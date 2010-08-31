@@ -318,8 +318,9 @@ bool ARMFastISel::isTypeLegal(const Type *Ty, EVT &VT) {
   // Only handle simple types.
   if (VT == MVT::Other || !VT.isSimple()) return false;
   
-  // For now, only handle 32-bit types.
-  return VT == MVT::i32;
+  // Handle all legal types, i.e. a register that will directly hold this
+  // value.
+  return TLI.isTypeLegal(VT);
 }
 
 // Computes the Reg+Offset to get to an object.
@@ -387,7 +388,6 @@ bool ARMFastISel::ARMLoadAlloca(const Instruction *I) {
       return true;
     }
   }
-  
   return false;
 }
 
@@ -395,25 +395,33 @@ bool ARMFastISel::ARMEmitLoad(EVT VT, unsigned &ResultReg,
                               unsigned Reg, int Offset) {
   
   assert(VT.isSimple() && "Non-simple types are invalid here!");
+  
+  bool isThumb = AFI->isThumbFunction();
+  unsigned Opc;
+  
   switch (VT.getSimpleVT().SimpleTy) {
     default: 
       assert(false && "Trying to emit for an unhandled type!");
       return false;
-    case MVT::i32: {
-      ResultReg = createResultReg(ARM::GPRRegisterClass);
-      // TODO: Fix the Addressing modes so that these can share some code.
-      // Since this is a Thumb1 load this will work in Thumb1 or 2 mode.
-      if (AFI->isThumbFunction())
-        AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
-                                TII.get(ARM::tLDR), ResultReg)
-                        .addReg(Reg).addImm(Offset).addReg(0));
-      else
-        AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
-                                TII.get(ARM::LDR), ResultReg)
-                        .addReg(Reg).addReg(0).addImm(Offset));
-      return true;
-    }
+    case MVT::i32:
+      Opc = isThumb ? ARM::tLDR : ARM::LDR;
+      break;
   }
+  
+  ResultReg = createResultReg(TLI.getRegClassFor(VT));
+  
+  // TODO: Fix the Addressing modes so that these can share some code.
+  // Since this is a Thumb1 load this will work in Thumb1 or 2 mode.
+  if (isThumb)
+    AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
+                            TII.get(Opc), ResultReg)
+                    .addReg(Reg).addImm(Offset).addReg(0));
+  else
+    AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
+                            TII.get(Opc), ResultReg)
+                    .addReg(Reg).addReg(0).addImm(Offset));
+                    
+  return true;
 }
 
 bool ARMFastISel::ARMSelectLoad(const Instruction *I) {
