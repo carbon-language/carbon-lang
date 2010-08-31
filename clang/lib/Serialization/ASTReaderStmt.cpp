@@ -592,6 +592,7 @@ void ASTStmtReader::VisitConditionalOperator(ConditionalOperator *E) {
   E->setCond(Reader.ReadSubExpr());
   E->setLHS(Reader.ReadSubExpr());
   E->setRHS(Reader.ReadSubExpr());
+  E->setSAVE(Reader.ReadSubExpr());
   E->setQuestionLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
   E->setColonLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
 }

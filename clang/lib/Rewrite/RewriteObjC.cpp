@@ -3041,8 +3041,10 @@ Stmt *RewriteObjC::SynthMessageExpr(ObjCMessageExpr *Exp,
     ConditionalOperator *CondExpr =
       new (Context) ConditionalOperator(lessThanExpr,
                                         SourceLocation(), CE,
-                                        SourceLocation(), STCE, returnType);
-    ReplacingStmt = new (Context) ParenExpr(SourceLocation(), SourceLocation(), CondExpr);
+                                        SourceLocation(), STCE, (Expr*)0,
+                                        returnType);
+    ReplacingStmt = new (Context) ParenExpr(SourceLocation(), SourceLocation(), 
+                                            CondExpr);
   }
   // delete Exp; leak for now, see RewritePropertySetter() usage for more info.
   return ReplacingStmt;
@@ -4566,7 +4568,8 @@ Stmt *RewriteObjC::SynthesizeBlockCall(CallExpr *Exp, const Expr *BlockExp) {
     ConditionalOperator *CondExpr =
       new (Context) ConditionalOperator(CONDExp,
                                       SourceLocation(), cast<Expr>(LHSStmt),
-                                      SourceLocation(), cast<Expr>(RHSStmt), 
+                                      SourceLocation(), cast<Expr>(RHSStmt),
+                                      (Expr*)0,
                                       Exp->getType());
     return CondExpr;
   } else if (const ObjCIvarRefExpr *IRE = dyn_cast<ObjCIvarRefExpr>(BlockExp)) {

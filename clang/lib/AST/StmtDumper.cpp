@@ -65,6 +65,13 @@ namespace  {
               OS << '\n';
               DumpSubTree(*CI++);
             }
+            if (const ConditionalOperator *CO = 
+                  dyn_cast<ConditionalOperator>(S)) {
+              if (CO->getSAVE()) {
+                OS << '\n';
+                DumpSubTree(CO->getSAVE());
+              }
+            }
           }
         }
         OS << ')';

@@ -2391,10 +2391,11 @@ public:
 class ConditionalOperator : public Expr {
   enum { COND, LHS, RHS, END_EXPR };
   Stmt* SubExprs[END_EXPR]; // Left/Middle/Right hand sides.
+  Stmt* Save;
   SourceLocation QuestionLoc, ColonLoc;
 public:
   ConditionalOperator(Expr *cond, SourceLocation QLoc, Expr *lhs,
-                      SourceLocation CLoc, Expr *rhs, QualType t)
+                      SourceLocation CLoc, Expr *rhs, Expr *save, QualType t)
     : Expr(ConditionalOperatorClass, t,
            // FIXME: the type of the conditional operator doesn't
            // depend on the type of the conditional, but the standard
@@ -2408,6 +2409,7 @@ public:
     SubExprs[COND] = cond;
     SubExprs[LHS] = lhs;
     SubExprs[RHS] = rhs;
+    Save = save;
   }
 
   /// \brief Build an empty conditional operator.
@@ -2420,25 +2422,31 @@ public:
   void setCond(Expr *E) { SubExprs[COND] = E; }
 
   // getTrueExpr - Return the subexpression representing the value of the ?:
-  //  expression if the condition evaluates to true.  In most cases this value
-  //  will be the same as getLHS() except a GCC extension allows the left
-  //  subexpression to be omitted, and instead of the condition be returned.
-  //  e.g: x ?: y is shorthand for x ? x : y, except that the expression "x"
-  //  is only evaluated once.
+  //  expression if the condition evaluates to true.  
   Expr *getTrueExpr() const {
-    return cast<Expr>(SubExprs[LHS] ? SubExprs[LHS] : SubExprs[COND]);
+    return cast<Expr>(!Save ? SubExprs[LHS] : SubExprs[COND]);
   }
 
   // getFalseExpr - Return the subexpression representing the value of the ?:
   // expression if the condition evaluates to false. This is the same as getRHS.
   Expr *getFalseExpr() const { return cast<Expr>(SubExprs[RHS]); }
+  
+  // getSaveExpr - In most cases this value will be null. Except a GCC extension 
+  // allows the left subexpression to be omitted, and instead of that condition 
+  // be returned. e.g: x ?: y is shorthand for x ? x : y, except that the 
+  // expression "x" is only evaluated once. Under this senario, this function
+  // returns the original, non-converted condition expression for the ?:operator
+  Expr *getSaveExpr() const { return Save? cast<Expr>(Save) : (Expr*)0; }
 
-  Expr *getLHS() const { return cast_or_null<Expr>(SubExprs[LHS]); }
+  Expr *getLHS() const { return Save ? 0 : cast<Expr>(SubExprs[LHS]); }
   void setLHS(Expr *E) { SubExprs[LHS] = E; }
 
   Expr *getRHS() const { return cast<Expr>(SubExprs[RHS]); }
   void setRHS(Expr *E) { SubExprs[RHS] = E; }
 
+  Expr *getSAVE() const { return Save? cast<Expr>(Save) : (Expr*)0; }
+  void setSAVE(Expr *E) { Save = E; }
+  
   SourceLocation getQuestionLoc() const { return QuestionLoc; }
   void setQuestionLoc(SourceLocation L) { QuestionLoc = L; }
 

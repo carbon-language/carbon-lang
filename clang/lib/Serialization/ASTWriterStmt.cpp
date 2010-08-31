@@ -598,6 +598,7 @@ void ASTStmtWriter::VisitConditionalOperator(ConditionalOperator *E) {
   Writer.AddStmt(E->getCond());
   Writer.AddStmt(E->getLHS());
   Writer.AddStmt(E->getRHS());
+  Writer.AddStmt(E->getSAVE());
   Writer.AddSourceLocation(E->getQuestionLoc(), Record);
   Writer.AddSourceLocation(E->getColonLoc(), Record);
   Code = serialization::EXPR_CONDITIONAL_OPERATOR;

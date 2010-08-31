@@ -4521,8 +4521,10 @@ ExprResult Sema::ActOnConditionalOp(SourceLocation QuestionLoc,
   // If this is the gnu "x ?: y" extension, analyze the types as though the LHS
   // was the condition.
   bool isLHSNull = LHSExpr == 0;
-  if (isLHSNull)
-    LHSExpr = CondExpr;
+  Expr *SAVEExpr = 0;
+  if (isLHSNull) {
+    LHSExpr = SAVEExpr = CondExpr;
+  }
 
   QualType result = CheckConditionalOperands(CondExpr, LHSExpr,
                                              RHSExpr, QuestionLoc);
@@ -4530,8 +4532,9 @@ ExprResult Sema::ActOnConditionalOp(SourceLocation QuestionLoc,
     return ExprError();
 
   return Owned(new (Context) ConditionalOperator(CondExpr, QuestionLoc,
-                                                 isLHSNull ? 0 : LHSExpr,
-                                                 ColonLoc, RHSExpr, result));
+                                                 LHSExpr, ColonLoc, 
+                                                 RHSExpr, SAVEExpr,
+                                                 result));
 }
 
 // CheckPointerTypesForAssignment - This is a very tricky routine (despite
