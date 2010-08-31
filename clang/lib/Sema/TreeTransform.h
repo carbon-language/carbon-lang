@@ -2903,18 +2903,25 @@ QualType
 TreeTransform<Derived>::TransformFunctionProtoType(TypeLocBuilder &TLB,
                                                    FunctionProtoTypeLoc TL,
                                                    QualType ObjectType) {
-  // Transform the parameters. We do this first for the benefit of template
-  // instantiations, so that the ParmVarDecls get/ placed into the template
-  // instantiation scope before we transform the function type.
+  // Transform the parameters and return type.
+  //
+  // We instantiate in source order, with the return type first followed by
+  // the parameters, because users tend to expect this (even if they shouldn't
+  // rely on it!).
+  //
+  // FIXME: When we implement late-specified return types, we'll need to
+  // instantiate the return tpe *after* the parameter types in that case,
+  // since the return type can then refer to the parameters themselves (via
+  // decltype, sizeof, etc.).
   llvm::SmallVector<QualType, 4> ParamTypes;
   llvm::SmallVector<ParmVarDecl*, 4> ParamDecls;
-  if (getDerived().TransformFunctionTypeParams(TL, ParamTypes, ParamDecls))
-    return QualType();
-  
   FunctionProtoType *T = TL.getTypePtr();
   QualType ResultType = getDerived().TransformType(TLB, TL.getResultLoc());
   if (ResultType.isNull())
     return QualType();
+
+  if (getDerived().TransformFunctionTypeParams(TL, ParamTypes, ParamDecls))
+    return QualType();  
   
   QualType Result = TL.getType();
   if (getDerived().AlwaysRebuild() ||
