@@ -215,8 +215,8 @@ Module::ResolveSymbolContextForAddress (const Address& so_addr, uint32_t resolve
                 resolved_flags |= symbols->ResolveSymbolContext (so_addr, resolve_scope, sc);
         }
 
-        // Resolve the symbol if requested
-        if (resolve_scope & eSymbolContextSymbol)
+        // Resolve the symbol if requested, but don't re-look it up if we've already found it.
+        if (resolve_scope & eSymbolContextSymbol && !(resolved_flags & eSymbolContextSymbol))
         {
             ObjectFile* ofile = GetObjectFile();
             if (ofile)
