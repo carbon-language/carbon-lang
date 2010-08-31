@@ -834,6 +834,7 @@ Host::OpenFileInExternalEditor (FileSpec &file_spec, uint32_t line_no)
     
     file_and_line_desc.descKey = keyAEPosition;
     
+    static std::string g_app_name;
     static FSRef g_app_fsref;
 
     LSApplicationParameters app_params;
@@ -846,11 +847,10 @@ Host::OpenFileInExternalEditor (FileSpec &file_spec, uint32_t line_no)
     
     if (external_editor)
     {
-        bool calculate_fsref = true;
         if (log)
             log->Printf("Looking for external editor \"%s\".\n", external_editor);
 
-        if (app_name.empty() || strcmp (app_name.c_str(), external_editor) != 0)
+        if (g_app_name.empty() || strcmp (g_app_name.c_str(), external_editor) != 0)
         {
             CFCString editor_name (external_editor, kCFStringEncodingUTF8);
             error = ::LSFindApplicationForInfo (kLSUnknownCreator, 
