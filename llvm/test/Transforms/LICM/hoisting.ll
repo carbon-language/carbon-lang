@@ -48,3 +48,19 @@ Out:		; preds = %Loop
 	%C = sub i32 %A, %B		; <i32> [#uses=1]
 	ret i32 %C
 }
+
+
+; This loop invariant instruction should be constant folded, not hoisted.
+define i32 @test3(i1 %c) {
+; CHECK: define i32 @test3
+; CHECK: call void @foo2(i32 6)
+	%A = load i32* @X		; <i32> [#uses=2]
+	br label %Loop
+Loop:
+	%B = add i32 4, 2		; <i32> [#uses=2]
+	call void @foo2( i32 %B )
+	br i1 %c, label %Loop, label %Out
+Out:		; preds = %Loop
+	%C = sub i32 %A, %B		; <i32> [#uses=1]
+	ret i32 %C
+}

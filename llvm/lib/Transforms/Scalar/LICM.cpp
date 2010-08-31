@@ -36,11 +36,11 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/IntrinsicInst.h"
 #include "llvm/Instructions.h"
-#include "llvm/Target/TargetData.h"
-#include "llvm/Analysis/LoopInfo.h"
-#include "llvm/Analysis/LoopPass.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Analysis/AliasSetTracker.h"
+#include "llvm/Analysis/ConstantFolding.h"
+#include "llvm/Analysis/LoopInfo.h"
+#include "llvm/Analysis/LoopPass.h"
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Analysis/ScalarEvolution.h"
 #include "llvm/Transforms/Utils/Local.h"
@@ -353,6 +353,18 @@ void LICM::HoistRegion(DomTreeNode *N) {
     for (BasicBlock::iterator II = BB->begin(), E = BB->end(); II != E; ) {
       Instruction &I = *II++;
 
+      // Try constant folding this instruction.  If all the operands are
+      // constants, it is technically hoistable, but it would be better to just
+      // fold it.
+      if (Constant *C = ConstantFoldInstruction(&I)) {
+        DEBUG(dbgs() << "LICM folding inst: " << I << "  --> " << *C << '\n');
+        CurAST->copyValue(&I, C);
+        CurAST->deleteValue(&I);
+        I.replaceAllUsesWith(C);
+        I.eraseFromParent();
+        continue;
+      }
+      
       // Try hoisting the instruction out to the preheader.  We can only do this
       // if all of the operands of the instruction are loop invariant and if it
       // is safe to hoist the instruction.
@@ -360,7 +372,7 @@ void LICM::HoistRegion(DomTreeNode *N) {
       if (isLoopInvariantInst(I) && canSinkOrHoistInst(I) &&
           isSafeToExecuteUnconditionally(I))
         hoist(I);
-      }
+    }
 
   const std::vector<DomTreeNode*> &Children = N->getChildren();
   for (unsigned i = 0, e = Children.size(); i != e; ++i)
