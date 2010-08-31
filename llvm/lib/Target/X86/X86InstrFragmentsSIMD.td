@@ -166,14 +166,11 @@ def X86Movsd : SDNode<"X86ISD::MOVSD", SDTShuff2Op>;
 def X86Movss : SDNode<"X86ISD::MOVSS", SDTShuff2Op>;
 
 def X86Movlhps : SDNode<"X86ISD::MOVLHPS", SDTShuff2Op>;
-def X86Movhlps : SDNode<"X86ISD::MOVHLPS", SDTShuff2Op>;
 def X86Movlhpd : SDNode<"X86ISD::MOVLHPD", SDTShuff2Op>;
+
+def X86Movhlps : SDNode<"X86ISD::MOVHLPS", SDTShuff2Op>;
 def X86Movhlpd : SDNode<"X86ISD::MOVHLPD", SDTShuff2Op>;
 
-def X86MovhpsLd : SDNode<"X86ISD::MOVHPS", SDTShuff2OpLd,
-                        [SDNPHasChain, SDNPMayLoad, SDNPMemOperand]>;
-def X86MovhpdLd : SDNode<"X86ISD::MOVHPD", SDTShuff2OpLd,
-                        [SDNPHasChain, SDNPMayLoad, SDNPMemOperand]>;
 def X86MovlpsLd : SDNode<"X86ISD::MOVLPS", SDTShuff2OpLd,
                         [SDNPHasChain, SDNPMayLoad, SDNPMemOperand]>;
 def X86MovlpdLd : SDNode<"X86ISD::MOVLPD", SDTShuff2OpLd,

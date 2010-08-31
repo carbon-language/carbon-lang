@@ -2623,6 +2623,7 @@ static SDValue getTargetShuffleNode(unsigned Opc, DebugLoc dl, EVT VT,
   switch(Opc) {
   default: llvm_unreachable("Unknown x86 shuffle node");
   case X86ISD::MOVLHPS:
+  case X86ISD::MOVLHPD:
   case X86ISD::MOVSS:
   case X86ISD::MOVSD:
   case X86ISD::PUNPCKLDQ:
@@ -5004,6 +5005,22 @@ LowerVECTOR_SHUFFLE_4wide(ShuffleVectorSDNode *SVOp, SelectionDAG &DAG) {
   return DAG.getVectorShuffle(VT, dl, LoShuffle, HiShuffle, &MaskOps[0]);
 }
 
+static
+SDValue getMOVLowToHigh(SDValue &Op, DebugLoc &dl, SelectionDAG &DAG,
+                        bool HasSSE2) {
+  SDValue V1 = Op.getOperand(0);
+  SDValue V2 = Op.getOperand(1);
+  EVT VT = Op.getValueType();
+
+  assert(VT != MVT::v2i64 && "unsupported shuffle type");
+
+  if (HasSSE2 && VT == MVT::v2f64)
+    return getTargetShuffleNode(X86ISD::MOVLHPD, dl, VT, V1, V2, DAG);
+
+  // v4f32 or v4i32
+  return getTargetShuffleNode(X86ISD::MOVLHPS, dl, VT, V1, V2, DAG);
+}
+
 SDValue
 X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const {
   ShuffleVectorSDNode *SVOp = cast<ShuffleVectorSDNode>(Op);
@@ -5110,12 +5127,16 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const {
   }
 
   // FIXME: fold these into legal mask.
-  if (!isMMX && (X86::isMOVSHDUPMask(SVOp) ||
-                 X86::isMOVSLDUPMask(SVOp) ||
-                 X86::isMOVHLPSMask(SVOp) ||
-                 X86::isMOVLHPSMask(SVOp) ||
-                 X86::isMOVLPMask(SVOp)))
-    return Op;
+  if (!isMMX) {
+    if (X86::isMOVLHPSMask(SVOp) && !X86::isUNPCKLMask(SVOp))
+      return getMOVLowToHigh(Op, dl, DAG, HasSSE2);
+
+    if (X86::isMOVSHDUPMask(SVOp) ||
+        X86::isMOVSLDUPMask(SVOp) ||
+        X86::isMOVHLPSMask(SVOp) ||
+        X86::isMOVLPMask(SVOp))
+      return Op;
+  }
 
   if (ShouldXformToMOVHLPS(SVOp) ||
       ShouldXformToMOVLP(V1.getNode(), V2.getNode(), SVOp))
@@ -8362,13 +8383,9 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::SHUFPS:             return "X86ISD::SHUFPS";
   case X86ISD::SHUFPD:             return "X86ISD::SHUFPD";
   case X86ISD::MOVLHPS:            return "X86ISD::MOVLHPS";
-  case X86ISD::MOVHLPS:            return "X86ISD::MOVHLPS";
   case X86ISD::MOVLHPD:            return "X86ISD::MOVLHPD";
+  case X86ISD::MOVHLPS:            return "X86ISD::MOVHLPS";
   case X86ISD::MOVHLPD:            return "X86ISD::MOVHLPD";
-  case X86ISD::MOVHPS:             return "X86ISD::MOVHPS";
-  case X86ISD::MOVLPS:             return "X86ISD::MOVLPS";
-  case X86ISD::MOVHPD:             return "X86ISD::MOVHPD";
-  case X86ISD::MOVLPD:             return "X86ISD::MOVLPD";
   case X86ISD::MOVDDUP:            return "X86ISD::MOVDDUP";
   case X86ISD::MOVSHDUP:           return "X86ISD::MOVSHDUP";
   case X86ISD::MOVSLDUP:           return "X86ISD::MOVSLDUP";
