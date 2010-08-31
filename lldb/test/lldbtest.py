@@ -13,11 +13,11 @@ entire test suite.  Users who want to run a test case on its own can specify the
 LLDB_TEST and PYTHONPATH environment variables, for example:
 
 $ export LLDB_TEST=$PWD
-$ export PYTHONPATH=/Volumes/data/lldb/svn/trunk/build/Debug/LLDB.framework/Resources/Python:$LLDB_TEST
+$ export PYTHONPATH=/Volumes/data/lldb/svn/trunk/build/Debug/LLDB.framework/Resources/Python:$LLDB_TEST:$LLDB_TEST/plugins
 $ echo $LLDB_TEST
 /Volumes/data/lldb/svn/trunk/test
 $ echo $PYTHONPATH
-/Volumes/data/lldb/svn/trunk/build/Debug/LLDB.framework/Resources/Python:/Volumes/data/lldb/svn/trunk/test
+/Volumes/data/lldb/svn/trunk/build/Debug/LLDB.framework/Resources/Python:/Volumes/data/lldb/svn/trunk/test:/Volumes/data/lldb/svn/trunk/test/plugins
 $ python function_types/TestFunctionTypes.py
 .
 ----------------------------------------------------------------------
@@ -112,6 +112,12 @@ import types
 import unittest2
 import lldb
 
+if "LLDB_COMMAND_TRACE" in os.environ and os.environ["LLDB_COMMAND_TRACE"]=="YES":
+    traceAlways = True
+else:
+    traceAlways = False
+
+
 #
 # Some commonly used assert messages.
 #
@@ -203,6 +209,51 @@ def StopReasonString(enum):
 def EnvArray():
     return map(lambda k,v: k+"="+v, os.environ.keys(), os.environ.values())
 
+# From 2.7's subprocess.check_output() convenience function.
+def system(*popenargs, **kwargs):
+    r"""Run command with arguments and return its output as a byte string.
+
+    If the exit code was non-zero it raises a CalledProcessError.  The
+    CalledProcessError object will have the return code in the returncode
+    attribute and output in the output attribute.
+
+    The arguments are the same as for the Popen constructor.  Example:
+
+    >>> check_output(["ls", "-l", "/dev/null"])
+    'crw-rw-rw- 1 root root 1, 3 Oct 18  2007 /dev/null\n'
+
+    The stdout argument is not allowed as it is used internally.
+    To capture standard error in the result, use stderr=STDOUT.
+
+    >>> check_output(["/bin/sh", "-c",
+    ...               "ls -l non_existent_file ; exit 0"],
+    ...              stderr=STDOUT)
+    'ls: non_existent_file: No such file or directory\n'
+    """
+    if 'stdout' in kwargs:
+        raise ValueError('stdout argument not allowed, it will be overridden.')
+    process = Popen(stdout=PIPE, *popenargs, **kwargs)
+    output, unused_err = process.communicate()
+    retcode = process.poll()
+
+    if traceAlways:
+        if isinstance(popenargs, types.StringTypes):
+            args = [popenargs]
+        else:
+            args = list(popenargs)
+        print >> sys.stderr
+        print >> sys.stderr, "os command:", args
+        print >> sys.stderr, "output:", output
+        print >> sys.stderr, "error:", unused_err
+        print >> sys.stderr, "retcode:", retcode
+
+    if retcode:
+        cmd = kwargs.get("args")
+        if cmd is None:
+            cmd = popenargs[0]
+        raise CalledProcessError(retcode, cmd, output=output)
+    return output
+
 
 class TestBase(unittest2.TestCase):
     """This LLDB abstract base class is meant to be subclassed."""
@@ -220,9 +271,6 @@ class TestBase(unittest2.TestCase):
     # Time to wait before the next launching attempt in second(s).
     # Can be overridden by the LLDB_TIME_WAIT environment variable.
     timeWait = 1.0;
-
-    # os.environ["LLDB_COMMAND_TRACE"], if set to "YES", will turn on this flag.
-    traceAlways = False;
 
     def setUp(self):
         #import traceback
@@ -244,10 +292,6 @@ class TestBase(unittest2.TestCase):
 
         if "LLDB_TIME_WAIT" in os.environ:
             self.timeWait = float(os.environ["LLDB_TIME_WAIT"])
-
-        if ("LLDB_COMMAND_TRACE" in os.environ and
-            os.environ["LLDB_COMMAND_TRACE"] == "YES"):
-            self.traceAlways = True
 
         # Create the debugger instance if necessary.
         try:
@@ -288,7 +332,7 @@ class TestBase(unittest2.TestCase):
         if not cmd or len(cmd) == 0:
             raise Exception("Bad 'cmd' parameter encountered")
 
-        trace = (True if self.traceAlways else trace)
+        trace = (True if traceAlways else trace)
 
         self.runStarted = (cmd.startswith("run") or
                            cmd.startswith("process launch"))
@@ -324,7 +368,7 @@ class TestBase(unittest2.TestCase):
         'startstr' and matches the substrings contained in 'substrs'.
         """
 
-        trace = (True if self.traceAlways else trace)
+        trace = (True if traceAlways else trace)
 
         # First run the command.
         self.runCmd(cmd, trace = (True if trace else False))
@@ -354,79 +398,32 @@ class TestBase(unittest2.TestCase):
     def invoke(self, obj, name, trace=False):
         """Use reflection to call a method dynamically with no argument."""
 
-        trace = (True if self.traceAlways else trace)
+        trace = (True if traceAlways else trace)
         
         method = getattr(obj, name)
         import inspect
         self.assertTrue(inspect.ismethod(method),
                         name + "is a method name of object: " + str(obj))
         result = method()
-        if self.traceAlways:
+        if trace:
             print str(method) + ":",  result
         return result
 
-    # From 2.7's subprocess.check_output() convenience function.
-    def system(self, *popenargs, **kwargs):
-        r"""Run command with arguments and return its output as a byte string.
-
-        If the exit code was non-zero it raises a CalledProcessError.  The
-        CalledProcessError object will have the return code in the returncode
-        attribute and output in the output attribute.
-
-        The arguments are the same as for the Popen constructor.  Example:
-
-        >>> check_output(["ls", "-l", "/dev/null"])
-        'crw-rw-rw- 1 root root 1, 3 Oct 18  2007 /dev/null\n'
-
-        The stdout argument is not allowed as it is used internally.
-        To capture standard error in the result, use stderr=STDOUT.
-
-        >>> check_output(["/bin/sh", "-c",
-        ...               "ls -l non_existent_file ; exit 0"],
-        ...              stderr=STDOUT)
-        'ls: non_existent_file: No such file or directory\n'
-        """
-        if 'stdout' in kwargs:
-            raise ValueError('stdout argument not allowed, it will be overridden.')
-        process = Popen(stdout=PIPE, *popenargs, **kwargs)
-        output, unused_err = process.communicate()
-        retcode = process.poll()
-
-        if self.traceAlways:
-            if isinstance(popenargs, types.StringTypes):
-                args = [popenargs]
-            else:
-                args = list(popenargs)
-            print >> sys.stderr
-            print >> sys.stderr, "os command:", args
-            print >> sys.stderr, "output:", output
-            print >> sys.stderr, "error:", unused_err
-            print >> sys.stderr, "retcode:", retcode
-
-        if retcode:
-            cmd = kwargs.get("args")
-            if cmd is None:
-                cmd = popenargs[0]
-            raise CalledProcessError(retcode, cmd, output=output)
-        return output
-
     def buildDsym(self):
         """Platform specific way to build binaries with dsym info."""
-        if sys.platform.startswith("darwin"):
-            self.system(["/bin/sh", "-c", "make clean; make MAKE_DSYM=YES"])
-        else:
+        module = __import__(sys.platform)
+        if not module.buildDsym():
             raise Exception("Don't know how to build binary with dsym")
 
     def buildDwarf(self):
         """Platform specific way to build binaries with dwarf maps."""
-        if sys.platform.startswith("darwin"):
-            self.system(["/bin/sh", "-c", "make clean; make MAKE_DSYM=NO"])
-        else:
+        module = __import__(sys.platform)
+        if not module.buildDwarf():
             raise Exception("Don't know how to build binary with dwarf")
 
     def DebugSBValue(self, frame, val):
-        """Debug print a SBValue object, if self.traceAlways is True."""
-        if not self.traceAlways:
+        """Debug print a SBValue object, if traceAlways is True."""
+        if not traceAlways:
             return
 
         err = sys.stderr

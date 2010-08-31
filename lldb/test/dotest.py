@@ -81,6 +81,7 @@ def setupSysPath():
         sys.exit(-1)
 
     os.environ["LLDB_TEST"] = scriptPath
+    pluginPath = os.path.join(scriptPath, 'plugins')
 
     base = os.path.abspath(os.path.join(scriptPath, os.pardir))
     dbgPath = os.path.join(base, 'build', 'Debug', 'LLDB.framework',
@@ -101,6 +102,7 @@ def setupSysPath():
 
     sys.path.append(lldbPath)
     sys.path.append(scriptPath)
+    sys.path.append(pluginPath)
 
 
 def initTestdirs():
