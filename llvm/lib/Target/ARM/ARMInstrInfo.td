@@ -1856,6 +1856,8 @@ def : ARMV6Pat<(int_arm_usat GPR:$a, imm:$pos), (USAT imm:$pos, GPR:$a, 0)>;
 
 defm AND   : AsI1_bin_irs<0b0000, "and",
                           BinOpFrag<(and node:$LHS, node:$RHS)>, 1>;
+defm ANDS  : AI1_bin_s_irs<0b0000, "and",
+                           BinOpFrag<(ARMand node:$LHS, node:$RHS)>, 1>;
 defm ORR   : AsI1_bin_irs<0b1100, "orr",
                           BinOpFrag<(or  node:$LHS, node:$RHS)>, 1>;
 defm EOR   : AsI1_bin_irs<0b0001, "eor",
