@@ -217,6 +217,7 @@ static void ProcessUCNEscape(const char *&ThisTokBuf, const char *ThisTokEnd,
     return;
   }
   if (wide) {
+    (void)UcnLenSave;
     assert(UcnLenSave == 4 && 
            "ProcessUCNEscape - only ucn length of 4 supported");
     // little endian assumed.
