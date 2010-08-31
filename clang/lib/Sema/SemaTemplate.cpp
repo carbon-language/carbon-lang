@@ -3440,8 +3440,8 @@ static bool CheckTemplateSpecializationScope(Sema &S,
        getTemplateSpecializationKind(PrevDecl) == TSK_ImplicitInstantiation)){
     // There is no prior declaration of this entity, so this
     // specialization must be in the same context as the template
-    // itself.
-    if (!DC->Equals(SpecializedContext)) {
+    // itself, or in the enclosing namespace set.
+    if (!DC->InEnclosingNamespaceSetOf(SpecializedContext)) {
       if (isa<TranslationUnitDecl>(SpecializedContext))
         S.Diag(Loc, diag::err_template_spec_decl_out_of_scope_global)
         << EntityKind << Specialized;
