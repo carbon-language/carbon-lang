@@ -919,6 +919,7 @@ void ELFObjectWriterImpl::WriteObject(const MCAssembler &Asm,
     case ELF::SHT_PROGBITS:
     case ELF::SHT_STRTAB:
     case ELF::SHT_NOBITS:
+    case ELF::SHT_NULL:
       // Nothing to do.
       break;
 
