@@ -324,8 +324,8 @@ Parser::DeclGroupPtrTy Parser::ParseDeclaration(unsigned Context,
     SingleDecl = ParseDeclarationStartingWithTemplate(Context, DeclEnd);
     break;
   case tok::kw_inline:
-    // Could be the start of an inline namespace.
-    if (getLang().CPlusPlus0x && NextToken().is(tok::kw_namespace)) {
+    // Could be the start of an inline namespace. Allowed as an ext in C++03.
+    if (getLang().CPlusPlus && NextToken().is(tok::kw_namespace)) {
       if (Attr.HasAttr)
         Diag(Attr.Range.getBegin(), diag::err_attributes_not_allowed)
           << Attr.Range;

@@ -484,8 +484,8 @@ Parser::DeclGroupPtrTy Parser::ParseExternalDeclaration(CXX0XAttributeList Attr,
     }
 
   case tok::kw_inline:
-    if (getLang().CPlusPlus0x && NextToken().is(tok::kw_namespace)) {
-      // Inline namespaces
+    if (getLang().CPlusPlus && NextToken().is(tok::kw_namespace)) {
+      // Inline namespaces. Allowed as an extension even in C++03.
       SourceLocation DeclEnd;
       return ParseDeclaration(Declarator::FileContext, DeclEnd, Attr);
     }

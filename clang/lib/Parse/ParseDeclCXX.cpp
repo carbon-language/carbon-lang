@@ -103,6 +103,10 @@ Decl *Parser::ParseNamespace(unsigned Context,
     return 0;
   }
 
+  // If we're still good, complain about inline namespaces in non-C++0x now.
+  if (!getLang().CPlusPlus0x && InlineLoc.isValid())
+    Diag(InlineLoc, diag::ext_inline_namespace);
+
   // Enter a scope for the namespace.
   ParseScope NamespaceScope(this, Scope::DeclScope);
 
