@@ -3656,11 +3656,13 @@ SDValue getShuffleScalarElt(SDNode *N, int Index, SelectionDAG &DAG) {
   if (isTargetShuffle(Opcode)) {
     switch(Opcode) {
     case X86ISD::MOVSS:
-    case X86ISD::MOVSD:
-      // Only care about the second operand, which can contain
-      // a scalar_to_vector which we are looking for.
-      return getShuffleScalarElt(V.getOperand(1).getNode(),
-                                 0 /* Index */, DAG);
+    case X86ISD::MOVSD: {
+      // The index 0 always comes from the first element of the second source,
+      // this is why MOVSS and MOVSD are used in the first place. The other
+      // elements come from the other positions of the first source vector.
+      unsigned OpNum = (Index == 0) ? 1 : 0;
+      return getShuffleScalarElt(V.getOperand(OpNum).getNode(), Index, DAG);
+    }
     default:
       assert("not implemented for target shuffle node");
       return SDValue();
@@ -5098,8 +5100,13 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const {
       return V2;
     if (ISD::isBuildVectorAllZeros(V1.getNode()))
       return getVZextMovL(VT, VT, V2, DAG, Subtarget, dl);
-    if (!isMMX)
-      return Op;
+    if (!isMMX && !X86::isMOVLPMask(SVOp)) {
+      if (HasSSE2 && (VT == MVT::v2i64 || VT == MVT::v2f64))
+        return getTargetShuffleNode(X86ISD::MOVSD, dl, VT, V1, V2, DAG);
+
+      if (VT == MVT::v4i32 || VT == MVT::v4f32)
+        return getTargetShuffleNode(X86ISD::MOVSS, dl, VT, V1, V2, DAG);
+    }
   }
 
   // FIXME: fold these into legal mask.
