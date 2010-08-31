@@ -327,7 +327,7 @@ Pass *createLowerAtomicPass();
 //
 // ValuePropagation - Propagate CFG-derived value information
 //
-Pass *createValuePropagationPass();
+Pass *createCorrelatedValuePropagationPass();
 
 } // End llvm namespace
 

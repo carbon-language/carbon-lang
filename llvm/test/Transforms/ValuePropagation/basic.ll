@@ -1,4 +1,4 @@
-; RUN: opt < %s -value-propagation -S | FileCheck %s
+; RUN: opt < %s -correlated-propagation -S | FileCheck %s
 ; PR2581
 
 ; CHECK: @test1

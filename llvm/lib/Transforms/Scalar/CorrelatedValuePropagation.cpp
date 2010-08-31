@@ -1,4 +1,4 @@
-//===- ValuePropagation.cpp - Propagate information derived control flow --===//
+//===- CorrelatedValuePropagation.cpp - Propagate CFG-derived info --------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,11 +7,11 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file implements the Value Propagation pass.
+// This file implements the Correlated Value Propagation pass.
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "value-propagation"
+#define DEBUG_TYPE "correlated-value-propagation"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Function.h"
 #include "llvm/Instructions.h"
@@ -25,7 +25,7 @@ STATISTIC(NumPhis,    "Number of phis propagated");
 STATISTIC(NumSelects, "Number of selects propagated");
 
 namespace {
-  class ValuePropagation : public FunctionPass {
+  class CorrelatedValuePropagation : public FunctionPass {
     LazyValueInfo *LVI;
     
     bool processSelect(SelectInst *SI);
@@ -33,7 +33,7 @@ namespace {
     
   public:
     static char ID;
-    ValuePropagation(): FunctionPass(ID) { }
+    CorrelatedValuePropagation(): FunctionPass(ID) { }
     
     bool runOnFunction(Function &F);
     
@@ -43,16 +43,16 @@ namespace {
   };
 }
 
-char ValuePropagation::ID = 0;
-INITIALIZE_PASS(ValuePropagation, "value-propagation",
+char CorrelatedValuePropagation::ID = 0;
+INITIALIZE_PASS(CorrelatedValuePropagation, "correlated-propagation",
                 "Value Propagation", false, false);
 
 // Public interface to the Value Propagation pass
-Pass *llvm::createValuePropagationPass() {
-  return new ValuePropagation();
+Pass *llvm::createCorrelatedValuePropagationPass() {
+  return new CorrelatedValuePropagation();
 }
 
-bool ValuePropagation::processSelect(SelectInst *S) {
+bool CorrelatedValuePropagation::processSelect(SelectInst *S) {
   if (S->getType()->isVectorTy()) return false;
   
   Constant *C = LVI->getConstant(S->getOperand(0), S->getParent());
@@ -69,7 +69,7 @@ bool ValuePropagation::processSelect(SelectInst *S) {
   return true;
 }
 
-bool ValuePropagation::processPHI(PHINode *P) {
+bool CorrelatedValuePropagation::processPHI(PHINode *P) {
   bool Changed = false;
   
   BasicBlock *BB = P->getParent();
@@ -97,7 +97,7 @@ bool ValuePropagation::processPHI(PHINode *P) {
   return Changed;
 }
 
-bool ValuePropagation::runOnFunction(Function &F) {
+bool CorrelatedValuePropagation::runOnFunction(Function &F) {
   LVI = &getAnalysis<LazyValueInfo>();
   
   bool Changed = false;
