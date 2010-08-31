@@ -9,7 +9,33 @@ class TestClassTypes(TestBase):
 
     mydir = "class_types"
 
-    def test_class_types(self):
+    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    def test_with_dsym_and_run_command(self):
+        """Test 'variable list this' when stopped on a class constructor."""
+        self.buildDsym()
+        self.class_types()
+
+    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    def test_with_dsym_and_python_api(self):
+        """Use Python APIs to create a breakpoint by (filespec, line)."""
+        self.buildDsym()
+        self.breakpoint_creation_by_filespec_python()
+
+    # rdar://problem/8378863
+    # "variable list this" returns
+    # error: unable to find any variables named 'this'
+    @unittest2.expectedFailure
+    def test_with_dwarf_and_run_command(self):
+        """Test 'variable list this' when stopped on a class constructor."""
+        self.buildDwarf()
+        self.class_types()
+
+    def test_with_dwarf_and_python_api(self):
+        """Use Python APIs to create a breakpoint by (filespec, line)."""
+        self.buildDwarf()
+        self.breakpoint_creation_by_filespec_python()
+
+    def class_types(self):
         """Test 'variable list this' when stopped on a class constructor."""
         exe = os.path.join(os.getcwd(), "a.out")
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
@@ -33,7 +59,7 @@ class TestClassTypes(TestBase):
         self.expect("variable list this", VARIABLES_DISPLAYED_CORRECTLY,
             startstr = '(class C *const) this = ')
 
-    def test_breakpoint_creation_by_filespec_python(self):
+    def breakpoint_creation_by_filespec_python(self):
         """Use Python APIs to create a breakpoint by (filespec, line)."""
         exe = os.path.join(os.getcwd(), "a.out")
 
