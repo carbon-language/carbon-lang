@@ -5847,7 +5847,7 @@ def : Pat<(v4i32 (X86Movsd VR128:$src1, VR128:$src2)),
 // Shuffle with MOVSHDUP
 def : Pat<(v4i32 (X86Movshdup VR128:$src)),
           (MOVSHDUPrr VR128:$src)>;
-def : Pat<(v4i32 (X86Movshdup (bc_v4i32 (memopv2i64 addr:$src)))),
+def : Pat<(X86Movshdup (bc_v4i32 (memopv2i64 addr:$src))),
           (MOVSHDUPrm addr:$src)>;
 
 def : Pat<(v4f32 (X86Movshdup VR128:$src)),
@@ -5858,12 +5858,12 @@ def : Pat<(X86Movshdup (memopv4f32 addr:$src)),
 // Shuffle with MOVSLDUP
 def : Pat<(v4i32 (X86Movsldup VR128:$src)),
           (MOVSLDUPrr VR128:$src)>;
-def : Pat<(v4i32 (X86MovsldupLd addr:$src)),
+def : Pat<(X86Movsldup (bc_v4i32 (memopv2i64 addr:$src))),
           (MOVSLDUPrm addr:$src)>;
 
 def : Pat<(v4f32 (X86Movsldup VR128:$src)),
           (MOVSLDUPrr VR128:$src)>;
-def : Pat<(v4f32 (X86MovsldupLd addr:$src)),
+def : Pat<(X86Movsldup (memopv4f32 addr:$src)),
           (MOVSLDUPrm addr:$src)>;
 
 // Shuffle with PSHUFHW

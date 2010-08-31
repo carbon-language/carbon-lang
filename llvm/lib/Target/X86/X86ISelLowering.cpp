@@ -2587,6 +2587,7 @@ static bool isTargetShuffle(unsigned Opcode) {
   case X86ISD::MOVLHPS:
   case X86ISD::MOVHLPS:
   case X86ISD::MOVSHDUP:
+  case X86ISD::MOVSLDUP:
   case X86ISD::MOVSS:
   case X86ISD::MOVSD:
   case X86ISD::PUNPCKLDQ:
@@ -2600,6 +2601,7 @@ static SDValue getTargetShuffleNode(unsigned Opc, DebugLoc dl, EVT VT,
   switch(Opc) {
   default: llvm_unreachable("Unknown x86 shuffle node");
   case X86ISD::MOVSHDUP:
+  case X86ISD::MOVSLDUP:
     return DAG.getNode(Opc, dl, VT, V1);
   }
 
@@ -5168,9 +5170,10 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const {
     if (X86::isMOVSHDUPMask(SVOp) && HasSSE3 && V2IsUndef && NumElems == 4)
       return getTargetShuffleNode(X86ISD::MOVSHDUP, dl, VT, V1, DAG);
 
-    if (X86::isMOVSLDUPMask(SVOp) ||
-        X86::isMOVHLPSMask(SVOp) ||
-        X86::isMOVLPMask(SVOp))
+    if (X86::isMOVSLDUPMask(SVOp) && HasSSE3 && V2IsUndef && NumElems == 4)
+      return getTargetShuffleNode(X86ISD::MOVSLDUP, dl, VT, V1, DAG);
+
+    if (X86::isMOVLPMask(SVOp))
       return Op;
   }
 
