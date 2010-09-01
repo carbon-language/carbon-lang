@@ -39,6 +39,11 @@ struct array;
 template<template<typename, unsigned> class DataStructure = array>
 struct storage;
 
+typedef unsigned Unsigned;
+
+template<typename T, Unsigned Value>
+struct value_c;
+
 // RUN: c-index-test -test-load-source all %s | FileCheck -check-prefix=CHECK-LOAD %s
 // CHECK-LOAD: index-templates.cpp:4:6: FunctionTemplate=f:4:6 Extent=[3:1 - 4:22]
 // CHECK-LOAD: index-templates.cpp:3:19: TemplateTypeParameter=T:3:19 (Definition) Extent=[3:19 - 3:20]
@@ -84,6 +89,11 @@ struct storage;
 // CHECK-LOAD: index-templates.cpp:39:19: TemplateTypeParameter=:39:19 (Definition) Extent=[39:19 - 39:27]
 // CHECK-LOAD: index-templates.cpp:39:37: NonTypeTemplateParameter=:39:37 (Definition) Extent=[39:29 - 39:38]
 // CHECK-LOAD: index-templates.cpp:39:61: TemplateRef=array:37:8 Extent=[39:61 - 39:66]
+// CHECK-LOAD: index-templates.cpp:42:18: TypedefDecl=Unsigned:42:18 (Definition) Extent=[42:18 - 42:26]
+// CHECK-LOAD: index-templates.cpp:45:8: ClassTemplate=value_c:45:8 Extent=[44:1 - 45:15]
+// CHECK-LOAD: index-templates.cpp:44:19: TemplateTypeParameter=T:44:19 (Definition) Extent=[44:19 - 44:20]
+// CHECK-LOAD: index-templates.cpp:44:31: NonTypeTemplateParameter=Value:44:31 (Definition) Extent=[44:22 - 44:36]
+// CHECK-LOAD: index-templates.cpp:44:22: TypeRef=Unsigned:42:18 Extent=[44:22 - 44:30]
 
 // RUN: c-index-test -test-load-source-usrs all %s | FileCheck -check-prefix=CHECK-USRS %s
 // CHECK-USRS: index-templates.cpp c:@FT@>3#T#Nt0.0#t>2#T#Nt1.0f#>t0.22t0.0# Extent=[3:1 - 4:22]
