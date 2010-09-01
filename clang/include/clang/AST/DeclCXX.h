@@ -1707,7 +1707,9 @@ public:
 // artificial name, for all using-directives in order to store
 // them in DeclContext effectively.
 class UsingDirectiveDecl : public NamedDecl {
-
+  /// \brief The location of the "using" keyword.
+  SourceLocation UsingLoc;
+  
   /// SourceLocation - Location of 'namespace' token.
   SourceLocation NamespaceLoc;
 
@@ -1718,10 +1720,6 @@ class UsingDirectiveDecl : public NamedDecl {
   /// \brief The nested-name-specifier that precedes the namespace
   /// name, if any.
   NestedNameSpecifier *Qualifier;
-
-  /// IdentLoc - Location of nominated namespace-name identifier.
-  // FIXME: We don't store location of scope specifier.
-  SourceLocation IdentLoc;
 
   /// NominatedNamespace - Namespace nominated by using-directive.
   NamedDecl *NominatedNamespace;
@@ -1737,17 +1735,16 @@ class UsingDirectiveDecl : public NamedDecl {
     return DeclarationName::getUsingDirectiveName();
   }
 
-  UsingDirectiveDecl(DeclContext *DC, SourceLocation L,
+  UsingDirectiveDecl(DeclContext *DC, SourceLocation UsingLoc,
                      SourceLocation NamespcLoc,
                      SourceRange QualifierRange,
                      NestedNameSpecifier *Qualifier,
                      SourceLocation IdentLoc,
                      NamedDecl *Nominated,
                      DeclContext *CommonAncestor)
-    : NamedDecl(UsingDirective, DC, L, getName()),
+    : NamedDecl(UsingDirective, DC, IdentLoc, getName()), UsingLoc(UsingLoc),
       NamespaceLoc(NamespcLoc), QualifierRange(QualifierRange),
-      Qualifier(Qualifier), IdentLoc(IdentLoc),
-      NominatedNamespace(Nominated),
+      Qualifier(Qualifier), NominatedNamespace(Nominated),
       CommonAncestor(CommonAncestor) {
   }
 
@@ -1756,17 +1753,9 @@ public:
   /// that qualifies the namespace name.
   SourceRange getQualifierRange() const { return QualifierRange; }
 
-  /// \brief Set the source range of the nested-name-specifier that
-  /// qualifies the namespace name.
-  void setQualifierRange(SourceRange R) { QualifierRange = R; }
-
   /// \brief Retrieve the nested-name-specifier that qualifies the
   /// name of the namespace.
   NestedNameSpecifier *getQualifier() const { return Qualifier; }
-
-  /// \brief Set the nested-name-specifier that qualifes the name of the
-  /// namespace.
-  void setQualifier(NestedNameSpecifier *NNS) { Qualifier = NNS; }
 
   NamedDecl *getNominatedNamespaceAsWritten() { return NominatedNamespace; }
   const NamedDecl *getNominatedNamespaceAsWritten() const {
@@ -1780,34 +1769,23 @@ public:
     return const_cast<UsingDirectiveDecl*>(this)->getNominatedNamespace();
   }
 
-  /// setNominatedNamespace - Set the namespace nominataed by the
-  /// using-directive.
-  void setNominatedNamespace(NamedDecl* NS);
-
   /// \brief Returns the common ancestor context of this using-directive and
   /// its nominated namespace.
   DeclContext *getCommonAncestor() { return CommonAncestor; }
   const DeclContext *getCommonAncestor() const { return CommonAncestor; }
 
-  /// \brief Set the common ancestor context of this using-directive and its
-  /// nominated namespace.
-  void setCommonAncestor(DeclContext* Cxt) { CommonAncestor = Cxt; }
-
+  /// \brief Return the location of the "using" keyword.
+  SourceLocation getUsingLoc() const { return UsingLoc; }
+  
   // FIXME: Could omit 'Key' in name.
   /// getNamespaceKeyLocation - Returns location of namespace keyword.
   SourceLocation getNamespaceKeyLocation() const { return NamespaceLoc; }
 
-  /// setNamespaceKeyLocation - Set the the location of the namespacekeyword.
-  void setNamespaceKeyLocation(SourceLocation L) { NamespaceLoc = L; }
-
   /// getIdentLocation - Returns location of identifier.
-  SourceLocation getIdentLocation() const { return IdentLoc; }
-
-  /// setIdentLocation - set the location of the identifier.
-  void setIdentLocation(SourceLocation L) { IdentLoc = L; }
+  SourceLocation getIdentLocation() const { return getLocation(); }
 
   static UsingDirectiveDecl *Create(ASTContext &C, DeclContext *DC,
-                                    SourceLocation L,
+                                    SourceLocation UsingLoc,
                                     SourceLocation NamespaceLoc,
                                     SourceRange QualifierRange,
                                     NestedNameSpecifier *Qualifier,
@@ -1815,12 +1793,18 @@ public:
                                     NamedDecl *Nominated,
                                     DeclContext *CommonAncestor);
 
+  SourceRange getSourceRange() const {
+    return SourceRange(UsingLoc, getLocation());
+  }
+  
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
   static bool classof(const UsingDirectiveDecl *D) { return true; }
   static bool classofKind(Kind K) { return K == UsingDirective; }
 
   // Friend for getUsingDirectiveName.
   friend class DeclContext;
+  
+  friend class ASTDeclReader;
 };
 
 /// NamespaceAliasDecl - Represents a C++ namespace alias. For example:

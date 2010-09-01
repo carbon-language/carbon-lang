@@ -658,10 +658,10 @@ void ASTDeclWriter::VisitUsingShadowDecl(UsingShadowDecl *D) {
 
 void ASTDeclWriter::VisitUsingDirectiveDecl(UsingDirectiveDecl *D) {
   VisitNamedDecl(D);
+  Writer.AddSourceLocation(D->getUsingLoc(), Record);
   Writer.AddSourceLocation(D->getNamespaceKeyLocation(), Record);
   Writer.AddSourceRange(D->getQualifierRange(), Record);
   Writer.AddNestedNameSpecifier(D->getQualifier(), Record);
-  Writer.AddSourceLocation(D->getIdentLocation(), Record);
   Writer.AddDeclRef(D->getNominatedNamespace(), Record);
   Writer.AddDeclRef(dyn_cast<Decl>(D->getCommonAncestor()), Record);
   Code = serialization::DECL_USING_DIRECTIVE;

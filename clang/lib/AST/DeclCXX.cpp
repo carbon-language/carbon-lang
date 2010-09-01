@@ -989,14 +989,8 @@ NamespaceDecl *UsingDirectiveDecl::getNominatedNamespace() {
   return cast_or_null<NamespaceDecl>(NominatedNamespace);
 }
 
-void UsingDirectiveDecl::setNominatedNamespace(NamedDecl* ND) {
-  assert((isa<NamespaceDecl>(ND) || isa<NamespaceAliasDecl>(ND)) &&
-    "expected a NamespaceDecl or NamespaceAliasDecl");
-  NominatedNamespace = ND;
-}
-
 NamespaceAliasDecl *NamespaceAliasDecl::Create(ASTContext &C, DeclContext *DC,
-                                               SourceLocation L,
+                                               SourceLocation UsingLoc,
                                                SourceLocation AliasLoc,
                                                IdentifierInfo *Alias,
                                                SourceRange QualifierRange,
@@ -1005,7 +999,7 @@ NamespaceAliasDecl *NamespaceAliasDecl::Create(ASTContext &C, DeclContext *DC,
                                                NamedDecl *Namespace) {
   if (NamespaceDecl *NS = dyn_cast_or_null<NamespaceDecl>(Namespace))
     Namespace = NS->getOriginalNamespace();
-  return new (C) NamespaceAliasDecl(DC, L, AliasLoc, Alias, QualifierRange,
+  return new (C) NamespaceAliasDecl(DC, UsingLoc, AliasLoc, Alias, QualifierRange,
                                     Qualifier, IdentLoc, Namespace);
 }
 

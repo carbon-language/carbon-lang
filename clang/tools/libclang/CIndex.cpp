@@ -317,7 +317,8 @@ public:
   bool VisitLinkageSpecDecl(LinkageSpecDecl *D);
   bool VisitNamespaceDecl(NamespaceDecl *D);
   bool VisitNamespaceAliasDecl(NamespaceAliasDecl *D);
- 
+  bool VisitUsingDirectiveDecl(UsingDirectiveDecl *D);
+  
   // Name visitor
   bool VisitDeclarationNameInfo(DeclarationNameInfo Name);
   
@@ -869,6 +870,13 @@ bool CursorVisitor::VisitNamespaceAliasDecl(NamespaceAliasDecl *D) {
   
   return Visit(MakeCursorNamespaceRef(D->getAliasedNamespace(), 
                                       D->getTargetNameLoc(), TU));
+}
+
+bool CursorVisitor::VisitUsingDirectiveDecl(UsingDirectiveDecl *D) {
+  // FIXME: Visit nested-name-specifier
+
+  return Visit(MakeCursorNamespaceRef(D->getNominatedNamespaceAsWritten(),
+                                      D->getIdentLocation(), TU));
 }
 
 bool CursorVisitor::VisitDeclarationNameInfo(DeclarationNameInfo Name) {
@@ -2022,6 +2030,9 @@ static CXString getDeclSpelling(Decl *D) {
     // ObjCCategoryImplDecl returns the category name.
     return createCXString(CIMP->getIdentifier()->getNameStart());
 
+  if (isa<UsingDirectiveDecl>(D))
+    return createCXString("");
+  
   llvm::SmallString<1024> S;
   llvm::raw_svector_ostream os(S);
   ND->printName(os);
@@ -2219,6 +2230,8 @@ CXString clang_getCursorKindSpelling(enum CXCursorKind Kind) {
     return createCXString("ClassTemplatePartialSpecialization");
   case CXCursor_NamespaceAlias:
     return createCXString("NamespaceAlias");
+  case CXCursor_UsingDirective:
+    return createCXString("UsingDirective");
   }
 
   llvm_unreachable("Unhandled CXCursorKind");

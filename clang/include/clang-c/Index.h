@@ -996,8 +996,11 @@ enum CXCursorKind {
   CXCursor_ClassTemplatePartialSpecialization = 32,
   /** \brief A C++ namespace alias declaration. */
   CXCursor_NamespaceAlias                = 33,
+  /** \brief A C++ using directive. */
+  CXCursor_UsingDirective                = 34,
+  
   CXCursor_FirstDecl                     = CXCursor_UnexposedDecl,
-  CXCursor_LastDecl                      = CXCursor_NamespaceAlias,
+  CXCursor_LastDecl                      = CXCursor_UsingDirective,
 
   /* References */
   CXCursor_FirstRef                      = 40, /* Decl references */

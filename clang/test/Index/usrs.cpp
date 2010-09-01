@@ -57,6 +57,8 @@ extern "C" {
 
 namespace foo_alias = foo;
 
+using namespace foo;
+
 // RUN: c-index-test -test-load-source-usrs all %s | FileCheck %s
 // CHECK: usrs.cpp c:@N@foo Extent=[1:11 - 4:2]
 // CHECK: usrs.cpp c:@N@foo@x Extent=[2:3 - 2:8]

@@ -82,9 +82,11 @@ public:
   void VisitTemplateTemplateParmDecl(TemplateTemplateParmDecl *D);
   void VisitLinkageSpecDecl(LinkageSpecDecl *D) {
     IgnoreResults = true;
-    return;
   }
-
+  void VisitUsingDirectiveDecl(UsingDirectiveDecl *D) {
+    IgnoreResults = true;
+  }
+  
   /// Generate the string component containing the location of the
   ///  declaration.
   bool GenLoc(const Decl *D);

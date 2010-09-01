@@ -676,13 +676,12 @@ void ASTDeclReader::VisitUsingShadowDecl(UsingShadowDecl *D) {
 
 void ASTDeclReader::VisitUsingDirectiveDecl(UsingDirectiveDecl *D) {
   VisitNamedDecl(D);
-  D->setNamespaceKeyLocation(Reader.ReadSourceLocation(Record, Idx));
-  D->setQualifierRange(Reader.ReadSourceRange(Record, Idx));
-  D->setQualifier(Reader.ReadNestedNameSpecifier(Record, Idx));
-  D->setIdentLocation(Reader.ReadSourceLocation(Record, Idx));
-  D->setNominatedNamespace(cast<NamedDecl>(Reader.GetDecl(Record[Idx++])));
-  D->setCommonAncestor(cast_or_null<DeclContext>(
-                                                Reader.GetDecl(Record[Idx++])));
+  D->UsingLoc = Reader.ReadSourceLocation(Record, Idx);
+  D->NamespaceLoc = Reader.ReadSourceLocation(Record, Idx);
+  D->QualifierRange = Reader.ReadSourceRange(Record, Idx);
+  D->Qualifier = Reader.ReadNestedNameSpecifier(Record, Idx);
+  D->NominatedNamespace = cast<NamedDecl>(Reader.GetDecl(Record[Idx++]));
+  D->CommonAncestor = cast_or_null<DeclContext>(Reader.GetDecl(Record[Idx++]));
 }
 
 void ASTDeclReader::VisitUnresolvedUsingValueDecl(UnresolvedUsingValueDecl *D) {

@@ -13,7 +13,7 @@ namespace std {
 namespace std98 = std;
 namespace std0x = std98;
 
-// FIXME: using directives
+using namespace std0x;
 
 // RUN: c-index-test -test-load-source all %s | FileCheck %s
 // CHECK: load-namespaces.cpp:3:11: Namespace=std:3:11 (Definition) Extent=[3:11 - 7:2]
@@ -25,3 +25,5 @@ namespace std0x = std98;
 // CHECK: load-namespaces.cpp:13:19: NamespaceRef=std:3:11 Extent=[13:19 - 13:22]
 // CHECK: load-namespaces.cpp:14:11: NamespaceAlias=std0x:14:11 Extent=[14:1 - 14:24]
 // CHECK: load-namespaces.cpp:14:19: NamespaceRef=std98:13:11 Extent=[14:19 - 14:24]
+// CHECK: load-namespaces.cpp:16:17: UsingDirective=:16:17 Extent=[16:1 - 16:22]
+// CHECK: load-namespaces.cpp:16:17: NamespaceRef=std0x:14:11 Extent=[16:17 - 16:22]
