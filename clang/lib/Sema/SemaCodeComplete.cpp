@@ -2686,9 +2686,9 @@ static void AddObjCProperties(ObjCContainerDecl *Container,
     }
     
     // Look through protocols.
-    for (ObjCInterfaceDecl::protocol_iterator I = IFace->protocol_begin(),
-                                              E = IFace->protocol_end(); 
-         I != E; ++I)
+    for (ObjCInterfaceDecl::all_protocol_iterator
+         I = IFace->all_referenced_protocol_begin(),
+         E = IFace->all_referenced_protocol_end(); I != E; ++I)
       AddObjCProperties(*I, AllowCategories, CurContext, Results);
     
     // Look in the superclass.
@@ -2698,8 +2698,8 @@ static void AddObjCProperties(ObjCContainerDecl *Container,
   } else if (const ObjCCategoryDecl *Category
                                     = dyn_cast<ObjCCategoryDecl>(Container)) {
     // Look through protocols.
-    for (ObjCInterfaceDecl::protocol_iterator P = Category->protocol_begin(),
-                                           PEnd = Category->protocol_end(); 
+    for (ObjCCategoryDecl::protocol_iterator P = Category->protocol_begin(),
+                                          PEnd = Category->protocol_end(); 
          P != PEnd; ++P)
       AddObjCProperties(*P, AllowCategories, CurContext, Results);
   }

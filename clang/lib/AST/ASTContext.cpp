@@ -897,8 +897,10 @@ void ASTContext::DeepCollectObjCIvars(const ObjCInterfaceDecl *OI,
 void ASTContext::CollectInheritedProtocols(const Decl *CDecl,
                           llvm::SmallPtrSet<ObjCProtocolDecl*, 8> &Protocols) {
   if (const ObjCInterfaceDecl *OI = dyn_cast<ObjCInterfaceDecl>(CDecl)) {
-    for (ObjCInterfaceDecl::protocol_iterator P = OI->protocol_begin(),
-         PE = OI->protocol_end(); P != PE; ++P) {
+    // We can use protocol_iterator here instead of
+    // all_referenced_protocol_iterator since we are walking all categories.    
+    for (ObjCInterfaceDecl::all_protocol_iterator P = OI->all_referenced_protocol_begin(),
+         PE = OI->all_referenced_protocol_end(); P != PE; ++P) {
       ObjCProtocolDecl *Proto = (*P);
       Protocols.insert(Proto);
       for (ObjCProtocolDecl::protocol_iterator P = Proto->protocol_begin(),
@@ -918,7 +920,7 @@ void ASTContext::CollectInheritedProtocols(const Decl *CDecl,
         SD = SD->getSuperClass();
       }
   } else if (const ObjCCategoryDecl *OC = dyn_cast<ObjCCategoryDecl>(CDecl)) {
-    for (ObjCInterfaceDecl::protocol_iterator P = OC->protocol_begin(),
+    for (ObjCCategoryDecl::protocol_iterator P = OC->protocol_begin(),
          PE = OC->protocol_end(); P != PE; ++P) {
       ObjCProtocolDecl *Proto = (*P);
       Protocols.insert(Proto);

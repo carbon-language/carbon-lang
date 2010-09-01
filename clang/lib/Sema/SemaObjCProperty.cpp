@@ -731,15 +731,17 @@ void Sema::CompareProperties(Decl *CDecl, Decl *ClassOrProtocol) {
   }
 
   if (ObjCInterfaceDecl *MDecl = dyn_cast<ObjCInterfaceDecl>(ClassDecl)) {
-    for (ObjCInterfaceDecl::protocol_iterator P = MDecl->protocol_begin(),
-         E = MDecl->protocol_end(); P != E; ++P)
+    for (ObjCInterfaceDecl::all_protocol_iterator
+          P = MDecl->all_referenced_protocol_begin(),
+          E = MDecl->all_referenced_protocol_end(); P != E; ++P)
       // Match properties of class IDecl with those of protocol (*P).
       MatchOneProtocolPropertiesInClass(IDecl, *P);
 
     // Go thru the list of protocols for this class and recursively match
     // their properties with those declared in the class.
-    for (ObjCInterfaceDecl::protocol_iterator P = IDecl->protocol_begin(),
-         E = IDecl->protocol_end(); P != E; ++P)
+    for (ObjCInterfaceDecl::all_protocol_iterator
+          P = IDecl->all_referenced_protocol_begin(),
+          E = IDecl->all_referenced_protocol_end(); P != E; ++P)
       CompareProperties(IDecl, *P);
   } else {
     ObjCProtocolDecl *MD = cast<ObjCProtocolDecl>(ClassDecl);
@@ -812,8 +814,9 @@ void Sema::CollectImmediateProperties(ObjCContainerDecl *CDecl,
       PropMap[Prop->getIdentifier()] = Prop;
     }
     // scan through class's protocols.
-    for (ObjCInterfaceDecl::protocol_iterator PI = IDecl->protocol_begin(),
-         E = IDecl->protocol_end(); PI != E; ++PI)
+    for (ObjCInterfaceDecl::all_protocol_iterator
+         PI = IDecl->all_referenced_protocol_begin(),
+         E = IDecl->all_referenced_protocol_end(); PI != E; ++PI)
         CollectImmediateProperties((*PI), PropMap, SuperPropMap);
   }
   if (ObjCCategoryDecl *CATDecl = dyn_cast<ObjCCategoryDecl>(CDecl)) {
@@ -824,7 +827,7 @@ void Sema::CollectImmediateProperties(ObjCContainerDecl *CDecl,
         PropMap[Prop->getIdentifier()] = Prop;
       }
     // scan through class's protocols.
-    for (ObjCInterfaceDecl::protocol_iterator PI = CATDecl->protocol_begin(),
+    for (ObjCCategoryDecl::protocol_iterator PI = CATDecl->protocol_begin(),
          E = CATDecl->protocol_end(); PI != E; ++PI)
       CollectImmediateProperties((*PI), PropMap, SuperPropMap);
   }
@@ -859,8 +862,9 @@ static void CollectClassPropertyImplementations(ObjCContainerDecl *CDecl,
       ObjCPropertyDecl *Prop = (*P);
       PropMap[Prop->getIdentifier()] = Prop;
     }
-    for (ObjCInterfaceDecl::protocol_iterator PI = IDecl->protocol_begin(),
-         E = IDecl->protocol_end(); PI != E; ++PI)
+    for (ObjCInterfaceDecl::all_protocol_iterator
+         PI = IDecl->all_referenced_protocol_begin(),
+         E = IDecl->all_referenced_protocol_end(); PI != E; ++PI)
       CollectClassPropertyImplementations((*PI), PropMap);
   }
   else if (ObjCProtocolDecl *PDecl = dyn_cast<ObjCProtocolDecl>(CDecl)) {
@@ -902,8 +906,9 @@ ObjCPropertyDecl *Sema::LookupPropertyDecl(const ObjCContainerDecl *CDecl,
         return Prop;
     }
     // scan through class's protocols.
-    for (ObjCInterfaceDecl::protocol_iterator PI = IDecl->protocol_begin(),
-         E = IDecl->protocol_end(); PI != E; ++PI) {
+    for (ObjCInterfaceDecl::all_protocol_iterator
+         PI = IDecl->all_referenced_protocol_begin(),
+         E = IDecl->all_referenced_protocol_end(); PI != E; ++PI) {
       ObjCPropertyDecl *Prop = LookupPropertyDecl((*PI), II);
       if (Prop)
         return Prop;

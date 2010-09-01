@@ -1990,8 +1990,9 @@ llvm::Constant *CGObjCCommonMac::EmitPropertyList(llvm::Twine Name,
                                                    Prop));
   }
   if (const ObjCInterfaceDecl *OID = dyn_cast<ObjCInterfaceDecl>(OCD)) {
-    for (ObjCInterfaceDecl::protocol_iterator P = OID->protocol_begin(),
-         E = OID->protocol_end(); P != E; ++P)
+    for (ObjCInterfaceDecl::all_protocol_iterator
+         P = OID->all_referenced_protocol_begin(),
+         E = OID->all_referenced_protocol_end(); P != E; ++P)
       PushProtocolProperties(PropertySet, Properties, Container, (*P), 
                              ObjCTypes);
   }
@@ -2179,8 +2180,8 @@ void CGObjCMac::GenerateClass(const ObjCImplementationDecl *ID) {
     const_cast<ObjCInterfaceDecl*>(ID->getClassInterface());
   llvm::Constant *Protocols =
     EmitProtocolList("\01L_OBJC_CLASS_PROTOCOLS_" + ID->getName(),
-                     Interface->protocol_begin(),
-                     Interface->protocol_end());
+                     Interface->all_referenced_protocol_begin(),
+                     Interface->all_referenced_protocol_end());
   unsigned Flags = eClassFlags_Factory;
   if (ID->getNumIvarInitializers())
     Flags |= eClassFlags_HasCXXStructors;
@@ -4804,8 +4805,8 @@ llvm::GlobalVariable * CGObjCNonFragileABIMac::BuildClassRoTInitializer(
   assert(OID && "CGObjCNonFragileABIMac::BuildClassRoTInitializer");
   Values[ 6] = EmitProtocolList("\01l_OBJC_CLASS_PROTOCOLS_$_"
                                 + OID->getName(),
-                                OID->protocol_begin(),
-                                OID->protocol_end());
+                                OID->all_referenced_protocol_begin(),
+                                OID->all_referenced_protocol_end());
 
   if (flags & CLS_META)
     Values[ 7] = llvm::Constant::getNullValue(ObjCTypes.IvarListnfABIPtrTy);

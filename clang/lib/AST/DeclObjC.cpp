@@ -120,8 +120,9 @@ ObjCContainerDecl::FindPropertyDeclaration(IdentifierInfo *PropertyId) const {
             return P;
 
       // Look through protocols.
-      for (ObjCInterfaceDecl::protocol_iterator
-            I = OID->protocol_begin(), E = OID->protocol_end(); I != E; ++I)
+      for (ObjCInterfaceDecl::all_protocol_iterator
+            I = OID->all_referenced_protocol_begin(),
+            E = OID->all_referenced_protocol_end(); I != E; ++I)
         if (ObjCPropertyDecl *P = (*I)->FindPropertyDeclaration(PropertyId))
           return P;
 
@@ -157,8 +158,9 @@ ObjCInterfaceDecl::FindPropertyVisibleInPrimaryClass(
     return PD;
 
   // Look through protocols.
-  for (ObjCInterfaceDecl::protocol_iterator
-        I = protocol_begin(), E = protocol_end(); I != E; ++I)
+  for (ObjCInterfaceDecl::all_protocol_iterator
+        I = all_referenced_protocol_begin(),
+        E = all_referenced_protocol_end(); I != E; ++I)
     if (ObjCPropertyDecl *P = (*I)->FindPropertyDeclaration(PropertyId))
       return P;
 
@@ -167,23 +169,23 @@ ObjCInterfaceDecl::FindPropertyVisibleInPrimaryClass(
 
 void ObjCInterfaceDecl::mergeClassExtensionProtocolList(
                               ObjCProtocolDecl *const* ExtList, unsigned ExtNum,
-                              const SourceLocation *Locs,
                               ASTContext &C)
 {
-  if (ReferencedProtocols.empty()) {
-    ReferencedProtocols.set(ExtList, ExtNum, Locs, C);
+  if (AllReferencedProtocols.empty() && ReferencedProtocols.empty()) {
+    AllReferencedProtocols.set(ExtList, ExtNum, C);
     return;
   }
+  
   // Check for duplicate protocol in class's protocol list.
-  // This is (O)2. But it is extremely rare and number of protocols in
+  // This is O(n*m). But it is extremely rare and number of protocols in
   // class or its extension are very few.
   llvm::SmallVector<ObjCProtocolDecl*, 8> ProtocolRefs;
-  llvm::SmallVector<SourceLocation, 8> ProtocolLocs;
   for (unsigned i = 0; i < ExtNum; i++) {
     bool protocolExists = false;
     ObjCProtocolDecl *ProtoInExtension = ExtList[i];
-    for (protocol_iterator p = protocol_begin(), e = protocol_end();
-         p != e; p++) {
+    for (all_protocol_iterator
+          p = all_referenced_protocol_begin(),
+          e = all_referenced_protocol_end(); p != e; ++p) {
       ObjCProtocolDecl *Proto = (*p);
       if (C.ProtocolCompatibleWithProtocol(ProtoInExtension, Proto)) {
         protocolExists = true;
@@ -192,22 +194,20 @@ void ObjCInterfaceDecl::mergeClassExtensionProtocolList(
     }
     // Do we want to warn on a protocol in extension class which
     // already exist in the class? Probably not.
-    if (!protocolExists) {
+    if (!protocolExists)
       ProtocolRefs.push_back(ProtoInExtension);
-      ProtocolLocs.push_back(Locs[i]);
-    }
   }
+
   if (ProtocolRefs.empty())
     return;
+
   // Merge ProtocolRefs into class's protocol list;
-  protocol_loc_iterator pl = protocol_loc_begin();
-  for (protocol_iterator p = protocol_begin(), e = protocol_end();
-       p != e; ++p, ++pl) {
+  for (all_protocol_iterator p = all_referenced_protocol_begin(), 
+        e = all_referenced_protocol_end(); p != e; ++p) {
     ProtocolRefs.push_back(*p);
-    ProtocolLocs.push_back(*pl);
   }
-  unsigned NumProtoRefs = ProtocolRefs.size();
-  setProtocolList(ProtocolRefs.data(), NumProtoRefs, ProtocolLocs.data(), C);
+
+  AllReferencedProtocols.set(ProtocolRefs.data(), ProtocolRefs.size(), C);
 }
 
 /// getFirstClassExtension - Find first class extension of the given class.

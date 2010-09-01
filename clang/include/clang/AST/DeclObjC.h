@@ -443,8 +443,11 @@ class ObjCInterfaceDecl : public ObjCContainerDecl {
   /// Class's super class.
   ObjCInterfaceDecl *SuperClass;
 
-  /// Protocols referenced in interface header declaration
+  /// Protocols referenced in the @interface  declaration
   ObjCProtocolList ReferencedProtocols;
+  
+  /// Protocols reference in both the @interface and class extensions.
+  ObjCList<ObjCProtocolDecl> AllReferencedProtocols;
 
   /// List of categories defined for this class.
   /// FIXME: Why is this a linked list??
@@ -489,23 +492,44 @@ public:
   }
 
   typedef ObjCProtocolList::iterator protocol_iterator;
-  protocol_iterator protocol_begin() const {return ReferencedProtocols.begin();}
-  protocol_iterator protocol_end() const { return ReferencedProtocols.end(); }
+  
+  protocol_iterator protocol_begin() const {
+    return ReferencedProtocols.begin();
+  }
+  protocol_iterator protocol_end() const {
+    return ReferencedProtocols.end();
+  }
+
   typedef ObjCProtocolList::loc_iterator protocol_loc_iterator;
+
   protocol_loc_iterator protocol_loc_begin() const { 
     return ReferencedProtocols.loc_begin(); 
   }
+
   protocol_loc_iterator protocol_loc_end() const { 
     return ReferencedProtocols.loc_end(); 
   }
-  unsigned protocol_size() const { return ReferencedProtocols.size(); }
+  
+  typedef ObjCList<ObjCProtocolDecl>::iterator all_protocol_iterator;
+  
+  all_protocol_iterator all_referenced_protocol_begin() const {
+    return AllReferencedProtocols.empty() ? protocol_begin()
+      : AllReferencedProtocols.begin();
+  }
+  all_protocol_iterator all_referenced_protocol_end() const {
+    return AllReferencedProtocols.empty() ? protocol_end() 
+      : AllReferencedProtocols.end();
+  }
 
   typedef specific_decl_iterator<ObjCIvarDecl> ivar_iterator;
+
   ivar_iterator ivar_begin() const { return  ivar_iterator(decls_begin()); }
   ivar_iterator ivar_end() const { return ivar_iterator(decls_end()); }
+
   unsigned ivar_size() const {
     return std::distance(ivar_begin(), ivar_end());
   }
+  
   bool ivar_empty() const { return ivar_begin() == ivar_end(); }
   
   ObjCIvarDecl  *all_declared_ivar_begin();
@@ -522,7 +546,6 @@ public:
   /// into the protocol list for this class.
   void mergeClassExtensionProtocolList(ObjCProtocolDecl *const* List, 
                                        unsigned Num,
-                                       const SourceLocation *Locs,
                                        ASTContext &C);
 
   bool isForwardDecl() const { return ForwardDecl; }
@@ -604,6 +627,9 @@ public:
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
   static bool classof(const ObjCInterfaceDecl *D) { return true; }
   static bool classofKind(Kind K) { return K == ObjCInterface; }
+
+  friend class ASTDeclReader;
+  friend class ASTDeclWriter;
 };
 
 /// ObjCIvarDecl - Represents an ObjC instance variable. In general, ObjC

@@ -485,8 +485,7 @@ ActOnStartCategoryInterface(SourceLocation AtInterfaceLoc,
     // Protocols in the class extension belong to the class.
     if (CDecl->IsClassExtension())
      IDecl->mergeClassExtensionProtocolList((ObjCProtocolDecl**)ProtoRefs, 
-                                            NumProtoRefs, ProtoLocs,
-                                            Context); 
+                                            NumProtoRefs, Context); 
   }
 
   CheckObjCDeclScope(CDecl);
@@ -924,8 +923,9 @@ void Sema::MatchAllMethodDeclarations(const llvm::DenseSet<Selector> &InsMap,
   }
   if (ObjCInterfaceDecl *I = dyn_cast<ObjCInterfaceDecl> (CDecl)) {
     // Check for any implementation of a methods declared in protocol.
-    for (ObjCInterfaceDecl::protocol_iterator PI = I->protocol_begin(),
-         E = I->protocol_end(); PI != E; ++PI)
+    for (ObjCInterfaceDecl::all_protocol_iterator
+          PI = I->all_referenced_protocol_begin(),
+          E = I->all_referenced_protocol_end(); PI != E; ++PI)
       MatchAllMethodDeclarations(InsMap, ClsMap, InsMapSeen, ClsMapSeen,
                                  IMPDecl,
                                  (*PI), IncompleteImpl, false);
@@ -971,8 +971,9 @@ void Sema::ImplMethodsVsClassMethods(Scope *S, ObjCImplDecl* IMPDecl,
   // implemented in the implementation class.
 
   if (ObjCInterfaceDecl *I = dyn_cast<ObjCInterfaceDecl> (CDecl)) {
-    for (ObjCInterfaceDecl::protocol_iterator PI = I->protocol_begin(),
-         E = I->protocol_end(); PI != E; ++PI)
+    for (ObjCInterfaceDecl::all_protocol_iterator
+          PI = I->all_referenced_protocol_begin(),
+          E = I->all_referenced_protocol_end(); PI != E; ++PI)
       CheckProtocolMethodDefs(IMPDecl->getLocation(), *PI, IncompleteImpl,
                               InsMap, ClsMap, I);
     // Check class extensions (unnamed categories)

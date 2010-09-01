@@ -2553,6 +2553,8 @@ Decl *ASTNodeImporter::VisitObjCInterfaceDecl(ObjCInterfaceDecl *D) {
     llvm::SmallVector<SourceLocation, 4> ProtocolLocs;
     ObjCInterfaceDecl::protocol_loc_iterator 
       FromProtoLoc = D->protocol_loc_begin();
+    
+    // FIXME: Should we be usng all_referenced_protocol_begin() here?
     for (ObjCInterfaceDecl::protocol_iterator FromProto = D->protocol_begin(),
                                            FromProtoEnd = D->protocol_end();
        FromProto != FromProtoEnd;

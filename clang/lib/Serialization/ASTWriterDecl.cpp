@@ -343,7 +343,9 @@ void ASTDeclWriter::VisitObjCInterfaceDecl(ObjCInterfaceDecl *D) {
   VisitObjCContainerDecl(D);
   Writer.AddTypeRef(QualType(D->getTypeForDecl(), 0), Record);
   Writer.AddDeclRef(D->getSuperClass(), Record);
-  Record.push_back(D->protocol_size());
+
+  // Write out the protocols that are directly referenced by the @interface.
+  Record.push_back(D->ReferencedProtocols.size());
   for (ObjCInterfaceDecl::protocol_iterator P = D->protocol_begin(),
          PEnd = D->protocol_end();
        P != PEnd; ++P)
@@ -352,6 +354,16 @@ void ASTDeclWriter::VisitObjCInterfaceDecl(ObjCInterfaceDecl *D) {
          PLEnd = D->protocol_loc_end();
        PL != PLEnd; ++PL)
     Writer.AddSourceLocation(*PL, Record);
+
+  // Write out the protocols that are transitively referenced.
+  Record.push_back(D->AllReferencedProtocols.size());
+  for (ObjCList<ObjCProtocolDecl>::iterator
+        P = D->AllReferencedProtocols.begin(),
+        PEnd = D->AllReferencedProtocols.end();
+       P != PEnd; ++P)
+    Writer.AddDeclRef(*P, Record);
+  
+  // Write out the ivars.
   Record.push_back(D->ivar_size());
   for (ObjCInterfaceDecl::ivar_iterator I = D->ivar_begin(),
                                      IEnd = D->ivar_end(); I != IEnd; ++I)

@@ -374,6 +374,8 @@ void ASTDeclReader::VisitObjCInterfaceDecl(ObjCInterfaceDecl *ID) {
   ID->setTypeForDecl(Reader.GetType(Record[Idx++]).getTypePtr());
   ID->setSuperClass(cast_or_null<ObjCInterfaceDecl>
                        (Reader.GetDecl(Record[Idx++])));
+  
+  // Read the directly referenced protocols and their SourceLocations.
   unsigned NumProtocols = Record[Idx++];
   llvm::SmallVector<ObjCProtocolDecl *, 16> Protocols;
   Protocols.reserve(NumProtocols);
@@ -385,6 +387,17 @@ void ASTDeclReader::VisitObjCInterfaceDecl(ObjCInterfaceDecl *ID) {
     ProtoLocs.push_back(SourceLocation::getFromRawEncoding(Record[Idx++]));
   ID->setProtocolList(Protocols.data(), NumProtocols, ProtoLocs.data(),
                       *Reader.getContext());
+  
+  // Read the transitive closure of protocols referenced by this class.
+  NumProtocols = Record[Idx++];
+  Protocols.clear();
+  Protocols.reserve(NumProtocols);
+  for (unsigned I = 0; I != NumProtocols; ++I)
+    Protocols.push_back(cast<ObjCProtocolDecl>(Reader.GetDecl(Record[Idx++])));
+  ID->AllReferencedProtocols.set(Protocols.data(), NumProtocols,
+                                 *Reader.getContext());
+  
+  // Read the ivars.
   unsigned NumIvars = Record[Idx++];
   llvm::SmallVector<ObjCIvarDecl *, 16> IVars;
   IVars.reserve(NumIvars);
