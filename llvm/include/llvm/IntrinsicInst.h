@@ -269,6 +269,20 @@ namespace llvm {
     }
   };
 
+  /// EHExceptionInst - This represents the llvm.eh.exception instruction.
+  ///
+  class EHExceptionInst : public IntrinsicInst {
+  public:
+    // Methods for support type inquiry through isa, cast, and dyn_cast:
+    static inline bool classof(const EHExceptionInst *) { return true; }
+    static inline bool classof(const IntrinsicInst *I) {
+      return I->getIntrinsicID() == Intrinsic::eh_exception;
+    }
+    static inline bool classof(const Value *V) {
+      return isa<IntrinsicInst>(V) && classof(cast<IntrinsicInst>(V));
+    }
+  };
+
   /// EHSelectorInst - This represents the llvm.eh.selector instruction.
   ///
   class EHSelectorInst : public IntrinsicInst {
