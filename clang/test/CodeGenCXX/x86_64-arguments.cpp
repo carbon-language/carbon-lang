@@ -100,3 +100,18 @@ namespace test5 {
   // CHECK: alloca %"struct.test5::X"
   // CHECK: alloca %"struct.test5::Y"
 }
+
+
+// rdar://8360877
+namespace test6 {
+  struct outer {
+    int x;
+    struct epsilon_matcher {} e;
+    int f;
+  };
+
+  int test(outer x) {
+    return x.x + x.f;
+  }
+  // CHECK: define i32 @_ZN5test64testENS_5outerE(i64 %x.coerce0, i32 %x.coerce1)
+}

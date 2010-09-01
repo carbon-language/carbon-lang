@@ -1426,6 +1426,50 @@ GetINTEGERTypeAtOffset(const llvm::Type *IRType, unsigned IROffset,
                                 std::min(TySizeInBytes-SourceOffset, 8U)*8);
 }
 
+
+/// GetX86_64ByValArgumentPair - Given a high and low type that can ideally
+/// be used as elements of a two register pair to pass or return, return a
+/// first class aggregate to represent them.  For example, if the low part of
+/// a by-value argument should be passed as i32* and the high part as float,
+/// return {i32*, float}.
+static const llvm::Type *
+GetX86_64ByValArgumentPair(const llvm::Type *Lo, const llvm::Type *Hi,
+                           const llvm::TargetData &TD) {
+  // In order to correctly satisfy the ABI, we need to the high part to start
+  // at offset 8.  If the high and low parts we inferred are both 4-byte types
+  // (e.g. i32 and i32) then the resultant struct type ({i32,i32}) won't have
+  // the second element at offset 8.  Check for this:
+  unsigned LoSize = (unsigned)TD.getTypeAllocSize(Lo);
+  unsigned HiAlign = TD.getABITypeAlignment(Hi);
+  unsigned HiStart = llvm::TargetData::RoundUpAlignment(LoSize, HiAlign);
+  assert(HiStart != 0 && HiStart <= 8 && "Invalid x86-64 argument pair!");
+  
+  // To handle this, we have to increase the size of the low part so that the
+  // second element will start at an 8 byte offset.  We can't increase the size
+  // of the second element because it might make us access off the end of the
+  // struct.
+  if (HiStart != 8) {
+    // There are only two sorts of types the ABI generation code can produce for
+    // the low part of a pair that aren't 8 bytes in size: float or i8/i16/i32.
+    // Promote these to a larger type.
+    if (Lo->isFloatTy())
+      Lo = llvm::Type::getDoubleTy(Lo->getContext());
+    else {
+      assert(Lo->isIntegerTy() && "Invalid/unknown lo type");
+      Lo = llvm::Type::getInt64Ty(Lo->getContext());
+    }
+  }
+  
+  const llvm::StructType *Result = 
+    llvm::StructType::get(Lo->getContext(), Lo, Hi, NULL);
+  
+  
+  // Verify that the second element is at an 8-byte offset.
+  assert(TD.getStructLayout(Result)->getElementOffset(1) == 8 &&
+         "Invalid x86-64 argument pair!");
+  return Result;
+}
+
 ABIArgInfo X86_64ABIInfo::
 classifyReturnType(QualType RetTy) const {
   // AMD64-ABI 3.2.3p4: Rule 1. Classify the return type with the
@@ -1552,8 +1596,8 @@ classifyReturnType(QualType RetTy) const {
   // If a high part was specified, merge it together with the low part.  It is
   // known to pass in the high eightbyte of the result.  We do this by forming a
   // first class struct aggregate with the high and low part: {low, high}
-  if (HighPart) 
-    ResType = llvm::StructType::get(getVMContext(), ResType, HighPart, NULL);
+  if (HighPart)
+    ResType = GetX86_64ByValArgumentPair(ResType, HighPart, getTargetData());
 
   return ABIArgInfo::getDirect(ResType);
 }
@@ -1674,7 +1718,7 @@ ABIArgInfo X86_64ABIInfo::classifyArgumentType(QualType Ty, unsigned &neededInt,
   // known to pass in the high eightbyte of the result.  We do this by forming a
   // first class struct aggregate with the high and low part: {low, high}
   if (HighPart)
-    ResType = llvm::StructType::get(getVMContext(), ResType, HighPart, NULL);
+    ResType = GetX86_64ByValArgumentPair(ResType, HighPart, getTargetData());
   
   return ABIArgInfo::getDirect(ResType);
 }
