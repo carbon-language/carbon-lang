@@ -1766,6 +1766,13 @@ EnumConstantDecl *EnumConstantDecl::Create(ASTContext &C, EnumDecl *CD,
   return new (C) EnumConstantDecl(CD, L, Id, T, E, V);
 }
 
+SourceRange EnumConstantDecl::getSourceRange() const {
+  SourceLocation End = getLocation();
+  if (Init)
+    End = Init->getLocEnd();
+  return SourceRange(getLocation(), End);
+}
+
 TypedefDecl *TypedefDecl::Create(ASTContext &C, DeclContext *DC,
                                  SourceLocation L, IdentifierInfo *Id,
                                  TypeSourceInfo *TInfo) {
