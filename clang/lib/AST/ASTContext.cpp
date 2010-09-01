@@ -1124,6 +1124,15 @@ static QualType getExtFunctionType(ASTContext& Context, QualType T,
       return T;
 
     ResultType = Context.getBlockPointerType(ResultType);
+  } else if (const MemberPointerType *MemberPointer 
+                                            = T->getAs<MemberPointerType>()) {
+    QualType Pointee = MemberPointer->getPointeeType();
+    ResultType = getExtFunctionType(Context, Pointee, Info);
+    if (ResultType == Pointee)
+      return T;
+    
+    ResultType = Context.getMemberPointerType(ResultType, 
+                                              MemberPointer->getClass());
    } else if (const FunctionType *F = T->getAs<FunctionType>()) {
     if (F->getExtInfo() == Info)
       return T;

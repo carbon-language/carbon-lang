@@ -1846,7 +1846,8 @@ bool ProcessFnAttr(Sema &S, QualType &Type, const AttributeList &Attr) {
     // Delay if this is not a function or pointer to block.
     if (!Type->isFunctionPointerType()
         && !Type->isBlockPointerType()
-        && !Type->isFunctionType())
+        && !Type->isFunctionType()
+        && !Type->isMemberFunctionPointerType())
       return true;
     
     if (!GetResultType(Type)->isVoidType()) {
@@ -1868,7 +1869,8 @@ bool ProcessFnAttr(Sema &S, QualType &Type, const AttributeList &Attr) {
     // Delay if this is not a function or pointer to block.
     if (!Type->isFunctionPointerType()
         && !Type->isBlockPointerType()
-        && !Type->isFunctionType())
+        && !Type->isFunctionType()
+        && !Type->isMemberFunctionPointerType())
       return true;
 
     // Otherwise we can process right away.
@@ -1894,6 +1896,12 @@ bool ProcessFnAttr(Sema &S, QualType &Type, const AttributeList &Attr) {
   QualType T = Type;
   if (const PointerType *PT = Type->getAs<PointerType>())
     T = PT->getPointeeType();
+  else if (const BlockPointerType *BPT = Type->getAs<BlockPointerType>())
+    T = BPT->getPointeeType();
+  else if (const MemberPointerType *MPT = Type->getAs<MemberPointerType>())
+    T = MPT->getPointeeType();
+  else if (const ReferenceType *RT = Type->getAs<ReferenceType>())
+    T = RT->getPointeeType();
   const FunctionType *Fn = T->getAs<FunctionType>();
 
   // Delay if the type didn't work out to a function.

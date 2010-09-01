@@ -29,3 +29,16 @@ struct Derived : Base {
   virtual void f2() throw(...);
   virtual void f3();
 };
+
+// __stdcall handling
+struct M {
+    int __stdcall addP();
+    float __stdcall subtractP(); 
+};
+
+template<typename T> void h1(T (__stdcall M::* const )()) { }
+
+void m1() {
+  h1<int>(&M::addP);
+  h1(&M::subtractP);
+} 
