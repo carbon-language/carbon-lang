@@ -1,7 +1,7 @@
 // RUN: %llvmgcc %s -m64 -S -o - | FileCheck %s
 // Exercise various use cases for local asm "register variables".
 // XFAIL: *
-// XTARGET: x86_64
+// XTARGET: x86_64,i686,i386
 
 int foo() {
 // CHECK: %a = alloca i32
