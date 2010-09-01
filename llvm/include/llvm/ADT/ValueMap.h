@@ -149,7 +149,7 @@ public:
   bool erase(const KeyT &Val) {
     return Map.erase(Wrap(Val));
   }
-  bool erase(iterator I) {
+  void erase(iterator I) {
     return Map.erase(I.base());
   }
 

@@ -106,8 +106,8 @@ public:
   const_iterator end() const { return ConstIterator(TheMap.end()); }
 
   iterator find(const ValueT &V) { return Iterator(TheMap.find(V)); }
-  bool erase(Iterator I) { return TheMap.erase(I.I); }
-  bool erase(ConstIterator CI) { return TheMap.erase(CI.I); }
+  void erase(Iterator I) { return TheMap.erase(I.I); }
+  void erase(ConstIterator CI) { return TheMap.erase(CI.I); }
 
   std::pair<iterator, bool> insert(const ValueT &V) {
     return TheMap.insert(std::make_pair(V, 0));

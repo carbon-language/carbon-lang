@@ -185,13 +185,12 @@ public:
     ++NumTombstones;
     return true;
   }
-  bool erase(iterator I) {
+  void erase(iterator I) {
     BucketT *TheBucket = &*I;
     TheBucket->second.~ValueT();
     TheBucket->first = getTombstoneKey();
     --NumEntries;
     ++NumTombstones;
-    return true;
   }
 
   void swap(DenseMap& RHS) {
