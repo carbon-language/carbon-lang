@@ -18,7 +18,7 @@ class HelloWorldTestCase(TestBase):
         self.buildDsym()
         self.hello_world_python(useLaunchAPI = False)
 
-    @unittest2.expectedFailure
+    #@unittest2.expectedFailure
     def test_with_dwarf_and_process_launch_api(self):
         """Create target, breakpoint, launch a process, and then kill it.
 
@@ -52,38 +52,21 @@ class HelloWorldTestCase(TestBase):
         # SBTarget.LaunchProcess() issue (or is there some race condition)?
 
         if useLaunchAPI:
-            # The following approach of launching a process looks untidy and only
-            # works sometimes.
-            process = target.LaunchProcess([''], [''], os.ctermid(), False)
-
-            SR = process.GetThreadAtIndex(0).GetStopReason()
-            count = 0
-            while SR == StopReasonEnum("Invalid") or SR == StopReasonEnum("Signal"):
-                print >> sys.stderr, "StopReason =", StopReasonString(SR)
-
-                time.sleep(1.0)
-                print >> sys.stderr, "Continuing the process:", process
-                process.Continue()
-
-                count = count + 1
-                if count == 10:
-                    print >> sys.stderr, "Reached 10 iterations, giving up..."
-                    break
-
-                SR = process.GetThreadAtIndex(0).GetStopReason()
+            process = target.LaunchProcess([''], [''], os.ctermid(), 0, False)
+            # Apply some dances after LaunchProcess() in order to break at "main".
+            # It only works sometimes.
+            self.breakAfterLaunch(process, "main")
         else:
             # On the other hand, the following two lines of code are more reliable.
-            self.runCmd("run")
-            process = target.GetProcess()
+            self.runCmd("run", setCookie=False)
 
-        self.runCmd("thread backtrace")
-        self.runCmd("breakpoint list")
-        self.runCmd("thread list")
+        #self.runCmd("thread backtrace")
+        #self.runCmd("breakpoint list")
+        #self.runCmd("thread list")
 
-        # The stop reason of the thread should be breakpoint.
+        process = target.GetProcess()
         thread = process.GetThreadAtIndex(0)
-        
-        print >> sys.stderr, "StopReason =", StopReasonString(thread.GetStopReason())
+
         self.assertTrue(thread.GetStopReason() == StopReasonEnum("Breakpoint"),
                         STOPPED_DUE_TO_BREAKPOINT)
 

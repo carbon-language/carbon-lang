@@ -368,7 +368,6 @@ class TestBase(unittest2.TestCase):
         message.  We expect the output from running the command to start with
         'startstr' and matches the substrings contained in 'substrs'.
         """
-
         trace = (True if traceAlways else trace)
 
         # First run the command.
@@ -398,7 +397,6 @@ class TestBase(unittest2.TestCase):
 
     def invoke(self, obj, name, trace=False):
         """Use reflection to call a method dynamically with no argument."""
-
         trace = (True if traceAlways else trace)
         
         method = getattr(obj, name)
@@ -409,6 +407,45 @@ class TestBase(unittest2.TestCase):
         if trace:
             print str(method) + ":",  result
         return result
+
+    def breakAfterLaunch(self, process, func, trace=False):
+        """
+        Perform some dancees after LaunchProcess() to break at func name.
+
+        Return True if we can successfully break at the func name in due time.
+        """
+        trace = (True if traceAlways else trace)
+
+        count = 0
+        while True:
+            # The stop reason of the thread should be breakpoint.
+            thread = process.GetThreadAtIndex(0)
+            SR = thread.GetStopReason()
+            if trace:
+                print >> sys.stderr, "StopReason =", StopReasonString(SR)
+
+            if SR == StopReasonEnum("Breakpoint"):
+                frame = thread.GetFrameAtIndex(0)
+                name = frame.GetFunction().GetName()
+                if (name == func):
+                    # We got what we want; now break out of the loop.
+                    return True
+
+            # The inferior is in a transient state; continue the process.
+            time.sleep(1.0)
+            if trace:
+                print >> sys.stderr, "Continuing the process:", process
+            process.Continue()
+
+            count = count + 1
+            if count == 10:
+                if trace:
+                    print >> sys.stderr, "Reached 10 iterations, giving up..."
+                # Enough iterations already, break out of the loop.
+                return False
+
+            # End of while loop.
+
 
     def buildDsym(self):
         """Platform specific way to build binaries with dsym info."""
