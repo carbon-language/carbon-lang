@@ -57,7 +57,7 @@ class HelloWorldTestCase(TestBase):
             # It only works sometimes.
             self.breakAfterLaunch(process, "main")
         else:
-            # On the other hand, the following two lines of code are more reliable.
+            # On the other hand, the following line of code are more reliable.
             self.runCmd("run", setCookie=False)
 
         #self.runCmd("thread backtrace")
