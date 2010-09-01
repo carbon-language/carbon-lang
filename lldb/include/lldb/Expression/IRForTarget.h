@@ -131,8 +131,8 @@ private:
     /// @param[in] selector_load
     ///     The load of the statically-allocated selector.
     ///
-    /// @param[in] BB
-    ///     The basic block currently being processed.
+    /// @param[in] M
+    ///     The module containing the load.
     ///
     /// @return
     ///     True on success; false otherwise
