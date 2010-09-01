@@ -5127,10 +5127,10 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const {
 
     unsigned TargetMask = X86::getShuffleSHUFImmediate(SVOp);
 
-    if (HasSSE2 && (VT == MVT::v4f32 || VT == MVT::v4i32))
+    if (HasSSE2 && NumElems == 4)
       return getTargetShuffleNode(X86ISD::PSHUFD, dl, VT, V1, TargetMask, DAG);
 
-    if (HasSSE2 && (VT == MVT::v2i64 || VT == MVT::v2f64))
+    if (HasSSE2 && NumElems == 2)
       return getTargetShuffleNode(X86ISD::SHUFPD, dl, VT, V1, V1,
                                   TargetMask, DAG);
 
@@ -5159,10 +5159,10 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const {
     if (ISD::isBuildVectorAllZeros(V1.getNode()))
       return getVZextMovL(VT, VT, V2, DAG, Subtarget, dl);
     if (!isMMX && !X86::isMOVLPMask(SVOp)) {
-      if (HasSSE2 && (VT == MVT::v2i64 || VT == MVT::v2f64))
+      if (HasSSE2 && NumElems == 2)
         return getTargetShuffleNode(X86ISD::MOVSD, dl, VT, V1, V2, DAG);
 
-      if (VT == MVT::v4i32 || VT == MVT::v4f32)
+      if (NumElems == 4)
         return getTargetShuffleNode(X86ISD::MOVSS, dl, VT, V1, V2, DAG);
     }
   }
