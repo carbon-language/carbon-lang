@@ -101,17 +101,10 @@ const MemRegion *StoreManager::CastRegion(const MemRegion *R, QualType CastToTy)
       assert(0 && "Invalid region cast");
       break;
     }
-    
+
     case MemRegion::FunctionTextRegionKind:
     case MemRegion::BlockTextRegionKind:
-    case MemRegion::BlockDataRegionKind: {
-      // CodeTextRegion should be cast to only a function or block pointer type,
-      // although they can in practice be casted to anything, e.g, void*, char*,
-      // etc.  
-      // Just return the region.
-      return R;
-    }
-
+    case MemRegion::BlockDataRegionKind:
     case MemRegion::StringRegionKind:
       // FIXME: Need to handle arbitrary downcasts.
     case MemRegion::SymbolicRegionKind:

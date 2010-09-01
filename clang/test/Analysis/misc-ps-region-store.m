@@ -1066,3 +1066,27 @@ int r8258814()
   // Do not warn that the value of 'foo' is uninitialized.
   return foo; // no-warning
 }
+
+// PR 8052 - Don't crash when reasoning about loads from a function address.\n
+typedef unsigned int __uint32_t;
+typedef unsigned long vm_offset_t;
+typedef __uint32_t pd_entry_t;
+typedef unsigned char u_char;
+typedef unsigned int u_int;
+typedef unsigned long u_long;
+extern int      bootMP_size;
+void            bootMP(void);
+static void 
+pr8052(u_int boot_addr)
+{
+    int             x;
+    int             size = *(int *) ((u_long) & bootMP_size);
+    u_char         *src = (u_char *) ((u_long) bootMP);
+    u_char         *dst = (u_char *) boot_addr + ((vm_offset_t) ((((((((1 <<
+12) / (sizeof(pd_entry_t))) - 1) - 1) - (260 - 2))) << 22) | ((0) << 12)));
+    for (x = 0;
+         x < size;
+         ++x)
+        *dst++ = *src++;
+}
+

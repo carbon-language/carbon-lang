@@ -1087,6 +1087,10 @@ SVal RegionStoreManager::RetrieveElement(Store store,
       return ValMgr.makeIntVal(c, T);
     }
   }
+  
+  // Check for loads from a code text region.  For such loads, just give up.
+  if (const CodeTextRegion *cR = dyn_cast<CodeTextRegion>(superR))
+    return UnknownVal();
 
   // Handle the case where we are indexing into a larger scalar object.
   // For example, this handles:
