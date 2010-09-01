@@ -2576,6 +2576,14 @@ X86TargetLowering::createFastISel(FunctionLoweringInfo &funcInfo) const {
 //                           Other Lowering Hooks
 //===----------------------------------------------------------------------===//
 
+static bool MayFoldLoad(SDValue Op) {
+  return Op.hasOneUse() && ISD::isNormalLoad(Op.getNode());
+}
+
+static bool MayFoldIntoStore(SDValue Op) {
+  return Op.hasOneUse() && ISD::isNormalStore(*Op.getNode()->use_begin());
+}
+
 static bool isTargetShuffle(unsigned Opcode) {
   switch(Opcode) {
   default: return false;
@@ -10561,14 +10569,6 @@ bool X86TargetLowering::isTypeDesirableForOp(unsigned Opc, EVT VT) const {
   case ISD::XOR:
     return false;
   }
-}
-
-static bool MayFoldLoad(SDValue Op) {
-  return Op.hasOneUse() && ISD::isNormalLoad(Op.getNode());
-}
-
-static bool MayFoldIntoStore(SDValue Op) {
-  return Op.hasOneUse() && ISD::isNormalStore(*Op.getNode()->use_begin());
 }
 
 /// IsDesirableToPromoteOp - This method query the target whether it is
