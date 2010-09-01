@@ -24,6 +24,14 @@ class vector<Z2> {
   void clear();
 };
 
+template<typename T, typename U>
+struct Y {
+  using typename T::type;
+  using U::operator Z2;
+};
+
+struct Z3 { };
+
 // RUN: c-index-test -test-load-source all %s | FileCheck -check-prefix=CHECK-LOAD %s
 // CHECK-LOAD: index-templates.cpp:4:6: FunctionTemplate=f:4:6 Extent=[3:1 - 4:22]
 // CHECK-LOAD: index-templates.cpp:3:19: TemplateTypeParameter=T:3:19 (Definition) Extent=[3:19 - 3:20]
@@ -50,6 +58,12 @@ class vector<Z2> {
 // CHECK-LOAD: index-templates.cpp:23:7: ClassDecl=vector:23:7 (Definition) Extent=[22:1 - 25:2]
 // CHECK-LOAD: index-templates.cpp:23:14: TypeRef=struct Z2:20:8 Extent=[23:14 - 23:16]
 // CHECK-LOAD: index-templates.cpp:24:8: CXXMethod=clear:24:8 Extent=[24:8 - 24:15]
+// CHECK-LOAD: index-templates.cpp:28:8: ClassTemplate=Y:28:8 (Definition) Extent=[27:1 - 31:2]
+// CHECK-LOAD: index-templates.cpp:27:19: TemplateTypeParameter=T:27:19 (Definition) Extent=[27:19 - 27:20]
+// CHECK-LOAD: index-templates.cpp:27:31: TemplateTypeParameter=U:27:31 (Definition) Extent=[27:31 - 27:32]
+// CHECK-LOAD: index-templates.cpp:29:21: UsingDeclaration=type:29:21 Extent=[29:3 - 29:25]
+// CHECK-LOAD: index-templates.cpp:30:12: UsingDeclaration=operator Z2:30:12 Extent=[30:3 - 30:23]
+// CHECK-LOAD: index-templates.cpp:30:21: TypeRef=struct Z2:20:8 Extent=[30:21 - 30:23]
 
 // RUN: c-index-test -test-load-source-usrs all %s | FileCheck -check-prefix=CHECK-USRS %s
 // CHECK-USRS: index-templates.cpp c:@FT@>3#T#Nt0.0#t>2#T#Nt1.0f#>t0.22t0.0# Extent=[3:1 - 4:22]
@@ -70,3 +84,8 @@ class vector<Z2> {
 // CHECK-USRS: index-templates.cpp c:@S@Z2 Extent=[20:1 - 20:14]
 // CHECK-USRS: index-templates.cpp c:@C@vector>#$@S@Z2#$@C@allocator>#$@S@Z2 Extent=[22:1 - 25:2]
 // CHECK-USRS: index-templates.cpp c:@C@vector>#$@S@Z2#$@C@allocator>#$@S@Z2@F@clear# Extent=[24:8 - 24:15]
+// CHECK-USRS: index-templates.cpp c:@ST>2#T#T@Y Extent=[27:1 - 31:2]
+// CHECK-USRS: index-templates.cpp c:index-templates.cpp@452 Extent=[27:19 - 27:20]
+// CHECK-USRS: index-templates.cpp c:index-templates.cpp@464 Extent=[27:31 - 27:32]
+// CHECK-USRS-NOT: type
+// CHECK-USRS: index-templates.cpp c:@S@Z3 Extent=[33:1 - 33:14]

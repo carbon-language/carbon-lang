@@ -61,6 +61,10 @@ using namespace foo;
 
 namespace foo_alias2 = foo;
 
+using foo::ClsB;
+
+namespace foo_alias3 = foo;
+
 // RUN: c-index-test -test-load-source-usrs all %s | FileCheck %s
 // CHECK: usrs.cpp c:@N@foo Extent=[1:11 - 4:2]
 // CHECK: usrs.cpp c:@N@foo@x Extent=[2:3 - 2:8]
@@ -116,3 +120,5 @@ namespace foo_alias2 = foo;
 // CHECK: usrs.cpp c:@NA@foo_alias
 // CHECK-NOT: foo
 // CHECK: usrs.cpp c:@NA@foo_alias2
+// CHECK-NOT: ClsB
+// CHECK: usrs.cpp c:@NA@foo_alias3

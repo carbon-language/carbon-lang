@@ -998,9 +998,11 @@ enum CXCursorKind {
   CXCursor_NamespaceAlias                = 33,
   /** \brief A C++ using directive. */
   CXCursor_UsingDirective                = 34,
+  /** \brief A using declaration. */
+  CXCursor_UsingDeclaration              = 35,
   
   CXCursor_FirstDecl                     = CXCursor_UnexposedDecl,
-  CXCursor_LastDecl                      = CXCursor_UsingDirective,
+  CXCursor_LastDecl                      = CXCursor_UsingDeclaration,
 
   /* References */
   CXCursor_FirstRef                      = 40, /* Decl references */

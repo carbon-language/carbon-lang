@@ -2060,6 +2060,10 @@ public:
                            const DeclarationNameInfo &NameInfo,
                            bool IsTypeNameArg);
 
+  SourceRange getSourceRange() const {
+    return SourceRange(UsingLocation, getNameInfo().getEndLoc());
+  }
+
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
   static bool classof(const UsingDecl *D) { return true; }
   static bool classofKind(Kind K) { return K == Using; }
@@ -2134,6 +2138,10 @@ public:
            SourceRange TargetNNR, NestedNameSpecifier *TargetNNS,
            const DeclarationNameInfo &NameInfo);
 
+  SourceRange getSourceRange() const {
+    return SourceRange(UsingLocation, getNameInfo().getEndLoc());
+  }
+
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
   static bool classof(const UnresolvedUsingValueDecl *D) { return true; }
   static bool classofKind(Kind K) { return K == UnresolvedUsingValue; }
@@ -2170,36 +2178,23 @@ class UnresolvedUsingTypenameDecl : public TypeDecl {
     TypenameLocation(TypenameLoc), TargetNestedNameSpecifier(TargetNNS)
   { }
 
+  friend class ASTDeclReader;
+  
 public:
   /// \brief Returns the source range that covers the nested-name-specifier
   /// preceding the namespace name.
   SourceRange getTargetNestedNameRange() const { return TargetNestedNameRange; }
-
-  /// \brief Set the source range coverting the nested-name-specifier preceding
-  /// the namespace name.
-  void setTargetNestedNameRange(SourceRange R) { TargetNestedNameRange = R; }
 
   /// \brief Get target nested name declaration.
   NestedNameSpecifier* getTargetNestedNameSpecifier() {
     return TargetNestedNameSpecifier;
   }
 
-  /// \brief Set the nested name declaration.
-  void setTargetNestedNameSpecifier(NestedNameSpecifier* NNS) {
-    TargetNestedNameSpecifier = NNS;
-  }
-
   /// \brief Returns the source location of the 'using' keyword.
   SourceLocation getUsingLoc() const { return UsingLocation; }
 
-  /// \brief Set the source location of the 'using' keyword.
-  void setUsingLoc(SourceLocation L) { UsingLocation = L; }
-
   /// \brief Returns the source location of the 'typename' keyword.
   SourceLocation getTypenameLoc() const { return TypenameLocation; }
-
-  /// \brief Set the source location of the 'typename' keyword.
-  void setTypenameLoc(SourceLocation L) { TypenameLocation = L; }
 
   static UnresolvedUsingTypenameDecl *
     Create(ASTContext &C, DeclContext *DC, SourceLocation UsingLoc,
@@ -2207,6 +2202,10 @@ public:
            SourceRange TargetNNR, NestedNameSpecifier *TargetNNS,
            SourceLocation TargetNameLoc, DeclarationName TargetName);
 
+  SourceRange getSourceRange() const {
+    return SourceRange(UsingLocation, getLocation());
+  }
+  
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
   static bool classof(const UnresolvedUsingTypenameDecl *D) { return true; }
   static bool classofKind(Kind K) { return K == UnresolvedUsingTypename; }

@@ -71,6 +71,11 @@ static CXCursorKind GetCursorKind(Decl *D) {
       return CXCursor_ClassTemplatePartialSpecialization;
     case Decl::UsingDirective:     return CXCursor_UsingDirective;
       
+    case Decl::Using:
+    case Decl::UnresolvedUsingValue:
+    case Decl::UnresolvedUsingTypename: 
+      return CXCursor_UsingDeclaration;
+      
     default:
       if (TagDecl *TD = dyn_cast<TagDecl>(D)) {
         switch (TD->getTagKind()) {

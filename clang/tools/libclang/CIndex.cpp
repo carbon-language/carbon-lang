@@ -319,6 +319,9 @@ public:
   bool VisitNamespaceDecl(NamespaceDecl *D);
   bool VisitNamespaceAliasDecl(NamespaceAliasDecl *D);
   bool VisitUsingDirectiveDecl(UsingDirectiveDecl *D);
+  bool VisitUsingDecl(UsingDecl *D);
+  bool VisitUnresolvedUsingValueDecl(UnresolvedUsingValueDecl *D);
+  bool VisitUnresolvedUsingTypenameDecl(UnresolvedUsingTypenameDecl *D);
   
   // Name visitor
   bool VisitDeclarationNameInfo(DeclarationNameInfo Name);
@@ -902,17 +905,39 @@ bool CursorVisitor::VisitNamespaceDecl(NamespaceDecl *D) {
 }
 
 bool CursorVisitor::VisitNamespaceAliasDecl(NamespaceAliasDecl *D) {
-  // FIXME: Visit nested-name-specifier
+  // FIXME: Visit nested-name-specifier.
   
   return Visit(MakeCursorNamespaceRef(D->getAliasedNamespace(), 
                                       D->getTargetNameLoc(), TU));
 }
 
+bool CursorVisitor::VisitUsingDecl(UsingDecl *D) {
+  // FIXME: Visit nested-name-specifier.
+  
+  // FIXME: Provide a multi-reference of some kind for all of the declarations
+  // that the using declaration refers to. We don't have this kind of cursor
+  // yet.
+  
+  return VisitDeclarationNameInfo(D->getNameInfo());
+}
+
 bool CursorVisitor::VisitUsingDirectiveDecl(UsingDirectiveDecl *D) {
-  // FIXME: Visit nested-name-specifier
+  // FIXME: Visit nested-name-specifier.
 
   return Visit(MakeCursorNamespaceRef(D->getNominatedNamespaceAsWritten(),
                                       D->getIdentLocation(), TU));
+}
+
+bool CursorVisitor::VisitUnresolvedUsingValueDecl(UnresolvedUsingValueDecl *D) {
+  // FIXME: Visit nested-name-specifier.
+  
+  return VisitDeclarationNameInfo(D->getNameInfo());
+}
+
+bool CursorVisitor::VisitUnresolvedUsingTypenameDecl(
+                                               UnresolvedUsingTypenameDecl *D) {
+  // FIXME: Visit nested-name-specifier.
+  return false;
 }
 
 bool CursorVisitor::VisitDeclarationNameInfo(DeclarationNameInfo Name) {
@@ -2268,6 +2293,8 @@ CXString clang_getCursorKindSpelling(enum CXCursorKind Kind) {
     return createCXString("NamespaceAlias");
   case CXCursor_UsingDirective:
     return createCXString("UsingDirective");
+  case CXCursor_UsingDeclaration:
+    return createCXString("UsingDeclaration");
   }
 
   llvm_unreachable("Unhandled CXCursorKind");

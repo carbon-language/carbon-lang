@@ -86,6 +86,15 @@ public:
   void VisitUsingDirectiveDecl(UsingDirectiveDecl *D) {
     IgnoreResults = true;
   }
+  void VisitUsingDecl(UsingDecl *D) { 
+    IgnoreResults = true;
+  }
+  void VisitUnresolvedUsingValueDecl(UnresolvedUsingValueDecl *D) { 
+    IgnoreResults = true;
+  }
+  void VisitUnresolvedUsingTypenameDecl(UnresolvedUsingTypenameDecl *D) { 
+    IgnoreResults = true;
+  }
   
   /// Generate the string component containing the location of the
   ///  declaration.

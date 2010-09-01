@@ -695,10 +695,10 @@ void ASTDeclReader::VisitUnresolvedUsingValueDecl(UnresolvedUsingValueDecl *D) {
 void ASTDeclReader::VisitUnresolvedUsingTypenameDecl(
                                                UnresolvedUsingTypenameDecl *D) {
   VisitTypeDecl(D);
-  D->setTargetNestedNameRange(Reader.ReadSourceRange(Record, Idx));
-  D->setUsingLoc(Reader.ReadSourceLocation(Record, Idx));
-  D->setTypenameLoc(Reader.ReadSourceLocation(Record, Idx));
-  D->setTargetNestedNameSpecifier(Reader.ReadNestedNameSpecifier(Record, Idx));
+  D->TargetNestedNameRange = Reader.ReadSourceRange(Record, Idx);
+  D->UsingLocation = Reader.ReadSourceLocation(Record, Idx);
+  D->TypenameLocation = Reader.ReadSourceLocation(Record, Idx);
+  D->TargetNestedNameSpecifier = Reader.ReadNestedNameSpecifier(Record, Idx);
 }
 
 void ASTDeclReader::VisitCXXRecordDecl(CXXRecordDecl *D) {
