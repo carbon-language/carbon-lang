@@ -1116,3 +1116,12 @@ void pr8015_D_FIXME() {
   }
 }
 
+void pr8015_E() {
+  // Similar to pr8015_C, but number is allowed to be a valid range.
+  int number = pr8015_A();
+  const char *numbers[] = { "zero", "one", "two" };
+  if (number < 3) {
+    pr8015_B(numbers[number]); // no-warning
+  }
+}
+
