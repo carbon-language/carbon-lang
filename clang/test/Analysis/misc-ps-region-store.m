@@ -1125,3 +1125,18 @@ void pr8015_E() {
   }
 }
 
+void pr8015_F_FIXME() {
+  // Similar to pr8015_E, but like pr8015_D we check if the pointer
+  // is the same as one of the string literals.  The null dereference
+  // here is not feasible in practice, so this is a false positive.
+  int number = pr8015_A();
+  const char *numbers[] = { "zero", "one", "two" };
+  if (number < 3) {
+    const char *p = numbers[number];
+    if (p == numbers[0] || p == numbers[1] || p == numbers[2])
+      return;
+    int *q = 0;
+    *q = 0xDEADBEEF; // expected-warning{{Dereference of null pointer}}
+  }
+}
+
