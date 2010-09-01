@@ -32,6 +32,13 @@ struct Y {
 
 struct Z3 { };
 
+const unsigned OneDimension = 1;
+template<typename T, unsigned Dimensions = OneDimension>
+struct array;
+
+template<template<typename, unsigned> class DataStructure = array>
+struct storage;
+
 // RUN: c-index-test -test-load-source all %s | FileCheck -check-prefix=CHECK-LOAD %s
 // CHECK-LOAD: index-templates.cpp:4:6: FunctionTemplate=f:4:6 Extent=[3:1 - 4:22]
 // CHECK-LOAD: index-templates.cpp:3:19: TemplateTypeParameter=T:3:19 (Definition) Extent=[3:19 - 3:20]
@@ -47,6 +54,7 @@ struct Z3 { };
 // CHECK-LOAD: index-templates.cpp:9:7: ClassTemplate=vector:9:7 (Definition) Extent=[8:1 - 11:2]
 // CHECK-LOAD: index-templates.cpp:8:19: TemplateTypeParameter=T:8:19 (Definition) Extent=[8:19 - 8:20]
 // CHECK-LOAD: index-templates.cpp:8:31: TemplateTypeParameter=Alloc:8:31 (Definition) Extent=[8:31 - 8:36]
+// CHECK-LOAD: index-templates.cpp:8:39: TemplateRef=allocator:6:28 Extent=[8:39 - 8:48]
 // CHECK-LOAD: index-templates.cpp:10:8: CXXMethod=clear:10:8 Extent=[10:8 - 10:15]
 // CHECK-LOAD: index-templates.cpp:14:7: ClassTemplatePartialSpecialization=vector:14:7 (Definition) Extent=[13:1 - 14:21]
 // CHECK-LOAD: index-templates.cpp:13:19: TemplateTypeParameter=T:13:19 (Definition) Extent=[13:19 - 13:20]
@@ -64,6 +72,18 @@ struct Z3 { };
 // CHECK-LOAD: index-templates.cpp:29:21: UsingDeclaration=type:29:21 Extent=[29:3 - 29:25]
 // CHECK-LOAD: index-templates.cpp:30:12: UsingDeclaration=operator Z2:30:12 Extent=[30:3 - 30:23]
 // CHECK-LOAD: index-templates.cpp:30:21: TypeRef=struct Z2:20:8 Extent=[30:21 - 30:23]
+// CHECK-LOAD: index-templates.cpp:35:16: VarDecl=OneDimension:35:16 (Definition) Extent=[35:7 - 35:32]
+// CHECK-LOAD: index-templates.cpp:35:31: UnexposedExpr= Extent=[35:31 - 35:32]
+// CHECK-LOAD: index-templates.cpp:35:31: UnexposedExpr= Extent=[35:31 - 35:32]
+// CHECK-LOAD: index-templates.cpp:37:8: ClassTemplate=array:37:8 Extent=[36:1 - 37:13]
+// CHECK-LOAD: index-templates.cpp:36:19: TemplateTypeParameter=T:36:19 (Definition) Extent=[36:19 - 36:20]
+// CHECK-LOAD: index-templates.cpp:36:31: NonTypeTemplateParameter=Dimensions:36:31 (Definition) Extent=[36:22 - 36:41]
+// CHECK-LOAD: index-templates.cpp:36:44: DeclRefExpr=OneDimension:35:16 Extent=[36:44 - 36:56]
+// CHECK-LOAD: index-templates.cpp:40:8: ClassTemplate=storage:40:8 Extent=[39:1 - 40:15]
+// CHECK-LOAD: index-templates.cpp:39:45: TemplateTemplateParameter=DataStructure:39:45 (Definition) Extent=[39:10 - 39:66]
+// CHECK-LOAD: index-templates.cpp:39:19: TemplateTypeParameter=:39:19 (Definition) Extent=[39:19 - 39:27]
+// CHECK-LOAD: index-templates.cpp:39:37: NonTypeTemplateParameter=:39:37 (Definition) Extent=[39:29 - 39:38]
+// CHECK-LOAD: index-templates.cpp:39:61: TemplateRef=array:37:8 Extent=[39:61 - 39:66]
 
 // RUN: c-index-test -test-load-source-usrs all %s | FileCheck -check-prefix=CHECK-USRS %s
 // CHECK-USRS: index-templates.cpp c:@FT@>3#T#Nt0.0#t>2#T#Nt1.0f#>t0.22t0.0# Extent=[3:1 - 4:22]

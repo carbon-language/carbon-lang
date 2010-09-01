@@ -299,8 +299,10 @@ public:
   bool VisitFunctionDecl(FunctionDecl *ND);
   bool VisitFieldDecl(FieldDecl *D);
   bool VisitVarDecl(VarDecl *);
+  bool VisitNonTypeTemplateParmDecl(NonTypeTemplateParmDecl *D);
   bool VisitFunctionTemplateDecl(FunctionTemplateDecl *D);
   bool VisitClassTemplateDecl(ClassTemplateDecl *D);
+  bool VisitTemplateTemplateParmDecl(TemplateTemplateParmDecl *D);
   bool VisitObjCMethodDecl(ObjCMethodDecl *ND);
   bool VisitObjCContainerDecl(ObjCContainerDecl *D);
   bool VisitObjCCategoryDecl(ObjCCategoryDecl *ND);
@@ -661,7 +663,12 @@ bool CursorVisitor::VisitClassTemplatePartialSpecializationDecl(
 }
 
 bool CursorVisitor::VisitTemplateTypeParmDecl(TemplateTypeParmDecl *D) {
-  // FIXME: Visit default argument
+  // Visit the default argument.
+  if (D->hasDefaultArgument() && !D->defaultArgumentWasInherited())
+    if (TypeSourceInfo *DefArg = D->getDefaultArgumentInfo())
+      if (Visit(DefArg->getTypeLoc()))
+        return true;
+  
   return false;
 }
 
@@ -735,6 +742,17 @@ bool CursorVisitor::VisitVarDecl(VarDecl *D) {
   return false;
 }
 
+bool CursorVisitor::VisitNonTypeTemplateParmDecl(NonTypeTemplateParmDecl *D) {
+  if (VisitDeclaratorDecl(D))
+    return true;
+  
+  if (D->hasDefaultArgument() && !D->defaultArgumentWasInherited())
+    if (Expr *DefArg = D->getDefaultArgument())
+      return Visit(MakeCXCursor(DefArg, StmtParent, TU));
+  
+  return false;  
+}
+
 bool CursorVisitor::VisitFunctionTemplateDecl(FunctionTemplateDecl *D) {
   // FIXME: Visit the "outer" template parameter lists on the FunctionDecl
   // before visiting these template parameters.
@@ -751,6 +769,17 @@ bool CursorVisitor::VisitClassTemplateDecl(ClassTemplateDecl *D) {
     return true;
   
   return VisitCXXRecordDecl(D->getTemplatedDecl());
+}
+
+bool CursorVisitor::VisitTemplateTemplateParmDecl(TemplateTemplateParmDecl *D) {
+  if (VisitTemplateParameters(D->getTemplateParameters()))
+    return true;
+  
+  if (D->hasDefaultArgument() && !D->defaultArgumentWasInherited() &&
+      VisitTemplateArgumentLoc(D->getDefaultArgument()))
+    return true;
+  
+  return false;
 }
 
 bool CursorVisitor::VisitObjCMethodDecl(ObjCMethodDecl *ND) {
