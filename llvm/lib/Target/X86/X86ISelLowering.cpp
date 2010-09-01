@@ -2593,7 +2593,10 @@ static bool isTargetShuffle(unsigned Opcode) {
   case X86ISD::SHUFPD:
   case X86ISD::SHUFPS:
   case X86ISD::MOVLHPS:
+  case X86ISD::MOVLHPD:
   case X86ISD::MOVHLPS:
+  case X86ISD::MOVLPS:
+  case X86ISD::MOVLPD:
   case X86ISD::MOVSHDUP:
   case X86ISD::MOVSLDUP:
   case X86ISD::MOVSS:
@@ -2648,6 +2651,8 @@ static SDValue getTargetShuffleNode(unsigned Opc, DebugLoc dl, EVT VT,
   case X86ISD::MOVLHPS:
   case X86ISD::MOVLHPD:
   case X86ISD::MOVHLPS:
+  case X86ISD::MOVLPS:
+  case X86ISD::MOVLPD:
   case X86ISD::MOVSS:
   case X86ISD::MOVSD:
   case X86ISD::PUNPCKLDQ:
@@ -3664,7 +3669,6 @@ SDValue getShuffleScalarElt(SDNode *N, int Index, SelectionDAG &DAG) {
   SDValue V = SDValue(N, 0);
   EVT VT = V.getValueType();
   unsigned Opcode = V.getOpcode();
-  int NumElems = VT.getVectorNumElements();
 
   // Recurse into ISD::VECTOR_SHUFFLE node to find scalars.
   if (const ShuffleVectorSDNode *SV = dyn_cast<ShuffleVectorSDNode>(N)) {
@@ -3673,6 +3677,7 @@ SDValue getShuffleScalarElt(SDNode *N, int Index, SelectionDAG &DAG) {
     if (Index < 0)
       return DAG.getUNDEF(VT.getVectorElementType());
 
+    int NumElems = VT.getVectorNumElements();
     SDValue NewV = (Index < NumElems) ? SV->getOperand(0) : SV->getOperand(1);
     return getShuffleScalarElt(NewV.getNode(), Index % NumElems, DAG);
   }
@@ -3698,8 +3703,9 @@ SDValue getShuffleScalarElt(SDNode *N, int Index, SelectionDAG &DAG) {
   if (Opcode == ISD::BIT_CONVERT) {
     V = V.getOperand(0);
     EVT SrcVT = V.getValueType();
+    unsigned NumElems = VT.getVectorNumElements();
 
-    if (!SrcVT.isVector() || SrcVT.getVectorNumElements() != (unsigned)NumElems)
+    if (!SrcVT.isVector() || SrcVT.getVectorNumElements() != NumElems)
       return SDValue();
   }
 
@@ -5061,6 +5067,67 @@ SDValue getMOVHighToLow(SDValue &Op, DebugLoc &dl, SelectionDAG &DAG) {
   return getTargetShuffleNode(X86ISD::MOVHLPS, dl, VT, V1, V2, DAG);
 }
 
+static
+SDValue getMOVLP(SDValue &Op, DebugLoc &dl, SelectionDAG &DAG, bool HasSSE2) {
+  SDValue V1 = Op.getOperand(0);
+  SDValue V2 = Op.getOperand(1);
+  EVT VT = Op.getValueType();
+  unsigned NumElems = VT.getVectorNumElements();
+
+  // Use MOVLPS and MOVLPD in case V1 or V2 are loads. During isel, the second
+  // operand of these instructions is only memory, so check if there's a
+  // potencial load folding here, otherwise use SHUFPS or MOVSD to match the
+  // same masks.
+  bool CanFoldLoad = false;
+  SDValue TmpV1 = V1;
+  SDValue TmpV2 = V2;
+
+  // Trivial case, when V2 is a load.
+  if (TmpV2.getOpcode() == ISD::BIT_CONVERT)
+    TmpV2 = TmpV2.getOperand(0);
+  if (TmpV2.getOpcode() == ISD::SCALAR_TO_VECTOR)
+    TmpV2 = TmpV2.getOperand(0);
+  if (MayFoldLoad(TmpV2))
+    CanFoldLoad = true;
+
+  // When V1 is a load, it can be folded later into a store in isel, example:
+  //  (store (v4f32 (X86Movlps (load addr:$src1), VR128:$src2)), addr:$src1)
+  //    turns into:
+  //  (MOVLPSmr addr:$src1, VR128:$src2)
+  // So, recognize this potential and also use MOVLPS or MOVLPD
+  if (TmpV1.getOpcode() == ISD::BIT_CONVERT)
+    TmpV1 = TmpV1.getOperand(0);
+  if (MayFoldLoad(TmpV1))
+    CanFoldLoad = true;
+
+  if (CanFoldLoad) {
+    if (HasSSE2 && NumElems == 2)
+      return getTargetShuffleNode(X86ISD::MOVLPD, dl, VT, V1, V2, DAG);
+
+    if (NumElems == 4)
+      return getTargetShuffleNode(X86ISD::MOVLPS, dl, VT, V1, V2, DAG);
+  }
+
+  ShuffleVectorSDNode *SVOp = cast<ShuffleVectorSDNode>(Op);
+  // movl and movlp will both match v2i64, but v2i64 is never matched by
+  // movl earlier because we make it strict to avoid messing with the movlp load
+  // folding logic (see the code above getMOVLP call). Match it here then,
+  // this is horrible, but will stay like this until we move all shuffle
+  // matching to x86 specific nodes. Note that for the 1st condition all
+  // types are matched with movsd.
+  if ((HasSSE2 && NumElems == 2) || !X86::isMOVLMask(SVOp))
+    return getTargetShuffleNode(X86ISD::MOVSD, dl, VT, V1, V2, DAG);
+  else if (HasSSE2)
+    return getTargetShuffleNode(X86ISD::MOVSS, dl, VT, V1, V2, DAG);
+
+
+  assert(VT != MVT::v4i32 && "unsupported shuffle type");
+
+  // Invert the operand order and use SHUFPS to match it.
+  return getTargetShuffleNode(X86ISD::SHUFPS, dl, VT, V2, V1,
+                              X86::getShuffleSHUFImmediate(SVOp), DAG);
+}
+
 SDValue
 X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const {
   ShuffleVectorSDNode *SVOp = cast<ShuffleVectorSDNode>(Op);
@@ -5182,7 +5249,7 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const {
       return getTargetShuffleNode(X86ISD::MOVSLDUP, dl, VT, V1, DAG);
 
     if (X86::isMOVLPMask(SVOp))
-      return Op;
+      return getMOVLP(Op, dl, DAG, HasSSE2);
   }
 
   if (ShouldXformToMOVHLPS(SVOp) ||
@@ -8433,6 +8500,8 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::MOVLHPD:            return "X86ISD::MOVLHPD";
   case X86ISD::MOVHLPS:            return "X86ISD::MOVHLPS";
   case X86ISD::MOVHLPD:            return "X86ISD::MOVHLPD";
+  case X86ISD::MOVLPS:             return "X86ISD::MOVLPS";
+  case X86ISD::MOVLPD:             return "X86ISD::MOVLPD";
   case X86ISD::MOVDDUP:            return "X86ISD::MOVDDUP";
   case X86ISD::MOVSHDUP:           return "X86ISD::MOVSHDUP";
   case X86ISD::MOVSLDUP:           return "X86ISD::MOVSLDUP";

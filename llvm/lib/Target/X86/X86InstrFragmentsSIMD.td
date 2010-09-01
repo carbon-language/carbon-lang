@@ -134,9 +134,6 @@ def SDTShuff2OpI : SDTypeProfile<1, 2, [SDTCisVec<0>,
 def SDTShuff3OpI : SDTypeProfile<1, 3, [SDTCisVec<0>, SDTCisSameAs<0,1>,
                                  SDTCisSameAs<0,2>, SDTCisInt<3>]>;
 
-def SDTShuff2OpLd : SDTypeProfile<1, 2, [SDTCisVec<0>, SDTCisSameAs<0,1>,
-                                  SDTCisPtrTy<2>]>;
-
 def SDTShuff2OpLdI : SDTypeProfile<1, 2, [SDTCisVec<0>, SDTCisPtrTy<1>,
                                   SDTCisInt<2>]>;
 
@@ -161,14 +158,11 @@ def X86Movss : SDNode<"X86ISD::MOVSS", SDTShuff2Op>;
 
 def X86Movlhps : SDNode<"X86ISD::MOVLHPS", SDTShuff2Op>;
 def X86Movlhpd : SDNode<"X86ISD::MOVLHPD", SDTShuff2Op>;
-
 def X86Movhlps : SDNode<"X86ISD::MOVHLPS", SDTShuff2Op>;
 def X86Movhlpd : SDNode<"X86ISD::MOVHLPD", SDTShuff2Op>;
 
-def X86MovlpsLd : SDNode<"X86ISD::MOVLPS", SDTShuff2OpLd,
-                        [SDNPHasChain, SDNPMayLoad, SDNPMemOperand]>;
-def X86MovlpdLd : SDNode<"X86ISD::MOVLPD", SDTShuff2OpLd,
-                        [SDNPHasChain, SDNPMayLoad, SDNPMemOperand]>;
+def X86Movlps : SDNode<"X86ISD::MOVLPS", SDTShuff2Op>;
+def X86Movlpd : SDNode<"X86ISD::MOVLPD", SDTShuff2Op>;
 
 def X86Unpcklps : SDNode<"X86ISD::UNPCKLPS", SDTShuff2Op>;
 def X86Unpcklpd : SDNode<"X86ISD::UNPCKLPD", SDTShuff2Op>;

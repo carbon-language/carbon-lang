@@ -5840,9 +5840,9 @@ def : Pat<(v2f64 (X86Movsd VR128:$src1, VR128:$src2)),
           (MOVSDrr (v2f64 VR128:$src1),
                    (EXTRACT_SUBREG (v2f64 VR128:$src2), sub_sd))>;
 def : Pat<(v4f32 (X86Movsd VR128:$src1, VR128:$src2)),
-          (MOVSDrr VR128:$src1, (EXTRACT_SUBREG VR128:$src2, sub_sd))>;
+          (MOVSDrr VR128:$src1, (EXTRACT_SUBREG (v4f32 VR128:$src2), sub_sd))>;
 def : Pat<(v4i32 (X86Movsd VR128:$src1, VR128:$src2)),
-          (MOVSDrr VR128:$src1, (EXTRACT_SUBREG VR128:$src2, sub_sd))>;
+          (MOVSDrr VR128:$src1, (EXTRACT_SUBREG (v4i32 VR128:$src2), sub_sd))>;
 
 // Shuffle with MOVSHDUP
 def : Pat<(v4i32 (X86Movshdup VR128:$src)),
@@ -5901,7 +5901,25 @@ def : Pat<(v8i16 (X86PAlign VR128:$src1, VR128:$src2, (i8 imm:$imm))),
 def : Pat<(v16i8 (X86PAlign VR128:$src1, VR128:$src2, (i8 imm:$imm))),
           (PALIGNR128rr VR128:$src2, VR128:$src1, imm:$imm)>;
 
-// Extra patterns to match stores
+// Shuffle with MOVLPS
+def : Pat<(v4f32 (X86Movlps VR128:$src1, (load addr:$src2))),
+          (MOVLPSrm VR128:$src1, addr:$src2)>;
+def : Pat<(v4i32 (X86Movlps VR128:$src1, (load addr:$src2))),
+          (MOVLPSrm VR128:$src1, addr:$src2)>;
+def : Pat<(X86Movlps VR128:$src1,
+                    (bc_v4f32 (v2f64 (scalar_to_vector (loadf64 addr:$src2))))),
+          (MOVLPSrm VR128:$src1, addr:$src2)>;
+
+// Shuffle with MOVLPD
+def : Pat<(v2f64 (X86Movlpd VR128:$src1, (load addr:$src2))),
+          (MOVLPDrm VR128:$src1, addr:$src2)>;
+def : Pat<(v2i64 (X86Movlpd VR128:$src1, (load addr:$src2))),
+          (MOVLPDrm VR128:$src1, addr:$src2)>;
+def : Pat<(v2f64 (X86Movlpd VR128:$src1,
+                            (scalar_to_vector (loadf64 addr:$src2)))),
+          (MOVLPDrm VR128:$src1, addr:$src2)>;
+
+// Extra patterns to match stores with MOVHPS/PD and MOVLPS/PD
 def : Pat<(store (f64 (vector_extract
           (v2f64 (X86Unpckhps VR128:$src, (undef))), (iPTR 0))),addr:$dst),
           (MOVHPSmr addr:$dst, VR128:$src)>;
@@ -5909,3 +5927,13 @@ def : Pat<(store (f64 (vector_extract
           (v2f64 (X86Unpckhpd VR128:$src, (undef))), (iPTR 0))),addr:$dst),
           (MOVHPDmr addr:$dst, VR128:$src)>;
 
+def : Pat<(store (v4f32 (X86Movlps (load addr:$src1), VR128:$src2)),addr:$src1),
+          (MOVLPSmr addr:$src1, VR128:$src2)>;
+def : Pat<(store (v4i32 (X86Movlps
+                 (bc_v4i32 (loadv2i64 addr:$src1)), VR128:$src2)), addr:$src1),
+          (MOVLPSmr addr:$src1, VR128:$src2)>;
+
+def : Pat<(store (v2f64 (X86Movlpd (load addr:$src1), VR128:$src2)),addr:$src1),
+          (MOVLPDmr addr:$src1, VR128:$src2)>;
+def : Pat<(store (v2i64 (X86Movlpd (load addr:$src1), VR128:$src2)),addr:$src1),
+          (MOVLPDmr addr:$src1, VR128:$src2)>;
