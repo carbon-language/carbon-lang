@@ -97,15 +97,6 @@ public:
     return 0;
   }
 
-  /// erase - Remove the specified type, returning true if it was in the set.
-  bool erase(const Type *Ty) {
-    if (!TheMap.erase(Ty))
-      return false;
-    if (Ty->isAbstract())
-      Ty->removeAbstractTypeUser(this);
-    return true;
-  }
-
   /// insert - This returns true if the pointer was new to the set, false if it
   /// was already in the set.
   bool insert(const Type *Src, const Type *Dst) {
