@@ -277,7 +277,7 @@ AllocatedCXCodeCompleteResults::~AllocatedCXCodeCompleteResults() {
 CXCodeCompleteResults *clang_codeComplete(CXIndex CIdx,
                                           const char *source_filename,
                                           int num_command_line_args,
-                                          const char **command_line_args,
+                                          const char * const *command_line_args,
                                           unsigned num_unsaved_files,
                                           struct CXUnsavedFile *unsaved_files,
                                           const char *complete_filename,

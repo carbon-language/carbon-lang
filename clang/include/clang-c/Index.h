@@ -645,7 +645,7 @@ CINDEX_LINKAGE CXTranslationUnit clang_createTranslationUnitFromSourceFile(
                                          CXIndex CIdx,
                                          const char *source_filename,
                                          int num_clang_command_line_args,
-                                         const char **clang_command_line_args,
+                                   const char * const *clang_command_line_args,
                                          unsigned num_unsaved_files,
                                          struct CXUnsavedFile *unsaved_files);
 
@@ -779,7 +779,7 @@ CINDEX_LINKAGE unsigned clang_defaultEditingTranslationUnitOptions(void);
  */
 CINDEX_LINKAGE CXTranslationUnit clang_parseTranslationUnit(CXIndex CIdx,
                                                     const char *source_filename,
-                                                 const char **command_line_args,
+                                         const char * const *command_line_args,
                                                       int num_command_line_args,
                                             struct CXUnsavedFile *unsaved_files,
                                                      unsigned num_unsaved_files,
@@ -2313,7 +2313,7 @@ CINDEX_LINKAGE
 CXCodeCompleteResults *clang_codeComplete(CXIndex CIdx,
                                           const char *source_filename,
                                           int num_command_line_args,
-                                          const char **command_line_args,
+                                          const char * const *command_line_args,
                                           unsigned num_unsaved_files,
                                           struct CXUnsavedFile *unsaved_files,
                                           const char *complete_filename,

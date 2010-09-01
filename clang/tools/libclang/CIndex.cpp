@@ -1434,7 +1434,7 @@ CXTranslationUnit
 clang_createTranslationUnitFromSourceFile(CXIndex CIdx,
                                           const char *source_filename,
                                           int num_command_line_args,
-                                          const char **command_line_args,
+                                          const char * const *command_line_args,
                                           unsigned num_unsaved_files,
                                           struct CXUnsavedFile *unsaved_files) {
   return clang_parseTranslationUnit(CIdx, source_filename,
@@ -1446,7 +1446,7 @@ clang_createTranslationUnitFromSourceFile(CXIndex CIdx,
 struct ParseTranslationUnitInfo {
   CXIndex CIdx;
   const char *source_filename;
-  const char **command_line_args;
+  const char *const *command_line_args;
   int num_command_line_args;
   struct CXUnsavedFile *unsaved_files;
   unsigned num_unsaved_files;
@@ -1458,7 +1458,7 @@ static void clang_parseTranslationUnit_Impl(void *UserData) {
     static_cast<ParseTranslationUnitInfo*>(UserData);
   CXIndex CIdx = PTUI->CIdx;
   const char *source_filename = PTUI->source_filename;
-  const char **command_line_args = PTUI->command_line_args;
+  const char * const *command_line_args = PTUI->command_line_args;
   int num_command_line_args = PTUI->num_command_line_args;
   struct CXUnsavedFile *unsaved_files = PTUI->unsaved_files;
   unsigned num_unsaved_files = PTUI->num_unsaved_files;
@@ -1712,7 +1712,7 @@ static void clang_parseTranslationUnit_Impl(void *UserData) {
 }
 CXTranslationUnit clang_parseTranslationUnit(CXIndex CIdx,
                                              const char *source_filename,
-                                             const char **command_line_args,
+                                         const char * const *command_line_args,
                                              int num_command_line_args,
                                              struct CXUnsavedFile *unsaved_files,
                                              unsigned num_unsaved_files,
