@@ -90,6 +90,12 @@ static bool UpgradeIntrinsicFunction1(Function *F, Function *&NewFn) {
            (Name.compare(19, 2, "s.", 2) == 0 ||
             Name.compare(19, 2, "u.", 2) == 0)) ||
 
+          ((Name.compare(14, 5, "vmull", 5) == 0 ||
+            Name.compare(14, 5, "vmlal", 5) == 0 ||
+            Name.compare(14, 5, "vmlsl", 5) == 0) &&
+           (Name.compare(19, 2, "s.", 2) == 0 ||
+            Name.compare(19, 2, "u.", 2) == 0)) ||
+
           (Name.compare(14, 6, "vmovn.", 6) == 0)) {
 
         // Calls to these are transformed into IR without intrinsics.
@@ -359,6 +365,32 @@ bool llvm::UpgradeIntrinsicFunction(Function *F, Function *&NewFn) {
   return Upgraded;
 }
 
+/// ExtendNEONArgs - For NEON "long" and "wide" operations, where the results
+/// have vector elements twice as big as one or both source operands, do the
+/// sign- or zero-extension that used to be handled by intrinsics.  The
+/// extended values are returned via V0 and V1.
+static void ExtendNEONArgs(CallInst *CI, Value *Arg0, Value *Arg1,
+                           Value *&V0, Value *&V1) {
+  Function *F = CI->getCalledFunction();
+  const std::string& Name = F->getName();
+  bool isLong = (Name.at(18) == 'l');
+  bool isSigned = (Name.at(19) == 's');
+
+  if (isSigned) {
+    if (isLong)
+      V0 = new SExtInst(Arg0, CI->getType(), "", CI);
+    else
+      V0 = Arg0;
+    V1 = new SExtInst(Arg1, CI->getType(), "", CI);
+  } else {
+    if (isLong)
+      V0 = new ZExtInst(Arg0, CI->getType(), "", CI);
+    else
+      V0 = Arg0;
+    V1 = new ZExtInst(Arg1, CI->getType(), "", CI);
+  }
+}
+
 // UpgradeIntrinsicCall - Upgrade a call to an old intrinsic to be a call the 
 // upgraded intrinsic. All argument and return casting must be provided in 
 // order to seamlessly integrate with existing context.
@@ -376,33 +408,32 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
     // Upgrade ARM NEON intrinsics.
     if (Name.compare(5, 9, "arm.neon.", 9) == 0) {
       Instruction *NewI;
+      Value *V0, *V1;
       if (Name.compare(14, 7, "vmovls.", 7) == 0) {
         NewI = new SExtInst(CI->getArgOperand(0), CI->getType(),
                             "upgraded." + CI->getName(), CI);
       } else if (Name.compare(14, 7, "vmovlu.", 7) == 0) {
         NewI = new ZExtInst(CI->getArgOperand(0), CI->getType(),
                             "upgraded." + CI->getName(), CI);
-
-      } else if (Name.compare(14, 4, "vadd", 4) == 0 ||
-                 Name.compare(14, 4, "vsub", 4) == 0) {
-        // Extend one (vaddw/vsubw) or both (vaddl/vsubl) operands.
-        Value *V0 = CI->getArgOperand(0);
-        Value *V1 = CI->getArgOperand(1);
-        if (Name.at(19) == 's') {
-          if (Name.at(18) == 'l')
-            V0 = new SExtInst(CI->getArgOperand(0), CI->getType(), "", CI);
-          V1 = new SExtInst(CI->getArgOperand(1), CI->getType(), "", CI);
-        } else {
-          assert(Name.at(19) == 'u' && "unexpected vadd/vsub intrinsic");
-          if (Name.at(18) == 'l')
-            V0 = new ZExtInst(CI->getArgOperand(0), CI->getType(), "", CI);
-          V1 = new ZExtInst(CI->getArgOperand(1), CI->getType(), "", CI);
-        }
-        if (Name.compare(14, 4, "vadd", 4) == 0)
-          NewI = BinaryOperator::CreateAdd(V0, V1,"upgraded."+CI->getName(),CI);
-        else
-          NewI = BinaryOperator::CreateSub(V0, V1,"upgraded."+CI->getName(),CI);
-
+      } else if (Name.compare(14, 4, "vadd", 4) == 0) {
+        ExtendNEONArgs(CI, CI->getArgOperand(0), CI->getArgOperand(1), V0, V1);
+        NewI = BinaryOperator::CreateAdd(V0, V1, "upgraded."+CI->getName(), CI);
+      } else if (Name.compare(14, 4, "vsub", 4) == 0) {
+        ExtendNEONArgs(CI, CI->getArgOperand(0), CI->getArgOperand(1), V0, V1);
+        NewI = BinaryOperator::CreateSub(V0, V1,"upgraded."+CI->getName(),CI);
+      } else if (Name.compare(14, 4, "vmul", 4) == 0) {
+        ExtendNEONArgs(CI, CI->getArgOperand(0), CI->getArgOperand(1), V0, V1);
+        NewI = BinaryOperator::CreateMul(V0, V1,"upgraded."+CI->getName(),CI);
+      } else if (Name.compare(14, 4, "vmla", 4) == 0) {
+        ExtendNEONArgs(CI, CI->getArgOperand(1), CI->getArgOperand(2), V0, V1);
+        Instruction *MulI = BinaryOperator::CreateMul(V0, V1, "", CI);
+        NewI = BinaryOperator::CreateAdd(CI->getArgOperand(0), MulI,
+                                         "upgraded."+CI->getName(), CI);
+      } else if (Name.compare(14, 4, "vmls", 4) == 0) {
+        ExtendNEONArgs(CI, CI->getArgOperand(1), CI->getArgOperand(2), V0, V1);
+        Instruction *MulI = BinaryOperator::CreateMul(V0, V1, "", CI);
+        NewI = BinaryOperator::CreateSub(CI->getArgOperand(0), MulI,
+                                         "upgraded."+CI->getName(), CI);
       } else if (Name.compare(14, 6, "vmovn.", 6) == 0) {
         NewI = new TruncInst(CI->getArgOperand(0), CI->getType(),
                              "upgraded." + CI->getName(), CI);

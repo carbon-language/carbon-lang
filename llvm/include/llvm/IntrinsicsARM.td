@@ -129,16 +129,8 @@ let Properties = [IntrNoMem, Commutative] in {
   def int_arm_neon_vmulp : Neon_2Arg_Intrinsic;
   def int_arm_neon_vqdmulh : Neon_2Arg_Intrinsic;
   def int_arm_neon_vqrdmulh : Neon_2Arg_Intrinsic;
-  def int_arm_neon_vmulls : Neon_2Arg_Long_Intrinsic;
-  def int_arm_neon_vmullu : Neon_2Arg_Long_Intrinsic;
   def int_arm_neon_vmullp : Neon_2Arg_Long_Intrinsic;
   def int_arm_neon_vqdmull : Neon_2Arg_Long_Intrinsic;
-
-  // Vector Multiply and Accumulate/Subtract.
-  def int_arm_neon_vmlals : Neon_3Arg_Long_Intrinsic;
-  def int_arm_neon_vmlalu : Neon_3Arg_Long_Intrinsic;
-  def int_arm_neon_vmlsls : Neon_3Arg_Long_Intrinsic;
-  def int_arm_neon_vmlslu : Neon_3Arg_Long_Intrinsic;
   def int_arm_neon_vqdmlal : Neon_3Arg_Long_Intrinsic;
   def int_arm_neon_vqdmlsl : Neon_3Arg_Long_Intrinsic;
 
@@ -302,7 +294,7 @@ def int_arm_neon_vcvtfp2fxu : Neon_CvtFPToFx_Intrinsic;
 def int_arm_neon_vcvtfxs2fp : Neon_CvtFxToFP_Intrinsic;
 def int_arm_neon_vcvtfxu2fp : Neon_CvtFxToFP_Intrinsic;
 
-// Narrowing and Lengthening Vector Moves.
+// Narrowing Saturating Vector Moves.
 def int_arm_neon_vqmovns : Neon_1Arg_Narrow_Intrinsic;
 def int_arm_neon_vqmovnu : Neon_1Arg_Narrow_Intrinsic;
 def int_arm_neon_vqmovnsu : Neon_1Arg_Narrow_Intrinsic;

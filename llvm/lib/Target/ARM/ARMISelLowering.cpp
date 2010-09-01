@@ -326,7 +326,10 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
 
     // Neon does not support some operations on v1i64 and v2i64 types.
     setOperationAction(ISD::MUL, MVT::v1i64, Expand);
-    setOperationAction(ISD::MUL, MVT::v2i64, Expand);
+    // Custom handling for some quad-vector types to detect VMULL.
+    setOperationAction(ISD::MUL, MVT::v8i16, Custom);
+    setOperationAction(ISD::MUL, MVT::v4i32, Custom);
+    setOperationAction(ISD::MUL, MVT::v2i64, Custom);
     setOperationAction(ISD::VSETCC, MVT::v1i64, Expand);
     setOperationAction(ISD::VSETCC, MVT::v2i64, Expand);
 
@@ -684,6 +687,8 @@ const char *ARMTargetLowering::getTargetNodeName(unsigned Opcode) const {
   case ARMISD::VZIP:          return "ARMISD::VZIP";
   case ARMISD::VUZP:          return "ARMISD::VUZP";
   case ARMISD::VTRN:          return "ARMISD::VTRN";
+  case ARMISD::VMULLs:        return "ARMISD::VMULLs";
+  case ARMISD::VMULLu:        return "ARMISD::VMULLu";
   case ARMISD::BUILD_VECTOR:  return "ARMISD::BUILD_VECTOR";
   case ARMISD::FMAX:          return "ARMISD::FMAX";
   case ARMISD::FMIN:          return "ARMISD::FMIN";
@@ -3751,6 +3756,51 @@ static SDValue LowerCONCAT_VECTORS(SDValue Op, SelectionDAG &DAG) {
   return DAG.getNode(ISD::BIT_CONVERT, dl, Op.getValueType(), Val);
 }
 
+/// SkipExtension - For a node that is either a SIGN_EXTEND, ZERO_EXTEND, or
+/// an extending load, return the unextended value.
+static SDValue SkipExtension(SDNode *N, SelectionDAG &DAG) {
+  if (N->getOpcode() == ISD::SIGN_EXTEND || N->getOpcode() == ISD::ZERO_EXTEND)
+    return N->getOperand(0);
+  LoadSDNode *LD = cast<LoadSDNode>(N);
+  return DAG.getLoad(LD->getMemoryVT(), N->getDebugLoc(), LD->getChain(),
+                     LD->getBasePtr(), LD->getSrcValue(),
+                     LD->getSrcValueOffset(), LD->isVolatile(),
+                     LD->isNonTemporal(), LD->getAlignment());
+}
+
+static SDValue LowerMUL(SDValue Op, SelectionDAG &DAG) {
+  // Multiplications are only custom-lowered for 128-bit vectors so that
+  // VMULL can be detected.  Otherwise v2i64 multiplications are not legal.
+  EVT VT = Op.getValueType();
+  assert(VT.is128BitVector() && "unexpected type for custom-lowering ISD::MUL");
+  SDNode *N0 = Op.getOperand(0).getNode();
+  SDNode *N1 = Op.getOperand(1).getNode();
+  unsigned NewOpc = 0;
+  if ((N0->getOpcode() == ISD::SIGN_EXTEND || ISD::isSEXTLoad(N0)) &&
+      (N1->getOpcode() == ISD::SIGN_EXTEND || ISD::isSEXTLoad(N1))) {
+    NewOpc = ARMISD::VMULLs;
+  } else if ((N0->getOpcode() == ISD::ZERO_EXTEND || ISD::isZEXTLoad(N0)) &&
+             (N1->getOpcode() == ISD::ZERO_EXTEND || ISD::isZEXTLoad(N1))) {
+    NewOpc = ARMISD::VMULLu;
+  } else if (VT.getSimpleVT().SimpleTy == MVT::v2i64) {
+    // Fall through to expand this.  It is not legal.
+    return SDValue();
+  } else {
+    // Other vector multiplications are legal.
+    return Op;
+  }
+
+  // Legalize to a VMULL instruction.
+  DebugLoc DL = Op.getDebugLoc();
+  SDValue Op0 = SkipExtension(N0, DAG);
+  SDValue Op1 = SkipExtension(N1, DAG);
+
+  assert(Op0.getValueType().is64BitVector() &&
+         Op1.getValueType().is64BitVector() &&
+         "unexpected types for extended operands to VMULL");
+  return DAG.getNode(NewOpc, DL, VT, Op0, Op1);
+}
+
 SDValue ARMTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
   switch (Op.getOpcode()) {
   default: llvm_unreachable("Don't know how to custom lower this!");
@@ -3792,6 +3842,7 @@ SDValue ARMTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
   case ISD::EXTRACT_VECTOR_ELT: return LowerEXTRACT_VECTOR_ELT(Op, DAG);
   case ISD::CONCAT_VECTORS: return LowerCONCAT_VECTORS(Op, DAG);
   case ISD::FLT_ROUNDS_:   return LowerFLT_ROUNDS_(Op, DAG);
+  case ISD::MUL:           return LowerMUL(Op, DAG);
   }
   return SDValue();
 }
