@@ -5909,6 +5909,9 @@ def : Pat<(v4i32 (X86Movlps VR128:$src1, (load addr:$src2))),
 def : Pat<(X86Movlps VR128:$src1,
                     (bc_v4f32 (v2f64 (scalar_to_vector (loadf64 addr:$src2))))),
           (MOVLPSrm VR128:$src1, addr:$src2)>;
+def : Pat<(X86Movlps VR128:$src1,
+                    (bc_v4i32 (v2i64 (load addr:$src2)))),
+          (MOVLPSrm VR128:$src1, addr:$src2)>;
 
 // Shuffle with MOVLPD
 def : Pat<(v2f64 (X86Movlpd VR128:$src1, (load addr:$src2))),
