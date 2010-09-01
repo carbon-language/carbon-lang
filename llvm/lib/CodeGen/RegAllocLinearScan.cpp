@@ -1147,9 +1147,11 @@ void RALinScan::assignRegOrStackSlotAtInterval(LiveInterval* cur) {
            e = RC->allocation_order_end(*mf_); i != e; ++i) {
       unsigned reg = *i;
       float regWeight = SpillWeights[reg];
+      // Don't even consider reserved regs.
+      if (reservedRegs_.test(reg))
+        continue;
       // Skip recently allocated registers and reserved registers.
-      if (minWeight > regWeight && !isRecentlyUsed(reg) &&
-          !reservedRegs_.test(reg))
+      if (minWeight > regWeight && !isRecentlyUsed(reg))
         Found = true;
       RegsWeights.push_back(std::make_pair(reg, regWeight));
     }
