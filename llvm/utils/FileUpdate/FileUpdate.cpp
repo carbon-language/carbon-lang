@@ -78,7 +78,7 @@ int main(int argc, char **argv) {
     return 1;
   }
 
-  OutStream.write(In->getBufferStart(), In->getBufferSize());
+  OutStream.os().write(In->getBufferStart(), In->getBufferSize());
 
   // Declare success.
   OutStream.keep();

@@ -244,7 +244,7 @@ void GenerateBitcode(Module* M, const std::string& FileName) {
   }
 
   // Write it out
-  WriteBitcodeToFile(M, Out);
+  WriteBitcodeToFile(M, Out.os());
   Out.keep();
 }
 
@@ -432,10 +432,10 @@ static void EmitShellScript(char **argv, Module *M) {
   if (!ErrorInfo.empty())
     PrintAndExit(ErrorInfo, M);
 
-  Out2 << "#!/bin/sh\n";
+  Out2.os() << "#!/bin/sh\n";
   // Allow user to setenv LLVMINTERP if lli is not in their PATH.
-  Out2 << "lli=${LLVMINTERP-lli}\n";
-  Out2 << "exec $lli \\\n";
+  Out2.os() << "lli=${LLVMINTERP-lli}\n";
+  Out2.os() << "exec $lli \\\n";
   // gcc accepts -l<lib> and implicitly searches /lib and /usr/lib.
   LibPaths.push_back("/lib");
   LibPaths.push_back("/usr/lib");
@@ -466,9 +466,9 @@ static void EmitShellScript(char **argv, Module *M) {
     if (FullLibraryPath.isEmpty())
       FullLibraryPath = sys::Path::FindLibrary(*i);
     if (!FullLibraryPath.isEmpty())
-      Out2 << "    -load=" << FullLibraryPath.str() << " \\\n";
+      Out2.os() << "    -load=" << FullLibraryPath.str() << " \\\n";
   }
-  Out2 << "    "  << BitcodeOutputFilename << " ${1+\"$@\"}\n";
+  Out2.os() << "    "  << BitcodeOutputFilename << " ${1+\"$@\"}\n";
   Out2.keep();
 }
 

@@ -123,9 +123,9 @@ GetFileNameRoot(const std::string &InputFilename) {
   return outputFilename;
 }
 
-static formatted_tool_output_file *GetOutputStream(const char *TargetName,
-                                                   Triple::OSType OS,
-                                                   const char *ProgName) {
+static tool_output_file *GetOutputStream(const char *TargetName,
+                                         Triple::OSType OS,
+                                         const char *ProgName) {
   // If we don't yet have an output filename, make one.
   if (OutputFilename.empty()) {
     if (InputFilename == "-")
@@ -183,11 +183,7 @@ static formatted_tool_output_file *GetOutputStream(const char *TargetName,
     return 0;
   }
 
-  formatted_tool_output_file *Out =
-    new formatted_tool_output_file(*FDOut,
-                                   formatted_raw_ostream::DELETE_STREAM);
-
-  return Out;
+  return FDOut;
 }
 
 // main - Entry point for the llc compiler.
@@ -278,7 +274,7 @@ int main(int argc, char **argv) {
   TargetMachine &Target = *target.get();
 
   // Figure out where we are going to send the output...
-  OwningPtr<formatted_tool_output_file> Out
+  OwningPtr<tool_output_file> Out
     (GetOutputStream(TheTarget->getName(), TheTriple.getOS(), argv[0]));
   if (!Out) return 1;
 
@@ -314,15 +310,18 @@ int main(int argc, char **argv) {
       Target.setMCRelaxAll(true);
   }
 
-  // Ask the target to add backend passes as necessary.
-  if (Target.addPassesToEmitFile(PM, *Out, FileType, OLvl,
-                                 NoVerify)) {
-    errs() << argv[0] << ": target does not support generation of this"
-           << " file type!\n";
-    return 1;
-  }
+  {
+    formatted_raw_ostream FOS(Out->os());
 
-  PM.run(mod);
+    // Ask the target to add backend passes as necessary.
+    if (Target.addPassesToEmitFile(PM, FOS, FileType, OLvl, NoVerify)) {
+      errs() << argv[0] << ": target does not support generation of this"
+             << " file type!\n";
+      return 1;
+    }
+
+    PM.run(mod);
+  }
 
   // Declare success.
   Out->keep();

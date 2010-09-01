@@ -19,14 +19,10 @@
 
 namespace llvm 
 {
-  class formatted_tool_output_file;
-
   /// formatted_raw_ostream - Formatted raw_fd_ostream to handle
   /// asm-specific constructs.
   ///
   class formatted_raw_ostream : public raw_ostream {
-    friend class formatted_tool_output_file;
-
   public:
     /// DELETE_STREAM - Tell the destructor to delete the held stream.
     ///
@@ -137,38 +133,6 @@ namespace llvm
         TheStream->SetBufferSize(BufferSize);
       else
         TheStream->SetUnbuffered();
-    }
-  };
-
-  /// formatted_tool_output_file - This is a subclass of formatted_raw_ostream
-  /// for use when the underlying stream is a tool_output_file. It exposes
-  /// keep() and several other member functions.
-  class formatted_tool_output_file : public formatted_raw_ostream {
-  private:
-    tool_output_file &get_tool_output_file() const {
-      return *static_cast<tool_output_file *>(TheStream);
-    }
-
-  public:
-    formatted_tool_output_file(tool_output_file &Stream, bool Delete = false) 
-      : formatted_raw_ostream(Stream, Delete) {}
-
-    formatted_tool_output_file() {}
-
-    ~formatted_tool_output_file();
-
-    void setStream(tool_output_file &Stream, bool Delete = false) {
-      return formatted_raw_ostream::setStream(Stream, Delete);
-    }
-
-    void keep()            { return get_tool_output_file().keep(); }
-    bool has_error() const { return get_tool_output_file().has_error(); }
-    void clear_error()     { return get_tool_output_file().clear_error(); }
-    void close() {
-      // The inner stream is unbuffered; flush the outer stream's buffer.
-      flush();
-      // The inner stream can close its file descriptor now.
-      return get_tool_output_file().close();
     }
   };
 

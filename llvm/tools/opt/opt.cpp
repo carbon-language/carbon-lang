@@ -359,6 +359,11 @@ void AddStandardLinkPasses(PassManagerBase &PM) {
 int main(int argc, char **argv) {
   sys::PrintStackTraceOnErrorSignal();
   llvm::PrettyStackTraceProgram X(argc, argv);
+
+  if (AnalyzeOnly && NoOutput) {
+    errs() << argv[0] << ": analyze mode conflicts with no-output mode.\n";
+    return 1;
+  }
   
   // Enable debug stream buffering.
   EnableDebugBuffering = true;
@@ -408,7 +413,7 @@ int main(int argc, char **argv) {
   // console, print out a warning message and refuse to do it.  We don't
   // impress anyone by spewing tons of binary goo to a terminal.
   if (!Force && !NoOutput && !AnalyzeOnly && !OutputAssembly)
-    if (CheckBitcodeOutputToConsole(*Out, !Quiet))
+    if (CheckBitcodeOutputToConsole(Out->os(), !Quiet))
       NoOutput = true;
 
   // Create a PassManager to hold and optimize the collection of passes we are
@@ -484,19 +489,19 @@ int main(int argc, char **argv) {
       if (AnalyzeOnly) {
         switch (Kind) {
         case PT_BasicBlock:
-          Passes.add(new BasicBlockPassPrinter(PassInf, *Out));
+          Passes.add(new BasicBlockPassPrinter(PassInf, Out->os()));
           break;
         case PT_Loop:
-          Passes.add(new LoopPassPrinter(PassInf, *Out));
+          Passes.add(new LoopPassPrinter(PassInf, Out->os()));
           break;
         case PT_Function:
-          Passes.add(new FunctionPassPrinter(PassInf, *Out));
+          Passes.add(new FunctionPassPrinter(PassInf, Out->os()));
           break;
         case PT_CallGraphSCC:
-          Passes.add(new CallGraphSCCPassPrinter(PassInf, *Out));
+          Passes.add(new CallGraphSCCPassPrinter(PassInf, Out->os()));
           break;
         default:
-          Passes.add(new ModulePassPrinter(PassInf, *Out));
+          Passes.add(new ModulePassPrinter(PassInf, Out->os()));
           break;
         }
       }
@@ -536,9 +541,9 @@ int main(int argc, char **argv) {
   // Write bitcode or assembly to the output as the last step...
   if (!NoOutput && !AnalyzeOnly) {
     if (OutputAssembly)
-      Passes.add(createPrintModulePass(Out.get()));
+      Passes.add(createPrintModulePass(&Out->os()));
     else
-      Passes.add(createBitcodeWriterPass(*Out));
+      Passes.add(createBitcodeWriterPass(Out->os()));
   }
 
   // Now that we have all of the passes ready, run them.

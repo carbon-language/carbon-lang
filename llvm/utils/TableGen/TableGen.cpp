@@ -226,109 +226,109 @@ int main(int argc, char **argv) {
   try {
     switch (Action) {
     case PrintRecords:
-      Out << Records;           // No argument, dump all contents
+      Out.os() << Records;           // No argument, dump all contents
       break;
     case GenEmitter:
-      CodeEmitterGen(Records).run(Out);
+      CodeEmitterGen(Records).run(Out.os());
       break;
 
     case GenRegisterEnums:
-      RegisterInfoEmitter(Records).runEnums(Out);
+      RegisterInfoEmitter(Records).runEnums(Out.os());
       break;
     case GenRegister:
-      RegisterInfoEmitter(Records).run(Out);
+      RegisterInfoEmitter(Records).run(Out.os());
       break;
     case GenRegisterHeader:
-      RegisterInfoEmitter(Records).runHeader(Out);
+      RegisterInfoEmitter(Records).runHeader(Out.os());
       break;
     case GenInstrEnums:
-      InstrEnumEmitter(Records).run(Out);
+      InstrEnumEmitter(Records).run(Out.os());
       break;
     case GenInstrs:
-      InstrInfoEmitter(Records).run(Out);
+      InstrInfoEmitter(Records).run(Out.os());
       break;
     case GenCallingConv:
-      CallingConvEmitter(Records).run(Out);
+      CallingConvEmitter(Records).run(Out.os());
       break;
     case GenAsmWriter:
-      AsmWriterEmitter(Records).run(Out);
+      AsmWriterEmitter(Records).run(Out.os());
       break;
     case GenARMDecoder:
-      ARMDecoderEmitter(Records).run(Out);
+      ARMDecoderEmitter(Records).run(Out.os());
       break;
     case GenAsmMatcher:
-      AsmMatcherEmitter(Records).run(Out);
+      AsmMatcherEmitter(Records).run(Out.os());
       break;
     case GenClangAttrClasses:
-      ClangAttrClassEmitter(Records).run(Out);
+      ClangAttrClassEmitter(Records).run(Out.os());
       break;
     case GenClangAttrImpl:
-      ClangAttrImplEmitter(Records).run(Out);
+      ClangAttrImplEmitter(Records).run(Out.os());
       break;
     case GenClangAttrList:
-      ClangAttrListEmitter(Records).run(Out);
+      ClangAttrListEmitter(Records).run(Out.os());
       break;
     case GenClangAttrPCHRead:
-      ClangAttrPCHReadEmitter(Records).run(Out);
+      ClangAttrPCHReadEmitter(Records).run(Out.os());
       break;
     case GenClangAttrPCHWrite:
-      ClangAttrPCHWriteEmitter(Records).run(Out);
+      ClangAttrPCHWriteEmitter(Records).run(Out.os());
       break;
     case GenClangDiagsDefs:
-      ClangDiagsDefsEmitter(Records, ClangComponent).run(Out);
+      ClangDiagsDefsEmitter(Records, ClangComponent).run(Out.os());
       break;
     case GenClangDiagGroups:
-      ClangDiagGroupsEmitter(Records).run(Out);
+      ClangDiagGroupsEmitter(Records).run(Out.os());
       break;
     case GenClangDeclNodes:
-      ClangASTNodesEmitter(Records, "Decl", "Decl").run(Out);
-      ClangDeclContextEmitter(Records).run(Out);
+      ClangASTNodesEmitter(Records, "Decl", "Decl").run(Out.os());
+      ClangDeclContextEmitter(Records).run(Out.os());
       break;
     case GenClangStmtNodes:
-      ClangASTNodesEmitter(Records, "Stmt", "").run(Out);
+      ClangASTNodesEmitter(Records, "Stmt", "").run(Out.os());
       break;
     case GenDisassembler:
-      DisassemblerEmitter(Records).run(Out);
+      DisassemblerEmitter(Records).run(Out.os());
       break;
     case GenOptParserDefs:
-      OptParserEmitter(Records, true).run(Out);
+      OptParserEmitter(Records, true).run(Out.os());
       break;
     case GenOptParserImpl:
-      OptParserEmitter(Records, false).run(Out);
+      OptParserEmitter(Records, false).run(Out.os());
       break;
     case GenDAGISel:
-      DAGISelEmitter(Records).run(Out);
+      DAGISelEmitter(Records).run(Out.os());
       break;
     case GenFastISel:
-      FastISelEmitter(Records).run(Out);
+      FastISelEmitter(Records).run(Out.os());
       break;
     case GenSubtarget:
-      SubtargetEmitter(Records).run(Out);
+      SubtargetEmitter(Records).run(Out.os());
       break;
     case GenIntrinsic:
-      IntrinsicEmitter(Records).run(Out);
+      IntrinsicEmitter(Records).run(Out.os());
       break;
     case GenTgtIntrinsic:
-      IntrinsicEmitter(Records, true).run(Out);
+      IntrinsicEmitter(Records, true).run(Out.os());
       break;
     case GenLLVMCConf:
-      LLVMCConfigurationEmitter(Records).run(Out);
+      LLVMCConfigurationEmitter(Records).run(Out.os());
       break;
     case GenEDInfo:
-      EDEmitter(Records).run(Out);
+      EDEmitter(Records).run(Out.os());
       break;
     case GenArmNeon:
-      NeonEmitter(Records).run(Out);
+      NeonEmitter(Records).run(Out.os());
       break;
     case GenArmNeonSema:
-      NeonEmitter(Records).runHeader(Out);
+      NeonEmitter(Records).runHeader(Out.os());
       break;
     case PrintEnums:
     {
       std::vector<Record*> Recs = Records.getAllDerivedDefinitions(Class);
       for (unsigned i = 0, e = Recs.size(); i != e; ++i)
-        Out << Recs[i]->getName() << ", ";
-      Out << "\n";
+        Out.os() << Recs[i]->getName() << ", ";
+      Out.os() << "\n";
       break;
     }
     default:

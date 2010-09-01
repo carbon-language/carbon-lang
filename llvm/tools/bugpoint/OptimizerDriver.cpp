@@ -58,14 +58,14 @@ bool BugDriver::writeProgramToFile(const std::string &Filename,
   tool_output_file Out(Filename.c_str(), ErrInfo,
                        raw_fd_ostream::F_Binary);
   if (ErrInfo.empty()) {
-    WriteBitcodeToFile(M, Out);
-    Out.close();
-    if (!Out.has_error()) {
+    WriteBitcodeToFile(M, Out.os());
+    Out.os().close();
+    if (!Out.os().has_error()) {
       Out.keep();
       return false;
     }
   }
-  Out.clear_error();
+  Out.os().clear_error();
   return true;
 }
 
@@ -140,11 +140,11 @@ bool BugDriver::runPasses(Module *Program,
     errs() << "Error opening bitcode file: " << inputFilename.str() << "\n";
     return 1;
   }
-  WriteBitcodeToFile(Program, InFile);
-  InFile.close();
-  if (InFile.has_error()) {
+  WriteBitcodeToFile(Program, InFile.os());
+  InFile.os().close();
+  if (InFile.os().has_error()) {
     errs() << "Error writing bitcode file: " << inputFilename.str() << "\n";
-    InFile.clear_error();
+    InFile.os().clear_error();
     return 1;
   }
   InFile.keep();

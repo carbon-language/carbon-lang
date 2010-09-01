@@ -164,13 +164,13 @@ bool LTOCodeGenerator::writeMergedModules(const char *path,
   }
     
   // write bitcode to it
-  WriteBitcodeToFile(_linker.getModule(), Out);
-  Out.close();
+  WriteBitcodeToFile(_linker.getModule(), Out.os());
+  Out.os().close();
 
-  if (Out.has_error()) {
+  if (Out.os().has_error()) {
     errMsg = "could not write bitcode file: ";
     errMsg += path;
-    Out.clear_error();
+    Out.os().clear_error();
     return true;
   }
   
@@ -190,14 +190,13 @@ const void* LTOCodeGenerator::compile(size_t* length, std::string& errMsg)
     // generate assembly code
     bool genResult = false;
     {
-      tool_output_file asmFD(uniqueAsmPath.c_str(), errMsg);
-      formatted_tool_output_file asmFile(asmFD);
+      tool_output_file asmFile(uniqueAsmPath.c_str(), errMsg);
       if (!errMsg.empty())
         return NULL;
-      genResult = this->generateAssemblyCode(asmFile, errMsg);
-      asmFile.close();
-      if (asmFile.has_error()) {
-        asmFile.clear_error();
+      genResult = this->generateAssemblyCode(asmFile.os(), errMsg);
+      asmFile.os().close();
+      if (asmFile.os().has_error()) {
+        asmFile.os().clear_error();
         return NULL;
       }
       asmFile.keep();
@@ -368,7 +367,7 @@ void LTOCodeGenerator::applyScopeRestrictions() {
 }
 
 /// Optimize merged modules using various IPO passes
-bool LTOCodeGenerator::generateAssemblyCode(formatted_raw_ostream& out,
+bool LTOCodeGenerator::generateAssemblyCode(raw_ostream& out,
                                             std::string& errMsg)
 {
     if ( this->determineTarget(errMsg) ) 
@@ -403,7 +402,9 @@ bool LTOCodeGenerator::generateAssemblyCode(formatted_raw_ostream& out,
 
     codeGenPasses->add(new TargetData(*_target->getTargetData()));
 
-    if (_target->addPassesToEmitFile(*codeGenPasses, out,
+    formatted_raw_ostream Out(out);
+
+    if (_target->addPassesToEmitFile(*codeGenPasses, Out,
                                      TargetMachine::CGFT_AssemblyFile,
                                      CodeGenOpt::Aggressive)) {
       errMsg = "target file type not supported";

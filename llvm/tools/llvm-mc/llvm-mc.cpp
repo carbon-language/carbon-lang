@@ -140,7 +140,7 @@ static const Target *GetTarget(const char *ProgName) {
   return 0;
 }
 
-static formatted_tool_output_file *GetOutputStream() {
+static tool_output_file *GetOutputStream() {
   if (OutputFilename == "")
     OutputFilename = "-";
 
@@ -152,9 +152,8 @@ static formatted_tool_output_file *GetOutputStream() {
     delete Out;
     return 0;
   }
-  
-  return new formatted_tool_output_file(*Out,
-                                        formatted_raw_ostream::DELETE_STREAM);
+
+  return Out;
 }
 
 static int AsLexInput(const char *ProgName) {
@@ -189,7 +188,7 @@ static int AsLexInput(const char *ProgName) {
   AsmLexer Lexer(*MAI);
   Lexer.setBuffer(SrcMgr.getMemoryBuffer(0));
 
-  OwningPtr<formatted_tool_output_file> Out(GetOutputStream());
+  OwningPtr<tool_output_file> Out(GetOutputStream());
   if (!Out)
     return 1;
 
@@ -204,44 +203,44 @@ static int AsLexInput(const char *ProgName) {
       Error = true; // error already printed.
       break;
     case AsmToken::Identifier:
-      *Out << "identifier: " << Lexer.getTok().getString() << '\n';
+      Out->os() << "identifier: " << Lexer.getTok().getString() << '\n';
       break;
     case AsmToken::String:
-      *Out << "string: " << Lexer.getTok().getString() << '\n';
+      Out->os() << "string: " << Lexer.getTok().getString() << '\n';
       break;
     case AsmToken::Integer:
-      *Out << "int: " << Lexer.getTok().getString() << '\n';
+      Out->os() << "int: " << Lexer.getTok().getString() << '\n';
       break;
 
-    case AsmToken::Amp:            *Out << "Amp\n"; break;
-    case AsmToken::AmpAmp:         *Out << "AmpAmp\n"; break;
-    case AsmToken::Caret:          *Out << "Caret\n"; break;
-    case AsmToken::Colon:          *Out << "Colon\n"; break;
-    case AsmToken::Comma:          *Out << "Comma\n"; break;
-    case AsmToken::Dollar:         *Out << "Dollar\n"; break;
-    case AsmToken::EndOfStatement: *Out << "EndOfStatement\n"; break;
-    case AsmToken::Eof:            *Out << "Eof\n"; break;
-    case AsmToken::Equal:          *Out << "Equal\n"; break;
-    case AsmToken::EqualEqual:     *Out << "EqualEqual\n"; break;
-    case AsmToken::Exclaim:        *Out << "Exclaim\n"; break;
-    case AsmToken::ExclaimEqual:   *Out << "ExclaimEqual\n"; break;
-    case AsmToken::Greater:        *Out << "Greater\n"; break;
-    case AsmToken::GreaterEqual:   *Out << "GreaterEqual\n"; break;
-    case AsmToken::GreaterGreater: *Out << "GreaterGreater\n"; break;
-    case AsmToken::LParen:         *Out << "LParen\n"; break;
-    case AsmToken::Less:           *Out << "Less\n"; break;
-    case AsmToken::LessEqual:      *Out << "LessEqual\n"; break;
-    case AsmToken::LessGreater:    *Out << "LessGreater\n"; break;
-    case AsmToken::LessLess:       *Out << "LessLess\n"; break;
-    case AsmToken::Minus:          *Out << "Minus\n"; break;
-    case AsmToken::Percent:        *Out << "Percent\n"; break;
-    case AsmToken::Pipe:           *Out << "Pipe\n"; break;
-    case AsmToken::PipePipe:       *Out << "PipePipe\n"; break;
-    case AsmToken::Plus:           *Out << "Plus\n"; break;
-    case AsmToken::RParen:         *Out << "RParen\n"; break;
-    case AsmToken::Slash:          *Out << "Slash\n"; break;
-    case AsmToken::Star:           *Out << "Star\n"; break;
-    case AsmToken::Tilde:          *Out << "Tilde\n"; break;
+    case AsmToken::Amp:            Out->os() << "Amp\n"; break;
+    case AsmToken::AmpAmp:         Out->os() << "AmpAmp\n"; break;
+    case AsmToken::Caret:          Out->os() << "Caret\n"; break;
+    case AsmToken::Colon:          Out->os() << "Colon\n"; break;
+    case AsmToken::Comma:          Out->os() << "Comma\n"; break;
+    case AsmToken::Dollar:         Out->os() << "Dollar\n"; break;
+    case AsmToken::EndOfStatement: Out->os() << "EndOfStatement\n"; break;
+    case AsmToken::Eof:            Out->os() << "Eof\n"; break;
+    case AsmToken::Equal:          Out->os() << "Equal\n"; break;
+    case AsmToken::EqualEqual:     Out->os() << "EqualEqual\n"; break;
+    case AsmToken::Exclaim:        Out->os() << "Exclaim\n"; break;
+    case AsmToken::ExclaimEqual:   Out->os() << "ExclaimEqual\n"; break;
+    case AsmToken::Greater:        Out->os() << "Greater\n"; break;
+    case AsmToken::GreaterEqual:   Out->os() << "GreaterEqual\n"; break;
+    case AsmToken::GreaterGreater: Out->os() << "GreaterGreater\n"; break;
+    case AsmToken::LParen:         Out->os() << "LParen\n"; break;
+    case AsmToken::Less:           Out->os() << "Less\n"; break;
+    case AsmToken::LessEqual:      Out->os() << "LessEqual\n"; break;
+    case AsmToken::LessGreater:    Out->os() << "LessGreater\n"; break;
+    case AsmToken::LessLess:       Out->os() << "LessLess\n"; break;
+    case AsmToken::Minus:          Out->os() << "Minus\n"; break;
+    case AsmToken::Percent:        Out->os() << "Percent\n"; break;
+    case AsmToken::Pipe:           Out->os() << "Pipe\n"; break;
+    case AsmToken::PipePipe:       Out->os() << "PipePipe\n"; break;
+    case AsmToken::Plus:           Out->os() << "Plus\n"; break;
+    case AsmToken::RParen:         Out->os() << "RParen\n"; break;
+    case AsmToken::Slash:          Out->os() << "Slash\n"; break;
+    case AsmToken::Star:           Out->os() << "Star\n"; break;
+    case AsmToken::Tilde:          Out->os() << "Tilde\n"; break;
     }
   }
 
@@ -291,10 +290,11 @@ static int AssembleInput(const char *ProgName) {
     return 1;
   }
 
-  OwningPtr<formatted_tool_output_file> Out(GetOutputStream());
+  OwningPtr<tool_output_file> Out(GetOutputStream());
   if (!Out)
     return 1;
 
+  formatted_raw_ostream FOS(Out->os());
   OwningPtr<MCStreamer> Str;
 
   if (FileType == OFT_AssemblyFile) {
@@ -303,7 +303,7 @@ static int AssembleInput(const char *ProgName) {
     MCCodeEmitter *CE = 0;
     if (ShowEncoding)
       CE = TheTarget->createCodeEmitter(*TM, Ctx);
-    Str.reset(createAsmStreamer(Ctx, *Out,
+    Str.reset(createAsmStreamer(Ctx, FOS,
                                 TM->getTargetData()->isLittleEndian(),
                                 /*asmverbose*/true, IP, CE, ShowInst));
   } else if (FileType == OFT_Null) {
@@ -313,7 +313,7 @@ static int AssembleInput(const char *ProgName) {
     MCCodeEmitter *CE = TheTarget->createCodeEmitter(*TM, Ctx);
     TargetAsmBackend *TAB = TheTarget->createAsmBackend(TripleName);
     Str.reset(TheTarget->createObjectStreamer(TripleName, Ctx, *TAB,
-                                              *Out, CE, RelaxAll));
+                                              FOS, CE, RelaxAll));
   }
 
   if (EnableLogging) {
@@ -359,15 +359,15 @@ static int DisassembleInput(const char *ProgName, bool Enhanced) {
     return 1;
   }
   
-  OwningPtr<formatted_tool_output_file> Out(GetOutputStream());
+  OwningPtr<tool_output_file> Out(GetOutputStream());
   if (!Out)
     return 1;
 
   int Res;
   if (Enhanced)
-    Res = Disassembler::disassembleEnhanced(TripleName, *Buffer, *Out);
+    Res = Disassembler::disassembleEnhanced(TripleName, *Buffer, Out->os());
   else
-    Res = Disassembler::disassemble(*TheTarget, TripleName, *Buffer, *Out);
+    Res = Disassembler::disassemble(*TheTarget, TripleName, *Buffer, Out->os());
 
   // Keep output if no errors.
   if (Res == 0) Out->keep();

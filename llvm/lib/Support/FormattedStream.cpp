@@ -98,6 +98,3 @@ formatted_raw_ostream &llvm::fdbgs() {
   static formatted_raw_ostream S(dbgs());
   return S;
 }
-
-/// ~formatted_tool_output_file - Out-of-line destructor.
-formatted_tool_output_file::~formatted_tool_output_file() {}

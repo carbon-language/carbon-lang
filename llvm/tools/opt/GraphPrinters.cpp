@@ -31,16 +31,16 @@ static void WriteGraphToFile(raw_ostream &O, const std::string &GraphName,
   tool_output_file F(Filename.c_str(), ErrInfo);
 
   if (ErrInfo.empty()) {
-    WriteGraph(F, GT);
-    F.close();
-    if (!F.has_error()) {
+    WriteGraph(F.os(), GT);
+    F.os().close();
+    if (!F.os().has_error()) {
       O << "\n";
       F.keep();
       return;
     }
   }
-  F.clear_error();
   O << "  error opening file for writing!\n";
+  F.os().clear_error();
 }
 
 

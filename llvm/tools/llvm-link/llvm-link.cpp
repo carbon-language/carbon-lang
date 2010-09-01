@@ -130,9 +130,9 @@ int main(int argc, char **argv) {
 
   if (Verbose) errs() << "Writing bitcode...\n";
   if (OutputAssembly) {
-    Out << *Composite;
-  } else if (Force || !CheckBitcodeOutputToConsole(Out, true))
-    WriteBitcodeToFile(Composite.get(), Out);
+    Out.os() << *Composite;
+  } else if (Force || !CheckBitcodeOutputToConsole(Out.os(), true))
+    WriteBitcodeToFile(Composite.get(), Out.os());
 
   // Declare success.
   Out.keep();

@@ -339,15 +339,15 @@ Module *BugDriver::ExtractMappedBlocksFromModule(const
     // If the BB doesn't have a name, give it one so we have something to key
     // off of.
     if (!BB->hasName()) BB->setName("tmpbb");
-    BlocksToNotExtractFile << BB->getParent()->getNameStr() << " "
-                           << BB->getName() << "\n";
+    BlocksToNotExtractFile.os() << BB->getParent()->getNameStr() << " "
+                                << BB->getName() << "\n";
   }
-  BlocksToNotExtractFile.close();
-  if (BlocksToNotExtractFile.has_error()) {
+  BlocksToNotExtractFile.os().close();
+  if (BlocksToNotExtractFile.os().has_error()) {
     errs() << "Error writing list of blocks to not extract: " << ErrorInfo
            << "\n";
     EmitProgressBitcode(M, "basicblockextractfail", true);
-    BlocksToNotExtractFile.clear_error();
+    BlocksToNotExtractFile.os().clear_error();
     return 0;
   }
   BlocksToNotExtractFile.keep();

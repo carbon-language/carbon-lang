@@ -134,9 +134,9 @@ int main(int argc, char **argv) {
   }
 
   if (OutputAssembly)
-    Passes.add(createPrintModulePass(&Out));
-  else if (Force || !CheckBitcodeOutputToConsole(Out, true))
-    Passes.add(createBitcodeWriterPass(Out));
+    Passes.add(createPrintModulePass(&Out.os()));
+  else if (Force || !CheckBitcodeOutputToConsole(Out.os(), true))
+    Passes.add(createBitcodeWriterPass(Out.os()));
 
   Passes.run(*M.get());
 

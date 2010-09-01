@@ -45,7 +45,7 @@ struct LTOCodeGenerator {
     const void*         compile(size_t* length, std::string& errMsg);
     void                setCodeGenDebugOptions(const char *opts); 
 private:
-    bool                generateAssemblyCode(llvm::formatted_raw_ostream& out, 
+    bool                generateAssemblyCode(llvm::raw_ostream& out, 
                                              std::string& errMsg);
     bool                assemble(const std::string& asmPath, 
                             const std::string& objPath, std::string& errMsg);

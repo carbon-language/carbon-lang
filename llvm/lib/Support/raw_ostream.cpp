@@ -670,25 +670,29 @@ uint64_t raw_null_ostream::current_pos() const {
 //  tool_output_file
 //===----------------------------------------------------------------------===//
 
-/// SetupRemoveOnSignal - This is a helper for tool_output_file's constructor
-/// to allow the signal handlers to be installed before constructing the
-/// base class raw_fd_ostream.
-static const char *SetupRemoveOnSignal(const char *Filename) {
+tool_output_file::CleanupInstaller::CleanupInstaller(const char *filename)
+  : Filename(filename), Keep(false) {
   // Arrange for the file to be deleted if the process is killed.
-  if (strcmp(Filename, "-") != 0)
+  if (Filename != "-")
     sys::RemoveFileOnSignal(sys::Path(Filename));
-  return Filename;
 }
 
-tool_output_file::tool_output_file(const char *filename, std::string &ErrorInfo, 
-                                   unsigned Flags)
-  : raw_fd_ostream(SetupRemoveOnSignal(filename), ErrorInfo, Flags),
-    Filename(filename),
-    Keep(!ErrorInfo.empty() /* If open fails, no cleanup is needed. */) {
-}
-
-tool_output_file::~tool_output_file() {
+tool_output_file::CleanupInstaller::~CleanupInstaller() {
   // Delete the file if the client hasn't told us not to.
   if (!Keep && Filename != "-")
     sys::Path(Filename).eraseFromDisk();
+
+  // Ok, the file is successfully written and closed, or deleted. There's no
+  // further need to clean it up on signals.
+  if (Filename != "-")
+    sys::DontRemoveFileOnSignal(sys::Path(Filename));
+}
+
+tool_output_file::tool_output_file(const char *filename, std::string &ErrorInfo,
+                                   unsigned Flags)
+  : Installer(filename),
+    OS(filename, ErrorInfo, Flags) {
+  // If open fails, no cleanup is needed.
+  if (!ErrorInfo.empty())
+    Installer.Keep = true;
 }

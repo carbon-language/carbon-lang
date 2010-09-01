@@ -98,7 +98,7 @@ int main(int argc, char **argv) {
 
   // All that llvm-dis does is write the assembly to a file.
   if (!DontPrint)
-    *Out << *M;
+    Out->os() << *M;
 
   // Declare success.
   Out->keep();
