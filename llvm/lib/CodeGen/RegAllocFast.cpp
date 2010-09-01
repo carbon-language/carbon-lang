@@ -113,6 +113,9 @@ namespace {
     // Allocatable - vector of allocatable physical registers.
     BitVector Allocatable;
 
+    // Reserved - vector of reserved physical registers.
+    BitVector Reserved;
+
     // SkippedInstrs - Descriptors of instructions whose clobber list was
     // ignored because all registers were spilled. It is still necessary to
     // mark all the clobbered registers as used by the function.
@@ -709,7 +712,7 @@ void RAFast::handleThroughOperands(MachineInstr *MI,
   }
 
   // Restore UsedInInstr to a state usable for allocating normal virtual uses.
-  UsedInInstr.reset();
+  UsedInInstr = Reserved;
   for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
     MachineOperand &MO = MI->getOperand(i);
     if (!MO.isReg() || (MO.isDef() && !MO.isEarlyClobber())) continue;
@@ -835,7 +838,7 @@ void RAFast::AllocateBasicBlock() {
     }
 
     // Track registers used by instruction.
-    UsedInInstr.reset();
+    UsedInInstr = Reserved;
 
     // First scan.
     // Mark physreg uses and early clobbers as used.
@@ -913,7 +916,7 @@ void RAFast::AllocateBasicBlock() {
 
     // Track registers defined by instruction - early clobbers and tied uses at
     // this point.
-    UsedInInstr.reset();
+    UsedInInstr = Reserved;
     if (hasEarlyClobbers) {
       for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
         MachineOperand &MO = MI->getOperand(i);
@@ -1011,6 +1014,7 @@ bool RAFast::runOnMachineFunction(MachineFunction &Fn) {
 
   UsedInInstr.resize(TRI->getNumRegs());
   Allocatable = TRI->getAllocatableSet(*MF);
+  Reserved = TRI->getReservedRegs(*MF);
 
   // initialize the virtual->physical register map to have a 'null'
   // mapping for all virtual registers
