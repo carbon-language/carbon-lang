@@ -1500,6 +1500,7 @@ classifyReturnType(QualType RetTy) const {
     break;
   }
 
+  const llvm::Type *HighPart = 0;
   switch (Hi) {
     // Memory was handled previously and X87 should
     // never occur as a hi class.
@@ -1511,24 +1512,17 @@ classifyReturnType(QualType RetTy) const {
   case NoClass:
     break;
 
-  case Integer: {
-    const llvm::Type *HiType =
-      GetINTEGERTypeAtOffset(CGT.ConvertTypeRecursive(RetTy), 8, RetTy, 8);
-    if (Lo == NoClass)  // Return HiType at offset 8 in memory.
-      return ABIArgInfo::getDirect(HiType, 8);
-
-    ResType = llvm::StructType::get(getVMContext(), ResType, HiType, NULL);
+  case Integer:
+    HighPart = GetINTEGERTypeAtOffset(CGT.ConvertTypeRecursive(RetTy),
+                                      8, RetTy, 8);
+    if (Lo == NoClass)  // Return HighPart at offset 8 in memory.
+      return ABIArgInfo::getDirect(HighPart, 8);
     break;
-  }
-  case SSE: {
-    const llvm::Type *HiType =
-      GetSSETypeAtOffset(CGT.ConvertTypeRecursive(RetTy), 8, RetTy, 8);
-    if (Lo == NoClass)  // Return HiType at offset 8 in memory.
-      return ABIArgInfo::getDirect(HiType, 8);
-
-    ResType = llvm::StructType::get(getVMContext(), ResType, HiType,NULL);
+  case SSE:
+    HighPart = GetSSETypeAtOffset(CGT.ConvertTypeRecursive(RetTy), 8, RetTy, 8);
+    if (Lo == NoClass)  // Return HighPart at offset 8 in memory.
+      return ABIArgInfo::getDirect(HighPart, 8);
     break;
-  }
 
     // AMD64-ABI 3.2.3p4: Rule 5. If the class is SSEUP, the eightbyte
     // is passed in the upper half of the last used SSE register.
@@ -1547,15 +1541,18 @@ classifyReturnType(QualType RetTy) const {
     // preceeded by X87. In such situations we follow gcc and pass the
     // extra bits in an SSE reg.
     if (Lo != X87) {
-      const llvm::Type *HiType =
-        GetSSETypeAtOffset(CGT.ConvertTypeRecursive(RetTy), 8, RetTy, 8);
-      if (Lo == NoClass)  // Return HiType at offset 8 in memory.
-        return ABIArgInfo::getDirect(HiType, 8);
-
-      ResType = llvm::StructType::get(getVMContext(), ResType, HiType, NULL);
+      HighPart = GetSSETypeAtOffset(CGT.ConvertTypeRecursive(RetTy),
+                                    8, RetTy, 8);
+      if (Lo == NoClass)  // Return HighPart at offset 8 in memory.
+        return ABIArgInfo::getDirect(HighPart, 8);
     }
     break;
   }
+  
+  // If a high part was specified, merge it together with the low part.  It is
+  // known to pass in the high eightbyte of the result.
+  if (HighPart) 
+    ResType = llvm::StructType::get(getVMContext(), ResType, HighPart, NULL);
 
   return ABIArgInfo::getDirect(ResType);
 }
