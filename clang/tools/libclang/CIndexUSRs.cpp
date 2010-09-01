@@ -422,6 +422,17 @@ void USRGenerator::VisitTagDecl(TagDecl *D) {
     else
       Buf[off] = 'a';
   }
+  
+  // For a class template specialization, mangle the template arguments.
+  if (ClassTemplateSpecializationDecl *Spec
+                              = dyn_cast<ClassTemplateSpecializationDecl>(D)) {
+    const TemplateArgumentList &Args = Spec->getTemplateInstantiationArgs();
+    Out << '>';
+    for (unsigned I = 0, N = Args.size(); I != N; ++I) {
+      Out << '#';
+      VisitTemplateArgument(Args.get(I));
+    }
+  }
 }
 
 void USRGenerator::VisitTypedefDecl(TypedefDecl *D) {

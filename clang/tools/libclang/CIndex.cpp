@@ -290,6 +290,7 @@ public:
   bool VisitTranslationUnitDecl(TranslationUnitDecl *D);
   bool VisitTypedefDecl(TypedefDecl *D);
   bool VisitTagDecl(TagDecl *D);
+  bool VisitClassTemplateSpecializationDecl(ClassTemplateSpecializationDecl *D);
   bool VisitClassTemplatePartialSpecializationDecl(
                                      ClassTemplatePartialSpecializationDecl *D);
   bool VisitTemplateTypeParmDecl(TemplateTypeParmDecl *D);
@@ -603,6 +604,41 @@ bool CursorVisitor::VisitTypedefDecl(TypedefDecl *D) {
 
 bool CursorVisitor::VisitTagDecl(TagDecl *D) {
   return VisitDeclContext(D);
+}
+
+bool CursorVisitor::VisitClassTemplateSpecializationDecl(
+                                          ClassTemplateSpecializationDecl *D) {
+  bool ShouldVisitBody = false;
+  switch (D->getSpecializationKind()) {
+  case TSK_Undeclared:
+  case TSK_ImplicitInstantiation:
+    // Nothing to visit
+    return false;
+      
+  case TSK_ExplicitInstantiationDeclaration:
+  case TSK_ExplicitInstantiationDefinition:
+    break;
+      
+  case TSK_ExplicitSpecialization:
+    ShouldVisitBody = true;
+    break;
+  }
+  
+  // Visit the template arguments used in the specialization.
+  if (TypeSourceInfo *SpecType = D->getTypeAsWritten()) {
+    TypeLoc TL = SpecType->getTypeLoc();
+    if (TemplateSpecializationTypeLoc *TSTLoc
+          = dyn_cast<TemplateSpecializationTypeLoc>(&TL)) {
+      for (unsigned I = 0, N = TSTLoc->getNumArgs(); I != N; ++I)
+        if (VisitTemplateArgumentLoc(TSTLoc->getArgLoc(I)))
+          return true;
+    }
+  }
+  
+  if (ShouldVisitBody && VisitCXXRecordDecl(D))
+    return true;
+  
+  return false;
 }
 
 bool CursorVisitor::VisitClassTemplatePartialSpecializationDecl(
