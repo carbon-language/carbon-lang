@@ -1406,15 +1406,29 @@ Value *CodeGenFunction::EmitARMBuiltinExpr(unsigned BuiltinID,
     Int = usgn ? Intrinsic::arm_neon_vminu : Intrinsic::arm_neon_vmins;
     return EmitNeonCall(CGM.getIntrinsic(Int, &Ty, 1), Ops, "vmin");
   case ARM::BI__builtin_neon_vmlal_lane_v:
-    splat = true;
+    Ops[2] = EmitNeonSplat(Ops[2], cast<Constant>(Ops[3]));
   case ARM::BI__builtin_neon_vmlal_v:
-    Int = usgn ? Intrinsic::arm_neon_vmlalu : Intrinsic::arm_neon_vmlals;
-    return EmitNeonCall(CGM.getIntrinsic(Int, &Ty, 1), Ops, "vmlal", splat);
+    if (usgn) {
+      Ops[1] = Builder.CreateZExt(Ops[1], Ty);
+      Ops[2] = Builder.CreateZExt(Ops[2], Ty);
+    } else {
+      Ops[1] = Builder.CreateSExt(Ops[1], Ty);
+      Ops[2] = Builder.CreateSExt(Ops[2], Ty);
+    }
+    Ops[1] = Builder.CreateMul(Ops[1], Ops[2]);
+    return Builder.CreateAdd(Ops[0], Ops[1], "vmlal");
   case ARM::BI__builtin_neon_vmlsl_lane_v:
-    splat = true;
+    Ops[2] = EmitNeonSplat(Ops[2], cast<Constant>(Ops[3]));
   case ARM::BI__builtin_neon_vmlsl_v:
-    Int = usgn ? Intrinsic::arm_neon_vmlslu : Intrinsic::arm_neon_vmlsls;
-    return EmitNeonCall(CGM.getIntrinsic(Int, &Ty, 1), Ops, "vmlsl", splat);
+    if (usgn) {
+      Ops[1] = Builder.CreateZExt(Ops[1], Ty);
+      Ops[2] = Builder.CreateZExt(Ops[2], Ty);
+    } else {
+      Ops[1] = Builder.CreateSExt(Ops[1], Ty);
+      Ops[2] = Builder.CreateSExt(Ops[2], Ty);
+    }
+    Ops[1] = Builder.CreateMul(Ops[1], Ops[2]);
+    return Builder.CreateSub(Ops[0], Ops[1], "vmlsl");
   case ARM::BI__builtin_neon_vmovl_v:
     if (usgn)
       return Builder.CreateZExt(Ops[0], Ty, "vmovl");
@@ -1422,11 +1436,19 @@ Value *CodeGenFunction::EmitARMBuiltinExpr(unsigned BuiltinID,
   case ARM::BI__builtin_neon_vmovn_v:
     return Builder.CreateTrunc(Ops[0], Ty, "vmovn");
   case ARM::BI__builtin_neon_vmull_lane_v:
-    splat = true;
+    Ops[1] = EmitNeonSplat(Ops[1], cast<Constant>(Ops[2]));
   case ARM::BI__builtin_neon_vmull_v:
-    Int = usgn ? Intrinsic::arm_neon_vmullu : Intrinsic::arm_neon_vmulls;
-    Int = poly ? (unsigned)Intrinsic::arm_neon_vmullp : Int;
-    return EmitNeonCall(CGM.getIntrinsic(Int, &Ty, 1), Ops, "vmlal", splat);
+    if (poly)
+      return EmitNeonCall(CGM.getIntrinsic(Intrinsic::arm_neon_vmullp, &Ty, 1),
+                          Ops, "vmull");
+    if (usgn) {
+      Ops[0] = Builder.CreateZExt(Ops[0], Ty);
+      Ops[1] = Builder.CreateZExt(Ops[1], Ty);
+    } else {
+      Ops[0] = Builder.CreateSExt(Ops[0], Ty);
+      Ops[1] = Builder.CreateSExt(Ops[1], Ty);
+    }
+    return Builder.CreateMul(Ops[0], Ops[1], "vmull");
   case ARM::BI__builtin_neon_vpadal_v:
   case ARM::BI__builtin_neon_vpadalq_v:
     Int = usgn ? Intrinsic::arm_neon_vpadalu : Intrinsic::arm_neon_vpadals;
