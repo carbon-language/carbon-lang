@@ -16,14 +16,15 @@ scalar(@ARGV) == 1 or die "Usage: dotest.pl testdir";
 
 my $scriptDir = $FindBin::Bin;
 my $baseDir = abs_path("$scriptDir/..");
+my $pluginDir = "$baseDir/test/plugins";
 my $testDir = $ARGV[0];
 
 my $dbgPath = "$baseDir/build/Debug/LLDB.framework/Resources/Python";
 my $relPath = "$baseDir/build/Release/LLDB.framework/Resources/Python";
 if (-d $dbgPath) {
-  $ENV{'PYTHONPATH'} = "$dbgPath:$scriptDir";
+  $ENV{'PYTHONPATH'} = "$dbgPath:$scriptDir:$pluginDir";
 } elsif (-d $relPath) {
-  $ENV{'PYTHONPATH'} = "$relPath:$scriptDir";
+  $ENV{'PYTHONPATH'} = "$relPath:$scriptDir:$pluginDir";
 }
 #print("ENV{PYTHONPATH}=$ENV{'PYTHONPATH'}\n");
 
