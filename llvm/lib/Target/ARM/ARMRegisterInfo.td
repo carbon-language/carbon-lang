@@ -425,32 +425,7 @@ def rGPR : RegisterClass<"ARM", [i32], 32, [R0, R1, R2, R3, R4, R5, R6,
 
 // Thumb registers are R0-R7 normally. Some instructions can still use
 // the general GPR register class above (MOV, e.g.)
-def tGPR : RegisterClass<"ARM", [i32], 32, [R0, R1, R2, R3, R4, R5, R6, R7]> {
-  let MethodProtos = [{
-    iterator allocation_order_begin(const MachineFunction &MF) const;
-    iterator allocation_order_end(const MachineFunction &MF) const;
-  }];
-  let MethodBodies = [{
-    static const unsigned THUMB_tGPR_AO[] = {
-      ARM::R0, ARM::R1, ARM::R2, ARM::R3,
-      ARM::R4, ARM::R5, ARM::R6, ARM::R7 };
-
-    // FP is R7, only low registers available.
-    tGPRClass::iterator
-    tGPRClass::allocation_order_begin(const MachineFunction &MF) const {
-      return THUMB_tGPR_AO;
-    }
-
-    tGPRClass::iterator
-    tGPRClass::allocation_order_end(const MachineFunction &MF) const {
-      const TargetMachine &TM = MF.getTarget();
-      const TargetRegisterInfo *RI = TM.getRegisterInfo();
-      tGPRClass::iterator I =
-        THUMB_tGPR_AO + (sizeof(THUMB_tGPR_AO)/sizeof(unsigned));
-      return RI->hasFP(MF) ? I-1 : I;
-    }
-  }];
-}
+def tGPR : RegisterClass<"ARM", [i32], 32, [R0, R1, R2, R3, R4, R5, R6, R7]> {}
 
 // For tail calls, we can't use callee-saved registers, as they are restored
 // to the saved value before the tail call, which would clobber a call address.
