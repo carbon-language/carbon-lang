@@ -180,9 +180,6 @@ private:
   SDNode *SelectARMCMOVSoImmOp(SDNode *N, SDValue FalseVal, SDValue TrueVal,
                                ARMCC::CondCodes CCVal, SDValue CCR,
                                SDValue InFlag);
-  SDNode *OptimizeCMOVSoImmOp(SDNode *N, SDValue FalseVal, SDValue TrueVal,
-                              ARMCC::CondCodes CCVal, SDValue CCR,
-                              SDValue InFlag, bool IsThumb2);
 
   SDNode *SelectConcatVector(SDNode *N);
 
@@ -1644,92 +1641,6 @@ SelectARMCMOVShiftOp(SDNode *N, SDValue FalseVal, SDValue TrueVal,
   return 0;
 }
 
-/// OptimizeCMOVSoImmOp - It's possible to save an instruction or two be
-/// recognizing that the TST and AND instructions perform the same function
-/// (they "and" the two values). See inside for more details.
-SDNode *ARMDAGToDAGISel::
-OptimizeCMOVSoImmOp(SDNode *N, SDValue FalseVal, SDValue TrueVal,
-                    ARMCC::CondCodes CCVal, SDValue CCR, SDValue InFlag,
-                    bool IsThumb2) {
-  // Convert:
-  //
-  //   tst.w    r0, #256
-  //   mvn      r0, #25
-  //   it       eq
-  //   moveq    r0, #0
-  //
-  // into:
-  //
-  //   ands.w   r0, r0, #256
-  //   it       ne
-  //   mvnne.w  r0, #25
-  //
-  if (InFlag.getOpcode() != ARMISD::CMPZ ||
-      InFlag.getOperand(0).getOpcode() != ISD::AND)
-    return 0;
-
-  // The true value needs to be zero, as that's the result of the AND
-  // instruction.
-  ConstantSDNode *True = dyn_cast<ConstantSDNode>(TrueVal);
-  if (!True || True->getZExtValue() != 0)
-    return 0;
-
-  // Bail if the false value isn't an immediate.
-  ConstantSDNode *False = dyn_cast<ConstantSDNode>(FalseVal);
-  if (!False)
-    return 0;
-
-  bool UseMVN = false;
-  if ((IsThumb2 && !Pred_t2_so_imm(FalseVal.getNode())) ||
-      (!IsThumb2 && !Pred_so_imm(FalseVal.getNode()))) {
-    // The false value isn't a proper immediate. Check to see if we can use the
-    // bitwise NOT version.
-    if ((IsThumb2 && ARM_AM::getT2SOImmVal(~False->getZExtValue()) != -1) ||
-        (!IsThumb2 && ARM_AM::getSOImmVal(~False->getZExtValue()) != -1)) {
-      UseMVN = true;
-      FalseVal = CurDAG->getTargetConstant(~False->getZExtValue(), MVT::i32);
-    } else {
-      return 0;
-    }
-  } else {
-    FalseVal = CurDAG->getTargetConstant(False->getZExtValue(), MVT::i32);
-  }
-
-  // A comparison against zero corresponds with the flag AND sets if the result
-  // is zero.
-  ConstantSDNode *CmpVal = dyn_cast<ConstantSDNode>(InFlag.getOperand(1));
-  if (!CmpVal || CmpVal->getZExtValue() != 0)
-    return 0;
-
-  ARMCC::CondCodes NegCC = ARMCC::getOppositeCondition(CCVal);
-  SDValue OrigAnd = InFlag.getOperand(0);
-  SDValue NewAnd =
-    CurDAG->getNode(ARMISD::AND, N->getDebugLoc(),
-                    CurDAG->getVTList(OrigAnd.getValueType(), MVT::Flag),
-                    OrigAnd->getOperand(0), OrigAnd->getOperand(1));
-
-  unsigned Opcode = !UseMVN ?
-    (IsThumb2 ? ARM::t2MOVCCi : ARM::MOVCCi) :
-    (IsThumb2 ? ARM::t2MVNCCi : ARM::MVNCCi);
-
-  SDValue Ops[] = {
-    NewAnd.getValue(0),
-    FalseVal,
-    CurDAG->getTargetConstant(NegCC, MVT::i32),
-    CCR, NewAnd.getValue(1)
-  };
-  SDNode *ResNode = CurDAG->SelectNodeTo(N, Opcode, MVT::i32, Ops, 5);
-
-  // Manually run "Select" on the newly created "ARMISD::AND" node to make
-  // sure that it's converted properly.
-  SDNode *AndNode = Select(NewAnd.getNode());
-  if (AndNode && NewAnd.getNode() != AndNode &&
-      NewAnd.getNode()->getOpcode() != ISD::DELETED_NODE)
-    ReplaceUses(NewAnd.getNode(), AndNode);
-
-  return ResNode;
-}
-
 SDNode *ARMDAGToDAGISel::
 SelectT2CMOVSoImmOp(SDNode *N, SDValue FalseVal, SDValue TrueVal,
                     ARMCC::CondCodes CCVal, SDValue CCR, SDValue InFlag) {
@@ -1738,10 +1649,6 @@ SelectT2CMOVSoImmOp(SDNode *N, SDValue FalseVal, SDValue TrueVal,
     return 0;
 
   if (Pred_t2_so_imm(TrueVal.getNode())) {
-    SDNode *ResNode = OptimizeCMOVSoImmOp(N, FalseVal, TrueVal, CCVal, CCR,
-                                          InFlag, true);
-    if (ResNode) return ResNode;
-
     SDValue True = CurDAG->getTargetConstant(T->getZExtValue(), MVT::i32);
     SDValue CC = CurDAG->getTargetConstant(CCVal, MVT::i32);
     SDValue Ops[] = { FalseVal, True, CC, CCR, InFlag };
@@ -1759,10 +1666,6 @@ SelectARMCMOVSoImmOp(SDNode *N, SDValue FalseVal, SDValue TrueVal,
     return 0;
 
   if (Pred_so_imm(TrueVal.getNode())) {
-    SDNode *ResNode = OptimizeCMOVSoImmOp(N, FalseVal, TrueVal, CCVal, CCR,
-                                          InFlag, false);
-    if (ResNode) return ResNode;
-
     SDValue True = CurDAG->getTargetConstant(T->getZExtValue(), MVT::i32);
     SDValue CC = CurDAG->getTargetConstant(CCVal, MVT::i32);
     SDValue Ops[] = { FalseVal, True, CC, CCR, InFlag };
