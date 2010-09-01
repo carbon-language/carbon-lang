@@ -182,6 +182,16 @@ bool llvm::sys::RemoveFileOnSignal(const sys::Path &Filename,
   return false;
 }
 
+// DontRemoveFileOnSignal - The public API
+void llvm::sys::DontRemoveFileOnSignal(const sys::Path &Filename) {
+  SignalsMutex.acquire();
+  std::vector<sys::Path>::reverse_iterator I =
+    std::find(FilesToRemove.rbegin(), FilesToRemove.rend(), Filename);
+  if (I != FilesToRemove.rend())
+    FilesToRemove.erase(I.base()-1);
+  SignalsMutex.release();
+}
+
 /// AddSignalHandler - Add a function to be called when a signal is delivered
 /// to the process.  The handler can have a cookie passed to it to identify
 /// what instance of the handler it is.
