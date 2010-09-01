@@ -100,8 +100,10 @@ namespace {
     bool runOnFunction(Function &F);
     
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
-      if (EnableLVI)
+      if (EnableLVI) {
         AU.addRequired<LazyValueInfo>();
+        AU.addPreserved<LazyValueInfo>();
+      }
     }
     
     void FindLoopHeaders(Function &F);
