@@ -203,11 +203,17 @@ CodeGenFunction::EmitCXXOperatorMemberCallExpr(const CXXOperatorCallExpr *E,
              "EmitCXXOperatorMemberCallExpr - user declared copy assignment");
       LValue LV = EmitLValue(E->getArg(0));
       llvm::Value *This;
-      if (LV.isPropertyRef()) {
+      if (LV.isPropertyRef() || LV.isKVCRef()) {
         llvm::Value *AggLoc  = CreateMemTemp(E->getArg(1)->getType());
         EmitAggExpr(E->getArg(1), AggLoc, false /*VolatileDest*/);
-        EmitObjCPropertySet(LV.getPropertyRefExpr(),
-                            RValue::getAggregate(AggLoc, false /*VolatileDest*/));
+        if (LV.isPropertyRef())
+          EmitObjCPropertySet(LV.getPropertyRefExpr(),
+                              RValue::getAggregate(AggLoc, 
+                                                   false /*VolatileDest*/));
+        else
+          EmitObjCPropertySet(LV.getKVCRefExpr(),
+                              RValue::getAggregate(AggLoc, 
+                                                   false /*VolatileDest*/));
         return RValue::getAggregate(0, false);
       }
       else
@@ -226,8 +232,11 @@ CodeGenFunction::EmitCXXOperatorMemberCallExpr(const CXXOperatorCallExpr *E,
                                    FPT->isVariadic());
   LValue LV = EmitLValue(E->getArg(0));
   llvm::Value *This;
-  if (LV.isPropertyRef()) {
-    RValue RV = EmitLoadOfPropertyRefLValue(LV, E->getArg(0)->getType());
+  if (LV.isPropertyRef() || LV.isKVCRef()) {
+    QualType QT = E->getArg(0)->getType();
+    RValue RV = 
+      LV.isPropertyRef() ? EmitLoadOfPropertyRefLValue(LV, QT)
+                         : EmitLoadOfKVCRefLValue(LV, QT);
     assert (!RV.isScalar() && "EmitCXXOperatorMemberCallExpr");
     This = RV.getAggregateAddr();
   }

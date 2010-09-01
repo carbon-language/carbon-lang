@@ -1753,9 +1753,11 @@ LValue CodeGenFunction::EmitCastLValue(const CastExpr *E) {
     if (E->getSubExpr()->Classify(getContext()).getKind() 
                                           != Expr::Classification::CL_PRValue) {
       LValue LV = EmitLValue(E->getSubExpr());
-      if (LV.isPropertyRef()) {
+      if (LV.isPropertyRef() || LV.isKVCRef()) {
         QualType QT = E->getSubExpr()->getType();
-        RValue RV = EmitLoadOfPropertyRefLValue(LV, QT);
+        RValue RV = 
+          LV.isPropertyRef() ? EmitLoadOfPropertyRefLValue(LV, QT) 
+                             : EmitLoadOfKVCRefLValue(LV, QT);
         assert(!RV.isScalar() && "EmitCastLValue-scalar cast of property ref");
         llvm::Value *V = RV.getAggregateAddr();
         return MakeAddrLValue(V, QT);
@@ -1810,8 +1812,11 @@ LValue CodeGenFunction::EmitCastLValue(const CastExpr *E) {
     
     LValue LV = EmitLValue(E->getSubExpr());
     llvm::Value *This;
-    if (LV.isPropertyRef()) {
-      RValue RV = EmitLoadOfPropertyRefLValue(LV, E->getSubExpr()->getType());
+    if (LV.isPropertyRef() || LV.isKVCRef()) {
+      QualType QT = E->getSubExpr()->getType();
+      RValue RV = 
+        LV.isPropertyRef() ? EmitLoadOfPropertyRefLValue(LV, QT)
+                           : EmitLoadOfKVCRefLValue(LV, QT);
       assert (!RV.isScalar() && "EmitCastLValue");
       This = RV.getAggregateAddr();
     }

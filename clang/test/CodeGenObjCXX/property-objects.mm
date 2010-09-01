@@ -25,6 +25,8 @@ struct CGRect {
 - (void)setFrame:(CGRect)frameRect;
 - (CGRect)frame;
 - (void) initWithOwner;
+- (struct CGRect)extent;
+- (void)dealloc;
 @end
 
 @implementation I
@@ -40,6 +42,12 @@ struct CGRect {
   labelLayerFrame = self.bounds;
   _labelLayer.frame = labelLayerFrame;
 }
+// rdar://8366604
+- (void)dealloc
+  {
+      CGRect cgrect = self.extent;
+  }
+- (struct CGRect)extent {return bounds;}
 @end
 
 int main() {
