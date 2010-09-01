@@ -21,10 +21,9 @@ namespace llvm {
   class raw_ostream;
   namespace sys { class Path; }
 
-/// Determine if the raw_ostream provided is connected to the outs() and
-/// displayed or not (to a console window). If so, generate a warning message
-/// advising against display of bitcode and return true. Otherwise just return
-/// false
+/// Determine if the raw_ostream provided is connected to a terminal. If so,
+/// generate a warning message to errs() advising against display of bitcode
+/// and return true. Otherwise just return false.
 /// @brief Check for output written to a console
 bool CheckBitcodeOutputToConsole(
   raw_ostream &stream_to_check, ///< The stream to be checked
