@@ -389,16 +389,12 @@ bool SimpleRegisterCoalescing::RemoveCopyByCommutingDef(const CoalescerPair &CP,
   if (HasOtherReachingDefs(IntA, IntB, AValNo, BValNo))
     return false;
 
-  bool BHasSubRegs = false;
-  if (TargetRegisterInfo::isPhysicalRegister(IntB.reg))
-    BHasSubRegs = *tri_->getSubRegisters(IntB.reg);
-
-  // Abort if the subregisters of IntB.reg have values that are not simply the
+  // Abort if the aliases of IntB.reg have values that are not simply the
   // clobbers from the superreg.
-  if (BHasSubRegs)
-    for (const unsigned *SR = tri_->getSubRegisters(IntB.reg); *SR; ++SR)
-      if (li_->hasInterval(*SR) &&
-          HasOtherReachingDefs(IntA, li_->getInterval(*SR), AValNo, 0))
+  if (TargetRegisterInfo::isPhysicalRegister(IntB.reg))
+    for (const unsigned *AS = tri_->getAliasSet(IntB.reg); *AS; ++AS)
+      if (li_->hasInterval(*AS) &&
+          HasOtherReachingDefs(IntA, li_->getInterval(*AS), AValNo, 0))
         return false;
 
   // If some of the uses of IntA.reg is already coalesced away, return false.
@@ -414,6 +410,8 @@ bool SimpleRegisterCoalescing::RemoveCopyByCommutingDef(const CoalescerPair &CP,
     if (ULR->valno == AValNo && JoinedCopies.count(UseMI))
       return false;
   }
+
+  DEBUG(dbgs() << "\tRemoveCopyByCommutingDef: " << *DefMI);
 
   // At this point we have decided that it is legal to do this
   // transformation.  Start by commuting the instruction.
@@ -478,7 +476,7 @@ bool SimpleRegisterCoalescing::RemoveCopyByCommutingDef(const CoalescerPair &CP,
     if (UseMI->getOperand(0).getReg() != IntB.reg ||
         UseMI->getOperand(0).getSubReg())
       continue;
-        
+
     // This copy will become a noop. If it's defining a new val#,
     // remove that val# as well. However this live range is being
     // extended to the end of the existing live range defined by the copy.
@@ -503,13 +501,13 @@ bool SimpleRegisterCoalescing::RemoveCopyByCommutingDef(const CoalescerPair &CP,
   // Remove val#'s defined by copies that will be coalesced away.
   for (unsigned i = 0, e = BDeadValNos.size(); i != e; ++i) {
     VNInfo *DeadVNI = BDeadValNos[i];
-    if (BHasSubRegs) {
-      for (const unsigned *SR = tri_->getSubRegisters(IntB.reg); *SR; ++SR) {
-        if (!li_->hasInterval(*SR))
+    if (TargetRegisterInfo::isPhysicalRegister(IntB.reg)) {
+      for (const unsigned *AS = tri_->getAliasSet(IntB.reg); *AS; ++AS) {
+        if (!li_->hasInterval(*AS))
           continue;
-        LiveInterval &SRLI = li_->getInterval(*SR);
-        if (const LiveRange *SRLR = SRLI.getLiveRangeContaining(DeadVNI->def))
-          SRLI.removeValNo(SRLR->valno);
+        LiveInterval &ASLI = li_->getInterval(*AS);
+        if (const LiveRange *ASLR = ASLI.getLiveRangeContaining(DeadVNI->def))
+          ASLI.removeValNo(ASLR->valno);
       }
     }
     IntB.removeValNo(BDeadValNos[i]);
