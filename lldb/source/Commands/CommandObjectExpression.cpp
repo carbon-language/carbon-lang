@@ -192,7 +192,7 @@ CommandObjectExpression::EvaluateExpression (const char *expr, bool bare, Stream
 {
     if (!m_exe_ctx.process)
     {
-        error_stream.Printf ("Execution context doesn't contain a process");
+        error_stream.Printf ("Execution context doesn't contain a process\n");
         return false;
     }
     
@@ -204,7 +204,7 @@ CommandObjectExpression::EvaluateExpression (const char *expr, bool bare, Stream
         
         if (!dynamic_checkers->Install(install_errors, m_exe_ctx))
         {
-            error_stream.Printf("Couldn't install dynamic checkers into the execution context: %s", install_errors.GetData());
+            error_stream.Printf("Couldn't install dynamic checkers into the execution context: %s\n", install_errors.GetData());
             return false;
         }
         
@@ -215,7 +215,7 @@ CommandObjectExpression::EvaluateExpression (const char *expr, bool bare, Stream
     
     if (!user_expression.Parse (error_stream, m_exe_ctx))
     {
-        error_stream.Printf ("Couldn't parse the expresssion");
+        error_stream.Printf ("Couldn't parse the expresssion\n");
         return false;
     }
     
@@ -223,7 +223,7 @@ CommandObjectExpression::EvaluateExpression (const char *expr, bool bare, Stream
     
     if (!user_expression.Execute (error_stream, m_exe_ctx, expr_result))
     {
-        error_stream.Printf ("Couldn't execute the expresssion");
+        error_stream.Printf ("Couldn't execute the expresssion\n");
         return false;
     }
         
