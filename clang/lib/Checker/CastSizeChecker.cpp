@@ -44,6 +44,10 @@ void CastSizeChecker::PreVisitCastExpr(CheckerContext &C, const CastExpr *CE) {
 
   QualType ToPointeeTy = ToPTy->getPointeeType();
 
+  // Only perform the check if 'ToPointeeTy' is a complete type.
+  if (ToPointeeTy->isIncompleteType())
+    return;
+
   const GRState *state = C.getState();
   const MemRegion *R = state->getSVal(E).getAsRegion();
   if (R == 0)
