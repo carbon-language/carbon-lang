@@ -614,7 +614,7 @@ void ASTDeclWriter::VisitNamespaceDecl(NamespaceDecl *D) {
 
 void ASTDeclWriter::VisitNamespaceAliasDecl(NamespaceAliasDecl *D) {
   VisitNamedDecl(D);
-  Writer.AddSourceLocation(D->getAliasLoc(), Record);
+  Writer.AddSourceLocation(D->getNamespaceLoc(), Record);
   Writer.AddSourceRange(D->getQualifierRange(), Record);
   Writer.AddNestedNameSpecifier(D->getQualifier(), Record);
   Writer.AddSourceLocation(D->getTargetNameLoc(), Record);

@@ -622,12 +622,11 @@ void ASTDeclReader::VisitNamespaceDecl(NamespaceDecl *D) {
 
 void ASTDeclReader::VisitNamespaceAliasDecl(NamespaceAliasDecl *D) {
   VisitNamedDecl(D);
-
-  D->setAliasLoc(Reader.ReadSourceLocation(Record, Idx));
+  D->NamespaceLoc = Reader.ReadSourceLocation(Record, Idx);
   D->setQualifierRange(Reader.ReadSourceRange(Record, Idx));
   D->setQualifier(Reader.ReadNestedNameSpecifier(Record, Idx));
-  D->setTargetNameLoc(Reader.ReadSourceLocation(Record, Idx));
-  D->setAliasedNamespace(cast<NamedDecl>(Reader.GetDecl(Record[Idx++])));
+  D->IdentLoc = Reader.ReadSourceLocation(Record, Idx);
+  D->Namespace = cast<NamedDecl>(Reader.GetDecl(Record[Idx++]));
 }
 
 void ASTDeclReader::VisitUsingDecl(UsingDecl *D) {

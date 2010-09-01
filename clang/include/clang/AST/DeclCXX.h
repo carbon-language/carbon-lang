@@ -1829,7 +1829,8 @@ public:
 /// namespace Foo = Bar;
 /// @endcode
 class NamespaceAliasDecl : public NamedDecl {
-  SourceLocation AliasLoc;
+  /// \brief The location of the "namespace" keyword.
+  SourceLocation NamespaceLoc;
 
   /// \brief The source range that covers the nested-name-specifier
   /// preceding the namespace name.
@@ -1846,15 +1847,17 @@ class NamespaceAliasDecl : public NamedDecl {
   /// NamespaceDecl or a NamespaceAliasDecl.
   NamedDecl *Namespace;
 
-  NamespaceAliasDecl(DeclContext *DC, SourceLocation L,
+  NamespaceAliasDecl(DeclContext *DC, SourceLocation NamespaceLoc,
                      SourceLocation AliasLoc, IdentifierInfo *Alias,
                      SourceRange QualifierRange,
                      NestedNameSpecifier *Qualifier,
                      SourceLocation IdentLoc, NamedDecl *Namespace)
-    : NamedDecl(NamespaceAlias, DC, L, Alias), AliasLoc(AliasLoc),
-      QualifierRange(QualifierRange), Qualifier(Qualifier),
-      IdentLoc(IdentLoc), Namespace(Namespace) { }
+    : NamedDecl(NamespaceAlias, DC, AliasLoc, Alias), 
+      NamespaceLoc(NamespaceLoc), QualifierRange(QualifierRange), 
+      Qualifier(Qualifier), IdentLoc(IdentLoc), Namespace(Namespace) { }
 
+  friend class ASTDeclReader;
+  
 public:
   /// \brief Retrieve the source range of the nested-name-specifier
   /// that qualifiers the namespace name.
@@ -1886,41 +1889,31 @@ public:
 
   /// Returns the location of the alias name, i.e. 'foo' in
   /// "namespace foo = ns::bar;".
-  SourceLocation getAliasLoc() const { return AliasLoc; }
-
-  /// Set the location o;f the alias name, e.e., 'foo' in
-  /// "namespace foo = ns::bar;".
-  void setAliasLoc(SourceLocation L) { AliasLoc = L; }
+  SourceLocation getAliasLoc() const { return getLocation(); }
 
   /// Returns the location of the 'namespace' keyword.
-  SourceLocation getNamespaceLoc() const { return getLocation(); }
+  SourceLocation getNamespaceLoc() const { return NamespaceLoc; }
 
   /// Returns the location of the identifier in the named namespace.
   SourceLocation getTargetNameLoc() const { return IdentLoc; }
-
-  /// Set the location of the identifier in the named namespace.
-  void setTargetNameLoc(SourceLocation L) { IdentLoc = L; }
 
   /// \brief Retrieve the namespace that this alias refers to, which
   /// may either be a NamespaceDecl or a NamespaceAliasDecl.
   NamedDecl *getAliasedNamespace() const { return Namespace; }
 
-  /// \brief Set the namespace or namespace alias pointed to by this
-  /// alias decl.
-  void setAliasedNamespace(NamedDecl *ND) {
-    assert((isa<NamespaceAliasDecl>(ND) || isa<NamespaceDecl>(ND)) &&
-      "expecting namespace or namespace alias decl");
-      Namespace = ND;
-  }
-
   static NamespaceAliasDecl *Create(ASTContext &C, DeclContext *DC,
-                                    SourceLocation L, SourceLocation AliasLoc,
+                                    SourceLocation NamespaceLoc, 
+                                    SourceLocation AliasLoc,
                                     IdentifierInfo *Alias,
                                     SourceRange QualifierRange,
                                     NestedNameSpecifier *Qualifier,
                                     SourceLocation IdentLoc,
                                     NamedDecl *Namespace);
 
+  virtual SourceRange getSourceRange() const {
+    return SourceRange(NamespaceLoc, IdentLoc);
+  }
+  
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
   static bool classof(const NamespaceAliasDecl *D) { return true; }
   static bool classofKind(Kind K) { return K == NamespaceAlias; }
