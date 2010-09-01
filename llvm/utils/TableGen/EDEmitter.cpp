@@ -84,34 +84,6 @@ namespace {
     }
   };
 
-  class StructEmitter {
-  private:
-    std::string Name;
-    typedef std::pair<const char*, const char*> member;
-    std::vector< member > Members;
-  public:
-    StructEmitter(const char *N) : Name(N) {
-    }
-    void addMember(const char *t, const char *n) {
-      member m(t, n);
-      Members.push_back(m);
-    }
-    void emit(raw_ostream &o, unsigned int &i) {
-      o.indent(i) << "struct " << Name.c_str() << " {" << "\n";
-      i += 2;
-      
-      unsigned int index = 0;
-      unsigned int numMembers = Members.size();
-      for (index = 0; index < numMembers; ++index) {
-        o.indent(i) << Members[index].first << " ";
-        o.indent(i) << Members[index].second << ";" << "\n";
-      }
-      
-      i -= 2;
-      o.indent(i) << "};" << "\n";
-    }
-  };
-  
   class ConstantEmitter {
   public:
     virtual ~ConstantEmitter() { }
@@ -126,10 +98,6 @@ namespace {
       const char* String;
     };
   public:
-    LiteralConstantEmitter(const char *string) : 
-      IsNumber(false),
-      String(string) {
-    }
     LiteralConstantEmitter(int number = 0) : 
       IsNumber(true),
       Number(number) {
@@ -138,11 +106,6 @@ namespace {
       IsNumber = false;
       Number = 0;
       String = string;
-    }
-    void set(int number) {
-      IsNumber = true;
-      String = NULL;
-      Number = number;
     }
     bool is(const char *string) {
       return !strcmp(String, string);
