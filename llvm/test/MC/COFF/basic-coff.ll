@@ -106,8 +106,8 @@ declare i32 @printf(i8* nocapture, ...) nounwind
 ; CHECK:       Name                     = _main
 ; CHECK:       Value                    = 0
 ; CHECK:       SectionNumber            = 1
-; CHECK:       SimpleType               = unknown (32)
-; CHECK:       ComplexType              = IMAGE_SYM_DTYPE_NULL (0)
+; CHECK:       SimpleType               = IMAGE_SYM_TYPE_NULL (0)
+; CHECK:       ComplexType              = IMAGE_SYM_DTYPE_FUNCTION (2)
 ; CHECK:       StorageClass             = IMAGE_SYM_CLASS_EXTERNAL (2)
 ; CHECK:       NumberOfAuxSymbols       = 0
 ; CHECK:       AuxillaryData            =
