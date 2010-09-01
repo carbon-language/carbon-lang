@@ -1550,7 +1550,8 @@ classifyReturnType(QualType RetTy) const {
   }
   
   // If a high part was specified, merge it together with the low part.  It is
-  // known to pass in the high eightbyte of the result.
+  // known to pass in the high eightbyte of the result.  We do this by forming a
+  // first class struct aggregate with the high and low part: {low, high}
   if (HighPart) 
     ResType = llvm::StructType::get(getVMContext(), ResType, HighPart, NULL);
 
@@ -1626,6 +1627,7 @@ ABIArgInfo X86_64ABIInfo::classifyArgumentType(QualType Ty, unsigned &neededInt,
     break;
   }
 
+  const llvm::Type *HighPart = 0;
   switch (Hi) {
     // Memory was handled previously, ComplexX87 and X87 should
     // never occur as hi classes, and X87Up must be preceed by X87,
@@ -1638,33 +1640,26 @@ ABIArgInfo X86_64ABIInfo::classifyArgumentType(QualType Ty, unsigned &neededInt,
 
   case NoClass: break;
 
-  case Integer: {
+  case Integer:
     ++neededInt;
     // Pick an 8-byte type based on the preferred type.
-    const llvm::Type *HiType =
-      GetINTEGERTypeAtOffset(CGT.ConvertTypeRecursive(Ty), 8, Ty, 8);
+    HighPart = GetINTEGERTypeAtOffset(CGT.ConvertTypeRecursive(Ty), 8, Ty, 8);
 
-    if (Lo == NoClass)  // Pass HiType at offset 8 in memory.
-      return ABIArgInfo::getDirect(HiType, 8);
-
-    ResType = llvm::StructType::get(getVMContext(), ResType, HiType, NULL);
+    if (Lo == NoClass)  // Pass HighPart at offset 8 in memory.
+      return ABIArgInfo::getDirect(HighPart, 8);
     break;
-  }
 
     // X87Up generally doesn't occur here (long double is passed in
     // memory), except in situations involving unions.
   case X87Up:
-  case SSE: {
-    const llvm::Type *HiType =
-      GetSSETypeAtOffset(CGT.ConvertTypeRecursive(Ty), 8, Ty, 8);
+  case SSE:
+    HighPart = GetSSETypeAtOffset(CGT.ConvertTypeRecursive(Ty), 8, Ty, 8);
 
-    if (Lo == NoClass)  // Pass HiType at offset 8 in memory.
-      return ABIArgInfo::getDirect(HiType, 8);
+    if (Lo == NoClass)  // Pass HighPart at offset 8 in memory.
+      return ABIArgInfo::getDirect(HighPart, 8);
 
-    ResType = llvm::StructType::get(getVMContext(), ResType, HiType, NULL);
     ++neededSSE;
     break;
-  }
 
     // AMD64-ABI 3.2.3p3: Rule 4. If the class is SSEUP, the
     // eightbyte is passed in the upper half of the last used SSE
@@ -1675,6 +1670,12 @@ ABIArgInfo X86_64ABIInfo::classifyArgumentType(QualType Ty, unsigned &neededInt,
     break;
   }
 
+  // If a high part was specified, merge it together with the low part.  It is
+  // known to pass in the high eightbyte of the result.  We do this by forming a
+  // first class struct aggregate with the high and low part: {low, high}
+  if (HighPart)
+    ResType = llvm::StructType::get(getVMContext(), ResType, HighPart, NULL);
+  
   return ABIArgInfo::getDirect(ResType);
 }
 
