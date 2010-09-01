@@ -4,7 +4,7 @@ import random
 import unittest
 import traceback
 
-class TestSequenceFunctions(unittest.TestCase):
+class SequenceFunctionsTestCase(unittest.TestCase):
 
     def setUp(self):
         #traceback.print_stack()

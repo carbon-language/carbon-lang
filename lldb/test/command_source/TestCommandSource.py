@@ -9,7 +9,7 @@ import unittest2
 import lldb
 from lldbtest import *
 
-class TestCommandSource(TestBase):
+class CommandSourceTestCase(TestBase):
 
     mydir = "command_source"
 

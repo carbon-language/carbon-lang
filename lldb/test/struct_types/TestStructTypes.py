@@ -9,7 +9,7 @@ import unittest2
 import lldb
 from lldbtest import *
 
-class TestStructTypes(TestBase):
+class StructTypesTestCase(TestBase):
 
     mydir = "struct_types"
 

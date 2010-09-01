@@ -5,7 +5,7 @@ import unittest2
 import lldb
 from lldbtest import *
 
-class TestGlobalVariables(TestBase):
+class GlobalVariablesTestCase(TestBase):
 
     mydir = "global_variables"
 

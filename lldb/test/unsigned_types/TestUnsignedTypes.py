@@ -8,7 +8,7 @@ import unittest2
 import lldb
 from lldbtest import *
 
-class TestUnsignedTypes(TestBase):
+class UnsignedTypesTestCase(TestBase):
 
     mydir = "unsigned_types"
 

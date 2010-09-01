@@ -7,7 +7,7 @@ import unittest2
 import lldb
 from lldbtest import *
 
-class TestSTL(TestBase):
+class STLTestCase(TestBase):
 
     mydir = "stl"
 

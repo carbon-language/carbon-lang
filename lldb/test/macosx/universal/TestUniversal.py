@@ -5,7 +5,7 @@ import unittest2
 import lldb
 from lldbtest import *
 
-class TestUniversal(TestBase):
+class UniversalTestCase(TestBase):
 
     mydir = "macosx/universal"
 

@@ -8,7 +8,7 @@ import unittest2
 import lldb
 from lldbtest import *
 
-class TestOrderFile(TestBase):
+class OrderFileTestCase(TestBase):
 
     mydir = "order"
 

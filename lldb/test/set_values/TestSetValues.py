@@ -5,7 +5,7 @@ import unittest2
 import lldb
 from lldbtest import *
 
-class TestSetValues(TestBase):
+class SetValuesTestCase(TestBase):
 
     mydir = "set_values"
 

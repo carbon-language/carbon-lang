@@ -7,7 +7,7 @@ import unittest2
 import lldb
 from lldbtest import *
 
-class TestDeadStrip(TestBase):
+class DeadStripTestCase(TestBase):
 
     mydir = "dead-strip"
 

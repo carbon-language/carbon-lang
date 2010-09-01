@@ -5,7 +5,7 @@ import unittest2
 import lldb
 from lldbtest import *
 
-class TestFunctionTypes(TestBase):
+class FunctionTypesTestCase(TestBase):
 
     mydir = "function_types"
 

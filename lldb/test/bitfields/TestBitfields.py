@@ -5,7 +5,7 @@ import unittest2
 import lldb
 from lldbtest import *
 
-class TestBitfields(TestBase):
+class BitfieldsTestCase(TestBase):
 
     mydir = "bitfields"
 

@@ -5,7 +5,7 @@ import unittest2
 import lldb
 from lldbtest import *
 
-class TestArrayTypes(TestBase):
+class ArrayTypesTestCase(TestBase):
 
     mydir = "array_types"
 
