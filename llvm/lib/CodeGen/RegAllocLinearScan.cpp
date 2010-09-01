@@ -87,7 +87,7 @@ namespace {
                                "to skip."),
                       cl::init(0),
                       cl::Hidden);
- 
+
   struct RALinScan : public MachineFunctionPass {
     static char ID;
     RALinScan() : MachineFunctionPass(ID) {
@@ -383,7 +383,7 @@ void RALinScan::ComputeRelatedRegClasses() {
     for (TargetRegisterClass::iterator I = (*RCI)->begin(), E = (*RCI)->end();
          I != E; ++I) {
       HasAliases = HasAliases || *tri_->getAliasSet(*I) != 0;
-      
+
       const TargetRegisterClass *&PRC = OneClassForEachPhysReg[*I];
       if (PRC) {
         // Already processed this register.  Just make sure we know that
@@ -394,7 +394,7 @@ void RALinScan::ComputeRelatedRegClasses() {
       }
     }
   }
-  
+
   // Second pass, now that we know conservatively what register classes each reg
   // belongs to, add info about aliases.  We don't need to do this for targets
   // without register aliases.
@@ -495,9 +495,9 @@ bool RALinScan::runOnMachineFunction(MachineFunction &fn) {
 
   vrm_ = &getAnalysis<VirtRegMap>();
   if (!rewriter_.get()) rewriter_.reset(createVirtRegRewriter());
-  
+
   spiller_.reset(createSpiller(*this, *mf_, *vrm_));
-  
+
   initIntervalSets();
 
   linearScan();
@@ -551,7 +551,7 @@ void RALinScan::linearScan() {
   // linear scan algorithm
   DEBUG({
       dbgs() << "********** LINEAR SCAN **********\n"
-             << "********** Function: " 
+             << "********** Function: "
              << mf_->getFunction()->getName() << '\n';
       printIntervals("fixed", fixed_.begin(), fixed_.end());
     });
@@ -773,7 +773,8 @@ FindIntervalInVector(RALinScan::IntervalPtrs &IP, LiveInterval *LI) {
   return IP.end();
 }
 
-static void RevertVectorIteratorsTo(RALinScan::IntervalPtrs &V, SlotIndex Point){
+static void RevertVectorIteratorsTo(RALinScan::IntervalPtrs &V,
+                                    SlotIndex Point){
   for (unsigned i = 0, e = V.size(); i != e; ++i) {
     RALinScan::IntervalPtr &IP = V[i];
     LiveInterval::iterator I = std::upper_bound(IP.first->begin(),
@@ -845,7 +846,7 @@ void RALinScan::findIntervalsToSpill(LiveInterval *cur,
         dbgs() << tri_->getName(Candidates[i].first) << " ";
       dbgs() << "\n";
     });
-  
+
   // Calculate the number of conflicts of each candidate.
   for (IntervalPtrs::iterator i = active_.begin(); i != active_.end(); ++i) {
     unsigned Reg = i->first->reg;
@@ -1015,7 +1016,7 @@ void RALinScan::assignRegOrStackSlotAtInterval(LiveInterval* cur) {
     assert(TargetRegisterInfo::isVirtualRegister(Reg) &&
            "Can only allocate virtual registers!");
     const TargetRegisterClass *RegRC = mri_->getRegClass(Reg);
-    // If this is not in a related reg class to the register we're allocating, 
+    // If this is not in a related reg class to the register we're allocating,
     // don't check it.
     if (RelatedRegClasses.getLeaderValue(RegRC) == RCLeader &&
         cur->overlapsFrom(*i->first, i->second-1)) {
@@ -1024,7 +1025,7 @@ void RALinScan::assignRegOrStackSlotAtInterval(LiveInterval* cur) {
       SpillWeightsToAdd.push_back(std::make_pair(Reg, i->first->weight));
     }
   }
-  
+
   // Speculatively check to see if we can get a register right now.  If not,
   // we know we won't be able to by adding more constraints.  If so, we can
   // check to see if it is valid.  Doing an exhaustive search of the fixed_ list
@@ -1039,7 +1040,7 @@ void RALinScan::assignRegOrStackSlotAtInterval(LiveInterval* cur) {
     SmallSet<unsigned, 8> RegAliases;
     for (const unsigned *AS = tri_->getAliasSet(physReg); *AS; ++AS)
       RegAliases.insert(*AS);
-    
+
     bool ConflictsWithFixed = false;
     for (unsigned i = 0, e = fixed_.size(); i != e; ++i) {
       IntervalPtr &IP = fixed_[i];
@@ -1059,7 +1060,7 @@ void RALinScan::assignRegOrStackSlotAtInterval(LiveInterval* cur) {
         }
       }
     }
-    
+
     // Okay, the register picked by our speculative getFreePhysReg call turned
     // out to be in use.  Actually add all of the conflicting fixed registers to
     // regUse_ so we can do an accurate query.
@@ -1071,7 +1072,7 @@ void RALinScan::assignRegOrStackSlotAtInterval(LiveInterval* cur) {
         LiveInterval *I = IP.first;
 
         const TargetRegisterClass *RegRC = OneClassForEachPhysReg[I->reg];
-        if (RelatedRegClasses.getLeaderValue(RegRC) == RCLeader &&       
+        if (RelatedRegClasses.getLeaderValue(RegRC) == RCLeader &&
             I->endIndex() > StartPosition) {
           LiveInterval::iterator II = I->advanceTo(IP.second, StartPosition);
           IP.second = II;
@@ -1090,11 +1091,11 @@ void RALinScan::assignRegOrStackSlotAtInterval(LiveInterval* cur) {
       physReg = getFreePhysReg(cur);
     }
   }
-    
+
   // Restore the physical register tracker, removing information about the
   // future.
   restoreRegUses();
-  
+
   // If we find a free register, we are done: assign this virtual to
   // the free physical register and add this interval to the active
   // list.
@@ -1109,7 +1110,7 @@ void RALinScan::assignRegOrStackSlotAtInterval(LiveInterval* cur) {
     UpgradeRegister(physReg);
     if (LiveInterval *NextReloadLI = hasNextReloadInterval(cur)) {
       // "Downgrade" physReg to try to keep physReg from being allocated until
-      // the next reload from the same SS is allocated. 
+      // the next reload from the same SS is allocated.
       mri_->setRegAllocationHint(NextReloadLI->reg, 0, physReg);
       DowngradeRegister(cur, physReg);
     }
@@ -1122,7 +1123,7 @@ void RALinScan::assignRegOrStackSlotAtInterval(LiveInterval* cur) {
   for (std::vector<std::pair<unsigned, float> >::iterator
        I = SpillWeightsToAdd.begin(), E = SpillWeightsToAdd.end(); I != E; ++I)
     updateSpillWeights(SpillWeights, I->first, I->second, RC);
-  
+
   // for each interval in active, update spill weights.
   for (IntervalPtrs::const_iterator i = active_.begin(), e = active_.end();
        i != e; ++i) {
@@ -1132,7 +1133,7 @@ void RALinScan::assignRegOrStackSlotAtInterval(LiveInterval* cur) {
     reg = vrm_->getPhys(reg);
     updateSpillWeights(SpillWeights, reg, i->first->weight, RC);
   }
- 
+
   DEBUG(dbgs() << "\tassigning stack slot at interval "<< *cur << ":\n");
 
   // Find a register to spill.
@@ -1152,7 +1153,7 @@ void RALinScan::assignRegOrStackSlotAtInterval(LiveInterval* cur) {
         Found = true;
       RegsWeights.push_back(std::make_pair(reg, regWeight));
     }
-  
+
   // If we didn't find a register that is spillable, try aliases?
   if (!Found) {
     for (TargetRegisterClass::iterator i = RC->allocation_order_begin(*mf_),
@@ -1281,7 +1282,7 @@ void RALinScan::assignRegOrStackSlotAtInterval(LiveInterval* cur) {
 
   // The earliest start of a Spilled interval indicates up to where
   // in handled we need to roll back
-  assert(!spillIs.empty() && "No spill intervals?"); 
+  assert(!spillIs.empty() && "No spill intervals?");
   SlotIndex earliestStart = spillIs[0]->beginIndex();
 
   // Spill live intervals of virtual regs mapped to the physical register we
@@ -1484,17 +1485,17 @@ unsigned RALinScan::getFreePhysReg(LiveInterval* cur,
 unsigned RALinScan::getFreePhysReg(LiveInterval *cur) {
   SmallVector<unsigned, 256> inactiveCounts;
   unsigned MaxInactiveCount = 0;
-  
+
   const TargetRegisterClass *RC = mri_->getRegClass(cur->reg);
   const TargetRegisterClass *RCLeader = RelatedRegClasses.getLeaderValue(RC);
- 
+
   for (IntervalPtrs::iterator i = inactive_.begin(), e = inactive_.end();
        i != e; ++i) {
     unsigned reg = i->first->reg;
     assert(TargetRegisterInfo::isVirtualRegister(reg) &&
            "Can only allocate virtual registers!");
 
-    // If this is not in a related reg class to the register we're allocating, 
+    // If this is not in a related reg class to the register we're allocating,
     // don't check it.
     const TargetRegisterClass *RegRC = mri_->getRegClass(reg);
     if (RelatedRegClasses.getLeaderValue(RegRC) == RCLeader) {
@@ -1511,7 +1512,7 @@ unsigned RALinScan::getFreePhysReg(LiveInterval *cur) {
   unsigned Preference = vrm_->getRegAllocPref(cur->reg);
   if (Preference) {
     DEBUG(dbgs() << "(preferred: " << tri_->getName(Preference) << ") ");
-    if (isRegAvail(Preference) && 
+    if (isRegAvail(Preference) &&
         RC->contains(Preference))
       return Preference;
   }
