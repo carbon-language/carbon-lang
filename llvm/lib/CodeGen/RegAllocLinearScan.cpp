@@ -125,6 +125,7 @@ namespace {
     const TargetRegisterInfo* tri_;
     const TargetInstrInfo* tii_;
     BitVector allocatableRegs_;
+    BitVector reservedRegs_;
     LiveIntervals* li_;
     LiveStacks* ls_;
     MachineLoopInfo *loopInfo;
@@ -464,6 +465,7 @@ bool RALinScan::runOnMachineFunction(MachineFunction &fn) {
   tri_ = tm_->getRegisterInfo();
   tii_ = tm_->getInstrInfo();
   allocatableRegs_ = tri_->getAllocatableSet(fn);
+  reservedRegs_ = tri_->getReservedRegs(fn);
   li_ = &getAnalysis<LiveIntervals>();
   ls_ = &getAnalysis<LiveStacks>();
   loopInfo = &getAnalysis<MachineLoopInfo>();
@@ -949,8 +951,14 @@ void RALinScan::assignRegOrStackSlotAtInterval(LiveInterval* cur) {
   const TargetRegisterClass *RC = mri_->getRegClass(cur->reg);
   if (cur->empty()) {
     unsigned physReg = vrm_->getRegAllocPref(cur->reg);
-    if (!physReg)
-      physReg = *RC->allocation_order_begin(*mf_);
+    if (!physReg) {
+      TargetRegisterClass::iterator aoe = RC->allocation_order_end(*mf_);
+      TargetRegisterClass::iterator i = RC->allocation_order_begin(*mf_);
+      while (reservedRegs_.test(*i) && i != aoe)
+        ++i;
+      assert(i != aoe && "All registers reserved?!");
+      physReg = *i;
+    }
     DEBUG(dbgs() <<  tri_->getName(physReg) << '\n');
     // Note the register is not really in use.
     vrm_->assignVirt2Phys(cur->reg, physReg);
@@ -1133,8 +1141,9 @@ void RALinScan::assignRegOrStackSlotAtInterval(LiveInterval* cur) {
            e = RC->allocation_order_end(*mf_); i != e; ++i) {
       unsigned reg = *i;
       float regWeight = SpillWeights[reg];
-      // Skip recently allocated registers.
-      if (minWeight > regWeight && !isRecentlyUsed(reg))
+      // Skip recently allocated registers and reserved registers.
+      if (minWeight > regWeight && !isRecentlyUsed(reg) &&
+          !reservedRegs_.test(reg))
         Found = true;
       RegsWeights.push_back(std::make_pair(reg, regWeight));
     }
@@ -1144,6 +1153,8 @@ void RALinScan::assignRegOrStackSlotAtInterval(LiveInterval* cur) {
     for (TargetRegisterClass::iterator i = RC->allocation_order_begin(*mf_),
            e = RC->allocation_order_end(*mf_); i != e; ++i) {
       unsigned reg = *i;
+      if (reservedRegs_.test(reg))
+        continue;
       // No need to worry about if the alias register size < regsize of RC.
       // We are going to spill all registers that alias it anyway.
       for (const unsigned* as = tri_->getAliasSet(reg); *as; ++as)
@@ -1157,7 +1168,15 @@ void RALinScan::assignRegOrStackSlotAtInterval(LiveInterval* cur) {
   minWeight = RegsWeights[0].second;
   if (minWeight == HUGE_VALF) {
     // All registers must have inf weight. Just grab one!
-    minReg = BestPhysReg ? BestPhysReg : *RC->allocation_order_begin(*mf_);
+    if (BestPhysReg == 0) {
+      TargetRegisterClass::iterator aoe = RC->allocation_order_end(*mf_);
+      TargetRegisterClass::iterator i = RC->allocation_order_begin(*mf_);
+      while (reservedRegs_.test(*i) && i != aoe)
+        ++i;
+      assert(i != aoe && "All registers reserved?!");
+      minReg = *i;
+    } else
+      minReg = BestPhysReg;
     if (cur->weight == HUGE_VALF ||
         li_->getApproximateInstructionCount(*cur) == 0) {
       // Spill a physical register around defs and uses.
@@ -1414,6 +1433,9 @@ unsigned RALinScan::getFreePhysReg(LiveInterval* cur,
     // Ignore "downgraded" registers.
     if (SkipDGRegs && DowngradedRegs.count(Reg))
       continue;
+    // Skip reserved registers.
+    if (reservedRegs_.test(Reg))
+      continue;
     // Skip recently allocated registers.
     if (isRegAvail(Reg) && !isRecentlyUsed(Reg)) {
       FreeReg = Reg;
@@ -1441,6 +1463,9 @@ unsigned RALinScan::getFreePhysReg(LiveInterval* cur,
     unsigned Reg = *I;
     // Ignore "downgraded" registers.
     if (SkipDGRegs && DowngradedRegs.count(Reg))
+      continue;
+    // Skip reserved registers.
+    if (reservedRegs_.test(Reg))
       continue;
     if (isRegAvail(Reg) && Reg < inactiveCounts.size() &&
         FreeRegInactiveCount < inactiveCounts[Reg] && !isRecentlyUsed(Reg)) {
