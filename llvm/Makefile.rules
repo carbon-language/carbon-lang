@@ -917,9 +917,20 @@ endif
 LLVMLibsOptions += -lLLVM-$(LLVMVersion)
 LLVMLibsPaths += $(SharedLibDir)/$(SharedPrefix)LLVM-$(LLVMVersion)$(SHLIBEXT)
 else
-LLVMLibsOptions += $(shell $(LLVM_CONFIG) --libs     $(LINK_COMPONENTS))
-LLVMLibsPaths   += $(LLVM_CONFIG) \
-                   $(shell $(LLVM_CONFIG) --libfiles $(LINK_COMPONENTS))
+
+ifndef NO_LLVM_CONFIG
+LLVMConfigLibs := $(shell $(LLVM_CONFIG) --libs $(LINK_COMPONENTS) || echo Error)
+ifeq ($(LLVMConfigLibs),Error)
+$(error llvm-config --libs failed)
+endif
+LLVMLibsOptions += $(LLVMConfigLibs)
+LLVMConfigLibfiles := $(shell $(LLVM_CONFIG) --libfiles $(LINK_COMPONENTS) || echo Error)
+ifeq ($(LLVMConfigLibfiles),Error)
+$(error llvm-config --libfiles failed)
+endif
+LLVMLibsPaths += $(LLVM_CONFIG) $(LLVMConfigLibfiles)
+endif
+
 endif
 endif
 endif
