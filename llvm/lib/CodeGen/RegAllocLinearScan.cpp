@@ -336,6 +336,17 @@ namespace {
                             SmallVector<unsigned, 256> &inactiveCounts,
                             bool SkipDGRegs);
 
+    /// getFirstNonReservedPhysReg - return the first non-reserved physical
+    /// register in the register class.
+    unsigned getFirstNonReservedPhysReg(const TargetRegisterClass *RC) {
+        TargetRegisterClass::iterator aoe = RC->allocation_order_end(*mf_);
+        TargetRegisterClass::iterator i = RC->allocation_order_begin(*mf_);
+        while (i != aoe && reservedRegs_.test(*i))
+          ++i;
+        assert(i != aoe && "All registers reserved?!");
+        return *i;
+      }
+
     void ComputeRelatedRegClasses();
 
     template <typename ItTy>
@@ -951,14 +962,8 @@ void RALinScan::assignRegOrStackSlotAtInterval(LiveInterval* cur) {
   const TargetRegisterClass *RC = mri_->getRegClass(cur->reg);
   if (cur->empty()) {
     unsigned physReg = vrm_->getRegAllocPref(cur->reg);
-    if (!physReg) {
-      TargetRegisterClass::iterator aoe = RC->allocation_order_end(*mf_);
-      TargetRegisterClass::iterator i = RC->allocation_order_begin(*mf_);
-      while (reservedRegs_.test(*i) && i != aoe)
-        ++i;
-      assert(i != aoe && "All registers reserved?!");
-      physReg = *i;
-    }
+    if (!physReg)
+      physReg = getFirstNonReservedPhysReg(RC);
     DEBUG(dbgs() <<  tri_->getName(physReg) << '\n');
     // Note the register is not really in use.
     vrm_->assignVirt2Phys(cur->reg, physReg);
@@ -1168,15 +1173,7 @@ void RALinScan::assignRegOrStackSlotAtInterval(LiveInterval* cur) {
   minWeight = RegsWeights[0].second;
   if (minWeight == HUGE_VALF) {
     // All registers must have inf weight. Just grab one!
-    if (BestPhysReg == 0) {
-      TargetRegisterClass::iterator aoe = RC->allocation_order_end(*mf_);
-      TargetRegisterClass::iterator i = RC->allocation_order_begin(*mf_);
-      while (reservedRegs_.test(*i) && i != aoe)
-        ++i;
-      assert(i != aoe && "All registers reserved?!");
-      minReg = *i;
-    } else
-      minReg = BestPhysReg;
+    minReg = BestPhysReg ? BestPhysReg : getFirstNonReservedPhysReg(RC);
     if (cur->weight == HUGE_VALF ||
         li_->getApproximateInstructionCount(*cur) == 0) {
       // Spill a physical register around defs and uses.
