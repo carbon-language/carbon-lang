@@ -1090,3 +1090,29 @@ pr8052(u_int boot_addr)
         *dst++ = *src++;
 }
 
+// PR 8015 - don't return undefined values for arrays when using a valid
+// symbolic index
+int pr8015_A();
+void pr8015_B(const char *);
+
+void pr8015_C() {
+  int number = pr8015_A();
+  const char *numbers[] = { "zero" };    
+  if (number == 0) {
+      pr8015_B(numbers[number]); // no-warning
+  }
+}
+
+// FIXME: This is a false positive due to not reasoning about symbolic
+// array indices correctly.  Discussion in PR 8015.
+void pr8015_D_FIXME() {
+  int number = pr8015_A();
+  const char *numbers[] = { "zero" };
+  if (number == 0) {
+    if (numbers[number] == numbers[0])
+      return;
+    int *p = 0;
+    *p = 0xDEADBEEF; // expected-warning{{Dereference of null pointer}}
+  }
+}
+

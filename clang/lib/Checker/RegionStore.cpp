@@ -1193,13 +1193,18 @@ SVal RegionStoreManager::RetrieveFieldOrElementCommon(Store store,
   }
 
   if (R->hasStackNonParametersStorage()) {
-    if (isa<ElementRegion>(R)) {
+    if (const ElementRegion *ER = dyn_cast<ElementRegion>(R)) {
       // Currently we don't reason specially about Clang-style vectors.  Check
       // if superR is a vector and if so return Unknown.
       if (const TypedRegion *typedSuperR = dyn_cast<TypedRegion>(superR)) {
         if (typedSuperR->getValueType()->isVectorType())
           return UnknownVal();
       }
+      
+      // FIXME: We also need to take ElementRegions with symbolic indexes into
+      // account.
+      if (!ER->getIndex().isConstant())
+        return UnknownVal();
     }
 
     return UndefinedVal();
