@@ -452,8 +452,8 @@ bb5:                                              ; preds = %bb3, %entry
 ; CHECK-NEXT:   addss   %xmm{{.*}}, %xmm{{.*}}
 ; CHECK-NEXT:   mulss   (%r{{[^,]*}}), %xmm{{.*}}
 ; CHECK-NEXT:   movss   %xmm{{.*}}, (%r{{[^,]*}})
-; CHECK-NEXT:   decq    %r{{.*}}
 ; CHECK-NEXT:   addq    $4, %r{{.*}}
+; CHECK-NEXT:   decq    %r{{.*}}
 ; CHECK-NEXT:   addq    $4, %r{{.*}}
 ; CHECK-NEXT:   movaps  %xmm{{.*}}, %xmm{{.*}}
 ; CHECK-NEXT: BB10_2:

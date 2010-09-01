@@ -35,123 +35,112 @@ Pass *llvm::createIVUsersPass() {
   return new IVUsers();
 }
 
-/// findInterestingAddRec - Test whether the given expression is interesting.
-/// Return the addrec with the current loop which makes it interesting, or
-/// null if it is not interesting.
-const SCEVAddRecExpr *IVUsers::findInterestingAddRec(const SCEV *S) const {
+/// isInteresting - Test whether the given expression is "interesting" when
+/// used by the given expression, within the context of analyzing the
+/// given loop.
+static bool isInteresting(const SCEV *S, const Instruction *I, const Loop *L,
+                          ScalarEvolution *SE) {
   // An addrec is interesting if it's affine or if it has an interesting start.
   if (const SCEVAddRecExpr *AR = dyn_cast<SCEVAddRecExpr>(S)) {
     // Keep things simple. Don't touch loop-variant strides.
     if (AR->getLoop() == L)
-      return AR;
-    // We don't yet know how to do effective SCEV expansions for addrecs
-    // with interesting steps.
-    if (findInterestingAddRec(AR->getStepRecurrence(*SE)))
-      return 0;
-    // Otherwise recurse to see if the start value is interesting.
-    return findInterestingAddRec(AR->getStart());
+      return AR->isAffine() || !L->contains(I);
+    // Otherwise recurse to see if the start value is interesting, and that
+    // the step value is not interesting, since we don't yet know how to
+    // do effective SCEV expansions for addrecs with interesting steps.
+    return isInteresting(AR->getStart(), I, L, SE) &&
+          !isInteresting(AR->getStepRecurrence(*SE), I, L, SE);
   }
 
   // An add is interesting if exactly one of its operands is interesting.
   if (const SCEVAddExpr *Add = dyn_cast<SCEVAddExpr>(S)) {
+    bool AnyInterestingYet = false;
     for (SCEVAddExpr::op_iterator OI = Add->op_begin(), OE = Add->op_end();
          OI != OE; ++OI)
-      if (const SCEVAddRecExpr *AR = findInterestingAddRec(*OI))
-        return AR;
-    return 0;
+      if (isInteresting(*OI, I, L, SE)) {
+        if (AnyInterestingYet)
+          return false;
+        AnyInterestingYet = true;
+      }
+    return AnyInterestingYet;
   }
 
   // Nothing else is interesting here.
-  return 0;
-}
-
-bool IVUsers::isInterestingUser(const Instruction *User) const {
-  // Void and FP expressions cannot be reduced.
-  if (!SE->isSCEVable(User->getType()))
-    return false;
-
-  // LSR is not APInt clean, do not touch integers bigger than 64-bits.
-  if (SE->getTypeSizeInBits(User->getType()) > 64)
-    return false;
-
-  // Don't descend into PHI nodes outside the current loop.
-  if (LI->getLoopFor(User->getParent()) != L &&
-      isa<PHINode>(User))
-    return false;
-
-  // Otherwise, it may be interesting.
-  return true;
+  return false;
 }
 
 /// AddUsersIfInteresting - Inspect the specified instruction.  If it is a
 /// reducible SCEV, recursively add its users to the IVUsesByStride set and
 /// return true.  Otherwise, return false.
-void IVUsers::AddUsersIfInteresting(Instruction *I) {
-  // Stop if we've seen this before.
-  if (!Processed.insert(I))
-    return;
-
-  // If this PHI node is not SCEVable, ignore it.
+bool IVUsers::AddUsersIfInteresting(Instruction *I) {
   if (!SE->isSCEVable(I->getType()))
-    return;
+    return false;   // Void and FP expressions cannot be reduced.
 
-  // If this PHI node is not an addrec for this loop, ignore it.
-  const SCEVAddRecExpr *Expr = findInterestingAddRec(SE->getSCEV(I));
-  if (!Expr)
-    return;
+  // LSR is not APInt clean, do not touch integers bigger than 64-bits.
+  if (SE->getTypeSizeInBits(I->getType()) > 64)
+    return false;
 
-  // Walk the def-use graph.
-  SmallVector<std::pair<Instruction *, const SCEVAddRecExpr *>, 16> Worklist;
-  Worklist.push_back(std::make_pair(I, Expr));
-  do {
-    std::pair<Instruction *, const SCEVAddRecExpr *> P =
-      Worklist.pop_back_val();
-    Instruction *Op = P.first;
-    const SCEVAddRecExpr *OpAR = P.second;
+  if (!Processed.insert(I))
+    return true;    // Instruction already handled.
 
-    // Visit Op's users.
-    SmallPtrSet<Instruction *, 8> VisitedUsers;
-    for (Value::use_iterator UI = Op->use_begin(), E = Op->use_end();
-         UI != E; ++UI) {
-      // Don't visit any individual user more than once.
-      Instruction *User = cast<Instruction>(*UI);
-      if (!VisitedUsers.insert(User))
-        continue;
+  // Get the symbolic expression for this instruction.
+  const SCEV *ISE = SE->getSCEV(I);
 
-      // If it's an affine addrec (which we can pretty safely re-expand) inside
-      // the loop, or a potentially non-affine addrec outside the loop (which
-      // we can evaluate outside of the loop), follow it.
-      if (OpAR->isAffine() || !L->contains(User)) {
-        if (isInterestingUser(User)) {
-          const SCEV *UserExpr = SE->getSCEV(User);
+  // If we've come to an uninteresting expression, stop the traversal and
+  // call this a user.
+  if (!isInteresting(ISE, I, L, SE))
+    return false;
 
-          if (const SCEVAddRecExpr *AR = findInterestingAddRec(UserExpr)) {
-            // Interesting. Keep searching.
-            if (Processed.insert(User))
-              Worklist.push_back(std::make_pair(User, AR));
-            continue;
-          }
-        }
+  SmallPtrSet<Instruction *, 4> UniqueUsers;
+  for (Value::use_iterator UI = I->use_begin(), E = I->use_end();
+       UI != E; ++UI) {
+    Instruction *User = cast<Instruction>(*UI);
+    if (!UniqueUsers.insert(User))
+      continue;
+
+    // Do not infinitely recurse on PHI nodes.
+    if (isa<PHINode>(User) && Processed.count(User))
+      continue;
+
+    // Descend recursively, but not into PHI nodes outside the current loop.
+    // It's important to see the entire expression outside the loop to get
+    // choices that depend on addressing mode use right, although we won't
+    // consider references outside the loop in all cases.
+    // If User is already in Processed, we don't want to recurse into it again,
+    // but do want to record a second reference in the same instruction.
+    bool AddUserToIVUsers = false;
+    if (LI->getLoopFor(User->getParent()) != L) {
+      if (isa<PHINode>(User) || Processed.count(User) ||
+          !AddUsersIfInteresting(User)) {
+        DEBUG(dbgs() << "FOUND USER in other loop: " << *User << '\n'
+                     << "   OF SCEV: " << *ISE << '\n');
+        AddUserToIVUsers = true;
       }
-
-      // Otherwise, this is the point where the def-use chain
-      // becomes uninteresting. Call it an IV User.
-      AddUser(User, Op);
+    } else if (Processed.count(User) ||
+               !AddUsersIfInteresting(User)) {
+      DEBUG(dbgs() << "FOUND USER: " << *User << '\n'
+                   << "   OF SCEV: " << *ISE << '\n');
+      AddUserToIVUsers = true;
     }
-  } while (!Worklist.empty());
+
+    if (AddUserToIVUsers) {
+      // Okay, we found a user that we cannot reduce.
+      IVUses.push_back(new IVStrideUse(this, User, I));
+      IVStrideUse &NewUse = IVUses.back();
+      // Transform the expression into a normalized form.
+      ISE = TransformForPostIncUse(NormalizeAutodetect,
+                                   ISE, User, I,
+                                   NewUse.PostIncLoops,
+                                   *SE, *DT);
+      DEBUG(dbgs() << "   NORMALIZED TO: " << *ISE << '\n');
+    }
+  }
+  return true;
 }
 
 IVStrideUse &IVUsers::AddUser(Instruction *User, Value *Operand) {
   IVUses.push_back(new IVStrideUse(this, User, Operand));
-  IVStrideUse &NewUse = IVUses.back();
-
-  // Auto-detect and remember post-inc loops for this expression.
-  const SCEV *S = SE->getSCEV(Operand);
-  (void)TransformForPostIncUse(NormalizeAutodetect,
-                               S, User, Operand,
-                               NewUse.PostIncLoops,
-                               *SE, *DT);
-  return NewUse;
+  return IVUses.back();
 }
 
 IVUsers::IVUsers()
@@ -176,7 +165,7 @@ bool IVUsers::runOnLoop(Loop *l, LPPassManager &LPM) {
   // them by stride.  Start by finding all of the PHI nodes in the header for
   // this loop.  If they are induction variables, inspect their uses.
   for (BasicBlock::iterator I = L->getHeader()->begin(); isa<PHINode>(I); ++I)
-    AddUsersIfInteresting(I);
+    (void)AddUsersIfInteresting(I);
 
   return false;
 }
