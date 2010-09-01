@@ -28,6 +28,7 @@
 #include "llvm/Instructions.h"
 #include "llvm/IntrinsicInst.h"
 #include "llvm/LLVMContext.h"
+#include "llvm/Module.h"
 #include "llvm/Pass.h"
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Target/TargetData.h"
@@ -197,7 +198,12 @@ private:
 /// IsVerbotenVectorType - Return true if this is a vector type ScalarRepl isn't
 /// allowed to form.  We do this to avoid MMX types, which is a complete hack,
 /// but is required until the backend is fixed.
-static bool IsVerbotenVectorType(const VectorType *VTy) {
+static bool IsVerbotenVectorType(const VectorType *VTy, const Instruction *I) {
+  StringRef Triple(I->getParent()->getParent()->getParent()->getTargetTriple());
+  if (!Triple.startswith("i386") &&
+      !Triple.startswith("x86_64"))
+    return false;
+  
   // Reject all the MMX vector types.
   switch (VTy->getNumElements()) {
   default: return false;
@@ -226,7 +232,7 @@ AllocaInst *ConvertToScalarInfo::TryConvert(AllocaInst *AI) {
   // involved, then we probably really do have a union of vector/array.
   const Type *NewTy;
   if (VectorTy && VectorTy->isVectorTy() && HadAVector &&
-      !IsVerbotenVectorType(cast<VectorType>(VectorTy))) {
+      !IsVerbotenVectorType(cast<VectorType>(VectorTy), AI)) {
     DEBUG(dbgs() << "CONVERT TO VECTOR: " << *AI << "\n  TYPE = "
           << *VectorTy << '\n');
     NewTy = VectorTy;  // Use the vector type.
