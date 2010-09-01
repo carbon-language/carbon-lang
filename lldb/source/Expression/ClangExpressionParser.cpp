@@ -13,8 +13,10 @@
 #include "lldb/Core/DataBufferHeap.h"
 #include "lldb/Core/Disassembler.h"
 #include "lldb/Core/Stream.h"
+#include "lldb/Core/StreamString.h"
 #include "lldb/Expression/ClangASTSource.h"
 #include "lldb/Expression/ClangExpression.h"
+#include "lldb/Expression/IRDynamicChecks.h"
 #include "lldb/Expression/IRForTarget.h"
 #include "lldb/Expression/IRToDWARF.h"
 #include "lldb/Expression/RecordingMemoryManager.h"
@@ -409,6 +411,15 @@ ClangExpressionParser::MakeJIT (lldb::addr_t &func_addr,
             err.SetErrorString("Couldn't convert the expression to DWARF");
             return err;
         }
+        
+        IRDynamicChecks ir_dynamic_checks(*exe_ctx.process->GetDynamicCheckers(), m_expr.FunctionName());
+        
+        if (!ir_dynamic_checks.runOnModule(*module))
+        {
+            err.SetErrorToGenericError();
+            err.SetErrorString("Couldn't add dynamic checks to the expression");
+            return err;
+        }        
     }
     
     m_jit_mm = new RecordingMemoryManager();

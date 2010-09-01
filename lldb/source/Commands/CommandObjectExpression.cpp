@@ -190,6 +190,27 @@ bool
 CommandObjectExpression::EvaluateExpression (const char *expr, bool bare, Stream &output_stream, Stream &error_stream,
                                              CommandReturnObject *result)
 {
+    if (!m_exe_ctx.process)
+    {
+        error_stream.Printf ("Execution context doesn't contain a process");
+        return false;
+    }
+    
+    if (!m_exe_ctx.process->GetDynamicCheckers())
+    {
+        DynamicCheckerFunctions *dynamic_checkers = new DynamicCheckerFunctions();
+        
+        StreamString install_errors;
+        
+        if (!dynamic_checkers->Install(install_errors, m_exe_ctx))
+        {
+            error_stream.Printf("Couldn't install dynamic checkers into the execution context: %s", install_errors.GetData());
+            return false;
+        }
+        
+        m_exe_ctx.process->SetDynamicCheckers(dynamic_checkers);
+    }
+    
     ClangUserExpression user_expression (expr);
     
     if (!user_expression.Parse (error_stream, m_exe_ctx))

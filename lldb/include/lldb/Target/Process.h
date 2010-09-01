@@ -26,6 +26,7 @@
 #include "lldb/Core/PluginInterface.h"
 #include "lldb/Breakpoint/BreakpointSiteList.h"
 #include "lldb/Expression/ClangPersistentVariables.h"
+#include "lldb/Expression/IRDynamicChecks.h"
 #include "lldb/Target/ExecutionContextScope.h"
 #include "lldb/Target/ObjCObjectPrinter.h"
 #include "lldb/Target/ThreadList.h"
@@ -1353,6 +1354,16 @@ public:
 
     bool
     IsRunning () const;
+    
+    DynamicCheckerFunctions *GetDynamicCheckers()
+    {
+        return m_dynamic_checkers.get();
+    }
+    
+    void SetDynamicCheckers(DynamicCheckerFunctions *dynamic_checkers)
+    {
+        m_dynamic_checkers.reset(dynamic_checkers);
+    }
 
     //------------------------------------------------------------------
     // lldb::ExecutionContextScope pure virtual functions
@@ -1405,6 +1416,7 @@ protected:
     BreakpointSiteList          m_breakpoint_site_list; ///< This is the list of breakpoint locations we intend
                                                         ///< to insert in the target.
     ClangPersistentVariables    m_persistent_vars;      ///< These are the persistent variables associated with this process for the expression parser.
+    std::auto_ptr<DynamicCheckerFunctions>  m_dynamic_checkers; ///< The functions used by the expression parser to validate data that expressions use.
     UnixSignals                 m_unix_signals;         /// This is the current signal set for this process.
     ConstString                 m_target_triple;
     lldb::ABISP                 m_abi_sp;

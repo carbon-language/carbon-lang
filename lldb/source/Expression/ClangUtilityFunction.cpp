@@ -37,7 +37,9 @@ using namespace lldb_private;
 ClangUtilityFunction::ClangUtilityFunction (const char *text, 
                                             const char *name) :
     m_function_text(text),
-    m_function_name(name)
+    m_function_name(name),
+    m_jit_begin(LLDB_INVALID_ADDRESS),
+    m_jit_end(LLDB_INVALID_ADDRESS)
 {
 }
 
@@ -56,7 +58,13 @@ ClangUtilityFunction::ClangUtilityFunction (const char *text,
 bool
 ClangUtilityFunction::Install (Stream &error_stream,
                                ExecutionContext &exe_ctx)
-{    
+{
+    if (m_jit_begin != LLDB_INVALID_ADDRESS)
+    {
+        error_stream.PutCString("error: already installed\n");
+        return false;
+    }
+    
     ////////////////////////////////////
     // Set up the target and compiler
     //
