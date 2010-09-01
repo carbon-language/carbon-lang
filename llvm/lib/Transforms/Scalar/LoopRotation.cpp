@@ -221,7 +221,7 @@ bool LoopRotate::rotateLoop(Loop *Lp, LPPassManager &LPM) {
 
     // The value now exits in two versions: the initial value in the preheader
     // and the loop "next" value in the original header.
-    SSA.Initialize(OrigHeaderVal->getType(), OrigHeaderVal->getName());
+    SSA.Initialize(OrigHeaderVal);
     SSA.AddAvailableValue(OrigHeader, OrigHeaderVal);
     SSA.AddAvailableValue(OrigPreHeader, OrigPreHeaderVal);
 

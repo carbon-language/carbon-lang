@@ -1310,7 +1310,7 @@ static Value *ConstructSSAForLoadSet(LoadInst *LI,
   // Otherwise, we have to construct SSA form.
   SmallVector<PHINode*, 8> NewPHIs;
   SSAUpdater SSAUpdate(&NewPHIs);
-  SSAUpdate.Initialize(LI->getType(), LI->getName());
+  SSAUpdate.Initialize(LI);
   
   const Type *LoadTy = LI->getType();
   
