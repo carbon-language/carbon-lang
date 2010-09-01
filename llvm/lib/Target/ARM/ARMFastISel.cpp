@@ -106,6 +106,7 @@ class ARMFastISel : public FastISel {
   
     // Instruction selection routines.
     virtual bool ARMSelectLoad(const Instruction *I);
+    virtual bool ARMSelectStore(const Instruction *I);
 
     // Utility routines.
   private:
@@ -113,6 +114,7 @@ class ARMFastISel : public FastISel {
     bool isLoadTypeLegal(const Type *Ty, EVT &VT);
     bool ARMEmitLoad(EVT VT, unsigned &ResultReg, unsigned Reg, int Offset);
     bool ARMLoadAlloca(const Instruction *I);
+    bool ARMStoreAlloca(const Instruction *I);
     bool ARMComputeRegOffset(const Value *Obj, unsigned &Reg, int &Offset);
     
     bool DefinesOptionalPredicate(MachineInstr *MI, bool *CPSR);
@@ -444,6 +446,43 @@ bool ARMFastISel::ARMEmitLoad(EVT VT, unsigned &ResultReg,
   return true;
 }
 
+bool ARMFastISel::ARMStoreAlloca(const Instruction *I) {
+  Value *Op1 = I->getOperand(1);
+
+  // Verify it's an alloca.
+  if (const AllocaInst *AI = dyn_cast<AllocaInst>(Op1)) {
+    DenseMap<const AllocaInst*, int>::iterator SI =
+      FuncInfo.StaticAllocaMap.find(AI);
+
+    if (SI != FuncInfo.StaticAllocaMap.end()) {
+      TargetRegisterClass* RC = TLI.getRegClassFor(TLI.getPointerTy());
+      unsigned Reg = getRegForValue(I->getOperand(0));
+      // Make sure we can get this into a register.
+      if (Reg == 0) return false;
+      TII.storeRegToStackSlot(*FuncInfo.MBB, *FuncInfo.InsertPt,
+                              Reg, true /*isKill*/, SI->second, RC,
+                              TM.getRegisterInfo());
+      return true;
+    }
+  }
+  return false;
+}
+
+bool ARMFastISel::ARMSelectStore(const Instruction *I) {
+  // If we're an alloca we know we have a frame index and can emit the store
+  // quickly.
+  if (ARMStoreAlloca(I))
+    return true;
+    
+  // Yay type legalization
+  EVT VT;
+  if (!isLoadTypeLegal(I->getType(), VT))
+    return false;
+    
+  return false;
+  
+}
+
 bool ARMFastISel::ARMSelectLoad(const Instruction *I) {
   // If we're an alloca we know we have a frame index and can emit the load
   // directly in short order.
@@ -496,6 +535,8 @@ bool ARMFastISel::TargetSelectInstruction(const Instruction *I) {
   switch (I->getOpcode()) {
     case Instruction::Load:
       return ARMSelectLoad(I);
+    case Instruction::Store:
+      return ARMSelectStore(I);
     default: break;
   }
   return false;
