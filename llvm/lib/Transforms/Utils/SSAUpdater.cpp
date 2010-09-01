@@ -29,20 +29,21 @@ static AvailableValsTy &getAvailableVals(void *AV) {
 }
 
 SSAUpdater::SSAUpdater(SmallVectorImpl<PHINode*> *NewPHI)
-  : AV(0), PrototypeValue(0), InsertedPHIs(NewPHI) {}
+  : AV(0), ProtoType(0), ProtoName(), InsertedPHIs(NewPHI) {}
 
 SSAUpdater::~SSAUpdater() {
   delete &getAvailableVals(AV);
 }
 
 /// Initialize - Reset this object to get ready for a new set of SSA
-/// updates.  ProtoValue is the value used to name PHI nodes.
-void SSAUpdater::Initialize(Value *ProtoValue) {
+/// updates with type 'Ty'.  PHI nodes get a name based on 'Name'.
+void SSAUpdater::Initialize(const Type *Ty, StringRef Name) {
   if (AV == 0)
     AV = new AvailableValsTy();
   else
     getAvailableVals(AV).clear();
-  PrototypeValue = ProtoValue;
+  ProtoType = Ty;
+  ProtoName = Name;
 }
 
 /// HasValueForBlock - Return true if the SSAUpdater already has a value for
@@ -54,8 +55,8 @@ bool SSAUpdater::HasValueForBlock(BasicBlock *BB) const {
 /// AddAvailableValue - Indicate that a rewritten value is available in the
 /// specified block with the specified value.
 void SSAUpdater::AddAvailableValue(BasicBlock *BB, Value *V) {
-  assert(PrototypeValue != 0 && "Need to initialize SSAUpdater");
-  assert(PrototypeValue->getType() == V->getType() &&
+  assert(ProtoType != 0 && "Need to initialize SSAUpdater");
+  assert(ProtoType == V->getType() &&
          "All rewritten values must have the same type");
   getAvailableVals(AV)[BB] = V;
 }
@@ -148,7 +149,7 @@ Value *SSAUpdater::GetValueInMiddleOfBlock(BasicBlock *BB) {
 
   // If there are no predecessors, just return undef.
   if (PredValues.empty())
-    return UndefValue::get(PrototypeValue->getType());
+    return UndefValue::get(ProtoType);
 
   // Otherwise, if all the merged values are the same, just use it.
   if (SingularValue != 0)
@@ -168,9 +169,7 @@ Value *SSAUpdater::GetValueInMiddleOfBlock(BasicBlock *BB) {
   }
 
   // Ok, we have no way out, insert a new one now.
-  PHINode *InsertedPHI = PHINode::Create(PrototypeValue->getType(),
-                                         PrototypeValue->getName(),
-                                         &BB->front());
+  PHINode *InsertedPHI = PHINode::Create(ProtoType, ProtoName, &BB->front());
   InsertedPHI->reserveOperandSpace(PredValues.size());
 
   // Fill in all the predecessors of the PHI.
@@ -282,15 +281,14 @@ public:
   /// GetUndefVal - Get an undefined value of the same type as the value
   /// being handled.
   static Value *GetUndefVal(BasicBlock *BB, SSAUpdater *Updater) {
-    return UndefValue::get(Updater->PrototypeValue->getType());
+    return UndefValue::get(Updater->ProtoType);
   }
 
   /// CreateEmptyPHI - Create a new PHI instruction in the specified block.
   /// Reserve space for the operands but do not fill them in yet.
   static Value *CreateEmptyPHI(BasicBlock *BB, unsigned NumPreds,
                                SSAUpdater *Updater) {
-    PHINode *PHI = PHINode::Create(Updater->PrototypeValue->getType(),
-                                   Updater->PrototypeValue->getName(),
+    PHINode *PHI = PHINode::Create(Updater->ProtoType, Updater->ProtoName,
                                    &BB->front());
     PHI->reserveOperandSpace(NumPreds);
     return PHI;

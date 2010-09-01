@@ -206,7 +206,7 @@ bool LCSSA::ProcessInstruction(Instruction *Inst,
   DomTreeNode *DomNode = DT->getNode(DomBB);
 
   SSAUpdater SSAUpdate;
-  SSAUpdate.Initialize(Inst);
+  SSAUpdate.Initialize(Inst->getType(), Inst->getName());
   
   // Insert the LCSSA phi's into all of the exit blocks dominated by the
   // value, and add them to the Phi's map.

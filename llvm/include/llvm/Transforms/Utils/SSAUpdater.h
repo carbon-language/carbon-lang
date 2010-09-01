@@ -36,9 +36,11 @@ private:
   //typedef DenseMap<BasicBlock*, Value*> AvailableValsTy;
   void *AV;
 
-  /// PrototypeValue is an arbitrary representative value, which we derive names
-  /// and a type for PHI nodes.
-  Value *PrototypeValue;
+  /// ProtoType holds the type of the values being rewritten.
+  const Type *ProtoType;
+
+  // PHI nodes are given a name based on ProtoName.
+  std::string ProtoName;
 
   /// InsertedPHIs - If this is non-null, the SSAUpdater adds all PHI nodes that
   /// it creates to the vector.
@@ -51,8 +53,8 @@ public:
   ~SSAUpdater();
 
   /// Initialize - Reset this object to get ready for a new set of SSA
-  /// updates.  ProtoValue is the value used to name PHI nodes.
-  void Initialize(Value *ProtoValue);
+  /// updates with type 'Ty'.  PHI nodes get a name based on 'Name'.
+  void Initialize(const Type *Ty, StringRef Name);
 
   /// AddAvailableValue - Indicate that a rewritten value is available at the
   /// end of the specified block with the specified value.

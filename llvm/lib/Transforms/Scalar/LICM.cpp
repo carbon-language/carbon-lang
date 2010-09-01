@@ -526,7 +526,7 @@ void LICM::sink(Instruction &I) {
   SSAUpdater SSA(&NewPHIs);
   
   if (!I.use_empty())
-    SSA.Initialize(&I);
+    SSA.Initialize(I.getType(), I.getName());
   
   // Insert a copy of the instruction in each exit block of the loop that is
   // dominated by the instruction.  Each exit block is known to only be in the
@@ -728,7 +728,7 @@ void LICM::PromoteAliasSet(AliasSet &AS) {
     SomeValue = LoopUses[0];
   else
     SomeValue = cast<StoreInst>(LoopUses[0])->getOperand(0);
-  SSA.Initialize(SomeValue);
+  SSA.Initialize(SomeValue->getType(), SomeValue->getName());
 
   // First step: bucket up uses of the pointers by the block they occur in.
   // This is important because we have to handle multiple defs/uses in a block

@@ -1526,7 +1526,7 @@ bool JumpThreading::ThreadEdge(BasicBlock *BB,
     // We found a use of I outside of BB.  Rename all uses of I that are outside
     // its block to be uses of the appropriate PHI node etc.  See ValuesInBlocks
     // with the two values we know.
-    SSAUpdate.Initialize(I);
+    SSAUpdate.Initialize(I->getType(), I->getName());
     SSAUpdate.AddAvailableValue(BB, I);
     SSAUpdate.AddAvailableValue(NewBB, ValueMapping[I]);
     
@@ -1681,7 +1681,7 @@ bool JumpThreading::DuplicateCondBranchOnPHIIntoPred(BasicBlock *BB,
     // We found a use of I outside of BB.  Rename all uses of I that are outside
     // its block to be uses of the appropriate PHI node etc.  See ValuesInBlocks
     // with the two values we know.
-    SSAUpdate.Initialize(I);
+    SSAUpdate.Initialize(I->getType(), I->getName());
     SSAUpdate.AddAvailableValue(BB, I);
     SSAUpdate.AddAvailableValue(PredBB, ValueMapping[I]);
     
