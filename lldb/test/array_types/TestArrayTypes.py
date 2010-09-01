@@ -84,7 +84,7 @@ class TestArrayTypes(TestBase):
         breakpoint = target.BreakpointCreateByLocation("main.c", 42)
         self.assertTrue(breakpoint.IsValid(), VALID_BREAKPOINT)
 
-        self.runCmd("run", RUN_SUCCEEDED)
+        self.runCmd("run", RUN_SUCCEEDED, setCookie=False)
         # This does not work, and results in the process stopped at dyld_start?
         #process = target.LaunchProcess([''], [''], os.ctermid(), False)
 

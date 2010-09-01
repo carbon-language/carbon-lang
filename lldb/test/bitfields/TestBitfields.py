@@ -86,7 +86,7 @@ class TestBitfields(TestBase):
         breakpoint = target.BreakpointCreateByLocation("main.c", 42)
         self.assertTrue(breakpoint.IsValid(), VALID_BREAKPOINT)
 
-        self.runCmd("run", RUN_SUCCEEDED)
+        self.runCmd("run", RUN_SUCCEEDED, setCookie=False)
         # This does not work, and results in the process stopped at dyld_start?
         #process = target.LaunchProcess([''], [''], os.ctermid(), False)
 
@@ -130,6 +130,10 @@ class TestBitfields(TestBase):
                         four.IsInScope(frame) and
                         int(four.GetValue(frame), 16) == 0x0f,
                         'bits.four has type uint32_t:4, is in scope, and == 0x0f')
+
+        # Now kill the process, and we are done.
+        rc = target.GetProcess().Kill()
+        self.assertTrue(rc.Success())
 
 
 if __name__ == '__main__':

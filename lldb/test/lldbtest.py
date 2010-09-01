@@ -323,7 +323,7 @@ class TestBase(unittest2.TestCase):
         # Restore old working directory.
         os.chdir(self.oldcwd)
 
-    def runCmd(self, cmd, msg=None, check=True, trace=False):
+    def runCmd(self, cmd, msg=None, check=True, trace=False, setCookie=True):
         """
         Ask the command interpreter to handle the command and then check its
         return status.
@@ -334,10 +334,9 @@ class TestBase(unittest2.TestCase):
 
         trace = (True if traceAlways else trace)
 
-        self.runStarted = (cmd.startswith("run") or
-                           cmd.startswith("process launch"))
+        running = (cmd.startswith("run") or cmd.startswith("process launch"))
 
-        for i in range(self.maxLaunchCount if self.runStarted else 1):
+        for i in range(self.maxLaunchCount if running else 1):
             self.ci.HandleCommand(cmd, self.res)
 
             if trace:
@@ -350,9 +349,11 @@ class TestBase(unittest2.TestCase):
             if self.res.Succeeded():
                 break
             else:
-                if self.runStarted:
+                if running:
                     # Process launch failed, wait some time before the next try.
                     time.sleep(self.timeWait)
+
+        self.runStarted = running and setCookie
 
         if check:
             self.assertTrue(self.res.Succeeded(),
