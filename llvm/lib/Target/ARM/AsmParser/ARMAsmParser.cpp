@@ -167,8 +167,8 @@ public:
 
   };
   
-  ARMOperand(KindTy K, SMLoc S, SMLoc E)
-    : Kind(K), StartLoc(S), EndLoc(E) {}
+  //ARMOperand(KindTy K, SMLoc S, SMLoc E)
+  //  : Kind(K), StartLoc(S), EndLoc(E) {}
   
   ARMOperand(const ARMOperand &o) : MCParsedAsmOperand() {
     Kind = o.Kind;
