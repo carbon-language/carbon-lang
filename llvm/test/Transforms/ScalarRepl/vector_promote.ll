@@ -85,3 +85,17 @@ define i32 @test5(float %X) {  ;; should turn into bitcast.
 ; CHECK-NEXT: ret i32
 }
 
+
+;; should not turn into <1 x i64> - It is a banned MMX datatype.
+;; rdar://8380055
+define i64 @test6(<2 x float> %X) {
+	%X_addr = alloca <2 x float>
+        store <2 x float> %X, <2 x float>* %X_addr
+	%P = bitcast <2 x float>* %X_addr to i64*
+	%tmp = load i64* %P
+	ret i64 %tmp
+; CHECK: @test6
+; CHECK-NEXT: bitcast <2 x float> %X to i64
+; CHECK-NEXT: ret i64
+}
+
