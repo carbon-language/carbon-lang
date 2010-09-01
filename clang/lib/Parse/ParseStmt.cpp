@@ -519,6 +519,7 @@ StmtResult Parser::ParseCompoundStatementBody(bool isStmtExpr) {
   // We broke out of the while loop because we found a '}' or EOF.
   if (Tok.isNot(tok::r_brace)) {
     Diag(Tok, diag::err_expected_rbrace);
+    Diag(LBraceLoc, diag::note_matching) << "{";
     return StmtError();
   }
 
