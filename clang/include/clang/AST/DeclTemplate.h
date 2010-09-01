@@ -1813,8 +1813,11 @@ public:
 ///
 /// template <typename T> class A {
 ///   friend class MyVector<T>; // not a friend template
-///   template <typename U> friend class B; // friend template
+///   template <typename U> friend class B; // not a friend template
 ///   template <typename U> friend class Foo<T>::Nested; // friend template
+/// };
+/// NOTE: This class is not currently in use.  All of the above
+/// will yield a FriendDecl, not a FriendTemplateDecl.
 class FriendTemplateDecl : public Decl {
 public:
   typedef llvm::PointerUnion<NamedDecl*,TypeSourceInfo*> FriendUnion;
