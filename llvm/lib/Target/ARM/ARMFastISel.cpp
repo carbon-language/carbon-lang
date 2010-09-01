@@ -110,6 +110,7 @@ class ARMFastISel : public FastISel {
     // Utility routines.
   private:
     bool isTypeLegal(const Type *Ty, EVT &VT);
+    bool isLoadTypeLegal(const Type *Ty, EVT &VT);
     bool ARMEmitLoad(EVT VT, unsigned &ResultReg, unsigned Reg, int Offset);
     bool ARMLoadAlloca(const Instruction *I);
     bool ARMComputeRegOffset(const Value *Obj, unsigned &Reg, int &Offset);
@@ -317,10 +318,21 @@ bool ARMFastISel::isTypeLegal(const Type *Ty, EVT &VT) {
   
   // Only handle simple types.
   if (VT == MVT::Other || !VT.isSimple()) return false;
-  
+    
   // Handle all legal types, i.e. a register that will directly hold this
   // value.
   return TLI.isTypeLegal(VT);
+}
+
+bool ARMFastISel::isLoadTypeLegal(const Type *Ty, EVT &VT) {
+  if (isTypeLegal(Ty, VT)) return true;
+  
+  // If this is a type than can be sign or zero-extended to a basic operation
+  // go ahead and accept it now.
+  if (VT == MVT::i8 || VT == MVT::i16)
+    return true;
+  
+  return false;
 }
 
 // Computes the Reg+Offset to get to an object.
@@ -403,6 +415,14 @@ bool ARMFastISel::ARMEmitLoad(EVT VT, unsigned &ResultReg,
     default: 
       assert(false && "Trying to emit for an unhandled type!");
       return false;
+    case MVT::i16:
+      Opc = isThumb ? ARM::tLDRH : ARM::LDRH;
+      VT = MVT::i32;
+      break;
+    case MVT::i8:
+      Opc = isThumb ? ARM::tLDRB : ARM::LDRB;
+      VT = MVT::i32;
+      break;
     case MVT::i32:
       Opc = isThumb ? ARM::tLDR : ARM::LDR;
       break;
@@ -432,7 +452,7 @@ bool ARMFastISel::ARMSelectLoad(const Instruction *I) {
     
   // Verify we have a legal type before going any further.
   EVT VT;
-  if (!isTypeLegal(I->getType(), VT))
+  if (!isLoadTypeLegal(I->getType(), VT))
     return false;
   
   // Our register and offset with innocuous defaults.
