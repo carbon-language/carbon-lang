@@ -35,7 +35,6 @@ protected:
 
 class ConcreteCallbackVH : public CallbackVH {
 public:
-  ConcreteCallbackVH() : CallbackVH() {}
   ConcreteCallbackVH(Value *V) : CallbackVH(V) {}
 };
 
