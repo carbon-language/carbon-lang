@@ -587,6 +587,8 @@ PBQP::Graph PBQPRegAlloc::constructPBQPProblem() {
   // Resize allowedSets container appropriately.
   allowedSets.resize(vregIntervalsToAlloc.size());
 
+  BitVector ReservedRegs = tri->getReservedRegs(*mf);
+
   // Iterate over virtual register intervals to compute allowed sets...
   for (unsigned node = 0; node < node2LI.size(); ++node) {
 
@@ -595,8 +597,12 @@ PBQP::Graph PBQPRegAlloc::constructPBQPProblem() {
     const TargetRegisterClass *liRC = mri->getRegClass(li->reg);
 
     // Start by assuming all allocable registers in the class are allowed...
-    RegVector liAllowed(liRC->allocation_order_begin(*mf),
-                        liRC->allocation_order_end(*mf));
+    RegVector liAllowed;
+    TargetRegisterClass::iterator aob = liRC->allocation_order_begin(*mf);
+    TargetRegisterClass::iterator aoe = liRC->allocation_order_end(*mf);
+    for (TargetRegisterClass::iterator it = aob; it != aoe; ++it)
+      if (!ReservedRegs.test(*it))
+        liAllowed.push_back(*it);
 
     // Eliminate the physical registers which overlap with this range, along
     // with all their aliases.
