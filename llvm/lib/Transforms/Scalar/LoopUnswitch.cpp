@@ -277,19 +277,18 @@ bool LoopUnswitch::processCurrentLoop() {
   return Changed;
 }
 
-/// isTrivialLoopExitBlock - Check to see if all paths from BB either:
-///   1. Exit the loop with no side effects.
-///   2. Branch to the latch block with no side-effects.
+/// isTrivialLoopExitBlock - Check to see if all paths from BB exit the
+/// loop with no side effects (including infinite loops).
 ///
-/// If these conditions are true, we return true and set ExitBB to the block we
+/// If true, we return true and set ExitBB to the block we
 /// exit through.
 ///
 static bool isTrivialLoopExitBlockHelper(Loop *L, BasicBlock *BB,
                                          BasicBlock *&ExitBB,
                                          std::set<BasicBlock*> &Visited) {
   if (!Visited.insert(BB).second) {
-    // Already visited and Ok, end of recursion.
-    return true;
+    // Already visited. Without more analysis, this could indicate an infinte loop.
+    return false;
   } else if (!L->contains(BB)) {
     // Otherwise, this is a loop exit, this is fine so long as this is the
     // first exit.
@@ -319,7 +318,7 @@ static bool isTrivialLoopExitBlockHelper(Loop *L, BasicBlock *BB,
 /// process.  If so, return the block that is exited to, otherwise return null.
 static BasicBlock *isTrivialLoopExitBlock(Loop *L, BasicBlock *BB) {
   std::set<BasicBlock*> Visited;
-  Visited.insert(L->getHeader());  // Branches to header are ok.
+  Visited.insert(L->getHeader());  // Branches to header make infinite loops.
   BasicBlock *ExitBB = 0;
   if (isTrivialLoopExitBlockHelper(L, BB, ExitBB, Visited))
     return ExitBB;
@@ -351,8 +350,8 @@ bool LoopUnswitch::IsTrivialUnswitchCondition(Value *Cond, Constant **Val,
     if (!BI->isConditional() || BI->getCondition() != Cond)
       return false;
   
-    // Check to see if a successor of the branch is guaranteed to go to the
-    // latch block or exit through a one exit block without having any 
+    // Check to see if a successor of the branch is guaranteed to 
+    // exit through a unique exit block without having any 
     // side-effects.  If so, determine the value of Cond that causes it to do
     // this.
     if ((LoopExitBB = isTrivialLoopExitBlock(currentLoop, 
