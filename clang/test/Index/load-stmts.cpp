@@ -38,6 +38,16 @@ void test_exprs(C *c) {
   int_ptr->Integer::~Integer();
 }
 
+namespace N {
+  int f(int);
+  float f(float);
+}
+
+template<typename T>
+void test_dependent_exprs(T t) {
+  N::f(t);
+}
+
 // RUN: c-index-test -test-load-source all %s | FileCheck %s
 // CHECK: load-stmts.cpp:1:13: TypedefDecl=T:1:13 (Definition) Extent=[1:13 - 1:14]
 // CHECK: load-stmts.cpp:2:8: StructDecl=X:2:8 (Definition) Extent=[2:1 - 2:23]
@@ -103,3 +113,7 @@ void test_exprs(C *c) {
 // CHECK: load-stmts.cpp:38:3: DeclRefExpr=int_ptr:37:12 Extent=[38:3 - 38:10]
 // CHECK: load-stmts.cpp:38:12: TypeRef=Integer:36:15 Extent=[38:12 - 38:19]
 // CHECK: load-stmts.cpp:38:22: TypeRef=Integer:36:15 Extent=[38:22 - 38:29]
+// CHECK: load-stmts.cpp:47:6: FunctionTemplate=test_dependent_exprs:47:6 (Definition)
+// CHECK: load-stmts.cpp:48:3: CallExpr= Extent=[48:3 - 48:10]
+// CHECK: load-stmts.cpp:48:3: NamespaceRef=N:41:11 Extent=[48:3 - 48:4]
+// CHECK: load-stmts.cpp:48:8: DeclRefExpr=t:47:29 Extent=[48:8 - 48:9]

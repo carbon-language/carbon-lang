@@ -386,10 +386,12 @@ public:
   // FIXME: DesignatedInitExpr
   bool VisitCXXTypeidExpr(CXXTypeidExpr *E);
   bool VisitCXXDefaultArgExpr(CXXDefaultArgExpr *E) { return false; }
-  // FIXME: CXXTemporaryObjectExpr has poor source-location information
-  // FIXME: CXXScalarValueInitExpr has poor source-location information
+  // FIXME: CXXTemporaryObjectExpr has poor source-location information.
+  // FIXME: CXXScalarValueInitExpr has poor source-location information.
   // FIXME: CXXNewExpr has poor source-location information
   bool VisitCXXPseudoDestructorExpr(CXXPseudoDestructorExpr *E);
+  // FIXME: UnaryTypeTraitExpr has poor source-location information.
+  bool VisitUnresolvedLookupExpr(UnresolvedLookupExpr *E);
 };
 
 } // end anonymous namespace
@@ -1605,6 +1607,21 @@ bool CursorVisitor::VisitCXXPseudoDestructorExpr(CXXPseudoDestructorExpr *E) {
     if (Visit(TSInfo->getTypeLoc()))
       return true;
   
+  return false;
+}
+
+bool CursorVisitor::VisitUnresolvedLookupExpr(UnresolvedLookupExpr *E) {
+  // Visit the nested-name-specifier.
+  if (NestedNameSpecifier *Qualifier = E->getQualifier())
+    if (VisitNestedNameSpecifier(Qualifier, E->getQualifierRange()))
+      return true;
+  
+  // Visit the declaration name.
+  if (VisitDeclarationNameInfo(E->getNameInfo()))
+    return true;
+  
+  // FIXME: We don't have a way to visit all of the declarations referenced
+  // here.
   return false;
 }
 
