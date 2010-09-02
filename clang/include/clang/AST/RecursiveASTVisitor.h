@@ -123,12 +123,27 @@ namespace clang {
 /// users may override Traverse* and WalkUpFrom* to implement custom
 /// traversal strategies.  Returning false from one of these overridden
 /// functions will abort the entire traversal.
+///
+/// By default, this visitor tries to visit every part of the explicit
+/// source code exactly once.  The default policy towards templates
+/// is to descend into the 'pattern' class or function body, not any
+/// explicit or implicit instantiations.  Explicit specializations
+/// are still visited, and the patterns of partial specializations
+/// are visited separately.  This behavior can be changed by
+/// overriding shouldVisitTemplateInstantiations() in the derived class
+/// to return true, in which case all known implicit and explicit
+/// instantiations will be visited at the same time as the pattern
+/// from which they were produced.
 template<typename Derived>
 class RecursiveASTVisitor {
 public:
   /// \brief Return a reference to the derived class.
   Derived &getDerived() { return *static_cast<Derived*>(this); }
 
+  /// \brief Return whether this visitor should recurse into
+  /// template instantiations.
+  bool shouldVisitTemplateInstantiations() const { return false; }
+  
   /// \brief Recursively visit a statement or expression, by
   /// dispatching to Traverse*() based on the argument's dynamic type.
   ///
@@ -351,7 +366,9 @@ public:
 private:
   // These are helper methods used by more than one Traverse* method.
   bool TraverseTemplateParameterListHelper(TemplateParameterList *TPL);
-  bool TraverseTemplateArgumentLocsHelper(const TemplateArgumentLoc *TAL,
+  bool TraverseClassInstantiations(ClassTemplateDecl* D, Decl *Pattern);
+  bool TraverseFunctionInstantiations(FunctionTemplateDecl* D) ;
+  bool TraverseTemplateArgumentLocsHelper(const TemplateArgumentLoc *TAL, 
                                           unsigned Count);
   bool TraverseArrayTypeLocHelper(ArrayTypeLoc TL);
   bool TraverseRecordHelper(RecordDecl *D);
@@ -1095,19 +1112,124 @@ bool RecursiveASTVisitor<Derived>::TraverseTemplateParameterListHelper(
   return true;
 }
 
+// A helper method for traversing the implicit instantiations of a
+// class.
+template<typename Derived>
+bool RecursiveASTVisitor<Derived>::TraverseClassInstantiations(
+  ClassTemplateDecl* D, Decl *Pattern) {
+  assert(isa<ClassTemplateDecl>(Pattern) ||
+         isa<ClassTemplatePartialSpecializationDecl>(Pattern));
+
+  ClassTemplateDecl::spec_iterator end = D->spec_end();
+  for (ClassTemplateDecl::spec_iterator it = D->spec_begin(); it != end; ++it) {
+    ClassTemplateSpecializationDecl* SD = *it;
+
+    switch (SD->getSpecializationKind()) {
+    // Visit the implicit instantiations with the requested pattern.
+    case TSK_ImplicitInstantiation: {
+      llvm::PointerUnion<ClassTemplateDecl *,
+                         ClassTemplatePartialSpecializationDecl *> U
+        = SD->getInstantiatedFrom();
+
+      bool ShouldVisit;
+      if (U.is<ClassTemplateDecl*>())
+        ShouldVisit = (U.get<ClassTemplateDecl*>() == Pattern);
+      else
+        ShouldVisit
+          = (U.get<ClassTemplatePartialSpecializationDecl*>() == Pattern);
+
+      if (ShouldVisit)
+        TRY_TO(TraverseClassTemplateSpecializationDecl(SD));
+      break;
+    }
+
+    // We don't need to do anything on an explicit instantiation
+    // or explicit specialization because there will be an explicit
+    // node for it elsewhere.
+    case TSK_ExplicitInstantiationDeclaration:
+    case TSK_ExplicitInstantiationDefinition:
+    case TSK_ExplicitSpecialization:
+      break;
+
+    // We don't need to do anything for an uninstantiated
+    // specialization.
+    case TSK_Undeclared:
+      break;
+    }
+  }
+
+  return true;
+}
+
 DEF_TRAVERSE_DECL(ClassTemplateDecl, {
-    TRY_TO(TraverseDecl(D->getTemplatedDecl()));
+    CXXRecordDecl* TempDecl = D->getTemplatedDecl();
+    TRY_TO(TraverseDecl(TempDecl));
     TRY_TO(TraverseTemplateParameterListHelper(D->getTemplateParameters()));
-    // We should not traverse the specializations/partial
-    // specializations.  Those will show up in other contexts.
-    // getInstantiatedFromMemberTemplate() is just a link from a
-    // template instantiation back to the template from which it was
-    // instantiated, and thus should not be traversed either.
+
+    // By default, we do not traverse the instantiations of
+    // class templates since they do not apprear in the user code. The
+    // following code optionally traverses them.
+    if (getDerived().shouldVisitTemplateInstantiations()) {
+      // If this is the definition of the primary template, visit
+      // instantiations which were formed from this pattern.
+      if (D->isThisDeclarationADefinition())
+        TRY_TO(TraverseClassInstantiations(D, D));
+    }
+    
+    // Note that getInstantiatedFromMemberTemplate() is just a link
+    // from a template instantiation back to the template from which
+    // it was instantiated, and thus should not be traversed.
   })
 
+// A helper method for traversing the instantiations of a
+// function while skipping its specializations.
+template<typename Derived>
+bool RecursiveASTVisitor<Derived>::TraverseFunctionInstantiations(
+  FunctionTemplateDecl* D) {
+  FunctionTemplateDecl::spec_iterator end = D->spec_end();
+  for (FunctionTemplateDecl::spec_iterator it = D->spec_begin(); it != end; ++it) {
+    FunctionDecl* FD = *it;
+    switch (FD->getTemplateSpecializationKind()) {
+    case TSK_ImplicitInstantiation:
+      // We don't know what kind of FunctionDecl this is.
+      TRY_TO(TraverseDecl(FD));
+      break;
+
+    // No need to visit explicit instantiations, we'll find the node
+    // eventually.
+    case TSK_ExplicitInstantiationDeclaration:
+    case TSK_ExplicitInstantiationDefinition:
+      break;
+
+    case TSK_Undeclared:           // Declaration of the template definition.
+    case TSK_ExplicitSpecialization:
+      break;
+    default:
+      assert(false && "Unknown specialization kind.");
+    }
+  }
+  
+  return true;
+}
+  
 DEF_TRAVERSE_DECL(FunctionTemplateDecl, {
     TRY_TO(TraverseDecl(D->getTemplatedDecl()));
     TRY_TO(TraverseTemplateParameterListHelper(D->getTemplateParameters()));
+
+    // By default, we do not traverse the instantiations of
+    // function templates since they do not apprear in the user code. The
+    // following code optionally traverses them.
+    if (getDerived().shouldVisitTemplateInstantiations()) {
+      // Explicit function specializations will be traversed from the
+      // context of their declaration. There is therefore no need to
+      // traverse them for here.
+      //
+      // In addition, we only traverse the function instantiations when
+      // the function template is a function template definition.
+      if (D->isThisDeclarationADefinition()) {
+        TRY_TO(TraverseFunctionInstantiations(D));
+      }
+    }
   })
 
 DEF_TRAVERSE_DECL(TemplateTemplateParmDecl, {
@@ -1203,10 +1325,16 @@ DEF_TRAVERSE_DECL(ClassTemplateSpecializationDecl, {
     // ("template set<int>;"), we do need a callback, since this
     // is the only callback that's made for this instantiation.
     // We use getTypeAsWritten() to distinguish.
-    // FIXME: see how we want to handle template specializations.
     if (TypeSourceInfo *TSI = D->getTypeAsWritten())
       TRY_TO(TraverseTypeLoc(TSI->getTypeLoc()));
-    return true;
+
+    if (!getDerived().shouldVisitTemplateInstantiations() &&
+        D->getTemplateSpecializationKind() != TSK_ExplicitSpecialization)
+      // Returning from here skips traversing the
+      // declaration context of the ClassTemplateSpecializationDecl
+      // (embedded in the DEF_TRAVERSE_DECL() macro)
+      // which contains the instantiated members of the class.
+      return true;
   })
 
 template <typename Derived>
@@ -1234,6 +1362,12 @@ DEF_TRAVERSE_DECL(ClassTemplatePartialSpecializationDecl, {
     // though that's our parent class -- we already visit all the
     // template args here.
     TRY_TO(TraverseCXXRecordHelper(D));
+
+    // If we're visiting instantiations, visit the instantiations of
+    // this template now.
+    if (getDerived().shouldVisitTemplateInstantiations() &&
+        D->isThisDeclarationADefinition())
+      TRY_TO(TraverseClassInstantiations(D->getSpecializedTemplate(), D));
   })
 
 DEF_TRAVERSE_DECL(EnumConstantDecl, {
