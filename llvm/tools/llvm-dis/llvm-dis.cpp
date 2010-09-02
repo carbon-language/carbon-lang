@@ -18,8 +18,11 @@
 
 #include "llvm/LLVMContext.h"
 #include "llvm/Module.h"
+#include "llvm/Type.h"
 #include "llvm/Bitcode/ReaderWriter.h"
+#include "llvm/Assembly/AssemblyAnnotationWriter.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/FormattedStream.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/PrettyStackTrace.h"
@@ -39,6 +42,29 @@ Force("f", cl::desc("Enable binary output on terminals"));
 
 static cl::opt<bool>
 DontPrint("disable-output", cl::desc("Don't output the .ll file"), cl::Hidden);
+
+static cl::opt<bool>
+ShowAnnotations("show-annotations",
+                cl::desc("Add informational comments to the .ll file"));
+
+namespace {
+  
+class CommentWriter : public AssemblyAnnotationWriter {
+public:
+  void emitFunctionAnnot(const Function *F,
+                         formatted_raw_ostream &OS) {
+    OS << "; [#uses=" << F->getNumUses() << ']';  // Output # uses
+    OS << '\n';
+  }
+  void printInfoComment(const Value &V, formatted_raw_ostream &OS) {
+    if (V.getType()->isVoidTy()) return;
+      
+    OS.PadToColumn(50);
+    OS << "; [#uses=" << V.getNumUses() << ']';  // Output # uses
+  }
+};
+  
+} // end anon namespace
 
 int main(int argc, char **argv) {
   // Print a stack trace if we signal out.
@@ -96,9 +122,13 @@ int main(int argc, char **argv) {
     return 1;
   }
 
+  OwningPtr<AssemblyAnnotationWriter> Annotator;
+  if (ShowAnnotations)
+    Annotator.reset(new CommentWriter());
+  
   // All that llvm-dis does is write the assembly to a file.
   if (!DontPrint)
-    Out->os() << *M;
+    M->print(Out->os(), Annotator.get());
 
   // Declare success.
   Out->keep();
