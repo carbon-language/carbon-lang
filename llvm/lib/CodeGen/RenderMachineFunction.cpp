@@ -57,6 +57,11 @@ showIntervals("rmf-intervals",
               cl::init(""), cl::Hidden);
 
 static cl::opt<bool>
+filterEmpty("rmf-filter-empty-intervals",
+            cl::desc("Don't display empty intervals."),
+            cl::init(true), cl::Hidden);
+
+static cl::opt<bool>
 showEmptyIndexes("rmf-empty-indexes",
                  cl::desc("Render indexes not associated with instructions or "
                           "MBB starts."),
@@ -150,10 +155,14 @@ namespace llvm {
                                           const std::string &intervalRangeStr) {
     if (intervalRangeStr == "*") {
       intervalTypesToRender |= All;
+    } else if (intervalRangeStr == "virt-nospills*") {
+      intervalTypesToRender |= VirtNoSpills;
+    } else if (intervalRangeStr == "spills*") {
+      intervalTypesToRender |= VirtSpills;
     } else if (intervalRangeStr == "virt*") {
-      intervalTypesToRender |= VirtPlusExplicit;
+      intervalTypesToRender |= AllVirt;
     } else if (intervalRangeStr == "phys*") {
-      intervalTypesToRender |= PhysPlusExplicit;
+      intervalTypesToRender |= AllPhys;
     } else {
       std::istringstream iss(intervalRangeStr);
       unsigned reg1, reg2;
@@ -179,10 +188,12 @@ namespace llvm {
 
   void MFRenderingOptions::setup(MachineFunction *mf,
                                  const TargetRegisterInfo *tri,
-                                 LiveIntervals *lis) {
+                                 LiveIntervals *lis,
+                                 const RenderMachineFunction *rmf) {
     this->mf = mf;
     this->tri = tri;
     this->lis = lis;
+    this->rmf = rmf;
 
     clear();
   }
@@ -252,12 +263,19 @@ namespace llvm {
       if (intervalTypesToRender != ExplicitOnly) {
         for (LiveIntervals::iterator liItr = lis->begin(), liEnd = lis->end();
              liItr != liEnd; ++liItr) {
+          LiveInterval *li = liItr->second;
 
-          if ((TargetRegisterInfo::isPhysicalRegister(liItr->first) &&
-               (intervalTypesToRender & PhysPlusExplicit)) ||
-              (TargetRegisterInfo::isVirtualRegister(liItr->first) &&
-               (intervalTypesToRender & VirtPlusExplicit))) {
-            intervalSet.insert(liItr->second);
+          if (filterEmpty && li->empty())
+            continue;
+
+          if ((TargetRegisterInfo::isPhysicalRegister(li->reg) &&
+               (intervalTypesToRender & AllPhys))) {
+            intervalSet.insert(li);
+          } else if (TargetRegisterInfo::isVirtualRegister(li->reg)) {
+            if (((intervalTypesToRender & VirtNoSpills) && !rmf->isSpill(li)) || 
+                ((intervalTypesToRender & VirtSpills) && rmf->isSpill(li))) {
+              intervalSet.insert(li);
+            }
           }
         }
       }
@@ -542,7 +560,26 @@ namespace llvm {
                                         SlotIndex i) const {
     const MachineInstr *mi = sis->getInstructionFromIndex(i);
 
+    // For uses/defs recorded use/def indexes override current liveness and
+    // instruction operands (Only for the interval which records the indexes).
+    if (i.isUse() || i.isDef()) {
+      UseDefs::const_iterator udItr = useDefs.find(li);
+      if (udItr != useDefs.end()) {
+        const SlotSet &slotSet = udItr->second;
+        if (slotSet.count(i)) {
+          if (i.isUse()) {
+            return Used;
+          }
+          // else
+          return Defined;
+        }
+      }
+    }
+
+    // If the slot is a load/store, or there's no info in the use/def set then
+    // use liveness and instruction operand info.
     if (li->liveAt(i)) {
+
       if (mi == 0) {
         if (vrm == 0 || 
             (vrm->getStackSlot(li->reg) == VirtRegMap::NO_STACK_SLOT)) {
@@ -880,6 +917,7 @@ namespace llvm {
   }
 
   bool RenderMachineFunction::runOnMachineFunction(MachineFunction &fn) {
+
     mf = &fn;
     mri = &mf->getRegInfo();
     tri = mf->getTarget().getRegisterInfo();
@@ -887,7 +925,10 @@ namespace llvm {
     sis = &getAnalysis<SlotIndexes>();
 
     trei.setup(mf, mri, tri, lis);
-    ro.setup(mf, tri, lis);
+    ro.setup(mf, tri, lis, this);
+    spillIntervals.clear();
+    spillFor.clear();
+    useDefs.clear();
 
     fqn = mf->getFunction()->getParent()->getModuleIdentifier() + "." +
           mf->getFunction()->getName().str();
@@ -898,6 +939,50 @@ namespace llvm {
   void RenderMachineFunction::releaseMemory() {
     trei.clear();
     ro.clear();
+    spillIntervals.clear();
+    spillFor.clear();
+    useDefs.clear();
+  }
+
+  void RenderMachineFunction::rememberUseDefs(const LiveInterval *li) {
+
+    if (!ro.shouldRenderCurrentMachineFunction())
+      return; 
+
+    for (MachineRegisterInfo::reg_iterator rItr = mri->reg_begin(li->reg),
+                                           rEnd = mri->reg_end();
+         rItr != rEnd; ++rItr) {
+      const MachineInstr *mi = &*rItr;
+      if (mi->readsRegister(li->reg)) {
+        useDefs[li].insert(lis->getInstructionIndex(mi).getUseIndex());
+      }
+      if (mi->definesRegister(li->reg)) {
+        useDefs[li].insert(lis->getInstructionIndex(mi).getDefIndex());
+      }
+    }
+  }
+
+  void RenderMachineFunction::rememberSpills(
+                                     const LiveInterval *li,
+                                     const std::vector<LiveInterval*> &spills) {
+
+    if (!ro.shouldRenderCurrentMachineFunction())
+      return; 
+
+    for (std::vector<LiveInterval*>::const_iterator siItr = spills.begin(),
+                                                    siEnd = spills.end();
+         siItr != siEnd; ++siItr) {
+      const LiveInterval *spill = *siItr;
+      spillIntervals[li].insert(spill);
+      spillFor[spill] = li;
+    }
+  }
+
+  bool RenderMachineFunction::isSpill(const LiveInterval *li) const {
+    SpillForMap::const_iterator sfItr = spillFor.find(li);
+    if (sfItr == spillFor.end())
+      return false;
+    return true;
   }
 
   void RenderMachineFunction::renderMachineFunction(

@@ -28,10 +28,107 @@ namespace llvm {
   class LiveIntervals;
   class MachineInstr;
   class MachineRegisterInfo;
+  class RenderMachineFunction;
   class TargetRegisterClass;
   class TargetRegisterInfo;
   class VirtRegMap;
   class raw_ostream;
+
+  /// \brief Helper class to process rendering options. Tries to be as lazy as
+  ///        possible.
+  class MFRenderingOptions {
+  public:
+
+    struct RegClassComp {
+      bool operator()(const TargetRegisterClass *trc1,
+                      const TargetRegisterClass *trc2) const {
+        std::string trc1Name(trc1->getName()), trc2Name(trc2->getName());
+        return std::lexicographical_compare(trc1Name.begin(), trc1Name.end(),
+                                            trc2Name.begin(), trc2Name.end());
+      }
+    };
+
+    typedef std::set<const TargetRegisterClass*, RegClassComp> RegClassSet;
+
+    struct IntervalComp {
+      bool operator()(const LiveInterval *li1, const LiveInterval *li2) const {
+        return li1->reg < li2->reg;
+      }
+    };
+
+    typedef std::set<const LiveInterval*, IntervalComp> IntervalSet;
+
+    /// Initialise the rendering options.
+    void setup(MachineFunction *mf, const TargetRegisterInfo *tri,
+               LiveIntervals *lis, const RenderMachineFunction *rmf);
+
+    /// Clear translations of options to the current function.
+    void clear();
+
+    /// Reset any options computed for this specific rendering.
+    void resetRenderSpecificOptions();
+
+    /// Should we render the current function.
+    bool shouldRenderCurrentMachineFunction() const;
+
+    /// Return the set of register classes to render pressure for.
+    const RegClassSet& regClasses() const;
+
+    /// Return the set of live intervals to render liveness for.
+    const IntervalSet& intervals() const;
+
+    /// Render indexes which are not associated with instructions / MBB starts.
+    bool renderEmptyIndexes() const;
+
+    /// Return whether or not to render using SVG for fancy vertical text.
+    bool fancyVerticals() const;
+
+  private:
+
+    static bool renderingOptionsProcessed;
+    static std::set<std::string> mfNamesToRender;
+    static bool renderAllMFs;
+
+    static std::set<std::string> classNamesToRender;
+    static bool renderAllClasses;
+
+
+    static std::set<std::pair<unsigned, unsigned> > intervalNumsToRender;
+    typedef enum { ExplicitOnly     = 0,
+                   AllPhys          = 1,
+                   VirtNoSpills     = 2,
+                   VirtSpills       = 4,
+                   AllVirt          = 6,
+                   All              = 7 }
+      IntervalTypesToRender;
+    static unsigned intervalTypesToRender;
+
+    template <typename OutputItr>
+    static void splitComaSeperatedList(const std::string &s, OutputItr outItr);
+
+    static void processOptions();
+
+    static void processFuncNames();
+    static void processRegClassNames();
+    static void processIntervalNumbers();
+
+    static void processIntervalRange(const std::string &intervalRangeStr);
+
+    MachineFunction *mf;
+    const TargetRegisterInfo *tri;
+    LiveIntervals *lis;
+    const RenderMachineFunction *rmf;
+
+    mutable bool regClassesTranslatedToCurrentFunction;
+    mutable RegClassSet regClassSet;
+
+    mutable bool intervalsTranslatedToCurrentFunction;
+    mutable IntervalSet intervalSet;
+
+    void translateRegClassNamesToCurrentFunction() const;
+
+    void translateIntervalNumbersToCurrentFunction() const;
+  };
 
   /// \brief Provide extra information about the physical and virtual registers
   ///        in the function being compiled.
@@ -99,99 +196,6 @@ namespace llvm {
     void resetPressureAndLiveStates();
   };
 
-  /// \brief Helper class to process rendering options. Tries to be as lazy as
-  ///        possible.
-  class MFRenderingOptions {
-  public:
-
-    struct RegClassComp {
-      bool operator()(const TargetRegisterClass *trc1,
-                      const TargetRegisterClass *trc2) const {
-        std::string trc1Name(trc1->getName()), trc2Name(trc2->getName());
-        return std::lexicographical_compare(trc1Name.begin(), trc1Name.end(),
-                                            trc2Name.begin(), trc2Name.end());
-      }
-    };
-
-    typedef std::set<const TargetRegisterClass*, RegClassComp> RegClassSet;
-
-    struct IntervalComp {
-      bool operator()(const LiveInterval *li1, const LiveInterval *li2) const {
-        return li1->reg < li2->reg;
-      }
-    };
-
-    typedef std::set<const LiveInterval*, IntervalComp> IntervalSet;
-
-    /// Initialise the rendering options.
-    void setup(MachineFunction *mf, const TargetRegisterInfo *tri,
-               LiveIntervals *lis);
-
-    /// Clear translations of options to the current function.
-    void clear();
-
-    /// Reset any options computed for this specific rendering.
-    void resetRenderSpecificOptions();
-
-    /// Should we render the current function.
-    bool shouldRenderCurrentMachineFunction() const;
-
-    /// Return the set of register classes to render pressure for.
-    const RegClassSet& regClasses() const;
-
-    /// Return the set of live intervals to render liveness for.
-    const IntervalSet& intervals() const;
-
-    /// Render indexes which are not associated with instructions / MBB starts.
-    bool renderEmptyIndexes() const;
-
-    /// Return whether or not to render using SVG for fancy vertical text.
-    bool fancyVerticals() const;
-
-  private:
-
-    static bool renderingOptionsProcessed;
-    static std::set<std::string> mfNamesToRender;
-    static bool renderAllMFs;
-
-    static std::set<std::string> classNamesToRender;
-    static bool renderAllClasses;
-
-
-    static std::set<std::pair<unsigned, unsigned> > intervalNumsToRender;
-    typedef enum { ExplicitOnly     = 0,
-                   VirtPlusExplicit = 1,
-                   PhysPlusExplicit = 2,
-                   All              = 3 }
-      IntervalTypesToRender;
-    static unsigned intervalTypesToRender;
-
-    template <typename OutputItr>
-    static void splitComaSeperatedList(const std::string &s, OutputItr outItr);
-
-    static void processOptions();
-
-    static void processFuncNames();
-    static void processRegClassNames();
-    static void processIntervalNumbers();
-
-    static void processIntervalRange(const std::string &intervalRangeStr);
-
-    MachineFunction *mf;
-    const TargetRegisterInfo *tri;
-    LiveIntervals *lis;
-
-    mutable bool regClassesTranslatedToCurrentFunction;
-    mutable RegClassSet regClassSet;
-
-    mutable bool intervalsTranslatedToCurrentFunction;
-    mutable IntervalSet intervalSet;
-
-    void translateRegClassNamesToCurrentFunction() const;
-
-    void translateIntervalNumbersToCurrentFunction() const;
-  };
-
   /// \brief Render MachineFunction objects and related information to a HTML
   ///        page.
   class RenderMachineFunction : public MachineFunctionPass {
@@ -205,6 +209,13 @@ namespace llvm {
     virtual bool runOnMachineFunction(MachineFunction &fn);
 
     virtual void releaseMemory();
+
+    void rememberUseDefs(const LiveInterval *li);
+
+    void rememberSpills(const LiveInterval *li,
+                        const std::vector<LiveInterval*> &spills);
+
+    bool isSpill(const LiveInterval *li) const;
 
     /// \brief Render this machine function to HTML.
     /// 
@@ -225,9 +236,7 @@ namespace llvm {
 
   private:
     class Spacer;
-
     friend raw_ostream& operator<<(raw_ostream &os, const Spacer &s);
-
 
     std::string fqn;
 
@@ -241,6 +250,8 @@ namespace llvm {
     TargetRegisterExtraInfo trei;
     MFRenderingOptions ro;
 
+    
+
     // Utilities.
     typedef enum { Dead, Defined, Used, AliveReg, AliveStack } LiveState;
     LiveState getLiveStateAt(const LiveInterval *li, SlotIndex i) const;
@@ -248,6 +259,17 @@ namespace llvm {
     typedef enum { Zero, Low, High } PressureState;
     PressureState getPressureStateAt(const TargetRegisterClass *trc,
                                      SlotIndex i) const;
+
+    typedef std::map<const LiveInterval*, std::set<const LiveInterval*> >
+      SpillIntervals;
+    SpillIntervals spillIntervals;
+
+    typedef std::map<const LiveInterval*, const LiveInterval*> SpillForMap;
+    SpillForMap spillFor;
+
+    typedef std::set<SlotIndex> SlotSet;
+    typedef std::map<const LiveInterval*, SlotSet> UseDefs;
+    UseDefs useDefs;
 
     // ---------- Rendering methods ----------
 

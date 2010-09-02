@@ -140,6 +140,7 @@ namespace {
     const TargetInstrInfo *tii;
     const MachineLoopInfo *loopInfo;
     MachineRegisterInfo *mri;
+    RenderMachineFunction *rmf;
 
     LiveIntervals *lis;
     LiveStacks *lss;
@@ -761,9 +762,11 @@ bool PBQPRegAlloc::mapPBQPToRegAlloc(const PBQP::Solution &solution) {
       const LiveInterval *spillInterval = node2LI[node];
       double oldSpillWeight = spillInterval->weight;
       SmallVector<LiveInterval*, 8> spillIs;
+      rmf->rememberUseDefs(spillInterval);
       std::vector<LiveInterval*> newSpills =
         lis->addIntervalsForSpills(*spillInterval, spillIs, loopInfo, *vrm);
       addStackInterval(spillInterval, mri);
+      rmf->rememberSpills(spillInterval, newSpills);
 
       (void) oldSpillWeight;
       DEBUG(dbgs() << "VREG " << virtReg << " -> SPILLED (Cost: "
@@ -871,7 +874,7 @@ bool PBQPRegAlloc::runOnMachineFunction(MachineFunction &MF) {
   lis = &getAnalysis<LiveIntervals>();
   lss = &getAnalysis<LiveStacks>();
   loopInfo = &getAnalysis<MachineLoopInfo>();
-  RenderMachineFunction *rmf = &getAnalysis<RenderMachineFunction>();
+  rmf = &getAnalysis<RenderMachineFunction>();
 
   vrm = &getAnalysis<VirtRegMap>();
 
