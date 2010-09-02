@@ -25,6 +25,16 @@ class C : public A, private B {
 
 class D : virtual public C, virtual private A {};
 
+namespace std {
+  class type_info { };
+}
+
+void test_exprs(C *c) {
+  int typeid_marker;
+  typeid(C);
+  typeid(c);
+}
+
 // RUN: c-index-test -test-load-source all %s | FileCheck %s
 // CHECK: load-stmts.cpp:1:13: TypedefDecl=T:1:13 (Definition) Extent=[1:13 - 1:14]
 // CHECK: load-stmts.cpp:2:8: StructDecl=X:2:8 (Definition) Extent=[2:1 - 2:23]
@@ -82,4 +92,6 @@ class D : virtual public C, virtual private A {};
 // CHECK: load-stmts.cpp:26:7: ClassDecl=D:26:7 (Definition) Extent=[26:1 - 26:49]
 // CHECK: <invalid loc>:0:0: C++ base class specifier=class C:22:7 [access=public isVirtual=true]
 // CHECK: <invalid loc>:0:0: C++ base class specifier=class A:14:7 [access=private isVirtual=true]
-
+// CHECK: load-stmts.cpp:33:7: VarDecl=typeid_marker:33:7 (Definition)
+// CHECK: load-stmts.cpp:34:10: TypeRef=class C:22:7 Extent=[34:10 - 34:11]
+// CHECK: load-stmts.cpp:35:10: DeclRefExpr=c:32:20 Extent=[35:10 - 35:11]

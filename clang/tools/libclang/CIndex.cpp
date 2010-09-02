@@ -384,6 +384,7 @@ public:
   bool VisitVAArgExpr(VAArgExpr *E);
   // FIXME: InitListExpr (for the designators)
   // FIXME: DesignatedInitExpr
+  bool VisitCXXTypeidExpr(CXXTypeidExpr *E);
 };
 
 } // end anonymous namespace
@@ -1565,6 +1566,17 @@ bool CursorVisitor::VisitVAArgExpr(VAArgExpr *E) {
     return true;
   
   return Visit(MakeCXCursor(E->getSubExpr(), StmtParent, TU));
+}
+
+bool CursorVisitor::VisitCXXTypeidExpr(CXXTypeidExpr *E) {
+  if (E->isTypeOperand()) {
+    if (TypeSourceInfo *TSInfo = E->getTypeOperandSourceInfo())
+      return Visit(TSInfo->getTypeLoc());
+    
+    return false;
+  }
+  
+  return VisitExpr(E);
 }
 
 bool CursorVisitor::VisitObjCMessageExpr(ObjCMessageExpr *E) {
