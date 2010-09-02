@@ -108,5 +108,16 @@ int* ret_cpp_const_cast(const int x) {
   return const_cast<int*>(&x);  // expected-warning {{address of stack memory}}
 }
 
+// PR 7999 - handle the case where a field is itself a reference.
+template <typename T> struct PR7999 {
+  PR7999(T& t) : value(t) {}
+  T& value;
+};
+
+struct PR7999_X {};
+
+PR7999_X& PR7999_f(PR7999<PR7999_X> s) { return s.value; } // no-warning
+void test_PR7999(PR7999_X& x) { (void)PR7999_f(x); } // no-warning
+
 // TODO: test case for dynamic_cast.  clang does not yet have
 // support for C++ classes to write such a test case.

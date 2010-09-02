@@ -2029,10 +2029,15 @@ do {
     MemberExpr *M = cast<MemberExpr>(E);
 
     // Check for indirect access.  We only want direct field accesses.
-    if (!M->isArrow())
-      return EvalVal(M->getBase());
-    else
+    if (M->isArrow())
       return NULL;
+
+    // Check whether the member type is itself a reference, in which case
+    // we're not going to refer to the member, but to what the member refers to.
+    if (M->getMemberDecl()->getType()->isReferenceType())
+      return NULL;
+
+    return EvalVal(M->getBase());
   }
 
   // Everything else: we simply don't reason about them.
