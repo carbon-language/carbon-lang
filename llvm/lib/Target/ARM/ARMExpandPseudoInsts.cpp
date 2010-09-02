@@ -74,8 +74,8 @@ void ARMExpandPseudo::TransferImpOps(MachineInstr &OldMI,
   }
 }
 
-/// ExpandVLD - 
-///
+/// ExpandVLD - Translate VLD pseudo instructions with Q, QQ or QQQQ register
+/// operands to real VLD instructions with D register operands.
 void ARMExpandPseudo::ExpandVLD(MachineBasicBlock::iterator &MBBI,
                                 unsigned Opc, bool hasWriteBack,
                                 NEONRegSpacing RegSpc, unsigned NumRegs) {
