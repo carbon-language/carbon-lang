@@ -1232,14 +1232,7 @@ void AsmPrinter::EmitLabelPlusOffset(const MCSymbol *Label, uint64_t Offset,
                             MCConstantExpr::Create(Offset, OutContext),
                             OutContext);
   
-  if (!MAI->hasSetDirective()) 
-    OutStreamer.EmitValue(Plus, 4, 0/*AddrSpace*/);
-  else {
-    // Otherwise, emit with .set (aka assignment).
-    MCSymbol *SetLabel = GetTempSymbol("set", SetCounter++);
-    OutStreamer.EmitAssignment(SetLabel, Plus);
-    OutStreamer.EmitSymbolValue(SetLabel, 4, 0/*AddrSpace*/);
-  }
+  OutStreamer.EmitValue(Plus, 4, 0/*AddrSpace*/);
 }
     
 
