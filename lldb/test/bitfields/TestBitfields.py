@@ -90,6 +90,9 @@ class BitfieldsTestCase(TestBase):
         # This does not work, and results in the process stopped at dyld_start?
         #process = target.LaunchProcess([''], [''], os.ctermid(), False)
 
+        self.process = target.GetProcess()
+        self.assertTrue(self.process.IsValid(), PROCESS_IS_VALID)
+
         # The stop reason of the thread should be breakpoint.
         thread = target.GetProcess().GetThreadAtIndex(0)
         self.assertTrue(thread.GetStopReason() == StopReasonEnum("Breakpoint"),

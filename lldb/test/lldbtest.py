@@ -124,6 +124,10 @@ else:
 
 CURRENT_EXECUTABLE_SET = "Current executable set successfully"
 
+PROCESS_IS_VALID = "Process is valid"
+
+PROCESS_KILLED = "Process is killed successfully"
+
 RUN_SUCCEEDED = "Process is launched successfully"
 
 RUN_COMPLETED = "Process exited successfully"
@@ -305,6 +309,9 @@ class TestBase(unittest2.TestCase):
         # We want our debugger to be synchronous.
         self.dbg.SetAsync(False)
 
+        # There is no process associated with the debugger as yet.
+        self.process = None
+
         # Retrieve the associated command interpreter instance.
         self.ci = self.dbg.GetCommandInterpreter()
         if not self.ci:
@@ -314,9 +321,15 @@ class TestBase(unittest2.TestCase):
         self.res = lldb.SBCommandReturnObject()
 
     def tearDown(self):
-        # Terminate the current process being debugged.
+        #import traceback
+        #traceback.print_stack()
+
+        # Terminate the current process being debugged, if any.
         if self.runStarted:
-            self.ci.HandleCommand("process kill", self.res)
+            self.runCmd("process kill", PROCESS_KILLED, check=False)
+        elif self.process and self.process.IsValid():
+            rc = self.process.Kill()
+            self.assertTrue(rc.Success(), PROCESS_KILLED)
 
         del self.dbg
 
@@ -353,7 +366,9 @@ class TestBase(unittest2.TestCase):
                     # Process launch failed, wait some time before the next try.
                     time.sleep(self.timeWait)
 
-        self.runStarted = running and setCookie
+        # Modify runStarted only if "run" or "process launch" was encountered.
+        if running:
+            self.runStarted = running and setCookie
 
         if check:
             self.assertTrue(self.res.Succeeded(),

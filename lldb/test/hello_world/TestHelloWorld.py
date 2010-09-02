@@ -64,18 +64,15 @@ class HelloWorldTestCase(TestBase):
         #self.runCmd("breakpoint list")
         #self.runCmd("thread list")
 
-        process = target.GetProcess()
-        thread = process.GetThreadAtIndex(0)
+        self.process = target.GetProcess()
+        self.assertTrue(self.process.IsValid(), PROCESS_IS_VALID)
 
+        thread = self.process.GetThreadAtIndex(0)
         self.assertTrue(thread.GetStopReason() == StopReasonEnum("Breakpoint"),
                         STOPPED_DUE_TO_BREAKPOINT)
 
         # The breakpoint should have a hit count of 1.
         self.assertTrue(breakpoint.GetHitCount() == 1, BREAKPOINT_HIT_ONCE)
-
-        # Now kill the process, and we are done.
-        rc = process.Kill()
-        self.assertTrue(rc.Success())
 
 
 if __name__ == '__main__':

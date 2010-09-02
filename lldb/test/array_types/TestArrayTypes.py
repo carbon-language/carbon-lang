@@ -88,8 +88,11 @@ class ArrayTypesTestCase(TestBase):
         # This does not work, and results in the process stopped at dyld_start?
         #process = target.LaunchProcess([''], [''], os.ctermid(), False)
 
+        self.process = target.GetProcess()
+        self.assertTrue(self.process.IsValid(), PROCESS_IS_VALID)
+
         # The stop reason of the thread should be breakpoint.
-        thread = target.GetProcess().GetThreadAtIndex(0)
+        thread = self.process.GetThreadAtIndex(0)
         self.assertTrue(thread.GetStopReason() == StopReasonEnum("Breakpoint"),
                         STOPPED_DUE_TO_BREAKPOINT)
 
@@ -137,10 +140,6 @@ class ArrayTypesTestCase(TestBase):
         self.DebugSBValue(frame, child5)
         self.assertTrue(long(child5.GetValue(frame)) == 6,
                         "long_6[5] == 6")
-
-        # Now kill the process, and we are done.
-        rc = target.GetProcess().Kill()
-        self.assertTrue(rc.Success())
 
 
 if __name__ == '__main__':
