@@ -475,10 +475,8 @@ def tcGPR : RegisterClass<"ARM", [i32], 32, [R0, R1, R2, R3, R9, R12]> {
       const ARMSubtarget &Subtarget = TM.getSubtarget<ARMSubtarget>();
       GPRClass::iterator I;
 
-      if (Subtarget.isThumb1Only()) {
-        I = THUMB_GPR_AO_TC + (sizeof(THUMB_GPR_AO_TC)/sizeof(unsigned));
-        return I;
-      }
+      if (Subtarget.isThumb1Only())
+        return THUMB_GPR_AO_TC + (sizeof(THUMB_GPR_AO_TC)/sizeof(unsigned));
 
       if (Subtarget.isTargetDarwin()) {
         if (Subtarget.isR9Reserved())
