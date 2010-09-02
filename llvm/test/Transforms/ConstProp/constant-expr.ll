@@ -16,9 +16,9 @@
 @E = global i1 udiv (i1 icmp ult (i8* @X, i8* @Y), i1 icmp ult (i8* @X, i8* @Z))
 ; CHECK: @E = global i1 icmp ult (i8* @X, i8* @Y)
 @F = global i1 srem (i1 icmp ult (i8* @X, i8* @Y), i1 icmp ult (i8* @X, i8* @Z))
-; CHECK: @F = global i1 false ; <i1*> [#uses=0]
+; CHECK: @F = global i1 false 
 @G = global i1 urem (i1 icmp ult (i8* @X, i8* @Y), i1 icmp ult (i8* @X, i8* @Z))
-; CHECK: @G = global i1 false ; <i1*> [#uses=0]
+; CHECK: @G = global i1 false 
 
 @H = global i1 icmp ule (i32* bitcast (i8* @X to i32*), i32* bitcast (i8* @Y to i32*))
 ; CHECK: @H = global i1 icmp ule (i8* @X, i8* @Y)
