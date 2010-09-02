@@ -90,9 +90,9 @@ namespace {
     virtual const char *getPassName() const {
       return "ARM Assembly Printer";
     }
-    
+
     void printInstructionThroughMCStreamer(const MachineInstr *MI);
-    
+
 
     void printOperand(const MachineInstr *MI, int OpNum, raw_ostream &O,
                       const char *Modifier = 0);
@@ -204,7 +204,7 @@ namespace {
 
     virtual void EmitInstruction(const MachineInstr *MI);
     bool runOnMachineFunction(MachineFunction &F);
-    
+
     virtual void EmitConstantPool() {} // we emit constant pools customly!
     virtual void EmitFunctionEntryLabel();
     void EmitStartOfAsmFile(Module &M);
@@ -242,7 +242,7 @@ namespace {
       EmitMachineConstantPoolValue(MCPV, OS);
       OutStreamer.EmitRawText(OS.str());
     }
-    
+
     void EmitMachineConstantPoolValue(MachineConstantPoolValue *MCPV,
                                       raw_ostream &O) {
       switch (TM.getTargetData()->getTypeAllocSize(MCPV->getType())) {
@@ -268,7 +268,7 @@ namespace {
           // FIXME: Remove this when Darwin transition to @GOT like syntax.
           MCSymbol *Sym = GetSymbolWithGlobalValueBase(GV, "$non_lazy_ptr");
           O << *Sym;
-          
+
           MachineModuleInfoMachO &MMIMachO =
             MMI->getObjFileInfo<MachineModuleInfoMachO>();
           MachineModuleInfoImpl::StubValueTy &StubSym =
@@ -312,7 +312,7 @@ void ARMAsmPrinter::EmitFunctionEntryLabel() {
       OutStreamer.EmitRawText(OS.str());
     }
   }
-  
+
   OutStreamer.EmitLabel(CurrentFnSym);
 }
 
@@ -392,7 +392,7 @@ void ARMAsmPrinter::printOperand(const MachineInstr *MI, int OpNum,
   case MachineOperand::MO_ExternalSymbol: {
     bool isCallOp = Modifier && !strcmp(Modifier, "call");
     O << *GetExternalSymbolSymbol(MO.getSymbolName());
-    
+
     if (isCallOp && Subtarget->isTargetELF() &&
         TM.getRelocationModel() == Reloc::PIC_)
       O << "(PLT)";
@@ -963,7 +963,7 @@ void ARMAsmPrinter::printJTBlockOperand(const MachineInstr *MI, int OpNum,
 
   const MachineOperand &MO1 = MI->getOperand(OpNum);
   const MachineOperand &MO2 = MI->getOperand(OpNum+1); // Unique Id
-  
+
   unsigned JTI = MO1.getIndex();
   MCSymbol *JTISymbol = GetARMJTIPICJumpTableLabel2(JTI, MO2.getImm());
   // Can't use EmitLabel until instprinter happens, label comes out in the wrong
@@ -1005,9 +1005,9 @@ void ARMAsmPrinter::printJT2BlockOperand(const MachineInstr *MI, int OpNum,
   const MachineOperand &MO1 = MI->getOperand(OpNum);
   const MachineOperand &MO2 = MI->getOperand(OpNum+1); // Unique Id
   unsigned JTI = MO1.getIndex();
-  
+
   MCSymbol *JTISymbol = GetARMJTIPICJumpTableLabel2(JTI, MO2.getImm());
-  
+
   // Can't use EmitLabel until instprinter happens, label comes out in the wrong
   // order.
   O << "\n" << *JTISymbol << ":\n";
@@ -1027,7 +1027,7 @@ void ARMAsmPrinter::printJT2BlockOperand(const MachineInstr *MI, int OpNum,
       O << MAI->getData8bitsDirective();
     else if (HalfWordOffset)
       O << MAI->getData16bitsDirective();
-    
+
     if (ByteOffset || HalfWordOffset)
       O << '(' << *MBB->getSymbol() << "-" << *JTISymbol << ")/2";
     else
@@ -1133,10 +1133,10 @@ void ARMAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     printInstructionThroughMCStreamer(MI);
     return;
   }
-  
+
   if (MI->getOpcode() == ARM::CONSTPOOL_ENTRY)
     EmitAlignment(2);
-  
+
   SmallString<128> Str;
   raw_svector_ostream OS(Str);
   if (MI->getOpcode() == ARM::DBG_VALUE) {
@@ -1159,7 +1159,7 @@ void ARMAsmPrinter::EmitInstruction(const MachineInstr *MI) {
 
   printInstruction(MI, OS);
   OutStreamer.EmitRawText(OS.str());
-  
+
   // Make sure the instruction that follows TBB is 2-byte aligned.
   // FIXME: Constant island pass should insert an "ALIGN" instruction instead.
   if (MI->getOpcode() == ARM::t2TBB)
@@ -1176,7 +1176,7 @@ void ARMAsmPrinter::EmitStartOfAsmFile(Module &M) {
       // avoid out-of-range branches that are due a fundamental limitation of
       // the way symbol offsets are encoded with the current Darwin ARM
       // relocations.
-      const TargetLoweringObjectFileMachO &TLOFMacho = 
+      const TargetLoweringObjectFileMachO &TLOFMacho =
         static_cast<const TargetLoweringObjectFileMachO &>(
           getObjFileLowering());
       OutStreamer.SwitchSection(TLOFMacho.getTextSection());
@@ -1226,7 +1226,7 @@ void ARMAsmPrinter::EmitStartOfAsmFile(Module &M) {
       OutStreamer.EmitRawText("\t.eabi_attribute " +
                               Twine(ARMBuildAttrs::ABI_FP_exceptions) + ", 1");
     }
-    
+
     if (NoInfsFPMath && NoNaNsFPMath)
       OutStreamer.EmitRawText("\t.eabi_attribute " +
                               Twine(ARMBuildAttrs::ABI_FP_number_model)+ ", 1");
@@ -1333,7 +1333,7 @@ void ARMAsmPrinter::printInstructionThroughMCStreamer(const MachineInstr *MI) {
     // LPC0:
     //     add r0, pc, r0
     // This adds the address of LPC0 to r0.
-    
+
     // Emit the label.
     // FIXME: MOVE TO SHARED PLACE.
     unsigned Id = (unsigned)MI->getOperand(2).getImm();
@@ -1341,8 +1341,8 @@ void ARMAsmPrinter::printInstructionThroughMCStreamer(const MachineInstr *MI) {
     MCSymbol *Label =OutContext.GetOrCreateSymbol(Twine(Prefix)
                          + "PC" + Twine(getFunctionNumber()) + "_" + Twine(Id));
     OutStreamer.EmitLabel(Label);
-    
-    
+
+
     // Form and emit tha dd.
     MCInst AddInst;
     AddInst.setOpcode(ARM::ADDrr);
@@ -1368,7 +1368,7 @@ void ARMAsmPrinter::printInstructionThroughMCStreamer(const MachineInstr *MI) {
       EmitMachineConstantPoolValue(MCPE.Val.MachineCPVal);
     else
       EmitGlobalConstant(MCPE.Val.ConstVal);
-    
+
     return;
   }
   case ARM::MOVi2pieces: { // FIXME: Remove asmstring from td file.
@@ -1378,13 +1378,13 @@ void ARMAsmPrinter::printInstructionThroughMCStreamer(const MachineInstr *MI) {
 
     unsigned SOImmValV1 = ARM_AM::getSOImmTwoPartFirst(ImmVal);
     unsigned SOImmValV2 = ARM_AM::getSOImmTwoPartSecond(ImmVal);
-    
+
     {
       MCInst TmpInst;
       TmpInst.setOpcode(ARM::MOVi);
       TmpInst.addOperand(MCOperand::CreateReg(DstReg));
       TmpInst.addOperand(MCOperand::CreateImm(SOImmValV1));
-      
+
       // Predicate.
       TmpInst.addOperand(MCOperand::CreateImm(MI->getOperand(2).getImm()));
       TmpInst.addOperand(MCOperand::CreateReg(MI->getOperand(3).getReg()));
@@ -1402,11 +1402,11 @@ void ARMAsmPrinter::printInstructionThroughMCStreamer(const MachineInstr *MI) {
       // Predicate.
       TmpInst.addOperand(MCOperand::CreateImm(MI->getOperand(2).getImm()));
       TmpInst.addOperand(MCOperand::CreateReg(MI->getOperand(3).getReg()));
-      
+
       TmpInst.addOperand(MCOperand::CreateReg(0));          // cc_out
       OutStreamer.EmitInstruction(TmpInst);
     }
-    return; 
+    return;
   }
   case ARM::MOVi32imm: { // FIXME: Remove asmstring from td file.
     // This is a hack that lowers as a two instruction sequence.
@@ -1437,32 +1437,32 @@ void ARMAsmPrinter::printInstructionThroughMCStreamer(const MachineInstr *MI) {
       TmpInst.setOpcode(ARM::MOVi16);
       TmpInst.addOperand(MCOperand::CreateReg(DstReg));         // dstreg
       TmpInst.addOperand(V1); // lower16(imm)
-      
+
       // Predicate.
       TmpInst.addOperand(MCOperand::CreateImm(MI->getOperand(2).getImm()));
       TmpInst.addOperand(MCOperand::CreateReg(MI->getOperand(3).getReg()));
-      
+
       OutStreamer.EmitInstruction(TmpInst);
     }
-    
+
     {
       MCInst TmpInst;
       TmpInst.setOpcode(ARM::MOVTi16);
       TmpInst.addOperand(MCOperand::CreateReg(DstReg));         // dstreg
       TmpInst.addOperand(MCOperand::CreateReg(DstReg));         // srcreg
       TmpInst.addOperand(V2);   // upper16(imm)
-      
+
       // Predicate.
       TmpInst.addOperand(MCOperand::CreateImm(MI->getOperand(2).getImm()));
       TmpInst.addOperand(MCOperand::CreateReg(MI->getOperand(3).getReg()));
-      
+
       OutStreamer.EmitInstruction(TmpInst);
     }
-    
+
     return;
   }
   }
-      
+
   MCInst TmpInst;
   MCInstLowering.Lower(MI, TmpInst);
   OutStreamer.EmitInstruction(TmpInst);
