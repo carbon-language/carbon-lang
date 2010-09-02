@@ -45,6 +45,7 @@
 #include "GRExprEngineExperimentalChecks.h"
 #include "clang/Analysis/CFGStmtMap.h"
 #include "clang/Analysis/Analyses/PseudoConstantAnalysis.h"
+#include "clang/Checker/BugReporter/BugReporter.h"
 #include "clang/Checker/BugReporter/BugType.h"
 #include "clang/Checker/PathSensitive/CheckerHelpers.h"
 #include "clang/Checker/PathSensitive/CheckerVisitor.h"
@@ -64,6 +65,7 @@ class IdempotentOperationChecker
   public:
     static void *getTag();
     void PreVisitBinaryOperator(CheckerContext &C, const BinaryOperator *B);
+    void PostVisitBinaryOperator(CheckerContext &C, const BinaryOperator *B);
     void VisitEndAnalysis(ExplodedGraph &G, BugReporter &B, GRExprEngine &Eng);
 
   private:
@@ -87,10 +89,17 @@ class IdempotentOperationChecker
                                            AnalysisContext *AC);
     static bool containsNonLocalVarDecl(const Stmt *S);
 
-    // Hash table
-    typedef llvm::DenseMap<const BinaryOperator *,
-                           std::pair<Assumption, AnalysisContext*> >
-                           AssumptionMap;
+    // Hash table and related data structures
+    struct BinaryOperatorData {
+      BinaryOperatorData() : assumption(Possible), analysisContext(0) {}
+
+      Assumption assumption;
+      AnalysisContext *analysisContext;
+      ExplodedNodeSet explodedNodes; // Set of ExplodedNodes that refer to a
+                                     // BinaryOperator
+    };
+    typedef llvm::DenseMap<const BinaryOperator *, BinaryOperatorData>
+        AssumptionMap;
     AssumptionMap hash;
 };
 }
@@ -109,11 +118,12 @@ void IdempotentOperationChecker::PreVisitBinaryOperator(
                                                       const BinaryOperator *B) {
   // Find or create an entry in the hash for this BinaryOperator instance.
   // If we haven't done a lookup before, it will get default initialized to
-  // 'Possible'.
-  std::pair<Assumption, AnalysisContext *> &Data = hash[B];
-  Assumption &A = Data.first;
+  // 'Possible'. At this stage we do not store the ExplodedNode, as it has not
+  // been created yet.
+  BinaryOperatorData &Data = hash[B];
+  Assumption &A = Data.assumption;
   AnalysisContext *AC = C.getCurrentAnalysisContext();
-  Data.second = AC;
+  Data.analysisContext = AC;
 
   // If we already have visited this node on a path that does not contain an
   // idempotent operation, return immediately.
@@ -317,16 +327,29 @@ void IdempotentOperationChecker::PreVisitBinaryOperator(
   A = Impossible;
 }
 
+// At the post visit stage, the predecessor ExplodedNode will be the
+// BinaryOperator that was just created. We use this hook to collect the
+// ExplodedNode.
+void IdempotentOperationChecker::PostVisitBinaryOperator(
+                                                      CheckerContext &C,
+                                                      const BinaryOperator *B) {
+  // Add the ExplodedNode we just visited
+  BinaryOperatorData &Data = hash[B];
+  Data.explodedNodes.Add(C.getPredecessor());
+}
+
 void IdempotentOperationChecker::VisitEndAnalysis(ExplodedGraph &G,
                                                   BugReporter &BR,
                                                   GRExprEngine &Eng) {
+  BugType *BT = new BugType("Idempotent operation", "Dead code");
   // Iterate over the hash to see if we have any paths with definite
   // idempotent operations.
   for (AssumptionMap::const_iterator i = hash.begin(); i != hash.end(); ++i) {
     // Unpack the hash contents
-    const std::pair<Assumption, AnalysisContext *> &Data = i->second;
-    const Assumption &A = Data.first;
-    AnalysisContext *AC = Data.second;
+    const BinaryOperatorData &Data = i->second;
+    const Assumption &A = Data.assumption;
+    AnalysisContext *AC = Data.analysisContext;
+    const ExplodedNodeSet &ES = Data.explodedNodes;
 
     const BinaryOperator *B = i->first;
 
@@ -348,11 +371,14 @@ void IdempotentOperationChecker::VisitEndAnalysis(ExplodedGraph &G,
       delete CBM;
     }
 
-    // Select the error message.
+    // Select the error message and SourceRanges to report.
     llvm::SmallString<128> buf;
     llvm::raw_svector_ostream os(buf);
+    bool LHSRelevant = false, RHSRelevant = false;
     switch (A) {
     case Equal:
+      LHSRelevant = true;
+      RHSRelevant = true;
       if (B->getOpcode() == BO_Assign)
         os << "Assigned value is always the same as the existing value";
       else
@@ -360,15 +386,19 @@ void IdempotentOperationChecker::VisitEndAnalysis(ExplodedGraph &G,
            << "' always have the same value";
       break;
     case LHSis1:
+      LHSRelevant = true;
       os << "The left operand to '" << B->getOpcodeStr() << "' is always 1";
       break;
     case RHSis1:
+      RHSRelevant = true;
       os << "The right operand to '" << B->getOpcodeStr() << "' is always 1";
       break;
     case LHSis0:
+      LHSRelevant = true;
       os << "The left operand to '" << B->getOpcodeStr() << "' is always 0";
       break;
     case RHSis0:
+      RHSRelevant = true;
       os << "The right operand to '" << B->getOpcodeStr() << "' is always 0";
       break;
     case Possible:
@@ -377,11 +407,24 @@ void IdempotentOperationChecker::VisitEndAnalysis(ExplodedGraph &G,
       llvm_unreachable(0);
     }
 
-    // Create the SourceRange Arrays
-    SourceRange S[2] = { i->first->getLHS()->getSourceRange(),
-                         i->first->getRHS()->getSourceRange() };
-    BR.EmitBasicReport("Idempotent operation", "Dead code",
-                       os.str(), i->first->getOperatorLoc(), S, 2);
+    // Add a report for each ExplodedNode
+    for (ExplodedNodeSet::iterator I = ES.begin(), E = ES.end(); I != E; ++I) {
+      EnhancedBugReport *report = new EnhancedBugReport(*BT, os.str(), *I);
+
+      // Add source ranges and visitor hooks
+      if (LHSRelevant) {
+        const Expr *LHS = i->first->getLHS();
+        report->addRange(LHS->getSourceRange());
+        report->addVisitorCreator(bugreporter::registerVarDeclsLastStore, LHS);
+      }
+      if (RHSRelevant) {
+        const Expr *RHS = i->first->getRHS();
+        report->addRange(i->first->getRHS()->getSourceRange());
+        report->addVisitorCreator(bugreporter::registerVarDeclsLastStore, RHS);
+      }
+
+      BR.EmitReport(report);
+    }
   }
 }
 

@@ -471,6 +471,9 @@ void registerFindLastStore(BugReporterContext& BRC, const void *memregion,
 
 void registerNilReceiverVisitor(BugReporterContext &BRC);
 
+void registerVarDeclsLastStore(BugReporterContext &BRC, const void *stmt,
+                               const ExplodedNode *N);
+
 } // end namespace clang::bugreporter
 
 //===----------------------------------------------------------------------===//
