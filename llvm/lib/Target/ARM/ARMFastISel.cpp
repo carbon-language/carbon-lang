@@ -113,9 +113,11 @@ class ARMFastISel : public FastISel {
     bool isTypeLegal(const Type *Ty, EVT &VT);
     bool isLoadTypeLegal(const Type *Ty, EVT &VT);
     bool ARMEmitLoad(EVT VT, unsigned &ResultReg, unsigned Reg, int Offset);
+    bool ARMEmitStore(EVT VT, unsigned SrcReg, unsigned Reg, int Offset);
     bool ARMLoadAlloca(const Instruction *I);
-    bool ARMStoreAlloca(const Instruction *I);
+    bool ARMStoreAlloca(const Instruction *I, unsigned SrcReg);
     bool ARMComputeRegOffset(const Value *Obj, unsigned &Reg, int &Offset);
+    bool ARMMaterializeConstant(const ConstantInt *Val, unsigned &Reg);
     
     bool DefinesOptionalPredicate(MachineInstr *MI, bool *CPSR);
     const MachineInstrBuilder &AddOptionalDefs(const MachineInstrBuilder &MIB);
@@ -381,7 +383,31 @@ bool ARMFastISel::ARMComputeRegOffset(const Value *Obj, unsigned &Reg,
   
   // Try to get this in a register if nothing else has worked.
   Reg = getRegForValue(Obj);
-  return Reg != 0;  
+  if (Reg == 0) return false;
+
+  // Since the offset may be too large for the load instruction
+  // get the reg+offset into a register.
+  // TODO: Verify the additions work, otherwise we'll need to add the
+  // offset instead of 0 to the instructions and do all sorts of operand
+  // munging.
+  // TODO: Optimize this somewhat.
+  if (Offset != 0) {
+    ARMCC::CondCodes Pred = ARMCC::AL;
+    unsigned PredReg = 0;
+
+    if (!AFI->isThumbFunction())
+      emitARMRegPlusImmediate(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
+                              Reg, Reg, Offset, Pred, PredReg,
+                              static_cast<const ARMBaseInstrInfo&>(TII));
+    else {
+      assert(AFI->isThumb2Function());
+      emitT2RegPlusImmediate(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
+                             Reg, Reg, Offset, Pred, PredReg,
+                             static_cast<const ARMBaseInstrInfo&>(TII));
+    }
+  }
+  
+  return true;
 }
 
 bool ARMFastISel::ARMLoadAlloca(const Instruction *I) {
@@ -446,7 +472,31 @@ bool ARMFastISel::ARMEmitLoad(EVT VT, unsigned &ResultReg,
   return true;
 }
 
-bool ARMFastISel::ARMStoreAlloca(const Instruction *I) {
+bool ARMFastISel::ARMMaterializeConstant(const ConstantInt *CI, unsigned &Reg) {
+  unsigned Opc;
+  bool Signed = true;
+  bool isThumb = AFI->isThumbFunction();
+  EVT VT = TLI.getValueType(CI->getType(), true);
+  
+  switch (VT.getSimpleVT().SimpleTy) {
+    default: return false;
+    case MVT::i1:  Signed = false;     // FALLTHROUGH to handle as i8.
+    case MVT::i8:
+    case MVT::i16:
+    case MVT::i32:
+    Opc = isThumb ? ARM::t2MOVi32imm : ARM::MOVi32imm; break;
+  }
+
+  Reg = createResultReg(TLI.getRegClassFor(VT));
+  AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(Opc),
+                          Reg)
+                  .addImm(Signed ? (uint64_t) CI->getSExtValue() :
+                                    CI->getZExtValue()));
+
+  return true;
+}
+
+bool ARMFastISel::ARMStoreAlloca(const Instruction *I, unsigned SrcReg) {
   Value *Op1 = I->getOperand(1);
 
   // Verify it's an alloca.
@@ -456,11 +506,9 @@ bool ARMFastISel::ARMStoreAlloca(const Instruction *I) {
 
     if (SI != FuncInfo.StaticAllocaMap.end()) {
       TargetRegisterClass* RC = TLI.getRegClassFor(TLI.getPointerTy());
-      unsigned Reg = getRegForValue(I->getOperand(0));
-      // Make sure we can get this into a register.
-      if (Reg == 0) return false;
+      assert(SrcReg != 0 && "Nothing to store!");
       TII.storeRegToStackSlot(*FuncInfo.MBB, *FuncInfo.InsertPt,
-                              Reg, true /*isKill*/, SI->second, RC,
+                              SrcReg, true /*isKill*/, SI->second, RC,
                               TM.getRegisterInfo());
       return true;
     }
@@ -468,16 +516,72 @@ bool ARMFastISel::ARMStoreAlloca(const Instruction *I) {
   return false;
 }
 
-bool ARMFastISel::ARMSelectStore(const Instruction *I) {
-  // If we're an alloca we know we have a frame index and can emit the store
-  // quickly.
-  if (ARMStoreAlloca(I))
-    return true;
+bool ARMFastISel::ARMEmitStore(EVT VT, unsigned SrcReg,
+                               unsigned DstReg, int Offset) {
+  bool isThumb = AFI->isThumbFunction();
     
+  unsigned StrOpc;
+  switch (VT.getSimpleVT().SimpleTy) {
+    default: return false;
+    case MVT::i1:
+    case MVT::i8: StrOpc = isThumb ? ARM::tSTRB : ARM::STRB; break;
+    case MVT::i16: StrOpc = isThumb ? ARM::tSTRH : ARM::STRH; break;
+    case MVT::i32: StrOpc = isThumb ? ARM::tSTR : ARM::STR; break;
+  }
+  
+  if (isThumb)
+    AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
+                            TII.get(StrOpc), SrcReg)
+                    .addReg(DstReg).addImm(Offset).addReg(0));
+  else
+    AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
+                            TII.get(StrOpc), SrcReg)
+                    .addReg(DstReg).addReg(0).addImm(Offset));
+  
+  return true;
+}
+
+bool ARMFastISel::ARMSelectStore(const Instruction *I) {
+  Value *Op0 = I->getOperand(0);
+  unsigned SrcReg = 0;
+
   // Yay type legalization
   EVT VT;
-  if (!isLoadTypeLegal(I->getType(), VT))
+  if (!isLoadTypeLegal(I->getOperand(0)->getType(), VT))
     return false;
+    
+  // First see if we're a constant that we want to store, we'll need to
+  // materialize that into a register.
+  // Handle 'null' like i32/i64 0.
+  if (isa<ConstantPointerNull>(Op0))
+    Op0 = Constant::getNullValue(TD.getIntPtrType(Op0->getContext()));
+  
+  // If this is a store of a simple constant, materialize the constant into
+  // a register then emit the store into the location.
+  if (const ConstantInt *CI = dyn_cast<ConstantInt>(Op0))
+    if (!ARMMaterializeConstant(CI, SrcReg))
+      return false;
+
+  // If Reg is still 0, try to get the value into a register.
+  if (SrcReg == 0)
+    SrcReg = getRegForValue(Op0);
+  if (SrcReg == 0)
+    return false;
+    
+  // If we're an alloca we know we have a frame index and can emit the store
+  // quickly.
+  if (ARMStoreAlloca(I, SrcReg))
+    return true;
+    
+  // Our register and offset with innocuous defaults.
+  unsigned Reg = 0;
+  int Offset = 0;
+  
+  // See if we can handle this as Reg + Offset
+  if (!ARMComputeRegOffset(I->getOperand(1), Reg, Offset))
+    return false;
+    
+  if (!ARMEmitStore(VT, SrcReg, Reg, Offset /* 0 */)) return false;
     
   return false;
   
@@ -501,28 +605,9 @@ bool ARMFastISel::ARMSelectLoad(const Instruction *I) {
   // See if we can handle this as Reg + Offset
   if (!ARMComputeRegOffset(I->getOperand(0), Reg, Offset))
     return false;
-    
-  // Since the offset may be too large for the load instruction
-  // get the reg+offset into a register.
-  // TODO: Optimize this somewhat.
-  ARMCC::CondCodes Pred = ARMCC::AL;
-  unsigned PredReg = 0;
-  
-  if (!AFI->isThumbFunction())
-    emitARMRegPlusImmediate(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
-                            Reg, Reg, Offset, Pred, PredReg,
-                            static_cast<const ARMBaseInstrInfo&>(TII));
-  else {
-    assert(AFI->isThumb2Function());
-    emitT2RegPlusImmediate(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
-                           Reg, Reg, Offset, Pred, PredReg,
-                           static_cast<const ARMBaseInstrInfo&>(TII));
-  } 
   
   unsigned ResultReg;
-  // TODO: Verify the additions above work, otherwise we'll need to add the
-  // offset instead of 0 and do all sorts of operand munging.
-  if (!ARMEmitLoad(VT, ResultReg, Reg, 0)) return false;
+  if (!ARMEmitLoad(VT, ResultReg, Reg, Offset /* 0 */)) return false;
   
   UpdateValueMap(I, ResultReg);
   return true;
