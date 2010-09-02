@@ -41,11 +41,16 @@ void test_exprs(C *c) {
 namespace N {
   int f(int);
   float f(float);
+
+  template<typename T> T g(T);
+  template<typename T> T g(T*);
 }
 
 template<typename T>
 void test_dependent_exprs(T t) {
   N::f(t);
+  typedef T type;
+  N::g<type>(t);
 }
 
 // RUN: c-index-test -test-load-source all %s | FileCheck %s
@@ -113,7 +118,12 @@ void test_dependent_exprs(T t) {
 // CHECK: load-stmts.cpp:38:3: DeclRefExpr=int_ptr:37:12 Extent=[38:3 - 38:10]
 // CHECK: load-stmts.cpp:38:12: TypeRef=Integer:36:15 Extent=[38:12 - 38:19]
 // CHECK: load-stmts.cpp:38:22: TypeRef=Integer:36:15 Extent=[38:22 - 38:29]
-// CHECK: load-stmts.cpp:47:6: FunctionTemplate=test_dependent_exprs:47:6 (Definition)
-// CHECK: load-stmts.cpp:48:3: CallExpr= Extent=[48:3 - 48:10]
-// CHECK: load-stmts.cpp:48:3: NamespaceRef=N:41:11 Extent=[48:3 - 48:4]
-// CHECK: load-stmts.cpp:48:8: DeclRefExpr=t:47:29 Extent=[48:8 - 48:9]
+// CHECK: load-stmts.cpp:50:6: FunctionTemplate=test_dependent_exprs:50:6 (Definition)
+// CHECK: load-stmts.cpp:51:3: CallExpr= Extent=[51:3 - 51:10]
+// CHECK: load-stmts.cpp:51:3: NamespaceRef=N:41:11 Extent=[51:3 - 51:4]
+// CHECK: load-stmts.cpp:51:8: DeclRefExpr=t:50:29 Extent=[51:8 - 51:9]
+// CHECK: load-stmts.cpp:52:13: TypedefDecl=type:52:13 (Definition) Extent=[52:13 - 52:17]
+// CHECK: load-stmts.cpp:53:3: CallExpr= Extent=[53:3 - 53:16]
+// CHECK: load-stmts.cpp:53:3: NamespaceRef=N:41:11 Extent=[53:3 - 53:4]
+// CHECK: load-stmts.cpp:53:8: TypeRef=type:52:13 Extent=[53:8 - 53:12]
+// CHECK: load-stmts.cpp:53:14: DeclRefExpr=t:50:29 Extent=[53:14 - 53:15]

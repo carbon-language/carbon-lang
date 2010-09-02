@@ -391,7 +391,7 @@ public:
   // FIXME: CXXNewExpr has poor source-location information
   bool VisitCXXPseudoDestructorExpr(CXXPseudoDestructorExpr *E);
   // FIXME: UnaryTypeTraitExpr has poor source-location information.
-  bool VisitUnresolvedLookupExpr(UnresolvedLookupExpr *E);
+  bool VisitOverloadExpr(OverloadExpr *E);
 };
 
 } // end anonymous namespace
@@ -1610,7 +1610,7 @@ bool CursorVisitor::VisitCXXPseudoDestructorExpr(CXXPseudoDestructorExpr *E) {
   return false;
 }
 
-bool CursorVisitor::VisitUnresolvedLookupExpr(UnresolvedLookupExpr *E) {
+bool CursorVisitor::VisitOverloadExpr(OverloadExpr *E) {
   // Visit the nested-name-specifier.
   if (NestedNameSpecifier *Qualifier = E->getQualifier())
     if (VisitNestedNameSpecifier(Qualifier, E->getQualifierRange()))
@@ -1620,6 +1620,17 @@ bool CursorVisitor::VisitUnresolvedLookupExpr(UnresolvedLookupExpr *E) {
   if (VisitDeclarationNameInfo(E->getNameInfo()))
     return true;
   
+  // Visit the explicitly-specified template arguments.
+  if (const ExplicitTemplateArgumentList *ArgList
+                                      = E->getOptionalExplicitTemplateArgs()) {
+    for (const TemplateArgumentLoc *Arg = ArgList->getTemplateArgs(),
+                                *ArgEnd = Arg + ArgList->NumTemplateArgs;
+         Arg != ArgEnd; ++Arg) {
+      if (VisitTemplateArgumentLoc(*Arg))
+        return true;
+    }
+  }
+    
   // FIXME: We don't have a way to visit all of the declarations referenced
   // here.
   return false;
