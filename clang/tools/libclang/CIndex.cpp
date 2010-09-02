@@ -385,6 +385,7 @@ public:
   // FIXME: InitListExpr (for the designators)
   // FIXME: DesignatedInitExpr
   bool VisitCXXTypeidExpr(CXXTypeidExpr *E);
+  bool VisitCXXDefaultArgExpr(CXXDefaultArgExpr *E) { return false; }
 };
 
 } // end anonymous namespace
