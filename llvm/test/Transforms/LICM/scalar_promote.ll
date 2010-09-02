@@ -71,3 +71,50 @@ Out:		; preds = %Loop
 	ret void
 }
 
+; PR8041
+define void @test4(i8* %x, i8 %n) {
+; CHECK: @test4
+  %handle1 = alloca i8*
+  %handle2 = alloca i8*
+  store i8* %x, i8** %handle1
+  br label %loop
+
+loop:
+  %tmp = getelementptr i8* %x, i64 8
+  store i8* %tmp, i8** %handle2
+  br label %subloop
+
+subloop:
+  %count = phi i8 [ 0, %loop ], [ %nextcount, %subloop ]
+  %offsetx2 = load i8** %handle2
+  store i8 %n, i8* %offsetx2
+  %newoffsetx2 = getelementptr i8* %offsetx2, i64 -1
+  store i8* %newoffsetx2, i8** %handle2
+  %nextcount = add i8 %count, 1
+  %innerexitcond = icmp sge i8 %nextcount, 8
+  br i1 %innerexitcond, label %innerexit, label %subloop
+
+; Should have promoted 'handle2' accesses.
+; CHECK: subloop:
+; CHECK-NEXT: phi i8* [
+; CHECK-NEXT: %count = phi i8 [
+; CHECK-NEXT: store i8 %n
+; CHECK-NOT: store
+; CHECK: br i1
+
+innerexit:
+  %offsetx1 = load i8** %handle1
+  %val = load i8* %offsetx1
+  %cond = icmp eq i8 %val, %n
+  br i1 %cond, label %exit, label %loop
+
+; Should not have promoted offsetx1 loads.
+; CHECK: innerexit:
+; CHECK: %val = load i8* %offsetx1
+; CHECK: %cond = icmp eq i8 %val, %n
+; CHECK: br i1 %cond, label %exit, label %loop
+
+exit:
+  ret void
+}
+

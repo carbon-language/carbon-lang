@@ -583,7 +583,7 @@ void LICM::sink(Instruction &I) {
   // Update CurAST for NewPHIs if I had pointer type.
   if (I.getType()->isPointerTy())
     for (unsigned i = 0, e = NewPHIs.size(); i != e; ++i)
-      CurAST->copyValue(NewPHIs[i], &I);
+      CurAST->copyValue(&I, NewPHIs[i]);
   
   // Finally, remove the instruction from CurAST.  It is no longer in the loop.
   CurAST->deleteValue(&I);
@@ -843,7 +843,9 @@ void LICM::PromoteAliasSet(AliasSet &AS) {
   // inserting PHI nodes as necessary.
   for (unsigned i = 0, e = LiveInLoads.size(); i != e; ++i) {
     LoadInst *ALoad = LiveInLoads[i];
-    ALoad->replaceAllUsesWith(SSA.GetValueInMiddleOfBlock(ALoad->getParent()));
+    Value *NewVal = SSA.GetValueInMiddleOfBlock(ALoad->getParent());
+    ALoad->replaceAllUsesWith(NewVal);
+    CurAST->copyValue(ALoad, NewVal);
   }
   
   // Now that everything is rewritten, delete the old instructions from the body
