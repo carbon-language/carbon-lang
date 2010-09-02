@@ -490,7 +490,7 @@ public:
   Sema(Preprocessor &pp, ASTContext &ctxt, ASTConsumer &consumer,
        bool CompleteTranslationUnit = true,
        CodeCompleteConsumer *CompletionConsumer = 0);
-  ~Sema();
+  virtual ~Sema();
   
   /// \brief Perform initialization that occurs after the parser has been
   /// initialized but before it parses anything.
