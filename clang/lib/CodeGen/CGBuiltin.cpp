@@ -1148,7 +1148,10 @@ Value *CodeGenFunction::EmitARMBuiltinExpr(unsigned BuiltinID,
   case ARM::BI__builtin_neon_vaddhn_v:
     return EmitNeonCall(CGM.getIntrinsic(Intrinsic::arm_neon_vaddhn, &Ty, 1),
                         Ops, "vaddhn");
-  case ARM::BI__builtin_neon_vaddl_v:
+  case ARM::BI__builtin_neon_vaddl_v: {
+    const llvm::Type *DTy =llvm::VectorType::getTruncatedElementVectorType(VTy);
+    Ops[0] = Builder.CreateBitCast(Ops[0], DTy);
+    Ops[1] = Builder.CreateBitCast(Ops[1], DTy);
     if (usgn) {
       Ops[0] = Builder.CreateZExt(Ops[0], Ty);
       Ops[1] = Builder.CreateZExt(Ops[1], Ty);
@@ -1157,12 +1160,17 @@ Value *CodeGenFunction::EmitARMBuiltinExpr(unsigned BuiltinID,
       Ops[1] = Builder.CreateSExt(Ops[1], Ty);
     }
     return Builder.CreateAdd(Ops[0], Ops[1], "vaddl");
-  case ARM::BI__builtin_neon_vaddw_v:
+  }
+  case ARM::BI__builtin_neon_vaddw_v: {
+    const llvm::Type *DTy =llvm::VectorType::getTruncatedElementVectorType(VTy);
+    Ops[0] = Builder.CreateBitCast(Ops[0], Ty);
+    Ops[1] = Builder.CreateBitCast(Ops[1], DTy);
     if (usgn)
       Ops[1] = Builder.CreateZExt(Ops[1], Ty);
     else
       Ops[1] = Builder.CreateSExt(Ops[1], Ty);
     return Builder.CreateAdd(Ops[0], Ops[1], "vaddw");
+  }
   case ARM::BI__builtin_neon_vcale_v:
     std::swap(Ops[0], Ops[1]);
   case ARM::BI__builtin_neon_vcage_v: {
@@ -1405,9 +1413,16 @@ Value *CodeGenFunction::EmitARMBuiltinExpr(unsigned BuiltinID,
   case ARM::BI__builtin_neon_vminq_v:
     Int = usgn ? Intrinsic::arm_neon_vminu : Intrinsic::arm_neon_vmins;
     return EmitNeonCall(CGM.getIntrinsic(Int, &Ty, 1), Ops, "vmin");
-  case ARM::BI__builtin_neon_vmlal_lane_v:
+  case ARM::BI__builtin_neon_vmlal_lane_v: {
+    const llvm::Type *DTy =llvm::VectorType::getTruncatedElementVectorType(VTy);
+    Ops[2] = Builder.CreateBitCast(Ops[2], DTy);
     Ops[2] = EmitNeonSplat(Ops[2], cast<Constant>(Ops[3]));
-  case ARM::BI__builtin_neon_vmlal_v:
+  }
+  case ARM::BI__builtin_neon_vmlal_v: {
+    const llvm::Type *DTy =llvm::VectorType::getTruncatedElementVectorType(VTy);
+    Ops[0] = Builder.CreateBitCast(Ops[0], Ty);
+    Ops[1] = Builder.CreateBitCast(Ops[1], DTy);
+    Ops[2] = Builder.CreateBitCast(Ops[2], DTy);
     if (usgn) {
       Ops[1] = Builder.CreateZExt(Ops[1], Ty);
       Ops[2] = Builder.CreateZExt(Ops[2], Ty);
@@ -1417,9 +1432,17 @@ Value *CodeGenFunction::EmitARMBuiltinExpr(unsigned BuiltinID,
     }
     Ops[1] = Builder.CreateMul(Ops[1], Ops[2]);
     return Builder.CreateAdd(Ops[0], Ops[1], "vmlal");
-  case ARM::BI__builtin_neon_vmlsl_lane_v:
+  }
+  case ARM::BI__builtin_neon_vmlsl_lane_v: {
+    const llvm::Type *DTy =llvm::VectorType::getTruncatedElementVectorType(VTy);
+    Ops[2] = Builder.CreateBitCast(Ops[2], DTy);
     Ops[2] = EmitNeonSplat(Ops[2], cast<Constant>(Ops[3]));
-  case ARM::BI__builtin_neon_vmlsl_v:
+  }
+  case ARM::BI__builtin_neon_vmlsl_v: {
+    const llvm::Type *DTy =llvm::VectorType::getTruncatedElementVectorType(VTy);
+    Ops[0] = Builder.CreateBitCast(Ops[0], Ty);
+    Ops[1] = Builder.CreateBitCast(Ops[1], DTy);
+    Ops[2] = Builder.CreateBitCast(Ops[2], DTy);
     if (usgn) {
       Ops[1] = Builder.CreateZExt(Ops[1], Ty);
       Ops[2] = Builder.CreateZExt(Ops[2], Ty);
@@ -1429,18 +1452,31 @@ Value *CodeGenFunction::EmitARMBuiltinExpr(unsigned BuiltinID,
     }
     Ops[1] = Builder.CreateMul(Ops[1], Ops[2]);
     return Builder.CreateSub(Ops[0], Ops[1], "vmlsl");
-  case ARM::BI__builtin_neon_vmovl_v:
+  }
+  case ARM::BI__builtin_neon_vmovl_v: {
+    const llvm::Type *DTy =llvm::VectorType::getTruncatedElementVectorType(VTy);
+    Ops[0] = Builder.CreateBitCast(Ops[0], DTy);
     if (usgn)
       return Builder.CreateZExt(Ops[0], Ty, "vmovl");
     return Builder.CreateSExt(Ops[0], Ty, "vmovl");
-  case ARM::BI__builtin_neon_vmovn_v:
+  }
+  case ARM::BI__builtin_neon_vmovn_v: {
+    const llvm::Type *QTy = llvm::VectorType::getExtendedElementVectorType(VTy);
+    Ops[0] = Builder.CreateBitCast(Ops[0], QTy);
     return Builder.CreateTrunc(Ops[0], Ty, "vmovn");
-  case ARM::BI__builtin_neon_vmull_lane_v:
+  }
+  case ARM::BI__builtin_neon_vmull_lane_v: {
+    const llvm::Type *DTy =llvm::VectorType::getTruncatedElementVectorType(VTy);
+    Ops[1] = Builder.CreateBitCast(Ops[1], DTy);
     Ops[1] = EmitNeonSplat(Ops[1], cast<Constant>(Ops[2]));
-  case ARM::BI__builtin_neon_vmull_v:
+  }
+  case ARM::BI__builtin_neon_vmull_v: {
     if (poly)
       return EmitNeonCall(CGM.getIntrinsic(Intrinsic::arm_neon_vmullp, &Ty, 1),
                           Ops, "vmull");
+    const llvm::Type *DTy =llvm::VectorType::getTruncatedElementVectorType(VTy);
+    Ops[0] = Builder.CreateBitCast(Ops[0], DTy);
+    Ops[1] = Builder.CreateBitCast(Ops[1], DTy);
     if (usgn) {
       Ops[0] = Builder.CreateZExt(Ops[0], Ty);
       Ops[1] = Builder.CreateZExt(Ops[1], Ty);
@@ -1449,6 +1485,7 @@ Value *CodeGenFunction::EmitARMBuiltinExpr(unsigned BuiltinID,
       Ops[1] = Builder.CreateSExt(Ops[1], Ty);
     }
     return Builder.CreateMul(Ops[0], Ops[1], "vmull");
+  }
   case ARM::BI__builtin_neon_vpadal_v:
   case ARM::BI__builtin_neon_vpadalq_v:
     Int = usgn ? Intrinsic::arm_neon_vpadalu : Intrinsic::arm_neon_vpadals;
@@ -1689,7 +1726,10 @@ Value *CodeGenFunction::EmitARMBuiltinExpr(unsigned BuiltinID,
   case ARM::BI__builtin_neon_vsubhn_v:
     return EmitNeonCall(CGM.getIntrinsic(Intrinsic::arm_neon_vsubhn, &Ty, 1),
                         Ops, "vsubhn");
-  case ARM::BI__builtin_neon_vsubl_v:
+  case ARM::BI__builtin_neon_vsubl_v: {
+    const llvm::Type *DTy =llvm::VectorType::getTruncatedElementVectorType(VTy);
+    Ops[0] = Builder.CreateBitCast(Ops[0], DTy);
+    Ops[1] = Builder.CreateBitCast(Ops[1], DTy);
     if (usgn) {
       Ops[0] = Builder.CreateZExt(Ops[0], Ty);
       Ops[1] = Builder.CreateZExt(Ops[1], Ty);
@@ -1698,12 +1738,17 @@ Value *CodeGenFunction::EmitARMBuiltinExpr(unsigned BuiltinID,
       Ops[1] = Builder.CreateSExt(Ops[1], Ty);
     }
     return Builder.CreateSub(Ops[0], Ops[1], "vsubl");
-  case ARM::BI__builtin_neon_vsubw_v:
+  }
+  case ARM::BI__builtin_neon_vsubw_v: {
+    const llvm::Type *DTy =llvm::VectorType::getTruncatedElementVectorType(VTy);
+    Ops[0] = Builder.CreateBitCast(Ops[0], Ty);
+    Ops[1] = Builder.CreateBitCast(Ops[1], DTy);
     if (usgn)
       Ops[1] = Builder.CreateZExt(Ops[1], Ty);
     else
       Ops[1] = Builder.CreateSExt(Ops[1], Ty);
     return Builder.CreateSub(Ops[0], Ops[1], "vsubw");
+  }
   case ARM::BI__builtin_neon_vtbl1_v:
     return EmitNeonCall(CGM.getIntrinsic(Intrinsic::arm_neon_vtbl1),
                         Ops, "vtbl1");
