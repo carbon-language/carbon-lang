@@ -4074,6 +4074,17 @@ SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I, unsigned Intrinsic) {
     // absolute, but not relative, values are different depending on whether
     // debug info exists.
     ++SDNodeOrder;
+
+    // Check if address has undef value.
+    if (isa<UndefValue>(Address) ||
+        (Address->use_empty() && !isa<Argument>(Address))) {
+      SDDbgValue*SDV = 
+        DAG.getDbgValue(Variable, UndefValue::get(Address->getType()),
+                        0, dl, SDNodeOrder);
+      DAG.AddDbgValue(SDV, 0, false);
+      return 0;
+    }
+
     SDValue &N = NodeMap[Address];
     if (!N.getNode() && isa<Argument>(Address))
       // Check unused arguments map.
