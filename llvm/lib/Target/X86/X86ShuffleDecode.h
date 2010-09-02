@@ -26,38 +26,24 @@ enum {
   SM_SentinelZero = ~0U
 };
 
-static void DecodeINSERTPSMask(unsigned Imm,
-                               SmallVectorImpl<unsigned> &ShuffleMask) {
-  // Defaults the copying the dest value.
-  ShuffleMask.push_back(0);
-  ShuffleMask.push_back(1);
-  ShuffleMask.push_back(2);
-  ShuffleMask.push_back(3);
+// <3,1> or <6,7,2,3>
+static void DecodeMOVHLPSMask(unsigned NElts,
+                              SmallVectorImpl<unsigned> &ShuffleMask) {
+  for (unsigned i = NElts/2; i != NElts; ++i)
+    ShuffleMask.push_back(NElts+i);
 
-  // Decode the immediate.
-  unsigned ZMask = Imm & 15;
-  unsigned CountD = (Imm >> 4) & 3;
-  unsigned CountS = (Imm >> 6) & 3;
-
-  // CountS selects which input element to use.
-  unsigned InVal = 4+CountS;
-  // CountD specifies which element of destination to update.
-  ShuffleMask[CountD] = InVal;
-  // ZMask zaps values, potentially overriding the CountD elt.
-  if (ZMask & 1) ShuffleMask[0] = SM_SentinelZero;
-  if (ZMask & 2) ShuffleMask[1] = SM_SentinelZero;
-  if (ZMask & 4) ShuffleMask[2] = SM_SentinelZero;
-  if (ZMask & 8) ShuffleMask[3] = SM_SentinelZero;
+  for (unsigned i = NElts/2; i != NElts; ++i)
+    ShuffleMask.push_back(i);
 }
 
-static void DecodeMOVHLPSMask(SmallVectorImpl<unsigned> &ShuffleMask) {
-  ShuffleMask.push_back(3);
-  ShuffleMask.push_back(1);
-}
+// <0,2> or <0,1,4,5>
+static void DecodeMOVLHPSMask(unsigned NElts,
+                              SmallVectorImpl<unsigned> &ShuffleMask) {
+  for (unsigned i = 0; i != NElts/2; ++i)
+    ShuffleMask.push_back(i);
 
-static void DecodeMOVLHPSMask(SmallVectorImpl<unsigned> &ShuffleMask) {
-  ShuffleMask.push_back(0);
-  ShuffleMask.push_back(2);
+  for (unsigned i = 0; i != NElts/2; ++i)
+    ShuffleMask.push_back(NElts+i);
 }
 
 static void DecodePSHUFMask(unsigned NElts, unsigned Imm,

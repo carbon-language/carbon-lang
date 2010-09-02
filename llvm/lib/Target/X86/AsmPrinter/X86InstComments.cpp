@@ -20,6 +20,34 @@
 using namespace llvm;
 
 //===----------------------------------------------------------------------===//
+//  Vector Mask Decoding for non-shuffles
+//===----------------------------------------------------------------------===//
+
+static void DecodeINSERTPSMask(unsigned Imm,
+                               SmallVectorImpl<unsigned> &ShuffleMask) {
+  // Defaults the copying the dest value.
+  ShuffleMask.push_back(0);
+  ShuffleMask.push_back(1);
+  ShuffleMask.push_back(2);
+  ShuffleMask.push_back(3);
+
+  // Decode the immediate.
+  unsigned ZMask = Imm & 15;
+  unsigned CountD = (Imm >> 4) & 3;
+  unsigned CountS = (Imm >> 6) & 3;
+
+  // CountS selects which input element to use.
+  unsigned InVal = 4+CountS;
+  // CountD specifies which element of destination to update.
+  ShuffleMask[CountD] = InVal;
+  // ZMask zaps values, potentially overriding the CountD elt.
+  if (ZMask & 1) ShuffleMask[0] = SM_SentinelZero;
+  if (ZMask & 2) ShuffleMask[1] = SM_SentinelZero;
+  if (ZMask & 4) ShuffleMask[2] = SM_SentinelZero;
+  if (ZMask & 8) ShuffleMask[3] = SM_SentinelZero;
+}
+
+//===----------------------------------------------------------------------===//
 // Top Level Entrypoint
 //===----------------------------------------------------------------------===//
 
@@ -42,13 +70,13 @@ void llvm::EmitAnyX86InstComments(const MCInst *MI, raw_ostream &OS,
   case X86::MOVLHPSrr:
     Src2Name = getRegName(MI->getOperand(2).getReg());
     Src1Name = getRegName(MI->getOperand(0).getReg());
-    DecodeMOVLHPSMask(ShuffleMask);
+    DecodeMOVLHPSMask(2, ShuffleMask);
     break;
 
   case X86::MOVHLPSrr:
     Src2Name = getRegName(MI->getOperand(2).getReg());
     Src1Name = getRegName(MI->getOperand(0).getReg());
-    DecodeMOVHLPSMask(ShuffleMask);
+    DecodeMOVHLPSMask(2, ShuffleMask);
     break;
 
   case X86::PSHUFDri:
