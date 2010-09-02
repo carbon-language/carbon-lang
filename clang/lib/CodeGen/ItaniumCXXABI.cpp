@@ -305,8 +305,13 @@ llvm::Value *ItaniumCXXABI::EmitMemberDataPointerAddress(CodeGenFunction &CGF,
 
   // Cast the address to the appropriate pointer type, adopting the
   // address space of the base pointer.
-  const llvm::Type *PType
-    = CGF.ConvertType(MPT->getPointeeType())->getPointerTo(AS);
+  // FIXME: We seem to be losing the "volatile" qualifier on the base pointer.
+  QualType PtrType = CGF.getContext().getPointerType(MPT->getPointeeType());
+  Qualifiers Qs = MPT->getPointeeType().getQualifiers();
+  if (AS)
+    Qs.addAddressSpace(AS);
+  PtrType = CGF.getContext().getQualifiedType(PtrType, Qs);
+  const llvm::Type *PType = CGF.ConvertType(PtrType);
   return Builder.CreateBitCast(Addr, PType);
 }
 
