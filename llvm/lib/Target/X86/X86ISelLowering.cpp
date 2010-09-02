@@ -5290,8 +5290,7 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const {
     return getMOVL(DAG, dl, VT, V2, V1);
   }
 
-  if (X86::isUNPCKL_v_undef_Mask(SVOp) ||
-      X86::isUNPCKH_v_undef_Mask(SVOp) ||
+  if (X86::isUNPCKH_v_undef_Mask(SVOp) ||
       X86::isUNPCKLMask(SVOp) ||
       X86::isUNPCKHMask(SVOp))
     return Op;
@@ -5316,8 +5315,7 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const {
     // FIXME: this seems wrong.
     SDValue NewOp = CommuteVectorShuffle(SVOp, DAG);
     ShuffleVectorSDNode *NewSVOp = cast<ShuffleVectorSDNode>(NewOp);
-    if (X86::isUNPCKL_v_undef_Mask(NewSVOp) ||
-        X86::isUNPCKH_v_undef_Mask(NewSVOp) ||
+    if (X86::isUNPCKH_v_undef_Mask(NewSVOp) ||
         X86::isUNPCKLMask(NewSVOp) ||
         X86::isUNPCKHMask(NewSVOp))
       return NewOp;
