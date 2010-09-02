@@ -424,7 +424,7 @@ public:
                         unsigned NumBaseOrMembers, RecordData &Record);
 
   /// \brief Add a string to the given record.
-  void AddString(const std::string &Str, RecordData &Record);
+  void AddString(llvm::StringRef Str, RecordData &Record);
 
   /// \brief Mark a namespace as needing an update.
   void AddUpdatedNamespace(const NamespaceDecl *NS) {

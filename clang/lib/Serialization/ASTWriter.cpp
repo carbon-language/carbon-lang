@@ -2165,7 +2165,7 @@ void ASTWriter::WriteAttributeRecord(const AttrVec &Attrs) {
   Stream.EmitRecord(DECL_ATTR, Record);
 }
 
-void ASTWriter::AddString(const std::string &Str, RecordData &Record) {
+void ASTWriter::AddString(llvm::StringRef Str, RecordData &Record) {
   Record.push_back(Str.size());
   Record.insert(Record.end(), Str.begin(), Str.end());
 }
