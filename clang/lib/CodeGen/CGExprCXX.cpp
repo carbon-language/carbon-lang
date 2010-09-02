@@ -1018,8 +1018,9 @@ void CodeGenFunction::EmitCXXDeleteExpr(const CXXDeleteExpr *E) {
     Ptr = Builder.CreateInBoundsGEP(Ptr, GEP.begin(), GEP.end(), "del.first");
   }
 
-  assert(ConvertType(DeleteTy) ==
-         cast<llvm::PointerType>(Ptr->getType())->getElementType());
+  assert(DeleteTy->isBooleanType() || 
+         (ConvertType(DeleteTy) ==
+          cast<llvm::PointerType>(Ptr->getType())->getElementType()));
 
   if (E->isArrayForm()) {
     EmitArrayDelete(*this, E->getOperatorDelete(), Ptr, DeleteTy);

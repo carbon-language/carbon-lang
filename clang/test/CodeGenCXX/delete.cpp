@@ -95,3 +95,13 @@ namespace test1 {
     // CHECK:      call void @_ZdaPv(i8* [[ALLOC]])
   }
 }
+
+namespace test2 {
+  // CHECK: define void @_ZN5test21fEPb
+  void f(bool *b) {
+    // CHECK: call void @_ZdlPv(i8*
+    delete b;
+    // CHECK: call void @_ZdaPv(i8*
+    delete [] b;
+  }
+}
