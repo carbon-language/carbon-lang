@@ -90,12 +90,12 @@ class IdempotentOperationChecker
     static bool containsNonLocalVarDecl(const Stmt *S);
 
     // Hash table and related data structures
-    typedef struct {
-      Assumption Assumption;
-      AnalysisContext *AnalysisContext;
-      ExplodedNodeSet ExplodedNodes; // Set of ExplodedNodes that refer to a
-                                      // BinaryOperator
-    } BinaryOperatorData;
+    struct BinaryOperatorData {
+      Assumption assumption;
+      AnalysisContext *analysisContext;
+      ExplodedNodeSet explodedNodes; // Set of ExplodedNodes that refer to a
+                                     // BinaryOperator
+    };
     typedef llvm::DenseMap<const BinaryOperator *, BinaryOperatorData>
         AssumptionMap;
     AssumptionMap hash;
@@ -119,9 +119,9 @@ void IdempotentOperationChecker::PreVisitBinaryOperator(
   // 'Possible'. At this stage we do not store the ExplodedNode, as it has not
   // been created yet.
   BinaryOperatorData &Data = hash[B];
-  Assumption &A = Data.Assumption;
+  Assumption &A = Data.assumption;
   AnalysisContext *AC = C.getCurrentAnalysisContext();
-  Data.AnalysisContext = AC;
+  Data.analysisContext = AC;
 
   // If we already have visited this node on a path that does not contain an
   // idempotent operation, return immediately.
@@ -333,7 +333,7 @@ void IdempotentOperationChecker::PostVisitBinaryOperator(
                                                       const BinaryOperator *B) {
   // Add the ExplodedNode we just visited
   BinaryOperatorData &Data = hash[B];
-  Data.ExplodedNodes.Add(C.getPredecessor());
+  Data.explodedNodes.Add(C.getPredecessor());
 }
 
 void IdempotentOperationChecker::VisitEndAnalysis(ExplodedGraph &G,
@@ -345,9 +345,9 @@ void IdempotentOperationChecker::VisitEndAnalysis(ExplodedGraph &G,
   for (AssumptionMap::const_iterator i = hash.begin(); i != hash.end(); ++i) {
     // Unpack the hash contents
     const BinaryOperatorData &Data = i->second;
-    const Assumption &A = Data.Assumption;
-    AnalysisContext *AC = Data.AnalysisContext;
-    const ExplodedNodeSet &ES = Data.ExplodedNodes;
+    const Assumption &A = Data.assumption;
+    AnalysisContext *AC = Data.analysisContext;
+    const ExplodedNodeSet &ES = Data.explodedNodes;
 
     const BinaryOperator *B = i->first;
 
