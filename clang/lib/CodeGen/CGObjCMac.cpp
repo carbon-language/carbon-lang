@@ -113,11 +113,27 @@ LValue CGObjCRuntime::EmitValueForIvarAtOffset(CodeGen::CodeGenFunction &CGF,
     return LV;
   }
 
-  // We need to compute the bit offset for the bit-field, the offset is to the
-  // byte. Note, there is a subtle invariant here: we can only call this routine
-  // on non-synthesized ivars but we may be called for synthesized ivars.
-  // However, a synthesized ivar can never be a bit-field, so this is safe.
-  uint64_t BitOffset = LookupFieldBitOffset(CGF.CGM, OID, 0, Ivar) % 8;
+  // We need to compute an access strategy for this bit-field. We are given the
+  // offset to the first byte in the bit-field, the sub-byte offset is taken
+  // from the original layout. We reuse the normal bit-field access strategy by
+  // treating this as an access to a struct where the bit-field is in byte 0,
+  // and adjust the containing type size as appropriate.
+  //
+  // FIXME: Note that currently we make a very conservative estimate of the
+  // alignment of the bit-field, because (a) it is not clear what guarantees the
+  // runtime makes us, and (b) we don't have a way to specify that the struct is
+  // at an alignment plus offset.
+  //
+  // Note, there is a subtle invariant here: we can only call this routine on
+  // non-synthesized ivars but we may be called for synthesized ivars.  However,
+  // a synthesized ivar can never be a bit-field, so this is safe.
+  const ASTRecordLayout &RL =
+    CGF.CGM.getContext().getASTObjCInterfaceLayout(OID);
+  uint64_t TypeSizeInBits = RL.getSize();
+  uint64_t FieldBitOffset = LookupFieldBitOffset(CGF.CGM, OID, 0, Ivar);
+  uint64_t BitOffset = FieldBitOffset % 8;
+  uint64_t ContainingTypeAlign = 8;
+  uint64_t ContainingTypeSize = TypeSizeInBits - (FieldBitOffset - BitOffset);
   uint64_t BitFieldSize =
     Ivar->getBitWidth()->EvaluateAsInt(CGF.getContext()).getZExtValue();
 
@@ -127,23 +143,10 @@ LValue CGObjCRuntime::EmitValueForIvarAtOffset(CodeGen::CodeGenFunction &CGF,
   // layout object. However, this is blocked on other cleanups to the
   // Objective-C code, so for now we just live with allocating a bunch of these
   // objects.
+  CGBitFieldInfo *Info = new (CGF.CGM.getContext()) CGBitFieldInfo(
+    CGBitFieldInfo::MakeInfo(CGF.CGM.getTypes(), Ivar, BitOffset, BitFieldSize,
+                             ContainingTypeSize, ContainingTypeAlign));
 
-  // We always construct a single, possibly unaligned, access for this case.
-  CGBitFieldInfo::AccessInfo AI;
-  AI.FieldIndex = 0;
-  AI.FieldByteOffset = 0;
-  AI.FieldBitStart = BitOffset;
-  AI.AccessWidth = CGF.CGM.getContext().getTypeSize(IvarTy);
-  AI.AccessAlignment = 0;
-  AI.TargetBitOffset = 0;
-  AI.TargetBitWidth = BitFieldSize;
-
-  CGBitFieldInfo *Info =
-    new (CGF.CGM.getContext()) CGBitFieldInfo(BitFieldSize, 1, &AI,
-                                              IvarTy->isSignedIntegerType());
-
-  // FIXME: We need to set a very conservative alignment on this, or make sure
-  // that the runtime is doing the right thing.
   return LValue::MakeBitfield(V, *Info,
                               IvarTy.getCVRQualifiers() | CVRQualifiers);
 }
