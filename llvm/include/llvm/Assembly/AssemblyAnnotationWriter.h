@@ -1,4 +1,4 @@
-//===-- AsmAnnotationWriter.h - Itf for annotation .ll files - --*- C++ -*-===//
+//===-- AssemblyAnnotationWriter.h - Annotation .ll files -------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -39,13 +39,13 @@ public:
   /// after the basic block label, but before the first instruction in the
   /// block.
   virtual void emitBasicBlockStartAnnot(const BasicBlock *BB,
-                                        formatted_raw_ostream &OS){
+                                        formatted_raw_ostream &OS) {
   }
 
   /// emitBasicBlockEndAnnot - This may be implemented to emit a string right
   /// after the basic block.
   virtual void emitBasicBlockEndAnnot(const BasicBlock *BB,
-                                      formatted_raw_ostream &OS){
+                                      formatted_raw_ostream &OS) {
   }
 
   /// emitInstructionAnnot - This may be implemented to emit a string right
