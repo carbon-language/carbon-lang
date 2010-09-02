@@ -81,11 +81,11 @@ Declaration::Dump(Stream *s) const
 }
 
 void
-Declaration::DumpStopContext (Stream *s) const
+Declaration::DumpStopContext (Stream *s, bool show_fullpaths) const
 {
     if (m_file)
     {
-        if (s->GetVerbose())
+        if (show_fullpaths || s->GetVerbose())
             *s << m_file;
         else
             m_file.GetFilename().Dump(s);

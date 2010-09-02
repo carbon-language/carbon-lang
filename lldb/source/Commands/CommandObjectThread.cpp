@@ -224,7 +224,7 @@ lldb_private::DisplayFrameForExecutionContext
         if (show_frame_info)
         {
             strm.Indent();
-            frame->Dump (&strm, true);
+            frame->Dump (&strm, true, false);
             strm.EOL();
         }
 

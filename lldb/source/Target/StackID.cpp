@@ -24,7 +24,7 @@ using namespace lldb_private;
 void
 StackID::Dump (Stream *s)
 {
-    s->Printf("StackID (start_pc = 0x%16.16llx, cfa = 0x%16.16llx, symbol_scope = %p", (uint64_t)m_start_pc, (uint64_t)m_cfa, m_symbol_scope);
+    s->Printf("StackID (pc = 0x%16.16llx, cfa = 0x%16.16llx, symbol_scope = %p", (uint64_t)m_pc, (uint64_t)m_cfa, m_symbol_scope);
     if (m_symbol_scope)
     {
         SymbolContext sc;
@@ -41,21 +41,64 @@ StackID::Dump (Stream *s)
 bool
 lldb_private::operator== (const StackID& lhs, const StackID& rhs)
 {
-    return lhs.GetCallFrameAddress()    == rhs.GetCallFrameAddress()    && 
-           lhs.GetSymbolContextScope()  == rhs.GetSymbolContextScope()  &&
-           lhs.GetStartAddress()        == rhs.GetStartAddress();
+    if (lhs.GetCallFrameAddress() != rhs.GetCallFrameAddress())
+        return false;
+
+    SymbolContextScope *lhs_scope = lhs.GetSymbolContextScope();
+    SymbolContextScope *rhs_scope = rhs.GetSymbolContextScope();
+
+    // Only compare the PC values if both symbol context scopes are NULL
+    if (lhs_scope == NULL && rhs_scope == NULL)
+        return lhs.GetPC() == rhs.GetPC();
+    
+    return lhs_scope == rhs_scope;
 }
 
 bool
 lldb_private::operator!= (const StackID& lhs, const StackID& rhs)
 {
-    return lhs.GetCallFrameAddress()    != rhs.GetCallFrameAddress()    || 
-           lhs.GetSymbolContextScope()  != rhs.GetSymbolContextScope()  || 
-           lhs.GetStartAddress()        != rhs.GetStartAddress();
+    if (lhs.GetCallFrameAddress() != rhs.GetCallFrameAddress())
+        return true;
+
+    SymbolContextScope *lhs_scope = lhs.GetSymbolContextScope();
+    SymbolContextScope *rhs_scope = rhs.GetSymbolContextScope();
+
+    if (lhs_scope == NULL && rhs_scope == NULL)
+        return lhs.GetPC() != rhs.GetPC();
+
+    return lhs_scope != rhs_scope;
 }
 
 bool
 lldb_private::operator< (const StackID& lhs, const StackID& rhs)
 {
-    return lhs.GetCallFrameAddress()    < rhs.GetCallFrameAddress();
+    const lldb::addr_t lhs_cfa = lhs.GetCallFrameAddress();
+    const lldb::addr_t rhs_cfa = rhs.GetCallFrameAddress();
+    
+    if (lhs_cfa != rhs_cfa)
+        return lhs_cfa < rhs_cfa;
+
+    SymbolContextScope *lhs_scope = lhs.GetSymbolContextScope();
+    SymbolContextScope *rhs_scope = rhs.GetSymbolContextScope();
+
+    if (lhs_scope != NULL && rhs_scope != NULL)
+    {
+        // Same exact scope, lhs is not less than (younger than rhs)
+        if (lhs_scope == rhs_scope)
+            return false;
+        
+        SymbolContext lhs_sc;
+        SymbolContext rhs_sc;
+        lhs_scope->CalculateSymbolContext (&lhs_sc);
+        rhs_scope->CalculateSymbolContext (&rhs_sc);
+        
+        // Items with the same function can only be compared
+        if (lhs_sc.function == rhs_sc.function &&
+            lhs_sc.function != NULL && lhs_sc.block != NULL &&
+            rhs_sc.function != NULL && rhs_sc.block != NULL)
+        {
+            return rhs_sc.block->Contains (lhs_sc.block);
+        }
+    }
+    return false;
 }

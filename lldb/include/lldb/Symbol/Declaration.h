@@ -103,7 +103,7 @@ public:
     Dump (Stream *s) const;
 
     void
-    DumpStopContext (Stream *s) const;
+    DumpStopContext (Stream *s, bool show_fullpaths) const;
     //------------------------------------------------------------------
     /// Get accessor for the declaration column number.
     ///

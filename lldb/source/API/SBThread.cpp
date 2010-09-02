@@ -288,7 +288,7 @@ SBThread::DisplaySingleFrameForSelectedContext (FILE *out,
                        frame_idx,
                        GetThreadID(),
                        (long long)pc);
-            sc->DumpStopContext (&str, &m_opaque_sp->GetProcess(), *frame.GetPCAddress(), true, false);
+            sc->DumpStopContext (&str, &m_opaque_sp->GetProcess(), *frame.GetPCAddress(), false, true, false);
             fprintf (out, "\n");
             success = true;
         }

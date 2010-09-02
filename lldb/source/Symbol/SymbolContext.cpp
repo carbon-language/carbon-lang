@@ -114,20 +114,24 @@ SymbolContext::DumpStopContext
     Stream *s,
     ExecutionContextScope *exe_scope,
     const Address &addr,
+    bool show_fullpaths,
     bool show_module,
     bool show_inlined_frames
 ) const
 {
     if (show_module && module_sp)
     {
-        *s << module_sp->GetFileSpec().GetFilename() << '`';
+        if (show_fullpaths)
+            *s << module_sp->GetFileSpec();
+        else
+            *s << module_sp->GetFileSpec().GetFilename();
+        s->PutChar('`');
     }
 
     if (function != NULL)
     {
         if (function->GetMangled().GetName())
             function->GetMangled().GetName().Dump(s);
-
 
         if (show_inlined_frames && block)
         {
@@ -147,7 +151,7 @@ SymbolContext::DumpStopContext
                 if (line_entry.IsValid())
                 {
                     s->PutCString(" at ");
-                    line_entry.DumpStopContext(s);
+                    line_entry.DumpStopContext(s, show_fullpaths);
                 }
                 return;
             }
@@ -159,7 +163,7 @@ SymbolContext::DumpStopContext
         if (block != NULL)
         {
             s->IndentMore();
-            block->DumpStopContext(s, this);
+            block->DumpStopContext(s, this, show_fullpaths);
             s->IndentLess();
         }
         else
@@ -167,7 +171,7 @@ SymbolContext::DumpStopContext
             if (line_entry.IsValid())
             {
                 s->PutCString(" at ");
-                if (line_entry.DumpStopContext(s))
+                if (line_entry.DumpStopContext(s, show_fullpaths))
                     return;
             }
         }

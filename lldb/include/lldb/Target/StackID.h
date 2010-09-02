@@ -26,22 +26,22 @@ public:
     // Constructors and Destructors
     //------------------------------------------------------------------
     StackID () :
-        m_start_pc (LLDB_INVALID_ADDRESS),
+        m_pc (LLDB_INVALID_ADDRESS),
         m_cfa (LLDB_INVALID_ADDRESS),
         m_symbol_scope (NULL)
     {
     }
 
     explicit 
-    StackID (lldb::addr_t start_pc, lldb::addr_t cfa, SymbolContextScope *symbol_scope) :
-        m_start_pc (start_pc),
+    StackID (lldb::addr_t pc, lldb::addr_t cfa, SymbolContextScope *symbol_scope) :
+        m_pc (pc),
         m_cfa (cfa),
         m_symbol_scope (symbol_scope)
     {
     }
 
     StackID (const StackID& rhs) :
-        m_start_pc (rhs.m_start_pc),
+        m_pc (rhs.m_pc),
         m_cfa (rhs.m_cfa),
         m_symbol_scope (rhs.m_symbol_scope)
     {
@@ -52,15 +52,9 @@ public:
     }
 
     const lldb::addr_t
-    GetStartAddress() const
+    GetPC() const
     {
-        return m_start_pc;
-    }
-
-    void
-    SetStartAddress(lldb::addr_t start_pc)
-    {
-        m_start_pc = start_pc;
+        return m_pc;
     }
 
     lldb::addr_t
@@ -92,7 +86,7 @@ public:
     {
         if (this != &rhs)
         {
-            m_start_pc = rhs.m_start_pc;
+            m_pc = rhs.m_pc;
             m_cfa = rhs.m_cfa;
             m_symbol_scope = rhs.m_symbol_scope;
         }
@@ -103,7 +97,10 @@ protected:
     //------------------------------------------------------------------
     // Classes that inherit from StackID can see and modify these
     //------------------------------------------------------------------
-    lldb::addr_t m_start_pc;            // The start address for the function/symbol for this frame
+    lldb::addr_t m_pc;                  // The pc value for the function/symbol for this frame. This will
+                                        // only get used if the symbol scope is NULL (the code where we are
+                                        // stopped is not represented by any function or symbol in any
+                                        // shared library).
     lldb::addr_t m_cfa;                 // The call frame address (stack pointer) value
                                         // at the beginning of the function that uniquely
                                         // identifies this frame (along with m_symbol_scope below)

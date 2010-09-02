@@ -256,7 +256,7 @@ StackFrameList::Dump (Stream *s)
         if (frame)
         {
             frame->GetStackID().Dump (s);
-            frame->Dump(s, true);
+            frame->Dump(s, true, false);
         }
         else
             s->Printf("frame #%u", std::distance (begin, pos));

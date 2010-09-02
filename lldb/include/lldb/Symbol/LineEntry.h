@@ -110,7 +110,7 @@ struct LineEntry
     ///     \b false otherwise.
     //------------------------------------------------------------------
     bool
-    DumpStopContext (Stream *s) const;
+    DumpStopContext (Stream *s, bool show_fullpaths) const;
 
     //------------------------------------------------------------------
     /// Check if a line entry object is valid.

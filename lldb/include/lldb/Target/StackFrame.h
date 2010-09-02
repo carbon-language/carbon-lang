@@ -100,7 +100,7 @@ public:
     Disassemble ();
 
     void
-    Dump (Stream *strm, bool show_frame_index);
+    Dump (Stream *strm, bool show_frame_index, bool show_fullpaths);
     
     bool
     IsInlined ();

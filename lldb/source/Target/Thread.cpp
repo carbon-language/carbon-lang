@@ -820,7 +820,7 @@ Thread::ClearStackFrames ()
 lldb::StackFrameSP
 Thread::GetStackFrameAtIndex (uint32_t idx)
 {
-    return StackFrameSP (GetStackFrameList().GetFrameAtIndex(idx));
+    return GetStackFrameList().GetFrameAtIndex(idx);
 }
 
 lldb::StackFrameSP
@@ -859,7 +859,7 @@ Thread::DumpInfo
         if (frame_sp)
         {
             strm.PutCString(", ");
-            frame_sp->Dump (&strm, false);
+            frame_sp->Dump (&strm, false, false);
         }
     }
 

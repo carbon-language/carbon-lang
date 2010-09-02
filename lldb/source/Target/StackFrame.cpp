@@ -32,8 +32,7 @@ using namespace lldb_private;
 // so we know if we have tried to look up information in our internal symbol
 // context (m_sc) already.
 #define RESOLVED_FRAME_CODE_ADDR        (uint32_t(eSymbolContextEverything + 1))
-#define RESOLVED_FRAME_ID_START_ADDR    (RESOLVED_FRAME_CODE_ADDR << 1)
-#define RESOLVED_FRAME_ID_SYMBOL_SCOPE  (RESOLVED_FRAME_ID_START_ADDR << 1)
+#define RESOLVED_FRAME_ID_SYMBOL_SCOPE  (RESOLVED_FRAME_CODE_ADDR << 1)
 #define GOT_FRAME_BASE                  (RESOLVED_FRAME_ID_SYMBOL_SCOPE << 1)
 #define RESOLVED_VARIABLES              (GOT_FRAME_BASE << 1)
 
@@ -50,7 +49,7 @@ StackFrame::StackFrame
     m_unwind_frame_index (unwind_frame_index),    
     m_thread (thread),
     m_reg_context_sp (),
-    m_id (LLDB_INVALID_ADDRESS, cfa, NULL),
+    m_id (pc, cfa, NULL),
     m_frame_code_addr (NULL, pc),
     m_sc (),
     m_flags (),
@@ -80,7 +79,7 @@ StackFrame::StackFrame
     m_unwind_frame_index (unwind_frame_index),    
     m_thread (thread),
     m_reg_context_sp (reg_context_sp),
-    m_id (LLDB_INVALID_ADDRESS, cfa, NULL),
+    m_id (pc, cfa, NULL),
     m_frame_code_addr (NULL, pc),
     m_sc (),
     m_flags (),
@@ -116,7 +115,7 @@ StackFrame::StackFrame
     m_unwind_frame_index (unwind_frame_index),    
     m_thread (thread),
     m_reg_context_sp (reg_context_sp),
-    m_id (LLDB_INVALID_ADDRESS, cfa, NULL),
+    m_id (pc_addr.GetLoadAddress (&thread.GetProcess()), cfa, NULL),
     m_frame_code_addr (pc_addr),
     m_sc (),
     m_flags (),
@@ -159,42 +158,12 @@ StackFrame::~StackFrame()
 StackID&
 StackFrame::GetStackID()
 {
-    // Make sure we have resolved our stack ID's start PC before we give
-    // it out to any external clients. This allows us to not have to lookup
-    // this information if it is never asked for.
-    if (m_flags.IsClear(RESOLVED_FRAME_ID_START_ADDR))
-    {
-        m_flags.Set (RESOLVED_FRAME_ID_START_ADDR);
+    // Make sure we have resolved the StackID object's symbol context scope if
+    // we already haven't looked it up.
 
-        if (m_id.GetStartAddress() == LLDB_INVALID_ADDRESS)
-        {
-            // Resolve our PC to section offset if we haven't alreday done so
-            // and if we don't have a module. The resolved address section will
-            // contain the module to which it belongs.
-            if (!m_sc.module_sp && m_flags.IsClear(RESOLVED_FRAME_CODE_ADDR))
-                GetFrameCodeAddress();
-
-            if (GetSymbolContext (eSymbolContextFunction).function)
-            {
-                m_id.SetStartAddress (m_sc.function->GetAddressRange().GetBaseAddress().GetLoadAddress (&m_thread.GetProcess()));
-            }
-            else if (GetSymbolContext (eSymbolContextSymbol).symbol)
-            {
-                AddressRange *symbol_range_ptr = m_sc.symbol->GetAddressRangePtr();
-                if (symbol_range_ptr)
-                    m_id.SetStartAddress(symbol_range_ptr->GetBaseAddress().GetLoadAddress (&m_thread.GetProcess()));
-            }
-            
-            // We didn't find a function or symbol, just use the frame code address
-            // which will be the same as the PC in the frame.
-            if (m_id.GetStartAddress() == LLDB_INVALID_ADDRESS)
-                m_id.SetStartAddress (m_frame_code_addr.GetLoadAddress (&m_thread.GetProcess()));
-        }
-    }
-    
     if (m_flags.IsClear (RESOLVED_FRAME_ID_SYMBOL_SCOPE))
     {
-        if (m_id.GetSymbolContextScope ())
+        if (m_id.GetSymbolContextScope () == NULL)
         {
             m_flags.Set (RESOLVED_FRAME_ID_SYMBOL_SCOPE);
         }
@@ -627,20 +596,18 @@ StackFrame::Calculate (ExecutionContext &exe_ctx)
 }
 
 void
-StackFrame::Dump (Stream *strm, bool show_frame_index)
+StackFrame::Dump (Stream *strm, bool show_frame_index, bool show_fullpaths)
 {
     if (strm == NULL)
         return;
 
     if (show_frame_index)
         strm->Printf("frame #%u: ", m_frame_index);
-    strm->Printf("0x%0*llx", m_thread.GetProcess().GetAddressByteSize() * 2, GetFrameCodeAddress().GetLoadAddress(&m_thread.GetProcess()));
+    strm->Printf("0x%0*llx ", m_thread.GetProcess().GetAddressByteSize() * 2, GetFrameCodeAddress().GetLoadAddress(&m_thread.GetProcess()));
     GetSymbolContext(eSymbolContextEverything);
-    strm->PutCString(", where = ");
-    // TODO: need to get the
     const bool show_module = true;
     const bool show_inline = true;
-    m_sc.DumpStopContext(strm, &m_thread.GetProcess(), GetFrameCodeAddress(), show_module, show_inline);
+    m_sc.DumpStopContext(strm, &m_thread.GetProcess(), GetFrameCodeAddress(), show_fullpaths, show_module, show_inline);
 }
 
 void

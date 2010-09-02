@@ -503,7 +503,7 @@ Address::Dump (Stream *s, ExecutionContextScope *exe_scope, DumpStyle style, Dum
 #endif
                                     Address cstr_addr(*this);
                                     cstr_addr.SetOffset(cstr_addr.GetOffset() + pointer_size);
-                                    func_sc.DumpStopContext(s, exe_scope, so_addr, true, false);
+                                    func_sc.DumpStopContext(s, exe_scope, so_addr, true, true, false);
                                     if (ReadAddress (exe_scope, cstr_addr, pointer_size, so_addr))
                                     {
 #if VERBOSE_OUTPUT
@@ -586,7 +586,7 @@ Address::Dump (Stream *s, ExecutionContextScope *exe_scope, DumpStyle style, Dum
                                     if (pointer_sc.function || pointer_sc.symbol)
                                     {
                                         s->PutCString(": ");
-                                        pointer_sc.DumpStopContext(s, exe_scope, so_addr, false, false);
+                                        pointer_sc.DumpStopContext(s, exe_scope, so_addr, true, false, false);
                                     }
                                 }
                             }
@@ -625,7 +625,7 @@ Address::Dump (Stream *s, ExecutionContextScope *exe_scope, DumpStyle style, Dum
                         {
                             // We have a function or a symbol from the same
                             // sections as this address.
-                            sc.DumpStopContext(s, exe_scope, *this, show_module, false);
+                            sc.DumpStopContext(s, exe_scope, *this, true, show_module, false);
                         }
                         else
                         {

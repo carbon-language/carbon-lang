@@ -133,6 +133,9 @@ public:
     bool
     Contains (const VMRange& range) const;
 
+    bool
+    Contains (const Block *block) const;
+
     //------------------------------------------------------------------
     /// Dump the block contents.
     ///
@@ -156,7 +159,7 @@ public:
     Dump (Stream *s, lldb::addr_t base_addr, int32_t depth, bool show_context) const;
 
     void
-    DumpStopContext (Stream *s, const SymbolContext *sc);
+    DumpStopContext (Stream *s, const SymbolContext *sc, bool show_fullpaths);
 
     //------------------------------------------------------------------
     /// @copydoc SymbolContextScope::DumpSymbolContext(Stream*)

@@ -74,12 +74,16 @@ LineEntry::IsValid() const
 }
 
 bool
-LineEntry::DumpStopContext(Stream *s) const
+LineEntry::DumpStopContext(Stream *s, bool show_fullpaths) const
 {
     bool result = false;
     if (file)
     {
-        file.Dump (s);
+        if (show_fullpaths)
+            file.Dump (s);
+        else
+            file.GetFilename().Dump (s);
+
         if (line)
             s->PutChar(':');
         result = true;

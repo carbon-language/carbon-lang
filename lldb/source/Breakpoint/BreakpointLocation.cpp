@@ -285,7 +285,7 @@ BreakpointLocation::GetDescription (Stream *s, lldb::DescriptionLevel level)
         if (level == lldb::eDescriptionLevelFull)
         {
             s->PutCString("where = ");
-            sc.DumpStopContext (s, m_owner.GetTarget().GetProcessSP().get(), m_address, true, false);
+            sc.DumpStopContext (s, m_owner.GetTarget().GetProcessSP().get(), m_address, true, true, false);
         }
         else
         {
@@ -313,7 +313,7 @@ BreakpointLocation::GetDescription (Stream *s, lldb::DescriptionLevel level)
                 {
                     s->EOL();
                     s->Indent("location = ");
-                    sc.line_entry.DumpStopContext (s);
+                    sc.line_entry.DumpStopContext (s, true);
                 }
 
             }

@@ -145,7 +145,7 @@ Block::CalculateSymbolContext (SymbolContext* sc)
 }
 
 void
-Block::DumpStopContext (Stream *s, const SymbolContext *sc)
+Block::DumpStopContext (Stream *s, const SymbolContext *sc, bool show_fullpaths)
 {
     Block* parent_block = GetParent();
 
@@ -170,7 +170,7 @@ Block::DumpStopContext (Stream *s, const SymbolContext *sc)
             if (call_site.IsValid())
             {
                 s->PutCString(" at ");
-                call_site.DumpStopContext (s);
+                call_site.DumpStopContext (s, show_fullpaths);
             }
         }
     }
@@ -182,11 +182,11 @@ Block::DumpStopContext (Stream *s, const SymbolContext *sc)
         if (sc->line_entry.IsValid())
         {
             s->PutCString(" at ");
-            sc->line_entry.DumpStopContext (s);
+            sc->line_entry.DumpStopContext (s, show_fullpaths);
         }
     }
     if (parent_block)
-        parent_block->Block::DumpStopContext (s, NULL);
+        parent_block->Block::DumpStopContext (s, NULL, show_fullpaths);
 }
 
 
@@ -204,6 +204,24 @@ bool
 Block::Contains (addr_t range_offset) const
 {
     return VMRange::ContainsValue(m_ranges, range_offset);
+}
+
+bool
+Block::Contains (const Block *block) const
+{
+    // Block objects can't contain themselves...
+    if (this == block)
+        return false;
+    
+    const Block *block_parent;
+    for (block_parent = block->GetParent();
+         block_parent != NULL;
+         block_parent = block_parent->GetParent())
+    {
+        if (block_parent == block)
+            return true;
+    }
+    return false;
 }
 
 bool

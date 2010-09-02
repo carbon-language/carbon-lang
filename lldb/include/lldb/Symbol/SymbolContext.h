@@ -163,6 +163,7 @@ public:
     DumpStopContext (Stream *s,
                      ExecutionContextScope *exe_scope,
                      const Address &so_addr,
+                     bool show_fullpaths,
                      bool show_module,
                      bool show_inlined_frames) const;
 
