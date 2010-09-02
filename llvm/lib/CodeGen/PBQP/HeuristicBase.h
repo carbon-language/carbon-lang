@@ -174,8 +174,11 @@ namespace PBQP {
 
       while (!finished) {
         if (!optimalReduce())
-          if (!impl().heuristicReduce())
+          if (impl().heuristicReduce()) {
+            getSolver().recordRN();
+          } else {
             finished = true;
+          }
       }
     }
 

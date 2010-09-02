@@ -226,6 +226,8 @@ namespace PBQP {
 
       // Nothing to do. Just push the node onto the reduction stack.
       pushToStack(nItr);
+
+      s.recordR0();
     }
 
     /// \brief Apply rule R1.
@@ -274,6 +276,7 @@ namespace PBQP {
       assert(nd.getSolverDegree() == 0 &&
              "Degree 1 with edge removed should be 0.");
       pushToStack(xnItr);
+      s.recordR1();
     }
 
     /// \brief Apply rule R2.
@@ -378,7 +381,13 @@ namespace PBQP {
       removeSolverEdge(zxeItr);
 
       pushToStack(xnItr);
+      s.recordR2();
     }
+
+    /// \brief Record an application of the RN rule.
+    ///
+    /// For use by the HeuristicBase.
+    void recordRN() { s.recordRN(); } 
 
   private:
 
