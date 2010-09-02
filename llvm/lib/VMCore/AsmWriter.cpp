@@ -1635,9 +1635,9 @@ void AssemblyWriter::printFunction(const Function *F) {
   if (F->hasGC())
     Out << " gc \"" << F->getGC() << '"';
   if (F->isDeclaration()) {
-    Out << "\n";
+    Out << " ; [#uses=" << F->getNumUses() << "]\n";  // Output # uses
   } else {
-    Out << " {";
+    Out << " { ; [#uses=" << F->getNumUses() << ']';  // Output # uses
 
     // Output all of its basic blocks... for the function
     for (Function::const_iterator I = F->begin(), E = F->end(); I != E; ++I)

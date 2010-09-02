@@ -1,8 +1,7 @@
 ; The induction variable canonicalization pass shouldn't leave dead
 ; instructions laying around!
 ;
-; RUN: opt < %s -indvars -S | \
-; RUN:   not grep {#uses=0}
+; RUN: opt < %s -indvars -S | grep {#uses=0} | count 1
 
 define i32 @mul(i32 %x, i32 %y) {
 entry:
