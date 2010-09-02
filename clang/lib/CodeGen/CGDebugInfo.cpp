@@ -1471,6 +1471,20 @@ void CGDebugInfo::EmitFunctionStart(GlobalDecl GD, QualType FnType,
     Name = getFunctionName(FD);
     // Use mangled name as linkage name for c/c++ functions.
     LinkageName = CGM.getMangledName(GD);
+  } else if (const ObjCMethodDecl *OMD = dyn_cast<ObjCMethodDecl>(D)) {
+    llvm::SmallString<256> MethodName;
+    llvm::raw_svector_ostream OS(MethodName);
+    OS << (OMD->isInstanceMethod() ? '-' : '+') << '[';
+    const DeclContext *DC = OMD->getDeclContext();
+    if (const ObjCImplementationDecl *OID = dyn_cast<const ObjCImplementationDecl>(DC)) {
+       OS << OID->getName();
+    } else if (const ObjCCategoryImplDecl *OCD = dyn_cast<const ObjCCategoryImplDecl>(DC)){
+        OS << ((NamedDecl *)OCD)->getIdentifier()->getNameStart() << '(' <<
+            OCD->getIdentifier()->getNameStart() << ')';
+    }
+    OS << ' ' << OMD->getSelector().getAsString() << ']';
+    Name = MethodName;
+    LinkageName = Name;
   } else {
     // Use llvm function name as linkage name.
     Name = Fn->getName();
