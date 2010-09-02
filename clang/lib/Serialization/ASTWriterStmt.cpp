@@ -135,7 +135,6 @@ namespace clang {
     void VisitCXXThrowExpr(CXXThrowExpr *E);
     void VisitCXXDefaultArgExpr(CXXDefaultArgExpr *E);
     void VisitCXXBindTemporaryExpr(CXXBindTemporaryExpr *E);
-    void VisitCXXBindReferenceExpr(CXXBindReferenceExpr *E);
 
     void VisitCXXScalarValueInitExpr(CXXScalarValueInitExpr *E);
     void VisitCXXNewExpr(CXXNewExpr *E);
@@ -1073,14 +1072,6 @@ void ASTStmtWriter::VisitCXXBindTemporaryExpr(CXXBindTemporaryExpr *E) {
   Writer.AddCXXTemporary(E->getTemporary(), Record);
   Writer.AddStmt(E->getSubExpr());
   Code = serialization::EXPR_CXX_BIND_TEMPORARY;
-}
-
-void ASTStmtWriter::VisitCXXBindReferenceExpr(CXXBindReferenceExpr *E) {
-  VisitExpr(E);
-  Writer.AddStmt(E->getSubExpr());
-  Record.push_back(E->extendsLifetime());
-  Record.push_back(E->requiresTemporaryCopy());
-  Code = serialization::EXPR_CXX_BIND_REFERENCE;
 }
 
 void ASTStmtWriter::VisitCXXScalarValueInitExpr(CXXScalarValueInitExpr *E) {

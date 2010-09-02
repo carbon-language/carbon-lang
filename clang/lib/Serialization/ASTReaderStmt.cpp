@@ -138,7 +138,6 @@ namespace clang {
     void VisitCXXThrowExpr(CXXThrowExpr *E);
     void VisitCXXDefaultArgExpr(CXXDefaultArgExpr *E);
     void VisitCXXBindTemporaryExpr(CXXBindTemporaryExpr *E);
-    void VisitCXXBindReferenceExpr(CXXBindReferenceExpr *E);
     
     void VisitCXXScalarValueInitExpr(CXXScalarValueInitExpr *E);
     void VisitCXXNewExpr(CXXNewExpr *E);
@@ -1057,13 +1056,6 @@ void ASTStmtReader::VisitCXXBindTemporaryExpr(CXXBindTemporaryExpr *E) {
   E->setSubExpr(Reader.ReadSubExpr());
 }
 
-void ASTStmtReader::VisitCXXBindReferenceExpr(CXXBindReferenceExpr *E) {
-  VisitExpr(E);
-  E->SubExpr = Reader.ReadSubExpr();
-  E->ExtendsLifetime = Record[Idx++];
-  E->RequiresTemporaryCopy = Record[Idx++];
-}
-
 void ASTStmtReader::VisitCXXScalarValueInitExpr(CXXScalarValueInitExpr *E) {
   VisitExpr(E);
   E->setTypeBeginLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
@@ -1704,10 +1696,7 @@ Stmt *ASTReader::ReadStmtFromStream(llvm::BitstreamCursor &Cursor) {
     case EXPR_CXX_BIND_TEMPORARY:
       S = new (Context) CXXBindTemporaryExpr(Empty);
       break;
-    case EXPR_CXX_BIND_REFERENCE:
-      S = new (Context) CXXBindReferenceExpr(Empty);
-      break;
-
+        
     case EXPR_CXX_SCALAR_VALUE_INIT:
       S = new (Context) CXXScalarValueInitExpr(Empty);
       break;

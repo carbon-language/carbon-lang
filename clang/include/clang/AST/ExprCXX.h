@@ -631,69 +631,6 @@ public:
   virtual child_iterator child_end();
 };
 
-/// CXXBindReferenceExpr - Represents binding an expression to a reference.
-/// In the example:
-///
-/// const int &i = 10;
-///
-/// a bind reference expression is inserted to indicate that 10 is bound to
-/// a reference, and that a temporary needs to be created to hold the
-/// value.
-class CXXBindReferenceExpr : public Expr {
-  // SubExpr - The expression being bound.
-  Stmt *SubExpr;
-  
-  // ExtendsLifetime - Whether binding this reference extends the lifetime of
-  // the expression being bound. FIXME: Add C++ reference.
-  bool ExtendsLifetime;
-
-  /// RequiresTemporaryCopy - Whether binding the subexpression requires a
-  /// temporary copy.
-  bool RequiresTemporaryCopy;
-  
-  CXXBindReferenceExpr(Expr *subexpr, bool ExtendsLifetime, 
-                       bool RequiresTemporaryCopy)
-  : Expr(CXXBindReferenceExprClass, subexpr->getType(), false, false),
-    SubExpr(subexpr), ExtendsLifetime(ExtendsLifetime), 
-    RequiresTemporaryCopy(RequiresTemporaryCopy) { }
-
-public:
-  static CXXBindReferenceExpr *Create(ASTContext &C, Expr *SubExpr,
-                                      bool ExtendsLifetime, 
-                                      bool RequiresTemporaryCopy);
-  
-  explicit CXXBindReferenceExpr(EmptyShell Empty)
-    : Expr(CXXBindReferenceExprClass, Empty) { }
-
-  const Expr *getSubExpr() const { return cast<Expr>(SubExpr); }
-  Expr *getSubExpr() { return cast<Expr>(SubExpr); }
-  void setSubExpr(Expr *E) { SubExpr = E; }
-
-  virtual SourceRange getSourceRange() const { 
-    return SubExpr->getSourceRange();
-  }
-
-  /// requiresTemporaryCopy - Whether binding the subexpression requires a
-  /// temporary copy.
-  bool requiresTemporaryCopy() const { return RequiresTemporaryCopy; }
-
-  // extendsLifetime - Whether binding this reference extends the lifetime of
-  // the expression being bound. FIXME: Add C++ reference.
-  bool extendsLifetime() const { return ExtendsLifetime; }
-    
-  // Implement isa/cast/dyncast/etc.
-  static bool classof(const Stmt *T) {
-    return T->getStmtClass() == CXXBindReferenceExprClass;
-  }
-  static bool classof(const CXXBindReferenceExpr *) { return true; }
-
-  // Iterators
-  virtual child_iterator child_begin();
-  virtual child_iterator child_end();
-  
-  friend class ASTStmtReader;
-};
-
 /// CXXConstructExpr - Represents a call to a C++ constructor.
 class CXXConstructExpr : public Expr {
 public:

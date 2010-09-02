@@ -677,14 +677,6 @@ CXXBindTemporaryExpr *CXXBindTemporaryExpr::Create(ASTContext &C,
   return new (C) CXXBindTemporaryExpr(Temp, SubExpr);
 }
 
-CXXBindReferenceExpr *CXXBindReferenceExpr::Create(ASTContext &C, Expr *SubExpr,
-                                                   bool ExtendsLifetime, 
-                                                   bool RequiresTemporaryCopy) {
-  return new (C) CXXBindReferenceExpr(SubExpr, 
-                                      ExtendsLifetime,
-                                      RequiresTemporaryCopy);
-}
-
 CXXTemporaryObjectExpr::CXXTemporaryObjectExpr(ASTContext &C,
                                                CXXConstructorDecl *Cons,
                                                QualType writtenTy,
@@ -767,15 +759,6 @@ Stmt::child_iterator CXXBindTemporaryExpr::child_begin() {
 }
 
 Stmt::child_iterator CXXBindTemporaryExpr::child_end() {
-  return &SubExpr + 1;
-}
-
-// CXXBindReferenceExpr
-Stmt::child_iterator CXXBindReferenceExpr::child_begin() {
-  return &SubExpr;
-}
-
-Stmt::child_iterator CXXBindReferenceExpr::child_end() {
   return &SubExpr + 1;
 }
 

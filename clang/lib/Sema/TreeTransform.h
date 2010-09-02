@@ -5695,16 +5695,6 @@ TreeTransform<Derived>::TransformCXXBindTemporaryExpr(CXXBindTemporaryExpr *E) {
   return getDerived().TransformExpr(E->getSubExpr());
 }
 
-/// \brief Transform a C++ reference-binding expression.
-///
-/// Since CXXBindReferenceExpr nodes are implicitly generated, we just
-/// transform the subexpression and return that.
-template<typename Derived>
-ExprResult
-TreeTransform<Derived>::TransformCXXBindReferenceExpr(CXXBindReferenceExpr *E) {
-  return getDerived().TransformExpr(E->getSubExpr());
-}
-
 /// \brief Transform a C++ expression that contains temporaries that should
 /// be destroyed after the expression is evaluated.
 ///

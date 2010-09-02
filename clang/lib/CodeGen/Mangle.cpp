@@ -1906,10 +1906,6 @@ void CXXNameMangler::mangleExpression(const Expr *E, unsigned Arity) {
     break;
   }
 
-  case Expr::CXXBindReferenceExprClass:
-    mangleExpression(cast<CXXBindReferenceExpr>(E)->getSubExpr());
-    break;
-
   case Expr::CXXBindTemporaryExprClass:
     mangleExpression(cast<CXXBindTemporaryExpr>(E)->getSubExpr());
     break;

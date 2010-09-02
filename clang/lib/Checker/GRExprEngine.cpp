@@ -761,7 +761,6 @@ void GRExprEngine::Visit(const Stmt* S, ExplodedNode* Pred,
 
   switch (S->getStmtClass()) {
     // C++ stuff we don't support yet.
-    case Stmt::CXXBindReferenceExprClass:
     case Stmt::CXXBindTemporaryExprClass:
     case Stmt::CXXCatchStmtClass:
     case Stmt::CXXConstructExprClass:

@@ -1037,10 +1037,6 @@ void StmtPrinter::VisitCXXBindTemporaryExpr(CXXBindTemporaryExpr *Node) {
   PrintExpr(Node->getSubExpr());
 }
 
-void StmtPrinter::VisitCXXBindReferenceExpr(CXXBindReferenceExpr *Node) {
-  PrintExpr(Node->getSubExpr());
-}
-
 void StmtPrinter::VisitCXXTemporaryObjectExpr(CXXTemporaryObjectExpr *Node) {
   OS << Node->getType().getAsString(Policy);
   OS << "(";
