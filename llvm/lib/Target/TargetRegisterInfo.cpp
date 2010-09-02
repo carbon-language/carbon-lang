@@ -80,6 +80,11 @@ BitVector TargetRegisterInfo::getAllocatableSet(const MachineFunction &MF,
   for (TargetRegisterInfo::regclass_iterator I = regclass_begin(),
          E = regclass_end(); I != E; ++I)
     getAllocatableSetForRC(MF, *I, Allocatable);
+
+  // Mask out the reserved registers
+  BitVector Reserved = getReservedRegs(MF);
+  Allocatable ^= Reserved & Allocatable;
+
   return Allocatable;
 }
 
