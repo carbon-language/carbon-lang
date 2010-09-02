@@ -105,6 +105,7 @@ class ARMFastISel : public FastISel {
                                                 
     // Backend specific FastISel code.
     virtual bool TargetSelectInstruction(const Instruction *I);
+    virtual unsigned TargetMaterializeConstant(const Constant *C);
 
   #include "ARMGenFastISel.inc"
   
@@ -321,6 +322,31 @@ unsigned ARMFastISel::FastEmitInst_extractsubreg(MVT RetVT,
   return ResultReg;
 }
 
+unsigned ARMFastISel::TargetMaterializeConstant(const Constant *C) {
+  const ConstantInt *CI = dyn_cast<ConstantInt>(C);
+  if (!CI) return 0;
+  
+  unsigned Opc;
+  bool Signed = true;
+  EVT VT = TLI.getValueType(CI->getType(), true);
+  
+  switch (VT.getSimpleVT().SimpleTy) {
+    default: return 0;
+    case MVT::i1:  Signed = false;     // FALLTHROUGH to handle as i8.
+    case MVT::i8:
+    case MVT::i16:
+    case MVT::i32:
+      Opc = isThumb ? ARM::t2MOVi32imm : ARM::MOVi32imm; break;
+  }
+
+  unsigned Reg = createResultReg(TLI.getRegClassFor(VT));
+  AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(Opc),
+                          Reg)
+                  .addImm(Signed ? (uint64_t) CI->getSExtValue() :
+                                    CI->getZExtValue()));
+  return Reg;
+}
+
 bool ARMFastISel::isTypeLegal(const Type *Ty, EVT &VT) {
   VT = TLI.getValueType(Ty, true);
   
@@ -474,29 +500,6 @@ bool ARMFastISel::ARMEmitLoad(EVT VT, unsigned &ResultReg,
   return true;
 }
 
-bool ARMFastISel::ARMMaterializeConstant(const ConstantInt *CI, unsigned &Reg) {
-  unsigned Opc;
-  bool Signed = true;
-  EVT VT = TLI.getValueType(CI->getType(), true);
-  
-  switch (VT.getSimpleVT().SimpleTy) {
-    default: return false;
-    case MVT::i1:  Signed = false;     // FALLTHROUGH to handle as i8.
-    case MVT::i8:
-    case MVT::i16:
-    case MVT::i32:
-    Opc = isThumb ? ARM::t2MOVi32imm : ARM::MOVi32imm; break;
-  }
-
-  Reg = createResultReg(TLI.getRegClassFor(VT));
-  AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(Opc),
-                          Reg)
-                  .addImm(Signed ? (uint64_t) CI->getSExtValue() :
-                                    CI->getZExtValue()));
-
-  return true;
-}
-
 bool ARMFastISel::ARMStoreAlloca(const Instruction *I, unsigned SrcReg) {
   Value *Op1 = I->getOperand(1);
 
@@ -548,22 +551,9 @@ bool ARMFastISel::ARMSelectStore(const Instruction *I) {
   EVT VT;
   if (!isLoadTypeLegal(I->getOperand(0)->getType(), VT))
     return false;
-    
-  // First see if we're a constant that we want to store, we'll need to
-  // materialize that into a register.
-  // Handle 'null' like i32/i64 0.
-  if (isa<ConstantPointerNull>(Op0))
-    Op0 = Constant::getNullValue(TD.getIntPtrType(Op0->getContext()));
-  
-  // If this is a store of a simple constant, materialize the constant into
-  // a register then emit the store into the location.
-  if (const ConstantInt *CI = dyn_cast<ConstantInt>(Op0))
-    if (!ARMMaterializeConstant(CI, SrcReg))
-      return false;
 
-  // If Reg is still 0, try to get the value into a register.
-  if (SrcReg == 0)
-    SrcReg = getRegForValue(Op0);
+  // Get the value to be stored into a register.
+  SrcReg = getRegForValue(Op0);
   if (SrcReg == 0)
     return false;
     
