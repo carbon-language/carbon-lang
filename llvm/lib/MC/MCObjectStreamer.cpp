@@ -77,6 +77,7 @@ void MCObjectStreamer::SwitchSection(const MCSection *Section) {
   // If already in this section, then this is a noop.
   if (Section == CurSection) return;
 
+  PrevSection = CurSection;
   CurSection = Section;
   CurSectionData = &getAssembler().getOrCreateSectionData(*Section);
 }

@@ -50,6 +50,7 @@ public:
     AddDirectiveHandler<&ELFAsmParser::ParseDirectiveSize>(".size");
     AddDirectiveHandler<&ELFAsmParser::ParseDirectiveLEB128>(".sleb128");
     AddDirectiveHandler<&ELFAsmParser::ParseDirectiveLEB128>(".uleb128");
+    AddDirectiveHandler<&ELFAsmParser::ParseDirectivePrevious>(".previous");
   }
 
   bool ParseSectionDirectiveData(StringRef, SMLoc) {
@@ -111,6 +112,7 @@ public:
   bool ParseDirectiveLEB128(StringRef, SMLoc);
   bool ParseDirectiveSection(StringRef, SMLoc);
   bool ParseDirectiveSize(StringRef, SMLoc);
+  bool ParseDirectivePrevious(StringRef, SMLoc);
 };
 
 }
@@ -270,6 +272,14 @@ bool ELFAsmParser::ParseDirectiveLEB128(StringRef DirName, SMLoc) {
   }
   // FIXME: This shouldn't be an error!
   return TokError("LEB128 not supported yet");
+}
+
+bool ELFAsmParser::ParseDirectivePrevious(StringRef DirName, SMLoc) {
+  const MCSection *PreviousSection = getStreamer().getPreviousSection();
+  if (PreviousSection != NULL)
+    getStreamer().SwitchSection(PreviousSection);
+
+  return false;
 }
 
 namespace llvm {

@@ -26,6 +26,7 @@ namespace {
     /// @{
 
     virtual void SwitchSection(const MCSection *Section) {
+      PrevSection = CurSection;
       CurSection = Section;
     }
 

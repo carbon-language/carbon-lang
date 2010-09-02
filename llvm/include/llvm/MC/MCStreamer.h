@@ -54,6 +54,10 @@ namespace llvm {
     /// kept up to date by SwitchSection.
     const MCSection *CurSection;
 
+    /// PrevSection - This is the previous section code is being emitted to, it is
+    /// kept up to date by SwitchSection.
+    const MCSection *PrevSection;
+
   public:
     virtual ~MCStreamer();
 
@@ -95,6 +99,10 @@ namespace llvm {
     /// getCurrentSection - Return the current section that the streamer is
     /// emitting code to.
     const MCSection *getCurrentSection() const { return CurSection; }
+
+    /// getPreviousSection - Return the previous section that the streamer is
+    /// emitting code to.
+    const MCSection *getPreviousSection() const { return PrevSection; }
 
     /// SwitchSection - Set the current section where code is being emitted to
     /// @p Section.  This is required to update CurSection.
