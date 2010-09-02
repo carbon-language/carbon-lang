@@ -323,28 +323,9 @@ unsigned ARMFastISel::FastEmitInst_extractsubreg(MVT RetVT,
 }
 
 unsigned ARMFastISel::TargetMaterializeConstant(const Constant *C) {
-  const ConstantInt *CI = dyn_cast<ConstantInt>(C);
-  if (!CI) return 0;
-  
-  unsigned Opc;
-  bool Signed = true;
-  EVT VT = TLI.getValueType(CI->getType(), true);
-  
-  switch (VT.getSimpleVT().SimpleTy) {
-    default: return 0;
-    case MVT::i1:  Signed = false;     // FALLTHROUGH to handle as i8.
-    case MVT::i8:
-    case MVT::i16:
-    case MVT::i32:
-      Opc = isThumb ? ARM::t2MOVi32imm : ARM::MOVi32imm; break;
-  }
-
-  unsigned Reg = createResultReg(TLI.getRegClassFor(VT));
-  AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(Opc),
-                          Reg)
-                  .addImm(Signed ? (uint64_t) CI->getSExtValue() :
-                                    CI->getZExtValue()));
-  return Reg;
+  // TODO: Implement this for floating point constants and integer constants
+  // if we care about non-v6 architectures.
+  return 0;
 }
 
 bool ARMFastISel::isTypeLegal(const Type *Ty, EVT &VT) {
