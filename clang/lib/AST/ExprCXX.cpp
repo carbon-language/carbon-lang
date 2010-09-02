@@ -488,6 +488,16 @@ bool UnaryTypeTraitExpr::EvaluateTrait(ASTContext& C) const {
       }
     }
     return false;
+  case UTT_HasVirtualDestructor:
+    // http://gcc.gnu.org/onlinedocs/gcc/Type-Traits.html:
+    //   If type is a class type with a virtual destructor ([class.dtor])
+    //   then the trait is true, else it is false.
+    if (const RecordType *Record = QueriedType->getAs<RecordType>()) {
+      CXXRecordDecl *RD = cast<CXXRecordDecl>(Record->getDecl());
+      if (CXXDestructorDecl *Destructor = RD->getDestructor())
+        return Destructor->isVirtual();
+    }
+    return false;
   }
 }
 

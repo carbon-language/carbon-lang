@@ -533,7 +533,7 @@ ExprResult Parser::ParseCastExpression(bool isUnaryExpression,
 ///                   '__has_trivial_copy'                    [TODO]
 ///                   '__has_trivial_constructor'
 ///                   '__has_trivial_destructor'
-///                   '__has_virtual_destructor'              [TODO]
+///                   '__has_virtual_destructor'
 ///                   '__is_abstract'                         [TODO]
 ///                   '__is_class'
 ///                   '__is_empty'                            [TODO]
@@ -903,6 +903,7 @@ ExprResult Parser::ParseCastExpression(bool isUnaryExpression,
   case tok::kw___has_nothrow_assign:
   case tok::kw___has_nothrow_copy:
   case tok::kw___has_nothrow_constructor:
+  case tok::kw___has_virtual_destructor:
     return ParseUnaryTypeTrait();
 
   case tok::at: {

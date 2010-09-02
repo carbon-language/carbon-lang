@@ -609,7 +609,8 @@ CXXDestructorDecl *CXXRecordDecl::getDestructor() const {
 
   DeclContext::lookup_const_iterator I, E;
   llvm::tie(I, E) = lookup(Name);
-  assert(I != E && "Did not find a destructor!");
+  if (I == E)
+    return 0;
 
   CXXDestructorDecl *Dtor = cast<CXXDestructorDecl>(*I);
   assert(++I == E && "Found more than one destructor!");

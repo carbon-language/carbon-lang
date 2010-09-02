@@ -61,6 +61,10 @@ struct HasMultipleNoThrowCopy {
   HasMultipleNoThrowCopy(volatile HasMultipleNoThrowCopy&) throw();
 };
 
+struct HasVirtDest { virtual ~HasVirtDest(); };
+struct DerivedVirtDest : HasVirtDest {};
+typedef HasVirtDest VirtDestAr[1];
+
 void is_pod()
 {
   int t01[T(__is_pod(int))];
@@ -358,4 +362,29 @@ void has_nothrow_constructor() {
 
   int t19[T(__has_nothrow_constructor(HasNoThrowConstructor))];
   int t20[F(__has_nothrow_constructor(HasNoThrowConstructorWithArgs))];
+}
+
+void has_virtual_destructor() {
+  int t01[F(__has_virtual_destructor(Int))];
+  int t02[F(__has_virtual_destructor(IntAr))];
+  int t03[F(__has_virtual_destructor(Union))];
+  int t04[F(__has_virtual_destructor(UnionAr))];
+  int t05[F(__has_virtual_destructor(POD))];
+  int t06[F(__has_virtual_destructor(Derives))];
+  int t07[F(__has_virtual_destructor(ConstIntAr))];
+  int t08[F(__has_virtual_destructor(ConstIntArAr))];
+  int t09[F(__has_virtual_destructor(HasDest))];
+  int t10[F(__has_virtual_destructor(HasPriv))];
+  int t11[F(__has_virtual_destructor(HasCons))];
+  int t12[F(__has_virtual_destructor(HasRef))];
+  int t13[F(__has_virtual_destructor(HasCopy))];
+  int t14[F(__has_virtual_destructor(IntRef))];
+  int t15[F(__has_virtual_destructor(HasCopyAssign))];
+  int t16[F(__has_virtual_destructor(const Int))];
+  int t17[F(__has_virtual_destructor(NonPODAr))];
+  int t18[F(__has_virtual_destructor(VirtAr))];
+
+  int t19[T(__has_virtual_destructor(HasVirtDest))];
+  int t20[T(__has_virtual_destructor(DerivedVirtDest))];
+  int t21[F(__has_virtual_destructor(VirtDestAr))];
 }
