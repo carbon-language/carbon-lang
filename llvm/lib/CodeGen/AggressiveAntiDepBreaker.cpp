@@ -654,6 +654,8 @@ bool AggressiveAntiDepBreaker::FindSuitableFreeRegisters(
     if (R == RB) R = RE;
     --R;
     const unsigned NewSuperReg = *R;
+    // Don't consider non-allocatable registers
+    if (!AllocatableSet.test(NewSuperReg)) continue;
     // Don't replace a register with itself.
     if (NewSuperReg == SuperReg) continue;
 

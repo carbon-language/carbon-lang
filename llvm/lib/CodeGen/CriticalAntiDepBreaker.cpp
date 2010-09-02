@@ -330,6 +330,8 @@ CriticalAntiDepBreaker::findSuitableFreeRegister(MachineInstr *MI,
   for (TargetRegisterClass::iterator R = RC->allocation_order_begin(MF),
        RE = RC->allocation_order_end(MF); R != RE; ++R) {
     unsigned NewReg = *R;
+    // Don't consider non-allocatable registers
+    if (!AllocatableSet.test(NewReg)) continue;
     // Don't replace a register with itself.
     if (NewReg == AntiDepReg) continue;
     // Don't replace a register with one that was recently used to repair
