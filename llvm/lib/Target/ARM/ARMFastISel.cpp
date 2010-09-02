@@ -323,9 +323,37 @@ unsigned ARMFastISel::FastEmitInst_extractsubreg(MVT RetVT,
 }
 
 unsigned ARMFastISel::TargetMaterializeConstant(const Constant *C) {
-  // TODO: Implement this for floating point constants and integer constants
-  // if we care about non-v6 architectures.
-  return 0;
+  EVT VT = TLI.getValueType(C->getType(), true);
+
+  // Only handle simple types.
+  if (!VT.isSimple()) return 0;
+  
+  // TODO: This should be safe for fp because they're just bits from the
+  // Constant.
+  // TODO: Theoretically we could materialize fp constants with instructions
+  // from VFP3.
+
+  // MachineConstantPool wants an explicit alignment.
+  unsigned Align = TD.getPrefTypeAlignment(C->getType());
+  if (Align == 0) {
+    // TODO: Figure out if this is correct.
+    Align = TD.getTypeAllocSize(C->getType());
+  }
+  unsigned Idx = MCP.getConstantPoolIndex(C, Align);
+
+  unsigned DestReg = createResultReg(TLI.getRegClassFor(VT));
+  // Different addressing modes between ARM/Thumb2 for constant pool loads.
+  if (isThumb)
+    AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
+                            TII.get(ARM::t2LDRpci))
+                    .addReg(DestReg).addConstantPoolIndex(Idx));
+  else
+    AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
+                            TII.get(ARM::LDRcp))
+                    .addReg(DestReg).addConstantPoolIndex(Idx)
+                    .addReg(0).addImm(0));
+    
+  return DestReg;
 }
 
 bool ARMFastISel::isTypeLegal(const Type *Ty, EVT &VT) {
@@ -510,6 +538,14 @@ bool ARMFastISel::ARMEmitStore(EVT VT, unsigned SrcReg,
     case MVT::i8: StrOpc = isThumb ? ARM::tSTRB : ARM::STRB; break;
     case MVT::i16: StrOpc = isThumb ? ARM::tSTRH : ARM::STRH; break;
     case MVT::i32: StrOpc = isThumb ? ARM::tSTR : ARM::STR; break;
+    case MVT::f32:
+      if (!Subtarget->hasVFP2()) return false;
+      StrOpc = ARM::VSTRS;
+      break;
+    case MVT::f64:
+      if (!Subtarget->hasVFP2()) return false;
+      StrOpc = ARM::VSTRD;
+      break;
   }
   
   if (isThumb)
@@ -583,6 +619,7 @@ bool ARMFastISel::ARMSelectLoad(const Instruction *I) {
   return true;
 }
 
+// TODO: SoftFP support.
 bool ARMFastISel::TargetSelectInstruction(const Instruction *I) {
   // No Thumb-1 for now.
   if (isThumb && !AFI->isThumb2Function()) return false;
