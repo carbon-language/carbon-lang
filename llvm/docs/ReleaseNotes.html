@@ -494,6 +494,8 @@ on LLVM 2.7, this section lists some "gotchas" that you may run into upgrading
 from the previous release.</p>
 
 <ul>
+<li>.ll file doesn't produce #uses comments anymore, to get them, run a .bc file
+   through "llvm-dis --show-annotations".</li>
 <li>MSIL Backend removed.</li>
 <li>ABCD and SSI passes removed.</li>
 <li>'Union' LLVM IR feature removed.</li>
