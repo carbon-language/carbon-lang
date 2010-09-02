@@ -70,7 +70,7 @@ static lldb::OptionDefinition g_options[] =
     { LLDB_OPT_SET_3,  true,  "file",           'f',  required_argument,  NULL,  NULL,  "<filename>",
         "Tells the debugger to use the file <filename> as the program to be debugged." },
 
-    { LLDB_OPT_SET_ALL,  false,  "editor",           'e',  no_argument,  NULL,  NULL,  "<external-editor>",
+    { LLDB_OPT_SET_ALL,  false,  "editor",           'e',  no_argument,  NULL,  NULL,  NULL,
         "Tells the debugger to open source files using the host's \"external editor\" mechanism." },
 
 //    { LLDB_OPT_SET_4,  true,  "crash-log",      'c',  required_argument,  NULL,  NULL,  "<file>",

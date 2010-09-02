@@ -104,7 +104,6 @@
 		26D5B08811B07550009A862E /* CommandObjectSource.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BC7E4210F1B84700F91463 /* CommandObjectSource.cpp */; };
 		26D5B08B11B07550009A862E /* CommandObjectSyntax.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BC7E4510F1B84700F91463 /* CommandObjectSyntax.cpp */; };
 		26D5B08C11B07550009A862E /* CommandObjectThread.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BC7E4610F1B84700F91463 /* CommandObjectThread.cpp */; };
-		26D5B08D11B07550009A862E /* CommandObjectVariable.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BC7E4810F1B84700F91463 /* CommandObjectVariable.cpp */; };
 		26D5B08E11B07550009A862E /* Address.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BC7E6910F1B85900F91463 /* Address.cpp */; };
 		26D5B08F11B07550009A862E /* AddressRange.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BC7E6A10F1B85900F91463 /* AddressRange.cpp */; };
 		26D5B09011B07550009A862E /* ArchSpec.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BC7E6B10F1B85900F91463 /* ArchSpec.cpp */; };
@@ -638,7 +637,6 @@
 		26BC7D2910F1B76300F91463 /* CommandObjectSource.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CommandObjectSource.h; path = source/Commands/CommandObjectSource.h; sourceTree = "<group>"; };
 		26BC7D2C10F1B76300F91463 /* CommandObjectSyntax.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CommandObjectSyntax.h; path = source/Commands/CommandObjectSyntax.h; sourceTree = "<group>"; };
 		26BC7D2D10F1B76300F91463 /* CommandObjectThread.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CommandObjectThread.h; path = source/Commands/CommandObjectThread.h; sourceTree = "<group>"; };
-		26BC7D2F10F1B76300F91463 /* CommandObjectVariable.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CommandObjectVariable.h; path = source/Commands/CommandObjectVariable.h; sourceTree = "<group>"; };
 		26BC7D5010F1B77400F91463 /* Address.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Address.h; path = include/lldb/Core/Address.h; sourceTree = "<group>"; };
 		26BC7D5110F1B77400F91463 /* AddressRange.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = AddressRange.h; path = include/lldb/Core/AddressRange.h; sourceTree = "<group>"; };
 		26BC7D5210F1B77400F91463 /* ArchSpec.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ArchSpec.h; path = include/lldb/Core/ArchSpec.h; sourceTree = "<group>"; };
@@ -753,7 +751,6 @@
 		26BC7E4210F1B84700F91463 /* CommandObjectSource.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CommandObjectSource.cpp; path = source/Commands/CommandObjectSource.cpp; sourceTree = "<group>"; };
 		26BC7E4510F1B84700F91463 /* CommandObjectSyntax.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CommandObjectSyntax.cpp; path = source/Commands/CommandObjectSyntax.cpp; sourceTree = "<group>"; };
 		26BC7E4610F1B84700F91463 /* CommandObjectThread.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CommandObjectThread.cpp; path = source/Commands/CommandObjectThread.cpp; sourceTree = "<group>"; };
-		26BC7E4810F1B84700F91463 /* CommandObjectVariable.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CommandObjectVariable.cpp; path = source/Commands/CommandObjectVariable.cpp; sourceTree = "<group>"; };
 		26BC7E6910F1B85900F91463 /* Address.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Address.cpp; path = source/Core/Address.cpp; sourceTree = "<group>"; };
 		26BC7E6A10F1B85900F91463 /* AddressRange.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = AddressRange.cpp; path = source/Core/AddressRange.cpp; sourceTree = "<group>"; };
 		26BC7E6B10F1B85900F91463 /* ArchSpec.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ArchSpec.cpp; path = source/Core/ArchSpec.cpp; sourceTree = "<group>"; };
@@ -1854,8 +1851,6 @@
 				269416AD119A024800FF2715 /* CommandObjectTarget.cpp */,
 				26BC7D2D10F1B76300F91463 /* CommandObjectThread.h */,
 				26BC7E4610F1B84700F91463 /* CommandObjectThread.cpp */,
-				26BC7D2F10F1B76300F91463 /* CommandObjectVariable.h */,
-				26BC7E4810F1B84700F91463 /* CommandObjectVariable.cpp */,
 			);
 			name = Commands;
 			sourceTree = "<group>";
@@ -2467,7 +2462,6 @@
 				26D5B08811B07550009A862E /* CommandObjectSource.cpp in Sources */,
 				26D5B08B11B07550009A862E /* CommandObjectSyntax.cpp in Sources */,
 				26D5B08C11B07550009A862E /* CommandObjectThread.cpp in Sources */,
-				26D5B08D11B07550009A862E /* CommandObjectVariable.cpp in Sources */,
 				26D5B08E11B07550009A862E /* Address.cpp in Sources */,
 				26D5B08F11B07550009A862E /* AddressRange.cpp in Sources */,
 				26D5B09011B07550009A862E /* ArchSpec.cpp in Sources */,
