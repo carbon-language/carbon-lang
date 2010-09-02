@@ -418,6 +418,8 @@ def fmath_errno : Flag<"-fmath-errno">,
   HelpText<"Require math functions to indicate errors by setting errno">;
 def fms_extensions : Flag<"-fms-extensions">,
   HelpText<"Accept some non-standard constructs used in Microsoft header files ">;
+def fborland_extensions : Flag<"-fborland-extensions">,
+  HelpText<"Accept non-standard constructs supported by the Borland compiler">;
 def main_file_name : Separate<"-main-file-name">,
   HelpText<"Main file name to use for debug info">;
 def fno_elide_constructors : Flag<"-fno-elide-constructors">,
