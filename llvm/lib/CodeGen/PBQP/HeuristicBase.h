@@ -173,12 +173,13 @@ namespace PBQP {
       bool finished = false;
 
       while (!finished) {
-        if (!optimalReduce())
+        if (!optimalReduce()) {
           if (impl().heuristicReduce()) {
             getSolver().recordRN();
           } else {
             finished = true;
           }
+        }
       }
     }
 
