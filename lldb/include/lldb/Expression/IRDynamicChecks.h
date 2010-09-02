@@ -132,6 +132,26 @@ public:
     //------------------------------------------------------------------
     llvm::PassManagerType getPotentialPassManagerType() const;
 private:
+    //------------------------------------------------------------------
+    /// A basic block-level pass to find all pointer dereferences and
+    /// validate them before use.
+    //------------------------------------------------------------------
+    
+    //------------------------------------------------------------------
+    /// The top-level pass implementation
+    ///
+    /// @param[in] M
+    ///     The module currently being processed.
+    ///
+    /// @param[in] BB
+    ///     The basic block currently being processed.
+    ///
+    /// @return
+    ///     True on success; false otherwise
+    //------------------------------------------------------------------
+    bool FindDataLoads(llvm::Module &M, 
+                       llvm::BasicBlock &BB);
+    
     std::string                 m_func_name;            ///< The name of the function to add checks to
     DynamicCheckerFunctions    &m_checker_functions;    ///< The checker functions for the process
 };
