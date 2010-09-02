@@ -5798,7 +5798,8 @@ SDValue DAGCombiner::ReduceLoadOpStoreWidth(SDNode *N) {
     return SDValue();
 
   SDValue N0 = Value.getOperand(0);
-  if (ISD::isNormalLoad(N0.getNode()) && N0.hasOneUse()) {
+  if (ISD::isNormalLoad(N0.getNode()) && N0.hasOneUse() &&
+      Chain == SDValue(N0.getNode(), 1)) {
     LoadSDNode *LD = cast<LoadSDNode>(N0);
     if (LD->getBasePtr() != Ptr)
       return SDValue();

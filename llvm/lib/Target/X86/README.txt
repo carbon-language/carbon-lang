@@ -1915,3 +1915,48 @@ And the following x86 code:
 It should be possible to eliminate the sign extensions.
 
 //===---------------------------------------------------------------------===//
+
+LLVM misses a load+store narrowing opportunity in this code:
+
+%struct.bf = type { i64, i16, i16, i32 }
+
+@bfi = external global %struct.bf*                ; <%struct.bf**> [#uses=2]
+
+define void @t1() nounwind ssp {
+entry:
+  %0 = load %struct.bf** @bfi, align 8            ; <%struct.bf*> [#uses=1]
+  %1 = getelementptr %struct.bf* %0, i64 0, i32 1 ; <i16*> [#uses=1]
+  %2 = bitcast i16* %1 to i32*                    ; <i32*> [#uses=2]
+  %3 = load i32* %2, align 1                      ; <i32> [#uses=1]
+  %4 = and i32 %3, -65537                         ; <i32> [#uses=1]
+  store i32 %4, i32* %2, align 1
+  %5 = load %struct.bf** @bfi, align 8            ; <%struct.bf*> [#uses=1]
+  %6 = getelementptr %struct.bf* %5, i64 0, i32 1 ; <i16*> [#uses=1]
+  %7 = bitcast i16* %6 to i32*                    ; <i32*> [#uses=2]
+  %8 = load i32* %7, align 1                      ; <i32> [#uses=1]
+  %9 = and i32 %8, -131073                        ; <i32> [#uses=1]
+  store i32 %9, i32* %7, align 1
+  ret void
+}
+
+LLVM currently emits this:
+
+  movq  bfi(%rip), %rax
+  andl  $-65537, 8(%rax)
+  movq  bfi(%rip), %rax
+  andl  $-131073, 8(%rax)
+  ret
+
+It could narrow the loads and stores to emit this:
+
+  movq  bfi(%rip), %rax
+  andb  $-2, 10(%rax)
+  movq  bfi(%rip), %rax
+  andb  $-3, 10(%rax)
+  ret
+
+The trouble is that there is a TokenFactor between the store and the
+load, making it non-trivial to determine if there's anything between
+the load and the store which would prohibit narrowing.
+
+//===---------------------------------------------------------------------===//

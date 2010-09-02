@@ -1,6 +1,6 @@
 ; rdar://7860110
-; RUN: llc < %s | FileCheck %s -check-prefix=X64
-; RUN: llc -march=x86 < %s | FileCheck %s -check-prefix=X32
+; RUN: llc -asm-verbose=false < %s | FileCheck %s -check-prefix=X64
+; RUN: llc -march=x86 -asm-verbose=false < %s | FileCheck %s -check-prefix=X32
 target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f32:32:32-f64:64:64-v64:64:64-v128:128:128-a0:0:64-s0:64:64-f80:128:128-n8:16:32:64"
 target triple = "x86_64-apple-darwin10.2"
 
@@ -125,3 +125,30 @@ entry:
 ; X32: movb	%cl, 5(%{{.*}})
 }
 
+; PR7833
+
+@g_16 = internal global i32 -1
+
+; X64: test8:
+; X64-NEXT: movl _g_16(%rip), %eax
+; X64-NEXT: movl $0, _g_16(%rip)
+; X64-NEXT: orl  $1, %eax
+; X64-NEXT: movl %eax, _g_16(%rip)
+; X64-NEXT: ret
+define void @test8() nounwind {
+  %tmp = load i32* @g_16
+  store i32 0, i32* @g_16
+  %or = or i32 %tmp, 1
+  store i32 %or, i32* @g_16
+  ret void
+}
+
+; X64: test9:
+; X64-NEXT: orb $1, _g_16(%rip)
+; X64-NEXT: ret
+define void @test9() nounwind {
+  %tmp = load i32* @g_16
+  %or = or i32 %tmp, 1
+  store i32 %or, i32* @g_16
+  ret void
+}
