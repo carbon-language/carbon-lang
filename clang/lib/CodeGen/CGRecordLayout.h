@@ -144,6 +144,21 @@ public:
 
   void print(llvm::raw_ostream &OS) const;
   void dump() const;
+
+  /// \brief Given a bit-field decl, build an appropriate helper object for
+  /// accessing that field (which is expected to have the given offset and
+  /// size).
+  static CGBitFieldInfo MakeInfo(class CodeGenTypes &Types, const FieldDecl *FD,
+                                 uint64_t FieldOffset, uint64_t FieldSize);
+
+  /// \brief Given a bit-field decl, build an appropriate helper object for
+  /// accessing that field (which is expected to have the given offset and
+  /// size). The field decl should be known to be contained within a type of at
+  /// least the given size and with the given alignment.
+  static CGBitFieldInfo MakeInfo(CodeGenTypes &Types, const FieldDecl *FD,
+                                 uint64_t FieldOffset, uint64_t FieldSize,
+                                 uint64_t ContainingTypeSizeInBits,
+                                 unsigned ContainingTypeAlign);
 };
 
 /// CGRecordLayout - This class handles struct and union layout info while

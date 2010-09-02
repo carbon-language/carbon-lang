@@ -157,15 +157,12 @@ void CGRecordLayoutBuilder::Layout(const RecordDecl *D) {
   LayoutFields(D);
 }
 
-static CGBitFieldInfo ComputeBitFieldInfo(CodeGenTypes &Types,
-                                          const FieldDecl *FD,
-                                          uint64_t FieldOffset,
-                                          uint64_t FieldSize) {
-  const RecordDecl *RD = FD->getParent();
-  const ASTRecordLayout &RL = Types.getContext().getASTRecordLayout(RD);
-  uint64_t ContainingTypeSizeInBits = RL.getSize();
-  unsigned ContainingTypeAlign = RL.getAlignment();
-
+CGBitFieldInfo CGBitFieldInfo::MakeInfo(CodeGenTypes &Types,
+                               const FieldDecl *FD,
+                               uint64_t FieldOffset,
+                               uint64_t FieldSize,
+                               uint64_t ContainingTypeSizeInBits,
+                               unsigned ContainingTypeAlign) {
   const llvm::Type *Ty = Types.ConvertTypeForMemRecursive(FD->getType());
   uint64_t TypeSizeInBytes = Types.getTargetData().getTypeAllocSize(Ty);
   uint64_t TypeSizeInBits = TypeSizeInBytes * 8;
@@ -255,6 +252,19 @@ static CGBitFieldInfo ComputeBitFieldInfo(CodeGenTypes &Types,
   return CGBitFieldInfo(FieldSize, NumComponents, Components, IsSigned);
 }
 
+CGBitFieldInfo CGBitFieldInfo::MakeInfo(CodeGenTypes &Types,
+                                        const FieldDecl *FD,
+                                        uint64_t FieldOffset,
+                                        uint64_t FieldSize) {
+  const RecordDecl *RD = FD->getParent();
+  const ASTRecordLayout &RL = Types.getContext().getASTRecordLayout(RD);
+  uint64_t ContainingTypeSizeInBits = RL.getSize();
+  unsigned ContainingTypeAlign = RL.getAlignment();
+
+  return MakeInfo(Types, FD, FieldOffset, FieldSize, ContainingTypeSizeInBits,
+                  ContainingTypeAlign);
+}
+
 void CGRecordLayoutBuilder::LayoutBitField(const FieldDecl *D,
                                            uint64_t FieldOffset) {
   uint64_t FieldSize =
@@ -287,7 +297,8 @@ void CGRecordLayoutBuilder::LayoutBitField(const FieldDecl *D,
 
   // Add the bit field info.
   LLVMBitFields.push_back(
-    LLVMBitFieldInfo(D, ComputeBitFieldInfo(Types, D, FieldOffset, FieldSize)));
+    LLVMBitFieldInfo(D, CGBitFieldInfo::MakeInfo(Types, D, FieldOffset,
+                                                 FieldSize)));
 
   AppendBytes(NumBytesToAppend);
 
@@ -379,7 +390,8 @@ CGRecordLayoutBuilder::LayoutUnionField(const FieldDecl *Field,
 
     // Add the bit field info.
     LLVMBitFields.push_back(
-      LLVMBitFieldInfo(Field, ComputeBitFieldInfo(Types, Field, 0, FieldSize)));
+      LLVMBitFieldInfo(Field, CGBitFieldInfo::MakeInfo(Types, Field,
+                                                       0, FieldSize)));
     return FieldTy;
   }
 
