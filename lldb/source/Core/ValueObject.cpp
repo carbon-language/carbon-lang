@@ -44,12 +44,16 @@ ValueObject::ValueObject () :
     m_data (),
     m_value (),
     m_error (),
-    m_flags (),
-    m_value_str(),
-    m_location_str(),
-    m_summary_str(),
-    m_children(),
-    m_synthetic_children()
+    m_value_str (),
+    m_old_value_str (),
+    m_location_str (),
+    m_summary_str (),
+    m_children (),
+    m_synthetic_children (),
+    m_value_is_valid (false),
+    m_value_did_change (false),
+    m_children_count_valid (false),
+    m_old_value_valid (false)
 {
 }
 
@@ -77,10 +81,19 @@ ValueObject::UpdateValueIfNeeded (ExecutionContextScope *exe_scope)
             const user_id_t stop_id = process->GetStopID();
             if (m_update_id != stop_id)
             {
+                bool first_update = m_update_id == 0;
                 // Save the old value using swap to avoid a string copy which
                 // also will clear our m_value_str
-                std::string old_value_str;
-                old_value_str.swap (m_value_str);
+                if (m_value_str.empty())
+                {
+                    m_old_value_valid = false;
+                }
+                else
+                {
+                    m_old_value_valid = true;
+                    m_old_value_str.swap (m_value_str);
+                    m_value_str.clear();
+                }
                 m_location_str.clear();
                 m_summary_str.clear();
 
@@ -97,22 +110,14 @@ ValueObject::UpdateValueIfNeeded (ExecutionContextScope *exe_scope)
                 m_update_id = stop_id;
                 bool success = m_error.Success();
                 SetValueIsValid (success);
-                // If the variable hasn't already been marked as changed do it
-                // by comparing the old any new value
-                if (!GetValueDidChange())
+                
+                if (first_update)
+                    SetValueDidChange (false);
+                else if (!m_value_did_change && success == false)
                 {
-                    if (success)
-                    {
-                        // The value was gotten successfully, so we consider the
-                        // value as changed if the value string differs
-                        SetValueDidChange (old_value_str != m_value_str);
-                    }
-                    else
-                    {
-                        // The value wasn't gotten successfully, so we mark this
-                        // as changed if the value used to be valid and now isn't
-                        SetValueDidChange (value_was_valid);
-                    }
+                    // The value wasn't gotten successfully, so we mark this
+                    // as changed if the value used to be valid and now isn't
+                    SetValueDidChange (value_was_valid);
                 }
             }
         }
@@ -202,31 +207,29 @@ ValueObject::GetValue() const
 }
 
 bool
-ValueObject::GetValueIsValid ()
+ValueObject::GetValueIsValid () const
 {
-    return m_flags.IsSet(eValueIsValid);
+    return m_value_is_valid;
 }
 
 
 void
 ValueObject::SetValueIsValid (bool b)
 {
-    if (b)
-        m_flags.Set(eValueIsValid);
-    else
-        m_flags.Clear(eValueIsValid);
+    m_value_is_valid = b;
 }
 
 bool
-ValueObject::GetValueDidChange () const
+ValueObject::GetValueDidChange (ExecutionContextScope *exe_scope)
 {
-    return m_flags.IsSet(eValueChanged);
+    GetValueAsCString (exe_scope);
+    return m_value_did_change;
 }
 
 void
 ValueObject::SetValueDidChange (bool value_changed)
 {
-    m_flags.Set(eValueChanged);
+    m_value_did_change = value_changed;
 }
 
 ValueObjectSP
@@ -301,7 +304,7 @@ ValueObject::GetChildMemberWithName (const ConstString &name, bool can_create)
 uint32_t
 ValueObject::GetNumChildren ()
 {
-    if (m_flags.IsClear(eNumChildrenHasBeenSet))
+    if (!m_children_count_valid)
     {
         SetNumChildren (CalculateNumChildren());
     }
@@ -310,7 +313,7 @@ ValueObject::GetNumChildren ()
 void
 ValueObject::SetNumChildren (uint32_t num_children)
 {
-    m_flags.Set(eNumChildrenHasBeenSet);
+    m_children_count_valid = true;
     m_children.resize(num_children);
 }
 
@@ -551,6 +554,13 @@ ValueObject::GetValueAsCString (ExecutionContextScope *exe_scope)
                 default:
                     break;
                 }
+            }
+            
+            if (!m_value_did_change && m_old_value_valid)
+            {
+                // The value was gotten successfully, so we consider the
+                // value as changed if the value string differs
+                SetValueDidChange (m_old_value_str != m_value_str);
             }
         }
     }

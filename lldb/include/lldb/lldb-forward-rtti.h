@@ -62,6 +62,7 @@ namespace lldb {
     typedef SharedPtr<lldb_private::ValueObject>::Type ValueObjectSP;
     typedef SharedPtr<lldb_private::Variable>::Type VariableSP;
     typedef SharedPtr<lldb_private::VariableList>::Type VariableListSP;
+    typedef SharedPtr<lldb_private::ValueObjectList>::Type ValueObjectListSP;
 
 } // namespace lldb
 

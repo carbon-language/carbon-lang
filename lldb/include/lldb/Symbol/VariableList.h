@@ -27,7 +27,7 @@ public:
     virtual ~VariableList();
 
     void
-    AddVariable (lldb::VariableSP &var_sp);
+    AddVariable (const lldb::VariableSP &var_sp);
 
     void
     AddVariables(VariableList *variable_list);
@@ -42,14 +42,11 @@ public:
     GetVariableAtIndex(uint32_t idx);
 
     lldb::VariableSP
-    FindVariable(const ConstString& name);
+    FindVariable (const ConstString& name);
 
-//  const SymbolContext&
-//  GetSymbolContext() const
-//  {
-//      return m_symbol_context;
-//  }
-//
+    uint32_t
+    FindIndexForVariable (Variable* variable);
+
     size_t
     MemorySize() const;
 

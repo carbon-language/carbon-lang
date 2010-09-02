@@ -32,7 +32,7 @@
 
 using namespace lldb_private;
 
-ValueObjectVariable::ValueObjectVariable (lldb::VariableSP &var_sp) :
+ValueObjectVariable::ValueObjectVariable (const lldb::VariableSP &var_sp) :
     ValueObject(),
     m_variable_sp(var_sp)
 {

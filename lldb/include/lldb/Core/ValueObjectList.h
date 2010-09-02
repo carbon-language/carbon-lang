@@ -48,11 +48,18 @@ public:
     FindValueObjectByPointer (ValueObject *valobj);
 
     uint32_t
-    GetSize() const;
+    GetSize () const;
+    
+    void
+    Resize (uint32_t size);
 
     lldb::ValueObjectSP
-    GetValueObjectAtIndex (uint32_t);
+    GetValueObjectAtIndex (uint32_t idx);
 
+    void
+    SetValueObjectAtIndex (uint32_t idx, 
+                           const lldb::ValueObjectSP &valobj_sp);
+    
     lldb::ValueObjectSP
     FindValueObjectByValueName (const char *name);
 

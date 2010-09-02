@@ -57,6 +57,12 @@ ValueObjectList::GetSize() const
     return m_value_objects.size();
 }
 
+void
+ValueObjectList::Resize (uint32_t size)
+{
+    m_value_objects.resize (size);
+}
+
 lldb::ValueObjectSP
 ValueObjectList::GetValueObjectAtIndex (uint32_t idx)
 {
@@ -64,6 +70,14 @@ ValueObjectList::GetValueObjectAtIndex (uint32_t idx)
     if (idx < m_value_objects.size())
         valobj_sp = m_value_objects[idx];
     return valobj_sp;
+}
+
+void
+ValueObjectList::SetValueObjectAtIndex (uint32_t idx, const ValueObjectSP &valobj_sp)
+{
+    if (idx >= m_value_objects.size())
+        m_value_objects.resize (idx + 1);
+    m_value_objects[idx] = valobj_sp;
 }
 
 ValueObjectSP
@@ -74,7 +88,8 @@ ValueObjectList::FindValueObjectByValueName (const char *name)
     collection::iterator pos, end = m_value_objects.end();
     for (pos = m_value_objects.begin(); pos != end; ++pos)
     {
-        if ((*pos)->GetName() == name_const_str)
+        ValueObject *valobj = (*pos).get();
+        if (valobj && valobj->GetName() == name_const_str)
         {
             val_obj_sp = *pos;
             break;
@@ -91,7 +106,10 @@ ValueObjectList::FindValueObjectByUID (lldb::user_id_t uid)
 
     for (pos = m_value_objects.begin(); pos != end; ++pos)
     {
-        if ((*pos)->GetID() == uid)
+        // Watch out for NULL objects in our list as the list
+        // might get resized to a specific size and lazily filled in
+        ValueObject *valobj = (*pos).get();
+        if (valobj && valobj->GetID() == uid)
         {
             valobj_sp = *pos;
             break;
@@ -102,14 +120,15 @@ ValueObjectList::FindValueObjectByUID (lldb::user_id_t uid)
 
 
 ValueObjectSP
-ValueObjectList::FindValueObjectByPointer (ValueObject *valobj)
+ValueObjectList::FindValueObjectByPointer (ValueObject *find_valobj)
 {
     ValueObjectSP valobj_sp;
     collection::iterator pos, end = m_value_objects.end();
 
     for (pos = m_value_objects.begin(); pos != end; ++pos)
     {
-        if ((*pos).get() == valobj)
+        ValueObject *valobj = (*pos).get();
+        if (valobj && valobj == find_valobj)
         {
             valobj_sp = *pos;
             break;

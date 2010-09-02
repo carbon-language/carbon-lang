@@ -45,7 +45,7 @@ public:
     GetValue (const lldb::SBFrame &frame);
 
     bool
-    GetValueDidChange ();
+    GetValueDidChange (const lldb::SBFrame &frame);
 
     const char *
     GetSummary (const lldb::SBFrame &frame);

@@ -172,15 +172,15 @@ SBValue::GetValue (const SBFrame &frame)
 {
     const char *value_string = NULL;
     if ( m_opaque_sp)
-        value_string = m_opaque_sp->GetValueAsCString(frame.get());
+        value_string = m_opaque_sp->GetValueAsCString (frame.get());
     return value_string;
 }
 
 bool
-SBValue::GetValueDidChange ()
+SBValue::GetValueDidChange (const SBFrame &frame)
 {
     if (IsValid())
-        return m_opaque_sp->GetValueDidChange();
+        return m_opaque_sp->GetValueDidChange (frame.get());
     return false;
 }
 

@@ -32,7 +32,7 @@ VariableList::~VariableList()
 
 
 void
-VariableList::AddVariable(VariableSP &variable_sp)
+VariableList::AddVariable(const VariableSP &variable_sp)
 {
     m_variables.push_back(variable_sp);
 }
@@ -82,6 +82,20 @@ VariableList::FindVariable(const ConstString& name)
     return var_sp;
 }
 
+uint32_t
+VariableList::FindIndexForVariable (Variable* variable)
+{
+    VariableSP var_sp;
+    iterator pos;
+    const iterator begin = m_variables.begin();
+    const iterator end = m_variables.end();
+    for (pos = m_variables.begin(); pos != end; ++pos)
+    {
+        if ((*pos).get() == variable)
+            return std::distance (begin, pos);
+    }
+    return UINT32_MAX;
+}
 
 size_t
 VariableList::MemorySize() const

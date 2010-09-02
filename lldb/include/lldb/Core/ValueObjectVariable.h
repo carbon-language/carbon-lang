@@ -25,7 +25,7 @@ namespace lldb_private {
 class ValueObjectVariable : public ValueObject
 {
 public:
-    ValueObjectVariable (lldb::VariableSP &var_sp);
+    ValueObjectVariable (const lldb::VariableSP &var_sp);
 
     virtual
     ~ValueObjectVariable();

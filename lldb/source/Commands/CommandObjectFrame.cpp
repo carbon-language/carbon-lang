@@ -584,13 +584,12 @@ public:
                                 var_sp = global_var_list.GetVariableAtIndex(global_idx);
                                 if (var_sp)
                                 {
-                                    valobj_sp = exe_ctx.frame->GetValueObjectList().FindValueObjectByValueName (m_options.globals[idx].AsCString());
+                                    valobj_sp = exe_ctx.frame->GetValueObjectForFrameVariable (var_sp);
                                     if (!valobj_sp)
-                                        valobj_sp.reset (new ValueObjectVariable (var_sp));
+                                        valobj_sp = exe_ctx.frame->TrackGlobalVariable (var_sp);
 
                                     if (valobj_sp)
                                     {
-                                        exe_ctx.frame->GetValueObjectList().Append (valobj_sp);
                                         DumpValueObject (result, exe_ctx.frame, valobj_sp.get(), name_cstr, m_options.ptr_depth, 0, m_options.max_depth, false);
                                         result.GetOutputStream().EOL();
                                     }
@@ -631,18 +630,7 @@ public:
                     var_sp = variable_list.FindVariable(name_const_string);
                     if (var_sp)
                     {
-                        //DumpVariable (result, &exe_ctx, var_sp.get());
-                        // TODO: redo history variables using a different map
-//                        if (var_path[0] == '$')
-//                            valobj_sp = valobj_list.FindValueObjectByValueObjectName (name_const_string.GetCString());
-//                        else
-                            valobj_sp = exe_ctx.frame->GetValueObjectList().FindValueObjectByValueName (name_const_string.GetCString());
-
-                        if (!valobj_sp)
-                        {
-                            valobj_sp.reset (new ValueObjectVariable (var_sp));
-                            exe_ctx.frame->GetValueObjectList().Append (valobj_sp);
-                        }
+                        valobj_sp = exe_ctx.frame->GetValueObjectForFrameVariable (var_sp);
 
                         var_path.erase (0, name_const_string.GetLength ());
                         // We are dumping at least one child

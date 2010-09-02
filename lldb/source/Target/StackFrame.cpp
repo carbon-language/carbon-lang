@@ -16,7 +16,9 @@
 #include "lldb/Core/Module.h"
 #include "lldb/Core/Disassembler.h"
 #include "lldb/Core/Value.h"
+#include "lldb/Core/ValueObjectVariable.h"
 #include "lldb/Symbol/Function.h"
+#include "lldb/Symbol/VariableList.h"
 #include "lldb/Target/ExecutionContext.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Target/RegisterContext.h"
@@ -55,7 +57,7 @@ StackFrame::StackFrame
     m_frame_base (),
     m_frame_base_error (),
     m_variable_list_sp (),
-    m_value_object_list ()
+    m_variable_list_value_objects ()
 {
     if (sc_ptr != NULL)
     {
@@ -85,7 +87,7 @@ StackFrame::StackFrame
     m_frame_base (),
     m_frame_base_error (),
     m_variable_list_sp (),
-    m_value_object_list ()
+    m_variable_list_value_objects ()
 {
     if (sc_ptr != NULL)
     {
@@ -121,7 +123,7 @@ StackFrame::StackFrame
     m_frame_base (),
     m_frame_base_error (),
     m_variable_list_sp (),
-    m_value_object_list ()
+    m_variable_list_value_objects ()
 {
     if (sc_ptr != NULL)
     {
@@ -450,17 +452,30 @@ StackFrame::GetSymbolContext (uint32_t resolve_scope)
 
 
 VariableList *
-StackFrame::GetVariableList ()
+StackFrame::GetVariableList (bool get_file_globals)
 {
     if (m_flags.IsClear(RESOLVED_VARIABLES))
     {
         m_flags.Set(RESOLVED_VARIABLES);
 
-        if (GetSymbolContext (eSymbolContextFunction).function)
+        GetSymbolContext (eSymbolContextCompUnit | 
+                          eSymbolContextFunction | 
+                          eSymbolContextBlock);
+
+        if (m_sc.block)
         {
             bool get_child_variables = true;
             bool can_create = true;
             m_variable_list_sp = m_sc.function->GetBlock (can_create).GetVariableList (get_child_variables, can_create);
+        }
+        
+        if (get_file_globals && m_sc.comp_unit)
+        {
+            VariableListSP global_variable_list_sp (m_sc.comp_unit->GetVariableList(true));
+            if (m_variable_list_sp)
+                m_variable_list_sp->AddVariables (global_variable_list_sp.get());
+            else
+                m_variable_list_sp = global_variable_list_sp;
         }
     }
     return m_variable_list_sp.get();
@@ -521,10 +536,52 @@ StackFrame::HasDebugInformation ()
     return m_sc.line_entry.IsValid();
 }
 
-ValueObjectList &
-StackFrame::GetValueObjectList()
+
+ValueObjectSP
+StackFrame::GetValueObjectForFrameVariable (const VariableSP &variable_sp)
 {
-    return m_value_object_list;
+    ValueObjectSP valobj_sp;
+    VariableList *var_list = GetVariableList (true);
+    if (var_list)
+    {
+        // Make sure the variable is a frame variable
+        const uint32_t var_idx = var_list->FindIndexForVariable (variable_sp.get());
+        const uint32_t num_variables = var_list->GetSize();
+        if (var_idx < num_variables)
+        {
+            valobj_sp = m_variable_list_value_objects.GetValueObjectAtIndex (var_idx);
+            if (valobj_sp.get() == NULL)
+            {
+                if (m_variable_list_value_objects.GetSize() < num_variables)
+                    m_variable_list_value_objects.Resize(num_variables);
+                valobj_sp.reset (new ValueObjectVariable (variable_sp));
+                m_variable_list_value_objects.SetValueObjectAtIndex (var_idx, valobj_sp);
+            }
+        }
+    }
+    return valobj_sp;
+}
+
+ValueObjectSP
+StackFrame::TrackGlobalVariable (const VariableSP &variable_sp)
+{
+    // Check to make sure we aren't already tracking this variable?
+    ValueObjectSP valobj_sp (GetValueObjectForFrameVariable (variable_sp));
+    if (!valobj_sp)
+    {
+        // We aren't already tracking this global
+        VariableList *var_list = GetVariableList (true);
+        // If this frame has no variables, create a new list
+        if (var_list == NULL)
+            m_variable_list_sp.reset (new VariableList());
+
+        // Add the global/static variable to this frame
+        m_variable_list_sp->AddVariable (variable_sp);
+
+        // Now make a value object for it so we can track its changes
+        valobj_sp = GetValueObjectForFrameVariable (variable_sp);
+    }
+    return valobj_sp;
 }
 
 bool
@@ -591,7 +648,7 @@ StackFrame::UpdateCurrentFrameFromPreviousFrame (StackFrame &prev_frame)
 {
     assert (GetStackID() == prev_frame.GetStackID());    // TODO: remove this after some testing
     m_variable_list_sp = prev_frame.m_variable_list_sp;
-    m_value_object_list.Swap (prev_frame.m_value_object_list);
+    m_variable_list_value_objects.Swap (prev_frame.m_variable_list_value_objects);
     if (!m_disassembly.GetString().empty())
         m_disassembly.GetString().swap (m_disassembly.GetString());
 }
@@ -610,7 +667,6 @@ StackFrame::UpdatePreviousFrameFromCurrentFrame (StackFrame &curr_frame)
     assert (m_sc.module_sp.get() == NULL || curr_frame.m_sc.module_sp.get() == NULL || m_sc.module_sp.get() == curr_frame.m_sc.module_sp.get());
     assert (m_sc.comp_unit == NULL || curr_frame.m_sc.comp_unit == NULL || m_sc.comp_unit == curr_frame.m_sc.comp_unit);
     assert (m_sc.function == NULL || curr_frame.m_sc.function == NULL || m_sc.function == curr_frame.m_sc.function);
-    assert (m_sc.symbol == NULL || curr_frame.m_sc.symbol == NULL || m_sc.symbol == curr_frame.m_sc.symbol);
     m_sc = curr_frame.m_sc;
     m_flags.Clear(GOT_FRAME_BASE | eSymbolContextEverything);
     m_flags.Set (m_sc.GetResolvedMask());

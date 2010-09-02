@@ -304,7 +304,7 @@ SBFrame::GetVariables (bool arguments,
     if (m_opaque_sp)
     {
         size_t i;
-        VariableList *variable_list = m_opaque_sp->GetVariableList();
+        VariableList *variable_list = m_opaque_sp->GetVariableList(true);
         if (variable_list)
         {
             const size_t num_variables = variable_list->GetSize();
@@ -339,38 +339,12 @@ SBFrame::GetVariables (bool arguments,
                             if (in_scope_only && !variable_sp->IsInScope(m_opaque_sp.get()))
                                 continue;
 
-                            value_list.Append(ValueObjectSP (new ValueObjectVariable (variable_sp)));
+                            value_list.Append(m_opaque_sp->GetValueObjectForFrameVariable (variable_sp));
                         }
                     }
                 }
             }
-        }
-        
-        if (statics)
-        {
-            CompileUnit *frame_comp_unit = m_opaque_sp->GetSymbolContext (eSymbolContextCompUnit).comp_unit;
-            
-            if (frame_comp_unit)
-            {
-                variable_list = frame_comp_unit->GetVariableList(true).get();
-                
-                if (variable_list)
-                {
-                    const size_t num_variables = variable_list->GetSize();
-                    if (num_variables)
-                    {
-                        for (i = 0; i < num_variables; ++i)
-                        {
-                            VariableSP variable_sp (variable_list->GetVariableAtIndex(i));
-                            if (variable_sp)
-                            {
-                                value_list.Append(ValueObjectSP (new ValueObjectVariable (variable_sp)));
-                            }
-                        }
-                    }
-                }
-            }
-        }
+        }        
     }
     return value_list;
 }

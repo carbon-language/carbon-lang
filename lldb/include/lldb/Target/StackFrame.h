@@ -91,13 +91,10 @@ public:
     }
 
     VariableList *
-    GetVariableList ();
+    GetVariableList (bool get_file_globals);
 
     bool
     HasDebugInformation ();
-
-    ValueObjectList &
-    GetValueObjectList();
 
     const char *
     Disassemble ();
@@ -119,6 +116,12 @@ public:
     {
         return m_unwind_frame_index;
     }
+    
+    lldb::ValueObjectSP
+    GetValueObjectForFrameVariable (const lldb::VariableSP &variable_sp);
+
+    lldb::ValueObjectSP
+    TrackGlobalVariable (const lldb::VariableSP &variable_sp);
     
     //------------------------------------------------------------------
     // lldb::ExecutionContextScope pure virtual functions
@@ -165,7 +168,7 @@ private:
     Scalar m_frame_base;
     Error m_frame_base_error;
     lldb::VariableListSP m_variable_list_sp;
-    ValueObjectList m_value_object_list;
+    ValueObjectList m_variable_list_value_objects;  // Value objects for each variable in m_variable_list_sp
     StreamString m_disassembly;
     DISALLOW_COPY_AND_ASSIGN (StackFrame);
 };

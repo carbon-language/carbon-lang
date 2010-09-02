@@ -145,10 +145,10 @@ public:
     GetUpdateID() const;
 
     bool
-    GetValueIsValid ();
+    GetValueIsValid () const;
 
     bool
-    GetValueDidChange () const;
+    GetValueDidChange (ExecutionContextScope *exe_scope);
 
     bool
     UpdateValueIfNeeded (ExecutionContextScope *exe_scope);
@@ -173,11 +173,6 @@ public:
     GetSyntheticArrayMemberFromPointer (int32_t index, bool can_create);
 
 protected:
-    enum {
-        eValueChanged = (1 << 0),
-        eNumChildrenHasBeenSet = (1 << 1),
-        eValueIsValid = (1 << 2)
-    };
     //------------------------------------------------------------------
     // Classes that inherit from ValueObject can see and modify these
     //------------------------------------------------------------------
@@ -191,12 +186,17 @@ protected:
     DataExtractor       m_data;         // A data extractor that can be used to extract the value.
     Value               m_value;
     Error               m_error;        // An error object that can describe any errors that occur when updating values.
-    Flags               m_flags;        // A boolean that indicates this value has changed
     std::string         m_value_str;    // Cached value string that will get cleared if/when the value is updated.
+    std::string         m_old_value_str;// Cached old value string from the last time the value was gotten
     std::string         m_location_str; // Cached location string that will get cleared if/when the value is updated.
     std::string         m_summary_str;  // Cached summary string that will get cleared if/when the value is updated.
     std::vector<lldb::ValueObjectSP> m_children;
     std::map<ConstString, lldb::ValueObjectSP> m_synthetic_children;
+    bool                m_value_is_valid:1,
+                        m_value_did_change:1,
+                        m_children_count_valid:1,
+                        m_old_value_valid:1;
+                        
     //------------------------------------------------------------------
     // Constructors and Destructors
     //------------------------------------------------------------------
