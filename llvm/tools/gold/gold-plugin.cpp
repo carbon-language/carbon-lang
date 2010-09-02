@@ -460,12 +460,12 @@ static ld_plugin_status all_symbols_read_hook(void) {
     return LDPS_ERR;
   }
 
-  objFile.write(buffer, bufsize);
-  objFile.close();
-  if (objFile.has_error()) {
+  objFile.os().write(buffer, bufsize);
+  objFile.os().close();
+  if (objFile.os().has_error()) {
     (*message)(LDPL_ERROR, "Error writing output file '%s'",
                uniqueObjPath.c_str());
-    objFile.clear_error();
+    objFile.os().clear_error();
     return LDPS_ERR;
   }
   objFile.keep();
