@@ -3,7 +3,7 @@
 
 @"\01LC" = internal constant [4 x i8] c"%d\0A\00"		; <[4 x i8]*> [#uses=1]
 
-define i32 @main() nounwind {
+define i32 @foo() nounwind {
 bb1.thread:
 	br label %bb1
 
