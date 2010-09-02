@@ -1571,8 +1571,8 @@ let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
               Intrinsic<[], [llvm_ptr_ty, llvm_v1i64_ty], []>;
 
 //   def int_x86_mmx_palignr_b : GCCBuiltin<"__builtin_ia32_palignr">,
-//               Intrinsic<[llvm_v8i8_ty], [llvm_8i8_ty, 
-//                          llvm_v8i8_ty, llvm_i8_ty], [IntrNoMem]>;
+//               Intrinsic<[llvm_v1i64_ty], [llvm_1i64_ty, 
+//                          llvm_v1i64_ty, llvm_i8_ty], [IntrNoMem]>;
 
   def int_x86_mmx_pextr_w :
               Intrinsic<[llvm_i32_ty], [llvm_v1i64_ty, llvm_i32_ty], 
