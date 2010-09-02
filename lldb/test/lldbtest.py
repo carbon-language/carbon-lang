@@ -25,9 +25,8 @@ Ran 1 test in 0.363s
 
 OK
 $ LLDB_COMMAND_TRACE=YES python array_types/TestArrayTypes.py
-LLDB_COMMAND_TRACE=YES python array_types/TestArrayTypes.py
-runCmd: file /Volumes/data/lldb/svn/trunk/test/array_types/a.out
-output: Current executable set to '/Volumes/data/lldb/svn/trunk/test/array_types/a.out' (x86_64).
+
+...
 
 runCmd: breakpoint set -f main.c -l 42
 output: Breakpoint created: 1: file ='main.c', line = 42, locations = 1
@@ -35,17 +34,9 @@ output: Breakpoint created: 1: file ='main.c', line = 42, locations = 1
 runCmd: run
 output: Launching '/Volumes/data/lldb/svn/trunk/test/array_types/a.out'  (x86_64)
 
-runCmd: thread list
-output: Process 24987 state is Stopped
-  thread #1: tid = 0x2e03, pc = 0x0000000100000df4, where = a.out`main + 612 at /Volumes/data/lldb/svn/trunk/test/array_types/main.c:45, stop reason = breakpoint 1.1, queue = com.apple.main-thread
+...
 
-runCmd: breakpoint list
-output: Current breakpoints:
-1: file ='main.c', line = 42, locations = 1, resolved = 1
-  1.1: where = a.out`main + 612 at /Volumes/data/lldb/svn/trunk/test/array_types/main.c:45, address = 0x0000000100000df4, resolved, hit count = 1 
-
-
-runCmd: variable list strings
+runCmd: frame variable strings
 output: (char *[4]) strings = {
   (char *) strings[0] = 0x0000000100000f0c "Hello",
   (char *) strings[1] = 0x0000000100000f12 "Hola",
@@ -53,7 +44,7 @@ output: (char *[4]) strings = {
   (char *) strings[3] = 0x0000000100000f1f "Guten Tag"
 }
 
-runCmd: variable list char_16
+runCmd: frame variable char_16
 output: (char [16]) char_16 = {
   (char) char_16[0] = 'H',
   (char) char_16[1] = 'e',
@@ -73,7 +64,7 @@ output: (char [16]) char_16 = {
   (char) char_16[15] = '\0'
 }
 
-runCmd: variable list ushort_matrix
+runCmd: frame variable ushort_matrix
 output: (unsigned short [2][3]) ushort_matrix = {
   (unsigned short [3]) ushort_matrix[0] = {
     (unsigned short) ushort_matrix[0][0] = 0x0001,
@@ -87,7 +78,7 @@ output: (unsigned short [2][3]) ushort_matrix = {
   }
 }
 
-runCmd: variable list long_6
+runCmd: frame variable long_6
 output: (long [6]) long_6 = {
   (long) long_6[0] = 1,
   (long) long_6[1] = 2,
@@ -266,6 +257,9 @@ class TestBase(unittest2.TestCase):
     mydir = None
 
     # State pertaining to the inferior process, if any.
+    # This reflects inferior process started through the command interface with
+    # either the lldb "run" or "process launch" command.
+    # See also self.runCmd().
     runStarted = False
 
     # Maximum allowed attempts when launching the inferior process.
@@ -310,6 +304,8 @@ class TestBase(unittest2.TestCase):
         self.dbg.SetAsync(False)
 
         # There is no process associated with the debugger as yet.
+        # See also self.tearDown() where it checks whether self.process has a
+        # valid reference and calls self.process.Kill() to kill the process.
         self.process = None
 
         # Retrieve the associated command interpreter instance.

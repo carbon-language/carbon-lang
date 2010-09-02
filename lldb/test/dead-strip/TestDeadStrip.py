@@ -45,7 +45,7 @@ class DeadStripTestCase(TestBase):
         self.expect("thread list", STOPPED_DUE_TO_BREAKPOINT,
             substrs = ['state is Stopped',
                        'main.c:20',
-                       'where = a.out`f1',
+                       'a.out`f1',
                        'stop reason = breakpoint'])
 
         # The breakpoint should have a hit count of 1.
@@ -58,7 +58,7 @@ class DeadStripTestCase(TestBase):
         self.expect("thread list", STOPPED_DUE_TO_BREAKPOINT,
             substrs = ['state is Stopped',
                        'main.c:40',
-                       'where = a.out`f3',
+                       'a.out`f3',
                        'stop reason = breakpoint'])
 
         # The breakpoint should have a hit count of 1.
