@@ -49,6 +49,10 @@ sys::Path llvm::FindExecutable(const std::string &ExeName,
     Result.appendComponent(ExeName);
     if (Result.canExecute())
       return Result;
+    // Expect to retrieve the pathname with suffix .exe.
+    Result = sys::Program::FindProgramByName(Result.str());
+    if (!Result.empty())
+      return Result;
   }
 
   return sys::Path();
