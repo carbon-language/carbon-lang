@@ -177,7 +177,6 @@ void MCELFStreamer::EmitSymbolAttribute(MCSymbol *Symbol,
   case MCSA_Reference:
   case MCSA_NoDeadStrip:
   case MCSA_PrivateExtern:
-  case MCSA_WeakReference:
   case MCSA_WeakDefinition:
   case MCSA_WeakDefAutoPrivate:
   case MCSA_Invalid:
@@ -191,6 +190,7 @@ void MCELFStreamer::EmitSymbolAttribute(MCSymbol *Symbol,
     SD.setExternal(true);
     break;
 
+  case MCSA_WeakReference:
   case MCSA_Weak:
     SD.setFlags(SD.getFlags() | ELF_STB_Weak);
     break;
