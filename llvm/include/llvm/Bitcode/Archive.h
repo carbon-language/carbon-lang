@@ -297,7 +297,7 @@ class Archive {
     /// its symbol table without reading in any of the archive's members. This
     /// reduces both I/O and cpu time in opening the archive if it is to be used
     /// solely for symbol lookup (e.g. during linking).  The \p Filename must
-    /// exist and be an archive file or an exception will be thrown. This form
+    /// exist and be an archive file or an error will be returned. This form
     /// of opening the archive is intended for read-only operations that need to
     /// locate members via the symbol table for link editing.  Since the archve
     /// members are not read by this method, the archive will appear empty upon
@@ -306,8 +306,7 @@ class Archive {
     /// if this form of opening the archive is used that only the symbol table
     /// lookup methods (getSymbolTable, findModuleDefiningSymbol, and
     /// findModulesDefiningSymbols) be used.
-    /// @throws std::string if an error occurs opening the file
-    /// @returns an Archive* that represents the archive file.
+    /// @returns an Archive* that represents the archive file, or null on error.
     /// @brief Open an existing archive and load its symbols.
     static Archive* OpenAndLoadSymbols(
       const sys::Path& Filename,   ///< Name of the archive file to open
@@ -319,7 +318,6 @@ class Archive {
     /// closes files. It does nothing with the archive file on disk. If you
     /// haven't used the writeToDisk method by the time the destructor is
     /// called, all changes to the archive will be lost.
-    /// @throws std::string if an error occurs
     /// @brief Destruct in-memory archive
     ~Archive();
 

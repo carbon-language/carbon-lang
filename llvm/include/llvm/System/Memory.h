@@ -63,7 +63,6 @@ namespace sys {
     ///
     /// On success, this returns false, otherwise it returns true and fills
     /// in *ErrMsg.
-    /// @throws std::string if an error occurred.
     /// @brief Release Read/Write/Execute memory.
     static bool ReleaseRWX(MemoryBlock &block, std::string *ErrMsg = 0);
     

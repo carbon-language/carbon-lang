@@ -73,7 +73,7 @@ namespace llvm {
 ///
 /// TypeBuilder cannot handle recursive types or types you only know at runtime.
 /// If you try to give it a recursive type, it will deadlock, infinitely
-/// recurse, or throw a recursive_init exception.
+/// recurse, or do something similarly undesirable.
 template<typename T, bool cross_compilable> class TypeBuilder {};
 
 // Types for use with cross-compilable TypeBuilders.  These correspond

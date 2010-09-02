@@ -158,7 +158,6 @@ class Linker {
     /// @returns true if an error occurred, false otherwise
     /// @see LinkItemKind
     /// @see getLastError
-    /// @throws nothing
     bool LinkInItems (
       const ItemList& Items, ///< Set of libraries/files to link in
       ItemList& NativeItems  ///< Output list of native files/libs

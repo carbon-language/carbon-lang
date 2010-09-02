@@ -116,7 +116,6 @@ namespace sys {
     /// locations to search (e.g. the PATH on Unix).
     /// @returns A Path object initialized to the path of the program or a
     /// Path object that is empty (invalid) if the program could not be found.
-    /// @throws nothing
     /// @brief Construct a Program by finding it by name.
     static Path FindProgramByName(const std::string& name);
 
@@ -129,7 +128,6 @@ namespace sys {
 
     /// A convenience function equivalent to Program prg; prg.Execute(..);
     /// prg.Wait(..);
-    /// @throws nothing
     /// @see Execute, Wait
     static int ExecuteAndWait(const Path& path,
                               const char** args,
@@ -140,7 +138,6 @@ namespace sys {
                               std::string* ErrMsg = 0);
 
     /// A convenience function equivalent to Program prg; prg.Execute(..);
-    /// @throws nothing
     /// @see Execute
     static void ExecuteNoWait(const Path& path,
                               const char** args,
