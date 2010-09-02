@@ -186,6 +186,10 @@ public:
     return Is64Bit && (isTargetMingw() || isTargetWindows());
   }
 
+  bool isTargetWin32() const {
+    return !Is64Bit && (isTargetMingw() || isTargetWindows());
+  }
+
   std::string getDataLayout() const {
     const char *p;
     if (is64Bit())

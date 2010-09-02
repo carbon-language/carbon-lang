@@ -764,7 +764,7 @@ void mergeSPUpdatesUp(MachineBasicBlock &MBB, MachineBasicBlock::iterator &MBBI,
   }
 }
 
-/// mergeSPUpdatesUp - Merge two stack-manipulating instructions lower iterator.
+/// mergeSPUpdatesDown - Merge two stack-manipulating instructions lower iterator.
 static
 void mergeSPUpdatesDown(MachineBasicBlock &MBB,
                         MachineBasicBlock::iterator &MBBI,
@@ -1087,7 +1087,17 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
   DL = MBB.findDebugLoc(MBBI);
 
   // Adjust stack pointer: ESP -= numbytes.
-  if (NumBytes >= 4096 && Subtarget->isTargetCygMing()) {
+
+  // Windows and cygwin/mingw require a prologue helper routine when allocating
+  // more than 4K bytes on the stack.  Windows uses __chkstk and cygwin/mingw
+  // uses __alloca.  __alloca and the 32-bit version of __chkstk will probe
+  // the stack and adjust the stack pointer in one go.  The 64-bit version
+  // of __chkstk is only responsible for probing the stack.  The 64-bit
+  // prologue is responsible for adjusting the stack pointer.  Touching the
+  // stack at 4K increments is necessary to ensure that the guard pages used
+  // by the OS virtual memory manager are allocated in correct sequence.
+  if (NumBytes >= 4096 &&
+     (Subtarget->isTargetCygMing() || Subtarget->isTargetWin32())) {
     // Check, whether EAX is livein for this function.
     bool isEAXAlive = false;
     for (MachineRegisterInfo::livein_iterator
@@ -1098,15 +1108,14 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
                     Reg == X86::AH || Reg == X86::AL);
     }
 
-    // Function prologue calls _alloca to probe the stack when allocating more
-    // than 4k bytes in one go. Touching the stack at 4K increments is necessary
-    // to ensure that the guard pages used by the OS virtual memory manager are
-    // allocated in correct sequence.
+
+    const char *StackProbeSymbol =
+      Subtarget->isTargetWindows() ? "_chkstk" : "_alloca";
     if (!isEAXAlive) {
       BuildMI(MBB, MBBI, DL, TII.get(X86::MOV32ri), X86::EAX)
         .addImm(NumBytes);
       BuildMI(MBB, MBBI, DL, TII.get(X86::CALLpcrel32))
-        .addExternalSymbol("_alloca")
+        .addExternalSymbol(StackProbeSymbol)
         .addReg(StackPtr,    RegState::Define | RegState::Implicit)
         .addReg(X86::EFLAGS, RegState::Define | RegState::Implicit);
     } else {
@@ -1119,7 +1128,7 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
       BuildMI(MBB, MBBI, DL, TII.get(X86::MOV32ri), X86::EAX)
         .addImm(NumBytes - 4);
       BuildMI(MBB, MBBI, DL, TII.get(X86::CALLpcrel32))
-        .addExternalSymbol("_alloca")
+        .addExternalSymbol(StackProbeSymbol)
         .addReg(StackPtr,    RegState::Define | RegState::Implicit)
         .addReg(X86::EFLAGS, RegState::Define | RegState::Implicit);
 
