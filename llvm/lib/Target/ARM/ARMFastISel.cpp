@@ -59,6 +59,9 @@ class ARMFastISel : public FastISel {
   const TargetLowering &TLI;
   const ARMFunctionInfo *AFI;
 
+  // Convenience variable to avoid checking all the time.
+  bool isThumb;
+
   public:
     explicit ARMFastISel(FunctionLoweringInfo &funcInfo) 
     : FastISel(funcInfo),
@@ -67,6 +70,7 @@ class ARMFastISel : public FastISel {
       TLI(*TM.getTargetLowering()) {
       Subtarget = &TM.getSubtarget<ARMSubtarget>();
       AFI = funcInfo.MF->getInfo<ARMFunctionInfo>();
+      isThumb = AFI->isThumbFunction();
     }
 
     // Code from FastISel.cpp.
@@ -395,7 +399,7 @@ bool ARMFastISel::ARMComputeRegOffset(const Value *Obj, unsigned &Reg,
     ARMCC::CondCodes Pred = ARMCC::AL;
     unsigned PredReg = 0;
 
-    if (!AFI->isThumbFunction())
+    if (!isThumb)
       emitARMRegPlusImmediate(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
                               Reg, Reg, Offset, Pred, PredReg,
                               static_cast<const ARMBaseInstrInfo&>(TII));
@@ -435,8 +439,6 @@ bool ARMFastISel::ARMEmitLoad(EVT VT, unsigned &ResultReg,
                               unsigned Reg, int Offset) {
   
   assert(VT.isSimple() && "Non-simple types are invalid here!");
-  
-  bool isThumb = AFI->isThumbFunction();
   unsigned Opc;
   
   switch (VT.getSimpleVT().SimpleTy) {
@@ -475,7 +477,6 @@ bool ARMFastISel::ARMEmitLoad(EVT VT, unsigned &ResultReg,
 bool ARMFastISel::ARMMaterializeConstant(const ConstantInt *CI, unsigned &Reg) {
   unsigned Opc;
   bool Signed = true;
-  bool isThumb = AFI->isThumbFunction();
   EVT VT = TLI.getValueType(CI->getType(), true);
   
   switch (VT.getSimpleVT().SimpleTy) {
@@ -518,8 +519,6 @@ bool ARMFastISel::ARMStoreAlloca(const Instruction *I, unsigned SrcReg) {
 
 bool ARMFastISel::ARMEmitStore(EVT VT, unsigned SrcReg,
                                unsigned DstReg, int Offset) {
-  bool isThumb = AFI->isThumbFunction();
-    
   unsigned StrOpc;
   switch (VT.getSimpleVT().SimpleTy) {
     default: return false;
@@ -615,7 +614,7 @@ bool ARMFastISel::ARMSelectLoad(const Instruction *I) {
 
 bool ARMFastISel::TargetSelectInstruction(const Instruction *I) {
   // No Thumb-1 for now.
-  if (AFI->isThumbFunction() && !AFI->isThumb2Function()) return false;
+  if (isThumb && !AFI->isThumb2Function()) return false;
   
   switch (I->getOpcode()) {
     case Instruction::Load:
