@@ -34,7 +34,6 @@ public:
   unsigned HexFloats         : 1;  // C99 Hexadecimal float constants.
   unsigned C99               : 1;  // C99 Support
   unsigned Microsoft         : 1;  // Microsoft extensions.
-  unsigned Borland           : 1;  // Borland extensions.
   unsigned CPlusPlus         : 1;  // C++ Support
   unsigned CPlusPlus0x       : 1;  // C++0x Support
   unsigned CXXOperatorNames  : 1;  // Treat C++ operator names as keywords.
@@ -141,7 +140,7 @@ public:
     HexFloats = 0;
     GC = ObjC1 = ObjC2 = ObjCNonFragileABI = ObjCNonFragileABI2 = 0;
     NoConstantCFStrings = 0; InlineVisibilityHidden = 0;
-    C99 = Microsoft = Borland = CPlusPlus = CPlusPlus0x = 0;
+    C99 = Microsoft = CPlusPlus = CPlusPlus0x = 0;
     CXXOperatorNames = PascalStrings = WritableStrings = ConstStrings = 0;
     Exceptions = SjLjExceptions = Freestanding = NoBuiltin = 0;
     NeXTRuntime = 1;
