@@ -49,10 +49,16 @@ sys::Path llvm::FindExecutable(const std::string &ExeName,
     Result.appendComponent(ExeName);
     if (Result.canExecute())
       return Result;
-    // Expect to retrieve the pathname with suffix .exe.
-    Result = sys::Program::FindProgramByName(Result.str());
-    if (!Result.empty())
-      return Result;
+    // If the path is absolute (and it usually is), call FindProgramByName to
+    // allow it to try platform-specific logic, such as appending a .exe suffix
+    // on Windows. Don't do this if we somehow have a relative path, because
+    // we don't want to go searching the PATH and accidentally find an unrelated
+    // version of the program.
+    if (Result.isAbsolute()) {
+      Result = sys::Program::FindProgramByName(Result.str());
+      if (!Result.empty())
+        return Result;
+    }
   }
 
   return sys::Path();
