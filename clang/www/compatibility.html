@@ -33,6 +33,7 @@
     <ul>
       <li><a href="#inline">C99 inline functions</a></li>
       <li><a href="#lvalue-cast">Lvalue casts</a></li>
+      <li><a href="#blocks-in-protected-scope">Jumps to within <tt>__block</tt> variable scope</a></li>
     </ul>
   </li>
   <li><a href="#objective-c">Objective-C compatibility</a>
@@ -133,6 +134,55 @@ example, one could use:</p>
 <pre>
   addr = (float *)val;
 </pre>
+
+<!-- ======================================================================= -->
+<h3 id="blocks-in-protected-scope">Jumps to within <tt>__block</tt> variable scope</h3>
+<!-- ======================================================================= -->
+
+<p>Clang disallows jumps into the scope of a <tt>__block</tt> variable, similar
+to the manner in which both GCC and Clang disallow jumps into the scope of
+variables which have user defined constructors (in C++).</p>
+
+<p>Variables marked with <tt>__block</tt> require special runtime initialization
+before they can be used. A jump into the scope of a <tt>__block</tt> variable
+would bypass this initialization and therefore the variable cannot safely be
+used.</p>
+
+<p>For example, consider the following code fragment:</p>
+
+<pre>
+int f0(int c) {
+  if (c)
+    goto error;
+
+  __block int x;
+  x = 1;
+  return x;
+
+ error:
+  x = 0;
+  return x;
+}
+</pre>
+
+<p>GCC accepts this code, but it will crash at runtime along the error path,
+because the runtime setup for the storage backing the <tt>x</tt> variable will
+not have been initialized. Clang rejects this code with a hard error:</p>
+
+<pre>
+t.c:3:5: error: goto into protected scope
+    goto error;
+    ^
+t.c:5:15: note: jump bypasses setup of __block variable
+  __block int x;
+              ^
+</pre>
+
+<p>Some instances of this construct may be safe if the variable is never used
+after the jump target, however the protected scope checker does not check the
+uses of the varaible, only the scopes in which it is visible. You should rewrite
+your code to put the <tt>__block</tt> variables in a scope which is only visible
+where they are used.</p>
 
 <!-- ======================================================================= -->
 <h2 id="objective-c">Objective-C compatibility</h3>
