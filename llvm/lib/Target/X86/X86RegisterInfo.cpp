@@ -945,11 +945,6 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
     if (HasFP) MinSize += SlotSize;
     StackSize = std::max(MinSize, StackSize > 128 ? StackSize - 128 : 0);
     MFI->setStackSize(StackSize);
-  } else if (Subtarget->isTargetWin64()) {
-    // We need to always allocate 32 bytes as register spill area.
-    // FIXME: We might reuse these 32 bytes for leaf functions.
-    StackSize += 32;
-    MFI->setStackSize(StackSize);
   }
 
   // Insert stack pointer adjustment for later moving of return addr.  Only
