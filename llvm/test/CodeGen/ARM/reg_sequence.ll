@@ -45,9 +45,9 @@ define void @t2(i16* %i_ptr, i16* %o_ptr, %struct.int16x8_t* nocapture %vT0ptr, 
 entry:
 ; CHECK:        t2:
 ; CHECK:        vld1.16
-; CHECK:        vmul.i16
 ; CHECK-NOT:    vmov
 ; CHECK:        vld1.16
+; CHECK:        vmul.i16
 ; CHECK:        vmul.i16
 ; CHECK-NOT:    vmov
 ; CHECK:        vst1.16

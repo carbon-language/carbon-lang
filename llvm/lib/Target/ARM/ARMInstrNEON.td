@@ -167,6 +167,21 @@ def VST1q
 
 let mayLoad = 1, neverHasSideEffects = 1, hasExtraDefRegAllocReq = 1 in {
 
+// Classes for VLD* pseudo-instructions with multi-register operands.
+// These are expanded to real instructions after register allocation.
+class VLDQPseudo
+  : PseudoNLdSt<(outs QPR:$dst), (ins addrmode6:$addr), IIC_VST, "">;
+class VLDQWBPseudo
+  : PseudoNLdSt<(outs QPR:$dst, GPR:$wb),
+                (ins addrmode6:$addr, am6offset:$offset), IIC_VST,
+                "$addr.addr = $wb">;
+class VLDQQPseudo
+  : PseudoNLdSt<(outs QQPR:$dst), (ins addrmode6:$addr), IIC_VST, "">;
+class VLDQQWBPseudo
+  : PseudoNLdSt<(outs QQPR:$dst, GPR:$wb),
+                (ins addrmode6:$addr, am6offset:$offset), IIC_VST,
+                "$addr.addr = $wb">;
+
 //   VLD1     : Vector Load (multiple single elements)
 class VLD1D<bits<4> op7_4, string Dt>
   : NLdSt<0,0b10,0b0111,op7_4, (outs DPR:$dst),
@@ -186,6 +201,11 @@ def  VLD1q8   : VLD1Q<0b0000, "8">;
 def  VLD1q16  : VLD1Q<0b0100, "16">;
 def  VLD1q32  : VLD1Q<0b1000, "32">;
 def  VLD1q64  : VLD1Q<0b1100, "64">;
+
+def  VLD1q8Pseudo  : VLDQPseudo;
+def  VLD1q16Pseudo : VLDQPseudo;
+def  VLD1q32Pseudo : VLDQPseudo;
+def  VLD1q64Pseudo : VLDQPseudo;
 
 // ...with address register writeback:
 class VLD1DWB<bits<4> op7_4, string Dt>
@@ -209,6 +229,11 @@ def VLD1q16_UPD : VLD1QWB<0b0100, "16">;
 def VLD1q32_UPD : VLD1QWB<0b1000, "32">;
 def VLD1q64_UPD : VLD1QWB<0b1100, "64">;
 
+def VLD1q8Pseudo_UPD  : VLDQWBPseudo;
+def VLD1q16Pseudo_UPD : VLDQWBPseudo;
+def VLD1q32Pseudo_UPD : VLDQWBPseudo;
+def VLD1q64Pseudo_UPD : VLDQWBPseudo;
+
 // ...with 3 registers (some of these are only for the disassembler):
 class VLD1D3<bits<4> op7_4, string Dt>
   : NLdSt<0,0b10,0b0110,op7_4, (outs DPR:$dst1, DPR:$dst2, DPR:$dst3),
@@ -228,6 +253,9 @@ def VLD1d8T_UPD  : VLD1D3WB<0b0000, "8">;
 def VLD1d16T_UPD : VLD1D3WB<0b0100, "16">;
 def VLD1d32T_UPD : VLD1D3WB<0b1000, "32">;
 def VLD1d64T_UPD : VLD1D3WB<0b1100, "64">;
+
+def VLD1d64TPseudo     : VLDQQPseudo;
+def VLD1d64TPseudo_UPD : VLDQQWBPseudo;
 
 // ...with 4 registers (some of these are only for the disassembler):
 class VLD1D4<bits<4> op7_4, string Dt>
@@ -251,6 +279,9 @@ def VLD1d16Q_UPD : VLD1D4WB<0b0100, "16">;
 def VLD1d32Q_UPD : VLD1D4WB<0b1000, "32">;
 def VLD1d64Q_UPD : VLD1D4WB<0b1100, "64">;
 
+def VLD1d64QPseudo     : VLDQQPseudo;
+def VLD1d64QPseudo_UPD : VLDQQWBPseudo;
+
 //   VLD2     : Vector Load (multiple 2-element structures)
 class VLD2D<bits<4> op11_8, bits<4> op7_4, string Dt>
   : NLdSt<0, 0b10, op11_8, op7_4, (outs DPR:$dst1, DPR:$dst2),
@@ -269,6 +300,14 @@ def  VLD2d32  : VLD2D<0b1000, 0b1000, "32">;
 def  VLD2q8   : VLD2Q<0b0000, "8">;
 def  VLD2q16  : VLD2Q<0b0100, "16">;
 def  VLD2q32  : VLD2Q<0b1000, "32">;
+
+def  VLD2d8Pseudo  : VLDQPseudo;
+def  VLD2d16Pseudo : VLDQPseudo;
+def  VLD2d32Pseudo : VLDQPseudo;
+
+def  VLD2q8Pseudo  : VLDQQPseudo;
+def  VLD2q16Pseudo : VLDQQPseudo;
+def  VLD2q32Pseudo : VLDQQPseudo;
 
 // ...with address register writeback:
 class VLD2DWB<bits<4> op11_8, bits<4> op7_4, string Dt>
@@ -290,6 +329,14 @@ def VLD2d32_UPD : VLD2DWB<0b1000, 0b1000, "32">;
 def VLD2q8_UPD  : VLD2QWB<0b0000, "8">;
 def VLD2q16_UPD : VLD2QWB<0b0100, "16">;
 def VLD2q32_UPD : VLD2QWB<0b1000, "32">;
+
+def VLD2d8Pseudo_UPD  : VLDQWBPseudo;
+def VLD2d16Pseudo_UPD : VLDQWBPseudo;
+def VLD2d32Pseudo_UPD : VLDQWBPseudo;
+
+def VLD2q8Pseudo_UPD  : VLDQQWBPseudo;
+def VLD2q16Pseudo_UPD : VLDQQWBPseudo;
+def VLD2q32Pseudo_UPD : VLDQQWBPseudo;
 
 // ...with double-spaced registers (for disassembly only):
 def VLD2b8      : VLD2D<0b1001, 0b0000, "8">;
@@ -531,10 +578,10 @@ def  VST1q16  : VST1Q<0b0100, "16">;
 def  VST1q32  : VST1Q<0b1000, "32">;
 def  VST1q64  : VST1Q<0b1100, "64">;
 
-def VST1q8Pseudo  : VSTQPseudo;
-def VST1q16Pseudo : VSTQPseudo;
-def VST1q32Pseudo : VSTQPseudo;
-def VST1q64Pseudo : VSTQPseudo;
+def  VST1q8Pseudo  : VSTQPseudo;
+def  VST1q16Pseudo : VSTQPseudo;
+def  VST1q32Pseudo : VSTQPseudo;
+def  VST1q64Pseudo : VSTQPseudo;
 
 // ...with address register writeback:
 class VST1DWB<bits<4> op7_4, string Dt>

@@ -51,25 +51,11 @@ static bool isNEONMultiRegOp(int Opcode, unsigned &FirstOpnd, unsigned &NumRegs,
   default:
     break;
 
-  case ARM::VLD1q8:
-  case ARM::VLD1q16:
-  case ARM::VLD1q32:
-  case ARM::VLD1q64:
-  case ARM::VLD2d8:
-  case ARM::VLD2d16:
-  case ARM::VLD2d32:
   case ARM::VLD2LNd8:
   case ARM::VLD2LNd16:
   case ARM::VLD2LNd32:
     FirstOpnd = 0;
     NumRegs = 2;
-    return true;
-
-  case ARM::VLD2q8:
-  case ARM::VLD2q16:
-  case ARM::VLD2q32:
-    FirstOpnd = 0;
-    NumRegs = 4;
     return true;
 
   case ARM::VLD2LNq16:
