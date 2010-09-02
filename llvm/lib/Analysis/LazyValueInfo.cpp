@@ -173,10 +173,6 @@ public:
     assert(isUndefined());
     if (NewR.isEmptySet())
       return markOverdefined();
-    else if (NewR.isFullSet()) {
-      Tag = undefined;
-      return true;
-    }
     
     Tag = constantrange;
     Range = NewR;
