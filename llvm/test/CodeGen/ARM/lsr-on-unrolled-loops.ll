@@ -628,7 +628,7 @@ bb24:                                             ; preds = %bb23
 
 ;      CHECK: @ %bb24
 ; CHECK-NEXT: @   in Loop: Header=BB1_1 Depth=1
-; CHECK-NEXT: sub{{.*}} [[REGISTER:r[0-9]+]], #1
+; CHECK-NEXT: sub{{.*}} [[REGISTER:(r[0-9]+)|(lr)]], #1
 ; CHECK-NEXT: bne.w
 
   %92 = icmp eq i32 %tmp81, %indvar78             ; <i1> [#uses=1]

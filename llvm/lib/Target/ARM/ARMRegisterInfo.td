@@ -220,41 +220,11 @@ def GPR : RegisterClass<"ARM", [i32], 32, [R0, R1, R2, R3, R4, R5, R6,
     iterator allocation_order_end(const MachineFunction &MF) const;
   }];
   let MethodBodies = [{
-    // FP is R11, R9 is available.
-    static const unsigned ARM_GPR_AO_1[] = {
+    static const unsigned ARM_GPR_AO[] = {
       ARM::R0, ARM::R1, ARM::R2, ARM::R3,
       ARM::R12,ARM::LR,
       ARM::R4, ARM::R5, ARM::R6, ARM::R7,
-      ARM::R8, ARM::R9, ARM::R10,
-      ARM::R11 };
-    // FP is R11, R9 is not available.
-    static const unsigned ARM_GPR_AO_2[] = {
-      ARM::R0, ARM::R1, ARM::R2, ARM::R3,
-      ARM::R12,ARM::LR,
-      ARM::R4, ARM::R5, ARM::R6, ARM::R7,
-      ARM::R8, ARM::R10,
-      ARM::R11 };
-    // FP is R7, R9 is available as non-callee-saved register.
-    // This is used by Darwin.
-    static const unsigned ARM_GPR_AO_3[] = {
-      ARM::R0, ARM::R1, ARM::R2, ARM::R3,
-      ARM::R9, ARM::R12,ARM::LR,
-      ARM::R4, ARM::R5, ARM::R6,
-      ARM::R8, ARM::R10,ARM::R11,ARM::R7 };
-    // FP is R7, R9 is not available.
-    static const unsigned ARM_GPR_AO_4[] = {
-      ARM::R0, ARM::R1, ARM::R2, ARM::R3,
-      ARM::R12,ARM::LR,
-      ARM::R4, ARM::R5, ARM::R6,
-      ARM::R8, ARM::R10,ARM::R11,
-      ARM::R7 };
-    // FP is R7, R9 is available as callee-saved register.
-    // This is used by non-Darwin platform in Thumb mode.
-    static const unsigned ARM_GPR_AO_5[] = {
-      ARM::R0, ARM::R1, ARM::R2, ARM::R3,
-      ARM::R12,ARM::LR,
-      ARM::R4, ARM::R5, ARM::R6,
-      ARM::R8, ARM::R9, ARM::R10,ARM::R11,ARM::R7 };
+      ARM::R8, ARM::R9, ARM::R10, ARM::R11 };
 
     // For Thumb1 mode, we don't want to allocate hi regs at all, as we
     // don't know how to spill them. If we make our prologue/epilogue code
@@ -270,48 +240,16 @@ def GPR : RegisterClass<"ARM", [i32], 32, [R0, R1, R2, R3, R4, R5, R6,
       const ARMSubtarget &Subtarget = TM.getSubtarget<ARMSubtarget>();
       if (Subtarget.isThumb1Only())
         return THUMB_GPR_AO;
-      if (Subtarget.isTargetDarwin()) {
-        if (Subtarget.isR9Reserved())
-          return ARM_GPR_AO_4;
-        else
-          return ARM_GPR_AO_3;
-      } else {
-        if (Subtarget.isR9Reserved())
-          return ARM_GPR_AO_2;
-        else if (Subtarget.isThumb())
-          return ARM_GPR_AO_5;
-        else
-          return ARM_GPR_AO_1;
-      }
+      return ARM_GPR_AO;
     }
 
     GPRClass::iterator
     GPRClass::allocation_order_end(const MachineFunction &MF) const {
       const TargetMachine &TM = MF.getTarget();
-      const TargetRegisterInfo *RI = TM.getRegisterInfo();
       const ARMSubtarget &Subtarget = TM.getSubtarget<ARMSubtarget>();
-      GPRClass::iterator I;
-
-      if (Subtarget.isThumb1Only()) {
-        I = THUMB_GPR_AO + (sizeof(THUMB_GPR_AO)/sizeof(unsigned));
-        return RI->hasFP(MF) ? I-1 : I;
-      }
-
-      if (Subtarget.isTargetDarwin()) {
-        if (Subtarget.isR9Reserved())
-          I = ARM_GPR_AO_4 + (sizeof(ARM_GPR_AO_4)/sizeof(unsigned));
-        else
-          I = ARM_GPR_AO_3 + (sizeof(ARM_GPR_AO_3)/sizeof(unsigned));
-      } else {
-        if (Subtarget.isR9Reserved())
-          I = ARM_GPR_AO_2 + (sizeof(ARM_GPR_AO_2)/sizeof(unsigned));
-        else if (Subtarget.isThumb())
-          I = ARM_GPR_AO_5 + (sizeof(ARM_GPR_AO_5)/sizeof(unsigned));
-        else
-          I = ARM_GPR_AO_1 + (sizeof(ARM_GPR_AO_1)/sizeof(unsigned));
-      }
-
-      return RI->hasFP(MF) ? I-1 : I;
+      if (Subtarget.isThumb1Only())
+        return THUMB_GPR_AO + (sizeof(THUMB_GPR_AO)/sizeof(unsigned));
+      return ARM_GPR_AO + (sizeof(ARM_GPR_AO)/sizeof(unsigned));
     }
   }];
 }
@@ -327,47 +265,18 @@ def rGPR : RegisterClass<"ARM", [i32], 32, [R0, R1, R2, R3, R4, R5, R6,
     iterator allocation_order_end(const MachineFunction &MF) const;
   }];
   let MethodBodies = [{
-    // FP is R11, R9 is available.
-    static const unsigned ARM_rGPRAO_1[] = {
+    static const unsigned ARM_rGPR_AO[] = {
       ARM::R0, ARM::R1, ARM::R2, ARM::R3,
       ARM::R12,ARM::LR,
       ARM::R4, ARM::R5, ARM::R6, ARM::R7,
       ARM::R8, ARM::R9, ARM::R10,
       ARM::R11 };
-    // FP is R11, R9 is not available.
-    static const unsigned ARM_rGPRAO_2[] = {
-      ARM::R0, ARM::R1, ARM::R2, ARM::R3,
-      ARM::R12,ARM::LR,
-      ARM::R4, ARM::R5, ARM::R6, ARM::R7,
-      ARM::R8, ARM::R10,
-      ARM::R11 };
-    // FP is R7, R9 is available as non-callee-saved register.
-    // This is used by Darwin.
-    static const unsigned ARM_rGPRAO_3[] = {
-      ARM::R0, ARM::R1, ARM::R2, ARM::R3,
-      ARM::R9, ARM::R12,ARM::LR,
-      ARM::R4, ARM::R5, ARM::R6,
-      ARM::R8, ARM::R10,ARM::R11,ARM::R7 };
-    // FP is R7, R9 is not available.
-    static const unsigned ARM_rGPRAO_4[] = {
-      ARM::R0, ARM::R1, ARM::R2, ARM::R3,
-      ARM::R12,ARM::LR,
-      ARM::R4, ARM::R5, ARM::R6,
-      ARM::R8, ARM::R10,ARM::R11,
-      ARM::R7 };
-    // FP is R7, R9 is available as callee-saved register.
-    // This is used by non-Darwin platform in Thumb mode.
-    static const unsigned ARM_rGPRAO_5[] = {
-      ARM::R0, ARM::R1, ARM::R2, ARM::R3,
-      ARM::R12,ARM::LR,
-      ARM::R4, ARM::R5, ARM::R6,
-      ARM::R8, ARM::R9, ARM::R10,ARM::R11,ARM::R7 };
 
     // For Thumb1 mode, we don't want to allocate hi regs at all, as we
     // don't know how to spill them. If we make our prologue/epilogue code
     // smarter at some point, we can go back to using the above allocation
     // orders for the Thumb1 instructions that know how to use hi regs.
-    static const unsigned THUMB_rGPRAO[] = {
+    static const unsigned THUMB_rGPR_AO[] = {
       ARM::R0, ARM::R1, ARM::R2, ARM::R3,
       ARM::R4, ARM::R5, ARM::R6, ARM::R7 };
 
@@ -376,49 +285,18 @@ def rGPR : RegisterClass<"ARM", [i32], 32, [R0, R1, R2, R3, R4, R5, R6,
       const TargetMachine &TM = MF.getTarget();
       const ARMSubtarget &Subtarget = TM.getSubtarget<ARMSubtarget>();
       if (Subtarget.isThumb1Only())
-        return THUMB_rGPRAO;
-      if (Subtarget.isTargetDarwin()) {
-        if (Subtarget.isR9Reserved())
-          return ARM_rGPRAO_4;
-        else
-          return ARM_rGPRAO_3;
-      } else {
-        if (Subtarget.isR9Reserved())
-          return ARM_rGPRAO_2;
-        else if (Subtarget.isThumb())
-          return ARM_rGPRAO_5;
-        else
-          return ARM_rGPRAO_1;
-      }
+        return THUMB_rGPR_AO;
+      return ARM_rGPR_AO;
     }
 
     rGPRClass::iterator
     rGPRClass::allocation_order_end(const MachineFunction &MF) const {
       const TargetMachine &TM = MF.getTarget();
-      const TargetRegisterInfo *RI = TM.getRegisterInfo();
       const ARMSubtarget &Subtarget = TM.getSubtarget<ARMSubtarget>();
-      GPRClass::iterator I;
 
-      if (Subtarget.isThumb1Only()) {
-        I = THUMB_rGPRAO + (sizeof(THUMB_rGPRAO)/sizeof(unsigned));
-        return RI->hasFP(MF) ? I-1 : I;
-      }
-
-      if (Subtarget.isTargetDarwin()) {
-        if (Subtarget.isR9Reserved())
-          I = ARM_rGPRAO_4 + (sizeof(ARM_rGPRAO_4)/sizeof(unsigned));
-        else
-          I = ARM_rGPRAO_3 + (sizeof(ARM_rGPRAO_3)/sizeof(unsigned));
-      } else {
-        if (Subtarget.isR9Reserved())
-          I = ARM_rGPRAO_2 + (sizeof(ARM_rGPRAO_2)/sizeof(unsigned));
-        else if (Subtarget.isThumb())
-          I = ARM_rGPRAO_5 + (sizeof(ARM_rGPRAO_5)/sizeof(unsigned));
-        else
-          I = ARM_rGPRAO_1 + (sizeof(ARM_rGPRAO_1)/sizeof(unsigned));
-      }
-
-      return RI->hasFP(MF) ? I-1 : I;
+      if (Subtarget.isThumb1Only())
+        return THUMB_rGPR_AO + (sizeof(THUMB_rGPR_AO)/sizeof(unsigned));
+      return ARM_rGPR_AO + (sizeof(ARM_rGPR_AO)/sizeof(unsigned));
     }
   }];
 }
@@ -459,34 +337,20 @@ def tcGPR : RegisterClass<"ARM", [i32], 32, [R0, R1, R2, R3, R9, R12]> {
       const ARMSubtarget &Subtarget = TM.getSubtarget<ARMSubtarget>();
       if (Subtarget.isThumb1Only())
         return THUMB_GPR_AO_TC;
-      if (Subtarget.isTargetDarwin()) {
-        if (Subtarget.isR9Reserved())
-          return ARM_GPR_NOR9_TC;
-        else
-          return ARM_GPR_R9_TC;
-      } else
-        // R9 is either callee-saved or reserved; can't use it.
-        return ARM_GPR_NOR9_TC;
+      return Subtarget.isTargetDarwin() ? ARM_GPR_R9_TC : ARM_GPR_NOR9_TC;
     }
 
     tcGPRClass::iterator
     tcGPRClass::allocation_order_end(const MachineFunction &MF) const {
       const TargetMachine &TM = MF.getTarget();
       const ARMSubtarget &Subtarget = TM.getSubtarget<ARMSubtarget>();
-      GPRClass::iterator I;
 
       if (Subtarget.isThumb1Only())
         return THUMB_GPR_AO_TC + (sizeof(THUMB_GPR_AO_TC)/sizeof(unsigned));
 
-      if (Subtarget.isTargetDarwin()) {
-        if (Subtarget.isR9Reserved())
-          I = ARM_GPR_NOR9_TC + (sizeof(ARM_GPR_NOR9_TC)/sizeof(unsigned));
-        else
-          I = ARM_GPR_R9_TC + (sizeof(ARM_GPR_R9_TC)/sizeof(unsigned));
-      } else
-        // R9 is either callee-saved or reserved; can't use it.
-        I = ARM_GPR_NOR9_TC + (sizeof(ARM_GPR_NOR9_TC)/sizeof(unsigned));
-      return I;
+      return Subtarget.isTargetDarwin() ?
+        ARM_GPR_R9_TC + (sizeof(ARM_GPR_R9_TC)/sizeof(unsigned)) :
+        ARM_GPR_NOR9_TC + (sizeof(ARM_GPR_NOR9_TC)/sizeof(unsigned));
     }
   }];
 }
