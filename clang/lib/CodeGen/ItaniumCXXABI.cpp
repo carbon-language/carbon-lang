@@ -41,7 +41,7 @@ protected:
   // It's a little silly for us to cache this.
   const llvm::IntegerType *getPtrDiffTy() {
     if (!PtrDiffTy) {
-      QualType T = CGM.getContext().getPointerDiffType();
+      QualType T = getContext().getPointerDiffType();
       const llvm::Type *Ty = CGM.getTypes().ConvertTypeRecursive(T);
       PtrDiffTy = cast<llvm::IntegerType>(Ty);
     }
@@ -52,7 +52,7 @@ protected:
 
 public:
   ItaniumCXXABI(CodeGen::CodeGenModule &CGM, bool IsARM = false) :
-    CGCXXABI(CGM), PtrDiffTy(0), MangleCtx(CGM.getContext(), CGM.getDiags()),
+    CGCXXABI(CGM), PtrDiffTy(0), MangleCtx(getContext(), CGM.getDiags()),
     IsARM(IsARM) { }
 
   CodeGen::MangleContext &getMangleContext() {
@@ -495,7 +495,7 @@ llvm::Constant *ItaniumCXXABI::EmitMemberPointer(const FieldDecl *FD) {
   //   A pointer to data member is an offset from the base address of
   //   the class object containing it, represented as a ptrdiff_t
 
-  QualType ClassType = CGM.getContext().getTypeDeclType(FD->getParent());
+  QualType ClassType = getContext().getTypeDeclType(FD->getParent());
   const llvm::StructType *ClassLTy =
     cast<llvm::StructType>(CGM.getTypes().ConvertType(ClassType));
 
@@ -521,7 +521,7 @@ llvm::Constant *ItaniumCXXABI::EmitMemberPointer(const CXXMethodDecl *MD) {
 
     // FIXME: We shouldn't use / 8 here.
     uint64_t PointerWidthInBytes =
-      CGM.getContext().Target.getPointerWidth(0) / 8;
+      getContext().Target.getPointerWidth(0) / 8;
     uint64_t VTableOffset = (Index * PointerWidthInBytes);
 
     if (IsARM) {
@@ -686,7 +686,7 @@ void ItaniumCXXABI::BuildConstructorSignature(const CXXConstructorDecl *Ctor,
                                               CXXCtorType Type,
                                               CanQualType &ResTy,
                                 llvm::SmallVectorImpl<CanQualType> &ArgTys) {
-  ASTContext &Context = CGM.getContext();
+  ASTContext &Context = getContext();
 
   // 'this' is already there.
 
@@ -710,7 +710,7 @@ void ItaniumCXXABI::BuildDestructorSignature(const CXXDestructorDecl *Dtor,
                                              CXXDtorType Type,
                                              CanQualType &ResTy,
                                 llvm::SmallVectorImpl<CanQualType> &ArgTys) {
-  ASTContext &Context = CGM.getContext();
+  ASTContext &Context = getContext();
 
   // 'this' is already there.
 
@@ -742,7 +742,7 @@ void ItaniumCXXABI::BuildInstanceFunctionParams(CodeGenFunction &CGF,
 
   // Check if we need a VTT parameter as well.
   if (CodeGenVTables::needsVTTParameter(CGF.CurGD)) {
-    ASTContext &Context = CGF.getContext();
+    ASTContext &Context = getContext();
 
     // FIXME: avoid the fake decl
     QualType T = Context.getPointerType(Context.VoidPtrTy);
@@ -800,7 +800,7 @@ void ARMCXXABI::EmitReturnFromThunk(CodeGenFunction &CGF,
 /************************** Array allocation cookies **************************/
 
 bool ItaniumCXXABI::NeedsArrayCookie(QualType ElementType) {
-  ElementType = CGM.getContext().getBaseElementType(ElementType);
+  ElementType = getContext().getBaseElementType(ElementType);
   const RecordType *RT = ElementType->getAs<RecordType>();
   if (!RT) return false;
   
@@ -819,7 +819,7 @@ bool ItaniumCXXABI::NeedsArrayCookie(QualType ElementType) {
   // FIXME: what exactly is this code supposed to do if there's an
   // ambiguity?  That's possible with using declarations.
   DeclarationName OpName =
-    CGM.getContext().DeclarationNames.getCXXOperatorName(OO_Array_Delete);
+    getContext().DeclarationNames.getCXXOperatorName(OO_Array_Delete);
   DeclContext::lookup_const_iterator Op, OpEnd;
   for (llvm::tie(Op, OpEnd) = RD->lookup(OpName); Op != OpEnd; ++Op) {
     const CXXMethodDecl *Delete =
@@ -850,7 +850,7 @@ CharUnits ItaniumCXXABI::GetArrayCookieSize(QualType ElementType) {
     return CharUnits::Zero();
   
   // Padding is the maximum of sizeof(size_t) and alignof(ElementType)
-  ASTContext &Ctx = CGM.getContext();
+  ASTContext &Ctx = getContext();
   return std::max(Ctx.getTypeSizeInChars(Ctx.getSizeType()),
                   Ctx.getTypeAlignInChars(ElementType));
 }
@@ -863,7 +863,7 @@ llvm::Value *ItaniumCXXABI::InitializeArrayCookie(CodeGenFunction &CGF,
 
   unsigned AS = cast<llvm::PointerType>(NewPtr->getType())->getAddressSpace();
 
-  ASTContext &Ctx = CGM.getContext();
+  ASTContext &Ctx = getContext();
   QualType SizeTy = Ctx.getSizeType();
   CharUnits SizeSize = Ctx.getTypeSizeInChars(SizeTy);
 
@@ -908,12 +908,12 @@ void ItaniumCXXABI::ReadArrayCookie(CodeGenFunction &CGF,
     return;
   }
 
-  QualType SizeTy = CGF.getContext().getSizeType();
-  CharUnits SizeSize = CGF.getContext().getTypeSizeInChars(SizeTy);
+  QualType SizeTy = getContext().getSizeType();
+  CharUnits SizeSize = getContext().getTypeSizeInChars(SizeTy);
   const llvm::Type *SizeLTy = CGF.ConvertType(SizeTy);
   
   CookieSize
-    = std::max(SizeSize, CGF.getContext().getTypeAlignInChars(ElementType));
+    = std::max(SizeSize, getContext().getTypeAlignInChars(ElementType));
 
   CharUnits NumElementsOffset = CookieSize - SizeSize;
 
@@ -956,7 +956,7 @@ llvm::Value *ARMCXXABI::InitializeArrayCookie(CodeGenFunction &CGF,
 
   unsigned AS = cast<llvm::PointerType>(NewPtr->getType())->getAddressSpace();
 
-  ASTContext &Ctx = CGM.getContext();
+  ASTContext &Ctx = getContext();
   CharUnits SizeSize = Ctx.getTypeSizeInChars(Ctx.getSizeType());
   const llvm::IntegerType *SizeTy =
     cast<llvm::IntegerType>(CGF.ConvertType(Ctx.getSizeType()));
@@ -999,8 +999,8 @@ void ARMCXXABI::ReadArrayCookie(CodeGenFunction &CGF,
     return;
   }
 
-  QualType SizeTy = CGF.getContext().getSizeType();
-  CharUnits SizeSize = CGF.getContext().getTypeSizeInChars(SizeTy);
+  QualType SizeTy = getContext().getSizeType();
+  CharUnits SizeSize = getContext().getTypeSizeInChars(SizeTy);
   const llvm::Type *SizeLTy = CGF.ConvertType(SizeTy);
   
   // The cookie size is always 2 * sizeof(size_t).
