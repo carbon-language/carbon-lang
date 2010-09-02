@@ -41,3 +41,13 @@ int main() {
 	a->F();
         return 0;
 }
+
+// rdar://8382559
+namespace radar8382559 {
+  void func(bool& outHasProperty);
+
+  void test() {
+    __attribute__((__blocks__(byref))) bool hasProperty = false;
+    func(hasProperty);
+  }
+}
