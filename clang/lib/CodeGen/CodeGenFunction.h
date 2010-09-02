@@ -731,6 +731,7 @@ private:
 public:
   CodeGenFunction(CodeGenModule &cgm);
 
+  CodeGenTypes &getTypes() const { return CGM.getTypes(); }
   ASTContext &getContext() const;
   CGDebugInfo *getDebugInfo() { return DebugInfo; }
 

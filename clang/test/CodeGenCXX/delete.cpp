@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 %s -emit-llvm -o - | FileCheck %s
+// RUN: %clang_cc1 -triple x86_64-apple-darwin10 %s -emit-llvm -o - | FileCheck %s
 
 void t1(int *a) {
   delete a;
@@ -56,4 +56,42 @@ namespace test0 {
 
   // CHECK: define linkonce_odr void @_ZN5test01AD1Ev
   // CHECK: define linkonce_odr void @_ZN5test01AdlEPv
+}
+
+namespace test1 {
+  struct A {
+    int x;
+    ~A();
+  };
+
+  // CHECK: define void @_ZN5test14testEPA10_A20_NS_1AE(
+  void test(A (*arr)[10][20]) {
+    delete [] arr;
+    // CHECK:      icmp eq [10 x [20 x [[S:%.*]]]]* [[PTR:%.*]], null
+    // CHECK-NEXT: br i1
+
+    // CHECK:      [[ARR:%.*]] = getelementptr inbounds [10 x [20 x [[S]]]]* [[PTR]], i32 0, i32 0, i32 0
+    // CHECK-NEXT: bitcast {{.*}} to i8*
+    // CHECK-NEXT: [[ALLOC:%.*]] = getelementptr inbounds {{.*}}, i64 -8
+    // CHECK-NEXT: bitcast i8* [[ALLOC]] to i64*
+    // CHECK-NEXT: load
+    // CHECK-NEXT: store i64 {{.*}}, i64* [[IDX:%.*]]
+
+    // CHECK:      load i64* [[IDX]]
+    // CHECK-NEXT: icmp ne {{.*}}, 0
+    // CHECK-NEXT: br i1
+
+    // CHECK:      load i64* [[IDX]]
+    // CHECK-NEXT: [[I:%.*]] = sub i64 {{.*}}, 1
+    // CHECK-NEXT: getelementptr inbounds [[S]]* [[ARR]], i64 [[I]]
+    // CHECK-NEXT: call void @_ZN5test11AD1Ev(
+    // CHECK-NEXT: br label
+
+    // CHECK:      load i64* [[IDX]]
+    // CHECK-NEXT: sub
+    // CHECK-NEXT: store {{.*}}, i64* [[IDX]]
+    // CHECK-NEXT: br label
+
+    // CHECK:      call void @_ZdaPv(i8* [[ALLOC]])
+  }
 }

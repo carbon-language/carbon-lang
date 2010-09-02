@@ -327,7 +327,7 @@ static void ErrorUnsupportedABI(CodeGenFunction &CGF,
                                 llvm::StringRef S) {
   Diagnostic &Diags = CGF.CGM.getDiags();
   unsigned DiagID = Diags.getCustomDiagID(Diagnostic::Error,
-                                          "cannot yet compile %s in this ABI");
+                                          "cannot yet compile %1 in this ABI");
   Diags.Report(CGF.getContext().getFullLoc(CGF.CurCodeDecl->getLocation()),
                DiagID)
     << S;
@@ -444,4 +444,28 @@ void CGCXXABI::EmitThisParam(CodeGenFunction &CGF) {
 void CGCXXABI::EmitReturnFromThunk(CodeGenFunction &CGF,
                                    RValue RV, QualType ResultType) {
   CGF.EmitReturnOfRValue(RV, ResultType);
+}
+
+CharUnits CGCXXABI::GetArrayCookieSize(QualType ElementType) {
+  return CharUnits::Zero();
+}
+
+llvm::Value *CGCXXABI::InitializeArrayCookie(CodeGenFunction &CGF,
+                                             llvm::Value *NewPtr,
+                                             llvm::Value *NumElements,
+                                             QualType ElementType) {
+  // Should never be called.
+  ErrorUnsupportedABI(CGF, "array cookie initialization");
+  return 0;
+}
+
+void CGCXXABI::ReadArrayCookie(CodeGenFunction &CGF, llvm::Value *Ptr,
+                               QualType ElementType, llvm::Value *&NumElements,
+                               llvm::Value *&AllocPtr, CharUnits &CookieSize) {
+  ErrorUnsupportedABI(CGF, "array cookie reading");
+
+  // This should be enough to avoid assertions.
+  NumElements = 0;
+  AllocPtr = llvm::Constant::getNullValue(CGF.Builder.getInt8PtrTy());
+  CookieSize = CharUnits::Zero();
 }

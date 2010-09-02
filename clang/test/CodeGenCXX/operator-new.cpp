@@ -21,9 +21,9 @@ void f1() {
 void *f2(long N) {
   return new int[N];
   
-// SANE: call{{.*}}@llvm.umul.with.overflow
-// SANE: extractvalue
-// SANE: br i1
-// SANE: = phi {{.*}} [ {{.*}} ], [ -1,
-// SANE:  call noalias i8* @_Znaj(
+// SANE:      [[UWO:%.*]] = call {{.*}} @llvm.umul.with.overflow
+// SANE-NEXT: [[OVER:%.*]] = extractvalue {{.*}} [[UWO]], 1
+// SANE-NEXT: [[SUM:%.*]] = extractvalue {{.*}} [[UWO]], 0
+// SANE-NEXT: [[RESULT:%.*]] = select i1 [[OVER]], i32 -1, i32 [[SUM]]
+// SANE-NEXT: call noalias i8* @_Znaj(i32 [[RESULT]])
 }

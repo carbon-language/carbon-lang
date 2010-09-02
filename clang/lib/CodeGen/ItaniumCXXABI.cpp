@@ -48,6 +48,8 @@ protected:
     return PtrDiffTy;
   }
 
+  bool NeedsArrayCookie(QualType ElementType);
+
 public:
   ItaniumCXXABI(CodeGen::CodeGenModule &CGM, bool IsARM = false) :
     CGCXXABI(CGM), PtrDiffTy(0), MangleCtx(CGM.getContext(), CGM.getDiags()),
@@ -108,6 +110,15 @@ public:
                                    FunctionArgList &Params);
 
   void EmitInstanceFunctionProlog(CodeGenFunction &CGF);
+
+  CharUnits GetArrayCookieSize(QualType ElementType);
+  llvm::Value *InitializeArrayCookie(CodeGenFunction &CGF,
+                                     llvm::Value *NewPtr,
+                                     llvm::Value *NumElements,
+                                     QualType ElementType);
+  void ReadArrayCookie(CodeGenFunction &CGF, llvm::Value *Ptr,
+                       QualType ElementType, llvm::Value *&NumElements,
+                       llvm::Value *&AllocPtr, CharUnits &CookieSize);
 };
 
 class ARMCXXABI : public ItaniumCXXABI {
@@ -132,6 +143,14 @@ public:
 
   void EmitReturnFromThunk(CodeGenFunction &CGF, RValue RV, QualType ResTy);
 
+  CharUnits GetArrayCookieSize(QualType ElementType);
+  llvm::Value *InitializeArrayCookie(CodeGenFunction &CGF,
+                                     llvm::Value *NewPtr,
+                                     llvm::Value *NumElements,
+                                     QualType ElementType);
+  void ReadArrayCookie(CodeGenFunction &CGF, llvm::Value *Ptr,
+                       QualType ElementType, llvm::Value *&NumElements,
+                       llvm::Value *&AllocPtr, CharUnits &CookieSize);
 
 private:
   /// \brief Returns true if the given instance method is one of the
@@ -777,3 +796,228 @@ void ARMCXXABI::EmitReturnFromThunk(CodeGenFunction &CGF,
   RValue Undef = RValue::get(llvm::UndefValue::get(T));
   return ItaniumCXXABI::EmitReturnFromThunk(CGF, Undef, ResultType);
 }
+
+/************************** Array allocation cookies **************************/
+
+bool ItaniumCXXABI::NeedsArrayCookie(QualType ElementType) {
+  ElementType = CGM.getContext().getBaseElementType(ElementType);
+  const RecordType *RT = ElementType->getAs<RecordType>();
+  if (!RT) return false;
+  
+  const CXXRecordDecl *RD = cast<CXXRecordDecl>(RT->getDecl());
+
+  // If the class has a non-trivial destructor, it always needs a cookie.
+  if (!RD->hasTrivialDestructor()) return true;
+
+  // If the class's usual deallocation function takes two arguments,
+  // it needs a cookie.  Otherwise we don't need a cookie.
+  const CXXMethodDecl *UsualDeallocationFunction = 0;
+
+  // Usual deallocation functions of this form are always found on the
+  // class.
+  //
+  // FIXME: what exactly is this code supposed to do if there's an
+  // ambiguity?  That's possible with using declarations.
+  DeclarationName OpName =
+    CGM.getContext().DeclarationNames.getCXXOperatorName(OO_Array_Delete);
+  DeclContext::lookup_const_iterator Op, OpEnd;
+  for (llvm::tie(Op, OpEnd) = RD->lookup(OpName); Op != OpEnd; ++Op) {
+    const CXXMethodDecl *Delete =
+      cast<CXXMethodDecl>((*Op)->getUnderlyingDecl());
+
+    if (Delete->isUsualDeallocationFunction()) {
+      UsualDeallocationFunction = Delete;
+      break;
+    }
+  }
+    
+  // No usual deallocation function, we don't need a cookie.
+  if (!UsualDeallocationFunction)
+    return false;
+    
+  // The usual deallocation function doesn't take a size_t argument,
+  // so we don't need a cookie.
+  if (UsualDeallocationFunction->getNumParams() == 1)
+    return false;
+        
+  assert(UsualDeallocationFunction->getNumParams() == 2 && 
+         "Unexpected deallocation function type!");
+  return true;
+}
+
+CharUnits ItaniumCXXABI::GetArrayCookieSize(QualType ElementType) {
+  if (!NeedsArrayCookie(ElementType))
+    return CharUnits::Zero();
+  
+  // Padding is the maximum of sizeof(size_t) and alignof(ElementType)
+  ASTContext &Ctx = CGM.getContext();
+  return std::max(Ctx.getTypeSizeInChars(Ctx.getSizeType()),
+                  Ctx.getTypeAlignInChars(ElementType));
+}
+
+llvm::Value *ItaniumCXXABI::InitializeArrayCookie(CodeGenFunction &CGF,
+                                                  llvm::Value *NewPtr,
+                                                  llvm::Value *NumElements,
+                                                  QualType ElementType) {
+  assert(NeedsArrayCookie(ElementType));
+
+  unsigned AS = cast<llvm::PointerType>(NewPtr->getType())->getAddressSpace();
+
+  ASTContext &Ctx = CGM.getContext();
+  QualType SizeTy = Ctx.getSizeType();
+  CharUnits SizeSize = Ctx.getTypeSizeInChars(SizeTy);
+
+  // The size of the cookie.
+  CharUnits CookieSize =
+    std::max(SizeSize, Ctx.getTypeAlignInChars(ElementType));
+
+  // Compute an offset to the cookie.
+  llvm::Value *CookiePtr = NewPtr;
+  CharUnits CookieOffset = CookieSize - SizeSize;
+  if (!CookieOffset.isZero())
+    CookiePtr = CGF.Builder.CreateConstInBoundsGEP1_64(CookiePtr,
+                                                 CookieOffset.getQuantity());
+
+  // Write the number of elements into the appropriate slot.
+  llvm::Value *NumElementsPtr
+    = CGF.Builder.CreateBitCast(CookiePtr,
+                                CGF.ConvertType(SizeTy)->getPointerTo(AS));
+  CGF.Builder.CreateStore(NumElements, NumElementsPtr);
+
+  // Finally, compute a pointer to the actual data buffer by skipping
+  // over the cookie completely.
+  return CGF.Builder.CreateConstInBoundsGEP1_64(NewPtr,
+                                                CookieSize.getQuantity());  
+}
+
+void ItaniumCXXABI::ReadArrayCookie(CodeGenFunction &CGF,
+                                    llvm::Value *Ptr,
+                                    QualType ElementType,
+                                    llvm::Value *&NumElements,
+                                    llvm::Value *&AllocPtr,
+                                    CharUnits &CookieSize) {
+  // Derive a char* in the same address space as the pointer.
+  unsigned AS = cast<llvm::PointerType>(Ptr->getType())->getAddressSpace();
+  const llvm::Type *CharPtrTy = CGF.Builder.getInt8Ty()->getPointerTo(AS);
+
+  // If we don't need an array cookie, bail out early.
+  if (!NeedsArrayCookie(ElementType)) {
+    AllocPtr = CGF.Builder.CreateBitCast(Ptr, CharPtrTy);
+    NumElements = 0;
+    CookieSize = CharUnits::Zero();
+    return;
+  }
+
+  QualType SizeTy = CGF.getContext().getSizeType();
+  CharUnits SizeSize = CGF.getContext().getTypeSizeInChars(SizeTy);
+  const llvm::Type *SizeLTy = CGF.ConvertType(SizeTy);
+  
+  CookieSize
+    = std::max(SizeSize, CGF.getContext().getTypeAlignInChars(ElementType));
+
+  CharUnits NumElementsOffset = CookieSize - SizeSize;
+
+  // Compute the allocated pointer.
+  AllocPtr = CGF.Builder.CreateBitCast(Ptr, CharPtrTy);
+  AllocPtr = CGF.Builder.CreateConstInBoundsGEP1_64(AllocPtr,
+                                                    -CookieSize.getQuantity());
+
+  llvm::Value *NumElementsPtr = AllocPtr;
+  if (!NumElementsOffset.isZero())
+    NumElementsPtr =
+      CGF.Builder.CreateConstInBoundsGEP1_64(NumElementsPtr,
+                                             NumElementsOffset.getQuantity());
+  NumElementsPtr = 
+    CGF.Builder.CreateBitCast(NumElementsPtr, SizeLTy->getPointerTo(AS));
+  NumElements = CGF.Builder.CreateLoad(NumElementsPtr);
+}
+
+CharUnits ARMCXXABI::GetArrayCookieSize(QualType ElementType) {
+  if (!NeedsArrayCookie(ElementType))
+    return CharUnits::Zero();
+
+  // On ARM, the cookie is always:
+  //   struct array_cookie {
+  //     std::size_t element_size; // element_size != 0
+  //     std::size_t element_count;
+  //   };
+  // TODO: what should we do if the allocated type actually wants
+  // greater alignment?
+  return getContext().getTypeSizeInChars(getContext().getSizeType()) * 2;
+}
+
+llvm::Value *ARMCXXABI::InitializeArrayCookie(CodeGenFunction &CGF,
+                                              llvm::Value *NewPtr,
+                                              llvm::Value *NumElements,
+                                              QualType ElementType) {
+  assert(NeedsArrayCookie(ElementType));
+
+  // NewPtr is a char*.
+
+  unsigned AS = cast<llvm::PointerType>(NewPtr->getType())->getAddressSpace();
+
+  ASTContext &Ctx = CGM.getContext();
+  CharUnits SizeSize = Ctx.getTypeSizeInChars(Ctx.getSizeType());
+  const llvm::IntegerType *SizeTy =
+    cast<llvm::IntegerType>(CGF.ConvertType(Ctx.getSizeType()));
+
+  // The cookie is always at the start of the buffer.
+  llvm::Value *CookiePtr = NewPtr;
+
+  // The first element is the element size.
+  CookiePtr = CGF.Builder.CreateBitCast(CookiePtr, SizeTy->getPointerTo(AS));
+  llvm::Value *ElementSize = llvm::ConstantInt::get(SizeTy,
+                          Ctx.getTypeSizeInChars(ElementType).getQuantity());
+  CGF.Builder.CreateStore(ElementSize, CookiePtr);
+
+  // The second element is the element count.
+  CookiePtr = CGF.Builder.CreateConstInBoundsGEP1_32(CookiePtr, 1);
+  CGF.Builder.CreateStore(NumElements, CookiePtr);
+
+  // Finally, compute a pointer to the actual data buffer by skipping
+  // over the cookie completely.
+  CharUnits CookieSize = 2 * SizeSize;
+  return CGF.Builder.CreateConstInBoundsGEP1_64(NewPtr,
+                                                CookieSize.getQuantity());
+}
+
+void ARMCXXABI::ReadArrayCookie(CodeGenFunction &CGF,
+                                llvm::Value *Ptr,
+                                QualType ElementType,
+                                llvm::Value *&NumElements,
+                                llvm::Value *&AllocPtr,
+                                CharUnits &CookieSize) {
+  // Derive a char* in the same address space as the pointer.
+  unsigned AS = cast<llvm::PointerType>(Ptr->getType())->getAddressSpace();
+  const llvm::Type *CharPtrTy = CGF.Builder.getInt8Ty()->getPointerTo(AS);
+
+  // If we don't need an array cookie, bail out early.
+  if (!NeedsArrayCookie(ElementType)) {
+    AllocPtr = CGF.Builder.CreateBitCast(Ptr, CharPtrTy);
+    NumElements = 0;
+    CookieSize = CharUnits::Zero();
+    return;
+  }
+
+  QualType SizeTy = CGF.getContext().getSizeType();
+  CharUnits SizeSize = CGF.getContext().getTypeSizeInChars(SizeTy);
+  const llvm::Type *SizeLTy = CGF.ConvertType(SizeTy);
+  
+  // The cookie size is always 2 * sizeof(size_t).
+  CookieSize = 2 * SizeSize;
+  CharUnits NumElementsOffset = CookieSize - SizeSize;
+
+  // The allocated pointer is the input ptr, minus that amount.
+  AllocPtr = CGF.Builder.CreateBitCast(Ptr, CharPtrTy);
+  AllocPtr = CGF.Builder.CreateConstInBoundsGEP1_64(AllocPtr,
+                                               -CookieSize.getQuantity());
+
+  // The number of elements is at offset sizeof(size_t) relative to that.
+  llvm::Value *NumElementsPtr
+    = CGF.Builder.CreateConstInBoundsGEP1_64(AllocPtr,
+                                             SizeSize.getQuantity());
+  NumElementsPtr = 
+    CGF.Builder.CreateBitCast(NumElementsPtr, SizeLTy->getPointerTo(AS));
+  NumElements = CGF.Builder.CreateLoad(NumElementsPtr);
+}
+

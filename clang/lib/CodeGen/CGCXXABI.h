@@ -67,6 +67,8 @@ protected:
   /// for 'this' emitted by BuildThisParam.
   void EmitThisParam(CodeGenFunction &CGF);
 
+  ASTContext &getContext() const { return CGM.getContext(); }
+
 public:
 
   virtual ~CGCXXABI();
@@ -170,6 +172,51 @@ public:
 
   virtual void EmitReturnFromThunk(CodeGenFunction &CGF,
                                    RValue RV, QualType ResultType);
+
+  /**************************** Array cookies ******************************/
+
+  /// Returns the extra size required in order to store the array
+  /// cookie for the given type.  May return 0 to indicate that no
+  /// array cookie is required.
+  ///
+  /// Several cases are filtered out before this method is called:
+  ///   - non-array allocations never need a cookie
+  ///   - calls to ::operator new(size_t, void*) never need a cookie
+  ///
+  /// \param ElementType - the allocated type of the expression,
+  ///   i.e. the pointee type of the expression result type
+  virtual CharUnits GetArrayCookieSize(QualType ElementType);
+
+  /// Initialize the array cookie for the given allocation.
+  ///
+  /// \param NewPtr - a char* which is the presumed-non-null
+  ///   return value of the allocation function
+  /// \param NumElements - the computed number of elements,
+  ///   potentially collapsed from the multidimensional array case
+  /// \param ElementType - the base element allocated type,
+  ///   i.e. the allocated type after stripping all array types
+  virtual llvm::Value *InitializeArrayCookie(CodeGenFunction &CGF,
+                                             llvm::Value *NewPtr,
+                                             llvm::Value *NumElements,
+                                             QualType ElementType);
+
+  /// Reads the array cookie associated with the given pointer,
+  /// if it has one.
+  ///
+  /// \param Ptr - a pointer to the first element in the array
+  /// \param ElementType - the base element type of elements of the array
+  /// \param NumElements - an out parameter which will be initialized
+  ///   with the number of elements allocated, or zero if there is no
+  ///   cookie
+  /// \param AllocPtr - an out parameter which will be initialized
+  ///   with a char* pointing to the address returned by the allocation
+  ///   function
+  /// \param CookieSize - an out parameter which will be initialized
+  ///   with the size of the cookie, or zero if there is no cookie
+  virtual void ReadArrayCookie(CodeGenFunction &CGF, llvm::Value *Ptr,
+                               QualType ElementType, llvm::Value *&NumElements,
+                               llvm::Value *&AllocPtr, CharUnits &CookieSize);
+
 };
 
 /// Creates an instance of a C++ ABI class.
