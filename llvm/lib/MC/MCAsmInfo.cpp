@@ -70,6 +70,7 @@ MCAsmInfo::MCAsmInfo() {
   DwarfUsesInlineInfoSection = false;
   DwarfUsesAbsoluteLabelForStmtList = true;
   DwarfSectionOffsetDirective = 0;
+  DwarfUsesLabelOffsetForRanges = true;
   HasMicrosoftFastStdCallMangling = false;
 
   AsmTransCBE = 0;

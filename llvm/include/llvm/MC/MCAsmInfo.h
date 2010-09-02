@@ -259,6 +259,10 @@ namespace llvm {
     /// absolute label instead of offset.
     bool DwarfUsesAbsoluteLabelForStmtList;  // Defaults to true;
 
+    // DwarfUsesLabelOffsetDifference - True if Dwarf2 output can
+    // use EmitLabelOffsetDifference.
+    bool DwarfUsesLabelOffsetForRanges;
+
     //===--- CBE Asm Translation Table -----------------------------------===//
 
     const char *const *AsmTransCBE;          // Defaults to empty
@@ -423,6 +427,9 @@ namespace llvm {
     }
     bool doesDwarfUsesAbsoluteLabelForStmtList() const {
       return DwarfUsesAbsoluteLabelForStmtList;
+    }
+    bool doesDwarfUsesLabelOffsetForRanges() const {
+      return DwarfUsesLabelOffsetForRanges;
     }
     const char *const *getAsmCBE() const {
       return AsmTransCBE;

@@ -3130,10 +3130,17 @@ void DwarfDebug::emitDIE(DIE *Die) {
     case dwarf::DW_AT_ranges: {
       // DW_AT_range Value encodes offset in debug_range section.
       DIEInteger *V = cast<DIEInteger>(Values[i]);
-      Asm->EmitLabelOffsetDifference(DwarfDebugRangeSectionSym,
-                                     V->getValue(),
-                                     DwarfDebugRangeSectionSym,
-                                     4);
+
+      if (Asm->MAI->doesDwarfUsesLabelOffsetForRanges()) {
+        Asm->EmitLabelPlusOffset(DwarfDebugRangeSectionSym,
+                                 V->getValue(),
+                                 4);
+      } else {
+        Asm->EmitLabelOffsetDifference(DwarfDebugRangeSectionSym,
+                                       V->getValue(),
+                                       DwarfDebugRangeSectionSym,
+                                       4);
+      }
       break;
     }
     case dwarf::DW_AT_location: {
