@@ -17,8 +17,8 @@ return(char)s->c;
 }
 main()
 {
-// CHECK:  getelementptr inbounds %struct.T* %t, i32 0, i32 0 ; <i32*> [#uses=2]
-// CHECK:  getelementptr inbounds %struct.T* %t, i32 0, i32 0 ; <i32*> [#uses=2]
+// CHECK:  getelementptr inbounds %struct.T* %t, i32 0, i32 0 
+// CHECK:  getelementptr inbounds %struct.T* %t, i32 0, i32 0
 struct T t;
 t.i=0xff;
 t.c=0xffff11;
