@@ -206,7 +206,7 @@ template <typename T, bool isPodLike>
 void SmallVectorTemplateBase<T, isPodLike>::grow(size_t MinSize) {
   size_t CurCapacity = this->capacity();
   size_t CurSize = this->size();
-  size_t NewCapacity = 2*CurCapacity;
+  size_t NewCapacity = 2*CurCapacity + 1; // Always grow, even from zero.
   if (NewCapacity < MinSize)
     NewCapacity = MinSize;
   T *NewElts = static_cast<T*>(malloc(NewCapacity*sizeof(T)));
@@ -712,38 +712,27 @@ public:
 /// members are required.
 template <typename T>
 class SmallVector<T,0> : public SmallVectorImpl<T> {
-  // SmallVector doesn't like growing from zero capacity.  As a
-  // temporary workaround, avoid changing the growth algorithm by
-  // forcing capacity to be at least 1 in the constructors.
-
 public:
-  SmallVector() : SmallVectorImpl<T>(0) {
-    this->reserve(1); // workaround
-  }
+  SmallVector() : SmallVectorImpl<T>(0) {}
 
   explicit SmallVector(unsigned Size, const T &Value = T())
     : SmallVectorImpl<T>(0) {
-    this->reserve(Size ? Size : 1); // workaround
+    this->reserve(Size);
     while (Size--)
       this->push_back(Value);
   }
 
   template<typename ItTy>
   SmallVector(ItTy S, ItTy E) : SmallVectorImpl<T>(0) {
-    if (S == E) this->reserve(1); // workaround
     this->append(S, E);
   }
 
   SmallVector(const SmallVector &RHS) : SmallVectorImpl<T>(0) {
-    if (!RHS.empty())
-      SmallVectorImpl<T>::operator=(RHS);
-    else
-      this->reserve(1); // workaround
+    SmallVectorImpl<T>::operator=(RHS);
   }
 
-  const SmallVector &operator=(const SmallVector &RHS) {
-    SmallVectorImpl<T>::operator=(RHS);
-    return *this;
+  SmallVector &operator=(const SmallVectorImpl<T> &RHS) {
+    return SmallVectorImpl<T>::operator=(RHS);
   }
 
 };

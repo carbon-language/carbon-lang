@@ -18,7 +18,7 @@ using namespace llvm;
 /// on POD-like datatypes and is out of line to reduce code duplication.
 void SmallVectorBase::grow_pod(size_t MinSizeInBytes, size_t TSize) {
   size_t CurSizeBytes = size_in_bytes();
-  size_t NewCapacityInBytes = 2 * capacity_in_bytes();
+  size_t NewCapacityInBytes = 2 * capacity_in_bytes() + TSize; // Always grow.
   if (NewCapacityInBytes < MinSizeInBytes)
     NewCapacityInBytes = MinSizeInBytes;
 
