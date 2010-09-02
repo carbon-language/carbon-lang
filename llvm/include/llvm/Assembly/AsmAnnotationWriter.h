@@ -32,21 +32,26 @@ public:
 
   /// emitFunctionAnnot - This may be implemented to emit a string right before
   /// the start of a function.
-  virtual void emitFunctionAnnot(const Function *F, raw_ostream &OS) {}
+  virtual void emitFunctionAnnot(const Function *F,
+                                 formatted_raw_ostream &OS) {}
 
   /// emitBasicBlockStartAnnot - This may be implemented to emit a string right
-  /// after the basic block label, but before the first instruction in the block.
-  virtual void emitBasicBlockStartAnnot(const BasicBlock *BB, raw_ostream &OS){
+  /// after the basic block label, but before the first instruction in the
+  /// block.
+  virtual void emitBasicBlockStartAnnot(const BasicBlock *BB,
+                                        formatted_raw_ostream &OS){
   }
 
   /// emitBasicBlockEndAnnot - This may be implemented to emit a string right
   /// after the basic block.
-  virtual void emitBasicBlockEndAnnot(const BasicBlock *BB, raw_ostream &OS){
+  virtual void emitBasicBlockEndAnnot(const BasicBlock *BB,
+                                      formatted_raw_ostream &OS){
   }
 
   /// emitInstructionAnnot - This may be implemented to emit a string right
   /// before an instruction is emitted.
-  virtual void emitInstructionAnnot(const Instruction *I, raw_ostream &OS) {}
+  virtual void emitInstructionAnnot(const Instruction *I, 
+                                    formatted_raw_ostream &OS) {}
 
   /// printInfoComment - This may be implemented to emit a comment to the
   /// right of an instruction or global value.
