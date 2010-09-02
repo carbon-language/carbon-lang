@@ -5181,16 +5181,17 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const {
     }
   }
 
+  if (OptForSize) { // NOTE: isPSHUFDMask can also match this mask...
+    if (HasSSE2 && X86::isUNPCKL_v_undef_Mask(SVOp) && VT == MVT::v4i32)
+      return getTargetShuffleNode(X86ISD::PUNPCKLDQ, dl, VT, V1, V1, DAG);
+  }
+
   if (X86::isPSHUFDMask(SVOp)) {
     // The actual implementation will match the mask in the if above and then
     // during isel it can match several different instructions, not only pshufd
     // as its name says, sad but true, emulate the behavior for now...
     if (X86::isMOVDDUPMask(SVOp) && ((VT == MVT::v4f32 || VT == MVT::v2i64)))
         return getTargetShuffleNode(X86ISD::MOVLHPS, dl, VT, V1, V1, DAG);
-
-    if (OptForSize && HasSSE2 && X86::isUNPCKL_v_undef_Mask(SVOp) &&
-        VT == MVT::v4i32)
-      return getTargetShuffleNode(X86ISD::PUNPCKLDQ, dl, VT, V1, V1, DAG);
 
     unsigned TargetMask = X86::getShuffleSHUFImmediate(SVOp);
 
