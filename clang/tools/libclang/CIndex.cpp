@@ -370,7 +370,6 @@ public:
 
   // Expression visitors
   bool VisitDeclRefExpr(DeclRefExpr *E);
-  // FIXME: MemberExpr with template arguments, nested-name-specifier
   bool VisitCXXOperatorCallExpr(CXXOperatorCallExpr *E);
   bool VisitBlockExpr(BlockExpr *B);
   bool VisitCompoundLiteralExpr(CompoundLiteralExpr *E);
@@ -379,6 +378,7 @@ public:
   bool VisitObjCEncodeExpr(ObjCEncodeExpr *E);
   bool VisitOffsetOfExpr(OffsetOfExpr *E);
   bool VisitSizeOfAlignOfExpr(SizeOfAlignOfExpr *E);
+  bool VisitMemberExpr(MemberExpr *E);
   // FIXME: AddrLabelExpr (once we have cursors for labels)
   bool VisitTypesCompatibleExpr(TypesCompatibleExpr *E);
   bool VisitVAArgExpr(VAArgExpr *E);
@@ -1509,6 +1509,34 @@ bool CursorVisitor::VisitSizeOfAlignOfExpr(SizeOfAlignOfExpr *E) {
   }
 
   return VisitExpr(E);
+}
+
+bool CursorVisitor::VisitMemberExpr(MemberExpr *E) {
+  // Visit the base expression.
+  if (Visit(MakeCXCursor(E->getBase(), StmtParent, TU)))
+    return true;
+  
+  // Visit the nested-name-specifier
+  if (NestedNameSpecifier *Qualifier = E->getQualifier())
+    if (VisitNestedNameSpecifier(Qualifier, E->getQualifierRange()))
+      return true;
+  
+  // Visit the declaration name.
+  if (VisitDeclarationNameInfo(E->getMemberNameInfo()))
+    return true;
+  
+  // Visit the explicitly-specified template arguments, if any.
+  if (E->hasExplicitTemplateArgs()) {
+    for (const TemplateArgumentLoc *Arg = E->getTemplateArgs(),
+                                *ArgEnd = Arg + E->getNumTemplateArgs();
+         Arg != ArgEnd;
+         ++Arg) {
+      if (VisitTemplateArgumentLoc(*Arg))
+        return true;
+    }
+  }
+  
+  return false;
 }
 
 bool CursorVisitor::VisitExplicitCastExpr(ExplicitCastExpr *E) {

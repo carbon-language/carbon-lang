@@ -46,8 +46,13 @@ struct value_c;
 
 template class vector<int*>;
 
+struct Z4 {
+  template<typename T> T getAs();
+};
+
 void template_exprs() {
   f<Unsigned, OneDimension, array>(array<Unsigned, OneDimension>());
+  Z4().getAs<Unsigned>();
 }
 
 // RUN: c-index-test -test-load-source all %s | FileCheck -check-prefix=CHECK-LOAD %s
@@ -101,11 +106,20 @@ void template_exprs() {
 // CHECK-LOAD: index-templates.cpp:44:31: NonTypeTemplateParameter=Value:44:31 (Definition) Extent=[44:22 - 44:36]
 // CHECK-LOAD: index-templates.cpp:44:22: TypeRef=Unsigned:42:18 Extent=[44:22 - 44:30]
 // CHECK-LOAD: index-templates.cpp:47:16: ClassDecl=vector:47:16 (Definition) [Specialization of vector:14:7] Extent=[47:1 - 47:22]
-// CHECK-LOAD: index-templates.cpp:49:6: FunctionDecl=template_exprs:49:6 (Definition) Extent=[49:6 - 51:2]
-// CHECK-LOAD: index-templates.cpp:50:3: DeclRefExpr=f:4:6 Extent=[50:3 - 50:35]
-// CHECK-LOAD: index-templates.cpp:50:5: TypeRef=Unsigned:42:18 Extent=[50:5 - 50:13]
-// CHECK-LOAD: index-templates.cpp:50:15: DeclRefExpr=OneDimension:35:16 Extent=[50:15 - 50:27]
-// CHECK-LOAD: index-templates.cpp:50:29: TemplateRef=array:37:8 Extent=[50:29 - 50:34]
+// CHECK-LOAD: index-templates.cpp:49:8: StructDecl=Z4:49:8 (Definition) Extent=[49:1 - 51:2]
+// CHECK-LOAD: index-templates.cpp:50:26: FunctionTemplate=getAs:50:26 Extent=[50:3 - 50:33]
+// CHECK-LOAD: index-templates.cpp:50:21: TemplateTypeParameter=T:50:21 (Definition) Extent=[50:21 - 50:22]
+// CHECK-LOAD: index-templates.cpp:53:6: FunctionDecl=template_exprs:53:6 (Definition)
+// CHECK-LOAD: <invalid loc>:0:0: UnexposedStmt=
+// CHECK-LOAD: index-templates.cpp:54:3: CallExpr=f:4:6 Extent=[54:3 - 54:68]
+// CHECK-LOAD: index-templates.cpp:54:3: UnexposedExpr=f:4:6 Extent=[54:3 - 54:35]
+// CHECK-LOAD: index-templates.cpp:54:3: DeclRefExpr=f:4:6 Extent=[54:3 - 54:35]
+// CHECK-LOAD: index-templates.cpp:54:5: TypeRef=Unsigned:42:18 Extent=[54:5 - 54:13]
+// CHECK-LOAD: index-templates.cpp:54:15: DeclRefExpr=OneDimension:35:16 Extent=[54:15 - 54:27]
+// CHECK-LOAD: index-templates.cpp:54:29: TemplateRef=array:37:8 Extent=[54:29 - 54:34]
+// CHECK-LOAD: index-templates.cpp:55:8: MemberRefExpr=getAs:50:26 Extent=[55:3 - 55:23]
+// CHECK-LOAD: index-templates.cpp:55:3: CallExpr= Extent=[55:3 - 55:7]
+// CHECK-LOAD: index-templates.cpp:55:14: TypeRef=Unsigned:42:18 Extent=[55:14 - 55:22]
 
 // RUN: c-index-test -test-load-source-usrs all %s | FileCheck -check-prefix=CHECK-USRS %s
 // CHECK-USRS: index-templates.cpp c:@FT@>3#T#Nt0.0#t>2#T#Nt1.0f#>t0.22t0.0# Extent=[3:1 - 4:22]
