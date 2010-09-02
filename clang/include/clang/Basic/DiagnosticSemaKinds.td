@@ -2198,10 +2198,10 @@ def warn_mixed_sign_conditional : Warning<
   InGroup<SignCompare>, DefaultIgnore;
 def warn_lunsigned_always_true_comparison : Warning<
   "comparison of unsigned expression %0 is always %1">,
-  InGroup<TautologicalCompare>;
+  InGroup<SignCompare>, DefaultIgnore;
 def warn_runsigned_always_true_comparison : Warning<
   "comparison of %0 unsigned expression is always %1">,
-  InGroup<TautologicalCompare>;
+  InGroup<SignCompare>, DefaultIgnore;
 
 def err_invalid_this_use : Error<
   "invalid use of 'this' outside of a nonstatic member function">;
@@ -3062,7 +3062,7 @@ def err_ret_local_block : Error<
 // Array comparisons have similar warnings
 def warn_comparison_always : Warning<
   "%select{self-|array }0comparison always evaluates to %select{false|true|a constant}1">,
-  InGroup<TautologicalCompare>;
+  InGroup<DiagGroup<"tautological-compare">>;
 
 def warn_stringcompare : Warning<
   "result of comparison against %select{a string literal|@encode}0 is "

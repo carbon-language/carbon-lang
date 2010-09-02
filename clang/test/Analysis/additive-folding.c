@@ -183,14 +183,14 @@ void tautologyGT (unsigned a) {
 
 void tautologyGE (unsigned a) {
   char* b = malloc(1);
-  if (a >= 0) // expected-warning{{always true}}
+  if (a >= 0)
     free(b);
   return; // no-warning
 }
 
 void tautologyLT (unsigned a) {
   char* b = malloc(1);
-  if (a < 0) // expected-warning{{always false}}
+  if (a < 0)
     return; // expected-warning{{never executed}}
   free(b);
 }

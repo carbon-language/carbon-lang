@@ -100,7 +100,6 @@ def SignCompare : DiagGroup<"sign-compare">;
 def : DiagGroup<"stack-protector">;
 def : DiagGroup<"switch-default">;
 def : DiagGroup<"synth">;
-def TautologicalCompare : DiagGroup<"tautological-compare">;
 
 // Preprocessor warnings.
 def : DiagGroup<"builtin-macro-redefined">;
