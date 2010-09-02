@@ -1751,6 +1751,36 @@ CINDEX_LINKAGE unsigned clang_CXXMethod_isStatic(CXCursor C);
 CINDEX_LINKAGE enum CXCursorKind clang_getTemplateCursorKind(CXCursor C);
   
 /**
+ * \brief Given a cursor that may represent a specialization or instantiation
+ * of a template, retrieve the cursor that represents the template that it
+ * specializes or from which it was instantiated.
+ *
+ * This routine determines the template involved both for explicit 
+ * specializations of templates and for implicit instantiations of the template,
+ * both of which are referred to as "specializations". For a class template
+ * specialization (e.g., \c std::vector<bool>), this routine will return 
+ * either the primary template (\c std::vector) or, if the specialization was
+ * instantiated from a class template partial specialization, the class template
+ * partial specialization. For a class template partial specialization and a
+ * function template specialization (including instantiations), this
+ * this routine will return the specialized template.
+ *
+ * For members of a class template (e.g., member functions, member classes, or
+ * static data members), returns the specialized or instantiated member. 
+ * Although not strictly "templates" in the C++ language, members of class
+ * templates have the same notions of specializations and instantiations that
+ * templates do, so this routine treats them similarly.
+ *
+ * \param C A cursor that may be a specialization of a template or a member
+ * of a template.
+ *
+ * \returns If the given cursor is a specialization or instantiation of a 
+ * template or a member thereof, the template or member that it specializes or
+ * from which it was instantiated. Otherwise, returns a NULL cursor.
+ */
+CINDEX_LINKAGE CXCursor clang_getSpecializedCursorTemplate(CXCursor C);
+  
+/**
  * @}
  */
 

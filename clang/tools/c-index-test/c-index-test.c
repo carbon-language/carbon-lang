@@ -166,7 +166,8 @@ static void PrintCursor(CXCursor Cursor) {
     CXString string, ks;
     CXCursor Referenced;
     unsigned line, column;
-
+    CXCursor SpecializationOf;
+    
     ks = clang_getCursorKindSpelling(Cursor.kind);
     string = clang_getCursorSpelling(Cursor);
     printf("%s=%s", clang_getCString(ks),
@@ -223,6 +224,16 @@ static void PrintCursor(CXCursor Cursor) {
       
       printf(" [access=%s isVirtual=%s]", accessStr,
              isVirtual ? "true" : "false");
+    }
+    
+    SpecializationOf = clang_getSpecializedCursorTemplate(Cursor);
+    if (!clang_equalCursors(SpecializationOf, clang_getNullCursor())) {
+      CXSourceLocation Loc = clang_getCursorLocation(SpecializationOf);
+      CXString Name = clang_getCursorSpelling(SpecializationOf);
+      clang_getInstantiationLocation(Loc, 0, &line, &column, 0);
+      printf(" [Specialization of %s:%d:%d]", 
+             clang_getCString(Name), line, column);
+      clang_disposeString(Name);
     }
   }
 }

@@ -1300,7 +1300,8 @@ public:
     if (getSpecializationKind() != TSK_ImplicitInstantiation &&
         getSpecializationKind() != TSK_ExplicitInstantiationDefinition &&
         getSpecializationKind() != TSK_ExplicitInstantiationDeclaration)
-      return (ClassTemplateDecl*)0;
+      return llvm::PointerUnion<ClassTemplateDecl *,
+                                ClassTemplatePartialSpecializationDecl *>();
 
     if (SpecializedPartialSpecialization *PartialSpec
           = SpecializedTemplate.dyn_cast<SpecializedPartialSpecialization*>())
