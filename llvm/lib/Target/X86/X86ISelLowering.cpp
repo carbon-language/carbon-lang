@@ -5082,10 +5082,10 @@ SDValue getMOVLP(SDValue &Op, DebugLoc &dl, SelectionDAG &DAG, bool HasSSE2) {
   SDValue TmpV1 = V1;
   SDValue TmpV2 = V2;
 
-  // Trivial case, when V2 is a load.
-  if (TmpV2.getOpcode() == ISD::BIT_CONVERT)
+  // Trivial case, when V2 comes from a load.
+  if (TmpV2.hasOneUse() && TmpV2.getOpcode() == ISD::BIT_CONVERT)
     TmpV2 = TmpV2.getOperand(0);
-  if (TmpV2.getOpcode() == ISD::SCALAR_TO_VECTOR)
+  if (TmpV2.hasOneUse() && TmpV2.getOpcode() == ISD::SCALAR_TO_VECTOR)
     TmpV2 = TmpV2.getOperand(0);
   if (MayFoldLoad(TmpV2))
     CanFoldLoad = true;
@@ -5095,9 +5095,9 @@ SDValue getMOVLP(SDValue &Op, DebugLoc &dl, SelectionDAG &DAG, bool HasSSE2) {
   //    turns into:
   //  (MOVLPSmr addr:$src1, VR128:$src2)
   // So, recognize this potential and also use MOVLPS or MOVLPD
-  if (TmpV1.getOpcode() == ISD::BIT_CONVERT)
+  if (TmpV1.hasOneUse() && TmpV1.getOpcode() == ISD::BIT_CONVERT)
     TmpV1 = TmpV1.getOperand(0);
-  if (MayFoldLoad(TmpV1))
+  if (MayFoldLoad(TmpV1) && MayFoldIntoStore(Op))
     CanFoldLoad = true;
 
   if (CanFoldLoad) {
