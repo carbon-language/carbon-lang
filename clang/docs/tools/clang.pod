@@ -168,6 +168,10 @@ Enable support for Pascal-style strings with "\pfoo".
 
 Enable support for Microsoft extensions.
 
+=item B<-fborland-extensions>
+
+Enable support for Borland extensions.
+
 =item B<-fwritable-strings>
 
 Make all string literals default to writable.  This disables uniquing of

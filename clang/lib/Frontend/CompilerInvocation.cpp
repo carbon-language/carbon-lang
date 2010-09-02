@@ -526,6 +526,8 @@ static void LangOptsToArgs(const LangOptions &Opts,
     Res.push_back("-fgnu-keywords");
   if (Opts.Microsoft)
     Res.push_back("-fms-extensions");
+  if (Opts.Borland)
+    Res.push_back("-fborland-extensions");
   if (Opts.ObjCNonFragileABI)
     Res.push_back("-fobjc-nonfragile-abi");
   if (Opts.ObjCNonFragileABI2)
@@ -1317,6 +1319,7 @@ static void ParseLangArgs(LangOptions &Opts, ArgList &Args, InputKind IK,
                                    !Opts.AsmPreprocessor);
   Opts.PascalStrings = Args.hasArg(OPT_fpascal_strings);
   Opts.Microsoft = Args.hasArg(OPT_fms_extensions);
+  Opts.Borland = Args.hasArg(OPT_fborland_extensions);
   Opts.WritableStrings = Args.hasArg(OPT_fwritable_strings);
   Opts.ConstStrings = Args.hasArg(OPT_Wwrite_strings);
   if (Args.hasArg(OPT_fno_lax_vector_conversions))
