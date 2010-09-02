@@ -327,6 +327,7 @@ public:
   
   // Name visitor
   bool VisitDeclarationNameInfo(DeclarationNameInfo Name);
+  bool VisitNestedNameSpecifier(NestedNameSpecifier *NNS, SourceRange Range);
   
   // Template visitors
   bool VisitTemplateParameters(const TemplateParameterList *Params);
@@ -700,7 +701,10 @@ bool CursorVisitor::VisitFunctionDecl(FunctionDecl *ND) {
         (!FTL && Visit(TL)))
       return true;
     
-    // FIXME: Visit the nested-name-specifier, if present.
+    // Visit the nested-name-specifier, if present.
+    if (NestedNameSpecifier *Qualifier = ND->getQualifier())
+      if (VisitNestedNameSpecifier(Qualifier, ND->getQualifierRange()))
+        return true;
     
     // Visit the declaration name.
     if (VisitDeclarationNameInfo(ND->getNameInfo()))
@@ -934,14 +938,20 @@ bool CursorVisitor::VisitNamespaceDecl(NamespaceDecl *D) {
 }
 
 bool CursorVisitor::VisitNamespaceAliasDecl(NamespaceAliasDecl *D) {
-  // FIXME: Visit nested-name-specifier.
+  // Visit nested-name-specifier.
+  if (NestedNameSpecifier *Qualifier = D->getQualifier())
+    if (VisitNestedNameSpecifier(Qualifier, D->getQualifierRange()))
+      return true;
   
   return Visit(MakeCursorNamespaceRef(D->getAliasedNamespace(), 
                                       D->getTargetNameLoc(), TU));
 }
 
 bool CursorVisitor::VisitUsingDecl(UsingDecl *D) {
-  // FIXME: Visit nested-name-specifier.
+  // Visit nested-name-specifier.
+  if (NestedNameSpecifier *Qualifier = D->getTargetNestedNameDecl())
+    if (VisitNestedNameSpecifier(Qualifier, D->getNestedNameRange()))
+      return true;
   
   // FIXME: Provide a multi-reference of some kind for all of the declarations
   // that the using declaration refers to. We don't have this kind of cursor
@@ -951,21 +961,31 @@ bool CursorVisitor::VisitUsingDecl(UsingDecl *D) {
 }
 
 bool CursorVisitor::VisitUsingDirectiveDecl(UsingDirectiveDecl *D) {
-  // FIXME: Visit nested-name-specifier.
+  // Visit nested-name-specifier.
+  if (NestedNameSpecifier *Qualifier = D->getQualifier())
+    if (VisitNestedNameSpecifier(Qualifier, D->getQualifierRange()))
+      return true;
 
   return Visit(MakeCursorNamespaceRef(D->getNominatedNamespaceAsWritten(),
                                       D->getIdentLocation(), TU));
 }
 
 bool CursorVisitor::VisitUnresolvedUsingValueDecl(UnresolvedUsingValueDecl *D) {
-  // FIXME: Visit nested-name-specifier.
-  
+  // Visit nested-name-specifier.
+  if (NestedNameSpecifier *Qualifier = D->getTargetNestedNameSpecifier())
+    if (VisitNestedNameSpecifier(Qualifier, D->getTargetNestedNameRange()))
+      return true;
+
   return VisitDeclarationNameInfo(D->getNameInfo());
 }
 
 bool CursorVisitor::VisitUnresolvedUsingTypenameDecl(
                                                UnresolvedUsingTypenameDecl *D) {
-  // FIXME: Visit nested-name-specifier.
+  // Visit nested-name-specifier.
+  if (NestedNameSpecifier *Qualifier = D->getTargetNestedNameSpecifier())
+    if (VisitNestedNameSpecifier(Qualifier, D->getTargetNestedNameRange()))
+      return true;
+  
   return false;
 }
 
@@ -989,6 +1009,50 @@ bool CursorVisitor::VisitDeclarationNameInfo(DeclarationNameInfo Name) {
   case clang::DeclarationName::ObjCMultiArgSelector:
     // FIXME: Per-identifier location info?
     return false;
+  }
+  
+  return false;
+}
+
+bool CursorVisitor::VisitNestedNameSpecifier(NestedNameSpecifier *NNS, 
+                                             SourceRange Range) {
+  // FIXME: This whole routine is a hack to work around the lack of proper
+  // source information in nested-name-specifiers (PR5791). Since we do have
+  // a beginning source location, we can visit the first component of the
+  // nested-name-specifier, if it's a single-token component.
+  if (!NNS)
+    return false;
+  
+  // Get the first component in the nested-name-specifier.
+  while (NestedNameSpecifier *Prefix = NNS->getPrefix())
+    NNS = Prefix;
+  
+  switch (NNS->getKind()) {
+  case NestedNameSpecifier::Namespace:
+    // FIXME: The token at this source location might actually have been a
+    // namespace alias, but we don't model that. Lame!
+    return Visit(MakeCursorNamespaceRef(NNS->getAsNamespace(), Range.getBegin(),
+                                        TU));
+
+  case NestedNameSpecifier::TypeSpec: {
+    // If the type has a form where we know that the beginning of the source
+    // range matches up with a reference cursor. Visit the appropriate reference
+    // cursor.
+    Type *T = NNS->getAsType();
+    if (const TypedefType *Typedef = dyn_cast<TypedefType>(T))
+      return Visit(MakeCursorTypeRef(Typedef->getDecl(), Range.getBegin(), TU));
+    if (const TagType *Tag = dyn_cast<TagType>(T))
+      return Visit(MakeCursorTypeRef(Tag->getDecl(), Range.getBegin(), TU));
+    if (const TemplateSpecializationType *TST
+                                      = dyn_cast<TemplateSpecializationType>(T))
+      return VisitTemplateName(TST->getTemplateName(), Range.getBegin());
+    break;
+  }
+      
+  case NestedNameSpecifier::TypeSpecWithTemplate:
+  case NestedNameSpecifier::Global:
+  case NestedNameSpecifier::Identifier:
+    break;      
   }
   
   return false;

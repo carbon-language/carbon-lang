@@ -21,6 +21,11 @@ namespace std {
 
 using std::g;
 
+void std::g() {
+}
+
+namespace my_rel_ops = std::rel_ops;
+
 // RUN: c-index-test -test-load-source all %s | FileCheck %s
 // CHECK: load-namespaces.cpp:3:11: Namespace=std:3:11 (Definition) Extent=[3:11 - 7:2]
 // CHECK: load-namespaces.cpp:4:13: Namespace=rel_ops:4:13 (Definition) Extent=[4:13 - 6:4]
@@ -37,3 +42,9 @@ using std::g;
 // CHECK: load-namespaces.cpp:19:7: FunctionDecl=g:19:7 Extent=[19:7 - 19:13]
 // CHECK: load-namespaces.cpp:19:12: ParmDecl=:19:12 (Definition) Extent=[19:9 - 19:13]
 // CHECK: load-namespaces.cpp:22:12: UsingDeclaration=g:22:12 Extent=[22:1 - 22:13]
+// CHECK: load-namespaces.cpp:22:7: NamespaceRef=std:18:11 Extent=[22:7 - 22:10]
+// CHECK: load-namespaces.cpp:24:11: FunctionDecl=g:24:11 (Definition) Extent=[24:11 - 25:2]
+// CHECK: load-namespaces.cpp:24:6: NamespaceRef=std:18:11 Extent=[24:6 - 24:9]
+// CHECK: load-namespaces.cpp:27:11: NamespaceAlias=my_rel_ops:27:11 Extent=[27:1 - 27:36]
+// CHECK: load-namespaces.cpp:27:24: NamespaceRef=std:18:11 Extent=[27:24 - 27:27]
+// CHECK: load-namespaces.cpp:27:29: NamespaceRef=rel_ops:4:13 Extent=[27:29 - 27:36]
