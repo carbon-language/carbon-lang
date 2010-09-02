@@ -1635,10 +1635,11 @@ void AssemblyWriter::printFunction(const Function *F) {
   if (F->hasGC())
     Out << " gc \"" << F->getGC() << '"';
   if (F->isDeclaration()) {
-    Out << '\n';
+    Out << " ; [#uses=" << F->getNumUses() << "]\n";  // Output # uses
   } else {
-    Out << " {";
-    // Output all of the function's basic blocks.
+    Out << " { ; [#uses=" << F->getNumUses() << ']';  // Output # uses
+
+    // Output all of its basic blocks... for the function
     for (Function::const_iterator I = F->begin(), E = F->end(); I != E; ++I)
       printBasicBlock(I);
 
@@ -1687,7 +1688,7 @@ void AssemblyWriter::printBasicBlock(const BasicBlock *BB) {
     Out.PadToColumn(50);
     Out << "; Error: Block without parent!";
   } else if (BB != &BB->getParent()->getEntryBlock()) {  // Not the entry block?
-    // Output predecessors for the block.
+    // Output predecessors for the block...
     Out.PadToColumn(50);
     Out << ";";
     const_pred_iterator PI = pred_begin(BB), PE = pred_end(BB);
@@ -1725,6 +1726,13 @@ void AssemblyWriter::printInfoComment(const Value &V) {
     AnnotationWriter->printInfoComment(V, Out);
     return;
   }
+
+  if (V.getType()->isVoidTy()) return;
+  
+  Out.PadToColumn(50);
+  Out << "; <";
+  TypePrinter.print(V.getType(), Out);
+  Out << "> [#uses=" << V.getNumUses() << ']';  // Output # uses
 }
 
 // This member is called for each Instruction in a function..
