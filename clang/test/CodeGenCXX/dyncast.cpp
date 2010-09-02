@@ -86,15 +86,12 @@ void test1() {
 // CHECK-LL-NEXT:  [[tmp:%.*]] = load %class.test1_A** [[bp]]
 // CHECK-LL-NEXT:  [[v4:%.*]] = icmp ne %class.test1_A* [[tmp]], null
 // CHECK-LL-NEXT:  br i1 [[v4]], label %[[v5:.*]], label %[[v9:.*]]
-// CHECK-LL:       ; <label>:[[v5]]
-// CHECK-LL-NEXT:  [[v6:%.*]] = bitcast %class.test1_A* [[tmp]] to i8*
-// CHECK-LL-NEXT:  [[v7:%.*]] = call i8* @__dynamic_cast(i8* [[v6]], i8* bitcast (%0* @_ZTI7test1_B to i8*), i8* bitcast (%1* @_ZTI7test1_D to i8*), i64 -1) ; <i8*> [#uses=1]
+// CHECK-LL:       [[v6:%.*]] = bitcast %class.test1_A* [[tmp]] to i8*
+// CHECK-LL-NEXT:  [[v7:%.*]] = call i8* @__dynamic_cast(i8* [[v6]], i8* bitcast (%0* @_ZTI7test1_B to i8*), i8* bitcast (%1* @_ZTI7test1_D to i8*), i64 -1) 
 // CHECK-LL-NEXT:  [[v8:%.*]] = bitcast i8* [[v7]] to %class.test1_D*
 // CHECK-LL-NEXT:  br label %[[v10:.*]]
-// CHECK-LL:       ; <label>:[[v9]]
-// CHECK-LL-NEXT:  br label %[[v10]]
-// CHECK-LL:       ; <label>:[[v10]]
-// CHECK-LL-NEXT:  [[v11:%.*]] = phi %class.test1_D* [ [[v8]], %[[v5]] ], [ null, %[[v9]] ]
+// CHECK-LL:  br label %[[v10]]
+// CHECK-LL:  [[v11:%.*]] = phi %class.test1_D* [ [[v8]], %[[v5]] ], [ null, %[[v9]] ]
 // CHECK-LL-NEXT:  store %class.test1_D* [[v11]], %class.test1_D** [[dp]]
 // CHECK-LL-NEXT:  [[tmp4:%.*]] = load %class.test1_D** [[dp]]
 // CHECK-LL-NEXT:  [[cmp:%.*]] = icmp eq %class.test1_D* [[tmp4]], null
@@ -109,15 +106,12 @@ void test1() {
 // CHECK-LL-NEXT:  [[tmp6:%.*]] = load %class.test1_A** [[bp]]
 // CHECK-LL-NEXT:  [[v12:%.*]] = icmp ne %class.test1_A* [[tmp6]], null
 // CHECK-LL-NEXT:  br i1 [[v12]], label %[[v13:.*]], label %[[v17:.*]]
-// CHECK-LL:       ; <label>:[[v13]]
-// CHECK-LL-NEXT:  [[v14:%.*]] = bitcast %class.test1_A* [[tmp6]] to i8*
+// CHECK-LL:  [[v14:%.*]] = bitcast %class.test1_A* [[tmp6]] to i8*
 // CHECK-LL-NEXT:  [[v15:%.*]] = call i8* @__dynamic_cast(i8* [[v14]], i8* bitcast ({{.*}} @_ZTI7test1_B to i8*), i8* bitcast ({{.*}} @_ZTI7test1_A to i8*), i64 -1)
 // CHECK-LL-NEXT:  [[v16:%.*]] = bitcast i8* [[v15]] to %class.test1_A*
 // CHECK-LL-NEXT:  br label %[[v18:.*]]
-// CHECK-LL:       ; <label>:[[v17]]
-// CHECK-LL-NEXT:  br label %[[v18]]
-// CHECK-LL:       ; <label>:[[v18]]
-// CHECK-LL-NEXT:  [[v19:%.*]] = phi %class.test1_A* [ [[v16]], %[[v13]] ], [ null, %[[v17]] ]
+// CHECK-LL:  br label %[[v18]]
+// CHECK-LL:  [[v19:%.*]] = phi %class.test1_A* [ [[v16]], %[[v13]] ], [ null, %[[v17]] ]
 // CHECK-LL-NEXT:  store %class.test1_A* [[v19]], %class.test1_A** [[ap]]
 // CHECK-LL-NEXT:  [[tmp7:%.*]] = load %class.test1_A** [[ap]]
 // CHECK-LL-NEXT:  [[cmp8:%.*]] = icmp eq %class.test1_A* [[tmp7]], null
@@ -132,15 +126,12 @@ void test1() {
 // CHECK-LL-NEXT:  [[tmp14:%.*]] = load %class.test1_A** [[ap]]
 // CHECK-LL-NEXT:  [[v20:%.*]] = icmp ne %class.test1_A* [[tmp14]], null
 // CHECK-LL-NEXT:  br i1 [[v20]], label %[[v21:.*]], label %[[v25:.*]]
-// CHECK-LL:       ; <label>:[[v21]]
-// CHECK-LL-NEXT:  [[v22:%.*]] = bitcast %class.test1_A* [[tmp14]] to i8*
+// CHECK-LL:  [[v22:%.*]] = bitcast %class.test1_A* [[tmp14]] to i8*
 // CHECK-LL-NEXT:  [[v23:%.*]] = call i8* @__dynamic_cast({{.*}} [[v22]], i8* bitcast ({{.*}} @_ZTI7test1_A to i8*), i8* bitcast ({{.*}} @_ZTI7test1_B to i8*), i64 -1)
 // CHECK-LL-NEXT:  [[v24:%.*]] = bitcast i8* [[v23]] to %class.test1_A*
 // CHECK-LL-NEXT:  br label %[[v26:.*]]
-// CHECK-LL:       ; <label>:[[v25]]
-// CHECK-LL-NEXT:  br label %[[v26]]
-// CHECK-LL:       ; <label>:[[v26]]
-// CHECK-LL-NEXT:  [[v27:%.*]] = phi %class.test1_A* [ [[v24]], %[[v21]] ], [ null, %[[v25]] ]
+// CHECK-LL:  br label %[[v26]]
+// CHECK-LL:  [[v27:%.*]] = phi %class.test1_A* [ [[v24]], %[[v21]] ], [ null, %[[v25]] ]
 // CHECK-LL-NEXT:  store %class.test1_A* [[v27]], %class.test1_A** [[bp]]
 // CHECK-LL-NEXT:  [[tmp15:%.*]] = load %class.test1_A** [[bp]]
 // CHECK-LL-NEXT:  [[cmp16:%.*]] = icmp eq %class.test1_A* [[tmp15]], null
@@ -203,15 +194,12 @@ void test1() {
 // CHECK-LL-NEXT:  [[tmp54:%.*]] = load %class.test1_A** [[ap37]]
 // CHECK-LL-NEXT:  [[v34:%.*]] = icmp ne %class.test1_A* [[tmp54]], null
 // CHECK-LL-NEXT:  br i1 [[v34]], label %[[v35:.*]], label %[[v39:.*]]
-// CHECK-LL:       ; <label>:[[v35]]
-// CHECK-LL-NEXT:  [[v36:%.*]] = bitcast %class.test1_A* [[tmp54]] to i8*
+// CHECK-LL:       [[v36:%.*]] = bitcast %class.test1_A* [[tmp54]] to i8*
 // CHECK-LL-NEXT:  [[v37:%.*]] = call i8* @__dynamic_cast(i8* [[v36]], i8* bitcast ({{.*}} @_ZTI7test1_A to i8*), i8* bitcast ({{.*}} @_ZTI7test1_D to i8*), i64 -1)
 // CHECK-LL-NEXT:  [[v38:%.*]] = bitcast i8* [[v37]] to %class.test1_D*
 // CHECK-LL-NEXT:  br label %[[v40:.*]]
-// CHECK-LL:       ; <label>:[[v39]]
-// CHECK-LL-NEXT:  br label %[[v40]]
-// CHECK-LL:       ; <label>:[[v40]]
-// CHECK-LL-NEXT:  [[v41:%.*]] = phi %class.test1_D* [ [[v38]], %[[v35]] ], [ null, %[[v39]] ]
+// CHECK-LL:       br label %[[v40]]
+// CHECK-LL:       [[v41:%.*]] = phi %class.test1_D* [ [[v38]], %[[v35]] ], [ null, %[[v39]] ]
 // CHECK-LL-NEXT:  store %class.test1_D* [[v41]], %class.test1_D** [[dp53]]
 // CHECK-LL-NEXT:  [[tmp55:%.*]] = load %class.test1_D** [[dp53]]
 // CHECK-LL-NEXT:  [[cmp56:%.*]] = icmp eq %class.test1_D* [[tmp55]], null
@@ -226,15 +214,12 @@ void test1() {
 // CHECK-LL-NEXT:  [[tmp63:%.*]] = load %class.test1_A** [[ap37]]
 // CHECK-LL-NEXT:  [[v42:%.*]] = icmp ne %class.test1_A* [[tmp63]], null
 // CHECK-LL-NEXT:  br i1 [[v42]], label %[[v43:.*]], label %[[v47:.*]]
-// CHECK-LL:       ; <label>:[[v43]]
-// CHECK-LL-NEXT:  [[v44:%.*]] = bitcast %class.test1_A* [[tmp63]] to i8*
+// CHECK-LL:       [[v44:%.*]] = bitcast %class.test1_A* [[tmp63]] to i8*
 // CHECK-LL-NEXT:  [[v45:%.*]] = call i8* @__dynamic_cast(i8* [[v44]], i8* bitcast ({{.*}} @_ZTI7test1_A to i8*), i8* bitcast ({{.*}} @_ZTI7test1_E to i8*), i64 -1)
 // CHECK-LL-NEXT:  [[v46:%.*]] = bitcast i8* [[v45]] to %class.test1_E*
 // CHECK-LL-NEXT:  br label %[[v48:.*]]
-// CHECK-LL:       ; <label>:[[v47]]
-// CHECK-LL-NEXT:  br label %[[v48]]
-// CHECK-LL:       ; <label>:[[v48]]
-// CHECK-LL-NEXT:  [[v49:%.*]] = phi %class.test1_E* [ [[v46]], %[[v43]] ], [ null, %[[v47]] ]
+// CHECK-LL:       br label %[[v48]]
+// CHECK-LL:       [[v49:%.*]] = phi %class.test1_E* [ [[v46]], %[[v43]] ], [ null, %[[v47]] ]
 // CHECK-LL-NEXT:  store %class.test1_E* [[v49]], %class.test1_E** [[ep1]]
 // CHECK-LL-NEXT:  [[tmp64:%.*]] = load %class.test1_E** [[ep1]]
 // CHECK-LL-NEXT:  [[cmp65:%.*]] = icmp ne %class.test1_E* [[tmp64]], null
@@ -269,14 +254,11 @@ void test1() {
 // CHECK-LL-NEXT:  br label %[[ifend85]]
 // CHECK-LL:       [[ifend85]]
 // CHECK-LL-NEXT:  br i1 false, label %[[v50:.*]], label %[[v53:.*]]
-// CHECK-LL:       ; <label>:[[v50]]
-// CHECK-LL-NEXT:  [[v51:%.*]] = call i8* @__dynamic_cast(i8* null, i8* bitcast ({{.*}}* @_ZTI7test1_A to i8*), i8* bitcast ({{.*}} @_ZTI7test1_D to i8*), i64 -1)
+// CHECK-LL:       [[v51:%.*]] = call i8* @__dynamic_cast(i8* null, i8* bitcast ({{.*}}* @_ZTI7test1_A to i8*), i8* bitcast ({{.*}} @_ZTI7test1_D to i8*), i64 -1)
 // CHECK-LL-NEXT:  [[v52:%.*]] = bitcast i8* [[v51]] to %class.test1_D*
 // CHECK-LL-NEXT:  br label %[[v54:.*]]
-// CHECK-LL:       ; <label>:[[v53]]
-// CHECK-LL-NEXT:  br label %[[v54]]
-// CHECK-LL:       ; <label>:[[v54]]
-// CHECK-LL-NEXT:  [[v55:%.*]] = phi %class.test1_D* [ [[v52]], %[[v50]] ], [ null, %[[v53]] ]
+// CHECK-LL:       br label %[[v54]]
+// CHECK-LL:       [[v55:%.*]] = phi %class.test1_D* [ [[v52]], %[[v50]] ], [ null, %[[v53]] ]
 // CHECK-LL-NEXT:  store %class.test1_D* [[v55]], %class.test1_D** [[dp]]
 // CHECK-LL-NEXT:  [[tmp86:%.*]] = load %class.test1_D** [[dp]]
 // CHECK-LL-NEXT:  [[cmp87:%.*]] = icmp eq %class.test1_D* [[tmp86]], null
@@ -327,7 +309,7 @@ void test1() {
 // CHECK-LL:       [[ifend113]]
 // CHECK-LL-NEXT: store %class.test1_E* bitcast (%class.test1_F* @test1_f to %class.test1_E*), %class.test1_E** [[ep]]
 // CHECK-LL-NEXT:  [[tmp118:%.*]] = load %class.test1_E** [[ep]]
-// CHECK-LL-NEXT:  [[cmp122:%.*]] = icmp eq %class.test1_E* [[tmp118]], bitcast (%class.test1_F* @test1_f to %class.test1_E*) ; <i1> [#uses=1]
+// CHECK-LL-NEXT:  [[cmp122:%.*]] = icmp eq %class.test1_E* [[tmp118]], bitcast (%class.test1_F* @test1_f to %class.test1_E*) 
 
 // CHECK-LL-NEXT:  br i1 [[cmp122]], label %[[ifthen123:.*]], label %[[ifelse125:.*]]
 // CHECK-LL:       [[ifthen123]]
@@ -340,18 +322,15 @@ void test1() {
 // CHECK-LL-NEXT:  [[tmp129:%.*]] = load %class.test1_A** [[ap]]
 // CHECK-LL-NEXT:  [[v64:%.*]] = icmp ne %class.test1_A* [[tmp129]], null
 // CHECK-LL-NEXT:  br i1 [[v64]], label %[[v65:.*]], label %[[v70:.*]]
-// CHECK-LL:       ; <label>:[[v65]]
-// CHECK-LL-NEXT:  [[v66:%.*]] = bitcast %class.test1_A* [[tmp129]] to i64**
+// CHECK-LL:       [[v66:%.*]] = bitcast %class.test1_A* [[tmp129]] to i64**
 // CHECK-LL-NEXT:  [[vtable130:%.*]] = load i64** [[v66]]
 // CHECK-LL-NEXT:  [[v67:%.*]] = getelementptr inbounds i64* [[vtable130]], i64 -2
 // CHECK-LL-NEXT:  [[offsettotop:%.*]] = load i64* [[v67]]
 // CHECK-LL-NEXT:  [[v68:%.*]] = bitcast %class.test1_A* [[tmp129]] to i8*
 // CHECK-LL-NEXT:  [[v69:%.*]] = getelementptr inbounds i8* [[v68]], i64 [[offsettotop]]
 // CHECK-LL-NEXT:  br label %[[v71:.*]]
-// CHECK-LL:       ; <label>:[[v70]]
-// CHECK-LL-NEXT:  br label %[[v71]]
-// CHECK-LL:       ; <label>:[[v71]]
-// CHECK-LL-NEXT:  [[v72:%.*]] = phi i8* [ [[v69]], %[[v65]] ], [ null, %[[v70]] ]
+// CHECK-LL:       br label %[[v71]]
+// CHECK-LL:       [[v72:%.*]] = phi i8* [ [[v69]], %[[v65]] ], [ null, %[[v70]] ]
 // CHECK-LL-NEXT:  store i8* [[v72]], i8** [[vp]]
 // CHECK-LL-NEXT:  [[tmp131:%.*]] = load i8** [[vp]]
 // CHECK-LL-NEXT:  [[cmp132:%.*]] = icmp eq i8* [[tmp131]], getelementptr inbounds (%class.test1_D* @test1_d, i32 0, i32 0, i32 0)
@@ -366,18 +345,15 @@ void test1() {
 // CHECK-LL-NEXT:  [[tmp139:%.*]] = load %class.test1_A** [[ap]]
 // CHECK-LL-NEXT:  [[v73:%.*]] = icmp ne %class.test1_A* [[tmp139]], null
 // CHECK-LL-NEXT:  br i1 [[v73]], label %[[v74:.*]], label %[[v79:.*]]
-// CHECK-LL:       ; <label>:[[v74]]
-// CHECK-LL-NEXT:  [[v75:%.*]] = bitcast %class.test1_A* [[tmp139]] to i64**
+// CHECK-LL:       [[v75:%.*]] = bitcast %class.test1_A* [[tmp139]] to i64**
 // CHECK-LL-NEXT:  [[vtable140:%.*]] = load i64** [[v75]]
 // CHECK-LL-NEXT:  [[v76:%.*]] = getelementptr inbounds i64* [[vtable140]], i64 -2
 // CHECK-LL-NEXT:  [[offsettotop141:%.*]] = load i64* [[v76]]
 // CHECK-LL-NEXT:  [[v77:%.*]] = bitcast %class.test1_A* [[tmp139]] to i8*
 // CHECK-LL-NEXT:  [[v78:%.*]] = getelementptr inbounds i8* [[v77]], i64 [[offsettotop141]]
 // CHECK-LL-NEXT:  br label %[[v80:.*]]
-// CHECK-LL:       ; <label>:[[v79]]
-// CHECK-LL-NEXT:  br label %[[v80]]
-// CHECK-LL:       ; <label>:[[v80]]
-// CHECK-LL-NEXT:  [[v81:%.*]] = phi i8* [ [[v78]], %[[v74]] ], [ null, %[[v79]] ]
+// CHECK-LL:       br label %[[v80]]
+// CHECK-LL:       [[v81:%.*]] = phi i8* [ [[v78]], %[[v74]] ], [ null, %[[v79]] ]
 // CHECK-LL-NEXT:  store i8* [[v81]], i8** [[cvp]]
 // CHECK-LL-NEXT:  [[tmp142:%.*]] = load i8** [[cvp]]
 // CHECK-LL-NEXT:  [[cmp143:%.*]] = icmp eq i8* [[tmp142]], getelementptr inbounds (%class.test1_D* @test1_d, i32 0, i32 0, i32 0)

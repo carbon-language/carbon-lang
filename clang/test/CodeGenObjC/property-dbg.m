@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -S -g -masm-verbose -x objective-c < %s | grep setI | grep DW_AT_name
+// RUN: %clang_cc1 -S -g -masm-verbose -x objective-c < %s | grep DW_AT_name
 @interface Foo {
   int i;
 }
