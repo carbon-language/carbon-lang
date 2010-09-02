@@ -754,7 +754,8 @@ llvm::Value *CodeGenFunction::EmitCXXNewExpr(const CXXNewExpr *E) {
                                                    AllocType);
   }
 
-  const llvm::Type *ElementPtrTy = ConvertType(AllocType)->getPointerTo(AS);
+  const llvm::Type *ElementPtrTy
+    = ConvertTypeForMem(AllocType)->getPointerTo(AS);
   NewPtr = Builder.CreateBitCast(NewPtr, ElementPtrTy);
   if (E->isArray()) {
     EmitNewInitializer(*this, E, NewPtr, NumElements, AllocSizeWithoutCookie);
@@ -762,7 +763,7 @@ llvm::Value *CodeGenFunction::EmitCXXNewExpr(const CXXNewExpr *E) {
     // NewPtr is a pointer to the base element type.  If we're
     // allocating an array of arrays, we'll need to cast back to the
     // array pointer type.
-    const llvm::Type *ResultTy = ConvertType(E->getType());
+    const llvm::Type *ResultTy = ConvertTypeForMem(E->getType());
     if (NewPtr->getType() != ResultTy)
       NewPtr = Builder.CreateBitCast(NewPtr, ResultTy);
   } else {

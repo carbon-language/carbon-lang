@@ -158,4 +158,8 @@ void f() {
   // CHECK: call void @_ZN5AllocD1Ev(
   // CHECK: call void @_ZN5AllocdaEPv(i8*
   delete[] new Alloc[10][20];
+  // CHECK: call noalias i8* @_Znwm
+  // CHECK: call void @_ZdlPv(i8*
+  delete new bool;
+  // CHECK: ret void
 }
