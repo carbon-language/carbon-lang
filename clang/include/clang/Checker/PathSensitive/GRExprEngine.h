@@ -295,10 +295,9 @@ public:
                               const GRState *state,
                               ExplodedNode *Pred);
   
-  void CheckerVisitBind(const Stmt *AssignE, const Stmt *StoreE,
-                        ExplodedNodeSet &Dst, ExplodedNodeSet &Src, 
-                        SVal location, SVal val, bool isPrevisit);
-
+  void CheckerVisitBind(const Stmt *StoreE, ExplodedNodeSet &Dst,
+                        ExplodedNodeSet &Src,  SVal location, SVal val,
+                        bool isPrevisit);
 
   /// Visit - Transfer function logic for all statements.  Dispatches to
   ///  other functions that handle specific kinds of statements.
@@ -494,8 +493,7 @@ protected:
 
   /// EvalBind - Handle the semantics of binding a value to a specific location.
   ///  This method is used by EvalStore, VisitDeclStmt, and others.
-  void EvalBind(ExplodedNodeSet& Dst, const Stmt *AssignE,
-                const Stmt* StoreE, ExplodedNode* Pred,
+  void EvalBind(ExplodedNodeSet& Dst, const Stmt* StoreE, ExplodedNode* Pred,
                 const GRState* St, SVal location, SVal Val,
                 bool atDeclInit = false);
 

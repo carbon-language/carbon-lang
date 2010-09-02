@@ -25,9 +25,8 @@ class UndefinedAssignmentChecker
 public:
   UndefinedAssignmentChecker() : BT(0) {}
   static void *getTag();
-  virtual void PreVisitBind(CheckerContext &C, const Stmt *AssignE,
-                            const Stmt *StoreE, SVal location,
-                            SVal val);
+  virtual void PreVisitBind(CheckerContext &C, const Stmt *StoreE,
+                            SVal location, SVal val);
 };
 }
 
@@ -41,7 +40,6 @@ void *UndefinedAssignmentChecker::getTag() {
 }
 
 void UndefinedAssignmentChecker::PreVisitBind(CheckerContext &C,
-                                              const Stmt *AssignE,
                                               const Stmt *StoreE,
                                               SVal location,
                                               SVal val) {
@@ -61,8 +59,8 @@ void UndefinedAssignmentChecker::PreVisitBind(CheckerContext &C,
   // Generate a report for this bug.
   const Expr *ex = 0;
 
-  while (AssignE) {
-    if (const BinaryOperator *B = dyn_cast<BinaryOperator>(AssignE)) {
+  while (StoreE) {
+    if (const BinaryOperator *B = dyn_cast<BinaryOperator>(StoreE)) {
       if (B->isCompoundAssignmentOp()) {
         const GRState *state = C.getState();
         if (state->getSVal(B->getLHS()).isUndef()) {
@@ -77,7 +75,7 @@ void UndefinedAssignmentChecker::PreVisitBind(CheckerContext &C,
       break;
     }
 
-    if (const DeclStmt *DS = dyn_cast<DeclStmt>(AssignE)) {
+    if (const DeclStmt *DS = dyn_cast<DeclStmt>(StoreE)) {
       const VarDecl* VD = dyn_cast<VarDecl>(DS->getSingleDecl());
       ex = VD->getInit();
     }

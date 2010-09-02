@@ -226,7 +226,6 @@ private:
   // FIXME: Remove the 'tag' option.
   void GR_VisitBind(ExplodedNodeSet &Dst,
                     GRStmtNodeBuilder &Builder, GRExprEngine &Eng,
-                    const Stmt *AssignE,
                     const Stmt *StoreE, ExplodedNode *Pred, void *tag, 
                     SVal location, SVal val,
                     bool isPrevisit) {
@@ -234,7 +233,7 @@ private:
                      isPrevisit ? ProgramPoint::PreStmtKind :
                      ProgramPoint::PostStmtKind, 0, StoreE);
     assert(isPrevisit && "Only previsit supported for now.");
-    PreVisitBind(C, AssignE, StoreE, location, val);
+    PreVisitBind(C, StoreE, location, val);
   }
   
   // FIXME: Remove the 'tag' option.
@@ -264,8 +263,8 @@ public:
   virtual void _PreVisit(CheckerContext &C, const Stmt *S) {}
   virtual void _PostVisit(CheckerContext &C, const Stmt *S) {}
   virtual void VisitLocation(CheckerContext &C, const Stmt *S, SVal location) {}
-  virtual void PreVisitBind(CheckerContext &C, const Stmt *AssignE,
-                            const Stmt *StoreE, SVal location, SVal val) {}
+  virtual void PreVisitBind(CheckerContext &C, const Stmt *StoreE,
+                            SVal location, SVal val) {}
   virtual void EvalDeadSymbols(CheckerContext &C, SymbolReaper &SymReaper) {}
   virtual void EvalEndPath(GREndPathNodeBuilder &B, void *tag,
                            GRExprEngine &Eng) {}

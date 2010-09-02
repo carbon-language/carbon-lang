@@ -82,9 +82,8 @@ public:
   const GRState *EvalAssume(const GRState *state, SVal Cond, bool Assumption,
                             bool *respondsToCallback);
   void VisitLocation(CheckerContext &C, const Stmt *S, SVal l);
-  virtual void PreVisitBind(CheckerContext &C, const Stmt *AssignE,
-                            const Stmt *StoreE, SVal location,
-                            SVal val);
+  virtual void PreVisitBind(CheckerContext &C, const Stmt *StoreE,
+                            SVal location, SVal val);
 
 private:
   void MallocMem(CheckerContext &C, const CallExpr *CE);
@@ -676,7 +675,6 @@ void MallocChecker::VisitLocation(CheckerContext &C, const Stmt *S, SVal l) {
 }
 
 void MallocChecker::PreVisitBind(CheckerContext &C,
-                                 const Stmt *AssignE,
                                  const Stmt *StoreE,
                                  SVal location,
                                  SVal val) {

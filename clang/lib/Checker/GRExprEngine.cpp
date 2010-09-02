@@ -306,10 +306,9 @@ bool GRExprEngine::CheckerEvalCall(const CallExpr *CE,
 
 // FIXME: This is largely copy-paste from CheckerVisit().  Need to
 // unify.
-void GRExprEngine::CheckerVisitBind(const Stmt *AssignE, const Stmt *StoreE,
-                                    ExplodedNodeSet &Dst,
-                                    ExplodedNodeSet &Src,
-                                    SVal location, SVal val, bool isPrevisit) {
+void GRExprEngine::CheckerVisitBind(const Stmt *StoreE, ExplodedNodeSet &Dst,
+                                    ExplodedNodeSet &Src, SVal location,
+                                    SVal val, bool isPrevisit) {
 
   if (Checkers.empty()) {
     Dst.insert(Src);
@@ -334,7 +333,7 @@ void GRExprEngine::CheckerVisitBind(const Stmt *AssignE, const Stmt *StoreE,
 
     for (ExplodedNodeSet::iterator NI = PrevSet->begin(), NE = PrevSet->end();
          NI != NE; ++NI)
-      checker->GR_VisitBind(*CurrSet, *Builder, *this, AssignE, StoreE,
+      checker->GR_VisitBind(*CurrSet, *Builder, *this, StoreE,
                             *NI, tag, location, val, isPrevisit);
 
     // Update which NodeSet is the current one.
@@ -1816,16 +1815,15 @@ void GRExprEngine::VisitMemberExpr(const MemberExpr* M, ExplodedNode* Pred,
 
 /// EvalBind - Handle the semantics of binding a value to a specific location.
 ///  This method is used by EvalStore and (soon) VisitDeclStmt, and others.
-void GRExprEngine::EvalBind(ExplodedNodeSet& Dst, const Stmt *AssignE,
-                            const Stmt* StoreE, ExplodedNode* Pred,
-                            const GRState* state, SVal location, SVal Val,
-                            bool atDeclInit) {
+void GRExprEngine::EvalBind(ExplodedNodeSet& Dst, const Stmt* StoreE,
+                            ExplodedNode* Pred, const GRState* state,
+                            SVal location, SVal Val, bool atDeclInit) {
 
 
   // Do a previsit of the bind.
   ExplodedNodeSet CheckedSet, Src;
   Src.Add(Pred);
-  CheckerVisitBind(AssignE, StoreE, CheckedSet, Src, location, Val, true);
+  CheckerVisitBind(StoreE, CheckedSet, Src, location, Val, true);
 
   for (ExplodedNodeSet::iterator I = CheckedSet.begin(), E = CheckedSet.end();
        I!=E; ++I) {
@@ -1858,6 +1856,10 @@ void GRExprEngine::EvalBind(ExplodedNodeSet& Dst, const Stmt *AssignE,
     // The next thing to do is check if the GRTransferFuncs object wants to
     // update the state based on the new binding.  If the GRTransferFunc object
     // doesn't do anything, just auto-propagate the current state.
+    
+    // NOTE: We use 'AssignE' for the location of the PostStore if 'AssignE'
+    // is non-NULL.  Checkers typically care about 
+    
     GRStmtNodeBuilderRef BuilderRef(Dst, *Builder, *this, *I, newState, StoreE,
                                     newState != state);
 
@@ -1872,7 +1874,7 @@ void GRExprEngine::EvalBind(ExplodedNodeSet& Dst, const Stmt *AssignE,
 ///  @param location The location to store the value
 ///  @param Val The value to be stored
 void GRExprEngine::EvalStore(ExplodedNodeSet& Dst, const Expr *AssignE,
-                             const Expr* StoreE,
+                             const Expr* LocationE,
                              ExplodedNode* Pred,
                              const GRState* state, SVal location, SVal Val,
                              const void *tag) {
@@ -1881,7 +1883,7 @@ void GRExprEngine::EvalStore(ExplodedNodeSet& Dst, const Expr *AssignE,
 
   // Evaluate the location (checks for bad dereferences).
   ExplodedNodeSet Tmp;
-  EvalLocation(Tmp, StoreE, Pred, state, location, tag, false);
+  EvalLocation(Tmp, LocationE, Pred, state, location, tag, false);
 
   if (Tmp.empty())
     return;
@@ -1892,9 +1894,12 @@ void GRExprEngine::EvalStore(ExplodedNodeSet& Dst, const Expr *AssignE,
                                                    ProgramPoint::PostStoreKind);
   SaveAndRestore<const void*> OldTag(Builder->Tag, tag);
 
-  // Proceed with the store.
+  // Proceed with the store.  We use AssignE as the anchor for the PostStore
+  // ProgramPoint if it is non-NULL, and LocationE otherwise.
+  const Expr *StoreE = AssignE ? AssignE : LocationE;
+
   for (ExplodedNodeSet::iterator NI=Tmp.begin(), NE=Tmp.end(); NI!=NE; ++NI)
-    EvalBind(Dst, AssignE, StoreE, *NI, GetState(*NI), location, Val);
+    EvalBind(Dst, StoreE, *NI, GetState(*NI), location, Val);
 }
 
 void GRExprEngine::EvalLoad(ExplodedNodeSet& Dst, const Expr *Ex, 
@@ -2701,7 +2706,7 @@ void GRExprEngine::VisitDeclStmt(const DeclStmt *DS, ExplodedNode *Pred,
                                                Builder->getCurrentBlockCount());
       }
 
-      EvalBind(Dst, DS, DS, *I, state,
+      EvalBind(Dst, DS, *I, state,
                loc::MemRegionVal(state->getRegion(VD, LC)), InitVal, true);
     }
     else {
@@ -2733,7 +2738,7 @@ void GRExprEngine::VisitCondInit(const VarDecl *VD, const Stmt *S,
                                             Builder->getCurrentBlockCount());
     }
 
-    EvalBind(Dst, S, S, N, state,
+    EvalBind(Dst, S, N, state,
              loc::MemRegionVal(state->getRegion(VD, LC)), InitVal, true);
   }
 }

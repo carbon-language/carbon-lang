@@ -205,7 +205,7 @@ void test_null_field(void) {
 // CHECK:         </dict>
 // CHECK:         <dict>
 // CHECK:          <key>line</key><integer>10</integer>
-// CHECK:          <key>col</key><integer>3</integer>
+// CHECK:          <key>col</key><integer>7</integer>
 // CHECK:          <key>file</key><integer>0</integer>
 // CHECK:         </dict>
 // CHECK:        </array>
