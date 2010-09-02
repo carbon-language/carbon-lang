@@ -18,7 +18,7 @@ class HelloWorldTestCase(TestBase):
         self.buildDsym()
         self.hello_world_python(useLaunchAPI = False)
 
-    #@unittest2.expectedFailure
+    @unittest2.expectedFailure
     def test_with_dwarf_and_process_launch_api(self):
         """Create target, breakpoint, launch a process, and then kill it.
 

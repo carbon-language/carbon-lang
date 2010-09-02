@@ -10,7 +10,7 @@ class GlobalVariablesTestCase(TestBase):
     mydir = "global_variables"
 
     def test_global_variables(self):
-        """Test 'variable list -s -a' which omits args and shows scopes."""
+        """Test 'frame variable -s -a' which omits args and shows scopes."""
         exe = os.path.join(os.getcwd(), "a.out")
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 
@@ -30,7 +30,7 @@ class GlobalVariablesTestCase(TestBase):
             substrs = [' resolved, hit count = 1'])
 
         # Check that GLOBAL scopes are indicated for the variables.
-        self.expect("variable list -s -a", VARIABLES_DISPLAYED_CORRECTLY,
+        self.expect("frame variable -s -a", VARIABLES_DISPLAYED_CORRECTLY,
             substrs = ['GLOBAL: g_file_static_cstr',
                        '"g_file_static_cstr"',
                        'GLOBAL: g_file_global_int',

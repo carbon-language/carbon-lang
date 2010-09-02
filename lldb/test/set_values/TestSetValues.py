@@ -42,8 +42,8 @@ class SetValuesTestCase(TestBase):
             substrs = [' resolved, hit count = 1'])
 
         # main.c:15
-        # Check that 'variable list' displays the correct data type and value.
-        self.expect("variable list", VARIABLES_DISPLAYED_CORRECTLY,
+        # Check that 'frame variable' displays the correct data type and value.
+        self.expect("frame variable", VARIABLES_DISPLAYED_CORRECTLY,
             startstr = "i = (char) 'a'")
 
         # TODO:
@@ -52,8 +52,8 @@ class SetValuesTestCase(TestBase):
         self.runCmd("continue")
 
         # main.c:36
-        # Check that 'variable list' displays the correct data type and value.
-        self.expect("variable list", VARIABLES_DISPLAYED_CORRECTLY,
+        # Check that 'frame variable' displays the correct data type and value.
+        self.expect("frame variable", VARIABLES_DISPLAYED_CORRECTLY,
             startstr = "i = (short unsigned int) 0x0021")
 
         # TODO:
@@ -62,8 +62,8 @@ class SetValuesTestCase(TestBase):
         self.runCmd("continue")
 
         # main.c:57
-        # Check that 'variable list' displays the correct data type and value.
-        self.expect("variable list", VARIABLES_DISPLAYED_CORRECTLY,
+        # Check that 'frame variable' displays the correct data type and value.
+        self.expect("frame variable", VARIABLES_DISPLAYED_CORRECTLY,
             startstr = "i = (long int) 33")
 
         # TODO:
@@ -72,8 +72,8 @@ class SetValuesTestCase(TestBase):
         self.runCmd("continue")
 
         # main.c:78
-        # Check that 'variable list' displays the correct data type and value.
-        self.expect("variable list", VARIABLES_DISPLAYED_CORRECTLY,
+        # Check that 'frame variable' displays the correct data type and value.
+        self.expect("frame variable", VARIABLES_DISPLAYED_CORRECTLY,
             startstr = "i = (double) 3.14159")
 
         # TODO:
@@ -82,8 +82,8 @@ class SetValuesTestCase(TestBase):
         self.runCmd("continue")
 
         # main.c:85
-        # Check that 'variable list' displays the correct data type and value.
-        self.expect("variable list", VARIABLES_DISPLAYED_CORRECTLY,
+        # Check that 'frame variable' displays the correct data type and value.
+        self.expect("frame variable", VARIABLES_DISPLAYED_CORRECTLY,
             startstr = "i = (long double) ")
 
         # TODO:

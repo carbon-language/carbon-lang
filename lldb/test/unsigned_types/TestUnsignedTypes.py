@@ -32,7 +32,7 @@ class UnsignedTypesTestCase(TestBase):
             substrs = [' resolved, hit count = 1'])
 
         # Test that unsigned types display correctly.
-        self.expect("variable list -a", VARIABLES_DISPLAYED_CORRECTLY,
+        self.expect("frame variable -a", VARIABLES_DISPLAYED_CORRECTLY,
             startstr = "the_unsigned_char = (unsigned char) 'c'",
             substrs = ["the_unsigned_short = (short unsigned int) 0x0063",
                        "the_unsigned_int = (unsigned int) 0x00000063",

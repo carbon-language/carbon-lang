@@ -12,7 +12,7 @@ class BitfieldsTestCase(TestBase):
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @unittest2.expectedFailure
     def test_with_dsym_and_run_command(self):
-        """Test 'variable list ...' on a variable with bitfields."""
+        """Test 'frame variable ...' on a variable with bitfields."""
         self.buildDsym()
         self.bitfields_variable()
 
@@ -24,7 +24,7 @@ class BitfieldsTestCase(TestBase):
 
     @unittest2.expectedFailure
     def test_with_dwarf_and_run_command(self):
-        """Test 'variable list ...' on a variable with bitfields."""
+        """Test 'frame variable ...' on a variable with bitfields."""
         self.buildDwarf()
         self.bitfields_variable()
 
@@ -34,7 +34,7 @@ class BitfieldsTestCase(TestBase):
         self.bitfields_variable_python()
 
     def bitfields_variable(self):
-        """Test 'variable list ...' on a variable with bitfields."""
+        """Test 'frame variable ...' on a variable with bitfields."""
         exe = os.path.join(os.getcwd(), "a.out")
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 
@@ -54,7 +54,7 @@ class BitfieldsTestCase(TestBase):
             substrs = [' resolved, hit count = 1'])
 
         # This should display correctly.
-        self.expect("variable list bits", VARIABLES_DISPLAYED_CORRECTLY,
+        self.expect("frame variable bits", VARIABLES_DISPLAYED_CORRECTLY,
             substrs = ['(uint32_t:1) b1 = 0x00000001,',
                        '(uint32_t:2) b2 = 0x00000003,',
                        '(uint32_t:3) b3 = 0x00000007,',
@@ -66,7 +66,7 @@ class BitfieldsTestCase(TestBase):
 
         # And so should this.
         # rdar://problem/8348251
-        self.expect("variable list", VARIABLES_DISPLAYED_CORRECTLY,
+        self.expect("frame variable", VARIABLES_DISPLAYED_CORRECTLY,
             substrs = ['(uint32_t:1) b1 = 0x00000001,',
                        '(uint32_t:2) b2 = 0x00000003,',
                        '(uint32_t:3) b3 = 0x00000007,',

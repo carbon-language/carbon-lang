@@ -11,7 +11,7 @@ class ArrayTypesTestCase(TestBase):
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     def test_with_dsym_and_run_command(self):
-        """Test 'variable list var_name' on some variables with array types."""
+        """Test 'frame variable var_name' on some variables with array types."""
         self.buildDsym()
         self.array_types()
 
@@ -22,7 +22,7 @@ class ArrayTypesTestCase(TestBase):
         self.array_types_python()
 
     def test_with_dwarf_and_run_command(self):
-        """Test 'variable list var_name' on some variables with array types."""
+        """Test 'frame variable var_name' on some variables with array types."""
         self.buildDwarf()
         self.array_types()
 
@@ -32,7 +32,7 @@ class ArrayTypesTestCase(TestBase):
         self.array_types_python()
 
     def array_types(self):
-        """Test 'variable list var_name' on some variables with array types."""
+        """Test 'frame variable var_name' on some variables with array types."""
         exe = os.path.join(os.getcwd(), "a.out")
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 
@@ -53,7 +53,7 @@ class ArrayTypesTestCase(TestBase):
 
         # Issue 'variable list' command on several array-type variables.
 
-        self.expect("variable list strings", VARIABLES_DISPLAYED_CORRECTLY,
+        self.expect("frame variable strings", VARIABLES_DISPLAYED_CORRECTLY,
             startstr = '(char *[4])',
             substrs = ['(char *) strings[0]',
                        '(char *) strings[1]',
@@ -64,14 +64,14 @@ class ArrayTypesTestCase(TestBase):
                        'Bonjour',
                        'Guten Tag'])
 
-        self.expect("variable list char_16", VARIABLES_DISPLAYED_CORRECTLY,
+        self.expect("frame variable char_16", VARIABLES_DISPLAYED_CORRECTLY,
             substrs = ['(char) char_16[0]',
                        '(char) char_16[15]'])
 
-        self.expect("variable list ushort_matrix", VARIABLES_DISPLAYED_CORRECTLY,
+        self.expect("frame variable ushort_matrix", VARIABLES_DISPLAYED_CORRECTLY,
             startstr = '(unsigned short [2][3])')
 
-        self.expect("variable list long_6", VARIABLES_DISPLAYED_CORRECTLY,
+        self.expect("frame variable long_6", VARIABLES_DISPLAYED_CORRECTLY,
             startstr = '(long [6])')
 
     def array_types_python(self):

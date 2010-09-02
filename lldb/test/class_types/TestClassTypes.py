@@ -11,7 +11,7 @@ class ClassTypesTestCase(TestBase):
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     def test_with_dsym_and_run_command(self):
-        """Test 'variable list this' when stopped on a class constructor."""
+        """Test 'frame variable this' when stopped on a class constructor."""
         self.buildDsym()
         self.class_types()
 
@@ -22,11 +22,11 @@ class ClassTypesTestCase(TestBase):
         self.breakpoint_creation_by_filespec_python()
 
     # rdar://problem/8378863
-    # "variable list this" returns
+    # "frame variable this" returns
     # error: unable to find any variables named 'this'
     @unittest2.expectedFailure
     def test_with_dwarf_and_run_command(self):
-        """Test 'variable list this' when stopped on a class constructor."""
+        """Test 'frame variable this' when stopped on a class constructor."""
         self.buildDwarf()
         self.class_types()
 
@@ -36,7 +36,7 @@ class ClassTypesTestCase(TestBase):
         self.breakpoint_creation_by_filespec_python()
 
     def class_types(self):
-        """Test 'variable list this' when stopped on a class constructor."""
+        """Test 'frame variable this' when stopped on a class constructor."""
         exe = os.path.join(os.getcwd(), "a.out")
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 
@@ -56,7 +56,7 @@ class ClassTypesTestCase(TestBase):
             substrs = [' resolved, hit count = 1'])
 
         # We should be stopped on the ctor function of class C.
-        self.expect("variable list this", VARIABLES_DISPLAYED_CORRECTLY,
+        self.expect("frame variable this", VARIABLES_DISPLAYED_CORRECTLY,
             startstr = '(class C *const) this = ')
 
     def breakpoint_creation_by_filespec_python(self):
