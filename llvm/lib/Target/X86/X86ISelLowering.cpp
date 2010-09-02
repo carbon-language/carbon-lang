@@ -2601,7 +2601,14 @@ static bool isTargetShuffle(unsigned Opcode) {
   case X86ISD::MOVSLDUP:
   case X86ISD::MOVSS:
   case X86ISD::MOVSD:
+  case X86ISD::UNPCKLPS:
+  case X86ISD::PUNPCKLWD:
+  case X86ISD::PUNPCKLBW:
   case X86ISD::PUNPCKLDQ:
+  case X86ISD::UNPCKHPS:
+  case X86ISD::PUNPCKHWD:
+  case X86ISD::PUNPCKHBW:
+  case X86ISD::PUNPCKHDQ:
     return true;
   }
   return false;
@@ -2655,7 +2662,14 @@ static SDValue getTargetShuffleNode(unsigned Opc, DebugLoc dl, EVT VT,
   case X86ISD::MOVLPD:
   case X86ISD::MOVSS:
   case X86ISD::MOVSD:
+  case X86ISD::UNPCKLPS:
+  case X86ISD::PUNPCKLWD:
+  case X86ISD::PUNPCKLBW:
   case X86ISD::PUNPCKLDQ:
+  case X86ISD::UNPCKHPS:
+  case X86ISD::PUNPCKHWD:
+  case X86ISD::PUNPCKHBW:
+  case X86ISD::PUNPCKHDQ:
     return DAG.getNode(Opc, dl, VT, V1, V2);
   }
   return SDValue();
@@ -5181,9 +5195,30 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const {
     }
   }
 
-  if (OptForSize) { // NOTE: isPSHUFDMask can also match this mask...
-    if (HasSSE2 && X86::isUNPCKL_v_undef_Mask(SVOp) && VT == MVT::v4i32)
+  if (OptForSize && X86::isUNPCKL_v_undef_Mask(SVOp)) {
+    // NOTE: isPSHUFDMask can also match this mask, if speed is more
+    // important than size here, this will be matched by pshufd
+    if (VT == MVT::v4f32)
+      return getTargetShuffleNode(X86ISD::UNPCKLPS, dl, VT, V1, V1, DAG);
+    if (HasSSE2 && VT == MVT::v16i8)
+      return getTargetShuffleNode(X86ISD::PUNPCKLBW, dl, VT, V1, V1, DAG);
+    if (HasSSE2 && VT == MVT::v8i16)
+      return getTargetShuffleNode(X86ISD::PUNPCKLWD, dl, VT, V1, V1, DAG);
+    if (HasSSE2 && VT == MVT::v4i32)
       return getTargetShuffleNode(X86ISD::PUNPCKLDQ, dl, VT, V1, V1, DAG);
+  }
+
+  if (OptForSize && X86::isUNPCKH_v_undef_Mask(SVOp)) {
+    // NOTE: isPSHUFDMask can also match this mask, if speed is more
+    // important than size here, this will be matched by pshufd
+    if (VT == MVT::v4f32)
+      return getTargetShuffleNode(X86ISD::UNPCKHPS, dl, VT, V1, V1, DAG);
+    if (HasSSE2 && VT == MVT::v16i8)
+      return getTargetShuffleNode(X86ISD::PUNPCKHBW, dl, VT, V1, V1, DAG);
+    if (HasSSE2 && VT == MVT::v8i16)
+      return getTargetShuffleNode(X86ISD::PUNPCKHWD, dl, VT, V1, V1, DAG);
+    if (HasSSE2 && VT == MVT::v4i32)
+      return getTargetShuffleNode(X86ISD::PUNPCKHDQ, dl, VT, V1, V1, DAG);
   }
 
   if (X86::isPSHUFDMask(SVOp)) {
@@ -5291,8 +5326,7 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const {
     return getMOVL(DAG, dl, VT, V2, V1);
   }
 
-  if (X86::isUNPCKH_v_undef_Mask(SVOp) ||
-      X86::isUNPCKLMask(SVOp) ||
+  if (X86::isUNPCKLMask(SVOp) ||
       X86::isUNPCKHMask(SVOp))
     return Op;
 
@@ -5316,8 +5350,7 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const {
     // FIXME: this seems wrong.
     SDValue NewOp = CommuteVectorShuffle(SVOp, DAG);
     ShuffleVectorSDNode *NewSVOp = cast<ShuffleVectorSDNode>(NewOp);
-    if (X86::isUNPCKH_v_undef_Mask(NewSVOp) ||
-        X86::isUNPCKLMask(NewSVOp) ||
+    if (X86::isUNPCKLMask(NewSVOp) ||
         X86::isUNPCKHMask(NewSVOp))
       return NewOp;
   }
