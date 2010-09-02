@@ -4064,19 +4064,10 @@ SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I, unsigned Intrinsic) {
   }
   case Intrinsic::dbg_declare: {
     const DbgDeclareInst &DI = cast<DbgDeclareInst>(I);
-    if (!DIVariable(DI.getVariable()).Verify())
-      return 0;
-
     MDNode *Variable = DI.getVariable();
-    // Parameters are handled specially.
-    bool isParameter = 
-      DIVariable(Variable).getTag() == dwarf::DW_TAG_arg_variable;
     const Value *Address = DI.getAddress();
-    if (!Address)
+    if (!Address || !DIVariable(DI.getVariable()).Verify())
       return 0;
-    if (const BitCastInst *BCI = dyn_cast<BitCastInst>(Address))
-      Address = BCI->getOperand(0);
-    const AllocaInst *AI = dyn_cast<AllocaInst>(Address);
 
     // Build an entry in DbgOrdering.  Debug info input nodes get an SDNodeOrder
     // but do not always have a corresponding SDNode built.  The SDNodeOrder
@@ -4089,6 +4080,13 @@ SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I, unsigned Intrinsic) {
       N = UnusedArgNodeMap[Address];
     SDDbgValue *SDV;
     if (N.getNode()) {
+      // Parameters are handled specially.
+      bool isParameter = 
+        DIVariable(Variable).getTag() == dwarf::DW_TAG_arg_variable;
+      if (const BitCastInst *BCI = dyn_cast<BitCastInst>(Address))
+        Address = BCI->getOperand(0);
+      const AllocaInst *AI = dyn_cast<AllocaInst>(Address);
+
       if (isParameter && !AI) {
         FrameIndexSDNode *FINode = dyn_cast<FrameIndexSDNode>(N.getNode());
         if (FINode)
@@ -4113,7 +4111,7 @@ SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I, unsigned Intrinsic) {
       if (!EmitFuncArgumentDbgValue(Address, Variable, 0, N)) {
         SDV = DAG.getDbgValue(Variable, UndefValue::get(Address->getType()),
                               0, dl, SDNodeOrder);
-        DAG.AddDbgValue(SDV, 0, isParameter);
+        DAG.AddDbgValue(SDV, 0, false);
       }
     }
     return 0;
