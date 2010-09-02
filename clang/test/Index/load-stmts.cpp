@@ -33,6 +33,9 @@ void test_exprs(C *c) {
   int typeid_marker;
   typeid(C);
   typeid(c);
+  typedef int Integer;
+  Integer *int_ptr;
+  int_ptr->Integer::~Integer();
 }
 
 // RUN: c-index-test -test-load-source all %s | FileCheck %s
@@ -95,3 +98,8 @@ void test_exprs(C *c) {
 // CHECK: load-stmts.cpp:33:7: VarDecl=typeid_marker:33:7 (Definition)
 // CHECK: load-stmts.cpp:34:10: TypeRef=class C:22:7 Extent=[34:10 - 34:11]
 // CHECK: load-stmts.cpp:35:10: DeclRefExpr=c:32:20 Extent=[35:10 - 35:11]
+// CHECK: load-stmts.cpp:37:12: VarDecl=int_ptr:37:12 (Definition) Extent=[37:3 - 37:19]
+// CHECK: load-stmts.cpp:37:3: TypeRef=Integer:36:15 Extent=[37:3 - 37:10]
+// CHECK: load-stmts.cpp:38:3: DeclRefExpr=int_ptr:37:12 Extent=[38:3 - 38:10]
+// CHECK: load-stmts.cpp:38:12: TypeRef=Integer:36:15 Extent=[38:12 - 38:19]
+// CHECK: load-stmts.cpp:38:22: TypeRef=Integer:36:15 Extent=[38:22 - 38:29]

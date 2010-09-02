@@ -386,6 +386,10 @@ public:
   // FIXME: DesignatedInitExpr
   bool VisitCXXTypeidExpr(CXXTypeidExpr *E);
   bool VisitCXXDefaultArgExpr(CXXDefaultArgExpr *E) { return false; }
+  // FIXME: CXXTemporaryObjectExpr has poor source-location information
+  // FIXME: CXXScalarValueInitExpr has poor source-location information
+  // FIXME: CXXNewExpr has poor source-location information
+  bool VisitCXXPseudoDestructorExpr(CXXPseudoDestructorExpr *E);
 };
 
 } // end anonymous namespace
@@ -1578,6 +1582,30 @@ bool CursorVisitor::VisitCXXTypeidExpr(CXXTypeidExpr *E) {
   }
   
   return VisitExpr(E);
+}
+
+bool CursorVisitor::VisitCXXPseudoDestructorExpr(CXXPseudoDestructorExpr *E) {
+  // Visit base expression.
+  if (Visit(MakeCXCursor(E->getBase(), StmtParent, TU)))
+    return true;
+  
+  // Visit the nested-name-specifier.
+  if (NestedNameSpecifier *Qualifier = E->getQualifier())
+    if (VisitNestedNameSpecifier(Qualifier, E->getQualifierRange()))
+      return true;
+  
+  // Visit the scope type that looks disturbingly like the nested-name-specifier
+  // but isn't.
+  if (TypeSourceInfo *TSInfo = E->getScopeTypeInfo())
+    if (Visit(TSInfo->getTypeLoc()))
+      return true;
+  
+  // Visit the name of the type being destroyed.
+  if (TypeSourceInfo *TSInfo = E->getDestroyedTypeInfo())
+    if (Visit(TSInfo->getTypeLoc()))
+      return true;
+  
+  return false;
 }
 
 bool CursorVisitor::VisitObjCMessageExpr(ObjCMessageExpr *E) {
