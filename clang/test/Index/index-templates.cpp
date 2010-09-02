@@ -34,10 +34,10 @@ struct Z3 { };
 
 const unsigned OneDimension = 1;
 template<typename T, unsigned Dimensions = OneDimension>
-struct array;
+struct array { };
 
 template<template<typename, unsigned> class DataStructure = array>
-struct storage;
+struct storage { };
 
 typedef unsigned Unsigned;
 
@@ -45,6 +45,10 @@ template<typename T, Unsigned Value>
 struct value_c;
 
 template class vector<int*>;
+
+void template_exprs() {
+  f<Unsigned, OneDimension, array>(array<Unsigned, OneDimension>());
+}
 
 // RUN: c-index-test -test-load-source all %s | FileCheck -check-prefix=CHECK-LOAD %s
 // CHECK-LOAD: index-templates.cpp:4:6: FunctionTemplate=f:4:6 Extent=[3:1 - 4:22]
@@ -82,11 +86,11 @@ template class vector<int*>;
 // CHECK-LOAD: index-templates.cpp:35:16: VarDecl=OneDimension:35:16 (Definition) Extent=[35:7 - 35:32]
 // CHECK-LOAD: index-templates.cpp:35:31: UnexposedExpr= Extent=[35:31 - 35:32]
 // CHECK-LOAD: index-templates.cpp:35:31: UnexposedExpr= Extent=[35:31 - 35:32]
-// CHECK-LOAD: index-templates.cpp:37:8: ClassTemplate=array:37:8 Extent=[36:1 - 37:13]
+// CHECK-LOAD: index-templates.cpp:37:8: ClassTemplate=array:37:8 (Definition) Extent=[36:1 - 37:17]
 // CHECK-LOAD: index-templates.cpp:36:19: TemplateTypeParameter=T:36:19 (Definition) Extent=[36:19 - 36:20]
 // CHECK-LOAD: index-templates.cpp:36:31: NonTypeTemplateParameter=Dimensions:36:31 (Definition) Extent=[36:22 - 36:41]
 // CHECK-LOAD: index-templates.cpp:36:44: DeclRefExpr=OneDimension:35:16 Extent=[36:44 - 36:56]
-// CHECK-LOAD: index-templates.cpp:40:8: ClassTemplate=storage:40:8 Extent=[39:1 - 40:15]
+// CHECK-LOAD: index-templates.cpp:40:8: ClassTemplate=storage:40:8 (Definition) Extent=[39:1 - 40:19]
 // CHECK-LOAD: index-templates.cpp:39:45: TemplateTemplateParameter=DataStructure:39:45 (Definition) Extent=[39:10 - 39:66]
 // CHECK-LOAD: index-templates.cpp:39:19: TemplateTypeParameter=:39:19 (Definition) Extent=[39:19 - 39:27]
 // CHECK-LOAD: index-templates.cpp:39:37: NonTypeTemplateParameter=:39:37 (Definition) Extent=[39:29 - 39:38]
@@ -97,6 +101,11 @@ template class vector<int*>;
 // CHECK-LOAD: index-templates.cpp:44:31: NonTypeTemplateParameter=Value:44:31 (Definition) Extent=[44:22 - 44:36]
 // CHECK-LOAD: index-templates.cpp:44:22: TypeRef=Unsigned:42:18 Extent=[44:22 - 44:30]
 // CHECK-LOAD: index-templates.cpp:47:16: ClassDecl=vector:47:16 (Definition) [Specialization of vector:14:7] Extent=[47:1 - 47:22]
+// CHECK-LOAD: index-templates.cpp:49:6: FunctionDecl=template_exprs:49:6 (Definition) Extent=[49:6 - 51:2]
+// CHECK-LOAD: index-templates.cpp:50:3: DeclRefExpr=f:4:6 Extent=[50:3 - 50:35]
+// CHECK-LOAD: index-templates.cpp:50:5: TypeRef=Unsigned:42:18 Extent=[50:5 - 50:13]
+// CHECK-LOAD: index-templates.cpp:50:15: DeclRefExpr=OneDimension:35:16 Extent=[50:15 - 50:27]
+// CHECK-LOAD: index-templates.cpp:50:29: TemplateRef=array:37:8 Extent=[50:29 - 50:34]
 
 // RUN: c-index-test -test-load-source-usrs all %s | FileCheck -check-prefix=CHECK-USRS %s
 // CHECK-USRS: index-templates.cpp c:@FT@>3#T#Nt0.0#t>2#T#Nt1.0f#>t0.22t0.0# Extent=[3:1 - 4:22]

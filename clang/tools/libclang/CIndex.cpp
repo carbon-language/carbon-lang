@@ -369,7 +369,7 @@ public:
 //  bool VisitSwitchCase(SwitchCase *S);
 
   // Expression visitors
-  // FIXME: DeclRefExpr with template arguments, nested-name-specifier
+  bool VisitDeclRefExpr(DeclRefExpr *E);
   // FIXME: MemberExpr with template arguments, nested-name-specifier
   bool VisitCXXOperatorCallExpr(CXXOperatorCallExpr *E);
   bool VisitBlockExpr(BlockExpr *B);
@@ -1435,6 +1435,29 @@ bool CursorVisitor::VisitForStmt(ForStmt *S) {
   if (S->getBody() && Visit(MakeCXCursor(S->getBody(), StmtParent, TU)))
     return true;
 
+  return false;
+}
+
+bool CursorVisitor::VisitDeclRefExpr(DeclRefExpr *E) {
+  // Visit nested-name-specifier, if present.
+  if (NestedNameSpecifier *Qualifier = E->getQualifier())
+    if (VisitNestedNameSpecifier(Qualifier, E->getQualifierRange()))
+      return true;
+  
+  // Visit declaration name.
+  if (VisitDeclarationNameInfo(E->getNameInfo()))
+    return true;
+  
+  // Visit explicitly-specified template arguments.
+  if (E->hasExplicitTemplateArgs()) {
+    ExplicitTemplateArgumentList &Args = E->getExplicitTemplateArgs();
+    for (TemplateArgumentLoc *Arg = Args.getTemplateArgs(),
+                          *ArgEnd = Arg + Args.NumTemplateArgs;
+         Arg != ArgEnd; ++Arg)
+      if (VisitTemplateArgumentLoc(*Arg))
+        return true;
+  }
+  
   return false;
 }
 
