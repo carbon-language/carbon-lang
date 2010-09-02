@@ -641,19 +641,19 @@ needsStackRealignment(const MachineFunction &MF) const {
   unsigned StackAlign = MF.getTarget().getFrameInfo()->getStackAlignment();
   bool requiresRealignment = ((MFI->getMaxAlignment() > StackAlign) ||
                                F->hasFnAttr(Attribute::StackAlignment));
-    
+
   // FIXME: Currently we don't support stack realignment for functions with
   //        variable-sized allocas.
   // FIXME: It's more complicated than this...
   if (0 && requiresRealignment && MFI->hasVarSizedObjects())
     report_fatal_error(
       "Stack realignment in presense of dynamic allocas is not supported");
-  
+
   // FIXME: This probably isn't the right place for this.
   if (0 && requiresRealignment && AFI->isThumb1OnlyFunction())
     report_fatal_error(
       "Stack realignment in thumb1 functions is not supported");
-  
+
   return requiresRealignment && canRealignStack(MF);
 }
 
@@ -984,7 +984,7 @@ unsigned ARMBaseRegisterInfo::getRARegister() const {
   return ARM::LR;
 }
 
-unsigned 
+unsigned
 ARMBaseRegisterInfo::getFrameRegister(const MachineFunction &MF) const {
   if (hasFP(MF))
     return FramePtr;
@@ -1980,7 +1980,7 @@ emitEpilogue(MachineFunction &MF, MachineBasicBlock &MBB) const {
 
     // Jump to label or value in register.
     if (RetOpcode == ARM::TCRETURNdi) {
-      BuildMI(MBB, MBBI, dl, 
+      BuildMI(MBB, MBBI, dl,
             TII.get(STI.isThumb() ? ARM::TAILJMPdt : ARM::TAILJMPd)).
         addGlobalAddress(JumpTarget.getGlobal(), JumpTarget.getOffset(),
                          JumpTarget.getTargetFlags());
@@ -1995,7 +1995,7 @@ emitEpilogue(MachineFunction &MF, MachineBasicBlock &MBB) const {
     } else if (RetOpcode == ARM::TCRETURNriND) {
       BuildMI(MBB, MBBI, dl, TII.get(ARM::TAILJMPrND)).
         addReg(JumpTarget.getReg(), RegState::Kill);
-    } 
+    }
 
     MachineInstr *NewMI = prior(MBBI);
     for (unsigned i = 1, e = MBBI->getNumOperands(); i != e; ++i)
