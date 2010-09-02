@@ -43,7 +43,8 @@
    is to eliminate miscommunication, rework, and confusion that might arise from
    the distributed nature of LLVM's development.  By stating the policy in clear
    terms, we hope each developer can know ahead of time what to expect when
-   making LLVM contributions.</p>
+   making LLVM contributions.  This policy covers all llvm.org subprojects,
+   including Clang, LLDB, etc.</p>
 <p>This policy is also designed to accomplish the following objectives:</p>
 
 <ol>
@@ -77,17 +78,28 @@
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsection"> <a name="informed">Stay Informed</a> </div>
 <div class="doc_text">
-<p>Developers should stay informed by reading at least the 
-   <a href="http://lists.cs.uiuc.edu/mailman/listinfo/llvmdev">llvmdev</a> email
-  list.  If you are doing anything more than just casual work on LLVM, it is
-  suggested that you also subscribe to the
-  <a href="http://lists.cs.uiuc.edu/mailman/listinfo/llvm-commits">llvm-commits</a>
-  list and pay attention to changes being made by others.</p>
+<p>Developers should stay informed by reading at least the "dev" mailing list
+   for the projects you are interested in, such as 
+   <a href="http://lists.cs.uiuc.edu/mailman/listinfo/llvmdev">llvmdev</a> for
+   LLVM, <a href="http://lists.cs.uiuc.edu/mailman/listinfo/cfe-dev">cfe-dev</a>
+   for Clang, or <a
+   href="http://lists.cs.uiuc.edu/mailman/listinfo/lldb-dev">lldb-dev</a>
+   for LLDB.  If you are doing anything more than just casual work on LLVM, it
+   is suggested that you also subscribe to the "commits" mailing list for the
+   subproject you're interested in, such as
+  <a href="http://lists.cs.uiuc.edu/mailman/listinfo/llvm-commits">llvm-commits</a>,
+  <a href="http://lists.cs.uiuc.edu/mailman/listinfo/cfe-commits">cfe-commits</a>,
+  or <a href="http://lists.cs.uiuc.edu/mailman/listinfo/lldb-commits">lldb-commits</a>.
+   Reading the "commits" list and paying attention to changes being made by
+   others is a good way to see what other people are interested in and watching
+   the flow of the project as a whole.</p>
 
 <p>We recommend that active developers register an email account with 
    <a href="http://llvm.org/bugs/">LLVM Bugzilla</a> and preferably subscribe to
    the <a href="http://lists.cs.uiuc.edu/mailman/listinfo/llvmbugs">llvm-bugs</a>
-   email list to keep track of bugs and enhancements occurring in LLVM.</p>
+   email list to keep track of bugs and enhancements occurring in LLVM.  We
+   really appreciate people who are proactive at catching incoming bugs in their
+   components and dealing with them promptly.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
@@ -234,8 +246,9 @@
       them short.</li>
 </ol>
   
-<p>Note that llvm/test is designed for regression and small feature tests
-   only. More extensive test cases (e.g., entire applications, benchmarks, etc)
+<p>Note that llvm/test and clang/test are designed for regression and small
+   feature tests only. More extensive test cases (e.g., entire applications,
+   benchmarks, etc)
    should be added to the <tt>llvm-test</tt> test suite.  The llvm-test suite is
    for coverage (correctness, performance, etc) testing, not feature or
    regression testing.</p>
@@ -258,7 +271,7 @@
       testcase</a> so we know if the fix/feature ever regresses in the
       future.</li>
 
-  <li>Code must pass the dejagnu (<tt>llvm/test</tt>) test suite.</li>
+  <li>Code must pass the <tt>llvm/test</tt> test suite.</li>
 
   <li>The code must not cause regressions on a reasonable subset of llvm-test,
       where "reasonable" depends on the contributor's judgement and the scope of
