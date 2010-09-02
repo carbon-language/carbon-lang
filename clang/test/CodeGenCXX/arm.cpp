@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 %s -triple=thumbv7-apple-darwin3.0.0-iphoneos -fno-use-cxa-atexit -target-abi apcs-gnu -emit-llvm -o - -fexceptions | Filecheck %s
+// RUN: %clang_cc1 %s -triple=thumbv7-apple-darwin3.0.0-iphoneos -fno-use-cxa-atexit -target-abi apcs-gnu -emit-llvm -o - -fexceptions | FileCheck %s
 
 typedef typeof(sizeof(int)) size_t;
 
