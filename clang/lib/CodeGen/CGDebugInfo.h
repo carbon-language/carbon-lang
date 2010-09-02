@@ -232,6 +232,9 @@ private:
   /// name is constructred on demand (e.g. C++ destructor) then the name
   /// is stored on the side.
   llvm::StringRef getFunctionName(const FunctionDecl *FD);
+  /// getObjCMethodName - Returns the unmangled name of an Objective-C method.
+  /// This is the display name for the debugging info.  
+  llvm::StringRef getObjCMethodName(const ObjCMethodDecl *FD);
 
   /// getClassName - Get class name including template argument list.
   llvm::StringRef getClassName(RecordDecl *RD);

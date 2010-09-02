@@ -95,6 +95,24 @@ llvm::StringRef CGDebugInfo::getFunctionName(const FunctionDecl *FD) {
   return llvm::StringRef(StrPtr, NS.length());
 }
 
+llvm::StringRef CGDebugInfo::getObjCMethodName(const ObjCMethodDecl *OMD) {
+  llvm::SmallString<256> MethodName;
+  llvm::raw_svector_ostream OS(MethodName);
+  OS << (OMD->isInstanceMethod() ? '-' : '+') << '[';
+  const DeclContext *DC = OMD->getDeclContext();
+  if (const ObjCImplementationDecl *OID = dyn_cast<const ObjCImplementationDecl>(DC)) {
+     OS << OID->getName();
+  } else if (const ObjCCategoryImplDecl *OCD = dyn_cast<const ObjCCategoryImplDecl>(DC)){
+      OS << ((NamedDecl *)OCD)->getIdentifier()->getNameStart() << '(' <<
+          OCD->getIdentifier()->getNameStart() << ')';
+  }
+  OS << ' ' << OMD->getSelector().getAsString() << ']';
+
+  char *StrPtr = DebugInfoNames.Allocate<char>(OS.tell());
+  memcpy(StrPtr, MethodName.begin(), OS.tell());
+  return llvm::StringRef(StrPtr, OS.tell());
+}
+
 /// getClassName - Get class name including template argument list.
 llvm::StringRef 
 CGDebugInfo::getClassName(RecordDecl *RD) {
@@ -1472,18 +1490,7 @@ void CGDebugInfo::EmitFunctionStart(GlobalDecl GD, QualType FnType,
     // Use mangled name as linkage name for c/c++ functions.
     LinkageName = CGM.getMangledName(GD);
   } else if (const ObjCMethodDecl *OMD = dyn_cast<ObjCMethodDecl>(D)) {
-    llvm::SmallString<256> MethodName;
-    llvm::raw_svector_ostream OS(MethodName);
-    OS << (OMD->isInstanceMethod() ? '-' : '+') << '[';
-    const DeclContext *DC = OMD->getDeclContext();
-    if (const ObjCImplementationDecl *OID = dyn_cast<const ObjCImplementationDecl>(DC)) {
-       OS << OID->getName();
-    } else if (const ObjCCategoryImplDecl *OCD = dyn_cast<const ObjCCategoryImplDecl>(DC)){
-        OS << ((NamedDecl *)OCD)->getIdentifier()->getNameStart() << '(' <<
-            OCD->getIdentifier()->getNameStart() << ')';
-    }
-    OS << ' ' << OMD->getSelector().getAsString() << ']';
-    Name = MethodName;
+    Name = getObjCMethodName(OMD);
     LinkageName = Name;
   } else {
     // Use llvm function name as linkage name.
