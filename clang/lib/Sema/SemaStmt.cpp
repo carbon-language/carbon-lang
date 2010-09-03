@@ -1368,7 +1368,6 @@ StmtResult Sema::ActOnAsmStmt(SourceLocation AsmLoc,
   if (unsigned DiagID = NS->AnalyzeAsmString(Pieces, Context, DiagOffs)) {
     Diag(getLocationOfStringLiteralByte(AsmString, DiagOffs), DiagID)
            << AsmString->getSourceRange();
-    DeleteStmt(NS);
     return StmtError();
   }
 
@@ -1459,7 +1458,6 @@ StmtResult Sema::ActOnAsmStmt(SourceLocation AsmLoc,
          diag::err_asm_tying_incompatible_types)
       << InTy << OutTy << OutputExpr->getSourceRange()
       << InputExpr->getSourceRange();
-    DeleteStmt(NS);
     return StmtError();
   }
 

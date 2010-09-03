@@ -6094,7 +6094,6 @@ FieldDecl *Sema::CheckFieldDecl(DeclarationName Name, QualType T,
   if (!InvalidDecl && BitWidth &&
       VerifyBitField(Loc, II, T, BitWidth, &ZeroWidth)) {
     InvalidDecl = true;
-    DeleteExpr(BitWidth);
     BitWidth = 0;
     ZeroWidth = false;
   }
@@ -6390,7 +6389,6 @@ Decl *Sema::ActOnIvar(Scope *S,
     // 6.7.2.1p3, 6.7.2.1p4
     if (VerifyBitField(Loc, II, T, BitWidth)) {
       D.setInvalidType();
-      DeleteExpr(BitWidth);
       BitWidth = 0;
     }
   } else {

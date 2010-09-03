@@ -239,11 +239,6 @@ ExprValueKind Sema::CastCategory(Expr *E) {
       (Classification.isLValue() ? VK_LValue : VK_XValue);
 }
 
-void Sema::DeleteExpr(ExprTy *E) {
-}
-void Sema::DeleteStmt(StmtTy *S) {
-}
-
 /// \brief Used to prune the decls of Sema's UnusedFileScopedDecls vector.
 static bool ShouldRemoveFromUnused(Sema *SemaRef, const DeclaratorDecl *D) {
   if (D->isUsed())

@@ -2254,9 +2254,6 @@ Sema::ActOnSizeOfAlignOfExpr(SourceLocation OpLoc, bool isSizeof, bool isType,
   ExprResult Result
     = CreateSizeOfAlignOfExpr(ArgEx, OpLoc, isSizeof, ArgEx->getSourceRange());
 
-  if (Result.isInvalid())
-    DeleteExpr(ArgEx);
-
   return move(Result);
 }
 

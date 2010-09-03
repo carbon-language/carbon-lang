@@ -958,7 +958,6 @@ Sema::ActOnCXXMemberDeclarator(Scope *S, AccessSpecifier AS, Declarator &D,
   } else {
     Member = HandleDeclarator(S, D, move(TemplateParameterLists), IsDefinition);
     if (!Member) {
-      if (BitWidth) DeleteExpr(BitWidth);
       return 0;
     }
 
@@ -983,7 +982,6 @@ Sema::ActOnCXXMemberDeclarator(Scope *S, AccessSpecifier AS, Declarator &D,
           << BitWidth->getSourceRange();
       }
 
-      DeleteExpr(BitWidth);
       BitWidth = 0;
       Member->setInvalidDecl();
     }
