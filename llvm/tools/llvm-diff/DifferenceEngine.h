@@ -118,7 +118,7 @@ namespace llvm {
       virtual void logd(const DiffLogBuilder &Log) = 0;
 
     protected:
-      ~Consumer() {}
+      virtual ~Consumer() {}
     };
 
     /// A RAII object for recording the current context.
@@ -141,7 +141,7 @@ namespace llvm {
       virtual bool operator()(Value *L, Value *R) = 0;
 
     protected:
-      ~Oracle() {}
+      virtual ~Oracle() {}
     };
 
     DifferenceEngine(LLVMContext &context, Consumer &consumer)
