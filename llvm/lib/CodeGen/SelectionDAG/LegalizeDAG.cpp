@@ -1313,9 +1313,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
           }
           break;
         case TargetLowering::Expand:
-          if (!TLI.isLoadExtLegal(ISD::EXTLOAD, SrcVT)) {
-            // FIXME: If SrcVT isn't legal, then this introduces an illegal
-            // type.
+          if (!TLI.isLoadExtLegal(ISD::EXTLOAD, SrcVT) && isTypeLegal(SrcVT)) {
             SDValue Load = DAG.getLoad(SrcVT, dl, Tmp1, Tmp2, LD->getSrcValue(),
                                        LD->getSrcValueOffset(),
                                        LD->isVolatile(), LD->isNonTemporal(),
@@ -1335,6 +1333,10 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
             Tmp2 = LegalizeOp(Load.getValue(1));
             break;
           }
+          // FIXME: This does not work for vectors on most targets.  Sign- and
+          // zero-extend operations are currently folded into extending loads,
+          // whether they are legal or not, and then we end up here without any
+          // support for legalizing them.
           assert(ExtType != ISD::EXTLOAD &&
                  "EXTLOAD should always be supported!");
           // Turn the unsupported load into an EXTLOAD followed by an explicit
