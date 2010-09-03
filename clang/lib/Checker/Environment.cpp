@@ -80,7 +80,7 @@ SVal Environment::GetSVal(const Stmt *E, ValueManager& ValMgr) const {
   return LookupExpr(E);
 }
 
-Environment EnvironmentManager::BindExpr(Environment Env, const Stmt *S,
+Environment EnvironmentManager::bindExpr(Environment Env, const Stmt *S,
                                          SVal V, bool Invalidate) {
   assert(S);
 
@@ -92,6 +92,16 @@ Environment EnvironmentManager::BindExpr(Environment Env, const Stmt *S,
   }
 
   return Environment(F.Add(Env.ExprBindings, S, V));
+}
+
+static inline const Stmt *MakeLocation(const Stmt *S) {
+  return (const Stmt*) (((uintptr_t) S) | 0x1);
+}
+
+Environment EnvironmentManager::bindExprAndLocation(Environment Env,
+                                                    const Stmt *S,
+                                                    SVal location, SVal V) {
+  return Environment(F.Add(F.Add(Env.ExprBindings, MakeLocation(S), V), S, V));
 }
 
 namespace {
@@ -115,6 +125,12 @@ static bool isBlockExprInCallers(const Stmt *E, const LocationContext *LC) {
   return false;
 }
 
+// In addition to mapping from Stmt * - > SVals in the Environment, we also
+// maintain a mapping from Stmt * -> SVals (locations) that were used during
+// a load and store.
+static inline bool IsLocation(const Stmt *S) {
+  return (bool) (((uintptr_t) S) & 0x1);
+}
 
 // RemoveDeadBindings:
 //  - Remove subexpression bindings.
@@ -123,7 +139,6 @@ static bool isBlockExprInCallers(const Stmt *E, const LocationContext *LC) {
 //   - Mark their reachable symbols live in SymbolReaper,
 //     see ScanReachableSymbols.
 //   - Mark the region in DRoots if the binding is a loc::MemRegionVal.
-
 Environment
 EnvironmentManager::RemoveDeadBindings(Environment Env,
                                        SymbolReaper &SymReaper,
@@ -136,12 +151,25 @@ EnvironmentManager::RemoveDeadBindings(Environment Env,
   // individually removing all the subexpression bindings (which will greatly
   // outnumber block-level expression bindings).
   Environment NewEnv = getInitialEnvironment();
+  
+  llvm::SmallVector<std::pair<const Stmt*, SVal>, 10> deferredLocations;
 
   // Iterate over the block-expr bindings.
   for (Environment::iterator I = Env.begin(), E = Env.end();
        I != E; ++I) {
 
     const Stmt *BlkExpr = I.getKey();
+    
+    // For recorded locations (used when evaluating loads and stores), we
+    // consider them live only when their associated normal expression is
+    // also live.
+    // NOTE: This assumes that loads/stores that evaluated to UnknownVal
+    // still have an entry in the map.
+    if (IsLocation(BlkExpr)) {
+      deferredLocations.push_back(std::make_pair(BlkExpr, I.getData()));
+      continue;
+    }
+    
     const SVal &X = I.getData();
 
     // Block-level expressions in callers are assumed always live.
@@ -185,6 +213,15 @@ EnvironmentManager::RemoveDeadBindings(Environment Env,
     // SVal.
     if (X.isUndef() && cast<UndefinedVal>(X).getData())
       NewEnv.ExprBindings = F.Add(NewEnv.ExprBindings, BlkExpr, X);
+  }
+  
+  // Go through he deferred locations and add them to the new environment if
+  // the correspond Stmt* is in the map as well.
+  for (llvm::SmallVectorImpl<std::pair<const Stmt*, SVal> >::iterator
+      I = deferredLocations.begin(), E = deferredLocations.end(); I != E; ++I) {
+    const Stmt *S = (Stmt*) (((uintptr_t) I->first) & (uintptr_t) ~0x1);
+    if (NewEnv.ExprBindings.lookup(S))
+      NewEnv.ExprBindings = F.Add(NewEnv.ExprBindings, I->first, I->second);
   }
 
   return NewEnv;

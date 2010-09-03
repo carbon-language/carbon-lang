@@ -206,12 +206,25 @@ SVal GRState::getSimplifiedSVal(Loc location, QualType T) const {
   return V;
 }
 
-const GRState *GRState::BindExpr(const Stmt* Ex, SVal V, bool Invalidate) const{
-  Environment NewEnv = getStateManager().EnvMgr.BindExpr(Env, Ex, V,
+const GRState *GRState::BindExpr(const Stmt* S, SVal V, bool Invalidate) const{
+  Environment NewEnv = getStateManager().EnvMgr.bindExpr(Env, S, V,
                                                          Invalidate);
   if (NewEnv == Env)
     return this;
 
+  GRState NewSt = *this;
+  NewSt.Env = NewEnv;
+  return getStateManager().getPersistentState(NewSt);
+}
+
+const GRState *GRState::bindExprAndLocation(const Stmt *S, SVal location,
+                                            SVal V) const {
+  Environment NewEnv =
+    getStateManager().EnvMgr.bindExprAndLocation(Env, S, location, V);
+
+  if (NewEnv == Env)
+    return this;
+  
   GRState NewSt = *this;
   NewSt.Env = NewEnv;
   return getStateManager().getPersistentState(NewSt);
@@ -295,6 +308,11 @@ const GRState* GRState::makeWithStore(Store store) const {
 //  State pretty-printing.
 //===----------------------------------------------------------------------===//
 
+static bool IsEnvLoc(const Stmt *S) {
+  // FIXME: This is a layering violation.  Should be in environment.
+  return (bool) (((uintptr_t) S) & 0x1);
+}
+
 void GRState::print(llvm::raw_ostream& Out, CFG &C, const char* nl,
                     const char* sep) const {
   // Print the store.
@@ -304,8 +322,9 @@ void GRState::print(llvm::raw_ostream& Out, CFG &C, const char* nl,
   // Print Subexpression bindings.
   bool isFirst = true;
 
+  // FIXME: All environment printing should be moved inside Environment.
   for (Environment::iterator I = Env.begin(), E = Env.end(); I != E; ++I) {
-    if (C.isBlkExpr(I.getKey()))
+    if (C.isBlkExpr(I.getKey()) || IsEnvLoc(I.getKey()))
       continue;
 
     if (isFirst) {
@@ -336,6 +355,27 @@ void GRState::print(llvm::raw_ostream& Out, CFG &C, const char* nl,
     Out << " (" << (void*) I.getKey() << ") ";
     LangOptions LO; // FIXME.
     I.getKey()->printPretty(Out, 0, PrintingPolicy(LO));
+    Out << " : " << I.getData();
+  }
+  
+  // Print locations.
+  isFirst = true;
+  
+  for (Environment::iterator I = Env.begin(), E = Env.end(); I != E; ++I) {
+    if (!IsEnvLoc(I.getKey()))
+      continue;
+    
+    if (isFirst) {
+      Out << nl << nl << "Load/store locations:" << nl;
+      isFirst = false;
+    }
+    else { Out << nl; }
+
+    const Stmt *S = (Stmt*) (((uintptr_t) I.getKey()) & ((uintptr_t) ~0x1));
+    
+    Out << " (" << (void*) S << ") ";
+    LangOptions LO; // FIXME.
+    S->printPretty(Out, 0, PrintingPolicy(LO));
     Out << " : " << I.getData();
   }
 

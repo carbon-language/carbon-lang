@@ -83,8 +83,14 @@ public:
     return Environment(F.GetEmptyMap());
   }
 
-  Environment BindExpr(Environment Env, const Stmt *S, SVal V,
+  /// Bind the value 'V' to the statement 'S'.
+  Environment bindExpr(Environment Env, const Stmt *S, SVal V,
                        bool Invalidate);
+  
+  /// Bind the location 'location' and value 'V' to the statement 'S'.  This
+  /// is used when simulating loads/stores.
+  Environment bindExprAndLocation(Environment Env, const Stmt *S, SVal location,
+                                  SVal V);
 
   Environment RemoveDeadBindings(Environment Env,
                                  SymbolReaper &SymReaper, const GRState *ST,

@@ -201,8 +201,15 @@ public:
                                      const LocationContext *LC,
                                      SVal V) const;
 
+  /// Create a new state by binding the value 'V' to the statement 'S' in the
+  /// state's environment.
   const GRState *BindExpr(const Stmt *S, SVal V, bool Invalidate = true) const;
 
+  /// Create a new state by binding the value 'V' and location 'locaton' to the
+  /// statement 'S' in the state's environment.
+  const GRState *bindExprAndLocation(const Stmt *S, SVal location, SVal V)
+    const;
+  
   const GRState *bindDecl(const VarRegion *VR, SVal V) const;
 
   const GRState *bindDeclWithNoInit(const VarRegion *VR) const;
