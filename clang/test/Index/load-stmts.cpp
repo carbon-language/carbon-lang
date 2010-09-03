@@ -51,6 +51,7 @@ void test_dependent_exprs(T t) {
   N::f(t);
   typedef T type;
   N::g<type>(t);
+  type::template f<type*>(t);
 }
 
 // RUN: c-index-test -test-load-source all %s | FileCheck %s
@@ -127,3 +128,7 @@ void test_dependent_exprs(T t) {
 // CHECK: load-stmts.cpp:53:3: NamespaceRef=N:41:11 Extent=[53:3 - 53:4]
 // CHECK: load-stmts.cpp:53:8: TypeRef=type:52:13 Extent=[53:8 - 53:12]
 // CHECK: load-stmts.cpp:53:14: DeclRefExpr=t:50:29 Extent=[53:14 - 53:15]
+// CHECK: load-stmts.cpp:54:3: CallExpr= Extent=[54:3 - 54:29]
+// CHECK: load-stmts.cpp:54:3: TypeRef=type:52:13 Extent=[54:3 - 54:7]
+// CHECK: load-stmts.cpp:54:20: TypeRef=type:52:13 Extent=[54:20 - 54:24]
+// CHECK: load-stmts.cpp:54:27: DeclRefExpr=t:50:29 Extent=[54:27 - 54:28]
