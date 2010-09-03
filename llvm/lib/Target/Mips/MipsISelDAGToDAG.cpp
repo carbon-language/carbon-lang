@@ -184,8 +184,9 @@ SDNode *MipsDAGToDAGISel::SelectLoadFp64(SDNode *N) {
   if (!Subtarget.isMips1() || NVT != MVT::f64)
     return NULL;
 
-  if (!Predicate_unindexedload(N) ||
-      !Predicate_load(N))
+  LoadSDNode *LN = cast<LoadSDNode>(N);
+  if (LN->getExtensionType() != ISD::NON_EXTLOAD ||
+      LN->getAddressingMode() != ISD::UNINDEXED)
     return NULL;
 
   SDValue Chain = N->getOperand(0);
