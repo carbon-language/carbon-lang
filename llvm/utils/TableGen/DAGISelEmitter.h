@@ -31,8 +31,6 @@ public:
 
   // run - Output the isel, returning true on failure.
   void run(raw_ostream &OS);
-private:
-  void EmitPredicateFunctions(raw_ostream &OS);
 };
 
 } // End llvm namespace

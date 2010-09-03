@@ -57,51 +57,6 @@ static unsigned getResultPatternSize(TreePatternNode *P,
   return Cost;
 }
 
-//===----------------------------------------------------------------------===//
-// Predicate emitter implementation.
-//
-
-void DAGISelEmitter::EmitPredicateFunctions(raw_ostream &OS) {
-  OS << "\n// Predicate functions.\n";
-
-  // Walk the pattern fragments, adding them to a map, which sorts them by
-  // name.
-  typedef std::map<std::string, std::pair<Record*, TreePattern*> > PFsByNameTy;
-  PFsByNameTy PFsByName;
-
-  for (CodeGenDAGPatterns::pf_iterator I = CGP.pf_begin(), E = CGP.pf_end();
-       I != E; ++I)
-    PFsByName.insert(std::make_pair(I->first->getName(), *I));
-
-  
-  for (PFsByNameTy::iterator I = PFsByName.begin(), E = PFsByName.end();
-       I != E; ++I) {
-    Record *PatFragRecord = I->second.first;// Record that derives from PatFrag.
-    TreePattern *P = I->second.second;
-    
-    // If there is a code init for this fragment, emit the predicate code.
-    std::string Code = PatFragRecord->getValueAsCode("Predicate");
-    if (Code.empty()) continue;
-    
-    if (P->getOnlyTree()->isLeaf())
-      OS << "inline bool Predicate_" << PatFragRecord->getName()
-      << "(SDNode *N) const {\n";
-    else {
-      std::string ClassName =
-        CGP.getSDNodeInfo(P->getOnlyTree()->getOperator()).getSDClassName();
-      const char *C2 = ClassName == "SDNode" ? "N" : "inN";
-      
-      OS << "inline bool Predicate_" << PatFragRecord->getName()
-         << "(SDNode *" << C2 << ") const {\n";
-      if (ClassName != "SDNode")
-        OS << "  " << ClassName << " *N = cast<" << ClassName << ">(inN);\n";
-    }
-    OS << Code << "\n}\n";
-  }
-  
-  OS << "\n\n";
-}
-
 namespace {
 // PatternSortingPredicate - return true if we prefer to match LHS before RHS.
 // In particular, we want to match maximal patterns first and lowest cost within
@@ -167,9 +122,6 @@ void DAGISelEmitter::run(raw_ostream &OS) {
           errs() << "\nRESULT:  "; I->getDstPattern()->dump();
           errs() << "\n";
         });
-
-  // FIXME: These are being used by hand written code, gross.
-  EmitPredicateFunctions(OS);
 
   // Add all the patterns to a temporary list so we can sort them.
   std::vector<const PatternToMatch*> Patterns;
