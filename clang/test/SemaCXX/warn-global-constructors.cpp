@@ -56,3 +56,26 @@ namespace test4 {
   char b[5] = "hello";
   char c[][5] = { "hello" };
 }
+
+namespace test5 {
+  struct A { A(); };
+
+  void f1() {
+    static A a;
+  }
+  void f2() {
+    static A& a = *new A;
+  }
+}
+
+namespace test6 {
+  struct A { ~A(); };
+
+  void f1() {
+    static A a; // expected-warning {{global destructor}}
+  }
+  void f2() {
+    static A& a = *new A;
+  }
+
+}

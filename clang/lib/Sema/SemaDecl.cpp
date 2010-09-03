@@ -4280,7 +4280,7 @@ void Sema::AddInitializerToDecl(Decl *RealDecl, Expr *Init, bool DirectInit) {
   if (getLangOptions().CPlusPlus) {
     if (!VDecl->isInvalidDecl() &&
         !VDecl->getDeclContext()->isDependentContext() &&
-        VDecl->hasGlobalStorage() &&
+        VDecl->hasGlobalStorage() && !VDecl->isStaticLocal() &&
         !Init->isConstantInitializer(Context,
                                      VDecl->getType()->isReferenceType()))
       Diag(VDecl->getLocation(), diag::warn_global_constructor)
@@ -4492,7 +4492,7 @@ void Sema::ActOnUninitializedDecl(Decl *RealDecl,
         Var->setInit(MaybeCreateCXXExprWithTemporaries(Init.takeAs<Expr>()));
 
         if (getLangOptions().CPlusPlus && !Var->isInvalidDecl() && 
-            Var->hasGlobalStorage() &&
+            Var->hasGlobalStorage() && !Var->isStaticLocal() &&
             !Var->getDeclContext()->isDependentContext() &&
             !Var->getInit()->isConstantInitializer(Context, false))
           Diag(Var->getLocation(), diag::warn_global_constructor);
