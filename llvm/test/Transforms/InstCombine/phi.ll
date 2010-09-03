@@ -402,3 +402,24 @@ if.else:                                          ; preds = %entry
   store i32 %tmp5, i32* %res
   br label %if.end
 }
+
+; PR4413
+declare i32 @ext()
+; CHECK: @test17
+define i32 @test17(i1 %a) {
+entry:
+    br i1 %a, label %bb1, label %bb2
+
+bb1:        ; preds = %entry
+    %0 = tail call i32 @ext()        ; <i32> [#uses=1]
+    br label %bb2
+
+bb2:        ; preds = %bb1, %entry
+    %cond = phi i1 [ true, %bb1 ], [ false, %entry ]        ; <i1> [#uses=1]
+; CHECK-NOT: %val = phi i32 [ %0, %bb1 ], [ 0, %entry ]
+    %val = phi i32 [ %0, %bb1 ], [ 0, %entry ]        ; <i32> [#uses=1]
+    %res = select i1 %cond, i32 %val, i32 0        ; <i32> [#uses=1]
+; CHECK: ret i32 %cond
+    ret i32 %res
+}
+
