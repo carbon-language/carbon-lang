@@ -373,7 +373,7 @@ const llvm::Type *CodeGenFunction::BuildByRefType(const ValueDecl *D) {
   }
 
   // T x;
-  Types.push_back(ConvertTypeForMem(Ty));
+  Types.push_back(ConvertType(Ty));
   
   const llvm::Type *T = llvm::StructType::get(VMContext, Types, Packed);
   
