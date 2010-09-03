@@ -305,7 +305,7 @@ public:
 
   /// getLocalFrameMaxAlign - Return the required alignment of the local
   /// object blob.
-  unsigned getLocalFrameMaxAlign() { return LocalFrameMaxAlign; }
+  unsigned getLocalFrameMaxAlign() const { return LocalFrameMaxAlign; }
 
   /// getUseLocalStackAllocationBlock - Get whether the local allocation blob
   /// should be allocated together or let PEI allocate the locals in it
