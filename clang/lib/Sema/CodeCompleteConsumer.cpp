@@ -666,14 +666,6 @@ bool clang::operator<(const CodeCompletionResult &X,
   cmp = XStr.compare(YStr);
   if (cmp)
     return cmp < 0;
-
-  // Non-hidden names precede hidden names.
-  if (X.Hidden != Y.Hidden)
-    return !X.Hidden;
-  
-  // Non-nested-name-specifiers precede nested-name-specifiers.
-  if (X.StartsNestedNameSpecifier != Y.StartsNestedNameSpecifier)
-    return !X.StartsNestedNameSpecifier;
   
   return false;
 }
