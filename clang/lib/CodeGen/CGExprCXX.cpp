@@ -93,14 +93,9 @@ RValue CodeGenFunction::EmitCXXMemberCallExpr(const CXXMemberCallExpr *CE,
     return EmitCall(getContext().getPointerType(MD->getType()), Callee,
                     ReturnValue, CE->arg_begin(), CE->arg_end());
   }
-  
-  const FunctionProtoType *FPT = MD->getType()->getAs<FunctionProtoType>();
 
-  const llvm::Type *Ty =
-    CGM.getTypes().GetFunctionType(CGM.getTypes().getFunctionInfo(MD),
-                                   FPT->isVariadic());
+  // Compute the object pointer.
   llvm::Value *This;
-
   if (ME->isArrow())
     This = EmitScalarExpr(ME->getBase());
   else {
@@ -108,7 +103,10 @@ RValue CodeGenFunction::EmitCXXMemberCallExpr(const CXXMemberCallExpr *CE,
     This = BaseLV.getAddress();
   }
 
-  if (MD->isCopyAssignment() && MD->isTrivial()) {
+  if (MD->isTrivial()) {
+    if (isa<CXXDestructorDecl>(MD)) return RValue::get(0);
+
+    assert(MD->isCopyAssignment() && "unknown trivial member function");
     // We don't like to generate the trivial copy assignment operator when
     // it isn't necessary; just produce the proper effect here.
     llvm::Value *RHS = EmitLValue(*CE->arg_begin()).getAddress();
@@ -116,25 +114,34 @@ RValue CodeGenFunction::EmitCXXMemberCallExpr(const CXXMemberCallExpr *CE,
     return RValue::get(This);
   }
 
+  // Compute the function type we're calling.
+  const CGFunctionInfo &FInfo =
+    (isa<CXXDestructorDecl>(MD)
+     ? CGM.getTypes().getFunctionInfo(cast<CXXDestructorDecl>(MD),
+                                      Dtor_Complete)
+     : CGM.getTypes().getFunctionInfo(MD));
+
+  const FunctionProtoType *FPT = MD->getType()->getAs<FunctionProtoType>();
+  const llvm::Type *Ty
+    = CGM.getTypes().GetFunctionType(FInfo, FPT->isVariadic());
+
   // C++ [class.virtual]p12:
   //   Explicit qualification with the scope operator (5.1) suppresses the
   //   virtual call mechanism.
   //
   // We also don't emit a virtual call if the base expression has a record type
   // because then we know what the type is.
+  bool UseVirtualCall = MD->isVirtual() && !ME->hasQualifier()
+                     && !canDevirtualizeMemberFunctionCalls(ME->getBase());
+
   llvm::Value *Callee;
-  if (const CXXDestructorDecl *Destructor
-             = dyn_cast<CXXDestructorDecl>(MD)) {
-    if (Destructor->isTrivial())
-      return RValue::get(0);
-    if (MD->isVirtual() && !ME->hasQualifier() && 
-        !canDevirtualizeMemberFunctionCalls(ME->getBase())) {
-      Callee = BuildVirtualCall(Destructor, Dtor_Complete, This, Ty); 
+  if (const CXXDestructorDecl *Dtor = dyn_cast<CXXDestructorDecl>(MD)) {
+    if (UseVirtualCall) {
+      Callee = BuildVirtualCall(Dtor, Dtor_Complete, This, Ty);
     } else {
-      Callee = CGM.GetAddrOfFunction(GlobalDecl(Destructor, Dtor_Complete), Ty);
+      Callee = CGM.GetAddrOfFunction(GlobalDecl(Dtor, Dtor_Complete), Ty);
     }
-  } else if (MD->isVirtual() && !ME->hasQualifier() && 
-             !canDevirtualizeMemberFunctionCalls(ME->getBase())) {
+  } else if (UseVirtualCall) {
     Callee = BuildVirtualCall(MD, This, Ty); 
   } else {
     Callee = CGM.GetAddrOfFunction(MD, Ty);

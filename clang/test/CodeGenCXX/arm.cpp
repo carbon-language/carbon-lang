@@ -237,6 +237,23 @@ namespace test4 {
   }
 }
 
+// <rdar://problem/8386802>: don't crash
+namespace test5 {
+  struct A {
+    ~A();
+  };
+
+  // CHECK: define void @_ZN5test54testEPNS_1AE
+  void test(A *a) {
+    // CHECK:      [[PTR:%.*]] = alloca [[A:%.*]]*, align 4
+    // CHECK-NEXT: store [[A]]* {{.*}}, [[A]]** [[PTR]], align 4
+    // CHECK-NEXT: [[TMP:%.*]] = load [[A]]** [[PTR]], align 4
+    // CHECK-NEXT: call [[A]]* @_ZN5test51AD1Ev([[A]]* [[TMP]])
+    // CHECK-NEXT: ret void
+    a->~A();
+  }
+}
+
   // CHECK: define linkonce_odr [[C:%.*]]* @_ZTv0_n12_N5test21CD1Ev(
   // CHECK:   call [[C]]* @_ZN5test21CD1Ev(
   // CHECK:   ret [[C]]* undef
