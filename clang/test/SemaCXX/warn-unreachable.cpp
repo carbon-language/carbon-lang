@@ -1,6 +1,6 @@
 // RUN: %clang_cc1 %s -fsyntax-only -verify -fblocks -Wunreachable-code -Wno-unused-value
 
-int &halt() __attribute__((noreturn)); // expected-warning{{functions declared 'noreturn' should have a 'void' result type}}
+int &halt() __attribute__((noreturn));
 int &live();
 int dead();
 int liveti() throw(int);
@@ -60,7 +60,7 @@ void test5() {
   struct S {
     int mem;
   } s;
-  S &foor() __attribute__((noreturn)); // expected-warning{{functions declared 'noreturn' should have a 'void' result type}}
+  S &foor() __attribute__((noreturn));
   foor()
     .mem;       // expected-warning {{will never be executed}}
 }

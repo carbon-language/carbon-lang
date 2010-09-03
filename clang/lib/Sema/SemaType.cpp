@@ -1850,11 +1850,6 @@ bool ProcessFnAttr(Sema &S, QualType &Type, const AttributeList &Attr) {
         && !Type->isMemberFunctionPointerType())
       return true;
     
-    if (!GetResultType(Type)->isVoidType()) {
-      S.Diag(Attr.getLoc(), diag::warn_noreturn_function_has_nonvoid_result)
-        << (Type->isBlockPointerType() ? /* blocks */ 1 : /* functions */ 0);
-    }
-    
     // Otherwise we can process right away.
     Type = S.Context.getNoReturnType(Type);
     return false;
