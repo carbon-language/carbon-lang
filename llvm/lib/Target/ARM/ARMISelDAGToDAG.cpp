@@ -1111,120 +1111,79 @@ SDNode *ARMDAGToDAGISel::SelectVLD(SDNode *N, unsigned NumVecs,
     break;
   }
 
+  EVT ResTy;
+  if (NumVecs == 1)
+    ResTy = VT;
+  else {
+    unsigned ResTyElts = (NumVecs == 3) ? 4 : NumVecs;
+    if (!is64BitVector)
+      ResTyElts *= 2;
+    ResTy = EVT::getVectorVT(*CurDAG->getContext(), MVT::i64, ResTyElts);
+  }
+
   SDValue Pred = getAL(CurDAG);
   SDValue Reg0 = CurDAG->getRegister(0, MVT::i32);
+  SDValue SuperReg;
   if (is64BitVector) {
     unsigned Opc = DOpcodes[OpcodeIndex];
     const SDValue Ops[] = { MemAddr, Align, Pred, Reg0, Chain };
-    SDNode *VLd;
-    if (NumVecs <= 2) {
-      EVT ResTy;
-      if (NumVecs == 1)
-        ResTy = VT;
-      else
-        ResTy = EVT::getVectorVT(*CurDAG->getContext(), MVT::i64, NumVecs);
-      VLd = CurDAG->getMachineNode(Opc, dl, ResTy, MVT::Other, Ops, 5);
-    } else {
-      std::vector<EVT> ResTys(NumVecs, VT);
-      ResTys.push_back(MVT::Other);
-      VLd = CurDAG->getMachineNode(Opc, dl, ResTys, Ops, 5);
-    }
+    SDNode *VLd = CurDAG->getMachineNode(Opc, dl, ResTy, MVT::Other, Ops, 5);
     if (NumVecs == 1)
       return VLd;
 
-    SDValue SuperReg;
-    if (NumVecs <= 2)
-      SuperReg = SDValue(VLd, 0);
-    else {
-      SDValue V0 = SDValue(VLd, 0);
-      SDValue V1 = SDValue(VLd, 1);
-      // Form a REG_SEQUENCE to force register allocation.
-      SDValue V2 = SDValue(VLd, 2);
-      // If it's a vld3, form a quad D-register but discard the last part.
-      SDValue V3 = (NumVecs == 3)
-          ? SDValue(CurDAG->getMachineNode(TargetOpcode::IMPLICIT_DEF,dl,VT), 0)
-          : SDValue(VLd, 3);
-      SuperReg = SDValue(QuadDRegs(MVT::v4i64, V0, V1, V2, V3), 0);
-    }
-
+    SuperReg = SDValue(VLd, 0);
     assert(ARM::dsub_7 == ARM::dsub_0+7 && "Unexpected subreg numbering");
     for (unsigned Vec = 0; Vec < NumVecs; ++Vec) {
       SDValue D = CurDAG->getTargetExtractSubreg(ARM::dsub_0+Vec,
                                                  dl, VT, SuperReg);
       ReplaceUses(SDValue(N, Vec), D);
     }
-    ReplaceUses(SDValue(N, NumVecs), SDValue(VLd, NumVecs <= 2 ? 1 : NumVecs));
+    ReplaceUses(SDValue(N, NumVecs), SDValue(VLd, 1));
     return NULL;
   }
 
-  EVT RegVT = GetNEONSubregVT(VT);
   if (NumVecs <= 2) {
     // Quad registers are directly supported for VLD1 and VLD2,
     // loading pairs of D regs.
     unsigned Opc = QOpcodes0[OpcodeIndex];
     const SDValue Ops[] = { MemAddr, Align, Pred, Reg0, Chain };
-
-    EVT ResTy;
-    if (NumVecs == 1)
-      ResTy = VT;
-    else
-      ResTy = EVT::getVectorVT(*CurDAG->getContext(), MVT::i64, 2 * NumVecs);
     SDNode *VLd = CurDAG->getMachineNode(Opc, dl, ResTy, MVT::Other, Ops, 5);
-
-    // Combine the even and odd subregs to produce the result.
     if (NumVecs == 1)
       return VLd;
 
-    SDValue QQ = SDValue(VLd, 0);
+    SuperReg = SDValue(VLd, 0);
     Chain = SDValue(VLd, 1);
 
-    SDValue Q0 = CurDAG->getTargetExtractSubreg(ARM::qsub_0, dl, VT, QQ);
-    SDValue Q1 = CurDAG->getTargetExtractSubreg(ARM::qsub_1, dl, VT, QQ);
-    ReplaceUses(SDValue(N, 0), Q0);
-    ReplaceUses(SDValue(N, 1), Q1);
   } else {
     // Otherwise, quad registers are loaded with two separate instructions,
     // where one loads the even registers and the other loads the odd registers.
-
-    std::vector<EVT> ResTys(NumVecs, RegVT);
-    ResTys.push_back(MemAddr.getValueType());
-    ResTys.push_back(MVT::Other);
+    EVT AddrTy = MemAddr.getValueType();
 
     // Load the even subregs.
     unsigned Opc = QOpcodes0[OpcodeIndex];
-    const SDValue OpsA[] = { MemAddr, Align, Reg0, Pred, Reg0, Chain };
-    SDNode *VLdA = CurDAG->getMachineNode(Opc, dl, ResTys, OpsA, 6);
-    Chain = SDValue(VLdA, NumVecs+1);
+    SDValue ImplDef =
+      SDValue(CurDAG->getMachineNode(TargetOpcode::IMPLICIT_DEF, dl, ResTy), 0);
+    const SDValue OpsA[] = { MemAddr, Align, Reg0, ImplDef, Pred, Reg0, Chain };
+    SDNode *VLdA =
+      CurDAG->getMachineNode(Opc, dl, ResTy, AddrTy, MVT::Other, OpsA, 7);
+    Chain = SDValue(VLdA, 2);
 
     // Load the odd subregs.
     Opc = QOpcodes1[OpcodeIndex];
-    const SDValue OpsB[] = { SDValue(VLdA, NumVecs),
-                             Align, Reg0, Pred, Reg0, Chain };
-    SDNode *VLdB = CurDAG->getMachineNode(Opc, dl, ResTys, OpsB, 6);
-    Chain = SDValue(VLdB, NumVecs+1);
+    const SDValue OpsB[] = { SDValue(VLdA, 1), Align, Reg0, SDValue(VLdA, 0),
+                             Pred, Reg0, Chain };
+    SDNode *VLdB =
+      CurDAG->getMachineNode(Opc, dl, ResTy, AddrTy, MVT::Other, OpsB, 7);
+    SuperReg = SDValue(VLdB, 0);
+    Chain = SDValue(VLdB, 2);
+  }
 
-    SDValue V0 = SDValue(VLdA, 0);
-    SDValue V1 = SDValue(VLdB, 0);
-    SDValue V2 = SDValue(VLdA, 1);
-    SDValue V3 = SDValue(VLdB, 1);
-    SDValue V4 = SDValue(VLdA, 2);
-    SDValue V5 = SDValue(VLdB, 2);
-    SDValue V6 = (NumVecs == 3)
-      ? SDValue(CurDAG->getMachineNode(TargetOpcode::IMPLICIT_DEF,dl,RegVT), 0)
-      : SDValue(VLdA, 3);
-    SDValue V7 = (NumVecs == 3)
-      ? SDValue(CurDAG->getMachineNode(TargetOpcode::IMPLICIT_DEF,dl,RegVT), 0)
-      : SDValue(VLdB, 3);
-    SDValue RegSeq = SDValue(OctoDRegs(MVT::v8i64, V0, V1, V2, V3,
-                                       V4, V5, V6, V7), 0);
-
-    // Extract out the 3 / 4 Q registers.
-    assert(ARM::qsub_3 == ARM::qsub_0+3 && "Unexpected subreg numbering");
-    for (unsigned Vec = 0; Vec < NumVecs; ++Vec) {
-      SDValue Q = CurDAG->getTargetExtractSubreg(ARM::qsub_0+Vec,
-                                                 dl, VT, RegSeq);
-      ReplaceUses(SDValue(N, Vec), Q);
-    }
+  // Extract out the Q registers.
+  assert(ARM::qsub_3 == ARM::qsub_0+3 && "Unexpected subreg numbering");
+  for (unsigned Vec = 0; Vec < NumVecs; ++Vec) {
+    SDValue Q = CurDAG->getTargetExtractSubreg(ARM::qsub_0+Vec,
+                                               dl, VT, SuperReg);
+    ReplaceUses(SDValue(N, Vec), Q);
   }
   ReplaceUses(SDValue(N, NumVecs), Chain);
   return NULL;
@@ -2166,26 +2125,26 @@ SDNode *ARMDAGToDAGISel::Select(SDNode *N) {
     }
 
     case Intrinsic::arm_neon_vld3: {
-      unsigned DOpcodes[] = { ARM::VLD3d8, ARM::VLD3d16,
-                              ARM::VLD3d32, ARM::VLD1d64T };
-      unsigned QOpcodes0[] = { ARM::VLD3q8_UPD,
-                               ARM::VLD3q16_UPD,
-                               ARM::VLD3q32_UPD };
-      unsigned QOpcodes1[] = { ARM::VLD3q8odd_UPD,
-                               ARM::VLD3q16odd_UPD,
-                               ARM::VLD3q32odd_UPD };
+      unsigned DOpcodes[] = { ARM::VLD3d8Pseudo, ARM::VLD3d16Pseudo,
+                              ARM::VLD3d32Pseudo, ARM::VLD1d64TPseudo };
+      unsigned QOpcodes0[] = { ARM::VLD3q8Pseudo_UPD,
+                               ARM::VLD3q16Pseudo_UPD,
+                               ARM::VLD3q32Pseudo_UPD };
+      unsigned QOpcodes1[] = { ARM::VLD3q8oddPseudo_UPD,
+                               ARM::VLD3q16oddPseudo_UPD,
+                               ARM::VLD3q32oddPseudo_UPD };
       return SelectVLD(N, 3, DOpcodes, QOpcodes0, QOpcodes1);
     }
 
     case Intrinsic::arm_neon_vld4: {
-      unsigned DOpcodes[] = { ARM::VLD4d8, ARM::VLD4d16,
-                              ARM::VLD4d32, ARM::VLD1d64Q };
-      unsigned QOpcodes0[] = { ARM::VLD4q8_UPD,
-                               ARM::VLD4q16_UPD,
-                               ARM::VLD4q32_UPD };
-      unsigned QOpcodes1[] = { ARM::VLD4q8odd_UPD,
-                               ARM::VLD4q16odd_UPD,
-                               ARM::VLD4q32odd_UPD };
+      unsigned DOpcodes[] = { ARM::VLD4d8Pseudo, ARM::VLD4d16Pseudo,
+                              ARM::VLD4d32Pseudo, ARM::VLD1d64QPseudo };
+      unsigned QOpcodes0[] = { ARM::VLD4q8Pseudo_UPD,
+                               ARM::VLD4q16Pseudo_UPD,
+                               ARM::VLD4q32Pseudo_UPD };
+      unsigned QOpcodes1[] = { ARM::VLD4q8oddPseudo_UPD,
+                               ARM::VLD4q16oddPseudo_UPD,
+                               ARM::VLD4q32oddPseudo_UPD };
       return SelectVLD(N, 4, DOpcodes, QOpcodes0, QOpcodes1);
     }
 

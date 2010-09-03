@@ -74,33 +74,11 @@ static bool isNEONMultiRegOp(int Opcode, unsigned &FirstOpnd, unsigned &NumRegs,
     Stride = 2;
     return true;
 
-  case ARM::VLD3d8:
-  case ARM::VLD3d16:
-  case ARM::VLD3d32:
-  case ARM::VLD1d64T:
   case ARM::VLD3LNd8:
   case ARM::VLD3LNd16:
   case ARM::VLD3LNd32:
     FirstOpnd = 0;
     NumRegs = 3;
-    return true;
-
-  case ARM::VLD3q8_UPD:
-  case ARM::VLD3q16_UPD:
-  case ARM::VLD3q32_UPD:
-    FirstOpnd = 0;
-    NumRegs = 3;
-    Offset = 0;
-    Stride = 2;
-    return true;
-
-  case ARM::VLD3q8odd_UPD:
-  case ARM::VLD3q16odd_UPD:
-  case ARM::VLD3q32odd_UPD:
-    FirstOpnd = 0;
-    NumRegs = 3;
-    Offset = 1;
-    Stride = 2;
     return true;
 
   case ARM::VLD3LNq16:
@@ -119,33 +97,11 @@ static bool isNEONMultiRegOp(int Opcode, unsigned &FirstOpnd, unsigned &NumRegs,
     Stride = 2;
     return true;
 
-  case ARM::VLD4d8:
-  case ARM::VLD4d16:
-  case ARM::VLD4d32:
-  case ARM::VLD1d64Q:
   case ARM::VLD4LNd8:
   case ARM::VLD4LNd16:
   case ARM::VLD4LNd32:
     FirstOpnd = 0;
     NumRegs = 4;
-    return true;
-
-  case ARM::VLD4q8_UPD:
-  case ARM::VLD4q16_UPD:
-  case ARM::VLD4q32_UPD:
-    FirstOpnd = 0;
-    NumRegs = 4;
-    Offset = 0;
-    Stride = 2;
-    return true;
-
-  case ARM::VLD4q8odd_UPD:
-  case ARM::VLD4q16odd_UPD:
-  case ARM::VLD4q32odd_UPD:
-    FirstOpnd = 0;
-    NumRegs = 4;
-    Offset = 1;
-    Stride = 2;
     return true;
 
   case ARM::VLD4LNq16:
