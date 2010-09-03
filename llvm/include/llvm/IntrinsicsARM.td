@@ -176,14 +176,6 @@ let TargetPrefix = "arm" in {
 // Vector Absolute Differences.
 def int_arm_neon_vabds : Neon_2Arg_Intrinsic;
 def int_arm_neon_vabdu : Neon_2Arg_Intrinsic;
-def int_arm_neon_vabdls : Neon_2Arg_Long_Intrinsic;
-def int_arm_neon_vabdlu : Neon_2Arg_Long_Intrinsic;
-
-// Vector Absolute Difference and Accumulate.
-def int_arm_neon_vabas : Neon_3Arg_Intrinsic;
-def int_arm_neon_vabau : Neon_3Arg_Intrinsic;
-def int_arm_neon_vabals : Neon_3Arg_Long_Intrinsic;
-def int_arm_neon_vabalu : Neon_3Arg_Long_Intrinsic;
 
 // Vector Pairwise Add.
 def int_arm_neon_vpadd : Neon_2Arg_Intrinsic;

@@ -81,20 +81,20 @@ static bool UpgradeIntrinsicFunction1(Function *F, Function *&NewFn) {
     } else if (Name.compare(5, 9, "arm.neon.", 9) == 0) {
       if (((Name.compare(14, 5, "vmovl", 5) == 0 ||
             Name.compare(14, 5, "vaddl", 5) == 0 ||
-            Name.compare(14, 5, "vsubl", 5) == 0) &&
-           (Name.compare(19, 2, "s.", 2) == 0 ||
-            Name.compare(19, 2, "u.", 2) == 0)) ||
-
-          ((Name.compare(14, 5, "vaddw", 5) == 0 ||
-            Name.compare(14, 5, "vsubw", 5) == 0) &&
-           (Name.compare(19, 2, "s.", 2) == 0 ||
-            Name.compare(19, 2, "u.", 2) == 0)) ||
-
-          ((Name.compare(14, 5, "vmull", 5) == 0 ||
+            Name.compare(14, 5, "vsubl", 5) == 0 ||
+            Name.compare(14, 5, "vaddw", 5) == 0 ||
+            Name.compare(14, 5, "vsubw", 5) == 0 ||
+            Name.compare(14, 5, "vmull", 5) == 0 ||
             Name.compare(14, 5, "vmlal", 5) == 0 ||
-            Name.compare(14, 5, "vmlsl", 5) == 0) &&
+            Name.compare(14, 5, "vmlsl", 5) == 0 ||
+            Name.compare(14, 5, "vabdl", 5) == 0 ||
+            Name.compare(14, 5, "vabal", 5) == 0) &&
            (Name.compare(19, 2, "s.", 2) == 0 ||
             Name.compare(19, 2, "u.", 2) == 0)) ||
+
+          (Name.compare(14, 4, "vaba", 4) == 0 &&
+           (Name.compare(18, 2, "s.", 2) == 0 ||
+            Name.compare(18, 2, "u.", 2) == 0)) ||
 
           (Name.compare(14, 6, "vmovn.", 6) == 0)) {
 
@@ -391,6 +391,35 @@ static void ExtendNEONArgs(CallInst *CI, Value *Arg0, Value *Arg1,
   }
 }
 
+/// CallVABD - As part of expanding a call to one of the old NEON vabdl, vaba,
+/// or vabal intrinsics, construct a call to a vabd intrinsic.  Examine the
+/// name of the old intrinsic to determine whether to use a signed or unsigned
+/// vabd intrinsic.  Get the type from the old call instruction, adjusted for
+/// half-size vector elements if the old intrinsic was vabdl or vabal.
+static Instruction *CallVABD(CallInst *CI, Value *Arg0, Value *Arg1) {
+  Function *F = CI->getCalledFunction();
+  const std::string& Name = F->getName();
+  bool isLong = (Name.at(18) == 'l');
+  bool isSigned = (Name.at(isLong ? 19 : 18) == 's');
+
+  Intrinsic::ID intID;
+  if (isSigned)
+    intID = Intrinsic::arm_neon_vabds;
+  else
+    intID = Intrinsic::arm_neon_vabdu;
+
+  const Type *Ty = CI->getType();
+  if (isLong)
+    Ty = VectorType::getTruncatedElementVectorType(cast<const VectorType>(Ty));
+
+  Function *VABD = Intrinsic::getDeclaration(F->getParent(), intID, &Ty, 1);
+  Value *Operands[2];
+  Operands[0] = Arg0;
+  Operands[1] = Arg1;
+  return CallInst::Create(VABD, Operands, Operands+2, 
+                          "upgraded."+CI->getName(), CI);
+}
+
 // UpgradeIntrinsicCall - Upgrade a call to an old intrinsic to be a call the 
 // upgraded intrinsic. All argument and return casting must be provided in 
 // order to seamlessly integrate with existing context.
@@ -433,6 +462,15 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
         ExtendNEONArgs(CI, CI->getArgOperand(1), CI->getArgOperand(2), V0, V1);
         Instruction *MulI = BinaryOperator::CreateMul(V0, V1, "", CI);
         NewI = BinaryOperator::CreateSub(CI->getArgOperand(0), MulI,
+                                         "upgraded."+CI->getName(), CI);
+      } else if (Name.compare(14, 4, "vabd", 4) == 0) {
+        NewI = CallVABD(CI, CI->getArgOperand(0), CI->getArgOperand(1));
+        NewI = new ZExtInst(NewI, CI->getType(), "upgraded."+CI->getName(), CI);
+      } else if (Name.compare(14, 4, "vaba", 4) == 0) {
+        NewI = CallVABD(CI, CI->getArgOperand(1), CI->getArgOperand(2));
+        if (Name.at(18) == 'l')
+          NewI = new ZExtInst(NewI, CI->getType(), "", CI);
+        NewI = BinaryOperator::CreateAdd(CI->getArgOperand(0), NewI,
                                          "upgraded."+CI->getName(), CI);
       } else if (Name.compare(14, 6, "vmovn.", 6) == 0) {
         NewI = new TruncInst(CI->getArgOperand(0), CI->getType(),
@@ -675,7 +713,7 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
   }
 
   switch (NewFn->getIntrinsicID()) {
-  default:  llvm_unreachable("Unknown function for CallInst upgrade.");
+  default: llvm_unreachable("Unknown function for CallInst upgrade.");
   case Intrinsic::arm_neon_vld1:
   case Intrinsic::arm_neon_vld2:
   case Intrinsic::arm_neon_vld3:

@@ -1288,6 +1288,24 @@ class N3VQMulOpSL16<bits<2> op21_20, bits<4> op11_8, InstrItinClass itin,
                                    (ResTy (NEONvduplane (OpTy DPR_8:$src3),
                                                         imm:$lane)))))))]>;
 
+// Neon Intrinsic-Op instructions (VABA): double- and quad-register.
+class N3VDIntOp<bit op24, bit op23, bits<2> op21_20, bits<4> op11_8, bit op4,
+                InstrItinClass itin, string OpcodeStr, string Dt,
+                ValueType Ty, Intrinsic IntOp, SDNode OpNode>
+  : N3V<op24, op23, op21_20, op11_8, 0, op4,
+        (outs DPR:$dst), (ins DPR:$src1, DPR:$src2, DPR:$src3), N3RegFrm, itin,
+        OpcodeStr, Dt, "$dst, $src2, $src3", "$src1 = $dst",
+        [(set DPR:$dst, (Ty (OpNode DPR:$src1,
+                             (Ty (IntOp (Ty DPR:$src2), (Ty DPR:$src3))))))]>;
+class N3VQIntOp<bit op24, bit op23, bits<2> op21_20, bits<4> op11_8, bit op4,
+                InstrItinClass itin, string OpcodeStr, string Dt,
+                ValueType Ty, Intrinsic IntOp, SDNode OpNode>
+  : N3V<op24, op23, op21_20, op11_8, 1, op4,
+        (outs QPR:$dst), (ins QPR:$src1, QPR:$src2, QPR:$src3), N3RegFrm, itin,
+        OpcodeStr, Dt, "$dst, $src2, $src3", "$src1 = $dst",
+        [(set QPR:$dst, (Ty (OpNode QPR:$src1,
+                             (Ty (IntOp (Ty QPR:$src2), (Ty QPR:$src3))))))]>;
+
 // Neon 3-argument intrinsics, both double- and quad-register.
 // The destination register is also used as the first source operand register.
 class N3VDInt3<bit op24, bit op23, bits<2> op21_20, bits<4> op11_8, bit op4,
@@ -1342,6 +1360,17 @@ class N3VLMulOpSL16<bit op24, bits<2> op21_20, bits<4> op11_8,
                               (TyD (NEONvduplane (TyD DPR_8:$src3),
                                                  imm:$lane))))))]>;
 
+// Long Intrinsic-Op vector operations with explicit extend (VABAL).
+class N3VLIntExtOp<bit op24, bit op23, bits<2> op21_20, bits<4> op11_8, bit op4,
+                   InstrItinClass itin, string OpcodeStr, string Dt,
+                   ValueType TyQ, ValueType TyD, Intrinsic IntOp, SDNode ExtOp,
+                   SDNode OpNode>
+  : N3V<op24, op23, op21_20, op11_8, 0, op4,
+        (outs QPR:$dst), (ins QPR:$src1, DPR:$src2, DPR:$src3), N3RegFrm, itin,
+        OpcodeStr, Dt, "$dst, $src2, $src3", "$src1 = $dst",
+        [(set QPR:$dst, (OpNode (TyQ QPR:$src1),
+                                (TyQ (ExtOp (TyD (IntOp (TyD DPR:$src2),
+                                                        (TyD DPR:$src3)))))))]>;
 
 // Neon Long 3-argument intrinsic.  The destination register is
 // a quad-register and is also used as the first source operand register.
@@ -1430,6 +1459,19 @@ class N3VLExt<bit op24, bit op23, bits<2> op21_20, bits<4> op11_8, bit op4,
         OpcodeStr, Dt, "$dst, $src1, $src2", "",
         [(set QPR:$dst, (OpNode (TyQ (ExtOp (TyD DPR:$src1))),
                                 (TyQ (ExtOp (TyD DPR:$src2)))))]> {
+  let isCommutable = Commutable;
+}
+
+// Long 3-register intrinsics with explicit extend (VABDL).
+class N3VLIntExt<bit op24, bit op23, bits<2> op21_20, bits<4> op11_8, bit op4,
+                 InstrItinClass itin, string OpcodeStr, string Dt,
+                 ValueType TyQ, ValueType TyD, Intrinsic IntOp, SDNode ExtOp,
+                 bit Commutable>
+  : N3V<op24, op23, op21_20, op11_8, 0, op4,
+        (outs QPR:$dst), (ins DPR:$src1, DPR:$src2), N3RegFrm, itin,
+        OpcodeStr, Dt, "$dst, $src1, $src2", "",
+        [(set QPR:$dst, (TyQ (ExtOp (TyD (IntOp (TyD DPR:$src1),
+                                                (TyD DPR:$src2))))))]> {
   let isCommutable = Commutable;
 }
 
@@ -1918,6 +1960,21 @@ multiclass N3VLInt_QHS<bit op24, bit op23, bits<4> op11_8, bit op4,
                       v8i16, v8i8, IntOp, Commutable>;
 }
 
+// ....with explicit extend (VABDL).
+multiclass N3VLIntExt_QHS<bit op24, bit op23, bits<4> op11_8, bit op4,
+                       InstrItinClass itin, string OpcodeStr, string Dt,
+                       Intrinsic IntOp, SDNode ExtOp, bit Commutable = 0> {
+  def v8i16 : N3VLIntExt<op24, op23, 0b00, op11_8, op4, itin,
+                         OpcodeStr, !strconcat(Dt, "8"),
+                         v8i16, v8i8, IntOp, ExtOp, Commutable>;
+  def v4i32 : N3VLIntExt<op24, op23, 0b01, op11_8, op4, itin, 
+                         OpcodeStr, !strconcat(Dt, "16"),
+                         v4i32, v4i16, IntOp, ExtOp, Commutable>;
+  def v2i64 : N3VLIntExt<op24, op23, 0b10, op11_8, op4, itin,
+                         OpcodeStr, !strconcat(Dt, "32"),
+                         v2i64, v2i32, IntOp, ExtOp, Commutable>;
+}
+
 
 // Neon Wide 3-register vector intrinsics,
 //   source operand element sizes of 8, 16 and 32 bits:
@@ -1973,6 +2030,29 @@ multiclass N3VMulOpSL_HS<bits<4> op11_8,
   def v4i32 : N3VQMulOpSL<0b10, op11_8, itinQ32,
                           OpcodeStr, !strconcat(Dt, "32"), v4i32, v2i32,
                           mul, ShOp>;
+}
+
+// Neon Intrinsic-Op vector operations,
+//   element sizes of 8, 16 and 32 bits:
+multiclass N3VIntOp_QHS<bit op24, bit op23, bits<4> op11_8, bit op4,
+                        InstrItinClass itinD, InstrItinClass itinQ,
+                        string OpcodeStr, string Dt, Intrinsic IntOp,
+                        SDNode OpNode> {
+  // 64-bit vector types.
+  def v8i8  : N3VDIntOp<op24, op23, 0b00, op11_8, op4, itinD,
+                        OpcodeStr, !strconcat(Dt, "8"), v8i8, IntOp, OpNode>;
+  def v4i16 : N3VDIntOp<op24, op23, 0b01, op11_8, op4, itinD,
+                        OpcodeStr, !strconcat(Dt, "16"), v4i16, IntOp, OpNode>;
+  def v2i32 : N3VDIntOp<op24, op23, 0b10, op11_8, op4, itinD,
+                        OpcodeStr, !strconcat(Dt, "32"), v2i32, IntOp, OpNode>;
+
+  // 128-bit vector types.
+  def v16i8 : N3VQIntOp<op24, op23, 0b00, op11_8, op4, itinQ,
+                        OpcodeStr, !strconcat(Dt, "8"), v16i8, IntOp, OpNode>;
+  def v8i16 : N3VQIntOp<op24, op23, 0b01, op11_8, op4, itinQ,
+                        OpcodeStr, !strconcat(Dt, "16"), v8i16, IntOp, OpNode>;
+  def v4i32 : N3VQIntOp<op24, op23, 0b10, op11_8, op4, itinQ,
+                        OpcodeStr, !strconcat(Dt, "32"), v4i32, IntOp, OpNode>;
 }
 
 // Neon 3-argument intrinsics,
@@ -2048,6 +2128,21 @@ multiclass N3VLInt3_QHS<bit op24, bit op23, bits<4> op11_8, bit op4,
   : N3VLInt3_HS<op24, op23, op11_8, op4, itin16, itin32, OpcodeStr, Dt, IntOp> {
   def v8i16 : N3VLInt3<op24, op23, 0b00, op11_8, op4, itin16,
                        OpcodeStr, !strconcat(Dt, "8"), v8i16, v8i8, IntOp>;
+}
+
+// ....with explicit extend (VABAL).
+multiclass N3VLIntExtOp_QHS<bit op24, bit op23, bits<4> op11_8, bit op4,
+                            InstrItinClass itin, string OpcodeStr, string Dt,
+                            Intrinsic IntOp, SDNode ExtOp, SDNode OpNode> {
+  def v8i16 : N3VLIntExtOp<op24, op23, 0b00, op11_8, op4, itin,
+                           OpcodeStr, !strconcat(Dt, "8"), v8i16, v8i8,
+                           IntOp, ExtOp, OpNode>;
+  def v4i32 : N3VLIntExtOp<op24, op23, 0b01, op11_8, op4, itin,
+                           OpcodeStr, !strconcat(Dt, "16"), v4i32, v4i16,
+                           IntOp, ExtOp, OpNode>;
+  def v2i64 : N3VLIntExtOp<op24, op23, 0b10, op11_8, op4, itin,
+                           OpcodeStr, !strconcat(Dt, "32"), v2i64, v2i32,
+                           IntOp, ExtOp, OpNode>;
 }
 
 
@@ -2765,32 +2860,32 @@ def  VBITq    : N3VX<1, 0, 0b10, 0b0001, 1, 1,
 //   VABD     : Vector Absolute Difference
 defm VABDs    : N3VInt_QHS<0, 0, 0b0111, 0, N3RegFrm,
                            IIC_VSUBi4D, IIC_VSUBi4D, IIC_VSUBi4Q, IIC_VSUBi4Q,
-                           "vabd", "s", int_arm_neon_vabds, 0>;
+                           "vabd", "s", int_arm_neon_vabds, 1>;
 defm VABDu    : N3VInt_QHS<1, 0, 0b0111, 0, N3RegFrm,
                            IIC_VSUBi4D, IIC_VSUBi4D, IIC_VSUBi4Q, IIC_VSUBi4Q,
-                           "vabd", "u", int_arm_neon_vabdu, 0>;
+                           "vabd", "u", int_arm_neon_vabdu, 1>;
 def  VABDfd   : N3VDInt<1, 0, 0b10, 0b1101, 0, N3RegFrm, IIC_VBIND,
-                        "vabd", "f32", v2f32, v2f32, int_arm_neon_vabds, 0>;
+                        "vabd", "f32", v2f32, v2f32, int_arm_neon_vabds, 1>;
 def  VABDfq   : N3VQInt<1, 0, 0b10, 0b1101, 0, N3RegFrm, IIC_VBINQ,
-                        "vabd", "f32", v4f32, v4f32, int_arm_neon_vabds, 0>;
+                        "vabd", "f32", v4f32, v4f32, int_arm_neon_vabds, 1>;
 
 //   VABDL    : Vector Absolute Difference Long (Q = | D - D |)
-defm VABDLs   : N3VLInt_QHS<0,1,0b0111,0, IIC_VSUBi4Q, IIC_VSUBi4Q,
-                            "vabdl", "s", int_arm_neon_vabdls, 0>;
-defm VABDLu   : N3VLInt_QHS<1,1,0b0111,0, IIC_VSUBi4Q, IIC_VSUBi4Q,
-                            "vabdl", "u", int_arm_neon_vabdlu, 0>;
+defm VABDLs   : N3VLIntExt_QHS<0,1,0b0111,0, IIC_VSUBi4Q,
+                               "vabdl", "s", int_arm_neon_vabds, zext, 1>;
+defm VABDLu   : N3VLIntExt_QHS<1,1,0b0111,0, IIC_VSUBi4Q,
+                               "vabdl", "u", int_arm_neon_vabdu, zext, 1>;
 
 //   VABA     : Vector Absolute Difference and Accumulate
-defm VABAs    : N3VInt3_QHS<0,0,0b0111,1, IIC_VABAD, IIC_VABAQ,
-                            "vaba", "s", int_arm_neon_vabas>;
-defm VABAu    : N3VInt3_QHS<1,0,0b0111,1, IIC_VABAD, IIC_VABAQ,
-                            "vaba", "u", int_arm_neon_vabau>;
+defm VABAs    : N3VIntOp_QHS<0,0,0b0111,1, IIC_VABAD, IIC_VABAQ,
+                             "vaba", "s", int_arm_neon_vabds, add>;
+defm VABAu    : N3VIntOp_QHS<1,0,0b0111,1, IIC_VABAD, IIC_VABAQ,
+                             "vaba", "u", int_arm_neon_vabdu, add>;
 
 //   VABAL    : Vector Absolute Difference and Accumulate Long (Q += | D - D |)
-defm VABALs   : N3VLInt3_QHS<0,1,0b0101,0, IIC_VABAD, IIC_VABAD,
-                             "vabal", "s", int_arm_neon_vabals>;
-defm VABALu   : N3VLInt3_QHS<1,1,0b0101,0, IIC_VABAD, IIC_VABAD,
-                             "vabal", "u", int_arm_neon_vabalu>;
+defm VABALs   : N3VLIntExtOp_QHS<0,1,0b0101,0, IIC_VABAD,
+                                 "vabal", "s", int_arm_neon_vabds, zext, add>;
+defm VABALu   : N3VLIntExtOp_QHS<1,1,0b0101,0, IIC_VABAD,
+                                 "vabal", "u", int_arm_neon_vabdu, zext, add>;
 
 // Vector Maximum and Minimum.
 

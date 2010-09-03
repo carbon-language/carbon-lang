@@ -126,6 +126,44 @@
 ; CHECK-NEXT: mul <2 x i64>
 ; CHECK-NEXT: sub <2 x i64>
 
+; vaba should be auto-upgraded to vabd + add
+
+; CHECK: vabas32
+; CHECK-NOT: arm.neon.vabas.v2i32
+; CHECK: arm.neon.vabds.v2i32
+; CHECK-NEXT: add <2 x i32>
+
+; CHECK: vabaQu8
+; CHECK-NOT: arm.neon.vabau.v16i8
+; CHECK: arm.neon.vabdu.v16i8
+; CHECK-NEXT: add <16 x i8>
+
+; vabal should be auto-upgraded to vabd with zext + add
+
+; CHECK: vabals16
+; CHECK-NOT: arm.neon.vabals.v4i32
+; CHECK: arm.neon.vabds.v4i16
+; CHECK-NEXT: zext <4 x i16>
+; CHECK-NEXT: add <4 x i32>
+
+; CHECK: vabalu32
+; CHECK-NOT: arm.neon.vabalu.v2i64
+; CHECK: arm.neon.vabdu.v2i32
+; CHECK-NEXT: zext <2 x i32>
+; CHECK-NEXT: add <2 x i64>
+
+; vabdl should be auto-upgraded to vabd with zext
+
+; CHECK: vabdls8
+; CHECK-NOT: arm.neon.vabdls.v8i16
+; CHECK: arm.neon.vabds.v8i8
+; CHECK-NEXT: zext <8 x i8>
+
+; CHECK: vabdlu16
+; CHECK-NOT: arm.neon.vabdlu.v4i32
+; CHECK: arm.neon.vabdu.v4i16
+; CHECK-NEXT: zext <4 x i16>
+
 ; vmovn should be auto-upgraded to trunc
 
 ; CHECK: vmovni16
