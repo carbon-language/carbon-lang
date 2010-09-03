@@ -2274,6 +2274,11 @@ Sema::InstantiateMemInitializers(CXXConstructorDecl *New,
        Inits != InitsEnd; ++Inits) {
     CXXBaseOrMemberInitializer *Init = *Inits;
 
+    // Only instantiate written initializers, let Sema re-construct implicit
+    // ones.
+    if (!Init->isWritten())
+      continue;
+
     SourceLocation LParenLoc, RParenLoc;
     ASTOwningVector<Expr*> NewArgs(*this);
     llvm::SmallVector<SourceLocation, 4> CommaLocs;

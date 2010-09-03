@@ -47,3 +47,22 @@ namespace PR7088 {
 
   template void f<double>();
 }
+
+// Check for problems related to PR7402 that occur when template instantiation
+// instantiates implicit initializers.
+namespace PR7402 {
+  struct X {
+    union {
+      struct {
+        int x;
+        int y;
+      };
+      int v[2];
+    };
+
+    // Check that this requirement survives instantiation.
+    template <typename T> X(const T& t) : x(t), y(t) {}
+  };
+
+  X x(42.0);
+}
