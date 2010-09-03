@@ -78,8 +78,7 @@ Mutex::Locker::Locker (pthread_mutex_t *mutex_ptr) :
 //----------------------------------------------------------------------
 Mutex::Locker::~Locker ()
 {
-    if (m_mutex_ptr)
-        Mutex::Unlock (m_mutex_ptr);
+    Reset();
 }
 
 //----------------------------------------------------------------------
@@ -89,6 +88,10 @@ Mutex::Locker::~Locker ()
 void
 Mutex::Locker::Reset (pthread_mutex_t *mutex_ptr)
 {
+    // We already have this mutex locked or both are NULL...
+    if (m_mutex_ptr == mutex_ptr)
+        return;
+
     if (m_mutex_ptr)
         Mutex::Unlock (m_mutex_ptr);
 
@@ -100,9 +103,12 @@ Mutex::Locker::Reset (pthread_mutex_t *mutex_ptr)
 bool
 Mutex::Locker::TryLock (pthread_mutex_t *mutex_ptr)
 {
-    if (m_mutex_ptr)
-        Mutex::Unlock (m_mutex_ptr);
-    m_mutex_ptr = NULL;
+    // We already have this mutex locked!
+    if (m_mutex_ptr == mutex_ptr)
+        return true;
+
+    Reset ();
+
     if (mutex_ptr)
     {
         if (Mutex::TryLock (mutex_ptr) == 0)

@@ -124,7 +124,7 @@ GDBRemoteCommunication::SendPacketAndWaitForResponse
     timeout_time = TimeValue::Now();
     timeout_time.OffsetWithSeconds (timeout_seconds);
 
-    if (locker.TryLock (m_sequence_mutex.GetMutex()))
+    if (GetSequenceMutex (locker))
     {
         if (SendPacketNoLock (payload, strlen(payload)))
             return WaitForPacketNoLock (response, &timeout_time);
@@ -139,7 +139,7 @@ GDBRemoteCommunication::SendPacketAndWaitForResponse
             m_async_packet_predicate.SetValue (true, eBroadcastNever);
             
             bool timed_out = false;
-            if (SendInterrupt(1, &timed_out))
+            if (SendInterrupt(locker, 1, &timed_out))
             {
                 if (m_async_packet_predicate.WaitForValueEqualTo (false, &timeout_time, &timed_out))
                 {
@@ -396,14 +396,25 @@ GDBRemoteCommunication::SendAsyncSignal (int signo)
 {
     m_async_signal = signo;
     bool timed_out = false;
-    if (SendInterrupt(1, &timed_out))
+    Mutex::Locker locker;
+    if (SendInterrupt (locker, 1, &timed_out))
         return true;
     m_async_signal = -1;
     return false;
 }
 
+// This function takes a mutex locker as a parameter in case the GetSequenceMutex
+// actually succeeds. If it doesn't succeed in acquiring the sequence mutex 
+// (the expected result), then it will send the halt packet. If it does succeed
+// then the caller that requested the interrupt will want to keep the sequence
+// locked down so that no one else can send packets while the caller has control.
+// This function usually gets called when we are running and need to stop the 
+// target. It can also be used when we are running and and we need to do something
+// else (like read/write memory), so we need to interrupt the running process
+// (gdb remote protocol requires this), and do what we need to do, then resume.
+
 bool
-GDBRemoteCommunication::SendInterrupt (uint32_t seconds_to_wait_for_stop, bool *timed_out)
+GDBRemoteCommunication::SendInterrupt (Mutex::Locker& locker, uint32_t seconds_to_wait_for_stop, bool *timed_out)
 {
     if (timed_out)
         *timed_out = false;
@@ -411,7 +422,7 @@ GDBRemoteCommunication::SendInterrupt (uint32_t seconds_to_wait_for_stop, bool *
     if (IsConnected() && IsRunning())
     {
         // Only send an interrupt if our debugserver is running...
-        if (m_sequence_mutex.TryLock() != 0)
+        if (GetSequenceMutex (locker) == false)
         {
             // Someone has the mutex locked waiting for a response or for the
             // inferior to stop, so send the interrupt on the down low...

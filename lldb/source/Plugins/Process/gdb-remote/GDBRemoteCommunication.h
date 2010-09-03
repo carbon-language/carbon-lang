@@ -99,7 +99,9 @@ public:
     SendAsyncSignal (int signo);
 
     bool
-    SendInterrupt (uint32_t seconds_to_wait_for_stop, bool *timed_out = NULL);
+    SendInterrupt (lldb_private::Mutex::Locker &locker, 
+                   uint32_t seconds_to_wait_for_stop, 
+                   bool *timed_out = NULL);
 
     bool
     GetSequenceMutex(lldb_private::Mutex::Locker& locker);

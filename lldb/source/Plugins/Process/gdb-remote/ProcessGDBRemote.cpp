@@ -1117,7 +1117,8 @@ ProcessGDBRemote::DoHalt ()
     if (m_gdb_comm.IsRunning())
     {
         bool timed_out = false;
-        if (!m_gdb_comm.SendInterrupt (2, &timed_out))
+        Mutex::Locker locker;
+        if (!m_gdb_comm.SendInterrupt (locker, 2, &timed_out))
         {
             if (timed_out)
                 error.SetErrorString("timed out sending interrupt packet");
@@ -1150,7 +1151,8 @@ ProcessGDBRemote::DoDestroy ()
         log->Printf ("ProcessGDBRemote::DoDestroy()");
 
     // Interrupt if our inferior is running...
-    m_gdb_comm.SendInterrupt (1);
+    Mutex::Locker locker;
+    m_gdb_comm.SendInterrupt (locker, 1);
     DisableAllBreakpointSites ();
     SetExitStatus(-1, "process killed");
 
