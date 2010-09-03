@@ -18,6 +18,7 @@
 #include "clang/Driver/OptTable.h"
 #include "clang/Driver/Option.h"
 #include "clang/Driver/Options.h"
+#include "clang/Basic/Version.h"
 
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringExtras.h"
