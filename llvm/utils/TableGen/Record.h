@@ -535,6 +535,12 @@ public:
   virtual Init *convertInitializerBitRange(const std::vector<unsigned> &Bits);
   virtual Init *convertInitListSlice(const std::vector<unsigned> &Elements);
 
+  /// getFieldType - This method is used to implement the FieldInit class.
+  /// Implementors of this method should return the type of the named field if
+  /// they are of record type.
+  ///
+  virtual RecTy *getFieldType(const std::string &FieldName) const;
+
   /// resolveBitReference - This method is used to implement
   /// VarBitInit::resolveReferences.  If the bit is able to be resolved, we
   /// simply return the resolved value, otherwise we return null.
@@ -834,12 +840,6 @@ public:
   Init *Fold(Record *CurRec, MultiClass *CurMultiClass);
 
   virtual Init *resolveReferences(Record &R, const RecordVal *RV);
-
-  /// getFieldType - This method is used to implement the FieldInit class.
-  /// Implementors of this method should return the type of the named field if
-  /// they are of record type.
-  ///
-  virtual RecTy *getFieldType(const std::string &FieldName) const;
 
   virtual std::string getAsString() const;
 };

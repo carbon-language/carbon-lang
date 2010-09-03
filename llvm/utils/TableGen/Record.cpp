@@ -628,23 +628,6 @@ std::string UnOpInit::getAsString() const {
   return Result + "(" + LHS->getAsString() + ")";
 }
 
-RecTy *UnOpInit::getFieldType(const std::string &FieldName) const {
-  switch (getOpcode()) {
-  default: assert(0 && "Unknown unop");
-  case CAST: {
-    RecordRecTy *RecordType = dynamic_cast<RecordRecTy *>(getType());
-    if (RecordType) {
-      RecordVal *Field = RecordType->getRecord()->getValue(FieldName);
-      if (Field) {
-        return Field->getType();
-      }
-    }
-    break;
-  }
-  }
-  return 0;
-}
-
 Init *BinOpInit::Fold(Record *CurRec, MultiClass *CurMultiClass) {
   switch (getOpcode()) {
   default: assert(0 && "Unknown binop");
@@ -1044,6 +1027,17 @@ std::string TernOpInit::getAsString() const {
  }
   return Result + "(" + LHS->getAsString() + ", " + MHS->getAsString() + ", "
     + RHS->getAsString() + ")";
+}
+
+RecTy *TypedInit::getFieldType(const std::string &FieldName) const {
+  RecordRecTy *RecordType = dynamic_cast<RecordRecTy *>(getType());
+  if (RecordType) {
+    RecordVal *Field = RecordType->getRecord()->getValue(FieldName);
+    if (Field) {
+      return Field->getType();
+    }
+  }
+  return 0;
 }
 
 Init *TypedInit::convertInitializerBitRange(const std::vector<unsigned> &Bits) {
