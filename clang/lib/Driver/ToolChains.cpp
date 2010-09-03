@@ -1084,7 +1084,8 @@ Tool &AuroraUX::SelectTool(const Compilation &C, const JobAction &JA) const {
 
 Linux::Linux(const HostInfo &Host, const llvm::Triple& Triple)
   : Generic_GCC(Host, Triple) {
-  getFilePaths().push_back(getDriver().Dir + "/../lib/clang/1.0/");
+  getFilePaths().push_back(getDriver().Dir +
+                           "/../lib/clang/" CLANG_VERSION_STRING "/");
   getFilePaths().push_back("/lib/");
   getFilePaths().push_back("/usr/lib/");
 
