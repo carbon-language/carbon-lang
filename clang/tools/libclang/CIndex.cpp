@@ -393,6 +393,7 @@ public:
   // FIXME: UnaryTypeTraitExpr has poor source-location information.
   bool VisitOverloadExpr(OverloadExpr *E);
   bool VisitDependentScopeDeclRefExpr(DependentScopeDeclRefExpr *E);
+  bool VisitCXXDependentScopeMemberExpr(CXXDependentScopeMemberExpr *E);
 };
 
 } // end anonymous namespace
@@ -1661,6 +1662,37 @@ bool CursorVisitor::VisitDependentScopeDeclRefExpr(
 
   return false;
 }
+
+bool CursorVisitor::VisitCXXDependentScopeMemberExpr(
+                                              CXXDependentScopeMemberExpr *E) {
+  // Visit the base expression, if there is one.
+  if (!E->isImplicitAccess() &&
+      Visit(MakeCXCursor(E->getBase(), StmtParent, TU)))
+    return true;
+  
+  // Visit the nested-name-specifier.
+  if (NestedNameSpecifier *Qualifier = E->getQualifier())
+    if (VisitNestedNameSpecifier(Qualifier, E->getQualifierRange()))
+      return true;
+  
+  // Visit the declaration name.
+  if (VisitDeclarationNameInfo(E->getMemberNameInfo()))
+    return true;
+  
+  // Visit the explicitly-specified template arguments.
+  if (const ExplicitTemplateArgumentList *ArgList
+      = E->getOptionalExplicitTemplateArgs()) {
+    for (const TemplateArgumentLoc *Arg = ArgList->getTemplateArgs(),
+         *ArgEnd = Arg + ArgList->NumTemplateArgs;
+         Arg != ArgEnd; ++Arg) {
+      if (VisitTemplateArgumentLoc(*Arg))
+        return true;
+    }
+  }
+  
+  return false;
+}
+
 
 bool CursorVisitor::VisitObjCMessageExpr(ObjCMessageExpr *E) {
   if (TypeSourceInfo *TSInfo = E->getClassReceiverTypeInfo())
