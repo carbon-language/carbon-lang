@@ -73,11 +73,7 @@ def GetLo32XForm : SDNodeXForm<imm, [{
   return getI32Imm((unsigned)N->getZExtValue());
 }]>;
 
-def i64immSExt32  : PatLeaf<(i64 imm), [{
-  // i64immSExt32 predicate - True if the 64-bit immediate fits in a 32-bit
-  // sign extended field.
-  return (int64_t)N->getZExtValue() == (int32_t)N->getZExtValue();
-}]>;
+def i64immSExt32  : PatLeaf<(i64 imm), [{ return i64immSExt32(N); }]>;
 
 
 def i64immZExt32  : PatLeaf<(i64 imm), [{

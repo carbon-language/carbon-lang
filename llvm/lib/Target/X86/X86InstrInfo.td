@@ -414,9 +414,7 @@ def X86_COND_O   : PatLeaf<(i8 13)>;
 def X86_COND_P   : PatLeaf<(i8 14)>; // alt. COND_PE
 def X86_COND_S   : PatLeaf<(i8 15)>;
 
-def immSext8 : PatLeaf<(imm), [{
-  return N->getSExtValue() == (int8_t)N->getSExtValue();
-}]>;
+def immSext8 : PatLeaf<(imm), [{ return immSext8(N); }]>;
 
 def i16immSExt8  : PatLeaf<(i16 immSext8)>;
 def i32immSExt8  : PatLeaf<(i32 immSext8)>;
