@@ -833,8 +833,43 @@ SVal SimpleSValuator::EvalBinOpLN(const GRState *state,
       }
     }
   }
+  
+  // We are dealing with pointer arithmetic.
 
-  // Delegate pointer arithmetic to the StoreManager.
+  // Handle pointer arithmetic on constant values.
+  if (nonloc::ConcreteInt *rhsInt = dyn_cast<nonloc::ConcreteInt>(&rhs)) {
+    if (loc::ConcreteInt *lhsInt = dyn_cast<loc::ConcreteInt>(&lhs)) {
+      const llvm::APSInt &leftI = lhsInt->getValue();
+      assert(leftI.isUnsigned());
+      llvm::APSInt rightI(rhsInt->getValue(), /* isUnsigned */ true);
+
+      // Convert the bitwidth of rightI.  This should deal with overflow
+      // since we are dealing with concrete values.
+      rightI.extOrTrunc(leftI.getBitWidth());
+
+      // Offset the increment by the pointer size.
+      ASTContext &ctx = ValMgr.getContext();
+      const PointerType *PT = resultTy->getAs<PointerType>();
+      llvm::APSInt Multiplicand(rightI.getBitWidth(), /* isUnsigned */ true);
+      rightI *= Multiplicand;
+      
+      // Compute the adjusted pointer.
+      switch (op) {
+        case BO_Add:
+          rightI = leftI + rightI;
+          break;
+        case BO_Sub:
+          rightI = leftI - rightI;
+          break;
+        default:
+          llvm_unreachable("Invalid pointer arithmetic operation");
+      }
+      return loc::ConcreteInt(ValMgr.getBasicValueFactory().getValue(rightI));
+    }
+  }
+  
+
+  // Delegate remaining pointer arithmetic to the StoreManager.
   return state->getStateManager().getStoreManager().EvalBinOp(op, lhs,
                                                               rhs, resultTy);
 }
