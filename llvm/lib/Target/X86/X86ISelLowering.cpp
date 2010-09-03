@@ -2602,13 +2602,17 @@ static bool isTargetShuffle(unsigned Opcode) {
   case X86ISD::MOVSS:
   case X86ISD::MOVSD:
   case X86ISD::UNPCKLPS:
+  case X86ISD::UNPCKLPD:
   case X86ISD::PUNPCKLWD:
   case X86ISD::PUNPCKLBW:
   case X86ISD::PUNPCKLDQ:
+  case X86ISD::PUNPCKLQDQ:
   case X86ISD::UNPCKHPS:
+  case X86ISD::UNPCKHPD:
   case X86ISD::PUNPCKHWD:
   case X86ISD::PUNPCKHBW:
   case X86ISD::PUNPCKHDQ:
+  case X86ISD::PUNPCKHQDQ:
     return true;
   }
   return false;
@@ -2663,13 +2667,17 @@ static SDValue getTargetShuffleNode(unsigned Opc, DebugLoc dl, EVT VT,
   case X86ISD::MOVSS:
   case X86ISD::MOVSD:
   case X86ISD::UNPCKLPS:
+  case X86ISD::UNPCKLPD:
   case X86ISD::PUNPCKLWD:
   case X86ISD::PUNPCKLBW:
   case X86ISD::PUNPCKLDQ:
+  case X86ISD::PUNPCKLQDQ:
   case X86ISD::UNPCKHPS:
+  case X86ISD::UNPCKHPD:
   case X86ISD::PUNPCKHWD:
   case X86ISD::PUNPCKHBW:
   case X86ISD::PUNPCKHDQ:
+  case X86ISD::PUNPCKHQDQ:
     return DAG.getNode(Opc, dl, VT, V1, V2);
   }
   return SDValue();
@@ -5140,6 +5148,34 @@ SDValue getMOVLP(SDValue &Op, DebugLoc &dl, SelectionDAG &DAG, bool HasSSE2) {
   // Invert the operand order and use SHUFPS to match it.
   return getTargetShuffleNode(X86ISD::SHUFPS, dl, VT, V2, V1,
                               X86::getShuffleSHUFImmediate(SVOp), DAG);
+}
+
+static inline unsigned getUNPCKLOpcode(EVT VT) {
+  switch(VT.getSimpleVT().SimpleTy) {
+  case MVT::v4i32: return X86ISD::PUNPCKLDQ;
+  case MVT::v2i64: return X86ISD::PUNPCKLQDQ;
+  case MVT::v4f32: return X86ISD::UNPCKLPS;
+  case MVT::v2f64: return X86ISD::UNPCKLPD;
+  case MVT::v16i8: return X86ISD::PUNPCKLBW;
+  case MVT::v8i16: return X86ISD::PUNPCKLWD;
+  default:
+    llvm_unreachable("Unknow type for unpckl");
+  }
+  return 0;
+}
+
+static inline unsigned getUNPCKHOpcode(EVT VT) {
+  switch(VT.getSimpleVT().SimpleTy) {
+  case MVT::v4i32: return X86ISD::PUNPCKHDQ;
+  case MVT::v2i64: return X86ISD::PUNPCKHQDQ;
+  case MVT::v4f32: return X86ISD::UNPCKHPS;
+  case MVT::v2f64: return X86ISD::UNPCKHPD;
+  case MVT::v16i8: return X86ISD::PUNPCKHBW;
+  case MVT::v8i16: return X86ISD::PUNPCKHWD;
+  default:
+    llvm_unreachable("Unknow type for unpckh");
+  }
+  return 0;
 }
 
 SDValue
