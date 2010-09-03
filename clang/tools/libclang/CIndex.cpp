@@ -393,7 +393,9 @@ public:
   // FIXME: UnaryTypeTraitExpr has poor source-location information.
   bool VisitOverloadExpr(OverloadExpr *E);
   bool VisitDependentScopeDeclRefExpr(DependentScopeDeclRefExpr *E);
+  // FIXME: CXXUnresolvedConstructExpr has poor source-location information.
   bool VisitCXXDependentScopeMemberExpr(CXXDependentScopeMemberExpr *E);
+  bool VisitUnresolvedMemberExpr(UnresolvedMemberExpr *E);
 };
 
 } // end anonymous namespace
@@ -1693,6 +1695,14 @@ bool CursorVisitor::VisitCXXDependentScopeMemberExpr(
   return false;
 }
 
+bool CursorVisitor::VisitUnresolvedMemberExpr(UnresolvedMemberExpr *E) {
+  // Visit the base expression, if there is one.
+  if (!E->isImplicitAccess() &&
+      Visit(MakeCXCursor(E->getBase(), StmtParent, TU)))
+    return true;
+
+  return VisitOverloadExpr(E);
+}
 
 bool CursorVisitor::VisitObjCMessageExpr(ObjCMessageExpr *E) {
   if (TypeSourceInfo *TSInfo = E->getClassReceiverTypeInfo())

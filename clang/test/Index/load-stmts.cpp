@@ -55,6 +55,21 @@ void test_dependent_exprs(T t) {
   t->type::template f<type*>();
 }
 
+struct Y {
+  int f(int);
+  float f(float);
+
+  template<typename T> T g(T);
+  template<typename T> T g(T*);
+};
+
+template<typename T>
+void test_more_dependent_exprs(T t, Y y) {
+  y.Y::f(t);
+  typedef T type;
+  y.g<type>(t);
+}
+
 // RUN: c-index-test -test-load-source all %s | FileCheck %s
 // CHECK: load-stmts.cpp:1:13: TypedefDecl=T:1:13 (Definition) Extent=[1:13 - 1:14]
 // CHECK: load-stmts.cpp:2:8: StructDecl=X:2:8 (Definition) Extent=[2:1 - 2:23]
@@ -136,3 +151,12 @@ void test_dependent_exprs(T t) {
 // CHECK: load-stmts.cpp:55:3: CallExpr= Extent=[55:3 - 55:31]
 // CHECK: load-stmts.cpp:55:3: DeclRefExpr=t:50:29 Extent=[55:3 - 55:4]
 // CHECK: load-stmts.cpp:55:23: TypeRef=type:52:13 Extent=[55:23 - 55:27]
+// CHECK: load-stmts.cpp:67:6: FunctionTemplate=test_more_dependent_exprs:67:6 (Definition)
+// CHECK: load-stmts.cpp:68:3: CallExpr= Extent=[68:3 - 68:12]
+// CHECK: load-stmts.cpp:68:3: DeclRefExpr=y:67:39 Extent=[68:3 - 68:4]
+// CHECK: load-stmts.cpp:68:5: TypeRef=struct Y:58:8 Extent=[68:5 - 68:6]
+// CHECK: load-stmts.cpp:68:10: DeclRefExpr=t:67:34 Extent=[68:10 - 68:11]
+// CHECK: load-stmts.cpp:70:3: CallExpr= Extent=[70:3 - 70:15]
+// CHECK: load-stmts.cpp:70:3: DeclRefExpr=y:67:39 Extent=[70:3 - 70:4]
+// CHECK: load-stmts.cpp:70:7: TypeRef=type:69:13 Extent=[70:7 - 70:11]
+// CHECK: load-stmts.cpp:70:13: DeclRefExpr=t:67:34 Extent=[70:13 - 70:14]
