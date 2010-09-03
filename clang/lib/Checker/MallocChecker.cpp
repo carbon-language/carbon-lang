@@ -32,10 +32,10 @@ public:
   RefState(Kind k, const Stmt *s) : K(k), S(s) {}
 
   bool isAllocated() const { return K == AllocateUnchecked; }
-  bool isFailed() const { return K == AllocateFailed; }
+  //bool isFailed() const { return K == AllocateFailed; }
   bool isReleased() const { return K == Released; }
-  bool isEscaped() const { return K == Escaped; }
-  bool isRelinquished() const { return K == Relinquished; }
+  //bool isEscaped() const { return K == Escaped; }
+  //bool isRelinquished() const { return K == Relinquished; }
 
   bool operator==(const RefState &X) const {
     return K == X.K && S == X.S;

@@ -116,7 +116,7 @@ namespace {
 
     void Destroy();
 
-    static inline bool classof(const DeltaTreeNode *) { return true; }
+    //static inline bool classof(const DeltaTreeNode *) { return true; }
   };
 } // end anonymous namespace
 
@@ -132,12 +132,6 @@ namespace {
     friend class DeltaTreeNode;
   public:
     DeltaTreeInteriorNode() : DeltaTreeNode(false /*nonleaf*/) {}
-
-    DeltaTreeInteriorNode(DeltaTreeNode *FirstChild)
-    : DeltaTreeNode(false /*nonleaf*/) {
-      FullDelta = FirstChild->FullDelta;
-      Children[0] = FirstChild;
-    }
 
     DeltaTreeInteriorNode(const InsertResult &IR)
       : DeltaTreeNode(false /*nonleaf*/) {
@@ -157,7 +151,7 @@ namespace {
       return Children[i];
     }
 
-    static inline bool classof(const DeltaTreeInteriorNode *) { return true; }
+  //static inline bool classof(const DeltaTreeInteriorNode *) { return true; }
     static inline bool classof(const DeltaTreeNode *N) { return !N->isLeaf(); }
   };
 }

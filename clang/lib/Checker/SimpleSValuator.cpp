@@ -848,8 +848,6 @@ SVal SimpleSValuator::EvalBinOpLN(const GRState *state,
       rightI.extOrTrunc(leftI.getBitWidth());
 
       // Offset the increment by the pointer size.
-      ASTContext &ctx = ValMgr.getContext();
-      const PointerType *PT = resultTy->getAs<PointerType>();
       llvm::APSInt Multiplicand(rightI.getBitWidth(), /* isUnsigned */ true);
       rightI *= Multiplicand;
       

@@ -31,8 +31,8 @@ struct StreamState {
 
   bool isOpened() const { return K == Opened; }
   bool isClosed() const { return K == Closed; }
-  bool isOpenFailed() const { return K == OpenFailed; }
-  bool isEscaped() const { return K == Escaped; }
+  //bool isOpenFailed() const { return K == OpenFailed; }
+  //bool isEscaped() const { return K == Escaped; }
 
   bool operator==(const StreamState &X) const {
     return K == X.K && S == X.S;

@@ -1576,7 +1576,6 @@ public:
     return t == other.t;
   }
 
-  QualType getQualType() const { return t; }
   CXXCatchStmt *getCatchStmt() const { return stmt; }
   SourceLocation getTypeSpecStartLoc() const {
     return stmt->getExceptionDecl()->getTypeSpecStartLoc();
