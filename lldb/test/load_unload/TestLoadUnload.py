@@ -13,6 +13,10 @@ class LoadUnloadTestCase(TestBase):
 
     def test_load_unload(self):
         """Test breakpoint by name works correctly with dlopen'ing."""
+
+        # Invoke the default build rule.
+        self.buildDefault()
+
         exe = os.path.join(os.getcwd(), "a.out")
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 
