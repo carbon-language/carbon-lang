@@ -48,16 +48,23 @@ namespace radar8382559 {
 
   int test3() {
     __attribute__((__blocks__(byref))) bool hasProperty = false;
+    bool has = true;
+
     bool (^b)() = ^ {
      func(hasProperty);
      if (hasProperty)
        hasProperty = 0;
+     if (has)
+       hasProperty = 1;
      return hasProperty;
      };
     func(hasProperty);
+    func(has);
     b();
     if (hasProperty)
       hasProperty = 1;
+    if (has)
+      has = 2;
     return hasProperty = 1;
   }
 }
