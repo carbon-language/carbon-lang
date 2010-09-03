@@ -391,15 +391,6 @@ ConstString::DumpDebug(Stream *s) const
 }
 
 //----------------------------------------------------------------------
-// Returns true if the contained string is empty.
-//----------------------------------------------------------------------
-bool
-ConstString::IsEmpty() const
-{
-    return m_string == NULL || m_string[0] == '\0';
-}
-
-//----------------------------------------------------------------------
 // Set the string value in the object by uniquing the "cstr" string
 // value in our global string pool.
 //

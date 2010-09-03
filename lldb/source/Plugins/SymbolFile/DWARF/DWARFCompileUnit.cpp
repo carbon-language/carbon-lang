@@ -9,6 +9,7 @@
 
 #include "DWARFCompileUnit.h"
 
+#include "lldb/Core/Mangled.h"
 #include "lldb/Core/Stream.h"
 #include "lldb/Core/Timer.h"
 
@@ -591,7 +592,7 @@ DWARFCompileUnit::Index
 
         DWARFDebugInfoEntry::Attributes attributes;
         const char *name = NULL;
-        const char *mangled = NULL;
+        Mangled mangled;
         bool is_variable = false;
         bool is_declaration = false;
         bool is_artificial = false;
@@ -629,7 +630,7 @@ DWARFCompileUnit::Index
 
                 case DW_AT_MIPS_linkage_name:
                     if (attributes.ExtractFormValueAtIndex(m_dwarf2Data, i, form_value))
-                        mangled = form_value.AsCString(debug_str);
+                        mangled.GetMangledName().SetCString(form_value.AsCString(debug_str));
                     break;
 
                 case DW_AT_low_pc:
@@ -761,8 +762,10 @@ DWARFCompileUnit::Index
                     else
                         base_name_to_function_die.Append(ConstString(name).AsCString(), die.GetOffset());
                 }
-                if (mangled)
-                    full_name_to_function_die.Append(ConstString(mangled).AsCString(), die.GetOffset());
+                if (mangled.GetMangledName())
+                    full_name_to_function_die.Append(mangled.GetMangledName().AsCString(), die.GetOffset());
+                if (mangled.GetDemangledName())
+                    full_name_to_function_die.Append(mangled.GetDemangledName().AsCString(), die.GetOffset());
             }
             break;
 
@@ -771,8 +774,10 @@ DWARFCompileUnit::Index
             {
                 if (name)
                     base_name_to_function_die.Append(ConstString(name).AsCString(), die.GetOffset());
-                if (mangled)
-                    full_name_to_function_die.Append(ConstString(mangled).AsCString(), die.GetOffset());
+                if (mangled.GetMangledName())
+                    full_name_to_function_die.Append(mangled.GetMangledName().AsCString(), die.GetOffset());
+                if (mangled.GetDemangledName())
+                    full_name_to_function_die.Append(mangled.GetDemangledName().AsCString(), die.GetOffset());
             }
             break;
         

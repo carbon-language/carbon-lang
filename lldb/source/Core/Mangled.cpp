@@ -9,6 +9,8 @@
 
 #include <cxxabi.h>
 
+#include "llvm/ADT/DenseMap.h"
+
 #include "lldb/Core/ConstString.h"
 #include "lldb/Core/Mangled.h"
 #include "lldb/Core/Stream.h"
@@ -142,18 +144,47 @@ Mangled::GetDemangledName () const
         const char * mangled = m_mangled.AsCString();
         if (mangled[0])
         {
-            char *demangled_name = abi::__cxa_demangle (mangled, NULL, NULL, NULL);
+            // Since demangling can be a costly, and since all names that go 
+            // into a ConstString (like our m_mangled and m_demangled members)
+            // end up being unique "const char *" values, we can use a DenseMap
+            // to speed up our lookup. We do this because often our symbol table
+            // and our debug information both have the mangled names which they
+            // would each need to demangle. Also, with GCC we end up with the one
+            // definition rule where a lot of STL code produces symbols that are
+            // in multiple compile units and the mangled names end up being in
+            // the same binary multiple times. The performance win isn't huge, 
+            // but we showed a 20% improvement on darwin.
+            typedef llvm::DenseMap<const char *, const char *> MangledToDemangledMap;
+            static MangledToDemangledMap g_mangled_to_demangled;
 
-            if (demangled_name)
+            // Check our mangled string pointer to demangled string pointer map first
+            MangledToDemangledMap::const_iterator pos = g_mangled_to_demangled.find (mangled);
+            if (pos != g_mangled_to_demangled.end())
             {
-                m_demangled.SetCString (demangled_name);
-                free (demangled_name);
+                // We have already demangled this string, we can just use our saved result!
+                m_demangled.SetCString(pos->second);
             }
             else
             {
-                // Set the demangled string to the empty string to indicate we
-                // tried to parse it once and failed.
-                m_demangled.SetCString("");
+                // We didn't already mangle this name, demangle it and if all goes well
+                // add it to our map.
+                char *demangled_name = abi::__cxa_demangle (mangled, NULL, NULL, NULL);
+
+                if (demangled_name)
+                {
+                    m_demangled.SetCString (demangled_name);
+                    // Now that the name has been uniqued, add the uniqued C string
+                    // pointer from m_mangled as the key to the uniqued C string
+                    // pointer in m_demangled.
+                    g_mangled_to_demangled.insert (std::make_pair (mangled, m_demangled.GetCString()));
+                    free (demangled_name);
+                }
+                else
+                {
+                    // Set the demangled string to the empty string to indicate we
+                    // tried to parse it once and failed.
+                    m_demangled.SetCString("");
+                }
             }
         }
     }

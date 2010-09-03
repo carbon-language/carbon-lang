@@ -290,7 +290,11 @@ public:
     ///     @li \b false if the contained string is not empty.
     //------------------------------------------------------------------
     bool
-    IsEmpty () const;
+    IsEmpty () const
+    {
+        return m_string == NULL || m_string[0] == '\0';
+    }
+
 
     //------------------------------------------------------------------
     /// Set the C string value.
