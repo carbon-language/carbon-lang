@@ -27,6 +27,8 @@ namespace llvm {
 
 namespace clang {
 
+class Decl;
+  
 /// \brief Default priority values for code-completion results based
 /// on their kind.
 enum {
@@ -122,6 +124,10 @@ QualType getDeclUsageType(ASTContext &C, NamedDecl *ND);
 unsigned getMacroUsagePriority(llvm::StringRef MacroName, 
                                bool PreferredTypeIsPointer = false);
 
+/// \brief Determine the libclang cursor kind associated with the given
+/// declaration.
+CXCursorKind getCursorKindForDecl(Decl *D);
+  
 class FunctionDecl;
 class FunctionType;
 class FunctionTemplateDecl;

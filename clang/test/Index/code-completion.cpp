@@ -40,18 +40,18 @@ Z::operator int() const {
 // CHECK-MEMBER: FieldDecl:{ResultType double}{TypedText member}
 // CHECK-MEMBER: FieldDecl:{ResultType int}{Text X::}{TypedText member}
 // CHECK-MEMBER: FieldDecl:{ResultType float}{Text Y::}{TypedText member}
-// CHECK-MEMBER: FunctionDecl:{ResultType void}{Informative Y::}{TypedText memfunc}{LeftParen (}{Optional {Placeholder int i}}{RightParen )}
-// CHECK-MEMBER: FunctionDecl:{ResultType int}{TypedText operator int}{LeftParen (}{RightParen )}{Informative  const}
-// CHECK-MEMBER: FunctionDecl:{ResultType Z &}{TypedText operator=}{LeftParen (}{Placeholder Z const &}{RightParen )}
-// CHECK-MEMBER: FunctionDecl:{ResultType X &}{Text X::}{TypedText operator=}{LeftParen (}{Placeholder X const &}{RightParen )}
-// CHECK-MEMBER: FunctionDecl:{ResultType Y &}{Text Y::}{TypedText operator=}{LeftParen (}{Placeholder Y const &}{RightParen )}
+// CHECK-MEMBER: CXXMethod:{ResultType void}{Informative Y::}{TypedText memfunc}{LeftParen (}{Optional {Placeholder int i}}{RightParen )}
+// CHECK-MEMBER: CXXConversion:{ResultType int}{TypedText operator int}{LeftParen (}{RightParen )}{Informative  const}
+// CHECK-MEMBER: CXXMethod:{ResultType Z &}{TypedText operator=}{LeftParen (}{Placeholder Z const &}{RightParen )}
+// CHECK-MEMBER: CXXMethod:{ResultType X &}{Text X::}{TypedText operator=}{LeftParen (}{Placeholder X const &}{RightParen )}
+// CHECK-MEMBER: CXXMethod:{ResultType Y &}{Text Y::}{TypedText operator=}{LeftParen (}{Placeholder Y const &}{RightParen )}
 // CHECK-MEMBER: EnumConstantDecl:{ResultType X::E}{Informative E::}{TypedText Val1}
 // CHECK-MEMBER: StructDecl:{TypedText X}{Text ::}
 // CHECK-MEMBER: StructDecl:{TypedText Y}{Text ::}
 // CHECK-MEMBER: StructDecl:{TypedText Z}{Text ::}
-// CHECK-MEMBER: FunctionDecl:{ResultType void}{Informative X::}{TypedText ~X}{LeftParen (}{RightParen )}
-// CHECK-MEMBER: FunctionDecl:{ResultType void}{Informative Y::}{TypedText ~Y}{LeftParen (}{RightParen )}
-// CHECK-MEMBER: FunctionDecl:{ResultType void}{TypedText ~Z}{LeftParen (}{RightParen )}
+// CHECK-MEMBER: CXXDestructor:{ResultType void}{Informative X::}{TypedText ~X}{LeftParen (}{RightParen )}
+// CHECK-MEMBER: CXXDestructor:{ResultType void}{Informative Y::}{TypedText ~Y}{LeftParen (}{RightParen )}
+// CHECK-MEMBER: CXXDestructor:{ResultType void}{TypedText ~Z}{LeftParen (}{RightParen )}
 
 // CHECK-OVERLOAD: NotImplemented:{ResultType int &}{Text overloaded}{LeftParen (}{Text Z z}{Comma , }{CurrentParameter int second}{RightParen )}
 // CHECK-OVERLOAD: NotImplemented:{ResultType float &}{Text overloaded}{LeftParen (}{Text int i}{Comma , }{CurrentParameter long second}{RightParen )}
@@ -63,5 +63,5 @@ Z::operator int() const {
 // CHECK-EXPR: FieldDecl:{ResultType double}{TypedText member} (10)
 // CHECK-EXPR: FieldDecl:{ResultType int}{Text X::}{TypedText member} (5)
 // CHECK-EXPR: FieldDecl:{ResultType float}{Text Y::}{TypedText member} (11)
-// CHECK-EXPR: FunctionDecl:{ResultType void}{TypedText memfunc}{LeftParen (}{Optional {Placeholder int i}}{RightParen )} (22)
-// CHECK-EXPR: NotImplemented:{TypedText N}{Text ::} (75)
+// CHECK-EXPR: CXXMethod:{ResultType void}{TypedText memfunc}{LeftParen (}{Optional {Placeholder int i}}{RightParen )} (22)
+// CHECK-EXPR: Namespace:{TypedText N}{Text ::} (75)

@@ -510,95 +510,13 @@ void CodeCompletionResult::computeCursorKindAndAvailability() {
     else if (Declaration->getAttr<DeprecatedAttr>())
       Availability = CXAvailability_Deprecated;
       
-    switch (Declaration->getKind()) {
-    case Decl::Record:
-    case Decl::CXXRecord:
-    case Decl::ClassTemplateSpecialization: {
-      RecordDecl *Record = cast<RecordDecl>(Declaration);
-      if (Record->isStruct())
-        CursorKind = CXCursor_StructDecl;
-      else if (Record->isUnion())
-        CursorKind = CXCursor_UnionDecl;
-      else
-        CursorKind = CXCursor_ClassDecl;
-      break;
-    }
-      
-    case Decl::ObjCMethod: {
-      ObjCMethodDecl *Method = cast<ObjCMethodDecl>(Declaration);
-      if (Method->isInstanceMethod())
-          CursorKind = CXCursor_ObjCInstanceMethodDecl;
-      else
-        CursorKind = CXCursor_ObjCClassMethodDecl;
-      break;
-    }
-      
-    case Decl::Typedef:
-      CursorKind = CXCursor_TypedefDecl;
-      break;
-        
-    case Decl::Enum:
-      CursorKind = CXCursor_EnumDecl;
-      break;
-        
-    case Decl::Field:
-      CursorKind = CXCursor_FieldDecl;
-      break;
-        
-    case Decl::EnumConstant:
-      CursorKind = CXCursor_EnumConstantDecl;
-      break;      
-        
-    case Decl::Function:
-    case Decl::CXXMethod:
-    case Decl::CXXConstructor:
-    case Decl::CXXDestructor:
-    case Decl::CXXConversion:
-      CursorKind = CXCursor_FunctionDecl;
-      if (cast<FunctionDecl>(Declaration)->isDeleted())
+    if (FunctionDecl *Function = dyn_cast<FunctionDecl>(Declaration))
+      if (Function->isDeleted())
         Availability = CXAvailability_NotAvailable;
-      break;
-        
-    case Decl::Var:
-      CursorKind = CXCursor_VarDecl;
-      break;
-        
-    case Decl::ParmVar:
-      CursorKind = CXCursor_ParmDecl;
-      break;
-        
-    case Decl::ObjCInterface:
-      CursorKind = CXCursor_ObjCInterfaceDecl;
-      break;
-        
-    case Decl::ObjCCategory:
-      CursorKind = CXCursor_ObjCCategoryDecl;
-      break;
-        
-    case Decl::ObjCProtocol:
-      CursorKind = CXCursor_ObjCProtocolDecl;
-      break;
-
-    case Decl::ObjCProperty:
-      CursorKind = CXCursor_ObjCPropertyDecl;
-      break;
-        
-    case Decl::ObjCIvar:
-      CursorKind = CXCursor_ObjCIvarDecl;
-      break;
-        
-    case Decl::ObjCImplementation:
-      CursorKind = CXCursor_ObjCImplementationDecl;
-      break;
-        
-    case Decl::ObjCCategoryImpl:
-      CursorKind = CXCursor_ObjCCategoryImplDecl;
-      break;
-        
-    default:
+      
+    CursorKind = getCursorKindForDecl(Declaration);
+    if (CursorKind == CXCursor_UnexposedDecl)
       CursorKind = CXCursor_NotImplemented;
-      break;
-    }
     break;
 
   case RK_Macro:

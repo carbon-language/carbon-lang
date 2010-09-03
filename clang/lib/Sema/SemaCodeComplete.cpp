@@ -2317,6 +2317,69 @@ unsigned clang::getMacroUsagePriority(llvm::StringRef MacroName,
   return Priority;
 }
 
+CXCursorKind clang::getCursorKindForDecl(Decl *D) {
+  if (!D)
+    return CXCursor_UnexposedDecl;
+  
+  switch (D->getKind()) {
+    case Decl::Enum:               return CXCursor_EnumDecl;
+    case Decl::EnumConstant:       return CXCursor_EnumConstantDecl;
+    case Decl::Field:              return CXCursor_FieldDecl;
+    case Decl::Function:  
+      return CXCursor_FunctionDecl;
+    case Decl::ObjCCategory:       return CXCursor_ObjCCategoryDecl;
+    case Decl::ObjCCategoryImpl:   return CXCursor_ObjCCategoryImplDecl;
+    case Decl::ObjCClass:
+      // FIXME
+      return CXCursor_UnexposedDecl;
+    case Decl::ObjCForwardProtocol:
+      // FIXME
+      return CXCursor_UnexposedDecl;      
+    case Decl::ObjCImplementation: return CXCursor_ObjCImplementationDecl;
+    case Decl::ObjCInterface:      return CXCursor_ObjCInterfaceDecl;
+    case Decl::ObjCIvar:           return CXCursor_ObjCIvarDecl; 
+    case Decl::ObjCMethod:
+      return cast<ObjCMethodDecl>(D)->isInstanceMethod()
+      ? CXCursor_ObjCInstanceMethodDecl : CXCursor_ObjCClassMethodDecl;
+    case Decl::CXXMethod:          return CXCursor_CXXMethod;
+    case Decl::CXXConstructor:     return CXCursor_Constructor;
+    case Decl::CXXDestructor:      return CXCursor_Destructor;
+    case Decl::CXXConversion:      return CXCursor_ConversionFunction;
+    case Decl::ObjCProperty:       return CXCursor_ObjCPropertyDecl;
+    case Decl::ObjCProtocol:       return CXCursor_ObjCProtocolDecl;
+    case Decl::ParmVar:            return CXCursor_ParmDecl;
+    case Decl::Typedef:            return CXCursor_TypedefDecl;
+    case Decl::Var:                return CXCursor_VarDecl;
+    case Decl::Namespace:          return CXCursor_Namespace;
+    case Decl::NamespaceAlias:     return CXCursor_NamespaceAlias;
+    case Decl::TemplateTypeParm:   return CXCursor_TemplateTypeParameter;
+    case Decl::NonTypeTemplateParm:return CXCursor_NonTypeTemplateParameter;
+    case Decl::TemplateTemplateParm:return CXCursor_TemplateTemplateParameter;
+    case Decl::FunctionTemplate:   return CXCursor_FunctionTemplate;
+    case Decl::ClassTemplate:      return CXCursor_ClassTemplate;
+    case Decl::ClassTemplatePartialSpecialization:
+      return CXCursor_ClassTemplatePartialSpecialization;
+    case Decl::UsingDirective:     return CXCursor_UsingDirective;
+      
+    case Decl::Using:
+    case Decl::UnresolvedUsingValue:
+    case Decl::UnresolvedUsingTypename: 
+      return CXCursor_UsingDeclaration;
+      
+    default:
+      if (TagDecl *TD = dyn_cast<TagDecl>(D)) {
+        switch (TD->getTagKind()) {
+          case TTK_Struct: return CXCursor_StructDecl;
+          case TTK_Class:  return CXCursor_ClassDecl;
+          case TTK_Union:  return CXCursor_UnionDecl;
+          case TTK_Enum:   return CXCursor_EnumDecl;
+        }
+      }
+  }
+  
+  return CXCursor_UnexposedDecl;
+}
+
 static void AddMacroResults(Preprocessor &PP, ResultBuilder &Results,
                             bool TargetTypeIsPointer = false) {
   typedef CodeCompletionResult Result;
