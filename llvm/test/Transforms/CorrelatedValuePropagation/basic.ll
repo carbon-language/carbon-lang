@@ -39,3 +39,21 @@ bb3:            ; preds = %bb1
 ; CHECK: ret i1 %res
         ret i1 %res
 }
+
+; PR4855
+@gv = internal constant i8 7
+; CHECK: @test3
+define i8 @test3(i8* %a) nounwind {
+entry:
+        %cond = icmp eq i8* %a, @gv
+        br i1 %cond, label %bb2, label %bb
+
+bb:             ; preds = %entry
+        ret i8 0
+
+bb2:            ; preds = %entry
+; CHECK-NOT: load i8* %a
+        %should_be_const = load i8* %a
+; CHECK: ret i8 7
+        ret i8 %should_be_const
+}

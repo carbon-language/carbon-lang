@@ -21,8 +21,9 @@
 #include "llvm/ADT/Statistic.h"
 using namespace llvm;
 
-STATISTIC(NumPhis,    "Number of phis propagated");
-STATISTIC(NumSelects, "Number of selects propagated");
+STATISTIC(NumPhis,      "Number of phis propagated");
+STATISTIC(NumSelects,   "Number of selects propagated");
+STATISTIC(NumMemAccess, "Number of memory access targets propagated");
 
 namespace {
   class CorrelatedValuePropagation : public FunctionPass {
@@ -30,6 +31,7 @@ namespace {
     
     bool processSelect(SelectInst *SI);
     bool processPHI(PHINode *P);
+    bool processMemAccess(Instruction *I);
     
   public:
     static char ID;
@@ -54,6 +56,7 @@ Pass *llvm::createCorrelatedValuePropagationPass() {
 
 bool CorrelatedValuePropagation::processSelect(SelectInst *S) {
   if (S->getType()->isVectorTy()) return false;
+  if (isa<Constant>(S->getOperand(0))) return false;
   
   Constant *C = LVI->getConstant(S->getOperand(0), S->getParent());
   if (!C) return false;
@@ -97,6 +100,23 @@ bool CorrelatedValuePropagation::processPHI(PHINode *P) {
   return Changed;
 }
 
+bool CorrelatedValuePropagation::processMemAccess(Instruction *I) {
+  Value *Pointer = 0;
+  if (LoadInst *L = dyn_cast<LoadInst>(I))
+    Pointer = L->getPointerOperand();
+  else
+    Pointer = cast<StoreInst>(I)->getPointerOperand();
+  
+  if (isa<Constant>(Pointer)) return false;
+  
+  Constant *C = LVI->getConstant(Pointer, I->getParent());
+  if (!C) return false;
+  
+  ++NumMemAccess;
+  I->replaceUsesOfWith(Pointer, C);
+  return true;
+}
+
 bool CorrelatedValuePropagation::runOnFunction(Function &F) {
   LVI = &getAnalysis<LazyValueInfo>();
   
@@ -106,10 +126,18 @@ bool CorrelatedValuePropagation::runOnFunction(Function &F) {
     bool BBChanged = false;
     for (BasicBlock::iterator BI = FI->begin(), BE = FI->end(); BI != BE; ) {
       Instruction *II = BI++;
-      if (SelectInst *SI = dyn_cast<SelectInst>(II))
-        BBChanged |= processSelect(SI);
-      else if (PHINode *P = dyn_cast<PHINode>(II))
-        BBChanged |= processPHI(P);
+      switch (II->getOpcode()) {
+      case Instruction::Select:
+        BBChanged |= processSelect(cast<SelectInst>(II));
+        break;
+      case Instruction::PHI:
+        BBChanged |= processPHI(cast<PHINode>(II));
+        break;
+      case Instruction::Load:
+      case Instruction::Store:
+        BBChanged |= processMemAccess(II);
+        break;
+      }
     }
     
     // Propagating correlated values might leave cruft around.

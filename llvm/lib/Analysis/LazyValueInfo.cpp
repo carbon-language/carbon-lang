@@ -452,14 +452,15 @@ LVILatticeVal LVIQuery::getBlockValue(BasicBlock *BB) {
     
     // If this is a pointer, and there's a load from that pointer in this BB,
     // then we know that the pointer can't be NULL.
+    bool NotNull = false;
     if (Val->getType()->isPointerTy()) {
-      const PointerType *PTy = cast<PointerType>(Val->getType());
       for (BasicBlock::iterator BI = BB->begin(), BE = BB->end();BI != BE;++BI){
         LoadInst *L = dyn_cast<LoadInst>(BI);
         if (L && L->getPointerAddressSpace() == 0 &&
             L->getPointerOperand()->getUnderlyingObject() ==
               Val->getUnderlyingObject()) {
-          return LVILatticeVal::getNot(ConstantPointerNull::get(PTy));
+          NotNull = true;
+          break;
         }
       }
     }
@@ -475,10 +476,18 @@ LVILatticeVal LVIQuery::getBlockValue(BasicBlock *BB) {
       if (Result.isOverdefined()) {
         DEBUG(dbgs() << " compute BB '" << BB->getName()
                      << "' - overdefined because of pred.\n");
+        // If we previously determined that this is a pointer that can't be null
+        // then return that rather than giving up entirely.
+        if (NotNull) {
+          const PointerType *PTy = cast<PointerType>(Val->getType());
+          Result = LVILatticeVal::getNot(ConstantPointerNull::get(PTy));
+        }
+        
         return Result;
       }
       ++NumPreds;
     }
+    
     
     // If this is the entry block, we must be asking about an argument.  The
     // value is overdefined.
