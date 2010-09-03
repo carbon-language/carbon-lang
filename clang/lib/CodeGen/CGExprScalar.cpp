@@ -1033,7 +1033,7 @@ Value *ScalarExprEmitter::EmitCastExpr(CastExpr *CE) {
 
     // Handle conversion to bool correctly.
     if (DestTy->isBooleanType())
-      return EmitScalarConversion(Visit(E), E->getType(), DestTy);
+      return EmitScalarConversion(Src, E->getType(), DestTy);
 
     return Builder.CreatePtrToInt(Src, ConvertType(DestTy));
   }
