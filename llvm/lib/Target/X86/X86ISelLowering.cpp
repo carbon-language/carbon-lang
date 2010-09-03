@@ -9787,9 +9787,9 @@ static SDValue PerformShuffleCombine(SDNode *N, SelectionDAG &DAG,
   return EltsFromConsecutiveLoads(VT, Elts, dl, DAG);
 }
 
-/// PerformEXTRACT_VECTOR_ELTCombine - Detect vector gather/scatter index
-/// generation and convert it from being a bunch of shuffles and extracts
-/// to a simple store and scalar loads to extract the elements.
+/// PerformShuffleCombine - Detect vector gather/scatter index generation
+/// and convert it from being a bunch of shuffles and extracts to a simple
+/// store and scalar loads to extract the elements.
 static SDValue PerformEXTRACT_VECTOR_ELTCombine(SDNode *N, SelectionDAG &DAG,
                                                 const TargetLowering &TLI) {
   SDValue InputVector = N->getOperand(0);
