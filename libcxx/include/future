@@ -257,7 +257,7 @@ class shared_future<R&>
 public:
     shared_future();
     shared_future(const shared_future& rhs);
-    shared_future(future<R>&&);
+    shared_future(future<R&>&&);
     shared_future(shared_future&& rhs);
     ~shared_future();
     shared_future& operator=(const shared_future& rhs);
@@ -284,7 +284,7 @@ class shared_future<void>
 public:
     shared_future();
     shared_future(const shared_future& rhs);
-    shared_future(future<R>&&);
+    shared_future(future<void>&&);
     shared_future(shared_future&& rhs);
     ~shared_future();
     shared_future& operator=(const shared_future& rhs);
@@ -919,6 +919,8 @@ __deferred_assoc_state<void, _F>::__execute()
 }
 
 template <class> class promise;
+template <class> class shared_future;
+template <class> class atomic_future;
 
 // future
 
@@ -940,6 +942,8 @@ class future
     explicit future(__assoc_state<_R>* __state);
 
     template <class> friend class promise;
+    template <class> friend class shared_future;
+    template <class> friend class atomic_future;
 
     template <class _R1, class _F>
 #ifdef _LIBCPP_MOVE
@@ -1027,6 +1031,8 @@ class future<_R&>
     explicit future(__assoc_state<_R&>* __state);
 
     template <class> friend class promise;
+    template <class> friend class shared_future;
+    template <class> friend class atomic_future;
 
     template <class _R1, class _F>
 #ifdef _LIBCPP_MOVE
@@ -1109,6 +1115,8 @@ class future<void>
     explicit future(__assoc_sub_state* __state);
 
     template <class> friend class promise;
+    template <class> friend class shared_future;
+    template <class> friend class atomic_future;
 
     template <class _R1, class _F>
 #ifdef _LIBCPP_MOVE
@@ -1155,6 +1163,14 @@ public:
         wait_until(const chrono::time_point<_Clock, _Duration>& __abs_time) const
             {return __state_->wait_until(__abs_time);}
 };
+
+template <class _R>
+inline _LIBCPP_INLINE_VISIBILITY
+void
+swap(future<_R>& __x, future<_R>& __y)
+{
+    __x.swap(__y);
+}
 
 // promise<R>
 
@@ -2049,6 +2065,184 @@ async(_F&& __f, _Args&&... __args)
 }
 
 #endif  // _LIBCPP_HAS_NO_VARIADICS
+
+template <class _R>
+class shared_future
+{
+    __assoc_state<_R>* __state_;
+
+public:
+    shared_future() : __state_(nullptr) {}
+    shared_future(const shared_future& __rhs) : __state_(__rhs.__state_)
+        {if (__state_) __state_->__add_shared();}
+#ifdef _LIBCPP_MOVE
+    shared_future(future<_R>&& __f) : __state_(__f.__state_)
+        {__f.__state_ = nullptr;}
+    shared_future(shared_future&& __rhs) : __state_(__rhs.__state_)
+        {__rhs.__state_ = nullptr;}
+#endif  // _LIBCPP_MOVE
+    ~shared_future();
+    shared_future& operator=(const shared_future& __rhs);
+#ifdef _LIBCPP_MOVE
+    shared_future& operator=(shared_future&& __rhs)
+        {
+            shared_future(std::move(__rhs)).swap(*this);
+            return *this;
+        }
+#endif  // _LIBCPP_MOVE
+
+    // retrieving the value
+    const _R& get() const {return __state_->copy();}
+
+    void swap(shared_future& __rhs) {_STD::swap(__state_, __rhs.__state_);}
+
+    // functions to check state
+    bool valid() const {return __state_ != nullptr;}
+
+    void wait() const {__state_->wait();}
+    template <class _Rep, class _Period>
+        future_status
+        wait_for(const chrono::duration<_Rep, _Period>& __rel_time) const
+            {return __state_->wait_for(__rel_time);}
+    template <class _Clock, class _Duration>
+        future_status
+        wait_until(const chrono::time_point<_Clock, _Duration>& __abs_time) const
+            {return __state_->wait_until(__abs_time);}
+};
+
+template <class _R>
+shared_future<_R>::~shared_future()
+{
+    if (__state_)
+        __state_->__release_shared();
+}
+
+template <class _R>
+shared_future<_R>&
+shared_future<_R>::operator=(const shared_future& __rhs)
+{
+    if (__rhs.__state_)
+        __rhs.__state_->__add_shared();
+    if (__state_)
+        __state_->__release_shared();
+    __state_ = __rhs.__state_;
+    return *this;
+}
+
+template <class _R>
+class shared_future<_R&>
+{
+    __assoc_state<_R&>* __state_;
+
+public:
+    shared_future() : __state_(nullptr) {}
+    shared_future(const shared_future& __rhs) : __state_(__rhs.__state_)
+        {if (__state_) __state_->__add_shared();}
+#ifdef _LIBCPP_MOVE
+    shared_future(future<_R&>&& __f) : __state_(__f.__state_)
+        {__f.__state_ = nullptr;}
+    shared_future(shared_future&& __rhs) : __state_(__rhs.__state_)
+        {__rhs.__state_ = nullptr;}
+#endif  // _LIBCPP_MOVE
+    ~shared_future();
+    shared_future& operator=(const shared_future& __rhs);
+#ifdef _LIBCPP_MOVE
+    shared_future& operator=(shared_future&& __rhs)
+        {
+            shared_future(std::move(__rhs)).swap(*this);
+            return *this;
+        }
+#endif  // _LIBCPP_MOVE
+
+    // retrieving the value
+    _R& get() const {return __state_->copy();}
+
+    void swap(shared_future& __rhs) {_STD::swap(__state_, __rhs.__state_);}
+
+    // functions to check state
+    bool valid() const {return __state_ != nullptr;}
+
+    void wait() const {__state_->wait();}
+    template <class _Rep, class _Period>
+        future_status
+        wait_for(const chrono::duration<_Rep, _Period>& __rel_time) const
+            {return __state_->wait_for(__rel_time);}
+    template <class _Clock, class _Duration>
+        future_status
+        wait_until(const chrono::time_point<_Clock, _Duration>& __abs_time) const
+            {return __state_->wait_until(__abs_time);}
+};
+
+template <class _R>
+shared_future<_R&>::~shared_future()
+{
+    if (__state_)
+        __state_->__release_shared();
+}
+
+template <class _R>
+shared_future<_R&>&
+shared_future<_R&>::operator=(const shared_future& __rhs)
+{
+    if (__rhs.__state_)
+        __rhs.__state_->__add_shared();
+    if (__state_)
+        __state_->__release_shared();
+    __state_ = __rhs.__state_;
+    return *this;
+}
+
+template <>
+class shared_future<void>
+{
+    __assoc_sub_state* __state_;
+
+public:
+    shared_future() : __state_(nullptr) {}
+    shared_future(const shared_future& __rhs) : __state_(__rhs.__state_)
+        {if (__state_) __state_->__add_shared();}
+#ifdef _LIBCPP_MOVE
+    shared_future(future<void>&& __f) : __state_(__f.__state_)
+        {__f.__state_ = nullptr;}
+    shared_future(shared_future&& __rhs) : __state_(__rhs.__state_)
+        {__rhs.__state_ = nullptr;}
+#endif  // _LIBCPP_MOVE
+    ~shared_future();
+    shared_future& operator=(const shared_future& __rhs);
+#ifdef _LIBCPP_MOVE
+    shared_future& operator=(shared_future&& __rhs)
+        {
+            shared_future(std::move(__rhs)).swap(*this);
+            return *this;
+        }
+#endif  // _LIBCPP_MOVE
+
+    // retrieving the value
+    void get() const {__state_->copy();}
+
+    void swap(shared_future& __rhs) {_STD::swap(__state_, __rhs.__state_);}
+
+    // functions to check state
+    bool valid() const {return __state_ != nullptr;}
+
+    void wait() const {__state_->wait();}
+    template <class _Rep, class _Period>
+        future_status
+        wait_for(const chrono::duration<_Rep, _Period>& __rel_time) const
+            {return __state_->wait_for(__rel_time);}
+    template <class _Clock, class _Duration>
+        future_status
+        wait_until(const chrono::time_point<_Clock, _Duration>& __abs_time) const
+            {return __state_->wait_until(__abs_time);}
+};
+
+template <class _R>
+inline _LIBCPP_INLINE_VISIBILITY
+void
+swap(shared_future<_R>& __x, shared_future<_R>& __y)
+{
+    __x.swap(__y);
+}
 
 _LIBCPP_END_NAMESPACE_STD
 

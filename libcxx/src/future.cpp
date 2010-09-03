@@ -240,4 +240,21 @@ promise<void>::set_exception_at_thread_exit(exception_ptr __p)
     __state_->set_exception_at_thread_exit(__p);
 }
 
+shared_future<void>::~shared_future()
+{
+    if (__state_)
+        __state_->__release_shared();
+}
+
+shared_future<void>&
+shared_future<void>::operator=(const shared_future& __rhs)
+{
+    if (__rhs.__state_)
+        __rhs.__state_->__add_shared();
+    if (__state_)
+        __state_->__release_shared();
+    __state_ = __rhs.__state_;
+    return *this;
+}
+
 _LIBCPP_END_NAMESPACE_STD
