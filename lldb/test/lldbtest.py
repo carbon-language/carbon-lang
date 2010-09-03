@@ -355,12 +355,12 @@ class TestBase(unittest2.TestCase):
                 else:
                     print >> sys.stderr, self.res.GetError()
 
+            if running:
+                # For process launch, wait some time before possible next try.
+                time.sleep(self.timeWait)
+
             if self.res.Succeeded():
                 break
-            else:
-                if running:
-                    # Process launch failed, wait some time before the next try.
-                    time.sleep(self.timeWait)
 
         # Modify runStarted only if "run" or "process launch" was encountered.
         if running:

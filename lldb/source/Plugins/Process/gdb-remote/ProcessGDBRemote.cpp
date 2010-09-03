@@ -1171,6 +1171,7 @@ ProcessGDBRemote::DoDestroy ()
     StopAsyncThread ();
     m_gdb_comm.StopReadThread();
     KillDebugserverProcess ();
+    m_gdb_comm.Disconnect();    // Disconnect from the debug server.
     return error;
 }
 

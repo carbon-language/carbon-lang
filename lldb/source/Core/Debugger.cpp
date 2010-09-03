@@ -479,7 +479,7 @@ Debugger::UpdateExecutionContext (ExecutionContext *override_context)
         {
             m_exe_ctx.target = target_sp.get();
             m_exe_ctx.process = target_sp->GetProcessSP().get();
-            if (m_exe_ctx.process && m_exe_ctx.process->IsRunning() == false)
+            if (m_exe_ctx.process && m_exe_ctx.process->IsAlive() && !m_exe_ctx.process->IsRunning())
             {
                 m_exe_ctx.thread = m_exe_ctx.process->GetThreadList().GetSelectedThread().get();
                 if (m_exe_ctx.thread == NULL)
