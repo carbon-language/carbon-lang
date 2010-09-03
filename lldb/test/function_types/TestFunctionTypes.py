@@ -9,7 +9,18 @@ class FunctionTypesTestCase(TestBase):
 
     mydir = "function_types"
 
-    def test_function_types(self):
+    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    def test_with_dsym(self):
+        """Test 'callback' has function ptr type, then break on the function."""
+        self.buildDsym()
+        self.function_types()
+
+    def test_with_dwarf(self):
+        """Test 'callback' has function ptr type, then break on the function."""
+        self.buildDwarf()
+        self.function_types()
+
+    def function_types(self):
         """Test 'callback' has function ptr type, then break on the function."""
         exe = os.path.join(os.getcwd(), "a.out")
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
