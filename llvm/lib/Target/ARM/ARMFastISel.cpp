@@ -112,6 +112,7 @@ class ARMFastISel : public FastISel {
     // Instruction selection routines.
     virtual bool ARMSelectLoad(const Instruction *I);
     virtual bool ARMSelectStore(const Instruction *I);
+    virtual bool ARMSelectBranch(const Instruction *I);
 
     // Utility routines.
   private:
@@ -619,6 +620,26 @@ bool ARMFastISel::ARMSelectLoad(const Instruction *I) {
   return true;
 }
 
+bool ARMFastISel::ARMSelectBranch(const Instruction *I) {
+  const BranchInst *BI = cast<BranchInst>(I);
+  MachineBasicBlock *TBB = FuncInfo.MBBMap[BI->getSuccessor(0)];
+  MachineBasicBlock *FBB = FuncInfo.MBBMap[BI->getSuccessor(1)];
+  
+  // Simple branch support.
+  unsigned CondReg = getRegForValue(BI->getCondition());
+  if (CondReg == 0) return false;
+  
+  unsigned CmpOpc = isThumb ? ARM::t2CMPrr : ARM::CMPrr;
+  unsigned BrOpc = isThumb ? ARM::t2Bcc : ARM::Bcc;
+  AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(CmpOpc))
+                  .addReg(CondReg).addReg(CondReg));
+  BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(BrOpc))
+                  .addMBB(TBB).addImm(ARMCC::NE).addReg(ARM::CPSR);
+  FastEmitBranch(FBB, DL);
+  FuncInfo.MBB->addSuccessor(TBB);
+  return true;
+}
+
 // TODO: SoftFP support.
 bool ARMFastISel::TargetSelectInstruction(const Instruction *I) {
   // No Thumb-1 for now.
@@ -629,6 +650,8 @@ bool ARMFastISel::TargetSelectInstruction(const Instruction *I) {
       return ARMSelectLoad(I);
     case Instruction::Store:
       return ARMSelectStore(I);
+    case Instruction::Br:
+      return ARMSelectBranch(I);
     default: break;
   }
   return false;
