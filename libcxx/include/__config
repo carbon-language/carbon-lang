@@ -95,8 +95,23 @@
 #endif
 
 #define _LIBCPP_HAS_NO_ADVANCED_SFINAE
-#define _LIBCPP_HAS_NO_STRONG_USING
 #define _LIBCPP_HAS_NO_TEMPLATE_ALIASES
+
+#if __has_feature(cxx_inline_namespaces)
+#define _LIBCPP_BEGIN_NAMESPACE_STD namespace std {inline namespace _LIBCPP_NAMESPACE {
+#define _LIBCPP_END_NAMESPACE_STD  } }
+#define _STD std::_LIBCPP_NAMESPACE
+
+namespace std {
+inline namespace _LIBCPP_NAMESPACE {
+}
+using namespace _LIBCPP_NAMESPACE;
+}
+#else  // __has_feature(cxx_inline_namespaces)
+#define _LIBCPP_BEGIN_NAMESPACE_STD namespace std {
+#define _LIBCPP_END_NAMESPACE_STD }
+#define _STD std
+#endif  // __has_feature(cxx_inline_namespaces)
 
 #ifndef __GXX_EXPERIMENTAL_CXX0X__
 
@@ -181,13 +196,6 @@
 
 #endif  // __GXX_EXPERIMENTAL_CXX0X__
 
-#endif  // defined(__GNUC__)
-
-#ifdef _LIBCPP_HAS_NO_STRONG_USING
-#define _LIBCPP_BEGIN_NAMESPACE_STD namespace std {
-#define _LIBCPP_END_NAMESPACE_STD }
-#define _STD std
-#else  // _LIBCPP_HAS_NO_STRONG_USING
 #define _LIBCPP_BEGIN_NAMESPACE_STD namespace std { namespace _LIBCPP_NAMESPACE {
 #define _LIBCPP_END_NAMESPACE_STD  } }
 #define _STD std::_LIBCPP_NAMESPACE
@@ -198,7 +206,7 @@ namespace _LIBCPP_NAMESPACE {
 using namespace _LIBCPP_NAMESPACE __attribute__((__strong__));
 }
 
-#endif  // _LIBCPP_HAS_NO_STRONG_USING
+#endif  // defined(__GNUC__)
 
 #ifdef _LIBCPP_HAS_NO_UNICODE_CHARS
 typedef unsigned short char16_t;
