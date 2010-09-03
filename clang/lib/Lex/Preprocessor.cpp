@@ -613,10 +613,8 @@ void Preprocessor::HandleIdentifier(Token &Identifier) {
   // C++ 2.11p2: If this is an alternative representation of a C++ operator,
   // then we act as if it is the actual operator and not the textual
   // representation of it.
-  if (II.isCPlusPlusOperatorKeyword()) {
+  if (II.isCPlusPlusOperatorKeyword())
     Identifier.setIdentifierInfo(0);
-    Identifier.setFlag(Token::CPlusPlusOpKeyword);
-  }
 
   // If this is an extension token, diagnose its use.
   // We avoid diagnosing tokens that originate from macro definitions.

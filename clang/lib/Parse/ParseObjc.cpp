@@ -553,60 +553,6 @@ void Parser::ParseObjCPropertyAttribute(ObjCDeclSpec &DS, Decl *ClassDecl,
   MatchRHSPunctuation(tok::r_paren, LHSLoc);
 }
 
-static void ConvertCPlusPlusOperatorToken(Preprocessor &PP, Token &Tok) {
-  if (!Tok.isCPlusPlusOpKeyword())
-    return;
-  
-  switch (Tok.getKind()) {
-    case tok::ampamp:
-      Tok.setIdentifierInfo(&PP.getIdentifierTable().get("and"));
-      Tok.setKind(tok::identifier);
-      return;
-    case tok::ampequal:
-      Tok.setIdentifierInfo(&PP.getIdentifierTable().get("and_eq"));
-      Tok.setKind(tok::identifier);
-      return;
-    case tok::amp:
-      Tok.setIdentifierInfo(&PP.getIdentifierTable().get("bitand"));
-      Tok.setKind(tok::identifier);
-      return;
-    case tok::pipe:
-      Tok.setIdentifierInfo(&PP.getIdentifierTable().get("pipe"));
-      Tok.setKind(tok::identifier);
-      return;
-    case tok::tilde:
-      Tok.setIdentifierInfo(&PP.getIdentifierTable().get("compl"));
-      Tok.setKind(tok::identifier);
-      return;
-    case tok::exclaim:
-      Tok.setIdentifierInfo(&PP.getIdentifierTable().get("not"));
-      Tok.setKind(tok::identifier);
-      return;
-    case tok::exclaimequal:
-      Tok.setIdentifierInfo(&PP.getIdentifierTable().get("not_eq"));
-      Tok.setKind(tok::identifier);
-      return;
-    case tok::pipepipe:
-      Tok.setIdentifierInfo(&PP.getIdentifierTable().get("or"));
-      Tok.setKind(tok::identifier);
-      return;
-    case tok::pipeequal:
-      Tok.setIdentifierInfo(&PP.getIdentifierTable().get("or_eq"));
-      Tok.setKind(tok::identifier);
-      return;
-    case tok::caret:
-      Tok.setIdentifierInfo(&PP.getIdentifierTable().get("xor"));
-      Tok.setKind(tok::identifier);
-      return;
-    case tok::caretequal:
-      Tok.setIdentifierInfo(&PP.getIdentifierTable().get("xor_eq"));
-      Tok.setKind(tok::identifier);
-      return;
-    default:
-      return;
-  }
-}
-
 ///   objc-method-proto:
 ///     objc-instance-method objc-method-decl objc-method-attributes[opt]
 ///     objc-class-method objc-method-decl objc-method-attributes[opt]
@@ -638,11 +584,31 @@ Decl *Parser::ParseObjCMethodPrototype(Decl *IDecl,
 ///       in out inout bycopy byref oneway int char float double void _Bool
 ///
 IdentifierInfo *Parser::ParseObjCSelectorPiece(SourceLocation &SelectorLoc) {
-  ConvertCPlusPlusOperatorToken(PP, Tok);
 
   switch (Tok.getKind()) {
   default:
     return 0;
+  case tok::ampamp:
+  case tok::ampequal:
+  case tok::amp:
+  case tok::pipe:
+  case tok::tilde:
+  case tok::exclaim:
+  case tok::exclaimequal:
+  case tok::pipepipe:
+  case tok::pipeequal:
+  case tok::caret:
+  case tok::caretequal: {
+    llvm::StringRef ThisTok = PP.getSpelling(Tok);
+    if (isalpha(ThisTok[0])) {
+      IdentifierInfo *II = &PP.getIdentifierTable().get(ThisTok.data());
+      Tok.setKind(tok::identifier);
+      SelectorLoc = ConsumeToken();
+      return II;
+    }
+    return 0; 
+  }
+      
   case tok::identifier:
   case tok::kw_asm:
   case tok::kw_auto:
