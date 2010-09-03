@@ -122,6 +122,7 @@ namespace llvm {
       PM->add(createSimplifyLibCallsPass());    // Library Call Optimizations
     PM->add(createInstructionCombiningPass());  // Cleanup for scalarrepl.
     PM->add(createJumpThreadingPass());         // Thread jumps.
+    PM->add(createCorrelatedValuePropagationPass()); // Propagate conditionals
     PM->add(createCFGSimplificationPass());     // Merge & remove BBs
     PM->add(createInstructionCombiningPass());  // Combine silly seq's
     
@@ -146,6 +147,7 @@ namespace llvm {
     // opened up by them.
     PM->add(createInstructionCombiningPass());
     PM->add(createJumpThreadingPass());         // Thread jumps
+    PM->add(createCorrelatedValuePropagationPass());
     PM->add(createDeadStoreEliminationPass());  // Delete dead stores
     PM->add(createAggressiveDCEPass());         // Delete dead instructions
     PM->add(createCFGSimplificationPass());     // Merge & remove BBs
