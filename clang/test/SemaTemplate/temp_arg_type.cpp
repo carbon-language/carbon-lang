@@ -24,11 +24,11 @@ A<ns::B> a8; // expected-error{{use of class template ns::B requires template ar
 // [temp.arg.type]p2
 void f() {
   class X { };
-  A<X> * a = 0; // expected-error{{template argument uses local type 'X'}}
+  A<X> * a = 0; // expected-warning{{template argument uses local type 'X'}}
 }
 
 struct { int x; } Unnamed; // expected-note{{unnamed type used in template argument was declared here}}
-A<__typeof__(Unnamed)> *a9; // expected-error{{template argument uses unnamed type}}
+A<__typeof__(Unnamed)> *a9; // expected-warning{{template argument uses unnamed type}}
 
 template<typename T, unsigned N>
 struct Array {

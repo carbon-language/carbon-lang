@@ -1371,9 +1371,10 @@ def err_template_arg_nontype_ambig : Error<
   "template argument for non-type template parameter is treated as type %0">;
 def err_template_arg_must_be_template : Error<
   "template argument for template template parameter must be a class template">;
-def err_template_arg_local_type : Error<"template argument uses local type %0">;
-def err_template_arg_unnamed_type : Error<
-  "template argument uses unnamed type">;
+def ext_template_arg_local_type : ExtWarn<
+  "template argument uses local type %0">, InGroup<LocalTypeTemplateArgs>;
+def ext_template_arg_unnamed_type : ExtWarn<
+  "template argument uses unnamed type">, InGroup<UnnamedTypeTemplateArgs>;
 def note_template_unnamed_type_here : Note<
   "unnamed type used in template argument was declared here">;
 def err_template_arg_overload_type : Error<

@@ -2347,31 +2347,33 @@ bool Sema::CheckTemplateArgument(TemplateTypeParmDecl *Param,
   assert(ArgInfo && "invalid TypeSourceInfo");
   QualType Arg = ArgInfo->getType();
 
-  // C++ [temp.arg.type]p2:
+  // C++03 [temp.arg.type]p2:
   //   A local type, a type with no linkage, an unnamed type or a type
   //   compounded from any of these types shall not be used as a
   //   template-argument for a template type-parameter.
-  //
-  // FIXME: Perform the unnamed type check.
+  // C++0x allows these, and even in C++03 we allow them as an extension with
+  // a warning.
   SourceRange SR = ArgInfo->getTypeLoc().getSourceRange();
-  const TagType *Tag = 0;
-  if (const EnumType *EnumT = Arg->getAs<EnumType>())
-    Tag = EnumT;
-  else if (const RecordType *RecordT = Arg->getAs<RecordType>())
-    Tag = RecordT;
-  if (Tag && Tag->getDecl()->getDeclContext()->isFunctionOrMethod()) {
-    SourceRange SR = ArgInfo->getTypeLoc().getSourceRange();
-    return Diag(SR.getBegin(), diag::err_template_arg_local_type)
-      << QualType(Tag, 0) << SR;
-  } else if (Tag && !Tag->getDecl()->getDeclName() &&
-           !Tag->getDecl()->getTypedefForAnonDecl()) {
-    Diag(SR.getBegin(), diag::err_template_arg_unnamed_type) << SR;
-    Diag(Tag->getDecl()->getLocation(), diag::note_template_unnamed_type_here);
-    return true;
-  } else if (Arg->isVariablyModifiedType()) {
-    Diag(SR.getBegin(), diag::err_variably_modified_template_arg)
-      << Arg;
-    return true;
+  if (!LangOpts.CPlusPlus0x) {
+    const TagType *Tag = 0;
+    if (const EnumType *EnumT = Arg->getAs<EnumType>())
+      Tag = EnumT;
+    else if (const RecordType *RecordT = Arg->getAs<RecordType>())
+      Tag = RecordT;
+    if (Tag && Tag->getDecl()->getDeclContext()->isFunctionOrMethod()) {
+      SourceRange SR = ArgInfo->getTypeLoc().getSourceRange();
+      Diag(SR.getBegin(), diag::ext_template_arg_local_type)
+        << QualType(Tag, 0) << SR;
+    } else if (Tag && !Tag->getDecl()->getDeclName() &&
+               !Tag->getDecl()->getTypedefForAnonDecl()) {
+      Diag(SR.getBegin(), diag::ext_template_arg_unnamed_type) << SR;
+      Diag(Tag->getDecl()->getLocation(),
+           diag::note_template_unnamed_type_here);
+    }
+  }
+
+  if (Arg->isVariablyModifiedType()) {
+    return Diag(SR.getBegin(), diag::err_variably_modified_template_arg) << Arg;
   } else if (Context.hasSameUnqualifiedType(Arg, Context.OverloadTy)) {
     return Diag(SR.getBegin(), diag::err_template_arg_overload_type) << SR;
   }
