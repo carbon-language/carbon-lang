@@ -599,7 +599,7 @@ IdentifierInfo *Parser::ParseObjCSelectorPiece(SourceLocation &SelectorLoc) {
   case tok::pipeequal:
   case tok::caret:
   case tok::caretequal: {
-    llvm::StringRef ThisTok = PP.getSpelling(Tok);
+    std::string ThisTok(PP.getSpelling(Tok));
     if (isalpha(ThisTok[0])) {
       IdentifierInfo *II = &PP.getIdentifierTable().get(ThisTok.data());
       Tok.setKind(tok::identifier);
