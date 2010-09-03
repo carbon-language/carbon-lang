@@ -219,7 +219,7 @@ SelectAddr(SDNode *Op, SDValue Addr, SDValue &Offset, SDValue &Base) {
   // Operand is a result from an ADD.
   if (Addr.getOpcode() == ISD::ADD) {
     if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(Addr.getOperand(1))) {
-      if (Predicate_immSExt16(CN)) {
+      if (isUInt<16>(CN->getZExtValue())) {
 
         // If the first operand is a FI, get the TargetFI Node
         if (FrameIndexSDNode *FIN = dyn_cast<FrameIndexSDNode>

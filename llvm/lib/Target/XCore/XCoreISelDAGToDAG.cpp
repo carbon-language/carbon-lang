@@ -56,6 +56,17 @@ namespace {
       return CurDAG->getTargetConstant(Imm, MVT::i32);
     }
 
+    inline bool immMskBitp(SDNode *inN) const {
+      ConstantSDNode *N = cast<ConstantSDNode>(inN);
+      uint32_t value = (uint32_t)N->getZExtValue();
+      if (!isMask_32(value)) {
+        return false;
+      }
+      int msksize = 32 - CountLeadingZeros_32(value);
+      return (msksize >= 1 && msksize <= 8) ||
+              msksize == 16 || msksize == 24 || msksize == 32;
+    }
+
     // Complex Pattern Selectors.
     bool SelectADDRspii(SDNode *Op, SDValue Addr, SDValue &Base,
                         SDValue &Offset);
@@ -151,17 +162,15 @@ SDNode *XCoreDAGToDAGISel::Select(SDNode *N) {
     switch (N->getOpcode()) {
       default: break;
       case ISD::Constant: {
-        if (Predicate_immMskBitp(N)) {
+        uint64_t Val = cast<ConstantSDNode>(N)->getZExtValue();
+        if (immMskBitp(N)) {
           // Transformation function: get the size of a mask
-          int64_t MaskVal = cast<ConstantSDNode>(N)->getZExtValue();
-          assert(isMask_32(MaskVal));
           // Look for the first non-zero bit
-          SDValue MskSize = getI32Imm(32 - CountLeadingZeros_32(MaskVal));
+          SDValue MskSize = getI32Imm(32 - CountLeadingZeros_32(Val));
           return CurDAG->getMachineNode(XCore::MKMSK_rus, dl,
                                         MVT::i32, MskSize);
         }
-        else if (! Predicate_immU16(N)) {
-          unsigned Val = cast<ConstantSDNode>(N)->getZExtValue();
+        else if (!isUInt<16>(Val)) {
           SDValue CPIdx =
             CurDAG->getTargetConstantPool(ConstantInt::get(
                                   Type::getInt32Ty(*CurDAG->getContext()), Val),

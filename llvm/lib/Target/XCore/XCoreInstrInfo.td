@@ -140,17 +140,7 @@ def immU20 : PatLeaf<(imm), [{
   return (uint32_t)N->getZExtValue() < (1 << 20);
 }]>;
 
-def immMskBitp : PatLeaf<(imm), [{
-  uint32_t value = (uint32_t)N->getZExtValue();
-  if (!isMask_32(value)) {
-    return false;
-  }
-  int msksize = 32 - CountLeadingZeros_32(value);
-  return (msksize >= 1 && msksize <= 8)
-          || msksize == 16
-          || msksize == 24
-          || msksize == 32;
-}]>;
+def immMskBitp : PatLeaf<(imm), [{ return immMskBitp(N); }]>;
 
 def immBitp : PatLeaf<(imm), [{
   uint32_t value = (uint32_t)N->getZExtValue();
