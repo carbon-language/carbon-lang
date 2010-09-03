@@ -6564,7 +6564,7 @@ void Sema::ActOnFields(Scope* S,
       EnclosingDecl->setInvalidDecl();
       continue;
     } else if (FDTy->isIncompleteArrayType() && i == NumFields - 1 &&
-               Record && Record->isStruct()) {
+               Record && !Record->isUnion()) {
       // Flexible array member.
       if (NumNamedMembers < 1) {
         Diag(FD->getLocation(), diag::err_flexible_array_empty_struct)

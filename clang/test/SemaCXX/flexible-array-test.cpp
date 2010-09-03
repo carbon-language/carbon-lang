@@ -43,3 +43,13 @@ struct X {
    int blah;
    S strings[];	// expected-error {{flexible array member 'strings' of non-POD element type 'S []'}}
 };
+
+class A {
+  int s;
+  char c[];
+};
+
+union B {
+  int s;
+  char c[]; // expected-error {{field has incomplete type 'char []'}}
+};
