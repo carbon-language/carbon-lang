@@ -405,7 +405,7 @@ ProcessGDBRemote::DoLaunch
                                              NULL, //stdin_path,
                                              LLDB_INVALID_PROCESS_ID,
                                              NULL, false,
-                                             launch_flags & eLaunchFlagDisableASLR != 0,
+                                             (launch_flags & eLaunchFlagDisableASLR) != 0,
                                              inferior_arch);
             if (error.Fail())
                 return error;
@@ -424,7 +424,7 @@ ProcessGDBRemote::DoLaunch
                                              NULL, //stdin_path,
                                              LLDB_INVALID_PROCESS_ID,
                                              NULL, false,
-                                             launch_flags & eLaunchFlagDisableASLR != 0,
+                                             (launch_flags & eLaunchFlagDisableASLR) != 0,
                                              inferior_arch);
             if (error.Fail())
                 return error;
