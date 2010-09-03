@@ -2027,14 +2027,16 @@ LocalRewriter::RewriteMBB(LiveIntervals *LIs,
           CanReuse = !ReusedOperands.isClobbered(PhysReg) &&
             Spills.canClobberPhysReg(PhysReg);
         }
-        // If this is an asm, and PhysReg is used elsewhere as an earlyclobber
-        // operand, we can't also use it as an input.  (Outputs always come
-        // before inputs, so we can stop looking at i.)
+        // If this is an asm, and a PhysReg alias is used elsewhere as an
+        // earlyclobber operand, we can't also use it as an input.
         if (MI.isInlineAsm()) {
-          for (unsigned k=0; k<i; ++k) {
+          for (unsigned k = 0, e = MI.getNumOperands(); k != e; ++k) {
             MachineOperand &MOk = MI.getOperand(k);
-            if (MOk.isReg() && MOk.getReg()==PhysReg && MOk.isEarlyClobber()) {
+            if (MOk.isReg() && MOk.isEarlyClobber() &&
+                TRI->regsOverlap(MOk.getReg(), PhysReg)) {
               CanReuse = false;
+              DEBUG(dbgs() << "Not reusing physreg " << TRI->getName(PhysReg)
+                           << " for vreg" << VirtReg << ": " << MOk << '\n');
               break;
             }
           }
