@@ -548,7 +548,7 @@ void MCMachOStreamer::EmitDwarfFileTable(void) {
   //  Minimum line offset in a special line info. opcode.  This value
   //  was chosen to give a reasonable range of values.  */
   //  DWARF2_LINE_BASE
-  EmitIntValue(-5, 1);
+  EmitIntValue(uint64_t(-5), 1);
   //  Range of line offsets in a special line info. opcode.
   //  DWARF2_LINE_RANGE
   EmitIntValue(14, 1);
