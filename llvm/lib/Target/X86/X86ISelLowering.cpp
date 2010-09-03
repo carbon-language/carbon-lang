@@ -2609,9 +2609,11 @@ static bool isTargetShuffle(unsigned Opcode) {
   case X86ISD::PUNPCKLDQ:
   case X86ISD::PUNPCKLQDQ:
   case X86ISD::UNPCKHPS:
+  case X86ISD::UNPCKHPD:
   case X86ISD::PUNPCKHWD:
   case X86ISD::PUNPCKHBW:
   case X86ISD::PUNPCKHDQ:
+  case X86ISD::PUNPCKHQDQ:
     return true;
   }
   return false;
@@ -2672,9 +2674,11 @@ static SDValue getTargetShuffleNode(unsigned Opc, DebugLoc dl, EVT VT,
   case X86ISD::PUNPCKLDQ:
   case X86ISD::PUNPCKLQDQ:
   case X86ISD::UNPCKHPS:
+  case X86ISD::UNPCKHPD:
   case X86ISD::PUNPCKHWD:
   case X86ISD::PUNPCKHBW:
   case X86ISD::PUNPCKHDQ:
+  case X86ISD::PUNPCKHQDQ:
     return DAG.getNode(Opc, dl, VT, V1, V2);
   }
   return SDValue();
@@ -5223,6 +5227,20 @@ static unsigned getUNPCKLOpcode(EVT VT) {
   return 0;
 }
 
+static unsigned getUNPCKHOpcode(EVT VT) {
+  switch(VT.getSimpleVT().SimpleTy) {
+  case MVT::v4i32: return X86ISD::PUNPCKHDQ;
+  case MVT::v2i64: return X86ISD::PUNPCKHQDQ;
+  case MVT::v4f32: return X86ISD::UNPCKHPS;
+  case MVT::v2f64: return X86ISD::UNPCKHPD;
+  case MVT::v16i8: return X86ISD::PUNPCKHBW;
+  case MVT::v8i16: return X86ISD::PUNPCKHWD;
+  default:
+    llvm_unreachable("Unknow type for unpckh");
+  }
+  return 0;
+}
+
 SDValue
 X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const {
   ShuffleVectorSDNode *SVOp = cast<ShuffleVectorSDNode>(Op);
@@ -5413,7 +5431,8 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const {
       Op : getTargetShuffleNode(getUNPCKLOpcode(VT), dl, VT, V1, V2, DAG);
 
   if (X86::isUNPCKHMask(SVOp))
-    return Op;
+    return (isMMX) ?
+      Op : getTargetShuffleNode(getUNPCKHOpcode(VT), dl, VT, V1, V2, DAG);
 
   if (V2IsSplat) {
     // Normalize mask so all entries that point to V2 points to its first
@@ -5438,10 +5457,11 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const {
 
     if (X86::isUNPCKLMask(NewSVOp))
       return (isMMX) ?
-        Op : getTargetShuffleNode(getUNPCKLOpcode(VT), dl, VT, V2, V1, DAG);
+        NewOp : getTargetShuffleNode(getUNPCKLOpcode(VT), dl, VT, V2, V1, DAG);
 
     if (X86::isUNPCKHMask(NewSVOp))
-      return NewOp;
+      return (isMMX) ?
+        NewOp : getTargetShuffleNode(getUNPCKHOpcode(VT), dl, VT, V2, V1, DAG);
   }
 
   // FIXME: for mmx, bitcast v2i32 to v4i16 for shuffle.
