@@ -9,8 +9,13 @@ class UniversalTestCase(TestBase):
 
     mydir = "macosx/universal"
 
+    @unittest2.skipUnless(sys.platform.startswith("darwin") and os.uname()[4]=='i386',
+                          "requires Darwin & i386")
     def test_process_launch_for_universal(self):
         """Test process launch of a universal binary."""
+
+        # Invoke the default build rule.
+        self.buildDefault()
 
         # Note that "testit" is a universal binary.
         exe = os.path.join(os.getcwd(), "testit")

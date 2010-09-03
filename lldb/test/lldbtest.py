@@ -458,6 +458,12 @@ class TestBase(unittest2.TestCase):
             # End of while loop.
 
 
+    def buildDefault(self):
+        """Platform specific way to build the default binaries."""
+        module = __import__(sys.platform)
+        if not module.buildDefault():
+            raise Exception("Don't know how to build default binary")
+
     def buildDsym(self):
         """Platform specific way to build binaries with dsym info."""
         module = __import__(sys.platform)
