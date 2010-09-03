@@ -639,7 +639,7 @@ needsStackRealignment(const MachineFunction &MF) const {
   const Function *F = MF.getFunction();
   const ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
   unsigned StackAlign = MF.getTarget().getFrameInfo()->getStackAlignment();
-  bool requiresRealignment = ((MFI->getMaxAlignment() > StackAlign) ||
+  bool requiresRealignment = ((MFI->getLocalFrameMaxAlign() > StackAlign) ||
                                F->hasFnAttr(Attribute::StackAlignment));
 
   // FIXME: Currently we don't support stack realignment for functions with
