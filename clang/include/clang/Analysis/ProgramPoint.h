@@ -47,7 +47,7 @@ public:
               CallEnterKind,
               CallExitKind,
               MinPostStmtKind = PostStmtKind,
-              MaxPostStmtKind = PostLValueKind };
+              MaxPostStmtKind = CallExitKind };
 
 private:
   std::pair<const void *, const void *> Data;
