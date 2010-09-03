@@ -951,6 +951,7 @@ ProcessGDBRemote::UpdateThreadListIfNeeded ()
     if (log && log->GetMask().IsSet(GDBR_LOG_VERBOSE))
         log->Printf ("ProcessGDBRemote::%s (pid = %i)", __FUNCTION__, GetID());
 
+    Mutex::Locker locker (m_thread_list.GetMutex ());
     const uint32_t stop_id = GetStopID();
     if (m_thread_list.GetSize(false) == 0 || stop_id != m_thread_list.GetStopID())
     {

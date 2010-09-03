@@ -13,9 +13,10 @@
 // C++ Includes
 // Other libraries and framework includes
 // Project includes
-#include "lldb/Target/Thread.h"
 #include "lldb/Core/Log.h"
 #include "lldb/Core/State.h"
+#include "lldb/Target/RegisterContext.h"
+#include "lldb/Target/Thread.h"
 
 using namespace lldb;
 using namespace lldb_private;
@@ -88,12 +89,21 @@ ThreadPlan::MischiefManaged ()
 Vote
 ThreadPlan::ShouldReportStop (Event *event_ptr)
 {
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP);
+
     if (m_stop_vote == eVoteNoOpinion)
     {
         ThreadPlan *prev_plan = GetPreviousPlan ();
         if (prev_plan)
-            return prev_plan->ShouldReportStop (event_ptr);
+        {
+            Vote prev_vote = prev_plan->ShouldReportStop (event_ptr);
+            if (log)
+                log->Printf ("ThreadPlan::ShouldReportStop() returning previous thread plan vote %s\n", GetVoteAsCString (prev_vote));
+            return prev_vote;
+        }
     }
+    if (log)
+        log->Printf ("ThreadPlan::ShouldReportStop() returning vote %s\n", GetVoteAsCString (m_stop_vote));
     return m_stop_vote;
 }
 
@@ -128,8 +138,21 @@ ThreadPlan::WillResume (StateType resume_state, bool current_plan)
         Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP);
 
         if (log)
-            log->Printf("Thread #%u: tid = 0x%4.4x about to resume the \"%s\" plan - state: %s - stop others: %d.", 
-                        m_thread.GetIndexID(), m_thread.GetID(),  m_name.c_str(), StateAsCString(resume_state), StopOthers());
+        {
+            RegisterContext *reg_ctx = m_thread.GetRegisterContext();
+            addr_t pc = reg_ctx->GetPC();
+            addr_t sp = reg_ctx->GetSP();
+            addr_t fp = reg_ctx->GetFP();
+            log->Printf("Thread #%u: tid = 0x%4.4x (pc = 0x%8.8llx, sp = 0x%8.8llx, fp = 0x%8.8llx) about to resume the \"%s\" plan - state: %s - stop others: %d.", 
+                        m_thread.GetIndexID(), 
+                        m_thread.GetID(),  
+                        (uint64_t)pc,
+                        (uint64_t)sp,
+                        (uint64_t)fp,
+                        m_name.c_str(), 
+                        StateAsCString(resume_state), 
+                        StopOthers());
+        }
     }
     return true;
 }

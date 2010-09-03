@@ -129,3 +129,14 @@ lldb_private::GetDefaultArchitecture ()
     static ArchSpec g_default_arch;
     return g_default_arch;
 }
+
+
+const char *
+lldb_private::GetVoteAsCString (lldb::Vote vote)
+{
+    static const char * g_vote_cstrings[] = { "no", "no opinion", "yes" };
+    if (vote >= eVoteNo && vote <= eVoteYes)
+        return g_vote_cstrings[vote-1];
+    return "invalid";
+}
+

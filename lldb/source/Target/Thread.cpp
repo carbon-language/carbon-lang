@@ -293,17 +293,28 @@ Vote
 Thread::ShouldReportStop (Event* event_ptr)
 {
     StateType thread_state = GetResumeState ();
-    if (thread_state == eStateSuspended
-            || thread_state == eStateInvalid)
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP);
+
+    if (thread_state == eStateSuspended || thread_state == eStateInvalid)
+    {
+        if (log)
+            log->Printf ("Thread::ShouldReportStop() tid = 0x%4.4x: returning vote %i (state was suspended or invalid)\n", GetID(), eVoteNoOpinion);
         return eVoteNoOpinion;
+    }
 
     if (m_completed_plan_stack.size() > 0)
     {
         // Don't use GetCompletedPlan here, since that suppresses private plans.
+        if (log)
+            log->Printf ("Thread::ShouldReportStop() tid = 0x%4.4x: returning vote  for complete stack's back plan\n", GetID());
         return m_completed_plan_stack.back()->ShouldReportStop (event_ptr);
     }
     else
+    {
+        if (log)
+            log->Printf ("Thread::ShouldReportStop() tid = 0x%4.4x: returning vote  for current plan\n", GetID());
         return GetCurrentPlan()->ShouldReportStop (event_ptr);
+    }
 }
 
 Vote
@@ -797,7 +808,7 @@ StackFrameList &
 Thread::GetStackFrameList ()
 {
     if (m_curr_frames_ap.get() == NULL)
-        m_curr_frames_ap.reset (new StackFrameList (*this, m_prev_frames_ap.release(), true));
+        m_curr_frames_ap.reset (new StackFrameList (*this, m_prev_frames_sp, true));
     return *m_curr_frames_ap;
 }
 
@@ -813,8 +824,13 @@ Thread::GetStackFrameCount()
 void
 Thread::ClearStackFrames ()
 {
-    if (m_curr_frames_ap.get())
-        m_prev_frames_ap = m_curr_frames_ap;
+    if (m_curr_frames_ap.get() && m_curr_frames_ap->GetNumFrames (false) > 1)
+        m_prev_frames_sp.reset (m_curr_frames_ap.release());
+    else
+        m_curr_frames_ap.release();
+
+//    StackFrameList::Merge (m_curr_frames_ap, m_prev_frames_sp);
+//    assert (m_curr_frames_ap.get() == NULL);
 }
 
 lldb::StackFrameSP

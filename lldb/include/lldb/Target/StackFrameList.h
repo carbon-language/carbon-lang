@@ -28,13 +28,13 @@ public:
     // Constructors and Destructors
     //------------------------------------------------------------------
     StackFrameList (Thread &thread, 
-                    StackFrameList *prev_frames, 
+                    const lldb::StackFrameListSP &prev_frames_sp,
                     bool show_inline_frames);
 
     ~StackFrameList();
 
     uint32_t
-    GetNumFrames();
+    GetNumFrames (bool can_create = true);
 
     lldb::StackFrameSP
     GetFrameAtIndex (uint32_t idx);
@@ -61,8 +61,14 @@ public:
 
 protected:
 
+    friend class Thread;
+
     bool
     SetFrameAtIndex (uint32_t idx, lldb::StackFrameSP &frame_sp);
+
+    static void
+    Merge (std::auto_ptr<StackFrameList>& curr_ap, 
+           lldb::StackFrameListSP& prev_sp);
 
     //------------------------------------------------------------------
     // Classes that inherit from StackFrameList can see and modify these
@@ -72,7 +78,7 @@ protected:
     typedef collection::const_iterator const_iterator;
 
     Thread &m_thread;
-    std::auto_ptr<StackFrameList> m_prev_frames_ap;
+    lldb::StackFrameListSP m_prev_frames_sp;
     mutable Mutex m_mutex;
     collection m_frames;
     uint32_t m_selected_frame_idx;

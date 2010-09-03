@@ -10,6 +10,8 @@
 
 #include <algorithm>
 
+#include "lldb/Core/Log.h"
+#include "lldb/Target/RegisterContext.h"
 #include "lldb/Target/ThreadList.h"
 #include "lldb/Target/Thread.h"
 #include "lldb/Target/ThreadPlan.h"
@@ -177,11 +179,15 @@ ThreadList::ShouldStop (Event *event_ptr)
 
     // Running events should never stop, obviously...
 
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP);
 
     bool should_stop = false;    
     m_process->UpdateThreadListIfNeeded();
 
     collection::iterator pos, end = m_threads.end();
+
+    if (log)
+        log->Printf ("%s %zu threads\n", __FUNCTION__, m_threads.size());
 
     // Run through the threads and ask whether we should stop.  Don't ask
     // suspended threads, however, it makes more sense for them to preserve their
@@ -189,11 +195,34 @@ ThreadList::ShouldStop (Event *event_ptr)
     for (pos = m_threads.begin(); pos != end; ++pos)
     {
         ThreadSP thread_sp(*pos);
-        if ((thread_sp->GetResumeState () != eStateSuspended) && (thread_sp->ThreadStoppedForAReason()))
+        
+        if (log)
+            log->Printf ("%s thread 0x%4.4x: pc = 0x%16.16llx ", __FUNCTION__, thread_sp->GetID (), thread_sp->GetRegisterContext()->GetPC());
+
+        if (thread_sp->GetResumeState () == eStateSuspended)
         {
-            should_stop |=  thread_sp->ShouldStop(event_ptr);
+            if (log)
+                log->Printf("ignore: thread was suspended\n", thread_sp->GetID (), thread_sp->GetRegisterContext()->GetPC());
+            continue;
         }
+        
+        if (thread_sp->ThreadStoppedForAReason() == false)
+        {
+            if (log)
+                log->Printf("ignore: no stop reason\n", thread_sp->GetID (), thread_sp->GetRegisterContext()->GetPC());
+            continue;
+
+        }
+
+        const bool thread_should_stop = thread_sp->ShouldStop(event_ptr);
+        if (log)
+            log->Printf("should_stop = %i\n", thread_sp->GetID (), thread_sp->GetRegisterContext()->GetPC(), thread_should_stop);
+        if (thread_should_stop)
+            should_stop |= true;
     }
+
+    if (log)
+        log->Printf ("%s overall should_stop = %i\n", __FUNCTION__, should_stop);
 
     if (should_stop)
     {
@@ -210,9 +239,16 @@ ThreadList::ShouldStop (Event *event_ptr)
 Vote
 ThreadList::ShouldReportStop (Event *event_ptr)
 {
+    Mutex::Locker locker(m_threads_mutex);
+
     Vote result = eVoteNoOpinion;
     m_process->UpdateThreadListIfNeeded();
     collection::iterator pos, end = m_threads.end();
+
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP);
+
+    if (log)
+        log->Printf ("%s %zu threads\n", __FUNCTION__, m_threads.size());
 
     // Run through the threads and ask whether we should report this event.
     // For stopping, a YES vote wins over everything.  A NO vote wins over NO opinion.
@@ -221,26 +257,52 @@ ThreadList::ShouldReportStop (Event *event_ptr)
         ThreadSP thread_sp(*pos);
         if (thread_sp->ThreadStoppedForAReason() && (thread_sp->GetResumeState () != eStateSuspended))
         {
-            switch (thread_sp->ShouldReportStop (event_ptr))
+            const lldb::Vote vote = thread_sp->ShouldReportStop (event_ptr);
+            if (log)
+                log->Printf  ("%s thread 0x%4.4x: pc = 0x%16.16llx vote: %s\n", 
+                              __FUNCTION__,
+                              thread_sp->GetID (), 
+                              thread_sp->GetRegisterContext()->GetPC(),
+                              GetVoteAsCString (vote));
+            switch (vote)
             {
-                case eVoteNoOpinion:
-                    continue;
-                case eVoteYes:
-                    result = eVoteYes;
-                    break;
-                case eVoteNo:
-                    if (result == eVoteNoOpinion)
-                        result = eVoteNo;
-                    break;
+            case eVoteNoOpinion:
+                continue;
+
+            case eVoteYes:
+                result = eVoteYes;
+                break;
+
+            case eVoteNo:
+                if (result == eVoteNoOpinion)
+                {
+                    result = eVoteNo;
+                }
+                else
+                {
+                    if (log)
+                        log->Printf ("%s thread 0x%4.4x: pc = 0x%16.16llx voted %s, but lost out because result was %s\n", 
+                                     __FUNCTION__,
+                                     thread_sp->GetID (), 
+                                     thread_sp->GetRegisterContext()->GetPC(),
+                                     GetVoteAsCString (vote),
+                                     GetVoteAsCString (result));
+                }
+                break;
             }
         }
     }
+    if (log)
+        log->Printf ("%s returning %s\n", __FUNCTION__, GetVoteAsCString (result));
     return result;
 }
 
 Vote
 ThreadList::ShouldReportRun (Event *event_ptr)
 {
+
+    Mutex::Locker locker(m_threads_mutex);
+
     Vote result = eVoteNoOpinion;
     m_process->UpdateThreadListIfNeeded();
     collection::iterator pos, end = m_threads.end();

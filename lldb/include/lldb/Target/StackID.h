@@ -51,12 +51,12 @@ public:
     {
     }
 
-    const lldb::addr_t
+    lldb::addr_t
     GetPC() const
     {
         return m_pc;
     }
-
+    
     lldb::addr_t
     GetCallFrameAddress() const
     {
@@ -94,6 +94,16 @@ public:
     }
 
 protected:
+
+    friend class StackFrame;
+    
+    void
+    SetPC (lldb::addr_t pc)
+    {
+        m_pc = pc;
+    }
+
+
     //------------------------------------------------------------------
     // Classes that inherit from StackID can see and modify these
     //------------------------------------------------------------------

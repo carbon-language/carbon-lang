@@ -153,6 +153,8 @@ protected:
     void
     UpdatePreviousFrameFromCurrentFrame (StackFrame &curr_frame);
 
+    bool
+    HasCachedData () const;
 private:
     //------------------------------------------------------------------
     // For StackFrame only

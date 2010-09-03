@@ -84,10 +84,12 @@ ThreadPlanStepRange::PlanExplainsStop ()
 Vote
 ThreadPlanStepRange::ShouldReportStop (Event *event_ptr)
 {
-    if (IsPlanComplete())
-        return eVoteYes;
-    else
-        return eVoteNo;
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP);
+
+    const Vote vote = IsPlanComplete() ? eVoteYes : eVoteNo;
+    if (log)
+        log->Printf ("ThreadPlanStepRange::ShouldReportStop() returning vote %i\n", eVoteYes);
+    return vote;
 }
 
 bool

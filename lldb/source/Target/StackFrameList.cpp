@@ -30,9 +30,14 @@ using namespace lldb_private;
 //----------------------------------------------------------------------
 // StackFrameList constructor
 //----------------------------------------------------------------------
-StackFrameList::StackFrameList(Thread &thread, StackFrameList *prev_frames, bool show_inline_frames) :
+StackFrameList::StackFrameList
+(
+    Thread &thread, 
+    const lldb::StackFrameListSP &prev_frames_sp, 
+    bool show_inline_frames
+) :
     m_thread (thread),
-    m_prev_frames_ap (prev_frames),
+    m_prev_frames_sp (prev_frames_sp),
     m_show_inlined_frames (show_inline_frames),
     m_mutex (Mutex::eMutexTypeRecursive),
     m_frames (),
@@ -49,11 +54,11 @@ StackFrameList::~StackFrameList()
 
 
 uint32_t
-StackFrameList::GetNumFrames()
+StackFrameList::GetNumFrames (bool can_create)
 {
     Mutex::Locker locker (m_mutex);
 
-    if (m_frames.size() <= 1)
+    if (can_create && m_frames.size() <= 1)
     {
         if (m_show_inlined_frames)
         {
@@ -165,9 +170,10 @@ StackFrameList::GetNumFrames()
                     }
                 }
             }
-            StackFrameList *prev_frames = m_prev_frames_ap.get();
-            if (prev_frames)
+
+            if (m_prev_frames_sp)
             {
+                StackFrameList *prev_frames = m_prev_frames_sp.get();
                 StackFrameList *curr_frames = this;
 
 #if defined (DEBUG_STACK_FRAMES)
@@ -189,17 +195,16 @@ StackFrameList::GetNumFrames()
                     StackFrameSP prev_frame_sp (prev_frames->m_frames[prev_frame_idx]);
 
 #if defined (DEBUG_STACK_FRAMES)
-                    s.Printf("\nCurrent frame #%u ", curr_frame_idx);
+                    s.Printf("\n\nCurr frame #%u ", curr_frame_idx);
                     if (curr_frame_sp)
-                        curr_frame_sp->Dump (&s, true);
+                        curr_frame_sp->Dump (&s, true, false);
                     else
                         s.PutCString("NULL");
-                    s.Printf("\nPrevious frame #%u ", prev_frame_idx);
+                    s.Printf("\nPrev frame #%u ", prev_frame_idx);
                     if (prev_frame_sp)
-                        prev_frame_sp->Dump (&s, true);
+                        prev_frame_sp->Dump (&s, true, false);
                     else
                         s.PutCString("NULL");
-                    s.EOL();
 #endif
 
                     StackFrame *curr_frame = curr_frame_sp.get();
@@ -223,8 +228,7 @@ StackFrameList::GetNumFrames()
 #endif
                 }
                 // We are done with the old stack frame list, we can release it now
-                m_prev_frames_ap.release();
-                prev_frames = NULL;
+                m_prev_frames_sp.reset();
             }
             
 #if defined (DEBUG_STACK_FRAMES)
@@ -332,7 +336,6 @@ StackFrameList::GetFrameAtIndex (uint32_t idx)
     return frame_sp;
 }
 
-
 bool
 StackFrameList::SetFrameAtIndex (uint32_t idx, StackFrameSP &frame_sp)
 {
@@ -408,4 +411,105 @@ StackFrameList::InvalidateFrames (uint32_t start_idx)
             ++start_idx;
         }
     }
+}
+
+void
+StackFrameList::Merge (std::auto_ptr<StackFrameList>& curr_ap, lldb::StackFrameListSP& prev_sp)
+{
+    Mutex::Locker curr_locker (curr_ap.get() ? curr_ap->m_mutex.GetMutex() : NULL);
+    Mutex::Locker prev_locker (prev_sp.get() ? prev_sp->m_mutex.GetMutex() : NULL);
+
+#if defined (DEBUG_STACK_FRAMES)
+    StreamFile s(stdout);
+    s.PutCString("\n\nStackFrameList::Merge():\nPrev:\n");
+    if (prev_sp.get())
+        prev_sp->Dump (&s);
+    else
+        s.PutCString ("NULL");
+    s.PutCString("\nCurr:\n");
+    if (curr_ap.get())
+        curr_ap->Dump (&s);
+    else
+        s.PutCString ("NULL");
+    s.EOL();
+#endif
+
+    if (curr_ap.get() == NULL || curr_ap->GetNumFrames (false) == 0)
+    {
+#if defined (DEBUG_STACK_FRAMES)
+        s.PutCString("No current frames, leave previous frames alone...\n");
+#endif
+        curr_ap.release();
+        return;
+    }
+
+    if (prev_sp.get() == NULL || prev_sp->GetNumFrames (false) == 0)
+    {
+#if defined (DEBUG_STACK_FRAMES)
+        s.PutCString("No previous frames, so use current frames...\n");
+#endif
+        // We either don't have any previous frames, or since we have more than
+        // one current frames it means we have all the frames and can safely
+        // replace our previous frames.
+        prev_sp.reset (curr_ap.release());
+        return;
+    }
+
+    const uint32_t num_curr_frames = curr_ap->GetNumFrames (false);
+    
+    if (num_curr_frames > 1)
+    {
+#if defined (DEBUG_STACK_FRAMES)
+        s.PutCString("We have more than one current frame, so use current frames...\n");
+#endif
+        // We have more than one current frames it means we have all the frames 
+        // and can safely replace our previous frames.
+        prev_sp.reset (curr_ap.release());
+
+#if defined (DEBUG_STACK_FRAMES)
+        s.PutCString("\nMerged:\n");
+        prev_sp->Dump (&s);
+#endif
+        return;
+    }
+
+    StackFrameSP prev_frame_zero_sp(prev_sp->GetFrameAtIndex (0));
+    StackFrameSP curr_frame_zero_sp(curr_ap->GetFrameAtIndex (0));
+    StackID curr_stack_id (curr_frame_zero_sp->GetStackID());
+    StackID prev_stack_id (prev_frame_zero_sp->GetStackID());
+
+    //const uint32_t num_prev_frames = prev_sp->GetNumFrames (false);
+
+#if defined (DEBUG_STACK_FRAMES)
+    s.Printf("\n%u previous frames with one current frame\n", num_prev_frames);
+#endif
+
+    // We have only a single current frame
+    // Our previous stack frames only had a single frame as well...
+    if (curr_stack_id == prev_stack_id)
+    {
+#if defined (DEBUG_STACK_FRAMES)
+        s.Printf("\nPrevious frame #0 is same as current frame #0, merge the cached data\n");
+#endif
+
+        curr_frame_zero_sp->UpdateCurrentFrameFromPreviousFrame (*prev_frame_zero_sp);
+//        prev_frame_zero_sp->UpdatePreviousFrameFromCurrentFrame (*curr_frame_zero_sp);
+//        prev_sp->SetFrameAtIndex (0, prev_frame_zero_sp);
+    }
+    else if (curr_stack_id < prev_stack_id)
+    {
+#if defined (DEBUG_STACK_FRAMES)
+        s.Printf("\nCurrent frame #0 has a stack ID that is less than the previous frame #0, insert current frame zero in front of previous\n");
+#endif
+        prev_sp->m_frames.insert (prev_sp->m_frames.begin(), curr_frame_zero_sp);
+    }
+    
+    curr_ap.release();
+
+#if defined (DEBUG_STACK_FRAMES)
+    s.PutCString("\nMerged:\n");
+    prev_sp->Dump (&s);
+#endif
+
+
 }

@@ -99,6 +99,12 @@ public:
     void
     SetStopID (uint32_t stop_id);
 
+    Mutex &
+    GetMutex ()
+    {
+        return m_threads_mutex;
+    }
+    
 protected:
 
     typedef std::vector<lldb::ThreadSP> collection;

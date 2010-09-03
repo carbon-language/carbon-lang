@@ -163,7 +163,7 @@ StackFrame::GetStackID()
 
     if (m_flags.IsClear (RESOLVED_FRAME_ID_SYMBOL_SCOPE))
     {
-        if (m_id.GetSymbolContextScope () == NULL)
+        if (m_id.GetSymbolContextScope ())
         {
             m_flags.Set (RESOLVED_FRAME_ID_SYMBOL_SCOPE);
         }
@@ -624,7 +624,8 @@ StackFrame::UpdateCurrentFrameFromPreviousFrame (StackFrame &prev_frame)
 void
 StackFrame::UpdatePreviousFrameFromCurrentFrame (StackFrame &curr_frame)
 {
-    assert (GetStackID() == curr_frame.GetStackID());    // TODO: remove this after some testing
+    assert (GetStackID() == curr_frame.GetStackID());        // TODO: remove this after some testing
+    m_id.SetPC (curr_frame.m_id.GetPC());       // Update the Stack ID PC value
     assert (&m_thread == &curr_frame.m_thread);
     m_frame_index = curr_frame.m_frame_index;
     m_unwind_frame_index = curr_frame.m_unwind_frame_index;
@@ -642,3 +643,14 @@ StackFrame::UpdatePreviousFrameFromCurrentFrame (StackFrame &curr_frame)
 }
     
 
+bool
+StackFrame::HasCachedData () const
+{
+    if (m_variable_list_sp.get())
+        return true;
+    if (m_variable_list_value_objects.GetSize() > 0)
+        return true;
+    if (!m_disassembly.GetString().empty())
+        return true;
+    return false;
+}
