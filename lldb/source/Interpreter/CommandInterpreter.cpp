@@ -17,14 +17,12 @@
 #include "../Commands/CommandObjectArgs.h"
 #include "../Commands/CommandObjectBreakpoint.h"
 //#include "../Commands/CommandObjectCall.h"
-#include "../Commands/CommandObjectDelete.h"
 #include "../Commands/CommandObjectDisassemble.h"
 #include "../Commands/CommandObjectExpression.h"
 #include "../Commands/CommandObjectFile.h"
 #include "../Commands/CommandObjectFrame.h"
 #include "../Commands/CommandObjectHelp.h"
 #include "../Commands/CommandObjectImage.h"
-#include "../Commands/CommandObjectInfo.h"
 #include "../Commands/CommandObjectLog.h"
 #include "../Commands/CommandObjectMemory.h"
 #include "../Commands/CommandObjectProcess.h"
@@ -32,7 +30,6 @@
 #include "lldb/Interpreter/CommandObjectRegexCommand.h"
 #include "../Commands/CommandObjectRegister.h"
 #include "CommandObjectScript.h"
-#include "../Commands/CommandObjectSelect.h"
 #include "../Commands/CommandObjectSet.h"
 #include "../Commands/CommandObjectSettings.h"
 #include "../Commands/CommandObjectShow.h"
@@ -201,10 +198,6 @@ CommandInterpreter::LoadCommandDictionary ()
     // are created.  This is so that when another command is created that needs to go into a crossref object,
     // the crossref object exists and is ready to take the cross reference. Put the cross referencing command
     // objects into the CommandDictionary now, so they are ready for use when the other commands get created.
-
-    m_command_dict["select"]    = CommandObjectSP (new CommandObjectSelect ());
-    m_command_dict["info"]      = CommandObjectSP (new CommandObjectInfo ());
-    m_command_dict["delete"]    = CommandObjectSP (new CommandObjectDelete ());
 
     // Non-CommandObjectCrossref commands can now be created.
 
