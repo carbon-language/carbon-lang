@@ -16,6 +16,7 @@ exit:           ; preds = %0
         ret i32 10
 }
 
+; PR4420
 declare i1 @ext()
 ; CHECK: @test2
 define i1 @test2() {
