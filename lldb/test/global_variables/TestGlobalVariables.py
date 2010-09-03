@@ -9,7 +9,18 @@ class GlobalVariablesTestCase(TestBase):
 
     mydir = "global_variables"
 
-    def test_global_variables(self):
+    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    def test_with_dsym(self):
+        """Test 'frame variable -s -a' which omits args and shows scopes."""
+        self.buildDsym()
+        self.global_variables()
+
+    def test_with_dwarf(self):
+        """Test 'frame variable -s -a' which omits args and shows scopes."""
+        self.buildDwarf()
+        self.global_variables()
+
+    def global_variables(self):
         """Test 'frame variable -s -a' which omits args and shows scopes."""
         exe = os.path.join(os.getcwd(), "a.out")
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
