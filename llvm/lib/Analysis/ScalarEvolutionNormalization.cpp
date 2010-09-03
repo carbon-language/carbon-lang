@@ -108,7 +108,11 @@ const SCEV *llvm::TransformForPostIncUse(TransformKind Kind,
         Result = SE.getMinusSCEV(Result, TransformedStep);
         Loops.insert(L);
       }
-#ifdef XDEBUG
+#if 0
+      // This assert is conceptually correct, but ScalarEvolution currently
+      // sometimes fails to canonicalize two equal SCEVs to exactly the same
+      // form. It's possibly a pessimization when this happens, but it isn't a
+      // correctness problem, so disable this assert for now.
       assert(S == TransformForPostIncUse(Denormalize, Result,
                                          User, OperandValToReplace,
                                          Loops, SE, DT) &&
@@ -122,7 +126,8 @@ const SCEV *llvm::TransformForPostIncUse(TransformKind Kind,
                                  User, OperandValToReplace, Loops, SE, DT);
         Result = SE.getMinusSCEV(Result, TransformedStep);
       }
-#ifdef XDEBUG
+#if 0
+      // See the comment on the assert above.
       assert(S == TransformForPostIncUse(Denormalize, Result,
                                          User, OperandValToReplace,
                                          Loops, SE, DT) &&
