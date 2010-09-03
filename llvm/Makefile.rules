@@ -972,7 +972,14 @@ LLVMLibsOptions += -Wl,-exported_symbols_list,$(NativeExportsFile)
 endif
 
 # GNU ld Win32 accepts .DEF files that contain "DATA" entries.
+# This doesn't work when cross-compiling, though.
 ifeq ($(HOST_OS), $(filter $(HOST_OS), Cygwin MingW))
+ifneq ($(LLVM_CROSS_COMPILING),1)
+HAVE_WIN32_GNU_LD=1
+endif
+endif
+
+ifeq ($(HAVE_WIN32_GNU_LD),1)
 NativeExportsFile := $(ObjDir)/$(notdir $(EXPORTED_SYMBOL_FILE:.exports=.def))
 
 # LLVMLibsOptions is invalidated at processing tools/llvm-shlib.
