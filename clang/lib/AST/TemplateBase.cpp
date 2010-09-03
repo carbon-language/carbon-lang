@@ -125,19 +125,22 @@ SourceRange TemplateArgumentLoc::getSourceRange() const {
   switch (Argument.getKind()) {
   case TemplateArgument::Expression:
     return getSourceExpression()->getSourceRange();
-      
+
   case TemplateArgument::Declaration:
     return getSourceDeclExpression()->getSourceRange();
-      
+
   case TemplateArgument::Type:
-    return getTypeSourceInfo()->getTypeLoc().getSourceRange();
-      
+    if (TypeSourceInfo *TSI = getTypeSourceInfo())
+      return TSI->getTypeLoc().getSourceRange();
+    else
+      return SourceRange();
+
   case TemplateArgument::Template:
     if (getTemplateQualifierRange().isValid())
       return SourceRange(getTemplateQualifierRange().getBegin(),
                          getTemplateNameLoc());
     return SourceRange(getTemplateNameLoc());
-      
+
   case TemplateArgument::Integral:
   case TemplateArgument::Pack:
   case TemplateArgument::Null:
