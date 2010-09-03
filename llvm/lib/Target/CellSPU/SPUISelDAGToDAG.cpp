@@ -41,13 +41,6 @@ using namespace llvm;
 namespace {
   //! ConstantSDNode predicate for i32 sign-extended, 10-bit immediates
   bool
-  isI64IntS10Immediate(ConstantSDNode *CN)
-  {
-    return isInt<10>(CN->getSExtValue());
-  }
-
-  //! ConstantSDNode predicate for i32 sign-extended, 10-bit immediates
-  bool
   isI32IntS10Immediate(ConstantSDNode *CN)
   {
     return isInt<10>(CN->getSExtValue());
