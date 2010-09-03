@@ -7,10 +7,7 @@ struct S {
 
 template <typename T> struct X {
   T value;
-
   X(T t) : value(t) {}
-
-  // Again, two instantiations should be present.
   int f() { return value; }
 };
 
