@@ -17,6 +17,7 @@
 #include "llvm/Instructions.h"
 #include "llvm/Pass.h"
 #include "llvm/Analysis/LazyValueInfo.h"
+#include "llvm/Support/CFG.h"
 #include "llvm/Transforms/Utils/Local.h"
 #include "llvm/ADT/Statistic.h"
 using namespace llvm;
@@ -24,6 +25,7 @@ using namespace llvm;
 STATISTIC(NumPhis,      "Number of phis propagated");
 STATISTIC(NumSelects,   "Number of selects propagated");
 STATISTIC(NumMemAccess, "Number of memory access targets propagated");
+STATISTIC(NumCmps,      "Number of comparisons propagated");
 
 namespace {
   class CorrelatedValuePropagation : public FunctionPass {
@@ -32,6 +34,7 @@ namespace {
     bool processSelect(SelectInst *SI);
     bool processPHI(PHINode *P);
     bool processMemAccess(Instruction *I);
+    bool processCmp(CmpInst *C);
     
   public:
     static char ID;
@@ -117,6 +120,47 @@ bool CorrelatedValuePropagation::processMemAccess(Instruction *I) {
   return true;
 }
 
+/// processCmp - If the value of this comparison could be determined locally,
+/// constant propagation would already have figured it out.  Instead, walk
+/// the predecessors and statically evaluate the comparison based on information
+/// available on that edge.  If a given static evaluation is true on ALL
+/// incoming edges, then it's true universally and we can simplify the compare.
+bool CorrelatedValuePropagation::processCmp(CmpInst *C) {
+  Value *Op0 = C->getOperand(0);
+  if (isa<Instruction>(Op0) &&
+      cast<Instruction>(Op0)->getParent() == C->getParent())
+    return false;
+  
+  Constant *Op1 = dyn_cast<Constant>(C->getOperand(1));
+  if (!Op1) return false;
+  
+  pred_iterator PI = pred_begin(C->getParent()), PE = pred_end(C->getParent());
+  if (PI == PE) return false;
+  
+  LazyValueInfo::Tristate Result = LVI->getPredicateOnEdge(C->getPredicate(), 
+                                    C->getOperand(0), Op1, *PI, C->getParent());
+  if (Result == LazyValueInfo::Unknown) return false;
+
+  ++PI;
+  while (PI != PE) {
+    LazyValueInfo::Tristate Res = LVI->getPredicateOnEdge(C->getPredicate(), 
+                                    C->getOperand(0), Op1, *PI, C->getParent());
+    if (Res != Result) return false;
+    ++PI;
+  }
+  
+  ++NumCmps;
+  
+  if (Result == LazyValueInfo::True)
+    C->replaceAllUsesWith(ConstantInt::getTrue(C->getContext()));
+  else
+    C->replaceAllUsesWith(ConstantInt::getFalse(C->getContext()));
+  
+  C->eraseFromParent();
+
+  return true;
+}
+
 bool CorrelatedValuePropagation::runOnFunction(Function &F) {
   LVI = &getAnalysis<LazyValueInfo>();
   
@@ -132,6 +176,10 @@ bool CorrelatedValuePropagation::runOnFunction(Function &F) {
         break;
       case Instruction::PHI:
         BBChanged |= processPHI(cast<PHINode>(II));
+        break;
+      case Instruction::ICmp:
+      case Instruction::FCmp:
+        BBChanged |= processCmp(cast<CmpInst>(II));
         break;
       case Instruction::Load:
       case Instruction::Store:

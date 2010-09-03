@@ -57,3 +57,27 @@ bb2:            ; preds = %entry
 ; CHECK: ret i8 7
         ret i8 %should_be_const
 }
+
+; PR1757
+; CHECK: @test4
+define i32 @test4(i32) {
+EntryBlock:
+; CHECK: icmp sgt i32 %0, 2  
+  %.demorgan = icmp sgt i32 %0, 2    
+  br i1 %.demorgan, label %GreaterThanTwo, label %LessThanOrEqualToTwo
+
+GreaterThanTwo:
+; CHECK-NOT: icmp eq i32 %0, 2
+  icmp eq i32 %0, 2
+; CHECK: br i1 false
+  br i1 %1, label %Impossible, label %NotTwoAndGreaterThanTwo
+
+NotTwoAndGreaterThanTwo:
+  ret i32 2
+
+Impossible:
+  ret i32 1
+
+LessThanOrEqualToTwo:
+  ret i32 0
+}
