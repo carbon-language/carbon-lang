@@ -257,11 +257,18 @@ public:
 
   const llvm::APSInt *getSymVal(SymbolRef sym) const;
 
-  SVal getSVal(const Stmt* Ex) const;
-
+  /// Returns the SVal bound to the statement 'S' in the state's environment.
+  SVal getSVal(const Stmt* S) const;
+  
   SVal getSValAsScalarOrLoc(const Stmt *Ex) const;
 
   SVal getSVal(Loc LV, QualType T = QualType()) const;
+  
+  /// Returns a "simplified" SVal bound to the location 'LV' in the state's
+  /// store.  A simplified SVal will include optimizations such as
+  /// if the SVal is a symbol whose value is perfectly constrained then that
+  /// constant value is returned instead.
+  SVal getSimplifiedSVal(Loc LV, QualType T= QualType()) const;
 
   SVal getSVal(const MemRegion* R) const;
 

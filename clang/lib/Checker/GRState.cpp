@@ -169,6 +169,42 @@ SVal GRState::getSValAsScalarOrLoc(const MemRegion *R) const {
   return UnknownVal();
 }
 
+SVal GRState::getSimplifiedSVal(Loc location, QualType T) const {
+  SVal V = getSVal(cast<Loc>(location), T);
+  
+  // If 'V' is a symbolic value that is *perfectly* constrained to
+  // be a constant value, use that value instead to lessen the burden
+  // on later analysis stages (so we have less symbolic values to reason
+  // about).
+  if (!T.isNull()) {
+    if (SymbolRef sym = V.getAsSymbol()) {
+      if (const llvm::APSInt *Int = getSymVal(sym)) {
+        // FIXME: Because we don't correctly model (yet) sign-extension
+        // and truncation of symbolic values, we need to convert
+        // the integer value to the correct signedness and bitwidth.
+        //
+        // This shows up in the following:
+        //
+        //   char foo();
+        //   unsigned x = foo();
+        //   if (x == 54)
+        //     ...
+        //
+        //  The symbolic value stored to 'x' is actually the conjured
+        //  symbol for the call to foo(); the type of that symbol is 'char',
+        //  not unsigned.
+        const llvm::APSInt &NewV = getBasicVals().Convert(T, *Int);
+        
+        if (isa<Loc>(V))
+          return loc::ConcreteInt(NewV);
+        else
+          return nonloc::ConcreteInt(NewV);
+      }
+    }
+  }
+  
+  return V;
+}
 
 const GRState *GRState::BindExpr(const Stmt* Ex, SVal V, bool Invalidate) const{
   Environment NewEnv = getStateManager().EnvMgr.BindExpr(Env, Ex, V,
