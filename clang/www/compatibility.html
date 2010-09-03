@@ -180,7 +180,7 @@ t.c:5:15: note: jump bypasses setup of __block variable
 
 <p>Some instances of this construct may be safe if the variable is never used
 after the jump target, however the protected scope checker does not check the
-uses of the varaible, only the scopes in which it is visible. You should rewrite
+uses of the variable, only the scopes in which it is visible. You should rewrite
 your code to put the <tt>__block</tt> variables in a scope which is only visible
 where they are used.</p>
 
