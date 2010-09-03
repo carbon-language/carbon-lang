@@ -15,6 +15,7 @@
 #define DEBUG_TYPE "x86-isel"
 #include "X86.h"
 #include "X86InstrBuilder.h"
+#include "X86ShuffleDecode.h"
 #include "X86ISelLowering.h"
 #include "X86TargetMachine.h"
 #include "X86TargetObjectFile.h"
@@ -2602,9 +2603,11 @@ static bool isTargetShuffle(unsigned Opcode) {
   case X86ISD::MOVSS:
   case X86ISD::MOVSD:
   case X86ISD::UNPCKLPS:
+  case X86ISD::UNPCKLPD:
   case X86ISD::PUNPCKLWD:
   case X86ISD::PUNPCKLBW:
   case X86ISD::PUNPCKLDQ:
+  case X86ISD::PUNPCKLQDQ:
   case X86ISD::UNPCKHPS:
   case X86ISD::PUNPCKHWD:
   case X86ISD::PUNPCKHBW:
@@ -2663,9 +2666,11 @@ static SDValue getTargetShuffleNode(unsigned Opc, DebugLoc dl, EVT VT,
   case X86ISD::MOVSS:
   case X86ISD::MOVSD:
   case X86ISD::UNPCKLPS:
+  case X86ISD::UNPCKLPD:
   case X86ISD::PUNPCKLWD:
   case X86ISD::PUNPCKLBW:
   case X86ISD::PUNPCKLDQ:
+  case X86ISD::PUNPCKLQDQ:
   case X86ISD::UNPCKHPS:
   case X86ISD::PUNPCKHWD:
   case X86ISD::PUNPCKHBW:
@@ -3698,7 +3703,60 @@ SDValue getShuffleScalarElt(SDNode *N, int Index, SelectionDAG &DAG) {
 
   // Recurse into target specific vector shuffles to find scalars.
   if (isTargetShuffle(Opcode)) {
+    int NumElems = VT.getVectorNumElements();
+    SmallVector<unsigned, 16> ShuffleMask;
+    SDValue ImmN;
+
     switch(Opcode) {
+    case X86ISD::SHUFPS:
+    case X86ISD::SHUFPD:
+      ImmN = N->getOperand(N->getNumOperands()-1);
+      DecodeSHUFPSMask(NumElems,
+                       cast<ConstantSDNode>(ImmN)->getZExtValue(),
+                       ShuffleMask);
+      break;
+    case X86ISD::PUNPCKHBW:
+    case X86ISD::PUNPCKHWD:
+    case X86ISD::PUNPCKHDQ:
+    case X86ISD::PUNPCKHQDQ:
+      DecodePUNPCKHMask(NumElems, ShuffleMask);
+      break;
+    case X86ISD::UNPCKHPS:
+    case X86ISD::UNPCKHPD:
+      DecodeUNPCKHPMask(NumElems, ShuffleMask);
+      break;
+    case X86ISD::PUNPCKLBW:
+    case X86ISD::PUNPCKLWD:
+    case X86ISD::PUNPCKLDQ:
+    case X86ISD::PUNPCKLQDQ:
+      DecodePUNPCKLMask(NumElems, ShuffleMask);
+      break;
+    case X86ISD::UNPCKLPS:
+    case X86ISD::UNPCKLPD:
+      DecodeUNPCKLPMask(NumElems, ShuffleMask);
+      break;
+    case X86ISD::MOVHLPS:
+      DecodeMOVHLPSMask(NumElems, ShuffleMask);
+      break;
+    case X86ISD::MOVLHPS:
+      DecodeMOVLHPSMask(NumElems, ShuffleMask);
+      break;
+    case X86ISD::PSHUFD:
+      ImmN = N->getOperand(N->getNumOperands()-1);
+      DecodePSHUFMask(NumElems,
+                      cast<ConstantSDNode>(ImmN)->getZExtValue(),
+                      ShuffleMask);
+      break;
+    case X86ISD::PSHUFHW:
+      ImmN = N->getOperand(N->getNumOperands()-1);
+      DecodePSHUFHWMask(cast<ConstantSDNode>(ImmN)->getZExtValue(),
+                        ShuffleMask);
+      break;
+    case X86ISD::PSHUFLW:
+      ImmN = N->getOperand(N->getNumOperands()-1);
+      DecodePSHUFLWMask(cast<ConstantSDNode>(ImmN)->getZExtValue(),
+                        ShuffleMask);
+      break;
     case X86ISD::MOVSS:
     case X86ISD::MOVSD: {
       // The index 0 always comes from the first element of the second source,
@@ -3711,6 +3769,13 @@ SDValue getShuffleScalarElt(SDNode *N, int Index, SelectionDAG &DAG) {
       assert("not implemented for target shuffle node");
       return SDValue();
     }
+
+    Index = ShuffleMask[Index];
+    if (Index < 0)
+      return DAG.getUNDEF(VT.getVectorElementType());
+
+    SDValue NewV = (Index < NumElems) ? N->getOperand(0) : N->getOperand(1);
+    return getShuffleScalarElt(NewV.getNode(), Index % NumElems, DAG);
   }
 
   // Actual nodes that may contain scalar elements
@@ -5049,6 +5114,16 @@ LowerVECTOR_SHUFFLE_4wide(ShuffleVectorSDNode *SVOp, SelectionDAG &DAG) {
   return DAG.getVectorShuffle(VT, dl, LoShuffle, HiShuffle, &MaskOps[0]);
 }
 
+static bool MayFoldVectorLoad(SDValue V) {
+  if (V.hasOneUse() && V.getOpcode() == ISD::BIT_CONVERT)
+    V = V.getOperand(0);
+  if (V.hasOneUse() && V.getOpcode() == ISD::SCALAR_TO_VECTOR)
+    V = V.getOperand(0);
+  if (MayFoldLoad(V))
+    return true;
+  return false;
+}
+
 static
 SDValue getMOVLowToHigh(SDValue &Op, DebugLoc &dl, SelectionDAG &DAG,
                         bool HasSSE2) {
@@ -5093,15 +5168,9 @@ SDValue getMOVLP(SDValue &Op, DebugLoc &dl, SelectionDAG &DAG, bool HasSSE2) {
   // potencial load folding here, otherwise use SHUFPS or MOVSD to match the
   // same masks.
   bool CanFoldLoad = false;
-  SDValue TmpV1 = V1;
-  SDValue TmpV2 = V2;
 
   // Trivial case, when V2 comes from a load.
-  if (TmpV2.hasOneUse() && TmpV2.getOpcode() == ISD::BIT_CONVERT)
-    TmpV2 = TmpV2.getOperand(0);
-  if (TmpV2.hasOneUse() && TmpV2.getOpcode() == ISD::SCALAR_TO_VECTOR)
-    TmpV2 = TmpV2.getOperand(0);
-  if (MayFoldLoad(TmpV2))
+  if (MayFoldVectorLoad(V2))
     CanFoldLoad = true;
 
   // When V1 is a load, it can be folded later into a store in isel, example:
@@ -5109,9 +5178,7 @@ SDValue getMOVLP(SDValue &Op, DebugLoc &dl, SelectionDAG &DAG, bool HasSSE2) {
   //    turns into:
   //  (MOVLPSmr addr:$src1, VR128:$src2)
   // So, recognize this potential and also use MOVLPS or MOVLPD
-  if (TmpV1.hasOneUse() && TmpV1.getOpcode() == ISD::BIT_CONVERT)
-    TmpV1 = TmpV1.getOperand(0);
-  if (MayFoldLoad(TmpV1) && MayFoldIntoStore(Op))
+  if (MayFoldVectorLoad(V1) && MayFoldIntoStore(Op))
     CanFoldLoad = true;
 
   if (CanFoldLoad) {
@@ -5140,6 +5207,20 @@ SDValue getMOVLP(SDValue &Op, DebugLoc &dl, SelectionDAG &DAG, bool HasSSE2) {
   // Invert the operand order and use SHUFPS to match it.
   return getTargetShuffleNode(X86ISD::SHUFPS, dl, VT, V2, V1,
                               X86::getShuffleSHUFImmediate(SVOp), DAG);
+}
+
+static unsigned getUNPCKLOpcode(EVT VT) {
+  switch(VT.getSimpleVT().SimpleTy) {
+  case MVT::v4i32: return X86ISD::PUNPCKLDQ;
+  case MVT::v2i64: return X86ISD::PUNPCKLQDQ;
+  case MVT::v4f32: return X86ISD::UNPCKLPS;
+  case MVT::v2f64: return X86ISD::UNPCKLPD;
+  case MVT::v16i8: return X86ISD::PUNPCKLBW;
+  case MVT::v8i16: return X86ISD::PUNPCKLWD;
+  default:
+    llvm_unreachable("Unknow type for unpckl");
+  }
+  return 0;
 }
 
 SDValue
@@ -5272,7 +5353,8 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const {
 
   // FIXME: fold these into legal mask.
   if (!isMMX) {
-    if (X86::isMOVLHPSMask(SVOp) && !X86::isUNPCKLMask(SVOp))
+    if (X86::isMOVLHPSMask(SVOp) &&
+       (!X86::isUNPCKLMask(SVOp) || MayFoldVectorLoad(V2)))
       return getMOVLowToHigh(Op, dl, DAG, HasSSE2);
 
     if (X86::isMOVHLPSMask(SVOp))
@@ -5326,8 +5408,11 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const {
     return getMOVL(DAG, dl, VT, V2, V1);
   }
 
-  if (X86::isUNPCKLMask(SVOp) ||
-      X86::isUNPCKHMask(SVOp))
+  if (X86::isUNPCKLMask(SVOp))
+    return (isMMX) ?
+      Op : getTargetShuffleNode(getUNPCKLOpcode(VT), dl, VT, V1, V2, DAG);
+
+  if (X86::isUNPCKHMask(SVOp))
     return Op;
 
   if (V2IsSplat) {
@@ -5350,8 +5435,12 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const {
     // FIXME: this seems wrong.
     SDValue NewOp = CommuteVectorShuffle(SVOp, DAG);
     ShuffleVectorSDNode *NewSVOp = cast<ShuffleVectorSDNode>(NewOp);
-    if (X86::isUNPCKLMask(NewSVOp) ||
-        X86::isUNPCKHMask(NewSVOp))
+
+    if (X86::isUNPCKLMask(NewSVOp))
+      return (isMMX) ?
+        Op : getTargetShuffleNode(getUNPCKLOpcode(VT), dl, VT, V2, V1, DAG);
+
+    if (X86::isUNPCKHMask(NewSVOp))
       return NewOp;
   }
 
@@ -10621,7 +10710,6 @@ SDValue X86TargetLowering::PerformDAGCombine(SDNode *N,
   SelectionDAG &DAG = DCI.DAG;
   switch (N->getOpcode()) {
   default: break;
-  case ISD::VECTOR_SHUFFLE: return PerformShuffleCombine(N, DAG, *this);
   case ISD::EXTRACT_VECTOR_ELT:
                         return PerformEXTRACT_VECTOR_ELTCombine(N, DAG, *this);
   case ISD::SELECT:         return PerformSELECTCombine(N, DAG, Subtarget);
@@ -10638,6 +10726,28 @@ SDValue X86TargetLowering::PerformDAGCombine(SDNode *N,
   case X86ISD::BT:          return PerformBTCombine(N, DAG, DCI);
   case X86ISD::VZEXT_MOVL:  return PerformVZEXT_MOVLCombine(N, DAG);
   case ISD::ZERO_EXTEND:    return PerformZExtCombine(N, DAG);
+  case X86ISD::SHUFPS:      // Handle all target specific shuffles
+  case X86ISD::SHUFPD:
+  case X86ISD::PUNPCKHBW:
+  case X86ISD::PUNPCKHWD:
+  case X86ISD::PUNPCKHDQ:
+  case X86ISD::PUNPCKHQDQ:
+  case X86ISD::UNPCKHPS:
+  case X86ISD::UNPCKHPD:
+  case X86ISD::PUNPCKLBW:
+  case X86ISD::PUNPCKLWD:
+  case X86ISD::PUNPCKLDQ:
+  case X86ISD::PUNPCKLQDQ:
+  case X86ISD::UNPCKLPS:
+  case X86ISD::UNPCKLPD:
+  case X86ISD::MOVHLPS:
+  case X86ISD::MOVLHPS:
+  case X86ISD::PSHUFD:
+  case X86ISD::PSHUFHW:
+  case X86ISD::PSHUFLW:
+  case X86ISD::MOVSS:
+  case X86ISD::MOVSD:
+  case ISD::VECTOR_SHUFFLE: return PerformShuffleCombine(N, DAG, *this);
   }
 
   return SDValue();
