@@ -194,6 +194,7 @@ GDBRemoteCommunication::SendContinuePacketAndWaitForResponse
 )
 {
     Log *log = ProcessGDBRemoteLog::GetLogIfAllCategoriesSet (GDBR_LOG_PROCESS);
+    Log *async_log = ProcessGDBRemoteLog::GetLogIfAllCategoriesSet (GDBR_LOG_ASYNC);
     if (log)
         log->Printf ("GDBRemoteCommunication::%s ()", __FUNCTION__);
 
@@ -226,6 +227,9 @@ GDBRemoteCommunication::SendContinuePacketAndWaitForResponse
                 case 'S':
                     if (m_async_signal != -1)
                     {
+                        if (async_log) 
+                            async_log->Printf ("async: send signo = %s", Host::GetSignalAsCString (m_async_signal));
+
                         // Save off the async signal we are supposed to send
                         const int async_signal = m_async_signal;
                         // Clear the async signal member so we don't end up
@@ -235,6 +239,9 @@ GDBRemoteCommunication::SendContinuePacketAndWaitForResponse
                         uint8_t signo = response.GetHexU8(255);
                         if (signo == async_signal)
                         {
+                            if (async_log) 
+                                async_log->Printf ("async: stopped with signal %s, we are done running", Host::GetSignalAsCString (signo));
+
                             // We already stopped with a signal that we wanted
                             // to stop with, so we are done
                             response.SetFilePos (0);
@@ -251,8 +258,16 @@ GDBRemoteCommunication::SendContinuePacketAndWaitForResponse
                                                             "C%2.2x",
                                                             async_signal);
 
+                            if (async_log) 
+                                async_log->Printf ("async: stopped with signal %s, resume with %s", 
+                                                   Host::GetSignalAsCString (signo),
+                                                   Host::GetSignalAsCString (async_signal));
+
                             if (SendPacket(signal_packet, signal_packet_len) == 0)
                             {
+                                if (async_log) 
+                                    async_log->Printf ("async: error: failed to resume with %s", 
+                                                       Host::GetSignalAsCString (async_signal));
                                 state = eStateInvalid;
                                 break;
                             }
@@ -262,6 +277,10 @@ GDBRemoteCommunication::SendContinuePacketAndWaitForResponse
                     }
                     else if (m_async_packet_predicate.GetValue())
                     {
+                        if (async_log) 
+                            async_log->Printf ("async: send async packet: %s", 
+                                               m_async_packet.c_str());
+
                         // We are supposed to send an asynchronous packet while
                         // we are running. 
                         m_async_response.Clear();
@@ -276,6 +295,10 @@ GDBRemoteCommunication::SendContinuePacketAndWaitForResponse
                         // Let the other thread that was trying to send the async
                         // packet know that the packet has been sent.
                         m_async_packet_predicate.SetValue(false, eBroadcastAlways);
+
+                        if (async_log) 
+                            async_log->Printf ("async: resume after async response received: %s", 
+                                               m_async_response.GetStringRef().c_str());
 
                         // Continue again
                         if (SendPacket("c", 1) == 0)

@@ -28,6 +28,7 @@
 #define GDBR_LOG_WATCHPOINTS              (1u << 8)
 #define GDBR_LOG_STEP                     (1u << 9)
 #define GDBR_LOG_COMM                     (1u << 10)
+#define GDBR_LOG_ASYNC                    (1u << 11)
 #define GDBR_LOG_ALL                      (UINT32_MAX)
 #define GDBR_LOG_DEFAULT                  GDBR_LOG_PACKETS
 

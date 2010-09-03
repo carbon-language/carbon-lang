@@ -59,7 +59,9 @@ ProcessGDBRemoteLog::EnableLog (StreamSP &log_stream_sp, uint32_t log_options, A
             const char *arg = args.GetArgumentAtIndex(i);
 
             if      (::strcasecmp (arg, "all")        == 0   ) flag_bits |= GDBR_LOG_ALL;
+            else if (::strcasecmp (arg, "async")      == 0   ) flag_bits |= GDBR_LOG_ASYNC;
             else if (::strcasestr (arg, "break")      == arg ) flag_bits |= GDBR_LOG_BREAKPOINTS;
+            else if (::strcasestr (arg, "comm")       == arg ) flag_bits |= GDBR_LOG_COMM;
             else if (::strcasecmp (arg, "default")    == 0   ) flag_bits |= GDBR_LOG_DEFAULT;
             else if (::strcasecmp (arg, "packets")    == 0   ) flag_bits |= GDBR_LOG_PACKETS;
             else if (::strcasecmp (arg, "memory")     == 0   ) flag_bits |= GDBR_LOG_MEMORY;
@@ -93,7 +95,9 @@ ProcessGDBRemoteLog::ListLogCategories (Stream *strm)
 {
     strm->Printf("Logging categories for '%s':\n"
         "\tall - turn on all available logging categories\n"
+        "\tasync - log asynchronous activity\n"
         "\tbreak - log breakpoints\n"
+        "\tcommunication - log communication activity\n"
         "\tdefault - enable the default set of logging categories for liblldb\n"
         "\tpackets - log gdb remote packets\n"
         "\tmemory - log memory reads and writes\n"
