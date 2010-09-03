@@ -50,6 +50,10 @@ EnableLocalStackAlloc("enable-local-stack-alloc", cl::init(true), cl::Hidden,
 
 using namespace llvm;
 
+static cl::opt<bool>
+EnableBasePointer("arm-use-base-pointer", cl::Hidden, cl::init(true),
+          cl::desc("Enable use of a base pointer for complex stack frames"));
+
 unsigned ARMBaseRegisterInfo::getRegisterNumbering(unsigned RegEnum,
                                                    bool *isSPVFP) {
   if (isSPVFP)
@@ -146,7 +150,8 @@ ARMBaseRegisterInfo::ARMBaseRegisterInfo(const ARMBaseInstrInfo &tii,
                                          const ARMSubtarget &sti)
   : ARMGenRegisterInfo(ARM::ADJCALLSTACKDOWN, ARM::ADJCALLSTACKUP),
     TII(tii), STI(sti),
-    FramePtr((STI.isTargetDarwin() || STI.isThumb()) ? ARM::R7 : ARM::R11) {
+    FramePtr((STI.isTargetDarwin() || STI.isThumb()) ? ARM::R7 : ARM::R11),
+    BasePtr(ARM::R6) {
 }
 
 const unsigned*
@@ -182,6 +187,8 @@ getReservedRegs(const MachineFunction &MF) const {
   Reserved.set(ARM::FPSCR);
   if (hasFP(MF))
     Reserved.set(FramePtr);
+  if (hasBasePointer(MF))
+    Reserved.set(BasePtr);
   // Some targets reserve R9.
   if (STI.isR9Reserved())
     Reserved.set(ARM::R9);
@@ -195,6 +202,10 @@ bool ARMBaseRegisterInfo::isReservedReg(const MachineFunction &MF,
   case ARM::SP:
   case ARM::PC:
     return true;
+  case ARM::R6:
+    if (hasBasePointer(MF))
+      return true;
+    break;
   case ARM::R7:
   case ARM::R11:
     if (FramePtr == Reg && hasFP(MF))
@@ -625,34 +636,48 @@ bool ARMBaseRegisterInfo::hasFP(const MachineFunction &MF) const {
           MFI->isFrameAddressTaken());
 }
 
-bool ARMBaseRegisterInfo::canRealignStack(const MachineFunction &MF) const {
+bool ARMBaseRegisterInfo::hasBasePointer(const MachineFunction &MF) const {
   const MachineFrameInfo *MFI = MF.getFrameInfo();
   const ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
-  return (RealignStack &&
-          !AFI->isThumb1OnlyFunction() &&
-          !MFI->hasVarSizedObjects());
+
+  if (!EnableBasePointer)
+    return false;
+
+  if (needsStackRealignment(MF) && MFI->hasVarSizedObjects())
+    return true;
+
+  // Thumb has trouble with negative offsets from the FP. Thumb2 has a limited
+  // negative range for ldr/str (255), and thumb1 is positive offsets only.
+  // It's going to be better to use the SP or Base Pointer instead. When there
+  // are variable sized objects, we can't reference off of the SP, so we
+  // reserve a Base Pointer.
+  if (AFI->isThumbFunction() && MFI->hasVarSizedObjects()) {
+    // Conservatively estimate whether the negative offset from the frame
+    // pointer will be sufficient to reach. If a function has a smallish
+    // frame, it's less likely to have lots of spills and callee saved
+    // space, so it's all more likely to be within range of the frame pointer.
+    // If it's wrong, the scavenger will still enable access to work, it just
+    // won't be optimal.
+    if (AFI->isThumb2Function() && MFI->getLocalFrameSize() < 128)
+      return false;
+    return true;
+  }
+
+  return false;
+}
+
+bool ARMBaseRegisterInfo::canRealignStack(const MachineFunction &MF) const {
+  const ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
+  return (RealignStack && !AFI->isThumb1OnlyFunction());
 }
 
 bool ARMBaseRegisterInfo::
 needsStackRealignment(const MachineFunction &MF) const {
   const MachineFrameInfo *MFI = MF.getFrameInfo();
   const Function *F = MF.getFunction();
-  const ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
   unsigned StackAlign = MF.getTarget().getFrameInfo()->getStackAlignment();
   bool requiresRealignment = ((MFI->getLocalFrameMaxAlign() > StackAlign) ||
                                F->hasFnAttr(Attribute::StackAlignment));
-
-  // FIXME: Currently we don't support stack realignment for functions with
-  //        variable-sized allocas.
-  // FIXME: It's more complicated than this...
-  if (0 && requiresRealignment && MFI->hasVarSizedObjects())
-    report_fatal_error(
-      "Stack realignment in presense of dynamic allocas is not supported");
-
-  // FIXME: This probably isn't the right place for this.
-  if (0 && requiresRealignment && AFI->isThumb1OnlyFunction())
-    report_fatal_error(
-      "Stack realignment in thumb1 functions is not supported");
 
   return requiresRealignment && canRealignStack(MF);
 }
@@ -775,6 +800,10 @@ ARMBaseRegisterInfo::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
   // Spill LR if Thumb1 function uses variable length argument lists.
   if (AFI->isThumb1OnlyFunction() && AFI->getVarArgsRegSaveSize() > 0)
     MF.getRegInfo().setPhysRegUsed(ARM::LR);
+
+  // Spill the BasePtr if it's used.
+  if (hasBasePointer(MF))
+    MF.getRegInfo().setPhysRegUsed(BasePtr);
 
   // Don't spill FP if the frame can be eliminated. This is determined
   // by scanning the callee-save registers to see if any is used.
@@ -1022,13 +1051,14 @@ ARMBaseRegisterInfo::ResolveFrameIndexReference(const MachineFunction &MF,
     return Offset - AFI->getDPRCalleeSavedAreaOffset();
 
   // When dynamically realigning the stack, use the frame pointer for
-  // parameters, and the stack pointer for locals.
+  // parameters, and the stack/base pointer for locals.
   if (needsStackRealignment(MF)) {
     assert (hasFP(MF) && "dynamic stack realignment without a FP!");
     if (isFixed) {
       FrameReg = getFrameRegister(MF);
       Offset = FPOffset;
-    }
+    } else if (MFI->hasVarSizedObjects())
+      FrameReg = BasePtr;
     return Offset;
   }
 
@@ -1036,9 +1066,13 @@ ARMBaseRegisterInfo::ResolveFrameIndexReference(const MachineFunction &MF,
   if (hasFP(MF) && AFI->hasStackFrame()) {
     // Use frame pointer to reference fixed objects. Use it for locals if
     // there are VLAs (and thus the SP isn't reliable as a base).
-    if (isFixed || MFI->hasVarSizedObjects()) {
+    if (isFixed || (MFI->hasVarSizedObjects() && !hasBasePointer(MF))) {
       FrameReg = getFrameRegister(MF);
       Offset = FPOffset;
+    } else if (MFI->hasVarSizedObjects()) {
+      assert(hasBasePointer(MF) && "missing base pointer!");
+      // Use the base register since we have it.
+      FrameReg = BasePtr;
     } else if (AFI->isThumb2Function()) {
       // In Thumb2 mode, the negative offset is very limited. Try to avoid
       // out of range references.
@@ -1052,6 +1086,9 @@ ARMBaseRegisterInfo::ResolveFrameIndexReference(const MachineFunction &MF,
       Offset = FPOffset;
     }
   }
+  // Use the base pointer if we have one.
+  if (hasBasePointer(MF))
+    FrameReg = BasePtr;
   return Offset;
 }
 
@@ -1089,7 +1126,8 @@ unsigned ARMBaseRegisterInfo::getRegisterPairEven(unsigned Reg,
   case ARM::R5:
     return ARM::R4;
   case ARM::R7:
-    return isReservedReg(MF, ARM::R7)  ? 0 : ARM::R6;
+    return (isReservedReg(MF, ARM::R7) || isReservedReg(MF, ARM::R6))
+      ? 0 : ARM::R6;
   case ARM::R9:
     return isReservedReg(MF, ARM::R9)  ? 0 :ARM::R8;
   case ARM::R11:
@@ -1178,7 +1216,8 @@ unsigned ARMBaseRegisterInfo::getRegisterPairOdd(unsigned Reg,
   case ARM::R4:
     return ARM::R5;
   case ARM::R6:
-    return isReservedReg(MF, ARM::R7)  ? 0 : ARM::R7;
+    return (isReservedReg(MF, ARM::R7) || isReservedReg(MF, ARM::R6))
+      ? 0 : ARM::R7;
   case ARM::R8:
     return isReservedReg(MF, ARM::R9)  ? 0 :ARM::R9;
   case ARM::R10:
@@ -1876,6 +1915,20 @@ emitPrologue(MachineFunction &MF) const {
     }
 
     AFI->setShouldRestoreSPFromFP(true);
+  }
+
+  // If we need a base pointer, set it up here. It's whatever the value
+  // of the stack pointer is at this point. Any variable size objects
+  // will be allocated after this, so we can still use the base pointer
+  // to reference locals.
+  if (hasBasePointer(MF)) {
+    if (isARM)
+      BuildMI(MBB, MBBI, dl, TII.get(ARM::MOVr), BasePtr)
+        .addReg(ARM::SP)
+        .addImm((unsigned)ARMCC::AL).addReg(0).addReg(0);
+    else
+      BuildMI(MBB, MBBI, dl, TII.get(ARM::tMOVgpr2gpr), BasePtr)
+        .addReg(ARM::SP);
   }
 
   // If the frame has variable sized objects then the epilogue must restore
