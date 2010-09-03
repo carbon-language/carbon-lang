@@ -5475,10 +5475,29 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const {
   if (!isMMX && V2.getOpcode() != ISD::UNDEF && isCommutedSHUFP(SVOp))
     return CommuteVectorShuffle(SVOp, DAG);
 
-  // Check for legal shuffle and return?
-  SmallVector<int, 16> PermMask;
-  SVOp->getMask(PermMask);
-  if (isShuffleMaskLegal(PermMask, VT))
+  // The checks below are all present in isShuffleMaskLegal, but they are
+  // inlined here right now to enable us to directly emit target specific
+  // nodes, and remove one by one until they don't return Op anymore.
+  SmallVector<int, 16> M;
+  SVOp->getMask(M);
+
+  // Very little shuffling can be done for 64-bit vectors right now.
+  if (VT.getSizeInBits() == 64)
+    return isPALIGNRMask(M, VT, Subtarget->hasSSSE3()) ? Op : SDValue();
+
+  // FIXME: pshufb, blends, shifts.
+  if (VT.getVectorNumElements() == 2 ||
+      ShuffleVectorSDNode::isSplatMask(&M[0], VT) ||
+      isMOVLMask(M, VT) ||
+      isSHUFPMask(M, VT) ||
+      isPSHUFDMask(M, VT) ||
+      isPSHUFHWMask(M, VT) ||
+      isPSHUFLWMask(M, VT) ||
+      isPALIGNRMask(M, VT, Subtarget->hasSSSE3()) ||
+      isUNPCKLMask(M, VT) ||
+      isUNPCKHMask(M, VT) ||
+      isUNPCKL_v_undef_Mask(M, VT) ||
+      isUNPCKH_v_undef_Mask(M, VT))
     return Op;
 
   // Handle v8i16 specifically since SSE can do byte extraction and insertion.
