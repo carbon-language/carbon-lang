@@ -68,7 +68,7 @@ namespace test1 {
 
 namespace test2 {
   class A {
-    protected: int x; // expected-note 3 {{declared}}
+    protected: int x; // expected-note 3 {{object type must derive}}
     static int sx;
     static void test(A&);
   };
@@ -103,7 +103,7 @@ namespace test2 {
 namespace test3 {
   class B;
   class A {
-    protected: int x; // expected-note {{declared}}
+    protected: int x; // expected-note {{object type must derive}}
     static int sx;
     static void test(B&);
   };
@@ -138,7 +138,7 @@ namespace test3 {
 namespace test4 {
   class C;
   class A {
-    protected: int x; // expected-note 3 {{declared}}
+    protected: int x; // expected-note {{declared}} expected-note 2 {{object type must derive}}
     static int sx;    // expected-note 3{{member is declared here}}
     static void test(C&);
   };
@@ -215,7 +215,7 @@ namespace test6 {
   class Static {};
   class A {
   protected:
-    void foo(int); // expected-note 3 {{declared}}
+    void foo(int); // expected-note 3 {{object type must derive}}
     void foo(long);
     static void foo(Static);
 
@@ -253,7 +253,7 @@ namespace test7 {
   class Static {};
   class A {
     protected:
-    void foo(int); // expected-note 3 {{declared}}
+    void foo(int); // expected-note 3 {{object type must derive}}
     void foo(long);
     static void foo(Static);
 
@@ -291,7 +291,7 @@ namespace test8 {
   class Static {};
   class A {
     protected:
-    void foo(int); // expected-note 3 {{declared}}
+    void foo(int); // expected-note 3 {{object type must derive}}
     void foo(long);
     static void foo(Static);
 
@@ -329,7 +329,7 @@ namespace test8 {
 
 namespace test9 {
   class A { // expected-note {{member is declared here}}
-  protected: int foo(); // expected-note 7 {{declared}}
+  protected: int foo(); // expected-note 4 {{declared}} expected-note 2 {{object type must derive}} expected-note {{object type 'test9::A' must derive}}
   };
 
   class B : public A { // expected-note {{member is declared here}}

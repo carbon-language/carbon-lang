@@ -567,6 +567,8 @@ def note_access_natural : Note<
 def note_access_constrained_by_path : Note<
   "constrained by %select{|implicitly }1%select{private|protected}0"
   " inheritance here">;
+def note_access_protected_restricted : Note<
+  "object type %select{|%1 }0must derive from context type %2">;
   
 // C++ name lookup
 def err_incomplete_nested_name_spec : Error<
