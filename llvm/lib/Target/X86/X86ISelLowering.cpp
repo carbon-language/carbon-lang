@@ -5057,6 +5057,16 @@ LowerVECTOR_SHUFFLE_4wide(ShuffleVectorSDNode *SVOp, SelectionDAG &DAG) {
   return DAG.getVectorShuffle(VT, dl, LoShuffle, HiShuffle, &MaskOps[0]);
 }
 
+static bool MayFoldVectorLoad(SDValue V) {
+  if (V.hasOneUse() && V.getOpcode() == ISD::BIT_CONVERT)
+    V = V.getOperand(0);
+  if (V.hasOneUse() && V.getOpcode() == ISD::SCALAR_TO_VECTOR)
+    V = V.getOperand(0);
+  if (MayFoldLoad(V))
+    return true;
+  return false;
+}
+
 static
 SDValue getMOVLowToHigh(SDValue &Op, DebugLoc &dl, SelectionDAG &DAG,
                         bool HasSSE2) {
@@ -5101,15 +5111,9 @@ SDValue getMOVLP(SDValue &Op, DebugLoc &dl, SelectionDAG &DAG, bool HasSSE2) {
   // potencial load folding here, otherwise use SHUFPS or MOVSD to match the
   // same masks.
   bool CanFoldLoad = false;
-  SDValue TmpV1 = V1;
-  SDValue TmpV2 = V2;
 
   // Trivial case, when V2 comes from a load.
-  if (TmpV2.hasOneUse() && TmpV2.getOpcode() == ISD::BIT_CONVERT)
-    TmpV2 = TmpV2.getOperand(0);
-  if (TmpV2.hasOneUse() && TmpV2.getOpcode() == ISD::SCALAR_TO_VECTOR)
-    TmpV2 = TmpV2.getOperand(0);
-  if (MayFoldLoad(TmpV2))
+  if (MayFoldVectorLoad(V2))
     CanFoldLoad = true;
 
   // When V1 is a load, it can be folded later into a store in isel, example:
@@ -5117,9 +5121,7 @@ SDValue getMOVLP(SDValue &Op, DebugLoc &dl, SelectionDAG &DAG, bool HasSSE2) {
   //    turns into:
   //  (MOVLPSmr addr:$src1, VR128:$src2)
   // So, recognize this potential and also use MOVLPS or MOVLPD
-  if (TmpV1.hasOneUse() && TmpV1.getOpcode() == ISD::BIT_CONVERT)
-    TmpV1 = TmpV1.getOperand(0);
-  if (MayFoldLoad(TmpV1) && MayFoldIntoStore(Op))
+  if (MayFoldVectorLoad(V1) && MayFoldIntoStore(Op))
     CanFoldLoad = true;
 
   if (CanFoldLoad) {
