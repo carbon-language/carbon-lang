@@ -235,15 +235,16 @@ void StreamChecker::OpenFileAux(CheckerContext &C, const CallExpr *CE) {
   const GRState *stateNotNull, *stateNull;
   llvm::tie(stateNotNull, stateNull) = CM.AssumeDual(state, RetVal);
   
-  SymbolRef Sym = RetVal.getAsSymbol();
-  assert(Sym);
+  if (SymbolRef Sym = RetVal.getAsSymbol()) {
+    // if RetVal is not NULL, set the symbol's state to Opened.
+    stateNotNull =
+      stateNotNull->set<StreamState>(Sym,StreamState::getOpened(CE));
+    stateNull =
+      stateNull->set<StreamState>(Sym, StreamState::getOpenFailed(CE));
 
-  // if RetVal is not NULL, set the symbol's state to Opened.
-  stateNotNull = stateNotNull->set<StreamState>(Sym,StreamState::getOpened(CE));
-  stateNull = stateNull->set<StreamState>(Sym, StreamState::getOpenFailed(CE));
-
-  C.addTransition(stateNotNull);
-  C.addTransition(stateNull);
+    C.addTransition(stateNotNull);
+    C.addTransition(stateNull);
+  }
 }
 
 void StreamChecker::Fclose(CheckerContext &C, const CallExpr *CE) {
@@ -370,7 +371,8 @@ const GRState *StreamChecker::CheckDoubleClose(const CallExpr *CE,
                                                const GRState *state,
                                                CheckerContext &C) {
   SymbolRef Sym = state->getSVal(CE->getArg(0)).getAsSymbol();
-  assert(Sym);
+  if (!Sym)
+    return state;
   
   const StreamState *SS = state->get<StreamState>(Sym);
 
