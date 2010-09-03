@@ -90,7 +90,10 @@ __thread_specific_ptr<__thread_struct> __thread_local_data;
 class __thread_struct_imp
 {
     typedef vector<__assoc_sub_state*> _AsyncStates;
+    typedef vector<pair<condition_variable*, mutex*> > _Notify;
+
     _AsyncStates async_states_;
+    _Notify notify_;
 
     __thread_struct_imp(const __thread_struct_imp&);
     __thread_struct_imp& operator=(const __thread_struct_imp&);
@@ -98,17 +101,30 @@ public:
     __thread_struct_imp() {}
     ~__thread_struct_imp();
 
+    void notify_all_at_thread_exit(condition_variable* cv, mutex* m);
     void __make_ready_at_thread_exit(__assoc_sub_state* __s);
 };
 
 __thread_struct_imp::~__thread_struct_imp()
 {
+    for (_Notify::iterator i = notify_.begin(), e = notify_.end();
+            i != e; ++i)
+    {
+        i->second->unlock();
+        i->first->notify_all();
+    }
     for (_AsyncStates::iterator i = async_states_.begin(), e = async_states_.end();
             i != e; ++i)
     {
         (*i)->__make_ready();
         (*i)->__release_shared();
     }
+}
+
+void
+__thread_struct_imp::notify_all_at_thread_exit(condition_variable* cv, mutex* m)
+{
+    notify_.push_back(pair<condition_variable*, mutex*>(cv, m));
 }
 
 void
@@ -128,6 +144,12 @@ __thread_struct::__thread_struct()
 __thread_struct::~__thread_struct()
 {
     delete __p_;
+}
+
+void
+__thread_struct::notify_all_at_thread_exit(condition_variable* cv, mutex* m)
+{
+    __p_->notify_all_at_thread_exit(cv, m);
 }
 
 void

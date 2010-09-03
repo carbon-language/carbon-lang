@@ -295,6 +295,7 @@ public:
     __thread_struct();
     ~__thread_struct();
 
+    void notify_all_at_thread_exit(condition_variable*, mutex*);
     void __make_ready_at_thread_exit(__assoc_sub_state*);
 };
 

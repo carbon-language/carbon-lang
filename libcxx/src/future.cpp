@@ -257,4 +257,39 @@ shared_future<void>::operator=(const shared_future& __rhs)
     return *this;
 }
 
+atomic_future<void>::~atomic_future()
+{
+    if (__state_)
+        __state_->__release_shared();
+}
+
+atomic_future<void>&
+atomic_future<void>::operator=(const atomic_future& __rhs)
+{
+    if (this != &__rhs)
+    {
+        unique_lock<mutex> __this(__mut_, defer_lock);
+        unique_lock<mutex> __that(__rhs.__mut_, defer_lock);
+        _STD::lock(__this, __that);
+        if (__rhs.__state_)
+            __rhs.__state_->__add_shared();
+        if (__state_)
+            __state_->__release_shared();
+        __state_ = __rhs.__state_;
+    }
+    return *this;
+}
+
+void
+atomic_future<void>::swap(atomic_future& __rhs)
+{
+    if (this != &__rhs)
+    {
+        unique_lock<mutex> __this(__mut_, defer_lock);
+        unique_lock<mutex> __that(__rhs.__mut_, defer_lock);
+        _STD::lock(__this, __that);
+        _STD::swap(__state_, __rhs.__state_);
+    }
+}
+
 _LIBCPP_END_NAMESPACE_STD
