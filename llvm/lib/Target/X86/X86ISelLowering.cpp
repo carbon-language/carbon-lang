@@ -5494,7 +5494,6 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const {
       isPSHUFHWMask(M, VT) ||
       isPSHUFLWMask(M, VT) ||
       isPALIGNRMask(M, VT, Subtarget->hasSSSE3()) ||
-      isUNPCKHMask(M, VT) ||
       isUNPCKL_v_undef_Mask(M, VT) ||
       isUNPCKH_v_undef_Mask(M, VT))
     return Op;
