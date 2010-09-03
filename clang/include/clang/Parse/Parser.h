@@ -1365,6 +1365,7 @@ private:
   AttributeList *ParseGNUAttributes(SourceLocation *EndLoc = 0);
   AttributeList *ParseMicrosoftDeclSpec(AttributeList* CurrAttr = 0);
   AttributeList *ParseMicrosoftTypeAttributes(AttributeList* CurrAttr = 0);
+  AttributeList *ParseBorlandTypeAttributes(AttributeList* CurrAttr = 0);
   void ParseTypeofSpecifier(DeclSpec &DS);
   void ParseDecltypeSpecifier(DeclSpec &DS);
   

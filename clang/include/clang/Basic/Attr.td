@@ -359,6 +359,10 @@ def ThisCall : Attr {
   let Spellings = ["thiscall", "__thiscall"];
 }
 
+def Pascal : Attr {
+  let Spellings = ["pascal", "__pascal"];
+}
+
 def TransparentUnion : Attr {
   let Spellings = ["transparent_union"];
 }

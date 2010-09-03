@@ -73,7 +73,8 @@ namespace {
     KEYMS = 32,
     BOOLSUPPORT = 64,
     KEYALTIVEC = 128,
-    KEYNOMS = 256
+    KEYNOMS = 256,
+    KEYBORLAND = 512
   };
 }
 
@@ -95,6 +96,7 @@ static void AddKeyword(llvm::StringRef Keyword,
   else if (LangOpts.C99 && (Flags & KEYC99)) AddResult = 2;
   else if (LangOpts.GNUKeywords && (Flags & KEYGNU)) AddResult = 1;
   else if (LangOpts.Microsoft && (Flags & KEYMS)) AddResult = 1;
+  else if (LangOpts.Borland && (Flags & KEYBORLAND)) AddResult = 1;
   else if (LangOpts.Bool && (Flags & BOOLSUPPORT)) AddResult = 2;
   else if (LangOpts.AltiVec && (Flags & KEYALTIVEC)) AddResult = 2;
   else if (!LangOpts.Microsoft && (Flags & KEYNOMS)) AddResult = 2;

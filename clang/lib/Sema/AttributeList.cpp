@@ -126,9 +126,11 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo *Name) {
     .Case("init_priority", AT_init_priority)
     .Case("no_instrument_function", AT_no_instrument_function)
     .Case("thiscall", AT_thiscall)
+    .Case("pascal", AT_pascal)
     .Case("__cdecl", AT_cdecl)
     .Case("__stdcall", AT_stdcall)
     .Case("__fastcall", AT_fastcall)
     .Case("__thiscall", AT_thiscall)
+    .Case("__pascal", AT_pascal)
     .Default(UnknownAttribute);
 }

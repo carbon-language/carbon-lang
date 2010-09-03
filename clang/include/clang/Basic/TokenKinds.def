@@ -186,6 +186,7 @@ PUNCTUATOR(at,                  "@")
 //   KEYCXX0X - This is a C++ keyword introduced to C++ in C++0x
 //   KEYGNU   - This is a keyword if GNU extensions are enabled
 //   KEYMS    - This is a keyword if Microsoft extensions are enabled
+//   KEYBORLAND - This is a keyword if Borland extensions are enabled
 //
 KEYWORD(auto                        , KEYALL)
 KEYWORD(break                       , KEYALL)
@@ -335,6 +336,9 @@ KEYWORD(__fastcall                  , KEYALL)
 KEYWORD(__thiscall                  , KEYALL)
 KEYWORD(__forceinline               , KEYALL)
 
+// Borland Extension.
+KEYWORD(__pascal                    , KEYALL)
+
 // Altivec Extension.
 KEYWORD(__vector                    , KEYALTIVEC)
 KEYWORD(__pixel                     , KEYALTIVEC)
@@ -370,6 +374,9 @@ ALIAS("_cdecl"       , __cdecl    , KEYMS)
 ALIAS("_fastcall"    , __fastcall , KEYMS)
 ALIAS("_stdcall"     , __stdcall  , KEYMS)
 ALIAS("_thiscall"    , __thiscall , KEYMS)
+
+// Borland Extensions which should be disabled in strict conformance mode.
+ALIAS("_pascal"      , __pascal   , KEYBORLAND)
 
 //===----------------------------------------------------------------------===//
 // Objective-C @-preceeded keywords.

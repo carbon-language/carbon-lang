@@ -1986,6 +1986,9 @@ static void HandleCallConvAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   case AttributeList::AT_cdecl:
     d->addAttr(::new (S.Context) CDeclAttr(Attr.getLoc(), S.Context));
     return;
+  case AttributeList::AT_pascal:
+    d->addAttr(::new (S.Context) PascalAttr(Attr.getLoc(), S.Context));
+    return;
   default:
     llvm_unreachable("unexpected attribute kind");
     return;
@@ -2294,6 +2297,7 @@ static void ProcessDeclAttribute(Scope *scope, Decl *D,
   case AttributeList::AT_cdecl:
   case AttributeList::AT_fastcall:
   case AttributeList::AT_thiscall:
+  case AttributeList::AT_pascal:
     HandleCallConvAttr(D, Attr, S);
     break;
   default:

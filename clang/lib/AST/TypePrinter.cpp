@@ -299,6 +299,9 @@ void TypePrinter::PrintFunctionProto(const FunctionProtoType *T,
   case CC_X86ThisCall:
     S += " __attribute__((thiscall))";
     break;
+  case CC_X86Pascal:
+    S += " __attribute__((pascal))";
+    break;
   }
   if (Info.getNoReturn())
     S += " __attribute__((noreturn))";

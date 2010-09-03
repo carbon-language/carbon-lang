@@ -293,6 +293,17 @@ AttributeList* Parser::ParseMicrosoftTypeAttributes(AttributeList *CurrAttr) {
   return CurrAttr;
 }
 
+AttributeList* Parser::ParseBorlandTypeAttributes(AttributeList *CurrAttr) {
+  // Treat these like attributes
+  while (Tok.is(tok::kw___pascal)) {
+    IdentifierInfo *AttrName = Tok.getIdentifierInfo();
+    SourceLocation AttrNameLoc = ConsumeToken();
+    CurrAttr = new AttributeList(AttrName, AttrNameLoc, 0, AttrNameLoc, 0,
+                                 SourceLocation(), 0, 0, CurrAttr, true);
+  }
+  return CurrAttr;
+}
+
 /// ParseDeclaration - Parse a full 'declaration', which consists of
 /// declaration-specifiers, some number of declarators, and a semicolon.
 /// 'Context' should be a Declarator::TheContext value.  This returns the
@@ -1207,6 +1218,11 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
       DS.AddAttributes(ParseMicrosoftTypeAttributes());
       continue;
 
+    // Borland single token adornments.
+    case tok::kw___pascal:
+      DS.AddAttributes(ParseBorlandTypeAttributes());
+      continue;
+
     // storage-class-specifier
     case tok::kw_typedef:
       isInvalid = DS.SetStorageClassSpec(DeclSpec::SCS_typedef, Loc, PrevSpec,
@@ -1683,6 +1699,7 @@ bool Parser::ParseOptionalTypeSpecifier(DeclSpec &DS, bool& isInvalid,
 
     isInvalid = DS.SetTypeSpecType(DeclSpec::TST_auto, Loc, PrevSpec, DiagID);
     break;
+
   case tok::kw___ptr64:
   case tok::kw___w64:
   case tok::kw___cdecl:
@@ -1690,6 +1707,10 @@ bool Parser::ParseOptionalTypeSpecifier(DeclSpec &DS, bool& isInvalid,
   case tok::kw___fastcall:
   case tok::kw___thiscall:
     DS.AddAttributes(ParseMicrosoftTypeAttributes());
+    return true;
+
+  case tok::kw___pascal:
+    DS.AddAttributes(ParseBorlandTypeAttributes());
     return true;
 
   default:
@@ -2268,6 +2289,7 @@ bool Parser::isTypeSpecifierQualifier() {
   case tok::kw___thiscall:
   case tok::kw___w64:
   case tok::kw___ptr64:
+  case tok::kw___pascal:
     return true;
   }
 }
@@ -2376,6 +2398,7 @@ bool Parser::isDeclarationSpecifier() {
   case tok::kw___w64:
   case tok::kw___ptr64:
   case tok::kw___forceinline:
+  case tok::kw___pascal:
     return true;
   }
 }
@@ -2427,15 +2450,19 @@ bool Parser::isConstructorDeclarator() {
 }
 
 /// ParseTypeQualifierListOpt
-///       type-qualifier-list: [C99 6.7.5]
-///         type-qualifier
-/// [GNU]   attributes                        [ only if AttributesAllowed=true ]
-///         type-qualifier-list type-qualifier
-/// [GNU]   type-qualifier-list attributes    [ only if AttributesAllowed=true ]
-/// [C++0x] attribute-specifier[opt] is allowed before cv-qualifier-seq
-///           if CXX0XAttributesAllowed = true
+///          type-qualifier-list: [C99 6.7.5]
+///            type-qualifier
+/// [vendor]   attributes                        
+///              [ only if VendorAttributesAllowed=true ]
+///            type-qualifier-list type-qualifier
+/// [vendor]   type-qualifier-list attributes    
+///              [ only if VendorAttributesAllowed=true ]
+/// [C++0x]    attribute-specifier[opt] is allowed before cv-qualifier-seq
+///              [ only if CXX0XAttributesAllowed=true ]
+/// Note: vendor can be GNU, MS, etc.
 ///
-void Parser::ParseTypeQualifierListOpt(DeclSpec &DS, bool GNUAttributesAllowed,
+void Parser::ParseTypeQualifierListOpt(DeclSpec &DS,
+                                       bool VendorAttributesAllowed,
                                        bool CXX0XAttributesAllowed) {
   if (getLang().CPlusPlus0x && isCXX0XAttributeSpecifier()) {
     SourceLocation Loc = Tok.getLocation();
@@ -2476,13 +2503,19 @@ void Parser::ParseTypeQualifierListOpt(DeclSpec &DS, bool GNUAttributesAllowed,
     case tok::kw___stdcall:
     case tok::kw___fastcall:
     case tok::kw___thiscall:
-      if (GNUAttributesAllowed) {
+      if (VendorAttributesAllowed) {
         DS.AddAttributes(ParseMicrosoftTypeAttributes());
         continue;
       }
       goto DoneWithTypeQuals;
+    case tok::kw___pascal:
+      if (VendorAttributesAllowed) {
+        DS.AddAttributes(ParseBorlandTypeAttributes());
+        continue;
+      }
+      goto DoneWithTypeQuals;
     case tok::kw___attribute:
-      if (GNUAttributesAllowed) {
+      if (VendorAttributesAllowed) {
         DS.AddAttributes(ParseGNUAttributes());
         continue; // do *not* consume the next token!
       }
@@ -2866,6 +2899,10 @@ void Parser::ParseParenDeclarator(Declarator &D) {
        Tok.is(tok::kw___thiscall) || Tok.is(tok::kw___fastcall) ||
        Tok.is(tok::kw___w64) || Tok.is(tok::kw___ptr64)) {
     AttrList.reset(ParseMicrosoftTypeAttributes(AttrList.take()));
+  }
+  // Eat any Borland extensions.
+  if  (Tok.is(tok::kw___pascal)) {
+    AttrList.reset(ParseBorlandTypeAttributes(AttrList.take()));
   }
 
   // If we haven't past the identifier yet (or where the identifier would be

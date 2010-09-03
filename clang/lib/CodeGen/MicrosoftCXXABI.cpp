@@ -919,6 +919,7 @@ void MicrosoftCXXNameMangler::mangleCallingConvention(const FunctionType *T) {
   switch (T->getCallConv()) {
     case CC_Default:
     case CC_C: Out << 'A'; break;
+    case CC_X86Pascal: Out << 'C'; break;
     case CC_X86ThisCall: Out << 'E'; break;
     case CC_X86StdCall: Out << 'G'; break;
     case CC_X86FastCall: Out << 'I'; break;

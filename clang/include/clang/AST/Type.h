@@ -410,7 +410,8 @@ enum CallingConv {
   CC_C,           // __attribute__((cdecl))
   CC_X86StdCall,  // __attribute__((stdcall))
   CC_X86FastCall, // __attribute__((fastcall))
-  CC_X86ThisCall  // __attribute__((thiscall))
+  CC_X86ThisCall, // __attribute__((thiscall))
+  CC_X86Pascal    // __attribute__((pascal))
 };
 
 
@@ -1928,7 +1929,7 @@ class FunctionType : public Type {
     // The value passed to __attribute__((regparm(x)))
     unsigned RegParm;
     // The calling convention as specified via
-    // __attribute__((cdecl|stdcall|fastcall|thiscall))
+    // __attribute__((cdecl|stdcall|fastcall|thiscall|pascal))
     CallingConv CC;
   };
 

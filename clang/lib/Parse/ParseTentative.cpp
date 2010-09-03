@@ -757,6 +757,10 @@ Parser::TPResult Parser::isCXXDeclarationSpecifier() {
   case tok::kw___ptr64:
   case tok::kw___forceinline:
     return TPResult::True();
+
+    // Borland
+  case tok::kw___pascal:
+    return TPResult::True();
   
     // AltiVec
   case tok::kw___vector:
