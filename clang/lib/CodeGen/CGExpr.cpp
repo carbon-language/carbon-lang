@@ -335,6 +335,23 @@ CodeGenFunction::EmitReferenceBindingToExpr(const Expr* E,
   llvm::Value *Value = EmitExprForReferenceBinding(*this, E, ReferenceTemporary,
                                                    ReferenceTemporaryDtor,
                                                    InitializedDecl);
+  if (E->getType()->isBooleanType()) {
+    // special handling for __block variable of bool type bound to
+    // a reference type.
+    bool block_byref_var = false;
+    if (const BlockDeclRefExpr *BE = dyn_cast<BlockDeclRefExpr>(E))
+      block_byref_var = BE->isByRef();
+    else if (const DeclRefExpr *BD = dyn_cast<DeclRefExpr>(E)) {
+      const NamedDecl *ND = BD->getDecl();
+      if (const VarDecl *VD = dyn_cast<VarDecl>(ND))
+        block_byref_var = VD->hasAttr<BlocksAttr>();
+    }
+    if (block_byref_var) {
+      const llvm::Type *T = ConvertTypeForMem(E->getType());
+      T = llvm::PointerType::getUnqual(T);
+      Value = Builder.CreateBitCast(Value, T);
+    }
+  }
 
   if (!ReferenceTemporaryDtor)
     return RValue::get(Value);
