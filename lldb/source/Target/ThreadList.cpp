@@ -187,7 +187,7 @@ ThreadList::ShouldStop (Event *event_ptr)
     collection::iterator pos, end = m_threads.end();
 
     if (log)
-        log->Printf ("%s %zu threads\n", __FUNCTION__, m_threads.size());
+        log->Printf ("%s %zu threads", __FUNCTION__, m_threads.size());
 
     // Run through the threads and ask whether we should stop.  Don't ask
     // suspended threads, however, it makes more sense for them to preserve their
@@ -196,33 +196,39 @@ ThreadList::ShouldStop (Event *event_ptr)
     {
         ThreadSP thread_sp(*pos);
         
-        if (log)
-            log->Printf ("%s thread 0x%4.4x: pc = 0x%16.16llx ", __FUNCTION__, thread_sp->GetID (), thread_sp->GetRegisterContext()->GetPC());
-
         if (thread_sp->GetResumeState () == eStateSuspended)
         {
             if (log)
-                log->Printf("ignore: thread was suspended\n", thread_sp->GetID (), thread_sp->GetRegisterContext()->GetPC());
+                log->Printf ("%s tid = 0x%4.4x, pc = 0x%16.16llx, should_stop = 0 (ignore since thread was suspended)", 
+                             __FUNCTION__, 
+                             thread_sp->GetID (), 
+                             thread_sp->GetRegisterContext()->GetPC());
             continue;
         }
         
         if (thread_sp->ThreadStoppedForAReason() == false)
         {
             if (log)
-                log->Printf("ignore: no stop reason\n", thread_sp->GetID (), thread_sp->GetRegisterContext()->GetPC());
+                log->Printf ("%s tid = 0x%4.4x, pc = 0x%16.16llx, should_stop = 0 (ignore since no stop reason)", 
+                             __FUNCTION__, 
+                             thread_sp->GetID (), 
+                             thread_sp->GetRegisterContext()->GetPC());
             continue;
-
         }
 
         const bool thread_should_stop = thread_sp->ShouldStop(event_ptr);
         if (log)
-            log->Printf("should_stop = %i\n", thread_sp->GetID (), thread_sp->GetRegisterContext()->GetPC(), thread_should_stop);
+            log->Printf ("%s tid = 0x%4.4x, pc = 0x%16.16llx, should_stop = %i", 
+                         __FUNCTION__, 
+                         thread_sp->GetID (), 
+                         thread_sp->GetRegisterContext()->GetPC(), 
+                         thread_should_stop);
         if (thread_should_stop)
             should_stop |= true;
     }
 
     if (log)
-        log->Printf ("%s overall should_stop = %i\n", __FUNCTION__, should_stop);
+        log->Printf ("%s overall should_stop = %i", __FUNCTION__, should_stop);
 
     if (should_stop)
     {
@@ -248,7 +254,7 @@ ThreadList::ShouldReportStop (Event *event_ptr)
     Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP);
 
     if (log)
-        log->Printf ("%s %zu threads\n", __FUNCTION__, m_threads.size());
+        log->Printf ("%s %zu threads", __FUNCTION__, m_threads.size());
 
     // Run through the threads and ask whether we should report this event.
     // For stopping, a YES vote wins over everything.  A NO vote wins over NO opinion.
@@ -259,7 +265,7 @@ ThreadList::ShouldReportStop (Event *event_ptr)
         {
             const lldb::Vote vote = thread_sp->ShouldReportStop (event_ptr);
             if (log)
-                log->Printf  ("%s thread 0x%4.4x: pc = 0x%16.16llx vote: %s\n", 
+                log->Printf  ("%s thread 0x%4.4x: pc = 0x%16.16llx, vote = %s", 
                               __FUNCTION__,
                               thread_sp->GetID (), 
                               thread_sp->GetRegisterContext()->GetPC(),
@@ -281,7 +287,7 @@ ThreadList::ShouldReportStop (Event *event_ptr)
                 else
                 {
                     if (log)
-                        log->Printf ("%s thread 0x%4.4x: pc = 0x%16.16llx voted %s, but lost out because result was %s\n", 
+                        log->Printf ("%s thread 0x%4.4x: pc = 0x%16.16llx voted %s, but lost out because result was %s", 
                                      __FUNCTION__,
                                      thread_sp->GetID (), 
                                      thread_sp->GetRegisterContext()->GetPC(),
@@ -293,7 +299,7 @@ ThreadList::ShouldReportStop (Event *event_ptr)
         }
     }
     if (log)
-        log->Printf ("%s returning %s\n", __FUNCTION__, GetVoteAsCString (result));
+        log->Printf ("%s returning %s", __FUNCTION__, GetVoteAsCString (result));
     return result;
 }
 

@@ -360,7 +360,7 @@ Thread::PushPlan (ThreadPlanSP &thread_plan_sp)
         {
             StreamString s;
             thread_plan_sp->GetDescription (&s, lldb::eDescriptionLevelFull);
-            log->Printf("Pushing plan: \"%s\" for thread: %d immediate: %s.",
+            log->Printf("Pushing plan: \"%s\", tid = 0x%4.4x, immediate = %s.",
                         s.GetData(),
                         thread_plan_sp->GetThread().GetID(),
                         thread_plan_sp->IsImmediate() ? "true" : "false");
@@ -378,7 +378,7 @@ Thread::PopPlan ()
         ThreadPlanSP &plan = m_immediate_plan_stack.back();
         if (log)
         {
-            log->Printf("Popping plan: \"%s\" for thread: %d immediate: true.", plan->GetName(), plan->GetThread().GetID());
+            log->Printf("Popping plan: \"%s\", tid = 0x%4.4x, immediate = true.", plan->GetName(), plan->GetThread().GetID());
         }
         plan->WillPop();
         m_immediate_plan_stack.pop_back();
@@ -390,7 +390,7 @@ Thread::PopPlan ()
         ThreadPlanSP &plan = m_plan_stack.back();
         if (log)
         {
-            log->Printf("Popping plan: \"%s\" for thread: 0x%x immediate: false.", plan->GetName(), plan->GetThread().GetID());
+            log->Printf("Popping plan: \"%s\", tid = 0x%4.4x, immediate = false.", plan->GetName(), plan->GetThread().GetID());
         }
         m_completed_plan_stack.push_back (plan);
         plan->WillPop();
@@ -535,7 +535,7 @@ Thread::DiscardThreadPlans(bool force)
     Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP);
     if (log)
     {
-        log->Printf("Discarding thread plans for thread: 0x%x: force %d.", GetID(), force);
+        log->Printf("Discarding thread plans for thread (tid = 0x%4.4x, force %d)", GetID(), force);
     }
 
     if (force)
@@ -726,8 +726,9 @@ void
 Thread::DumpThreadPlans (lldb_private::Stream *s) const
 {
     uint32_t stack_size = m_plan_stack.size();
-    s->Printf ("Plan Stack for thread #%u: tid = 0x%4.4x - %d elements.\n", GetIndexID(), GetID(), stack_size);
-    for (int i = stack_size - 1; i > 0; i--)
+    int i;
+    s->Printf ("Plan Stack for thread #%u: tid = 0x%4.4x, stack_size = %d\n", GetIndexID(), GetID(), stack_size);
+    for (i = stack_size - 1; i >= 0; i--)
     {
         s->Printf ("Element %d: ", i);
         s->IndentMore();
@@ -738,7 +739,7 @@ Thread::DumpThreadPlans (lldb_private::Stream *s) const
 
     stack_size = m_immediate_plan_stack.size();
     s->Printf ("Immediate Plan Stack: %d elements.\n", stack_size);
-    for (int i = stack_size - 1; i > 0; i--)
+    for (i = stack_size - 1; i >= 0; i--)
     {
         s->Printf ("Element %d: ", i);
         s->IndentMore();
@@ -749,7 +750,7 @@ Thread::DumpThreadPlans (lldb_private::Stream *s) const
 
     stack_size = m_completed_plan_stack.size();
     s->Printf ("Completed Plan Stack: %d elements.\n", stack_size);
-    for (int i = stack_size - 1; i > 0; i--)
+    for (i = stack_size - 1; i >= 0; i--)
     {
         s->Printf ("Element %d: ", i);
         s->IndentMore();
@@ -760,7 +761,7 @@ Thread::DumpThreadPlans (lldb_private::Stream *s) const
 
     stack_size = m_discarded_plan_stack.size();
     s->Printf ("Discarded Plan Stack: %d elements.\n", stack_size);
-    for (int i = stack_size - 1; i > 0; i--)
+    for (int i = stack_size - 1; i >= 0; i--)
     {
         s->Printf ("Element %d: ", i);
         s->IndentMore();

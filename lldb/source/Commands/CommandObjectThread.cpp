@@ -404,7 +404,7 @@ public:
                                                       3,
                                                       3))
                 {
-                    result.AppendErrorWithFormat ("error displaying backtrace for thread: \"%d\"\n", i);
+                    result.AppendErrorWithFormat ("error displaying backtrace for thread: \"0x%4.4x\"\n", i);
                     result.SetStatus (eReturnStatusFailed);
                     return false;
                 }

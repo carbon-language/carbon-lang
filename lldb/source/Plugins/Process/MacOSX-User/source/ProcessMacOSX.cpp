@@ -1436,7 +1436,7 @@ ProcessMacOSX::ReplyToAllExceptions()
             if (thread_sp.get())
                 resume_signal = thread_sp->GetResumeSignal();
             if (log)
-                log->Printf ("Replying to exception %d for thread 0x%4.4x (resume_signal = %i).", std::distance(begin, pos), thread_sp->GetID(), resume_signal);
+                log->Printf ("Replying to exception %d, tid = 0x%4.4x, resume_signal = %i", std::distance(begin, pos), thread_sp->GetID(), resume_signal);
             Error curr_error (pos->Reply (Task().GetTaskPort(), GetID(), resume_signal));
 
             // Only report the first error

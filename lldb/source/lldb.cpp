@@ -134,9 +134,14 @@ lldb_private::GetDefaultArchitecture ()
 const char *
 lldb_private::GetVoteAsCString (lldb::Vote vote)
 {
-    static const char * g_vote_cstrings[] = { "no", "no opinion", "yes" };
-    if (vote >= eVoteNo && vote <= eVoteYes)
-        return g_vote_cstrings[vote-1];
+    switch (vote)
+    {
+    case eVoteNo:           return "no";
+    case eVoteNoOpinion:    return "no opinion";
+    case eVoteYes:          return "yes";
+    default:
+        break;
+    }
     return "invalid";
 }
 
