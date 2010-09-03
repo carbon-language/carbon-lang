@@ -707,9 +707,10 @@ above, it would be the location of the "a" identifier.</li>
 last token replaced with the annotation token.  In the example above, it would
 be the location of the "c" identifier.</li>
 
-<li><b>void* "AnnotationValue"</b> - This contains an opaque object that the
-parser gets from Sema through an Actions module, it is passed around and Sema
-interprets it, based on the type of annotation token.</li>
+<li><b>void* "AnnotationValue"</b> - This contains an opaque object
+that the parser gets from Sema.  The parser merely preserves the
+information for Sema to later interpret based on the annotation token
+kind.</li>
 
 <li><b>TokenKind "Kind"</b> - This indicates the kind of Annotation token this
 is.  See below for the different valid kinds.</li>
@@ -719,21 +720,29 @@ is.  See below for the different valid kinds.</li>
 
 <ol>
 <li><b>tok::annot_typename</b>: This annotation token represents a
-resolved typename token that is potentially qualified.  The AnnotationValue
-field contains a pointer returned by Action::getTypeName().  In the case of the
-Sema actions module, this is a <tt>Decl*</tt> for the type.</li>
+resolved typename token that is potentially qualified.  The
+AnnotationValue field contains the <tt>QualType</tt> returned by
+Sema::getTypeName(), possibly with source location information
+attached.</li>
 
-<li><b>tok::annot_cxxscope</b>: This annotation token represents a C++ scope
-specifier, such as "A::B::".  This corresponds to the grammar productions "::"
-and ":: [opt] nested-name-specifier".  The AnnotationValue pointer is returned
-by the Action::ActOnCXXGlobalScopeSpecifier and
-Action::ActOnCXXNestedNameSpecifier callbacks.  In the case of Sema, this is a
-<tt>DeclContext*</tt>.</li>
+<li><b>tok::annot_cxxscope</b>: This annotation token represents a C++
+scope specifier, such as "A::B::".  This corresponds to the grammar
+productions "::" and ":: [opt] nested-name-specifier".  The
+AnnotationValue pointer is a <tt>NestedNameSpecifier*</tt> returned by
+the Sema::ActOnCXXGlobalScopeSpecifier and
+Sema::ActOnCXXNestedNameSpecifier callbacks.</li>
 
 <li><b>tok::annot_template_id</b>: This annotation token represents a
 C++ template-id such as "foo&lt;int, 4&gt;", where "foo" is the name
 of a template. The AnnotationValue pointer is a pointer to a malloc'd
-TemplateIdAnnotation object. Depending on the context, a parsed template-id that names a type might become a typename annotation token (if all we care about is the named type, e.g., because it occurs in a type specifier) or might remain a template-id token (if we want to retain more source location information or produce a new type, e.g., in a declaration of a class template specialization). template-id annotation tokens that refer to a type can be "upgraded" to typename annotation tokens by the parser.</li>
+TemplateIdAnnotation object. Depending on the context, a parsed
+template-id that names a type might become a typename annotation token
+(if all we care about is the named type, e.g., because it occurs in a
+type specifier) or might remain a template-id token (if we want to
+retain more source location information or produce a new type, e.g.,
+in a declaration of a class template specialization). template-id
+annotation tokens that refer to a type can be "upgraded" to typename
+annotation tokens by the parser.</li>
 
 </ol>
 
@@ -953,11 +962,12 @@ make sense to you :).</p>
 <h3 id="QualType">The QualType class</h3>
 <!-- ======================================================================= -->
 
-<p>The QualType class is designed as a trivial value class that is small,
-passed by-value and is efficient to query.  The idea of QualType is that it
-stores the type qualifiers (const, volatile, restrict) separately from the types
-themselves: QualType is conceptually a pair of "Type*" and bits for the type
-qualifiers.</p>
+<p>The QualType class is designed as a trivial value class that is
+small, passed by-value and is efficient to query.  The idea of
+QualType is that it stores the type qualifiers (const, volatile,
+restrict, plus some extended qualifiers required by language
+extensions) separately from the types themselves.  QualType is
+conceptually a pair of "Type*" and the bits for these type qualifiers.</p>
 
 <p>By storing the type qualifiers as bits in the conceptual pair, it is
 extremely efficient to get the set of qualifiers on a QualType (just return the
@@ -972,10 +982,11 @@ both point to the same heap allocated "int" type).  This reduces the heap size
 used to represent bits and also means we do not have to consider qualifiers when
 uniquing types (<a href="#Type">Type</a> does not even contain qualifiers).</p>
 
-<p>In practice, on hosts where it is safe, the 3 type qualifiers are stored in
-the low bit of the pointer to the Type object.  This means that QualType is
-exactly the same size as a pointer, and this works fine on any system where
-malloc'd objects are at least 8 byte aligned.</p>
+<p>In practice, the two most common type qualifiers (const and
+restrict) are stored in the low bits of the pointer to the Type
+object, together with a flag indicating whether extended qualifiers
+are present (which must be heap-allocated).  This means that QualType
+is exactly the same size as a pointer.</p>
 
 <!-- ======================================================================= -->
 <h3 id="DeclarationName">Declaration names</h3>
