@@ -195,6 +195,8 @@ void InitHeaderSearch::AddMinGWCPlusPlusIncludePaths(llvm::StringRef Base,
           System, true, false, false);
   AddPath(Base + "/" + Arch + "/" + Version + "/include/c++",
           System, true, false, false);
+  AddPath(Base + "/" + Arch + "/" + Version + "/include/c++/" + Arch,
+          System, true, false, false);
   AddPath(Base + "/" + Arch + "/" + Version + "/include/c++/backward",
           System, true, false, false);
 }
