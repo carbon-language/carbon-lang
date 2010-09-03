@@ -3592,25 +3592,8 @@ defm PABSD : SS3I_unop_rm_int<0x1E, "pabsd", memopv4i32,
 
 /// SS3I_binop_rm_int - Simple SSSE3 bin op whose type can be v*{i8,i16,i32}.
 multiclass SS3I_binop_rm_int<bits<8> opc, string OpcodeStr,
-                             PatFrag mem_frag64, PatFrag mem_frag128,
-                             Intrinsic IntId64, Intrinsic IntId128,
+                             PatFrag mem_frag128, Intrinsic IntId128,
                              bit Is2Addr = 1> {
-  let isCommutable = 1 in
-  def rr64 : SS38I<opc, MRMSrcReg, (outs VR64:$dst),
-       (ins VR64:$src1, VR64:$src2),
-       !if(Is2Addr,
-         !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"),
-         !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}")),
-       [(set VR64:$dst, (IntId64 VR64:$src1, VR64:$src2))]>;
-  def rm64 : SS38I<opc, MRMSrcMem, (outs VR64:$dst),
-       (ins VR64:$src1, i64mem:$src2),
-       !if(Is2Addr,
-         !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"),
-         !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}")),
-       [(set VR64:$dst,
-         (IntId64 VR64:$src1,
-          (bitconvert (memopv8i8 addr:$src2))))]>;
-
   let isCommutable = 1 in
   def rr128 : SS38I<opc, MRMSrcReg, (outs VR128:$dst),
        (ins VR128:$src1, VR128:$src2),
@@ -3628,88 +3611,102 @@ multiclass SS3I_binop_rm_int<bits<8> opc, string OpcodeStr,
          (IntId128 VR128:$src1,
           (bitconvert (memopv16i8 addr:$src2))))]>, OpSize;
 }
+multiclass SS3I_binop_rm_int_mm<bits<8> opc, string OpcodeStr,
+                             PatFrag mem_frag64, Intrinsic IntId64> {
+  let isCommutable = 1 in
+  def rr64 : SS38I<opc, MRMSrcReg, (outs VR64:$dst),
+       (ins VR64:$src1, VR64:$src2),
+        !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"),
+       [(set VR64:$dst, (IntId64 VR64:$src1, VR64:$src2))]>;
+  def rm64 : SS38I<opc, MRMSrcMem, (outs VR64:$dst),
+       (ins VR64:$src1, i64mem:$src2),
+        !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"),
+       [(set VR64:$dst,
+         (IntId64 VR64:$src1,
+          (bitconvert (memopv8i8 addr:$src2))))]>;
+}
 
 let isAsmParserOnly = 1, Predicates = [HasAVX] in {
 let isCommutable = 0 in {
-  defm VPHADDW    : SS3I_binop_rm_int<0x01, "vphaddw", memopv4i16, memopv8i16,
-                                      int_x86_ssse3_phadd_w,
+  defm VPHADDW    : SS3I_binop_rm_int<0x01, "vphaddw", memopv8i16,
                                       int_x86_ssse3_phadd_w_128, 0>, VEX_4V;
-  defm VPHADDD    : SS3I_binop_rm_int<0x02, "vphaddd", memopv2i32, memopv4i32,
-                                      int_x86_ssse3_phadd_d,
+  defm VPHADDD    : SS3I_binop_rm_int<0x02, "vphaddd", memopv4i32,
                                       int_x86_ssse3_phadd_d_128, 0>, VEX_4V;
-  defm VPHADDSW   : SS3I_binop_rm_int<0x03, "vphaddsw", memopv4i16, memopv8i16,
-                                      int_x86_ssse3_phadd_sw,
+  defm VPHADDSW   : SS3I_binop_rm_int<0x03, "vphaddsw", memopv8i16,
                                       int_x86_ssse3_phadd_sw_128, 0>, VEX_4V;
-  defm VPHSUBW    : SS3I_binop_rm_int<0x05, "vphsubw", memopv4i16, memopv8i16,
-                                      int_x86_ssse3_phsub_w,
+  defm VPHSUBW    : SS3I_binop_rm_int<0x05, "vphsubw", memopv8i16,
                                       int_x86_ssse3_phsub_w_128, 0>, VEX_4V;
-  defm VPHSUBD    : SS3I_binop_rm_int<0x06, "vphsubd", memopv2i32, memopv4i32,
-                                      int_x86_ssse3_phsub_d,
+  defm VPHSUBD    : SS3I_binop_rm_int<0x06, "vphsubd", memopv4i32,
                                       int_x86_ssse3_phsub_d_128, 0>, VEX_4V;
-  defm VPHSUBSW   : SS3I_binop_rm_int<0x07, "vphsubsw", memopv4i16, memopv8i16,
-                                      int_x86_ssse3_phsub_sw,
+  defm VPHSUBSW   : SS3I_binop_rm_int<0x07, "vphsubsw", memopv8i16,
                                       int_x86_ssse3_phsub_sw_128, 0>, VEX_4V;
-  defm VPMADDUBSW : SS3I_binop_rm_int<0x04, "vpmaddubsw", memopv8i8, memopv16i8,
-                                      int_x86_ssse3_pmadd_ub_sw,
+  defm VPMADDUBSW : SS3I_binop_rm_int<0x04, "vpmaddubsw", memopv16i8,
                                       int_x86_ssse3_pmadd_ub_sw_128, 0>, VEX_4V;
-  defm VPSHUFB    : SS3I_binop_rm_int<0x00, "vpshufb", memopv8i8, memopv16i8,
-                                      int_x86_ssse3_pshuf_b,
+  defm VPSHUFB    : SS3I_binop_rm_int<0x00, "vpshufb", memopv16i8,
                                       int_x86_ssse3_pshuf_b_128, 0>, VEX_4V;
-  defm VPSIGNB    : SS3I_binop_rm_int<0x08, "vpsignb", memopv8i8, memopv16i8,
-                                      int_x86_ssse3_psign_b,
+  defm VPSIGNB    : SS3I_binop_rm_int<0x08, "vpsignb", memopv16i8,
                                       int_x86_ssse3_psign_b_128, 0>, VEX_4V;
-  defm VPSIGNW    : SS3I_binop_rm_int<0x09, "vpsignw", memopv4i16, memopv8i16,
-                                      int_x86_ssse3_psign_w,
+  defm VPSIGNW    : SS3I_binop_rm_int<0x09, "vpsignw", memopv8i16,
                                       int_x86_ssse3_psign_w_128, 0>, VEX_4V;
-  defm VPSIGND    : SS3I_binop_rm_int<0x0A, "vpsignd", memopv2i32, memopv4i32,
-                                      int_x86_ssse3_psign_d,
+  defm VPSIGND    : SS3I_binop_rm_int<0x0A, "vpsignd", memopv4i32,
                                       int_x86_ssse3_psign_d_128, 0>, VEX_4V;
 }
-defm VPMULHRSW    : SS3I_binop_rm_int<0x0B, "vpmulhrsw", memopv4i16, memopv8i16,
-                                      int_x86_ssse3_pmul_hr_sw,
+defm VPMULHRSW    : SS3I_binop_rm_int<0x0B, "vpmulhrsw", memopv8i16,
                                       int_x86_ssse3_pmul_hr_sw_128, 0>, VEX_4V;
 }
 
 // None of these have i8 immediate fields.
 let ImmT = NoImm, Constraints = "$src1 = $dst" in {
 let isCommutable = 0 in {
-  defm PHADDW    : SS3I_binop_rm_int<0x01, "phaddw", memopv4i16, memopv8i16,
-                                     int_x86_ssse3_phadd_w,
-                                     int_x86_ssse3_phadd_w_128>;
-  defm PHADDD    : SS3I_binop_rm_int<0x02, "phaddd", memopv2i32, memopv4i32,
-                                     int_x86_ssse3_phadd_d,
-                                     int_x86_ssse3_phadd_d_128>;
-  defm PHADDSW   : SS3I_binop_rm_int<0x03, "phaddsw", memopv4i16, memopv8i16,
-                                     int_x86_ssse3_phadd_sw,
-                                     int_x86_ssse3_phadd_sw_128>;
-  defm PHSUBW    : SS3I_binop_rm_int<0x05, "phsubw", memopv4i16, memopv8i16,
-                                     int_x86_ssse3_phsub_w,
-                                     int_x86_ssse3_phsub_w_128>;
-  defm PHSUBD    : SS3I_binop_rm_int<0x06, "phsubd", memopv2i32, memopv4i32,
-                                     int_x86_ssse3_phsub_d,
-                                     int_x86_ssse3_phsub_d_128>;
-  defm PHSUBSW   : SS3I_binop_rm_int<0x07, "phsubsw", memopv4i16, memopv8i16,
-                                     int_x86_ssse3_phsub_sw,
-                                     int_x86_ssse3_phsub_sw_128>;
-  defm PMADDUBSW : SS3I_binop_rm_int<0x04, "pmaddubsw", memopv8i8, memopv16i8,
-                                     int_x86_ssse3_pmadd_ub_sw,
-                                     int_x86_ssse3_pmadd_ub_sw_128>;
-  defm PSHUFB    : SS3I_binop_rm_int<0x00, "pshufb", memopv8i8, memopv16i8,
-                                     int_x86_ssse3_pshuf_b,
-                                     int_x86_ssse3_pshuf_b_128>;
-  defm PSIGNB    : SS3I_binop_rm_int<0x08, "psignb", memopv8i8, memopv16i8,
-                                     int_x86_ssse3_psign_b,
-                                     int_x86_ssse3_psign_b_128>;
-  defm PSIGNW    : SS3I_binop_rm_int<0x09, "psignw", memopv4i16, memopv8i16,
-                                     int_x86_ssse3_psign_w,
-                                     int_x86_ssse3_psign_w_128>;
-  defm PSIGND    : SS3I_binop_rm_int<0x0A, "psignd", memopv2i32, memopv4i32,
-                                       int_x86_ssse3_psign_d,
-                                       int_x86_ssse3_psign_d_128>;
+  defm PHADDW    : SS3I_binop_rm_int<0x01, "phaddw", memopv8i16,
+                                     int_x86_ssse3_phadd_w_128>,
+                   SS3I_binop_rm_int_mm<0x01, "phaddw", memopv4i16,
+                                     int_x86_ssse3_phadd_w>;
+  defm PHADDD    : SS3I_binop_rm_int<0x02, "phaddd", memopv4i32,
+                                     int_x86_ssse3_phadd_d_128>,
+                   SS3I_binop_rm_int_mm<0x02, "phaddd", memopv2i32,
+                                     int_x86_ssse3_phadd_d>;
+  defm PHADDSW   : SS3I_binop_rm_int<0x03, "phaddsw", memopv8i16,
+                                     int_x86_ssse3_phadd_sw_128>,
+                   SS3I_binop_rm_int_mm<0x03, "phaddsw", memopv4i16,
+                                     int_x86_ssse3_phadd_sw>;
+  defm PHSUBW    : SS3I_binop_rm_int<0x05, "phsubw", memopv8i16,
+                                     int_x86_ssse3_phsub_w_128>,
+                    SS3I_binop_rm_int_mm<0x05, "phsubw", memopv4i16,
+                                     int_x86_ssse3_phsub_w>;
+  defm PHSUBD    : SS3I_binop_rm_int<0x06, "phsubd", memopv4i32,
+                                     int_x86_ssse3_phsub_d_128>,
+                   SS3I_binop_rm_int_mm<0x06, "phsubd", memopv2i32,
+                                     int_x86_ssse3_phsub_d>;
+  defm PHSUBSW   : SS3I_binop_rm_int<0x07, "phsubsw", memopv8i16,
+                                     int_x86_ssse3_phsub_sw_128>,
+                   SS3I_binop_rm_int_mm<0x07, "phsubsw", memopv4i16,
+                                     int_x86_ssse3_phsub_sw>;
+  defm PMADDUBSW : SS3I_binop_rm_int<0x04, "pmaddubsw", memopv16i8,
+                                     int_x86_ssse3_pmadd_ub_sw_128>,
+                   SS3I_binop_rm_int_mm<0x04, "pmaddubsw", memopv8i8,
+                                     int_x86_ssse3_pmadd_ub_sw>;
+  defm PSHUFB    : SS3I_binop_rm_int<0x00, "pshufb", memopv8i8, 
+                                     int_x86_ssse3_pshuf_b_128>,
+                   SS3I_binop_rm_int_mm<0x00, "pshufb", memopv8i8,
+                                     int_x86_ssse3_pshuf_b>;
+  defm PSIGNB    : SS3I_binop_rm_int<0x08, "psignb", memopv16i8,
+                                     int_x86_ssse3_psign_b_128>,
+                   SS3I_binop_rm_int_mm<0x08, "psignb", memopv8i8,
+                                     int_x86_ssse3_psign_b>;
+  defm PSIGNW    : SS3I_binop_rm_int<0x09, "psignw", memopv8i16,
+                                     int_x86_ssse3_psign_w_128>,
+                   SS3I_binop_rm_int_mm<0x09, "psignw", memopv4i16,
+                                     int_x86_ssse3_psign_w>;
+  defm PSIGND    : SS3I_binop_rm_int<0x0A, "psignd", memopv4i32,
+                                       int_x86_ssse3_psign_d_128>,
+                   SS3I_binop_rm_int_mm<0x0A, "psignd", memopv2i32,
+                                       int_x86_ssse3_psign_d>;
 }
-defm PMULHRSW    : SS3I_binop_rm_int<0x0B, "pmulhrsw", memopv4i16, memopv8i16,
-                                     int_x86_ssse3_pmul_hr_sw,
-                                     int_x86_ssse3_pmul_hr_sw_128>;
+defm PMULHRSW    : SS3I_binop_rm_int<0x0B, "pmulhrsw", memopv8i16,
+                                     int_x86_ssse3_pmul_hr_sw_128>,
+                   SS3I_binop_rm_int_mm<0x0B, "pmulhrsw", memopv4i16,
+                                     int_x86_ssse3_pmul_hr_sw>;
 }
 
 def : Pat<(X86pshufb VR128:$src, VR128:$mask),
