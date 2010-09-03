@@ -94,10 +94,6 @@ augroup END
 
 " Clang code-completion support. This is highly experimental!
 
-" TODO: code-completing on
-"          cast_cast<
-" turns up some peculiarities -- "asm("? 
-
 " A path to a clang executable.
 let g:clang_path = "clang++"
 
