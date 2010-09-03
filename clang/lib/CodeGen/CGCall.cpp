@@ -117,9 +117,6 @@ const CGFunctionInfo &CodeGenTypes::getFunctionInfo(const CXXRecordDecl *RD,
 const CGFunctionInfo &CodeGenTypes::getFunctionInfo(const CXXMethodDecl *MD) {
   llvm::SmallVector<CanQualType, 16> ArgTys;
 
-  assert(!isa<CXXConstructorDecl>(MD) && "wrong method for contructors!");
-  assert(!isa<CXXDestructorDecl>(MD) && "wrong method for destructors!");
-
   // Add the 'this' pointer unless this is a static method.
   if (MD->isInstance())
     ArgTys.push_back(GetThisType(Context, MD->getParent()));
