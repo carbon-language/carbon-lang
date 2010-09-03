@@ -237,6 +237,46 @@ namespace test4 {
   }
 }
 
+// <rdar://problem/8386802>: don't crash
+namespace test5 {
+  struct A {
+    ~A();
+  };
+
+  // CHECK: define void @_ZN5test54testEPNS_1AE
+  void test(A *a) {
+    // CHECK:      [[PTR:%.*]] = alloca [[A:%.*]]*, align 4
+    // CHECK-NEXT: store [[A]]* {{.*}}, [[A]]** [[PTR]], align 4
+    // CHECK-NEXT: [[TMP:%.*]] = load [[A]]** [[PTR]], align 4
+    // CHECK-NEXT: call [[A]]* @_ZN5test51AD1Ev([[A]]* [[TMP]])
+    // CHECK-NEXT: ret void
+    a->~A();
+  }
+}
+
+namespace test6 {
+  struct A {
+    virtual ~A();
+  };
+
+  // CHECK: define void @_ZN5test64testEPNS_1AE
+  void test(A *a) {
+    // CHECK:      [[AVAR:%.*]] = alloca [[A:%.*]]*, align 4
+    // CHECK-NEXT: store [[A]]* {{.*}}, [[A]]** [[AVAR]], align 4
+    // CHECK-NEXT: [[V:%.*]] = load [[A]]** [[AVAR]], align 4
+    // CHECK-NEXT: [[ISNULL:%.*]] = icmp eq [[A]]* [[V]], null
+    // CHECK-NEXT: br i1 [[ISNULL]]
+    // CHECK:      [[T0:%.*]] = bitcast [[A]]* [[V]] to [[A]]* ([[A]]*)***
+    // CHECK-NEXT: [[T1:%.*]] = load [[A]]* ([[A]]*)*** [[T0]]
+    // CHECK-NEXT: [[T2:%.*]] = getelementptr inbounds [[A]]* ([[A]]*)** [[T1]], i64 1
+    // CHECK-NEXT: [[T3:%.*]] = load [[A]]* ([[A]]*)** [[T2]]
+    // CHECK-NEXT: call [[A]]* [[T3]]([[A]]* [[V]])
+    // CHECK-NEXT: br label
+    // CHECK:      ret void
+    delete a;
+  }
+}
+
   // CHECK: define linkonce_odr [[C:%.*]]* @_ZTv0_n12_N5test21CD1Ev(
   // CHECK:   call [[C]]* @_ZN5test21CD1Ev(
   // CHECK:   ret [[C]]* undef
