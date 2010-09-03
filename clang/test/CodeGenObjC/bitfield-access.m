@@ -28,7 +28,7 @@ int f0(I0 *a) {
 // CHECK-ARM:    [[t1_base:%.*]] = bitcast i8* [[t1_ptr]] to i32*
 // CHECK-ARM:    [[t1_0:%.*]] = load i32* [[t1_base]], align 1
 // CHECK-ARM:    lshr i32 [[t1_0]], 1
-// CHECK-ARM:    [[t1_base_2_cast:%.*]] = bitcast i32* %1 to i8*
+// CHECK-ARM:    [[t1_base_2_cast:%.*]] = bitcast i32* %{{.*}} to i8*
 // CHECK-ARM:    [[t1_base_2:%.*]] = getelementptr i8* [[t1_base_2_cast]]
 // CHECK-ARM:    [[t1_1:%.*]] = load i8* [[t1_base_2]], align 1
 // CHECK-ARM:    and i8 [[t1_1:%.*]], 1
