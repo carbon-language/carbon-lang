@@ -961,23 +961,9 @@ $(NativeExportsFile): $(EXPORTED_SYMBOL_FILE) $(ObjDir)/.dir
 clean-local::
 	-$(Verb) $(RM) -f $(NativeExportsFile)
 else
-NativeExportsFile := $(EXPORTED_SYMBOL_FILE)
-endif
-endif
-
-# Now add the linker command-line options to use the native export file.
-
-ifeq ($(HOST_OS),Darwin)
-LLVMLibsOptions += -Wl,-exported_symbols_list,$(NativeExportsFile)
-endif
-
-# GNU ld Win32 accepts .DEF files that contain "DATA" entries.
 ifeq ($(HOST_OS), $(filter $(HOST_OS), Cygwin MingW))
+# GNU ld Win32 accepts .DEF files that contain "DATA" entries.
 NativeExportsFile := $(ObjDir)/$(notdir $(EXPORTED_SYMBOL_FILE:.exports=.def))
-
-# LLVMLibsOptions is invalidated at processing tools/llvm-shlib.
-SharedLinkOptions += $(NativeExportsFile)
-
 $(NativeExportsFile): $(EXPORTED_SYMBOL_FILE) $(ObjDir)/.dir
 	$(Echo) Generating $(notdir $@)
 	$(Verb) $(ECHO) "EXPORTS" > $@
@@ -985,12 +971,28 @@ $(NativeExportsFile): $(EXPORTED_SYMBOL_FILE) $(ObjDir)/.dir
 clean-local::
 	-$(Verb) $(RM) -f $(NativeExportsFile)
 else
+# Default behavior: just use the exports file verbatim.
+NativeExportsFile := $(EXPORTED_SYMBOL_FILE)
+endif
+endif
+endif
+
+# Now add the linker command-line options to use the native export file.
+
+# Darwin
+ifeq ($(HOST_OS),Darwin)
+LLVMLibsOptions += -Wl,-exported_symbols_list,$(NativeExportsFile)
+endif
 
 # gold, bfd ld, etc.
 ifeq ($(HAVE_LINK_VERSION_SCRIPT),1)
 LLVMLibsOptions += -Wl,--version-script,$(NativeExportsFile)
 endif
 
+# Windows
+ifeq ($(HOST_OS), $(filter $(HOST_OS), Cygwin MingW))
+# LLVMLibsOptions is invalidated at processing tools/llvm-shlib.
+SharedLinkOptions += $(NativeExportsFile)
 endif
 
 endif
