@@ -604,12 +604,9 @@ Thumb1RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   else if (MF.getFrameInfo()->hasVarSizedObjects()) {
     assert(SPAdj == 0 && hasFP(MF) && "Unexpected");
     // There are alloca()'s in this function, must reference off the frame
-    // pointer or base pointer instead.
-    if (!hasBasePointer(MF)) {
-      FrameReg = getFrameRegister(MF);
-      Offset -= AFI->getFramePtrSpillOffset();
-    } else
-      FrameReg = BasePtr;
+    // pointer instead.
+    FrameReg = getFrameRegister(MF);
+    Offset -= AFI->getFramePtrSpillOffset();
   }
 
   // Special handling of dbg_value instructions.
@@ -790,13 +787,6 @@ void Thumb1RegisterInfo::emitPrologue(MachineFunction &MF) const {
   AFI->setGPRCalleeSavedArea1Size(GPRCS1Size);
   AFI->setGPRCalleeSavedArea2Size(GPRCS2Size);
   AFI->setDPRCalleeSavedAreaSize(DPRCSSize);
-
-  // If we need a base pointer, set it up here. It's whatever the value
-  // of the stack pointer is at this point. Any variable size objects
-  // will be allocated after this, so we can still use the base pointer
-  // to reference locals.
-  if (hasBasePointer(MF))
-    BuildMI(MBB, MBBI, dl, TII.get(ARM::tMOVgpr2gpr), BasePtr).addReg(ARM::SP);
 }
 
 static bool isCalleeSavedRegister(unsigned Reg, const unsigned *CSRegs) {

@@ -7,12 +7,19 @@
 define void @t() nounwind ssp {
 entry:
 ; CHECK: t:
+; CHECK:  push  {r4, r7}
+; CHECK:  mov r0, sp
+; CHECK:  add r7, sp, #4
+; CHECK:  bic r0, r0, #7
+; CHECK:  subs  r0, #16
+; CHECK:  mov sp, r0
+; CHECK:  mov r0, sp
+; CHECK:  bic r0, r0, #7
+; CHECK:  subs  r0, #16
+; CHECK:  mov sp, r0
+
   %size = mul i32 8, 2
-; CHECK:  subs  r0, #16
-; CHECK:  mov sp, r0
   %vla_a = alloca i8, i32 %size, align 8
-; CHECK:  subs  r0, #16
-; CHECK:  mov sp, r0
   %vla_b = alloca i8, i32 %size, align 8
   unreachable
 }

@@ -52,11 +52,6 @@ protected:
   /// FramePtr - ARM physical register used as frame ptr.
   unsigned FramePtr;
 
-  /// BasePtr - ARM physical register used as a base ptr in complex stack
-  /// frames. I.e., when we need a 3rd base, not just SP and FP, due to
-  /// variable size stack objects.
-  unsigned BasePtr;
-
   // Can be only subclassed.
   explicit ARMBaseRegisterInfo(const ARMBaseInstrInfo &tii,
                                const ARMSubtarget &STI);
@@ -107,7 +102,6 @@ public:
                           MachineFunction &MF) const;
 
   bool hasFP(const MachineFunction &MF) const;
-  bool hasBasePointer(const MachineFunction &MF) const;
 
   bool canRealignStack(const MachineFunction &MF) const;
   bool needsStackRealignment(const MachineFunction &MF) const;
