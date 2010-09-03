@@ -1715,14 +1715,6 @@ define i32 @test_x86_sse_ucomineq_ss(<4 x float> %a0, <4 x float> %a1) {
 declare i32 @llvm.x86.sse.ucomineq.ss(<4 x float>, <4 x float>) nounwind readnone
 
 
-define <8 x i8> @test_x86_ssse3_pabs_b(<8 x i8> %a0) {
-  ; CHECK: vpabsb
-  %res = call <8 x i8> @llvm.x86.ssse3.pabs.b(<8 x i8> %a0) ; <<8 x i8>> [#uses=1]
-  ret <8 x i8> %res
-}
-declare <8 x i8> @llvm.x86.ssse3.pabs.b(<8 x i8>) nounwind readnone
-
-
 define <16 x i8> @test_x86_ssse3_pabs_b_128(<16 x i8> %a0) {
   ; CHECK: vpabsb
   %res = call <16 x i8> @llvm.x86.ssse3.pabs.b.128(<16 x i8> %a0) ; <<16 x i8>> [#uses=1]
@@ -1731,28 +1723,12 @@ define <16 x i8> @test_x86_ssse3_pabs_b_128(<16 x i8> %a0) {
 declare <16 x i8> @llvm.x86.ssse3.pabs.b.128(<16 x i8>) nounwind readnone
 
 
-define <2 x i32> @test_x86_ssse3_pabs_d(<2 x i32> %a0) {
-  ; CHECK: vpabsd
-  %res = call <2 x i32> @llvm.x86.ssse3.pabs.d(<2 x i32> %a0) ; <<2 x i32>> [#uses=1]
-  ret <2 x i32> %res
-}
-declare <2 x i32> @llvm.x86.ssse3.pabs.d(<2 x i32>) nounwind readnone
-
-
 define <4 x i32> @test_x86_ssse3_pabs_d_128(<4 x i32> %a0) {
   ; CHECK: vpabsd
   %res = call <4 x i32> @llvm.x86.ssse3.pabs.d.128(<4 x i32> %a0) ; <<4 x i32>> [#uses=1]
   ret <4 x i32> %res
 }
 declare <4 x i32> @llvm.x86.ssse3.pabs.d.128(<4 x i32>) nounwind readnone
-
-
-define <4 x i16> @test_x86_ssse3_pabs_w(<4 x i16> %a0) {
-  ; CHECK: vpabsw
-  %res = call <4 x i16> @llvm.x86.ssse3.pabs.w(<4 x i16> %a0) ; <<4 x i16>> [#uses=1]
-  ret <4 x i16> %res
-}
-declare <4 x i16> @llvm.x86.ssse3.pabs.w(<4 x i16>) nounwind readnone
 
 
 define <8 x i16> @test_x86_ssse3_pabs_w_128(<8 x i16> %a0) {
