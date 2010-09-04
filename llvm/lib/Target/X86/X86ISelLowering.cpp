@@ -5472,13 +5472,11 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const {
                                 X86::getShufflePALIGNRImmediate(SVOp),
                                 DAG);
 
-  // MMX shuffles not already handled must be expanded.
+  // Only a few shuffle masks are handled for 64-bit vectors (MMX), and
+  // 64-bit vectors which made to this point can't be handled, they are
+  // expanded.
   if (VT.getSizeInBits() == 64)
     return SDValue();
-
-  // FIXME: pshufb, blends, shifts.
-  if (VT.getVectorNumElements() == 2)
-    return Op;
 
   if (ShuffleVectorSDNode::isSplatMask(&M[0], VT) &&
       SVOp->getSplatIndex() == 0 && V2IsUndef) {
