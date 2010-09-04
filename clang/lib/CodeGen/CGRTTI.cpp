@@ -284,7 +284,7 @@ static bool ShouldUseExternalRTTIDescriptor(ASTContext &Context,
       return false;
 
     // Get the key function.
-    const CXXMethodDecl *KeyFunction = RD->getASTContext().getKeyFunction(RD);
+    const CXXMethodDecl *KeyFunction = Context.getKeyFunction(RD);
     if (KeyFunction && !KeyFunction->hasBody()) {
       // The class has a key function, but it is not defined in this translation
       // unit, so we should use the external descriptor for it.
