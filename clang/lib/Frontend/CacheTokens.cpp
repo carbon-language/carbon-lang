@@ -189,8 +189,6 @@ class PTHWriter {
 
   void Emit16(uint32_t V) { ::Emit16(Out, V); }
 
-  void Emit24(uint32_t V) { ::Emit24(Out, V); }
-
   void Emit32(uint32_t V) { ::Emit32(Out, V); }
 
   void EmitBuf(const char *Ptr, unsigned NumBytes) {

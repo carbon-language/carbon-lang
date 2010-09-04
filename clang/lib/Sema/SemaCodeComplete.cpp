@@ -165,10 +165,6 @@ namespace {
       this->Filter = Filter;
     }
     
-    typedef std::vector<Result>::iterator iterator;
-    iterator begin() { return Results.begin(); }
-    iterator end() { return Results.end(); }
-    
     Result *data() { return Results.empty()? 0 : &Results.front(); }
     unsigned size() const { return Results.size(); }
     bool empty() const { return Results.empty(); }
@@ -324,11 +320,11 @@ public:
     return *this;
   }
 
-  iterator operator++(int) {
+  /*iterator operator++(int) {
     iterator tmp(*this);
     ++(*this);
     return tmp;
-  }
+  }*/
 
   reference operator*() const {
     if (NamedDecl *ND = DeclOrIterator.dyn_cast<NamedDecl *>())
