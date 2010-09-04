@@ -582,7 +582,6 @@ namespace {
     
   public:
     static char ID;
-    PrintCallGraphPass() : CallGraphSCCPass(ID), Out(dbgs()) {}
     PrintCallGraphPass(const std::string &B, raw_ostream &o)
       : CallGraphSCCPass(ID), Banner(B), Out(o) {}
     
