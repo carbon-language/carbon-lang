@@ -5473,7 +5473,6 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const {
       ShuffleVectorSDNode::isSplatMask(&M[0], VT) ||
       isMOVLMask(M, VT) ||
       isSHUFPMask(M, VT) ||
-      isPSHUFDMask(M, VT) ||
       isPSHUFHWMask(M, VT) ||
       isPSHUFLWMask(M, VT) ||
       isPALIGNRMask(M, VT, Subtarget->hasSSSE3()))
