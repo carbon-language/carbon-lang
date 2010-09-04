@@ -81,10 +81,10 @@ break; \
       break;
 
     // Don't desugar through the primary typedef of an anonymous type.
-    if (isa<TagType>(Underlying) && isa<TypedefType>(QT))
-      if (cast<TagType>(Underlying)->getDecl()->getTypedefForAnonDecl() ==
-          cast<TypedefType>(QT)->getDecl())
-        break;
+    if (const TagType *UTT = Underlying->getAs<TagType>())
+      if (const TypedefType *QTT = dyn_cast<TypedefType>(QT))
+        if (UTT->getDecl()->getTypedefForAnonDecl() == QTT->getDecl())
+          break;
 
     // Record that we actually looked through an opaque type here.
     ShouldAKA = true;
@@ -94,11 +94,11 @@ break; \
   // If we have a pointer-like type, desugar the pointee as well.
   // FIXME: Handle other pointer-like types.
   if (const PointerType *Ty = QT->getAs<PointerType>()) {
-      QT = Context.getPointerType(Desugar(Context, Ty->getPointeeType(),
-                                          ShouldAKA));
+    QT = Context.getPointerType(Desugar(Context, Ty->getPointeeType(),
+                                        ShouldAKA));
   } else if (const LValueReferenceType *Ty = QT->getAs<LValueReferenceType>()) {
-      QT = Context.getLValueReferenceType(Desugar(Context, Ty->getPointeeType(),
-                                                  ShouldAKA));
+    QT = Context.getLValueReferenceType(Desugar(Context, Ty->getPointeeType(),
+                                                ShouldAKA));
   }
 
   return QC.apply(QT);
@@ -151,13 +151,10 @@ ConvertTypeToDiagnosticString(ASTContext &Context, QualType Ty,
     bool ShouldAKA = false;
     QualType DesugaredTy = Desugar(Context, Ty, ShouldAKA);
     if (ShouldAKA) {
-      std::string D = DesugaredTy.getAsString(Context.PrintingPolicy);
-      if (D != S) {
-        S = "'" + S + "' (aka '";
-        S += D;
-        S += "')";
-        return S;
-      }
+      S = "'" + S + "' (aka '";
+      S += DesugaredTy.getAsString(Context.PrintingPolicy);
+      S += "')";
+      return S;
     }
   }
 
