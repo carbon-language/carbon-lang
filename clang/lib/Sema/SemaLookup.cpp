@@ -183,11 +183,8 @@ namespace {
       std::sort(list.begin(), list.end(), UnqualUsingEntry::Comparator());
     }
 
-    typedef ListTy::iterator iterator;
     typedef ListTy::const_iterator const_iterator;
     
-    iterator begin() { return list.begin(); }
-    iterator end() { return list.end(); }
     const_iterator begin() const { return list.begin(); }
     const_iterator end() const { return list.end(); }
 
@@ -2707,7 +2704,7 @@ public:
   typedef llvm::SmallVector<IdentifierInfo *, 4>::const_iterator
     keyword_iterator;
   keyword_iterator keyword_begin() const { return BestKeywords.begin(); }
-  keyword_iterator keyword_end() const { return BestKeywords.end(); }
+  //keyword_iterator keyword_end() const { return BestKeywords.end(); }
   bool keyword_empty() const { return BestKeywords.empty(); }
   unsigned keyword_size() const { return BestKeywords.size(); }
   
