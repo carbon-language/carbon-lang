@@ -358,21 +358,6 @@ namespace llvm {
     /// cause merging of V1/V2 values numbers and compaction of the value space.
     VNInfo* MergeValueNumberInto(VNInfo *V1, VNInfo *V2);
 
-    /// MergeInClobberRanges - For any live ranges that are not defined in the
-    /// current interval, but are defined in the Clobbers interval, mark them
-    /// used with an unknown definition value. Caller must pass in reference to
-    /// VNInfoAllocator since it will create a new val#.
-    void MergeInClobberRanges(LiveIntervals &li_,
-                              const LiveInterval &Clobbers,
-                              VNInfo::Allocator &VNInfoAllocator);
-
-    /// MergeInClobberRange - Same as MergeInClobberRanges except it merge in a
-    /// single LiveRange only.
-    void MergeInClobberRange(LiveIntervals &li_,
-                             SlotIndex Start,
-                             SlotIndex End,
-                             VNInfo::Allocator &VNInfoAllocator);
-
     /// MergeValueInAsValue - Merge all of the live ranges of a specific val#
     /// in RHS into this live interval as the specified value number.
     /// The LiveRanges in RHS are allowed to overlap with LiveRanges in the
