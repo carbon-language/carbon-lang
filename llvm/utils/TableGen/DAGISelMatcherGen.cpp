@@ -102,7 +102,6 @@ namespace {
     void EmitResultCode();
     
     Matcher *GetMatcher() const { return TheMatcher; }
-    Matcher *GetCurPredicate() const { return CurPredicate; }
   private:
     void AddMatcher(Matcher *NewNode);
     void InferPossibleTypes();
