@@ -2224,35 +2224,6 @@ int TestInfo::increment_death_test_count() {
   return impl_->result()->increment_death_test_count();
 }
 
-namespace {
-
-// A predicate that checks the test name of a TestInfo against a known
-// value.
-//
-// This is used for implementation of the TestCase class only.  We put
-// it in the anonymous namespace to prevent polluting the outer
-// namespace.
-//
-// TestNameIs is copyable.
-class TestNameIs {
- public:
-  // Constructor.
-  //
-  // TestNameIs has NO default constructor.
-  explicit TestNameIs(const char* name)
-      : name_(name) {}
-
-  // Returns true iff the test name of test_info matches name_.
-  bool operator()(const TestInfo * test_info) const {
-    return test_info && internal::String(test_info->name()).Compare(name_) == 0;
-  }
-
- private:
-  internal::String name_;
-};
-
-}  // namespace
-
 namespace internal {
 
 // This method expands all parameterized tests registered with macros TEST_P
