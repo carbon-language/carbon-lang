@@ -619,7 +619,7 @@ private:
 #ifndef _LIBCPP_HAS_NO_VARIADICS
     template <class ..._Args>
         __node_holder __construct_node(_Args&& ...__args);
-#endif
+#endif  // _LIBCPP_HAS_NO_VARIADICS
     __node_holder __construct_node(value_type&& __v, size_t __hash);
 #else  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
     __node_holder __construct_node(const value_type& __v);

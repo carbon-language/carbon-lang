@@ -11,7 +11,7 @@
 
 // class future_error
 
-// const char*	what() const throw();
+// const char* what() const throw();
 
 #include <future>
 #include <cstring>

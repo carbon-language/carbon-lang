@@ -46,7 +46,6 @@ __future_error_category::message(int ev) const
     return string("unspecified future_errc value\n");
 }
 
-
 const error_category&
 future_category()
 {

@@ -463,7 +463,7 @@ public:
         {
             __x.__value_constructed = false;
         }
-#endif  // _LIBCPP_HAS_NO_VARIADICS
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
     void operator()(pointer __p)
     {
@@ -705,7 +705,7 @@ public:
             return *this;
         }
 
-#endif  // _LIBCPP_HAS_NO_VARIADICS
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
     explicit map(const allocator_type& __a)
         : __tree_(__a)
@@ -1378,7 +1378,7 @@ public:
             __tree_.__assign_multi(__il.begin(), __il.end());
             return *this;
         }
-#endif  // !defined(_LIBCPP_HAS_NO_RVALUE_REFERENCES) && !defined(_LIBCPP_HAS_NO_VARIADICS)
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
     explicit multimap(const allocator_type& __a)
         : __tree_(__a)

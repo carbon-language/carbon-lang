@@ -3628,7 +3628,7 @@ wstring_convert<_Codecvt, _Elem, _Wide_alloc, _Byte_alloc>::
     __wc.__cvtptr_ = nullptr;
 }
 
-#endif  // _LIBCPP_HAS_NO_VARIADICS
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 template<class _Codecvt, class _Elem, class _Wide_alloc, class _Byte_alloc>
 wstring_convert<_Codecvt, _Elem, _Wide_alloc, _Byte_alloc>::~wstring_convert()
