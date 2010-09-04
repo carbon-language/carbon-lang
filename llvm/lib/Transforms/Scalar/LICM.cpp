@@ -743,6 +743,7 @@ void LICM::PromoteAliasSet(AliasSet &AS) {
   // Okay, now we can iterate over all the blocks in the loop with uses,
   // processing them.  Keep track of which loads are loading a live-in value.
   SmallVector<LoadInst*, 32> LiveInLoads;
+  DenseMap<Value*, Value*> ReplacedLoads;
   
   for (unsigned LoopUse = 0, e = LoopUses.size(); LoopUse != e; ++LoopUse) {
     Instruction *User = LoopUses[LoopUse];
@@ -792,15 +793,17 @@ void LICM::PromoteAliasSet(AliasSet &AS) {
     Value *StoredValue = 0;
     for (BasicBlock::iterator II = BB->begin(), E = BB->end(); II != E; ++II) {
       if (LoadInst *L = dyn_cast<LoadInst>(II)) {
-        // If this is a load to an unrelated pointer, ignore it.
+        // If this is a load from an unrelated pointer, ignore it.
         if (!PointerMustAliases.count(L->getOperand(0))) continue;
 
         // If we haven't seen a store yet, this is a live in use, otherwise
         // use the stored value.
-        if (StoredValue)
+        if (StoredValue) {
           L->replaceAllUsesWith(StoredValue);
-        else
+          ReplacedLoads[L] = StoredValue;
+        } else {
           LiveInLoads.push_back(L);
+        }
         continue;
       }
       
@@ -846,12 +849,35 @@ void LICM::PromoteAliasSet(AliasSet &AS) {
     Value *NewVal = SSA.GetValueInMiddleOfBlock(ALoad->getParent());
     ALoad->replaceAllUsesWith(NewVal);
     CurAST->copyValue(ALoad, NewVal);
+    ReplacedLoads[ALoad] = NewVal;
   }
   
   // Now that everything is rewritten, delete the old instructions from the body
   // of the loop.  They should all be dead now.
   for (unsigned i = 0, e = LoopUses.size(); i != e; ++i) {
     Instruction *User = LoopUses[i];
+    
+    // If this is a load that still has uses, then the load must have been added
+    // as a live value in the SSAUpdate data structure for a block (e.g. because
+    // the loaded value was stored later).  In this case, we need to recursively
+    // propagate the updates until we get to the real value.
+    if (!User->use_empty()) {
+      Value *NewVal = ReplacedLoads[User];
+      assert(NewVal && "not a replaced load?");
+      
+      // Propagate down to the ultimate replacee.  The intermediately loads
+      // could theoretically already have been deleted, so we don't want to
+      // dereference the Value*'s.
+      DenseMap<Value*, Value*>::iterator RLI = ReplacedLoads.find(NewVal);
+      while (RLI != ReplacedLoads.end()) {
+        NewVal = RLI->second;
+        RLI = ReplacedLoads.find(NewVal);
+      }
+      
+      User->replaceAllUsesWith(NewVal);
+      CurAST->copyValue(User, NewVal);
+    }
+    
     CurAST->deleteValue(User);
     User->eraseFromParent();
   }
