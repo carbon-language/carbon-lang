@@ -5300,31 +5300,14 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const {
     }
   }
 
-  if (OptForSize && X86::isUNPCKL_v_undef_Mask(SVOp)) {
-    // NOTE: isPSHUFDMask can also match this mask, if speed is more
-    // important than size here, this will be matched by pshufd
-    if (VT == MVT::v4f32)
-      return getTargetShuffleNode(X86ISD::UNPCKLPS, dl, VT, V1, V1, DAG);
-    if (HasSSE2 && VT == MVT::v16i8)
-      return getTargetShuffleNode(X86ISD::PUNPCKLBW, dl, VT, V1, V1, DAG);
-    if (HasSSE2 && VT == MVT::v8i16)
-      return getTargetShuffleNode(X86ISD::PUNPCKLWD, dl, VT, V1, V1, DAG);
-    if (HasSSE2 && VT == MVT::v4i32)
-      return getTargetShuffleNode(X86ISD::PUNPCKLDQ, dl, VT, V1, V1, DAG);
-  }
-
-  if (OptForSize && X86::isUNPCKH_v_undef_Mask(SVOp)) {
-    // NOTE: isPSHUFDMask can also match this mask, if speed is more
-    // important than size here, this will be matched by pshufd
-    if (VT == MVT::v4f32)
-      return getTargetShuffleNode(X86ISD::UNPCKHPS, dl, VT, V1, V1, DAG);
-    if (HasSSE2 && VT == MVT::v16i8)
-      return getTargetShuffleNode(X86ISD::PUNPCKHBW, dl, VT, V1, V1, DAG);
-    if (HasSSE2 && VT == MVT::v8i16)
-      return getTargetShuffleNode(X86ISD::PUNPCKHWD, dl, VT, V1, V1, DAG);
-    if (HasSSE2 && VT == MVT::v4i32)
-      return getTargetShuffleNode(X86ISD::PUNPCKHDQ, dl, VT, V1, V1, DAG);
-  }
+  // NOTE: isPSHUFDMask can also match both masks below (unpckl_undef and
+  // unpckh_undef). Only use pshufd if speed is more important than size.
+  if (OptForSize && X86::isUNPCKL_v_undef_Mask(SVOp))
+    if (VT != MVT::v2i64 && VT != MVT::v2f64)
+      return getTargetShuffleNode(getUNPCKLOpcode(VT), dl, VT, V1, V1, DAG);
+  if (OptForSize && X86::isUNPCKH_v_undef_Mask(SVOp))
+    if (VT != MVT::v2i64 && VT != MVT::v2f64)
+      return getTargetShuffleNode(getUNPCKHOpcode(VT), dl, VT, V1, V1, DAG);
 
   if (X86::isPSHUFDMask(SVOp)) {
     // The actual implementation will match the mask in the if above and then
@@ -5475,6 +5458,15 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const {
   if (!isMMX && V2.getOpcode() != ISD::UNDEF && isCommutedSHUFP(SVOp))
     return CommuteVectorShuffle(SVOp, DAG);
 
+  // NOTE: isPSHUFDMask can also match both masks below (unpckl_undef and
+  // unpckh_undef). Only use pshufd if speed is more important than size.
+  if (OptForSize && X86::isUNPCKL_v_undef_Mask(SVOp))
+    if (VT != MVT::v2i64 && VT != MVT::v2f64)
+      return getTargetShuffleNode(getUNPCKLOpcode(VT), dl, VT, V1, V1, DAG);
+  if (OptForSize && X86::isUNPCKH_v_undef_Mask(SVOp))
+    if (VT != MVT::v2i64 && VT != MVT::v2f64)
+      return getTargetShuffleNode(getUNPCKHOpcode(VT), dl, VT, V1, V1, DAG);
+
   // The checks below are all present in isShuffleMaskLegal, but they are
   // inlined here right now to enable us to directly emit target specific
   // nodes, and remove one by one until they don't return Op anymore.
@@ -5493,10 +5485,15 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const {
       isPSHUFDMask(M, VT) ||
       isPSHUFHWMask(M, VT) ||
       isPSHUFLWMask(M, VT) ||
-      isPALIGNRMask(M, VT, Subtarget->hasSSSE3()) ||
-      isUNPCKL_v_undef_Mask(M, VT) ||
-      isUNPCKH_v_undef_Mask(M, VT))
+      isPALIGNRMask(M, VT, Subtarget->hasSSSE3()))
     return Op;
+
+  if (X86::isUNPCKL_v_undef_Mask(SVOp))
+    if (VT != MVT::v2i64 && VT != MVT::v2f64)
+      return getTargetShuffleNode(getUNPCKLOpcode(VT), dl, VT, V1, V1, DAG);
+  if (X86::isUNPCKH_v_undef_Mask(SVOp))
+    if (VT != MVT::v2i64 && VT != MVT::v2f64)
+      return getTargetShuffleNode(getUNPCKHOpcode(VT), dl, VT, V1, V1, DAG);
 
   // Handle v8i16 specifically since SSE can do byte extraction and insertion.
   if (VT == MVT::v8i16) {
