@@ -5471,7 +5471,6 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const {
   // FIXME: pshufb, blends, shifts.
   if (VT.getVectorNumElements() == 2 ||
       ShuffleVectorSDNode::isSplatMask(&M[0], VT) ||
-      isMOVLMask(M, VT) ||
       isSHUFPMask(M, VT) ||
       isPSHUFHWMask(M, VT) ||
       isPSHUFLWMask(M, VT) ||
