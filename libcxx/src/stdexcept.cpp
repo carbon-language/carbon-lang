@@ -81,7 +81,7 @@ __libcpp_nmstr::~__libcpp_nmstr()
 
 }
 
-#pragma GCC visiblity pop
+#pragma GCC visibility pop
 
 namespace std  // purposefully not using versioning namespace
 {

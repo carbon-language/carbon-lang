@@ -94,7 +94,7 @@ init_monotonic_clock()
     return &monotonic_full;
 }
 
-#pragma GCC visiblity pop
+#pragma GCC visibility pop
 
 monotonic_clock::time_point
 monotonic_clock::now()
