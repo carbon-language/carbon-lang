@@ -152,9 +152,6 @@ namespace {
       return false;
     }
     
-    SDValue BuildSDIVSequence(SDNode *N);
-    SDValue BuildUDIVSequence(SDNode *N);
-    
     void InsertVRSaveCode(MachineFunction &MF);
 
     virtual const char *getPassName() const {

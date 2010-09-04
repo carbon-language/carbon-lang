@@ -67,10 +67,6 @@ namespace {
       return "PowerPC Assembly Printer";
     }
 
-    PPCTargetMachine &getTM() {
-      return static_cast<PPCTargetMachine&>(TM);
-    }
-
     unsigned enumRegToMachineReg(unsigned enumReg) {
       switch (enumReg) {
       default: llvm_unreachable("Unhandled register!");

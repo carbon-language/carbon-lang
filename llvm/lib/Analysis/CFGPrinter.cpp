@@ -69,7 +69,6 @@ namespace {
   struct CFGPrinter : public FunctionPass {
     static char ID; // Pass identification, replacement for typeid
     CFGPrinter() : FunctionPass(ID) {}
-    explicit CFGPrinter(char &pid) : FunctionPass(pid) {}
 
     virtual bool runOnFunction(Function &F) {
       std::string Filename = "cfg." + F.getNameStr() + ".dot";
@@ -102,7 +101,6 @@ namespace {
   struct CFGOnlyPrinter : public FunctionPass {
     static char ID; // Pass identification, replacement for typeid
     CFGOnlyPrinter() : FunctionPass(ID) {}
-    explicit CFGOnlyPrinter(char &pid) : FunctionPass(pid) {}
     virtual bool runOnFunction(Function &F) {
       std::string Filename = "cfg." + F.getNameStr() + ".dot";
       errs() << "Writing '" << Filename << "'...";

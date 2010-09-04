@@ -140,9 +140,9 @@ namespace {
       }
     }
 
-    bool operator!=(const Expression &other) const {
+    /*bool operator!=(const Expression &other) const {
       return !(*this == other);
-    }
+    }*/
   };
 
   class ValueTable {
@@ -176,7 +176,6 @@ namespace {
       void add(Value *V, uint32_t num);
       void clear();
       void erase(Value *v);
-      unsigned size();
       void setAliasAnalysis(AliasAnalysis* A) { AA = A; }
       AliasAnalysis *getAliasAnalysis() const { return AA; }
       void setMemDep(MemoryDependenceAnalysis* M) { MD = M; }

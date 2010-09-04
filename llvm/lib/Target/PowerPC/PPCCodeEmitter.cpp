@@ -67,10 +67,6 @@ namespace {
     /// emitBasicBlock - emits the given MachineBasicBlock to memory
     ///
     void emitBasicBlock(MachineBasicBlock &MBB);
-
-    /// getValueBit - return the particular bit of Val
-    ///
-    unsigned getValueBit(int64_t Val, unsigned bit) { return (Val >> bit) & 1; }
   };
 }
 

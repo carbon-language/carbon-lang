@@ -221,16 +221,10 @@ namespace {
       return CurDAG->getTargetConstant(Imm, MVT::i32);
     }
 
-    /// getI64Imm - Return a target constant with the specified value, of type
-    /// i64.
-    inline SDValue getI64Imm(uint64_t Imm) {
-      return CurDAG->getTargetConstant(Imm, MVT::i64);
-    }
-
     /// getSmallIPtrImm - Return a target constant of pointer type.
     inline SDValue getSmallIPtrImm(unsigned Imm) {
       return CurDAG->getTargetConstant(Imm, SPUtli.getPointerTy());
-      }
+    }
 
     SDNode *emitBuildVector(SDNode *bvNode) {
       EVT vecVT = bvNode->getValueType(0);

@@ -136,7 +136,6 @@ namespace {
   /// @brief A class for maintaining the slot number definition
   /// as a placeholder for the actual definition for forward constants defs.
   class ConstantPlaceHolder : public ConstantExpr {
-    ConstantPlaceHolder();                       // DO NOT IMPLEMENT
     void operator=(const ConstantPlaceHolder &); // DO NOT IMPLEMENT
   public:
     // allocate space for exactly one operand
@@ -149,7 +148,7 @@ namespace {
     }
 
     /// @brief Methods to support type inquiry through isa, cast, and dyn_cast.
-    static inline bool classof(const ConstantPlaceHolder *) { return true; }
+    //static inline bool classof(const ConstantPlaceHolder *) { return true; }
     static bool classof(const Value *V) {
       return isa<ConstantExpr>(V) &&
              cast<ConstantExpr>(V)->getOpcode() == Instruction::UserOp1;

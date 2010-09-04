@@ -160,10 +160,6 @@ namespace {
     /// zero.
     unsigned getMovi32Value(const MachineInstr &MI,const MachineOperand &MO,
                             unsigned Reloc);
-    unsigned getMovi32Value(const MachineInstr &MI, unsigned OpIdx,
-                            unsigned Reloc) {
-      return getMovi32Value(MI, MI.getOperand(OpIdx), Reloc);
-    }
 
     /// getShiftOp - Return the shift opcode (bit[6:5]) of the immediate value.
     ///

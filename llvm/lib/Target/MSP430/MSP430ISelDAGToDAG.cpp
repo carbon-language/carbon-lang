@@ -60,15 +60,6 @@ namespace {
       return GV != 0 || CP != 0 || ES != 0 || JT != -1;
     }
 
-    bool hasBaseReg() const {
-      return Base.Reg.getNode() != 0;
-    }
-
-    void setBaseReg(SDValue Reg) {
-      BaseType = RegBase;
-      Base.Reg = Reg;
-    }
-
     void dump() {
       errs() << "MSP430ISelAddressMode " << this << '\n';
       if (BaseType == RegBase && Base.Reg.getNode() != 0) {

@@ -129,12 +129,6 @@ namespace {
       }
     }
 
-    void WriteType(const Type *T) {
-      if (!T) return;
-      MessagesStr << ' ';
-      WriteTypeSymbolic(MessagesStr, T, Mod);
-    }
-
     // CheckFailed - A check failed, so print out the condition and the message
     // that failed.  This provides a nice place to put a breakpoint if you want
     // to see why something is not correct.
@@ -146,22 +140,6 @@ namespace {
       WriteValue(V2);
       WriteValue(V3);
       WriteValue(V4);
-    }
-
-    void CheckFailed(const Twine &Message, const Value *V1,
-                     const Type *T2, const Value *V3 = 0) {
-      MessagesStr << Message.str() << "\n";
-      WriteValue(V1);
-      WriteType(T2);
-      WriteValue(V3);
-    }
-
-    void CheckFailed(const Twine &Message, const Type *T1,
-                     const Type *T2 = 0, const Type *T3 = 0) {
-      MessagesStr << Message.str() << "\n";
-      WriteType(T1);
-      WriteType(T2);
-      WriteType(T3);
     }
   };
 }

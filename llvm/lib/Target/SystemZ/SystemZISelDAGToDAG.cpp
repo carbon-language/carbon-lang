@@ -142,8 +142,6 @@ namespace {
     bool MatchAddress(SDValue N, SystemZRRIAddressMode &AM,
                       bool is12Bit, unsigned Depth = 0);
     bool MatchAddressBase(SDValue N, SystemZRRIAddressMode &AM);
-    bool MatchAddressRI(SDValue N, SystemZRRIAddressMode &AM,
-                        bool is12Bit);
   };
 }  // end anonymous namespace
 

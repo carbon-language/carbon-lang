@@ -293,10 +293,6 @@ namespace {
       void allUsesReplacedWith(Value* V) {
         deleted();
       }
-
-      LVIValueHandle &operator=(Value *V) {
-        return *this = LVIValueHandle(V, Parent);
-      }
     };
 
     /// ValueCache - This is all of the cached information for all values,

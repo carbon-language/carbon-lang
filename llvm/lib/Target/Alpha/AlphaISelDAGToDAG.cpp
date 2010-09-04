@@ -130,19 +130,6 @@ namespace {
         return (x - y) == r;
     }
 
-    static bool isFPZ(SDValue N) {
-      ConstantFPSDNode *CN = dyn_cast<ConstantFPSDNode>(N);
-      return (CN && (CN->getValueAPF().isZero()));
-    }
-    static bool isFPZn(SDValue N) {
-      ConstantFPSDNode *CN = dyn_cast<ConstantFPSDNode>(N);
-      return (CN && CN->getValueAPF().isNegZero());
-    }
-    static bool isFPZp(SDValue N) {
-      ConstantFPSDNode *CN = dyn_cast<ConstantFPSDNode>(N);
-      return (CN && CN->getValueAPF().isPosZero());
-    }
-
   public:
     explicit AlphaDAGToDAGISel(AlphaTargetMachine &TM)
       : SelectionDAGISel(TM)

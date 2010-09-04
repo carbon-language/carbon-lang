@@ -264,12 +264,6 @@ namespace {
       return CurDAG->getTargetConstant(Imm, MVT::i8);
     }
 
-    /// getI16Imm - Return a target constant with the specified value, of type
-    /// i16.
-    inline SDValue getI16Imm(unsigned Imm) {
-      return CurDAG->getTargetConstant(Imm, MVT::i16);
-    }
-
     /// getI32Imm - Return a target constant with the specified value, of type
     /// i32.
     inline SDValue getI32Imm(unsigned Imm) {
