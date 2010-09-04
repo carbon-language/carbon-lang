@@ -1038,8 +1038,13 @@ Value *ScalarExprEmitter::EmitCastExpr(CastExpr *CE) {
     return Builder.CreatePtrToInt(Src, ConvertType(DestTy));
   }
   case CK_ToVoid: {
-    if (E->Classify(CGF.getContext()).isGLValue())
-      CGF.EmitLValue(E);
+    if (E->Classify(CGF.getContext()).isGLValue()) {
+      LValue LV = CGF.EmitLValue(E);
+      if (LV.isPropertyRef())
+        CGF.EmitLoadOfPropertyRefLValue(LV, E->getType());
+      else if (LV.isKVCRef())
+        CGF.EmitLoadOfKVCRefLValue(LV, E->getType());
+    }
     else
       CGF.EmitAnyExpr(E, 0, false, true);
     return 0;
