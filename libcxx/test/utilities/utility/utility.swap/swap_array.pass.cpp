@@ -16,7 +16,7 @@
 
 #include <utility>
 #include <cassert>
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 #include <memory>
 #endif
 
@@ -34,7 +34,7 @@ test()
     assert(j[2] == 3);
 }
 
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 void
 test1()
@@ -54,12 +54,12 @@ test1()
     assert(*j[2] == 3);
 }
 
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 int main()
 {
     test();
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     test1();
 #endif
 }

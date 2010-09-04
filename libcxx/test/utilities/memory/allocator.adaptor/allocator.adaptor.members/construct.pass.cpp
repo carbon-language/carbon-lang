@@ -20,7 +20,7 @@
 
 #include "../allocators.h"
 
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 struct B
 {
@@ -111,11 +111,11 @@ struct F
 
 bool F::constructed = false;
 
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 int main()
 {
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
     {
         typedef std::scoped_allocator_adaptor<A1<std::string>> A;
@@ -189,5 +189,5 @@ int main()
         s->~S();
     }
 
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 }

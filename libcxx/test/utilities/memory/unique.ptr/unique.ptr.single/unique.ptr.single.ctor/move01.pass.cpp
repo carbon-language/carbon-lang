@@ -34,16 +34,16 @@ class Deleter
 {
     int state_;
 
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     Deleter(const Deleter&);
     Deleter& operator=(const Deleter&);
-#else  // _LIBCPP_MOVE
+#else  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
     Deleter(Deleter&);
     Deleter& operator=(Deleter&);
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 public:
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     Deleter(Deleter&& r) : state_(r.state_) {r.state_ = 0;}
     Deleter& operator=(Deleter&& r)
     {
@@ -51,7 +51,7 @@ public:
         r.state_ = 0;
         return *this;
     }
-#else  // _LIBCPP_MOVE
+#else  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
     operator std::__rv<Deleter>() {return std::__rv<Deleter>(*this);}
     Deleter(std::__rv<Deleter> r) : state_(r->state_) {r->state_ = 0;}
     Deleter& operator=(std::__rv<Deleter> r)
@@ -60,11 +60,11 @@ public:
         r->state_ = 0;
         return *this;
     }
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
     Deleter() : state_(5) {}
 
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     template <class U>
         Deleter(Deleter<U>&& d,
             typename std::enable_if<!std::is_same<U, T>::value>::type* = 0)
@@ -74,12 +74,12 @@ private:
     template <class U>
         Deleter(const Deleter<U>& d,
             typename std::enable_if<!std::is_same<U, T>::value>::type* = 0);
-#else  // _LIBCPP_MOVE
+#else  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
     template <class U>
         Deleter(Deleter<U> d,
             typename std::enable_if<!std::is_same<U, T>::value>::type* = 0)
             : state_(d.state()) {}
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 public:
     int state() const {return state_;}
     void set_state(int i) {state_ = i;}

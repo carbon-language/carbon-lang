@@ -19,7 +19,7 @@
 
 int main()
 {
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     typedef test_compare<std::less<int> > Cmp;
     typedef std::set<int, Cmp> C;
     typedef C::value_type V;
@@ -34,5 +34,5 @@ int main()
     assert(*++i == V(5));
     assert(*++i == V(6));
     assert(m.key_comp() == Cmp(10));
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 }

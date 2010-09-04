@@ -23,7 +23,7 @@
 
 int main()
 {
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     {
         typedef std::unordered_map<int, Emplaceable> C;
         typedef std::pair<C::iterator, bool> R;
@@ -46,5 +46,5 @@ int main()
         assert(r.first->first == 5);
         assert(r.first->second == Emplaceable(6, 7));
     }
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 }

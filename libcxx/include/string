@@ -1031,10 +1031,10 @@ public:
     explicit basic_string(const allocator_type& __a);
     basic_string(const basic_string& __str);
     basic_string(const basic_string& __str, const allocator_type& __a);
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     basic_string(basic_string&& __str);
     basic_string(basic_string&& __str, const allocator_type& __a);
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
     basic_string(const_pointer __s);
     basic_string(const_pointer __s, const allocator_type& __a);
     basic_string(const_pointer __s, size_type __n);
@@ -1053,7 +1053,7 @@ public:
     ~basic_string();
 
     _LIBCPP_INLINE_VISIBILITY basic_string& operator=(const basic_string& __str) {return assign(__str);}
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     _LIBCPP_INLINE_VISIBILITY basic_string& operator=(basic_string&& __str) {swap(__str); return *this;}
 #endif
     _LIBCPP_INLINE_VISIBILITY basic_string& operator=(const_pointer __s)         {return assign(__s);}
@@ -1521,7 +1521,7 @@ basic_string<_CharT, _Traits, _Allocator>::basic_string(const basic_string& __st
         __init(__str.__get_long_pointer(), __str.__get_long_size());
 }
 
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 template <class _CharT, class _Traits, class _Allocator>
 _LIBCPP_INLINE_VISIBILITY inline
@@ -1545,7 +1545,7 @@ basic_string<_CharT, _Traits, _Allocator>::basic_string(basic_string&& __str, co
 #endif
 }
 
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 template <class _CharT, class _Traits, class _Allocator>
 void
@@ -3423,7 +3423,7 @@ operator+(const basic_string<_CharT, _Traits, _Allocator>& __lhs, _CharT __rhs)
     return __r;
 }
 
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 template<class _CharT, class _Traits, class _Allocator>
 _LIBCPP_INLINE_VISIBILITY inline
@@ -3483,7 +3483,7 @@ operator+(basic_string<_CharT, _Traits, _Allocator>&& __lhs, _CharT __rhs)
     return _STD::move(__lhs);
 }
 
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 // swap
 

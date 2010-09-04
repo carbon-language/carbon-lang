@@ -501,11 +501,11 @@ public:
     list& operator=(const list& __c);
     list(initializer_list<value_type> __il);
     list(initializer_list<value_type> __il, const allocator_type& __a);
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     list(list&& __c);
     list(list&& __c, const allocator_type& __a);
     list& operator=(list&& __c);
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
     list& operator=(initializer_list<value_type> __il)
         {assign(__il.begin(), __il.end()); return *this;}
 
@@ -541,17 +541,19 @@ public:
           reference back()         {return base::__end_.__prev_->__value_;}
     const_reference back()  const  {return base::__end_.__prev_->__value_;}
 
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     void push_front(value_type&& __x);
     void push_back(value_type&& __x);
+#ifndef _LIBCPP_HAS_NO_VARIADICS
     template <class... _Args>
        void emplace_front(_Args&&... __args);
     template <class... _Args>
         void emplace_back(_Args&&... __args);
     template <class... _Args>
         iterator emplace(const_iterator __p, _Args&&... __args);
+#endif  // _LIBCPP_HAS_NO_VARIADICS
     iterator insert(const_iterator __p, value_type&& __x);
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
     void push_front(const value_type& __x);
     void push_back(const value_type& __x);
@@ -577,19 +579,19 @@ public:
     void resize(size_type __n, const value_type& __x);
 
     void splice(const_iterator __p, list& __c);
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     void splice(const_iterator __p, list&& __c) {splice(__p, __c);}
 #endif
     void splice(const_iterator __p, list& __c, const_iterator __i);
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     void splice(const_iterator __p, list&& __c, const_iterator __i)
         {splice(__p, __c, __i);}
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
     void splice(const_iterator __p, list& __c, const_iterator __f, const_iterator __l);
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     void splice(const_iterator __p, list&& __c, const_iterator __f, const_iterator __l)
         {splice(__p, __c, __f, __l);}
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
     void remove(const value_type& __x);
     template <class _Pred> void remove_if(_Pred __pred);
@@ -597,15 +599,15 @@ public:
     template <class _BinaryPred>
         void unique(_BinaryPred __binary_pred);
     void merge(list& __c);
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     void merge(list&& __c) {merge(__c);}
 #endif
     template <class _Comp>
         void merge(list& __c, _Comp __comp);
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     template <class _Comp>
         void merge(list&& __c, _Comp __comp) {merge(__c, __comp);}
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
     void sort();
     template <class _Comp>
         void sort(_Comp __comp);
@@ -647,7 +649,7 @@ template <class _Tp, class _Alloc>
 list<_Tp, _Alloc>::list(size_type __n)
 {
     for (; __n > 0; --__n)
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
         emplace_back();
 #else
         push_back(value_type());
@@ -736,7 +738,7 @@ list<_Tp, _Alloc>::operator=(const list& __c)
     return *this;
 }
 
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 template <class _Tp, class _Alloc>
 inline
@@ -792,7 +794,7 @@ list<_Tp, _Alloc>::__move_assign(list& __c, true_type)
     splice(end(), __c);
 }
 
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 template <class _Tp, class _Alloc>
 template <class _InpIter>
@@ -976,7 +978,7 @@ list<_Tp, _Alloc>::push_back(const value_type& __x)
     __hold.release();
 }
 
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 template <class _Tp, class _Alloc>
 void
@@ -1003,6 +1005,8 @@ list<_Tp, _Alloc>::push_back(value_type&& __x)
     ++base::__sz();
     __hold.release();
 }
+
+#ifndef _LIBCPP_HAS_NO_VARIADICS
 
 template <class _Tp, class _Alloc>
 template <class... _Args>
@@ -1047,6 +1051,8 @@ list<_Tp, _Alloc>::emplace(const_iterator __p, _Args&&... __args)
     return iterator(__hold.release());
 }
 
+#endif  // _LIBCPP_HAS_NO_VARIADICS
+
 template <class _Tp, class _Alloc>
 typename list<_Tp, _Alloc>::iterator
 list<_Tp, _Alloc>::insert(const_iterator __p, value_type&& __x)
@@ -1061,7 +1067,7 @@ list<_Tp, _Alloc>::insert(const_iterator __p, value_type&& __x)
     return iterator(__hold.release());
 }
 
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 template <class _Tp, class _Alloc>
 void

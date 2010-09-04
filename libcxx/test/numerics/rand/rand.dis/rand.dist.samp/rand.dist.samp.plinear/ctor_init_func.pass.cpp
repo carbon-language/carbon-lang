@@ -27,7 +27,7 @@ double f(double x)
 
 int main()
 {
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     {
         typedef std::piecewise_linear_distribution<> D;
         D d({}, f);
@@ -78,5 +78,5 @@ int main()
         assert(dn[1] == 0.125);
         assert(dn[2] == 0.175);
     }
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 }

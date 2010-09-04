@@ -456,7 +456,7 @@ class __call_once_param
 {
     _F __f_;
 public:
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     explicit __call_once_param(_F&& __f) : __f_(_STD::move(__f)) {}
 #else
     explicit __call_once_param(const _F& __f) : __f_(__f) {}

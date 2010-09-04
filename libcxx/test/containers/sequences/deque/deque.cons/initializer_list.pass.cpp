@@ -16,12 +16,12 @@
 
 int main()
 {
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     std::deque<int> d = {3, 4, 5, 6};
     assert(d.size() == 4);
     assert(d[0] == 3);
     assert(d[1] == 4);
     assert(d[2] == 5);
     assert(d[3] == 6);
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 }

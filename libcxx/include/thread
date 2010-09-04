@@ -265,10 +265,10 @@ public:
 #endif
     ~thread();
 
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     thread(thread&& __t) : __t_(__t.__t_) {__t.__t_ = 0;}
     thread& operator=(thread&& __t);
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
     void swap(thread& __t) {_STD::swap(__t_, __t.__t_);}
 
@@ -343,7 +343,7 @@ thread::thread(_F __f)
 
 #endif  // _LIBCPP_HAS_NO_VARIADICS
 
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 inline
 thread&
@@ -356,7 +356,7 @@ thread::operator=(thread&& __t)
     return *this;
 }
 
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 inline
 void swap(thread& __x, thread& __y) {__x.swap(__y);}

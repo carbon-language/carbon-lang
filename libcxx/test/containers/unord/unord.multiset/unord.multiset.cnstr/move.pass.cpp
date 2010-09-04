@@ -24,7 +24,7 @@
 
 int main()
 {
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     {
         typedef std::unordered_multiset<int,
                                    test_hash<std::hash<int> >,
@@ -100,5 +100,5 @@ int main()
 
         assert(c0.empty());
     }
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 }

@@ -16,7 +16,7 @@
 
 int main()
 {
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     std::deque<int> d(10, 1);
     std::deque<int>::iterator i = d.insert(d.cbegin() + 2, {3, 4, 5, 6});
     assert(d.size() == 14);
@@ -35,5 +35,5 @@ int main()
     assert(d[11] == 1);
     assert(d[12] == 1);
     assert(d[13] == 1);
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 }

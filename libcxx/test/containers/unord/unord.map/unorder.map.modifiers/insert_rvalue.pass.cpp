@@ -53,7 +53,7 @@ int main()
         assert(r.first->first == 5.5);
         assert(r.first->second == 4);
     }
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     {
         typedef std::unordered_map<MoveOnly, MoveOnly> C;
         typedef std::pair<C::iterator, bool> R;
@@ -83,5 +83,5 @@ int main()
         assert(r.first->first == 5);
         assert(r.first->second == 4);
     }
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 }

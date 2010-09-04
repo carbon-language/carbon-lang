@@ -18,7 +18,7 @@
 
 int main()
 {
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     {
         std::vector<MoveOnly> c;
         c.push_back(MoveOnly(0));
@@ -65,5 +65,5 @@ int main()
         for (int j = 0; j < c.size(); ++j)
             assert(c[j] == MoveOnly(j));
     }
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 }

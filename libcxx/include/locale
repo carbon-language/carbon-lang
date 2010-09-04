@@ -3564,7 +3564,7 @@ public:
     wstring_convert(_Codecvt* __pcvt, state_type __state);
     wstring_convert(const byte_string& __byte_err,
                     const wide_string& __wide_err = wide_string());
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     wstring_convert(wstring_convert&& __wc);
 #endif
     ~wstring_convert();
@@ -3614,7 +3614,7 @@ wstring_convert<_Codecvt, _Elem, _Wide_alloc, _Byte_alloc>::
     __cvtptr_ = new _Codecvt;
 }
 
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 template<class _Codecvt, class _Elem, class _Wide_alloc, class _Byte_alloc>
 inline
@@ -3628,7 +3628,7 @@ wstring_convert<_Codecvt, _Elem, _Wide_alloc, _Byte_alloc>::
     __wc.__cvtptr_ = nullptr;
 }
 
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_VARIADICS
 
 template<class _Codecvt, class _Elem, class _Wide_alloc, class _Byte_alloc>
 wstring_convert<_Codecvt, _Elem, _Wide_alloc, _Byte_alloc>::~wstring_convert()

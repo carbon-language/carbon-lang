@@ -33,8 +33,8 @@ void test_rvalue_ref()
 
 int main()
 {
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     test_rvalue_ref<int&&>();
     test_rvalue_ref<const int&&>();
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 }

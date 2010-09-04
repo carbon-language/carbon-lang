@@ -18,7 +18,7 @@
 
 int main()
 {
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     std::stack<MoveOnly> q;
     q.push(MoveOnly(1));
     assert(q.size() == 1);
@@ -29,5 +29,5 @@ int main()
     q.push(MoveOnly(3));
     assert(q.size() == 3);
     assert(q.top() == MoveOnly(3));
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 }

@@ -16,7 +16,7 @@
 
 #include <iterator>
 #include <cassert>
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 #include <memory>
 #endif
 
@@ -33,26 +33,26 @@ test(It i, typename std::iterator_traits<It>::difference_type n,
     assert(rr == x);
 }
 
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 struct do_nothing
 {
     void operator()(void*) const {}
 };
 
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 int main()
 {
     char s[] = "1234567890";
     test(random_access_iterator<char*>(s+5), 4, '0');
     test(s+5, 4, '0');
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     int i[5];
     typedef std::unique_ptr<int, do_nothing> Ptr;
     Ptr p[5];
     for (unsigned j = 0; j < 5; ++j)
         p[j].reset(i+j);
     test(p, 3, Ptr(i+3));
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 }

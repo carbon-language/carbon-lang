@@ -16,7 +16,7 @@
 
 #include "../../../Emplaceable.h"
 
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 std::deque<Emplaceable>
 make(int size, int start = 0 )
@@ -85,15 +85,15 @@ testN(int start, int N)
     }
 }
 
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 int main()
 {
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     int rng[] = {0, 1, 2, 3, 1023, 1024, 1025, 2047, 2048, 2049};
     const int N = sizeof(rng)/sizeof(rng[0]);
     for (int i = 0; i < N; ++i)
         for (int j = 0; j < N; ++j)
             testN(rng[i], rng[j]);
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 }

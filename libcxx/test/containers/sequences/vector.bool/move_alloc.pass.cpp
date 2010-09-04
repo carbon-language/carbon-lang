@@ -17,7 +17,7 @@
 
 int main()
 {
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     {
         std::vector<bool, test_allocator<bool> > l(test_allocator<bool>(5));
         std::vector<bool, test_allocator<bool> > lo(test_allocator<bool>(5));
@@ -57,5 +57,5 @@ int main()
         assert(!l.empty());
         assert(l2.get_allocator() == other_allocator<bool>(4));
     }
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 }

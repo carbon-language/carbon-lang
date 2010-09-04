@@ -610,14 +610,14 @@ protected:
 public:
 
     template <class _Arg>
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
         void set_value(_Arg&& __arg);
 #else
         void set_value(_Arg& __arg);
 #endif
 
     template <class _Arg>
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
         void set_value_at_thread_exit(_Arg&& __arg);
 #else
         void set_value_at_thread_exit(_Arg& __arg);
@@ -639,7 +639,7 @@ __assoc_state<_R>::__on_zero_shared()
 template <class _R>
 template <class _Arg>
 void
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 __assoc_state<_R>::set_value(_Arg&& __arg)
 #else
 __assoc_state<_R>::set_value(_Arg& __arg)
@@ -657,7 +657,7 @@ __assoc_state<_R>::set_value(_Arg& __arg)
 template <class _R>
 template <class _Arg>
 void
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 __assoc_state<_R>::set_value_at_thread_exit(_Arg&& __arg)
 #else
 __assoc_state<_R>::set_value_at_thread_exit(_Arg& __arg)
@@ -834,14 +834,14 @@ class __deferred_assoc_state
     _F __func_;
 
 public:
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     explicit __deferred_assoc_state(_F&& __f);
 #endif
 
     virtual void __execute();
 };
 
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 template <class _R, class _F>
 inline _LIBCPP_INLINE_VISIBILITY
@@ -851,7 +851,7 @@ __deferred_assoc_state<_R, _F>::__deferred_assoc_state(_F&& __f)
     this->__set_deferred();
 }
 
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 template <class _R, class _F>
 void
@@ -880,14 +880,14 @@ class __deferred_assoc_state<void, _F>
     _F __func_;
 
 public:
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     explicit __deferred_assoc_state(_F&& __f);
 #endif
 
     virtual void __execute();
 };
 
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 template <class _F>
 inline _LIBCPP_INLINE_VISIBILITY
@@ -897,7 +897,7 @@ __deferred_assoc_state<void, _F>::__deferred_assoc_state(_F&& __f)
     this->__set_deferred();
 }
 
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 template <class _F>
 void
@@ -928,7 +928,7 @@ template <class _R> class future;
 
 template <class _R, class _F>
 future<_R>
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 __make_deferred_assoc_state(_F&& __f);
 #else
 __make_deferred_assoc_state(_F __f);
@@ -946,7 +946,7 @@ class future
     template <class> friend class atomic_future;
 
     template <class _R1, class _F>
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
         friend future<_R1> __make_deferred_assoc_state(_F&& __f);
 #else
         friend future<_R1> __make_deferred_assoc_state(_F __f);
@@ -954,7 +954,7 @@ class future
 
 public:
     future() : __state_(nullptr) {}
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     future(future&& __rhs)
         : __state_(__rhs.__state_) {__rhs.__state_ = nullptr;}
     future(const future&) = delete;
@@ -964,12 +964,12 @@ public:
             future(std::move(__rhs)).swap(*this);
             return *this;
         }
-#else  // _LIBCPP_MOVE
+#else  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 private:
     future(const future&);
     future& operator=(const future&);
 public:
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
     ~future();
 
     // retrieving the value
@@ -1035,7 +1035,7 @@ class future<_R&>
     template <class> friend class atomic_future;
 
     template <class _R1, class _F>
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
         friend future<_R1> __make_deferred_assoc_state(_F&& __f);
 #else
         friend future<_R1> __make_deferred_assoc_state(_F __f);
@@ -1043,7 +1043,7 @@ class future<_R&>
 
 public:
     future() : __state_(nullptr) {}
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     future(future&& __rhs)
         : __state_(__rhs.__state_) {__rhs.__state_ = nullptr;}
     future(const future&) = delete;
@@ -1053,12 +1053,12 @@ public:
             future(std::move(__rhs)).swap(*this);
             return *this;
         }
-#else  // _LIBCPP_MOVE
+#else  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 private:
     future(const future&);
     future& operator=(const future&);
 public:
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
     ~future();
 
     // retrieving the value
@@ -1119,7 +1119,7 @@ class future<void>
     template <class> friend class atomic_future;
 
     template <class _R1, class _F>
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
         friend future<_R1> __make_deferred_assoc_state(_F&& __f);
 #else
         friend future<_R1> __make_deferred_assoc_state(_F __f);
@@ -1127,7 +1127,7 @@ class future<void>
 
 public:
     future() : __state_(nullptr) {}
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     future(future&& __rhs)
         : __state_(__rhs.__state_) {__rhs.__state_ = nullptr;}
     future(const future&) = delete;
@@ -1137,12 +1137,12 @@ public:
             future(std::move(__rhs)).swap(*this);
             return *this;
         }
-#else  // _LIBCPP_MOVE
+#else  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 private:
     future(const future&);
     future& operator=(const future&);
 public:
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
     ~future();
 
     // retrieving the value
@@ -1188,30 +1188,30 @@ public:
     promise();
     template <class _Alloc>
         promise(allocator_arg_t, const _Alloc& __a);
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     promise(promise&& __rhs)
         : __state_(__rhs.__state_) {__rhs.__state_ = nullptr;}
     promise(const promise& __rhs) = delete;
-#else  // _LIBCPP_MOVE
+#else  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 private:
     promise(const promise& __rhs);
 public:
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
     ~promise();
 
     // assignment
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     promise& operator=(promise&& __rhs)
         {
             promise(std::move(__rhs)).swap(*this);
             return *this;
         }
     promise& operator=(const promise& __rhs) = delete;
-#else  // _LIBCPP_MOVE
+#else  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 private:
     promise& operator=(const promise& __rhs);
 public:
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
     void swap(promise& __rhs) {_STD::swap(__state_, __rhs.__state_);}
 
     // retrieving the result
@@ -1219,14 +1219,14 @@ public:
 
     // setting the result
     void set_value(const _R& __r);
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     void set_value(_R&& __r);
 #endif
     void set_exception(exception_ptr __p);
 
     // setting the result with deferred notification
     void set_value_at_thread_exit(const _R& __r);
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     void set_value_at_thread_exit(_R&& __r);
 #endif
     void set_exception_at_thread_exit(exception_ptr __p);
@@ -1281,7 +1281,7 @@ promise<_R>::set_value(const _R& __r)
     __state_->set_value(__r);
 }
 
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 template <class _R>
 void
@@ -1292,7 +1292,7 @@ promise<_R>::set_value(_R&& __r)
     __state_->set_value(_STD::move(__r));
 }
 
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 template <class _R>
 void
@@ -1312,7 +1312,7 @@ promise<_R>::set_value_at_thread_exit(const _R& __r)
     __state_->set_value_at_thread_exit(__r);
 }
 
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 template <class _R>
 void
@@ -1323,7 +1323,7 @@ promise<_R>::set_value_at_thread_exit(_R&& __r)
     __state_->set_value_at_thread_exit(_STD::move(__r));
 }
 
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 template <class _R>
 void
@@ -1349,30 +1349,30 @@ public:
     promise();
     template <class _Allocator>
         promise(allocator_arg_t, const _Allocator& __a);
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     promise(promise&& __rhs)
         : __state_(__rhs.__state_) {__rhs.__state_ = nullptr;}
     promise(const promise& __rhs) = delete;
-#else  // _LIBCPP_MOVE
+#else  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 private:
     promise(const promise& __rhs);
 public:
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
     ~promise();
 
     // assignment
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     promise& operator=(promise&& __rhs)
         {
             promise(std::move(__rhs)).swap(*this);
             return *this;
         }
     promise& operator=(const promise& __rhs) = delete;
-#else  // _LIBCPP_MOVE
+#else  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 private:
     promise& operator=(const promise& __rhs);
 public:
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
     void swap(promise& __rhs) {_STD::swap(__state_, __rhs.__state_);}
 
     // retrieving the result
@@ -1478,30 +1478,30 @@ public:
     promise();
     template <class _Allocator>
         promise(allocator_arg_t, const _Allocator& __a);
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     promise(promise&& __rhs)
         : __state_(__rhs.__state_) {__rhs.__state_ = nullptr;}
     promise(const promise& __rhs) = delete;
-#else  // _LIBCPP_MOVE
+#else  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 private:
     promise(const promise& __rhs);
 public:
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
     ~promise();
 
     // assignment
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     promise& operator=(promise&& __rhs)
         {
             promise(std::move(__rhs)).swap(*this);
             return *this;
         }
     promise& operator=(const promise& __rhs) = delete;
-#else  // _LIBCPP_MOVE
+#else  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 private:
     promise& operator=(const promise& __rhs);
 public:
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
     void swap(promise& __rhs) {_STD::swap(__state_, __rhs.__state_);}
 
     // retrieving the result
@@ -2021,7 +2021,7 @@ struct uses_allocator<packaged_task<_Callable>, _Alloc> : public true_type {};
 
 template <class _R, class _F>
 future<_R>
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 __make_deferred_assoc_state(_F&& __f)
 #else
 __make_deferred_assoc_state(_F __f)
@@ -2077,21 +2077,21 @@ public:
     shared_future() : __state_(nullptr) {}
     shared_future(const shared_future& __rhs) : __state_(__rhs.__state_)
         {if (__state_) __state_->__add_shared();}
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     shared_future(future<_R>&& __f) : __state_(__f.__state_)
         {__f.__state_ = nullptr;}
     shared_future(shared_future&& __rhs) : __state_(__rhs.__state_)
         {__rhs.__state_ = nullptr;}
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
     ~shared_future();
     shared_future& operator=(const shared_future& __rhs);
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     shared_future& operator=(shared_future&& __rhs)
         {
             shared_future(std::move(__rhs)).swap(*this);
             return *this;
         }
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
     // retrieving the value
     const _R& get() const {return __state_->copy();}
@@ -2140,21 +2140,21 @@ public:
     shared_future() : __state_(nullptr) {}
     shared_future(const shared_future& __rhs) : __state_(__rhs.__state_)
         {if (__state_) __state_->__add_shared();}
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     shared_future(future<_R&>&& __f) : __state_(__f.__state_)
         {__f.__state_ = nullptr;}
     shared_future(shared_future&& __rhs) : __state_(__rhs.__state_)
         {__rhs.__state_ = nullptr;}
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
     ~shared_future();
     shared_future& operator=(const shared_future& __rhs);
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     shared_future& operator=(shared_future&& __rhs)
         {
             shared_future(std::move(__rhs)).swap(*this);
             return *this;
         }
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
     // retrieving the value
     _R& get() const {return __state_->copy();}
@@ -2203,21 +2203,21 @@ public:
     shared_future() : __state_(nullptr) {}
     shared_future(const shared_future& __rhs) : __state_(__rhs.__state_)
         {if (__state_) __state_->__add_shared();}
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     shared_future(future<void>&& __f) : __state_(__f.__state_)
         {__f.__state_ = nullptr;}
     shared_future(shared_future&& __rhs) : __state_(__rhs.__state_)
         {__rhs.__state_ = nullptr;}
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
     ~shared_future();
     shared_future& operator=(const shared_future& __rhs);
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     shared_future& operator=(shared_future&& __rhs)
         {
             shared_future(std::move(__rhs)).swap(*this);
             return *this;
         }
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
     // retrieving the value
     void get() const {__state_->copy();}
@@ -2258,10 +2258,10 @@ public:
     atomic_future() : __state_(nullptr) {}
     atomic_future(const atomic_future& __rhs) : __state_(__rhs.__state_)
         {if (__state_) __state_->__add_shared();}
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     atomic_future(future<_R>&& __f) : __state_(__f.__state_)
         {__f.__state_ = nullptr;}
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
     ~atomic_future();
     atomic_future& operator=(const atomic_future& __rhs);
 
@@ -2332,10 +2332,10 @@ public:
     atomic_future() : __state_(nullptr) {}
     atomic_future(const atomic_future& __rhs) : __state_(__rhs.__state_)
         {if (__state_) __state_->__add_shared();}
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     atomic_future(future<_R&>&& __f) : __state_(__f.__state_)
         {__f.__state_ = nullptr;}
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
     ~atomic_future();
     atomic_future& operator=(const atomic_future& __rhs);
 
@@ -2406,10 +2406,10 @@ public:
     atomic_future() : __state_(nullptr) {}
     atomic_future(const atomic_future& __rhs) : __state_(__rhs.__state_)
         {if (__state_) __state_->__add_shared();}
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     atomic_future(future<void>&& __f) : __state_(__f.__state_)
         {__f.__state_ = nullptr;}
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
     ~atomic_future();
     atomic_future& operator=(const atomic_future& __rhs);
 

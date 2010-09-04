@@ -15,7 +15,7 @@
 #include <string>
 #include <cassert>
 
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 #include "../test_allocator.h"
 
@@ -31,11 +31,11 @@ test(S s1, S s2)
     assert(s1.capacity() >= s1.size());
 }
 
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 int main()
 {
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     typedef std::string S;
     test(S(), S());
     test(S("1"), S());
@@ -52,5 +52,5 @@ int main()
     test(S("1234567890123456789012345678901234567890123456789012345678901234567890"
            "1234567890123456789012345678901234567890123456789012345678901234567890"),
          S("abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz"));
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 }

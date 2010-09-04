@@ -22,7 +22,7 @@
 
 int main()
 {
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
     {
         typedef std::scoped_allocator_adaptor<A1<int>> A;
@@ -40,5 +40,5 @@ int main()
         assert(a.outer_allocator() == A1<int>(5));
     }
 
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 }

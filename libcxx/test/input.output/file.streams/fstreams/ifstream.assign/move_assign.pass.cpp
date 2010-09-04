@@ -19,7 +19,7 @@
 
 int main()
 {
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     {
         std::ifstream fso("test.dat");
         std::ifstream fs;
@@ -36,5 +36,5 @@ int main()
         fs >> x;
         assert(x == 3.25);
     }
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 }

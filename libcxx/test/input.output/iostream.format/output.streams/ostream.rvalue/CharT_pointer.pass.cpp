@@ -19,7 +19,7 @@
 #include <ostream>
 #include <cassert>
 
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 template <class CharT>
 class testbuf
@@ -53,11 +53,11 @@ protected:
         }
 };
 
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 int main()
 {
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     {
         testbuf<char> sb;
         std::ostream(&sb) << "testing...";
@@ -68,5 +68,5 @@ int main()
         std::wostream(&sb) << L"123";
         assert(sb.str() == L"123");
     }
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 }

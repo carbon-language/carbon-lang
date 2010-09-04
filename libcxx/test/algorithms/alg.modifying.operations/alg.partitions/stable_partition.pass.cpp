@@ -17,7 +17,7 @@
 
 #include <algorithm>
 #include <cassert>
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 #include <memory>
 #endif
 
@@ -283,7 +283,7 @@ test()
     }
 }
 
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 struct is_null
 {
@@ -300,7 +300,7 @@ test1()
     Iter r = std::stable_partition(Iter(array), Iter(array+size), is_null());
 }
 
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 int main()
 {
@@ -308,7 +308,7 @@ int main()
     test<random_access_iterator<std::pair<int,int>*> >();
     test<std::pair<int,int>*>();
 
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     test1<bidirectional_iterator<std::unique_ptr<int>*> >();
 #endif
 }

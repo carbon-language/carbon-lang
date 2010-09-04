@@ -14,7 +14,7 @@
 #include <string>
 #include <cassert>
 
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 #include "../test_allocator.h"
 
@@ -31,15 +31,15 @@ test(S s0)
     assert(s2.get_allocator() == s1.get_allocator());
 }
 
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 int main()
 {
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     typedef test_allocator<char> A;
     typedef std::basic_string<char, std::char_traits<char>, A> S;
     test(S(A(3)));
     test(S("1", A(5)));
     test(S("1234567890123456789012345678901234567890123456789012345678901234567890", A(7)));
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 }

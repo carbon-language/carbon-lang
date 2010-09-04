@@ -17,7 +17,7 @@
 
 int main()
 {
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     {
         typedef int T;
         typedef std::forward_list<T> C;
@@ -40,5 +40,5 @@ int main()
             assert(*i == 10+n);
         assert(n == 4);
     }
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 }

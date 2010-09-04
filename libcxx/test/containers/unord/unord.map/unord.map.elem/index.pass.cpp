@@ -43,7 +43,7 @@ int main()
         assert(c.size() == 5);
         assert(c.at(11) == "eleven");
     }
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     {
         typedef std::unordered_map<MoveOnly, std::string> C;
         typedef std::pair<int, std::string> P;
@@ -64,5 +64,5 @@ int main()
         assert(c.size() == 5);
         assert(c.at(11) == "eleven");
     }
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 }

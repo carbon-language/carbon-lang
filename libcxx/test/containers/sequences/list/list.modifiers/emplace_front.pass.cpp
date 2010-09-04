@@ -31,7 +31,7 @@ public:
 
 int main()
 {
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     std::list<A> c;
     c.emplace_front(2, 3.5);
     assert(c.size() == 1);
@@ -43,5 +43,5 @@ int main()
     assert(c.front().getd() == 4.5);
     assert(c.back().geti() == 2);
     assert(c.back().getd() == 3.5);
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 }

@@ -200,7 +200,7 @@ testNI(int start, int N, int M)
 void
 test_move()
 {
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     std::deque<MoveOnly, stack_allocator<MoveOnly, 2000> > c;
     typedef std::deque<MoveOnly>::const_iterator CI;
     {
@@ -219,7 +219,7 @@ test_move()
     j = 0;
     for (CI i = c.begin(); i != c.end(); ++i, ++j)
         assert(*i == MoveOnly(j));
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 }
 
 int main()

@@ -32,7 +32,7 @@ bool B::constructed = false;
 
 int main()
 {
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
     {
         typedef std::scoped_allocator_adaptor<A1<B>> A;
@@ -66,5 +66,5 @@ int main()
         assert(A3<S>::destroy_called);
     }
 
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 }

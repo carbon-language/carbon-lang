@@ -66,24 +66,24 @@ int main()
             std::shared_ptr<B> pB(std::move(pA));
             assert(B::count == 1);
             assert(A::count == 1);
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
             assert(pB.use_count() == 1);
             assert(pA.use_count() == 0);
-#else  // _LIBCPP_MOVE
+#else  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
             assert(pB.use_count() == 2);
             assert(pA.use_count() == 2);
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
             assert(p == pB.get());
         }
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
         assert(pA.use_count() == 0);
         assert(B::count == 0);
         assert(A::count == 0);
-#else  // _LIBCPP_MOVE
+#else  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
         assert(pA.use_count() == 1);
         assert(B::count == 1);
         assert(A::count == 1);
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
     }
     assert(B::count == 0);
     assert(A::count == 0);

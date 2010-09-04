@@ -15,7 +15,7 @@
 
 #include <iterator>
 #include <cassert>
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 #include <memory>
 #endif
 
@@ -40,22 +40,22 @@ test(It i, typename std::iterator_traits<It>::value_type x)
     assert(x2 == x);
 }
 
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 struct do_nothing
 {
     void operator()(void*) const {}
 };
 
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 int main()
 {
     A a;
     test(&a, A());
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     int i;
     std::unique_ptr<int, do_nothing> p(&i);
     test(&p, std::unique_ptr<int, do_nothing>(&i));
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 }

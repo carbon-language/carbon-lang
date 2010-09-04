@@ -17,7 +17,7 @@
 #include <memory>
 #include <cassert>
 
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 struct A
 {
@@ -26,11 +26,11 @@ struct A
     A(A&&) {throw 9;}
 };
 
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 int main()
 {
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     {
         typedef std::unique_ptr<int> T;
         T i(new int(3));
@@ -63,5 +63,5 @@ int main()
             assert(j == 9);
         }
     }
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 }

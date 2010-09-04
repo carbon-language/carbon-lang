@@ -43,7 +43,7 @@ int main()
         assert(c.size() == 4);
         assert(*r == 5.5);
     }
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     {
         typedef std::unordered_multiset<MoveOnly> C;
         typedef C::iterator R;
@@ -65,5 +65,5 @@ int main()
         assert(c.size() == 4);
         assert(*r == 5);
     }
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 }

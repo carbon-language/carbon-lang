@@ -20,7 +20,7 @@
 
 int main()
 {
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     std::priority_queue<MoveOnly> q;
     q.push(1);
     assert(q.top() == 1);
@@ -28,5 +28,5 @@ int main()
     assert(q.top() == 3);
     q.push(2);
     assert(q.top() == 3);
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 }

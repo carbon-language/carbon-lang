@@ -18,7 +18,7 @@
 
 int main()
 {
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     int i = std::min({2, 3, 1});
     assert(i == 1);
     i = std::min({2, 1, 3});
@@ -31,5 +31,5 @@ int main()
     assert(i == 1);
     i = std::min({1, 3, 2});
     assert(i == 1);
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 }

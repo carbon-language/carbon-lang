@@ -27,7 +27,7 @@ class A
 public:
 
     A() {}
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     A(A&&) {}
 #endif
 };
@@ -40,16 +40,16 @@ int main()
     A a;
     const A ca;
 
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     static_assert((std::is_same<decltype(std::move_if_noexcept(i)), int&&>::value), "");
     static_assert((std::is_same<decltype(std::move_if_noexcept(ci)), const int&&>::value), "");
     static_assert((std::is_same<decltype(std::move_if_noexcept(a)), const A&>::value), "");
     static_assert((std::is_same<decltype(std::move_if_noexcept(ca)), const A&>::value), "");
-#else  // _LIBCPP_MOVE
+#else  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
     static_assert((std::is_same<decltype(std::move_if_noexcept(i)), const int>::value), "");
     static_assert((std::is_same<decltype(std::move_if_noexcept(ci)), const int>::value), "");
     static_assert((std::is_same<decltype(std::move_if_noexcept(a)), const A>::value), "");
     static_assert((std::is_same<decltype(std::move_if_noexcept(ca)), const A>::value), "");
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 }

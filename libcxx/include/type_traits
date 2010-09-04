@@ -246,13 +246,13 @@ template <class _Tp> struct is_lvalue_reference       : public false_type {};
 template <class _Tp> struct is_lvalue_reference<_Tp&> : public true_type {};
 
 template <class _Tp> struct is_rvalue_reference        : public false_type {};
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 template <class _Tp> struct is_rvalue_reference<_Tp&&> : public true_type {};
 #endif
 
 template <class _Tp> struct is_reference        : public false_type {};
 template <class _Tp> struct is_reference<_Tp&>  : public true_type {};
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 template <class _Tp> struct is_reference<_Tp&&> : public true_type {};
 #endif
 
@@ -400,7 +400,7 @@ template <class _Tp> struct add_cv {typedef typename add_const<typename add_vola
 
 template <class _Tp> struct remove_reference        {typedef _Tp type;};
 template <class _Tp> struct remove_reference<_Tp&>  {typedef _Tp type;};
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 template <class _Tp> struct remove_reference<_Tp&&> {typedef _Tp type;};
 #endif
 
@@ -413,7 +413,7 @@ template <>          struct add_lvalue_reference<const void>          {typedef c
 template <>          struct add_lvalue_reference<volatile void>       {typedef volatile void type;};
 template <>          struct add_lvalue_reference<const volatile void> {typedef const volatile void type;};
 
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 template <class _Tp> struct add_rvalue_reference                      {typedef _Tp&& type;};
 template <>          struct add_rvalue_reference<void>                {typedef void type;};
@@ -421,7 +421,7 @@ template <>          struct add_rvalue_reference<const void>          {typedef c
 template <>          struct add_rvalue_reference<volatile void>       {typedef volatile void type;};
 template <>          struct add_rvalue_reference<const volatile void> {typedef const volatile void type;};
 
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 // remove_pointer
 
@@ -515,13 +515,13 @@ template <class _Tp> struct is_abstract : public __libcpp_abstract<_Tp> {};
 
 namespace __is_convertible_imp
 {
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 template <class _Tp> char  __test(const volatile typename remove_reference<_Tp>::type&&);
 #else
 template <class _Tp> char  __test(_Tp);
 #endif
 template <class _Tp> __two __test(...);
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 template <class _Tp> _Tp&& __source();
 #else
 template <class _Tp> typename remove_reference<_Tp>::type& __source();
@@ -561,12 +561,12 @@ struct __is_convertible
 template <class _T1, class _T2> struct __is_convertible<_T1, _T2, 1, 0> : false_type {};
 
 template <class _T1> struct __is_convertible<_T1, const _T1&, 1, 0> : true_type {};
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 template <class _T1> struct __is_convertible<_T1, _T1&&, 1, 0> : true_type {};
 template <class _T1> struct __is_convertible<_T1, const _T1&&, 1, 0> : true_type {};
 template <class _T1> struct __is_convertible<_T1, volatile _T1&&, 1, 0> : true_type {};
 template <class _T1> struct __is_convertible<_T1, const volatile _T1&&, 1, 0> : true_type {};
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 template <class _T1, class _T2> struct __is_convertible<_T1, _T2*, 1, 0>
     : public integral_constant<bool, __is_convertible<typename remove_all_extents<_T1>::type*, _T2*>::value> {};
@@ -581,7 +581,7 @@ template <class _T1, class _T2> struct __is_convertible<_T1, _T2* const volatile
     : public integral_constant<bool, __is_convertible<typename remove_all_extents<_T1>::type*, _T2*const volatile>::value> {};
 
 template <class _T1, class _T2> struct __is_convertible<_T1, _T2, 2, 0>                : public false_type {};
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 template <class _T1>            struct __is_convertible<_T1, _T1&&, 2, 0>               : public true_type {};
 #endif
 template <class _T1>            struct __is_convertible<_T1, _T1*, 2, 0>               : public true_type {};
@@ -1083,13 +1083,13 @@ template <class _Tp, class _Up>
 struct common_type<_Tp, _Up, void>
 {
 private:
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     static _Tp&& __t();
     static _Up&& __u();
-#else  // _LIBCPP_MOVE
+#else  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
     static _Tp __t();
     static _Up __u();
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
     static bool __f();
 public:
     typedef decltype(__f() ? __t() : __u()) type;
@@ -1126,7 +1126,7 @@ struct common_type<_Tp, _Up, _Vp...>
 
 // move
 
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 template <class _Tp>
 inline _LIBCPP_INLINE_VISIBILITY
@@ -1180,7 +1180,7 @@ template <class _Tp,
 _Tp
 forward(typename remove_reference<_Tp>::type&& __t) = delete;
 
-#else  // _LIBCPP_MOVE
+#else  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 template <class _Tp>
 class __rv
@@ -1264,21 +1264,21 @@ forward(const _Up& __t)
     return _Tp(__rv<_Tp>(__t));
 }
 
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 template <class _Tp>
 typename add_rvalue_reference<_Tp>::type
 declval();
 
-#else  // _LIBCPP_MOVE
+#else  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 template <class _Tp>
 typename add_lvalue_reference<_Tp>::type
 declval();
 
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 template <class _Tp>
 struct decay

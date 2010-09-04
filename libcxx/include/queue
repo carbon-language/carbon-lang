@@ -182,10 +182,10 @@ protected:
 public:
     queue() : c() {}
     explicit queue(const container_type& __c)  : c(__c) {}
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     explicit queue(container_type&& __c) : c(_STD::move(__c)) {}
     queue(queue&& __q) : c(_STD::move(__q.c)) {}
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
     template <class _Alloc>
         explicit queue(const _Alloc& __a,
                        typename enable_if<uses_allocator<container_type,
@@ -201,7 +201,7 @@ public:
                        typename enable_if<uses_allocator<container_type,
                                                          _Alloc>::value>::type* = 0)
             : c(__c, __a) {}
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     template <class _Alloc>
         queue(container_type&& __c, const _Alloc& __a,
                        typename enable_if<uses_allocator<container_type,
@@ -218,7 +218,7 @@ public:
         c = _STD::move(__q.c);
         return *this;
     }
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
     bool      empty() const {return c.empty();}
     size_type size() const  {return c.size();}
@@ -229,12 +229,14 @@ public:
     const_reference back() const  {return c.back();}
 
     void push(const value_type& __v) {c.push_back(__v);}
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     void push(value_type&& __v)      {c.push_back(_STD::move(__v));}
+#ifndef _LIBCPP_HAS_NO_VARIADICS
     template <class... _Args>
         void emplace(_Args&&... __args)
             {c.emplace_back(_STD::forward<_Args>(__args)...);}
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_VARIADICS
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
     void pop() {c.pop_front();}
 
     void swap(queue& __q)
@@ -336,7 +338,7 @@ public:
     explicit priority_queue(const value_compare& __comp = value_compare())
         : c(), comp(__comp) {}
     priority_queue(const value_compare& __comp, const container_type& __c);
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     explicit priority_queue(const value_compare& __comp, container_type&& __c);
 #endif
     template <class _InputIter>
@@ -345,13 +347,13 @@ public:
     template <class _InputIter>
         priority_queue(_InputIter __f, _InputIter __l,
                        const value_compare& __comp, const container_type& __c);
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     template <class _InputIter>
         priority_queue(_InputIter __f, _InputIter __l,
                        const value_compare& __comp, container_type&& __c);
     priority_queue(priority_queue&& __q);
     priority_queue& operator=(priority_queue&& __q);
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
     template <class _Alloc>
         explicit priority_queue(const _Alloc& __a,
                        typename enable_if<uses_allocator<container_type,
@@ -369,7 +371,7 @@ public:
         priority_queue(const priority_queue& __q, const _Alloc& __a,
                        typename enable_if<uses_allocator<container_type,
                                                          _Alloc>::value>::type* = 0);
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     template <class _Alloc>
         priority_queue(const value_compare& __comp, container_type&& __c,
                        const _Alloc& __a,
@@ -379,17 +381,19 @@ public:
         priority_queue(priority_queue&& __q, const _Alloc& __a,
                        typename enable_if<uses_allocator<container_type,
                                                          _Alloc>::value>::type* = 0);
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
     bool            empty() const {return c.empty();}
     size_type       size() const  {return c.size();}
     const_reference top() const   {return c.front();}
 
     void push(const value_type& __v);
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     void push(value_type&& __v);
+#ifndef _LIBCPP_HAS_NO_VARIADICS
     template <class... _Args> void emplace(_Args&&... __args);
-#endif  // _LIBCPP_MOVE
+#endif
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
     void pop();
 
     void swap(priority_queue& __q);
@@ -405,7 +409,7 @@ priority_queue<_Tp, _Container, _Compare>::priority_queue(const _Compare& __comp
     _STD::make_heap(c.begin(), c.end(), comp);
 }
 
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 template <class _Tp, class _Container, class _Compare>
 inline
@@ -417,7 +421,7 @@ priority_queue<_Tp, _Container, _Compare>::priority_queue(const value_compare& _
     _STD::make_heap(c.begin(), c.end(), comp);
 }
 
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 template <class _Tp, class _Container, class _Compare>
 template <class _InputIter>
@@ -443,7 +447,7 @@ priority_queue<_Tp, _Container, _Compare>::priority_queue(_InputIter __f, _Input
     _STD::make_heap(c.begin(), c.end(), comp);
 }
 
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 template <class _Tp, class _Container, class _Compare>
 template <class _InputIter>
@@ -475,7 +479,7 @@ priority_queue<_Tp, _Container, _Compare>::operator=(priority_queue&& __q)
     return *this;
 }
 
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 template <class _Tp, class _Container, class _Compare>
 template <class _Alloc>
@@ -526,7 +530,7 @@ priority_queue<_Tp, _Container, _Compare>::priority_queue(const priority_queue& 
     _STD::make_heap(c.begin(), c.end(), comp);
 }
 
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 template <class _Tp, class _Container, class _Compare>
 template <class _Alloc>
@@ -555,7 +559,7 @@ priority_queue<_Tp, _Container, _Compare>::priority_queue(priority_queue&& __q,
     _STD::make_heap(c.begin(), c.end(), comp);
 }
 
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 template <class _Tp, class _Container, class _Compare>
 inline
@@ -566,7 +570,7 @@ priority_queue<_Tp, _Container, _Compare>::push(const value_type& __v)
     _STD::push_heap(c.begin(), c.end(), comp);
 }
 
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 template <class _Tp, class _Container, class _Compare>
 inline
@@ -576,6 +580,8 @@ priority_queue<_Tp, _Container, _Compare>::push(value_type&& __v)
     c.push_back(_STD::move(__v));
     _STD::push_heap(c.begin(), c.end(), comp);
 }
+
+#ifndef _LIBCPP_HAS_NO_VARIADICS
 
 template <class _Tp, class _Container, class _Compare>
 template <class... _Args>
@@ -587,7 +593,8 @@ priority_queue<_Tp, _Container, _Compare>::emplace(_Args&&... __args)
     _STD::push_heap(c.begin(), c.end(), comp);
 }
 
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_VARIADICS
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 template <class _Tp, class _Container, class _Compare>
 inline

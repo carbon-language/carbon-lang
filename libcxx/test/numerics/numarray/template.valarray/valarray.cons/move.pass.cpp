@@ -19,7 +19,7 @@
 
 int main()
 {
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     {
         typedef int T;
         T a[] = {1, 2, 3, 4, 5};
@@ -57,5 +57,5 @@ int main()
                 assert(v2[i][j] == a[i][j]);
         }
     }
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 }

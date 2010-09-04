@@ -17,7 +17,7 @@
 
 #include <algorithm>
 #include <cassert>
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 #include <memory>
 #endif
 
@@ -84,7 +84,7 @@ test()
     assert(ii[2] == 2);
 }
 
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 struct do_nothing
 {
@@ -169,7 +169,7 @@ test1()
     assert(*ii[2] == 2);
 }
 
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 int main()
 {
@@ -178,12 +178,12 @@ int main()
     test<random_access_iterator<int*> >();
     test<int*>();
 
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
     test1<forward_iterator<Ptr*> >();
     test1<bidirectional_iterator<Ptr*> >();
     test1<random_access_iterator<Ptr*> >();
     test1<Ptr*>();
 
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 }

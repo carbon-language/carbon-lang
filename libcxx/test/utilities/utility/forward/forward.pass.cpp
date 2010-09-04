@@ -27,19 +27,19 @@ struct eight {one _[8];};
 one test(A&);
 two test(const A&);
 
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 four test(A&&);
 eight test(const A&&);
 
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 int main()
 {
     A a;
     const A ca = A();
 
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     static_assert(sizeof(test(std::forward<A&>(a))) == 1, "");
     static_assert(sizeof(test(std::forward<A>(a))) == 4, "");
     static_assert(sizeof(test(std::forward<A>(source()))) == 4, "");
@@ -54,7 +54,7 @@ int main()
     static_assert(sizeof(test(std::forward<const A>(ca))) == 8, "");
     static_assert(sizeof(test(std::forward<const A>(csource()))) == 8, "");
 
-#else  // _LIBCPP_MOVE
+#else  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
     static_assert(sizeof(test(std::forward<A&>(a))) == 1, "");
     static_assert(sizeof(test(std::forward<A>(a))) == 1, "");
@@ -69,5 +69,5 @@ int main()
     static_assert(sizeof(test(std::forward<const A&>(csource()))) == 2, "");
     static_assert(sizeof(test(std::forward<const A>(ca))) == 2, "");
     static_assert(sizeof(test(std::forward<const A>(csource()))) == 2, "");
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 }

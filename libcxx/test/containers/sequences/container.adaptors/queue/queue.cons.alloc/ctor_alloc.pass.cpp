@@ -24,10 +24,10 @@ struct test
 
     explicit test(const test_allocator<int>& a) : base(a) {}
     test(const container_type& c, const test_allocator<int>& a) : base(c, a) {}
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     test(container_type&& c, const test_allocator<int>& a) : base(std::move(c), a) {}
     test(test&& q, const test_allocator<int>& a) : base(std::move(q), a) {}
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
     test_allocator<int> get_allocator() {return c.get_allocator();}
 };
 

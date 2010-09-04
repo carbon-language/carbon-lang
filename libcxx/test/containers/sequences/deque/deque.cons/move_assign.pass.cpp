@@ -19,7 +19,7 @@
 
 int main()
 {
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     {
         int ab[] = {3, 4, 2, 8, 0, 1, 44, 34, 45, 96, 80, 1, 13, 31, 45};
         int* an = ab + sizeof(ab)/sizeof(ab[0]);
@@ -68,5 +68,5 @@ int main()
         assert(c1.size() == 0);
         assert(c3.get_allocator() == A(5));
     }
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 }

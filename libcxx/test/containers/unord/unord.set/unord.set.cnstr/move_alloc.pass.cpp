@@ -24,7 +24,7 @@
 
 int main()
 {
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     {
         typedef int P;
         typedef test_allocator<int> A;
@@ -107,5 +107,5 @@ int main()
 
         assert(c0.empty());
     }
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 }

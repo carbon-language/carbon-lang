@@ -39,7 +39,7 @@ test0(const S& lhs, const S& rhs, const S& x)
     assert(lhs + rhs == x);
 }
 
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 template <class S>
 void
@@ -62,7 +62,7 @@ test3(S&& lhs, S&& rhs, const S& x)
     assert(move(lhs) + move(rhs) == x);
 }
 
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 typedef std::string S;
 
@@ -85,7 +85,7 @@ int main()
     test0(S("abcdefghijklmnopqrst"), S("1234567890"), S("abcdefghijklmnopqrst1234567890"));
     test0(S("abcdefghijklmnopqrst"), S("12345678901234567890"), S("abcdefghijklmnopqrst12345678901234567890"));
 
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
     test1(S(""), S(""), S(""));
     test1(S(""), S("12345"), S("12345"));
@@ -138,5 +138,5 @@ int main()
     test3(S("abcdefghijklmnopqrst"), S("1234567890"), S("abcdefghijklmnopqrst1234567890"));
     test3(S("abcdefghijklmnopqrst"), S("12345678901234567890"), S("abcdefghijklmnopqrst12345678901234567890"));
 
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 }

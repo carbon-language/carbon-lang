@@ -18,7 +18,7 @@
 
 #include "../../../MoveOnly.h"
 
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 std::deque<MoveOnly>
 make(int size, int start = 0 )
@@ -54,14 +54,14 @@ void test(int size)
     }
 }
 
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 int main()
 {
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     int rng[] = {0, 1, 2, 3, 1023, 1024, 1025, 2046, 2047, 2048, 2049, 4094, 4095, 4096};
     const int N = sizeof(rng)/sizeof(rng[0]);
     for (int j = 0; j < N; ++j)
         test(rng[j]);
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 }

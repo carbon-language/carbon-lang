@@ -189,13 +189,13 @@ public:
 
     // 27.9.1.2 Constructors/destructor:
     basic_filebuf();
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     basic_filebuf(basic_filebuf&& __rhs);
 #endif
     virtual ~basic_filebuf();
 
     // 27.9.1.3 Assign/swap:
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     basic_filebuf& operator=(basic_filebuf&& __rhs);
 #endif
     void swap(basic_filebuf& __rhs);
@@ -260,7 +260,7 @@ basic_filebuf<_CharT, _Traits>::basic_filebuf()
     setbuf(0, 4096);
 }
 
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 template <class _CharT, class _Traits>
 basic_filebuf<_CharT, _Traits>::basic_filebuf(basic_filebuf&& __rhs)
@@ -333,7 +333,7 @@ basic_filebuf<_CharT, _Traits>::operator=(basic_filebuf&& __rhs)
     swap(__rhs);
 }
 
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 template <class _CharT, class _Traits>
 basic_filebuf<_CharT, _Traits>::~basic_filebuf()
@@ -970,11 +970,11 @@ public:
     basic_ifstream();
     explicit basic_ifstream(const char* __s, ios_base::openmode __mode = ios_base::in);
     explicit basic_ifstream(const string& __s, ios_base::openmode __mode = ios_base::in);
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     basic_ifstream(basic_ifstream&& __rhs);
 #endif
 
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     basic_ifstream& operator=(basic_ifstream&& __rhs);
 #endif
     void swap(basic_ifstream& __rhs);
@@ -1014,7 +1014,7 @@ basic_ifstream<_CharT, _Traits>::basic_ifstream(const string& __s, ios_base::ope
         this->setstate(ios_base::failbit);
 }
 
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 template <class _CharT, class _Traits>
 inline _LIBCPP_INLINE_VISIBILITY
@@ -1035,7 +1035,7 @@ basic_ifstream<_CharT, _Traits>::operator=(basic_ifstream&& __rhs)
     return *this;
 }
 
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 template <class _CharT, class _Traits>
 inline _LIBCPP_INLINE_VISIBILITY
@@ -1115,11 +1115,11 @@ public:
     basic_ofstream();
     explicit basic_ofstream(const char* __s, ios_base::openmode __mode = ios_base::out);
     explicit basic_ofstream(const string& __s, ios_base::openmode __mode = ios_base::out);
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     basic_ofstream(basic_ofstream&& __rhs);
 #endif
 
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     basic_ofstream& operator=(basic_ofstream&& __rhs);
 #endif
     void swap(basic_ofstream& __rhs);
@@ -1159,7 +1159,7 @@ basic_ofstream<_CharT, _Traits>::basic_ofstream(const string& __s, ios_base::ope
         this->setstate(ios_base::failbit);
 }
 
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 template <class _CharT, class _Traits>
 inline _LIBCPP_INLINE_VISIBILITY
@@ -1180,7 +1180,7 @@ basic_ofstream<_CharT, _Traits>::operator=(basic_ofstream&& __rhs)
     return *this;
 }
 
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 template <class _CharT, class _Traits>
 inline _LIBCPP_INLINE_VISIBILITY
@@ -1260,11 +1260,11 @@ public:
     basic_fstream();
     explicit basic_fstream(const char* __s, ios_base::openmode __mode = ios_base::in | ios_base::out);
     explicit basic_fstream(const string& __s, ios_base::openmode __mode = ios_base::in | ios_base::out);
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     basic_fstream(basic_fstream&& __rhs);
 #endif
 
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     basic_fstream& operator=(basic_fstream&& __rhs);
 #endif
     void swap(basic_fstream& __rhs);
@@ -1304,7 +1304,7 @@ basic_fstream<_CharT, _Traits>::basic_fstream(const string& __s, ios_base::openm
         this->setstate(ios_base::failbit);
 }
 
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 template <class _CharT, class _Traits>
 inline _LIBCPP_INLINE_VISIBILITY
@@ -1325,7 +1325,7 @@ basic_fstream<_CharT, _Traits>::operator=(basic_fstream&& __rhs)
     return *this;
 }
 
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 template <class _CharT, class _Traits>
 inline _LIBCPP_INLINE_VISIBILITY

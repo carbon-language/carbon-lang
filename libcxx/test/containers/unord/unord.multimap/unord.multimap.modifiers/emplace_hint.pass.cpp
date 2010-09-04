@@ -23,7 +23,7 @@
 
 int main()
 {
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     {
         typedef std::unordered_multimap<int, Emplaceable> C;
         typedef C::iterator R;
@@ -52,5 +52,5 @@ int main()
         assert(r->first == 3);
         assert(r->second == Emplaceable(5, 6));
     }
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 }

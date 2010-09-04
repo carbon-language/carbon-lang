@@ -16,7 +16,7 @@
 
 int main()
 {
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     std::list<int> d = {3, 4, 5, 6};
     assert(d.size() == 4);
     std::list<int>::iterator i = d.begin();
@@ -24,5 +24,5 @@ int main()
     assert(*i++ == 4);
     assert(*i++ == 5);
     assert(*i++ == 6);
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 }

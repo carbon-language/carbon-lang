@@ -1,7 +1,7 @@
 #ifndef EMPLACEABLE_H
 #define EMPLACEABLE_H
 
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 class Emplaceable
 {
@@ -40,6 +40,6 @@ struct hash<Emplaceable>
 
 }
 
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 #endif  // EMPLACEABLE_H

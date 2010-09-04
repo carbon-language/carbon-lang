@@ -24,10 +24,10 @@ test(typename C::size_type n)
     assert(c.__invariants());
     assert(c.size() == n);
     assert(c.get_allocator() == typename C::allocator_type());
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     for (typename C::const_iterator i = c.cbegin(), e = c.cend(); i != e; ++i)
         assert(*i == typename C::value_type());
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 }
 
 int main()

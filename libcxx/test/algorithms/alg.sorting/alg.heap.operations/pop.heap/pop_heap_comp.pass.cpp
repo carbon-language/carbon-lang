@@ -17,7 +17,7 @@
 #include <algorithm>
 #include <functional>
 #include <cassert>
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 #include <memory>
 
 struct indirect_less
@@ -27,7 +27,7 @@ struct indirect_less
         {return *x < *y;}
 };
 
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 void test(unsigned N)
 {
@@ -49,7 +49,7 @@ int main()
 {
     test(1000);
 
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     {
     const int N = 1000;
     std::unique_ptr<int>* ia = new std::unique_ptr<int> [N];
@@ -64,5 +64,5 @@ int main()
     }
     delete [] ia;
     }
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 }

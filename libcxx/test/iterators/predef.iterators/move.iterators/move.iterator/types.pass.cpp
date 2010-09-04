@@ -38,7 +38,7 @@ test()
     static_assert((std::is_same<typename R::difference_type, typename T::difference_type>::value), "");
     static_assert((std::is_same<typename R::pointer, typename T::pointer>::value), "");
     static_assert((std::is_same<typename R::value_type, typename T::value_type>::value), "");
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     static_assert((std::is_same<typename R::reference, typename R::value_type&&>::value), "");
 #else
     static_assert((std::is_same<typename R::reference, typename T::reference>::value), "");

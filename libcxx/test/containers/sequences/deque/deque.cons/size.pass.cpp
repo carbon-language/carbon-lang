@@ -29,10 +29,10 @@ test(unsigned n)
     assert(DefaultOnly::count == n);
     assert(d.size() == n);
     assert(distance(d.begin(), d.end()) == d.size());
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     for (const_iterator i = d.begin(), e = d.end(); i != e; ++i)
         assert(*i == T());
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
     }
     assert(DefaultOnly::count == 0);
 }

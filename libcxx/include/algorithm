@@ -2693,7 +2693,7 @@ random_shuffle(_RandomAccessIterator __first, _RandomAccessIterator __last)
 template <class _RandomAccessIterator, class _RandomNumberGenerator>
 void
 random_shuffle(_RandomAccessIterator __first, _RandomAccessIterator __last,
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
                _RandomNumberGenerator&& __rand)
 #else
                _RandomNumberGenerator& __rand)

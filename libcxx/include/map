@@ -455,7 +455,7 @@ public:
           __second_constructed(false)
         {}
 
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     __map_node_destructor(__tree_node_destructor<allocator_type>&& __x)
         : __na_(__x.__na_),
           __first_constructed(__x.__value_constructed),
@@ -463,7 +463,7 @@ public:
         {
             __x.__value_constructed = false;
         }
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_VARIADICS
 
     void operator()(pointer __p)
     {
@@ -672,7 +672,7 @@ public:
             insert(__m.begin(), __m.end());
         }
 
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
     map(map&& __m)
         : __tree_(_STD::move(__m.__tree_))
@@ -705,7 +705,7 @@ public:
             return *this;
         }
 
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_VARIADICS
 
     explicit map(const allocator_type& __a)
         : __tree_(__a)
@@ -738,7 +738,7 @@ public:
     size_type max_size() const {return __tree_.max_size();}
 
     mapped_type& operator[](const key_type& __k);
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     mapped_type& operator[](key_type&& __k);
 #endif
 
@@ -749,7 +749,7 @@ public:
     key_compare    key_comp()      const {return __tree_.value_comp().key_comp();}
     value_compare  value_comp()    const {return value_compare(__tree_.value_comp().key_comp());}
 
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
     pair<iterator, bool>
         emplace() {return __tree_.__emplace_unique();}
@@ -760,10 +760,14 @@ public:
         emplace(_A0&& __a0)
             {return __tree_.__emplace_unique(_STD::forward<_A0>(__a0));}
 
+#ifndef _LIBCPP_HAS_NO_VARIADICS
+
     template <class _A0, class ..._Args,
               class = typename enable_if<is_convertible<_A0, key_type>::value>::type>
         pair<iterator, bool>
         emplace(_A0&& __a0, _Args&& ...__args);
+
+#endif  // _LIBCPP_HAS_NO_VARIADICS
 
     iterator
     emplace_hint(const_iterator __p)
@@ -775,10 +779,14 @@ public:
         emplace_hint(const_iterator __p, _A0&& __a0)
             {return __tree_.__emplace_hint_unique(__p.__i_, _STD::forward<_A0>(__a0));}
 
+#ifndef _LIBCPP_HAS_NO_VARIADICS
+
     template <class _A0, class ..._Args,
               class = typename enable_if<is_convertible<_A0, key_type>::value>::type>
         iterator
         emplace_hint(const_iterator __p, _A0&& __a0, _Args&& ...__args);
+
+#endif  // _LIBCPP_HAS_NO_VARIADICS
 
     template <class _P,
               class = typename enable_if<is_convertible<_P, value_type>::value>::type>
@@ -790,7 +798,7 @@ public:
         iterator insert(const_iterator __pos, _P&& __p)
             {return __tree_.__insert_unique(__pos.__i_, _STD::forward<_P>(__p));}
 
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
     pair<iterator, bool>
         insert(const value_type& __v) {return __tree_.__insert_unique(__v);}
@@ -845,15 +853,17 @@ private:
     typedef __map_node_destructor<__node_allocator> _D;
     typedef unique_ptr<__node, _D> __node_holder;
 
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     __node_holder __construct_node();
     template <class _A0,
               class = typename enable_if<is_convertible<_A0, value_type>::value>::type>
         __node_holder __construct_node(_A0&& __a0);
+#ifndef _LIBCPP_HAS_NO_VARIADICS
     template <class _A0, class ..._Args,
               class = typename enable_if<is_convertible<_A0, key_type>::value>::type>
         __node_holder __construct_node(_A0&& __a0, _Args&& ...__args);
-#else  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_VARIADICS
+#else  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
     __node_holder __construct_node(const key_type& __k);
 #endif
 
@@ -1016,7 +1026,7 @@ map<_Key, _Tp, _Compare, _Allocator>::__find_equal_key(__node_base_const_pointer
     return const_cast<const __node_base_const_pointer&>(__parent->__left_);
 }
 
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 template <class _Key, class _Tp, class _Compare, class _Allocator>
 map<_Key, _Tp, _Compare, _Allocator>::map(map&& __m, const allocator_type& __a)
@@ -1058,6 +1068,8 @@ map<_Key, _Tp, _Compare, _Allocator>::__construct_node(_A0&& __a0)
     return __h;
 }
 
+#ifndef _LIBCPP_HAS_NO_VARIADICS
+
 template <class _Key, class _Tp, class _Compare, class _Allocator>
 template <class _A0, class ..._Args,
           class>
@@ -1073,7 +1085,9 @@ map<_Key, _Tp, _Compare, _Allocator>::__construct_node(_A0&& __a0, _Args&& ...__
     return __h;
 }
 
-#else  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_VARIADICS
+
+#else  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 template <class _Key, class _Tp, class _Compare, class _Allocator>
 typename map<_Key, _Tp, _Compare, _Allocator>::__node_holder
@@ -1088,7 +1102,7 @@ map<_Key, _Tp, _Compare, _Allocator>::__construct_node(const key_type& __k)
     return _STD::move(__h);
 }
 
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 template <class _Key, class _Tp, class _Compare, class _Allocator>
 _Tp&
@@ -1106,7 +1120,7 @@ map<_Key, _Tp, _Compare, _Allocator>::operator[](const key_type& __k)
     return __r->__value_.second;
 }
 
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 template <class _Key, class _Tp, class _Compare, class _Allocator>
 _Tp&
@@ -1124,7 +1138,7 @@ map<_Key, _Tp, _Compare, _Allocator>::operator[](key_type&& __k)
     return __r->__value_.second;
 }
 
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 template <class _Key, class _Tp, class _Compare, class _Allocator>
 _Tp&
@@ -1152,7 +1166,7 @@ map<_Key, _Tp, _Compare, _Allocator>::at(const key_type& __k) const
     return static_cast<__node_const_pointer>(__child)->__value_.second;
 }
 
-#ifdef _LIBCPP_MOVE
+#if !defined(_LIBCPP_HAS_NO_RVALUE_REFERENCES) && !defined(_LIBCPP_HAS_NO_VARIADICS)
 
 template <class _Key, class _Tp, class _Compare, class _Allocator>
 template <class _A0, class ..._Args,
@@ -1185,7 +1199,7 @@ map<_Key, _Tp, _Compare, _Allocator>::emplace_hint(const_iterator __p,
     return __r;
 }
 
-#endif  // _LIBCPP_MOVE
+#endif  // !defined(_LIBCPP_HAS_NO_RVALUE_REFERENCES) && !defined(_LIBCPP_HAS_NO_VARIADICS)
 
 template <class _Key, class _Tp, class _Compare, class _Allocator>
 inline
@@ -1332,7 +1346,7 @@ public:
             insert(__m.begin(), __m.end());
         }
 
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
     multimap(multimap&& __m)
         : __tree_(_STD::move(__m.__tree_))
@@ -1364,7 +1378,7 @@ public:
             __tree_.__assign_multi(__il.begin(), __il.end());
             return *this;
         }
-#endif  // _LIBCPP_MOVE
+#endif  // !defined(_LIBCPP_HAS_NO_RVALUE_REFERENCES) && !defined(_LIBCPP_HAS_NO_VARIADICS)
 
     explicit multimap(const allocator_type& __a)
         : __tree_(__a)
@@ -1400,7 +1414,7 @@ public:
     key_compare    key_comp()      const {return __tree_.value_comp().key_comp();}
     value_compare  value_comp()    const {return value_compare(__tree_.value_comp().key_comp());}
 
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
     iterator emplace() {return __tree_.__emplace_multi();}
 
@@ -1410,10 +1424,14 @@ public:
         emplace(_A0&& __a0)
             {return __tree_.__emplace_multi(_STD::forward<_A0>(__a0));}
 
+#ifndef _LIBCPP_HAS_NO_VARIADICS
+
     template <class _A0, class ..._Args,
               class = typename enable_if<is_convertible<_A0, key_type>::value>::type>
         iterator
         emplace(_A0&& __a0, _Args&& ...__args);
+
+#endif  // _LIBCPP_HAS_NO_VARIADICS
 
     iterator emplace_hint(const_iterator __p)
         {return __tree_.__emplace_hint_multi(__p.__i_);}
@@ -1424,10 +1442,14 @@ public:
         emplace_hint(const_iterator __p, _A0&& __a0)
             {return __tree_.__emplace_hint_multi(__p.__i_, _STD::forward<_A0>(__a0));}
 
+#ifndef _LIBCPP_HAS_NO_VARIADICS
+
     template <class _A0, class ..._Args,
               class = typename enable_if<is_convertible<_A0, key_type>::value>::type>
         iterator
         emplace_hint(const_iterator __p, _A0&& __a0, _Args&& ...__args);
+
+#endif  // _LIBCPP_HAS_NO_VARIADICS
 
     template <class _P,
               class = typename enable_if<is_convertible<_P, value_type>::value>::type>
@@ -1439,7 +1461,7 @@ public:
         iterator insert(const_iterator __pos, _P&& __p)
             {return __tree_.__insert_multi(__pos.__i_, _STD::forward<_P>(__p));}
 
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
     iterator insert(const value_type& __v) {return __tree_.__insert_multi(__v);}
 
@@ -1489,18 +1511,20 @@ private:
     typedef __map_node_destructor<__node_allocator> _D;
     typedef unique_ptr<__node, _D> __node_holder;
 
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     __node_holder __construct_node();
     template <class _A0,
               class = typename enable_if<is_convertible<_A0, value_type>::value>::type>
         __node_holder __construct_node(_A0&& __a0);
+#ifndef _LIBCPP_HAS_NO_VARIADICS
     template <class _A0, class ..._Args,
               class = typename enable_if<is_convertible<_A0, key_type>::value>::type>
         __node_holder __construct_node(_A0&& __a0, _Args&& ...__args);
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_VARIADICS
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 };
 
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 template <class _Key, class _Tp, class _Compare, class _Allocator>
 multimap<_Key, _Tp, _Compare, _Allocator>::multimap(multimap&& __m, const allocator_type& __a)
@@ -1543,6 +1567,8 @@ multimap<_Key, _Tp, _Compare, _Allocator>::__construct_node(_A0&& __a0)
     return __h;
 }
 
+#ifndef _LIBCPP_HAS_NO_VARIADICS
+
 template <class _Key, class _Tp, class _Compare, class _Allocator>
 template <class _A0, class ..._Args,
           class // = typename enable_if<is_convertible<_A0, key_type>::value>::type
@@ -1559,9 +1585,10 @@ multimap<_Key, _Tp, _Compare, _Allocator>::__construct_node(_A0&& __a0, _Args&& 
     return __h;
 }
 
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_VARIADICS
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
-#ifdef _LIBCPP_MOVE
+#if !defined(_LIBCPP_HAS_NO_RVALUE_REFERENCES) && !defined(_LIBCPP_HAS_NO_VARIADICS)
 
 template <class _Key, class _Tp, class _Compare, class _Allocator>
 template <class _A0, class ..._Args,
@@ -1593,7 +1620,7 @@ multimap<_Key, _Tp, _Compare, _Allocator>::emplace_hint(const_iterator __p,
     return __r;
 }
 
-#endif  // _LIBCPP_MOVE
+#endif  // !defined(_LIBCPP_HAS_NO_RVALUE_REFERENCES) && !defined(_LIBCPP_HAS_NO_VARIADICS)
 
 template <class _Key, class _Tp, class _Compare, class _Allocator>
 inline

@@ -99,7 +99,7 @@ int main()
     assert(f2.target<int(*)(int)>() == 0);
     assert(f2.target<A>() == 0);
     }
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     assert(new_called == 0);
     {
     std::function<int(int)> f = A();
@@ -115,5 +115,5 @@ int main()
     assert(f.target<A>() == 0);
     assert(f.target<int(*)(int)>() == 0);
     }
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 }

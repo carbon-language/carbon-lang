@@ -30,7 +30,7 @@
 
 int main()
 {
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
     static_assert((std::is_base_of<
         A1<int>,
@@ -98,5 +98,5 @@ int main()
         std::scoped_allocator_adaptor<A2<int>, A1<int>>::const_void_pointer,
         const void*>::value), "");
 
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 }

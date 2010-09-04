@@ -21,7 +21,7 @@
 
 int main()
 {
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
     {
         typedef std::scoped_allocator_adaptor<A1<int>> A;
@@ -42,5 +42,5 @@ int main()
         assert((A1<int>::deallocate_called == std::pair<int*, std::size_t>((int*)10, 20)));
     }
 
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 }

@@ -21,7 +21,7 @@
 
 int main()
 {
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     {
         typedef std::map<int, MoveOnly> M;
         typedef std::pair<M::iterator, bool> R;
@@ -54,5 +54,5 @@ int main()
         assert(r.first->first == 3);
         assert(r.first->second == 3);
     }
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 }

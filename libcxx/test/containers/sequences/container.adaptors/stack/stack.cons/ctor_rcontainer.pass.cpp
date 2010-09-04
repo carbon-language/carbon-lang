@@ -16,7 +16,7 @@
 
 #include "../../../../MoveOnly.h"
 
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 template <class C>
 C
@@ -28,12 +28,12 @@ make(int n)
     return c;
 }
 
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 int main()
 {
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     std::stack<MoveOnly> q(make<std::deque<MoveOnly> >(5));
     assert(q.size() == 5);
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 }

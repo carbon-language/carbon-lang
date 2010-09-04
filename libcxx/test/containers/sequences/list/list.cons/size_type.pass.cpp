@@ -40,11 +40,11 @@ int main()
         ++i;
         assert(*i == 0);
     }
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     {
         std::list<DefaultOnly> l(3);
         assert(l.size() == 3);
         assert(std::distance(l.begin(), l.end()) == 3);
     }
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 }

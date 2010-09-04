@@ -58,11 +58,11 @@ public:
     __split_buffer(size_type __cap, size_type __start, __alloc_rr& __a);
     ~__split_buffer();
 
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     __split_buffer(__split_buffer&& __c);
     __split_buffer(__split_buffer&& __c, const __alloc_rr& __a);
     __split_buffer& operator=(__split_buffer&& __c);
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
     _LIBCPP_INLINE_VISIBILITY       iterator begin()       {return __begin_;}
     _LIBCPP_INLINE_VISIBILITY const_iterator begin() const {return __begin_;}
@@ -85,12 +85,12 @@ public:
     void shrink_to_fit();
     void push_front(const_reference __x);
     void push_back(const_reference __x);
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     void push_front(value_type&& __x);
     void push_back(value_type&& __x);
     template <class... _Args>
         void emplace_back(_Args&&... __args);
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
     _LIBCPP_INLINE_VISIBILITY void pop_front() {__destruct_at_begin(__begin_+1);}
     _LIBCPP_INLINE_VISIBILITY void pop_back() {__destruct_at_end(__end_-1);}
@@ -367,7 +367,7 @@ __split_buffer<_Tp, _Allocator>::~__split_buffer()
         __alloc_traits::deallocate(__alloc(), __first_, capacity());
 }
 
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 template <class _Tp, class _Allocator>
 __split_buffer<_Tp, _Allocator>::__split_buffer(__split_buffer&& __c)
@@ -425,7 +425,7 @@ __split_buffer<_Tp, _Allocator>::operator=(__split_buffer&& __c)
     return *this;
 }
 
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 template <class _Tp, class _Allocator>
 void
@@ -510,7 +510,7 @@ __split_buffer<_Tp, _Allocator>::push_front(const_reference __x)
     --__begin_;
 }
 
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 template <class _Tp, class _Allocator>
 void
@@ -542,7 +542,7 @@ __split_buffer<_Tp, _Allocator>::push_front(value_type&& __x)
     --__begin_;
 }
 
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 template <class _Tp, class _Allocator>
 _LIBCPP_INLINE_VISIBILITY inline
@@ -574,7 +574,7 @@ __split_buffer<_Tp, _Allocator>::push_back(const_reference __x)
     ++__end_;
 }
 
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 template <class _Tp, class _Allocator>
 void
@@ -605,6 +605,8 @@ __split_buffer<_Tp, _Allocator>::push_back(value_type&& __x)
             _STD::move(__x));
     ++__end_;
 }
+
+#ifndef _LIBCPP_HAS_NO_VARIADICS
 
 template <class _Tp, class _Allocator>
 template <class... _Args>
@@ -637,7 +639,9 @@ __split_buffer<_Tp, _Allocator>::emplace_back(_Args&&... __args)
     ++__end_;
 }
 
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_VARIADICS
+
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 _LIBCPP_END_NAMESPACE_STD
 

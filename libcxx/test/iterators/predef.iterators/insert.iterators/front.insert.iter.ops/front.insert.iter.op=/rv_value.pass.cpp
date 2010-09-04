@@ -16,7 +16,7 @@
 
 #include <iterator>
 
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 #include <list>
 #include <memory>
@@ -31,11 +31,11 @@ test(C c)
     assert(c.front() == typename C::value_type());
 }
 
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 int main()
 {
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     test(std::list<std::unique_ptr<int> >());
 #endif
 }

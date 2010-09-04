@@ -23,7 +23,7 @@ int main()
         assert(p1.first == 3);
         assert(p1.second == 4);
     }
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     {
         typedef std::pair<std::unique_ptr<int>, short> P1;
         P1 p1 = std::make_pair(std::unique_ptr<int>(new int(3)), 4);
@@ -36,5 +36,5 @@ int main()
         assert(p1.first == nullptr);
         assert(p1.second == 4);
     }
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 }

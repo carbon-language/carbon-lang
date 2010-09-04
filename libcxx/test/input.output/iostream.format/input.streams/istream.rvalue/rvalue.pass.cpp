@@ -16,7 +16,7 @@
 #include <istream>
 #include <cassert>
 
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 template <class CharT>
 struct testbuf
@@ -42,11 +42,11 @@ public:
     CharT* egptr() const {return base::egptr();}
 };
 
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 int main()
 {
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     {
         testbuf<char> sb("   123");
         int i = 0;
@@ -59,5 +59,5 @@ int main()
         std::wistream(&sb) >> i;
         assert(i == 123);
     }
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 }

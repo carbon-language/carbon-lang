@@ -795,10 +795,10 @@ public:
     valarray(const value_type& __x, size_t __n);
     valarray(const value_type* __p, size_t __n);
     valarray(const valarray& __v);
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     valarray(valarray&& __v);
     valarray(initializer_list<value_type> __il);
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
     valarray(const slice_array<value_type>& __sa);
     valarray(const gslice_array<value_type>& __ga);
     valarray(const mask_array<value_type>& __ma);
@@ -807,10 +807,10 @@ public:
 
     // assignment:
     valarray& operator=(const valarray& __v);
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     valarray& operator=(valarray&& __v);
     valarray& operator=(initializer_list<value_type>);
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
     valarray& operator=(const value_type& __x);
     valarray& operator=(const slice_array<value_type>& __sa);
     valarray& operator=(const gslice_array<value_type>& __ga);
@@ -829,22 +829,22 @@ public:
     slice_array<value_type>                       operator[](slice __s);
     __val_expr<__indirect_expr<const valarray&> > operator[](const gslice& __gs) const;
     gslice_array<value_type>   operator[](const gslice& __gs);
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     __val_expr<__indirect_expr<const valarray&> > operator[](gslice&& __gs) const;
     gslice_array<value_type>                      operator[](gslice&& __gs);
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
     __val_expr<__mask_expr<const valarray&> >     operator[](const valarray<bool>& __vb) const;
     mask_array<value_type>                        operator[](const valarray<bool>& __vb);
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     __val_expr<__mask_expr<const valarray&> >     operator[](valarray<bool>&& __vb) const;
     mask_array<value_type>                        operator[](valarray<bool>&& __vb);
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
     __val_expr<__indirect_expr<const valarray&> > operator[](const valarray<size_t>& __vs) const;
     indirect_array<value_type>                    operator[](const valarray<size_t>& __vs);
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     __val_expr<__indirect_expr<const valarray&> > operator[](valarray<size_t>&& __vs) const;
     indirect_array<value_type>                    operator[](valarray<size_t>&& __vs);
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
     // unary operators:
     valarray       operator+() const;
@@ -1395,7 +1395,7 @@ public:
           __stride_(__stride)
         {__init(__start);}
 
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
     _LIBCPP_ALWAYS_INLINE
     gslice(size_t __start, const valarray<size_t>&  __size,
@@ -1418,7 +1418,7 @@ public:
           __stride_(move(__stride))
         {__init(__start);}
 
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 //  gslice(const gslice&)            = default;
 //  gslice(gslice&&)                 = default;
@@ -1559,7 +1559,7 @@ private:
           __1d_(__gs.__1d_)
         {}
 
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
     _LIBCPP_ALWAYS_INLINE
     gslice_array(gslice&& __gs, const valarray<value_type>& __v)
@@ -1567,7 +1567,7 @@ private:
           __1d_(move(__gs.__1d_))
         {}
 
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
     template <class> friend class valarray;
 };
@@ -2232,7 +2232,7 @@ private:
           __1d_(__ia)
         {}
 
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
     _LIBCPP_ALWAYS_INLINE
     indirect_array(valarray<size_t>&& __ia, const valarray<value_type>& __v)
@@ -2240,7 +2240,7 @@ private:
           __1d_(move(__ia))
         {}
 
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
     template <class> friend class valarray;
 };
@@ -2450,14 +2450,14 @@ private:
           __1d_(__ia)
           {}
 
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
     __indirect_expr(valarray<size_t>&& __ia, const _RmExpr& __e)
         : __expr_(__e),
           __1d_(move(__ia))
           {}
 
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 public:
     _LIBCPP_ALWAYS_INLINE
@@ -2691,7 +2691,7 @@ valarray<_Tp>::valarray(const valarray& __v)
     }
 }
 
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 template <class _Tp>
 inline _LIBCPP_ALWAYS_INLINE
@@ -2728,7 +2728,7 @@ valarray<_Tp>::valarray(initializer_list<value_type> __il)
     }
 }
 
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 template <class _Tp>
 valarray<_Tp>::valarray(const slice_array<value_type>& __sa)
@@ -2863,7 +2863,7 @@ valarray<_Tp>::operator=(const valarray& __v)
     return *this;
 }
 
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 template <class _Tp>
 inline _LIBCPP_ALWAYS_INLINE
@@ -2889,7 +2889,7 @@ valarray<_Tp>::operator=(initializer_list<value_type> __il)
     return *this;
 }
 
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 template <class _Tp>
 inline _LIBCPP_ALWAYS_INLINE
@@ -2986,7 +2986,7 @@ valarray<_Tp>::operator[](const gslice& __gs)
     return gslice_array<value_type>(__gs, *this);
 }
 
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 template <class _Tp>
 inline _LIBCPP_ALWAYS_INLINE
@@ -3004,7 +3004,7 @@ valarray<_Tp>::operator[](gslice&& __gs)
     return gslice_array<value_type>(move(__gs), *this);
 }
 
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 template <class _Tp>
 inline _LIBCPP_ALWAYS_INLINE
@@ -3022,7 +3022,7 @@ valarray<_Tp>::operator[](const valarray<bool>& __vb)
     return mask_array<value_type>(__vb, *this);
 }
 
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 template <class _Tp>
 inline _LIBCPP_ALWAYS_INLINE
@@ -3040,7 +3040,7 @@ valarray<_Tp>::operator[](valarray<bool>&& __vb)
     return mask_array<value_type>(move(__vb), *this);
 }
 
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 template <class _Tp>
 inline _LIBCPP_ALWAYS_INLINE
@@ -3058,7 +3058,7 @@ valarray<_Tp>::operator[](const valarray<size_t>& __vs)
     return indirect_array<value_type>(__vs, *this);
 }
 
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 template <class _Tp>
 inline _LIBCPP_ALWAYS_INLINE
@@ -3076,7 +3076,7 @@ valarray<_Tp>::operator[](valarray<size_t>&& __vs)
     return indirect_array<value_type>(move(__vs), *this);
 }
 
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 template <class _Tp>
 valarray<_Tp>

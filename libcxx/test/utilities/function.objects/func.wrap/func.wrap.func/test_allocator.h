@@ -59,10 +59,10 @@ public:
         {return UINT_MAX / sizeof(T);}
     void construct(pointer p, const T& val)
         {::new(p) T(val);}
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     void construct(pointer p, T&& val)
         {::new(p) T(std::move(val));}
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
     void destroy(pointer p) {p->~T();}
 
     friend bool operator==(const test_allocator& x, const test_allocator& y)

@@ -19,7 +19,7 @@
 
 int main()
 {
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     {
         std::filebuf f;
         assert(f.open("test.dat", std::ios_base::out | std::ios_base::in
@@ -48,5 +48,5 @@ int main()
         assert(f2.sgetc() == L'2');
     }
     remove("test.dat");
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 }

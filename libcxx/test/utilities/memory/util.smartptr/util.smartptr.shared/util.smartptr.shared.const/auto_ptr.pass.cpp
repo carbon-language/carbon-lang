@@ -58,7 +58,7 @@ int main()
     {
     std::auto_ptr<A> ptr(new A);
     A* raw_ptr = ptr.get();
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     std::shared_ptr<B> p(std::move(ptr));
 #else
     std::shared_ptr<B> p(ptr);
@@ -76,7 +76,7 @@ int main()
     throw_next = true;
     try
     {
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
         std::shared_ptr<B> p(std::move(ptr));
 #else
         std::shared_ptr<B> p(ptr);

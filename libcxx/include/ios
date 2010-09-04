@@ -609,7 +609,7 @@ protected:
     void init(basic_streambuf<char_type, traits_type>* __sb);
 
     void move(basic_ios& __rhs);
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     void move(basic_ios&& __rhs) {move(__rhs);}
 #endif
     void swap(basic_ios& __rhs);

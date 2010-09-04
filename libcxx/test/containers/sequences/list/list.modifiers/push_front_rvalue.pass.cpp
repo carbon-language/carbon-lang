@@ -18,7 +18,7 @@
 
 int main()
 {
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     std::list<MoveOnly> l1;
     l1.push_front(MoveOnly(1));
     assert(l1.size() == 1);
@@ -27,5 +27,5 @@ int main()
     assert(l1.size() == 2);
     assert(l1.front() == MoveOnly(2));
     assert(l1.back() == MoveOnly(1));
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 }

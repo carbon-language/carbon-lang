@@ -25,7 +25,7 @@ int main()
         C c = N;
         unsigned n = 0;
         for (C::const_iterator i = c.begin(), e = c.end(); i != e; ++i, ++n)
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
             assert(*i == T());
 #else
             ;

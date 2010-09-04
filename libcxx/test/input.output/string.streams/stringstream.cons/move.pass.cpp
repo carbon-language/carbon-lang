@@ -19,7 +19,7 @@
 
 int main()
 {
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     {
         std::stringstream ss0(" 123 456 ");
         std::stringstream ss(std::move(ss0));
@@ -48,5 +48,5 @@ int main()
         ss << i << ' ' << 123;
         assert(ss.str() == L"456 1236 ");
     }
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 }

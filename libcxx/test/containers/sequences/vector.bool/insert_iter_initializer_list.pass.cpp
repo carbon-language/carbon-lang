@@ -16,7 +16,7 @@
 
 int main()
 {
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     std::vector<bool> d(10, true);
     std::vector<bool>::iterator i = d.insert(d.cbegin() + 2, {false, true, true, false});
     assert(d.size() == 14);
@@ -35,5 +35,5 @@ int main()
     assert(d[11] == true);
     assert(d[12] == true);
     assert(d[13] == true);
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 }

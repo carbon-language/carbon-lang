@@ -14,23 +14,23 @@
 
 class move_only
 {
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     move_only(const move_only&);
     move_only& operator=(const move_only&);
-#else  // _LIBCPP_MOVE
+#else  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
     move_only(move_only&);
     move_only& operator=(move_only&);
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 public:
 
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     move_only(move_only&&) {}
     move_only& operator=(move_only&&) {}
-#else  // _LIBCPP_MOVE
+#else  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
     operator std::__rv<move_only> () {return std::__rv<move_only>(*this);}
     move_only(std::__rv<move_only>) {}
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
     move_only() {}
 };

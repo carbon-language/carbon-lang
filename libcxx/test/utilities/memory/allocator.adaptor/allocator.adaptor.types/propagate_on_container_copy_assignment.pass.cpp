@@ -21,7 +21,7 @@
 
 int main()
 {
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
     static_assert((std::is_same<
         std::scoped_allocator_adaptor<A1<int>>::propagate_on_container_copy_assignment,
@@ -35,5 +35,5 @@ int main()
         std::scoped_allocator_adaptor<A1<int>, A2<int>, A3<int>>::propagate_on_container_copy_assignment,
         std::true_type>::value), "");
 
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 }

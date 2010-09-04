@@ -484,11 +484,11 @@ public:
     vector(const vector& __x);
     vector(const vector& __x, const allocator_type& __a);
     vector& operator=(const vector& __x);
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     vector(vector&& __x);
     vector(vector&& __x, const allocator_type& __a);
     vector& operator=(vector&& __x);
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
     vector& operator=(initializer_list<value_type> __il)
         {assign(__il.begin(), __il.end()); return *this;}
 
@@ -552,19 +552,23 @@ public:
         {return _STD::__to_raw_pointer(this->__begin_);}
 
     void push_back(const_reference __x);
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     void push_back(value_type&& __x);
+#ifndef _LIBCPP_HAS_NO_VARIADICS
     template <class... _Args>
         void emplace_back(_Args&&... __args);
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_VARIADICS
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
     void pop_back();
 
     iterator insert(const_iterator __position, const_reference __x);
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     iterator insert(const_iterator __position, value_type&& __x);
+#ifndef _LIBCPP_HAS_NO_VARIADICS
     template <class... _Args>
         iterator emplace(const_iterator __position, _Args&&... __args);
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_VARIADICS
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
     iterator insert(const_iterator __position, size_type __n, const_reference __x);
     template <class _InputIterator>
         typename enable_if
@@ -951,7 +955,7 @@ vector<_Tp, _Allocator>::vector(const vector& __x, const allocator_type& __a)
     }
 }
 
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 template <class _Tp, class _Allocator>
 _LIBCPP_INLINE_VISIBILITY inline
@@ -1043,7 +1047,7 @@ vector<_Tp, _Allocator>::__move_assign(vector& __c, true_type)
     __c.__begin_ = __c.__end_ = __c.__end_cap() = nullptr;
 }
 
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 template <class _Tp, class _Allocator>
 _LIBCPP_INLINE_VISIBILITY inline
@@ -1283,7 +1287,7 @@ vector<_Tp, _Allocator>::push_back(const_reference __x)
     }
 }
 
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 template <class _Tp, class _Allocator>
 void
@@ -1304,6 +1308,8 @@ vector<_Tp, _Allocator>::push_back(value_type&& __x)
         __swap_out_circular_buffer(__v);
     }
 }
+
+#ifndef _LIBCPP_HAS_NO_VARIADICS
 
 template <class _Tp, class _Allocator>
 template <class... _Args>
@@ -1326,7 +1332,8 @@ vector<_Tp, _Allocator>::emplace_back(_Args&&... __args)
     }
 }
 
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_VARIADICS
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 template <class _Tp, class _Allocator>
 _LIBCPP_INLINE_VISIBILITY inline
@@ -1402,7 +1409,7 @@ vector<_Tp, _Allocator>::insert(const_iterator __position, const_reference __x)
     return __make_iter(__p);
 }
 
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 template <class _Tp, class _Allocator>
 typename vector<_Tp, _Allocator>::iterator
@@ -1433,6 +1440,8 @@ vector<_Tp, _Allocator>::insert(const_iterator __position, value_type&& __x)
     }
     return __make_iter(__p);
 }
+
+#ifndef _LIBCPP_HAS_NO_VARIADICS
 
 template <class _Tp, class _Allocator>
 template <class... _Args>
@@ -1465,7 +1474,8 @@ vector<_Tp, _Allocator>::emplace(const_iterator __position, _Args&&... __args)
     return __make_iter(__p);
 }
 
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_VARIADICS
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 template <class _Tp, class _Allocator>
 typename vector<_Tp, _Allocator>::iterator
@@ -1761,11 +1771,11 @@ public:
     vector(initializer_list<value_type> __il);
     vector(initializer_list<value_type> __il, const allocator_type& __a);
 
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     vector(vector&& __v);
     vector(vector&& __v, const allocator_type& __a);
     vector& operator=(vector&& __v);
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
     vector& operator=(initializer_list<value_type> __il)
         {assign(__il.begin(), __il.end()); return *this;}
 
@@ -2272,7 +2282,8 @@ vector<bool, _Allocator>::operator=(const vector& __v)
     return *this;
 }
 
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
+
 template <class _Allocator>
 _LIBCPP_INLINE_VISIBILITY inline
 vector<bool, _Allocator>::vector(vector&& __v)
@@ -2337,7 +2348,8 @@ vector<bool, _Allocator>::__move_assign(vector& __c, true_type)
     __c.__begin_ = nullptr;
     __c.__cap() = __c.__size_ = 0;
 }
-#endif  // _LIBCPP_MOVE
+
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 template <class _Allocator>
 void

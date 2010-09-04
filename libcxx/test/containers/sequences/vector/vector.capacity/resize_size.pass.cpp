@@ -18,7 +18,7 @@
 
 int main()
 {
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     {
         std::vector<MoveOnly> v(100);
         v.resize(50);
@@ -37,7 +37,7 @@ int main()
         assert(v.size() == 200);
         assert(v.capacity() >= 200);
     }
-#else  // _LIBCPP_MOVE
+#else  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
     {
         std::vector<int> v(100);
         v.resize(50);
@@ -56,5 +56,5 @@ int main()
         assert(v.size() == 200);
         assert(v.capacity() >= 200);
     }
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 }

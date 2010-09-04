@@ -22,7 +22,7 @@ class A
 
 int main()
 {
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     static_assert((std::is_same<decltype(std::declval<A>()), A&&>::value), "");
 #else
     static_assert((std::is_same<decltype(std::declval<A>()), A>::value), "");

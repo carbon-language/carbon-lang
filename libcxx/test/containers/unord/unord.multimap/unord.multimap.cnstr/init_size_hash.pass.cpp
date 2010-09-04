@@ -25,7 +25,7 @@
 
 int main()
 {
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     {
         typedef std::unordered_multimap<int, std::string,
                                    test_hash<std::hash<int> >,
@@ -82,5 +82,5 @@ int main()
         assert(c.key_eq() == test_compare<std::equal_to<int> >());
         assert((c.get_allocator() == test_allocator<std::pair<const int, std::string> >()));
     }
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 }

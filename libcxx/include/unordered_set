@@ -317,10 +317,10 @@ public:
     explicit unordered_set(const allocator_type& __a);
     unordered_set(const unordered_set& __u);
     unordered_set(const unordered_set& __u, const allocator_type& __a);
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     unordered_set(unordered_set&& __u);
     unordered_set(unordered_set&& __u, const allocator_type& __a);
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
     unordered_set(initializer_list<value_type> __il);
     unordered_set(initializer_list<value_type> __il, size_type __n,
                   const hasher& __hf = hasher(),
@@ -330,7 +330,7 @@ public:
                   const allocator_type& __a);
     // ~unordered_set() = default;
     // unordered_set& operator=(const unordered_set& __u) = default;
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     unordered_set& operator=(unordered_set&& __u);
 #endif
     unordered_set& operator=(initializer_list<value_type> __il);
@@ -349,26 +349,26 @@ public:
     const_iterator cbegin() const {return __table_.begin();}
     const_iterator cend()   const {return __table_.end();}
 
-#ifdef _LIBCPP_MOVE
+#if !defined(_LIBCPP_HAS_NO_RVALUE_REFERENCES) && !defined(_LIBCPP_HAS_NO_VARIADICS)
     template <class... _Args>
         pair<iterator, bool> emplace(_Args&&... __args)
             {return __table_.__emplace_unique(_STD::forward<_Args>(__args)...);}
     template <class... _Args>
         iterator emplace_hint(const_iterator, _Args&&... __args)
             {return __table_.__emplace_unique(_STD::forward<_Args>(__args)...).first;}
-#endif  // _LIBCPP_MOVE
+#endif  // !defined(_LIBCPP_HAS_NO_RVALUE_REFERENCES) && !defined(_LIBCPP_HAS_NO_VARIADICS)
     pair<iterator, bool> insert(const value_type& __x)
         {return __table_.__insert_unique(__x);}
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     pair<iterator, bool> insert(value_type&& __x)
         {return __table_.__insert_unique(_STD::move(__x));}
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
     iterator insert(const_iterator, const value_type& __x)
         {return insert(__x).first;}
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     iterator insert(const_iterator, value_type&& __x)
         {return insert(_STD::move(__x)).first;}
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
     template <class _InputIterator>
         void insert(_InputIterator __first, _InputIterator __last);
     void insert(initializer_list<value_type> __il)
@@ -485,7 +485,7 @@ unordered_set<_Value, _Hash, _Pred, _Alloc>::unordered_set(
     insert(__u.begin(), __u.end());
 }
 
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 template <class _Value, class _Hash, class _Pred, class _Alloc>
 inline
@@ -508,7 +508,7 @@ unordered_set<_Value, _Hash, _Pred, _Alloc>::unordered_set(
     }
 }
 
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 template <class _Value, class _Hash, class _Pred, class _Alloc>
 unordered_set<_Value, _Hash, _Pred, _Alloc>::unordered_set(
@@ -537,7 +537,7 @@ unordered_set<_Value, _Hash, _Pred, _Alloc>::unordered_set(
     insert(__il.begin(), __il.end());
 }
 
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 template <class _Value, class _Hash, class _Pred, class _Alloc>
 inline
@@ -548,7 +548,7 @@ unordered_set<_Value, _Hash, _Pred, _Alloc>::operator=(unordered_set&& __u)
     return *this;
 }
 
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 template <class _Value, class _Hash, class _Pred, class _Alloc>
 inline
@@ -656,10 +656,10 @@ public:
     explicit unordered_multiset(const allocator_type& __a);
     unordered_multiset(const unordered_multiset& __u);
     unordered_multiset(const unordered_multiset& __u, const allocator_type& __a);
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     unordered_multiset(unordered_multiset&& __u);
     unordered_multiset(unordered_multiset&& __u, const allocator_type& __a);
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
     unordered_multiset(initializer_list<value_type> __il);
     unordered_multiset(initializer_list<value_type> __il, size_type __n,
                        const hasher& __hf = hasher(),
@@ -669,7 +669,7 @@ public:
                        const allocator_type& __a);
     // ~unordered_multiset() = default;
     // unordered_multiset& operator=(const unordered_multiset& __u) = default;
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     unordered_multiset& operator=(unordered_multiset&& __u);
 #endif
     unordered_multiset& operator=(initializer_list<value_type> __il);
@@ -688,24 +688,24 @@ public:
     const_iterator cbegin() const {return __table_.begin();}
     const_iterator cend()   const {return __table_.end();}
 
-#ifdef _LIBCPP_MOVE
+#if !defined(_LIBCPP_HAS_NO_RVALUE_REFERENCES) && !defined(_LIBCPP_HAS_NO_VARIADICS)
     template <class... _Args>
         iterator emplace(_Args&&... __args)
             {return __table_.__emplace_multi(_STD::forward<_Args>(__args)...);}
     template <class... _Args>
         iterator emplace_hint(const_iterator __p, _Args&&... __args)
             {return __table_.__emplace_hint_multi(__p, _STD::forward<_Args>(__args)...);}
-#endif  // _LIBCPP_MOVE
+#endif  // !defined(_LIBCPP_HAS_NO_RVALUE_REFERENCES) && !defined(_LIBCPP_HAS_NO_VARIADICS)
     iterator insert(const value_type& __x) {return __table_.__insert_multi(__x);}
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     iterator insert(value_type&& __x) {return __table_.__insert_multi(_STD::move(__x));}
 #endif
     iterator insert(const_iterator __p, const value_type& __x)
         {return __table_.__insert_multi(__p, __x);}
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     iterator insert(const_iterator __p, value_type&& __x)
         {return __table_.__insert_multi(__p, _STD::move(__x));}
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
     template <class _InputIterator>
         void insert(_InputIterator __first, _InputIterator __last);
     void insert(initializer_list<value_type> __il)
@@ -823,7 +823,7 @@ unordered_multiset<_Value, _Hash, _Pred, _Alloc>::unordered_multiset(
     insert(__u.begin(), __u.end());
 }
 
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 template <class _Value, class _Hash, class _Pred, class _Alloc>
 inline
@@ -846,7 +846,7 @@ unordered_multiset<_Value, _Hash, _Pred, _Alloc>::unordered_multiset(
     }
 }
 
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 template <class _Value, class _Hash, class _Pred, class _Alloc>
 unordered_multiset<_Value, _Hash, _Pred, _Alloc>::unordered_multiset(
@@ -875,7 +875,7 @@ unordered_multiset<_Value, _Hash, _Pred, _Alloc>::unordered_multiset(
     insert(__il.begin(), __il.end());
 }
 
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 template <class _Value, class _Hash, class _Pred, class _Alloc>
 inline
@@ -887,7 +887,7 @@ unordered_multiset<_Value, _Hash, _Pred, _Alloc>::operator=(
     return *this;
 }
 
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 template <class _Value, class _Hash, class _Pred, class _Alloc>
 inline

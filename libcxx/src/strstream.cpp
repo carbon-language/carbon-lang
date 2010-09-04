@@ -100,7 +100,7 @@ strstreambuf::strstreambuf(const unsigned char* __gnext, streamsize __n)
     __init((char*)__gnext, __n, nullptr);
 }
 
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 strstreambuf::strstreambuf(strstreambuf&& __rhs)
     : streambuf(__rhs),
@@ -132,7 +132,7 @@ strstreambuf::operator=(strstreambuf&& __rhs)
     __rhs.setp(nullptr, nullptr);
 }
 
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 strstreambuf::~strstreambuf()
 {

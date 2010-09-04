@@ -22,7 +22,7 @@
 
 int main()
 {
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     {
         typedef std::unordered_multiset<int> C;
         typedef int P;
@@ -43,5 +43,5 @@ int main()
         assert(c.count(3) == 1);
         assert(c.count(4) == 1);
     }
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 }

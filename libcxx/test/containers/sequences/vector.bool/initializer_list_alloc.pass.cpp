@@ -18,7 +18,7 @@
 
 int main()
 {
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     std::vector<int, test_allocator<int>> d({true, false, false, true}, test_allocator<int>(3));
     assert(d.get_allocator() == test_allocator<int>(3));
     assert(d.size() == 4);
@@ -26,5 +26,5 @@ int main()
     assert(d[1] == false);
     assert(d[2] == false);
     assert(d[3] == true);
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 }

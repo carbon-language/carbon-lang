@@ -56,7 +56,7 @@ void f1()
 
 int main()
 {
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     std::set_terminate(f1);
     {
         assert(G::n_alive == 0);
@@ -78,5 +78,5 @@ int main()
         t0 = std::move(t1);
         assert(false);
     }
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 }

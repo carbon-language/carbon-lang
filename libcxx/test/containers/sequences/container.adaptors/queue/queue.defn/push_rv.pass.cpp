@@ -18,7 +18,7 @@
 
 int main()
 {
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     std::queue<MoveOnly> q;
     q.push(MoveOnly(1));
     assert(q.size() == 1);
@@ -32,5 +32,5 @@ int main()
     assert(q.size() == 3);
     assert(q.front() == MoveOnly(1));
     assert(q.back() == MoveOnly(3));
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 }

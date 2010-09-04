@@ -22,7 +22,7 @@
 
 int main()
 {
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     {
         typedef MoveOnly V;
         typedef test_compare<std::less<MoveOnly> > C;
@@ -137,5 +137,5 @@ int main()
         assert(m3.key_comp() == C(5));
         assert(m1.empty());
     }
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 }

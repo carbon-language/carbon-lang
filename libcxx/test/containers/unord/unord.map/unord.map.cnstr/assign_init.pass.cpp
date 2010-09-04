@@ -24,7 +24,7 @@
 
 int main()
 {
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     {
         typedef std::allocator<std::pair<const int, std::string> > A;
         typedef std::unordered_map<int, std::string,
@@ -57,5 +57,5 @@ int main()
         assert(c.load_factor() == (float)c.size()/c.bucket_count());
         assert(c.max_load_factor() == 1);
     }
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 }

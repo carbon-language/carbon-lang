@@ -18,7 +18,7 @@
 #include <algorithm>
 #include <functional>
 #include <cassert>
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 #include <memory>
 
 struct indirect_less
@@ -28,7 +28,7 @@ struct indirect_less
         {return *x < *y;}
 };
 
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 #include "../../iterators.h"
 
@@ -89,7 +89,7 @@ int main()
     test<random_access_iterator<int*> >();
     test<int*>();
 
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     {
     unsigned N = 100;
     unsigned M = 50;
@@ -108,5 +108,5 @@ int main()
     }
     delete [] ia;
     }
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 }

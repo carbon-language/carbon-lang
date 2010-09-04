@@ -20,7 +20,7 @@
 
 int main()
 {
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     {
         typedef std::set<MoveOnly> M;
         typedef std::pair<M::iterator, bool> R;
@@ -49,5 +49,5 @@ int main()
         assert(m.size() == 3);
         assert(*r.first == 3);
     }
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 }

@@ -86,6 +86,10 @@
 
 #if defined(__clang__)
 
+#define _LIBCPP_HAS_NO_ADVANCED_SFINAE
+#define _LIBCPP_HAS_NO_TEMPLATE_ALIASES
+#define _LIBCPP_HAS_NO_UNICODE_CHARS
+
 #if !(__has_feature(cxx_exceptions))
 #define _LIBCPP_NO_EXCEPTIONS
 #endif
@@ -94,8 +98,42 @@
 #define _LIBCPP_NO_RTTI
 #endif
 
-#define _LIBCPP_HAS_NO_ADVANCED_SFINAE
-#define _LIBCPP_HAS_NO_TEMPLATE_ALIASES
+#if !(__has_feature(cxx_decltype))
+#define _LIBCPP_HAS_NO_DECLTYPE
+#endif
+
+#if !(__has_feature(cxx_attributes))
+#define _LIBCPP_HAS_NO_ATTRIBUTES
+#endif
+
+#if !(__has_feature(cxx_deleted_functions))
+#define _LIBCPP_HAS_NO_DEFAULTED_FUNCTIONS
+#define _LIBCPP_HAS_NO_DELETED_FUNCTIONS
+#endif  // !(__has_feature(cxx_deleted_functions))
+
+#if !(__has_feature(cxx_lambdas))
+#define _LIBCPP_HAS_NO_LAMBDAS
+#endif
+
+#if !(__has_feature(cxx_nullptr))
+#define _LIBCPP_HAS_NO_NULLPTR
+#endif
+
+#if !(__has_feature(cxx_rvalue_references))
+#define _LIBCPP_HAS_NO_RVALUE_REFERENCES
+#endif
+
+#if !(__has_feature(cxx_static_assert))
+#define _LIBCPP_HAS_NO_STATIC_ASSERT
+#endif
+
+#if !(__has_feature(cxx_auto_type))
+#define _LIBCPP_HAS_NO_AUTO_TYPE
+#endif
+
+#if !(__has_feature(cxx_variadic_templates))
+#define _LIBCPP_HAS_NO_VARIADICS
+#endif
 
 #if __has_feature(cxx_inline_namespaces)
 #define _LIBCPP_BEGIN_NAMESPACE_STD namespace std {inline namespace _LIBCPP_NAMESPACE {
@@ -107,50 +145,14 @@ inline namespace _LIBCPP_NAMESPACE {
 }
 using namespace _LIBCPP_NAMESPACE;
 }
+
 #else  // __has_feature(cxx_inline_namespaces)
 #define _LIBCPP_BEGIN_NAMESPACE_STD namespace std {
 #define _LIBCPP_END_NAMESPACE_STD }
 #define _STD std
 #endif  // __has_feature(cxx_inline_namespaces)
 
-#ifndef __GXX_EXPERIMENTAL_CXX0X__
-
-#define _LIBCPP_HAS_NO_DECLTYPE
-#define _LIBCPP_HAS_NO_DEFAULTED_FUNCTIONS
-#define _LIBCPP_HAS_NO_DELETED_FUNCTIONS
-#define _LIBCPP_HAS_NO_NULLPTR
-#define _LIBCPP_HAS_NO_STATIC_ASSERT
-#define _LIBCPP_HAS_NO_UNICODE_CHARS
-#define _LIBCPP_HAS_NO_VARIADICS
-
-#else  // __GXX_EXPERIMENTAL_CXX0X__
-
-#if __has_feature(cxx_rvalue_references)
-#define _LIBCPP_MOVE
-#endif
-
-#if !(__has_feature(cxx_decltype))
-#define _LIBCPP_HAS_NO_DECLTYPE
-#endif
-
-#if !(__has_feature(cxx_deleted_functions))
-#define _LIBCPP_HAS_NO_DEFAULTED_FUNCTIONS
-#define _LIBCPP_HAS_NO_DELETED_FUNCTIONS
-#endif  // !(__has_feature(cxx_deleted_functions))
-
-#if !(__has_feature(cxx_nullptr))
-#define _LIBCPP_HAS_NO_NULLPTR
-#endif
-
-#if !(__has_feature(cxx_static_assert))
-#define _LIBCPP_HAS_NO_STATIC_ASSERT
-#endif
-
-#if !(__has_feature(cxx_variadic_templates))
-#define _LIBCPP_HAS_NO_VARIADICS
-#endif
-
-#endif  // __GXX_EXPERIMENTAL_CXX0X__
+// end defined(__clang__)
 
 #elif defined(__GNUC__)
 
@@ -170,11 +172,12 @@ using namespace _LIBCPP_NAMESPACE;
 #define _LIBCPP_HAS_NO_STATIC_ASSERT
 #define _LIBCPP_HAS_NO_UNICODE_CHARS
 #define _LIBCPP_HAS_NO_VARIADICS
+#define _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 #else  // __GXX_EXPERIMENTAL_CXX0X__
 
-#if __GNUC__ >= 4 && __GNUC_MINOR__ >= 3
-#define _LIBCPP_MOVE
+#if !(__GNUC__ >= 4 && __GNUC_MINOR__ >= 3)
+#define _LIBCPP_HAS_NO_RVALUE_REFERENCES
 #endif
 
 #if !(__GNUC__ >= 4 && __GNUC_MINOR__ >= 3)

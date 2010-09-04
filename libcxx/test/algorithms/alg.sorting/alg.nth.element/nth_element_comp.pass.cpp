@@ -19,7 +19,7 @@
 #include <functional>
 #include <vector>
 #include <cassert>
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 #include <memory>
 
 struct indirect_less
@@ -29,7 +29,7 @@ struct indirect_less
         {return *x < *y;}
 };
 
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 void
 test_one(unsigned N, unsigned M)
@@ -73,7 +73,7 @@ int main()
     test(1000);
     test(1009);
 
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     {
     std::vector<std::unique_ptr<int> > v(1000);
     for (int i = 0; i < v.size(); ++i)
@@ -81,5 +81,5 @@ int main()
     std::nth_element(v.begin(), v.begin() + v.size()/2, v.end(), indirect_less());
     assert(*v[v.size()/2] == v.size()/2);
     }
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 }

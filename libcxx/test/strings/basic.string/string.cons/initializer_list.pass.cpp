@@ -18,7 +18,7 @@
 
 int main()
 {
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     {
         std::string s = {'a', 'b', 'c'};
         assert(s == "abc");
@@ -28,5 +28,5 @@ int main()
         s = {L'a', L'b', L'c'};
         assert(s == L"abc");
     }
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 }

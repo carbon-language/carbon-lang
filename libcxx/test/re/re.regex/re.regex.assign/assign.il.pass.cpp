@@ -20,7 +20,7 @@
 
 int main()
 {
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     std::regex r2;
     r2.assign({'(', 'a', '(', '[', 'b', 'c', ']', ')', ')'});
     assert(r2.flags() == std::regex::ECMAScript);
@@ -29,5 +29,5 @@ int main()
     r2.assign({'(', 'a', '(', '[', 'b', 'c', ']', ')', ')'}, std::regex::extended);
     assert(r2.flags() == std::regex::extended);
     assert(r2.mark_count() == 2);
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 }

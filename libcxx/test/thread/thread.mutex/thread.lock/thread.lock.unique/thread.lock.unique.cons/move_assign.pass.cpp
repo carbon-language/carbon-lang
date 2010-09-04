@@ -21,7 +21,7 @@ std::mutex m1;
 
 int main()
 {
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     std::unique_lock<std::mutex> lk0(m0);
     std::unique_lock<std::mutex> lk1(m1);
     lk1 = std::move(lk0);
@@ -29,5 +29,5 @@ int main()
     assert(lk1.owns_lock() == true);
     assert(lk0.mutex() == nullptr);
     assert(lk0.owns_lock() == false);
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 }

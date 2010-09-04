@@ -49,7 +49,7 @@ int main()
         assert(r->first == 5.5);
         assert(r->second == 4);
     }
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     {
         typedef std::unordered_multimap<MoveOnly, MoveOnly> C;
         typedef C::iterator R;
@@ -75,5 +75,5 @@ int main()
         assert(r->first == 5);
         assert(r->second == 4);
     }
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 }

@@ -18,7 +18,7 @@
 
 int main()
 {
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     std::queue<Emplaceable> q;
     q.emplace(1, 2.5);
     q.emplace(2, 3.5);
@@ -26,5 +26,5 @@ int main()
     assert(q.size() == 3);
     assert(q.front() == Emplaceable(1, 2.5));
     assert(q.back() == Emplaceable(3, 4.5));
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 }

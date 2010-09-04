@@ -1448,7 +1448,7 @@ struct uses_allocator
 {
 };
 
-#if defined(_LIBCPP_MOVE) && !defined(_LIBCPP_HAS_NO_ADVANCED_SFINAE)
+#if !defined(_LIBCPP_HAS_NO_RVALUE_REFERENCES) && !defined(_LIBCPP_HAS_NO_ADVANCED_SFINAE)
 
 // uses-allocator construction
 
@@ -1466,7 +1466,7 @@ struct __uses_alloc_ctor
     : integral_constant<int, __uses_alloc_ctor_imp<_Tp, _Alloc, _Args...>::value>
     {};
 
-#endif  // defined(_LIBCPP_MOVE) && !defined(_LIBCPP_HAS_NO_ADVANCED_SFINAE)
+#endif  // !defined(_LIBCPP_HAS_NO_RVALUE_REFERENCES) && !defined(_LIBCPP_HAS_NO_ADVANCED_SFINAE)
 
 // allocator
 
@@ -1492,7 +1492,7 @@ public:
         {return static_cast<pointer>(::operator new(__n * sizeof(_Tp)));}
     _LIBCPP_INLINE_VISIBILITY void deallocate(pointer __p, size_type) {::operator delete((void*)__p);}
     _LIBCPP_INLINE_VISIBILITY size_type max_size() const throw() {return size_type(~0) / sizeof(_Tp);}
-#ifdef _LIBCPP_MOVE
+#if !defined(_LIBCPP_HAS_NO_RVALUE_REFERENCES) && !defined(_LIBCPP_HAS_NO_VARIADICS)
     template <class _Up, class... _Args>
         _LIBCPP_INLINE_VISIBILITY
         void
@@ -1500,7 +1500,7 @@ public:
         {
             ::new((void*)__p) _Up(_STD::forward<_Args>(__args)...);
         }
-#else  // _LIBCPP_MOVE
+#else  // !defined(_LIBCPP_HAS_NO_RVALUE_REFERENCES) && !defined(_LIBCPP_HAS_NO_VARIADICS)
         _LIBCPP_INLINE_VISIBILITY
         void
         construct(pointer __p)
@@ -1568,7 +1568,7 @@ public:
         {
             ::new((void*)__p) _Tp(__a0, __a1);
         }
-#endif  // _LIBCPP_MOVE
+#endif  // !defined(_LIBCPP_HAS_NO_RVALUE_REFERENCES) && !defined(_LIBCPP_HAS_NO_VARIADICS)
     _LIBCPP_INLINE_VISIBILITY void destroy(pointer __p) {__p->~_Tp();}
 };
 
@@ -1732,10 +1732,10 @@ public:
     _LIBCPP_INLINE_VISIBILITY __libcpp_compressed_pair_imp(_T1_param __t1, _T2_param __t2)
         : __first_(_STD::forward<_T1_param>(__t1)), __second_(_STD::forward<_T2_param>(__t2)) {}
 
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     _LIBCPP_INLINE_VISIBILITY __libcpp_compressed_pair_imp(__libcpp_compressed_pair_imp&& __p)
         : __first_(_STD::forward<_T1>(__p.first())), __second_(_STD::forward<_T2>(__p.second())) {}
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
     _LIBCPP_INLINE_VISIBILITY _T1_reference       first()       {return __first_;}
     _LIBCPP_INLINE_VISIBILITY _T1_const_reference first() const {return __first_;}
@@ -1775,10 +1775,10 @@ public:
     _LIBCPP_INLINE_VISIBILITY __libcpp_compressed_pair_imp(_T1_param __t1, _T2_param __t2)
         : _T1(_STD::forward<_T1_param>(__t1)), __second_(_STD::forward<_T2_param>(__t2)) {}
 
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     _LIBCPP_INLINE_VISIBILITY __libcpp_compressed_pair_imp(__libcpp_compressed_pair_imp&& __p)
         : _T1(_STD::move(__p.first())), __second_(_STD::forward<_T2>(__p.second())) {}
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
     _LIBCPP_INLINE_VISIBILITY _T1_reference       first()       {return *this;}
     _LIBCPP_INLINE_VISIBILITY _T1_const_reference first() const {return *this;}
@@ -1817,10 +1817,10 @@ public:
     _LIBCPP_INLINE_VISIBILITY __libcpp_compressed_pair_imp(_T1_param __t1, _T2_param __t2)
         : _T2(_STD::forward<_T2_param>(__t2)), __first_(_STD::forward<_T1_param>(__t1)) {}
 
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     __libcpp_compressed_pair_imp(__libcpp_compressed_pair_imp&& __p)
         : _T2(_STD::forward<_T2>(__p.second())), __first_(_STD::move(__p.first())) {}
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
     _LIBCPP_INLINE_VISIBILITY _T1_reference       first()       {return __first_;}
     _LIBCPP_INLINE_VISIBILITY _T1_const_reference first() const {return __first_;}
@@ -1858,10 +1858,10 @@ public:
     _LIBCPP_INLINE_VISIBILITY __libcpp_compressed_pair_imp(_T1_param __t1, _T2_param __t2)
         : _T1(_STD::forward<_T1_param>(__t1)), _T2(_STD::forward<_T2_param>(__t2)) {}
 
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     _LIBCPP_INLINE_VISIBILITY __libcpp_compressed_pair_imp(__libcpp_compressed_pair_imp&& __p)
         : _T1(_STD::move(__p.first())), _T2(_STD::move(__p.second())) {}
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
     _LIBCPP_INLINE_VISIBILITY _T1_reference       first()       {return *this;}
     _LIBCPP_INLINE_VISIBILITY _T1_const_reference first() const {return *this;}
@@ -1897,10 +1897,10 @@ public:
     _LIBCPP_INLINE_VISIBILITY __compressed_pair(_T1_param __t1, _T2_param __t2)
         : base(_STD::forward<_T1_param>(__t1), _STD::forward<_T2_param>(__t2)) {}
 
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     __compressed_pair(__compressed_pair&& __p)
         : base(_STD::move(__p)) {}
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
     _LIBCPP_INLINE_VISIBILITY _T1_reference       first()       {return base::first();}
     _LIBCPP_INLINE_VISIBILITY _T1_const_reference first() const {return base::first();}
@@ -1953,21 +1953,21 @@ public:
 private:
     __compressed_pair<pointer, deleter_type> __ptr_;
 
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     unique_ptr(const unique_ptr&);
     unique_ptr& operator=(const unique_ptr&);
     template <class _Up, class _Ep>
         unique_ptr(const unique_ptr<_Up, _Ep>&);
     template <class _Up, class _Ep>
         unique_ptr& operator=(const unique_ptr<_Up, _Ep>&);
-#else  // _LIBCPP_MOVE
+#else  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
     unique_ptr(unique_ptr&);
     template <class _Up, class _Ep>
         unique_ptr(unique_ptr<_Up, _Ep>&);
     unique_ptr& operator=(unique_ptr&);
     template <class _Up, class _Ep>
         unique_ptr& operator=(unique_ptr<_Up, _Ep>&);
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
     struct __nat {int __for_bool_;};
 
@@ -1993,7 +1993,7 @@ public:
                 "unique_ptr constructed with null function pointer deleter");
         }
 
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     _LIBCPP_INLINE_VISIBILITY unique_ptr(pointer __p, typename conditional<
                                         is_reference<deleter_type>::value,
                                         deleter_type,
@@ -2054,7 +2054,7 @@ public:
                 __ptr_.second() = _STD::forward<_Ep>(__u.get_deleter());
                 return *this;
             }
-#else  // _LIBCPP_MOVE
+#else  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
     _LIBCPP_INLINE_VISIBILITY operator __rv<unique_ptr>()
     {
@@ -2085,7 +2085,7 @@ public:
         operator=(auto_ptr<_Up> __p)
             {reset(__p.release()); return *this;}
 
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
     _LIBCPP_INLINE_VISIBILITY ~unique_ptr() {reset();}
 
     _LIBCPP_INLINE_VISIBILITY unique_ptr& operator=(nullptr_t)
@@ -2130,17 +2130,17 @@ public:
 private:
     __compressed_pair<pointer, deleter_type> __ptr_;
 
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     unique_ptr(const unique_ptr&);
     unique_ptr& operator=(const unique_ptr&);
-#else  // _LIBCPP_MOVE
+#else  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
     unique_ptr(unique_ptr&);
     template <class _Up>
         unique_ptr(unique_ptr<_Up>&);
     unique_ptr& operator=(unique_ptr&);
     template <class _Up>
         unique_ptr& operator=(unique_ptr<_Up>&);
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
     struct __nat {int __for_bool_;};
 
@@ -2159,7 +2159,7 @@ public:
             static_assert(!is_pointer<deleter_type>::value,
                 "unique_ptr constructed with null function pointer deleter");
         }
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     template <class _P,
               class = typename enable_if<is_same<_P, pointer>::value>::type
              >
@@ -2210,7 +2210,7 @@ public:
             __ptr_.second() = _STD::forward<deleter_type>(__u.get_deleter());
             return *this;
         }
-#else  // _LIBCPP_MOVE
+#else  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
     _LIBCPP_INLINE_VISIBILITY explicit unique_ptr(pointer __p)
         : __ptr_(__p)
@@ -2240,7 +2240,7 @@ public:
         return *this;
     }
 
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
     _LIBCPP_INLINE_VISIBILITY ~unique_ptr() {reset();}
 
     _LIBCPP_INLINE_VISIBILITY unique_ptr& operator=(nullptr_t)
@@ -2263,7 +2263,7 @@ public:
         return __t;
     }
 
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     template <class _P,
               class = typename enable_if<is_same<_P, pointer>::value>::type
              >
@@ -2288,7 +2288,7 @@ public:
         if (__tmp)
             __ptr_.second()(__tmp);
     }
-#else  // _LIBCPP_MOVE
+#else  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
     _LIBCPP_INLINE_VISIBILITY void reset(pointer __p = pointer())
     {
         pointer __tmp = __ptr_.first();
@@ -2296,12 +2296,12 @@ public:
         if (__tmp)
             __ptr_.second()(__tmp);
     }
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
     _LIBCPP_INLINE_VISIBILITY void swap(unique_ptr& __u) {__ptr_.swap(__u.__ptr_);}
 private:
 
-#ifndef _LIBCPP_MOVE
+#ifdef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     template <class _Up>
         explicit unique_ptr(_Up);
     template <class _Up>
@@ -2315,7 +2315,7 @@ private:
                          is_convertible<_Up, pointer>::value,
                          __nat
                       >::type = __nat());
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 };
 
 template <class _Tp, class _Dp>
@@ -2667,19 +2667,19 @@ public:
     template<class _Yp>
         shared_ptr(const shared_ptr<_Yp>& __r,
                    typename enable_if<is_convertible<_Yp*, _Tp*>::value, __nat>::type = __nat());
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     shared_ptr(shared_ptr&& __r);
     template<class _Yp> shared_ptr(shared_ptr<_Yp>&& __r,
                    typename enable_if<is_convertible<_Yp*, _Tp*>::value, __nat>::type = __nat());
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
     template<class _Yp> explicit shared_ptr(const weak_ptr<_Yp>& __r,
                    typename enable_if<is_convertible<_Yp*, _Tp*>::value, __nat>::type= __nat());
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     template<class _Yp> shared_ptr(auto_ptr<_Yp>&& __r);
 #else
     template<class _Yp> shared_ptr(auto_ptr<_Yp> __r);
 #endif
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 private:
     template <class _Yp, class _Dp> shared_ptr(const unique_ptr<_Yp, _Dp>& __r);// = delete;
 public:
@@ -2687,30 +2687,30 @@ public:
        typename enable_if<!is_lvalue_reference<_Dp>::value, __nat>::type = __nat());
     template <class _Yp, class _Dp> shared_ptr(unique_ptr<_Yp, _Dp>&&,
        typename enable_if<is_lvalue_reference<_Dp>::value, __nat>::type = __nat());
-#else  // _LIBCPP_MOVE
+#else  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
     template <class _Yp, class _Dp> shared_ptr(unique_ptr<_Yp, _Dp>,
        typename enable_if<!is_lvalue_reference<_Dp>::value, __nat>::type = __nat());
     template <class _Yp, class _Dp> shared_ptr(unique_ptr<_Yp, _Dp>,
        typename enable_if<is_lvalue_reference<_Dp>::value, __nat>::type = __nat());
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
     ~shared_ptr();
 
     shared_ptr& operator=(const shared_ptr& __r);
     template<class _Yp> shared_ptr& operator=(const shared_ptr<_Yp>& __r);
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     shared_ptr& operator=(shared_ptr&& __r);
     template<class _Yp> shared_ptr& operator=(shared_ptr<_Yp>&& __r);
     template<class _Yp> shared_ptr& operator=(auto_ptr<_Yp>&& __r);
-#else  // _LIBCPP_MOVE
+#else  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
     template<class _Yp> shared_ptr& operator=(auto_ptr<_Yp> __r);
 #endif
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 private:
     template <class _Yp, class _Dp> shared_ptr& operator=(const unique_ptr<_Yp, _Dp>& __r);// = delete;
 public:
     template <class _Yp, class _Dp> shared_ptr& operator=(unique_ptr<_Yp, _Dp>&& __r);
-#else  // _LIBCPP_MOVE
+#else  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
     template <class _Yp, class _Dp> shared_ptr& operator=(unique_ptr<_Yp, _Dp> __r);
 #endif
 
@@ -2954,7 +2954,7 @@ shared_ptr<_Tp>::shared_ptr(const shared_ptr<_Yp>& __r,
         __cntrl_->__add_shared();
 }
 
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 template<class _Tp>
 inline _LIBCPP_INLINE_VISIBILITY
@@ -2978,11 +2978,11 @@ shared_ptr<_Tp>::shared_ptr(shared_ptr<_Yp>&& __r,
     __r.__cntrl_ = 0;
 }
 
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 template<class _Tp>
 template<class _Yp>
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 shared_ptr<_Tp>::shared_ptr(auto_ptr<_Yp>&& __r)
 #else
 shared_ptr<_Tp>::shared_ptr(auto_ptr<_Yp> __r)
@@ -2997,7 +2997,7 @@ shared_ptr<_Tp>::shared_ptr(auto_ptr<_Yp> __r)
 
 template<class _Tp>
 template <class _Yp, class _Dp>
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 shared_ptr<_Tp>::shared_ptr(unique_ptr<_Yp, _Dp>&& __r,
 #else
 shared_ptr<_Tp>::shared_ptr(unique_ptr<_Yp, _Dp> __r,
@@ -3013,7 +3013,7 @@ shared_ptr<_Tp>::shared_ptr(unique_ptr<_Yp, _Dp> __r,
 
 template<class _Tp>
 template <class _Yp, class _Dp>
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 shared_ptr<_Tp>::shared_ptr(unique_ptr<_Yp, _Dp>&& __r,
 #else
 shared_ptr<_Tp>::shared_ptr(unique_ptr<_Yp, _Dp> __r,
@@ -3240,7 +3240,7 @@ shared_ptr<_Tp>::operator=(const shared_ptr<_Yp>& __r)
     return *this;
 }
 
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 template<class _Tp>
 inline _LIBCPP_INLINE_VISIBILITY
@@ -3281,7 +3281,7 @@ shared_ptr<_Tp>::operator=(unique_ptr<_Yp, _Dp>&& __r)
     return *this;
 }
 
-#else  // _LIBCPP_MOVE
+#else  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 template<class _Tp>
 template<class _Yp>
@@ -3303,7 +3303,7 @@ shared_ptr<_Tp>::operator=(unique_ptr<_Yp, _Dp> __r)
     return *this;
 }
 
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 template<class _Tp>
 inline _LIBCPP_INLINE_VISIBILITY

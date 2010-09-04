@@ -17,7 +17,7 @@
 #include <istream>
 #include <cassert>
 
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 template <class CharT>
 struct testbuf
@@ -37,11 +37,11 @@ struct test_istream
         : base(std::move(s)) {}
 };
 
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 int main()
 {
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     {
         testbuf<char> sb;
         test_istream<char> is1(&sb);
@@ -74,5 +74,5 @@ int main()
         assert(is.precision() == 6);
         assert(is.getloc().name() == "C");
     }
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 }

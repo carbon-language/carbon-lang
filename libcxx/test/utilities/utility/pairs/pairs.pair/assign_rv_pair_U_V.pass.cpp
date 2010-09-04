@@ -29,7 +29,7 @@ struct Derived
 
 int main()
 {
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     {
         typedef std::pair<std::unique_ptr<Derived>, short> P1;
         typedef std::pair<std::unique_ptr<Base>, long> P2;
@@ -39,5 +39,5 @@ int main()
         assert(p2.first == nullptr);
         assert(p2.second == 4);
     }
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 }

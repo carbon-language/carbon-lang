@@ -20,7 +20,7 @@
 
 int main()
 {
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     assert(test_alloc_base::count == 0);
     {
         std::promise<int> p0(std::allocator_arg, test_allocator<int>());
@@ -79,5 +79,5 @@ int main()
         assert(test_alloc_base::count == 1);
     }
     assert(test_alloc_base::count == 0);
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 }

@@ -16,11 +16,11 @@
 
 int main()
 {
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     {
         std::string s("123def456");
         s.replace(s.begin() + 3, s.begin() + 6, {'a', 'b', 'c'});
         assert(s == "123abc456");
     }
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 }

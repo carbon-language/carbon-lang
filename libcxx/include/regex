@@ -5185,10 +5185,8 @@ public:
     explicit match_results(const allocator_type& __a = allocator_type());
 //    match_results(const match_results&) = default;
 //    match_results& operator=(const match_results&) = default;
-#ifdef _LIBCPP_MOVE
 //    match_results(match_results&& __m) = default;
 //    match_results& operator=(match_results&& __m) = default;
-#endif  // _LIBCPP_MOVE
 //    ~match_results() = default;
 
     // size:

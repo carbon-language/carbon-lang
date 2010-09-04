@@ -32,7 +32,7 @@ struct A
 
 int main()
 {
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     A test1 = {3, 2, 1};
 #endif
 }

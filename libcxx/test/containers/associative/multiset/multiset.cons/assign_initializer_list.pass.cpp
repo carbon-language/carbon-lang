@@ -18,7 +18,7 @@
 
 int main()
 {
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     typedef std::multiset<int> C;
     typedef C::value_type V;
     C m = {10, 8};
@@ -32,5 +32,5 @@ int main()
     assert(*++i == V(4));
     assert(*++i == V(5));
     assert(*++i == V(6));
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 }

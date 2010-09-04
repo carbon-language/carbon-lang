@@ -179,16 +179,16 @@ struct __nested
 
 template <class _Tp>
 void
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 throw_with_nested /*[[noreturn]]*/ (_Tp&& __t, typename enable_if<
                   is_class<typename remove_reference<_Tp>::type>::value &&
                   !is_base_of<nested_exception, typename remove_reference<_Tp>::type>::value
                                     >::type* = 0)
-#else  // _LIBCPP_MOVE
+#else  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 throw_with_nested (_Tp& __t, typename enable_if<
                   is_class<_Tp>::value && !is_base_of<nested_exception, _Tp>::value
                                     >::type* = 0)
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 {
 #ifndef _LIBCPP_NO_EXCEPTIONS
     throw __nested<typename remove_reference<_Tp>::type>(_STD::forward<_Tp>(__t));
@@ -197,16 +197,16 @@ throw_with_nested (_Tp& __t, typename enable_if<
 
 template <class _Tp>
 void
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 throw_with_nested /*[[noreturn]]*/ (_Tp&& __t, typename enable_if<
                   !is_class<typename remove_reference<_Tp>::type>::value ||
                   is_base_of<nested_exception, typename remove_reference<_Tp>::type>::value
                                     >::type* = 0)
-#else  // _LIBCPP_MOVE
+#else  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 throw_with_nested (_Tp& __t, typename enable_if<
                   !is_class<_Tp>::value || is_base_of<nested_exception, _Tp>::value
                                     >::type* = 0)
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 {
 #ifndef _LIBCPP_NO_EXCEPTIONS
     throw _STD::forward<_Tp>(__t);

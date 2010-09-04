@@ -18,7 +18,7 @@
 
 int main()
 {
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     {
         typedef Emplaceable T;
         typedef std::forward_list<T> C;
@@ -31,5 +31,5 @@ int main()
         assert(*next(c.begin()) == Emplaceable());
         assert(distance(c.begin(), c.end()) == 2);
     }
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 }

@@ -1,7 +1,7 @@
 #ifndef MOVEONLY_H
 #define MOVEONLY_H
 
-#ifdef _LIBCPP_MOVE
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 #include <cstddef>
 #include <functional>
@@ -36,6 +36,6 @@ struct hash<MoveOnly>
 
 }
 
-#endif  // _LIBCPP_MOVE
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 #endif  // MOVEONLY_H
