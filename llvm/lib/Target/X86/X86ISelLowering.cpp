@@ -5470,9 +5470,16 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const {
 
   // FIXME: pshufb, blends, shifts.
   if (VT.getVectorNumElements() == 2 ||
-      ShuffleVectorSDNode::isSplatMask(&M[0], VT) ||
       isPALIGNRMask(M, VT, Subtarget->hasSSSE3()))
     return Op;
+
+  if (ShuffleVectorSDNode::isSplatMask(&M[0], VT) &&
+      SVOp->getSplatIndex() == 0 && V2IsUndef) {
+    if (VT == MVT::v2f64)
+      return getTargetShuffleNode(X86ISD::UNPCKLPD, dl, VT, V1, V1, DAG);
+    if (VT == MVT::v2i64)
+      return getTargetShuffleNode(X86ISD::PUNPCKLQDQ, dl, VT, V1, V1, DAG);
+  }
 
   if (isPSHUFHWMask(M, VT))
     return getTargetShuffleNode(X86ISD::PSHUFHW, dl, VT, V1,
