@@ -2592,6 +2592,7 @@ static bool isTargetShuffle(unsigned Opcode) {
   case X86ISD::PSHUFHW:
   case X86ISD::PSHUFLW:
   case X86ISD::SHUFPD:
+  case X86ISD::PALIGN:
   case X86ISD::SHUFPS:
   case X86ISD::MOVLHPS:
   case X86ISD::MOVLHPD:
@@ -2648,6 +2649,7 @@ static SDValue getTargetShuffleNode(unsigned Opc, DebugLoc dl, EVT VT,
                SDValue V1, SDValue V2, unsigned TargetMask, SelectionDAG &DAG) {
   switch(Opc) {
   default: llvm_unreachable("Unknown x86 shuffle node");
+  case X86ISD::PALIGN:
   case X86ISD::SHUFPD:
   case X86ISD::SHUFPS:
     return DAG.getNode(Opc, dl, VT, V1, V2,
@@ -5262,6 +5264,7 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const {
   bool V2IsSplat = false;
   bool HasSSE2 = Subtarget->hasSSE2() || Subtarget->hasAVX();
   bool HasSSE3 = Subtarget->hasSSE3() || Subtarget->hasAVX();
+  bool HasSSSE3 = Subtarget->hasSSSE3() || Subtarget->hasAVX();
   MachineFunction &MF = DAG.getMachineFunction();
   bool OptForSize = MF.getFunction()->hasFnAttr(Attribute::OptimizeForSize);
 
@@ -5469,9 +5472,13 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const {
     return isPALIGNRMask(M, VT, Subtarget->hasSSSE3()) ? Op : SDValue();
 
   // FIXME: pshufb, blends, shifts.
-  if (VT.getVectorNumElements() == 2 ||
-      isPALIGNRMask(M, VT, Subtarget->hasSSSE3()))
+  if (VT.getVectorNumElements() == 2)
     return Op;
+
+  if (isPALIGNRMask(M, VT, HasSSSE3))
+    return getTargetShuffleNode(X86ISD::PALIGN, dl, VT, V1, V2,
+                                X86::getShufflePALIGNRImmediate(SVOp),
+                                DAG);
 
   if (ShuffleVectorSDNode::isSplatMask(&M[0], VT) &&
       SVOp->getSplatIndex() == 0 && V2IsUndef) {
@@ -10780,6 +10787,7 @@ SDValue X86TargetLowering::PerformDAGCombine(SDNode *N,
   case ISD::ZERO_EXTEND:    return PerformZExtCombine(N, DAG);
   case X86ISD::SHUFPS:      // Handle all target specific shuffles
   case X86ISD::SHUFPD:
+  case X86ISD::PALIGN:
   case X86ISD::PUNPCKHBW:
   case X86ISD::PUNPCKHWD:
   case X86ISD::PUNPCKHDQ:
