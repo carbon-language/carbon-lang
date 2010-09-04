@@ -12,7 +12,6 @@
 #include <getopt.h>
 #include <stdlib.h>
 
-#include "../Commands/CommandObjectAppend.h"
 #include "../Commands/CommandObjectApropos.h"
 #include "../Commands/CommandObjectArgs.h"
 #include "../Commands/CommandObjectBreakpoint.h"
@@ -30,9 +29,7 @@
 #include "lldb/Interpreter/CommandObjectRegexCommand.h"
 #include "../Commands/CommandObjectRegister.h"
 #include "CommandObjectScript.h"
-#include "../Commands/CommandObjectSet.h"
 #include "../Commands/CommandObjectSettings.h"
-#include "../Commands/CommandObjectShow.h"
 #include "../Commands/CommandObjectSource.h"
 #include "../Commands/CommandObjectCommands.h"
 #include "../Commands/CommandObjectSyntax.h"
@@ -61,9 +58,13 @@ CommandInterpreter::CommandInterpreter
 ) :
     Broadcaster ("CommandInterpreter"),
     m_debugger (debugger),
-    m_script_language (script_language),
     m_synchronous_execution (synchronous_execution)
 {
+    const char *dbg_name = debugger.GetInstanceName().AsCString();
+    std::string lang_name = ScriptInterpreter::LanguageToString (script_language);
+    StreamString var_name;
+    var_name.Printf ("[%s].script-lang", dbg_name);
+    debugger.GetSettingsController()->SetVariable (var_name.GetData(), lang_name.c_str(), lldb::eVarSetOperationAssign, false);
 }
 
 void
@@ -74,8 +75,6 @@ CommandInterpreter::Initialize ()
     CommandReturnObject result;
 
     LoadCommandDictionary ();
-
-    InitializeVariables ();
 
     // Set up some initial aliases.
     result.Clear(); HandleCommand ("command alias q        quit", false, result);
@@ -96,72 +95,6 @@ CommandInterpreter::Initialize ()
     result.Clear(); HandleCommand ("command alias x        memory read", false, result);
     result.Clear(); HandleCommand ("command alias l        source list", false, result);
     result.Clear(); HandleCommand ("command alias list     source list", false, result);
-}
-
-void
-CommandInterpreter::InitializeVariables ()
-{
-    Timer scoped_timer (__PRETTY_FUNCTION__, __PRETTY_FUNCTION__);
-
-    m_variables["prompt"] =
-            StateVariableSP (new StateVariable ("prompt",
-                                                "(lldb) ",
-                                                false,
-                                                "The debugger prompt displayed for the user.",
-                                                StateVariable::BroadcastPromptChange));
-
-    m_variables["run-args"] =
-            StateVariableSP (new StateVariable ("run-args",
-                                                (Args*)NULL,
-                                                "An argument list containing the arguments to be passed to the executable when it is launched."));
-
-
-    m_variables["env-vars"] =
-            StateVariableSP (new StateVariable ("env-vars",
-                                                (Args*)NULL,
-                                                "A list of strings containing the environment variables to be passed to the executable's environment."));
-
-    m_variables["input-path"] =
-            StateVariableSP (new StateVariable ("input-path",
-                                                "/dev/stdin",
-                                                false,
-                                                "The file/path to be used by the executable program for reading its input."));
-
-    m_variables["output-path"] =
-            StateVariableSP (new StateVariable ( "output-path",
-                                                "/dev/stdout",
-                                                false,
-                                                "The file/path to be used by the executable program for writing its output."));
-
-    m_variables["error-path"] =
-            StateVariableSP (new StateVariable ("error-path",
-                                                "/dev/stderr",
-                                                false,
-                                                "The file/path to be used by the executable program for writing its error messages."));
-
-    m_variables["arch"] =
-        StateVariableSP (new StateVariable ("arch",
-                                            "",
-                                            false,
-                                            "The architecture to be used for running the executable (e.g. i386, x86_64, etc)."));
-
-    m_variables["script-lang"] =
-        StateVariableSP (new StateVariable ("script-lang",
-                                            "Python",
-                                            false,
-                                            "The script language to be used for evaluating user-written scripts.",
-                                            StateVariable::VerifyScriptLanguage));
-
-    m_variables["term-width"] =
-    StateVariableSP (new StateVariable ("term-width",
-                                         80,
-                                        "The maximum number of columns to use for displaying text."));
-    
-    m_variables["disable-aslr"] =
-    StateVariableSP (new StateVariable ("disable-aslr",
-                                        1,
-                                        "Disable Address Space Layout Randomization (ASLR)."));
-    
 }
 
 const char *
@@ -201,7 +134,16 @@ CommandInterpreter::LoadCommandDictionary ()
 
     // Non-CommandObjectCrossref commands can now be created.
 
-    m_command_dict["append"]    = CommandObjectSP (new CommandObjectAppend ());
+    lldb::ScriptLanguage script_language;
+    lldb::SettableVariableType var_type = lldb::eSetVarTypeString;
+    StringList value;
+    const char *dbg_name = GetDebugger().GetInstanceName().AsCString();
+    StreamString var_name;
+    var_name.Printf ("[%s].script-lang", dbg_name);
+    value = Debugger::GetSettingsController()->GetVariable (var_name.GetData(), var_type);
+    bool success;
+    script_language = Args::StringToScriptLanguage (value.GetStringAtIndex(0), lldb::eScriptLanguageDefault, &success);
+    
     m_command_dict["apropos"]   = CommandObjectSP (new CommandObjectApropos ());
     m_command_dict["breakpoint"]= CommandObjectSP (new CommandObjectMultiwordBreakpoint (*this));
     //m_command_dict["call"]      = CommandObjectSP (new CommandObjectCall ());
@@ -217,10 +159,8 @@ CommandInterpreter::LoadCommandDictionary ()
     m_command_dict["process"]   = CommandObjectSP (new CommandObjectMultiwordProcess (*this));
     m_command_dict["quit"]      = CommandObjectSP (new CommandObjectQuit ());
     m_command_dict["register"]  = CommandObjectSP (new CommandObjectRegister (*this));
-    m_command_dict["script"]    = CommandObjectSP (new CommandObjectScript (m_script_language));
-    m_command_dict["set"]       = CommandObjectSP (new CommandObjectSet ());
-    m_command_dict["settings"]  = CommandObjectSP (new CommandObjectSettings ());
-    m_command_dict["show"]      = CommandObjectSP (new CommandObjectShow ());
+    m_command_dict["script"]    = CommandObjectSP (new CommandObjectScript (script_language));
+    m_command_dict["settings"]  = CommandObjectSP (new CommandObjectMultiwordSettings (*this));
     m_command_dict["source"]    = CommandObjectSP (new CommandObjectMultiwordSource (*this));
     m_command_dict["target"]    = CommandObjectSP (new CommandObjectMultiwordTarget (*this));
     m_command_dict["thread"]    = CommandObjectSP (new CommandObjectMultiwordThread (*this));
@@ -448,15 +388,6 @@ CommandInterpreter::RemoveUser (const char *alias_name)
     return false;
 }
 
-StateVariable *
-CommandInterpreter::GetStateVariable(const char *name)
-{
-    VariableMap::const_iterator pos = m_variables.find(name);
-    if (pos != m_variables.end())
-        return pos->second.get();
-    return NULL;
-}
-
 void
 CommandInterpreter::GetAliasHelp (const char *alias_name, const char *command_name, StreamString &help_string)
 {
@@ -555,33 +486,6 @@ CommandInterpreter::GetHelp (CommandReturnObject &result)
 
     result.AppendMessage("For more information on any particular command, try 'help <command-name>'.");
 }
-
-void
-CommandInterpreter::ShowVariableValues (CommandReturnObject &result)
-{
-    result.AppendMessage ("Below is a list of all the debugger setting variables and their values:");
-
-    for (VariableMap::const_iterator pos = m_variables.begin(); pos != m_variables.end(); ++pos)
-    {
-        StateVariable *var = pos->second.get();
-        var->AppendVariableInformation (result);
-    }
-}
-
-void
-CommandInterpreter::ShowVariableHelp (CommandReturnObject &result)
-{
-    result.AppendMessage ("Below is a list of all the internal debugger variables that are settable:");
-    for (VariableMap::const_iterator pos = m_variables.begin(); pos != m_variables.end(); ++pos)
-    {
-        StateVariable *var = pos->second.get();
-        result.AppendMessageWithFormat ("    %s  --  %s \n", var->GetName(), var->GetHelp());
-    }
-}
-
-// Main entry point into the command_interpreter; this function takes a text
-// line containing a debugger command, with all its flags, options, etc,
-// parses the line and takes the appropriate actions.
 
 bool
 CommandInterpreter::HandleCommand 
@@ -861,47 +765,6 @@ CommandInterpreter::HandleCompletion (const char *current_line,
     return num_command_matches;
 }
 
-const Args *
-CommandInterpreter::GetProgramArguments ()
-{
-    if (! HasInterpreterVariables())
-        return NULL;
-
-    VariableMap::const_iterator pos = m_variables.find("run-args");
-    if (pos == m_variables.end())
-        return NULL;
-
-    StateVariable *var = pos->second.get();
-
-    if (var)
-        return &var->GetArgs();
-    return NULL;
-}
-
-const Args *
-CommandInterpreter::GetEnvironmentVariables ()
-{
-    if (! HasInterpreterVariables())
-        return NULL;
-
-    VariableMap::const_iterator pos = m_variables.find("env-vars");
-    if (pos == m_variables.end())
-        return NULL;
-
-    StateVariable *var = pos->second.get();
-    if (var)
-        return &var->GetArgs();
-    return NULL;
-}
-
-int
-CommandInterpreter::GetDisableASLR ()
-{
-    StateVariable *var = GetStateVariable ("disable-aslr");
-    int disable_aslr = var->GetIntValue();
-
-    return disable_aslr;
-}
 
 CommandInterpreter::~CommandInterpreter ()
 {
@@ -910,37 +773,20 @@ CommandInterpreter::~CommandInterpreter ()
 const char *
 CommandInterpreter::GetPrompt ()
 {
-    VariableMap::iterator pos;
-
-    if (! HasInterpreterVariables())
-        return NULL;
-
-    pos = m_variables.find("prompt");
-    if (pos == m_variables.end())
-        return NULL;
-
-    StateVariable *var = pos->second.get();
-
-    return ((char *) var->GetStringValue());
+    lldb::SettableVariableType var_type;
+    const char *instance_name = GetDebugger().GetInstanceName().AsCString();
+    StreamString var_name;
+    var_name.Printf ("[%s].prompt", instance_name);
+    return Debugger::GetSettingsController()->GetVariable (var_name.GetData(), var_type).GetStringAtIndex(0);
 }
 
 void
 CommandInterpreter::SetPrompt (const char *new_prompt)
 {
-    VariableMap::iterator pos;
-    CommandReturnObject result;
-
-    if (! HasInterpreterVariables())
-        return;
-
-    pos = m_variables.find ("prompt");
-    if (pos == m_variables.end())
-        return;
-
-    StateVariable *var = pos->second.get();
-
-    if (var->VerifyValue (this, (void *) new_prompt, result))
-       var->SetStringValue (new_prompt);
+    const char *instance_name = GetDebugger().GetInstanceName().AsCString();
+    StreamString name_str;
+    name_str.Printf ("[%s].prompt", instance_name);
+    Debugger::GetSettingsController()->SetVariable (name_str.GetData(), new_prompt, lldb::eVarSetOperationAssign, false);
 }
 
 void
@@ -954,12 +800,6 @@ CommandInterpreter::CrossRegisterCommand (const char * dest_cmd, const char * ob
         if (cmd_obj->IsCrossRefObject ())
             cmd_obj->AddObject (object_type);
     }
-}
-
-void
-CommandInterpreter::SetScriptLanguage (ScriptLanguage lang)
-{
-    m_script_language = lang;
 }
 
 OptionArgVectorSP
@@ -1018,12 +858,6 @@ bool
 CommandInterpreter::HasAliasOptions ()
 {
     return (!m_alias_options.empty());
-}
-
-bool
-CommandInterpreter::HasInterpreterVariables ()
-{
-    return (!m_variables.empty());
 }
 
 void
@@ -1201,8 +1035,10 @@ CommandInterpreter::OutputFormattedHelpText (Stream &strm,
                                              const char *help_text,
                                              uint32_t max_word_len)
 {
-    StateVariable *var = GetStateVariable ("term-width");
-    int max_columns = var->GetIntValue();
+    lldb::SettableVariableType var_type;
+    const char *width_value = 
+                            Debugger::GetSettingsController()->GetVariable ("term-width", var_type).GetStringAtIndex(0);
+    int max_columns = atoi (width_value);
     // Sanity check max_columns, to cope with emacs shell mode with TERM=dumb
     // (0 rows; 0 columns;).
     if (max_columns <= 0) max_columns = 80;

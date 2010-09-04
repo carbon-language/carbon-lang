@@ -38,6 +38,7 @@ CommandCompletions::g_common_completions[] =
     {eDiskDirectoryCompletion,   CommandCompletions::DiskDirectories},
     {eSymbolCompletion,          CommandCompletions::Symbols},
     {eModuleCompletion,          CommandCompletions::Modules},
+    {eSettingsNameCompletion,    CommandCompletions::SettingsNames},
     {eNoCompletion,              NULL}      // This one has to be last in the list.
 };
 
@@ -410,6 +411,26 @@ CommandCompletions::Symbols
     return matches.GetSize();
 }
 
+int
+CommandCompletions::SettingsNames (CommandInterpreter &interpreter,
+                                   const char *partial_setting_name,
+                                   int match_start_point,
+                                   int max_return_elements,
+                                   SearchFilter *searcher,
+                                   bool &word_complete,
+                                   StringList &matches)
+{
+    lldb::UserSettingsControllerSP root_settings = Debugger::GetSettingsController();
+    Args partial_setting_name_pieces = UserSettingsController::BreakNameIntoPieces (partial_setting_name);
+
+    return UserSettingsController::CompleteSettingsNames (root_settings,
+                                                          partial_setting_name_pieces,
+                                                          word_complete,
+                                                          matches);
+
+    //return matches.GetSize();
+}
+
 CommandCompletions::Completer::Completer 
 (
     CommandInterpreter &interpreter,
@@ -687,6 +708,3 @@ CommandCompletions::ModuleCompleter::DoCompletion (SearchFilter *filter)
     filter->Search (*this);
     return m_matches.GetSize();
 }
-
-
-

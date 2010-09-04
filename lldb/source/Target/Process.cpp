@@ -18,6 +18,7 @@
 #include "lldb/Core/Log.h"
 #include "lldb/Core/PluginManager.h"
 #include "lldb/Core/State.h"
+#include "lldb/Interpreter/CommandInterpreter.h"
 #include "lldb/Host/Host.h"
 #include "lldb/Target/ABI.h"
 #include "lldb/Target/RegisterContext.h"
@@ -63,6 +64,7 @@ Process::FindPlugin (Target &target, const char *plugin_name, Listener &listener
 Process::Process(Target &target, Listener &listener) :
     UserID (LLDB_INVALID_PROCESS_ID),
     Broadcaster ("Process"),
+    ProcessInstanceSettings (*(Process::GetSettingsController().get())),
     m_target (target),
     m_section_load_info (),
     m_public_state (eStateUnloaded),
@@ -1918,5 +1920,346 @@ Process::GetArchSpecForExistingProcess (const char *process_name)
 {
     return Host::GetArchSpecForExistingProcess (process_name);
 }
+
+lldb::UserSettingsControllerSP
+Process::GetSettingsController (bool finish)
+{
+    static UserSettingsControllerSP g_settings_controller (new ProcessSettingsController);
+    static bool initialized = false;
+
+    if (!initialized)
+    {
+        const lldb::UserSettingsControllerSP &parent = g_settings_controller->GetParent ();
+        if (parent)
+	    parent->RegisterChild (g_settings_controller);
+
+	g_settings_controller->CreateSettingsVector (Process::ProcessSettingsController::global_settings_table,
+                                                     true);
+	g_settings_controller->CreateSettingsVector (Process::ProcessSettingsController::instance_settings_table,
+                                                     false);
+
+	g_settings_controller->InitializeGlobalVariables ();
+        g_settings_controller->CreateDefaultInstanceSettings ();
+	initialized = true;
+    }
+
+    if (finish)
+    {
+        const lldb::UserSettingsControllerSP &parent = g_settings_controller->GetParent ();
+        if (parent)
+            parent->RemoveChild (g_settings_controller);
+        g_settings_controller.reset();
+    }
+
+    return g_settings_controller;
+}
+
+//--------------------------------------------------------------
+// class Process::ProcessSettingsController
+//--------------------------------------------------------------
+
+Process::ProcessSettingsController::ProcessSettingsController () :
+    UserSettingsController ("process", Debugger::GetSettingsController())
+{
+    m_default_settings.reset (new ProcessInstanceSettings (*this, InstanceSettings::GetDefaultName().AsCString()));
+}
+
+Process::ProcessSettingsController::~ProcessSettingsController ()
+{
+}
+
+lldb::InstanceSettingsSP
+Process::ProcessSettingsController::CreateNewInstanceSettings ()
+{
+    ProcessInstanceSettings *new_settings = new ProcessInstanceSettings (*(Process::GetSettingsController().get()));
+    lldb::InstanceSettingsSP new_settings_sp (new_settings);
+    return new_settings_sp;
+}
+
+//--------------------------------------------------------------
+// class ProcessInstanceSettings
+//--------------------------------------------------------------
+
+ProcessInstanceSettings::ProcessInstanceSettings (UserSettingsController &owner, const char *name) :
+    InstanceSettings (owner, (name == NULL ? CreateInstanceName().AsCString() : name)), 
+    m_run_args (),
+    m_env_vars (),
+    m_input_path (),
+    m_output_path (),
+    m_error_path (),
+    m_plugin (),
+    m_disable_aslr (true)
+{
+    if (m_instance_name != InstanceSettings::GetDefaultName())
+    {
+        const lldb::InstanceSettingsSP &pending_settings = m_owner.FindPendingSettings (m_instance_name);
+        CopyInstanceSettings (pending_settings,false);
+        m_owner.RemovePendingSettings (m_instance_name);
+    }
+}
+
+ProcessInstanceSettings::ProcessInstanceSettings (const ProcessInstanceSettings &rhs) :
+    InstanceSettings (*(Process::GetSettingsController().get()), CreateInstanceName().AsCString()),
+    m_run_args (rhs.m_run_args),
+    m_env_vars (rhs.m_env_vars),
+    m_input_path (rhs.m_input_path),
+    m_output_path (rhs.m_output_path),
+    m_error_path (rhs.m_error_path),
+    m_plugin (rhs.m_plugin),
+    m_disable_aslr (rhs.m_disable_aslr)
+{
+    if (m_instance_name != InstanceSettings::GetDefaultName())
+    {
+        const lldb::InstanceSettingsSP &pending_settings = m_owner.FindPendingSettings (m_instance_name);
+        CopyInstanceSettings (pending_settings,false);
+        m_owner.RemovePendingSettings (m_instance_name);
+    }
+}
+
+ProcessInstanceSettings::~ProcessInstanceSettings ()
+{
+}
+
+ProcessInstanceSettings&
+ProcessInstanceSettings::operator= (const ProcessInstanceSettings &rhs)
+{
+    if (this != &rhs)
+    {
+        m_run_args = rhs.m_run_args;
+        m_env_vars = rhs.m_env_vars;
+        m_input_path = rhs.m_input_path;
+        m_output_path = rhs.m_output_path;
+        m_error_path = rhs.m_error_path;
+        m_plugin = rhs.m_plugin;
+        m_disable_aslr = rhs.m_disable_aslr;
+    }
+
+    return *this;
+}
+
+
+void
+ProcessInstanceSettings::UpdateInstanceSettingsVariable (const ConstString &var_name,
+                                                         const char *index_value,
+                                                         const char *value,
+                                                         const ConstString &instance_name,
+                                                         const SettingEntry &entry,
+                                                         lldb::VarSetOperationType op,
+                                                         Error &err,
+                                                         bool pending)
+{
+    if (var_name == RunArgsVarName())
+        UserSettingsController::UpdateStringArrayVariable (op, index_value, m_run_args, value, err);
+    else if (var_name == EnvVarsVarName())
+        UserSettingsController::UpdateDictionaryVariable (op, index_value, m_env_vars, value, err);
+    else if (var_name == InputPathVarName())
+        UserSettingsController::UpdateStringVariable (op, m_input_path, value, err);
+    else if (var_name == OutputPathVarName())
+        UserSettingsController::UpdateStringVariable (op, m_output_path, value, err);
+    else if (var_name == ErrorPathVarName())
+        UserSettingsController::UpdateStringVariable (op, m_error_path, value, err);
+    else if (var_name == PluginVarName())
+        UserSettingsController::UpdateEnumVariable (entry.enum_values, (int *) &m_plugin, value, err);
+    else if (var_name == DisableASLRVarName())
+        UserSettingsController::UpdateBooleanVariable (op, m_disable_aslr, value, err);
+}
+
+void
+ProcessInstanceSettings::CopyInstanceSettings (const lldb::InstanceSettingsSP &new_settings,
+                                               bool pending)
+{
+    if (new_settings.get() == NULL)
+        return;
+
+    ProcessInstanceSettings *new_process_settings = (ProcessInstanceSettings *) new_settings.get();
+
+    m_run_args = new_process_settings->m_run_args;
+    m_env_vars = new_process_settings->m_env_vars;
+    m_input_path = new_process_settings->m_input_path;
+    m_output_path = new_process_settings->m_output_path;
+    m_error_path = new_process_settings->m_error_path;
+    m_plugin = new_process_settings->m_plugin;
+    m_disable_aslr = new_process_settings->m_disable_aslr;
+}
+
+void
+Process::ProcessSettingsController::UpdateGlobalVariable (const ConstString &var_name,
+                                                          const char *index_value,
+                                                          const char *value,
+                                                          const SettingEntry &entry,
+                                                          lldb::VarSetOperationType op,
+                                                          Error&err)
+{
+    // Currently 'process' does not have any global settings.
+}
+
+
+void
+ProcessInstanceSettings::GetInstanceSettingsValue (const SettingEntry &entry,
+                                                   const ConstString &var_name,
+                                                   StringList &value)
+{
+    if (var_name == RunArgsVarName())
+    {
+        if (m_run_args.GetArgumentCount() > 0)
+            for (int i = 0; i < m_run_args.GetArgumentCount(); ++i)
+                value.AppendString (m_run_args.GetArgumentAtIndex (i));
+        else
+            value.AppendString ("");
+    }
+    else if (var_name == EnvVarsVarName())
+    {
+        if (m_env_vars.size() > 0)
+        {
+            std::map<std::string, std::string>::iterator pos;
+            for (pos = m_env_vars.begin(); pos != m_env_vars.end(); ++pos)
+            {
+                StreamString value_str;
+                value_str.Printf ("%s=%s", pos->first.c_str(), pos->second.c_str());
+                value.AppendString (value_str.GetData());
+            }
+        }
+        else
+            value.AppendString ("");
+    }
+    else if (var_name == InputPathVarName())
+    {
+        value.AppendString (m_input_path.c_str());
+    }
+    else if (var_name == OutputPathVarName())
+    {
+        value.AppendString (m_output_path.c_str());
+    }
+    else if (var_name == ErrorPathVarName())
+    {
+        value.AppendString (m_error_path.c_str());
+    }
+    else if (var_name == PluginVarName())
+    {
+        value.AppendString (UserSettingsController::EnumToString (entry.enum_values, (int) m_plugin));
+    }
+    else if (var_name == DisableASLRVarName())
+    {
+        if (m_disable_aslr)
+            value.AppendString ("true");
+        else
+            value.AppendString ("false");
+    }
+    else
+        value.AppendString ("unrecognized variable name");
+}
+
+void
+Process::ProcessSettingsController::GetGlobalSettingsValue (const ConstString &var_name,
+                                                            StringList &value)
+{
+    // Currently 'process' does not have any global settings.
+}
+
+const ConstString
+ProcessInstanceSettings::CreateInstanceName ()
+{
+    static int instance_count = 1;
+    StreamString sstr;
+
+    sstr.Printf ("process_%d", instance_count);
+    ++instance_count;
+
+    const ConstString ret_val (sstr.GetData());
+    return ret_val;
+}
+
+const ConstString &
+ProcessInstanceSettings::RunArgsVarName ()
+{
+    static ConstString run_args_var_name ("run-args");
+
+    return run_args_var_name;
+}
+
+const ConstString &
+ProcessInstanceSettings::EnvVarsVarName ()
+{
+    static ConstString env_vars_var_name ("env-vars");
+
+    return env_vars_var_name;
+}
+
+const ConstString &
+ProcessInstanceSettings::InputPathVarName ()
+{
+  static ConstString input_path_var_name ("input-path");
+
+    return input_path_var_name;
+}
+
+const ConstString &
+ProcessInstanceSettings::OutputPathVarName ()
+{
+    static ConstString output_path_var_name ("output_path");
+
+    return output_path_var_name;
+}
+
+const ConstString &
+ProcessInstanceSettings::ErrorPathVarName ()
+{
+    static ConstString error_path_var_name ("error_path");
+
+    return error_path_var_name;
+}
+
+const ConstString &
+ProcessInstanceSettings::PluginVarName ()
+{
+    static ConstString plugin_var_name ("plugin");
+
+    return plugin_var_name;
+}
+
+
+const ConstString &
+ProcessInstanceSettings::DisableASLRVarName ()
+{
+    static ConstString disable_aslr_var_name ("disable-aslr");
+
+    return disable_aslr_var_name;
+}
+
+
+//--------------------------------------------------
+// ProcessSettingsController Variable Tables
+//--------------------------------------------------
+
+SettingEntry
+Process::ProcessSettingsController::global_settings_table[] =
+{
+  //{ "var-name",    var-type  ,        "default", enum-table, init'd, hidden, "help-text"},
+    {  NULL, eSetVarTypeNone, NULL, NULL, 0, 0, NULL }
+};
+
+
+lldb::OptionEnumValueElement
+Process::ProcessSettingsController::g_plugins[] =
+{
+  { eMacosx, "macosx", "Use the Mac OS X plugin" },
+  { eRemoteDebugger, "remote_debugger" , "Use the remote debugger plugin" },
+  { 0, NULL, NULL }
+};
+
+SettingEntry
+Process::ProcessSettingsController::instance_settings_table[] =
+{
+  //{ "var-name",    var-type,              "default",      enum-table, init'd, hidden, "help-text"},
+    { "run-args",    eSetVarTypeArray,       NULL,          NULL,       false,  false,  "A list containing all the arguments to be passed to the executable when it is run." },
+    { "env-vars",    eSetVarTypeDictionary,  NULL,          NULL,       false,  false,  "A list of all the environment variables to be passed to the executable's environment, and their values." },
+    { "input-path",  eSetVarTypeString,      "/dev/stdin",  NULL,       false,  false,  "The file/path to be used by the executable program for reading its input." },
+    { "output-path", eSetVarTypeString,      "/dev/stdout", NULL,       false,  false,  "The file/path to be used by the executable program for writing its output." },
+    { "error-path",  eSetVarTypeString,      "/dev/stderr", NULL,       false,  false,  "The file/path to be used by the executable program for writings its error messages." },
+    { "plugin",      eSetVarTypeEnum,        NULL         , g_plugins,  false,  false,  "The plugin to be used to run the process." },
+    { "disable-aslr", eSetVarTypeBool,       "true",        NULL,       false,  false, "Disable Address Space Layout Randomization (ASLR)" },
+    {  NULL, eSetVarTypeNone, NULL, NULL, 0, 0, NULL }
+};
+
 
 

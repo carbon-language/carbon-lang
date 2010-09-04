@@ -22,6 +22,7 @@
 #include "lldb/Core/StreamFile.h"
 #include "lldb/Core/SourceManager.h"
 #include "lldb/Core/UserID.h"
+#include "lldb/Core/UserSettingsController.h"
 #include "lldb/Target/ExecutionContext.h"
 #include "lldb/Target/TargetList.h"
 
@@ -33,10 +34,111 @@ namespace lldb_private {
 ///
 /// Provides a global root objects for the debugger core.
 //----------------------------------------------------------------------
-class Debugger :
-    public UserID
+    
+
+class DebuggerInstanceSettings : public InstanceSettings
 {
 public:
+    
+    DebuggerInstanceSettings (UserSettingsController &owner, const char *name = NULL);
+
+    DebuggerInstanceSettings (const DebuggerInstanceSettings &rhs);
+
+    virtual
+    ~DebuggerInstanceSettings ();
+
+    DebuggerInstanceSettings&
+    operator= (const DebuggerInstanceSettings &rhs);
+
+    void
+    UpdateInstanceSettingsVariable (const ConstString &var_name,
+                                    const char *index_value,
+                                    const char *value,
+                                    const ConstString &instance_name,
+                                    const SettingEntry &entry,
+                                    lldb::VarSetOperationType op,
+                                    Error &err,
+                                    bool pending);
+
+    void
+    GetInstanceSettingsValue (const SettingEntry &entry,
+                              const ConstString &var_name,
+                              StringList &value);
+
+protected:
+
+    void
+    CopyInstanceSettings (const lldb::InstanceSettingsSP &new_settings,
+                          bool pending);
+
+    bool
+    BroadcastPromptChange (const ConstString &instance_name, const char *new_prompt);
+
+    const ConstString
+    CreateInstanceName ();
+
+    const ConstString &
+    PromptVarName ();
+
+    const ConstString &
+    ScriptLangVarName ();
+  
+private:
+
+    std::string m_prompt;
+    lldb::ScriptLanguage m_script_lang;
+};
+
+
+
+class Debugger :
+    public UserID,
+    public DebuggerInstanceSettings
+{
+public:
+
+    class DebuggerSettingsController : public UserSettingsController
+    {
+    public:
+
+        DebuggerSettingsController ();
+
+        virtual
+        ~DebuggerSettingsController ();
+
+        void
+        UpdateGlobalVariable (const ConstString &var_name,
+                              const char *index_value,
+                              const char *value,
+                              const SettingEntry &entry,
+                              lldb::VarSetOperationType op,
+                              Error&err);
+
+        void
+        GetGlobalSettingsValue (const ConstString &var_name, 
+                                StringList &value);
+
+        static SettingEntry global_settings_table[];
+        static SettingEntry instance_settings_table[];
+
+    protected:
+
+        lldb::InstanceSettingsSP
+        CreateNewInstanceSettings ();
+
+        bool
+        ValidTermWidthValue (const char *value, Error err);
+
+    private:
+
+        // Class-wide settings.
+        int m_term_width;
+
+        DISALLOW_COPY_AND_ASSIGN (DebuggerSettingsController);
+    };
+
+    static lldb::UserSettingsControllerSP &
+    GetSettingsController (bool finish = false);
 
     static lldb::DebuggerSP
     CreateInstance ();
@@ -137,7 +239,6 @@ public:
         return m_exe_ctx;
     }
 
-
     void
     UpdateExecutionContext (ExecutionContext *override_context);
 
@@ -157,6 +258,9 @@ public:
     {
         return m_use_external_editor;
     }
+
+    static lldb::DebuggerSP
+    FindDebuggerWithInstanceName (const ConstString &instance_name);
 
 protected:
 
@@ -191,8 +295,6 @@ private:
     // Use Debugger::CreateInstance() to get a shared pointer to a new
     // debugger object
     Debugger ();
-
-
 
     DISALLOW_COPY_AND_ASSIGN (Debugger);
 };

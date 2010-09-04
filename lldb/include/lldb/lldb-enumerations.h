@@ -478,6 +478,40 @@ typedef enum AccessType
     eAccessPackage
 } AccessType;
 
+//----------------------------------------------------------------------
+/// Settable state variable types.
+///
+//----------------------------------------------------------------------
+
+typedef enum SettableVariableType
+{
+    eSetVarTypeInt,
+    eSetVarTypeBool,
+    eSetVarTypeString,
+    eSetVarTypeArray,
+    eSetVarTypeDictionary,
+    eSetVarTypeEnum,
+    eSetVarTypeNone
+} SettableVariableType;
+
+typedef enum VarSetOperationType
+{
+    eVarSetOperationReplace,
+    eVarSetOperationInsertBefore,
+    eVarSetOperationInsertAfter,
+    eVarSetOperationRemove,
+    eVarSetOperationAppend,
+    eVarSetOperationClear,
+    eVarSetOperationAssign,
+    eVarSetOperationInvalid
+} VarSetOperationType;
+
+typedef enum ProcessPlugins
+{
+    eMacosx,
+    eRemoteDebugger
+} ProcessPlugins;
+
 } // namespace lldb
 
 

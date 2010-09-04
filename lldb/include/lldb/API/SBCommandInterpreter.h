@@ -42,8 +42,8 @@ public:
     lldb::SBBroadcaster
     GetBroadcaster ();
 
-    const char **
-    GetEnvironmentVariables ();
+    //const char **
+    //GetEnvironmentVariables ();
 
     bool
     HasCommands ();
@@ -57,8 +57,8 @@ public:
     bool
     HasAliasOptions ();
 
-    bool
-    HasInterpreterVariables ();
+    //bool
+    //HasInterpreterVariables ();
 
     lldb::SBProcess
     GetProcess ();

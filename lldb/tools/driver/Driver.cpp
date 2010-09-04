@@ -1087,7 +1087,8 @@ Driver::MainLoop ()
     {
         char buffer[25];
 
-        sprintf (buffer, "set term-width %d", window_size.ws_col);
+        if (window_size.ws_col > 0)
+            sprintf (buffer, "settings set term-width %d", window_size.ws_col);
         m_debugger.HandleCommand ((const char *) buffer);
     }
 

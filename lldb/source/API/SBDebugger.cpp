@@ -22,11 +22,12 @@
 #include "lldb/API/SBCommandReturnObject.h"
 #include "lldb/API/SBEvent.h"
 #include "lldb/API/SBFrame.h"
-#include "lldb/API/SBTarget.h"
-#include "lldb/API/SBProcess.h"
-#include "lldb/API/SBThread.h"
-#include "lldb/API/SBSourceManager.h"
 #include "lldb/API/SBInputReader.h"
+#include "lldb/API/SBProcess.h"
+#include "lldb/API/SBSourceManager.h"
+#include "lldb/API/SBStringList.h"
+#include "lldb/API/SBTarget.h"
+#include "lldb/API/SBThread.h"
 
 using namespace lldb;
 using namespace lldb_private;
@@ -564,6 +565,32 @@ SBDebugger::FindDebuggerWithID (int id)
     return sb_debugger;
 }
 
+SBError
+SBDebugger::SetInternalVariable (const char *var_name, const char *value)
+{
+    lldb::UserSettingsControllerSP root_settings_controller = lldb_private::Debugger::GetSettingsController();
+
+    Error err = root_settings_controller->SetVariable (var_name, value, lldb::eVarSetOperationAssign, false);
+    SBError sb_error;
+    sb_error.SetError (err);
+
+    return sb_error;
+}
+
+lldb::SBStringList
+SBDebugger::GetInternalVariableValue (const char *var_name)
+{
+    SBStringList ret_value;
+    lldb::UserSettingsControllerSP root_settings_controller = lldb_private::Debugger::GetSettingsController();
+
+    lldb::SettableVariableType var_type;
+    StringList value = root_settings_controller->GetVariable (var_name, var_type);
+    for (int i = 0; i < value.GetSize(); ++i)
+        ret_value.AppendString (value.GetStringAtIndex(i));
+
+    return ret_value;
+}
+
 bool
 SBDebugger::SetUseExternalEditor (bool value)
 {
@@ -581,5 +608,4 @@ SBDebugger::UseExternalEditor ()
     else
         return false;
 }
-
 

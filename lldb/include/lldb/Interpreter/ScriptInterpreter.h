@@ -86,6 +86,9 @@ public:
     CommandInterpreter *
     GetCommandInterpreter ();
 
+    static std::string
+    LanguageToString (lldb::ScriptLanguage);
+
 private:
     lldb::ScriptLanguage m_script_lang;
 

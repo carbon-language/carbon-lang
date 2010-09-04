@@ -17,6 +17,8 @@
 // Other libraries and framework includes
 // Project includes
 #include "lldb/lldb-private.h"
+#include "lldb/Interpreter/Args.h"
+#include "lldb/Interpreter/Options.h"
 #include "lldb/Core/Broadcaster.h"
 #include "lldb/Core/Error.h"
 #include "lldb/Core/Event.h"
@@ -24,6 +26,7 @@
 #include "lldb/Core/ThreadSafeValue.h"
 #include "lldb/Core/ThreadSafeSTLMap.h"
 #include "lldb/Core/PluginInterface.h"
+#include "lldb/Core/UserSettingsController.h"
 #include "lldb/Breakpoint/BreakpointSiteList.h"
 #include "lldb/Expression/ClangPersistentVariables.h"
 #include "lldb/Expression/IRDynamicChecks.h"
@@ -34,6 +37,80 @@
 
 namespace lldb_private {
 
+class ProcessInstanceSettings : public InstanceSettings
+{
+public:
+
+    ProcessInstanceSettings (UserSettingsController &owner, const char *name = NULL);
+  
+    ProcessInstanceSettings (const ProcessInstanceSettings &rhs);
+
+    virtual
+    ~ProcessInstanceSettings ();
+  
+    ProcessInstanceSettings&
+    operator= (const ProcessInstanceSettings &rhs);
+  
+
+    void
+    UpdateInstanceSettingsVariable (const ConstString &var_name,
+                                    const char *index_value,
+                                    const char *value,
+                                    const ConstString &instance_name,
+                                    const SettingEntry &entry,
+                                    lldb::VarSetOperationType op,
+                                    Error &err,
+                                    bool pending);
+
+    void
+    GetInstanceSettingsValue (const SettingEntry &entry,
+                              const ConstString &var_name,
+                              StringList &value);
+
+
+protected:
+
+    void
+    CopyInstanceSettings (const lldb::InstanceSettingsSP &new_settings,
+                          bool pending);
+
+    const ConstString
+    CreateInstanceName ();
+
+    const ConstString &
+    RunArgsVarName ();
+
+    const ConstString &
+    EnvVarsVarName ();
+
+    const ConstString &
+    InputPathVarName ();
+
+    const ConstString &
+    OutputPathVarName ();
+
+    const ConstString &
+    ErrorPathVarName ();
+
+    const ConstString &
+    PluginVarName ();
+
+    const ConstString &
+    DisableASLRVarName();
+
+
+private:
+
+    Args m_run_args;
+    std::map<std::string, std::string> m_env_vars;
+    std::string m_input_path;
+    std::string m_output_path;
+    std::string m_error_path;
+    lldb::ProcessPlugins m_plugin;
+    bool m_disable_aslr;
+};
+
+
 //----------------------------------------------------------------------
 /// @class Process Process.h "lldb/Target/Process.h"
 /// @brief A plug-in interface definition class for debugging a process.
@@ -42,7 +119,8 @@ class Process :
     public UserID,
     public Broadcaster,
     public ExecutionContextScope,
-    public PluginInterface
+    public PluginInterface,
+    public ProcessInstanceSettings
 {
 friend class ThreadList;
 
@@ -145,7 +223,49 @@ public:
             DISALLOW_COPY_AND_ASSIGN (ProcessEventData);
 
     };
+
+    class ProcessSettingsController : public UserSettingsController
+    {
+    public:
+        
+        ProcessSettingsController ();
+
+        virtual
+        ~ProcessSettingsController ();
+
+        void
+        UpdateGlobalVariable (const ConstString &var_name,
+                              const char *index_value,
+                              const char *value,
+                              const SettingEntry &entry,
+                              lldb::VarSetOperationType op,
+                              Error&err);
+
+        void
+        GetGlobalSettingsValue (const ConstString &var_name,
+                                StringList &value);
+
+        static SettingEntry global_settings_table[];
+        static SettingEntry instance_settings_table[];
+
+    protected:
+
+        lldb::InstanceSettingsSP
+        CreateNewInstanceSettings ();
+
+        static lldb::OptionEnumValueElement g_plugins[];
+
+    private:
+
+        // Class-wide settings.
+
+        DISALLOW_COPY_AND_ASSIGN (ProcessSettingsController);
+    };
+
 #endif
+
+    static lldb::UserSettingsControllerSP
+    GetSettingsController (bool finish = false);
 
     //------------------------------------------------------------------
     /// Construct with a shared pointer to a target, and the Process listener.
@@ -1478,12 +1598,13 @@ protected:
 
     size_t
     WriteMemoryPrivate (lldb::addr_t addr, const void *buf, size_t size, Error &error);
-    
+
 private:
     //------------------------------------------------------------------
     // For Process only
     //------------------------------------------------------------------
     void ControlPrivateStateThread (uint32_t signal);
+
     DISALLOW_COPY_AND_ASSIGN (Process);
 
 };

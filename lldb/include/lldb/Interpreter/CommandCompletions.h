@@ -44,7 +44,8 @@ public:
         eDiskDirectoryCompletion = (1 << 2),
         eSymbolCompletion        = (1 << 3),
         eModuleCompletion        = (1 << 4),
-        eCustomCompletion        = (1 << 5)  // This item serves two purposes.  It is the last element in the enum,
+        eSettingsNameCompletion  = (1 << 5),
+        eCustomCompletion        = (1 << 6)  // This item serves two purposes.  It is the last element in the enum,
                                             // so you can add custom enums starting from here in your Option class.
                                             // Also if you & in this bit the base code will not process the option.
 
@@ -111,6 +112,15 @@ public:
              SearchFilter *searcher,
              bool &word_complete,
              lldb_private::StringList &matches);
+    
+    static int
+    SettingsNames (CommandInterpreter &interpreter,
+                   const char *partial_file_name,
+                   int match_start_point,
+                   int max_return_elements,
+                   SearchFilter *searcher,
+                   bool &word_complete,
+                   lldb_private::StringList &matches);
     
     //----------------------------------------------------------------------
     // The Completer class is a convenient base class for building searchers

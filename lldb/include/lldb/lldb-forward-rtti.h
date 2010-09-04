@@ -39,6 +39,7 @@ namespace lldb {
     typedef SharedPtr<lldb_private::Function>::Type FunctionSP;
     typedef SharedPtr<lldb_private::InlineFunctionInfo>::Type InlineFunctionInfoSP;
     typedef SharedPtr<lldb_private::InputReader>::Type InputReaderSP;
+    typedef SharedPtr<lldb_private::InstanceSettings>::Type InstanceSettingsSP;
     typedef SharedPtr<lldb_private::LineTable>::Type LineTableSP;
     typedef SharedPtr<lldb_private::Listener>::Type ListenerSP;
     typedef SharedPtr<lldb_private::Log>::Type LogSP;
@@ -50,7 +51,6 @@ namespace lldb {
     typedef SharedPtr<lldb_private::SearchFilter>::Type SearchFilterSP;
     typedef SharedPtr<lldb_private::StackFrame>::Type StackFrameSP;
     typedef SharedPtr<lldb_private::StackFrameList>::Type StackFrameListSP;
-    typedef SharedPtr<lldb_private::StateVariable>::Type StateVariableSP;
     typedef SharedPtr<lldb_private::StopInfo>::Type StopInfoSP;
     typedef SharedPtr<lldb_private::StoppointLocation>::Type StoppointLocationSP;
     typedef SharedPtr<lldb_private::Stream>::Type StreamSP;
@@ -59,6 +59,7 @@ namespace lldb {
     typedef SharedPtr<lldb_private::Thread>::Type ThreadSP;
     typedef SharedPtr<lldb_private::ThreadPlan>::Type ThreadPlanSP;
     typedef SharedPtr<lldb_private::Type>::Type TypeSP;
+    typedef SharedPtr<lldb_private::UserSettingsController>::Type UserSettingsControllerSP;
     typedef SharedPtr<lldb_private::ValueObject>::Type ValueObjectSP;
     typedef SharedPtr<lldb_private::Variable>::Type VariableSP;
     typedef SharedPtr<lldb_private::VariableList>::Type VariableListSP;

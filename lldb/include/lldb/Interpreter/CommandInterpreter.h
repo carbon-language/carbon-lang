@@ -20,7 +20,6 @@
 #include "lldb/Core/Log.h"
 #include "lldb/Interpreter/CommandObject.h"
 #include "lldb/Interpreter/ScriptInterpreter.h"
-#include "lldb/Interpreter/StateVariable.h"
 #include "lldb/Core/Event.h"
 #include "lldb/Interpreter/Args.h"
 #include "lldb/Core/StringList.h"
@@ -30,7 +29,6 @@ namespace lldb_private {
 class CommandInterpreter : public Broadcaster
 {
 public:
-    typedef std::map<std::string, lldb::StateVariableSP> VariableMap;
     typedef std::map<std::string, OptionArgVectorSP> OptionArgMap;
 
     enum
@@ -58,9 +56,6 @@ public:
 
     CommandObject *
     GetCommandObject (const char *cmd, StringList *matches = NULL);
-
-    StateVariable *
-    GetStateVariable(const char *name);
 
     bool
     CommandExists (const char *cmd);
@@ -148,27 +143,12 @@ public:
                              const char *help_text,
                              uint32_t max_word_len);
 
-    void
-    ShowVariableValues (CommandReturnObject &result);
-
-    void
-    ShowVariableHelp (CommandReturnObject &result);
-
     Debugger &
     GetDebugger ()
     {
         return m_debugger;
     }
 
-    const Args *
-    GetProgramArguments ();
-
-    const Args *
-    GetEnvironmentVariables ();
-
-    int
-    GetDisableASLR ();
-    
     const char *
     ProcessEmbeddedScriptCommands (const char *arg);
 
@@ -183,9 +163,6 @@ public:
 
     void
     Initialize ();
-
-    void
-    InitializeVariables ();
 
     void
     CrossRegisterCommand (const char * dest_cmd, const char * object_type);
@@ -205,9 +182,6 @@ public:
 
     bool
     HasAliasOptions ();
-
-    bool
-    HasInterpreterVariables ();
 
     void
     BuildAliasCommandArgs (CommandObject *alias_cmd_obj, const char *alias_name, Args &cmd_args,
@@ -255,12 +229,10 @@ protected:
 private:
 
     Debugger &m_debugger;   // The debugger session that this interpreter is associated with
-    lldb::ScriptLanguage m_script_language;
     bool m_synchronous_execution;
     CommandObject::CommandMap m_command_dict; // Stores basic built-in commands (they cannot be deleted, removed or overwritten).
     CommandObject::CommandMap m_alias_dict;   // Stores user aliases/abbreviations for commands
     CommandObject::CommandMap m_user_dict;    // Stores user-defined commands
-    VariableMap m_variables;
     OptionArgMap m_alias_options; // Stores any options (with or without arguments) that go with any alias.
     std::vector<std::string> m_command_history;
     std::string m_repeat_command;  // Stores the command that will be executed for an empty command string.

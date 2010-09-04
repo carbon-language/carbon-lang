@@ -94,7 +94,7 @@ CommandObjectHelp::Execute (CommandInterpreter &interpreter, Args& command, Comm
                 Stream &output_strm = result.GetOutputStream();
                 if (sub_cmd_obj->GetOptions() != NULL)
                 {
-                    output_strm.Printf ("%s\n", sub_cmd_obj->GetHelp());
+                    interpreter.OutputFormattedHelpText (output_strm, "", "", sub_cmd_obj->GetHelp(), 1);
                     output_strm.Printf ("\nSyntax: %s\n", sub_cmd_obj->GetSyntax());
                     sub_cmd_obj->GetOptions()->GenerateOptionUsage (output_strm, sub_cmd_obj);
                     const char *long_help = sub_cmd_obj->GetHelpLong();
@@ -104,7 +104,7 @@ CommandObjectHelp::Execute (CommandInterpreter &interpreter, Args& command, Comm
                 }
                 else if (sub_cmd_obj->IsMultiwordObject())
                 {
-                    output_strm.Printf ("%s\n", sub_cmd_obj->GetHelp());
+                    interpreter.OutputFormattedHelpText (output_strm, "", "", sub_cmd_obj->GetHelp(), 1);
                     ((CommandObjectMultiword *) sub_cmd_obj)->GenerateHelpText (interpreter, result);
                 }
                 else
@@ -112,9 +112,9 @@ CommandObjectHelp::Execute (CommandInterpreter &interpreter, Args& command, Comm
                     const char *long_help = sub_cmd_obj->GetHelpLong();
                     if ((long_help != NULL)
                         && (strlen (long_help) > 0))
-                        output_strm.Printf ("%s", long_help);
+                        interpreter.OutputFormattedHelpText (output_strm, "", "", sub_cmd_obj->GetHelpLong(), 1);
                     else
-                        output_strm.Printf ("%s\n", sub_cmd_obj->GetHelp());
+                        interpreter.OutputFormattedHelpText (output_strm, "", "", sub_cmd_obj->GetHelp(), 1);
                     output_strm.Printf ("\nSyntax: %s\n", sub_cmd_obj->GetSyntax());
                 }
             }

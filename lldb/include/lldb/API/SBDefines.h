@@ -50,6 +50,7 @@ class SBListener;
 class SBModule;
 class SBProcess;
 class SBSourceManager;
+class SBStringList;
 class SBSymbol;
 class SBSymbolContext;
 class SBStringList;

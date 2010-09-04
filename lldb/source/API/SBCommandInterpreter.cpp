@@ -107,17 +107,17 @@ SBCommandInterpreter::HandleCompletion (const char *current_line,
     return num_completions;
 }
 
-const char **
-SBCommandInterpreter::GetEnvironmentVariables ()
-{
-    if (m_opaque_ptr)
-    {
-        const Args *env_vars =  m_opaque_ptr->GetEnvironmentVariables();
-        if (env_vars)
-            return env_vars->GetConstArgumentVector ();
-    }
-    return NULL;
-}
+//const char **
+//SBCommandInterpreter::GetEnvironmentVariables ()
+//{
+//    if (m_opaque_ptr)
+//    {
+//        //const Args *env_vars =  m_opaque_ptr->GetEnvironmentVariables();
+//        //if (env_vars)
+//        //    return env_vars->GetConstArgumentVector ();
+//    }
+//    return NULL;
+//}
 
 bool
 SBCommandInterpreter::HasCommands ()
@@ -151,13 +151,13 @@ SBCommandInterpreter::HasAliasOptions ()
     return false;
 }
 
-bool
-SBCommandInterpreter::HasInterpreterVariables ()
-{
-    if (m_opaque_ptr)
-        return m_opaque_ptr->HasInterpreterVariables ();
-    return false;
-}
+//bool
+//SBCommandInterpreter::HasInterpreterVariables ()
+//{
+//    if (m_opaque_ptr)
+//        return m_opaque_ptr->HasInterpreterVariables ();
+//    return false;
+//}
 
 SBProcess
 SBCommandInterpreter::GetProcess ()

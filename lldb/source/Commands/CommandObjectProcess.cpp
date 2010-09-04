@@ -161,11 +161,44 @@ public:
 
         process = target->CreateProcess (interpreter.GetDebugger().GetListener(), plugin_name).get();
 
-        const Args *environment = interpreter.GetEnvironmentVariables();
-        const Args *run_args = interpreter.GetProgramArguments();
-		uint32_t launch_flags = eLaunchFlagNone;
-        if (interpreter.GetDisableASLR())
-			launch_flags |= eLaunchFlagDisableASLR;
+        const char *process_name = process->GetInstanceName().AsCString();
+        StreamString run_args_var_name;
+        StreamString env_vars_var_name;
+        StreamString disable_aslr_var_name;
+        lldb::SettableVariableType var_type;
+        
+        Args *run_args = NULL;
+        run_args_var_name.Printf ("process.[%s].run-args", process_name);
+        StringList run_args_value = Debugger::GetSettingsController()->GetVariable (run_args_var_name.GetData(), 
+                                                                                    var_type);
+        if (run_args_value.GetSize() > 0)
+        {
+            run_args = new Args;
+            for (int i = 0; i < run_args_value.GetSize(); ++i)
+                run_args->AppendArgument (run_args_value.GetStringAtIndex (i));
+        }
+        
+        Args *environment = NULL;
+        env_vars_var_name.Printf ("process.[%s].env-vars", process_name);
+        StringList env_vars_value = Debugger::GetSettingsController()->GetVariable (env_vars_var_name.GetData(), 
+                                                                                    var_type);
+        if (env_vars_value.GetSize() > 0)
+        {
+            environment = new Args;
+            for (int i = 0; i < env_vars_value.GetSize(); ++i)
+                environment->AppendArgument (env_vars_value.GetStringAtIndex (i));
+        }
+
+        uint32_t launch_flags = eLaunchFlagNone;
+        disable_aslr_var_name.Printf ("process.[%s].disable-aslr", process_name);
+        StringList disable_aslr_value = Debugger::GetSettingsController()->GetVariable(disable_aslr_var_name.GetData(),
+                                                                                       var_type);
+        if (disable_aslr_value.GetSize() > 0)
+        {
+            if (strcmp (disable_aslr_value.GetStringAtIndex(0), "true") == 0)
+                launch_flags |= eLaunchFlagDisableASLR;
+
+        }
 
         // There are two possible sources of args to be passed to the process upon launching:  Those the user
         // typed at the run command (launch_args); or those the user pre-set in the run-args variable (run_args).
@@ -179,12 +212,9 @@ public:
         else
         {
             // launch-args was not empty; use that, AND re-set run-args to contains launch-args values.
-            StateVariable *run_args_var = interpreter.GetStateVariable ("run-args");
-            if (run_args_var != NULL)
-            {
-                run_args_var->ArrayClearValues();
-                run_args_var->GetArgs().AppendArguments (launch_args);
-            }
+            std::string new_run_args;
+            launch_args.GetCommandString (new_run_args);
+            Debugger::GetSettingsController()->SetVariable (run_args_var_name.GetData(), new_run_args.c_str(), lldb::eVarSetOperationAssign, false);
         }
 
 

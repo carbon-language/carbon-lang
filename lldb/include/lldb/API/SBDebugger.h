@@ -145,6 +145,12 @@ public:
     static SBDebugger
     FindDebuggerWithID (int id);
 
+    lldb::SBError
+    SetInternalVariable (const char *var_name, const char *value);
+
+    lldb::SBStringList
+    GetInternalVariableValue (const char *var_name);
+
 private:
 
 #ifndef SWIG

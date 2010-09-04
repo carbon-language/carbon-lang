@@ -63,4 +63,21 @@ ScriptInterpreter::CollectDataForBreakpointCommandCallback
     result.AppendError ("ScriptInterpreter::GetScriptCommands(StringList &) is not implemented.");
 }
 
+std::string
+ScriptInterpreter::LanguageToString (lldb::ScriptLanguage language)
+{
+    std::string return_value;
 
+    switch (language)
+    {
+        case eScriptLanguageNone:
+            return_value = "None";
+            break;
+        case eScriptLanguagePython:
+            return_value = "Python";
+            break;
+        
+    }
+
+    return return_value;
+}

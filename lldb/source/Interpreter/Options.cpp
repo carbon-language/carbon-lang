@@ -364,7 +364,13 @@ Options::GenerateOptionUsage
     CommandObject *cmd,
     const char *program_name)
 {
-    uint32_t screen_width = 80;
+    lldb::SettableVariableType var_type;
+    const char *screen_width_str = 
+                            Debugger::GetSettingsController()->GetVariable ("term-width", var_type).GetStringAtIndex(0);
+    uint32_t screen_width = atoi (screen_width_str);
+    if (screen_width == 0)
+        screen_width = 80;
+
     const lldb::OptionDefinition *full_options_table = GetDefinitions();
     const uint32_t save_indent_level = strm.GetIndentLevel();
     const char *name;

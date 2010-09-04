@@ -74,6 +74,8 @@ lldb_private::Initialize ()
         ProcessMacOSX::Initialize();
         SymbolVendorMacOSX::Initialize();
 #endif
+	Debugger::GetSettingsController (false);
+	Process::GetSettingsController (false);
 
 #ifdef __linux__
         ProcessLinux::Initialize();
@@ -106,6 +108,9 @@ lldb_private::Terminate ()
     ProcessMacOSX::Terminate();
     SymbolVendorMacOSX::Terminate();
 #endif
+
+    Process::GetSettingsController (true);
+    Debugger::GetSettingsController (true);
 
 #ifdef __linux__
     ProcessLinux::Terminate();

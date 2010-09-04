@@ -98,6 +98,25 @@ Debugger::GetSP ()
     return debugger_sp;
 }
 
+lldb::DebuggerSP
+Debugger::FindDebuggerWithInstanceName (const ConstString &instance_name)
+{
+    lldb::DebuggerSP debugger_sp;
+   
+    Mutex::Locker locker (GetDebuggerListMutex ());
+    DebuggerList &debugger_list = GetDebuggerList();
+    DebuggerList::iterator pos, end = debugger_list.end();
+
+    for (pos = debugger_list.begin(); pos != end; ++pos)
+    {
+        if ((*pos).get()->m_instance_name == instance_name)
+        {
+            debugger_sp = *pos;
+            break;
+        }
+    }
+    return debugger_sp;
+}
 
 TargetSP
 Debugger::FindTargetWithProcessID (lldb::pid_t pid)
@@ -118,6 +137,7 @@ Debugger::FindTargetWithProcessID (lldb::pid_t pid)
 
 Debugger::Debugger () :
     UserID (g_unique_id++),
+    DebuggerInstanceSettings (*(Debugger::GetSettingsController().get())),
     m_input_comm("debugger.input"),
     m_input_file (),
     m_output_file (),
@@ -513,3 +533,324 @@ Debugger::FindDebuggerWithID (lldb::user_id_t id)
     }
     return debugger_sp;
 }
+
+lldb::UserSettingsControllerSP &
+Debugger::GetSettingsController (bool finish)
+{
+    static lldb::UserSettingsControllerSP g_settings_controller (new DebuggerSettingsController);
+    static bool initialized = false;
+
+    if (!initialized)
+    {
+        UserSettingsControllerSP parent = g_settings_controller->GetParent();
+        if (parent)
+            parent->RegisterChild (g_settings_controller);
+
+        g_settings_controller->CreateSettingsVector (Debugger::DebuggerSettingsController::global_settings_table, 
+                                                     true);
+        g_settings_controller->CreateSettingsVector (Debugger::DebuggerSettingsController::instance_settings_table,
+                                                     false);
+
+	g_settings_controller->InitializeGlobalVariables ();
+        g_settings_controller->CreateDefaultInstanceSettings ();
+	initialized = true;
+    }
+
+    if (finish)
+    {
+        UserSettingsControllerSP parent = g_settings_controller->GetParent();
+        if (parent)
+            parent->RemoveChild (g_settings_controller);
+        g_settings_controller.reset();
+    }
+    return g_settings_controller;
+}
+
+//--------------------------------------------------
+// class Debugger::DebuggerSettingsController
+//--------------------------------------------------
+
+Debugger::DebuggerSettingsController::DebuggerSettingsController () :
+    UserSettingsController ("", lldb::UserSettingsControllerSP()),
+    m_term_width (80)
+{
+    m_default_settings.reset (new DebuggerInstanceSettings (*this, InstanceSettings::GetDefaultName().AsCString()));
+}
+
+Debugger::DebuggerSettingsController::~DebuggerSettingsController ()
+{
+}
+
+
+lldb::InstanceSettingsSP
+Debugger::DebuggerSettingsController::CreateNewInstanceSettings ()
+{
+    DebuggerInstanceSettings *new_settings = new DebuggerInstanceSettings (*(Debugger::GetSettingsController().get()));
+    lldb::InstanceSettingsSP new_settings_sp (new_settings);
+    return new_settings_sp;
+}
+
+bool
+Debugger::DebuggerSettingsController::ValidTermWidthValue (const char *value, Error err)
+{
+    bool valid = true;
+
+    // Verify we have a value string.
+    if (value == NULL
+        || strlen (value) == 0)
+    {
+        valid = false;
+        err.SetErrorString ("Missing value.  Can't set terminal width without a value.\n");
+    }
+
+    // Verify the string consists entirely of digits.
+    if (valid)
+    {
+        int len = strlen (value);
+        for (int i = 0; i < len; ++i)
+            if (! isdigit (value[i]))
+            {
+                valid = false;
+                err.SetErrorStringWithFormat ("'%s' is not a valid representation of an integer.\n", value);
+            }
+    }
+
+    // Verify the term-width is 'reasonable' (e.g. 10 <= width <= 250).
+    if (valid)
+    {
+        int width = atoi (value);
+        if (width < 10
+            || width > 250)
+        {
+            valid = false;
+            err.SetErrorString ("Invalid term-width value; value must be between 10 and 250.\n");
+        }
+    }
+
+    return valid;
+}
+
+
+//--------------------------------------------------
+//  class DebuggerInstanceSettings
+//--------------------------------------------------
+
+DebuggerInstanceSettings::DebuggerInstanceSettings (UserSettingsController &owner, const char *name) :
+    InstanceSettings (owner, (name == NULL ? CreateInstanceName ().AsCString() : name)),
+    m_prompt (),
+    m_script_lang ()
+{
+    if (name == NULL)
+    {
+        const lldb::InstanceSettingsSP &pending_settings = m_owner.FindPendingSettings (m_instance_name);
+        CopyInstanceSettings (pending_settings, false);
+        m_owner.RemovePendingSettings (m_instance_name);
+    }
+}
+
+DebuggerInstanceSettings::DebuggerInstanceSettings (const DebuggerInstanceSettings &rhs) :
+    InstanceSettings (*(Debugger::GetSettingsController().get()), CreateInstanceName ().AsCString()),
+    m_prompt (rhs.m_prompt),
+    m_script_lang (rhs.m_script_lang)
+{
+    const lldb::InstanceSettingsSP &pending_settings = m_owner.FindPendingSettings (m_instance_name);
+    CopyInstanceSettings (pending_settings, false);
+    m_owner.RemovePendingSettings (m_instance_name);
+}
+
+DebuggerInstanceSettings::~DebuggerInstanceSettings ()
+{
+}
+
+DebuggerInstanceSettings&
+DebuggerInstanceSettings::operator= (const DebuggerInstanceSettings &rhs)
+{
+    if (this != &rhs)
+    {
+        m_prompt = rhs.m_prompt;
+        m_script_lang = rhs.m_script_lang;
+    }
+
+    return *this;
+}
+
+void
+DebuggerInstanceSettings::UpdateInstanceSettingsVariable (const ConstString &var_name,
+                                                          const char *index_value,
+                                                          const char *value,
+                                                          const ConstString &instance_name,
+                                                          const SettingEntry &entry,
+                                                          lldb::VarSetOperationType op,
+                                                          Error &err,
+                                                          bool pending)
+{
+    if (var_name == PromptVarName())
+    {
+      UserSettingsController::UpdateStringVariable (op, m_prompt, value, err);
+        if (!pending)
+        {
+            BroadcastPromptChange (instance_name, m_prompt.c_str());
+        }
+    }
+    else if (var_name == ScriptLangVarName())
+    {
+        bool success;
+        m_script_lang = Args::StringToScriptLanguage (value, eScriptLanguageDefault,
+                                                      &success);
+    }
+}
+
+void
+Debugger::DebuggerSettingsController::UpdateGlobalVariable (const ConstString &var_name,
+                                                            const char *index_value,
+                                                            const char *value,
+                                                            const SettingEntry &entry,
+                                                            lldb::VarSetOperationType op,
+                                                            Error &err)
+{
+    static ConstString term_width_name ("term-width");
+    
+    if (var_name == term_width_name)
+    {
+        if (ValidTermWidthValue (value, err))
+        {
+            m_term_width = atoi (value);
+        }
+    }
+}
+
+void
+DebuggerInstanceSettings::GetInstanceSettingsValue (const SettingEntry &entry,
+                                                    const ConstString &var_name,
+                                                    StringList &value)
+{
+    if (var_name == PromptVarName())
+    {
+        value.AppendString (m_prompt.c_str());
+        
+    }
+    else if (var_name == ScriptLangVarName())
+    {
+        value.AppendString (ScriptInterpreter::LanguageToString (m_script_lang).c_str());
+    }
+}
+
+void
+DebuggerInstanceSettings::CopyInstanceSettings (const lldb::InstanceSettingsSP &new_settings,
+                                                bool pending)
+{
+    if (new_settings.get() == NULL)
+        return;
+
+    DebuggerInstanceSettings *new_debugger_settings = (DebuggerInstanceSettings *) new_settings.get();
+
+    m_prompt = new_debugger_settings->m_prompt;
+    if (!pending)
+        BroadcastPromptChange (m_instance_name, m_prompt.c_str());
+  
+    m_script_lang = new_debugger_settings->m_script_lang;
+}
+
+void
+Debugger::DebuggerSettingsController::GetGlobalSettingsValue (const ConstString &var_name,
+                                                              StringList &value)
+{
+    static ConstString term_width_name ("term-width");
+  
+    if (var_name == term_width_name)
+    {
+        StreamString width_str;
+        width_str.Printf ("%d", m_term_width);
+        value.AppendString (width_str.GetData());
+    }
+}
+
+bool
+DebuggerInstanceSettings::BroadcastPromptChange (const ConstString &instance_name, const char *new_prompt)
+{
+    std::string tmp_prompt;
+    
+    if (new_prompt != NULL)
+    {
+        tmp_prompt = new_prompt ;
+        int len = tmp_prompt.size();
+        if (len > 1
+            && (tmp_prompt[0] == '\'' || tmp_prompt[0] == '"')
+            && (tmp_prompt[len-1] == tmp_prompt[0]))
+        {
+            tmp_prompt = tmp_prompt.substr(1,len-2);
+        }
+        len = tmp_prompt.size();
+        if (tmp_prompt[len-1] != ' ')
+            tmp_prompt.append(" ");
+    }
+    EventSP new_event_sp;
+    new_event_sp.reset (new Event(CommandInterpreter::eBroadcastBitResetPrompt, 
+                                  new EventDataBytes (tmp_prompt.c_str())));
+
+    if (instance_name.GetLength() != 0)
+    {
+        // Set prompt for a particular instance.
+        Debugger *dbg = Debugger::FindDebuggerWithInstanceName (instance_name).get();
+        if (dbg != NULL)
+        {
+            dbg->GetCommandInterpreter().BroadcastEvent (new_event_sp);
+        }
+    }
+
+    return true;
+}
+
+const ConstString
+DebuggerInstanceSettings::CreateInstanceName ()
+{
+    static int instance_count = 1;
+    StreamString sstr;
+
+    sstr.Printf ("debugger_%d", instance_count);
+    ++instance_count;
+
+    const ConstString ret_val (sstr.GetData());
+
+    return ret_val;
+}
+
+const ConstString &
+DebuggerInstanceSettings::PromptVarName ()
+{
+    static ConstString prompt_var_name ("prompt");
+
+    return prompt_var_name;
+}
+
+const ConstString &
+DebuggerInstanceSettings::ScriptLangVarName ()
+{
+    static ConstString script_lang_var_name ("script-lang");
+
+    return script_lang_var_name;
+}
+
+//--------------------------------------------------
+// DebuggerSettingsController Variable Tables
+//--------------------------------------------------
+
+
+SettingEntry
+Debugger::DebuggerSettingsController::global_settings_table[] =
+{
+  //{ "var-name",    var-type,      "default", enum-table, init'd, hidden, "help-text"},
+    { "term-width" , eSetVarTypeInt, "80"    , NULL,       false , false , "The maximum number of columns to use for displaying text." },
+    {  NULL, eSetVarTypeNone, NULL, NULL, 0, 0, NULL }
+};
+
+
+
+SettingEntry
+Debugger::DebuggerSettingsController::instance_settings_table[] =
+{
+  //{ "var-name",     var-type ,        "default", enum-table, init'd, hidden, "help-text"},
+    { "script-lang" , eSetVarTypeString, "python", NULL,       false,  false,  "The script language to be used for evaluating user-written scripts." },
+    { "prompt"      , eSetVarTypeString, "(lldb)", NULL,       false,  false,  "The debugger command line prompt displayed for the user." },
+    {  NULL, eSetVarTypeNone, NULL, NULL, 0, 0, NULL }
+};
