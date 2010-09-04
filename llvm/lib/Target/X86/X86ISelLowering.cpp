@@ -5467,18 +5467,18 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const {
   SmallVector<int, 16> M;
   SVOp->getMask(M);
 
-  // Very little shuffling can be done for 64-bit vectors right now.
-  if (VT.getSizeInBits() == 64)
-    return isPALIGNRMask(M, VT, Subtarget->hasSSSE3()) ? Op : SDValue();
-
-  // FIXME: pshufb, blends, shifts.
-  if (VT.getVectorNumElements() == 2)
-    return Op;
-
   if (isPALIGNRMask(M, VT, HasSSSE3))
     return getTargetShuffleNode(X86ISD::PALIGN, dl, VT, V1, V2,
                                 X86::getShufflePALIGNRImmediate(SVOp),
                                 DAG);
+
+  // MMX shuffles not already handled must be expanded.
+  if (VT.getSizeInBits() == 64)
+    return SDValue();
+
+  // FIXME: pshufb, blends, shifts.
+  if (VT.getVectorNumElements() == 2)
+    return Op;
 
   if (ShuffleVectorSDNode::isSplatMask(&M[0], VT) &&
       SVOp->getSplatIndex() == 0 && V2IsUndef) {
