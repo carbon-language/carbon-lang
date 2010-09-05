@@ -1333,7 +1333,7 @@ void CXXNameMangler::mangleType(const DependentSizedArrayType *T) {
   mangleType(T->getElementType());
 }
 void CXXNameMangler::mangleType(const IncompleteArrayType *T) {
-  Out << 'A' << '_';
+  Out << "A_";
   mangleType(T->getElementType());
 }
 
@@ -1947,7 +1947,7 @@ void CXXNameMangler::mangleExpression(const Expr *E, unsigned Arity) {
   case Expr::ImaginaryLiteralClass: {
     const ImaginaryLiteral *IE = cast<ImaginaryLiteral>(E);
     // Mangle as if a complex literal.
-    // Proposal from David Vandervoorde, 2010.06.30.
+    // Proposal from David Vandevoorde, 2010.06.30.
     Out << 'L';
     mangleType(E->getType());
     if (const FloatingLiteral *Imag =
@@ -1957,7 +1957,7 @@ void CXXNameMangler::mangleExpression(const Expr *E, unsigned Arity) {
       Out << '_';
       mangleFloat(Imag->getValue());
     } else {
-      Out << '0' << '_';
+      Out << "0_";
       llvm::APSInt Value(cast<IntegerLiteral>(IE->getSubExpr())->getValue());
       if (IE->getSubExpr()->getType()->isSignedIntegerType())
         Value.setIsSigned(true);
