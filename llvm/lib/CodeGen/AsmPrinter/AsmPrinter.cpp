@@ -327,6 +327,13 @@ void AsmPrinter::EmitGlobalVariable(const GlobalVariable *GV) {
   // Handle thread local data for mach-o which requires us to output an
   // additional structure of data and mangle the original symbol so that we
   // can reference it later.
+  //
+  // TODO: This should become an "emit thread local global" method on TLOF.
+  // All of this macho specific stuff should be sunk down into TLOFMachO and
+  // stuff like "TLSExtraDataSection" should no longer be part of the parent
+  // TLOF class.  This will also make it more obvious that stuff like
+  // MCStreamer::EmitTBSSSymbol is macho specific and only called from macho
+  // specific code.
   if (GVKind.isThreadLocal() && MAI->hasMachoTBSSDirective()) {
     // Emit the .tbss symbol
     MCSymbol *MangSym = 
