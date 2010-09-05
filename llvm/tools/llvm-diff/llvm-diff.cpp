@@ -63,18 +63,19 @@ static Module *ReadModule(LLVMContext &Context, StringRef Name) {
 }
 
 namespace {
-struct DiffContext {
-  DiffContext(Value *L, Value *R)
-    : L(L), R(R), Differences(false), IsFunction(isa<Function>(L)) {}
-  Value *L;
-  Value *R;
-  bool Differences;
-  bool IsFunction;
-  DenseMap<Value*,unsigned> LNumbering;
-  DenseMap<Value*,unsigned> RNumbering;
-};
+  struct DiffContext {
+    DiffContext(Value *L, Value *R)
+      : L(L), R(R), Differences(false), IsFunction(isa<Function>(L)) {}
+    Value *L;
+    Value *R;
+    bool Differences;
+    bool IsFunction;
+    DenseMap<Value*,unsigned> LNumbering;
+    DenseMap<Value*,unsigned> RNumbering;
+  };
+}
 
-void ComputeNumbering(Function *F, DenseMap<Value*,unsigned> &Numbering) {
+static void ComputeNumbering(Function *F, DenseMap<Value*,unsigned> &Numbering){
   unsigned IN = 0;
 
   // Arguments get the first numbers.
@@ -98,6 +99,7 @@ void ComputeNumbering(Function *F, DenseMap<Value*,unsigned> &Numbering) {
   assert(!Numbering.empty() && "asked for numbering but numbering was no-op");
 }
 
+namespace {
 class DiffConsumer : public DifferenceEngine::Consumer {
 private:
   raw_ostream &out;
@@ -273,7 +275,7 @@ public:
   }
   
 };
-}
+} // end anonymous namespace
 
 static void diffGlobal(DifferenceEngine &Engine, Module *L, Module *R,
                        StringRef Name) {
@@ -292,14 +294,14 @@ static void diffGlobal(DifferenceEngine &Engine, Module *L, Module *R,
     errs() << "No function named @" << Name << " in right module\n";
 }
 
-cl::opt<std::string> LeftFilename(cl::Positional,
-                                  cl::desc("<first file>"),
-                                  cl::Required);
-cl::opt<std::string> RightFilename(cl::Positional,
-                                   cl::desc("<second file>"),
-                                   cl::Required);
-cl::list<std::string> GlobalsToCompare(cl::Positional,
-                                       cl::desc("<globals to compare>"));
+static cl::opt<std::string> LeftFilename(cl::Positional,
+                                         cl::desc("<first file>"),
+                                         cl::Required);
+static cl::opt<std::string> RightFilename(cl::Positional,
+                                          cl::desc("<second file>"),
+                                          cl::Required);
+static cl::list<std::string> GlobalsToCompare(cl::Positional,
+                                              cl::desc("<globals to compare>"));
 
 int main(int argc, char **argv) {
   cl::ParseCommandLineOptions(argc, argv);
