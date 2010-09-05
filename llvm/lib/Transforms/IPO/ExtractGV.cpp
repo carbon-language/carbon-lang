@@ -55,7 +55,7 @@ namespace {
           if (I->hasLocalLinkage())
             I->setVisibility(GlobalValue::HiddenVisibility);
           I->setLinkage(GlobalValue::ExternalLinkage);
-          if (deleteStuff == Named.count(I))
+          if (deleteStuff == (bool)Named.count(I))
             I->setInitializer(0);
         }
 
@@ -65,7 +65,7 @@ namespace {
           if (I->hasLocalLinkage())
             I->setVisibility(GlobalValue::HiddenVisibility);
           I->setLinkage(GlobalValue::ExternalLinkage);
-          if (deleteStuff == Named.count(I))
+          if (deleteStuff == (bool)Named.count(I))
             I->deleteBody();
         }
 
