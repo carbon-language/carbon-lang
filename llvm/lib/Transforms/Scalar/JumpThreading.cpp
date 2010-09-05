@@ -726,10 +726,9 @@ bool JumpThreading::ProcessBlock(BasicBlock *BB) {
       if (Baseline != LazyValueInfo::Unknown) {
         // Check that all remaining incoming values match the first one.
         while (++PI != PE) {
-          LazyValueInfo::Tristate Ret = LVI->getPredicateOnEdge(
-                                          CondCmp->getPredicate(),
-                                          CondCmp->getOperand(0),
-                                          CondConst, *PI, BB);
+          LazyValueInfo::Tristate Ret =
+            LVI->getPredicateOnEdge(CondCmp->getPredicate(),
+                                    CondCmp->getOperand(0), CondConst, *PI, BB);
           if (Ret != Baseline) break;
         }
         
