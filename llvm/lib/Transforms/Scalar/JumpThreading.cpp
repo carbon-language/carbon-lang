@@ -443,8 +443,8 @@ ComputeValueKnownInPredecessors(Value *V, BasicBlock *BB,PredValueInfo &Result){
     
       // Try to use constant folding to simplify the binary operator.
       for (unsigned i = 0, e = LHSVals.size(); i != e; ++i) {
-        Constant *V = LHSVals[i].first ? LHSVals[i].first :
-                                 cast<Constant>(UndefValue::get(BO->getType()));
+        Constant *V = LHSVals[i].first;
+        if (V == 0) V = UndefValue::get(BO->getType());
         Constant *Folded = ConstantExpr::get(BO->getOpcode(), V, CI);
         
         PushConstantIntOrUndef(Result, Folded, LHSVals[i].second);
@@ -518,8 +518,8 @@ ComputeValueKnownInPredecessors(Value *V, BasicBlock *BB,PredValueInfo &Result){
         ComputeValueKnownInPredecessors(I->getOperand(0), BB, LHSVals);
         
         for (unsigned i = 0, e = LHSVals.size(); i != e; ++i) {
-          Constant *V = LHSVals[i].first ? LHSVals[i].first :
-                           cast<Constant>(UndefValue::get(CmpConst->getType()));
+          Constant *V = LHSVals[i].first;
+          if (V == 0) V = UndefValue::get(CmpConst->getType());
           Constant *Folded = ConstantExpr::getCompare(Cmp->getPredicate(),
                                                       V, CmpConst);
           PushConstantIntOrUndef(Result, Folded, LHSVals[i].second);
