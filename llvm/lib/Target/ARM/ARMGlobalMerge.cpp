@@ -67,7 +67,7 @@
 using namespace llvm;
 
 namespace {
-  class LLVM_LIBRARY_VISIBILITY ARMGlobalMerge : public FunctionPass {
+  class ARMGlobalMerge : public FunctionPass {
     /// TLI - Keep a pointer of a TargetLowering to consult for determining
     /// target type sizes.
     const TargetLowering *TLI;
@@ -81,7 +81,7 @@ namespace {
       : FunctionPass(ID), TLI(tli) {}
 
     virtual bool doInitialization(Module &M);
-    virtual bool runOnFunction(Function& F);
+    virtual bool runOnFunction(Function &F);
 
     const char *getPassName() const {
       return "Merge internal globals";
@@ -95,13 +95,11 @@ namespace {
     struct GlobalCmp {
       const TargetData *TD;
 
-      GlobalCmp(const TargetData *td):
-        TD(td) { }
+      GlobalCmp(const TargetData *td) : TD(td) { }
 
-      bool operator() (const GlobalVariable* GV1,
-                       const GlobalVariable* GV2) {
-        const Type* Ty1 = cast<PointerType>(GV1->getType())->getElementType();
-        const Type* Ty2 = cast<PointerType>(GV2->getType())->getElementType();
+      bool operator()(const GlobalVariable *GV1, const GlobalVariable *GV2) {
+        const Type *Ty1 = cast<PointerType>(GV1->getType())->getElementType();
+        const Type *Ty2 = cast<PointerType>(GV2->getType())->getElementType();
 
         return (TD->getTypeAllocSize(Ty1) < TD->getTypeAllocSize(Ty2));
       }
@@ -131,26 +129,23 @@ bool ARMGlobalMerge::doMerge(SmallVectorImpl<GlobalVariable*> &Globals,
     std::vector<const Type*> Tys;
     std::vector<Constant*> Inits;
     for (j = i; MergedSize < MaxOffset && j != e; ++j) {
-      const Type* Ty = Globals[j]->getType()->getElementType();
+      const Type *Ty = Globals[j]->getType()->getElementType();
       Tys.push_back(Ty);
       Inits.push_back(Globals[j]->getInitializer());
       MergedSize += TD->getTypeAllocSize(Ty);
     }
 
-    StructType* MergedTy = StructType::get(M.getContext(), Tys);
-    Constant* MergedInit = ConstantStruct::get(MergedTy, Inits);
-    GlobalVariable* MergedGV = new GlobalVariable(M, MergedTy, isConst,
+    StructType *MergedTy = StructType::get(M.getContext(), Tys);
+    Constant *MergedInit = ConstantStruct::get(MergedTy, Inits);
+    GlobalVariable *MergedGV = new GlobalVariable(M, MergedTy, isConst,
                                                   GlobalValue::InternalLinkage,
                                                   MergedInit, "merged");
     for (size_t k = i; k < j; ++k) {
-      SmallVector<Constant*, 2> Idx;
-      Idx.push_back(ConstantInt::get(Int32Ty, 0));
-      Idx.push_back(ConstantInt::get(Int32Ty, k-i));
-
-      Constant* GEP =
-        ConstantExpr::getInBoundsGetElementPtr(MergedGV,
-                                               &Idx[0], Idx.size());
-
+      Constant *Idx[2] = {
+        ConstantInt::get(Int32Ty, 0),
+        ConstantInt::get(Int32Ty, k-i)
+      };
+      Constant *GEP = ConstantExpr::getInBoundsGetElementPtr(MergedGV, Idx, 2);
       Globals[k]->replaceAllUsesWith(GEP);
       Globals[k]->eraseFromParent();
     }
@@ -161,7 +156,7 @@ bool ARMGlobalMerge::doMerge(SmallVectorImpl<GlobalVariable*> &Globals,
 }
 
 
-bool ARMGlobalMerge::doInitialization(Module& M) {
+bool ARMGlobalMerge::doInitialization(Module &M) {
   SmallVector<GlobalVariable*, 16> Globals, ConstGlobals;
   const TargetData *TD = TLI->getTargetData();
   unsigned MaxOffset = TLI->getMaximalGlobalOffset();
@@ -203,7 +198,7 @@ bool ARMGlobalMerge::doInitialization(Module& M) {
   return Changed;
 }
 
-bool ARMGlobalMerge::runOnFunction(Function& F) {
+bool ARMGlobalMerge::runOnFunction(Function &F) {
   return false;
 }
 
