@@ -63,6 +63,13 @@ public:
 
   virtual bool TargetSelectInstruction(const Instruction *I);
 
+  /// TryToFoldLoad - The specified machine instr operand is a vreg, and that
+  /// vreg is being provided by the specified load instruction.  If possible,
+  /// try to fold the load as an operand to the instruction, returning true if
+  /// possible.
+  virtual bool TryToFoldLoad(MachineInstr *MI, unsigned OpNo,
+                             const LoadInst *LI);
+  
 #include "X86GenFastISel.inc"
 
 private:
@@ -1940,6 +1947,34 @@ unsigned X86FastISel::TargetMaterializeAlloca(const AllocaInst *C) {
                          TII.get(Opc), ResultReg), AM);
   return ResultReg;
 }
+
+/// TryToFoldLoad - The specified machine instr operand is a vreg, and that
+/// vreg is being provided by the specified load instruction.  If possible,
+/// try to fold the load as an operand to the instruction, returning true if
+/// possible.
+bool X86FastISel::TryToFoldLoad(MachineInstr *MI, unsigned OpNo,
+                                const LoadInst *LI) {
+  X86AddressMode AM;
+  if (!X86SelectAddress(LI->getOperand(0), AM))
+    return false;
+  
+  X86InstrInfo &XII = (X86InstrInfo&)TII;
+  
+  unsigned Size = TD.getTypeAllocSize(LI->getType());
+  unsigned Alignment = LI->getAlignment();
+
+  SmallVector<MachineOperand, 8> AddrOps;
+  AM.getFullAddress(AddrOps);
+  
+  MachineInstr *Result =
+    XII.foldMemoryOperandImpl(*FuncInfo.MF, MI, OpNo, AddrOps, Size, Alignment);
+  if (Result == 0) return false;
+  
+  MI->getParent()->insert(MI, Result);
+  MI->eraseFromParent();
+  return true;
+}
+
 
 namespace llvm {
   llvm::FastISel *X86::createFastISel(FunctionLoweringInfo &funcInfo) {

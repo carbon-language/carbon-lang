@@ -56,6 +56,31 @@ struct X86AddressMode {
     : BaseType(RegBase), Scale(1), IndexReg(0), Disp(0), GV(0), GVOpFlags(0) {
     Base.Reg = 0;
   }
+  
+  
+  void getFullAddress(SmallVectorImpl<MachineOperand> &MO) {
+    assert(Scale == 1 || Scale == 2 || Scale == 4 || Scale == 8);
+    
+    if (BaseType == X86AddressMode::RegBase)
+      MO.push_back(MachineOperand::CreateReg(Base.Reg, false, false,
+                                             false, false, false, 0, false));
+    else {
+      assert(BaseType == X86AddressMode::FrameIndexBase);
+      MO.push_back(MachineOperand::CreateFI(Base.FrameIndex));
+    }
+    
+    MO.push_back(MachineOperand::CreateImm(Scale));
+    MO.push_back(MachineOperand::CreateReg(IndexReg, false, false,
+                                           false, false, false, 0, false));
+    
+    if (GV)
+      MO.push_back(MachineOperand::CreateGA(GV, Disp, GVOpFlags));
+    else
+      MO.push_back(MachineOperand::CreateImm(Disp));
+    
+    MO.push_back(MachineOperand::CreateReg(0, false, false,
+                                           false, false, false, 0, false));
+  }
 };
 
 /// addDirectMem - This function is used to add a direct memory reference to the
@@ -101,10 +126,11 @@ addFullAddress(const MachineInstrBuilder &MIB,
   
   if (AM.BaseType == X86AddressMode::RegBase)
     MIB.addReg(AM.Base.Reg);
-  else if (AM.BaseType == X86AddressMode::FrameIndexBase)
+  else {
+    assert(AM.BaseType == X86AddressMode::FrameIndexBase);
     MIB.addFrameIndex(AM.Base.FrameIndex);
-  else
-    assert (0);
+  }
+
   MIB.addImm(AM.Scale).addReg(AM.IndexReg);
   if (AM.GV)
     MIB.addGlobalAddress(AM.GV, AM.Disp, AM.GVOpFlags);

@@ -661,6 +661,43 @@ void SelectionDAGISel::PrepareEHLandingPad() {
   }
 }
 
+
+
+  
+bool SelectionDAGISel::TryToFoldFastISelLoad(const LoadInst *LI,
+                                             FastISel *FastIS) {
+  // Don't try to fold volatile loads.  Target has to deal with alignment
+  // constraints.
+  if (LI->isVolatile()) return false;
+  
+  // Figure out which vreg this is going into.
+  unsigned LoadReg = FastIS->getRegForValue(LI);
+  assert(LoadReg && "Load isn't already assigned a vreg? ");
+
+  // Check to see what the uses of this vreg are.  If it has no uses, or more
+  // than one use (at the machine instr level) then we can't fold it.
+  MachineRegisterInfo::reg_iterator RI = RegInfo->reg_begin(LoadReg);
+  if (RI == RegInfo->reg_end())
+    return false;
+  
+  // See if there is exactly one use of the vreg.  If there are multiple uses,
+  // then the instruction got lowered to multiple machine instructions or the
+  // use of the loaded value ended up being multiple operands of the result, in
+  // either case, we can't fold this.
+  MachineRegisterInfo::reg_iterator PostRI = RI; ++PostRI;
+  if (PostRI != RegInfo->reg_end())
+    return false;
+  
+  assert(RI.getOperand().isUse() &&
+         "The only use of the vreg must be a use, we haven't emitted the def!");
+
+  // Ask the target to try folding the load.
+  return FastIS->TryToFoldLoad(&*RI, RI.getOperandNo(), LI);
+}
+
+  
+
+
 void SelectionDAGISel::SelectAllBasicBlocks(const Function &Fn) {
   // Initialize the Fast-ISel state, if needed.
   FastISel *FastIS = 0;
@@ -723,8 +760,21 @@ void SelectionDAGISel::SelectAllBasicBlocks(const Function &Fn) {
         FastIS->recomputeInsertPt();
 
         // Try to select the instruction with FastISel.
-        if (FastIS->SelectInstruction(Inst))
+        if (FastIS->SelectInstruction(Inst)) {
+          // If fast isel succeeded, check to see if there is a single-use
+          // non-volatile load right before the selected instruction, and see if
+          // the load is used by the instruction.  If so, try to fold it.
+          const Instruction *BeforeInst = 0;
+          if (Inst != Begin)
+            BeforeInst = llvm::prior(llvm::prior(BI));
+          if (BeforeInst && isa<LoadInst>(BeforeInst) &&
+              BeforeInst->hasOneUse() && *BeforeInst->use_begin() == Inst &&
+              TryToFoldFastISelLoad(cast<LoadInst>(BeforeInst), FastIS)) {
+            // If we succeeded, don't re-select the load.
+            --BI;
+          }          
           continue;
+        }
 
         // Then handle certain instructions as single-LLVM-Instruction blocks.
         if (isa<CallInst>(Inst)) {

@@ -845,17 +845,17 @@ public:
   /// SetSSEDomain - Set the SSEDomain of MI.
   void SetSSEDomain(MachineInstr *MI, unsigned Domain) const;
 
+  MachineInstr* foldMemoryOperandImpl(MachineFunction &MF,
+                                      MachineInstr* MI,
+                                      unsigned OpNum,
+                                      const SmallVectorImpl<MachineOperand> &MOs,
+                                      unsigned Size, unsigned Alignment) const;
+  
 private:
   MachineInstr * convertToThreeAddressWithLEA(unsigned MIOpc,
                                               MachineFunction::iterator &MFI,
                                               MachineBasicBlock::iterator &MBBI,
                                               LiveVariables *LV) const;
-
-  MachineInstr* foldMemoryOperandImpl(MachineFunction &MF,
-                                     MachineInstr* MI,
-                                     unsigned OpNum,
-                                     const SmallVectorImpl<MachineOperand> &MOs,
-                                     unsigned Size, unsigned Alignment) const;
 
   /// isFrameOperand - Return true and the FrameIndex if the specified
   /// operand and follow operands form a reference to the stack frame.
