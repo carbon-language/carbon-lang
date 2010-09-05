@@ -86,27 +86,57 @@ static unsigned ProfileFunction(const Function *F) {
 
 class ComparableFunction {
 public:
+  static const ComparableFunction EmptyKey;
+  static const ComparableFunction TombstoneKey;
+
   ComparableFunction(Function *Func, TargetData *TD)
     : Func(Func), Hash(ProfileFunction(Func)), TD(TD) {}
 
-  AssertingVH<Function> const Func;
-  const unsigned Hash;
-  TargetData * const TD;
+  Function *getFunc() const { return Func; }
+  unsigned getHash() const { return Hash; }
+  TargetData *getTD() const { return TD; }
+
+  // Drops AssertingVH reference to the function. Outside of debug mode, this
+  // does nothing.
+  void release() {
+    assert(Func &&
+           "Attempted to release function twice, or release empty/tombstone!");
+    Func = NULL;
+  }
+
+private:
+  explicit ComparableFunction(unsigned Hash)
+    : Func(NULL), Hash(Hash), TD(NULL) {}
+
+  AssertingVH<Function> Func;
+  unsigned Hash;
+  TargetData *TD;
 };
 
-struct MergeFunctionsEqualityInfo {
-  static ComparableFunction *getEmptyKey() {
-    return reinterpret_cast<ComparableFunction*>(0);
-  }
-  static ComparableFunction *getTombstoneKey() {
-    return reinterpret_cast<ComparableFunction*>(-1);
-  }
-  static unsigned getHashValue(const ComparableFunction *CF) {
-    return CF->Hash;
-  }
-  static bool isEqual(const ComparableFunction *LHS,
-                      const ComparableFunction *RHS);
-};
+const ComparableFunction ComparableFunction::EmptyKey = ComparableFunction(0);
+const ComparableFunction ComparableFunction::TombstoneKey =
+    ComparableFunction(1);
+
+} // anonymous namespace
+
+namespace llvm {
+  template <>
+  struct DenseMapInfo<ComparableFunction> {
+    static ComparableFunction getEmptyKey() {
+      return ComparableFunction::EmptyKey;
+    }
+    static ComparableFunction getTombstoneKey() {
+      return ComparableFunction::TombstoneKey;
+    }
+    static unsigned getHashValue(const ComparableFunction &CF) {
+      return CF.getHash();
+    }
+    static bool isEqual(const ComparableFunction &LHS,
+                        const ComparableFunction &RHS);
+  };
+}
+
+namespace {
 
 /// MergeFunctions finds functions which will generate identical machine code,
 /// by considering all pointer types to be equivalent. Once identified,
@@ -121,12 +151,12 @@ public:
   bool runOnModule(Module &M);
 
 private:
-  typedef DenseSet<ComparableFunction *, MergeFunctionsEqualityInfo> FnSetType;
+  typedef DenseSet<ComparableFunction> FnSetType;
 
 
   /// Insert a ComparableFunction into the FnSet, or merge it away if it's
   /// equal to one that's already present.
-  bool Insert(FnSetType &FnSet, ComparableFunction *NewF);
+  bool Insert(FnSetType &FnSet, ComparableFunction &NewF);
 
   /// MergeTwoFunctions - Merge two equivalent functions. Upon completion, G
   /// may be deleted, or may be converted into a thunk. In either case, it
@@ -602,23 +632,23 @@ void MergeFunctions::MergeTwoFunctions(Function *F, Function *G) const {
 
 // Insert - Insert a ComparableFunction into the FnSet, or merge it away if
 // equal to one that's already inserted.
-bool MergeFunctions::Insert(FnSetType &FnSet, ComparableFunction *NewF) {
+bool MergeFunctions::Insert(FnSetType &FnSet, ComparableFunction &NewF) {
   std::pair<FnSetType::iterator, bool> Result = FnSet.insert(NewF);
   if (Result.second)
     return false;
 
-  ComparableFunction *OldF = *Result.first;
-  assert(OldF && "Expected a hash collision");
+  const ComparableFunction &OldF = *Result.first;
 
   // Never thunk a strong function to a weak function.
-  assert(!OldF->Func->isWeakForLinker() || NewF->Func->isWeakForLinker());
+  assert(!OldF.getFunc()->isWeakForLinker() ||
+         NewF.getFunc()->isWeakForLinker());
 
-  DEBUG(dbgs() << "  " << OldF->Func->getName() << " == "
-               << NewF->Func->getName() << '\n');
+  DEBUG(dbgs() << "  " << OldF.getFunc()->getName() << " == "
+               << NewF.getFunc()->getName() << '\n');
 
-  Function *DeleteF = NewF->Func;
-  delete NewF;
-  MergeTwoFunctions(OldF->Func, DeleteF);
+  Function *DeleteF = NewF.getFunc();
+  NewF.release();
+  MergeTwoFunctions(OldF.getFunc(), DeleteF);
   return true;
 }
 
@@ -701,7 +731,7 @@ bool MergeFunctions::runOnModule(Module &M) {
       Function *F = I++;
       if (!F->isDeclaration() && !F->hasAvailableExternallyLinkage() &&
           !F->isWeakForLinker() && !IsThunk(F)) {
-        ComparableFunction *CF = new ComparableFunction(F, TD);
+        ComparableFunction CF = ComparableFunction(F, TD);
         LocalChanged |= Insert(FnSet, CF);
       }
     }
@@ -714,24 +744,25 @@ bool MergeFunctions::runOnModule(Module &M) {
       Function *F = I++;
       if (!F->isDeclaration() && !F->hasAvailableExternallyLinkage() &&
           F->isWeakForLinker() && !IsThunk(F)) {
-        ComparableFunction *CF = new ComparableFunction(F, TD);
+        ComparableFunction CF = ComparableFunction(F, TD);
         LocalChanged |= Insert(FnSet, CF);
       }
     }
-    DeleteContainerPointers(FnSet);
     Changed |= LocalChanged;
   } while (LocalChanged);
 
   return Changed;
 }
 
-bool MergeFunctionsEqualityInfo::isEqual(const ComparableFunction *LHS,
-                                         const ComparableFunction *RHS) {
-  if (LHS == RHS)
+bool DenseMapInfo<ComparableFunction>::isEqual(const ComparableFunction &LHS,
+                                               const ComparableFunction &RHS) {
+  if (LHS.getFunc() == RHS.getFunc() &&
+      LHS.getHash() == RHS.getHash())
     return true;
-  if (LHS == getEmptyKey() || LHS == getTombstoneKey() ||
-      RHS == getEmptyKey() || RHS == getTombstoneKey())
+  if (!LHS.getFunc() || !RHS.getFunc())
     return false;
-  assert(LHS->TD == RHS->TD && "Comparing functions for different targets");
-  return FunctionComparator(LHS->TD, LHS->Func, RHS->Func).Compare();
+  assert(LHS.getTD() == RHS.getTD() &&
+         "Comparing functions for different targets");
+  return FunctionComparator(LHS.getTD(),
+                            LHS.getFunc(), RHS.getFunc()).Compare();
 }
