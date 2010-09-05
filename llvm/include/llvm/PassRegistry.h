@@ -62,7 +62,7 @@ public:
                              PassInfo& Registeree, bool isDefault);
   
   void enumerateWith(PassRegistrationListener *L);
-  void addRegistrationListener(PassRegistrationListener* L);
+  void addRegistrationListener(PassRegistrationListener *L);
   void removeRegistrationListener(PassRegistrationListener *L);
 };
 
