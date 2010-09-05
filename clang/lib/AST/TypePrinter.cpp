@@ -74,7 +74,7 @@ void TypePrinter::Print(QualType T, std::string &S) {
   // type expands to a simple string.
   bool CanPrefixQualifiers =
     isa<BuiltinType>(T) || isa<TypedefType>(T) || isa<TagType>(T) || 
-    isa<ComplexType>(T);
+    isa<ComplexType>(T) || isa<TemplateSpecializationType>(T);
   
   if (!CanPrefixQualifiers && !Quals.empty()) {
     std::string TQS;
