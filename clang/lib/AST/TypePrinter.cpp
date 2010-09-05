@@ -73,7 +73,8 @@ void TypePrinter::Print(QualType T, std::string &S) {
   // "int * const", printing "const int *" is different.  Only do this when the
   // type expands to a simple string.
   bool CanPrefixQualifiers =
-    isa<BuiltinType>(T) || isa<TypedefType>(T) || isa<TagType>(T);
+    isa<BuiltinType>(T) || isa<TypedefType>(T) || isa<TagType>(T) || 
+    isa<ComplexType>(T);
   
   if (!CanPrefixQualifiers && !Quals.empty()) {
     std::string TQS;
