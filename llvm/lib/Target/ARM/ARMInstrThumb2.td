@@ -145,8 +145,7 @@ def t2am_imm8_offset : Operand<i32>,
 }
 
 // t2addrmode_imm8s4  := reg +/- (imm8 << 2)
-def t2addrmode_imm8s4 : Operand<i32>,
-                        ComplexPattern<i32, 2, "SelectT2AddrModeImm8s4", []> {
+def t2addrmode_imm8s4 : Operand<i32> {
   let PrintMethod = "printT2AddrModeImm8s4Operand";
   let MIOperandInfo = (ops GPR:$base, i32imm:$offsimm);
 }
