@@ -342,6 +342,10 @@ static void InitializePredefinedMacros(const TargetInfo &TI,
       Builder.defineMacro("_NATIVE_WCHAR_T_DEFINED");
       Builder.append("class type_info;");
     }
+
+    if (LangOpts.CPlusPlus0x) {
+      Builder.defineMacro("_HAS_CHAR16_T_LANGUAGE_SUPPORT", "1");
+    }
   }
 
   if (LangOpts.Optimize)
