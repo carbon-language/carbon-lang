@@ -72,7 +72,8 @@ void TypePrinter::Print(QualType T, std::string &S) {
   // the type is complex.  For example if the type is "int*", we *must* print
   // "int * const", printing "const int *" is different.  Only do this when the
   // type expands to a simple string.
-  bool CanPrefixQualifiers = isa<BuiltinType>(T);
+  bool CanPrefixQualifiers =
+    isa<BuiltinType>(T) || isa<TypedefType>(T);
   
   if (!CanPrefixQualifiers && !Quals.empty()) {
     std::string TQS;
