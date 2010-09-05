@@ -14,12 +14,8 @@
 
 #define DEBUG_TYPE "loweratomic"
 #include "llvm/Transforms/Scalar.h"
-#include "llvm/BasicBlock.h"
 #include "llvm/Function.h"
-#include "llvm/Instruction.h"
-#include "llvm/Instructions.h"
 #include "llvm/IntrinsicInst.h"
-#include "llvm/Intrinsics.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/IRBuilder.h"
 using namespace llvm;
@@ -41,51 +37,46 @@ static bool LowerAtomicIntrinsic(IntrinsicInst *II) {
   case Intrinsic::atomic_load_min:
   case Intrinsic::atomic_load_umax:
   case Intrinsic::atomic_load_umin: {
-    Value *Ptr = II->getArgOperand(0);
-    Value *Delta = II->getArgOperand(1);
+    Value *Ptr = II->getArgOperand(0), *Delta = II->getArgOperand(1);
 
     LoadInst *Orig = Builder.CreateLoad(Ptr);
     Value *Res = NULL;
     switch (IID) {
-      default: assert(0 && "Unrecognized atomic modify operation");
-      case Intrinsic::atomic_load_add:
-        Res = Builder.CreateAdd(Orig, Delta);
-        break;
-      case Intrinsic::atomic_load_sub:
-        Res = Builder.CreateSub(Orig, Delta);
-        break;
-      case Intrinsic::atomic_load_and:
-        Res = Builder.CreateAnd(Orig, Delta);
-        break;
-      case Intrinsic::atomic_load_nand:
-        Res = Builder.CreateNot(Builder.CreateAnd(Orig, Delta));
-        break;
-      case Intrinsic::atomic_load_or:
-        Res = Builder.CreateOr(Orig, Delta);
-        break;
-      case Intrinsic::atomic_load_xor:
-        Res = Builder.CreateXor(Orig, Delta);
-        break;
-      case Intrinsic::atomic_load_max:
-        Res = Builder.CreateSelect(Builder.CreateICmpSLT(Orig, Delta),
-                                   Delta,
-                                   Orig);
-        break;
-      case Intrinsic::atomic_load_min:
-        Res = Builder.CreateSelect(Builder.CreateICmpSLT(Orig, Delta),
-                                   Orig,
-                                   Delta);
-        break;
-      case Intrinsic::atomic_load_umax:
-        Res = Builder.CreateSelect(Builder.CreateICmpULT(Orig, Delta),
-                                   Delta,
-                                   Orig);
-        break;
-      case Intrinsic::atomic_load_umin:
-        Res = Builder.CreateSelect(Builder.CreateICmpULT(Orig, Delta),
-                                   Orig,
-                                   Delta);
-        break;
+    default: assert(0 && "Unrecognized atomic modify operation");
+    case Intrinsic::atomic_load_add:
+      Res = Builder.CreateAdd(Orig, Delta);
+      break;
+    case Intrinsic::atomic_load_sub:
+      Res = Builder.CreateSub(Orig, Delta);
+      break;
+    case Intrinsic::atomic_load_and:
+      Res = Builder.CreateAnd(Orig, Delta);
+      break;
+    case Intrinsic::atomic_load_nand:
+      Res = Builder.CreateNot(Builder.CreateAnd(Orig, Delta));
+      break;
+    case Intrinsic::atomic_load_or:
+      Res = Builder.CreateOr(Orig, Delta);
+      break;
+    case Intrinsic::atomic_load_xor:
+      Res = Builder.CreateXor(Orig, Delta);
+      break;
+    case Intrinsic::atomic_load_max:
+      Res = Builder.CreateSelect(Builder.CreateICmpSLT(Orig, Delta),
+                                 Delta, Orig);
+      break;
+    case Intrinsic::atomic_load_min:
+      Res = Builder.CreateSelect(Builder.CreateICmpSLT(Orig, Delta),
+                                 Orig, Delta);
+      break;
+    case Intrinsic::atomic_load_umax:
+      Res = Builder.CreateSelect(Builder.CreateICmpULT(Orig, Delta),
+                                 Delta, Orig);
+      break;
+    case Intrinsic::atomic_load_umin:
+      Res = Builder.CreateSelect(Builder.CreateICmpULT(Orig, Delta),
+                                 Orig, Delta);
+      break;
     }
     Builder.CreateStore(Res, Ptr);
 
@@ -94,26 +85,21 @@ static bool LowerAtomicIntrinsic(IntrinsicInst *II) {
   }
 
   case Intrinsic::atomic_swap: {
-    Value *Ptr = II->getArgOperand(0);
-    Value *Val = II->getArgOperand(1);
-
+    Value *Ptr = II->getArgOperand(0), *Val = II->getArgOperand(1);
     LoadInst *Orig = Builder.CreateLoad(Ptr);
     Builder.CreateStore(Val, Ptr);
-
     II->replaceAllUsesWith(Orig);
     break;
   }
 
   case Intrinsic::atomic_cmp_swap: {
-    Value *Ptr = II->getArgOperand(0);
-    Value *Cmp = II->getArgOperand(1);
+    Value *Ptr = II->getArgOperand(0), *Cmp = II->getArgOperand(1);
     Value *Val = II->getArgOperand(2);
 
     LoadInst *Orig = Builder.CreateLoad(Ptr);
     Value *Equal = Builder.CreateICmpEQ(Orig, Cmp);
     Value *Res = Builder.CreateSelect(Equal, Val, Orig);
     Builder.CreateStore(Res, Ptr);
-
     II->replaceAllUsesWith(Orig);
     break;
   }
