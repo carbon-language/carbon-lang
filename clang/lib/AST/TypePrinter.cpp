@@ -680,14 +680,19 @@ void TypePrinter::PrintObjCObjectPointer(const ObjCObjectPointerType *T,
                                          std::string &S) { 
   std::string ObjCQIString;
   
+  T->getPointeeType().getLocalQualifiers().getAsStringInternal(ObjCQIString, 
+                                                               Policy);
+  if (!ObjCQIString.empty())
+    ObjCQIString += ' ';
+    
   if (T->isObjCIdType() || T->isObjCQualifiedIdType())
-    ObjCQIString = "id";
+    ObjCQIString += "id";
   else if (T->isObjCClassType() || T->isObjCQualifiedClassType())
-    ObjCQIString = "Class";
+    ObjCQIString += "Class";
   else if (T->isObjCSelType())
-    ObjCQIString = "SEL";
+    ObjCQIString += "SEL";
   else
-    ObjCQIString = T->getInterfaceDecl()->getNameAsString();
+    ObjCQIString += T->getInterfaceDecl()->getNameAsString();
   
   if (!T->qual_empty()) {
     ObjCQIString += '<';
@@ -700,9 +705,6 @@ void TypePrinter::PrintObjCObjectPointer(const ObjCObjectPointerType *T,
     }
     ObjCQIString += '>';
   }
-  
-  T->getPointeeType().getLocalQualifiers().getAsStringInternal(ObjCQIString, 
-                                                               Policy);
   
   if (!T->isObjCIdType() && !T->isObjCQualifiedIdType())
     ObjCQIString += " *"; // Don't forget the implicit pointer.
