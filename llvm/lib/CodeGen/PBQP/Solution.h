@@ -34,6 +34,10 @@ namespace PBQP {
 
   public:
 
+    /// \brief Initialise an empty solution.
+    Solution()
+      : r0Reductions(0), r1Reductions(0), r2Reductions(0), rNReductions(0) {}
+
     /// \brief Number of nodes for which selections have been made.
     /// @return Number of nodes for which selections have been made.
     unsigned numNodes() const { return selections.size(); }
