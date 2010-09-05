@@ -84,8 +84,8 @@ void t_529_5_8()
   (void)static_cast<C1&>(*((A*)0)); // expected-error {{cannot cast 'A' to 'C1 &' via virtual base 'B'}}
   (void)static_cast<D*>((A*)0); // expected-error {{cannot cast 'A *' to 'D *' via virtual base 'B'}}
   (void)static_cast<D&>(*((A*)0)); // expected-error {{cannot cast 'A' to 'D &' via virtual base 'B'}}
-  (void)static_cast<B*>((const A*)0); // expected-error {{static_cast from 'A const *' to 'B *' casts away constness}}
-  (void)static_cast<B&>(*((const A*)0)); // expected-error {{static_cast from 'A const' to 'B &' casts away constness}}
+  (void)static_cast<B*>((const A*)0); // expected-error {{static_cast from 'const A *' to 'B *' casts away constness}}
+  (void)static_cast<B&>(*((const A*)0)); // expected-error {{static_cast from 'const A' to 'B &' casts away constness}}
   (void)static_cast<E*>((A*)0); // expected-error {{cannot cast private base class 'A' to 'E'}}
   (void)static_cast<E&>(*((A*)0)); // expected-error {{cannot cast private base class 'A' to 'E'}}
   (void)static_cast<H*>((A*)0); // expected-error {{ambiguous cast from base 'A' to derived 'H':\n    struct A -> struct B -> struct G1 -> struct H\n    struct A -> struct B -> struct G2 -> struct H}}

@@ -78,7 +78,7 @@ namespace Test2 {
 // CHECK-2-NEXT:   5 | Test2::A::~A() [complete]
 // CHECK-2-NEXT:   6 | Test2::A::~A() [deleting]
 // CHECK-2-NEXT:   7 | void Test2::A::h()
-// CHECK-2-NEXT:   8 | Test2::A &Test2::A::operator=(Test2::A const &)
+// CHECK-2-NEXT:   8 | Test2::A &Test2::A::operator=(const Test2::A &)
 struct A {
   virtual void f();
   virtual void f() const;

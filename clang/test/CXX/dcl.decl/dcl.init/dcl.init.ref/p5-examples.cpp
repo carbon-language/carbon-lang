@@ -19,8 +19,8 @@ void example1() {
   // CHECK: A &ra =
   // CHECK: ImplicitCastExpr{{.*}}'struct A' <DerivedToBase (A)> lvalue
   A &ra = b;
-  // CHECK: A const &rca =
-  // CHECK: ImplicitCastExpr{{.*}}'struct A const' <NoOp>
+  // CHECK: const A &rca =
+  // CHECK: ImplicitCastExpr{{.*}}'const struct A' <NoOp>
   // CHECK: ImplicitCastExpr{{.*}}'struct A' <DerivedToBase (A)>
   const A& rca = b;
 }
@@ -33,13 +33,13 @@ struct X {
 
 // CHECK: example2
 void example2() {
-  // CHECK: A const &rca =
-  // CHECK: ImplicitCastExpr{{.*}}'struct A const' <NoOp>
+  // CHECK: const A &rca =
+  // CHECK: ImplicitCastExpr{{.*}}'const struct A' <NoOp>
   // CHECK: ImplicitCastExpr{{.*}}'struct A' <DerivedToBase (A)>
   // CHECK: CallExpr{{.*}}B
   const A &rca = f(); 
-  // CHECK: A const &r =
-  // CHECK: ImplicitCastExpr{{.*}}'struct A const' <NoOp>
+  // CHECK: const A &r =
+  // CHECK: ImplicitCastExpr{{.*}}'const struct A' <NoOp>
   // CHECK: ImplicitCastExpr{{.*}}'struct A' <DerivedToBase (A)>
   // CHECK: CXXMemberCallExpr{{.*}}'struct B'
   const A& r = x;

@@ -44,7 +44,7 @@ struct Derived : Base {
 };
 
 void foo(const Derived cd, Derived d) {
-        int *pi = cd;	// expected-error {{no viable conversion from 'Derived const' to 'int *'}}
+        int *pi = cd;	// expected-error {{no viable conversion from 'const Derived' to 'int *'}}
         int *ppi = d; 
 
 }

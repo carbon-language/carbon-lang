@@ -23,7 +23,7 @@ struct foo {
 };
 
 // PR3600
-void test(const foo *P) { P->bar(); } // expected-error{{cannot initialize object parameter of type 'foo' with an expression of type 'foo const'}}
+void test(const foo *P) { P->bar(); } // expected-error{{cannot initialize object parameter of type 'foo' with an expression of type 'const foo'}}
 
 namespace PR6757 {
   struct Foo {
@@ -38,7 +38,7 @@ namespace PR6757 {
   void f(Foo);
 
   void g(Foo foo) {
-    f(Bar()); // expected-error{{no viable constructor copying parameter of type 'PR6757::Foo const'}}
+    f(Bar()); // expected-error{{no viable constructor copying parameter of type 'const PR6757::Foo'}}
     f(foo);
   }
 }

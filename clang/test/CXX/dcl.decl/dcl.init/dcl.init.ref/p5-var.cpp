@@ -64,8 +64,8 @@ void bind_lvalue_quals(volatile Base b, volatile Derived d,
                        volatile const int ivc) {
   volatile Base &bvr1 = b;
   volatile Base &bvr2 = d;
-  volatile Base &bvr3 = bvc; // expected-error{{binding of reference to type 'Base volatile' to a value of type 'Base const volatile' drops qualifiers}}
-  volatile Base &bvr4 = dvc; // expected-error{{binding of reference to type 'Base volatile' to a value of type 'Derived const volatile' drops qualifiers}}
+  volatile Base &bvr3 = bvc; // expected-error{{binding of reference to type 'volatile Base' to a value of type 'const volatile Base' drops qualifiers}}
+  volatile Base &bvr4 = dvc; // expected-error{{binding of reference to type 'volatile Base' to a value of type 'const volatile Derived' drops qualifiers}}
   
   volatile int &ir = ivc; // expected-error{{binding of reference to type 'volatile int' to a value of type 'const volatile int' drops qualifiers}}
 
@@ -76,15 +76,15 @@ void bind_lvalue_quals(volatile Base b, volatile Derived d,
 void bind_lvalue_to_rvalue() {
   Base &br1 = Base(); // expected-error{{non-const lvalue reference to type 'Base' cannot bind to a temporary of type 'Base'}}
   Base &br2 = Derived(); // expected-error{{non-const lvalue reference to type 'Base' cannot bind to a temporary of type 'Derived'}}
-  const volatile Base &br3 = Base(); // expected-error{{volatile lvalue reference to type 'Base const volatile' cannot bind to a temporary of type 'Base'}}
-  const volatile Base &br4 = Derived(); // expected-error{{volatile lvalue reference to type 'Base const volatile' cannot bind to a temporary of type 'Derived'}}
+  const volatile Base &br3 = Base(); // expected-error{{volatile lvalue reference to type 'const volatile Base' cannot bind to a temporary of type 'Base'}}
+  const volatile Base &br4 = Derived(); // expected-error{{volatile lvalue reference to type 'const volatile Base' cannot bind to a temporary of type 'Derived'}}
 
   int &ir = 17; // expected-error{{non-const lvalue reference to type 'int' cannot bind to a temporary of type 'int'}}
 }
 
 void bind_lvalue_to_unrelated(Unrelated ur) {
   Base &br1 = ur; // expected-error{{non-const lvalue reference to type 'Base' cannot bind to a value of unrelated type 'Unrelated'}}
-  const volatile Base &br2 = ur; // expected-error{{volatile lvalue reference to type 'Base const volatile' cannot bind to a value of unrelated type 'Unrelated'}}
+  const volatile Base &br2 = ur; // expected-error{{volatile lvalue reference to type 'const volatile Base' cannot bind to a value of unrelated type 'Unrelated'}}
 }
 
 void bind_lvalue_to_conv_lvalue() {
@@ -118,8 +118,8 @@ void bind_const_lvalue_to_rvalue() {
   const Base &br3 = create<const Base>();
   const Base &br4 = create<const Derived>();
 
-  const Base &br5 = create<const volatile Base>(); // expected-error{{binding of reference to type 'Base const' to a value of type 'Base const volatile' drops qualifiers}}
-  const Base &br6 = create<const volatile Derived>(); // expected-error{{binding of reference to type 'Base const' to a value of type 'Derived const volatile' drops qualifiers}}
+  const Base &br5 = create<const volatile Base>(); // expected-error{{binding of reference to type 'const Base' to a value of type 'const volatile Base' drops qualifiers}}
+  const Base &br6 = create<const volatile Derived>(); // expected-error{{binding of reference to type 'const Base' to a value of type 'const volatile Derived' drops qualifiers}}
 
   const int &ir = create<int>();
 }
@@ -131,5 +131,5 @@ void bind_const_lvalue_to_class_conv_temporary() {
 }
 void bind_lvalue_to_conv_rvalue_ambig(ConvertibleToBothDerived both) {
   const Derived &dr1 = both;
-  const Base &br1 = both; // expected-error{{reference initialization of type 'Base const &' with initializer of type 'ConvertibleToBothDerived' is ambiguous}}
+  const Base &br1 = both; // expected-error{{reference initialization of type 'const Base &' with initializer of type 'ConvertibleToBothDerived' is ambiguous}}
 }

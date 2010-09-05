@@ -38,7 +38,7 @@ bool operator==(A&, Z&); // expected-note 2{{candidate function}}
 void h(A a, const A ac, Z z) {
   make_A() == z;
   a == z; // expected-error{{use of overloaded operator '==' is ambiguous; candidates are:}}
-  ac == z; // expected-error{{invalid operands to binary expression ('A const' and 'Z')}}
+  ac == z; // expected-error{{invalid operands to binary expression ('const A' and 'Z')}}
 }
 
 struct B {

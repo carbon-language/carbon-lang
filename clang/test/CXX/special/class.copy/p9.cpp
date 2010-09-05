@@ -37,8 +37,8 @@ void test_non_const_copy(const ImplicitNonConstCopy1 &cincc1,
                          const ImplicitNonConstCopy2 &cincc2,
                          const ImplicitNonConstCopy3 &cincc3,
                          const ImplicitNonConstCopy4 &cincc4) {
-  (void)sizeof(ImplicitNonConstCopy1(cincc1)); // expected-error{{functional-style cast from 'ImplicitNonConstCopy1 const' to 'ImplicitNonConstCopy1' is not allowed}}
-  (void)sizeof(ImplicitNonConstCopy2(cincc2)); // expected-error{{functional-style cast from 'ImplicitNonConstCopy2 const' to 'ImplicitNonConstCopy2' is not allowed}}
-  (void)sizeof(ImplicitNonConstCopy3(cincc3)); // expected-error{{functional-style cast from 'ImplicitNonConstCopy3 const' to 'ImplicitNonConstCopy3' is not allowed}}
-  (void)sizeof(ImplicitNonConstCopy4(cincc4)); // expected-error{{functional-style cast from 'ImplicitNonConstCopy4 const' to 'ImplicitNonConstCopy4' is not allowed}}
+  (void)sizeof(ImplicitNonConstCopy1(cincc1)); // expected-error{{functional-style cast from 'const ImplicitNonConstCopy1' to 'ImplicitNonConstCopy1' is not allowed}}
+  (void)sizeof(ImplicitNonConstCopy2(cincc2)); // expected-error{{functional-style cast from 'const ImplicitNonConstCopy2' to 'ImplicitNonConstCopy2' is not allowed}}
+  (void)sizeof(ImplicitNonConstCopy3(cincc3)); // expected-error{{functional-style cast from 'const ImplicitNonConstCopy3' to 'ImplicitNonConstCopy3' is not allowed}}
+  (void)sizeof(ImplicitNonConstCopy4(cincc4)); // expected-error{{functional-style cast from 'const ImplicitNonConstCopy4' to 'ImplicitNonConstCopy4' is not allowed}}
 }

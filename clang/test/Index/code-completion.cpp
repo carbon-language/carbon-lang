@@ -42,9 +42,9 @@ Z::operator int() const {
 // CHECK-MEMBER: FieldDecl:{ResultType float}{Text Y::}{TypedText member}
 // CHECK-MEMBER: CXXMethod:{ResultType void}{Informative Y::}{TypedText memfunc}{LeftParen (}{Optional {Placeholder int i}}{RightParen )}
 // CHECK-MEMBER: CXXConversion:{ResultType int}{TypedText operator int}{LeftParen (}{RightParen )}{Informative  const}
-// CHECK-MEMBER: CXXMethod:{ResultType Z &}{TypedText operator=}{LeftParen (}{Placeholder Z const &}{RightParen )}
-// CHECK-MEMBER: CXXMethod:{ResultType X &}{Text X::}{TypedText operator=}{LeftParen (}{Placeholder X const &}{RightParen )}
-// CHECK-MEMBER: CXXMethod:{ResultType Y &}{Text Y::}{TypedText operator=}{LeftParen (}{Placeholder Y const &}{RightParen )}
+// CHECK-MEMBER: CXXMethod:{ResultType Z &}{TypedText operator=}{LeftParen (}{Placeholder const Z &}{RightParen )}
+// CHECK-MEMBER: CXXMethod:{ResultType X &}{Text X::}{TypedText operator=}{LeftParen (}{Placeholder const X &}{RightParen )}
+// CHECK-MEMBER: CXXMethod:{ResultType Y &}{Text Y::}{TypedText operator=}{LeftParen (}{Placeholder const Y &}{RightParen )}
 // CHECK-MEMBER: EnumConstantDecl:{ResultType X::E}{Informative E::}{TypedText Val1}
 // CHECK-MEMBER: StructDecl:{TypedText X}{Text ::}
 // CHECK-MEMBER: StructDecl:{TypedText Y}{Text ::}

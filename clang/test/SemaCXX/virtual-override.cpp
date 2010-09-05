@@ -86,7 +86,7 @@ class A {
 
 class B : A {
   virtual a* f(); 
-  virtual const a* g(); // expected-error{{return type of virtual function 'g' is not covariant with the return type of the function it overrides (class type 'T6::a const *' is more qualified than class type 'T6::a *'}}
+  virtual const a* g(); // expected-error{{return type of virtual function 'g' is not covariant with the return type of the function it overrides (class type 'const T6::a *' is more qualified than class type 'T6::a *'}}
 };
 
 }

@@ -14,15 +14,15 @@ struct C : B, A {
 };
 
 void test(C c) {
-  const E2 &e2 = c; // expected-error {{reference initialization of type 'E2 const &' with initializer of type 'C' is ambiguous}}
+  const E2 &e2 = c; // expected-error {{reference initialization of type 'const E2 &' with initializer of type 'C' is ambiguous}}
 }
 
 void foo(const E2 &);// expected-note{{passing argument to parameter here}}
 
 const E2 & re(C c) {
-    foo(c); // expected-error {{reference initialization of type 'E2 const &' with initializer of type 'C' is ambiguous}}
+    foo(c); // expected-error {{reference initialization of type 'const E2 &' with initializer of type 'C' is ambiguous}}
 
-    return c; // expected-error {{reference initialization of type 'E2 const &' with initializer of type 'C' is ambiguous}}
+    return c; // expected-error {{reference initialization of type 'const E2 &' with initializer of type 'C' is ambiguous}}
 }
 
 

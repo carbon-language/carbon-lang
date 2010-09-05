@@ -106,8 +106,8 @@ void test()
   i1 = (i1 ? Base() : Derived()).trick();
   i1 = (i1 ? Derived() : Base()).trick();
   // should fail: const lost
-  (void)(i1 ? Base() : constder()); // expected-error {{incompatible operand types ('Base' and 'Derived const')}}
-  (void)(i1 ? constder() : Base()); // expected-error {{incompatible operand types ('Derived const' and 'Base')}}
+  (void)(i1 ? Base() : constder()); // expected-error {{incompatible operand types ('Base' and 'const Derived')}}
+  (void)(i1 ? constder() : Base()); // expected-error {{incompatible operand types ('const Derived' and 'Base')}}
 
   Priv priv;
   Fin fin;

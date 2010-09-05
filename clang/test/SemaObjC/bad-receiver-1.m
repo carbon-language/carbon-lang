@@ -16,6 +16,6 @@ typedef const struct __CFString * CFStringRef;
 void func() {
   CFStringRef obj;
 
-  [obj self]; // expected-warning {{receiver type 'CFStringRef' (aka 'struct __CFString const *') is not 'id'}} \\
+  [obj self]; // expected-warning {{receiver type 'CFStringRef' (aka 'const struct __CFString *') is not 'id'}} \\
                  expected-warning {{method '-self' not found}}
 }
