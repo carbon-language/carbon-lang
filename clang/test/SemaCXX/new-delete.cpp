@@ -73,7 +73,7 @@ void bad_news(int *ip)
   (void)new int(1, 2); // expected-error {{excess elements in scalar initializer}}
   (void)new S(1); // expected-error {{no matching constructor}}
   (void)new S(1, 1); // expected-error {{call to constructor of 'S' is ambiguous}}
-  (void)new const int; // expected-error {{default initialization of an object of const type 'int const'}}
+  (void)new const int; // expected-error {{default initialization of an object of const type 'const int'}}
   (void)new float*(ip); // expected-error {{cannot initialize a new value of type 'float *' with an lvalue of type 'int *'}}
   // Undefined, but clang should reject it directly.
   (void)new int[-1]; // expected-error {{array size is negative}}

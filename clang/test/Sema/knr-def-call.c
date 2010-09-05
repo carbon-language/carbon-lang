@@ -23,7 +23,7 @@ void f4() {
 }
 
 char *rindex(s, c)
-     register char *s, c; // expected-warning{{promoted type 'char *' of K&R function parameter is not compatible with the parameter type 'char const *' declared in a previous prototype}}
+     register char *s, c; // expected-warning{{promoted type 'char *' of K&R function parameter is not compatible with the parameter type 'const char *' declared in a previous prototype}}
 {
   return 0;
 }

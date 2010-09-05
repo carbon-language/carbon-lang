@@ -13,7 +13,7 @@ int main() {
   int (^IFP) () = PFR; // OK
 
 
-  const int (^CIC) () = IFP; // expected-error {{incompatible block pointer types initializing 'int const (^)()' with an expression of type 'int (^)()'}}
+  const int (^CIC) () = IFP; // expected-error {{incompatible block pointer types initializing 'const int (^)()' with an expression of type 'int (^)()'}}
 
   const int (^CICC) () = CIC;
 

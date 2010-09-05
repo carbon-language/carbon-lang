@@ -89,7 +89,7 @@ struct C3 {
 void f()
 {
   const C3 c3 = { 1, 2 };
-  (void)static_cast<int*>(&c3.i); // expected-error {{static_cast from 'int const *' to 'int *' is not allowed}}
+  (void)static_cast<int*>(&c3.i); // expected-error {{static_cast from 'const int *' to 'int *' is not allowed}}
   // but no error here
   (void)static_cast<int*>(&c3.j);
 }

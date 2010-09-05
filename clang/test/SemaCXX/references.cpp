@@ -54,7 +54,7 @@ void test4() {
 void test5() {
   //  const double& rcd2 = 2; // rcd2 refers to temporary with value 2.0
   const volatile int cvi = 1;
-  const int& r = cvi; // expected-error{{binding of reference to type 'int const' to a value of type 'int const volatile' drops qualifiers}}
+  const int& r = cvi; // expected-error{{binding of reference to type 'const int' to a value of type 'const volatile int' drops qualifiers}}
 }
 
 // C++ [dcl.init.ref]p3

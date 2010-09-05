@@ -28,7 +28,7 @@ struct C1 : B1, A1 { };
 
 void test(C1 c) {
   ++c;	// expected-error {{use of overloaded operator '++' is ambiguous}} \
-	// expected-note {{built-in candidate operator++(int volatile &)}} \
-	// expected-note {{built-in candidate operator++(long volatile &)}}
+	// expected-note {{built-in candidate operator++(volatile int &)}} \
+	// expected-note {{built-in candidate operator++(volatile long &)}}
 }
 

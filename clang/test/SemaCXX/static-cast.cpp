@@ -55,7 +55,7 @@ void t_529_2()
 
   // Bad code below
 
-  (void)static_cast<void*>((const int*)0); // expected-error {{static_cast from 'int const *' to 'void *' is not allowed}}
+  (void)static_cast<void*>((const int*)0); // expected-error {{static_cast from 'const int *' to 'void *' is not allowed}}
   (void)static_cast<A*>((E*)0); // expected-error {{cannot cast 'E' to its private base class 'A'}}
   (void)static_cast<A*>((H*)0); // expected-error {{ambiguous conversion}}
   (void)static_cast<int>((int*)0); // expected-error {{static_cast from 'int *' to 'int' is not allowed}}
@@ -119,7 +119,7 @@ void t_529_10()
 
   // Bad code below
 
-  (void)static_cast<int*>((const void*)0); // expected-error {{static_cast from 'void const *' to 'int *' casts away constness}}
+  (void)static_cast<int*>((const void*)0); // expected-error {{static_cast from 'const void *' to 'int *' casts away constness}}
   (void)static_cast<void (*)()>((void*)0); // expected-error {{static_cast from 'void *' to 'void (*)()' is not allowed}}
 }
 

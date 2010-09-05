@@ -18,7 +18,7 @@ void g(int malloc) { // okay: these aren't functions
 void h() {
   int malloc(int); // expected-warning{{incompatible redeclaration of library function 'malloc'}}
   int strcpy(int); // expected-warning{{incompatible redeclaration of library function 'strcpy'}} \
-  // expected-note{{'strcpy' is a builtin with type 'char *(char *, char const *)'}}
+  // expected-note{{'strcpy' is a builtin with type 'char *(char *, const char *)'}}
 }
 
 void f2() {

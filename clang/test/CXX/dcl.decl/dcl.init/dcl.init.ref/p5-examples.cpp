@@ -6,8 +6,8 @@ void example0() {
   // CHECK: double &rd =
   // CHECK-NEXT: DeclRefExpr
   double &rd = d;
-  // CHECK: double const &rcd =
-  // CHECK-NEXT: ImplicitCastExpr{{.*}}'double const' <NoOp>
+  // CHECK: const double &rcd =
+  // CHECK-NEXT: ImplicitCastExpr{{.*}}'const double' <NoOp>
   const double &rcd = d;
 }
 
@@ -47,7 +47,7 @@ void example2() {
 
 // CHECK: example3
 void example3() {
-  // CHECK: double const &rcd2 =
+  // CHECK: const double &rcd2 =
   // CHECK: ImplicitCastExpr{{.*}}<IntegralToFloating>
   const double& rcd2 = 2; 
 }

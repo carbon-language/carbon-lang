@@ -226,6 +226,6 @@ void memptrs()
   void (structure::*psf)() = 0;
   (void)(int (structure::*)())(psf);
 
-  (void)(void (structure::*)())(psi); // expected-error {{C-style cast from 'int const structure::*' to 'void (structure::*)()' is not allowed}}
+  (void)(void (structure::*)())(psi); // expected-error {{C-style cast from 'const int structure::*' to 'void (structure::*)()' is not allowed}}
   (void)(int structure::*)(psf); // expected-error {{C-style cast from 'void (structure::*)()' to 'int structure::*' is not allowed}}
 }

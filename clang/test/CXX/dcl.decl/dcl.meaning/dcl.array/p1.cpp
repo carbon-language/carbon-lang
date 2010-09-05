@@ -5,7 +5,7 @@ int ar1[10];
 
 // Element type cannot be:
 // - (cv) void
-volatile void ar2[10]; // expected-error {{incomplete element type 'void volatile'}}
+volatile void ar2[10]; // expected-error {{incomplete element type 'volatile void'}}
 // - a reference
 int& ar3[10]; // expected-error {{array of references}}
 // - a function type

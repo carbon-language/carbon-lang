@@ -50,7 +50,7 @@ class A { };
 class B : public A {
 public:
   operator A&() const; // expected-warning{{conversion function converting 'B' to its base class 'A' will never be used}}
-  operator const void() const; // expected-warning{{conversion function converting 'B' to 'void const' will never be used}}
+  operator const void() const; // expected-warning{{conversion function converting 'B' to 'const void' will never be used}}
   operator const B(); // expected-warning{{conversion function converting 'B' to itself will never be used}}
 };
 

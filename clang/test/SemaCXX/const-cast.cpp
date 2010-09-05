@@ -45,16 +45,16 @@ char ***good_const_cast_test(ccvpcvpp var)
 short *bad_const_cast_test(char const *volatile *const volatile *var)
 {
   // Different pointer levels.
-  char **var2 = const_cast<char**>(var); // expected-error {{const_cast from 'char const *volatile *const volatile *' to 'char **' is not allowed}}
+  char **var2 = const_cast<char**>(var); // expected-error {{const_cast from 'const char *volatile *const volatile *' to 'char **' is not allowed}}
   // Different final type.
-  short ***var3 = const_cast<short***>(var); // expected-error {{const_cast from 'char const *volatile *const volatile *' to 'short ***' is not allowed}}
+  short ***var3 = const_cast<short***>(var); // expected-error {{const_cast from 'const char *volatile *const volatile *' to 'short ***' is not allowed}}
   // Rvalue to reference.
   char ***&var4 = const_cast<cpppr>(&var2); // expected-error {{const_cast from rvalue to reference type 'cpppr'}}
   // Non-pointer.
   char v = const_cast<char>(**var2); // expected-error {{const_cast to 'char', which is not a reference, pointer-to-object, or pointer-to-data-member}}
   const int *ar[100] = {0};
   // Not even lenient g++ accepts this.
-  int *(*rar)[100] = const_cast<int *(*)[100]>(&ar); // expected-error {{const_cast from 'int const *(*)[100]' to 'int *(*)[100]' is not allowed}}
+  int *(*rar)[100] = const_cast<int *(*)[100]>(&ar); // expected-error {{const_cast from 'const int *(*)[100]' to 'int *(*)[100]' is not allowed}}
   f fp1 = 0;
   // Function pointers.
   f fp2 = const_cast<f>(fp1); // expected-error {{const_cast to 'f' (aka 'int (*)(int)'), which is not a reference, pointer-to-object, or pointer-to-data-member}}

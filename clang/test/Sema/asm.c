@@ -36,7 +36,7 @@ void test3() {
 // <rdar://problem/6156893>
 void test4(const volatile void *addr)
 {
-    asm ("nop" : : "r"(*addr)); // expected-error {{invalid type 'void const volatile' in asm input for constraint 'r'}}
+    asm ("nop" : : "r"(*addr)); // expected-error {{invalid type 'const volatile void' in asm input for constraint 'r'}}
     asm ("nop" : : "m"(*addr));
 
     asm ("nop" : : "r"(test4(addr))); // expected-error {{invalid type 'void' in asm input for constraint 'r'}}

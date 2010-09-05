@@ -90,5 +90,5 @@ struct MutableString : public String { };
 
 void test_I5(I5 *i5, String s) {
   [i5 method:"hello" other:s];
-  [i5 method:s other:"world"]; // expected-error{{non-const lvalue reference to type 'String' cannot bind to a value of unrelated type 'char const [6]'}}
+  [i5 method:s other:"world"]; // expected-error{{non-const lvalue reference to type 'String' cannot bind to a value of unrelated type 'const char [6]'}}
 }

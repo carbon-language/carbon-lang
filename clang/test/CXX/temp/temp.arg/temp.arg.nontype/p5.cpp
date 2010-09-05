@@ -88,19 +88,19 @@ namespace reference_parameters {
   extern const volatile int cvi;
   void test() {
     S0<i> s0;
-    S0<ci> s0c; // expected-error{{reference binding of non-type template parameter of type 'int &' to template argument of type 'int const' ignores qualifiers}}
-    S0<vi> s0v; // expected-error{{reference binding of non-type template parameter of type 'int &' to template argument of type 'int volatile' ignores qualifiers}}
-    S0<cvi> s0cv; // expected-error{{reference binding of non-type template parameter of type 'int &' to template argument of type 'int const volatile' ignores qualifiers}}
+    S0<ci> s0c; // expected-error{{reference binding of non-type template parameter of type 'int &' to template argument of type 'const int' ignores qualifiers}}
+    S0<vi> s0v; // expected-error{{reference binding of non-type template parameter of type 'int &' to template argument of type 'volatile int' ignores qualifiers}}
+    S0<cvi> s0cv; // expected-error{{reference binding of non-type template parameter of type 'int &' to template argument of type 'const volatile int' ignores qualifiers}}
 
     S1<i> s1;
     S1<ci> s1c;
-    S1<vi> s1v; // expected-error{{reference binding of non-type template parameter of type 'int const &' to template argument of type 'int volatile' ignores qualifiers}}
-    S1<cvi> s1cv; // expected-error{{reference binding of non-type template parameter of type 'int const &' to template argument of type 'int const volatile' ignores qualifiers}}
+    S1<vi> s1v; // expected-error{{reference binding of non-type template parameter of type 'const int &' to template argument of type 'volatile int' ignores qualifiers}}
+    S1<cvi> s1cv; // expected-error{{reference binding of non-type template parameter of type 'const int &' to template argument of type 'const volatile int' ignores qualifiers}}
 
     S2<i> s2;
-    S2<ci> s2c; // expected-error{{reference binding of non-type template parameter of type 'int volatile &' to template argument of type 'int const' ignores qualifiers}}
+    S2<ci> s2c; // expected-error{{reference binding of non-type template parameter of type 'volatile int &' to template argument of type 'const int' ignores qualifiers}}
     S2<vi> s2v;
-    S2<cvi> s2cv; // expected-error{{reference binding of non-type template parameter of type 'int volatile &' to template argument of type 'int const volatile' ignores qualifiers}}
+    S2<cvi> s2cv; // expected-error{{reference binding of non-type template parameter of type 'volatile int &' to template argument of type 'const volatile int' ignores qualifiers}}
 
     S3<i> s3;
     S3<ci> s3c;

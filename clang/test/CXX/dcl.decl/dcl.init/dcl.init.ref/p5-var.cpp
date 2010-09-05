@@ -67,7 +67,7 @@ void bind_lvalue_quals(volatile Base b, volatile Derived d,
   volatile Base &bvr3 = bvc; // expected-error{{binding of reference to type 'Base volatile' to a value of type 'Base const volatile' drops qualifiers}}
   volatile Base &bvr4 = dvc; // expected-error{{binding of reference to type 'Base volatile' to a value of type 'Derived const volatile' drops qualifiers}}
   
-  volatile int &ir = ivc; // expected-error{{binding of reference to type 'int volatile' to a value of type 'int const volatile' drops qualifiers}}
+  volatile int &ir = ivc; // expected-error{{binding of reference to type 'volatile int' to a value of type 'const volatile int' drops qualifiers}}
 
   const volatile Base &bcvr1 = b;
   const volatile Base &bcvr2 = d;

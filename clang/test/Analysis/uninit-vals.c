@@ -32,7 +32,7 @@ void f6(int i) {
   int x;
   for (i = 0 ; i < 10; i++)
     printf("%d",x++); // expected-warning {{use of uninitialized variable}} \
-  // expected-warning{{implicitly declaring C library function 'printf' with type 'int (char const *, ...)'}} \
+  // expected-warning{{implicitly declaring C library function 'printf' with type 'int (const char *, ...)'}} \
   // expected-note{{please include the header <stdio.h> or explicitly provide a declaration for 'printf'}}
 }
 

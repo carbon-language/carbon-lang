@@ -26,7 +26,7 @@ A *f1_a(int cond, A *a) {
 }
 
 void *f1_const_a(int x, void *p, const A * q) {
-  void *r = x ? p : q; // expected-warning{{initializing 'void *' with an expression of type 'void const *' discards qualifiers}}
+  void *r = x ? p : q; // expected-warning{{initializing 'void *' with an expression of type 'const void *' discards qualifiers}}
   return r;
 }
 

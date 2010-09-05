@@ -66,7 +66,15 @@ void TypePrinter::Print(QualType T, std::string &S) {
   
   // Print qualifiers as appropriate.
   Qualifiers Quals = T.getLocalQualifiers();
-  if (!Quals.empty()) {
+  
+  // CanPrefixQualifiers - We prefer to print type qualifiers before the type,
+  // so that we get "const int" instead of "int const", but we can't do this if
+  // the type is complex.  For example if the type is "int*", we *must* print
+  // "int * const", printing "const int *" is different.  Only do this when the
+  // type expands to a simple string.
+  bool CanPrefixQualifiers = isa<BuiltinType>(T);
+  
+  if (!CanPrefixQualifiers && !Quals.empty()) {
     std::string TQS;
     Quals.getAsStringInternal(TQS, Policy);
     
@@ -83,6 +91,18 @@ void TypePrinter::Print(QualType T, std::string &S) {
     Print##CLASS(cast<CLASS##Type>(T.getTypePtr()), S);      \
     break;
 #include "clang/AST/TypeNodes.def"
+  }
+  
+  // If we're adding the qualifiers as a prefix, do it now.
+  if (CanPrefixQualifiers && !Quals.empty()) {
+    std::string TQS;
+    Quals.getAsStringInternal(TQS, Policy);
+    
+    if (!S.empty()) {
+      TQS += ' ';
+      TQS += S;
+    }
+    std::swap(S, TQS);
   }
 }
 
