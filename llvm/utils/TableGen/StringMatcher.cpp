@@ -98,7 +98,9 @@ EmitStringMatcherForChar(const std::vector<const StringPair*> &Matches,
        MatchesByLetter.begin(), E = MatchesByLetter.end(); LI != E; ++LI) {
     // TODO: escape hard stuff (like \n) if we ever care about it.
     OS << Indent << "case '" << LI->first << "':\t // "
-    << LI->second.size() << " strings to match.\n";
+       << LI->second.size() << " string";
+    if (LI->second.size() != 1) OS << 's';
+    OS << " to match.\n";
     if (EmitStringMatcherForChar(LI->second, CharNo+1, IndentCount+1))
       OS << Indent << "  break;\n";
   }
