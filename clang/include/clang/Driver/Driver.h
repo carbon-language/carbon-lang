@@ -92,9 +92,6 @@ public:
   /// Information about the host which can be overriden by the user.
   std::string HostBits, HostMachine, HostSystem, HostRelease;
 
-  /// Name to use when calling the generic gcc.
-  std::string CCCGenericGCCName;
-
   /// The file to log CC_PRINT_OPTIONS output to, if enabled.
   const char *CCPrintOptionsFilename;
 
@@ -112,6 +109,9 @@ public:
   unsigned CCPrintOptions : 1;
 
 private:
+  /// Name to use when calling the generic gcc.
+  std::string CCCGenericGCCName;
+
   /// Whether to check that input files exist when constructing compilation
   /// jobs.
   unsigned CheckInputsExist : 1;
@@ -156,6 +156,10 @@ public:
 
   /// @name Accessors
   /// @{
+
+  /// Name to use when calling the generic gcc.
+  const std::string &getCCCGenericGCCName() const { return CCCGenericGCCName; }
+
 
   const OptTable &getOpts() const { return *Opts; }
 

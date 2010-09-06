@@ -1619,7 +1619,7 @@ void gcc::Common::ConstructJob(Compilation &C, const JobAction &JA,
       II.getInputArg().render(Args, CmdArgs);
   }
 
-  const char *GCCName = getToolChain().getDriver().CCCGenericGCCName.c_str();
+  const char *GCCName = getToolChain().getDriver().getCCCGenericGCCName().c_str();
   const char *Exec =
     Args.MakeArgString(getToolChain().GetProgramPath(GCCName));
   C.addCommand(new Command(JA, *this, Exec, CmdArgs));

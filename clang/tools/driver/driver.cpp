@@ -334,7 +334,6 @@ int main(int argc_, const char **argv_) {
   if (llvm::StringRef(ProgName).endswith("++") ||
       llvm::StringRef(ProgName).rsplit('-').first.endswith("++")) {
     TheDriver.CCCIsCXX = true;
-    TheDriver.CCCGenericGCCName = "g++";
   }
 
   // Handle CC_PRINT_OPTIONS and CC_PRINT_OPTIONS_FILE.
