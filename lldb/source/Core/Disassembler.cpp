@@ -215,7 +215,7 @@ Disassembler::Disassemble
                             uint32_t resolved_mask = module->ResolveSymbolContextForAddress(addr, eSymbolContextEverything, sc);
                             if (resolved_mask)
                             {
-                                if (prev_sc.function != sc.function || prev_sc.symbol != sc.symbol)
+                                if (!(prev_sc.function == sc.function || prev_sc.symbol == sc.symbol))
                                 {
                                     if (prev_sc.function || prev_sc.symbol)
                                         strm.EOL();
