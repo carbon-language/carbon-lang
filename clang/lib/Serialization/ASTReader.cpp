@@ -3545,8 +3545,7 @@ ASTReader::SetGloballyVisibleDecls(IdentifierInfo *II,
     PendingIdentifierInfos.push_back(PendingIdentifierInfo());
     PendingIdentifierInfo &PII = PendingIdentifierInfos.back();
     PII.II = II;
-    for (unsigned I = 0, N = DeclIDs.size(); I != N; ++I)
-      PII.DeclIDs.push_back(DeclIDs[I]);
+    PII.DeclIDs.append(DeclIDs.begin(), DeclIDs.end());
     return;
   }
 

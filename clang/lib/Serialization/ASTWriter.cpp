@@ -2690,10 +2690,8 @@ void ASTWriter::AddSourceRange(SourceRange Range, RecordData &Record) {
 
 void ASTWriter::AddAPInt(const llvm::APInt &Value, RecordData &Record) {
   Record.push_back(Value.getBitWidth());
-  unsigned N = Value.getNumWords();
-  const uint64_t* Words = Value.getRawData();
-  for (unsigned I = 0; I != N; ++I)
-    Record.push_back(Words[I]);
+  const uint64_t *Words = Value.getRawData();
+  Record.append(Words, Words + Value.getNumWords());
 }
 
 void ASTWriter::AddAPSInt(const llvm::APSInt &Value, RecordData &Record) {
