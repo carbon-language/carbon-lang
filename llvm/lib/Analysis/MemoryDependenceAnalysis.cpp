@@ -176,7 +176,7 @@ getPointerDependencyFrom(Value *MemPtr, uint64_t MemSize, bool isLoad,
     
     if (IntrinsicInst *II = dyn_cast<IntrinsicInst>(Inst)) {
       // Debug intrinsics don't cause dependences.
-      if (isa<DbgInfoIntrinsic>(Inst)) continue;
+      if (isa<DbgInfoIntrinsic>(II)) continue;
       
       // If we pass an invariant-end marker, then we've just entered an
       // invariant region and can start ignoring dependencies.
