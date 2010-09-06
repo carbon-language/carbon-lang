@@ -92,7 +92,8 @@ static bool GetX86CpuIDAndInfo(unsigned value, unsigned *rEAX,
   return true;
 }
 
-static void DetectX86FamilyModel(unsigned EAX, unsigned &Family, unsigned &Model) {
+static void DetectX86FamilyModel(unsigned EAX, unsigned &Family,
+                                 unsigned &Model) {
   Family = (EAX >> 8) & 0xf; // Bits 8 - 11
   Model  = (EAX >> 4) & 0xf; // Bits 4 - 7
   if (Family == 6 || Family == 0xf) {
@@ -112,9 +113,9 @@ std::string sys::getHostCPUName() {
   unsigned Model  = 0;
   DetectX86FamilyModel(EAX, Family, Model);
 
+  bool HasSSE3 = (ECX & 0x1);
   GetX86CpuIDAndInfo(0x80000001, &EAX, &EBX, &ECX, &EDX);
   bool Em64T = (EDX >> 29) & 0x1;
-  bool HasSSE3 = (ECX & 0x1);
 
   union {
     unsigned u[3];
@@ -277,14 +278,12 @@ std::string sys::getHostCPUName() {
         default: return "athlon";
         }
       case 15:
-        if (HasSSE3) {
+        if (HasSSE3)
           return "k8-sse3";
-        } else {
-          switch (Model) {
-          case 1:  return "opteron";
-          case 5:  return "athlon-fx"; // also opteron
-          default: return "athlon64";
-          }
+        switch (Model) {
+        case 1:  return "opteron";
+        case 5:  return "athlon-fx"; // also opteron
+        default: return "athlon64";
         }
       case 16:
         return "amdfam10";
