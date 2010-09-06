@@ -92,6 +92,11 @@ public:
   ///
   bool isWrappedSet() const;
 
+  /// isSignWrappedSet - Return true if this set wraps around the INT_MIN of
+  /// its bitwidth, for example: i8 [120, 140).
+  ///
+  bool isSignWrappedSet() const;
+
   /// contains - Return true if the specified value is in the set.
   ///
   bool contains(const APInt &Val) const;

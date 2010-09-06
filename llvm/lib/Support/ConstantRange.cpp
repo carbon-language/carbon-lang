@@ -115,6 +115,14 @@ bool ConstantRange::isWrappedSet() const {
   return Lower.ugt(Upper);
 }
 
+/// isSignWrappedSet - Return true if this set wraps around the INT_MIN of
+/// its bitwidth, for example: i8 [120, 140).
+///
+bool ConstantRange::isSignWrappedSet() const {
+  return contains(APInt::getSignedMaxValue(getBitWidth())) &&
+         contains(APInt::getSignedMinValue(getBitWidth()));
+}
+
 /// getSetSize - Return the number of elements in this set.
 ///
 APInt ConstantRange::getSetSize() const {
@@ -408,10 +416,12 @@ ConstantRange ConstantRange::unionWith(const ConstantRange &CR) const {
 /// correspond to the possible range of values as if the source range had been
 /// zero extended.
 ConstantRange ConstantRange::zeroExtend(uint32_t DstTySize) const {
+  if (isEmptySet()) return ConstantRange(DstTySize, /*isFullSet=*/false);
+
   unsigned SrcTySize = getBitWidth();
   assert(SrcTySize < DstTySize && "Not a value extension");
-  if (isFullSet())
-    // Change a source full set into [0, 1 << 8*numbytes)
+  if (isFullSet() || isWrappedSet())
+    // Change into [0, 1 << src bit width)
     return ConstantRange(APInt(DstTySize,0), APInt(DstTySize,1).shl(SrcTySize));
 
   APInt L = Lower; L.zext(DstTySize);
@@ -424,9 +434,11 @@ ConstantRange ConstantRange::zeroExtend(uint32_t DstTySize) const {
 /// correspond to the possible range of values as if the source range had been
 /// sign extended.
 ConstantRange ConstantRange::signExtend(uint32_t DstTySize) const {
+  if (isEmptySet()) return ConstantRange(DstTySize, /*isFullSet=*/false);
+
   unsigned SrcTySize = getBitWidth();
   assert(SrcTySize < DstTySize && "Not a value extension");
-  if (isFullSet()) {
+  if (isFullSet() || isSignWrappedSet()) {
     return ConstantRange(APInt::getHighBitsSet(DstTySize,DstTySize-SrcTySize+1),
                          APInt::getLowBitsSet(DstTySize, SrcTySize-1) + 1);
   }
