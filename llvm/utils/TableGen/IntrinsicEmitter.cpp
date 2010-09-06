@@ -14,6 +14,7 @@
 #include "CodeGenTarget.h"
 #include "IntrinsicEmitter.h"
 #include "Record.h"
+#include "StringMatcher.h"
 #include "llvm/ADT/StringExtras.h"
 #include <algorithm>
 using namespace llvm;
@@ -586,112 +587,22 @@ EmitGCCBuiltinList(const std::vector<CodeGenIntrinsic> &Ints, raw_ostream &OS){
   OS << "#endif\n\n";
 }
 
-/// EmitBuiltinComparisons - Emit comparisons to determine whether the specified
-/// sorted range of builtin names is equal to the current builtin.  This breaks
-/// it down into a simple tree.
-///
-/// At this point, we know that all the builtins in the range have the same name
-/// for the first 'CharStart' characters.  Only the end of the name needs to be
-/// discriminated.
-typedef std::map<std::string, std::string>::const_iterator StrMapIterator;
-static void EmitBuiltinComparisons(StrMapIterator Start, StrMapIterator End,
-                                   unsigned CharStart, unsigned Indent,
-                                   std::string TargetPrefix, raw_ostream &OS) {
-  if (Start == End) return; // empty range.
-  
-  // Determine what, if anything, is the same about all these strings.
-  std::string CommonString = Start->first;
-  unsigned NumInRange = 0;
-  for (StrMapIterator I = Start; I != End; ++I, ++NumInRange) {
-    // Find the first character that doesn't match.
-    const std::string &ThisStr = I->first;
-    unsigned NonMatchChar = CharStart;
-    while (NonMatchChar < CommonString.size() && 
-           NonMatchChar < ThisStr.size() &&
-           CommonString[NonMatchChar] == ThisStr[NonMatchChar])
-      ++NonMatchChar;
-    // Truncate off pieces that don't match.
-    CommonString.resize(NonMatchChar);
-  }
-  
-  // Just compare the rest of the string.
-  if (NumInRange == 1) {
-    if (CharStart != CommonString.size()) {
-      OS << std::string(Indent*2, ' ') << "if (!memcmp(BuiltinName";
-      if (CharStart) OS << "+" << CharStart;
-      OS << ", \"" << (CommonString.c_str()+CharStart) << "\", ";
-      OS << CommonString.size() - CharStart << "))\n";
-      ++Indent;
-    }
-    OS << std::string(Indent*2, ' ') << "IntrinsicID = " << TargetPrefix
-       << "Intrinsic::";
-    OS << Start->second << ";\n";
-    return;
-  }
-
-  // At this point, we potentially have a common prefix for these builtins, emit
-  // a check for this common prefix.
-  if (CommonString.size() != CharStart) {
-    OS << std::string(Indent*2, ' ') << "if (!memcmp(BuiltinName";
-    if (CharStart) OS << "+" << CharStart;
-    OS << ", \"" << (CommonString.c_str()+CharStart) << "\", ";
-    OS << CommonString.size()-CharStart << ")) {\n";
-    
-    EmitBuiltinComparisons(Start, End, CommonString.size(), Indent+1, 
-                           TargetPrefix, OS);
-    OS << std::string(Indent*2, ' ') << "}\n";
-    return;
-  }
-  
-  // Output a switch on the character that differs across the set.
-  OS << std::string(Indent*2, ' ') << "switch (BuiltinName[" << CharStart
-      << "]) {";
-  if (CharStart)
-    OS << "  // \"" << std::string(Start->first.begin(), 
-                                   Start->first.begin()+CharStart) << "\"";
-  OS << "\n";
-  
-  for (StrMapIterator I = Start; I != End; ) {
-    char ThisChar = I->first[CharStart];
-    OS << std::string(Indent*2, ' ') << "case '" << ThisChar << "':\n";
-    // Figure out the range that has this common character.
-    StrMapIterator NextChar = I;
-    for (++NextChar; NextChar != End && NextChar->first[CharStart] == ThisChar;
-         ++NextChar)
-      /*empty*/;
-    EmitBuiltinComparisons(I, NextChar, CharStart+1, Indent+1, TargetPrefix,OS);
-    OS << std::string(Indent*2, ' ') << "  break;\n";
-    I = NextChar;
-  }
-  OS << std::string(Indent*2, ' ') << "}\n";
-}
-
 /// EmitTargetBuiltins - All of the builtins in the specified map are for the
 /// same target, and we already checked it.
 static void EmitTargetBuiltins(const std::map<std::string, std::string> &BIM,
                                const std::string &TargetPrefix,
                                raw_ostream &OS) {
-  // Rearrange the builtins by length.
-  std::vector<std::map<std::string, std::string> > BuiltinsByLen;
-  BuiltinsByLen.reserve(100);
   
-  for (StrMapIterator I = BIM.begin(), E = BIM.end(); I != E; ++I) {
-    if (I->first.size() >= BuiltinsByLen.size())
-      BuiltinsByLen.resize(I->first.size()+1);
-    BuiltinsByLen[I->first.size()].insert(*I);
-  }
+  std::vector<StringMatcher::StringPair> Results;
   
-  // Now that we have all the builtins by their length, emit a switch stmt.
-  OS << "    switch (strlen(BuiltinName)) {\n";
-  OS << "    default: break;\n";
-  for (unsigned i = 0, e = BuiltinsByLen.size(); i != e; ++i) {
-    if (BuiltinsByLen[i].empty()) continue;
-    OS << "    case " << i << ":\n";
-    EmitBuiltinComparisons(BuiltinsByLen[i].begin(), BuiltinsByLen[i].end(),
-                           0, 3, TargetPrefix, OS);
-    OS << "      break;\n";
+  for (std::map<std::string, std::string>::const_iterator I = BIM.begin(),
+       E = BIM.end(); I != E; ++I) {
+    std::string ResultCode =
+    "return " + TargetPrefix + "Intrinsic::" + I->second + ";";
+    Results.push_back(StringMatcher::StringPair(I->first, ResultCode));
   }
-  OS << "    }\n";
+
+  StringMatcher("BuiltinName", Results, OS).Emit();
 }
 
         
@@ -721,24 +632,20 @@ EmitIntrinsicToGCCBuiltinMap(const std::vector<CodeGenIntrinsic> &Ints,
   if (TargetOnly) {
     OS << "static " << TargetPrefix << "Intrinsic::ID "
        << "getIntrinsicForGCCBuiltin(const char "
-       << "*TargetPrefix, const char *BuiltinName) {\n";
-    OS << "  " << TargetPrefix << "Intrinsic::ID IntrinsicID = ";
+       << "*TargetPrefixStr, const char *BuiltinNameStr) {\n";
   } else {
     OS << "Intrinsic::ID Intrinsic::getIntrinsicForGCCBuiltin(const char "
-       << "*TargetPrefix, const char *BuiltinName) {\n";
-    OS << "  Intrinsic::ID IntrinsicID = ";
+       << "*TargetPrefixStr, const char *BuiltinNameStr) {\n";
   }
   
-  if (TargetOnly)
-    OS << "(" << TargetPrefix<< "Intrinsic::ID)";
-
-  OS << "Intrinsic::not_intrinsic;\n";
+  OS << "  StringRef BuiltinName(BuiltinNameStr);\n";
+  OS << "  StringRef TargetPrefix(TargetPrefixStr);\n\n";
   
   // Note: this could emit significantly better code if we cared.
   for (BIMTy::iterator I = BuiltinMap.begin(), E = BuiltinMap.end();I != E;++I){
     OS << "  ";
     if (!I->first.empty())
-      OS << "if (!strcmp(TargetPrefix, \"" << I->first << "\")) ";
+      OS << "if (TargetPrefix == \"" << I->first << "\") ";
     else
       OS << "/* Target Independent Builtins */ ";
     OS << "{\n";
@@ -747,7 +654,10 @@ EmitIntrinsicToGCCBuiltinMap(const std::vector<CodeGenIntrinsic> &Ints,
     EmitTargetBuiltins(I->second, TargetPrefix, OS);
     OS << "  }\n";
   }
-  OS << "  return IntrinsicID;\n";
+  OS << "  return ";
+  if (!TargetPrefix.empty())
+    OS << "(" << TargetPrefix << "Intrinsic::ID)";
+  OS << "Intrinsic::not_intrinsic;\n";
   OS << "}\n";
   OS << "#endif\n\n";
 }
