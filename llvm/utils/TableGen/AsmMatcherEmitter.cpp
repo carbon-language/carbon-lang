@@ -1720,7 +1720,7 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
      << Info.Instructions.size() << ", Mnemonic, LessOpcode());\n\n";
   
   OS << "  for (const MatchEntry *it = MnemonicRange.first, "
-     << "*ie = MnemonicRange.second;\n"
+     << "*ie = MnemonicRange.second;\n";
   OS << "       it != ie; ++it) {\n";
 
   OS << "    // Instruction mneumonic must match.\n";
