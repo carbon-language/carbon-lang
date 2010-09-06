@@ -127,7 +127,7 @@ void StringMatcher::Emit() const {
   for (std::map<unsigned, std::vector<const StringPair*> >::iterator LI =
        MatchesByLength.begin(), E = MatchesByLength.end(); LI != E; ++LI) {
     OS << "  case " << LI->first << ":\t // " << LI->second.size()
-    << " strings to match.\n";
+       << " string" << (LI->second.size() == 1 ? "" : "s") << " to match.\n";
     if (EmitStringMatcherForChar(LI->second, 0, 0))
       OS << "    break;\n";
   }
