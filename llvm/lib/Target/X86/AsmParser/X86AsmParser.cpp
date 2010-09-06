@@ -862,6 +862,8 @@ X86ATTAsmParser::MatchInstruction(SMLoc IDLoc,
                                   MCInst &Inst) {
   assert(!Operands.empty() && "Unexpect empty operand list!");
 
+  bool WasOriginallyInvalidOperand = false;
+  
   // First, try a direct match.
   switch (MatchInstructionImpl(Operands, Inst)) {
   case Match_Success:
@@ -869,7 +871,10 @@ X86ATTAsmParser::MatchInstruction(SMLoc IDLoc,
   case Match_MissingFeature:
     Error(IDLoc, "instruction requires a CPU feature not currently enabled");
     return true;
-  default:
+  case Match_InvalidOperand:
+    WasOriginallyInvalidOperand = true;
+    break;
+  case Match_MnemonicFail:
     break;
   }
 
@@ -941,23 +946,38 @@ X86ATTAsmParser::MatchInstruction(SMLoc IDLoc,
     return true;
   }
   
-  unsigned NumMatchFailures =
-    (MatchB == Match_Fail) + (MatchW == Match_Fail) +
-    (MatchL == Match_Fail) + (MatchQ == Match_Fail);
+  // Okay, we know that none of the variants matched successfully.
   
+  // If all of the instructions reported an invalid mnemonic, then the original
+  // mnemonic was invalid.
+  if ((MatchB == Match_MnemonicFail) && (MatchW == Match_MnemonicFail) &&
+      (MatchL == Match_MnemonicFail) && (MatchQ == Match_MnemonicFail)) {
+    if (WasOriginallyInvalidOperand)
+      Error(IDLoc, "invalid operand for instruction");
+    else
+      Error(IDLoc, "invalid instruction mnemonic '" + Base + "'"); 
+    return true;
+  }
   
   // If one instruction matched with a missing feature, report this as a
   // missing feature.
   if ((MatchB == Match_MissingFeature) + (MatchW == Match_MissingFeature) +
-      (MatchL == Match_MissingFeature) + (MatchQ == Match_MissingFeature) == 1&&
-      NumMatchFailures == 3) {
+      (MatchL == Match_MissingFeature) + (MatchQ == Match_MissingFeature) == 1){
     Error(IDLoc, "instruction requires a CPU feature not currently enabled");
+    return true;
+  }
+  
+  // If one instruction matched with an invalid operand, report this as an
+  // operand failure.
+  if ((MatchB == Match_InvalidOperand) + (MatchW == Match_InvalidOperand) +
+      (MatchL == Match_InvalidOperand) + (MatchQ == Match_InvalidOperand) == 1){
+    Error(IDLoc, "invalid operand for instruction");
     return true;
   }
   
   // If all of these were an outright failure, report it in a useless way.
   // FIXME: We should give nicer diagnostics about the exact failure.
-  Error(IDLoc, "unrecognized instruction");
+  Error(IDLoc, "unknown use of instruction mnemonic without a size suffix");
   return true;
 }
 

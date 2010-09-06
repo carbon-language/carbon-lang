@@ -1559,7 +1559,8 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
   OS << "  unsigned ComputeAvailableFeatures(const " <<
            Target.getName() << "Subtarget *Subtarget) const;\n";
   OS << "  enum MatchResultTy {\n";
-  OS << "    Match_Success, Match_Fail, Match_MissingFeature\n";
+  OS << "    Match_Success, Match_MnemonicFail, Match_InvalidOperand,\n";
+  OS << "    Match_MissingFeature\n";
   OS << "  };\n";
   OS << "  MatchResultTy MatchInstructionImpl(const SmallVectorImpl<MCParsedAsmOperand*>"
      << " &Operands, MCInst &Inst);\n\n";
@@ -1687,7 +1688,7 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
   // Emit code to compute the class list for this operand vector.
   OS << "  // Eliminate obvious mismatches.\n";
   OS << "  if (Operands.size() > " << MaxNumOperands << "+1)\n";
-  OS << "    return Match_Fail;\n\n";
+  OS << "    return Match_InvalidOperand;\n\n";
 
   OS << "  // Compute the class list for this operand vector.\n";
   OS << "  MatchClassKind Classes[" << MaxNumOperands << "];\n";
@@ -1696,7 +1697,7 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
 
   OS << "    // Check for invalid operands before matching.\n";
   OS << "    if (Classes[i-1] == InvalidMatchClass)\n";
-  OS << "      return Match_Fail;\n";
+  OS << "      return Match_InvalidOperand;\n";
   OS << "  }\n\n";
 
   OS << "  // Mark unused classes.\n";
@@ -1715,6 +1716,10 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
   OS << "  std::pair<const MatchEntry*, const MatchEntry*> MnemonicRange =\n";
   OS << "    std::equal_range(MatchTable, MatchTable+"
      << Info.Instructions.size() << ", Mnemonic, LessOpcode());\n\n";
+  
+  OS << "  // Return a more specific error code if no mnemonics match.\n";
+  OS << "  if (MnemonicRange.first == MnemonicRange.second)\n";
+  OS << "    return Match_MnemonicFail;\n\n";
   
   OS << "  for (const MatchEntry *it = MnemonicRange.first, "
      << "*ie = MnemonicRange.second;\n";
@@ -1751,7 +1756,7 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
 
   OS << "  // Okay, we had no match.  Try to return a useful error code.\n";
   OS << "  if (HadMatchOtherThanFeatures) return Match_MissingFeature;\n";
-  OS << "  return Match_Fail;\n";
+  OS << "  return Match_InvalidOperand;\n";
   OS << "}\n\n";
   
   OS << "#endif // GET_MATCHER_IMPLEMENTATION\n\n";
