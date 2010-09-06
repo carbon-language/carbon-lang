@@ -76,6 +76,7 @@
 #include "AsmMatcherEmitter.h"
 #include "CodeGenTarget.h"
 #include "Record.h"
+#include "StringMatcher.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/STLExtras.h"
@@ -1397,133 +1398,6 @@ static void EmitIsSubclass(CodeGenTarget &Target,
   OS << "}\n\n";
 }
 
-typedef std::pair<std::string, std::string> StringPair;
-
-/// FindFirstNonCommonLetter - Find the first character in the keys of the
-/// string pairs that is not shared across the whole set of strings.  All
-/// strings are assumed to have the same length.
-static unsigned 
-FindFirstNonCommonLetter(const std::vector<const StringPair*> &Matches) {
-  assert(!Matches.empty());
-  for (unsigned i = 0, e = Matches[0]->first.size(); i != e; ++i) {
-    // Check to see if letter i is the same across the set.
-    char Letter = Matches[0]->first[i];
-    
-    for (unsigned str = 0, e = Matches.size(); str != e; ++str)
-      if (Matches[str]->first[i] != Letter)
-        return i;
-  }
-  
-  return Matches[0]->first.size();
-}
-
-/// EmitStringMatcherForChar - Given a set of strings that are known to be the
-/// same length and whose characters leading up to CharNo are the same, emit
-/// code to verify that CharNo and later are the same.
-///
-/// \return - True if control can leave the emitted code fragment.
-static bool EmitStringMatcherForChar(const std::string &StrVariableName,
-                                  const std::vector<const StringPair*> &Matches,
-                                     unsigned CharNo, unsigned IndentCount,
-                                     raw_ostream &OS) {
-  assert(!Matches.empty() && "Must have at least one string to match!");
-  std::string Indent(IndentCount*2+4, ' ');
-
-  // If we have verified that the entire string matches, we're done: output the
-  // matching code.
-  if (CharNo == Matches[0]->first.size()) {
-    assert(Matches.size() == 1 && "Had duplicate keys to match on");
-    
-    // FIXME: If Matches[0].first has embeded \n, this will be bad.
-    OS << Indent << Matches[0]->second << "\t // \"" << Matches[0]->first
-       << "\"\n";
-    return false;
-  }
-  
-  // Bucket the matches by the character we are comparing.
-  std::map<char, std::vector<const StringPair*> > MatchesByLetter;
-  
-  for (unsigned i = 0, e = Matches.size(); i != e; ++i)
-    MatchesByLetter[Matches[i]->first[CharNo]].push_back(Matches[i]);
-  
-
-  // If we have exactly one bucket to match, see how many characters are common
-  // across the whole set and match all of them at once.
-  if (MatchesByLetter.size() == 1) {
-    unsigned FirstNonCommonLetter = FindFirstNonCommonLetter(Matches);
-    unsigned NumChars = FirstNonCommonLetter-CharNo;
-    
-    // Emit code to break out if the prefix doesn't match.
-    if (NumChars == 1) {
-      // Do the comparison with if (Str[1] != 'f')
-      // FIXME: Need to escape general characters.
-      OS << Indent << "if (" << StrVariableName << "[" << CharNo << "] != '"
-         << Matches[0]->first[CharNo] << "')\n";
-      OS << Indent << "  break;\n";
-    } else {
-      // Do the comparison with if (Str.substr(1,3) != "foo").    
-      // FIXME: Need to escape general strings.
-      OS << Indent << "if (" << StrVariableName << ".substr(" << CharNo << ","
-         << NumChars << ") != \"";
-      OS << Matches[0]->first.substr(CharNo, NumChars) << "\")\n";
-      OS << Indent << "  break;\n";
-    }
-    
-    return EmitStringMatcherForChar(StrVariableName, Matches, 
-                                    FirstNonCommonLetter, IndentCount, OS);
-  }
-  
-  // Otherwise, we have multiple possible things, emit a switch on the
-  // character.
-  OS << Indent << "switch (" << StrVariableName << "[" << CharNo << "]) {\n";
-  OS << Indent << "default: break;\n";
-  
-  for (std::map<char, std::vector<const StringPair*> >::iterator LI = 
-       MatchesByLetter.begin(), E = MatchesByLetter.end(); LI != E; ++LI) {
-    // TODO: escape hard stuff (like \n) if we ever care about it.
-    OS << Indent << "case '" << LI->first << "':\t // "
-       << LI->second.size() << " strings to match.\n";
-    if (EmitStringMatcherForChar(StrVariableName, LI->second, CharNo+1,
-                                 IndentCount+1, OS))
-      OS << Indent << "  break;\n";
-  }
-  
-  OS << Indent << "}\n";
-  return true;
-}
-
-
-/// EmitStringMatcher - Given a list of strings and code to execute when they
-/// match, output a simple switch tree to classify the input string.
-/// 
-/// If a match is found, the code in Vals[i].second is executed; control must
-/// not exit this code fragment.  If nothing matches, execution falls through.
-///
-/// \param StrVariableName - The name of the variable to test.
-static void EmitStringMatcher(const std::string &StrVariableName,
-                              const std::vector<StringPair> &Matches,
-                              raw_ostream &OS) {
-  // First level categorization: group strings by length.
-  std::map<unsigned, std::vector<const StringPair*> > MatchesByLength;
-  
-  for (unsigned i = 0, e = Matches.size(); i != e; ++i)
-    MatchesByLength[Matches[i].first.size()].push_back(&Matches[i]);
-  
-  // Output a switch statement on length and categorize the elements within each
-  // bin.
-  OS << "  switch (" << StrVariableName << ".size()) {\n";
-  OS << "  default: break;\n";
-  
-  for (std::map<unsigned, std::vector<const StringPair*> >::iterator LI =
-       MatchesByLength.begin(), E = MatchesByLength.end(); LI != E; ++LI) {
-    OS << "  case " << LI->first << ":\t // " << LI->second.size()
-       << " strings to match.\n";
-    if (EmitStringMatcherForChar(StrVariableName, LI->second, 0, 0, OS))
-      OS << "    break;\n";
-  }
-  
-  OS << "  }\n";
-}
 
 
 /// EmitMatchTokenString - Emit the function to match a token string to the
@@ -1532,18 +1406,19 @@ static void EmitMatchTokenString(CodeGenTarget &Target,
                                  std::vector<ClassInfo*> &Infos,
                                  raw_ostream &OS) {
   // Construct the match list.
-  std::vector<StringPair> Matches;
+  std::vector<StringMatcher::StringPair> Matches;
   for (std::vector<ClassInfo*>::iterator it = Infos.begin(), 
          ie = Infos.end(); it != ie; ++it) {
     ClassInfo &CI = **it;
 
     if (CI.Kind == ClassInfo::Token)
-      Matches.push_back(StringPair(CI.ValueName, "return " + CI.Name + ";"));
+      Matches.push_back(StringMatcher::StringPair(CI.ValueName,
+                                                  "return " + CI.Name + ";"));
   }
 
   OS << "static MatchClassKind MatchTokenString(StringRef Name) {\n";
 
-  EmitStringMatcher("Name", Matches, OS);
+  StringMatcher("Name", Matches, OS).Emit();
 
   OS << "  return InvalidMatchClass;\n";
   OS << "}\n\n";
@@ -1554,19 +1429,20 @@ static void EmitMatchTokenString(CodeGenTarget &Target,
 static void EmitMatchRegisterName(CodeGenTarget &Target, Record *AsmParser,
                                   raw_ostream &OS) {
   // Construct the match list.
-  std::vector<StringPair> Matches;
+  std::vector<StringMatcher::StringPair> Matches;
   for (unsigned i = 0, e = Target.getRegisters().size(); i != e; ++i) {
     const CodeGenRegister &Reg = Target.getRegisters()[i];
     if (Reg.TheDef->getValueAsString("AsmName").empty())
       continue;
 
-    Matches.push_back(StringPair(Reg.TheDef->getValueAsString("AsmName"),
-                                 "return " + utostr(i + 1) + ";"));
+    Matches.push_back(StringMatcher::StringPair(
+                                        Reg.TheDef->getValueAsString("AsmName"),
+                                        "return " + utostr(i + 1) + ";"));
   }
   
   OS << "static unsigned MatchRegisterName(StringRef Name) {\n";
 
-  EmitStringMatcher("Name", Matches, OS);
+  StringMatcher("Name", Matches, OS).Emit();
   
   OS << "  return 0;\n";
   OS << "}\n\n";
