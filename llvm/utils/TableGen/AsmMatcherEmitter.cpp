@@ -1541,13 +1541,32 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
 
   EmitSourceFileHeader("Assembly Matcher Source Fragment", OS);
 
+  // Information for the class declaration.
+  OS << "\n#ifdef GET_ASSEMBLER_HEADER\n";
+  OS << "#undef GET_ASSEMBLER_HEADER\n";
+  OS << "  unsigned ComputeAvailableFeatures(const " <<
+           Target.getName() << "Subtarget *Subtarget) const;\n";
+  OS << "bool MatchInstructionImpl(const SmallVectorImpl<MCParsedAsmOperand*>"
+     << " &Operands, MCInst &Inst);\n\n";
+  OS << "#endif // GET_ASSEMBLER_HEADER_INFO\n\n";
+
+  
+  
+  
+  OS << "\n#ifdef GET_REGISTER_MATCHER\n";
+  OS << "#undef GET_REGISTER_MATCHER\n\n";
+
   // Emit the subtarget feature enumeration.
   EmitSubtargetFeatureFlagEnumeration(Target, Info, OS);
 
   // Emit the function to match a register name to number.
   EmitMatchRegisterName(Target, AsmParser, OS);
+
+  OS << "#endif // GET_REGISTER_MATCHER\n\n";
   
-  OS << "#ifndef REGISTERS_ONLY\n\n";
+
+  OS << "\n#ifdef GET_MATCHER_IMPLEMENTATION\n";
+  OS << "#undef GET_MATCHER_IMPLEMENTATION\n\n";
 
   // Generate the unified function to convert operands into an MCInst.
   EmitConvertToMCInst(Target, Info.Instructions, OS);
@@ -1658,16 +1677,17 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
      << "; it != ie; ++it) {\n";
 
   // Emit check that the required features are available.
-    OS << "    if ((AvailableFeatures & it->RequiredFeatures) "
-       << "!= it->RequiredFeatures)\n";
-    OS << "      continue;\n";
-
+  OS << "    if ((AvailableFeatures & it->RequiredFeatures) "
+     << "!= it->RequiredFeatures)\n";
+  OS << "      continue;\n";
+  
   // Emit check that the subclasses match.
   for (unsigned i = 0; i != MaxNumOperands; ++i) {
     OS << "    if (!IsSubclass(Classes[" 
        << i << "], it->Classes[" << i << "]))\n";
     OS << "      continue;\n";
   }
+  
   OS << "\n";
   OS << "    ConvertToMCInst(it->ConvertFn, Inst, it->Opcode, Operands);\n";
 
@@ -1683,5 +1703,5 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
   OS << "  return true;\n";
   OS << "}\n\n";
   
-  OS << "#endif // REGISTERS_ONLY\n";
+  OS << "#endif // GET_MATCHER_IMPLEMENTATION\n\n";
 }

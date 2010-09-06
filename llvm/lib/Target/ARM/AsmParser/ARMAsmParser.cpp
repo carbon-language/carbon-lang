@@ -95,11 +95,8 @@ private:
   /// @name Auto-generated Match Functions
   /// {
 
-  unsigned ComputeAvailableFeatures(const ARMSubtarget *Subtarget) const;
-
-  bool MatchInstructionImpl(const SmallVectorImpl<MCParsedAsmOperand*>
-                              &Operands,
-                            MCInst &Inst);
+#define GET_ASSEMBLER_HEADER
+#include "ARMGenAsmMatcher.inc"
 
   /// }
 
@@ -869,4 +866,6 @@ extern "C" void LLVMInitializeARMAsmParser() {
   LLVMInitializeARMAsmLexer();
 }
 
+#define GET_REGISTER_MATCHER
+#define GET_MATCHER_IMPLEMENTATION
 #include "ARMGenAsmMatcher.inc"

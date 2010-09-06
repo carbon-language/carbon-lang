@@ -56,12 +56,10 @@ private:
 
   /// @name Auto-generated Matcher Functions
   /// {
-
-  unsigned ComputeAvailableFeatures(const X86Subtarget *Subtarget) const;
-
-  bool MatchInstructionImpl(
-    const SmallVectorImpl<MCParsedAsmOperand*> &Operands, MCInst &Inst);
-
+  
+#define GET_ASSEMBLER_HEADER
+#include "X86GenAsmMatcher.inc"
+  
   /// }
 
 public:
@@ -882,9 +880,6 @@ X86ATTAsmParser::MatchInstruction(SMLoc IDLoc,
                                   MCInst &Inst) {
   assert(!Operands.empty() && "Unexpect empty operand list!");
 
-  X86Operand *Op = static_cast<X86Operand*>(Operands[0]);
-  assert(Op->isToken() && "Leading operand should always be a mnemonic!");
-
   // First, try a direct match.
   if (!MatchInstructionImpl(Operands, Inst))
     return false;
@@ -894,6 +889,9 @@ X86ATTAsmParser::MatchInstruction(SMLoc IDLoc,
   // type. However, that requires substantially more matcher support than the
   // following hack.
 
+  X86Operand *Op = static_cast<X86Operand*>(Operands[0]);
+  assert(Op->isToken() && "Leading operand should always be a mnemonic!");
+  
   // Change the operand to point to a temporary token.
   StringRef Base = Op->getToken();
   SmallString<16> Tmp;
@@ -966,4 +964,6 @@ extern "C" void LLVMInitializeX86AsmParser() {
   LLVMInitializeX86AsmLexer();
 }
 
+#define GET_REGISTER_MATCHER
+#define GET_MATCHER_IMPLEMENTATION
 #include "X86GenAsmMatcher.inc"
