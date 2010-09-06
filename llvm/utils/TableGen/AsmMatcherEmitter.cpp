@@ -1723,8 +1723,8 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
      << "*ie = MnemonicRange.second;\n";
   OS << "       it != ie; ++it) {\n";
 
-  OS << "    // Instruction mneumonic must match.\n";
-  OS << "    if (Mnemonic != it->Mnemonic) continue;\n";
+  OS << "    // equal_range guarantees that instruction mneumonic matches.\n";
+  OS << "    assert(Mnemonic == it->Mnemonic);\n";
   
   // Emit check that the subclasses match.
   for (unsigned i = 0; i != MaxNumOperands; ++i) {
