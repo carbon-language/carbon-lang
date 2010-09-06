@@ -164,3 +164,12 @@ imul $12, %eax
 
 // CHECK: imull %ecx, %eax
 imull %ecx, %eax
+
+
+// rdar://8208481
+// CHECK: outb	%al, $161
+outb	%al, $161
+// CHECK: outw	%ax, $128
+outw	%ax, $128
+// CHECK: inb	$161, %al
+inb	$161, %al

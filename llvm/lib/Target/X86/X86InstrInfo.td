@@ -978,13 +978,13 @@ def IN32rr : I<0xED, RawFrm, (outs), (ins),
                "in{l}\t{%dx, %eax|%EAX, %DX}", []>;
 
 let Defs = [AL] in
-def IN8ri  : Ii8<0xE4, RawFrm, (outs), (ins i16i8imm:$port),
+def IN8ri  : Ii8<0xE4, RawFrm, (outs), (ins i8imm:$port),
                   "in{b}\t{$port, %al|%AL, $port}", []>;
 let Defs = [AX] in
-def IN16ri : Ii8<0xE5, RawFrm, (outs), (ins i16i8imm:$port),
+def IN16ri : Ii8<0xE5, RawFrm, (outs), (ins i8imm:$port),
                   "in{w}\t{$port, %ax|%AX, $port}", []>, OpSize;
 let Defs = [EAX] in
-def IN32ri : Ii8<0xE5, RawFrm, (outs), (ins i16i8imm:$port),
+def IN32ri : Ii8<0xE5, RawFrm, (outs), (ins i8imm:$port),
                   "in{l}\t{$port, %eax|%EAX, $port}", []>;
 
 let Uses = [DX, AL] in
@@ -998,13 +998,13 @@ def OUT32rr : I<0xEF, RawFrm, (outs), (ins),
                 "out{l}\t{%eax, %dx|%DX, %EAX}", []>;
 
 let Uses = [AL] in
-def OUT8ir  : Ii8<0xE6, RawFrm, (outs), (ins i16i8imm:$port),
+def OUT8ir  : Ii8<0xE6, RawFrm, (outs), (ins i8imm:$port),
                    "out{b}\t{%al, $port|$port, %AL}", []>;
 let Uses = [AX] in
-def OUT16ir : Ii8<0xE7, RawFrm, (outs), (ins i16i8imm:$port),
+def OUT16ir : Ii8<0xE7, RawFrm, (outs), (ins i8imm:$port),
                    "out{w}\t{%ax, $port|$port, %AX}", []>, OpSize;
 let Uses = [EAX] in
-def OUT32ir : Ii8<0xE7, RawFrm, (outs), (ins i16i8imm:$port),
+def OUT32ir : Ii8<0xE7, RawFrm, (outs), (ins i8imm:$port),
                    "out{l}\t{%eax, $port|$port, %EAX}", []>;
 
 def IN8  : I<0x6C, RawFrm, (outs), (ins),
