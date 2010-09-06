@@ -2,7 +2,7 @@
 // RUN: FileCheck %s < %t
 
 int test1(int X) {
-// CHECK: error: unrecognized instruction
+// CHECK: error: invalid instruction mnemonic 'abc'
   __asm__ ("abc incl    %0" : "+r" (X));
   return X;
 }
