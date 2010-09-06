@@ -34,7 +34,6 @@ namespace std
     template <class T> struct is_pointer;
     template <class T> struct is_lvalue_reference;
     template <class T> struct is_rvalue_reference;
-    template <class T> struct is_reference;
     template <class T> struct is_member_object_pointer;
     template <class T> struct is_member_function_pointer;
     template <class T> struct is_enum;
@@ -152,9 +151,12 @@ struct __two {char _[2];};
 template <class _Tp, _Tp __v>
 struct integral_constant
 {
-    static const _Tp          value = __v;
+    static constexpr _Tp      value = __v;
     typedef _Tp               value_type;
     typedef integral_constant type;
+#ifndef _LIBCPP_HAS_NO_CONSTEXPR
+    constexpr operator value_type() {return value;}
+#endif
 };
 
 template <class _Tp, _Tp __v>
@@ -258,7 +260,7 @@ template <class _Tp> struct is_reference<_Tp&&> : public true_type {};
 
 // is_union
 
-#if __GNUC__ >= 4 && __GNUC_MINOR__ >= 3
+#if __GNUC__ >= 4 && __GNUC_MINOR__ >= 3 || defined(__clang__)
 
 template <class _Tp> struct is_union : public integral_constant<bool, __is_union(_Tp)> {};
 
@@ -725,13 +727,30 @@ template <class _Tp> struct has_nothrow_move_constructor : public has_nothrow_co
 
 template <class _Tp> struct has_copy_constructor : public true_type {};
 
+// has_copy_assign
+
+template <class _Tp> struct has_copy_assign;
+
 // has_trivial_copy_assign
 
-template <class _Tp> struct __libcpp_trivial_copy_assign : public integral_constant<bool, !is_const<_Tp>::value &&
-                                                                                   is_scalar<_Tp>::value> {};
+#if defined(__clang__) || (__GNUC__ >= 4 && __GNUC_MINOR__ >= 3)
+
+template <class _Tp, bool = is_void<_Tp>::value>
+struct __has_trivial_copy_assign
+    : public integral_constant<bool, __has_trivial_assign(_Tp)> {};
+
+template <class _Tp> struct __has_trivial_copy_assign<_Tp, true>
+    : public false_type {};
 
 template <class _Tp> struct has_trivial_copy_assign
-    : public __libcpp_trivial_copy_assign<typename remove_all_extents<_Tp>::type> {};
+    : __has_trivial_copy_assign<_Tp> {};
+
+#else
+
+template <class _Tp> struct has_trivial_copy_assign
+    : public integral_constant<bool, is_scalar<_Tp>::value && !is_const<_Tp>::value> {};
+
+#endif  // defined(__clang__) || (__GNUC__ >= 4 && __GNUC_MINOR__ >= 3)
 
 // has_nothrow_copy_assign
 

@@ -62,9 +62,10 @@ int main()
     test_has_not_trivial_assign<void>();
     test_has_not_trivial_assign<A>();
     test_has_not_trivial_assign<int&>();
+    test_has_not_trivial_assign<NotEmpty>();
+    test_has_not_trivial_assign<Abstract>();
 
     test_has_trivial_assign<Union>();
-    test_has_trivial_assign<Abstract>();
     test_has_trivial_assign<Empty>();
     test_has_trivial_assign<int>();
     test_has_trivial_assign<double>();
@@ -72,6 +73,5 @@ int main()
     test_has_trivial_assign<const int*>();
     test_has_trivial_assign<char[3]>();
     test_has_trivial_assign<char[3]>();
-    test_has_trivial_assign<NotEmpty>();
     test_has_trivial_assign<bit_zero>();
 }

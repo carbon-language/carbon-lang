@@ -152,6 +152,10 @@ using namespace _LIBCPP_NAMESPACE;
 #define _STD std
 #endif  // __has_feature(cxx_inline_namespaces)
 
+#if !(__has_feature(cxx_constexpr))
+#define _LIBCPP_HAS_NO_CONSTEXPR
+#endif
+
 // end defined(__clang__)
 
 #elif defined(__GNUC__)
@@ -161,6 +165,7 @@ using namespace _LIBCPP_NAMESPACE;
 #endif
 
 #define _LIBCPP_HAS_NO_TEMPLATE_ALIASES
+#define _LIBCPP_HAS_NO_CONSTEXPR
 
 #ifndef __GXX_EXPERIMENTAL_CXX0X__
 
@@ -229,6 +234,10 @@ template <unsigned> struct __static_assert_check {};
 
 #ifdef _LIBCPP_HAS_NO_DECLTYPE
 #define decltype(x) __typeof__(x)
+#endif
+
+#ifdef _LIBCPP_HAS_NO_CONSTEXPR
+#define constexpr const
 #endif
 
 #endif  // _LIBCPP_CONFIG

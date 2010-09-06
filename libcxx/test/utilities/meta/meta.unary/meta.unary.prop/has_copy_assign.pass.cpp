@@ -15,5 +15,5 @@
 
 int main()
 {
-#error has_copy_assign not implemented
+    static_assert((std::has_copy_assign<int>::value), "");
 }

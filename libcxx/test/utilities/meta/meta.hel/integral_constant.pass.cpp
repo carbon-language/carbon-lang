@@ -12,6 +12,7 @@
 // integral_constant
 
 #include <type_traits>
+#include <cassert>
 
 int main()
 {
@@ -19,6 +20,7 @@ int main()
     static_assert(_5::value == 5, "");
     static_assert((std::is_same<_5::value_type, int>::value), "");
     static_assert((std::is_same<_5::type, _5>::value), "");
+    static_assert((_5() == 5), "");
 
     static_assert(std::false_type::value == false, "");
     static_assert((std::is_same<std::false_type::value_type, bool>::value), "");
