@@ -99,33 +99,35 @@ EmitFnNameRecognizer(const std::vector<CodeGenIntrinsic> &Ints,
   // Build a function name -> intrinsic name mapping.
   std::map<std::string, unsigned> IntMapping;
   for (unsigned i = 0, e = Ints.size(); i != e; ++i)
-    IntMapping[Ints[i].Name] = i;
+    IntMapping[Ints[i].Name.substr(5)] = i;
     
   OS << "// Function name -> enum value recognizer code.\n";
   OS << "#ifdef GET_FUNCTION_RECOGNIZER\n";
-  OS << "  switch (Name[5]) {\n";
+  OS << "  Name += 5; Len -= 5;  // Skip over 'llvm.'\n";
+  OS << "  switch (*Name) {      // Dispatch on first letter.\n";
   OS << "  default:\n";
   // Emit the intrinsics in sorted order.
   char LastChar = 0;
   for (std::map<std::string, unsigned>::iterator I = IntMapping.begin(),
        E = IntMapping.end(); I != E; ++I) {
-    if (I->first[5] != LastChar) {
-      LastChar = I->first[5];
+    if (I->first[0] != LastChar) {
+      LastChar = I->first[0];
       OS << "    break;\n";
       OS << "  case '" << LastChar << "':\n";
     }
     
     // For overloaded intrinsics, only the prefix needs to match
-    if (Ints[I->second].isOverloaded)
-      OS << "    if (Len > " << I->first.size()
-       << " && !memcmp(Name, \"" << I->first << ".\", "
-       << (I->first.size() + 1) << ")) return " << TargetPrefix << "Intrinsic::"
+    std::string TheStr = I->first;
+    if (Ints[I->second].isOverloaded) {
+      TheStr += '.';  // Require "bswap." instead of bswap.
+      OS << "    if (Len > " << I->first.size();
+    } else {
+      OS << "    if (Len == " << I->first.size();
+    }
+      
+    OS << " && !memcmp(Name, \"" << TheStr << "\", "
+       << TheStr.size() << ")) return " << TargetPrefix << "Intrinsic::"
        << Ints[I->second].EnumName << ";\n";
-    else 
-      OS << "    if (Len == " << I->first.size()
-         << " && !memcmp(Name, \"" << I->first << "\", "
-         << I->first.size() << ")) return " << TargetPrefix << "Intrinsic::"
-         << Ints[I->second].EnumName << ";\n";
   }
   OS << "  }\n";
   OS << "#endif\n\n";
