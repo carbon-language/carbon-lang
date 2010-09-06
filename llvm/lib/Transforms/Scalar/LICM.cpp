@@ -193,7 +193,6 @@ namespace {
     }
 
     bool canSinkOrHoistInst(Instruction &I);
-    bool isLoopInvariantInst(Instruction &I);
     bool isNotUsedInLoop(Instruction &I);
 
     void PromoteAliasSet(AliasSet &AS);
@@ -369,7 +368,7 @@ void LICM::HoistRegion(DomTreeNode *N) {
       // if all of the operands of the instruction are loop invariant and if it
       // is safe to hoist the instruction.
       //
-      if (isLoopInvariantInst(I) && canSinkOrHoistInst(I) &&
+      if (CurLoop->hasLoopInvariantOperands(&I) && canSinkOrHoistInst(I) &&
           isSafeToExecuteUnconditionally(I))
         hoist(I);
     }
@@ -451,20 +450,6 @@ bool LICM::isNotUsedInLoop(Instruction &I) {
   return true;
 }
 
-
-/// isLoopInvariantInst - Return true if all operands of this instruction are
-/// loop invariant.  We also filter out non-hoistable instructions here just for
-/// efficiency.
-///
-bool LICM::isLoopInvariantInst(Instruction &I) {
-  // The instruction is loop invariant if all of its operands are loop-invariant
-  for (unsigned i = 0, e = I.getNumOperands(); i != e; ++i)
-    if (!CurLoop->isLoopInvariant(I.getOperand(i)))
-      return false;
-
-  // If we got this far, the instruction is loop invariant!
-  return true;
-}
 
 /// sink - When an instruction is found to only be used outside of the loop,
 /// this function moves it to the exit blocks and patches up SSA form as needed.
