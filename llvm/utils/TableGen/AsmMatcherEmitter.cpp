@@ -1604,20 +1604,14 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
   // Emit the available features compute function.
   EmitComputeAvailableFeatures(Target, Info, OS);
 
-  // Finally, build the match function.
 
   size_t MaxNumOperands = 0;
   for (std::vector<InstructionInfo*>::const_iterator it =
          Info.Instructions.begin(), ie = Info.Instructions.end();
        it != ie; ++it)
     MaxNumOperands = std::max(MaxNumOperands, (*it)->Operands.size());
-
-  OS << Target.getName() << ClassName << "::MatchResultTy "
-     << Target.getName() << ClassName << "::\n"
-     << "MatchInstructionImpl(const SmallVectorImpl<MCParsedAsmOperand*>"
-     << " &Operands,\n";
-  OS << "                     MCInst &Inst) {\n";
-
+  
+  
   // Emit the static match table; unused classes get initalized to 0 which is
   // guaranteed to be InvalidMatchClass.
   //
@@ -1628,22 +1622,27 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
   // order the match kinds appropriately (putting mnemonics last), then we
   // should only end up using a few bits for each class, especially the ones
   // following the mnemonic.
-  OS << "  static const struct MatchEntry {\n";
+  OS << "namespace {\n";
+  OS << "  struct MatchEntry {\n";
   OS << "    unsigned Opcode;\n";
   OS << "    const char *Mnemonic;\n";
   OS << "    ConversionKind ConvertFn;\n";
   OS << "    MatchClassKind Classes[" << MaxNumOperands << "];\n";
   OS << "    unsigned RequiredFeatures;\n";
-  OS << "  } MatchTable[" << Info.Instructions.size() << "] = {\n";
-
+  OS << "  };\n";
+  OS << "} // end anonymous namespace.\n\n";
+  
+  OS << "static const MatchEntry MatchTable["
+     << Info.Instructions.size() << "] = {\n";
+  
   for (std::vector<InstructionInfo*>::const_iterator it =
-         Info.Instructions.begin(), ie = Info.Instructions.end();
+       Info.Instructions.begin(), ie = Info.Instructions.end();
        it != ie; ++it) {
     InstructionInfo &II = **it;
-
-    OS << "    { " << Target.getName() << "::" << II.InstrName
-       << ", \"" << II.Tokens[0] << "\""
-       << ", " << II.ConversionFnKind << ", { ";
+    
+    OS << "  { " << Target.getName() << "::" << II.InstrName
+    << ", \"" << II.Tokens[0] << "\""
+    << ", " << II.ConversionFnKind << ", { ";
     for (unsigned i = 0, e = II.Operands.size(); i != e; ++i) {
       InstructionInfo::Operand &Op = II.Operands[i];
       
@@ -1651,7 +1650,7 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
       OS << Op.Class->Name;
     }
     OS << " }, ";
-
+    
     // Write the required features mask.
     if (!II.RequiredFeatures.empty()) {
       for (unsigned i = 0, e = II.RequiredFeatures.size(); i != e; ++i) {
@@ -1660,12 +1659,18 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
       }
     } else
       OS << "0";
-
+    
     OS << "},\n";
   }
+  
+  OS << "};\n\n";
 
-  OS << "  };\n\n";
-
+  // Finally, build the match function.
+  OS << Target.getName() << ClassName << "::MatchResultTy "
+     << Target.getName() << ClassName << "::\n"
+     << "MatchInstructionImpl(const SmallVectorImpl<MCParsedAsmOperand*>"
+     << " &Operands,\n";
+  OS << "                     MCInst &Inst) {\n";
 
   // Emit code to get the available features.
   OS << "  // Get the current feature set.\n";
