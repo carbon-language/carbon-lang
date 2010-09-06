@@ -180,7 +180,7 @@ CreateReferenceTemporary(CodeGenFunction& CGF, QualType Type,
 }
 
 static llvm::Value *
-EmitExprForReferenceBinding(CodeGenFunction& CGF, const Expr* E,
+EmitExprForReferenceBinding(CodeGenFunction &CGF, const Expr *E,
                             llvm::Value *&ReferenceTemporary,
                             const CXXDestructorDecl *&ReferenceTemporaryDtor,
                             const NamedDecl *InitializedDecl) {
@@ -328,7 +328,7 @@ EmitExprForReferenceBinding(CodeGenFunction& CGF, const Expr* E,
 }
 
 RValue
-CodeGenFunction::EmitReferenceBindingToExpr(const Expr* E,
+CodeGenFunction::EmitReferenceBindingToExpr(const Expr *E,
                                             const NamedDecl *InitializedDecl) {
   llvm::Value *ReferenceTemporary = 0;
   const CXXDestructorDecl *ReferenceTemporaryDtor = 0;
@@ -1116,7 +1116,7 @@ static LValue EmitGlobalVarDeclLValue(CodeGenFunction &CGF,
 
 static LValue EmitFunctionDeclLValue(CodeGenFunction &CGF,
                                       const Expr *E, const FunctionDecl *FD) {
-  llvm::Value* V = CGF.CGM.GetAddrOfFunction(FD);
+  llvm::Value *V = CGF.CGM.GetAddrOfFunction(FD);
   if (!FD->hasPrototype()) {
     if (const FunctionProtoType *Proto =
             FD->getType()->getAs<FunctionProtoType>()) {
@@ -1138,7 +1138,7 @@ LValue CodeGenFunction::EmitDeclRefLValue(const DeclRefExpr *E) {
   unsigned Alignment = CGF.getContext().getDeclAlign(ND).getQuantity();
 
   if (ND->hasAttr<WeakRefAttr>()) {
-    const ValueDecl* VD = cast<ValueDecl>(ND);
+    const ValueDecl *VD = cast<ValueDecl>(ND);
     llvm::Constant *Aliasee = CGM.GetWeakRefReference(VD);
     return MakeAddrLValue(Aliasee, E->getType(), Alignment);
   }
@@ -1574,8 +1574,8 @@ LValue CodeGenFunction::EmitMemberExpr(const MemberExpr *E) {
   return LValue();
 }
 
-LValue CodeGenFunction::EmitLValueForBitfield(llvm::Value* BaseValue,
-                                              const FieldDecl* Field,
+LValue CodeGenFunction::EmitLValueForBitfield(llvm::Value *BaseValue,
+                                              const FieldDecl *Field,
                                               unsigned CVRQualifiers) {
   const CGRecordLayout &RL =
     CGM.getTypes().getCGRecordLayout(Field->getParent());
@@ -1613,8 +1613,8 @@ LValue CodeGenFunction::EmitLValueForAnonRecordField(llvm::Value *BaseValue,
   }
 }
 
-LValue CodeGenFunction::EmitLValueForField(llvm::Value* BaseValue,
-                                           const FieldDecl* Field,
+LValue CodeGenFunction::EmitLValueForField(llvm::Value *BaseValue,
+                                           const FieldDecl *Field,
                                            unsigned CVRQualifiers) {
   if (Field->isBitField())
     return EmitLValueForBitfield(BaseValue, Field, CVRQualifiers);
@@ -1628,7 +1628,7 @@ LValue CodeGenFunction::EmitLValueForField(llvm::Value* BaseValue,
   if (Field->getParent()->isUnion()) {
     const llvm::Type *FieldTy =
       CGM.getTypes().ConvertTypeForMem(Field->getType());
-    const llvm::PointerType * BaseTy =
+    const llvm::PointerType *BaseTy =
       cast<llvm::PointerType>(BaseValue->getType());
     unsigned AS = BaseTy->getAddressSpace();
     V = Builder.CreateBitCast(V,
@@ -1650,8 +1650,8 @@ LValue CodeGenFunction::EmitLValueForField(llvm::Value* BaseValue,
 }
 
 LValue 
-CodeGenFunction::EmitLValueForFieldInitialization(llvm::Value* BaseValue, 
-                                                  const FieldDecl* Field,
+CodeGenFunction::EmitLValueForFieldInitialization(llvm::Value *BaseValue, 
+                                                  const FieldDecl *Field,
                                                   unsigned CVRQualifiers) {
   QualType FieldType = Field->getType();
   
@@ -1669,9 +1669,9 @@ CodeGenFunction::EmitLValueForFieldInitialization(llvm::Value* BaseValue,
   return MakeAddrLValue(V, FieldType, Alignment);
 }
 
-LValue CodeGenFunction::EmitCompoundLiteralLValue(const CompoundLiteralExpr* E){
+LValue CodeGenFunction::EmitCompoundLiteralLValue(const CompoundLiteralExpr *E){
   llvm::Value *DeclPtr = CreateMemTemp(E->getType(), ".compoundliteral");
-  const Expr* InitExpr = E->getInitializer();
+  const Expr *InitExpr = E->getInitializer();
   LValue Result = MakeAddrLValue(DeclPtr, E->getType());
 
   EmitAnyExprToMem(InitExpr, DeclPtr, /*Volatile*/ false);
@@ -1680,7 +1680,7 @@ LValue CodeGenFunction::EmitCompoundLiteralLValue(const CompoundLiteralExpr* E){
 }
 
 LValue 
-CodeGenFunction::EmitConditionalOperatorLValue(const ConditionalOperator* E) {
+CodeGenFunction::EmitConditionalOperatorLValue(const ConditionalOperator *E) {
   if (E->isLvalue(getContext()) == Expr::LV_Valid) {
     if (int Cond = ConstantFoldsToSimpleInteger(E->getCond())) {
       Expr *Live = Cond == 1 ? E->getLHS() : E->getRHS();

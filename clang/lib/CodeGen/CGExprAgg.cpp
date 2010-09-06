@@ -534,9 +534,8 @@ void AggExprEmitter::VisitInitListExpr(InitListExpr *E) {
     return;
   }
 #endif
-  if (E->hadArrayRangeDesignator()) {
+  if (E->hadArrayRangeDesignator())
     CGF.ErrorUnsupported(E, "GNU array range designator extension");
-  }
 
   // Handle initialization of an array.
   if (E->getType()->isArrayType()) {
