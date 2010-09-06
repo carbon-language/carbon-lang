@@ -622,9 +622,6 @@ ParseInstruction(StringRef Name, SMLoc NameLoc,
     // FIXME: We can do jcxz/jecxz, we just don't have the encoding right yet.
     if (Name == "jcxz" || Name == "jecxz")
       return Error(NameLoc, Name + " cannot be encoded in 64-bit mode");
-  } else {
-    if (Name == "jrcxz")
-      return Error(NameLoc, "jrcxz cannot be encoded in 32-bit mode");
   }
 
   // FIXME: Hack to recognize "sal..." and "rep..." for now. We need a way to
@@ -652,7 +649,7 @@ ParseInstruction(StringRef Name, SMLoc NameLoc,
     // jecxz requires an AdSize prefix but jecxz does not have a prefix in
     // 32-bit mode.
     .Case("jecxz", "jcxz")
-    .Case("jrcxz", "jcxz")
+    .Case("jrcxz", Is64Bit ? "jcxz" : "jrcxz")
     .Case("jna", "jbe")
     .Case("jnae", "jb")
     .Case("jnb", "jae")
