@@ -103,9 +103,6 @@ namespace {
 
     raw_ostream &OS;
 
-    // This holds the current offset into the object file.
-    size_t FileOff;
-
     unsigned Is64Bit : 1;
 
     bool HasRelocationAddend;
@@ -120,7 +117,7 @@ namespace {
   public:
     ELFObjectWriterImpl(ELFObjectWriter *_Writer, bool _Is64Bit,
                         bool _HasRelAddend)
-      : Writer(_Writer), OS(Writer->getStream()), FileOff(0),
+      : Writer(_Writer), OS(Writer->getStream()),
         Is64Bit(_Is64Bit), HasRelocationAddend(_HasRelAddend) {
     }
 
@@ -702,7 +699,7 @@ void ELFObjectWriterImpl::WriteRelocation(MCAssembler &Asm, MCAsmLayout &Layout,
                                     false, EntrySize);
 
     MCSectionData &RelaSD = Asm.getOrCreateSectionData(*RelaSection);
-    RelaSD.setAlignment(1);
+    RelaSD.setAlignment(Is64Bit ? 8 : 4);
 
     MCDataFragment *F = new MCDataFragment(&RelaSD);
 
@@ -832,21 +829,28 @@ void ELFObjectWriterImpl::WriteObject(const MCAssembler &Asm,
 
   // Add 1 for the null section.
   unsigned NumSections = Asm.size() + 1;
-
-  uint64_t SectionDataSize = 0;
+  uint64_t NaturalAlignment = Is64Bit ? 8 : 4;
+  uint64_t HeaderSize = Is64Bit ? sizeof(ELF::Elf64_Ehdr) : sizeof(ELF::Elf32_Ehdr);
+  uint64_t FileOff = HeaderSize;
 
   for (MCAssembler::const_iterator it = Asm.begin(),
          ie = Asm.end(); it != ie; ++it) {
     const MCSectionData &SD = *it;
 
+    FileOff = RoundUpToAlignment(FileOff, SD.getAlignment());
+
     // Get the size of the section in the output file (including padding).
     uint64_t Size = Layout.getSectionFileSize(&SD);
-    SectionDataSize += Size;
+
+    FileOff += Size;
   }
 
+  FileOff = RoundUpToAlignment(FileOff, NaturalAlignment);
+
   // Write out the ELF header ...
-  WriteHeader(SectionDataSize, NumSections);
-  FileOff = Is64Bit ? sizeof(ELF::Elf64_Ehdr) : sizeof(ELF::Elf32_Ehdr);
+  WriteHeader(FileOff - HeaderSize, NumSections);
+
+  FileOff = HeaderSize;
 
   // ... then all of the sections ...
   DenseMap<const MCSection*, uint64_t> SectionOffsetMap;
@@ -856,16 +860,24 @@ void ELFObjectWriterImpl::WriteObject(const MCAssembler &Asm,
   unsigned Index = 1;
   for (MCAssembler::const_iterator it = Asm.begin(),
          ie = Asm.end(); it != ie; ++it) {
+    const MCSectionData &SD = *it;
+
+    uint64_t Padding = OffsetToAlignment(FileOff, SD.getAlignment());
+    WriteZeros(Padding);
+    FileOff += Padding;
+
     // Remember the offset into the file for this section.
     SectionOffsetMap[&it->getSection()] = FileOff;
-
     SectionIndexMap[&it->getSection()] = Index++;
 
-    const MCSectionData &SD = *it;
     FileOff += Layout.getSectionFileSize(&SD);
 
     Asm.WriteSectionData(it, Layout, Writer);
   }
+
+  uint64_t Padding = OffsetToAlignment(FileOff, NaturalAlignment);
+  WriteZeros(Padding);
+  FileOff += Padding;
 
   // ... and then the section header table.
   // Should we align the section header table?
