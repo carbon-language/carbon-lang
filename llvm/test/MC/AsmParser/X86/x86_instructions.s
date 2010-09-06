@@ -173,3 +173,8 @@ outb	%al, $161
 outw	%ax, $128
 // CHECK: inb	$161, %al
 inb	$161, %al
+
+// rdar://8017621
+// CHECK: pushq	$1
+push $1
+
