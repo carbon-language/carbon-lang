@@ -1549,7 +1549,7 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
   OS << "  unsigned ComputeAvailableFeatures(const " <<
            Target.getName() << "Subtarget *Subtarget) const;\n";
   OS << "  enum MatchResultTy {\n";
-  OS << "    Match_Success, Match_Fail\n";
+  OS << "    Match_Success, Match_Fail, Match_MissingFeature\n";
   OS << "  };\n";
   OS << "  MatchResultTy MatchInstructionImpl(const SmallVectorImpl<MCParsedAsmOperand*>"
      << " &Operands, MCInst &Inst);\n\n";
@@ -1678,21 +1678,24 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
 
   // Emit code to search the table.
   OS << "  // Search the table.\n";
+  OS << "  bool HadMatchOtherThanFeatures = false;\n";
   OS << "  for (const MatchEntry *it = MatchTable, "
      << "*ie = MatchTable + " << Info.Instructions.size()
      << "; it != ie; ++it) {\n";
 
-  // Emit check that the required features are available.
-  OS << "    if ((AvailableFeatures & it->RequiredFeatures) "
-     << "!= it->RequiredFeatures)\n";
-  OS << "      continue;\n";
-  
   // Emit check that the subclasses match.
   for (unsigned i = 0; i != MaxNumOperands; ++i) {
     OS << "    if (!IsSubclass(Classes[" 
        << i << "], it->Classes[" << i << "]))\n";
     OS << "      continue;\n";
   }
+
+  // Emit check that the required features are available.
+  OS << "    if ((AvailableFeatures & it->RequiredFeatures) "
+     << "!= it->RequiredFeatures) {\n";
+  OS << "      HadMatchOtherThanFeatures = true;\n";
+  OS << "      continue;\n";
+  OS << "    }\n";
   
   OS << "\n";
   OS << "    ConvertToMCInst(it->ConvertFn, Inst, it->Opcode, Operands);\n";
@@ -1706,6 +1709,8 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
   OS << "    return Match_Success;\n";
   OS << "  }\n\n";
 
+  OS << "  // Okay, we had no match.  Try to return a useful error code.\n";
+  OS << "  if (HadMatchOtherThanFeatures) return Match_MissingFeature;\n";
   OS << "  return Match_Fail;\n";
   OS << "}\n\n";
   

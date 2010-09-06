@@ -615,28 +615,13 @@ X86Operand *X86ATTAsmParser::ParseMemOperand(unsigned SegReg, SMLoc MemStart) {
 bool X86ATTAsmParser::
 ParseInstruction(StringRef Name, SMLoc NameLoc,
                  SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
-  // The various flavors of pushf and popf use Requires<In32BitMode> and
-  // Requires<In64BitMode>, but the assembler doesn't yet implement that.
-  // For now, just do a manual check to prevent silent misencoding.
-  if (Is64Bit) {
-    if (Name == "popfl")
-      return Error(NameLoc, "popfl cannot be encoded in 64-bit mode");
-    if (Name == "pushfl")
-      return Error(NameLoc, "pushfl cannot be encoded in 64-bit mode");
-    if (Name == "pusha")
-      return Error(NameLoc, "pusha cannot be encoded in 64-bit mode");
-  } else {
-    if (Name == "popfq")
-      return Error(NameLoc, "popfq cannot be encoded in 32-bit mode");
-    if (Name == "pushfq")
-      return Error(NameLoc, "pushfq cannot be encoded in 32-bit mode");
-  }
 
   // The "Jump if rCX Zero" form jcxz is not allowed in 64-bit mode and
   // the form jrcxz is not allowed in 32-bit mode.
   if (Is64Bit) {
-    if (Name == "jcxz")
-      return Error(NameLoc, "jcxz cannot be encoded in 64-bit mode");
+    // FIXME: We can do jcxz/jecxz, we just don't have the encoding right yet.
+    if (Name == "jcxz" || Name == "jecxz")
+      return Error(NameLoc, Name + " cannot be encoded in 64-bit mode");
   } else {
     if (Name == "jrcxz")
       return Error(NameLoc, "jrcxz cannot be encoded in 32-bit mode");
@@ -881,8 +866,15 @@ X86ATTAsmParser::MatchInstruction(SMLoc IDLoc,
   assert(!Operands.empty() && "Unexpect empty operand list!");
 
   // First, try a direct match.
-  if (MatchInstructionImpl(Operands, Inst) == Match_Success)
+  switch (MatchInstructionImpl(Operands, Inst)) {
+  case Match_Success:
     return false;
+  case Match_MissingFeature:
+    Error(IDLoc, "instruction requires a CPU feature not currently enabled");
+    return true;
+  default:
+    break;
+  }
 
   // FIXME: Ideally, we would only attempt suffix matches for things which are
   // valid prefixes, and we could just infer the right unambiguous
@@ -901,13 +893,13 @@ X86ATTAsmParser::MatchInstruction(SMLoc IDLoc,
 
   // Check for the various suffix matches.
   Tmp[Base.size()] = 'b';
-  bool MatchB = MatchInstructionImpl(Operands, Inst) != Match_Success;
+  MatchResultTy MatchB = MatchInstructionImpl(Operands, Inst);
   Tmp[Base.size()] = 'w';
-  bool MatchW = MatchInstructionImpl(Operands, Inst) != Match_Success;
+  MatchResultTy MatchW = MatchInstructionImpl(Operands, Inst);
   Tmp[Base.size()] = 'l';
-  bool MatchL = MatchInstructionImpl(Operands, Inst) != Match_Success;
+  MatchResultTy MatchL = MatchInstructionImpl(Operands, Inst);
   Tmp[Base.size()] = 'q';
-  bool MatchQ = MatchInstructionImpl(Operands, Inst) != Match_Success;
+  MatchResultTy MatchQ = MatchInstructionImpl(Operands, Inst);
 
   // Restore the old token.
   Op->setTokenValue(Base);
@@ -915,23 +907,26 @@ X86ATTAsmParser::MatchInstruction(SMLoc IDLoc,
   // If exactly one matched, then we treat that as a successful match (and the
   // instruction will already have been filled in correctly, since the failing
   // matches won't have modified it).
-  if (MatchB + MatchW + MatchL + MatchQ == 3)
+  unsigned NumSuccessfulMatches =
+    (MatchB == Match_Success) + (MatchW == Match_Success) +
+    (MatchL == Match_Success) + (MatchQ == Match_Success);
+  if (NumSuccessfulMatches == 1)
     return false;
 
-  // Otherwise, the match failed.
+  // Otherwise, the match failed, try to produce a decent error message.
 
   // If we had multiple suffix matches, then identify this as an ambiguous
   // match.
-  if (MatchB + MatchW + MatchL + MatchQ != 4) {
+  if (NumSuccessfulMatches > 1) {
     char MatchChars[4];
     unsigned NumMatches = 0;
-    if (!MatchB)
+    if (MatchB == Match_Success)
       MatchChars[NumMatches++] = 'b';
-    if (!MatchW)
+    if (MatchW == Match_Success)
       MatchChars[NumMatches++] = 'w';
-    if (!MatchL)
+    if (MatchL == Match_Success)
       MatchChars[NumMatches++] = 'l';
-    if (!MatchQ)
+    if (MatchQ == Match_Success)
       MatchChars[NumMatches++] = 'q';
 
     SmallString<126> Msg;
@@ -946,11 +941,26 @@ X86ATTAsmParser::MatchInstruction(SMLoc IDLoc,
     }
     OS << ")";
     Error(IDLoc, OS.str());
-  } else {
-    // FIXME: We should give nicer diagnostics about the exact failure.
-    Error(IDLoc, "unrecognized instruction");
+    return true;
   }
-
+  
+  unsigned NumMatchFailures =
+    (MatchB == Match_Fail) + (MatchW == Match_Fail) +
+    (MatchL == Match_Fail) + (MatchQ == Match_Fail);
+  
+  
+  // If one instruction matched with a missing feature, report this as a
+  // missing feature.
+  if ((MatchB == Match_MissingFeature) + (MatchW == Match_MissingFeature) +
+      (MatchL == Match_MissingFeature) + (MatchQ == Match_MissingFeature) == 1&&
+      NumMatchFailures == 3) {
+    Error(IDLoc, "instruction requires a CPU feature not currently enabled");
+    return true;
+  }
+  
+  // If all of these were an outright failure, report it in a useless way.
+  // FIXME: We should give nicer diagnostics about the exact failure.
+  Error(IDLoc, "unrecognized instruction");
   return true;
 }
 
