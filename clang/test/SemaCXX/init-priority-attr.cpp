@@ -26,11 +26,11 @@ Two coo[2]  __attribute__((init_priority(3)));	// expected-error {{init_priority
 Two koo[4]  __attribute__((init_priority(1.13))); // expected-error {{'init_priority' attribute requires integer constant}}
 
 
-Two func()  __attribute__((init_priority(1001))); // expected-error {{can only use ‘init_priority’ attribute on file-scope definitions of objects of class type}}
+Two func()  __attribute__((init_priority(1001))); // expected-error {{can only use 'init_priority' attribute on file-scope definitions of objects of class type}}
 
-int i  __attribute__((init_priority(1001))); // expected-error {{can only use ‘init_priority’ attribute on file-scope definitions of objects of class type}}
+int i  __attribute__((init_priority(1001))); // expected-error {{can only use 'init_priority' attribute on file-scope definitions of objects of class type}}
 
 int main() {
-	Two foo __attribute__((init_priority(1001)));	// expected-error {{can only use ‘init_priority’ attribute on file-scope definitions of objects of class type}}
+	Two foo __attribute__((init_priority(1001)));	// expected-error {{can only use 'init_priority' attribute on file-scope definitions of objects of class type}}
 }
 
