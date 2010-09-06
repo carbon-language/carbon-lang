@@ -143,11 +143,11 @@ bool LoopRotate::rotateLoop(Loop *Lp, LPPassManager &LPM) {
   // FIXME: Use common api to estimate size.
   for (BasicBlock::const_iterator OI = OrigHeader->begin(), 
          OE = OrigHeader->end(); OI != OE; ++OI) {
-      if (isa<PHINode>(OI)) 
-        continue;           // PHI nodes don't count.
-      if (isa<DbgInfoIntrinsic>(OI))
-        continue;  // Debug intrinsics don't count as size.
-      ++Size;
+    if (isa<PHINode>(OI)) 
+      continue;           // PHI nodes don't count.
+    if (isa<DbgInfoIntrinsic>(OI))
+      continue;  // Debug intrinsics don't count as size.
+    ++Size;
   }
 
   if (Size > MAX_HEADER_SIZE)
@@ -187,13 +187,30 @@ bool LoopRotate::rotateLoop(Loop *Lp, LPPassManager &LPM) {
   for (; PHINode *PN = dyn_cast<PHINode>(I); ++I)
     ValueMap[PN] = PN->getIncomingValue(PN->getBasicBlockIndex(OrigPreHeader));
 
-  // For the rest of the instructions, create a clone in the OldPreHeader.
+  // For the rest of the instructions, either hoist to the OrigPreheader if
+  // possible or create a clone in the OldPreHeader if not.
   TerminatorInst *LoopEntryBranch = OrigPreHeader->getTerminator();
-  for (; I != E; ++I) {
-    Instruction *C = I->clone();
-    C->setName(I->getName());
+  while (I != E) {
+    Instruction *Inst = I++;
+    
+    // If the instruction's operands are invariant and it doesn't read or write
+    // memory, then it is safe to hoist.  Doing this doesn't change the order of
+    // execution in the preheader, but does prevent the instruction from
+    // executing in each iteration of the loop.  This means it is safe to hoist
+    // something that might trap, but isn't safe to hoist something that reads
+    // memory (without proving that the loop doesn't write).
+    if (L->hasLoopInvariantOperands(Inst) &&
+        !Inst->mayReadFromMemory() && !Inst->mayWriteToMemory() &&
+        !isa<TerminatorInst>(Inst)) {
+      Inst->moveBefore(LoopEntryBranch);
+      continue;
+    }
+    
+    // Otherwise, create a duplicate of the instruction.
+    Instruction *C = Inst->clone();
+    C->setName(Inst->getName());
     C->insertBefore(LoopEntryBranch);
-    ValueMap[I] = C;
+    ValueMap[Inst] = C;
   }
 
   // Along with all the other instructions, we just cloned OrigHeader's
