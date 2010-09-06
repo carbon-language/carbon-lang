@@ -178,3 +178,6 @@ inb	$161, %al
 // CHECK: pushq	$1
 push $1
 
+// rdar://8017530
+// CHECK: sldtw	4
+sldt	4

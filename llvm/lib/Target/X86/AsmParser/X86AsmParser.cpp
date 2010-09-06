@@ -819,6 +819,13 @@ ParseInstruction(StringRef Name, SMLoc NameLoc,
     Operands.push_back(X86Operand::CreateReg(Op->getReg(), Op->getStartLoc(),
                                              Op->getEndLoc()));
   }
+  
+  // 'sldt <mem>' can be encoded with either sldtw or sldtq with the same
+  // effect (both store to a 16-bit mem).  Force to sldtw to avoid ambiguity
+  // errors, since its encoding is the most compact.
+  if (Name == "sldt" && Operands.size() == 2 &&
+      static_cast<X86Operand*>(Operands[1])->isMem())
+    Operands[0] = X86Operand::CreateToken("sldtw", NameLoc);
 
   return false;
 }
