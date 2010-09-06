@@ -41,7 +41,7 @@ public:
                 const std::vector<StringPair> &matches, raw_ostream &os)
     : StrVariableName(strVariableName), Matches(matches), OS(os) {}
   
-  void Emit() const;
+  void Emit(unsigned Indent = 0) const;
   
   
 private:

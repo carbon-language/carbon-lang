@@ -112,7 +112,10 @@ EmitStringMatcherForChar(const std::vector<const StringPair*> &Matches,
 
 /// Emit - Top level entry point.
 ///
-void StringMatcher::Emit() const {
+void StringMatcher::Emit(unsigned Indent) const {
+  // If nothing to match, just fall through.
+  if (Matches.empty()) return;
+  
   // First level categorization: group strings by length.
   std::map<unsigned, std::vector<const StringPair*> > MatchesByLength;
   
@@ -121,16 +124,17 @@ void StringMatcher::Emit() const {
   
   // Output a switch statement on length and categorize the elements within each
   // bin.
-  OS << "  switch (" << StrVariableName << ".size()) {\n";
-  OS << "  default: break;\n";
+  OS.indent(Indent*2+2) << "switch (" << StrVariableName << ".size()) {\n";
+  OS.indent(Indent*2+2) << "default: break;\n";
   
   for (std::map<unsigned, std::vector<const StringPair*> >::iterator LI =
        MatchesByLength.begin(), E = MatchesByLength.end(); LI != E; ++LI) {
-    OS << "  case " << LI->first << ":\t // " << LI->second.size()
+    OS.indent(Indent*2+2) << "case " << LI->first << ":\t // "
+       << LI->second.size()
        << " string" << (LI->second.size() == 1 ? "" : "s") << " to match.\n";
-    if (EmitStringMatcherForChar(LI->second, 0, 0))
-      OS << "    break;\n";
+    if (EmitStringMatcherForChar(LI->second, 0, Indent))
+      OS.indent(Indent*2+4) << "break;\n";
   }
   
-  OS << "  }\n";
+  OS.indent(Indent*2+2) << "}\n";
 }
