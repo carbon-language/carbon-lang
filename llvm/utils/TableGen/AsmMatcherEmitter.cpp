@@ -1629,7 +1629,18 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
   OS << "    ConversionKind ConvertFn;\n";
   OS << "    MatchClassKind Classes[" << MaxNumOperands << "];\n";
   OS << "    unsigned RequiredFeatures;\n";
+  OS << "  };\n\n";
+  
+  OS << "// Predicate for searching for an opcode.\n";
+  OS << "  struct LessOpcode {\n";
+  OS << "    bool operator()(const MatchEntry &LHS, StringRef RHS) {\n";
+  OS << "      return StringRef(LHS.Mnemonic) < RHS;\n";
+  OS << "    }\n";
+  OS << "    bool operator()(StringRef LHS, const MatchEntry &RHS) {\n";
+  OS << "      return LHS < StringRef(RHS.Mnemonic);\n";
+  OS << "    }\n";
   OS << "  };\n";
+  
   OS << "} // end anonymous namespace.\n\n";
   
   OS << "static const MatchEntry MatchTable["
@@ -1699,16 +1710,21 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
   OS << "  // Get the instruction mneumonic, which is the first token.\n";
   OS << "  StringRef Mnemonic = ((" << Target.getName()
      << "Operand*)Operands[0])->getToken();\n\n";
-  
+
+  OS << "  bool HadMatchOtherThanFeatures = false;\n\n";
+
   // Emit code to search the table.
   OS << "  // Search the table.\n";
-  OS << "  bool HadMatchOtherThanFeatures = false;\n";
-  OS << "  for (const MatchEntry *it = MatchTable, "
-     << "*ie = MatchTable + " << Info.Instructions.size()
-     << "; it != ie; ++it) {\n";
+  OS << "  std::pair<const MatchEntry*, const MatchEntry*> MnemonicRange =\n";
+  OS << "    std::equal_range(MatchTable, MatchTable+"
+     << Info.Instructions.size() << ", Mnemonic, LessOpcode());\n\n";
+  
+  OS << "  for (const MatchEntry *it = MnemonicRange.first, "
+     << "*ie = MnemonicRange.second;\n"
+  OS << "       it != ie; ++it) {\n";
 
   OS << "    // Instruction mneumonic must match.\n";
-  OS << "    if (Mnemonic != it->Mnemonic) continue;";
+  OS << "    if (Mnemonic != it->Mnemonic) continue;\n";
   
   // Emit check that the subclasses match.
   for (unsigned i = 0; i != MaxNumOperands; ++i) {
