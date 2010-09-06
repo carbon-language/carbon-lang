@@ -83,7 +83,7 @@ private:
   bool MatchInstruction(SMLoc IDLoc,
                         const SmallVectorImpl<MCParsedAsmOperand*> &Operands,
                         MCInst &Inst) {
-    if (!MatchInstructionImpl(Operands, Inst))
+    if (MatchInstructionImpl(Operands, Inst) == Match_Success)
       return false;
 
     // FIXME: We should give nicer diagnostics about the exact failure.

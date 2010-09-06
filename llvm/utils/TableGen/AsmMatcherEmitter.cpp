@@ -1544,9 +1544,14 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
   // Information for the class declaration.
   OS << "\n#ifdef GET_ASSEMBLER_HEADER\n";
   OS << "#undef GET_ASSEMBLER_HEADER\n";
+  OS << "  // This should be included into the middle of the declaration of \n";
+  OS << "  // your subclasses implementation of TargetAsmParser.\n";
   OS << "  unsigned ComputeAvailableFeatures(const " <<
            Target.getName() << "Subtarget *Subtarget) const;\n";
-  OS << "bool MatchInstructionImpl(const SmallVectorImpl<MCParsedAsmOperand*>"
+  OS << "  enum MatchResultTy {\n";
+  OS << "    Match_Success, Match_Fail\n";
+  OS << "  };\n";
+  OS << "  MatchResultTy MatchInstructionImpl(const SmallVectorImpl<MCParsedAsmOperand*>"
      << " &Operands, MCInst &Inst);\n\n";
   OS << "#endif // GET_ASSEMBLER_HEADER_INFO\n\n";
 
@@ -1594,7 +1599,8 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
        it != ie; ++it)
     MaxNumOperands = std::max(MaxNumOperands, (*it)->Operands.size());
 
-  OS << "bool " << Target.getName() << ClassName << "::\n"
+  OS << Target.getName() << ClassName << "::MatchResultTy "
+     << Target.getName() << ClassName << "::\n"
      << "MatchInstructionImpl(const SmallVectorImpl<MCParsedAsmOperand*>"
      << " &Operands,\n";
   OS << "                     MCInst &Inst) {\n";
@@ -1653,7 +1659,7 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
   // Emit code to compute the class list for this operand vector.
   OS << "  // Eliminate obvious mismatches.\n";
   OS << "  if (Operands.size() > " << MaxNumOperands << ")\n";
-  OS << "    return true;\n\n";
+  OS << "    return Match_Fail;\n\n";
 
   OS << "  // Compute the class list for this operand vector.\n";
   OS << "  MatchClassKind Classes[" << MaxNumOperands << "];\n";
@@ -1662,7 +1668,7 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
 
   OS << "    // Check for invalid operands before matching.\n";
   OS << "    if (Classes[i] == InvalidMatchClass)\n";
-  OS << "      return true;\n";
+  OS << "      return Match_Fail;\n";
   OS << "  }\n\n";
 
   OS << "  // Mark unused classes.\n";
@@ -1697,10 +1703,10 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
   if (!InsnCleanupFn.empty())
     OS << "    " << InsnCleanupFn << "(Inst);\n";
 
-  OS << "    return false;\n";
+  OS << "    return Match_Success;\n";
   OS << "  }\n\n";
 
-  OS << "  return true;\n";
+  OS << "  return Match_Fail;\n";
   OS << "}\n\n";
   
   OS << "#endif // GET_MATCHER_IMPLEMENTATION\n\n";

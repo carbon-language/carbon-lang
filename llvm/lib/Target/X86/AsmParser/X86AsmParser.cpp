@@ -881,7 +881,7 @@ X86ATTAsmParser::MatchInstruction(SMLoc IDLoc,
   assert(!Operands.empty() && "Unexpect empty operand list!");
 
   // First, try a direct match.
-  if (!MatchInstructionImpl(Operands, Inst))
+  if (MatchInstructionImpl(Operands, Inst) == Match_Success)
     return false;
 
   // FIXME: Ideally, we would only attempt suffix matches for things which are
@@ -901,13 +901,13 @@ X86ATTAsmParser::MatchInstruction(SMLoc IDLoc,
 
   // Check for the various suffix matches.
   Tmp[Base.size()] = 'b';
-  bool MatchB = MatchInstructionImpl(Operands, Inst);
+  bool MatchB = MatchInstructionImpl(Operands, Inst) != Match_Success;
   Tmp[Base.size()] = 'w';
-  bool MatchW = MatchInstructionImpl(Operands, Inst);
+  bool MatchW = MatchInstructionImpl(Operands, Inst) != Match_Success;
   Tmp[Base.size()] = 'l';
-  bool MatchL = MatchInstructionImpl(Operands, Inst);
+  bool MatchL = MatchInstructionImpl(Operands, Inst) != Match_Success;
   Tmp[Base.size()] = 'q';
-  bool MatchQ = MatchInstructionImpl(Operands, Inst);
+  bool MatchQ = MatchInstructionImpl(Operands, Inst) != Match_Success;
 
   // Restore the old token.
   Op->setTokenValue(Base);
