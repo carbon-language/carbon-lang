@@ -1088,8 +1088,10 @@ Driver::MainLoop ()
         char buffer[25];
 
         if (window_size.ws_col > 0)
+        {
             sprintf (buffer, "settings set term-width %d", window_size.ws_col);
-        m_debugger.HandleCommand ((const char *) buffer);
+            m_debugger.HandleCommand ((const char *) buffer);
+        }
     }
 
     // Since input can be redirected by the debugger, we must insert our editline
