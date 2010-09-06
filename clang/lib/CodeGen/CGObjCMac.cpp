@@ -3586,10 +3586,10 @@ void CGObjCCommonMac::BuildAggrIvarLayout(const ObjCImplementationDecl *OI,
   uint64_t MaxSkippedUnionIvarSize = 0;
   FieldDecl *MaxField = 0;
   FieldDecl *MaxSkippedField = 0;
-  FieldDecl *LastFieldBitfield = 0;
+  FieldDecl *LastFieldBitfieldOrUnnamed = 0;
   uint64_t MaxFieldOffset = 0;
   uint64_t MaxSkippedFieldOffset = 0;
-  uint64_t LastBitfieldOffset = 0;
+  uint64_t LastBitfieldOrUnnamedOffset = 0;
 
   if (RecFields.empty())
     return;
@@ -3609,12 +3609,12 @@ void CGObjCCommonMac::BuildAggrIvarLayout(const ObjCImplementationDecl *OI,
 
     // Skip over unnamed or bitfields
     if (!Field->getIdentifier() || Field->isBitField()) {
-      LastFieldBitfield = Field;
-      LastBitfieldOffset = FieldOffset;
+      LastFieldBitfieldOrUnnamed = Field;
+      LastBitfieldOrUnnamedOffset = FieldOffset;
       continue;
     }
 
-    LastFieldBitfield = 0;
+    LastFieldBitfieldOrUnnamed = 0;
     QualType FQT = Field->getType();
     if (FQT->isRecordType() || FQT->isUnionType()) {
       if (FQT->isUnionType())
@@ -3703,16 +3703,25 @@ void CGObjCCommonMac::BuildAggrIvarLayout(const ObjCImplementationDecl *OI,
     }
   }
 
-  if (LastFieldBitfield) {
-    // Last field was a bitfield. Must update skip info.
-    Expr *BitWidth = LastFieldBitfield->getBitWidth();
-    uint64_t BitFieldSize =
-      BitWidth->EvaluateAsInt(CGM.getContext()).getZExtValue();
-    GC_IVAR skivar;
-    skivar.ivar_bytepos = BytePos + LastBitfieldOffset;
-    skivar.ivar_size = (BitFieldSize / ByteSizeInBits)
-      + ((BitFieldSize % ByteSizeInBits) != 0);
-    SkipIvars.push_back(skivar);
+  if (LastFieldBitfieldOrUnnamed) {
+    if (LastFieldBitfieldOrUnnamed->isBitField()) {
+      // Last field was a bitfield. Must update skip info.
+      Expr *BitWidth = LastFieldBitfieldOrUnnamed->getBitWidth();
+      uint64_t BitFieldSize =
+        BitWidth->EvaluateAsInt(CGM.getContext()).getZExtValue();
+      GC_IVAR skivar;
+      skivar.ivar_bytepos = BytePos + LastBitfieldOrUnnamedOffset;
+      skivar.ivar_size = (BitFieldSize / ByteSizeInBits)
+        + ((BitFieldSize % ByteSizeInBits) != 0);
+      SkipIvars.push_back(skivar);
+    } else {
+      assert(!LastFieldBitfieldOrUnnamed->getIdentifier() &&"Expected unnamed");
+      // Last field was unnamed. Must update skip info.
+      unsigned FieldSize
+          = CGM.getContext().getTypeSize(LastFieldBitfieldOrUnnamed->getType());
+      SkipIvars.push_back(GC_IVAR(BytePos + LastBitfieldOrUnnamedOffset,
+                                  FieldSize / ByteSizeInBits));
+    }
   }
 
   if (MaxField)

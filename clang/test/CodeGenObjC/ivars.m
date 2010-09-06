@@ -1,5 +1,6 @@
 // RUN: %clang_cc1 -triple x86_64-apple-darwin9 -emit-llvm -o - %s
 // RUN: %clang_cc1 -triple i386-apple-darwin9 -emit-llvm -o - %s
+// RUN: %clang_cc1 -fobjc-gc -emit-llvm -o - %s
 
 // rdar://6800926
 @interface ITF {
@@ -12,3 +13,17 @@
 void foo(ITF *P) {
   P->boolfield = 1;
 }
+
+// rdar://8368320
+@interface R {
+  struct {
+    union {
+      int x;
+      char c;
+    };
+  } _union;
+}
+@end
+
+@implementation R
+@end
