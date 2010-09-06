@@ -175,7 +175,7 @@ getPointerDependencyFrom(Value *MemPtr, uint64_t MemSize, bool isLoad,
     }
     
     if (IntrinsicInst *II = dyn_cast<IntrinsicInst>(Inst)) {
-      // Debug intrinsics don't cause dependences.
+      // Debug intrinsics don't (and can't) cause dependences.
       if (isa<DbgInfoIntrinsic>(II)) continue;
       
       // If we pass an invariant-end marker, then we've just entered an
@@ -185,25 +185,30 @@ getPointerDependencyFrom(Value *MemPtr, uint64_t MemSize, bool isLoad,
         // pointer, not on query pointers that are indexed off of them.  It'd
         // be nice to handle that at some point.
         AliasAnalysis::AliasResult R = AA->alias(II->getArgOperand(2), MemPtr);
-        if (R == AliasAnalysis::MustAlias) {
+        if (R == AliasAnalysis::MustAlias)
           InvariantTag = II->getArgOperand(0);
-          continue;
-        }
-      
+
+        continue;
+      }
+
       // If we reach a lifetime begin or end marker, then the query ends here
       // because the value is undefined.
-      } else if (II->getIntrinsicID() == Intrinsic::lifetime_start) {
+      if (II->getIntrinsicID() == Intrinsic::lifetime_start) {
         // FIXME: This only considers queries directly on the invariant-tagged
         // pointer, not on query pointers that are indexed off of them.  It'd
         // be nice to handle that at some point.
         AliasAnalysis::AliasResult R = AA->alias(II->getArgOperand(1), MemPtr);
         if (R == AliasAnalysis::MustAlias)
           return MemDepResult::getDef(II);
+        continue;
       }
     }
 
     // If we're querying on a load and we're in an invariant region, we're done
     // at this point. Nothing a load depends on can live in an invariant region.
+    //
+    // FIXME: this will prevent us from returning load/load must-aliases, so GVN
+    // won't remove redundant loads.
     if (isLoad && InvariantTag) continue;
 
     // Values depend on loads if the pointers are must aliased.  This means that
