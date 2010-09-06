@@ -1513,29 +1513,30 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
     });
 
   // Check for ambiguous instructions.
-  unsigned NumAmbiguous = 0;
-  for (unsigned i = 0, e = Info.Instructions.size(); i != e; ++i) {
-    for (unsigned j = i + 1; j != e; ++j) {
-      InstructionInfo &A = *Info.Instructions[i];
-      InstructionInfo &B = *Info.Instructions[j];
-    
-      if (A.CouldMatchAmiguouslyWith(B)) {
-        DEBUG_WITH_TYPE("ambiguous_instrs", {
-            errs() << "warning: ambiguous instruction match:\n";
-            A.dump();
-            errs() << "\nis incomparable with:\n";
-            B.dump();
-            errs() << "\n\n";
-          });
-        ++NumAmbiguous;
+  DEBUG(unsigned NumAmbiguous = 0;
+    for (unsigned i = 0, e = Info.Instructions.size(); i != e; ++i) {
+      for (unsigned j = i + 1; j != e; ++j) {
+        InstructionInfo &A = *Info.Instructions[i];
+        InstructionInfo &B = *Info.Instructions[j];
+      
+        if (A.CouldMatchAmiguouslyWith(B)) {
+          DEBUG_WITH_TYPE("ambiguous_instrs", {
+              errs() << "warning: ambiguous instruction match:\n";
+              A.dump();
+              errs() << "\nis incomparable with:\n";
+              B.dump();
+              errs() << "\n\n";
+            });
+          ++NumAmbiguous;
+        }
       }
     }
-  }
-  if (NumAmbiguous)
-    DEBUG_WITH_TYPE("ambiguous_instrs", {
-        errs() << "warning: " << NumAmbiguous 
-               << " ambiguous instructions!\n";
-      });
+    if (NumAmbiguous)
+      DEBUG_WITH_TYPE("ambiguous_instrs", {
+          errs() << "warning: " << NumAmbiguous 
+                 << " ambiguous instructions!\n";
+        });
+  );
 
   // Write the output.
 
