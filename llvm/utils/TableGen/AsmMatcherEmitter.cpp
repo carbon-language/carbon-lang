@@ -1563,7 +1563,7 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
   OS << "    Match_MissingFeature\n";
   OS << "  };\n";
   OS << "  MatchResultTy MatchInstructionImpl(const SmallVectorImpl<MCParsedAsmOperand*>"
-     << " &Operands, MCInst &Inst);\n\n";
+     << " &Operands, MCInst &Inst, unsigned &ErrorInfo);\n\n";
   OS << "#endif // GET_ASSEMBLER_HEADER_INFO\n\n";
 
   
@@ -1679,16 +1679,19 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
      << Target.getName() << ClassName << "::\n"
      << "MatchInstructionImpl(const SmallVectorImpl<MCParsedAsmOperand*>"
      << " &Operands,\n";
-  OS << "                     MCInst &Inst) {\n";
+  OS << "                     MCInst &Inst, unsigned &ErrorInfo) {\n";
 
   // Emit code to get the available features.
   OS << "  // Get the current feature set.\n";
   OS << "  unsigned AvailableFeatures = getAvailableFeatures();\n\n";
+  OS << "  ErrorInfo = 0;\n";
 
   // Emit code to compute the class list for this operand vector.
   OS << "  // Eliminate obvious mismatches.\n";
-  OS << "  if (Operands.size() > " << MaxNumOperands << "+1)\n";
-  OS << "    return Match_InvalidOperand;\n\n";
+  OS << "  if (Operands.size() > " << (MaxNumOperands+1) << ") {\n";
+  OS << "    ErrorInfo = " << (MaxNumOperands+1) << ";\n";
+  OS << "    return Match_InvalidOperand;\n";
+  OS << "  }\n\n";
 
   OS << "  // Compute the class list for this operand vector.\n";
   OS << "  MatchClassKind Classes[" << MaxNumOperands << "];\n";
@@ -1696,8 +1699,10 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
   OS << "    Classes[i-1] = ClassifyOperand(Operands[i]);\n\n";
 
   OS << "    // Check for invalid operands before matching.\n";
-  OS << "    if (Classes[i-1] == InvalidMatchClass)\n";
+  OS << "    if (Classes[i-1] == InvalidMatchClass) {\n";
+  OS << "      ErrorInfo = i;\n";
   OS << "      return Match_InvalidOperand;\n";
+  OS << "    }\n";
   OS << "  }\n\n";
 
   OS << "  // Mark unused classes.\n";
@@ -1729,11 +1734,22 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
   OS << "    assert(Mnemonic == it->Mnemonic);\n";
   
   // Emit check that the subclasses match.
-  for (unsigned i = 0; i != MaxNumOperands; ++i) {
-    OS << "    if (!IsSubclass(Classes[" 
-       << i << "], it->Classes[" << i << "]))\n";
-    OS << "      continue;\n";
-  }
+  OS << "    bool OperandsValid = true;\n";
+  OS << "    for (unsigned i = 0; i != " << MaxNumOperands << "; ++i) {\n";
+  OS << "      if (IsSubclass(Classes[i], it->Classes[i]))\n";
+  OS << "        continue;\n";
+  OS << "      // If there is only one instruction with this opcode, report\n";
+  OS << "      // this as an operand error with location info.\n";
+  OS << "      if (MnemonicRange.first+1 == ie) {\n";
+  OS << "        ErrorInfo = i+1;\n";
+  OS << "        return Match_InvalidOperand;\n";
+  OS << "      }\n";
+  OS << "      // Otherwise, just reject this instance of the mnemonic.\n";
+  OS << "      OperandsValid = false;\n";
+  OS << "      break;\n";
+  OS << "    }\n\n";
+  
+  OS << "    if (!OperandsValid) continue;\n";
 
   // Emit check that the required features are available.
   OS << "    if ((AvailableFeatures & it->RequiredFeatures) "
@@ -1756,6 +1772,7 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
 
   OS << "  // Okay, we had no match.  Try to return a useful error code.\n";
   OS << "  if (HadMatchOtherThanFeatures) return Match_MissingFeature;\n";
+  OS << "  ErrorInfo = ~0U;\n";
   OS << "  return Match_InvalidOperand;\n";
   OS << "}\n\n";
   

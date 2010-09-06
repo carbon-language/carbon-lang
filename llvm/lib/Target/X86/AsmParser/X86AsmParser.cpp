@@ -863,9 +863,10 @@ X86ATTAsmParser::MatchInstruction(SMLoc IDLoc,
   assert(!Operands.empty() && "Unexpect empty operand list!");
 
   bool WasOriginallyInvalidOperand = false;
+  unsigned OrigErrorInfo;
   
   // First, try a direct match.
-  switch (MatchInstructionImpl(Operands, Inst)) {
+  switch (MatchInstructionImpl(Operands, Inst, OrigErrorInfo)) {
   case Match_Success:
     return false;
   case Match_MissingFeature:
@@ -895,13 +896,14 @@ X86ATTAsmParser::MatchInstruction(SMLoc IDLoc,
 
   // Check for the various suffix matches.
   Tmp[Base.size()] = 'b';
-  MatchResultTy MatchB = MatchInstructionImpl(Operands, Inst);
+  unsigned BErrorInfo, WErrorInfo, LErrorInfo, QErrorInfo;
+  MatchResultTy MatchB = MatchInstructionImpl(Operands, Inst, BErrorInfo);
   Tmp[Base.size()] = 'w';
-  MatchResultTy MatchW = MatchInstructionImpl(Operands, Inst);
+  MatchResultTy MatchW = MatchInstructionImpl(Operands, Inst, WErrorInfo);
   Tmp[Base.size()] = 'l';
-  MatchResultTy MatchL = MatchInstructionImpl(Operands, Inst);
+  MatchResultTy MatchL = MatchInstructionImpl(Operands, Inst, LErrorInfo);
   Tmp[Base.size()] = 'q';
-  MatchResultTy MatchQ = MatchInstructionImpl(Operands, Inst);
+  MatchResultTy MatchQ = MatchInstructionImpl(Operands, Inst, QErrorInfo);
 
   // Restore the old token.
   Op->setTokenValue(Base);
@@ -952,10 +954,19 @@ X86ATTAsmParser::MatchInstruction(SMLoc IDLoc,
   // mnemonic was invalid.
   if ((MatchB == Match_MnemonicFail) && (MatchW == Match_MnemonicFail) &&
       (MatchL == Match_MnemonicFail) && (MatchQ == Match_MnemonicFail)) {
-    if (WasOriginallyInvalidOperand)
-      Error(IDLoc, "invalid operand for instruction");
-    else
+    if (!WasOriginallyInvalidOperand) {
       Error(IDLoc, "invalid instruction mnemonic '" + Base + "'"); 
+      return true;
+    }
+
+    // Recover location info for the operand if we know which was the problem.
+    SMLoc ErrorLoc = IDLoc;
+    if (OrigErrorInfo != ~0U) {
+      ErrorLoc = ((X86Operand*)Operands[OrigErrorInfo])->getStartLoc();
+      if (ErrorLoc == SMLoc()) ErrorLoc = IDLoc;
+    }
+
+    Error(ErrorLoc, "invalid operand for instruction");
     return true;
   }
   
