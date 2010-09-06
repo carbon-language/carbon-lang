@@ -1018,7 +1018,6 @@ bool IntExprEvaluator::CheckReferencedDecl(const Expr* E, const Decl* D) {
         }
 
         VD->setEvaluatedValue(APValue());
-        return false;
       }
     }
   }
