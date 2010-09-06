@@ -78,9 +78,9 @@ EmitStringMatcherForChar(const std::vector<const StringPair*> &Matches,
       << Matches[0]->first[CharNo] << "')\n";
       OS << Indent << "  break;\n";
     } else {
-      // Do the comparison with if (Str.substr(1,3) != "foo").    
+      // Do the comparison with if (Str.substr(1, 3) != "foo").    
       // FIXME: Need to escape general strings.
-      OS << Indent << "if (" << StrVariableName << ".substr(" << CharNo << ","
+      OS << Indent << "if (" << StrVariableName << ".substr(" << CharNo << ", "
       << NumChars << ") != \"";
       OS << Matches[0]->first.substr(CharNo, NumChars) << "\")\n";
       OS << Indent << "  break;\n";

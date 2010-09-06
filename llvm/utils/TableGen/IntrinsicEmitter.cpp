@@ -97,39 +97,48 @@ void IntrinsicEmitter::EmitEnumInfo(const std::vector<CodeGenIntrinsic> &Ints,
 void IntrinsicEmitter::
 EmitFnNameRecognizer(const std::vector<CodeGenIntrinsic> &Ints, 
                      raw_ostream &OS) {
-  // Build a function name -> intrinsic name mapping.
-  std::map<std::string, unsigned> IntMapping;
+  // Build a 'first character of function name' -> intrinsic # mapping.
+  std::map<char, std::vector<unsigned> > IntMapping;
   for (unsigned i = 0, e = Ints.size(); i != e; ++i)
-    IntMapping[Ints[i].Name.substr(5)] = i;
-    
+    IntMapping[Ints[i].Name[5]].push_back(i);
+  
   OS << "// Function name -> enum value recognizer code.\n";
   OS << "#ifdef GET_FUNCTION_RECOGNIZER\n";
-  OS << "  Name += 5; Len -= 5;  // Skip over 'llvm.'\n";
-  OS << "  switch (*Name) {      // Dispatch on first letter.\n";
-  OS << "  default:\n";
-  // Emit the intrinsics in sorted order.
-  char LastChar = 0;
-  for (std::map<std::string, unsigned>::iterator I = IntMapping.begin(),
+  OS << "  StringRef NameR(Name+6, Len-6);   // Skip over 'llvm.'\n";
+  OS << "  switch (Name[5]) {                  // Dispatch on first letter.\n";
+  OS << "  default: break;\n";
+  // Emit the intrinsic matching stuff by first letter.
+  for (std::map<char, std::vector<unsigned> >::iterator I = IntMapping.begin(),
        E = IntMapping.end(); I != E; ++I) {
-    if (I->first[0] != LastChar) {
-      LastChar = I->first[0];
-      OS << "    break;\n";
-      OS << "  case '" << LastChar << "':\n";
+    OS << "  case '" << I->first << "':\n";
+    std::vector<unsigned> &IntList = I->second;
+
+    // Emit all the overloaded intrinsics first, build a table of the
+    // non-overloaded ones.
+    std::vector<StringMatcher::StringPair> MatchTable;
+    
+    for (unsigned i = 0, e = IntList.size(); i != e; ++i) {
+      unsigned IntNo = IntList[i];
+      std::string Result = "return " + TargetPrefix + "Intrinsic::" +
+        Ints[IntNo].EnumName + ";";
+
+      if (!Ints[IntNo].isOverloaded) {
+        MatchTable.push_back(std::make_pair(Ints[IntNo].Name.substr(6),Result));
+        continue;
+      }
+
+      // For overloaded intrinsics, only the prefix needs to match
+      std::string TheStr = Ints[IntNo].Name.substr(6);
+      TheStr += '.';  // Require "bswap." instead of bswap.
+      OS << "    if (NameR.startswith(\"" << TheStr << "\")) "
+         << Result << '\n';
     }
     
-    // For overloaded intrinsics, only the prefix needs to match
-    std::string TheStr = I->first;
-    if (Ints[I->second].isOverloaded) {
-      TheStr += '.';  // Require "bswap." instead of bswap.
-      OS << "    if (Len > " << I->first.size();
-    } else {
-      OS << "    if (Len == " << I->first.size();
-    }
-      
-    OS << " && !memcmp(Name, \"" << TheStr << "\", "
-       << TheStr.size() << ")) return " << TargetPrefix << "Intrinsic::"
-       << Ints[I->second].EnumName << ";\n";
+    // Emit the matcher logic for the fixed length strings.
+    StringMatcher("NameR", MatchTable, OS).Emit(1);
+    OS << "    break;  // end of '" << I->first << "' case.\n";
   }
+  
   OS << "  }\n";
   OS << "#endif\n\n";
 }
