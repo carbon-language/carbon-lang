@@ -1684,7 +1684,6 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
   // Emit code to get the available features.
   OS << "  // Get the current feature set.\n";
   OS << "  unsigned AvailableFeatures = getAvailableFeatures();\n\n";
-  OS << "  ErrorInfo = 0;\n";
 
   // Emit code to compute the class list for this operand vector.
   OS << "  // Eliminate obvious mismatches.\n";
@@ -1714,7 +1713,11 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
   OS << "  StringRef Mnemonic = ((" << Target.getName()
      << "Operand*)Operands[0])->getToken();\n\n";
 
+  OS << "  // Some state to try to produce better error messages.\n";
   OS << "  bool HadMatchOtherThanFeatures = false;\n\n";
+  OS << "  // Set ErrorInfo to the operand that mismatches if it is \n";
+  OS << "  // wrong for all instances of the instruction.\n";
+  OS << "  ErrorInfo = ~0U;\n";
 
   // Emit code to search the table.
   OS << "  // Search the table.\n";
@@ -1738,12 +1741,12 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
   OS << "    for (unsigned i = 0; i != " << MaxNumOperands << "; ++i) {\n";
   OS << "      if (IsSubclass(Classes[i], it->Classes[i]))\n";
   OS << "        continue;\n";
-  OS << "      // If there is only one instruction with this opcode, report\n";
-  OS << "      // this as an operand error with location info.\n";
-  OS << "      if (MnemonicRange.first+1 == ie) {\n";
+  OS << "      // If this operand is broken for all of the instances of this\n";
+  OS << "      // mnemonic, keep track of it so we can report loc info.\n";
+  OS << "      if (it == MnemonicRange.first || ErrorInfo == i+1)\n";
   OS << "        ErrorInfo = i+1;\n";
-  OS << "        return Match_InvalidOperand;\n";
-  OS << "      }\n";
+  OS << "      else\n";
+  OS << "        ErrorInfo = ~0U;";
   OS << "      // Otherwise, just reject this instance of the mnemonic.\n";
   OS << "      OperandsValid = false;\n";
   OS << "      break;\n";
@@ -1772,7 +1775,6 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
 
   OS << "  // Okay, we had no match.  Try to return a useful error code.\n";
   OS << "  if (HadMatchOtherThanFeatures) return Match_MissingFeature;\n";
-  OS << "  ErrorInfo = ~0U;\n";
   OS << "  return Match_InvalidOperand;\n";
   OS << "}\n\n";
   
