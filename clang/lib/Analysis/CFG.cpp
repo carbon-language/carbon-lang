@@ -171,7 +171,7 @@ private:
 
   void autoCreateBlock() { if (!Block) Block = createBlock(); }
   CFGBlock *createBlock(bool add_successor = true);
-  bool FinishBlock(CFGBlock* B);
+
   CFGBlock *addStmt(Stmt *S) {
     return Visit(S, AddStmtChoice::AlwaysAdd);
   }
@@ -329,15 +329,6 @@ CFGBlock* CFGBuilder::createBlock(bool add_successor) {
   if (add_successor && Succ)
     AddSuccessor(B, Succ);
   return B;
-}
-
-/// FinishBlock - "Finalize" the block by checking if we have a bad CFG.
-bool CFGBuilder::FinishBlock(CFGBlock* B) {
-  if (badCFG)
-    return false;
-
-  assert(B);
-  return true;
 }
 
 /// Visit - Walk the subtree of a statement and add extra
@@ -505,7 +496,7 @@ CFGBlock *CFGBuilder::VisitBinaryOperator(BinaryOperator *B,
     CFGBlock* ConfluenceBlock = Block ? Block : createBlock();
     AppendStmt(ConfluenceBlock, B, asc);
 
-    if (!FinishBlock(ConfluenceBlock))
+    if (badCFG)
       return 0;
 
     // create the block evaluating the LHS
@@ -518,7 +509,7 @@ CFGBlock *CFGBuilder::VisitBinaryOperator(BinaryOperator *B,
     CFGBlock* RHSBlock = addStmt(B->getRHS());
 
     if (RHSBlock) {
-      if (!FinishBlock(RHSBlock))
+      if (badCFG)
         return 0;
     }
     else {
@@ -576,8 +567,8 @@ CFGBlock *CFGBuilder::VisitBlockExpr(BlockExpr *E, AddStmtChoice asc) {
 CFGBlock *CFGBuilder::VisitBreakStmt(BreakStmt *B) {
   // "break" is a control-flow statement.  Thus we stop processing the current
   // block.
-  if (Block && !FinishBlock(Block))
-      return 0;
+  if (badCFG)
+    return 0;
 
   // Now create a new block that ends with the break statement.
   Block = createBlock(false);
@@ -644,7 +635,7 @@ CFGBlock *CFGBuilder::VisitCallExpr(CallExpr *C, AddStmtChoice asc) {
 
   if (Block) {
     Succ = Block;
-    if (!FinishBlock(Block))
+    if (badCFG)
       return 0;
   }
 
@@ -670,7 +661,7 @@ CFGBlock *CFGBuilder::VisitChooseExpr(ChooseExpr *C,
                                       AddStmtChoice asc) {
   CFGBlock* ConfluenceBlock = Block ? Block : createBlock();
   AppendStmt(ConfluenceBlock, C, asc);
-  if (!FinishBlock(ConfluenceBlock))
+  if (badCFG)
     return 0;
 
   asc = asc.asLValue() ? AddStmtChoice::AlwaysAddAsLValue
@@ -679,13 +670,13 @@ CFGBlock *CFGBuilder::VisitChooseExpr(ChooseExpr *C,
   Succ = ConfluenceBlock;
   Block = NULL;
   CFGBlock* LHSBlock = Visit(C->getLHS(), asc);
-  if (!FinishBlock(LHSBlock))
+  if (badCFG)
     return 0;
 
   Succ = ConfluenceBlock;
   Block = NULL;
   CFGBlock* RHSBlock = Visit(C->getRHS(), asc);
-  if (!FinishBlock(RHSBlock))
+  if (badCFG)
     return 0;
 
   Block = createBlock(false);
@@ -725,7 +716,7 @@ CFGBlock *CFGBuilder::VisitConditionalOperator(ConditionalOperator *C,
   // expression.
   CFGBlock* ConfluenceBlock = Block ? Block : createBlock();
   AppendStmt(ConfluenceBlock, C, asc);
-  if (!FinishBlock(ConfluenceBlock))
+  if (badCFG)
     return 0;
 
   asc = asc.asLValue() ? AddStmtChoice::AlwaysAddAsLValue
@@ -740,7 +731,7 @@ CFGBlock *CFGBuilder::VisitConditionalOperator(ConditionalOperator *C,
   CFGBlock* LHSBlock = NULL;
   if (C->getLHS()) {
     LHSBlock = Visit(C->getLHS(), asc);
-    if (!FinishBlock(LHSBlock))
+    if (badCFG)
       return 0;
     Block = NULL;
   }
@@ -748,7 +739,7 @@ CFGBlock *CFGBuilder::VisitConditionalOperator(ConditionalOperator *C,
   // Create the block for the RHS expression.
   Succ = ConfluenceBlock;
   CFGBlock* RHSBlock = Visit(C->getRHS(), asc);
-  if (!FinishBlock(RHSBlock))
+  if (badCFG)
     return 0;
 
   // Create the block that will contain the condition.
@@ -857,7 +848,7 @@ CFGBlock* CFGBuilder::VisitIfStmt(IfStmt* I) {
   // block.
   if (Block) {
     Succ = Block;
-    if (!FinishBlock(Block))
+    if (badCFG)
       return 0;
   }
 
@@ -875,7 +866,7 @@ CFGBlock* CFGBuilder::VisitIfStmt(IfStmt* I) {
     if (!ElseBlock) // Can occur when the Else body has all NullStmts.
       ElseBlock = sv.get();
     else if (Block) {
-      if (!FinishBlock(ElseBlock))
+      if (badCFG)
         return 0;
     }
   }
@@ -896,7 +887,7 @@ CFGBlock* CFGBuilder::VisitIfStmt(IfStmt* I) {
       ThenBlock = createBlock(false);
       AddSuccessor(ThenBlock, sv.get());
     } else if (Block) {
-      if (!FinishBlock(ThenBlock))
+      if (badCFG)
         return 0;
     }
   }
@@ -940,8 +931,6 @@ CFGBlock* CFGBuilder::VisitReturnStmt(ReturnStmt* R) {
   //       code afterwards is DEAD (unreachable).  We still keep a basic block
   //       for that code; a simple "mark-and-sweep" from the entry block will be
   //       able to report such dead blocks.
-  if (Block)
-    FinishBlock(Block);
 
   // Create the new block.
   Block = createBlock(false);
@@ -970,7 +959,7 @@ CFGBlock* CFGBuilder::VisitLabelStmt(LabelStmt* L) {
   // already processed the substatement) there is no extra control-flow to worry
   // about.
   LabelBlock->setLabel(L);
-  if (!FinishBlock(LabelBlock))
+  if (badCFG)
     return 0;
 
   // We set Block to NULL to allow lazy creation of a new block (if necessary);
@@ -985,8 +974,6 @@ CFGBlock* CFGBuilder::VisitLabelStmt(LabelStmt* L) {
 CFGBlock* CFGBuilder::VisitGotoStmt(GotoStmt* G) {
   // Goto is a control-flow statement.  Thus we stop processing the current
   // block and create a new one.
-  if (Block)
-    FinishBlock(Block);
 
   Block = createBlock(false);
   Block->setTerminator(G);
@@ -1009,7 +996,7 @@ CFGBlock* CFGBuilder::VisitForStmt(ForStmt* F) {
   // "for" is a control-flow statement.  Thus we stop processing the current
   // block.
   if (Block) {
-    if (!FinishBlock(Block))
+    if (badCFG)
       return 0;
     LoopSuccessor = Block;
   } else
@@ -1048,7 +1035,7 @@ CFGBlock* CFGBuilder::VisitForStmt(ForStmt* F) {
     }
 
     if (Block) {
-      if (!FinishBlock(EntryConditionBlock))
+      if (badCFG)
         return 0;
     }
   }
@@ -1088,7 +1075,7 @@ CFGBlock* CFGBuilder::VisitForStmt(ForStmt* F) {
     // Finish up the increment (or empty) block if it hasn't been already.
     if (Block) {
       assert(Block == Succ);
-      if (!FinishBlock(Block))
+      if (badCFG)
         return 0;
       Block = 0;
     }
@@ -1105,7 +1092,7 @@ CFGBlock* CFGBuilder::VisitForStmt(ForStmt* F) {
 
     if (!BodyBlock)
       BodyBlock = ContinueTargetBlock; // can happen for "for (...;...;...) ;"
-    else if (Block && !FinishBlock(BodyBlock))
+    else if (badCFG)
       return 0;
 
     // This new body block is a successor to our "exit" condition block.
@@ -1176,7 +1163,7 @@ CFGBlock* CFGBuilder::VisitObjCForCollectionStmt(ObjCForCollectionStmt* S) {
   CFGBlock* LoopSuccessor = 0;
 
   if (Block) {
-    if (!FinishBlock(Block))
+    if (badCFG)
       return 0;
     LoopSuccessor = Block;
     Block = 0;
@@ -1201,7 +1188,7 @@ CFGBlock* CFGBuilder::VisitObjCForCollectionStmt(ObjCForCollectionStmt* S) {
   // the CFG unless it contains control-flow.
   EntryConditionBlock = Visit(S->getElement(), AddStmtChoice::NotAlwaysAdd);
   if (Block) {
-    if (!FinishBlock(EntryConditionBlock))
+    if (badCFG)
       return 0;
     Block = 0;
   }
@@ -1224,7 +1211,7 @@ CFGBlock* CFGBuilder::VisitObjCForCollectionStmt(ObjCForCollectionStmt* S) {
     if (!BodyBlock)
       BodyBlock = EntryConditionBlock; // can happen for "for (X in Y) ;"
     else if (Block) {
-      if (!FinishBlock(BodyBlock))
+      if (badCFG)
         return 0;
     }
 
@@ -1250,7 +1237,7 @@ CFGBlock* CFGBuilder::VisitObjCAtSynchronizedStmt(ObjCAtSynchronizedStmt* S) {
   // The sync body starts its own basic block.  This makes it a little easier
   // for diagnostic clients.
   if (SyncBlock) {
-    if (!FinishBlock(SyncBlock))
+    if (badCFG)
       return 0;
 
     Block = 0;
@@ -1272,7 +1259,7 @@ CFGBlock* CFGBuilder::VisitWhileStmt(WhileStmt* W) {
   // "while" is a control-flow statement.  Thus we stop processing the current
   // block.
   if (Block) {
-    if (!FinishBlock(Block))
+    if (badCFG)
       return 0;
     LoopSuccessor = Block;
   } else
@@ -1307,7 +1294,7 @@ CFGBlock* CFGBuilder::VisitWhileStmt(WhileStmt* W) {
     }
 
     if (Block) {
-      if (!FinishBlock(EntryConditionBlock))
+      if (badCFG)
         return 0;
     }
   }
@@ -1348,7 +1335,7 @@ CFGBlock* CFGBuilder::VisitWhileStmt(WhileStmt* W) {
     if (!BodyBlock)
       BodyBlock = ContinueTargetBlock; // can happen for "while(...) ;"
     else if (Block) {
-      if (!FinishBlock(BodyBlock))
+      if (badCFG)
         return 0;
     }
 
@@ -1381,7 +1368,7 @@ CFGBlock* CFGBuilder::VisitObjCAtThrowStmt(ObjCAtThrowStmt* S) {
   //  statement.
 
   // If we were in the middle of a block we stop processing that block.
-  if (Block && !FinishBlock(Block))
+  if (badCFG)
     return 0;
 
   // Create the new block.
@@ -1397,7 +1384,7 @@ CFGBlock* CFGBuilder::VisitObjCAtThrowStmt(ObjCAtThrowStmt* S) {
 
 CFGBlock* CFGBuilder::VisitCXXThrowExpr(CXXThrowExpr* T) {
   // If we were in the middle of a block we stop processing that block.
-  if (Block && !FinishBlock(Block))
+  if (badCFG)
     return 0;
 
   // Create the new block.
@@ -1421,7 +1408,7 @@ CFGBlock *CFGBuilder::VisitDoStmt(DoStmt* D) {
   // "do...while" is a control-flow statement.  Thus we stop processing the
   // current block.
   if (Block) {
-    if (!FinishBlock(Block))
+    if (badCFG)
       return 0;
     LoopSuccessor = Block;
   } else
@@ -1442,7 +1429,7 @@ CFGBlock *CFGBuilder::VisitDoStmt(DoStmt* D) {
     Block = ExitConditionBlock;
     EntryConditionBlock = addStmt(C);
     if (Block) {
-      if (!FinishBlock(EntryConditionBlock))
+      if (badCFG)
         return 0;
     }
   }
@@ -1478,7 +1465,7 @@ CFGBlock *CFGBuilder::VisitDoStmt(DoStmt* D) {
     if (!BodyBlock)
       BodyBlock = EntryConditionBlock; // can happen for "do ; while(...)"
     else if (Block) {
-      if (!FinishBlock(BodyBlock))
+      if (badCFG)
         return 0;
     }
 
@@ -1516,8 +1503,8 @@ CFGBlock *CFGBuilder::VisitDoStmt(DoStmt* D) {
 CFGBlock* CFGBuilder::VisitContinueStmt(ContinueStmt* C) {
   // "continue" is a control-flow statement.  Thus we stop processing the
   // current block.
-  if (Block && !FinishBlock(Block))
-      return 0;
+  if (badCFG)
+    return 0;
 
   // Now create a new block that ends with the continue statement.
   Block = createBlock(false);
@@ -1567,7 +1554,7 @@ CFGBlock* CFGBuilder::VisitSwitchStmt(SwitchStmt* Terminator) {
   CFGBlock* SwitchSuccessor = NULL;
 
   if (Block) {
-    if (!FinishBlock(Block))
+    if (badCFG)
       return 0;
     SwitchSuccessor = Block;
   } else SwitchSuccessor = Succ;
@@ -1595,9 +1582,9 @@ CFGBlock* CFGBuilder::VisitSwitchStmt(SwitchStmt* Terminator) {
   // control-flow from the switch goes to case/default statements.
   assert(Terminator->getBody() && "switch must contain a non-NULL body");
   Block = NULL;
-  CFGBlock *BodyBlock = addStmt(Terminator->getBody());
+  addStmt(Terminator->getBody());
   if (Block) {
-    if (!FinishBlock(BodyBlock))
+    if (badCFG)
       return 0;
   }
 
@@ -1660,7 +1647,7 @@ CFGBlock* CFGBuilder::VisitCaseStmt(CaseStmt* CS) {
   // were processing (the "case XXX:" is the label).
   CaseBlock->setLabel(CS);
 
-  if (!FinishBlock(CaseBlock))
+  if (badCFG)
     return 0;
 
   // Add this block to the list of successors for the block with the switch
@@ -1696,7 +1683,7 @@ CFGBlock* CFGBuilder::VisitDefaultStmt(DefaultStmt* Terminator) {
   // we were processing (the "default:" is the label).
   DefaultCaseBlock->setLabel(Terminator);
 
-  if (!FinishBlock(DefaultCaseBlock))
+  if (badCFG)
     return 0;
 
   // Unlike case statements, we don't add the default block to the successors
@@ -1720,7 +1707,7 @@ CFGBlock *CFGBuilder::VisitCXXTryStmt(CXXTryStmt *Terminator) {
   CFGBlock* TrySuccessor = NULL;
 
   if (Block) {
-    if (!FinishBlock(Block))
+    if (badCFG)
       return 0;
     TrySuccessor = Block;
   } else TrySuccessor = Succ;
@@ -1781,7 +1768,7 @@ CFGBlock* CFGBuilder::VisitCXXCatchStmt(CXXCatchStmt* CS) {
 
   CatchBlock->setLabel(CS);
 
-  if (!FinishBlock(CatchBlock))
+  if (badCFG)
     return 0;
 
   // We set Block to NULL to allow lazy creation of a new block (if necessary)
@@ -1810,7 +1797,7 @@ CFGBlock* CFGBuilder::VisitIndirectGotoStmt(IndirectGotoStmt* I) {
 
   // IndirectGoto is a control-flow statement.  Thus we stop processing the
   // current block and create a new one.
-  if (Block && !FinishBlock(Block))
+  if (badCFG)
     return 0;
 
   Block = createBlock(false);
