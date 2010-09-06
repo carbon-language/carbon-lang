@@ -663,7 +663,6 @@ ParseInstruction(StringRef Name, SMLoc NameLoc,
     .Case("jpe", "jp")
     .Case("jpo", "jnp")
     .Case("cmovcl", "cmovbl")
-    .Case("cmovcl", "cmovbl")
     .Case("cmovnal", "cmovbel")
     .Case("cmovnbl", "cmovael")
     .Case("cmovnbel", "cmoval")
