@@ -468,6 +468,10 @@ struct InstructionInfo {
 
   /// operator< - Compare two instructions.
   bool operator<(const InstructionInfo &RHS) const {
+    // The primary comparator is the instruction mnemonic.
+    if (Tokens[0] != RHS.Tokens[0])
+      return Tokens[0] < RHS.Tokens[0];
+    
     if (Operands.size() != RHS.Operands.size())
       return Operands.size() < RHS.Operands.size();
 
@@ -991,8 +995,16 @@ void AsmMatcherInfo::BuildInfo(CodeGenTarget &Target) {
   for (std::vector<InstructionInfo*>::iterator it = Instructions.begin(),
          ie = Instructions.end(); it != ie; ++it) {
     InstructionInfo *II = *it;
-
-    for (unsigned i = 0, e = II->Tokens.size(); i != e; ++i) {
+    
+    // The first token of the instruction is the mnemonic, which must be a
+    // simple string.
+    assert(!II->Tokens.empty() && "Instruction has no tokens?");
+    StringRef Mnemonic = II->Tokens[0];
+    assert(Mnemonic[0] != '$' &&
+           (RegisterPrefix.empty() || !Mnemonic.startswith(RegisterPrefix)));
+    
+    // Parse the tokens after the mnemonic.
+    for (unsigned i = 1, e = II->Tokens.size(); i != e; ++i) {
       StringRef Token = II->Tokens[i];
 
       // Check for singleton registers.
@@ -1221,7 +1233,7 @@ static void EmitConvertToMCInst(CodeGenTarget &Target,
 
       CvtOS << "    ((" << TargetOperandClass << "*)Operands["
          << MIOperandList[i].second 
-         << "])->" << Op.Class->RenderMethod 
+         << "+1])->" << Op.Class->RenderMethod 
          << "(Inst, " << Op.OperandInfo->MINumOperands << ");\n";
       CurIndex += Op.OperandInfo->MINumOperands;
     }
@@ -1618,6 +1630,7 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
   // following the mnemonic.
   OS << "  static const struct MatchEntry {\n";
   OS << "    unsigned Opcode;\n";
+  OS << "    const char *Mnemonic;\n";
   OS << "    ConversionKind ConvertFn;\n";
   OS << "    MatchClassKind Classes[" << MaxNumOperands << "];\n";
   OS << "    unsigned RequiredFeatures;\n";
@@ -1629,6 +1642,7 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
     InstructionInfo &II = **it;
 
     OS << "    { " << Target.getName() << "::" << II.InstrName
+       << ", \"" << II.Tokens[0] << "\""
        << ", " << II.ConversionFnKind << ", { ";
     for (unsigned i = 0, e = II.Operands.size(); i != e; ++i) {
       InstructionInfo::Operand &Op = II.Operands[i];
@@ -1659,24 +1673,28 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
 
   // Emit code to compute the class list for this operand vector.
   OS << "  // Eliminate obvious mismatches.\n";
-  OS << "  if (Operands.size() > " << MaxNumOperands << ")\n";
+  OS << "  if (Operands.size() > " << MaxNumOperands << "+1)\n";
   OS << "    return Match_Fail;\n\n";
 
   OS << "  // Compute the class list for this operand vector.\n";
   OS << "  MatchClassKind Classes[" << MaxNumOperands << "];\n";
-  OS << "  for (unsigned i = 0, e = Operands.size(); i != e; ++i) {\n";
-  OS << "    Classes[i] = ClassifyOperand(Operands[i]);\n\n";
+  OS << "  for (unsigned i = 1, e = Operands.size(); i != e; ++i) {\n";
+  OS << "    Classes[i-1] = ClassifyOperand(Operands[i]);\n\n";
 
   OS << "    // Check for invalid operands before matching.\n";
-  OS << "    if (Classes[i] == InvalidMatchClass)\n";
+  OS << "    if (Classes[i-1] == InvalidMatchClass)\n";
   OS << "      return Match_Fail;\n";
   OS << "  }\n\n";
 
   OS << "  // Mark unused classes.\n";
-  OS << "  for (unsigned i = Operands.size(), e = " << MaxNumOperands << "; "
+  OS << "  for (unsigned i = Operands.size()-1, e = " << MaxNumOperands << "; "
      << "i != e; ++i)\n";
   OS << "    Classes[i] = InvalidMatchClass;\n\n";
 
+  OS << "  // Get the instruction mneumonic, which is the first token.\n";
+  OS << "  StringRef Mnemonic = ((" << Target.getName()
+     << "Operand*)Operands[0])->getToken();\n\n";
+  
   // Emit code to search the table.
   OS << "  // Search the table.\n";
   OS << "  bool HadMatchOtherThanFeatures = false;\n";
@@ -1684,6 +1702,9 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
      << "*ie = MatchTable + " << Info.Instructions.size()
      << "; it != ie; ++it) {\n";
 
+  OS << "    // Instruction mneumonic must match.\n";
+  OS << "    if (Mnemonic != it->Mnemonic) continue;";
+  
   // Emit check that the subclasses match.
   for (unsigned i = 0; i != MaxNumOperands; ++i) {
     OS << "    if (!IsSubclass(Classes[" 
