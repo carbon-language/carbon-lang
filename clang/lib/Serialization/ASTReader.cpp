@@ -3872,6 +3872,8 @@ ASTReader::ReadCXXBaseOrMemberInitializers(llvm::BitstreamCursor &Cursor,
                                                      Indices.size());
       }
 
+      if (IsWritten)
+        BOMInit->setSourceOrder(SourceOrderOrNumArrayIndices);
       BOMInit->setAnonUnionMember(AnonUnionMember);
       BaseOrMemberInitializers[i] = BOMInit;
     }

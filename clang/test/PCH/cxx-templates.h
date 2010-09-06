@@ -135,3 +135,13 @@ void S4ImplicitInst() {
     S4<int> s;
     s.m();
 }
+
+struct S5 {
+  S5(int x);
+};
+
+struct TS5 {
+  S5 s;
+  template <typename T>
+  TS5(T y) : s(y) {}
+};

@@ -30,6 +30,8 @@ void test() {
   
   S3<int> s3;
   s3.m();
+
+  TS5 ts(0);
 }
 
 template struct S4<int>;
