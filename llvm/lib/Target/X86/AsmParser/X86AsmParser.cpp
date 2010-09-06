@@ -623,14 +623,14 @@ ParseInstruction(StringRef Name, SMLoc NameLoc,
   if (Is64Bit) {
     if (Name == "popfl")
       return Error(NameLoc, "popfl cannot be encoded in 64-bit mode");
-    else if (Name == "pushfl")
+    if (Name == "pushfl")
       return Error(NameLoc, "pushfl cannot be encoded in 64-bit mode");
-    else if (Name == "pusha")
+    if (Name == "pusha")
       return Error(NameLoc, "pusha cannot be encoded in 64-bit mode");
   } else {
     if (Name == "popfq")
       return Error(NameLoc, "popfq cannot be encoded in 32-bit mode");
-    else if (Name == "pushfq")
+    if (Name == "pushfq")
       return Error(NameLoc, "pushfq cannot be encoded in 32-bit mode");
   }
 
@@ -778,6 +778,8 @@ ParseInstruction(StringRef Name, SMLoc NameLoc,
   if (ExtraImmOp)
     Operands.push_back(X86Operand::CreateImm(ExtraImmOp, NameLoc, NameLoc));
 
+  
+  // This does the actual operand parsing.
   if (getLexer().isNot(AsmToken::EndOfStatement)) {
 
     // Parse '*' modifier.
@@ -807,12 +809,13 @@ ParseInstruction(StringRef Name, SMLoc NameLoc,
   // FIXME: Hack to handle recognizing s{hr,ar,hl}? $1.
   if ((Name.startswith("shr") || Name.startswith("sar") ||
        Name.startswith("shl")) &&
-      Operands.size() == 3 &&
-      static_cast<X86Operand*>(Operands[1])->isImm() &&
-      isa<MCConstantExpr>(static_cast<X86Operand*>(Operands[1])->getImm()) &&
-      cast<MCConstantExpr>(static_cast<X86Operand*>(Operands[1])->getImm())->getValue() == 1) {
-    delete Operands[1];
-    Operands.erase(Operands.begin() + 1);
+      Operands.size() == 3) {
+    X86Operand *Op1 = static_cast<X86Operand*>(Operands[1]);
+    if (Op1->isImm() && isa<MCConstantExpr>(Op1->getImm()) &&
+        cast<MCConstantExpr>(Op1->getImm())->getValue() == 1) {
+      delete Operands[1];
+      Operands.erase(Operands.begin() + 1);
+    }
   }
 
   // FIXME: Hack to handle "f{mul*,add*,sub*,div*} $op, st(0)" the same as
