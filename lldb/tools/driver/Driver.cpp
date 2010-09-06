@@ -1085,11 +1085,11 @@ Driver::MainLoop ()
     if (isatty (STDIN_FILENO)
         && ::ioctl (STDIN_FILENO, TIOCGWINSZ, &window_size) == 0)
     {
-        char buffer[25];
+        char buffer[256];
 
         if (window_size.ws_col > 0)
         {
-            sprintf (buffer, "settings set term-width %d", window_size.ws_col);
+            ::snprintf (buffer, sizeof(buffer), "settings set term-width %d", window_size.ws_col);
             m_debugger.HandleCommand ((const char *) buffer);
         }
     }
