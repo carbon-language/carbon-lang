@@ -88,7 +88,10 @@
 
 #define _LIBCPP_HAS_NO_ADVANCED_SFINAE
 #define _LIBCPP_HAS_NO_TEMPLATE_ALIASES
+
+#ifndef __GXX_EXPERIMENTAL_CXX0X__
 #define _LIBCPP_HAS_NO_UNICODE_CHARS
+#endif
 
 #if !(__has_feature(cxx_exceptions))
 #define _LIBCPP_NO_EXCEPTIONS

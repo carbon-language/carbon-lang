@@ -37,6 +37,7 @@ class Empty
 
 class NotEmpty
 {
+public:
     virtual ~NotEmpty();
 };
 
@@ -49,6 +50,7 @@ struct bit_zero
 
 class Abstract
 {
+public:
     virtual ~Abstract() = 0;
 };
 
@@ -61,17 +63,17 @@ int main()
 {
     test_has_not_trivial_copy_constructor<void>();
     test_has_not_trivial_copy_constructor<A>();
-    test_has_not_trivial_copy_constructor<int&>();
+    test_has_not_trivial_copy_constructor<char[3]>();
+    test_has_not_trivial_copy_constructor<char[]>();
+    test_has_not_trivial_copy_constructor<Abstract>();
+    test_has_not_trivial_copy_constructor<NotEmpty>();
 
+    test_has_trivial_copy_constructor<int&>();
     test_has_trivial_copy_constructor<Union>();
-    test_has_trivial_copy_constructor<Abstract>();
     test_has_trivial_copy_constructor<Empty>();
     test_has_trivial_copy_constructor<int>();
     test_has_trivial_copy_constructor<double>();
     test_has_trivial_copy_constructor<int*>();
     test_has_trivial_copy_constructor<const int*>();
-    test_has_trivial_copy_constructor<char[3]>();
-    test_has_trivial_copy_constructor<char[3]>();
-    test_has_trivial_copy_constructor<NotEmpty>();
     test_has_trivial_copy_constructor<bit_zero>();
 }
