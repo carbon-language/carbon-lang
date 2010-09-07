@@ -761,10 +761,6 @@ template <class _Tp> struct has_nothrow_copy_constructor
 
 template <class _Tp> struct has_nothrow_move_constructor : public has_nothrow_copy_constructor<_Tp> {};
 
-// has_copy_constructor
-
-template <class _Tp> struct has_copy_constructor : public true_type {};
-
 // has_copy_assign
 
 template <class _Tp> struct has_copy_assign;
@@ -1728,6 +1724,24 @@ struct __is_constructible0_imp<false, _A[_N]>
 template <class _A>
 struct __is_constructible0_imp<false, _A[]>
     : public false_type
+    {};
+
+#endif  // _LIBCPP_HAS_NO_ADVANCED_SFINAE
+
+// has_copy_constructor
+
+#ifndef _LIBCPP_HAS_NO_ADVANCED_SFINAE
+
+template <class _Tp>
+struct has_copy_constructor
+    : public is_constructible<_Tp, typename add_lvalue_reference<const _Tp>::type>
+    {};
+
+#else  // _LIBCPP_HAS_NO_ADVANCED_SFINAE
+
+template <class _Tp>
+struct has_copy_constructor
+    : public has_nothrow_copy_constructor<_Tp>
     {};
 
 #endif  // _LIBCPP_HAS_NO_ADVANCED_SFINAE

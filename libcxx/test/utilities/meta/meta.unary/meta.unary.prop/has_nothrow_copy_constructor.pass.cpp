@@ -61,11 +61,11 @@ struct A
 
 int main()
 {
-//    test_has_not_nothrow_copy_constructor<void>();
+    test_has_not_nothrow_copy_constructor<void>();
     test_has_not_nothrow_copy_constructor<A>();
     test_has_not_nothrow_copy_constructor<Abstract>();
-//    test_has_not_nothrow_copy_constructor<char[3]>();
-//    test_has_not_nothrow_copy_constructor<char[]>();
+    test_has_not_nothrow_copy_constructor<char[3]>();
+    test_has_not_nothrow_copy_constructor<char[]>();
 
     test_has_nothrow_copy_constructor<int&>();
     test_has_nothrow_copy_constructor<Union>();
@@ -74,6 +74,6 @@ int main()
     test_has_nothrow_copy_constructor<double>();
     test_has_nothrow_copy_constructor<int*>();
     test_has_nothrow_copy_constructor<const int*>();
-//    test_has_nothrow_copy_constructor<NotEmpty>();
+    test_has_nothrow_copy_constructor<NotEmpty>();
     test_has_nothrow_copy_constructor<bit_zero>();
 }
