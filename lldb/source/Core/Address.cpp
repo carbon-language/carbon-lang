@@ -608,7 +608,9 @@ Address::Dump (Stream *s, ExecutionContextScope *exe_scope, DumpStyle style, Dum
                     if (sc.function || sc.symbol)
                     {
                         bool show_stop_context = true;
-                        bool show_module = (style == DumpStyleResolvedDescription);
+                        const bool show_module = (style == DumpStyleResolvedDescription);
+                        const bool show_fullpaths = false; 
+                        const bool show_inlined_frames = false;
                         if (sc.function == NULL && sc.symbol != NULL)
                         {
                             // If we have just a symbol make sure it is in the right section
@@ -625,7 +627,12 @@ Address::Dump (Stream *s, ExecutionContextScope *exe_scope, DumpStyle style, Dum
                         {
                             // We have a function or a symbol from the same
                             // sections as this address.
-                            sc.DumpStopContext(s, exe_scope, *this, true, show_module, false);
+                            sc.DumpStopContext (s, 
+                                                exe_scope, 
+                                                *this, 
+                                                show_fullpaths, 
+                                                show_module, 
+                                                show_inlined_frames);
                         }
                         else
                         {
