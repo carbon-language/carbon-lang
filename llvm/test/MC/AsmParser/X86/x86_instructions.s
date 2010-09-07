@@ -181,3 +181,10 @@ push $1
 // rdar://8017530
 // CHECK: sldtw	4
 sldt	4
+
+// rdar://8208499
+// CHECK: cmovnew	%bx, %ax
+cmovnz %bx, %ax
+// CHECK: cmovneq	%rbx, %rax
+cmovnzq %rbx, %rax
+
