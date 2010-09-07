@@ -133,6 +133,13 @@ SourceLocation Parser::MatchRHSPunctuation(tok::TokenKind RHSTok,
   return R;
 }
 
+static bool IsCommonTypo(tok::TokenKind ExpectedTok, const Token &Tok) {
+  switch (ExpectedTok) {
+  case tok::semi: return Tok.is(tok::colon); // : for ;
+  default: return false;
+  }
+}
+
 /// ExpectAndConsume - The parser expects that 'ExpectedTok' is next in the
 /// input.  If so, it is consumed and false is returned.
 ///
@@ -143,6 +150,19 @@ bool Parser::ExpectAndConsume(tok::TokenKind ExpectedTok, unsigned DiagID,
                               const char *Msg, tok::TokenKind SkipToTok) {
   if (Tok.is(ExpectedTok) || Tok.is(tok::code_completion)) {
     ConsumeAnyToken();
+    return false;
+  }
+
+  // Detect common single-character typos and resume.
+  if (IsCommonTypo(ExpectedTok, Tok)) {
+    SourceLocation Loc = Tok.getLocation();
+    Diag(Loc, DiagID)
+      << Msg
+      << FixItHint::CreateReplacement(SourceRange(Loc),
+                                      getTokenSimpleSpelling(ExpectedTok));
+    ConsumeAnyToken();
+
+    // Pretend there wasn't a problem.
     return false;
   }
 

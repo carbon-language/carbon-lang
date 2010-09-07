@@ -78,3 +78,9 @@ void foo() {
 // rdar://7980651
 typedef int intptr_t;  // expected-note {{'intptr_t' declared here}}
 void bar(intptr y);     // expected-error {{unknown type name 'intptr'; did you mean 'intptr_t'?}}
+
+void test1(void) {
+  int x = 2: // expected-error {{expected ';' at end of declaration}}
+  int y = x;
+  int z = y;
+}
