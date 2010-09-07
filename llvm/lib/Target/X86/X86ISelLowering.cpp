@@ -4898,8 +4898,7 @@ SDValue LowerVECTOR_SHUFFLEv16i8(ShuffleVectorSDNode *SVOp,
 /// vector_shuffle <>, <>, < 3, 4, | 10, 11, | 0, 1, | 14, 15>
 static
 SDValue RewriteAsNarrowerShuffle(ShuffleVectorSDNode *SVOp,
-                                 SelectionDAG &DAG,
-                                 const TargetLowering &TLI, DebugLoc dl) {
+                                 SelectionDAG &DAG, DebugLoc dl) {
   EVT VT = SVOp->getValueType(0);
   SDValue V1 = SVOp->getOperand(0);
   SDValue V2 = SVOp->getOperand(1);
@@ -5252,6 +5251,48 @@ static inline unsigned getUNPCKHOpcode(EVT VT) {
   return 0;
 }
 
+static
+SDValue NormalizeVectorShuffle(SDValue Op, SelectionDAG &DAG,
+                               const X86Subtarget *Subtarget) {
+  ShuffleVectorSDNode *SVOp = cast<ShuffleVectorSDNode>(Op);
+  EVT VT = Op.getValueType();
+  DebugLoc dl = Op.getDebugLoc();
+  SDValue V1 = Op.getOperand(0);
+  SDValue V2 = Op.getOperand(1);
+
+  if (isZeroShuffle(SVOp))
+    return getZeroVector(VT, Subtarget->hasSSE2(), DAG, dl);
+
+  // Promote splats to v4f32.
+  if (SVOp->isSplat())
+    return PromoteSplat(SVOp, DAG);
+
+  // If the shuffle can be profitably rewritten as a narrower shuffle, then
+  // do it!
+  if (VT == MVT::v8i16 || VT == MVT::v16i8) {
+    SDValue NewOp = RewriteAsNarrowerShuffle(SVOp, DAG, dl);
+    if (NewOp.getNode())
+      return DAG.getNode(ISD::BIT_CONVERT, dl, VT, NewOp);
+  } else if ((VT == MVT::v4i32 || (VT == MVT::v4f32 && Subtarget->hasSSE2()))) {
+    // FIXME: Figure out a cleaner way to do this.
+    // Try to make use of movq to zero out the top part.
+    if (ISD::isBuildVectorAllZeros(V2.getNode())) {
+      SDValue NewOp = RewriteAsNarrowerShuffle(SVOp, DAG, dl);
+      if (NewOp.getNode()) {
+        if (isCommutedMOVL(cast<ShuffleVectorSDNode>(NewOp), true, false))
+          return getVZextMovL(VT, NewOp.getValueType(), NewOp.getOperand(0),
+                              DAG, Subtarget, dl);
+      }
+    } else if (ISD::isBuildVectorAllZeros(V1.getNode())) {
+      SDValue NewOp = RewriteAsNarrowerShuffle(SVOp, DAG, dl);
+      if (NewOp.getNode() && X86::isMOVLMask(cast<ShuffleVectorSDNode>(NewOp)))
+        return getVZextMovL(VT, NewOp.getValueType(), NewOp.getOperand(1),
+                            DAG, Subtarget, dl);
+    }
+  }
+  return SDValue();
+}
+
 SDValue
 X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const {
   ShuffleVectorSDNode *SVOp = cast<ShuffleVectorSDNode>(Op);
@@ -5278,37 +5319,26 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const {
   if (isMMX && SVOp->isSplat())
     return Op;
 
-  if (isZeroShuffle(SVOp))
-    return getZeroVector(VT, Subtarget->hasSSE2(), DAG, dl);
+  // Vector shuffle lowering takes 3 steps:
+  //
+  // 1) Normalize the input vectors. Here splats, zeroed vectors, profitable
+  //    narrowing and commutation of operands should be handled.
+  // 2) Matching of shuffles with known shuffle masks to x86 target specific
+  //    shuffle nodes.
+  // 3) Rewriting of unmatched masks into new generic shuffle operations,
+  //    so the shuffle can be broken into other shuffles and the legalizer can
+  //    try the lowering again.
+  //
+  // The general ideia is that no vector_shuffle operation should be left to
+  // be matched during isel, all of them must be converted to a target specific
+  // node here.
 
-  // Promote splats to v4f32.
-  if (SVOp->isSplat())
-    return PromoteSplat(SVOp, DAG);
-
-  // If the shuffle can be profitably rewritten as a narrower shuffle, then
-  // do it!
-  if (VT == MVT::v8i16 || VT == MVT::v16i8) {
-    SDValue NewOp = RewriteAsNarrowerShuffle(SVOp, DAG, *this, dl);
-    if (NewOp.getNode())
-      return DAG.getNode(ISD::BIT_CONVERT, dl, VT,
-                         LowerVECTOR_SHUFFLE(NewOp, DAG));
-  } else if ((VT == MVT::v4i32 || (VT == MVT::v4f32 && Subtarget->hasSSE2()))) {
-    // FIXME: Figure out a cleaner way to do this.
-    // Try to make use of movq to zero out the top part.
-    if (ISD::isBuildVectorAllZeros(V2.getNode())) {
-      SDValue NewOp = RewriteAsNarrowerShuffle(SVOp, DAG, *this, dl);
-      if (NewOp.getNode()) {
-        if (isCommutedMOVL(cast<ShuffleVectorSDNode>(NewOp), true, false))
-          return getVZextMovL(VT, NewOp.getValueType(), NewOp.getOperand(0),
-                              DAG, Subtarget, dl);
-      }
-    } else if (ISD::isBuildVectorAllZeros(V1.getNode())) {
-      SDValue NewOp = RewriteAsNarrowerShuffle(SVOp, DAG, *this, dl);
-      if (NewOp.getNode() && X86::isMOVLMask(cast<ShuffleVectorSDNode>(NewOp)))
-        return getVZextMovL(VT, NewOp.getValueType(), NewOp.getOperand(1),
-                            DAG, Subtarget, dl);
-    }
-  }
+  // Normalize the input vectors. Here splats, zeroed vectors, profitable
+  // narrowing and commutation of operands should be handled. The actual code
+  // doesn't include all of those, work in progress...
+  SDValue NewOp = NormalizeVectorShuffle(Op, DAG, Subtarget);
+  if (NewOp.getNode())
+    return NewOp;
 
   // NOTE: isPSHUFDMask can also match both masks below (unpckl_undef and
   // unpckh_undef). Only use pshufd if speed is more important than size.
