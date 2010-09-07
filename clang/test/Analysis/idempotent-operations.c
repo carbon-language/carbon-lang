@@ -187,3 +187,10 @@ int false7() {
 
   return a;
 }
+
+// Check truncations do not flag as self-assignments
+void false8() {
+  int a = 10000000;
+  a = (short)a; // no-warning
+  test(a);
+}

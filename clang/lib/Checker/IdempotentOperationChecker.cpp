@@ -78,8 +78,8 @@ class IdempotentOperationChecker
     // False positive reduction methods
     static bool isSelfAssign(const Expr *LHS, const Expr *RHS);
     static bool isUnused(const Expr *E, AnalysisContext *AC);
-    //static bool isTruncationExtensionAssignment(const Expr *LHS,
-    //                                            const Expr *RHS);
+    static bool isTruncationExtensionAssignment(const Expr *LHS,
+                                                const Expr *RHS);
     static bool PathWasCompletelyAnalyzed(const CFG *C,
                                           const CFGBlock *CB,
                                           const GRCoreEngine &CE);
@@ -196,9 +196,10 @@ void IdempotentOperationChecker::PreVisitBinaryOperator(
   case BO_Assign:
     // x Assign x can be used to silence unused variable warnings intentionally.
     // If this is a self assignment and the variable is referenced elsewhere,
-    // then it is a false positive.
+    // and the assignment is not a truncation or extension, then it is a false
+    // positive.
     if (isSelfAssign(LHS, RHS)) {
-      if (!isUnused(LHS, AC)) {
+      if (!isUnused(LHS, AC) && !isTruncationExtensionAssignment(LHS, RHS)) {
         UpdateAssumption(A, Equal);
         return;
       }
@@ -500,7 +501,6 @@ bool IdempotentOperationChecker::isUnused(const Expr *E,
   return true;
 }
 
-#if 0
 // Check for self casts truncating/extending a variable
 bool IdempotentOperationChecker::isTruncationExtensionAssignment(
                                                               const Expr *LHS,
@@ -523,7 +523,6 @@ bool IdempotentOperationChecker::isTruncationExtensionAssignment(
 
   return dyn_cast<DeclRefExpr>(RHS->IgnoreParens()) == NULL;
 }
-#endif
 
 // Returns false if a path to this block was not completely analyzed, or true
 // otherwise.
