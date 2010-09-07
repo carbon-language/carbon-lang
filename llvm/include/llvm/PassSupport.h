@@ -23,6 +23,7 @@
 
 #include "Pass.h"
 #include "llvm/PassRegistry.h"
+#include <vector>
 
 namespace llvm {
 

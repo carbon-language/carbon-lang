@@ -26,6 +26,8 @@
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/STLExtras.h"
+#include <map>
+#include <set>
 using namespace llvm;
 
 char LazyValueInfo::ID = 0;
