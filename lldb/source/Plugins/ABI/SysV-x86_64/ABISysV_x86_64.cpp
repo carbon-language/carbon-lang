@@ -64,7 +64,12 @@ ABISysV_x86_64::PrepareTrivialCall (Thread &thread,
         return false;
 
     uint32_t rdiID = reg_ctx->GetRegisterInfoByName("rdi", 0)->reg;
+#define CHAIN_RBP
+    
+#ifndef CHAIN_RBP
     uint32_t rbpID = reg_ctx->ConvertRegisterKindToRegisterNumber (eRegisterKindGeneric, LLDB_REGNUM_GENERIC_FP);
+#endif
+    
     uint32_t ripID = reg_ctx->ConvertRegisterKindToRegisterNumber (eRegisterKindGeneric, LLDB_REGNUM_GENERIC_PC);
     uint32_t rspID = reg_ctx->ConvertRegisterKindToRegisterNumber (eRegisterKindGeneric, LLDB_REGNUM_GENERIC_SP);
 
@@ -90,10 +95,12 @@ ABISysV_x86_64::PrepareTrivialCall (Thread &thread,
     if (!reg_ctx->WriteRegisterFromUnsigned(rspID, sp))
         return false;
 
+#ifndef CHAIN_RBP
     // %rbp is set to a fake value, in our case 0x0000000000000000.
 
     if (!reg_ctx->WriteRegisterFromUnsigned(rbpID, 0x000000000000000))
         return false;
+#endif
 
     // %rip is set to the address of the called function.
 

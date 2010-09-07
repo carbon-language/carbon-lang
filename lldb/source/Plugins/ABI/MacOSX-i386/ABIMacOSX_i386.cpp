@@ -61,9 +61,12 @@ ABIMacOSX_i386::PrepareTrivialCall (Thread &thread,
 {
     RegisterContext *reg_ctx = thread.GetRegisterContext();
     if (!reg_ctx)
-        return false;
-    
+        return false;    
+#define CHAIN_EBP
+
+#ifndef CHAIN_EBP
     uint32_t ebpID = reg_ctx->ConvertRegisterKindToRegisterNumber (eRegisterKindGeneric, LLDB_REGNUM_GENERIC_FP);
+#endif
     uint32_t eipID = reg_ctx->ConvertRegisterKindToRegisterNumber (eRegisterKindGeneric, LLDB_REGNUM_GENERIC_PC);
     uint32_t espID = reg_ctx->ConvertRegisterKindToRegisterNumber (eRegisterKindGeneric, LLDB_REGNUM_GENERIC_SP);
     
@@ -94,10 +97,12 @@ ABIMacOSX_i386::PrepareTrivialCall (Thread &thread,
     if (!reg_ctx->WriteRegisterFromUnsigned(espID, sp))
         return false;
     
+#ifndef CHAIN_EBP
     // %ebp is set to a fake value, in our case 0x0x00000000
     
     if (!reg_ctx->WriteRegisterFromUnsigned(ebpID, 0x00000000))
         return false;
+#endif
     
     // %eip is set to the address of the called function.
     
