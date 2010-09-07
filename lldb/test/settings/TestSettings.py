@@ -37,7 +37,7 @@ class SettingsCommandTestCase(TestBase):
 
         # The overall display should also reflect the new setting.
         self.expect("settings show",
-            startstr = "term-width (int) = 70")
+            startstr = "term-width (int) = '70'")
 
 
 if __name__ == '__main__':

@@ -438,6 +438,8 @@ class TestBase(unittest2.TestCase):
             if SR == StopReasonEnum("Breakpoint"):
                 frame = thread.GetFrameAtIndex(0)
                 name = frame.GetFunction().GetName()
+                if trace:
+                    print >> sys.stderr, "function =", name
                 if (name == func):
                     # We got what we want; now break out of the loop.
                     return True
