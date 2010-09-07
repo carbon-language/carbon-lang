@@ -172,11 +172,42 @@ IRForTarget::createResultVariable(llvm::Module &M,
     named_metadata->addOperand(persistent_global_md);
     
     if (log)
-        log->Printf("Replacing %s with %s", 
-                    PrintValue(result_global).c_str(), 
+        log->Printf("Replacing %s with %s",
+                    PrintValue(result_global).c_str(),
                     PrintValue(new_result_global).c_str());
+    
+    if (result_global->hasNUses(0))
+    {
+        // We need to synthesize a store for this variable, because otherwise
+        // there's nothing to put into its equivalent persistent variable.
         
-    result_global->replaceAllUsesWith(new_result_global);
+        BasicBlock &entry_block(F.getEntryBlock());
+        Instruction *first_entry_instruction(entry_block.getFirstNonPHIOrDbg());
+        
+        if (!first_entry_instruction)
+            return false;
+        
+        if (!result_global->hasInitializer())
+        {
+            if (log)
+                log->Printf("Couldn't find initializer for unused variable");
+            return false;
+        }
+        
+        Constant *initializer = result_global->getInitializer();
+                
+        StoreInst *synthesized_store = new StoreInst::StoreInst(initializer,
+                                                                new_result_global,
+                                                                first_entry_instruction);
+        
+        if (log)
+            log->Printf("Synthesized result store %s\n", PrintValue(synthesized_store).c_str());
+    }
+    else
+    {
+        result_global->replaceAllUsesWith(new_result_global);
+    }
+        
     result_global->eraseFromParent();
     
     return true;
