@@ -608,6 +608,32 @@ ConstantRange::udiv(const ConstantRange &RHS) const {
 }
 
 ConstantRange
+ConstantRange::binaryAnd(const ConstantRange &Other) const {
+  if (isEmptySet() || Other.isEmptySet())
+    return ConstantRange(getBitWidth(), /*isFullSet=*/false);
+
+  // TODO: replace this with something less conservative
+
+  APInt umin = APIntOps::umin(Other.getUnsignedMax(), getUnsignedMax());
+  if (umin.isAllOnesValue())
+    return ConstantRange(getBitWidth(), /*isFullSet=*/true);
+  return ConstantRange(APInt::getNullValue(getBitWidth()), umin + 1);
+}
+
+ConstantRange
+ConstantRange::binaryOr(const ConstantRange &Other) const {
+  if (isEmptySet() || Other.isEmptySet())
+    return ConstantRange(getBitWidth(), /*isFullSet=*/false);
+
+  // TODO: replace this with something less conservative
+
+  APInt umax = APIntOps::umax(getUnsignedMin(), Other.getUnsignedMin());
+  if (umax.isMinValue())
+    return ConstantRange(getBitWidth(), /*isFullSet=*/true);
+  return ConstantRange(umax, APInt::getNullValue(getBitWidth()));
+}
+
+ConstantRange
 ConstantRange::shl(const ConstantRange &Other) const {
   if (isEmptySet() || Other.isEmptySet())
     return ConstantRange(getBitWidth(), /*isFullSet=*/false);

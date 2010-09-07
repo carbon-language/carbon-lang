@@ -602,6 +602,12 @@ LVILatticeVal LVIQuery::getBlockValue(BasicBlock *BB) {
   case Instruction::BitCast:
     Result.markConstantRange(LHSRange);
     break;
+  case Instruction::And:
+    Result.markConstantRange(LHSRange.binaryAnd(RHSRange));
+    break;
+  case Instruction::Or:
+    Result.markConstantRange(LHSRange.binaryOr(RHSRange));
+    break;
   
   // Unhandled instructions are overdefined.
   default:
