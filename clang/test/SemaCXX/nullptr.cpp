@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -verify -std=c++0x %s
+// RUN: %clang_cc1 -fsyntax-only -verify -std=c++0x -ffreestanding %s
 #include <stdint.h>
 
 // Don't have decltype yet.
