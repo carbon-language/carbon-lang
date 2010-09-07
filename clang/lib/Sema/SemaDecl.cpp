@@ -4806,7 +4806,12 @@ Decl *Sema::ActOnStartOfFunctionDef(Scope *FnBodyScope, Decl *D) {
   const FunctionDecl *Definition;
   if (FD->hasBody(Definition) &&
       !canRedefineFunction(Definition, getLangOptions())) {
-    Diag(FD->getLocation(), diag::err_redefinition) << FD->getDeclName();
+    if (getLangOptions().GNUMode && Definition->isInlineSpecified() &&
+        Definition->getStorageClass() == SC_Extern)
+      Diag(FD->getLocation(), diag::err_redefinition_extern_inline)
+        << FD->getDeclName() << getLangOptions().CPlusPlus;
+    else
+      Diag(FD->getLocation(), diag::err_redefinition) << FD->getDeclName();
     Diag(Definition->getLocation(), diag::note_previous_definition);
   }
 
