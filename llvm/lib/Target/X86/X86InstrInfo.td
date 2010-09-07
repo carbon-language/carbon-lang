@@ -599,7 +599,6 @@ let Uses = [EFLAGS] in {
 }
 def INT3 : I<0xcc, RawFrm, (outs), (ins), "int3",
               [(int_x86_int (i8 3))]>;
-// FIXME: need to make sure that "int $3" matches int3
 def INT : Ii8<0xcd, RawFrm, (outs), (ins i8imm:$trap), "int\t$trap",
               [(int_x86_int imm:$trap)]>;
 def IRET16 : I<0xcf, RawFrm, (outs), (ins), "iret{w}", []>, OpSize;
