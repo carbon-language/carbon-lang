@@ -114,7 +114,6 @@ namespace std
     template <class T, class U> struct is_same;
     template <class Base, class Derived> struct is_base_of;
     template <class From, class To> struct is_convertible;
-    template <class T> struct underlying_type;
 
     // Alignment properties and transformations:
     template <class T> struct alignment_of;
@@ -698,10 +697,20 @@ template <class _Tp> struct is_polymorphic : public __libcpp_polymorphic<_Tp> {}
 
 // has_trivial_default_constructor
 
-template <class _Tp> struct __has_trivial_default_constructor : public integral_constant<bool, is_scalar<_Tp>::value> {};
+#if __GNUC__ >= 4 && __GNUC_MINOR__ >= 3 || defined(__clang__)
+
+template <class _Tp> struct has_trivial_default_constructor
+    : public integral_constant<bool, __has_trivial_constructor(_Tp)> {};
+
+#else  // __GNUC__ >= 4 && __GNUC_MINOR__ >= 3 || defined(__clang__)
+
+template <class _Tp> struct __has_trivial_default_constructor
+    : public integral_constant<bool, is_scalar<_Tp>::value> {};
 
 template <class _Tp> struct has_trivial_default_constructor
     : public __has_trivial_default_constructor<typename remove_all_extents<_Tp>::type> {};
+
+#endif  // __GNUC__ >= 4 && __GNUC_MINOR__ >= 3 || defined(__clang__)
 
 // has_nothrow_default_constructor
 
@@ -1493,6 +1502,11 @@ class result_of<_Fn(_A0, _A1, _A2)>
 
 #endif  // _LIBCPP_HAS_NO_VARIADICS
 
+struct __any
+{
+    __any(...);
+};
+
 #ifndef _LIBCPP_HAS_NO_ADVANCED_SFINAE
 
 // template <class T, class... Args> struct is_constructible;
@@ -1502,11 +1516,6 @@ class result_of<_Fn(_A0, _A1, _A2)>
 template <class _Tp, class ..._Args>
 decltype(_STD::move(_Tp(_STD::declval<_Args>()...)), true_type())
 __is_constructible_test(_Tp&&, _Args&& ...);
-
-struct __any
-{
-    __any(...);
-};
 
 template <class ..._Args>
 false_type
