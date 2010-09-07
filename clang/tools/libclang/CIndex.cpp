@@ -388,7 +388,7 @@ public:
   bool VisitCXXDefaultArgExpr(CXXDefaultArgExpr *E) { return false; }
   // FIXME: CXXTemporaryObjectExpr has poor source-location information.
   // FIXME: CXXScalarValueInitExpr has poor source-location information.
-  // FIXME: CXXNewExpr has poor source-location information
+  bool VisitCXXNewExpr(CXXNewExpr *E);
   bool VisitCXXPseudoDestructorExpr(CXXPseudoDestructorExpr *E);
   // FIXME: UnaryTypeTraitExpr has poor source-location information.
   bool VisitOverloadExpr(OverloadExpr *E);
@@ -1588,6 +1588,29 @@ bool CursorVisitor::VisitCXXTypeidExpr(CXXTypeidExpr *E) {
   }
   
   return VisitExpr(E);
+}
+
+bool CursorVisitor::VisitCXXNewExpr(CXXNewExpr *E) {
+  // Visit placement arguments.
+  for (unsigned I = 0, N = E->getNumPlacementArgs(); I != N; ++I)
+    if (Visit(MakeCXCursor(E->getPlacementArg(I), StmtParent, TU)))
+      return true;
+  
+  // Visit the allocated type.
+  if (TypeSourceInfo *TSInfo = E->getAllocatedTypeSourceInfo())
+    if (Visit(TSInfo->getTypeLoc()))
+      return true;
+  
+  // Visit the array size, if any.
+  if (E->isArray() && Visit(MakeCXCursor(E->getArraySize(), StmtParent, TU)))
+    return true;
+  
+  // Visit the initializer or constructor arguments.
+  for (unsigned I = 0, N = E->getNumConstructorArgs(); I != N; ++I)
+    if (Visit(MakeCXCursor(E->getConstructorArg(I), StmtParent, TU)))
+      return true;
+  
+  return false;
 }
 
 bool CursorVisitor::VisitCXXPseudoDestructorExpr(CXXPseudoDestructorExpr *E) {

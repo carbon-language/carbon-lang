@@ -70,6 +70,16 @@ void test_more_dependent_exprs(T t, Y y) {
   y.g<type>(t);
 }
 
+struct Pair {
+  Pair(int, int);
+};
+
+void *operator new(__SIZE_TYPE__, void*) throw();
+
+void test_more_exprs(void *mem, int i, int j) {
+  new (mem) Pair(i, j);
+}
+
 // RUN: c-index-test -test-load-source all %s | FileCheck %s
 // CHECK: load-stmts.cpp:1:13: TypedefDecl=T:1:13 (Definition) Extent=[1:13 - 1:14]
 // CHECK: load-stmts.cpp:2:8: StructDecl=X:2:8 (Definition) Extent=[2:1 - 2:23]
@@ -160,3 +170,8 @@ void test_more_dependent_exprs(T t, Y y) {
 // CHECK: load-stmts.cpp:70:3: DeclRefExpr=y:67:39 Extent=[70:3 - 70:4]
 // CHECK: load-stmts.cpp:70:7: TypeRef=type:69:13 Extent=[70:7 - 70:11]
 // CHECK: load-stmts.cpp:70:13: DeclRefExpr=t:67:34 Extent=[70:13 - 70:14]
+// CHECK: load-stmts.cpp:79:6: FunctionDecl=test_more_exprs:79:6 (Definition)
+// CHECK: load-stmts.cpp:80:8: DeclRefExpr=mem:79:28 Extent=[80:8 - 80:11]
+// CHECK: load-stmts.cpp:80:13: TypeRef=struct Pair:73:8 Extent=[80:13 - 80:17]
+// CHECK: load-stmts.cpp:80:18: DeclRefExpr=i:79:37 Extent=[80:18 - 80:19]
+// CHECK: load-stmts.cpp:80:21: DeclRefExpr=j:79:44 Extent=[80:21 - 80:22]

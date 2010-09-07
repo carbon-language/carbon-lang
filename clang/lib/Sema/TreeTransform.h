@@ -1580,26 +1580,24 @@ public:
   /// By default, performs semantic analysis to build the new expression.
   /// Subclasses may override this routine to provide different behavior.
   ExprResult RebuildCXXNewExpr(SourceLocation StartLoc,
-                                     bool UseGlobal,
-                                     SourceLocation PlacementLParen,
-                                     MultiExprArg PlacementArgs,
-                                     SourceLocation PlacementRParen,
-                                     SourceRange TypeIdParens,
-                                     QualType AllocType,
-                                     SourceLocation TypeLoc,
-                                     SourceRange TypeRange,
-                                     Expr *ArraySize,
-                                     SourceLocation ConstructorLParen,
-                                     MultiExprArg ConstructorArgs,
-                                     SourceLocation ConstructorRParen) {
+                               bool UseGlobal,
+                               SourceLocation PlacementLParen,
+                               MultiExprArg PlacementArgs,
+                               SourceLocation PlacementRParen,
+                               SourceRange TypeIdParens,
+                               QualType AllocatedType,
+                               TypeSourceInfo *AllocatedTypeInfo,
+                               Expr *ArraySize,
+                               SourceLocation ConstructorLParen,
+                               MultiExprArg ConstructorArgs,
+                               SourceLocation ConstructorRParen) {
     return getSema().BuildCXXNew(StartLoc, UseGlobal,
                                  PlacementLParen,
                                  move(PlacementArgs),
                                  PlacementRParen,
                                  TypeIdParens,
-                                 AllocType,
-                                 TypeLoc,
-                                 TypeRange,
+                                 AllocatedType,
+                                 AllocatedTypeInfo,
                                  ArraySize,
                                  ConstructorLParen,
                                  move(ConstructorArgs),
@@ -5245,9 +5243,9 @@ template<typename Derived>
 ExprResult
 TreeTransform<Derived>::TransformCXXNewExpr(CXXNewExpr *E) {
   // Transform the type that we're allocating
-  TemporaryBase Rebase(*this, E->getLocStart(), DeclarationName());
-  QualType AllocType = getDerived().TransformType(E->getAllocatedType());
-  if (AllocType.isNull())
+  TypeSourceInfo *AllocTypeInfo
+    = getDerived().TransformType(E->getAllocatedTypeSourceInfo());
+  if (!AllocTypeInfo)
     return ExprError();
 
   // Transform the size of the array we're allocating (if any).
@@ -5310,7 +5308,7 @@ TreeTransform<Derived>::TransformCXXNewExpr(CXXNewExpr *E) {
   }
   
   if (!getDerived().AlwaysRebuild() &&
-      AllocType == E->getAllocatedType() &&
+      AllocTypeInfo == E->getAllocatedTypeSourceInfo() &&
       ArraySize.get() == E->getArraySize() &&
       Constructor == E->getConstructor() &&
       OperatorNew == E->getOperatorNew() &&
@@ -5327,6 +5325,7 @@ TreeTransform<Derived>::TransformCXXNewExpr(CXXNewExpr *E) {
     return SemaRef.Owned(E->Retain());
   }
 
+  QualType AllocType = AllocTypeInfo->getType();
   if (!ArraySize.get()) {
     // If no array size was specified, but the new expression was
     // instantiated with an array type (e.g., "new T" where T is
@@ -5352,6 +5351,7 @@ TreeTransform<Derived>::TransformCXXNewExpr(CXXNewExpr *E) {
       }
     }
   }
+  
   return getDerived().RebuildCXXNewExpr(E->getLocStart(),
                                         E->isGlobalNew(),
                                         /*FIXME:*/E->getLocStart(),
@@ -5359,8 +5359,7 @@ TreeTransform<Derived>::TransformCXXNewExpr(CXXNewExpr *E) {
                                         /*FIXME:*/E->getLocStart(),
                                         E->getTypeIdParens(),
                                         AllocType,
-                                        /*FIXME:*/E->getLocStart(),
-                                        /*FIXME:*/SourceRange(),
+                                        AllocTypeInfo,
                                         ArraySize.get(),
                                         /*FIXME:*/E->getLocStart(),
                                         move_arg(ConstructorArgs),

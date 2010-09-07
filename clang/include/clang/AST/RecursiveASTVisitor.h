@@ -1744,7 +1744,8 @@ DEF_TRAVERSE_STMT(CXXScalarValueInitExpr, {
   })
 
 DEF_TRAVERSE_STMT(CXXNewExpr, {
-    TRY_TO(TraverseType(S->getAllocatedType()));
+  // The child-iterator will pick up the other arguments.
+  TRY_TO(TraverseTypeLoc(S->getAllocatedTypeSourceInfo()->getTypeLoc()));
   })
 
 DEF_TRAVERSE_STMT(OffsetOfExpr, {

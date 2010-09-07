@@ -630,12 +630,14 @@ Sema::ActOnCXXNew(SourceLocation StartLoc, bool UseGlobal,
     }
   }
 
-  //FIXME: Store TypeSourceInfo in CXXNew expression.
   TypeSourceInfo *TInfo = GetTypeForDeclarator(D, /*Scope=*/0);
   QualType AllocType = TInfo->getType();
   if (D.isInvalidType())
     return ExprError();
   
+  if (!TInfo)
+    TInfo = Context.getTrivialTypeSourceInfo(AllocType);
+    
   SourceRange R = TInfo->getTypeLoc().getSourceRange();    
   return BuildCXXNew(StartLoc, UseGlobal,
                      PlacementLParen,
@@ -643,8 +645,7 @@ Sema::ActOnCXXNew(SourceLocation StartLoc, bool UseGlobal,
                      PlacementRParen,
                      TypeIdParens,
                      AllocType,
-                     D.getSourceRange().getBegin(),
-                     R,
+                     TInfo,
                      ArraySize,
                      ConstructorLParen,
                      move(ConstructorArgs),
@@ -658,13 +659,13 @@ Sema::BuildCXXNew(SourceLocation StartLoc, bool UseGlobal,
                   SourceLocation PlacementRParen,
                   SourceRange TypeIdParens,
                   QualType AllocType,
-                  SourceLocation TypeLoc,
-                  SourceRange TypeRange,
+                  TypeSourceInfo *AllocTypeInfo,
                   Expr *ArraySize,
                   SourceLocation ConstructorLParen,
                   MultiExprArg ConstructorArgs,
                   SourceLocation ConstructorRParen) {
-  if (CheckAllocatedType(AllocType, TypeLoc, TypeRange))
+  SourceRange TypeRange = AllocTypeInfo->getTypeLoc().getSourceRange();
+  if (CheckAllocatedType(AllocType, TypeRange.getBegin(), TypeRange))
     return ExprError();
 
   // Per C++0x [expr.new]p5, the type being constructed may be a
@@ -800,10 +801,10 @@ Sema::BuildCXXNew(SourceLocation StartLoc, bool UseGlobal,
     //     - If the new-initializer is omitted, the object is default-
     //       initialized (8.5); if no initialization is performed,
     //       the object has indeterminate value
-      = !Init? InitializationKind::CreateDefault(TypeLoc)
+      = !Init? InitializationKind::CreateDefault(TypeRange.getBegin())
     //     - Otherwise, the new-initializer is interpreted according to the 
     //       initialization rules of 8.5 for direct-initialization.
-             : InitializationKind::CreateDirect(TypeLoc,
+             : InitializationKind::CreateDirect(TypeRange.getBegin(),
                                                 ConstructorLParen, 
                                                 ConstructorRParen);
     
@@ -852,12 +853,12 @@ Sema::BuildCXXNew(SourceLocation StartLoc, bool UseGlobal,
   PlacementArgs.release();
   ConstructorArgs.release();
   
-  // FIXME: The TypeSourceInfo should also be included in CXXNewExpr.
   return Owned(new (Context) CXXNewExpr(Context, UseGlobal, OperatorNew,
                                         PlaceArgs, NumPlaceArgs, TypeIdParens,
                                         ArraySize, Constructor, Init,
                                         ConsArgs, NumConsArgs, OperatorDelete,
-                                        ResultType, StartLoc,
+                                        ResultType, AllocTypeInfo,
+                                        StartLoc,
                                         Init ? ConstructorRParen :
                                                TypeRange.getEnd()));
 }

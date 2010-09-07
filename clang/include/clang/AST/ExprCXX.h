@@ -900,6 +900,9 @@ class CXXNewExpr : public Expr {
   // Must be null for all other types.
   CXXConstructorDecl *Constructor;
 
+  /// \brief The allocated type-source information, as written in the source.
+  TypeSourceInfo *AllocatedTypeInfo;
+  
   /// \brief If the allocated type was expressed as a parenthesized type-id, 
   /// the source range covering the parenthesized type-id.
   SourceRange TypeIdParens;
@@ -915,6 +918,7 @@ public:
              Expr *arraySize, CXXConstructorDecl *constructor, bool initializer,
              Expr **constructorArgs, unsigned numConsArgs,
              FunctionDecl *operatorDelete, QualType ty,
+             TypeSourceInfo *AllocatedTypeInfo,
              SourceLocation startLoc, SourceLocation endLoc);
   explicit CXXNewExpr(EmptyShell Shell)
     : Expr(CXXNewExprClass, Shell), SubExprs(0) { }
@@ -927,6 +931,10 @@ public:
     return getType()->getAs<PointerType>()->getPointeeType();
   }
 
+  TypeSourceInfo *getAllocatedTypeSourceInfo() const {
+    return AllocatedTypeInfo;
+  }
+  
   FunctionDecl *getOperatorNew() const { return OperatorNew; }
   void setOperatorNew(FunctionDecl *D) { OperatorNew = D; }
   FunctionDecl *getOperatorDelete() const { return OperatorDelete; }

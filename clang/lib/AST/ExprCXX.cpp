@@ -89,12 +89,14 @@ CXXNewExpr::CXXNewExpr(ASTContext &C, bool globalNew, FunctionDecl *operatorNew,
                        CXXConstructorDecl *constructor, bool initializer,
                        Expr **constructorArgs, unsigned numConsArgs,
                        FunctionDecl *operatorDelete, QualType ty,
+                       TypeSourceInfo *AllocatedTypeInfo,
                        SourceLocation startLoc, SourceLocation endLoc)
   : Expr(CXXNewExprClass, ty, ty->isDependentType(), ty->isDependentType()),
     GlobalNew(globalNew),
     Initializer(initializer), SubExprs(0), OperatorNew(operatorNew),
     OperatorDelete(operatorDelete), Constructor(constructor),
-    TypeIdParens(TypeIdParens), StartLoc(startLoc), EndLoc(endLoc) {
+    AllocatedTypeInfo(AllocatedTypeInfo), TypeIdParens(TypeIdParens),
+    StartLoc(startLoc), EndLoc(endLoc) {
       
   AllocateArgsArray(C, arraySize != 0, numPlaceArgs, numConsArgs);
   unsigned i = 0;

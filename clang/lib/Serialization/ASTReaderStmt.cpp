@@ -1074,6 +1074,7 @@ void ASTStmtReader::VisitCXXNewExpr(CXXNewExpr *E) {
                     cast_or_null<FunctionDecl>(Reader.GetDecl(Record[Idx++])));
   E->setConstructor(
                cast_or_null<CXXConstructorDecl>(Reader.GetDecl(Record[Idx++])));
+  E->AllocatedTypeInfo = Reader.GetTypeSourceInfo(DeclsCursor, Record, Idx);
   SourceRange TypeIdParens;
   TypeIdParens.setBegin(SourceLocation::getFromRawEncoding(Record[Idx++]));
   TypeIdParens.setEnd(SourceLocation::getFromRawEncoding(Record[Idx++]));
