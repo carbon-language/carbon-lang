@@ -37,6 +37,7 @@ class PassRegistry {
    
 public:
   PassRegistry() : pImpl(0) { }
+  ~PassRegistry();
   
   /// getPassRegistry - Access the global registry object, which is 
   /// automatically initialized at application launch and destroyed by

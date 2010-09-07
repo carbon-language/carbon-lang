@@ -22,45 +22,14 @@
 
 using namespace llvm;
 
-static PassRegistry *PassRegistryObj = 0;
-PassRegistry *PassRegistry::getPassRegistry() {
-  // Use double-checked locking to safely initialize the registrar when
-  // we're running in multithreaded mode.
-  PassRegistry* tmp = PassRegistryObj;
-  if (llvm_is_multithreaded()) {
-    sys::MemoryFence();
-    if (!tmp) {
-      llvm_acquire_global_lock();
-      tmp = PassRegistryObj;
-      if (!tmp) {
-        tmp = new PassRegistry();
-        sys::MemoryFence();
-        PassRegistryObj = tmp;
-      }
-      llvm_release_global_lock();
-    }
-  } else if (!tmp) {
-    PassRegistryObj = new PassRegistry();
-  }
-  
-  return PassRegistryObj;
-}
-
-namespace {
-
-// FIXME: We use ManagedCleanup to erase the pass registrar on shutdown.
+// FIXME: We use ManagedStatic to erase the pass registrar on shutdown.
 // Unfortunately, passes are registered with static ctors, and having
 // llvm_shutdown clear this map prevents successful ressurection after 
 // llvm_shutdown is run.  Ideally we should find a solution so that we don't
 // leak the map, AND can still resurrect after shutdown.
-void cleanupPassRegistry(void*) {
-  if (PassRegistryObj) {
-    delete PassRegistryObj;
-    PassRegistryObj = 0;
-  }
-}
-ManagedCleanup<&cleanupPassRegistry> registryCleanup ATTRIBUTE_USED;
-
+static ManagedStatic<PassRegistry> PassRegistryObj;
+PassRegistry *PassRegistry::getPassRegistry() {
+  return &*PassRegistryObj;
 }
 
 //===----------------------------------------------------------------------===//
@@ -93,6 +62,12 @@ void *PassRegistry::getImpl() const {
 //===----------------------------------------------------------------------===//
 // Accessors
 //
+
+PassRegistry::~PassRegistry() {
+  PassRegistryImpl *Impl = static_cast<PassRegistryImpl*>(pImpl);
+  if (Impl) delete Impl;
+  pImpl = 0;
+}
 
 const PassInfo *PassRegistry::getPassInfo(const void *TI) const {
   PassRegistryImpl *Impl = static_cast<PassRegistryImpl*>(getImpl());
@@ -188,6 +163,12 @@ void PassRegistry::addRegistrationListener(PassRegistrationListener *L) {
 }
 
 void PassRegistry::removeRegistrationListener(PassRegistrationListener *L) {
+  // NOTE: This is necessary, because removeRegistrationListener() can be called
+  // as part of the llvm_shutdown sequence.  Since we have no control over the
+  // order of that sequence, we need to gracefully handle the case where the
+  // PassRegistry is destructed before the object that triggers this call.
+  if (!pImpl) return;
+  
   PassRegistryImpl *Impl = static_cast<PassRegistryImpl*>(getImpl());
   std::vector<PassRegistrationListener*>::iterator I =
     std::find(Impl->Listeners.begin(), Impl->Listeners.end(), L);
