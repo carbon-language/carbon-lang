@@ -364,6 +364,9 @@ def err_default_template_template_parameter_not_template : Error<
   "default template argument for a template template parameter must be a class "
   "template">;
   
+def err_ctor_init_missing_comma : Error<
+  "missing ',' between base or member initializers">;
+
 // C++ declarations
 def err_friend_decl_defines_class : Error<
   "cannot define a type in a friend declaration">;
