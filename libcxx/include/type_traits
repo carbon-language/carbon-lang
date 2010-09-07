@@ -714,7 +714,17 @@ template <class _Tp> struct has_trivial_default_constructor
 
 // has_nothrow_default_constructor
 
-template <class _Tp> struct has_nothrow_default_constructor : public has_trivial_default_constructor<_Tp> {};
+#if __GNUC__ >= 4 && __GNUC_MINOR__ >= 3 || defined(__clang__)
+
+template <class _Tp> struct has_nothrow_default_constructor
+    : public integral_constant<bool, __has_nothrow_constructor(_Tp)> {};
+
+#else  // __GNUC__ >= 4 && __GNUC_MINOR__ >= 3 || defined(__clang__)
+
+template <class _Tp> struct has_nothrow_default_constructor
+    : public has_trivial_default_constructor<_Tp> {};
+
+#endif  // __GNUC__ >= 4 && __GNUC_MINOR__ >= 3 || defined(__clang__)
 
 // has_trivial_copy_constructor
 
