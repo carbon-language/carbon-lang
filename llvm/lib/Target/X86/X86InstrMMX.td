@@ -18,7 +18,7 @@
 //===----------------------------------------------------------------------===//
 
 let Constraints = "$src1 = $dst" in {
-  // MMXI_binop_rm - Simple MMX binary operator.
+  // MMXI_binop_rm - Simple MMX binary operator based on llvm operator.
   multiclass MMXI_binop_rm<bits<8> opc, string OpcodeStr, SDNode OpNode,
                            ValueType OpVT, bit Commutable = 0> {
     def rr : MMXI<opc, MRMSrcReg, (outs VR64:$dst),
@@ -35,6 +35,7 @@ let Constraints = "$src1 = $dst" in {
                                           (load_mmx addr:$src2)))))]>;
   }
 
+  // MMXI_binop_rm_int - Simple MMX binary operator based on intrinsic.
   multiclass MMXI_binop_rm_int<bits<8> opc, string OpcodeStr, Intrinsic IntId,
                                bit Commutable = 0> {
     def rr : MMXI<opc, MRMSrcReg, (outs VR64:$dst),
@@ -44,6 +45,27 @@ let Constraints = "$src1 = $dst" in {
       let isCommutable = Commutable;
     }
     def rm : MMXI<opc, MRMSrcMem, (outs VR64:$dst),
+                 (ins VR64:$src1, i64mem:$src2),
+                 !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"),
+                 [(set VR64:$dst, (IntId VR64:$src1,
+                                   (bitconvert (load_mmx addr:$src2))))]>;
+  }
+
+  // MMXI_binop_rm_int2 - Simple MMX binary operator based on intrinsic, with a
+  // different name for the generated instructions than MMXI_binop_rm uses.
+  // Thus int2 and rm can coexist for different implementations of the same
+  // instruction, while int and rm cannot.  This is temporary during transition
+  // to intrinsic-only implementation.  When it is removed, remove the FIXME
+  // from X86RecognizableInstr.cpp.
+  multiclass MMXI_binop_rm_int2<bits<8> opc, string OpcodeStr, Intrinsic IntId,
+                               bit Commutable = 0> {
+    def irr : MMXI<opc, MRMSrcReg, (outs VR64:$dst),
+                 (ins VR64:$src1, VR64:$src2),
+                 !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"),
+                 [(set VR64:$dst, (IntId VR64:$src1, VR64:$src2))]> {
+      let isCommutable = Commutable;
+    }
+    def irm : MMXI<opc, MRMSrcMem, (outs VR64:$dst),
                  (ins VR64:$src1, i64mem:$src2),
                  !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"),
                  [(set VR64:$dst, (IntId VR64:$src1,
@@ -188,11 +210,14 @@ def MMX_MOVZDI2PDIrm : MMXI<0x6E, MRMSrcMem, (outs VR64:$dst),
 // Arithmetic Instructions
 
 // -- Addition
-defm MMX_PADDB : MMXI_binop_rm<0xFC, "paddb", add, v8i8,  1>;
-defm MMX_PADDW : MMXI_binop_rm<0xFD, "paddw", add, v4i16, 1>;
-defm MMX_PADDD : MMXI_binop_rm<0xFE, "paddd", add, v2i32, 1>;
-defm MMX_PADDQ : MMXI_binop_rm<0xD4, "paddq", add, v1i64, 1>;
-
+defm MMX_PADDB : MMXI_binop_rm<0xFC, "paddb", add, v8i8,  1>,
+                 MMXI_binop_rm_int2<0xFC, "paddb", int_x86_mmx_padd_b, 1>;
+defm MMX_PADDW : MMXI_binop_rm<0xFD, "paddw", add, v4i16, 1>,
+                 MMXI_binop_rm_int2<0xFD, "paddw", int_x86_mmx_padd_w, 1>;
+defm MMX_PADDD : MMXI_binop_rm<0xFE, "paddd", add, v2i32, 1>,
+                 MMXI_binop_rm_int2<0xFE, "paddd", int_x86_mmx_padd_d, 1>;
+defm MMX_PADDQ : MMXI_binop_rm<0xD4, "paddq", add, v1i64, 1>,
+                 MMXI_binop_rm_int2<0xD4, "paddq", int_x86_mmx_padd_q, 1>;
 defm MMX_PADDSB  : MMXI_binop_rm_int<0xEC, "paddsb" , int_x86_mmx_padds_b, 1>;
 defm MMX_PADDSW  : MMXI_binop_rm_int<0xED, "paddsw" , int_x86_mmx_padds_w, 1>;
 
@@ -200,10 +225,14 @@ defm MMX_PADDUSB : MMXI_binop_rm_int<0xDC, "paddusb", int_x86_mmx_paddus_b, 1>;
 defm MMX_PADDUSW : MMXI_binop_rm_int<0xDD, "paddusw", int_x86_mmx_paddus_w, 1>;
 
 // -- Subtraction
-defm MMX_PSUBB : MMXI_binop_rm<0xF8, "psubb", sub, v8i8>;
-defm MMX_PSUBW : MMXI_binop_rm<0xF9, "psubw", sub, v4i16>;
-defm MMX_PSUBD : MMXI_binop_rm<0xFA, "psubd", sub, v2i32>;
-defm MMX_PSUBQ : MMXI_binop_rm<0xFB, "psubq", sub, v1i64>;
+defm MMX_PSUBB : MMXI_binop_rm<0xF8, "psubb", sub, v8i8>,
+                 MMXI_binop_rm_int2<0xF8, "psubb", int_x86_mmx_psub_b>;
+defm MMX_PSUBW : MMXI_binop_rm<0xF9, "psubw", sub, v4i16>,
+                 MMXI_binop_rm_int2<0xF9, "psubw", int_x86_mmx_psub_w>;
+defm MMX_PSUBD : MMXI_binop_rm<0xFA, "psubd", sub, v2i32>,
+                 MMXI_binop_rm_int2<0xFA, "psubd", int_x86_mmx_psub_d>;
+defm MMX_PSUBQ : MMXI_binop_rm<0xFB, "psubq", sub, v1i64>,
+                 MMXI_binop_rm_int2<0xFB, "psubq", int_x86_mmx_psub_q>;
 
 defm MMX_PSUBSB  : MMXI_binop_rm_int<0xE8, "psubsb" , int_x86_mmx_psubs_b>;
 defm MMX_PSUBSW  : MMXI_binop_rm_int<0xE9, "psubsw" , int_x86_mmx_psubs_w>;
@@ -212,7 +241,8 @@ defm MMX_PSUBUSB : MMXI_binop_rm_int<0xD8, "psubusb", int_x86_mmx_psubus_b>;
 defm MMX_PSUBUSW : MMXI_binop_rm_int<0xD9, "psubusw", int_x86_mmx_psubus_w>;
 
 // -- Multiplication
-defm MMX_PMULLW  : MMXI_binop_rm<0xD5, "pmullw", mul, v4i16, 1>;
+defm MMX_PMULLW  : MMXI_binop_rm<0xD5, "pmullw", mul, v4i16, 1>,
+                   MMXI_binop_rm_int2<0xD5, "pmullw", int_x86_mmx_pmull_w, 1>;
 
 defm MMX_PMULHW  : MMXI_binop_rm_int<0xE5, "pmulhw",  int_x86_mmx_pmulh_w,  1>;
 defm MMX_PMULHUW : MMXI_binop_rm_int<0xE4, "pmulhuw", int_x86_mmx_pmulhu_w, 1>;
@@ -233,9 +263,13 @@ defm MMX_PMAXSW  : MMXI_binop_rm_int<0xEE, "pmaxsw", int_x86_mmx_pmaxs_w, 1>;
 defm MMX_PSADBW  : MMXI_binop_rm_int<0xF6, "psadbw", int_x86_mmx_psad_bw, 1>;
 
 // Logical Instructions
-defm MMX_PAND : MMXI_binop_rm_v1i64<0xDB, "pand", and, 1>;
-defm MMX_POR  : MMXI_binop_rm_v1i64<0xEB, "por" , or,  1>;
-defm MMX_PXOR : MMXI_binop_rm_v1i64<0xEF, "pxor", xor, 1>;
+defm MMX_PAND : MMXI_binop_rm_v1i64<0xDB, "pand", and, 1>,
+                MMXI_binop_rm_int2<0xDB, "pand", int_x86_mmx_pand, 1>;
+defm MMX_POR  : MMXI_binop_rm_v1i64<0xEB, "por" , or,  1>,
+                MMXI_binop_rm_int2<0xEB, "por" , int_x86_mmx_por,  1>;
+defm MMX_PXOR : MMXI_binop_rm_v1i64<0xEF, "pxor", xor, 1>,
+                MMXI_binop_rm_int2<0xEF, "pxor", int_x86_mmx_pxor, 1>;
+defm MMX_PANDN : MMXI_binop_rm_int2<0xDF, "pandn", int_x86_mmx_pandn, 1>;
 
 let Constraints = "$src1 = $dst" in {
   def MMX_PANDNrr : MMXI<0xDF, MRMSrcReg,
@@ -363,6 +397,18 @@ let Constraints = "$src1 = $dst" in {
                                (v2i32 (mmx_unpckl VR64:$src1,
                                        (bc_v2i32 (load_mmx addr:$src2)))))]>;
 }
+defm MMX_PUNPCKHBW : MMXI_binop_rm_int2<0x68, "punpckhbw", 
+                                       int_x86_mmx_punpckhbw>;
+defm MMX_PUNPCKHWD : MMXI_binop_rm_int2<0x69, "punpckhwd", 
+                                       int_x86_mmx_punpckhwd>;
+defm MMX_PUNPCKHDQ : MMXI_binop_rm_int2<0x6A, "punpckhdq", 
+                                       int_x86_mmx_punpckhdq>;
+defm MMX_PUNPCKLBW : MMXI_binop_rm_int2<0x60, "punpcklbw", 
+                                       int_x86_mmx_punpcklbw>;
+defm MMX_PUNPCKLWD : MMXI_binop_rm_int2<0x61, "punpcklwd", 
+                                       int_x86_mmx_punpcklwd>;
+defm MMX_PUNPCKLDQ : MMXI_binop_rm_int2<0x62, "punpckldq",
+                                       int_x86_mmx_punpckldq>;
 
 // -- Pack Instructions
 defm MMX_PACKSSWB : MMXI_binop_rm_int<0x63, "packsswb", int_x86_mmx_packsswb>;

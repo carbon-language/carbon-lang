@@ -3718,13 +3718,22 @@ def : Pat<(X86pshufb VR128:$src, (bc_v16i8 (memopv2i64 addr:$mask))),
 // SSSE3 - Packed Align Instruction Patterns
 //===---------------------------------------------------------------------===//
 
-multiclass ssse3_palign_mm<string asm> {
+multiclass ssse3_palign_mm<string asm, Intrinsic IntId> {
   def R64rr  : SS3AI<0x0F, MRMSrcReg, (outs VR64:$dst),
       (ins VR64:$src1, VR64:$src2, i8imm:$src3),
       !strconcat(asm, "\t{$src3, $src2, $dst|$dst, $src2, $src3}"), []>;
   def R64rm  : SS3AI<0x0F, MRMSrcMem, (outs VR64:$dst),
       (ins VR64:$src1, i64mem:$src2, i8imm:$src3),
       !strconcat(asm, "\t{$src3, $src2, $dst|$dst, $src2, $src3}"), []>;
+  def R64irr  : SS3AI<0x0F, MRMSrcReg, (outs VR64:$dst),
+      (ins VR64:$src1, VR64:$src2, i8imm:$src3),
+      !strconcat(asm, "\t{$src3, $src2, $dst|$dst, $src2, $src3}"), 
+      [(set VR64:$dst, (IntId VR64:$src1, VR64:$src2, (i8 imm:$src3)))]>;
+  def R64irm  : SS3AI<0x0F, MRMSrcMem, (outs VR64:$dst),
+      (ins VR64:$src1, i64mem:$src2, i8imm:$src3),
+      !strconcat(asm, "\t{$src3, $src2, $dst|$dst, $src2, $src3}"),
+      [(set VR64:$dst, (IntId VR64:$src1,
+                       (bitconvert (load_mmx addr:$src2)), (i8 imm:$src3)))]>;
 }
 
 multiclass ssse3_palign<string asm, bit Is2Addr = 1> {
@@ -3748,7 +3757,7 @@ let isAsmParserOnly = 1, Predicates = [HasAVX] in
   defm VPALIGN : ssse3_palign<"vpalignr", 0>, VEX_4V;
 let Constraints = "$src1 = $dst" in
   defm PALIGN : ssse3_palign<"palignr">,
-                ssse3_palign_mm<"palignr">;
+                ssse3_palign_mm<"palignr", int_x86_mmx_palignr_b>;
 
 let AddedComplexity = 5 in {
 

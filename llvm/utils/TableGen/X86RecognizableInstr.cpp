@@ -311,7 +311,7 @@ RecognizableInstr::filter_ret RecognizableInstr::filter() const {
     return FILTER_STRONG;
 
   // Special cases.
-  
+
   if (Name.find("PCMPISTRI") != Name.npos && Name != "PCMPISTRI")
     return FILTER_WEAK;
   if (Name.find("PCMPESTRI") != Name.npos && Name != "PCMPESTRI")
@@ -368,6 +368,12 @@ RecognizableInstr::filter_ret RecognizableInstr::filter() const {
       (Name.find("to") != Name.npos)))
     return FILTER_WEAK;
 
+  // Filter out the intrinsic form of instructions that also have an llvm
+  // operator form.  FIXME this is temporary.
+  if (Name.find("irm") != Name.npos ||
+      Name.find("irr") != Name.npos)
+    return FILTER_WEAK;
+  
   return FILTER_NORMAL;
 }
   
