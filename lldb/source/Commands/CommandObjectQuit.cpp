@@ -24,7 +24,7 @@ using namespace lldb_private;
 //-------------------------------------------------------------------------
 
 CommandObjectQuit::CommandObjectQuit () :
-    CommandObject ("quit", "Quits out of the LLDB debugger.", "quit")
+    CommandObject ("quit", "Quit out of the LLDB debugger.", "quit")
 {
 }
 

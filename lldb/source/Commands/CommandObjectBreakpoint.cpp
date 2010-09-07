@@ -504,7 +504,7 @@ CommandObjectBreakpointSet::Execute
 
 CommandObjectMultiwordBreakpoint::CommandObjectMultiwordBreakpoint (CommandInterpreter &interpreter) :
     CommandObjectMultiword ("breakpoint",
-                              "A set of commands for operating on breakpoints.",
+                              "A set of commands for operating on breakpoints. Also see regexp-break.",
                               "breakpoint <command> [<command-options>]")
 {
     bool status;

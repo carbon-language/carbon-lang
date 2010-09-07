@@ -220,7 +220,7 @@ public:
 //----------------------------------------------------------------------
 CommandObjectRegister::CommandObjectRegister(CommandInterpreter &interpreter) :
     CommandObjectMultiword ("register",
-                            "Access thread registers.",
+                            "A set of commands to access thread registers.",
                             "register [read|write] ...")
 {
     LoadSubCommand (interpreter, "read",  CommandObjectSP (new CommandObjectRegisterRead ()));

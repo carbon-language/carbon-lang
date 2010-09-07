@@ -28,7 +28,7 @@ using namespace lldb_private;
 
 CommandObjectApropos::CommandObjectApropos () :
     CommandObject ("apropos",
-                     "Finds a list of debugger commands related to a particular word/subject.",
+                     "Find a list of debugger commands related to a particular word/subject.",
                      "apropos <search-word>")
 {
 }

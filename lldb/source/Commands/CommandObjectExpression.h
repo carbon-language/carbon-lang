@@ -46,7 +46,7 @@ public:
         // Options table: Required for subclasses of Options.
 
         static lldb::OptionDefinition g_option_table[];
-        Language  language;
+        //Language  language;
         lldb::Encoding  encoding;
         lldb::Format    format;
         bool        debug;

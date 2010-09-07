@@ -575,7 +575,7 @@ CommandObjectSourceList::CommandOptions::g_option_table[] =
 
 CommandObjectMultiwordSource::CommandObjectMultiwordSource (CommandInterpreter &interpreter) :
     CommandObjectMultiword ("source",
-                            "Commands for accessing source file information",
+                            "A set of commands for accessing source file information",
                             "source <subcommand> [<subcommand-options>]")
 {
     LoadSubCommand (interpreter, "info",   CommandObjectSP (new CommandObjectSourceInfo ()));

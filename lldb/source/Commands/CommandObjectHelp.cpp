@@ -27,7 +27,7 @@ using namespace lldb_private;
 
 CommandObjectHelp::CommandObjectHelp () :
     CommandObject ("help",
-                   "Shows a list of all debugger commands, or give details about specific commands.",
+                   "Show a list of all debugger commands, or give details about specific commands.",
                    "help [<cmd-name>]")
 {
 }

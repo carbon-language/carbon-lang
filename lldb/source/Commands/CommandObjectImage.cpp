@@ -1554,8 +1554,8 @@ CommandObjectImageLookup::CommandOptions::g_option_table[] =
 //----------------------------------------------------------------------
 CommandObjectImage::CommandObjectImage(CommandInterpreter &interpreter) :
     CommandObjectMultiword ("image",
-                            "Access information for one or more executable images.",
-                            "image [dump|list] ...")
+                            "A set of commands for accessing information for one or more executable images.",
+                            "image <sub-command> ...")
 {
     LoadSubCommand (interpreter, "dump",    CommandObjectSP (new CommandObjectImageDump (interpreter)));
     LoadSubCommand (interpreter, "list",    CommandObjectSP (new CommandObjectImageList ()));

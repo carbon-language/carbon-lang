@@ -29,8 +29,8 @@ using namespace lldb_private;
 
 CommandObjectScript::CommandObjectScript (ScriptLanguage script_lang) :
     CommandObject ("script",
-                   "Passes an expression to the script interpreter for evaluation and returns the results. Drops user into the interactive interpreter if no expressions are given.",
-                   "script [<script-expressions-for-evaluation>]"),
+                   "Pass an expression to the script interpreter for evaluation and return the results. Drop into the interactive interpreter if no expression is given.",
+                   "script [<script-expression-for-evaluation>]"),
     m_script_lang (script_lang),
     m_interpreter_ap ()
 {

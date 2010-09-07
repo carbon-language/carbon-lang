@@ -55,12 +55,12 @@ CommandObjectExpression::CommandOptions::SetOptionValue (int option_idx, const c
 
     switch (short_option)
     {
-    case 'l':
-        if (language.SetLanguageFromCString (option_arg) == false)
-        {
-            error.SetErrorStringWithFormat("Invalid language option argument '%s'.\n", option_arg);
-        }
-        break;
+      //case 'l':
+      //if (language.SetLanguageFromCString (option_arg) == false)
+      //{
+      //    error.SetErrorStringWithFormat("Invalid language option argument '%s'.\n", option_arg);
+      //}
+      //break;
 
     case 'g':
         debug = true;
@@ -82,7 +82,7 @@ void
 CommandObjectExpression::CommandOptions::ResetOptionValues ()
 {
     Options::ResetOptionValues();
-    language.Clear();
+    //language.Clear();
     debug = false;
     format = eFormatDefault;
     show_types = true;
@@ -98,7 +98,7 @@ CommandObjectExpression::CommandOptions::GetDefinitions ()
 CommandObjectExpression::CommandObjectExpression () :
     CommandObject (
             "expression",
-            "Evaluate a C expression in the current program context, using variables currently in scope.",
+            "Evaluate an Objective-C++ expression in the current program context, using variables currently in scope.",
             "expression [<cmd-options>] <expr>"),
     m_expr_line_count (0),
     m_expr_lines ()
@@ -347,7 +347,7 @@ CommandObjectExpression::ExecuteRawCommandString
 lldb::OptionDefinition
 CommandObjectExpression::CommandOptions::g_option_table[] =
 {
-{ LLDB_OPT_SET_ALL, false, "language",   'l', required_argument, NULL, 0, "[c|c++|objc|objc++]",          "Sets the language to use when parsing the expression."},
+  //{ LLDB_OPT_SET_ALL, false, "language",   'l', required_argument, NULL, 0, "[c|c++|objc|objc++]",          "Sets the language to use when parsing the expression."},
 { LLDB_OPT_SET_ALL, false, "format",     'f', required_argument, NULL, 0, "[ [bool|b] | [bin] | [char|c] | [oct|o] | [dec|i|d|u] | [hex|x] | [float|f] | [cstr|s] ]",  "Specify the format that the expression output should use."},
 { LLDB_OPT_SET_ALL, false, "debug",      'g', no_argument,       NULL, 0, NULL,                           "Enable verbose debug logging of the expression parsing and evaluation."},
 { LLDB_OPT_SET_ALL, false, "use-ir",     'i', no_argument,       NULL, 0, NULL,                           "[Temporary] Instructs the expression evaluator to use IR instead of ASTs."},

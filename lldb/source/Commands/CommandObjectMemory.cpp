@@ -678,7 +678,7 @@ CommandObjectMemoryWrite::CommandOptions::g_option_table[] =
 
 CommandObjectMemory::CommandObjectMemory (CommandInterpreter &interpreter) :
     CommandObjectMultiword ("memory",
-                            "A set of commands for operating on a memory.",
+                            "A set of commands for operating on memory.",
                             "memory <subcommand> [<subcommand-options>]")
 {
     LoadSubCommand (interpreter, "read",  CommandObjectSP (new CommandObjectMemoryRead ()));

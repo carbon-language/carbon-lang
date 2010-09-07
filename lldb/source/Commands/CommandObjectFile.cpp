@@ -87,7 +87,7 @@ CommandObjectFile::CommandOptions::ResetOptionValues ()
 
 CommandObjectFile::CommandObjectFile() :
     CommandObject ("file",
-                   "Sets the file to be used as the main executable by the debugger.",
+                   "Set the file to be used as the main executable by the debugger.",
                    "file [<cmd-options>] <filename>")
 {
 }

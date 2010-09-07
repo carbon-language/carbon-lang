@@ -167,7 +167,7 @@ CommandInterpreter::LoadCommandDictionary ()
 
     std::auto_ptr<CommandObjectRegexCommand>
     break_regex_cmd_ap(new CommandObjectRegexCommand ("regexp-break",
-                                                      "Smart breakpoint command (using regular expressions).",
+                                                      "Set a breakpoint using a regular expression to specify the location.",
                                                       "regexp-break [<file>:<line>]\nregexp-break [<address>]\nregexp-break <...>", 2));
     if (break_regex_cmd_ap.get())
     {

@@ -424,7 +424,7 @@ public:
 
 CommandObjectMultiwordCommands::CommandObjectMultiwordCommands (CommandInterpreter &interpreter) :
     CommandObjectMultiword ("commands",
-                            "Commands for managing the command interpreters commands",
+                            "A set of commands for managing or customizing the debugger commands.",
                             "commands <subcommand> [<subcommand-options>]")
 {
     LoadSubCommand (interpreter, "source",   CommandObjectSP (new CommandObjectCommandsSource ()));

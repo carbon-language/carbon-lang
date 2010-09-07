@@ -332,7 +332,7 @@ public:
 
     CommandObjectThreadBacktrace () :
         CommandObject ("thread backtrace",
-                       "Shows the stack for one or more threads.  If no threads are specified, shows the currently selected thread.  \nUse the thread-index \"all\" to see all threads.",
+                       "Shows the stack for one or more threads.  If no threads are specified, shows the currently selected thread.  Use the thread-index \"all\" to see all threads.",
                        "thread backtrace [<thread-index>] ...",
                        eFlagProcessMustBeLaunched | eFlagProcessMustBePaused),
         m_options()
@@ -1378,7 +1378,7 @@ public:
 
 CommandObjectMultiwordThread::CommandObjectMultiwordThread (CommandInterpreter &interpreter) :
     CommandObjectMultiword ("thread",
-                            "A set of commands for operating on one or more thread within a running process.",
+                            "A set of commands for operating on one or more threads within a running process.",
                             "thread <subcommand> [<subcommand-options>]")
 {
     LoadSubCommand (interpreter, "backtrace",  CommandObjectSP (new CommandObjectThreadBacktrace ()));
