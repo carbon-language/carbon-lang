@@ -130,6 +130,13 @@ NODE_XML(FunctionProtoType, "FunctionType")
   ID_ATTRIBUTE_XML
   ATTRIBUTE_XML(getResultType(), "result_type")
   ATTRIBUTE_OPT_XML(isVariadic(), "variadic")
+  ATTRIBUTE_ENUM_XML(getCallConv(), "call_conv")
+	  ENUM_XML(CC_Default, "")
+	  ENUM_XML(CC_C, "C")
+	  ENUM_XML(CC_X86StdCall, "X86StdCall")
+	  ENUM_XML(CC_X86FastCall, "X86FastCall")
+	  ENUM_XML(CC_X86ThisCall, "X86ThisCall")
+  END_ENUM_XML
 END_NODE_XML
 
 NODE_XML(TypedefType, "Typedef")

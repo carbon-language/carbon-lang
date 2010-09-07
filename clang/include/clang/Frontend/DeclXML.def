@@ -103,6 +103,9 @@ NODE_XML(FunctionDecl, "Function")
   ATTRIBUTE_OPT_XML(isInlineSpecified(), "inline")
   //ATTRIBUTE_OPT_XML(isVariadic(), "variadic")       // in the type reference
   ATTRIBUTE_XML(getNumParams(), "num_args")
+  ATTRIBUTE_OPT_XML(isMain(), "main")
+  ATTRIBUTE_OPT_XML(isExternC(), "externc")
+  ATTRIBUTE_OPT_XML(isGlobal(), "global")
   SUB_NODE_SEQUENCE_XML(ParmVarDecl)
   SUB_NODE_FN_BODY_XML
 END_NODE_XML
@@ -117,6 +120,7 @@ NODE_XML(CXXMethodDecl, "CXXMethod")
   ATTRIBUTE_OPT_XML(isInlineSpecified(), "inline")
   ATTRIBUTE_OPT_XML(isStatic(), "static")
   ATTRIBUTE_OPT_XML(isVirtual(), "virtual")
+  ATTRIBUTE_OPT_XML(isPure(), "pure")
   ATTRIBUTE_ENUM_OPT_XML(getAccess(), "access")
 	  ENUM_XML(AS_none,      "")
 	  ENUM_XML(AS_public,    "public")
