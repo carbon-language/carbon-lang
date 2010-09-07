@@ -36,6 +36,8 @@ class PassRegistry {
   void *getImpl() const;
    
 public:
+  PassRegistry() : pImpl(0) { }
+  
   /// getPassRegistry - Access the global registry object, which is 
   /// automatically initialized at application launch and destroyed by
   /// llvm_shutdown.
