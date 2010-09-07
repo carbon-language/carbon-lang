@@ -2209,6 +2209,16 @@ void darwin::Link::AddLinkArgs(const ArgList &Args,
     // FIXME: This is a temporary workaround, ld should be handling this.
     bool UsesLdClassic = (getToolChain().getArch() == llvm::Triple::x86 &&
                           Args.hasArg(options::OPT_static));
+    if (getToolChain().getArch() == llvm::Triple::x86) {
+      for (arg_iterator it = Args.filtered_begin(options::OPT_Xlinker,
+                                                 options::OPT_Wl_COMMA),
+             ie = Args.filtered_end(); it != ie; ++it) {
+        const Arg *A = *it;
+        for (unsigned i = 0, e = A->getNumValues(); i != e; ++i)
+          if (llvm::StringRef(A->getValue(Args, i)) == "-kext")
+            UsesLdClassic = true;
+      }
+    }
     if (!UsesLdClassic)
       CmdArgs.push_back("-demangle");
   }
