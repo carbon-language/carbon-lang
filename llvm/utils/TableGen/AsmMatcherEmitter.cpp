@@ -1709,7 +1709,7 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
      << "i != e; ++i)\n";
   OS << "    Classes[i] = InvalidMatchClass;\n\n";
 
-  OS << "  // Get the instruction mneumonic, which is the first token.\n";
+  OS << "  // Get the instruction mnemonic, which is the first token.\n";
   OS << "  StringRef Mnemonic = ((" << Target.getName()
      << "Operand*)Operands[0])->getToken();\n\n";
 
@@ -1733,7 +1733,7 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
      << "*ie = MnemonicRange.second;\n";
   OS << "       it != ie; ++it) {\n";
 
-  OS << "    // equal_range guarantees that instruction mneumonic matches.\n";
+  OS << "    // equal_range guarantees that instruction mnemonic matches.\n";
   OS << "    assert(Mnemonic == it->Mnemonic);\n";
   
   // Emit check that the subclasses match.
