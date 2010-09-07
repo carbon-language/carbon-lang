@@ -222,33 +222,6 @@ public:
   /// getModRefInfo - Return information about whether or not an instruction may
   /// read or write memory specified by the pointer operand.  An instruction
   /// that doesn't read or write memory may be trivially LICM'd for example.
-
-  /// getModRefInfo (for call sites) - Return whether information about whether
-  /// a particular call site modifies or reads the memory specified by the
-  /// pointer.
-  ///
-  virtual ModRefResult getModRefInfo(ImmutableCallSite CS,
-                                     const Value *P, unsigned Size);
-
-  /// getModRefInfo - Return information about whether two call sites may refer
-  /// to the same set of memory locations.  See 
-  ///   http://llvm.org/docs/AliasAnalysis.html#ModRefInfo
-  /// for details.
-  virtual ModRefResult getModRefInfo(ImmutableCallSite CS1,
-                                     ImmutableCallSite CS2);
-
-public:
-  /// Convenience functions...
-  ModRefResult getModRefInfo(const LoadInst *L, const Value *P, unsigned Size);
-  ModRefResult getModRefInfo(const StoreInst *S, const Value *P, unsigned Size);
-  ModRefResult getModRefInfo(const VAArgInst* I, const Value* P, unsigned Size);
-  ModRefResult getModRefInfo(const CallInst *C, const Value *P, unsigned Size) {
-    return getModRefInfo(ImmutableCallSite(C), P, Size);
-  }
-  ModRefResult getModRefInfo(const InvokeInst *I,
-                             const Value *P, unsigned Size) {
-    return getModRefInfo(ImmutableCallSite(I), P, Size);
-  }
   ModRefResult getModRefInfo(const Instruction *I,
                              const Value *P, unsigned Size) {
     switch (I->getOpcode()) {
@@ -260,6 +233,49 @@ public:
     default:                  return NoModRef;
     }
   }
+
+  /// getModRefInfo (for call sites) - Return whether information about whether
+  /// a particular call site modifies or reads the memory specified by the
+  /// pointer.
+  virtual ModRefResult getModRefInfo(ImmutableCallSite CS,
+                                     const Value *P, unsigned Size);
+
+  /// getModRefInfo (for calls) - Return whether information about whether
+  /// a particular call modifies or reads the memory specified by the
+  /// pointer.
+  ModRefResult getModRefInfo(const CallInst *C, const Value *P, unsigned Size) {
+    return getModRefInfo(ImmutableCallSite(C), P, Size);
+  }
+
+  /// getModRefInfo (for invokes) - Return whether information about whether
+  /// a particular invoke modifies or reads the memory specified by the
+  /// pointer.
+  ModRefResult getModRefInfo(const InvokeInst *I,
+                             const Value *P, unsigned Size) {
+    return getModRefInfo(ImmutableCallSite(I), P, Size);
+  }
+
+  /// getModRefInfo (for loads) - Return whether information about whether
+  /// a particular load modifies or reads the memory specified by the
+  /// pointer.
+  ModRefResult getModRefInfo(const LoadInst *L, const Value *P, unsigned Size);
+
+  /// getModRefInfo (for stores) - Return whether information about whether
+  /// a particular store modifies or reads the memory specified by the
+  /// pointer.
+  ModRefResult getModRefInfo(const StoreInst *S, const Value *P, unsigned Size);
+
+  /// getModRefInfo (for va_args) - Return whether information about whether
+  /// a particular va_arg modifies or reads the memory specified by the
+  /// pointer.
+  ModRefResult getModRefInfo(const VAArgInst* I, const Value* P, unsigned Size);
+
+  /// getModRefInfo - Return information about whether two call sites may refer
+  /// to the same set of memory locations.  See 
+  ///   http://llvm.org/docs/AliasAnalysis.html#ModRefInfo
+  /// for details.
+  virtual ModRefResult getModRefInfo(ImmutableCallSite CS1,
+                                     ImmutableCallSite CS2);
 
   //===--------------------------------------------------------------------===//
   /// Higher level methods for querying mod/ref information.
