@@ -32,6 +32,8 @@
 #include "llvm/Support/raw_ostream.h"
 #include "clang/Basic/TargetBuiltins.h"
 #include "clang/Basic/TargetInfo.h"
+#include "clang/Basic/ConvertUTF.h"
+
 #include <limits>
 using namespace clang;
 using namespace sema;
@@ -581,9 +583,6 @@ Sema::SemaBuiltinAtomicOverloaded(ExprResult TheCallResult) {
 
 /// CheckObjCString - Checks that the argument to the builtin
 /// CFString constructor is correct
-/// FIXME: GCC currently emits the following warning:
-/// "warning: input conversion stopped due to an input byte that does not
-///           belong to the input codeset UTF-8"
 /// Note: It might also make sense to do the UTF-16 conversion here (would
 /// simplify the backend).
 bool Sema::CheckObjCString(Expr *Arg) {
@@ -602,7 +601,21 @@ bool Sema::CheckObjCString(Expr *Arg) {
          diag::warn_cfstring_literal_contains_nul_character)
       << Arg->getSourceRange();
   }
-
+  if (Literal->containsNonAsciiOrNull()) {
+    llvm::StringRef String = Literal->getString();
+    unsigned NumBytes = String.size();
+    llvm::SmallVector<UTF16, 128> ToBuf(NumBytes);
+    const UTF8 *FromPtr = (UTF8 *)String.data();
+    UTF16 *ToPtr = &ToBuf[0];
+    
+    ConversionResult Result = ConvertUTF8toUTF16(&FromPtr, FromPtr + NumBytes,
+                                                 &ToPtr, ToPtr + NumBytes,
+                                                 strictConversion);
+    // Check for conversion failure.
+    if (Result != conversionOK)
+      Diag(Arg->getLocStart(),
+           diag::warn_cfstring_truncated) << Arg->getSourceRange();
+  }
   return false;
 }
 

@@ -3091,6 +3091,9 @@ def err_cfstring_literal_not_string_constant : Error<
   "CFString literal is not a string constant">;
 def warn_cfstring_literal_contains_nul_character : Warning<
   "CFString literal contains NUL character">;
+def warn_cfstring_truncated : Warning<
+  "input conversion stopped due to an input byte that does not "
+  "belong to the input codeset UTF-8">;
 
 // Statements.
 def err_continue_not_in_loop : Error<

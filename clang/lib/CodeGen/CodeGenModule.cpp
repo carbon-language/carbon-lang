@@ -1498,15 +1498,6 @@ GetConstantCFStringEntry(llvm::StringMap<llvm::Constant*> &Map,
                                                &ToPtr, ToPtr + NumBytes,
                                                strictConversion);
 
-  // Check for conversion failure.
-  if (Result != conversionOK) {
-    // FIXME: Have Sema::CheckObjCString() validate the UTF-8 string and remove
-    // this duplicate code.
-    assert(Result == sourceIllegal && "UTF-8 to UTF-16 conversion failed");
-    StringLength = NumBytes;
-    return Map.GetOrCreateValue(String);
-  }
-
   // ConvertUTF8toUTF16 returns the length in ToPtr.
   StringLength = ToPtr - &ToBuf[0];
 
