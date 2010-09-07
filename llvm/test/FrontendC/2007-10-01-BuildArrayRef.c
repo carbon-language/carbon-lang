@@ -3,7 +3,7 @@
 void func()
 {
    const int *arr;
-   arr[0] = 1;  // CXHECK: error: assignment of read-only location
+   arr[0] = 1;  // CHECK: error: assignment of read-only location
 }
 
 struct foo {
