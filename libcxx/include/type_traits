@@ -769,20 +769,14 @@ template <class _Tp> struct has_copy_assign;
 
 #if defined(__clang__) || (__GNUC__ >= 4 && __GNUC_MINOR__ >= 3)
 
-template <class _Tp, bool = is_void<_Tp>::value>
-struct __has_trivial_copy_assign
-    : public integral_constant<bool, __has_trivial_assign(_Tp)> {};
-
-template <class _Tp> struct __has_trivial_copy_assign<_Tp, true>
-    : public false_type {};
-
 template <class _Tp> struct has_trivial_copy_assign
-    : __has_trivial_copy_assign<_Tp> {};
+    : public integral_constant<bool, __has_trivial_assign(_Tp)> {};
 
 #else
 
 template <class _Tp> struct has_trivial_copy_assign
-    : public integral_constant<bool, is_scalar<_Tp>::value && !is_const<_Tp>::value> {};
+    : public integral_constant<bool, is_scalar<_Tp>::value &&
+                                    !is_const<_Tp>::value> {};
 
 #endif  // defined(__clang__) || (__GNUC__ >= 4 && __GNUC_MINOR__ >= 3)
 
