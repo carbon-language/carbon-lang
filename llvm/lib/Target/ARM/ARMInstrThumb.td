@@ -535,7 +535,7 @@ def tSpill : T1pIs<(outs), (ins tGPR:$src, t_addrmode_sp:$addr), IIC_iStorei,
 //  Load / store multiple Instructions.
 //
 
-// These requires base address to be written back or one of the loaded regs.
+// These require base address to be written back or one of the loaded regs.
 let mayLoad = 1, neverHasSideEffects = 1, hasExtraDefRegAllocReq = 1 in {
 def tLDM : T1I<(outs),
                (ins addrmode4:$addr, pred:$p, reglist:$dsts, variable_ops),
