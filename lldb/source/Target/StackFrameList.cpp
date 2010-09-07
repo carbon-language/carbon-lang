@@ -135,7 +135,7 @@ StackFrameList::GetNumFrames (bool can_create)
                             AddressRange range;
                             inlined_block->GetRangeContainingAddress (previous_frame_lookup_addr, range);
                         
-                            const InlineFunctionInfo* inline_info = inlined_block->InlinedFunctionInfo();
+                            const InlineFunctionInfo* inline_info = inlined_block->GetInlinedFunctionInfo();
                             assert (inline_info);
                             inline_sc.line_entry.range.GetBaseAddress() = m_frames.back()->GetFrameCodeAddress();
                             inline_sc.line_entry.file = inline_info->GetCallSite().GetFile();

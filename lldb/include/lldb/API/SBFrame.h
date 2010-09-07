@@ -57,8 +57,24 @@ public:
     lldb::SBFunction
     GetFunction () const;
 
+    // Gets the deepest block that contains the frame PC
     lldb::SBBlock
     GetBlock () const;
+
+    // Gets the lexical block that defines the stack frame. Another way to think
+    // of this is it will return the block that contains all of the variables
+    // for a stack frame. Inlined functions are represented as SBBlock objects
+    // that have inlined function information: the name of the inlined function,
+    // where it was called from. The block that is returned will be the first 
+    // block at or above the block for the PC (SBFrame::GetBlock()) that defines
+    // the scope of the frame. When a function contains no inlined functions,
+    // this will be the top most lexical block that defines the function. 
+    // When a function has inlined functions and the PC is currently
+    // in one of those inlined functions, this method will return the inlined
+    // block that defines this frame. If the PC isn't currently in an inlined
+    // function, the lexical block that defines the function is returned.
+    lldb::SBBlock
+    GetFrameBlock () const;
 
     lldb::SBLineEntry
     GetLineEntry () const;

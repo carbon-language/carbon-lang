@@ -49,9 +49,10 @@ public:
     ResolvePath (const char *src_path, char *dst_path, size_t dst_len);
 
 private:
-    friend class SBLineEntry;
+    friend class SBBlock;
     friend class SBCompileUnit;
     friend class SBHostOS;
+    friend class SBLineEntry;
     friend class SBModule;
     friend class SBSourceManager;
     friend class SBThread;

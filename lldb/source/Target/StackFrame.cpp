@@ -165,40 +165,27 @@ StackFrame::GetStackID()
     {
         if (m_id.GetSymbolContextScope ())
         {
+            // We already have a symbol context scope, we just don't have our
+            // flag bit set.
             m_flags.Set (RESOLVED_FRAME_ID_SYMBOL_SCOPE);
         }
         else
         {
-            GetSymbolContext (eSymbolContextFunction | eSymbolContextBlock);
-            
-            if (m_sc.block)
+            // Calculate the frame block and use this for the stack ID symbol
+            // context scope if we have one.
+            SymbolContextScope *scope = GetFrameBlock (); 
+            if (scope == NULL)
             {
-                Block *inline_block = m_sc.block->GetContainingInlinedBlock();
-                if (inline_block)
-                {
-                    // Use the block with the inlined function info
-                    // as the symbol context since we want this frame
-                    // to have only the variables for the inlined function
-                    SetSymbolContextScope (inline_block);
-                }
-                else
-                {
-                    // This block is not inlined with means it has no
-                    // inlined parents either, so we want to use the top
-                    // most function block.
-                    SetSymbolContextScope (&m_sc.function->GetBlock(false));
-                }
+                // We don't have a block, so use the symbol
+                if (m_flags.IsClear (eSymbolContextSymbol))
+                    GetSymbolContext (eSymbolContextSymbol);
+                
+                // It is ok if m_sc.symbol is NULL here
+                scope = m_sc.symbol;
             }
-            else
-            {
-                // The current stack frame doesn't have a block. Check to see
-                // if it has a symbol. If it does we will use this as the 
-                // symbol scope. It is ok if "m_sc.symbol" is NULL below as
-                // it will set the symbol context to NULL and set the
-                // RESOLVED_FRAME_ID_SYMBOL_SCOPE flag bit.
-                GetSymbolContext (eSymbolContextSymbol);
-                SetSymbolContextScope (m_sc.symbol);
-            }
+            // Set the symbol context scope (the accessor will set the
+            // RESOLVED_FRAME_ID_SYMBOL_SCOPE bit in m_flags).
+            SetSymbolContextScope (scope);
         }
     }
     return m_id;
@@ -268,6 +255,32 @@ StackFrame::Disassemble ()
             return NULL;
     }
     return m_disassembly.GetData();
+}
+
+Block *
+StackFrame::GetFrameBlock ()
+{
+    if (m_sc.block == NULL && m_flags.IsClear (eSymbolContextBlock))
+        GetSymbolContext (eSymbolContextBlock);
+
+    if (m_sc.block)
+    {    
+        Block *inline_block = m_sc.block->GetContainingInlinedBlock();
+        if (inline_block)
+        {
+            // Use the block with the inlined function info
+            // as the frame block we want this frame to have only the variables
+            // for the inlined function and its non-inlined block child blocks.
+            return inline_block;
+        }
+        else
+        {
+            // This block is not contained withing any inlined function blocks
+            // with so we want to use the top most function block.
+            return &m_sc.function->GetBlock (false);
+        }
+    }    
+    return NULL;
 }
 
 //----------------------------------------------------------------------
@@ -427,24 +440,28 @@ StackFrame::GetVariableList (bool get_file_globals)
     {
         m_flags.Set(RESOLVED_VARIABLES);
 
-        GetSymbolContext (eSymbolContextCompUnit | 
-                          eSymbolContextFunction | 
-                          eSymbolContextBlock);
-
-        if (m_sc.block)
+        Block *frame_block = GetFrameBlock();
+        
+        if (frame_block)
         {
-            bool get_child_variables = true;
-            bool can_create = true;
-            m_variable_list_sp = m_sc.function->GetBlock (can_create).GetVariableList (get_child_variables, can_create);
+            const bool get_child_variables = true;
+            const bool can_create = true;
+            m_variable_list_sp = frame_block->GetVariableList (get_child_variables, can_create);
         }
         
-        if (get_file_globals && m_sc.comp_unit)
+        if (get_file_globals)
         {
-            VariableListSP global_variable_list_sp (m_sc.comp_unit->GetVariableList(true));
-            if (m_variable_list_sp)
-                m_variable_list_sp->AddVariables (global_variable_list_sp.get());
-            else
-                m_variable_list_sp = global_variable_list_sp;
+            if (m_flags.IsClear (eSymbolContextCompUnit))
+                GetSymbolContext (eSymbolContextCompUnit);
+
+            if (m_sc.comp_unit)
+            {
+                VariableListSP global_variable_list_sp (m_sc.comp_unit->GetVariableList(true));
+                if (m_variable_list_sp)
+                    m_variable_list_sp->AddVariables (global_variable_list_sp.get());
+                else
+                    m_variable_list_sp = global_variable_list_sp;
+            }
         }
     }
     return m_variable_list_sp.get();

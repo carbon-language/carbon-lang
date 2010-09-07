@@ -135,12 +135,12 @@ SymbolContext::DumpStopContext
 
         if (show_inlined_frames && block)
         {
-            const InlineFunctionInfo *inline_info = block->InlinedFunctionInfo();
+            const InlineFunctionInfo *inline_info = block->GetInlinedFunctionInfo();
             if (inline_info == NULL)
             {
                 const Block *parent_inline_block = block->GetInlinedParent();
                 if (parent_inline_block)
-                    inline_info = parent_inline_block->InlinedFunctionInfo();
+                    inline_info = parent_inline_block->GetInlinedFunctionInfo();
             }
 
             if (inline_info)
@@ -163,7 +163,7 @@ SymbolContext::DumpStopContext
         if (block != NULL)
         {
             s->IndentMore();
-            block->DumpStopContext(s, this, show_fullpaths);
+            block->DumpStopContext (s, this, NULL, show_fullpaths, show_inlined_frames);
             s->IndentLess();
         }
         else

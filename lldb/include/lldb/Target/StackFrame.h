@@ -81,6 +81,9 @@ public:
     bool
     GetFrameBaseValue(Scalar &value, Error *error_ptr);
 
+    Block *
+    GetFrameBlock ();
+
     RegisterContext *
     GetRegisterContext ();
 

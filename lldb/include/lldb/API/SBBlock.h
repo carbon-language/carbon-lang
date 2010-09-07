@@ -23,17 +23,44 @@ public:
     ~SBBlock ();
 
     bool
+    IsInlined () const;
+
+    bool
     IsValid () const;
 
-    void
-    AppendVariables (bool can_create, bool get_parent_variables, lldb_private::VariableList *var_list);
+    const char *
+    GetInlinedName () const;
+
+    lldb::SBFileSpec
+    GetInlinedCallSiteFile () const;
+
+    uint32_t 
+    GetInlinedCallSiteLine () const;
+
+    uint32_t
+    GetInlinedCallSiteColumn () const;
+
+    lldb::SBBlock
+    GetParent ();
+    
+    lldb::SBBlock
+    GetSibling ();
+    
+    lldb::SBBlock
+    GetFirstChild ();
 
 private:
     friend class SBFrame;
     friend class SBSymbolContext;
 
+#ifndef SWIG
+
     SBBlock (lldb_private::Block *lldb_object_ptr);
 
+    void
+    AppendVariables (bool can_create, bool get_parent_variables, lldb_private::VariableList *var_list);
+
+#endif
 
     lldb_private::Block *m_opaque_ptr;
 };

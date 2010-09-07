@@ -145,48 +145,77 @@ Block::CalculateSymbolContext (SymbolContext* sc)
 }
 
 void
-Block::DumpStopContext (Stream *s, const SymbolContext *sc, bool show_fullpaths)
+Block::DumpStopContext 
+(
+    Stream *s, 
+    const SymbolContext *sc_ptr, 
+    const Declaration *child_inline_call_site, 
+    bool show_fullpaths,
+    bool show_inline_blocks)
 {
     Block* parent_block = GetParent();
 
-    const InlineFunctionInfo* inline_info = InlinedFunctionInfo ();
+    const InlineFunctionInfo* inline_info = GetInlinedFunctionInfo ();
+    const Declaration *inline_call_site = child_inline_call_site;
     if (inline_info)
     {
-        const Declaration &call_site = inline_info->GetCallSite();
-        if (sc)
+        inline_call_site = &inline_info->GetCallSite();
+        if (sc_ptr)
         {
-            // First frame, dump the first inline call site
-//            if (call_site.IsValid())
-//            {
-//                s->PutCString(" at ");
-//                call_site.DumpStopContext (s);
-//            }
+            // First frame in a frame with inlined functions
             s->PutCString (" [inlined]");
         }
-        s->EOL();
-        inline_info->DumpStopContext (s);
-        if (sc == NULL)
+        if (show_inline_blocks)
+            s->EOL();
+        else
+            s->PutChar(' ');
+            
+        s->PutCString(inline_info->GetName ().AsCString());
+
+        if (child_inline_call_site && child_inline_call_site->IsValid())
         {
-            if (call_site.IsValid())
-            {
-                s->PutCString(" at ");
-                call_site.DumpStopContext (s, show_fullpaths);
-            }
+            s->PutCString(" at ");
+            child_inline_call_site->DumpStopContext (s, show_fullpaths);
         }
     }
 
-    if (sc)
+    if (sc_ptr)
     {
         // If we have any inlined functions, this will be the deepest most
         // inlined location
-        if (sc->line_entry.IsValid())
+        if (sc_ptr->line_entry.IsValid())
         {
             s->PutCString(" at ");
-            sc->line_entry.DumpStopContext (s, show_fullpaths);
+            sc_ptr->line_entry.DumpStopContext (s, show_fullpaths);
         }
     }
-    if (parent_block)
-        parent_block->Block::DumpStopContext (s, NULL, show_fullpaths);
+
+    if (show_inline_blocks)
+    {
+        if (parent_block)
+        {
+            parent_block->Block::DumpStopContext (s, 
+                                                  NULL, 
+                                                  inline_call_site, 
+                                                  show_fullpaths, 
+                                                  show_inline_blocks);
+        }
+        else if (child_inline_call_site)
+        {
+            SymbolContext sc;
+            CalculateSymbolContext(&sc);
+            if (sc.function)
+            {
+                s->EOL();
+                s->Indent (sc.function->GetMangled().GetName().AsCString());
+                if (child_inline_call_site && child_inline_call_site->IsValid())
+                {
+                    s->PutCString(" at ");
+                    child_inline_call_site->DumpStopContext (s, show_fullpaths);
+                }
+            }
+        }
+    }
 }
 
 
@@ -246,7 +275,7 @@ Block::GetParent () const
 Block *
 Block::GetContainingInlinedBlock ()
 {
-    if (InlinedFunctionInfo())
+    if (GetInlinedFunctionInfo())
         return this;
     return GetInlinedParent ();
 }
@@ -257,7 +286,7 @@ Block::GetInlinedParent ()
     Block *parent_block = GetParent ();
     if (parent_block)
     {
-        if (parent_block->InlinedFunctionInfo())
+        if (parent_block->GetInlinedFunctionInfo())
             return parent_block;
         else
             return parent_block->GetInlinedParent();
@@ -381,13 +410,17 @@ Block::GetVariableList (bool get_child_variables, bool can_create)
 
         if (get_child_variables)
         {
-            Block *child_block = GetFirstChild();
-            while (child_block)
-            {
-                VariableListSP child_block_variable_list(child_block->GetVariableList(get_child_variables, can_create));
-                if (child_block_variable_list.get())
-                    variable_list_sp->AddVariables(child_block_variable_list.get());
-                child_block = child_block->GetSibling();
+            for (Block *child_block = GetFirstChild(); 
+                 child_block != NULL; 
+                 child_block = child_block->GetSibling())
+            {   
+                if (child_block->GetInlinedFunctionInfo() == NULL)
+                {
+                    VariableListSP child_block_variable_list(child_block->GetVariableList(get_child_variables, can_create));
+                    if (child_block_variable_list.get())
+                        variable_list_sp->AddVariables(child_block_variable_list.get());
+                }
+                
             }
         }
     }
@@ -407,7 +440,7 @@ Block::AppendVariables
     uint32_t num_variables_added = 0;
     VariableListSP variable_list_sp(GetVariableList(false, can_create));
 
-    bool is_inlined_function = InlinedFunctionInfo() != NULL;
+    bool is_inlined_function = GetInlinedFunctionInfo() != NULL;
     if (variable_list_sp.get())
     {
         num_variables_added = variable_list_sp->GetSize();

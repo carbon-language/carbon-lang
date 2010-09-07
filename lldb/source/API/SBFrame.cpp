@@ -105,6 +105,13 @@ SBFrame::GetBlock () const
     return sb_block;
 }
 
+SBBlock
+SBFrame::GetFrameBlock () const
+{
+    SBBlock sb_block(m_opaque_sp->GetFrameBlock ());
+    return sb_block;    
+}
+
 SBLineEntry
 SBFrame::GetLineEntry () const
 {
