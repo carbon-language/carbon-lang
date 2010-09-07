@@ -38,6 +38,32 @@ UserSettingsController::~UserSettingsController ()
     m_live_settings.clear();
 }
 
+bool
+UserSettingsController::InitializeSettingsController (lldb::UserSettingsControllerSP &controller_sp,
+                                                      SettingEntry *global_settings,
+                                                      SettingEntry *instance_settings)
+{
+    const lldb::UserSettingsControllerSP &parent = controller_sp->GetParent ();
+    if (parent)
+    parent->RegisterChild (controller_sp);
+
+	controller_sp->CreateSettingsVector (global_settings, true);
+	controller_sp->CreateSettingsVector (instance_settings, false);
+
+	controller_sp->InitializeGlobalVariables ();
+    controller_sp->CreateDefaultInstanceSettings ();
+
+    return true;
+}
+
+void
+UserSettingsController::FinalizeSettingsController (lldb::UserSettingsControllerSP &controller_sp)
+{
+    const lldb::UserSettingsControllerSP &parent = controller_sp->GetParent ();
+    if (parent)
+        parent->RemoveChild (controller_sp);
+}
+
 void
 UserSettingsController::InitializeGlobalVariables ()
 {

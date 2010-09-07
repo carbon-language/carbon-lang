@@ -542,18 +542,9 @@ Debugger::GetSettingsController (bool finish)
 
     if (!initialized)
     {
-        UserSettingsControllerSP parent = g_settings_controller->GetParent();
-        if (parent)
-            parent->RegisterChild (g_settings_controller);
-
-        g_settings_controller->CreateSettingsVector (Debugger::DebuggerSettingsController::global_settings_table, 
-                                                     true);
-        g_settings_controller->CreateSettingsVector (Debugger::DebuggerSettingsController::instance_settings_table,
-                                                     false);
-
-	g_settings_controller->InitializeGlobalVariables ();
-        g_settings_controller->CreateDefaultInstanceSettings ();
-	initialized = true;
+        initialized = UserSettingsController::InitializeSettingsController (g_settings_controller,
+                                                             Debugger::DebuggerSettingsController::global_settings_table,
+                                                             Debugger::DebuggerSettingsController::instance_settings_table);
     }
 
     if (finish)

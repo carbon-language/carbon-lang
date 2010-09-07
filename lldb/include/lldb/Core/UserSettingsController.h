@@ -196,6 +196,15 @@ public:
                         const char *new_value,
                         Error &err);
 
+    static bool
+    InitializeSettingsController (lldb::UserSettingsControllerSP &controller_sp,
+                                  SettingEntry *global_settings,
+                                  SettingEntry *instance_settings);
+
+    static void
+    FinalizeSettingsController (lldb::UserSettingsControllerSP &controller_sp);
+
+
 protected:
 
     // -------------------------------------------------------------------------

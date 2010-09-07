@@ -1929,26 +1929,16 @@ Process::GetSettingsController (bool finish)
 
     if (!initialized)
     {
-        const lldb::UserSettingsControllerSP &parent = g_settings_controller->GetParent ();
-        if (parent)
-	    parent->RegisterChild (g_settings_controller);
-
-	g_settings_controller->CreateSettingsVector (Process::ProcessSettingsController::global_settings_table,
-                                                     true);
-	g_settings_controller->CreateSettingsVector (Process::ProcessSettingsController::instance_settings_table,
-                                                     false);
-
-	g_settings_controller->InitializeGlobalVariables ();
-        g_settings_controller->CreateDefaultInstanceSettings ();
-	initialized = true;
+        initialized = UserSettingsController::InitializeSettingsController (g_settings_controller,
+                                                             Process::ProcessSettingsController::global_settings_table,
+                                                             Process::ProcessSettingsController::instance_settings_table);
     }
 
     if (finish)
     {
-        const lldb::UserSettingsControllerSP &parent = g_settings_controller->GetParent ();
-        if (parent)
-            parent->RemoveChild (g_settings_controller);
+        UserSettingsController::FinalizeSettingsController (g_settings_controller);
         g_settings_controller.reset();
+        initialized = false;
     }
 
     return g_settings_controller;
