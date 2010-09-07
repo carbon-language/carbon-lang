@@ -271,29 +271,24 @@ void StreamChecker::Fseek(CheckerContext &C, const CallExpr *CE) {
     return;
   // Check the legality of the 'whence' argument of 'fseek'.
   SVal Whence = state->getSVal(CE->getArg(2));
-  bool WhenceIsLegal = true;
   const nonloc::ConcreteInt *CI = dyn_cast<nonloc::ConcreteInt>(&Whence);
+
   if (!CI)
-    WhenceIsLegal = false;
+    return;
 
   int64_t x = CI->getValue().getSExtValue();
-  if (!(x == 0 || x == 1 || x == 2))
-    WhenceIsLegal = false;
-
-  if (!WhenceIsLegal) {
-    if (ExplodedNode *N = C.GenerateSink(state)) {
-      if (!BT_illegalwhence)
-        BT_illegalwhence = new BuiltinBug("Illegal whence argument",
-                                     "The whence argument to fseek() should be "
-                                          "SEEK_SET, SEEK_END, or SEEK_CUR.");
-      BugReport *R = new BugReport(*BT_illegalwhence, 
-                                   BT_illegalwhence->getDescription(), N);
-      C.EmitReport(R);
-    }
+  if (x >= 0 && x <= 2)
     return;
-  }
 
-  C.addTransition(state);
+  if (ExplodedNode *N = C.GenerateNode(state)) {
+    if (!BT_illegalwhence)
+      BT_illegalwhence = new BuiltinBug("Illegal whence argument",
+					"The whence argument to fseek() should be "
+					"SEEK_SET, SEEK_END, or SEEK_CUR.");
+    BugReport *R = new BugReport(*BT_illegalwhence, 
+				 BT_illegalwhence->getDescription(), N);
+    C.EmitReport(R);
+  }
 }
 
 void StreamChecker::Ftell(CheckerContext &C, const CallExpr *CE) {

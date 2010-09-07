@@ -77,3 +77,9 @@ FILE *f9(void) {
 void pr7831(FILE *fp) {
   fclose(fp); // no-warning
 }
+
+// PR 8081 - null pointer crash when 'whence' is not an integer constant
+void pr8081(FILE *stream, long offset, int whence) {
+  fseek(stream, offset, whence);
+}
+
