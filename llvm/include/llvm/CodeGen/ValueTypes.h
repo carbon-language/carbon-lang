@@ -50,17 +50,17 @@ namespace llvm {
 
       v2i8           =  12,   //  2 x i8
       v4i8           =  13,   //  4 x i8
-      v8i8           =  14,   //  8 x i8  - MMX type
+      v8i8           =  14,   //  8 x i8
       v16i8          =  15,   // 16 x i8
       v32i8          =  16,   // 32 x i8
       v2i16          =  17,   //  2 x i16
-      v4i16          =  18,   //  4 x i16 - MMX type
+      v4i16          =  18,   //  4 x i16
       v8i16          =  19,   //  8 x i16
       v16i16         =  20,   // 16 x i16
-      v2i32          =  21,   //  2 x i32 - MMX type
+      v2i32          =  21,   //  2 x i32
       v4i32          =  22,   //  4 x i32
       v8i32          =  23,   //  8 x i32
-      v1i64          =  24,   //  1 x i64 - MMX type
+      v1i64          =  24,   //  1 x i64
       v2i64          =  25,   //  2 x i64
       v4i64          =  26,   //  4 x i64
       v8i64          =  27,   //  8 x i64
