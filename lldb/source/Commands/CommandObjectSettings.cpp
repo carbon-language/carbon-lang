@@ -82,7 +82,7 @@ CommandObjectSettingsSet::Execute (CommandInterpreter &interpreter,
 
     const int argc = command.GetArgumentCount ();
 
-    if (argc < 2)
+    if ((argc < 2) && (!m_options.m_reset))
     {
         result.AppendError ("'settings set' takes more arguments");
         result.SetStatus (eReturnStatusFailed);

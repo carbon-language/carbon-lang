@@ -1042,13 +1042,14 @@ UserSettingsController::GetAllVariableValues (CommandInterpreter &interpreter,
         StringList value = root->GetVariable (full_var_name.GetData(), var_type);
         description.Clear();
         if (value.GetSize() == 1)   
-            description.Printf ("%s (%s) = %s", full_var_name.GetData(), GetTypeString (entry.var_type),
+            description.Printf ("%s (%s) = '%s'", full_var_name.GetData(), GetTypeString (entry.var_type),
                                 value.GetStringAtIndex (0));
         else
         {
-            description.Printf ("%s (%s) = ", full_var_name.GetData(), GetTypeString (entry.var_type));
+            description.Printf ("%s (%s) = '", full_var_name.GetData(), GetTypeString (entry.var_type));
             for (int j = 0; j < value.GetSize(); ++j)
                 description.Printf ("%s ", value.GetStringAtIndex (j));
+            description.Printf ("'");
         }
 
         result_stream.Printf ("%s\n", description.GetData());

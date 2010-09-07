@@ -2196,7 +2196,7 @@ ProcessInstanceSettings::InputPathVarName ()
 const ConstString &
 ProcessInstanceSettings::OutputPathVarName ()
 {
-    static ConstString output_path_var_name ("output_path");
+    static ConstString output_path_var_name ("output-path");
 
     return output_path_var_name;
 }
@@ -2204,7 +2204,7 @@ ProcessInstanceSettings::OutputPathVarName ()
 const ConstString &
 ProcessInstanceSettings::ErrorPathVarName ()
 {
-    static ConstString error_path_var_name ("error_path");
+    static ConstString error_path_var_name ("error-path");
 
     return error_path_var_name;
 }

@@ -689,7 +689,16 @@ DebuggerInstanceSettings::UpdateInstanceSettingsVariable (const ConstString &var
       UserSettingsController::UpdateStringVariable (op, m_prompt, value, err);
         if (!pending)
         {
-            BroadcastPromptChange (instance_name, m_prompt.c_str());
+            // 'instance_name' is actually (probably) in the form '[<instance_name>]';  if so, we need to
+            // strip off the brackets before passing it to BroadcastPromptChange.
+
+            std::string tmp_instance_name (instance_name.AsCString());
+            if ((tmp_instance_name[0] == '[') 
+                && (tmp_instance_name[instance_name.GetLength() - 1] == ']'))
+                tmp_instance_name = tmp_instance_name.substr (1, instance_name.GetLength() - 2);
+            ConstString new_name (tmp_instance_name.c_str());
+
+            BroadcastPromptChange (new_name, m_prompt.c_str());
         }
     }
     else if (var_name == ScriptLangVarName())
@@ -746,7 +755,18 @@ DebuggerInstanceSettings::CopyInstanceSettings (const lldb::InstanceSettingsSP &
 
     m_prompt = new_debugger_settings->m_prompt;
     if (!pending)
-        BroadcastPromptChange (m_instance_name, m_prompt.c_str());
+    {
+        // 'instance_name' is actually (probably) in the form '[<instance_name>]';  if so, we need to
+        // strip off the brackets before passing it to BroadcastPromptChange.
+
+        std::string tmp_instance_name (m_instance_name.AsCString());
+        if ((tmp_instance_name[0] == '[')
+            && (tmp_instance_name[m_instance_name.GetLength() - 1] == ']'))
+            tmp_instance_name = tmp_instance_name.substr (1, m_instance_name.GetLength() - 2);
+        ConstString new_name (tmp_instance_name.c_str());
+
+        BroadcastPromptChange (new_name, m_prompt.c_str());
+    }
   
     m_script_lang = new_debugger_settings->m_script_lang;
 }
