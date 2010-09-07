@@ -23,7 +23,7 @@ USEDLIBS = lldbAPI.a \
 	lldbCommands.a \
 	lldbCore.a \
 	lldbExpression.a \
-	lldbHostPosix.a \
+	lldbHostCommon.a \
 	lldbInitAndLog.a \
 	lldbInterpreter.a \
 	lldbPluginABIMacOSX_i386.a \
@@ -69,8 +69,7 @@ ifeq ($(HOST_OS),Darwin)
 endif
 
 ifeq ($(HOST_OS),Linux)
-  USEDLIBS += lldbHostLinux.a \
-              lldbPluginProcessLinux.a
+  USEDLIBS += lldbPluginProcessLinux.a
 endif
 
 include $(LEVEL)/Makefile.common

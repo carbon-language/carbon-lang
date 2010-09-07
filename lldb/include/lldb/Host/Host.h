@@ -148,7 +148,7 @@ public:
     /// @return
     ///     The thread ID for the calling thread in the current process.
     //------------------------------------------------------------------
-    static lldb::pid_t
+    static lldb::tid_t
     GetCurrentThreadID ();
 
     static const char *

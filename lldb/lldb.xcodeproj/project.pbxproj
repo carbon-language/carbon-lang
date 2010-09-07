@@ -147,9 +147,7 @@
 		26D5B0BC11B07550009A862E /* VMRange.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BC7E9E10F1B85900F91463 /* VMRange.cpp */; };
 		26D5B0BD11B07550009A862E /* ClangUserExpression.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BC7ED510F1B86700F91463 /* ClangUserExpression.cpp */; };
 		26D5B0BE11B07550009A862E /* ClangExpressionVariable.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BC7ED610F1B86700F91463 /* ClangExpressionVariable.cpp */; };
-		26D5B0C111B07550009A862E /* Condition.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BC7EE710F1B88F00F91463 /* Condition.cpp */; };
 		26D5B0C211B07550009A862E /* Host.mm in Sources */ = {isa = PBXBuildFile; fileRef = 26BC7EE810F1B88F00F91463 /* Host.mm */; };
-		26D5B0C311B07550009A862E /* Mutex.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BC7EE910F1B88F00F91463 /* Mutex.cpp */; };
 		26D5B0C411B07550009A862E /* CFCBundle.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BC7EED10F1B8AD00F91463 /* CFCBundle.cpp */; };
 		26D5B0C511B07550009A862E /* CFCData.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BC7EEF10F1B8AD00F91463 /* CFCData.cpp */; };
 		26D5B0C611B07550009A862E /* CFCMutableArray.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BC7EF110F1B8AD00F91463 /* CFCMutableArray.cpp */; };
@@ -246,7 +244,6 @@
 		26D5B12611B07550009A862E /* ThreadPlanStepOverRange.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4C43DF8A11069C3200E55CBF /* ThreadPlanStepOverRange.cpp */; };
 		26D5B12711B07550009A862E /* CommandObjectLog.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 264AD83711095BA600E0B039 /* CommandObjectLog.cpp */; };
 		26D5B12811B07550009A862E /* ValueObjectRegister.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 264334381110F63100CDB6C6 /* ValueObjectRegister.cpp */; };
-		26D5B12911B07550009A862E /* TimeValue.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26B4E28B112F5DCD00AB3F64 /* TimeValue.cpp */; };
 		26D5B12A11B07550009A862E /* UUID.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26C81CA511335651004BDC5A /* UUID.cpp */; };
 		26D5B12B11B07550009A862E /* ScriptInterpreterNone.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9A2771FC1135A37500E6ADB6 /* ScriptInterpreterNone.cpp */; };
 		26D5B12C11B07550009A862E /* CommandObjectCrossref.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26DFBC57113B48F300DD817F /* CommandObjectCrossref.cpp */; };
@@ -352,6 +349,11 @@
 		4C5DBBC911E3FEC60035160F /* CommandObjectCommands.h in Headers */ = {isa = PBXBuildFile; fileRef = 4C5DBBC711E3FEC60035160F /* CommandObjectCommands.h */; };
 		4C74CB6312288704006A8171 /* Carbon.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4C74CB6212288704006A8171 /* Carbon.framework */; };
 		4CA9637B11B6E99A00780E28 /* CommandObjectApropos.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4CA9637911B6E99A00780E28 /* CommandObjectApropos.cpp */; };
+		69A01E211236C5D400C660B5 /* Condition.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 69A01E1B1236C5D400C660B5 /* Condition.cpp */; };
+		69A01E221236C5D400C660B5 /* Host.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 69A01E1C1236C5D400C660B5 /* Host.cpp */; };
+		69A01E241236C5D400C660B5 /* Mutex.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 69A01E1E1236C5D400C660B5 /* Mutex.cpp */; };
+		69A01E251236C5D400C660B5 /* Symbols.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 69A01E1F1236C5D400C660B5 /* Symbols.cpp */; };
+		69A01E261236C5D400C660B5 /* TimeValue.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 69A01E201236C5D400C660B5 /* TimeValue.cpp */; };
 		9A19A6AF1163BBB200E0D453 /* SBValue.h in Headers */ = {isa = PBXBuildFile; fileRef = 9A19A6A51163BB7E00E0D453 /* SBValue.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		9A19A6B01163BBB300E0D453 /* SBValue.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9A19A6AD1163BB9800E0D453 /* SBValue.cpp */; };
 		9A357583116CFDEE00E8ED2F /* SBValueList.h in Headers */ = {isa = PBXBuildFile; fileRef = 9A357582116CFDEE00E8ED2F /* SBValueList.h */; settings = {ATTRIBUTES = (Public, ); }; };
@@ -569,7 +571,6 @@
 		26B4666F11A2091600CF6220 /* LibUnwindRegisterContext.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = LibUnwindRegisterContext.cpp; path = Utility/LibUnwindRegisterContext.cpp; sourceTree = "<group>"; };
 		26B4667011A2091600CF6220 /* LibUnwindRegisterContext.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = LibUnwindRegisterContext.h; path = Utility/LibUnwindRegisterContext.h; sourceTree = "<group>"; };
 		26B4E26E112F35F700AB3F64 /* TimeValue.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = TimeValue.h; path = include/lldb/Host/TimeValue.h; sourceTree = "<group>"; };
-		26B4E28B112F5DCD00AB3F64 /* TimeValue.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = TimeValue.cpp; path = source/Host/macosx/TimeValue.cpp; sourceTree = "<group>"; };
 		26BC7C2510F1B3BC00F91463 /* lldb-defines.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "lldb-defines.h"; path = "include/lldb/lldb-defines.h"; sourceTree = "<group>"; };
 		26BC7C2610F1B3BC00F91463 /* lldb-enumerations.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "lldb-enumerations.h"; path = "include/lldb/lldb-enumerations.h"; sourceTree = "<group>"; };
 		26BC7C2810F1B3BC00F91463 /* lldb-private-interfaces.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "lldb-private-interfaces.h"; path = "include/lldb/lldb-private-interfaces.h"; sourceTree = "<group>"; };
@@ -783,9 +784,7 @@
 		26BC7ED510F1B86700F91463 /* ClangUserExpression.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ClangUserExpression.cpp; path = source/Expression/ClangUserExpression.cpp; sourceTree = "<group>"; };
 		26BC7ED610F1B86700F91463 /* ClangExpressionVariable.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ClangExpressionVariable.cpp; path = source/Expression/ClangExpressionVariable.cpp; sourceTree = "<group>"; };
 		26BC7ED810F1B86700F91463 /* DWARFExpression.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = DWARFExpression.cpp; path = source/Expression/DWARFExpression.cpp; sourceTree = "<group>"; };
-		26BC7EE710F1B88F00F91463 /* Condition.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Condition.cpp; path = source/Host/posix/Condition.cpp; sourceTree = "<group>"; };
 		26BC7EE810F1B88F00F91463 /* Host.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = Host.mm; path = source/Host/macosx/Host.mm; sourceTree = "<group>"; };
-		26BC7EE910F1B88F00F91463 /* Mutex.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Mutex.cpp; path = source/Host/posix/Mutex.cpp; sourceTree = "<group>"; };
 		26BC7EED10F1B8AD00F91463 /* CFCBundle.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CFCBundle.cpp; path = source/Host/macosx/cfcpp/CFCBundle.cpp; sourceTree = "<group>"; };
 		26BC7EEE10F1B8AD00F91463 /* CFCBundle.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CFCBundle.h; path = source/Host/macosx/cfcpp/CFCBundle.h; sourceTree = "<group>"; };
 		26BC7EEF10F1B8AD00F91463 /* CFCData.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CFCData.cpp; path = source/Host/macosx/cfcpp/CFCData.cpp; sourceTree = "<group>"; };
@@ -963,6 +962,11 @@
 		4CEE62FF1145F2130064CF93 /* ThreadGDBRemote.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ThreadGDBRemote.h; path = "source/Plugins/Process/gdb-remote/ThreadGDBRemote.h"; sourceTree = "<group>"; };
 		4CF4473D11A8687100EF971E /* ThreadPlanStepThroughObjCTrampoline.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ThreadPlanStepThroughObjCTrampoline.h; sourceTree = "<group>"; };
 		4CF4473E11A8687100EF971E /* ThreadPlanStepThroughObjCTrampoline.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ThreadPlanStepThroughObjCTrampoline.cpp; sourceTree = "<group>"; };
+		69A01E1B1236C5D400C660B5 /* Condition.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Condition.cpp; sourceTree = "<group>"; };
+		69A01E1C1236C5D400C660B5 /* Host.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Host.cpp; sourceTree = "<group>"; };
+		69A01E1E1236C5D400C660B5 /* Mutex.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Mutex.cpp; sourceTree = "<group>"; };
+		69A01E1F1236C5D400C660B5 /* Symbols.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Symbols.cpp; sourceTree = "<group>"; };
+		69A01E201236C5D400C660B5 /* TimeValue.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = TimeValue.cpp; sourceTree = "<group>"; };
 		9654F79C1197DA1300F72B43 /* MacOSXLibunwindCallbacks.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = MacOSXLibunwindCallbacks.cpp; path = Utility/MacOSXLibunwindCallbacks.cpp; sourceTree = "<group>"; };
 		9654F79D1197DA1300F72B43 /* MacOSXLibunwindCallbacks.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MacOSXLibunwindCallbacks.h; path = Utility/MacOSXLibunwindCallbacks.h; sourceTree = "<group>"; };
 		9654F7A11197DA3F00F72B43 /* libunwind.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = libunwind.h; sourceTree = "<group>"; };
@@ -1868,8 +1872,8 @@
 		26BC7DD010F1B7C100F91463 /* Host */ = {
 			isa = PBXGroup;
 			children = (
+				69A01E1A1236C5D400C660B5 /* common */,
 				26BC7EE510F1B88100F91463 /* MacOSX */,
-				26F62BB211C5E6C300358180 /* posix */,
 				26BC7DD210F1B7D500F91463 /* Condition.h */,
 				26BC7DD310F1B7D500F91463 /* Endian.h */,
 				26BC7DD410F1B7D500F91463 /* Host.h */,
@@ -1999,7 +2003,6 @@
 				26BC7EF910F1B8AD00F91463 /* CFCString.h */,
 				26BC7EE810F1B88F00F91463 /* Host.mm */,
 				2689B0B5113EE47E00A4AEDB /* Symbols.cpp */,
-				26B4E28B112F5DCD00AB3F64 /* TimeValue.cpp */,
 			);
 			name = MacOSX;
 			sourceTree = "<group>";
@@ -2050,15 +2053,6 @@
 			sourceTree = "<group>";
 			usesTabs = 0;
 		};
-		26F62BB211C5E6C300358180 /* posix */ = {
-			isa = PBXGroup;
-			children = (
-				26BC7EE710F1B88F00F91463 /* Condition.cpp */,
-				26BC7EE910F1B88F00F91463 /* Mutex.cpp */,
-			);
-			name = posix;
-			sourceTree = "<group>";
-		};
 		493C63D711891A8000914D5E /* ABI */ = {
 			isa = PBXGroup;
 			children = (
@@ -2102,6 +2096,19 @@
 			);
 			name = "GDB Remote";
 			path = ../../..;
+			sourceTree = "<group>";
+		};
+		69A01E1A1236C5D400C660B5 /* common */ = {
+			isa = PBXGroup;
+			children = (
+				69A01E1B1236C5D400C660B5 /* Condition.cpp */,
+				69A01E1C1236C5D400C660B5 /* Host.cpp */,
+				69A01E1E1236C5D400C660B5 /* Mutex.cpp */,
+				69A01E1F1236C5D400C660B5 /* Symbols.cpp */,
+				69A01E201236C5D400C660B5 /* TimeValue.cpp */,
+			);
+			name = common;
+			path = source/Host/common;
 			sourceTree = "<group>";
 		};
 		9654F79F1197DA3F00F72B43 /* libunwind */ = {
@@ -2282,6 +2289,7 @@
 			isa = PBXProject;
 			buildConfigurationList = 1DEB91EF08733DB70010E9CD /* Build configuration list for PBXProject "lldb" */;
 			compatibilityVersion = "Xcode 3.1";
+			developmentRegion = English;
 			hasScannedForEncodings = 1;
 			knownRegions = (
 				en,
@@ -2477,9 +2485,7 @@
 				26D5B0BC11B07550009A862E /* VMRange.cpp in Sources */,
 				26D5B0BD11B07550009A862E /* ClangUserExpression.cpp in Sources */,
 				26D5B0BE11B07550009A862E /* ClangExpressionVariable.cpp in Sources */,
-				26D5B0C111B07550009A862E /* Condition.cpp in Sources */,
 				26D5B0C211B07550009A862E /* Host.mm in Sources */,
-				26D5B0C311B07550009A862E /* Mutex.cpp in Sources */,
 				26D5B0C411B07550009A862E /* CFCBundle.cpp in Sources */,
 				26D5B0C511B07550009A862E /* CFCData.cpp in Sources */,
 				26D5B0C611B07550009A862E /* CFCMutableArray.cpp in Sources */,
@@ -2576,7 +2582,6 @@
 				26D5B12611B07550009A862E /* ThreadPlanStepOverRange.cpp in Sources */,
 				26D5B12711B07550009A862E /* CommandObjectLog.cpp in Sources */,
 				26D5B12811B07550009A862E /* ValueObjectRegister.cpp in Sources */,
-				26D5B12911B07550009A862E /* TimeValue.cpp in Sources */,
 				26D5B12A11B07550009A862E /* UUID.cpp in Sources */,
 				26D5B12B11B07550009A862E /* ScriptInterpreterNone.cpp in Sources */,
 				26D5B12C11B07550009A862E /* CommandObjectCrossref.cpp in Sources */,
@@ -2680,6 +2685,11 @@
 				491193521226386000578B7F /* ASTStructExtractor.cpp in Sources */,
 				497C86BE122823D800B54702 /* ClangUtilityFunction.cpp in Sources */,
 				49CF982A122C70BD007A0B96 /* IRDynamicChecks.cpp in Sources */,
+				69A01E211236C5D400C660B5 /* Condition.cpp in Sources */,
+				69A01E221236C5D400C660B5 /* Host.cpp in Sources */,
+				69A01E241236C5D400C660B5 /* Mutex.cpp in Sources */,
+				69A01E251236C5D400C660B5 /* Symbols.cpp in Sources */,
+				69A01E261236C5D400C660B5 /* TimeValue.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

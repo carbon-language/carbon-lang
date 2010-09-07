@@ -1,4 +1,4 @@
-##===- source/Host/linux/Makefile --------------------------*- Makefile -*-===##
+##===- source/Host/common/Makefile -------------------------*- Makefile -*-===##
 # 
 #                     The LLVM Compiler Infrastructure
 #
@@ -8,7 +8,7 @@
 ##===----------------------------------------------------------------------===##
 
 LLDB_LEVEL := ../../..
-LIBRARYNAME := lldbHostLinux
+LIBRARYNAME := lldbHostCommon
 BUILD_ARCHIVE = 1
 
 include $(LLDB_LEVEL)/Makefile

@@ -12,16 +12,20 @@
 using namespace lldb;
 using namespace lldb_private;
 
+#if !defined (__APPLE__)
+
 FileSpec
 Symbols::LocateExecutableObjectFile (const FileSpec *exec_fspec, const ArchSpec* arch, const UUID *uuid)
 {
-    // FIXME: Proper impliementation?
+    // FIXME
     return FileSpec();
 }
 
 FileSpec
 Symbols::LocateExecutableSymbolFile (const FileSpec *exec_fspec, const ArchSpec* arch, const UUID *uuid)
 {
-    // FIXME: Proper impliementation?
+    // FIXME
     return FileSpec();
 }
+
+#endif

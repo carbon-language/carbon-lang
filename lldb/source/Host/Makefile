@@ -11,10 +11,10 @@ LLDB_LEVEL := ../..
 
 include $(LLDB_LEVEL)/../../Makefile.config
 
+DIRS := common
+
 ifeq ($(HOST_OS),Darwin)
-DIRS := macosx posix
-else
-DIRS := linux posix
+DIRS += macosx
 endif
 
 include $(LLDB_LEVEL)/Makefile
