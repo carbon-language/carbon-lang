@@ -37,6 +37,7 @@ class Empty
 
 class NotEmpty
 {
+public:
     virtual ~NotEmpty();
 };
 
@@ -49,6 +50,7 @@ struct bit_zero
 
 class Abstract
 {
+public:
     virtual ~Abstract() = 0;
 };
 

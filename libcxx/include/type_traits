@@ -1637,6 +1637,80 @@ struct __is_constructible<false, _A[], _Args...>
     : public false_type
     {};
 
+template <class _Tp>
+struct has_default_constructor
+    : public is_constructible<_Tp>
+    {};
+
+#else  // _LIBCPP_HAS_NO_ADVANCED_SFINAE
+
+// template <class T> struct is_constructible0;
+
+//      main is_constructible0 test
+
+template <class _Tp>
+decltype((_STD::move(_Tp()), true_type()))
+__is_constructible0_test(_Tp&);
+
+false_type
+__is_constructible0_test(__any);
+
+template <bool, class _Tp>
+struct __is_constructible0_imp // false, _Tp is not a scalar
+    : public common_type
+             <
+                 decltype(__is_constructible0_test(declval<_Tp&>()))
+             >::type
+    {};
+
+//      handle scalars and reference types
+
+//      Scalars are default constructible, references are not
+
+template <class _Tp>
+struct __is_constructible0_imp<true, _Tp>
+    : public is_scalar<_Tp>
+    {};
+
+//      Treat scalars and reference types separately
+
+template <bool, class _Tp>
+struct __is_constructible0_void_check
+    : public __is_constructible0_imp<is_scalar<_Tp>::value || is_reference<_Tp>::value,
+                                _Tp>
+    {};
+
+//      If any of T or Args is void, is_constructible should be false
+
+template <class _Tp>
+struct __is_constructible0_void_check<true, _Tp>
+    : public false_type
+    {};
+
+//      has_default_constructor entry point
+
+template <class _Tp>
+struct has_default_constructor
+    : public __is_constructible0_void_check<is_void<_Tp>::value
+                                        || is_abstract<_Tp>::value,
+                                           _Tp>
+    {};
+
+//      Array types are default constructible if their element type
+//      is default constructible
+
+template <class _A, size_t _N>
+struct __is_constructible0_imp<false, _A[_N]>
+    : public has_default_constructor<typename remove_all_extents<_A>::type>
+    {};
+
+//      Incomplete array types are not constructible
+
+template <class _A>
+struct __is_constructible0_imp<false, _A[]>
+    : public false_type
+    {};
+
 #endif  // _LIBCPP_HAS_NO_ADVANCED_SFINAE
 
 template <class _Tp> struct __is_zero_default_constructible
