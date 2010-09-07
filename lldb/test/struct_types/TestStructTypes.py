@@ -13,7 +13,18 @@ class StructTypesTestCase(TestBase):
 
     mydir = "struct_types"
 
-    def test_struct_types(self):
+    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    def test_with_dsym(self):
+        """Test that break on a struct declaration has no effect."""
+        self.buildDsym()
+        self.struct_types()
+
+    def test_with_dwarf(self):
+        """Test that break on a struct declaration has no effect."""
+        self.buildDwarf()
+        self.struct_types()
+
+    def struct_types(self):
         """Test that break on a struct declaration has no effect."""
         exe = os.path.join(os.getcwd(), "a.out")
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)

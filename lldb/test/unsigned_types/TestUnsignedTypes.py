@@ -12,7 +12,18 @@ class UnsignedTypesTestCase(TestBase):
 
     mydir = "unsigned_types"
 
-    def test_unsigned_types(self):
+    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    def test_with_dsym(self):
+        """Test that variables with unsigned types display correctly."""
+        self.buildDsym()
+        self.unsigned_types()
+
+    def test_with_dwarf(self):
+        """Test that variables with unsigned types display correctly."""
+        self.buildDwarf()
+        self.unsigned_types()
+
+    def unsigned_types(self):
         """Test that variables with unsigned types display correctly."""
         exe = os.path.join(os.getcwd(), "a.out")
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
