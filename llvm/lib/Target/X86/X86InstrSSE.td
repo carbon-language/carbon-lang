@@ -5878,16 +5878,12 @@ def : Pat<(X86Movsldup (memopv4f32 addr:$src)),
           (MOVSLDUPrm addr:$src)>;
 
 // Shuffle with PSHUFHW
-def : Pat<(v8i16 (X86PShufhwLd addr:$src, (i8 imm:$imm))),
-          (PSHUFHWmi addr:$src, imm:$imm)>;
 def : Pat<(v8i16 (X86PShufhw VR128:$src, (i8 imm:$imm))),
           (PSHUFHWri VR128:$src, imm:$imm)>;
 def : Pat<(v8i16 (X86PShufhw (bc_v8i16 (memopv2i64 addr:$src)), (i8 imm:$imm))),
           (PSHUFHWmi addr:$src, imm:$imm)>;
 
 // Shuffle with PSHUFLW
-def : Pat<(v8i16 (X86PShuflwLd addr:$src, (i8 imm:$imm))),
-          (PSHUFLWmi addr:$src, imm:$imm)>;
 def : Pat<(v8i16 (X86PShuflw VR128:$src, (i8 imm:$imm))),
           (PSHUFLWri VR128:$src, imm:$imm)>;
 def : Pat<(v8i16 (X86PShuflw (bc_v8i16 (memopv2i64 addr:$src)), (i8 imm:$imm))),

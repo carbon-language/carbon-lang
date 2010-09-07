@@ -134,17 +134,11 @@ def SDTShuff2OpI : SDTypeProfile<1, 2, [SDTCisVec<0>,
 def SDTShuff3OpI : SDTypeProfile<1, 3, [SDTCisVec<0>, SDTCisSameAs<0,1>,
                                  SDTCisSameAs<0,2>, SDTCisInt<3>]>;
 
-def SDTShuff2OpLdI : SDTypeProfile<1, 2, [SDTCisVec<0>, SDTCisPtrTy<1>,
-                                  SDTCisInt<2>]>;
-
 def X86PAlign : SDNode<"X86ISD::PALIGN", SDTShuff3OpI>;
 
 def X86PShufd  : SDNode<"X86ISD::PSHUFD", SDTShuff2OpI>;
 def X86PShufhw : SDNode<"X86ISD::PSHUFHW", SDTShuff2OpI>;
 def X86PShuflw : SDNode<"X86ISD::PSHUFLW", SDTShuff2OpI>;
-
-def X86PShufhwLd : SDNode<"X86ISD::PSHUFHW_LD", SDTShuff2OpLdI>;
-def X86PShuflwLd : SDNode<"X86ISD::PSHUFLW_LD", SDTShuff2OpLdI>;
 
 def X86Shufpd : SDNode<"X86ISD::SHUFPD", SDTShuff3OpI>;
 def X86Shufps : SDNode<"X86ISD::SHUFPS", SDTShuff3OpI>;
