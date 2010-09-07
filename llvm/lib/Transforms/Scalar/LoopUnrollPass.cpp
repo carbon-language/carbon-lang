@@ -49,6 +49,12 @@ namespace {
     /// that the loop unroll should be performed regardless of how much
     /// code expansion would result.
     static const unsigned NoThreshold = UINT_MAX;
+    
+    // Threshold to use when optsize is specified (and there is no
+    // explicit -unroll-threshold).
+    static const unsigned OptSizeUnrollThreshold = 50;
+    
+    unsigned CurrentThreshold;
 
     bool runOnLoop(Loop *L, LPPassManager &LPM);
 
@@ -88,12 +94,22 @@ static unsigned ApproximateLoopSize(const Loop *L, unsigned &NumCalls) {
 }
 
 bool LoopUnroll::runOnLoop(Loop *L, LPPassManager &LPM) {
+  
   LoopInfo *LI = &getAnalysis<LoopInfo>();
 
   BasicBlock *Header = L->getHeader();
   DEBUG(dbgs() << "Loop Unroll: F[" << Header->getParent()->getName()
         << "] Loop %" << Header->getName() << "\n");
   (void)Header;
+  
+  // Determine the current unrolling threshold.  While this is normally set
+  // from UnrollThreshold, it is overridden to a smaller value if the current
+  // function is marked as optimize-for-size, and the unroll threshold was
+  // not user specified.
+  CurrentThreshold = UnrollThreshold;
+  if (Header->getParent()->hasFnAttr(Attribute::OptimizeForSize) &&
+      UnrollThreshold.getNumOccurrences() == 0)
+    CurrentThreshold = OptSizeUnrollThreshold;
 
   // Find trip count
   unsigned TripCount = L->getSmallConstantTripCount();
@@ -111,7 +127,7 @@ bool LoopUnroll::runOnLoop(Loop *L, LPPassManager &LPM) {
   }
 
   // Enforce the threshold.
-  if (UnrollThreshold != NoThreshold) {
+  if (CurrentThreshold != NoThreshold) {
     unsigned NumCalls;
     unsigned LoopSize = ApproximateLoopSize(L, NumCalls);
     DEBUG(dbgs() << "  Loop Size = " << LoopSize << "\n");
@@ -120,16 +136,16 @@ bool LoopUnroll::runOnLoop(Loop *L, LPPassManager &LPM) {
       return false;
     }
     uint64_t Size = (uint64_t)LoopSize*Count;
-    if (TripCount != 1 && Size > UnrollThreshold) {
+    if (TripCount != 1 && Size > CurrentThreshold) {
       DEBUG(dbgs() << "  Too large to fully unroll with count: " << Count
-            << " because size: " << Size << ">" << UnrollThreshold << "\n");
+            << " because size: " << Size << ">" << CurrentThreshold << "\n");
       if (!UnrollAllowPartial) {
         DEBUG(dbgs() << "  will not try to unroll partially because "
               << "-unroll-allow-partial not given\n");
         return false;
       }
       // Reduce unroll count to be modulo of TripCount for partial unrolling
-      Count = UnrollThreshold / LoopSize;
+      Count = CurrentThreshold / LoopSize;
       while (Count != 0 && TripCount%Count != 0) {
         Count--;
       }
