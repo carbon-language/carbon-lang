@@ -837,8 +837,10 @@ ParseInstruction(StringRef Name, SMLoc NameLoc,
   // effect (both store to a 16-bit mem).  Force to sldtw to avoid ambiguity
   // errors, since its encoding is the most compact.
   if (Name == "sldt" && Operands.size() == 2 &&
-      static_cast<X86Operand*>(Operands[1])->isMem())
+      static_cast<X86Operand*>(Operands[1])->isMem()) {
+    delete Operands[0];
     Operands[0] = X86Operand::CreateToken("sldtw", NameLoc);
+  }
 
   return false;
 }
