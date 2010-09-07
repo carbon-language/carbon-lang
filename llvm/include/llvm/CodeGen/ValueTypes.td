@@ -49,14 +49,15 @@ def v2i64  : ValueType<128, 25>;   //  2 x i64 vector value
 def v4i64  : ValueType<256, 26>;   //  4 x f64 vector value
 def v8i64  : ValueType<512, 27>;   //  4 x f64 vector value
 
-def v2f32  : ValueType<64,  28>;   //  2 x f32 vector value
+def v2f32  : ValueType<64 , 28>;   //  2 x f32 vector value
 def v4f32  : ValueType<128, 29>;   //  4 x f32 vector value
 def v8f32  : ValueType<256, 30>;   //  8 x f32 vector value
 def v2f64  : ValueType<128, 31>;   //  2 x f64 vector value
 def v4f64  : ValueType<256, 32>;   //  4 x f64 vector value
 
-def FlagVT : ValueType<0  , 33>;   // Pre-RA sched glue
-def isVoid : ValueType<0  , 34>;   // Produces no value
+def x86mmx : ValueType<0  , 33>;   // X86 MMX value
+def FlagVT : ValueType<0  , 34>;   // Pre-RA sched glue
+def isVoid : ValueType<0  , 35>;   // Produces no value
 
 def MetadataVT: ValueType<0, 250>; // Metadata
 

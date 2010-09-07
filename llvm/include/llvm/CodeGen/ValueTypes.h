@@ -50,17 +50,17 @@ namespace llvm {
 
       v2i8           =  12,   //  2 x i8
       v4i8           =  13,   //  4 x i8
-      v8i8           =  14,   //  8 x i8
+      v8i8           =  14,   //  8 x i8  - MMX type
       v16i8          =  15,   // 16 x i8
       v32i8          =  16,   // 32 x i8
       v2i16          =  17,   //  2 x i16
-      v4i16          =  18,   //  4 x i16
+      v4i16          =  18,   //  4 x i16 - MMX type
       v8i16          =  19,   //  8 x i16
       v16i16         =  20,   // 16 x i16
-      v2i32          =  21,   //  2 x i32
+      v2i32          =  21,   //  2 x i32 - MMX type
       v4i32          =  22,   //  4 x i32
       v8i32          =  23,   //  8 x i32
-      v1i64          =  24,   //  1 x i64
+      v1i64          =  24,   //  1 x i64 - MMX type
       v2i64          =  25,   //  2 x i64
       v4i64          =  26,   //  4 x i64
       v8i64          =  27,   //  8 x i64
@@ -74,11 +74,13 @@ namespace llvm {
       FIRST_VECTOR_VALUETYPE = v2i8,
       LAST_VECTOR_VALUETYPE  = v4f64,
 
-      Flag           =  33,   // This glues nodes together during pre-RA sched
+      x86mmx         =  33,   // This is an X86 MMX value
 
-      isVoid         =  34,   // This has no value
+      Flag           =  34,   // This glues nodes together during pre-RA sched
 
-      LAST_VALUETYPE =  35,   // This always remains at the end of the list.
+      isVoid         =  35,   // This has no value
+
+      LAST_VALUETYPE =  36,   // This always remains at the end of the list.
 
       // This is the current maximum for LAST_VALUETYPE.
       // EVT::MAX_ALLOWED_VALUETYPE is used for asserts and to size bit vectors
@@ -247,6 +249,7 @@ namespace llvm {
       case i32 :
       case v4i8:
       case v2i16: return 32;
+      case x86mmx:
       case f64 :
       case i64 :
       case v8i8:
