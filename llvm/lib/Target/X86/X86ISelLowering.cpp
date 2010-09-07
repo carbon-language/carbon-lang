@@ -5273,7 +5273,7 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const {
 
   // Promote splats to v4f32.
   if (SVOp->isSplat()) {
-    if (isMMX || NumElems < 4)
+    if (isMMX)
       return Op;
     return PromoteSplat(SVOp, DAG);
   }
