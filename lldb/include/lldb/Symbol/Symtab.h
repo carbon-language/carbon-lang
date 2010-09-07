@@ -32,6 +32,7 @@ public:
             void        Dump(Stream *s, Process *process) const;
             void        Dump(Stream *s, Process *process, std::vector<uint32_t>& indexes) const;
 
+            Symbol *    FindSymbolByID (lldb::user_id_t uid) const;
             Symbol *    SymbolAtIndex (uint32_t idx);
     const   Symbol *    SymbolAtIndex (uint32_t idx) const;
             Symbol *    FindSymbolWithType (lldb::SymbolType symbol_type, uint32_t &start_idx);
@@ -55,7 +56,7 @@ public:
     static  void        DumpSymbolHeader (Stream *s);
 
 protected:
-    typedef std::vector<Symbol>     collection;
+    typedef std::vector<Symbol>         collection;
     typedef collection::iterator        iterator;
     typedef collection::const_iterator  const_iterator;
 

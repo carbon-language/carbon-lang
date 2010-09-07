@@ -878,6 +878,10 @@ ObjectFileMachO::ParseSymtab (bool minimize)
                         case StabIncludeFileName:
                             // N_SOL - #included file name: name,,n_sect,0,address
                             type = eSymbolTypeHeaderFile;
+
+                            // We currently don't use the header files on darwin
+                            if (minimize)
+                                add_nlist = false;
                             break;
 
                         case StabCompilerParameters:  
@@ -1175,7 +1179,13 @@ ObjectFileMachO::ParseSymtab (bool minimize)
                                     {
                                         const uint32_t symbol_index = indirect_symbol_index_data.GetU32 (&symbol_stub_offset);
 
-                                        Symbol *stub_symbol = symtab->SymbolAtIndex(symbol_index);
+                                        Symbol *stub_symbol;
+                                        if (minimize)
+                                            stub_symbol = symtab->FindSymbolByID (symbol_index);
+                                        else
+                                            stub_symbol = symtab->SymbolAtIndex (symbol_index);
+
+                                        assert (stub_symbol);
                                         if (stub_symbol)
                                         {
                                             Address so_addr(symbol_stub_addr, section_list);

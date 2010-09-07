@@ -136,6 +136,31 @@ Symtab::DumpSymbolHeader (Stream *s)
     s->Indent("------- ------ --- ------------ ------------------ ------------------ ------------------ ---------- ----------------------------------\n");
 }
 
+
+static int
+CompareSymbolID (const void *key, const void *p)
+{
+    const user_id_t match_uid = *(user_id_t*) key;
+    const user_id_t symbol_uid = ((Symbol *)p)->GetID();
+    if (match_uid < symbol_uid)
+        return -1;
+    if (match_uid > symbol_uid)
+        return 1;
+    return 0;
+}
+
+Symbol *
+Symtab::FindSymbolByID (lldb::user_id_t symbol_uid) const
+{
+    Symbol *symbol = (Symbol*)::bsearch (&symbol_uid, 
+                                         &m_symbols[0], 
+                                         m_symbols.size(), 
+                                         sizeof(Symbol), 
+                                         CompareSymbolID);
+    return symbol;
+}
+
+
 Symbol *
 Symtab::SymbolAtIndex(uint32_t idx)
 {
