@@ -5475,7 +5475,7 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const {
   // Only a few shuffle masks are handled for 64-bit vectors (MMX), and
   // 64-bit vectors which made to this point can't be handled, they are
   // expanded.
-  if (VT.getSizeInBits() == 64)
+  if (isMMX)
     return SDValue();
 
   if (ShuffleVectorSDNode::isSplatMask(&M[0], VT) &&
