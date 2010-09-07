@@ -25,6 +25,20 @@ class SettingsCommandTestCase(TestBase):
         self.expect("settings show",
             substrs = ["prompt (string) = 'lldb2'"])
 
+    def test_set_term_width(self):
+        """Test that 'set term-width' actually changes the term-width."""
+
+        # No '-o' option is needed for static setting.
+        self.runCmd("settings set term-width 70")
+
+        # Immediately test the setting.
+        self.expect("settings show term-width",
+            startstr = "term-width (int) = '70'")
+
+        # The overall display should also reflect the new setting.
+        self.expect("settings show",
+            startstr = "term-width (int) = 70")
+
 
 if __name__ == '__main__':
     import atexit
