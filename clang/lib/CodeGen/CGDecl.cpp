@@ -244,6 +244,10 @@ void CodeGenFunction::EmitStaticBlockVarDecl(const VarDecl &D,
   // Make sure to evaluate VLA bounds now so that we have them for later.
   if (D.getType()->isVariablyModifiedType())
     EmitVLASize(D.getType());
+  
+  // Local static block variables must be treated as globals as they may be
+  // referenced in their RHS initializer block-literal expresion.
+  CGM.setStaticLocalDeclAddress(&D, GV);
 
   // If this value has an initializer, emit it.
   if (D.getInit())
@@ -266,9 +270,6 @@ void CodeGenFunction::EmitStaticBlockVarDecl(const VarDecl &D,
   if (D.hasAttr<UsedAttr>())
     CGM.AddUsedGlobal(GV);
 
-  if (getContext().getLangOptions().CPlusPlus)
-    CGM.setStaticLocalDeclAddress(&D, GV);
-  
   // We may have to cast the constant because of the initializer
   // mismatch above.
   //
