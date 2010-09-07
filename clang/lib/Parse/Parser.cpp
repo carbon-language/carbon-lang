@@ -162,6 +162,25 @@ bool Parser::ExpectAndConsume(tok::TokenKind ExpectedTok, unsigned DiagID,
   return true;
 }
 
+bool Parser::ExpectAndConsumeSemi(unsigned DiagID) {
+  if (Tok.is(tok::semi) || Tok.is(tok::code_completion)) {
+    ConsumeAnyToken();
+    return false;
+  }
+  
+  if ((Tok.is(tok::r_paren) || Tok.is(tok::r_square)) && 
+      NextToken().is(tok::semi)) {
+    Diag(Tok, diag::err_extraneous_token_before_semi)
+      << PP.getSpelling(Tok)
+      << FixItHint::CreateRemoval(Tok.getLocation());
+    ConsumeAnyToken(); // The ')' or ']'.
+    ConsumeToken(); // The ';'.
+    return false;
+  }
+  
+  return ExpectAndConsume(tok::semi, DiagID);
+}
+
 //===----------------------------------------------------------------------===//
 // Error recovery.
 //===----------------------------------------------------------------------===//

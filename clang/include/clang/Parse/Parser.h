@@ -464,6 +464,13 @@ private:
                         const char *DiagMsg = "",
                         tok::TokenKind SkipToTok = tok::unknown);
 
+  /// \brief The parser expects a semicolon and, if present, will consume it.
+  ///
+  /// If the next token is not a semicolon, this emits the specified diagnostic,
+  /// or, if there's just some closing-delimiter noise (e.g., ')' or ']') prior
+  /// to the semicolon, consumes that extra token.
+  bool ExpectAndConsumeSemi(unsigned DiagID);
+  
   //===--------------------------------------------------------------------===//
   // Scope manipulation
 

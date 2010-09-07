@@ -137,7 +137,7 @@ Parser::ParseStatementOrDeclaration(bool OnlyStatement) {
       return StmtError();
     }
     // Otherwise, eat the semicolon.
-    ExpectAndConsume(tok::semi, diag::err_expected_semi_after_expr);
+    ExpectAndConsumeSemi(diag::err_expected_semi_after_expr);
     return Actions.ActOnExprStmt(Actions.MakeFullExpr(Expr.get()));
   }
 
@@ -507,7 +507,7 @@ StmtResult Parser::ParseCompoundStatementBody(bool isStmtExpr) {
         // FIXME: Use attributes?
         // Eat the semicolon at the end of stmt and convert the expr into a
         // statement.
-        ExpectAndConsume(tok::semi, diag::err_expected_semi_after_expr);
+        ExpectAndConsumeSemi(diag::err_expected_semi_after_expr);
         R = Actions.ActOnExprStmt(Actions.MakeFullExpr(Res.get()));
       }
     }

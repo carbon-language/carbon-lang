@@ -124,6 +124,8 @@ def err_expected_while : Error<"expected 'while' in do/while loop">;
 def err_expected_semi_after : Error<"expected ';' after %0">;
 def err_expected_semi_after_stmt : Error<"expected ';' after %0 statement">;
 def err_expected_semi_after_expr : Error<"expected ';' after expression">;
+def err_extraneous_token_before_semi : Error<"extraneous '%0' before ';'">;
+
 def err_expected_semi_after_method_proto : Error<
   "expected ';' after method prototype">;
 def err_expected_semi_after_namespace_name : Error<

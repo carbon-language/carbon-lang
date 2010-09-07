@@ -1731,7 +1731,7 @@ StmtResult Parser::ParseObjCAtStatement(SourceLocation AtLoc) {
   }
   
   // Otherwise, eat the semicolon.
-  ExpectAndConsume(tok::semi, diag::err_expected_semi_after_expr);
+  ExpectAndConsumeSemi(diag::err_expected_semi_after_expr);
   return Actions.ActOnExprStmt(Actions.MakeFullExpr(Res.take()));
 }
 

@@ -313,8 +313,9 @@ Decl *Parser::ParseUsingDirective(unsigned Context,
   // Eat ';'.
   DeclEnd = Tok.getLocation();
   ExpectAndConsume(tok::semi,
-                   GNUAttr ? diag::err_expected_semi_after_attribute_list :
-                   diag::err_expected_semi_after_namespace_name, "", tok::semi);
+                   GNUAttr ? diag::err_expected_semi_after_attribute_list
+                           : diag::err_expected_semi_after_namespace_name, 
+                   "", tok::semi);
 
   return Actions.ActOnUsingDirective(getCurScope(), UsingLoc, NamespcLoc, SS,
                                       IdentLoc, NamespcName, Attr);
@@ -422,7 +423,7 @@ Decl *Parser::ParseStaticAssertDeclaration(SourceLocation &DeclEnd){
   MatchRHSPunctuation(tok::r_paren, LParenLoc);
 
   DeclEnd = Tok.getLocation();
-  ExpectAndConsume(tok::semi, diag::err_expected_semi_after_static_assert);
+  ExpectAndConsumeSemi(diag::err_expected_semi_after_static_assert);
 
   return Actions.ActOnStaticAssertDeclaration(StaticAssertLoc,
                                               AssertExpr.take(),
