@@ -283,6 +283,10 @@ bool TargetInfo::validateOutputConstraint(ConstraintInfo &Info) const {
       Info.setAllowsRegister();
       break;
     case 'm': // memory operand.
+    case 'o': // offsetable memory operand.
+    case 'V': // non-offsetable memory operand.
+    case '<': // autodecrement memory operand.
+    case '>': // autoincrement memory operand.
       Info.setAllowsMemory();
       break;
     case 'g': // general register, memory operand or immediate integer.
@@ -297,7 +301,7 @@ bool TargetInfo::validateOutputConstraint(ConstraintInfo &Info) const {
         Name++;
       break;
     case '?': // Disparage slightly code.
-    case '!': // Disparage severly.
+    case '!': // Disparage severely.
       break;  // Pass them.
     }
 
@@ -384,8 +388,10 @@ bool TargetInfo::validateInputConstraint(ConstraintInfo *OutputConstraints,
       Info.setAllowsRegister();
       break;
     case 'm': // memory operand.
-    case 'o': // offsettable memory operand
-    case 'V': // non-offsettable memory operand
+    case 'o': // offsettable memory operand.
+    case 'V': // non-offsettable memory operand.
+    case '<': // autodecrement memory operand.
+    case '>': // autoincrement memory operand.
       Info.setAllowsMemory();
       break;
     case 'g': // general register, memory operand or immediate integer.
