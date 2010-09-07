@@ -146,7 +146,7 @@ inline TypeLoc TypeSourceInfo::getTypeLoc() const {
 }
 
 /// \brief Wrapper of type source information for a type with
-/// no direct quqlaifiers.
+/// no direct qualifiers.
 class UnqualTypeLoc : public TypeLoc {
 public:
   UnqualTypeLoc() {}
