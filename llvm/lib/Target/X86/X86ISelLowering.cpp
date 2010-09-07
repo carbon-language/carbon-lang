@@ -5271,15 +5271,15 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const {
   MachineFunction &MF = DAG.getMachineFunction();
   bool OptForSize = MF.getFunction()->hasFnAttr(Attribute::OptimizeForSize);
 
-  if (isZeroShuffle(SVOp))
-    return getZeroVector(VT, Subtarget->hasSSE2(), DAG, dl);
-
   // FIXME: this is somehow handled during isel by MMX pattern fragments. Remove
   // the check or come up with another solution when all MMX move to intrinsics,
   // but don't allow this to be considered legal, we don't want vector_shuffle
   // operations to be matched during isel anymore.
   if (isMMX && SVOp->isSplat())
     return Op;
+
+  if (isZeroShuffle(SVOp))
+    return getZeroVector(VT, Subtarget->hasSSE2(), DAG, dl);
 
   // Promote splats to v4f32.
   if (SVOp->isSplat())
