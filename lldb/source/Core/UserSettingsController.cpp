@@ -26,8 +26,8 @@ UserSettingsController::UserSettingsController (const char *level_name,
     m_pending_settings (),
     m_live_settings (),
     m_children_mutex (Mutex::eMutexTypeNormal),
-    m_pending_settings_mutex (Mutex::eMutexTypeNormal),
-    m_live_settings_mutex (Mutex::eMutexTypeNormal)
+    m_pending_settings_mutex (Mutex::eMutexTypeRecursive),
+    m_live_settings_mutex (Mutex::eMutexTypeRecursive)
 {
     m_settings.parent = parent;
     m_settings.level_name.SetCString (level_name);
