@@ -55,6 +55,8 @@ def ext_c99_compound_literal : Extension<
 def ext_enumerator_list_comma : Extension<
   "commas at the end of enumerator lists are a %select{C99|C++0x}0-specific "
   "feature">;
+def err_enumerator_list_missing_comma : Error<
+  "missing ',' between enumerators">;
 
 def ext_gnu_indirect_goto : Extension<
   "use of GNU indirect-goto extension">, InGroup<GNU>;

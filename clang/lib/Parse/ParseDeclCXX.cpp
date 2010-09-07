@@ -1737,11 +1737,11 @@ void Parser::ParseConstructorInitializer(Decl *ConstructorDecl) {
       break;
     // If the next token looks like a base or member initializer, assume that
     // we're just missing a comma.
-    else if (Tok.is(tok::identifier) || Tok.is(tok::coloncolon))
-      Diag(Tok.getLocation(), diag::err_ctor_init_missing_comma)
-        << FixItHint::CreateInsertion(PP.getLocForEndOfToken(PrevTokLocation),
-                                      ", ");
-    else {
+    else if (Tok.is(tok::identifier) || Tok.is(tok::coloncolon)) {
+      SourceLocation Loc = PP.getLocForEndOfToken(PrevTokLocation);
+      Diag(Loc, diag::err_ctor_init_missing_comma)
+        << FixItHint::CreateInsertion(Loc, ", ");
+    } else {
       // Skip over garbage, until we get to '{'.  Don't eat the '{'.
       Diag(Tok.getLocation(), diag::err_expected_lbrace_or_comma);
       SkipUntil(tok::l_brace, true, true);

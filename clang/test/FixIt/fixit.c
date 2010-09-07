@@ -41,3 +41,10 @@ int test_cond(int y, int fooBar) {
 
 // CHECK: typedef int int_t;
 typedef typedef int int_t;
+
+// <rdar://problem/7159693>
+enum Color { 
+  Red // expected-error{{missing ',' between enumerators}}
+  Green = 17 // expected-error{{missing ',' between enumerators}}
+  Blue,
+};

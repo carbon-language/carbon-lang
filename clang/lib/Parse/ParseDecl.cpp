@@ -2127,6 +2127,14 @@ void Parser::ParseEnumBody(SourceLocation StartLoc, Decl *EnumDecl) {
     EnumConstantDecls.push_back(EnumConstDecl);
     LastEnumConstDecl = EnumConstDecl;
 
+    if (Tok.is(tok::identifier)) {
+      // We're missing a comma between enumerators.
+      SourceLocation Loc = PP.getLocForEndOfToken(PrevTokLocation);
+      Diag(Loc, diag::err_enumerator_list_missing_comma)      
+        << FixItHint::CreateInsertion(Loc, ", ");
+      continue;
+    }
+    
     if (Tok.isNot(tok::comma))
       break;
     SourceLocation CommaLoc = ConsumeToken();
