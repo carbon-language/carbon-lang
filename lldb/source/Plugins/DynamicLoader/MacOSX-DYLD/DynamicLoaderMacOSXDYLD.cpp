@@ -601,6 +601,9 @@ DynamicLoaderMacOSXDYLD::UpdateAllImageInfos()
 
             if (image_module_sp)
             {
+                if (m_dyld_image_infos[idx].header.filetype == HeaderFileTypeDynamicLinkEditor)
+                    image_module_sp->SetIsDynamicLinkEditor (true);
+
                 ObjectFile *objfile = image_module_sp->GetObjectFile ();
                 if (objfile)
                 {

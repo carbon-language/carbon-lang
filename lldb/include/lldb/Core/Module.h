@@ -49,13 +49,6 @@ public:
     friend class ModuleList;
     friend bool ObjectFile::SetModulesArchitecture (const ArchSpec &new_arch);
 
-    enum
-    {
-        flagsSearchedForObjParser       = (1 << 0),
-        flagsSearchedForSymVendor       = (1 << 1),
-        flagsParsedUUID                 = (1 << 2)
-    };
-
     //------------------------------------------------------------------
     /// Construct with file specification and architecture.
     ///
@@ -553,6 +546,18 @@ public:
     SetFileSpecAndObjectName (const FileSpec &file,
                               const ConstString &object_name);
 
+    bool
+    GetIsDynamicLinkEditor () const
+    {
+        return m_is_dynamic_loader_module;
+    }
+    
+    void
+    SetIsDynamicLinkEditor (bool b)
+    {
+        m_is_dynamic_loader_module = b;
+    }
+    
 protected:
     //------------------------------------------------------------------
     // Member Variables
@@ -562,10 +567,14 @@ protected:
     ArchSpec                    m_arch;         ///< The architecture for this module.
     UUID                        m_uuid;         ///< Each module is assumed to have a unique identifier to help match it up to debug symbols.
     FileSpec                    m_file;         ///< The file representation on disk for this module (if there is one).
-    Flags                       m_flags;        ///< Flags for this module to track what has been parsed already.
     ConstString                 m_object_name;  ///< The name an object within this module that is selected, or empty of the module is represented by \a m_file.
     std::auto_ptr<ObjectFile>   m_objfile_ap;   ///< A pointer to the object file parser for this module.
     std::auto_ptr<SymbolVendor> m_symfile_ap;   ///< A pointer to the symbol vendor for this module.
+    bool                        m_did_load_objfile:1,
+                                m_did_load_symbol_vendor:1,
+                                m_did_parse_uuid:1,
+                                m_is_dynamic_loader_module:1;
+    
     //------------------------------------------------------------------
     /// Resolve a file or load virtual address.
     ///
@@ -601,14 +610,21 @@ protected:
     /// @see SymbolContext::Scope
     //------------------------------------------------------------------
     uint32_t
-    ResolveSymbolContextForAddress (lldb::addr_t vm_addr, bool vm_addr_is_file_addr, uint32_t resolve_scope, Address& so_addr, SymbolContext& sc);
-
-    void SymbolIndicesToSymbolContextList (Symtab *symtab, std::vector<uint32_t> &symbol_indexes, SymbolContextList &sc_list);
+    ResolveSymbolContextForAddress (lldb::addr_t vm_addr, 
+                                    bool vm_addr_is_file_addr, 
+                                    uint32_t resolve_scope, 
+                                    Address& so_addr, 
+                                    SymbolContext& sc);
     
-    bool SetArchitecture (const ArchSpec &new_arch);
+    void 
+    SymbolIndicesToSymbolContextList (Symtab *symtab, 
+                                      std::vector<uint32_t> &symbol_indexes, 
+                                      SymbolContextList &sc_list);
+    
+    bool
+    SetArchitecture (const ArchSpec &new_arch);
     
 private:
-
     DISALLOW_COPY_AND_ASSIGN (Module);
 };
 

@@ -26,10 +26,13 @@ Module::Module(const FileSpec& file_spec, const ArchSpec& arch, const ConstStrin
     m_arch (arch),
     m_uuid (),
     m_file (file_spec),
-    m_flags (),
     m_object_name (),
     m_objfile_ap (),
-    m_symfile_ap ()
+    m_symfile_ap (),
+    m_did_load_objfile (false),
+    m_did_load_symbol_vendor (false),
+    m_did_parse_uuid (false),
+    m_is_dynamic_loader_module (false)
 {
     if (object_name)
         m_object_name = *object_name;
@@ -70,14 +73,14 @@ const UUID&
 Module::GetUUID()
 {
     Mutex::Locker locker (m_mutex);
-    if (m_flags.IsClear(flagsParsedUUID))
+    if (m_did_parse_uuid == false)
     {
         ObjectFile * obj_file = GetObjectFile ();
 
         if (obj_file != NULL)
         {
             obj_file->GetUUID(&m_uuid);
-            m_flags.Set(flagsParsedUUID);
+            m_did_parse_uuid = true;
         }
     }
     return m_uuid;
@@ -330,14 +333,14 @@ SymbolVendor*
 Module::GetSymbolVendor (bool can_create)
 {
     Mutex::Locker locker (m_mutex);
-    if (m_flags.IsClear(flagsSearchedForSymVendor) && can_create)
+    if (m_did_load_symbol_vendor == false && can_create)
     {
         ObjectFile *obj_file = GetObjectFile ();
         if (obj_file != NULL)
         {
             Timer scoped_timer(__PRETTY_FUNCTION__, __PRETTY_FUNCTION__);
             m_symfile_ap.reset(SymbolVendor::FindPlugin(this));
-            m_flags.Set (flagsSearchedForSymVendor);
+            m_did_load_symbol_vendor = true;
         }
     }
     return m_symfile_ap.get();
@@ -412,9 +415,9 @@ ObjectFile *
 Module::GetObjectFile()
 {
     Mutex::Locker locker (m_mutex);
-    if (m_flags.IsClear(flagsSearchedForObjParser))
+    if (m_did_load_objfile == false)
     {
-        m_flags.Set (flagsSearchedForObjParser);
+        m_did_load_objfile = true;
         Timer scoped_timer(__PRETTY_FUNCTION__,
                            "Module::GetObjectFile () module = %s", GetFileSpec().GetFilename().AsCString(""));
         m_objfile_ap.reset(ObjectFile::FindPlugin(this, &m_file, 0, m_file.GetByteSize()));
