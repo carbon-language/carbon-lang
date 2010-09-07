@@ -1637,6 +1637,9 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
   OS << "    bool operator()(StringRef LHS, const MatchEntry &RHS) {\n";
   OS << "      return LHS < StringRef(RHS.Mnemonic);\n";
   OS << "    }\n";
+  OS << "    bool operator()(const MatchEntry &LHS, const MatchEntry &RHS) {\n";
+  OS << "      return StringRef(LHS.Mnemonic) < StringRef(RHS.Mnemonic);\n";
+  OS << "    }\n";
   OS << "  };\n";
   
   OS << "} // end anonymous namespace.\n\n";
