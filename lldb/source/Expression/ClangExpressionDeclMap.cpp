@@ -734,6 +734,9 @@ ClangExpressionDeclMap::GetDecls(NameSearchContext &context,
     
     m_sym_ctx->FindFunctionsByName(name_cs, false, sym_ctxs);
     
+    bool found_generic = false;
+    bool found_specific = false;
+    
     for (uint32_t index = 0, num_indices = sym_ctxs.GetSize();
          index < num_indices;
          ++index)
@@ -742,9 +745,21 @@ ClangExpressionDeclMap::GetDecls(NameSearchContext &context,
         sym_ctxs.GetContextAtIndex(index, sym_ctx);
         
         if (sym_ctx.function)
-            AddOneFunction(context, sym_ctx.function, NULL);
+        {
+            // TODO only do this if it's a C function; C++ functions may be
+            // overloaded
+            if (!found_specific)
+                AddOneFunction(context, sym_ctx.function, NULL);
+            found_specific = true;
+        }
         else if(sym_ctx.symbol)
-            AddOneFunction(context, NULL, sym_ctx.symbol);
+        {
+            if (!found_generic && !found_specific)
+            {
+                AddOneFunction(context, NULL, sym_ctx.symbol);
+                found_generic = true;
+            }
+        }
     }
     
     Variable *var = FindVariableInScope(*m_sym_ctx, name);
@@ -993,7 +1008,7 @@ ClangExpressionDeclMap::AddOneFunction(NameSearchContext &context,
     entity.m_parser_vars->m_lldb_value  = fun_location.release();
         
     if (log)
-        log->Printf("Found function %s, returned (NamedDecl)%p", context.Name.getAsString().c_str(), fun_decl);    
+        log->Printf("Found %s function %s, returned (NamedDecl)%p", (fun ? "specific" : "generic"), context.Name.getAsString().c_str(), fun_decl);    
 }
 
 void 

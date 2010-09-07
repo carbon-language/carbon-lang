@@ -558,9 +558,15 @@ IRForTarget::MaybeHandleCall(Module &M,
     {
         if (!m_decl_map->GetFunctionInfo(fun_decl, fun_value_ptr, fun_addr)) 
         {
-            if (log)
-                log->Printf("Function %s had no address", fun_decl->getNameAsCString());
-            return false;
+            fun_value_ptr = NULL;
+            
+            if (!m_decl_map->GetFunctionAddress(fun->getName().str().c_str(), fun_addr))
+            {
+                if (log)
+                    log->Printf("Function %s had no address", fun->getName().str().c_str());
+                
+                return false;
+            }
         }
     }
     else 
@@ -580,12 +586,9 @@ IRForTarget::MaybeHandleCall(Module &M,
             
     if (!fun_value_ptr || !*fun_value_ptr)
     {
-        std::vector<const Type*> params;
-        
         const IntegerType *intptr_ty = Type::getIntNTy(M.getContext(),
                                                        (M.getPointerSize() == Module::Pointer64) ? 64 : 32);
-        
-        FunctionType *fun_ty = FunctionType::get(intptr_ty, params, true);
+        const FunctionType *fun_ty = fun->getFunctionType();
         PointerType *fun_ptr_ty = PointerType::getUnqual(fun_ty);
         Constant *fun_addr_int = ConstantInt::get(intptr_ty, fun_addr, false);
         fun_addr_ptr = ConstantExpr::getIntToPtr(fun_addr_int, fun_ptr_ty);
