@@ -9,7 +9,18 @@ class SetValuesTestCase(TestBase):
 
     mydir = "set_values"
 
-    def test_set_values(self):
+    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    def test_with_dsym(self):
+        """Test settings and readings of program variables."""
+        self.buildDsym()
+        self.set_values()
+
+    def test_with_dwarf(self):
+        """Test settings and readings of program variables."""
+        self.buildDwarf()
+        self.set_values()
+
+    def set_values(self):
         """Test settings and readings of program variables."""
         exe = os.path.join(os.getcwd(), "a.out")
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
