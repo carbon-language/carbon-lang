@@ -2204,7 +2204,13 @@ void darwin::Link::AddLinkArgs(const ArgList &Args,
   // Newer linkers support -demangle, pass it if supported and not disabled by
   // the user.
   if (Version[0] >= 100 && !Args.hasArg(options::OPT_Z_Xlinker__no_demangle)) {
-    CmdArgs.push_back("-demangle");
+    // Don't pass -demangle to ld_classic.
+    //
+    // FIXME: This is a temporary workaround, ld should be handling this.
+    bool UsesLdClassic = (getToolChain().getArch() == llvm::Triple::x86 &&
+                          Args.hasArg(options::OPT_static));
+    if (!UsesLdClassic)
+      CmdArgs.push_back("-demangle");
   }
 
   // Derived from the "link" spec.
