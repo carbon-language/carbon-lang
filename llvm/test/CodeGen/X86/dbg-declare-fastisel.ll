@@ -1,5 +1,5 @@
 ; This test case checks handling of llvm.dbg.declare intrinsic during fast-isel.
-; RUN: llc -mtriple=x86_64-apple-darwin --disable-fp-elim -O0 %s -o %t.s
+; RUN: llc --disable-fp-elim -O0 %s -o %t.s
 ; RUN: %compile_c -m64 %t.s -o %t.o
 ; RUN: %link -m64 %t.o -o %t.exe
 ; RUN: echo {break f1\n break f2 \n break f3 \n break f5 \n break f9 \n run \n p i \n c \n p i\n c \n p i\n c \n p i\n c \n p i.x} > %t.in
@@ -10,8 +10,6 @@
 ; RUN: grep "4 = 46" %t.out
 ; RUN: grep "5 = 51" %t.out
 
-; XTARGET: darwin
-target triple = "x86_64-apple-darwin"
 %struct.XYZ = type { i32, i32, i32, i32, i32 }
 
 ; Check handling of llvm.dbg.declare for an argument referred through alloca, where

@@ -1,6 +1,6 @@
 ; This test case checks handling of llvm.dbg.declare intrinsic during hybrid mode where we begin
 ; using fast-isel but switch back to DAG building at some point.
-; RUN: llc  -mtriple=x86_64-apple-darwin --disable-fp-elim -O0  %s -o %t.s
+; RUN: llc  --disable-fp-elim -O0  %s -o %t.s
 ; RUN: %compile_c -m64 %t.s -o %t.o
 ; RUN: %link -m64 %t.o -o %t.exe
 ; RUN: echo {break f1\n break f4\n break f5\n run \n p i\n c \n p i\n c \n p i\n} > %t.in
@@ -9,8 +9,6 @@
 ; RUN: grep "2 = 45" %t.out
 ; RUN: grep "3 = 46" %t.out
 
-; XTARGET: darwin
-target triple = "x86_64-apple-darwin"
 %struct.XYZ = type { i32, i32, i32, i32, i32 }
 %0 = type { i64, i32 }
 define %0 @foobar() {
