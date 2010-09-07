@@ -67,9 +67,12 @@
 using namespace llvm;
 
 STATISTIC(NumFunctionsMerged, "Number of functions merged");
+STATISTIC(NumThunksWritten, "Number of thunks generated");
+STATISTIC(NumDoubleWeak, "Number of new functions created");
 
-namespace {
-
+/// ProfileFunction - Creates a hash-code for the function which is the same
+/// for any two functions that will compare equal, without looking at the
+/// instructions inside the function.
 static unsigned ProfileFunction(const Function *F) {
   const FunctionType *FTy = F->getFunctionType();
 
@@ -83,6 +86,8 @@ static unsigned ProfileFunction(const Function *F) {
     ID.AddInteger(FTy->getParamType(i)->getTypeID());
   return ID.ComputeHash();
 }
+
+namespace {
 
 class ComparableFunction {
 public:
@@ -117,7 +122,7 @@ const ComparableFunction ComparableFunction::EmptyKey = ComparableFunction(0);
 const ComparableFunction ComparableFunction::TombstoneKey =
     ComparableFunction(1);
 
-} // anonymous namespace
+}
 
 namespace llvm {
   template <>
@@ -508,14 +513,14 @@ bool FunctionComparator::Compare() {
     return false;
 
   assert(F1->arg_size() == F2->arg_size() &&
-         "Identical functions have a different number of args.");
+         "Identically typed functions have different numbers of args!");
 
   // Visit the arguments so that they get enumerated in the order they're
   // passed in.
   for (Function::const_arg_iterator f1i = F1->arg_begin(),
          f2i = F2->arg_begin(), f1e = F1->arg_end(); f1i != f1e; ++f1i, ++f2i) {
     if (!Enumerate(f1i, f2i))
-      llvm_unreachable("Arguments repeat");
+      llvm_unreachable("Arguments repeat!");
   }
 
   // We do a CFG-ordered walk since the actual ordering of the blocks in the
@@ -567,7 +572,7 @@ void MergeFunctions::WriteThunk(Function *F, Function *G) const {
     }
   }
 
-  // If G was internal then we may have replaced all uses if G with F. If so,
+  // If G was internal then we may have replaced all uses of G with F. If so,
   // stop here and delete G. There's no need for a thunk.
   if (G->hasLocalLinkage() && G->use_empty()) {
     G->eraseFromParent();
@@ -601,13 +606,16 @@ void MergeFunctions::WriteThunk(Function *F, Function *G) const {
   NewG->takeName(G);
   G->replaceAllUsesWith(NewG);
   G->eraseFromParent();
+
+  DEBUG(dbgs() << "WriteThunk: " << NewG->getName() << '\n');
+  ++NumThunksWritten;
 }
 
 /// MergeTwoFunctions - Merge two equivalent functions. Upon completion,
 /// Function G is deleted.
 void MergeFunctions::MergeTwoFunctions(Function *F, Function *G) const {
-  if (F->isWeakForLinker()) {
-    assert(G->isWeakForLinker());
+  if (F->mayBeOverridden()) {
+    assert(G->mayBeOverridden());
 
     // Make them both thunks to the same internal function.
     Function *H = Function::Create(F->getFunctionType(), F->getLinkage(), "",
@@ -623,6 +631,8 @@ void MergeFunctions::MergeTwoFunctions(Function *F, Function *G) const {
 
     F->setAlignment(MaxAlignment);
     F->setLinkage(GlobalValue::InternalLinkage);
+
+    ++NumDoubleWeak;
   } else {
     WriteThunk(F, G);
   }
@@ -640,8 +650,8 @@ bool MergeFunctions::Insert(FnSetType &FnSet, ComparableFunction &NewF) {
   const ComparableFunction &OldF = *Result.first;
 
   // Never thunk a strong function to a weak function.
-  assert(!OldF.getFunc()->isWeakForLinker() ||
-         NewF.getFunc()->isWeakForLinker());
+  assert(!OldF.getFunc()->mayBeOverridden() ||
+         NewF.getFunc()->mayBeOverridden());
 
   DEBUG(dbgs() << "  " << OldF.getFunc()->getName() << " == "
                << NewF.getFunc()->getName() << '\n');
@@ -660,8 +670,7 @@ static bool IsThunk(const Function *F) {
   // then we may try to merge unmergable thing (ie., identical weak functions)
   // which will push us into an infinite loop.
 
-  if (F->size() != 1)
-    return false;
+  assert(!F->isDeclaration() && "Expected a function definition.");
 
   const BasicBlock *BB = &F->front();
   // A thunk is:
@@ -670,6 +679,10 @@ static bool IsThunk(const Function *F) {
   //   ret void|optional-reg
   // where the args are in the same order as the arguments.
 
+  // Put this at the top since it triggers most often.
+  const ReturnInst *RI = dyn_cast<ReturnInst>(BB->getTerminator());
+  if (!RI) return false;
+
   // Verify that the sequence of bitcast-inst's are all casts of arguments and
   // that there aren't any extras (ie. no repeated casts).
   int LastArgNo = -1;
@@ -677,18 +690,22 @@ static bool IsThunk(const Function *F) {
   while (const BitCastInst *BCI = dyn_cast<BitCastInst>(I)) {
     const Argument *A = dyn_cast<Argument>(BCI->getOperand(0));
     if (!A) return false;
-    if ((int)A->getArgNo() >= LastArgNo) return false;
+    if ((int)A->getArgNo() <= LastArgNo) return false;
     LastArgNo = A->getArgNo();
     ++I;
   }
 
+  // Verify that we have a direct tail call and that the calling conventions
+  // and number of arguments match.
+  const CallInst *CI = dyn_cast<CallInst>(I++);
+  if (!CI || !CI->isTailCall() || !CI->getCalledFunction() || 
+      CI->getCallingConv() != CI->getCalledFunction()->getCallingConv() ||
+      CI->getNumArgOperands() != F->arg_size())
+    return false;
+
   // Verify that the call instruction has the same arguments as this function
   // and that they're all either the incoming argument or a cast of the right
   // argument.
-  const CallInst *CI = dyn_cast<CallInst>(I++);
-  if (!CI || !CI->isTailCall() ||
-      CI->getNumArgOperands() != F->arg_size()) return false;
-
   for (unsigned i = 0, e = CI->getNumArgOperands(); i != e; ++i) {
     const Value *V = CI->getArgOperand(i);
     const Argument *A = dyn_cast<Argument>(V);
@@ -708,8 +725,7 @@ static bool IsThunk(const Function *F) {
     if (BCI->getOperand(0) != CI) return false;
     RetOp = BCI;
   }
-  const ReturnInst *RI = dyn_cast<ReturnInst>(I);
-  if (!RI) return false;
+  if (RI != I) return false;
   if (RI->getNumOperands() == 0)
     return CI->getType()->isVoidTy();
   return RI->getReturnValue() == CI;
@@ -721,7 +737,7 @@ bool MergeFunctions::runOnModule(Module &M) {
 
   bool LocalChanged;
   do {
-    DEBUG(dbgs() << "size: " << M.size() << '\n');
+    DEBUG(dbgs() << "size of module: " << M.size() << '\n');
     LocalChanged = false;
     FnSetType FnSet;
 
@@ -730,7 +746,7 @@ bool MergeFunctions::runOnModule(Module &M) {
     for (Module::iterator I = M.begin(), E = M.end(); I != E;) {
       Function *F = I++;
       if (!F->isDeclaration() && !F->hasAvailableExternallyLinkage() &&
-          !F->isWeakForLinker() && !IsThunk(F)) {
+          !F->mayBeOverridden() && !IsThunk(F)) {
         ComparableFunction CF = ComparableFunction(F, TD);
         LocalChanged |= Insert(FnSet, CF);
       }
@@ -743,11 +759,12 @@ bool MergeFunctions::runOnModule(Module &M) {
     for (Module::iterator I = M.begin(), E = M.end(); I != E;) {
       Function *F = I++;
       if (!F->isDeclaration() && !F->hasAvailableExternallyLinkage() &&
-          F->isWeakForLinker() && !IsThunk(F)) {
+          F->mayBeOverridden() && !IsThunk(F)) {
         ComparableFunction CF = ComparableFunction(F, TD);
         LocalChanged |= Insert(FnSet, CF);
       }
     }
+    DEBUG(dbgs() << "size of FnSet: " << FnSet.size() << '\n');
     Changed |= LocalChanged;
   } while (LocalChanged);
 
