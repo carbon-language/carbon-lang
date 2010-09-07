@@ -5271,12 +5271,16 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const {
   if (isZeroShuffle(SVOp))
     return getZeroVector(VT, Subtarget->hasSSE2(), DAG, dl);
 
+  // FIXME: this is somehow handled during isel by MMX pattern fragments. Remove
+  // the check or come up with another solution when all MMX move to intrinsics,
+  // but don't allow this to be considered legal, we don't want vector_shuffle
+  // operations to be matched during isel anymore.
+  if (isMMX && SVOp->isSplat())
+    return Op;
+
   // Promote splats to v4f32.
-  if (SVOp->isSplat()) {
-    if (isMMX)
-      return Op;
+  if (SVOp->isSplat())
     return PromoteSplat(SVOp, DAG);
-  }
 
   // If the shuffle can be profitably rewritten as a narrower shuffle, then
   // do it!
