@@ -439,7 +439,7 @@ void ELFObjectWriterImpl::WriteSymbolTable(MCDataFragment *F,
     assert((Data.getFlags() & ELF_STB_Global) &&
            "External symbol requires STB_GLOBAL flag");
     WriteSymbol(F, MSD, Layout);
-    if (Data.getFlags() & ELF_STB_Local)
+    if ((Data.getFlags() & (0xf << ELF_STB_Shift)) == ELF_STB_Local)
       LastLocalSymbolIndex++;
   }
 
@@ -448,7 +448,7 @@ void ELFObjectWriterImpl::WriteSymbolTable(MCDataFragment *F,
     MCSymbolData &Data = *MSD.SymbolData;
     Data.setFlags(Data.getFlags() | ELF_STB_Global);
     WriteSymbol(F, MSD, Layout);
-    if (Data.getFlags() & ELF_STB_Local)
+    if ((Data.getFlags() & (0xf << ELF_STB_Shift)) == ELF_STB_Local)
       LastLocalSymbolIndex++;
   }
 }

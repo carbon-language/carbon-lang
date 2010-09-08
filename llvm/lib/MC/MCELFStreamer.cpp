@@ -196,7 +196,9 @@ void MCELFStreamer::EmitSymbolAttribute(MCSymbol *Symbol,
     break;
 
   case MCSA_Local:
-    SD.setFlags(SD.getFlags() | ELF_STB_Local);
+    // ELF_STB_Local is 0, so zero the ELF_STB area
+    // SD.getFlags() | ELF_STB_Local is a NOP
+    SD.setFlags(SD.getFlags() & ~(0xf << ELF_STB_Shift));
     break;
 
   case MCSA_ELF_TypeFunction:
