@@ -5820,6 +5820,14 @@ def : Pat<(v4i32 (X86Movlhps VR128:$src1, VR128:$src2)),
           (MOVLHPSrr VR128:$src1, VR128:$src2)>;
 def : Pat<(v2i64 (X86Movlhps VR128:$src1, VR128:$src2)),
           (MOVLHPSrr (v2i64 VR128:$src1), VR128:$src2)>;
+// FIXME: Instead of X86Movddup, there should be a X86Movlhps here, the problem
+// is during lowering, where it's not possible to recognize the load fold cause
+// it has two uses through a bitcast. One use disappears at isel time and the
+// fold opportunity reappears.
+def : Pat<(v2i64 (X86Movddup VR128:$src)),
+          (MOVLHPSrr VR128:$src, VR128:$src)>;
+def : Pat<(v4f32 (X86Movddup VR128:$src)),
+          (MOVLHPSrr VR128:$src, VR128:$src)>;
 
 // Shuffle with MOVLHPD
 def : Pat<(v2f64 (X86Movlhpd VR128:$src1,

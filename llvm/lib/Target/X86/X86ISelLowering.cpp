@@ -2604,6 +2604,7 @@ static bool isTargetShuffle(unsigned Opcode) {
   case X86ISD::MOVLPD:
   case X86ISD::MOVSHDUP:
   case X86ISD::MOVSLDUP:
+  case X86ISD::MOVDDUP:
   case X86ISD::MOVSS:
   case X86ISD::MOVSD:
   case X86ISD::UNPCKLPS:
@@ -2629,6 +2630,7 @@ static SDValue getTargetShuffleNode(unsigned Opc, DebugLoc dl, EVT VT,
   default: llvm_unreachable("Unknown x86 shuffle node");
   case X86ISD::MOVSHDUP:
   case X86ISD::MOVSLDUP:
+  case X86ISD::MOVDDUP:
     return DAG.getNode(Opc, dl, VT, V1);
   }
 
@@ -3645,9 +3647,6 @@ static SDValue getUnpackh(SelectionDAG &DAG, DebugLoc dl, EVT VT, SDValue V1,
 
 /// PromoteSplat - Promote a splat of v4i32, v8i16 or v16i8 to v4f32.
 static SDValue PromoteSplat(ShuffleVectorSDNode *SV, SelectionDAG &DAG) {
-  if (SV->getValueType(0).getVectorNumElements() <= 4)
-    return SDValue(SV, 0);
-
   EVT PVT = MVT::v4f32;
   EVT VT = SV->getValueType(0);
   DebugLoc dl = SV->getDebugLoc();
@@ -5138,6 +5137,98 @@ static bool MayFoldVectorLoad(SDValue V) {
   return false;
 }
 
+// FIXME: the version above should always be used. Since there's
+// a bug where several vector shuffles can't be folded because the
+// DAG is not updated during lowering and a node claims to have two
+// uses while it only has one, use this version, and let isel match
+// another instruction if the load really happens to have more than
+// one use. Remove this version after this bug get fixed.
+static bool RelaxedMayFoldVectorLoad(SDValue V) {
+  if (V.hasOneUse() && V.getOpcode() == ISD::BIT_CONVERT)
+    V = V.getOperand(0);
+  if (V.hasOneUse() && V.getOpcode() == ISD::SCALAR_TO_VECTOR)
+    V = V.getOperand(0);
+  if (ISD::isNormalLoad(V.getNode()))
+    return true;
+  return false;
+}
+
+/// CanFoldShuffleIntoVExtract - Check if the current shuffle is used by
+/// a vector extract, and if both can be later optimized into a single load.
+/// This is done in visitEXTRACT_VECTOR_ELT and the conditions are checked
+/// here because otherwise a target specific shuffle node is going to be
+/// emitted for this shuffle, and the optimization not done.
+/// FIXME: This is probably not the best approach, but fix the problem
+/// until the right path is decided.
+static
+bool CanXFormVExtractWithShuffleIntoLoad(SDValue V, SelectionDAG &DAG,
+                                         const TargetLowering &TLI) {
+  EVT VT = V.getValueType();
+  ShuffleVectorSDNode *SVOp = dyn_cast<ShuffleVectorSDNode>(V);
+
+  // Be sure that the vector shuffle is present in a pattern like this:
+  // (vextract (v4f32 shuffle (load $addr), <1,u,u,u>), c) -> (f32 load $addr)
+  if (!V.hasOneUse())
+    return false;
+
+  SDNode *N = *V.getNode()->use_begin();
+  if (N->getOpcode() != ISD::EXTRACT_VECTOR_ELT)
+    return false;
+
+  SDValue EltNo = N->getOperand(1);
+  if (!isa<ConstantSDNode>(EltNo))
+    return false;
+
+  // If the bit convert changed the number of elements, it is unsafe
+  // to examine the mask.
+  bool HasShuffleIntoBitcast = false;
+  if (V.getOpcode() == ISD::BIT_CONVERT) {
+    EVT SrcVT = V.getOperand(0).getValueType();
+    if (SrcVT.getVectorNumElements() != VT.getVectorNumElements())
+      return false;
+    V = V.getOperand(0);
+    HasShuffleIntoBitcast = true;
+  }
+
+  // Select the input vector, guarding against out of range extract vector.
+  unsigned NumElems = VT.getVectorNumElements();
+  unsigned Elt = cast<ConstantSDNode>(EltNo)->getZExtValue();
+  int Idx = (Elt > NumElems) ? -1 : SVOp->getMaskElt(Elt);
+  V = (Idx < (int)NumElems) ? V.getOperand(0) : V.getOperand(1);
+
+  // Skip one more bit_convert if necessary
+  if (V.getOpcode() == ISD::BIT_CONVERT)
+    V = V.getOperand(0);
+
+  if (ISD::isNormalLoad(V.getNode())) {
+    // Is the original load suitable?
+    LoadSDNode *LN0 = cast<LoadSDNode>(V);
+
+    // FIXME: avoid the multi-use bug that is preventing lots of
+    // of foldings to be detected, this is still wrong of course, but
+    // give the temporary desired behavior, and if it happens that
+    // the load has real more uses, during isel it will not fold, and
+    // will generate poor code.
+    if (!LN0 || LN0->isVolatile()) // || !LN0->hasOneUse()
+      return false;
+
+    if (!HasShuffleIntoBitcast)
+      return true;
+
+    // If there's a bitcast before the shuffle, check if the load type and
+    // alignment is valid.
+    unsigned Align = LN0->getAlignment();
+    unsigned NewAlign =
+      TLI.getTargetData()->getABITypeAlignment(
+                                    VT.getTypeForEVT(*DAG.getContext()));
+
+    if (NewAlign > Align || !TLI.isOperationLegalOrCustom(ISD::LOAD, VT))
+      return false;
+  }
+
+  return true;
+}
+
 static
 SDValue getMOVLowToHigh(SDValue &Op, DebugLoc &dl, SelectionDAG &DAG,
                         bool HasSSE2) {
@@ -5253,6 +5344,7 @@ static inline unsigned getUNPCKHOpcode(EVT VT) {
 
 static
 SDValue NormalizeVectorShuffle(SDValue Op, SelectionDAG &DAG,
+                               const TargetLowering &TLI,
                                const X86Subtarget *Subtarget) {
   ShuffleVectorSDNode *SVOp = cast<ShuffleVectorSDNode>(Op);
   EVT VT = Op.getValueType();
@@ -5263,9 +5355,23 @@ SDValue NormalizeVectorShuffle(SDValue Op, SelectionDAG &DAG,
   if (isZeroShuffle(SVOp))
     return getZeroVector(VT, Subtarget->hasSSE2(), DAG, dl);
 
-  // Promote splats to v4f32.
-  if (SVOp->isSplat())
+  // Handle splat operations
+  if (SVOp->isSplat()) {
+    // Special case, this is the only place now where it's
+    // allowed to return a vector_shuffle operation without
+    // using a target specific node, because *hopefully* it
+    // will be optimized away by the dag combiner.
+    if (VT.getVectorNumElements() <= 4 &&
+        CanXFormVExtractWithShuffleIntoLoad(Op, DAG, TLI))
+      return Op;
+
+    // Handle splats by matching through known masks
+    if (VT.getVectorNumElements() <= 4)
+      return SDValue();
+
+    // Canonize all of the remaining to v4f32.
     return PromoteSplat(SVOp, DAG);
+  }
 
   // If the shuffle can be profitably rewritten as a narrower shuffle, then
   // do it!
@@ -5336,7 +5442,7 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const {
   // Normalize the input vectors. Here splats, zeroed vectors, profitable
   // narrowing and commutation of operands should be handled. The actual code
   // doesn't include all of those, work in progress...
-  SDValue NewOp = NormalizeVectorShuffle(Op, DAG, Subtarget);
+  SDValue NewOp = NormalizeVectorShuffle(Op, DAG, *this, Subtarget);
   if (NewOp.getNode())
     return NewOp;
 
@@ -5348,6 +5454,18 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const {
   if (OptForSize && X86::isUNPCKH_v_undef_Mask(SVOp))
     if (VT != MVT::v2i64 && VT != MVT::v2f64)
       return getTargetShuffleNode(getUNPCKHOpcode(VT), dl, VT, V1, V1, DAG);
+
+  if (X86::isMOVDDUPMask(SVOp) && HasSSE3 && V2IsUndef &&
+      RelaxedMayFoldVectorLoad(V1) && !isMMX)
+    return getTargetShuffleNode(X86ISD::MOVDDUP, dl, VT, V1, DAG);
+
+  if (!isMMX && X86::isMOVHLPS_v_undef_Mask(SVOp))
+    return getMOVHighToLow(Op, dl, DAG);
+
+  // Use to match splats
+  if (HasSSE2 && X86::isUNPCKHMask(SVOp) && V2IsUndef &&
+      (VT == MVT::v2f64 || VT == MVT::v2i64))
+    return getTargetShuffleNode(getUNPCKHOpcode(VT), dl, VT, V1, V1, DAG);
 
   if (X86::isPSHUFDMask(SVOp)) {
     // The actual implementation will match the mask in the if above and then
