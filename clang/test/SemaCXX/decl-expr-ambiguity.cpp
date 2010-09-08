@@ -9,7 +9,7 @@ void f() {
   T(a)->m = 7;
   int(a)++; // expected-error {{expression is not assignable}}
   __extension__ int(a)++; // expected-error {{expression is not assignable}}
-  __typeof(int)(a,5)<<a; // expected-error {{function-style cast to a builtin type can only take one argument}}
+  __typeof(int)(a,5)<<a; // expected-error {{excess elements in scalar initializer}}
   void(a), ++a;
   if (int(a)+1) {}
   for (int(a)+1;;) {} // expected-warning {{expression result unused}}

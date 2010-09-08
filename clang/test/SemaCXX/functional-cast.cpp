@@ -23,7 +23,7 @@ void test_cxx_functional_value_init() {
 void test_cxx_function_cast_multi() { 
   (void)NoValueInit(0, 0);
   (void)NoValueInit(0, 0, 0); // expected-error{{no matching constructor for initialization}}
-  (void)int(1, 2); // expected-error{{function-style cast to a builtin type can only take one argument}}
+  (void)int(1, 2); // expected-error{{excess elements in scalar initializer}}
 }
 
 
@@ -314,4 +314,7 @@ void crash_on_invalid_1()
 {
   typedef itn Typo; // expected-error {{unknown type name 'itn'}}
   (void)Typo(1); // used to crash
+
+  typedef int &int_ref;
+  (void)int_ref(); // expected-error {{reference to type 'int' requires an initializer}}
 }

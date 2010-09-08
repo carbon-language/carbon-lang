@@ -2,7 +2,7 @@
 
 void f() {
   float v1 = float(1);
-  int v2 = typeof(int)(1,2); // expected-error {{function-style cast to a builtin type can only take one argument}}
+  int v2 = typeof(int)(1,2); // expected-error {{excess elements in scalar initializer}}
   typedef int arr[];
   int v3 = arr(); // expected-error {{array types cannot be value-initialized}}
   int v4 = int();

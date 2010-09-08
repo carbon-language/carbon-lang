@@ -615,41 +615,17 @@ Sema::BuildCXXTypeConstructExpr(TypeSourceInfo *TInfo,
                                                RParenLoc));
   }
 
-  if (Ty->isRecordType()) {
-    InitializedEntity Entity = InitializedEntity::InitializeTemporary(TInfo);
-    InitializationKind Kind
-      = NumExprs ? InitializationKind::CreateDirect(TyBeginLoc,
-                                                    LParenLoc, RParenLoc)
-                 : InitializationKind::CreateValue(TyBeginLoc, 
-                                                   LParenLoc, RParenLoc);
-    InitializationSequence InitSeq(*this, Entity, Kind, Exprs, NumExprs);
-    ExprResult Result = InitSeq.Perform(*this, Entity, Kind, move(exprs));
+  InitializedEntity Entity = InitializedEntity::InitializeTemporary(TInfo);
+  InitializationKind Kind
+    = NumExprs ? InitializationKind::CreateDirect(TyBeginLoc,
+                                                  LParenLoc, RParenLoc)
+               : InitializationKind::CreateValue(TyBeginLoc, 
+                                                 LParenLoc, RParenLoc);
+  InitializationSequence InitSeq(*this, Entity, Kind, Exprs, NumExprs);
+  ExprResult Result = InitSeq.Perform(*this, Entity, Kind, move(exprs));
 
-    // FIXME: Improve AST representation?
-    return move(Result);
-  }
-
-  // C++ [expr.type.conv]p1:
-  // If the expression list specifies more than a single value, the type shall
-  // be a class with a suitably declared constructor.
-  //
-  if (NumExprs > 1)
-    return ExprError(Diag(PP.getLocForEndOfToken(Exprs[0]->getLocEnd()),
-                          diag::err_builtin_func_cast_more_than_one_arg)
-      << FullRange);
-
-  assert(NumExprs == 0 && "Expected 0 expressions");
-  // FIXME: Why doesn't this go through the new-initialization code?
-  
-  // C++ [expr.type.conv]p2:
-  // The expression T(), where T is a simple-type-specifier for a non-array
-  // complete object type or the (possibly cv-qualified) void type, creates an
-  // rvalue of the specified type, which is value-initialized.
-  //
-  exprs.release();
-  return Owned(new (Context) CXXScalarValueInitExpr(
-                                TInfo->getType().getNonLValueExprType(Context),
-                                                    TInfo, RParenLoc));
+  // FIXME: Improve AST representation?
+  return move(Result);
 }
 
 

@@ -4094,13 +4094,18 @@ bool InitializationSequence::Diagnose(Sema &S,
     SourceRange R;
 
     if (InitListExpr *InitList = dyn_cast<InitListExpr>(Args[0]))
-      R = SourceRange(InitList->getInit(1)->getLocStart(),
+      R = SourceRange(InitList->getInit(0)->getLocEnd(),
                       InitList->getLocEnd());
-    else
-      R = SourceRange(Args[0]->getLocStart(), Args[NumArgs - 1]->getLocEnd());
+    else  
+      R = SourceRange(Args[0]->getLocEnd(), Args[NumArgs - 1]->getLocEnd());
 
-    S.Diag(Kind.getLocation(), diag::err_excess_initializers)
-      << /*scalar=*/2 << R;
+    R.setBegin(S.PP.getLocForEndOfToken(R.getBegin()));
+    if (Kind.isCStyleOrFunctionalCast())
+      S.Diag(Kind.getLocation(), diag::err_builtin_func_cast_more_than_one_arg)
+        << R;
+    else
+      S.Diag(Kind.getLocation(), diag::err_excess_initializers)
+        << /*scalar=*/2 << R;
     break;
   }
 
