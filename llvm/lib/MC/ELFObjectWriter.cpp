@@ -364,7 +364,7 @@ void ELFObjectWriterImpl::WriteSymbol(MCDataFragment *F, ELFSymbolData &MSD,
   if (Data.isCommon() && Data.isExternal())
     Value = Data.getCommonAlignment();
 
-  if (!Data.isCommon())
+  if (!Data.isCommon() && !(Data.getFlags() & ELF_STB_Weak))
     if (MCFragment *FF = Data.getFragment())
       Value = Layout.getSymbolAddress(&Data) -
               Layout.getSectionAddress(FF->getParent());
