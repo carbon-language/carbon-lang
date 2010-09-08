@@ -23,15 +23,6 @@ do_fortran="yes"
 do_64bit="yes"
 BuildDir="`pwd`"
 
-# Figure out how many make processes to run.
-NumJobs=`sysctl -n hw.activecpu 2> /dev/null || true`
-if [ -z "$NumJobs" ]; then
-    NumJobs=`sysctl -n hw.ncpu 2> /dev/null || true`
-fi
-if [ -z "$NumJobs" ]; then
-    NumJobs=`grep -c processor /proc/cpuinfo 2> /dev/null || true`
-fi
-
 function usage() {
     echo "usage: `basename $0` -release X.Y -rc NUM [OPTIONS]"
     echo ""
@@ -104,6 +95,16 @@ if [ -z "$RC" ]; then
     exit 1
 fi
 
+# Figure out how many make processes to run.
+if [ -z "$NumJobs" ]; then
+    NumJobs=`sysctl -n hw.activecpu 2> /dev/null || true`
+fi
+if [ -z "$NumJobs" ]; then
+    NumJobs=`sysctl -n hw.ncpu 2> /dev/null || true`
+fi
+if [ -z "$NumJobs" ]; then
+    NumJobs=`grep -c processor /proc/cpuinfo 2> /dev/null || true`
+fi
 if [ -z "$NumJobs" ]; then
     NumJobs=3
 fi
