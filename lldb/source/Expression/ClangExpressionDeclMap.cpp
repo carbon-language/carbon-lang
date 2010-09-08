@@ -955,6 +955,9 @@ ClangExpressionDeclMap::AddOneFunction(NameSearchContext &context,
     
     if (fun)
     {
+#define BROKEN_OVERLOADING
+        // Awaiting a fix on the Clang side
+#ifndef BROKEN_OVERLOADING
         Type *fun_type = fun->GetType();
         
         if (!fun_type) 
@@ -980,6 +983,11 @@ ClangExpressionDeclMap::AddOneFunction(NameSearchContext &context,
         void *copied_type = ClangASTContext::CopyType(context.GetASTContext(), fun_ast_context, fun_opaque_type);
         
         fun_decl = context.AddFunDecl(copied_type);
+#else
+        fun_address = &fun->GetAddressRange().GetBaseAddress();
+        
+        fun_decl = context.AddGenericFunDecl();
+#endif
     }
     else if (symbol)
     {
