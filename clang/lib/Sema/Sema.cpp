@@ -134,11 +134,12 @@ Sema::Sema(Preprocessor &pp, ASTContext &ctxt, ASTConsumer &consumer,
     Diags(PP.getDiagnostics()), SourceMgr(PP.getSourceManager()),
     ExternalSource(0), CodeCompleter(CodeCompleter), CurContext(0), 
     PackContext(0), VisContext(0), ParsingDeclDepth(0),
-    IdResolver(pp.getLangOptions()), GlobalNewDeleteDeclared(false), 
+    IdResolver(pp.getLangOptions()), MSVCGuidDecl(0),
+    GlobalNewDeleteDeclared(false), 
     CompleteTranslationUnit(CompleteTranslationUnit),
     NumSFINAEErrors(0), SuppressAccessChecking(false),
     NonInstantiationEntries(0), CurrentInstantiationScope(0), TyposCorrected(0),
-    AnalysisWarnings(*this), MSVCGuidDecl(0)
+    AnalysisWarnings(*this)
 {
   TUScope = 0;
   if (getLangOptions().CPlusPlus)
