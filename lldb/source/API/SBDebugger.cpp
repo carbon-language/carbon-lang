@@ -585,7 +585,7 @@ SBDebugger::GetInternalVariableValue (const char *var_name)
 
     lldb::SettableVariableType var_type;
     StringList value = root_settings_controller->GetVariable (var_name, var_type);
-    for (int i = 0; i < value.GetSize(); ++i)
+    for (unsigned i = 0; i != value.GetSize(); ++i)
         ret_value.AppendString (value.GetStringAtIndex(i));
 
     return ret_value;

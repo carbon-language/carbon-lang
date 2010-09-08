@@ -84,7 +84,7 @@ public:
     bool InvokeCallback (StoppointCallbackContext *context, lldb::user_id_t break_id, lldb::user_id_t break_loc_id);
     bool IsCallbackSynchronous () {
         return m_callback_is_synchronous;
-    };
+    }
     Baton *GetBaton ();
     const Baton *GetBaton () const;
     void ClearCallback ();

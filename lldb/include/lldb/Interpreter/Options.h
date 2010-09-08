@@ -165,7 +165,7 @@ public:
     // this class.
 
     virtual const lldb::OptionDefinition*
-    GetDefinitions () { return NULL; };
+    GetDefinitions () { return NULL; }
 
     virtual void
     ResetOptionValues ();

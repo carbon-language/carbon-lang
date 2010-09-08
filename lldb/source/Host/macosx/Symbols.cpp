@@ -25,6 +25,7 @@
 #include "lldb/Core/UUID.h"
 
 #include "Host/macosx/cfcpp/CFCReleaser.h"
+#include "mach/machine.h"
 
 using namespace lldb;
 using namespace lldb_private;
