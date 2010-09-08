@@ -45,6 +45,8 @@ class ConditionalBreakTestCase(TestBase):
             target = self.dbg.GetSelectedTarget()
             process = target.GetProcess()
             thread = process.GetThreadAtIndex(0)
+            import lldbutil
+            lldbutil.PrintStackTrace(thread)
             
             if thread.GetNumFrames() >= 2:
                 frame0 = thread.GetFrameAtIndex(0)
