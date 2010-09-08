@@ -77,10 +77,10 @@ protected:
     const ConstString
     CreateInstanceName ();
 
-    const ConstString &
+    static const ConstString &
     PromptVarName ();
 
-    const ConstString &
+    static const ConstString &
     ScriptLangVarName ();
   
 private:

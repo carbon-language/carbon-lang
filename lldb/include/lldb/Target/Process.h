@@ -77,25 +77,25 @@ protected:
     const ConstString
     CreateInstanceName ();
 
-    const ConstString &
+    static const ConstString &
     RunArgsVarName ();
 
-    const ConstString &
+    static const ConstString &
     EnvVarsVarName ();
 
-    const ConstString &
+    static const ConstString &
     InputPathVarName ();
 
-    const ConstString &
+    static const ConstString &
     OutputPathVarName ();
 
-    const ConstString &
+    static const ConstString &
     ErrorPathVarName ();
 
-    const ConstString &
+    static const ConstString &
     PluginVarName ();
 
-    const ConstString &
+    static const ConstString &
     DisableASLRVarName();
 
 
