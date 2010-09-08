@@ -18,7 +18,6 @@
 #include "clang/Frontend/CompilerInstance.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ExecutionEngine/ExecutionEngine.h"
-#include "llvm/ExecutionEngine/JIT.h"
 #include "llvm/Module.h"
 
 // Project includes
