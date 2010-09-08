@@ -148,17 +148,16 @@ struct CallGraphSCCPassPrinter : public CallGraphSCCPass {
     }
 
   virtual bool runOnSCC(CallGraphSCC &SCC) {
-    if (!Quiet) {
+    if (!Quiet)
       Out << "Printing analysis '" << PassToPrint->getPassName() << "':\n";
 
-      for (CallGraphSCC::iterator I = SCC.begin(), E = SCC.end(); I != E; ++I) {
-        Function *F = (*I)->getFunction();
-        if (F)
-          getAnalysisID<Pass>(PassToPrint->getTypeInfo()).print(Out, 
-                F->getParent());
-      }
-    }
     // Get and print pass...
+    for (CallGraphSCC::iterator I = SCC.begin(), E = SCC.end(); I != E; ++I) {
+      Function *F = (*I)->getFunction();
+      if (F)
+        getAnalysisID<Pass>(PassToPrint->getTypeInfo()).print(Out,
+                                                              F->getParent());
+    }
     return false;
   }
 
@@ -185,12 +184,11 @@ struct ModulePassPrinter : public ModulePass {
     }
 
   virtual bool runOnModule(Module &M) {
-    if (!Quiet) {
+    if (!Quiet)
       Out << "Printing analysis '" << PassToPrint->getPassName() << "':\n";
-      getAnalysisID<Pass>(PassToPrint->getTypeInfo()).print(Out, &M);
-    }
 
     // Get and print pass...
+    getAnalysisID<Pass>(PassToPrint->getTypeInfo()).print(Out, &M);
     return false;
   }
 
@@ -216,10 +214,10 @@ struct FunctionPassPrinter : public FunctionPass {
     }
 
   virtual bool runOnFunction(Function &F) {
-    if (!Quiet) {
+    if (!Quiet)
       Out << "Printing analysis '" << PassToPrint->getPassName()
           << "' for function '" << F.getName() << "':\n";
-    }
+
     // Get and print pass...
     getAnalysisID<Pass>(PassToPrint->getTypeInfo()).print(Out,
             F.getParent());
@@ -250,12 +248,12 @@ struct LoopPassPrinter : public LoopPass {
 
 
   virtual bool runOnLoop(Loop *L, LPPassManager &LPM) {
-    if (!Quiet) {
+    if (!Quiet)
       Out << "Printing analysis '" << PassToPrint->getPassName() << "':\n";
-      getAnalysisID<Pass>(PassToPrint->getTypeInfo()).print(Out,
-                                  L->getHeader()->getParent()->getParent());
-    }
+
     // Get and print pass...
+    getAnalysisID<Pass>(PassToPrint->getTypeInfo()).print(Out,
+                        L->getHeader()->getParent()->getParent());
     return false;
   }
 
@@ -282,10 +280,9 @@ struct BasicBlockPassPrinter : public BasicBlockPass {
     }
 
   virtual bool runOnBasicBlock(BasicBlock &BB) {
-    if (!Quiet) {
+    if (!Quiet)
       Out << "Printing Analysis info for BasicBlock '" << BB.getName()
           << "': Pass " << PassToPrint->getPassName() << ":\n";
-    }
 
     // Get and print pass...
     getAnalysisID<Pass>(PassToPrint->getTypeInfo()).print(Out, 
