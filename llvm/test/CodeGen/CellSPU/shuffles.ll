@@ -39,3 +39,29 @@ define <4 x float>  @test_insert_1(<4 x float> %vparam, float %eltparam) {
   ret <4 x float> %rv
 }
 
+define <2 x i32> @test_v2i32(<4 x i32>%vec)
+{
+;CHECK: rotqbyi $3, $3, 4
+;CHECK: bi $lr
+  %rv = shufflevector <4 x i32> %vec, <4 x i32> undef, <2 x i32><i32 1,i32 2>
+  ret <2 x i32> %rv
+}
+
+define <4 x i32> @test_v4i32_rot8(<4 x i32>%vec)
+{
+;CHECK: rotqbyi $3, $3, 8
+;CHECK: bi $lr
+  %rv = shufflevector <4 x i32> %vec, <4 x i32> undef, 
+        <4 x i32> <i32 2,i32 3,i32 0, i32 1>
+  ret <4 x i32> %rv
+}
+
+define <4 x i32> @test_v4i32_rot4(<4 x i32>%vec)
+{
+;CHECK: rotqbyi $3, $3, 4
+;CHECK: bi $lr
+  %rv = shufflevector <4 x i32> %vec, <4 x i32> undef, 
+        <4 x i32> <i32 1,i32 2,i32 3, i32 0>
+  ret <4 x i32> %rv
+}
+

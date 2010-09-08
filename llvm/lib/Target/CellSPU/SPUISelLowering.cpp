@@ -1735,9 +1735,9 @@ static SDValue LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) {
   unsigned CurrElt = 0;
   unsigned MaxElts = VecVT.getVectorNumElements();
   unsigned PrevElt = 0;
-  unsigned V0Elt = 0;
   bool monotonic = true;
   bool rotate = true;
+  int rotamt;
   EVT maskVT;             // which of the c?d instructions to use
 
   if (EltVT == MVT::i8) {
@@ -1781,14 +1781,13 @@ static SDValue LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) {
       if (PrevElt > 0 && SrcElt < MaxElts) {
         if ((PrevElt == SrcElt - 1)
             || (PrevElt == MaxElts - 1 && SrcElt == 0)) {
+          rotamt = SrcElt-i;
           PrevElt = SrcElt;
-          if (SrcElt == 0)
-            V0Elt = i;
         } else {
           rotate = false;
         }
-      } else if (i == 0) {
-        // First time through, need to keep track of previous element
+      } else if (i == 0 || (PrevElt==0 && SrcElt==1)) {
+        // First time or after a "wrap around"
         PrevElt = SrcElt;
       } else {
         // This isn't a rotation, takes elements from vector 2
@@ -1813,8 +1812,9 @@ static SDValue LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) {
     return DAG.getNode(SPUISD::SHUFB, dl, V1.getValueType(), V2, V1,
                        ShufMaskOp);
   } else if (rotate) {
-    int rotamt = (MaxElts - V0Elt) * EltVT.getSizeInBits()/8;
-
+    if (rotamt < 0)
+      rotamt +=MaxElts;
+    rotamt *= EltVT.getSizeInBits()/8;
     return DAG.getNode(SPUISD::ROTBYTES_LEFT, dl, V1.getValueType(),
                        V1, DAG.getConstant(rotamt, MVT::i16));
   } else {
