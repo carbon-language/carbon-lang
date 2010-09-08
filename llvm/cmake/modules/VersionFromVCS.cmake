@@ -10,7 +10,7 @@ function(add_version_info_from_vcs VERS)
     if( Subversion_FOUND )
       subversion_wc_info( ${CMAKE_CURRENT_SOURCE_DIR} Project )
       if( Project_WC_REVISION )
-	set(result "${result}-r${Project_WC_REVISION}")
+        set(result "${result}-r${Project_WC_REVISION}")
       endif()
     endif()
   elseif( EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/.git )
@@ -19,13 +19,23 @@ function(add_version_info_from_vcs VERS)
     find_program(git_executable NAMES git git.exe git.cmd)
     if( git_executable )
       execute_process(COMMAND ${git_executable} show-ref HEAD
-	WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-	TIMEOUT 5
-	RESULT_VARIABLE git_result
-	OUTPUT_VARIABLE git_output)
+                      WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+                      TIMEOUT 5
+                      RESULT_VARIABLE git_result
+                      OUTPUT_VARIABLE git_output)
       if( git_result EQUAL 0 )
-	string(SUBSTRING ${git_output} 0 7 git_ref_id)
-	set(result "${result}-${git_ref_id}")
+        string(SUBSTRING ${git_output} 0 7 git_ref_id)
+        set(result "${result}-${git_ref_id}")
+      else()
+        execute_process(COMMAND ${git_executable} svn log --limit=1 --oneline
+                        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+                        TIMEOUT 5
+                        RESULT_VARIABLE git_result
+                        OUTPUT_VARIABLE git_output)
+        if( git_result EQUAL 0 )
+          string(REGEX MATCH r[0-9]+ git_svn_rev ${git_output})
+          set(result "${result}-svn-${git_svn_rev}")
+        endif()
       endif()
     endif()
   endif()
