@@ -1274,8 +1274,12 @@ TypeSourceInfo *Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
               if (BTy->getKind() == BuiltinType::Float)
                 ArgTy = Context.DoubleTy;
             }
+          } else if (getLangOptions().ObjC1) {
+            if (ArgTy->isLegacyObjCIdType(Context))
+              ArgTy = Context.getObjCIdType();
+            else if (ArgTy->isLegacyObjCClassType(Context))
+              ArgTy = Context.getObjCClassType();
           }
-
           ArgTys.push_back(ArgTy);
         }
 

@@ -470,6 +470,24 @@ bool Type::isIntegralOrEnumerationType() const {
   return false;  
 }
 
+bool Type::isLegacyObjCIdType(ASTContext &Ctx) const {
+  if (const PointerType *PTTo = getAs<PointerType>()) {
+    QualType PointeeTy = PTTo->getPointeeType();
+    if (const RecordType *RTy = PointeeTy->getAs<RecordType>())
+      return RTy->getDecl()->getIdentifier() == &Ctx.Idents.get("objc_object");
+  }
+  return false;
+}
+
+bool Type::isLegacyObjCClassType(ASTContext &Ctx) const {
+  if (const PointerType *PTTo = getAs<PointerType>()) {
+    QualType PointeeTy = PTTo->getPointeeType();
+    if (const RecordType *RTy = PointeeTy->getAs<RecordType>())
+      return RTy->getDecl()->getIdentifier() == &Ctx.Idents.get("objc_class");
+  }
+  return false;
+}
+
 bool Type::isEnumeralType() const {
   if (const TagType *TT = dyn_cast<TagType>(CanonicalType))
     return TT->getDecl()->isEnum();
