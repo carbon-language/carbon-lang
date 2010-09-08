@@ -14,9 +14,7 @@ you need to pass in a list of directory names.  By default, the current
 working directory is searched if nothing is specified on the command line.
 """
 
-import os
-import sys
-import time
+import os, signal, sys, time
 import unittest2
 
 class _WritelnDecorator(object):
@@ -41,6 +39,9 @@ class _WritelnDecorator(object):
 # The test suite.
 suite = unittest2.TestSuite()
 
+# Delay startup in order for the debugger to attach.
+delay = False
+
 # Default verbosity is 0.
 verbose = 0
 
@@ -59,6 +60,7 @@ def usage():
 Usage: dotest.py [option] [args]
 where options:
 -h   : print this help message and exit (also --help)
+-d   : delay startup for 10 seconds (in order for the debugger to attach)
 -t   : trace lldb command execution and result
 -v   : do verbose mode of unittest framework
 
@@ -111,6 +113,7 @@ def initTestdirs():
     '-h/--help as the first option prints out usage info and exit the program.
     """
 
+    global delay
     global verbose
     global testdirs
 
@@ -124,6 +127,9 @@ def initTestdirs():
         # Process possible trace and/or verbose flag.
         index = 1
         for i in range(1, len(sys.argv) - 1):
+            if sys.argv[index].startswith('-d'):
+                delay = True
+                index += 1
             if sys.argv[index].startswith('-t'):
                 os.environ["LLDB_COMMAND_TRACE"] = "YES"
                 index += 1
@@ -160,6 +166,27 @@ def visit(prefix, dir, names):
 #
 setupSysPath()
 initTestdirs()
+
+#
+# If '-d' is specified, do a delay of 10 seconds for the debugger to attach.
+#
+if delay:
+    def alarm_handler(*args):
+        raise Exception("timeout")
+
+    signal.signal(signal.SIGALRM, alarm_handler)
+    signal.alarm(10)
+    sys.stdout.write("pid=" + str(os.getpid()) + '\n')
+    sys.stdout.write("Enter RET to proceed (or timeout after 10 seconds):")
+    sys.stdout.flush()
+    try:
+        text = sys.stdin.readline()
+    except:
+        text = ""
+    signal.alarm(0)
+    sys.stdout.write("proceeding...\n")
+    pass
+
 for testdir in testdirs:
     os.path.walk(testdir, visit, 'Test')
 
