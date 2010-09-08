@@ -52,6 +52,7 @@ ENDIF(MSVC)
 add_dependencies(clangFrontend 
   ClangAttrClasses
   ClangAttrList
+  ClangCC1Options
   ClangDiagnosticFrontend 
   ClangDiagnosticLex
   ClangDiagnosticSema
