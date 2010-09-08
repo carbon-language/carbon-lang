@@ -189,7 +189,7 @@ function configure_llvmCore() {
 
     cd $ObjDir
     echo "# Configuring llvm $Release-rc$RC $Flavor"
-    echo "# $llvmCore_srcdir/configure --prefix=$llvmCore_installdir \
+    echo "# $llvmCore_srcdir/configure --prefix=$InstallDir \
         --enable-optimized=$Optimized \
         --enable-assertions=$Assertions \
         --with-llvmgccdir=$llvmgccDir"
