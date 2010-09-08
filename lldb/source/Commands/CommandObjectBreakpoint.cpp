@@ -106,7 +106,7 @@ CommandObjectBreakpointSet::CommandOptions::g_option_table[] =
     { LLDB_OPT_SET_3, true, "name", 'n', required_argument, NULL, CommandCompletions::eSymbolCompletion, "<name>",
         "Set the breakpoint by function name - for C++ this means namespaces and arguments will be ignored." },
 
-    { LLDB_OPT_SET_4, true, "fullname", 'F', required_argument, NULL, 0, "<fullname>",
+    { LLDB_OPT_SET_4, true, "fullname", 'F', required_argument, NULL, CommandCompletions::eSymbolCompletion, "<fullname>",
         "Set the breakpoint by fully qualified function names. For C++ this means namespaces and all arguemnts, and "
         "for Objective C this means a full function prototype with class and selector." },
 
