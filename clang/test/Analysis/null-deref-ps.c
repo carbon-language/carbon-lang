@@ -237,7 +237,7 @@ int* f10(int* p, signed char x, int y) {
 // Test case from <rdar://problem/6407949>
 void f11(unsigned i) {
   int *x = 0;
-  if (i >= 0) {
+  if (i >= 0) { // expected-warning{{always true}}
     // always true
   } else {
     *x = 42; // no-warning
