@@ -16,7 +16,7 @@
 #include <queue>
 #include <cassert>
 
-#include "../../../../test_allocator.h"
+#include "../../../test_allocator.h"
 
 template <class C>
 C

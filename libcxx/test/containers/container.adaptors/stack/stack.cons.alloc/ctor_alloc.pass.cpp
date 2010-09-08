@@ -15,7 +15,7 @@
 #include <stack>
 #include <cassert>
 
-#include "../../../../test_allocator.h"
+#include "../../../test_allocator.h"
 
 struct test
     : private std::stack<int, std::deque<int, test_allocator<int> > >

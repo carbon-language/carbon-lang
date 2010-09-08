@@ -15,8 +15,8 @@
 #include <queue>
 #include <cassert>
 
-#include "../../../../test_allocator.h"
-#include "../../../../MoveOnly.h"
+#include "../../../test_allocator.h"
+#include "../../../MoveOnly.h"
 
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 

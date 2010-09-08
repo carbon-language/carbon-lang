@@ -15,7 +15,7 @@
 #include <queue>
 #include <cassert>
 
-#include "../../../../MoveOnly.h"
+#include "../../../MoveOnly.h"
 
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
@@ -29,7 +29,7 @@ make(int n)
     return c;
 }
 
-#include "../../../../test_allocator.h"
+#include "../../../test_allocator.h"
 
 template <class T>
 struct test

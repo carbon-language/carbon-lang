@@ -14,7 +14,7 @@
 #include <queue>
 #include <cassert>
 
-#include "../../../../stack_allocator.h"
+#include "../../../stack_allocator.h"
 
 int main()
 {
