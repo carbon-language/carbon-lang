@@ -687,6 +687,12 @@ void StmtProfiler::VisitCXXTypeidExpr(CXXTypeidExpr *S) {
     VisitType(S->getTypeOperand());
 }
 
+void StmtProfiler::VisitCXXUuidofExpr(CXXUuidofExpr *S) {
+  VisitExpr(S);
+  if (S->isTypeOperand())
+    VisitType(S->getTypeOperand());
+}
+
 void StmtProfiler::VisitCXXThisExpr(CXXThisExpr *S) {
   VisitExpr(S);
 }

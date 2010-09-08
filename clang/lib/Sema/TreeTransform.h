@@ -1513,6 +1513,7 @@ public:
                                     RParenLoc);
   }
 
+
   /// \brief Build a new C++ typeid(expr) expression.
   ///
   /// By default, performs semantic analysis to build the new expression.
@@ -1522,6 +1523,30 @@ public:
                                         Expr *Operand,
                                         SourceLocation RParenLoc) {
     return getSema().BuildCXXTypeId(TypeInfoType, TypeidLoc, Operand,
+                                    RParenLoc);
+  }
+
+  /// \brief Build a new C++ __uuidof(type) expression.
+  ///
+  /// By default, performs semantic analysis to build the new expression.
+  /// Subclasses may override this routine to provide different behavior.
+  ExprResult RebuildCXXUuidofExpr(QualType TypeInfoType,
+                                        SourceLocation TypeidLoc,
+                                        TypeSourceInfo *Operand,
+                                        SourceLocation RParenLoc) {
+    return getSema().BuildCXXUuidof(TypeInfoType, TypeidLoc, Operand, 
+                                    RParenLoc);
+  }
+
+  /// \brief Build a new C++ __uuidof(expr) expression.
+  ///
+  /// By default, performs semantic analysis to build the new expression.
+  /// Subclasses may override this routine to provide different behavior.
+  ExprResult RebuildCXXUuidofExpr(QualType TypeInfoType,
+                                        SourceLocation TypeidLoc,
+                                        Expr *Operand,
+                                        SourceLocation RParenLoc) {
+    return getSema().BuildCXXUuidof(TypeInfoType, TypeidLoc, Operand,
                                     RParenLoc);
   }
 
@@ -5138,6 +5163,44 @@ TreeTransform<Derived>::TransformCXXTypeidExpr(CXXTypeidExpr *E) {
     return SemaRef.Owned(E->Retain());
 
   return getDerived().RebuildCXXTypeidExpr(E->getType(),
+                                           E->getLocStart(),
+                                           SubExpr.get(),
+                                           E->getLocEnd());
+}
+
+template<typename Derived>
+ExprResult
+TreeTransform<Derived>::TransformCXXUuidofExpr(CXXUuidofExpr *E) {
+  if (E->isTypeOperand()) {
+    TypeSourceInfo *TInfo
+      = getDerived().TransformType(E->getTypeOperandSourceInfo());
+    if (!TInfo)
+      return ExprError();
+
+    if (!getDerived().AlwaysRebuild() &&
+        TInfo == E->getTypeOperandSourceInfo())
+      return SemaRef.Owned(E->Retain());
+
+    return getDerived().RebuildCXXTypeidExpr(E->getType(),
+                                             E->getLocStart(),
+                                             TInfo,
+                                             E->getLocEnd());
+  }
+
+  // We don't know whether the expression is potentially evaluated until
+  // after we perform semantic analysis, so the expression is potentially
+  // potentially evaluated.
+  EnterExpressionEvaluationContext Unevaluated(SemaRef, Sema::Unevaluated);
+
+  ExprResult SubExpr = getDerived().TransformExpr(E->getExprOperand());
+  if (SubExpr.isInvalid())
+    return ExprError();
+
+  if (!getDerived().AlwaysRebuild() &&
+      SubExpr.get() == E->getExprOperand())
+    return SemaRef.Owned(E->Retain());
+
+  return getDerived().RebuildCXXUuidofExpr(E->getType(),
                                            E->getLocStart(),
                                            SubExpr.get(),
                                            E->getLocEnd());

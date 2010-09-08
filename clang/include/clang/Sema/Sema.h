@@ -365,6 +365,9 @@ public:
   /// standard library.
   LazyDeclPtr StdBadAlloc;
 
+  /// \brief The MSVC "_GUID" struct, which is defined in MSVC header files.
+  RecordDecl *MSVCGuidDecl;
+
   /// A flag to remember whether the implicit forms of operator new and delete
   /// have been declared.
   bool GlobalNewDeleteDeclared;
@@ -2155,6 +2158,22 @@ public:
                             SourceLocation LParenLoc, bool isType,
                             void *TyOrExpr,
                             SourceLocation RParenLoc);
+
+  ExprResult BuildCXXUuidof(QualType TypeInfoType,
+                            SourceLocation TypeidLoc,
+                            TypeSourceInfo *Operand,
+                            SourceLocation RParenLoc);
+  ExprResult BuildCXXUuidof(QualType TypeInfoType,
+                            SourceLocation TypeidLoc,
+                            Expr *Operand,
+                            SourceLocation RParenLoc);
+
+  /// ActOnCXXUuidof - Parse __uuidof( something ).
+  virtual ExprResult ActOnCXXUuidof(SourceLocation OpLoc,
+                                    SourceLocation LParenLoc, bool isType,
+                                    void *TyOrExpr,
+                                    SourceLocation RParenLoc);
+
 
   //// ActOnCXXThis -  Parse 'this' pointer.
   ExprResult ActOnCXXThis(SourceLocation ThisLoc);

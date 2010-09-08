@@ -768,6 +768,9 @@ ExprResult Parser::ParseCastExpression(bool isUnaryExpression,
   case tok::kw_typeid:
     Res = ParseCXXTypeid();
     break;
+  case tok::kw___uuidof:
+    Res = ParseCXXUuidof();
+    break;
   case tok::kw_this:
     Res = ParseCXXThis();
     break;

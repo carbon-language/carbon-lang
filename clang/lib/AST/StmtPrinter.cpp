@@ -1002,6 +1002,16 @@ void StmtPrinter::VisitCXXTypeidExpr(CXXTypeidExpr *Node) {
   OS << ")";
 }
 
+void StmtPrinter::VisitCXXUuidofExpr(CXXUuidofExpr *Node) {
+  OS << "__uuidof(";
+  if (Node->isTypeOperand()) {
+    OS << Node->getTypeOperand().getAsString(Policy);
+  } else {
+    PrintExpr(Node->getExprOperand());
+  }
+  OS << ")";
+}
+
 void StmtPrinter::VisitCXXBoolLiteralExpr(CXXBoolLiteralExpr *Node) {
   OS << (Node->getValue() ? "true" : "false");
 }

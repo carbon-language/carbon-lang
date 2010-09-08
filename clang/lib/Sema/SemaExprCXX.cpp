@@ -370,6 +370,62 @@ Sema::ActOnCXXTypeid(SourceLocation OpLoc, SourceLocation LParenLoc,
   return BuildCXXTypeId(TypeInfoType, OpLoc, (Expr*)TyOrExpr, RParenLoc);
 }
 
+/// \brief Build a Microsoft __uuidof expression with a type operand.
+ExprResult Sema::BuildCXXUuidof(QualType TypeInfoType,
+                                SourceLocation TypeidLoc,
+                                TypeSourceInfo *Operand,
+                                SourceLocation RParenLoc) {
+  // FIXME: add __uuidof semantic analysis for type operand.
+  return Owned(new (Context) CXXUuidofExpr(TypeInfoType.withConst(),
+                                           Operand,
+                                           SourceRange(TypeidLoc, RParenLoc)));
+}
+
+/// \brief Build a Microsoft __uuidof expression with an expression operand.
+ExprResult Sema::BuildCXXUuidof(QualType TypeInfoType,
+                                SourceLocation TypeidLoc,
+                                Expr *E,
+                                SourceLocation RParenLoc) {
+  // FIXME: add __uuidof semantic analysis for expr operand.
+  return Owned(new (Context) CXXUuidofExpr(TypeInfoType.withConst(),
+                                           E,
+                                           SourceRange(TypeidLoc, RParenLoc)));  
+}
+
+/// ActOnCXXUuidof - Parse __uuidof( type-id ) or __uuidof (expression);
+ExprResult
+Sema::ActOnCXXUuidof(SourceLocation OpLoc, SourceLocation LParenLoc,
+                     bool isType, void *TyOrExpr, SourceLocation RParenLoc) {
+  // If MSVCGuidDecl has not been cached, do the lookup. 
+  if (!MSVCGuidDecl) {
+    IdentifierInfo *GuidII = &PP.getIdentifierTable().get("_GUID");
+    LookupResult R(*this, GuidII, SourceLocation(), LookupTagName);
+    LookupQualifiedName(R, Context.getTranslationUnitDecl());
+    MSVCGuidDecl = R.getAsSingle<RecordDecl>();
+    if (!MSVCGuidDecl)
+      return ExprError(Diag(OpLoc, diag::err_need_header_before_ms_uuidof));
+  }  
+  
+  QualType GuidType = Context.getTypeDeclType(MSVCGuidDecl);
+  
+  if (isType) {
+    // The operand is a type; handle it as such.
+    TypeSourceInfo *TInfo = 0;
+    QualType T = GetTypeFromParser(ParsedType::getFromOpaquePtr(TyOrExpr),
+                                   &TInfo);
+    if (T.isNull())
+      return ExprError();
+    
+    if (!TInfo)
+      TInfo = Context.getTrivialTypeSourceInfo(T, OpLoc);
+
+    return BuildCXXUuidof(GuidType, OpLoc, TInfo, RParenLoc);
+  }
+
+  // The operand is an expression.  
+  return BuildCXXUuidof(GuidType, OpLoc, (Expr*)TyOrExpr, RParenLoc);
+}
+
 /// ActOnCXXBoolLiteral - Parse {true,false} literals.
 ExprResult
 Sema::ActOnCXXBoolLiteral(SourceLocation OpLoc, tok::TokenKind Kind) {

@@ -134,6 +134,7 @@ namespace clang {
     void VisitCXXBoolLiteralExpr(CXXBoolLiteralExpr *E);
     void VisitCXXNullPtrLiteralExpr(CXXNullPtrLiteralExpr *E);
     void VisitCXXTypeidExpr(CXXTypeidExpr *E);
+    void VisitCXXUuidofExpr(CXXUuidofExpr *E);
     void VisitCXXThisExpr(CXXThisExpr *E);
     void VisitCXXThrowExpr(CXXThrowExpr *E);
     void VisitCXXDefaultArgExpr(CXXDefaultArgExpr *E);
@@ -1028,6 +1029,18 @@ void ASTStmtReader::VisitCXXTypeidExpr(CXXTypeidExpr *E) {
   // typeid(42+2)
   E->setExprOperand(Reader.ReadSubExpr());
 }
+void ASTStmtReader::VisitCXXUuidofExpr(CXXUuidofExpr *E) {
+  VisitExpr(E);
+  E->setSourceRange(Reader.ReadSourceRange(Record, Idx));
+  if (E->isTypeOperand()) { // __uuidof(ComType)
+    E->setTypeOperandSourceInfo(
+        Reader.GetTypeSourceInfo(DeclsCursor, Record, Idx));
+    return;
+  }
+  
+  // __uuidof(expr)
+  E->setExprOperand(Reader.ReadSubExpr());
+}
 
 void ASTStmtReader::VisitCXXThisExpr(CXXThisExpr *E) {
   VisitExpr(E);
@@ -1677,6 +1690,12 @@ Stmt *ASTReader::ReadStmtFromStream(llvm::BitstreamCursor &Cursor) {
       break;
     case EXPR_CXX_TYPEID_TYPE:
       S = new (Context) CXXTypeidExpr(Empty, false);
+      break;
+    case EXPR_CXX_UUIDOF_EXPR:
+      S = new (Context) CXXUuidofExpr(Empty, true);
+      break;
+    case EXPR_CXX_UUIDOF_TYPE:
+      S = new (Context) CXXUuidofExpr(Empty, false);
       break;
     case EXPR_CXX_THIS:
       S = new (Context) CXXThisExpr(Empty);

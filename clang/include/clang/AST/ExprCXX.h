@@ -396,6 +396,74 @@ public:
   virtual child_iterator child_end();
 };
 
+/// CXXUuidofExpr - A microsoft C++ @c __uuidof expression, which gets
+/// the _GUID that corresponds to the supplied type or expression.
+///
+/// This represents code like @c __uuidof(COMTYPE) or @c __uuidof(*comPtr)
+class CXXUuidofExpr : public Expr {
+private:
+  llvm::PointerUnion<Stmt *, TypeSourceInfo *> Operand;
+  SourceRange Range;
+
+public:
+  CXXUuidofExpr(QualType Ty, TypeSourceInfo *Operand, SourceRange R)
+    : Expr(CXXUuidofExprClass, Ty, 
+        false, Operand->getType()->isDependentType()),
+      Operand(Operand), Range(R) { }
+  
+  CXXUuidofExpr(QualType Ty, Expr *Operand, SourceRange R)
+    : Expr(CXXUuidofExprClass, Ty,
+        false, Operand->isTypeDependent()),
+      Operand(Operand), Range(R) { }
+
+  CXXUuidofExpr(EmptyShell Empty, bool isExpr)
+    : Expr(CXXUuidofExprClass, Empty) {
+    if (isExpr)
+      Operand = (Expr*)0;
+    else
+      Operand = (TypeSourceInfo*)0;
+  }
+  
+  bool isTypeOperand() const { return Operand.is<TypeSourceInfo *>(); }
+  
+  /// \brief Retrieves the type operand of this __uuidof() expression after
+  /// various required adjustments (removing reference types, cv-qualifiers).
+  QualType getTypeOperand() const;
+
+  /// \brief Retrieve source information for the type operand.
+  TypeSourceInfo *getTypeOperandSourceInfo() const {
+    assert(isTypeOperand() && "Cannot call getTypeOperand for __uuidof(expr)");
+    return Operand.get<TypeSourceInfo *>();
+  }
+
+  void setTypeOperandSourceInfo(TypeSourceInfo *TSI) {
+    assert(isTypeOperand() && "Cannot call getTypeOperand for __uuidof(expr)");
+    Operand = TSI;
+  }
+  
+  Expr *getExprOperand() const {
+    assert(!isTypeOperand() && "Cannot call getExprOperand for __uuidof(type)");
+    return static_cast<Expr*>(Operand.get<Stmt *>());
+  }
+  
+  void setExprOperand(Expr *E) {
+    assert(!isTypeOperand() && "Cannot call getExprOperand for __uuidof(type)");
+    Operand = E;
+  }
+
+  virtual SourceRange getSourceRange() const { return Range; }
+  void setSourceRange(SourceRange R) { Range = R; }
+  
+  static bool classof(const Stmt *T) {
+    return T->getStmtClass() == CXXUuidofExprClass;
+  }
+  static bool classof(const CXXUuidofExpr *) { return true; }
+
+  // Iterators
+  virtual child_iterator child_begin();
+  virtual child_iterator child_end();
+};
+
 /// CXXThisExpr - Represents the "this" expression in C++, which is a
 /// pointer to the object on which the current member function is
 /// executing (C++ [expr.prim]p3). Example:

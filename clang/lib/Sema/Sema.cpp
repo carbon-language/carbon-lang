@@ -138,7 +138,7 @@ Sema::Sema(Preprocessor &pp, ASTContext &ctxt, ASTConsumer &consumer,
     CompleteTranslationUnit(CompleteTranslationUnit),
     NumSFINAEErrors(0), SuppressAccessChecking(false),
     NonInstantiationEntries(0), CurrentInstantiationScope(0), TyposCorrected(0),
-    AnalysisWarnings(*this)
+    AnalysisWarnings(*this), MSVCGuidDecl(0)
 {
   TUScope = 0;
   if (getLangOptions().CPlusPlus)

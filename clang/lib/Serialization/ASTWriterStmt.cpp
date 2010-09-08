@@ -131,6 +131,7 @@ namespace clang {
     void VisitCXXBoolLiteralExpr(CXXBoolLiteralExpr *E);
     void VisitCXXNullPtrLiteralExpr(CXXNullPtrLiteralExpr *E);
     void VisitCXXTypeidExpr(CXXTypeidExpr *E);
+    void VisitCXXUuidofExpr(CXXUuidofExpr *E);
     void VisitCXXThisExpr(CXXThisExpr *E);
     void VisitCXXThrowExpr(CXXThrowExpr *E);
     void VisitCXXDefaultArgExpr(CXXDefaultArgExpr *E);
@@ -1036,6 +1037,18 @@ void ASTStmtWriter::VisitCXXTypeidExpr(CXXTypeidExpr *E) {
   } else {
     Writer.AddStmt(E->getExprOperand());
     Code = serialization::EXPR_CXX_TYPEID_EXPR;
+  }
+}
+
+void ASTStmtWriter::VisitCXXUuidofExpr(CXXUuidofExpr *E) {
+  VisitExpr(E);
+  Writer.AddSourceRange(E->getSourceRange(), Record);
+  if (E->isTypeOperand()) {
+    Writer.AddTypeSourceInfo(E->getTypeOperandSourceInfo(), Record);
+    Code = serialization::EXPR_CXX_UUIDOF_TYPE;
+  } else {
+    Writer.AddStmt(E->getExprOperand());
+    Code = serialization::EXPR_CXX_UUIDOF_EXPR;
   }
 }
 

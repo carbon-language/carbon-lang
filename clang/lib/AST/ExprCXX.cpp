@@ -39,6 +39,22 @@ Stmt::child_iterator CXXTypeidExpr::child_end() {
                          : reinterpret_cast<Stmt **>(&Operand) + 1;
 }
 
+QualType CXXUuidofExpr::getTypeOperand() const {
+  assert(isTypeOperand() && "Cannot call getTypeOperand for __uuidof(expr)");
+  return Operand.get<TypeSourceInfo *>()->getType().getNonReferenceType()
+                                                        .getUnqualifiedType();
+}
+
+// CXXUuidofExpr - has child iterators if the operand is an expression
+Stmt::child_iterator CXXUuidofExpr::child_begin() {
+  return isTypeOperand() ? child_iterator() 
+                         : reinterpret_cast<Stmt **>(&Operand);
+}
+Stmt::child_iterator CXXUuidofExpr::child_end() {
+  return isTypeOperand() ? child_iterator() 
+                         : reinterpret_cast<Stmt **>(&Operand) + 1;
+}
+
 // CXXBoolLiteralExpr
 Stmt::child_iterator CXXBoolLiteralExpr::child_begin() {
   return child_iterator();

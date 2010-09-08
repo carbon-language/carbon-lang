@@ -534,6 +534,54 @@ ExprResult Parser::ParseCXXTypeid() {
   return move(Result);
 }
 
+/// ParseCXXUuidof - This handles the Microsoft C++ __uuidof expression.
+///
+///         '__uuidof' '(' expression ')'
+///         '__uuidof' '(' type-id ')'
+///
+ExprResult Parser::ParseCXXUuidof() {
+  assert(Tok.is(tok::kw___uuidof) && "Not '__uuidof'!");
+
+  SourceLocation OpLoc = ConsumeToken();
+  SourceLocation LParenLoc = Tok.getLocation();
+  SourceLocation RParenLoc;
+
+  // __uuidof expressions are always parenthesized.
+  if (ExpectAndConsume(tok::l_paren, diag::err_expected_lparen_after,
+      "__uuidof"))
+    return ExprError();
+
+  ExprResult Result;
+
+  if (isTypeIdInParens()) {
+    TypeResult Ty = ParseTypeName();
+
+    // Match the ')'.
+    RParenLoc = MatchRHSPunctuation(tok::r_paren, LParenLoc);
+
+    if (Ty.isInvalid())
+      return ExprError();
+
+    Result = Actions.ActOnCXXUuidof(OpLoc, LParenLoc, /*isType=*/true,
+                                    Ty.get().getAsOpaquePtr(), RParenLoc);
+  } else {
+    EnterExpressionEvaluationContext Unevaluated(Actions, Sema::Unevaluated);
+    Result = ParseExpression();
+
+    // Match the ')'.
+    if (Result.isInvalid())
+      SkipUntil(tok::r_paren);
+    else {
+      RParenLoc = MatchRHSPunctuation(tok::r_paren, LParenLoc);
+
+      Result = Actions.ActOnCXXUuidof(OpLoc, LParenLoc, /*isType=*/false,
+                                      Result.release(), RParenLoc);
+    }
+  }
+
+  return move(Result);
+}
+
 /// \brief Parse a C++ pseudo-destructor expression after the base,
 /// . or -> operator, and nested-name-specifier have already been
 /// parsed.

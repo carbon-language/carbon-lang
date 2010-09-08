@@ -1029,6 +1029,10 @@ private:
   ExprResult ParseCXXTypeid();
 
   //===--------------------------------------------------------------------===//
+  //  C++ : Microsoft __uuidof Expression
+  ExprResult ParseCXXUuidof();
+
+  //===--------------------------------------------------------------------===//
   // C++ 5.2.4: C++ Pseudo-Destructor Expressions
   ExprResult ParseCXXPseudoDestructor(ExprArg Base, SourceLocation OpLoc,
                                             tok::TokenKind OpKind,

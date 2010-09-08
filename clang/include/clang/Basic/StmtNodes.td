@@ -127,3 +127,7 @@ def ObjCIsaExpr : DStmt<Expr>;
 def ShuffleVectorExpr : DStmt<Expr>;
 def BlockExpr : DStmt<Expr>;
 def BlockDeclRefExpr : DStmt<Expr>;
+
+// Microsoft Extensions.
+def CXXUuidofExpr : DStmt<Expr>; 
+

@@ -1769,6 +1769,13 @@ DEF_TRAVERSE_STMT(CXXTypeidExpr, {
       TRY_TO(TraverseTypeLoc(S->getTypeOperandSourceInfo()->getTypeLoc()));
   })
 
+DEF_TRAVERSE_STMT(CXXUuidofExpr, {
+    // The child-iterator will pick up the arg if it's an expression,
+    // but not if it's a type.
+    if (S->isTypeOperand())
+      TRY_TO(TraverseTypeLoc(S->getTypeOperandSourceInfo()->getTypeLoc()));
+  })
+
 DEF_TRAVERSE_STMT(TypesCompatibleExpr, {
     TRY_TO(TraverseTypeLoc(S->getArgTInfo1()->getTypeLoc()));
     TRY_TO(TraverseTypeLoc(S->getArgTInfo2()->getTypeLoc()));

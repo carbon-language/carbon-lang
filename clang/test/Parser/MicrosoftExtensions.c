@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -triple i386-mingw32 -fsyntax-only -verify -fms-extensions -Wno-missing-declarations -x objective-c++ %s
+// RUN: %clang_cc1 -triple i386-mingw32 -fsyntax-only -verify -fms-extensions -Wno-unused-value -Wno-missing-declarations -x objective-c++ %s
 __stdcall int func0();
 int __stdcall func();
 typedef int (__cdecl *tptr)();
@@ -36,3 +36,40 @@ typedef bool (__stdcall __stdcall *blarg)(int);
 char x = FOO(a);
 
 typedef enum E { e1 };
+
+
+void uuidof_test1()
+{  
+  __uuidof(0);  // expected-error {{you need to include <guiddef.h> before using the '__uuidof' operator}}
+}
+
+typedef struct _GUID
+{
+    unsigned long  Data1;
+    unsigned short Data2;
+    unsigned short Data3;
+    unsigned char  Data4[8];
+} GUID;
+struct __declspec(uuid("00000000-0000-0000-3231-000000000046")) A { };
+struct __declspec(uuid("00000000-0000-0000-1234-000000000047")) B { };
+class C {};
+
+void uuidof_test2()
+{
+  A* a = new A;
+  B b;
+  __uuidof(A);
+  __uuidof(*a);
+  __uuidof(B);
+  __uuidof(&b);
+  _uuidof(0);
+
+   // FIXME, this must not compile
+  _uuidof(1);
+   // FIXME, this must not compile
+  _uuidof(C);
+
+   C c;
+   // FIXME, this must not compile
+  _uuidof(c);
+}
