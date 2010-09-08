@@ -263,6 +263,7 @@ void PrintPPOutputPPCallbacks::FileChanged(SourceLocation Loc,
   // predefines buffer.
   if (DumpHeaderIncludes && HasProcessedPredefines &&
       Reason == PPCallbacks::EnterFile) {
+    // Write to a temporary string to avoid unnecessary flushing on errs().
     llvm::SmallString<256> Msg;
     llvm::raw_svector_ostream OS(Msg);
     for (unsigned i = 0; i != CurrentIncludeDepth; ++i)
