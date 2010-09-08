@@ -33,17 +33,20 @@ class LLVMContext {
   LLVMContext(LLVMContext&);
   void operator=(LLVMContext&);
 
-public:
-  LLVMContextImpl *const pImpl;
-  LLVMContext();
-  ~LLVMContext();
-  
   /// addModule - Register a module as being instantiated in this context.  If
   /// the context is deleted, the module will be deleted as well.
   void addModule(Module*);
   
   /// removeModule - Unregister a module from this context.
   void removeModule(Module*);
+  
+  // Module needs access to the add/removeModule methods.
+  friend class Module;
+
+public:
+  LLVMContextImpl *const pImpl;
+  LLVMContext();
+  ~LLVMContext();
   
   // Pinned metadata names, which always have the same value.  This is a
   // compile-time performance optimization, not a correctness optimization.
