@@ -19,6 +19,7 @@ Release_no_dot=""
 RC=""
 do_checkout="yes"
 do_ada="no"
+do_objc="yes"
 do_fortran="yes"
 do_64bit="yes"
 BuildDir="`pwd`"
@@ -33,6 +34,7 @@ function usage() {
     echo " -no-checkout      Don't checkout the sources from SVN."
     echo " -no-64bit         Don't test the 64-bit version. [default: yes]"
     echo " -ada              Build Ada. [default: no]"
+    echo " -disable-objc     Disable ObjC build. [default: build]"
     echo " -disable-fortran  Disable Fortran build. [default: build]"
 }
 
@@ -66,6 +68,9 @@ while [ $# -gt 0 ]; do
             ;;
         -ada | --ada )
             do_ada="yes"
+            ;;
+        -disable-objc | --disable-objc )
+            do_objc="no"
             ;;
         -disable-fortran | --disable-fortran )
             echo "WARNING: Do you *really* need to disable Fortran?"
@@ -250,7 +255,10 @@ function configure_llvm_gcc() {
     InstallDir="$4"
     llvmObjDir="$5"
 
-    languages="c,c++,objc,obj-c++"
+    languages="c,c++"
+    if [ "$do_objc" = "yes" ]; then
+        languages="$languages,objc,obj-c++"
+    fi
     if [ "$do_fortran" = "yes" ]; then
         languages="$languages,fortran"
     fi
