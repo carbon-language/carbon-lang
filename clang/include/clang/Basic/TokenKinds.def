@@ -336,7 +336,7 @@ KEYWORD(__fastcall                  , KEYALL)
 KEYWORD(__thiscall                  , KEYALL)
 KEYWORD(__forceinline               , KEYALL)
 
-// Borland Extension.
+// Borland Extensions.
 KEYWORD(__pascal                    , KEYALL)
 
 // Altivec Extension.
@@ -369,13 +369,13 @@ ALIAS("__volatile__" , volatile   , KEYALL)
 // Microsoft extensions which should be disabled in strict conformance mode
 KEYWORD(__ptr64                   , KEYMS)
 KEYWORD(__w64                     , KEYMS)
-KEYWORD(__uuidof                  , KEYMS)
+KEYWORD(__uuidof                  , KEYMS | KEYBORLAND)
 ALIAS("_asm"         , asm        , KEYMS)
-ALIAS("_cdecl"       , __cdecl    , KEYMS)
-ALIAS("_fastcall"    , __fastcall , KEYMS)
-ALIAS("_stdcall"     , __stdcall  , KEYMS)
+ALIAS("_cdecl"       , __cdecl    , KEYMS | KEYBORLAND)
+ALIAS("_fastcall"    , __fastcall , KEYMS | KEYBORLAND)
+ALIAS("_stdcall"     , __stdcall  , KEYMS | KEYBORLAND)
 ALIAS("_thiscall"    , __thiscall , KEYMS)
-ALIAS("_uuidof"      ,__uuidof    , KEYMS)
+ALIAS("_uuidof"      , __uuidof   , KEYMS | KEYBORLAND)
 
 // Borland Extensions which should be disabled in strict conformance mode.
 ALIAS("_pascal"      , __pascal   , KEYBORLAND)

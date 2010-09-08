@@ -24,3 +24,30 @@ void m2() {
     i = h2<int>(&M::addP);
     f = h2(&M::subtractP);
 } 
+
+// 3. test other calling conventions
+int _cdecl fa3();
+int _fastcall fc3();
+int _stdcall fd3();
+
+// 4. test __uuidof()
+typedef struct _GUID {
+     unsigned long  Data1;
+     unsigned short Data2;
+     unsigned short Data3;
+     unsigned char  Data4[ 8 ];
+} GUID;
+
+struct __declspec(uuid("{12345678-1234-1234-1234-123456789abc}")) Foo;
+struct Data {
+     GUID const* Guid;
+};
+
+void t4() {
+    unsigned long  data;
+
+    const GUID guid_inl = __uuidof(Foo);
+    Data ata1 = { &guid_inl};
+    data = ata1.Guid->Data1;
+}
+
