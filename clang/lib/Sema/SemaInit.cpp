@@ -3843,10 +3843,14 @@ InitializationSequence::Perform(Sema &S,
         unsigned NumExprs = ConstructorArgs.size();
         Expr **Exprs = (Expr **)ConstructorArgs.take();
         S.MarkDeclarationReferenced(Loc, Constructor);
+            
+        TypeSourceInfo *TSInfo = Entity.getTypeSourceInfo();
+        if (!TSInfo)
+          TSInfo = S.Context.getTrivialTypeSourceInfo(Entity.getType(), Loc);
+            
         CurInit = S.Owned(new (S.Context) CXXTemporaryObjectExpr(S.Context,
                                                                  Constructor,
-                                                              Entity.getType(),
-                                                                 Loc,
+                                                                 TSInfo,
                                                                  Exprs, 
                                                                  NumExprs,
                                                 Kind.getParenRange().getEnd(),
@@ -3901,8 +3905,14 @@ InitializationSequence::Perform(Sema &S,
       } else if (Kind.getKind() == InitializationKind::IK_Value &&
                  S.getLangOptions().CPlusPlus &&
                  !Kind.isImplicitValueInit()) {
-        CurInit = S.Owned(new (S.Context) CXXScalarValueInitExpr(Step->Type,
-                                                   Kind.getRange().getBegin(),
+        TypeSourceInfo *TSInfo = Entity.getTypeSourceInfo();
+        if (!TSInfo)
+          TSInfo = S.Context.getTrivialTypeSourceInfo(Step->Type, 
+                                                    Kind.getRange().getBegin());
+
+        CurInit = S.Owned(new (S.Context) CXXScalarValueInitExpr(
+                              TSInfo->getType().getNonLValueExprType(S.Context),
+                                                                 TSInfo,
                                                     Kind.getRange().getEnd()));
       } else {
         CurInit = S.Owned(new (S.Context) ImplicitValueInitExpr(Step->Type));

@@ -1739,8 +1739,7 @@ bool RecursiveASTVisitor<Derived>::TraverseInitListExpr(InitListExpr *S) {
 DEF_TRAVERSE_STMT(CXXScalarValueInitExpr, {
     // This is called for code like 'return T()' where T is a built-in
     // (i.e. non-class) type.
-    if (!S->isImplicit())
-      TRY_TO(TraverseType(S->getType()));
+    TRY_TO(TraverseTypeLoc(S->getTypeSourceInfo()->getTypeLoc()));
   })
 
 DEF_TRAVERSE_STMT(CXXNewExpr, {

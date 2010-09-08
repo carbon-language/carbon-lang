@@ -18,6 +18,7 @@
 #include "clang/AST/PrettyPrinter.h"
 #include "llvm/Support/Format.h"
 #include "clang/AST/Expr.h"
+#include "clang/AST/ExprCXX.h"
 using namespace clang;
 
 //===----------------------------------------------------------------------===//
@@ -1051,7 +1052,10 @@ void StmtPrinter::VisitCXXTemporaryObjectExpr(CXXTemporaryObjectExpr *Node) {
 }
 
 void StmtPrinter::VisitCXXScalarValueInitExpr(CXXScalarValueInitExpr *Node) {
-  OS << Node->getType().getAsString(Policy) << "()";
+  if (TypeSourceInfo *TSInfo = Node->getTypeSourceInfo())
+    OS << TSInfo->getType().getAsString(Policy) << "()";
+  else
+    OS << Node->getType().getAsString(Policy) << "()";
 }
 
 void StmtPrinter::VisitCXXNewExpr(CXXNewExpr *E) {

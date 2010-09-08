@@ -1492,16 +1492,12 @@ public:
   ///
   /// By default, performs semantic analysis to build the new expression.
   /// Subclasses may override this routine to provide different behavior.
-  ExprResult RebuildCXXFunctionalCastExpr(SourceRange TypeRange,
-                                                TypeSourceInfo *TInfo,
-                                                SourceLocation LParenLoc,
-                                                Expr *Sub,
-                                                SourceLocation RParenLoc) {
-    return getSema().ActOnCXXTypeConstructExpr(TypeRange,
-                                             ParsedType::make(TInfo->getType()),
-                                               LParenLoc,
+  ExprResult RebuildCXXFunctionalCastExpr(TypeSourceInfo *TInfo,
+                                          SourceLocation LParenLoc,
+                                          Expr *Sub,
+                                          SourceLocation RParenLoc) {
+    return getSema().BuildCXXTypeConstructExpr(TInfo, LParenLoc,
                                                MultiExprArg(&Sub, 1),
-                                               /*CommaLocs=*/0,
                                                RParenLoc);
   }
 
@@ -1565,14 +1561,12 @@ public:
   ///
   /// By default, performs semantic analysis to build the new expression.
   /// Subclasses may override this routine to provide different behavior.
-  ExprResult RebuildCXXScalarValueInitExpr(SourceLocation TypeStartLoc,
-                                               SourceLocation LParenLoc,
-                                               QualType T,
-                                               SourceLocation RParenLoc) {
-    return getSema().ActOnCXXTypeConstructExpr(SourceRange(TypeStartLoc),
-                                               ParsedType::make(T), LParenLoc,
+  ExprResult RebuildCXXScalarValueInitExpr(TypeSourceInfo *TSInfo,
+                                           SourceLocation LParenLoc,
+                                           SourceLocation RParenLoc) {
+    return getSema().BuildCXXTypeConstructExpr(TSInfo, LParenLoc,
                                                MultiExprArg(getSema(), 0, 0),
-                                               0, RParenLoc);
+                                               RParenLoc);
   }
 
   /// \brief Build a new C++ "new" expression.
@@ -1685,17 +1679,13 @@ public:
   ///
   /// By default, performs semantic analysis to build the new expression.
   /// Subclasses may override this routine to provide different behavior.
-  ExprResult RebuildCXXTemporaryObjectExpr(SourceLocation TypeBeginLoc,
-                                                 QualType T,
-                                                 SourceLocation LParenLoc,
-                                                 MultiExprArg Args,
-                                                 SourceLocation *Commas,
-                                                 SourceLocation RParenLoc) {
-    return getSema().ActOnCXXTypeConstructExpr(SourceRange(TypeBeginLoc),
-                                               ParsedType::make(T),
+  ExprResult RebuildCXXTemporaryObjectExpr(TypeSourceInfo *TSInfo,
+                                           SourceLocation LParenLoc,
+                                           MultiExprArg Args,
+                                           SourceLocation RParenLoc) {
+    return getSema().BuildCXXTypeConstructExpr(TSInfo,
                                                LParenLoc,
                                                move(Args),
-                                               Commas,
                                                RParenLoc);
   }
 
@@ -1703,18 +1693,13 @@ public:
   ///
   /// By default, performs semantic analysis to build the new expression.
   /// Subclasses may override this routine to provide different behavior.
-  ExprResult RebuildCXXUnresolvedConstructExpr(SourceLocation TypeBeginLoc,
-                                                     QualType T,
-                                                     SourceLocation LParenLoc,
-                                                     MultiExprArg Args,
-                                                     SourceLocation *Commas,
-                                                     SourceLocation RParenLoc) {
-    return getSema().ActOnCXXTypeConstructExpr(SourceRange(TypeBeginLoc,
-                                                           /*FIXME*/LParenLoc),
-                                               ParsedType::make(T),
+  ExprResult RebuildCXXUnresolvedConstructExpr(TypeSourceInfo *TSInfo,
+                                               SourceLocation LParenLoc,
+                                               MultiExprArg Args,
+                                               SourceLocation RParenLoc) {
+    return getSema().BuildCXXTypeConstructExpr(TSInfo,
                                                LParenLoc,
                                                move(Args),
-                                               Commas,
                                                RParenLoc);
   }
 
@@ -5113,10 +5098,7 @@ TreeTransform<Derived>::TransformCXXFunctionalCastExpr(
       SubExpr.get() == E->getSubExpr())
     return SemaRef.Owned(E->Retain());
 
-  // FIXME: The end of the type's source range is wrong
-  return getDerived().RebuildCXXFunctionalCastExpr(
-                                  /*FIXME:*/SourceRange(E->getTypeBeginLoc()),
-                                                   NewT,
+  return getDerived().RebuildCXXFunctionalCastExpr(NewT,
                                       /*FIXME:*/E->getSubExpr()->getLocStart(),
                                                    SubExpr.get(),
                                                    E->getRParenLoc());
@@ -5222,20 +5204,18 @@ TreeTransform<Derived>::TransformCXXDefaultArgExpr(CXXDefaultArgExpr *E) {
 
 template<typename Derived>
 ExprResult
-TreeTransform<Derived>::TransformCXXScalarValueInitExpr(CXXScalarValueInitExpr *E) {
-  TemporaryBase Rebase(*this, E->getTypeBeginLoc(), DeclarationName());
-
-  QualType T = getDerived().TransformType(E->getType());
-  if (T.isNull())
+TreeTransform<Derived>::TransformCXXScalarValueInitExpr(
+                                                    CXXScalarValueInitExpr *E) {
+  TypeSourceInfo *T = getDerived().TransformType(E->getTypeSourceInfo());
+  if (!T)
     return ExprError();
-
+  
   if (!getDerived().AlwaysRebuild() &&
-      T == E->getType())
+      T == E->getTypeSourceInfo())
     return SemaRef.Owned(E->Retain());
 
-  return getDerived().RebuildCXXScalarValueInitExpr(E->getTypeBeginLoc(),
-                                                 /*FIXME:*/E->getTypeBeginLoc(),
-                                                    T,
+  return getDerived().RebuildCXXScalarValueInitExpr(T, 
+                                          /*FIXME:*/T->getTypeLoc().getEndLoc(),
                                                     E->getRParenLoc());
 }
 
@@ -5709,10 +5689,9 @@ TreeTransform<Derived>::TransformCXXExprWithTemporaries(
 template<typename Derived>
 ExprResult
 TreeTransform<Derived>::TransformCXXTemporaryObjectExpr(
-                                                      CXXTemporaryObjectExpr *E) {
-  TemporaryBase Rebase(*this, E->getTypeBeginLoc(), DeclarationName());
-  QualType T = getDerived().TransformType(E->getType());
-  if (T.isNull())
+                                                    CXXTemporaryObjectExpr *E) {
+  TypeSourceInfo *T = getDerived().TransformType(E->getTypeSourceInfo());
+  if (!T)
     return ExprError();
 
   CXXConstructorDecl *Constructor
@@ -5742,26 +5721,17 @@ TreeTransform<Derived>::TransformCXXTemporaryObjectExpr(
   }
 
   if (!getDerived().AlwaysRebuild() &&
-      T == E->getType() &&
+      T == E->getTypeSourceInfo() &&
       Constructor == E->getConstructor() &&
       !ArgumentChanged) {
     // FIXME: Instantiation-specific
-    SemaRef.MarkDeclarationReferenced(E->getTypeBeginLoc(), Constructor);
+    SemaRef.MarkDeclarationReferenced(E->getLocStart(), Constructor);
     return SemaRef.MaybeBindToTemporary(E->Retain());
   }
-
-  // FIXME: Bogus location information
-  SourceLocation CommaLoc;
-  if (Args.size() > 1) {
-    Expr *First = (Expr *)Args[0];
-    CommaLoc
-      = SemaRef.PP.getLocForEndOfToken(First->getSourceRange().getEnd());
-  }
-  return getDerived().RebuildCXXTemporaryObjectExpr(E->getTypeBeginLoc(),
-                                                    T,
-                                                /*FIXME:*/E->getTypeBeginLoc(),
+  
+  return getDerived().RebuildCXXTemporaryObjectExpr(T,
+                                          /*FIXME:*/T->getTypeLoc().getEndLoc(),
                                                     move_arg(Args),
-                                                    &CommaLoc,
                                                     E->getLocEnd());
 }
 
@@ -5769,14 +5739,12 @@ template<typename Derived>
 ExprResult
 TreeTransform<Derived>::TransformCXXUnresolvedConstructExpr(
                                                   CXXUnresolvedConstructExpr *E) {
-  TemporaryBase Rebase(*this, E->getTypeBeginLoc(), DeclarationName());
-  QualType T = getDerived().TransformType(E->getTypeAsWritten());
-  if (T.isNull())
+  TypeSourceInfo *T = getDerived().TransformType(E->getTypeSourceInfo());
+  if (!T)
     return ExprError();
 
   bool ArgumentChanged = false;
   ASTOwningVector<Expr*> Args(SemaRef);
-  llvm::SmallVector<SourceLocation, 8> FakeCommaLocs;
   for (CXXUnresolvedConstructExpr::arg_iterator Arg = E->arg_begin(),
                                              ArgEnd = E->arg_end();
        Arg != ArgEnd; ++Arg) {
@@ -5785,22 +5753,18 @@ TreeTransform<Derived>::TransformCXXUnresolvedConstructExpr(
       return ExprError();
 
     ArgumentChanged = ArgumentChanged || TransArg.get() != *Arg;
-    FakeCommaLocs.push_back(
-                        SemaRef.PP.getLocForEndOfToken((*Arg)->getLocEnd()));
     Args.push_back(TransArg.get());
   }
 
   if (!getDerived().AlwaysRebuild() &&
-      T == E->getTypeAsWritten() &&
+      T == E->getTypeSourceInfo() &&
       !ArgumentChanged)
     return SemaRef.Owned(E->Retain());
 
   // FIXME: we're faking the locations of the commas
-  return getDerived().RebuildCXXUnresolvedConstructExpr(E->getTypeBeginLoc(),
-                                                        T,
+  return getDerived().RebuildCXXUnresolvedConstructExpr(T,
                                                         E->getLParenLoc(),
                                                         move_arg(Args),
-                                                        FakeCommaLocs.data(),
                                                         E->getRParenLoc());
 }
 

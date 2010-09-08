@@ -386,14 +386,14 @@ public:
   // FIXME: DesignatedInitExpr
   bool VisitCXXTypeidExpr(CXXTypeidExpr *E);
   bool VisitCXXDefaultArgExpr(CXXDefaultArgExpr *E) { return false; }
-  // FIXME: CXXTemporaryObjectExpr has poor source-location information.
-  // FIXME: CXXScalarValueInitExpr has poor source-location information.
+  bool VisitCXXTemporaryObjectExpr(CXXTemporaryObjectExpr *E);
+  bool VisitCXXScalarValueInitExpr(CXXScalarValueInitExpr *E);
   bool VisitCXXNewExpr(CXXNewExpr *E);
   bool VisitCXXPseudoDestructorExpr(CXXPseudoDestructorExpr *E);
   // FIXME: UnaryTypeTraitExpr has poor source-location information.
   bool VisitOverloadExpr(OverloadExpr *E);
   bool VisitDependentScopeDeclRefExpr(DependentScopeDeclRefExpr *E);
-  // FIXME: CXXUnresolvedConstructExpr has poor source-location information.
+  bool VisitCXXUnresolvedConstructExpr(CXXUnresolvedConstructExpr *E);
   bool VisitCXXDependentScopeMemberExpr(CXXDependentScopeMemberExpr *E);
   bool VisitUnresolvedMemberExpr(UnresolvedMemberExpr *E);
 };
@@ -1590,6 +1590,20 @@ bool CursorVisitor::VisitCXXTypeidExpr(CXXTypeidExpr *E) {
   return VisitExpr(E);
 }
 
+bool CursorVisitor::VisitCXXTemporaryObjectExpr(CXXTemporaryObjectExpr *E) {
+  if (TypeSourceInfo *TSInfo = E->getTypeSourceInfo())
+    return Visit(TSInfo->getTypeLoc());
+  
+  return VisitExpr(E);
+}
+
+bool CursorVisitor::VisitCXXScalarValueInitExpr(CXXScalarValueInitExpr *E) {
+  if (TypeSourceInfo *TSInfo = E->getTypeSourceInfo())
+    return Visit(TSInfo->getTypeLoc());
+  
+  return false;
+}
+
 bool CursorVisitor::VisitCXXNewExpr(CXXNewExpr *E) {
   // Visit placement arguments.
   for (unsigned I = 0, N = E->getNumPlacementArgs(); I != N; ++I)
@@ -1686,6 +1700,15 @@ bool CursorVisitor::VisitDependentScopeDeclRefExpr(
   }
 
   return false;
+}
+
+bool CursorVisitor::VisitCXXUnresolvedConstructExpr(
+                                                CXXUnresolvedConstructExpr *E) {
+  if (TypeSourceInfo *TSInfo = E->getTypeSourceInfo())
+    if (Visit(TSInfo->getTypeLoc()))
+      return true;
+  
+  return VisitExpr(E);
 }
 
 bool CursorVisitor::VisitCXXDependentScopeMemberExpr(

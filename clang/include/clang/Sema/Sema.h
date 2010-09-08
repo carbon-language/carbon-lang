@@ -2173,11 +2173,15 @@ public:
   /// Can be interpreted either as function-style casting ("int(x)")
   /// or class type construction ("ClassType(x,y,z)")
   /// or creation of a value-initialized type ("int()").
-  ExprResult ActOnCXXTypeConstructExpr(SourceRange TypeRange,
-                                       ParsedType TypeRep,
+  ExprResult ActOnCXXTypeConstructExpr(ParsedType TypeRep,
                                        SourceLocation LParenLoc,
                                        MultiExprArg Exprs,
                                        SourceLocation *CommaLocs,
+                                       SourceLocation RParenLoc);
+
+  ExprResult BuildCXXTypeConstructExpr(TypeSourceInfo *Type,
+                                       SourceLocation LParenLoc,
+                                       MultiExprArg Exprs,
                                        SourceLocation RParenLoc);
 
   /// ActOnCXXNew - Parsed a C++ 'new' expression.

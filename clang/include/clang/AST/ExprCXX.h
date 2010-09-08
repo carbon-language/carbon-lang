@@ -804,24 +804,23 @@ public:
 /// };
 /// @endcode
 class CXXTemporaryObjectExpr : public CXXConstructExpr {
-  SourceLocation TyBeginLoc;
   SourceLocation RParenLoc;
+  TypeSourceInfo *Type;
 
 public:
   CXXTemporaryObjectExpr(ASTContext &C, CXXConstructorDecl *Cons,
-                         QualType writtenTy, SourceLocation tyBeginLoc,
+                         TypeSourceInfo *Type,
                          Expr **Args,unsigned NumArgs,
                          SourceLocation rParenLoc,
                          bool ZeroInitialization = false);
   explicit CXXTemporaryObjectExpr(EmptyShell Empty)
-    : CXXConstructExpr(CXXTemporaryObjectExprClass, Empty) { }
+    : CXXConstructExpr(CXXTemporaryObjectExprClass, Empty), Type() { }
 
-  SourceLocation getTypeBeginLoc() const { return TyBeginLoc; }
+  TypeSourceInfo *getTypeSourceInfo() const { return Type; }
   SourceLocation getRParenLoc() const { return RParenLoc; }
 
-  virtual SourceRange getSourceRange() const {
-    return SourceRange(TyBeginLoc, RParenLoc);
-  }
+  virtual SourceRange getSourceRange() const;
+  
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == CXXTemporaryObjectExprClass;
   }
@@ -835,32 +834,30 @@ public:
 /// T, which is a non-class type.
 ///
 class CXXScalarValueInitExpr : public Expr {
-  SourceLocation TyBeginLoc;
   SourceLocation RParenLoc;
+  TypeSourceInfo *TypeInfo;
 
+  friend class ASTStmtReader;
+  
 public:
-  CXXScalarValueInitExpr(QualType ty, SourceLocation tyBeginLoc,
-                       SourceLocation rParenLoc ) :
-    Expr(CXXScalarValueInitExprClass, ty, false, false),
-    TyBeginLoc(tyBeginLoc), RParenLoc(rParenLoc) {}
+  /// \brief Create an explicitly-written scalar-value initialization 
+  /// expression.
+  CXXScalarValueInitExpr(QualType Type,
+                         TypeSourceInfo *TypeInfo,
+                         SourceLocation rParenLoc ) :
+    Expr(CXXScalarValueInitExprClass, Type, false, false),
+    RParenLoc(rParenLoc), TypeInfo(TypeInfo) {}
+
   explicit CXXScalarValueInitExpr(EmptyShell Shell)
     : Expr(CXXScalarValueInitExprClass, Shell) { }
 
-  SourceLocation getTypeBeginLoc() const { return TyBeginLoc; }
+  TypeSourceInfo *getTypeSourceInfo() const {
+    return TypeInfo;
+  }
+  
   SourceLocation getRParenLoc() const { return RParenLoc; }
 
-  void setTypeBeginLoc(SourceLocation L) { TyBeginLoc = L; }
-  void setRParenLoc(SourceLocation L) { RParenLoc = L; }
-  
-  /// @brief Whether this initialization expression was
-  /// implicitly-generated.
-  bool isImplicit() const {
-    return TyBeginLoc.isInvalid() && RParenLoc.isInvalid();
-  }
-
-  virtual SourceRange getSourceRange() const {
-    return SourceRange(TyBeginLoc, RParenLoc);
-  }
+  virtual SourceRange getSourceRange() const;
 
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == CXXScalarValueInitExprClass;
@@ -1838,12 +1835,9 @@ public:
 /// constructor call, conversion function call, or some kind of type
 /// conversion.
 class CXXUnresolvedConstructExpr : public Expr {
-  /// \brief The starting location of the type
-  SourceLocation TyBeginLoc;
-
   /// \brief The type being constructed.
-  QualType Type;
-
+  TypeSourceInfo *Type;
+  
   /// \brief The location of the left parentheses ('(').
   SourceLocation LParenLoc;
 
@@ -1853,20 +1847,20 @@ class CXXUnresolvedConstructExpr : public Expr {
   /// \brief The number of arguments used to construct the type.
   unsigned NumArgs;
 
-  CXXUnresolvedConstructExpr(SourceLocation TyBegin,
-                             QualType T,
+  CXXUnresolvedConstructExpr(TypeSourceInfo *Type,
                              SourceLocation LParenLoc,
                              Expr **Args,
                              unsigned NumArgs,
                              SourceLocation RParenLoc);
 
   CXXUnresolvedConstructExpr(EmptyShell Empty, unsigned NumArgs)
-    : Expr(CXXUnresolvedConstructExprClass, Empty), NumArgs(NumArgs) { }
+    : Expr(CXXUnresolvedConstructExprClass, Empty), Type(), NumArgs(NumArgs) { }
 
+  friend class ASTStmtReader;
+  
 public:
   static CXXUnresolvedConstructExpr *Create(ASTContext &C,
-                                            SourceLocation TyBegin,
-                                            QualType T,
+                                            TypeSourceInfo *Type,
                                             SourceLocation LParenLoc,
                                             Expr **Args,
                                             unsigned NumArgs,
@@ -1875,15 +1869,14 @@ public:
   static CXXUnresolvedConstructExpr *CreateEmpty(ASTContext &C,
                                                  unsigned NumArgs);
 
-  /// \brief Retrieve the source location where the type begins.
-  SourceLocation getTypeBeginLoc() const { return TyBeginLoc; }
-  void setTypeBeginLoc(SourceLocation L) { TyBeginLoc = L; }
-
   /// \brief Retrieve the type that is being constructed, as specified
   /// in the source code.
-  QualType getTypeAsWritten() const { return Type; }
-  void setTypeAsWritten(QualType T) { Type = T; }
+  QualType getTypeAsWritten() const { return Type->getType(); }
 
+  /// \brief Retrieve the type source information for the type being 
+  /// constructed.
+  TypeSourceInfo *getTypeSourceInfo() const { return Type; }
+  
   /// \brief Retrieve the location of the left parentheses ('(') that
   /// precedes the argument list.
   SourceLocation getLParenLoc() const { return LParenLoc; }
@@ -1924,9 +1917,8 @@ public:
     *(arg_begin() + I) = E;
   }
 
-  virtual SourceRange getSourceRange() const {
-    return SourceRange(TyBeginLoc, RParenLoc);
-  }
+  virtual SourceRange getSourceRange() const;
+  
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == CXXUnresolvedConstructExprClass;
   }

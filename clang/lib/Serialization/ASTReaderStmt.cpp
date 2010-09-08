@@ -974,7 +974,7 @@ void ASTStmtReader::VisitCXXConstructExpr(CXXConstructExpr *E) {
 
 void ASTStmtReader::VisitCXXTemporaryObjectExpr(CXXTemporaryObjectExpr *E) {
   VisitCXXConstructExpr(E);
-  E->TyBeginLoc = Reader.ReadSourceLocation(Record, Idx);
+  E->Type = Reader.GetTypeSourceInfo(DeclsCursor, Record, Idx);
   E->RParenLoc = Reader.ReadSourceLocation(Record, Idx);
 }
 
@@ -1058,8 +1058,8 @@ void ASTStmtReader::VisitCXXBindTemporaryExpr(CXXBindTemporaryExpr *E) {
 
 void ASTStmtReader::VisitCXXScalarValueInitExpr(CXXScalarValueInitExpr *E) {
   VisitExpr(E);
-  E->setTypeBeginLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
-  E->setRParenLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+  E->TypeInfo = Reader.GetTypeSourceInfo(DeclsCursor, Record, Idx);
+  E->RParenLoc = SourceLocation::getFromRawEncoding(Record[Idx++]);
 }
 
 void ASTStmtReader::VisitCXXNewExpr(CXXNewExpr *E) {
@@ -1180,8 +1180,7 @@ ASTStmtReader::VisitCXXUnresolvedConstructExpr(CXXUnresolvedConstructExpr *E) {
   ++Idx; // NumArgs;
   for (unsigned I = 0, N = E->arg_size(); I != N; ++I)
     E->setArg(I, Reader.ReadSubExpr());
-  E->setTypeBeginLoc(Reader.ReadSourceLocation(Record, Idx));
-  E->setTypeAsWritten(Reader.GetType(Record[Idx++]));
+  E->Type = Reader.GetTypeSourceInfo(DeclsCursor, Record, Idx);
   E->setLParenLoc(Reader.ReadSourceLocation(Record, Idx));
   E->setRParenLoc(Reader.ReadSourceLocation(Record, Idx));
 }

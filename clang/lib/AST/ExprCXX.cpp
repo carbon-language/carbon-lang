@@ -75,6 +75,13 @@ Stmt::child_iterator CXXDefaultArgExpr::child_end() {
 }
 
 // CXXScalarValueInitExpr
+SourceRange CXXScalarValueInitExpr::getSourceRange() const {
+  SourceLocation Start = RParenLoc;
+  if (TypeInfo)
+    Start = TypeInfo->getTypeLoc().getBeginLoc();
+  return SourceRange(Start, RParenLoc);
+}
+
 Stmt::child_iterator CXXScalarValueInitExpr::child_begin() {
   return child_iterator();
 }
@@ -691,15 +698,20 @@ CXXBindTemporaryExpr *CXXBindTemporaryExpr::Create(ASTContext &C,
 
 CXXTemporaryObjectExpr::CXXTemporaryObjectExpr(ASTContext &C,
                                                CXXConstructorDecl *Cons,
-                                               QualType writtenTy,
-                                               SourceLocation tyBeginLoc,
+                                               TypeSourceInfo *Type,
                                                Expr **Args,
                                                unsigned NumArgs,
                                                SourceLocation rParenLoc,
                                                bool ZeroInitialization)
-  : CXXConstructExpr(C, CXXTemporaryObjectExprClass, writtenTy, tyBeginLoc,
+  : CXXConstructExpr(C, CXXTemporaryObjectExprClass, 
+                     Type->getType().getNonReferenceType(), 
+                     Type->getTypeLoc().getBeginLoc(),
                      Cons, false, Args, NumArgs, ZeroInitialization),
-  TyBeginLoc(tyBeginLoc), RParenLoc(rParenLoc) {
+    RParenLoc(rParenLoc), Type(Type) {
+}
+
+SourceRange CXXTemporaryObjectExpr::getSourceRange() const {
+  return SourceRange(Type->getTypeLoc().getBeginLoc(), RParenLoc);
 }
 
 CXXConstructExpr *CXXConstructExpr::Create(ASTContext &C, QualType T,
@@ -791,17 +803,15 @@ Stmt::child_iterator CXXExprWithTemporaries::child_end() {
   return &SubExpr + 1;
 }
 
-CXXUnresolvedConstructExpr::CXXUnresolvedConstructExpr(
-                                                 SourceLocation TyBeginLoc,
-                                                 QualType T,
+CXXUnresolvedConstructExpr::CXXUnresolvedConstructExpr(TypeSourceInfo *Type,
                                                  SourceLocation LParenLoc,
                                                  Expr **Args,
                                                  unsigned NumArgs,
                                                  SourceLocation RParenLoc)
-  : Expr(CXXUnresolvedConstructExprClass, T.getNonReferenceType(),
-         T->isDependentType(), true),
-    TyBeginLoc(TyBeginLoc),
-    Type(T),
+  : Expr(CXXUnresolvedConstructExprClass, 
+         Type->getType().getNonReferenceType(),
+         Type->getType()->isDependentType(), true),
+    Type(Type),
     LParenLoc(LParenLoc),
     RParenLoc(RParenLoc),
     NumArgs(NumArgs) {
@@ -811,15 +821,14 @@ CXXUnresolvedConstructExpr::CXXUnresolvedConstructExpr(
 
 CXXUnresolvedConstructExpr *
 CXXUnresolvedConstructExpr::Create(ASTContext &C,
-                                   SourceLocation TyBegin,
-                                   QualType T,
+                                   TypeSourceInfo *Type,
                                    SourceLocation LParenLoc,
                                    Expr **Args,
                                    unsigned NumArgs,
                                    SourceLocation RParenLoc) {
   void *Mem = C.Allocate(sizeof(CXXUnresolvedConstructExpr) +
                          sizeof(Expr *) * NumArgs);
-  return new (Mem) CXXUnresolvedConstructExpr(TyBegin, T, LParenLoc,
+  return new (Mem) CXXUnresolvedConstructExpr(Type, LParenLoc,
                                               Args, NumArgs, RParenLoc);
 }
 
@@ -829,6 +838,10 @@ CXXUnresolvedConstructExpr::CreateEmpty(ASTContext &C, unsigned NumArgs) {
   void *Mem = C.Allocate(sizeof(CXXUnresolvedConstructExpr) +
                          sizeof(Expr *) * NumArgs);
   return new (Mem) CXXUnresolvedConstructExpr(Empty, NumArgs);
+}
+
+SourceRange CXXUnresolvedConstructExpr::getSourceRange() const {
+  return SourceRange(Type->getTypeLoc().getBeginLoc(), RParenLoc);
 }
 
 Stmt::child_iterator CXXUnresolvedConstructExpr::child_begin() {

@@ -481,34 +481,43 @@ ExprResult Sema::ActOnCXXThis(SourceLocation ThisLoc) {
   return ExprError(Diag(ThisLoc, diag::err_invalid_this_use));
 }
 
-/// ActOnCXXTypeConstructExpr - Parse construction of a specified type.
-/// Can be interpreted either as function-style casting ("int(x)")
-/// or class type construction ("ClassType(x,y,z)")
-/// or creation of a value-initialized type ("int()").
 ExprResult
-Sema::ActOnCXXTypeConstructExpr(SourceRange TypeRange, ParsedType TypeRep,
+Sema::ActOnCXXTypeConstructExpr(ParsedType TypeRep,
                                 SourceLocation LParenLoc,
                                 MultiExprArg exprs,
                                 SourceLocation *CommaLocs,
                                 SourceLocation RParenLoc) {
   if (!TypeRep)
     return ExprError();
-
+  
   TypeSourceInfo *TInfo;
   QualType Ty = GetTypeFromParser(TypeRep, &TInfo);
   if (!TInfo)
     TInfo = Context.getTrivialTypeSourceInfo(Ty, SourceLocation());
+
+  return BuildCXXTypeConstructExpr(TInfo, LParenLoc, exprs, RParenLoc);
+}
+
+/// ActOnCXXTypeConstructExpr - Parse construction of a specified type.
+/// Can be interpreted either as function-style casting ("int(x)")
+/// or class type construction ("ClassType(x,y,z)")
+/// or creation of a value-initialized type ("int()").
+ExprResult
+Sema::BuildCXXTypeConstructExpr(TypeSourceInfo *TInfo,
+                                SourceLocation LParenLoc,
+                                MultiExprArg exprs,
+                                SourceLocation RParenLoc) {
+  QualType Ty = TInfo->getType();
   unsigned NumExprs = exprs.size();
   Expr **Exprs = (Expr**)exprs.get();
-  SourceLocation TyBeginLoc = TypeRange.getBegin();
+  SourceLocation TyBeginLoc = TInfo->getTypeLoc().getBeginLoc();
   SourceRange FullRange = SourceRange(TyBeginLoc, RParenLoc);
 
   if (Ty->isDependentType() ||
       CallExpr::hasAnyTypeDependentArguments(Exprs, NumExprs)) {
     exprs.release();
 
-    return Owned(CXXUnresolvedConstructExpr::Create(Context,
-                                                    TypeRange.getBegin(), Ty,
+    return Owned(CXXUnresolvedConstructExpr::Create(Context, TInfo,
                                                     LParenLoc,
                                                     Exprs, NumExprs,
                                                     RParenLoc));
@@ -536,29 +545,29 @@ Sema::ActOnCXXTypeConstructExpr(SourceRange TypeRange, ParsedType TypeRep,
   if (NumExprs == 1) {
     CastKind Kind = CK_Unknown;
     CXXCastPath BasePath;
-    if (CheckCastTypes(TypeRange, Ty, Exprs[0], Kind, BasePath,
+    if (CheckCastTypes(TInfo->getTypeLoc().getSourceRange(), Ty, Exprs[0], 
+                       Kind, BasePath,
                        /*FunctionalStyle=*/true))
       return ExprError();
 
     exprs.release();
 
     return Owned(CXXFunctionalCastExpr::Create(Context,
-                                              Ty.getNonLValueExprType(Context),
+                                               Ty.getNonLValueExprType(Context),
                                                TInfo, TyBeginLoc, Kind,
                                                Exprs[0], &BasePath,
                                                RParenLoc));
   }
 
   if (Ty->isRecordType()) {
-    InitializedEntity Entity = InitializedEntity::InitializeTemporary(Ty);
+    InitializedEntity Entity = InitializedEntity::InitializeTemporary(TInfo);
     InitializationKind Kind
-      = NumExprs ? InitializationKind::CreateDirect(TypeRange.getBegin(), 
+      = NumExprs ? InitializationKind::CreateDirect(TyBeginLoc,
                                                     LParenLoc, RParenLoc)
-                 : InitializationKind::CreateValue(TypeRange.getBegin(), 
+                 : InitializationKind::CreateValue(TyBeginLoc, 
                                                    LParenLoc, RParenLoc);
     InitializationSequence InitSeq(*this, Entity, Kind, Exprs, NumExprs);
-    ExprResult Result = InitSeq.Perform(*this, Entity, Kind,
-                                              move(exprs));
+    ExprResult Result = InitSeq.Perform(*this, Entity, Kind, move(exprs));
 
     // FIXME: Improve AST representation?
     return move(Result);
@@ -569,18 +578,22 @@ Sema::ActOnCXXTypeConstructExpr(SourceRange TypeRange, ParsedType TypeRep,
   // be a class with a suitably declared constructor.
   //
   if (NumExprs > 1)
-    return ExprError(Diag(CommaLocs[0],
+    return ExprError(Diag(PP.getLocForEndOfToken(Exprs[0]->getLocEnd()),
                           diag::err_builtin_func_cast_more_than_one_arg)
       << FullRange);
 
   assert(NumExprs == 0 && "Expected 0 expressions");
+  // FIXME: Why doesn't this go through the new-initialization code?
+  
   // C++ [expr.type.conv]p2:
   // The expression T(), where T is a simple-type-specifier for a non-array
   // complete object type or the (possibly cv-qualified) void type, creates an
   // rvalue of the specified type, which is value-initialized.
   //
   exprs.release();
-  return Owned(new (Context) CXXScalarValueInitExpr(Ty, TyBeginLoc, RParenLoc));
+  return Owned(new (Context) CXXScalarValueInitExpr(
+                                TInfo->getType().getNonLValueExprType(Context),
+                                                    TInfo, RParenLoc));
 }
 
 

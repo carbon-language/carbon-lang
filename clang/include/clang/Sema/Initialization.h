@@ -88,6 +88,10 @@ private:
     /// the VarDecl, ParmVarDecl, or FieldDecl, respectively.
     DeclaratorDecl *VariableOrMember;
     
+    /// \brief When Kind == EK_Temporary, the type source information for
+    /// the temporary.
+    TypeSourceInfo *TypeInfo;
+    
     struct {
       /// \brief When Kind == EK_Result, EK_Exception, or EK_New, the
       /// location of the 'return', 'throw', or 'new' keyword,
@@ -189,7 +193,15 @@ public:
   static InitializedEntity InitializeTemporary(QualType Type) {
     return InitializedEntity(EK_Temporary, SourceLocation(), Type);
   }
-  
+
+  /// \brief Create the initialization entity for a temporary.
+  static InitializedEntity InitializeTemporary(TypeSourceInfo *TypeInfo) {
+    InitializedEntity Result(EK_Temporary, SourceLocation(), 
+                             TypeInfo->getType());
+    Result.TypeInfo = TypeInfo;
+    return Result;
+  }
+
   /// \brief Create the initialization entity for a base class subobject.
   static InitializedEntity InitializeBase(ASTContext &Context,
                                           CXXBaseSpecifier *Base,
@@ -218,6 +230,15 @@ public:
 
   /// \brief Retrieve type being initialized.
   QualType getType() const { return Type; }
+  
+  /// \brief Retrieve complete type-source information for the object being 
+  /// constructed, if known.
+  TypeSourceInfo *getTypeSourceInfo() const {
+    if (Kind == EK_Temporary)
+      return TypeInfo;
+    
+    return 0;
+  }
   
   /// \brief Retrieve the name of the entity being initialized.
   DeclarationName getName() const;

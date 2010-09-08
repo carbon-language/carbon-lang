@@ -78,6 +78,16 @@ void *operator new(__SIZE_TYPE__, void*) throw();
 
 void test_more_exprs(void *mem, int i, int j) {
   new (mem) Pair(i, j);
+  typedef int Integer;
+  (void)Integer(i);
+  (Integer)i;
+  Integer();
+}
+
+template<typename T>
+void test_even_more_dependent_exprs(T t, Y y) {
+  typedef T type;
+  (void)type(t, y);
 }
 
 // RUN: c-index-test -test-load-source all %s | FileCheck %s
@@ -175,3 +185,13 @@ void test_more_exprs(void *mem, int i, int j) {
 // CHECK: load-stmts.cpp:80:13: TypeRef=struct Pair:73:8 Extent=[80:13 - 80:17]
 // CHECK: load-stmts.cpp:80:18: DeclRefExpr=i:79:37 Extent=[80:18 - 80:19]
 // CHECK: load-stmts.cpp:80:21: DeclRefExpr=j:79:44 Extent=[80:21 - 80:22]
+// CHECK: load-stmts.cpp:82:9: TypeRef=Integer:81:15 Extent=[82:9 - 82:16]
+// CHECK: load-stmts.cpp:82:17: DeclRefExpr=i:79:37 Extent=[82:17 - 82:18]
+// CHECK: load-stmts.cpp:83:3: UnexposedExpr=i:79:37 Extent=[83:3 - 83:13]
+// CHECK: load-stmts.cpp:83:4: TypeRef=Integer:81:15 Extent=[83:4 - 83:11]
+// CHECK: load-stmts.cpp:83:12: DeclRefExpr=i:79:37 Extent=[83:12 - 83:13]
+// CHECK: load-stmts.cpp:84:3: UnexposedExpr= Extent=[84:3 - 84:12]
+// CHECK: load-stmts.cpp:84:3: TypeRef=Integer:81:15 Extent=[84:3 - 84:10]
+// CHECK: load-stmts.cpp:90:9: TypeRef=type:89:13 Extent=[90:9 - 90:13]
+// CHECK: load-stmts.cpp:90:14: DeclRefExpr=t:88:39 Extent=[90:14 - 90:15]
+// CHECK: load-stmts.cpp:90:17: DeclRefExpr=y:88:44 Extent=[90:17 - 90:18]
