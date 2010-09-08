@@ -33,7 +33,7 @@ class CommandObjectCommandsSource : public CommandObject
 public:
     CommandObjectCommandsSource() :
         CommandObject ("commands source",
-                   "Reads in debugger commands from the file <filename> and executes them.",
+                   "Read in debugger commands from the file <filename> and execute them.",
                    "command source <filename>")
     {
     }
@@ -139,8 +139,8 @@ class CommandObjectCommandsAlias : public CommandObject
 public:
     CommandObjectCommandsAlias () :
         CommandObject ("commands alias",
-                         "Allows users to define their own debugger command abbreviations.",
-                         "commands alias <new_command> <old_command> [<options-for-aliased-command>]")
+                       "Allow users to define their own debugger command abbreviations.",
+                       "commands alias <new_command> <old_command> [<options-for-aliased-command>]")
     {
         SetHelpLong(
     "'alias' allows the user to create a short-cut or abbreviation for long \n\

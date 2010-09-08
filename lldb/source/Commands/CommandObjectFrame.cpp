@@ -53,7 +53,7 @@ public:
 
     CommandObjectFrameInfo () :
     CommandObject ("frame info",
-                   "Lists information about the currently selected frame in the current thread.",
+                   "List information about the currently selected frame in the current thread.",
                    "frame info",
                    eFlagProcessMustBeLaunched | eFlagProcessMustBePaused)
     {
@@ -96,7 +96,8 @@ public:
 
     CommandObjectFrameSelect () :
     CommandObject ("frame select",
-                   "Select the current frame by index in the current thread.",
+                   //"Select the current frame by index in the current thread.",
+                   "Select a frame by index from within the current thread and make it the current frame.",
                    "frame select <frame-index>",
                    eFlagProcessMustBeLaunched | eFlagProcessMustBePaused)
     {
@@ -362,12 +363,13 @@ public:
                                 }
                                 if (addr == LLDB_INVALID_ADDRESS)
                                 {
-                                    result.GetErrorStream().Printf ("error: %s is not loaded", var_sc.module_sp->GetFileSpec().GetFilename().AsCString());
+                                    result.GetErrorStream().Printf ("error: %s is not loaded\n", 
+                                                                    var_sc.module_sp->GetFileSpec().GetFilename().AsCString());
                                 }
                             }
                             else
                             {
-                                result.GetErrorStream().Printf ("error: unable to resolve the variable address 0x%llx", file_addr);
+                                result.GetErrorStream().Printf ("error: unable to resolve the variable address 0x%llx\n", file_addr);
                             }
                         }
                         else

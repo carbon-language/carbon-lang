@@ -98,7 +98,7 @@ class CommandObjectSourceInfo : public CommandObject
 public:   
     CommandObjectSourceInfo() :
         CommandObject ("source info",
-                         "Display info on the source lines from the current executable's debug info.",
+                         "Display information about the source lines from the current executable's debug info.",
                          "source info [<cmd-options>]")
     {
     }
@@ -229,7 +229,7 @@ class CommandObjectSourceList : public CommandObject
 public:   
     CommandObjectSourceList() :
         CommandObject ("source list",
-                         "Display source files from the current executable's debug info.",
+                         "Display source code (as specified) based on the current executable's debug info.",
                          "source list [<cmd-options>] [<filename>]")
     {
     }

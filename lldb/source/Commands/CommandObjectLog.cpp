@@ -83,7 +83,7 @@ public:
     {
         if (args.GetArgumentCount() < 1)
         {
-            result.GetErrorStream() << m_cmd_syntax.c_str();
+            result.AppendErrorWithFormat("Usage: %s\n", m_cmd_syntax.c_str());
         }
         else
         {
@@ -254,7 +254,7 @@ public:
         const size_t argc = args.GetArgumentCount();
         if (argc == 0)
         {
-            result.GetErrorStream() << m_cmd_syntax.c_str();
+            result.AppendErrorWithFormat("Usage: %s\n", m_cmd_syntax.c_str());
         }
         else
         {

@@ -50,7 +50,7 @@ CommandObjectBreakpointCommandAdd::CommandOptions::g_option_table[] =
         "Write the breakpoint command script in the Python scripting language."},
 
     { LLDB_OPT_SET_3, true, "commands",  'c', no_argument, NULL, 0, NULL,
-        "Write the breakpoint command script using the command line commands."},
+        "Write the breakpoint command script using standard debugger commands."},
 
     { 0, false, NULL, 0, 0, NULL, 0, NULL, NULL }
 };
@@ -112,7 +112,7 @@ CommandObjectBreakpointCommandAdd::CommandOptions::ResetOptionValues ()
 
 CommandObjectBreakpointCommandAdd::CommandObjectBreakpointCommandAdd () :
     CommandObject ("add",
-                   "Adds a set of commands to a breakpoint to be executed whenever a breakpoint is hit.",
+                   "Add a set of commands to a breakpoint, to be executed whenever the breakpoint is hit.",
                    "breakpoint command add <cmd-options> <breakpoint-id>")
 {
     SetHelpLong (
@@ -193,8 +193,8 @@ initialized: \n\
  \n\
 (lldb)  \n\
  \n\
-Special information  debugger command breakpoint commands \n\
---------------------------------------------------------- \n\
+Special information about debugger command breakpoint commands \n\
+-------------------------------------------------------------- \n\
  \n\
 You may enter any debugger command, exactly as you would at the \n\
 debugger prompt.  You may enter as many debugger commands as you like, \n\

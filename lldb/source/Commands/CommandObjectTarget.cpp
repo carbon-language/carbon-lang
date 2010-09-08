@@ -99,7 +99,7 @@ public:
 
     CommandObjectTargetImageSearchPathsClear () :
         CommandObject ("target image-search-paths clear",
-                       "Clears all current image search paths substitution pairs from the current target.",
+                       "Clear all current image search path substitution pairs from the current target.",
                        "target image-search-paths clear")
     {
     }
@@ -134,7 +134,7 @@ public:
 
     CommandObjectTargetImageSearchPathsInsert () :
         CommandObject ("target image-search-paths insert",
-                       "Inserts a new image search paths substitution pair to the current target at the specified index.",
+                       "Insert a new image search path substitution pair into the current target at the specified index.",
                        "target image-search-paths insert <index> <path-prefix> <new-path-prefix> [<path-prefix> <new-path-prefix>] ...")
     {
     }
@@ -217,7 +217,7 @@ public:
 
     CommandObjectTargetImageSearchPathsList () :
         CommandObject ("target image-search-paths list",
-                       "Lists all current image search paths substitution pairs in the current target.",
+                       "List all current image search path substitution pairs in the current target.",
                        "target image-search-paths list")
     {
     }
@@ -258,7 +258,7 @@ public:
 
     CommandObjectTargetImageSearchPathsQuery () :
     CommandObject ("target image-search-paths query",
-                   "Transforms a path using the first applicable image search path.",
+                   "Transform a path using the first applicable image search path.",
                    "target image-search-paths query <path>")
     {
     }

@@ -112,7 +112,7 @@ CommandObjectHelp::Execute (CommandInterpreter &interpreter, Args& command, Comm
                     const char *long_help = sub_cmd_obj->GetHelpLong();
                     if ((long_help != NULL)
                         && (strlen (long_help) > 0))
-                        interpreter.OutputFormattedHelpText (output_strm, "", "", sub_cmd_obj->GetHelpLong(), 1);
+                        output_strm.Printf ("\n%s", long_help);
                     else
                         interpreter.OutputFormattedHelpText (output_strm, "", "", sub_cmd_obj->GetHelp(), 1);
                     output_strm.Printf ("\nSyntax: %s\n", sub_cmd_obj->GetSyntax());

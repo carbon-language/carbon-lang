@@ -103,7 +103,7 @@ public:
 
     CommandObjectProcessLaunch () :
         CommandObject ("process launch",
-                       "Launches the executable in the debugger.",
+                       "Launch the executable in the debugger.",
                        "process launch [<cmd-options>] [<arguments-for-running-the-program>]")
     {
     }
@@ -454,7 +454,7 @@ public:
 
     CommandObjectProcessAttach () :
         CommandObject ("process attach",
-                       "Attaches to a process.",
+                       "Attach to a process.",
                        "process attach <cmd-options>")
     {
         SetHelpLong("Currently, you must set the executable file before you can attach "
@@ -683,7 +683,7 @@ public:
 
     CommandObjectProcessContinue () :
         CommandObject ("process continue",
-                       "Continues execution all threads in the current process.",
+                       "Continue execution of all threads in the current process.",
                        "process continue",
                        eFlagProcessMustBeLaunched | eFlagProcessMustBePaused)
     {
@@ -770,7 +770,7 @@ public:
 
     CommandObjectProcessDetach () :
         CommandObject ("process detach",
-                       "Detaches from the current process being debugged.",
+                       "Detach from the current process being debugged.",
                        "process detach",
                        eFlagProcessMustBeLaunched)
     {
@@ -818,7 +818,7 @@ public:
 
     CommandObjectProcessSignal () :
         CommandObject ("process signal",
-                       "Sends a UNIX signal to the current process being debugged.",
+                       "Send a UNIX signal to the current process being debugged.",
                        "process signal <unix-signal-number>")
     {
     }
@@ -884,7 +884,7 @@ public:
 
     CommandObjectProcessInterrupt () :
     CommandObject ("process interrupt",
-                   "Interrupts the current process being debugged.",
+                   "Interrupt the current process being debugged.",
                    "process interrupt",
                    eFlagProcessMustBeLaunched)
     {
@@ -945,7 +945,7 @@ public:
 
     CommandObjectProcessKill () :
     CommandObject ("process kill",
-                   "Terminates the current process being debugged.",
+                   "Terminate the current process being debugged.",
                    "process kill",
                    eFlagProcessMustBeLaunched)
     {
@@ -999,9 +999,9 @@ class CommandObjectProcessStatus : public CommandObject
 {
 public:
     CommandObjectProcessStatus () :
-    CommandObject ("status",
-                   "Shows the current status and location of executing process.",
-                   "status",
+    CommandObject ("process status",
+                   "Show the current status and location of executing process.",
+                   "process status",
                    0)
     {
     }

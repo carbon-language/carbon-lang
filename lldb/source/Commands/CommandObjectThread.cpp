@@ -332,7 +332,7 @@ public:
 
     CommandObjectThreadBacktrace () :
         CommandObject ("thread backtrace",
-                       "Shows the stack for one or more threads.  If no threads are specified, shows the currently selected thread.  Use the thread-index \"all\" to see all threads.",
+                       "Show the stack for one or more threads.  If no threads are specified, shows the currently selected thread.  Use the thread-index \"all\" to see all threads.",
                        "thread backtrace [<thread-index>] ...",
                        eFlagProcessMustBeLaunched | eFlagProcessMustBePaused),
         m_options()
@@ -793,7 +793,7 @@ public:
 
     CommandObjectThreadContinue () :
         CommandObject ("thread continue",
-                       "Continues execution of one or more threads in an active process.",
+                       "Continue execution of one or more threads in an active process.",
                        "thread continue <thread-index> [<thread-index> ...]",
                        eFlagProcessMustBeLaunched | eFlagProcessMustBePaused)
     {
@@ -1037,7 +1037,7 @@ public:
 
     CommandObjectThreadUntil () :
         CommandObject ("thread until",
-                       "Runs the current or specified thread until it reaches a given line number or leaves the current function.",
+                       "Run the current or specified thread until it reaches a given line number or leaves the current function.",
                        "thread until [<cmd-options>] <line-number>",
                        eFlagProcessMustBeLaunched | eFlagProcessMustBePaused),
         m_options ()
@@ -1235,7 +1235,7 @@ public:
 
     CommandObjectThreadSelect () :
         CommandObject ("thread select",
-                         "Selects a threads as the currently active thread.",
+                         "Select a threads as the currently active thread.",
                          "thread select <thread-index>",
                          eFlagProcessMustBeLaunched | eFlagProcessMustBePaused)
     {
@@ -1304,7 +1304,7 @@ public:
 
     CommandObjectThreadList ():
         CommandObject ("thread list",
-                       "Shows a summary of all current threads in a process.",
+                       "Show a summary of all current threads in a process.",
                        "thread list",
                        eFlagProcessMustBeLaunched | eFlagProcessMustBePaused)
     {

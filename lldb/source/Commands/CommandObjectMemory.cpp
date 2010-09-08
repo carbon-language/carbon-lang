@@ -178,7 +178,7 @@ public:
 
     CommandObjectMemoryRead () :
         CommandObject ("memory read",
-                       "Read memory from the process being debugged.",
+                       "Read from the memory of the process being debugged.",
                        "memory read [<cmd-options>] <start-addr> [<end-addr>]",
                        eFlagProcessMustBeLaunched)
     {
@@ -396,7 +396,7 @@ public:
 
     CommandObjectMemoryWrite () :
         CommandObject ("memory write",
-                       "Write memory to the process being debugged.",
+                       "Write to the memory of the process being debugged.",
                        "memory write [<cmd-options>] <addr> [value1 value2 ...]",
                        eFlagProcessMustBeLaunched)
     {

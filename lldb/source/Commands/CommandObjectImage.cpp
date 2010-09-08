@@ -887,7 +887,7 @@ public:
     CommandObjectImageDumpLineTable () :
         CommandObjectImageDumpSourceFileList ("image dump line-table",
                          "Dump the debug symbol file for one or more executable images.",
-                         "image dump line-table <file1> [<file2> ...]")
+                         "image dump line-table <source-file1> [<source-file2> ...]")
     {
     }
 
@@ -974,7 +974,7 @@ public:
     //------------------------------------------------------------------
     CommandObjectImageDump(CommandInterpreter &interpreter) :
         CommandObjectMultiword ("image dump",
-                                "Dumps information in one or more executable images; 'line-table' expects a source file name",
+                                "A set of commands for dumping information about one or more executable images; 'line-table' expects a source file name",
                                 "image dump [symtab|sections|symfile|line-table] [<file1> <file2> ...]")
     {
         LoadSubCommand (interpreter, "symtab",      CommandObjectSP (new CommandObjectImageDumpSymtab ()));

@@ -771,7 +771,7 @@ CommandObjectBreakpointList::Execute
 
 CommandObjectBreakpointEnable::CommandObjectBreakpointEnable () :
     CommandObject ("enable",
-                     "Enables the specified disabled breakpoint(s).  If no breakpoints are specified, enables all of them.",
+                     "Enable the specified disabled breakpoint(s).  If no breakpoints are specified, enable all of them.",
                      "breakpoint enable [<breakpoint-id> | <breakpoint-id-list>]")
 {
     // This command object can either be called via 'enable' or 'breakpoint enable'.  Because it has two different
@@ -873,7 +873,7 @@ CommandObjectBreakpointEnable::Execute
 
 CommandObjectBreakpointDisable::CommandObjectBreakpointDisable () :
     CommandObject ("disable",
-                   "Disables the specified breakpoint(s) without removing it/them.  If no breakpoints are specified, disables them all.",
+                   "Disable the specified breakpoint(s) without removing it/them.  If no breakpoints are specified, disable them all.",
                    "disable [<breakpoint-id> | <breakpoint-id-list>]")
 {
     // This command object can either be called via 'enable' or 'breakpoint enable'.  Because it has two different
@@ -973,7 +973,7 @@ CommandObjectBreakpointDisable::Execute
 
 CommandObjectBreakpointDelete::CommandObjectBreakpointDelete() :
     CommandObject ("breakpoint delete",
-                   "Delete the specified breakpoint(s).  If no breakpoints are specified, deletes them all.",
+                   "Delete the specified breakpoint(s).  If no breakpoints are specified, delete them all.",
                    "breakpoint delete [<breakpoint-id> | <breakpoint-id-list>]")
 {
 }
@@ -1208,7 +1208,7 @@ CommandObjectBreakpointModify::CommandOptions::ResetOptionValues ()
 #pragma mark Modify
 
 CommandObjectBreakpointModify::CommandObjectBreakpointModify () :
-    CommandObject ("breakpoint modify", "Modifys the options on a breakpoint or set of breakpoints in the executable.", 
+    CommandObject ("breakpoint modify", "Modify the options on a breakpoint or set of breakpoints in the executable.", 
                    "breakpoint modify <cmd-options> break-id [break-id ...]")
 {
 }

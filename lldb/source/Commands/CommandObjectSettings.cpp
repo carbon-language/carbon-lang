@@ -62,7 +62,7 @@ CommandObjectMultiwordSettings::~CommandObjectMultiwordSettings ()
 
 CommandObjectSettingsSet::CommandObjectSettingsSet () :
     CommandObject ("settings set",
-                   "Allows the user to set or change the value of a single debugger setting variable.",
+                   "Set or change the value of a single debugger setting variable.",
                    "settings set [<cmd-options>] <setting-variable-name> <value>"),
     m_options ()
 {
@@ -259,7 +259,7 @@ CommandObjectSettingsSet::GetOptions ()
 
 CommandObjectSettingsShow::CommandObjectSettingsShow () :
     CommandObject ("settings show",
-                    "Allows the user to see a single internal debugger setting variable and its value, or lists them all.",
+                    "Show the specified internal debugger setting variable and its value, or show all the currently set variables and their values, if nothing is specified.",
                     "settings show [<setting-variable-name>]")
 {
 }
@@ -365,7 +365,7 @@ CommandObjectSettingsShow::HandleArgumentCompletion (CommandInterpreter &interpr
 
 CommandObjectSettingsList::CommandObjectSettingsList () :
     CommandObject ("settings list",
-                   "Lists the internal debugger settings variables available to the user to 'set' or 'show'.",
+                   "List all the internal debugger settings variables that are available to the user to 'set' or 'show'.",
                    "settings list")
 {
 }
@@ -407,7 +407,7 @@ CommandObjectSettingsList::Execute (CommandInterpreter &interpreter,
 
 CommandObjectSettingsRemove::CommandObjectSettingsRemove () :
     CommandObject ("settings remove",
-                   "Removes the specified element from an internal debugger settings array or dictionary variable.",
+                   "Remove the specified element from an internal debugger settings array or dictionary variable.",
                    "settings remove <setting-variable-name> [<index>|\"key\"]")
 {
 }
@@ -502,7 +502,7 @@ CommandObjectSettingsRemove::HandleArgumentCompletion (CommandInterpreter &inter
 
 CommandObjectSettingsReplace::CommandObjectSettingsReplace () :
     CommandObject ("settings replace",
-                   "Replaces the specified element from an internal debugger settings array or dictionary variable.",
+                   "Replace the specified element from an internal debugger settings array or dictionary variable with the specified new value.",
                    "settings replace <setting-variable-name> [<index>|\"<key>\"] <new-value>")
 {
 }
@@ -612,7 +612,7 @@ CommandObjectSettingsReplace::HandleArgumentCompletion (CommandInterpreter &inte
 
 CommandObjectSettingsInsertBefore::CommandObjectSettingsInsertBefore () :
     CommandObject ("settings insert-before",
-                   "Inserts value(s) into an internal debugger settings array variable, immediately before the specified element.",
+                   "Insert value(s) into an internal debugger settings array variable, immediately before the specified element.",
                    "settings insert-before <setting-variable-name> [<index>] <new-value>")
 {
 }
@@ -724,7 +724,7 @@ CommandObjectSettingsInsertBefore::HandleArgumentCompletion (CommandInterpreter 
 
 CommandObjectSettingsInsertAfter::CommandObjectSettingsInsertAfter () :
     CommandObject ("settings insert-after",
-                   "Inserts value(s) into an internal debugger settings array variable, immediately after the specified element.",
+                   "Insert value(s) into an internal debugger settings array variable, immediately after the specified element.",
                    "settings insert-after <setting-variable-name> [<index>] <new-value>")
 {
 }
@@ -836,7 +836,7 @@ CommandObjectSettingsInsertAfter::HandleArgumentCompletion (CommandInterpreter &
 
 CommandObjectSettingsAppend::CommandObjectSettingsAppend () :
     CommandObject ("settings append",
-                   "Appends new value to the end of an internal debugger settings array, dictionary or string variable.",
+                   "Append a new value to the end of an internal debugger settings array, dictionary or string variable.",
                    "settings append <setting-variable-name> <new-value>")
 {
 }
@@ -936,7 +936,7 @@ CommandObjectSettingsAppend::HandleArgumentCompletion (CommandInterpreter &inter
 
 CommandObjectSettingsClear::CommandObjectSettingsClear () :
     CommandObject ("settings clear",
-                   "Erases all the contents of an internal debugger settings variables; only valid for variables with clearable types, i.e. strings, arrays or dictionaries.",
+                   "Erase all the contents of an internal debugger settings variables; this is only valid for variables with clearable types, i.e. strings, arrays or dictionaries.",
                    "settings clear")
 {
 }
