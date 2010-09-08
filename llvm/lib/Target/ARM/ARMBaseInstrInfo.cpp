@@ -747,7 +747,6 @@ storeRegToStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
   case ARM::QPRRegClassID:
   case ARM::QPR_VFP2RegClassID:
   case ARM::QPR_8RegClassID:
-    // FIXME: Neon instructions should support predicates
     if (Align >= 16 && getRegisterInfo().needsStackRealignment(MF)) {
       AddDefaultPred(BuildMI(MBB, I, DL, get(ARM::VST1q))
                      .addFrameIndex(FI).addImm(16)
