@@ -1830,23 +1830,28 @@ static std::string FormatFunctionParameter(ASTContext &Context,
   
   // We have the function prototype behind the block pointer type, as it was
   // written in the source.
-  std::string Result = "(^)(";
-  for (unsigned I = 0, N = Block->getNumArgs(); I != N; ++I) {
-    if (I)
-      Result += ", ";
-    Result += FormatFunctionParameter(Context, Block->getArg(I));
-    
-    if (I == N - 1 && Block->getTypePtr()->isVariadic())
-      Result += ", ...";
+  std::string Result;
+  QualType ResultType = Block->getTypePtr()->getResultType();
+  if (!ResultType->isVoidType())
+    ResultType.getAsStringInternal(Result, Context.PrintingPolicy);
+  
+  Result = '^' + Result;
+  if (Block->getNumArgs() == 0) {
+    if (Block->getTypePtr()->isVariadic())
+      Result += "(...)";
+  } else {
+    Result += "(";
+    for (unsigned I = 0, N = Block->getNumArgs(); I != N; ++I) {
+      if (I)
+        Result += ", ";
+      Result += FormatFunctionParameter(Context, Block->getArg(I));
+      
+      if (I == N - 1 && Block->getTypePtr()->isVariadic())
+        Result += ", ...";
+    }
+    Result += ")";
   }
-  if (Block->getTypePtr()->isVariadic() && Block->getNumArgs() == 0)
-    Result += "...";
-  else if (Block->getNumArgs() == 0 && !Context.getLangOptions().CPlusPlus)
-    Result += "void";
-             
-  Result += ")";
-  Block->getTypePtr()->getResultType().getAsStringInternal(Result, 
-                                                        Context.PrintingPolicy);
+  
   return Result;
 }
 
