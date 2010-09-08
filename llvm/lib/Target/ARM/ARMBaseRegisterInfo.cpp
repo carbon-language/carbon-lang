@@ -1057,8 +1057,11 @@ ARMBaseRegisterInfo::ResolveFrameIndexReference(const MachineFunction &MF,
     if (isFixed) {
       FrameReg = getFrameRegister(MF);
       Offset = FPOffset;
-    } else if (MFI->hasVarSizedObjects())
+    } else if (MFI->hasVarSizedObjects()) {
+      assert(hasBasePointer(MF) &&
+             "VLAs and dynamic stack alignment, but missing base pointer!");
       FrameReg = BasePtr;
+    }
     return Offset;
   }
 
