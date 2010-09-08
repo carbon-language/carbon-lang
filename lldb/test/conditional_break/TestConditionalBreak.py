@@ -58,8 +58,10 @@ class ConditionalBreakTestCase(TestBase):
                     # In reality, similar logic can be used to find out the call
                     # site.
                     self.assertTrue(line == 27, "Immediate caller a() at main.c:27")
-                    self.runCmd("thread backtrace")
-                    self.runCmd("frame variable")
+                    self.expect("thread backtrace", "Call site at a()",
+                        substrs = ["main.c:27"])
+                    self.expect("frame variable", "Passed in arg val of (int) 3",
+                        startstr = "val = (int) 3")
                     break
 
             # This doesn't work?
