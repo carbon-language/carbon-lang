@@ -5622,7 +5622,7 @@ void Sema::AddCXXDirectInitializerToDecl(Decl *RealDecl,
 
     if (!VDecl->isInvalidDecl() &&
         !VDecl->getDeclContext()->isDependentContext() &&
-        VDecl->hasGlobalStorage() &&
+        VDecl->hasGlobalStorage() && !VDecl->isStaticLocal() &&
         !VDecl->getInit()->isConstantInitializer(Context,
                                         VDecl->getType()->isReferenceType()))
       Diag(VDecl->getLocation(), diag::warn_global_constructor)

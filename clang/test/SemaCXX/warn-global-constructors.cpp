@@ -77,5 +77,15 @@ namespace test6 {
   void f2() {
     static A& a = *new A;
   }
+}
 
+namespace pr8095 {
+  struct Foo {
+    int x;
+    Foo(int x1) : x(x1) {}
+  };
+
+  void bar() {
+    static Foo a(0);
+  }
 }
