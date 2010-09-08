@@ -171,6 +171,13 @@ namespace {
       return ModRef;
     }
 
+    virtual DependenceResult getDependence(const Instruction *First,
+                                           DependenceQueryFlags FirstFlags,
+                                           const Instruction *Second,
+                                           DependenceQueryFlags SecondFlags) {
+      return Unknown;
+    }
+
     virtual void deleteValue(Value *V) {}
     virtual void copyValue(Value *From, Value *To) {}
     
@@ -523,6 +530,11 @@ namespace {
     /// For use when the call site is not known.
     virtual ModRefBehavior getModRefBehavior(const Function *F);
 
+    virtual DependenceResult getDependence(const Instruction *First,
+                                           DependenceQueryFlags FirstFlags,
+                                           const Instruction *Second,
+                                           DependenceQueryFlags SecondFlags);
+
     /// getAdjustedAnalysisPointer - This method is used when a pass implements
     /// an analysis interface through multiple inheritance.  If needed, it
     /// should override this to adjust the this pointer as needed for the
@@ -734,6 +746,14 @@ BasicAliasAnalysis::getModRefInfo(ImmutableCallSite CS,
   return AliasAnalysis::getModRefInfo(CS, P, Size);
 }
 
+AliasAnalysis::DependenceResult
+BasicAliasAnalysis::getDependence(const Instruction *First,
+                                  DependenceQueryFlags FirstFlags,
+                                  const Instruction *Second,
+                                  DependenceQueryFlags SecondFlags) {
+  // We don't have anything special to say yet.
+  return getDependenceViaModRefInfo(First, FirstFlags, Second, SecondFlags);
+}
 
 /// aliasGEP - Provide a bunch of ad-hoc rules to disambiguate a GEP instruction
 /// against another pointer.  We know that V1 is a GEP, but we don't know

@@ -278,6 +278,81 @@ public:
                                      ImmutableCallSite CS2);
 
   //===--------------------------------------------------------------------===//
+  /// Dependence queries.
+  ///
+
+  /// DependenceResult - These are the return values for getDependence queries.
+  /// They are defined in terms of "memory", but they are also used to model
+  /// other side effects, such as I/O and volatility.
+  enum DependenceResult {
+    /// ReadThenRead - The instructions are ReadThenReadSome and the second
+    /// instruction reads from exactly the same memory read from by the first.
+    ReadThenRead,
+    
+    /// ReadThenReadSome - The instructions are Independent, both are read-only,
+    /// and the second instruction reads from a subset of the memory read from
+    /// by the first.
+    ReadThenReadSome,
+
+    /// Independent - Neither instruction reads from or writes to memory written
+    /// to by the other.  All enum values lower than this one are special cases
+    /// of Indepenent.
+    Independent,
+
+    /// WriteThenRead - The instructions are WriteThenReadSome and the second
+    /// instruction reads from exactly the same memory written by the first.
+    WriteThenRead,
+
+    /// WriteThenReadSome - The first instruction is write-only, the second
+    /// instruction is read-only, and the second only reads from memory
+    /// written to by the first.
+    WriteThenReadSome,
+
+    /// ReadThenWrite - The instructions are ReadThenWriteSome and the second
+    /// instruction writes to exactly the same memory read from by the first.
+    ReadThenWrite,
+
+    /// WriteThenWrite - The instructions are WriteThenWriteSome, and the
+    /// second instruction writes to exactly the same memory written to by
+    /// the first.
+    WriteThenWrite,
+
+    /// WriteSomeThenWrite - Both instructions are write-only, and the second
+    /// instruction writes to a superset of the memory written to by the first.
+    WriteSomeThenWrite,
+
+    /// Unknown - The relationship between the instructions cannot be
+    /// determined or does not fit into any of the cases defined here.
+    Unknown
+  };
+
+  /// DependenceQueryFlags - Flags for refining dependence queries.
+  enum DependenceQueryFlags {
+    Default      = 0,
+    IgnoreLoads  = 1,
+    IgnoreStores = 2
+  };
+
+  /// getDependence - Determine the dependence relationship between the
+  /// instructions. This does not include "register" dependencies; it just
+  /// considers memory references and other side effects.
+  /// WARNING: This is an experimental interface.
+  DependenceResult getDependence(const Instruction *First,
+                                 const Instruction *Second) {
+    return getDependence(First, Default, Second, Default);
+  }
+
+  /// getDependence - Determine the dependence relationship between the
+  /// instructions. This does not include "register" dependencies; it just
+  /// considers memory references and other side effects.  This overload
+  /// accepts additional flags to refine the query.
+  /// WARNING: This is an experimental interface.
+  virtual DependenceResult getDependence(const Instruction *First,
+                                         DependenceQueryFlags FirstFlags,
+                                         const Instruction *Second,
+                                         DependenceQueryFlags SecondFlags);
+
+  //===--------------------------------------------------------------------===//
   /// Higher level methods for querying mod/ref information.
   ///
 
@@ -322,6 +397,15 @@ public:
     copyValue(Old, New);
     deleteValue(Old);
   }
+
+protected:
+  /// getDependenceViaModRefInfo - Helper function for implementing getDependence
+  /// in implementations which already have getModRefInfo implementations.
+  DependenceResult getDependenceViaModRefInfo(const Instruction *First,
+                                              DependenceQueryFlags FirstFlags,
+                                              const Instruction *Second,
+                                              DependenceQueryFlags SecondFlags);
+
 };
 
 /// isNoAliasCall - Return true if this pointer is returned by a noalias
