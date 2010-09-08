@@ -11,6 +11,7 @@ struct Empty {};
 typedef Empty EmptyAr[10];
 typedef int Int;
 typedef Int IntAr[10];
+typedef Int IntArNB[];
 class Statics { static int priv; static NonPOD np; };
 union EmptyUnion {};
 union Union { int i; float f; };
@@ -20,6 +21,7 @@ struct HasConv { operator int(); };
 struct HasAssign { void operator =(int); };
 
 // Not PODs
+typedef const void cvoid;
 struct Derives : POD {};
 struct DerivesEmpty : Empty {};
 struct HasCons { HasCons(int); };
@@ -32,6 +34,7 @@ struct HasNonPOD { NonPOD np; };
 struct HasVirt { virtual void Virt() {}; };
 typedef Derives NonPODAr[10];
 typedef HasVirt VirtAr[10];
+typedef HasCons NonPODArNB[];
 union NonPODUnion { int i; Derives n; };
 
 struct HasNoThrowCopyAssign {
@@ -80,6 +83,7 @@ void is_pod()
   int t11[T(__is_pod(HasOp))];
   int t12[T(__is_pod(HasConv))];
   int t13[T(__is_pod(HasAssign))];
+  int t14[T(__is_pod(IntArNB))];
 
   int t21[F(__is_pod(Derives))];
   int t22[F(__is_pod(HasCons))];
@@ -92,6 +96,9 @@ void is_pod()
   int t29[F(__is_pod(HasVirt))];
   int t30[F(__is_pod(NonPODAr))];
   int t31[F(__is_pod(DerivesEmpty))];
+  int t32[F(__is_pod(void))];
+  int t33[F(__is_pod(cvoid))];
+  int t34[F(__is_pod(NonPODArNB))];
  // int t32[F(__is_pod(NonPODUnion))];
 }
 
@@ -122,6 +129,8 @@ void is_empty()
   int t25[F(__is_empty(HasRef))];
   int t26[F(__is_empty(HasVirt))];
   int t27[F(__is_empty(BitOnly))];
+  int t28[F(__is_empty(void))];
+  int t29[F(__is_empty(IntArNB))];
 //  int t27[F(__is_empty(DerivesVirt))];
 }
 
@@ -139,6 +148,8 @@ void is_class()
   int t14[F(__is_class(IntAr))];
   int t15[F(__is_class(NonPODAr))];
   int t16[F(__is_class(Union))];
+  int t17[F(__is_class(cvoid))];
+  int t18[F(__is_class(IntArNB))];
 }
 
 typedef Union UnionAr[10];
@@ -154,6 +165,8 @@ void is_union()
   int t13[F(__is_union(Int))];
   int t14[F(__is_union(IntAr))];
   int t15[F(__is_union(UnionAr))];
+  int t16[F(__is_union(cvoid))];
+  int t17[F(__is_union(IntArNB))];
 }
 
 typedef Enum EnumType;
@@ -170,6 +183,8 @@ void is_enum()
   int t15[F(__is_enum(UnionAr))];
   int t16[F(__is_enum(Derives))];
   int t17[F(__is_enum(ClassType))];
+  int t18[F(__is_enum(cvoid))];
+  int t19[F(__is_enum(IntArNB))];
 }
 
 typedef HasVirt Polymorph;
@@ -188,6 +203,8 @@ void is_polymorphic()
   int t16[F(__is_polymorphic(Derives))];
   int t17[F(__is_polymorphic(ClassType))];
   int t18[F(__is_polymorphic(Enum))];
+  int t19[F(__is_polymorphic(cvoid))];
+  int t20[F(__is_polymorphic(IntArNB))];
 }
 
 typedef Int& IntRef;
@@ -217,6 +234,8 @@ void has_trivial_default_constructor() {
   int t16[T(__has_trivial_constructor(const Int))];
   int t17[T(__has_trivial_constructor(NonPODAr))];
   int t18[F(__has_trivial_constructor(VirtAr))];
+  int t19[F(__has_trivial_constructor(void))];
+  int t20[F(__has_trivial_constructor(cvoid))];
 }
 
 void has_trivial_copy_constructor() {
@@ -238,6 +257,8 @@ void has_trivial_copy_constructor() {
   int t16[T(__has_trivial_copy(const Int))];
   int t17[F(__has_trivial_copy(NonPODAr))];
   int t18[F(__has_trivial_copy(VirtAr))];
+  int t19[F(__has_trivial_copy(void))];
+  int t20[F(__has_trivial_copy(cvoid))];
 }
 
 void has_trivial_copy_assignment() {
@@ -259,6 +280,8 @@ void has_trivial_copy_assignment() {
   int t16[F(__has_trivial_assign(const Int))];
   int t17[F(__has_trivial_assign(NonPODAr))];
   int t18[F(__has_trivial_assign(VirtAr))];
+  int t19[F(__has_trivial_assign(void))];
+  int t20[F(__has_trivial_assign(cvoid))];
 }
 
 void has_trivial_destructor() {
@@ -280,14 +303,16 @@ void has_trivial_destructor() {
   int t16[T(__has_trivial_destructor(const Int))];
   int t17[T(__has_trivial_destructor(NonPODAr))];
   int t18[T(__has_trivial_destructor(VirtAr))];
+  int t19[F(__has_trivial_destructor(void))];
+  int t20[F(__has_trivial_destructor(cvoid))];
 }
 
 struct A { ~A() {} };
 template<typename> struct B : A { };
 
 void f() {
-  int t01[T(!__has_trivial_destructor(A))];
-  int t02[T(!__has_trivial_destructor(B<int>))];
+  int t01[F(__has_trivial_destructor(A))];
+  int t02[F(__has_trivial_destructor(B<int>))];
 }
 
 void has_nothrow_assign() {
@@ -309,10 +334,11 @@ void has_nothrow_assign() {
   int t16[F(__has_nothrow_assign(const Int))];
   int t17[F(__has_nothrow_assign(NonPODAr))];
   int t18[F(__has_nothrow_assign(VirtAr))];
-
   int t19[T(__has_nothrow_assign(HasNoThrowCopyAssign))];
   int t20[F(__has_nothrow_assign(HasMultipleCopyAssign))];
   int t21[T(__has_nothrow_assign(HasMultipleNoThrowCopyAssign))];
+  int t22[F(__has_nothrow_assign(void))];
+  int t23[F(__has_nothrow_assign(cvoid))];
 }
 
 void has_nothrow_copy() {
@@ -338,6 +364,8 @@ void has_nothrow_copy() {
   int t19[T(__has_nothrow_copy(HasNoThrowCopy))];
   int t20[F(__has_nothrow_copy(HasMultipleCopy))];
   int t21[T(__has_nothrow_copy(HasMultipleNoThrowCopy))];
+  int t22[F(__has_nothrow_copy(void))];
+  int t23[F(__has_nothrow_copy(cvoid))];
 }
 
 void has_nothrow_constructor() {
@@ -362,6 +390,8 @@ void has_nothrow_constructor() {
 
   int t19[T(__has_nothrow_constructor(HasNoThrowConstructor))];
   int t20[F(__has_nothrow_constructor(HasNoThrowConstructorWithArgs))];
+  int t21[F(__has_nothrow_constructor(void))];
+  int t22[F(__has_nothrow_constructor(cvoid))];
 }
 
 void has_virtual_destructor() {
@@ -387,4 +417,6 @@ void has_virtual_destructor() {
   int t19[T(__has_virtual_destructor(HasVirtDest))];
   int t20[T(__has_virtual_destructor(DerivedVirtDest))];
   int t21[F(__has_virtual_destructor(VirtDestAr))];
+  int t22[F(__has_virtual_destructor(void))];
+  int t23[F(__has_virtual_destructor(cvoid))];
 }

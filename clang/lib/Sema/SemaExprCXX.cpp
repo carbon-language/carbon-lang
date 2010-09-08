@@ -1956,9 +1956,13 @@ ExprResult Sema::ActOnUnaryTypeTrait(UnaryTypeTrait OTT,
 
   // According to http://gcc.gnu.org/onlinedocs/gcc/Type-Traits.html
   // all traits except __is_class, __is_enum and __is_union require a the type
-  // to be complete.
+  // to be complete, an array of unknown bound, or void.
   if (OTT != UTT_IsClass && OTT != UTT_IsEnum && OTT != UTT_IsUnion) {
-    if (RequireCompleteType(KWLoc, T,
+    QualType E = T;
+    if (T->isIncompleteArrayType())
+      E = Context.getAsArrayType(T)->getElementType();
+    if (!T->isVoidType() &&
+        RequireCompleteType(KWLoc, E,
                             diag::err_incomplete_type_used_in_type_trait_expr))
       return ExprError();
   }

@@ -678,7 +678,11 @@ bool Type::isIncompleteType() const {
 /// isPODType - Return true if this is a plain-old-data type (C++ 3.9p10)
 bool Type::isPODType() const {
   // The compiler shouldn't query this for incomplete types, but the user might.
-  // We return false for that case.
+  // We return false for that case. Except for incomplete arrays of PODs, which
+  // are PODs according to the standard.
+  if (isIncompleteArrayType() &&
+      cast<ArrayType>(CanonicalType)->getElementType()->isPODType())
+    return true;
   if (isIncompleteType())
     return false;
 
@@ -687,7 +691,7 @@ bool Type::isPODType() const {
   default: return false;
   case VariableArray:
   case ConstantArray:
-    // IncompleteArray is caught by isIncompleteType() above.
+    // IncompleteArray is handled above.
     return cast<ArrayType>(CanonicalType)->getElementType()->isPODType();
 
   case Builtin:
