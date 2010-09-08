@@ -173,3 +173,15 @@ xchgl   368(%rax),%ecx
 // CHECK: xchgl	%ecx, 368(%rax)
 xchgl   %ecx, 368(%rax)
 // CHECK: xchgl	%ecx, 368(%rax)
+
+// PR7254
+lock  incl 1(%rsp)
+// CHECK: lock
+// CHECK: incl 1(%rsp)
+
+// rdar://8033482
+rep movsl
+// CHECK: rep
+// CHECK: encoding: [0xf3]
+// CHECK: movsl
+// CHECK: encoding: [0xa5]

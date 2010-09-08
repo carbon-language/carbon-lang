@@ -758,10 +758,19 @@ ParseInstruction(StringRef Name, SMLoc NameLoc,
 
   if (ExtraImmOp)
     Operands.push_back(X86Operand::CreateImm(ExtraImmOp, NameLoc, NameLoc));
-
   
-  // This does the actual operand parsing.
-  if (getLexer().isNot(AsmToken::EndOfStatement)) {
+  
+  // Determine whether this is an instruction prefix.
+  bool isPrefix =
+    PatchedName == "lock" || PatchedName == "rep" || 
+    PatchedName == "repne";
+  
+  
+  // This does the actual operand parsing.  Don't parse any more if we have a
+  // prefix juxtaposed with an operation like "lock incl 4(%rax)", because we
+  // just want to parse the "lock" as the first instruction and the "incl" as
+  // the next one.
+  if (getLexer().isNot(AsmToken::EndOfStatement) && !isPrefix) {
 
     // Parse '*' modifier.
     if (getLexer().is(AsmToken::Star)) {
@@ -785,11 +794,13 @@ ParseInstruction(StringRef Name, SMLoc NameLoc,
       else
         return true;
     }
+    
+    if (getLexer().isNot(AsmToken::EndOfStatement))
+      return TokError("unexpected token in argument list");
   }
   
-  if (getLexer().isNot(AsmToken::EndOfStatement))
-    return TokError("unexpected token in argument list");
-  Parser.Lex(); // Consume the EndOfStatement
+  if (getLexer().is(AsmToken::EndOfStatement))
+    Parser.Lex(); // Consume the EndOfStatement
 
   // FIXME: Hack to handle recognizing s{hr,ar,hl}? $1.
   if ((Name.startswith("shr") || Name.startswith("sar") ||
