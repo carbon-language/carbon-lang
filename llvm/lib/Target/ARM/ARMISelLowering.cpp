@@ -57,7 +57,7 @@ EnableARMTailCalls("arm-tail-calls", cl::Hidden,
   cl::desc("Generate tail calls (TEMPORARY OPTION)."),
   cl::init(false));
 
-// This option should go away when Machine LICM is smart enough to hoist a 
+// This option should go away when Machine LICM is smart enough to hoist a
 // reg-to-reg VDUP.
 static cl::opt<bool>
 EnableARMVDUPsplat("arm-vdup-splat", cl::Hidden,
@@ -640,7 +640,7 @@ const char *ARMTargetLowering::getTargetNodeName(unsigned Opcode) const {
   case ARMISD::EH_SJLJ_LONGJMP:return "ARMISD::EH_SJLJ_LONGJMP";
 
   case ARMISD::TC_RETURN:     return "ARMISD::TC_RETURN";
-  
+
   case ARMISD::THREAD_POINTER:return "ARMISD::THREAD_POINTER";
 
   case ARMISD::DYN_ALLOC:     return "ARMISD::DYN_ALLOC";
@@ -1490,7 +1490,7 @@ ARMTargetLowering::IsEligibleForTailCallOptimization(SDValue Callee,
   // LR.  This means if we need to reload LR, it takes an extra instructions,
   // which outweighs the value of the tail call; but here we don't know yet
   // whether LR is going to be used.  Probably the right approach is to
-  // generate the tail call here and turn it back into CALL/RET in 
+  // generate the tail call here and turn it back into CALL/RET in
   // emitEpilogue if LR is used.
   if (Subtarget->isThumb1Only())
     return false;
@@ -1583,7 +1583,7 @@ ARMTargetLowering::IsEligibleForTailCallOptimization(SDValue Callee,
           if (!VA.isRegLoc())
             return false;
           if (!ArgLocs[++i].isRegLoc())
-            return false; 
+            return false;
           if (RegVT == MVT::v2f64) {
             if (!ArgLocs[++i].isRegLoc())
               return false;
@@ -2054,7 +2054,7 @@ ARMTargetLowering::GetF64FormalArgument(CCValAssign &VA, CCValAssign &NextVA,
     RC = ARM::GPRRegisterClass;
 
   // Transform the arguments stored in physical registers into virtual ones.
-  unsigned Reg = MF.addLiveIn(VA.getLocReg(), RC); 
+  unsigned Reg = MF.addLiveIn(VA.getLocReg(), RC);
   SDValue ArgValue = DAG.getCopyFromReg(Root, dl, Reg, MVT::i32);
 
   SDValue ArgValue2;
@@ -2825,7 +2825,7 @@ SDValue ARMTargetLowering::LowerShiftLeftParts(SDValue Op,
   return DAG.getMergeValues(Ops, 2, dl);
 }
 
-SDValue ARMTargetLowering::LowerFLT_ROUNDS_(SDValue Op, 
+SDValue ARMTargetLowering::LowerFLT_ROUNDS_(SDValue Op,
                                             SelectionDAG &DAG) const {
   // The rounding mode is in bits 23:22 of the FPSCR.
   // The ARM rounding mode value to FLT_ROUNDS mapping is 0->1, 1->2, 2->3, 3->0
@@ -2835,11 +2835,11 @@ SDValue ARMTargetLowering::LowerFLT_ROUNDS_(SDValue Op,
   SDValue FPSCR = DAG.getNode(ISD::INTRINSIC_WO_CHAIN, dl, MVT::i32,
                               DAG.getConstant(Intrinsic::arm_get_fpscr,
                                               MVT::i32));
-  SDValue FltRounds = DAG.getNode(ISD::ADD, dl, MVT::i32, FPSCR, 
+  SDValue FltRounds = DAG.getNode(ISD::ADD, dl, MVT::i32, FPSCR,
                                   DAG.getConstant(1U << 22, MVT::i32));
   SDValue RMODE = DAG.getNode(ISD::SRL, dl, MVT::i32, FltRounds,
                               DAG.getConstant(22, MVT::i32));
-  return DAG.getNode(ISD::AND, dl, MVT::i32, RMODE, 
+  return DAG.getNode(ISD::AND, dl, MVT::i32, RMODE,
                      DAG.getConstant(3, MVT::i32));
 }
 
@@ -3376,7 +3376,7 @@ static SDValue IsSingleInstrConstant(SDValue N, SelectionDAG &DAG,
 
 // If this is a case we can't handle, return null and let the default
 // expansion code take care of it.
-static SDValue LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG, 
+static SDValue LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG,
                                  const ARMSubtarget *ST) {
   BuildVectorSDNode *BVN = cast<BuildVectorSDNode>(Op.getNode());
   DebugLoc dl = Op.getDebugLoc();
@@ -3448,11 +3448,11 @@ static SDValue LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG,
       if (VT.getVectorElementType().isFloatingPoint()) {
         SmallVector<SDValue, 8> Ops;
         for (unsigned i = 0; i < NumElts; ++i)
-          Ops.push_back(DAG.getNode(ISD::BIT_CONVERT, dl, MVT::i32, 
+          Ops.push_back(DAG.getNode(ISD::BIT_CONVERT, dl, MVT::i32,
                                     Op.getOperand(i)));
         SDValue Val = DAG.getNode(ISD::BUILD_VECTOR, dl, MVT::v4i32, &Ops[0],
                                   NumElts);
-        return DAG.getNode(ISD::BIT_CONVERT, dl, VT, 
+        return DAG.getNode(ISD::BIT_CONVERT, dl, VT,
                            LowerBUILD_VECTOR(Val, DAG, ST));
       }
       SDValue Val = IsSingleInstrConstant(Value, DAG, ST, dl);
@@ -5143,7 +5143,7 @@ bool ARMTargetLowering::isLegalICmpImmediate(int64_t Imm) const {
   if (!Subtarget->isThumb())
     return ARM_AM::getSOImmVal(Imm) != -1;
   if (Subtarget->isThumb2())
-    return ARM_AM::getT2SOImmVal(Imm) != -1; 
+    return ARM_AM::getT2SOImmVal(Imm) != -1;
   return Imm >= 0 && Imm <= 255;
 }
 
