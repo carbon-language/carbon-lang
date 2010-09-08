@@ -379,7 +379,7 @@ void X86MCInstLower::Lower(const MachineInstr *MI, MCInst &OutMI) const {
   case X86::MOV32r0:      LowerUnaryToTwoAddr(OutMI, X86::XOR32rr); break;
   case X86::MMX_V_SET0:   LowerUnaryToTwoAddr(OutMI, X86::MMX_PXORrr); break;
   case X86::MMX_V_SETALLONES:
-    LowerUnaryToTwoAddr(OutMI, X86::MMX_PCMPEQDrr); break;
+    LowerUnaryToTwoAddr(OutMI, X86::MMX_PCMPEQDirr); break;
   case X86::FsFLD0SS:      LowerUnaryToTwoAddr(OutMI, X86::PXORrr); break;
   case X86::FsFLD0SD:      LowerUnaryToTwoAddr(OutMI, X86::PXORrr); break;
   case X86::V_SET0PS:      LowerUnaryToTwoAddr(OutMI, X86::XORPSrr); break;
