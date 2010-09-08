@@ -124,6 +124,7 @@ CXCursor cxcursor::MakeCXCursor(Stmt *S, Decl *Parent, ASTUnit *TU) {
   case Stmt::CXXConstCastExprClass:       
   case Stmt::CXXFunctionalCastExprClass:
   case Stmt::CXXTypeidExprClass:          
+  case Stmt::CXXUuidofExprClass:          
   case Stmt::CXXBoolLiteralExprClass:     
   case Stmt::CXXNullPtrLiteralExprClass:  
   case Stmt::CXXThisExprClass:            

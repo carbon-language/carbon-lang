@@ -773,6 +773,7 @@ void GRExprEngine::Visit(const Stmt* S, ExplodedNode* Pred,
     case Stmt::CXXThrowExprClass:
     case Stmt::CXXTryStmtClass:
     case Stmt::CXXTypeidExprClass:
+    case Stmt::CXXUuidofExprClass:
     case Stmt::CXXUnresolvedConstructExprClass:
     case Stmt::CXXScalarValueInitExprClass:
     case Stmt::DependentScopeDeclRefExprClass:

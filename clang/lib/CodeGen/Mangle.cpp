@@ -1617,7 +1617,8 @@ void CXXNameMangler::mangleExpression(const Expr *E, unsigned Arity) {
   case Expr::StmtExprClass:
   case Expr::TypesCompatibleExprClass:
   case Expr::UnaryTypeTraitExprClass:
-  case Expr::VAArgExprClass: {
+  case Expr::VAArgExprClass:
+  case Expr::CXXUuidofExprClass: {
     // As bad as this diagnostic is, it's better than crashing.
     Diagnostic &Diags = Context.getDiags();
     unsigned DiagID = Diags.getCustomDiagID(Diagnostic::Error,
