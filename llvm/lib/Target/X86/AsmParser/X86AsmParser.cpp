@@ -786,6 +786,10 @@ ParseInstruction(StringRef Name, SMLoc NameLoc,
         return true;
     }
   }
+  
+  if (getLexer().isNot(AsmToken::EndOfStatement))
+    return TokError("unexpected token in argument list");
+  Parser.Lex(); // Consume the EndOfStatement
 
   // FIXME: Hack to handle recognizing s{hr,ar,hl}? $1.
   if ((Name.startswith("shr") || Name.startswith("sar") ||

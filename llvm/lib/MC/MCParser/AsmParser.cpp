@@ -917,8 +917,6 @@ bool AsmParser::ParseStatement() {
   SmallVector<MCParsedAsmOperand*, 8> ParsedOperands;
   bool HadError = getTargetParser().ParseInstruction(Opcode.str(), IDLoc,
                                                      ParsedOperands);
-  if (!HadError && Lexer.isNot(AsmToken::EndOfStatement))
-    HadError = TokError("unexpected token in argument list");
 
   // Dump the parsed representation, if requested.
   if (getShowParsedOperands()) {
@@ -944,11 +942,6 @@ bool AsmParser::ParseStatement() {
     } else
       HadError = true;
   }
-
-  // If there was no error, consume the end-of-statement token. Otherwise this
-  // will be done by our caller.
-  if (!HadError)
-    Lex();
 
   // Free any parsed operands.
   for (unsigned i = 0, e = ParsedOperands.size(); i != e; ++i)

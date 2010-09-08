@@ -737,6 +737,11 @@ bool ARMAsmParser::ParseInstruction(StringRef Name, SMLoc NameLoc,
       Operands.push_back(Op.take());
     }
   }
+  
+  if (getLexer().isNot(AsmToken::EndOfStatement))
+    return TokError("unexpected token in argument list");
+  Parser.Lex(); // Consume the EndOfStatement
+  
   return false;
 }
 
