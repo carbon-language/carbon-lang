@@ -534,14 +534,16 @@ public:
   /// this routine to provide different behavior.
   QualType RebuildDependentTemplateSpecializationType(
                                     ElaboratedTypeKeyword Keyword,
-                                    NestedNameSpecifier *NNS,
+                                    NestedNameSpecifier *Qualifier,
+                                    SourceRange QualifierRange,
                                     const IdentifierInfo *Name,
                                     SourceLocation NameLoc,
                                     const TemplateArgumentListInfo &Args) {
     // Rebuild the template name.
     // TODO: avoid TemplateName abstraction
     TemplateName InstName =
-      getDerived().RebuildTemplateName(NNS, *Name, QualType());
+      getDerived().RebuildTemplateName(Qualifier, QualifierRange, *Name, 
+                                       QualType());
     
     if (InstName.isNull())
       return QualType();
@@ -549,7 +551,7 @@ public:
     // If it's still dependent, make a dependent specialization.
     if (InstName.getAsDependentTemplateName())
       return SemaRef.Context.getDependentTemplateSpecializationType(
-                                          Keyword, NNS, Name, Args);
+                                          Keyword, Qualifier, Name, Args);
 
     // Otherwise, make an elaborated type wrapping a non-dependent
     // specialization.
@@ -689,6 +691,7 @@ public:
   /// template name. Subclasses may override this routine to provide different
   /// behavior.
   TemplateName RebuildTemplateName(NestedNameSpecifier *Qualifier,
+                                   SourceRange QualifierRange,
                                    const IdentifierInfo &II,
                                    QualType ObjectType);
 
@@ -2185,9 +2188,13 @@ TreeTransform<Derived>::TransformTemplateName(TemplateName Name,
         ObjectType.isNull())
       return Name;
 
-    if (DTN->isIdentifier())
-      return getDerived().RebuildTemplateName(NNS, *DTN->getIdentifier(), 
+    if (DTN->isIdentifier()) {
+      // FIXME: Bad range
+      SourceRange QualifierRange(getDerived().getBaseLocation());
+      return getDerived().RebuildTemplateName(NNS, QualifierRange,
+                                              *DTN->getIdentifier(), 
                                               ObjectType);
+    }
     
     return getDerived().RebuildTemplateName(NNS, DTN->getOperator(), 
                                             ObjectType);
@@ -3375,12 +3382,13 @@ QualType TreeTransform<Derived>::
     NewTemplateArgs.addArgument(Loc);
   }
 
-  QualType Result = getDerived().RebuildDependentTemplateSpecializationType(
-                                                     T->getKeyword(),
-                                                     NNS,
-                                                     T->getIdentifier(),
-                                                     TL.getNameLoc(),
-                                                     NewTemplateArgs);
+  QualType Result
+    = getDerived().RebuildDependentTemplateSpecializationType(T->getKeyword(),
+                                                              NNS,
+                                                        TL.getQualifierRange(),
+                                                            T->getIdentifier(),
+                                                              TL.getNameLoc(),
+                                                              NewTemplateArgs);
   if (Result.isNull())
     return QualType();
 
@@ -6578,10 +6586,11 @@ TreeTransform<Derived>::RebuildTemplateName(NestedNameSpecifier *Qualifier,
 template<typename Derived>
 TemplateName
 TreeTransform<Derived>::RebuildTemplateName(NestedNameSpecifier *Qualifier,
+                                            SourceRange QualifierRange,
                                             const IdentifierInfo &II,
                                             QualType ObjectType) {
   CXXScopeSpec SS;
-  SS.setRange(SourceRange(getDerived().getBaseLocation()));
+  SS.setRange(QualifierRange);
   SS.setScopeRep(Qualifier);
   UnqualifiedId Name;
   Name.setIdentifier(&II, /*FIXME:*/getDerived().getBaseLocation());
