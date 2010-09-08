@@ -3171,7 +3171,7 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
       SC = SC_Static;
     break;
   }
-  case DeclSpec::SCS_private_extern: SC = SC_PrivateExtern;break;
+  case DeclSpec::SCS_private_extern: SC = SC_PrivateExtern; break;
   }
 
   if (D.getDeclSpec().isThreadSpecified())
@@ -3976,8 +3976,14 @@ void Sema::CheckMain(FunctionDecl* FD) {
   const FunctionType* FT = T->getAs<FunctionType>();
 
   if (!Context.hasSameUnqualifiedType(FT->getResultType(), Context.IntTy)) {
-    // TODO: add a replacement fixit to turn the return type into 'int'.
-    Diag(FD->getTypeSpecStartLoc(), diag::err_main_returns_nonint);
+    TypeSourceInfo *TSI = FD->getTypeSourceInfo();
+    TypeLoc TL = TSI->getTypeLoc();
+    const SemaDiagnosticBuilder& D = Diag(FD->getTypeSpecStartLoc(),
+                                          diag::err_main_returns_nonint);
+    if (FunctionTypeLoc* PTL = dyn_cast<FunctionTypeLoc>(&TL)) {
+      D << FixItHint::CreateReplacement(PTL->getResultLoc().getSourceRange(),
+                                        "int");
+    }
     FD->setInvalidDecl(true);
   }
 

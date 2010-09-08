@@ -60,3 +60,9 @@ namespace rdar7796492 {
   }
 
 }
+
+CT<1> main(void); // expected-error{{'main' must return 'int'}}
+
+// typedef CT<1> mainT(void);
+// mainT main; // TODO
+
