@@ -61,10 +61,7 @@ namespace llvm {
     };
 
     unsigned char flags;
-    union {
-      MachineInstr *copy;
-      unsigned reg;
-    } cr;
+    MachineInstr *copy;
 
   public:
     typedef BumpPtrAllocator Allocator;
@@ -79,17 +76,17 @@ namespace llvm {
     /// d is presumed to point to the actual defining instr. If it doesn't
     /// setIsDefAccurate(false) should be called after construction.
     VNInfo(unsigned i, SlotIndex d, MachineInstr *c)
-      : flags(IS_DEF_ACCURATE), id(i), def(d) { cr.copy = c; }
+      : flags(IS_DEF_ACCURATE), id(i), def(d) { copy = c; }
 
     /// VNInfo construtor, copies values from orig, except for the value number.
     VNInfo(unsigned i, const VNInfo &orig)
-      : flags(orig.flags), cr(orig.cr), id(i), def(orig.def)
+      : flags(orig.flags), copy(orig.copy), id(i), def(orig.def)
     { }
 
     /// Copy from the parameter into this VNInfo.
     void copyFrom(VNInfo &src) {
       flags = src.flags;
-      cr = src.cr;
+      copy = src.copy;
       def = src.def;
     }
 
@@ -100,20 +97,11 @@ namespace llvm {
     /// For a register interval, if this VN was definied by a copy instr
     /// getCopy() returns a pointer to it, otherwise returns 0.
     /// For a stack interval the behaviour of this method is undefined.
-    MachineInstr* getCopy() const { return cr.copy; }
+    MachineInstr* getCopy() const { return copy; }
     /// For a register interval, set the copy member.
     /// This method should not be called on stack intervals as it may lead to
     /// undefined behavior.
-    void setCopy(MachineInstr *c) { cr.copy = c; }
-
-    /// For a stack interval, returns the reg which this stack interval was
-    /// defined from.
-    /// For a register interval the behaviour of this method is undefined.
-    unsigned getReg() const { return cr.reg; }
-    /// For a stack interval, set the defining register.
-    /// This method should not be called on register intervals as it may lead
-    /// to undefined behaviour.
-    void setReg(unsigned reg) { cr.reg = reg; }
+    void setCopy(MachineInstr *c) { copy = c; }
 
     /// Returns true if one or more kills are PHI nodes.
     bool hasPHIKill() const { return flags & HAS_PHI_KILL; }
