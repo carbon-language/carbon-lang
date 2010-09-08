@@ -664,10 +664,28 @@ defm JGE : ICBr<0x7D, 0x8D, "jge\t$dst", X86_COND_GE>;
 defm JLE : ICBr<0x7E, 0x8E, "jle\t$dst", X86_COND_LE>;
 defm JG  : ICBr<0x7F, 0x8F, "jg\t$dst" , X86_COND_G>;
 
-// FIXME: What about the CX/RCX versions of this instruction?
-let Uses = [ECX], isBranch = 1, isTerminator = 1 in
-  def JCXZ8 : Ii8PCRel<0xE3, RawFrm, (outs), (ins brtarget8:$dst),
-                       "jcxz\t$dst", []>;
+// jcx/jecx/jrcx instructions.
+let isAsmParserOnly = 1, isBranch = 1, isTerminator = 1 in {
+  // These are the 32-bit versions of this instruction for the asmparser.  In
+  // 32-bit mode, the address size prefix is jcxz and the unprefixed version is
+  // jecxz.
+  let Uses = [CX] in
+    def JCXZ : Ii8PCRel<0xE3, RawFrm, (outs), (ins brtarget8:$dst),
+                        "jcxz\t$dst", []>, AdSize, Requires<[In32BitMode]>;
+  let Uses = [ECX] in
+    def JECXZ_32 : Ii8PCRel<0xE3, RawFrm, (outs), (ins brtarget8:$dst),
+                           "jecxz\t$dst", []>, Requires<[In32BitMode]>;
+
+  // J*CXZ instruction: 64-bit versions of this instruction for the asmparser.
+  // In 64-bit mode, the address size prefix is jecxz and the unprefixed version
+  // is jrcxz.
+  let Uses = [ECX] in
+    def JECXZ_64 : Ii8PCRel<0xE3, RawFrm, (outs), (ins brtarget8:$dst),
+                            "jecxz\t$dst", []>, AdSize, Requires<[In64BitMode]>;
+  let Uses = [RCX] in
+    def JRCXZ : Ii8PCRel<0xE3, RawFrm, (outs), (ins brtarget8:$dst),
+                           "jrcxz\t$dst", []>, Requires<[In64BitMode]>;
+}
 
 
 // Indirect branches

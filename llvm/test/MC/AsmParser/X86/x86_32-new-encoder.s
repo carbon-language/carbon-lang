@@ -423,3 +423,14 @@ retl
 // CHECK: lcalll $2, $4660
 // CHECK:   encoding: [0x9a,0x34,0x12,0x00,0x00,0x02,0x00]
 lcalll $0x2, $0x1234
+
+
+// rdar://8061602
+L1:
+  jcxz L1
+// CHECK: jcxz L1
+// CHECK:   encoding: [0x67,0xe3,A]
+  jecxz L1
+// CHECK: jecxz L1
+// CHECK:   encoding: [0xe3,A]
+

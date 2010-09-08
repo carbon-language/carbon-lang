@@ -615,15 +615,6 @@ X86Operand *X86ATTAsmParser::ParseMemOperand(unsigned SegReg, SMLoc MemStart) {
 bool X86ATTAsmParser::
 ParseInstruction(StringRef Name, SMLoc NameLoc,
                  SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
-
-  // The "Jump if rCX Zero" form jcxz is not allowed in 64-bit mode and
-  // the form jrcxz is not allowed in 32-bit mode.
-  if (Is64Bit) {
-    // FIXME: We can do jcxz/jecxz, we just don't have the encoding right yet.
-    if (Name == "jcxz" || Name == "jecxz")
-      return Error(NameLoc, Name + " cannot be encoded in 64-bit mode");
-  }
-
   // FIXME: Hack to recognize "sal..." and "rep..." for now. We need a way to
   // represent alternative syntaxes in the .td file, without requiring
   // instruction duplication.
@@ -646,11 +637,6 @@ ParseInstruction(StringRef Name, SMLoc NameLoc,
     .Case("jz", "je")
     .Case("jnz", "jne")
     .Case("jc", "jb")
-    // FIXME: in 32-bit mode jcxz requires an AdSize prefix. In 64-bit mode
-    // jecxz requires an AdSize prefix but jecxz does not have a prefix in
-    // 32-bit mode.
-    .Case("jecxz", "jcxz")
-    .Case("jrcxz", Is64Bit ? "jcxz" : "jrcxz")
     .Case("jna", "jbe")
     .Case("jnae", "jb")
     .Case("jnb", "jae")

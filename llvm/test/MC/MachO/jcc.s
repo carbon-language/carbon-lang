@@ -10,7 +10,7 @@
 1: nop
    jc 1f
 1: nop
-   jcxz 1f
+   jecxz 1f
 1: nop
    jecxz 1f
 1: nop

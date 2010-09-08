@@ -157,3 +157,14 @@ btq $0x01,%rdx
 // CHECK: btq $61, -216(%rbp)
 // CHECK:   encoding: [0x48,0x0f,0xba,0xa5,0x28,0xff,0xff,0xff,0x3d]
 	btq	$61, -216(%rbp)
+
+
+// rdar://8061602
+L1:
+  jecxz L1
+// CHECK: jecxz L1
+// CHECK:   encoding: [0x67,0xe3,A]
+  jrcxz L1
+// CHECK: jrcxz L1
+// CHECK:   encoding: [0xe3,A]
+
