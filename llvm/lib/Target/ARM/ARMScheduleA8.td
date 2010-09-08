@@ -122,6 +122,15 @@ def CortexA8Itineraries : ProcessorItineraries<
                                 InstrStage<1, [A8_Pipe0, A8_Pipe1]>,
                                 InstrStage<1, [A8_LdSt0]>]>,
 
+  //
+  // Load multiple plus branch
+  InstrItinData<IIC_iLoadmBr , [InstrStage<2, [A8_Issue], 0>,
+                                InstrStage<2, [A8_Pipe0], 0>,
+                                InstrStage<2, [A8_Pipe1]>,
+                                InstrStage<1, [A8_Pipe0, A8_Pipe1]>,
+                                InstrStage<1, [A8_LdSt0]>,
+                                InstrStage<1, [A8_Pipe0, A8_Pipe1]>]>,
+
   // Integer store pipeline
   //
   // use A8_Issue to enforce the 1 load/store per cycle limit

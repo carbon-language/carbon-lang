@@ -43,6 +43,7 @@ def IIC_iLoadiu    : InstrItinClass;
 def IIC_iLoadru    : InstrItinClass;
 def IIC_iLoadsiu   : InstrItinClass;
 def IIC_iLoadm     : InstrItinClass;
+def IIC_iLoadmBr   : InstrItinClass;
 def IIC_iStorei    : InstrItinClass;
 def IIC_iStorer    : InstrItinClass;
 def IIC_iStoresi   : InstrItinClass;

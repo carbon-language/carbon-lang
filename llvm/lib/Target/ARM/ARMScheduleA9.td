@@ -107,6 +107,12 @@ def CortexA9Itineraries : ProcessorItineraries<
   InstrItinData<IIC_iLoadm   , [InstrStage<1, [A9_Pipe1]>,
                                 InstrStage<1, [A9_LSPipe]>]>,
 
+  //
+  // Load multiple plus branch
+  InstrItinData<IIC_iLoadmBr , [InstrStage<1, [A9_Pipe1]>,
+                                InstrStage<1, [A9_LSPipe]>,
+                                InstrStage<1, [A9_Pipe0, A9_Pipe1]>]>,
+
   // Integer store pipeline
   ///
   // Immediate offset
