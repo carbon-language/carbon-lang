@@ -418,18 +418,20 @@ SourceLocation Decl::getBodyRBrace() const {
 
 #ifndef NDEBUG
 void Decl::CheckAccessDeclContext() const {
-  // FIXME: Disable this until rdar://8146294 "access specifier for inner class
-  // templates is not set or checked" is fixed.
-  return;
   // Suppress this check if any of the following hold:
   // 1. this is the translation unit (and thus has no parent)
   // 2. this is a template parameter (and thus doesn't belong to its context)
   // 3. the context is not a record
   // 4. it's invalid
+  // 5. it's a C++0x static_assert.
   if (isa<TranslationUnitDecl>(this) ||
       isa<TemplateTypeParmDecl>(this) ||
       !isa<CXXRecordDecl>(getDeclContext()) ||
-      isInvalidDecl())
+      isInvalidDecl() ||
+      isa<StaticAssertDecl>(this) ||
+      // FIXME: a ParmVarDecl can have ClassTemplateSpecialization
+      // as DeclContext (?).
+      isa<ParmVarDecl>(this))
     return;
 
   assert(Access != AS_none &&

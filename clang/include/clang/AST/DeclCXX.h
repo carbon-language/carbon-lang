@@ -112,6 +112,8 @@ class AccessSpecDecl : public Decl {
     : Decl(AccessSpec, DC, ASLoc), ColonLoc(ColonLoc) {
     setAccess(AS);
   }
+  AccessSpecDecl(EmptyShell Empty)
+    : Decl(AccessSpec, Empty) { }
 public:
   /// getAccessSpecifierLoc - The location of the access specifier.
   SourceLocation getAccessSpecifierLoc() const { return getLocation(); }
@@ -131,6 +133,9 @@ public:
                                 DeclContext *DC, SourceLocation ASLoc,
                                 SourceLocation ColonLoc) {
     return new (C) AccessSpecDecl(AS, DC, ASLoc, ColonLoc);
+  }
+  static AccessSpecDecl *Create(ASTContext &C, EmptyShell Empty) {
+    return new (C) AccessSpecDecl(Empty);
   }
 
   // Implement isa/cast/dyncast/etc.

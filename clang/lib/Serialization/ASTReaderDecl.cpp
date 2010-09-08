@@ -1308,8 +1308,7 @@ Decl *ASTReader::ReadDeclRecord(unsigned Index, DeclID ID) {
     D = CXXConversionDecl::Create(*Context, Decl::EmptyShell());
     break;
   case DECL_ACCESS_SPEC:
-    D = AccessSpecDecl::Create(*Context, AS_none, 0, SourceLocation(),
-                               SourceLocation());
+    D = AccessSpecDecl::Create(*Context, Decl::EmptyShell());
     break;
   case DECL_FRIEND:
     D = FriendDecl::Create(*Context, Decl::EmptyShell());
