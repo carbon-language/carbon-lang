@@ -123,7 +123,6 @@ class ARMFastISel : public FastISel {
     bool ARMLoadAlloca(const Instruction *I, EVT VT);
     bool ARMStoreAlloca(const Instruction *I, unsigned SrcReg, EVT VT);
     bool ARMComputeRegOffset(const Value *Obj, unsigned &Reg, int &Offset);
-    bool ARMMaterializeConstant(const ConstantInt *Val, unsigned &Reg);
     
     bool DefinesOptionalPredicate(MachineInstr *MI, bool *CPSR);
     const MachineInstrBuilder &AddOptionalDefs(const MachineInstrBuilder &MIB);
