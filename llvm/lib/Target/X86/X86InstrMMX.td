@@ -471,6 +471,57 @@ def MMX_CVTTPS2PIrm : MMXI<0x2C, MRMSrcMem, (outs VR64:$dst), (ins f64mem:$src),
                            "cvttps2pi\t{$src, $dst|$dst, $src}", []>;
 } // end neverHasSideEffects
 
+// Intrinsic versions.
+def MMX_CVTPD2PIirr : MMX2I<0x2D, MRMSrcReg, (outs VR64:$dst), (ins VR128:$src),
+                            "cvtpd2pi\t{$src, $dst|$dst, $src}", 
+                          [(set VR64:$dst, (int_x86_sse_cvtpd2pi VR128:$src))]>;
+def MMX_CVTPD2PIirm : MMX2I<0x2D, MRMSrcMem, (outs VR64:$dst),
+                            (ins f128mem:$src),
+                            "cvtpd2pi\t{$src, $dst|$dst, $src}",
+                          [(set VR64:$dst, 
+                              (int_x86_sse_cvtpd2pi 
+                                  (bitconvert (loadv2i64 addr:$src))))]>;
+def MMX_CVTPI2PDirr : MMX2I<0x2A, MRMSrcReg, (outs VR128:$dst), (ins VR64:$src),
+                            "cvtpi2pd\t{$src, $dst|$dst, $src}",
+                          [(set VR128:$dst, (int_x86_sse_cvtpi2pd VR64:$src))]>;
+let Constraints = "$src1 = $dst" in {
+def MMX_CVTPI2PSirr : MMXI<0x2A, MRMSrcReg, (outs VR128:$dst), 
+                                            (ins VR128:$src1, VR64:$src2),
+                           "cvtpi2ps\t{$src2, $dst|$dst, $src2}",
+                          [(set VR128:$dst, 
+                              (int_x86_sse_cvtpi2ps VR128:$src1, VR64:$src2))]>;
+def MMX_CVTPI2PSirm : MMXI<0x2A, MRMSrcMem, (outs VR128:$dst),
+                           (ins VR128:$src1, i64mem:$src2),
+                           "cvtpi2ps\t{$src2, $dst|$dst, $src2}",
+                          [(set VR128:$dst, 
+                              (int_x86_sse_cvtpi2ps VR128:$src1,
+                                  (bitconvert (load_mmx addr:$src2))))]>;
+}
+def MMX_CVTPS2PIirr : MMXI<0x2D, MRMSrcReg, (outs VR64:$dst), (ins VR128:$src),
+                           "cvtps2pi\t{$src, $dst|$dst, $src}",
+                          [(set VR64:$dst, (int_x86_sse_cvtps2pi VR128:$src))]>;
+def MMX_CVTPS2PIirm : MMXI<0x2D, MRMSrcMem, (outs VR64:$dst), (ins f64mem:$src),
+                           "cvtps2pi\t{$src, $dst|$dst, $src}",
+                          [(set VR64:$dst, 
+                              (int_x86_sse_cvtps2pi 
+                                  (bitconvert (load_mmx addr:$src))))]>;
+def MMX_CVTTPD2PIirr: MMX2I<0x2C, MRMSrcReg, (outs VR64:$dst), (ins VR128:$src),
+                            "cvttpd2pi\t{$src, $dst|$dst, $src}",
+                          [(set VR64:$dst, (int_x86_sse_cvtpd2pi VR128:$src))]>;
+def MMX_CVTTPD2PIirm: MMX2I<0x2C, MRMSrcMem, (outs VR64:$dst),
+                            (ins f128mem:$src),
+                            "cvttpd2pi\t{$src, $dst|$dst, $src}",
+                          [(set VR64:$dst, 
+                              (int_x86_sse_cvtpd2pi 
+                                  (bitconvert (loadv2i64 addr:$src))))]>;
+def MMX_CVTTPS2PIirr: MMXI<0x2C, MRMSrcReg, (outs VR64:$dst), (ins VR128:$src),
+                           "cvttps2pi\t{$src, $dst|$dst, $src}",
+                          [(set VR64:$dst, (int_x86_sse_cvtps2pi VR128:$src))]>;
+def MMX_CVTTPS2PIirm: MMXI<0x2C, MRMSrcMem, (outs VR64:$dst), (ins f64mem:$src),
+                           "cvttps2pi\t{$src, $dst|$dst, $src}",
+                          [(set VR64:$dst, 
+                              (int_x86_sse_cvtpd2pi
+                                  (bitconvert (load_mmx addr:$src))))]>;
 
 // Extract / Insert
 def MMX_X86pinsrw : SDNode<"X86ISD::MMX_PINSRW",
