@@ -262,9 +262,9 @@ ParsedType Sema::getDestructorName(SourceLocation TildeLoc,
 
 /// \brief Build a C++ typeid expression with a type operand.
 ExprResult Sema::BuildCXXTypeId(QualType TypeInfoType,
-                                            SourceLocation TypeidLoc,
-                                            TypeSourceInfo *Operand,
-                                            SourceLocation RParenLoc) {
+                                SourceLocation TypeidLoc,
+                                TypeSourceInfo *Operand,
+                                SourceLocation RParenLoc) {
   // C++ [expr.typeid]p4:
   //   The top-level cv-qualifiers of the lvalue expression or the type-id 
   //   that is the operand of typeid are always ignored.
@@ -285,9 +285,9 @@ ExprResult Sema::BuildCXXTypeId(QualType TypeInfoType,
 
 /// \brief Build a C++ typeid expression with an expression operand.
 ExprResult Sema::BuildCXXTypeId(QualType TypeInfoType,
-                                            SourceLocation TypeidLoc,
-                                            Expr *E,
-                                            SourceLocation RParenLoc) {
+                                SourceLocation TypeidLoc,
+                                Expr *E,
+                                SourceLocation RParenLoc) {
   bool isUnevaluatedOperand = true;
   if (E && !E->isTypeDependent()) {
     QualType T = E->getType();
@@ -343,14 +343,16 @@ Sema::ActOnCXXTypeid(SourceLocation OpLoc, SourceLocation LParenLoc,
   if (!StdNamespace)
     return ExprError(Diag(OpLoc, diag::err_need_header_before_typeid));
 
-  IdentifierInfo *TypeInfoII = &PP.getIdentifierTable().get("type_info");
-  LookupResult R(*this, TypeInfoII, SourceLocation(), LookupTagName);
-  LookupQualifiedName(R, getStdNamespace());
-  RecordDecl *TypeInfoRecordDecl = R.getAsSingle<RecordDecl>();
-  if (!TypeInfoRecordDecl)
-    return ExprError(Diag(OpLoc, diag::err_need_header_before_typeid));
+  if (!CXXTypeInfoDecl) {
+    IdentifierInfo *TypeInfoII = &PP.getIdentifierTable().get("type_info");
+    LookupResult R(*this, TypeInfoII, SourceLocation(), LookupTagName);
+    LookupQualifiedName(R, getStdNamespace());
+    CXXTypeInfoDecl = R.getAsSingle<RecordDecl>();
+    if (!CXXTypeInfoDecl)
+      return ExprError(Diag(OpLoc, diag::err_need_header_before_typeid));
+  }
   
-  QualType TypeInfoType = Context.getTypeDeclType(TypeInfoRecordDecl);
+  QualType TypeInfoType = Context.getTypeDeclType(CXXTypeInfoDecl);
   
   if (isType) {
     // The operand is a type; handle it as such.

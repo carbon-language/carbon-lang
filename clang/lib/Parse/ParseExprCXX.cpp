@@ -500,9 +500,9 @@ ExprResult Parser::ParseCXXTypeid() {
     TypeResult Ty = ParseTypeName();
 
     // Match the ')'.
-    MatchRHSPunctuation(tok::r_paren, LParenLoc);
+    RParenLoc = MatchRHSPunctuation(tok::r_paren, LParenLoc);
 
-    if (Ty.isInvalid())
+    if (Ty.isInvalid() || RParenLoc.isInvalid())
       return ExprError();
 
     Result = Actions.ActOnCXXTypeid(OpLoc, LParenLoc, /*isType=*/true,
@@ -524,8 +524,10 @@ ExprResult Parser::ParseCXXTypeid() {
     if (Result.isInvalid())
       SkipUntil(tok::r_paren);
     else {
-      MatchRHSPunctuation(tok::r_paren, LParenLoc);
-
+      RParenLoc = MatchRHSPunctuation(tok::r_paren, LParenLoc);
+      if (RParenLoc.isInvalid())
+        return ExprError();
+      
       Result = Actions.ActOnCXXTypeid(OpLoc, LParenLoc, /*isType=*/false,
                                       Result.release(), RParenLoc);
     }

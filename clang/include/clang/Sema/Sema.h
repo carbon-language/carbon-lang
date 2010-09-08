@@ -365,6 +365,9 @@ public:
   /// standard library.
   LazyDeclPtr StdBadAlloc;
 
+  /// \brief The C++ "type_info" declaration, which is defined in <typeinfo>.
+  RecordDecl *CXXTypeInfoDecl;
+  
   /// \brief The MSVC "_GUID" struct, which is defined in MSVC header files.
   RecordDecl *MSVCGuidDecl;
 
