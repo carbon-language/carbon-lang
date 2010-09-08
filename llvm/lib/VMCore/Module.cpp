@@ -62,9 +62,11 @@ Module::Module(StringRef MID, LLVMContext& C)
   ValSymTab = new ValueSymbolTable();
   TypeSymTab = new TypeSymbolTable();
   NamedMDSymTab = new StringMap<NamedMDNode *>();
+  Context.addModule(this);
 }
 
 Module::~Module() {
+  Context.removeModule(this);
   dropAllReferences();
   GlobalList.clear();
   FunctionList.clear();

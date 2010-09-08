@@ -34,6 +34,14 @@ LLVMContext::LLVMContext() : pImpl(new LLVMContextImpl(*this)) {
 }
 LLVMContext::~LLVMContext() { delete pImpl; }
 
+void LLVMContext::addModule(Module *M) {
+  pImpl->OwnedModules.insert(M);
+}
+
+void LLVMContext::removeModule(Module *M) {
+  pImpl->OwnedModules.erase(M);
+}
+
 //===----------------------------------------------------------------------===//
 // Recoverable Backend Errors
 //===----------------------------------------------------------------------===//

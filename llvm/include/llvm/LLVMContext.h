@@ -20,6 +20,7 @@ namespace llvm {
 class LLVMContextImpl;
 class StringRef;
 class Instruction;
+class Module;
 template <typename T> class SmallVectorImpl;
 
 /// This is an important class for using LLVM in a threaded context.  It
@@ -36,6 +37,13 @@ public:
   LLVMContextImpl *const pImpl;
   LLVMContext();
   ~LLVMContext();
+  
+  /// addModule - Register a module as being instantiated in this context.  If
+  /// the context is deleted, the module will be deleted as well.
+  void addModule(Module*);
+  
+  /// removeModule - Unregister a module from this context.
+  void removeModule(Module*);
   
   // Pinned metadata names, which always have the same value.  This is a
   // compile-time performance optimization, not a correctness optimization.

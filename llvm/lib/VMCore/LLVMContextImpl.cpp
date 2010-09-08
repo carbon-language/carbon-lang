@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "LLVMContextImpl.h"
+#include "llvm/Module.h"
 #include <algorithm>
 using namespace llvm;
 
@@ -51,6 +52,15 @@ struct DropReferences {
 }
 
 LLVMContextImpl::~LLVMContextImpl() {
+  // NOTE: We need to delete the contents of OwnedModules, but we have to
+  // duplicate it into a temporary vector, because the destructor of Module
+  // will try to remove itself from OwnedModules set.  This would cause
+  // iterator invalidation if we iterated on the set directly.
+  std::vector<Module*> Modules(OwnedModules.begin(), OwnedModules.end());
+  for (std::vector<Module*>::iterator I = Modules.begin(), E = Modules.end();
+       I != E; ++I)
+    delete *I;
+  
   std::for_each(ExprConstants.map_begin(), ExprConstants.map_end(),
                 DropReferences());
   std::for_each(ArrayConstants.map_begin(), ArrayConstants.map_end(),
