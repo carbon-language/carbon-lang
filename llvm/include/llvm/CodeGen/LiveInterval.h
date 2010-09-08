@@ -60,8 +60,8 @@ namespace llvm {
       IS_DEF_ACCURATE = 1 << 4
     };
 
-    unsigned char flags;
     MachineInstr *copy;
+    unsigned char flags;
 
   public:
     typedef BumpPtrAllocator Allocator;
@@ -76,11 +76,12 @@ namespace llvm {
     /// d is presumed to point to the actual defining instr. If it doesn't
     /// setIsDefAccurate(false) should be called after construction.
     VNInfo(unsigned i, SlotIndex d, MachineInstr *c)
-      : flags(IS_DEF_ACCURATE), id(i), def(d) { copy = c; }
+      : copy(c), flags(IS_DEF_ACCURATE), id(i), def(d)
+    { }
 
     /// VNInfo construtor, copies values from orig, except for the value number.
     VNInfo(unsigned i, const VNInfo &orig)
-      : flags(orig.flags), copy(orig.copy), id(i), def(orig.def)
+      : copy(orig.copy), flags(orig.flags), id(i), def(orig.def)
     { }
 
     /// Copy from the parameter into this VNInfo.
