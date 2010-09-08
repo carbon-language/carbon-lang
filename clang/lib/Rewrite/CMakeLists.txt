@@ -1,5 +1,7 @@
 set(LLVM_NO_RTTI 1)
 
+set(LLVM_USED_LIBS clangBasic)
+
 add_clang_library(clangRewrite
   DeltaTree.cpp
   FixItRewriter.cpp
@@ -14,7 +16,7 @@ add_clang_library(clangRewrite
   TokenRewriter.cpp
   )
 
-add_dependencies(clangBasic
+add_dependencies(clangRewrite
   ClangAttrClasses
   ClangAttrList
   ClangDeclNodes
