@@ -13,6 +13,7 @@
 #include "lldb/lldb-private.h"
 #include "lldb/Host/Mutex.h"
 #include "lldb/Core/UserID.h"
+#include "lldb/Core/UserSettingsController.h"
 #include "lldb/Target/ExecutionContextScope.h"
 #include "lldb/Target/StackFrameList.h"
 #include "libunwind/include/libunwind.h"
@@ -24,11 +25,101 @@
 
 namespace lldb_private {
 
-class Thread :
-    public UserID,
-    public ExecutionContextScope
+class ThreadInstanceSettings : public InstanceSettings
 {
 public:
+
+    ThreadInstanceSettings (UserSettingsController &owner, const char *name = NULL);
+  
+    ThreadInstanceSettings (const ThreadInstanceSettings &rhs);
+
+    virtual
+    ~ThreadInstanceSettings ();
+  
+    ThreadInstanceSettings&
+    operator= (const ThreadInstanceSettings &rhs);
+  
+
+    void
+    UpdateInstanceSettingsVariable (const ConstString &var_name,
+                                    const char *index_value,
+                                    const char *value,
+                                    const ConstString &instance_name,
+                                    const SettingEntry &entry,
+                                    lldb::VarSetOperationType op,
+                                    Error &err,
+                                    bool pending);
+
+    void
+    GetInstanceSettingsValue (const SettingEntry &entry,
+                              const ConstString &var_name,
+                              StringList &value);
+
+    RegularExpression *
+    GetSymbolsToAvoidRegexp()
+    {
+        return m_avoid_regexp_ap.get();
+    }
+
+    static const ConstString &
+    StepAvoidRegexpVarName ();
+
+protected:
+
+    void
+    CopyInstanceSettings (const lldb::InstanceSettingsSP &new_settings,
+                          bool pending);
+
+    const ConstString
+    CreateInstanceName ();
+
+private:
+
+    std::auto_ptr<RegularExpression> m_avoid_regexp_ap;
+};
+
+class Thread :
+    public UserID,
+    public ExecutionContextScope,
+    public ThreadInstanceSettings
+{
+public:
+
+    class ThreadSettingsController : public UserSettingsController
+    {
+    public:
+        
+        ThreadSettingsController ();
+
+        virtual
+        ~ThreadSettingsController ();
+
+        void
+        UpdateGlobalVariable (const ConstString &var_name,
+                              const char *index_value,
+                              const char *value,
+                              const SettingEntry &entry,
+                              lldb::VarSetOperationType op,
+                              Error&err);
+
+        void
+        GetGlobalSettingsValue (const ConstString &var_name,
+                                StringList &value);
+
+        static SettingEntry global_settings_table[];
+        static SettingEntry instance_settings_table[];
+
+    protected:
+
+        lldb::InstanceSettingsSP
+        CreateNewInstanceSettings ();
+
+    private:
+
+        // Class-wide settings.
+
+        DISALLOW_COPY_AND_ASSIGN (ThreadSettingsController);
+    };
 
     class RegisterCheckpoint
     {
@@ -78,6 +169,9 @@ public:
         StackID m_stack_id;
         lldb::DataBufferSP m_data_sp;
     };
+
+    static lldb::UserSettingsControllerSP
+    GetSettingsController (bool finish = false);
 
     Thread (Process &process, lldb::tid_t tid);
     virtual ~Thread();
@@ -488,6 +582,21 @@ public:
     //------------------------------------------------------------------
     void
     DumpThreadPlans (Stream *s) const;
+    
+    //------------------------------------------------------------------
+    /// The regular expression returned determines symbols that this
+    /// thread won't stop in during "step-in" operations.
+    ///
+    /// @return
+    ///    A pointer to a regular expression to compare against symbols,
+    ///    or NULL if all symbols are allowed.
+    ///
+    //------------------------------------------------------------------
+    RegularExpression *
+    GetSymbolsToAvoidRegexp()
+    {
+        return ThreadInstanceSettings::GetSymbolsToAvoidRegexp();
+    }
 
     // Get the thread index ID. The index ID that is guaranteed to not be
     // re-used by a process. They start at 1 and increase with each new thread.

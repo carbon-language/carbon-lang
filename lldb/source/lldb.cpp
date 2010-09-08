@@ -76,7 +76,7 @@ lldb_private::Initialize ()
 #endif
 	Debugger::GetSettingsController (false);
 	Process::GetSettingsController (false);
-
+    Thread::GetSettingsController (false);
 #ifdef __linux__
         ProcessLinux::Initialize();
 #endif
@@ -111,7 +111,8 @@ lldb_private::Terminate ()
 
     Process::GetSettingsController (true);
     Debugger::GetSettingsController (true);
-
+    Thread::GetSettingsController (true);
+    
 #ifdef __linux__
     ProcessLinux::Terminate();
 #endif

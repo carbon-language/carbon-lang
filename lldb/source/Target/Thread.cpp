@@ -12,6 +12,7 @@
 #include "lldb/Core/Log.h"
 #include "lldb/Core/Stream.h"
 #include "lldb/Core/StreamString.h"
+#include "lldb/Core/RegularExpression.h"
 #include "lldb/Host/Host.h"
 #include "lldb/Target/DynamicLoader.h"
 #include "lldb/Target/ExecutionContext.h"
@@ -39,6 +40,7 @@ using namespace lldb_private;
 
 Thread::Thread (Process &process, lldb::tid_t tid) :
     UserID (tid),
+    ThreadInstanceSettings (*(Thread::GetSettingsController().get())),
     m_process (process),
     m_public_stop_info_sp (),
     m_actual_stop_info_sp (),
@@ -912,3 +914,220 @@ Thread::GetSP ()
 {
     return m_process.GetThreadList().GetThreadSPForThreadPtr(this);
 }
+
+lldb::UserSettingsControllerSP
+Thread::GetSettingsController (bool finish)
+{
+    static UserSettingsControllerSP g_settings_controller (new ThreadSettingsController);
+    static bool initialized = false;
+
+    if (!initialized)
+    {
+        initialized = UserSettingsController::InitializeSettingsController (g_settings_controller,
+                                                             Thread::ThreadSettingsController::global_settings_table,
+                                                             Thread::ThreadSettingsController::instance_settings_table);
+    }
+
+    if (finish)
+    {
+        UserSettingsController::FinalizeSettingsController (g_settings_controller);
+        g_settings_controller.reset();
+        initialized = false;
+    }
+
+    return g_settings_controller;
+}
+
+//--------------------------------------------------------------
+// class Thread::ThreadSettingsController
+//--------------------------------------------------------------
+
+Thread::ThreadSettingsController::ThreadSettingsController () :
+    UserSettingsController ("thread", Process::GetSettingsController())
+{
+    m_default_settings.reset (new ThreadInstanceSettings (*this, InstanceSettings::GetDefaultName().AsCString()));
+}
+
+Thread::ThreadSettingsController::~ThreadSettingsController ()
+{
+}
+
+lldb::InstanceSettingsSP
+Thread::ThreadSettingsController::CreateNewInstanceSettings ()
+{
+    ThreadInstanceSettings *new_settings = new ThreadInstanceSettings (*(Thread::GetSettingsController().get()));
+    lldb::InstanceSettingsSP new_settings_sp (new_settings);
+    return new_settings_sp;
+}
+
+//--------------------------------------------------------------
+// class ThreadInstanceSettings
+//--------------------------------------------------------------
+
+ThreadInstanceSettings::ThreadInstanceSettings (UserSettingsController &owner, const char *name) :
+    InstanceSettings (owner, (name == NULL ? CreateInstanceName().AsCString() : name)), 
+    m_avoid_regexp_ap ()
+{
+    // FIXME: This seems like generic code, why was it duplicated (with the slight difference that
+    // DebuggerInstanceSettings checks name, not m_instance_name below) in Process & Debugger?
+    if (m_instance_name != InstanceSettings::GetDefaultName())
+    {
+        const lldb::InstanceSettingsSP &pending_settings = m_owner.FindPendingSettings (m_instance_name);
+        CopyInstanceSettings (pending_settings,false);
+        m_owner.RemovePendingSettings (m_instance_name);
+    }
+}
+
+ThreadInstanceSettings::ThreadInstanceSettings (const ThreadInstanceSettings &rhs) :
+    InstanceSettings (*(Thread::GetSettingsController().get()), CreateInstanceName().AsCString()),
+    m_avoid_regexp_ap ()
+{
+    if (m_instance_name != InstanceSettings::GetDefaultName())
+    {
+        const lldb::InstanceSettingsSP &pending_settings = m_owner.FindPendingSettings (m_instance_name);
+        CopyInstanceSettings (pending_settings,false);
+        m_owner.RemovePendingSettings (m_instance_name);
+    }
+    if (rhs.m_avoid_regexp_ap.get() != NULL)
+        m_avoid_regexp_ap.reset(new RegularExpression(rhs.m_avoid_regexp_ap->GetText()));
+}
+
+ThreadInstanceSettings::~ThreadInstanceSettings ()
+{
+}
+
+ThreadInstanceSettings&
+ThreadInstanceSettings::operator= (const ThreadInstanceSettings &rhs)
+{
+    if (this != &rhs)
+    {
+        if (rhs.m_avoid_regexp_ap.get() != NULL)
+            m_avoid_regexp_ap.reset(new RegularExpression(rhs.m_avoid_regexp_ap->GetText()));
+        else
+            m_avoid_regexp_ap.reset(NULL);
+    }
+    
+    return *this;
+}
+
+
+void
+ThreadInstanceSettings::UpdateInstanceSettingsVariable (const ConstString &var_name,
+                                                         const char *index_value,
+                                                         const char *value,
+                                                         const ConstString &instance_name,
+                                                         const SettingEntry &entry,
+                                                         lldb::VarSetOperationType op,
+                                                         Error &err,
+                                                         bool pending)
+{
+    if (var_name == StepAvoidRegexpVarName())
+    {
+        std::string regexp_text;
+        if (m_avoid_regexp_ap.get() != NULL)
+            regexp_text.append (m_avoid_regexp_ap->GetText());
+        UserSettingsController::UpdateStringVariable (op, regexp_text, value, err);
+        if (regexp_text.empty())
+            m_avoid_regexp_ap.reset();
+        else
+        {
+            m_avoid_regexp_ap.reset(new RegularExpression(regexp_text.c_str()));
+            
+        }
+    }
+}
+
+void
+ThreadInstanceSettings::CopyInstanceSettings (const lldb::InstanceSettingsSP &new_settings,
+                                               bool pending)
+{
+    if (new_settings.get() == NULL)
+        return;
+
+    ThreadInstanceSettings *new_process_settings = (ThreadInstanceSettings *) new_settings.get();
+    if (new_process_settings->GetSymbolsToAvoidRegexp() != NULL)
+        m_avoid_regexp_ap.reset (new RegularExpression (new_process_settings->GetSymbolsToAvoidRegexp()->GetText()));
+    else 
+        m_avoid_regexp_ap.reset ();
+}
+
+void
+Thread::ThreadSettingsController::UpdateGlobalVariable (const ConstString &var_name,
+                                                          const char *index_value,
+                                                          const char *value,
+                                                          const SettingEntry &entry,
+                                                          lldb::VarSetOperationType op,
+                                                          Error&err)
+{
+    // Currently 'thread' does not have any global settings.
+}
+
+
+void
+ThreadInstanceSettings::GetInstanceSettingsValue (const SettingEntry &entry,
+                                                   const ConstString &var_name,
+                                                   StringList &value)
+{
+    if (var_name == StepAvoidRegexpVarName())
+    {
+        if (m_avoid_regexp_ap.get() != NULL)
+        {
+            std::string regexp_text("\"");
+            regexp_text.append(m_avoid_regexp_ap->GetText());
+            regexp_text.append ("\"");
+            value.AppendString (regexp_text.c_str());
+        }
+        
+    }
+    else
+        value.AppendString ("unrecognized variable name");
+}
+
+void
+Thread::ThreadSettingsController::GetGlobalSettingsValue (const ConstString &var_name,
+                                                            StringList &value)
+{
+    // Currently 'thread' does not have any global settings.
+}
+
+const ConstString
+ThreadInstanceSettings::CreateInstanceName ()
+{
+    static int instance_count = 1;
+    StreamString sstr;
+
+    sstr.Printf ("thread_%d", instance_count);
+    ++instance_count;
+
+    const ConstString ret_val (sstr.GetData());
+    return ret_val;
+}
+
+const ConstString &
+ThreadInstanceSettings::StepAvoidRegexpVarName ()
+{
+    static ConstString run_args_var_name ("step-avoid-regexp");
+
+    return run_args_var_name;
+}
+
+//--------------------------------------------------
+// ThreadSettingsController Variable Tables
+//--------------------------------------------------
+
+SettingEntry
+Thread::ThreadSettingsController::global_settings_table[] =
+{
+  //{ "var-name",    var-type  ,        "default", enum-table, init'd, hidden, "help-text"},
+    {  NULL, eSetVarTypeNone, NULL, NULL, 0, 0, NULL }
+};
+
+
+SettingEntry
+Thread::ThreadSettingsController::instance_settings_table[] =
+{
+  //{ "var-name",    var-type,              "default",      enum-table, init'd, hidden, "help-text"},
+    { "step-avoid-regexp",  eSetVarTypeString,      "",  NULL,       false,  false,  "A regular expression defining functions step-in won't stop in." },
+    {  NULL, eSetVarTypeNone, NULL, NULL, 0, 0, NULL }
+};
+

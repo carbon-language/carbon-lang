@@ -156,7 +156,13 @@ ThreadPlanStepInRange::FrameMatchesAvoidRegexp ()
 {
     StackFrame *frame = GetThread().GetStackFrameAtIndex(0).get();
 
-    if (m_avoid_regexp_ap.get() != NULL)
+    RegularExpression *avoid_regexp_to_use;
+    
+    avoid_regexp_to_use = m_avoid_regexp_ap.get();
+    if (avoid_regexp_to_use == NULL)
+        avoid_regexp_to_use = GetThread().GetSymbolsToAvoidRegexp();
+        
+    if (avoid_regexp_to_use != NULL)
     {
         SymbolContext sc = frame->GetSymbolContext(eSymbolContextSymbol);
         if (sc.symbol != NULL)
@@ -164,7 +170,7 @@ ThreadPlanStepInRange::FrameMatchesAvoidRegexp ()
             const char *unnamed_symbol = "<UNKNOWN>";
             const char *sym_name = sc.symbol->GetMangled().GetName().AsCString(unnamed_symbol);
             if (strcmp (sym_name, unnamed_symbol) != 0)
-               return m_avoid_regexp_ap->Execute(sym_name);
+               return avoid_regexp_to_use->Execute(sym_name);
         }
     }
     return false;
