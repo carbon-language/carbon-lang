@@ -206,7 +206,7 @@ ObjectFileMachO::GetSymtab()
     if (m_symtab_ap.get() == NULL)
     {
         m_symtab_ap.reset(new Symtab(this));
-        ParseSymtab(false);
+        ParseSymtab (true);
     }
     return m_symtab_ap.get();
 }
@@ -646,6 +646,9 @@ ObjectFileMachO::ParseSymtab (bool minimize)
                 std::vector<uint32_t> N_INCL_indexes;
                 std::vector<uint32_t> N_BRAC_indexes;
                 std::vector<uint32_t> N_COMM_indexes;
+                typedef std::map <uint64_t, uint32_t> ValueToSymbolIndexMap;
+                ValueToSymbolIndexMap N_FUN_addr_to_sym_idx;
+                ValueToSymbolIndexMap N_STSYM_addr_to_sym_idx;
                 uint32_t nlist_idx = 0;
                 Symbol *symbol_ptr = NULL;
 
@@ -706,6 +709,8 @@ ObjectFileMachO::ParseSymtab (bool minimize)
                             {
                                 type = eSymbolTypeFunction;
                                 symbol_section = section_info.GetSection (nlist.n_sect, nlist.n_value);
+                                
+                                N_FUN_addr_to_sym_idx[nlist.n_value] = sym_idx;
                                 // We use the current number of symbols in the symbol table in lieu of
                                 // using nlist_idx in case we ever start trimming entries out
                                 N_FUN_indexes.push_back(sym_idx);
@@ -731,6 +736,7 @@ ObjectFileMachO::ParseSymtab (bool minimize)
 
                         case StabStaticSymbol:   
                             // N_STSYM -- static symbol: name,,n_sect,type,address
+                            N_STSYM_addr_to_sym_idx[nlist.n_value] = sym_idx;
                             symbol_section = section_info.GetSection (nlist.n_sect, nlist.n_value);
                             type = eSymbolTypeStatic;
                             break;
@@ -1082,7 +1088,7 @@ ObjectFileMachO::ParseSymtab (bool minimize)
                                     }
                                 }
                                 break;
-                            }
+                            }                            
                         }
                     }
 
@@ -1095,13 +1101,58 @@ ObjectFileMachO::ParseSymtab (bool minimize)
                             symbol_name++;  // Skip the leading underscore
                         }
                         uint64_t symbol_value = nlist.n_value;
+
+                        if (symbol_name)
+                            sym[sym_idx].GetMangled().SetValue(symbol_name, symbol_name_is_mangled);
+
+                        if (type == eSymbolTypeCode)
+                        {
+                            // See if we can find a N_FUN entry for any code symbols.
+                            // If we do find a match, and the name matches, then we
+                            // can merge the two into just the function symbol to avoid
+                            // duplicate entries in the symbol table
+                            ValueToSymbolIndexMap::const_iterator pos = N_FUN_addr_to_sym_idx.find (nlist.n_value);
+                            if (pos != N_FUN_addr_to_sym_idx.end())
+                            {
+                                if ((symbol_name_is_mangled == true && sym[sym_idx].GetMangled().GetMangledName() == sym[pos->second].GetMangled().GetMangledName()) ||
+                                    (symbol_name_is_mangled == false && sym[sym_idx].GetMangled().GetDemangledName() == sym[pos->second].GetMangled().GetDemangledName()))
+                                {
+                                
+                                    // We just need the flags from the linker symbol, so put these flags
+                                    // into the N_FUN flags to avoid duplicate symbols in the symbol table
+                                    sym[pos->second].SetFlags (nlist.n_type << 16 | nlist.n_desc);
+                                    sym[sym_idx].GetMangled().Clear();
+                                    continue;
+                                }
+                            }
+                        }
+                        else if (type == eSymbolTypeData)
+                        {
+                            // See if we can find a N_STSYM entry for any data symbols.
+                            // If we do find a match, and the name matches, then we
+                            // can merge the two into just the Static symbol to avoid
+                            // duplicate entries in the symbol table
+                            ValueToSymbolIndexMap::const_iterator pos = N_STSYM_addr_to_sym_idx.find (nlist.n_value);
+                            if (pos != N_STSYM_addr_to_sym_idx.end())
+                            {
+                                if ((symbol_name_is_mangled == true && sym[sym_idx].GetMangled().GetMangledName() == sym[pos->second].GetMangled().GetMangledName()) ||
+                                    (symbol_name_is_mangled == false && sym[sym_idx].GetMangled().GetDemangledName() == sym[pos->second].GetMangled().GetDemangledName()))
+                                {
+                                
+                                    // We just need the flags from the linker symbol, so put these flags
+                                    // into the N_STSYM flags to avoid duplicate symbols in the symbol table
+                                    sym[pos->second].SetFlags (nlist.n_type << 16 | nlist.n_desc);
+                                    sym[sym_idx].GetMangled().Clear();
+                                    continue;
+                                }
+                            }
+                        }
+
                         if (symbol_section != NULL)
                             symbol_value -= symbol_section->GetFileAddress();
 
                         sym[sym_idx].SetID (nlist_idx);
                         sym[sym_idx].SetType (type);
-                        if (symbol_name)
-                            sym[sym_idx].GetMangled().SetValue(symbol_name, symbol_name_is_mangled);
                         sym[sym_idx].GetAddressRangeRef().GetBaseAddress().SetSection (symbol_section);
                         sym[sym_idx].GetAddressRangeRef().GetBaseAddress().SetOffset (symbol_value);
                         sym[sym_idx].SetFlags (nlist.n_type << 16 | nlist.n_desc);
