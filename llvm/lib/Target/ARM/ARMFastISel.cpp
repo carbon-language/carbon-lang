@@ -120,8 +120,8 @@ class ARMFastISel : public FastISel {
     bool isLoadTypeLegal(const Type *Ty, EVT &VT);
     bool ARMEmitLoad(EVT VT, unsigned &ResultReg, unsigned Reg, int Offset);
     bool ARMEmitStore(EVT VT, unsigned SrcReg, unsigned Reg, int Offset);
-    bool ARMLoadAlloca(const Instruction *I);
-    bool ARMStoreAlloca(const Instruction *I, unsigned SrcReg);
+    bool ARMLoadAlloca(const Instruction *I, EVT VT);
+    bool ARMStoreAlloca(const Instruction *I, unsigned SrcReg, EVT VT);
     bool ARMComputeRegOffset(const Value *Obj, unsigned &Reg, int &Offset);
     bool ARMMaterializeConstant(const ConstantInt *Val, unsigned &Reg);
     
@@ -461,7 +461,7 @@ bool ARMFastISel::ARMComputeRegOffset(const Value *Obj, unsigned &Reg,
   return true;
 }
 
-bool ARMFastISel::ARMLoadAlloca(const Instruction *I) {
+bool ARMFastISel::ARMLoadAlloca(const Instruction *I, EVT VT) {
   Value *Op0 = I->getOperand(0);
 
   // Verify it's an alloca.
@@ -470,7 +470,7 @@ bool ARMFastISel::ARMLoadAlloca(const Instruction *I) {
       FuncInfo.StaticAllocaMap.find(AI);
 
     if (SI != FuncInfo.StaticAllocaMap.end()) {
-      TargetRegisterClass* RC = TLI.getRegClassFor(TLI.getPointerTy());
+      TargetRegisterClass* RC = TLI.getRegClassFor(VT);
       unsigned ResultReg = createResultReg(RC);
       TII.loadRegFromStackSlot(*FuncInfo.MBB, *FuncInfo.InsertPt,
                                ResultReg, SI->second, RC,
@@ -521,7 +521,7 @@ bool ARMFastISel::ARMEmitLoad(EVT VT, unsigned &ResultReg,
   return true;
 }
 
-bool ARMFastISel::ARMStoreAlloca(const Instruction *I, unsigned SrcReg) {
+bool ARMFastISel::ARMStoreAlloca(const Instruction *I, unsigned SrcReg, EVT VT){
   Value *Op1 = I->getOperand(1);
 
   // Verify it's an alloca.
@@ -530,7 +530,7 @@ bool ARMFastISel::ARMStoreAlloca(const Instruction *I, unsigned SrcReg) {
       FuncInfo.StaticAllocaMap.find(AI);
 
     if (SI != FuncInfo.StaticAllocaMap.end()) {
-      TargetRegisterClass* RC = TLI.getRegClassFor(TLI.getPointerTy());
+      TargetRegisterClass* RC = TLI.getRegClassFor(VT);
       assert(SrcReg != 0 && "Nothing to store!");
       TII.storeRegToStackSlot(*FuncInfo.MBB, *FuncInfo.InsertPt,
                               SrcReg, true /*isKill*/, SI->second, RC,
@@ -588,7 +588,7 @@ bool ARMFastISel::ARMSelectStore(const Instruction *I) {
     
   // If we're an alloca we know we have a frame index and can emit the store
   // quickly.
-  if (ARMStoreAlloca(I, SrcReg))
+  if (ARMStoreAlloca(I, SrcReg, VT))
     return true;
     
   // Our register and offset with innocuous defaults.
@@ -606,16 +606,16 @@ bool ARMFastISel::ARMSelectStore(const Instruction *I) {
 }
 
 bool ARMFastISel::ARMSelectLoad(const Instruction *I) {
-  // If we're an alloca we know we have a frame index and can emit the load
-  // directly in short order.
-  if (ARMLoadAlloca(I))
-    return true;
-    
   // Verify we have a legal type before going any further.
   EVT VT;
   if (!isLoadTypeLegal(I->getType(), VT))
     return false;
   
+  // If we're an alloca we know we have a frame index and can emit the load
+  // directly in short order.
+  if (ARMLoadAlloca(I, VT))
+    return true;
+    
   // Our register and offset with innocuous defaults.
   unsigned Reg = 0;
   int Offset = 0;
