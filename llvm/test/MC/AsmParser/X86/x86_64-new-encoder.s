@@ -168,3 +168,8 @@ L1:
 // CHECK: jrcxz L1
 // CHECK:   encoding: [0xe3,A]
 
+// PR8061
+xchgl   368(%rax),%ecx
+// CHECK: xchgl	%ecx, 368(%rax)
+xchgl   %ecx, 368(%rax)
+// CHECK: xchgl	%ecx, 368(%rax)

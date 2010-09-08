@@ -753,6 +753,7 @@ ParseInstruction(StringRef Name, SMLoc NameLoc,
       PatchedName = "vpclmulqdq";
     }
   }
+  
   Operands.push_back(X86Operand::CreateToken(PatchedName, NameLoc));
 
   if (ExtraImmOp)
@@ -827,6 +828,16 @@ ParseInstruction(StringRef Name, SMLoc NameLoc,
     delete Operands[0];
     Operands[0] = X86Operand::CreateToken("sldtw", NameLoc);
   }
+  
+  // The assembler accepts "xchgX <reg>, <mem>" and "xchgX <mem>, <reg>" as
+  // synonyms.  Our tables only have the "<reg>, <mem>" form, so if we see the
+  // other operand order, swap them.
+  if (Name == "xchgb" || Name == "xchgw" || Name == "xchgl" || Name == "xchgq")
+    if (Operands.size() == 3 &&
+        static_cast<X86Operand*>(Operands[1])->isMem() &&
+        static_cast<X86Operand*>(Operands[2])->isReg()) {
+      std::swap(Operands[1], Operands[2]);
+    }
 
   return false;
 }
