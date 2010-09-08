@@ -308,7 +308,7 @@ CommandObjectSettingsShow::Execute (CommandInterpreter &interpreter,
             else
             {
                 result.AppendMessageWithFormat ("%s%s:\n", variable_name, type_name);
-                for (int i = 0; i < value.GetSize(); ++i)
+                for (unsigned i = 0, e = value.GetSize(); i != e; ++i)
                 {
                     result.AppendMessageWithFormat ("  [%d]: '%s'\n", i, value.GetStringAtIndex (i));
                 }

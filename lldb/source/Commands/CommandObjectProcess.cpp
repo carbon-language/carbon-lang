@@ -174,8 +174,8 @@ public:
         if (run_args_value.GetSize() > 0)
         {
             run_args = new Args;
-            for (int i = 0; i < run_args_value.GetSize(); ++i)
-                run_args->AppendArgument (run_args_value.GetStringAtIndex (i));
+            for (unsigned i = 0, e = run_args_value.GetSize(); i != e; ++i)
+                run_args->AppendArgument(run_args_value.GetStringAtIndex(i));
         }
         
         Args *environment = NULL;
@@ -185,7 +185,7 @@ public:
         if (env_vars_value.GetSize() > 0)
         {
             environment = new Args;
-            for (int i = 0; i < env_vars_value.GetSize(); ++i)
+            for (unsigned i = 0, e = env_vars_value.GetSize(); i != e; ++i)
                 environment->AppendArgument (env_vars_value.GetStringAtIndex (i));
         }
 

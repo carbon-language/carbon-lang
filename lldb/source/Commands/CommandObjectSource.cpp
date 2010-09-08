@@ -283,7 +283,7 @@ public:
             if (m_options.m_modules.size() > 0)
             {
                 ModuleList matching_modules;
-                for (int i = 0; i < m_options.m_modules.size(); i++)
+                for (unsigned i = 0, e = m_options.m_modules.size(); i != e; i++)
                 {
                     FileSpec module_spec(m_options.m_modules[i].c_str());
                     if (module_spec)
@@ -457,7 +457,7 @@ public:
             if (m_options.m_modules.size() > 0)
             {
                 ModuleList matching_modules;
-                for (int i = 0; i < m_options.m_modules.size(); i++)
+                for (unsigned i = 0, e = m_options.m_modules.size(); i != e; i++)
                 {
                     FileSpec module_spec(m_options.m_modules[i].c_str());
                     if (module_spec)
@@ -495,7 +495,7 @@ public:
                 bool got_multiple = false;
                 FileSpec *test_cu_spec = NULL;
 
-                for (int i = 0; i < num_matches; i++)
+                for (unsigned i = 0; i < num_matches; i++)
                 {
                     sc_list.GetContextAtIndex(i, sc);
                     if (sc.comp_unit)
