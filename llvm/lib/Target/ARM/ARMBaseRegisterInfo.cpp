@@ -1077,7 +1077,7 @@ ARMBaseRegisterInfo::ResolveFrameIndexReference(const MachineFunction &MF,
     // there are VLAs (and thus the SP isn't reliable as a base).
     if (isFixed || (MFI->hasVarSizedObjects() && !hasBasePointer(MF))) {
       FrameReg = getFrameRegister(MF);
-      Offset = FPOffset;
+      return FPOffset;
     } else if (MFI->hasVarSizedObjects()) {
       assert(hasBasePointer(MF) && "missing base pointer!");
       // Use the base register since we have it.
@@ -1087,12 +1087,12 @@ ARMBaseRegisterInfo::ResolveFrameIndexReference(const MachineFunction &MF,
       // out of range references.
       if (FPOffset >= -255 && FPOffset < 0) {
         FrameReg = getFrameRegister(MF);
-        Offset = FPOffset;
+        return FPOffset;
       }
     } else if (Offset > (FPOffset < 0 ? -FPOffset : FPOffset)) {
       // Otherwise, use SP or FP, whichever is closer to the stack slot.
       FrameReg = getFrameRegister(MF);
-      Offset = FPOffset;
+      return FPOffset;
     }
   }
   // Use the base pointer if we have one.
