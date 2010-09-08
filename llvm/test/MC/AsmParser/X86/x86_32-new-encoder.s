@@ -444,3 +444,11 @@ iretw
 iretl
 // CHECK: iretl
 // CHECK: encoding: [0xcf]
+
+// rdar://8403907
+sysret
+// CHECK: sysretl
+// CHECK: encoding: [0x0f,0x07]
+sysretl
+// CHECK: sysretl
+// CHECK: encoding: [0x0f,0x07]

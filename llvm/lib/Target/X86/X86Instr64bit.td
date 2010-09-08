@@ -120,6 +120,10 @@ def ADJCALLSTACKUP64   : I<0, Pseudo, (outs), (ins i32imm:$amt1, i32imm:$amt2),
 def IRET64 : RI<0xcf, RawFrm, (outs), (ins), "iretq", []>,
              Requires<[In64BitMode]>;
 
+def SYSRETQ : RI<0x07, RawFrm,
+                 (outs), (ins), "sysretq", []>, TB, Requires<[In64BitMode]>;
+
+
 //===----------------------------------------------------------------------===//
 //  Call Instructions...
 //

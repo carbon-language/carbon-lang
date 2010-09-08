@@ -201,4 +201,13 @@ iretq
 // CHECK: iretq
 // CHECK: encoding: [0x48,0xcf]
 
-
+// rdar://8403907
+sysret
+// CHECK: sysretl
+// CHECK: encoding: [0x0f,0x07]
+sysretl
+// CHECK: sysretl
+// CHECK: encoding: [0x0f,0x07]
+sysretq
+// CHECK: sysretq
+// CHECK: encoding: [0x48,0x0f,0x07]
