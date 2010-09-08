@@ -51,7 +51,7 @@ EnableLocalStackAlloc("enable-local-stack-alloc", cl::init(true), cl::Hidden,
 using namespace llvm;
 
 static cl::opt<bool>
-EnableBasePointer("arm-use-base-pointer", cl::Hidden, cl::init(true),
+EnableBasePointer("arm-use-base-pointer", cl::Hidden, cl::init(false),
           cl::desc("Enable use of a base pointer for complex stack frames"));
 
 unsigned ARMBaseRegisterInfo::getRegisterNumbering(unsigned RegEnum,
