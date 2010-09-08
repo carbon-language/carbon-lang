@@ -452,3 +452,10 @@ sysret
 sysretl
 // CHECK: sysretl
 // CHECK: encoding: [0x0f,0x07]
+
+// rdar://8018260
+testl	%ecx, -24(%ebp)
+// CHECK: testl	-24(%ebp), %ecx
+testl	-24(%ebp), %ecx
+// CHECK: testl	-24(%ebp), %ecx
+

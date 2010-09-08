@@ -856,6 +856,16 @@ ParseInstruction(StringRef Name, SMLoc NameLoc,
       std::swap(Operands[1], Operands[2]);
     }
 
+  // The assembler accepts "testX <reg>, <mem>" and "testX <mem>, <reg>" as
+  // synonyms.  Our tables only have the "<mem>, <reg>" form, so if we see the
+  // other operand order, swap them.
+  if (Name == "testb" || Name == "testw" || Name == "testl" || Name == "testq")
+    if (Operands.size() == 3 &&
+        static_cast<X86Operand*>(Operands[1])->isReg() &&
+        static_cast<X86Operand*>(Operands[2])->isMem()) {
+      std::swap(Operands[1], Operands[2]);
+    }
+  
   return false;
 }
 
