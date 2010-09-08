@@ -4274,23 +4274,53 @@ def LTRr : I<0x00, MRM3r, (outs), (ins GR16:$src),
 def LTRm : I<0x00, MRM3m, (outs), (ins i16mem:$src),
              "ltr{w}\t{$src}", []>, TB;
              
+def PUSHCS16 : I<0x0E, RawFrm, (outs), (ins),
+                 "push{w}\t%cs", []>, Requires<[In32BitMode]>, OpSize;
+def PUSHCS32 : I<0x0E, RawFrm, (outs), (ins),
+                 "push{l}\t%cs", []>, Requires<[In32BitMode]>;
+def PUSHSS16 : I<0x16, RawFrm, (outs), (ins),
+                 "push{w}\t%ss", []>, Requires<[In32BitMode]>, OpSize;
+def PUSHSS32 : I<0x16, RawFrm, (outs), (ins),
+                 "push{l}\t%ss", []>, Requires<[In32BitMode]>;
+def PUSHDS16 : I<0x1E, RawFrm, (outs), (ins),
+                 "push{w}\t%ds", []>, Requires<[In32BitMode]>, OpSize;
+def PUSHDS32 : I<0x1E, RawFrm, (outs), (ins),
+                 "push{l}\t%ds", []>, Requires<[In32BitMode]>;
+def PUSHES16 : I<0x06, RawFrm, (outs), (ins),
+                 "push{w}\t%es", []>, Requires<[In32BitMode]>, OpSize;
+def PUSHES32 : I<0x06, RawFrm, (outs), (ins),
+                 "push{l}\t%es", []>, Requires<[In32BitMode]>;
+                 
 def PUSHFS16 : I<0xa0, RawFrm, (outs), (ins),
                  "push{w}\t%fs", []>, OpSize, TB;
 def PUSHFS32 : I<0xa0, RawFrm, (outs), (ins),
-                 "push{l}\t%fs", []>, TB;
+                 "push{l}\t%fs", []>, TB, Requires<[In32BitMode]>;
 def PUSHGS16 : I<0xa8, RawFrm, (outs), (ins),
                  "push{w}\t%gs", []>, OpSize, TB;
 def PUSHGS32 : I<0xa8, RawFrm, (outs), (ins),
-                 "push{l}\t%gs", []>, TB;
+                 "push{l}\t%gs", []>, TB, Requires<[In32BitMode]>;
 
+// No "pop cs" instruction.
+def POPSS16 : I<0x17, RawFrm, (outs), (ins),
+                "pop{w}\t%ss", []>, OpSize, Requires<[In32BitMode]>;
+def POPSS32 : I<0x17, RawFrm, (outs), (ins),
+                "pop{l}\t%ss", []>        , Requires<[In32BitMode]>;
+def POPDS16 : I<0x1F, RawFrm, (outs), (ins),
+                "pop{w}\t%ds", []>, OpSize, Requires<[In32BitMode]>;
+def POPDS32 : I<0x1F, RawFrm, (outs), (ins),
+                "pop{l}\t%ds", []>        , Requires<[In32BitMode]>;
+def POPES16 : I<0x07, RawFrm, (outs), (ins),
+                "pop{w}\t%es", []>, OpSize, Requires<[In32BitMode]>;
+def POPES32 : I<0x07, RawFrm, (outs), (ins),
+                "pop{l}\t%es", []>        , Requires<[In32BitMode]>;
 def POPFS16 : I<0xa1, RawFrm, (outs), (ins),
                 "pop{w}\t%fs", []>, OpSize, TB;
 def POPFS32 : I<0xa1, RawFrm, (outs), (ins),
-                "pop{l}\t%fs", []>, TB;
+                "pop{l}\t%fs", []>, TB    , Requires<[In32BitMode]>;
 def POPGS16 : I<0xa9, RawFrm, (outs), (ins),
                 "pop{w}\t%gs", []>, OpSize, TB;
 def POPGS32 : I<0xa9, RawFrm, (outs), (ins),
-                "pop{l}\t%gs", []>, TB;
+                "pop{l}\t%gs", []>, TB    , Requires<[In32BitMode]>;
 
 def LDS16rm : I<0xc5, MRMSrcMem, (outs GR16:$dst), (ins opaque32mem:$src),
                 "lds{w}\t{$src, $dst|$dst, $src}", []>, OpSize;

@@ -211,3 +211,36 @@ sysretl
 sysretq
 // CHECK: sysretq
 // CHECK: encoding: [0x48,0x0f,0x07]
+
+// rdar://8407242
+push %fs
+// CHECK: pushq	%fs
+// CHECK: encoding: [0x0f,0xa0]
+push %gs
+// CHECK: pushq	%gs
+// CHECK: encoding: [0x0f,0xa8]
+
+pushw %fs
+// CHECK: pushw	%fs
+// CHECK: encoding: [0x66,0x0f,0xa0]
+pushw %gs
+// CHECK: pushw	%gs
+// CHECK: encoding: [0x66,0x0f,0xa8]
+
+
+pop %fs
+// CHECK: popq	%fs
+// CHECK: encoding: [0x0f,0xa1]
+pop %gs
+// CHECK: popq	%gs
+// CHECK: encoding: [0x0f,0xa9]
+
+popw %fs
+// CHECK: popw	%fs
+// CHECK: encoding: [0x66,0x0f,0xa1]
+popw %gs
+// CHECK: popw	%gs
+// CHECK: encoding: [0x66,0x0f,0xa9]
+
+
+

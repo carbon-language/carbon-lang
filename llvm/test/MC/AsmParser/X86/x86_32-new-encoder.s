@@ -459,3 +459,52 @@ testl	%ecx, -24(%ebp)
 testl	-24(%ebp), %ecx
 // CHECK: testl	-24(%ebp), %ecx
 
+
+// rdar://8407242
+push %cs
+// CHECK: pushl	%cs
+// CHECK: encoding: [0x0e]
+push %ds
+// CHECK: pushl	%ds
+// CHECK: encoding: [0x1e]
+push %ss
+// CHECK: pushl	%ss
+// CHECK: encoding: [0x16]
+push %es
+// CHECK: pushl	%es
+// CHECK: encoding: [0x06]
+push %fs
+// CHECK: pushl	%fs
+// CHECK: encoding: [0x0f,0xa0]
+push %gs
+// CHECK: pushl	%gs
+// CHECK: encoding: [0x0f,0xa8]
+
+pushw %cs
+// CHECK: pushw	%cs
+// CHECK: encoding: [0x66,0x0e]
+pushw %ds
+// CHECK: pushw	%ds
+// CHECK: encoding: [0x66,0x1e]
+pushw %ss
+// CHECK: pushw	%ss
+// CHECK: encoding: [0x66,0x16]
+pushw %es
+// CHECK: pushw	%es
+// CHECK: encoding: [0x66,0x06]
+pushw %fs
+// CHECK: pushw	%fs
+// CHECK: encoding: [0x66,0x0f,0xa0]
+pushw %gs
+// CHECK: pushw	%gs
+// CHECK: encoding: [0x66,0x0f,0xa8]
+
+pop %ss
+// CHECK: popl	%ss
+// CHECK: encoding: [0x17]
+pop %ds
+// CHECK: popl	%ds
+// CHECK: encoding: [0x1f]
+pop %es
+// CHECK: popl	%es
+// CHECK: encoding: [0x07]

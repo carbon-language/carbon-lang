@@ -461,8 +461,12 @@ static void X86ExtractSemantics(
   }
   
   if (name.find("PUSH") != name.npos) {
-    if (name.find("FS") != name.npos ||
-        name.find("GS") != name.npos) {
+    if (name.find("CS") != name.npos ||
+        name.find("DS") != name.npos ||
+        name.find("ES") != name.npos ||
+        name.find("FS") != name.npos ||
+        name.find("GS") != name.npos ||
+        name.find("SS") != name.npos) {
       instType.set("kInstructionTypePush");
       // TODO add support for fixed operands
     } else if (name.find("F") != name.npos) {
@@ -481,8 +485,12 @@ static void X86ExtractSemantics(
   if (name.find("POP") != name.npos) {
     if (name.find("POPCNT") != name.npos) {
       // ignore (not a real pop)
-    } else if (name.find("FS") != name.npos ||
-             name.find("GS") != name.npos) {
+    } else if (name.find("CS") != name.npos ||
+               name.find("DS") != name.npos ||
+               name.find("ES") != name.npos ||
+               name.find("FS") != name.npos ||
+               name.find("GS") != name.npos ||
+               name.find("SS") != name.npos) {
       instType.set("kInstructionTypePop");
       // TODO add support for fixed operands
     } else if (name.find("F") != name.npos) {
