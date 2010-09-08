@@ -434,3 +434,13 @@ L1:
 // CHECK: jecxz L1
 // CHECK:   encoding: [0xe3,A]
 
+// rdar://8403974
+iret
+// CHECK: iretl
+// CHECK: encoding: [0xcf]
+iretw
+// CHECK: iretw
+// CHECK: encoding: [0x66,0xcf]
+iretl
+// CHECK: iretl
+// CHECK: encoding: [0xcf]

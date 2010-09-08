@@ -601,8 +601,8 @@ def INT3 : I<0xcc, RawFrm, (outs), (ins), "int3",
               [(int_x86_int (i8 3))]>;
 def INT : Ii8<0xcd, RawFrm, (outs), (ins i8imm:$trap), "int\t$trap",
               [(int_x86_int imm:$trap)]>;
-def IRET16 : I<0xcf, RawFrm, (outs), (ins), "iret{w}", []>, OpSize;
-def IRET32 : I<0xcf, RawFrm, (outs), (ins), "iret{l}", []>;
+def IRET16 : I<0xcf, RawFrm, (outs), (ins), "iretw", []>, OpSize;
+def IRET32 : I<0xcf, RawFrm, (outs), (ins), "iret{l|d}", []>;
 
 // PIC base construction.  This expands to code that looks like this:
 //     call  $next_inst

@@ -117,7 +117,8 @@ def ADJCALLSTACKUP64   : I<0, Pseudo, (outs), (ins i32imm:$amt1, i32imm:$amt2),
 }
 
 // Interrupt Instructions
-def IRET64 : RI<0xcf, RawFrm, (outs), (ins), "iret{q}", []>;
+def IRET64 : RI<0xcf, RawFrm, (outs), (ins), "iretq", []>,
+             Requires<[In64BitMode]>;
 
 //===----------------------------------------------------------------------===//
 //  Call Instructions...

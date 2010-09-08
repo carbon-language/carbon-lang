@@ -185,3 +185,20 @@ rep movsl
 // CHECK: encoding: [0xf3]
 // CHECK: movsl
 // CHECK: encoding: [0xa5]
+
+
+// rdar://8403974
+iret
+// CHECK: iretl
+// CHECK: encoding: [0xcf]
+iretw
+// CHECK: iretw
+// CHECK: encoding: [0x66,0xcf]
+iretl
+// CHECK: iretl
+// CHECK: encoding: [0xcf]
+iretq
+// CHECK: iretq
+// CHECK: encoding: [0x48,0xcf]
+
+
