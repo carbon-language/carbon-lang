@@ -29,20 +29,6 @@ template <typename T> class SmallVectorImpl;
 /// LLVMContext itself provides no locking guarantees, so you should be careful
 /// to have one context per thread.
 class LLVMContext {
-  // DO NOT IMPLEMENT
-  LLVMContext(LLVMContext&);
-  void operator=(LLVMContext&);
-
-  /// addModule - Register a module as being instantiated in this context.  If
-  /// the context is deleted, the module will be deleted as well.
-  void addModule(Module*);
-  
-  /// removeModule - Unregister a module from this context.
-  void removeModule(Module*);
-  
-  // Module needs access to the add/removeModule methods.
-  friend class Module;
-
 public:
   LLVMContextImpl *const pImpl;
   LLVMContext();
@@ -88,6 +74,21 @@ public:
   void emitError(unsigned LocCookie, StringRef ErrorStr);
   void emitError(const Instruction *I, StringRef ErrorStr);
   void emitError(StringRef ErrorStr);
+
+private:
+  // DO NOT IMPLEMENT
+  LLVMContext(LLVMContext&);
+  void operator=(LLVMContext&);
+
+  /// addModule - Register a module as being instantiated in this context.  If
+  /// the context is deleted, the module will be deleted as well.
+  void addModule(Module*);
+  
+  /// removeModule - Unregister a module from this context.
+  void removeModule(Module*);
+  
+  // Module needs access to the add/removeModule methods.
+  friend class Module;
 };
 
 /// getGlobalContext - Returns a global context.  This is for LLVM clients that
