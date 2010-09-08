@@ -932,9 +932,7 @@ public:
   bool isObjCQualifiedClassType() const;        // Class<foo>
   bool isObjCObjectOrInterfaceType() const;
   bool isObjCIdType() const;                    // id
-  bool isLegacyObjCIdType(ASTContext &) const;  // struct_object *
   bool isObjCClassType() const;                 // Class
-  bool isLegacyObjCClassType(ASTContext &) const; // struct_class *
   bool isObjCSelType() const;                 // Class
   bool isObjCBuiltinType() const;               // 'id' or 'Class'
   bool isTemplateTypeParmType() const;          // C++ template type parameter
