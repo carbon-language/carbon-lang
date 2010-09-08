@@ -206,7 +206,7 @@ ObjectFileMachO::GetSymtab()
     if (m_symtab_ap.get() == NULL)
     {
         m_symtab_ap.reset(new Symtab(this));
-        ParseSymtab (true);
+        ParseSymtab (false);
     }
     return m_symtab_ap.get();
 }
