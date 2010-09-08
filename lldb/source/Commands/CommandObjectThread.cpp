@@ -332,7 +332,7 @@ public:
 
     CommandObjectThreadBacktrace () :
         CommandObject ("thread backtrace",
-                       "Show the stack for one or more threads.  If no threads are specified, shows the currently selected thread.  Use the thread-index \"all\" to see all threads.",
+                       "Show the stack for one or more threads.  If no threads are specified, show the currently selected thread.  Use the thread-index \"all\" to see all threads.",
                        "thread backtrace [<thread-index>] ...",
                        eFlagProcessMustBeLaunched | eFlagProcessMustBePaused),
         m_options()
@@ -472,7 +472,7 @@ lldb::OptionDefinition
 CommandObjectThreadBacktrace::CommandOptions::g_option_table[] =
 {
 { LLDB_OPT_SET_1, false, "count", 'c', required_argument, NULL,               0, "<count>", "How many frames to display (-1 for all)"},
-{ LLDB_OPT_SET_1, false, "start",       's', required_argument, NULL, 0, "<start>",       "Where to start the backtrace"},
+{ LLDB_OPT_SET_1, false, "start",       's', required_argument, NULL, 0, "<start>",       "Frame in which to start the backtrace"},
 { 0, false, NULL, 0, 0, NULL, 0, NULL, NULL }
 };
 
@@ -1235,7 +1235,7 @@ public:
 
     CommandObjectThreadSelect () :
         CommandObject ("thread select",
-                         "Select a threads as the currently active thread.",
+                         "Select a thread as the currently active thread.",
                          "thread select <thread-index>",
                          eFlagProcessMustBeLaunched | eFlagProcessMustBePaused)
     {
@@ -1388,21 +1388,21 @@ CommandObjectMultiwordThread::CommandObjectMultiwordThread (CommandInterpreter &
     LoadSubCommand (interpreter, "until",      CommandObjectSP (new CommandObjectThreadUntil ()));
     LoadSubCommand (interpreter, "step-in",    CommandObjectSP (new CommandObjectThreadStepWithTypeAndScope (
                                                     "thread step-in",
-                                                     "Source level single step in in specified thread (current thread, if none specified).",
+                                                     "Source level single step in specified thread (current thread, if none specified).",
                                                      "thread step-in [<thread-id>]",
                                                      eFlagProcessMustBeLaunched | eFlagProcessMustBePaused,
                                                      eStepTypeInto,
                                                      eStepScopeSource)));
     
     LoadSubCommand (interpreter, "step-out",    CommandObjectSP (new CommandObjectThreadStepWithTypeAndScope ("thread step-out",
-                                                                                      "Source level single step out in specified thread (current thread, if none specified).",
+                                                                                      "Finish executing the current fucntion and return to its call site in specified thread (current thread, if none specified).",
                                                                                       "thread step-out [<thread-id>]",
                                                                                       eFlagProcessMustBeLaunched | eFlagProcessMustBePaused,
                                                                                       eStepTypeOut,
                                                                                       eStepScopeSource)));
 
     LoadSubCommand (interpreter, "step-over",   CommandObjectSP (new CommandObjectThreadStepWithTypeAndScope ("thread step-over",
-                                                                                      "Source level single step over in specified thread (current thread, if none specified).",
+                                                                                      "Source level single step in specified thread (current thread, if none specified), stepping over calls.",
                                                                                       "thread step-over [<thread-id>]",
                                                                                       eFlagProcessMustBeLaunched | eFlagProcessMustBePaused,
                                                                                       eStepTypeOver,

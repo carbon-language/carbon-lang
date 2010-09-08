@@ -1209,7 +1209,7 @@ CommandObjectBreakpointModify::CommandOptions::ResetOptionValues ()
 
 CommandObjectBreakpointModify::CommandObjectBreakpointModify () :
     CommandObject ("breakpoint modify", "Modify the options on a breakpoint or set of breakpoints in the executable.", 
-                   "breakpoint modify <cmd-options> break-id [break-id ...]")
+                   "breakpoint modify <cmd-options> <breakpoint-id> [<breakpoint-id> ...]")
 {
 }
 

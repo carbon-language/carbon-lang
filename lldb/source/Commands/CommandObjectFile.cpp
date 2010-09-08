@@ -38,7 +38,7 @@ CommandObjectFile::CommandOptions::~CommandOptions ()
 lldb::OptionDefinition
 CommandObjectFile::CommandOptions::g_option_table[] =
 {
-    { LLDB_OPT_SET_1, false, "arch", 'a', required_argument, NULL, 0, "<arch>", "Specify the architecture to launch."},
+    { LLDB_OPT_SET_1, false, "arch", 'a', required_argument, NULL, 0, "<arch>", "Specify the architecture to be used when the process is launched."},
     { 0, false, NULL, 0, 0, NULL, 0, NULL, NULL }
 };
 
@@ -111,7 +111,7 @@ CommandObjectFile::Execute
 )
 {
     const char *file_path = command.GetArgumentAtIndex(0);
-    Timer scoped_timer(__PRETTY_FUNCTION__, "(dbg) file '%s'", file_path);
+    Timer scoped_timer(__PRETTY_FUNCTION__, "(lldb) file '%s'", file_path);
     const int argc = command.GetArgumentCount();
     if (argc == 1)
     {

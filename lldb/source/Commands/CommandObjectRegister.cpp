@@ -33,7 +33,7 @@ class CommandObjectRegisterRead : public CommandObject
 public:
     CommandObjectRegisterRead () :
         CommandObject ("register read",
-                       "Dump the one or more register values from the current frame.",
+                       "Dump the contents of one or more register values from the current frame.",
                        "register read [<reg-name1> [<reg-name2> [...]]]",
                        eFlagProcessMustBeLaunched | eFlagProcessMustBePaused)
     {
