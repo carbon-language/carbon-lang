@@ -270,12 +270,10 @@ function configure_llvm_gcc() {
     echo "# Configuring llvm-gcc $Release-rc$RC $Flavor"
     echo "# $llvmgcc42_srcdir/configure --prefix=$InstallDir \
         --program-prefix=llvm- --enable-llvm=$llvmObjDir \
-        --enable-languages=$languages \
-        --with-gxx-include-dir=/usr/include/c++/4.2.1"
+        --enable-languages=$languages"
     $llvmgcc42_srcdir/configure --prefix=$InstallDir \
         --program-prefix=llvm- --enable-llvm=$llvmObjDir \
         --enable-languages=$languages \
-        --with-gxx-include-dir=/usr/include/c++/4.2.1 \
         > $LogDir/llvm-gcc.configure.$Release-rc$RC-Phase$Phase-$Flavor.log 2>&1
     cd -
 }
