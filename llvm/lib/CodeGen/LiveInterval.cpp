@@ -443,17 +443,6 @@ VNInfo *LiveInterval::findDefinedVNInfoForRegInt(SlotIndex Idx) const {
   return 0;
 }
 
-/// findDefinedVNInfo - Find the VNInfo defined by the specified
-/// register (stack inteval).
-VNInfo *LiveInterval::findDefinedVNInfoForStackInt(unsigned reg) const {
-  for (LiveInterval::const_vni_iterator i = vni_begin(), e = vni_end();
-       i != e; ++i) {
-    if ((*i)->getReg() == reg)
-      return *i;
-  }
-  return 0;
-}
-
 /// join - Join two live intervals (this, and other) together.  This applies
 /// mappings to the value numbers in the LHS/RHS intervals as specified.  If
 /// the intervals are not joinable, this aborts.

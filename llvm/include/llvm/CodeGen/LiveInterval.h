@@ -447,10 +447,6 @@ namespace llvm {
     /// index (register interval) or defined
     VNInfo *findDefinedVNInfoForRegInt(SlotIndex Idx) const;
 
-    /// findDefinedVNInfo - Find the VNInfo that's defined by the specified
-    /// register (stack inteval only).
-    VNInfo *findDefinedVNInfoForStackInt(unsigned Reg) const;
-
 
     /// overlaps - Return true if the intersection of the two live intervals is
     /// not empty.
