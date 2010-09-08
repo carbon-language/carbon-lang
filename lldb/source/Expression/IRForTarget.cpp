@@ -579,7 +579,23 @@ IRForTarget::MaybeHandleCall(Module &M,
     Function *fun = C->getCalledFunction();
     
     if (fun == NULL)
-        return true;
+    {
+        Value *val = C->getCalledValue();
+        
+        ConstantExpr *const_expr = dyn_cast<ConstantExpr>(val);
+        
+        if (const_expr && const_expr->getOpcode() == Instruction::BitCast)
+        {
+            fun = dyn_cast<Function>(const_expr->getOperand(0));
+            
+            if (!fun)
+                return true;
+        }
+        else
+        {
+            return true;
+        }
+    }
     
     clang::NamedDecl *fun_decl = DeclForGlobalValue(M, fun);
     uint64_t fun_addr;

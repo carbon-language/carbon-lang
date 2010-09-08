@@ -460,8 +460,14 @@ ClangFunction::ExecuteFunction (
     if (call_plan_sp == NULL)
         return eExecutionSetupError;
     
+//#define SINGLE_STEP_EXPRESSIONS
+    
+#ifdef SINGLE_STEP_EXPRESSIONS
+    return eExecutionInterrupted;
+#else
     call_plan_sp->SetPrivate(true);
     exe_ctx.thread->QueueThreadPlan(call_plan_sp, true);
+#endif
     
     // We need to call the function synchronously, so spin waiting for it to return.
     // If we get interrupted while executing, we're going to lose our context, and

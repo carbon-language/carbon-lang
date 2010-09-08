@@ -343,6 +343,18 @@ IRDynamicChecks::runOnModule(llvm::Module &M)
     if (!vpc.Instrument())
         return false;
     
+    if (log)
+    {
+        std::string s;
+        raw_string_ostream oss(s);
+        
+        M.print(oss, NULL);
+        
+        oss.flush();
+        
+        log->Printf("Module after dynamic checks: \n%s", s.c_str());
+    }
+    
     return true;    
 }
 
