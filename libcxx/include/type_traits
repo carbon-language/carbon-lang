@@ -90,24 +90,31 @@ namespace std
     template <class T> struct is_empty;
     template <class T> struct is_polymorphic;
     template <class T> struct is_abstract;
+
     template <class T, class... Args> struct is_constructible;
     template <class T, class... Args> struct is_nothrow_constructible;
-    template <class T> struct has_default_constructor;
-    template <class T> struct has_copy_constructor;
-    template <class T> struct has_move_constructor;
-    template <class T> struct has_copy_assign;
-    template <class T> struct has_move_assign;
+
     template <class T> struct has_trivial_default_constructor
-    template <class T> struct has_trivial_copy_constructor;
-    template <class T> struct has_trivial_move_constructor;
-    template <class T> struct has_trivial_copy_assign;
-    template <class T> struct has_trivial_move_assign;
-    template <class T> struct has_trivial_destructor;
     template <class T> struct has_nothrow_default_constructor;
+    template <class T> struct has_default_constructor;
+
+    template <class T> struct has_trivial_copy_constructor;
     template <class T> struct has_nothrow_copy_constructor;
+    template <class T> struct has_copy_constructor;
+
+    template <class T> struct has_trivial_move_constructor;
     template <class T> struct has_nothrow_move_constructor;
+    template <class T> struct has_move_constructor;
+
+    template <class T> struct has_trivial_copy_assign;
     template <class T> struct has_nothrow_copy_assign;
+    template <class T> struct has_copy_assign;
+
+    template <class T> struct has_trivial_move_assign;
     template <class T> struct has_nothrow_move_assign;
+    template <class T> struct has_move_assign;
+
+    template <class T> struct has_trivial_destructor;
     template <class T> struct has_virtual_destructor;
 
     // Relationships between types:
@@ -261,16 +268,24 @@ template <class _Tp> struct is_reference<_Tp&&> : public true_type {};
 
 #if __GNUC__ >= 4 && __GNUC_MINOR__ >= 3 || defined(__clang__)
 
-template <class _Tp> struct is_union : public integral_constant<bool, __is_union(_Tp)> {};
+template <class _Tp> struct is_union
+    : public integral_constant<bool, __is_union(_Tp)> {};
 
-#else  // __GNUC__ >= 4 && __GNUC_MINOR__ >= 3
+#else  // __GNUC__ >= 4 && __GNUC_MINOR__ >= 3 || defined(__clang__)
 
 template <class _Tp> struct __libcpp_union : public false_type {};
 template <class _Tp> struct is_union : public __libcpp_union<typename remove_cv<_Tp>::type> {};
 
-#endif  // __GNUC__ >= 4 && __GNUC_MINOR__ >= 3
+#endif  // __GNUC__ >= 4 && __GNUC_MINOR__ >= 3 || defined(__clang__)
 
 // is_class
+
+#if __GNUC__ >= 4 && __GNUC_MINOR__ >= 3 || defined(__clang__)
+
+template <class _Tp> struct is_class
+    : public integral_constant<bool, __is_class(_Tp)> {};
+
+#else  // __GNUC__ >= 4 && __GNUC_MINOR__ >= 3 || defined(__clang__)
 
 namespace __is_class_imp
 {
@@ -280,6 +295,8 @@ template <class _Tp> __two __test(...);
 
 template <class _Tp> struct is_class
     : public integral_constant<bool, sizeof(__is_class_imp::__test<_Tp>(0)) == 1 && !is_union<_Tp>::value> {};
+
+#endif  // __GNUC__ >= 4 && __GNUC_MINOR__ >= 3 || defined(__clang__)
 
 // is_function
 
@@ -325,6 +342,13 @@ template <class _Tp> struct is_member_object_pointer
 
 // is_enum
 
+#if __GNUC__ >= 4 && __GNUC_MINOR__ >= 3 || defined(__clang__)
+
+template <class _Tp> struct is_enum
+    : public integral_constant<bool, __is_enum(_Tp)> {};
+
+#else  // __GNUC__ >= 4 && __GNUC_MINOR__ >= 3 || defined(__clang__)
+
 template <class _Tp> struct is_enum
     : public integral_constant<bool, !is_void<_Tp>::value             &&
                                      !is_integral<_Tp>::value         &&
@@ -336,6 +360,8 @@ template <class _Tp> struct is_enum
                                      !is_union<_Tp>::value            &&
                                      !is_class<_Tp>::value            &&
                                      !is_function<_Tp>::value         > {};
+
+#endif  // __GNUC__ >= 4 && __GNUC_MINOR__ >= 3 || defined(__clang__)
 
 // is_arithmetic
 
@@ -423,6 +449,25 @@ template <>          struct add_rvalue_reference<volatile void>       {typedef v
 template <>          struct add_rvalue_reference<const volatile void> {typedef const volatile void type;};
 
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
+
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
+
+template <class _Tp>
+typename add_rvalue_reference<_Tp>::type
+declval();
+
+#else  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
+
+template <class _Tp>
+typename add_lvalue_reference<_Tp>::type
+declval();
+
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
+
+struct __any
+{
+    __any(...);
+};
 
 // remove_pointer
 
@@ -761,10 +806,6 @@ template <class _Tp> struct has_nothrow_copy_constructor
 
 template <class _Tp> struct has_nothrow_move_constructor : public has_nothrow_copy_constructor<_Tp> {};
 
-// has_copy_assign
-
-template <class _Tp> struct has_copy_assign;
-
 // has_trivial_copy_assign
 
 #if defined(__clang__) || (__GNUC__ >= 4 && __GNUC_MINOR__ >= 3)
@@ -782,26 +823,64 @@ template <class _Tp> struct has_trivial_copy_assign
 
 // has_nothrow_copy_assign
 
-template <class _Tp> struct has_nothrow_copy_assign: public has_trivial_copy_assign<_Tp> {};
+#if defined(__clang__) || (__GNUC__ >= 4 && __GNUC_MINOR__ >= 3)
+
+template <class _Tp> struct has_nothrow_copy_assign
+    : public integral_constant<bool, __has_nothrow_assign(_Tp)> {};
+
+#else  // defined(__clang__) || (__GNUC__ >= 4 && __GNUC_MINOR__ >= 3)
+
+template <class _Tp> struct has_nothrow_copy_assign
+    : public has_trivial_copy_assign<_Tp> {};
+
+#endif  // defined(__clang__) || (__GNUC__ >= 4 && __GNUC_MINOR__ >= 3)
 
 // has_trivial_destructor
 
-template <class _Tp> struct __libcpp_trivial_destructor : public integral_constant<bool, is_scalar<_Tp>::value ||
-                                                                                      is_reference<_Tp>::value> {};
+#if defined(__clang__) || (__GNUC__ >= 4 && __GNUC_MINOR__ >= 3)
+
+template <class _Tp> struct has_trivial_destructor
+    : public integral_constant<bool, __has_trivial_destructor(_Tp)> {};
+
+#else  // defined(__clang__) || (__GNUC__ >= 4 && __GNUC_MINOR__ >= 3)
+
+template <class _Tp> struct __libcpp_trivial_destructor
+    : public integral_constant<bool, is_scalar<_Tp>::value ||
+                                     is_reference<_Tp>::value> {};
 
 template <class _Tp> struct has_trivial_destructor
     : public __libcpp_trivial_destructor<typename remove_all_extents<_Tp>::type> {};
 
+#endif  // defined(__clang__) || (__GNUC__ >= 4 && __GNUC_MINOR__ >= 3)
+
 // has_virtual_destructor
+
+#if defined(__clang__) || (__GNUC__ >= 4 && __GNUC_MINOR__ >= 3)
+
+template <class _Tp> struct has_virtual_destructor
+    : public integral_constant<bool, __has_virtual_destructor(_Tp)> {};
+
+#else  // defined(__clang__) || (__GNUC__ >= 4 && __GNUC_MINOR__ >= 3)
 
 template <class _Tp> struct has_virtual_destructor : public false_type {};
 
+#endif  // defined(__clang__) || (__GNUC__ >= 4 && __GNUC_MINOR__ >= 3)
+
 // is_pod
+
+#if defined(__clang__) || (__GNUC__ >= 4 && __GNUC_MINOR__ >= 3)
+
+template <class _Tp> struct is_pod
+    : public integral_constant<bool, __is_pod(_Tp)> {};
+
+#else  // defined(__clang__) || (__GNUC__ >= 4 && __GNUC_MINOR__ >= 3)
 
 template <class _Tp> struct is_pod : public integral_constant<bool, has_trivial_default_constructor<_Tp>::value   &&
                                                                     has_trivial_copy_constructor<_Tp>::value      &&
                                                                     has_trivial_copy_assign<_Tp>::value    &&
                                                                     has_trivial_destructor<_Tp>::value> {};
+
+#endif  // defined(__clang__) || (__GNUC__ >= 4 && __GNUC_MINOR__ >= 3)
 
 // alignment_of
 
@@ -1171,6 +1250,44 @@ struct common_type<_Tp, _Up, _Vp...>
 
 #endif  // _LIBCPP_HAS_NO_VARIADICS
 
+template <class _Tp, class _Arg>
+decltype((_STD::declval<_Tp>() = _STD::declval<_Arg>(), true_type()))
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
+__is_assignable_test(_Tp&&, _Arg&&);
+#else
+__is_assignable_test(_Tp&, _Arg&);
+#endif
+
+template <class _Arg>
+false_type
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
+__is_assignable_test(__any, _Arg&&);
+#else
+__is_assignable_test(__any, _Arg&);
+#endif
+
+template <class _Tp, class _Arg>
+struct __is_assignable_imp
+    : public common_type
+        <
+            decltype(__is_assignable_test(declval<_Tp>(), declval<_Arg>()))
+        >::type {};
+
+template <class _Tp, class _Arg>
+struct __is_assignable
+    : public __is_assignable_imp<_Tp, _Arg> {};
+
+// has_copy_assign
+
+template <class _Tp> struct has_copy_assign
+    : public __is_assignable<_Tp&, const _Tp&> {};
+
+template <class _Tp> struct has_copy_assign<_Tp[]>
+    : public false_type {};
+
+template <class _Tp> struct has_copy_assign<_Tp&>
+    : public false_type {};
+
 // move
 
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
@@ -1310,20 +1427,6 @@ forward(const _Up& __t)
 {
     return _Tp(__rv<_Tp>(__t));
 }
-
-#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
-
-#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
-
-template <class _Tp>
-typename add_rvalue_reference<_Tp>::type
-declval();
-
-#else  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
-
-template <class _Tp>
-typename add_lvalue_reference<_Tp>::type
-declval();
 
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
@@ -1520,11 +1623,6 @@ class result_of<_Fn(_A0, _A1, _A2)>
 };
 
 #endif  // _LIBCPP_HAS_NO_VARIADICS
-
-struct __any
-{
-    __any(...);
-};
 
 #ifndef _LIBCPP_HAS_NO_ADVANCED_SFINAE
 
