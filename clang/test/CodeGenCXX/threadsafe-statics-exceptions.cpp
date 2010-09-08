@@ -11,8 +11,8 @@ struct Y { };
 void f() {
   // CHECK: call i32 @__cxa_guard_acquire(i64* @_ZGVZ1fvE1x)
   // CHECK: invoke void @_ZN1XC1Ev
-  // CHECK: call void @__cxa_guard_release(i64* @_ZGVZ1fvE1x)
-  // CHECK-NEXT: call i32 @__cxa_atexit
+  // CHECK: call i32 @__cxa_atexit
+  // CHECK-NEXT: call void @__cxa_guard_release(i64* @_ZGVZ1fvE1x)
   // CHECK: br
   static X x;
 

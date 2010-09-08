@@ -119,8 +119,6 @@ public:
   virtual void mangleCXXDtorThunk(const CXXDestructorDecl *DD, CXXDtorType Type,
                                   const ThisAdjustment &ThisAdjustment,
                                   llvm::SmallVectorImpl<char> &);
-  virtual void mangleGuardVariable(const VarDecl *D,
-                                   llvm::SmallVectorImpl<char> &);
   virtual void mangleReferenceTemporary(const VarDecl *D,
                                         llvm::SmallVectorImpl<char> &);
   virtual void mangleCXXVTable(const CXXRecordDecl *RD,
@@ -138,6 +136,10 @@ public:
                              llvm::SmallVectorImpl<char> &);
   void mangleBlock(GlobalDecl GD,
                    const BlockDecl *BD, llvm::SmallVectorImpl<char> &);
+
+  // This is pretty lame.
+  void mangleItaniumGuardVariable(const VarDecl *D,
+                                  llvm::SmallVectorImpl<char> &);
 
   void mangleInitDiscriminator() {
     Discriminator = 0;

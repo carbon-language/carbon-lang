@@ -119,6 +119,9 @@ public:
   void ReadArrayCookie(CodeGenFunction &CGF, llvm::Value *Ptr,
                        QualType ElementType, llvm::Value *&NumElements,
                        llvm::Value *&AllocPtr, CharUnits &CookieSize);
+
+  void EmitStaticLocalInit(CodeGenFunction &CGF, const VarDecl &D,
+                           llvm::GlobalVariable *DeclPtr);
 };
 
 class ARMCXXABI : public ItaniumCXXABI {
@@ -1021,3 +1024,159 @@ void ARMCXXABI::ReadArrayCookie(CodeGenFunction &CGF,
   NumElements = CGF.Builder.CreateLoad(NumElementsPtr);
 }
 
+/*********************** Static local initialization **************************/
+
+static llvm::Constant *getGuardAcquireFn(CodeGenModule &CGM,
+                                         const llvm::PointerType *GuardPtrTy) {
+  // int __cxa_guard_acquire(__guard *guard_object);
+  
+  std::vector<const llvm::Type*> Args(1, GuardPtrTy);  
+  const llvm::FunctionType *FTy =
+    llvm::FunctionType::get(CGM.getTypes().ConvertType(CGM.getContext().IntTy),
+                            Args, /*isVarArg=*/false);
+  
+  return CGM.CreateRuntimeFunction(FTy, "__cxa_guard_acquire");
+}
+
+static llvm::Constant *getGuardReleaseFn(CodeGenModule &CGM,
+                                         const llvm::PointerType *GuardPtrTy) {
+  // void __cxa_guard_release(__guard *guard_object);
+  
+  std::vector<const llvm::Type*> Args(1, GuardPtrTy);
+  
+  const llvm::FunctionType *FTy =
+    llvm::FunctionType::get(llvm::Type::getVoidTy(CGM.getLLVMContext()),
+                            Args, /*isVarArg=*/false);
+  
+  return CGM.CreateRuntimeFunction(FTy, "__cxa_guard_release");
+}
+
+static llvm::Constant *getGuardAbortFn(CodeGenModule &CGM,
+                                       const llvm::PointerType *GuardPtrTy) {
+  // void __cxa_guard_abort(__guard *guard_object);
+  
+  std::vector<const llvm::Type*> Args(1, GuardPtrTy);
+  
+  const llvm::FunctionType *FTy =
+    llvm::FunctionType::get(llvm::Type::getVoidTy(CGM.getLLVMContext()),
+                            Args, /*isVarArg=*/false);
+  
+  return CGM.CreateRuntimeFunction(FTy, "__cxa_guard_abort");
+}
+
+namespace {
+  struct CallGuardAbort : EHScopeStack::Cleanup {
+    llvm::GlobalVariable *Guard;
+    CallGuardAbort(llvm::GlobalVariable *Guard) : Guard(Guard) {}
+
+    void Emit(CodeGenFunction &CGF, bool IsForEH) {
+      CGF.Builder.CreateCall(getGuardAbortFn(CGF.CGM, Guard->getType()), Guard)
+        ->setDoesNotThrow();
+    }
+  };
+}
+
+/// The ARM code here follows the Itanium code closely enough that we
+/// just special-case it at particular places.
+void ItaniumCXXABI::EmitStaticLocalInit(CodeGenFunction &CGF,
+                                        const VarDecl &D,
+                                        llvm::GlobalVariable *GV) {
+  CGBuilderTy &Builder = CGF.Builder;
+  bool ThreadsafeStatics = getContext().getLangOptions().ThreadsafeStatics;
+  
+  // Guard variables are 64 bits in the generic ABI and 32 bits on ARM.
+  const llvm::IntegerType *GuardTy
+    = (IsARM ? Builder.getInt32Ty() : Builder.getInt64Ty());
+  const llvm::PointerType *GuardPtrTy = GuardTy->getPointerTo();
+
+  // Create the guard variable.
+  llvm::SmallString<256> GuardVName;
+  getMangleContext().mangleItaniumGuardVariable(&D, GuardVName);
+  llvm::GlobalVariable *GuardVariable =
+    new llvm::GlobalVariable(CGM.getModule(), GuardTy,
+                             false, GV->getLinkage(),
+                             llvm::ConstantInt::get(GuardTy, 0),
+                             GuardVName.str());
+
+  // Test whether the variable has completed initialization.
+  llvm::Value *IsInitialized;
+
+  // ARM C++ ABI 3.2.3.1:
+  //   To support the potential use of initialization guard variables
+  //   as semaphores that are the target of ARM SWP and LDREX/STREX
+  //   synchronizing instructions we define a static initialization
+  //   guard variable to be a 4-byte aligned, 4- byte word with the
+  //   following inline access protocol.
+  //     #define INITIALIZED 1
+  //     if ((obj_guard & INITIALIZED) != INITIALIZED) {
+  //       if (__cxa_guard_acquire(&obj_guard))
+  //         ...
+  //     }
+  if (IsARM) {
+    llvm::Value *V = Builder.CreateLoad(GuardVariable);
+    V = Builder.CreateAnd(V, Builder.getInt32(1));
+    IsInitialized = Builder.CreateIsNull(V, "guard.uninitialized");
+
+  // Itanium C++ ABI 3.3.2:
+  //   The following is pseudo-code showing how these functions can be used:
+  //     if (obj_guard.first_byte == 0) {
+  //       if ( __cxa_guard_acquire (&obj_guard) ) {
+  //         try {
+  //           ... initialize the object ...;
+  //         } catch (...) {
+  //            __cxa_guard_abort (&obj_guard);
+  //            throw;
+  //         }
+  //         ... queue object destructor with __cxa_atexit() ...;
+  //         __cxa_guard_release (&obj_guard);
+  //       }
+  //     }
+  } else {
+    // Load the first byte of the guard variable.
+    const llvm::Type *PtrTy = Builder.getInt8PtrTy();
+    llvm::Value *V = 
+      Builder.CreateLoad(Builder.CreateBitCast(GuardVariable, PtrTy), "tmp");
+
+    IsInitialized = Builder.CreateIsNull(V, "guard.uninitialized");
+  }
+
+  llvm::BasicBlock *InitCheckBlock = CGF.createBasicBlock("init.check");
+  llvm::BasicBlock *EndBlock = CGF.createBasicBlock("init.end");
+
+  // Check if the first byte of the guard variable is zero.
+  Builder.CreateCondBr(IsInitialized, InitCheckBlock, EndBlock);
+
+  CGF.EmitBlock(InitCheckBlock);
+
+  // Variables used when coping with thread-safe statics and exceptions.
+  if (ThreadsafeStatics) {    
+    // Call __cxa_guard_acquire.
+    llvm::Value *V
+      = Builder.CreateCall(getGuardAcquireFn(CGM, GuardPtrTy), GuardVariable);
+               
+    llvm::BasicBlock *InitBlock = CGF.createBasicBlock("init");
+  
+    Builder.CreateCondBr(Builder.CreateIsNotNull(V, "tobool"),
+                         InitBlock, EndBlock);
+  
+    // Call __cxa_guard_abort along the exceptional edge.
+    CGF.EHStack.pushCleanup<CallGuardAbort>(EHCleanup, GuardVariable);
+    
+    CGF.EmitBlock(InitBlock);
+  }
+
+  // Emit the initializer and add a global destructor if appropriate.
+  CGF.EmitCXXGlobalVarDeclInit(D, GV);
+
+  if (ThreadsafeStatics) {
+    // Pop the guard-abort cleanup if we pushed one.
+    CGF.PopCleanupBlock();
+
+    // Call __cxa_guard_release.  This cannot throw.
+    Builder.CreateCall(getGuardReleaseFn(CGM, GuardPtrTy), GuardVariable);
+  } else {
+    Builder.CreateStore(llvm::ConstantInt::get(GuardTy, 1), GuardVariable);
+  }
+
+  CGF.EmitBlock(EndBlock);
+}

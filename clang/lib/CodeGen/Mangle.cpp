@@ -2451,8 +2451,8 @@ MangleContext::mangleCXXDtorThunk(const CXXDestructorDecl *DD, CXXDtorType Type,
 
 /// mangleGuardVariable - Returns the mangled name for a guard variable
 /// for the passed in VarDecl.
-void MangleContext::mangleGuardVariable(const VarDecl *D,
-                                        llvm::SmallVectorImpl<char> &Res) {
+void MangleContext::mangleItaniumGuardVariable(const VarDecl *D,
+                                         llvm::SmallVectorImpl<char> &Res) {
   //  <special-name> ::= GV <object name>       # Guard variable for one-time
   //                                            # initialization
   CXXNameMangler Mangler(*this, Res);

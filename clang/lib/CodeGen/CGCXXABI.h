@@ -69,9 +69,11 @@ protected:
 
   ASTContext &getContext() const { return CGM.getContext(); }
 
+  virtual void _anchor();
+
 public:
 
-  virtual ~CGCXXABI();
+  virtual ~CGCXXABI() {}
 
   /// Gets the mangle context.
   virtual MangleContext &getMangleContext() = 0;
@@ -216,6 +218,14 @@ public:
   virtual void ReadArrayCookie(CodeGenFunction &CGF, llvm::Value *Ptr,
                                QualType ElementType, llvm::Value *&NumElements,
                                llvm::Value *&AllocPtr, CharUnits &CookieSize);
+
+  /*************************** Static local guards ****************************/
+
+  /// Emits the initializer and destructor setup for the given static
+  /// local variable, given that it's reachable and couldn't be
+  /// emitted as a constant.
+  virtual void EmitStaticLocalInit(CodeGenFunction &CGF, const VarDecl &D,
+                                   llvm::GlobalVariable *DeclPtr);
 
 };
 

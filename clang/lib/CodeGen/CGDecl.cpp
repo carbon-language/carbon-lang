@@ -189,12 +189,12 @@ CodeGenFunction::AddInitializerToGlobalBlockVarDecl(const VarDecl &D,
   if (!Init) {
     if (!getContext().getLangOptions().CPlusPlus)
       CGM.ErrorUnsupported(D.getInit(), "constant l-value expression");
-    else {
+    else if (Builder.GetInsertBlock()) {
       // Since we have a static initializer, this global variable can't 
       // be constant.
       GV->setConstant(false);
-      
-      EmitStaticCXXBlockVarDeclInit(D, GV);
+
+      EmitCXXStaticLocalInit(D, GV);
     }
     return GV;
   }

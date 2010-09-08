@@ -1,5 +1,10 @@
 // RUN: %clang_cc1 %s -triple=thumbv7-apple-darwin3.0.0-iphoneos -fno-use-cxa-atexit -target-abi apcs-gnu -emit-llvm -o - -fexceptions | FileCheck %s
 
+// CHECK: @_ZZN5test74testEvE1x = internal global i32 0, align 4
+// CHECK: @_ZGVZN5test74testEvE1x = internal global i32 0
+// CHECK: @_ZZN5test84testEvE1x = internal global [[TEST8A:.*]] zeroinitializer, align 1
+// CHECK: @_ZGVZN5test84testEvE1x = internal global i32 0
+
 typedef typeof(sizeof(int)) size_t;
 
 class foo {
@@ -274,6 +279,76 @@ namespace test6 {
     // CHECK-NEXT: br label
     // CHECK:      ret void
     delete a;
+  }
+}
+
+namespace test7 {
+  int foo();
+
+  // Static and guard tested at top of file
+
+  // CHECK: define void @_ZN5test74testEv()
+  void test() {
+    // CHECK:      [[T0:%.*]] = load i32* @_ZGVZN5test74testEvE1x
+    // CHECK-NEXT: [[T1:%.*]] = and i32 [[T0]], 1
+    // CHECK-NEXT: [[T2:%.*]] = icmp eq i32 [[T1]], 0
+    // CHECK-NEXT: br i1 [[T2]]
+    //   -> fallthrough, end
+    // CHECK:      [[T3:%.*]] = call i32 @__cxa_guard_acquire(i32* @_ZGVZN5test74testEvE1x)
+    // CHECK-NEXT: [[T4:%.*]] = icmp ne i32 [[T3]], 0
+    // CHECK-NEXT: br i1 [[T4]]
+    //   -> fallthrough, end
+    // CHECK:      [[INIT:%.*]] = invoke i32 @_ZN5test73fooEv()
+    // CHECK:      store i32 [[INIT]], i32* @_ZZN5test74testEvE1x, align 4
+    // CHECK-NEXT: call void @__cxa_guard_release(i32* @_ZGVZN5test74testEvE1x)
+    // CHECK-NEXT: br label
+    //   -> end
+    // end:
+    // CHECK:      ret void
+    static int x = foo();
+
+    // CHECK:      call i8* @llvm.eh.exception()
+    // CHECK:      call void @__cxa_guard_abort(i32* @_ZGVZN5test74testEvE1x)
+    // CHECK:      call void @_Unwind_Resume_or_Rethrow
+  }
+}
+
+namespace test8 {
+  struct A {
+    A();
+    ~A();
+  };
+
+  // Static and guard tested at top of file
+
+  // CHECK: define void @_ZN5test84testEv()
+  void test() {
+    // CHECK:      [[T0:%.*]] = load i32* @_ZGVZN5test84testEvE1x
+    // CHECK-NEXT: [[T1:%.*]] = and i32 [[T0]], 1
+    // CHECK-NEXT: [[T2:%.*]] = icmp eq i32 [[T1]], 0
+    // CHECK-NEXT: br i1 [[T2]]
+    //   -> fallthrough, end
+    // CHECK:      [[T3:%.*]] = call i32 @__cxa_guard_acquire(i32* @_ZGVZN5test84testEvE1x)
+    // CHECK-NEXT: [[T4:%.*]] = icmp ne i32 [[T3]], 0
+    // CHECK-NEXT: br i1 [[T4]]
+    //   -> fallthrough, end
+    // CHECK:      [[INIT:%.*]] = invoke [[TEST8A]]* @_ZN5test81AC1Ev([[TEST8A]]* @_ZZN5test84testEvE1x)
+
+    // FIXME: Here we register a global destructor that
+    // unconditionally calls the destructor.  That's what we've always
+    // done for -fno-use-cxa-atexit here, but that's really not
+    // semantically correct at all.
+
+    // CHECK:      call void @__cxa_guard_release(i32* @_ZGVZN5test84testEvE1x)
+    // CHECK-NEXT: br label
+    //   -> end
+    // end:
+    // CHECK:      ret void
+    static A x;
+
+    // CHECK:      call i8* @llvm.eh.exception()
+    // CHECK:      call void @__cxa_guard_abort(i32* @_ZGVZN5test84testEvE1x)
+    // CHECK:      call void @_Unwind_Resume_or_Rethrow
   }
 }
 

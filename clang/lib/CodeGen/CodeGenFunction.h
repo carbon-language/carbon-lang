@@ -1565,11 +1565,6 @@ public:
                                      llvm::GlobalVariable *GV);
   
 
-  /// EmitStaticCXXBlockVarDeclInit - Create the initializer for a C++ runtime
-  /// initialized static block var decl.
-  void EmitStaticCXXBlockVarDeclInit(const VarDecl &D,
-                                     llvm::GlobalVariable *GV);
-
   /// EmitCXXGlobalVarDeclInit - Create the initializer for a C++
   /// variable with global storage.
   void EmitCXXGlobalVarDeclInit(const VarDecl &D, llvm::Constant *DeclPtr);
@@ -1578,6 +1573,8 @@ public:
   /// with the C++ runtime so that its destructor will be called at exit.
   void EmitCXXGlobalDtorRegistration(llvm::Constant *DtorFn,
                                      llvm::Constant *DeclPtr);
+
+  void EmitCXXStaticLocalInit(const VarDecl &D, llvm::GlobalVariable *DeclPtr);
 
   /// GenerateCXXGlobalInitFunc - Generates code for initializing global
   /// variables.
