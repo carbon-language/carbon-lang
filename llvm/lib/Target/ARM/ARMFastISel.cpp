@@ -328,11 +328,12 @@ unsigned ARMFastISel::TargetMaterializeConstant(const Constant *C) {
 
   // Only handle simple types.
   if (!VT.isSimple()) return 0;
+
+  // Handle double width floating point?
+  if (VT.getSimpleVT().SimpleTy == MVT::f64) return 0;
   
-  // TODO: This should be safe for fp because they're just bits from the
-  // Constant.
-  // TODO: Theoretically we could materialize fp constants with instructions
-  // from VFP3.
+  // TODO: Theoretically we could materialize fp constants directly with
+  // instructions from VFP3.
 
   // MachineConstantPool wants an explicit alignment.
   unsigned Align = TD.getPrefTypeAlignment(C->getType());
@@ -342,8 +343,7 @@ unsigned ARMFastISel::TargetMaterializeConstant(const Constant *C) {
   }
   unsigned Idx = MCP.getConstantPoolIndex(C, Align);
 
-  unsigned DestReg = createResultReg(TLI.getRegClassFor(VT));
-  // Different addressing modes between ARM/Thumb2 for constant pool loads.
+  unsigned DestReg = createResultReg(TLI.getRegClassFor(MVT::i32));
   if (isThumb)
     AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
                             TII.get(ARM::t2LDRpci))
@@ -351,8 +351,19 @@ unsigned ARMFastISel::TargetMaterializeConstant(const Constant *C) {
   else
     AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
                             TII.get(ARM::LDRcp))
-                    .addReg(DestReg).addConstantPoolIndex(Idx)
+                            .addReg(DestReg).addConstantPoolIndex(Idx)
                     .addReg(0).addImm(0));
+                  
+  // If we have a floating point constant we expect it in a floating point
+  // register.
+  // TODO: Make this use ARMBaseInstrInfo::copyPhysReg.
+  if (C->getType()->isFloatTy()) {
+    unsigned MoveReg = createResultReg(TLI.getRegClassFor(VT));
+    AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
+                            TII.get(ARM::VMOVRS), MoveReg)
+                    .addReg(DestReg));
+    return MoveReg;
+  }
     
   return DestReg;
 }
