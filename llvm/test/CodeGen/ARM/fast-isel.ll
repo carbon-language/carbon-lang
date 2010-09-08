@@ -3,7 +3,7 @@
 
 ; Very basic fast-isel functionality.
 
-define i32 @add(i32 %a, i32 %b) nounwind ssp {
+define i32 @add(i32 %a, i32 %b) nounwind {
 entry:
   %a.addr = alloca i32, align 4
   %b.addr = alloca i32, align 4
