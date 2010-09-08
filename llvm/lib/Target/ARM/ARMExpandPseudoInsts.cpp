@@ -7,10 +7,10 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file contains a pass that expand pseudo instructions into target
+// This file contains a pass that expands pseudo instructions into target
 // instructions to allow proper scheduling, if-conversion, and other late
 // optimizations. This pass should be run after register allocation but before
-// post- regalloc scheduling pass.
+// the post-regalloc scheduling pass.
 //
 //===----------------------------------------------------------------------===//
 
