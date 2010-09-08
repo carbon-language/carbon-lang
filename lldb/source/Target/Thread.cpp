@@ -945,7 +945,8 @@ Thread::GetSettingsController (bool finish)
 Thread::ThreadSettingsController::ThreadSettingsController () :
     UserSettingsController ("thread", Process::GetSettingsController())
 {
-    m_default_settings.reset (new ThreadInstanceSettings (*this, InstanceSettings::GetDefaultName().AsCString()));
+    m_default_settings.reset (new ThreadInstanceSettings (*this, false, 
+                                                          InstanceSettings::GetDefaultName().AsCString()));
 }
 
 Thread::ThreadSettingsController::~ThreadSettingsController ()
@@ -953,9 +954,10 @@ Thread::ThreadSettingsController::~ThreadSettingsController ()
 }
 
 lldb::InstanceSettingsSP
-Thread::ThreadSettingsController::CreateNewInstanceSettings ()
+Thread::ThreadSettingsController::CreateNewInstanceSettings (const char *instance_name)
 {
-    ThreadInstanceSettings *new_settings = new ThreadInstanceSettings (*(Thread::GetSettingsController().get()));
+    ThreadInstanceSettings *new_settings = new ThreadInstanceSettings (*(Thread::GetSettingsController().get()),
+                                                                       false, instance_name);
     lldb::InstanceSettingsSP new_settings_sp (new_settings);
     return new_settings_sp;
 }
@@ -964,13 +966,13 @@ Thread::ThreadSettingsController::CreateNewInstanceSettings ()
 // class ThreadInstanceSettings
 //--------------------------------------------------------------
 
-ThreadInstanceSettings::ThreadInstanceSettings (UserSettingsController &owner, const char *name) :
-    InstanceSettings (owner, (name == NULL ? CreateInstanceName().AsCString() : name)), 
+ThreadInstanceSettings::ThreadInstanceSettings (UserSettingsController &owner, bool live_instance, const char *name) :
+    InstanceSettings (owner, (name == NULL ? CreateInstanceName().AsCString() : name), live_instance), 
     m_avoid_regexp_ap ()
 {
     // FIXME: This seems like generic code, why was it duplicated (with the slight difference that
     // DebuggerInstanceSettings checks name, not m_instance_name below) in Process & Debugger?
-    if (m_instance_name != InstanceSettings::GetDefaultName())
+    if (m_instance_name != InstanceSettings::GetDefaultName() && live_instance)
     {
         const lldb::InstanceSettingsSP &pending_settings = m_owner.FindPendingSettings (m_instance_name);
         CopyInstanceSettings (pending_settings,false);

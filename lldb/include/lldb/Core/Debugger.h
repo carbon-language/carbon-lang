@@ -40,7 +40,7 @@ class DebuggerInstanceSettings : public InstanceSettings
 {
 public:
     
-    DebuggerInstanceSettings (UserSettingsController &owner, const char *name = NULL);
+    DebuggerInstanceSettings (UserSettingsController &owner, bool live_instance = true, const char *name = NULL);
 
     DebuggerInstanceSettings (const DebuggerInstanceSettings &rhs);
 
@@ -124,7 +124,7 @@ public:
     protected:
 
         lldb::InstanceSettingsSP
-        CreateNewInstanceSettings ();
+        CreateNewInstanceSettings (const char *instance_name);
 
         bool
         ValidTermWidthValue (const char *value, Error err);

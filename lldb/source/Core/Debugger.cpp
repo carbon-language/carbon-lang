@@ -565,7 +565,8 @@ Debugger::DebuggerSettingsController::DebuggerSettingsController () :
     UserSettingsController ("", lldb::UserSettingsControllerSP()),
     m_term_width (80)
 {
-    m_default_settings.reset (new DebuggerInstanceSettings (*this, InstanceSettings::GetDefaultName().AsCString()));
+    m_default_settings.reset (new DebuggerInstanceSettings (*this, false, 
+                                                            InstanceSettings::GetDefaultName().AsCString()));
 }
 
 Debugger::DebuggerSettingsController::~DebuggerSettingsController ()
@@ -574,9 +575,10 @@ Debugger::DebuggerSettingsController::~DebuggerSettingsController ()
 
 
 lldb::InstanceSettingsSP
-Debugger::DebuggerSettingsController::CreateNewInstanceSettings ()
+Debugger::DebuggerSettingsController::CreateNewInstanceSettings (const char *instance_name)
 {
-    DebuggerInstanceSettings *new_settings = new DebuggerInstanceSettings (*(Debugger::GetSettingsController().get()));
+    DebuggerInstanceSettings *new_settings = new DebuggerInstanceSettings (*(Debugger::GetSettingsController().get()),
+                                                                           false, instance_name);
     lldb::InstanceSettingsSP new_settings_sp (new_settings);
     return new_settings_sp;
 }
@@ -626,12 +628,13 @@ Debugger::DebuggerSettingsController::ValidTermWidthValue (const char *value, Er
 //  class DebuggerInstanceSettings
 //--------------------------------------------------
 
-DebuggerInstanceSettings::DebuggerInstanceSettings (UserSettingsController &owner, const char *name) :
-    InstanceSettings (owner, (name == NULL ? CreateInstanceName ().AsCString() : name)),
+DebuggerInstanceSettings::DebuggerInstanceSettings (UserSettingsController &owner, bool live_instance,
+                                                    const char *name) :
+    InstanceSettings (owner, (name == NULL ? CreateInstanceName ().AsCString() : name), live_instance),
     m_prompt (),
     m_script_lang ()
 {
-    if (name == NULL)
+    if (name == NULL && live_instance)
     {
         const lldb::InstanceSettingsSP &pending_settings = m_owner.FindPendingSettings (m_instance_name);
         CopyInstanceSettings (pending_settings, false);

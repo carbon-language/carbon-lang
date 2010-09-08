@@ -61,7 +61,7 @@ public:
     // Pure virtual functions, which all sub-classes must implement.
 
     virtual lldb::InstanceSettingsSP
-    CreateNewInstanceSettings () = 0;
+    CreateNewInstanceSettings (const char *instance_name) = 0;
   
     virtual void
     UpdateGlobalVariable (const ConstString &var_name,
@@ -334,7 +334,7 @@ class InstanceSettings
 {
 public:
 
-    InstanceSettings (UserSettingsController &owner, const char *instance_name);
+    InstanceSettings (UserSettingsController &owner, const char *instance_name, bool live_instance = true);
 
     InstanceSettings (const InstanceSettings &rhs);
 

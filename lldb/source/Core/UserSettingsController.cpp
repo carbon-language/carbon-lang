@@ -47,10 +47,10 @@ UserSettingsController::InitializeSettingsController (lldb::UserSettingsControll
     if (parent)
     parent->RegisterChild (controller_sp);
 
-	controller_sp->CreateSettingsVector (global_settings, true);
-	controller_sp->CreateSettingsVector (instance_settings, false);
+    controller_sp->CreateSettingsVector (global_settings, true);
+    controller_sp->CreateSettingsVector (instance_settings, false);
 
-	controller_sp->InitializeGlobalVariables ();
+    controller_sp->InitializeGlobalVariables ();
     controller_sp->CreateDefaultInstanceSettings ();
 
     return true;
@@ -565,8 +565,17 @@ UserSettingsController::GetVariable (const char *full_dot_name, lldb::SettableVa
 void
 UserSettingsController::RemovePendingSettings (const ConstString &instance_name)
 {
+    StreamString tmp_name;
+
+    // Add surrounding brackets to instance name if not already present.
+
+    if (instance_name.AsCString()[0] != '[')
+        tmp_name.Printf ("[%s]", instance_name.AsCString());
+    else
+        tmp_name.Printf ("%s", instance_name.AsCString());
+
+    std::string instance_name_str (tmp_name.GetData());
     std::map<std::string, lldb::InstanceSettingsSP>::iterator pos;
-    std::string instance_name_str (instance_name.AsCString());
     Mutex::Locker locker (m_pending_settings_mutex);
 
     m_pending_settings.erase (instance_name_str);
@@ -576,7 +585,16 @@ const lldb::InstanceSettingsSP &
 UserSettingsController::FindPendingSettings (const ConstString &instance_name)
 {
     std::map<std::string, lldb::InstanceSettingsSP>::iterator pos;
-    std::string instance_name_str (instance_name.AsCString());
+    StreamString tmp_name;
+
+    // Add surrounding brackets to instance name if not already present.
+
+    if (instance_name.AsCString()[0] != '[')
+        tmp_name.Printf ("[%s]", instance_name.AsCString());
+    else
+        tmp_name.Printf ("%s", instance_name.AsCString());
+
+    std::string instance_name_str (tmp_name.GetData());  // Need std::string for std::map look-up
 
     {   // Scope for mutex.
         Mutex::Locker locker (m_pending_settings_mutex);
@@ -655,9 +673,7 @@ UserSettingsController::PendingSettingsForInstance (const ConstString &instance_
       }
     else
       {
-        lldb::InstanceSettingsSP default_settings_sp =  
-                                                   m_pending_settings[InstanceSettings::GetDefaultName().AsCString()];
-        lldb::InstanceSettingsSP new_settings_sp = CreateNewInstanceSettings ();
+        lldb::InstanceSettingsSP new_settings_sp = CreateNewInstanceSettings (instance_name.AsCString());
         CopyDefaultSettings (new_settings_sp, instance_name, true);
         m_pending_settings[name_str] = new_settings_sp;
         return new_settings_sp;
@@ -1861,11 +1877,12 @@ UserSettingsController::UpdateEnumVariable (lldb::OptionEnumValueElement *enum_v
 // class InstanceSettings
 //----------------------------------------------------------------------
 
-InstanceSettings::InstanceSettings (UserSettingsController &owner, const char *instance_name) :
+InstanceSettings::InstanceSettings (UserSettingsController &owner, const char *instance_name, bool live_instance) :
     m_owner (owner),
     m_instance_name (instance_name)
 {
-    if (m_instance_name != InstanceSettings::GetDefaultName())
+    if ((m_instance_name != InstanceSettings::GetDefaultName())
+        && live_instance)
         m_owner.RegisterInstanceSettings (this);
 }
 

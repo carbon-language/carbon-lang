@@ -1951,7 +1951,8 @@ Process::GetSettingsController (bool finish)
 Process::ProcessSettingsController::ProcessSettingsController () :
     UserSettingsController ("process", Debugger::GetSettingsController())
 {
-    m_default_settings.reset (new ProcessInstanceSettings (*this, InstanceSettings::GetDefaultName().AsCString()));
+    m_default_settings.reset (new ProcessInstanceSettings (*this, false,
+                                                           InstanceSettings::GetDefaultName().AsCString()));
 }
 
 Process::ProcessSettingsController::~ProcessSettingsController ()
@@ -1959,9 +1960,10 @@ Process::ProcessSettingsController::~ProcessSettingsController ()
 }
 
 lldb::InstanceSettingsSP
-Process::ProcessSettingsController::CreateNewInstanceSettings ()
+Process::ProcessSettingsController::CreateNewInstanceSettings (const char *instance_name)
 {
-    ProcessInstanceSettings *new_settings = new ProcessInstanceSettings (*(Process::GetSettingsController().get()));
+    ProcessInstanceSettings *new_settings = new ProcessInstanceSettings (*(Process::GetSettingsController().get()),
+                                                                         false, instance_name);
     lldb::InstanceSettingsSP new_settings_sp (new_settings);
     return new_settings_sp;
 }
@@ -1970,8 +1972,9 @@ Process::ProcessSettingsController::CreateNewInstanceSettings ()
 // class ProcessInstanceSettings
 //--------------------------------------------------------------
 
-ProcessInstanceSettings::ProcessInstanceSettings (UserSettingsController &owner, const char *name) :
-    InstanceSettings (owner, (name == NULL ? CreateInstanceName().AsCString() : name)), 
+ProcessInstanceSettings::ProcessInstanceSettings (UserSettingsController &owner, bool live_instance, 
+                                                  const char *name) :
+  InstanceSettings (owner, (name == NULL ? CreateInstanceName().AsCString() : name), live_instance), 
     m_run_args (),
     m_env_vars (),
     m_input_path (),
@@ -1980,7 +1983,7 @@ ProcessInstanceSettings::ProcessInstanceSettings (UserSettingsController &owner,
     m_plugin (),
     m_disable_aslr (true)
 {
-    if (m_instance_name != InstanceSettings::GetDefaultName())
+    if (m_instance_name != InstanceSettings::GetDefaultName() && live_instance)
     {
         const lldb::InstanceSettingsSP &pending_settings = m_owner.FindPendingSettings (m_instance_name);
         CopyInstanceSettings (pending_settings,false);

@@ -41,7 +41,7 @@ class ProcessInstanceSettings : public InstanceSettings
 {
 public:
 
-    ProcessInstanceSettings (UserSettingsController &owner, const char *name = NULL);
+    ProcessInstanceSettings (UserSettingsController &owner, bool live_instance = true, const char *name = NULL);
   
     ProcessInstanceSettings (const ProcessInstanceSettings &rhs);
 
@@ -251,7 +251,7 @@ public:
     protected:
 
         lldb::InstanceSettingsSP
-        CreateNewInstanceSettings ();
+        CreateNewInstanceSettings (const char *instance_name);
 
         static lldb::OptionEnumValueElement g_plugins[];
 
