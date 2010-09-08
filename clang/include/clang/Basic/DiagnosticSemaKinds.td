@@ -2850,6 +2850,9 @@ def err_anonymous_struct_member_redecl : Error<
   "member of anonymous struct redeclares %0">;
 def err_anonymous_record_with_type : Error<
   "types cannot be declared in an anonymous %select{struct|union}0">;
+def ext_anonymous_record_with_type : Extension<
+  "types declared in an anonymous %select{struct|union}0 are a Microsoft extension">,
+  InGroup<Microsoft>;
 def err_anonymous_record_with_function : Error<
   "functions cannot be declared in an anonymous %select{struct|union}0">;
 def err_anonymous_record_with_static : Error<

@@ -1898,10 +1898,16 @@ Decl *Sema::BuildAnonymousStructOrUnion(Scope *S, DeclSpec &DS,
       } else if (RecordDecl *MemRecord = dyn_cast<RecordDecl>(*Mem)) {
         if (!MemRecord->isAnonymousStructOrUnion() &&
             MemRecord->getDeclName()) {
-          // This is a nested type declaration.
-          Diag(MemRecord->getLocation(), diag::err_anonymous_record_with_type)
-            << (int)Record->isUnion();
-          Invalid = true;
+          // Visual C++ allows type definition in anonymous struct or union.
+          if (getLangOptions().Microsoft)
+            Diag(MemRecord->getLocation(), diag::ext_anonymous_record_with_type)
+              << (int)Record->isUnion();
+          else {
+            // This is a nested type declaration.
+            Diag(MemRecord->getLocation(), diag::err_anonymous_record_with_type)
+              << (int)Record->isUnion();
+            Invalid = true;
+          }
         }
       } else if (isa<AccessSpecDecl>(*Mem)) {
         // Any access specifier is fine.
@@ -1915,9 +1921,17 @@ Decl *Sema::BuildAnonymousStructOrUnion(Scope *S, DeclSpec &DS,
           DK = diag::err_anonymous_record_with_function;
         else if (isa<VarDecl>(*Mem))
           DK = diag::err_anonymous_record_with_static;
-        Diag((*Mem)->getLocation(), DK)
+        
+        // Visual C++ allows type definition in anonymous struct or union.
+        if (getLangOptions().Microsoft &&
+            DK == diag::err_anonymous_record_with_type)
+          Diag((*Mem)->getLocation(), diag::ext_anonymous_record_with_type)
             << (int)Record->isUnion();
+        else {
+          Diag((*Mem)->getLocation(), DK)
+              << (int)Record->isUnion();
           Invalid = true;
+        }
       }
     }
   }

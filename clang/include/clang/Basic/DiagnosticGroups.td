@@ -227,3 +227,6 @@ def NonGCC : DiagGroup<"non-gcc",
 
 // A warning group for warnings about GCC extensions.
 def GNU : DiagGroup<"gnu", [GNUDesignator, VLA]>;
+
+// A warning group for warnings about Microsoft extensions.
+def Microsoft : DiagGroup<"microsoft">;
