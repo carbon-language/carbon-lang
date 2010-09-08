@@ -113,6 +113,7 @@ class ARMFastISel : public FastISel {
     virtual bool ARMSelectLoad(const Instruction *I);
     virtual bool ARMSelectStore(const Instruction *I);
     virtual bool ARMSelectBranch(const Instruction *I);
+    virtual bool ARMSelectCmp(const Instruction *I);
 
     // Utility routines.
   private:
@@ -650,6 +651,50 @@ bool ARMFastISel::ARMSelectBranch(const Instruction *I) {
   return true;
 }
 
+bool ARMFastISel::ARMSelectCmp(const Instruction *I) {
+  const CmpInst *CI = cast<CmpInst>(I);
+  
+  EVT VT;
+  const Type *Ty = CI->getOperand(0)->getType();
+  if (!isTypeLegal(Ty, VT))
+    return false;
+  
+  bool isFloat = (Ty->isDoubleTy() || Ty->isFloatTy());
+  if (isFloat && !Subtarget->hasVFP2())
+    return false;
+  
+  unsigned CmpOpc;
+  switch (VT.getSimpleVT().SimpleTy) {
+    default: return false;
+    // TODO: Verify compares.
+    case MVT::f32:
+      CmpOpc = ARM::VCMPES;
+      break;
+    case MVT::f64:
+      CmpOpc = ARM::VCMPED;
+      break;
+    case MVT::i32:
+      CmpOpc = isThumb ? ARM::t2CMPrr : ARM::CMPrr;
+      break;
+  }
+
+  unsigned Arg1 = getRegForValue(CI->getOperand(0));
+  if (Arg1 == 0) return false;
+  
+  unsigned Arg2 = getRegForValue(CI->getOperand(1));
+  if (Arg2 == 0) return false;
+  
+  AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(CmpOpc))
+                  .addReg(Arg1).addReg(Arg2));
+                  
+  // For floating point we need to move the result to a register we can
+  // actually do something with.
+  if (isFloat)
+    AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
+                            TII.get(ARM::FMSTAT)));
+  return true;
+}
+
 // TODO: SoftFP support.
 bool ARMFastISel::TargetSelectInstruction(const Instruction *I) {
   // No Thumb-1 for now.
@@ -662,6 +707,9 @@ bool ARMFastISel::TargetSelectInstruction(const Instruction *I) {
       return ARMSelectStore(I);
     case Instruction::Br:
       return ARMSelectBranch(I);
+    case Instruction::ICmp:
+    case Instruction::FCmp:
+        return ARMSelectCmp(I);
     default: break;
   }
   return false;
