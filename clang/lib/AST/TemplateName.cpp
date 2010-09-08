@@ -44,8 +44,14 @@ TemplateDecl *TemplateName::getAsTemplateDecl() const {
 
 bool TemplateName::isDependent() const {
   if (TemplateDecl *Template = getAsTemplateDecl()) {
-    return isa<TemplateTemplateParmDecl>(Template) ||
-      Template->getDeclContext()->isDependentContext();
+    if (isa<TemplateTemplateParmDecl>(Template))
+      return true;
+    // FIXME: Hack, getDeclContext() can be null if Template is still
+    // initializing due to PCH reading, so we check it before using it.
+    // Should probably modify TemplateSpecializationType to allow constructing
+    // it without the isDependent() checking.
+    return Template->getDeclContext() &&
+           Template->getDeclContext()->isDependentContext();
   }
 
   assert(!getAsOverloadedTemplate() &&

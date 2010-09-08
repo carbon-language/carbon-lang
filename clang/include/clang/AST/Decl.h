@@ -1136,6 +1136,42 @@ private:
   /// declaration name embedded in the DeclaratorDecl base class.
   DeclarationNameLoc DNLoc;
 
+  /// \brief Specify that this function declaration is actually a function
+  /// template specialization.
+  ///
+  /// \param C the ASTContext.
+  ///
+  /// \param Template the function template that this function template
+  /// specialization specializes.
+  ///
+  /// \param TemplateArgs the template arguments that produced this
+  /// function template specialization from the template.
+  ///
+  /// \param InsertPos If non-NULL, the position in the function template
+  /// specialization set where the function template specialization data will
+  /// be inserted.
+  ///
+  /// \param TSK the kind of template specialization this is.
+  ///
+  /// \param TemplateArgsAsWritten location info of template arguments.
+  ///
+  /// \param PointOfInstantiation point at which the function template
+  /// specialization was first instantiated. 
+  void setFunctionTemplateSpecialization(ASTContext &C,
+                                         FunctionTemplateDecl *Template,
+                                       const TemplateArgumentList *TemplateArgs,
+                                         void *InsertPos,
+                                         TemplateSpecializationKind TSK,
+                          const TemplateArgumentListInfo *TemplateArgsAsWritten,
+                                         SourceLocation PointOfInstantiation);
+
+  /// \brief Specify that this record is an instantiation of the
+  /// member function FD.
+  void setInstantiationOfMemberFunction(ASTContext &C, FunctionDecl *FD,
+                                        TemplateSpecializationKind TSK);
+
+  void setParams(ASTContext &C, ParmVarDecl **NewParamInfo, unsigned NumParams);
+
 protected:
   FunctionDecl(Kind DK, DeclContext *DC, const DeclarationNameInfo &NameInfo,
                QualType T, TypeSourceInfo *TInfo,
@@ -1343,7 +1379,9 @@ public:
     assert(i < getNumParams() && "Illegal param #");
     return ParamInfo[i];
   }
-  void setParams(ParmVarDecl **NewParamInfo, unsigned NumParams);
+  void setParams(ParmVarDecl **NewParamInfo, unsigned NumParams) {
+    setParams(getASTContext(), NewParamInfo, NumParams);
+  }
 
   /// getMinRequiredArguments - Returns the minimum number of arguments
   /// needed to call this function. This may be fewer than the number of
@@ -1432,7 +1470,9 @@ public:
   /// \brief Specify that this record is an instantiation of the
   /// member function FD.
   void setInstantiationOfMemberFunction(FunctionDecl *FD,
-                                        TemplateSpecializationKind TSK);
+                                        TemplateSpecializationKind TSK) {
+    setInstantiationOfMemberFunction(getASTContext(), FD, TSK);
+  }
 
   /// \brief Retrieves the function template that is described by this
   /// function declaration.
@@ -1526,43 +1566,11 @@ public:
                                          void *InsertPos,
                     TemplateSpecializationKind TSK = TSK_ImplicitInstantiation,
                     const TemplateArgumentListInfo *TemplateArgsAsWritten = 0,
-                    SourceLocation PointOfInstantiation = SourceLocation());
-
-  /// \brief Specify that this function declaration is actually a function
-  /// template specialization.
-  ///
-  /// \param Template the function template that this function template
-  /// specialization specializes.
-  ///
-  /// \param NumTemplateArgs number of template arguments that produced this
-  /// function template specialization from the template.
-  ///
-  /// \param TemplateArgs array of template arguments that produced this
-  /// function template specialization from the template.
-  ///
-  /// \param TSK the kind of template specialization this is.
-  ///
-  /// \param NumTemplateArgsAsWritten number of template arguments that produced
-  /// this function template specialization from the template.
-  ///
-  /// \param TemplateArgsAsWritten array of location info for the template
-  /// arguments.
-  ///
-  /// \param LAngleLoc location of left angle token.
-  ///
-  /// \param RAngleLoc location of right angle token.
-  ///
-  /// \param PointOfInstantiation point at which the function template
-  /// specialization was first instantiated. 
-  void setFunctionTemplateSpecialization(FunctionTemplateDecl *Template,
-                                         unsigned NumTemplateArgs,
-                                         const TemplateArgument *TemplateArgs,
-                                         TemplateSpecializationKind TSK,
-                                         unsigned NumTemplateArgsAsWritten,
-                                     TemplateArgumentLoc *TemplateArgsAsWritten,
-                                          SourceLocation LAngleLoc,
-                                          SourceLocation RAngleLoc,
-                                          SourceLocation PointOfInstantiation);
+                    SourceLocation PointOfInstantiation = SourceLocation()) {
+    setFunctionTemplateSpecialization(getASTContext(), Template, TemplateArgs,
+                                      InsertPos, TSK, TemplateArgsAsWritten,
+                                      PointOfInstantiation);
+  }
 
   /// \brief Specifies that this function declaration is actually a
   /// dependent function template specialization.

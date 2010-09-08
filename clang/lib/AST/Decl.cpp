@@ -1093,13 +1093,14 @@ unsigned FunctionDecl::getNumParams() const {
 
 }
 
-void FunctionDecl::setParams(ParmVarDecl **NewParamInfo, unsigned NumParams) {
+void FunctionDecl::setParams(ASTContext &C,
+                             ParmVarDecl **NewParamInfo, unsigned NumParams) {
   assert(ParamInfo == 0 && "Already has param info!");
   assert(NumParams == getNumParams() && "Parameter count mismatch!");
 
   // Zero params -> null pointer.
   if (NumParams) {
-    void *Mem = getASTContext().Allocate(sizeof(ParmVarDecl*)*NumParams);
+    void *Mem = C.Allocate(sizeof(ParmVarDecl*)*NumParams);
     ParamInfo = new (Mem) ParmVarDecl*[NumParams];
     memcpy(ParamInfo, NewParamInfo, sizeof(ParmVarDecl*)*NumParams);
 
@@ -1271,12 +1272,13 @@ MemberSpecializationInfo *FunctionDecl::getMemberSpecializationInfo() const {
 }
 
 void 
-FunctionDecl::setInstantiationOfMemberFunction(FunctionDecl *FD,
+FunctionDecl::setInstantiationOfMemberFunction(ASTContext &C,
+                                               FunctionDecl *FD,
                                                TemplateSpecializationKind TSK) {
   assert(TemplateOrSpecialization.isNull() && 
          "Member function is already a specialization");
   MemberSpecializationInfo *Info 
-    = new (getASTContext()) MemberSpecializationInfo(FD, TSK);
+    = new (C) MemberSpecializationInfo(FD, TSK);
   TemplateOrSpecialization = Info;
 }
 
@@ -1362,7 +1364,8 @@ FunctionDecl::getTemplateSpecializationArgsAsWritten() const {
 }
 
 void
-FunctionDecl::setFunctionTemplateSpecialization(FunctionTemplateDecl *Template,
+FunctionDecl::setFunctionTemplateSpecialization(ASTContext &C,
+                                                FunctionTemplateDecl *Template,
                                      const TemplateArgumentList *TemplateArgs,
                                                 void *InsertPos,
                                                 TemplateSpecializationKind TSK,
@@ -1373,7 +1376,7 @@ FunctionDecl::setFunctionTemplateSpecialization(FunctionTemplateDecl *Template,
   FunctionTemplateSpecializationInfo *Info
     = TemplateOrSpecialization.dyn_cast<FunctionTemplateSpecializationInfo*>();
   if (!Info)
-    Info = new (getASTContext()) FunctionTemplateSpecializationInfo;
+    Info = new (C) FunctionTemplateSpecializationInfo;
 
   Info->Function = this;
   Info->Template.setPointer(Template);
@@ -1398,28 +1401,6 @@ FunctionDecl::setFunctionTemplateSpecialization(FunctionTemplateDecl *Template,
     assert((!Existing || Existing->Function->isCanonicalDecl()) &&
            "Set is supposed to only contain canonical decls");
   }
-}
-
-void
-FunctionDecl::setFunctionTemplateSpecialization(FunctionTemplateDecl *Template,
-                                                unsigned NumTemplateArgs,
-                                           const TemplateArgument *TemplateArgs,
-                                                 TemplateSpecializationKind TSK,
-                                              unsigned NumTemplateArgsAsWritten,
-                                   TemplateArgumentLoc *TemplateArgsAsWritten,
-                                                SourceLocation LAngleLoc,
-                                                SourceLocation RAngleLoc,
-                                          SourceLocation PointOfInstantiation) {
-  ASTContext &Ctx = getASTContext();
-  TemplateArgumentList *TemplArgs
-    = new (Ctx) TemplateArgumentList(Ctx, TemplateArgs, NumTemplateArgs);
-  TemplateArgumentListInfo *TemplArgsInfo
-    = new (Ctx) TemplateArgumentListInfo(LAngleLoc, RAngleLoc);
-  for (unsigned i=0; i != NumTemplateArgsAsWritten; ++i)
-    TemplArgsInfo->addArgument(TemplateArgsAsWritten[i]);
-
-  setFunctionTemplateSpecialization(Template, TemplArgs, /*InsertPos=*/0, TSK,
-                                    TemplArgsInfo, PointOfInstantiation);
 }
 
 void

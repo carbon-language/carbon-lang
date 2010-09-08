@@ -183,8 +183,8 @@ void ASTDeclReader::VisitTypedefDecl(TypedefDecl *TD) {
 
 void ASTDeclReader::VisitTagDecl(TagDecl *TD) {
   VisitTypeDecl(TD);
-  TD->IdentifierNamespace = Record[Idx++];
   VisitRedeclarable(TD);
+  TD->IdentifierNamespace = Record[Idx++];
   TD->setTagKind((TagDecl::TagKind)Record[Idx++]);
   TD->setDefinition(Record[Idx++]);
   TD->setEmbeddedInDeclarator(Record[Idx++]);
@@ -234,6 +234,7 @@ void ASTDeclReader::VisitDeclaratorDecl(DeclaratorDecl *DD) {
 
 void ASTDeclReader::VisitFunctionDecl(FunctionDecl *FD) {
   VisitDeclaratorDecl(FD);
+  VisitRedeclarable(FD);
   // FIXME: read DeclarationNameLoc.
 
   FD->IdentifierNamespace = Record[Idx++];
@@ -250,7 +251,7 @@ void ASTDeclReader::VisitFunctionDecl(FunctionDecl *FD) {
     FunctionDecl *InstFD = cast<FunctionDecl>(Reader.GetDecl(Record[Idx++]));
     TemplateSpecializationKind TSK = (TemplateSpecializationKind)Record[Idx++];
     SourceLocation POI = Reader.ReadSourceLocation(Record, Idx);
-    FD->setInstantiationOfMemberFunction(InstFD, TSK);
+    FD->setInstantiationOfMemberFunction(*Reader.getContext(), InstFD, TSK);
     FD->getMemberSpecializationInfo()->setPointOfInstantiation(POI);
     break;
   }
@@ -279,12 +280,26 @@ void ASTDeclReader::VisitFunctionDecl(FunctionDecl *FD) {
     
     SourceLocation POI = Reader.ReadSourceLocation(Record, Idx);
 
-    if (FD->isCanonicalDecl()) // if canonical add to template's set.
-      FD->setFunctionTemplateSpecialization(Template, TemplArgs.size(),
-                                            TemplArgs.data(), TSK,
-                                            TemplArgLocs.size(),
-                                            TemplArgLocs.data(),
-                                            LAngleLoc, RAngleLoc, POI);
+    if (FD->isCanonicalDecl()) { // if canonical add to template's set.
+      ASTContext &C = *Reader.getContext();
+      TemplateArgumentList *TemplArgList
+        = new (C) TemplateArgumentList(C, TemplArgs.data(), TemplArgs.size());
+      TemplateArgumentListInfo *TemplArgsInfo
+        = new (C) TemplateArgumentListInfo(LAngleLoc, RAngleLoc);
+      for (unsigned i=0, e = TemplArgLocs.size(); i != e; ++i)
+        TemplArgsInfo->addArgument(TemplArgLocs[i]);
+
+      llvm::FoldingSetNodeID ID;
+      FunctionTemplateSpecializationInfo::Profile(ID, TemplArgs.data(),
+                                                  TemplArgs.size(), C);
+      void *InsertPos = 0;
+      FunctionTemplateSpecializationInfo *PrevFTInfo =
+          Template->getSpecializations().FindNodeOrInsertPos(ID, InsertPos);
+      (void)PrevFTInfo;
+      assert(!PrevFTInfo && "Another specialization already inserted!");
+      FD->setFunctionTemplateSpecialization(C, Template, TemplArgList, InsertPos,
+                                            TSK, TemplArgsInfo, POI);
+    }
     break;
   }
   case FunctionDecl::TK_DependentFunctionTemplateSpecialization: {
@@ -311,7 +326,6 @@ void ASTDeclReader::VisitFunctionDecl(FunctionDecl *FD) {
   // FunctionDecl's body is handled last at ASTDeclReader::Visit,
   // after everything else is read.
 
-  VisitRedeclarable(FD);
   FD->setStorageClass((StorageClass)Record[Idx++]);
   FD->setStorageClassAsWritten((StorageClass)Record[Idx++]);
   FD->setInlineSpecified(Record[Idx++]);
@@ -331,7 +345,7 @@ void ASTDeclReader::VisitFunctionDecl(FunctionDecl *FD) {
   Params.reserve(NumParams);
   for (unsigned I = 0; I != NumParams; ++I)
     Params.push_back(cast<ParmVarDecl>(Reader.GetDecl(Record[Idx++])));
-  FD->setParams(Params.data(), NumParams);
+  FD->setParams(*Reader.getContext(), Params.data(), NumParams);
 }
 
 void ASTDeclReader::VisitObjCMethodDecl(ObjCMethodDecl *MD) {
@@ -567,13 +581,13 @@ void ASTDeclReader::VisitFieldDecl(FieldDecl *FD) {
 
 void ASTDeclReader::VisitVarDecl(VarDecl *VD) {
   VisitDeclaratorDecl(VD);
+  VisitRedeclarable(VD);
   VD->setStorageClass((StorageClass)Record[Idx++]);
   VD->setStorageClassAsWritten((StorageClass)Record[Idx++]);
   VD->setThreadSpecified(Record[Idx++]);
   VD->setCXXDirectInitializer(Record[Idx++]);
   VD->setExceptionVariable(Record[Idx++]);
   VD->setNRVOVariable(Record[Idx++]);
-  VisitRedeclarable(VD);
   if (Record[Idx++])
     VD->setInit(Reader.ReadExpr(Cursor));
 
@@ -864,9 +878,10 @@ void ASTDeclReader::VisitTemplateDecl(TemplateDecl *D) {
 }
 
 void ASTDeclReader::VisitRedeclarableTemplateDecl(RedeclarableTemplateDecl *D) {
-  VisitTemplateDecl(D);
+  // Initialize CommonOrPrev before VisitTemplateDecl so that getCommonPtr()
+  // can be used while this is still initializing.
 
-  D->IdentifierNamespace = Record[Idx++];
+  assert(D->CommonOrPrev.isNull() && "getCommonPtr was called earlier on this");
   RedeclarableTemplateDecl *PrevDecl =
       cast_or_null<RedeclarableTemplateDecl>(Reader.GetDecl(Record[Idx++]));
   assert((PrevDecl == 0 || PrevDecl->getKind() == D->getKind()) &&
@@ -874,6 +889,7 @@ void ASTDeclReader::VisitRedeclarableTemplateDecl(RedeclarableTemplateDecl *D) {
   if (PrevDecl)
     D->CommonOrPrev = PrevDecl;
   if (PrevDecl == 0) {
+    D->CommonOrPrev = D->newCommon(*Reader.getContext());
     if (RedeclarableTemplateDecl *RTD
           = cast_or_null<RedeclarableTemplateDecl>(Reader.GetDecl(Record[Idx++]))) {
       assert(RTD->getKind() == D->getKind() &&
@@ -907,6 +923,9 @@ void ASTDeclReader::VisitRedeclarableTemplateDecl(RedeclarableTemplateDecl *D) {
     assert(LatestDecl->getKind() == D->getKind() && "Latest kind mismatch");
     D->getCommonPtr()->Latest = LatestDecl;
   }
+
+  VisitTemplateDecl(D);
+  D->IdentifierNamespace = Record[Idx++];
 }
 
 void ASTDeclReader::VisitClassTemplateDecl(ClassTemplateDecl *D) {

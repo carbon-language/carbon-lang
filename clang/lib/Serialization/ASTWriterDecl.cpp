@@ -163,8 +163,8 @@ void ASTDeclWriter::VisitTypedefDecl(TypedefDecl *D) {
 
 void ASTDeclWriter::VisitTagDecl(TagDecl *D) {
   VisitTypeDecl(D);
-  Record.push_back(D->getIdentifierNamespace());
   VisitRedeclarable(D);
+  Record.push_back(D->getIdentifierNamespace());
   Record.push_back((unsigned)D->getTagKind()); // FIXME: stable encoding
   Record.push_back(D->isDefinition());
   Record.push_back(D->isEmbeddedInDeclarator());
@@ -214,6 +214,7 @@ void ASTDeclWriter::VisitDeclaratorDecl(DeclaratorDecl *D) {
 
 void ASTDeclWriter::VisitFunctionDecl(FunctionDecl *D) {
   VisitDeclaratorDecl(D);
+  VisitRedeclarable(D);
   // FIXME: write DeclarationNameLoc.
 
   Record.push_back(D->getIdentifierNamespace());
@@ -281,7 +282,6 @@ void ASTDeclWriter::VisitFunctionDecl(FunctionDecl *D) {
   // FunctionDecl's body is handled last at ASTWriterDecl::Visit,
   // after everything else is written.
 
-  VisitRedeclarable(D);
   Record.push_back(D->getStorageClass()); // FIXME: stable encoding
   Record.push_back(D->getStorageClassAsWritten());
   Record.push_back(D->isInlineSpecified());
@@ -513,13 +513,13 @@ void ASTDeclWriter::VisitFieldDecl(FieldDecl *D) {
 
 void ASTDeclWriter::VisitVarDecl(VarDecl *D) {
   VisitDeclaratorDecl(D);
+  VisitRedeclarable(D);
   Record.push_back(D->getStorageClass()); // FIXME: stable encoding
   Record.push_back(D->getStorageClassAsWritten());
   Record.push_back(D->isThreadSpecified());
   Record.push_back(D->hasCXXDirectInitializer());
   Record.push_back(D->isExceptionVariable());
   Record.push_back(D->isNRVOVariable());
-  VisitRedeclarable(D);
   Record.push_back(D->getInit() ? 1 : 0);
   if (D->getInit())
     Writer.AddStmt(D->getInit());
@@ -840,9 +840,9 @@ void ASTDeclWriter::VisitTemplateDecl(TemplateDecl *D) {
 }
 
 void ASTDeclWriter::VisitRedeclarableTemplateDecl(RedeclarableTemplateDecl *D) {
-  VisitTemplateDecl(D);
+  // Emit data to initialize CommonOrPrev before VisitTemplateDecl so that
+  // getCommonPtr() can be used while this is still initializing.
 
-  Record.push_back(D->getIdentifierNamespace());
   Writer.AddDeclRef(D->getPreviousDeclaration(), Record);
   if (D->getPreviousDeclaration() == 0) {
     // This TemplateDecl owns the CommonPtr; write it.
@@ -866,6 +866,9 @@ void ASTDeclWriter::VisitRedeclarableTemplateDecl(RedeclarableTemplateDecl *D) {
       Writer.FirstLatestDecls[First] = D;
     }
   }
+
+  VisitTemplateDecl(D);
+  Record.push_back(D->getIdentifierNamespace());
 }
 
 void ASTDeclWriter::VisitClassTemplateDecl(ClassTemplateDecl *D) {
