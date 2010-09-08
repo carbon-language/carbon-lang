@@ -174,6 +174,12 @@ xchgl   368(%rax),%ecx
 xchgl   %ecx, 368(%rax)
 // CHECK: xchgl	%ecx, 368(%rax)
 
+// rdar://8407548
+xchg	0xdeadbeef(%rbx,%rcx,8),%bl
+// CHECK: xchgb	%bl, 3735928559(%rbx,%rcx,8)
+
+
+
 // PR7254
 lock  incl 1(%rsp)
 // CHECK: lock
