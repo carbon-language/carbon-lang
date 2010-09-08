@@ -4891,10 +4891,10 @@ SDValue LowerVECTOR_SHUFFLEv16i8(ShuffleVectorSDNode *SVOp,
 }
 
 /// RewriteAsNarrowerShuffle - Try rewriting v8i16 and v16i8 shuffles as 4 wide
-/// ones, or rewriting v4i32 / v2i32 as 2 wide ones if possible. This can be
+/// ones, or rewriting v4i32 / v4f32 as 2 wide ones if possible. This can be
 /// done when every pair / quad of shuffle mask elements point to elements in
 /// the right sequence. e.g.
-/// vector_shuffle <>, <>, < 3, 4, | 10, 11, | 0, 1, | 14, 15>
+/// vector_shuffle X, Y, <2, 3, | 10, 11, | 0, 1, | 14, 15>
 static
 SDValue RewriteAsNarrowerShuffle(ShuffleVectorSDNode *SVOp,
                                  SelectionDAG &DAG, DebugLoc dl) {
@@ -4903,8 +4903,7 @@ SDValue RewriteAsNarrowerShuffle(ShuffleVectorSDNode *SVOp,
   SDValue V2 = SVOp->getOperand(1);
   unsigned NumElems = VT.getVectorNumElements();
   unsigned NewWidth = (NumElems == 4) ? 2 : 4;
-  EVT MaskVT = (NewWidth == 4) ? MVT::v4i16 : MVT::v2i32;
-  EVT NewVT = MaskVT;
+  EVT NewVT;
   switch (VT.getSimpleVT().SimpleTy) {
   default: assert(false && "Unexpected!");
   case MVT::v4f32: NewVT = MVT::v2f64; break;
@@ -4913,12 +4912,6 @@ SDValue RewriteAsNarrowerShuffle(ShuffleVectorSDNode *SVOp,
   case MVT::v16i8: NewVT = MVT::v4i32; break;
   }
 
-  if (NewWidth == 2) {
-    if (VT.isInteger())
-      NewVT = MVT::v2i64;
-    else
-      NewVT = MVT::v2f64;
-  }
   int Scale = NumElems / NewWidth;
   SmallVector<int, 8> MaskVec;
   for (unsigned i = 0; i < NumElems; i += Scale) {
