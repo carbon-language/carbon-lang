@@ -15,7 +15,7 @@ int f1_a(struct FPRec* foo) {
 
 int f1_b() {
   int x;
-  return bar(x)+1;  // expected-warning{{Pass-by-value argument in function call is undefined.}}
+  return bar(x)+1;  // expected-warning{{Function call argument is an uninitialized value}}
 }
 
 int f2() {

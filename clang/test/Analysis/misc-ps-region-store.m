@@ -394,7 +394,7 @@ void rdar_7332673_test1() {
 int rdar_7332673_test2_aux(char *x);
 void rdar_7332673_test2() {
     char *value;
-    if ( rdar_7332673_test2_aux(value) != 1 ) {} // expected-warning{{Pass-by-value argument in function call is undefined}}
+    if ( rdar_7332673_test2_aux(value) != 1 ) {} // expected-warning{{Function call argument is an uninitialized value}}
 }
 
 //===----------------------------------------------------------------------===//
@@ -671,7 +671,7 @@ typedef void (^RDar_7462324_Callback)(id obj);
   builder = ^(id object) {
     id x;
     if (object) {
-      builder(x); // expected-warning{{Pass-by-value argument in function call is undefined}}
+      builder(x); // expected-warning{{Function call argument is an uninitialized value}}
     }
   };
   builder(target);

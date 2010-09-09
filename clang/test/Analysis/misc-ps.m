@@ -794,7 +794,7 @@ int test_uninit_branch_c(void) {
 void test_bad_call_aux(int x);
 void test_bad_call(void) {
   int y;
-  test_bad_call_aux(y); // expected-warning{{Pass-by-value argument in function call is undefined}}
+  test_bad_call_aux(y); // expected-warning{{Function call argument is an uninitialized value}}
 }
 
 @interface TestBadArg {}
@@ -803,7 +803,7 @@ void test_bad_call(void) {
 
 void test_bad_msg(TestBadArg *p) {
   int y;
-  [p testBadArg:y]; // expected-warning{{Pass-by-value argument in message expression is undefined}}
+  [p testBadArg:y]; // expected-warning{{Argument in message expression is an uninitialized value}}
 }
 
 //===----------------------------------------------------------------------===//

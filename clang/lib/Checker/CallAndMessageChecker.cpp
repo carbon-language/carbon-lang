@@ -193,7 +193,7 @@ void CallAndMessageChecker::PreVisitCallExpr(CheckerContext &C,
   if (L.isUndef()) {
     if (!BT_call_undef)
       BT_call_undef =
-        new BuiltinBug("Called function pointer is an undefined pointer value");
+        new BuiltinBug("Called function pointer is an uninitalized pointer value");
     EmitBadCall(BT_call_undef, C, CE);
     return;
   }
@@ -208,8 +208,8 @@ void CallAndMessageChecker::PreVisitCallExpr(CheckerContext &C,
   for (CallExpr::const_arg_iterator I = CE->arg_begin(), E = CE->arg_end();
        I != E; ++I)
     if (PreVisitProcessArg(C, *I,
-                           "Pass-by-value argument in function call is"
-                           " undefined", BT_call_arg))
+                           "Function call argument is an uninitialized value",
+                           BT_call_arg))
       return;
 }
 
@@ -224,7 +224,7 @@ void CallAndMessageChecker::PreVisitObjCMessageExpr(CheckerContext &C,
       if (ExplodedNode *N = C.GenerateSink()) {
         if (!BT_msg_undef)
           BT_msg_undef =
-            new BuiltinBug("Receiver in message expression is a garbage value");
+            new BuiltinBug("Receiver in message expression is an uninitialized value");
         EnhancedBugReport *R =
           new EnhancedBugReport(*BT_msg_undef, BT_msg_undef->getName(), N);
         R->addRange(receiver->getSourceRange());
@@ -239,8 +239,8 @@ void CallAndMessageChecker::PreVisitObjCMessageExpr(CheckerContext &C,
   for (ObjCMessageExpr::const_arg_iterator I = ME->arg_begin(),
          E = ME->arg_end(); I != E; ++I)
     if (PreVisitProcessArg(C, *I,
-                           "Pass-by-value argument in message expression "
-                           "is undefined", BT_msg_arg))
+                           "Argument in message expression "
+                           "is an uninitialized value", BT_msg_arg))
         return;
 }
 

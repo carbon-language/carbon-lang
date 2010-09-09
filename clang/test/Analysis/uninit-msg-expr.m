@@ -42,7 +42,7 @@ extern NSString * const NSUndoManagerCheckpointNotification;
 
 unsigned f1() {
   NSString *aString;
-  return [aString length]; // expected-warning {{Receiver in message expression is a garbage value}}
+  return [aString length]; // expected-warning {{Receiver in message expression is an uninitialized value}}
 }
 
 unsigned f2() {
@@ -53,5 +53,5 @@ unsigned f2() {
 void f3() {
   NSMutableArray *aArray = [NSArray array];
   NSString *aString;
-  [aArray addObject:aString]; // expected-warning {{Pass-by-value argument in message expression is undefined.}}
+  [aArray addObject:aString]; // expected-warning {{Argument in message expression is an uninitialized value}}
 }
