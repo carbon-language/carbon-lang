@@ -422,6 +422,10 @@ public:
   /// ParenExpr or ImplicitCastExprs, returning their operand.
   Expr *IgnoreParenImpCasts();
 
+  const Expr *IgnoreParenImpCasts() const {
+    return const_cast<Expr*>(this)->IgnoreParenImpCasts();
+  }
+
   /// IgnoreParenNoopCasts - Ignore parentheses and casts that do not change the
   /// value (including ptr->int casts of the same size).  Strip off any
   /// ParenExpr or CastExprs, returning their operand.

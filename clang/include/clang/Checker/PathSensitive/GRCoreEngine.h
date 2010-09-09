@@ -422,6 +422,10 @@ public:
   iterator begin() { return iterator(Src->succ_rbegin()+1); }
   iterator end() { return iterator(Src->succ_rend()); }
 
+  const SwitchStmt *getSwitch() const {
+    return llvm::cast<SwitchStmt>(Src->getTerminator());
+  }
+
   ExplodedNode* generateCaseStmtNode(const iterator& I, const GRState* State);
 
   ExplodedNode* generateDefaultCaseNode(const GRState* State,

@@ -1561,9 +1561,24 @@ void GRExprEngine::ProcessSwitch(GRSwitchNodeBuilder& builder) {
     } while (true);
   }
 
-  // If we reach here, than we know that the default branch is
-  // possible.
-  if (defaultIsFeasible) builder.generateDefaultCaseNode(DefaultSt);
+  if (!defaultIsFeasible)
+    return;
+
+  // If we have switch(enum value), the default branch is not
+  // feasible if all of the enum constants not covered by 'case:' statements
+  // are not feasible values for the switch condition.
+  //
+  // Note that this isn't as accurate as it could be.  Even if there isn't
+  // a case for a particular enum value as long as that enum value isn't
+  // feasible then it shouldn't be considered for making 'default:' reachable.
+  const SwitchStmt *SS = builder.getSwitch();
+  const Expr *CondExpr = SS->getCond()->IgnoreParenImpCasts();
+  if (CondExpr->getType()->getAs<EnumType>()) {
+    if (SS->isAllEnumCasesCovered())
+      return;
+  }
+
+  builder.generateDefaultCaseNode(DefaultSt);
 }
 
 void GRExprEngine::ProcessCallEnter(GRCallEnterNodeBuilder &B) {
