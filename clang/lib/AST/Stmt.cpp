@@ -530,7 +530,7 @@ void ForStmt::setConditionVariable(ASTContext &C, VarDecl *V) {
 }
 
 SwitchStmt::SwitchStmt(ASTContext &C, VarDecl *Var, Expr *cond) 
-  : Stmt(SwitchStmtClass), FirstCase(0) 
+  : Stmt(SwitchStmtClass), FirstCase(0), AllEnumCasesCovered(0) 
 {
   setConditionVariable(C, Var);
   SubExprs[COND] = reinterpret_cast<Stmt*>(cond);
