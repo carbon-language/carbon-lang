@@ -110,16 +110,7 @@ namespace llvm {
       /// entry here.
       std::vector<ArgInfo> ArgumentWeights;
 
-      /// CountCodeReductionForConstant - Figure out an approximation for how
-      /// many instructions will be constant folded if the specified value is
-      /// constant.
-      unsigned CountCodeReductionForConstant(Value *V);
 
-      /// CountCodeReductionForAlloca - Figure out an approximation of how much
-      /// smaller the function will be if it is inlined into a context where an
-      /// argument becomes an alloca.
-      ///
-      unsigned CountCodeReductionForAlloca(Value *V);
 
       /// analyzeFunction - Add information about the specified function
       /// to the current structure.

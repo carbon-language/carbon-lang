@@ -18,96 +18,6 @@
 #include "llvm/ADT/SmallPtrSet.h"
 using namespace llvm;
 
-// CountCodeReductionForConstant - Figure out an approximation for how many
-// instructions will be constant folded if the specified value is constant.
-//
-unsigned InlineCostAnalyzer::FunctionInfo::
-CountCodeReductionForConstant(Value *V) {
-  unsigned Reduction = 0;
-  for (Value::use_iterator UI = V->use_begin(), E = V->use_end(); UI != E;++UI){
-    User *U = *UI;
-    if (isa<BranchInst>(U) || isa<SwitchInst>(U)) {
-      // We will be able to eliminate all but one of the successors.
-      const TerminatorInst &TI = cast<TerminatorInst>(*U);
-      const unsigned NumSucc = TI.getNumSuccessors();
-      unsigned Instrs = 0;
-      for (unsigned I = 0; I != NumSucc; ++I)
-        Instrs += Metrics.NumBBInsts[TI.getSuccessor(I)];
-      // We don't know which blocks will be eliminated, so use the average size.
-      Reduction += InlineConstants::InstrCost*Instrs*(NumSucc-1)/NumSucc;
-    } else if (CallInst *CI = dyn_cast<CallInst>(U)) {
-      // Turning an indirect call into a direct call is a BIG win
-      if (CI->getCalledValue() == V)
-        Reduction += InlineConstants::IndirectCallBonus;
-    } else if (InvokeInst *II = dyn_cast<InvokeInst>(U)) {
-      // Turning an indirect call into a direct call is a BIG win
-      if (II->getCalledValue() == V)
-        Reduction += InlineConstants::IndirectCallBonus;
-    } else {
-      // Figure out if this instruction will be removed due to simple constant
-      // propagation.
-      Instruction &Inst = cast<Instruction>(*U);
-
-      // We can't constant propagate instructions which have effects or
-      // read memory.
-      //
-      // FIXME: It would be nice to capture the fact that a load from a
-      // pointer-to-constant-global is actually a *really* good thing to zap.
-      // Unfortunately, we don't know the pointer that may get propagated here,
-      // so we can't make this decision.
-      if (Inst.mayReadFromMemory() || Inst.mayHaveSideEffects() ||
-          isa<AllocaInst>(Inst))
-        continue;
-
-      bool AllOperandsConstant = true;
-      for (unsigned i = 0, e = Inst.getNumOperands(); i != e; ++i)
-        if (!isa<Constant>(Inst.getOperand(i)) && Inst.getOperand(i) != V) {
-          AllOperandsConstant = false;
-          break;
-        }
-
-      if (AllOperandsConstant) {
-        // We will get to remove this instruction...
-        Reduction += InlineConstants::InstrCost;
-
-        // And any other instructions that use it which become constants
-        // themselves.
-        Reduction += CountCodeReductionForConstant(&Inst);
-      }
-    }
-  }
-  return Reduction;
-}
-
-// CountCodeReductionForAlloca - Figure out an approximation of how much smaller
-// the function will be if it is inlined into a context where an argument
-// becomes an alloca.
-//
-unsigned InlineCostAnalyzer::FunctionInfo::
-         CountCodeReductionForAlloca(Value *V) {
-  if (!V->getType()->isPointerTy()) return 0;  // Not a pointer
-  unsigned Reduction = 0;
-  for (Value::use_iterator UI = V->use_begin(), E = V->use_end(); UI != E;++UI){
-    Instruction *I = cast<Instruction>(*UI);
-    if (isa<LoadInst>(I) || isa<StoreInst>(I))
-      Reduction += InlineConstants::InstrCost;
-    else if (GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(I)) {
-      // If the GEP has variable indices, we won't be able to do much with it.
-      if (GEP->hasAllConstantIndices())
-        Reduction += CountCodeReductionForAlloca(GEP);
-    } else if (BitCastInst *BCI = dyn_cast<BitCastInst>(I)) {
-      // Track pointer through bitcasts.
-      Reduction += CountCodeReductionForAlloca(BCI);
-    } else {
-      // If there is some other strange instruction, we're not going to be able
-      // to do much if we inline this.
-      return 0;
-    }
-  }
-
-  return Reduction;
-}
-
 /// callIsSmall - If a call is likely to lower to a single target instruction,
 /// or is otherwise deemed small return true.
 /// TODO: Perhaps calls like memcpy, strcpy, etc?
@@ -226,6 +136,94 @@ void CodeMetrics::analyzeBasicBlock(const BasicBlock *BB) {
   NumBBInsts[BB] = NumInsts - NumInstsBeforeThisBB;
 }
 
+// CountCodeReductionForConstant - Figure out an approximation for how many
+// instructions will be constant folded if the specified value is constant.
+//
+unsigned CodeMetrics::CountCodeReductionForConstant(Value *V) {
+  unsigned Reduction = 0;
+  for (Value::use_iterator UI = V->use_begin(), E = V->use_end(); UI != E;++UI){
+    User *U = *UI;
+    if (isa<BranchInst>(U) || isa<SwitchInst>(U)) {
+      // We will be able to eliminate all but one of the successors.
+      const TerminatorInst &TI = cast<TerminatorInst>(*U);
+      const unsigned NumSucc = TI.getNumSuccessors();
+      unsigned Instrs = 0;
+      for (unsigned I = 0; I != NumSucc; ++I)
+        Instrs += NumBBInsts[TI.getSuccessor(I)];
+      // We don't know which blocks will be eliminated, so use the average size.
+      Reduction += InlineConstants::InstrCost*Instrs*(NumSucc-1)/NumSucc;
+    } else if (CallInst *CI = dyn_cast<CallInst>(U)) {
+      // Turning an indirect call into a direct call is a BIG win
+      if (CI->getCalledValue() == V)
+        Reduction += InlineConstants::IndirectCallBonus;
+    } else if (InvokeInst *II = dyn_cast<InvokeInst>(U)) {
+      // Turning an indirect call into a direct call is a BIG win
+      if (II->getCalledValue() == V)
+        Reduction += InlineConstants::IndirectCallBonus;
+    } else {
+      // Figure out if this instruction will be removed due to simple constant
+      // propagation.
+      Instruction &Inst = cast<Instruction>(*U);
+
+      // We can't constant propagate instructions which have effects or
+      // read memory.
+      //
+      // FIXME: It would be nice to capture the fact that a load from a
+      // pointer-to-constant-global is actually a *really* good thing to zap.
+      // Unfortunately, we don't know the pointer that may get propagated here,
+      // so we can't make this decision.
+      if (Inst.mayReadFromMemory() || Inst.mayHaveSideEffects() ||
+          isa<AllocaInst>(Inst))
+        continue;
+
+      bool AllOperandsConstant = true;
+      for (unsigned i = 0, e = Inst.getNumOperands(); i != e; ++i)
+        if (!isa<Constant>(Inst.getOperand(i)) && Inst.getOperand(i) != V) {
+          AllOperandsConstant = false;
+          break;
+        }
+
+      if (AllOperandsConstant) {
+        // We will get to remove this instruction...
+        Reduction += InlineConstants::InstrCost;
+
+        // And any other instructions that use it which become constants
+        // themselves.
+        Reduction += CountCodeReductionForConstant(&Inst);
+      }
+    }
+  }
+  return Reduction;
+}
+
+// CountCodeReductionForAlloca - Figure out an approximation of how much smaller
+// the function will be if it is inlined into a context where an argument
+// becomes an alloca.
+//
+unsigned CodeMetrics::CountCodeReductionForAlloca(Value *V) {
+  if (!V->getType()->isPointerTy()) return 0;  // Not a pointer
+  unsigned Reduction = 0;
+  for (Value::use_iterator UI = V->use_begin(), E = V->use_end(); UI != E;++UI){
+    Instruction *I = cast<Instruction>(*UI);
+    if (isa<LoadInst>(I) || isa<StoreInst>(I))
+      Reduction += InlineConstants::InstrCost;
+    else if (GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(I)) {
+      // If the GEP has variable indices, we won't be able to do much with it.
+      if (GEP->hasAllConstantIndices())
+        Reduction += CountCodeReductionForAlloca(GEP);
+    } else if (BitCastInst *BCI = dyn_cast<BitCastInst>(I)) {
+      // Track pointer through bitcasts.
+      Reduction += CountCodeReductionForAlloca(BCI);
+    } else {
+      // If there is some other strange instruction, we're not going to be able
+      // to do much if we inline this.
+      return 0;
+    }
+  }
+
+  return Reduction;
+}
+
 /// analyzeFunction - Fill in the current structure with information gleaned
 /// from the specified function.
 void CodeMetrics::analyzeFunction(Function *F) {
@@ -254,8 +252,8 @@ void InlineCostAnalyzer::FunctionInfo::analyzeFunction(Function *F) {
   // code can be eliminated if one of the arguments is a constant.
   ArgumentWeights.reserve(F->arg_size());
   for (Function::arg_iterator I = F->arg_begin(), E = F->arg_end(); I != E; ++I)
-    ArgumentWeights.push_back(ArgInfo(CountCodeReductionForConstant(I),
-                                      CountCodeReductionForAlloca(I)));
+    ArgumentWeights.push_back(ArgInfo(Metrics.CountCodeReductionForConstant(I),
+                                      Metrics.CountCodeReductionForAlloca(I)));
 }
 
 /// NeverInline - returns true if the function should never be inlined into
