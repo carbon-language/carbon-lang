@@ -64,7 +64,9 @@ CommandInterpreter::CommandInterpreter
     std::string lang_name = ScriptInterpreter::LanguageToString (script_language);
     StreamString var_name;
     var_name.Printf ("[%s].script-lang", dbg_name);
-    debugger.GetSettingsController()->SetVariable (var_name.GetData(), lang_name.c_str(), lldb::eVarSetOperationAssign, false);
+    debugger.GetSettingsController()->SetVariable (var_name.GetData(), lang_name.c_str(), 
+                                                   lldb::eVarSetOperationAssign, false, 
+                                                   m_debugger.GetInstanceName().AsCString());
 }
 
 void
@@ -140,7 +142,8 @@ CommandInterpreter::LoadCommandDictionary ()
     const char *dbg_name = GetDebugger().GetInstanceName().AsCString();
     StreamString var_name;
     var_name.Printf ("[%s].script-lang", dbg_name);
-    value = Debugger::GetSettingsController()->GetVariable (var_name.GetData(), var_type);
+    value = Debugger::GetSettingsController()->GetVariable (var_name.GetData(), var_type, 
+                                                            m_debugger.GetInstanceName().AsCString());
     bool success;
     script_language = Args::StringToScriptLanguage (value.GetStringAtIndex(0), lldb::eScriptLanguageDefault, &success);
     
@@ -777,7 +780,7 @@ CommandInterpreter::GetPrompt ()
     const char *instance_name = GetDebugger().GetInstanceName().AsCString();
     StreamString var_name;
     var_name.Printf ("[%s].prompt", instance_name);
-    return Debugger::GetSettingsController()->GetVariable (var_name.GetData(), var_type).GetStringAtIndex(0);
+    return Debugger::GetSettingsController()->GetVariable (var_name.GetData(), var_type, instance_name).GetStringAtIndex(0);
 }
 
 void
@@ -786,7 +789,8 @@ CommandInterpreter::SetPrompt (const char *new_prompt)
     const char *instance_name = GetDebugger().GetInstanceName().AsCString();
     StreamString name_str;
     name_str.Printf ("[%s].prompt", instance_name);
-    Debugger::GetSettingsController()->SetVariable (name_str.GetData(), new_prompt, lldb::eVarSetOperationAssign, false);
+    Debugger::GetSettingsController()->SetVariable (name_str.GetData(), new_prompt, lldb::eVarSetOperationAssign, 
+                                                    false, m_debugger.GetInstanceName().AsCString());
 }
 
 void
@@ -1037,7 +1041,8 @@ CommandInterpreter::OutputFormattedHelpText (Stream &strm,
 {
     lldb::SettableVariableType var_type;
     const char *width_value = 
-                            Debugger::GetSettingsController()->GetVariable ("term-width", var_type).GetStringAtIndex(0);
+      Debugger::GetSettingsController()->GetVariable ("term-width", var_type,
+                                                      m_debugger.GetInstanceName().AsCString()).GetStringAtIndex(0);
     int max_columns = atoi (width_value);
     // Sanity check max_columns, to cope with emacs shell mode with TERM=dumb
     // (0 rows; 0 columns;).
@@ -1128,7 +1133,7 @@ CommandInterpreter::AproposAllSubCommands (CommandObject *cmd_obj, const char *p
           
           complete_command_name.Printf ("%s %s", prefix, command_name);
 
-          if (sub_cmd_obj->HelpTextContainsWord (search_word))
+          if (sub_cmd_obj->HelpTextContainsWord (search_word, *this))
           {
               commands_found.AppendString (complete_command_name.GetData());
               commands_help.AppendString (sub_cmd_obj->GetHelp());
@@ -1152,7 +1157,7 @@ CommandInterpreter::FindCommandsForApropos (const char *search_word, StringList 
         const char *command_name = pos->first.c_str();
         CommandObject *cmd_obj = pos->second.get();
 
-        if (cmd_obj->HelpTextContainsWord (search_word))
+        if (cmd_obj->HelpTextContainsWord (search_word, *this))
         {
             commands_found.AppendString (command_name);
             commands_help.AppendString (cmd_obj->GetHelp());

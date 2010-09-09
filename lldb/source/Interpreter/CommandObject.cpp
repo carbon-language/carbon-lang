@@ -177,7 +177,8 @@ CommandObject::ParseOptions
             else
             {
                 // No error string, output the usage information into result
-                options->GenerateOptionUsage (result.GetErrorStream(), this);
+                options->GenerateOptionUsage (result.GetErrorStream(), this,
+                                              interpreter.GetDebugger().GetInstanceName().AsCString());
             }
             // Set the return status to failed (this was an error).
             result.SetStatus (eReturnStatusFailed);
@@ -396,7 +397,7 @@ contains_string (const char *s1, const char *s2)
 }
 
 bool
-CommandObject::HelpTextContainsWord (const char *search_word)
+CommandObject::HelpTextContainsWord (const char *search_word, CommandInterpreter &interpreter)
 {
     const char *short_help;
     const char *long_help;
@@ -421,7 +422,7 @@ CommandObject::HelpTextContainsWord (const char *search_word)
         && GetOptions() != NULL)
     {
         StreamString usage_help;
-        GetOptions()->GenerateOptionUsage (usage_help, this);
+        GetOptions()->GenerateOptionUsage (usage_help, this, interpreter.GetDebugger().GetInstanceName().AsCString());
         if (usage_help.GetSize() > 0)
         {
             const char *usage_text = usage_help.GetData();

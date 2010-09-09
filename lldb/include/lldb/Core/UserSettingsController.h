@@ -82,11 +82,13 @@ public:
                  const char *value, 
                  const lldb::VarSetOperationType op,
                  const bool override,
+                 const char *debugger_instance_name,
                  const char *index_value = NULL);
 
     StringList
     GetVariable (const char *full_dot_name, 
-                 lldb::SettableVariableType &var_type);
+                 lldb::SettableVariableType &var_type,
+                 const char *debugger_instance_name);
 
     const lldb::UserSettingsControllerSP &
     GetParent ();

@@ -162,6 +162,7 @@ public:
         process = target->CreateProcess (interpreter.GetDebugger().GetListener(), plugin_name).get();
 
         const char *process_name = process->GetInstanceName().AsCString();
+        const char *debugger_instance_name = interpreter.GetDebugger().GetInstanceName().AsCString();
         StreamString run_args_var_name;
         StreamString env_vars_var_name;
         StreamString disable_aslr_var_name;
@@ -170,7 +171,8 @@ public:
         Args *run_args = NULL;
         run_args_var_name.Printf ("process.[%s].run-args", process_name);
         StringList run_args_value = Debugger::GetSettingsController()->GetVariable (run_args_var_name.GetData(), 
-                                                                                    var_type);
+                                                                                    var_type, debugger_instance_name);
+
         if (run_args_value.GetSize() > 0)
         {
             run_args = new Args;
@@ -181,7 +183,8 @@ public:
         Args *environment = NULL;
         env_vars_var_name.Printf ("process.[%s].env-vars", process_name);
         StringList env_vars_value = Debugger::GetSettingsController()->GetVariable (env_vars_var_name.GetData(), 
-                                                                                    var_type);
+                                                                                    var_type, debugger_instance_name);
+
         if (env_vars_value.GetSize() > 0)
         {
             environment = new Args;
@@ -192,7 +195,9 @@ public:
         uint32_t launch_flags = eLaunchFlagNone;
         disable_aslr_var_name.Printf ("process.[%s].disable-aslr", process_name);
         StringList disable_aslr_value = Debugger::GetSettingsController()->GetVariable(disable_aslr_var_name.GetData(),
-                                                                                       var_type);
+                                                                                       var_type, 
+                                                                                       debugger_instance_name);
+
         if (disable_aslr_value.GetSize() > 0)
         {
             if (strcmp (disable_aslr_value.GetStringAtIndex(0), "true") == 0)
@@ -214,7 +219,9 @@ public:
             // launch-args was not empty; use that, AND re-set run-args to contains launch-args values.
             std::string new_run_args;
             launch_args.GetCommandString (new_run_args);
-            Debugger::GetSettingsController()->SetVariable (run_args_var_name.GetData(), new_run_args.c_str(), lldb::eVarSetOperationAssign, false);
+            Debugger::GetSettingsController()->SetVariable (run_args_var_name.GetData(), new_run_args.c_str(), 
+                                                            lldb::eVarSetOperationAssign, false,
+                                                            interpreter.GetDebugger().GetInstanceName().AsCString());
         }
 
 

@@ -233,7 +233,7 @@ public:
     }
     
     bool
-    HelpTextContainsWord (const char *search_word);
+    HelpTextContainsWord (const char *search_word, CommandInterpreter &interpreter);
 
     //------------------------------------------------------------------
     /// The flags accessor.

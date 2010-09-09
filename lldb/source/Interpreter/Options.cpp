@@ -362,11 +362,13 @@ Options::GenerateOptionUsage
 (
     Stream &strm,
     CommandObject *cmd,
+    const char *debugger_instance_name,
     const char *program_name)
 {
     lldb::SettableVariableType var_type;
     const char *screen_width_str = 
-                            Debugger::GetSettingsController()->GetVariable ("term-width", var_type).GetStringAtIndex(0);
+      Debugger::GetSettingsController()->GetVariable ("term-width", var_type,
+                                                      debugger_instance_name).GetStringAtIndex(0);
     uint32_t screen_width = atoi (screen_width_str);
     if (screen_width == 0)
         screen_width = 80;

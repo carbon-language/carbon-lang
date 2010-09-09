@@ -1424,7 +1424,7 @@ public:
             break;
 
         default:
-            m_options.GenerateOptionUsage (result.GetErrorStream(), this);
+            m_options.GenerateOptionUsage (result.GetErrorStream(), this, interpreter.GetDebugger().GetInstanceName().AsCString());
             syntax_error = true;
             break;
         }

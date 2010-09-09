@@ -117,7 +117,8 @@ CommandObjectSettingsSet::Execute (CommandInterpreter &interpreter,
     else
     {
       Error err = root_settings->SetVariable (var_name_string.c_str(), var_value, lldb::eVarSetOperationAssign, 
-                                              m_options.m_override);
+                                              m_options.m_override, 
+                                              interpreter.GetDebugger().GetInstanceName().AsCString());
         if (err.Fail ())
         {
             result.AppendError (err.AsCString());
@@ -284,7 +285,8 @@ CommandObjectSettingsShow::Execute (CommandInterpreter &interpreter,
         // The user requested to see the value of a particular variable.
         lldb::SettableVariableType var_type;
         const char *variable_name = command.GetArgumentAtIndex (0);
-        StringList value = root_settings->GetVariable (variable_name, var_type);
+        StringList value = root_settings->GetVariable (variable_name, var_type, 
+                                                       interpreter.GetDebugger().GetInstanceName().AsCString());
         
         if (value.GetSize() == 0)
         {
@@ -456,7 +458,8 @@ CommandObjectSettingsRemove::Execute (CommandInterpreter &interpreter,
     index_value_string = index_value;
 
     Error err = root_settings->SetVariable (var_name_string.c_str(), NULL, lldb::eVarSetOperationRemove,  
-                                            false, index_value_string.c_str());
+                                            false, interpreter.GetDebugger().GetInstanceName().AsCString(),
+                                            index_value_string.c_str());
     if (err.Fail ())
     {
         result.AppendError (err.AsCString());
@@ -565,7 +568,8 @@ CommandObjectSettingsReplace::Execute (CommandInterpreter &interpreter,
     else
     {
         Error err = root_settings->SetVariable (var_name_string.c_str(), var_value, lldb::eVarSetOperationReplace, 
-                                                false, index_value_string.c_str());
+                                                false, interpreter.GetDebugger().GetInstanceName().AsCString(),
+                                                index_value_string.c_str());
         if (err.Fail ())
         {
             result.AppendError (err.AsCString());
@@ -676,7 +680,8 @@ CommandObjectSettingsInsertBefore::Execute (CommandInterpreter &interpreter,
     else
     {
         Error err = root_settings->SetVariable (var_name_string.c_str(), var_value, lldb::eVarSetOperationInsertBefore,
-                                                false, index_value_string.c_str());
+                                                false, interpreter.GetDebugger().GetInstanceName().AsCString(),
+                                                index_value_string.c_str());
         if (err.Fail ())
         {
             result.AppendError (err.AsCString());
@@ -788,7 +793,8 @@ CommandObjectSettingsInsertAfter::Execute (CommandInterpreter &interpreter,
     else
     {
         Error err = root_settings->SetVariable (var_name_string.c_str(), var_value, lldb::eVarSetOperationInsertAfter,
-                                                false, index_value_string.c_str());
+                                                false, interpreter.GetDebugger().GetInstanceName().AsCString(), 
+                                                index_value_string.c_str());
         if (err.Fail ())
         {
             result.AppendError (err.AsCString());
@@ -888,7 +894,7 @@ CommandObjectSettingsAppend::Execute (CommandInterpreter &interpreter,
     else
     {
         Error err = root_settings->SetVariable (var_name_string.c_str(), var_value, lldb::eVarSetOperationAppend, 
-                                                false);
+                                                false, interpreter.GetDebugger().GetInstanceName().AsCString());
         if (err.Fail ())
         {
             result.AppendError (err.AsCString());
@@ -969,7 +975,8 @@ CommandObjectSettingsClear::Execute (CommandInterpreter &interpreter,
         return false;
     }
 
-    Error err = root_settings->SetVariable (var_name, NULL, lldb::eVarSetOperationClear, false);
+    Error err = root_settings->SetVariable (var_name, NULL, lldb::eVarSetOperationClear, false, 
+                                            interpreter.GetDebugger().GetInstanceName().AsCString());
 
     if (err.Fail ())
     {

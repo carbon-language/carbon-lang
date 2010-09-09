@@ -159,6 +159,7 @@ public:
     void
     GenerateOptionUsage (Stream &strm,
                          CommandObject *cmd,
+                         const char *debugger_instance_name,
                          const char *program_name = NULL);
 
     // The following two pure virtual functions must be defined by every class that inherits from

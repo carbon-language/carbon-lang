@@ -562,8 +562,7 @@ Debugger::GetSettingsController (bool finish)
 //--------------------------------------------------
 
 Debugger::DebuggerSettingsController::DebuggerSettingsController () :
-    UserSettingsController ("", lldb::UserSettingsControllerSP()),
-    m_term_width (80)
+    UserSettingsController ("", lldb::UserSettingsControllerSP())
 {
     m_default_settings.reset (new DebuggerInstanceSettings (*this, false, 
                                                             InstanceSettings::GetDefaultName().AsCString()));
@@ -584,7 +583,7 @@ Debugger::DebuggerSettingsController::CreateNewInstanceSettings (const char *ins
 }
 
 bool
-Debugger::DebuggerSettingsController::ValidTermWidthValue (const char *value, Error err)
+Debugger::DebuggerInstanceSettings::ValidTermWidthValue (const char *value, Error err)
 {
     bool valid = true;
 
@@ -604,7 +603,7 @@ Debugger::DebuggerSettingsController::ValidTermWidthValue (const char *value, Er
             if (! isdigit (value[i]))
             {
                 valid = false;
-                err.SetErrorStringWithFormat ("'%s' is not a valid representation of an integer.\n", value);
+                err.SetErrorStringWithFormat ("'%s' is not a valid representation of an unsigned integer.\n", value);
             }
     }
 
@@ -680,7 +679,7 @@ DebuggerInstanceSettings::UpdateInstanceSettingsVariable (const ConstString &var
 {
     if (var_name == PromptVarName())
     {
-      UserSettingsController::UpdateStringVariable (op, m_prompt, value, err);
+        UserSettingsController::UpdateStringVariable (op, m_prompt, value, err);
         if (!pending)
         {
             // 'instance_name' is actually (probably) in the form '[<instance_name>]';  if so, we need to
@@ -701,6 +700,13 @@ DebuggerInstanceSettings::UpdateInstanceSettingsVariable (const ConstString &var
         m_script_lang = Args::StringToScriptLanguage (value, eScriptLanguageDefault,
                                                       &success);
     }
+    else if (var_name == TermWidthVarName())
+    {
+        if (ValidTermWidthValue (value, err))
+        {
+            m_term_width = atoi (value);
+        }
+    }
 }
 
 void
@@ -711,15 +717,7 @@ Debugger::DebuggerSettingsController::UpdateGlobalVariable (const ConstString &v
                                                             lldb::VarSetOperationType op,
                                                             Error &err)
 {
-    static ConstString term_width_name ("term-width");
-    
-    if (var_name == term_width_name)
-    {
-        if (ValidTermWidthValue (value, err))
-        {
-            m_term_width = atoi (value);
-        }
-    }
+    // There should not be any global variables at the Debugger level.
 }
 
 void
@@ -735,6 +733,12 @@ DebuggerInstanceSettings::GetInstanceSettingsValue (const SettingEntry &entry,
     else if (var_name == ScriptLangVarName())
     {
         value.AppendString (ScriptInterpreter::LanguageToString (m_script_lang).c_str());
+    }
+    else if (var_name == TermWidthVarName())
+    {
+        StreamString width_str;
+        width_str.Printf ("%d", m_term_width);
+        value.AppendString (width_str.GetData());
     }
 }
 
@@ -769,14 +773,7 @@ void
 Debugger::DebuggerSettingsController::GetGlobalSettingsValue (const ConstString &var_name,
                                                               StringList &value)
 {
-    static ConstString term_width_name ("term-width");
-  
-    if (var_name == term_width_name)
-    {
-        StreamString width_str;
-        width_str.Printf ("%d", m_term_width);
-        value.AppendString (width_str.GetData());
-    }
+    // There should not be any global variables at the Debugger level.
 }
 
 bool
@@ -845,6 +842,14 @@ DebuggerInstanceSettings::ScriptLangVarName ()
     return script_lang_var_name;
 }
 
+const ConstString &
+DebuggerInstanceSettings::TermWidthVarName ()
+{
+    static ConstString term_width_var_name ("term-width");
+
+    return term_width_var_name;
+}
+
 //--------------------------------------------------
 // DebuggerSettingsController Variable Tables
 //--------------------------------------------------
@@ -854,7 +859,8 @@ SettingEntry
 Debugger::DebuggerSettingsController::global_settings_table[] =
 {
   //{ "var-name",    var-type,      "default", enum-table, init'd, hidden, "help-text"},
-    { "term-width" , eSetVarTypeInt, "80"    , NULL,       false , false , "The maximum number of columns to use for displaying text." },
+  // The Debugger level global table should always be empty; all Debugger settable variables should be instance
+  // variables.
     {  NULL, eSetVarTypeNone, NULL, NULL, 0, 0, NULL }
 };
 
@@ -864,6 +870,7 @@ SettingEntry
 Debugger::DebuggerSettingsController::instance_settings_table[] =
 {
   //{ "var-name",     var-type ,        "default", enum-table, init'd, hidden, "help-text"},
+    { "term-width" , eSetVarTypeInt, "80"    , NULL,       false , false , "The maximum number of columns to use for displaying text." },
     { "script-lang" , eSetVarTypeString, "python", NULL,       false,  false,  "The script language to be used for evaluating user-written scripts." },
     { "prompt"      , eSetVarTypeString, "(lldb)", NULL,       false,  false,  "The debugger command line prompt displayed for the user." },
     {  NULL, eSetVarTypeNone, NULL, NULL, 0, 0, NULL }

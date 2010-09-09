@@ -84,7 +84,7 @@ UserSettingsController::InitializeGlobalVariables ()
                     full_name.Printf ("%s.%s", prefix, entry.var_name);
                 else
                     full_name.Printf ("%s", entry.var_name);
-                SetVariable (full_name.GetData(), entry.default_value, lldb::eVarSetOperationAssign, false);
+                SetVariable (full_name.GetData(), entry.default_value, lldb::eVarSetOperationAssign, false, "");
             }
             else if ((entry.var_type == lldb::eSetVarTypeEnum)
                      && (entry.enum_values != NULL))
@@ -95,7 +95,7 @@ UserSettingsController::InitializeGlobalVariables ()
                 else
                     full_name.Printf ("%s", entry.var_name);
                 SetVariable (full_name.GetData(), entry.enum_values[0].string_value, lldb::eVarSetOperationAssign,
-                             false);
+                             false, "");
             }
         }
         global_initialized = true;
@@ -215,6 +215,7 @@ UserSettingsController::SetVariable (const char *full_dot_name,
                                      const char *value, 
                                      const lldb::VarSetOperationType op,
                                      const bool override,
+                                     const char *debugger_instance_name,
                                      const char *index_value)
 {
     Error err;
@@ -298,8 +299,28 @@ UserSettingsController::SetVariable (const char *full_dot_name,
                             value = entry->enum_values[0].string_value;
                     }
 
-                    m_default_settings->UpdateInstanceSettingsVariable (const_var_name, index_value, value, 
-                                                                        default_name, *entry, op, err, true);
+                    if ((m_settings.level_name.GetLength() > 0)
+                        || strlen (debugger_instance_name) == 0)
+                      {
+                        // Set the default settings
+                        m_default_settings->UpdateInstanceSettingsVariable (const_var_name, index_value, value, 
+                                                                            default_name, *entry, op, err, true);
+                      }
+                    else
+                      {
+                        // We're at the Debugger level; find the correct debugger instance and set those settings
+                        StreamString tmp_name;
+                        if (debugger_instance_name[0] != '[')
+                            tmp_name.Printf ("[%s]", debugger_instance_name);
+                        else
+                            tmp_name.Printf ("%s", debugger_instance_name);
+                        ConstString dbg_name (tmp_name.GetData());
+                        InstanceSettings *dbg_settings = FindSettingsForInstance (dbg_name);
+                        if (dbg_settings)
+                            dbg_settings->UpdateInstanceSettingsVariable (const_var_name, index_value, value, dbg_name,
+                                                                          *entry, op, err, false);
+                      }
+
                     if (override)
                     {
                         OverrideAllInstances (const_var_name, value, op, index_value, err);
@@ -428,7 +449,8 @@ UserSettingsController::SetVariable (const char *full_dot_name,
                                 new_name += '.';
                             new_name += names.GetArgumentAtIndex (j);
                         }
-                        return child->SetVariable (new_name.c_str(), value, op, override, index_value);
+                        return child->SetVariable (new_name.c_str(), value, op, override, debugger_instance_name,
+                                                   index_value);
                     }
                 }
                 if (!found)
@@ -450,7 +472,8 @@ UserSettingsController::SetVariable (const char *full_dot_name,
 }
 
 StringList
-UserSettingsController::GetVariable (const char *full_dot_name, lldb::SettableVariableType &var_type)
+UserSettingsController::GetVariable (const char *full_dot_name, lldb::SettableVariableType &var_type, 
+                                     const char *debugger_instance_name)
 {
     Args names = UserSettingsController::BreakNameIntoPieces (full_dot_name);
     ConstString const_var_name;
@@ -496,7 +519,7 @@ UserSettingsController::GetVariable (const char *full_dot_name, lldb::SettableVa
                         new_name += '.';
                     new_name += names.GetArgumentAtIndex (j);
                 }
-                return child->GetVariable (new_name.c_str(), var_type);
+                return child->GetVariable (new_name.c_str(), var_type, debugger_instance_name);
             }
         }
 
@@ -530,8 +553,24 @@ UserSettingsController::GetVariable (const char *full_dot_name, lldb::SettableVa
                     }
                     else 
                     {
-                        // No valid instance name; assume they want the default settings.
-                        m_default_settings->GetInstanceSettingsValue (*instance_entry, const_var_name, value);
+                        if (m_settings.level_name.GetLength() > 0)
+                        {
+                            // No valid instance name; assume they want the default settings.
+                            m_default_settings->GetInstanceSettingsValue (*instance_entry, const_var_name, value);
+                        }
+                        else
+                        {
+                            // We're at the Debugger level;  use the debugger's instance settings.
+                            StreamString tmp_name;
+                            if (debugger_instance_name[0] != '[')
+                                tmp_name.Printf ("[%s]", debugger_instance_name);
+                            else
+                                tmp_name.Printf ("%s", debugger_instance_name);
+                            ConstString dbg_name (debugger_instance_name);
+                            InstanceSettings *dbg_settings = FindSettingsForInstance (dbg_name);
+                            if (dbg_settings)
+                                dbg_settings->GetInstanceSettingsValue (*instance_entry, const_var_name, value);
+                        }
                     }
                 }
             }
@@ -555,7 +594,21 @@ UserSettingsController::GetVariable (const char *full_dot_name, lldb::SettableVa
         else if (instance_entry)
         {
             var_type = instance_entry->var_type;
-            m_default_settings->GetInstanceSettingsValue  (*instance_entry, const_var_name, value);
+            if (m_settings.level_name.GetLength() > 0)
+                m_default_settings->GetInstanceSettingsValue  (*instance_entry, const_var_name, value);
+            else
+            {
+                // We're at the Debugger level;  use the debugger's instance settings.
+                StreamString tmp_name;
+                if (debugger_instance_name[0] != '[')
+                    tmp_name.Printf ("[%s]", debugger_instance_name);
+                else
+                    tmp_name.Printf ("%s", debugger_instance_name);
+                ConstString dbg_name (tmp_name.GetData());
+                InstanceSettings *dbg_settings = FindSettingsForInstance (dbg_name);
+                if (dbg_settings)
+                    dbg_settings->GetInstanceSettingsValue (*instance_entry, const_var_name, value);
+            }
         }
     }
 
@@ -1081,7 +1134,8 @@ UserSettingsController::GetAllVariableValues (CommandInterpreter &interpreter,
             full_var_name.Printf ("%s.%s", current_prefix.c_str(), entry.var_name);
         else
             full_var_name.Printf ("%s", entry.var_name);
-        StringList value = root->GetVariable (full_var_name.GetData(), var_type);
+        StringList value = root->GetVariable (full_var_name.GetData(), var_type, 
+                                              interpreter.GetDebugger().GetInstanceName().AsCString());
         description.Clear();
         if (value.GetSize() == 1)   
             description.Printf ("%s (%s) = '%s'", full_var_name.GetData(), GetTypeString (entry.var_type),
@@ -1099,7 +1153,8 @@ UserSettingsController::GetAllVariableValues (CommandInterpreter &interpreter,
 
     root->GetAllInstanceVariableValues (interpreter, result_stream);
     root->GetAllPendingSettingValues (result_stream);
-    root->GetAllDefaultSettingValues (result_stream);
+    if (root->GetLevelName().GetLength() > 0)               // Don't bother with default values for Debugger level.
+         root->GetAllDefaultSettingValues (result_stream);
 
 
     // Now, recurse across all children.

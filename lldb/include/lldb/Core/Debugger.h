@@ -74,6 +74,9 @@ protected:
     bool
     BroadcastPromptChange (const ConstString &instance_name, const char *new_prompt);
 
+    bool
+    ValidTermWidthValue (const char *value, Error err);
+
     const ConstString
     CreateInstanceName ();
 
@@ -83,8 +86,12 @@ protected:
     static const ConstString &
     ScriptLangVarName ();
   
+    static const ConstString &
+    TermWidthVarName ();
+  
 private:
 
+    int m_term_width;
     std::string m_prompt;
     lldb::ScriptLanguage m_script_lang;
 };
@@ -126,13 +133,9 @@ public:
         lldb::InstanceSettingsSP
         CreateNewInstanceSettings (const char *instance_name);
 
-        bool
-        ValidTermWidthValue (const char *value, Error err);
-
     private:
 
         // Class-wide settings.
-        int m_term_width;
 
         DISALLOW_COPY_AND_ASSIGN (DebuggerSettingsController);
     };

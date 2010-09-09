@@ -76,7 +76,6 @@ CommandObjectSyntax::Execute
             if (cmd_obj->GetOptions() != NULL)
             {
                 output_strm.Printf ("\nSyntax: %s\n", cmd_obj->GetSyntax());
-                //cmd_obj->GetOptions()->GenerateOptionUsage (output_strm, cmd_obj);
                 output_strm.Printf ("(Try 'help %s' for more information on command options syntax.)\n",
                                     cmd_obj->GetCommandName());
                 result.SetStatus (eReturnStatusSuccessFinishNoResult);
