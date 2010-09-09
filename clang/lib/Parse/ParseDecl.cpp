@@ -650,7 +650,7 @@ Decl *Parser::ParseDeclarationAfterDeclarator(Declarator &D,
 
       Actions.AddCXXDirectInitializerToDecl(ThisDecl, LParenLoc,
                                             move_arg(Exprs),
-                                            CommaLocs.data(), RParenLoc);
+                                            RParenLoc);
     }
   } else {
     bool TypeContainsUndeducedAuto =

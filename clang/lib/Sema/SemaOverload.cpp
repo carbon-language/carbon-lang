@@ -6589,7 +6589,6 @@ BuildRecoveryCallExpr(Sema &SemaRef, Scope *S, Expr *Fn,
                       UnresolvedLookupExpr *ULE,
                       SourceLocation LParenLoc,
                       Expr **Args, unsigned NumArgs,
-                      SourceLocation *CommaLocs,
                       SourceLocation RParenLoc) {
 
   CXXScopeSpec SS;
@@ -6629,8 +6628,7 @@ BuildRecoveryCallExpr(Sema &SemaRef, Scope *S, Expr *Fn,
   // an expression with non-empty lookup results, which should never
   // end up here.
   return SemaRef.ActOnCallExpr(/*Scope*/ 0, NewFn.take(), LParenLoc,
-                               MultiExprArg(Args, NumArgs),
-                               CommaLocs, RParenLoc);
+                               MultiExprArg(Args, NumArgs), RParenLoc);
 }
 
 /// ResolveOverloadedCallFn - Given the call expression that calls Fn
@@ -6644,7 +6642,6 @@ ExprResult
 Sema::BuildOverloadedCallExpr(Scope *S, Expr *Fn, UnresolvedLookupExpr *ULE,
                               SourceLocation LParenLoc,
                               Expr **Args, unsigned NumArgs,
-                              SourceLocation *CommaLocs,
                               SourceLocation RParenLoc) {
 #ifndef NDEBUG
   if (ULE->requiresADL()) {
@@ -6675,7 +6672,7 @@ Sema::BuildOverloadedCallExpr(Scope *S, Expr *Fn, UnresolvedLookupExpr *ULE,
   // bailout out if it fails.
   if (CandidateSet.empty())
     return BuildRecoveryCallExpr(*this, S, Fn, ULE, LParenLoc, Args, NumArgs,
-                                 CommaLocs, RParenLoc);
+                                 RParenLoc);
 
   OverloadCandidateSet::iterator Best;
   switch (CandidateSet.BestViableFunction(*this, Fn->getLocStart(), Best)) {
@@ -7269,8 +7266,7 @@ Sema::CreateOverloadedArraySubscriptExpr(SourceLocation LLoc,
 ExprResult
 Sema::BuildCallToMemberFunction(Scope *S, Expr *MemExprE,
                                 SourceLocation LParenLoc, Expr **Args,
-                                unsigned NumArgs, SourceLocation *CommaLocs,
-                                SourceLocation RParenLoc) {
+                                unsigned NumArgs, SourceLocation RParenLoc) {
   // Dig out the member expression. This holds both the object
   // argument and the member function we're referring to.
   Expr *NakedMemExpr = MemExprE->IgnoreParens();
@@ -7415,7 +7411,6 @@ ExprResult
 Sema::BuildCallToObjectOfClassType(Scope *S, Expr *Object,
                                    SourceLocation LParenLoc,
                                    Expr **Args, unsigned NumArgs,
-                                   SourceLocation *CommaLocs,
                                    SourceLocation RParenLoc) {
   assert(Object->getType()->isRecordType() && "Requires object type argument");
   const RecordType *Record = Object->getType()->getAs<RecordType>();
@@ -7551,7 +7546,7 @@ Sema::BuildCallToObjectOfClassType(Scope *S, Expr *Object,
                                                    Conv);
       
     return ActOnCallExpr(S, CE, LParenLoc, MultiExprArg(Args, NumArgs),
-                         CommaLocs, RParenLoc);
+                         RParenLoc);
   }
 
   CheckMemberOperatorAccess(LParenLoc, Object, 0, Best->FoundDecl);

@@ -1103,7 +1103,6 @@ public:
                                      UnresolvedLookupExpr *ULE,
                                      SourceLocation LParenLoc,
                                      Expr **Args, unsigned NumArgs,
-                                     SourceLocation *CommaLocs,
                                      SourceLocation RParenLoc);
 
   ExprResult CreateOverloadedUnaryOp(SourceLocation OpLoc,
@@ -1123,12 +1122,10 @@ public:
   ExprResult
   BuildCallToMemberFunction(Scope *S, Expr *MemExpr,
                             SourceLocation LParenLoc, Expr **Args,
-                            unsigned NumArgs, SourceLocation *CommaLocs,
-                            SourceLocation RParenLoc);
+                            unsigned NumArgs, SourceLocation RParenLoc);
   ExprResult
   BuildCallToObjectOfClassType(Scope *S, Expr *Object, SourceLocation LParenLoc,
                                Expr **Args, unsigned NumArgs,
-                               SourceLocation *CommaLocs,
                                SourceLocation RParenLoc);
 
   ExprResult BuildOverloadedArrowExpr(Scope *S, Expr *Base,
@@ -1809,8 +1806,7 @@ public:
   /// This provides the location of the left/right parens and a list of comma
   /// locations.
   ExprResult ActOnCallExpr(Scope *S, Expr *Fn, SourceLocation LParenLoc,
-                           MultiExprArg Args, SourceLocation *CommaLocs,
-                           SourceLocation RParenLoc);
+                           MultiExprArg Args, SourceLocation RParenLoc);
   ExprResult BuildResolvedCallExpr(Expr *Fn, NamedDecl *NDecl,
                                    SourceLocation LParenLoc,
                                    Expr **Args, unsigned NumArgs,
@@ -2015,7 +2011,6 @@ public:
   void AddCXXDirectInitializerToDecl(Decl *Dcl,
                                      SourceLocation LParenLoc,
                                      MultiExprArg Exprs,
-                                     SourceLocation *CommaLocs,
                                      SourceLocation RParenLoc);
 
   /// InitializeVarWithConstructor - Creates an CXXConstructExpr
@@ -2198,7 +2193,6 @@ public:
   ExprResult ActOnCXXTypeConstructExpr(ParsedType TypeRep,
                                        SourceLocation LParenLoc,
                                        MultiExprArg Exprs,
-                                       SourceLocation *CommaLocs,
                                        SourceLocation RParenLoc);
 
   ExprResult BuildCXXTypeConstructExpr(TypeSourceInfo *Type,
@@ -2464,7 +2458,6 @@ public:
                                     SourceLocation IdLoc,
                                     SourceLocation LParenLoc,
                                     Expr **Args, unsigned NumArgs,
-                                    SourceLocation *CommaLocs,
                                     SourceLocation RParenLoc);
 
   MemInitResult BuildMemberInitializer(FieldDecl *Member, Expr **Args,

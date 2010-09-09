@@ -251,7 +251,6 @@ Decl *TemplateDeclInstantiator::VisitTypedefDecl(TypedefDecl *D) {
 static bool InstantiateInitializationArguments(Sema &SemaRef,
                                                Expr **Args, unsigned NumArgs,
                            const MultiLevelTemplateArgumentList &TemplateArgs,
-                         llvm::SmallVectorImpl<SourceLocation> &FakeCommaLocs,
                            ASTOwningVector<Expr*> &InitArgs) {
   for (unsigned I = 0; I != NumArgs; ++I) {
     // When we hit the first defaulted argument, break out of the loop:
@@ -263,12 +262,7 @@ static bool InstantiateInitializationArguments(Sema &SemaRef,
     if (Arg.isInvalid())
       return true;
   
-    Expr *ArgExpr = (Expr *)Arg.get();
     InitArgs.push_back(Arg.release());
-    
-    // FIXME: We're faking all of the comma locations. Do we need them?
-    FakeCommaLocs.push_back(
-                          SemaRef.PP.getLocForEndOfToken(ArgExpr->getLocEnd()));
   }
   
   return false;
@@ -290,7 +284,6 @@ static bool InstantiateInitializationArguments(Sema &SemaRef,
 static bool InstantiateInitializer(Sema &S, Expr *Init,
                             const MultiLevelTemplateArgumentList &TemplateArgs,
                                    SourceLocation &LParenLoc,
-                               llvm::SmallVector<SourceLocation, 4> &CommaLocs,
                              ASTOwningVector<Expr*> &NewArgs,
                                    SourceLocation &RParenLoc) {
   NewArgs.clear();
@@ -314,8 +307,7 @@ static bool InstantiateInitializer(Sema &S, Expr *Init,
     RParenLoc = ParenList->getRParenLoc();
     return InstantiateInitializationArguments(S, ParenList->getExprs(),
                                               ParenList->getNumExprs(),
-                                              TemplateArgs, CommaLocs, 
-                                              NewArgs);
+                                              TemplateArgs, NewArgs);
   }
 
   if (CXXConstructExpr *Construct = dyn_cast<CXXConstructExpr>(Init)) {
@@ -323,13 +315,12 @@ static bool InstantiateInitializer(Sema &S, Expr *Init,
       if (InstantiateInitializationArguments(S,
                                              Construct->getArgs(),
                                              Construct->getNumArgs(),
-                                             TemplateArgs,
-                                             CommaLocs, NewArgs))
+                                             TemplateArgs, NewArgs))
         return true;
 
       // FIXME: Fake locations!
       LParenLoc = S.PP.getLocForEndOfToken(Init->getLocStart());
-      RParenLoc = CommaLocs.empty()? LParenLoc : CommaLocs.back();
+      RParenLoc = LParenLoc;
       return false;
     }
   }
@@ -419,17 +410,15 @@ Decl *TemplateDeclInstantiator::VisitVarDecl(VarDecl *D) {
 
     // Instantiate the initializer.
     SourceLocation LParenLoc, RParenLoc;
-    llvm::SmallVector<SourceLocation, 4> CommaLocs;
     ASTOwningVector<Expr*> InitArgs(SemaRef);
     if (!InstantiateInitializer(SemaRef, D->getInit(), TemplateArgs, LParenLoc,
-                                CommaLocs, InitArgs, RParenLoc)) {
+                                InitArgs, RParenLoc)) {
       // Attach the initializer to the declaration.
       if (D->hasCXXDirectInitializer()) {
         // Add the direct initializer to the declaration.
         SemaRef.AddCXXDirectInitializerToDecl(Var,
                                               LParenLoc,
                                               move_arg(InitArgs),
-                                              CommaLocs.data(),
                                               RParenLoc);
       } else if (InitArgs.size() == 1) {
         Expr *Init = InitArgs.take()[0];
@@ -2281,11 +2270,10 @@ Sema::InstantiateMemInitializers(CXXConstructorDecl *New,
 
     SourceLocation LParenLoc, RParenLoc;
     ASTOwningVector<Expr*> NewArgs(*this);
-    llvm::SmallVector<SourceLocation, 4> CommaLocs;
 
     // Instantiate the initializer.
     if (InstantiateInitializer(*this, Init->getInit(), TemplateArgs, 
-                               LParenLoc, CommaLocs, NewArgs, RParenLoc)) {
+                               LParenLoc, NewArgs, RParenLoc)) {
       AnyErrors = true;
       continue;
     }

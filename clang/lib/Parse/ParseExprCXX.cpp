@@ -742,7 +742,7 @@ Parser::ParseCXXTypeConstructExpression(const DeclSpec &DS) {
   assert((Exprs.size() == 0 || Exprs.size()-1 == CommaLocs.size())&&
          "Unexpected number of commas!");
   return Actions.ActOnCXXTypeConstructExpr(TypeRep, LParenLoc, move_arg(Exprs),
-                                           CommaLocs.data(), RParenLoc);
+                                           RParenLoc);
 }
 
 /// ParseCXXCondition - if/switch/while condition expression.

@@ -543,7 +543,6 @@ ExprResult
 Sema::ActOnCXXTypeConstructExpr(ParsedType TypeRep,
                                 SourceLocation LParenLoc,
                                 MultiExprArg exprs,
-                                SourceLocation *CommaLocs,
                                 SourceLocation RParenLoc) {
   if (!TypeRep)
     return ExprError();
@@ -2847,7 +2846,6 @@ ExprResult Sema::DiagnoseDtorReference(SourceLocation NameLoc,
                        MemExpr,
                        /*LPLoc*/ ExpectedLParenLoc,
                        MultiExprArg(),
-                       /*CommaLocs*/ 0,
                        /*RPLoc*/ ExpectedLParenLoc);
 }
 

@@ -1023,8 +1023,7 @@ Parser::ParsePostfixExpressionSuffix(ExprResult LHS) {
         assert((ArgExprs.size() == 0 || ArgExprs.size()-1 == CommaLocs.size())&&
                "Unexpected number of commas!");
         LHS = Actions.ActOnCallExpr(getCurScope(), LHS.take(), Loc,
-                                    move_arg(ArgExprs), CommaLocs.data(),
-                                    Tok.getLocation());
+                                    move_arg(ArgExprs), Tok.getLocation());
       }
 
       ConsumeParen();

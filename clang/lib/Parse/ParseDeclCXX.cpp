@@ -1811,8 +1811,7 @@ Parser::MemInitResult Parser::ParseMemInitializer(Decl *ConstructorDecl) {
   return Actions.ActOnMemInitializer(ConstructorDecl, getCurScope(), SS, II,
                                      TemplateTypeTy, IdLoc,
                                      LParenLoc, ArgExprs.take(),
-                                     ArgExprs.size(), CommaLocs.data(),
-                                     RParenLoc);
+                                     ArgExprs.size(), RParenLoc);
 }
 
 /// ParseExceptionSpecification - Parse a C++ exception-specification

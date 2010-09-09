@@ -1063,7 +1063,6 @@ Sema::ActOnMemInitializer(Decl *ConstructorD,
                           SourceLocation IdLoc,
                           SourceLocation LParenLoc,
                           ExprTy **Args, unsigned NumArgs,
-                          SourceLocation *CommaLocs,
                           SourceLocation RParenLoc) {
   if (!ConstructorD)
     return true;
@@ -4644,8 +4643,8 @@ BuildSingleCopyAssign(Sema &S, SourceLocation Loc, QualType T,
     // Build the call to the assignment operator.
 
     ExprResult Call = S.BuildCallToMemberFunction(/*Scope=*/0, 
-                                                      OpEqualRef.takeAs<Expr>(),
-                                                        Loc, &From, 1, 0, Loc);
+                                                  OpEqualRef.takeAs<Expr>(),
+                                                  Loc, &From, 1, Loc);
     if (Call.isInvalid())
       return StmtError();
     
@@ -5156,20 +5155,17 @@ void Sema::DefineImplicitCopyAssignment(SourceLocation CurrentLocation,
       CallArgs.push_back(To.takeAs<Expr>());
       CallArgs.push_back(From.takeAs<Expr>());
       CallArgs.push_back(IntegerLiteral::Create(Context, Size, SizeType, Loc));
-      llvm::SmallVector<SourceLocation, 4> Commas; // FIXME: Silly
-      Commas.push_back(Loc);
-      Commas.push_back(Loc);
       ExprResult Call = ExprError();
       if (NeedsCollectableMemCpy)
         Call = ActOnCallExpr(/*Scope=*/0,
                              CollectableMemCpyRef,
                              Loc, move_arg(CallArgs), 
-                             Commas.data(), Loc);
+                             Loc);
       else
         Call = ActOnCallExpr(/*Scope=*/0,
                              BuiltinMemCpyRef,
                              Loc, move_arg(CallArgs), 
-                             Commas.data(), Loc);
+                             Loc);
           
       assert(!Call.isInvalid() && "Call to __builtin_memcpy cannot fail!");
       Statements.push_back(Call.takeAs<Expr>());
@@ -5511,7 +5507,6 @@ void Sema::FinalizeVarWithDestructor(VarDecl *VD, const RecordType *Record) {
 void Sema::AddCXXDirectInitializerToDecl(Decl *RealDecl,
                                          SourceLocation LParenLoc,
                                          MultiExprArg Exprs,
-                                         SourceLocation *CommaLocs,
                                          SourceLocation RParenLoc) {
   assert(Exprs.size() != 0 && Exprs.get() && "missing expressions");
 

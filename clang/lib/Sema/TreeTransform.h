@@ -1129,10 +1129,9 @@ public:
   /// Subclasses may override this routine to provide different behavior.
   ExprResult RebuildCallExpr(Expr *Callee, SourceLocation LParenLoc,
                                    MultiExprArg Args,
-                                   SourceLocation *CommaLocs,
                                    SourceLocation RParenLoc) {
     return getSema().ActOnCallExpr(/*Scope=*/0, Callee, LParenLoc,
-                                   move(Args), CommaLocs, RParenLoc);
+                                   move(Args), RParenLoc);
   }
 
   /// \brief Build a new member access expression.
@@ -4452,15 +4451,10 @@ TreeTransform<Derived>::TransformCallExpr(CallExpr *E) {
   // Transform arguments.
   bool ArgChanged = false;
   ASTOwningVector<Expr*> Args(SemaRef);
-  llvm::SmallVector<SourceLocation, 4> FakeCommaLocs;
   for (unsigned I = 0, N = E->getNumArgs(); I != N; ++I) {
     ExprResult Arg = getDerived().TransformExpr(E->getArg(I));
     if (Arg.isInvalid())
       return ExprError();
-
-    // FIXME: Wrong source location information for the ','.
-    FakeCommaLocs.push_back(
-       SemaRef.PP.getLocForEndOfToken(E->getArg(I)->getSourceRange().getEnd()));
 
     ArgChanged = ArgChanged || Arg.get() != E->getArg(I);
     Args.push_back(Arg.get());
@@ -4476,7 +4470,6 @@ TreeTransform<Derived>::TransformCallExpr(CallExpr *E) {
     = ((Expr *)Callee.get())->getSourceRange().getBegin();
   return getDerived().RebuildCallExpr(Callee.get(), FakeLParenLoc,
                                       move_arg(Args),
-                                      FakeCommaLocs.data(),
                                       E->getRParenLoc());
 }
 
@@ -4960,7 +4953,6 @@ TreeTransform<Derived>::TransformCXXOperatorCallExpr(CXXOperatorCallExpr *E) {
 
     // Transform the call arguments.
     ASTOwningVector<Expr*> Args(SemaRef);
-    llvm::SmallVector<SourceLocation, 4> FakeCommaLocs;
     for (unsigned I = 1, N = E->getNumArgs(); I != N; ++I) {
       if (getDerived().DropCallArgument(E->getArg(I)))
         break;
@@ -4969,17 +4961,11 @@ TreeTransform<Derived>::TransformCXXOperatorCallExpr(CXXOperatorCallExpr *E) {
       if (Arg.isInvalid())
         return ExprError();
 
-      // FIXME: Poor source location information.
-      SourceLocation FakeCommaLoc
-        = SemaRef.PP.getLocForEndOfToken(
-                                 static_cast<Expr *>(Arg.get())->getLocEnd());
-      FakeCommaLocs.push_back(FakeCommaLoc);
       Args.push_back(Arg.release());
     }
 
     return getDerived().RebuildCallExpr(Object.get(), FakeLParenLoc,
                                         move_arg(Args),
-                                        FakeCommaLocs.data(),
                                         E->getLocEnd());
   }
 

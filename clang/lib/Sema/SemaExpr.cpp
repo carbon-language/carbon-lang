@@ -3020,8 +3020,7 @@ Sema::LookupMemberExpr(LookupResult &R, Expr *&BaseExpr,
           << FixItHint::CreateInsertion(Loc, "()");
 
         ExprResult NewBase
-          = ActOnCallExpr(0, BaseExpr, Loc,
-                          MultiExprArg(*this, 0, 0), 0, Loc);
+          = ActOnCallExpr(0, BaseExpr, Loc, MultiExprArg(*this, 0, 0), Loc);
         BaseExpr = 0;
         if (NewBase.isInvalid())
           return ExprError();
@@ -3590,8 +3589,7 @@ bool Sema::GatherArgumentsForCall(SourceLocation CallLoc,
 /// locations.
 ExprResult
 Sema::ActOnCallExpr(Scope *S, Expr *Fn, SourceLocation LParenLoc,
-                    MultiExprArg args,
-                    SourceLocation *CommaLocs, SourceLocation RParenLoc) {
+                    MultiExprArg args, SourceLocation RParenLoc) {
   unsigned NumArgs = args.size();
 
   // Since this might be a postfix expression, get rid of ParenListExprs.
@@ -3635,7 +3633,7 @@ Sema::ActOnCallExpr(Scope *S, Expr *Fn, SourceLocation LParenLoc,
     // Determine whether this is a call to an object (C++ [over.call.object]).
     if (Fn->getType()->isRecordType())
       return Owned(BuildCallToObjectOfClassType(S, Fn, LParenLoc, Args, NumArgs,
-                                                CommaLocs, RParenLoc));
+                                                RParenLoc));
 
     Expr *NakedFn = Fn->IgnoreParens();
 
@@ -3652,7 +3650,7 @@ Sema::ActOnCallExpr(Scope *S, Expr *Fn, SourceLocation LParenLoc,
       (void)MemE;
 
       return BuildCallToMemberFunction(S, Fn, LParenLoc, Args, NumArgs,
-                                       CommaLocs, RParenLoc);
+                                       RParenLoc);
     }
 
     // Determine whether this is a call to a member function.
@@ -3660,7 +3658,7 @@ Sema::ActOnCallExpr(Scope *S, Expr *Fn, SourceLocation LParenLoc,
       NamedDecl *MemDecl = MemExpr->getMemberDecl();
       if (isa<CXXMethodDecl>(MemDecl))
         return BuildCallToMemberFunction(S, Fn, LParenLoc, Args, NumArgs,
-                                         CommaLocs, RParenLoc);
+                                         RParenLoc);
     }
 
     // Determine whether this is a call to a pointer-to-member function.
@@ -3702,7 +3700,7 @@ Sema::ActOnCallExpr(Scope *S, Expr *Fn, SourceLocation LParenLoc,
   if (isa<UnresolvedLookupExpr>(NakedFn)) {
     UnresolvedLookupExpr *ULE = cast<UnresolvedLookupExpr>(NakedFn);
     return BuildOverloadedCallExpr(S, Fn, ULE, LParenLoc, Args, NumArgs,
-                                   CommaLocs, RParenLoc);
+                                   RParenLoc);
   }
 
   NamedDecl *NDecl = 0;
