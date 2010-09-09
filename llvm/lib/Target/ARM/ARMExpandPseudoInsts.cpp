@@ -122,13 +122,17 @@ void ARMExpandPseudo::ExpandVLD(MachineBasicBlock::iterator &MBBI,
     MIB.addOperand(MI.getOperand(OpIdx++));
 
   MIB = AddDefaultPred(MIB);
-  TransferImpOps(MI, MIB, MIB);
-  // For an instruction writing the odd subregs, add an implicit use of the
-  // super-register because the even subregs were loaded separately.
-  if (RegSpc == EvenDblSpc || RegSpc == OddDblSpc)
-    MIB.addReg(DstReg, RegState::Implicit);
+  // For an instruction writing double-spaced subregs, the pseudo instruction
+  // has an extra operand that is a use of the super-register.  Copy that over
+  // to the new instruction as an implicit operand.
+  if (RegSpc == EvenDblSpc || RegSpc == OddDblSpc) {
+    MachineOperand MO = MI.getOperand(OpIdx);
+    MO.setImplicit(true);
+    MIB.addOperand(MO);
+  }
   // Add an implicit def for the super-register.
   MIB.addReg(DstReg, RegState::ImplicitDefine | getDeadRegState(DstIsDead));
+  TransferImpOps(MI, MIB, MIB);
   MI.eraseFromParent();
 }
 
