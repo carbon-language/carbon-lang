@@ -1057,11 +1057,6 @@ static void WriteConstantInternal(raw_ostream &Out, const Constant *CV,
     return;
   }
 
-  if (const MDNode *Node = dyn_cast<MDNode>(CV)) {
-    Out << "!" << Machine->getMetadataSlot(Node);
-    return;
-  }
-
   if (const ConstantExpr *CE = dyn_cast<ConstantExpr>(CV)) {
     Out << CE->getOpcodeName();
     WriteOptimizationInfo(Out, CE);
