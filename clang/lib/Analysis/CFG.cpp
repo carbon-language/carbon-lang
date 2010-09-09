@@ -1941,17 +1941,17 @@ unsigned CFG::getNumBlkExprs() {
 //===----------------------------------------------------------------------===//
 
 bool CFGBlock::FilterEdge(const CFGBlock::FilterOptions &F,
-			  const CFGBlock *From, const CFGBlock *To) {
+        const CFGBlock *From, const CFGBlock *To) {
 
   if (F.IgnoreDefaultsWithCoveredEnums) {
     // If the 'To' has no label or is labeled but the label isn't a
     // CaseStmt then filter this edge.
     if (const SwitchStmt *S =
-	dyn_cast_or_null<SwitchStmt>(From->getTerminator())) {
+  dyn_cast_or_null<SwitchStmt>(From->getTerminator())) {
       if (S->isAllEnumCasesCovered()) {
-	const Stmt *L = To->getLabel();
-	if (!L || !isa<CaseStmt>(L))
-	  return true;
+  const Stmt *L = To->getLabel();
+  if (!L || !isa<CaseStmt>(L))
+    return true;
       }
     }
   }

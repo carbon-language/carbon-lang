@@ -210,13 +210,13 @@ public:
   public:
     FilterOptions() {
       IgnoreDefaultsWithCoveredEnums = 0;
-    };
+    }
 
     unsigned IgnoreDefaultsWithCoveredEnums : 1;
   };
 
   static bool FilterEdge(const FilterOptions &F, const CFGBlock *Src,
-			 const CFGBlock *Dst);
+       const CFGBlock *Dst);
 
   template <typename IMPL, bool IsPred>
   class FilteredCFGBlockIterator {
@@ -226,8 +226,8 @@ public:
     const CFGBlock *From;
    public:
     explicit FilteredCFGBlockIterator(const IMPL &i, const IMPL &e,
-				      const CFGBlock *from,
-				      const FilterOptions &f)
+              const CFGBlock *from,
+              const FilterOptions &f)
       : I(i), E(e), F(f), From(from) {}
 
     bool hasMore() const { return I != E; }
