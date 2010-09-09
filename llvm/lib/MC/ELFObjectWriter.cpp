@@ -745,12 +745,33 @@ void ELFObjectWriterImpl::WriteRelocationsFragment(const MCAssembler &Asm,
   for (unsigned i = 0, e = Relocs.size(); i != e; ++i) {
     ELFRelocationEntry entry = Relocs[e - i - 1];
 
-    unsigned WordSize = Is64Bit ? 8 : 4;
-    F->getContents() += StringRef((const char *)&entry.r_offset, WordSize);
-    F->getContents() += StringRef((const char *)&entry.r_info, WordSize);
+    if (Is64Bit) {
+      char buf[8];
 
-    if (HasRelocationAddend)
-      F->getContents() += StringRef((const char *)&entry.r_addend, WordSize);
+      String64(buf, entry.r_offset);
+      F->getContents() += StringRef(buf, 8);
+
+      String64(buf, entry.r_info);
+      F->getContents() += StringRef(buf, 8);
+
+      if (HasRelocationAddend) {
+        String64(buf, entry.r_addend);
+        F->getContents() += StringRef(buf, 8);
+      }
+    } else {
+      char buf[4];
+
+      String32(buf, entry.r_offset);
+      F->getContents() += StringRef(buf, 4);
+
+      String32(buf, entry.r_info);
+      F->getContents() += StringRef(buf, 4);
+
+      if (HasRelocationAddend) {
+        String32(buf, entry.r_addend);
+        F->getContents() += StringRef(buf, 4);
+      }
+    }
   }
 }
 
