@@ -89,7 +89,7 @@ static unsigned ApproximateLoopSize(const Loop *L, unsigned &NumCalls) {
   for (Loop::block_iterator I = L->block_begin(), E = L->block_end();
        I != E; ++I)
     Metrics.analyzeBasicBlock(*I);
-  NumCalls = Metrics.NumCalls;
+  NumCalls = Metrics.NumInlineCandidates;
   
   unsigned LoopSize = Metrics.NumInsts;
   
@@ -151,11 +151,11 @@ bool LoopUnroll::runOnLoop(Loop *L, LPPassManager &LPM) {
 
   // Enforce the threshold.
   if (CurrentThreshold != NoThreshold) {
-    unsigned NumCalls;
-    unsigned LoopSize = ApproximateLoopSize(L, NumCalls);
+    unsigned NumInlineCandidates;
+    unsigned LoopSize = ApproximateLoopSize(L, NumInlineCandidates);
     DEBUG(dbgs() << "  Loop Size = " << LoopSize << "\n");
-    if (NumCalls != 0) {
-      DEBUG(dbgs() << "  Not unrolling loop with function calls.\n");
+    if (NumInlineCandidates != 0) {
+      DEBUG(dbgs() << "  Not unrolling loop with inlinable calls.\n");
       return false;
     }
     uint64_t Size = (uint64_t)LoopSize*Count;

@@ -70,6 +70,12 @@ void CodeMetrics::analyzeBasicBlock(const BasicBlock *BB) {
       // variables as volatile if they are live across a setjmp call, and they
       // probably won't do this in callers.
       if (const Function *F = CS.getCalledFunction()) {
+        // If a function is both internal and has a single use, then it is 
+        // extremely likely to get inlined in the future (it was probably 
+        // exposed by an interleaved devirtualization pass).
+        if (F->hasInternalLinkage() && F->hasOneUse())
+          ++NumInlineCandidates;
+        
         if (F->isDeclaration() && 
             (F->getName() == "setjmp" || F->getName() == "_setjmp"))
           callsSetJmp = true;

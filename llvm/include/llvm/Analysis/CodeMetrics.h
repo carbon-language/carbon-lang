@@ -45,6 +45,11 @@ namespace llvm {
 
     /// NumCalls - Keep track of the number of calls to 'big' functions.
     unsigned NumCalls;
+    
+    /// NumInlineCandidates - Keep track of the number of calls to internal
+    /// functions with only a single caller.  These are likely targets for
+    /// future inlining, likely exposed by interleaved devirtualization.
+    unsigned NumInlineCandidates;
 
     /// NumVectorInsts - Keep track of how many instructions produce vector
     /// values.  The inliner is being more aggressive with inlining vector
@@ -56,7 +61,8 @@ namespace llvm {
 
     CodeMetrics() : callsSetJmp(false), isRecursive(false),
                     containsIndirectBr(false), usesDynamicAlloca(false), 
-                    NumInsts(0), NumBlocks(0), NumCalls(0), NumVectorInsts(0), 
+                    NumInsts(0), NumBlocks(0), NumCalls(0),
+                    NumInlineCandidates(0), NumVectorInsts(0), 
                     NumRets(0) {}
 
     /// analyzeBasicBlock - Add information about the specified basic block
