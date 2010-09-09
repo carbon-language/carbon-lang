@@ -102,6 +102,9 @@ private:
   /// Boolean tracking whether macro substitution is enabled.
   unsigned MacrosEnabled : 1;
 
+  /// Flag tracking whether any errors have been encountered.
+  unsigned HadError : 1;
+
 public:
   AsmParser(const Target &T, SourceMgr &SM, MCContext &Ctx, MCStreamer &Out,
             const MCAsmInfo &MAI);
@@ -304,6 +307,7 @@ void AsmParser::Warning(SMLoc L, const Twine &Msg) {
 }
 
 bool AsmParser::Error(SMLoc L, const Twine &Msg) {
+  HadError = true;
   PrintMessage(L, Msg.str(), "error");
   PrintMacroInstantiations();
   return true;
@@ -361,17 +365,17 @@ bool AsmParser::Run(bool NoInitialTextSection, bool NoFinalize) {
 
   // Prime the lexer.
   Lex();
-  
-  bool HadError = false;
-  
+
+  HadError = false;
   AsmCond StartingCondState = TheCondState;
 
   // While we have input, parse each statement.
   while (Lexer.isNot(AsmToken::Eof)) {
     if (!ParseStatement()) continue;
   
-    // We had an error, remember it and recover by skipping to the next line.
-    HadError = true;
+    // We had an error, validate that one was emitted and recover by skipping to
+    // the next line.
+    assert(HadError && "Parse statement returned an error, but none emitted!");
     EatToEndOfStatement();
   }
 
@@ -383,10 +387,8 @@ bool AsmParser::Run(bool NoInitialTextSection, bool NoFinalize) {
   const std::vector<MCDwarfFile *> &MCDwarfFiles =
     getContext().getMCDwarfFiles();
   for (unsigned i = 1; i < MCDwarfFiles.size(); i++) {
-    if (!MCDwarfFiles[i]){
+    if (!MCDwarfFiles[i])
       TokError("unassigned file number: " + Twine(i) + " for .file directives");
-      HadError = true;
-    }
   }
   
   // Finalize the output stream if there are no errors and if the client wants
