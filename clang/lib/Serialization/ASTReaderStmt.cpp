@@ -239,6 +239,9 @@ void ASTStmtReader::VisitSwitchStmt(SwitchStmt *S) {
   S->setCond(Reader.ReadSubExpr());
   S->setBody(Reader.ReadSubStmt());
   S->setSwitchLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+  if (Record[Idx++])
+    S->setAllEnumCasesCovered();
+
   SwitchCase *PrevSC = 0;
   for (unsigned N = Record.size(); Idx != N; ++Idx) {
     SwitchCase *SC = Reader.getSwitchCaseWithID(Record[Idx]);

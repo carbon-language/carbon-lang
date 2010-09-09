@@ -233,6 +233,7 @@ void ASTStmtWriter::VisitSwitchStmt(SwitchStmt *S) {
   Writer.AddStmt(S->getCond());
   Writer.AddStmt(S->getBody());
   Writer.AddSourceLocation(S->getSwitchLoc(), Record);
+  Record.push_back(S->isAllEnumCasesCovered());
   for (SwitchCase *SC = S->getSwitchCaseList(); SC;
        SC = SC->getNextSwitchCase())
     Record.push_back(Writer.RecordSwitchCaseID(SC));

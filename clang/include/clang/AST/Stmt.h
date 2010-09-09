@@ -662,6 +662,11 @@ class SwitchStmt : public Stmt {
   SwitchCase *FirstCase;
   SourceLocation SwitchLoc;
 
+  /// If the SwitchStmt is a switch on an enum value, this records whether
+  /// all the enum values were covered by CaseStmts.  This value is meant to
+  /// be a hint for possible clients.
+  unsigned AllEnumCasesCovered : 1;
+
 public:
   SwitchStmt(ASTContext &C, VarDecl *Var, Expr *cond);
 
@@ -709,6 +714,19 @@ public:
     SC->setNextSwitchCase(FirstCase);
     FirstCase = SC;
   }
+
+  /// Set a flag in the SwitchStmt indicating that if the 'switch (X)' is a
+  /// switch over an enum value then all cases have been explicitly covered.
+  void setAllEnumCasesCovered() {
+    AllEnumCasesCovered = 1;
+  }
+
+  /// Returns true if the SwitchStmt is a switch of an enum value and all cases
+  /// have been explicitly covered.
+  bool isAllEnumCasesCovered() const {
+    return (bool) AllEnumCasesCovered;
+  }
+
   virtual SourceRange getSourceRange() const {
     return SourceRange(SwitchLoc, SubExprs[BODY]->getLocEnd());
   }

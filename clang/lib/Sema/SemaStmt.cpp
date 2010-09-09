@@ -696,14 +696,14 @@ Sema::ActOnFinishSwitchStmt(SourceLocation SwitchLoc, Stmt *Switch,
     }
 
     // Check to see if switch is over an Enum and handles all of its
-    // values.  We don't need to do this if there's a default
-    // statement or if we have a constant condition.
+    // values.  We only issue a warning if there is not 'default:', but
+    // we still do the analysis to preserve this information in the AST
+    // (which can be used by flow-based analyes).
     //
-    // TODO: we might want to check whether case values are out of the
-    // enum even if we don't want to check whether all cases are handled.
     const EnumType* ET = CondTypeBeforePromotion->getAs<EnumType>();
+
     // If switch has default case, then ignore it.
-    if (!CaseListIsErroneous && !TheDefaultStmt && !HasConstantCond && ET) {
+    if (!CaseListIsErroneous  && !HasConstantCond && ET) {
       const EnumDecl *ED = ET->getDecl();
       typedef llvm::SmallVector<std::pair<llvm::APSInt, EnumConstantDecl*>, 64> EnumValsTy;
       EnumValsTy EnumVals;
@@ -723,40 +723,46 @@ Sema::ActOnFinishSwitchStmt(SourceLocation SwitchLoc, Stmt *Switch,
       std::stable_sort(EnumVals.begin(), EnumVals.end(), CmpEnumVals);
       EnumValsTy::iterator EIend =
         std::unique(EnumVals.begin(), EnumVals.end(), EqEnumVals);
-      // See which case values aren't in enum 
-      EnumValsTy::const_iterator EI = EnumVals.begin();
-      for (CaseValsTy::const_iterator CI = CaseVals.begin();
+
+      // See which case values aren't in enum.
+      // TODO: we might want to check whether case values are out of the
+      // enum even if we don't want to check whether all cases are handled.
+      if (!TheDefaultStmt) {
+	EnumValsTy::const_iterator EI = EnumVals.begin();
+	for (CaseValsTy::const_iterator CI = CaseVals.begin();
              CI != CaseVals.end(); CI++) {
-        while (EI != EIend && EI->first < CI->first)
-          EI++;
-        if (EI == EIend || EI->first > CI->first)
+	  while (EI != EIend && EI->first < CI->first)
+	    EI++;
+	  if (EI == EIend || EI->first > CI->first)
             Diag(CI->second->getLHS()->getExprLoc(), diag::warn_not_in_enum)
               << ED->getDeclName();
-      }
-      // See which of case ranges aren't in enum
-      EI = EnumVals.begin();
-      for (CaseRangesTy::const_iterator RI = CaseRanges.begin();
+	}
+	// See which of case ranges aren't in enum
+	EI = EnumVals.begin();
+	for (CaseRangesTy::const_iterator RI = CaseRanges.begin();
              RI != CaseRanges.end() && EI != EIend; RI++) {
-        while (EI != EIend && EI->first < RI->first)
-          EI++;
+	  while (EI != EIend && EI->first < RI->first)
+	    EI++;
         
-        if (EI == EIend || EI->first != RI->first) {
-          Diag(RI->second->getLHS()->getExprLoc(), diag::warn_not_in_enum)
-            << ED->getDeclName();
-        }
+	  if (EI == EIend || EI->first != RI->first) {
+	    Diag(RI->second->getLHS()->getExprLoc(), diag::warn_not_in_enum)
+	      << ED->getDeclName();
+	  }
 
-        llvm::APSInt Hi = RI->second->getRHS()->EvaluateAsInt(Context);
-        while (EI != EIend && EI->first < Hi)
-          EI++;
-        if (EI == EIend || EI->first != Hi)
-          Diag(RI->second->getRHS()->getExprLoc(), diag::warn_not_in_enum)
-            << ED->getDeclName();
+	  llvm::APSInt Hi = RI->second->getRHS()->EvaluateAsInt(Context);
+	  while (EI != EIend && EI->first < Hi)
+	    EI++;
+	  if (EI == EIend || EI->first != Hi)
+	    Diag(RI->second->getRHS()->getExprLoc(), diag::warn_not_in_enum)
+	      << ED->getDeclName();
+	}
       }
-      //Check which enum vals aren't in switch
+      // Check which enum vals aren't in switch
       CaseValsTy::const_iterator CI = CaseVals.begin();
       CaseRangesTy::const_iterator RI = CaseRanges.begin();
-      EI = EnumVals.begin();
-      for (; EI != EIend; EI++) {
+      bool hasCasesNotInSwitch = false;
+
+      for (EnumValsTy::const_iterator EI = EnumVals.begin(); EI != EIend; EI++){
         //Drop unneeded case values
         llvm::APSInt CIVal;
         while (CI != CaseVals.end() && CI->first < EI->first)
@@ -765,17 +771,23 @@ Sema::ActOnFinishSwitchStmt(SourceLocation SwitchLoc, Stmt *Switch,
         if (CI != CaseVals.end() && CI->first == EI->first)
           continue;
 
-        //Drop unneeded case ranges
+        // Drop unneeded case ranges
         for (; RI != CaseRanges.end(); RI++) {
           llvm::APSInt Hi = RI->second->getRHS()->EvaluateAsInt(Context);
           if (EI->first <= Hi)
             break;
         }
 
-        if (RI == CaseRanges.end() || EI->first < RI->first)
-          Diag(CondExpr->getExprLoc(), diag::warn_missing_cases)
-            << EI->second->getDeclName();
+        if (RI == CaseRanges.end() || EI->first < RI->first) {
+	  hasCasesNotInSwitch = true;
+	  if (!TheDefaultStmt)
+	    Diag(CondExpr->getExprLoc(), diag::warn_missing_cases)
+	      << EI->second->getDeclName();
+	}
       }
+
+      if (!hasCasesNotInSwitch)
+	SS->setAllEnumCasesCovered();
     }
   }
 
