@@ -170,20 +170,20 @@ let mayLoad = 1, neverHasSideEffects = 1, hasExtraDefRegAllocReq = 1 in {
 // Classes for VLD* pseudo-instructions with multi-register operands.
 // These are expanded to real instructions after register allocation.
 class VLDQPseudo
-  : PseudoNLdSt<(outs QPR:$dst), (ins addrmode6:$addr), IIC_VST, "">;
+  : PseudoNLdSt<(outs QPR:$dst), (ins addrmode6:$addr), IIC_VLD2, "">;
 class VLDQWBPseudo
   : PseudoNLdSt<(outs QPR:$dst, GPR:$wb),
-                (ins addrmode6:$addr, am6offset:$offset), IIC_VST,
+                (ins addrmode6:$addr, am6offset:$offset), IIC_VLD2,
                 "$addr.addr = $wb">;
 class VLDQQPseudo
-  : PseudoNLdSt<(outs QQPR:$dst), (ins addrmode6:$addr), IIC_VST, "">;
+  : PseudoNLdSt<(outs QQPR:$dst), (ins addrmode6:$addr), IIC_VLD4, "">;
 class VLDQQWBPseudo
   : PseudoNLdSt<(outs QQPR:$dst, GPR:$wb),
-                (ins addrmode6:$addr, am6offset:$offset), IIC_VST,
+                (ins addrmode6:$addr, am6offset:$offset), IIC_VLD4,
                 "$addr.addr = $wb">;
 class VLDQQQQWBPseudo
   : PseudoNLdSt<(outs QQQQPR:$dst, GPR:$wb),
-                (ins addrmode6:$addr, am6offset:$offset, QQQQPR:$src), IIC_VST,
+                (ins addrmode6:$addr, am6offset:$offset, QQQQPR:$src), IIC_VLD4,
                 "$addr.addr = $wb, $src = $dst">;
 
 //   VLD1     : Vector Load (multiple single elements)

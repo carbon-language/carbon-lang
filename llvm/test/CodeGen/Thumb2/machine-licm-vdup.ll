@@ -12,7 +12,7 @@ entry:
 
 bb1:
 ; CHECK-NEXT: %bb1
-; CHECK: vdup.32 q1, r3
+; CHECK: vdup.32 q{{.*}}, r3
   %indvar = phi i32 [ %indvar.next, %bb1 ], [ 0, %entry ]
   %tmp1 = shl i32 %indvar, 2
   %gep1 = getelementptr i8* %ptr1, i32 %tmp1
