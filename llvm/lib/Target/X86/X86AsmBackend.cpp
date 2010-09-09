@@ -186,25 +186,27 @@ bool X86AsmBackend::WriteNopData(uint64_t Count, MCObjectWriter *OW) const {
 namespace {
 class ELFX86AsmBackend : public X86AsmBackend {
 public:
-  ELFX86AsmBackend(const Target &T)
-    : X86AsmBackend(T) {
+  Triple::OSType OSType;
+  ELFX86AsmBackend(const Target &T, Triple::OSType _OSType)
+    : X86AsmBackend(T), OSType(_OSType) {
     HasAbsolutizedSet = true;
     HasScatteredSymbols = true;
   }
 
   bool isVirtualSection(const MCSection &Section) const {
     const MCSectionELF &SE = static_cast<const MCSectionELF&>(Section);
-    return SE.getType() == MCSectionELF::SHT_NOBITS;;
+    return SE.getType() == MCSectionELF::SHT_NOBITS;
   }
 };
 
 class ELFX86_32AsmBackend : public ELFX86AsmBackend {
 public:
-  ELFX86_32AsmBackend(const Target &T)
-    : ELFX86AsmBackend(T) {}
+  ELFX86_32AsmBackend(const Target &T, Triple::OSType OSType)
+    : ELFX86AsmBackend(T, OSType) {}
 
   MCObjectWriter *createObjectWriter(raw_ostream &OS) const {
     return new ELFObjectWriter(OS, /*Is64Bit=*/false,
+                               OSType,
                                /*IsLittleEndian=*/true,
                                /*HasRelocationAddend=*/false);
   }
@@ -212,11 +214,12 @@ public:
 
 class ELFX86_64AsmBackend : public ELFX86AsmBackend {
 public:
-  ELFX86_64AsmBackend(const Target &T)
-    : ELFX86AsmBackend(T) {}
+  ELFX86_64AsmBackend(const Target &T, Triple::OSType OSType)
+    : ELFX86AsmBackend(T, OSType) {}
 
   MCObjectWriter *createObjectWriter(raw_ostream &OS) const {
     return new ELFObjectWriter(OS, /*Is64Bit=*/true,
+                               OSType,
                                /*IsLittleEndian=*/true,
                                /*HasRelocationAddend=*/true);
   }
@@ -324,7 +327,7 @@ TargetAsmBackend *llvm::createX86_32AsmBackend(const Target &T,
   case Triple::Win32:
     return new WindowsX86AsmBackend(T, false);
   default:
-    return new ELFX86_32AsmBackend(T);
+    return new ELFX86_32AsmBackend(T, Triple(TT).getOS());
   }
 }
 
@@ -338,6 +341,6 @@ TargetAsmBackend *llvm::createX86_64AsmBackend(const Target &T,
   case Triple::Win32:
     return new WindowsX86AsmBackend(T, true);
   default:
-    return new ELFX86_64AsmBackend(T);
+    return new ELFX86_64AsmBackend(T, Triple(TT).getOS());
   }
 }

@@ -107,6 +107,8 @@ namespace {
 
     bool HasRelocationAddend;
 
+    Triple::OSType OSType;
+
     // This holds the symbol table index of the last local symbol.
     unsigned LastLocalSymbolIndex;
     // This holds the .strtab section index.
@@ -116,9 +118,10 @@ namespace {
 
   public:
     ELFObjectWriterImpl(ELFObjectWriter *_Writer, bool _Is64Bit,
-                        bool _HasRelAddend)
+                        bool _HasRelAddend, Triple::OSType _OSType)
       : Writer(_Writer), OS(Writer->getStream()),
-        Is64Bit(_Is64Bit), HasRelocationAddend(_HasRelAddend) {
+        Is64Bit(_Is64Bit), HasRelocationAddend(_HasRelAddend),
+        OSType(_OSType) {
     }
 
     void Write8(uint8_t Value) { Writer->Write8(Value); }
@@ -270,7 +273,12 @@ void ELFObjectWriterImpl::WriteHeader(uint64_t SectionDataSize,
   Write8(Writer->isLittleEndian() ? ELF::ELFDATA2LSB : ELF::ELFDATA2MSB);
 
   Write8(ELF::EV_CURRENT);        // e_ident[EI_VERSION]
-  Write8(ELF::ELFOSABI_LINUX);    // e_ident[EI_OSABI]
+  // e_ident[EI_OSABI]
+  switch (OSType) {
+    case Triple::FreeBSD:  Write8(ELF::ELFOSABI_FREEBSD); break;
+    case Triple::Linux:    Write8(ELF::ELFOSABI_LINUX); break;
+    default:               Write8(ELF::ELFOSABI_NONE); break;
+  }
   Write8(0);                  // e_ident[EI_ABIVERSION]
 
   WriteZeros(ELF::EI_NIDENT - ELF::EI_PAD);
@@ -955,11 +963,12 @@ void ELFObjectWriterImpl::WriteObject(const MCAssembler &Asm,
 
 ELFObjectWriter::ELFObjectWriter(raw_ostream &OS,
                                  bool Is64Bit,
+                                 Triple::OSType OSType,
                                  bool IsLittleEndian,
                                  bool HasRelocationAddend)
   : MCObjectWriter(OS, IsLittleEndian)
 {
-  Impl = new ELFObjectWriterImpl(this, Is64Bit, HasRelocationAddend);
+  Impl = new ELFObjectWriterImpl(this, Is64Bit, HasRelocationAddend, OSType);
 }
 
 ELFObjectWriter::~ELFObjectWriter() {
