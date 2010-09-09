@@ -1974,7 +1974,7 @@ Process::ProcessSettingsController::CreateNewInstanceSettings (const char *insta
 
 ProcessInstanceSettings::ProcessInstanceSettings (UserSettingsController &owner, bool live_instance, 
                                                   const char *name) :
-  InstanceSettings (owner, (name == NULL ? CreateInstanceName().AsCString() : name), live_instance), 
+    InstanceSettings (owner, (name == NULL ? CreateInstanceName().AsCString() : name), live_instance), 
     m_run_args (),
     m_env_vars (),
     m_input_path (),
@@ -1983,11 +1983,15 @@ ProcessInstanceSettings::ProcessInstanceSettings (UserSettingsController &owner,
     m_plugin (),
     m_disable_aslr (true)
 {
-    if (m_instance_name != InstanceSettings::GetDefaultName() && live_instance)
+    // CopyInstanceSettings is a pure virtual function in InstanceSettings; it therefore cannot be called
+    // until the vtables for ProcessInstanceSettings are properly set up, i.e. AFTER all the initializers.
+    // For this reason it has to be called here, rather than in the initializer or in the parent constructor.
+
+    if (live_instance)
     {
         const lldb::InstanceSettingsSP &pending_settings = m_owner.FindPendingSettings (m_instance_name);
         CopyInstanceSettings (pending_settings,false);
-        m_owner.RemovePendingSettings (m_instance_name);
+        //m_owner.RemovePendingSettings (m_instance_name);
     }
 }
 

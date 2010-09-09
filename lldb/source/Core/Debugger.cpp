@@ -633,11 +633,15 @@ DebuggerInstanceSettings::DebuggerInstanceSettings (UserSettingsController &owne
     m_prompt (),
     m_script_lang ()
 {
-    if (name == NULL && live_instance)
+    // CopyInstanceSettings is a pure virtual function in InstanceSettings; it therefore cannot be called
+    // until the vtables for DebuggerInstanceSettings are properly set up, i.e. AFTER all the initializers.
+    // For this reason it has to be called here, rather than in the initializer or in the parent constructor.
+
+    if (live_instance)
     {
         const lldb::InstanceSettingsSP &pending_settings = m_owner.FindPendingSettings (m_instance_name);
         CopyInstanceSettings (pending_settings, false);
-        m_owner.RemovePendingSettings (m_instance_name);
+      //m_owner.RemovePendingSettings (m_instance_name);
     }
 }
 

@@ -970,13 +970,15 @@ ThreadInstanceSettings::ThreadInstanceSettings (UserSettingsController &owner, b
     InstanceSettings (owner, (name == NULL ? CreateInstanceName().AsCString() : name), live_instance), 
     m_avoid_regexp_ap ()
 {
-    // FIXME: This seems like generic code, why was it duplicated (with the slight difference that
-    // DebuggerInstanceSettings checks name, not m_instance_name below) in Process & Debugger?
-    if (m_instance_name != InstanceSettings::GetDefaultName() && live_instance)
+    // CopyInstanceSettings is a pure virtual function in InstanceSettings; it therefore cannot be called
+    // until the vtables for ThreadInstanceSettings are properly set up, i.e. AFTER all the initializers.
+    // For this reason it has to be called here, rather than in the initializer or in the parent constructor.
+
+    if (live_instance)
     {
         const lldb::InstanceSettingsSP &pending_settings = m_owner.FindPendingSettings (m_instance_name);
         CopyInstanceSettings (pending_settings,false);
-        m_owner.RemovePendingSettings (m_instance_name);
+        //m_owner.RemovePendingSettings (m_instance_name);
     }
 }
 
