@@ -59,7 +59,7 @@ void ReturnPointerRangeChecker::PreVisitReturnStmt(CheckerContext &C,
   if (!ER)
     return;
 
-  DefinedOrUnknownSVal &Idx = cast<DefinedOrUnknownSVal>(ER->getIndex());
+  DefinedOrUnknownSVal Idx = cast<DefinedOrUnknownSVal>(ER->getIndex());
 
   // FIXME: All of this out-of-bounds checking should eventually be refactored
   // into a common place.

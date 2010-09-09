@@ -193,7 +193,7 @@ const GRState *CStringChecker::CheckLocation(CheckerContext &C,
   DefinedOrUnknownSVal Size = cast<DefinedOrUnknownSVal>(Extent);
 
   // Get the index of the accessed element.
-  DefinedOrUnknownSVal &Idx = cast<DefinedOrUnknownSVal>(ER->getIndex());
+  DefinedOrUnknownSVal Idx = cast<DefinedOrUnknownSVal>(ER->getIndex());
 
   const GRState *StInBound = state->AssumeInBound(Idx, Size, true);
   const GRState *StOutBound = state->AssumeInBound(Idx, Size, false);

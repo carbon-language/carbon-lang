@@ -51,7 +51,7 @@ void ArrayBoundChecker::VisitLocation(CheckerContext &C, const Stmt *S, SVal l){
     return;
 
   // Get the index of the accessed element.
-  DefinedOrUnknownSVal &Idx = cast<DefinedOrUnknownSVal>(ER->getIndex());
+  DefinedOrUnknownSVal Idx = cast<DefinedOrUnknownSVal>(ER->getIndex());
 
   const GRState *state = C.getState();
 
