@@ -308,8 +308,9 @@ public:
     /// written to by the first.
     WriteThenReadSome,
 
-    /// ReadThenWrite - The instructions are ReadThenWriteSome and the second
-    /// instruction writes to exactly the same memory read from by the first.
+    /// ReadThenWrite - The first instruction is read-only, the second
+    /// instruction is write-only, and the second wrotes to exactly the
+    /// same memory read from by the first.
     ReadThenWrite,
 
     /// WriteThenWrite - The instructions are WriteThenWriteSome, and the
