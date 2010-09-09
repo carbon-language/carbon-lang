@@ -341,8 +341,12 @@ bool Sema::CheckFunctionCall(FunctionDecl *FDecl, CallExpr *TheCall) {
   // more efficient. For example, just map function ids to custom
   // handlers.
 
-  // Printf checking.
-  if (const FormatAttr *Format = FDecl->getAttr<FormatAttr>()) {
+  // Printf and scanf checking.
+  for (specific_attr_iterator<FormatAttr>
+         i = FDecl->specific_attr_begin<FormatAttr>(),
+         e = FDecl->specific_attr_end<FormatAttr>(); i != e ; ++i) {
+
+    const FormatAttr *Format = *i;
     const bool b = Format->getType() == "scanf";
     if (b || CheckablePrintfAttr(Format, TheCall)) {
       bool HasVAListArg = Format->getFirstArg() == 0;
@@ -353,12 +357,11 @@ bool Sema::CheckFunctionCall(FunctionDecl *FDecl, CallExpr *TheCall) {
     }
   }
 
-  specific_attr_iterator<NonNullAttr>
-    i = FDecl->specific_attr_begin<NonNullAttr>(),
-    e = FDecl->specific_attr_end<NonNullAttr>();
-
-  for (; i != e; ++i)
+  for (specific_attr_iterator<NonNullAttr>
+         i = FDecl->specific_attr_begin<NonNullAttr>(),
+         e = FDecl->specific_attr_end<NonNullAttr>(); i != e; ++i) {
     CheckNonNullArguments(*i, TheCall);
+  }
 
   return false;
 }
