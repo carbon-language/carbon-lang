@@ -35,7 +35,9 @@ PragmaHandler::~PragmaHandler() {
 
 EmptyPragmaHandler::EmptyPragmaHandler() {}
 
-void EmptyPragmaHandler::HandlePragma(Preprocessor &PP, Token &FirstToken) {}
+void EmptyPragmaHandler::HandlePragma(Preprocessor &PP, 
+                                      PragmaIntroducerKind Introducer,
+                                      Token &FirstToken) {}
 
 //===----------------------------------------------------------------------===//
 // PragmaNamespace Implementation.
@@ -73,7 +75,9 @@ void PragmaNamespace::RemovePragmaHandler(PragmaHandler *Handler) {
   Handlers.erase(Handler->getName());
 }
 
-void PragmaNamespace::HandlePragma(Preprocessor &PP, Token &Tok) {
+void PragmaNamespace::HandlePragma(Preprocessor &PP, 
+                                   PragmaIntroducerKind Introducer,
+                                   Token &Tok) {
   // Read the 'namespace' that the directive is in, e.g. STDC.  Do not macro
   // expand it, the user can have a STDC #define, that should not affect this.
   PP.LexUnexpandedToken(Tok);
@@ -89,7 +93,7 @@ void PragmaNamespace::HandlePragma(Preprocessor &PP, Token &Tok) {
   }
 
   // Otherwise, pass it down.
-  Handler->HandlePragma(PP, Tok);
+  Handler->HandlePragma(PP, Introducer, Tok);
 }
 
 //===----------------------------------------------------------------------===//
@@ -98,12 +102,12 @@ void PragmaNamespace::HandlePragma(Preprocessor &PP, Token &Tok) {
 
 /// HandlePragmaDirective - The "#pragma" directive has been parsed.  Lex the
 /// rest of the pragma, passing it to the registered pragma handlers.
-void Preprocessor::HandlePragmaDirective() {
+void Preprocessor::HandlePragmaDirective(unsigned Introducer) {
   ++NumPragma;
 
   // Invoke the first level of pragma handlers which reads the namespace id.
   Token Tok;
-  PragmaHandlers->HandlePragma(*this, Tok);
+  PragmaHandlers->HandlePragma(*this, PragmaIntroducerKind(Introducer), Tok);
 
   // If the pragma handler didn't read the rest of the line, consume it now.
   if (CurPPLexer && CurPPLexer->ParsingPreprocessorDirective)
@@ -170,7 +174,7 @@ void Preprocessor::Handle_Pragma(Token &Tok) {
     }
   }
   
-  Handle_Pragma(StrVal, PragmaLoc, RParenLoc);
+  Handle_Pragma(PIK__Pragma, StrVal, PragmaLoc, RParenLoc);
 
   // Finally, return whatever came after the pragma directive.
   return Lex(Tok);
@@ -216,13 +220,14 @@ void Preprocessor::HandleMicrosoft__pragma(Token &Tok) {
   
   SourceLocation RParenLoc = Tok.getLocation();
 
-  Handle_Pragma(StrVal, PragmaLoc, RParenLoc);
+  Handle_Pragma(PIK___pragma, StrVal, PragmaLoc, RParenLoc);
 
   // Finally, return whatever came after the pragma directive.
   return Lex(Tok);
 }
 
-void Preprocessor::Handle_Pragma(const std::string &StrVal,
+void Preprocessor::Handle_Pragma(unsigned Introducer,
+                                 const std::string &StrVal,
                                  SourceLocation PragmaLoc,
                                  SourceLocation RParenLoc) {
 
@@ -241,7 +246,7 @@ void Preprocessor::Handle_Pragma(const std::string &StrVal,
   EnterSourceFileWithLexer(TL, 0);
 
   // With everything set up, lex this as a #pragma directive.
-  HandlePragmaDirective();
+  HandlePragmaDirective(Introducer);
 }
 
 
@@ -704,7 +709,8 @@ namespace {
 /// PragmaOnceHandler - "#pragma once" marks the file as atomically included.
 struct PragmaOnceHandler : public PragmaHandler {
   PragmaOnceHandler() : PragmaHandler("once") {}
-  virtual void HandlePragma(Preprocessor &PP, Token &OnceTok) {
+  virtual void HandlePragma(Preprocessor &PP, PragmaIntroducerKind Introducer,
+                            Token &OnceTok) {
     PP.CheckEndOfDirective("pragma once");
     PP.HandlePragmaOnce(OnceTok);
   }
@@ -714,7 +720,8 @@ struct PragmaOnceHandler : public PragmaHandler {
 /// rest of the line is not lexed.
 struct PragmaMarkHandler : public PragmaHandler {
   PragmaMarkHandler() : PragmaHandler("mark") {}
-  virtual void HandlePragma(Preprocessor &PP, Token &MarkTok) {
+  virtual void HandlePragma(Preprocessor &PP, PragmaIntroducerKind Introducer,
+                            Token &MarkTok) {
     PP.HandlePragmaMark();
   }
 };
@@ -722,7 +729,8 @@ struct PragmaMarkHandler : public PragmaHandler {
 /// PragmaPoisonHandler - "#pragma poison x" marks x as not usable.
 struct PragmaPoisonHandler : public PragmaHandler {
   PragmaPoisonHandler() : PragmaHandler("poison") {}
-  virtual void HandlePragma(Preprocessor &PP, Token &PoisonTok) {
+  virtual void HandlePragma(Preprocessor &PP, PragmaIntroducerKind Introducer,
+                            Token &PoisonTok) {
     PP.HandlePragmaPoison(PoisonTok);
   }
 };
@@ -731,21 +739,24 @@ struct PragmaPoisonHandler : public PragmaHandler {
 /// as a system header, which silences warnings in it.
 struct PragmaSystemHeaderHandler : public PragmaHandler {
   PragmaSystemHeaderHandler() : PragmaHandler("system_header") {}
-  virtual void HandlePragma(Preprocessor &PP, Token &SHToken) {
+  virtual void HandlePragma(Preprocessor &PP, PragmaIntroducerKind Introducer,
+                            Token &SHToken) {
     PP.HandlePragmaSystemHeader(SHToken);
     PP.CheckEndOfDirective("pragma");
   }
 };
 struct PragmaDependencyHandler : public PragmaHandler {
   PragmaDependencyHandler() : PragmaHandler("dependency") {}
-  virtual void HandlePragma(Preprocessor &PP, Token &DepToken) {
+  virtual void HandlePragma(Preprocessor &PP, PragmaIntroducerKind Introducer,
+                            Token &DepToken) {
     PP.HandlePragmaDependency(DepToken);
   }
 };
 
 struct PragmaDebugHandler : public PragmaHandler {
   PragmaDebugHandler() : PragmaHandler("__debug") {}
-  virtual void HandlePragma(Preprocessor &PP, Token &DepToken) {
+  virtual void HandlePragma(Preprocessor &PP, PragmaIntroducerKind Introducer,
+                            Token &DepToken) {
     Token Tok;
     PP.LexUnexpandedToken(Tok);
     if (Tok.isNot(tok::identifier)) {
@@ -783,7 +794,8 @@ struct PragmaDebugHandler : public PragmaHandler {
 struct PragmaDiagnosticHandler : public PragmaHandler {
 public:
   explicit PragmaDiagnosticHandler() : PragmaHandler("diagnostic") {}
-  virtual void HandlePragma(Preprocessor &PP, Token &DiagToken) {
+  virtual void HandlePragma(Preprocessor &PP, PragmaIntroducerKind Introducer,
+                            Token &DiagToken) {
     Token Tok;
     PP.LexUnexpandedToken(Tok);
     if (Tok.isNot(tok::identifier)) {
@@ -866,7 +878,8 @@ public:
 /// PragmaCommentHandler - "#pragma comment ...".
 struct PragmaCommentHandler : public PragmaHandler {
   PragmaCommentHandler() : PragmaHandler("comment") {}
-  virtual void HandlePragma(Preprocessor &PP, Token &CommentTok) {
+  virtual void HandlePragma(Preprocessor &PP, PragmaIntroducerKind Introducer,
+                            Token &CommentTok) {
     PP.HandlePragmaComment(CommentTok);
   }
 };
@@ -874,7 +887,8 @@ struct PragmaCommentHandler : public PragmaHandler {
 /// PragmaMessageHandler - "#pragma message("...")".
 struct PragmaMessageHandler : public PragmaHandler {
   PragmaMessageHandler() : PragmaHandler("message") {}
-  virtual void HandlePragma(Preprocessor &PP, Token &CommentTok) {
+  virtual void HandlePragma(Preprocessor &PP, PragmaIntroducerKind Introducer,
+                            Token &CommentTok) {
     PP.HandlePragmaMessage(CommentTok);
   }
 };
@@ -883,7 +897,8 @@ struct PragmaMessageHandler : public PragmaHandler {
 /// macro on the top of the stack.
 struct PragmaPushMacroHandler : public PragmaHandler {
   PragmaPushMacroHandler() : PragmaHandler("push_macro") {}
-  virtual void HandlePragma(Preprocessor &PP, Token &PushMacroTok) {
+  virtual void HandlePragma(Preprocessor &PP, PragmaIntroducerKind Introducer,
+                            Token &PushMacroTok) {
     PP.HandlePragmaPushMacro(PushMacroTok);
   }
 };
@@ -893,7 +908,8 @@ struct PragmaPushMacroHandler : public PragmaHandler {
 /// macro to the value on the top of the stack.
 struct PragmaPopMacroHandler : public PragmaHandler {
   PragmaPopMacroHandler() : PragmaHandler("pop_macro") {}
-  virtual void HandlePragma(Preprocessor &PP, Token &PopMacroTok) {
+  virtual void HandlePragma(Preprocessor &PP, PragmaIntroducerKind Introducer,
+                            Token &PopMacroTok) {
     PP.HandlePragmaPopMacro(PopMacroTok);
   }
 };
@@ -935,7 +951,8 @@ static STDCSetting LexOnOffSwitch(Preprocessor &PP) {
 /// PragmaSTDC_FP_CONTRACTHandler - "#pragma STDC FP_CONTRACT ...".
 struct PragmaSTDC_FP_CONTRACTHandler : public PragmaHandler {
   PragmaSTDC_FP_CONTRACTHandler() : PragmaHandler("FP_CONTRACT") {}
-  virtual void HandlePragma(Preprocessor &PP, Token &Tok) {
+  virtual void HandlePragma(Preprocessor &PP, PragmaIntroducerKind Introducer,
+                            Token &Tok) {
     // We just ignore the setting of FP_CONTRACT. Since we don't do contractions
     // at all, our default is OFF and setting it to ON is an optimization hint
     // we can safely ignore.  When we support -ffma or something, we would need
@@ -947,7 +964,8 @@ struct PragmaSTDC_FP_CONTRACTHandler : public PragmaHandler {
 /// PragmaSTDC_FENV_ACCESSHandler - "#pragma STDC FENV_ACCESS ...".
 struct PragmaSTDC_FENV_ACCESSHandler : public PragmaHandler {
   PragmaSTDC_FENV_ACCESSHandler() : PragmaHandler("FENV_ACCESS") {}
-  virtual void HandlePragma(Preprocessor &PP, Token &Tok) {
+  virtual void HandlePragma(Preprocessor &PP, PragmaIntroducerKind Introducer,
+                            Token &Tok) {
     if (LexOnOffSwitch(PP) == STDC_ON)
       PP.Diag(Tok, diag::warn_stdc_fenv_access_not_supported);
   }
@@ -957,7 +975,8 @@ struct PragmaSTDC_FENV_ACCESSHandler : public PragmaHandler {
 struct PragmaSTDC_CX_LIMITED_RANGEHandler : public PragmaHandler {
   PragmaSTDC_CX_LIMITED_RANGEHandler()
     : PragmaHandler("CX_LIMITED_RANGE") {}
-  virtual void HandlePragma(Preprocessor &PP, Token &Tok) {
+  virtual void HandlePragma(Preprocessor &PP, PragmaIntroducerKind Introducer,
+                            Token &Tok) {
     LexOnOffSwitch(PP);
   }
 };
@@ -965,7 +984,8 @@ struct PragmaSTDC_CX_LIMITED_RANGEHandler : public PragmaHandler {
 /// PragmaSTDC_UnknownHandler - "#pragma STDC ...".
 struct PragmaSTDC_UnknownHandler : public PragmaHandler {
   PragmaSTDC_UnknownHandler() {}
-  virtual void HandlePragma(Preprocessor &PP, Token &UnknownTok) {
+  virtual void HandlePragma(Preprocessor &PP, PragmaIntroducerKind Introducer,
+                            Token &UnknownTok) {
     // C99 6.10.6p2, unknown forms are not allowed.
     PP.Diag(UnknownTok, diag::ext_stdc_pragma_ignored);
   }

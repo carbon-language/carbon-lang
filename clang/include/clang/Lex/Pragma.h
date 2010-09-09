@@ -25,6 +25,28 @@ namespace clang {
   class IdentifierInfo;
   class PragmaNamespace;
 
+  /**
+   * \brief Describes how the pragma was introduced, e.g., with #pragma, 
+   * _Pragma, or __pragma.
+   */
+  enum PragmaIntroducerKind {
+    /**
+     * \brief The pragma was introduced via #pragma.
+     */
+    PIK_HashPragma,
+    
+    /**
+     * \brief The pragma was introduced via the C99 _Pragma(string-literal).
+     */
+    PIK__Pragma,
+    
+    /**
+     * \brief The pragma was introduced via the Microsoft 
+     * __pragma(token-string).
+     */
+    PIK___pragma
+  };
+  
 /// PragmaHandler - Instances of this interface defined to handle the various
 /// pragmas that the language front-end uses.  Each handler optionally has a
 /// name (e.g. "pack") and the HandlePragma method is invoked when a pragma with
@@ -42,7 +64,8 @@ public:
   virtual ~PragmaHandler();
 
   llvm::StringRef getName() const { return Name; }
-  virtual void HandlePragma(Preprocessor &PP, Token &FirstToken) = 0;
+  virtual void HandlePragma(Preprocessor &PP, PragmaIntroducerKind Introducer,
+                            Token &FirstToken) = 0;
 
   /// getIfNamespace - If this is a namespace, return it.  This is equivalent to
   /// using a dynamic_cast, but doesn't require RTTI.
@@ -55,7 +78,8 @@ class EmptyPragmaHandler : public PragmaHandler {
 public:
   EmptyPragmaHandler();
 
-  virtual void HandlePragma(Preprocessor &PP, Token &FirstToken);
+  virtual void HandlePragma(Preprocessor &PP, PragmaIntroducerKind Introducer,
+                            Token &FirstToken);
 };
 
 /// PragmaNamespace - This PragmaHandler subdivides the namespace of pragmas,
@@ -90,7 +114,8 @@ public:
     return Handlers.empty();
   }
 
-  virtual void HandlePragma(Preprocessor &PP, Token &FirstToken);
+  virtual void HandlePragma(Preprocessor &PP, PragmaIntroducerKind Introducer,
+                            Token &FirstToken);
 
   virtual PragmaNamespace *getIfNamespace() { return this; }
 };

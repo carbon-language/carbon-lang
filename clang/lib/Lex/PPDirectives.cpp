@@ -17,6 +17,7 @@
 #include "clang/Lex/MacroInfo.h"
 #include "clang/Lex/LexDiagnostic.h"
 #include "clang/Lex/CodeCompletionHandler.h"
+#include "clang/Lex/Pragma.h"
 #include "clang/Basic/FileManager.h"
 #include "clang/Basic/SourceManager.h"
 #include "llvm/ADT/APInt.h"
@@ -588,7 +589,7 @@ TryAgain:
 
     // C99 6.10.6 - Pragma Directive.
     case tok::pp_pragma:
-      return HandlePragmaDirective();
+      return HandlePragmaDirective(PIK_HashPragma);
 
     // GNU Extensions.
     case tok::pp_import:
