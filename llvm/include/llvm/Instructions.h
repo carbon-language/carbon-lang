@@ -1207,6 +1207,10 @@ public:
     setName(NameStr);
   }
 
+  Value *getPointerOperand() { return getOperand(0); }
+  const Value *getPointerOperand() const { return getOperand(0); }
+  static unsigned getPointerOperandIndex() { return 0U; }
+
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const VAArgInst *) { return true; }
   static inline bool classof(const Instruction *I) {
