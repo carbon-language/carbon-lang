@@ -1,4 +1,6 @@
 // RUN: tblgen %s
+// XFAIL: vg_leak
+
 class Bla<string t>
 {
   string blu = t;

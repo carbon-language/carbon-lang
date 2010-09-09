@@ -1,5 +1,6 @@
 (* RUN: %ocamlopt -warn-error A llvm.cmxa llvm_analysis.cmxa %s -o %t
  * RUN: %t
+ * XFAIL: vg_leak
  *)
 
 open Llvm

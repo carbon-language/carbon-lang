@@ -1,6 +1,7 @@
 (* RUN: %ocamlopt -warn-error A llvm.cmxa llvm_bitreader.cmxa llvm_bitwriter.cmxa %s -o %t
  * RUN: %t %t.bc
  * RUN: llvm-dis < %t.bc | grep caml_int_ty
+ * XFAIL: vg_leak
  *)
 
 (* Note that this takes a moment to link, so it's best to keep the number of

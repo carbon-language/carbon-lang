@@ -1,5 +1,6 @@
 (* RUN: %ocamlopt -warn-error A llvm.cmxa llvm_target.cmxa %s -o %t
  * RUN: %t %t.bc
+ * XFAIL: vg_leak
  *)
 
 (* Note: It takes several seconds for ocamlopt to link an executable with

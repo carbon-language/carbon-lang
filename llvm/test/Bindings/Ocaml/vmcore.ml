@@ -1,6 +1,7 @@
 (* RUN: %ocamlopt -warn-error A llvm.cmxa llvm_analysis.cmxa llvm_bitwriter.cmxa %s -o %t
  * RUN: %t %t.bc
  * RUN: llvm-dis < %t.bc > %t.ll
+ * XFAIL: vg_leak
  *)
 
 (* Note: It takes several seconds for ocamlopt to link an executable with
