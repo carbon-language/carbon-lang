@@ -67,10 +67,9 @@ void ARMExpandPseudo::TransferImpOps(MachineInstr &OldMI,
     const MachineOperand &MO = OldMI.getOperand(i);
     assert(MO.isReg() && MO.getReg());
     if (MO.isUse())
-      UseMI.addReg(MO.getReg(), getKillRegState(MO.isKill()));
+      UseMI.addOperand(MO);
     else
-      DefMI.addReg(MO.getReg(),
-                   getDefRegState(true) | getDeadRegState(MO.isDead()));
+      DefMI.addOperand(MO);
   }
 }
 
@@ -112,26 +111,21 @@ void ARMExpandPseudo::ExpandVLD(MachineBasicBlock::iterator &MBBI,
   if (NumRegs > 3)
     MIB.addReg(D3, RegState::Define | getDeadRegState(DstIsDead));
 
-  if (hasWriteBack) {
-    bool WBIsDead = MI.getOperand(OpIdx).isDead();
-    unsigned WBReg = MI.getOperand(OpIdx++).getReg();
-    MIB.addReg(WBReg, RegState::Define | getDeadRegState(WBIsDead));
-  }
+  if (hasWriteBack)
+    MIB.addOperand(MI.getOperand(OpIdx++));
+
   // Copy the addrmode6 operands.
-  bool AddrIsKill = MI.getOperand(OpIdx).isKill();
-  MIB.addReg(MI.getOperand(OpIdx++).getReg(), getKillRegState(AddrIsKill));
-  MIB.addImm(MI.getOperand(OpIdx++).getImm());
-  if (hasWriteBack) {
-    // Copy the am6offset operand.
-    bool OffsetIsKill = MI.getOperand(OpIdx).isKill();
-    MIB.addReg(MI.getOperand(OpIdx++).getReg(), getKillRegState(OffsetIsKill));
-  }
+  MIB.addOperand(MI.getOperand(OpIdx++));
+  MIB.addOperand(MI.getOperand(OpIdx++));
+  // Copy the am6offset operand.
+  if (hasWriteBack)
+    MIB.addOperand(MI.getOperand(OpIdx++));
 
   MIB = AddDefaultPred(MIB);
   TransferImpOps(MI, MIB, MIB);
   // For an instruction writing the odd subregs, add an implicit use of the
   // super-register because the even subregs were loaded separately.
-  if (RegSpc == OddDblSpc)
+  if (RegSpc == EvenDblSpc || RegSpc == OddDblSpc)
     MIB.addReg(DstReg, RegState::Implicit);
   // Add an implicit def for the super-register.
   MIB.addReg(DstReg, RegState::ImplicitDefine | getDeadRegState(DstIsDead));
@@ -148,20 +142,15 @@ void ARMExpandPseudo::ExpandVST(MachineBasicBlock::iterator &MBBI,
 
   MachineInstrBuilder MIB = BuildMI(MBB, MBBI, MI.getDebugLoc(), TII->get(Opc));
   unsigned OpIdx = 0;
-  if (hasWriteBack) {
-    bool DstIsDead = MI.getOperand(OpIdx).isDead();
-    unsigned DstReg = MI.getOperand(OpIdx++).getReg();
-    MIB.addReg(DstReg, RegState::Define | getDeadRegState(DstIsDead));
-  }
+  if (hasWriteBack)
+    MIB.addOperand(MI.getOperand(OpIdx++));
+
   // Copy the addrmode6 operands.
-  bool AddrIsKill = MI.getOperand(OpIdx).isKill();
-  MIB.addReg(MI.getOperand(OpIdx++).getReg(), getKillRegState(AddrIsKill));
-  MIB.addImm(MI.getOperand(OpIdx++).getImm());
-  if (hasWriteBack) {
-    // Copy the am6offset operand.
-    bool OffsetIsKill = MI.getOperand(OpIdx).isKill();
-    MIB.addReg(MI.getOperand(OpIdx++).getReg(), getKillRegState(OffsetIsKill));
-  }
+  MIB.addOperand(MI.getOperand(OpIdx++));
+  MIB.addOperand(MI.getOperand(OpIdx++));
+  // Copy the am6offset operand.
+  if (hasWriteBack)
+    MIB.addOperand(MI.getOperand(OpIdx++));
 
   bool SrcIsKill = MI.getOperand(OpIdx).isKill();
   unsigned SrcReg = MI.getOperand(OpIdx).getReg();
