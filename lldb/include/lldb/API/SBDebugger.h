@@ -142,14 +142,17 @@ public:
     void
     PushInputReader (lldb::SBInputReader &reader);
 
+    const char *
+    GetInstanceName  ();
+
     static SBDebugger
     FindDebuggerWithID (int id);
 
-    lldb::SBError
-    SetInternalVariable (const char *var_name, const char *value);
+    static lldb::SBError
+    SetInternalVariable (const char *var_name, const char *value, const char *debugger_instance_name);
 
-    lldb::SBStringList
-    GetInternalVariableValue (const char *var_name);
+    static lldb::SBStringList
+    GetInternalVariableValue (const char *var_name, const char *debugger_instance_name);
 
 private:
 

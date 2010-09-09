@@ -39,6 +39,8 @@ using namespace lldb;
 static void reset_stdin_termios ();
 static struct termios g_old_stdin_termios;
 
+static char *g_debugger_name =  (char *) "";
+
 // In the Driver::MainLoop, we change the terminal settings.  This function is
 // added as an atexit handler to make sure we clean them up.
 static void
@@ -90,6 +92,9 @@ Driver::Driver () :
     m_option_data (),
     m_waiting_for_command (false)
 {
+    g_debugger_name = (char *) m_debugger.GetInstanceName();
+    if (g_debugger_name == NULL)
+        g_debugger_name = (char *) "";
 }
 
 Driver::~Driver ()
@@ -1263,12 +1268,30 @@ Driver::ReadyForCommand ()
 }
 
 
+void
+sigwinch_handler (int signo)
+{
+    struct winsize window_size;
+    if (isatty (STDIN_FILENO)
+        && ::ioctl (STDIN_FILENO, TIOCGWINSZ, &window_size) == 0)
+    {
+        if ((window_size.ws_col > 0) && (strlen (g_debugger_name) > 0))
+        {
+            char width_str_buffer[25];
+            ::sprintf (width_str_buffer, "%d", window_size.ws_col);
+            SBDebugger::SetInternalVariable ("term-width", width_str_buffer, g_debugger_name);
+        }
+    }
+}
+
 int
 main (int argc, char const *argv[])
 {
     SBDebugger::Initialize();
     
     SBHostOS::ThreadCreated ("[main]");
+
+    signal (SIGWINCH, sigwinch_handler);
 
     // Create a scope for driver so that the driver object will destroy itself
     // before SBDebugger::Terminate() is called.

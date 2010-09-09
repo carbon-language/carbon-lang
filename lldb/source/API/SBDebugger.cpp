@@ -565,17 +565,19 @@ SBDebugger::FindDebuggerWithID (int id)
     return sb_debugger;
 }
 
+const char *
+SBDebugger::GetInstanceName()
+{
+    if (m_opaque_sp)
+        return m_opaque_sp->GetInstanceName().AsCString();
+    else
+        return NULL;
+}
+
 SBError
-SBDebugger::SetInternalVariable (const char *var_name, const char *value)
+SBDebugger::SetInternalVariable (const char *var_name, const char *value, const char *debugger_instance_name)
 {
     lldb::UserSettingsControllerSP root_settings_controller = lldb_private::Debugger::GetSettingsController();
-    
-    const char *debugger_instance_name;
-
-    if (m_opaque_sp)
-        debugger_instance_name = m_opaque_sp->GetInstanceName().AsCString();
-    else
-        debugger_instance_name = "";
 
     Error err = root_settings_controller->SetVariable (var_name, value, lldb::eVarSetOperationAssign, false,
                                                        debugger_instance_name);
@@ -586,18 +588,12 @@ SBDebugger::SetInternalVariable (const char *var_name, const char *value)
 }
 
 lldb::SBStringList
-SBDebugger::GetInternalVariableValue (const char *var_name)
+SBDebugger::GetInternalVariableValue (const char *var_name, const char *debugger_instance_name)
 {
     SBStringList ret_value;
     lldb::SettableVariableType var_type;
-    const char *debugger_instance_name;
 
     lldb::UserSettingsControllerSP root_settings_controller = lldb_private::Debugger::GetSettingsController();
-
-    if (m_opaque_sp)
-        debugger_instance_name = m_opaque_sp->GetInstanceName().AsCString();
-    else
-        debugger_instance_name = "";
 
     StringList value = root_settings_controller->GetVariable (var_name, var_type, debugger_instance_name);
     for (unsigned i = 0; i != value.GetSize(); ++i)
