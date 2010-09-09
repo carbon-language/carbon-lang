@@ -942,7 +942,7 @@ bool Sema::SemaCheckStringLiteral(const Expr *E, const CallExpr *TheCall,
                                   bool HasVAListArg,
                                   unsigned format_idx, unsigned firstDataArg,
                                   bool isPrintf) {
-
+ tryAgain:
   if (E->isTypeDependent() || E->isValueDependent())
     return false;
 
@@ -956,15 +956,13 @@ bool Sema::SemaCheckStringLiteral(const Expr *E, const CallExpr *TheCall,
   }
 
   case Stmt::ImplicitCastExprClass: {
-    const ImplicitCastExpr *Expr = cast<ImplicitCastExpr>(E);
-    return SemaCheckStringLiteral(Expr->getSubExpr(), TheCall, HasVAListArg,
-                                  format_idx, firstDataArg, isPrintf);
+    E = cast<ImplicitCastExpr>(E)->getSubExpr();
+    goto tryAgain;
   }
 
   case Stmt::ParenExprClass: {
-    const ParenExpr *Expr = cast<ParenExpr>(E);
-    return SemaCheckStringLiteral(Expr->getSubExpr(), TheCall, HasVAListArg,
-                                  format_idx, firstDataArg, isPrintf);
+    E = cast<ParenExpr>(E)->getSubExpr();
+    goto tryAgain;
   }
 
   case Stmt::DeclRefExprClass: {
