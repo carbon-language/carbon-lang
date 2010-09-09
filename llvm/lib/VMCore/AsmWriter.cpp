@@ -1165,7 +1165,11 @@ static void WriteAsOperandInternal(raw_ostream &Out, const Value *V,
       else
         Machine = new SlotTracker(Context);
     }
-    Out << '!' << Machine->getMetadataSlot(N);
+    int Slot = Machine->getMetadataSlot(N);
+    if (Slot == -1)
+      Out << "<badref>";
+    else
+      Out << '!' << Slot;
     return;
   }
 
@@ -1395,7 +1399,11 @@ void AssemblyWriter::printNamedMDNode(const NamedMDNode *NMD) {
   Out << "!" << NMD->getName() << " = !{";
   for (unsigned i = 0, e = NMD->getNumOperands(); i != e; ++i) {
     if (i) Out << ", ";
-    Out << '!' << Machine.getMetadataSlot(NMD->getOperand(i));
+    int Slot = Machine.getMetadataSlot(NMD->getOperand(i));
+    if (Slot == -1)
+      Out << "<badref>";
+    else
+      Out << '!' << Slot;
   }
   Out << "}\n";
 }
