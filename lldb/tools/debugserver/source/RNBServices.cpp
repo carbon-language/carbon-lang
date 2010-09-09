@@ -16,6 +16,7 @@
 #import <CoreFoundation/CoreFoundation.h>
 #import <unistd.h>
 #import "DNBLog.h"
+#include "MacOSX/CFUtils.h"
 
 #if defined (__arm__)
 #import <SpringBoardServices/SpringBoardServices.h>

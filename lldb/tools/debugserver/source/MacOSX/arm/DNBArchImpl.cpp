@@ -20,6 +20,8 @@
 #include "DNBLog.h"
 #include "DNBRegisterInfo.h"
 #include "DNB.h"
+#include "ARM_GCC_Registers.h"
+#include "ARM_DWARF_Registers.h"
 
 #include <sys/sysctl.h>
 
@@ -113,7 +115,7 @@ DNBArchMachARM::GetPC(uint64_t failValue)
 {
     // Get program counter
     if (GetGPRState(false) == KERN_SUCCESS)
-        return m_state.gpr.__pc;
+        return m_state.context.gpr.__pc;
     return failValue;
 }
 
@@ -124,7 +126,7 @@ DNBArchMachARM::SetPC(uint64_t value)
     kern_return_t err = GetGPRState(false);
     if (err == KERN_SUCCESS)
     {
-        m_state.gpr.__pc = value;
+        m_state.context.gpr.__pc = value;
         err = SetGPRState();
     }
     return err == KERN_SUCCESS;
@@ -135,7 +137,7 @@ DNBArchMachARM::GetSP(uint64_t failValue)
 {
     // Get stack pointer
     if (GetGPRState(false) == KERN_SUCCESS)
-        return m_state.gpr.__sp;
+        return m_state.context.gpr.__sp;
     return failValue;
 }
 
@@ -149,8 +151,8 @@ DNBArchMachARM::GetGPRState(bool force)
 
     // Read the registers from our thread
     mach_msg_type_number_t count = ARM_THREAD_STATE_COUNT;
-    kern_return_t kret = ::thread_get_state(m_thread->ThreadID(), ARM_THREAD_STATE, (thread_state_t)&m_state.gpr, &count);
-    uint32_t *r = &m_state.gpr.__r[0];
+    kern_return_t kret = ::thread_get_state(m_thread->ThreadID(), ARM_THREAD_STATE, (thread_state_t)&m_state.context.gpr, &count);
+    uint32_t *r = &m_state.context.gpr.__r[0];
     DNBLogThreadedIf(LOG_THREAD, "thread_get_state(0x%4.4x, %u, &gpr, %u) => 0x%8.8x regs r0=%8.8x r1=%8.8x r2=%8.8x r3=%8.8x r4=%8.8x r5=%8.8x r6=%8.8x r7=%8.8x r8=%8.8x r9=%8.8x r10=%8.8x r11=%8.8x s12=%8.8x sp=%8.8x lr=%8.8x pc=%8.8x cpsr=%8.8x", m_thread->ThreadID(), ARM_THREAD_STATE, ARM_THREAD_STATE_COUNT, kret,
      r[0], r[1], r[2], r[3], r[4], r[5], r[6], r[7], r[8], r[9], r[10], r[11], r[12], r[13], r[14], r[15], r[16]);
     m_state.SetError(set, Read, kret);
@@ -167,7 +169,7 @@ DNBArchMachARM::GetVFPState(bool force)
 
     // Read the registers from our thread
     mach_msg_type_number_t count = ARM_VFP_STATE_COUNT;
-    kern_return_t kret = ::thread_get_state(m_thread->ThreadID(), ARM_VFP_STATE, (thread_state_t)&m_state.vfp, &count);
+    kern_return_t kret = ::thread_get_state(m_thread->ThreadID(), ARM_VFP_STATE, (thread_state_t)&m_state.context.vfp, &count);
     m_state.SetError(set, Read, kret);
     return kret;
 }
@@ -182,7 +184,7 @@ DNBArchMachARM::GetEXCState(bool force)
 
     // Read the registers from our thread
     mach_msg_type_number_t count = ARM_EXCEPTION_STATE_COUNT;
-    kern_return_t kret = ::thread_get_state(m_thread->ThreadID(), ARM_EXCEPTION_STATE, (thread_state_t)&m_state.exc, &count);
+    kern_return_t kret = ::thread_get_state(m_thread->ThreadID(), ARM_EXCEPTION_STATE, (thread_state_t)&m_state.context.exc, &count);
     m_state.SetError(set, Read, kret);
     return kret;
 }
@@ -217,7 +219,7 @@ kern_return_t
 DNBArchMachARM::SetGPRState()
 {
     int set = e_regSetGPR;
-    kern_return_t kret = ::thread_set_state(m_thread->ThreadID(), ARM_THREAD_STATE, (thread_state_t)&m_state.gpr, ARM_THREAD_STATE_COUNT);
+    kern_return_t kret = ::thread_set_state(m_thread->ThreadID(), ARM_THREAD_STATE, (thread_state_t)&m_state.context.gpr, ARM_THREAD_STATE_COUNT);
     m_state.SetError(set, Write, kret);         // Set the current write error for this register set
     m_state.InvalidateRegisterSetState(set);    // Invalidate the current register state in case registers are read back differently
     return kret;                                // Return the error code
@@ -227,7 +229,7 @@ kern_return_t
 DNBArchMachARM::SetVFPState()
 {
     int set = e_regSetVFP;
-    kern_return_t kret = ::thread_set_state (m_thread->ThreadID(), ARM_VFP_STATE, (thread_state_t)&m_state.vfp, ARM_VFP_STATE_COUNT);
+    kern_return_t kret = ::thread_set_state (m_thread->ThreadID(), ARM_VFP_STATE, (thread_state_t)&m_state.context.vfp, ARM_VFP_STATE_COUNT);
     m_state.SetError(set, Write, kret);         // Set the current write error for this register set
     m_state.InvalidateRegisterSetState(set);    // Invalidate the current register state in case registers are read back differently
     return kret;                                // Return the error code
@@ -237,7 +239,7 @@ kern_return_t
 DNBArchMachARM::SetEXCState()
 {
     int set = e_regSetEXC;
-    kern_return_t kret = ::thread_set_state (m_thread->ThreadID(), ARM_EXCEPTION_STATE, (thread_state_t)&m_state.exc, ARM_EXCEPTION_STATE_COUNT);
+    kern_return_t kret = ::thread_set_state (m_thread->ThreadID(), ARM_EXCEPTION_STATE, (thread_state_t)&m_state.context.exc, ARM_EXCEPTION_STATE_COUNT);
     m_state.SetError(set, Write, kret);         // Set the current write error for this register set
     m_state.InvalidateRegisterSetState(set);    // Invalidate the current register state in case registers are read back differently
     return kret;                                // Return the error code
@@ -302,16 +304,16 @@ DNBArchMachARM::ThreadDidStop()
             {
                 uint32_t sw_step_next_pc = m_sw_single_step_next_pc & 0xFFFFFFFEu;
                 bool sw_step_next_pc_is_thumb = (m_sw_single_step_next_pc & 1) != 0;
-                bool actual_next_pc_is_thumb = (m_state.gpr.__cpsr & 0x20) != 0;
-                if (m_state.gpr.__pc != sw_step_next_pc)
+                bool actual_next_pc_is_thumb = (m_state.context.gpr.__cpsr & 0x20) != 0;
+                if (m_state.context.gpr.__pc != sw_step_next_pc)
                 {
-                    DNBLogError("curr pc = 0x%8.8x - calculated single step target PC was incorrect: 0x%8.8x != 0x%8.8x", m_state.gpr.__pc, sw_step_next_pc, m_state.gpr.__pc);
+                    DNBLogError("curr pc = 0x%8.8x - calculated single step target PC was incorrect: 0x%8.8x != 0x%8.8x", m_state.context.gpr.__pc, sw_step_next_pc, m_state.context.gpr.__pc);
                     exit(1);
                 }
                 if (actual_next_pc_is_thumb != sw_step_next_pc_is_thumb)
                 {
                     DNBLogError("curr pc = 0x%8.8x - calculated single step calculated mode mismatch: sw single mode = %s != %s",
-                                m_state.gpr.__pc,
+                                m_state.context.gpr.__pc,
                                 actual_next_pc_is_thumb ? "Thumb" : "ARM",
                                 sw_step_next_pc_is_thumb ? "Thumb" : "ARM");
                     exit(1);
@@ -336,7 +338,7 @@ DNBArchMachARM::ThreadDidStop()
                 if (m_sw_single_step_itblock_break_count > 0)
                 {
                     // See if we hit one of our Thumb IT breakpoints?
-                    DNBBreakpoint *step_bp = m_thread->Process()->Breakpoints().FindByAddress(m_state.gpr.__pc);
+                    DNBBreakpoint *step_bp = m_thread->Process()->Breakpoints().FindByAddress(m_state.context.gpr.__pc);
 
                     if (step_bp)
                     {
@@ -362,7 +364,7 @@ DNBArchMachARM::ThreadDidStop()
                     // Decode instructions up to the current PC to ensure the internal decoder state is valid for the IT block
                     // The decoder has to decode each instruction in the IT block even if it is not executed so that
                     // the fields are correctly updated
-                    DecodeITBlockInstructions(m_state.gpr.__pc);
+                    DecodeITBlockInstructions(m_state.context.gpr.__pc);
                 }
 
             }
@@ -389,7 +391,7 @@ DNBArchMachARM::StepNotComplete ()
         kret = GetGPRState(false);
         if (kret == KERN_SUCCESS)
         {
-            if (m_state.gpr.__pc == m_hw_single_chained_step_addr)
+            if (m_state.context.gpr.__pc == m_hw_single_chained_step_addr)
             {
                 DNBLogThreadedIf(LOG_STEP, "Need to step some more at 0x%8.8x", m_hw_single_chained_step_addr);
                 return true;
@@ -450,7 +452,7 @@ DNBArchMachARM::DecodeITBlockInstructions(nub_addr_t curr_pc)
         arm_error_t decodeError;
 
         m_last_decode_pc = pc_in_itblock;
-        decodeError = DecodeInstructionUsingDisassembler(pc_in_itblock, m_state.gpr.__cpsr, &m_last_decode_arm, &m_last_decode_thumb, &next_pc_in_itblock);
+        decodeError = DecodeInstructionUsingDisassembler(pc_in_itblock, m_state.context.gpr.__cpsr, &m_last_decode_arm, &m_last_decode_thumb, &next_pc_in_itblock);
 
         pc_in_itblock = next_pc_in_itblock;
         DNBLogThreadedIf(LOG_STEP | LOG_VERBOSE, "%s: next_pc_in_itblock=0x%8.8x", __FUNCTION__, next_pc_in_itblock);
@@ -489,30 +491,30 @@ DNBArchMachARM::EnableHardwareSingleStep (bool enable)
         // Save our previous state
         m_dbg_save = m_state.dbg;
         // Set a breakpoint that will stop when the PC doesn't match the current one!
-        m_state.dbg.__bvr[i] = m_state.gpr.__pc & 0xFFFFFFFCu;      // Set the current PC as the breakpoint address
+        m_state.dbg.__bvr[i] = m_state.context.gpr.__pc & 0xFFFFFFFCu;      // Set the current PC as the breakpoint address
         m_state.dbg.__bcr[i] = BCR_M_IMVA_MISMATCH |    // Stop on address mismatch
                                S_USER |                 // Stop only in user mode
                                BCR_ENABLE;              // Enable this breakpoint
-        if (m_state.gpr.__cpsr & 0x20)
+        if (m_state.context.gpr.__cpsr & 0x20)
         {
             // Thumb breakpoint
-            if (m_state.gpr.__pc & 2)
+            if (m_state.context.gpr.__pc & 2)
                 m_state.dbg.__bcr[i] |= BAS_IMVA_2_3;
             else
                 m_state.dbg.__bcr[i] |= BAS_IMVA_0_1;
 
             uint16_t opcode;
-            if (sizeof(opcode) == m_thread->Process()->Task().ReadMemory(m_state.gpr.__pc, sizeof(opcode), &opcode))
+            if (sizeof(opcode) == m_thread->Process()->Task().ReadMemory(m_state.context.gpr.__pc, sizeof(opcode), &opcode))
             {
                 if (((opcode & 0xE000) == 0xE000) && opcode & 0x1800)
                 {
                     // 32 bit thumb opcode...
-                    if (m_state.gpr.__pc & 2)
+                    if (m_state.context.gpr.__pc & 2)
                     {
                         // We can't take care of a 32 bit thumb instruction single step
                         // with just IVA mismatching. We will need to chain an extra
                         // hardware single step in order to complete this single step...
-                        m_hw_single_chained_step_addr = m_state.gpr.__pc + 2;
+                        m_hw_single_chained_step_addr = m_state.context.gpr.__pc + 2;
                     }
                     else
                     {
@@ -627,7 +629,7 @@ DNBArchMachARM::ComputeNextPC(nub_addr_t currentPC, arm_decoded_instruction_t de
     nub_addr_t myTargetPC, addressWherePCLives;
     pid_t mypid;
 
-    uint32_t cpsr_c = bit(m_state.gpr.__cpsr, 29); // Carry condition code flag
+    uint32_t cpsr_c = bit(m_state.context.gpr.__cpsr, 29); // Carry condition code flag
 
     uint32_t firstOperand=0, secondOperand=0, shiftAmount=0, secondOperandAfterShift=0, immediateValue=0;
     uint32_t halfwords=0, baseAddress=0, immediateOffset=0, addressOffsetFromRegister=0, addressOffsetFromRegisterAfterShift;
@@ -688,7 +690,7 @@ DNBArchMachARM::ComputeNextPC(nub_addr_t currentPC, arm_decoded_instruction_t de
 
                     // Get firstOperand register value (at index=1)
                     firstOperandIndex = decodedInstruction.op[1].value; // first operand register index
-                    firstOperand = m_state.gpr.__r[firstOperandIndex];
+                    firstOperand = m_state.context.gpr.__r[firstOperandIndex];
 
                     // Get immediateValue (at index=2)
                     immediateValue = decodedInstruction.op[2].value;
@@ -710,11 +712,11 @@ DNBArchMachARM::ComputeNextPC(nub_addr_t currentPC, arm_decoded_instruction_t de
 
                     // Get firstOperand register value (at index=1)
                     firstOperandIndex = decodedInstruction.op[1].value; // first operand register index
-                    firstOperand = m_state.gpr.__r[firstOperandIndex];
+                    firstOperand = m_state.context.gpr.__r[firstOperandIndex];
 
                     // Get secondOperand register value (at index=2)
                     secondOperandIndex = decodedInstruction.op[2].value; // second operand register index
-                    secondOperand = m_state.gpr.__r[secondOperandIndex];
+                    secondOperand = m_state.context.gpr.__r[secondOperandIndex];
 
                     break;
 
@@ -733,11 +735,11 @@ DNBArchMachARM::ComputeNextPC(nub_addr_t currentPC, arm_decoded_instruction_t de
 
                     // Get firstOperand register value (at index=1)
                     firstOperandIndex = decodedInstruction.op[1].value; // first operand register index
-                    firstOperand = m_state.gpr.__r[firstOperandIndex];
+                    firstOperand = m_state.context.gpr.__r[firstOperandIndex];
 
                     // Get secondOperand register value (at index=2)
                     secondOperandIndex = decodedInstruction.op[2].value; // second operand register index
-                    secondOperand = m_state.gpr.__r[secondOperandIndex];
+                    secondOperand = m_state.context.gpr.__r[secondOperandIndex];
 
                     // Get shiftAmount as immediate value (at index=3)
                     shiftAmount = decodedInstruction.op[3].value;
@@ -760,15 +762,15 @@ DNBArchMachARM::ComputeNextPC(nub_addr_t currentPC, arm_decoded_instruction_t de
 
                     // Get firstOperand register value (at index=1)
                     firstOperandIndex = decodedInstruction.op[1].value; // first operand register index
-                    firstOperand = m_state.gpr.__r[firstOperandIndex];
+                    firstOperand = m_state.context.gpr.__r[firstOperandIndex];
 
                     // Get secondOperand register value (at index=2)
                     secondOperandIndex = decodedInstruction.op[2].value; // second operand register index
-                    secondOperand = m_state.gpr.__r[secondOperandIndex];
+                    secondOperand = m_state.context.gpr.__r[secondOperandIndex];
 
                     // Get shiftAmount from register (at index=3)
                     shiftRegisterIndex = decodedInstruction.op[3].value; // second operand register index
-                    shiftAmount = m_state.gpr.__r[shiftRegisterIndex];
+                    shiftAmount = m_state.context.gpr.__r[shiftRegisterIndex];
 
                     break;
 
@@ -787,11 +789,11 @@ DNBArchMachARM::ComputeNextPC(nub_addr_t currentPC, arm_decoded_instruction_t de
 
                     // Get firstOperand register value (at index=0)
                     firstOperandIndex = decodedInstruction.op[0].value; // first operand register index
-                    firstOperand = m_state.gpr.__r[firstOperandIndex];
+                    firstOperand = m_state.context.gpr.__r[firstOperandIndex];
 
                     // Get secondOperand register value (at index=1)
                     secondOperandIndex = decodedInstruction.op[1].value; // second operand register index
-                    secondOperand = m_state.gpr.__r[secondOperandIndex];
+                    secondOperand = m_state.context.gpr.__r[secondOperandIndex];
 
                     break;
 
@@ -849,7 +851,7 @@ DNBArchMachARM::ComputeNextPC(nub_addr_t currentPC, arm_decoded_instruction_t de
 
                     // Get secondOperand register value (at index=1)
                     secondOperandIndex = decodedInstruction.op[1].value; // second operand register index
-                    secondOperand = m_state.gpr.__r[secondOperandIndex];
+                    secondOperand = m_state.context.gpr.__r[secondOperandIndex];
 
                     break;
 
@@ -868,7 +870,7 @@ DNBArchMachARM::ComputeNextPC(nub_addr_t currentPC, arm_decoded_instruction_t de
 
                     // Get secondOperand register value (at index=1)
                     secondOperandIndex = decodedInstruction.op[2].value; // second operand register index
-                    secondOperand = m_state.gpr.__r[secondOperandIndex];
+                    secondOperand = m_state.context.gpr.__r[secondOperandIndex];
 
                     // Get shiftAmount as immediate value (at index=2)
                     shiftAmount = decodedInstruction.op[2].value;
@@ -891,11 +893,11 @@ DNBArchMachARM::ComputeNextPC(nub_addr_t currentPC, arm_decoded_instruction_t de
 
                     // Get secondOperand register value (at index=1)
                     secondOperandIndex = decodedInstruction.op[1].value; // second operand register index
-                    secondOperand = m_state.gpr.__r[secondOperandIndex];
+                    secondOperand = m_state.context.gpr.__r[secondOperandIndex];
 
                     // Get shiftAmount from register (at index=2)
                     shiftRegisterIndex = decodedInstruction.op[2].value; // second operand register index
-                    shiftAmount = m_state.gpr.__r[shiftRegisterIndex];
+                    shiftAmount = m_state.context.gpr.__r[shiftRegisterIndex];
 
                     break;
 
@@ -914,7 +916,7 @@ DNBArchMachARM::ComputeNextPC(nub_addr_t currentPC, arm_decoded_instruction_t de
 
                     // Get secondOperand register value (at index=1)
                     secondOperandIndex = decodedInstruction.op[1].value; // second operand register index
-                    secondOperand = m_state.gpr.__r[secondOperandIndex];
+                    secondOperand = m_state.context.gpr.__r[secondOperandIndex];
 
                     break;
 
@@ -963,7 +965,7 @@ DNBArchMachARM::ComputeNextPC(nub_addr_t currentPC, arm_decoded_instruction_t de
                 }
 
                 // Get branch address in register (at index=0)
-                *targetPC = m_state.gpr.__r[decodedInstruction.op[0].value];
+                *targetPC = m_state.context.gpr.__r[decodedInstruction.op[0].value];
                 return true;
             }
             break;
@@ -992,7 +994,7 @@ DNBArchMachARM::ComputeNextPC(nub_addr_t currentPC, arm_decoded_instruction_t de
             }
 
             // Get branch address in register (at index=0)
-            *targetPC = m_state.gpr.__r[decodedInstruction.op[0].value];
+            *targetPC = m_state.context.gpr.__r[decodedInstruction.op[0].value];
             return true;
             break;
 
@@ -1033,7 +1035,7 @@ DNBArchMachARM::ComputeNextPC(nub_addr_t currentPC, arm_decoded_instruction_t de
 
                     // Get baseAddress from register (at index=1)
                     baseAddressIndex = decodedInstruction.op[1].value;
-                    baseAddress = m_state.gpr.__r[baseAddressIndex];
+                    baseAddress = m_state.context.gpr.__r[baseAddressIndex];
 
                     // Get immediateOffset (at index=2)
                     immediateOffset = decodedInstruction.op[2].value;
@@ -1050,11 +1052,11 @@ DNBArchMachARM::ComputeNextPC(nub_addr_t currentPC, arm_decoded_instruction_t de
 
                     // Get baseAddress from register (at index=1)
                     baseAddressIndex = decodedInstruction.op[1].value;
-                    baseAddress = m_state.gpr.__r[baseAddressIndex];
+                    baseAddress = m_state.context.gpr.__r[baseAddressIndex];
 
                     // Get immediateOffset from register (at index=2)
                     addressOffsetFromRegisterIndex = decodedInstruction.op[2].value;
-                    addressOffsetFromRegister = m_state.gpr.__r[addressOffsetFromRegisterIndex];
+                    addressOffsetFromRegister = m_state.context.gpr.__r[addressOffsetFromRegisterIndex];
 
                     break;
 
@@ -1069,11 +1071,11 @@ DNBArchMachARM::ComputeNextPC(nub_addr_t currentPC, arm_decoded_instruction_t de
 
                     // Get baseAddress from register (at index=1)
                     baseAddressIndex = decodedInstruction.op[1].value;
-                    baseAddress = m_state.gpr.__r[baseAddressIndex];
+                    baseAddress = m_state.context.gpr.__r[baseAddressIndex];
 
                     // Get immediateOffset from register (at index=2)
                     addressOffsetFromRegisterIndex = decodedInstruction.op[2].value;
-                    addressOffsetFromRegister = m_state.gpr.__r[addressOffsetFromRegisterIndex];
+                    addressOffsetFromRegister = m_state.context.gpr.__r[addressOffsetFromRegisterIndex];
 
                     // Get shiftAmount (at index=3)
                     shiftAmount = decodedInstruction.op[3].value;
@@ -1101,7 +1103,7 @@ DNBArchMachARM::ComputeNextPC(nub_addr_t currentPC, arm_decoded_instruction_t de
 
                 // Get baseAddress from register (at index=0)
                 baseAddressIndex = decodedInstruction.op[0].value;
-                baseAddress = m_state.gpr.__r[baseAddressIndex];
+                baseAddress = m_state.context.gpr.__r[baseAddressIndex];
 
                 // Get registerList from register (at index=1)
                 registerList16 = (uint16_t)decodedInstruction.op[1].value;
@@ -1125,7 +1127,7 @@ DNBArchMachARM::ComputeNextPC(nub_addr_t currentPC, arm_decoded_instruction_t de
             // Normal 16-bit LD multiple can't touch R15, but POP can
         case ARM_INST_POP:  // Can also get the PC & updates SP
             // Get baseAddress from SP (at index=0)
-            baseAddress = m_state.gpr.__sp;
+            baseAddress = m_state.context.gpr.__sp;
 
             if (decodedInstruction.thumb16b)
             {
@@ -1161,11 +1163,11 @@ DNBArchMachARM::ComputeNextPC(nub_addr_t currentPC, arm_decoded_instruction_t de
         case ARM_INST_TBH:
             // Get baseAddress from register (at index=0)
             baseAddressIndex = decodedInstruction.op[0].value;
-            baseAddress = m_state.gpr.__r[baseAddressIndex];
+            baseAddress = m_state.context.gpr.__r[baseAddressIndex];
 
             // Get immediateOffset from register (at index=1)
             addressOffsetFromRegisterIndex = decodedInstruction.op[1].value;
-            addressOffsetFromRegister = m_state.gpr.__r[addressOffsetFromRegisterIndex];
+            addressOffsetFromRegister = m_state.context.gpr.__r[addressOffsetFromRegisterIndex];
             break;
 
             // ThumbEE branch-to-handler instructions: Jump to handlers at some offset
@@ -1625,7 +1627,7 @@ DNBArchMachARM::EvaluateNextInstructionForSoftwareBreakpointSetup(nub_addr_t cur
         {
             // Compare and branch on zero/non-zero (Thumb-16 only)
             // Unusual condition check built into the instruction
-            registerValue = m_state.gpr.__r[m_last_decode_arm.op[REG_RD].value];
+            registerValue = m_state.context.gpr.__r[m_last_decode_arm.op[REG_RD].value];
 
             if (m_last_decode_arm.instruction->code == ARM_INST_CBZ)
             {
@@ -1767,11 +1769,15 @@ DNBArchMachARM::DecodeInstructionUsingDisassembler(nub_addr_t curr_pc, uint32_t 
 }
 
 nub_bool_t
-DNBArchMachARM::BreakpointHit(nub_process_t pid, nub_thread_t tid, nub_break_t breakID, void *baton)
+DNBArchMachARM::BreakpointHit (nub_process_t pid, nub_thread_t tid, nub_break_t breakID, void *baton)
 {
     nub_addr_t bkpt_pc = (nub_addr_t)baton;
     DNBLogThreadedIf(LOG_STEP | LOG_VERBOSE, "%s(pid = %i, tid = %4.4x, breakID = %u, baton = %p): Setting PC to 0x%8.8x", __FUNCTION__, pid, tid, breakID, baton, bkpt_pc);
-    return DNBThreadSetRegisterValueByID(pid, tid, REGISTER_SET_GENERIC, GENERIC_REGNUM_PC, bkpt_pc);
+    
+    DNBRegisterValue pc_value;
+    DNBThreadGetRegisterValueByID (pid, tid, REGISTER_SET_GENERIC, GENERIC_REGNUM_PC, &pc_value);
+    pc_value.value.uint32 = bkpt_pc;
+    return DNBThreadSetRegisterValueByID (pid, tid, REGISTER_SET_GENERIC, GENERIC_REGNUM_PC, &pc_value);
 }
 
 // Set the single step bit in the processor status register.
@@ -1787,11 +1793,11 @@ DNBArchMachARM::SetSingleStepSoftwareBreakpoints()
         return err.Error();
     }
 
-    nub_addr_t curr_pc = m_state.gpr.__pc;
-    uint32_t curr_cpsr = m_state.gpr.__cpsr;
+    nub_addr_t curr_pc = m_state.context.gpr.__pc;
+    uint32_t curr_cpsr = m_state.context.gpr.__cpsr;
     nub_addr_t next_pc = curr_pc;
 
-    bool curr_pc_is_thumb = (m_state.gpr.__cpsr & 0x20) != 0;
+    bool curr_pc_is_thumb = (m_state.context.gpr.__cpsr & 0x20) != 0;
     bool next_pc_is_thumb = curr_pc_is_thumb;
 
     uint32_t curr_itstate = ((curr_cpsr & 0x6000000) >> 25) | ((curr_cpsr & 0xFC00) >> 8);
@@ -1822,17 +1828,17 @@ DNBArchMachARM::SetSingleStepSoftwareBreakpoints()
     if (!inITBlock)
     {
         DNBLogThreadedIf(LOG_STEP | LOG_VERBOSE, "%s: normal instruction", __FUNCTION__);
-        EvaluateNextInstructionForSoftwareBreakpointSetup(curr_pc, m_state.gpr.__cpsr, curr_pc_is_thumb, &next_pc, &next_pc_is_thumb);
+        EvaluateNextInstructionForSoftwareBreakpointSetup(curr_pc, m_state.context.gpr.__cpsr, curr_pc_is_thumb, &next_pc, &next_pc_is_thumb);
     }
     else if (inITBlock && !m_last_decode_arm.setsFlags)
     {
         DNBLogThreadedIf(LOG_STEP | LOG_VERBOSE, "%s: IT instruction that doesn't set flags", __FUNCTION__);
-        EvaluateNextInstructionForSoftwareBreakpointSetup(curr_pc, m_state.gpr.__cpsr, curr_pc_is_thumb, &next_pc, &next_pc_is_thumb);
+        EvaluateNextInstructionForSoftwareBreakpointSetup(curr_pc, m_state.context.gpr.__cpsr, curr_pc_is_thumb, &next_pc, &next_pc_is_thumb);
     }
     else if (lastInITBlock && m_last_decode_arm.branch)
     {
         DNBLogThreadedIf(LOG_STEP | LOG_VERBOSE, "%s: IT instruction which last in the IT block and is a branch", __FUNCTION__);
-        EvaluateNextInstructionForSoftwareBreakpointSetup(curr_pc, m_state.gpr.__cpsr, curr_pc_is_thumb, &next_pc, &next_pc_is_thumb);
+        EvaluateNextInstructionForSoftwareBreakpointSetup(curr_pc, m_state.context.gpr.__cpsr, curr_pc_is_thumb, &next_pc, &next_pc_is_thumb);
     }
     else
     {
@@ -2279,119 +2285,294 @@ DNBArchMachARM::DisableHardwareWatchpoint (uint32_t hw_index)
 //----------------------------------------------------------------------
 enum gpr_regnums
 {
-    e_regNumGPR_r0 = 0,
-    e_regNumGPR_r1,
-    e_regNumGPR_r2,
-    e_regNumGPR_r3,
-    e_regNumGPR_r4,
-    e_regNumGPR_r5,
-    e_regNumGPR_r6,
-    e_regNumGPR_r7,
-    e_regNumGPR_r8,
-    e_regNumGPR_r9,
-    e_regNumGPR_r10,
-    e_regNumGPR_r11,
-    e_regNumGPR_r12,
-    e_regNumGPR_sp,
-    e_regNumGPR_lr,
-    e_regNumGPR_pc,
-    e_regNumGPR_cpsr
+    gpr_r0 = 0,
+    gpr_r1,
+    gpr_r2,
+    gpr_r3,
+    gpr_r4,
+    gpr_r5,
+    gpr_r6,
+    gpr_r7,
+    gpr_r8,
+    gpr_r9,
+    gpr_r10,
+    gpr_r11,
+    gpr_r12,
+    gpr_sp,
+    gpr_lr,
+    gpr_pc,
+    gpr_cpsr
 };
 
-// General purpose registers
-static DNBRegisterInfo g_gpr_registers[] =
+enum 
 {
-  { "r0"    , Uint, 4, Hex },
-  { "r1"    , Uint, 4, Hex },
-  { "r2"    , Uint, 4, Hex },
-  { "r3"    , Uint, 4, Hex },
-  { "r4"    , Uint, 4, Hex },
-  { "r5"    , Uint, 4, Hex },
-  { "r6"    , Uint, 4, Hex },
-  { "r7"    , Uint, 4, Hex },
-  { "r8"    , Uint, 4, Hex },
-  { "r9"    , Uint, 4, Hex },
-  { "r10"   , Uint, 4, Hex },
-  { "r11"   , Uint, 4, Hex },
-  { "r12"   , Uint, 4, Hex },
-  { "sp"    , Uint, 4, Hex },
-  { "lr"    , Uint, 4, Hex },
-  { "pc"    , Uint, 4, Hex },
-  { "cpsr"  , Uint, 4, Hex },
+    vfp_s0 = 0,
+    vfp_s1,
+    vfp_s2,
+    vfp_s3,
+    vfp_s4,
+    vfp_s5,
+    vfp_s6,
+    vfp_s7,
+    vfp_s8,
+    vfp_s9,
+    vfp_s10,
+    vfp_s11,
+    vfp_s12,
+    vfp_s13,
+    vfp_s14,
+    vfp_s15,
+    vfp_s16,
+    vfp_s17,
+    vfp_s18,
+    vfp_s19,
+    vfp_s20,
+    vfp_s21,
+    vfp_s22,
+    vfp_s23,
+    vfp_s24,
+    vfp_s25,
+    vfp_s26,
+    vfp_s27,
+    vfp_s28,
+    vfp_s29,
+    vfp_s30,
+    vfp_s31,
+    vfp_d16,
+    vfp_d17,
+    vfp_d18,
+    vfp_d19,
+    vfp_d20,
+    vfp_d21,
+    vfp_d22,
+    vfp_d23,
+    vfp_d24,
+    vfp_d25,
+    vfp_d26,
+    vfp_d27,
+    vfp_d28,
+    vfp_d29,
+    vfp_d30,
+    vfp_d31,
+    vfp_fpscr
+};
+
+enum
+{
+    exc_exception,
+	exc_fsr,
+	exc_far,
+};
+
+enum
+{
+    gdb_r0 = 0,
+    gdb_r1,
+    gdb_r2,
+    gdb_r3,
+    gdb_r4,
+    gdb_r5,
+    gdb_r6,
+    gdb_r7,
+    gdb_r8,
+    gdb_r9,
+    gdb_r10,
+    gdb_r11,
+    gdb_r12,
+    gdb_sp,
+    gdb_lr,
+    gdb_pc,
+    gdb_f0,
+    gdb_f1,
+    gdb_f2,
+    gdb_f3,
+    gdb_f4,
+    gdb_f5,
+    gdb_f6,
+    gdb_f7,
+    gdb_f8,
+    gdb_cpsr,
+    gdb_s0,
+    gdb_s1,
+    gdb_s2,
+    gdb_s3,
+    gdb_s4,
+    gdb_s5,
+    gdb_s6,
+    gdb_s7,
+    gdb_s8,
+    gdb_s9,
+    gdb_s10,
+    gdb_s11,
+    gdb_s12,
+    gdb_s13,
+    gdb_s14,
+    gdb_s15,
+    gdb_s16,
+    gdb_s17,
+    gdb_s18,
+    gdb_s19,
+    gdb_s20,
+    gdb_s21,
+    gdb_s22,
+    gdb_s23,
+    gdb_s24,
+    gdb_s25,
+    gdb_s26,
+    gdb_s27,
+    gdb_s28,
+    gdb_s29,
+    gdb_s30,
+    gdb_s31,
+    gdb_fpscr,
+    gdb_d0,
+    gdb_d1,
+    gdb_d2,
+    gdb_d3,
+    gdb_d4,
+    gdb_d5,
+    gdb_d6,
+    gdb_d7,
+    gdb_d8,
+    gdb_d9,
+    gdb_d10,
+    gdb_d11,
+    gdb_d12,
+    gdb_d13,
+    gdb_d14,
+    gdb_d15
+};
+
+#define GPR_OFFSET_IDX(idx) (offsetof (DNBArchMachARM::GPR, __r[idx]))
+#define GPR_OFFSET_NAME(reg) (offsetof (DNBArchMachARM::GPR, __##reg))
+#define VFP_S_OFFSET_IDX(idx) (offsetof (DNBArchMachARM::FPU, __r[idx]) + offsetof (DNBArchMachARM::Context, vfp))
+#define VFP_D_OFFSET_IDX(idx) (VFP_S_OFFSET_IDX (32) + (((idx) - 16) * 8))
+#define VFP_OFFSET_NAME(reg) (offsetof (DNBArchMachARM::FPU, __##reg) + offsetof (DNBArchMachARM::Context, vfp))
+#define EXC_OFFSET(reg)      (offsetof (DNBArchMachARM::EXC, __##reg)  + offsetof (DNBArchMachARM::Context, exc))
+
+// These macros will auto define the register name, alt name, register size,
+// register offset, encoding, format and native register. This ensures that
+// the register state structures are defined correctly and have the correct
+// sizes and offsets.
+#define DEFINE_GPR_IDX(idx, reg, alt, gen) { e_regSetGPR, gpr_##reg, #reg, alt, Uint, Hex, 4, GPR_OFFSET_IDX(idx), gcc_##reg, dwarf_##reg, gen, gdb_##reg }
+#define DEFINE_GPR_NAME(reg, alt, gen) { e_regSetGPR, gpr_##reg, #reg, alt, Uint, Hex, 4, GPR_OFFSET_NAME(reg), gcc_##reg, dwarf_##reg, gen, gdb_##reg }
+
+#define DEFINE_VFP_S_IDX(idx) { e_regSetVFP, vfp_s##idx, "s" #idx, NULL, IEEE754, 4, Float, VFP_S_OFFSET_IDX(idx), INVALID_NUB_REGNUM, dwarf_s##idx, INVALID_NUB_REGNUM, gdb_s##idx }
+#define DEFINE_VFP_D_IDX(idx) { e_regSetVFP, vfp_d##idx, "d" #idx, NULL, IEEE754, 8, Float, VFP_D_OFFSET_IDX(idx), INVALID_NUB_REGNUM, dwarf_s##idx, INVALID_NUB_REGNUM, gdb_s##idx }
+
+// General purpose registers
+const DNBRegisterInfo
+DNBArchMachARM::g_gpr_registers[] =
+{
+    DEFINE_GPR_IDX ( 0,  r0,  NULL, INVALID_NUB_REGNUM   ),
+    DEFINE_GPR_IDX ( 1,  r1,  NULL, INVALID_NUB_REGNUM   ),
+    DEFINE_GPR_IDX ( 2,  r2,  NULL, INVALID_NUB_REGNUM   ),
+    DEFINE_GPR_IDX ( 3,  r3,  NULL, INVALID_NUB_REGNUM   ),
+    DEFINE_GPR_IDX ( 4,  r4,  NULL, INVALID_NUB_REGNUM   ),
+    DEFINE_GPR_IDX ( 5,  r5,  NULL, INVALID_NUB_REGNUM   ),
+    DEFINE_GPR_IDX ( 6,  r6,  NULL, INVALID_NUB_REGNUM   ),
+    DEFINE_GPR_IDX ( 7,  r7,  NULL, GENERIC_REGNUM_FP    ),
+    DEFINE_GPR_IDX ( 8,  r8,  NULL, INVALID_NUB_REGNUM   ),
+    DEFINE_GPR_IDX ( 9,  r9,  NULL, INVALID_NUB_REGNUM   ),
+    DEFINE_GPR_IDX (10, r10,  NULL, INVALID_NUB_REGNUM   ),
+    DEFINE_GPR_IDX (11, r11,  NULL, INVALID_NUB_REGNUM   ),
+    DEFINE_GPR_IDX (12, r12,  NULL, INVALID_NUB_REGNUM   ),
+    DEFINE_GPR_NAME (sp, "r13", GENERIC_REGNUM_SP    ),
+    DEFINE_GPR_NAME (lr, "r14", GENERIC_REGNUM_RA    ),
+    DEFINE_GPR_NAME (pc, "r15", GENERIC_REGNUM_PC    ),
+    DEFINE_GPR_NAME (cpsr,  NULL, GENERIC_REGNUM_FLAGS )
 };
 
 // Floating point registers
-static DNBRegisterInfo g_vfp_registers[] =
+const DNBRegisterInfo
+DNBArchMachARM::g_vfp_registers[] =
 {
-  { "s0"    , IEEE754, 4, Float },
-  { "s1"    , IEEE754, 4, Float },
-  { "s2"    , IEEE754, 4, Float },
-  { "s3"    , IEEE754, 4, Float },
-  { "s4"    , IEEE754, 4, Float },
-  { "s5"    , IEEE754, 4, Float },
-  { "s6"    , IEEE754, 4, Float },
-  { "s7"    , IEEE754, 4, Float },
-  { "s8"    , IEEE754, 4, Float },
-  { "s9"    , IEEE754, 4, Float },
-  { "s10"   , IEEE754, 4, Float },
-  { "s11"   , IEEE754, 4, Float },
-  { "s12"   , IEEE754, 4, Float },
-  { "s13"   , IEEE754, 4, Float },
-  { "s14"   , IEEE754, 4, Float },
-  { "s15"   , IEEE754, 4, Float },
-  { "s16"   , IEEE754, 4, Float },
-  { "s17"   , IEEE754, 4, Float },
-  { "s18"   , IEEE754, 4, Float },
-  { "s19"   , IEEE754, 4, Float },
-  { "s20"   , IEEE754, 4, Float },
-  { "s21"   , IEEE754, 4, Float },
-  { "s22"   , IEEE754, 4, Float },
-  { "s23"   , IEEE754, 4, Float },
-  { "s24"   , IEEE754, 4, Float },
-  { "s25"   , IEEE754, 4, Float },
-  { "s26"   , IEEE754, 4, Float },
-  { "s27"   , IEEE754, 4, Float },
-  { "s28"   , IEEE754, 4, Float },
-  { "s29"   , IEEE754, 4, Float },
-  { "s30"   , IEEE754, 4, Float },
-  { "s31"   , IEEE754, 4, Float },
-  { "fpscr" , Uint, 4, Hex }
+    DEFINE_VFP_S_IDX ( 0),
+    DEFINE_VFP_S_IDX ( 1),
+    DEFINE_VFP_S_IDX ( 2),
+    DEFINE_VFP_S_IDX ( 3),
+    DEFINE_VFP_S_IDX ( 4),
+    DEFINE_VFP_S_IDX ( 5),
+    DEFINE_VFP_S_IDX ( 6),
+    DEFINE_VFP_S_IDX ( 7),
+    DEFINE_VFP_S_IDX ( 8),
+    DEFINE_VFP_S_IDX ( 9),
+    DEFINE_VFP_S_IDX (10),
+    DEFINE_VFP_S_IDX (11),
+    DEFINE_VFP_S_IDX (12),
+    DEFINE_VFP_S_IDX (13),
+    DEFINE_VFP_S_IDX (14),
+    DEFINE_VFP_S_IDX (15),
+    DEFINE_VFP_S_IDX (16),
+    DEFINE_VFP_S_IDX (17),
+    DEFINE_VFP_S_IDX (18),
+    DEFINE_VFP_S_IDX (19),
+    DEFINE_VFP_S_IDX (20),
+    DEFINE_VFP_S_IDX (21),
+    DEFINE_VFP_S_IDX (22),
+    DEFINE_VFP_S_IDX (23),
+    DEFINE_VFP_S_IDX (24),
+    DEFINE_VFP_S_IDX (25),
+    DEFINE_VFP_S_IDX (26),
+    DEFINE_VFP_S_IDX (27),
+    DEFINE_VFP_S_IDX (28),
+    DEFINE_VFP_S_IDX (29),
+    DEFINE_VFP_S_IDX (30),
+    DEFINE_VFP_S_IDX (31),
+    DEFINE_VFP_D_IDX (16),
+    DEFINE_VFP_D_IDX (17),
+    DEFINE_VFP_D_IDX (18),
+    DEFINE_VFP_D_IDX (19),
+    DEFINE_VFP_D_IDX (20),
+    DEFINE_VFP_D_IDX (21),
+    DEFINE_VFP_D_IDX (22),
+    DEFINE_VFP_D_IDX (23),
+    DEFINE_VFP_D_IDX (24),
+    DEFINE_VFP_D_IDX (25),
+    DEFINE_VFP_D_IDX (26),
+    DEFINE_VFP_D_IDX (27),
+    DEFINE_VFP_D_IDX (28),
+    DEFINE_VFP_D_IDX (29),
+    DEFINE_VFP_D_IDX (30),
+    DEFINE_VFP_D_IDX (31),
+    { e_regSetVFP, vfp_fpscr, "fpscr", NULL, Uint, 4, Hex, VFP_OFFSET_NAME(fpscr), INVALID_NUB_REGNUM, INVALID_NUB_REGNUM, INVALID_NUB_REGNUM, gdb_fpscr }
 };
 
 // Exception registers
 
-static DNBRegisterInfo g_exc_registers[] =
+const DNBRegisterInfo
+DNBArchMachARM::g_exc_registers[] =
 {
-  { "dar"       , Uint, 4, Hex },
-  { "dsisr"     , Uint, 4, Hex },
-  { "exception" , Uint, 4, Hex }
+  { e_regSetVFP, exc_exception  , "exception"   , NULL, Uint, 4, Hex, EXC_OFFSET(exception) , INVALID_NUB_REGNUM, INVALID_NUB_REGNUM, INVALID_NUB_REGNUM, INVALID_NUB_REGNUM },
+  { e_regSetVFP, exc_fsr        , "fsr"         , NULL, Uint, 4, Hex, EXC_OFFSET(fsr)       , INVALID_NUB_REGNUM, INVALID_NUB_REGNUM, INVALID_NUB_REGNUM, INVALID_NUB_REGNUM },
+  { e_regSetVFP, exc_far        , "far"         , NULL, Uint, 4, Hex, EXC_OFFSET(far)       , INVALID_NUB_REGNUM, INVALID_NUB_REGNUM, INVALID_NUB_REGNUM, INVALID_NUB_REGNUM }
 };
 
 // Number of registers in each register set
-const size_t k_num_gpr_registers = sizeof(g_gpr_registers)/sizeof(DNBRegisterInfo);
-const size_t k_num_vfp_registers = sizeof(g_vfp_registers)/sizeof(DNBRegisterInfo);
-const size_t k_num_exc_registers = sizeof(g_exc_registers)/sizeof(DNBRegisterInfo);
-// Total number of registers for this architecture
-const size_t k_num_armv6_registers = k_num_gpr_registers + k_num_vfp_registers + k_num_exc_registers;
+const size_t DNBArchMachARM::k_num_gpr_registers = sizeof(g_gpr_registers)/sizeof(DNBRegisterInfo);
+const size_t DNBArchMachARM::k_num_vfp_registers = sizeof(g_vfp_registers)/sizeof(DNBRegisterInfo);
+const size_t DNBArchMachARM::k_num_exc_registers = sizeof(g_exc_registers)/sizeof(DNBRegisterInfo);
+const size_t DNBArchMachARM::k_num_all_registers = k_num_gpr_registers + k_num_vfp_registers + k_num_exc_registers;
 
 //----------------------------------------------------------------------
 // Register set definitions. The first definitions at register set index
 // of zero is for all registers, followed by other registers sets. The
 // register information for the all register set need not be filled in.
 //----------------------------------------------------------------------
-static const DNBRegisterSetInfo g_reg_sets[] =
+const DNBRegisterSetInfo
+DNBArchMachARM::g_reg_sets[] =
 {
-    { "ARMV6 Registers",            NULL,               k_num_armv6_registers   },
+    { "ARM Registers",              NULL,               k_num_all_registers     },
     { "General Purpose Registers",  g_gpr_registers,    k_num_gpr_registers     },
     { "Floating Point Registers",   g_vfp_registers,    k_num_vfp_registers     },
     { "Exception State Registers",  g_exc_registers,    k_num_exc_registers     }
 };
 // Total number of register sets for this architecture
-const size_t k_num_register_sets = sizeof(g_reg_sets)/sizeof(DNBRegisterSetInfo);
+const size_t DNBArchMachARM::k_num_register_sets = sizeof(g_reg_sets)/sizeof(DNBRegisterSetInfo);
 
 
 const DNBRegisterSetInfo *
-DNBArchMachARM::GetRegisterSetInfo(nub_size_t *num_reg_sets) const
+DNBArchMachARM::GetRegisterSetInfo(nub_size_t *num_reg_sets)
 {
     *num_reg_sets = k_num_register_sets;
     return g_reg_sets;
@@ -2406,27 +2587,27 @@ DNBArchMachARM::GetRegisterValue(int set, int reg, DNBRegisterValue *value)
         {
         case GENERIC_REGNUM_PC:     // Program Counter
             set = e_regSetGPR;
-            reg = e_regNumGPR_pc;
+            reg = gpr_pc;
             break;
 
         case GENERIC_REGNUM_SP:     // Stack Pointer
             set = e_regSetGPR;
-            reg = e_regNumGPR_sp;
+            reg = gpr_sp;
             break;
 
         case GENERIC_REGNUM_FP:     // Frame Pointer
             set = e_regSetGPR;
-            reg = e_regNumGPR_r7;   // is this the right reg?
+            reg = gpr_r7;   // is this the right reg?
             break;
 
         case GENERIC_REGNUM_RA:     // Return Address
             set = e_regSetGPR;
-            reg = e_regNumGPR_lr;
+            reg = gpr_lr;
             break;
 
         case GENERIC_REGNUM_FLAGS:  // Processor flags register
             set = e_regSetGPR;
-            reg = e_regNumGPR_cpsr;
+            reg = gpr_cpsr;
             break;
 
         default:
@@ -2446,7 +2627,7 @@ DNBArchMachARM::GetRegisterValue(int set, int reg, DNBRegisterValue *value)
         case e_regSetGPR:
             if (reg < k_num_gpr_registers)
             {
-                value->value.uint32 = m_state.gpr.__r[reg];
+                value->value.uint32 = m_state.context.gpr.__r[reg];
                 return true;
             }
             break;
@@ -2454,12 +2635,12 @@ DNBArchMachARM::GetRegisterValue(int set, int reg, DNBRegisterValue *value)
         case e_regSetVFP:
             if (reg < 32)
             {
-                value->value.uint32 = m_state.vfp.__r[reg];
+                value->value.uint32 = m_state.context.vfp.__r[reg];
                 return true;
             }
             else if (reg == 32)
             {
-                value->value.uint32 = m_state.vfp.__fpscr;
+                value->value.uint32 = m_state.context.vfp.__fpscr;
                 return true;
             }
             break;
@@ -2467,7 +2648,7 @@ DNBArchMachARM::GetRegisterValue(int set, int reg, DNBRegisterValue *value)
         case e_regSetEXC:
             if (reg < k_num_exc_registers)
             {
-                value->value.uint32 = (&m_state.exc.__exception)[reg];
+                value->value.uint32 = (&m_state.context.exc.__exception)[reg];
                 return true;
             }
             break;
@@ -2485,27 +2666,27 @@ DNBArchMachARM::SetRegisterValue(int set, int reg, const DNBRegisterValue *value
         {
         case GENERIC_REGNUM_PC:     // Program Counter
             set = e_regSetGPR;
-            reg = e_regNumGPR_pc;
+            reg = gpr_pc;
             break;
 
         case GENERIC_REGNUM_SP:     // Stack Pointer
             set = e_regSetGPR;
-            reg = e_regNumGPR_sp;
+            reg = gpr_sp;
             break;
 
         case GENERIC_REGNUM_FP:     // Frame Pointer
             set = e_regSetGPR;
-            reg = e_regNumGPR_r7;
+            reg = gpr_r7;
             break;
 
         case GENERIC_REGNUM_RA:     // Return Address
             set = e_regSetGPR;
-            reg = e_regNumGPR_lr;
+            reg = gpr_lr;
             break;
 
         case GENERIC_REGNUM_FLAGS:  // Processor flags register
             set = e_regSetGPR;
-            reg = e_regNumGPR_cpsr;
+            reg = gpr_cpsr;
             break;
 
         default:
@@ -2525,7 +2706,7 @@ DNBArchMachARM::SetRegisterValue(int set, int reg, const DNBRegisterValue *value
         case e_regSetGPR:
             if (reg < k_num_gpr_registers)
             {
-                m_state.gpr.__r[reg] = value->value.uint32;
+                m_state.context.gpr.__r[reg] = value->value.uint32;
                 success = true;
             }
             break;
@@ -2533,12 +2714,12 @@ DNBArchMachARM::SetRegisterValue(int set, int reg, const DNBRegisterValue *value
         case e_regSetVFP:
             if (reg < 32)
             {
-                m_state.vfp.__r[reg] = value->value.float64;
+                m_state.context.vfp.__r[reg] = value->value.float64;
                 success = true;
             }
             else if (reg == 32)
             {
-                m_state.vfp.__fpscr = value->value.uint32;
+                m_state.context.vfp.__fpscr = value->value.uint32;
                 success = true;
             }
             break;
@@ -2546,7 +2727,7 @@ DNBArchMachARM::SetRegisterValue(int set, int reg, const DNBRegisterValue *value
         case e_regSetEXC:
             if (reg < k_num_exc_registers)
             {
-                (&m_state.exc.__exception)[reg] = value->value.uint32;
+                (&m_state.context.exc.__exception)[reg] = value->value.uint32;
                 success = true;
             }
             break;
@@ -2603,6 +2784,48 @@ bool
 DNBArchMachARM::RegisterSetStateIsValid (int set) const
 {
     return m_state.RegsAreValid(set);
+}
+
+
+nub_size_t
+DNBArchMachARM::GetRegisterContext (void *buf, nub_size_t buf_len)
+{
+    nub_size_t size = sizeof (m_state.context);
+    
+    if (buf && buf_len)
+    {
+        if (size > buf_len)
+            size = buf_len;
+
+        bool force = false;
+        if (GetGPRState(force) | GetVFPState(force) | GetEXCState(force))
+            return 0;
+        ::memcpy (buf, &m_state.context, size);
+    }
+    DNBLogThreadedIf (LOG_THREAD, "DNBArchMachARM::GetRegisterContext (buf = %p, len = %zu) => %zu", buf, buf_len, size);
+    // Return the size of the register context even if NULL was passed in
+    return size;
+}
+
+nub_size_t
+DNBArchMachARM::SetRegisterContext (const void *buf, nub_size_t buf_len)
+{
+    nub_size_t size = sizeof (m_state.context);
+    if (buf == NULL || buf_len == 0)
+        size = 0;
+    
+    if (size)
+    {
+        if (size > buf_len)
+            size = buf_len;
+
+        ::memcpy (&m_state.context, buf, size);
+        SetGPRState();
+        SetVFPState();
+        SetEXCState();
+    }
+    DNBLogThreadedIf (LOG_THREAD, "DNBArchMachARM::SetRegisterContext (buf = %p, len = %zu) => %zu", buf, buf_len, size);
+    return size;
 }
 
 

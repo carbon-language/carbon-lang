@@ -1778,7 +1778,17 @@ MachProcess::SBLaunchForDebug (const char *path, char const *argv[], char const 
         char const *arg;
         for (i=0; (arg = argv[i]) != NULL; i++)
             m_args.push_back(arg);
-        m_task.StartExceptionThread();
+        m_task.StartExceptionThread(launch_err);
+        
+        if (launch_err.Fail())
+        {
+            if (launch_err.AsString() == NULL)
+                launch_err.SetErrorString("unable to start the exception thread");
+            ::ptrace (PT_KILL, m_pid, 0, 0);
+            m_pid = INVALID_NUB_PROCESS;
+            return INVALID_NUB_PROCESS;
+        }
+
         StartSTDIOThread();
         SetState (eStateAttaching);
         int err = ptrace (PT_ATTACHEXC, m_pid, 0, 0);

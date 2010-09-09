@@ -171,6 +171,7 @@ RNBRemote::CreatePacketTable  ()
     t.push_back (Packet (set_max_packet_size,           &RNBRemote::HandlePacket_Q            , NULL, "QSetMaxPacketSize:", "Tell " DEBUGSERVER_PROGRAM_NAME " the max sized packet gdb can handle"));
     t.push_back (Packet (set_max_payload_size,          &RNBRemote::HandlePacket_Q            , NULL, "QSetMaxPayloadSize:", "Tell " DEBUGSERVER_PROGRAM_NAME " the max sized payload gdb can handle"));
     t.push_back (Packet (set_environment_variable,      &RNBRemote::HandlePacket_Q            , NULL, "QEnvironment:", "Add an environment variable to the inferior's environment"));
+    t.push_back (Packet (set_disable_aslr,              &RNBRemote::HandlePacket_Q            , NULL, "QSetDisableASLR:", "Set wether to disable ASLR when launching the process with the set argv ('A') packet"));
 //  t.push_back (Packet (pass_signals_to_inferior,      &RNBRemote::HandlePacket_UNIMPLEMENTED, NULL, "QPassSignals:", "Specify which signals are passed to the inferior"));
     t.push_back (Packet (allocate_memory,               &RNBRemote::HandlePacket_AllocateMemory, NULL, "_M", "Allocate memory in the inferior process."));
     t.push_back (Packet (deallocate_memory,             &RNBRemote::HandlePacket_DeallocateMemory, NULL, "_m", "Deallocate memory in the inferior process."));
@@ -826,14 +827,14 @@ g_gdb_register_map_arm[] =
     { 13,  4,  "sp",    {0}, NULL, 1},
     { 14,  4,  "lr",    {0}, NULL, 1},
     { 15,  4,  "pc",    {0}, NULL, 1},
-    { 16, 12,  "f0",    NULL, k_zero_bytes, 0},
-    { 17, 12,  "f1",    NULL, k_zero_bytes, 0},
-    { 18, 12,  "f2",    NULL, k_zero_bytes, 0},
-    { 19, 12,  "f3",    NULL, k_zero_bytes, 0},
-    { 20, 12,  "f4",    NULL, k_zero_bytes, 0},
-    { 21, 12,  "f5",    NULL, k_zero_bytes, 0},
-    { 22, 12,  "f6",    NULL, k_zero_bytes, 0},
-    { 23, 12,  "f7",    NULL, k_zero_bytes, 0},
+    { 16, 12,  "f0",    {0}, k_zero_bytes, 0},
+    { 17, 12,  "f1",    {0}, k_zero_bytes, 0},
+    { 18, 12,  "f2",    {0}, k_zero_bytes, 0},
+    { 19, 12,  "f3",    {0}, k_zero_bytes, 0},
+    { 20, 12,  "f4",    {0}, k_zero_bytes, 0},
+    { 21, 12,  "f5",    {0}, k_zero_bytes, 0},
+    { 22, 12,  "f6",    {0}, k_zero_bytes, 0},
+    { 23, 12,  "f7",    {0}, k_zero_bytes, 0},
     { 24,  4, "fps",    {0}, NULL, 0},
     { 25,  4,"cpsr",    {0}, NULL, 1},
     { 26,  4,  "s0",    {0}, NULL, 0},
@@ -1751,6 +1752,20 @@ RNBRemote::HandlePacket_Q (const char *p)
             return SendPacket ("E35");
     }
 
+    if (strncmp (p, "QSetDisableASLR:", sizeof ("QSetDisableASLR:") - 1) == 0)
+    {
+        extern int g_disable_aslr;
+        p += sizeof ("QSetDisableASLR:") - 1;
+        switch (*p)
+        {
+        case '0': g_disable_aslr = 0; break;
+        case '1': g_disable_aslr = 1; break;
+        default:
+            return SendPacket ("E56");
+        }
+        return SendPacket ("OK");
+    }
+
     /* The number of characters in a packet payload that gdb is
      prepared to accept.  The packet-start char, packet-end char,
      2 checksum chars and terminating null character are not included
@@ -1933,7 +1948,7 @@ RNBRemote::SendStopReplyPacketForThread (nub_thread_t tid)
         if (DNBThreadGetIdentifierInfo (pid, tid, &thread_ident_info))
         {
             if (thread_ident_info.dispatch_qaddr != 0)
-                ostrm << std::hex << "dispatchqaddr:" << thread_ident_info.dispatch_qaddr << ';';
+                ostrm << std::hex << "qaddr:" << thread_ident_info.dispatch_qaddr << ';';
         }
         DNBRegisterValue reg_value;
         for (uint32_t reg = 0; reg < g_num_reg_entries; reg++)

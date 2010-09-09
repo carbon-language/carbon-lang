@@ -45,10 +45,13 @@ public:
     {
     }
 
-    virtual const DNBRegisterSetInfo *
-                            GetRegisterSetInfo(nub_size_t *num_reg_sets) const;
+    static const DNBRegisterSetInfo *
+    GetRegisterSetInfo(nub_size_t *num_reg_sets);
+
     virtual bool            GetRegisterValue(int set, int reg, DNBRegisterValue *value);
     virtual bool            SetRegisterValue(int set, int reg, const DNBRegisterValue *value);
+    virtual nub_size_t      GetRegisterContext (void *buf, nub_size_t buf_len);
+    virtual nub_size_t      SetRegisterContext (const void *buf, nub_size_t buf_len);
 
     virtual kern_return_t   GetRegisterState  (int set, bool force);
     virtual kern_return_t   SetRegisterState  (int set);
@@ -100,12 +103,32 @@ protected:
         Write = 1,
         kNumErrors = 2
     };
+    
+    typedef arm_thread_state_t GPR;
+    typedef arm_vfp_state_t FPU;
+    typedef arm_exception_state_t EXC;
+
+    static const DNBRegisterInfo g_gpr_registers[];
+    static const DNBRegisterInfo g_vfp_registers[];
+    static const DNBRegisterInfo g_exc_registers[];
+    static const DNBRegisterSetInfo g_reg_sets[];
+
+    static const size_t k_num_gpr_registers;
+    static const size_t k_num_vfp_registers;
+    static const size_t k_num_exc_registers;
+    static const size_t k_num_all_registers;
+    static const size_t k_num_register_sets;
+
+    struct Context
+    {
+        GPR gpr;
+        FPU vfp;
+        EXC exc;
+    };
 
     struct State
     {
-        arm_thread_state_t      gpr;
-        arm_vfp_state_t         vfp;
-        arm_exception_state_t   exc;
+        Context                 context;
         arm_debug_state_t       dbg;
         kern_return_t           gpr_errs[2];    // Read/Write errors
         kern_return_t           vfp_errs[2];    // Read/Write errors

@@ -96,6 +96,7 @@ public:
         set_max_packet_size,            // 'QSetMaxPacketSize:'
         set_max_payload_size,           // 'QSetMaxPayloadSize:'
         set_environment_variable,       // 'QEnvironment:'
+        set_disable_aslr,               // 'QSetDisableASLR:'
         allocate_memory,                // '_M'
         deallocate_memory,              // '_m'
 

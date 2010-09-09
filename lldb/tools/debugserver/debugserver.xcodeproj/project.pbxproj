@@ -450,13 +450,18 @@
 		1DEB914F08733D8E0010E9CD /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ARCHS = "$(ARCHS_STANDARD_32_64_BIT)";
+				"ARCHS[sdk=iphoneos*]" = armv6;
+				"ARCHS[sdk=macosx*]" = (
+					x86_64,
+					i386,
+				);
 				COPY_PHASE_STRIP = NO;
 				CURRENT_PROJECT_VERSION = 112;
 				FRAMEWORK_SEARCH_PATHS = $SDKROOT/System/Library/PrivateFrameworks;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				STRIP_INSTALLED_PRODUCT = NO;
+				VALID_ARCHS = "armv4t armv5 armv6 armv7 i386 ppc ppc64 ppc7400 ppc970 x86_64";
 				VERSIONING_SYSTEM = "apple-generic";
 				VERSION_INFO_BUILDER = "$(USER)";
 			};
@@ -465,7 +470,11 @@
 		1DEB915008733D8E0010E9CD /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ARCHS = "$(ARCHS_STANDARD_32_64_BIT)";
+				"ARCHS[sdk=iphoneos*]" = armv6;
+				"ARCHS[sdk=macosx*]" = (
+					x86_64,
+					i386,
+				);
 				CURRENT_PROJECT_VERSION = 112;
 				DEAD_CODE_STRIPPING = YES;
 				FRAMEWORK_SEARCH_PATHS = $SDKROOT/System/Library/PrivateFrameworks;
@@ -473,6 +482,7 @@
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				STRIPFLAGS = "-x";
 				STRIP_STYLE = debugging;
+				VALID_ARCHS = "armv4t armv5 armv6 armv7 i386 ppc ppc64 ppc7400 ppc970 x86_64";
 				VERSIONING_SYSTEM = "apple-generic";
 				VERSION_INFO_BUILDER = "$(USER)";
 			};
@@ -481,7 +491,11 @@
 		262419A11198A93E00067686 /* BuildAndIntegration */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ARCHS = "$(ARCHS_STANDARD_32_64_BIT)";
+				"ARCHS[sdk=iphoneos*]" = armv6;
+				"ARCHS[sdk=macosx*]" = (
+					x86_64,
+					i386,
+				);
 				CURRENT_PROJECT_VERSION = 112;
 				DEAD_CODE_STRIPPING = YES;
 				FRAMEWORK_SEARCH_PATHS = $SDKROOT/System/Library/PrivateFrameworks;
@@ -489,6 +503,7 @@
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				STRIPFLAGS = "-x";
 				STRIP_STYLE = debugging;
+				VALID_ARCHS = "armv4t armv5 armv6 armv7 i386 ppc ppc64 ppc7400 ppc970 x86_64";
 				VERSIONING_SYSTEM = "apple-generic";
 				VERSION_INFO_BUILDER = "$(USER)";
 			};
@@ -498,13 +513,16 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
-				ARCHS = (
-					x86_64,
-					i386,
-				);
+				"CODE_SIGN_ENTITLEMENTS[sdk=iphoneos*]" = "source/debugserver-entitlements.plist";
 				COPY_PHASE_STRIP = YES;
 				CURRENT_PROJECT_VERSION = 112;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				FRAMEWORK_SEARCH_PATHS = $SDKROOT/System/Library/PrivateFrameworks;
+				"FRAMEWORK_SEARCH_PATHS[sdk=iphoneos*][arch=*]" = (
+					"$(SDKROOT)/System/Library/PrivateFrameworks",
+					"$(SDKROOT)$(DEVELOPER_LIBRARY_DIR)/PrivateFrameworks",
+				);
+				"FRAMEWORK_SEARCH_PATHS[sdk=macosx*][arch=*]" = "$(SDKROOT)/System/Library/PrivateFrameworks";
 				GCC_PREPROCESSOR_DEFINITIONS = LLDB_DEBUGSERVER;
 				HEADER_SEARCH_PATHS = /System/Library/Frameworks/System.framework/PrivateHeaders;
 				INSTALL_PATH = /Developer/usr/bin;
@@ -515,6 +533,13 @@
 					__TEXT,
 					__info_plist,
 					"$(PROJECT_DIR)/resources/lldb-debugserver-Info.plist",
+				);
+				"OTHER_LDFLAGS[sdk=iphoneos*][arch=*]" = (
+					"-framework",
+					SpringBoardServices,
+					"-framework",
+					ARMDisassembler,
+					"-llockdown",
 				);
 				OTHER_MIGFLAGS = "-I$(DERIVED_FILE_DIR)";
 				PREBINDING = NO;
@@ -529,17 +554,19 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
-				ARCHS = (
-					x86_64,
-					i386,
-				);
-				CODE_SIGN_IDENTITY = lldb_codesign;
+				"CODE_SIGN_ENTITLEMENTS[sdk=iphoneos*]" = "source/debugserver-entitlements.plist";
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = lldb_codesign;
 				COPY_PHASE_STRIP = YES;
 				CURRENT_PROJECT_VERSION = 112;
+				FRAMEWORK_SEARCH_PATHS = $SDKROOT/System/Library/PrivateFrameworks;
+				"FRAMEWORK_SEARCH_PATHS[sdk=iphoneos*][arch=*]" = (
+					"$(SDKROOT)/System/Library/PrivateFrameworks",
+					"$(SDKROOT)$(DEVELOPER_LIBRARY_DIR)/PrivateFrameworks",
+				);
+				"FRAMEWORK_SEARCH_PATHS[sdk=macosx*][arch=*]" = "$(SDKROOT)/System/Library/PrivateFrameworks";
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_OPTIMIZATION_LEVEL = 0;
 				GCC_PREPROCESSOR_DEFINITIONS = LLDB_DEBUGSERVER;
-				HEADER_SEARCH_PATHS = /System/Library/Frameworks/System.framework/PrivateHeaders;
 				INSTALL_PATH = /Developer/usr/bin;
 				LLDB_DEBUGSERVER = 1;
 				OTHER_CFLAGS = "-Wparentheses";
@@ -549,9 +576,17 @@
 					__info_plist,
 					"$(PROJECT_DIR)/resources/lldb-debugserver-Info.plist",
 				);
+				"OTHER_LDFLAGS[sdk=iphoneos*][arch=*]" = (
+					"-framework",
+					SpringBoardServices,
+					"-framework",
+					ARMDisassembler,
+					"-llockdown",
+				);
 				OTHER_MIGFLAGS = "-I$(DERIVED_FILE_DIR)";
 				PREBINDING = NO;
 				PRODUCT_NAME = debugserver;
+				"PROVISIONING_PROFILE[sdk=macosx*]" = "";
 				USER_HEADER_SEARCH_PATHS = "./source ../../source $(DERIVED_SOURCES_DIR)";
 				ZERO_LINK = NO;
 			};
@@ -561,14 +596,17 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
-				ARCHS = (
-					x86_64,
-					i386,
-				);
-				CODE_SIGN_IDENTITY = lldb_codesign;
+				"CODE_SIGN_ENTITLEMENTS[sdk=iphoneos*]" = "source/debugserver-entitlements.plist";
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = lldb_codesign;
 				COPY_PHASE_STRIP = YES;
 				CURRENT_PROJECT_VERSION = 112;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				FRAMEWORK_SEARCH_PATHS = $SDKROOT/System/Library/PrivateFrameworks;
+				"FRAMEWORK_SEARCH_PATHS[sdk=iphoneos*][arch=*]" = (
+					"$(SDKROOT)/System/Library/PrivateFrameworks",
+					"$(SDKROOT)$(DEVELOPER_LIBRARY_DIR)/PrivateFrameworks",
+				);
+				"FRAMEWORK_SEARCH_PATHS[sdk=macosx*][arch=*]" = "$(SDKROOT)/System/Library/PrivateFrameworks";
 				GCC_PREPROCESSOR_DEFINITIONS = LLDB_DEBUGSERVER;
 				HEADER_SEARCH_PATHS = /System/Library/Frameworks/System.framework/PrivateHeaders;
 				INSTALL_PATH = /Developer/usr/bin;
@@ -580,9 +618,17 @@
 					__info_plist,
 					"$(PROJECT_DIR)/resources/lldb-debugserver-Info.plist",
 				);
+				"OTHER_LDFLAGS[sdk=iphoneos*][arch=*]" = (
+					"-framework",
+					SpringBoardServices,
+					"-framework",
+					ARMDisassembler,
+					"-llockdown",
+				);
 				OTHER_MIGFLAGS = "-I$(DERIVED_FILE_DIR)";
 				PREBINDING = NO;
 				PRODUCT_NAME = debugserver;
+				"PROVISIONING_PROFILE[sdk=macosx*]" = "";
 				USER_HEADER_SEARCH_PATHS = "./source ../../source $(DERIVED_SOURCES_DIR)";
 				ZERO_LINK = NO;
 			};

@@ -53,7 +53,7 @@ RNBRemoteSP g_remoteSP;
 static int g_lockdown_opt  = 0;
 static int g_applist_opt = 0;
 static nub_launch_flavor_t g_launch_flavor = eLaunchFlavorDefault;
-static int g_disable_aslr = 0;
+int g_disable_aslr = 0;
 
 int g_isatty = 0;
 

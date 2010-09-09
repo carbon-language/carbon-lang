@@ -1042,7 +1042,7 @@ ProcessGDBRemote::SetThreadStopInfo (StringExtractor& stop_packet)
                 {
                     thread_name.swap (value);
                 }
-                else if (name.compare("dispatchqaddr") == 0)
+                else if (name.compare("qaddr") == 0)
                 {
                     thread_dispatch_qaddr = Args::StringToUInt64 (value.c_str(), 0, 16);
                 }
