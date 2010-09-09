@@ -380,8 +380,8 @@ public:
   // FIXME: AddrLabelExpr (once we have cursors for labels)
   bool VisitTypesCompatibleExpr(TypesCompatibleExpr *E);
   bool VisitVAArgExpr(VAArgExpr *E);
-  // FIXME: InitListExpr (for the designators)
-  // FIXME: DesignatedInitExpr
+  bool VisitInitListExpr(InitListExpr *E);
+  bool VisitDesignatedInitExpr(DesignatedInitExpr *E);
   bool VisitCXXTypeidExpr(CXXTypeidExpr *E);
   bool VisitCXXUuidofExpr(CXXUuidofExpr *E);
   bool VisitCXXDefaultArgExpr(CXXDefaultArgExpr *E) { return false; }
@@ -1650,6 +1650,42 @@ bool CursorVisitor::VisitVAArgExpr(VAArgExpr *E) {
     return true;
   
   return Visit(MakeCXCursor(E->getSubExpr(), StmtParent, TU));
+}
+
+bool CursorVisitor::VisitInitListExpr(InitListExpr *E) {
+  // We care about the syntactic form of the initializer list, only.
+  return VisitExpr(E->getSyntacticForm());
+}
+
+bool CursorVisitor::VisitDesignatedInitExpr(DesignatedInitExpr *E) {
+  // Visit the designators.
+  typedef DesignatedInitExpr::Designator Designator;
+  for (DesignatedInitExpr::designators_iterator D = E->designators_begin(),
+                                             DEnd = E->designators_end();
+       D != DEnd; ++D) {
+    if (D->isFieldDesignator()) {
+      if (FieldDecl *Field = D->getField())
+        if (Visit(MakeCursorMemberRef(Field, D->getFieldLoc(), TU)))
+          return true;
+      
+      continue;
+    }
+
+    if (D->isArrayDesignator()) {
+      if (Visit(MakeCXCursor(E->getArrayIndex(*D), StmtParent, TU)))
+        return true;
+      
+      continue;
+    }
+
+    assert(D->isArrayRangeDesignator() && "Unknown designator kind");
+    if (Visit(MakeCXCursor(E->getArrayRangeStart(*D), StmtParent, TU)) ||
+        Visit(MakeCXCursor(E->getArrayRangeEnd(*D), StmtParent, TU)))
+      return true;
+  }
+ 
+  // Visit the initializer value itself.
+  return Visit(MakeCXCursor(E->getInit(), StmtParent, TU));
 }
 
 bool CursorVisitor::VisitCXXTypeidExpr(CXXTypeidExpr *E) {
