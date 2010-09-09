@@ -54,6 +54,9 @@ public:
   /// User specified include entries.
   std::vector<Entry> UserEntries;
 
+  /// If non-empty, the list of C++ standard include paths to use.
+  std::vector<std::string> CXXSystemIncludes;
+
   /// A (system-path) delimited list of include paths to be added from the
   /// environment following the user specified includes (but prior to builtin
   /// and standard includes). This is parsed in the same manner as the CPATH

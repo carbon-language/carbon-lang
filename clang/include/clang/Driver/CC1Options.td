@@ -516,6 +516,8 @@ def iwithprefixbefore : JoinedOrSeparate<"-iwithprefixbefore">,
   HelpText<"Set directory to include search path with prefix">;
 def isysroot : JoinedOrSeparate<"-isysroot">, MetaVarName<"<dir>">,
   HelpText<"Set the system root directory (usually /)">;
+def cxx_system_include : Separate<"-cxx-system-include">,
+  HelpText<"Add a system #include directory for the C++ standard library">;
 def v : Flag<"-v">, HelpText<"Enable verbose output">;
 
 //===----------------------------------------------------------------------===//
