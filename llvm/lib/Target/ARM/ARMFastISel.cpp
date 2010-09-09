@@ -373,16 +373,24 @@ unsigned ARMFastISel::ARMMaterializeFP(const ConstantFP *CFP, EVT VT) {
                     .addFPImm(CFP));
     return DestReg;
   }
-
-  // No 64-bit at the moment.
-  if (is64bit) return 0;
-
-  // Load this from the constant pool.
-  unsigned DestReg = ARMMaterializeInt(cast<Constant>(CFP));
-
-  // If we have a floating point constant we expect it in a floating point
-  // register.
-  return ARMMoveToFPReg(VT, DestReg);
+  
+  // Require VFP2 for this.
+  if (!Subtarget->hasVFP2()) return false;
+  
+  // MachineConstantPool wants an explicit alignment.
+  unsigned Align = TD.getPrefTypeAlignment(CFP->getType());
+  if (Align == 0) {
+    // TODO: Figure out if this is correct.
+    Align = TD.getTypeAllocSize(CFP->getType());
+  }
+  unsigned Idx = MCP.getConstantPoolIndex(cast<Constant>(CFP), Align);
+  unsigned DestReg = createResultReg(TLI.getRegClassFor(VT));
+  unsigned Opc = is64bit ? ARM::VLDRD : ARM::VLDRS;
+  
+  AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(Opc))
+                  .addReg(DestReg).addConstantPoolIndex(Idx)
+                  .addReg(0));
+  return DestReg;
 }
 
 unsigned ARMFastISel::ARMMaterializeInt(const Constant *C) {
