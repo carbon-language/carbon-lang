@@ -445,41 +445,39 @@ void InitHeaderSearch::AddDefaultCIncludePaths(const llvm::Triple &triple,
   }
   llvm::Triple::OSType os = triple.getOS();
   switch (os) {
-  case llvm::Triple::Win32:
-    {
-      std::string VSDir;
-      std::string WindowsSDKDir;
-      if (getVisualStudioDir(VSDir)) {
-        AddPath(VSDir + "\\VC\\include", System, false, false, false);
-        if (getWindowsSDKDir(WindowsSDKDir))
-          AddPath(WindowsSDKDir + "\\include", System, false, false, false);
-        else
-          AddPath(VSDir + "\\VC\\PlatformSDK\\Include",
-            System, false, false, false);
-      }
-      else {
-          // Default install paths.
-        AddPath("C:/Program Files/Microsoft Visual Studio 10.0/VC/include",
-          System, false, false, false);
-        AddPath("C:/Program Files/Microsoft Visual Studio 9.0/VC/include",
-          System, false, false, false);
-        AddPath(
+  case llvm::Triple::Win32: {
+    std::string VSDir;
+    std::string WindowsSDKDir;
+    if (getVisualStudioDir(VSDir)) {
+      AddPath(VSDir + "\\VC\\include", System, false, false, false);
+      if (getWindowsSDKDir(WindowsSDKDir))
+        AddPath(WindowsSDKDir + "\\include", System, false, false, false);
+      else
+        AddPath(VSDir + "\\VC\\PlatformSDK\\Include",
+                System, false, false, false);
+    } else {
+      // Default install paths.
+      AddPath("C:/Program Files/Microsoft Visual Studio 10.0/VC/include",
+              System, false, false, false);
+      AddPath("C:/Program Files/Microsoft Visual Studio 9.0/VC/include",
+              System, false, false, false);
+      AddPath(
         "C:/Program Files/Microsoft Visual Studio 9.0/VC/PlatformSDK/Include",
-          System, false, false, false);
-        AddPath("C:/Program Files/Microsoft Visual Studio 8/VC/include",
-          System, false, false, false);
-        AddPath(
+        System, false, false, false);
+      AddPath("C:/Program Files/Microsoft Visual Studio 8/VC/include",
+              System, false, false, false);
+      AddPath(
         "C:/Program Files/Microsoft Visual Studio 8/VC/PlatformSDK/Include",
-          System, false, false, false);
-          // For some clang developers.
-        AddPath("G:/Program Files/Microsoft Visual Studio 9.0/VC/include",
-          System, false, false, false);
-        AddPath(
+        System, false, false, false);
+      // For some clang developers.
+      AddPath("G:/Program Files/Microsoft Visual Studio 9.0/VC/include",
+              System, false, false, false);
+      AddPath(
         "G:/Program Files/Microsoft Visual Studio 9.0/VC/PlatformSDK/Include",
-          System, false, false, false);
-      }
+        System, false, false, false);
     }
     break;
+  }
   case llvm::Triple::Haiku:
     AddPath("/boot/common/include", System, true, false, false);
     AddPath("/boot/develop/headers/os", System, true, false, false);
