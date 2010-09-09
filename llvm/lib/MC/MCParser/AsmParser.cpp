@@ -140,6 +140,8 @@ public:
   /// }
 
 private:
+  void CheckForValidSection();
+
   bool ParseStatement();
 
   bool HandleMacroEntry(StringRef Name, SMLoc NameLoc, const Macro *M);
@@ -397,6 +399,16 @@ bool AsmParser::Run(bool NoInitialTextSection, bool NoFinalize) {
     Out.Finish();
 
   return HadError;
+}
+
+void AsmParser::CheckForValidSection() {
+  if (!getStreamer().getCurrentSection()) {
+    TokError("expected section directive before assembly directive");
+    Out.SwitchSection(Ctx.getMachOSection(
+                        "__TEXT", "__text",
+                        MCSectionMachO::S_ATTR_PURE_INSTRUCTIONS,
+                        0, SectionKind::getText()));
+  }
 }
 
 /// EatToEndOfStatement - Throw away the rest of the line for testing purposes.
@@ -759,6 +771,8 @@ bool AsmParser::ParseStatement() {
   // See what kind of statement we have.
   switch (Lexer.getKind()) {
   case AsmToken::Colon: {
+    CheckForValidSection();
+
     // identifier ':'   -> Label.
     Lex();
 
@@ -910,6 +924,8 @@ bool AsmParser::ParseStatement() {
     EatToEndOfStatement();
     return false;
   }
+
+  CheckForValidSection();
 
   // Canonicalize the opcode to lower case.
   SmallString<128> Opcode;
@@ -1238,6 +1254,8 @@ bool AsmParser::ParseEscapedString(std::string &Data) {
 ///   ::= ( .ascii | .asciz ) [ "string" ( , "string" )* ]
 bool AsmParser::ParseDirectiveAscii(bool ZeroTerminated) {
   if (getLexer().isNot(AsmToken::EndOfStatement)) {
+    CheckForValidSection();
+
     for (;;) {
       if (getLexer().isNot(AsmToken::String))
         return TokError("expected string in '.ascii' or '.asciz' directive");
@@ -1269,6 +1287,8 @@ bool AsmParser::ParseDirectiveAscii(bool ZeroTerminated) {
 ///  ::= (.byte | .short | ... ) [ expression (, expression)* ]
 bool AsmParser::ParseDirectiveValue(unsigned Size) {
   if (getLexer().isNot(AsmToken::EndOfStatement)) {
+    CheckForValidSection();
+
     for (;;) {
       const MCExpr *Value;
       SMLoc ATTRIBUTE_UNUSED StartLoc = getLexer().getLoc();
@@ -1298,6 +1318,8 @@ bool AsmParser::ParseDirectiveValue(unsigned Size) {
 /// ParseDirectiveSpace
 ///  ::= .space expression [ , expression ]
 bool AsmParser::ParseDirectiveSpace() {
+  CheckForValidSection();
+
   int64_t NumBytes;
   if (ParseAbsoluteExpression(NumBytes))
     return true;
@@ -1329,6 +1351,8 @@ bool AsmParser::ParseDirectiveSpace() {
 /// ParseDirectiveFill
 ///  ::= .fill expression , expression , expression
 bool AsmParser::ParseDirectiveFill() {
+  CheckForValidSection();
+
   int64_t NumValues;
   if (ParseAbsoluteExpression(NumValues))
     return true;
@@ -1366,6 +1390,8 @@ bool AsmParser::ParseDirectiveFill() {
 /// ParseDirectiveOrg
 ///  ::= .org expression [ , expression ]
 bool AsmParser::ParseDirectiveOrg() {
+  CheckForValidSection();
+
   const MCExpr *Offset;
   if (ParseExpression(Offset))
     return true;
@@ -1396,6 +1422,8 @@ bool AsmParser::ParseDirectiveOrg() {
 /// ParseDirectiveAlign
 ///  ::= {.align, ...} expression [ , expression [ , expression ]]
 bool AsmParser::ParseDirectiveAlign(bool IsPow2, unsigned ValueSize) {
+  CheckForValidSection();
+
   SMLoc AlignmentLoc = getLexer().getLoc();
   int64_t Alignment;
   if (ParseAbsoluteExpression(Alignment))
@@ -1560,6 +1588,8 @@ bool AsmParser::ParseDirectiveELFType() {
 /// ParseDirectiveComm
 ///  ::= ( .comm | .lcomm ) identifier , size_expression [ , align_expression ]
 bool AsmParser::ParseDirectiveComm(bool IsLocal) {
+  CheckForValidSection();
+
   SMLoc IDLoc = getLexer().getLoc();
   StringRef Name;
   if (ParseIdentifier(Name))
