@@ -738,7 +738,7 @@ bool ARMFastISel::ARMSelectFPExt(const Instruction *I) {
   unsigned Result = createResultReg(ARM::DPRRegisterClass);
 
   AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
-                          TII.get(ARM::VCVTSD), Result)
+                          TII.get(ARM::VCVTDS), Result)
                   .addReg(Op));
   UpdateValueMap(I, Result);
   return true;
@@ -758,7 +758,7 @@ bool ARMFastISel::ARMSelectFPTrunc(const Instruction *I) {
   unsigned Result = createResultReg(ARM::SPRRegisterClass);
 
   AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
-                          TII.get(ARM::VCVTDS), Result)
+                          TII.get(ARM::VCVTSD), Result)
                   .addReg(Op));
   UpdateValueMap(I, Result);
   return true;
