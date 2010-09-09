@@ -1027,15 +1027,20 @@ enum CXCursorKind {
   CXCursor_TypeRef                       = 43,
   CXCursor_CXXBaseSpecifier              = 44,
   /** 
-   * \brief A reference to a class template, function template, or template
-   * template parameter. 
+   * \brief A reference to a class template, function template, template
+   * template parameter, or class template partial specialization.
    */
   CXCursor_TemplateRef                   = 45,
   /**
    * \brief A reference to a namespace or namespace alias.
    */
   CXCursor_NamespaceRef                  = 46,
-  CXCursor_LastRef                       = CXCursor_NamespaceRef,
+  /**
+   * A reference to a member of a struct, union, or class that occurs in some
+   * non-expression context, e.g., a designated initializer.
+   */
+  CXCursor_MemberRef                     = 47,
+  CXCursor_LastRef                       = CXCursor_MemberRef,
 
   /* Error conditions */
   CXCursor_FirstInvalid                  = 70,

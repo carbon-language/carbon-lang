@@ -91,6 +91,19 @@ void test_even_more_dependent_exprs(T t, Y y) {
   (void)__has_nothrow_assign(type);
 }
 
+struct Base {
+  Base(int);
+};
+
+struct Derived : public Base {
+  Derived(int x);
+  int member;
+};
+
+Derived::Derived(int x) 
+  : member(x), Base(x) {
+}
+
 // RUN: c-index-test -test-load-source all %s | FileCheck %s
 // CHECK: load-stmts.cpp:1:13: TypedefDecl=T:1:13 (Definition) Extent=[1:13 - 1:14]
 // CHECK: load-stmts.cpp:2:8: StructDecl=X:2:8 (Definition) Extent=[2:1 - 2:23]
@@ -198,3 +211,12 @@ void test_even_more_dependent_exprs(T t, Y y) {
 // CHECK: load-stmts.cpp:90:17: DeclRefExpr=y:88:44 Extent=[90:17 - 90:18]
 // CHECK: load-stmts.cpp:91:9: UnexposedExpr= Extent=[91:9 - 91:35]
 // CHECK: load-stmts.cpp:91:30: TypeRef=type:89:13 Extent=[91:30 - 91:34]
+// CHECK: load-stmts.cpp:103:10: CXXConstructor=Derived:103:10 (Definition)
+// CHECK: load-stmts.cpp:103:1: TypeRef=struct Derived:98:8 Extent=[103:1 - 103:
+// FIXME: Missing TypeRef for constructor name.
+// CHECK: load-stmts.cpp:103:22: ParmDecl=x:103:22 (Definition) 
+// CHECK: load-stmts.cpp:104:5: MemberRef=member:100:7 Extent=[104:5 - 104:11]
+// CHECK: load-stmts.cpp:104:12: DeclRefExpr=x:103:22 Extent=[104:12 - 104:13]
+// CHECK: load-stmts.cpp:104:16: TypeRef=struct Base:94:8 Extent=[104:16 - 104:2
+// CHECK: load-stmts.cpp:104:16: CallExpr= Extent=[104:16 - 104:22]
+// CHECK: load-stmts.cpp:104:21: DeclRefExpr=x:103:22 Extent=[104:21 - 104:22]

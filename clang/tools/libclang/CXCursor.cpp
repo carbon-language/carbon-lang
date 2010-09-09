@@ -291,6 +291,23 @@ cxcursor::getCursorNamespaceRef(CXCursor C) {
                                        reinterpret_cast<uintptr_t>(C.data[1])));  
 }
 
+CXCursor cxcursor::MakeCursorMemberRef(FieldDecl *Field, SourceLocation Loc, 
+                                       ASTUnit *TU) {
+  
+  assert(Field && TU && "Invalid arguments!");
+  void *RawLoc = reinterpret_cast<void *>(Loc.getRawEncoding());
+  CXCursor C = { CXCursor_MemberRef, { Field, RawLoc, TU } };
+  return C;    
+}
+
+std::pair<FieldDecl *, SourceLocation> 
+cxcursor::getCursorMemberRef(CXCursor C) {
+  assert(C.kind == CXCursor_MemberRef);
+  return std::make_pair(static_cast<FieldDecl *>(C.data[0]),
+                        SourceLocation::getFromRawEncoding(
+                                       reinterpret_cast<uintptr_t>(C.data[1])));  
+}
+
 CXCursor cxcursor::MakeCursorCXXBaseSpecifier(CXXBaseSpecifier *B, ASTUnit *TU){
   CXCursor C = { CXCursor_CXXBaseSpecifier, { B, 0, TU } };
   return C;  

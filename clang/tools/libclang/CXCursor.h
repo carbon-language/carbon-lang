@@ -26,6 +26,7 @@ class Attr;
 class CXXBaseSpecifier;
 class Decl;
 class Expr;
+class FieldDecl;
 class MacroDefinition;
 class MacroInstantiation;
 class NamedDecl;
@@ -92,6 +93,14 @@ CXCursor MakeCursorNamespaceRef(NamedDecl *NS, SourceLocation Loc, ASTUnit *TU);
 /// \brief Unpack a NamespaceRef cursor into the namespace or namespace alias
 /// it references and the location where the reference occurred.
 std::pair<NamedDecl *, SourceLocation> getCursorNamespaceRef(CXCursor C);
+
+/// \brief Create a reference to a field at the given location.
+CXCursor MakeCursorMemberRef(FieldDecl *Field, SourceLocation Loc, 
+                             ASTUnit *TU);
+  
+/// \brief Unpack a MemberRef cursor into the field it references and the 
+/// location where the reference occurred.
+std::pair<FieldDecl *, SourceLocation> getCursorMemberRef(CXCursor C);
 
 /// \brief Create a CXX base specifier cursor.
 CXCursor MakeCursorCXXBaseSpecifier(CXXBaseSpecifier *B, ASTUnit *TU);

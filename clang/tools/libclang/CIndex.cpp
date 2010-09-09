@@ -30,6 +30,7 @@
 #include "clang/Lex/Lexer.h"
 #include "clang/Lex/PreprocessingRecord.h"
 #include "clang/Lex/Preprocessor.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/CrashRecoveryContext.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/Timer.h"
@@ -697,6 +698,21 @@ bool CursorVisitor::VisitDeclaratorDecl(DeclaratorDecl *DD) {
   return false;
 }
 
+/// \brief Compare two base or member initializers based on their source order.
+static int CompareCXXBaseOrMemberInitializers(const void* Xp, const void *Yp) {
+  CXXBaseOrMemberInitializer const * const *X
+    = static_cast<CXXBaseOrMemberInitializer const * const *>(Xp);
+  CXXBaseOrMemberInitializer const * const *Y
+    = static_cast<CXXBaseOrMemberInitializer const * const *>(Yp);
+  
+  if ((*X)->getSourceOrder() < (*Y)->getSourceOrder())
+    return -1;
+  else if ((*X)->getSourceOrder() > (*Y)->getSourceOrder())
+    return 1;
+  else
+    return 0;
+}
+
 bool CursorVisitor::VisitFunctionDecl(FunctionDecl *ND) {
   if (TypeSourceInfo *TSInfo = ND->getTypeSourceInfo()) {
     // Visit the function declaration's syntactic components in the order
@@ -729,9 +745,45 @@ bool CursorVisitor::VisitFunctionDecl(FunctionDecl *ND) {
     // FIXME: Attributes?
   }
   
-  if (ND->isThisDeclarationADefinition() &&
-      Visit(MakeCXCursor(ND->getBody(), StmtParent, TU)))
-    return true;
+  if (ND->isThisDeclarationADefinition()) {
+    if (CXXConstructorDecl *Constructor = dyn_cast<CXXConstructorDecl>(ND)) {
+      // Find the initializers that were written in the source.
+      llvm::SmallVector<CXXBaseOrMemberInitializer *, 4> WrittenInits;
+      for (CXXConstructorDecl::init_iterator I = Constructor->init_begin(),
+                                          IEnd = Constructor->init_end();
+           I != IEnd; ++I) {
+        if (!(*I)->isWritten())
+          continue;
+      
+        WrittenInits.push_back(*I);
+      }
+      
+      // Sort the initializers in source order
+      llvm::array_pod_sort(WrittenInits.begin(), WrittenInits.end(),
+                           &CompareCXXBaseOrMemberInitializers);
+      
+      // Visit the initializers in source order
+      for (unsigned I = 0, N = WrittenInits.size(); I != N; ++I) {
+        CXXBaseOrMemberInitializer *Init = WrittenInits[I];
+        if (Init->isMemberInitializer()) {
+          if (Visit(MakeCursorMemberRef(Init->getMember(), 
+                                        Init->getMemberLocation(), TU)))
+            return true;
+        } else if (TypeSourceInfo *BaseInfo = Init->getBaseClassInfo()) {
+          if (Visit(BaseInfo->getTypeLoc()))
+            return true;
+        }
+        
+        // Visit the initializer value.
+        if (Expr *Initializer = Init->getInit())
+          if (Visit(MakeCXCursor(Initializer, ND, TU)))
+            return true;
+      } 
+    }
+    
+    if (Visit(MakeCXCursor(ND->getBody(), StmtParent, TU)))
+      return true;
+  }
 
   return false;
 }
@@ -2485,6 +2537,13 @@ CXString clang_getCursorSpelling(CXCursor C) {
       return createCXString(NS->getNameAsString());
     }
 
+    case CXCursor_MemberRef: {
+      FieldDecl *Field = getCursorMemberRef(C).first;
+      assert(Field && "Missing member decl");
+      
+      return createCXString(Field->getNameAsString());
+    }
+
     default:
       return createCXString("<not implemented>");
     }
@@ -2567,6 +2626,8 @@ CXString clang_getCursorKindSpelling(enum CXCursorKind Kind) {
       return createCXString("TemplateRef");
   case CXCursor_NamespaceRef:
     return createCXString("NamespaceRef");
+  case CXCursor_MemberRef:
+    return createCXString("MemberRef");
   case CXCursor_UnexposedExpr:
       return createCXString("UnexposedExpr");
   case CXCursor_BlockExpr:
@@ -2769,6 +2830,11 @@ CXSourceLocation clang_getCursorLocation(CXCursor C) {
       return cxloc::translateSourceLocation(P.first->getASTContext(), P.second);
     }
 
+    case CXCursor_MemberRef: {
+      std::pair<FieldDecl *, SourceLocation> P = getCursorMemberRef(C);
+      return cxloc::translateSourceLocation(P.first->getASTContext(), P.second);
+    }
+
     case CXCursor_CXXBaseSpecifier: {
       // FIXME: Figure out what location to return for a CXXBaseSpecifier.
       return clang_getNullLocation();
@@ -2832,7 +2898,10 @@ static SourceRange getRawCursorExtent(CXCursor C) {
 
     case CXCursor_NamespaceRef:
       return getCursorNamespaceRef(C).second;
-        
+
+    case CXCursor_MemberRef:
+      return getCursorMemberRef(C).second;
+
     case CXCursor_CXXBaseSpecifier:
       // FIXME: Figure out what source range to use for a CXBaseSpecifier.
       return SourceRange();
@@ -2915,6 +2984,9 @@ CXCursor clang_getCursorReferenced(CXCursor C) {
 
     case CXCursor_NamespaceRef:
       return MakeCXCursor(getCursorNamespaceRef(C).first, CXXUnit);
+
+    case CXCursor_MemberRef:
+      return MakeCXCursor(getCursorMemberRef(C).first, CXXUnit);
 
     case CXCursor_CXXBaseSpecifier: {
       CXXBaseSpecifier *B = cxcursor::getCursorCXXBaseSpecifier(C);

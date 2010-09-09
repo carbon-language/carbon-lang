@@ -3438,7 +3438,8 @@ void Sema::CodeCompleteConstructorInitializer(Decl *ConstructorD,
     Pattern->AddChunk(CodeCompletionString::CK_RightParen);
     Results.AddResult(CodeCompletionResult(Pattern, 
                                    SawLastInitializer? CCP_NextInitializer
-                                                     : CCP_MemberDeclaration));
+                                                     : CCP_MemberDeclaration,
+                                           CXCursor_MemberRef));
     SawLastInitializer = false;
   }
   Results.ExitScope();
