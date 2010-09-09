@@ -115,6 +115,7 @@ class ARMFastISel : public FastISel {
     virtual bool ARMSelectBranch(const Instruction *I);
     virtual bool ARMSelectCmp(const Instruction *I);
     virtual bool ARMSelectFPExt(const Instruction *I);
+    virtual bool ARMSelectFPTrunc(const Instruction *I);
     virtual bool ARMSelectBinaryOp(const Instruction *I, unsigned ISDOpcode);
     virtual bool ARMSelectSIToFP(const Instruction *I);
     virtual bool ARMSelectFPToSI(const Instruction *I);
@@ -545,7 +546,6 @@ bool ARMFastISel::ARMEmitLoad(EVT VT, unsigned &ResultReg,
     AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
                             TII.get(Opc), ResultReg)
                     .addReg(Reg).addReg(0).addImm(Offset));
-
   return true;
 }
 
@@ -630,7 +630,6 @@ bool ARMFastISel::ARMSelectStore(const Instruction *I) {
   if (!ARMEmitStore(VT, SrcReg, Reg, Offset /* 0 */)) return false;
 
   return false;
-
 }
 
 bool ARMFastISel::ARMSelectLoad(const Instruction *I) {
@@ -720,6 +719,8 @@ bool ARMFastISel::ARMSelectCmp(const Instruction *I) {
   if (isFloat)
     AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
                             TII.get(ARM::FMSTAT)));
+
+  // TODO: How to update the value map when there's no result reg?
   return true;
 }
 
@@ -735,6 +736,26 @@ bool ARMFastISel::ARMSelectFPExt(const Instruction *I) {
   if (Op == 0) return false;
 
   unsigned Result = createResultReg(ARM::DPRRegisterClass);
+
+  AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
+                          TII.get(ARM::VCVTSD), Result)
+                  .addReg(Op));
+  UpdateValueMap(I, Result);
+  return true;
+}
+
+bool ARMFastISel::ARMSelectFPTrunc(const Instruction *I) {
+  // Make sure we have VFP and that we're truncating double to float.
+  if (!Subtarget->hasVFP2()) return false;
+
+  Value *V = I->getOperand(0);
+  if (!I->getType()->isFloatTy() ||
+      !V->getType()->isDoubleTy()) return false;
+
+  unsigned Op = getRegForValue(V);
+  if (Op == 0) return false;
+
+  unsigned Result = createResultReg(ARM::SPRRegisterClass);
 
   AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
                           TII.get(ARM::VCVTDS), Result)
@@ -764,6 +785,7 @@ bool ARMFastISel::ARMSelectSIToFP(const Instruction *I) {
   AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(Opc),
                           ResultReg)
                   .addReg(Op));
+  UpdateValueMap(I, ResultReg);
   return true;
 }
 
@@ -789,6 +811,7 @@ bool ARMFastISel::ARMSelectFPToSI(const Instruction *I) {
   AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(Opc),
                           ResultReg)
                   .addReg(Op));
+  UpdateValueMap(I, ResultReg);
   return true;
 }
 
@@ -829,6 +852,7 @@ bool ARMFastISel::ARMSelectBinaryOp(const Instruction *I, unsigned ISDOpcode) {
   AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
                           TII.get(Opc), ResultReg)
                   .addReg(Op1).addReg(Op2));
+  UpdateValueMap(I, ResultReg);
   return true;
 }
 
@@ -849,6 +873,8 @@ bool ARMFastISel::TargetSelectInstruction(const Instruction *I) {
       return ARMSelectCmp(I);
     case Instruction::FPExt:
       return ARMSelectFPExt(I);
+    case Instruction::FPTrunc:
+      return ARMSelectFPTrunc(I);
     case Instruction::SIToFP:
       return ARMSelectSIToFP(I);
     case Instruction::FPToSI:
