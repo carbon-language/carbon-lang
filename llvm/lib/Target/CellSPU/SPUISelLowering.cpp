@@ -1737,7 +1737,7 @@ static SDValue LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) {
   unsigned PrevElt = 0;
   bool monotonic = true;
   bool rotate = true;
-  int rotamt;
+  int rotamt=0;
   EVT maskVT;             // which of the c?d instructions to use
 
   if (EltVT == MVT::i8) {
