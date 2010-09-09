@@ -132,6 +132,7 @@ class ARMFastISel : public FastISel {
     unsigned ARMMaterializeFP(const ConstantFP *CFP, EVT VT);
     unsigned ARMMaterializeInt(const Constant *C);
     unsigned ARMMoveToFPReg(EVT VT, unsigned SrcReg);
+    unsigned ARMMoveToIntReg(EVT VT, unsigned SrcReg);
 
     bool DefinesOptionalPredicate(MachineInstr *MI, bool *CPSR);
     const MachineInstrBuilder &AddOptionalDefs(const MachineInstrBuilder &MIB);
@@ -332,11 +333,25 @@ unsigned ARMFastISel::FastEmitInst_extractsubreg(MVT RetVT,
 }
 
 unsigned ARMFastISel::ARMMoveToFPReg(EVT VT, unsigned SrcReg) {
+  // Don't worry about 64-bit now.
+  if (VT.getSimpleVT().SimpleTy == MVT::f64) return 0;
+  
+  unsigned MoveReg = createResultReg(TLI.getRegClassFor(VT));
+  AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
+                          TII.get(ARM::VMOVRS), MoveReg)
+                  .addReg(SrcReg));
+  return MoveReg;
+}
+
+unsigned ARMFastISel::ARMMoveToIntReg(EVT VT, unsigned SrcReg) {
+  // Don't worry about 64-bit now.
+  if (VT.getSimpleVT().SimpleTy == MVT::i64) return 0;
+  
   // If we have a floating point constant we expect it in a floating point
   // register.
   unsigned MoveReg = createResultReg(TLI.getRegClassFor(VT));
   AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
-                          TII.get(ARM::VMOVRS), MoveReg)
+                          TII.get(ARM::VMOVSR), MoveReg)
                   .addReg(SrcReg));
   return MoveReg;
 }
@@ -775,23 +790,27 @@ bool ARMFastISel::ARMSelectSIToFP(const Instruction *I) {
   // Make sure we have VFP.
   if (!Subtarget->hasVFP2()) return false;
   
-  EVT VT;
+  EVT DstVT;
   const Type *Ty = I->getType();
-  if (!isTypeLegal(Ty, VT))
+  if (!isTypeLegal(Ty, DstVT))
     return false;
   
   unsigned Op = getRegForValue(I->getOperand(0));
   if (Op == 0) return false;
+  
+  // The conversion routine works on fp-reg to fp-reg.
+  unsigned FP = ARMMoveToFPReg(DstVT, Op);
+  if (FP == 0) return false;
   
   unsigned Opc;
   if (Ty->isFloatTy()) Opc = ARM::VSITOS;
   else if (Ty->isDoubleTy()) Opc = ARM::VSITOD;
   else return 0;
   
-  unsigned ResultReg = createResultReg(TLI.getRegClassFor(VT));
+  unsigned ResultReg = createResultReg(TLI.getRegClassFor(DstVT));
   AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(Opc),
                           ResultReg)
-                  .addReg(Op));
+                  .addReg(FP));
   UpdateValueMap(I, ResultReg);
   return true;
 }
@@ -813,12 +832,19 @@ bool ARMFastISel::ARMSelectFPToSI(const Instruction *I) {
   if (OpTy->isFloatTy()) Opc = ARM::VTOSIZS;
   else if (OpTy->isDoubleTy()) Opc = ARM::VTOSIZD;
   else return 0;
+  EVT OpVT = TLI.getValueType(OpTy, true);
   
-  unsigned ResultReg = createResultReg(TLI.getRegClassFor(VT));
+  unsigned ResultReg = createResultReg(TLI.getRegClassFor(OpVT));
   AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(Opc),
                           ResultReg)
                   .addReg(Op));
-  UpdateValueMap(I, ResultReg);
+        
+  // This result needs to be in an integer register, but the conversion only
+  // takes place in fp-regs.
+  unsigned IntReg = ARMMoveToIntReg(VT, ResultReg);
+  if (IntReg == 0) return false;
+  
+  UpdateValueMap(I, IntReg);
   return true;
 }
 
