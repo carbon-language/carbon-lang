@@ -169,9 +169,9 @@ SVal GRState::getSValAsScalarOrLoc(const MemRegion *R) const {
   return UnknownVal();
 }
 
-SVal GRState::getSimplifiedSVal(Loc location, QualType T) const {
-  SVal V = getSVal(cast<Loc>(location), T);
-  
+SVal GRState::getSVal(Loc location, QualType T) const {
+  SVal V = getRawSVal(cast<Loc>(location), T);
+
   // If 'V' is a symbolic value that is *perfectly* constrained to
   // be a constant value, use that value instead to lessen the burden
   // on later analysis stages (so we have less symbolic values to reason

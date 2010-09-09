@@ -1876,7 +1876,7 @@ void GRExprEngine::EvalBind(ExplodedNodeSet& Dst, const Stmt* StoreE,
     // is non-NULL.  Checkers typically care about 
     
     GRStmtNodeBuilderRef BuilderRef(Dst, *Builder, *this, *I, newState, StoreE,
-                                    newState != state);
+                                    true);
 
     getTF().EvalBind(BuilderRef, location, Val);
   }
@@ -1970,16 +1970,18 @@ void GRExprEngine::EvalLoadCommon(ExplodedNodeSet& Dst, const Expr *Ex,
   // Proceed with the load.
   for (ExplodedNodeSet::iterator NI=Tmp.begin(), NE=Tmp.end(); NI!=NE; ++NI) {
     state = GetState(*NI);
+
     if (location.isUnknown()) {
       // This is important.  We must nuke the old binding.
       MakeNode(Dst, Ex, *NI, state->BindExpr(Ex, UnknownVal()),
                ProgramPoint::PostLoadKind, tag);
     }
     else {
-      SVal V = state->getSVal(cast<Loc>(location), LoadTy.isNull() ?
-                                                     Ex->getType() : LoadTy);
-      MakeNode(Dst, Ex, *NI, state->BindExpr(Ex, V), ProgramPoint::PostLoadKind,
-               tag);
+      if (LoadTy.isNull())
+        LoadTy = Ex->getType();
+      SVal V = state->getSVal(cast<Loc>(location), LoadTy);
+      MakeNode(Dst, Ex, *NI, state->bindExprAndLocation(Ex, location, V),
+               ProgramPoint::PostLoadKind, tag);
     }
   }
 }
@@ -3384,13 +3386,7 @@ void GRExprEngine::VisitBinaryOperator(const BinaryOperator* B,
         SVal Result = EvalBinOp(state, Op, LeftV, RightV, B->getType());
 
         if (Result.isUnknown()) {
-          if (OldSt != state) {
-            // Generate a new node if we have already created a new state.
-            MakeNode(Tmp3, B, *I2, state);
-          }
-          else
-            Tmp3.Add(*I2);
-
+          MakeNode(Tmp3, B, *I2, state);
           continue;
         }
 

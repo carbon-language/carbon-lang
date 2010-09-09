@@ -200,7 +200,7 @@ void IdempotentOperationChecker::PreVisitBinaryOperator(
       A = Impossible;
       return;
     }
-    LHSVal = state->getSVal(cast<Loc>(LHSVal));
+    LHSVal = state->getSVal(cast<Loc>(LHSVal), LHS->getType());
   }
 
 
@@ -355,6 +355,8 @@ void IdempotentOperationChecker::PostVisitBinaryOperator(
                                                       const BinaryOperator *B) {
   // Add the ExplodedNode we just visited
   BinaryOperatorData &Data = hash[B];
+  assert(isa<BinaryOperator>(cast<StmtPoint>(C.getPredecessor()
+                                             ->getLocation()).getStmt()));
   Data.explodedNodes.Add(C.getPredecessor());
 }
 

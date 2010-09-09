@@ -1103,16 +1103,18 @@ void pr8015_C() {
   }
 }
 
-// FIXME: This is a false positive due to not reasoning about symbolic
-// array indices correctly.  Discussion in PR 8015.
+// Tests that we correctly handle that 'number' is perfectly constrained
+// after 'if (nunber == 0)', allowing us to resolve that
+// numbers[number] == numbers[0].
 void pr8015_D_FIXME() {
   int number = pr8015_A();
   const char *numbers[] = { "zero" };
   if (number == 0) {
-    if (numbers[number] == numbers[0])
+    if (numbers[number] == numbers[0]) // expected-warning{{Both operands to '==' always have the same value}}
       return;
+    // Unreachable.
     int *p = 0;
-    *p = 0xDEADBEEF; // expected-warning{{Dereference of null pointer}}
+    *p = 0xDEADBEEF; // no-warnng
   }
 }
 
