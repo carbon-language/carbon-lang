@@ -190,11 +190,14 @@ AliasAnalysis::getModRefBehavior(const Function *F) {
 
 AliasAnalysis::DependenceResult
 AliasAnalysis::getDependence(const Instruction *First,
+                             const Value *FirstPHITranslatedAddr,
                              DependenceQueryFlags FirstFlags,
                              const Instruction *Second,
+                             const Value *SecondPHITranslatedAddr,
                              DependenceQueryFlags SecondFlags) {
   assert(AA && "AA didn't call InitializeAliasAnalyais in its run method!");
-  return AA->getDependence(First, FirstFlags, Second, SecondFlags);
+  return AA->getDependence(First, FirstPHITranslatedAddr, FirstFlags,
+                           Second, SecondPHITranslatedAddr, SecondFlags);
 }
 
 //===----------------------------------------------------------------------===//
@@ -255,17 +258,23 @@ AliasAnalysis::getModRefInfo(const VAArgInst *V, const Value *P, unsigned Size) 
 
 AliasAnalysis::DependenceResult
 AliasAnalysis::getDependenceViaModRefInfo(const Instruction *First,
+                                          const Value *FirstPHITranslatedAddr,
                                           DependenceQueryFlags FirstFlags,
                                           const Instruction *Second,
+                                          const Value *SecondPHITranslatedAddr,
                                           DependenceQueryFlags SecondFlags) {
   if (const LoadInst *L = dyn_cast<LoadInst>(First)) {
     // Be over-conservative with volatile for now.
     if (L->isVolatile())
       return Unknown;
 
+    // If we don't have a phi-translated address, use the actual one.
+    if (!FirstPHITranslatedAddr)
+      FirstPHITranslatedAddr = L->getPointerOperand();
+
     // Forward this query to getModRefInfo.
     switch (getModRefInfo(Second,
-                          L->getPointerOperand(),
+                          FirstPHITranslatedAddr,
                           getTypeStoreSize(L->getType()))) {
     case NoModRef:
       // Second doesn't reference First's memory, so they're independent.
@@ -280,10 +289,14 @@ AliasAnalysis::getDependenceViaModRefInfo(const Instruction *First,
       // If it's loading the same size from the same address, we can
       // give a more precise result.
       if (const LoadInst *SecondL = dyn_cast<LoadInst>(Second)) {
+        // If we don't have a phi-translated address, use the actual one.
+        if (!SecondPHITranslatedAddr)
+          SecondPHITranslatedAddr = SecondL->getPointerOperand();
+
         unsigned LSize = getTypeStoreSize(L->getType());
         unsigned SecondLSize = getTypeStoreSize(SecondL->getType());
-        if (alias(L->getPointerOperand(), LSize,
-                  SecondL->getPointerOperand(), SecondLSize) ==
+        if (alias(FirstPHITranslatedAddr, LSize,
+                  SecondPHITranslatedAddr, SecondLSize) ==
             MustAlias) {
           // If the loads are the same size, it's ReadThenRead.
           if (LSize == SecondLSize)
@@ -307,10 +320,14 @@ AliasAnalysis::getDependenceViaModRefInfo(const Instruction *First,
       // If it's storing the same size to the same address, we can
       // give a more precise result.
       if (const StoreInst *SecondS = dyn_cast<StoreInst>(Second)) {
+        // If we don't have a phi-translated address, use the actual one.
+        if (!SecondPHITranslatedAddr)
+          SecondPHITranslatedAddr = SecondS->getPointerOperand();
+
         unsigned LSize = getTypeStoreSize(L->getType());
         unsigned SecondSSize = getTypeStoreSize(SecondS->getType());
-        if (alias(L->getPointerOperand(), LSize,
-                  SecondS->getPointerOperand(), SecondSSize) ==
+        if (alias(FirstPHITranslatedAddr, LSize,
+                  SecondPHITranslatedAddr, SecondSSize) ==
             MustAlias) {
           // If the load and the store are the same size, it's ReadThenWrite.
           if (LSize == SecondSSize)
@@ -332,9 +349,13 @@ AliasAnalysis::getDependenceViaModRefInfo(const Instruction *First,
     if (S->isVolatile())
       return Unknown;
 
+    // If we don't have a phi-translated address, use the actual one.
+    if (!FirstPHITranslatedAddr)
+      FirstPHITranslatedAddr = S->getPointerOperand();
+
     // Forward this query to getModRefInfo.
     switch (getModRefInfo(Second,
-                          S->getPointerOperand(),
+                          FirstPHITranslatedAddr,
                           getTypeStoreSize(S->getValueOperand()->getType()))) {
     case NoModRef:
       // Second doesn't reference First's memory, so they're independent.
@@ -349,10 +370,14 @@ AliasAnalysis::getDependenceViaModRefInfo(const Instruction *First,
       // If it's loading the same size from the same address, we can
       // give a more precise result.
       if (const LoadInst *SecondL = dyn_cast<LoadInst>(Second)) {
+        // If we don't have a phi-translated address, use the actual one.
+        if (!SecondPHITranslatedAddr)
+          SecondPHITranslatedAddr = SecondL->getPointerOperand();
+
         unsigned SSize = getTypeStoreSize(S->getValueOperand()->getType());
         unsigned SecondLSize = getTypeStoreSize(SecondL->getType());
-        if (alias(S->getPointerOperand(), SSize,
-                  SecondL->getPointerOperand(), SecondLSize) ==
+        if (alias(FirstPHITranslatedAddr, SSize,
+                  SecondPHITranslatedAddr, SecondLSize) ==
             MustAlias) {
           // If the store and the load are the same size, it's WriteThenRead.
           if (SSize == SecondLSize)
@@ -376,10 +401,14 @@ AliasAnalysis::getDependenceViaModRefInfo(const Instruction *First,
       // If it's storing the same size to the same address, we can
       // give a more precise result.
       if (const StoreInst *SecondS = dyn_cast<StoreInst>(Second)) {
+        // If we don't have a phi-translated address, use the actual one.
+        if (!SecondPHITranslatedAddr)
+          SecondPHITranslatedAddr = SecondS->getPointerOperand();
+
         unsigned SSize = getTypeStoreSize(S->getValueOperand()->getType());
         unsigned SecondSSize = getTypeStoreSize(SecondS->getType());
-        if (alias(S->getPointerOperand(), SSize,
-                  SecondS->getPointerOperand(), SecondSSize) ==
+        if (alias(FirstPHITranslatedAddr, SSize,
+                  SecondPHITranslatedAddr, SecondSSize) ==
             MustAlias) {
           // If the stores are the same size, it's WriteThenWrite.
           if (SSize == SecondSSize)
@@ -401,12 +430,20 @@ AliasAnalysis::getDependenceViaModRefInfo(const Instruction *First,
     }
 
   } else if (const VAArgInst *V = dyn_cast<VAArgInst>(First)) {
+    // If we don't have a phi-translated address, use the actual one.
+    if (!FirstPHITranslatedAddr)
+      FirstPHITranslatedAddr = V->getPointerOperand();
+
     // Forward this query to getModRefInfo.
-    if (getModRefInfo(Second, V->getOperand(0), UnknownSize) == NoModRef)
+    if (getModRefInfo(Second, FirstPHITranslatedAddr, UnknownSize) == NoModRef)
       // Second doesn't reference First's memory, so they're independent.
       return Independent;
 
   } else if (ImmutableCallSite FirstCS = cast<Value>(First)) {
+    assert(!FirstPHITranslatedAddr &&
+           !SecondPHITranslatedAddr &&
+           "PHI translation with calls not supported yet!");
+
     // If both instructions are calls/invokes we can use the two-callsite
     // form of getModRefInfo.
     if (ImmutableCallSite SecondCS = cast<Value>(Second))

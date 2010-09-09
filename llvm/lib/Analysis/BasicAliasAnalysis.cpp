@@ -172,8 +172,10 @@ namespace {
     }
 
     virtual DependenceResult getDependence(const Instruction *First,
+                                           const Value *FirstPHITranslatedAddr,
                                            DependenceQueryFlags FirstFlags,
                                            const Instruction *Second,
+                                           const Value *SecondPHITranslatedAddr,
                                            DependenceQueryFlags SecondFlags) {
       return Unknown;
     }
@@ -531,8 +533,10 @@ namespace {
     virtual ModRefBehavior getModRefBehavior(const Function *F);
 
     virtual DependenceResult getDependence(const Instruction *First,
+                                           const Value *FirstPHITranslatedAddr,
                                            DependenceQueryFlags FirstFlags,
                                            const Instruction *Second,
+                                           const Value *SecondPHITranslatedAddr,
                                            DependenceQueryFlags SecondFlags);
 
     /// getAdjustedAnalysisPointer - This method is used when a pass implements
@@ -748,11 +752,14 @@ BasicAliasAnalysis::getModRefInfo(ImmutableCallSite CS,
 
 AliasAnalysis::DependenceResult
 BasicAliasAnalysis::getDependence(const Instruction *First,
+                                  const Value *FirstPHITranslatedAddr,
                                   DependenceQueryFlags FirstFlags,
                                   const Instruction *Second,
+                                  const Value *SecondPHITranslatedAddr,
                                   DependenceQueryFlags SecondFlags) {
   // We don't have anything special to say yet.
-  return getDependenceViaModRefInfo(First, FirstFlags, Second, SecondFlags);
+  return getDependenceViaModRefInfo(First, FirstPHITranslatedAddr, FirstFlags,
+                                    Second, SecondPHITranslatedAddr, SecondFlags);
 }
 
 /// aliasGEP - Provide a bunch of ad-hoc rules to disambiguate a GEP instruction

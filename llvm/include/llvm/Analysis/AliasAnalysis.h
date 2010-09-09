@@ -340,17 +340,20 @@ public:
   /// WARNING: This is an experimental interface.
   DependenceResult getDependence(const Instruction *First,
                                  const Instruction *Second) {
-    return getDependence(First, Default, Second, Default);
+    return getDependence(First, 0, Default, Second, 0, Default);
   }
 
   /// getDependence - Determine the dependence relationship between the
   /// instructions. This does not include "register" dependencies; it just
   /// considers memory references and other side effects.  This overload
-  /// accepts additional flags to refine the query.
+  /// has additional parameters to allow phi-translated addresses to be
+  /// specified, and additional flags to refine the query.
   /// WARNING: This is an experimental interface.
   virtual DependenceResult getDependence(const Instruction *First,
+                                         const Value *FirstPHITranslatedAddr,
                                          DependenceQueryFlags FirstFlags,
                                          const Instruction *Second,
+                                         const Value *SecondPHITranslatedAddr,
                                          DependenceQueryFlags SecondFlags);
 
   //===--------------------------------------------------------------------===//
@@ -403,8 +406,10 @@ protected:
   /// getDependenceViaModRefInfo - Helper function for implementing getDependence
   /// in implementations which already have getModRefInfo implementations.
   DependenceResult getDependenceViaModRefInfo(const Instruction *First,
+                                              const Value *FirstPHITranslatedAddr,
                                               DependenceQueryFlags FirstFlags,
                                               const Instruction *Second,
+                                              const Value *SecondPHITranslatedAddr,
                                               DependenceQueryFlags SecondFlags);
 
 };
