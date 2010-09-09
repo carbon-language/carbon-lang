@@ -1068,3 +1068,30 @@ void pr8050(struct PR8050 **arg)
     *arg = malloc(1);
 }
 
+// <rdar://problem/5880430> Switch on enum should not consider default case live
+//  if all enum values are covered
+enum Cases { C1, C2, C3, C4 };
+void test_enum_cases(enum Cases C) {
+  switch (C) {
+  case C1:
+  case C2:
+  case C4:
+  case C3:
+    return;
+  }
+  int *p = 0;
+  *p = 0xDEADBEEF; // no-warning
+}
+
+void test_enum_cases_positive(enum Cases C) {
+  switch (C) { // expected-warning{{enumeration value 'C4' not handled in switch}}
+  case C1:
+  case C2:
+  case C3:
+    return;
+  }
+  int *p = 0;
+  *p = 0xDEADBEEF; // expected-warning{{Dereference of null pointer}}
+}
+
+
