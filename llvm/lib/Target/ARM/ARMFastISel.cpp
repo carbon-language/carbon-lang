@@ -114,6 +114,7 @@ class ARMFastISel : public FastISel {
     virtual bool ARMSelectStore(const Instruction *I);
     virtual bool ARMSelectBranch(const Instruction *I);
     virtual bool ARMSelectCmp(const Instruction *I);
+    virtual bool ARMSelectFPExt(const Instruction *I);
 
     // Utility routines.
   private:
@@ -719,6 +720,26 @@ bool ARMFastISel::ARMSelectCmp(const Instruction *I) {
   return true;
 }
 
+bool ARMFastISel::ARMSelectFPExt(const Instruction *I) {
+  // Make sure we have VFP and that we're extending float to double.
+  if (!Subtarget->hasVFP2()) return false;
+  
+  Value *V = I->getOperand(0);
+  if (!I->getType()->isDoubleTy() ||
+      !V->getType()->isFloatTy()) return false;
+      
+  unsigned Op = getRegForValue(V);
+  if (Op == 0) return false;
+  
+  unsigned Result = createResultReg(ARM::DPRRegisterClass);
+
+  AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, 
+                          TII.get(ARM::VCVTDS), Result)
+                  .addReg(Op));
+  UpdateValueMap(I, Result);
+  return true;
+}
+
 // TODO: SoftFP support.
 bool ARMFastISel::TargetSelectInstruction(const Instruction *I) {
   // No Thumb-1 for now.
@@ -734,6 +755,8 @@ bool ARMFastISel::TargetSelectInstruction(const Instruction *I) {
     case Instruction::ICmp:
     case Instruction::FCmp:
         return ARMSelectCmp(I);
+    case Instruction::FPExt:
+        return ARMSelectFPExt(I);
     default: break;
   }
   return false;
