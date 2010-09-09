@@ -373,10 +373,10 @@ static void HandleNonNullAttr(Decl *d, const AttributeList &Attr, Sema &S) {
         NonNullArgs.push_back(I);
     }
 
-    if (NonNullArgs.empty()) {
-      S.Diag(Attr.getLoc(), diag::warn_attribute_nonnull_no_pointers);
+    // No pointer arguments?  The attribute in this case is
+    // trivially satisfied.
+    if (NonNullArgs.empty())
       return;
-    }
   }
 
   unsigned* start = &NonNullArgs[0];

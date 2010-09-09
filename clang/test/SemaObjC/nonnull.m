@@ -2,7 +2,7 @@
 
 @class NSObject;
 
-int f1(int x) __attribute__((nonnull)); // expected-warning{{'nonnull' attribute applied to function with no pointer arguments}}
+int f1(int x) __attribute__((nonnull)); //no-warning
 int f2(int *x) __attribute__ ((nonnull (1)));
 int f3(int *x) __attribute__ ((nonnull (0))); // expected-error {{'nonnull' attribute parameter 1 is out of bounds}}
 int f4(int *x, int *y) __attribute__ ((nonnull (1,2)));
@@ -44,4 +44,4 @@ foo (int i1, int i2, int i3, void (^cp1)(), void (^cp2)(), void (^cp3)())
   func7((NSObject*) 0); // no-warning
 }
 
-void func5(int) __attribute__((nonnull)); // expected-warning{{'nonnull' attribute applied to function with no pointer arguments}}
+void func5(int) __attribute__((nonnull)); // no-warning

@@ -1016,14 +1016,11 @@ def err_mode_wrong_type : Error<
   "type of machine mode does not match type of base type">;
 def err_attr_wrong_decl : Error<
   "'%0' attribute invalid on this declaration, requires typedef or value">;
-def warn_attribute_nonnull_no_pointers : Warning<
-  "'nonnull' attribute applied to function with no pointer arguments">;
 def warn_attribute_malloc_pointer_only : Warning<
   "'malloc' attribute only applies to functions returning a pointer type">;
 def warn_transparent_union_nonpointer : Warning<
   "'transparent_union' attribute support incomplete; only supported for "
   "pointer unions">;
-
 def warn_attribute_sentinel_named_arguments : Warning<
   "'sentinel' attribute requires named arguments">;
 def warn_attribute_sentinel_not_variadic : Warning<
