@@ -116,6 +116,8 @@ class ARMFastISel : public FastISel {
     virtual bool ARMSelectCmp(const Instruction *I);
     virtual bool ARMSelectFPExt(const Instruction *I);
     virtual bool ARMSelectBinaryOp(const Instruction *I, unsigned ISDOpcode);
+    virtual bool ARMSelectSIToFP(const Instruction *I);
+    virtual bool ARMSelectFPToSI(const Instruction *I);
 
     // Utility routines.
   private:
@@ -741,6 +743,55 @@ bool ARMFastISel::ARMSelectFPExt(const Instruction *I) {
   return true;
 }
 
+bool ARMFastISel::ARMSelectSIToFP(const Instruction *I) {
+  // Make sure we have VFP.
+  if (!Subtarget->hasVFP2()) return false;
+  
+  EVT VT;
+  const Type *Ty = I->getType();
+  if (!isTypeLegal(Ty, VT))
+    return false;
+  
+  unsigned Op = getRegForValue(I->getOperand(0));
+  if (Op == 0) return false;
+  
+  unsigned Opc;
+  if (Ty->isFloatTy()) Opc = ARM::VSITOS;
+  else if (Ty->isDoubleTy()) Opc = ARM::VSITOD;
+  else return 0;
+  
+  unsigned ResultReg = createResultReg(TLI.getRegClassFor(VT));
+  AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(Opc),
+                          ResultReg)
+                  .addReg(Op));
+  return true;
+}
+
+bool ARMFastISel::ARMSelectFPToSI(const Instruction *I) {
+  // Make sure we have VFP.
+  if (!Subtarget->hasVFP2()) return false;
+  
+  EVT VT;
+  const Type *RetTy = I->getType();
+  if (!isTypeLegal(RetTy, VT))
+    return false;
+  
+  unsigned Op = getRegForValue(I->getOperand(0));
+  if (Op == 0) return false;
+  
+  unsigned Opc;
+  const Type *OpTy = I->getOperand(0)->getType();
+  if (OpTy->isFloatTy()) Opc = ARM::VTOSIZS;
+  else if (OpTy->isDoubleTy()) Opc = ARM::VTOSIZD;
+  else return 0;
+  
+  unsigned ResultReg = createResultReg(TLI.getRegClassFor(VT));
+  AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(Opc),
+                          ResultReg)
+                  .addReg(Op));
+  return true;
+}
+
 bool ARMFastISel::ARMSelectBinaryOp(const Instruction *I, unsigned ISDOpcode) {
   EVT VT  = TLI.getValueType(I->getType(), true);
 
@@ -798,6 +849,10 @@ bool ARMFastISel::TargetSelectInstruction(const Instruction *I) {
       return ARMSelectCmp(I);
     case Instruction::FPExt:
       return ARMSelectFPExt(I);
+    case Instruction::SIToFP:
+      return ARMSelectSIToFP(I);
+    case Instruction::FPToSI:
+      return ARMSelectFPToSI(I);
     case Instruction::FAdd:
       return ARMSelectBinaryOp(I, ISD::FADD);
     case Instruction::FSub:
