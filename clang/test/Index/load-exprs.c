@@ -20,6 +20,17 @@ int test_blocks(int x) {
   return y;
 }
 
+struct Y {
+  struct X array[3];
+};
+
+enum { StartIndex = 1 };
+
+void test_members(int aval, int bval) {
+  struct Y y0 = { .array[StartIndex].b = bval, .array[StartIndex].a = aval };
+  __builtin_offsetof(struct Y, array[StartIndex].b);
+}
+
 // RUN: c-index-test -test-load-source all %s -fblocks | FileCheck %s
 
 // CHECK: load-exprs.c:1:13: TypedefDecl=T:1:13 (Definition) Extent=[1:13 - 1:14]
@@ -52,4 +63,9 @@ int test_blocks(int x) {
 // CHECK: load-exprs.c:16:10: DeclRefExpr=z:13:17 Extent=[16:10 - 16:11]
 // CHECK: load-exprs.c:17:10: DeclRefExpr= Extent=[17:10 - 17:11]
 // CHECK: load-exprs.c:20:10: DeclRefExpr=y:11:15 Extent=[20:10 - 20:11]
+// CHECK: load-exprs.c:29:6: FunctionDecl=test_members:29:6 (Definition)
+// CHECK: load-exprs.c:31:29: TypeRef=struct Y:23:8 Extent=[31:29 - 31:30]
+// CHECK: load-exprs.c:31:32: MemberRef=array:24:12 Extent=[31:32 - 31:37]
+// CHECK: load-exprs.c:31:38: DeclRefExpr=StartIndex:27:8 Extent=[31:38 - 31:48]
+// CHECK: load-exprs.c:31:50: MemberRef=b:2:19 Extent=[31:50 - 31:51]
 

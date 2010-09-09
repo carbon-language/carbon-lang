@@ -1555,11 +1555,34 @@ bool CursorVisitor::VisitBlockExpr(BlockExpr *B) {
 }
 
 bool CursorVisitor::VisitOffsetOfExpr(OffsetOfExpr *E) {
-  // FIXME: Visit fields as well?
+  // Visit the type into which we're computing an offset.
   if (Visit(E->getTypeSourceInfo()->getTypeLoc()))
     return true;
+
+  // Visit the components of the offsetof expression.
+  for (unsigned I = 0, N = E->getNumComponents(); I != N; ++I) {
+    typedef OffsetOfExpr::OffsetOfNode OffsetOfNode;
+    const OffsetOfNode &Node = E->getComponent(I);
+    switch (Node.getKind()) {
+    case OffsetOfNode::Array:
+      if (Visit(MakeCXCursor(E->getIndexExpr(Node.getArrayExprIndex()), 
+                             StmtParent, TU)))
+        return true;
+      break;
+        
+    case OffsetOfNode::Field:
+      if (Visit(MakeCursorMemberRef(Node.getField(), Node.getRange().getEnd(),
+                                    TU)))
+        return true;
+      break;
+        
+    case OffsetOfNode::Identifier:
+    case OffsetOfNode::Base:
+      continue;
+    }
+  }
   
-  return VisitExpr(E);
+  return false;
 }
 
 bool CursorVisitor::VisitSizeOfAlignOfExpr(SizeOfAlignOfExpr *E) {
