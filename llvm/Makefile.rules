@@ -161,9 +161,13 @@ endif
 # If the Makefile in the source tree has been updated, copy it over into the
 # build tree. But, only do this if the source and object makefiles differ
 #------------------------------------------------------------------------
+ifndef PROJ_MAKEFILE
+PROJ_MAKEFILE := $(PROJ_SRC_DIR)/Makefile
+endif
+
 ifneq ($(PROJ_OBJ_DIR),$(PROJ_SRC_DIR))
 
-Makefile: $(PROJ_SRC_DIR)/Makefile $(ExtraMakefiles)
+Makefile: $(PROJ_MAKEFILE) $(ExtraMakefiles)
 	$(Echo) "Updating Makefile"
 	$(Verb) $(MKDIR) $(@D)
 	$(Verb) $(CP) -f $< $@
@@ -171,7 +175,7 @@ Makefile: $(PROJ_SRC_DIR)/Makefile $(ExtraMakefiles)
 # Copy the Makefile.* files unless we're in the root directory which avoids
 # the copying of Makefile.config.in or other things that should be explicitly
 # taken care of.
-$(PROJ_OBJ_DIR)/Makefile% : $(PROJ_SRC_DIR)/Makefile%
+$(PROJ_OBJ_DIR)/Makefile% : $(PROJ_MAKEFILE)%
 	@case '$?' in \
           *Makefile.rules) ;; \
           *.in) ;; \
@@ -1436,27 +1440,27 @@ DEPEND_OPTIONS = -MMD -MP -MF "$(ObjDir)/$*.d.tmp" \
 DEPEND_MOVEFILE = then $(MV) -f "$(ObjDir)/$*.d.tmp" "$(ObjDir)/$*.d"; \
                   else $(RM) "$(ObjDir)/$*.d.tmp"; exit 1; fi
 
-$(ObjDir)/%.o: %.cpp $(ObjDir)/.dir $(BUILT_SOURCES) $(PROJ_SRC_DIR)/Makefile
+$(ObjDir)/%.o: %.cpp $(ObjDir)/.dir $(BUILT_SOURCES) $(PROJ_MAKEFILE)
 	$(Echo) "Compiling $*.cpp for $(BuildMode) build" $(PIC_FLAG)
 	$(Verb) if $(Compile.CXX) $(DEPEND_OPTIONS) $< -o $(ObjDir)/$*.o ; \
 	        $(DEPEND_MOVEFILE)
 
-$(ObjDir)/%.o: %.mm $(ObjDir)/.dir $(BUILT_SOURCES) $(PROJ_SRC_DIR)/Makefile
+$(ObjDir)/%.o: %.mm $(ObjDir)/.dir $(BUILT_SOURCES) $(PROJ_MAKEFILE)
 	$(Echo) "Compiling $*.mm for $(BuildMode) build" $(PIC_FLAG)
 	$(Verb) if $(Compile.CXX) $(DEPEND_OPTIONS) $< -o $(ObjDir)/$*.o ; \
 	        $(DEPEND_MOVEFILE)
 
-$(ObjDir)/%.o: %.cc $(ObjDir)/.dir $(BUILT_SOURCES) $(PROJ_SRC_DIR)/Makefile
+$(ObjDir)/%.o: %.cc $(ObjDir)/.dir $(BUILT_SOURCES) $(PROJ_MAKEFILE)
 	$(Echo) "Compiling $*.cc for $(BuildMode) build" $(PIC_FLAG)
 	$(Verb) if $(Compile.CXX) $(DEPEND_OPTIONS) $< -o $(ObjDir)/$*.o ; \
 	        $(DEPEND_MOVEFILE)
 
-$(ObjDir)/%.o: %.c $(ObjDir)/.dir $(BUILT_SOURCES) $(PROJ_SRC_DIR)/Makefile
+$(ObjDir)/%.o: %.c $(ObjDir)/.dir $(BUILT_SOURCES) $(PROJ_MAKEFILE)
 	$(Echo) "Compiling $*.c for $(BuildMode) build" $(PIC_FLAG)
 	$(Verb) if $(Compile.C) $(DEPEND_OPTIONS) $< -o $(ObjDir)/$*.o ; \
 	        $(DEPEND_MOVEFILE)
 
-$(ObjDir)/%.o: %.m $(ObjDir)/.dir $(BUILT_SOURCES) $(PROJ_SRC_DIR)/Makefile
+$(ObjDir)/%.o: %.m $(ObjDir)/.dir $(BUILT_SOURCES) $(PROJ_MAKEFILE)
 	$(Echo) "Compiling $*.m for $(BuildMode) build" $(PIC_FLAG)
 	$(Verb) if $(Compile.C) $(DEPEND_OPTIONS) $< -o $(ObjDir)/$*.o ; \
 	        $(DEPEND_MOVEFILE)
