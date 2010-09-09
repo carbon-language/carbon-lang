@@ -1558,8 +1558,8 @@ public:
   /// semantic analysis. Subclasses may override this routine to provide
   /// different behavior.
   ExprResult RebuildCXXThisExpr(SourceLocation ThisLoc,
-                                      QualType ThisType,
-                                      bool isImplicit) {
+                                QualType ThisType,
+                                bool isImplicit) {
     return getSema().Owned(
                       new (getSema().Context) CXXThisExpr(ThisLoc, ThisType,
                                                           isImplicit));
@@ -4618,32 +4618,22 @@ TreeTransform<Derived>::TransformImplicitCastExpr(ImplicitCastExpr *E) {
 template<typename Derived>
 ExprResult
 TreeTransform<Derived>::TransformCStyleCastExpr(CStyleCastExpr *E) {
-  TypeSourceInfo *OldT;
-  TypeSourceInfo *NewT;
-  {
-    // FIXME: Source location isn't quite accurate.
-    SourceLocation TypeStartLoc
-      = SemaRef.PP.getLocForEndOfToken(E->getLParenLoc());
-    TemporaryBase Rebase(*this, TypeStartLoc, DeclarationName());
-
-    OldT = E->getTypeInfoAsWritten();
-    NewT = getDerived().TransformType(OldT);
-    if (!NewT)
-      return ExprError();
-  }
-
+  TypeSourceInfo *Type = getDerived().TransformType(E->getTypeInfoAsWritten());
+  if (!Type)
+    return ExprError();
+  
   ExprResult SubExpr
     = getDerived().TransformExpr(E->getSubExprAsWritten());
   if (SubExpr.isInvalid())
     return ExprError();
 
   if (!getDerived().AlwaysRebuild() &&
-      OldT == NewT &&
+      Type == E->getTypeInfoAsWritten() &&
       SubExpr.get() == E->getSubExpr())
     return SemaRef.Owned(E->Retain());
 
   return getDerived().RebuildCStyleCastExpr(E->getLParenLoc(),
-                                            NewT,
+                                            Type,
                                             E->getRParenLoc(),
                                             SubExpr.get());
 }
@@ -5024,27 +5014,17 @@ TreeTransform<Derived>::TransformCXXMemberCallExpr(CXXMemberCallExpr *E) {
 template<typename Derived>
 ExprResult
 TreeTransform<Derived>::TransformCXXNamedCastExpr(CXXNamedCastExpr *E) {
-  TypeSourceInfo *OldT;
-  TypeSourceInfo *NewT;
-  {
-    // FIXME: Source location isn't quite accurate.
-    SourceLocation TypeStartLoc
-      = SemaRef.PP.getLocForEndOfToken(E->getOperatorLoc());
-    TemporaryBase Rebase(*this, TypeStartLoc, DeclarationName());
-
-    OldT = E->getTypeInfoAsWritten();
-    NewT = getDerived().TransformType(OldT);
-    if (!NewT)
-      return ExprError();
-  }
-
+  TypeSourceInfo *Type = getDerived().TransformType(E->getTypeInfoAsWritten());
+  if (!Type)
+    return ExprError();
+  
   ExprResult SubExpr
     = getDerived().TransformExpr(E->getSubExprAsWritten());
   if (SubExpr.isInvalid())
     return ExprError();
 
   if (!getDerived().AlwaysRebuild() &&
-      OldT == NewT &&
+      Type == E->getTypeInfoAsWritten() &&
       SubExpr.get() == E->getSubExpr())
     return SemaRef.Owned(E->Retain());
 
@@ -5058,7 +5038,7 @@ TreeTransform<Derived>::TransformCXXNamedCastExpr(CXXNamedCastExpr *E) {
   return getDerived().RebuildCXXNamedCastExpr(E->getOperatorLoc(),
                                               E->getStmtClass(),
                                               FakeLAngleLoc,
-                                              NewT,
+                                              Type,
                                               FakeRAngleLoc,
                                               FakeRAngleLoc,
                                               SubExpr.get(),
@@ -5094,16 +5074,9 @@ template<typename Derived>
 ExprResult
 TreeTransform<Derived>::TransformCXXFunctionalCastExpr(
                                                      CXXFunctionalCastExpr *E) {
-  TypeSourceInfo *OldT;
-  TypeSourceInfo *NewT;
-  {
-    TemporaryBase Rebase(*this, E->getTypeBeginLoc(), DeclarationName());
-
-    OldT = E->getTypeInfoAsWritten();
-    NewT = getDerived().TransformType(OldT);
-    if (!NewT)
-      return ExprError();
-  }
+  TypeSourceInfo *Type = getDerived().TransformType(E->getTypeInfoAsWritten());
+  if (!Type)
+    return ExprError();
 
   ExprResult SubExpr
     = getDerived().TransformExpr(E->getSubExprAsWritten());
@@ -5111,11 +5084,11 @@ TreeTransform<Derived>::TransformCXXFunctionalCastExpr(
     return ExprError();
 
   if (!getDerived().AlwaysRebuild() &&
-      OldT == NewT &&
+      Type == E->getTypeInfoAsWritten() &&
       SubExpr.get() == E->getSubExpr())
     return SemaRef.Owned(E->Retain());
 
-  return getDerived().RebuildCXXFunctionalCastExpr(NewT,
+  return getDerived().RebuildCXXFunctionalCastExpr(Type,
                                       /*FIXME:*/E->getSubExpr()->getLocStart(),
                                                    SubExpr.get(),
                                                    E->getRParenLoc());
@@ -5214,14 +5187,11 @@ TreeTransform<Derived>::TransformCXXNullPtrLiteralExpr(
 template<typename Derived>
 ExprResult
 TreeTransform<Derived>::TransformCXXThisExpr(CXXThisExpr *E) {
-  TemporaryBase Rebase(*this, E->getLocStart(), DeclarationName());
+  DeclContext *DC = getSema().getFunctionLevelDeclContext();
+  CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(DC);
+  QualType T = MD->getThisType(getSema().Context);
 
-  QualType T = getDerived().TransformType(E->getType());
-  if (T.isNull())
-    return ExprError();
-
-  if (!getDerived().AlwaysRebuild() &&
-      T == E->getType())
+  if (!getDerived().AlwaysRebuild() && T == E->getType())
     return SemaRef.Owned(E->Retain());
 
   return getDerived().RebuildCXXThisExpr(E->getLocStart(), T, E->isImplicit());
