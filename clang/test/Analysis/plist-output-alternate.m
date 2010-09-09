@@ -37,6 +37,25 @@ void test_null_field(void) {
   *(x.p) = 0xDEADBEEF;
 }
 
+// <rdar://problem/8331641> leak reports should not show paths that end with exit() (but ones that don't end with exit())
+void panic() __attribute__((noreturn));
+enum { kCFNumberSInt8Type = 1,     kCFNumberSInt16Type = 2,     kCFNumberSInt32Type = 3,     kCFNumberSInt64Type = 4,     kCFNumberFloat32Type = 5,     kCFNumberFloat64Type = 6,      kCFNumberCharType = 7,     kCFNumberShortType = 8,     kCFNumberIntType = 9,     kCFNumberLongType = 10,     kCFNumberLongLongType = 11,     kCFNumberFloatType = 12,     kCFNumberDoubleType = 13,      kCFNumberCFIndexType = 14,      kCFNumberNSIntegerType = 15,     kCFNumberCGFloatType = 16,     kCFNumberMaxType = 16    };
+typedef const struct __CFAllocator * CFAllocatorRef;
+extern const CFAllocatorRef kCFAllocatorDefault;
+typedef signed long CFIndex;
+typedef CFIndex CFNumberType;
+typedef const struct __CFNumber * CFNumberRef;
+
+extern CFNumberRef CFNumberCreate(CFAllocatorRef allocator, CFNumberType theType, const void *valuePtr);
+
+void rdar8331641(int x) {
+  signed z = 1;
+  CFNumberRef value = CFNumberCreate(kCFAllocatorDefault, kCFNumberSInt32Type, &z); // expected-warning{{leak}}
+  if (x)
+    panic();
+  (void) value;
+}
+
 // CHECK: <?xml version="1.0" encoding="UTF-8"?>
 // CHECK: <!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 // CHECK: <plist version="1.0">
@@ -750,7 +769,246 @@ void test_null_field(void) {
 // CHECK:    <key>file</key><integer>0</integer>
 // CHECK:   </dict>
 // CHECK:   </dict>
+// CHECK:   <dict>
+// CHECK:    <key>path</key>
+// CHECK:    <array>
+// CHECK:     <dict>
+// CHECK:      <key>kind</key><string>control</string>
+// CHECK:      <key>edges</key>
+// CHECK:       <array>
+// CHECK:        <dict>
+// CHECK:         <key>start</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>52</integer>
+// CHECK:            <key>col</key><integer>3</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>52</integer>
+// CHECK:            <key>col</key><integer>3</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:         <key>end</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>53</integer>
+// CHECK:            <key>col</key><integer>3</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>53</integer>
+// CHECK:            <key>col</key><integer>3</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:        </dict>
+// CHECK:       </array>
+// CHECK:     </dict>
+// CHECK:     <dict>
+// CHECK:      <key>kind</key><string>control</string>
+// CHECK:      <key>edges</key>
+// CHECK:       <array>
+// CHECK:        <dict>
+// CHECK:         <key>start</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>53</integer>
+// CHECK:            <key>col</key><integer>3</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>53</integer>
+// CHECK:            <key>col</key><integer>3</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:         <key>end</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>53</integer>
+// CHECK:            <key>col</key><integer>23</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>53</integer>
+// CHECK:            <key>col</key><integer>82</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:        </dict>
+// CHECK:       </array>
+// CHECK:     </dict>
+// CHECK:     <dict>
+// CHECK:      <key>kind</key><string>event</string>
+// CHECK:      <key>location</key>
+// CHECK:      <dict>
+// CHECK:       <key>line</key><integer>53</integer>
+// CHECK:       <key>col</key><integer>23</integer>
+// CHECK:       <key>file</key><integer>0</integer>
+// CHECK:      </dict>
+// CHECK:      <key>ranges</key>
+// CHECK:      <array>
+// CHECK:        <array>
+// CHECK:         <dict>
+// CHECK:          <key>line</key><integer>53</integer>
+// CHECK:          <key>col</key><integer>23</integer>
+// CHECK:          <key>file</key><integer>0</integer>
+// CHECK:         </dict>
+// CHECK:         <dict>
+// CHECK:          <key>line</key><integer>53</integer>
+// CHECK:          <key>col</key><integer>82</integer>
+// CHECK:          <key>file</key><integer>0</integer>
+// CHECK:         </dict>
+// CHECK:        </array>
+// CHECK:      </array>
+// CHECK:      <key>extended_message</key>
+// CHECK:      <string>Call to function &apos;CFNumberCreate&apos; returns a Core Foundation object with a +1 retain count (owning reference)</string>
+// CHECK:      <key>message</key>
+// CHECK: <string>Call to function &apos;CFNumberCreate&apos; returns a Core Foundation object with a +1 retain count (owning reference)</string>
+// CHECK:     </dict>
+// CHECK:     <dict>
+// CHECK:      <key>kind</key><string>control</string>
+// CHECK:      <key>edges</key>
+// CHECK:       <array>
+// CHECK:        <dict>
+// CHECK:         <key>start</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>53</integer>
+// CHECK:            <key>col</key><integer>23</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>53</integer>
+// CHECK:            <key>col</key><integer>82</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:         <key>end</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>54</integer>
+// CHECK:            <key>col</key><integer>3</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>54</integer>
+// CHECK:            <key>col</key><integer>3</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:        </dict>
+// CHECK:       </array>
+// CHECK:     </dict>
+// CHECK:     <dict>
+// CHECK:      <key>kind</key><string>control</string>
+// CHECK:      <key>edges</key>
+// CHECK:       <array>
+// CHECK:        <dict>
+// CHECK:         <key>start</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>54</integer>
+// CHECK:            <key>col</key><integer>3</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>54</integer>
+// CHECK:            <key>col</key><integer>3</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:         <key>end</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>56</integer>
+// CHECK:            <key>col</key><integer>3</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>56</integer>
+// CHECK:            <key>col</key><integer>3</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:        </dict>
+// CHECK:       </array>
+// CHECK:     </dict>
+// CHECK:     <dict>
+// CHECK:      <key>kind</key><string>control</string>
+// CHECK:      <key>edges</key>
+// CHECK:       <array>
+// CHECK:        <dict>
+// CHECK:         <key>start</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>56</integer>
+// CHECK:            <key>col</key><integer>3</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>56</integer>
+// CHECK:            <key>col</key><integer>3</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:         <key>end</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>57</integer>
+// CHECK:            <key>col</key><integer>1</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>57</integer>
+// CHECK:            <key>col</key><integer>1</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:        </dict>
+// CHECK:       </array>
+// CHECK:     </dict>
+// CHECK:     <dict>
+// CHECK:      <key>kind</key><string>event</string>
+// CHECK:      <key>location</key>
+// CHECK:      <dict>
+// CHECK:       <key>line</key><integer>57</integer>
+// CHECK:       <key>col</key><integer>1</integer>
+// CHECK:       <key>file</key><integer>0</integer>
+// CHECK:      </dict>
+// CHECK:      <key>ranges</key>
+// CHECK:      <array>
+// CHECK:        <array>
+// CHECK:         <dict>
+// CHECK:          <key>line</key><integer>57</integer>
+// CHECK:          <key>col</key><integer>1</integer>
+// CHECK:          <key>file</key><integer>0</integer>
+// CHECK:         </dict>
+// CHECK:         <dict>
+// CHECK:          <key>line</key><integer>57</integer>
+// CHECK:          <key>col</key><integer>1</integer>
+// CHECK:          <key>file</key><integer>0</integer>
+// CHECK:         </dict>
+// CHECK:        </array>
+// CHECK:      </array>
+// CHECK:      <key>extended_message</key>
+// CHECK:      <string>Object allocated on line 53 and stored into &apos;value&apos; is no longer referenced after this point and has a retain count of +1 (object leaked)</string>
+// CHECK:      <key>message</key>
+// CHECK: <string>Object allocated on line 53 and stored into &apos;value&apos; is no longer referenced after this point and has a retain count of +1 (object leaked)</string>
+// CHECK:     </dict>
+// CHECK:    </array>
+// CHECK:    <key>description</key><string>Potential leak of an object allocated on line 53 and stored into &apos;value&apos;</string>
+// CHECK:    <key>category</key><string>Memory (Core Foundation/Objective-C)</string>
+// CHECK:    <key>type</key><string>Leak of returned object</string>
+// CHECK:   <key>location</key>
+// CHECK:   <dict>
+// CHECK:    <key>line</key><integer>57</integer>
+// CHECK:    <key>col</key><integer>1</integer>
+// CHECK:    <key>file</key><integer>0</integer>
+// CHECK:   </dict>
+// CHECK:   </dict>
 // CHECK:  </array>
 // CHECK: </dict>
 // CHECK: </plist>
-

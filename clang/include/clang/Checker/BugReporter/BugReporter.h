@@ -306,7 +306,8 @@ public:
   SourceManager& getSourceManager() { return D.getSourceManager(); }
 
   virtual void GeneratePathDiagnostic(PathDiagnostic& PD,
-                                      BugReportEquivClass& EQ) {}
+                                      BugReportEquivClass& EQ,
+               llvm::SmallVectorImpl<const ExplodedNode*> &Nodes) {}
 
   void Register(BugType *BT);
 
@@ -368,7 +369,8 @@ public:
   GRStateManager &getStateManager();
 
   virtual void GeneratePathDiagnostic(PathDiagnostic& PD,
-                                      BugReportEquivClass& R);
+                                      BugReportEquivClass& R,
+                     llvm::SmallVectorImpl<const ExplodedNode*> &Nodes);
 
   void addNotableSymbol(SymbolRef Sym) {
     NotableSymbols.insert(Sym);

@@ -1567,23 +1567,18 @@ static void CompactPathDiagnostic(PathDiagnostic &PD, const SourceManager& SM) {
 }
 
 void GRBugReporter::GeneratePathDiagnostic(PathDiagnostic& PD,
-                                           BugReportEquivClass& EQ) {
+                                           BugReportEquivClass& EQ,
+                       llvm::SmallVectorImpl<const ExplodedNode *> &Nodes) {
 
-  std::vector<const ExplodedNode*> Nodes;
 
-  for (BugReportEquivClass::iterator I=EQ.begin(), E=EQ.end(); I!=E; ++I) {
-    const ExplodedNode* N = I->getEndNode();
-    if (N) Nodes.push_back(N);
-  }
-
-  if (Nodes.empty())
-    return;
+  assert(!Nodes.empty());
 
   // Construct a new graph that contains only a single path from the error
   // node to a root.
   const std::pair<std::pair<ExplodedGraph*, NodeBackMap*>,
   std::pair<ExplodedNode*, unsigned> >&
-  GPair = MakeReportGraph(&getGraph(), &Nodes[0], &Nodes[0] + Nodes.size());
+    GPair = MakeReportGraph(&getGraph(), &Nodes[0],
+                            Nodes.data() + Nodes.size());
 
   // Find the BugReport with the original location.
   BugReport *R = 0;
@@ -1657,21 +1652,36 @@ struct FRIEC_WLItem {
 };  
 }
 
-static BugReport *FindReportInEquivalenceClass(BugReportEquivClass& EQ) {
+static BugReport *
+FindReportInEquivalenceClass(BugReportEquivClass& EQ,
+                             llvm::SmallVectorImpl<const ExplodedNode*> &Nodes) {
+
   BugReportEquivClass::iterator I = EQ.begin(), E = EQ.end();
   assert(I != E);
   BugReport *R = *I;
   BugType& BT = R->getBugType();
-  
-  if (!BT.isSuppressOnSink())
+
+  // If we don't need to suppress any of the nodes because they are post-dominated
+  // by a sink, simply add all the nodes in the equivalence class to 'Nodes'.
+  if (!BT.isSuppressOnSink()) {
+    for (BugReportEquivClass::iterator I=EQ.begin(), E=EQ.end(); I!=E; ++I) {
+      const ExplodedNode* N = I->getEndNode();
+      if (N) {
+        R = *I;
+        Nodes.push_back(N);
+      }
+    }
     return R;
-  
+  }
+
   // For bug reports that should be suppressed when all paths are post-dominated
   // by a sink node, iterate through the reports in the equivalence class
   // until we find one that isn't post-dominated (if one exists).  We use a
   // DFS traversal of the ExplodedGraph to find a non-sink node.  We could write
   // this as a recursive function, but we don't want to risk blowing out the
   // stack for very long paths.
+  BugReport *ExampleReport = 0;
+
   for (; I != E; ++I) {
     R = *I;
     const ExplodedNode *N = R->getEndNode();
@@ -1682,12 +1692,17 @@ static BugReport *FindReportInEquivalenceClass(BugReportEquivClass& EQ) {
     if (N->isSink()) {
       assert(false &&
            "BugType::isSuppressSink() should not be 'true' for sink end nodes");
-      return R;
+      return 0;
     }
-    
-    if (N->succ_empty())
-      return R;
-    
+
+    // No successors?  By definition this nodes isn't post-dominated by a sink.
+    if (N->succ_empty()) {
+      Nodes.push_back(N);
+      if (!ExampleReport)
+        ExampleReport = R;
+      continue;
+    }
+
     // At this point we know that 'N' is not a sink and it has at least one
     // successor.  Use a DFS worklist to find a non-sink end-of-path node.    
     typedef FRIEC_WLItem WLItem;
@@ -1706,15 +1721,17 @@ static BugReport *FindReportInEquivalenceClass(BugReportEquivClass& EQ) {
         const ExplodedNode *Succ = *WI.I;        
         // End-of-path node?
         if (Succ->succ_empty()) {
-          // If we found an end-of-path node that is not a sink, then return
-          // this report.
-          if (!Succ->isSink())
-            return R;
-         
+          // If we found an end-of-path node that is not a sink.
+          if (!Succ->isSink()) {
+            Nodes.push_back(N);
+            if (!ExampleReport)
+              ExampleReport = R;
+            WL.clear();
+            break;
+          }
           // Found a sink?  Continue on to the next successor.
           continue;
         }
-        
         // Mark the successor as visited.  If it hasn't been explored,
         // enqueue it to the DFS worklist.
         unsigned &mark = Visited[Succ];
@@ -1724,17 +1741,18 @@ static BugReport *FindReportInEquivalenceClass(BugReportEquivClass& EQ) {
           break;
         }
       }
-      
-      if (&WL.back() == &WI)
+
+      // The worklist may have been cleared at this point.  First
+      // check if it is empty before checking the last item.
+      if (!WL.empty() && &WL.back() == &WI)
         WL.pop_back();
     }
   }
-  
-  // If we reach here, the end nodes for all reports in the equivalence
-  // class are post-dominated by a sink node.
-  return NULL;
-}
 
+  // ExampleReport will be NULL if all the nodes in the equivalence class
+  // were post-dominated by sinks.
+  return ExampleReport;
+}
 
 //===----------------------------------------------------------------------===//
 // DiagnosticCache.  This is a hack to cache analyzer diagnostics.  It
@@ -1780,7 +1798,8 @@ static bool IsCachedDiagnostic(BugReport *R, PathDiagnostic *PD) {
 }
 
 void BugReporter::FlushReport(BugReportEquivClass& EQ) {
-  BugReport *R = FindReportInEquivalenceClass(EQ);
+  llvm::SmallVector<const ExplodedNode*, 10> Nodes;
+  BugReport *R = FindReportInEquivalenceClass(EQ, Nodes);
 
   if (!R)
     return;
@@ -1797,7 +1816,8 @@ void BugReporter::FlushReport(BugReportEquivClass& EQ) {
                          ? R->getDescription() : R->getShortDescription(),
                          BT.getCategory()));
 
-  GeneratePathDiagnostic(*D.get(), EQ);
+  if (!Nodes.empty())
+    GeneratePathDiagnostic(*D.get(), EQ, Nodes);
 
   if (IsCachedDiagnostic(R, D.get()))
     return;
