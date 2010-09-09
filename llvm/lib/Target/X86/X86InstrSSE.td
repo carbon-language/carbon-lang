@@ -598,14 +598,6 @@ defm CVTSI2SD64 : sse12_cvt_s<0x2A, GR64, FR64, sint_to_fp, i64mem, loadi64,
 
 // Conversion Instructions Intrinsics - Match intrinsics which expect MM
 // and/or XMM operand(s).
-multiclass sse12_cvt_pint<bits<8> opc, RegisterClass SrcRC, RegisterClass DstRC,
-                         Intrinsic Int, X86MemOperand x86memop, PatFrag ld_frag,
-                         string asm, Domain d> {
-  def rr : PI<opc, MRMSrcReg, (outs DstRC:$dst), (ins SrcRC:$src), asm,
-                        [(set DstRC:$dst, (Int SrcRC:$src))], d>;
-  def rm : PI<opc, MRMSrcMem, (outs DstRC:$dst), (ins x86memop:$src), asm,
-                        [(set DstRC:$dst, (Int (ld_frag addr:$src)))], d>;
-}
 
 multiclass sse12_cvt_sint<bits<8> opc, RegisterClass SrcRC, RegisterClass DstRC,
                          Intrinsic Int, X86MemOperand x86memop, PatFrag ld_frag,
@@ -616,16 +608,6 @@ multiclass sse12_cvt_sint<bits<8> opc, RegisterClass SrcRC, RegisterClass DstRC,
   def rm : SI<opc, MRMSrcMem, (outs DstRC:$dst), (ins x86memop:$src),
               !strconcat(asm, "\t{$src, $dst|$dst, $src}"),
               [(set DstRC:$dst, (Int (ld_frag addr:$src)))]>;
-}
-
-multiclass sse12_cvt_pint_3addr<bits<8> opc, RegisterClass SrcRC,
-                    RegisterClass DstRC, Intrinsic Int, X86MemOperand x86memop,
-                    PatFrag ld_frag, string asm, Domain d> {
-  def rr : PI<opc, MRMSrcReg, (outs DstRC:$dst), (ins DstRC:$src1, SrcRC:$src2),
-              asm, [(set DstRC:$dst, (Int DstRC:$src1, SrcRC:$src2))], d>;
-  def rm : PI<opc, MRMSrcMem, (outs DstRC:$dst),
-                   (ins DstRC:$src1, x86memop:$src2), asm,
-              [(set DstRC:$dst, (Int DstRC:$src1, (ld_frag addr:$src2)))], d>;
 }
 
 multiclass sse12_cvt_sint_3addr<bits<8> opc, RegisterClass SrcRC,
@@ -703,29 +685,6 @@ let Constraints = "$src1 = $dst" in {
   defm Int_CVTSI2SD64 : sse12_cvt_sint_3addr<0x2A, GR64, VR128,
                         int_x86_sse2_cvtsi642sd, i64mem, loadi64,
                         "cvtsi2sd">, XD, REX_W;
-}
-
-// Instructions below don't have an AVX form.
-defm Int_CVTPS2PI : sse12_cvt_pint<0x2D, VR128, VR64, int_x86_sse_cvtps2pi,
-                      f64mem, load, "cvtps2pi\t{$src, $dst|$dst, $src}",
-                      SSEPackedSingle>, TB;
-defm Int_CVTPD2PI : sse12_cvt_pint<0x2D, VR128, VR64, int_x86_sse_cvtpd2pi,
-                      f128mem, memop, "cvtpd2pi\t{$src, $dst|$dst, $src}",
-                      SSEPackedDouble>, TB, OpSize;
-defm Int_CVTTPS2PI : sse12_cvt_pint<0x2C, VR128, VR64, int_x86_sse_cvttps2pi,
-                       f64mem, load, "cvttps2pi\t{$src, $dst|$dst, $src}",
-                       SSEPackedSingle>, TB;
-defm Int_CVTTPD2PI : sse12_cvt_pint<0x2C, VR128, VR64, int_x86_sse_cvttpd2pi,
-                       f128mem, memop, "cvttpd2pi\t{$src, $dst|$dst, $src}",
-                       SSEPackedDouble>, TB, OpSize;
-defm Int_CVTPI2PD : sse12_cvt_pint<0x2A, VR64, VR128, int_x86_sse_cvtpi2pd,
-                         i64mem, load, "cvtpi2pd\t{$src, $dst|$dst, $src}",
-                         SSEPackedDouble>, TB, OpSize;
-let Constraints = "$src1 = $dst" in {
-  defm Int_CVTPI2PS : sse12_cvt_pint_3addr<0x2A, VR64, VR128,
-                         int_x86_sse_cvtpi2ps,
-                         i64mem, load, "cvtpi2ps\t{$src2, $dst|$dst, $src2}",
-                         SSEPackedSingle>, TB;
 }
 
 /// SSE 1 Only
@@ -3957,10 +3916,6 @@ def : Pat<(v4f32 (sint_to_fp (v4i32 VR128:$src))),
           (Int_CVTDQ2PSrr VR128:$src)>, Requires<[HasSSE2]>;
 def : Pat<(v4i32 (fp_to_sint (v4f32 VR128:$src))),
           (Int_CVTTPS2DQrr VR128:$src)>, Requires<[HasSSE2]>;
-def : Pat<(v2f64 (sint_to_fp (v2i32 VR64:$src))),
-          (Int_CVTPI2PDrr VR64:$src)>, Requires<[HasSSE2]>;
-def : Pat<(v2i32 (fp_to_sint (v2f64 VR128:$src))),
-          (Int_CVTTPD2PIrr VR128:$src)>, Requires<[HasSSE2]>;
 
 // Use movaps / movups for SSE integer load / store (one byte shorter).
 let Predicates = [HasSSE1] in {
