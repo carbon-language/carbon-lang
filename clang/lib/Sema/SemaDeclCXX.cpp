@@ -6077,13 +6077,13 @@ Decl *Sema::ActOnFinishLinkageSpecification(Scope *S,
 /// \brief Perform semantic analysis for the variable declaration that
 /// occurs within a C++ catch clause, returning the newly-created
 /// variable.
-VarDecl *Sema::BuildExceptionDeclaration(Scope *S, QualType ExDeclType,
+VarDecl *Sema::BuildExceptionDeclaration(Scope *S, 
                                          TypeSourceInfo *TInfo,
                                          IdentifierInfo *Name,
-                                         SourceLocation Loc,
-                                         SourceRange Range) {
+                                         SourceLocation Loc) {
   bool Invalid = false;
-
+  QualType ExDeclType = TInfo->getType();
+  
   // Arrays and functions decay.
   if (ExDeclType->isArrayType())
     ExDeclType = Context.getArrayDecayedType(ExDeclType);
@@ -6095,7 +6095,7 @@ VarDecl *Sema::BuildExceptionDeclaration(Scope *S, QualType ExDeclType,
   // incomplete type, other than [cv] void*.
   // N2844 forbids rvalue references.
   if (!ExDeclType->isDependentType() && ExDeclType->isRValueReferenceType()) {
-    Diag(Loc, diag::err_catch_rvalue_ref) << Range;
+    Diag(Loc, diag::err_catch_rvalue_ref);
     Invalid = true;
   }
 
@@ -6213,10 +6213,9 @@ Decl *Sema::ActOnExceptionDeclarator(Scope *S, Declarator &D) {
     Invalid = true;
   }
 
-  VarDecl *ExDecl = BuildExceptionDeclaration(S, ExDeclType, TInfo,
+  VarDecl *ExDecl = BuildExceptionDeclaration(S, TInfo,
                                               D.getIdentifier(),
-                                              D.getIdentifierLoc(),
-                                            D.getDeclSpec().getSourceRange());
+                                              D.getIdentifierLoc());
 
   if (Invalid)
     ExDecl->setInvalidDecl();

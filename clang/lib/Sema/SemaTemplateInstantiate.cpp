@@ -602,10 +602,10 @@ namespace {
       
     /// \brief Rebuild the exception declaration and register the declaration
     /// as an instantiated local.
-    VarDecl *RebuildExceptionDecl(VarDecl *ExceptionDecl, QualType T,
+    VarDecl *RebuildExceptionDecl(VarDecl *ExceptionDecl, 
                                   TypeSourceInfo *Declarator,
                                   IdentifierInfo *Name,
-                                  SourceLocation Loc, SourceRange TypeRange);
+                                  SourceLocation Loc);
 
     /// \brief Rebuild the Objective-C exception declaration and register the 
     /// declaration as an instantiated local.
@@ -719,13 +719,11 @@ TemplateInstantiator::TransformFirstQualifierInScope(NamedDecl *D,
 
 VarDecl *
 TemplateInstantiator::RebuildExceptionDecl(VarDecl *ExceptionDecl,
-                                           QualType T,
                                            TypeSourceInfo *Declarator,
                                            IdentifierInfo *Name,
-                                           SourceLocation Loc,
-                                           SourceRange TypeRange) {
-  VarDecl *Var = inherited::RebuildExceptionDecl(ExceptionDecl, T, Declarator,
-                                                 Name, Loc, TypeRange);
+                                           SourceLocation Loc) {
+  VarDecl *Var = inherited::RebuildExceptionDecl(ExceptionDecl, Declarator,
+                                                 Name, Loc);
   if (Var)
     getSema().CurrentInstantiationScope->InstantiatedLocal(ExceptionDecl, Var);
   return Var;

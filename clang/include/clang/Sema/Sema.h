@@ -1609,11 +1609,10 @@ public:
                                          Expr *SynchExpr,
                                          Stmt *SynchBody);
 
-  VarDecl *BuildExceptionDeclaration(Scope *S, QualType ExDeclType,
+  VarDecl *BuildExceptionDeclaration(Scope *S, 
                                      TypeSourceInfo *TInfo,
                                      IdentifierInfo *Name,
-                                     SourceLocation Loc,
-                                     SourceRange Range);
+                                     SourceLocation Loc);
   Decl *ActOnExceptionDeclarator(Scope *S, Declarator &D);
 
   StmtResult ActOnCXXCatchBlock(SourceLocation CatchLoc,

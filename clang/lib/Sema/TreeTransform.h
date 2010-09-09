@@ -980,13 +980,11 @@ public:
   ///
   /// By default, performs semantic analysis to build the new decaration.
   /// Subclasses may override this routine to provide different behavior.
-  VarDecl *RebuildExceptionDecl(VarDecl *ExceptionDecl, QualType T,
+  VarDecl *RebuildExceptionDecl(VarDecl *ExceptionDecl, 
                                 TypeSourceInfo *Declarator,
                                 IdentifierInfo *Name,
-                                SourceLocation Loc,
-                                SourceRange TypeRange) {
-    return getSema().BuildExceptionDeclaration(0, T, Declarator, Name, Loc,
-                                               TypeRange);
+                                SourceLocation Loc) {
+    return getSema().BuildExceptionDeclaration(0, Declarator, Name, Loc);
   }
 
   /// \brief Build a new C++ catch statement.
@@ -4127,20 +4125,14 @@ TreeTransform<Derived>::TransformCXXCatchStmt(CXXCatchStmt *S) {
   VarDecl *Var = 0;
   if (S->getExceptionDecl()) {
     VarDecl *ExceptionDecl = S->getExceptionDecl();
-    TemporaryBase Rebase(*this, ExceptionDecl->getLocation(),
-                         ExceptionDecl->getDeclName());
-
-    QualType T = getDerived().TransformType(ExceptionDecl->getType());
-    if (T.isNull())
+    TypeSourceInfo *T = getDerived().TransformType(
+                                            ExceptionDecl->getTypeSourceInfo());
+    if (!T)
       return StmtError();
 
-    Var = getDerived().RebuildExceptionDecl(ExceptionDecl,
-                                            T,
-                                            ExceptionDecl->getTypeSourceInfo(),
+    Var = getDerived().RebuildExceptionDecl(ExceptionDecl, T,
                                             ExceptionDecl->getIdentifier(),
-                                            ExceptionDecl->getLocation(),
-                                            /*FIXME: Inaccurate*/
-                                    SourceRange(ExceptionDecl->getLocation()));
+                                            ExceptionDecl->getLocation());
     if (!Var || Var->isInvalidDecl())
       return StmtError();
   }

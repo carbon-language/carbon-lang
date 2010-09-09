@@ -312,8 +312,6 @@ public:
   bool VisitObjCImplDecl(ObjCImplDecl *D);
   bool VisitObjCCategoryImplDecl(ObjCCategoryImplDecl *D);
   bool VisitObjCImplementationDecl(ObjCImplementationDecl *D);
-  // FIXME: ObjCPropertyDecl requires TypeSourceInfo, getter/setter locations,
-  // etc.
   // FIXME: ObjCCompatibleAliasDecl requires aliased-class locations.
   bool VisitObjCForwardProtocolDecl(ObjCForwardProtocolDecl *D);
   bool VisitObjCClassDecl(ObjCClassDecl *D);
@@ -846,7 +844,7 @@ bool CursorVisitor::VisitObjCProtocolDecl(ObjCProtocolDecl *PID) {
 }
 
 bool CursorVisitor::VisitObjCPropertyDecl(ObjCPropertyDecl *PD) {
-  if (Visit(PD->getTypeSourceInfo()->getTypeLoc()))
+  if (PD->getTypeSourceInfo() && Visit(PD->getTypeSourceInfo()->getTypeLoc()))
     return true;
 
   // FIXME: This implements a workaround with @property declarations also being
