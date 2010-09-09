@@ -1675,6 +1675,9 @@ llvm::Constant *CGObjCCommonMac::GCBlockLayout(CodeGen::CodeGenFunction &CGF,
   unsigned WordSizeInBits = CGM.getContext().Target.getPointerWidth(0);
   unsigned ByteSizeInBits = CGM.getContext().Target.getCharWidth();
   
+  // __isa is the first field in block descriptor and must assume by runtime's
+  // convention that it is GC'able.
+  IvarsInfo.push_back(GC_IVAR(0, 1));
   for (size_t i = 0; i < DeclRefs.size(); ++i) {
     const BlockDeclRefExpr *BDRE = DeclRefs[i];
     const ValueDecl *VD = BDRE->getDecl();
