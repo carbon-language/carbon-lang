@@ -955,6 +955,13 @@ bool Sema::SemaCheckStringLiteral(const Expr *E, const CallExpr *TheCall,
                                   format_idx, firstDataArg, isPrintf);
   }
 
+  case Stmt::IntegerLiteralClass:
+    // Technically -Wformat-nonliteral does not warn about this case.
+    // The behavior of printf and friends in this case is implementation
+    // dependent.  Ideally if the format string cannot be null then
+    // it should have a 'nonnull' attribute in the function prototype.
+    return true;
+
   case Stmt::ImplicitCastExprClass: {
     E = cast<ImplicitCastExpr>(E)->getSubExpr();
     goto tryAgain;

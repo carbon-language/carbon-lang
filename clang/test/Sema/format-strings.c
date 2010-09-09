@@ -301,3 +301,10 @@ void pr7981(wint_t c, wchar_t c2) {
   printf("%lc", c2); // no-warning
 }
 
+// <rdar://problem/8269537> -Wformat-security says NULL is not a string literal
+void r8269537() {
+  // This is likely to crash in most cases, but -Wformat-nonliteral technically
+  // doesn't warn in this case.
+  printf(0); // no-warning
+}
+
