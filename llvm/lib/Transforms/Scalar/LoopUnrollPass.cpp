@@ -155,10 +155,8 @@ bool LoopUnroll::runOnLoop(Loop *L, LPPassManager &LPM) {
     unsigned LoopSize = ApproximateLoopSize(L, NumCalls);
     DEBUG(dbgs() << "  Loop Size = " << LoopSize << "\n");
     if (NumCalls != 0) {
-      // Even for a loop that contains calls, it can still be profitable to
-      // unroll if the loop is really, REALLY small.
-      DEBUG(dbgs() <<"  Using lower threshold for loop with function calls.\n");
-      CurrentThreshold = OptSizeUnrollThreshold;
+      DEBUG(dbgs() << "  Not unrolling loop with function calls.\n");
+      return false;
     }
     uint64_t Size = (uint64_t)LoopSize*Count;
     if (TripCount != 1 && Size > CurrentThreshold) {
