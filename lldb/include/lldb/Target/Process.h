@@ -37,6 +37,14 @@
 
 namespace lldb_private {
 
+
+typedef enum ProcessPlugins
+{
+    eMacosx,
+    eRemoteDebugger
+} ProcessPlugins;
+
+
 class ProcessInstanceSettings : public InstanceSettings
 {
 public:
@@ -106,7 +114,7 @@ private:
     std::string m_input_path;
     std::string m_output_path;
     std::string m_error_path;
-    lldb::ProcessPlugins m_plugin;
+    ProcessPlugins m_plugin;
     bool m_disable_aslr;
 };
 

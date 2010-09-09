@@ -506,12 +506,6 @@ typedef enum VarSetOperationType
     eVarSetOperationInvalid
 } VarSetOperationType;
 
-typedef enum ProcessPlugins
-{
-    eMacosx,
-    eRemoteDebugger
-} ProcessPlugins;
-
 } // namespace lldb
 
 

@@ -2235,9 +2235,9 @@ Process::ProcessSettingsController::global_settings_table[] =
 lldb::OptionEnumValueElement
 Process::ProcessSettingsController::g_plugins[] =
 {
-  { eMacosx, "macosx", "Use the Mac OS X plugin" },
-  { eRemoteDebugger, "remote_debugger" , "Use the remote debugger plugin" },
-  { 0, NULL, NULL }
+    { eMacosx, "process.macosx", "Use the native MacOSX debugger plugin" },
+    { eRemoteDebugger, "process.gdb-remote" , "Use the GDB Remote protocol based debugger plugin" },
+    { 0, NULL, NULL }
 };
 
 SettingEntry
