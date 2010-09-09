@@ -124,6 +124,8 @@ class ARMFastISel : public FastISel {
     bool ARMLoadAlloca(const Instruction *I, EVT VT);
     bool ARMStoreAlloca(const Instruction *I, unsigned SrcReg, EVT VT);
     bool ARMComputeRegOffset(const Value *Obj, unsigned &Reg, int &Offset);
+    unsigned ARMMaterializeFP(const ConstantFP *CFP, EVT VT);
+    unsigned ARMMaterializeInt(const Constant *C);
     
     bool DefinesOptionalPredicate(MachineInstr *MI, bool *CPSR);
     const MachineInstrBuilder &AddOptionalDefs(const MachineInstrBuilder &MIB);
@@ -323,18 +325,40 @@ unsigned ARMFastISel::FastEmitInst_extractsubreg(MVT RetVT,
   return ResultReg;
 }
 
-unsigned ARMFastISel::TargetMaterializeConstant(const Constant *C) {
-  EVT VT = TLI.getValueType(C->getType(), true);
-
-  // Only handle simple types.
-  if (!VT.isSimple()) return 0;
-
-  // Handle double width floating point?
-  if (VT.getSimpleVT().SimpleTy == MVT::f64) return 0;
+// For double width floating point we need to materialize two constants
+// (the high and the low) into integer registers then use a move to get
+// the combined constant into an FP reg.
+unsigned ARMFastISel::ARMMaterializeFP(const ConstantFP *CFP, EVT VT) {
+  const APFloat Val = CFP->getValueAPF();
+  bool is64bit = VT.getSimpleVT().SimpleTy == MVT::f64;
   
-  // TODO: Theoretically we could materialize fp constants directly with
-  // instructions from VFP3.
+  // This checks to see if we can use VFP3 instructions to materialize
+  // a constant, otherwise we have to go through the constant pool.
+  if (TLI.isFPImmLegal(Val, VT)) {
+    unsigned Opc = is64bit ? ARM::FCONSTD : ARM::FCONSTS;
+    unsigned DestReg = createResultReg(TLI.getRegClassFor(VT));
+    AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(Opc),
+                            DestReg)
+                    .addFPImm(CFP));
+    return DestReg;
+  }
+  
+  // No 64-bit at the moment.
+  if (is64bit) return 0;
+  
+  // Load this from the constant pool.
+  unsigned DestReg = ARMMaterializeInt(cast<Constant>(CFP));
 
+  // If we have a floating point constant we expect it in a floating point
+  // register.
+  unsigned MoveReg = createResultReg(TLI.getRegClassFor(VT));
+  AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
+                          TII.get(ARM::VMOVRS), MoveReg)
+                  .addReg(DestReg));
+  return MoveReg;
+}
+
+unsigned ARMFastISel::ARMMaterializeInt(const Constant *C) {
   // MachineConstantPool wants an explicit alignment.
   unsigned Align = TD.getPrefTypeAlignment(C->getType());
   if (Align == 0) {
@@ -353,19 +377,19 @@ unsigned ARMFastISel::TargetMaterializeConstant(const Constant *C) {
                             TII.get(ARM::LDRcp))
                             .addReg(DestReg).addConstantPoolIndex(Idx)
                     .addReg(0).addImm(0));
-                  
-  // If we have a floating point constant we expect it in a floating point
-  // register.
-  // TODO: Make this use ARMBaseInstrInfo::copyPhysReg.
-  if (C->getType()->isFloatTy()) {
-    unsigned MoveReg = createResultReg(TLI.getRegClassFor(VT));
-    AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
-                            TII.get(ARM::VMOVRS), MoveReg)
-                    .addReg(DestReg));
-    return MoveReg;
-  }
     
   return DestReg;
+}
+
+unsigned ARMFastISel::TargetMaterializeConstant(const Constant *C) {
+  EVT VT = TLI.getValueType(C->getType(), true);
+
+  // Only handle simple types.
+  if (!VT.isSimple()) return 0;
+
+  if (const ConstantFP *CFP = dyn_cast<ConstantFP>(C))
+    return ARMMaterializeFP(CFP, VT);
+  return ARMMaterializeInt(C);
 }
 
 bool ARMFastISel::isTypeLegal(const Type *Ty, EVT &VT) {
