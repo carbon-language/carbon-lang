@@ -115,6 +115,7 @@ class ARMFastISel : public FastISel {
     virtual bool ARMSelectBranch(const Instruction *I);
     virtual bool ARMSelectCmp(const Instruction *I);
     virtual bool ARMSelectFPExt(const Instruction *I);
+    virtual bool ARMSelectBinaryOp(const Instruction *I, unsigned ISDOpcode);
 
     // Utility routines.
   private:
@@ -740,6 +741,44 @@ bool ARMFastISel::ARMSelectFPExt(const Instruction *I) {
   return true;
 }
 
+bool ARMFastISel::ARMSelectBinaryOp(const Instruction *I, unsigned ISDOpcode) {
+  // We can get here in the case when we want to use NEON for our fp
+  // operations, but can't figure out how to. Just use the vfp instructions
+  // if we have them.
+  // FIXME: It'd be nice to use NEON instructions.
+  if (!Subtarget->hasVFP2()) return false;
+  
+  EVT VT  = TLI.getValueType(I->getType(), true);
+  
+  // In this case make extra sure we have a 32-bit floating point add.
+  if (VT != MVT::f32) return false;
+  
+  unsigned Op1 = getRegForValue(I->getOperand(0));
+  if (Op1 == 0) return false;
+  
+  unsigned Op2 = getRegForValue(I->getOperand(1));
+  if (Op2 == 0) return false;
+  
+  unsigned Opc;
+  switch (ISDOpcode) {
+    default: return false;
+    case ISD::FADD:
+      Opc = ARM::VADDS;
+      break;
+    case ISD::FSUB:
+      Opc = ARM::VSUBS;
+      break;
+    case ISD::FMUL:
+      Opc = ARM::VMULS;
+      break;
+  }
+  unsigned ResultReg = createResultReg(ARM::SPRRegisterClass);
+  AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
+                          TII.get(Opc), ResultReg)
+                  .addReg(Op1).addReg(Op2));
+  return true;
+}
+
 // TODO: SoftFP support.
 bool ARMFastISel::TargetSelectInstruction(const Instruction *I) {
   // No Thumb-1 for now.
@@ -757,6 +796,12 @@ bool ARMFastISel::TargetSelectInstruction(const Instruction *I) {
         return ARMSelectCmp(I);
     case Instruction::FPExt:
         return ARMSelectFPExt(I);
+    case Instruction::FAdd:
+        return ARMSelectBinaryOp(I, ISD::FADD);
+    case Instruction::FSub:
+        return ARMSelectBinaryOp(I, ISD::FSUB);
+    case Instruction::FMul:
+        return ARMSelectBinaryOp(I, ISD::FMUL);
     default: break;
   }
   return false;
