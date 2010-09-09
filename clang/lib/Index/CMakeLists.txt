@@ -1,5 +1,7 @@
 set(LLVM_NO_RTTI 1)
 
+set(LLVM_USED_LIBS clangBasic clangLex clangAST)
+
 set( LLVM_USED_LIBS
   clangSerialization
   clangFrontend
@@ -27,3 +29,6 @@ add_clang_library(clangIndex
   Program.cpp
   SelectorMap.cpp
   )
+
+add_dependencies(clangIndex ClangAttrClasses ClangAttrList
+                 ClangDeclNodes ClangStmtNodes)

@@ -1,5 +1,7 @@
 set(LLVM_NO_RTTI 1)
 
+set(LLVM_USED_LIBS clangBasic clangAST clangFrontend)
+
 add_clang_library(clangCodeGen
   BackendUtil.cpp
   CGBlocks.cpp
