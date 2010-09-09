@@ -5688,6 +5688,8 @@ def : Pat<(v2i64 (X86Movddup VR128:$src)),
           (MOVLHPSrr VR128:$src, VR128:$src)>;
 def : Pat<(v4f32 (X86Movddup VR128:$src)),
           (MOVLHPSrr VR128:$src, VR128:$src)>;
+def : Pat<(v2f64 (X86Movddup VR128:$src)),
+          (UNPCKLPDrr VR128:$src, VR128:$src)>;
 
 // Shuffle with MOVLHPD
 def : Pat<(v2f64 (X86Movlhpd VR128:$src1,
