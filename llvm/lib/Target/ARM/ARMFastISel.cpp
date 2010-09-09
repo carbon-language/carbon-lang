@@ -63,7 +63,7 @@ class ARMFastISel : public FastISel {
   bool isThumb;
 
   public:
-    explicit ARMFastISel(FunctionLoweringInfo &funcInfo) 
+    explicit ARMFastISel(FunctionLoweringInfo &funcInfo)
     : FastISel(funcInfo),
       TM(funcInfo.MF->getTarget()),
       TII(*TM.getInstrInfo()),
@@ -102,13 +102,13 @@ class ARMFastISel : public FastISel {
     virtual unsigned FastEmitInst_extractsubreg(MVT RetVT,
                                                 unsigned Op0, bool Op0IsKill,
                                                 uint32_t Idx);
-                                                
+
     // Backend specific FastISel code.
     virtual bool TargetSelectInstruction(const Instruction *I);
     virtual unsigned TargetMaterializeConstant(const Constant *C);
 
   #include "ARMGenFastISel.inc"
-  
+
     // Instruction selection routines.
     virtual bool ARMSelectLoad(const Instruction *I);
     virtual bool ARMSelectStore(const Instruction *I);
@@ -128,7 +128,7 @@ class ARMFastISel : public FastISel {
     bool ARMComputeRegOffset(const Value *Obj, unsigned &Reg, int &Offset);
     unsigned ARMMaterializeFP(const ConstantFP *CFP, EVT VT);
     unsigned ARMMaterializeInt(const Constant *C);
-    
+
     bool DefinesOptionalPredicate(MachineInstr *MI, bool *CPSR);
     const MachineInstrBuilder &AddOptionalDefs(const MachineInstrBuilder &MIB);
 };
@@ -164,7 +164,7 @@ ARMFastISel::AddOptionalDefs(const MachineInstrBuilder &MIB) {
   // Do we use a predicate?
   if (TII.isPredicable(MI))
     AddDefaultPred(MIB);
-  
+
   // Do we optionally set a predicate?  Preds is size > 0 iff the predicate
   // defines CPSR. All other OptionalDefines in ARM are the CCR register.
   bool CPSR = false;
@@ -301,7 +301,7 @@ unsigned ARMFastISel::FastEmitInst_i(unsigned MachineInstOpcode,
                                      uint64_t Imm) {
   unsigned ResultReg = createResultReg(RC);
   const TargetInstrDesc &II = TII.get(MachineInstOpcode);
-  
+
   if (II.getNumDefs() >= 1)
     AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, II, ResultReg)
                    .addImm(Imm));
@@ -333,7 +333,7 @@ unsigned ARMFastISel::FastEmitInst_extractsubreg(MVT RetVT,
 unsigned ARMFastISel::ARMMaterializeFP(const ConstantFP *CFP, EVT VT) {
   const APFloat Val = CFP->getValueAPF();
   bool is64bit = VT.getSimpleVT().SimpleTy == MVT::f64;
-  
+
   // This checks to see if we can use VFP3 instructions to materialize
   // a constant, otherwise we have to go through the constant pool.
   if (TLI.isFPImmLegal(Val, VT)) {
@@ -344,10 +344,10 @@ unsigned ARMFastISel::ARMMaterializeFP(const ConstantFP *CFP, EVT VT) {
                     .addFPImm(CFP));
     return DestReg;
   }
-  
+
   // No 64-bit at the moment.
   if (is64bit) return 0;
-  
+
   // Load this from the constant pool.
   unsigned DestReg = ARMMaterializeInt(cast<Constant>(CFP));
 
@@ -379,7 +379,7 @@ unsigned ARMFastISel::ARMMaterializeInt(const Constant *C) {
                             TII.get(ARM::LDRcp))
                             .addReg(DestReg).addConstantPoolIndex(Idx)
                     .addReg(0).addImm(0));
-    
+
   return DestReg;
 }
 
@@ -396,10 +396,10 @@ unsigned ARMFastISel::TargetMaterializeConstant(const Constant *C) {
 
 bool ARMFastISel::isTypeLegal(const Type *Ty, EVT &VT) {
   VT = TLI.getValueType(Ty, true);
-  
+
   // Only handle simple types.
   if (VT == MVT::Other || !VT.isSimple()) return false;
-    
+
   // Handle all legal types, i.e. a register that will directly hold this
   // value.
   return TLI.isTypeLegal(VT);
@@ -407,12 +407,12 @@ bool ARMFastISel::isTypeLegal(const Type *Ty, EVT &VT) {
 
 bool ARMFastISel::isLoadTypeLegal(const Type *Ty, EVT &VT) {
   if (isTypeLegal(Ty, VT)) return true;
-  
+
   // If this is a type than can be sign or zero-extended to a basic operation
   // go ahead and accept it now.
   if (VT == MVT::i8 || VT == MVT::i16)
     return true;
-  
+
   return false;
 }
 
@@ -441,9 +441,9 @@ bool ARMFastISel::ARMComputeRegOffset(const Value *Obj, unsigned &Reg,
       // Fast instruction selection doesn't support the special
       // address spaces.
       return false;
-  
+
   switch (Opcode) {
-    default: 
+    default:
     //errs() << "Failing Opcode is: " << *Op1 << "\n";
     break;
     case Instruction::Alloca: {
@@ -451,13 +451,13 @@ bool ARMFastISel::ARMComputeRegOffset(const Value *Obj, unsigned &Reg,
       return false;
     }
   }
-  
+
   if (const GlobalValue *GV = dyn_cast<GlobalValue>(Obj)) {
     //errs() << "Failing GV is: " << GV << "\n";
     (void)GV;
     return false;
   }
-  
+
   // Try to get this in a register if nothing else has worked.
   Reg = getRegForValue(Obj);
   if (Reg == 0) return false;
@@ -483,7 +483,7 @@ bool ARMFastISel::ARMComputeRegOffset(const Value *Obj, unsigned &Reg,
                              static_cast<const ARMBaseInstrInfo&>(TII));
     }
   }
-  
+
   return true;
 }
 
@@ -510,12 +510,12 @@ bool ARMFastISel::ARMLoadAlloca(const Instruction *I, EVT VT) {
 
 bool ARMFastISel::ARMEmitLoad(EVT VT, unsigned &ResultReg,
                               unsigned Reg, int Offset) {
-  
+
   assert(VT.isSimple() && "Non-simple types are invalid here!");
   unsigned Opc;
-  
+
   switch (VT.getSimpleVT().SimpleTy) {
-    default: 
+    default:
       assert(false && "Trying to emit for an unhandled type!");
       return false;
     case MVT::i16:
@@ -530,9 +530,9 @@ bool ARMFastISel::ARMEmitLoad(EVT VT, unsigned &ResultReg,
       Opc = isThumb ? ARM::tLDR : ARM::LDR;
       break;
   }
-  
+
   ResultReg = createResultReg(TLI.getRegClassFor(VT));
-  
+
   // TODO: Fix the Addressing modes so that these can share some code.
   // Since this is a Thumb1 load this will work in Thumb1 or 2 mode.
   if (isThumb)
@@ -543,7 +543,7 @@ bool ARMFastISel::ARMEmitLoad(EVT VT, unsigned &ResultReg,
     AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
                             TII.get(Opc), ResultReg)
                     .addReg(Reg).addReg(0).addImm(Offset));
-                    
+
   return true;
 }
 
@@ -585,7 +585,7 @@ bool ARMFastISel::ARMEmitStore(EVT VT, unsigned SrcReg,
       StrOpc = ARM::VSTRD;
       break;
   }
-  
+
   if (isThumb)
     AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
                             TII.get(StrOpc), SrcReg)
@@ -594,7 +594,7 @@ bool ARMFastISel::ARMEmitStore(EVT VT, unsigned SrcReg,
     AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
                             TII.get(StrOpc), SrcReg)
                     .addReg(DstReg).addReg(0).addImm(Offset));
-  
+
   return true;
 }
 
@@ -611,24 +611,24 @@ bool ARMFastISel::ARMSelectStore(const Instruction *I) {
   SrcReg = getRegForValue(Op0);
   if (SrcReg == 0)
     return false;
-    
+
   // If we're an alloca we know we have a frame index and can emit the store
   // quickly.
   if (ARMStoreAlloca(I, SrcReg, VT))
     return true;
-    
+
   // Our register and offset with innocuous defaults.
   unsigned Reg = 0;
   int Offset = 0;
-  
+
   // See if we can handle this as Reg + Offset
   if (!ARMComputeRegOffset(I->getOperand(1), Reg, Offset))
     return false;
-    
+
   if (!ARMEmitStore(VT, SrcReg, Reg, Offset /* 0 */)) return false;
-    
+
   return false;
-  
+
 }
 
 bool ARMFastISel::ARMSelectLoad(const Instruction *I) {
@@ -636,23 +636,23 @@ bool ARMFastISel::ARMSelectLoad(const Instruction *I) {
   EVT VT;
   if (!isLoadTypeLegal(I->getType(), VT))
     return false;
-  
+
   // If we're an alloca we know we have a frame index and can emit the load
   // directly in short order.
   if (ARMLoadAlloca(I, VT))
     return true;
-    
+
   // Our register and offset with innocuous defaults.
   unsigned Reg = 0;
   int Offset = 0;
-  
+
   // See if we can handle this as Reg + Offset
   if (!ARMComputeRegOffset(I->getOperand(0), Reg, Offset))
     return false;
-  
+
   unsigned ResultReg;
   if (!ARMEmitLoad(VT, ResultReg, Reg, Offset /* 0 */)) return false;
-  
+
   UpdateValueMap(I, ResultReg);
   return true;
 }
@@ -661,11 +661,11 @@ bool ARMFastISel::ARMSelectBranch(const Instruction *I) {
   const BranchInst *BI = cast<BranchInst>(I);
   MachineBasicBlock *TBB = FuncInfo.MBBMap[BI->getSuccessor(0)];
   MachineBasicBlock *FBB = FuncInfo.MBBMap[BI->getSuccessor(1)];
-  
+
   // Simple branch support.
   unsigned CondReg = getRegForValue(BI->getCondition());
   if (CondReg == 0) return false;
-  
+
   unsigned CmpOpc = isThumb ? ARM::t2CMPrr : ARM::CMPrr;
   unsigned BrOpc = isThumb ? ARM::t2Bcc : ARM::Bcc;
   AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(CmpOpc))
@@ -679,16 +679,16 @@ bool ARMFastISel::ARMSelectBranch(const Instruction *I) {
 
 bool ARMFastISel::ARMSelectCmp(const Instruction *I) {
   const CmpInst *CI = cast<CmpInst>(I);
-  
+
   EVT VT;
   const Type *Ty = CI->getOperand(0)->getType();
   if (!isTypeLegal(Ty, VT))
     return false;
-  
+
   bool isFloat = (Ty->isDoubleTy() || Ty->isFloatTy());
   if (isFloat && !Subtarget->hasVFP2())
     return false;
-  
+
   unsigned CmpOpc;
   switch (VT.getSimpleVT().SimpleTy) {
     default: return false;
@@ -706,13 +706,13 @@ bool ARMFastISel::ARMSelectCmp(const Instruction *I) {
 
   unsigned Arg1 = getRegForValue(CI->getOperand(0));
   if (Arg1 == 0) return false;
-  
+
   unsigned Arg2 = getRegForValue(CI->getOperand(1));
   if (Arg2 == 0) return false;
-  
+
   AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(CmpOpc))
                   .addReg(Arg1).addReg(Arg2));
-                  
+
   // For floating point we need to move the result to a register we can
   // actually do something with.
   if (isFloat)
@@ -724,17 +724,17 @@ bool ARMFastISel::ARMSelectCmp(const Instruction *I) {
 bool ARMFastISel::ARMSelectFPExt(const Instruction *I) {
   // Make sure we have VFP and that we're extending float to double.
   if (!Subtarget->hasVFP2()) return false;
-  
+
   Value *V = I->getOperand(0);
   if (!I->getType()->isDoubleTy() ||
       !V->getType()->isFloatTy()) return false;
-      
+
   unsigned Op = getRegForValue(V);
   if (Op == 0) return false;
-  
+
   unsigned Result = createResultReg(ARM::DPRRegisterClass);
 
-  AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, 
+  AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
                           TII.get(ARM::VCVTDS), Result)
                   .addReg(Op));
   UpdateValueMap(I, Result);
@@ -743,7 +743,7 @@ bool ARMFastISel::ARMSelectFPExt(const Instruction *I) {
 
 bool ARMFastISel::ARMSelectBinaryOp(const Instruction *I, unsigned ISDOpcode) {
   EVT VT  = TLI.getValueType(I->getType(), true);
-  
+
   // We can get here in the case when we want to use NEON for our fp
   // operations, but can't figure out how to. Just use the vfp instructions
   // if we have them.
@@ -752,13 +752,13 @@ bool ARMFastISel::ARMSelectBinaryOp(const Instruction *I, unsigned ISDOpcode) {
   bool isFloat = (Ty->isDoubleTy() || Ty->isFloatTy());
   if (isFloat && !Subtarget->hasVFP2())
     return false;
-  
+
   unsigned Op1 = getRegForValue(I->getOperand(0));
   if (Op1 == 0) return false;
-  
+
   unsigned Op2 = getRegForValue(I->getOperand(1));
   if (Op2 == 0) return false;
-  
+
   unsigned Opc;
   bool is64bit = VT.getSimpleVT().SimpleTy == MVT::f64 ||
                  VT.getSimpleVT().SimpleTy == MVT::i64;
@@ -785,7 +785,7 @@ bool ARMFastISel::ARMSelectBinaryOp(const Instruction *I, unsigned ISDOpcode) {
 bool ARMFastISel::TargetSelectInstruction(const Instruction *I) {
   // No Thumb-1 for now.
   if (isThumb && !AFI->isThumb2Function()) return false;
-  
+
   switch (I->getOpcode()) {
     case Instruction::Load:
       return ARMSelectLoad(I);
@@ -795,15 +795,15 @@ bool ARMFastISel::TargetSelectInstruction(const Instruction *I) {
       return ARMSelectBranch(I);
     case Instruction::ICmp:
     case Instruction::FCmp:
-        return ARMSelectCmp(I);
+      return ARMSelectCmp(I);
     case Instruction::FPExt:
-        return ARMSelectFPExt(I);
+      return ARMSelectFPExt(I);
     case Instruction::FAdd:
-        return ARMSelectBinaryOp(I, ISD::FADD);
+      return ARMSelectBinaryOp(I, ISD::FADD);
     case Instruction::FSub:
-        return ARMSelectBinaryOp(I, ISD::FSUB);
+      return ARMSelectBinaryOp(I, ISD::FSUB);
     case Instruction::FMul:
-        return ARMSelectBinaryOp(I, ISD::FMUL);
+      return ARMSelectBinaryOp(I, ISD::FMUL);
     default: break;
   }
   return false;
