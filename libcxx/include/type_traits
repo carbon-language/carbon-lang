@@ -264,28 +264,32 @@ template <class _Tp> struct is_reference<_Tp&>  : public true_type {};
 template <class _Tp> struct is_reference<_Tp&&> : public true_type {};
 #endif
 
+#if defined(__clang__) || (__GNUC__ > 4) || (__GNUC__ == 4 && __GNUC_MINOR__ >= 3)
+#define _LIBCPP_HAS_TYPE_TRAITS
+#endif
+
 // is_union
 
-#if __GNUC__ >= 4 && __GNUC_MINOR__ >= 3 || defined(__clang__)
+#ifdef _LIBCPP_HAS_TYPE_TRAITS
 
 template <class _Tp> struct is_union
     : public integral_constant<bool, __is_union(_Tp)> {};
 
-#else  // __GNUC__ >= 4 && __GNUC_MINOR__ >= 3 || defined(__clang__)
+#else  // _LIBCPP_HAS_TYPE_TRAITS
 
 template <class _Tp> struct __libcpp_union : public false_type {};
 template <class _Tp> struct is_union : public __libcpp_union<typename remove_cv<_Tp>::type> {};
 
-#endif  // __GNUC__ >= 4 && __GNUC_MINOR__ >= 3 || defined(__clang__)
+#endif  // _LIBCPP_HAS_TYPE_TRAITS
 
 // is_class
 
-#if __GNUC__ >= 4 && __GNUC_MINOR__ >= 3 || defined(__clang__)
+#ifdef _LIBCPP_HAS_TYPE_TRAITS
 
 template <class _Tp> struct is_class
     : public integral_constant<bool, __is_class(_Tp)> {};
 
-#else  // __GNUC__ >= 4 && __GNUC_MINOR__ >= 3 || defined(__clang__)
+#else  // _LIBCPP_HAS_TYPE_TRAITS
 
 namespace __is_class_imp
 {
@@ -296,7 +300,7 @@ template <class _Tp> __two __test(...);
 template <class _Tp> struct is_class
     : public integral_constant<bool, sizeof(__is_class_imp::__test<_Tp>(0)) == 1 && !is_union<_Tp>::value> {};
 
-#endif  // __GNUC__ >= 4 && __GNUC_MINOR__ >= 3 || defined(__clang__)
+#endif  // _LIBCPP_HAS_TYPE_TRAITS
 
 // is_function
 
@@ -342,12 +346,12 @@ template <class _Tp> struct is_member_object_pointer
 
 // is_enum
 
-#if __GNUC__ >= 4 && __GNUC_MINOR__ >= 3 || defined(__clang__)
+#ifdef _LIBCPP_HAS_TYPE_TRAITS
 
 template <class _Tp> struct is_enum
     : public integral_constant<bool, __is_enum(_Tp)> {};
 
-#else  // __GNUC__ >= 4 && __GNUC_MINOR__ >= 3 || defined(__clang__)
+#else  // _LIBCPP_HAS_TYPE_TRAITS
 
 template <class _Tp> struct is_enum
     : public integral_constant<bool, !is_void<_Tp>::value             &&
@@ -361,7 +365,7 @@ template <class _Tp> struct is_enum
                                      !is_class<_Tp>::value            &&
                                      !is_function<_Tp>::value         > {};
 
-#endif  // __GNUC__ >= 4 && __GNUC_MINOR__ >= 3 || defined(__clang__)
+#endif  // _LIBCPP_HAS_TYPE_TRAITS
 
 // is_arithmetic
 
@@ -742,12 +746,12 @@ template <class _Tp> struct is_polymorphic : public __libcpp_polymorphic<_Tp> {}
 
 // has_trivial_default_constructor
 
-#if __GNUC__ >= 4 && __GNUC_MINOR__ >= 3 || defined(__clang__)
+#ifdef _LIBCPP_HAS_TYPE_TRAITS
 
 template <class _Tp> struct has_trivial_default_constructor
     : public integral_constant<bool, __has_trivial_constructor(_Tp)> {};
 
-#else  // __GNUC__ >= 4 && __GNUC_MINOR__ >= 3 || defined(__clang__)
+#else  // _LIBCPP_HAS_TYPE_TRAITS
 
 template <class _Tp> struct __has_trivial_default_constructor
     : public integral_constant<bool, is_scalar<_Tp>::value> {};
@@ -755,52 +759,50 @@ template <class _Tp> struct __has_trivial_default_constructor
 template <class _Tp> struct has_trivial_default_constructor
     : public __has_trivial_default_constructor<typename remove_all_extents<_Tp>::type> {};
 
-#endif  // __GNUC__ >= 4 && __GNUC_MINOR__ >= 3 || defined(__clang__)
+#endif  // _LIBCPP_HAS_TYPE_TRAITS
 
 // has_nothrow_default_constructor
 
-#if __GNUC__ >= 4 && __GNUC_MINOR__ >= 3 || defined(__clang__)
+#ifdef _LIBCPP_HAS_TYPE_TRAITS
 
 template <class _Tp> struct has_nothrow_default_constructor
     : public integral_constant<bool, __has_nothrow_constructor(_Tp)> {};
 
-#else  // __GNUC__ >= 4 && __GNUC_MINOR__ >= 3 || defined(__clang__)
+#else  // _LIBCPP_HAS_TYPE_TRAITS
 
 template <class _Tp> struct has_nothrow_default_constructor
     : public has_trivial_default_constructor<_Tp> {};
 
-#endif  // __GNUC__ >= 4 && __GNUC_MINOR__ >= 3 || defined(__clang__)
+#endif  // _LIBCPP_HAS_TYPE_TRAITS
 
 // has_trivial_copy_constructor
 
-#if __GNUC__ >= 4 && __GNUC_MINOR__ >= 3 || defined(__clang__)
+#ifdef _LIBCPP_HAS_TYPE_TRAITS
 
 template <class _Tp> struct has_trivial_copy_constructor
     : public integral_constant<bool, __has_trivial_copy(_Tp)> {};
 
-#else  // __GNUC__ >= 4 && __GNUC_MINOR__ >= 3 || defined(__clang__)
+#else  // _LIBCPP_HAS_TYPE_TRAITS
 
 template <class _Tp> struct has_trivial_copy_constructor
     : public integral_constant<bool, is_scalar<_Tp>::value ||
                                      is_reference<_Tp>::value> {};
 
-
-#endif  // __GNUC__ >= 4 && __GNUC_MINOR__ >= 3 || defined(__clang__)
+#endif  // _LIBCPP_HAS_TYPE_TRAITS
 
 // has_nothrow_copy_constructor
 
-#if __GNUC__ >= 4 && __GNUC_MINOR__ >= 3 || defined(__clang__)
+#ifdef _LIBCPP_HAS_TYPE_TRAITS
 
 template <class _Tp> struct has_nothrow_copy_constructor
     : public integral_constant<bool, __has_nothrow_copy(_Tp)> {};
 
-#else  // __GNUC__ >= 4 && __GNUC_MINOR__ >= 3 || defined(__clang__)
+#else  // _LIBCPP_HAS_TYPE_TRAITS
 
 template <class _Tp> struct has_nothrow_copy_constructor
     : public has_trivial_copy_constructor<_Tp> {};
 
-#endif  // __GNUC__ >= 4 && __GNUC_MINOR__ >= 3 || defined(__clang__)
-
+#endif  // _LIBCPP_HAS_TYPE_TRAITS
 
 // has_nothrow_move_constructor
 
@@ -808,41 +810,41 @@ template <class _Tp> struct has_nothrow_move_constructor : public has_nothrow_co
 
 // has_trivial_copy_assign
 
-#if defined(__clang__) || (__GNUC__ >= 4 && __GNUC_MINOR__ >= 3)
+#ifdef _LIBCPP_HAS_TYPE_TRAITS
 
 template <class _Tp> struct has_trivial_copy_assign
     : public integral_constant<bool, __has_trivial_assign(_Tp)> {};
 
-#else
+#else  // _LIBCPP_HAS_TYPE_TRAITS
 
 template <class _Tp> struct has_trivial_copy_assign
     : public integral_constant<bool, is_scalar<_Tp>::value &&
                                     !is_const<_Tp>::value> {};
 
-#endif  // defined(__clang__) || (__GNUC__ >= 4 && __GNUC_MINOR__ >= 3)
+#endif  // _LIBCPP_HAS_TYPE_TRAITS
 
 // has_nothrow_copy_assign
 
-#if defined(__clang__) || (__GNUC__ >= 4 && __GNUC_MINOR__ >= 3)
+#ifdef _LIBCPP_HAS_TYPE_TRAITS
 
 template <class _Tp> struct has_nothrow_copy_assign
     : public integral_constant<bool, __has_nothrow_assign(_Tp)> {};
 
-#else  // defined(__clang__) || (__GNUC__ >= 4 && __GNUC_MINOR__ >= 3)
+#else  // _LIBCPP_HAS_TYPE_TRAITS
 
 template <class _Tp> struct has_nothrow_copy_assign
     : public has_trivial_copy_assign<_Tp> {};
 
-#endif  // defined(__clang__) || (__GNUC__ >= 4 && __GNUC_MINOR__ >= 3)
+#endif  // _LIBCPP_HAS_TYPE_TRAITS
 
 // has_trivial_destructor
 
-#if defined(__clang__) || (__GNUC__ >= 4 && __GNUC_MINOR__ >= 3)
+#ifdef _LIBCPP_HAS_TYPE_TRAITS
 
 template <class _Tp> struct has_trivial_destructor
     : public integral_constant<bool, __has_trivial_destructor(_Tp)> {};
 
-#else  // defined(__clang__) || (__GNUC__ >= 4 && __GNUC_MINOR__ >= 3)
+#else  // _LIBCPP_HAS_TYPE_TRAITS
 
 template <class _Tp> struct __libcpp_trivial_destructor
     : public integral_constant<bool, is_scalar<_Tp>::value ||
@@ -851,36 +853,36 @@ template <class _Tp> struct __libcpp_trivial_destructor
 template <class _Tp> struct has_trivial_destructor
     : public __libcpp_trivial_destructor<typename remove_all_extents<_Tp>::type> {};
 
-#endif  // defined(__clang__) || (__GNUC__ >= 4 && __GNUC_MINOR__ >= 3)
+#endif  // _LIBCPP_HAS_TYPE_TRAITS
 
 // has_virtual_destructor
 
-#if defined(__clang__) || (__GNUC__ >= 4 && __GNUC_MINOR__ >= 3)
+#ifdef _LIBCPP_HAS_TYPE_TRAITS
 
 template <class _Tp> struct has_virtual_destructor
     : public integral_constant<bool, __has_virtual_destructor(_Tp)> {};
 
-#else  // defined(__clang__) || (__GNUC__ >= 4 && __GNUC_MINOR__ >= 3)
+#else  // _LIBCPP_HAS_TYPE_TRAITS
 
 template <class _Tp> struct has_virtual_destructor : public false_type {};
 
-#endif  // defined(__clang__) || (__GNUC__ >= 4 && __GNUC_MINOR__ >= 3)
+#endif  // _LIBCPP_HAS_TYPE_TRAITS
 
 // is_pod
 
-#if defined(__clang__) || (__GNUC__ >= 4 && __GNUC_MINOR__ >= 3)
+#ifdef _LIBCPP_HAS_TYPE_TRAITS
 
 template <class _Tp> struct is_pod
     : public integral_constant<bool, __is_pod(_Tp)> {};
 
-#else  // defined(__clang__) || (__GNUC__ >= 4 && __GNUC_MINOR__ >= 3)
+#else  // _LIBCPP_HAS_TYPE_TRAITS
 
 template <class _Tp> struct is_pod : public integral_constant<bool, has_trivial_default_constructor<_Tp>::value   &&
                                                                     has_trivial_copy_constructor<_Tp>::value      &&
                                                                     has_trivial_copy_assign<_Tp>::value    &&
                                                                     has_trivial_destructor<_Tp>::value> {};
 
-#endif  // defined(__clang__) || (__GNUC__ >= 4 && __GNUC_MINOR__ >= 3)
+#endif  // _LIBCPP_HAS_TYPE_TRAITS
 
 // alignment_of
 
