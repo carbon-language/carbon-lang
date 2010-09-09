@@ -742,16 +742,16 @@ bool ARMFastISel::ARMSelectFPExt(const Instruction *I) {
 }
 
 bool ARMFastISel::ARMSelectBinaryOp(const Instruction *I, unsigned ISDOpcode) {
+  EVT VT  = TLI.getValueType(I->getType(), true);
+  
   // We can get here in the case when we want to use NEON for our fp
   // operations, but can't figure out how to. Just use the vfp instructions
   // if we have them.
   // FIXME: It'd be nice to use NEON instructions.
-  if (!Subtarget->hasVFP2()) return false;
-  
-  EVT VT  = TLI.getValueType(I->getType(), true);
-  
-  // In this case make extra sure we have a 32-bit floating point add.
-  if (VT != MVT::f32) return false;
+  const Type *Ty = I->getType();
+  bool isFloat = (Ty->isDoubleTy() || Ty->isFloatTy());
+  if (isFloat && !Subtarget->hasVFP2())
+    return false;
   
   unsigned Op1 = getRegForValue(I->getOperand(0));
   if (Op1 == 0) return false;
@@ -760,19 +760,21 @@ bool ARMFastISel::ARMSelectBinaryOp(const Instruction *I, unsigned ISDOpcode) {
   if (Op2 == 0) return false;
   
   unsigned Opc;
+  bool is64bit = VT.getSimpleVT().SimpleTy == MVT::f64 ||
+                 VT.getSimpleVT().SimpleTy == MVT::i64;
   switch (ISDOpcode) {
     default: return false;
     case ISD::FADD:
-      Opc = ARM::VADDS;
+      Opc = is64bit ? ARM::VADDD : ARM::VADDS;
       break;
     case ISD::FSUB:
-      Opc = ARM::VSUBS;
+      Opc = is64bit ? ARM::VSUBD : ARM::VSUBS;
       break;
     case ISD::FMUL:
-      Opc = ARM::VMULS;
+      Opc = is64bit ? ARM::VMULD : ARM::VMULS;
       break;
   }
-  unsigned ResultReg = createResultReg(ARM::SPRRegisterClass);
+  unsigned ResultReg = createResultReg(TLI.getRegClassFor(VT));
   AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
                           TII.get(Opc), ResultReg)
                   .addReg(Op1).addReg(Op2));
