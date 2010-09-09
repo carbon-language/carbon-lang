@@ -591,6 +591,11 @@ public:
                                     MachineInstr *CmpInstr) const {
     return false;
   }
+
+  /// getNumMicroOps - Return the number of u-operations the given machine
+  /// instruction will be decoded to on the target cpu.
+  virtual unsigned getNumMicroOps(const MachineInstr *MI,
+                                  const InstrItineraryData &ItinData) const;
 };
 
 /// TargetInstrInfoImpl - This is the default implementation of

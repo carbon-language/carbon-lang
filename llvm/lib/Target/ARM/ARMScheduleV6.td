@@ -86,6 +86,11 @@ def ARMV6Itineraries : ProcessorItineraries<
   // Load multiple
   InstrItinData<IIC_iLoadm   , [InstrStage<3, [V6_Pipe]>]>,
 
+  //
+  // Load multiple plus branch
+  InstrItinData<IIC_iLoadmBr , [InstrStage<3, [V6_Pipe]>,
+                                InstrStage<1, [V6_Pipe]>]>,
+
   // Integer store pipeline
   //
   // Immediate offset

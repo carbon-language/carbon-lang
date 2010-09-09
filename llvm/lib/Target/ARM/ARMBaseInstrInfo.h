@@ -348,6 +348,9 @@ public:
   /// that we can remove a "comparison with zero".
   virtual bool ConvertToSetZeroFlag(MachineInstr *Instr,
                                     MachineInstr *CmpInstr) const;
+
+  virtual unsigned getNumMicroOps(const MachineInstr *MI,
+                                  const InstrItineraryData &ItinData) const;
 };
 
 static inline

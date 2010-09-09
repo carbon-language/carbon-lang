@@ -282,7 +282,8 @@ let isBranch = 1, isTerminator = 1, isBarrier = 1, isIndirectBranch = 1 in {
 // FIXME: remove when we have a way to marking a MI with these properties.
 let isReturn = 1, isTerminator = 1, isBarrier = 1, mayLoad = 1,
     hasExtraDefRegAllocReq = 1 in
-def tPOP_RET : T1I<(outs), (ins pred:$p, reglist:$dsts, variable_ops), IIC_Br,
+def tPOP_RET : T1I<(outs), (ins pred:$p, reglist:$dsts, variable_ops),
+                   IIC_iLoadmBr,
                    "pop${p}\t$dsts", []>,
                T1Misc<{1,1,0,?,?,?,?}>;
 
@@ -560,12 +561,12 @@ def tSTM_UPD : T1It<(outs tGPR:$wb),
            T1Encoding<{1,1,0,0,0,?}>; // A6.2 & A8.6.189
 
 let mayLoad = 1, Uses = [SP], Defs = [SP], hasExtraDefRegAllocReq = 1 in
-def tPOP : T1I<(outs), (ins pred:$p, reglist:$dsts, variable_ops), IIC_Br,
+def tPOP : T1I<(outs), (ins pred:$p, reglist:$dsts, variable_ops), IIC_iLoadmBr,
                "pop${p}\t$dsts", []>,
            T1Misc<{1,1,0,?,?,?,?}>;
 
 let mayStore = 1, Uses = [SP], Defs = [SP], hasExtraSrcRegAllocReq = 1 in
-def tPUSH : T1I<(outs), (ins pred:$p, reglist:$srcs, variable_ops), IIC_Br,
+def tPUSH : T1I<(outs), (ins pred:$p, reglist:$srcs, variable_ops), IIC_iStorem,
                 "push${p}\t$srcs", []>,
             T1Misc<{0,1,0,?,?,?,?}>;
 

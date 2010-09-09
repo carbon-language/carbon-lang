@@ -1412,3 +1412,66 @@ ConvertToSetZeroFlag(MachineInstr *MI, MachineInstr *CmpInstr) const {
 
   return false;
 }
+
+unsigned
+ARMBaseInstrInfo::getNumMicroOps(const MachineInstr *MI,
+                                 const InstrItineraryData &ItinData) const {
+  if (ItinData.isEmpty())
+    return 1;
+
+  const TargetInstrDesc &Desc = MI->getDesc();
+  unsigned Class = Desc.getSchedClass();
+  unsigned UOps = ItinData.Itineratries[Class].NumMicroOps;
+  if (UOps)
+    return UOps;
+
+  unsigned Opc = MI->getOpcode();
+  switch (Opc) {
+  default:
+    llvm_unreachable("Unexpected multi-uops instruction!");
+    break;
+  case ARM::VSTMQ:
+    return 2;
+
+  // The number of uOps for load / store multiple are determined by the number
+  // registers.
+  // On Cortex-A8, each odd / even pair of register loads / stores
+  // (e.g. r5 + r6) can be completed on the same cycle. The minimum is
+  // 2. For VFP / NEON load / store multiple, the formula is
+  // (#reg / 2) + (#reg % 2) + 1.
+  // On Cortex-A9, the formula is simply (#reg / 2) + (#reg % 2).
+  case ARM::VLDMD:
+  case ARM::VLDMS:
+  case ARM::VLDMD_UPD:
+  case ARM::VLDMS_UPD:
+  case ARM::VSTMD:
+  case ARM::VSTMS:
+  case ARM::VSTMD_UPD:
+  case ARM::VSTMS_UPD: {
+    unsigned NumRegs = MI->getNumOperands() - Desc.getNumOperands();
+    return (NumRegs / 2) + (NumRegs % 2) + 1;
+  }
+  case ARM::LDM_RET:
+  case ARM::LDM:
+  case ARM::LDM_UPD:
+  case ARM::STM:
+  case ARM::STM_UPD:
+  case ARM::tLDM:
+  case ARM::tLDM_UPD:
+  case ARM::tSTM_UPD:
+  case ARM::tPOP_RET:
+  case ARM::tPOP:
+  case ARM::tPUSH:
+  case ARM::t2LDM_RET:
+  case ARM::t2LDM:
+  case ARM::t2LDM_UPD:
+  case ARM::t2STM:
+  case ARM::t2STM_UPD: {
+    // FIXME: Distinquish between Cortex-A8 / Cortex-A9 and other processor
+    // families.
+    unsigned NumRegs = MI->getNumOperands() - Desc.getNumOperands();
+    UOps = (NumRegs / 2) + (NumRegs % 2);
+    return (UOps > 2) ? UOps : 2;
+  }
+  }
+}

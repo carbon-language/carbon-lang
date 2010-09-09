@@ -13,6 +13,7 @@
 
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/MC/MCAsmInfo.h"
+#include "llvm/Target/TargetInstrItineraries.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Support/ErrorHandling.h"
 using namespace llvm;
@@ -45,6 +46,22 @@ TargetInstrInfo::TargetInstrInfo(const TargetInstrDesc* Desc,
 }
 
 TargetInstrInfo::~TargetInstrInfo() {
+}
+
+unsigned
+TargetInstrInfo::getNumMicroOps(const MachineInstr *MI,
+                                const InstrItineraryData &ItinData) const {
+  if (ItinData.isEmpty())
+    return 1;
+
+  unsigned Class = MI->getDesc().getSchedClass();
+  unsigned UOps = ItinData.Itineratries[Class].NumMicroOps;
+  if (UOps)
+    return UOps;
+
+  // The # of u-ops is dynamically determined. The specific target should
+  // override this function to return the right number.
+  return 1;
 }
 
 /// insertNoop - Insert a noop into the instruction stream at the specified

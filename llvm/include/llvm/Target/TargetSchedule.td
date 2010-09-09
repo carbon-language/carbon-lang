@@ -66,7 +66,14 @@ class InstrStage<int cycles, list<FuncUnit> units,
 // across all chip sets.  Thus a new chip set can be added without modifying
 // instruction information.
 //
-class InstrItinClass;
+// NumMicroOps represents the number of micro-operations that each instruction
+// in the class are decoded to. If the number is zero, then it means the
+// instruction can decode into variable number of micro-ops and it must be
+// determined dynamically.
+//
+class InstrItinClass<int ops = 1> {
+  int NumMicroOps = ops;
+}
 def NoItinerary : InstrItinClass;
 
 //===----------------------------------------------------------------------===//

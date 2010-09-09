@@ -172,13 +172,10 @@ void SubtargetEmitter::CPUKeyValues(raw_ostream &OS) {
 // CollectAllItinClasses - Gathers and enumerates all the itinerary classes.
 // Returns itinerary class count.
 //
-unsigned SubtargetEmitter::CollectAllItinClasses(raw_ostream &OS,
-                              std::map<std::string, unsigned> &ItinClassesMap) {
-  // Gather and sort all itinerary classes
-  std::vector<Record*> ItinClassList =
-                            Records.getAllDerivedDefinitions("InstrItinClass");
-  std::sort(ItinClassList.begin(), ItinClassList.end(), LessRecord());
-
+unsigned SubtargetEmitter::
+CollectAllItinClasses(raw_ostream &OS,
+                      std::map<std::string, unsigned> &ItinClassesMap,
+                      std::vector<Record*> &ItinClassList) {
   // For each itinerary class
   unsigned N = ItinClassList.size();
   for (unsigned i = 0; i < N; i++) {
@@ -271,7 +268,8 @@ void SubtargetEmitter::FormItineraryOperandCycleString(Record *ItinData,
 //
 void SubtargetEmitter::EmitStageAndOperandCycleData(raw_ostream &OS,
        unsigned NItinClasses,
-       std::map<std::string, unsigned> &ItinClassesMap, 
+       std::map<std::string, unsigned> &ItinClassesMap,
+       std::vector<Record*> &ItinClassList,
        std::vector<std::vector<InstrItinerary> > &ProcList) {
   // Gather processor iteraries
   std::vector<Record*> ProcItinList =
@@ -374,14 +372,16 @@ void SubtargetEmitter::EmitStageAndOperandCycleData(raw_ostream &OS,
         }
       }
       
-      // Set up itinerary as location and location + stage count
-      InstrItinerary Intinerary = { FindStage, FindStage + NStages,
-                                    FindOperandCycle, FindOperandCycle + NOperandCycles};
-
       // Locate where to inject into processor itinerary table
       const std::string &Name = ItinData->getValueAsDef("TheClass")->getName();
       unsigned Find = ItinClassesMap[Name];
       
+      // Set up itinerary as location and location + stage count
+      unsigned NumUOps = ItinClassList[Find]->getValueAsInt("NumMicroOps");
+      InstrItinerary Intinerary = { NumUOps, FindStage, FindStage + NStages,
+                                    FindOperandCycle,
+                                    FindOperandCycle + NOperandCycles};
+
       // Inject - empty slots will be 0, 0
       ItinList[Find] = Intinerary;
     }
@@ -443,9 +443,11 @@ void SubtargetEmitter::EmitProcessorData(raw_ostream &OS,
       // Emit in the form of 
       // { firstStage, lastStage, firstCycle, lastCycle } // index
       if (Intinerary.FirstStage == 0) {
-        OS << "  { 0, 0, 0, 0 }";
+        OS << "  { 1, 0, 0, 0, 0 }";
       } else {
-        OS << "  { " << Intinerary.FirstStage << ", " << 
+        OS << "  { " <<
+          Intinerary.NumMicroOps << ", " <<
+          Intinerary.FirstStage << ", " << 
           Intinerary.LastStage << ", " << 
           Intinerary.FirstOperandCycle << ", " << 
           Intinerary.LastOperandCycle << " }";
@@ -455,7 +457,7 @@ void SubtargetEmitter::EmitProcessorData(raw_ostream &OS,
     }
     
     // End processor itinerary table
-    OS << "  { ~0U, ~0U, ~0U, ~0U } // end marker\n";
+    OS << "  { 1, ~0U, ~0U, ~0U, ~0U } // end marker\n";
     OS << "};\n";
   }
 }
@@ -511,16 +513,22 @@ void SubtargetEmitter::EmitProcessorLookup(raw_ostream &OS) {
 //
 void SubtargetEmitter::EmitData(raw_ostream &OS) {
   std::map<std::string, unsigned> ItinClassesMap;
-  std::vector<std::vector<InstrItinerary> > ProcList;
+  // Gather and sort all itinerary classes
+  std::vector<Record*> ItinClassList =
+    Records.getAllDerivedDefinitions("InstrItinClass");
+  std::sort(ItinClassList.begin(), ItinClassList.end(), LessRecord());
   
   // Enumerate all the itinerary classes
-  unsigned NItinClasses = CollectAllItinClasses(OS, ItinClassesMap);
+  unsigned NItinClasses = CollectAllItinClasses(OS, ItinClassesMap,
+                                                ItinClassList);
   // Make sure the rest is worth the effort
   HasItineraries = NItinClasses != 1;   // Ignore NoItinerary.
   
   if (HasItineraries) {
+    std::vector<std::vector<InstrItinerary> > ProcList;
     // Emit the stage data
-    EmitStageAndOperandCycleData(OS, NItinClasses, ItinClassesMap, ProcList);
+    EmitStageAndOperandCycleData(OS, NItinClasses, ItinClassesMap,
+                                 ItinClassList, ProcList);
     // Emit the processor itinerary data
     EmitProcessorData(OS, ProcList);
     // Emit the processor lookup data
