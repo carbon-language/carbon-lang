@@ -205,6 +205,59 @@ public:
   unsigned                     pred_size()   const { return Preds.size();    }
   bool                         pred_empty()  const { return Preds.empty();   }
 
+
+  class FilterOptions {
+  public:
+    FilterOptions() {
+      IgnoreDefaultsWithCoveredEnums = 0;
+    };
+
+    unsigned IgnoreDefaultsWithCoveredEnums : 1;
+  };
+
+  static bool FilterEdge(const FilterOptions &F, const CFGBlock *Src,
+			 const CFGBlock *Dst);
+
+  template <typename IMPL, bool IsPred>
+  class FilteredCFGBlockIterator {
+  private:
+    IMPL I, E;
+    const FilterOptions F;
+    const CFGBlock *From;
+   public:
+    explicit FilteredCFGBlockIterator(const IMPL &i, const IMPL &e,
+				      const CFGBlock *from,
+				      const FilterOptions &f)
+      : I(i), E(e), F(f), From(from) {}
+
+    bool hasMore() const { return I != E; }
+
+    FilteredCFGBlockIterator &operator++() {
+      do { ++I; } while (hasMore() && Filter(*I));
+      return *this;
+    }
+
+    const CFGBlock *operator*() const { return *I; }
+  private:
+    bool Filter(const CFGBlock *To) {
+      return IsPred ? FilterEdge(F, To, From) : FilterEdge(F, From, To);
+    }
+  };
+
+  typedef FilteredCFGBlockIterator<const_pred_iterator, true>
+          filtered_pred_iterator;
+
+  typedef FilteredCFGBlockIterator<const_succ_iterator, false>
+          filtered_succ_iterator;
+
+  filtered_pred_iterator filtered_pred_start_end(const FilterOptions &f) const {
+    return filtered_pred_iterator(pred_begin(), pred_end(), this, f);
+  }
+
+  filtered_succ_iterator filtered_succ_start_end(const FilterOptions &f) const {
+    return filtered_succ_iterator(succ_begin(), succ_end(), this, f);
+  }
+
   // Manipulation of block contents
 
   void setTerminator(Stmt* Statement) { Terminator = Statement; }
