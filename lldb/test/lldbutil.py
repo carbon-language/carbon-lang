@@ -44,6 +44,16 @@ def GetModuleNames(thread):
     return map(GetModuleName, range(thread.GetNumFrames()))
 
 
+def GetStackFrames(thread):
+    """
+    Returns a sequence of stack frames for this thread.
+    """
+    def GetStackFrame(i):
+        return thread.GetFrameAtIndex(i)
+
+    return map(GetStackFrame, range(thread.GetNumFrames()))
+
+
 def PrintStackTrace(thread):
     """Prints a simple stack trace of this thread."""
     depth = thread.GetNumFrames()
