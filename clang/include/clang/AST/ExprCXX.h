@@ -1378,24 +1378,28 @@ class UnaryTypeTraitExpr : public Expr {
   /// RParen - The location of the closing paren.
   SourceLocation RParen;
 
-  /// QueriedType - The type we're testing.
-  QualType QueriedType;
+  TypeSourceInfo *QueriedType;
 
 public:
-  UnaryTypeTraitExpr(SourceLocation loc, UnaryTypeTrait utt, QualType queried,
+  UnaryTypeTraitExpr(SourceLocation loc, UnaryTypeTrait utt, 
+                     TypeSourceInfo *queried,
                      SourceLocation rparen, QualType ty)
-    : Expr(UnaryTypeTraitExprClass, ty, false, queried->isDependentType()),
+    : Expr(UnaryTypeTraitExprClass, ty, false, 
+           queried->getType()->isDependentType()),
       UTT(utt), Loc(loc), RParen(rparen), QueriedType(queried) { }
 
   explicit UnaryTypeTraitExpr(EmptyShell Empty)
-    : Expr(UnaryTypeTraitExprClass, Empty), UTT((UnaryTypeTrait)0) { }
+    : Expr(UnaryTypeTraitExprClass, Empty), UTT((UnaryTypeTrait)0), 
+      QueriedType() { }
 
   virtual SourceRange getSourceRange() const { return SourceRange(Loc, RParen);}
 
   UnaryTypeTrait getTrait() const { return UTT; }
 
-  QualType getQueriedType() const { return QueriedType; }
+  QualType getQueriedType() const { return QueriedType->getType(); }
 
+  TypeSourceInfo *getQueriedTypeSourceInfo() const { return QueriedType; }
+  
   bool EvaluateTrait(ASTContext&) const;
 
   static bool classof(const Stmt *T) {

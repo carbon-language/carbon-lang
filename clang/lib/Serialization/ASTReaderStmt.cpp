@@ -1249,7 +1249,7 @@ void ASTStmtReader::VisitUnaryTypeTraitExpr(UnaryTypeTraitExpr *E) {
   SourceRange Range = Reader.ReadSourceRange(Record, Idx);
   E->Loc = Range.getBegin();
   E->RParen = Range.getEnd();
-  E->QueriedType = Reader.GetType(Record[Idx++]);
+  E->QueriedType = Reader.GetTypeSourceInfo(DeclsCursor, Record, Idx);
 }
 
 Stmt *ASTReader::ReadStmt(llvm::BitstreamCursor &Cursor) {

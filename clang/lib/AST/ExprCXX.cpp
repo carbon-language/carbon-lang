@@ -328,30 +328,31 @@ StmtIterator DependentScopeDeclRefExpr::child_end() {
 }
 
 bool UnaryTypeTraitExpr::EvaluateTrait(ASTContext& C) const {
+  QualType T = getQueriedType();
   switch(UTT) {
   default: assert(false && "Unknown type trait or not implemented");
-  case UTT_IsPOD: return QueriedType->isPODType();
-  case UTT_IsLiteral: return QueriedType->isLiteralType();
+  case UTT_IsPOD: return T->isPODType();
+  case UTT_IsLiteral: return T->isLiteralType();
   case UTT_IsClass: // Fallthrough
   case UTT_IsUnion:
-    if (const RecordType *Record = QueriedType->getAs<RecordType>()) {
+    if (const RecordType *Record = T->getAs<RecordType>()) {
       bool Union = Record->getDecl()->isUnion();
       return UTT == UTT_IsUnion ? Union : !Union;
     }
     return false;
-  case UTT_IsEnum: return QueriedType->isEnumeralType();
+  case UTT_IsEnum: return T->isEnumeralType();
   case UTT_IsPolymorphic:
-    if (const RecordType *Record = QueriedType->getAs<RecordType>()) {
+    if (const RecordType *Record = T->getAs<RecordType>()) {
       // Type traits are only parsed in C++, so we've got CXXRecords.
       return cast<CXXRecordDecl>(Record->getDecl())->isPolymorphic();
     }
     return false;
   case UTT_IsAbstract:
-    if (const RecordType *RT = QueriedType->getAs<RecordType>())
+    if (const RecordType *RT = T->getAs<RecordType>())
       return cast<CXXRecordDecl>(RT->getDecl())->isAbstract();
     return false;
   case UTT_IsEmpty:
-    if (const RecordType *Record = QueriedType->getAs<RecordType>()) {
+    if (const RecordType *Record = T->getAs<RecordType>()) {
       return !Record->getDecl()->isUnion()
           && cast<CXXRecordDecl>(Record->getDecl())->isEmpty();
     }
@@ -361,10 +362,10 @@ bool UnaryTypeTraitExpr::EvaluateTrait(ASTContext& C) const {
     //   If __is_pod (type) is true then the trait is true, else if type is
     //   a cv class or union type (or array thereof) with a trivial default
     //   constructor ([class.ctor]) then the trait is true, else it is false.
-    if (QueriedType->isPODType())
+    if (T->isPODType())
       return true;
     if (const RecordType *RT =
-          C.getBaseElementType(QueriedType)->getAs<RecordType>())
+          C.getBaseElementType(T)->getAs<RecordType>())
       return cast<CXXRecordDecl>(RT->getDecl())->hasTrivialConstructor();
     return false;
   case UTT_HasTrivialCopy:
@@ -373,9 +374,9 @@ bool UnaryTypeTraitExpr::EvaluateTrait(ASTContext& C) const {
     //   the trait is true, else if type is a cv class or union type
     //   with a trivial copy constructor ([class.copy]) then the trait
     //   is true, else it is false.
-    if (QueriedType->isPODType() || QueriedType->isReferenceType())
+    if (T->isPODType() || T->isReferenceType())
       return true;
-    if (const RecordType *RT = QueriedType->getAs<RecordType>())
+    if (const RecordType *RT = T->getAs<RecordType>())
       return cast<CXXRecordDecl>(RT->getDecl())->hasTrivialCopyConstructor();
     return false;
   case UTT_HasTrivialAssign:
@@ -391,11 +392,11 @@ bool UnaryTypeTraitExpr::EvaluateTrait(ASTContext& C) const {
     // errors if the copy assignment operator is actually used, q.v.
     // [class.copy]p12).
 
-    if (C.getBaseElementType(QueriedType).isConstQualified())
+    if (C.getBaseElementType(T).isConstQualified())
       return false;
-    if (QueriedType->isPODType())
+    if (T->isPODType())
       return true;
-    if (const RecordType *RT = QueriedType->getAs<RecordType>())
+    if (const RecordType *RT = T->getAs<RecordType>())
       return cast<CXXRecordDecl>(RT->getDecl())->hasTrivialCopyAssignment();
     return false;
   case UTT_HasTrivialDestructor:
@@ -405,10 +406,10 @@ bool UnaryTypeTraitExpr::EvaluateTrait(ASTContext& C) const {
     //   type (or array thereof) with a trivial destructor
     //   ([class.dtor]) then the trait is true, else it is
     //   false.
-    if (QueriedType->isPODType() || QueriedType->isReferenceType())
+    if (T->isPODType() || T->isReferenceType())
       return true;
     if (const RecordType *RT =
-          C.getBaseElementType(QueriedType)->getAs<RecordType>())
+          C.getBaseElementType(T)->getAs<RecordType>())
       return cast<CXXRecordDecl>(RT->getDecl())->hasTrivialDestructor();
     return false;
   // TODO: Propagate nothrowness for implicitly declared special members.
@@ -420,13 +421,13 @@ bool UnaryTypeTraitExpr::EvaluateTrait(ASTContext& C) const {
     //   or union type with copy assignment operators that are known
     //   not to throw an exception then the trait is true, else it is
     //   false.
-    if (C.getBaseElementType(QueriedType).isConstQualified())
+    if (C.getBaseElementType(T).isConstQualified())
       return false;
-    if (QueriedType->isReferenceType())
+    if (T->isReferenceType())
       return false;
-    if (QueriedType->isPODType())
+    if (T->isPODType())
       return true;
-    if (const RecordType *RT = QueriedType->getAs<RecordType>()) {
+    if (const RecordType *RT = T->getAs<RecordType>()) {
       CXXRecordDecl* RD = cast<CXXRecordDecl>(RT->getDecl());
       if (RD->hasTrivialCopyAssignment())
         return true;
@@ -458,9 +459,9 @@ bool UnaryTypeTraitExpr::EvaluateTrait(ASTContext& C) const {
     //   if type is a cv class or union type with copy constructors that are
     //   known not to throw an exception then the trait is true, else it is
     //   false.
-    if (QueriedType->isPODType() || QueriedType->isReferenceType())
+    if (T->isPODType() || T->isReferenceType())
       return true;
-    if (const RecordType *RT = QueriedType->getAs<RecordType>()) {
+    if (const RecordType *RT = T->getAs<RecordType>()) {
       CXXRecordDecl *RD = cast<CXXRecordDecl>(RT->getDecl());
       if (RD->hasTrivialCopyConstructor())
         return true;
@@ -469,8 +470,7 @@ bool UnaryTypeTraitExpr::EvaluateTrait(ASTContext& C) const {
       bool AllNoThrow = true;
       unsigned FoundTQs;
       DeclarationName ConstructorName
-          = C.DeclarationNames.getCXXConstructorName(
-                                          C.getCanonicalType(QueriedType));
+          = C.DeclarationNames.getCXXConstructorName(C.getCanonicalType(T));
       DeclContext::lookup_const_iterator Con, ConEnd;
       for (llvm::tie(Con, ConEnd) = RD->lookup(ConstructorName);
            Con != ConEnd; ++Con) {
@@ -495,10 +495,9 @@ bool UnaryTypeTraitExpr::EvaluateTrait(ASTContext& C) const {
     //   true, else if type is a cv class or union type (or array
     //   thereof) with a default constructor that is known not to
     //   throw an exception then the trait is true, else it is false.
-    if (QueriedType->isPODType())
+    if (T->isPODType())
       return true;
-    if (const RecordType *RT =
-          C.getBaseElementType(QueriedType)->getAs<RecordType>()) {
+    if (const RecordType *RT = C.getBaseElementType(T)->getAs<RecordType>()) {
       CXXRecordDecl *RD = cast<CXXRecordDecl>(RT->getDecl());
       if (RD->hasTrivialConstructor())
         return true;
@@ -517,7 +516,7 @@ bool UnaryTypeTraitExpr::EvaluateTrait(ASTContext& C) const {
     // http://gcc.gnu.org/onlinedocs/gcc/Type-Traits.html:
     //   If type is a class type with a virtual destructor ([class.dtor])
     //   then the trait is true, else it is false.
-    if (const RecordType *Record = QueriedType->getAs<RecordType>()) {
+    if (const RecordType *Record = T->getAs<RecordType>()) {
       CXXRecordDecl *RD = cast<CXXRecordDecl>(Record->getDecl());
       if (CXXDestructorDecl *Destructor = RD->getDestructor())
         return Destructor->isVirtual();

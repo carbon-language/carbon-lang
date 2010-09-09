@@ -2260,8 +2260,12 @@ public:
   /// pseudo-functions.
   ExprResult ActOnUnaryTypeTrait(UnaryTypeTrait OTT,
                                  SourceLocation KWLoc,
-                                 SourceLocation LParen,
                                  ParsedType Ty,
+                                 SourceLocation RParen);
+
+  ExprResult BuildUnaryTypeTrait(UnaryTypeTrait OTT,
+                                 SourceLocation KWLoc,
+                                 TypeSourceInfo *T,
                                  SourceLocation RParen);
 
   ExprResult ActOnStartCXXMemberReference(Scope *S,

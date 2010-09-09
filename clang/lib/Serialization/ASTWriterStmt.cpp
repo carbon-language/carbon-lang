@@ -1279,7 +1279,7 @@ void ASTStmtWriter::VisitUnaryTypeTraitExpr(UnaryTypeTraitExpr *E) {
   VisitExpr(E);
   Record.push_back(E->getTrait());
   Writer.AddSourceRange(E->getSourceRange(), Record);
-  Writer.AddTypeRef(E->getQueriedType(), Record);
+  Writer.AddTypeSourceInfo(E->getQueriedTypeSourceInfo(), Record);
   Code = serialization::EXPR_CXX_UNARY_TYPE_TRAIT;
 }
 

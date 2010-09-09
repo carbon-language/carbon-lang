@@ -88,6 +88,7 @@ template<typename T>
 void test_even_more_dependent_exprs(T t, Y y) {
   typedef T type;
   (void)type(t, y);
+  (void)__has_nothrow_assign(type);
 }
 
 // RUN: c-index-test -test-load-source all %s | FileCheck %s
@@ -195,3 +196,5 @@ void test_even_more_dependent_exprs(T t, Y y) {
 // CHECK: load-stmts.cpp:90:9: TypeRef=type:89:13 Extent=[90:9 - 90:13]
 // CHECK: load-stmts.cpp:90:14: DeclRefExpr=t:88:39 Extent=[90:14 - 90:15]
 // CHECK: load-stmts.cpp:90:17: DeclRefExpr=y:88:44 Extent=[90:17 - 90:18]
+// CHECK: load-stmts.cpp:91:9: UnexposedExpr= Extent=[91:9 - 91:35]
+// CHECK: load-stmts.cpp:91:30: TypeRef=type:89:13 Extent=[91:30 - 91:34]

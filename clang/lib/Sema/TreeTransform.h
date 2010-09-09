@@ -1643,12 +1643,10 @@ public:
   /// By default, performs semantic analysis to build the new expression.
   /// Subclasses may override this routine to provide different behavior.
   ExprResult RebuildUnaryTypeTrait(UnaryTypeTrait Trait,
-                                         SourceLocation StartLoc,
-                                         SourceLocation LParenLoc,
-                                         QualType T,
-                                         SourceLocation RParenLoc) {
-    return getSema().ActOnUnaryTypeTrait(Trait, StartLoc, LParenLoc,
-                                         ParsedType::make(T), RParenLoc);
+                                   SourceLocation StartLoc,
+                                   TypeSourceInfo *T,
+                                   SourceLocation RParenLoc) {
+    return getSema().BuildUnaryTypeTrait(Trait, StartLoc, T, RParenLoc);
   }
 
   /// \brief Build a new (previously unresolved) declaration reference
@@ -5614,23 +5612,16 @@ TreeTransform<Derived>::TransformUnresolvedLookupExpr(
 template<typename Derived>
 ExprResult
 TreeTransform<Derived>::TransformUnaryTypeTraitExpr(UnaryTypeTraitExpr *E) {
-  TemporaryBase Rebase(*this, /*FIXME*/E->getLocStart(), DeclarationName());
-
-  QualType T = getDerived().TransformType(E->getQueriedType());
-  if (T.isNull())
+  TypeSourceInfo *T = getDerived().TransformType(E->getQueriedTypeSourceInfo());
+  if (!T)
     return ExprError();
 
   if (!getDerived().AlwaysRebuild() &&
-      T == E->getQueriedType())
+      T == E->getQueriedTypeSourceInfo())
     return SemaRef.Owned(E->Retain());
-
-  // FIXME: Bad location information
-  SourceLocation FakeLParenLoc
-    = SemaRef.PP.getLocForEndOfToken(E->getLocStart());
 
   return getDerived().RebuildUnaryTypeTrait(E->getTrait(),
                                             E->getLocStart(),
-                                            /*FIXME:*/FakeLParenLoc,
                                             T,
                                             E->getLocEnd());
 }

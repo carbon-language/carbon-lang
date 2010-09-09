@@ -1782,7 +1782,7 @@ DEF_TRAVERSE_STMT(TypesCompatibleExpr, {
   })
 
 DEF_TRAVERSE_STMT(UnaryTypeTraitExpr, {
-    TRY_TO(TraverseType(S->getQueriedType()));
+    TRY_TO(TraverseTypeLoc(S->getQueriedTypeSourceInfo()->getTypeLoc()));
   })
 
 // These exprs (most of them), do not need any action except iterating

@@ -366,7 +366,6 @@ public:
   bool VisitCaseStmt(CaseStmt *S);
   bool VisitWhileStmt(WhileStmt *S);
   bool VisitForStmt(ForStmt *S);
-//  bool VisitSwitchCase(SwitchCase *S);
 
   // Expression visitors
   bool VisitDeclRefExpr(DeclRefExpr *E);
@@ -385,12 +384,13 @@ public:
   // FIXME: InitListExpr (for the designators)
   // FIXME: DesignatedInitExpr
   bool VisitCXXTypeidExpr(CXXTypeidExpr *E);
+  bool VisitCXXUuidofExpr(CXXUuidofExpr *E);
   bool VisitCXXDefaultArgExpr(CXXDefaultArgExpr *E) { return false; }
   bool VisitCXXTemporaryObjectExpr(CXXTemporaryObjectExpr *E);
   bool VisitCXXScalarValueInitExpr(CXXScalarValueInitExpr *E);
   bool VisitCXXNewExpr(CXXNewExpr *E);
   bool VisitCXXPseudoDestructorExpr(CXXPseudoDestructorExpr *E);
-  // FIXME: UnaryTypeTraitExpr has poor source-location information.
+  bool VisitUnaryTypeTraitExpr(UnaryTypeTraitExpr *E);
   bool VisitOverloadExpr(OverloadExpr *E);
   bool VisitDependentScopeDeclRefExpr(DependentScopeDeclRefExpr *E);
   bool VisitCXXUnresolvedConstructExpr(CXXUnresolvedConstructExpr *E);
@@ -1590,6 +1590,17 @@ bool CursorVisitor::VisitCXXTypeidExpr(CXXTypeidExpr *E) {
   return VisitExpr(E);
 }
 
+bool CursorVisitor::VisitCXXUuidofExpr(CXXUuidofExpr *E) {
+  if (E->isTypeOperand()) {
+    if (TypeSourceInfo *TSInfo = E->getTypeOperandSourceInfo())
+      return Visit(TSInfo->getTypeLoc());
+    
+    return false;
+  }
+  
+  return VisitExpr(E);  
+}
+
 bool CursorVisitor::VisitCXXTemporaryObjectExpr(CXXTemporaryObjectExpr *E) {
   if (TypeSourceInfo *TSInfo = E->getTypeSourceInfo())
     return Visit(TSInfo->getTypeLoc());
@@ -1649,6 +1660,10 @@ bool CursorVisitor::VisitCXXPseudoDestructorExpr(CXXPseudoDestructorExpr *E) {
       return true;
   
   return false;
+}
+
+bool CursorVisitor::VisitUnaryTypeTraitExpr(UnaryTypeTraitExpr *E) {
+  return Visit(E->getQueriedTypeSourceInfo()->getTypeLoc());
 }
 
 bool CursorVisitor::VisitOverloadExpr(OverloadExpr *E) {

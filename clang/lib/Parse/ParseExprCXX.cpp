@@ -1832,7 +1832,7 @@ ExprResult Parser::ParseUnaryTypeTrait() {
   if (Ty.isInvalid())
     return ExprError();
 
-  return Actions.ActOnUnaryTypeTrait(UTT, Loc, LParen, Ty.get(), RParen);
+  return Actions.ActOnUnaryTypeTrait(UTT, Loc, Ty.get(), RParen);
 }
 
 /// ParseCXXAmbiguousParenExpression - We have parsed the left paren of a

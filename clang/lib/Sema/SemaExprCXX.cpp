@@ -1982,12 +1982,23 @@ Sema::PerformImplicitConversion(Expr *&From, QualType ToType,
 }
 
 ExprResult Sema::ActOnUnaryTypeTrait(UnaryTypeTrait OTT,
-                                                 SourceLocation KWLoc,
-                                                 SourceLocation LParen,
-                                                 ParsedType Ty,
-                                                 SourceLocation RParen) {
-  QualType T = GetTypeFromParser(Ty);
+                                     SourceLocation KWLoc,
+                                     ParsedType Ty,
+                                     SourceLocation RParen) {
+  TypeSourceInfo *TSInfo;
+  QualType T = GetTypeFromParser(Ty, &TSInfo);
 
+  if (!TSInfo)
+    TSInfo = Context.getTrivialTypeSourceInfo(T);
+  return BuildUnaryTypeTrait(OTT, KWLoc, TSInfo, RParen);
+}
+
+ExprResult Sema::BuildUnaryTypeTrait(UnaryTypeTrait OTT,
+                                     SourceLocation KWLoc,
+                                     TypeSourceInfo *TSInfo,
+                                     SourceLocation RParen) {
+  QualType T = TSInfo->getType();
+  
   // According to http://gcc.gnu.org/onlinedocs/gcc/Type-Traits.html
   // all traits except __is_class, __is_enum and __is_union require a the type
   // to be complete, an array of unknown bound, or void.
@@ -2004,7 +2015,7 @@ ExprResult Sema::ActOnUnaryTypeTrait(UnaryTypeTrait OTT,
   // There is no point in eagerly computing the value. The traits are designed
   // to be used from type trait templates, so Ty will be a template parameter
   // 99% of the time.
-  return Owned(new (Context) UnaryTypeTraitExpr(KWLoc, OTT, T,
+  return Owned(new (Context) UnaryTypeTraitExpr(KWLoc, OTT, TSInfo,
                                                 RParen, Context.BoolTy));
 }
 
