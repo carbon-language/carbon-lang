@@ -728,34 +728,34 @@ Sema::ActOnFinishSwitchStmt(SourceLocation SwitchLoc, Stmt *Switch,
       // TODO: we might want to check whether case values are out of the
       // enum even if we don't want to check whether all cases are handled.
       if (!TheDefaultStmt) {
-  EnumValsTy::const_iterator EI = EnumVals.begin();
-  for (CaseValsTy::const_iterator CI = CaseVals.begin();
+        EnumValsTy::const_iterator EI = EnumVals.begin();
+        for (CaseValsTy::const_iterator CI = CaseVals.begin();
              CI != CaseVals.end(); CI++) {
-    while (EI != EIend && EI->first < CI->first)
-      EI++;
-    if (EI == EIend || EI->first > CI->first)
+          while (EI != EIend && EI->first < CI->first)
+            EI++;
+          if (EI == EIend || EI->first > CI->first)
             Diag(CI->second->getLHS()->getExprLoc(), diag::warn_not_in_enum)
               << ED->getDeclName();
-  }
-  // See which of case ranges aren't in enum
-  EI = EnumVals.begin();
-  for (CaseRangesTy::const_iterator RI = CaseRanges.begin();
+        }
+        // See which of case ranges aren't in enum
+        EI = EnumVals.begin();
+        for (CaseRangesTy::const_iterator RI = CaseRanges.begin();
              RI != CaseRanges.end() && EI != EIend; RI++) {
-    while (EI != EIend && EI->first < RI->first)
-      EI++;
+          while (EI != EIend && EI->first < RI->first)
+            EI++;
         
-    if (EI == EIend || EI->first != RI->first) {
-      Diag(RI->second->getLHS()->getExprLoc(), diag::warn_not_in_enum)
-        << ED->getDeclName();
-    }
+          if (EI == EIend || EI->first != RI->first) {
+            Diag(RI->second->getLHS()->getExprLoc(), diag::warn_not_in_enum)
+              << ED->getDeclName();
+          }
 
-    llvm::APSInt Hi = RI->second->getRHS()->EvaluateAsInt(Context);
-    while (EI != EIend && EI->first < Hi)
-      EI++;
-    if (EI == EIend || EI->first != Hi)
-      Diag(RI->second->getRHS()->getExprLoc(), diag::warn_not_in_enum)
-        << ED->getDeclName();
-  }
+          llvm::APSInt Hi = RI->second->getRHS()->EvaluateAsInt(Context);
+          while (EI != EIend && EI->first < Hi)
+            EI++;
+          if (EI == EIend || EI->first != Hi)
+            Diag(RI->second->getRHS()->getExprLoc(), diag::warn_not_in_enum)
+              << ED->getDeclName();
+        }
       }
       // Check which enum vals aren't in switch
       CaseValsTy::const_iterator CI = CaseVals.begin();
@@ -779,15 +779,15 @@ Sema::ActOnFinishSwitchStmt(SourceLocation SwitchLoc, Stmt *Switch,
         }
 
         if (RI == CaseRanges.end() || EI->first < RI->first) {
-    hasCasesNotInSwitch = true;
-    if (!TheDefaultStmt)
-      Diag(CondExpr->getExprLoc(), diag::warn_missing_cases)
-        << EI->second->getDeclName();
-  }
+          hasCasesNotInSwitch = true;
+          if (!TheDefaultStmt)
+            Diag(CondExpr->getExprLoc(), diag::warn_missing_cases)
+              << EI->second->getDeclName();
+        }
       }
 
       if (!hasCasesNotInSwitch)
-  SS->setAllEnumCasesCovered();
+        SS->setAllEnumCasesCovered();
     }
   }
 
