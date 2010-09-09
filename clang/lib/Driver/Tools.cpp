@@ -1184,7 +1184,8 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     CmdArgs.push_back("-fno-access-control");
 
   // -fexceptions=0 is default.
-  if (needsExceptions(Args, InputType, getToolChain().getTriple()))
+  if (!KernelOrKext &&
+      needsExceptions(Args, InputType, getToolChain().getTriple()))
     CmdArgs.push_back("-fexceptions");
 
   if (getToolChain().UseSjLjExceptions())
