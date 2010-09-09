@@ -1,0 +1,225 @@
+#!/usr/bin/env python
+
+import struct
+import sys
+import StringIO
+
+class Reader:
+    def __init__(self, path):
+        if path == "-":
+            # Snarf all the data so we can seek.
+            self.file = StringIO.StringIO(sys.stdin.read())
+        else:
+            self.file = open(path, "rb")
+        self.isLSB = None
+        self.is64Bit = None
+
+    def seek(self, pos):
+        self.file.seek(pos)
+
+    def read(self, N):
+        data = self.file.read(N)
+        if len(data) != N:
+            raise ValueError, "Out of data!"
+        return data
+
+    def read8(self):
+        return ord(self.read(1))
+
+    def read16(self):
+        return struct.unpack('><'[self.isLSB] + 'H', self.read(2))[0]
+
+    def read32(self):
+        return struct.unpack('><'[self.isLSB] + 'I', self.read(4))[0]
+
+    def read32S(self):
+        return struct.unpack('><'[self.isLSB] + 'i', self.read(4))[0]
+
+    def read64(self):
+        return struct.unpack('><'[self.isLSB] + 'Q', self.read(8))[0]
+
+    def read64S(self):
+        return struct.unpack('><'[self.isLSB] + 'q', self.read(8))[0]
+
+    def readWord(self):
+        if self.is64Bit:
+            return self.read64()
+        else:
+            return self.read32()
+
+    def readWordS(self):
+        if self.is64Bit:
+            return self.read64S()
+        else:
+            return self.read32S()
+
+class StringTable:
+    def __init__(self, strings):
+       self.string_table = strings
+
+    def __getitem__(self, index):
+       end = self.string_table.index('\x00', index)
+       return self.string_table[index:end]
+
+class Section:
+    def __init__(self, f):
+        self.sh_name = f.read32()
+        self.sh_type = f.read32()
+        self.sh_flags = f.readWord()
+        self.sh_addr = f.readWord()
+        self.sh_offset = f.readWord()
+        self.sh_size = f.readWord()
+        self.sh_link = f.read32()
+        self.sh_info = f.read32()
+        self.sh_addralign = f.readWord()
+        self.sh_entsize = f.readWord()
+
+    def dump(self, shstrtab, f, strtab, dumpdata):
+        print "  (('sh_name', %d) # %r" % (self.sh_name, shstrtab[self.sh_name])
+        print "   ('sh_type', %d)" % self.sh_type
+        print "   ('sh_flags', %d)" % self.sh_flags
+        print "   ('sh_addr', %d)" % self.sh_addr
+        print "   ('sh_offset', %d)" % self.sh_offset
+        print "   ('sh_size', %d)" % self.sh_size
+        print "   ('sh_link', %d)" % self.sh_link
+        print "   ('sh_info', %d)" % self.sh_info
+        print "   ('sh_addralign', %d)" % self.sh_addralign
+        print "   ('sh_entsize', %d)" % self.sh_entsize
+        if self.sh_type == 2: # SHT_SYMTAB
+            print "   ('_symbols', ["
+            dumpSymtab(f, self, strtab)
+            print "   ])"
+        elif self.sh_type == 4 or self.sh_type == 9: # SHT_RELA / SHT_REL
+            print "   ('_relocations', ["
+            dumpRel(f, self, self.sh_type == 4)
+            print "   ])"
+        elif dumpdata:
+            f.seek(self.sh_offset)
+            print "   ('_section_data', %r)" % f.read(self.sh_size)
+        print "  ),"
+
+def dumpSymtab(f, section, strtab):
+    entries = section.sh_size // section.sh_entsize
+
+    for index in range(entries):
+        f.seek(section.sh_offset + index * section.sh_entsize)
+        print "    # Symbol %d" % index
+        name = f.read32()
+        print "    (('st_name', %d) # %r" % (name, strtab[name])
+        if not f.is64Bit:
+            print "     ('st_value', %d)" % f.read32()
+            print "     ('st_size', %d)" % f.read32()
+        st_info = f.read8()
+        print "     ('st_bind', %d)" % (st_info >> 4)
+        print "     ('st_type', %d)" % (st_info & 0xf)
+        print "     ('st_other', %d)" % f.read8()
+        print "     ('st_shndx', %d)" % f.read16()
+        if f.is64Bit:
+            print "     ('st_value', %d)" % f.read64()
+            print "     ('st_size', %d)" % f.read64()
+        print "    ),"
+
+def dumpRel(f, section, dumprela = False):
+    entries = section.sh_size // section.sh_entsize
+
+    for index in range(entries):
+        f.seek(section.sh_offset + index * section.sh_entsize)
+        print "    # Relocation %d" % index
+        print "    (('r_offset', %d)" % f.readWord()
+        r_info = f.readWord()
+        if f.is64Bit:
+            print "     ('r_sym', %d)" % (r_info >> 32)
+            print "     ('r_type', %d)" % (r_info & 0xffffffff)
+        else:
+            print "     ('r_sym', %d)" % (r_info >> 8)
+            print "     ('r_type', %d)" % (r_info & 0xff)
+        if dumprela:
+            print "     ('r_addend', %d)" % f.readWordS()
+        print "    ),"
+
+def dumpELF(path, opts):
+    f = Reader(path)
+
+    magic = f.read(4)
+    assert magic == '\x7FELF'
+
+    fileclass = f.read8()
+    if fileclass == 1: # ELFCLASS32
+        f.is64Bit = False
+    elif fileclass == 2: # ELFCLASS64
+        f.is64Bit = True
+    else:
+        raise ValueError, "Unknown file class %d" % fileclass
+    print "('e_indent[EI_CLASS]', %d)" % fileclass
+
+    byteordering = f.read8()
+    if byteordering == 1: # ELFDATA2LSB
+        f.isLSB = True
+    elif byteordering == 2: # ELFDATA2MSB
+        f.isLSB = False
+    else:
+        raise ValueError, "Unknown byte ordering %d" % byteordering
+    print "('e_indent[EI_DATA]', %d)" % byteordering
+
+    print "('e_indent[EI_VERSION]', %d)" % f.read8()
+    print "('e_indent[EI_OSABI]', %d)" % f.read8()
+    print "('e_indent[EI_ABIVERSION]', %d)" % f.read8()
+
+    f.seek(16) # Seek to end of e_ident.
+
+    print "('e_type', %d)" % f.read16()
+    print "('e_machine', %d)" % f.read16()
+    print "('e_version', %d)" % f.read32()
+    print "('e_entry', %d)" % f.readWord()
+    print "('e_phoff', %d)" % f.readWord()
+    e_shoff = f.readWord()
+    print "('e_shoff', %d)" % e_shoff
+    print "('e_flags', %d)" % f.read32()
+    print "('e_ehsize', %d)" % f.read16()
+    print "('e_phentsize', %d)" % f.read16()
+    print "('e_phnum', %d)" % f.read16()
+    e_shentsize = f.read16()
+    print "('e_shentsize', %d)" % e_shentsize
+    e_shnum = f.read16()
+    print "('e_shnum', %d)" % e_shnum
+    e_shstrndx = f.read16()
+    print "('e_shstrndx', %d)" % e_shstrndx
+
+    # Read all section headers
+    sections = []
+    for index in range(e_shnum):
+        f.seek(e_shoff + index * e_shentsize)
+        s = Section(f)
+        sections.append(s)
+
+    # Read .shstrtab so we can resolve section names
+    f.seek(sections[e_shstrndx].sh_offset)
+    shstrtab = StringTable(f.read(sections[e_shstrndx].sh_size))
+
+    # Get the symbol string table
+    strtab = None
+    for section in sections:
+        if shstrtab[section.sh_name] == ".strtab":
+            f.seek(section.sh_offset)
+            strtab = StringTable(f.read(section.sh_size))
+            break
+
+    print "('_sections', ["
+    for index in range(e_shnum):
+        print "  # Section %d" % index
+        sections[index].dump(shstrtab, f, strtab, opts.dumpSectionData)
+    print "])"
+
+if __name__ == "__main__":
+    from optparse import OptionParser, OptionGroup
+    parser = OptionParser("usage: %prog [options] {files}")
+    parser.add_option("", "--dump-section-data", dest="dumpSectionData",
+                      help="Dump the contents of sections",
+                      action="store_true", default=False)
+    (opts, args) = parser.parse_args()
+
+    if not args:
+        args.append('-')
+
+    for arg in args:
+        dumpELF(arg, opts)
