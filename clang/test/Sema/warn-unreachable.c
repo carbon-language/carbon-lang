@@ -98,3 +98,19 @@ void test2() {
   }
   }
 }
+
+enum Cases { C1, C2, C3 };
+int test_enum_cases(enum Cases C) {
+  switch (C) {
+    case C1:
+    case C2:
+    case C3:
+      return 1;
+    default: {
+      int i = 0; // expected-warning{{will never be executed}}
+      ++i;
+      return i;
+    }
+  }  
+}
+
