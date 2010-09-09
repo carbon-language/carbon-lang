@@ -12,6 +12,7 @@
 // C Includes
 // C++ Includes
 #include <bitset>
+#include <algorithm>
 
 // Other libraries and framework includes
 // Project includes
@@ -406,6 +407,8 @@ Options::GenerateOptionUsage
         if (opt_set > 0)
             strm.Printf ("\n");
         strm.Indent (name);
+
+        // First go through and print the required options (list them up front).
         
         for (i = 0; i < num_options; ++i)
         {
@@ -430,7 +433,18 @@ Options::GenerateOptionUsage
                     else
                         strm.Printf (" -%c", full_options_table[i].short_option);
                 }
-                else
+            }
+        }
+
+        // Now go through again, and this time only print the optional options.
+
+        for (i = 0; i < num_options; ++i)
+        {
+            if (full_options_table[i].usage_mask & opt_set_mask)
+            {
+                // Add current option to the end of out_stream.
+
+                if (! full_options_table[i].required)
                 {
                     if (full_options_table[i].option_has_arg == required_argument)
                         strm.Printf (" [-%c %s]", full_options_table[i].short_option,
@@ -458,51 +472,78 @@ Options::GenerateOptionUsage
     OptionSet::iterator pos;
     strm.IndentMore (5);
 
-    int first_option_printed = 1;
+    std::vector<char> sorted_options;
+
+
+    // Put the unique command options in a vector & sort it, so we can output them alphabetically (by short_option)
+    // when writing out detailed help for each option.
+
     for (i = 0; i < num_options; ++i)
     {
-        // Only print out this option if we haven't already seen it.
         pos = options_seen.find (full_options_table[i].short_option);
         if (pos == options_seen.end())
         {
-            // Put a newline separation between arguments
-            if (first_option_printed)
-                first_option_printed = 0;
-            else
-                strm.EOL();
-      
             options_seen.insert (full_options_table[i].short_option);
-            strm.Indent ();
-            strm.Printf ("-%c ", full_options_table[i].short_option);
-            if (full_options_table[i].argument_name != NULL)
-                strm.PutCString(full_options_table[i].argument_name);
-            strm.EOL();
-            strm.Indent ();
-            strm.Printf ("--%s ", full_options_table[i].long_option);
-            if (full_options_table[i].argument_name != NULL)
-                strm.PutCString(full_options_table[i].argument_name);
-            strm.EOL();
+            sorted_options.push_back (full_options_table[i].short_option);
+        }
+    }
 
-            strm.IndentMore (5);
-            
-            if (full_options_table[i].usage_text)
+    std::sort (sorted_options.begin(), sorted_options.end());
+
+    // Go through the unique'd and alphabetically sorted vector of options, find the table entry for each option
+    // and write out the detailed help information for that option.
+
+    int first_option_printed = 1;
+    size_t end = sorted_options.size();
+    for (size_t j = 0; j < end; ++j)
+    {
+        char option = sorted_options[j];
+        bool found = false;
+        for (i = 0; i < num_options && !found; ++i)
+        {
+            if (full_options_table[i].short_option == option)
+            {
+                found = true;
+                //Print out the help information for this option.
+
+                // Put a newline separation between arguments
+                if (first_option_printed)
+                    first_option_printed = 0;
+                else
+                    strm.EOL();
+                
+                strm.Indent ();
+                strm.Printf ("-%c ", full_options_table[i].short_option);
+                if (full_options_table[i].argument_name != NULL)
+                    strm.PutCString(full_options_table[i].argument_name);
+                strm.EOL();
+                strm.Indent ();
+                strm.Printf ("--%s ", full_options_table[i].long_option);
+                if (full_options_table[i].argument_name != NULL)
+                    strm.PutCString(full_options_table[i].argument_name);
+                strm.EOL();
+                
+                strm.IndentMore (5);
+                
+                if (full_options_table[i].usage_text)
                     OutputFormattedUsageText (strm,
                                               full_options_table[i].usage_text,
                                               screen_width);
-            if (full_options_table[i].enum_values != NULL)
-            {
-                strm.Indent ();
-                strm.Printf("Values: ");
-                for (int j = 0; full_options_table[i].enum_values[j].string_value != NULL; j++) 
+                if (full_options_table[i].enum_values != NULL)
                 {
-                    if (j == 0)
-                        strm.Printf("%s", full_options_table[i].enum_values[j].string_value);
-                    else
-                        strm.Printf(" | %s", full_options_table[i].enum_values[j].string_value);
+                    strm.Indent ();
+                    strm.Printf("Values: ");
+                    for (int k = 0; full_options_table[i].enum_values[k].string_value != NULL; k++) 
+                    {
+                        if (k == 0)
+                            strm.Printf("%s", full_options_table[i].enum_values[k].string_value);
+                        else
+                            strm.Printf(" | %s", full_options_table[i].enum_values[k].string_value);
+                    }
+                    strm.EOL();
                 }
-                strm.EOL();
+                strm.IndentLess (5);
             }
-            strm.IndentLess (5);
         }
     }
 
