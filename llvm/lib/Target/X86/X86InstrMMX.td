@@ -11,6 +11,9 @@
 // and properties of the instructions which are needed for code generation,
 // machine code emission, and analysis.
 //
+// All instructions that use MMX should be in this file, even if they also use
+// SSE.
+//
 //===----------------------------------------------------------------------===//
 
 //===----------------------------------------------------------------------===//
@@ -93,6 +96,56 @@ let Constraints = "$src1 = $dst" in {
                     !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"),
            [(set VR64:$dst, (IntId2 VR64:$src1, (i32 imm:$src2)))]>;
   }
+}
+
+/// Unary MMX instructions requiring SSSE3.
+multiclass SS3I_unop_rm_int_mm<bits<8> opc, string OpcodeStr,
+                               PatFrag mem_frag64, Intrinsic IntId64> {
+  def rr64 : SS38I<opc, MRMSrcReg, (outs VR64:$dst), (ins VR64:$src),
+                   !strconcat(OpcodeStr, "\t{$src, $dst|$dst, $src}"),
+                   [(set VR64:$dst, (IntId64 VR64:$src))]>;
+
+  def rm64 : SS38I<opc, MRMSrcMem, (outs VR64:$dst), (ins i64mem:$src),
+                   !strconcat(OpcodeStr, "\t{$src, $dst|$dst, $src}"),
+                   [(set VR64:$dst,
+                     (IntId64 (bitconvert (mem_frag64 addr:$src))))]>;
+}
+
+/// Binary MMX instructions requiring SSSE3.
+let ImmT = NoImm, Constraints = "$src1 = $dst" in {
+multiclass SS3I_binop_rm_int_mm<bits<8> opc, string OpcodeStr,
+                             PatFrag mem_frag64, Intrinsic IntId64> {
+  let isCommutable = 0 in
+  def rr64 : SS38I<opc, MRMSrcReg, (outs VR64:$dst),
+       (ins VR64:$src1, VR64:$src2),
+        !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"),
+       [(set VR64:$dst, (IntId64 VR64:$src1, VR64:$src2))]>;
+  def rm64 : SS38I<opc, MRMSrcMem, (outs VR64:$dst),
+       (ins VR64:$src1, i64mem:$src2),
+        !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"),
+       [(set VR64:$dst,
+         (IntId64 VR64:$src1,
+          (bitconvert (mem_frag64 addr:$src2))))]>;
+}
+}
+
+/// PALIGN MMX instructions (require SSSE3).
+multiclass ssse3_palign_mm<string asm, Intrinsic IntId> {
+  def R64rr  : SS3AI<0x0F, MRMSrcReg, (outs VR64:$dst),
+      (ins VR64:$src1, VR64:$src2, i8imm:$src3),
+      !strconcat(asm, "\t{$src3, $src2, $dst|$dst, $src2, $src3}"), []>;
+  def R64rm  : SS3AI<0x0F, MRMSrcMem, (outs VR64:$dst),
+      (ins VR64:$src1, i64mem:$src2, i8imm:$src3),
+      !strconcat(asm, "\t{$src3, $src2, $dst|$dst, $src2, $src3}"), []>;
+  def R64irr  : SS3AI<0x0F, MRMSrcReg, (outs VR64:$dst),
+      (ins VR64:$src1, VR64:$src2, i8imm:$src3),
+      !strconcat(asm, "\t{$src3, $src2, $dst|$dst, $src2, $src3}"), 
+      [(set VR64:$dst, (IntId VR64:$src1, VR64:$src2, (i8 imm:$src3)))]>;
+  def R64irm  : SS3AI<0x0F, MRMSrcMem, (outs VR64:$dst),
+      (ins VR64:$src1, i64mem:$src2, i8imm:$src3),
+      !strconcat(asm, "\t{$src3, $src2, $dst|$dst, $src2, $src3}"),
+      [(set VR64:$dst, (IntId VR64:$src1,
+                       (bitconvert (load_mmx addr:$src2)), (i8 imm:$src3)))]>;
 }
 
 //===----------------------------------------------------------------------===//
@@ -192,7 +245,12 @@ def MMX_MOVZDI2PDIrm : MMXI<0x6E, MRMSrcMem, (outs VR64:$dst),
                                    (scalar_to_vector (loadi32 addr:$src))))))]>;
 
 // Arithmetic Instructions
-
+defm MMX_PABSB : SS3I_unop_rm_int_mm<0x1C, "pabsb", memopv8i8,
+                                 int_x86_ssse3_pabs_b>;
+defm MMX_PABSW : SS3I_unop_rm_int_mm<0x1D, "pabsw", memopv4i16,
+                                 int_x86_ssse3_pabs_w>;
+defm MMX_PABSD : SS3I_unop_rm_int_mm<0x1E, "pabsd", memopv2i32,
+                                 int_x86_ssse3_pabs_d>;
 // -- Addition
 defm MMX_PADDB : MMXI_binop_rm<0xFC, "paddb", add, v8i8,  1>,
                  MMXI_binop_rm_int<0xFC, "paddb", int_x86_mmx_padd_b, 1>;
@@ -207,6 +265,14 @@ defm MMX_PADDSW  : MMXI_binop_rm_int<0xED, "paddsw" , int_x86_mmx_padds_w, 1>;
 
 defm MMX_PADDUSB : MMXI_binop_rm_int<0xDC, "paddusb", int_x86_mmx_paddus_b, 1>;
 defm MMX_PADDUSW : MMXI_binop_rm_int<0xDD, "paddusw", int_x86_mmx_paddus_w, 1>;
+
+defm MMX_PHADDW  : SS3I_binop_rm_int_mm<0x01, "phaddw", memopv4i16,
+                                     int_x86_ssse3_phadd_w>;
+defm MMX_PHADD   : SS3I_binop_rm_int_mm<0x02, "phaddd", memopv2i32,
+                                     int_x86_ssse3_phadd_d>;
+defm MMX_PHADDSW : SS3I_binop_rm_int_mm<0x03, "phaddsw", memopv4i16,
+                                     int_x86_ssse3_phadd_sw>;
+
 
 // -- Subtraction
 defm MMX_PSUBB : MMXI_binop_rm<0xF8, "psubb", sub, v8i8>,
@@ -224,6 +290,13 @@ defm MMX_PSUBSW  : MMXI_binop_rm_int<0xE9, "psubsw" , int_x86_mmx_psubs_w>;
 defm MMX_PSUBUSB : MMXI_binop_rm_int<0xD8, "psubusb", int_x86_mmx_psubus_b>;
 defm MMX_PSUBUSW : MMXI_binop_rm_int<0xD9, "psubusw", int_x86_mmx_psubus_w>;
 
+defm MMX_PHSUBW  : SS3I_binop_rm_int_mm<0x05, "phsubw", memopv4i16,
+                                     int_x86_ssse3_phsub_w>;
+defm MMX_PHSUBD  : SS3I_binop_rm_int_mm<0x06, "phsubd", memopv2i32,
+                                     int_x86_ssse3_phsub_d>;
+defm MMX_PHSUBSW : SS3I_binop_rm_int_mm<0x07, "phsubsw", memopv4i16,
+                                     int_x86_ssse3_phsub_sw>;
+
 // -- Multiplication
 defm MMX_PMULLW  : MMXI_binop_rm<0xD5, "pmullw", mul, v4i16, 1>,
                    MMXI_binop_rm_int<0xD5, "pmullw", int_x86_mmx_pmull_w, 1>;
@@ -231,10 +304,15 @@ defm MMX_PMULLW  : MMXI_binop_rm<0xD5, "pmullw", mul, v4i16, 1>,
 defm MMX_PMULHW  : MMXI_binop_rm_int<0xE5, "pmulhw",  int_x86_mmx_pmulh_w,  1>;
 defm MMX_PMULHUW : MMXI_binop_rm_int<0xE4, "pmulhuw", int_x86_mmx_pmulhu_w, 1>;
 defm MMX_PMULUDQ : MMXI_binop_rm_int<0xF4, "pmuludq", int_x86_mmx_pmulu_dq, 1>;
+let isCommutable = 1 in
+defm MMX_PMULHRSW : SS3I_binop_rm_int_mm<0x0B, "pmulhrsw", memopv4i16,
+                                     int_x86_ssse3_pmul_hr_sw>;
 
 // -- Miscellanea
 defm MMX_PMADDWD : MMXI_binop_rm_int<0xF5, "pmaddwd", int_x86_mmx_pmadd_wd, 1>;
 
+defm MMX_PMADDUBSW : SS3I_binop_rm_int_mm<0x04, "pmaddubsw", memopv8i8,
+                                     int_x86_ssse3_pmadd_ub_sw>;
 defm MMX_PAVGB   : MMXI_binop_rm_int<0xE0, "pavgb", int_x86_mmx_pavg_b, 1>;
 defm MMX_PAVGW   : MMXI_binop_rm_int<0xE3, "pavgw", int_x86_mmx_pavg_w, 1>;
 
@@ -245,6 +323,35 @@ defm MMX_PMAXUB  : MMXI_binop_rm_int<0xDE, "pmaxub", int_x86_mmx_pmaxu_b, 1>;
 defm MMX_PMAXSW  : MMXI_binop_rm_int<0xEE, "pmaxsw", int_x86_mmx_pmaxs_w, 1>;
 
 defm MMX_PSADBW  : MMXI_binop_rm_int<0xF6, "psadbw", int_x86_mmx_psad_bw, 1>;
+
+defm MMX_PSIGNB :   SS3I_binop_rm_int_mm<0x08, "psignb", memopv8i8,
+                                     int_x86_ssse3_psign_b>;
+defm MMX_PSIGNW :   SS3I_binop_rm_int_mm<0x09, "psignw", memopv4i16,
+                                     int_x86_ssse3_psign_w>;
+defm MMX_PSIGND :   SS3I_binop_rm_int_mm<0x0A, "psignd", memopv2i32,
+                                     int_x86_ssse3_psign_d>;
+let Constraints = "$src1 = $dst" in
+  defm MMX_PALIGN : ssse3_palign_mm<"palignr", int_x86_mmx_palignr_b>;
+
+let AddedComplexity = 5 in {
+
+def : Pat<(v1i64 (palign:$src3 VR64:$src1, VR64:$src2)),
+          (MMX_PALIGNR64rr VR64:$src2, VR64:$src1,
+                       (SHUFFLE_get_palign_imm VR64:$src3))>,
+          Requires<[HasSSSE3]>;
+def : Pat<(v2i32 (palign:$src3 VR64:$src1, VR64:$src2)),
+          (MMX_PALIGNR64rr VR64:$src2, VR64:$src1,
+                       (SHUFFLE_get_palign_imm VR64:$src3))>,
+          Requires<[HasSSSE3]>;
+def : Pat<(v4i16 (palign:$src3 VR64:$src1, VR64:$src2)),
+          (MMX_PALIGNR64rr VR64:$src2, VR64:$src1,
+                       (SHUFFLE_get_palign_imm VR64:$src3))>,
+          Requires<[HasSSSE3]>;
+def : Pat<(v8i8 (palign:$src3 VR64:$src1, VR64:$src2)),
+          (MMX_PALIGNR64rr VR64:$src2, VR64:$src1,
+                       (SHUFFLE_get_palign_imm VR64:$src3))>,
+          Requires<[HasSSSE3]>;
+}
 
 // Logical Instructions
 defm MMX_PAND : MMXI_binop_rm_v1i64<0xDB, "pand", and, 1>,
@@ -411,6 +518,18 @@ def MMX_PSHUFWmi : MMXIi8<0x70, MRMSrcMem,
                           [(set VR64:$dst,
                             (mmx_pshufw:$src2 (bc_v4i16 (load_mmx addr:$src1)),
                                               (undef)))]>;
+
+defm MMX_PSHUFB : SS3I_binop_rm_int_mm<0x00, "pshufb", memopv8i8,
+                                     int_x86_ssse3_pshuf_b>;
+// Shuffle with PALIGN
+def : Pat<(v1i64 (X86PAlign VR64:$src1, VR64:$src2, (i8 imm:$imm))),
+          (MMX_PALIGNR64rr VR64:$src2, VR64:$src1, imm:$imm)>;
+def : Pat<(v2i32 (X86PAlign VR64:$src1, VR64:$src2, (i8 imm:$imm))),
+          (MMX_PALIGNR64rr VR64:$src2, VR64:$src1, imm:$imm)>;
+def : Pat<(v4i16 (X86PAlign VR64:$src1, VR64:$src2, (i8 imm:$imm))),
+          (MMX_PALIGNR64rr VR64:$src2, VR64:$src1, imm:$imm)>;
+def : Pat<(v8i8 (X86PAlign VR64:$src1, VR64:$src2, (i8 imm:$imm))),
+          (MMX_PALIGNR64rr VR64:$src2, VR64:$src1, imm:$imm)>;
 
 // -- Conversion Instructions
 let neverHasSideEffects = 1 in {
