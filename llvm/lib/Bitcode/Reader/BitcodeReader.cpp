@@ -786,8 +786,12 @@ bool BitcodeReader::ParseMetadata() {
       Record.clear();
       Code = Stream.ReadCode();
 
-      // METADATA_NAME is always followed by METADATA_NAMED_NODE.
-      if (Stream.ReadRecord(Code, Record) != bitc::METADATA_NAMED_NODE)
+      // METADATA_NAME is always followed by METADATA_NAMED_NODE2.
+      unsigned NextBitCode = Stream.ReadRecord(Code, Record);
+      // FIXME: LLVM 3.0: Remove this.
+      if (NextBitCode == bitc::METADATA_NAMED_NODE)
+        break;
+      if (NextBitCode != bitc::METADATA_NAMED_NODE2)
         assert ( 0 && "Inavlid Named Metadata record");
 
       // Read named metadata elements.
@@ -802,11 +806,19 @@ bool BitcodeReader::ParseMetadata() {
       break;
     }
     case bitc::METADATA_FN_NODE:
+      // FIXME: Legacy support for the old fn_node, where function-local
+      // metadata operands were bogus. Remove in LLVM 3.0.
+      break;
+    case bitc::METADATA_NODE:
+      // FIXME: Legacy support for the old node, where function-local
+      // metadata operands were bogus. Remove in LLVM 3.0.
+      break;
+    case bitc::METADATA_FN_NODE2:
       IsFunctionLocal = true;
       // fall-through
-    case bitc::METADATA_NODE: {
+    case bitc::METADATA_NODE2: {
       if (Record.size() % 2 == 1)
-        return Error("Invalid METADATA_NODE record");
+        return Error("Invalid METADATA_NODE2 record");
 
       unsigned Size = Record.size();
       SmallVector<Value*, 8> Elts;
@@ -1593,7 +1605,10 @@ bool BitcodeReader::ParseMetadataAttachment() {
     switch (Stream.ReadRecord(Code, Record)) {
     default:  // Default behavior: ignore.
       break;
-    case bitc::METADATA_ATTACHMENT: {
+    case bitc::METADATA_ATTACHMENT:
+      // LLVM 3.0: Remove this.
+      break;
+    case bitc::METADATA_ATTACHMENT2: {
       unsigned RecordLength = Record.size();
       if (Record.empty() || (RecordLength - 1) % 2 == 1)
         return Error ("Invalid METADATA_ATTACHMENT reader!");
@@ -1706,7 +1721,11 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
       I = 0;
       continue;
         
-    case bitc::FUNC_CODE_DEBUG_LOC: {      // DEBUG_LOC: [line, col, scope, ia]
+    case bitc::FUNC_CODE_DEBUG_LOC:
+      // FIXME: Ignore. Remove this in LLVM 3.0.
+      continue;
+
+    case bitc::FUNC_CODE_DEBUG_LOC2: {      // DEBUG_LOC: [line, col, scope, ia]
       I = 0;     // Get the last instruction emitted.
       if (CurBB && !CurBB->empty())
         I = &CurBB->back();
@@ -2221,7 +2240,12 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
       InstructionList.push_back(I);
       break;
     }
-    case bitc::FUNC_CODE_INST_CALL: {
+    case bitc::FUNC_CODE_INST_CALL:
+    case bitc::FUNC_CODE_INST_CALL2: {
+      // FIXME: Legacy support for the old call instruction, where function-local
+      // metadata operands were bogus. Remove in LLVM 3.0.
+      bool DropMetadata = BitCode == bitc::FUNC_CODE_INST_CALL;
+
       // CALL: [paramattrs, cc, fnty, fnid, arg0, arg1...]
       if (Record.size() < 3)
         return Error("Invalid CALL record");
@@ -2245,7 +2269,13 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
       for (unsigned i = 0, e = FTy->getNumParams(); i != e; ++i, ++OpNum) {
         if (FTy->getParamType(i)->getTypeID()==Type::LabelTyID)
           Args.push_back(getBasicBlock(Record[OpNum]));
-        else
+        else if (DropMetadata &&
+                 FTy->getParamType(i)->getTypeID()==Type::MetadataTyID) {
+          // LLVM 2.7 compatibility: drop metadata arguments to null.
+          Value *Ops = 0;
+          Args.push_back(MDNode::get(Context, &Ops, 1));
+          continue;
+        } else
           Args.push_back(getFnValueByID(Record[OpNum], FTy->getParamType(i)));
         if (Args.back() == 0) return Error("Invalid CALL record");
       }
