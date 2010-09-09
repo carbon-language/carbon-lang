@@ -1376,14 +1376,10 @@ FunctionDecl::setFunctionTemplateSpecialization(ASTContext &C,
   FunctionTemplateSpecializationInfo *Info
     = TemplateOrSpecialization.dyn_cast<FunctionTemplateSpecializationInfo*>();
   if (!Info)
-    Info = new (C) FunctionTemplateSpecializationInfo;
-
-  Info->Function = this;
-  Info->Template.setPointer(Template);
-  Info->Template.setInt(TSK - 1);
-  Info->TemplateArguments = TemplateArgs;
-  Info->TemplateArgumentsAsWritten = TemplateArgsAsWritten;
-  Info->PointOfInstantiation = PointOfInstantiation;
+    Info = FunctionTemplateSpecializationInfo::Create(C, this, Template, TSK,
+                                                      TemplateArgs,
+                                                      TemplateArgsAsWritten,
+                                                      PointOfInstantiation);
   TemplateOrSpecialization = Info;
 
   // Insert this function template specialization into the set of known

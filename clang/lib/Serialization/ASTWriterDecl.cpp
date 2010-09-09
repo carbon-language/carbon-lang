@@ -237,8 +237,7 @@ void ASTDeclWriter::VisitFunctionDecl(FunctionDecl *D) {
   case FunctionDecl::TK_FunctionTemplateSpecialization: {
     FunctionTemplateSpecializationInfo *
       FTSInfo = D->getTemplateSpecializationInfo();
-    // We want it canonical to guarantee that it has a Common*.
-    Writer.AddDeclRef(FTSInfo->getTemplate()->getCanonicalDecl(), Record);
+    Writer.AddDeclRef(FTSInfo->getTemplate(), Record);
     Record.push_back(FTSInfo->getTemplateSpecializationKind());
     
     // Template arguments.

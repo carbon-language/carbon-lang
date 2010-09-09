@@ -292,7 +292,31 @@ public:
 /// which is a FunctionDecl that has been explicitly specialization or
 /// instantiated from a function template.
 class FunctionTemplateSpecializationInfo : public llvm::FoldingSetNode {
+  FunctionTemplateSpecializationInfo(FunctionDecl *FD,
+                                     FunctionTemplateDecl *Template,
+                                     TemplateSpecializationKind TSK,
+                                     const TemplateArgumentList *TemplateArgs,
+                          const TemplateArgumentListInfo *TemplateArgsAsWritten,
+                                     SourceLocation POI)
+  : Function(FD),
+    Template(Template, TSK - 1),
+    TemplateArguments(TemplateArgs),
+    TemplateArgumentsAsWritten(TemplateArgsAsWritten),
+    PointOfInstantiation(POI) { }
+
 public:
+  static FunctionTemplateSpecializationInfo *
+  Create(ASTContext &C, FunctionDecl *FD, FunctionTemplateDecl *Template,
+         TemplateSpecializationKind TSK,
+         const TemplateArgumentList *TemplateArgs,
+         const TemplateArgumentListInfo *TemplateArgsAsWritten,
+         SourceLocation POI) {
+    return new (C) FunctionTemplateSpecializationInfo(FD, Template, TSK,
+                                                      TemplateArgs,
+                                                      TemplateArgsAsWritten,
+                                                      POI);
+  }
+
   /// \brief The function template specialization that this structure
   /// describes.
   FunctionDecl *Function;

@@ -280,25 +280,32 @@ void ASTDeclReader::VisitFunctionDecl(FunctionDecl *FD) {
     
     SourceLocation POI = Reader.ReadSourceLocation(Record, Idx);
 
-    if (FD->isCanonicalDecl()) { // if canonical add to template's set.
-      ASTContext &C = *Reader.getContext();
-      TemplateArgumentList *TemplArgList
-        = new (C) TemplateArgumentList(C, TemplArgs.data(), TemplArgs.size());
-      TemplateArgumentListInfo *TemplArgsInfo
-        = new (C) TemplateArgumentListInfo(LAngleLoc, RAngleLoc);
-      for (unsigned i=0, e = TemplArgLocs.size(); i != e; ++i)
-        TemplArgsInfo->addArgument(TemplArgLocs[i]);
+    ASTContext &C = *Reader.getContext();
+    TemplateArgumentList *TemplArgList
+      = new (C) TemplateArgumentList(C, TemplArgs.data(), TemplArgs.size());
+    TemplateArgumentListInfo *TemplArgsInfo
+      = new (C) TemplateArgumentListInfo(LAngleLoc, RAngleLoc);
+    for (unsigned i=0, e = TemplArgLocs.size(); i != e; ++i)
+      TemplArgsInfo->addArgument(TemplArgLocs[i]);
+    FunctionTemplateSpecializationInfo *FTInfo
+        = FunctionTemplateSpecializationInfo::Create(C, FD, Template, TSK,
+                                                     TemplArgList,
+                                                     TemplArgsInfo, POI);
+    FD->TemplateOrSpecialization = FTInfo;
 
+    if (FD->isCanonicalDecl()) { // if canonical add to template's set.
+      // Get the InsertPos by FindNodeOrInsertPos() instead of calling
+      // InsertNode(FTInfo) directly to avoid the getASTContext() call in
+      // FunctionTemplateSpecializationInfo's Profile().
+      // We avoid getASTContext because a decl in the parent hierarchy may
+      // be initializing.
       llvm::FoldingSetNodeID ID;
       FunctionTemplateSpecializationInfo::Profile(ID, TemplArgs.data(),
                                                   TemplArgs.size(), C);
       void *InsertPos = 0;
-      FunctionTemplateSpecializationInfo *PrevFTInfo =
-          Template->getSpecializations().FindNodeOrInsertPos(ID, InsertPos);
-      (void)PrevFTInfo;
-      assert(!PrevFTInfo && "Another specialization already inserted!");
-      FD->setFunctionTemplateSpecialization(C, Template, TemplArgList, InsertPos,
-                                            TSK, TemplArgsInfo, POI);
+      Template->getSpecializations().FindNodeOrInsertPos(ID, InsertPos);
+      assert(InsertPos && "Another specialization already inserted!");
+      Template->getSpecializations().InsertNode(FTInfo, InsertPos);
     }
     break;
   }
