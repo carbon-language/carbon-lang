@@ -6685,6 +6685,8 @@ ExprResult Sema::BuildBinOp(Scope *S, SourceLocation OpLoc,
                             BinaryOperatorKind Opc,
                             Expr *lhs, Expr *rhs) {
   if (getLangOptions().CPlusPlus &&
+      (!isa<ObjCImplicitSetterGetterRefExpr>(lhs) ||
+       rhs->isTypeDependent()) &&
       (lhs->getType()->isOverloadableType() ||
        rhs->getType()->isOverloadableType())) {
     // Find all of the overloaded operators visible from this
