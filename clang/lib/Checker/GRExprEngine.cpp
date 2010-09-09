@@ -3356,7 +3356,6 @@ void GRExprEngine::VisitBinaryOperator(const BinaryOperator* B,
          I2 != E2; ++I2) {
 
       const GRState *state = GetState(*I2);
-      const GRState *OldSt = state;
       SVal RightV = state->getSVal(RHS);
 
       BinaryOperator::Opcode Op = B->getOpcode();
