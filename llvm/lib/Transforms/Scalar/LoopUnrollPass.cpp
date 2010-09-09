@@ -27,7 +27,7 @@
 using namespace llvm;
 
 static cl::opt<unsigned>
-UnrollThreshold("unroll-threshold", cl::init(200), cl::Hidden,
+UnrollThreshold("unroll-threshold", cl::init(0), cl::Hidden,
   cl::desc("The cut-off point for automatic loop unrolling"));
 
 static cl::opt<unsigned>
@@ -105,7 +105,7 @@ static unsigned ApproximateLoopSize(const Loop *L, unsigned &NumCalls) {
     unsigned SizeDecrease = Metrics.CountCodeReductionForConstant(IndVar);
     // NOTE: Because SizeDecrease is a fuzzy estimate, we don't want to allow
     // it to totally negate the cost of unrolling a loop.
-    SizeDecrease = SizeDecrease > LoopSize / 2 ? LoopSize : SizeDecrease;
+    SizeDecrease = SizeDecrease > LoopSize / 2 ? LoopSize / 2 : SizeDecrease;
   }
   
   // Don't allow an estimate of size zero.  This would allows unrolling of loops
