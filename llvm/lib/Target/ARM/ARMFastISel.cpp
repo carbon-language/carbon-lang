@@ -131,6 +131,7 @@ class ARMFastISel : public FastISel {
     bool ARMComputeRegOffset(const Value *Obj, unsigned &Reg, int &Offset);
     unsigned ARMMaterializeFP(const ConstantFP *CFP, EVT VT);
     unsigned ARMMaterializeInt(const Constant *C);
+    unsigned ARMMoveToFPReg(EVT VT, unsigned SrcReg);
 
     bool DefinesOptionalPredicate(MachineInstr *MI, bool *CPSR);
     const MachineInstrBuilder &AddOptionalDefs(const MachineInstrBuilder &MIB);
@@ -330,6 +331,16 @@ unsigned ARMFastISel::FastEmitInst_extractsubreg(MVT RetVT,
   return ResultReg;
 }
 
+unsigned ARMFastISel::ARMMoveToFPReg(EVT VT, unsigned SrcReg) {
+  // If we have a floating point constant we expect it in a floating point
+  // register.
+  unsigned MoveReg = createResultReg(TLI.getRegClassFor(VT));
+  AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
+                          TII.get(ARM::VMOVRS), MoveReg)
+                  .addReg(SrcReg));
+  return MoveReg;
+}
+
 // For double width floating point we need to materialize two constants
 // (the high and the low) into integer registers then use a move to get
 // the combined constant into an FP reg.
@@ -356,11 +367,7 @@ unsigned ARMFastISel::ARMMaterializeFP(const ConstantFP *CFP, EVT VT) {
 
   // If we have a floating point constant we expect it in a floating point
   // register.
-  unsigned MoveReg = createResultReg(TLI.getRegClassFor(VT));
-  AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
-                          TII.get(ARM::VMOVRS), MoveReg)
-                  .addReg(DestReg));
-  return MoveReg;
+  return ARMMoveToFPReg(VT, DestReg);
 }
 
 unsigned ARMFastISel::ARMMaterializeInt(const Constant *C) {
