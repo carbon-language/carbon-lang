@@ -1159,6 +1159,24 @@ bool IntExprEvaluator::VisitCallExpr(CallExpr *E) {
 
   case Builtin::BI__builtin_expect:
     return Visit(E->getArg(0));
+      
+  case Builtin::BIstrlen:
+  case Builtin::BI__builtin_strlen:
+    // As an extension, we support strlen() and __builtin_strlen() as constant
+    // expressions when the argument is a string literal.
+    if (StringLiteral *S
+               = dyn_cast<StringLiteral>(E->getArg(0)->IgnoreParenImpCasts())) {
+      // The string literal may have embedded null characters. Find the first
+      // one and truncate there.
+      llvm::StringRef Str = S->getString();
+      llvm::StringRef::size_type Pos = Str.find(0);
+      if (Pos != llvm::StringRef::npos)
+        Str = Str.substr(0, Pos);
+      
+      return Success(Str.size(), E);
+    }
+      
+    return Error(E->getLocStart(), diag::note_invalid_subexpr_in_ice, E);
   }
 }
 

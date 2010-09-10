@@ -50,3 +50,7 @@ int h0 = __builtin_types_compatible_p(int, float);
 //int h2 = __builtin_expect(0, 0);
 extern long int bi0;
 extern __typeof__(__builtin_expect(0, 0)) bi0;
+
+// Strings
+int array1[__builtin_strlen("ab\0cd")];
+int array2[(sizeof(array1)/sizeof(int)) == 2? 1 : -1];
