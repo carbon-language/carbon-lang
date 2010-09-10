@@ -1091,7 +1091,6 @@ ObjectFileMachO::ParseSymtab (bool minimize)
                             }                            
                         }
                     }
-
                     if (add_nlist)
                     {
                         bool symbol_name_is_mangled = false;
@@ -1104,7 +1103,6 @@ ObjectFileMachO::ParseSymtab (bool minimize)
 
                         if (symbol_name)
                             sym[sym_idx].GetMangled().SetValue(symbol_name, symbol_name_is_mangled);
-
                         if (type == eSymbolTypeCode)
                         {
                             // See if we can find a N_FUN entry for any code symbols.
@@ -1147,7 +1145,6 @@ ObjectFileMachO::ParseSymtab (bool minimize)
                                 }
                             }
                         }
-
                         if (symbol_section != NULL)
                             symbol_value -= symbol_section->GetFileAddress();
 
@@ -1165,7 +1162,6 @@ ObjectFileMachO::ParseSymtab (bool minimize)
                     }
 
                 }
-
 
                 // STAB N_GSYM entries end up having a symbol type eSymbolTypeGlobal and when the symbol value
                 // is zero, the address of the global ends up being in a non-STAB entry. Try and fix up all
@@ -1230,11 +1226,7 @@ ObjectFileMachO::ParseSymtab (bool minimize)
                                     {
                                         const uint32_t symbol_index = indirect_symbol_index_data.GetU32 (&symbol_stub_offset);
 
-                                        Symbol *stub_symbol;
-                                        if (minimize)
-                                            stub_symbol = symtab->FindSymbolByID (symbol_index);
-                                        else
-                                            stub_symbol = symtab->SymbolAtIndex (symbol_index);
+                                        Symbol *stub_symbol = symtab->FindSymbolByID (symbol_index);
 
                                         assert (stub_symbol);
                                         if (stub_symbol)
