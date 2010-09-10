@@ -368,9 +368,12 @@ bool llvm::UpgradeIntrinsicFunction(Function *F, Function *&NewFn) {
 bool llvm::UpgradeGlobalVariable(GlobalVariable *GV) {
   const std::string &Name = GV->getName();
 
-  // We are only upgrading one symbol here. If we upgrade more, we will want to
-  // perform some sort of short-circuiting like in the
-  // "UpgradeIntrinsicFunction1" function.
+  // Early exit with simple tests.
+  if (Name.length() != 24 || Name[0] != '.' || Name[1] != 'l' ||
+      Name[3] != 'l' || Name[4] != 'v' || Name[5] != 'm' || Name[6] != '.')
+    return false;
+
+  // We are only upgrading one symbol here.
   if (Name == ".llvm.eh.catch.all.value") {
     GV->setName("llvm.eh.catch.all.value");
     return true;
