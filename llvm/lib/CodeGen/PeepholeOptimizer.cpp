@@ -244,7 +244,7 @@ bool PeepholeOptimizer::OptimizeCmpInstr(MachineInstr *MI,
     return false;
 
   // Attempt to convert the defining instruction to set the "zero" flag.
-  if (TII->ConvertToSetZeroFlag(MI, NextIter)) {
+  if (TII->ConvertToSetZeroFlag(MI, SrcReg, CmpValue, NextIter)) {
     ++NumEliminated;
     return true;
   }

@@ -1381,11 +1381,9 @@ AnalyzeCompare(const MachineInstr *MI, unsigned &SrcReg, int &CmpValue) const {
 /// comparison into one that sets the zero bit in the flags register. Update the
 /// iterator *only* if a transformation took place.
 bool ARMBaseInstrInfo::
-ConvertToSetZeroFlag(MachineInstr *CmpInstr,
+ConvertToSetZeroFlag(MachineInstr *CmpInstr, unsigned SrcReg, int CmpValue,
                      MachineBasicBlock::iterator &MII) const {
-  unsigned SrcReg;
-  int CmpValue;
-  if (!AnalyzeCompare(CmpInstr, SrcReg, CmpValue) || CmpValue != 0)
+  if (CmpValue != 0)
     return false;
 
   MachineRegisterInfo &MRI = CmpInstr->getParent()->getParent()->getRegInfo();

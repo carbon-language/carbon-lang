@@ -589,6 +589,7 @@ public:
   /// the comparison into one that sets the zero bit in the flags
   /// register. Update the iterator *only* if a transformation took place.
   virtual bool ConvertToSetZeroFlag(MachineInstr * /*CmpInstr*/,
+                                    unsigned /*SrcReg*/, int /*CmpValue*/,
                                     MachineBasicBlock::iterator &) const {
     return false;
   }
