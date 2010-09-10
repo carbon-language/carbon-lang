@@ -458,10 +458,10 @@ static inline unsigned getLSMultipleTransferSize(MachineInstr *MI) {
   case ARM::t2STM:
   case ARM::VLDMS:
   case ARM::VSTMS:
-    return (MI->getNumOperands() - 4) * 4;
+    return (MI->getNumOperands() - MI->getDesc().getNumOperands() + 1) * 4;
   case ARM::VLDMD:
   case ARM::VSTMD:
-    return (MI->getNumOperands() - 4) * 8;
+    return (MI->getNumOperands() - MI->getDesc().getNumOperands() + 1) * 8;
   }
 }
 
