@@ -242,14 +242,11 @@ public:
     : Expr(ObjCPropertyRefExprClass, Empty) {}
 
   ObjCPropertyDecl *getProperty() const { return AsProperty; }
-  void setProperty(ObjCPropertyDecl *D) { AsProperty = D; }
 
   const Expr *getBase() const { return cast<Expr>(Base); }
   Expr *getBase() { return cast<Expr>(Base); }
-  void setBase(Expr *base) { Base = base; }
 
   SourceLocation getLocation() const { return IdLoc; }
-  void setLocation(SourceLocation L) { IdLoc = L; }
 
   virtual SourceRange getSourceRange() const {
     return SourceRange(getBase()->getLocStart(), IdLoc);
@@ -263,6 +260,11 @@ public:
   // Iterators
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
+private:
+  friend class ASTStmtReader;
+  void setProperty(ObjCPropertyDecl *D) { AsProperty = D; }
+  void setBase(Expr *base) { Base = base; }
+  void setLocation(SourceLocation L) { IdLoc = L; }
 };
 
 /// ObjCImplicitSetterGetterRefExpr - A dot-syntax expression to access two
