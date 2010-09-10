@@ -373,6 +373,7 @@ static void RegisterInternalChecks(GRExprEngine &Eng) {
   RegisterUndefCapturedBlockVarChecker(Eng);
   RegisterUndefResultChecker(Eng);
   RegisterStackAddrLeakChecker(Eng);
+  RegisterObjCAtSyncChecker(Eng);
 
   // This is not a checker yet.
   RegisterNoReturnFunctionChecker(Eng);

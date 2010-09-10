@@ -18,6 +18,7 @@ add_clang_library(clangChecker
   BugReporterVisitors.cpp
   BuiltinFunctionChecker.cpp
   CFRefCount.cpp
+  CStringChecker.cpp
   CallAndMessageChecker.cpp
   CastSizeChecker.cpp
   CastToStructChecker.cpp
@@ -29,7 +30,6 @@ add_clang_library(clangChecker
   Checker.cpp
   CheckerHelpers.cpp
   CocoaConventions.cpp
-  CStringChecker.cpp
   DereferenceChecker.cpp
   DivZeroChecker.cpp
   Environment.cpp
@@ -54,6 +54,7 @@ add_clang_library(clangChecker
   NSErrorChecker.cpp
   NoReturnFunctionChecker.cpp
   OSAtomicChecker.cpp
+  ObjCAtSyncChecker.cpp
   ObjCUnusedIVarsChecker.cpp
   PathDiagnostic.cpp
   PlistDiagnostics.cpp

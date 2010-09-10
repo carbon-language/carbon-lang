@@ -1094,4 +1094,19 @@ void test_enum_cases_positive(enum Cases C) {
   *p = 0xDEADBEEF; // expected-warning{{Dereference of null pointer}}
 }
 
+// <rdar://problem/6351970> rule request: warn if synchronization mutex can be nil
+void rdar6351970() {
+  id x = 0;
+  @synchronized(x) {} // expected-warning{{Nil value used as mutex for @synchronized() (no synchronization will occur)}}
+}
+
+void rdar6351970_b(id x) {
+  if (!x)
+    @synchronized(x) {} // expected-warning{{Nil value used as mutex for @synchronized() (no synchronization will occur)}}
+}
+
+void rdar6351970_c() {
+  id x;
+  @synchronized(x) {} // expected-warning{{Uninitialized value used as mutex for @synchronized}}
+}
 
