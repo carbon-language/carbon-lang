@@ -45,7 +45,11 @@ using namespace lldb_private;
 //----------------------------------------------------------------------
 // ClangFunction constructor
 //----------------------------------------------------------------------
-ClangFunction::ClangFunction(const char *target_triple, ClangASTContext *ast_context, void *return_qualtype, const Address& functionAddress, const ValueList &arg_value_list) :
+ClangFunction::ClangFunction(const char *target_triple, 
+                             ClangASTContext *ast_context, 
+                             void *return_qualtype, 
+                             const Address& functionAddress, 
+                             const ValueList &arg_value_list) :
     m_target_triple (target_triple),
     m_function_ptr (NULL),
     m_function_addr (functionAddress),
@@ -61,7 +65,10 @@ ClangFunction::ClangFunction(const char *target_triple, ClangASTContext *ast_con
 {
 }
 
-ClangFunction::ClangFunction(const char *target_triple, Function &function, ClangASTContext *ast_context, const ValueList &arg_value_list) :
+ClangFunction::ClangFunction(const char *target_triple, 
+                             Function &function, 
+                             ClangASTContext *ast_context, 
+                             const ValueList &arg_value_list) :
     m_target_triple (target_triple),
     m_function_ptr (&function),
     m_function_addr (),
@@ -245,7 +252,11 @@ ClangFunction::WriteFunctionArguments (ExecutionContext &exe_ctx, lldb::addr_t &
 // FIXME: Assure that the ValueList we were passed in is consistent with the one that defined this function.
 
 bool
-ClangFunction::WriteFunctionArguments (ExecutionContext &exe_ctx, lldb::addr_t &args_addr_ref, Address function_address, ValueList &arg_values, Stream &errors)
+ClangFunction::WriteFunctionArguments (ExecutionContext &exe_ctx, 
+                                       lldb::addr_t &args_addr_ref, 
+                                       Address function_address, 
+                                       ValueList &arg_values, 
+                                       Stream &errors)
 {
     // All the information to reconstruct the struct is provided by the
     // StructExtractor.
@@ -448,8 +459,25 @@ ClangFunction::ExecuteFunction (
         Stream &errors)
 {
     // Save this value for restoration of the execution context after we run
-    uint32_t tid = exe_ctx.thread->GetID();
+    uint32_t tid = exe_ctx.thread->GetIndexID();
     
+    // N.B. Running the target may unset the currently selected thread and frame.  We don't want to do that either, 
+    // so we should arrange to reset them as well.
+    
+    lldb::ThreadSP selected_thread_sp = exe_ctx.process->GetThreadList().GetSelectedThread();
+    lldb::StackFrameSP selected_frame_sp;
+    
+    uint32_t selected_tid; 
+    if (selected_thread_sp != NULL)
+    {
+        selected_tid = selected_thread_sp->GetIndexID();
+        selected_frame_sp = selected_thread_sp->GetSelectedFrame();
+    }
+    else
+    {
+        selected_tid = LLDB_INVALID_THREAD_ID;
+    }
+
     ClangFunction::ExecutionResults return_value = eExecutionSetupError;
     
     lldb::ThreadPlanSP call_plan_sp(ClangFunction::GetThreadPlanToCallFunction(exe_ctx, function_address, void_arg, errors, stop_others, false));
@@ -496,7 +524,6 @@ ClangFunction::ExecuteFunction (
         lldb::EventSP event_sp;
         
         // Now wait for the process to stop again:
-        // FIXME: Probably want a time out.
         lldb::StateType stop_state =  exe_ctx.process->WaitForStateChangedEvents (timeout_ptr, event_sp);
         
         if (stop_state == lldb::eStateInvalid && timeout_ptr != NULL)
@@ -505,7 +532,10 @@ ClangFunction::ExecuteFunction (
             // We should interrupt the process here...
             // Not really sure what to do if Halt fails here...
             if (log)
-                log->Printf ("Running function with timeout: %d timed out, trying with all threads enabled.", single_thread_timeout_usec);
+                if (try_all_threads)
+                    log->Printf ("Running function with timeout: %d timed out, trying with all threads enabled.", single_thread_timeout_usec);
+                else
+                    log->Printf ("Running function with timeout: %d timed out, abandoning execution.", single_thread_timeout_usec);
             
             if (exe_ctx.process->Halt().Success())
             {
@@ -633,8 +663,20 @@ ClangFunction::ExecuteFunction (
     
     // Thread we ran the function in may have gone away because we ran the target
     // Check that it's still there.
-    exe_ctx.thread = exe_ctx.process->GetThreadList().FindThreadByID(tid, true).get();
+    exe_ctx.thread = exe_ctx.process->GetThreadList().FindThreadByIndexID(tid, true).get();
     exe_ctx.frame = exe_ctx.thread->GetStackFrameAtIndex(0).get();
+    
+    // Also restore the current process'es selected frame & thread, since this function calling may
+    // be done behind the user's back.
+    
+    if (selected_tid != LLDB_INVALID_THREAD_ID)
+    {
+        if (exe_ctx.process->GetThreadList().SetSelectedThreadByIndexID (selected_tid))
+        {
+            // We were able to restore the selected thread, now restore the frame:
+            exe_ctx.process->GetThreadList().GetSelectedThread()->SetSelectedFrame(selected_frame_sp.get());
+        }
+    }
     
     return return_value;
 }  
@@ -668,7 +710,8 @@ ClangFunction::ExecuteFunction(
             return eExecutionSetupError;
     }
     
-    return_value = ClangFunction::ExecuteFunction(exe_ctx, m_wrapper_function_addr, args_addr, stop_others, try_all_threads, single_thread_timeout_usec, errors);
+    return_value = ClangFunction::ExecuteFunction(exe_ctx, m_wrapper_function_addr, args_addr, stop_others, 
+                                                  try_all_threads, single_thread_timeout_usec, errors);
 
     if (args_addr_ptr != NULL)
         *args_addr_ptr = args_addr;
