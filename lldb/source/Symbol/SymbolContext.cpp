@@ -156,9 +156,12 @@ SymbolContext::DumpStopContext
                 return;
             }
         }
-        const addr_t function_offset = addr.GetOffset() - function->GetAddressRange().GetBaseAddress().GetOffset();
-        if (function_offset)
-            s->Printf(" + %llu", function_offset);
+        if (addr.IsValid())
+        {
+            const addr_t function_offset = addr.GetOffset() - function->GetAddressRange().GetBaseAddress().GetOffset();
+            if (function_offset)
+                s->Printf(" + %llu", function_offset);
+        }
 
         if (block != NULL)
         {
@@ -180,14 +183,14 @@ SymbolContext::DumpStopContext
     {
         symbol->GetMangled().GetName().Dump(s);
 
-        if (symbol->GetAddressRangePtr())
+        if (addr.IsValid() && symbol->GetAddressRangePtr())
         {
             const addr_t symbol_offset = addr.GetOffset() - symbol->GetAddressRangePtr()->GetBaseAddress().GetOffset();
             if (symbol_offset)
                 s->Printf(" + %llu", symbol_offset);
         }
     }
-    else
+    else if (addr.IsValid())
     {
         addr.Dump(s, exe_scope, Address::DumpStyleModuleWithFileAddress);
     }
