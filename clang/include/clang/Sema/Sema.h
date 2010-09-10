@@ -2166,10 +2166,10 @@ public:
                             SourceLocation RParenLoc);
 
   /// ActOnCXXUuidof - Parse __uuidof( something ).
-  virtual ExprResult ActOnCXXUuidof(SourceLocation OpLoc,
-                                    SourceLocation LParenLoc, bool isType,
-                                    void *TyOrExpr,
-                                    SourceLocation RParenLoc);
+  ExprResult ActOnCXXUuidof(SourceLocation OpLoc,
+                            SourceLocation LParenLoc, bool isType,
+                            void *TyOrExpr,
+                            SourceLocation RParenLoc);
 
 
   //// ActOnCXXThis -  Parse 'this' pointer.
