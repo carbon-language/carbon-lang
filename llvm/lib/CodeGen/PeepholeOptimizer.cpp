@@ -76,7 +76,8 @@ namespace {
     }
 
   private:
-    bool OptimizeCmpInstr(MachineInstr *MI, MachineBasicBlock *MBB);
+    bool OptimizeCmpInstr(MachineInstr *MI, MachineBasicBlock *MBB,
+                          MachineBasicBlock::iterator &MII);
     bool OptimizeExtInstr(MachineInstr *MI, MachineBasicBlock *MBB,
                           SmallPtrSet<MachineInstr*, 8> &LocalMIs);
   };
@@ -232,7 +233,8 @@ OptimizeExtInstr(MachineInstr *MI, MachineBasicBlock *MBB,
 /// set) the same flag as the compare, then we can remove the comparison and use
 /// the flag from the previous instruction.
 bool PeepholeOptimizer::OptimizeCmpInstr(MachineInstr *MI,
-                                         MachineBasicBlock *MBB) {
+                                         MachineBasicBlock *MBB,
+                                         MachineBasicBlock::iterator &NextIter){
   // If this instruction is a comparison against zero and isn't comparing a
   // physical register, we can try to optimize it.
   unsigned SrcReg;
@@ -247,7 +249,7 @@ bool PeepholeOptimizer::OptimizeCmpInstr(MachineInstr *MI,
     return false;
 
   // Attempt to convert the defining instruction to set the "zero" flag.
-  if (TII->ConvertToSetZeroFlag(&*DI, MI)) {
+  if (TII->ConvertToSetZeroFlag(&*DI, MI, NextIter)) {
     ++NumEliminated;
     return true;
   }
@@ -269,12 +271,14 @@ bool PeepholeOptimizer::runOnMachineFunction(MachineFunction &MF) {
     LocalMIs.clear();
 
     for (MachineBasicBlock::iterator
-           MII = I->begin(), ME = I->end(); MII != ME; ) {
+           MII = I->begin(), MIE = I->end(); MII != MIE; ) {
       MachineInstr *MI = &*MII;
 
       if (MI->getDesc().isCompare()) {
-        ++MII; // The iterator may become invalid if the compare is deleted.
-        Changed |= OptimizeCmpInstr(MI, MBB);
+        if (OptimizeCmpInstr(MI, MBB, MII))
+          Changed = true;
+        else
+          ++MII;
       } else {
         Changed |= OptimizeExtInstr(MI, MBB, LocalMIs);
         ++MII;

@@ -586,9 +586,11 @@ public:
   }
 
   /// ConvertToSetZeroFlag - Convert the instruction to set the zero flag so
-  /// that we can remove a "comparison with zero".
-  virtual bool ConvertToSetZeroFlag(MachineInstr *Instr,
-                                    MachineInstr *CmpInstr) const {
+  /// that we can remove a "comparison with zero".  Update the iterator *only*
+  /// if a transformation took place.
+  virtual bool ConvertToSetZeroFlag(MachineInstr * /*Instr*/,
+                                    MachineInstr * /*CmpInstr*/,
+                                    MachineBasicBlock::iterator &) const {
     return false;
   }
 

@@ -1378,9 +1378,11 @@ AnalyzeCompare(const MachineInstr *MI, unsigned &SrcReg, int &CmpValue) const {
 }
 
 /// ConvertToSetZeroFlag - Convert the instruction to set the "zero" flag so
-/// that we can remove a "comparison with zero".
+/// that we can remove a "comparison with zero". Update the iterator *only* if a
+/// transformation took place.
 bool ARMBaseInstrInfo::
-ConvertToSetZeroFlag(MachineInstr *MI, MachineInstr *CmpInstr) const {
+ConvertToSetZeroFlag(MachineInstr *MI, MachineInstr *CmpInstr,
+                     MachineBasicBlock::iterator &MII) const {
   // Conservatively refuse to convert an instruction which isn't in the same BB
   // as the comparison.
   if (MI->getParent() != CmpInstr->getParent())
@@ -1414,6 +1416,7 @@ ConvertToSetZeroFlag(MachineInstr *MI, MachineInstr *CmpInstr) const {
     MI->RemoveOperand(5);
     MachineInstrBuilder(MI)
       .addReg(ARM::CPSR, RegState::Define | RegState::Implicit);
+    MII = llvm::next(MachineBasicBlock::iterator(CmpInstr));
     CmpInstr->eraseFromParent();
     return true;
   }

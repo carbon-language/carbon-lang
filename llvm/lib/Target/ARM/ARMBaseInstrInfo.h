@@ -347,7 +347,8 @@ public:
   /// ConvertToSetZeroFlag - Convert the instruction to set the zero flag so
   /// that we can remove a "comparison with zero".
   virtual bool ConvertToSetZeroFlag(MachineInstr *Instr,
-                                    MachineInstr *CmpInstr) const;
+                                    MachineInstr *CmpInstr,
+                                    MachineBasicBlock::iterator &MII) const;
 
   virtual unsigned getNumMicroOps(const MachineInstr *MI,
                                   const InstrItineraryData *ItinData) const;
