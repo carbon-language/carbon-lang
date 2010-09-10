@@ -106,6 +106,16 @@ Value *llvm::SimplifyAndInst(Value *Op0, Value *Op1, const TargetData *TD) {
       (A == Op0 || B == Op0))
     return Op0;
   
+  // (A & B) & A -> A & B
+  if (match(Op0, m_And(m_Value(A), m_Value(B))) &&
+      (A == Op1 || B == Op1))
+    return Op0;
+
+  // A & (A & B) -> A & B
+  if (match(Op1, m_And(m_Value(A), m_Value(B))) &&
+      (A == Op0 || B == Op0))
+    return Op1;
+
   return 0;
 }
 
@@ -165,6 +175,16 @@ Value *llvm::SimplifyOrInst(Value *Op0, Value *Op1, const TargetData *TD) {
       (A == Op0 || B == Op0))
     return Op0;
   
+  // (A | B) | A -> A | B
+  if (match(Op0, m_Or(m_Value(A), m_Value(B))) &&
+      (A == Op1 || B == Op1))
+    return Op0;
+
+  // A | (A | B) -> A | B
+  if (match(Op1, m_Or(m_Value(A), m_Value(B))) &&
+      (A == Op0 || B == Op0))
+    return Op1;
+
   return 0;
 }
 

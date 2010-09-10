@@ -8,3 +8,21 @@ define i1 @test1(double %X, double %Y) {
         ret i1 %bothcond
 ; CHECK:  fcmp ord double %Y, %X
 }
+
+define i1 @test2(i1 %X, i1 %Y) {
+  %a = and i1 %X, %Y
+  %b = and i1 %a, %X
+  ret i1 %b
+; CHECK: @test2
+; CHECK-NEXT: and i1 %X, %Y
+; CHECK-NEXT: ret
+}
+
+define i32 @test3(i32 %X, i32 %Y) {
+  %a = and i32 %X, %Y
+  %b = and i32 %Y, %a
+  ret i32 %b
+; CHECK: @test3
+; CHECK-NEXT: and i32 %X, %Y
+; CHECK-NEXT: ret
+}

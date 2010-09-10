@@ -350,3 +350,20 @@ define <4 x i32> @test32(<4 x i1> %and.i1352, <4 x i32> %vecinit6.i176, <4 x i32
 ; CHECK: or <4 x i32> %and.i, %and.i129
 }
 
+define i1 @test33(i1 %X, i1 %Y) {
+  %a = or i1 %X, %Y
+  %b = or i1 %a, %X
+  ret i1 %b
+; CHECK: @test33
+; CHECK-NEXT: or i1 %X, %Y
+; CHECK-NEXT: ret
+}
+
+define i32 @test34(i32 %X, i32 %Y) {
+  %a = or i32 %X, %Y
+  %b = or i32 %Y, %a
+  ret i32 %b
+; CHECK: @test34
+; CHECK-NEXT: or i32 %X, %Y
+; CHECK-NEXT: ret
+}
