@@ -17,6 +17,16 @@ then
 	CXX=g++
 fi
 
+if [ -z $MACOSX_DEPLOYMENT_TARGET ]
+then
+  MACOSX_DEPLOYMENT_TARGET=10.6
+fi
+
+if [ -z $RC_ProjectSourceVersion ]
+then
+  RC_ProjectSourceVersion=1
+fi
+
 case $TRIPLE in
   *-apple-*)
     if [ -z $RC_BUILDIT ]
@@ -24,12 +34,28 @@ case $TRIPLE in
       RC_CFLAGS="-arch i386 -arch x86_64"
     fi
     SOEXT=dylib
-    LDSHARED_FLAGS="-o libc++.1.dylib \
-        -dynamiclib -nodefaultlibs -current_version 1 \
-        -compatibility_version 1 \
-        -install_name /usr/lib/libc++.dylib \
-        -Wl,-reexport_library,/usr/lib/libc++abi.dylib \
-        /usr/lib/libSystem.B.dylib"
+	if [ "$MACOSX_DEPLOYMENT_TARGET" == "10.6" ]
+	then
+		LDSHARED_FLAGS="-o libc++.1.dylib \
+			-dynamiclib -nodefaultlibs -current_version 1 \
+			-compatibility_version 1 \
+			-install_name /usr/lib/libc++.dylib \
+			-Wl,-reexport_library,/usr/lib/libc++abi.dylib \
+			/usr/lib/libSystem.B.dylib"
+	else
+		LDSHARED_FLAGS="-o libc++.1.dylib \
+			-dynamiclib -nodefaultlibs  \
+			-current_version ${RC_ProjectSourceVersion} -compatibility_version 1 \
+			-install_name /usr/lib/libc++.dylib \
+			${SDKROOT}/usr/lib/libc++abi.dylib \
+			-lSystem  \
+			-Xarch_x86_64 -exported_symbols_list \
+			-Xarch_x86_64 x86_64.exp \
+			-Xarch_i386 -exported_symbols_list \
+			-Xarch_i386 i386.exp \
+			-exported_symbols_list libc++abi.exp \
+			-Wl,-force_symbols_not_weak_list,notweak.exp"
+	fi
     ;;
   *)
     RC_CFLAGS="-fPIC"
@@ -51,7 +77,8 @@ for FILE in ../src/*.cpp; do
 	$CXX -c -g -Os $RC_CFLAGS -nostdinc++ -I../include $FILE
 done
 
-$CXX *.o $RC_CFLAGS $LDSHARED_FLAGS
+
+$CXX *.o $RC_CFLAGS $LDSHARED_FLAGS 
 
 #libtool -static -o libc++.a *.o
 

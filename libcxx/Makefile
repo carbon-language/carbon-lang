@@ -12,7 +12,7 @@ export TRIPLE=-apple-
 installsrc:: $(SRCROOT)
 
 	ditto $(SRCDIRS)/include $(SRCROOT)/include
-	ditto $(SRCDIRS)/lib/buildit $(SRCROOT)/lib/buildit
+	ditto $(SRCDIRS)/lib $(SRCROOT)/lib
 	ditto $(SRCDIRS)/src $(SRCROOT)/src
 	ditto $(SRCDIRS)/Makefile $(SRCROOT)/Makefile
 
