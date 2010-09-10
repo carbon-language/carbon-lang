@@ -3116,11 +3116,6 @@ CXXMemberCallExpr *Sema::BuildCXXMemberCallExpr(Expr *Exp,
 
 ExprResult Sema::BuildCXXNoexceptExpr(SourceLocation KeyLoc, Expr *Operand,
                                       SourceLocation RParen) {
-  // C++ [expr.unary.noexcept]p1:
-  //   The noexcept operator determines whether the evaluation of its operand,
-  //   which is an unevaluated operand, can throw an exception.
-  ExprEvalContexts.back().Context = Unevaluated;
-
   return Owned(new (Context) CXXNoexceptExpr(Context.BoolTy, Operand,
                                              Operand->CanThrow(Context),
                                              KeyLoc, RParen));

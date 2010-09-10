@@ -898,6 +898,10 @@ ExprResult Parser::ParseCastExpression(bool isUnaryExpression,
     if (ExpectAndConsume(tok::l_paren,
                          diag::err_expected_lparen_after, "noexcept"))
       return ExprError();
+    // C++ [expr.unary.noexcept]p1:
+    //   The noexcept operator determines whether the evaluation of its operand,
+    //   which is an unevaluated operand, can throw an exception.
+    EnterExpressionEvaluationContext Unevaluated(Actions, Sema::Unevaluated);
     ExprResult Result = ParseExpression();
     SourceLocation RParen = MatchRHSPunctuation(tok::r_paren, LParen);
     if (!Result.isInvalid())
