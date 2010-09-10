@@ -19,7 +19,6 @@ include $(LEVEL)/Makefile.config
 
 LINK_LIBS_IN_SHARED=1
 SHARED_LIBRARY = 1
-BUILD_ARCHIVE = 0
 LOADABLE_MODULE = 1
 
 LINK_COMPONENTS := support system
