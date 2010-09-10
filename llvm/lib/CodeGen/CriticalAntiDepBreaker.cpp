@@ -177,7 +177,7 @@ void CriticalAntiDepBreaker::PrescanInstruction(MachineInstr *MI) {
   // that have special allocation requirements. Also assume all registers
   // used in a call must not be changed (ABI).
   // FIXME: The issue with predicated instruction is more complex. We are being
-  // conservatively here because the kill markers cannot be trusted after
+  // conservative here because the kill markers cannot be trusted after
   // if-conversion:
   // %R6<def> = LDR %SP, %reg0, 92, pred:14, pred:%reg0; mem:LD4[FixedStack14]
   // ...
