@@ -958,6 +958,8 @@ public:
   bool VisitUnaryReal(const UnaryOperator *E);
   bool VisitUnaryImag(const UnaryOperator *E);
 
+  bool VisitCXXNoexceptExpr(const CXXNoexceptExpr *E);
+
 private:
   CharUnits GetAlignOfExpr(const Expr *E);
   CharUnits GetAlignOfType(QualType T);
@@ -1738,6 +1740,10 @@ bool IntExprEvaluator::VisitUnaryImag(const UnaryOperator *E) {
   if (!E->getSubExpr()->isEvaluatable(Info.Ctx))
     Info.EvalResult.HasSideEffects = true;
   return Success(0, E);
+}
+
+bool IntExprEvaluator::VisitCXXNoexceptExpr(const CXXNoexceptExpr *E) {
+  return Success(E->getValue(), E);
 }
 
 //===----------------------------------------------------------------------===//

@@ -1369,6 +1369,9 @@ static Expr::CanThrowResult CanDynamicCastThrow(const CXXDynamicCastExpr *DC) {
   if (DC->isTypeDependent())
     return Expr::CT_Dependent;
 
+  if (!DC->getTypeAsWritten()->isReferenceType())
+    return Expr::CT_Cannot;
+
   return DC->getCastKind() == clang::CK_Dynamic? Expr::CT_Can : Expr::CT_Cannot;
 }
 
@@ -1429,7 +1432,8 @@ Expr::CanThrowResult Expr::CanThrow(ASTContext &C) const {
     return MergeCanThrow(CT, CanSubExprsThrow(C, this));
   }
 
-  case CXXConstructExprClass: {
+  case CXXConstructExprClass:
+  case CXXTemporaryObjectExprClass: {
     CanThrowResult CT = CanCalleeThrow(
         cast<CXXConstructExpr>(this)->getConstructor());
     if (CT == CT_Can)
@@ -1479,7 +1483,6 @@ Expr::CanThrowResult Expr::CanThrow(ASTContext &C) const {
   case CXXDefaultArgExprClass:
   case CXXBindTemporaryExprClass:
   case CXXExprWithTemporariesClass:
-  case CXXTemporaryObjectExprClass:
   case ObjCIvarRefExprClass:
   case ObjCIsaExprClass:
   case ShuffleVectorExprClass:
