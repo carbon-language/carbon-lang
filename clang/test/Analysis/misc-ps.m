@@ -1110,3 +1110,22 @@ void rdar6351970_c() {
   @synchronized(x) {} // expected-warning{{Uninitialized value used as mutex for @synchronized}}
 }
 
+// <rdar://problem/6352035> rule request: direct structure member access null pointer dereference
+@interface RDar6352035 {
+  int c;
+}
+- (void)foo;
+- (void)bar;
+@end
+
+@implementation RDar6352035
+- (void)foo {
+  RDar6352035 *friend = 0;
+  friend->c = 7; // expected-warning{{Instance variable access (via 'friend') results in a null pointer dereference}}
+}
+- (void)bar {
+  self = 0;
+  c = 7; // expected-warning{{Instance variable access (via 'self') results in a null pointer dereference}}
+}
+@end
+

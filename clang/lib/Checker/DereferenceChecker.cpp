@@ -123,6 +123,19 @@ void DereferenceChecker::VisitLocation(CheckerContext &C, const Stmt *S,
             }
           break;
         }
+        case Stmt::ObjCIvarRefExprClass: {
+          const ObjCIvarRefExpr *IV = cast<ObjCIvarRefExpr>(S);
+          if (const DeclRefExpr *DR =
+              dyn_cast<DeclRefExpr>(IV->getBase()->IgnoreParenCasts())) {
+            if (const VarDecl *VD = dyn_cast<VarDecl>(DR->getDecl())) {
+              llvm::raw_svector_ostream os(buf);
+              os << "Instance variable access (via '" << VD->getName()
+                 << "') results in a null pointer dereference";
+            }
+          }
+          Ranges.push_back(IV->getSourceRange());
+          break;
+        }
         default:
           break;
       }
