@@ -1457,9 +1457,30 @@ Expr::CanThrowResult Expr::CanThrow(ASTContext &C) const {
   }
 
   case CXXDeleteExprClass: {
-    // FIXME: check if destructor might throw
     CanThrowResult CT = CanCalleeThrow(
         cast<CXXDeleteExpr>(this)->getOperatorDelete());
+    if (CT == CT_Can)
+      return CT;
+    const Expr *Arg = cast<CXXDeleteExpr>(this)->getArgument();
+    // Unwrap exactly one implicit cast, which converts all pointers to void*.
+    if (const ImplicitCastExpr *Cast = dyn_cast<ImplicitCastExpr>(Arg))
+      Arg = Cast->getSubExpr();
+    if (const PointerType *PT = Arg->getType()->getAs<PointerType>()) {
+      if (const RecordType *RT = PT->getPointeeType()->getAs<RecordType>()) {
+        CanThrowResult CT2 = CanCalleeThrow(
+            cast<CXXRecordDecl>(RT->getDecl())->getDestructor());
+        if (CT2 == CT_Can)
+          return CT2;
+        CT = MergeCanThrow(CT, CT2);
+      }
+    }
+    return MergeCanThrow(CT, CanSubExprsThrow(C, this));
+  }
+
+  case CXXBindTemporaryExprClass: {
+    // The bound temporary has to be destroyed again, which might throw.
+    CanThrowResult CT = CanCalleeThrow(
+      cast<CXXBindTemporaryExpr>(this)->getTemporary()->getDestructor());
     if (CT == CT_Can)
       return CT;
     return MergeCanThrow(CT, CanSubExprsThrow(C, this));
@@ -1486,8 +1507,7 @@ Expr::CanThrowResult Expr::CanThrow(ASTContext &C) const {
   case ParenListExprClass:
   case VAArgExprClass:
   case CXXDefaultArgExprClass:
-  case CXXBindTemporaryExprClass:
-  case CXXExprWithTemporariesClass: // FIXME: this thing calls destructors
+  case CXXExprWithTemporariesClass:
   case ObjCIvarRefExprClass:
   case ObjCIsaExprClass:
   case ShuffleVectorExprClass:

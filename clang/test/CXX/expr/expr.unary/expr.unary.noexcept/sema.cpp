@@ -86,9 +86,19 @@ struct S2 {
 
 void *operator new(__typeof__(sizeof(int)) sz, int) throw();
 
+struct Bad1 {
+  ~Bad1() throw(int);
+};
+struct Bad2 {
+  void operator delete(void*) throw(int);
+};
+
 void implicits() {
   N(new int);
   P(new (0) int);
+  P(delete (int*)0);
+  N(delete (Bad1*)0);
+  N(delete (Bad2*)0);
   N(S2());
   P(S2(0, 0));
   S2 s;
@@ -98,7 +108,7 @@ void implicits() {
   P(s - 0);
   N(static_cast<int>(s));
   P(static_cast<float>(s));
-  // FIXME: test destructors of temporaries
+  N(Bad1());
 }
 
 struct V {
