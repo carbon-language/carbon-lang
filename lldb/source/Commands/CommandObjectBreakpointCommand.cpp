@@ -162,6 +162,22 @@ Enter your Python command(s). Type 'DONE' to end. \n\
 > print \"Hit this breakpoint!\" \n\
 > DONE \n\
  \n\
+As a convenience, this also works for a short Python one-liner: \n\
+(lldb) breakpoint command add -p 1 \"import time; print time.asctime()\" \n\
+(lldb) run \n\
+Launching '.../a.out'  (x86_64) \n\
+(lldb) Fri Sep 10 12:17:45 2010 \n\
+Process 21778 Stopped \n\
+* thread #1: tid = 0x2e03, 0x0000000100000de8 a.out`c + 7 at main.c:39, stop reason = breakpoint 1.1, queue = com.apple.main-thread \n\
+  36   	\n\
+  37   	int c(int val)\n\
+  38   	{\n\
+  39 ->	    return val + 3;\n\
+  40   	}\n\
+  41   	\n\
+  42   	int main (int argc, char const *argv[])\n\
+(lldb) \n\
+ \n\
 Example multiple line Python breakpoint command, using function definition: \n\
  \n\
 (lldb) breakpoint command add -p 1 \n\
