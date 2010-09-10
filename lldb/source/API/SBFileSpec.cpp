@@ -61,6 +61,13 @@ SBFileSpec::Exists () const
     return false;
 }
 
+bool
+SBFileSpec::ResolveExecutableLocation ()
+{
+    if (m_opaque_ap.get())
+        return m_opaque_ap->ResolveExecutableLocation ();
+    return false;
+}
 
 int
 SBFileSpec::ResolvePath (const char *src_path, char *dst_path, size_t dst_len)

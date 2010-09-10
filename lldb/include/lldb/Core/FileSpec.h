@@ -261,6 +261,21 @@ public:
     bool
     Exists () const;
 
+     
+    //------------------------------------------------------------------
+    /// Expanded existence test.
+    ///
+    /// Call into the Host to see if it can help find the file (e.g. by
+    /// searching paths set in the environment, etc.).
+    ///
+    /// If found, sets the value of m_directory to the directory where the file was found.
+    ///
+    /// @return
+    ///     \b true if was able to find the file using expanded search methods, \b false otherwise.
+    //------------------------------------------------------------------
+    bool
+    ResolveExecutableLocation ();
+
     uint64_t
     GetByteSize() const;
 

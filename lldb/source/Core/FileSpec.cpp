@@ -22,6 +22,7 @@
 #include "lldb/Core/DataBufferHeap.h"
 #include "lldb/Core/DataBufferMemoryMap.h"
 #include "lldb/Core/Stream.h"
+#include "lldb/Host/Host.h"
 
 using namespace lldb;
 using namespace lldb_private;
@@ -412,6 +413,12 @@ FileSpec::Exists () const
 {
     struct stat file_stats;
     return GetFileStats (this, &file_stats);
+}
+
+bool
+FileSpec::ResolveExecutableLocation ()
+{
+    return Host::ResolveExecutableLocation (m_directory, m_filename);
 }
 
 uint64_t

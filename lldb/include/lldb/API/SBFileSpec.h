@@ -36,6 +36,9 @@ public:
     bool
     Exists () const;
 
+    bool
+    ResolveExecutableLocation ();
+
     const char *
     GetFilename() const;
 

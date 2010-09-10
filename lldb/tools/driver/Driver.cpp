@@ -527,6 +527,13 @@ Driver::ParseArgs (int argc, const char *argv[], FILE *out_fh, bool &exit)
                             SBFileSpec file(optarg);
                             if (file.Exists())
                                 m_option_data.m_filename = optarg;
+                            else if (file.ResolveExecutableLocation())
+                            {
+                                char path[PATH_MAX];
+                                int path_len;
+                                file.GetPath (path, path_len);
+                                m_option_data.m_filename = path;
+                            }
                             else
                                 error.SetErrorStringWithFormat("file specified in --file (-f) option doesn't exist: '%s'", optarg);
                         }
@@ -550,6 +557,14 @@ Driver::ParseArgs (int argc, const char *argv[], FILE *out_fh, bool &exit)
                             SBFileSpec file(optarg);
                             if (file.Exists())
                                 m_option_data.m_source_command_files.push_back (optarg);
+                            else if (file.ResolveExecutableLocation())
+                            {
+                                char final_path[PATH_MAX];
+                                size_t path_len;
+                                file.GetPath (final_path, path_len);
+                                std::string path_str (final_path);
+                                m_option_data.m_source_command_files.push_back (path_str);
+                            }
                             else
                                 error.SetErrorStringWithFormat("file specified in --source (-s) option doesn't exist: '%s'", optarg);
                         }

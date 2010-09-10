@@ -71,6 +71,10 @@ TargetList::CreateTarget
     {
         ModuleSP exe_module_sp;
         FileSpec resolved_file(file);
+        
+        if (!resolved_file.Exists())
+            resolved_file.ResolveExecutableLocation ();
+            
         if (!Host::ResolveExecutableInBundle (&resolved_file))
             resolved_file = file;
 

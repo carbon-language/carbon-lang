@@ -117,7 +117,7 @@ CommandObjectFile::Execute
     {
         FileSpec file_spec (file_path);
 
-        if (! file_spec.Exists())
+        if (! file_spec.Exists() && !file_spec.ResolveExecutableLocation())
         {
             result.AppendErrorWithFormat ("File '%s' does not exist.\n", file_path);
             result.SetStatus (eReturnStatusFailed);
