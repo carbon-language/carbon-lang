@@ -17,6 +17,12 @@ else
   endif
 endif
 
+# We don't currently expect production Clang builds to be interested in
+# plugins. This is important for startup performance.
+ifdef CLANG_IS_PRODUCTION
+TOOL_NO_EXPORTS := 1
+endif
+
 # Include tool version information on OS X.
 TOOL_INFO_PLIST := Info.plist
 
