@@ -359,7 +359,7 @@ public:
   // Statement visitors
   bool VisitStmt(Stmt *S);
   bool VisitDeclStmt(DeclStmt *S);
-  // FIXME: LabelStmt label?
+  bool VisitGotoStmt(GotoStmt *S);
   bool VisitIfStmt(IfStmt *S);
   bool VisitSwitchStmt(SwitchStmt *S);
   bool VisitCaseStmt(CaseStmt *S);
@@ -377,7 +377,7 @@ public:
   bool VisitOffsetOfExpr(OffsetOfExpr *E);
   bool VisitSizeOfAlignOfExpr(SizeOfAlignOfExpr *E);
   bool VisitMemberExpr(MemberExpr *E);
-  // FIXME: AddrLabelExpr (once we have cursors for labels)
+  bool VisitAddrLabelExpr(AddrLabelExpr *E);
   bool VisitTypesCompatibleExpr(TypesCompatibleExpr *E);
   bool VisitVAArgExpr(VAArgExpr *E);
   bool VisitInitListExpr(InitListExpr *E);
@@ -1438,6 +1438,10 @@ bool CursorVisitor::VisitDeclStmt(DeclStmt *S) {
   return false;
 }
 
+bool CursorVisitor::VisitGotoStmt(GotoStmt *S) {
+  return Visit(MakeCursorLabelRef(S->getLabel(), S->getLabelLoc(), TU));
+}
+
 bool CursorVisitor::VisitIfStmt(IfStmt *S) {
   if (VarDecl *Var = S->getConditionVariable()) {
     if (Visit(MakeCXCursor(Var, TU)))
@@ -1638,6 +1642,10 @@ bool CursorVisitor::VisitCompoundLiteralExpr(CompoundLiteralExpr *E) {
       return true;
 
   return VisitExpr(E);
+}
+
+bool CursorVisitor::VisitAddrLabelExpr(AddrLabelExpr *E) {
+  return Visit(MakeCursorLabelRef(E->getLabel(), E->getLabelLoc(), TU));
 }
 
 bool CursorVisitor::VisitTypesCompatibleExpr(TypesCompatibleExpr *E) {
@@ -2603,6 +2611,13 @@ CXString clang_getCursorSpelling(CXCursor C) {
       return createCXString(Field->getNameAsString());
     }
 
+    case CXCursor_LabelRef: {
+      LabelStmt *Label = getCursorLabelRef(C).first;
+      assert(Label && "Missing label");
+      
+      return createCXString(Label->getID()->getName());
+    }
+
     default:
       return createCXString("<not implemented>");
     }
@@ -2615,6 +2630,14 @@ CXString clang_getCursorSpelling(CXCursor C) {
     return createCXString("");
   }
 
+  if (clang_isStatement(C.kind)) {
+    Stmt *S = getCursorStmt(C);
+    if (LabelStmt *Label = dyn_cast_or_null<LabelStmt>(S))
+      return createCXString(Label->getID()->getName());
+
+    return createCXString("");
+  }
+  
   if (C.kind == CXCursor_MacroInstantiation)
     return createCXString(getCursorMacroInstantiation(C)->getName()
                                                            ->getNameStart());
@@ -2687,6 +2710,8 @@ CXString clang_getCursorKindSpelling(enum CXCursorKind Kind) {
     return createCXString("NamespaceRef");
   case CXCursor_MemberRef:
     return createCXString("MemberRef");
+  case CXCursor_LabelRef:
+    return createCXString("LabelRef");
   case CXCursor_UnexposedExpr:
       return createCXString("UnexposedExpr");
   case CXCursor_BlockExpr:
@@ -2701,6 +2726,8 @@ CXString clang_getCursorKindSpelling(enum CXCursorKind Kind) {
       return createCXString("ObjCMessageExpr");
   case CXCursor_UnexposedStmt:
       return createCXString("UnexposedStmt");
+  case CXCursor_LabelStmt:
+      return createCXString("LabelStmt");
   case CXCursor_InvalidFile:
       return createCXString("InvalidFile");
   case CXCursor_InvalidCode:
@@ -2899,6 +2926,11 @@ CXSourceLocation clang_getCursorLocation(CXCursor C) {
       return clang_getNullLocation();
     }
 
+    case CXCursor_LabelRef: {
+      std::pair<LabelStmt *, SourceLocation> P = getCursorLabelRef(C);
+      return cxloc::translateSourceLocation(getCursorContext(C), P.second);
+    }
+
     default:
       // FIXME: Need a way to enumerate all non-reference cases.
       llvm_unreachable("Missed a reference kind");
@@ -2908,6 +2940,10 @@ CXSourceLocation clang_getCursorLocation(CXCursor C) {
   if (clang_isExpression(C.kind))
     return cxloc::translateSourceLocation(getCursorContext(C),
                                    getLocationFromExpr(getCursorExpr(C)));
+
+  if (clang_isStatement(C.kind))
+    return cxloc::translateSourceLocation(getCursorContext(C),
+                                          getCursorStmt(C)->getLocStart());
 
   if (C.kind == CXCursor_PreprocessingDirective) {
     SourceLocation L = cxcursor::getCursorPreprocessingDirective(C).getBegin();
@@ -2965,6 +3001,9 @@ static SourceRange getRawCursorExtent(CXCursor C) {
       // FIXME: Figure out what source range to use for a CXBaseSpecifier.
       return SourceRange();
 
+    case CXCursor_LabelRef:
+      return getCursorLabelRef(C).second;
+
     default:
       // FIXME: Need a way to enumerate all non-reference cases.
       llvm_unreachable("Missed a reference kind");
@@ -3017,6 +3056,15 @@ CXCursor clang_getCursorReferenced(CXCursor C) {
     return clang_getNullCursor();
   }
 
+  if (clang_isStatement(C.kind)) {
+    Stmt *S = getCursorStmt(C);
+    if (GotoStmt *Goto = dyn_cast_or_null<GotoStmt>(S))
+      return MakeCXCursor(Goto->getLabel(), getCursorDecl(C), 
+                          getCursorASTUnit(C));
+
+    return clang_getNullCursor();
+  }
+  
   if (C.kind == CXCursor_MacroInstantiation) {
     if (MacroDefinition *Def = getCursorMacroInstantiation(C)->getDefinition())
       return MakeMacroDefinitionCursor(Def, CXXUnit);
@@ -3052,6 +3100,13 @@ CXCursor clang_getCursorReferenced(CXCursor C) {
       return clang_getTypeDeclaration(cxtype::MakeCXType(B->getType(),
                                                          CXXUnit));
     }
+
+    case CXCursor_LabelRef:
+      // FIXME: We end up faking the "parent" declaration here because we
+      // don't want to make CXCursor larger.
+      return MakeCXCursor(getCursorLabelRef(C).first, 
+                          CXXUnit->getASTContext().getTranslationUnitDecl(),
+                          CXXUnit);
 
     default:
       // We would prefer to enumerate all non-reference cursor kinds here.

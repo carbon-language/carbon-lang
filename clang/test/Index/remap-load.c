@@ -5,8 +5,6 @@
 // CHECK: remap-load.c:1:5: FunctionDecl=foo:1:5 (Definition) Extent=[1:5 - 3:2]
 // CHECK: remap-load.c:1:13: ParmDecl=parm1:1:13 (Definition) Extent=[1:9 - 1:18]
 // CHECK: remap-load.c:1:26: ParmDecl=parm2:1:26 (Definition) Extent=[1:20 - 1:31]
-// CHECK: <invalid loc>:0:0: UnexposedStmt= Extent=[1:33 - 3:2]
-// CHECK: <invalid loc>:0:0: UnexposedStmt= Extent=[2:3 - 2:23]
 // CHECK: remap-load.c:2:10: UnexposedExpr= Extent=[2:10 - 2:23]
 // CHECK: remap-load.c:2:10: UnexposedExpr= Extent=[2:10 - 2:23]
 // CHECK: remap-load.c:2:10: UnexposedExpr=parm1:1:13 Extent=[2:10 - 2:15]

@@ -110,7 +110,6 @@ void template_exprs() {
 // CHECK-LOAD: index-templates.cpp:50:26: FunctionTemplate=getAs:50:26 Extent=[50:3 - 50:33]
 // CHECK-LOAD: index-templates.cpp:50:21: TemplateTypeParameter=T:50:21 (Definition) Extent=[50:21 - 50:22]
 // CHECK-LOAD: index-templates.cpp:53:6: FunctionDecl=template_exprs:53:6 (Definition)
-// CHECK-LOAD: <invalid loc>:0:0: UnexposedStmt=
 // CHECK-LOAD: index-templates.cpp:54:3: CallExpr=f:4:6 Extent=[54:3 - 54:68]
 // CHECK-LOAD: index-templates.cpp:54:3: UnexposedExpr=f:4:6 Extent=[54:3 - 54:35]
 // CHECK-LOAD: index-templates.cpp:54:3: DeclRefExpr=f:4:6 Extent=[54:3 - 54:35]

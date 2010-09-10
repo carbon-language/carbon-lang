@@ -27,6 +27,7 @@ class CXXBaseSpecifier;
 class Decl;
 class Expr;
 class FieldDecl;
+class LabelStmt;
 class MacroDefinition;
 class MacroInstantiation;
 class NamedDecl;
@@ -128,6 +129,13 @@ CXCursor MakeMacroInstantiationCursor(MacroInstantiation *, ASTUnit *TU);
 /// source range.
 MacroInstantiation *getCursorMacroInstantiation(CXCursor C);
 
+/// \brief Create a label reference at the given location.
+CXCursor MakeCursorLabelRef(LabelStmt *Label, SourceLocation Loc, ASTUnit *TU);
+
+/// \brief Unpack a label reference into the label statement it refers to and
+/// the location of the reference.
+std::pair<LabelStmt *, SourceLocation> getCursorLabelRef(CXCursor C);
+  
 Decl *getCursorDecl(CXCursor Cursor);
 Expr *getCursorExpr(CXCursor Cursor);
 Stmt *getCursorStmt(CXCursor Cursor);

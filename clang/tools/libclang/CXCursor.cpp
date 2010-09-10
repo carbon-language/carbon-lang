@@ -65,7 +65,6 @@ CXCursor cxcursor::MakeCXCursor(Stmt *S, Decl *Parent, ASTUnit *TU) {
   case Stmt::CompoundStmtClass:
   case Stmt::CaseStmtClass:
   case Stmt::DefaultStmtClass:
-  case Stmt::LabelStmtClass:       
   case Stmt::IfStmtClass:          
   case Stmt::SwitchStmtClass:      
   case Stmt::WhileStmtClass:       
@@ -88,6 +87,10 @@ CXCursor cxcursor::MakeCXCursor(Stmt *S, Decl *Parent, ASTUnit *TU) {
   case Stmt::CXXCatchStmtClass:
   case Stmt::CXXTryStmtClass:  
     K = CXCursor_UnexposedStmt;
+    break;
+      
+  case Stmt::LabelStmtClass:       
+    K = CXCursor_LabelStmt;
     break;
       
   case Stmt::PredefinedExprClass:        
@@ -153,6 +156,7 @@ CXCursor cxcursor::MakeCXCursor(Stmt *S, Decl *Parent, ASTUnit *TU) {
   case Stmt::BlockExprClass:  
     K = CXCursor_UnexposedExpr;
     break;
+      
   case Stmt::DeclRefExprClass:           
   case Stmt::BlockDeclRefExprClass:
     // FIXME: UnresolvedLookupExpr?
@@ -355,6 +359,23 @@ CXCursor cxcursor::MakeMacroInstantiationCursor(MacroInstantiation *MI,
 MacroInstantiation *cxcursor::getCursorMacroInstantiation(CXCursor C) {
   assert(C.kind == CXCursor_MacroInstantiation);
   return static_cast<MacroInstantiation *>(C.data[0]);
+}
+
+CXCursor cxcursor::MakeCursorLabelRef(LabelStmt *Label, SourceLocation Loc, 
+                                      ASTUnit *TU) {
+  
+  assert(Label && TU && "Invalid arguments!");
+  void *RawLoc = reinterpret_cast<void *>(Loc.getRawEncoding());
+  CXCursor C = { CXCursor_LabelRef, { Label, RawLoc, TU } };
+  return C;    
+}
+
+std::pair<LabelStmt*, SourceLocation> 
+cxcursor::getCursorLabelRef(CXCursor C) {
+  assert(C.kind == CXCursor_LabelRef);
+  return std::make_pair(static_cast<LabelStmt *>(C.data[0]),
+                        SourceLocation::getFromRawEncoding(
+                                       reinterpret_cast<uintptr_t>(C.data[1])));  
 }
 
 Decl *cxcursor::getCursorDecl(CXCursor Cursor) {

@@ -1000,7 +1000,6 @@ enum CXCursorKind {
   CXCursor_UsingDirective                = 34,
   /** \brief A using declaration. */
   CXCursor_UsingDeclaration              = 35,
-  
   CXCursor_FirstDecl                     = CXCursor_UnexposedDecl,
   CXCursor_LastDecl                      = CXCursor_UsingDeclaration,
 
@@ -1036,11 +1035,28 @@ enum CXCursorKind {
    */
   CXCursor_NamespaceRef                  = 46,
   /**
-   * A reference to a member of a struct, union, or class that occurs in some
-   * non-expression context, e.g., a designated initializer.
+   * \brief A reference to a member of a struct, union, or class that occurs in 
+   * some non-expression context, e.g., a designated initializer.
    */
   CXCursor_MemberRef                     = 47,
-  CXCursor_LastRef                       = CXCursor_MemberRef,
+  /**
+   * \brief A reference to a labeled statement.
+   *
+   * This cursor kind is used to describe the jump to "start_over" in the 
+   * goto statement in the following example:
+   *
+   * \code
+   *   start_over:
+   *     ++counter;
+   *
+   *     goto start_over;
+   * \endcode
+   *
+   * A label reference cursor refers to a label statement.
+   */
+  CXCursor_LabelRef                      = 48,
+  
+  CXCursor_LastRef                       = CXCursor_LabelRef,
 
   /* Error conditions */
   CXCursor_FirstInvalid                  = 70,
@@ -1100,7 +1116,21 @@ enum CXCursorKind {
    * reported.
    */
   CXCursor_UnexposedStmt                 = 200,
-  CXCursor_LastStmt                      = 200,
+  
+  /** \brief A labelled statement in a function. 
+   *
+   * This cursor kind is used to describe the "start_over:" label statement in 
+   * the following example:
+   *
+   * \code
+   *   start_over:
+   *     ++counter;
+   * \endcode
+   *
+   */
+  CXCursor_LabelStmt                     = 201,
+  
+  CXCursor_LastStmt                      = CXCursor_LabelStmt,
 
   /**
    * \brief Cursor that represents the translation unit itself.
