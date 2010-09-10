@@ -2440,6 +2440,11 @@ class CXXNoexceptExpr : public Expr {
   Stmt *Operand;
   SourceRange Range;
 
+  friend class ASTStmtReader;
+  void setOperand(Expr *E) { Operand = E; }
+  void setSourceRange(const SourceRange &R) { Range = R; }
+  void setValue(bool V) { Value = V; }
+
 public:
   CXXNoexceptExpr(QualType Ty, Expr *Operand, CanThrowResult Val,
                   SourceLocation Keyword, SourceLocation RParen)
@@ -2453,13 +2458,10 @@ public:
   { }
 
   Expr *getOperand() const { return static_cast<Expr*>(Operand); }
-  void setOperand(Expr *E) { Operand = E; }
 
   virtual SourceRange getSourceRange() const { return Range; }
-  void setSourceRange(const SourceRange &R) { Range = R; }
 
   bool getValue() const { return Value; }
-  void setValue(bool V) { Value = V; }
 
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == CXXNoexceptExprClass;
