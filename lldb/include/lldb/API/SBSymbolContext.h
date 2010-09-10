@@ -46,17 +46,25 @@ public:
 
 protected:
     friend class SBFrame;
+    friend class SBModule;
     friend class SBThread;
+    friend class SBSymbolContextList;
 
 #ifndef SWIG
 
     lldb_private::SymbolContext*
     operator->() const;
 
+    lldb_private::SymbolContext&
+    operator*();
+
+    const lldb_private::SymbolContext&
+    operator*() const;
+
 #endif
 
     lldb_private::SymbolContext *
-    GetLLDBObjectPtr() const;
+    get() const;
 
     SBSymbolContext (const lldb_private::SymbolContext *sc_ptr);
 

@@ -20,6 +20,7 @@
 using namespace lldb_private;
 
 #define TIMER_INDENT_AMOUNT 2
+static bool g_quiet = true;
 uint32_t Timer::g_depth = 0;
 uint32_t Timer::g_display_depth = 0;
 FILE * Timer::g_file = NULL;
@@ -78,16 +79,19 @@ Timer::Timer (const char *category, const char *format, ...) :
 {
     if (g_depth++ < g_display_depth)
     {
-        // Indent
-        ::fprintf (g_file, "%*s", g_depth * TIMER_INDENT_AMOUNT, "");
-        // Print formatted string
-        va_list args;
-        va_start (args, format);
-        ::vfprintf (g_file, format, args);
-        va_end (args);
+        if (g_quiet == false)
+        {
+            // Indent
+            ::fprintf (g_file, "%*s", g_depth * TIMER_INDENT_AMOUNT, "");
+            // Print formatted string
+            va_list args;
+            va_start (args, format);
+            ::vfprintf (g_file, format, args);
+            va_end (args);
 
-        // Newline
-        ::fprintf (g_file, "\n");
+            // Newline
+            ::fprintf (g_file, "\n");
+        }
         TimeValue start_time(TimeValue::Now());
         m_total_start = start_time;
         m_timer_start = start_time;
@@ -133,11 +137,16 @@ Timer::~Timer()
         const uint64_t timer_nsec_uint = GetTimerElapsedNanoSeconds();
         const double total_nsec = total_nsec_uint;
         const double timer_nsec = timer_nsec_uint;
-        ::fprintf (g_file,
-                   "%*s%.9f sec (%.9f sec)\n",
-                   (g_depth - 1) *TIMER_INDENT_AMOUNT, "",
-                   total_nsec / 1000000000.0,
-                   timer_nsec / 1000000000.0);
+
+        if (g_quiet == false)
+        {
+
+            ::fprintf (g_file,
+                       "%*s%.9f sec (%.9f sec)\n",
+                       (g_depth - 1) *TIMER_INDENT_AMOUNT, "",
+                       total_nsec / 1000000000.0,
+                       timer_nsec / 1000000000.0);
+        }
 
         // Keep total results for each category so we can dump results.
         Mutex::Locker locker (GetCategoryMutex());

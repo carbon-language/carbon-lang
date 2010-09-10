@@ -55,6 +55,12 @@ SBAddress::IsValid () const
 }
 
 void
+SBAddress::Clear ()
+{
+    m_opaque_ap.reset();
+}
+
+void
 SBAddress::SetAddress (const lldb_private::Address *lldb_object_ptr)
 {
     if (lldb_object_ptr)
@@ -102,6 +108,11 @@ SBAddress::OffsetAddress (addr_t offset)
     return false;
 }
 
+lldb_private::Address *
+SBAddress::operator->()
+{
+    return m_opaque_ap.get();
+}
 
 const lldb_private::Address *
 SBAddress::operator->() const
@@ -109,9 +120,18 @@ SBAddress::operator->() const
     return m_opaque_ap.get();
 }
 
+lldb_private::Address &
+SBAddress::operator*()
+{
+    if (m_opaque_ap.get() == NULL)
+        m_opaque_ap.reset (new lldb_private::Address);
+    return *m_opaque_ap;
+}
+
 const lldb_private::Address &
 SBAddress::operator*() const
 {
+    assert (m_opaque_ap.get());
     return *m_opaque_ap;
 }
 

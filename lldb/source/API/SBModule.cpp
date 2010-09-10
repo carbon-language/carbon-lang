@@ -8,6 +8,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "lldb/API/SBModule.h"
+#include "lldb/API/SBAddress.h"
+#include "lldb/API/SBFileSpec.h"
 #include "lldb/API/SBFileSpec.h"
 #include "lldb/Core/Module.h"
 
@@ -103,5 +105,25 @@ void
 SBModule::SetModule (const lldb::ModuleSP& module_sp)
 {
     m_opaque_sp = module_sp;
+}
+
+
+bool
+SBModule::ResolveFileAddress (lldb::addr_t vm_addr, SBAddress& addr)
+{
+    if (m_opaque_sp)
+        return m_opaque_sp->ResolveFileAddress (vm_addr, *addr);
+    
+    addr->Clear();
+    return false;
+}
+
+SBSymbolContext
+SBModule::ResolveSymbolContextForAddress (const SBAddress& addr, uint32_t resolve_scope)
+{
+    SBSymbolContext sb_sc;
+    if (m_opaque_sp && addr.IsValid())
+        m_opaque_sp->ResolveSymbolContextForAddress (*addr, resolve_scope, *sb_sc);
+    return sb_sc;
 }
 

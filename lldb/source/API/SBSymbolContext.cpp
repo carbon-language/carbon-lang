@@ -123,8 +123,25 @@ SBSymbolContext::operator->() const
     return m_opaque_ap.get();
 }
 
+
+const lldb_private::SymbolContext&
+SBSymbolContext::operator*() const
+{
+    assert (m_opaque_ap.get());
+    return *m_opaque_ap.get();
+}
+
+
+lldb_private::SymbolContext&
+SBSymbolContext::operator*()
+{
+    if (m_opaque_ap.get() == NULL)
+        m_opaque_ap.reset (new SymbolContext);
+    return *m_opaque_ap.get();
+}
+
 lldb_private::SymbolContext *
-SBSymbolContext::GetLLDBObjectPtr() const
+SBSymbolContext::get() const
 {
     return m_opaque_ap.get();
 }

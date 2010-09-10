@@ -11,6 +11,7 @@
 #define LLDB_SBModule_h_
 
 #include "lldb/API/SBDefines.h"
+#include "lldb/API/SBSymbolContext.h"
 
 namespace lldb {
 
@@ -40,6 +41,13 @@ public:
 
 #endif
 
+    bool
+    ResolveFileAddress (lldb::addr_t vm_addr, 
+                        lldb::SBAddress& addr);
+
+    lldb::SBSymbolContext
+    ResolveSymbolContextForAddress (const lldb::SBAddress& addr, 
+                                    uint32_t resolve_scope);
 
 private:
     friend class SBSymbolContext;

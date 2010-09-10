@@ -32,6 +32,9 @@ public:
     bool
     IsValid () const;
 
+    void
+    Clear ();
+
     addr_t
     GetFileAddress () const;
 
@@ -45,16 +48,23 @@ protected:
 
     friend class SBFrame;
     friend class SBLineEntry;
+    friend class SBModule;
     friend class SBSymbolContext;
     friend class SBThread;
 
 #ifndef SWIG
+
+    lldb_private::Address *
+    operator->();
 
     const lldb_private::Address *
     operator->() const;
 
     const lldb_private::Address &
     operator*() const;
+
+    lldb_private::Address &
+    operator*();
 
 #endif
 

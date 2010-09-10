@@ -63,6 +63,8 @@
 		26680336116005EF008E1FE4 /* SBBreakpointLocation.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9AF16CC7114086A1007A7B3F /* SBBreakpointLocation.cpp */; };
 		26680337116005F1008E1FE4 /* SBBreakpoint.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9AF16A9C11402D5B007A7B3F /* SBBreakpoint.cpp */; };
 		2668035C11601108008E1FE4 /* LLDB.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 26680207115FD0ED008E1FE4 /* LLDB.framework */; };
+		268F9D53123AA15200B91E9B /* SBSymbolContextList.h in Headers */ = {isa = PBXBuildFile; fileRef = 268F9D52123AA15200B91E9B /* SBSymbolContextList.h */; };
+		268F9D55123AA16600B91E9B /* SBSymbolContextList.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 268F9D54123AA16600B91E9B /* SBSymbolContextList.cpp */; };
 		26B42B1F1187A92B0079C8C8 /* lldb-include.h in Headers */ = {isa = PBXBuildFile; fileRef = 26B42B1E1187A92B0079C8C8 /* lldb-include.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		26B42C4D1187ABA50079C8C8 /* LLDB.h in Headers */ = {isa = PBXBuildFile; fileRef = 26B42C4C1187ABA50079C8C8 /* LLDB.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		26D27C9F11ED3A4E0024D721 /* ELFHeader.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26D27C9D11ED3A4E0024D721 /* ELFHeader.cpp */; };
@@ -567,6 +569,8 @@
 		2689B0A4113EE3CD00A4AEDB /* Symbols.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Symbols.h; path = include/lldb/Host/Symbols.h; sourceTree = "<group>"; };
 		2689B0B5113EE47E00A4AEDB /* Symbols.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Symbols.cpp; path = source/Host/macosx/Symbols.cpp; sourceTree = "<group>"; };
 		268A813F115B19D000F645B0 /* UniqueCStringMap.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = UniqueCStringMap.h; path = include/lldb/Core/UniqueCStringMap.h; sourceTree = "<group>"; };
+		268F9D52123AA15200B91E9B /* SBSymbolContextList.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SBSymbolContextList.h; path = include/lldb/API/SBSymbolContextList.h; sourceTree = "<group>"; };
+		268F9D54123AA16600B91E9B /* SBSymbolContextList.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SBSymbolContextList.cpp; path = source/API/SBSymbolContextList.cpp; sourceTree = "<group>"; };
 		269416AD119A024800FF2715 /* CommandObjectTarget.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CommandObjectTarget.cpp; path = source/Commands/CommandObjectTarget.cpp; sourceTree = "<group>"; };
 		269416AE119A024800FF2715 /* CommandObjectTarget.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CommandObjectTarget.h; path = source/Commands/CommandObjectTarget.h; sourceTree = "<group>"; };
 		26A0604711A5BC7A00F75969 /* Baton.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Baton.h; path = include/lldb/Core/Baton.h; sourceTree = "<group>"; };
@@ -1479,6 +1483,8 @@
 				26DE20641161904E00A093E2 /* SBSymbol.cpp */,
 				26DE204011618AB900A093E2 /* SBSymbolContext.h */,
 				26DE204611618AED00A093E2 /* SBSymbolContext.cpp */,
+				268F9D52123AA15200B91E9B /* SBSymbolContextList.h */,
+				268F9D54123AA16600B91E9B /* SBSymbolContextList.cpp */,
 				9A9831081125FC5800A56CB0 /* SBTarget.h */,
 				9A9831071125FC5800A56CB0 /* SBTarget.cpp */,
 				9A98310A1125FC5800A56CB0 /* SBThread.h */,
@@ -2264,6 +2270,7 @@
 				49CF9834122C718B007A0B96 /* IRDynamicChecks.h in Headers */,
 				961FABEB1235F26800F93A47 /* UnwindAssemblyProfiler-x86.h in Headers */,
 				961FAC1F12360C7D00F93A47 /* ArchDefaultUnwindPlan-x86.h in Headers */,
+				268F9D53123AA15200B91E9B /* SBSymbolContextList.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -2726,6 +2733,7 @@
 				69A01E241236C5D400C660B5 /* Mutex.cpp in Sources */,
 				69A01E251236C5D400C660B5 /* Symbols.cpp in Sources */,
 				69A01E261236C5D400C660B5 /* TimeValue.cpp in Sources */,
+				268F9D55123AA16600B91E9B /* SBSymbolContextList.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
