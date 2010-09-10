@@ -2251,6 +2251,8 @@ public:
 
   ExprResult ActOnNoexceptExpr(SourceLocation KeyLoc, SourceLocation LParen,
                                Expr *Operand, SourceLocation RParen);
+  ExprResult BuildCXXNoexceptExpr(SourceLocation KeyLoc, Expr *Operand,
+                                  SourceLocation RParen);
 
   /// ActOnUnaryTypeTrait - Parsed one of the unary type trait support
   /// pseudo-functions.

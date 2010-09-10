@@ -2441,6 +2441,7 @@ static ICEDiag CheckICE(const Expr* E, ASTContext &Ctx) {
   case Expr::CXXScalarValueInitExprClass:
   case Expr::TypesCompatibleExprClass:
   case Expr::UnaryTypeTraitExprClass:
+  case Expr::CXXNoexceptExprClass:
     return NoDiag();
   case Expr::CallExprClass:
   case Expr::CXXOperatorCallExprClass: {

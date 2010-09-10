@@ -1773,6 +1773,14 @@ public:
                                             R, TemplateArgs);
   }
 
+  /// \brief Build a new noexcept expression.
+  ///
+  /// By default, performs semantic analysis to build the new expression.
+  /// Subclasses may override this routine to provide different behavior.
+  ExprResult RebuildCXXNoexceptExpr(SourceRange Range, Expr *Arg) {
+    return SemaRef.BuildCXXNoexceptExpr(Range.getBegin(), Arg, Range.getEnd());
+  }
+
   /// \brief Build a new Objective-C @encode expression.
   ///
   /// By default, performs semantic analysis to build the new expression.
@@ -5973,6 +5981,19 @@ TreeTransform<Derived>::TransformUnresolvedMemberExpr(UnresolvedMemberExpr *Old)
                                                   R,
                                               (Old->hasExplicitTemplateArgs()
                                                   ? &TransArgs : 0));
+}
+
+template<typename Derived>
+ExprResult
+TreeTransform<Derived>::TransformCXXNoexceptExpr(CXXNoexceptExpr *E) {
+  ExprResult SubExpr = getDerived().TransformExpr(E->getOperand());
+  if (SubExpr.isInvalid())
+    return ExprError();
+
+  if (!getDerived().AlwaysRebuild() && SubExpr.get() == E->getOperand())
+    return SemaRef.Owned(E->Retain());
+
+  return getDerived().RebuildCXXNoexceptExpr(E->getSourceRange(),SubExpr.get());
 }
 
 template<typename Derived>

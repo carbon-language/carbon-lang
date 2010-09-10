@@ -1235,6 +1235,12 @@ void StmtPrinter::VisitUnaryTypeTraitExpr(UnaryTypeTraitExpr *E) {
      << E->getQueriedType().getAsString(Policy) << ")";
 }
 
+void StmtPrinter::VisitCXXNoexceptExpr(CXXNoexceptExpr *E) {
+  OS << "noexcept(";
+  PrintExpr(E->getOperand());
+  OS << ")";
+}
+
 // Obj-C
 
 void StmtPrinter::VisitObjCStringLiteral(ObjCStringLiteral *Node) {

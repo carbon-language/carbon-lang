@@ -145,6 +145,7 @@ CXCursor cxcursor::MakeCXCursor(Stmt *S, Decl *Parent, ASTUnit *TU) {
   case Stmt::CXXUnresolvedConstructExprClass:
   case Stmt::CXXDependentScopeMemberExprClass:
   case Stmt::UnresolvedMemberExprClass:   
+  case Stmt::CXXNoexceptExprClass:
   case Stmt::ObjCStringLiteralClass:    
   case Stmt::ObjCEncodeExprClass:       
   case Stmt::ObjCSelectorExprClass:   

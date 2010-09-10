@@ -830,6 +830,10 @@ void StmtProfiler::VisitUnresolvedMemberExpr(UnresolvedMemberExpr *S) {
     VisitTemplateArguments(S->getTemplateArgs(), S->getNumTemplateArgs());
 }
 
+void StmtProfiler::VisitCXXNoexceptExpr(CXXNoexceptExpr *S) {
+  VisitExpr(S);
+}
+
 void StmtProfiler::VisitObjCStringLiteral(ObjCStringLiteral *S) {
   VisitExpr(S);
 }

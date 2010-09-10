@@ -1040,3 +1040,10 @@ Stmt::child_iterator UnresolvedMemberExpr::child_end() {
     return child_iterator(&Base);
   return child_iterator(&Base + 1);
 }
+
+Stmt::child_iterator CXXNoexceptExpr::child_begin() {
+  return child_iterator(&Operand);
+}
+Stmt::child_iterator CXXNoexceptExpr::child_end() {
+  return child_iterator(&Operand + 1);
+}

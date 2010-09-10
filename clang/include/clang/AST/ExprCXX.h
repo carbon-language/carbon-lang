@@ -2431,6 +2431,39 @@ public:
   virtual child_iterator child_end();
 };
 
+/// \brief Represents a C++0x noexcept expression (C++ [expr.unary.noexcept]).
+///
+/// The noexcept expression tests whether a given expression might throw. Its
+/// result is a boolean constant.
+class CXXNoexceptExpr : public Expr {
+  bool Value : 1;
+  Stmt *Operand;
+  SourceRange Range;
+
+public:
+  CXXNoexceptExpr(QualType Ty, Expr *Operand, CanThrowResult Val,
+                  SourceLocation Keyword, SourceLocation RParen)
+  : Expr(CXXNoexceptExprClass, Ty, /*TypeDependent*/false,
+         /*ValueDependent*/Val == CT_Dependent),
+    Value(Val == CT_Cannot), Operand(Operand), Range(Keyword, RParen)
+  { }
+
+  Expr *getOperand() const { return static_cast<Expr*>(Operand); }
+
+  virtual SourceRange getSourceRange() const { return Range; }
+
+  bool getValue() const { return Value; }
+
+  static bool classof(const Stmt *T) {
+    return T->getStmtClass() == CXXNoexceptExprClass;
+  }
+  static bool classof(const CXXNoexceptExpr *) { return true; }
+
+  // Iterators
+  virtual child_iterator child_begin();
+  virtual child_iterator child_end();
+};
+
 inline ExplicitTemplateArgumentList &OverloadExpr::getExplicitTemplateArgs() {
   if (isa<UnresolvedLookupExpr>(this))
     return cast<UnresolvedLookupExpr>(this)->getExplicitTemplateArgs();
