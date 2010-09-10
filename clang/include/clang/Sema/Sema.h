@@ -2249,6 +2249,9 @@ public:
                                     SourceLocation StmtLoc,
                                     bool ConvertToBoolean);
 
+  ExprResult ActOnNoexceptExpr(SourceLocation KeyLoc, SourceLocation LParen,
+                               Expr *Operand, SourceLocation RParen);
+
   /// ActOnUnaryTypeTrait - Parsed one of the unary type trait support
   /// pseudo-functions.
   ExprResult ActOnUnaryTypeTrait(UnaryTypeTrait OTT,

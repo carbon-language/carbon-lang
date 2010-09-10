@@ -457,6 +457,7 @@ ExprResult Parser::ParseCastExpression(bool isUnaryExpression,
 /// [GNU]   '&&' identifier
 /// [C++]   new-expression
 /// [C++]   delete-expression
+/// [C++0x] 'noexcept' '(' expression ')'
 ///
 ///       unary-operator: one of
 ///         '&'  '*'  '+'  '-'  '~'  '!'
@@ -546,9 +547,9 @@ ExprResult Parser::ParseCastExpression(bool isUnaryExpression,
 ///                   '__is_base_of'                          [TODO]
 ///
 ExprResult Parser::ParseCastExpression(bool isUnaryExpression,
-                                                     bool isAddressOfOperand,
-                                                     bool &NotCastExpr,
-                                                     ParsedType TypeOfCast) {
+                                       bool isAddressOfOperand,
+                                       bool &NotCastExpr,
+                                       ParsedType TypeOfCast) {
   ExprResult Res;
   tok::TokenKind SavedKind = Tok.getKind();
   NotCastExpr = false;
@@ -890,6 +891,19 @@ ExprResult Parser::ParseCastExpression(bool isUnaryExpression,
 
   case tok::kw_delete: // [C++] delete-expression
     return ParseCXXDeleteExpression(false, Tok.getLocation());
+
+  case tok::kw_noexcept: { // [C++0x] 'noexcept' '(' expression ')'
+    SourceLocation KeyLoc = ConsumeToken();
+    SourceLocation LParen = Tok.getLocation();
+    if (ExpectAndConsume(tok::l_paren,
+                         diag::err_expected_lparen_after, "noexcept"))
+      return ExprError();
+    ExprResult Result = ParseExpression();
+    SourceLocation RParen = MatchRHSPunctuation(tok::r_paren, LParen);
+    if (!Result.isInvalid())
+      Result = Actions.ActOnNoexceptExpr(KeyLoc, LParen, Result.take(), RParen);
+    return move(Result);
+  }
 
   case tok::kw___is_pod: // [GNU] unary-type-trait
   case tok::kw___is_class:
