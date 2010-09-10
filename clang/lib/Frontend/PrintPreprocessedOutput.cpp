@@ -455,8 +455,7 @@ struct UnknownPragmaHandler : public PragmaHandler {
                             Token &PragmaTok) {
     // Figure out what line we went to and insert the appropriate number of
     // newline characters.
-    if (Introducer == PIK__Pragma || Introducer == PIK___pragma)
-      Callbacks->StartNewLineIfNeeded();
+    Callbacks->StartNewLineIfNeeded();
     Callbacks->MoveToLine(PragmaTok.getLocation());
     Callbacks->OS.write(Prefix, strlen(Prefix));
     Callbacks->SetEmittedTokensOnThisLine();

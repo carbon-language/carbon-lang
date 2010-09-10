@@ -3,13 +3,18 @@
 // Test that we properly expand the C99 _Pragma and Microsoft __pragma
 // into #pragma directives, with newlines where needed. <rdar://problem/8412013>
 
-// CHECK: extern
 // CHECK: #line
 // CHECK: #pragma warning(push)
+// CHECK: extern "C" {
 // CHECK: #line
-// CHECK: ; void f0();
+// CHECK: #pragma warning(push)
+// CHECK:  int foo() { return 0; } }
 // CHECK: #line
 // CHECK: #pragma warning(pop)
-// CHECK: #line
-// CHECK: ; }
-extern "C" { _Pragma("warning(push)"); void f0(); __pragma(warning(pop)); }
+#define A(X) extern "C" { __pragma(warning(push)) \
+  int X() { return 0; } \
+}
+#define B(X) A(X)
+#pragma warning(push)
+B(foo)
+#pragma warning(pop)
