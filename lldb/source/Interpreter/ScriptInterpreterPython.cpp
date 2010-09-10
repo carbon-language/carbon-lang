@@ -653,6 +653,26 @@ ScriptInterpreterPython::CollectDataForBreakpointCommandCallback (CommandInterpr
     }
 }
 
+// Set a Python one-liner as the callback for the breakpoint command.
+void
+ScriptInterpreterPython::SetBreakpointCommandCallback (CommandInterpreter &interpreter,
+                                                       BreakpointOptions *bp_options,
+                                                       const char *oneliner)
+{
+    std::auto_ptr<BreakpointOptions::CommandData> data_ap(new BreakpointOptions::CommandData());
+
+    // It's necessary to set both user_source and script_source to the oneliner.
+    // The former is used to generate callback description (as in breakpoint command list)
+    // while the latter is used for Python to interpret during the actual callback.
+    data_ap->user_source.AppendString (oneliner);
+    data_ap->script_source.AppendString (oneliner);
+
+    BatonSP baton_sp (new BreakpointOptions::CommandBaton (data_ap.release()));
+    bp_options->SetCallback (ScriptInterpreterPython::BreakpointCallbackFunction, baton_sp);
+
+    return;
+}
+
 bool
 ScriptInterpreterPython::ExportFunctionDefinitionToInterpreter (StringList &function_def)
 {

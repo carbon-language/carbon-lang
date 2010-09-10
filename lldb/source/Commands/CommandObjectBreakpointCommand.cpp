@@ -258,9 +258,15 @@ CommandObjectBreakpointCommandAdd::Execute
                     {
                         if (m_options.m_use_script_language)
                         {
-                            interpreter.GetScriptInterpreter()->CollectDataForBreakpointCommandCallback (interpreter,
-                                                                                                         bp_loc_sp->GetLocationOptions(),
-                                                                                                         result);
+                            // Special handling for one-liner.
+                            if (command.GetArgumentCount() == 2)
+                                interpreter.GetScriptInterpreter()->SetBreakpointCommandCallback (interpreter,
+                                                                                                  bp_loc_sp->GetLocationOptions(),
+                                                                                                  command.GetArgumentAtIndex(1));
+                            else
+                                interpreter.GetScriptInterpreter()->CollectDataForBreakpointCommandCallback (interpreter,
+                                                                                                             bp_loc_sp->GetLocationOptions(),
+                                                                                                             result);
                         }
                         else
                         {
@@ -274,9 +280,15 @@ CommandObjectBreakpointCommandAdd::Execute
                 {
                     if (m_options.m_use_script_language)
                     {
-                        interpreter.GetScriptInterpreter()->CollectDataForBreakpointCommandCallback (interpreter,
-                                                                                                     bp->GetOptions(),
-                                                                                                     result);
+                        // Special handling for one-liner.
+                        if (command.GetArgumentCount() == 2)
+                            interpreter.GetScriptInterpreter()->SetBreakpointCommandCallback (interpreter,
+                                                                                              bp->GetOptions(),
+                                                                                              command.GetArgumentAtIndex(1));
+                        else
+                            interpreter.GetScriptInterpreter()->CollectDataForBreakpointCommandCallback (interpreter,
+                                                                                                         bp->GetOptions(),
+                                                                                                         result);
                     }
                     else
                     {

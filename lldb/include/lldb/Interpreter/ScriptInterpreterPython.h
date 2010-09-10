@@ -62,6 +62,12 @@ public:
                                              BreakpointOptions *bp_options,
                                              CommandReturnObject &result);
 
+    /// Set a one-liner as the callback for the breakpoint command.
+    void 
+    SetBreakpointCommandCallback (CommandInterpreter &interpreter,
+                                  BreakpointOptions *bp_options,
+                                  const char *oneliner);
+
     StringList
     ReadCommandInputFromUser (FILE *in_file);
 
