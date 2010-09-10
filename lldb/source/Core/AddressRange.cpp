@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "lldb/Core/AddressRange.h"
+#include "lldb/Core/Module.h"
 #include "lldb/Core/Stream.h"
 #include "lldb/Target/Process.h"
 
@@ -144,11 +145,11 @@ AddressRange::Dump(Stream *s, Process *process, Address::DumpStyle style, Addres
     if (process)
       addr_size = process->GetAddressByteSize ();
 
+    bool show_module = false;
     switch (style)
     {
     default:
         break;
-
     case Address::DumpStyleSectionNameOffset:
     case Address::DumpStyleSectionPointerOffset:
         s->PutChar ('[');
@@ -159,6 +160,9 @@ AddressRange::Dump(Stream *s, Process *process, Address::DumpStyle style, Addres
         return true;
         break;
 
+    case Address::DumpStyleModuleWithFileAddress:
+        show_module = true;
+        // fall through
     case Address::DumpStyleFileAddress:
         vmaddr = m_base_addr.GetFileAddress();
         break;
@@ -170,8 +174,18 @@ AddressRange::Dump(Stream *s, Process *process, Address::DumpStyle style, Addres
 
     if (vmaddr != LLDB_INVALID_ADDRESS)
     {
+        if (show_module)
+        {
+            Module *module = GetBaseAddress().GetModule();
+            if (module)
+                s->Printf("%s", module->GetFileSpec().GetFilename().AsCString());
+        }
         s->AddressRange(vmaddr, vmaddr + GetByteSize(), addr_size);
         return true;
+    }
+    else if (fallback_style != Address::DumpStyleInvalid)
+    {
+        return Dump(s, process, fallback_style, Address::DumpStyleInvalid);
     }
 
     return false;

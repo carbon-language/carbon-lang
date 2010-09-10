@@ -85,13 +85,10 @@ lldb_private::Type::operator= (const Type& rhs)
 void
 lldb_private::Type::GetDescription (Stream *s, lldb::DescriptionLevel level, bool show_name)
 {
-    if (show_name)
-    {
-        if (m_name)
-            *s << '\"' << m_name << "\", ";
-    }
-
     *s << "id = " << (const UserID&)*this;
+
+    if (show_name && m_name)
+        *s << ", name = \"" << m_name << '"';
 
     if (m_byte_size != 0)
         s->Printf(", byte-size = %zu", m_byte_size);
@@ -100,9 +97,9 @@ lldb_private::Type::GetDescription (Stream *s, lldb::DescriptionLevel level, boo
 
     if (m_clang_qual_type)
     {
-        *s << ", clang_type = " << m_clang_qual_type << ' ';
-
+        *s << ", clang_type = \"";
         ClangASTType::DumpTypeDescription (GetClangAST(), m_clang_qual_type, s);
+        *s << '"';
     }
     else if (m_encoding_uid != LLDB_INVALID_UID)
     {
@@ -118,7 +115,7 @@ lldb_private::Type::GetDescription (Stream *s, lldb::DescriptionLevel level, boo
         case eLValueReferenceToTypeWithUID: s->PutCString(" (unresolved L value reference)"); break;
         case eRValueReferenceToTypeWithUID: s->PutCString(" (unresolved R value reference)"); break;
         }
-    }
+    }    
 }
 
 

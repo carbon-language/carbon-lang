@@ -198,9 +198,11 @@ SymbolContext::GetDescription(Stream *s, lldb::DescriptionLevel level, Process *
 {
     if (module_sp)
     {
-        s->Indent("     Module: \"");
+        s->Indent("     Module: file = \"");
         module_sp->GetFileSpec().Dump(s);
-        s->PutChar('"');
+        *s << '"';
+        if (module_sp->GetArchitecture().IsValid())
+            s->Printf (", arch = \"%s\"", module_sp->GetArchitecture().AsCString());
         s->EOL();
     }
 

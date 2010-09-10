@@ -18,6 +18,7 @@
 #include "clang/AST/Type.h"
 #include "clang/AST/CanonicalType.h"
 
+using namespace lldb;
 using namespace lldb_private;
 
 //----------------------------------------------------------------------
@@ -328,9 +329,14 @@ void
 Function::GetDescription(Stream *s, lldb::DescriptionLevel level, Process *process)
 {
     Type* func_type = GetType();
-    *s << '"' << func_type->GetName() << "\", id = " << (const UserID&)*this;
-    *s << ", range = ";
-    GetAddressRange().Dump(s, process, Address::DumpStyleLoadAddress, Address::DumpStyleModuleWithFileAddress);
+    *s << "id = " << (const UserID&)*this << ", name = \"" << func_type->GetName() << "\", range = ";
+    
+    Address::DumpStyle fallback_style;
+    if (level == eDescriptionLevelVerbose)
+        fallback_style = Address::DumpStyleModuleWithFileAddress;
+    else
+        fallback_style = Address::DumpStyleFileAddress;
+    GetAddressRange().Dump(s, process, Address::DumpStyleLoadAddress, fallback_style);
 }
 
 void

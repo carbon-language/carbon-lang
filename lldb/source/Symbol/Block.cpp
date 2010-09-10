@@ -38,6 +38,8 @@ Block::~Block ()
 void
 Block::GetDescription(Stream *s, Function *function, lldb::DescriptionLevel level, Process *process) const
 {
+    *s << "id = " << ((const UserID&)*this);
+
     size_t num_ranges = m_ranges.size();
     if (num_ranges)
     {
@@ -48,12 +50,11 @@ Block::GetDescription(Stream *s, Function *function, lldb::DescriptionLevel leve
         if (base_addr == LLDB_INVALID_ADDRESS)
             base_addr = function->GetAddressRange().GetBaseAddress().GetFileAddress();
 
-        s->Printf("range%s = ", num_ranges > 1 ? "s" : "");
+        s->Printf(", range%s = ", num_ranges > 1 ? "s" : "");
         std::vector<VMRange>::const_iterator pos, end = m_ranges.end();
         for (pos = m_ranges.begin(); pos != end; ++pos)
             pos->Dump(s, base_addr, 4);
     }
-    *s << ", id = " << ((const UserID&)*this);
 
     if (m_inlineInfoSP.get() != NULL)
         m_inlineInfoSP->Dump(s);

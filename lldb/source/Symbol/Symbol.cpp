@@ -175,19 +175,29 @@ Symbol::IsTrampoline () const
 void
 Symbol::GetDescription (Stream *s, lldb::DescriptionLevel level, Process *process) const
 {
-    *s << '"' << m_mangled.GetName() << "\", id = " << (const UserID&)*this;
+    *s << "id = " << (const UserID&)*this << ", name = \"" << m_mangled.GetName() << '"';
     const Section *section = m_addr_range.GetBaseAddress().GetSection();
     if (section != NULL)
     {
-        if (m_addr_range.GetByteSize() > 0)
+        if (m_addr_range.GetBaseAddress().IsSectionOffset())
         {
-            s->PutCString(", range = ");
-            m_addr_range.Dump(s, process, Address::DumpStyleLoadAddress, Address::DumpStyleModuleWithFileAddress);
+            if (m_addr_range.GetByteSize() > 0)
+            {
+                s->PutCString (", range = ");
+                m_addr_range.Dump(s, process, Address::DumpStyleLoadAddress, Address::DumpStyleFileAddress);
+            }
+            else 
+            {
+                s->PutCString (", address = ");
+                m_addr_range.GetBaseAddress().Dump(s, process, Address::DumpStyleLoadAddress, Address::DumpStyleFileAddress);
+            }
         }
         else
         {
-            s->PutCString(", address = ");
-            m_addr_range.GetBaseAddress().Dump(s, process, Address::DumpStyleLoadAddress, Address::DumpStyleModuleWithFileAddress);
+            if (m_size_is_sibling)                
+                s->Printf (", sibling = %5llu", m_addr_range.GetBaseAddress().GetOffset());
+            else
+                s->Printf (", value = 0x%16.16llx", m_addr_range.GetBaseAddress().GetOffset());
         }
     }
 }

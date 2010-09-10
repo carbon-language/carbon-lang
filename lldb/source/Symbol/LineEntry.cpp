@@ -151,20 +151,16 @@ LineEntry::GetDescription (Stream *s, lldb::DescriptionLevel level, CompileUnit*
 
     if (level == lldb::eDescriptionLevelBrief || level == lldb::eDescriptionLevelFull)
     {
-        // Show address only
         if (show_address_only)
         {
-            s->PutCString ("address = ");
             range.GetBaseAddress().Dump(s, process, Address::DumpStyleLoadAddress, Address::DumpStyleFileAddress);
         }
         else
         {
-            s->PutCString ("range = ");
             range.Dump(s, process, Address::DumpStyleLoadAddress, Address::DumpStyleFileAddress);
         }
 
-        if (file)
-            *s << ' ' << file;
+        *s << ": " << file;
 
         if (line)
         {
@@ -172,6 +168,7 @@ LineEntry::GetDescription (Stream *s, lldb::DescriptionLevel level, CompileUnit*
             if (column)
                 s->Printf(":%u", column);
         }
+
 
         if (level == lldb::eDescriptionLevelFull)
         {

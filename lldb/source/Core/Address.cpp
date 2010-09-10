@@ -381,7 +381,7 @@ Address::Dump (Stream *s, ExecutionContextScope *exe_scope, DumpStyle style, Dum
             addr_size = sizeof(addr_t);
     }
 
-    lldb_private::Address so_addr;
+    Address so_addr;
     switch (style)
     {
     case DumpStyleInvalid:
@@ -448,7 +448,7 @@ Address::Dump (Stream *s, ExecutionContextScope *exe_scope, DumpStyle style, Dum
             }
 
             uint32_t pointer_size = 4;
-            lldb_private::Module *module = GetModule();
+            Module *module = GetModule();
             if (process)
                 pointer_size = process->GetAddressByteSize();
             else if (module)
@@ -488,7 +488,7 @@ Address::Dump (Stream *s, ExecutionContextScope *exe_scope, DumpStyle style, Dum
                         {
                             if (target && so_addr.IsSectionOffset())
                             {
-                                lldb_private::SymbolContext func_sc;
+                                SymbolContext func_sc;
                                 target->GetImages().ResolveSymbolContextForAddress (so_addr,
                                                                                     eSymbolContextEverything,
                                                                                     func_sc);
@@ -577,7 +577,7 @@ Address::Dump (Stream *s, ExecutionContextScope *exe_scope, DumpStyle style, Dum
                             showed_info = true;
                             if (so_addr.IsSectionOffset())
                             {
-                                lldb_private::SymbolContext pointer_sc;
+                                SymbolContext pointer_sc;
                                 if (target)
                                 {
                                     target->GetImages().ResolveSymbolContextForAddress (so_addr,
@@ -603,7 +603,7 @@ Address::Dump (Stream *s, ExecutionContextScope *exe_scope, DumpStyle style, Dum
             {
                 if (module)
                 {
-                    lldb_private::SymbolContext sc;
+                    SymbolContext sc;
                     module->ResolveSymbolContextForAddress(*this, eSymbolContextEverything, sc);
                     if (sc.function || sc.symbol)
                     {
@@ -656,18 +656,10 @@ Address::Dump (Stream *s, ExecutionContextScope *exe_scope, DumpStyle style, Dum
     case DumpStyleDetailedSymbolContext:
         if (IsSectionOffset())
         {
-            lldb::AddressType addr_type = eAddressTypeLoad;
-            addr_t addr = GetLoadAddress (process);
-            if (addr == LLDB_INVALID_ADDRESS)
-            {
-                addr = GetFileAddress();
-                addr_type = eAddressTypeFile;
-            }
-
-            lldb_private::Module *module = GetModule();
+            Module *module = GetModule();
             if (module)
             {
-                lldb_private::SymbolContext sc;
+                SymbolContext sc;
                 module->ResolveSymbolContextForAddress(*this, eSymbolContextEverything, sc);
                 if (sc.symbol)
                 {

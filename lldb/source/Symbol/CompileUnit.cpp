@@ -68,8 +68,7 @@ CompileUnit::DumpSymbolContext(Stream *s)
 void
 CompileUnit::GetDescription(Stream *s, lldb::DescriptionLevel level) const
 {
-    *s << '"' << (const FileSpec&)*this << "\", id = " << (const UserID&)*this
-        << ", language = " << (const Language&)*this;
+    *s << "id = " << (const UserID&)*this << ", file = \"" << (const FileSpec&)*this << "\", language = \"" << (const Language&)*this << '"';
 }
 
 
@@ -85,8 +84,8 @@ CompileUnit::Dump(Stream *s, bool show_context) const
     s->Printf("%.*p: ", (int)sizeof(void*) * 2, this);
     s->Indent();
     *s << "CompileUnit" << (const UserID&)*this
-        << ", language = " << (const Language&)*this
-        << ", file='" << (const FileSpec&)*this << "'\n";
+        << ", language = \"" << (const Language&)*this
+        << "\", file = '" << (const FileSpec&)*this << "'\n";
 
 //  m_types.Dump(s);
 
