@@ -473,10 +473,18 @@ bool FastISel::SelectCall(const User *I) {
       return true;
     const AllocaInst *AI = dyn_cast<AllocaInst>(Address);
     // Don't handle byval struct arguments or VLAs, for example.
-    if (!AI)
+    if (!AI) {
       // Building the map above is target independent.  Generating DBG_VALUE
       // inline is target dependent; do this now.
-      (void)TargetSelectInstruction(cast<Instruction>(I));
+      DenseMap<const Value *, unsigned>::iterator It =
+        FuncInfo.ValueMap.find(Address);
+      if (0 && It != FuncInfo.ValueMap.end()) {
+        BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, 
+                TII.get(TargetOpcode::DBG_VALUE))
+               .addReg(It->second, RegState::Debug).addImm(0).addMetadata(DI->getVariable());
+      } else
+        (void)TargetSelectInstruction(cast<Instruction>(I));
+    }
     return true;
   }
   case Intrinsic::dbg_value: {
