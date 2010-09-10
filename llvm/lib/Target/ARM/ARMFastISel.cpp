@@ -110,6 +110,7 @@ class ARMFastISel : public FastISel {
   #include "ARMGenFastISel.inc"
 
     // Instruction selection routines.
+  private:
     virtual bool ARMSelectLoad(const Instruction *I);
     virtual bool ARMSelectStore(const Instruction *I);
     virtual bool ARMSelectBranch(const Instruction *I);
