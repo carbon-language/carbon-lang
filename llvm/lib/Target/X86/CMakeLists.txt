@@ -29,7 +29,7 @@ set(sources
   X86InstrInfo.cpp
   X86JITInfo.cpp
   X86MCAsmInfo.cpp
-  X86MCCodeEmitter.cpp 
+  X86MCCodeEmitter.cpp
   X86MCInstLower.cpp
   X86RegisterInfo.cpp
   X86SelectionDAGInfo.cpp
@@ -49,4 +49,14 @@ if( CMAKE_CL_64 )
 endif()
 
 add_llvm_target(X86CodeGen ${sources})
-
+target_link_libraries(LLVMX86CodeGen
+  LLVMAnalysis
+  LLVMAsmPrinter
+  LLVMCodeGen
+  LLVMCore
+  LLVMMC
+  LLVMSelectionDAG
+  LLVMTarget
+  LLVMX86AsmPrinter
+  LLVMX86Info
+  )

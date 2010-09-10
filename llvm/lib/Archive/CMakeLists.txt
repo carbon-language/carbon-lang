@@ -3,3 +3,5 @@ add_llvm_library(LLVMArchive
   ArchiveReader.cpp
   ArchiveWriter.cpp
   )
+
+target_link_libraries(LLVMArchive LLVMBitReader LLVMCore)

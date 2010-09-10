@@ -1,5 +1,5 @@
-set(LLVM_LINK_COMPONENTS jit interpreter nativecodegen)
-
 add_llvm_example(Fibonacci
   fibonacci.cpp
   )
+
+add_llvm_link_components(Fibonacci jit interpreter nativecodegen)

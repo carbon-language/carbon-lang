@@ -13,3 +13,5 @@ add_llvm_library(LLVMTarget
   TargetRegisterInfo.cpp
   TargetSubtarget.cpp
   )
+
+target_link_libraries(LLVMTarget LLVMCore LLVMMC)

@@ -32,4 +32,10 @@ add_llvm_library(LLVMScalarOpts
   TailRecursionElimination.cpp
   )
 
-target_link_libraries (LLVMScalarOpts LLVMTransformUtils)
+target_link_libraries (LLVMScalarOpts
+  LLVMAnalysis
+  LLVMCore
+  LLVMInstCombine
+  LLVMTarget
+  LLVMTransformUtils
+  )

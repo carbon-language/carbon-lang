@@ -263,6 +263,7 @@ add_subdirectory(lib/System)
 
 # Everything else depends on Support and System:
 set(LLVM_COMMON_DEPENDS ${LLVM_COMMON_DEPENDS} ${LLVM_LIBS} )
+set(LLVM_COMMON_LIBS LLVMSupport LLVMSystem)
 
 set(LLVM_TABLEGEN "tblgen" CACHE
   STRING "Native TableGen executable. Saves building one when cross-compiling.")
@@ -361,6 +362,11 @@ option(LLVM_BUILD_EXAMPLES "Build LLVM example programs." OFF)
 add_subdirectory(examples)
 
 add_subdirectory(cmake/modules)
+
+install(EXPORT LLVM
+  DESTINATION lib${LLVM_LIBDIR_SUFFIX}/cmake/llvm/
+  FILE LLVMTargets.cmake
+  )
 
 install(DIRECTORY include/
   DESTINATION include
