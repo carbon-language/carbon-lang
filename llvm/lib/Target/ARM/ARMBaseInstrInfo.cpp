@@ -1377,12 +1377,25 @@ AnalyzeCompare(const MachineInstr *MI, unsigned &SrcReg, int &CmpValue) const {
   return false;
 }
 
-/// ConvertToSetZeroFlag - Convert the instruction to set the "zero" flag so
-/// that we can remove a "comparison with zero". Update the iterator *only* if a
-/// transformation took place.
+/// ConvertToSetZeroFlag - Convert the instruction supplying the argument to the
+/// comparison into one that sets the zero bit in the flags register. Update the
+/// iterator *only* if a transformation took place.
 bool ARMBaseInstrInfo::
-ConvertToSetZeroFlag(MachineInstr *MI, MachineInstr *CmpInstr,
+ConvertToSetZeroFlag(MachineInstr *CmpInstr,
                      MachineBasicBlock::iterator &MII) const {
+  unsigned SrcReg;
+  int CmpValue;
+  if (!AnalyzeCompare(CmpInstr, SrcReg, CmpValue) || CmpValue != 0)
+    return false;
+
+  MachineRegisterInfo &MRI = CmpInstr->getParent()->getParent()->getRegInfo();
+  MachineRegisterInfo::def_iterator DI = MRI.def_begin(SrcReg);
+  if (llvm::next(DI) != MRI.def_end())
+    // Only support one definition.
+    return false;
+
+  MachineInstr *MI = &*DI;
+
   // Conservatively refuse to convert an instruction which isn't in the same BB
   // as the comparison.
   if (MI->getParent() != CmpInstr->getParent())

@@ -240,16 +240,11 @@ bool PeepholeOptimizer::OptimizeCmpInstr(MachineInstr *MI,
   unsigned SrcReg;
   int CmpValue;
   if (!TII->AnalyzeCompare(MI, SrcReg, CmpValue) ||
-      TargetRegisterInfo::isPhysicalRegister(SrcReg) || CmpValue != 0)
-    return false;
-
-  MachineRegisterInfo::def_iterator DI = MRI->def_begin(SrcReg);
-  if (llvm::next(DI) != MRI->def_end())
-    // Only support one definition.
+      TargetRegisterInfo::isPhysicalRegister(SrcReg))
     return false;
 
   // Attempt to convert the defining instruction to set the "zero" flag.
-  if (TII->ConvertToSetZeroFlag(&*DI, MI, NextIter)) {
+  if (TII->ConvertToSetZeroFlag(MI, NextIter)) {
     ++NumEliminated;
     return true;
   }
