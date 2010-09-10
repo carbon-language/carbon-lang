@@ -559,6 +559,14 @@ CallExpr::CallExpr(ASTContext &C, StmtClass SC, EmptyShell Empty)
 
 Decl *CallExpr::getCalleeDecl() {
   Expr *CEE = getCallee()->IgnoreParenCasts();
+  // If we're calling a dereference, look at the pointer instead.
+  if (BinaryOperator *BO = dyn_cast<BinaryOperator>(CEE)) {
+    if (BO->isPtrMemOp())
+      CEE = BO->getRHS()->IgnoreParenCasts();
+  } else if (UnaryOperator *UO = dyn_cast<UnaryOperator>(CEE)) {
+    if (UO->getOpcode() == UO_Deref)
+      CEE = UO->getSubExpr()->IgnoreParenCasts();
+  }
   if (DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(CEE))
     return DRE->getDecl();
   if (MemberExpr *ME = dyn_cast<MemberExpr>(CEE))
