@@ -1,7 +1,5 @@
 set(LLVM_NO_RTTI 1)
 
-set(LLVM_USED_LIBS clangBasic clangLex clangAST clangFrontend clangRewrite)
-
 add_clang_library(clangChecker
   AdjustedReturnValueChecker.cpp
   AggExprVisitor.cpp
@@ -84,5 +82,17 @@ add_clang_library(clangChecker
   ValueManager.cpp
   )
 
-add_dependencies(clangChecker ClangAttrClasses ClangAttrList ClangDeclNodes
-                 ClangStmtNodes)
+target_link_libraries(clangChecker
+  clangBasic
+  clangLex
+  clangAST
+  clangFrontend
+  clangRewrite
+  )
+
+add_dependencies(clangChecker
+  ClangAttrClasses
+  ClangAttrList
+  ClangDeclNodes
+  ClangStmtNodes
+  )

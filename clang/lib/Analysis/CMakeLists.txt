@@ -1,7 +1,5 @@
 set(LLVM_NO_RTTI 1)
 
-set(LLVM_USED_LIBS clangBasic clangAST clangIndex)
-
 add_clang_library(clangAnalysis
   AnalysisContext.cpp
   CFG.cpp
@@ -15,5 +13,16 @@ add_clang_library(clangAnalysis
   UninitializedValues.cpp
   )
 
-add_dependencies(clangAnalysis ClangAttrClasses ClangAttrList
-                 ClangDiagnosticAnalysis ClangDeclNodes ClangStmtNodes)
+target_link_libraries(clangAnalysis
+  clangBasic
+  clangAST
+  clangIndex
+  )
+
+add_dependencies(clangAnalysis
+  ClangAttrClasses
+  ClangAttrList
+  ClangDiagnosticAnalysis
+  ClangDeclNodes
+  ClangStmtNodes
+  )

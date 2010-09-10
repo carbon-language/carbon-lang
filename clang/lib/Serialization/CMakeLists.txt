@@ -1,7 +1,5 @@
 set(LLVM_NO_RTTI 1)
 
-set(LLVM_USED_LIBS clangFrontend)
-
 add_clang_library(clangSerialization
   GeneratePCH.cpp
   ASTCommon.cpp
@@ -13,6 +11,10 @@ add_clang_library(clangSerialization
   ASTWriterStmt.cpp
   )
 
+target_link_libraries(clangSerialization
+  clangFrontend
+  )
+
 add_dependencies(clangSerialization
   ClangAttrClasses
   ClangAttrList
@@ -22,4 +24,5 @@ add_dependencies(clangSerialization
   ClangDiagnosticLex
   ClangDiagnosticSema
   ClangDeclNodes
-  ClangStmtNodes)
+  ClangStmtNodes
+  )

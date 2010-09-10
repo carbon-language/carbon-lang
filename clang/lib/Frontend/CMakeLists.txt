@@ -1,14 +1,5 @@
 set(LLVM_NO_RTTI 1)
 
-set( LLVM_USED_LIBS
-  clangDriver
-  clangParse
-  clangSema
-  clangAST
-  clangLex
-  clangBasic
-  )
-
 add_clang_library(clangFrontend
   ASTConsumers.cpp
   ASTMerge.cpp
@@ -36,6 +27,17 @@ add_clang_library(clangFrontend
   Warnings.cpp
   )
 
+target_link_libraries(clangFrontend
+  LLVMCore
+
+  clangDriver
+  clangParse
+  clangSema
+  clangAST
+  clangLex
+  clangBasic
+  )
+
 IF(MSVC)
   get_target_property(NON_ANSI_COMPILE_FLAGS clangFrontend COMPILE_FLAGS)
   string(REPLACE /Za
@@ -44,12 +46,13 @@ IF(MSVC)
   set_target_properties(clangFrontend PROPERTIES COMPILE_FLAGS ${NON_ANSI_COMPILE_FLAGS})
 ENDIF(MSVC)
 
-add_dependencies(clangFrontend 
+add_dependencies(clangFrontend
   ClangAttrClasses
   ClangAttrList
   ClangCC1Options
-  ClangDiagnosticFrontend 
+  ClangDiagnosticFrontend
   ClangDiagnosticLex
   ClangDiagnosticSema
   ClangDeclNodes
-  ClangStmtNodes)
+  ClangStmtNodes
+  )

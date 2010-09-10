@@ -1,7 +1,5 @@
 set(LLVM_NO_RTTI 1)
 
-set(LLVM_USED_LIBS clangBasic clangAST clangFrontend)
-
 add_clang_library(clangCodeGen
   BackendUtil.cpp
   CGBlocks.cpp
@@ -39,5 +37,17 @@ add_clang_library(clangCodeGen
   TargetInfo.cpp
   )
 
-add_dependencies(clangCodeGen ClangAttrClasses ClangAttrList ClangDeclNodes
-                 ClangStmtNodes)
+target_link_libraries(clangCodeGen
+  LLVMCore
+  LLVMAsmParser
+  LLVMBitReader
+  LLVMBitWriter
+  LLVMipo
+  )
+
+add_dependencies(clangCodeGen
+  ClangAttrClasses
+  ClangAttrList
+  ClangDeclNodes
+  ClangStmtNodes
+  )

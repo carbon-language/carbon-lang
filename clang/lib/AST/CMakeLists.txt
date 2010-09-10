@@ -1,7 +1,5 @@
 set(LLVM_NO_RTTI 1)
 
-set(LLVM_USED_LIBS clangBasic)
-
 add_clang_library(clangAST
   APValue.cpp
   ASTConsumer.cpp
@@ -44,5 +42,16 @@ add_clang_library(clangAST
   TypePrinter.cpp
   )
 
-add_dependencies(clangAST ClangARMNeon ClangAttrClasses ClangAttrList 
-                 ClangAttrImpl ClangDiagnosticAST ClangDeclNodes ClangStmtNodes)
+target_link_libraries(clangAST
+  clangBasic
+  )
+
+add_dependencies(clangAST
+  ClangARMNeon
+  ClangAttrClasses
+  ClangAttrList
+  ClangAttrImpl
+  ClangDiagnosticAST
+  ClangDeclNodes
+  ClangStmtNodes
+  )

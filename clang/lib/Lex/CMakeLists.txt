@@ -2,8 +2,6 @@ set(LLVM_NO_RTTI 1)
 
 # TODO: Add -maltivec when ARCH is PowerPC.
 
-set(LLVM_USED_LIBS clangBasic)
-
 add_clang_library(clangLex
   HeaderMap.cpp
   HeaderSearch.cpp
@@ -26,4 +24,10 @@ add_clang_library(clangLex
   TokenLexer.cpp
   )
 
-add_dependencies(clangLex ClangDiagnosticLex)
+target_link_libraries(clangLex
+  clangBasic
+  )
+
+add_dependencies(clangLex
+  ClangDiagnosticLex
+  )

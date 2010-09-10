@@ -24,7 +24,7 @@ if( NOT CMAKE_SOURCE_DIR STREQUAL CMAKE_BINARY_DIR )
 endif()
 
 # Compute the Clang version from the LLVM version.
-string(REGEX MATCH "[0-9]+\\.[0-9]+(\\.[0-9]+)?" CLANG_VERSION 
+string(REGEX MATCH "[0-9]+\\.[0-9]+(\\.[0-9]+)?" CLANG_VERSION
   ${PACKAGE_VERSION})
 message(STATUS "Clang version: ${CLANG_VERSION}")
 
@@ -63,7 +63,7 @@ macro(add_clang_library name)
     set(srcs ${srcs} ${headers})
     string( REGEX MATCHALL "/[^/]+" split_path ${CMAKE_CURRENT_SOURCE_DIR})
     list( GET split_path -1 dir)
-    file( GLOB_RECURSE headers 
+    file( GLOB_RECURSE headers
       ../../include/clang${dir}/*.h
       ../../include/clang${dir}/*.td
       ../../include/clang${dir}/*.def)
@@ -92,6 +92,9 @@ macro(add_clang_library name)
   if( llvm_system_libs )
     target_link_libraries(${name} ${llvm_system_libs})
   endif( llvm_system_libs )
+  if (LLVM_COMMON_LIBS)
+    target_link_libraries(${name} ${LLVM_COMMON_LIBS})
+  endif()
   add_dependencies(${name} ClangDiagnosticCommon)
   if(MSVC)
     get_target_property(cflag ${name} COMPILE_FLAGS)
@@ -102,6 +105,7 @@ macro(add_clang_library name)
     set_target_properties(${name} PROPERTIES COMPILE_FLAGS ${cflag})
   endif(MSVC)
   install(TARGETS ${name}
+    EXPORT LLVM
     LIBRARY DESTINATION lib${LLVM_LIBDIR_SUFFIX}
     ARCHIVE DESTINATION lib${LLVM_LIBDIR_SUFFIX})
 endmacro(add_clang_library)

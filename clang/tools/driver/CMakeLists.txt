@@ -1,6 +1,20 @@
 set(LLVM_NO_RTTI 1)
 
-set( LLVM_USED_LIBS
+add_clang_executable(clang
+  driver.cpp
+  cc1_main.cpp
+  cc1as_main.cpp
+  )
+
+add_llvm_link_components(clang all)
+target_link_libraries(clang
+  LLVMAsmParser
+  LLVMBitReader
+  LLVMBitWriter
+  LLVMCodeGen
+  LLVMipo
+  LLVMSelectionDAG
+
   clangFrontendTool
   clangFrontend
   clangDriver
@@ -15,22 +29,6 @@ set( LLVM_USED_LIBS
   clangAST
   clangLex
   clangBasic
-  )
-
-set( LLVM_LINK_COMPONENTS
-  ${LLVM_TARGETS_TO_BUILD}
-  asmparser
-  bitreader
-  bitwriter
-  codegen
-  ipo
-  selectiondag
-  )
-
-add_clang_executable(clang
-  driver.cpp
-  cc1_main.cpp
-  cc1as_main.cpp
   )
 
 if(UNIX)

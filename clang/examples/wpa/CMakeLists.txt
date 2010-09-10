@@ -1,6 +1,10 @@
 set(LLVM_NO_RTTI 1)
 
-set(LLVM_USED_LIBS
+add_clang_executable(clang-wpa
+  clang-wpa.cpp
+  )
+
+target_link_libraries(clang-wpa
   clangIndex
   clangFrontend
   clangDriver
@@ -12,15 +16,9 @@ set(LLVM_USED_LIBS
   clangAST
   clangParse
   clangLex
-  clangBasic)
-
-set( LLVM_LINK_COMPONENTS
-  bitreader
-  mc
-  core
+  clangBasic
   )
 
-add_clang_executable(clang-wpa
-  clang-wpa.cpp
+add_dependencies(clang-wpa
+  clang-headers
   )
-add_dependencies(clang-wpa clang-headers)
