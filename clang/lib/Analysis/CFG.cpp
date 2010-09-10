@@ -1244,6 +1244,10 @@ CFGBlock* CFGBuilder::VisitObjCAtSynchronizedStmt(ObjCAtSynchronizedStmt* S) {
     Succ = SyncBlock;
   }
 
+  // Add the @synchronized to the CFG.
+  autoCreateBlock();
+  AppendStmt(Block, S, AddStmtChoice::AlwaysAdd);
+
   // Inline the sync expression.
   return addStmt(S->getSynchExpr());
 }

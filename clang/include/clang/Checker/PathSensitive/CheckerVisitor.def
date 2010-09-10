@@ -24,6 +24,7 @@ PREVISIT(BinaryOperator, Stmt)
 PREVISIT(CallExpr, Stmt)
 PREVISIT(CXXOperatorCallExpr, CallExpr)
 PREVISIT(DeclStmt, Stmt)
+PREVISIT(ObjCAtSynchronizedStmt, Stmt)
 PREVISIT(ObjCMessageExpr, Stmt)
 PREVISIT(ReturnStmt, Stmt)
 

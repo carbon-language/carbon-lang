@@ -809,6 +809,10 @@ void GRExprEngine::Visit(const Stmt* S, ExplodedNode* Pred,
       break;
     }
 
+    case Stmt::ObjCAtSynchronizedStmtClass:
+      VisitObjCAtSynchronizedStmt(cast<ObjCAtSynchronizedStmt>(S), Pred, Dst);
+      break;
+
     // Cases not handled yet; but will handle some day.
     case Stmt::DesignatedInitExprClass:
     case Stmt::ExtVectorElementExprClass:
@@ -816,7 +820,6 @@ void GRExprEngine::Visit(const Stmt* S, ExplodedNode* Pred,
     case Stmt::ImplicitValueInitExprClass:
     case Stmt::ObjCAtCatchStmtClass:
     case Stmt::ObjCAtFinallyStmtClass:
-    case Stmt::ObjCAtSynchronizedStmtClass:
     case Stmt::ObjCAtTryStmtClass:
     case Stmt::ObjCEncodeExprClass:
     case Stmt::ObjCImplicitSetterGetterRefExprClass:
@@ -2241,6 +2244,23 @@ void GRExprEngine::EvalEagerlyAssume(ExplodedNodeSet &Dst, ExplodedNodeSet &Src,
     else
       Dst.Add(Pred);
   }
+}
+
+//===----------------------------------------------------------------------===//
+// Transfer function: Objective-C @synchronized.
+//===----------------------------------------------------------------------===//
+
+void GRExprEngine::VisitObjCAtSynchronizedStmt(const ObjCAtSynchronizedStmt *S,
+                                               ExplodedNode *Pred,
+                                               ExplodedNodeSet &Dst) {
+
+  // The mutex expression is a CFGElement, so we don't need to explicitly
+  // visit it since it will already be processed.
+
+  // Pre-visit the ObjCAtSynchronizedStmt.
+  ExplodedNodeSet Tmp;
+  Tmp.Add(Pred);
+  CheckerVisit(S, Dst, Tmp, PreVisitStmtCallback);
 }
 
 //===----------------------------------------------------------------------===//

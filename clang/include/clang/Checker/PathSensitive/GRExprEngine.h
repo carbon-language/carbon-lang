@@ -26,6 +26,7 @@
 #include "clang/AST/Type.h"
 #include "clang/AST/ExprObjC.h"
 #include "clang/AST/ExprCXX.h"
+#include "clang/AST/StmtObjC.h"
 
 namespace clang {
 class AnalysisManager;
@@ -385,6 +386,10 @@ public:
   /// VisitMemberExpr - Transfer function for member expressions.
   void VisitMemberExpr(const MemberExpr* M, ExplodedNode* Pred, 
                        ExplodedNodeSet& Dst, bool asLValue);
+
+  /// Transfer function logic for ObjCAtSynchronizedStmts.
+  void VisitObjCAtSynchronizedStmt(const ObjCAtSynchronizedStmt *S,
+                                   ExplodedNode *Pred, ExplodedNodeSet &Dst);
 
   /// VisitObjCIvarRefExpr - Transfer function logic for ObjCIvarRefExprs.
   void VisitObjCIvarRefExpr(const ObjCIvarRefExpr* DR, ExplodedNode* Pred,
