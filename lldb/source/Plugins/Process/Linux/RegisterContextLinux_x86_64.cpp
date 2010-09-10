@@ -305,23 +305,23 @@ g_reg_sets[k_num_register_sets] =
 
 #define DEFINE_GPR(reg, alt, kind1, kind2, kind3, kind4)        \
     { #reg, alt, GPR_SIZE(reg), GPR_OFFSET(reg), eEncodingUint, \
-      eFormatHex, gpr_##reg, { kind1, kind2, kind3, kind4 } }
+      eFormatHex, { kind1, kind2, kind3, kind4, gpr_##reg } }
 
 #define DEFINE_FPR(reg, kind1, kind2, kind3, kind4)              \
     { #reg, NULL, FPR_SIZE(reg), FPR_OFFSET(reg), eEncodingUint, \
-      eFormatHex, fpu_##reg, { kind1, kind2, kind3, kind4 } }
+      eFormatHex, { kind1, kind2, kind3, kind4, fpu_##reg } }
 
 #define DEFINE_FP(reg, i)                                          \
     { #reg#i, NULL, FP_SIZE, FPR_OFFSET(reg[i]), eEncodingVector,  \
-      eFormatVectorOfUInt8, fpu_##reg##i,                          \
+      eFormatVectorOfUInt8,                                        \
       { gcc_dwarf_fpu_##reg##i, gcc_dwarf_fpu_##reg##i,            \
-        LLDB_INVALID_REGNUM, gdb_fpu_##reg##i } }
+        LLDB_INVALID_REGNUM, gdb_fpu_##reg##i, fpu_##reg##i } }
 
 #define DEFINE_XMM(reg, i)                                         \
     { #reg#i, NULL, XMM_SIZE, FPR_OFFSET(reg[i]), eEncodingVector, \
-      eFormatVectorOfUInt8, fpu_##reg##i,                          \
+      eFormatVectorOfUInt8,                                        \
       { gcc_dwarf_fpu_##reg##i, gcc_dwarf_fpu_##reg##i,            \
-        LLDB_INVALID_REGNUM, gdb_fpu_##reg##i } }
+        LLDB_INVALID_REGNUM, gdb_fpu_##reg##i, fpu_##reg##i } }
 
 static RegisterInfo
 g_register_infos[k_num_registers] =
@@ -641,6 +641,10 @@ RegisterContextLinux_x86_64::ConvertRegisterKindToRegisterNumber(uint32_t kind,
         default:
             return LLDB_INVALID_REGNUM;
         }
+    }
+    else if (kind == eRegisterKindLLDB)
+    {
+        return reg;
     }
 
     return LLDB_INVALID_REGNUM;

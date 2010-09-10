@@ -11,6 +11,7 @@
 
 // C Includes
 #include <dirent.h>
+#include <mach/machine.h>
 #include "llvm/Support/MachO.h"
 
 // C++ Includes

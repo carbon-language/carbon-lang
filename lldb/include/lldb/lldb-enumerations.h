@@ -198,10 +198,11 @@ typedef enum ScriptLanguage
 //----------------------------------------------------------------------
 typedef enum RegisterKind
 {
-    eRegisterKindGCC = 0,
-    eRegisterKindDWARF,
-    eRegisterKindGeneric,
-    eRegisterKindGDB,
+    eRegisterKindGCC = 0,    // the register numbers seen in eh_frame
+    eRegisterKindDWARF,      // the register numbers seen DWARF
+    eRegisterKindGeneric,    // insn ptr reg, stack ptr reg, etc not specific to any particular target
+    eRegisterKindGDB,        // the register numbers gdb uses (matches stabs numbers?)
+    eRegisterKindLLDB,       // lldb's internal register numbers
     kNumRegisterKinds
 } RegisterKind;
 

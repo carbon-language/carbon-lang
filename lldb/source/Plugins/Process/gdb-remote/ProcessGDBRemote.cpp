@@ -214,12 +214,12 @@ ProcessGDBRemote::BuildDynamicRegisterInfo ()
                     reg_offset,           // offset
                     eEncodingUint,        // encoding
                     eFormatHex,           // formate
-                    reg_num,              // native register number
                     {
                         LLDB_INVALID_REGNUM, // GCC reg num
                         LLDB_INVALID_REGNUM, // DWARF reg num
                         LLDB_INVALID_REGNUM, // generic reg num
-                        reg_num              // GDB reg num
+                        reg_num,             // GDB reg num
+                        reg_num           // native register number
                     }
                 };
 

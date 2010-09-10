@@ -86,11 +86,11 @@ MachThreadContext_arm::InitializeInstance()
     const RegisterInfo * reg_info;
     reg_info = reg_ctx->GetRegisterInfoByName ("bvr0");
     if (reg_info)
-        m_bvr0_reg = reg_info->reg;
+        m_bvr0_reg = reg_info->kinds[eRegisterKindLLDB];
 
     reg_info = reg_ctx->GetRegisterInfoByName ("bcr0");
     if (reg_info)
-        m_bcr0_reg = reg_info->reg;
+        m_bcr0_reg = reg_info->kinds[eRegisterKindLLDB];
 }
 
 

@@ -10,301 +10,120 @@
 #ifndef liblldb_DWARFCallFrameInfo_h_
 #define liblldb_DWARFCallFrameInfo_h_
 
-// C Includes
-// C++ Includes
 #include <map>
 
-// Other libraries and framework includes
-// Project includes
 #include "lldb/lldb-private.h"
 #include "lldb/Core/DataExtractor.h"
 #include "lldb/Core/Flags.h"
 #include "lldb/Core/AddressRange.h"
 #include "lldb/Core/VMRange.h"
 #include "lldb/Core/dwarf.h"
+#include "lldb/Symbol/UnwindPlan.h"
+#include "lldb/Symbol/ObjectFile.h"
 
 namespace lldb_private {
-//----------------------------------------------------------------------
-// DWARFCallFrameInfo
-//
-// State that describes all register locations for a given address
-// range.
-//----------------------------------------------------------------------
+
+// DWARFCallFrameInfo is a class which can read eh_frame and DWARF
+// Call Frame Information FDEs.  It stores little information internally.
+// Only two APIs are exported - one to find the high/low pc values
+// of a function given a text address via the information in the
+// eh_frame / debug_frame, and one to generate an UnwindPlan based
+// on the FDE in the eh_frame / debug_frame section.
 
 class DWARFCallFrameInfo
 {
 public:
+
+    DWARFCallFrameInfo (ObjectFile& objfile, lldb::SectionSP& section, uint32_t reg_kind, bool is_eh_frame);
+
+    ~DWARFCallFrameInfo();
+
+    // Locate an AddressRange that includes the provided Address in this 
+    // object's eh_frame/debug_info
+    // Returns true if a range is found to cover that address.
+    bool
+    GetAddressRange (Address addr, AddressRange &range);
+
+    // Return an UnwindPlan based on the call frame information encoded 
+    // in the FDE of this DWARFCallFrameInfo section.
+    bool
+    GetUnwindPlan (Address addr, UnwindPlan& unwind_plan);
+
+
+private:
     enum
     {
         CFI_AUG_MAX_SIZE = 8,
         CFI_HEADER_SIZE = 8
     };
 
-    class Row;
-
-    class RegisterLocation
-    {
-    public:
-
-        enum Type
-            {
-                unspecified,    // not specified, we may be able to assume this is the same register.
-                                // gcc doesn't specify all initial values so we really don't know...
-                isUndefined,    // reg is not available
-                isSame,         // reg is unchanged
-                atCFAPlusOffset,// reg = deref(CFA + offset)
-                isCFAPlusOffset,// reg = CFA + offset
-                inOtherRegister,// reg = other reg
-                atDWARFExpression,  // reg = deref(eval(dwarf_expr))
-                isDWARFExpression       // reg = eval(dwarf_expr)
-            };
-
-        RegisterLocation();
-
-        bool
-        operator == (const RegisterLocation& rhs) const;
-
-        void
-        Dump(Stream *s, const DWARFCallFrameInfo &cfi, Thread *thread, const Row *row, uint32_t reg_num) const;
-
-        void
-        SetUnspecified();
-
-        void
-        SetUndefined();
-
-        void
-        SetSame() ;
-
-        void
-        SetAtCFAPlusOffset (int64_t offset);
-
-        void
-        SetIsCFAPlusOffset (int64_t offset);
-
-        void
-        SetInRegister (uint32_t reg_num);
-
-        void
-        SetAtDWARFExpression (const uint8_t *opcodes, uint32_t len);
-
-        void
-        SetIsDWARFExpression (const uint8_t *opcodes, uint32_t len);
-
-    protected:
-        Type m_type;            // How do we locate this register?
-        union
-        {
-            // For m_type == atCFAPlusOffset or m_type == isCFAPlusOffset
-            int32_t offset;
-            // For m_type == inOtherRegister
-            uint32_t reg_num; // The register number
-            // For m_type == atDWARFExpression or m_type == isDWARFExpression
-            struct {
-                const uint8_t *opcodes;
-                uint32_t length;
-            } expr;
-        } m_location;
-    };
-
-    class Row
-    {
-    public:
-
-        Row ();
-
-        ~Row ();
-
-        void
-        Clear();
-
-        void
-        Dump(Stream* s, const DWARFCallFrameInfo &cfi, Thread *thread, lldb::addr_t base_addr) const;
-
-        bool
-        GetRegisterInfo (uint32_t reg_num, RegisterLocation& register_location) const;
-
-        void
-        SetRegisterInfo (uint32_t reg_num, const RegisterLocation& register_location);
-
-        lldb::addr_t
-        GetOffset() const
-        {
-            return m_offset;
-        }
-
-        void
-        SetOffset(lldb::addr_t offset)
-        {
-            m_offset = offset;
-        }
-
-        void
-        SlideOffset (lldb::addr_t slide)
-        {
-            m_offset += slide;
-        }
-
-        uint32_t
-        GetCFARegister () const
-        {
-            return m_cfa_reg_num;
-        }
-
-        void
-        SetCFARegister (uint32_t reg_num)
-        {
-            m_cfa_reg_num = reg_num;
-        }
-
-        int32_t
-        GetCFAOffset () const
-        {
-            return m_cfa_offset;
-        }
-
-        void
-        SetCFAOffset (int32_t offset)
-        {
-            m_cfa_offset = offset;
-        }
-
-    protected:
-        typedef std::map<uint32_t, RegisterLocation> collection;
-        lldb::addr_t m_offset;          // The an offset into the DBAddressRange that owns this row.
-        uint32_t m_cfa_reg_num;     // The Call Frame Address register number
-        int32_t  m_cfa_offset;      // The offset from the CFA for this row
-        collection m_register_locations;
-    };
-
-    //------------------------------------------------------------------
-    // Common Information Entry (CIE)
-    //------------------------------------------------------------------
-protected:
-
     struct CIE
     {
-        typedef lldb::SharedPtr<CIE>::Type shared_ptr;
         dw_offset_t cie_offset;
         uint8_t     version;
-        char        augmentation[CFI_AUG_MAX_SIZE];  // This is typically empty or very short. If we ever run into the limit, make this a NSData pointer
+        char        augmentation[CFI_AUG_MAX_SIZE];  // This is typically empty or very short.
         uint32_t    code_align;
         int32_t     data_align;
         uint32_t    return_addr_reg_num;
         dw_offset_t inst_offset;        // offset of CIE instructions in mCFIData
         uint32_t    inst_length;        // length of CIE instructions in mCFIData
         uint8_t     ptr_encoding;
+        lldb_private::UnwindPlan::Row initial_row;
 
-        CIE(dw_offset_t offset);
-        ~CIE();
-
-        void
-        Dump(Stream *s, Thread* threadState, const ArchSpec *arch, uint32_t reg_kind) const;
+        CIE(dw_offset_t offset) : cie_offset(offset), initial_row() {}
     };
 
-    //------------------------------------------------------------------
-    // Frame Description Entry (FDE)
-    //------------------------------------------------------------------
-public:
+    typedef lldb::SharedPtr<CIE>::Type CIESP;
 
-    class FDE
+    struct FDEEntry
     {
-    public:
-        typedef lldb::SharedPtr<FDE>::Type shared_ptr;
+        AddressRange bounds;   // function bounds
+        dw_offset_t offset;    // offset to this FDE within the Section
 
-        FDE (uint32_t offset, const AddressRange &range);
-        ~FDE();
-
-        const AddressRange &
-        GetAddressRange() const;
-
-        void
-        AppendRow (const Row &row);
-
-        bool
-        IsValidRowIndex (uint32_t idx) const;
-
-        void
-        Dump (Stream *s, const DWARFCallFrameInfo &cfi, Thread* thread) const;
-
-        const Row&
-        GetRowAtIndex (uint32_t idx);
-
-    protected:
-        typedef std::vector<Row> collection;
-        uint32_t m_fde_offset;
-        AddressRange m_range;
-        collection m_row_list;
-    private:
-        DISALLOW_COPY_AND_ASSIGN (FDE);
+        inline bool
+        operator<(const DWARFCallFrameInfo::FDEEntry& b) const
+        {
+            if (bounds.GetBaseAddress().GetOffset() < b.bounds.GetBaseAddress().GetOffset())
+                return true;
+            else
+                return false;
+        }
     };
 
-    DWARFCallFrameInfo(ObjectFile *objfile, lldb_private::Section *section, uint32_t reg_kind);
-
-    ~DWARFCallFrameInfo();
+    typedef std::map<off_t, CIESP> cie_map_t;
 
     bool
     IsEHFrame() const;
 
-    const ArchSpec *
-    GetArchitecture() const;
-
-    uint32_t
-    GetRegisterKind () const;
+    bool
+    GetFDEEntryByAddress (Address addr, FDEEntry& fde_entry);
 
     void
-    SetRegisterKind (uint32_t reg_kind);
+    GetFDEIndex ();
 
-    void
-    Index ();
+    bool
+    FDEToUnwindPlan (uint32_t offset, Address startaddr, UnwindPlan& unwind_plan);
 
-//  bool        UnwindRegister (const uint32_t reg_num, const Thread* currState, const Row* row, Thread* unwindState);
-//  uint32_t    UnwindThreadState(const Thread* curr_state, bool is_first_frame, Thread* unwound_state);
-    const FDE *
-    FindFDE(const Address &addr);
+    const CIE* 
+    GetCIE(dw_offset_t cie_offset);
 
-    void
-    Dump(Stream *s, Thread *thread) const;
+    ObjectFile&                 m_objfile;
+    lldb::SectionSP             m_section;
+    uint32_t                    m_reg_kind;
+    Flags                       m_flags;
+    cie_map_t                   m_cie_map;
 
-    void
-    ParseAll();
-protected:
+    DataExtractor               m_cfi_data;
+    bool                        m_cfi_data_initialized;   // only copy the section into the DE once
 
-    enum
-    {
-        eFlagParsedIndex = (1 << 0)
-    };
+    std::vector<FDEEntry>       m_fde_index;
+    bool                        m_fde_index_initialized;  // only scan the section for FDEs once
 
-    typedef std::map<off_t, CIE::shared_ptr> cie_map_t;
-    struct FDEInfo
-    {
-        off_t fde_offset;
-        FDE::shared_ptr fde_sp;
-        FDEInfo (off_t offset);
-        FDEInfo ();
+    bool                        m_is_eh_frame;
 
-    };
-    typedef std::map<VMRange, FDEInfo> fde_map_t;
-
-    ObjectFile *    m_objfile;
-    lldb_private::Section *     m_section;
-    uint32_t        m_reg_kind;
-    Flags           m_flags;
-    DataExtractor   m_cfi_data;
-    cie_map_t       m_cie_map;
-    fde_map_t       m_fde_map;
-
-    const CIE*
-    GetCIE (uint32_t offset);
-
-    void
-    ParseInstructions(const CIE *cie, FDE *fde, uint32_t instr_offset, uint32_t instr_length);
-
-    CIE::shared_ptr
+    CIESP
     ParseCIE (const uint32_t cie_offset);
 
-    FDE::shared_ptr
-    ParseFDE (const uint32_t fde_offset);
 };
 
 } // namespace lldb_private

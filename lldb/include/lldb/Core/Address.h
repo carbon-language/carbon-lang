@@ -429,7 +429,7 @@ public:
     SetSection (const Section* section) { m_section = section; }
 
     //------------------------------------------------------------------
-    /// Reconstruct a symbol context from ad address.
+    /// Reconstruct a symbol context from an address.
     ///
     /// This class doesn't inherit from SymbolContextScope because many
     /// address objects have short lifespans. Address objects that are

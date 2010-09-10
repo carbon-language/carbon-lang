@@ -107,7 +107,6 @@ namespace lldb {
         uint32_t        byte_offset;    // The byte offset in the register context data where this register's value is found
         lldb::Encoding  encoding;       // Encoding of the register bits
         lldb::Format    format;         // Default display format
-        uint32_t        reg;            // The native register number for this register
         uint32_t        kinds[kNumRegisterKinds];   // Holds all of the various register numbers for all register kinds
     } RegisterInfo;
 

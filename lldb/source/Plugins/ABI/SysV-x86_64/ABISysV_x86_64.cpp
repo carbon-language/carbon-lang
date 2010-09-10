@@ -63,7 +63,7 @@ ABISysV_x86_64::PrepareTrivialCall (Thread &thread,
     if (!reg_ctx)
         return false;
 
-    uint32_t rdiID = reg_ctx->GetRegisterInfoByName("rdi", 0)->reg;
+    uint32_t rdiID = reg_ctx->GetRegisterInfoByName("rdi", 0)->kinds[eRegisterKindLLDB];
 #define CHAIN_RBP
     
 #ifndef CHAIN_RBP
@@ -226,12 +226,12 @@ ABISysV_x86_64::GetArgumentValues (Thread &thread,
     
     uint32_t argument_register_ids[6];
     
-    argument_register_ids[0] = reg_ctx->GetRegisterInfoByName("rdi", 0)->reg;
-    argument_register_ids[1] = reg_ctx->GetRegisterInfoByName("rsi", 0)->reg;
-    argument_register_ids[2] = reg_ctx->GetRegisterInfoByName("rdx", 0)->reg;
-    argument_register_ids[3] = reg_ctx->GetRegisterInfoByName("rcx", 0)->reg;
-    argument_register_ids[4] = reg_ctx->GetRegisterInfoByName("r8", 0)->reg;
-    argument_register_ids[5] = reg_ctx->GetRegisterInfoByName("r9", 0)->reg;
+    argument_register_ids[0] = reg_ctx->GetRegisterInfoByName("rdi", 0)->kinds[eRegisterKindLLDB];
+    argument_register_ids[1] = reg_ctx->GetRegisterInfoByName("rsi", 0)->kinds[eRegisterKindLLDB];
+    argument_register_ids[2] = reg_ctx->GetRegisterInfoByName("rdx", 0)->kinds[eRegisterKindLLDB];
+    argument_register_ids[3] = reg_ctx->GetRegisterInfoByName("rcx", 0)->kinds[eRegisterKindLLDB];
+    argument_register_ids[4] = reg_ctx->GetRegisterInfoByName("r8", 0)->kinds[eRegisterKindLLDB];
+    argument_register_ids[5] = reg_ctx->GetRegisterInfoByName("r9", 0)->kinds[eRegisterKindLLDB];
     
     unsigned int current_argument_register = 0;
     
@@ -313,7 +313,7 @@ ABISysV_x86_64::GetReturnValue (Thread &thread,
                 // Extract the register context so we can read arguments from registers
                 
                 size_t bit_width = ClangASTType::GetClangTypeBitWidth(ast_context, value_type);
-                unsigned rax_id = reg_ctx->GetRegisterInfoByName("rax", 0)->reg;
+                unsigned rax_id = reg_ctx->GetRegisterInfoByName("rax", 0)->kinds[eRegisterKindLLDB];
                 
                 switch (bit_width)
                 {
@@ -349,7 +349,7 @@ ABISysV_x86_64::GetReturnValue (Thread &thread,
             }
             else if (ClangASTContext::IsPointerType (value_type))
             {
-                unsigned rax_id = reg_ctx->GetRegisterInfoByName("rax", 0)->reg;
+                unsigned rax_id = reg_ctx->GetRegisterInfoByName("rax", 0)->kinds[eRegisterKindLLDB];
                 value.GetScalar() = (uint64_t)thread.GetRegisterContext()->ReadRegisterAsUnsigned(rax_id, 0);
             }
             else

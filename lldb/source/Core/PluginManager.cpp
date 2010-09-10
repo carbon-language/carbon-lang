@@ -1131,3 +1131,244 @@ PluginManager::GetSymbolVendorCreateCallbackForPluginName (const char *name)
 }
 
 
+#pragma mark UnwindAssemblyProfiler
+
+struct UnwindAssemblyProfilerInstance
+{
+    UnwindAssemblyProfilerInstance() :
+        name(),
+        description(),
+        create_callback(NULL)
+    {
+    }
+
+    std::string name;
+    std::string description;
+    UnwindAssemblyProfilerCreateInstance create_callback;
+};
+
+typedef std::vector<UnwindAssemblyProfilerInstance> UnwindAssemblyProfilerInstances;
+
+static bool
+AccessUnwindAssemblyProfilerInstances (PluginAction action, UnwindAssemblyProfilerInstance &instance, uint32_t index)
+{
+    static UnwindAssemblyProfilerInstances g_plugin_instances;
+
+    switch (action)
+    {
+    case ePluginRegisterInstance:
+        if (instance.create_callback)
+        {
+            g_plugin_instances.push_back (instance);
+            return true;
+        }
+        break;
+
+    case ePluginUnregisterInstance:
+        if (instance.create_callback)
+        {
+            UnwindAssemblyProfilerInstances::iterator pos, end = g_plugin_instances.end();
+            for (pos = g_plugin_instances.begin(); pos != end; ++ pos)
+            {
+                if (pos->create_callback == instance.create_callback)
+                {
+                    g_plugin_instances.erase(pos);
+                    return true;
+                }
+            }
+        }
+        break;
+
+    case ePluginGetInstanceAtIndex:
+        if (index < g_plugin_instances.size())
+        {
+            instance = g_plugin_instances[index];
+            return true;
+        }
+        break;
+
+    default:
+        break;
+    }
+    return false;
+}
+
+bool
+PluginManager::RegisterPlugin
+(
+    const char *name,
+    const char *description,
+    UnwindAssemblyProfilerCreateInstance create_callback
+)
+{
+    if (create_callback)
+    {
+        UnwindAssemblyProfilerInstance instance;
+        assert (name && name[0]);
+        instance.name = name;
+        if (description && description[0])
+            instance.description = description;
+        instance.create_callback = create_callback;
+        return AccessUnwindAssemblyProfilerInstances (ePluginRegisterInstance, instance, 0);
+    }
+    return false;
+}
+
+bool
+PluginManager::UnregisterPlugin (UnwindAssemblyProfilerCreateInstance create_callback)
+{
+    if (create_callback)
+    {
+        UnwindAssemblyProfilerInstance instance;
+        instance.create_callback = create_callback;
+        return AccessUnwindAssemblyProfilerInstances (ePluginUnregisterInstance, instance, 0);
+    }
+    return false;
+}
+
+UnwindAssemblyProfilerCreateInstance
+PluginManager::GetUnwindAssemblyProfilerCreateCallbackAtIndex (uint32_t idx)
+{
+    UnwindAssemblyProfilerInstance instance;
+    if (AccessUnwindAssemblyProfilerInstances (ePluginGetInstanceAtIndex, instance, idx))
+        return instance.create_callback;
+    return NULL;
+}
+
+UnwindAssemblyProfilerCreateInstance
+PluginManager::GetUnwindAssemblyProfilerCreateCallbackForPluginName (const char *name)
+{
+    if (name && name[0])
+    {
+        UnwindAssemblyProfilerInstance instance;
+        std::string ss_name(name);
+        for (uint32_t idx = 0; AccessUnwindAssemblyProfilerInstances (ePluginGetInstanceAtIndex, instance, idx); ++idx)
+        {
+            if (instance.name == ss_name)
+                return instance.create_callback;
+        }
+    }
+    return NULL;
+}
+
+#pragma mark ArchDefaultUnwindPlan
+
+struct ArchDefaultUnwindPlanInstance
+{
+    ArchDefaultUnwindPlanInstance() :
+        name(),
+        description(),
+        create_callback(NULL)
+    {
+    }
+
+    std::string name;
+    std::string description;
+    ArchDefaultUnwindPlanCreateInstance create_callback;
+};
+
+typedef std::vector<ArchDefaultUnwindPlanInstance> ArchDefaultUnwindPlanInstances;
+
+static bool
+AccessArchDefaultUnwindPlanInstances (PluginAction action, ArchDefaultUnwindPlanInstance &instance, uint32_t index)
+{
+    static ArchDefaultUnwindPlanInstances g_plugin_instances;
+
+    switch (action)
+    {
+    case ePluginRegisterInstance:
+        if (instance.create_callback)
+        {
+            g_plugin_instances.push_back (instance);
+            return true;
+        }
+        break;
+
+    case ePluginUnregisterInstance:
+        if (instance.create_callback)
+        {
+            ArchDefaultUnwindPlanInstances::iterator pos, end = g_plugin_instances.end();
+            for (pos = g_plugin_instances.begin(); pos != end; ++ pos)
+            {
+                if (pos->create_callback == instance.create_callback)
+                {
+                    g_plugin_instances.erase(pos);
+                    return true;
+                }
+            }
+        }
+        break;
+
+    case ePluginGetInstanceAtIndex:
+        if (index < g_plugin_instances.size())
+        {
+            instance = g_plugin_instances[index];
+            return true;
+        }
+        break;
+
+    default:
+        break;
+    }
+    return false;
+}
+
+bool
+PluginManager::RegisterPlugin
+(
+    const char *name,
+    const char *description,
+    ArchDefaultUnwindPlanCreateInstance create_callback
+)
+{
+    if (create_callback)
+    {
+        ArchDefaultUnwindPlanInstance instance;
+        assert (name && name[0]);
+        instance.name = name;
+        if (description && description[0])
+            instance.description = description;
+        instance.create_callback = create_callback;
+        return AccessArchDefaultUnwindPlanInstances (ePluginRegisterInstance, instance, 0);
+    }
+    return false;
+}
+
+bool
+PluginManager::UnregisterPlugin (ArchDefaultUnwindPlanCreateInstance create_callback)
+{
+    if (create_callback)
+    {
+        ArchDefaultUnwindPlanInstance instance;
+        instance.create_callback = create_callback;
+        return AccessArchDefaultUnwindPlanInstances (ePluginUnregisterInstance, instance, 0);
+    }
+    return false;
+}
+
+ArchDefaultUnwindPlanCreateInstance
+PluginManager::GetArchDefaultUnwindPlanCreateCallbackAtIndex (uint32_t idx)
+{
+    ArchDefaultUnwindPlanInstance instance;
+    if (AccessArchDefaultUnwindPlanInstances (ePluginGetInstanceAtIndex, instance, idx))
+        return instance.create_callback;
+    return NULL;
+}
+
+ArchDefaultUnwindPlanCreateInstance
+PluginManager::GetArchDefaultUnwindPlanCreateCallbackForPluginName (const char *name)
+{
+    if (name && name[0])
+    {
+        ArchDefaultUnwindPlanInstance instance;
+        std::string ss_name(name);
+        for (uint32_t idx = 0; AccessArchDefaultUnwindPlanInstances (ePluginGetInstanceAtIndex, instance, idx); ++idx)
+        {
+            if (instance.name == ss_name)
+                return instance.create_callback;
+        }
+    }
+    return NULL;
+}
+
+

@@ -472,8 +472,8 @@ ABIMacOSX_i386::GetReturnValue (Thread &thread,
             {
                 size_t bit_width = ClangASTType::GetClangTypeBitWidth(ast_context, value_type);
                 
-                unsigned eax_id = reg_ctx->GetRegisterInfoByName("eax", 0)->reg;
-                unsigned edx_id = reg_ctx->GetRegisterInfoByName("edx", 0)->reg;
+                unsigned eax_id = reg_ctx->GetRegisterInfoByName("eax", 0)->kinds[eRegisterKindLLDB];
+                unsigned edx_id = reg_ctx->GetRegisterInfoByName("edx", 0)->kinds[eRegisterKindLLDB];
                 
                 switch (bit_width)
                 {
@@ -512,7 +512,7 @@ ABIMacOSX_i386::GetReturnValue (Thread &thread,
             }
             else if (ClangASTContext::IsPointerType (value_type))
             {
-                unsigned eax_id = reg_ctx->GetRegisterInfoByName("eax", 0)->reg;
+                unsigned eax_id = reg_ctx->GetRegisterInfoByName("eax", 0)->kinds[eRegisterKindLLDB];
                 uint32_t ptr = thread.GetRegisterContext()->ReadRegisterAsUnsigned(eax_id, 0) & 0xffffffff;
                 value.GetScalar() = ptr;
             }

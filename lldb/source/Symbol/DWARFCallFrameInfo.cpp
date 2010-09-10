@@ -12,8 +12,7 @@
 // C++ Includes
 #include <list>
 
-// Other libraries and framework includes
-// Project includes
+#include "lldb/Core/Section.h"
 #include "lldb/Symbol/DWARFCallFrameInfo.h"
 #include "lldb/Core/ArchSpec.h"
 #include "lldb/Core/Module.h"
@@ -21,413 +20,83 @@
 #include "lldb/Target/RegisterContext.h"
 #include "lldb/Core/Section.h"
 #include "lldb/Target/Thread.h"
+#include "lldb/Symbol/UnwindPlan.h"
 
 using namespace lldb;
 using namespace lldb_private;
 
-static void
-DumpRegisterName (Stream *s, Thread *thread, const ArchSpec *arch, uint32_t reg_kind, uint32_t reg_num)
-{
-    const char *reg_name = NULL;
-    RegisterContext *reg_ctx = NULL;
-    if (thread)
-    {
-        reg_ctx = thread->GetRegisterContext();
-        if (reg_ctx)
-            reg_name = reg_ctx->GetRegisterName (reg_ctx->ConvertRegisterKindToRegisterNumber (reg_kind, reg_num));
-    }
-
-    if (reg_name == NULL && arch != NULL)
-    {
-        switch (reg_kind)
-        {
-        case eRegisterKindDWARF: reg_name = arch->GetRegisterName(reg_num, eRegisterKindDWARF); break;
-        case eRegisterKindGCC: reg_name = arch->GetRegisterName(reg_num, eRegisterKindGCC); break;
-        default:
-            break;
-        }
-    }
-
-    if (reg_name)
-        s->PutCString(reg_name);
-    else
-    {
-        const char *reg_kind_name = NULL;
-        switch (reg_kind)
-        {
-        case eRegisterKindDWARF: reg_kind_name = "dwarf-reg"; break;
-        case eRegisterKindGCC: reg_kind_name = "compiler-reg"; break;
-        case eRegisterKindGeneric: reg_kind_name = "generic-reg"; break;
-        default:
-            break;
-        }
-        if (reg_kind_name)
-            s->Printf("%s(%u)", reg_kind_name, reg_num);
-        else
-            s->Printf("reg(%d.%u)", reg_kind, reg_num);
-    }
-}
-
-
-#pragma mark DWARFCallFrameInfo::RegisterLocation
-
-DWARFCallFrameInfo::RegisterLocation::RegisterLocation() :
-    m_type(isSame)
-{
-}
-
-
-bool
-DWARFCallFrameInfo::RegisterLocation::operator == (const DWARFCallFrameInfo::RegisterLocation& rhs) const
-{
-    if (m_type != rhs.m_type)
-        return false;
-    switch (m_type)
-    {
-        case unspecified:
-        case isUndefined:
-        case isSame:
-            return true;
-
-        case atCFAPlusOffset:
-            return m_location.offset == rhs.m_location.offset;
-
-        case isCFAPlusOffset:
-            return m_location.offset == rhs.m_location.offset;
-
-        case inOtherRegister:
-            return m_location.reg_num == rhs.m_location.reg_num;
-
-        default:
-            break;
-    }
-    return false;
-}
-
-void
-DWARFCallFrameInfo::RegisterLocation::SetUnspecified()
-{
-    m_type = unspecified;
-}
-
-void
-DWARFCallFrameInfo::RegisterLocation::SetUndefined()
-{
-    m_type = isUndefined;
-}
-
-void
-DWARFCallFrameInfo::RegisterLocation::SetSame()
-{
-    m_type = isSame;
-}
-
-void
-DWARFCallFrameInfo::RegisterLocation::SetAtCFAPlusOffset(int64_t offset)
-{
-    m_type = atCFAPlusOffset;
-    m_location.offset = offset;
-}
-
-void
-DWARFCallFrameInfo::RegisterLocation::SetIsCFAPlusOffset(int64_t offset)
-{
-    m_type = isCFAPlusOffset;
-    m_location.offset = offset;
-}
-
-void
-DWARFCallFrameInfo::RegisterLocation::SetInRegister (uint32_t reg_num)
-{
-    m_type = inOtherRegister;
-    m_location.reg_num = reg_num;
-}
-
-void
-DWARFCallFrameInfo::RegisterLocation::SetAtDWARFExpression(const uint8_t *opcodes, uint32_t len)
-{
-    m_type = atDWARFExpression;
-    m_location.expr.opcodes = opcodes;
-    m_location.expr.length = len;
-}
-
-void
-DWARFCallFrameInfo::RegisterLocation::SetIsDWARFExpression(const uint8_t *opcodes, uint32_t len)
-{
-    m_type = isDWARFExpression;
-    m_location.expr.opcodes = opcodes;
-    m_location.expr.length = len;
-}
-
-void
-DWARFCallFrameInfo::RegisterLocation::Dump(Stream *s, const DWARFCallFrameInfo &cfi, Thread *thread, const Row *row, uint32_t reg_num) const
-{
-    const ArchSpec *arch = cfi.GetArchitecture();
-    const uint32_t reg_kind = cfi.GetRegisterKind();
-
-    DumpRegisterName (s, thread, arch, reg_kind, reg_num);
-    s->PutChar('=');
-
-    switch (m_type)
-    {
-    case unspecified:
-        s->PutChar('?');
-        break;
-
-    case isUndefined:
-        s->PutCString("undefined");
-        break;
-
-    case isSame:
-        s->PutCString("same");
-        break;
-
-    case atCFAPlusOffset:
-        s->PutChar('[');
-        // Fall through to isCFAPlusOffset...
-    case isCFAPlusOffset:
-        {
-            DumpRegisterName (s, thread, arch, reg_kind, row->GetCFARegister());
-            int32_t offset = row->GetCFAOffset() + m_location.offset;
-            if (offset != 0)
-                s->Printf("%-+d", offset);
-            if (m_type == atCFAPlusOffset)
-                s->PutChar(']');
-        }
-        break;
-
-    case inOtherRegister:
-        DumpRegisterName (s, thread, arch, reg_kind, m_location.reg_num);
-        break;
-
-    case atDWARFExpression:
-        s->PutCString("[EXPR] ");
-        break;
-
-    case isDWARFExpression:
-        s->PutCString("EXPR ");
-        break;
-    }
-}
-
-
-#pragma mark DWARFCallFrameInfo::Row
-
-DWARFCallFrameInfo::Row::Row() :
-    m_offset(0),
-    m_cfa_reg_num(0),
-    m_cfa_offset(0),
-    m_register_locations()
-{
-}
-
-DWARFCallFrameInfo::Row::~Row()
-{
-}
-
-void
-DWARFCallFrameInfo::Row::Clear()
-{
-    m_register_locations.clear();
-}
-bool
-DWARFCallFrameInfo::Row::GetRegisterInfo (uint32_t reg_num, DWARFCallFrameInfo::RegisterLocation& register_location) const
-{
-    collection::const_iterator pos = m_register_locations.find(reg_num);
-    if (pos != m_register_locations.end())
-    {
-        register_location = pos->second;
-        return true;
-    }
-    return false;
-}
-
-void
-DWARFCallFrameInfo::Row::SetRegisterInfo (uint32_t reg_num, const RegisterLocation& register_location)
-{
-    m_register_locations[reg_num] = register_location;
-}
-
-
-void
-DWARFCallFrameInfo::Row::Dump(Stream* s, const DWARFCallFrameInfo &cfi, Thread *thread, lldb::addr_t base_addr) const
-{
-    const ArchSpec *arch = cfi.GetArchitecture();
-    const uint32_t reg_kind = cfi.GetRegisterKind();
-    collection::const_iterator pos, end = m_register_locations.end();
-    s->Indent();
-    s->Printf("0x%16.16llx: CFA=", m_offset + base_addr);
-    DumpRegisterName(s, thread, arch, reg_kind, m_cfa_reg_num);
-    if (m_cfa_offset != 0)
-        s->Printf("%-+lld", m_cfa_offset);
-
-    for (pos = m_register_locations.begin(); pos != end; ++pos)
-    {
-        s->PutChar(' ');
-        pos->second.Dump(s, cfi, thread, this, pos->first);
-    }
-    s->EOL();
-}
-
-
-#pragma mark DWARFCallFrameInfo::FDE
-
-
-DWARFCallFrameInfo::FDE::FDE (dw_offset_t offset, const AddressRange &range) :
-    m_fde_offset (offset),
-    m_range (range),
-    m_row_list ()
-{
-}
-
-DWARFCallFrameInfo::FDE::~FDE()
-{
-}
-
-void
-DWARFCallFrameInfo::FDE::AppendRow (const Row &row)
-{
-    if (m_row_list.empty() || m_row_list.back().GetOffset() != row.GetOffset())
-        m_row_list.push_back(row);
-    else
-        m_row_list.back() = row;
-}
-
-void
-DWARFCallFrameInfo::FDE::Dump (Stream *s, const DWARFCallFrameInfo &cfi, Thread* thread) const
-{
-    s->Indent();
-    s->Printf("FDE{0x%8.8x} ", m_fde_offset);
-    m_range.Dump(s, NULL, Address::DumpStyleFileAddress);
-    lldb::addr_t fde_base_addr = m_range.GetBaseAddress().GetFileAddress();
-    s->EOL();
-    s->IndentMore();
-    collection::const_iterator pos, end = m_row_list.end();
-    for (pos = m_row_list.begin(); pos != end; ++pos)
-    {
-        pos->Dump(s, cfi, thread, fde_base_addr);
-    }
-    s->IndentLess();
-}
-
-const AddressRange &
-DWARFCallFrameInfo::FDE::GetAddressRange() const
-{
-    return m_range;
-}
-
-bool
-DWARFCallFrameInfo::FDE::IsValidRowIndex (uint32_t idx) const
-{
-    return idx < m_row_list.size();
-}
-
-const DWARFCallFrameInfo::Row&
-DWARFCallFrameInfo::FDE::GetRowAtIndex (uint32_t idx)
-{
-    // You must call IsValidRowIndex(idx) first before calling this!!!
-    return m_row_list[idx];
-}
-#pragma mark DWARFCallFrameInfo::FDEInfo
-
-DWARFCallFrameInfo::FDEInfo::FDEInfo () :
-    fde_offset (0),
-    fde_sp()
-{
-}
-
-DWARFCallFrameInfo::FDEInfo::FDEInfo (off_t offset) :
-    fde_offset(offset),
-    fde_sp()
-{
-}
-
-#pragma mark DWARFCallFrameInfo::CIE
-
-DWARFCallFrameInfo::CIE::CIE(dw_offset_t offset) :
-    cie_offset (offset),
-    version (0),
-    augmentation(),
-    code_align (0),
-    data_align (0),
-    return_addr_reg_num (0),
-    inst_offset (0),
-    inst_length (0),
-    ptr_encoding (DW_EH_PE_absptr)
-{
-}
-
-
-DWARFCallFrameInfo::CIE::~CIE()
-{
-}
-
-void
-DWARFCallFrameInfo::CIE::Dump(Stream *s, Thread* thread, const ArchSpec *arch, uint32_t reg_kind) const
-{
-    s->Indent();
-    s->Printf("CIE{0x%8.8x} version=%u, code_align=%u, data_align=%d, return_addr_reg=", cie_offset, version, code_align, data_align);
-    DumpRegisterName(s, thread, arch, reg_kind, return_addr_reg_num);
-    s->Printf(", instr_offset=0x%8.8x, instr_length=%u, ptr_encoding=0x%02x\n",
-            inst_offset,
-            inst_length,
-            ptr_encoding);
-}
-
-#pragma mark DWARFCallFrameInfo::CIE
-
-DWARFCallFrameInfo::DWARFCallFrameInfo(ObjectFile *objfile, Section *section, uint32_t reg_kind) :
+DWARFCallFrameInfo::DWARFCallFrameInfo(ObjectFile& objfile, SectionSP& section, uint32_t reg_kind, bool is_eh_frame) :
     m_objfile (objfile),
     m_section (section),
-    m_reg_kind (reg_kind),  // The flavor of registers that the CFI data uses (One of the defines that starts with "LLDB_REGKIND_")
-    m_cfi_data (),
+    m_reg_kind (reg_kind),  // The flavor of registers that the CFI data uses (enum RegisterKind)
     m_cie_map (),
-    m_fde_map ()
+    m_cfi_data (),
+    m_cfi_data_initialized (false),
+    m_fde_index (),
+    m_fde_index_initialized (false),
+    m_is_eh_frame (is_eh_frame)
 {
-    if (objfile && section)
-    {
-        section->ReadSectionDataFromObjectFile (objfile, m_cfi_data);
-    }
 }
 
 DWARFCallFrameInfo::~DWARFCallFrameInfo()
 {
 }
 
+
 bool
-DWARFCallFrameInfo::IsEHFrame() const
+DWARFCallFrameInfo::GetAddressRange (Address addr, AddressRange &range)
 {
-    return (m_reg_kind == eRegisterKindGCC);
+    FDEEntry fde_entry;
+    if (GetFDEEntryByAddress (addr, fde_entry) == false)
+        return false;
+    range = fde_entry.bounds;
+    return true;
 }
 
-const ArchSpec *
-DWARFCallFrameInfo::GetArchitecture() const
+bool
+DWARFCallFrameInfo::GetUnwindPlan (Address addr, UnwindPlan& unwind_plan)
 {
-    if (m_objfile && m_objfile->GetModule())
-        return &m_objfile->GetModule()->GetArchitecture();
-    return NULL;
+    FDEEntry fde_entry;
+    if (GetFDEEntryByAddress (addr, fde_entry) == false)
+        return false;
+    return FDEToUnwindPlan (fde_entry.offset, addr, unwind_plan);
 }
 
-uint32_t
-DWARFCallFrameInfo::GetRegisterKind () const
+bool
+DWARFCallFrameInfo::GetFDEEntryByAddress (Address addr, FDEEntry& fde_entry)
 {
-    return m_reg_kind;
+    if (m_section.get() == NULL)
+        return false;
+    GetFDEIndex();
+
+    struct FDEEntry searchfde;
+    searchfde.bounds = AddressRange (addr, 1);
+
+    std::vector<FDEEntry>::const_iterator idx;
+    if (m_fde_index.size() == 0)
+        return false;
+
+    idx = std::lower_bound (m_fde_index.begin(), m_fde_index.end(), searchfde);
+    if (idx == m_fde_index.end())
+    {
+        --idx;
+    }
+    if (idx != m_fde_index.begin() && idx->bounds.GetBaseAddress().GetOffset() != addr.GetOffset())
+    {
+       --idx;
+    }
+    if (idx->bounds.ContainsFileAddress (addr))
+    {
+        fde_entry = *idx;
+        return true;
+    }
+
+    return false;
 }
-
-void
-DWARFCallFrameInfo::SetRegisterKind (uint32_t reg_kind)
-{
-    m_reg_kind = reg_kind;
-}
-
-
-
 
 const DWARFCallFrameInfo::CIE*
 DWARFCallFrameInfo::GetCIE(dw_offset_t cie_offset)
 {
-    Index ();
-
     cie_map_t::iterator pos = m_cie_map.find(cie_offset);
 
     if (pos != m_cie_map.end())
@@ -441,16 +110,20 @@ DWARFCallFrameInfo::GetCIE(dw_offset_t cie_offset)
     return NULL;
 }
 
-DWARFCallFrameInfo::CIE::shared_ptr
+DWARFCallFrameInfo::CIESP
 DWARFCallFrameInfo::ParseCIE (const dw_offset_t cie_offset)
 {
-    CIE::shared_ptr cie_sp(new CIE(cie_offset));
-    const bool for_eh_frame = IsEHFrame();
+    CIESP cie_sp(new CIE(cie_offset));
     dw_offset_t offset = cie_offset;
+    if (m_cfi_data_initialized == false)
+    {
+        m_section->ReadSectionDataFromObjectFile (&m_objfile, m_cfi_data);
+        m_cfi_data_initialized = true;
+    }
     const uint32_t length = m_cfi_data.GetU32(&offset);
     const dw_offset_t cie_id = m_cfi_data.GetU32(&offset);
     const dw_offset_t end_offset = cie_offset + length + 4;
-    if (length > 0 && (!for_eh_frame && cie_id == 0xfffffffful) || (for_eh_frame && cie_id == 0ul))
+    if (length > 0 && (!m_is_eh_frame && cie_id == 0xfffffffful) || (m_is_eh_frame && cie_id == 0ul))
     {
         size_t i;
         //    cie.offset = cie_offset;
@@ -555,164 +228,158 @@ DWARFCallFrameInfo::ParseCIE (const dw_offset_t cie_offset)
             cie_sp->inst_offset = offset;
             cie_sp->inst_length = end_offset - offset;
         }
+        while (offset < end_offset)
+        {
+            uint8_t inst = m_cfi_data.GetU8(&offset);
+            uint8_t primary_opcode  = inst & 0xC0;
+            uint8_t extended_opcode = inst & 0x3F;
+
+            if (extended_opcode == DW_CFA_def_cfa)
+            {
+                // Takes two unsigned LEB128 operands representing a register
+                // number and a (non-factored) offset. The required action
+                // is to define the current CFA rule to use the provided
+                // register and offset.
+                uint32_t reg_num = (uint32_t)m_cfi_data.GetULEB128(&offset);
+                int op_offset = (int32_t)m_cfi_data.GetULEB128(&offset);
+                cie_sp->initial_row.SetCFARegister (reg_num);
+                cie_sp->initial_row.SetCFAOffset (op_offset);
+                continue;
+            }
+            if (primary_opcode == DW_CFA_offset)
+            {   
+                // 0x80 - high 2 bits are 0x2, lower 6 bits are register.
+                // Takes two arguments: an unsigned LEB128 constant representing a
+                // factored offset and a register number. The required action is to
+                // change the rule for the register indicated by the register number
+                // to be an offset(N) rule with a value of
+                // (N = factored offset * data_align).
+                uint32_t reg_num = extended_opcode;
+                int op_offset = (int32_t)m_cfi_data.GetULEB128(&offset) * cie_sp->data_align;
+                UnwindPlan::Row::RegisterLocation reg_location;
+                reg_location.SetAtCFAPlusOffset(op_offset);
+                cie_sp->initial_row.SetRegisterInfo (reg_num, reg_location);
+                continue;
+            }
+            if (extended_opcode == DW_CFA_nop)
+            {
+                continue;
+            }
+            break;  // Stop if we hit an unrecognized opcode
+        }
     }
 
     return cie_sp;
 }
 
-DWARFCallFrameInfo::FDE::shared_ptr
-DWARFCallFrameInfo::ParseFDE(const dw_offset_t fde_offset)
-{
-    const bool for_eh_frame = IsEHFrame();
-    FDE::shared_ptr fde_sp;
+// Scan through the eh_frame or debug_frame section looking for FDEs and noting the start/end addresses
+// of the functions and a pointer back to the function's FDE for later expansion.
+// Internalize CIEs as we come across them.
 
-    dw_offset_t offset = fde_offset;
-    const uint32_t length = m_cfi_data.GetU32(&offset);
-    dw_offset_t cie_offset = m_cfi_data.GetU32(&offset);
-    const dw_offset_t end_offset = fde_offset + length + 4;
+void
+DWARFCallFrameInfo::GetFDEIndex ()
+{
+    if (m_section.get() == NULL)
+        return;
+    if (m_fde_index_initialized)
+        return;
+
+    dw_offset_t offset = 0;
+    if (m_cfi_data_initialized == false)
+    {
+        m_section->ReadSectionDataFromObjectFile (&m_objfile, m_cfi_data);
+        m_cfi_data_initialized = true;
+    }
+    while (m_cfi_data.ValidOffsetForDataOfSize (offset, 8))
+    {
+        dw_offset_t current_entry = offset;
+        uint32_t len = m_cfi_data.GetU32 (&offset);
+        dw_offset_t next_entry = current_entry + len + 4;
+        dw_offset_t cie_id = m_cfi_data.GetU32 (&offset);
+
+        if (cie_id == 0 || cie_id == UINT32_MAX)
+        {
+            m_cie_map[current_entry] = ParseCIE (current_entry);
+            offset = next_entry;
+            continue;
+        }
+
+        const CIE *cie = GetCIE (current_entry + 4 - cie_id);
+        assert (cie != NULL);
+
+        const lldb::addr_t pc_rel_addr = m_section->GetFileAddress();
+        const lldb::addr_t text_addr = LLDB_INVALID_ADDRESS;
+        const lldb::addr_t data_addr = LLDB_INVALID_ADDRESS;
+
+        lldb::addr_t addr = m_cfi_data.GetGNUEHPointer(&offset, cie->ptr_encoding, pc_rel_addr, text_addr, data_addr);
+        lldb::addr_t length = m_cfi_data.GetGNUEHPointer(&offset, cie->ptr_encoding & DW_EH_PE_MASK_ENCODING, pc_rel_addr, text_addr, data_addr);
+        FDEEntry fde;
+        fde.bounds = AddressRange (addr, length, m_objfile.GetSectionList());
+        fde.offset = current_entry;
+        m_fde_index.push_back(fde);
+
+        offset = next_entry;
+    }
+    std::sort (m_fde_index.begin(), m_fde_index.end());
+    m_fde_index_initialized = true;
+}
+
+bool
+DWARFCallFrameInfo::FDEToUnwindPlan (dw_offset_t offset, Address startaddr, UnwindPlan& unwind_plan)
+{
+    dw_offset_t current_entry = offset;
+
+    if (m_section.get() == NULL)
+        return false;
+
+    if (m_cfi_data_initialized == false)
+    {
+        m_section->ReadSectionDataFromObjectFile (&m_objfile, m_cfi_data);
+        m_cfi_data_initialized = true;
+    }
+
+    uint32_t length = m_cfi_data.GetU32 (&offset);
+    dw_offset_t cie_offset = m_cfi_data.GetU32 (&offset);
+
+    assert (cie_offset != 0 && cie_offset != UINT32_MAX);
 
     // Translate the CIE_id from the eh_frame format, which
     // is relative to the FDE offset, into a __eh_frame section
     // offset
-    if (for_eh_frame)
-        cie_offset = offset - (cie_offset + 4);
+    if (m_is_eh_frame)
+        cie_offset = current_entry + 4 - cie_offset;
 
-    const CIE* cie = GetCIE(cie_offset);
-    if (cie)
+    const CIE *cie = GetCIE (cie_offset);
+    assert (cie != NULL);
+
+    const dw_offset_t end_offset = current_entry + length + 4;
+
+    const lldb::addr_t pc_rel_addr = m_section->GetFileAddress();
+    const lldb::addr_t text_addr = LLDB_INVALID_ADDRESS;
+    const lldb::addr_t data_addr = LLDB_INVALID_ADDRESS;
+    lldb::addr_t range_base = m_cfi_data.GetGNUEHPointer(&offset, cie->ptr_encoding, pc_rel_addr, text_addr, data_addr);
+    lldb::addr_t range_len = m_cfi_data.GetGNUEHPointer(&offset, cie->ptr_encoding & DW_EH_PE_MASK_ENCODING, pc_rel_addr, text_addr, data_addr);
+    AddressRange range (range_base, m_objfile.GetAddressByteSize(), m_objfile.GetSectionList());
+    range.SetByteSize (range_len);
+
+    if (cie->augmentation[0] == 'z')
     {
-        const lldb::addr_t pc_rel_addr = m_section->GetFileAddress();
-        const lldb::addr_t text_addr = LLDB_INVALID_ADDRESS;
-        const lldb::addr_t data_addr = LLDB_INVALID_ADDRESS;
-        lldb::addr_t range_base = m_cfi_data.GetGNUEHPointer(&offset, cie->ptr_encoding, pc_rel_addr, text_addr, data_addr);
-        lldb::addr_t range_len = m_cfi_data.GetGNUEHPointer(&offset, cie->ptr_encoding & DW_EH_PE_MASK_ENCODING, pc_rel_addr, text_addr, data_addr);
-
-        if (cie->augmentation[0] == 'z')
-        {
-            uint32_t aug_data_len = (uint32_t)m_cfi_data.GetULEB128(&offset);
-            offset += aug_data_len;
-        }
-
-        AddressRange fde_range (range_base, range_len, m_objfile->GetSectionList ());
-        fde_sp.reset(new FDE(fde_offset, fde_range));
-        if (offset < end_offset)
-        {
-            dw_offset_t fde_instr_offset = offset;
-            uint32_t fde_instr_length = end_offset - offset;
-            if (cie->inst_length > 0)
-                ParseInstructions(cie, fde_sp.get(), cie->inst_offset, cie->inst_length);
-            ParseInstructions(cie, fde_sp.get(), fde_instr_offset, fde_instr_length);
-        }
+        uint32_t aug_data_len = (uint32_t)m_cfi_data.GetULEB128(&offset);
+        offset += aug_data_len;
     }
-    return fde_sp;
-}
-
-const DWARFCallFrameInfo::FDE *
-DWARFCallFrameInfo::FindFDE(const Address &addr)
-{
-    Index ();
-
-    VMRange find_range(addr.GetFileAddress(), 0);
-    fde_map_t::iterator pos = m_fde_map.lower_bound (find_range);
-    fde_map_t::iterator end = m_fde_map.end();
-
-    if (pos != end)
-    {
-        if (pos->first.Contains(find_range.GetBaseAddress()))
-        {
-            // Parse and cache the FDE if we already haven't
-            if (pos->second.fde_sp.get() == NULL)
-                pos->second.fde_sp = ParseFDE(pos->second.fde_offset);
-
-            return pos->second.fde_sp.get();
-        }
-    }
-    return NULL;
-}
-
-
-void
-DWARFCallFrameInfo::Index ()
-{
-    if (m_flags.IsClear(eFlagParsedIndex))
-    {
-        m_flags.Set (eFlagParsedIndex);
-        const bool for_eh_frame = IsEHFrame();
-        CIE::shared_ptr empty_cie_sp;
-        dw_offset_t offset = 0;
-        // Parse all of the CIEs first since we will need them to be able to
-        // properly parse the FDE addresses due to them possibly having
-        // GNU pointer encodings in their augmentations...
-        while (m_cfi_data.ValidOffsetForDataOfSize(offset, 8))
-        {
-            const dw_offset_t curr_offset = offset;
-            const uint32_t length = m_cfi_data.GetU32(&offset);
-            const dw_offset_t next_offset = offset + length;
-            const dw_offset_t cie_id = m_cfi_data.GetU32(&offset);
-
-            bool is_cie = for_eh_frame ?  cie_id == 0 : cie_id == UINT32_MAX;
-            if (is_cie)
-                m_cie_map[curr_offset]= ParseCIE(curr_offset);
-
-            offset = next_offset;
-        }
-
-        // Now go back through and index all FDEs
-        offset = 0;
-        const lldb::addr_t pc_rel_addr = m_section->GetFileAddress();
-        const lldb::addr_t text_addr = LLDB_INVALID_ADDRESS;
-        const lldb::addr_t data_addr = LLDB_INVALID_ADDRESS;
-        while (m_cfi_data.ValidOffsetForDataOfSize(offset, 8))
-        {
-            const dw_offset_t curr_offset = offset;
-            const dw_offset_t next_offset = offset + m_cfi_data.GetU32(&offset);
-            const dw_offset_t cie_id = m_cfi_data.GetU32(&offset);
-
-            bool is_fde = for_eh_frame ?  cie_id != 0 : cie_id != UINT32_MAX;
-            if (is_fde)
-            {
-                dw_offset_t cie_offset;
-                if (for_eh_frame)
-                    cie_offset = offset - (cie_id + 4);
-                else
-                    cie_offset = cie_id;
-
-                const CIE* cie = GetCIE(cie_offset);
-                assert(cie);
-                lldb::addr_t addr = m_cfi_data.GetGNUEHPointer(&offset, cie->ptr_encoding, pc_rel_addr, text_addr, data_addr);
-                lldb::addr_t length = m_cfi_data.GetGNUEHPointer(&offset, cie->ptr_encoding & DW_EH_PE_MASK_ENCODING, pc_rel_addr, text_addr, data_addr);
-                m_fde_map[VMRange(addr, addr + length)] = FDEInfo(curr_offset);
-            }
-
-            offset = next_offset;
-        }
-    }
-}
-
-//----------------------------------------------------------------------
-// Parse instructions for a FDE. The initial instruction for the CIE
-// are parsed first, then the instructions for the FDE are parsed
-//----------------------------------------------------------------------
-void
-DWARFCallFrameInfo::ParseInstructions(const CIE *cie, FDE *fde, dw_offset_t instr_offset, uint32_t instr_length)
-{
-    if (cie != NULL && fde == NULL)
-        return;
 
     uint32_t reg_num = 0;
     int32_t op_offset = 0;
     uint32_t tmp_uval32;
     uint32_t code_align = cie->code_align;
     int32_t data_align = cie->data_align;
-    typedef std::list<Row> RowStack;
 
-    RowStack row_stack;
-    Row row;
-    if (fde->IsValidRowIndex(0))
-        row = fde->GetRowAtIndex(0);
+    unwind_plan.SetPlanValidAddressRange (range);
+    UnwindPlan::Row row = cie->initial_row;
 
-    dw_offset_t offset = instr_offset;
-    const dw_offset_t end_offset = instr_offset + instr_length;
-    RegisterLocation reg_location;
+    unwind_plan.SetRegisterKind (m_reg_kind);
+
+    UnwindPlan::Row::RegisterLocation reg_location;
     while (m_cfi_data.ValidOffset(offset) && offset < end_offset)
     {
         uint8_t inst = m_cfi_data.GetU8(&offset);
@@ -730,7 +397,7 @@ DWARFCallFrameInfo::ParseInstructions(const CIE *cie, FDE *fde, dw_offset_t inst
                         // value that is computed by taking the current entry's location
                         // value and adding (delta * code_align). All other
                         // values in the new row are initially identical to the current row.
-                        fde->AppendRow(row);
+                        unwind_plan.AppendRow(row);
                         row.SlideOffset(extended_opcode * code_align);
                     }
                     break;
@@ -758,9 +425,9 @@ DWARFCallFrameInfo::ParseInstructions(const CIE *cie, FDE *fde, dw_offset_t inst
                         // We only keep enough register locations around to
                         // unwind what is in our thread, and these are organized
                         // by the register index in that state, so we need to convert our
-                        // GCC register number from the EH frame info, to a registe index
+                        // GCC register number from the EH frame info, to a register index
 
-                        if (fde->IsValidRowIndex(0) && fde->GetRowAtIndex(0).GetRegisterInfo(reg_num, reg_location))
+                        if (unwind_plan.IsValidRowIndex(0) && unwind_plan.GetRowAtIndex(0).GetRegisterInfo(reg_num, reg_location))
                             row.SetRegisterInfo (reg_num, reg_location);
                     }
                     break;
@@ -780,8 +447,8 @@ DWARFCallFrameInfo::ParseInstructions(const CIE *cie, FDE *fde, dw_offset_t inst
                         // specified address as the location. All other values in the new row
                         // are initially identical to the current row. The new location value
                         // should always be greater than the current one.
-                        fde->AppendRow(row);
-                        row.SetOffset(m_cfi_data.GetPointer(&offset) - fde->GetAddressRange().GetBaseAddress().GetFileAddress());
+                        unwind_plan.AppendRow(row);
+                        row.SetOffset(m_cfi_data.GetPointer(&offset) - startaddr.GetFileAddress());
                     }
                     break;
 
@@ -790,7 +457,7 @@ DWARFCallFrameInfo::ParseInstructions(const CIE *cie, FDE *fde, dw_offset_t inst
                         // takes a single uword argument that represents a constant delta.
                         // This instruction is identical to DW_CFA_advance_loc except for the
                         // encoding and size of the delta argument.
-                        fde->AppendRow(row);
+                        unwind_plan.AppendRow(row);
                         row.SlideOffset (m_cfi_data.GetU8(&offset) * code_align);
                     }
                     break;
@@ -800,7 +467,7 @@ DWARFCallFrameInfo::ParseInstructions(const CIE *cie, FDE *fde, dw_offset_t inst
                         // takes a single uword argument that represents a constant delta.
                         // This instruction is identical to DW_CFA_advance_loc except for the
                         // encoding and size of the delta argument.
-                        fde->AppendRow(row);
+                        unwind_plan.AppendRow(row);
                         row.SlideOffset (m_cfi_data.GetU16(&offset) * code_align);
                     }
                     break;
@@ -810,7 +477,7 @@ DWARFCallFrameInfo::ParseInstructions(const CIE *cie, FDE *fde, dw_offset_t inst
                         // takes a single uword argument that represents a constant delta.
                         // This instruction is identical to DW_CFA_advance_loc except for the
                         // encoding and size of the delta argument.
-                        fde->AppendRow(row);
+                        unwind_plan.AppendRow(row);
                         row.SlideOffset (m_cfi_data.GetU32(&offset) * code_align);
                     }
                     break;
@@ -833,7 +500,7 @@ DWARFCallFrameInfo::ParseInstructions(const CIE *cie, FDE *fde, dw_offset_t inst
                         // number. This instruction is identical to DW_CFA_restore except for
                         // the encoding and size of the register argument.
                         reg_num = (uint32_t)m_cfi_data.GetULEB128(&offset);
-                        if (fde->IsValidRowIndex(0) && fde->GetRowAtIndex(0).GetRegisterInfo(reg_num, reg_location))
+                        if (unwind_plan.IsValidRowIndex(0) && unwind_plan.GetRowAtIndex(0).GetRegisterInfo(reg_num, reg_location))
                             row.SetRegisterInfo (reg_num, reg_location);
                     }
                     break;
@@ -881,7 +548,7 @@ DWARFCallFrameInfo::ParseInstructions(const CIE *cie, FDE *fde, dw_offset_t inst
                     // the stack and place them in the current row. (This operation is
                     // useful for compilers that move epilogue code into the body of a
                     // function.)
-                    row_stack.push_back(row);
+                    unwind_plan.AppendRow (row);
                     break;
 
                 case DW_CFA_restore_state       : // 0xB
@@ -893,8 +560,7 @@ DWARFCallFrameInfo::ParseInstructions(const CIE *cie, FDE *fde, dw_offset_t inst
                     // useful for compilers that move epilogue code into the body of a
                     // function.)
                     {
-                        row = row_stack.back();
-                        row_stack.pop_back();
+                        row = unwind_plan.GetRowAtIndex(unwind_plan.GetRowCount() - 1);
                     }
                     break;
 
@@ -1059,285 +725,7 @@ DWARFCallFrameInfo::ParseInstructions(const CIE *cie, FDE *fde, dw_offset_t inst
             }
         }
     }
-    fde->AppendRow(row);
+    unwind_plan.AppendRow(row);
+
+    return true;
 }
-
-void
-DWARFCallFrameInfo::ParseAll()
-{
-    Index();
-    fde_map_t::iterator pos, end = m_fde_map.end();
-    for (pos = m_fde_map.begin(); pos != end; ++ pos)
-    {
-        if (pos->second.fde_sp.get() == NULL)
-            pos->second.fde_sp = ParseFDE(pos->second.fde_offset);
-    }
-}
-
-
-//bool
-//DWARFCallFrameInfo::UnwindRegisterAtIndex
-//(
-//  const uint32_t reg_idx,
-//  const Thread* currState,
-//  const DWARFCallFrameInfo::Row* row,
-//  mapped_memory_t * memCache,
-//  Thread* unwindState
-//)
-//{
-//    bool get_reg_success = false;
-//
-//    const RegLocation* regLocation = row->regs.GetRegisterInfo(reg_idx);
-//
-//  // On some systems, we may not get unwind info for the program counter,
-//  // but the return address register can be used to get that information.
-//    if (reg_idx == currState->GetPCRegNum(Thread::Index))
-//    {
-//      const RegLocation* returnAddrRegLocation = row->regs.GetRegisterInfo(currState->GetRARegNum(Thread::Index));
-//      if (regLocation == NULL)
-//      {
-//          // We have nothing to the program counter, so lets see if this
-//          // thread state has a return address (link register) that can
-//          // help us track down the previous PC
-//          regLocation = returnAddrRegLocation;
-//      }
-//      else if (regLocation->type == RegLocation::unspecified)
-//      {
-//          // We did have a location that didn't specify a value for unwinding
-//          // the PC, so if there is a info for the return return address
-//          // register (link register) lets use that
-//          if (returnAddrRegLocation)
-//              regLocation = returnAddrRegLocation;
-//      }
-//    }
-//
-//    if (regLocation)
-//    {
-//      mach_vm_address_t unwoundRegValue = INVALID_VMADDR;
-//      switch (regLocation->type)
-//      {
-//          case RegLocation::undefined:
-//              // Register is not available, mark it as invalid
-//              unwindState->SetRegisterIsValid(reg_idx, Thread::Index, false);
-//              return true;
-//
-//          case RegLocation::unspecified:
-//              // Nothing to do if it is the same
-//              return true;
-//
-//          case RegLocation::same:
-//              // Nothing to do if it is the same
-//              return true;
-//
-//          case RegLocation::atFPPlusOffset:
-//          case RegLocation::isFPPlusOffset:
-//          {
-//              uint64_t unwindAddress = currState->GetRegisterValue(row->cfa_register, Thread::GCC, INVALID_VMADDR, &get_reg_success);
-//
-//              if (get_reg_success)
-//              {
-//                  unwindAddress += row->cfa_offset + regLocation->location.offset;
-//
-//                  if (regLocation->type == RegLocation::isFPPlusOffset)
-//                  {
-//                      unwindState->SetRegisterValue(reg_idx, Thread::Index, unwindAddress);
-//                      return true;
-//                  }
-//                  else
-//                  {
-//                      kern_return_t err = mapped_memory_read_pointer(memCache, unwindAddress, &unwoundRegValue);
-//                      if (err != KERN_SUCCESS)
-//                      {
-//                          unwindState->SetRegisterIsValid(reg_idx, Thread::Index, false);
-//                          return false;
-//                      }
-//                      unwindState->SetRegisterValue(reg_idx, Thread::Index, unwoundRegValue);
-//                      return true;
-//                  }
-//              }
-//              else
-//              {
-//                  unwindState->SetRegisterIsValid(reg_idx, Thread::Index, false);
-//              }
-//              return false;
-//          }
-//              break;
-//
-//          case RegLocation::atDWARFExpression:
-//          case RegLocation::isDWARFExpression:
-//          {
-//              bool swap = false;
-//              DWARFExpressionBaton baton = { currState, memCache, swap };
-//              uint64_t expr_result = 0;
-//              CSBinaryDataRef opcodes(regLocation->location.expr.opcodes, regLocation->location.expr.length, swap);
-//              opcodes.SetPointerSize(currState->Is64Bit() ? 8 : 4);
-//              const char * expr_err = CSDWARFExpression::Evaluate(DWARFExpressionReadMemoryDCScriptInterpreter::Type,
-//                                                                  DWARFExpressionReadRegisterDCScriptInterpreter::Type,
-//                                                                  &baton,
-//                                                                  opcodes,
-//                                                                  0,
-//                                                                  regLocation->location.expr.length,
-//                                                                  NULL,
-//                                                                  expr_result);
-//              if (expr_err == NULL)
-//              {
-//                  // SUCCESS!
-//                  if (regLocation->type == RegLocation::isDWARFExpression)
-//                  {
-//                      unwindState->SetRegisterValue(reg_idx, Thread::Index, expr_result);
-//                      return true;
-//                  }
-//                  else
-//                  {
-//                      kern_return_t err = mapped_memory_read_pointer(memCache, expr_result, &unwoundRegValue);
-//                      if (err != KERN_SUCCESS)
-//                      {
-//                          unwindState->SetRegisterIsValid(reg_idx, Thread::Index, false);
-//                          return false;
-//                      }
-//                      unwindState->SetRegisterValue(reg_idx, Thread::Index, unwoundRegValue);
-//                      return true;
-//                  }
-//              }
-//              else
-//              {
-//                  // FAIL
-//                  unwindState->SetRegisterIsValid(reg_idx, Thread::Index, false);
-//              }
-//              return false;
-//          }
-//              break;
-//
-//
-//          case RegLocation::inRegister:
-//              // The value is in another register.
-//              unwoundRegValue = currState->GetRegisterValue(regLocation->location.reg, Thread::GCC, 0, &get_reg_success);
-//              if (get_reg_success)
-//              {
-//                  unwindState->SetRegisterValue(reg_idx, Thread::Index, unwoundRegValue);
-//                  return true;
-//              }
-//              return false;
-//
-//          default:
-//              break;
-//      }
-//    }
-//
-//    if (reg_idx == currState->GetSPRegNum(Thread::Index))
-//    {
-//      uint64_t cfa = currState->GetRegisterValue(row->cfa_register, Thread::GCC, 0, &get_reg_success);
-//      if (get_reg_success)
-//      {
-//          return unwindState->SetSP(cfa + row->cfa_offset);
-//      }
-//      else
-//      {
-//          unwindState->SetRegisterIsValid(reg_idx, Thread::Index, false);
-//          return false;
-//      }
-//    }
-//
-//    return false;
-//}
-
-void
-DWARFCallFrameInfo::Dump(Stream *s, Thread *thread) const
-{
-    s->Indent();
-    s->Printf("DWARFCallFrameInfo for ");
-    *s << m_objfile->GetFileSpec();
-    if (m_flags.IsSet(eFlagParsedIndex))
-    {
-        s->Printf(" (CIE[%zu], FDE[%zu])\n", m_cie_map.size(), m_fde_map.size());
-        s->IndentMore();
-        cie_map_t::const_iterator cie_pos, cie_end = m_cie_map.end();
-        const ArchSpec *arch = &m_objfile->GetModule()->GetArchitecture();
-
-        for (cie_pos = m_cie_map.begin(); cie_pos != cie_end; ++ cie_pos)
-        {
-            if (cie_pos->second.get() == NULL)
-            {
-                s->Indent();
-                s->Printf("CIE{0x%8.8x} - unparsed\n", cie_pos->first);
-            }
-            else
-            {
-                cie_pos->second->Dump(s, thread, arch, m_reg_kind);
-            }
-        }
-
-        fde_map_t::const_iterator fde_pos, fde_end = m_fde_map.end();
-        for (fde_pos = m_fde_map.begin(); fde_pos != fde_end; ++ fde_pos)
-        {
-            if (fde_pos->second.fde_sp.get() == NULL)
-            {
-                s->Indent();
-                s->Printf("FDE{0x%8.8x} - unparsed\n", fde_pos->second.fde_offset);
-            }
-            else
-            {
-                fde_pos->second.fde_sp->Dump(s, *this, thread);
-            }
-        }
-        s->IndentLess();
-    }
-    else
-    {
-        s->PutCString(" (not indexed yet)\n");
-    }
-}
-
-
-//uint32_t
-//DWARFCallFrameInfo::UnwindThreadState(const Thread* currState, mapped_memory_t *memCache, bool is_first_frame, Thread* unwindState)
-//{
-//  if (currState == NULL || unwindState == NULL)
-//      return 0;
-//
-//    *unwindState = *currState;
-//    uint32_t numRegisterUnwound = 0;
-//    uint64_t currPC = currState->GetPC(INVALID_VMADDR);
-//
-//    if (currPC != INVALID_VMADDR)
-//    {
-//      // If this is not the first frame, we care about the previous instruction
-//      // since it will be at the instruction following the instruction that
-//      // made the function call.
-//      uint64_t unwindPC = currPC;
-//      if (unwindPC > 0 && !is_first_frame)
-//          --unwindPC;
-//
-//#if defined(__i386__) || defined(__x86_64__)
-//      // Only on i386 do we have __IMPORT segments that contain trampolines
-//      if (!currState->Is64Bit() && ImportRangesContainsAddress(unwindPC))
-//      {
-//          uint64_t curr_sp = currState->GetSP(INVALID_VMADDR);
-//          mach_vm_address_t pc = INVALID_VMADDR;
-//          unwindState->SetSP(curr_sp + 4);
-//          kern_return_t err = mapped_memory_read_pointer(memCache, curr_sp, &pc);
-//          if (err == KERN_SUCCESS)
-//          {
-//              unwindState->SetPC(pc);
-//              return 2;
-//          }
-//      }
-//#endif
-//      FDE *fde = FindFDE(unwindPC);
-//      if (fde)
-//      {
-//          FindRowUserData rowUserData (currState, unwindPC);
-//          ParseInstructions (currState, fde, FindRowForAddress, &rowUserData);
-//
-//          const uint32_t numRegs = currState->NumRegisters();
-//          for (uint32_t regNum = 0; regNum < numRegs; regNum++)
-//          {
-//              if (UnwindRegisterAtIndex(regNum, currState, &rowUserData.state, memCache, unwindState))
-//                  numRegisterUnwound++;
-//          }
-//      }
-//    }
-//    return numRegisterUnwound;
-//}
-
-

@@ -142,6 +142,9 @@ public:
     bool
     WriteRegisterFromUnsigned (uint32_t reg, uint64_t uval);
 
+    bool
+    ConvertBetweenRegisterKinds (int source_rk, uint32_t source_regnum, int target_rk, uint32_t target_regnum);
+
     //------------------------------------------------------------------
     // lldb::ExecutionContextScope pure virtual functions
     //------------------------------------------------------------------

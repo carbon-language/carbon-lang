@@ -178,6 +178,41 @@ public:
 
     static SymbolVendorCreateInstance
     GetSymbolVendorCreateCallbackForPluginName (const char *name);
+
+    //------------------------------------------------------------------
+    // UnwindAssemblyProfiler
+    //------------------------------------------------------------------
+    static bool
+    RegisterPlugin (const char *name,
+                    const char *description,
+                    UnwindAssemblyProfilerCreateInstance create_callback);
+
+    static bool
+    UnregisterPlugin (UnwindAssemblyProfilerCreateInstance create_callback);
+
+    static UnwindAssemblyProfilerCreateInstance
+    GetUnwindAssemblyProfilerCreateCallbackAtIndex (uint32_t idx);
+
+    static UnwindAssemblyProfilerCreateInstance
+    GetUnwindAssemblyProfilerCreateCallbackForPluginName (const char *name);
+
+    //------------------------------------------------------------------
+    // ArchDefaultUnwindPlan
+    //------------------------------------------------------------------
+    static bool
+    RegisterPlugin (const char *name,
+                    const char *description,
+                    ArchDefaultUnwindPlanCreateInstance create_callback);
+
+    static bool
+    UnregisterPlugin (ArchDefaultUnwindPlanCreateInstance create_callback);
+
+    static ArchDefaultUnwindPlanCreateInstance
+    GetArchDefaultUnwindPlanCreateCallbackAtIndex (uint32_t idx);
+
+    static ArchDefaultUnwindPlanCreateInstance
+    GetArchDefaultUnwindPlanCreateCallbackForPluginName (const char *name);
+
 };
 
 

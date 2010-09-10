@@ -106,7 +106,7 @@ public:
                     if (reg_info)
                     {
                         output_stream.Printf("%-12s = ", reg_info->name);
-                        if (reg_context->ReadRegisterBytes(reg_info->reg, reg_data))
+                        if (reg_context->ReadRegisterBytes(reg_info->kinds[eRegisterKindLLDB], reg_data))
                         {
                             reg_data.Dump(&output_stream, 0, reg_info->format, reg_info->byte_size, 1, UINT32_MAX, LLDB_INVALID_ADDRESS, 0, 0);
                         }
@@ -183,7 +183,7 @@ public:
                     Error error(scalar.SetValueFromCString (value_str, reg_info->encoding, reg_info->byte_size));
                     if (error.Success())
                     {
-                        if (reg_context->WriteRegisterValue(reg_info->reg, scalar))
+                        if (reg_context->WriteRegisterValue(reg_info->kinds[eRegisterKindLLDB], scalar))
                         {
                             result.SetStatus (eReturnStatusSuccessFinishNoResult);
                             return true;
