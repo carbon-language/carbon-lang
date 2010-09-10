@@ -719,16 +719,7 @@ ClangExpressionDeclMap::GetDecls(NameSearchContext &context,
     // Back out in all cases where we're not fully initialized
     if (!m_exe_ctx || !m_exe_ctx->frame || !m_sym_ctx)
         return;
-    
-    Function *function = m_sym_ctx->function;
-    
-    if (!function)
-    {
-        if (log)
-            log->Printf("Can't evaluate an expression when not in a function");
-        return;
-    }
-    
+        
     ConstString name_cs(name);
     SymbolContextList sym_ctxs;
     
