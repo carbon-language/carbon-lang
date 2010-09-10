@@ -301,6 +301,10 @@ public:
     return 0;
   }
 
+  Value *VisitCXXNoexceptExpr(const CXXNoexceptExpr *E) {
+    return llvm::ConstantInt::get(Builder.getInt1Ty(), E->getValue());
+  }
+
   // Binary Operators.
   Value *EmitMul(const BinOpInfo &Ops) {
     if (Ops.Ty->hasSignedIntegerRepresentation()) {
