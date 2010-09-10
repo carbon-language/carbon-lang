@@ -1347,6 +1347,11 @@ static Expr::CanThrowResult CanCalleeThrow(const Decl *D,
   if (!VD) // If we have no clue what we're calling, assume the worst.
     return Expr::CT_Can;
 
+  // As an extension, we assume that __attribute__((nothrow)) functions don't
+  // throw.
+  if (isa<FunctionDecl>(D) && D->hasAttr<NoThrowAttr>())
+    return Expr::CT_Cannot;
+
   QualType T = VD->getType();
   const FunctionProtoType *FT;
   if ((FT = T->getAs<FunctionProtoType>())) {
@@ -1482,7 +1487,7 @@ Expr::CanThrowResult Expr::CanThrow(ASTContext &C) const {
   case VAArgExprClass:
   case CXXDefaultArgExprClass:
   case CXXBindTemporaryExprClass:
-  case CXXExprWithTemporariesClass:
+  case CXXExprWithTemporariesClass: // FIXME: this thing calls destructors
   case ObjCIvarRefExprClass:
   case ObjCIsaExprClass:
   case ShuffleVectorExprClass:

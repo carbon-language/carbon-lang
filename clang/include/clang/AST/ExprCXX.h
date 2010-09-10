@@ -2441,9 +2441,6 @@ class CXXNoexceptExpr : public Expr {
   SourceRange Range;
 
   friend class ASTStmtReader;
-  void setOperand(Expr *E) { Operand = E; }
-  void setSourceRange(const SourceRange &R) { Range = R; }
-  void setValue(bool V) { Value = V; }
 
 public:
   CXXNoexceptExpr(QualType Ty, Expr *Operand, CanThrowResult Val,

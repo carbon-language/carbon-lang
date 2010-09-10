@@ -11,9 +11,9 @@ struct E {
 
 void test() {
   bool b;
-  // CHECK: store i8 1, i8* %b, align 1
+  // CHECK: store i8 1
   b = noexcept(0);
-  // CHECK: store i8 0, i8* %b, align 1
+  // CHECK: store i8 0
   b = noexcept(throw 0);
   b = f1();
   b = f2();

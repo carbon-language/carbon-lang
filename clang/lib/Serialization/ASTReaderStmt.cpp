@@ -1255,9 +1255,9 @@ void ASTStmtReader::VisitUnaryTypeTraitExpr(UnaryTypeTraitExpr *E) {
 
 void ASTStmtReader::VisitCXXNoexceptExpr(CXXNoexceptExpr *E) {
   VisitExpr(E);
-  E->setValue((bool)Record[Idx++]);
-  E->setSourceRange(Reader.ReadSourceRange(Record, Idx));
-  E->setOperand(Reader.ReadSubExpr());
+  E->Value = (bool)Record[Idx++];
+  E->Range = Reader.ReadSourceRange(Record, Idx);
+  E->Operand = Reader.ReadSubExpr();
 }
 
 Stmt *ASTReader::ReadStmt(llvm::BitstreamCursor &Cursor) {

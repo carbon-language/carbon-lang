@@ -19,12 +19,14 @@ void nospec();
 void allspec() throw(...);
 void intspec() throw(int);
 void emptyspec() throw();
+void nothrowattr() __attribute__((nothrow));
 
 void call() {
   N(nospec());
   N(allspec());
   N(intspec());
   P(emptyspec());
+  P(nothrowattr());
 }
 
 void (*pnospec)();
