@@ -15,6 +15,7 @@
 
 #include "ARM.h"
 #include "ARMBaseInstrInfo.h"
+#include "ARMCallingConv.h"
 #include "ARMRegisterInfo.h"
 #include "ARMTargetMachine.h"
 #include "ARMSubtarget.h"
@@ -135,13 +136,19 @@ class ARMFastISel : public FastISel {
     unsigned ARMMoveToFPReg(EVT VT, unsigned SrcReg);
     unsigned ARMMoveToIntReg(EVT VT, unsigned SrcReg);
 
+    // Call handling routines.
+  private:
+    CCAssignFn *CCAssignFnForCall(CallingConv::ID CC, bool Return);
+
+    // OptionalDef handling routines.
+  private:
     bool DefinesOptionalPredicate(MachineInstr *MI, bool *CPSR);
     const MachineInstrBuilder &AddOptionalDefs(const MachineInstrBuilder &MIB);
 };
 
 } // end anonymous namespace
 
-// #include "ARMGenCallingConv.inc"
+#include "ARMGenCallingConv.inc"
 
 // DefinesOptionalPredicate - This is different from DefinesPredicate in that
 // we don't care about implicit defs here, just places we'll need to add a
@@ -893,6 +900,35 @@ bool ARMFastISel::ARMSelectBinaryOp(const Instruction *I, unsigned ISDOpcode) {
                   .addReg(Op1).addReg(Op2));
   UpdateValueMap(I, ResultReg);
   return true;
+}
+
+// Call Handling Code
+
+// This is largely taken directly from CCAssignFnForNode - we don't support
+// varargs in FastISel so that part has been removed.
+// TODO: We may not support all of this.
+CCAssignFn *ARMFastISel::CCAssignFnForCall(CallingConv::ID CC, bool Return) {
+  switch (CC) {
+  default:
+    llvm_unreachable("Unsupported calling convention");
+  case CallingConv::C:
+  case CallingConv::Fast:
+    // Use target triple & subtarget features to do actual dispatch.
+    if (Subtarget->isAAPCS_ABI()) {
+      if (Subtarget->hasVFP2() &&
+          FloatABIType == FloatABI::Hard)
+        return (Return ? RetCC_ARM_AAPCS_VFP: CC_ARM_AAPCS_VFP);
+      else
+        return (Return ? RetCC_ARM_AAPCS: CC_ARM_AAPCS);
+    } else
+        return (Return ? RetCC_ARM_APCS: CC_ARM_APCS);
+  case CallingConv::ARM_AAPCS_VFP:
+    return (Return ? RetCC_ARM_AAPCS_VFP: CC_ARM_AAPCS_VFP);
+  case CallingConv::ARM_AAPCS:
+    return (Return ? RetCC_ARM_AAPCS: CC_ARM_AAPCS);
+  case CallingConv::ARM_APCS:
+    return (Return ? RetCC_ARM_APCS: CC_ARM_APCS);
+  }
 }
 
 // TODO: SoftFP support.
