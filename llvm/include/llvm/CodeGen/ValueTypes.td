@@ -55,7 +55,7 @@ def v8f32  : ValueType<256, 30>;   //  8 x f32 vector value
 def v2f64  : ValueType<128, 31>;   //  2 x f64 vector value
 def v4f64  : ValueType<256, 32>;   //  4 x f64 vector value
 
-def x86mmx : ValueType<0  , 33>;   // X86 MMX value
+def x86mmx : ValueType<64 , 33>;   // X86 MMX value
 def FlagVT : ValueType<0  , 34>;   // Pre-RA sched glue
 def isVoid : ValueType<0  , 35>;   // Produces no value
 
