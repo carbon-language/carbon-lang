@@ -181,9 +181,9 @@ def X86Punpckhqdq : SDNode<"X86ISD::PUNPCKHQDQ", SDTShuff2Op>;
 // the top elements.  These are used for the SSE 'ss' and 'sd' instruction
 // forms.
 def sse_load_f32 : ComplexPattern<v4f32, 5, "SelectScalarSSELoad", [],
-                                  [SDNPHasChain, SDNPMayLoad]>;
+                                  [SDNPHasChain, SDNPMayLoad, SDNPMemOperand]>;
 def sse_load_f64 : ComplexPattern<v2f64, 5, "SelectScalarSSELoad", [],
-                                  [SDNPHasChain, SDNPMayLoad]>;
+                                  [SDNPHasChain, SDNPMayLoad, SDNPMemOperand]>;
 
 def ssmem : Operand<v4f32> {
   let PrintMethod = "printf32mem";
