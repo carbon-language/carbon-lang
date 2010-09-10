@@ -100,7 +100,15 @@ RValue CodeGenFunction::EmitCXXMemberCallExpr(const CXXMemberCallExpr *CE,
     This = EmitScalarExpr(ME->getBase());
   else {
     LValue BaseLV = EmitLValue(ME->getBase());
-    This = BaseLV.getAddress();
+    if (BaseLV.isPropertyRef() || BaseLV.isKVCRef()) {
+      QualType QT = ME->getBase()->getType();
+      RValue RV = 
+        BaseLV.isPropertyRef() ? EmitLoadOfPropertyRefLValue(BaseLV, QT)
+          : EmitLoadOfKVCRefLValue(BaseLV, QT);
+      This = RV.isScalar() ? RV.getScalarVal() : RV.getAggregateAddr();
+    }
+    else
+      This = BaseLV.getAddress();
   }
 
   if (MD->isTrivial()) {

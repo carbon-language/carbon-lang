@@ -555,7 +555,8 @@ RValue CodeGenFunction::EmitObjCPropertyGet(const Expr *Exp,
     else
       Receiver = EmitScalarExpr(KE->getBase());
     return CGM.getObjCRuntime().
-             GenerateMessageSend(*this, Return, Exp->getType(), S,
+             GenerateMessageSend(*this, Return, 
+                                 KE->getGetterMethod()->getResultType(), S,
                                  Receiver,
                                  CallArgList(), KE->getInterfaceDecl());
   }
