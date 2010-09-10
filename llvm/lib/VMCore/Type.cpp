@@ -109,6 +109,7 @@ const Type *Type::getPrimitiveType(LLVMContext &C, TypeID IDNumber) {
   case PPC_FP128TyID : return getPPC_FP128Ty(C);
   case LabelTyID     : return getLabelTy(C);
   case MetadataTyID  : return getMetadataTy(C);
+  case X86_MMXTyID   : return getX86_MMXTy(C);
   default:
     return 0;
   }
@@ -192,6 +193,7 @@ unsigned Type::getPrimitiveSizeInBits() const {
   case Type::X86_FP80TyID: return 80;
   case Type::FP128TyID: return 128;
   case Type::PPC_FP128TyID: return 128;
+  case Type::X86_MMXTyID: return 64;
   case Type::IntegerTyID: return cast<IntegerType>(this)->getBitWidth();
   case Type::VectorTyID:  return cast<VectorType>(this)->getBitWidth();
   default: return 0;
@@ -354,6 +356,10 @@ const Type *Type::getPPC_FP128Ty(LLVMContext &C) {
   return &C.pImpl->PPC_FP128Ty;
 }
 
+const Type *Type::getX86_MMXTy(LLVMContext &C) {
+  return &C.pImpl->X86_MMXTy;
+}
+
 const IntegerType *Type::getIntNTy(LLVMContext &C, unsigned N) {
   return IntegerType::get(C, N);
 }
@@ -396,6 +402,10 @@ const PointerType *Type::getFP128PtrTy(LLVMContext &C, unsigned AS) {
 
 const PointerType *Type::getPPC_FP128PtrTy(LLVMContext &C, unsigned AS) {
   return getPPC_FP128Ty(C)->getPointerTo(AS);
+}
+
+const PointerType *Type::getX86_MMXPtrTy(LLVMContext &C, unsigned AS) {
+  return getX86_MMXTy(C)->getPointerTo(AS);
 }
 
 const PointerType *Type::getIntNPtrTy(LLVMContext &C, unsigned N, unsigned AS) {

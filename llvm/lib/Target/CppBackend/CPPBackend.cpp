@@ -358,6 +358,7 @@ std::string CppWriter::getCppName(const Type* Ty) {
     case Type::FloatTyID:    return "Type::getFloatTy(mod->getContext())";
     case Type::DoubleTyID:   return "Type::getDoubleTy(mod->getContext())";
     case Type::LabelTyID:    return "Type::getLabelTy(mod->getContext())";
+    case Type::X86_MMXTyID:  return "Type::getX86_MMXTy(mod->getContext())";
     default:
       error("Invalid primitive type");
       break;

@@ -461,6 +461,7 @@ uint64_t TargetData::getTypeSizeInBits(const Type *Ty) const {
   case Type::FloatTyID:
     return 32;
   case Type::DoubleTyID:
+  case Type::X86_MMXTyID:
     return 64;
   case Type::PPC_FP128TyID:
   case Type::FP128TyID:

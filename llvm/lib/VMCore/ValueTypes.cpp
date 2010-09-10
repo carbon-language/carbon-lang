@@ -156,6 +156,7 @@ const Type *EVT::getTypeForEVT(LLVMContext &Context) const {
   case MVT::f80:     return Type::getX86_FP80Ty(Context);
   case MVT::f128:    return Type::getFP128Ty(Context);
   case MVT::ppcf128: return Type::getPPC_FP128Ty(Context);
+  case MVT::x86mmx:  return Type::getX86_MMXTy(Context);
   case MVT::v2i8:    return VectorType::get(Type::getInt8Ty(Context), 2);
   case MVT::v4i8:    return VectorType::get(Type::getInt8Ty(Context), 4);
   case MVT::v8i8:    return VectorType::get(Type::getInt8Ty(Context), 8);

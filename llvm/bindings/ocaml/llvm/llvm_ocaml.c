@@ -264,6 +264,11 @@ CAMLprim LLVMTypeRef llvm_ppc_fp128_type(LLVMContextRef Context) {
   return LLVMPPCFP128TypeInContext(Context);
 }
 
+/* llcontext -> lltype */
+CAMLprim LLVMTypeRef llvm_x86mmx_type(LLVMContextRef Context) {
+  return LLVMX86MMXTypeInContext(Context);
+}
+
 /*--... Operations on function types .......................................--*/
 
 /* lltype -> lltype array -> lltype */

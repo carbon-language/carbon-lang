@@ -164,6 +164,8 @@ LLVMTypeKind LLVMGetTypeKind(LLVMTypeRef Ty) {
     return LLVMOpaqueTypeKind;
   case Type::VectorTyID:
     return LLVMVectorTypeKind;
+  case Type::X86_MMXTyID:
+    return LLVMX86_MMXTypeKind;
   }
 }
 
@@ -232,6 +234,9 @@ LLVMTypeRef LLVMFP128TypeInContext(LLVMContextRef C) {
 LLVMTypeRef LLVMPPCFP128TypeInContext(LLVMContextRef C) {
   return (LLVMTypeRef) Type::getPPC_FP128Ty(*unwrap(C));
 }
+LLVMTypeRef LLVMX86MMXTypeInContext(LLVMContextRef C) {
+  return (LLVMTypeRef) Type::getX86_MMXTy(*unwrap(C));
+}
 
 LLVMTypeRef LLVMFloatType(void) {
   return LLVMFloatTypeInContext(LLVMGetGlobalContext());
@@ -247,6 +252,9 @@ LLVMTypeRef LLVMFP128Type(void) {
 }
 LLVMTypeRef LLVMPPCFP128Type(void) {
   return LLVMPPCFP128TypeInContext(LLVMGetGlobalContext());
+}
+LLVMTypeRef LLVMX86MMXType(void) {
+  return LLVMX86MMXTypeInContext(LLVMGetGlobalContext());
 }
 
 /*--.. Operations on function types ........................................--*/

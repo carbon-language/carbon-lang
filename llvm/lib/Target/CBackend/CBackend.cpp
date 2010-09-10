@@ -514,7 +514,11 @@ CWriter::printSimpleType(raw_ostream &Out, const Type *Ty, bool isSigned,
   case Type::X86_FP80TyID:
   case Type::PPC_FP128TyID:
   case Type::FP128TyID:  return Out << "long double " << NameSoFar;
-      
+
+  case Type::X86_MMXTyID:
+    return printSimpleType(Out, Type::getInt32Ty(Ty->getContext()), isSigned,
+                     " __attribute__((vector_size(64))) " + NameSoFar);
+
   case Type::VectorTyID: {
     const VectorType *VTy = cast<VectorType>(Ty);
     return printSimpleType(Out, VTy->getElementType(), isSigned,

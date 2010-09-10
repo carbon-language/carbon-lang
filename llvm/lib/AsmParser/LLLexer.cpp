@@ -595,6 +595,7 @@ lltok::Kind LLLexer::LexIdentifier() {
   TYPEKEYWORD("ppc_fp128", Type::getPPC_FP128Ty(Context));
   TYPEKEYWORD("label",     Type::getLabelTy(Context));
   TYPEKEYWORD("metadata",  Type::getMetadataTy(Context));
+  TYPEKEYWORD("x86_mmx",   Type::getX86_MMXTy(Context));
 #undef TYPEKEYWORD
 
   // Handle special forms for autoupgrading.  Drop these in LLVM 3.0.  This is

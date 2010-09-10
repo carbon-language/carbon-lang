@@ -549,6 +549,9 @@ bool BitcodeReader::ParseTypeTable() {
     case bitc::TYPE_CODE_METADATA:  // METADATA
       ResultTy = Type::getMetadataTy(Context);
       break;
+    case bitc::TYPE_CODE_X86_MMX:   // X86_MMX
+      ResultTy = Type::getX86_MMXTy(Context);
+      break;
     case bitc::TYPE_CODE_INTEGER:   // INTEGER: [width]
       if (Record.size() < 1)
         return Error("Invalid Integer type record");

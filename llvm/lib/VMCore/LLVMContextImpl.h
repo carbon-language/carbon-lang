@@ -174,6 +174,7 @@ public:
   const Type X86_FP80Ty;
   const Type FP128Ty;
   const Type PPC_FP128Ty;
+  const Type X86_MMXTy;
   const IntegerType Int1Ty;
   const IntegerType Int8Ty;
   const IntegerType Int16Ty;
