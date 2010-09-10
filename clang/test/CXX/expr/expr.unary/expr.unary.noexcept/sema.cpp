@@ -12,6 +12,7 @@ void simple() {
   P(sizeof(0));
   P(static_cast<int>(0));
   N(throw 0);
+  N((throw 0, 0));
 }
 
 void nospec();
