@@ -227,9 +227,12 @@ public:
   /// cheaper to allocate caller saved registers.
   ///
   /// These methods take a MachineFunction argument, which can be used to tune
-  /// the allocatable registers based on the characteristics of the function.
-  /// One simple example is that the frame pointer register can be used if
-  /// frame-pointer-elimination is performed.
+  /// the allocatable registers based on the characteristics of the function,
+  /// subtarget, or other criteria.
+  ///
+  /// Register allocators should account for the fact that an allocation
+  /// order iterator may return a reserved register and always check
+  /// if the register is allocatable (getAllocatableSet()) before using it.
   ///
   /// By default, these methods return all registers in the class.
   ///
