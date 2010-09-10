@@ -2,6 +2,7 @@
 
 #define P(e) static_assert(noexcept(e), "expected nothrow")
 #define N(e) static_assert(!noexcept(e), "expected throw")
+#define B(b, e) static_assert(b == noexcept(e), "expectation failed")
 
 void simple() {
   P(0);
@@ -125,4 +126,34 @@ void idtype() {
 void uneval() {
   P(sizeof(typeid(*(V*)0)));
   P(typeid(typeid(*(V*)0)));
+}
+
+struct G1 {};
+struct G2 { int i; };
+struct G3 { S2 s; };
+
+void gencon() {
+  P(G1());
+  P(G2());
+  N(G3());
+}
+
+template <typename T, bool b>
+void late() {
+  B(b, typeid(*(T*)0));
+  B(b, T(1));
+  B(b, static_cast<T>(S2(0, 0)));
+  B(b, S1() + T());
+}
+struct S3 {
+  virtual ~S3() throw();
+  S3() throw();
+  explicit S3(int);
+  S3(const S2&);
+};
+void operator +(const S1&, float) throw();
+void operator +(const S1&, const S3&);
+void tlate() {
+  late<float, true>();
+  late<S3, false>();
 }
