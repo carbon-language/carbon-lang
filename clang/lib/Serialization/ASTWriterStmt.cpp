@@ -152,6 +152,7 @@ namespace clang {
     void VisitUnresolvedLookupExpr(UnresolvedLookupExpr *E);
 
     void VisitUnaryTypeTraitExpr(UnaryTypeTraitExpr *E);
+    void VisitCXXNoexceptExpr(CXXNoexceptExpr *E);
   };
 }
 
@@ -1281,6 +1282,14 @@ void ASTStmtWriter::VisitUnaryTypeTraitExpr(UnaryTypeTraitExpr *E) {
   Writer.AddSourceRange(E->getSourceRange(), Record);
   Writer.AddTypeSourceInfo(E->getQueriedTypeSourceInfo(), Record);
   Code = serialization::EXPR_CXX_UNARY_TYPE_TRAIT;
+}
+
+void ASTStmtWriter::VisitCXXNoexceptExpr(CXXNoexceptExpr *E) {
+  VisitExpr(E);
+  Record.push_back(E->getValue());
+  Writer.AddSourceRange(E->getSourceRange(), Record);
+  Writer.AddStmt(E->getOperand());
+  Code = serialization::EXPR_CXX_NOEXCEPT;
 }
 
 //===----------------------------------------------------------------------===//

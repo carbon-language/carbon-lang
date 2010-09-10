@@ -2443,16 +2443,23 @@ class CXXNoexceptExpr : public Expr {
 public:
   CXXNoexceptExpr(QualType Ty, Expr *Operand, CanThrowResult Val,
                   SourceLocation Keyword, SourceLocation RParen)
-  : Expr(CXXNoexceptExprClass, Ty, /*TypeDependent*/false,
-         /*ValueDependent*/Val == CT_Dependent),
-    Value(Val == CT_Cannot), Operand(Operand), Range(Keyword, RParen)
+    : Expr(CXXNoexceptExprClass, Ty, /*TypeDependent*/false,
+           /*ValueDependent*/Val == CT_Dependent),
+      Value(Val == CT_Cannot), Operand(Operand), Range(Keyword, RParen)
+  { }
+
+  CXXNoexceptExpr(EmptyShell Empty)
+    : Expr(CXXNoexceptExprClass, Empty)
   { }
 
   Expr *getOperand() const { return static_cast<Expr*>(Operand); }
+  void setOperand(Expr *E) { Operand = E; }
 
   virtual SourceRange getSourceRange() const { return Range; }
+  void setSourceRange(const SourceRange &R) { Range = R; }
 
   bool getValue() const { return Value; }
+  void setValue(bool V) { Value = V; }
 
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == CXXNoexceptExprClass;

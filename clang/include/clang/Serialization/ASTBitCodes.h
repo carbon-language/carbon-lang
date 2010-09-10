@@ -887,15 +887,16 @@ namespace clang {
       EXPR_CXX_DELETE,            // CXXDeleteExpr
       EXPR_CXX_PSEUDO_DESTRUCTOR, // CXXPseudoDestructorExpr
       
-      EXPR_CXX_EXPR_WITH_TEMPORARIES, // CXXExprWithTemporaries
+      EXPR_CXX_EXPR_WITH_TEMPORARIES,    // CXXExprWithTemporaries
       
-      EXPR_CXX_DEPENDENT_SCOPE_MEMBER, // CXXDependentScopeMemberExpr
-      EXPR_CXX_DEPENDENT_SCOPE_DECL_REF,   // DependentScopeDeclRefExpr
-      EXPR_CXX_UNRESOLVED_CONSTRUCT, // CXXUnresolvedConstructExpr
-      EXPR_CXX_UNRESOLVED_MEMBER,    // UnresolvedMemberExpr
-      EXPR_CXX_UNRESOLVED_LOOKUP,     // UnresolvedLookupExpr
+      EXPR_CXX_DEPENDENT_SCOPE_MEMBER,   // CXXDependentScopeMemberExpr
+      EXPR_CXX_DEPENDENT_SCOPE_DECL_REF, // DependentScopeDeclRefExpr
+      EXPR_CXX_UNRESOLVED_CONSTRUCT,     // CXXUnresolvedConstructExpr
+      EXPR_CXX_UNRESOLVED_MEMBER,        // UnresolvedMemberExpr
+      EXPR_CXX_UNRESOLVED_LOOKUP,        // UnresolvedLookupExpr
 
-      EXPR_CXX_UNARY_TYPE_TRAIT   // UnaryTypeTraitExpr  
+      EXPR_CXX_UNARY_TYPE_TRAIT,  // UnaryTypeTraitExpr
+      EXPR_CXX_NOEXCEPT           // CXXNoexceptExpr
     };
 
     /// \brief The kinds of designators that can occur in a

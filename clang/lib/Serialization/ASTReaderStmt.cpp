@@ -156,6 +156,7 @@ namespace clang {
     void VisitUnresolvedLookupExpr(UnresolvedLookupExpr *E);
 
     void VisitUnaryTypeTraitExpr(UnaryTypeTraitExpr *E);
+    void VisitCXXNoexceptExpr(CXXNoexceptExpr *E);
   };
 }
 
@@ -1252,6 +1253,13 @@ void ASTStmtReader::VisitUnaryTypeTraitExpr(UnaryTypeTraitExpr *E) {
   E->QueriedType = Reader.GetTypeSourceInfo(DeclsCursor, Record, Idx);
 }
 
+void ASTStmtReader::VisitCXXNoexceptExpr(CXXNoexceptExpr *E) {
+  VisitExpr(E);
+  E->setValue((bool)Record[Idx++]);
+  E->setSourceRange(Reader.ReadSourceRange(Record, Idx));
+  E->setOperand(Reader.ReadSubExpr());
+}
+
 Stmt *ASTReader::ReadStmt(llvm::BitstreamCursor &Cursor) {
   switch (ReadingKind) {
   case Read_Decl:
@@ -1763,6 +1771,10 @@ Stmt *ASTReader::ReadStmtFromStream(llvm::BitstreamCursor &Cursor) {
       
     case EXPR_CXX_UNARY_TYPE_TRAIT:
       S = new (Context) UnaryTypeTraitExpr(Empty);
+      break;
+
+    case EXPR_CXX_NOEXCEPT:
+      S = new (Context) CXXNoexceptExpr(Empty);
       break;
     }
     

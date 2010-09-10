@@ -781,6 +781,7 @@ void GRExprEngine::Visit(const Stmt* S, ExplodedNode* Pred,
     case Stmt::UnaryTypeTraitExprClass:
     case Stmt::UnresolvedLookupExprClass:
     case Stmt::UnresolvedMemberExprClass:
+    case Stmt::CXXNoexceptExprClass:
     {
       SaveAndRestore<bool> OldSink(Builder->BuildSinks);
       Builder->BuildSinks = true;
