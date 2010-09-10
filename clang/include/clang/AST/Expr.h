@@ -253,7 +253,7 @@ public:
     bool isRValue() const { return Kind >= CL_XValue; }
     bool isModifiable() const { return getModifiable() == CM_Modifiable; }
   };
-  /// \brief classify - Classify this expression according to the C++0x
+  /// \brief Classify - Classify this expression according to the C++0x
   ///        expression taxonomy.
   ///
   /// C++0x defines ([basic.lval]) a new taxonomy of expressions to replace the
@@ -269,7 +269,7 @@ public:
     return ClassifyImpl(Ctx, 0);
   }
 
-  /// \brief classifyModifiable - Classify this expression according to the
+  /// \brief ClassifyModifiable - Classify this expression according to the
   ///        C++0x expression taxonomy, and see if it is valid on the left side
   ///        of an assignment.
   ///
@@ -407,6 +407,16 @@ public:
   /// isOBJCGCCandidate - Return true if this expression may be used in a read/
   /// write barrier.
   bool isOBJCGCCandidate(ASTContext &Ctx) const;
+
+  /// \brief Result type of CanThrow().
+  enum CanThrowResult {
+    CT_Cannot,
+    CT_Dependent,
+    CT_Can
+  };
+  /// \brief Test if this expression, if evaluated, might throw, according to
+  ///        the rules of C++ [expr.unary.noexcept].
+  CanThrowResult CanThrow(ASTContext &C) const;
 
   /// IgnoreParens - Ignore parentheses.  If this Expr is a ParenExpr, return
   ///  its subexpression.  If that subexpression is also a ParenExpr,

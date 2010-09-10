@@ -1319,6 +1319,207 @@ bool Expr::isOBJCGCCandidate(ASTContext &Ctx) const {
     return cast<ArraySubscriptExpr>(this)->getBase()->isOBJCGCCandidate(Ctx);
   }
 }
+
+static Expr::CanThrowResult MergeCanThrow(Expr::CanThrowResult CT1,
+                                          Expr::CanThrowResult CT2) {
+  // CanThrowResult constants are ordered so that the maximum is the correct
+  // merge result.
+  return CT1 > CT2 ? CT1 : CT2;
+}
+
+static Expr::CanThrowResult CanSubExprsThrow(ASTContext &C, const Expr *CE) {
+  Expr *E = const_cast<Expr*>(CE);
+  Expr::CanThrowResult R = Expr::CT_Cannot;
+  for (Expr::child_iterator I = E->child_begin(), IE = E->child_end();
+       I != IE && R != Expr::CT_Can; ++I) {
+    R = MergeCanThrow(R, cast<Expr>(*I)->CanThrow(C));
+  }
+  return R;
+}
+
+static Expr::CanThrowResult CanCalleeThrow(const Decl *D,
+                                           bool NullThrows = true) {
+  if (!D)
+    return NullThrows ? Expr::CT_Can : Expr::CT_Cannot;
+
+  // See if we can get a function type from the decl somehow.
+  const ValueDecl *VD = dyn_cast<ValueDecl>(D);
+  if (!VD) // If we have no clue what we're calling, assume the worst.
+    return Expr::CT_Can;
+
+  QualType T = VD->getType();
+  const FunctionProtoType *FT;
+  if ((FT = T->getAs<FunctionProtoType>())) {
+  } else if (const PointerType *PT = T->getAs<PointerType>())
+    FT = PT->getPointeeType()->getAs<FunctionProtoType>();
+  else if (const ReferenceType *RT = T->getAs<ReferenceType>())
+    FT = RT->getPointeeType()->getAs<FunctionProtoType>();
+  else if (const MemberPointerType *MT = T->getAs<MemberPointerType>())
+    FT = MT->getPointeeType()->getAs<FunctionProtoType>();
+  else if (const BlockPointerType *BT = T->getAs<BlockPointerType>())
+    FT = BT->getPointeeType()->getAs<FunctionProtoType>();
+
+  if (!FT)
+    return Expr::CT_Can;
+
+  return FT->hasEmptyExceptionSpec() ? Expr::CT_Cannot : Expr::CT_Can;
+}
+
+static Expr::CanThrowResult CanDynamicCastThrow(const CXXDynamicCastExpr *DC) {
+  if (DC->isTypeDependent())
+    return Expr::CT_Dependent;
+
+  return DC->getCastKind() == clang::CK_Dynamic? Expr::CT_Can : Expr::CT_Cannot;
+}
+
+static Expr::CanThrowResult CanTypeidThrow(ASTContext &C,
+                                           const CXXTypeidExpr *DC) {
+  if (DC->isTypeOperand())
+    return Expr::CT_Cannot;
+
+  Expr *Op = DC->getExprOperand();
+  if (Op->isTypeDependent())
+    return Expr::CT_Dependent;
+
+  const RecordType *RT = Op->getType()->getAs<RecordType>();
+  if (!RT)
+    return Expr::CT_Cannot;
+
+  if (!cast<CXXRecordDecl>(RT->getDecl())->isPolymorphic())
+    return Expr::CT_Cannot;
+
+  if (Op->Classify(C).isPRValue())
+    return Expr::CT_Cannot;
+
+  return Expr::CT_Can;
+}
+
+Expr::CanThrowResult Expr::CanThrow(ASTContext &C) const {
+  // C++ [expr.unary.noexcept]p3:
+  //   [Can throw] if in a potentially-evaluated context the expression would
+  //   contain:
+  switch (getStmtClass()) {
+  case CXXThrowExprClass:
+    //   - a potentially evaluated throw-expression
+    return CT_Can;
+
+  case CXXDynamicCastExprClass: {
+    //   - a potentially evaluated dynamic_cast expression dynamic_cast<T>(v),
+    //     where T is a reference type, that requires a run-time check
+    CanThrowResult CT = CanDynamicCastThrow(cast<CXXDynamicCastExpr>(this));
+    if (CT == CT_Can)
+      return CT;
+    return MergeCanThrow(CT, CanSubExprsThrow(C, this));
+  }
+
+  case CXXTypeidExprClass:
+    //   - a potentially evaluated typeid expression applied to a glvalue
+    //     expression whose type is a polymorphic class type
+    return CanTypeidThrow(C, cast<CXXTypeidExpr>(this));
+
+    //   - a potentially evaluated call to a function, member function, function
+    //     pointer, or member function pointer that does not have a non-throwing
+    //     exception-specification
+  case CallExprClass:
+  case CXXOperatorCallExprClass:
+  case CXXMemberCallExprClass: {
+    CanThrowResult CT = CanCalleeThrow(cast<CallExpr>(this)->getCalleeDecl());
+    if (CT == CT_Can)
+      return CT;
+    return MergeCanThrow(CT, CanSubExprsThrow(C, this));
+  }
+
+  case CXXConstructExprClass: {
+    CanThrowResult CT = CanCalleeThrow(
+        cast<CXXConstructExpr>(this)->getConstructor());
+    if (CT == CT_Can)
+      return CT;
+    return MergeCanThrow(CT, CanSubExprsThrow(C, this));
+  }
+
+  case CXXNewExprClass: {
+    CanThrowResult CT = MergeCanThrow(
+        CanCalleeThrow(cast<CXXNewExpr>(this)->getOperatorNew()),
+        CanCalleeThrow(cast<CXXNewExpr>(this)->getConstructor(),
+                       /*NullThrows*/false));
+    if (CT == CT_Can)
+      return CT;
+    return MergeCanThrow(CT, CanSubExprsThrow(C, this));
+  }
+
+  case CXXDeleteExprClass: {
+    // FIXME: check if destructor might throw
+    CanThrowResult CT = CanCalleeThrow(
+        cast<CXXDeleteExpr>(this)->getOperatorDelete());
+    if (CT == CT_Can)
+      return CT;
+    return MergeCanThrow(CT, CanSubExprsThrow(C, this));
+  }
+
+    // ObjC message sends are like function calls, but never have exception
+    // specs.
+  case ObjCMessageExprClass:
+  case ObjCPropertyRefExprClass:
+  case ObjCImplicitSetterGetterRefExprClass:
+    return CT_Can;
+
+    // Many other things have subexpressions, so we have to test those.
+    // Some are simple:
+  case ParenExprClass:
+  case MemberExprClass:
+  case CXXReinterpretCastExprClass:
+  case CXXConstCastExprClass:
+  case ConditionalOperatorClass:
+  case CompoundLiteralExprClass:
+  case ExtVectorElementExprClass:
+  case InitListExprClass:
+  case DesignatedInitExprClass:
+  case ParenListExprClass:
+  case VAArgExprClass:
+  case CXXDefaultArgExprClass:
+  case CXXBindTemporaryExprClass:
+  case CXXExprWithTemporariesClass:
+  case CXXTemporaryObjectExprClass:
+  case ObjCIvarRefExprClass:
+  case ObjCIsaExprClass:
+  case ShuffleVectorExprClass:
+    return CanSubExprsThrow(C, this);
+
+    // Some might be dependent for other reasons.
+  case UnaryOperatorClass:
+  case ArraySubscriptExprClass:
+  case ImplicitCastExprClass:
+  case CStyleCastExprClass:
+  case CXXStaticCastExprClass:
+  case CXXFunctionalCastExprClass:
+  case BinaryOperatorClass:
+  case CompoundAssignOperatorClass: {
+    CanThrowResult CT = isTypeDependent() ? CT_Dependent : CT_Cannot;
+    return MergeCanThrow(CT, CanSubExprsThrow(C, this));
+  }
+
+    // FIXME: We should handle StmtExpr, but that opens a MASSIVE can of worms.
+  case StmtExprClass:
+    return CT_Can;
+
+  case ChooseExprClass:
+    if (isTypeDependent() || isValueDependent())
+      return CT_Dependent;
+    return cast<ChooseExpr>(this)->getChosenSubExpr(C)->CanThrow(C);
+
+    // Some expressions are always dependent.
+  case DependentScopeDeclRefExprClass:
+  case CXXUnresolvedConstructExprClass:
+  case CXXDependentScopeMemberExprClass:
+    return CT_Dependent;
+
+  default:
+    // All other expressions don't have subexpressions, or else they are
+    // unevaluated.
+    return CT_Cannot;
+  }
+}
+
 Expr* Expr::IgnoreParens() {
   Expr* E = this;
   while (ParenExpr* P = dyn_cast<ParenExpr>(E))
