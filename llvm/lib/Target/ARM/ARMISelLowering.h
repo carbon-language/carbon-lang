@@ -301,6 +301,8 @@ namespace llvm {
 
     const TargetRegisterInfo *RegInfo;
 
+    const InstrItineraryData *Itins;
+
     /// ARMPCLabelIndex - Keep track of the number of ARM PC labels created.
     ///
     unsigned ARMPCLabelIndex;

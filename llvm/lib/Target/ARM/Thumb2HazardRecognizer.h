@@ -26,7 +26,7 @@ class Thumb2HazardRecognizer : public PostRAHazardRecognizer {
   MachineInstr *ITBlockMIs[4];
 
 public:
-  Thumb2HazardRecognizer(const InstrItineraryData &ItinData) :
+  Thumb2HazardRecognizer(const InstrItineraryData *ItinData) :
     PostRAHazardRecognizer(ItinData) {}
 
   virtual HazardType getHazardType(SUnit *SU);

@@ -194,7 +194,7 @@ loadRegFromStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
 }
 
 ScheduleHazardRecognizer *Thumb2InstrInfo::
-CreateTargetPostRAHazardRecognizer(const InstrItineraryData &II) const {
+CreateTargetPostRAHazardRecognizer(const InstrItineraryData *II) const {
   return (ScheduleHazardRecognizer *)new Thumb2HazardRecognizer(II);
 }
 

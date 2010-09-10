@@ -575,7 +575,7 @@ public:
   /// to use for this target when scheduling the machine instructions after
   /// register allocation.
   virtual ScheduleHazardRecognizer*
-  CreateTargetPostRAHazardRecognizer(const InstrItineraryData&) const = 0;
+  CreateTargetPostRAHazardRecognizer(const InstrItineraryData*) const = 0;
 
   /// AnalyzeCompare - For a comparison instruction, return the source register
   /// in SrcReg and the value it compares against in CmpValue. Return true if
@@ -595,7 +595,7 @@ public:
   /// getNumMicroOps - Return the number of u-operations the given machine
   /// instruction will be decoded to on the target cpu.
   virtual unsigned getNumMicroOps(const MachineInstr *MI,
-                                  const InstrItineraryData &ItinData) const;
+                                  const InstrItineraryData *ItinData) const;
 };
 
 /// TargetInstrInfoImpl - This is the default implementation of
@@ -631,7 +631,7 @@ public:
                                     const MachineFunction &MF) const;
 
   virtual ScheduleHazardRecognizer *
-  CreateTargetPostRAHazardRecognizer(const InstrItineraryData&) const;
+  CreateTargetPostRAHazardRecognizer(const InstrItineraryData*) const;
 };
 
 } // End llvm namespace

@@ -177,6 +177,7 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
     : TargetLowering(TM, createTLOF(TM)) {
   Subtarget = &TM.getSubtarget<ARMSubtarget>();
   RegInfo = TM.getRegisterInfo();
+  Itins = TM.getInstrItineraryData();
 
   if (Subtarget->isTargetDarwin()) {
     // Uses VFP for Thumb libfuncs if available.
@@ -749,8 +750,7 @@ Sched::Preference ARMTargetLowering::getSchedulingPreference(SDNode *N) const {
   if (TID.mayLoad())
     return Sched::Latency;
 
-  const InstrItineraryData &Itins = getTargetMachine().getInstrItineraryData();
-  if (!Itins.isEmpty() && Itins.getStageLatency(TID.getSchedClass()) > 2)
+  if (!Itins->isEmpty() && Itins->getStageLatency(TID.getSchedClass()) > 2)
     return Sched::Latency;
   return Sched::RegPressure;
 }

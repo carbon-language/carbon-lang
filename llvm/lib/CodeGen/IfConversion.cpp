@@ -18,6 +18,7 @@
 #include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/Target/TargetInstrInfo.h"
+#include "llvm/Target/TargetInstrItineraries.h"
 #include "llvm/Target/TargetLowering.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetRegisterInfo.h"
@@ -150,6 +151,7 @@ namespace {
     const TargetLowering *TLI;
     const TargetInstrInfo *TII;
     const TargetRegisterInfo *TRI;
+    const InstrItineraryData *InstrItins;
     bool MadeChange;
     int FnNum;
   public:
@@ -238,6 +240,7 @@ bool IfConverter::runOnMachineFunction(MachineFunction &MF) {
   TLI = MF.getTarget().getTargetLowering();
   TII = MF.getTarget().getInstrInfo();
   TRI = MF.getTarget().getRegisterInfo();
+  InstrItins = MF.getTarget().getInstrItineraryData();
   if (!TII) return false;
 
   // Tail merge tend to expose more if-conversion opportunities.
@@ -641,9 +644,10 @@ void IfConverter::ScanInstructions(BBInfo &BBI) {
     bool isCondBr = BBI.IsBrAnalyzable && TID.isConditionalBranch();
 
     if (!isCondBr) {
-      if (!isPredicated)
-        BBI.NonPredSize++;
-      else if (!AlreadyPredicated) {
+      if (!isPredicated) {
+        unsigned NumOps = TII->getNumMicroOps(&*I, InstrItins);
+        BBI.NonPredSize += NumOps;
+      } else if (!AlreadyPredicated) {
         // FIXME: This instruction is already predicated before the
         // if-conversion pass. It's probably something like a conditional move.
         // Mark this block unpredicable for now.
@@ -1364,7 +1368,8 @@ void IfConverter::CopyAndPredicateBlock(BBInfo &ToBBI, BBInfo &FromBBI,
 
     MachineInstr *MI = MF.CloneMachineInstr(I);
     ToBBI.BB->insert(ToBBI.BB->end(), MI);
-    ToBBI.NonPredSize++;
+    unsigned NumOps = TII->getNumMicroOps(MI, InstrItins);
+    ToBBI.NonPredSize += NumOps;
 
     if (!TII->isPredicated(I) && !MI->isDebugValue()) {
       if (!TII->PredicateInstruction(MI, Cond)) {

@@ -152,8 +152,8 @@ public:
   /// getInstrItineraryData - Returns instruction itinerary data for the target
   /// or specific subtarget.
   ///
-  virtual const InstrItineraryData getInstrItineraryData() const {  
-    return InstrItineraryData();
+  virtual const InstrItineraryData *getInstrItineraryData() const {  
+    return 0;
   }
 
   /// getELFWriterInfo - If this target supports an ELF writer, return

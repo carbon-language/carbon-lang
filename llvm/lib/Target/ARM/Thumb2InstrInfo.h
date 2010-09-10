@@ -72,7 +72,7 @@ public:
   const Thumb2RegisterInfo &getRegisterInfo() const { return RI; }
 
   ScheduleHazardRecognizer *
-  CreateTargetPostRAHazardRecognizer(const InstrItineraryData &II) const;
+  CreateTargetPostRAHazardRecognizer(const InstrItineraryData *II) const;
 };
 
 /// getITInstrPredicate - Valid only in Thumb2 mode. This function is identical

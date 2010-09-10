@@ -350,7 +350,7 @@ public:
                                     MachineInstr *CmpInstr) const;
 
   virtual unsigned getNumMicroOps(const MachineInstr *MI,
-                                  const InstrItineraryData &ItinData) const;
+                                  const InstrItineraryData *ItinData) const;
 };
 
 static inline

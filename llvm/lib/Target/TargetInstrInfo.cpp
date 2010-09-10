@@ -50,12 +50,12 @@ TargetInstrInfo::~TargetInstrInfo() {
 
 unsigned
 TargetInstrInfo::getNumMicroOps(const MachineInstr *MI,
-                                const InstrItineraryData &ItinData) const {
-  if (ItinData.isEmpty())
+                                const InstrItineraryData *ItinData) const {
+  if (!ItinData || ItinData->isEmpty())
     return 1;
 
   unsigned Class = MI->getDesc().getSchedClass();
-  unsigned UOps = ItinData.Itineratries[Class].NumMicroOps;
+  unsigned UOps = ItinData->Itineratries[Class].NumMicroOps;
   if (UOps)
     return UOps;
 

@@ -36,6 +36,7 @@ namespace llvm {
   class ScheduleDAGSDNodes : public ScheduleDAG {
   public:
     SelectionDAG *DAG;                    // DAG of the current basic block
+    const InstrItineraryData *InstrItins;
 
     explicit ScheduleDAGSDNodes(MachineFunction &mf);
 

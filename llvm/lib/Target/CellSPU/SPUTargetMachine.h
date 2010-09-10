@@ -75,8 +75,8 @@ public:
     return &DataLayout;
   }
 
-  virtual const InstrItineraryData getInstrItineraryData() const {
-    return InstrItins;
+  virtual const InstrItineraryData *getInstrItineraryData() const {
+    return &InstrItins;
   }
   
   // Pass Pipeline Configuration

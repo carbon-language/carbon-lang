@@ -1415,13 +1415,13 @@ ConvertToSetZeroFlag(MachineInstr *MI, MachineInstr *CmpInstr) const {
 
 unsigned
 ARMBaseInstrInfo::getNumMicroOps(const MachineInstr *MI,
-                                 const InstrItineraryData &ItinData) const {
-  if (ItinData.isEmpty())
+                                 const InstrItineraryData *ItinData) const {
+  if (!ItinData || ItinData->isEmpty())
     return 1;
 
   const TargetInstrDesc &Desc = MI->getDesc();
   unsigned Class = Desc.getSchedClass();
-  unsigned UOps = ItinData.Itineratries[Class].NumMicroOps;
+  unsigned UOps = ItinData->Itineratries[Class].NumMicroOps;
   if (UOps)
     return UOps;
 
@@ -1430,16 +1430,19 @@ ARMBaseInstrInfo::getNumMicroOps(const MachineInstr *MI,
   default:
     llvm_unreachable("Unexpected multi-uops instruction!");
     break;
+  case ARM::VLDMQ:
   case ARM::VSTMQ:
     return 2;
 
   // The number of uOps for load / store multiple are determined by the number
   // registers.
-  // On Cortex-A8, each odd / even pair of register loads / stores
-  // (e.g. r5 + r6) can be completed on the same cycle. The minimum is
-  // 2. For VFP / NEON load / store multiple, the formula is
+  // On Cortex-A8, each pair of register loads / stores can be scheduled on the
+  // same cycle. The scheduling for the first load / store must be done
+  // separately by assuming the the address is not 64-bit aligned.
+  // On Cortex-A9, the formula is simply (#reg / 2) + (#reg % 2). If the address
+  // is not 64-bit aligned, then AGU would take an extra cycle.
+  // For VFP / NEON load / store multiple, the formula is
   // (#reg / 2) + (#reg % 2) + 1.
-  // On Cortex-A9, the formula is simply (#reg / 2) + (#reg % 2).
   case ARM::VLDMD:
   case ARM::VLDMS:
   case ARM::VLDMD_UPD:
@@ -1467,11 +1470,24 @@ ARMBaseInstrInfo::getNumMicroOps(const MachineInstr *MI,
   case ARM::t2LDM_UPD:
   case ARM::t2STM:
   case ARM::t2STM_UPD: {
-    // FIXME: Distinquish between Cortex-A8 / Cortex-A9 and other processor
-    // families.
-    unsigned NumRegs = MI->getNumOperands() - Desc.getNumOperands();
-    UOps = (NumRegs / 2) + (NumRegs % 2);
-    return (UOps > 2) ? UOps : 2;
+    unsigned NumRegs = MI->getNumOperands() - Desc.getNumOperands() + 1;
+    if (Subtarget.isCortexA8()) {
+      // 4 registers would be issued: 1, 2, 1.
+      // 5 registers would be issued: 1, 2, 2.
+      return 1 + (NumRegs / 2);
+    } else if (Subtarget.isCortexA9()) {
+      UOps = (NumRegs / 2);
+      // If there are odd number of registers or if it's not 64-bit aligned,
+      // then it takes an extra AGU (Address Generation Unit) cycle.
+      if ((NumRegs % 2) ||
+          !MI->hasOneMemOperand() ||
+          (*MI->memoperands_begin())->getAlignment() < 8)
+        ++UOps;
+      return UOps;
+    } else {
+      // Assume the worst.
+      return NumRegs;
+    }      
   }
   }
 }

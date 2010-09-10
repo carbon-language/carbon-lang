@@ -213,7 +213,7 @@ bool PostRAScheduler::runOnMachineFunction(MachineFunction &Fn) {
   const MachineLoopInfo &MLI = getAnalysis<MachineLoopInfo>();
   const MachineDominatorTree &MDT = getAnalysis<MachineDominatorTree>();
   const TargetMachine &TM = Fn.getTarget();
-  const InstrItineraryData &InstrItins = TM.getInstrItineraryData();
+  const InstrItineraryData *InstrItins = TM.getInstrItineraryData();
   ScheduleHazardRecognizer *HR =
     TM.getInstrInfo()->CreateTargetPostRAHazardRecognizer(InstrItins);
   AntiDepBreaker *ADB =

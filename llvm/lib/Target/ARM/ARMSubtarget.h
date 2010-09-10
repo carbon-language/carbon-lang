@@ -29,6 +29,10 @@ protected:
     V4, V4T, V5T, V5TE, V6, V6M, V6T2, V7A, V7M
   };
 
+  enum ARMProcFamilyEnum {
+    Others, CortexA8, CortexA9
+  };
+
   enum ARMFPEnum {
     None, VFPv2, VFPv3, NEON
   };
@@ -41,6 +45,9 @@ protected:
   /// ARMArchVersion - ARM architecture version: V4, V4T (base), V5T, V5TE,
   /// V6, V6T2, V7A, V7M.
   ARMArchEnum ARMArchVersion;
+
+  /// ARMProcFamily - ARM processor family: Cortex-A8, Cortex-A9, and others.
+  ARMProcFamilyEnum ARMProcFamily;
 
   /// ARMFPUType - Floating Point Unit type.
   ARMFPEnum ARMFPUType;
@@ -142,6 +149,9 @@ protected:
   bool hasV6Ops()   const { return ARMArchVersion >= V6;   }
   bool hasV6T2Ops() const { return ARMArchVersion >= V6T2; }
   bool hasV7Ops()   const { return ARMArchVersion >= V7A;  }
+
+  bool isCortexA8() const { return ARMProcFamily == CortexA8; }
+  bool isCortexA9() const { return ARMProcFamily == CortexA9; }
 
   bool hasARMOps() const { return !NoARM; }
 

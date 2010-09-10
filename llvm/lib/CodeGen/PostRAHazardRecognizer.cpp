@@ -23,19 +23,19 @@
 using namespace llvm;
 
 PostRAHazardRecognizer::
-PostRAHazardRecognizer(const InstrItineraryData &LItinData) :
+PostRAHazardRecognizer(const InstrItineraryData *LItinData) :
   ScheduleHazardRecognizer(), ItinData(LItinData) {
   // Determine the maximum depth of any itinerary. This determines the
   // depth of the scoreboard. We always make the scoreboard at least 1
   // cycle deep to avoid dealing with the boundary condition.
   unsigned ScoreboardDepth = 1;
-  if (!ItinData.isEmpty()) {
+  if (ItinData && !ItinData->isEmpty()) {
     for (unsigned idx = 0; ; ++idx) {
-      if (ItinData.isEndMarker(idx))
+      if (ItinData->isEndMarker(idx))
         break;
 
-      const InstrStage *IS = ItinData.beginStage(idx);
-      const InstrStage *E = ItinData.endStage(idx);
+      const InstrStage *IS = ItinData->beginStage(idx);
+      const InstrStage *E = ItinData->endStage(idx);
       unsigned ItinDepth = 0;
       for (; IS != E; ++IS)
         ItinDepth += IS->getCycles();
@@ -74,7 +74,7 @@ void PostRAHazardRecognizer::ScoreBoard::dump() const {
 
 ScheduleHazardRecognizer::HazardType
 PostRAHazardRecognizer::getHazardType(SUnit *SU) {
-  if (ItinData.isEmpty())
+  if (!ItinData || ItinData->isEmpty())
     return NoHazard;
 
   unsigned cycle = 0;
@@ -82,8 +82,8 @@ PostRAHazardRecognizer::getHazardType(SUnit *SU) {
   // Use the itinerary for the underlying instruction to check for
   // free FU's in the scoreboard at the appropriate future cycles.
   unsigned idx = SU->getInstr()->getDesc().getSchedClass();
-  for (const InstrStage *IS = ItinData.beginStage(idx),
-         *E = ItinData.endStage(idx); IS != E; ++IS) {
+  for (const InstrStage *IS = ItinData->beginStage(idx),
+         *E = ItinData->endStage(idx); IS != E; ++IS) {
     // We must find one of the stage's units free for every cycle the
     // stage is occupied. FIXME it would be more accurate to find the
     // same unit free in all the cycles.
@@ -121,7 +121,7 @@ PostRAHazardRecognizer::getHazardType(SUnit *SU) {
 }
 
 void PostRAHazardRecognizer::EmitInstruction(SUnit *SU) {
-  if (ItinData.isEmpty())
+  if (!ItinData || ItinData->isEmpty())
     return;
 
   unsigned cycle = 0;
@@ -129,8 +129,8 @@ void PostRAHazardRecognizer::EmitInstruction(SUnit *SU) {
   // Use the itinerary for the underlying instruction to reserve FU's
   // in the scoreboard at the appropriate future cycles.
   unsigned idx = SU->getInstr()->getDesc().getSchedClass();
-  for (const InstrStage *IS = ItinData.beginStage(idx),
-         *E = ItinData.endStage(idx); IS != E; ++IS) {
+  for (const InstrStage *IS = ItinData->beginStage(idx),
+         *E = ItinData->endStage(idx); IS != E; ++IS) {
     // We must reserve one of the stage's units for every cycle the
     // stage is occupied. FIXME it would be more accurate to reserve
     // the same unit free in all the cycles.

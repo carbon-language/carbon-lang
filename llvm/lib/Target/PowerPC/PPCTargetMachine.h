@@ -58,8 +58,8 @@ public:
   
   virtual const TargetData    *getTargetData() const    { return &DataLayout; }
   virtual const PPCSubtarget  *getSubtargetImpl() const { return &Subtarget; }
-  virtual const InstrItineraryData getInstrItineraryData() const {  
-    return InstrItins;
+  virtual const InstrItineraryData *getInstrItineraryData() const {  
+    return &InstrItins;
   }
 
   // Pass Pipeline Configuration

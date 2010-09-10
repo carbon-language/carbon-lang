@@ -416,6 +416,6 @@ bool TargetInstrInfoImpl::isSchedulingBoundary(const MachineInstr *MI,
 
 // Default implementation of CreateTargetPostRAHazardRecognizer.
 ScheduleHazardRecognizer *TargetInstrInfoImpl::
-CreateTargetPostRAHazardRecognizer(const InstrItineraryData &II) const {
+CreateTargetPostRAHazardRecognizer(const InstrItineraryData *II) const {
   return (ScheduleHazardRecognizer *)new PostRAHazardRecognizer(II);
 }

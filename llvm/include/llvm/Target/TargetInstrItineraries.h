@@ -181,6 +181,14 @@ public:
 
     return (int)OperandCycles[FirstIdx + OperandIdx];
   }
+
+  /// isMicroCoded - Return true if the instructions in the given class decode
+  /// to more than one micro-ops.
+  bool isMicroCoded(unsigned ItinClassIndx) const {
+    if (isEmpty())
+      return false;
+    return Itineratries[ItinClassIndx].NumMicroOps != 1;
+  }
 };
 
 
