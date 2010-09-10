@@ -479,7 +479,7 @@ bool operator!=(const fpos<_StateT>& __x, const fpos<_StateT>& __y)
 // char_traits
 
 template <class _CharT>
-struct char_traits
+struct _LIBCPP_VISIBLE char_traits
 {
     typedef _CharT    char_type;
     typedef int       int_type;
@@ -591,7 +591,7 @@ char_traits<_CharT>::assign(char_type* __s, size_t __n, char_type __a)
 // char_traits<char>
 
 template <>
-struct char_traits<char>
+struct _LIBCPP_VISIBLE char_traits<char>
 {
     typedef char      char_type;
     typedef int       int_type;
@@ -933,7 +933,7 @@ __basic_string_common<__b>::__throw_out_of_range() const
 extern template class __basic_string_common<true>;
 
 template<class _CharT, class _Traits, class _Allocator>
-class basic_string
+class _LIBCPP_VISIBLE basic_string
     : private __basic_string_common<true>
 {
 public:

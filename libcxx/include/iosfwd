@@ -92,8 +92,8 @@ typedef fpos<char_traits<wchar_t>::state_type> wstreampos;
 
 _LIBCPP_BEGIN_NAMESPACE_STD
 
-template<class _CharT>  struct char_traits;
-template<class _Tp>     class allocator;
+template<class _CharT>  struct _LIBCPP_VISIBLE char_traits;
+template<class _Tp>     class _LIBCPP_VISIBLE allocator;
 
 template <class _CharT, class _Traits = char_traits<_CharT> > class basic_ios;
 
@@ -164,7 +164,7 @@ typedef long long streamoff;        // for char_traits in <string>
 
 template <class _CharT,             // for <stdexcept>
           class _Traits = char_traits<_CharT>,
-          class _Allocator = allocator<_CharT> > class basic_string;
+          class _Allocator = allocator<_CharT> > class _LIBCPP_VISIBLE basic_string;
 typedef basic_string<char, char_traits<char>, allocator<char> > string;
 typedef basic_string<wchar_t, char_traits<wchar_t>, allocator<wchar_t> > wstring;
 

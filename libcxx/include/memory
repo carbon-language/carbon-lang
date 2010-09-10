@@ -1471,7 +1471,7 @@ struct __uses_alloc_ctor
 // allocator
 
 template <class _Tp>
-class allocator
+class _LIBCPP_VISIBLE allocator
 {
 public:
     typedef size_t            size_type;

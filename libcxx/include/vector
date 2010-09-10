@@ -419,7 +419,7 @@ __vector_base<_Tp, _Allocator>::~__vector_base()
 }
 
 template <class _Tp, class _Allocator = allocator<_Tp> >
-class vector
+class _LIBCPP_VISIBLE vector
     : private __vector_base<_Tp, _Allocator>
 {
 private:
@@ -1682,7 +1682,7 @@ template <class _Allocator> class vector<bool, _Allocator>;
 template <class _Allocator> struct hash<vector<bool, _Allocator> >;
 
 template <class _Allocator>
-class vector<bool, _Allocator>
+class _LIBCPP_VISIBLE vector<bool, _Allocator>
     : private __vector_base_common<true>
 {
 public:
