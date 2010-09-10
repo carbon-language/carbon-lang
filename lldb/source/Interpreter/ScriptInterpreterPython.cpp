@@ -196,7 +196,7 @@ ScriptInterpreterPython::ScriptInterpreterPython (CommandInterpreter &interprete
     if (success == 0)
     {
         // Import the Script Bridge module.
-        success =  PyRun_SimpleString ("from lldb import *");
+        success =  PyRun_SimpleString ("import lldb");
     }
 
     const char *pty_slave_name = GetScriptInterpreterPtyName ();
@@ -241,7 +241,7 @@ ScriptInterpreterPython::ScriptInterpreterPython (CommandInterpreter &interprete
         PyRun_SimpleString ("tcsetattr (new_stdin, TCSANOW, new_mode)");
 
         run_string.Clear();
-        run_string.Printf ("debugger_unique_id = %d", interpreter.GetDebugger().GetID());
+        run_string.Printf ("lldb.debugger_unique_id = %d", interpreter.GetDebugger().GetID());
         PyRun_SimpleString (run_string.GetData());
     }
 
