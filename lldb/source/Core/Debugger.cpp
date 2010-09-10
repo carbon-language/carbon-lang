@@ -503,12 +503,22 @@ Debugger::UpdateExecutionContext (ExecutionContext *override_context)
             {
                 m_exe_ctx.thread = m_exe_ctx.process->GetThreadList().GetSelectedThread().get();
                 if (m_exe_ctx.thread == NULL)
+                {
                     m_exe_ctx.thread = m_exe_ctx.process->GetThreadList().GetThreadAtIndex(0).get();
+                    // If we didn't have a selected thread, select one here.
+                    if (m_exe_ctx.thread != NULL)
+                        m_exe_ctx.process->GetThreadList().SetSelectedThreadByIndexID(0);
+                }
                 if (m_exe_ctx.thread)
                 {
                     m_exe_ctx.frame = m_exe_ctx.thread->GetSelectedFrame().get();
                     if (m_exe_ctx.frame == NULL)
+                    {
                         m_exe_ctx.frame = m_exe_ctx.thread->GetStackFrameAtIndex (0).get();
+                        // If we didn't have a selected frame select one here.
+                        if (m_exe_ctx.frame != NULL)
+                            m_exe_ctx.thread->SetSelectedFrame(m_exe_ctx.frame);
+                    }
                 }
             }
         }
