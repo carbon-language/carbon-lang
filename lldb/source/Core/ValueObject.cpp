@@ -24,6 +24,7 @@
 #include "lldb/Symbol/ClangASTContext.h"
 #include "lldb/Symbol/Type.h"
 
+#include "lldb/Target/ExecutionContext.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Target/RegisterContext.h"
 #include "lldb/Target/Thread.h"
@@ -48,6 +49,7 @@ ValueObject::ValueObject () :
     m_old_value_str (),
     m_location_str (),
     m_summary_str (),
+    m_object_desc_str (),
     m_children (),
     m_synthetic_children (),
     m_value_is_valid (false),
@@ -96,6 +98,7 @@ ValueObject::UpdateValueIfNeeded (ExecutionContextScope *exe_scope)
                 }
                 m_location_str.clear();
                 m_summary_str.clear();
+                m_object_desc_str.clear();
 
                 const bool value_was_valid = GetValueIsValid();
                 SetValueDidChange (false);
@@ -499,6 +502,48 @@ ValueObject::GetSummaryAsCString (ExecutionContextScope *exe_scope)
     return m_summary_str.c_str();
 }
 
+const char *
+ValueObject::GetObjectDescription (ExecutionContextScope *exe_scope)
+{
+    if (!m_object_desc_str.empty())
+        return m_object_desc_str.c_str();
+        
+    if (!ClangASTContext::IsPointerType (GetOpaqueClangQualType()))
+        return NULL;
+    
+    if (!GetValueIsValid())
+        return NULL;
+    
+    Process *process = exe_scope->CalculateProcess();
+    
+    if (!process)
+        return NULL;
+    
+    Scalar scalar;
+    
+    if (!ClangASTType::GetValueAsScalar (GetClangAST(),
+                                        GetOpaqueClangQualType(),
+                                        GetDataExtractor(),
+                                        0,
+                                        GetByteSize(),
+                                        scalar))
+        return NULL;
+                        
+    ExecutionContext exe_ctx;
+    exe_scope->Calculate(exe_ctx);
+    
+    Value val(scalar);
+    val.SetContext(Value::eContextTypeOpaqueClangQualType, 
+                   ClangASTContext::GetVoidPtrType(GetClangAST(), false));
+                   
+    StreamString s;
+    // FIXME: Check the runtime this object belongs to and get the appropriate object printer for the object kind.
+    if (process->GetObjCObjectPrinter().PrintObject(s, val, exe_ctx))
+    {
+        m_object_desc_str.append (s.GetData());
+    }
+    return m_object_desc_str.c_str();
+}
 
 const char *
 ValueObject::GetValueAsCString (ExecutionContextScope *exe_scope)

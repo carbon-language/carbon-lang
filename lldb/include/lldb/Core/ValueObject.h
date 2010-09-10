@@ -140,6 +140,10 @@ public:
 
     const char *
     GetSummaryAsCString (ExecutionContextScope *exe_scope);
+    
+    const char *
+    GetObjectDescription (ExecutionContextScope *exe_scope);
+
 
     lldb::user_id_t
     GetUpdateID() const;
@@ -190,6 +194,8 @@ protected:
     std::string         m_old_value_str;// Cached old value string from the last time the value was gotten
     std::string         m_location_str; // Cached location string that will get cleared if/when the value is updated.
     std::string         m_summary_str;  // Cached summary string that will get cleared if/when the value is updated.
+    std::string         m_object_desc_str; // Cached result of the "object printer".  This differs from the summary
+                                              // in that the summary is consed up by us, the object_desc_string is builtin.
     std::vector<lldb::ValueObjectSP> m_children;
     std::map<ConstString, lldb::ValueObjectSP> m_synthetic_children;
     bool                m_value_is_valid:1,

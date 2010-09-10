@@ -31,7 +31,7 @@ namespace lldb_private {
         ~ObjCObjectPrinter ();
         
         bool
-        PrintObject (ConstString &str, Value &object_ptr, ExecutionContext &exe_ctx);
+        PrintObject (Stream &str, Value &object_ptr, ExecutionContext &exe_ctx);
     protected:
         Process                 &m_process;
         std::auto_ptr<Address>  m_PrintForDebugger_addr;

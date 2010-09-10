@@ -38,7 +38,7 @@ ObjCObjectPrinter::~ObjCObjectPrinter ()
 }
 
 bool
-ObjCObjectPrinter::PrintObject (ConstString &str, Value &object_ptr, ExecutionContext &exe_ctx)
+ObjCObjectPrinter::PrintObject (Stream &str, Value &object_ptr, ExecutionContext &exe_ctx)
 {
     if (!exe_ctx.process)
         return false;
@@ -64,8 +64,14 @@ ObjCObjectPrinter::PrintObject (ConstString &str, Value &object_ptr, ExecutionCo
     lldb::addr_t wrapper_struct_addr = LLDB_INVALID_ADDRESS;
     func.InsertFunction(exe_ctx, wrapper_struct_addr, error_stream);
     // FIXME: Check result of ExecuteFunction.
-    func.ExecuteFunction(exe_ctx, &wrapper_struct_addr, error_stream, true, 1000, true, ret);
-        
+    ClangFunction::ExecutionResults results 
+        = func.ExecuteFunction(exe_ctx, &wrapper_struct_addr, error_stream, true, 1000, true, ret);
+    if (results != ClangFunction::eExecutionCompleted)
+    {
+        str.Printf("Error evaluating Print Object function: %d.\n", results);
+        return false;
+    }
+       
     addr_t result_ptr = ret.GetScalar().ULongLong(LLDB_INVALID_ADDRESS);
     
     // poor man's strcpy
@@ -86,7 +92,7 @@ ObjCObjectPrinter::PrintObject (ConstString &str, Value &object_ptr, ExecutionCo
     
     if (!desc.empty())
     {
-        str.SetCString(&desc.front());
+        str.PutCString(&desc.front());
         return true;
     }
     return false;

@@ -176,6 +176,15 @@ SBValue::GetValue (const SBFrame &frame)
     return value_string;
 }
 
+const char *
+SBValue::GetObjectDescription (const SBFrame &frame)
+{
+    const char *value_string = NULL;
+    if ( m_opaque_sp)
+        value_string = m_opaque_sp->GetObjectDescription (frame.get());
+    return value_string;
+}
+
 bool
 SBValue::GetValueDidChange (const SBFrame &frame)
 {

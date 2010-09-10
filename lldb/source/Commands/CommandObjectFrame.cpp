@@ -444,41 +444,11 @@ public:
                 
                 if (use_objc)
                 {
-                    if (!ClangASTContext::IsPointerType (valobj->GetOpaqueClangQualType()))
-                        return;
-                    
-                    if (!valobj->GetValueIsValid())
-                        return;
-                    
-                    Process *process = exe_scope->CalculateProcess();
-                    
-                    if (!process)
-                        return;
-                    
-                    Scalar scalar;
-                    
-                    if (!ClangASTType::GetValueAsScalar (valobj->GetClangAST(),
-                                                        valobj->GetOpaqueClangQualType(),
-                                                        valobj->GetDataExtractor(),
-                                                        0,
-                                                        valobj->GetByteSize(),
-                                                        scalar))
-                        return;
-                                        
-                    ConstString po_output;
-                    
-                    ExecutionContext exe_ctx;
-                    exe_scope->Calculate(exe_ctx);
-                    
-                    Value val(scalar);
-                    val.SetContext(Value::eContextTypeOpaqueClangQualType, 
-                                   ClangASTContext::GetVoidPtrType(valobj->GetClangAST(), false));
-                    
-                    if (!process->GetObjCObjectPrinter().PrintObject(po_output, val, exe_ctx))
-                        return;
-                    
-                    s.Printf("\n%s\n", po_output.GetCString());
-                                        
+                    const char *object_desc = valobj->GetObjectDescription(exe_scope);
+                    if (object_desc)
+                        s.Printf("\n%s\n", object_desc);
+                    else
+                        s.Printf ("No description available.\n");
                     return;
                 }
 

@@ -49,6 +49,9 @@ public:
 
     const char *
     GetSummary (const lldb::SBFrame &frame);
+    
+    const char *
+    GetObjectDescription (const lldb::SBFrame &frame);
 
     const char *
     GetLocation (const lldb::SBFrame &frame);
