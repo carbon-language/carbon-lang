@@ -207,9 +207,6 @@ Instruction *InstCombiner::OptAndOp(Instruction *Op,
     }
     break;
   case Instruction::Or:
-    if (Together == AndRHS) // (X | C) & C --> C
-      return ReplaceInstUsesWith(TheAnd, AndRHS);
-
     if (Op->hasOneUse() && Together != OpRHS) {
       // (X | C1) & C2 --> (X | (C1&C2)) & C2
       Value *Or = Builder->CreateOr(X, Together);
