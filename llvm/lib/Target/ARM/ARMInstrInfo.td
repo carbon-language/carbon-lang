@@ -2310,8 +2310,8 @@ def : ARMV6Pat<(or (and GPR:$src1, 0xFFFF0000),
 defm CMP  : AI1_cmp_irs<0b1010, "cmp",
                         BinOpFrag<(ARMcmp node:$LHS, node:$RHS)>>;
 
-// FIXME: There seems to be a (potential) hardware bug with the CMN instruction
-// and comparison with 0. These two pieces of code should give identical
+// FIXME: We have to be careful when using the CMN instruction and comparison
+// with 0. One would expect these two pieces of code should give identical
 // results:
 //
 //   rsbs r1, r1, 0
@@ -2336,20 +2336,16 @@ defm CMP  : AI1_cmp_irs<0b1010, "cmp",
 // never a "carry" when this AddWithCarry is performed (because the "carry bit"
 // parameter to AddWithCarry is defined as 0).
 //
-// The AddWithCarry in the CMP case seems to be relying upon the identity:
-// 
-//   ~x + 1 = -x
-//
-// However when x is 0 and unsigned, this doesn't hold:
+// When x is 0 and unsigned:
 //
 //    x = 0
 //   ~x = 0xFFFF FFFF
 //   ~x + 1 = 0x1 0000 0000
 //   (-x = 0) != (0x1 0000 0000 = ~x + 1)
 //
-// Therefore, we should disable *all* versions of CMN, especially when comparing
-// against zero, until we can limit when the CMN instruction is used (when we
-// know that the RHS is not 0) or when we have a hardware fix for this.
+// Therefore, we should disable CMN when comparing against zero, until we can
+// limit when the CMN instruction is used (when we know that the RHS is not 0 or
+// when it's a comparison which doesn't look at the 'carry' flag).
 //
 // (See the ARM docs for the "AddWithCarry" pseudo-code.)
 //
