@@ -509,7 +509,7 @@ public:
   }
 
   /// eraseNode - Removes a node from the dominator tree. Block must not
-  /// domiante any other blocks. Removes node from its immediate dominator's
+  /// dominate any other blocks. Removes node from its immediate dominator's
   /// children list. Deletes dominator node associated with basic block BB.
   void eraseNode(NodeT *BB) {
     DomTreeNodeBase<NodeT> *Node = getNode(BB);
@@ -807,7 +807,7 @@ public:
   }
 
   /// eraseNode - Removes a node from the dominator tree. Block must not
-  /// domiante any other blocks. Removes node from its immediate dominator's
+  /// dominate any other blocks. Removes node from its immediate dominator's
   /// children list. Deletes dominator node associated with basic block BB.
   inline void eraseNode(BasicBlock *BB) {
     DT->eraseNode(BB);

@@ -186,8 +186,8 @@ void CodeExtractor::splitReturnBlocks() {
     if (ReturnInst *RI = dyn_cast<ReturnInst>((*I)->getTerminator())) {
       BasicBlock *New = (*I)->splitBasicBlock(RI, (*I)->getName()+".ret");
       if (DT) {
-        // Old dominates New. New node domiantes all other nodes dominated
-        //by Old.
+        // Old dominates New. New node dominates all other nodes dominated
+        // by Old.
         DomTreeNode *OldNode = DT->getNode(*I);
         SmallVector<DomTreeNode*, 8> Children;
         for (DomTreeNode::iterator DI = OldNode->begin(), DE = OldNode->end();

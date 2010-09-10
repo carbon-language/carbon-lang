@@ -617,8 +617,8 @@ bool LoopIndexSplit::updateLoopIterationSpace() {
   if (Op1->use_empty())
     Op1->eraseFromParent();
 
-  // Update domiantor info. Now, ExitingBlock has only one predecessor, 
-  // ExitingBBPred, and it is ExitingBlock's immediate domiantor.
+  // Update dominator info. Now, ExitingBlock has only one predecessor, 
+  // ExitingBBPred, and it is ExitingBlock's immediate dominator.
   DT->changeImmediateDominator(ExitingBlock, ExitingBBPred);
 
   BasicBlock *ExitBlock = ExitingBlock->getTerminator()->getSuccessor(1);
@@ -1040,7 +1040,7 @@ bool LoopIndexSplit::splitLoop() {
 
   // [*] Update BLoop's header phi nodes. Remove incoming PHINode's from
   //     original loop's preheader. Add incoming PHINode values from
-  //     ALoop's exiting block. Update BLoop header's domiantor info.
+  //     ALoop's exiting block. Update BLoop header's dominator info.
 
   // Collect inverse map of Header PHINodes.
   DenseMap<Value *, Value *> InverseMap;

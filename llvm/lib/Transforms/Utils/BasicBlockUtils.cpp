@@ -327,7 +327,7 @@ BasicBlock *llvm::SplitBlock(BasicBlock *Old, Instruction *SplitPt, Pass *P) {
       L->addBasicBlockToLoop(New, LI->getBase());
 
   if (DominatorTree *DT = P->getAnalysisIfAvailable<DominatorTree>()) {
-    // Old dominates New. New node domiantes all other nodes dominated by Old.
+    // Old dominates New. New node dominates all other nodes dominated by Old.
     DomTreeNode *OldNode = DT->getNode(Old);
     std::vector<DomTreeNode *> Children;
     for (DomTreeNode::iterator I = OldNode->begin(), E = OldNode->end();
