@@ -894,10 +894,13 @@ LLVMUsedLibs    := $(patsubst %.a.o, lib%.a, $(addsuffix .o, $(LLVMLIBS)))
 LLVMLibsPaths   := $(addprefix $(LLVMLibDir)/,$(LLVMUsedLibs))
 endif
 
-# Win32.DLL may refer to other components.
-ifeq ($(HOST_OS), $(filter $(HOST_OS), Cygwin MingW))
+# Loadable module for Win32 requires all symbols resolved for linking.
+# Then all symbols in LLVM.dll will be available.
+ifeq ($(ENABLE_SHARED),1)
   ifdef LOADABLE_MODULE
-    LINK_COMPONENTS := all
+    ifneq (,$(filter $(HOST_OS),Cygwin MingW))
+      LINK_COMPONENTS += all
+    endif
   endif
 endif
 
