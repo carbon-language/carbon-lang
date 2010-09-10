@@ -7,6 +7,7 @@ add_clang_library(clangChecker
   AggExprVisitor.cpp
   AnalysisConsumer.cpp
   AnalysisManager.cpp
+  AnalyzerStatsChecker.cpp
   ArrayBoundChecker.cpp
   AttrNonNullChecker.cpp
   BasicConstraintManager.cpp

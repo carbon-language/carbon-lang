@@ -264,6 +264,7 @@ public:
 
   // Functions for external checking of whether we have unfinished work
   bool wasBlockAborted() const { return CoreEngine.wasBlockAborted(); }
+  bool hasEmptyWorkList() const { return !CoreEngine.getWorkList()->hasWork(); }
   bool hasWorkRemaining() const {
     return wasBlockAborted() || CoreEngine.getWorkList()->hasWork();
   }

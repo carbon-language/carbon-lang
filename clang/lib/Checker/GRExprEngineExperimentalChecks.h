@@ -19,6 +19,7 @@ namespace clang {
 
 class GRExprEngine;
 
+void RegisterAnalyzerStatsChecker(GRExprEngine &Eng);
 void RegisterCStringChecker(GRExprEngine &Eng);
 void RegisterIdempotentOperationChecker(GRExprEngine &Eng);
 void RegisterMallocChecker(GRExprEngine &Eng);

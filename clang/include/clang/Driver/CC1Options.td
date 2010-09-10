@@ -64,6 +64,8 @@ def analysis_WarnSizeofPointer : Flag<"-warn-sizeof-pointer">,
   HelpText<"Warn about unintended use of sizeof() on pointer expressions">;
 def analysis_WarnIdempotentOps : Flag<"-analyzer-check-idempotent-operations">,
   HelpText<"Warn about idempotent operations">;
+def analysis_AnalyzerStats : Flag<"-analyzer-stats">,
+  HelpText<"Emit warnings with analyzer statistics">;
 
 def analyzer_store : Separate<"-analyzer-store">,
   HelpText<"Source Code Analysis - Abstract Memory Store Models">;
