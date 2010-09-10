@@ -826,7 +826,7 @@ bool ARMFastISel::ARMSelectFPToSI(const Instruction *I) {
   
   EVT DstVT;
   const Type *RetTy = I->getType();
-  if (!isTypeLegal(RetTy, VT))
+  if (!isTypeLegal(RetTy, DstVT))
     return false;
   
   unsigned Op = getRegForValue(I->getOperand(0));
