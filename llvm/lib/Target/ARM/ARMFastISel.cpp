@@ -332,8 +332,9 @@ unsigned ARMFastISel::FastEmitInst_extractsubreg(MVT RetVT,
   return ResultReg;
 }
 
+// TODO: Don't worry about 64-bit now, but when this is fixed remove the
+// checks from the various callers.
 unsigned ARMFastISel::ARMMoveToFPReg(EVT VT, unsigned SrcReg) {
-  // Don't worry about 64-bit now.
   if (VT.getSimpleVT().SimpleTy == MVT::f64) return 0;
   
   unsigned MoveReg = createResultReg(TLI.getRegClassFor(VT));
@@ -344,11 +345,8 @@ unsigned ARMFastISel::ARMMoveToFPReg(EVT VT, unsigned SrcReg) {
 }
 
 unsigned ARMFastISel::ARMMoveToIntReg(EVT VT, unsigned SrcReg) {
-  // Don't worry about 64-bit now.
   if (VT.getSimpleVT().SimpleTy == MVT::i64) return 0;
   
-  // If we have a floating point constant we expect it in a floating point
-  // register.
   unsigned MoveReg = createResultReg(TLI.getRegClassFor(VT));
   AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
                           TII.get(ARM::VMOVSR), MoveReg)
@@ -374,7 +372,7 @@ unsigned ARMFastISel::ARMMaterializeFP(const ConstantFP *CFP, EVT VT) {
     return DestReg;
   }
   
-  // Require VFP2 for this.
+  // Require VFP2 for loading fp constants.
   if (!Subtarget->hasVFP2()) return false;
   
   // MachineConstantPool wants an explicit alignment.
@@ -387,12 +385,14 @@ unsigned ARMFastISel::ARMMaterializeFP(const ConstantFP *CFP, EVT VT) {
   unsigned DestReg = createResultReg(TLI.getRegClassFor(VT));
   unsigned Opc = is64bit ? ARM::VLDRD : ARM::VLDRS;
   
+  // The extra reg is for addrmode5.
   AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(Opc))
                   .addReg(DestReg).addConstantPoolIndex(Idx)
                   .addReg(0));
   return DestReg;
 }
 
+// TODO: Verify 64-bit.
 unsigned ARMFastISel::ARMMaterializeInt(const Constant *C) {
   // MachineConstantPool wants an explicit alignment.
   unsigned Align = TD.getPrefTypeAlignment(C->getType());
@@ -401,13 +401,14 @@ unsigned ARMFastISel::ARMMaterializeInt(const Constant *C) {
     Align = TD.getTypeAllocSize(C->getType());
   }
   unsigned Idx = MCP.getConstantPoolIndex(C, Align);
-
   unsigned DestReg = createResultReg(TLI.getRegClassFor(MVT::i32));
+  
   if (isThumb)
     AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
                             TII.get(ARM::t2LDRpci))
                     .addReg(DestReg).addConstantPoolIndex(Idx));
   else
+    // The extra reg and immediate are for addrmode2.
     AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
                             TII.get(ARM::LDRcp))
                             .addReg(DestReg).addConstantPoolIndex(Idx)
@@ -461,7 +462,6 @@ bool ARMFastISel::ARMComputeRegOffset(const Value *Obj, unsigned &Reg,
     // virtual registers.
     if (FuncInfo.MBBMap[I->getParent()] != FuncInfo.MBB)
       return false;
-
     Opcode = I->getOpcode();
     U = I;
   } else if (const ConstantExpr *C = dyn_cast<ConstantExpr>(Obj)) {
@@ -477,7 +477,6 @@ bool ARMFastISel::ARMComputeRegOffset(const Value *Obj, unsigned &Reg,
 
   switch (Opcode) {
     default:
-    //errs() << "Failing Opcode is: " << *Op1 << "\n";
     break;
     case Instruction::Alloca: {
       assert(false && "Alloca should have been handled earlier!");
@@ -485,8 +484,8 @@ bool ARMFastISel::ARMComputeRegOffset(const Value *Obj, unsigned &Reg,
     }
   }
 
+  // FIXME: Handle global variables.
   if (const GlobalValue *GV = dyn_cast<GlobalValue>(Obj)) {
-    //errs() << "Failing GV is: " << GV << "\n";
     (void)GV;
     return false;
   }
@@ -516,7 +515,6 @@ bool ARMFastISel::ARMComputeRegOffset(const Value *Obj, unsigned &Reg,
                              static_cast<const ARMBaseInstrInfo&>(TII));
     }
   }
-
   return true;
 }
 
@@ -576,6 +574,32 @@ bool ARMFastISel::ARMEmitLoad(EVT VT, unsigned &ResultReg,
     AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
                             TII.get(Opc), ResultReg)
                     .addReg(Reg).addReg(0).addImm(Offset));
+  return true;
+}
+
+bool ARMFastISel::ARMSelectLoad(const Instruction *I) {
+  // Verify we have a legal type before going any further.
+  EVT VT;
+  if (!isLoadTypeLegal(I->getType(), VT))
+    return false;
+
+  // If we're an alloca we know we have a frame index and can emit the load
+  // directly in short order.
+  if (ARMLoadAlloca(I, VT))
+    return true;
+
+  // Our register and offset with innocuous defaults.
+  unsigned Reg = 0;
+  int Offset = 0;
+
+  // See if we can handle this as Reg + Offset
+  if (!ARMComputeRegOffset(I->getOperand(0), Reg, Offset))
+    return false;
+
+  unsigned ResultReg;
+  if (!ARMEmitLoad(VT, ResultReg, Reg, Offset /* 0 */)) return false;
+
+  UpdateValueMap(I, ResultReg);
   return true;
 }
 
@@ -662,32 +686,6 @@ bool ARMFastISel::ARMSelectStore(const Instruction *I) {
   return false;
 }
 
-bool ARMFastISel::ARMSelectLoad(const Instruction *I) {
-  // Verify we have a legal type before going any further.
-  EVT VT;
-  if (!isLoadTypeLegal(I->getType(), VT))
-    return false;
-
-  // If we're an alloca we know we have a frame index and can emit the load
-  // directly in short order.
-  if (ARMLoadAlloca(I, VT))
-    return true;
-
-  // Our register and offset with innocuous defaults.
-  unsigned Reg = 0;
-  int Offset = 0;
-
-  // See if we can handle this as Reg + Offset
-  if (!ARMComputeRegOffset(I->getOperand(0), Reg, Offset))
-    return false;
-
-  unsigned ResultReg;
-  if (!ARMEmitLoad(VT, ResultReg, Reg, Offset /* 0 */)) return false;
-
-  UpdateValueMap(I, ResultReg);
-  return true;
-}
-
 bool ARMFastISel::ARMSelectBranch(const Instruction *I) {
   const BranchInst *BI = cast<BranchInst>(I);
   MachineBasicBlock *TBB = FuncInfo.MBBMap[BI->getSuccessor(0)];
@@ -744,8 +742,8 @@ bool ARMFastISel::ARMSelectCmp(const Instruction *I) {
   AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(CmpOpc))
                   .addReg(Arg1).addReg(Arg2));
 
-  // For floating point we need to move the result to a register we can
-  // actually do something with.
+  // For floating point we need to move the result to a comparison register
+  // that we can then use for branches.
   if (isFloat)
     AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
                             TII.get(ARM::FMSTAT)));
@@ -766,7 +764,6 @@ bool ARMFastISel::ARMSelectFPExt(const Instruction *I) {
   if (Op == 0) return false;
 
   unsigned Result = createResultReg(ARM::DPRRegisterClass);
-
   AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
                           TII.get(ARM::VCVTDS), Result)
                   .addReg(Op));
@@ -786,7 +783,6 @@ bool ARMFastISel::ARMSelectFPTrunc(const Instruction *I) {
   if (Op == 0) return false;
 
   unsigned Result = createResultReg(ARM::SPRRegisterClass);
-
   AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
                           TII.get(ARM::VCVTSD), Result)
                   .addReg(Op));
@@ -806,7 +802,8 @@ bool ARMFastISel::ARMSelectSIToFP(const Instruction *I) {
   unsigned Op = getRegForValue(I->getOperand(0));
   if (Op == 0) return false;
   
-  // The conversion routine works on fp-reg to fp-reg.
+  // The conversion routine works on fp-reg to fp-reg and the operand above
+  // was an integer, move it to the fp registers if possible.
   unsigned FP = ARMMoveToFPReg(DstVT, Op);
   if (FP == 0) return false;
   
@@ -827,7 +824,7 @@ bool ARMFastISel::ARMSelectFPToSI(const Instruction *I) {
   // Make sure we have VFP.
   if (!Subtarget->hasVFP2()) return false;
   
-  EVT VT;
+  EVT DstVT;
   const Type *RetTy = I->getType();
   if (!isTypeLegal(RetTy, VT))
     return false;
@@ -849,7 +846,7 @@ bool ARMFastISel::ARMSelectFPToSI(const Instruction *I) {
         
   // This result needs to be in an integer register, but the conversion only
   // takes place in fp-regs.
-  unsigned IntReg = ARMMoveToIntReg(VT, ResultReg);
+  unsigned IntReg = ARMMoveToIntReg(DstVT, ResultReg);
   if (IntReg == 0) return false;
   
   UpdateValueMap(I, IntReg);
