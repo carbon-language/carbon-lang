@@ -2,7 +2,7 @@
 template<typename T, T Divisor>
 class X {
 public:
-  static const T value = 10 / Divisor; // expected-error{{in-class initializer is not an integral constant expression}}
+  static const T value = 10 / Divisor; // expected-error{{in-class initializer is not a constant expression}}
 };
 
 int array1[X<int, 2>::value == 5? 1 : -1];
@@ -11,7 +11,7 @@ X<int, 0> xi0; // expected-note{{in instantiation of template class 'X<int, 0>' 
 
 template<typename T>
 class Y {
-  static const T value = 0; // expected-error{{'value' can only be initialized if it is a static const integral data member}}
+  static const T value = 0; // expected-warning{{in-class initializer for static data member of type 'float const' is a C++0x extension}}
 };
 
 Y<float> fy; // expected-note{{in instantiation of template class 'Y<float>' requested here}}

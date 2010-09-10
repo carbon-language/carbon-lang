@@ -12,16 +12,18 @@ public:
   }
 
   class NestedC {
+  public:
+    NestedC(int);
     void m() {
       sx = 0;
-      x = 0; // expected-error {{error: invalid use of nonstatic data member 'x'}}
+      x = 0; // expected-error {{invalid use of nonstatic data member 'x'}}
     }
   };
 
   int b : 1, w : 2;
   int : 1, : 2;
   typedef int E : 1; // expected-error {{typedef member 'E' cannot be a bit-field}}
-  static int sb : 1; // expected-error {{error: static member 'sb' cannot be a bit-field}}
+  static int sb : 1; // expected-error {{static member 'sb' cannot be a bit-field}}
   static int vs;
 
   typedef int func();
@@ -32,10 +34,10 @@ public:
 
   enum E1 { en1, en2 };
 
-  int i = 0; // expected-error {{error: 'i' can only be initialized if it is a static const integral data member}}
-  static int si = 0; // expected-error {{error: 'si' can only be initialized if it is a static const integral data member}}
-  static const NestedC ci = 0; // expected-error {{error: 'ci' can only be initialized if it is a static const integral data member}}
-  static const int nci = vs; // expected-error {{in-class initializer is not an integral constant expression}}
+  int i = 0; // expected-error {{fields can only be initialized in constructors}}
+  static int si = 0; // expected-error {{non-const static data member must be initialized out of line}}
+  static const NestedC ci = 0; // expected-error {{static data member of type 'const C::NestedC' must be initialized out of line}}
+  static const int nci = vs; // expected-error {{in-class initializer is not a constant expression}}
   static const int vi = 0;
   static const E evi = 0;
 
@@ -164,4 +166,13 @@ namespace rdar8066414 {
   class C {
     C() {}
   } // expected-error{{expected ';' after class}}
+}
+
+namespace rdar8367341 {
+  float foo();
+
+  struct A {
+    static const float x = 5.0f; // expected-warning {{in-class initializer for static data member of type 'const float' is a C++0x extension}}
+    static const float y = foo(); // expected-warning {{in-class initializer for static data member of type 'const float' is a C++0x extension}} expected-error {{in-class initializer is not a constant expression}}
+  };
 }

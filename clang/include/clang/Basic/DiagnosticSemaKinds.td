@@ -619,7 +619,7 @@ def err_not_integral_type_bitfield : Error<
 def err_not_integral_type_anon_bitfield : Error<
   "anonymous bit-field has non-integral type %0">;
 def err_member_initialization : Error<
-  "%0 can only be initialized if it is a static const integral data member">;
+  "fields can only be initialized in constructors">;
 def err_member_function_initialization : Error<
   "initializer on function does not look like a pure-specifier">;
 def err_non_virtual_pure : Error<
@@ -2826,10 +2826,15 @@ def err_base_init_direct_and_virtual : Error<
 def err_not_direct_base_or_virtual : Error<
   "type %0 is not a direct or virtual base of %1">;
 
-def err_in_class_initializer_non_integral_type : Error<
-  "in-class initializer has non-integral, non-enumeration type %0">;
+def err_in_class_initializer_non_const : Error<
+  "non-const static data member must be initialized out of line">;
+def err_in_class_initializer_bad_type : Error<
+  "static data member of type %0 must be initialized out of line">;
+def ext_in_class_initializer_float_type : ExtWarn<
+  "in-class initializer for static data member of type %0 "
+  "is a C++0x extension">;
 def err_in_class_initializer_non_constant : Error<
-  "in-class initializer is not an integral constant expression">;
+  "in-class initializer is not a constant expression">;
 
 // C++ anonymous unions and GNU anonymous structs/unions
 def ext_anonymous_union : Extension<

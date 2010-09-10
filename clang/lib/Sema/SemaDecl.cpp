@@ -4115,8 +4115,7 @@ void Sema::AddInitializerToDecl(Decl *RealDecl, Expr *Init, bool DirectInit) {
     if (getLangOptions().CPlusPlus &&
         RealDecl->getLexicalDeclContext()->isRecord() &&
         isa<NamedDecl>(RealDecl))
-      Diag(RealDecl->getLocation(), diag::err_member_initialization)
-        << cast<NamedDecl>(RealDecl)->getDeclName();
+      Diag(RealDecl->getLocation(), diag::err_member_initialization);
     else
       Diag(RealDecl->getLocation(), diag::err_illegal_initializer);
     RealDecl->setInvalidDecl();
@@ -4220,34 +4219,38 @@ void Sema::AddInitializerToDecl(Decl *RealDecl, Expr *Init, bool DirectInit) {
     //   static const int value = 17;
     // };
 
-    // Attach the initializer
-    VDecl->setInit(Init);
+    // Try to perform the initialization regardless.
+    if (!VDecl->isInvalidDecl()) {
+      InitializationSequence InitSeq(*this, Entity, Kind, &Init, 1);
+      ExprResult Result = InitSeq.Perform(*this, Entity, Kind,
+                                          MultiExprArg(*this, &Init, 1),
+                                          &DclT);
+      if (Result.isInvalid()) {
+        VDecl->setInvalidDecl();
+        return;
+      }
+
+      Init = Result.takeAs<Expr>();
+    }
 
     // C++ [class.mem]p4:
     //   A member-declarator can contain a constant-initializer only
     //   if it declares a static member (9.4) of const integral or
     //   const enumeration type, see 9.4.2.
     QualType T = VDecl->getType();
-    if (!T->isDependentType() &&
-        (!Context.getCanonicalType(T).isConstQualified() ||
-         !T->isIntegralOrEnumerationType())) {
-      Diag(VDecl->getLocation(), diag::err_member_initialization)
-        << VDecl->getDeclName() << Init->getSourceRange();
+
+    // Do nothing on dependent types.
+    if (T->isDependentType()) {
+
+    // Require constness.
+    } else if (!T.isConstQualified()) {
+      Diag(VDecl->getLocation(), diag::err_in_class_initializer_non_const)
+        << Init->getSourceRange();
       VDecl->setInvalidDecl();
-    } else {
-      // C++ [class.static.data]p4:
-      //   If a static data member is of const integral or const
-      //   enumeration type, its declaration in the class definition
-      //   can specify a constant-initializer which shall be an
-      //   integral constant expression (5.19).
-      if (!Init->isTypeDependent() &&
-          !Init->getType()->isIntegralOrEnumerationType()) {
-        // We have a non-dependent, non-integral or enumeration type.
-        Diag(Init->getSourceRange().getBegin(),
-             diag::err_in_class_initializer_non_integral_type)
-          << Init->getType() << Init->getSourceRange();
-        VDecl->setInvalidDecl();
-      } else if (!Init->isTypeDependent() && !Init->isValueDependent()) {
+
+    // We allow integer constant expressions in all cases.
+    } else if (T->isIntegralOrEnumerationType()) {
+      if (!Init->isValueDependent()) {
         // Check whether the expression is a constant expression.
         llvm::APSInt Value;
         SourceLocation Loc;
@@ -4255,8 +4258,33 @@ void Sema::AddInitializerToDecl(Decl *RealDecl, Expr *Init, bool DirectInit) {
           Diag(Loc, diag::err_in_class_initializer_non_constant)
             << Init->getSourceRange();
           VDecl->setInvalidDecl();
-        } else if (!VDecl->getType()->isDependentType())
-          ImpCastExprToType(Init, VDecl->getType(), CK_IntegralCast);
+        }
+      }
+
+    // We allow floating-point constants as an extension in C++03, and
+    // C++0x has far more complicated rules that we don't really
+    // implement fully.
+    } else {
+      bool Allowed = false;
+      if (getLangOptions().CPlusPlus0x) {
+        Allowed = T->isLiteralType();
+      } else if (T->isFloatingType()) { // also permits complex, which is ok
+        Diag(VDecl->getLocation(), diag::ext_in_class_initializer_float_type)
+          << T << Init->getSourceRange();
+        Allowed = true;
+      }
+
+      if (!Allowed) {
+        Diag(VDecl->getLocation(), diag::err_in_class_initializer_bad_type)
+          << T << Init->getSourceRange();
+        VDecl->setInvalidDecl();
+
+      // TODO: there are probably expressions that pass here that shouldn't.
+      } else if (!Init->isValueDependent() &&
+                 !Init->isConstantInitializer(Context, false)) {
+        Diag(Init->getExprLoc(), diag::err_in_class_initializer_non_constant)
+          << Init->getSourceRange();
+        VDecl->setInvalidDecl();
       }
     }
   } else if (VDecl->isFileVarDecl()) {
