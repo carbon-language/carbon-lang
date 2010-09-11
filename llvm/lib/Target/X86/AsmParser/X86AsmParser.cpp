@@ -633,6 +633,8 @@ ParseInstruction(StringRef Name, SMLoc NameLoc,
     .Case("pop", Is64Bit ? "popq" : "popl")
     .Case("pushf", Is64Bit ? "pushfq" : "pushfl")
     .Case("popf",  Is64Bit ? "popfq"  : "popfl")
+    .Case("pushfd", "pushfl")
+    .Case("popfd",  "popfl")
     .Case("retl", Is64Bit ? "retl" : "ret")
     .Case("retq", Is64Bit ? "ret" : "retq")
     .Case("setz", "sete")

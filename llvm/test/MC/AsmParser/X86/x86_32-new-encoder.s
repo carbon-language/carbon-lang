@@ -508,3 +508,13 @@ pop %ds
 pop %es
 // CHECK: popl	%es
 // CHECK: encoding: [0x07]
+
+// rdar://8408129
+pushfd
+// CHECK: pushfl
+popfd
+// CHECK: popfl
+pushfl
+// CHECK: pushfl
+popfl
+// CHECK: popfl
