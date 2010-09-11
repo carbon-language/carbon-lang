@@ -35,11 +35,11 @@ about stating their intentions.  The first instance you'll note of
 this is the breakpoint command.  In gdb, to set a breakpoint, you
 would just say:
 
-(gdb) break set foo.c:12
+(gdb) break foo.c:12
 
 or
 
-(gdb) break set foo
+(gdb) break foo
 
 if foo is a function.  As time went on, the parser that tells foo.c:12
 from foo from foo.c::foo (which means the function foo in the file
