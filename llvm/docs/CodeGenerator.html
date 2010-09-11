@@ -33,12 +33,21 @@
       <li><a href="#targetjitinfo">The <tt>TargetJITInfo</tt> class</a></li>
     </ul>
   </li>
-  <li><a href="#codegendesc">Machine code description classes</a>
+  <li><a href="#codegendesc">The "Machine" Code Generator classes</a>
     <ul>
     <li><a href="#machineinstr">The <tt>MachineInstr</tt> class</a></li>
     <li><a href="#machinebasicblock">The <tt>MachineBasicBlock</tt>
                                      class</a></li>
     <li><a href="#machinefunction">The <tt>MachineFunction</tt> class</a></li>
+    </ul>
+  </li>
+  <li><a href="#mc">The "MC" Layer</a>
+    <ul>
+    <li><a href="#mcstreamer">The <tt>MCStreamer</tt> API</a></li>
+    <li><a href="#mccontext">The <tt>MCContext</tt> class</a>
+    <li><a href="#mcsymbol">The <tt>MCSymbol</tt> class</a></li>
+    <li><a href="#mcsection">The <tt>MCSection</tt> class</a></li>
+    <li><a href="#mcinst">The <tt>MCInst</tt> class</a></li>
     </ul>
   </li>
   <li><a href="#codegenalgs">Target-independent code generation algorithms</a>
@@ -76,13 +85,11 @@
       <li><a href="#regAlloc_fold">Instruction folding</a></li>
       <li><a href="#regAlloc_builtIn">Built in register allocators</a></li>
       </ul></li>
-    <li><a href="#codeemit">Code Emission</a>
-        <ul>
-        <li><a href="#codeemit_asm">Generating Assembly Code</a></li>
-        <li><a href="#codeemit_bin">Generating Binary Machine Code</a></li>
-        </ul></li>
+    <li><a href="#codeemit">Code Emission</a></li>
     </ul>
   </li>
+  <li><a href="#nativeassembler">Implementing a Native Assembler</a></li>
+  
   <li><a href="#targetimpls">Target-specific Implementation Notes</a>
     <ul>
     <li><a href="#tailcallopt">Tail call optimization</a></li>
@@ -100,11 +107,7 @@
 </ol>
 
 <div class="doc_author">
-  <p>Written by <a href="mailto:sabre@nondot.org">Chris Lattner</a>,
-                <a href="mailto:isanbard@gmail.com">Bill Wendling</a>,
-                <a href="mailto:pronesto@gmail.com">Fernando Magno Quintao
-                                                    Pereira</a> and
-                <a href="mailto:jlaskey@mac.com">Jim Laskey</a></p>
+  <p>Written by the LLVM Team.</p>
 </div>
 
 <div class="doc_warning">
@@ -123,7 +126,7 @@
    suite of reusable components for translating the LLVM internal representation
    to the machine code for a specified target&mdash;either in assembly form
    (suitable for a static compiler) or in binary machine code format (usable for
-   a JIT compiler). The LLVM target-independent code generator consists of five
+   a JIT compiler). The LLVM target-independent code generator consists of six
    main components:</p>
 
 <ol>
@@ -132,10 +135,17 @@
       independently of how they will be used.  These interfaces are defined in
       <tt>include/llvm/Target/</tt>.</li>
 
-  <li>Classes used to represent the <a href="#codegendesc">machine code</a>
-      being generated for a target.  These classes are intended to be abstract
+  <li>Classes used to represent the <a href="#codegendesc">code being
+      generated</a> for a target.  These classes are intended to be abstract
       enough to represent the machine code for <i>any</i> target machine.  These
-      classes are defined in <tt>include/llvm/CodeGen/</tt>.</li>
+      classes are defined in <tt>include/llvm/CodeGen/</tt>. At this level,
+      concepts like "constant pool entries" and "jump tables" are explicitly
+      exposed.</li>
+
+  <li>Classes and algorithms used to represent code as the object file level,
+      the <a href="#mc">MC Layer</a>.  These classes represent assembly level
+      constructs like labels, sections, and instructions.  At this level,
+      concepts like "constant pool entries" and "jump tables" don't exist.</li>
 
   <li><a href="#codegenalgs">Target-independent algorithms</a> used to implement
       various phases of native code generation (register allocation, scheduling,
@@ -731,6 +741,157 @@ ret
    <tt>include/llvm/CodeGen/MachineFunction.h</tt> for more information.</p>
 
 </div>
+
+
+<!-- *********************************************************************** -->
+<div class="doc_section">
+  <a name="mc">The "MC" Layer</a>
+</div>
+<!-- *********************************************************************** -->
+
+<div class="doc_text">
+
+<p>
+The MC Layer is used to represent and process code at the raw machine code
+level, devoid of "high level" information like "constant pools", "jump tables",
+"global variables" or anything like that.  At this level, LLVM handles things
+like label names, machine instructions, and sections in the object file.  The
+code in this layer is used for a number of important purposes: the tail end of
+the code generator uses it to write a .s or .o file, and it is also used by the
+llvm-mc tool to implement standalone machine codeassemblers and disassemblers.
+</p>
+
+<p>
+This section describes some of the important classes.  There are also a number
+of important subsystems that interact at this layer, they are described later
+in this manual.
+</p>
+
+</div>
+
+
+<!-- ======================================================================= -->
+<div class="doc_subsection">
+  <a name="mcstreamer">The <tt>MCStreamer</tt> API</a>
+</div>
+
+<div class="doc_text">
+
+<p>
+MCStreamer is best thought of as an assembler API.  It is an abstract API which
+is <em>implemented</em> in different ways (e.g. to output a .s file, output an
+ELF .o file, etc) but whose API correspond directly to what you see in a .s
+file.  MCStreamer has one method per directive, such as EmitLabel,
+EmitSymbolAttribute, SwitchSection, EmitValue (for .byte, .word), etc, which
+directly correspond to assembly level directives.  It also has an
+EmitInstruction method, which is used to output an MCInst to the streamer.
+</p>
+
+<p>
+This API is most important for two clients: the llvm-mc stand-alone assembler is
+effectively a parser that parses a line, then invokes a method on MCStreamer. In
+the code generator, the <a href="#codeemit">Code Emission</a> phase of the code
+generator lowers higher level LLVM IR and Machine* constructs down to the MC
+layer, emitting directives through MCStreamer.</p>
+
+<p>
+On the implementation side of MCStreamer, there are two major implementations:
+one for writing out a .s file (MCAsmStreamer), and one for writing out a .o
+file (MCObjectStreamer).  MCAsmStreamer is a straight-forward implementation
+that prints out a directive for each method (e.g. EmitValue -&gt; .byte), but
+MCObjectStreamer implements a full assembler.
+</p>
+
+</div>
+
+<!-- ======================================================================= -->
+<div class="doc_subsection">
+  <a name="mccontext">The <tt>MCContext</tt> class</a>
+</div>
+
+<div class="doc_text">
+
+<p>
+The MCContext class is the owner of a variety of uniqued data structures at the
+MC layer, including symbols, sections, etc.  As such, this is the class that you
+interact with to create symbols and sections.  This class can not be subclassed.
+</p>
+
+</div>
+
+<!-- ======================================================================= -->
+<div class="doc_subsection">
+  <a name="mcsymbol">The <tt>MCSymbol</tt> class</a>
+</div>
+
+<div class="doc_text">
+
+<p>
+The MCSymbol class represents a symbol (aka label) in the assembly file.  There
+are two interesting kinds of symbols: assembler temporary symbols, and normal
+symbols.  Assembler temporary symbols are used and processed by the assembler
+but are discarded when the object file is produced.  The distinction is usually
+represented by adding a prefix to the label, for example "L" labels are
+assembler temporary labels in MachO.
+</p>
+
+<p>MCSymbols are created by MCContext and uniqued there.  This means that
+MCSymbols can be compared for pointer equivalence to find out if they are the
+same symbol.  Note that pointer inequality does not guarantee the labels will
+end up at different addresses though.  It's perfectly legal to output something
+like this to the .s file:<p>
+
+<pre>
+  foo:
+  bar:
+    .byte 4
+</pre>
+
+<p>In this case, both the foo and bar symbols will have the same address.</p>
+
+</div>
+
+<!-- ======================================================================= -->
+<div class="doc_subsection">
+  <a name="mcsection">The <tt>MCSection</tt> class</a>
+</div>
+
+<div class="doc_text">
+
+<p>
+The MCSection class represents an object-file specific section. It is subclassed
+by object file specific implementations (e.g. <tt>MCSectionMachO</tt>, 
+<tt>MCSectionCOFF</tt>, <tt>MCSectionELF</tt>) and these are created and uniqued
+by MCContext.  The MCStreamer has a notion of the current section, which can be
+changed with the SwitchToSection method (which corresponds to a ".section"
+directive in a .s file).
+</p>
+
+</div>
+
+<!-- ======================================================================= -->
+<div class="doc_subsection">
+  <a name="mcinst">The <tt>MCInst</tt> class</a></li>
+</div>
+
+<div class="doc_text">
+
+<p>
+The MCInst class is a target-independent representation of an instruction.  It
+is a simple class (much more so than <a href="#machineinstr">MachineInstr</a>)
+that holds a target-specific opcode and a vector of MCOperands.  MCOperand, in
+turn, is a simple discriminated union of three cases: 1) a simple immediate, 
+2) a target register ID, 3) a symbolic expression (e.g. "Lfoo-Lbar+42") as an
+MCExpr.
+</p>
+
+<p>MCInst is the common currency used to represent machine instructions at the
+MC layer.  It is the type used by the instruction encoder, the instruction
+printer, and the type generated by the assembly parser and disassembler.
+</p>
+
+</div>
+
 
 <!-- *********************************************************************** -->
 <div class="doc_section">
@@ -1635,23 +1796,81 @@ $ llc -regalloc=pbqp file.bc -o pbqp.s;
   <a name="latemco">Late Machine Code Optimizations</a>
 </div>
 <div class="doc_text"><p>To Be Written</p></div>
+
 <!-- ======================================================================= -->
 <div class="doc_subsection">
   <a name="codeemit">Code Emission</a>
 </div>
-<div class="doc_text"><p>To Be Written</p></div>
-<!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
-  <a name="codeemit_asm">Generating Assembly Code</a>
+
+<div class="doc_text">
+
+<p>The code emission step of code generation is responsible for lowering from
+the code generator abstractions (like <a 
+href="#machinefunction">MachineFunction</a>, <a 
+href="#machineinstr">MachineInstr</a>, etc) down
+to the abstractions used by the MC layer (<a href="#mcinst">MCInst</a>, 
+<a href="#mcstreamer">MCStreamer</a>, etc).  This is
+done with a combination of several different classes: the (misnamed)
+target-independent AsmPrinter class, target-specific subclasses of AsmPrinter
+(such as SparcAsmPrinter), and the TargetLoweringObjectFile class.</p>
+
+<p>Since the MC layer works at the level of abstraction of object files, it
+doesn't have a notion of functions, global variables etc.  Instead, it thinks
+about labels, directives, and instructions.  A key class used at this time is
+the MCStreamer class.  This is an abstract API that is implemented in different
+ways (e.g. to output a .s file, output an ELF .o file, etc) that is effectively
+an "assembler API".  MCStreamer has one method per directive, such as EmitLabel,
+EmitSymbolAttribute, SwitchSection, etc, which directly correspond to assembly
+level directives.
+</p>
+
+<p>If you are interested in implementing a code generator for a target, there
+are three important things that you have to implement for your target:</p>
+
+<ol>
+<li>First, you need a subclass of AsmPrinter for your target.  This class
+implements the general lowering process converting MachineFunction's into MC
+label constructs.  The AsmPrinter base class provides a number of useful methods
+and routines, and also allows you to override the lowering process in some
+important ways.  You should get much of the lowering for free if you are
+implementing an ELF, COFF, or MachO target, because the TargetLoweringObjectFile
+class implements much of the common logic.</li>
+
+<li>Second, you need to implement an instruction printer for your target.  The
+instruction printer takes an <a href="#mcinst">MCInst</a> and renders it to a
+raw_ostream as text.  Most of this is automatically generated from the .td file
+(when you specify something like "<tt>add $dst, $src1, $src2</tt>" in the
+instructions), but you need to implement routines to print operands.</li>
+
+<li>Third, you need to implement code that lowers a <a
+href="#machineinstr">MachineInstr</a> to an MCInst, usually implemented in
+"&lt;target&gt;MCInstLower.cpp".  This lowering process is often target
+specific, and is responsible for turning jump table entries, constant pool
+indices, global variable addresses, etc into MCLabels as appropriate.  This
+translation layer is also responsible for expanding pseudo ops used by the code
+generator into the actual machine instructions they correspond to. The MCInsts
+that are generated by this are fed into the instruction printer or the encoder.
+</li>
+
+</ol>
+
+<p>Finally, at your choosing, you can also implement an subclass of
+MCCodeEmitter which lowers MCInst's into machine code bytes and relocations.
+This is important if you want to support direct .o file emission, or would like
+to implement an assembler for your target.</p>
+
 </div>
-<div class="doc_text"><p>To Be Written</p></div>
-<!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
-  <a name="codeemit_bin">Generating Binary Machine Code</a>
+
+
+<!-- ======================================================================= -->
+<div class="doc_section">
+  <a name="nativeassembler">Implementing a Native Assembler</a>
 </div>
 
 <div class="doc_text">
-   <p>For the JIT or <tt>.o</tt> file writer</p>
+
+<p>TODO</p>
+
 </div>
 
 
