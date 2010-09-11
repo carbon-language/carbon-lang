@@ -404,7 +404,17 @@ public:
     /// This evaluation context is used primary for the operand of the C++
     /// \c typeid expression, whose argument is potentially evaluated only when
     /// it is an lvalue of polymorphic class type (C++ [basic.def.odr]p2).
-    PotentiallyPotentiallyEvaluated
+    PotentiallyPotentiallyEvaluated,
+    
+    /// \brief The current expression is potentially evaluated, but any
+    /// declarations referenced inside that expression are only used if
+    /// in fact the current expression is used.
+    ///
+    /// This value is used when parsing default function arguments, for which
+    /// we would like to provide diagnostics (e.g., passing non-POD arguments
+    /// through varargs) but do not want to mark declarations as "referenced"
+    /// until the default argument is used.
+    PotentiallyEvaluatedIfUsed
   };
 
   /// \brief Data structure used to record current or nested
@@ -1656,6 +1666,7 @@ public:
 
   void MarkDeclarationReferenced(SourceLocation Loc, Decl *D);
   void MarkDeclarationsReferencedInType(SourceLocation Loc, QualType T);
+  void MarkDeclarationsReferencedInExpr(Expr *E);
   bool DiagRuntimeBehavior(SourceLocation Loc, const PartialDiagnostic &PD);
 
   // Primary Expressions.

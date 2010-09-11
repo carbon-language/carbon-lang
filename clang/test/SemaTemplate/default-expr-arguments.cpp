@@ -206,3 +206,31 @@ namespace InstForInit {
     Holder<int> h(i);
   }
 };
+
+namespace PR5810b {
+  template<typename T>
+  T broken() {
+    T t;
+    double**** not_it = t;
+  }
+
+  void f(int = broken<int>());
+  void g() { f(17); }
+}
+
+namespace PR8127 {
+  template< typename T > class PointerClass {
+  public:
+    PointerClass( T * object_p ) : p_( object_p ) {
+      p_->acquire();
+    }
+  private:    
+    T * p_;
+  };
+
+  class ExternallyImplementedClass;
+
+  class MyClass {
+    void foo( PointerClass<ExternallyImplementedClass> = 0 );
+  };
+}

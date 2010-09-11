@@ -138,6 +138,11 @@ void Parser::ParseLexedMethodDeclarations(ParsingClass &Class) {
         assert(Tok.is(tok::equal) && "Default argument not starting with '='");
         SourceLocation EqualLoc = ConsumeToken();
 
+        // The argument isn't actually potentially evaluated unless it is 
+        // used.
+        EnterExpressionEvaluationContext Eval(Actions,
+                                              Sema::PotentiallyEvaluatedIfUsed);
+        
         ExprResult DefArgResult(ParseAssignmentExpression());
         if (DefArgResult.isInvalid())
           Actions.ActOnParamDefaultArgumentError(LM.DefaultArgs[I].Param);

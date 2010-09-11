@@ -19,6 +19,7 @@
 #include "clang/AST/CXXInheritance.h"
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/DeclTemplate.h"
+#include "clang/AST/EvaluatedExprVisitor.h"
 #include "clang/AST/Expr.h"
 #include "clang/AST/ExprCXX.h"
 #include "clang/AST/ExprObjC.h"
@@ -3401,57 +3402,59 @@ ExprResult Sema::BuildCXXDefaultArgExpr(SourceLocation CallLoc,
                                                     FunctionDecl *FD,
                                                     ParmVarDecl *Param) {
   if (Param->hasUnparsedDefaultArg()) {
-    Diag (CallLoc,
+    Diag(CallLoc,
           diag::err_use_of_default_argument_to_function_declared_later) <<
       FD << cast<CXXRecordDecl>(FD->getDeclContext())->getDeclName();
     Diag(UnparsedDefaultArgLocs[Param],
           diag::note_default_argument_declared_here);
-  } else {
-    if (Param->hasUninstantiatedDefaultArg()) {
-      Expr *UninstExpr = Param->getUninstantiatedDefaultArg();
+    return ExprError();
+  }
+  
+  if (Param->hasUninstantiatedDefaultArg()) {
+    Expr *UninstExpr = Param->getUninstantiatedDefaultArg();
 
-      // Instantiate the expression.
-      MultiLevelTemplateArgumentList ArgList
-        = getTemplateInstantiationArgs(FD, 0, /*RelativeToPrimary=*/true);
+    // Instantiate the expression.
+    MultiLevelTemplateArgumentList ArgList
+      = getTemplateInstantiationArgs(FD, 0, /*RelativeToPrimary=*/true);
 
-      std::pair<const TemplateArgument *, unsigned> Innermost 
-        = ArgList.getInnermost();
-      InstantiatingTemplate Inst(*this, CallLoc, Param, Innermost.first,
-                                 Innermost.second);
+    std::pair<const TemplateArgument *, unsigned> Innermost 
+      = ArgList.getInnermost();
+    InstantiatingTemplate Inst(*this, CallLoc, Param, Innermost.first,
+                               Innermost.second);
 
-      ExprResult Result = SubstExpr(UninstExpr, ArgList);
-      if (Result.isInvalid())
-        return ExprError();
+    ExprResult Result = SubstExpr(UninstExpr, ArgList);
+    if (Result.isInvalid())
+      return ExprError();
 
-      // Check the expression as an initializer for the parameter.
-      InitializedEntity Entity
-        = InitializedEntity::InitializeParameter(Param);
-      InitializationKind Kind
-        = InitializationKind::CreateCopy(Param->getLocation(),
-               /*FIXME:EqualLoc*/UninstExpr->getSourceRange().getBegin());
-      Expr *ResultE = Result.takeAs<Expr>();
+    // Check the expression as an initializer for the parameter.
+    InitializedEntity Entity
+      = InitializedEntity::InitializeParameter(Param);
+    InitializationKind Kind
+      = InitializationKind::CreateCopy(Param->getLocation(),
+             /*FIXME:EqualLoc*/UninstExpr->getSourceRange().getBegin());
+    Expr *ResultE = Result.takeAs<Expr>();
 
-      InitializationSequence InitSeq(*this, Entity, Kind, &ResultE, 1);
-      Result = InitSeq.Perform(*this, Entity, Kind,
-                               MultiExprArg(*this, &ResultE, 1));
-      if (Result.isInvalid())
-        return ExprError();
+    InitializationSequence InitSeq(*this, Entity, Kind, &ResultE, 1);
+    Result = InitSeq.Perform(*this, Entity, Kind,
+                             MultiExprArg(*this, &ResultE, 1));
+    if (Result.isInvalid())
+      return ExprError();
 
-      // Build the default argument expression.
-      return Owned(CXXDefaultArgExpr::Create(Context, CallLoc, Param,
-                                             Result.takeAs<Expr>()));
-    }
-
-    // If the default expression creates temporaries, we need to
-    // push them to the current stack of expression temporaries so they'll
-    // be properly destroyed.
-    // FIXME: We should really be rebuilding the default argument with new
-    // bound temporaries; see the comment in PR5810.
-    for (unsigned i = 0, e = Param->getNumDefaultArgTemporaries(); i != e; ++i)
-      ExprTemporaries.push_back(Param->getDefaultArgTemporary(i));
+    // Build the default argument expression.
+    return Owned(CXXDefaultArgExpr::Create(Context, CallLoc, Param,
+                                           Result.takeAs<Expr>()));
   }
 
-  // We already type-checked the argument, so we know it works.
+  // If the default expression creates temporaries, we need to
+  // push them to the current stack of expression temporaries so they'll
+  // be properly destroyed.
+  // FIXME: We should really be rebuilding the default argument with new
+  // bound temporaries; see the comment in PR5810.
+  for (unsigned i = 0, e = Param->getNumDefaultArgTemporaries(); i != e; ++i)
+    ExprTemporaries.push_back(Param->getDefaultArgTemporary(i));
+
+  // We already type-checked the argument, so we know it works. 
+  MarkDeclarationsReferencedInExpr(Param->getDefaultArg());
   return Owned(CXXDefaultArgExpr::Create(Context, CallLoc, Param));
 }
 
@@ -7653,6 +7656,11 @@ void Sema::MarkDeclarationReferenced(SourceLocation Loc, Decl *D) {
       // potentially evaluated.
       ExprEvalContexts.back().addReferencedDecl(Loc, D);
       return;
+      
+    case PotentiallyEvaluatedIfUsed:
+      // Referenced declarations will only be used if the construct in the
+      // containing expression is used.
+      return;
   }
 
   // Note that this declaration has been used.
@@ -7791,6 +7799,55 @@ void Sema::MarkDeclarationsReferencedInType(SourceLocation Loc, QualType T) {
   Marker.TraverseType(Context.getCanonicalType(T));
 }
 
+namespace {
+  /// \brief Helper class that marks all of the declarations referenced by
+  /// potentially-evaluated subexpressions as "referenced".
+  class EvaluatedExprMarker : public EvaluatedExprVisitor<EvaluatedExprMarker> {
+    Sema &S;
+    
+  public:
+    typedef EvaluatedExprVisitor<EvaluatedExprMarker> Inherited;
+    
+    explicit EvaluatedExprMarker(Sema &S) : Inherited(S.Context), S(S) { }
+    
+    void VisitDeclRefExpr(DeclRefExpr *E) {
+      S.MarkDeclarationReferenced(E->getLocation(), E->getDecl());
+    }
+    
+    void VisitMemberExpr(MemberExpr *E) {
+      S.MarkDeclarationReferenced(E->getMemberLoc(), E->getMemberDecl());
+    }
+    
+    void VisitCXXNewExpr(CXXNewExpr *E) {
+      if (E->getConstructor())
+        S.MarkDeclarationReferenced(E->getLocStart(), E->getConstructor());
+      if (E->getOperatorNew())
+        S.MarkDeclarationReferenced(E->getLocStart(), E->getOperatorNew());
+      if (E->getOperatorDelete())
+        S.MarkDeclarationReferenced(E->getLocStart(), E->getOperatorDelete());
+    }
+    
+    void VisitCXXDeleteExpr(CXXDeleteExpr *E) {
+      if (E->getOperatorDelete())
+        S.MarkDeclarationReferenced(E->getLocStart(), E->getOperatorDelete());
+    }
+    
+    void VisitCXXConstructExpr(CXXConstructExpr *E) {
+      S.MarkDeclarationReferenced(E->getLocStart(), E->getConstructor());
+    }
+    
+    void VisitBlockDeclRefExpr(BlockDeclRefExpr *E) {
+      S.MarkDeclarationReferenced(E->getLocation(), E->getDecl());
+    }
+  };
+}
+
+/// \brief Mark any declarations that appear within this expression or any
+/// potentially-evaluated subexpressions as "referenced".
+void Sema::MarkDeclarationsReferencedInExpr(Expr *E) {
+  EvaluatedExprMarker(*this).Visit(E);
+}
+
 /// \brief Emit a diagnostic that describes an effect on the run-time behavior
 /// of the program being compiled.
 ///
@@ -7815,6 +7872,7 @@ bool Sema::DiagRuntimeBehavior(SourceLocation Loc,
     break;
 
   case PotentiallyEvaluated:
+  case PotentiallyEvaluatedIfUsed:
     Diag(Loc, PD);
     return true;
 

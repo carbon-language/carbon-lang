@@ -3192,6 +3192,11 @@ void Parser::ParseFunctionDeclarator(SourceLocation LParenLoc, Declarator &D,
           // Consume the '='.
           ConsumeToken();
 
+          // The argument isn't actually potentially evaluated unless it is 
+          // used.
+          EnterExpressionEvaluationContext Eval(Actions,
+                                              Sema::PotentiallyEvaluatedIfUsed);
+
           ExprResult DefArgResult(ParseAssignmentExpression());
           if (DefArgResult.isInvalid()) {
             Actions.ActOnParamDefaultArgumentError(Param);
