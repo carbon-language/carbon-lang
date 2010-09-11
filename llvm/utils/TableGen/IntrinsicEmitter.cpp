@@ -192,6 +192,8 @@ static void EmitTypeForValueType(raw_ostream &OS, MVT::SimpleValueType VT) {
     OS << "Type::getVoidTy(Context)";
   } else if (VT == MVT::Metadata) {
     OS << "Type::getMetadataTy(Context)";
+  } else if (VT == MVT::x86mmx) {
+    OS << "Type::getX86_MMXTy(Context)";
   } else {
     assert(false && "Unsupported ValueType!");
   }
