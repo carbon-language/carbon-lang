@@ -32,7 +32,12 @@ using namespace lldb_private;
 //-------------------------------------------------------------------------
 
 CommandObjectBreakpointCommandAdd::CommandOptions::CommandOptions () :
-    Options ()
+    Options (),
+    m_use_commands (false),
+    m_use_script_language (false),
+    m_script_language (eScriptLanguageNone),
+    m_use_one_liner (false),
+    m_one_liner()
 {
 }
 
@@ -43,6 +48,9 @@ CommandObjectBreakpointCommandAdd::CommandOptions::~CommandOptions ()
 lldb::OptionDefinition
 CommandObjectBreakpointCommandAdd::CommandOptions::g_option_table[] =
 {
+    { LLDB_OPT_SET_ALL, false, "one_liner", 'o', required_argument, NULL, 0, "<one-liner>",
+        "Specify a one-liner inline." },
+
     { LLDB_OPT_SET_1, true, "script",    's', no_argument, NULL, 0, NULL,
         "Write the breakpoint command script in the default scripting language."},
 
@@ -74,6 +82,10 @@ CommandObjectBreakpointCommandAdd::CommandOptions::SetOptionValue
 
     switch (short_option)
       {
+      case 'o':
+        m_use_one_liner = true;
+        m_one_liner = option_arg;
+        break;
       case 's':
         m_use_commands = false;
         m_use_script_language = true;
@@ -103,6 +115,9 @@ CommandObjectBreakpointCommandAdd::CommandOptions::ResetOptionValues ()
     m_use_commands = false;
     m_use_script_language = false;
     m_script_language = eScriptLanguageNone;
+
+    m_use_one_liner = false;
+    m_one_liner.clear();
 }
 
 //-------------------------------------------------------------------------
@@ -163,7 +178,7 @@ Enter your Python command(s). Type 'DONE' to end. \n\
 > DONE \n\
  \n\
 As a convenience, this also works for a short Python one-liner: \n\
-(lldb) breakpoint command add -p 1 \"import time; print time.asctime()\" \n\
+(lldb) breakpoint command add -p 1 -o \"import time; print time.asctime()\" \n\
 (lldb) run \n\
 Launching '.../a.out'  (x86_64) \n\
 (lldb) Fri Sep 10 12:17:45 2010 \n\
@@ -267,51 +282,50 @@ CommandObjectBreakpointCommandAdd::Execute
             if (cur_bp_id.GetBreakpointID() != LLDB_INVALID_BREAK_ID)
             {
                 Breakpoint *bp = target->GetBreakpointByID (cur_bp_id.GetBreakpointID()).get();
-                if (cur_bp_id.GetLocationID() != LLDB_INVALID_BREAK_ID)
+                BreakpointOptions *bp_options = NULL;
+                if (cur_bp_id.GetLocationID() == LLDB_INVALID_BREAK_ID)
+                {
+                    // This breakpoint does not have an associated location.
+                    bp_options = bp->GetOptions();
+                }
+                else                    
                 {
                     BreakpointLocationSP bp_loc_sp(bp->FindLocationByID (cur_bp_id.GetLocationID()));
+                    // This breakpoint does have an associated location.
+                    // Get its breakpoint options.
                     if (bp_loc_sp)
-                    {
-                        if (m_options.m_use_script_language)
-                        {
-                            // Special handling for one-liner.
-                            if (command.GetArgumentCount() == 2 && count == 1)
-                                interpreter.GetScriptInterpreter()->SetBreakpointCommandCallback (interpreter,
-                                                                                                  bp_loc_sp->GetLocationOptions(),
-                                                                                                  command.GetArgumentAtIndex(1));
-                            else
-                                interpreter.GetScriptInterpreter()->CollectDataForBreakpointCommandCallback (interpreter,
-                                                                                                             bp_loc_sp->GetLocationOptions(),
-                                                                                                             result);
-                        }
-                        else
-                        {
-                            CollectDataForBreakpointCommandCallback (interpreter, 
-                                                                     bp_loc_sp->GetLocationOptions(), 
-                                                                     result);
-                        }
-                    }
+                        bp_options = bp_loc_sp->GetLocationOptions();
+                }
+
+                // Skip this breakpoiont if bp_options is not good.
+                if (bp_options == NULL) continue;
+
+                // If we are using script language, get the script interpreter
+                // in order to set or collect command callback.  Otherwise, call
+                // the methods associated with this object.
+                if (m_options.m_use_script_language)
+                {
+                    // Special handling for one-liner specified inline.
+                    if (m_options.m_use_one_liner)
+                        interpreter.GetScriptInterpreter()->SetBreakpointCommandCallback (interpreter,
+                                                                                          bp_options,
+                                                                                          m_options.m_one_liner.c_str());
+                    else
+                        interpreter.GetScriptInterpreter()->CollectDataForBreakpointCommandCallback (interpreter,
+                                                                                                     bp_options,
+                                                                                                     result);
                 }
                 else
                 {
-                    if (m_options.m_use_script_language)
-                    {
-                        // Special handling for one-liner.
-                        if (command.GetArgumentCount() == 2 && count == 1)
-                            interpreter.GetScriptInterpreter()->SetBreakpointCommandCallback (interpreter,
-                                                                                              bp->GetOptions(),
-                                                                                              command.GetArgumentAtIndex(1));
-                        else
-                            interpreter.GetScriptInterpreter()->CollectDataForBreakpointCommandCallback (interpreter,
-                                                                                                         bp->GetOptions(),
-                                                                                                         result);
-                    }
+                    // Special handling for one-liner specified inline.
+                    if (m_options.m_use_one_liner)
+                        SetBreakpointCommandCallback (interpreter,
+                                                      bp_options,
+                                                      m_options.m_one_liner.c_str());
                     else
-                    {
                         CollectDataForBreakpointCommandCallback (interpreter, 
-                                                                 bp->GetOptions(), 
+                                                                 bp_options, 
                                                                  result);
-                    }
                 }
             }
         }
@@ -366,6 +380,26 @@ CommandObjectBreakpointCommandAdd::CollectDataForBreakpointCommandCallback
         result.SetStatus (eReturnStatusFailed);
     }
 
+}
+
+// Set a one-liner as the callback for the breakpoint command.
+void
+CommandObjectBreakpointCommandAdd::SetBreakpointCommandCallback (CommandInterpreter &interpreter,
+                                                                 BreakpointOptions *bp_options,
+                                                                 const char *oneliner)
+{
+    std::auto_ptr<BreakpointOptions::CommandData> data_ap(new BreakpointOptions::CommandData());
+
+    // It's necessary to set both user_source and script_source to the oneliner.
+    // The former is used to generate callback description (as in breakpoint command list)
+    // while the latter is used for Python to interpret during the actual callback.
+    data_ap->user_source.AppendString (oneliner);
+    data_ap->script_source.AppendString (oneliner);
+
+    BatonSP baton_sp (new BreakpointOptions::CommandBaton (data_ap.release()));
+    bp_options->SetCallback (CommandObjectBreakpointCommand::BreakpointOptionsCallbackFunction, baton_sp);
+
+    return;
 }
 
 size_t

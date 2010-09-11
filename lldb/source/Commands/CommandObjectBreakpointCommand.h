@@ -74,6 +74,11 @@ public:
                                              BreakpointOptions *bp_options, 
                                              CommandReturnObject &result);
 
+    void 
+    SetBreakpointCommandCallback (CommandInterpreter &interpreter,
+                                  BreakpointOptions *bp_options,
+                                  const char *oneliner);
+
     static size_t
     GenerateBreakpointCommandCallback (void *baton, 
                                        InputReader &reader, 
@@ -115,6 +120,10 @@ public:
         bool m_use_commands;
         bool m_use_script_language;
         lldb::ScriptLanguage m_script_language;
+
+        // Instance variables to hold the values for one_liner options.
+        bool m_use_one_liner;
+        std::string m_one_liner;
     };
 
 private:
