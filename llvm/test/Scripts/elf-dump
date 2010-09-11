@@ -98,7 +98,7 @@ class Section:
         elif dumpdata:
             f.seek(self.sh_offset)
             data = f.read(self.sh_size)
-            print "   ('_section_data', %s)" % common_dump.dataToHex(data)
+            print "   ('_section_data', '%s')" % common_dump.dataToHex(data)
         print "  ),"
 
 def dumpSymtab(f, section, strtab):
