@@ -654,6 +654,8 @@ ParseInstruction(StringRef Name, SMLoc NameLoc,
     // Condition code aliases for 16-bit, 32-bit, 64-bit and unspec operands.
     .Case("cmovcw",  "cmovbw") .Case("cmovcl",  "cmovbl")
     .Case("cmovcq",  "cmovbq") .Case("cmovc",   "cmovb")
+    .Case("cmovnaew","cmovbw") .Case("cmovnael","cmovbl")
+    .Case("cmovnaeq","cmovbq") .Case("cmovnae", "cmovb")
     .Case("cmovnaw", "cmovbew").Case("cmovnal", "cmovbel")
     .Case("cmovnaq", "cmovbeq").Case("cmovna",  "cmovbe")
     .Case("cmovnbw", "cmovaew").Case("cmovnbl", "cmovael")

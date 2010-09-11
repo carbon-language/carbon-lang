@@ -107,6 +107,10 @@ retl
 // CHECK:  encoding: [0x0f,0x42,0xd0]
         	cmovbl	%eax,%edx
 
+// CHECK: cmovbw %bx, %bx
+cmovnae	%bx,%bx
+
+
 // CHECK: cmovbel	%eax, %edx
 // CHECK:  encoding: [0x0f,0x46,0xd0]
         	cmovbel	%eax,%edx
