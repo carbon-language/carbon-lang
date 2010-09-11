@@ -1682,6 +1682,7 @@ interacts with constant evaluation:</p>
     floating-point literal.</li>
 <li><b><tt>__builtin_abs,copysign,..</tt></b>: These are constant folded as
     general constant expressions.</li>
+<li><b><tt>__builtin_strlen</tt></b> and <b><tt>strlen</tt></b>: These are constant folded as integer constant expressions if the argument is a string literal.</li>
 </ul>
 
 
