@@ -585,10 +585,11 @@ public:
     return false;
   }
 
-  /// ConvertToSetZeroFlag - Convert the instruction supplying the argument to
-  /// the comparison into one that sets the zero bit in the flags
-  /// register. Update the iterator *only* if a transformation took place.
-  virtual bool ConvertToSetZeroFlag(MachineInstr * /*CmpInstr*/,
+  /// OptimizeCompareInstr - See if the comparison instruction can be converted
+  /// into something more efficient. E.g., on ARM most instructions can set the
+  /// flags register, obviating the need for a separate CMP. Update the iterator
+  /// *only* if a transformation took place.
+  virtual bool OptimizeCompareInstr(MachineInstr * /*CmpInstr*/,
                                     unsigned /*SrcReg*/, int /*CmpValue*/,
                                     MachineBasicBlock::iterator &) const {
     return false;

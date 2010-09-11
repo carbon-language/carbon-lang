@@ -1377,11 +1377,11 @@ AnalyzeCompare(const MachineInstr *MI, unsigned &SrcReg, int &CmpValue) const {
   return false;
 }
 
-/// ConvertToSetZeroFlag - Convert the instruction supplying the argument to the
+/// OptimizeCompareInstr - Convert the instruction supplying the argument to the
 /// comparison into one that sets the zero bit in the flags register. Update the
 /// iterator *only* if a transformation took place.
 bool ARMBaseInstrInfo::
-ConvertToSetZeroFlag(MachineInstr *CmpInstr, unsigned SrcReg, int CmpValue,
+OptimizeCompareInstr(MachineInstr *CmpInstr, unsigned SrcReg, int CmpValue,
                      MachineBasicBlock::iterator &MII) const {
   if (CmpValue != 0)
     return false;

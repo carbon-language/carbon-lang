@@ -243,8 +243,8 @@ bool PeepholeOptimizer::OptimizeCmpInstr(MachineInstr *MI,
       TargetRegisterInfo::isPhysicalRegister(SrcReg))
     return false;
 
-  // Attempt to convert the defining instruction to set the "zero" flag.
-  if (TII->ConvertToSetZeroFlag(MI, SrcReg, CmpValue, NextIter)) {
+  // Attempt to optimize the comparison instruction.
+  if (TII->OptimizeCompareInstr(MI, SrcReg, CmpValue, NextIter)) {
     ++NumEliminated;
     return true;
   }

@@ -344,9 +344,9 @@ public:
   virtual bool AnalyzeCompare(const MachineInstr *MI, unsigned &SrcReg,
                               int &CmpValue) const;
 
-  /// ConvertToSetZeroFlag - Convert the instruction to set the zero flag so
+  /// OptimizeCompareInstr - Convert the instruction to set the zero flag so
   /// that we can remove a "comparison with zero".
-  virtual bool ConvertToSetZeroFlag(MachineInstr *CmpInstr, unsigned SrcReg,
+  virtual bool OptimizeCompareInstr(MachineInstr *CmpInstr, unsigned SrcReg,
                                     int CmpValue,
                                     MachineBasicBlock::iterator &MII) const;
 
