@@ -61,7 +61,7 @@ _foo:
 // CHECK:     (('word-0', 0x3),
 // CHECK:      ('word-1', 0x9d000001)),
 // CHECK:   ])
-// CHECK:   ('_section_data', 'H\x8b=\x00\x00\x00\x00\xff\x17\xc3')
+// CHECK:   ('_section_data', '488b3d00 000000ff 17c3')
 // CHECK:     # Section 1
 // CHECK:    (('section_name', '__thread_data\x00\x00\x00')
 // CHECK:     ('segment_name', '__DATA\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
@@ -78,7 +78,7 @@ _foo:
 // CHECK:    ),
 // CHECK:   ('_relocations', [
 // CHECK:   ])
-// CHECK:   ('_section_data', '\x04\x00\x00\x00')
+// CHECK:   ('_section_data', '04000000')
 // CHECK:     # Section 2
 // CHECK:    (('section_name', '__thread_vars\x00\x00\x00')
 // CHECK:     ('segment_name', '__DATA\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
@@ -101,7 +101,7 @@ _foo:
 // CHECK:     (('word-0', 0x0),
 // CHECK:      ('word-1', 0xe000003)),
 // CHECK:   ])
-// CHECK:   ('_section_data', '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
+// CHECK:   ('_section_data', '00000000 00000000 00000000 00000000 00000000 00000000')
 // CHECK:   ])
 // CHECK:  ),
 // CHECK:   # Load Command 1

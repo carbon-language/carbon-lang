@@ -61,7 +61,7 @@ _a:
 // CHECK:    ),
 // CHECK:   ('_relocations', [
 // CHECK:   ])
-// CHECK:   ('_section_data', '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
+// CHECK:   ('_section_data', '00000000 00000000 00000000 00000000 00000000 00000000')
 // CHECK:   ])
 // CHECK:  ),
 // CHECK:   # Load Command 1

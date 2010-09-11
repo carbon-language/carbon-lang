@@ -57,7 +57,7 @@ _a$tlv$init:
 // CHECK:    ),
 // CHECK:   ('_relocations', [
 // CHECK:   ])
-// CHECK:   ('_section_data', '\x04\x00\x00\x00')
+// CHECK:   ('_section_data', '04000000')
 // CHECK:   ])
 // CHECK:  ),
 // CHECK:   # Load Command 1

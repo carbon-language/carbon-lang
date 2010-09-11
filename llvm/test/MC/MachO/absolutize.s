@@ -103,7 +103,7 @@ Ldata_expr_2 = Ldata_d - Ldata_c
 // CHECK:     (('word-0', 0xa1000000),
 // CHECK:      ('word-1', 0x2)),
 // CHECK:   ])
-// CHECK:   ('_section_data', '1\xc01\xc01\xc01\xc0\xb8\xfe\xff\xff\xff\xb8\xfe\xff\xff\xff\xb8\x02\x00\x00\x00\xb8\x02\x00\x00\x00\xb8\x02\x00\x00\x00\xb8\x02\x00\x00\x00\xb8\xfe\xff\xff\xff')
+// CHECK:   ('_section_data', '31c031c0 31c031c0 b8feffff ffb8feff ffffb802 000000b8 02000000 b8020000 00b80200 0000b8fe ffffff')
 // CHECK:     # Section 1
 // CHECK:    (('section_name', '__data\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
 // CHECK:     ('segment_name', '__DATA\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
@@ -140,7 +140,7 @@ Ldata_expr_2 = Ldata_d - Ldata_c
 // CHECK:     (('word-0', 0xa1000000),
 // CHECK:      ('word-1', 0x2f)),
 // CHECK:   ])
-// CHECK:   ('_section_data', "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xfc\xff\xff\xff\xfc\xff\xff\xff\x04\x00\x00\x00\x04\x00\x00\x00\x04\x00\x00\x00\x04\x00\x00\x00'\x00\x00\x00")
+// CHECK:   ('_section_data', '00000000 00000000 00000000 00000000 fcffffff fcffffff 04000000 04000000 04000000 04000000 27000000')
 // CHECK:   ])
 // CHECK:  ),
 // CHECK:   # Load Command 1

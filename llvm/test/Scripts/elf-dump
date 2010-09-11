@@ -4,6 +4,8 @@ import struct
 import sys
 import StringIO
 
+import common_dump
+
 class Reader:
     def __init__(self, path):
         if path == "-":
@@ -95,7 +97,8 @@ class Section:
             print "   ])"
         elif dumpdata:
             f.seek(self.sh_offset)
-            print "   ('_section_data', %r)" % f.read(self.sh_size)
+            data = f.read(self.sh_size)
+            print "   ('_section_data', %s)" % common_dump.dataToHex(data)
         print "  ),"
 
 def dumpSymtab(f, section, strtab):

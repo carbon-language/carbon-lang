@@ -43,7 +43,7 @@
 // CHECK:     (('word-0', 0x2),
 // CHECK:      ('word-1', 0xc000001)),
 // CHECK:   ])
-// CHECK:   ('_section_data', '\xc7\x05\x00\x00\x00\x00\x00\x00\x00\x00')
+// CHECK:   ('_section_data', 'c7050000 00000000 0000')
 // CHECK:   ])
 // CHECK:  ),
 // CHECK:   # Load Command 1

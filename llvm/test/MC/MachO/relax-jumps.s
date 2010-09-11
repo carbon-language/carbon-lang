@@ -10,9 +10,9 @@
 //    diff $f.{as,mc}.dump)
 // to examine the results in a more sensible fashion.
 
-// CHECK: ('_section_data', '\x90
-// CHECK: \x0f\x842\xff\xff\xff\x0f\x82\xe6\x00\x00\x00\x0f\x87&\xff\xff\xff\x0f\x8f\xda\x00\x00\x00\x0f\x88\x1a\xff\xff\xff\x0f\x83\xce\x00\x00\x00\x0f\x89\x0e\xff\xff\xff\x90
-// CHECK: \x901\xc0')
+// CHECK: ('_section_data', '90
+// CHECK: 0f8432ff ffff0f82 e6000000 0f8726ff ffff0f8f da000000 0f881aff ffff0f83 ce000000 0f890eff ffff90
+// CHECK: 9031c0')
 
 L1:
         .space 200, 0x90

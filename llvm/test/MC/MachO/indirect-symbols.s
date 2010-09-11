@@ -71,7 +71,7 @@ _e:
 // CHECK:    ),
 // CHECK:   ('_relocations', [
 // CHECK:   ])
-// CHECK:   ('_section_data', '\xf4\xf4\xf4\xf4\xf4\xf4\xf4\xf4\xf4\xf4\xf4\xf4\xf4\xf4\xf4')
+// CHECK:   ('_section_data', 'f4f4f4f4 f4f4f4f4 f4f4f4f4 f4f4f4')
 // CHECK:     # Section 2
 // CHECK:    (('section_name', '__pointers\x00\x00\x00\x00\x00\x00')
 // CHECK:     ('segment_name', '__IMPORT\x00\x00\x00\x00\x00\x00\x00\x00')
@@ -87,7 +87,7 @@ _e:
 // CHECK:    ),
 // CHECK:   ('_relocations', [
 // CHECK:   ])
-// CHECK:   ('_section_data', '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
+// CHECK:   ('_section_data', '00000000 00000000 00000000')
 // CHECK:   ])
 // CHECK:  ),
 // CHECK:   # Load Command 1

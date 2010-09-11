@@ -57,7 +57,7 @@
 // CHECK:    ),
 // CHECK:   ('_relocations', [
 // CHECK:   ])
-// CHECK:   ('_section_data', '\xcf\xfa\xed\xfe\x07\x00\x00\x01\x03\x00\x00\x00')
+// CHECK:   ('_section_data', 'cffaedfe 07000001 03000000')
 // CHECK:   ])
 // CHECK:  ),
 // CHECK:   # Load Command 1

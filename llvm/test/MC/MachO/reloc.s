@@ -90,7 +90,7 @@ _f1:
 // CHECK:     (('word-0', 0x1),
 // CHECK:      ('word-1', 0x5000003)),
 // CHECK:   ])
-// CHECK:   ('_section_data', '\xe9:\x00\x00\x00\xeb\xf9\xc3')
+// CHECK:   ('_section_data', 'e93a0000 00ebf9c3')
 // CHECK:     # Section 1
 // CHECK:    (('section_name', '__data\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
 // CHECK:     ('segment_name', '__DATA\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
@@ -139,7 +139,7 @@ _f1:
 // CHECK:     (('word-0', 0x0),
 // CHECK:      ('word-1', 0xc000009)),
 // CHECK:   ])
-// CHECK:   ('_section_data', '\x00\x00\x00\x00\x04\x00\x00\x00\x10\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xed\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x19\x00\x00\x00"\x00\x00\x00,\x00q\x00\x00\x00\x00\x04\x00\x00\x00')
+// CHECK:   ('_section_data', '00000000 04000000 10000000 00000000 00000000 ed000000 00000000 00000000 19000000 22000000 2c007100 00000004 000000')
 // CHECK:     # Section 2
 // CHECK:    (('section_name', '__const\x00\x00\x00\x00\x00\x00\x00\x00\x00')
 // CHECK:     ('segment_name', '__TEXT\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
@@ -167,7 +167,7 @@ _f1:
 // CHECK:     (('word-0', 0xa1000000),
 // CHECK:      ('word-1', 0x3b)),
 // CHECK:   ])
-// CHECK:   ('_section_data', '\xfe\xff\xff\xff?\x00\x00\x00\x00\x00\x00\x00')
+// CHECK:   ('_section_data', 'feffffff 3f000000 00000000')
 // CHECK:   ])
 // CHECK:  ),
 // CHECK:   # Load Command 1

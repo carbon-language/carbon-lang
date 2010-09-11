@@ -46,7 +46,7 @@ direction_labels:
 // CHECK:    ),
 // CHECK:   ('_relocations', [
 // CHECK:   ])
-// CHECK:   ('_section_data', '\x90\xeb\xfd\x90u\x00\x90u\xfd\xeb\x00\x90\xc3')
+// CHECK:   ('_section_data', '90ebfd90 75009075 fdeb0090 c3')
 // CHECK:   ])
 // CHECK:  ),
 // CHECK:   # Load Command 1

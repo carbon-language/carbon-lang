@@ -4,6 +4,8 @@ import struct
 import sys
 import StringIO
 
+import common_dump
+
 class Reader:
    def __init__(self, path):
       if path == '-':
@@ -267,7 +269,7 @@ def dumpSection(f, i, opts, is64Bit):
 
    if opts.dumpSectionData:
       f.seek(offset)
-      print "  ('_section_data', %r)" % f.read(size)
+      print "  ('_section_data', '%s')" % common_dump.dataToHex(f.read(size))
       
    f.seek(prev_pos)
    
