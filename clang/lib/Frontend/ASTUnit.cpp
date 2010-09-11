@@ -1093,6 +1093,15 @@ llvm::MemoryBuffer *ASTUnit::getMainBufferWithPrecompiledPreamble(
     return 0;
   }
 
+  // Create a temporary file for the precompiled preamble. In rare 
+  // circumstances, this can fail.
+  std::string PreamblePCHPath = GetPreamblePCHPath();
+  if (PreamblePCHPath.empty()) {
+    // Try again next time.
+    PreambleRebuildCounter = 1;
+    return 0;
+  }
+  
   // We did not previously compute a preamble, or it can't be reused anyway.
   llvm::Timer *PreambleTimer = 0;
   if (TimerGroup.get()) {
@@ -1138,7 +1147,7 @@ llvm::MemoryBuffer *ASTUnit::getMainBufferWithPrecompiledPreamble(
   if (::getenv("LIBCLANG_CHAINING"))
     FrontendOpts.ChainedPCH = true;
   // FIXME: Generate the precompiled header into memory?
-  FrontendOpts.OutputFile = GetPreamblePCHPath();
+  FrontendOpts.OutputFile = PreamblePCHPath;
   
   // Create the compiler instance to use for building the precompiled preamble.
   CompilerInstance Clang;
