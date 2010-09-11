@@ -811,7 +811,8 @@ ParseInstruction(StringRef Name, SMLoc NameLoc,
   if (getLexer().is(AsmToken::EndOfStatement))
     Parser.Lex(); // Consume the EndOfStatement
 
-  // FIXME: Hack to handle recognizing s{hr,ar,hl}? $1.
+  // FIXME: Hack to handle recognize s{hr,ar,hl} <op>, $1.  Canonicalize to
+  // "shift <op>".
   if ((Name.startswith("shr") || Name.startswith("sar") ||
        Name.startswith("shl")) &&
       Operands.size() == 3) {
@@ -823,6 +824,37 @@ ParseInstruction(StringRef Name, SMLoc NameLoc,
     }
   }
 
+  // FIXME: Hack to handle recognize "in[bwl] <op>".  Canonicalize it to
+  // "inb <op>, %al".
+  if ((Name == "inb" || Name == "inw" || Name == "inl") &&
+      Operands.size() == 2) {
+    unsigned Reg;
+    if (Name[2] == 'b')
+      Reg = MatchRegisterName("al");
+    else if (Name[2] == 'w')
+      Reg = MatchRegisterName("ax");
+    else
+      Reg = MatchRegisterName("eax");
+    SMLoc Loc = Operands.back()->getEndLoc();
+    Operands.push_back(X86Operand::CreateReg(Reg, Loc, Loc));
+  }
+  
+  // FIXME: Hack to handle recognize "out[bwl] <op>".  Canonicalize it to
+  // "outb %al, <op>".
+  if ((Name == "outb" || Name == "outw" || Name == "outl") &&
+      Operands.size() == 2) {
+    unsigned Reg;
+    if (Name[3] == 'b')
+      Reg = MatchRegisterName("al");
+    else if (Name[3] == 'w')
+      Reg = MatchRegisterName("ax");
+    else
+      Reg = MatchRegisterName("eax");
+    SMLoc Loc = Operands.back()->getEndLoc();
+    Operands.push_back(X86Operand::CreateReg(Reg, Loc, Loc));
+    std::swap(Operands[1], Operands[2]);
+  }
+  
   // FIXME: Hack to handle "f{mul*,add*,sub*,div*} $op, st(0)" the same as
   // "f{mul*,add*,sub*,div*} $op"
   if ((Name.startswith("fmul") || Name.startswith("fadd") ||

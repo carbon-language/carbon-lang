@@ -188,3 +188,15 @@ cmovnz %bx, %ax
 // CHECK: cmovneq	%rbx, %rax
 cmovnzq %rbx, %rax
 
+
+// rdar://8407928
+// CHECK: inb	$127, %al
+// CHECK: inw	%dx, %ax
+// CHECK: outb	%al, $127
+// CHECK: outw	%ax, %dx
+// CHECK: inl	%dx, %eax
+inb	$0x7f
+inw	%dx
+outb	$0x7f
+outw	%dx
+inl	%dx
