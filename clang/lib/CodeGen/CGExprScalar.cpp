@@ -322,9 +322,23 @@ public:
       return Builder.CreateFMul(Ops.LHS, Ops.RHS, "mul");
     return Builder.CreateMul(Ops.LHS, Ops.RHS, "mul");
   }
+  bool isTrapvOverflowBehavior() {
+    return CGF.getContext().getLangOptions().getSignedOverflowBehavior() 
+               == LangOptions::SOB_Trapping; 
+  }
   /// Create a binary op that checks for overflow.
   /// Currently only supports +, - and *.
   Value *EmitOverflowCheckedBinOp(const BinOpInfo &Ops);
+  // Emit the overflow BB when -ftrapv option is activated. 
+  void EmitOverflowBB(llvm::BasicBlock *overflowBB) {
+    Builder.SetInsertPoint(overflowBB);
+    llvm::Function *Trap = CGF.CGM.getIntrinsic(llvm::Intrinsic::trap);
+    Builder.CreateCall(Trap);
+    Builder.CreateUnreachable();
+  }
+  // Check for undefined division and modulus behaviors.
+  void EmitUndefinedBehaviorIntegerDivAndRemCheck(const BinOpInfo &Ops, 
+                                                  llvm::Value *Zero,bool isDiv);
   Value *EmitDiv(const BinOpInfo &Ops);
   Value *EmitRem(const BinOpInfo &Ops);
   Value *EmitAdd(const BinOpInfo &Ops);
@@ -1499,8 +1513,51 @@ Value *ScalarExprEmitter::EmitCompoundAssign(const CompoundAssignOperator *E,
   return EmitLoadOfLValue(LHS, E->getType());
 }
 
+void ScalarExprEmitter::EmitUndefinedBehaviorIntegerDivAndRemCheck(
+     					    const BinOpInfo &Ops, 
+				     	    llvm::Value *Zero, bool isDiv) {
+  llvm::BasicBlock *overflowBB = CGF.createBasicBlock("overflow", CGF.CurFn);
+  llvm::BasicBlock *contBB =
+    CGF.createBasicBlock(isDiv ? "div.cont" : "rem.cont", CGF.CurFn);
+
+  const llvm::IntegerType *Ty = cast<llvm::IntegerType>(Zero->getType());
+
+  if (Ops.Ty->hasSignedIntegerRepresentation()) {
+    llvm::Value *IntMin =
+      llvm::ConstantInt::get(VMContext,
+                             llvm::APInt::getSignedMinValue(Ty->getBitWidth()));
+    llvm::Value *NegOne = llvm::ConstantInt::get(Ty, -1ULL);
+
+    llvm::Value *Cond1 = Builder.CreateICmpEQ(Ops.RHS, Zero);
+    llvm::Value *LHSCmp = Builder.CreateICmpEQ(Ops.LHS, IntMin);
+    llvm::Value *RHSCmp = Builder.CreateICmpEQ(Ops.RHS, NegOne);
+    llvm::Value *Cond2 = Builder.CreateAnd(LHSCmp, RHSCmp, "and");
+    Builder.CreateCondBr(Builder.CreateOr(Cond1, Cond2, "or"), 
+                         overflowBB, contBB);
+  } else {
+    CGF.Builder.CreateCondBr(Builder.CreateICmpEQ(Ops.RHS, Zero), 
+                             overflowBB, contBB);
+  }
+  EmitOverflowBB(overflowBB);
+  Builder.SetInsertPoint(contBB);
+}
 
 Value *ScalarExprEmitter::EmitDiv(const BinOpInfo &Ops) {
+  if (isTrapvOverflowBehavior()) { 
+    llvm::Value *Zero = llvm::Constant::getNullValue(ConvertType(Ops.Ty));
+
+    if (Ops.Ty->isIntegerType())
+      EmitUndefinedBehaviorIntegerDivAndRemCheck(Ops, Zero, true);
+    else if (Ops.Ty->isRealFloatingType()) {
+      llvm::BasicBlock *overflowBB = CGF.createBasicBlock("overflow",
+                                                          CGF.CurFn);
+      llvm::BasicBlock *DivCont = CGF.createBasicBlock("div.cont", CGF.CurFn);
+      CGF.Builder.CreateCondBr(Builder.CreateFCmpOEQ(Ops.RHS, Zero), 
+                               overflowBB, DivCont);
+      EmitOverflowBB(overflowBB);
+      Builder.SetInsertPoint(DivCont);
+    }
+  }
   if (Ops.LHS->getType()->isFPOrFPVectorTy())
     return Builder.CreateFDiv(Ops.LHS, Ops.RHS, "div");
   else if (Ops.Ty->hasUnsignedIntegerRepresentation())
@@ -1511,6 +1568,13 @@ Value *ScalarExprEmitter::EmitDiv(const BinOpInfo &Ops) {
 
 Value *ScalarExprEmitter::EmitRem(const BinOpInfo &Ops) {
   // Rem in C can't be a floating point type: C99 6.5.5p2.
+  if (isTrapvOverflowBehavior()) {
+    llvm::Value *Zero = llvm::Constant::getNullValue(ConvertType(Ops.Ty));
+
+    if (Ops.Ty->isIntegerType()) 
+      EmitUndefinedBehaviorIntegerDivAndRemCheck(Ops, Zero, false);
+  }
+
   if (Ops.Ty->isUnsignedIntegerType())
     return Builder.CreateURem(Ops.LHS, Ops.RHS, "rem");
   else
@@ -1560,10 +1624,7 @@ Value *ScalarExprEmitter::EmitOverflowCheckedBinOp(const BinOpInfo &Ops) {
 
   // Handle overflow with llvm.trap.
   // TODO: it would be better to generate one of these blocks per function.
-  Builder.SetInsertPoint(overflowBB);
-  llvm::Function *Trap = CGF.CGM.getIntrinsic(llvm::Intrinsic::trap);
-  Builder.CreateCall(Trap);
-  Builder.CreateUnreachable();
+  EmitOverflowBB(overflowBB);
   
   // Continue on.
   Builder.SetInsertPoint(continueBB);
