@@ -809,9 +809,14 @@ static std::string GetPreamblePCHPath() {
     TmpDir = ::getenv("TEMP");
   if (!TmpDir)
     TmpDir = ::getenv("TMP");
+#ifdef LLVM_ON_WIN32
+  if (!TmpDir)
+    TmpDir = ::getenv("USERPROFILE");
+#endif
   if (!TmpDir)
     TmpDir = "/tmp";
   llvm::sys::Path P(TmpDir);
+  P.createDirectoryOnDisk(true);
   P.appendComponent("preamble");
   P.appendSuffix("pch");
   if (P.createTemporaryFileOnDisk())

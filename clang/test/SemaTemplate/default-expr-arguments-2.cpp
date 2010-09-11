@@ -1,7 +1,7 @@
 // RUN: %clang_cc1 -ast-dump %s 2>&1 | FileCheck %s
 
 // This is a wacky test to ensure that we're actually instantiating
-// the default rguments of the constructor when the function type is
+// the default arguments of the constructor when the function type is
 // otherwise non-dependent.
 namespace PR6733 {
   template <class T>
