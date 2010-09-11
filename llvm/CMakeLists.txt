@@ -258,6 +258,15 @@ endif( ${CMAKE_SYSTEM_NAME} MATCHES SunOS )
 include(AddLLVM)
 include(TableGen)
 
+if( MINGW )
+  get_system_libs(LLVM_SYSTEM_LIBS_LIST)
+  foreach(l ${LLVM_SYSTEM_LIBS_LIST})
+    set(LLVM_SYSTEM_LIBS "${LLVM_SYSTEM_LIBS} -l${l}")
+  endforeach()
+  set(CMAKE_CXX_STANDARD_LIBRARIES "${CMAKE_CXX_STANDARD_LIBRARIES}${LLVM_SYSTEM_LIBS}")
+  set(CMAKE_C_STANDARD_LIBRARIES "${CMAKE_C_STANDARD_LIBRARIES}${LLVM_SYSTEM_LIBS}")
+endif()
+
 add_subdirectory(lib/Support)
 add_subdirectory(lib/System)
 
