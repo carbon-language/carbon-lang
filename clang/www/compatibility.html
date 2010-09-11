@@ -45,7 +45,6 @@
   <li><a href="#c++">C++ compatibility</a>
     <ul>
       <li><a href="#vla">Variable-length arrays</a></li>
-      <li><a href="#init_static_const">Initialization of non-integral static const data members within a class definition</a></li>
       <li><a href="#dep_lookup">Unqualified lookup in templates</a></li>
       <li><a href="#dep_lookup_bases">Unqualified lookup into dependent bases of class templates</a></li>
       <li><a href="#undep_incomplete">Incomplete types in templates</a></li>
@@ -271,46 +270,6 @@ template parameter.</li> </ul>
 <li>allocate the array on the heap instead using <tt>new Type[]</tt> -
     just remember to <tt>delete[]</tt> it.</li>
 </ol>
-
-<!-- ======================================================================= -->
-<h3 id="init_static_const">Initialization of non-integral static const data members within a class definition</h3>
-<!-- ======================================================================= -->
-
-The following code is ill-formed in C++'03:
-
-<pre>
-class SomeClass {
- public:
-  static const double SomeConstant = 0.5;
-};
-
-const double SomeClass::SomeConstant;
-</pre>
-
-Clang errors with something similar to:
-
-<pre>
-.../your_file.h:42:42: error: 'SomeConstant' can only be initialized if it is a static const integral data member
-  static const double SomeConstant = 0.5;
-                      ^              ~~~
-</pre>
-
-Only <i>integral</i> constant expressions are allowed as initializers
-within the class definition. See C++'03 [class.static.data] p4 for the
-details of this restriction.  The fix here is straightforward: move
-the initializer to the definition of the static data member, which
-must exist outside of the class definition:
-
-<pre>
-class SomeClass {
- public:
-  static const double SomeConstant;
-};
-
-const double SomeClass::SomeConstant<b> = 0.5</b>;
-</pre>
-
-Note that the forthcoming C++0x standard will allow this.
 
 <!-- ======================================================================= -->
 <h3 id="dep_lookup">Unqualified lookup in templates</h3>
