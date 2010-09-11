@@ -518,3 +518,18 @@ pushfl
 // CHECK: pushfl
 popfl
 // CHECK: popfl
+
+
+// rdar://8416805
+	setc	%bl
+	setnae	%bl
+	setnb	%bl
+	setnc	%bl
+	setna	%bl
+	setnbe	%bl
+	setpe	%bl
+	setpo	%bl
+	setnge	%bl
+	setnl	%bl
+	setng	%bl
+	setnle	%bl
