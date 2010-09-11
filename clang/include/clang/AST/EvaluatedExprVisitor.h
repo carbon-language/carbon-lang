@@ -63,7 +63,7 @@ public:
     // a glvalue of polymorphic type. (C++ 5.2.8p2-3)
     if (!E->isTypeOperand() && E->Classify(Context).isGLValue())
       if (const RecordType *Record 
-                        = E->getExprOperand()->getType()->getAs<RecordType>())
+                 = E->getExprOperand()->getType()->template getAs<RecordType>())
         if (cast<CXXRecordDecl>(Record->getDecl())->isPolymorphic())
           return this->Visit(E->getExprOperand());
   }
