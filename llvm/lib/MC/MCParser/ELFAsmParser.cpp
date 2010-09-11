@@ -48,8 +48,6 @@ public:
     AddDirectiveHandler<&ELFAsmParser::ParseSectionDirectiveEhFrame>(".eh_frame");
     AddDirectiveHandler<&ELFAsmParser::ParseDirectiveSection>(".section");
     AddDirectiveHandler<&ELFAsmParser::ParseDirectiveSize>(".size");
-    AddDirectiveHandler<&ELFAsmParser::ParseDirectiveLEB128>(".sleb128");
-    AddDirectiveHandler<&ELFAsmParser::ParseDirectiveLEB128>(".uleb128");
     AddDirectiveHandler<&ELFAsmParser::ParseDirectivePrevious>(".previous");
   }
 
@@ -109,7 +107,6 @@ public:
                               MCSectionELF::SHF_WRITE,
                               SectionKind::getDataRel());
   }
-  bool ParseDirectiveLEB128(StringRef, SMLoc);
   bool ParseDirectiveSection(StringRef, SMLoc);
   bool ParseDirectiveSize(StringRef, SMLoc);
   bool ParseDirectivePrevious(StringRef, SMLoc);
@@ -252,26 +249,6 @@ bool ELFAsmParser::ParseDirectiveSection(StringRef, SMLoc) {
   getStreamer().SwitchSection(getContext().getELFSection(SectionName, Type,
                                                          Flags, Kind, false));
   return false;
-}
-
-bool ELFAsmParser::ParseDirectiveLEB128(StringRef DirName, SMLoc) {
-  int64_t Value;
-  if (getParser().ParseAbsoluteExpression(Value))
-    return true;
-
-  if (getLexer().isNot(AsmToken::EndOfStatement))
-    return TokError("unexpected token in directive");
-
-  // FIXME: Add proper MC support.
-  if (getContext().getAsmInfo().hasLEB128()) {
-    if (DirName[1] == 's')
-      getStreamer().EmitRawText("\t.sleb128\t" + Twine(Value));
-    else
-      getStreamer().EmitRawText("\t.uleb128\t" + Twine(Value));
-    return false;
-  }
-  // FIXME: This shouldn't be an error!
-  return TokError("LEB128 not supported yet");
 }
 
 bool ELFAsmParser::ParseDirectivePrevious(StringRef DirName, SMLoc) {
