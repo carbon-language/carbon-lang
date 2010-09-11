@@ -803,6 +803,13 @@ static std::string GetPreamblePCHPath() {
   // FIXME: This is lame; sys::Path should provide this function (in particular,
   // it should know how to find the temporary files dir).
   // FIXME: This is really lame. I copied this code from the Driver!
+  // FIXME: This is a hack so that we can override the preamble file during
+  // crash-recovery testing, which is the only case where the preamble files
+  // are not necessarily cleaned up. 
+  const char *TmpFile = ::getenv("CINDEXTEST_PREAMBLE_FILE");
+  if (TmpFile)
+    return TmpFile;
+  
   std::string Error;
   const char *TmpDir = ::getenv("TMPDIR");
   if (!TmpDir)
