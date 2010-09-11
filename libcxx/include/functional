@@ -1141,9 +1141,9 @@ public:
 
     // deleted overloads close possible hole in the type system
     template<class _R2, class... _ArgTypes2>
-      bool operator==(const function<_R2(_ArgTypes2...)>&) = delete;
+      bool operator==(const function<_R2(_ArgTypes2...)>&) const = delete;
     template<class _R2, class... _ArgTypes2>
-      bool operator!=(const function<_R2(_ArgTypes2...)>&) = delete;
+      bool operator!=(const function<_R2(_ArgTypes2...)>&) const = delete;
 public:
     // function invocation:
     _R operator()(_ArgTypes...) const;
