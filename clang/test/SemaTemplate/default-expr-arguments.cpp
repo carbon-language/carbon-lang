@@ -218,6 +218,24 @@ namespace PR5810b {
   void g() { f(17); }
 }
 
+namespace PR5810c {
+  template<typename T>
+  struct X { 
+    X() { 
+      T t;
+      double *****p = t; // expected-error{{cannot initialize a variable of type 'double *****' with an lvalue of type 'int'}}
+    }
+    X(const X&) { }
+  };
+
+  struct Y : X<int> { // expected-note{{instantiation of}}
+  };
+
+  void f(Y y = Y());
+
+  void g() { f(); }
+}
+
 namespace PR8127 {
   template< typename T > class PointerClass {
   public:

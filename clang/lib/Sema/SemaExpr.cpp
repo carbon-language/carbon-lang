@@ -3454,6 +3454,8 @@ ExprResult Sema::BuildCXXDefaultArgExpr(SourceLocation CallLoc,
     ExprTemporaries.push_back(Param->getDefaultArgTemporary(i));
 
   // We already type-checked the argument, so we know it works. 
+  // Just mark all of the declarations in this potentially-evaluated expression
+  // as being "referenced".
   MarkDeclarationsReferencedInExpr(Param->getDefaultArg());
   return Owned(CXXDefaultArgExpr::Create(Context, CallLoc, Param));
 }
@@ -7816,6 +7818,7 @@ namespace {
     
     void VisitMemberExpr(MemberExpr *E) {
       S.MarkDeclarationReferenced(E->getMemberLoc(), E->getMemberDecl());
+      Inherited::VisitMemberExpr(E);
     }
     
     void VisitCXXNewExpr(CXXNewExpr *E) {
@@ -7825,15 +7828,18 @@ namespace {
         S.MarkDeclarationReferenced(E->getLocStart(), E->getOperatorNew());
       if (E->getOperatorDelete())
         S.MarkDeclarationReferenced(E->getLocStart(), E->getOperatorDelete());
+      Inherited::VisitCXXNewExpr(E);
     }
     
     void VisitCXXDeleteExpr(CXXDeleteExpr *E) {
       if (E->getOperatorDelete())
         S.MarkDeclarationReferenced(E->getLocStart(), E->getOperatorDelete());
+      Inherited::VisitCXXDeleteExpr(E);
     }
     
     void VisitCXXConstructExpr(CXXConstructExpr *E) {
       S.MarkDeclarationReferenced(E->getLocStart(), E->getConstructor());
+      Inherited::VisitCXXConstructExpr(E);
     }
     
     void VisitBlockDeclRefExpr(BlockDeclRefExpr *E) {

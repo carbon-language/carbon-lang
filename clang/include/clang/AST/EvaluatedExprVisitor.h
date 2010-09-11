@@ -67,6 +67,14 @@ public:
         if (cast<CXXRecordDecl>(Record->getDecl())->isPolymorphic())
           return this->Visit(E->getExprOperand());
   }
+  
+  /// \brief The basis case walks all of the children of the statement or
+  /// expression, assuming they are all potentially evaluated.
+  void VisitStmt(Stmt *S) {
+    for(Stmt::child_iterator C = S->child_begin(), CEnd = S->child_end();
+        C != CEnd; ++C)
+      this->Visit(*C);
+  }
 };
 
 }
