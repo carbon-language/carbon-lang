@@ -99,6 +99,10 @@ public:
   /// will be either the EndOfStatement or EOF.
   virtual StringRef ParseStringToEndOfStatement() = 0;
 
+  /// EatToEndOfStatement - Skip to the end of the current statement, for error
+  /// recovery.
+  virtual void EatToEndOfStatement() = 0;
+  
   /// ParseExpression - Parse an arbitrary expression.
   ///
   /// @param Res - The value of the expression. The result is undefined

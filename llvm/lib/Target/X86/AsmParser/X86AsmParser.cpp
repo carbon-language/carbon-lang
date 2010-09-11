@@ -785,8 +785,10 @@ ParseInstruction(StringRef Name, SMLoc NameLoc,
     // Read the first operand.
     if (X86Operand *Op = ParseOperand())
       Operands.push_back(Op);
-    else
+    else {
+      Parser.EatToEndOfStatement();
       return true;
+    }
 
     while (getLexer().is(AsmToken::Comma)) {
       Parser.Lex();  // Eat the comma.
@@ -794,12 +796,16 @@ ParseInstruction(StringRef Name, SMLoc NameLoc,
       // Parse and remember the operand.
       if (X86Operand *Op = ParseOperand())
         Operands.push_back(Op);
-      else
+      else {
+        Parser.EatToEndOfStatement();
         return true;
+      }
     }
     
-    if (getLexer().isNot(AsmToken::EndOfStatement))
+    if (getLexer().isNot(AsmToken::EndOfStatement)) {
+      Parser.EatToEndOfStatement();
       return TokError("unexpected token in argument list");
+    }
   }
   
   if (getLexer().is(AsmToken::EndOfStatement))

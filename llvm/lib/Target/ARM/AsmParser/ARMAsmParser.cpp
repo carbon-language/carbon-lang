@@ -726,22 +726,29 @@ bool ARMAsmParser::ParseInstruction(StringRef Name, SMLoc NameLoc,
   if (getLexer().isNot(AsmToken::EndOfStatement)) {
     // Read the first operand.
     OwningPtr<ARMOperand> Op;
-    if (ParseOperand(Op)) return true;
+    if (ParseOperand(Op)) {
+      Parser.EatToEndOfStatement();
+      return true;
+    }
     Operands.push_back(Op.take());
 
     while (getLexer().is(AsmToken::Comma)) {
       Parser.Lex();  // Eat the comma.
 
       // Parse and remember the operand.
-      if (ParseOperand(Op)) return true;
+      if (ParseOperand(Op)) {
+        Parser.EatToEndOfStatement();
+        return true;
+      }
       Operands.push_back(Op.take());
     }
   }
   
-  if (getLexer().isNot(AsmToken::EndOfStatement))
+  if (getLexer().isNot(AsmToken::EndOfStatement)) {
+    Parser.EatToEndOfStatement();
     return TokError("unexpected token in argument list");
+  }
   Parser.Lex(); // Consume the EndOfStatement
-  
   return false;
 }
 

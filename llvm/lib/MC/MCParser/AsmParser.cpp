@@ -965,7 +965,9 @@ bool AsmParser::ParseStatement() {
   for (unsigned i = 0, e = ParsedOperands.size(); i != e; ++i)
     delete ParsedOperands[i];
 
-  return HadError;
+  // Don't skip the rest of the line, the instruction parser is responsible for
+  // that.
+  return false;
 }
 
 MacroInstantiation::MacroInstantiation(const Macro *M, SMLoc IL, SMLoc EL,
