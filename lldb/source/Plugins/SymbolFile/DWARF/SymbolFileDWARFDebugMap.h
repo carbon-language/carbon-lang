@@ -105,26 +105,29 @@ protected:
         lldb_private::FileSpec so_file;
         lldb_private::Symbol *so_symbol;
         lldb_private::Symbol *oso_symbol;
+        lldb_private::Symbol *last_symbol;
+        uint32_t first_symbol_index;
+        uint32_t last_symbol_index;
         lldb::ModuleSP oso_module_sp;
         lldb::CompUnitSP oso_compile_unit_sp;
         lldb_private::SymbolVendor *oso_symbol_vendor;
-//      lldb_private::shared_ptr<SymbolFileDWARF> oso_dwarf_sp;
-//      lldb_private::shared_ptr<SymbolVendor> oso_dwarf_sp;
         std::vector<uint32_t> function_indexes;
         std::vector<uint32_t> static_indexes;
         lldb::SharedPtr<lldb_private::SectionList>::Type debug_map_sections_sp;
 
         CompileUnitInfo() :
-            so_file(),
-            so_symbol(NULL),
-            oso_symbol(NULL),
-            oso_module_sp(),
-            oso_compile_unit_sp(),
-            oso_symbol_vendor(NULL),
-//          oso_dwarf_sp(),
-            function_indexes(),
-            static_indexes(),
-            debug_map_sections_sp()
+            so_file (),
+            so_symbol (NULL),
+            oso_symbol (NULL),
+            last_symbol (NULL),
+            first_symbol_index (UINT32_MAX),
+            last_symbol_index (UINT32_MAX),
+            oso_module_sp (),
+            oso_compile_unit_sp (),
+            oso_symbol_vendor (NULL),
+            function_indexes (),
+            static_indexes (),
+            debug_map_sections_sp ()
         {
         }
     };
@@ -162,11 +165,17 @@ protected:
     SymbolFileDWARF *
     GetSymbolFileByOSOIndex (uint32_t oso_idx);
 
-    CompileUnitInfo*
+    CompileUnitInfo *
     GetCompileUnitInfoForSymbolWithIndex (uint32_t symbol_idx, uint32_t *oso_idx_ptr);
+    
+    CompileUnitInfo *
+    GetCompileUnitInfoForSymbolWithID (lldb::user_id_t symbol_id, uint32_t *oso_idx_ptr);
 
     static int
-    SymbolContainsSymbolIndex (uint32_t *symbol_idx_ptr, const CompileUnitInfo *comp_unit_info);
+    SymbolContainsSymbolWithIndex (uint32_t *symbol_idx_ptr, const CompileUnitInfo *comp_unit_info);
+
+    static int
+    SymbolContainsSymbolWithID (lldb::user_id_t *symbol_idx_ptr, const CompileUnitInfo *comp_unit_info);
 
     uint32_t
     PrivateFindGlobalVariables (const lldb_private::ConstString &name,

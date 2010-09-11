@@ -218,7 +218,7 @@ Symtab::InitNameIndexes()
 }
 
 uint32_t
-Symtab::AppendSymbolIndexesWithType(SymbolType symbol_type, std::vector<uint32_t>& indexes, uint32_t start_idx, uint32_t end_index) const
+Symtab::AppendSymbolIndexesWithType (SymbolType symbol_type, std::vector<uint32_t>& indexes, uint32_t start_idx, uint32_t end_index) const
 {
     uint32_t prev_size = indexes.size();
 
@@ -231,6 +231,35 @@ Symtab::AppendSymbolIndexesWithType(SymbolType symbol_type, std::vector<uint32_t
     }
 
     return indexes.size() - prev_size;
+}
+
+uint32_t
+Symtab::AppendSymbolIndexesWithType (SymbolType symbol_type, Debug symbol_debug_type, Visibility symbol_visibility, std::vector<uint32_t>& indexes, uint32_t start_idx, uint32_t end_index) const
+{
+    uint32_t prev_size = indexes.size();
+
+    const uint32_t count = std::min<uint32_t> (m_symbols.size(), end_index);
+
+    for (uint32_t i = start_idx; i < count; ++i)
+    {
+        if (symbol_type == eSymbolTypeAny || m_symbols[i].GetType() == symbol_type)
+        {
+            if (CheckSymbolAtIndex(i, symbol_debug_type, symbol_visibility))
+                indexes.push_back(i);
+        }
+    }
+
+    return indexes.size() - prev_size;
+}
+
+
+uint32_t
+Symtab::GetIndexForSymbol (const Symbol *symbol) const
+{
+    const Symbol *first_symbol = &m_symbols[0];
+    if (symbol >= first_symbol && symbol < first_symbol + m_symbols.size())
+        return symbol - first_symbol;
+    return UINT32_MAX;
 }
 
 struct SymbolSortInfo
@@ -291,7 +320,7 @@ Symtab::SortSymbolIndexesByValue (std::vector<uint32_t>& indexes, bool remove_du
 }
 
 uint32_t
-Symtab::AppendSymbolIndexesWithName(const ConstString& symbol_name, std::vector<uint32_t>& indexes)
+Symtab::AppendSymbolIndexesWithName (const ConstString& symbol_name, std::vector<uint32_t>& indexes)
 {
     Timer scoped_timer (__PRETTY_FUNCTION__, "%s", __PRETTY_FUNCTION__);
     if (symbol_name)
@@ -314,7 +343,31 @@ Symtab::AppendSymbolIndexesWithName(const ConstString& symbol_name, std::vector<
 }
 
 uint32_t
-Symtab::AppendSymbolIndexesWithNameAndType(const ConstString& symbol_name, SymbolType symbol_type, std::vector<uint32_t>& indexes)
+Symtab::AppendSymbolIndexesWithName (const ConstString& symbol_name, Debug symbol_debug_type, Visibility symbol_visibility, std::vector<uint32_t>& indexes)
+{
+    Timer scoped_timer (__PRETTY_FUNCTION__, "%s", __PRETTY_FUNCTION__);
+    if (symbol_name)
+    {
+        const size_t old_size = indexes.size();
+        if (m_name_to_index.IsEmpty())
+            InitNameIndexes();
+
+        const char *symbol_cstr = symbol_name.GetCString();
+        const UniqueCStringMap<uint32_t>::Entry *entry_ptr;
+        for (entry_ptr = m_name_to_index.FindFirstValueForName (symbol_cstr);
+             entry_ptr!= NULL;
+             entry_ptr = m_name_to_index.FindNextValueForName (symbol_cstr, entry_ptr))
+        {
+            if (CheckSymbolAtIndex(entry_ptr->value, symbol_debug_type, symbol_visibility))
+                indexes.push_back (entry_ptr->value);
+        }
+        return indexes.size() - old_size;
+    }
+    return 0;
+}
+
+uint32_t
+Symtab::AppendSymbolIndexesWithNameAndType (const ConstString& symbol_name, SymbolType symbol_type, std::vector<uint32_t>& indexes)
 {
     if (AppendSymbolIndexesWithName(symbol_name, indexes) > 0)
     {
@@ -329,6 +382,24 @@ Symtab::AppendSymbolIndexesWithNameAndType(const ConstString& symbol_name, Symbo
     }
     return indexes.size();
 }
+
+uint32_t
+Symtab::AppendSymbolIndexesWithNameAndType (const ConstString& symbol_name, SymbolType symbol_type, Debug symbol_debug_type, Visibility symbol_visibility, std::vector<uint32_t>& indexes)
+{
+    if (AppendSymbolIndexesWithName(symbol_name, symbol_debug_type, symbol_visibility, indexes) > 0)
+    {
+        std::vector<uint32_t>::iterator pos = indexes.begin();
+        while (pos != indexes.end())
+        {
+            if (symbol_type == eSymbolTypeAny || m_symbols[*pos].GetType() == symbol_type)
+                ++pos;
+            else
+                indexes.erase(pos);
+        }
+    }
+    return indexes.size();
+}
+
 
 uint32_t
 Symtab::AppendSymbolIndexesMatchingRegExAndType (const RegularExpression &regexp, SymbolType symbol_type, std::vector<uint32_t>& indexes)
@@ -352,31 +423,44 @@ Symtab::AppendSymbolIndexesMatchingRegExAndType (const RegularExpression &regexp
 
 }
 
-Symbol *
-Symtab::FindSymbolWithType(SymbolType symbol_type, uint32_t& start_idx)
+uint32_t
+Symtab::AppendSymbolIndexesMatchingRegExAndType (const RegularExpression &regexp, SymbolType symbol_type, Debug symbol_debug_type, Visibility symbol_visibility, std::vector<uint32_t>& indexes)
 {
-    const size_t count = m_symbols.size();
-    for (uint32_t idx = start_idx; idx < count; ++idx)
+    uint32_t prev_size = indexes.size();
+    uint32_t sym_end = m_symbols.size();
+
+    for (int i = 0; i < sym_end; i++)
     {
-        if (symbol_type == eSymbolTypeAny || m_symbols[idx].GetType() == symbol_type)
+        if (symbol_type == eSymbolTypeAny || m_symbols[i].GetType() == symbol_type)
         {
-            start_idx = idx;
-            return &m_symbols[idx];
+            if (CheckSymbolAtIndex(i, symbol_debug_type, symbol_visibility) == false)
+                continue;
+
+            const char *name = m_symbols[i].GetMangled().GetName().AsCString();
+            if (name)
+            {
+                if (regexp.Execute (name))
+                    indexes.push_back(i);
+            }
         }
     }
-    return NULL;
+    return indexes.size() - prev_size;
+
 }
 
-const Symbol *
-Symtab::FindSymbolWithType(SymbolType symbol_type, uint32_t& start_idx) const
+Symbol *
+Symtab::FindSymbolWithType (SymbolType symbol_type, Debug symbol_debug_type, Visibility symbol_visibility, uint32_t& start_idx)
 {
     const size_t count = m_symbols.size();
     for (uint32_t idx = start_idx; idx < count; ++idx)
     {
         if (symbol_type == eSymbolTypeAny || m_symbols[idx].GetType() == symbol_type)
         {
-            start_idx = idx;
-            return &m_symbols[idx];
+            if (CheckSymbolAtIndex(idx, symbol_debug_type, symbol_visibility))
+            {
+                start_idx = idx;
+                return &m_symbols[idx];
+            }
         }
     }
     return NULL;
@@ -395,20 +479,38 @@ Symtab::FindAllSymbolsWithNameAndType (const ConstString &name, SymbolType symbo
     {
         // The string table did have a string that matched, but we need
         // to check the symbols and match the symbol_type if any was given.
-        AppendSymbolIndexesWithNameAndType(name, symbol_type, symbol_indexes);
+        AppendSymbolIndexesWithNameAndType (name, symbol_type, symbol_indexes);
     }
     return symbol_indexes.size();
 }
 
 size_t
-Symtab::FindAllSymbolsMatchingRexExAndType (const RegularExpression &regex, SymbolType symbol_type, std::vector<uint32_t>& symbol_indexes)
+Symtab::FindAllSymbolsWithNameAndType (const ConstString &name, SymbolType symbol_type, Debug symbol_debug_type, Visibility symbol_visibility, std::vector<uint32_t>& symbol_indexes)
 {
-    AppendSymbolIndexesMatchingRegExAndType(regex, symbol_type, symbol_indexes);
+    Timer scoped_timer (__PRETTY_FUNCTION__, "%s", __PRETTY_FUNCTION__);
+    // Initialize all of the lookup by name indexes before converting NAME
+    // to a uniqued string NAME_STR below.
+    if (m_name_to_index.IsEmpty())
+        InitNameIndexes();
+
+    if (name)
+    {
+        // The string table did have a string that matched, but we need
+        // to check the symbols and match the symbol_type if any was given.
+        AppendSymbolIndexesWithNameAndType (name, symbol_type, symbol_debug_type, symbol_visibility, symbol_indexes);
+    }
+    return symbol_indexes.size();
+}
+
+size_t
+Symtab::FindAllSymbolsMatchingRexExAndType (const RegularExpression &regex, SymbolType symbol_type, Debug symbol_debug_type, Visibility symbol_visibility, std::vector<uint32_t>& symbol_indexes)
+{
+    AppendSymbolIndexesMatchingRegExAndType(regex, symbol_type, symbol_debug_type, symbol_visibility, symbol_indexes);
     return symbol_indexes.size();
 }
 
 Symbol *
-Symtab::FindFirstSymbolWithNameAndType (const ConstString &name, SymbolType symbol_type)
+Symtab::FindFirstSymbolWithNameAndType (const ConstString &name, SymbolType symbol_type, Debug symbol_debug_type, Visibility symbol_visibility)
 {
     Timer scoped_timer (__PRETTY_FUNCTION__, "%s", __PRETTY_FUNCTION__);
     if (m_name_to_index.IsEmpty())
@@ -419,7 +521,7 @@ Symtab::FindFirstSymbolWithNameAndType (const ConstString &name, SymbolType symb
         std::vector<uint32_t> matching_indexes;
         // The string table did have a string that matched, but we need
         // to check the symbols and match the symbol_type if any was given.
-        if (AppendSymbolIndexesWithNameAndType(name, symbol_type, matching_indexes))
+        if (AppendSymbolIndexesWithNameAndType (name, symbol_type, symbol_debug_type, symbol_visibility, matching_indexes))
         {
             std::vector<uint32_t>::const_iterator pos, end = matching_indexes.end();
             for (pos = matching_indexes.begin(); pos != end; ++pos)
@@ -514,9 +616,6 @@ Symtab::InitAddressIndexes()
 {
     if (m_addr_indexes.empty())
     {
-        AppendSymbolIndexesWithType (eSymbolTypeFunction, m_addr_indexes);
-        AppendSymbolIndexesWithType (eSymbolTypeGlobal, m_addr_indexes);
-        AppendSymbolIndexesWithType (eSymbolTypeStatic, m_addr_indexes);
         AppendSymbolIndexesWithType (eSymbolTypeCode, m_addr_indexes);
         AppendSymbolIndexesWithType (eSymbolTypeTrampoline, m_addr_indexes);
         AppendSymbolIndexesWithType (eSymbolTypeData, m_addr_indexes);

@@ -276,7 +276,8 @@ LookupSymbolInModule (CommandInterpreter &interpreter, Stream &strm, Module *mod
                 if (name_is_regex)
                 {
                     RegularExpression name_regexp(name);
-                    num_matches = symtab->AppendSymbolIndexesMatchingRegExAndType (name_regexp, eSymbolTypeAny,
+                    num_matches = symtab->AppendSymbolIndexesMatchingRegExAndType (name_regexp, 
+                                                                                   eSymbolTypeAny,
                                                                                    match_indexes);
                 }
                 else

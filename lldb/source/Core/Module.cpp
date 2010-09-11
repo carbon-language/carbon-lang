@@ -438,7 +438,7 @@ Module::FindFirstSymbolWithNameAndType (const ConstString &name, SymbolType symb
     {
         Symtab *symtab = objfile->GetSymtab();
         if (symtab)
-            return symtab->FindFirstSymbolWithNameAndType (name, symbol_type);
+            return symtab->FindFirstSymbolWithNameAndType (name, symbol_type, Symtab::eDebugAny, Symtab::eVisibilityAny);
     }
     return NULL;
 }
@@ -506,7 +506,7 @@ Module::FindSymbolsMatchingRegExAndType (const RegularExpression &regex, SymbolT
         if (symtab)
         {
             std::vector<uint32_t> symbol_indexes;
-            symtab->FindAllSymbolsMatchingRexExAndType (regex, symbol_type, symbol_indexes);
+            symtab->FindAllSymbolsMatchingRexExAndType (regex, symbol_type, Symtab::eDebugAny, Symtab::eVisibilityAny, symbol_indexes);
             SymbolIndicesToSymbolContextList (symtab, symbol_indexes, sc_list);
         }
     }

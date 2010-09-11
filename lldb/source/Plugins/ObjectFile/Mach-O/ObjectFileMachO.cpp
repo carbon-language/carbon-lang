@@ -206,7 +206,7 @@ ObjectFileMachO::GetSymtab()
     if (m_symtab_ap.get() == NULL)
     {
         m_symtab_ap.reset(new Symtab(this));
-        ParseSymtab (false);
+        ParseSymtab (true);
     }
     return m_symtab_ap.get();
 }
@@ -638,7 +638,7 @@ ObjectFileMachO::ParseSymtab (bool minimize)
                     // ...
                     assert (!"UNIMPLEMENTED: Swap all nlist entries");
                 }
-                uint32_t N_SO_index = UINT_MAX;
+                uint32_t N_SO_index = UINT32_MAX;
 
                 MachSymtabSectionInfo section_info (section_list);
                 std::vector<uint32_t> N_FUN_indexes;
@@ -647,8 +647,12 @@ ObjectFileMachO::ParseSymtab (bool minimize)
                 std::vector<uint32_t> N_BRAC_indexes;
                 std::vector<uint32_t> N_COMM_indexes;
                 typedef std::map <uint64_t, uint32_t> ValueToSymbolIndexMap;
+                typedef std::map <uint32_t, uint32_t> IndexToIndexMap;
                 ValueToSymbolIndexMap N_FUN_addr_to_sym_idx;
                 ValueToSymbolIndexMap N_STSYM_addr_to_sym_idx;
+                // Any symbols that get merged into another will get an entry
+                // in this map so we know
+                IndexToIndexMap m_index_map;
                 uint32_t nlist_idx = 0;
                 Symbol *symbol_ptr = NULL;
 
@@ -693,21 +697,22 @@ ObjectFileMachO::ParseSymtab (bool minimize)
                         case StabGlobalSymbol:    
                             // N_GSYM -- global symbol: name,,NO_SECT,type,0
                             // Sometimes the N_GSYM value contains the address.
+                            sym[sym_idx].SetExternal(true);
                             if (nlist.n_value != 0)
                                 symbol_section = section_info.GetSection (nlist.n_sect, nlist.n_value);
-                            type = eSymbolTypeGlobal;
+                            type = eSymbolTypeData;
                             break;
 
                         case StabFunctionName:
                             // N_FNAME -- procedure name (f77 kludge): name,,NO_SECT,0,0
-                            type = eSymbolTypeFunction;
+                            type = eSymbolTypeCompiler;
                             break;
 
                         case StabFunction:       
                             // N_FUN -- procedure: name,,n_sect,linenumber,address
                             if (symbol_name)
                             {
-                                type = eSymbolTypeFunction;
+                                type = eSymbolTypeCode;
                                 symbol_section = section_info.GetSection (nlist.n_sect, nlist.n_value);
                                 
                                 N_FUN_addr_to_sym_idx[nlist.n_value] = sym_idx;
@@ -717,7 +722,7 @@ ObjectFileMachO::ParseSymtab (bool minimize)
                             }
                             else
                             {
-                                type = eSymbolTypeFunctionEnd;
+                                type = eSymbolTypeCompiler;
 
                                 if ( !N_FUN_indexes.empty() )
                                 {
@@ -738,7 +743,7 @@ ObjectFileMachO::ParseSymtab (bool minimize)
                             // N_STSYM -- static symbol: name,,n_sect,type,address
                             N_STSYM_addr_to_sym_idx[nlist.n_value] = sym_idx;
                             symbol_section = section_info.GetSection (nlist.n_sect, nlist.n_value);
-                            type = eSymbolTypeStatic;
+                            type = eSymbolTypeData;
                             break;
 
                         case StabLocalCommon:
@@ -814,20 +819,15 @@ ObjectFileMachO::ParseSymtab (bool minimize)
                             type = eSymbolTypeSourceFile;
                             if (symbol_name == NULL)
                             {
-                                if (N_SO_index == UINT_MAX)
-                                {
-                                    // Skip the extra blank N_SO entries that happen when the entire
-                                    // path is contained in the second consecutive N_SO STAB.
-                                    if (minimize)
-                                        add_nlist = false;
-                                }
-                                else
+                                if (minimize)
+                                    add_nlist = false;
+                                if (N_SO_index != UINT32_MAX)
                                 {
                                     // Set the size of the N_SO to the terminating index of this N_SO
                                     // so that we can always skip the entire N_SO if we need to navigate
                                     // more quickly at the source level when parsing STABS
                                     symbol_ptr = symtab->SymbolAtIndex(N_SO_index);
-                                    symbol_ptr->SetByteSize(sym_idx + 1);
+                                    symbol_ptr->SetByteSize(sym_idx + (minimize ? 0 : 1));
                                     symbol_ptr->SetSizeIsSibling(true);
                                 }
                                 N_NSYM_indexes.clear();
@@ -835,14 +835,30 @@ ObjectFileMachO::ParseSymtab (bool minimize)
                                 N_BRAC_indexes.clear();
                                 N_COMM_indexes.clear();
                                 N_FUN_indexes.clear();
-                                N_SO_index = UINT_MAX;
+                                N_SO_index = UINT32_MAX;
                             }
-                            else if (symbol_name[0] == '/')
+                            else
                             {
                                 // We use the current number of symbols in the symbol table in lieu of
                                 // using nlist_idx in case we ever start trimming entries out
-                                N_SO_index = sym_idx;
+                                if (symbol_name[0] == '/')
+                                    N_SO_index = sym_idx;
+                                else if (minimize && (N_SO_index == sym_idx - 1))
+                                {
+                                    const char *so_path = sym[sym_idx - 1].GetMangled().GetDemangledName().AsCString();
+                                    if (so_path && so_path[0])
+                                    {
+                                        std::string full_so_path (so_path);
+                                        if (*full_so_path.rbegin() != '/')
+                                            full_so_path += '/';
+                                        full_so_path += symbol_name;
+                                        sym[sym_idx - 1].GetMangled().SetValue(full_so_path.c_str(), false);
+                                        add_nlist = false;
+                                        m_index_map[nlist_idx] = sym_idx - 1;
+                                    }
+                                }
                             }
+                            
                             break;
 
                         case StabObjectFileName:
@@ -1103,45 +1119,48 @@ ObjectFileMachO::ParseSymtab (bool minimize)
 
                         if (symbol_name)
                             sym[sym_idx].GetMangled().SetValue(symbol_name, symbol_name_is_mangled);
-                        if (type == eSymbolTypeCode)
+                        if (is_debug == false)
                         {
-                            // See if we can find a N_FUN entry for any code symbols.
-                            // If we do find a match, and the name matches, then we
-                            // can merge the two into just the function symbol to avoid
-                            // duplicate entries in the symbol table
-                            ValueToSymbolIndexMap::const_iterator pos = N_FUN_addr_to_sym_idx.find (nlist.n_value);
-                            if (pos != N_FUN_addr_to_sym_idx.end())
+                            if (type == eSymbolTypeCode)
                             {
-                                if ((symbol_name_is_mangled == true && sym[sym_idx].GetMangled().GetMangledName() == sym[pos->second].GetMangled().GetMangledName()) ||
-                                    (symbol_name_is_mangled == false && sym[sym_idx].GetMangled().GetDemangledName() == sym[pos->second].GetMangled().GetDemangledName()))
+                                // See if we can find a N_FUN entry for any code symbols.
+                                // If we do find a match, and the name matches, then we
+                                // can merge the two into just the function symbol to avoid
+                                // duplicate entries in the symbol table
+                                ValueToSymbolIndexMap::const_iterator pos = N_FUN_addr_to_sym_idx.find (nlist.n_value);
+                                if (pos != N_FUN_addr_to_sym_idx.end())
                                 {
-                                
-                                    // We just need the flags from the linker symbol, so put these flags
-                                    // into the N_FUN flags to avoid duplicate symbols in the symbol table
-                                    sym[pos->second].SetFlags (nlist.n_type << 16 | nlist.n_desc);
-                                    sym[sym_idx].GetMangled().Clear();
-                                    continue;
+                                    if ((symbol_name_is_mangled == true && sym[sym_idx].GetMangled().GetMangledName() == sym[pos->second].GetMangled().GetMangledName()) ||
+                                        (symbol_name_is_mangled == false && sym[sym_idx].GetMangled().GetDemangledName() == sym[pos->second].GetMangled().GetDemangledName()))
+                                    {
+                                        m_index_map[nlist_idx] = pos->second;
+                                        // We just need the flags from the linker symbol, so put these flags
+                                        // into the N_FUN flags to avoid duplicate symbols in the symbol table
+                                        sym[pos->second].SetFlags (nlist.n_type << 16 | nlist.n_desc);
+                                        sym[sym_idx].Clear();
+                                        continue;
+                                    }
                                 }
                             }
-                        }
-                        else if (type == eSymbolTypeData)
-                        {
-                            // See if we can find a N_STSYM entry for any data symbols.
-                            // If we do find a match, and the name matches, then we
-                            // can merge the two into just the Static symbol to avoid
-                            // duplicate entries in the symbol table
-                            ValueToSymbolIndexMap::const_iterator pos = N_STSYM_addr_to_sym_idx.find (nlist.n_value);
-                            if (pos != N_STSYM_addr_to_sym_idx.end())
+                            else if (type == eSymbolTypeData)
                             {
-                                if ((symbol_name_is_mangled == true && sym[sym_idx].GetMangled().GetMangledName() == sym[pos->second].GetMangled().GetMangledName()) ||
-                                    (symbol_name_is_mangled == false && sym[sym_idx].GetMangled().GetDemangledName() == sym[pos->second].GetMangled().GetDemangledName()))
+                                // See if we can find a N_STSYM entry for any data symbols.
+                                // If we do find a match, and the name matches, then we
+                                // can merge the two into just the Static symbol to avoid
+                                // duplicate entries in the symbol table
+                                ValueToSymbolIndexMap::const_iterator pos = N_STSYM_addr_to_sym_idx.find (nlist.n_value);
+                                if (pos != N_STSYM_addr_to_sym_idx.end())
                                 {
-                                
-                                    // We just need the flags from the linker symbol, so put these flags
-                                    // into the N_STSYM flags to avoid duplicate symbols in the symbol table
-                                    sym[pos->second].SetFlags (nlist.n_type << 16 | nlist.n_desc);
-                                    sym[sym_idx].GetMangled().Clear();
-                                    continue;
+                                    if ((symbol_name_is_mangled == true && sym[sym_idx].GetMangled().GetMangledName() == sym[pos->second].GetMangled().GetMangledName()) ||
+                                        (symbol_name_is_mangled == false && sym[sym_idx].GetMangled().GetDemangledName() == sym[pos->second].GetMangled().GetDemangledName()))
+                                    {
+                                        m_index_map[nlist_idx] = pos->second;
+                                        // We just need the flags from the linker symbol, so put these flags
+                                        // into the N_STSYM flags to avoid duplicate symbols in the symbol table
+                                        sym[pos->second].SetFlags (nlist.n_type << 16 | nlist.n_desc);
+                                        sym[sym_idx].Clear();
+                                        continue;
+                                    }
                                 }
                             }
                         }
@@ -1171,13 +1190,13 @@ ObjectFileMachO::ParseSymtab (bool minimize)
 
                 Symbol *global_symbol = NULL;
                 for (nlist_idx = 0;
-                     nlist_idx < symtab_load_command.nsyms && (global_symbol = symtab->FindSymbolWithType(eSymbolTypeGlobal, nlist_idx)) != NULL;
+                     nlist_idx < symtab_load_command.nsyms && (global_symbol = symtab->FindSymbolWithType (eSymbolTypeData, Symtab::eDebugYes, Symtab::eVisibilityAny, nlist_idx)) != NULL;
                      nlist_idx++)
                 {
                     if (global_symbol->GetValue().GetFileAddress() == 0)
                     {
                         std::vector<uint32_t> indexes;
-                        if (symtab->AppendSymbolIndexesWithName(global_symbol->GetMangled().GetName(), indexes) > 0)
+                        if (symtab->AppendSymbolIndexesWithName (global_symbol->GetMangled().GetName(), indexes) > 0)
                         {
                             std::vector<uint32_t>::const_iterator pos;
                             std::vector<uint32_t>::const_iterator end = indexes.end();
@@ -1200,6 +1219,7 @@ ObjectFileMachO::ParseSymtab (bool minimize)
 
                     if (indirect_symbol_indexes_sp && indirect_symbol_indexes_sp->GetByteSize())
                     {
+                        IndexToIndexMap::const_iterator end_index_pos = m_index_map.end();
                         DataExtractor indirect_symbol_index_data (indirect_symbol_indexes_sp, m_data.GetByteOrder(), m_data.GetAddressByteSize());
 
                         for (uint32_t sect_idx = 1; sect_idx < m_mach_sections.size(); ++sect_idx)
@@ -1224,7 +1244,12 @@ ObjectFileMachO::ParseSymtab (bool minimize)
                                     uint32_t symbol_stub_offset = symbol_stub_index * 4;
                                     if (indirect_symbol_index_data.ValidOffsetForDataOfSize(symbol_stub_offset, 4))
                                     {
-                                        const uint32_t symbol_index = indirect_symbol_index_data.GetU32 (&symbol_stub_offset);
+                                        uint32_t symbol_index = indirect_symbol_index_data.GetU32 (&symbol_stub_offset);
+
+                                        IndexToIndexMap::const_iterator index_pos = m_index_map.find (symbol_index);
+                                        assert (index_pos == end_index_pos); // TODO: remove this assert if it fires, else remove m_index_map
+                                        if (index_pos != end_index_pos)
+                                            symbol_index = index_pos->second;
 
                                         Symbol *stub_symbol = symtab->FindSymbolByID (symbol_index);
 

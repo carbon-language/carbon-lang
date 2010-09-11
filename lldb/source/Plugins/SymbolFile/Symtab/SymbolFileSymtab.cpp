@@ -90,14 +90,14 @@ SymbolFileSymtab::GetAbilities ()
         {
             abilities |= CompileUnits;
         }
-        symtab->AppendSymbolIndexesWithType(eSymbolTypeFunction, m_func_indexes);
+        symtab->AppendSymbolIndexesWithType(eSymbolTypeCode, Symtab::eDebugYes, Symtab::eVisibilityAny, m_func_indexes);
         if (!m_func_indexes.empty())
         {
             symtab->SortSymbolIndexesByValue(m_func_indexes, true);
             abilities |= Functions;
         }
 
-        symtab->AppendSymbolIndexesWithType(eSymbolTypeCode, m_code_indexes);
+        symtab->AppendSymbolIndexesWithType(eSymbolTypeCode, Symtab::eDebugNo, Symtab::eVisibilityAny, m_code_indexes);
         if (!m_code_indexes.empty())
         {
             symtab->SortSymbolIndexesByValue(m_code_indexes, true);
@@ -319,8 +319,7 @@ SymbolFileSymtab::FindFunctions(const ConstString &name, uint32_t name_type_mask
     {
         const uint32_t start_size = sc_list.GetSize();
         std::vector<uint32_t> symbol_indexes;
-        symtab->FindAllSymbolsWithNameAndType (name, eSymbolTypeFunction, symbol_indexes);
-        symtab->FindAllSymbolsWithNameAndType (name, eSymbolTypeCode, symbol_indexes);
+        symtab->FindAllSymbolsWithNameAndType (name, eSymbolTypeCode, Symtab::eDebugAny, Symtab::eVisibilityAny, symbol_indexes);
         const uint32_t num_matches = symbol_indexes.size();
         if (num_matches)
         {

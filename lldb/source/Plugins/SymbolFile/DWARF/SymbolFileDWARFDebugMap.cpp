@@ -91,8 +91,8 @@ SymbolFileDWARFDebugMap::InitOSO ()
         std::vector<uint32_t> oso_indexes;
         const uint32_t oso_index_count = symtab->AppendSymbolIndexesWithType(eSymbolTypeObjectFile, oso_indexes);
 
-        symtab->AppendSymbolIndexesWithType(eSymbolTypeFunction, m_func_indexes);
-        symtab->AppendSymbolIndexesWithType(eSymbolTypeGlobal, m_glob_indexes);
+        symtab->AppendSymbolIndexesWithType (eSymbolTypeCode, Symtab::eDebugYes, Symtab::eVisibilityAny, m_func_indexes);
+        symtab->AppendSymbolIndexesWithType (eSymbolTypeData, Symtab::eDebugYes, Symtab::eVisibilityAny, m_glob_indexes);
 
         symtab->SortSymbolIndexesByValue(m_func_indexes, true);
         symtab->SortSymbolIndexesByValue(m_glob_indexes, true);
@@ -109,6 +109,12 @@ SymbolFileDWARFDebugMap::InitOSO ()
                 if (m_compile_unit_infos[i].so_symbol->GetSiblingIndex() == 0)
                     m_compile_unit_infos[i].so_symbol = symtab->SymbolAtIndex(oso_indexes[i] - 2);
                 m_compile_unit_infos[i].oso_symbol = symtab->SymbolAtIndex(oso_indexes[i]);
+                uint32_t sibling_idx = m_compile_unit_infos[i].so_symbol->GetSiblingIndex();
+                assert (sibling_idx != 0);
+                assert (sibling_idx > i + 1);
+                m_compile_unit_infos[i].last_symbol = symtab->SymbolAtIndex (sibling_idx - 1);
+                m_compile_unit_infos[i].first_symbol_index = symtab->GetIndexForSymbol(m_compile_unit_infos[i].so_symbol);
+                m_compile_unit_infos[i].last_symbol_index = symtab->GetIndexForSymbol(m_compile_unit_infos[i].last_symbol);
             }
         }
     }
@@ -243,7 +249,9 @@ SymbolFileDWARFDebugMap::GetSymbolFileByCompUnitInfo (CompileUnitInfo *comp_unit
                 //SectionList *oso_sections = oso_objfile->Sections();
                 // Now we need to make sections that map from zero based object
                 // file addresses to where things eneded up in the main executable.
-                uint32_t oso_start_idx = comp_unit_info->oso_symbol->GetID() + 1;
+                uint32_t oso_start_idx = exe_symtab->GetIndexForSymbol (comp_unit_info->oso_symbol);
+                assert (oso_start_idx != UINT32_MAX);
+                oso_start_idx += 1;
                 const uint32_t oso_end_idx = comp_unit_info->so_symbol->GetSiblingIndex();
                 uint32_t sect_id = 0x10000;
                 for (uint32_t idx = oso_start_idx; idx < oso_end_idx; ++idx)
@@ -251,9 +259,12 @@ SymbolFileDWARFDebugMap::GetSymbolFileByCompUnitInfo (CompileUnitInfo *comp_unit
                     Symbol *exe_symbol = exe_symtab->SymbolAtIndex(idx);
                     if (exe_symbol)
                     {
+                        if (exe_symbol->IsDebug() == false)
+                            continue;
+
                         switch (exe_symbol->GetType())
                         {
-                        case eSymbolTypeFunction:
+                        case eSymbolTypeCode:
                             {
                                 // For each N_FUN, or function that we run into in the debug map
                                 // we make a new section that we add to the sections found in the
@@ -265,7 +276,7 @@ SymbolFileDWARFDebugMap::GetSymbolFileByCompUnitInfo (CompileUnitInfo *comp_unit
                                 // correctly to the new addresses in the main executable.
 
                                 // First we find the original symbol in the .o file's symbol table
-                                Symbol *oso_fun_symbol = oso_symtab->FindFirstSymbolWithNameAndType(exe_symbol->GetMangled().GetName(), eSymbolTypeCode);
+                                Symbol *oso_fun_symbol = oso_symtab->FindFirstSymbolWithNameAndType(exe_symbol->GetMangled().GetName(), eSymbolTypeCode, Symtab::eDebugNo, Symtab::eVisibilityAny);
                                 if (oso_fun_symbol)
                                 {
                                     // If we found the symbol, then we
@@ -299,8 +310,7 @@ SymbolFileDWARFDebugMap::GetSymbolFileByCompUnitInfo (CompileUnitInfo *comp_unit
                             }
                             break;
 
-                        case eSymbolTypeGlobal:
-                        case eSymbolTypeStatic:
+                        case eSymbolTypeData:
                             {
                                 // For each N_GSYM we remap the address for the global by making
                                 // a new section that we add to the sections found in the .o file.
@@ -317,7 +327,7 @@ SymbolFileDWARFDebugMap::GetSymbolFileByCompUnitInfo (CompileUnitInfo *comp_unit
 
 #if 0
                                 // First we find the non-stab entry that corresponds to the N_GSYM in the executable
-                                Symbol *exe_gsym_symbol = exe_symtab->FindFirstSymbolWithNameAndType(exe_symbol->GetMangled().GetName(), eSymbolTypeData);
+                                Symbol *exe_gsym_symbol = exe_symtab->FindFirstSymbolWithNameAndType(exe_symbol->GetMangled().GetName(), eSymbolTypeData, Symtab::eDebugNo, Symtab::eVisibilityAny);
 #else
                                 // The mach-o object file parser already matches up the N_GSYM with with the non-stab
                                 // entry, so we shouldn't have to do that. If this ever changes, enable the code above
@@ -325,7 +335,7 @@ SymbolFileDWARFDebugMap::GetSymbolFileByCompUnitInfo (CompileUnitInfo *comp_unit
                                 Symbol *exe_gsym_symbol = exe_symbol;
 #endif
                                 // Next we find the non-stab entry that corresponds to the N_GSYM in the .o file
-                                Symbol *oso_gsym_symbol = oso_symtab->FindFirstSymbolWithNameAndType(exe_symbol->GetMangled().GetName(), eSymbolTypeData);
+                                Symbol *oso_gsym_symbol = oso_symtab->FindFirstSymbolWithNameAndType(exe_symbol->GetMangled().GetName(), eSymbolTypeData, Symtab::eDebugNo, Symtab::eVisibilityAny);
                                 if (exe_gsym_symbol && oso_gsym_symbol)
                                 {
                                     // If we found the symbol, then we
@@ -598,7 +608,7 @@ SymbolFileDWARFDebugMap::ResolveSymbolContext (const Address& exe_so_addr, uint3
             resolved_flags |= eSymbolContextSymbol;
 
             uint32_t oso_idx = 0;
-            CompileUnitInfo* comp_unit_info = GetCompileUnitInfoForSymbolWithIndex (sc.symbol->GetID(), &oso_idx);
+            CompileUnitInfo* comp_unit_info = GetCompileUnitInfoForSymbolWithID (sc.symbol->GetID(), &oso_idx);
             if (comp_unit_info)
             {
                 SymbolFileDWARF *oso_dwarf = GetSymbolFileByOSOIndex (oso_idx);
@@ -709,7 +719,7 @@ SymbolFileDWARFDebugMap::FindGlobalVariables (const ConstString &name, bool appe
     if (symtab)
     {
         std::vector<uint32_t> indexes;
-        const size_t match_count = m_obj_file->GetSymtab()->FindAllSymbolsWithNameAndType (name, eSymbolTypeGlobal, indexes);
+        const size_t match_count = m_obj_file->GetSymtab()->FindAllSymbolsWithNameAndType (name, eSymbolTypeData, Symtab::eDebugYes, Symtab::eVisibilityAny, indexes);
         if (match_count)
         {
             PrivateFindGlobalVariables (name, indexes, max_matches, variables);
@@ -728,14 +738,29 @@ SymbolFileDWARFDebugMap::FindGlobalVariables (const RegularExpression& regex, bo
 
 
 int
-SymbolFileDWARFDebugMap::SymbolContainsSymbolIndex (uint32_t *symbol_idx_ptr, const CompileUnitInfo *comp_unit_info)
+SymbolFileDWARFDebugMap::SymbolContainsSymbolWithIndex (uint32_t *symbol_idx_ptr, const CompileUnitInfo *comp_unit_info)
 {
     const uint32_t symbol_idx = *symbol_idx_ptr;
 
-    if (symbol_idx < comp_unit_info->so_symbol->GetID())
+    if (symbol_idx < comp_unit_info->first_symbol_index)
         return -1;
 
-    if (symbol_idx < comp_unit_info->so_symbol->GetSiblingIndex())
+    if (symbol_idx <= comp_unit_info->last_symbol_index)
+        return 0;
+
+    return 1;
+}
+
+
+int
+SymbolFileDWARFDebugMap::SymbolContainsSymbolWithID (user_id_t *symbol_idx_ptr, const CompileUnitInfo *comp_unit_info)
+{
+    const user_id_t symbol_id = *symbol_idx_ptr;
+
+    if (symbol_id < comp_unit_info->so_symbol->GetID())
+        return -1;
+
+    if (symbol_id <= comp_unit_info->last_symbol->GetID())
         return 0;
 
     return 1;
@@ -749,7 +774,7 @@ SymbolFileDWARFDebugMap::GetCompileUnitInfoForSymbolWithIndex (uint32_t symbol_i
     CompileUnitInfo *comp_unit_info = NULL;
     if (oso_index_count)
     {
-        comp_unit_info = (CompileUnitInfo*)bsearch(&symbol_idx, &m_compile_unit_infos[0], m_compile_unit_infos.size(), sizeof(CompileUnitInfo), (comparison_function)SymbolContainsSymbolIndex);
+        comp_unit_info = (CompileUnitInfo*)bsearch(&symbol_idx, &m_compile_unit_infos[0], m_compile_unit_infos.size(), sizeof(CompileUnitInfo), (comparison_function)SymbolContainsSymbolWithIndex);
     }
 
     if (oso_idx_ptr)
@@ -761,6 +786,27 @@ SymbolFileDWARFDebugMap::GetCompileUnitInfoForSymbolWithIndex (uint32_t symbol_i
     }
     return comp_unit_info;
 }
+
+SymbolFileDWARFDebugMap::CompileUnitInfo*
+SymbolFileDWARFDebugMap::GetCompileUnitInfoForSymbolWithID (user_id_t symbol_id, uint32_t *oso_idx_ptr)
+{
+    const uint32_t oso_index_count = m_compile_unit_infos.size();
+    CompileUnitInfo *comp_unit_info = NULL;
+    if (oso_index_count)
+    {
+        comp_unit_info = (CompileUnitInfo*)bsearch(&symbol_id, &m_compile_unit_infos[0], m_compile_unit_infos.size(), sizeof(CompileUnitInfo), (comparison_function)SymbolContainsSymbolWithID);
+    }
+
+    if (oso_idx_ptr)
+    {
+        if (comp_unit_info != NULL)
+            *oso_idx_ptr = comp_unit_info - &m_compile_unit_infos[0];
+        else
+            *oso_idx_ptr = UINT32_MAX;
+    }
+    return comp_unit_info;
+}
+
 
 static void
 RemoveFunctionsWithModuleNotEqualTo (Module *module, SymbolContextList &sc_list, uint32_t start_idx)

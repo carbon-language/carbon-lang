@@ -268,7 +268,7 @@ Symbol::GetFunction ()
 uint32_t
 Symbol::GetPrologueByteSize ()
 {
-    if (m_type == eSymbolTypeCode || m_type == eSymbolTypeFunction)
+    if (m_type == eSymbolTypeCode)
     {
         if (!m_type_data_resolved)
         {
@@ -326,12 +326,8 @@ Symbol::GetTypeAsString() const
     ENUM_TO_CSTRING(SourceFile);
     ENUM_TO_CSTRING(HeaderFile);
     ENUM_TO_CSTRING(ObjectFile);
-    ENUM_TO_CSTRING(Function);
-    ENUM_TO_CSTRING(FunctionEnd);
     ENUM_TO_CSTRING(CommonBlock);
     ENUM_TO_CSTRING(Block);
-    ENUM_TO_CSTRING(Static);
-    ENUM_TO_CSTRING(Global);
     ENUM_TO_CSTRING(Local);
     ENUM_TO_CSTRING(Param);
     ENUM_TO_CSTRING(Variable);
