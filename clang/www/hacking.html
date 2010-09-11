@@ -202,30 +202,18 @@
   <p>The -sv option above tells the runner to show the test output if
   any tests failed, to help you determine the cause of failure.</p>
 
-  <p>Note that a few tests currently fail on Windows.  We are working to
-  correct this. Therefore your output might look something like this:</p>
+  <p>Your output might look something like this:</p>
 
-<tt><pre>lit.py: lit.cfg:152: note: using clang: 'C:/Tools/llvm/bin/Debug\\clang.EXE'
--- Testing: 1723 tests, 2 threads --
-FAIL: Clang::(test path) (659 of 1723)
-******************** TEST 'Clang::(test path)' FAILED ********************
-Script:
-  (commands run)
-Command Output (stdout):
-  (output here)
-Command Output (stderr):
-  (output here)
-********************
-Testing Time: 83.66s
-********************
-Failing Tests (1):
-    Clang::(test path)
-  Expected Passes    : 1704
-  Expected Failures  : 18
-  Unexpected Failures: 1
+<tt><pre>lit.py: lit.cfg:152: note: using clang: 'C:/Tools/llvm/bin/Release\\clang.EXE'
+-- Testing: Testing: 2534 tests, 4 threads --
+Testing: 0 .. 10.. 20.. 30.. 40.. 50.. 60.. 70.. 80.. 90..
+Testing Time: 81.52s
+  Expected Passes    : 2503
+  Expected Failures  : 28
+  Unsupported Tests  : 3
 </pre></tt>  
 
-  <p>The last statistic, "Unexpected Failures", is the important one.</p>
+  <p>The statistic, "Unexpected Failures" (not shown if all tests pass), is the important one.</p>
 
   <!--=====================================================================-->
   <h2 id="patches">Creating Patch Files</h2>
