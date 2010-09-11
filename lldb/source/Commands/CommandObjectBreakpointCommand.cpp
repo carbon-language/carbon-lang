@@ -382,7 +382,7 @@ CommandObjectBreakpointCommandAdd::CollectDataForBreakpointCommandCallback
 
 }
 
-// Set a one-liner as the callback for the breakpoint command.
+// Set a one-liner as the callback for the breakpoint.
 void
 CommandObjectBreakpointCommandAdd::SetBreakpointCommandCallback (CommandInterpreter &interpreter,
                                                                  BreakpointOptions *bp_options,

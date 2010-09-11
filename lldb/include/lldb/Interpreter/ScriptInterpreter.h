@@ -77,7 +77,7 @@ public:
                                              BreakpointOptions *bp_options,
                                              CommandReturnObject &result);
 
-    /// Set a one-liner as the callback for the breakpoint command.
+    /// Set a one-liner as the callback for the breakpoint.
     virtual void 
     SetBreakpointCommandCallback (CommandInterpreter &interpreter,
                                   BreakpointOptions *bp_options,

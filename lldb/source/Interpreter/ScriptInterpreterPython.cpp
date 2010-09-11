@@ -653,7 +653,7 @@ ScriptInterpreterPython::CollectDataForBreakpointCommandCallback (CommandInterpr
     }
 }
 
-// Set a Python one-liner as the callback for the breakpoint command.
+// Set a Python one-liner as the callback for the breakpoint.
 void
 ScriptInterpreterPython::SetBreakpointCommandCallback (CommandInterpreter &interpreter,
                                                        BreakpointOptions *bp_options,
