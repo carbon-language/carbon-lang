@@ -306,7 +306,7 @@ typename enable_if
 >::type
 __invoke(_R (_T::*__f)(_Param...) const, _T1&& __t1, _Arg&& ...__arg)
 {
-    return (_STD::forward<_T>(__t1).*__f)(_STD::forward<_Arg>(__arg)...);
+    return (_STD::forward<const _T>(__t1).*__f)(_STD::forward<_Arg>(__arg)...);
 }
 
 template <class _R, class _T, class _T1, class ..._Param, class ..._Arg>
@@ -319,7 +319,7 @@ typename enable_if
 >::type
 __invoke(_R (_T::*__f)(_Param...) volatile, _T1&& __t1, _Arg&& ...__arg)
 {
-    return (_STD::forward<_T>(__t1).*__f)(_STD::forward<_Arg>(__arg)...);
+    return (_STD::forward<volatile _T>(__t1).*__f)(_STD::forward<_Arg>(__arg)...);
 }
 
 template <class _R, class _T, class _T1, class ..._Param, class ..._Arg>
@@ -332,7 +332,7 @@ typename enable_if
 >::type
 __invoke(_R (_T::*__f)(_Param...) const volatile, _T1&& __t1, _Arg&& ...__arg)
 {
-    return (_STD::forward<_T>(__t1).*__f)(_STD::forward<_Arg>(__arg)...);
+    return (_STD::forward<const volatile _T>(__t1).*__f)(_STD::forward<_Arg>(__arg)...);
 }
 
 // second bullet
