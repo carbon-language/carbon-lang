@@ -46,8 +46,10 @@ target_link_libraries(clangCodeGen
   )
 
 add_dependencies(clangCodeGen
+  ClangARMNeon
   ClangAttrClasses
   ClangAttrList
   ClangDeclNodes
   ClangStmtNodes
+  ClangDiagnosticFrontend
   )
