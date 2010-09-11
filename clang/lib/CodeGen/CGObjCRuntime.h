@@ -220,7 +220,7 @@ public:
                                         llvm::Value *SrcPtr,
                                         llvm::Value *Size) = 0;
   virtual llvm::Constant *GCBlockLayout(CodeGen::CodeGenFunction &CGF,
-                  const llvm::SmallVectorImpl<const BlockDeclRefExpr *> &) = 0;
+                  const llvm::SmallVectorImpl<const Expr *> &) = 0;
                                         
 };
 

@@ -757,7 +757,7 @@ CodeGenFunction::GenerateBlockFunction(GlobalDecl GD, const BlockExpr *BExpr,
 
   // Capture block layout info. here.
   if (CGM.getContext().getLangOptions().ObjC1)
-    BlockVarLayout = CGM.getObjCRuntime().GCBlockLayout(*this, Info.DeclRefs);
+    BlockVarLayout = CGM.getObjCRuntime().GCBlockLayout(*this, BlockLayout);
   else
     BlockVarLayout = llvm::Constant::getNullValue(PtrToInt8Ty);
   

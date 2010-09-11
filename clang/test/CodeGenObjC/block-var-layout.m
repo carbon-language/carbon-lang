@@ -107,6 +107,23 @@ c();
 
 }
 
+// rdar: //8417746
+void CFRelease(id);
+void notifyBlock(id dependentBlock) {
+ id singleObservationToken;
+ id token;
+ void (^b)();
+ void (^wrapperBlock)() = ^() {
+     CFRelease(singleObservationToken);
+     CFRelease(singleObservationToken);
+     CFRelease(token);
+     CFRelease(singleObservationToken);
+     b();
+    };
+ wrapperBlock();
+}
+
+
 // CHECK-LP64: L_OBJC_CLASS_NAME_:
 // CHECK-LP64-NEXT: .asciz      "\0011\024"
 
@@ -121,3 +138,6 @@ c();
 
 // CHECK-LP64: L_OBJC_CLASS_NAME_14:
 // CHECK-LP64-NEXT: .asciz   "\001A\021\022p"
+
+// CHECK-LP64: L_OBJC_CLASS_NAME_16:
+// CHECK-LP64-NEXT: .asciz   "\0013"

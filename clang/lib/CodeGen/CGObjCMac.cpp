@@ -1000,7 +1000,7 @@ public:
   /// definition is seen. The return value has type ProtocolPtrTy.
   virtual llvm::Constant *GetOrEmitProtocolRef(const ObjCProtocolDecl *PD)=0;
   virtual llvm::Constant *GCBlockLayout(CodeGen::CodeGenFunction &CGF,
-                      const llvm::SmallVectorImpl<const BlockDeclRefExpr *> &);
+                      const llvm::SmallVectorImpl<const Expr *> &);
   
 };
 
@@ -1663,11 +1663,11 @@ static Qualifiers::GC GetGCAttrTypeForType(ASTContext &Ctx, QualType FQT) {
 }
 
 llvm::Constant *CGObjCCommonMac::GCBlockLayout(CodeGen::CodeGenFunction &CGF,
-              const llvm::SmallVectorImpl<const BlockDeclRefExpr *> &DeclRefs) {
+              const llvm::SmallVectorImpl<const Expr *> &BlockLayout) {
   llvm::Constant *NullPtr = 
     llvm::Constant::getNullValue(llvm::Type::getInt8PtrTy(VMContext));
   if ((CGM.getLangOptions().getGCMode() == LangOptions::NonGC) ||
-      DeclRefs.empty())
+      BlockLayout.empty())
     return NullPtr;
   bool hasUnion = false;
   SkipIvars.clear();
@@ -1678,8 +1678,11 @@ llvm::Constant *CGObjCCommonMac::GCBlockLayout(CodeGen::CodeGenFunction &CGF,
   // __isa is the first field in block descriptor and must assume by runtime's
   // convention that it is GC'able.
   IvarsInfo.push_back(GC_IVAR(0, 1));
-  for (size_t i = 0; i < DeclRefs.size(); ++i) {
-    const BlockDeclRefExpr *BDRE = DeclRefs[i];
+  for (size_t i = 0; i < BlockLayout.size(); ++i) {
+    const Expr *E = BlockLayout[i];
+    const BlockDeclRefExpr *BDRE = dyn_cast<BlockDeclRefExpr>(E);
+    if (!BDRE)
+      continue;
     const ValueDecl *VD = BDRE->getDecl();
     CharUnits Offset = CGF.BlockDecls[VD];
     uint64_t FieldOffset = Offset.getQuantity();
