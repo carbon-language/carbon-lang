@@ -1602,6 +1602,8 @@ def note_instantiation_contexts_suppressed : Note<
 
 def err_field_instantiates_to_function : Error<
   "data member instantiated with function type %0">;
+def err_variable_instantiates_to_function : Error<
+  "%select{variable|static data member}0 instantiated with function type %1">;
 def err_nested_name_spec_non_tag : Error<
   "type %0 cannot be used prior to '::' because it has no members">;
 

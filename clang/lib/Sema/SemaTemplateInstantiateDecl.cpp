@@ -349,6 +349,12 @@ Decl *TemplateDeclInstantiator::VisitVarDecl(VarDecl *D) {
   if (!DI)
     return 0;
 
+  if (DI->getType()->isFunctionType()) {
+    SemaRef.Diag(D->getLocation(), diag::err_variable_instantiates_to_function)
+      << D->isStaticDataMember() << DI->getType();
+    return 0;
+  }
+  
   // Build the instantiated declaration
   VarDecl *Var = VarDecl::Create(SemaRef.Context, Owner,
                                  D->getLocation(), D->getIdentifier(),
