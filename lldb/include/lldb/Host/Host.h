@@ -259,9 +259,6 @@ public:
     static bool
     ResolveExecutableInBundle (FileSpec *file);
 
-    static bool
-    ResolveExecutableLocation (ConstString &directory_name, const ConstString &filename);
-    
     static uint32_t
     ListProcessesMatchingName (const char *name, StringList &matches, std::vector<lldb::pid_t> &pids);
     
