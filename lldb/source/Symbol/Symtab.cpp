@@ -155,7 +155,7 @@ Symtab::FindSymbolByID (lldb::user_id_t symbol_uid) const
     Symbol *symbol = (Symbol*)::bsearch (&symbol_uid, 
                                          &m_symbols[0], 
                                          m_symbols.size(), 
-                                         sizeof(Symbol), 
+                                         (uint8_t *)&m_symbols[1] - (uint8_t *)&m_symbols[0], 
                                          CompareSymbolID);
     return symbol;
 }

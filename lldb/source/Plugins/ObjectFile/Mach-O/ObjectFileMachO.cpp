@@ -647,12 +647,12 @@ ObjectFileMachO::ParseSymtab (bool minimize)
                 std::vector<uint32_t> N_BRAC_indexes;
                 std::vector<uint32_t> N_COMM_indexes;
                 typedef std::map <uint64_t, uint32_t> ValueToSymbolIndexMap;
-                typedef std::map <uint32_t, uint32_t> IndexToIndexMap;
+                typedef std::map <uint32_t, uint32_t> NListIndexToSymbolIndexMap;
                 ValueToSymbolIndexMap N_FUN_addr_to_sym_idx;
                 ValueToSymbolIndexMap N_STSYM_addr_to_sym_idx;
                 // Any symbols that get merged into another will get an entry
                 // in this map so we know
-                IndexToIndexMap m_index_map;
+                NListIndexToSymbolIndexMap m_nlist_idx_to_sym_idx;
                 uint32_t nlist_idx = 0;
                 Symbol *symbol_ptr = NULL;
 
@@ -854,7 +854,7 @@ ObjectFileMachO::ParseSymtab (bool minimize)
                                         full_so_path += symbol_name;
                                         sym[sym_idx - 1].GetMangled().SetValue(full_so_path.c_str(), false);
                                         add_nlist = false;
-                                        m_index_map[nlist_idx] = sym_idx - 1;
+                                        m_nlist_idx_to_sym_idx[nlist_idx] = sym_idx - 1;
                                     }
                                 }
                             }
@@ -1133,7 +1133,7 @@ ObjectFileMachO::ParseSymtab (bool minimize)
                                     if ((symbol_name_is_mangled == true && sym[sym_idx].GetMangled().GetMangledName() == sym[pos->second].GetMangled().GetMangledName()) ||
                                         (symbol_name_is_mangled == false && sym[sym_idx].GetMangled().GetDemangledName() == sym[pos->second].GetMangled().GetDemangledName()))
                                     {
-                                        m_index_map[nlist_idx] = pos->second;
+                                        m_nlist_idx_to_sym_idx[nlist_idx] = pos->second;
                                         // We just need the flags from the linker symbol, so put these flags
                                         // into the N_FUN flags to avoid duplicate symbols in the symbol table
                                         sym[pos->second].SetFlags (nlist.n_type << 16 | nlist.n_desc);
@@ -1154,7 +1154,7 @@ ObjectFileMachO::ParseSymtab (bool minimize)
                                     if ((symbol_name_is_mangled == true && sym[sym_idx].GetMangled().GetMangledName() == sym[pos->second].GetMangled().GetMangledName()) ||
                                         (symbol_name_is_mangled == false && sym[sym_idx].GetMangled().GetDemangledName() == sym[pos->second].GetMangled().GetDemangledName()))
                                     {
-                                        m_index_map[nlist_idx] = pos->second;
+                                        m_nlist_idx_to_sym_idx[nlist_idx] = pos->second;
                                         // We just need the flags from the linker symbol, so put these flags
                                         // into the N_STSYM flags to avoid duplicate symbols in the symbol table
                                         sym[pos->second].SetFlags (nlist.n_type << 16 | nlist.n_desc);
@@ -1212,6 +1212,15 @@ ObjectFileMachO::ParseSymtab (bool minimize)
                         }
                     }
                 }
+
+                // Trim our symbols down to just what we ended up with after
+                // removing any symbols.
+                if (sym_idx < num_syms)
+                {
+                    num_syms = sym_idx;
+                    sym = symtab->Resize (num_syms);
+                }
+
                 // Now synthesize indirect symbols
                 if (m_dysymtab.nindirectsyms != 0)
                 {
@@ -1219,7 +1228,7 @@ ObjectFileMachO::ParseSymtab (bool minimize)
 
                     if (indirect_symbol_indexes_sp && indirect_symbol_indexes_sp->GetByteSize())
                     {
-                        IndexToIndexMap::const_iterator end_index_pos = m_index_map.end();
+                        NListIndexToSymbolIndexMap::const_iterator end_index_pos = m_nlist_idx_to_sym_idx.end();
                         DataExtractor indirect_symbol_index_data (indirect_symbol_indexes_sp, m_data.GetByteOrder(), m_data.GetAddressByteSize());
 
                         for (uint32_t sect_idx = 1; sect_idx < m_mach_sections.size(); ++sect_idx)
@@ -1236,7 +1245,7 @@ ObjectFileMachO::ParseSymtab (bool minimize)
                                     continue;
 
                                 const uint32_t symbol_stub_index_offset = m_mach_sections[sect_idx].reserved1;
-                                uint32_t stub_sym_id = symtab_load_command.nsyms;
+                                uint32_t synthetic_stub_sym_id = symtab_load_command.nsyms;
                                 for (uint32_t stub_idx = 0; stub_idx < num_symbol_stubs; ++stub_idx)
                                 {
                                     const uint32_t symbol_stub_index = symbol_stub_index_offset + stub_idx;
@@ -1244,14 +1253,23 @@ ObjectFileMachO::ParseSymtab (bool minimize)
                                     uint32_t symbol_stub_offset = symbol_stub_index * 4;
                                     if (indirect_symbol_index_data.ValidOffsetForDataOfSize(symbol_stub_offset, 4))
                                     {
-                                        uint32_t symbol_index = indirect_symbol_index_data.GetU32 (&symbol_stub_offset);
+                                        const uint32_t stub_sym_id = indirect_symbol_index_data.GetU32 (&symbol_stub_offset);
 
-                                        IndexToIndexMap::const_iterator index_pos = m_index_map.find (symbol_index);
-                                        assert (index_pos == end_index_pos); // TODO: remove this assert if it fires, else remove m_index_map
+                                        NListIndexToSymbolIndexMap::const_iterator index_pos = m_nlist_idx_to_sym_idx.find (stub_sym_id);
+                                        Symbol *stub_symbol = NULL;
                                         if (index_pos != end_index_pos)
-                                            symbol_index = index_pos->second;
-
-                                        Symbol *stub_symbol = symtab->FindSymbolByID (symbol_index);
+                                        {
+                                            // We have a remapping from the original nlist index to
+                                            // a current symbol index, so just look this up by index
+                                            stub_symbol = symtab->SymbolAtIndex (index_pos->second);
+                                        }
+                                        else 
+                                        {
+                                            // We need to lookup a symbol using the original nlist
+                                            // symbol index since this index is coming from the 
+                                            // S_SYMBOL_STUBS
+                                            stub_symbol = symtab->FindSymbolByID (stub_sym_id);
+                                        }
 
                                         assert (stub_symbol);
                                         if (stub_symbol)
@@ -1273,11 +1291,8 @@ ObjectFileMachO::ParseSymtab (bool minimize)
                                             {
                                                 // Make a synthetic symbol to describe the trampoline stub
                                                 if (sym_idx >= num_syms)
-                                                {
-                                                    sym = symtab->Resize (num_syms + 16);
-                                                    num_syms = symtab->GetNumSymbols();
-                                                }
-                                                sym[sym_idx].SetID (stub_sym_id++);
+                                                    sym = symtab->Resize (++num_syms);
+                                                sym[sym_idx].SetID (synthetic_stub_sym_id++);
                                                 sym[sym_idx].GetMangled() = stub_symbol->GetMangled();
                                                 sym[sym_idx].SetType (eSymbolTypeTrampoline);
                                                 sym[sym_idx].SetIsSynthetic (true);
@@ -1292,9 +1307,6 @@ ObjectFileMachO::ParseSymtab (bool minimize)
                         }
                     }
                 }
-
-                if (sym_idx != symtab->GetNumSymbols())
-                    symtab->Resize (sym_idx);
 
                 return symtab->GetNumSymbols();
             }
