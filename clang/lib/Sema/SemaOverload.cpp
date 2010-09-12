@@ -25,6 +25,7 @@
 #include "clang/AST/ExprCXX.h"
 #include "clang/AST/TypeOrdering.h"
 #include "clang/Basic/PartialDiagnostic.h"
+#include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/STLExtras.h"
 #include <algorithm>
@@ -4527,6 +4528,44 @@ Sema::AddBuiltinOperatorCandidates(OverloadedOperatorKind Op,
                                           Op == OO_PipePipe),
                                          VisibleTypeConversionsQuals);
 
+  // C++ [over.built]p1:
+  //   If there is a user-written candidate with the same name and parameter
+  //   types as a built-in candidate operator function, the built-in operator 
+  //   function is hidden and is not included in the set of candidate functions.
+  //
+  // The text is actually in a note, but if we don't implement it then we end
+  // up with ambiguities when the user provides an overloaded operator for
+  // an enumeration type. Note that only enumeration types have this problem,
+  // so we track which enumeration types we've seen operators for.
+  llvm::DenseSet<std::pair<CanQualType, CanQualType> > 
+    UserDefinedBinaryOperators;
+  
+  if (CandidateTypes.enumeration_begin() != CandidateTypes.enumeration_end()) {
+    for (OverloadCandidateSet::iterator C = CandidateSet.begin(),
+                                     CEnd = CandidateSet.end();
+         C != CEnd; ++C) {
+      if (!C->Viable || !C->Function || C->Function->getNumParams() != 2)
+        continue;
+      
+      // Check if the first parameter is of enumeration type.
+      QualType FirstParamType
+        = C->Function->getParamDecl(0)->getType().getUnqualifiedType();
+      if (!FirstParamType->isEnumeralType())
+        continue;
+      
+      // Check if the second parameter is of enumeration type.
+      QualType SecondParamType
+        = C->Function->getParamDecl(1)->getType().getUnqualifiedType();
+      if (!SecondParamType->isEnumeralType())
+        continue;
+
+      // Add this operator to the set of known user-defined operators.
+      UserDefinedBinaryOperators.insert(
+                  std::make_pair(Context.getCanonicalType(FirstParamType),
+                                 Context.getCanonicalType(SecondParamType)));
+    }
+  }
+  
   bool isComparison = false;
   switch (Op) {
   case OO_None:
@@ -4779,7 +4818,10 @@ Sema::AddBuiltinOperatorCandidates(OverloadedOperatorKind Op,
            = CandidateTypes.enumeration_begin();
          Enum != CandidateTypes.enumeration_end(); ++Enum) {
       QualType ParamTypes[2] = { *Enum, *Enum };
-      AddBuiltinCandidate(Context.BoolTy, ParamTypes, Args, 2, CandidateSet);
+      CanQualType CanonType = Context.getCanonicalType(*Enum);
+      if (!UserDefinedBinaryOperators.count(
+                                          std::make_pair(CanonType, CanonType)))
+        AddBuiltinCandidate(Context.BoolTy, ParamTypes, Args, 2, CandidateSet);
     }
 
     // Fall through.
