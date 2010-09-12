@@ -351,7 +351,7 @@ public:
     // Enumeration Types
     //------------------------------------------------------------------
     void *
-    CreateEnumerationType (const Declaration &decl, const char *name);
+    CreateEnumerationType (const Declaration &decl, const char *name, void *integer_qual_type);
 
     bool
     AddEnumerationValueToEnumerationType (void * enum_qual_type,

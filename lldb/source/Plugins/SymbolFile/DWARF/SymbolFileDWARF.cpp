@@ -2866,8 +2866,10 @@ SymbolFileDWARF::ParseType(const SymbolContext& sc, const DWARFCompileUnit* dwar
                                 }
                             }
                         }
+                        
+                        void *enumerator_qual_type = type_list->GetClangASTContext().GetBuiltinTypeForDWARFEncodingAndBitSize (NULL, DW_ATE_signed, byte_size * 8);
 
-                        clang_type = type_list->GetClangASTContext().CreateEnumerationType(decl, type_name_cstr);
+                        clang_type = type_list->GetClangASTContext().CreateEnumerationType(decl, type_name_cstr, enumerator_qual_type);
                         m_die_to_decl_ctx[die] = ClangASTContext::GetDeclContextForType (clang_type);
                         type_sp.reset( new Type(die->GetOffset(), this, type_name_dbstr, byte_size, NULL, encoding_uid, Type::eIsTypeWithUID, &decl, clang_type));
 
@@ -2876,7 +2878,6 @@ SymbolFileDWARF::ParseType(const SymbolContext& sc, const DWARFCompileUnit* dwar
                         if (die->HasChildren())
                         {
                             type_list->GetClangASTContext().StartTagDeclarationDefinition (clang_type);
-                            void *enumerator_qual_type = type_list->GetClangASTContext().GetBuiltinTypeForDWARFEncodingAndBitSize (NULL, DW_ATE_signed, byte_size * 8);
                             ParseChildEnumerators(sc, type_sp, enumerator_qual_type, byte_size, dwarf_cu, die);
                             type_list->GetClangASTContext().CompleteTagDeclarationDefinition (clang_type);
                         }

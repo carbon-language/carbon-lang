@@ -2610,7 +2610,7 @@ ClangASTContext::CompleteTagDeclarationDefinition (void *clang_type)
 #pragma mark Enumeration Types
 
 void *
-ClangASTContext::CreateEnumerationType (const Declaration &decl, const char *name)
+ClangASTContext::CreateEnumerationType (const Declaration &decl, const char *name, void *integer_qual_type)
 {
     // TODO: Do something intelligent with the Declaration object passed in
     // like maybe filling in the SourceLocation with it...
@@ -2623,7 +2623,11 @@ ClangASTContext::CreateEnumerationType (const Declaration &decl, const char *nam
                                            SourceLocation(),
                                            NULL);
     if (enum_decl)
+    {
+        // TODO: check if we should be setting the promotion type too?
+        enum_decl->setIntegerType(QualType::getFromOpaquePtr (integer_qual_type));
         return ast_context->getTagDeclType(enum_decl).getAsOpaquePtr();
+    }
     return NULL;
 }
 
