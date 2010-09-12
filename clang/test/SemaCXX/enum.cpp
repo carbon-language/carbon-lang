@@ -90,3 +90,8 @@ typedef enum { }; // expected-warning{{typedef requires a name}}
 enum PR7921E {
     PR7921V = (PR7921E)(123) // expected-error {{expression is not an integer constant expression}}
 };
+
+void PR8089() {
+  enum E; // expected-error{{ISO C++ forbids forward references to 'enum' types}}
+  int a = (E)3; // expected-error{{cannot initialize a variable of type 'int' with an rvalue of type 'E'}}
+}

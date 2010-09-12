@@ -1194,7 +1194,8 @@ bool Sema::IsIntegralPromotion(Expr *From, QualType FromType, QualType ToType) {
 
   // We pre-calculate the promotion type for enum types.
   if (const EnumType *FromEnumType = FromType->getAs<EnumType>())
-    if (ToType->isIntegerType())
+    if (ToType->isIntegerType() && 
+        !RequireCompleteType(From->getLocStart(), FromType, PDiag()))
       return Context.hasSameUnqualifiedType(ToType,
                                 FromEnumType->getDecl()->getPromotionType());
 
