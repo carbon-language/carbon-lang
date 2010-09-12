@@ -3233,7 +3233,10 @@ Decl *Sema::ActOnConversionDeclarator(CXXConversionDecl *Conversion) {
     = Context.getCanonicalType(Context.getTypeDeclType(ClassDecl));
   if (const ReferenceType *ConvTypeRef = ConvType->getAs<ReferenceType>())
     ConvType = ConvTypeRef->getPointeeType();
-  if (ConvType->isRecordType()) {
+  if (Conversion->getTemplateSpecializationKind() != TSK_Undeclared &&
+      Conversion->getTemplateSpecializationKind() != TSK_ExplicitSpecialization)
+    /* Suppress disanogstics for instantiations. */;
+  else if (ConvType->isRecordType()) {
     ConvType = Context.getCanonicalType(ConvType).getUnqualifiedType();
     if (ConvType == ClassType)
       Diag(Conversion->getLocation(), diag::warn_conv_to_self_not_used)

@@ -325,3 +325,21 @@ namespace rdar8018274 {
     int i = ed;
   }
 }
+
+namespace PR8065 {
+  template <typename T> struct Iterator;
+  template <typename T> struct Container;
+
+  template<>
+  struct Iterator<int> {
+    typedef Container<int> container_type;
+  };
+
+  template <typename T>
+  struct Container {
+    typedef typename Iterator<T>::container_type X;
+    operator X(void) { return X(); }
+  };
+
+  Container<int> test;
+}
