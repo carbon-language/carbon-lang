@@ -84,3 +84,7 @@ void m1() {
   h1<int>(&M::addP);
   h1(&M::subtractP);
 } 
+
+//MSVC allows forward enum declaration
+enum ENUM; // expected-warning {{forward references to 'enum' types are a Microsoft extension}}
+ENUM *var;     

@@ -5755,9 +5755,12 @@ CreateNewDecl:
           << New;
         Diag(Def->getLocation(), diag::note_previous_definition);
       } else {
-        Diag(Loc, 
-             getLangOptions().CPlusPlus? diag::err_forward_ref_enum
-                                       : diag::ext_forward_ref_enum);
+        unsigned DiagID = diag::ext_forward_ref_enum;
+        if (getLangOptions().Microsoft)
+          DiagID = diag::ext_ms_forward_ref_enum;
+        else if (getLangOptions().CPlusPlus)
+          DiagID = diag::err_forward_ref_enum;
+        Diag(Loc, DiagID);
       }
     }
   } else {
