@@ -158,6 +158,13 @@ public:
     uint32_t
     FindLineEntryIndexByFileIndex (uint32_t start_idx, uint32_t file_idx, uint32_t line, bool exact, LineEntry* line_entry_ptr);
 
+    uint32_t
+    FindLineEntryIndexByFileIndex (uint32_t start_idx, 
+                                   const std::vector<uint32_t> &file_indexes,
+                                   uint32_t line, 
+                                   bool exact, 
+                                   LineEntry* line_entry_ptr);
+
     //------------------------------------------------------------------
     /// Get the line entry from the line table at index \a idx.
     ///

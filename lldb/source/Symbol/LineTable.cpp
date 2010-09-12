@@ -281,6 +281,64 @@ LineTable::ConvertEntryAtIndexToLineEntry (uint32_t idx, LineEntry &line_entry)
 }
 
 uint32_t
+LineTable::FindLineEntryIndexByFileIndex 
+(
+    uint32_t start_idx, 
+    const std::vector<uint32_t> &file_indexes, 
+    uint32_t line, 
+    bool exact, 
+    LineEntry* line_entry_ptr
+)
+{
+
+    const size_t count = m_entries.size();
+    std::vector<uint32_t>::const_iterator begin_pos = file_indexes.begin();
+    std::vector<uint32_t>::const_iterator end_pos = file_indexes.end();
+    size_t best_match = UINT_MAX;
+
+    for (size_t idx = start_idx; idx < count; ++idx)
+    {
+        // Skip line table rows that terminate the previous row (is_terminal_entry is non-zero)
+        if (m_entries[idx].is_terminal_entry)
+            continue;
+
+        if (find (begin_pos, end_pos, m_entries[idx].file_idx) == end_pos)
+            continue;
+
+        // Exact match always wins.  Otherwise try to find the closest line > the desired
+        // line.
+        // FIXME: Maybe want to find the line closest before and the line closest after and
+        // if they're not in the same function, don't return a match.
+
+        if (m_entries[idx].line < line)
+        {
+            continue;
+        }
+        else if (m_entries[idx].line == line)
+        {
+            if (line_entry_ptr)
+                ConvertEntryAtIndexToLineEntry (idx, *line_entry_ptr);
+            return idx;
+        }
+        else if (!exact)
+        {
+            if (best_match == UINT32_MAX)
+                best_match = idx;
+            else if (m_entries[idx].line < m_entries[best_match].line)
+                best_match = idx;
+        }
+    }
+
+    if (best_match != UINT_MAX)
+    {
+        if (line_entry_ptr)
+            ConvertEntryAtIndexToLineEntry (best_match, *line_entry_ptr);
+        return best_match;
+    }
+    return UINT_MAX;
+}
+
+uint32_t
 LineTable::FindLineEntryIndexByFileIndex (uint32_t start_idx, uint32_t file_idx, uint32_t line, bool exact, LineEntry* line_entry_ptr)
 {
     const size_t count = m_entries.size();

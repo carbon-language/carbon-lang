@@ -281,58 +281,88 @@ CompileUnit::ResolveSymbolContext
     SymbolContextList &sc_list
 )
 {
-    const uint32_t prev_size = sc_list.GetSize();
+    // First find all of the file indexes that match our "file_spec". If 
+    // "file_spec" has an empty directory, then only compare the basenames
+    // when finding file indexes
+    std::vector<uint32_t> file_indexes;
     bool file_spec_matches_cu_file_spec = FileSpec::Compare(file_spec, this, !file_spec.GetDirectory().IsEmpty()) == 0;
-    if (check_inlines || file_spec_matches_cu_file_spec)
+
+    // If we are not looking for inlined functions and our file spec doesn't
+    // match then we are done...
+    if (file_spec_matches_cu_file_spec == false && check_inlines == false)
+        return 0;
+
+    uint32_t file_idx = GetSupportFiles().FindFileIndex (1, file_spec);
+    while (file_idx != UINT32_MAX)
     {
-        SymbolContext sc(GetModule());
-        sc.comp_unit = this;
+        file_indexes.push_back (file_idx);
+        file_idx = GetSupportFiles().FindFileIndex (file_idx + 1, file_spec);
+    }
+    
+    const size_t num_file_indexes = file_indexes.size();
+    if (num_file_indexes == 0)
+        return 0;
 
-        uint32_t file_idx = UINT32_MAX;
+    const uint32_t prev_size = sc_list.GetSize();
 
-        // If we are looking for inline functions only and we don't
-        // find it in the support files, we are done.
+    SymbolContext sc(GetModule());
+    sc.comp_unit = this;
 
-        if (check_inlines)
+
+    if (line != 0)
+    {
+        LineTable *line_table = sc.comp_unit->GetLineTable();
+
+        if (line_table != NULL)
         {
-            file_idx = sc.comp_unit->GetSupportFiles().FindFileIndex (1, file_spec);
-            if (file_idx == UINT32_MAX)
-                return 0;
-        }
-
-        if (line != 0)
-        {
-            LineTable *line_table = sc.comp_unit->GetLineTable();
-
-            if (line_table != NULL)
+            uint32_t found_line;
+            uint32_t line_idx;
+            
+            if (num_file_indexes == 1)
             {
-                // We will have already looked up the file index if
-                // we are searching for inline entries.
-                if (!check_inlines)
-                    file_idx = sc.comp_unit->GetSupportFiles().FindFileIndex (1, file_spec);
+                // We only have a single support file that matches, so use
+                // the line table function that searches for a line entries
+                // that match a single support file index
+                line_idx = line_table->FindLineEntryIndexByFileIndex (0, file_indexes.front(), line, exact, &sc.line_entry);
 
-                if (file_idx != UINT32_MAX)
+                // If "exact == true", then "found_line" will be the same
+                // as "line". If "exact == false", the "found_line" will be the
+                // closest line entry with a line number greater than "line" and 
+                // we will use this for our subsequent line exact matches below.
+                found_line = sc.line_entry.line;
+
+                while (line_idx != UINT_MAX)
                 {
-                    uint32_t found_line;
+                    sc_list.Append(sc);
+                    line_idx = line_table->FindLineEntryIndexByFileIndex (line_idx + 1, file_indexes.front(), found_line, true, &sc.line_entry);
+                }
+            }
+            else
+            {
+                // We found multiple support files that match "file_spec" so use
+                // the line table function that searches for a line entries
+                // that match a multiple support file indexes.
+                line_idx = line_table->FindLineEntryIndexByFileIndex (0, file_indexes, line, exact, &sc.line_entry);
 
-                    uint32_t line_idx = line_table->FindLineEntryIndexByFileIndex (0, file_idx, line, exact, &sc.line_entry);
-                    found_line = sc.line_entry.line;
+                // If "exact == true", then "found_line" will be the same
+                // as "line". If "exact == false", the "found_line" will be the
+                // closest line entry with a line number greater than "line" and 
+                // we will use this for our subsequent line exact matches below.
+                found_line = sc.line_entry.line;
 
-                    while (line_idx != UINT_MAX)
-                    {
-                        sc_list.Append(sc);
-                        line_idx = line_table->FindLineEntryIndexByFileIndex (line_idx + 1, file_idx, found_line, true, &sc.line_entry);
-                    }
+                while (line_idx != UINT_MAX)
+                {
+                    sc_list.Append(sc);
+                    line_idx = line_table->FindLineEntryIndexByFileIndex (line_idx + 1, file_indexes, found_line, true, &sc.line_entry);
                 }
             }
         }
-        else if (file_spec_matches_cu_file_spec && !check_inlines)
-        {
-            // only append the context if we aren't looking for inline call sites
-            // by file and line and if the file spec matches that of the compile unit
-            sc_list.Append(sc);
-        }
-
+    }
+    else if (file_spec_matches_cu_file_spec && !check_inlines)
+    {
+        // only append the context if we aren't looking for inline call sites
+        // by file and line and if the file spec matches that of the compile unit
+        sc_list.Append(sc);
     }
     return sc_list.GetSize() - prev_size;
 }
