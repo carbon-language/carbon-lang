@@ -6,4 +6,9 @@ include_directories(
 add_llvm_library(LLVMPIC16AsmPrinter
   PIC16AsmPrinter.cpp
   )
+
+target_link_libraries(LLVMPIC16AsmPrinter
+  LLVMPIC16CodeGen
+  )
+
 add_dependencies(LLVMPIC16AsmPrinter PIC16CodeGenTable_gen)
