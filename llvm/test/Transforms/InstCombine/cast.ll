@@ -437,8 +437,8 @@ define i64 @test47(i8 %A) {
  ret i64 %E
 ; CHECK: @test47
 ; CHECK-NEXT:   %B = sext i8 %A to i64
-; CHECK-NEXT: %C = and i64 %B, 4294967253
-; CHECK-NEXT:  %E = or i64 %C, 42
+; CHECK-NEXT: %C = or i64 %B, 42
+; CHECK-NEXT:  %E = and i64 %C, 4294967295
 ; CHECK-NEXT:  ret i64 %E
 }
 
@@ -508,8 +508,8 @@ define i32 @test52(i64 %A) {
   ret i32 %E
 ; CHECK: @test52
 ; CHECK-NEXT: %B = trunc i64 %A to i32
-; CHECK-NEXT: %C = and i32 %B, 7224
-; CHECK-NEXT: %D = or i32 %C, 32962
+; CHECK-NEXT: %C = or i32 %B, 32962
+; CHECK-NEXT: %D = and i32 %C, 40186
 ; CHECK-NEXT: ret i32 %D
 }
 
@@ -521,8 +521,8 @@ define i64 @test53(i32 %A) {
   ret i64 %E
 ; CHECK: @test53
 ; CHECK-NEXT: %B = zext i32 %A to i64
-; CHECK-NEXT: %C = and i64 %B, 7224
-; CHECK-NEXT: %D = or i64 %C, 32962
+; CHECK-NEXT: %C = or i64 %B, 32962
+; CHECK-NEXT: %D = and i64 %C, 40186
 ; CHECK-NEXT: ret i64 %D
 }
 
@@ -534,8 +534,8 @@ define i32 @test54(i64 %A) {
   ret i32 %E
 ; CHECK: @test54
 ; CHECK-NEXT: %B = trunc i64 %A to i32
-; CHECK-NEXT: %C = and i32 %B, 7224
-; CHECK-NEXT: %D = or i32 %C, -32574
+; CHECK-NEXT: %C = or i32 %B, -32574
+; CHECK-NEXT: %D = and i32 %C, -25350
 ; CHECK-NEXT: ret i32 %D
 }
 
@@ -547,8 +547,8 @@ define i64 @test55(i32 %A) {
   ret i64 %E
 ; CHECK: @test55
 ; CHECK-NEXT: %B = zext i32 %A to i64
-; CHECK-NEXT: %C = and i64 %B, 7224
-; CHECK-NEXT: %D = or i64 %C, -32574
+; CHECK-NEXT: %C = or i64 %B, -32574
+; CHECK-NEXT: %D = and i64 %C, -25350
 ; CHECK-NEXT: ret i64 %D
 }
 
@@ -584,8 +584,8 @@ define i64 @test58(i64 %A) nounwind {
  
 ; CHECK: @test58
 ; CHECK-NEXT:   %C = lshr i64 %A, 8
-; CHECK-NEXT:   %D = and i64 %C, 16777087
-; CHECK-NEXT:   %E = or i64 %D, 128
+; CHECK-NEXT:   %D = or i64 %C, 128
+; CHECK-NEXT:   %E = and i64 %D, 16777215
 ; CHECK-NEXT:   ret i64 %E
 }
 

@@ -316,8 +316,8 @@ entry:
   %E = or i32 %D, %C
   ret i32 %E
 ; CHECK: @test30
-; CHECK: %D = and i32 %A, -58312
-; CHECK: %E = or i32 %D, 32962
+; CHECK: %B = or i32 %A, 32962
+; CHECK: %E = and i32 %B, -25350
 ; CHECK: ret i32 %E
 }
 
@@ -332,8 +332,8 @@ define i64 @test31(i64 %A) nounwind readnone ssp noredzone {
   %F = or i64 %D, %E
   ret i64 %F
 ; CHECK: @test31
-; CHECK-NEXT: %E1 = and i64 %A, 4294908984
-; CHECK-NEXT: %F = or i64 %E1, 32962
+; CHECK-NEXT: %bitfield = or i64 %A, 32962
+; CHECK-NEXT: %F = and i64 %bitfield, 4294941946
 ; CHECK-NEXT: ret i64 %F
 }
 
@@ -366,13 +366,4 @@ define i32 @test34(i32 %X, i32 %Y) {
 ; CHECK: @test34
 ; CHECK-NEXT: or i32 %X, %Y
 ; CHECK-NEXT: ret
-}
-
-define i32 @test35(i32 %a, i32 %b) {
-  %1 = or i32 %a, 1135
-  %2 = or i32 %1, %b
-  ret i32 %2
-  ; CHECK: @test35
-  ; CHECK-NEXT: or i32 %a, %b
-  ; CHECK-NEXT: or i32 %1, 1135
 }

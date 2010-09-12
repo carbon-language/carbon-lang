@@ -15,6 +15,22 @@ entry:
   ret i32 %add
 }
 
+define float @fp_ops(float %a, float %b) nounwind {
+entry:
+  %a.addr = alloca float, align 4
+  %b.addr = alloca float, align 4
+  store float %a, float* %a.addr
+  store float %b, float* %b.addr
+  %tmp = load float* %a.addr
+  %tmp1 = load float* %b.addr
+  %mul = fmul float %tmp, %tmp1
+  %tmp2 = load float* %b.addr
+  %tmp3 = load float* %a.addr
+  %mul2 = fmul float %tmp2, %tmp3
+  %add = fadd float %mul, %mul2
+  ret float %mul
+}
+
 define i32* @foo(i32* %p, i32* %q, i32** %z) nounwind {
 entry:
   %r = load i32* %p

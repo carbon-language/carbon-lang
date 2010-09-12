@@ -207,26 +207,12 @@ Instruction *InstCombiner::OptAndOp(Instruction *Op,
     }
     break;
   case Instruction::Or:
-    if (Op->hasOneUse()){
-      if (Together != OpRHS) {
-        // (X | C1) & C2 --> (X | (C1&C2)) & C2
-        Value *Or = Builder->CreateOr(X, Together);
-        Or->takeName(Op);
-        return BinaryOperator::CreateAnd(Or, AndRHS);
-      }
-      
-      ConstantInt *TogetherCI = dyn_cast<ConstantInt>(Together);
-      if (TogetherCI && !TogetherCI->isZero()){
-        // (X | C1) & C2 --> (X & (C2^(C1&C2))) | C1
-        // NOTE: This reduces the number of bits set in the & mask, which
-        // can expose opportunities for store narrowing.
-        Together = ConstantExpr::getXor(AndRHS, Together);
-        Value *And = Builder->CreateAnd(X, Together);
-        And->takeName(Op);
-        return BinaryOperator::CreateOr(And, OpRHS);
-      }
+    if (Op->hasOneUse() && Together != OpRHS) {
+      // (X | C1) & C2 --> (X | (C1&C2)) & C2
+      Value *Or = Builder->CreateOr(X, Together);
+      Or->takeName(Op);
+      return BinaryOperator::CreateAnd(Or, AndRHS);
     }
-    
     break;
   case Instruction::Add:
     if (Op->hasOneUse()) {
@@ -1955,17 +1941,6 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
                 return CastInst::Create(Op0C->getOpcode(), Res, I.getType());
         }
       }
-  }
-  
-  // Note: If we've gotten to the point of visiting the outer OR, then the
-  // inner one couldn't be simplified.  If it was a constant, then it won't
-  // be simplified by a later pass either, so we try swapping the inner/outer
-  // ORs in the hopes that we'll be able to simplify it this way.
-  // (X|C) | V --> (X|V) | C
-  if (Op0->hasOneUse() && match(Op0, m_Or(m_Value(A), m_ConstantInt(C1)))) {
-    Value *Inner = Builder->CreateOr(Op0, Op1);
-    Inner->takeName(Op0);
-    return BinaryOperator::CreateOr(Inner, C1);
   }
   
   return Changed ? &I : 0;
