@@ -343,3 +343,13 @@ namespace PR8065 {
 
   Container<int> test;
 }
+
+namespace PR8034 {
+  struct C {
+    operator int();
+
+  private:
+    template <typename T> operator T();
+  };
+  int x = C().operator int();
+}

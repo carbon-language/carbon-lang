@@ -2041,7 +2041,7 @@ IsUserDefinedConversion(Sema &S, Expr *From, QualType ToType,
   }
 
   OverloadCandidateSet::iterator Best;
-  switch (CandidateSet.BestViableFunction(S, From->getLocStart(), Best)) {
+  switch (CandidateSet.BestViableFunction(S, From->getLocStart(), Best, true)) {
   case OR_Success:
     // Record the standard conversion we used and the conversion function.
     if (CXXConstructorDecl *Constructor
@@ -2769,7 +2769,7 @@ FindConversionForRefInit(Sema &S, ImplicitConversionSequence &ICS,
   }
 
   OverloadCandidateSet::iterator Best;
-  switch (CandidateSet.BestViableFunction(S, DeclLoc, Best)) {
+  switch (CandidateSet.BestViableFunction(S, DeclLoc, Best, true)) {
   case OR_Success:
     // C++ [over.ics.ref]p1:
     //
@@ -5329,7 +5329,8 @@ bool
 isBetterOverloadCandidate(Sema &S,
                           const OverloadCandidate& Cand1,
                           const OverloadCandidate& Cand2,
-                          SourceLocation Loc) {
+                          SourceLocation Loc,
+                          bool UserDefinedConversion) {
   // Define viable functions to be better candidates than non-viable
   // functions.
   if (!Cand2.Viable)
@@ -5404,7 +5405,7 @@ isBetterOverloadCandidate(Sema &S,
   //      the type of the entity being initialized) is a better
   //      conversion sequence than the standard conversion sequence
   //      from the return type of F2 to the destination type.
-  if (Cand1.Function && Cand2.Function &&
+  if (UserDefinedConversion && Cand1.Function && Cand2.Function &&
       isa<CXXConversionDecl>(Cand1.Function) &&
       isa<CXXConversionDecl>(Cand2.Function)) {
     switch (CompareStandardConversionSequences(S,
@@ -5441,12 +5442,14 @@ isBetterOverloadCandidate(Sema &S,
 /// \returns The result of overload resolution.
 OverloadingResult
 OverloadCandidateSet::BestViableFunction(Sema &S, SourceLocation Loc,
-                                         iterator& Best) {
+                                         iterator& Best,
+                                         bool UserDefinedConversion) {
   // Find the best viable function.
   Best = end();
   for (iterator Cand = begin(); Cand != end(); ++Cand) {
     if (Cand->Viable)
-      if (Best == end() || isBetterOverloadCandidate(S, *Cand, *Best, Loc))
+      if (Best == end() || isBetterOverloadCandidate(S, *Cand, *Best, Loc, 
+                                                     UserDefinedConversion))
         Best = Cand;
   }
 
@@ -5459,7 +5462,8 @@ OverloadCandidateSet::BestViableFunction(Sema &S, SourceLocation Loc,
   for (iterator Cand = begin(); Cand != end(); ++Cand) {
     if (Cand->Viable &&
         Cand != Best &&
-        !isBetterOverloadCandidate(S, *Best, *Cand, Loc)) {
+        !isBetterOverloadCandidate(S, *Best, *Cand, Loc, 
+                                   UserDefinedConversion)) {
       Best = end();
       return OR_Ambiguous;
     }

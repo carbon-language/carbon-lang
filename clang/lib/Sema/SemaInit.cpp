@@ -2389,7 +2389,7 @@ static OverloadingResult TryRefInitWithConversionFunction(Sema &S,
   // Perform overload resolution. If it fails, return the failed result.  
   OverloadCandidateSet::iterator Best;
   if (OverloadingResult Result 
-        = CandidateSet.BestViableFunction(S, DeclLoc, Best))
+        = CandidateSet.BestViableFunction(S, DeclLoc, Best, true))
     return Result;
 
   FunctionDecl *Function = Best->Function;
@@ -2981,7 +2981,7 @@ static void TryUserDefinedConversion(Sema &S,
   // Perform overload resolution. If it fails, return the failed result.  
   OverloadCandidateSet::iterator Best;
   if (OverloadingResult Result
-        = CandidateSet.BestViableFunction(S, DeclLoc, Best)) {
+        = CandidateSet.BestViableFunction(S, DeclLoc, Best, true)) {
     Sequence.SetOverloadFailure(
                         InitializationSequence::FK_UserConversionOverloadFailed, 
                                 Result);
@@ -3276,10 +3276,10 @@ static bool shouldDestroyTemporary(const InitializedEntity &Entity) {
 /// a temporary object, or an error expression if a copy could not be
 /// created.
 static ExprResult CopyObject(Sema &S,
-                                         QualType T,
-                                         const InitializedEntity &Entity,
-                                         ExprResult CurInit,
-                                         bool IsExtraneousCopy) {
+                             QualType T,
+                             const InitializedEntity &Entity,
+                             ExprResult CurInit,
+                             bool IsExtraneousCopy) {
   // Determine which class type we're copying to.
   Expr *CurInitExpr = (Expr *)CurInit.get();
   CXXRecordDecl *Class = 0; 
@@ -4033,7 +4033,8 @@ bool InitializationSequence::Diagnose(Sema &S,
         << Args[0]->getSourceRange();
       OverloadCandidateSet::iterator Best;
       OverloadingResult Ovl
-        = FailedCandidateSet.BestViableFunction(S, Kind.getLocation(), Best);
+        = FailedCandidateSet.BestViableFunction(S, Kind.getLocation(), Best,
+                                                true);
       if (Ovl == OR_Deleted) {
         S.Diag(Best->Function->getLocation(), diag::note_unavailable_here)
           << Best->Function->isDeleted();
