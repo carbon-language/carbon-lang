@@ -349,8 +349,8 @@ class CommandObjectCommandsUnalias : public CommandObject
 public:
     CommandObjectCommandsUnalias () :
         CommandObject ("commands unalias",
-                   "Allows the user to remove/delete a user-defined command abbreviation.",
-                   "unalias <alias-name-to-be-removed>")
+                       "Allow the user to remove/delete a user-defined command abbreviation.",
+                       "unalias <alias-name-to-be-removed>")
     {
     }
 
@@ -429,6 +429,7 @@ CommandObjectMultiwordCommands::CommandObjectMultiwordCommands (CommandInterpret
 {
     LoadSubCommand (interpreter, "source",   CommandObjectSP (new CommandObjectCommandsSource ()));
     LoadSubCommand (interpreter, "alias",   CommandObjectSP (new CommandObjectCommandsAlias ()));
+    LoadSubCommand (interpreter, "unalias", CommandObjectSP (new CommandObjectCommandsUnalias ()));
 }
 
 CommandObjectMultiwordCommands::~CommandObjectMultiwordCommands ()
