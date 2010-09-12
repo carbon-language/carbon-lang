@@ -893,6 +893,7 @@ Args::ParseAliasOptions
             {
             case no_argument:
                 option_arg_vector->push_back (OptionArgPair (std::string (option_str.GetData()), "<no-argument>"));
+                result.SetStatus (eReturnStatusSuccessFinishNoResult);
                 break;
             case required_argument:
                 if (optarg != NULL)
