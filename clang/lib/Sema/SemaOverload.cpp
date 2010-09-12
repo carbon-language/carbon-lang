@@ -6430,7 +6430,9 @@ Sema::ResolveAddressOfOverloadedFunction(Expr *From, QualType ToType,
                                << Matches[0].second->getDeclName(),
                            PDiag(diag::note_ovl_candidate)
                                << (unsigned) oc_function_template);
-    assert(Result != MatchesCopy.end() && "no most-specialized template");
+    if (Result == MatchesCopy.end())
+      return 0;
+    
     MarkDeclarationReferenced(From->getLocStart(), *Result);
     FoundResult = Matches[Result - MatchesCopy.begin()].first;
     if (Complain) {
