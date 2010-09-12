@@ -213,7 +213,7 @@ public:
   bool isFloatingPointTy() const { return ID == FloatTyID || ID == DoubleTyID ||
       ID == X86_FP80TyID || ID == FP128TyID || ID == PPC_FP128TyID; }
 
-  /// isPPC_FP128Ty - Return true if this is X86 MMX.
+  /// isX86_MMXTy - Return true if this is X86 MMX.
   bool isX86_MMXTy() const { return ID == X86_MMXTyID; }
 
   /// isFPOrFPVectorTy - Return true if this is a FP type or a vector of FP.
