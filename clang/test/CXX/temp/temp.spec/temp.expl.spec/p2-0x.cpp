@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -verify %s
+// RUN: %clang_cc1 -fsyntax-only -verify -std=c++0x %s
 
 // This test creates cases where implicit instantiations of various entities
 // would cause a diagnostic, but provides expliict specializations for those
@@ -16,7 +16,7 @@ struct NonDefaultConstructible {
 
 //     -- function template
 namespace N0 {
-  template<typename T> void f0(T) { // expected-note{{here}}
+  template<typename T> void f0(T) {
     T t;
   }
 
@@ -36,7 +36,7 @@ namespace N1 {
   template<> void N0::f0(long) { } // expected-error{{not in a namespace enclosing}}
 }
 
-template<> void N0::f0(double) { } // expected-warning{{originally be declared}}
+template<> void N0::f0(double) { }
 
 struct X1 {
   template<typename T> void f(T);
@@ -48,21 +48,21 @@ struct X1 {
 namespace N0 {
   
 template<typename T>
-struct X0 { // expected-note 2{{here}}
-  static T member; // expected-note{{here}}
+struct X0 { // expected-note {{here}}
+  static T member;
   
-  void f1(T t) { // expected-note{{explicitly specialized declaration is here}}
+  void f1(T t) {
     t = 17;
   }
   
-  struct Inner : public T { }; // expected-note 3{{here}}
+  struct Inner : public T { }; // expected-note 2{{here}}
   
   template<typename U>
-  struct InnerTemplate : public T { }; // expected-note 2{{explicitly specialized}} \
+  struct InnerTemplate : public T { }; // expected-note 1{{explicitly specialized}} \
    // expected-error{{base specifier}}
   
   template<typename U>
-  void ft1(T t, U u); // expected-note{{explicitly specialized}}
+  void ft1(T t, U u);
 };
 
 }
@@ -75,11 +75,11 @@ void N0::X0<T>::ft1(T t, U u) {
 
 template<typename T> T N0::X0<T>::member;
 
-template<> struct N0::X0<void> { }; // expected-warning{{originally}}
+template<> struct N0::X0<void> { };
 N0::X0<void> test_X0;
 
 namespace N1 {
-  template<> struct N0::X0<const void> { }; // expected-error{{originally}}
+  template<> struct N0::X0<const void> { }; // expected-error{{class template specialization of 'X0' must originally be declared in namespace 'N0'}}
 }
 
 namespace N0 {
@@ -91,7 +91,7 @@ template<> struct N0::X0<volatile void> {
 };
 
 //     -- member function of a class template
-template<> void N0::X0<void*>::f1(void *) { } // expected-warning{{member function specialization}}
+template<> void N0::X0<void*>::f1(void *) { }
 
 void test_spec(N0::X0<void*> xvp, void *vp) {
   xvp.f1(vp);
@@ -124,7 +124,7 @@ NonDefaultConstructible &get_static_member() {
   return N0::X0<NonDefaultConstructible>::member;
 }
 
-template<> int N0::X0<int>::member;  // expected-warning{{originally}}
+template<> int N0::X0<int>::member;
 
 template<> float N0::X0<float>::member = 3.14f;
 
@@ -152,7 +152,7 @@ namespace N0 {
 }
 
 template<>
-struct N0::X0<long>::Inner { }; // expected-warning{{originally}}
+struct N0::X0<long>::Inner { };
 
 template<>
 struct N0::X0<float>::Inner { };
@@ -191,7 +191,7 @@ template<> template<>
 struct N0::X0<int>::InnerTemplate<long> { }; // okay
 
 template<> template<>
-struct N0::X0<int>::InnerTemplate<float> { }; // expected-warning{{class template specialization}}
+struct N0::X0<int>::InnerTemplate<float> { };
 
 namespace N1 {
   template<> template<>
@@ -223,7 +223,7 @@ template<> template<>
 void N0::X0<void*>::ft1(void *, unsigned) { } // okay
 
 template<> template<>
-void N0::X0<void*>::ft1(void *, float) { } // expected-warning{{function template specialization}}
+void N0::X0<void*>::ft1(void *, float) { }
 
 namespace N1 {
   template<> template<>

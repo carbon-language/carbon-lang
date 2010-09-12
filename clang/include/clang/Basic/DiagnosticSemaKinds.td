@@ -1459,10 +1459,18 @@ def err_template_spec_decl_out_of_scope_global : Error<
   "%select{class template|class template partial|function template|member "
   "function|static data member|member class}0 specialization of %1 must "
   "originally be declared in the global scope">;
+def ext_template_spec_decl_out_of_scope_global : ExtWarn<
+  "%select{class template|class template partial|function template|member "
+  "function|static data member|member class}0 specialization of %1 must "
+  "originally be declared in the global scope; accepted as a C++0x extension">;
 def err_template_spec_decl_out_of_scope : Error<
   "%select{class template|class template partial|function template|member "
   "function|static data member|member class}0 specialization of %1 must "
   "originally be declared in namespace %2">;
+def ext_template_spec_decl_out_of_scope : ExtWarn<
+  "%select{class template|class template partial|function template|member "
+  "function|static data member|member class}0 specialization of %1 must "
+  "originally be declared in namespace %2; accepted as a C++0x extension">;
 def err_template_spec_redecl_out_of_scope : Error<
   "%select{class template|class template partial|function template|member "
   "function|static data member|member class}0 specialization of %1 not in a "

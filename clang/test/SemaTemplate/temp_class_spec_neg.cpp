@@ -9,7 +9,7 @@ namespace N {
 }
 
 template<typename T>
-struct N::M::A<T*> { }; // expected-error{{originally}}
+struct N::M::A<T*> { }; // expected-warning{{originally}}
 
 // C++ [temp.class.spec]p9
 //   bullet 1

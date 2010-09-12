@@ -3454,13 +3454,19 @@ static bool CheckTemplateSpecializationScope(Sema &S,
     //   the specialized template.
     if (!DC->InEnclosingNamespaceSetOf(SpecializedContext) &&
         !(S.getLangOptions().CPlusPlus0x && DC->Encloses(SpecializedContext))) {
+      bool IsCPlusPlus0xExtension
+        = !S.getLangOptions().CPlusPlus0x && DC->Encloses(SpecializedContext);
       if (isa<TranslationUnitDecl>(SpecializedContext))
-        S.Diag(Loc, diag::err_template_spec_decl_out_of_scope_global)
-        << EntityKind << Specialized;
+        S.Diag(Loc, IsCPlusPlus0xExtension
+                      ? diag::ext_template_spec_decl_out_of_scope_global
+                      : diag::err_template_spec_decl_out_of_scope_global)
+          << EntityKind << Specialized;
       else if (isa<NamespaceDecl>(SpecializedContext))
-        S.Diag(Loc, diag::err_template_spec_decl_out_of_scope)
-        << EntityKind << Specialized
-        << cast<NamedDecl>(SpecializedContext);
+        S.Diag(Loc, IsCPlusPlus0xExtension
+                      ? diag::ext_template_spec_decl_out_of_scope
+                      : diag::err_template_spec_decl_out_of_scope)
+          << EntityKind << Specialized
+          << cast<NamedDecl>(SpecializedContext);
       
       S.Diag(Specialized->getLocation(), diag::note_specialized_entity);
       ComplainedAboutScope = true;
