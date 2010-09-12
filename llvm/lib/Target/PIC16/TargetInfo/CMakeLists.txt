@@ -4,4 +4,4 @@ add_llvm_library(LLVMPIC16Info
   PIC16TargetInfo.cpp
   )
 
-add_dependencies(LLVMPIC16Info PIC16Table_gen)
+add_dependencies(LLVMPIC16Info PIC16CodeGenTable_gen)
