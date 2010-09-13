@@ -252,3 +252,36 @@ entry:
   %conv6 = zext i1 %cmp5 to i32                   ; <i32> [#uses=0]
   ret void
 }
+
+%s1 = type { %s2, %s2, [6 x %s2], i32, i32, i32, [1 x i32], [0 x i8] }
+%s2 = type { i64 }
+define void @test13() nounwind ssp {
+entry:
+  %0 = getelementptr inbounds %s1* null, i64 0, i32 2, i64 0, i32 0
+  %1 = bitcast i64* %0 to i32*
+  %2 = getelementptr inbounds %s1* null, i64 0, i32 2, i64 1, i32 0
+  %.pre = load i32* %1, align 8
+  %3 = lshr i32 %.pre, 19
+  %brmerge = or i1 undef, undef
+  %4 = and i32 %3, 3
+  %5 = add nsw i32 %4, 1
+  %6 = shl i32 %5, 19
+  %7 = add i32 %6, 1572864
+  %8 = and i32 %7, 1572864
+  %9 = load i64* %2, align 8
+  %trunc156 = trunc i64 %9 to i32
+  %10 = and i32 %trunc156, -1537
+  %11 = and i32 %10, -6145
+  %12 = or i32 %11, 2048
+  %13 = and i32 %12, -24577
+  %14 = or i32 %13, 16384
+  %15 = or i32 %14, 98304
+  store i32 %15, i32* undef, align 8
+  %16 = and i32 %15, -1572865
+  %17 = or i32 %16, %8
+  store i32 %17, i32* undef, align 8
+  %18 = and i32 %17, -449
+  %19 = or i32 %18, 64
+  store i32 %19, i32* undef, align 8
+  unreachable
+}
