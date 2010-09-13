@@ -1110,12 +1110,11 @@ void ASTStmtReader::VisitCXXNewExpr(CXXNewExpr *E) {
 
 void ASTStmtReader::VisitCXXDeleteExpr(CXXDeleteExpr *E) {
   VisitExpr(E);
-  E->setGlobalDelete(Record[Idx++]);
-  E->setArrayForm(Record[Idx++]);
-  E->setOperatorDelete(
-                     cast_or_null<FunctionDecl>(Reader.GetDecl(Record[Idx++])));
-  E->setArgument(Reader.ReadSubExpr());
-  E->setStartLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+  E->GlobalDelete = Record[Idx++];
+  E->ArrayForm = Record[Idx++];
+  E->OperatorDelete = cast_or_null<FunctionDecl>(Reader.GetDecl(Record[Idx++]));
+  E->Argument = Reader.ReadSubExpr();
+  E->Loc = Reader.ReadSourceLocation(Record, Idx);
 }
 
 void ASTStmtReader::VisitCXXPseudoDestructorExpr(CXXPseudoDestructorExpr *E) {

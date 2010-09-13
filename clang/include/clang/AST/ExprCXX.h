@@ -1124,21 +1124,15 @@ public:
 
   bool isGlobalDelete() const { return GlobalDelete; }
   bool isArrayForm() const { return ArrayForm; }
-  
-  void setGlobalDelete(bool V) { GlobalDelete = V; }
-  void setArrayForm(bool V) { ArrayForm = V; }
 
   FunctionDecl *getOperatorDelete() const { return OperatorDelete; }
-  void setOperatorDelete(FunctionDecl *D) { OperatorDelete = D; }
 
   Expr *getArgument() { return cast<Expr>(Argument); }
   const Expr *getArgument() const { return cast<Expr>(Argument); }
-  void setArgument(Expr *E) { Argument = E; }
 
   virtual SourceRange getSourceRange() const {
     return SourceRange(Loc, Argument->getLocEnd());
   }
-  void setStartLoc(SourceLocation L) { Loc = L; } 
 
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == CXXDeleteExprClass;
@@ -1148,6 +1142,8 @@ public:
   // Iterators
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
+
+  friend class ASTStmtReader;
 };
 
 /// \brief Structure used to store the type being destroyed by a 
