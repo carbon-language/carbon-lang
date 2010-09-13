@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -Wreturn-type %s -emit-llvm -o /dev/null
+// RUN: %clang_cc1 -Wreturn-type %s -emit-llvm-only
 
 void test1(int x) {
 switch (x) {
