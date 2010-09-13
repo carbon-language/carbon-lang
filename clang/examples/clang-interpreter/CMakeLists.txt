@@ -1,24 +1,34 @@
 set(LLVM_NO_RTTI 1)
 
+set(LLVM_USED_LIBS
+    clangFrontend
+    clangSerialization
+    clangDriver
+    clangCodeGen
+    clangSema
+    clangChecker
+    clangIndex
+    clangAnalysis
+    clangRewrite
+    clangAST
+    clangParse
+    clangLex
+    clangBasic
+    )
+
+set(LLVM_LINK_COMPONENTS
+    jit
+    interpreter
+    nativecodegen
+    asmparser
+    bitreader
+    bitwriter
+    codegen
+    ipo
+    selectiondag
+  )
+
 add_clang_executable(clang-interpreter
   main.cpp
   )
-
-add_llvm_link_components(clang-interpreter jit interpreter nativecodegen)
-target_link_libraries(clang-interpreter
-  clangFrontend
-  clangSerialization
-  clangDriver
-  clangCodeGen
-  clangSema
-  clangChecker
-  clangIndex
-  clangAnalysis
-  clangRewrite
-  clangAST
-  clangParse
-  clangLex
-  clangBasic
-  )
-
 add_dependencies(clang-interpreter clang-headers)

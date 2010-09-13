@@ -1,5 +1,21 @@
 set(LLVM_NO_RTTI 1)
 
+set(LLVM_USED_LIBS clangBasic clangLex clangAST)
+
+set( LLVM_USED_LIBS
+  clangSerialization
+  clangFrontend
+  clangParse
+  clangSema
+  clangChecker
+  clangAnalysis
+  clangIndex
+  clangRewrite
+  clangAST
+  clangLex
+  clangBasic
+  )
+
 add_clang_library(clangIndex
   ASTLocation.cpp
   Analyzer.cpp
@@ -14,23 +30,5 @@ add_clang_library(clangIndex
   SelectorMap.cpp
   )
 
-target_link_libraries(clangIndex
-  clangSerialization
-  clangFrontend
-  clangParse
-  clangSema
-  clangChecker
-  clangAnalysis
-  clangIndex
-  clangRewrite
-  clangAST
-  clangLex
-  clangBasic
-  )
-
-add_dependencies(clangIndex
-  ClangAttrClasses
-  ClangAttrList
-  ClangDeclNodes
-  ClangStmtNodes
-  )
+add_dependencies(clangIndex ClangAttrClasses ClangAttrList
+                 ClangDeclNodes ClangStmtNodes)

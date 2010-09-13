@@ -1,5 +1,7 @@
 set(LLVM_NO_RTTI 1)
 
+set(LLVM_USED_LIBS clangBasic clangAST clangParse)
+
 add_clang_library(clangDriver
   Action.cpp
   Arg.cpp
@@ -21,16 +23,5 @@ add_clang_library(clangDriver
   Types.cpp
   )
 
-target_link_libraries(clangDriver
-  clangBasic
-  clangAST
-  clangParse
-  )
-
-add_dependencies(clangDriver
-  ClangAttrList
-  ClangDiagnosticDriver
-  ClangDriverOptions
-  ClangCC1Options
-  ClangCC1AsOptions
-  )
+add_dependencies(clangDriver ClangAttrList ClangDiagnosticDriver
+                 ClangDriverOptions ClangCC1Options ClangCC1AsOptions)
