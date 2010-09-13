@@ -215,6 +215,13 @@ struct HasCopy {
   HasCopy(HasCopy& cp);
 };
 
+struct HasTemplateCons {
+  HasVirt Annoying;
+
+  template <typename T>
+  HasTemplateCons(const T&);
+};
+
 void has_trivial_default_constructor() {
   int t01[T(__has_trivial_constructor(Int))];
   int t02[T(__has_trivial_constructor(IntAr))];
@@ -236,6 +243,7 @@ void has_trivial_default_constructor() {
   int t18[F(__has_trivial_constructor(VirtAr))];
   int t19[F(__has_trivial_constructor(void))];
   int t20[F(__has_trivial_constructor(cvoid))];
+  int t21[F(__has_trivial_constructor(HasTemplateCons))];
 }
 
 void has_trivial_copy_constructor() {
@@ -259,6 +267,7 @@ void has_trivial_copy_constructor() {
   int t18[F(__has_trivial_copy(VirtAr))];
   int t19[F(__has_trivial_copy(void))];
   int t20[F(__has_trivial_copy(cvoid))];
+  int t21[F(__has_trivial_copy(HasTemplateCons))];
 }
 
 void has_trivial_copy_assignment() {
@@ -367,6 +376,7 @@ void has_nothrow_copy() {
   int t22[F(__has_nothrow_copy(void))];
   int t23[F(__has_nothrow_copy(cvoid))];
   int t24[T(__has_nothrow_copy(HasVirtDest))];
+  int t25[T(__has_nothrow_copy(HasTemplateCons))];
 }
 
 void has_nothrow_constructor() {
@@ -394,6 +404,7 @@ void has_nothrow_constructor() {
   int t21[F(__has_nothrow_constructor(void))];
   int t22[F(__has_nothrow_constructor(cvoid))];
   int t23[T(__has_nothrow_constructor(HasVirtDest))];
+  int t24[F(__has_nothrow_constructor(HasTemplateCons))];
 }
 
 void has_virtual_destructor() {
