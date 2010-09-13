@@ -55,7 +55,7 @@ class SetValuesTestCase(TestBase):
         # main.c:15
         # Check that 'frame variable' displays the correct data type and value.
         self.expect("frame variable", VARIABLES_DISPLAYED_CORRECTLY,
-            startstr = "i = (char) 'a'")
+            startstr = "(char) i = 'a'")
 
         # TODO:
         # Now set variable 'i' and check that it is correctly displayed.
@@ -65,7 +65,7 @@ class SetValuesTestCase(TestBase):
         # main.c:36
         # Check that 'frame variable' displays the correct data type and value.
         self.expect("frame variable", VARIABLES_DISPLAYED_CORRECTLY,
-            startstr = "i = (short unsigned int) 0x0021")
+            startstr = "(short unsigned int) i = 0x0021")
 
         # TODO:
         # Now set variable 'i' and check that it is correctly displayed.
@@ -75,7 +75,7 @@ class SetValuesTestCase(TestBase):
         # main.c:57
         # Check that 'frame variable' displays the correct data type and value.
         self.expect("frame variable", VARIABLES_DISPLAYED_CORRECTLY,
-            startstr = "i = (long int) 33")
+            startstr = "(long int) i = 33")
 
         # TODO:
         # Now set variable 'i' and check that it is correctly displayed.
@@ -85,7 +85,7 @@ class SetValuesTestCase(TestBase):
         # main.c:78
         # Check that 'frame variable' displays the correct data type and value.
         self.expect("frame variable", VARIABLES_DISPLAYED_CORRECTLY,
-            startstr = "i = (double) 3.14159")
+            startstr = "(double) i = 3.14159")
 
         # TODO:
         # Now set variable 'i' and check that it is correctly displayed.
@@ -94,8 +94,10 @@ class SetValuesTestCase(TestBase):
 
         # main.c:85
         # Check that 'frame variable' displays the correct data type and value.
+        # rdar://problem/8422727
+        # set_values test directory: 'frame variable' shows only (long double) i =
         self.expect("frame variable", VARIABLES_DISPLAYED_CORRECTLY,
-            startstr = "i = (long double) ")
+            startstr = "(long double) i = ")
 
         # TODO:
         # Now set variable 'i' and check that it is correctly displayed.
