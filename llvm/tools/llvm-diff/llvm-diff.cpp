@@ -17,13 +17,12 @@
 #include "llvm/LLVMContext.h"
 #include "llvm/Module.h"
 #include "llvm/Type.h"
-#include "llvm/Assembly/Parser.h"
-#include "llvm/Bitcode/ReaderWriter.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/IRReader.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/SourceMgr.h"
@@ -34,32 +33,14 @@
 
 using namespace llvm;
 
-/// Reads a module from a file.  If the filename ends in .ll, it is
-/// interpreted as an assembly file;  otherwise, it is interpreted as
-/// bitcode.  On error, messages are written to stderr and null is
-/// returned.
+/// Reads a module from a file.  On error, messages are written to stderr
+/// and null is returned.
 static Module *ReadModule(LLVMContext &Context, StringRef Name) {
-  // LLVM assembly path.
-  if (Name.endswith(".ll")) {
-    SMDiagnostic Diag;
-    Module *M = ParseAssemblyFile(Name, Diag, Context);
-    if (M) return M;
-
+  SMDiagnostic Diag;
+  Module *M = ParseIRFile(Name, Diag, Context);
+  if (!M)
     Diag.Print("llvmdiff", errs());
-    return 0;
-  }
-
-  // Bitcode path.
-  MemoryBuffer *Buffer = MemoryBuffer::getFile(Name);
-
-  // ParseBitcodeFile takes ownership of the buffer if it succeeds.
-  std::string Error;
-  Module *M = ParseBitcodeFile(Buffer, Context, &Error);
-  if (M) return M;
-
-  errs() << "error parsing " << Name << ": " << Error;
-  delete Buffer;
-  return 0;
+  return M;
 }
 
 namespace {
