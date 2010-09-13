@@ -20,7 +20,7 @@ my $executable_file = $ARGV[1];
 my $input_filename = basename $testcase_file;
 my $output_dir = dirname $executable_file;
 
-my $debugger_script_file = "$output_dir/$input_filename.gdb.scirpt";
+my $debugger_script_file = "$output_dir/$input_filename.debugger.script";
 my $output_file = "$output_dir/$input_filename.gdb.output";
 
 # Extract debugger commands from testcase. They are marked with DEBUGGER: 
