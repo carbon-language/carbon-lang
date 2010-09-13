@@ -366,6 +366,7 @@ void has_nothrow_copy() {
   int t21[T(__has_nothrow_copy(HasMultipleNoThrowCopy))];
   int t22[F(__has_nothrow_copy(void))];
   int t23[F(__has_nothrow_copy(cvoid))];
+  int t24[T(__has_nothrow_copy(HasVirtDest))];
 }
 
 void has_nothrow_constructor() {

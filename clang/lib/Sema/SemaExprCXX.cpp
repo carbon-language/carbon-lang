@@ -2148,7 +2148,7 @@ static bool EvaluateUnaryTypeTrait(Sema &Self, UnaryTypeTrait UTT, QualType T) {
       DeclarationName ConstructorName
           = C.DeclarationNames.getCXXConstructorName(C.getCanonicalType(T));
       DeclContext::lookup_const_iterator Con, ConEnd;
-      for (llvm::tie(Con, ConEnd) = RD->lookup(ConstructorName);
+      for (llvm::tie(Con, ConEnd) = Self.LookupConstructors(RD);
            Con != ConEnd; ++Con) {
         CXXConstructorDecl *Constructor = cast<CXXConstructorDecl>(*Con);
         if (Constructor->isCopyConstructor(FoundTQs)) {
