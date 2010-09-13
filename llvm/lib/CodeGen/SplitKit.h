@@ -227,10 +227,10 @@ class SplitEditor {
   /// dupli_ - Created as a copy of curli_, ranges are carved out as new
   /// intervals get added through openIntv / closeIntv. This is used to avoid
   /// editing curli_.
-  LiveInterval *dupli_;
+  LiveIntervalMap dupli_;
 
   /// Currently open LiveInterval.
-  LiveInterval *openli_;
+  LiveIntervalMap openli_;
 
   /// createInterval - Create a new virtual register and LiveInterval with same
   /// register class and spill slot as curli.
@@ -303,7 +303,9 @@ public:
 
   /// rewrite - after all the new live ranges have been created, rewrite
   /// instructions using curli to use the new intervals.
-  void rewrite();
+  /// Return true if curli has been completely replaced, false if curli is still
+  /// intact, and needs to be spilled or split further.
+  bool rewrite();
 
   // ===--- High level methods ---===
 
