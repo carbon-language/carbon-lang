@@ -4322,6 +4322,28 @@ namespace {
   };
 }
 
+static CXXConstructorDecl *getDefaultConstructorUnsafe(Sema &Self,
+                                                       CXXRecordDecl *D) {
+  ASTContext &Context = Self.Context;
+  QualType ClassType = Context.getTypeDeclType(D);
+  DeclarationName ConstructorName
+    = Context.DeclarationNames.getCXXConstructorName(
+                      Context.getCanonicalType(ClassType.getUnqualifiedType()));
+
+  DeclContext::lookup_const_iterator Con, ConEnd;
+  for (llvm::tie(Con, ConEnd) = D->lookup(ConstructorName);
+       Con != ConEnd; ++Con) {
+    // FIXME: In C++0x, a constructor template can be a default constructor.
+    if (isa<FunctionTemplateDecl>(*Con))
+      continue;
+
+    CXXConstructorDecl *Constructor = cast<CXXConstructorDecl>(*Con);
+    if (Constructor->isDefaultConstructor())
+      return Constructor;
+  }
+  return 0;
+}
+
 CXXConstructorDecl *Sema::DeclareImplicitDefaultConstructor(
                                                      CXXRecordDecl *ClassDecl) {
   // C++ [class.ctor]p5:
@@ -4349,8 +4371,8 @@ CXXConstructorDecl *Sema::DeclareImplicitDefaultConstructor(
       CXXRecordDecl *BaseClassDecl = cast<CXXRecordDecl>(BaseType->getDecl());
       if (!BaseClassDecl->hasDeclaredDefaultConstructor())
         ExceptSpec.CalledDecl(DeclareImplicitDefaultConstructor(BaseClassDecl));
-      else if (CXXConstructorDecl *Constructor 
-                                       = BaseClassDecl->getDefaultConstructor())
+      else if (CXXConstructorDecl *Constructor
+                            = getDefaultConstructorUnsafe(*this, BaseClassDecl))
         ExceptSpec.CalledDecl(Constructor);
     }
   }
@@ -4364,7 +4386,7 @@ CXXConstructorDecl *Sema::DeclareImplicitDefaultConstructor(
       if (!BaseClassDecl->hasDeclaredDefaultConstructor())
         ExceptSpec.CalledDecl(DeclareImplicitDefaultConstructor(BaseClassDecl));
       else if (CXXConstructorDecl *Constructor
-                                       = BaseClassDecl->getDefaultConstructor())
+                            = getDefaultConstructorUnsafe(*this, BaseClassDecl))
         ExceptSpec.CalledDecl(Constructor);
     }
   }
@@ -4380,7 +4402,7 @@ CXXConstructorDecl *Sema::DeclareImplicitDefaultConstructor(
         ExceptSpec.CalledDecl(
                             DeclareImplicitDefaultConstructor(FieldClassDecl));
       else if (CXXConstructorDecl *Constructor
-                                      = FieldClassDecl->getDefaultConstructor())
+                           = getDefaultConstructorUnsafe(*this, FieldClassDecl))
         ExceptSpec.CalledDecl(Constructor);
     }
   }

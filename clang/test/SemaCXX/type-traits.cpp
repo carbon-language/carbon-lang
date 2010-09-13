@@ -393,6 +393,7 @@ void has_nothrow_constructor() {
   int t20[F(__has_nothrow_constructor(HasNoThrowConstructorWithArgs))];
   int t21[F(__has_nothrow_constructor(void))];
   int t22[F(__has_nothrow_constructor(cvoid))];
+  int t23[T(__has_nothrow_constructor(HasVirtDest))];
 }
 
 void has_virtual_destructor() {

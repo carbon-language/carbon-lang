@@ -2145,8 +2145,6 @@ static bool EvaluateUnaryTypeTrait(Sema &Self, UnaryTypeTrait UTT, QualType T) {
       bool FoundConstructor = false;
       bool AllNoThrow = true;
       unsigned FoundTQs;
-      DeclarationName ConstructorName
-          = C.DeclarationNames.getCXXConstructorName(C.getCanonicalType(T));
       DeclContext::lookup_const_iterator Con, ConEnd;
       for (llvm::tie(Con, ConEnd) = Self.LookupConstructors(RD);
            Con != ConEnd; ++Con) {
@@ -2155,7 +2153,9 @@ static bool EvaluateUnaryTypeTrait(Sema &Self, UnaryTypeTrait UTT, QualType T) {
           FoundConstructor = true;
           const FunctionProtoType *CPT
               = Constructor->getType()->getAs<FunctionProtoType>();
-          if (!CPT->hasEmptyExceptionSpec()) {
+          // TODO: check whether evaluating default arguments can throw.
+          // For now, we'll be conservative and assume that they can throw.
+          if (!CPT->hasEmptyExceptionSpec() || CPT->getNumArgs() > 1) {
             AllNoThrow = false;
             break;
           }
@@ -2178,13 +2178,17 @@ static bool EvaluateUnaryTypeTrait(Sema &Self, UnaryTypeTrait UTT, QualType T) {
       if (RD->hasTrivialConstructor())
         return true;
 
-      if (CXXConstructorDecl *Constructor = RD->getDefaultConstructor()) {
-        const FunctionProtoType *CPT
-            = Constructor->getType()->getAs<FunctionProtoType>();
-        // TODO: check whether evaluating default arguments can throw.
-        // For now, we'll be conservative and assume that they can throw.
-        if (CPT->hasEmptyExceptionSpec() && CPT->getNumArgs() == 0)
-          return true;
+      DeclContext::lookup_const_iterator Con, ConEnd;
+      for (llvm::tie(Con, ConEnd) = Self.LookupConstructors(RD);
+           Con != ConEnd; ++Con) {
+        CXXConstructorDecl *Constructor = cast<CXXConstructorDecl>(*Con);
+        if (Constructor->isDefaultConstructor()) {
+          const FunctionProtoType *CPT
+              = Constructor->getType()->getAs<FunctionProtoType>();
+          // TODO: check whether evaluating default arguments can throw.
+          // For now, we'll be conservative and assume that they can throw.
+          return CPT->hasEmptyExceptionSpec() && CPT->getNumArgs() == 0;
+        }
       }
     }
     return false;

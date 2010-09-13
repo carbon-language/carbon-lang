@@ -859,9 +859,6 @@ public:
   
   /// \brief Set the kind of specialization or template instantiation this is.
   void setTemplateSpecializationKind(TemplateSpecializationKind TSK);
-  
-  /// getDefaultConstructor - Returns the default constructor for this class
-  CXXConstructorDecl *getDefaultConstructor();
 
   /// getDestructor - Returns the destructor decl for this class.
   CXXDestructorDecl *getDestructor() const;
