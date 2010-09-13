@@ -460,22 +460,22 @@ class TestBase(unittest2.TestCase):
             # End of while loop.
 
 
-    def buildDefault(self):
+    def buildDefault(self, compiler=None):
         """Platform specific way to build the default binaries."""
         module = __import__(sys.platform)
-        if not module.buildDefault():
+        if not module.buildDefault(compiler):
             raise Exception("Don't know how to build default binary")
 
-    def buildDsym(self):
+    def buildDsym(self, compiler=None):
         """Platform specific way to build binaries with dsym info."""
         module = __import__(sys.platform)
-        if not module.buildDsym():
+        if not module.buildDsym(compiler):
             raise Exception("Don't know how to build binary with dsym")
 
-    def buildDwarf(self):
+    def buildDwarf(self, compiler=None):
         """Platform specific way to build binaries with dwarf maps."""
         module = __import__(sys.platform)
-        if not module.buildDwarf():
+        if not module.buildDwarf(compiler):
             raise Exception("Don't know how to build binary with dwarf")
 
     def DebugSBValue(self, frame, val):
