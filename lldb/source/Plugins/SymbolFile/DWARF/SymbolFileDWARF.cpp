@@ -3064,6 +3064,9 @@ SymbolFileDWARF::ParseType(const SymbolContext& sc, const DWARFCompileUnit* dwar
                         {
                             std::vector<uint64_t> element_orders;
                             ParseChildArrayInfo(sc, dwarf_cu, die, first_index, element_orders, byte_stride, bit_stride);
+                            // We have an array that claims to have no members, lets give it at least one member...
+                            if (element_orders.empty())
+                                element_orders.push_back (1);
                             if (byte_stride == 0 && bit_stride == 0)
                                 byte_stride = element_type->GetByteSize();
                             void *array_element_type = element_type->GetOpaqueClangQualType();
@@ -3357,6 +3360,7 @@ SymbolFileDWARF::ParseVariableDIE
     if (num_attributes > 0)
     {
         const char *name = NULL;
+        const char *mangled = NULL;
         Declaration decl;
         uint32_t i;
         TypeSP type_sp;
@@ -3378,6 +3382,7 @@ SymbolFileDWARF::ParseVariableDIE
                 case DW_AT_decl_line:   decl.SetLine(form_value.Unsigned()); break;
                 case DW_AT_decl_column: decl.SetColumn(form_value.Unsigned()); break;
                 case DW_AT_name:        name = form_value.AsCString(&get_debug_str_data()); break;
+                case DW_AT_MIPS_linkage_name: mangled = form_value.AsCString(&get_debug_str_data()); break;
                 case DW_AT_type:        var_type = GetUniquedTypeForDIEOffset(form_value.Reference(dwarf_cu), type_sp, 0, 0, false); break;
                 case DW_AT_external:    is_external = form_value.Unsigned() != 0; break;
                 case DW_AT_location:
@@ -3427,7 +3432,17 @@ SymbolFileDWARF::ParseVariableDIE
         {
             assert(var_type != DIE_IS_BEING_PARSED);
 
-            ConstString var_name(name);
+            ConstString var_name;
+            if (mangled)
+            {
+                Mangled mangled_var_name (mangled, true);
+                var_name = mangled_var_name.GetDemangledName();
+            }
+            
+            if (!var_name && name)
+            {
+                var_name.SetCString(name);
+            }
 
             ValueType scope = eValueTypeInvalid;
 
