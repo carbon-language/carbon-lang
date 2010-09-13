@@ -11,6 +11,4 @@ set_property(
   PROPERTY COMPILE_FLAGS "/Od"
   )
 endif()
-
 add_dependencies(LLVMX86Disassembler X86CodeGenTable_gen)
-target_link_libraries(LLVMX86Disassembler LLVMMC LLVMX86Info)

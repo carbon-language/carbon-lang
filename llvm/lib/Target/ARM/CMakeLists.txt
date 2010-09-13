@@ -46,13 +46,4 @@ add_llvm_target(ARMCodeGen
   Thumb2SizeReduction.cpp
   )
 
-target_link_libraries (LLVMARMCodeGen
-  LLVMARMInfo
-  LLVMAnalysis
-  LLVMAsmPrinter
-  LLVMCodeGen
-  LLVMCore
-  LLVMMC
-  LLVMSelectionDAG
-  LLVMTarget
-  )
+target_link_libraries (LLVMARMCodeGen LLVMARMAsmPrinter LLVMSelectionDAG)

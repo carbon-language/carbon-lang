@@ -24,11 +24,4 @@ add_llvm_library(LLVMipo
   StructRetPromotion.cpp
   )
 
-target_link_libraries(LLVMipo
-  LLVMAnalysis
-  LLVMCore
-  LLVMScalarOpts
-  LLVMTarget
-  LLVMTransformUtils
-  LLVMipa
-  )
+target_link_libraries (LLVMipo LLVMScalarOpts LLVMInstCombine)

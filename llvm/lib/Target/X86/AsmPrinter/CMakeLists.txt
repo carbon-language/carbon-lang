@@ -5,6 +5,4 @@ add_llvm_library(LLVMX86AsmPrinter
   X86IntelInstPrinter.cpp
   X86InstComments.cpp
   )
-
 add_dependencies(LLVMX86AsmPrinter X86CodeGenTable_gen)
-target_link_libraries(LLVMX86AsmPrinter LLVMMC)

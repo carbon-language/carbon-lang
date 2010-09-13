@@ -5,9 +5,3 @@ add_llvm_library(LLVMARMAsmParser
   ARMAsmParser.cpp
   )
 
-target_link_libraries(LLVMARMAsmParser
-  LLVMARMInfo
-  LLVMMC
-  LLVMMCParser
-  LLVMTarget
-  )

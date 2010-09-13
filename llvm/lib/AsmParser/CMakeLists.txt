@@ -4,5 +4,3 @@ add_llvm_library(LLVMAsmParser
   LLParser.cpp
   Parser.cpp
   )
-
-target_link_libraries(LLVMAsmParser LLVMCore)

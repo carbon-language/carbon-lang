@@ -4,5 +4,3 @@ add_llvm_library(LLVMipa
   FindUsedTypes.cpp
   GlobalsModRef.cpp
   )
-
-target_link_libraries(LLVMipa LLVMAnalysis LLVMCore)

@@ -110,6 +110,10 @@ add_custom_target(llvm-config.target ALL
 
 add_dependencies(llvm-config.target ${llvm_lib_targets})
 
+# Make sure that llvm-config builds before the llvm tools, so we have
+# LibDeps.txt and can use it for updating the hard-coded library
+# dependencies on cmake/modules/LLVMLibDeps.cmake when the tools'
+# build fail due to outdated dependencies:
 set(LLVM_COMMON_DEPENDS ${LLVM_COMMON_DEPENDS} llvm-config.target)
 
 install(FILES ${LLVM_CONFIG}
@@ -117,5 +121,26 @@ install(FILES ${LLVM_CONFIG}
   WORLD_READ WORLD_EXECUTE
   DESTINATION bin)
 
+
+# Regeneration of library dependencies.
+
+# See the comments at the end of cmake/modules/LLVMConfig.cmake for
+# notes and guidelines.
+
+set(LLVMLibDeps ${LLVM_MAIN_SRC_DIR}/cmake/modules/LLVMLibDeps.cmake)
+set(LLVMLibDeps_TMP ${CMAKE_CURRENT_BINARY_DIR}/LLVMLibDeps.cmake.tmp)
+
+add_custom_command(OUTPUT ${LLVMLibDeps_TMP}
+  COMMAND sed -e s'@\\.a@@g' -e s'@\\.so@@g' -e 's@libLLVM@LLVM@g' -e 's@: @ @' -e 's@\\\(.*\\\)@set\(MSVC_LIB_DEPS_\\1\)@' ${FINAL_LIBDEPS} > ${LLVMLibDeps_TMP}
+  COMMAND ${CMAKE_COMMAND} -E copy_if_different ${LLVMLibDeps_TMP} ${LLVMLibDeps}
+  DEPENDS ${FINAL_LIBDEPS}
+  COMMENT "Updating cmake library dependencies file ${LLVMLibDeps}"
+  )
+
+if( LLVM_TARGETS_TO_BUILD STREQUAL LLVM_ALL_TARGETS )
+  add_custom_target(llvmlibdeps.target ALL DEPENDS ${LLVMLibDeps_TMP})
+  add_dependencies(llvmlibdeps.target llvm-config.target)
+  set(LLVM_COMMON_DEPENDS ${LLVM_COMMON_DEPENDS} llvmlibdeps.target)
+endif()
 
 set(LLVM_COMMON_DEPENDS ${LLVM_COMMON_DEPENDS} PARENT_SCOPE)

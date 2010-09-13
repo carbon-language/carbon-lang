@@ -50,4 +50,4 @@ add_llvm_library(LLVMAnalysis
   ValueTracking.cpp
   )
 
-target_link_libraries(LLVMAnalysis LLVMCore LLVMTarget)
+target_link_libraries (LLVMAnalysis LLVMSupport)

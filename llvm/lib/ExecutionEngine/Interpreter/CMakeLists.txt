@@ -3,10 +3,3 @@ add_llvm_library(LLVMInterpreter
   ExternalFunctions.cpp
   Interpreter.cpp
   )
-
-target_link_libraries(LLVMInterpreter
-  LLVMCodeGen
-  LLVMCore
-  LLVMExecutionEngine
-  LLVMTarget
-  )

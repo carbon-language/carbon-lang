@@ -22,10 +22,4 @@ add_llvm_library(LLVMSelectionDAG
   TargetSelectionDAGInfo.cpp
   )
 
-target_link_libraries(LLVMSelectionDAG
-  LLVMAnalysis
-  LLVMCodeGen
-  LLVMCore
-  LLVMMC
-  LLVMTarget
-  )
+target_link_libraries (LLVMSelectionDAG LLVMAnalysis LLVMAsmPrinter LLVMCodeGen)

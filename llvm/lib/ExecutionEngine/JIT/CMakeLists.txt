@@ -11,11 +11,3 @@ add_llvm_library(LLVMJIT
   OProfileJITEventListener.cpp
   TargetSelect.cpp
   )
-
-target_link_libraries(LLVMJIT
-  LLVMCodeGen
-  LLVMCore
-  LLVMExecutionEngine
-  LLVMMC
-  LLVMTarget
-  )
