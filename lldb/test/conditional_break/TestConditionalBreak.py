@@ -73,8 +73,8 @@ class ConditionalBreakTestCase(TestBase):
                     self.assertTrue(line == 27, "Immediate caller a() at main.c:27")
                     self.expect("thread backtrace", "Call site at a()",
                         substrs = ["main.c:27"])
-                    self.expect("frame variable", "Passed in arg val of (int) 3",
-                        startstr = "val = (int) 3")
+                    self.expect("frame variable", "Passed in arg (int) val of 3",
+                        startstr = "(int) val = 3")
                     break
 
             # This doesn't work?
