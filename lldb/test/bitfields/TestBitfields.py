@@ -10,7 +10,6 @@ class BitfieldsTestCase(TestBase):
     mydir = "bitfields"
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
-    @unittest2.expectedFailure
     def test_with_dsym_and_run_command(self):
         """Test 'frame variable ...' on a variable with bitfields."""
         self.buildDsym()
@@ -22,7 +21,6 @@ class BitfieldsTestCase(TestBase):
         self.buildDsym()
         self.bitfields_variable_python()
 
-    @unittest2.expectedFailure
     def test_with_dwarf_and_run_command(self):
         """Test 'frame variable ...' on a variable with bitfields."""
         self.buildDwarf()
