@@ -1192,10 +1192,9 @@ public:
     /// Member name lookup, which finds the names of
     /// class/struct/union members.
     LookupMemberName,
-    // Look up of an operator name (e.g., operator+) for use with
-    // operator overloading. This lookup is similar to ordinary name
-    // lookup, but will ignore any declarations that are class
-    // members.
+    /// Look up of an operator name (e.g., operator+) for use with
+    /// operator overloading. This lookup is similar to ordinary name
+    /// lookup, but will ignore any declarations that are class members.
     LookupOperatorName,
     /// Look up of a name that precedes the '::' scope resolution
     /// operator in C++. This lookup completely ignores operator, object,

@@ -278,8 +278,7 @@ public:
     return 0;
   }
   Value *VisitUnaryTypeTraitExpr(const UnaryTypeTraitExpr *E) {
-    return llvm::ConstantInt::get(Builder.getInt1Ty(),
-                                  E->EvaluateTrait(CGF.getContext()));
+    return llvm::ConstantInt::get(Builder.getInt1Ty(), E->getValue());
   }
 
   Value *VisitCXXPseudoDestructorExpr(const CXXPseudoDestructorExpr *E) {

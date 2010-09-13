@@ -1247,6 +1247,7 @@ void ASTStmtReader::VisitUnresolvedLookupExpr(UnresolvedLookupExpr *E) {
 void ASTStmtReader::VisitUnaryTypeTraitExpr(UnaryTypeTraitExpr *E) {
   VisitExpr(E);
   E->UTT = (UnaryTypeTrait)Record[Idx++];
+  E->Value = (bool)Record[Idx++];
   SourceRange Range = Reader.ReadSourceRange(Record, Idx);
   E->Loc = Range.getBegin();
   E->RParen = Range.getEnd();

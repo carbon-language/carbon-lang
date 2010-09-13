@@ -1371,8 +1371,10 @@ public:
 /// __is_pod(int) == true
 /// __is_enum(std::string) == false
 class UnaryTypeTraitExpr : public Expr {
-  /// UTT - The trait.
-  UnaryTypeTrait UTT;
+  /// UTT - The trait. A UnaryTypeTrait enum in MSVC compat unsigned.
+  unsigned UTT : 31;
+  /// The value of the type trait. Unspecified if dependent.
+  bool Value : 1;
 
   /// Loc - The location of the type trait keyword.
   SourceLocation Loc;
@@ -1380,29 +1382,30 @@ class UnaryTypeTraitExpr : public Expr {
   /// RParen - The location of the closing paren.
   SourceLocation RParen;
 
+  /// The type being queried.
   TypeSourceInfo *QueriedType;
 
 public:
   UnaryTypeTraitExpr(SourceLocation loc, UnaryTypeTrait utt, 
-                     TypeSourceInfo *queried,
+                     TypeSourceInfo *queried, bool value,
                      SourceLocation rparen, QualType ty)
     : Expr(UnaryTypeTraitExprClass, ty, false, 
            queried->getType()->isDependentType()),
-      UTT(utt), Loc(loc), RParen(rparen), QueriedType(queried) { }
+      UTT(utt), Value(value), Loc(loc), RParen(rparen), QueriedType(queried) { }
 
   explicit UnaryTypeTraitExpr(EmptyShell Empty)
-    : Expr(UnaryTypeTraitExprClass, Empty), UTT((UnaryTypeTrait)0), 
+    : Expr(UnaryTypeTraitExprClass, Empty), UTT(0), Value(false),
       QueriedType() { }
 
   virtual SourceRange getSourceRange() const { return SourceRange(Loc, RParen);}
 
-  UnaryTypeTrait getTrait() const { return UTT; }
+  UnaryTypeTrait getTrait() const { return static_cast<UnaryTypeTrait>(UTT); }
 
   QualType getQueriedType() const { return QueriedType->getType(); }
 
   TypeSourceInfo *getQueriedTypeSourceInfo() const { return QueriedType; }
   
-  bool EvaluateTrait(ASTContext&) const;
+  bool getValue() const { return Value; }
 
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == UnaryTypeTraitExprClass;
