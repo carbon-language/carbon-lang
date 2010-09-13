@@ -100,8 +100,7 @@ public:
 
   // buildCFG - Used by external clients to construct the CFG.
   CFG* buildCFG(const Decl *D, Stmt *Statement, ASTContext *C,
-                bool pruneTriviallyFalseEdges, bool AddEHEdges,
-                bool AddScopes);
+                bool pruneTriviallyFalseEdges, bool AddEHEdges);
 
 private:
   // Visitors to walk an AST and construct the CFG.
@@ -148,25 +147,6 @@ private:
   CFGBlock* NYS() {
     badCFG = true;
     return Block;
-  }
-
-  CFGBlock *StartScope(Stmt *S, CFGBlock *B) {
-    if (!AddScopes)
-      return B;
-
-    if (B == 0)
-      B = createBlock();
-    B->StartScope(S, cfg->getBumpVectorContext());
-    return B;
-  }
-
-  void EndScope(Stmt *S) {
-    if (!AddScopes)
-      return;
-
-    if (Block == 0)
-      Block = createBlock();
-    Block->EndScope(S, cfg->getBumpVectorContext());
   }
 
   void autoCreateBlock() { if (!Block) Block = createBlock(); }
@@ -225,9 +205,6 @@ private:
 
   // True iff EH edges on CallExprs should be added to the CFG.
   bool AddEHEdges;
-
-  // True iff scope start and scope end notes should be added to the CFG.
-  bool AddScopes;
 };
 
 // FIXME: Add support for dependent-sized array types in C++?
@@ -251,7 +228,7 @@ static VariableArrayType* FindVA(Type* t) {
 ///  NULL.
 CFG* CFGBuilder::buildCFG(const Decl *D, Stmt* Statement, ASTContext* C,
                           bool pruneTriviallyFalseEdges,
-                          bool addehedges, bool AddScopes) {
+                          bool addehedges) {
 
   AddEHEdges = addehedges;
   PruneTriviallyFalseEdges = pruneTriviallyFalseEdges;
@@ -261,7 +238,6 @@ CFG* CFGBuilder::buildCFG(const Decl *D, Stmt* Statement, ASTContext* C,
   if (!Statement)
     return NULL;
 
-  this->AddScopes = AddScopes;
   badCFG = false;
 
   // Create an empty block that will serve as the exit block for the CFG.  Since
@@ -690,8 +666,6 @@ CFGBlock *CFGBuilder::VisitChooseExpr(ChooseExpr *C,
 
 
 CFGBlock* CFGBuilder::VisitCompoundStmt(CompoundStmt* C) {
-  EndScope(C);
-
   CFGBlock* LastBlock = Block;
 
   for (CompoundStmt::reverse_body_iterator I=C->body_rbegin(), E=C->body_rend();
@@ -704,8 +678,6 @@ CFGBlock* CFGBuilder::VisitCompoundStmt(CompoundStmt* C) {
     if (badCFG)
       return NULL;
   }
-
-  LastBlock = StartScope(C, LastBlock);
 
   return LastBlock;
 }
@@ -1835,10 +1807,10 @@ CFGBlock* CFG::createBlock() {
 ///  CFG is returned to the caller.
 CFG* CFG::buildCFG(const Decl *D, Stmt* Statement, ASTContext *C,
                    bool PruneTriviallyFalse,
-                   bool AddEHEdges, bool AddScopes) {
+                   bool AddEHEdges) {
   CFGBuilder Builder;
   return Builder.buildCFG(D, Statement, C, PruneTriviallyFalse,
-                          AddEHEdges, AddScopes);
+                          AddEHEdges);
 }
 
 //===----------------------------------------------------------------------===//
@@ -2121,16 +2093,6 @@ public:
 
 static void print_stmt(llvm::raw_ostream &OS, StmtPrinterHelper* Helper,
                        const CFGElement &E) {
-
-  if (E.asStartScope()) {
-    OS << "start scope\n";
-    return;
-  }
-  if (E.asEndScope()) {
-    OS << "end scope\n";
-    return;
-  }
-
   Stmt *S = E;
   
   if (Helper) {

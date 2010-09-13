@@ -294,12 +294,6 @@ public:
   
   void appendStmt(Stmt* Statement, BumpVectorContext &C, bool asLValue) {
       Stmts.push_back(CFGElement(Statement, asLValue), C);
-  }  
-  void StartScope(Stmt* S, BumpVectorContext &C) {
-    Stmts.push_back(CFGElement(S, CFGElement::StartScope), C);
-  }
-  void EndScope(Stmt* S, BumpVectorContext &C) {
-    Stmts.push_back(CFGElement(S, CFGElement::EndScope), C);
   }
 };
 
@@ -321,9 +315,7 @@ public:
   ///   constructed CFG belongs to the caller.
   static CFG* buildCFG(const Decl *D, Stmt* AST, ASTContext *C,
                        bool pruneTriviallyFalseEdges = true,
-                       bool AddEHEdges = false,
-                       bool AddScopes = false /* NOT FULLY IMPLEMENTED.
-                                                 NOT READY FOR GENERAL USE. */);
+                       bool AddEHEdges = false);
 
   /// createBlock - Create a new block in the CFG.  The CFG owns the block;
   ///  the caller should not directly free it.
