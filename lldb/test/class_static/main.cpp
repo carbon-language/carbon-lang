@@ -36,9 +36,16 @@ PointType A::g_points[] =
     {   11,   22 }
 };
 
-int
-main ()
+static PointType g_points[] = 
 {
-    printf ("A::g_points[2].x = %i\n", A::g_points[2].x);
+    {    3,    4 },
+    {   33,   44 }
+};
+
+int
+main (int argc, char const *argv[])
+{
+    printf ("A::g_points[1].x = %i\n", A::g_points[1].x);
+    printf ("::g_points[1].x = %i\n", g_points[1].x);
     return 0;
 }
