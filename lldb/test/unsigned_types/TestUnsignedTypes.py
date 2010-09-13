@@ -44,12 +44,12 @@ class UnsignedTypesTestCase(TestBase):
 
         # Test that unsigned types display correctly.
         self.expect("frame variable -a", VARIABLES_DISPLAYED_CORRECTLY,
-            startstr = "the_unsigned_char = (unsigned char) 'c'",
-            substrs = ["the_unsigned_short = (short unsigned int) 0x0063",
-                       "the_unsigned_int = (unsigned int) 0x00000063",
-                       "the_unsigned_long = (long unsigned int) 0x0000000000000063",
-                       "the_unsigned_long_long = (long long unsigned int) 0x0000000000000063",
-                       "the_uint32 = (uint32_t) 0x00000063"])
+            startstr = "(unsigned char) the_unsigned_char = 'c'",
+            substrs = ["(short unsigned int) the_unsigned_short = 0x0063",
+                       "(unsigned int) the_unsigned_int = 0x00000063",
+                       "(long unsigned int) the_unsigned_long = 0x0000000000000063",
+                       "(long long unsigned int) the_unsigned_long_long = 0x0000000000000063",
+                       "(uint32_t) the_uint32 = 0x00000063"])
 
 
 if __name__ == '__main__':
