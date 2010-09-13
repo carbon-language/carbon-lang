@@ -257,6 +257,12 @@ void ASTDeclWriter::VisitFunctionDecl(FunctionDecl *D) {
     }
     
     Writer.AddSourceLocation(FTSInfo->getPointOfInstantiation(), Record);
+
+    if (D->isCanonicalDecl()) {
+      // Write the template that contains the specializations set. We will
+      // add a FunctionTemplateSpecializationInfo to it when reading.
+      Writer.AddDeclRef(FTSInfo->getTemplate()->getCanonicalDecl(), Record);
+    }
     break;
   }
   case FunctionDecl::TK_DependentFunctionTemplateSpecialization: {

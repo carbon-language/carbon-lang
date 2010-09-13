@@ -294,6 +294,10 @@ void ASTDeclReader::VisitFunctionDecl(FunctionDecl *FD) {
     FD->TemplateOrSpecialization = FTInfo;
 
     if (FD->isCanonicalDecl()) { // if canonical add to template's set.
+      // The template that contains the specializations set. It's not safe to
+      // use getCanonicalDecl on Template since it may still be initializing.
+      FunctionTemplateDecl *CanonTemplate
+        = cast<FunctionTemplateDecl>(Reader.GetDecl(Record[Idx++]));
       // Get the InsertPos by FindNodeOrInsertPos() instead of calling
       // InsertNode(FTInfo) directly to avoid the getASTContext() call in
       // FunctionTemplateSpecializationInfo's Profile().
@@ -303,9 +307,9 @@ void ASTDeclReader::VisitFunctionDecl(FunctionDecl *FD) {
       FunctionTemplateSpecializationInfo::Profile(ID, TemplArgs.data(),
                                                   TemplArgs.size(), C);
       void *InsertPos = 0;
-      Template->getSpecializations().FindNodeOrInsertPos(ID, InsertPos);
+      CanonTemplate->getSpecializations().FindNodeOrInsertPos(ID, InsertPos);
       assert(InsertPos && "Another specialization already inserted!");
-      Template->getSpecializations().InsertNode(FTInfo, InsertPos);
+      CanonTemplate->getSpecializations().InsertNode(FTInfo, InsertPos);
     }
     break;
   }
@@ -1041,7 +1045,7 @@ void ASTDeclReader::VisitFunctionTemplateDecl(FunctionTemplateDecl *D) {
 
     // Read the function specialization declarations.
     // FunctionTemplateDecl's FunctionTemplateSpecializationInfos are filled
-    // through the specialized FunctionDecl's setFunctionTemplateSpecialization.
+    // when reading the specialized FunctionDecl.
     unsigned NumSpecs = Record[Idx++];
     while (NumSpecs--)
       Reader.GetDecl(Record[Idx++]);

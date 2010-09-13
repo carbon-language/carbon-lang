@@ -145,3 +145,8 @@ struct TS5 {
   template <typename T>
   TS5(T y) : s(y) {}
 };
+
+// PR 8134
+template<class T> void f_PR8134(T);
+template<class T> void f_PR8134(T);
+void g_PR8134() { f_PR8134(0); f_PR8134('x'); }
