@@ -736,7 +736,6 @@ bool CodeGenPrepare::OptimizeMemoryInst(Instruction *MemoryInst, Value *Addr,
 bool CodeGenPrepare::OptimizeInlineAsmInst(Instruction *I, CallSite CS,
                                            DenseMap<Value*,Value*> &SunkAddrs) {
   bool MadeChange = false;
-  InlineAsm *IA = cast<InlineAsm>(CS.getCalledValue());
 
   std::vector<TargetLowering::AsmOperandInfo> TargetConstraints = TLI->ParseConstraints(CS);
   for (unsigned i = 0, e = TargetConstraints.size(); i != e; ++i) {
