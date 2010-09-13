@@ -123,6 +123,11 @@ void notifyBlock(id dependentBlock) {
  wrapperBlock();
 }
 
+void test_empty_block() {
+ void (^wrapperBlock)() = ^() {
+    };
+ wrapperBlock();
+}
 
 // CHECK-LP64: L_OBJC_CLASS_NAME_:
 // CHECK-LP64-NEXT: .asciz      "\0011\024"
@@ -141,3 +146,6 @@ void notifyBlock(id dependentBlock) {
 
 // CHECK-LP64: L_OBJC_CLASS_NAME_16:
 // CHECK-LP64-NEXT: .asciz   "\0013"
+
+// CHECK-LP64: L_OBJC_CLASS_NAME_20:
+// CHECK-LP64-NEXT: .asciz   "\001"

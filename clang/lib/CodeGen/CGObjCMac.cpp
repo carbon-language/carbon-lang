@@ -1666,8 +1666,7 @@ llvm::Constant *CGObjCCommonMac::GCBlockLayout(CodeGen::CodeGenFunction &CGF,
               const llvm::SmallVectorImpl<const Expr *> &BlockLayout) {
   llvm::Constant *NullPtr = 
     llvm::Constant::getNullValue(llvm::Type::getInt8PtrTy(VMContext));
-  if ((CGM.getLangOptions().getGCMode() == LangOptions::NonGC) ||
-      BlockLayout.empty())
+  if (CGM.getLangOptions().getGCMode() == LangOptions::NonGC)
     return NullPtr;
   bool hasUnion = false;
   SkipIvars.clear();
