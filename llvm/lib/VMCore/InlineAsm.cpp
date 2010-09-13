@@ -53,6 +53,24 @@ void InlineAsm::destroyConstant() {
 const FunctionType *InlineAsm::getFunctionType() const {
   return cast<FunctionType>(getType()->getElementType());
 }
+    
+///Default constructor.
+InlineAsm::ConstraintInfo::ConstraintInfo() :
+  isMultipleAlternative(false),
+  Type(isInput), isEarlyClobber(false),
+  MatchingInput(-1), isCommutative(false),
+  isIndirect(false), currentAlternativeIndex(0) {
+}
+
+/// Copy constructor.
+InlineAsm::ConstraintInfo::ConstraintInfo(const ConstraintInfo &other) :
+  isMultipleAlternative(other.isMultipleAlternative),
+  Type(other.Type), isEarlyClobber(other.isEarlyClobber),
+  MatchingInput(other.MatchingInput), isCommutative(other.isCommutative),
+  isIndirect(other.isIndirect), Codes(other.Codes),
+  multipleAlternatives(other.multipleAlternatives),
+  currentAlternativeIndex(other.currentAlternativeIndex) {
+}
 
 /// Parse - Analyze the specified string (e.g. "==&{eax}") and fill in the
 /// fields in this structure.  If the constraint string is not understood,
@@ -60,13 +78,22 @@ const FunctionType *InlineAsm::getFunctionType() const {
 bool InlineAsm::ConstraintInfo::Parse(StringRef Str,
                      std::vector<InlineAsm::ConstraintInfo> &ConstraintsSoFar) {
   StringRef::iterator I = Str.begin(), E = Str.end();
+  unsigned multipleAlternativeCount = Str.count('|') + 1;
+  unsigned multipleAlternativeIndex = 0;
+  std::vector<std::string> *pCodes = &Codes;
   
   // Initialize
+  isMultipleAlternative = (multipleAlternativeCount > 1 ? true : false);
+  if (isMultipleAlternative) {
+    multipleAlternatives.resize(multipleAlternativeCount);
+    pCodes = &multipleAlternatives[0].Codes;
+  }
   Type = isInput;
   isEarlyClobber = false;
   MatchingInput = -1;
   isCommutative = false;
   isIndirect = false;
+  currentAlternativeIndex = 0;
   
   // Parse prefixes.
   if (*I == '~') {
@@ -120,15 +147,15 @@ bool InlineAsm::ConstraintInfo::Parse(StringRef Str,
       // Find the end of the register name.
       StringRef::iterator ConstraintEnd = std::find(I+1, E, '}');
       if (ConstraintEnd == E) return true;  // "{foo"
-      Codes.push_back(std::string(I, ConstraintEnd+1));
+      pCodes->push_back(std::string(I, ConstraintEnd+1));
       I = ConstraintEnd+1;
     } else if (isdigit(*I)) {     // Matching Constraint
       // Maximal munch numbers.
       StringRef::iterator NumStart = I;
       while (I != E && isdigit(*I))
         ++I;
-      Codes.push_back(std::string(NumStart, I));
-      unsigned N = atoi(Codes.back().c_str());
+      pCodes->push_back(std::string(NumStart, I));
+      unsigned N = atoi(pCodes->back().c_str());
       // Check that this is a valid matching constraint!
       if (N >= ConstraintsSoFar.size() || ConstraintsSoFar[N].Type != isOutput||
           Type != isInput)
@@ -136,19 +163,43 @@ bool InlineAsm::ConstraintInfo::Parse(StringRef Str,
       
       // If Operand N already has a matching input, reject this.  An output
       // can't be constrained to the same value as multiple inputs.
-      if (ConstraintsSoFar[N].hasMatchingInput())
-        return true;
-      
-      // Note that operand #n has a matching input.
-      ConstraintsSoFar[N].MatchingInput = ConstraintsSoFar.size();
+      if (isMultipleAlternative) {
+        InlineAsm::SubConstraintInfo &scInfo =
+          ConstraintsSoFar[N].multipleAlternatives[multipleAlternativeIndex];
+        if (scInfo.MatchingInput != -1)
+          return true;
+        // Note that operand #n has a matching input.
+        scInfo.MatchingInput = ConstraintsSoFar.size();
+      } else {
+        if (ConstraintsSoFar[N].hasMatchingInput())
+          return true;
+        // Note that operand #n has a matching input.
+        ConstraintsSoFar[N].MatchingInput = ConstraintsSoFar.size();
+        }
+    } else if (*I == '|') {
+      multipleAlternativeIndex++;
+      pCodes = &multipleAlternatives[multipleAlternativeIndex].Codes;
+      ++I;
     } else {
       // Single letter constraint.
-      Codes.push_back(std::string(I, I+1));
+      pCodes->push_back(std::string(I, I+1));
       ++I;
     }
   }
 
   return false;
+}
+
+/// selectAlternative - Point this constraint to the alternative constraint
+/// indicated by the index.
+void InlineAsm::ConstraintInfo::selectAlternative(unsigned index) {
+  if (index < multipleAlternatives.size()) {
+    currentAlternativeIndex = index;
+    InlineAsm::SubConstraintInfo &scInfo =
+      multipleAlternatives[currentAlternativeIndex];
+    MatchingInput = scInfo.MatchingInput;
+    Codes = scInfo.Codes;
+  }
 }
 
 std::vector<InlineAsm::ConstraintInfo>
@@ -182,7 +233,6 @@ InlineAsm::ParseConstraints(StringRef Constraints) {
   
   return Result;
 }
-
 
 /// Verify - Verify that the specified constraint string is reasonable for the
 /// specified function type, and otherwise validate the constraint string.

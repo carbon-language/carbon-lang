@@ -45,6 +45,7 @@ namespace llvm {
   class Function;
   class FastISel;
   class FunctionLoweringInfo;
+  class ImmutableCallSite;
   class MachineBasicBlock;
   class MachineFunction;
   class MachineFrameInfo;
@@ -1356,12 +1357,42 @@ public:
     /// returns the output operand it matches.
     unsigned getMatchedOperand() const;
 
+    /// Copy constructor for copying from an AsmOperandInfo.
+    AsmOperandInfo(const AsmOperandInfo &info)
+      : InlineAsm::ConstraintInfo(info),
+        ConstraintCode(info.ConstraintCode),
+        ConstraintType(info.ConstraintType),
+        CallOperandVal(info.CallOperandVal),
+        ConstraintVT(info.ConstraintVT) {
+    }
+
+    /// Copy constructor for copying from a ConstraintInfo.
     AsmOperandInfo(const InlineAsm::ConstraintInfo &info)
       : InlineAsm::ConstraintInfo(info),
         ConstraintType(TargetLowering::C_Unknown),
         CallOperandVal(0), ConstraintVT(MVT::Other) {
     }
   };
+  
+  /// ParseConstraints - Split up the constraint string from the inline
+  /// assembly value into the specific constraints and their prefixes,
+  /// and also tie in the associated operand values.
+  /// If this returns an empty vector, and if the constraint string itself
+  /// isn't empty, there was an error parsing.
+  virtual std::vector<AsmOperandInfo> ParseConstraints(
+    ImmutableCallSite CS) const;
+  
+  /// Examine constraint type and operand type and determine a weight value,
+  /// where: -1 = invalid match, and 0 = so-so match to 5 = good match.
+  /// The operand object must already have been set up with the operand type.
+  virtual int getMultipleConstraintMatchWeight(
+      AsmOperandInfo &info, int maIndex) const;
+  
+  /// Examine constraint string and operand type and determine a weight value,
+  /// where: -1 = invalid match, and 0 = so-so match to 3 = good match.
+  /// The operand object must already have been set up with the operand type.
+  virtual int getSingleConstraintMatchWeight(
+      AsmOperandInfo &info, const char *constraint) const;
 
   /// ComputeConstraintToUse - Determines the constraint code and constraint
   /// type to use for the specific AsmOperandInfo, setting

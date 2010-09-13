@@ -87,6 +87,19 @@ public:
     isClobber           // '~x'
   };
   
+  struct SubConstraintInfo {
+    /// MatchingInput - If this is not -1, this is an output constraint where an
+    /// input constraint is required to match it (e.g. "0").  The value is the
+    /// constraint number that matches this one (for example, if this is
+    /// constraint #0 and constraint #4 has the value "0", this will be 4).
+    signed char MatchingInput;
+    /// Code - The constraint code, either the register name (in braces) or the
+    /// constraint letter/number.
+    std::vector<std::string> Codes;
+    /// Default constructor.
+    SubConstraintInfo() : MatchingInput(-1) {}
+  };
+  
   struct ConstraintInfo {
     /// Type - The basic type of the constraint: input/output/clobber
     ///
@@ -120,11 +133,31 @@ public:
     /// constraint letter/number.
     std::vector<std::string> Codes;
     
+    /// isMultipleAlternative - '|': has multiple-alternative constraints.
+    bool isMultipleAlternative;
+    
+    /// multipleAlternatives - If there are multiple alternative constraints,
+    /// this array will contain them.  Otherwise it will be empty.
+    std::vector<SubConstraintInfo> multipleAlternatives;
+    
+    /// The currently selected alternative constraint index.
+    unsigned currentAlternativeIndex;
+    
+    ///Default constructor.
+    ConstraintInfo();
+    
+    /// Copy constructor.
+    ConstraintInfo(const ConstraintInfo &other);
+    
     /// Parse - Analyze the specified string (e.g. "=*&{eax}") and fill in the
     /// fields in this structure.  If the constraint string is not understood,
     /// return true, otherwise return false.
     bool Parse(StringRef Str, 
                std::vector<InlineAsm::ConstraintInfo> &ConstraintsSoFar);
+               
+    /// selectAlternative - Point this constraint to the alternative constraint
+    /// indicated by the index.
+    void selectAlternative(unsigned index);
   };
   
   /// ParseConstraints - Split up the constraint string into the specific

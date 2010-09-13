@@ -11193,6 +11193,34 @@ X86TargetLowering::getConstraintType(const std::string &Constraint) const {
   return TargetLowering::getConstraintType(Constraint);
 }
 
+/// Examine constraint type and operand type and determine a weight value,
+/// where: -1 = invalid match, and 0 = so-so match to 3 = good match.
+/// This object must already have been set up with the operand type
+/// and the current alternative constraint selected.
+int X86TargetLowering::getSingleConstraintMatchWeight(
+    AsmOperandInfo &info, const char *constraint) const {
+  int weight = -1;
+  Value *CallOperandVal = info.CallOperandVal;
+    // If we don't have a value, we can't do a match,
+    // but allow it at the lowest weight.
+  if (CallOperandVal == NULL)
+    return 0;
+  // Look at the constraint type.
+  switch (*constraint) {
+  default:
+    return TargetLowering::getSingleConstraintMatchWeight(info, constraint);
+    break;
+  case 'I':
+    if (ConstantInt *C = dyn_cast<ConstantInt>(info.CallOperandVal)) {
+      if (C->getZExtValue() <= 31)
+        weight = 3;
+    }
+    break;
+  // etc.
+  }
+  return weight;
+}
+
 /// LowerXConstraint - try to replace an X constraint, which matches anything,
 /// with another that has more specific requirements based on the type of the
 /// corresponding operand.

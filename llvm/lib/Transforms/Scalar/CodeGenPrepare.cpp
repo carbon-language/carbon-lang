@@ -738,33 +738,10 @@ bool CodeGenPrepare::OptimizeInlineAsmInst(Instruction *I, CallSite CS,
   bool MadeChange = false;
   InlineAsm *IA = cast<InlineAsm>(CS.getCalledValue());
 
-  // Do a prepass over the constraints, canonicalizing them, and building up the
-  // ConstraintOperands list.
-  std::vector<InlineAsm::ConstraintInfo>
-    ConstraintInfos = IA->ParseConstraints();
-
-  /// ConstraintOperands - Information about all of the constraints.
-  std::vector<TargetLowering::AsmOperandInfo> ConstraintOperands;
-  unsigned ArgNo = 0;   // ArgNo - The argument of the CallInst.
-  for (unsigned i = 0, e = ConstraintInfos.size(); i != e; ++i) {
-    ConstraintOperands.
-      push_back(TargetLowering::AsmOperandInfo(ConstraintInfos[i]));
-    TargetLowering::AsmOperandInfo &OpInfo = ConstraintOperands.back();
-
-    // Compute the value type for each operand.
-    switch (OpInfo.Type) {
-    case InlineAsm::isOutput:
-      if (OpInfo.isIndirect)
-        OpInfo.CallOperandVal = CS.getArgument(ArgNo++);
-      break;
-    case InlineAsm::isInput:
-      OpInfo.CallOperandVal = CS.getArgument(ArgNo++);
-      break;
-    case InlineAsm::isClobber:
-      // Nothing to do.
-      break;
-    }
-
+  std::vector<TargetLowering::AsmOperandInfo> TargetConstraints = TLI->ParseConstraints(CS);
+  for (unsigned i = 0, e = TargetConstraints.size(); i != e; ++i) {
+    TargetLowering::AsmOperandInfo &OpInfo = TargetConstraints[i];
+    
     // Compute the constraint code and ConstraintType to use.
     TLI->ComputeConstraintToUse(OpInfo, SDValue());
 

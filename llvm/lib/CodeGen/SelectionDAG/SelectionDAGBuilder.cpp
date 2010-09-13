@@ -5008,7 +5008,7 @@ public:
   /// contains the set of register corresponding to the operand.
   RegsForValue AssignedRegs;
 
-  explicit SDISelAsmOperandInfo(const InlineAsm::ConstraintInfo &info)
+  explicit SDISelAsmOperandInfo(const TargetLowering::AsmOperandInfo &info)
     : TargetLowering::AsmOperandInfo(info), CallOperand(0,0) {
   }
 
@@ -5069,7 +5069,7 @@ public:
 
     return TLI.getValueType(OpTy, true);
   }
-
+  
 private:
   /// MarkRegAndAliases - Mark the specified register and all aliases in the
   /// specified set.
@@ -5324,28 +5324,15 @@ void SelectionDAGBuilder::visitInlineAsm(ImmutableCallSite CS) {
 
   std::set<unsigned> OutputRegs, InputRegs;
 
-  // Do a prepass over the constraints, canonicalizing them, and building up the
-  // ConstraintOperands list.
-  std::vector<InlineAsm::ConstraintInfo>
-    ConstraintInfos = IA->ParseConstraints();
-
-  bool hasMemory = hasInlineAsmMemConstraint(ConstraintInfos, TLI);
-
-  SDValue Chain, Flag;
-
-  // We won't need to flush pending loads if this asm doesn't touch
-  // memory and is nonvolatile.
-  if (hasMemory || IA->hasSideEffects())
-    Chain = getRoot();
-  else
-    Chain = DAG.getRoot();
-
+  std::vector<TargetLowering::AsmOperandInfo> TargetConstraints = TLI.ParseConstraints(CS);
+  bool hasMemory = false;
+  
   unsigned ArgNo = 0;   // ArgNo - The argument of the CallInst.
   unsigned ResNo = 0;   // ResNo - The result number of the next output.
-  for (unsigned i = 0, e = ConstraintInfos.size(); i != e; ++i) {
-    ConstraintOperands.push_back(SDISelAsmOperandInfo(ConstraintInfos[i]));
+  for (unsigned i = 0, e = TargetConstraints.size(); i != e; ++i) {
+    ConstraintOperands.push_back(SDISelAsmOperandInfo(TargetConstraints[i]));
     SDISelAsmOperandInfo &OpInfo = ConstraintOperands.back();
-
+    
     EVT OpVT = MVT::Other;
 
     // Compute the value type for each operand.
@@ -5393,32 +5380,34 @@ void SelectionDAGBuilder::visitInlineAsm(ImmutableCallSite CS) {
     }
 
     OpInfo.ConstraintVT = OpVT;
+    
+    // Indirect operand accesses access memory.
+    if (OpInfo.isIndirect)
+      hasMemory = true;
+    else {
+      for (unsigned j = 0, ee = OpInfo.Codes.size(); j != ee; ++j) {
+        TargetLowering::ConstraintType CType = TLI.getConstraintType(OpInfo.Codes[j]);
+        if (CType == TargetLowering::C_Memory) {
+          hasMemory = true;
+          break;
+        }
+      }
+    }
   }
+
+  SDValue Chain, Flag;
+
+  // We won't need to flush pending loads if this asm doesn't touch
+  // memory and is nonvolatile.
+  if (hasMemory || IA->hasSideEffects())
+    Chain = getRoot();
+  else
+    Chain = DAG.getRoot();
 
   // Second pass over the constraints: compute which constraint option to use
   // and assign registers to constraints that want a specific physreg.
-  for (unsigned i = 0, e = ConstraintInfos.size(); i != e; ++i) {
+  for (unsigned i = 0, e = ConstraintOperands.size(); i != e; ++i) {
     SDISelAsmOperandInfo &OpInfo = ConstraintOperands[i];
-
-    // If this is an output operand with a matching input operand, look up the
-    // matching input. If their types mismatch, e.g. one is an integer, the
-    // other is floating point, or their sizes are different, flag it as an
-    // error.
-    if (OpInfo.hasMatchingInput()) {
-      SDISelAsmOperandInfo &Input = ConstraintOperands[OpInfo.MatchingInput];
-      
-      if (OpInfo.ConstraintVT != Input.ConstraintVT) {
-        if ((OpInfo.ConstraintVT.isInteger() !=
-             Input.ConstraintVT.isInteger()) ||
-            (OpInfo.ConstraintVT.getSizeInBits() !=
-             Input.ConstraintVT.getSizeInBits())) {
-          report_fatal_error("Unsupported asm: input constraint"
-                             " with a matching output constraint of"
-                             " incompatible type!");
-        }
-        Input.ConstraintVT = OpInfo.ConstraintVT;
-      }
-    }
 
     // Compute the constraint code and ConstraintType to use.
     TLI.ComputeConstraintToUse(OpInfo, OpInfo.CallOperand, &DAG);
@@ -5427,7 +5416,7 @@ void SelectionDAGBuilder::visitInlineAsm(ImmutableCallSite CS) {
     // need to to provide an address for the memory input.
     if (OpInfo.ConstraintType == TargetLowering::C_Memory &&
         !OpInfo.isIndirect) {
-      assert(OpInfo.Type == InlineAsm::isInput &&
+      assert((OpInfo.isMultipleAlternative || (OpInfo.Type == InlineAsm::isInput)) &&
              "Can only indirectify direct input operands!");
 
       // Memory operands really want the address of the value.  If we don't have
@@ -5468,8 +5457,6 @@ void SelectionDAGBuilder::visitInlineAsm(ImmutableCallSite CS) {
     if (OpInfo.ConstraintType == TargetLowering::C_Register)
       GetRegistersForValue(OpInfo, OutputRegs, InputRegs);
   }
-
-  ConstraintInfos.clear();
 
   // Second pass - Loop over all of the operands, assigning virtual or physregs
   // to register class operands.

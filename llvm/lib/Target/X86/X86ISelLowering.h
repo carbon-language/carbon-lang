@@ -531,6 +531,12 @@ namespace llvm {
     virtual bool ExpandInlineAsm(CallInst *CI) const;
     
     ConstraintType getConstraintType(const std::string &Constraint) const;
+  
+    /// Examine constraint string and operand type and determine a weight value,
+    /// where: -1 = invalid match, and 0 = so-so match to 3 = good match.
+    /// The operand object must already have been set up with the operand type.
+    virtual int getSingleConstraintMatchWeight(
+      AsmOperandInfo &info, const char *constraint) const;
      
     std::vector<unsigned> 
       getRegClassForInlineAsmConstraint(const std::string &Constraint,
