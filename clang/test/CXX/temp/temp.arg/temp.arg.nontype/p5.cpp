@@ -53,7 +53,7 @@ namespace pointer_to_object_parameters {
   A2<X_ptr> *a12; // expected-error{{must have its address taken}}
   A2<array_of_Xs> *a13;
   A2<&an_X> *a13_2;
-  A2<(&an_X)> *a13_3; // expected-error{{non-type template argument cannot be surrounded by parentheses}}
+  A2<(&an_X)> *a13_3; // expected-warning{{address non-type template argument cannot be surrounded by parentheses}}
 
   // PR6244
   struct X1 {} X1v;

@@ -2410,13 +2410,15 @@ CheckTemplateArgumentAddressOfObjectOrFunction(Sema &S,
   //        corresponding template-parameter is a reference; or
   DeclRefExpr *DRE = 0;
 
-  // Ignore (and complain about) any excess parentheses.
+  // In C++98/03 mode, give an extension warning on any extra parentheses.
+  // See http://www.open-std.org/jtc1/sc22/wg21/docs/cwg_defects.html#773
+  bool ExtraParens = false;
   while (ParenExpr *Parens = dyn_cast<ParenExpr>(Arg)) {
-    if (!Invalid) {
+    if (!Invalid && !ExtraParens && !S.getLangOptions().CPlusPlus0x) {
       S.Diag(Arg->getSourceRange().getBegin(),
-             diag::err_template_arg_extra_parens)
+             diag::ext_template_arg_extra_parens)
         << Arg->getSourceRange();
-      Invalid = true;
+      ExtraParens = true;
     }
 
     Arg = Parens->getSubExpr();
@@ -2658,13 +2660,15 @@ bool Sema::CheckTemplateArgumentPointerToMember(Expr *Arg,
   //     -- a pointer to member expressed as described in 5.3.1.
   DeclRefExpr *DRE = 0;
 
-  // Ignore (and complain about) any excess parentheses.
+  // In C++98/03 mode, give an extension warning on any extra parentheses.
+  // See http://www.open-std.org/jtc1/sc22/wg21/docs/cwg_defects.html#773
+  bool ExtraParens = false;
   while (ParenExpr *Parens = dyn_cast<ParenExpr>(Arg)) {
-    if (!Invalid) {
+    if (!Invalid && !ExtraParens && !getLangOptions().CPlusPlus0x) {
       Diag(Arg->getSourceRange().getBegin(),
-           diag::err_template_arg_extra_parens)
+           diag::ext_template_arg_extra_parens)
         << Arg->getSourceRange();
-      Invalid = true;
+      ExtraParens = true;
     }
 
     Arg = Parens->getSubExpr();
