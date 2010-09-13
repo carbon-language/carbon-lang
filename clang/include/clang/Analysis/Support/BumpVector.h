@@ -155,7 +155,25 @@ public:
     grow(C);
     goto Retry;    
   }
-  
+
+  /// insert - Insert some number of copies of element into a position. Return
+  /// iterator to position after last inserted copy.
+  iterator insert(iterator I, size_t Cnt, const_reference E,
+      BumpVectorContext &C) {
+    assert (I >= Begin && I <= End && "Iterator out of bounds.");
+    if (End + Cnt <= Capacity) {
+    Retry:
+      move_range_right(I, End, Cnt);
+      construct_range(I, I + Cnt, E);
+      End += Cnt;
+      return I + Cnt;
+    }
+    ptrdiff_t D = I - Begin;
+    grow(C, size() + Cnt);
+    I = Begin + D;
+    goto Retry;
+  }
+
   void reserve(BumpVectorContext &C, unsigned N) {
     if (unsigned(Capacity-Begin) < N)
       grow(C, N);
@@ -178,6 +196,14 @@ private:
   void destroy_range(T *S, T *E) {
     while (S != E) {
       --E;
+      E->~T();
+    }
+  }
+
+  void move_range_right(T *S, T *E, size_t D) {
+    for (T *I = E + D - 1, *IL = S + D - 1; I != IL; --I) {
+      --E;
+      new (I) T(*E);
       E->~T();
     }
   }
