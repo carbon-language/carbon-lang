@@ -391,23 +391,23 @@ precompiled header, which contains the serialized representation of
 that statement or expression. Each substatement or subexpression
 within an expression is stored as a separate record (which keeps most
 records to a fixed size). Within the precompiled header, the
-subexpressions of an expression are stored prior to the expression
+subexpressions of an expression are stored, in reverse order, prior to the expression
 that owns those expression, using a form of <a
 href="http://en.wikipedia.org/wiki/Reverse_Polish_notation">Reverse
 Polish Notation</a>. For example, an expression <code>3 - 4 + 5</code>
 would be represented as follows:</p>
 
 <table border="1">
-  <tr><td><code>IntegerLiteral(3)</code></td></tr>
-  <tr><td><code>IntegerLiteral(4)</code></td></tr>
-  <tr><td><code>BinaryOperator(-)</code></td></tr>
   <tr><td><code>IntegerLiteral(5)</code></td></tr>
+  <tr><td><code>IntegerLiteral(4)</code></td></tr>
+  <tr><td><code>IntegerLiteral(3)</code></td></tr>
+  <tr><td><code>BinaryOperator(-)</code></td></tr>
   <tr><td><code>BinaryOperator(+)</code></td></tr>
   <tr><td>STOP</td></tr>
 </table>
 
 <p>When reading this representation, Clang evaluates each expression
-record it encounters, builds the appropriate abstract synax tree node,
+record it encounters, builds the appropriate abstract syntax tree node,
 and then pushes that expression on to a stack. When a record contains <i>N</i>
 subexpressions--<code>BinaryOperator</code> has two of them--those
 expressions are popped from the top of the stack. The special STOP
