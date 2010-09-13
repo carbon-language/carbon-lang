@@ -41,12 +41,11 @@ class GlobalVariablesTestCase(TestBase):
             substrs = [' resolved, hit count = 1'])
 
         # Check that GLOBAL scopes are indicated for the variables.
-        self.expect("frame variable -s -a", VARIABLES_DISPLAYED_CORRECTLY,
-            substrs = ['GLOBAL: g_file_static_cstr',
+        self.expect("frame variable -s -g -a", VARIABLES_DISPLAYED_CORRECTLY,
+            substrs = ['GLOBAL: (char const *) g_file_static_cstr',
                        '"g_file_static_cstr"',
-                       'GLOBAL: g_file_global_int',
-                       '(int) 42',
-                       'GLOBAL: g_file_global_cstr',
+                       'GLOBAL: (int) g_file_global_int = 42',
+                       'GLOBAL: (char const *) g_file_global_cstr',
                        '"g_file_global_cstr"'])
 
 
