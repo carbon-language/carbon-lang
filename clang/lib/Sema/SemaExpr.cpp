@@ -2418,7 +2418,11 @@ Sema::CreateBuiltinArraySubscriptExpr(Expr *Base, SourceLocation LLoc,
     return ExprError();
   }
 
-  if (!ResultType->isDependentType() &&
+  if (ResultType->isVoidType() && !getLangOptions().CPlusPlus) {
+    // GNU extension: subscripting on pointer to void
+    Diag(LLoc, diag::ext_gnu_void_ptr)
+      << BaseExpr->getSourceRange();
+  } else if (!ResultType->isDependentType() &&
       RequireCompleteType(LLoc, ResultType,
                           PDiag(diag::err_subscript_incomplete_type)
                             << BaseExpr->getSourceRange()))

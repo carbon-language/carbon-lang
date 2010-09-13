@@ -9,6 +9,7 @@ void a(S* b, void* c) {
   c += 1;    // expected-warning {{use of GNU void* extension}}
   c--;       // expected-warning {{use of GNU void* extension}}
   c -= 1;    // expected-warning {{use of GNU void* extension}}
+  (void) c[1]; // expected-warning {{use of GNU void* extension}}
   b = 1+b;   // expected-error {{arithmetic on pointer to incomplete type}}
   /* The next couple tests are only pedantic warnings in gcc */
   void (*d)(S*,void*) = a;
