@@ -175,11 +175,11 @@ function configure_llvmCore() {
     case $Flavor in
         Release | Release-64 )
             Optimized="yes"
-            Assertions="yes"
-            ;;
-        Release-Asserts )
-            Optimized="yes"
             Assertions="no"
+            ;;
+        Release+Asserts )
+            Optimized="yes"
+            Assertions="yes"
             ;;
         Debug )
             Optimized="no"
