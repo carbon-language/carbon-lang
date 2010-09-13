@@ -1464,6 +1464,23 @@ public:
     return BaseOrMemberInitializers + NumBaseOrMemberInitializers;
   }
 
+  typedef std::reverse_iterator<init_iterator> init_reverse_iterator;
+  typedef std::reverse_iterator<init_const_iterator> init_const_reverse_iterator;
+
+  init_reverse_iterator init_rbegin() {
+    return init_reverse_iterator(init_end());
+  }
+  init_const_reverse_iterator init_rbegin() const {
+    return init_const_reverse_iterator(init_end());
+  }
+
+  init_reverse_iterator init_rend() {
+    return init_reverse_iterator(init_begin());
+  }
+  init_const_reverse_iterator init_rend() const {
+    return init_const_reverse_iterator(init_begin());
+  }
+
   /// getNumArgs - Determine the number of arguments used to
   /// initialize the member or base.
   unsigned getNumBaseOrMemberInitializers() const {
