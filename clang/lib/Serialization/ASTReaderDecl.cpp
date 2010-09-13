@@ -1011,23 +1011,25 @@ void ASTDeclReader::VisitClassTemplatePartialSpecializationDecl(
                                     ClassTemplatePartialSpecializationDecl *D) {
   VisitClassTemplateSpecializationDecl(D);
 
-  D->initTemplateParameters(Reader.ReadTemplateParameterList(Record, Idx));
-  
-  TemplateArgumentListInfo ArgInfos;
+  ASTContext &C = *Reader.getContext();
+  D->TemplateParams = Reader.ReadTemplateParameterList(Record, Idx);
+
   unsigned NumArgs = Record[Idx++];
-  while (NumArgs--)
-    ArgInfos.addArgument(Reader.ReadTemplateArgumentLoc(Cursor, Record, Idx));
-  D->initTemplateArgsAsWritten(ArgInfos);
-  
-  D->setSequenceNumber(Record[Idx++]);
+  if (NumArgs) {
+    D->NumArgsAsWritten = NumArgs;
+    D->ArgsAsWritten = new (C) TemplateArgumentLoc[NumArgs];
+    for (unsigned i=0; i != NumArgs; ++i)
+      D->ArgsAsWritten[i] = Reader.ReadTemplateArgumentLoc(Cursor, Record, Idx);
+  }
+
+  D->SequenceNumber = Record[Idx++];
 
   // These are read/set from/to the first declaration.
   if (D->getPreviousDeclaration() == 0) {
-    D->setInstantiatedFromMember(
+    D->InstantiatedFromMember.setPointer(
         cast_or_null<ClassTemplatePartialSpecializationDecl>(
                                                 Reader.GetDecl(Record[Idx++])));
-    if (Record[Idx++])
-      D->setMemberSpecialization();
+    D->InstantiatedFromMember.setInt(Record[Idx++]);
   }
 }
 

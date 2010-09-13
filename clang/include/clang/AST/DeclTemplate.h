@@ -1513,17 +1513,10 @@ public:
     return TemplateParams;
   }
 
-  void initTemplateParameters(TemplateParameterList *Params) {
-    assert(TemplateParams == 0 && "TemplateParams already set");
-    TemplateParams = Params;
-  }
-
   /// Get the template arguments as written.
   TemplateArgumentLoc *getTemplateArgsAsWritten() const {
     return ArgsAsWritten;
   }
-
-  void initTemplateArgsAsWritten(const TemplateArgumentListInfo &ArgInfos);
 
   /// Get the number of template arguments as written.
   unsigned getNumTemplateArgsAsWritten() const {
@@ -1533,8 +1526,7 @@ public:
   /// \brief Get the sequence number for this class template partial
   /// specialization.
   unsigned getSequenceNumber() const { return SequenceNumber; }
-  void setSequenceNumber(unsigned N) { SequenceNumber = N; }
-    
+
   /// \brief Retrieve the member class template partial specialization from
   /// which this particular class template partial specialization was
   /// instantiated.
@@ -1618,6 +1610,9 @@ public:
   static bool classof(const ClassTemplatePartialSpecializationDecl *) {
     return true;
   }
+
+  friend class ASTDeclReader;
+  friend class ASTDeclWriter;
 };
 
 /// Declaration of a class template.

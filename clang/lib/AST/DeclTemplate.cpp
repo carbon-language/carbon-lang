@@ -577,19 +577,6 @@ ClassTemplatePartialSpecializationDecl::Create(ASTContext &Context,
   return new (Context)ClassTemplatePartialSpecializationDecl();
 }
 
-void ClassTemplatePartialSpecializationDecl::
-initTemplateArgsAsWritten(const TemplateArgumentListInfo &ArgInfos) {
-  assert(ArgsAsWritten == 0 && "ArgsAsWritten already set");
-  unsigned N = ArgInfos.size();
-  TemplateArgumentLoc *ClonedArgs
-    = new (getASTContext()) TemplateArgumentLoc[N];
-  for (unsigned I = 0; I != N; ++I)
-    ClonedArgs[I] = ArgInfos[I];
-  
-  ArgsAsWritten = ClonedArgs;
-  NumArgsAsWritten = N;
-}
-
 //===----------------------------------------------------------------------===//
 // FriendTemplateDecl Implementation
 //===----------------------------------------------------------------------===//
