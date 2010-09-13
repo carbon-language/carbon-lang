@@ -16,6 +16,7 @@
 
 #include "clang-c/Index.h"
 #include "clang/Basic/SourceLocation.h"
+#include "llvm/ADT/PointerUnion.h"
 #include <utility>
 
 namespace clang {
@@ -33,10 +34,13 @@ class MacroInstantiation;
 class NamedDecl;
 class ObjCInterfaceDecl;
 class ObjCProtocolDecl;
+class OverloadedTemplateStorage;
+class OverloadExpr;
 class Stmt;
 class TemplateDecl;
+class TemplateName;
 class TypeDecl;
-
+  
 namespace cxcursor {
   
 CXCursor MakeCXCursor(const clang::Attr *A, clang::Decl *Parent, ASTUnit *TU);
@@ -135,6 +139,27 @@ CXCursor MakeCursorLabelRef(LabelStmt *Label, SourceLocation Loc, ASTUnit *TU);
 /// \brief Unpack a label reference into the label statement it refers to and
 /// the location of the reference.
 std::pair<LabelStmt *, SourceLocation> getCursorLabelRef(CXCursor C);
+
+/// \brief Create a overloaded declaration reference cursor for an expression.
+CXCursor MakeCursorOverloadedDeclRef(OverloadExpr *E, ASTUnit *TU);
+
+/// \brief Create a overloaded declaration reference cursor for a declaration.
+CXCursor MakeCursorOverloadedDeclRef(Decl *D, SourceLocation Location,
+                                     ASTUnit *TU);
+
+/// \brief Create a overloaded declaration reference cursor for a template name.
+CXCursor MakeCursorOverloadedDeclRef(TemplateName Template, 
+                                     SourceLocation Location, ASTUnit *TU);
+
+/// \brief Internal storage for an overloaded declaration reference cursor;
+typedef llvm::PointerUnion3<OverloadExpr *, Decl *, 
+                            OverloadedTemplateStorage *>
+  OverloadedDeclRefStorage;
+  
+/// \brief Unpack an overloaded declaration reference into an expression,
+/// declaration, or template name along with the source location.
+std::pair<OverloadedDeclRefStorage, SourceLocation>
+  getCursorOverloadedDeclRef(CXCursor C);
   
 Decl *getCursorDecl(CXCursor Cursor);
 Expr *getCursorExpr(CXCursor Cursor);

@@ -55,6 +55,23 @@ void template_exprs() {
   Z4().getAs<Unsigned>();
 }
 
+template<typename T> void swap(T&, T&);
+template<typename T, typename U> void swap(Y<T, U>&, Y<T, U>&);
+void swap(Z4&, Z4&);
+
+struct Z5 {
+  int f(int);
+  float f(float);
+};
+
+template<typename T>
+void unresolved_exprs(T &x) {
+  swap(x, x);
+  Z5 z5;
+  z5.f(x);
+  swap<T>(x, x);
+}
+
 // RUN: c-index-test -test-load-source all %s | FileCheck -check-prefix=CHECK-LOAD %s
 // CHECK-LOAD: index-templates.cpp:4:6: FunctionTemplate=f:4:6 Extent=[3:1 - 4:22]
 // CHECK-LOAD: index-templates.cpp:3:19: TemplateTypeParameter=T:3:19 (Definition) Extent=[3:19 - 3:20]
@@ -119,6 +136,10 @@ void template_exprs() {
 // CHECK-LOAD: index-templates.cpp:55:8: MemberRefExpr=getAs:50:26 Extent=[55:3 - 55:23]
 // CHECK-LOAD: index-templates.cpp:55:3: CallExpr= Extent=[55:3 - 55:7]
 // CHECK-LOAD: index-templates.cpp:55:14: TypeRef=Unsigned:42:18 Extent=[55:14 - 55:22]
+// CHECK-LOAD: index-templates.cpp:68:6: FunctionTemplate=unresolved_exprs:68:6 (Definition)
+// CHECK-LOAD: index-templates.cpp:69:3: OverloadedDeclRef=swap[60:6, 59:39, 58:27]
+// CHECK-LOAD: index-templates.cpp:71:6: OverloadedDeclRef=f[63:7, 64:9]
+// CHECK-LOAD: index-templates.cpp:72:3: OverloadedDeclRef=swap[58:27, 59:39]
 
 // RUN: c-index-test -test-load-source-usrs all %s | FileCheck -check-prefix=CHECK-USRS %s
 // CHECK-USRS: index-templates.cpp c:@FT@>3#T#Nt0.0#t>2#T#Nt1.0f#>t0.22t0.0# Extent=[3:1 - 4:22]

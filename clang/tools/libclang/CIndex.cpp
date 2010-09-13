@@ -1015,10 +1015,9 @@ bool CursorVisitor::VisitUsingDecl(UsingDecl *D) {
     if (VisitNestedNameSpecifier(Qualifier, D->getNestedNameRange()))
       return true;
   
-  // FIXME: Provide a multi-reference of some kind for all of the declarations
-  // that the using declaration refers to. We don't have this kind of cursor
-  // yet.
-  
+  if (Visit(MakeCursorOverloadedDeclRef(D, D->getLocation(), TU)))
+    return true;
+    
   return VisitDeclarationNameInfo(D->getNameInfo());
 }
 
@@ -1141,8 +1140,10 @@ bool CursorVisitor::VisitTemplateName(TemplateName Name, SourceLocation Loc) {
     return Visit(MakeCursorTemplateRef(Name.getAsTemplateDecl(), Loc, TU));
 
   case TemplateName::OverloadedTemplate:
-    // FIXME: We need a way to return multiple lookup results in a single
-    // cursor.
+    // Visit the overloaded template set.
+    if (Visit(MakeCursorOverloadedDeclRef(Name, Loc, TU)))
+      return true;
+
     return false;
 
   case TemplateName::DependentTemplate:
@@ -1272,7 +1273,7 @@ bool CursorVisitor::VisitTagTypeLoc(TagTypeLoc TL) {
 }
 
 bool CursorVisitor::VisitTemplateTypeParmTypeLoc(TemplateTypeParmTypeLoc TL) {
-  // FIXME: We can't visit the template template parameter, but there's
+  // FIXME: We can't visit the template type parameter, because there's
   // no context information with which we can match up the depth/index in the
   // type to the appropriate 
   return false;
@@ -1792,7 +1793,11 @@ bool CursorVisitor::VisitOverloadExpr(OverloadExpr *E) {
   // Visit the declaration name.
   if (VisitDeclarationNameInfo(E->getNameInfo()))
     return true;
-  
+
+  // Visit the overloaded declaration reference.
+  if (Visit(MakeCursorOverloadedDeclRef(E, TU)))
+    return true;
+
   // Visit the explicitly-specified template arguments.
   if (const ExplicitTemplateArgumentList *ArgList
                                       = E->getOptionalExplicitTemplateArgs()) {
@@ -1804,8 +1809,6 @@ bool CursorVisitor::VisitOverloadExpr(OverloadExpr *E) {
     }
   }
     
-  // FIXME: We don't have a way to visit all of the declarations referenced
-  // here.
   return false;
 }
 
@@ -2618,6 +2621,22 @@ CXString clang_getCursorSpelling(CXCursor C) {
       return createCXString(Label->getID()->getName());
     }
 
+    case CXCursor_OverloadedDeclRef: {
+      OverloadedDeclRefStorage Storage = getCursorOverloadedDeclRef(C).first;
+      if (Decl *D = Storage.dyn_cast<Decl *>()) {
+        if (NamedDecl *ND = dyn_cast<NamedDecl>(D))
+          return createCXString(ND->getNameAsString());
+        return createCXString("");
+      }
+      if (OverloadExpr *E = Storage.dyn_cast<OverloadExpr *>())
+        return createCXString(E->getName().getAsString());
+      OverloadedTemplateStorage *Ovl
+        = Storage.get<OverloadedTemplateStorage*>();
+      if (Ovl->size() == 0)
+        return createCXString("");
+      return createCXString((*Ovl->begin())->getNameAsString());
+    }
+        
     default:
       return createCXString("<not implemented>");
     }
@@ -2712,6 +2731,8 @@ CXString clang_getCursorKindSpelling(enum CXCursorKind Kind) {
     return createCXString("MemberRef");
   case CXCursor_LabelRef:
     return createCXString("LabelRef");
+  case CXCursor_OverloadedDeclRef:
+    return createCXString("OverloadedDeclRef");
   case CXCursor_UnexposedExpr:
       return createCXString("UnexposedExpr");
   case CXCursor_BlockExpr:
@@ -2931,6 +2952,10 @@ CXSourceLocation clang_getCursorLocation(CXCursor C) {
       return cxloc::translateSourceLocation(getCursorContext(C), P.second);
     }
 
+    case CXCursor_OverloadedDeclRef:
+      return cxloc::translateSourceLocation(getCursorContext(C),
+                                          getCursorOverloadedDeclRef(C).second);
+
     default:
       // FIXME: Need a way to enumerate all non-reference cases.
       llvm_unreachable("Missed a reference kind");
@@ -3004,6 +3029,9 @@ static SourceRange getRawCursorExtent(CXCursor C) {
     case CXCursor_LabelRef:
       return getCursorLabelRef(C).second;
 
+    case CXCursor_OverloadedDeclRef:
+      return getCursorOverloadedDeclRef(C).second;
+
     default:
       // FIXME: Need a way to enumerate all non-reference cases.
       llvm_unreachable("Missed a reference kind");
@@ -3046,13 +3074,28 @@ CXCursor clang_getCursorReferenced(CXCursor C) {
     return clang_getNullCursor();
 
   ASTUnit *CXXUnit = getCursorASTUnit(C);
-  if (clang_isDeclaration(C.kind))
+  if (clang_isDeclaration(C.kind)) {
+    Decl *D = getCursorDecl(C);
+    if (UsingDecl *Using = dyn_cast<UsingDecl>(D))
+      return MakeCursorOverloadedDeclRef(Using, D->getLocation(), CXXUnit);
+    if (ObjCClassDecl *Classes = dyn_cast<ObjCClassDecl>(D))
+      return MakeCursorOverloadedDeclRef(Classes, D->getLocation(), CXXUnit);
+    if (ObjCForwardProtocolDecl *Protocols
+                                        = dyn_cast<ObjCForwardProtocolDecl>(D))
+      return MakeCursorOverloadedDeclRef(Protocols, D->getLocation(), CXXUnit);
+      
     return C;
-
+  }
+  
   if (clang_isExpression(C.kind)) {
-    Decl *D = getDeclFromExpr(getCursorExpr(C));
+    Expr *E = getCursorExpr(C);
+    Decl *D = getDeclFromExpr(E);
     if (D)
       return MakeCXCursor(D, CXXUnit);
+    
+    if (OverloadExpr *Ovl = dyn_cast_or_null<OverloadExpr>(E))
+      return MakeCursorOverloadedDeclRef(Ovl, CXXUnit);
+        
     return clang_getNullCursor();
   }
 
@@ -3107,6 +3150,9 @@ CXCursor clang_getCursorReferenced(CXCursor C) {
       return MakeCXCursor(getCursorLabelRef(C).first, 
                           CXXUnit->getASTContext().getTranslationUnitDecl(),
                           CXXUnit);
+
+    case CXCursor_OverloadedDeclRef:
+      return C;
 
     default:
       // We would prefer to enumerate all non-reference cursor kinds here.
@@ -3223,23 +3269,9 @@ CXCursor clang_getCursorDefinition(CXCursor C) {
     return clang_getNullCursor();
   }
 
-  case Decl::Using: {
-    UsingDecl *Using = cast<UsingDecl>(D);
-    CXCursor Def = clang_getNullCursor();
-    for (UsingDecl::shadow_iterator S = Using->shadow_begin(),
-                                 SEnd = Using->shadow_end();
-         S != SEnd; ++S) {
-      if (Def != clang_getNullCursor()) {
-        // FIXME: We have no way to return multiple results.
-        return clang_getNullCursor();
-      }
-
-      Def = clang_getCursorDefinition(MakeCXCursor((*S)->getTargetDecl(),
-                                                   CXXUnit));
-    }
-
-    return Def;
-  }
+  case Decl::Using:
+    return MakeCursorOverloadedDeclRef(cast<UsingDecl>(D), 
+                                       D->getLocation(), CXXUnit);
 
   case Decl::UsingShadow:
     return clang_getCursorDefinition(
@@ -3303,29 +3335,13 @@ CXCursor clang_getCursorDefinition(CXCursor C) {
 
     return clang_getNullCursor();
 
-  case Decl::ObjCForwardProtocol: {
-    ObjCForwardProtocolDecl *Forward = cast<ObjCForwardProtocolDecl>(D);
-    if (Forward->protocol_size() == 1)
-      return clang_getCursorDefinition(
-                                     MakeCXCursor(*Forward->protocol_begin(),
-                                                  CXXUnit));
+  case Decl::ObjCForwardProtocol:
+    return MakeCursorOverloadedDeclRef(cast<ObjCForwardProtocolDecl>(D), 
+                                       D->getLocation(), CXXUnit);
 
-    // FIXME: Cannot return multiple definitions.
-    return clang_getNullCursor();
-  }
-
-  case Decl::ObjCClass: {
-    ObjCClassDecl *Class = cast<ObjCClassDecl>(D);
-    if (Class->size() == 1) {
-      ObjCInterfaceDecl *IFace = Class->begin()->getInterface();
-      if (!IFace->isForwardDecl())
-        return MakeCXCursor(IFace, CXXUnit);
-      return clang_getNullCursor();
-    }
-
-    // FIXME: Cannot return multiple definitions.
-    return clang_getNullCursor();
-  }
+  case Decl::ObjCClass:
+    return MakeCursorOverloadedDeclRef(cast<ObjCClassDecl>(D), D->getLocation(), 
+                                       CXXUnit);
 
   case Decl::Friend:
     if (NamedDecl *Friend = cast<FriendDecl>(D)->getFriendDecl())
@@ -3348,6 +3364,62 @@ unsigned clang_isCursorDefinition(CXCursor C) {
   return clang_getCursorDefinition(C) == C;
 }
 
+unsigned clang_getNumOverloadedDecls(CXCursor C) {
+  if (!C.kind == CXCursor_OverloadedDeclRef)
+    return 0;
+  
+  OverloadedDeclRefStorage Storage = getCursorOverloadedDeclRef(C).first;
+  if (OverloadExpr *E = Storage.dyn_cast<OverloadExpr *>())
+    return E->getNumDecls();
+  
+  if (OverloadedTemplateStorage *S
+                              = Storage.dyn_cast<OverloadedTemplateStorage*>())
+    return S->size();
+  
+  Decl *D = Storage.get<Decl*>();
+  if (UsingDecl *Using = dyn_cast<UsingDecl>(D))
+    return Using->getNumShadowDecls();
+  if (ObjCClassDecl *Classes = dyn_cast<ObjCClassDecl>(D))
+    return Classes->size();
+  if (ObjCForwardProtocolDecl *Protocols =dyn_cast<ObjCForwardProtocolDecl>(D))
+    return Protocols->protocol_size();
+  
+  return 0;
+}
+
+CXCursor clang_getOverloadedDecl(CXCursor cursor, unsigned index) {
+  if (!cursor.kind == CXCursor_OverloadedDeclRef)
+    return clang_getNullCursor();
+
+  if (index >= clang_getNumOverloadedDecls(cursor))
+    return clang_getNullCursor();
+  
+  ASTUnit *Unit = getCursorASTUnit(cursor);
+  OverloadedDeclRefStorage Storage = getCursorOverloadedDeclRef(cursor).first;
+  if (OverloadExpr *E = Storage.dyn_cast<OverloadExpr *>())
+    return MakeCXCursor(E->decls_begin()[index], Unit);
+  
+  if (OverloadedTemplateStorage *S
+                              = Storage.dyn_cast<OverloadedTemplateStorage*>())
+    return MakeCXCursor(S->begin()[index], Unit);
+  
+  Decl *D = Storage.get<Decl*>();
+  if (UsingDecl *Using = dyn_cast<UsingDecl>(D)) {
+    // FIXME: This is, unfortunately, linear time.
+    UsingDecl::shadow_iterator Pos = Using->shadow_begin();
+    std::advance(Pos, index);
+    return MakeCXCursor(cast<UsingShadowDecl>(*Pos)->getTargetDecl(), Unit);
+  }
+  
+  if (ObjCClassDecl *Classes = dyn_cast<ObjCClassDecl>(D))
+    return MakeCXCursor(Classes->begin()[index].getInterface(), Unit);
+  
+  if (ObjCForwardProtocolDecl *Protocols = dyn_cast<ObjCForwardProtocolDecl>(D))
+    return MakeCXCursor(Protocols->protocol_begin()[index], Unit);
+  
+  return clang_getNullCursor();
+}
+  
 void clang_getDefinitionSpellingAndExtent(CXCursor C,
                                           const char **startBuf,
                                           const char **endBuf,

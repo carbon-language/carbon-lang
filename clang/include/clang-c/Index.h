@@ -1056,7 +1056,45 @@ enum CXCursorKind {
    */
   CXCursor_LabelRef                      = 48,
   
-  CXCursor_LastRef                       = CXCursor_LabelRef,
+  /**
+   * \brief A reference to a set of overloaded functions or function templates
+   * that has not yet been resolved to a specific function or function template.
+   *
+   * An overloaded declaration reference cursor occurs in C++ templates where
+   * a dependent name refers to a function. For example:
+   *
+   * \code
+   * template<typename T> void swap(T&, T&);
+   *
+   * struct X { ... };
+   * void swap(X&, X&);
+   *
+   * template<typename T>
+   * void reverse(T* first, T* last) {
+   *   while (first < last - 1) {
+   *     swap(*first, *--last);
+   *     ++first;
+   *   }
+   * }
+   *
+   * struct Y { };
+   * void swap(Y&, Y&);
+   * \endcode
+   *
+   * Here, the identifier "swap" is associated with an overloaded declaration
+   * reference. In the template definition, "swap" refers to either of the two
+   * "swap" functions declared above, so both results will be available. At
+   * instantiation time, "swap" may also refer to other functions found via
+   * argument-dependent lookup (e.g., the "swap" function at the end of the
+   * example).
+   *
+   * The functions \c clang_getNumOverloadedDecls() and 
+   * \c clang_getOverloadedDecl() can be used to retrieve the definitions
+   * referenced by this cursor.
+   */
+  CXCursor_OverloadedDeclRef             = 49,
+  
+  CXCursor_LastRef                       = CXCursor_OverloadedDeclRef,
 
   /* Error conditions */
   CXCursor_FirstInvalid                  = 70,
@@ -1530,6 +1568,34 @@ enum CX_CXXAccessSpecifier {
  */
 CINDEX_LINKAGE enum CX_CXXAccessSpecifier clang_getCXXAccessSpecifier(CXCursor);
 
+/**
+ * \brief Determine the number of overloaded declarations referenced by a 
+ * \c CXCursor_OverloadedDeclRef cursor.
+ *
+ * \param cursor The cursor whose overloaded declarations are being queried.
+ *
+ * \returns The number of overloaded declarations referenced by \c cursor. If it
+ * is not a \c CXCursor_OverloadedDeclRef cursor, returns 0.
+ */
+CINDEX_LINKAGE unsigned clang_getNumOverloadedDecls(CXCursor cursor);
+
+/**
+ * \brief Retrieve a cursor for one of the overloaded declarations referenced
+ * by a \c CXCursor_OverloadedDeclRef cursor.
+ *
+ * \param cursor The cursor whose overloaded declarations are being queried.
+ *
+ * \param index The zero-based index into the set of overloaded declarations in
+ * the cursor.
+ *
+ * \returns A cursor representing the declaration referenced by the given 
+ * \c cursor at the specified \c index. If the cursor does not have an 
+ * associated set of overloaded declarations, or if the index is out of bounds,
+ * returns \c clang_getNullCursor();
+ */
+CINDEX_LINKAGE CXCursor clang_getOverloadedDecl(CXCursor cursor, 
+                                                unsigned index);
+  
 /**
  * @}
  */

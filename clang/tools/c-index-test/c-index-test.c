@@ -177,9 +177,24 @@ static void PrintCursor(CXCursor Cursor) {
 
     Referenced = clang_getCursorReferenced(Cursor);
     if (!clang_equalCursors(Referenced, clang_getNullCursor())) {
-      CXSourceLocation Loc = clang_getCursorLocation(Referenced);
-      clang_getInstantiationLocation(Loc, 0, &line, &column, 0);
-      printf(":%d:%d", line, column);
+      if (clang_getCursorKind(Referenced) == CXCursor_OverloadedDeclRef) {
+        unsigned I, N = clang_getNumOverloadedDecls(Referenced);
+        printf("[");
+        for (I = 0; I != N; ++I) {
+          CXCursor Ovl = clang_getOverloadedDecl(Referenced, I);
+          if (I)
+            printf(", ");
+          
+          CXSourceLocation Loc = clang_getCursorLocation(Ovl);
+          clang_getInstantiationLocation(Loc, 0, &line, &column, 0);
+          printf("%d:%d", line, column);          
+        }
+        printf("]");
+      } else {
+        CXSourceLocation Loc = clang_getCursorLocation(Referenced);
+        clang_getInstantiationLocation(Loc, 0, &line, &column, 0);
+        printf(":%d:%d", line, column);
+      }
     }
 
     if (clang_isCursorDefinition(Cursor))

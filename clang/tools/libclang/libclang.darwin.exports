@@ -73,6 +73,8 @@ _clang_getNullLocation
 _clang_getNullRange
 _clang_getNumCompletionChunks
 _clang_getNumDiagnostics
+_clang_getNumOverloadedDecls
+_clang_getOverloadedDecl
 _clang_getPointeeType
 _clang_getRange
 _clang_getRangeEnd

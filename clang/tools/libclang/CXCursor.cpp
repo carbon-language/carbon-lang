@@ -19,9 +19,11 @@
 #include "clang/AST/DeclCXX.h"
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/Expr.h"
+#include "clang/AST/ExprCXX.h"
 #include "llvm/Support/ErrorHandling.h"
 
 using namespace clang;
+using namespace cxcursor;
 
 CXCursor cxcursor::MakeCXCursorInvalid(CXCursorKind K) {
   assert(K >= CXCursor_FirstInvalid && K <= CXCursor_LastInvalid);
@@ -377,6 +379,52 @@ cxcursor::getCursorLabelRef(CXCursor C) {
   return std::make_pair(static_cast<LabelStmt *>(C.data[0]),
                         SourceLocation::getFromRawEncoding(
                                        reinterpret_cast<uintptr_t>(C.data[1])));  
+}
+
+CXCursor cxcursor::MakeCursorOverloadedDeclRef(OverloadExpr *E, 
+                                               ASTUnit *TU) {
+  assert(E && TU && "Invalid arguments!");
+  OverloadedDeclRefStorage Storage(E);
+  void *RawLoc = reinterpret_cast<void *>(E->getNameLoc().getRawEncoding());
+  CXCursor C = { 
+                 CXCursor_OverloadedDeclRef, 
+                 { Storage.getOpaqueValue(), RawLoc, TU } 
+               };
+  return C;    
+}
+
+CXCursor cxcursor::MakeCursorOverloadedDeclRef(Decl *D, 
+                                               SourceLocation Loc,
+                                               ASTUnit *TU) {
+  assert(D && TU && "Invalid arguments!");
+  void *RawLoc = reinterpret_cast<void *>(Loc.getRawEncoding());
+  OverloadedDeclRefStorage Storage(D);
+  CXCursor C = { 
+    CXCursor_OverloadedDeclRef, 
+    { Storage.getOpaqueValue(), RawLoc, TU }
+  };
+  return C;    
+}
+
+CXCursor cxcursor::MakeCursorOverloadedDeclRef(TemplateName Name, 
+                                               SourceLocation Loc,
+                                               ASTUnit *TU) {
+  assert(Name.getAsOverloadedTemplate() && TU && "Invalid arguments!");
+  void *RawLoc = reinterpret_cast<void *>(Loc.getRawEncoding());
+  OverloadedDeclRefStorage Storage(Name.getAsOverloadedTemplate());
+  CXCursor C = { 
+    CXCursor_OverloadedDeclRef, 
+    { Storage.getOpaqueValue(), RawLoc, TU } 
+  };
+  return C;    
+}
+
+std::pair<cxcursor::OverloadedDeclRefStorage, SourceLocation>
+cxcursor::getCursorOverloadedDeclRef(CXCursor C) {
+  assert(C.kind == CXCursor_OverloadedDeclRef);
+  return std::make_pair(OverloadedDeclRefStorage::getFromOpaqueValue(C.data[0]),
+                        SourceLocation::getFromRawEncoding(
+                                       reinterpret_cast<uintptr_t>(C.data[1])));
 }
 
 Decl *cxcursor::getCursorDecl(CXCursor Cursor) {
