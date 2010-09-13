@@ -151,10 +151,9 @@ private:
 
   /// SelectVLDSTLane - Select NEON load/store lane intrinsics.  NumVecs should
   /// be 2, 3 or 4.  The opcode arrays specify the instructions used for
-  /// load/store of D registers and even subregs and odd subregs of Q registers.
+  /// load/store of D registers and Q registers.
   SDNode *SelectVLDSTLane(SDNode *N, bool IsLoad, unsigned NumVecs,
-                          unsigned *DOpcodes, unsigned *QOpcodes0,
-                          unsigned *QOpcodes1);
+                          unsigned *DOpcodes, unsigned *QOpcodes);
 
   /// SelectVTBL - Select NEON VTBL and VTBX intrinsics.  NumVecs should be 2,
   /// 3 or 4.  These are custom-selected so that a REG_SEQUENCE can be
@@ -196,10 +195,6 @@ private:
   SDNode *QuadSRegs(EVT VT, SDValue V0, SDValue V1, SDValue V2, SDValue V3);
   SDNode *QuadDRegs(EVT VT, SDValue V0, SDValue V1, SDValue V2, SDValue V3);
   SDNode *QuadQRegs(EVT VT, SDValue V0, SDValue V1, SDValue V2, SDValue V3);
-
-  // Form sequences of 8 consecutive D registers.
-  SDNode *OctoDRegs(EVT VT, SDValue V0, SDValue V1, SDValue V2, SDValue V3,
-                    SDValue V4, SDValue V5, SDValue V6, SDValue V7);
 };
 }
 
@@ -1015,39 +1010,6 @@ SDNode *ARMDAGToDAGISel::QuadQRegs(EVT VT, SDValue V0, SDValue V1,
   return CurDAG->getMachineNode(TargetOpcode::REG_SEQUENCE, dl, VT, Ops, 8);
 }
 
-/// OctoDRegs - Form 8 consecutive D registers.
-///
-SDNode *ARMDAGToDAGISel::OctoDRegs(EVT VT, SDValue V0, SDValue V1,
-                                   SDValue V2, SDValue V3,
-                                   SDValue V4, SDValue V5,
-                                   SDValue V6, SDValue V7) {
-  DebugLoc dl = V0.getNode()->getDebugLoc();
-  SDValue SubReg0 = CurDAG->getTargetConstant(ARM::dsub_0, MVT::i32);
-  SDValue SubReg1 = CurDAG->getTargetConstant(ARM::dsub_1, MVT::i32);
-  SDValue SubReg2 = CurDAG->getTargetConstant(ARM::dsub_2, MVT::i32);
-  SDValue SubReg3 = CurDAG->getTargetConstant(ARM::dsub_3, MVT::i32);
-  SDValue SubReg4 = CurDAG->getTargetConstant(ARM::dsub_4, MVT::i32);
-  SDValue SubReg5 = CurDAG->getTargetConstant(ARM::dsub_5, MVT::i32);
-  SDValue SubReg6 = CurDAG->getTargetConstant(ARM::dsub_6, MVT::i32);
-  SDValue SubReg7 = CurDAG->getTargetConstant(ARM::dsub_7, MVT::i32);
-  const SDValue Ops[] ={ V0, SubReg0, V1, SubReg1, V2, SubReg2, V3, SubReg3,
-                         V4, SubReg4, V5, SubReg5, V6, SubReg6, V7, SubReg7 };
-  return CurDAG->getMachineNode(TargetOpcode::REG_SEQUENCE, dl, VT, Ops, 16);
-}
-
-/// GetNEONSubregVT - Given a type for a 128-bit NEON vector, return the type
-/// for a 64-bit subregister of the vector.
-static EVT GetNEONSubregVT(EVT VT) {
-  switch (VT.getSimpleVT().SimpleTy) {
-  default: llvm_unreachable("unhandled NEON type");
-  case MVT::v16i8: return MVT::v8i8;
-  case MVT::v8i16: return MVT::v4i16;
-  case MVT::v4f32: return MVT::v2f32;
-  case MVT::v4i32: return MVT::v2i32;
-  case MVT::v2i64: return MVT::v1i64;
-  }
-}
-
 SDNode *ARMDAGToDAGISel::SelectVLD(SDNode *N, unsigned NumVecs,
                                    unsigned *DOpcodes, unsigned *QOpcodes0,
                                    unsigned *QOpcodes1) {
@@ -1281,8 +1243,7 @@ SDNode *ARMDAGToDAGISel::SelectVST(SDNode *N, unsigned NumVecs,
 
 SDNode *ARMDAGToDAGISel::SelectVLDSTLane(SDNode *N, bool IsLoad,
                                          unsigned NumVecs, unsigned *DOpcodes,
-                                         unsigned *QOpcodes0,
-                                         unsigned *QOpcodes1) {
+                                         unsigned *QOpcodes) {
   assert(NumVecs >=2 && NumVecs <= 4 && "VLDSTLane NumVecs out-of-range");
   DebugLoc dl = N->getDebugLoc();
 
@@ -1295,16 +1256,6 @@ SDNode *ARMDAGToDAGISel::SelectVLDSTLane(SDNode *N, bool IsLoad,
     cast<ConstantSDNode>(N->getOperand(NumVecs+3))->getZExtValue();
   EVT VT = IsLoad ? N->getValueType(0) : N->getOperand(3).getValueType();
   bool is64BitVector = VT.is64BitVector();
-
-  // Quad registers are handled by load/store of subregs. Find the subreg info.
-  unsigned NumElts = 0;
-  bool Even = false;
-  EVT RegVT = VT;
-  if (!is64BitVector) {
-    RegVT = GetNEONSubregVT(VT);
-    NumElts = RegVT.getVectorNumElements();
-    Even = Lane < NumElts;
-  }
 
   unsigned OpcodeIndex;
   switch (VT.getSimpleVT().SimpleTy) {
@@ -1323,121 +1274,59 @@ SDNode *ARMDAGToDAGISel::SelectVLDSTLane(SDNode *N, bool IsLoad,
   SDValue Pred = getAL(CurDAG);
   SDValue Reg0 = CurDAG->getRegister(0, MVT::i32);
 
-  SmallVector<SDValue, 10> Ops;
+  SmallVector<SDValue, 7> Ops;
   Ops.push_back(MemAddr);
   Ops.push_back(Align);
 
-  unsigned Opc = 0;
-  if (is64BitVector) {
-    Opc = DOpcodes[OpcodeIndex];
-    SDValue RegSeq;
-    SDValue V0 = N->getOperand(0+3);
-    SDValue V1 = N->getOperand(1+3);
-    if (NumVecs == 2) {
-      RegSeq = SDValue(PairDRegs(MVT::v2i64, V0, V1), 0);
-    } else {
-      SDValue V2 = N->getOperand(2+3);
-      SDValue V3 = (NumVecs == 3)
-        ? SDValue(CurDAG->getMachineNode(TargetOpcode::IMPLICIT_DEF,dl,VT), 0)
-        : N->getOperand(3+3);
-      RegSeq = SDValue(QuadDRegs(MVT::v4i64, V0, V1, V2, V3), 0);
-    }
+  unsigned Opc = (is64BitVector ? DOpcodes[OpcodeIndex] :
+                  Opc = QOpcodes[OpcodeIndex]);
 
-    // Now extract the D registers back out.
-    Ops.push_back(CurDAG->getTargetExtractSubreg(ARM::dsub_0, dl, VT, RegSeq));
-    Ops.push_back(CurDAG->getTargetExtractSubreg(ARM::dsub_1, dl, VT, RegSeq));
-    if (NumVecs > 2)
-      Ops.push_back(CurDAG->getTargetExtractSubreg(ARM::dsub_2, dl, VT,RegSeq));
-    if (NumVecs > 3)
-      Ops.push_back(CurDAG->getTargetExtractSubreg(ARM::dsub_3, dl, VT,RegSeq));
+  SDValue SuperReg;
+  SDValue V0 = N->getOperand(0+3);
+  SDValue V1 = N->getOperand(1+3);
+  if (NumVecs == 2) {
+    if (is64BitVector)
+      SuperReg = SDValue(PairDRegs(MVT::v2i64, V0, V1), 0);
+    else
+      SuperReg = SDValue(PairQRegs(MVT::v4i64, V0, V1), 0);
   } else {
-    // Check if this is loading the even or odd subreg of a Q register.
-    if (Lane < NumElts) {
-      Opc = QOpcodes0[OpcodeIndex];
-    } else {
-      Lane -= NumElts;
-      Opc = QOpcodes1[OpcodeIndex];
-    }
-
-    SDValue RegSeq;
-    SDValue V0 = N->getOperand(0+3);
-    SDValue V1 = N->getOperand(1+3);
-    if (NumVecs == 2) {
-      RegSeq = SDValue(PairQRegs(MVT::v4i64, V0, V1), 0);
-    } else {
-      SDValue V2 = N->getOperand(2+3);
-      SDValue V3 = (NumVecs == 3)
-        ? SDValue(CurDAG->getMachineNode(TargetOpcode::IMPLICIT_DEF,dl,VT), 0)
-        : N->getOperand(3+3);
-      RegSeq = SDValue(QuadQRegs(MVT::v8i64, V0, V1, V2, V3), 0);
-    }
-
-    // Extract the subregs of the input vector.
-    unsigned SubIdx = Even ? ARM::dsub_0 : ARM::dsub_1;
-    for (unsigned Vec = 0; Vec < NumVecs; ++Vec)
-      Ops.push_back(CurDAG->getTargetExtractSubreg(SubIdx+Vec*2, dl, RegVT,
-                                                   RegSeq));
+    SDValue V2 = N->getOperand(2+3);
+    SDValue V3 = (NumVecs == 3)
+      ? SDValue(CurDAG->getMachineNode(TargetOpcode::IMPLICIT_DEF,dl,VT), 0)
+      : N->getOperand(3+3);
+    if (is64BitVector)
+      SuperReg = SDValue(QuadDRegs(MVT::v4i64, V0, V1, V2, V3), 0);
+    else
+      SuperReg = SDValue(QuadQRegs(MVT::v8i64, V0, V1, V2, V3), 0);
   }
+  Ops.push_back(SuperReg);
   Ops.push_back(getI32Imm(Lane));
   Ops.push_back(Pred);
   Ops.push_back(Reg0);
   Ops.push_back(Chain);
 
   if (!IsLoad)
-    return CurDAG->getMachineNode(Opc, dl, MVT::Other, Ops.data(), NumVecs+6);
+    return CurDAG->getMachineNode(Opc, dl, MVT::Other, Ops.data(), 7);
 
-  std::vector<EVT> ResTys(NumVecs, RegVT);
-  ResTys.push_back(MVT::Other);
-  SDNode *VLdLn = CurDAG->getMachineNode(Opc, dl, ResTys, Ops.data(),NumVecs+6);
+  EVT ResTy;
+  unsigned ResTyElts = (NumVecs == 3) ? 4 : NumVecs;
+  if (!is64BitVector)
+    ResTyElts *= 2;
+  ResTy = EVT::getVectorVT(*CurDAG->getContext(), MVT::i64, ResTyElts);
 
-  // Form a REG_SEQUENCE to force register allocation.
-  SDValue RegSeq;
-  if (is64BitVector) {
-    SDValue V0 = SDValue(VLdLn, 0);
-    SDValue V1 = SDValue(VLdLn, 1);
-    if (NumVecs == 2) {
-      RegSeq = SDValue(PairDRegs(MVT::v2i64, V0, V1), 0);
-    } else {
-      SDValue V2 = SDValue(VLdLn, 2);
-      // If it's a vld3, form a quad D-register but discard the last part.
-      SDValue V3 = (NumVecs == 3)
-        ? SDValue(CurDAG->getMachineNode(TargetOpcode::IMPLICIT_DEF,dl,VT), 0)
-        : SDValue(VLdLn, 3);
-      RegSeq = SDValue(QuadDRegs(MVT::v4i64, V0, V1, V2, V3), 0);
-    }
-  } else {
-    // For 128-bit vectors, take the 64-bit results of the load and insert
-    // them as subregs into the result.
-    SDValue V[8];
-    for (unsigned Vec = 0, i = 0; Vec < NumVecs; ++Vec, i+=2) {
-      if (Even) {
-        V[i]   = SDValue(VLdLn, Vec);
-        V[i+1] = SDValue(CurDAG->getMachineNode(TargetOpcode::IMPLICIT_DEF,
-                                                dl, RegVT), 0);
-      } else {
-        V[i]   = SDValue(CurDAG->getMachineNode(TargetOpcode::IMPLICIT_DEF,
-                                                dl, RegVT), 0);
-        V[i+1] = SDValue(VLdLn, Vec);
-      }
-    }
-    if (NumVecs == 3)
-      V[6] = V[7] = SDValue(CurDAG->getMachineNode(TargetOpcode::IMPLICIT_DEF,
-                                                   dl, RegVT), 0);
+  SDNode *VLdLn = CurDAG->getMachineNode(Opc, dl, ResTy, MVT::Other,
+                                         Ops.data(), 7);
+  SuperReg = SDValue(VLdLn, 0);
+  Chain = SDValue(VLdLn, 1);
 
-    if (NumVecs == 2)
-      RegSeq = SDValue(QuadDRegs(MVT::v4i64, V[0], V[1], V[2], V[3]), 0);
-    else
-      RegSeq = SDValue(OctoDRegs(MVT::v8i64, V[0], V[1], V[2], V[3],
-                                 V[4], V[5], V[6], V[7]), 0);
-  }
-
+  // Extract the subregisters.
   assert(ARM::dsub_7 == ARM::dsub_0+7 && "Unexpected subreg numbering");
   assert(ARM::qsub_3 == ARM::qsub_0+3 && "Unexpected subreg numbering");
   unsigned SubIdx = is64BitVector ? ARM::dsub_0 : ARM::qsub_0;
   for (unsigned Vec = 0; Vec < NumVecs; ++Vec)
     ReplaceUses(SDValue(N, Vec),
-                CurDAG->getTargetExtractSubreg(SubIdx+Vec, dl, VT, RegSeq));
-  ReplaceUses(SDValue(N, NumVecs), SDValue(VLdLn, NumVecs));
+                CurDAG->getTargetExtractSubreg(SubIdx+Vec, dl, VT, SuperReg));
+  ReplaceUses(SDValue(N, NumVecs), Chain);
   return NULL;
 }
 
@@ -2119,24 +2008,24 @@ SDNode *ARMDAGToDAGISel::Select(SDNode *N) {
     }
 
     case Intrinsic::arm_neon_vld2lane: {
-      unsigned DOpcodes[] = { ARM::VLD2LNd8, ARM::VLD2LNd16, ARM::VLD2LNd32 };
-      unsigned QOpcodes0[] = { ARM::VLD2LNq16, ARM::VLD2LNq32 };
-      unsigned QOpcodes1[] = { ARM::VLD2LNq16odd, ARM::VLD2LNq32odd };
-      return SelectVLDSTLane(N, true, 2, DOpcodes, QOpcodes0, QOpcodes1);
+      unsigned DOpcodes[] = { ARM::VLD2LNd8Pseudo, ARM::VLD2LNd16Pseudo,
+                              ARM::VLD2LNd32Pseudo };
+      unsigned QOpcodes[] = { ARM::VLD2LNq16Pseudo, ARM::VLD2LNq32Pseudo };
+      return SelectVLDSTLane(N, true, 2, DOpcodes, QOpcodes);
     }
 
     case Intrinsic::arm_neon_vld3lane: {
-      unsigned DOpcodes[] = { ARM::VLD3LNd8, ARM::VLD3LNd16, ARM::VLD3LNd32 };
-      unsigned QOpcodes0[] = { ARM::VLD3LNq16, ARM::VLD3LNq32 };
-      unsigned QOpcodes1[] = { ARM::VLD3LNq16odd, ARM::VLD3LNq32odd };
-      return SelectVLDSTLane(N, true, 3, DOpcodes, QOpcodes0, QOpcodes1);
+      unsigned DOpcodes[] = { ARM::VLD3LNd8Pseudo, ARM::VLD3LNd16Pseudo,
+                              ARM::VLD3LNd32Pseudo };
+      unsigned QOpcodes[] = { ARM::VLD3LNq16Pseudo, ARM::VLD3LNq32Pseudo };
+      return SelectVLDSTLane(N, true, 3, DOpcodes, QOpcodes);
     }
 
     case Intrinsic::arm_neon_vld4lane: {
-      unsigned DOpcodes[] = { ARM::VLD4LNd8, ARM::VLD4LNd16, ARM::VLD4LNd32 };
-      unsigned QOpcodes0[] = { ARM::VLD4LNq16, ARM::VLD4LNq32 };
-      unsigned QOpcodes1[] = { ARM::VLD4LNq16odd, ARM::VLD4LNq32odd };
-      return SelectVLDSTLane(N, true, 4, DOpcodes, QOpcodes0, QOpcodes1);
+      unsigned DOpcodes[] = { ARM::VLD4LNd8Pseudo, ARM::VLD4LNd16Pseudo,
+                              ARM::VLD4LNd32Pseudo };
+      unsigned QOpcodes[] = { ARM::VLD4LNq16Pseudo, ARM::VLD4LNq32Pseudo };
+      return SelectVLDSTLane(N, true, 4, DOpcodes, QOpcodes);
     }
 
     case Intrinsic::arm_neon_vst1: {
@@ -2180,24 +2069,24 @@ SDNode *ARMDAGToDAGISel::Select(SDNode *N) {
     }
 
     case Intrinsic::arm_neon_vst2lane: {
-      unsigned DOpcodes[] = { ARM::VST2LNd8, ARM::VST2LNd16, ARM::VST2LNd32 };
-      unsigned QOpcodes0[] = { ARM::VST2LNq16, ARM::VST2LNq32 };
-      unsigned QOpcodes1[] = { ARM::VST2LNq16odd, ARM::VST2LNq32odd };
-      return SelectVLDSTLane(N, false, 2, DOpcodes, QOpcodes0, QOpcodes1);
+      unsigned DOpcodes[] = { ARM::VST2LNd8Pseudo, ARM::VST2LNd16Pseudo,
+                              ARM::VST2LNd32Pseudo };
+      unsigned QOpcodes[] = { ARM::VST2LNq16Pseudo, ARM::VST2LNq32Pseudo };
+      return SelectVLDSTLane(N, false, 2, DOpcodes, QOpcodes);
     }
 
     case Intrinsic::arm_neon_vst3lane: {
-      unsigned DOpcodes[] = { ARM::VST3LNd8, ARM::VST3LNd16, ARM::VST3LNd32 };
-      unsigned QOpcodes0[] = { ARM::VST3LNq16, ARM::VST3LNq32 };
-      unsigned QOpcodes1[] = { ARM::VST3LNq16odd, ARM::VST3LNq32odd };
-      return SelectVLDSTLane(N, false, 3, DOpcodes, QOpcodes0, QOpcodes1);
+      unsigned DOpcodes[] = { ARM::VST3LNd8Pseudo, ARM::VST3LNd16Pseudo,
+                              ARM::VST3LNd32Pseudo };
+      unsigned QOpcodes[] = { ARM::VST3LNq16Pseudo, ARM::VST3LNq32Pseudo };
+      return SelectVLDSTLane(N, false, 3, DOpcodes, QOpcodes);
     }
 
     case Intrinsic::arm_neon_vst4lane: {
-      unsigned DOpcodes[] = { ARM::VST4LNd8, ARM::VST4LNd16, ARM::VST4LNd32 };
-      unsigned QOpcodes0[] = { ARM::VST4LNq16, ARM::VST4LNq32 };
-      unsigned QOpcodes1[] = { ARM::VST4LNq16odd, ARM::VST4LNq32odd };
-      return SelectVLDSTLane(N, false, 4, DOpcodes, QOpcodes0, QOpcodes1);
+      unsigned DOpcodes[] = { ARM::VST4LNd8Pseudo, ARM::VST4LNd16Pseudo,
+                              ARM::VST4LNd32Pseudo };
+      unsigned QOpcodes[] = { ARM::VST4LNq16Pseudo, ARM::VST4LNq32Pseudo };
+      return SelectVLDSTLane(N, false, 4, DOpcodes, QOpcodes);
     }
     }
     break;
