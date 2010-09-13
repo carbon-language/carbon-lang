@@ -94,6 +94,24 @@ public:
     //------------------------------------------------------------------
     virtual StreamString &
     DwarfOpcodeStream () = 0;
+    
+    //------------------------------------------------------------------
+    /// Flags
+    //------------------------------------------------------------------
+    
+    //------------------------------------------------------------------
+    /// Return true if validation code should be inserted into the
+    /// expression.
+    //------------------------------------------------------------------
+    virtual bool
+    NeedsValidation () = 0;
+    
+    //------------------------------------------------------------------
+    /// Return true if external variables in the expression should be
+    /// resolved.
+    //------------------------------------------------------------------
+    virtual bool
+    NeedsVariableResolution () = 0;
 };
 
 } // namespace lldb_private

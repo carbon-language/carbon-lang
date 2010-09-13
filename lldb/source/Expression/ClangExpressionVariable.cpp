@@ -18,6 +18,8 @@
 #include "lldb/Core/DataExtractor.h"
 #include "lldb/Core/Stream.h"
 #include "lldb/Core/Value.h"
+#include "lldb/Target/ExecutionContext.h"
+#include "lldb/Target/Process.h"
 
 using namespace lldb_private;
 using namespace clang;
@@ -78,6 +80,12 @@ ClangExpressionVariable::Print (Stream &output_stream,
     // The expression result is more complex and requires special handling
     DataExtractor data;
     Error expr_error = val.GetValueAsData (&exe_ctx, ast_context, data, 0);
+    
+    
+    // Set byte order and pointer size to TARGET byte order and pointer size!
+    
+    data.SetByteOrder(exe_ctx.process->GetByteOrder());
+    data.SetAddressByteSize(exe_ctx.process->GetAddressByteSize());
     
     if (!expr_error.Success ())
     {

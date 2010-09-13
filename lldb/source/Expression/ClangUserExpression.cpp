@@ -196,13 +196,16 @@ ClangUserExpression::Execute (Stream &error_stream,
             
             Error dump_error;
             
-            if (!m_expr_decl_map->DumpMaterializedStruct(&exe_ctx, args, dump_error))
+            if (struct_address)
             {
-                log->Printf("Couldn't extract variable values : %s", dump_error.AsCString("unknown error"));
-            }
-            else
-            {
-                log->Printf("Structure contents:\n%s", args.GetData());
+                if (!m_expr_decl_map->DumpMaterializedStruct(&exe_ctx, args, dump_error))
+                {
+                    log->Printf("Couldn't extract variable values : %s", dump_error.AsCString("unknown error"));
+                }
+                else
+                {
+                    log->Printf("Structure contents:\n%s", args.GetData());
+                }
             }
         }
         

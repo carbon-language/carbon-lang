@@ -32,12 +32,14 @@ static char ID;
 
 IRForTarget::IRForTarget(lldb_private::ClangExpressionDeclMap *decl_map,
                          const TargetData *target_data,
+                         bool resolve_vars,
                          const char *func_name) :
     ModulePass(&ID),
     m_decl_map(decl_map),
     m_target_data(target_data),
     m_sel_registerName(NULL),
-    m_func_name(func_name)
+    m_func_name(func_name),
+    m_resolve_vars(resolve_vars)
 {
 }
 
@@ -65,7 +67,10 @@ IRForTarget::createResultVariable(llvm::Module &M,
 {
     lldb_private::Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS);
     
-    // Find the result variable
+    if (!m_resolve_vars)
+        return true;
+    
+    // Find the result variable.  If it doesn't exist, we can give up right here.
             
     Value *result_value = M.getNamedValue("___clang_expr_result");
     
@@ -73,9 +78,10 @@ IRForTarget::createResultVariable(llvm::Module &M,
     {
         if (log)
             log->PutCString("Couldn't find result variable");
-        return false;
+                
+        return true;
     }
-    
+        
     if (log)
         log->Printf("Found result in the IR: %s", PrintValue(result_value, false).c_str());
     
@@ -429,6 +435,9 @@ bool
 IRForTarget::rewritePersistentAllocs(llvm::Module &M,
                                      llvm::BasicBlock &BB)
 {
+    if (!m_resolve_vars)
+        return true;
+    
     lldb_private::Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS);
     
     BasicBlock::iterator ii;
@@ -649,6 +658,17 @@ IRForTarget::MaybeHandleCall(Module &M,
     
     C->setCalledFunction(fun_addr_ptr);
     
+    ConstantArray *func_name = (ConstantArray*)ConstantArray::get(M.getContext(), fun->getName());
+    
+    Value *values[1];
+    values[0] = func_name;
+    MDNode *func_metadata = MDNode::get(M.getContext(), values, 1);
+    
+    C->setMetadata("lldb.call.realName", func_metadata);
+    
+    if (log)
+        log->Printf("Set metadata for %p [%d, %s]", C, func_name->isString(), func_name->getAsString().c_str());
+    
     return true;
 }
 
@@ -667,13 +687,16 @@ IRForTarget::resolveExternals(Module &M, BasicBlock &BB)
     {
         Instruction &inst = *ii;
         
-        if (LoadInst *load = dyn_cast<LoadInst>(&inst))
-            if (!MaybeHandleVariable(M, load->getPointerOperand(), false))
-                return false;
+        if (m_resolve_vars)
+        {
+            if (LoadInst *load = dyn_cast<LoadInst>(&inst))
+                if (!MaybeHandleVariable(M, load->getPointerOperand(), false))
+                    return false;
             
-        if (StoreInst *store = dyn_cast<StoreInst>(&inst))
-            if (!MaybeHandleVariable(M, store->getPointerOperand(), true))
-                return false;
+            if (StoreInst *store = dyn_cast<StoreInst>(&inst))
+                if (!MaybeHandleVariable(M, store->getPointerOperand(), true))
+                    return false;
+        }
         
         if (CallInst *call = dyn_cast<CallInst>(&inst))
             if (!MaybeHandleCall(M, call))
@@ -886,6 +909,9 @@ UnfoldConstant(Constant *C, Value *new_value, Instruction *first_entry_instructi
 bool 
 IRForTarget::replaceVariables(Module &M, Function &F)
 {
+    if (!m_resolve_vars)
+        return true;
+    
     lldb_private::Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS);
 
     m_decl_map->DoStructLayout();

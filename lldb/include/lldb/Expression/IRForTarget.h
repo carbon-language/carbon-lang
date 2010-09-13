@@ -59,9 +59,15 @@ public:
     ///
     /// @param[in] func_name
     ///     The name of the function to prepare for execution in the target.
+    ///
+    /// @param[in] resolve_vars
+    ///     True if the external variable references (including persistent
+    ///     variables) should be resolved.  If not, only external functions
+    ///     are resolved.
     //------------------------------------------------------------------
     IRForTarget(lldb_private::ClangExpressionDeclMap *decl_map,
                 const llvm::TargetData *target_data,
+                bool resolve_vars,
                 const char* func_name = "___clang_expr");
     
     //------------------------------------------------------------------
@@ -294,10 +300,13 @@ private:
     bool replaceVariables(llvm::Module &M,
                           llvm::Function &F);
     
-    std::string m_func_name;                            ///< The name of the function to translate
-    lldb_private::ClangExpressionDeclMap *m_decl_map;   ///< The DeclMap containing the Decls 
-    const llvm::TargetData *m_target_data;              ///< The TargetData for use in determining type sizes
-    llvm::Constant *m_sel_registerName;                 ///< The address of the function sel_registerName, cast to the appropriate function pointer type
+    /// Flags
+    bool                                    m_resolve_vars;         ///< True if external variable references and persistent variable references should be resolved
+    
+    std::string                             m_func_name;            ///< The name of the function to translate
+    lldb_private::ClangExpressionDeclMap   *m_decl_map;             ///< The DeclMap containing the Decls 
+    const llvm::TargetData                 *m_target_data;          ///< The TargetData for use in determining type sizes
+    llvm::Constant                         *m_sel_registerName;     ///< The address of the function sel_registerName, cast to the appropriate function pointer type
 };
 
 #endif

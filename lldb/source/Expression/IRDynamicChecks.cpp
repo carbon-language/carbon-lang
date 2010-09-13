@@ -8,9 +8,12 @@
 //===----------------------------------------------------------------------===//
 
 #include "lldb/Expression/IRDynamicChecks.h"
-#include "lldb/Expression/ClangUtilityFunction.h"
 
+#include "lldb/Core/ConstString.h"
 #include "lldb/Core/Log.h"
+#include "lldb/Expression/ClangUtilityFunction.h"
+#include "lldb/Target/ExecutionContext.h"
+#include "lldb/Target/StackFrame.h"
 
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Function.h"
@@ -23,6 +26,9 @@ using namespace lldb_private;
 
 static char ID;
 
+static const char valid_pointer_check_name[] = 
+"___clang_valid_pointer_check";
+
 static const char valid_pointer_check_text[] = 
     "extern \"C\" void "
     "___clang_valid_pointer_check (unsigned char *ptr)"
@@ -30,13 +36,57 @@ static const char valid_pointer_check_text[] =
         "unsigned char val = *ptr;"
     "}";
 
-static const char valid_pointer_check_name[] = 
-    "___clang_valid_pointer_check";
+static const char objc_object_check_name[] =
+    "___clang_objc_object_check";
+
+static bool FunctionExists(const SymbolContext &sym_ctx, const char *name)
+{
+    ConstString name_cs(name);
+
+    SymbolContextList sym_ctxs;
+    
+    sym_ctx.FindFunctionsByName(name_cs, false, sym_ctxs);
+
+    return (sym_ctxs.GetSize() != 0);
+}
+
+static const char *objc_object_check_text(ExecutionContext &exe_ctx)
+{
+    std::string ret;
+    
+    if (!exe_ctx.frame)
+        return "extern \"C\" void ___clang_objc_object_check (unsigned char *obj) { }";
+    
+    const SymbolContext &sym_ctx(exe_ctx.frame->GetSymbolContext(lldb::eSymbolContextEverything));
+
+    if (FunctionExists(sym_ctx, "gdb_object_getClass"))
+    {
+        return  "extern \"C\" void "
+                "___clang_objc_object_check(uint8_t *obj)"
+                "{"
+                    ""
+                "}";
+    }
+    else if (FunctionExists(sym_ctx, "gdb_class_getClass"))
+    {
+        return  "extern \"C\" void "
+                "___clang_objc_object_check(uint8_t *obj)"
+                "{"
+                    ""
+                "}";
+    }
+    else
+    {
+        return  "extern \"C\" void "
+                "___clang_objc_object_check(uint8_t *obj)"
+                "{"
+                    ""
+                "}";
+    }
+}
 
 DynamicCheckerFunctions::DynamicCheckerFunctions ()
 {
-    m_valid_pointer_check.reset(new ClangUtilityFunction(valid_pointer_check_text,
-                                                         valid_pointer_check_name));
 }
 
 DynamicCheckerFunctions::~DynamicCheckerFunctions ()
@@ -47,6 +97,9 @@ bool
 DynamicCheckerFunctions::Install(Stream &error_stream,
                                  ExecutionContext &exe_ctx)
 {
+    m_valid_pointer_check.reset(new ClangUtilityFunction(valid_pointer_check_text,
+                                                         valid_pointer_check_name));
+    
     if (!m_valid_pointer_check->Install(error_stream, exe_ctx))
         return false;
         
@@ -104,7 +157,8 @@ public:
     Instrumenter (llvm::Module &module,
                   DynamicCheckerFunctions &checker_functions) :
         m_module(module),
-        m_checker_functions(checker_functions)
+        m_checker_functions(checker_functions),
+        m_i8ptr_ty(NULL)
     {
     }
     
@@ -222,12 +276,42 @@ protected:
         return true;
     }
     
+    //------------------------------------------------------------------
+    /// Build a function pointer for a function with signature 
+    /// void (*)(uint8_t*) with a given address
+    ///
+    /// @param[in] start_address
+    ///     The address of the function.
+    ///
+    /// @return
+    ///     The function pointer, for use in a CallInst.
+    //------------------------------------------------------------------
+    llvm::Value *BuildPointerValidatorFunc(lldb::addr_t start_address)
+    {
+        std::vector<const llvm::Type*> params;
+        
+        const IntegerType *intptr_ty = llvm::Type::getIntNTy(m_module.getContext(),
+                                                             (m_module.getPointerSize() == llvm::Module::Pointer64) ? 64 : 32);
+        
+        if (!m_i8ptr_ty)
+            m_i8ptr_ty = llvm::Type::getInt8PtrTy(m_module.getContext());
+        
+        params.push_back(m_i8ptr_ty);
+        
+        FunctionType *fun_ty = FunctionType::get(llvm::Type::getVoidTy(m_module.getContext()), params, true);
+        PointerType *fun_ptr_ty = PointerType::getUnqual(fun_ty);
+        Constant *fun_addr_int = ConstantInt::get(intptr_ty, start_address, false);
+        return ConstantExpr::getIntToPtr(fun_addr_int, fun_ptr_ty);
+    }
+    
     typedef std::vector <llvm::Instruction *>   InstVector;
     typedef InstVector::iterator                InstIterator;
     
     InstVector                  m_to_instrument;        ///< List of instructions the inspector found
     llvm::Module               &m_module;               ///< The module which is being instrumented
     DynamicCheckerFunctions    &m_checker_functions;    ///< The dynamic checker functions for the process
+
+    const PointerType          *m_i8ptr_ty;
 };
 
 class ValidPointerChecker : public Instrumenter
@@ -249,21 +333,7 @@ private:
                         PrintValue(inst).c_str());
         
         if (!m_valid_pointer_check_func)
-        {
-            std::vector<const llvm::Type*> params;
-            
-            const IntegerType *intptr_ty = llvm::Type::getIntNTy(m_module.getContext(),
-                                                                 (m_module.getPointerSize() == llvm::Module::Pointer64) ? 64 : 32);
-            
-            m_i8ptr_ty = llvm::Type::getInt8PtrTy(m_module.getContext());
-            
-            params.push_back(m_i8ptr_ty);
-            
-            FunctionType *fun_ty = FunctionType::get(llvm::Type::getVoidTy(m_module.getContext()), params, true);
-            PointerType *fun_ptr_ty = PointerType::getUnqual(fun_ty);
-            Constant *fun_addr_int = ConstantInt::get(intptr_ty, m_checker_functions.m_valid_pointer_check->StartAddress(), false);
-            m_valid_pointer_check_func = ConstantExpr::getIntToPtr(fun_addr_int, fun_ptr_ty);
-        }
+            m_valid_pointer_check_func = BuildPointerValidatorFunc(m_checker_functions.m_valid_pointer_check->StartAddress());
         
         llvm::Value *dereferenced_ptr;
         
@@ -305,6 +375,104 @@ private:
     }
     
     llvm::Value         *m_valid_pointer_check_func;
+};
+
+class ObjcObjectChecker : public Instrumenter
+{
+public:
+    ObjcObjectChecker(llvm::Module &module,
+                        DynamicCheckerFunctions &checker_functions) :
+        Instrumenter(module, checker_functions),
+        m_objc_object_check_func(NULL)
+    {
+    }
+private:
+    bool InstrumentInstruction(llvm::Instruction *inst)
+    {
+        CallInst *call_inst = dyn_cast<CallInst>(inst);
+        
+        if (!call_inst)
+            return false; // this really should be true, because otherwise InspectInstruction wouldn't have registered it
+        
+        if (!m_objc_object_check_func)
+            m_objc_object_check_func = BuildPointerValidatorFunc(m_checker_functions.m_objc_object_check->StartAddress());
+        
+        llvm::Value *target_object;
+        
+        // id objc_msgSend(id theReceiver, SEL theSelector, ...)
+        
+        target_object = call_inst->getArgOperand(0);
+        
+        // Insert an instruction to cast the receiver id to int8_t*
+        
+        BitCastInst *bit_cast = new BitCastInst(target_object,
+                                                m_i8ptr_ty,
+                                                "",
+                                                inst);
+        
+        // Insert an instruction to call the helper with the result
+        
+        SmallVector <llvm::Value*, 1> args;
+        args.push_back(bit_cast);
+        
+        CallInst::Create(m_objc_object_check_func, 
+                         args.begin(),
+                         args.end(),
+                         "",
+                         inst);
+        
+        return true;
+    }
+    
+    bool InspectInstruction(llvm::Instruction &i)
+    {
+        lldb_private::Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS);
+
+        CallInst *call_inst = dyn_cast<CallInst>(&i);
+        
+        if (call_inst)
+        {
+            // This metadata is set by IRForTarget::MaybeHandleCall().
+            
+            MDNode *metadata = call_inst->getMetadata("lldb.call.realName");
+                        
+            if (!metadata)
+                return true;
+            
+            if (metadata->getNumOperands() != 1)
+            {
+                if (log)
+                    log->Printf("Function call metadata has %d operands for [%p] %s", metadata->getNumOperands(), call_inst, PrintValue(call_inst).c_str());
+                return false;
+            }
+            
+            ConstantArray *real_name = dyn_cast<ConstantArray>(metadata->getOperand(0));
+            
+            if (!real_name)
+            {
+                if (log)
+                    log->Printf("Function call metadata is not a ConstantArray for [%p] %s", call_inst, PrintValue(call_inst).c_str());
+                return false;
+            }
+            
+            if (!real_name->isString())
+            {
+                if (log)
+                    log->Printf("Function call metadata is not a string for [%p] %s", call_inst, PrintValue(call_inst).c_str());
+                return false;
+            }
+            
+            if (log)
+                log->Printf("Found call to %s: %s\n", real_name->getAsString().c_str(), PrintValue(call_inst).c_str());
+            
+            if (real_name->getAsString().find("objc_msgSend") != std::string::npos)
+                RegisterInstruction(i);
+        }
+        
+        return true;
+    }
+    
+    llvm::Value         *m_objc_object_check_func;
     const PointerType   *m_i8ptr_ty;
 };
 
@@ -342,6 +510,16 @@ IRDynamicChecks::runOnModule(llvm::Module &M)
     
     if (!vpc.Instrument())
         return false;
+    
+    /*
+    ObjcObjectChecker ooc(M, m_checker_functions);
+    
+    if (!ooc.Inspect(*function))
+        return false;
+    
+    if (!ooc.Instrument())
+        return false;
+    */
     
     if (log)
     {

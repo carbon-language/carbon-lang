@@ -75,6 +75,7 @@ public:
                   ExecutionContext &exe_ctx);
     
     std::auto_ptr<ClangUtilityFunction> m_valid_pointer_check;
+    std::auto_ptr<ClangUtilityFunction> m_objc_object_check;
 };
 
 //----------------------------------------------------------------------
@@ -99,6 +100,10 @@ public:
     ///
     /// @param[in] func_name
     ///     The name of the function to prepare for execution in the target.
+    ///
+    /// @param[in] decl_map
+    ///     The mapping used to look up entities in the target process. In
+    ///     this case, used to find objc_msgSend
     //------------------------------------------------------------------
     IRDynamicChecks(DynamicCheckerFunctions &checker_functions,
                     const char* func_name = "___clang_expr");

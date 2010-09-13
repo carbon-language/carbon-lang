@@ -401,6 +401,16 @@ ClangExpressionDeclMap::DoMaterialize (bool dematerialize,
         return LLDB_INVALID_ADDRESS;
     }
     
+    if (!m_struct_size)
+    {
+        if (log)
+            log->PutCString("Not bothering to allocate a struct because no arguments are needed");
+        
+        m_allocated_area = NULL;
+        
+        return true;
+    }
+    
     const SymbolContext &sym_ctx(exe_ctx->frame->GetSymbolContext(lldb::eSymbolContextEverything));
     
     if (!dematerialize)

@@ -113,6 +113,18 @@ ASTResultSynthesizer::SynthesizeResult (FunctionDecl *FunDecl)
     if (!function_decl)
         return false;
     
+    if (log)
+    {
+        std::string s;
+        raw_string_ostream os(s);
+        
+        function_decl->print(os);
+        
+        os.flush();
+        
+        log->Printf("Function AST before transforming:\n%s", s.c_str());
+    }
+    
     Stmt *function_body = function_decl->getBody();
     CompoundStmt *compound_stmt = dyn_cast<CompoundStmt>(function_body);
     
@@ -124,6 +136,15 @@ ASTResultSynthesizer::SynthesizeResult (FunctionDecl *FunDecl)
     
     Stmt **last_stmt_ptr = compound_stmt->body_end() - 1;
     Stmt *last_stmt = *last_stmt_ptr;
+    
+    while (dyn_cast<NullStmt>(last_stmt))
+    {
+        if (last_stmt_ptr != compound_stmt->body_begin())
+        {
+            last_stmt_ptr--;
+            last_stmt = *last_stmt_ptr;
+        }
+    }
     
     Expr *last_expr = dyn_cast<Expr>(last_stmt);
     

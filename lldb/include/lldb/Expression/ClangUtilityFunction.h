@@ -126,7 +126,7 @@ public:
     ClangExpressionDeclMap *
     DeclMap ()
     {
-        return NULL;
+        return m_expr_decl_map.get();
     }
     
     //------------------------------------------------------------------
@@ -163,12 +163,34 @@ public:
         return *((StreamString*)NULL);
     }
     
-private:
-    std::string     m_function_text;    ///< The text of the function.  Must be a well-formed translation unit.
-    std::string     m_function_name;    ///< The name of the function.
+    //------------------------------------------------------------------
+    /// Return true if validation code should be inserted into the
+    /// expression.
+    //------------------------------------------------------------------
+    bool
+    NeedsValidation ()
+    {
+        return false;
+    }
     
-    lldb::addr_t    m_jit_begin;        ///< The address of the JITted code.  LLDB_INVALID_ADDRESS if invalid.
-    lldb::addr_t    m_jit_end;          ///< The end of the JITted code.  LLDB_INVALID_ADDRESS if invalid.
+    //------------------------------------------------------------------
+    /// Return true if external variables in the expression should be
+    /// resolved.
+    //------------------------------------------------------------------
+    bool
+    NeedsVariableResolution ()
+    {
+        return false;
+    }
+    
+private:
+    std::auto_ptr<ClangExpressionDeclMap>   m_expr_decl_map;    ///< The map to use when parsing and materializing the expression.
+    
+    std::string                             m_function_text;    ///< The text of the function.  Must be a well-formed translation unit.
+    std::string                             m_function_name;    ///< The name of the function.
+    
+    lldb::addr_t                            m_jit_begin;        ///< The address of the JITted code.  LLDB_INVALID_ADDRESS if invalid.
+    lldb::addr_t                            m_jit_end;          ///< The end of the JITted code.  LLDB_INVALID_ADDRESS if invalid.
 };
 
 } // namespace lldb_private

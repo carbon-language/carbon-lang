@@ -403,7 +403,10 @@ ClangExpressionParser::MakeJIT (lldb::addr_t &func_addr,
         
         std::auto_ptr<llvm::TargetMachine> target_machine(target->createTargetMachine(m_target_triple, ""));
         
-        IRForTarget ir_for_target(decl_map, target_machine->getTargetData(), m_expr.FunctionName());
+        IRForTarget ir_for_target(decl_map, 
+                                  target_machine->getTargetData(),
+                                  m_expr.NeedsVariableResolution(),
+                                  m_expr.FunctionName());
         
         if (!ir_for_target.runOnModule(*module))
         {
@@ -412,14 +415,17 @@ ClangExpressionParser::MakeJIT (lldb::addr_t &func_addr,
             return err;
         }
         
-        IRDynamicChecks ir_dynamic_checks(*exe_ctx.process->GetDynamicCheckers(), m_expr.FunctionName());
-        
-        if (!ir_dynamic_checks.runOnModule(*module))
+        if (m_expr.NeedsValidation())
         {
-            err.SetErrorToGenericError();
-            err.SetErrorString("Couldn't add dynamic checks to the expression");
-            return err;
-        }        
+            IRDynamicChecks ir_dynamic_checks(*exe_ctx.process->GetDynamicCheckers(), m_expr.FunctionName());
+        
+            if (!ir_dynamic_checks.runOnModule(*module))
+            {
+                err.SetErrorToGenericError();
+                err.SetErrorString("Couldn't add dynamic checks to the expression");
+                return err;
+            }
+        }
     }
     
     m_jit_mm = new RecordingMemoryManager();

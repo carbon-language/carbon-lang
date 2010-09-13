@@ -564,6 +564,26 @@ public:
         return *((StreamString*)0);
     }
     
+    //------------------------------------------------------------------
+    /// Return true if validation code should be inserted into the
+    /// expression.
+    //------------------------------------------------------------------
+    bool
+    NeedsValidation ()
+    {
+        return false;
+    }
+    
+    //------------------------------------------------------------------
+    /// Return true if external variables in the expression should be
+    /// resolved.
+    //------------------------------------------------------------------
+    bool
+    NeedsVariableResolution ()
+    {
+        return false;
+    }
+    
 private:
 	//------------------------------------------------------------------
 	// For ClangFunction only

@@ -149,6 +149,26 @@ public:
     //------------------------------------------------------------------
     StreamString &
     DwarfOpcodeStream ();
+    
+    //------------------------------------------------------------------
+    /// Return true if validation code should be inserted into the
+    /// expression.
+    //------------------------------------------------------------------
+    bool
+    NeedsValidation ()
+    {
+        return true;
+    }
+    
+    //------------------------------------------------------------------
+    /// Return true if external variables in the expression should be
+    /// resolved.
+    //------------------------------------------------------------------
+    bool
+    NeedsVariableResolution ()
+    {
+        return true;
+    }
 
 private:
     std::string                                 m_expr_text;            ///< The text of the expression, as typed by the user

@@ -219,7 +219,7 @@ CommandObjectExpression::EvaluateExpression (const char *expr, bool bare, Stream
         return false;
     }
     
-    ClangExpressionVariable *expr_result;
+    ClangExpressionVariable *expr_result = NULL;
     
     if (!user_expression.Execute (error_stream, m_exe_ctx, expr_result))
     {
@@ -249,7 +249,6 @@ CommandObjectExpression::EvaluateExpression (const char *expr, bool bare, Stream
     }
     else
     {
-        error_stream.Printf ("Expression produced no result\n");
         if (result)
             result->SetStatus (eReturnStatusSuccessFinishNoResult);
     }

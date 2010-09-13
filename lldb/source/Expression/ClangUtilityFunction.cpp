@@ -17,6 +17,7 @@
 
 #include "lldb/Core/ConstString.h"
 #include "lldb/Core/Stream.h"
+#include "lldb/Expression/ClangExpressionDeclMap.h"
 #include "lldb/Expression/ClangExpressionParser.h"
 #include "lldb/Expression/ClangUtilityFunction.h"
 #include "lldb/Host/Host.h"
@@ -93,6 +94,8 @@ ClangUtilityFunction::Install (Stream &error_stream,
     //////////////////////////
     // Parse the expression
     //
+    
+    m_expr_decl_map.reset(new ClangExpressionDeclMap(&exe_ctx));
         
     ClangExpressionParser parser(target_triple.GetCString(), *this);
     
@@ -101,6 +104,9 @@ ClangUtilityFunction::Install (Stream &error_stream,
     if (num_errors)
     {
         error_stream.Printf ("error: %d errors parsing expression\n", num_errors);
+        
+        m_expr_decl_map.reset();
+        
         return false;
     }
     
@@ -109,6 +115,8 @@ ClangUtilityFunction::Install (Stream &error_stream,
     //
         
     Error jit_error = parser.MakeJIT (m_jit_begin, m_jit_end, exe_ctx);
+    
+    m_expr_decl_map.reset();
     
     if (jit_error.Success())
     {
