@@ -2829,8 +2829,6 @@ static unsigned getConstraintGenerality(TargetLowering::ConstraintType CT) {
 int TargetLowering::getMultipleConstraintMatchWeight(
     AsmOperandInfo &info, int maIndex) const {
   std::vector<std::string> &rCodes = info.multipleAlternatives[maIndex].Codes;
-  int matchingInput = info.multipleAlternatives[maIndex].MatchingInput;
-  TargetLowering::ConstraintType BestType = TargetLowering::C_Unknown;
   int BestWeight = -1;
 
   // Loop over the options, keeping track of the most general one.
