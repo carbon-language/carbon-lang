@@ -267,6 +267,7 @@ def memopv4f32 : PatFrag<(ops node:$ptr), (v4f32 (memop node:$ptr))>;
 def memopv2f64 : PatFrag<(ops node:$ptr), (v2f64 (memop node:$ptr))>;
 def memopv4i32 : PatFrag<(ops node:$ptr), (v4i32 (memop node:$ptr))>;
 def memopv2i64 : PatFrag<(ops node:$ptr), (v2i64 (memop node:$ptr))>;
+def memopv8i16 : PatFrag<(ops node:$ptr), (v8i16 (memop node:$ptr))>;
 def memopv16i8 : PatFrag<(ops node:$ptr), (v16i8 (memop node:$ptr))>;
 
 // 256-bit memop pattern fragments
@@ -285,7 +286,6 @@ def memop64 : PatFrag<(ops node:$ptr), (load node:$ptr), [{
 
 def memopv8i8  : PatFrag<(ops node:$ptr), (v8i8  (memop64 node:$ptr))>;
 def memopv4i16 : PatFrag<(ops node:$ptr), (v4i16 (memop64 node:$ptr))>;
-def memopv8i16 : PatFrag<(ops node:$ptr), (v8i16 (memop64 node:$ptr))>;
 def memopv2i32 : PatFrag<(ops node:$ptr), (v2i32 (memop64 node:$ptr))>;
 
 // MOVNT Support

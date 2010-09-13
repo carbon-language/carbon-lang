@@ -3597,7 +3597,7 @@ let isCommutable = 0 in {
                                      int_x86_ssse3_phsub_sw_128>;
   defm PMADDUBSW : SS3I_binop_rm_int<0x04, "pmaddubsw", memopv16i8,
                                      int_x86_ssse3_pmadd_ub_sw_128>;
-  defm PSHUFB    : SS3I_binop_rm_int<0x00, "pshufb", memopv8i8, 
+  defm PSHUFB    : SS3I_binop_rm_int<0x00, "pshufb", memopv16i8,
                                      int_x86_ssse3_pshuf_b_128>;
   defm PSIGNB    : SS3I_binop_rm_int<0x08, "psignb", memopv16i8,
                                      int_x86_ssse3_psign_b_128>;
