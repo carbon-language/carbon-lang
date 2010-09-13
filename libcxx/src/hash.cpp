@@ -157,7 +157,7 @@ __next_prime(size_t n)
     // Select first potential prime >= n
     //   Known a-priori n >= L
     size_t k0 = n / L;
-    size_t in = std::lower_bound(indices, indices + M, n % L) - indices;
+    size_t in = std::lower_bound(indices, indices + M, n - k0 * L) - indices;
     n = L * k0 + indices[in];
     while (true)
     {
@@ -170,302 +170,352 @@ __next_prime(size_t n)
         //    small prime.
         for (size_t j = 5; j < N - 1; ++j)
         {
-            if (n % small_primes[j] == 0)
-                goto next;
-            if (n / small_primes[j] < small_primes[j])
+            const std::size_t p = small_primes[j];
+            const std::size_t q = n / p;
+            if (q < p)
                 return n;
+            if (n == q * p)
+                goto next;
         }
         // n wasn't divisible by small primes, try potential primes
         {
             size_t i = 211;
             while (true)
             {
-                if (n % i == 0)
-                    break;
-                if (n / i < i)
+                std::size_t q = n / i;
+                if (q < i)
                     return n;
+                if (n == q * i)
+                    break;
 
                 i += 10;
-                if (n % i == 0)
-                    break;
-                if (n / i < i)
+                q = n / i;
+                if (q < i)
                     return n;
+                if (n == q * i)
+                    break;
 
                 i += 2;
-                if (n % i == 0)
-                    break;
-                if (n / i < i)
+                q = n / i;
+                if (q < i)
                     return n;
+                if (n == q * i)
+                    break;
 
                 i += 4;
-                if (n % i == 0)
-                    break;
-                if (n / i < i)
+                q = n / i;
+                if (q < i)
                     return n;
+                if (n == q * i)
+                    break;
 
                 i += 2;
-                if (n % i == 0)
-                    break;
-                if (n / i < i)
+                q = n / i;
+                if (q < i)
                     return n;
+                if (n == q * i)
+                    break;
 
                 i += 4;
-                if (n % i == 0)
-                    break;
-                if (n / i < i)
+                q = n / i;
+                if (q < i)
                     return n;
+                if (n == q * i)
+                    break;
 
                 i += 6;
-                if (n % i == 0)
-                    break;
-                if (n / i < i)
+                q = n / i;
+                if (q < i)
                     return n;
+                if (n == q * i)
+                    break;
 
                 i += 2;
-                if (n % i == 0)
-                    break;
-                if (n / i < i)
+                q = n / i;
+                if (q < i)
                     return n;
+                if (n == q * i)
+                    break;
 
                 i += 6;
-                if (n % i == 0)
-                    break;
-                if (n / i < i)
+                q = n / i;
+                if (q < i)
                     return n;
+                if (n == q * i)
+                    break;
 
                 i += 4;
-                if (n % i == 0)
-                    break;
-                if (n / i < i)
+                q = n / i;
+                if (q < i)
                     return n;
+                if (n == q * i)
+                    break;
 
                 i += 2;
-                if (n % i == 0)
-                    break;
-                if (n / i < i)
+                q = n / i;
+                if (q < i)
                     return n;
+                if (n == q * i)
+                    break;
 
                 i += 4;
-                if (n % i == 0)
-                    break;
-                if (n / i < i)
+                q = n / i;
+                if (q < i)
                     return n;
+                if (n == q * i)
+                    break;
 
                 i += 6;
-                if (n % i == 0)
-                    break;
-                if (n / i < i)
+                q = n / i;
+                if (q < i)
                     return n;
+                if (n == q * i)
+                    break;
 
                 i += 6;
-                if (n % i == 0)
-                    break;
-                if (n / i < i)
+                q = n / i;
+                if (q < i)
                     return n;
+                if (n == q * i)
+                    break;
 
                 i += 2;
-                if (n % i == 0)
-                    break;
-                if (n / i < i)
+                q = n / i;
+                if (q < i)
                     return n;
+                if (n == q * i)
+                    break;
 
                 i += 6;
-                if (n % i == 0)
-                    break;
-                if (n / i < i)
+                q = n / i;
+                if (q < i)
                     return n;
+                if (n == q * i)
+                    break;
 
                 i += 4;
-                if (n % i == 0)
-                    break;
-                if (n / i < i)
+                q = n / i;
+                if (q < i)
                     return n;
+                if (n == q * i)
+                    break;
 
                 i += 2;
-                if (n % i == 0)
-                    break;
-                if (n / i < i)
+                q = n / i;
+                if (q < i)
                     return n;
+                if (n == q * i)
+                    break;
 
                 i += 6;
-                if (n % i == 0)
-                    break;
-                if (n / i < i)
+                q = n / i;
+                if (q < i)
                     return n;
+                if (n == q * i)
+                    break;
 
                 i += 4;
-                if (n % i == 0)
-                    break;
-                if (n / i < i)
+                q = n / i;
+                if (q < i)
                     return n;
+                if (n == q * i)
+                    break;
 
                 i += 6;
-                if (n % i == 0)
-                    break;
-                if (n / i < i)
+                q = n / i;
+                if (q < i)
                     return n;
+                if (n == q * i)
+                    break;
 
                 i += 8;
-                if (n % i == 0)
-                    break;
-                if (n / i < i)
+                q = n / i;
+                if (q < i)
                     return n;
+                if (n == q * i)
+                    break;
 
                 i += 4;
-                if (n % i == 0)
-                    break;
-                if (n / i < i)
+                q = n / i;
+                if (q < i)
                     return n;
+                if (n == q * i)
+                    break;
 
                 i += 2;
-                if (n % i == 0)
-                    break;
-                if (n / i < i)
+                q = n / i;
+                if (q < i)
                     return n;
+                if (n == q * i)
+                    break;
 
                 i += 4;
-                if (n % i == 0)
-                    break;
-                if (n / i < i)
+                q = n / i;
+                if (q < i)
                     return n;
+                if (n == q * i)
+                    break;
 
                 i += 2;
-                if (n % i == 0)
-                    break;
-                if (n / i < i)
+                q = n / i;
+                if (q < i)
                     return n;
+                if (n == q * i)
+                    break;
 
                 i += 4;
-                if (n % i == 0)
-                    break;
-                if (n / i < i)
+                q = n / i;
+                if (q < i)
                     return n;
+                if (n == q * i)
+                    break;
 
                 i += 8;
-                if (n % i == 0)
-                    break;
-                if (n / i < i)
+                q = n / i;
+                if (q < i)
                     return n;
+                if (n == q * i)
+                    break;
 
                 i += 6;
-                if (n % i == 0)
-                    break;
-                if (n / i < i)
+                q = n / i;
+                if (q < i)
                     return n;
+                if (n == q * i)
+                    break;
 
                 i += 4;
-                if (n % i == 0)
-                    break;
-                if (n / i < i)
+                q = n / i;
+                if (q < i)
                     return n;
+                if (n == q * i)
+                    break;
 
                 i += 6;
-                if (n % i == 0)
-                    break;
-                if (n / i < i)
+                q = n / i;
+                if (q < i)
                     return n;
+                if (n == q * i)
+                    break;
 
                 i += 2;
-                if (n % i == 0)
-                    break;
-                if (n / i < i)
+                q = n / i;
+                if (q < i)
                     return n;
+                if (n == q * i)
+                    break;
 
                 i += 4;
-                if (n % i == 0)
-                    break;
-                if (n / i < i)
+                q = n / i;
+                if (q < i)
                     return n;
+                if (n == q * i)
+                    break;
 
                 i += 6;
-                if (n % i == 0)
-                    break;
-                if (n / i < i)
+                q = n / i;
+                if (q < i)
                     return n;
+                if (n == q * i)
+                    break;
 
                 i += 2;
-                if (n % i == 0)
-                    break;
-                if (n / i < i)
+                q = n / i;
+                if (q < i)
                     return n;
+                if (n == q * i)
+                    break;
 
                 i += 6;
-                if (n % i == 0)
-                    break;
-                if (n / i < i)
+                q = n / i;
+                if (q < i)
                     return n;
+                if (n == q * i)
+                    break;
 
                 i += 6;
-                if (n % i == 0)
-                    break;
-                if (n / i < i)
+                q = n / i;
+                if (q < i)
                     return n;
+                if (n == q * i)
+                    break;
 
                 i += 4;
-                if (n % i == 0)
-                    break;
-                if (n / i < i)
+                q = n / i;
+                if (q < i)
                     return n;
+                if (n == q * i)
+                    break;
 
                 i += 2;
-                if (n % i == 0)
-                    break;
-                if (n / i < i)
+                q = n / i;
+                if (q < i)
                     return n;
+                if (n == q * i)
+                    break;
 
                 i += 4;
-                if (n % i == 0)
-                    break;
-                if (n / i < i)
+                q = n / i;
+                if (q < i)
                     return n;
+                if (n == q * i)
+                    break;
 
                 i += 6;
-                if (n % i == 0)
-                    break;
-                if (n / i < i)
+                q = n / i;
+                if (q < i)
                     return n;
+                if (n == q * i)
+                    break;
 
                 i += 2;
-                if (n % i == 0)
-                    break;
-                if (n / i < i)
+                q = n / i;
+                if (q < i)
                     return n;
+                if (n == q * i)
+                    break;
 
                 i += 6;
-                if (n % i == 0)
-                    break;
-                if (n / i < i)
+                q = n / i;
+                if (q < i)
                     return n;
+                if (n == q * i)
+                    break;
 
                 i += 4;
-                if (n % i == 0)
-                    break;
-                if (n / i < i)
+                q = n / i;
+                if (q < i)
                     return n;
+                if (n == q * i)
+                    break;
 
                 i += 2;
-                if (n % i == 0)
-                    break;
-                if (n / i < i)
+                q = n / i;
+                if (q < i)
                     return n;
+                if (n == q * i)
+                    break;
 
                 i += 4;
-                if (n % i == 0)
-                    break;
-                if (n / i < i)
+                q = n / i;
+                if (q < i)
                     return n;
+                if (n == q * i)
+                    break;
 
                 i += 2;
-                if (n % i == 0)
-                    break;
-                if (n / i < i)
+                q = n / i;
+                if (q < i)
                     return n;
+                if (n == q * i)
+                    break;
 
                 i += 10;
-                if (n % i == 0)
-                    break;
-                if (n / i < i)
+                q = n / i;
+                if (q < i)
                     return n;
+                if (n == q * i)
+                    break;
 
                 // This will loop i to the next "plane" of potential primes
                 i += 2;

@@ -1302,6 +1302,28 @@ move(_Tp&& __t)
     return static_cast<typename remove_reference<_Tp>::type&&>(__t);
 }
 
+#if 1
+
+template <class _Tp>
+inline _LIBCPP_INLINE_VISIBILITY
+_Tp&&
+forward(typename std::remove_reference<_Tp>::type& __t)
+{
+    return static_cast<_Tp&&>(__t);
+}
+
+template <class _Tp>
+inline _LIBCPP_INLINE_VISIBILITY
+_Tp&&
+forward(typename std::remove_reference<_Tp>::type&& __t)
+{
+ 	static_assert(!std::is_lvalue_reference<_Tp>::value,
+ 	              "Can not forward an rvalue as an lvalue.");
+ 	return static_cast<_Tp&&>(__t);
+}
+
+#else
+
 template <class _Tp,
           class = typename enable_if<
                      !is_lvalue_reference<_Tp>::value
@@ -1345,6 +1367,8 @@ template <class _Tp,
          >
 _Tp
 forward(typename remove_reference<_Tp>::type&& __t) = delete;
+
+#endif
 
 #else  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
