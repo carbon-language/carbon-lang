@@ -446,11 +446,50 @@ it run faster:</p>
 
 <ul>
 
-<li></li>
-
+<li>
+  All of the NEON load and store intrinsics (llvm.arm.neon.vld* and
+  llvm.arm.neon.vst*) take an extra parameter to specify the alignment in bytes
+  of the memory being accessed.
+</li>
+<li>
+  The llvm.arm.neon.vaba intrinsic (vector absolute difference and
+  accumulate) has been removed.  This operation is now represented using
+  the llvm.arm.neon.vabd intrinsic (vector absolute difference) followed by a
+  vector add.
 </ul>
-
-
+<li>
+  The llvm.arm.neon.vabdl and llvm.arm.neon.vabal intrinsics (lengthening
+  vector absolute difference with and without accumlation) have been removed.
+  They are represented using the llvm.arm.neon.vabd intrinsic (vector absolute
+  difference) followed by a vector zero-extend operation, and for vabal,
+  a vector add.
+</li>
+<li>
+  The llvm.arm.neon.vmovn intrinsic has been removed.  Calls of this intrinsic
+  are now replaced by vector truncate operations.
+</li>
+<li>
+  The llvm.arm.neon.vmovls and llvm.arm.neon.vmovlu intrinsics have been
+  removed.  They are now represented as vector sign-extend (vmovls) and
+  zero-extend (vmovlu) operations.
+</li>
+<li>
+  The llvm.arm.neon.vaddl*, llvm.arm.neon.vaddw*, llvm.arm.neon.vsubl*, and
+  llvm.arm.neon.vsubw* intrinsics (lengthening vector add and subtract) have
+  been removed.  They are replaced by vector add and vector subtract operations
+  where one (vaddw, vsubw) or both (vaddl, vsubl) of the operands are either
+  sign-extended or zero-extended.
+</li>
+<li>
+  The llvm.arm.neon.vmulls, llvm.arm.neon.vmullu, llvm.arm.neon.vmlal*, and
+  llvm.arm.neon.vmlsl* intrinsics (lengthening vector multiply with and without
+  accumulation and subtraction) have been removed.  These operations are now
+  represented as vector multiplications where the operands are either
+  sign-extended or zero-extended, followed by a vector add for vmlal or a
+  vector subtract for vmlsl.  Note that the polynomial vector multiply
+  intrinsic, llvm.arm.neon.vmullp, remains unchanged.
+</li>
+  
 </div>
 
 <!--=========================================================================-->
