@@ -151,7 +151,7 @@ class LiveIntervalMap {
   const LiveInterval &parentli_;
 
   // The child interval's values are fully contained inside parentli_ values.
-  LiveInterval &li_;
+  LiveInterval *li_;
 
   typedef DenseMap<const VNInfo*, VNInfo*> ValueMap;
 
@@ -172,9 +172,14 @@ class LiveIntervalMap {
 
 public:
   LiveIntervalMap(LiveIntervals &lis,
-                  const LiveInterval &parentli,
-                  LiveInterval &li)
-    : lis_(lis), parentli_(parentli), li_(li) {}
+                  const LiveInterval &parentli)
+    : lis_(lis), parentli_(parentli), li_(0) {}
+
+  /// reset - clear all data structures and start a new live interval.
+  void reset(LiveInterval *);
+
+  /// getLI - return the current live interval.
+  LiveInterval *getLI() const { return li_; }
 
   /// defValue - define a value in li_ from the parentli_ value VNI and Idx.
   /// Idx does not have to be ParentVNI->def, but it must be contained within

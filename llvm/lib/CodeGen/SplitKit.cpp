@@ -346,9 +346,15 @@ makeVV(const VNInfo *a, VNInfo *b) {
   return std::make_pair(a, b);
 }
 
+void LiveIntervalMap::reset(LiveInterval *li) {
+  li_ = li;
+  valueMap_.clear();
+}
+
 // defValue - Introduce a li_ def for ParentVNI that could be later than
 // ParentVNI->def.
 VNInfo *LiveIntervalMap::defValue(const VNInfo *ParentVNI, SlotIndex Idx) {
+  assert(li_ && "call reset first");
   assert(ParentVNI && "Mapping  NULL value");
   assert(Idx.isValid() && "Invalid SlotIndex");
   assert(parentli_.getVNInfoAt(Idx) == ParentVNI && "Bad ParentVNI");
@@ -364,13 +370,14 @@ VNInfo *LiveIntervalMap::defValue(const VNInfo *ParentVNI, SlotIndex Idx) {
 
   // Should we insert a minimal snippet of VNI LiveRange, or can we count on
   // callers to do that? We need it for lookups of complex values.
-  VNInfo *VNI = li_.getNextValue(Idx, 0, true, lis_.getVNInfoAllocator());
+  VNInfo *VNI = li_->getNextValue(Idx, 0, true, lis_.getVNInfoAllocator());
   return VNI;
 }
 
 // mapValue - Find the mapped value for ParentVNI at Idx.
 // Potentially create phi-def values.
 VNInfo *LiveIntervalMap::mapValue(const VNInfo *ParentVNI, SlotIndex Idx) {
+  assert(li_ && "call reset first");
   assert(ParentVNI && "Mapping  NULL value");
   assert(Idx.isValid() && "Invalid SlotIndex");
   assert(parentli_.getVNInfoAt(Idx) == ParentVNI && "Bad ParentVNI");
@@ -381,8 +388,8 @@ VNInfo *LiveIntervalMap::mapValue(const VNInfo *ParentVNI, SlotIndex Idx) {
 
   // This was an unknown value. Create a simple mapping.
   if (InsP.second)
-    return InsP.first->second = li_.createValueCopy(ParentVNI,
-                                                    lis_.getVNInfoAllocator());
+    return InsP.first->second = li_->createValueCopy(ParentVNI,
+                                                     lis_.getVNInfoAllocator());
   // This was a simple mapped value.
   if (InsP.first->second)
     return InsP.first->second;
@@ -449,7 +456,7 @@ VNInfo *LiveIntervalMap::mapValue(const VNInfo *ParentVNI, SlotIndex Idx) {
 
       // We have a collision between the old and new VNI at Succ. That means
       // neither dominates and we need a new phi-def.
-      VNI = li_.getNextValue(Start, 0, true, lis_.getVNInfoAllocator());
+      VNI = li_->getNextValue(Start, 0, true, lis_.getVNInfoAllocator());
       VNI->setIsPHIDef(true);
       InsP.first->second = VNI;
 
@@ -482,11 +489,11 @@ VNInfo *LiveIntervalMap::mapValue(const VNInfo *ParentVNI, SlotIndex Idx) {
      if (MBB == IdxMBB) {
        // Don't add full liveness to IdxMBB, stop at Idx.
        if (Start != Idx)
-         li_.addRange(LiveRange(Start, Idx, VNI));
+         li_->addRange(LiveRange(Start, Idx, VNI));
        // The caller had better add some liveness to IdxVNI, or it leaks.
        IdxVNI = VNI;
      } else
-      li_.addRange(LiveRange(Start, lis_.getMBBEndIdx(MBB), VNI));
+      li_->addRange(LiveRange(Start, lis_.getMBBEndIdx(MBB), VNI));
   }
 
   assert(IdxVNI && "Didn't find value for Idx");
@@ -497,8 +504,9 @@ VNInfo *LiveIntervalMap::mapValue(const VNInfo *ParentVNI, SlotIndex Idx) {
 // parentli_ is assumed to be live at Idx. Extend the live range to Idx.
 // Return the found VNInfo, or NULL.
 VNInfo *LiveIntervalMap::extendTo(MachineBasicBlock *MBB, SlotIndex Idx) {
-  LiveInterval::iterator I = std::upper_bound(li_.begin(), li_.end(), Idx);
-  if (I == li_.begin())
+  assert(li_ && "call reset first");
+  LiveInterval::iterator I = std::upper_bound(li_->begin(), li_->end(), Idx);
+  if (I == li_->begin())
     return 0;
   --I;
   if (I->start < lis_.getMBBStartIdx(MBB))
@@ -512,10 +520,11 @@ VNInfo *LiveIntervalMap::extendTo(MachineBasicBlock *MBB, SlotIndex Idx) {
 // ParentVNI must be live in the [Start;End) interval.
 void LiveIntervalMap::addSimpleRange(SlotIndex Start, SlotIndex End,
                                      const VNInfo *ParentVNI) {
+  assert(li_ && "call reset first");
   VNInfo *VNI = mapValue(ParentVNI, Start);
   // A simple mappoing is easy.
   if (VNI->def == ParentVNI->def) {
-    li_.addRange(LiveRange(Start, End, VNI));
+    li_->addRange(LiveRange(Start, End, VNI));
     return;
   }
 
@@ -524,30 +533,31 @@ void LiveIntervalMap::addSimpleRange(SlotIndex Start, SlotIndex End,
   MachineFunction::iterator MBBE = lis_.getMBBFromIndex(End);
 
   if (MBB == MBBE) {
-    li_.addRange(LiveRange(Start, End, VNI));
+    li_->addRange(LiveRange(Start, End, VNI));
     return;
   }
 
   // First block.
-  li_.addRange(LiveRange(Start, lis_.getMBBEndIdx(MBB), VNI));
+  li_->addRange(LiveRange(Start, lis_.getMBBEndIdx(MBB), VNI));
 
   // Run sequence of full blocks.
   for (++MBB; MBB != MBBE; ++MBB) {
     Start = lis_.getMBBStartIdx(MBB);
-    li_.addRange(LiveRange(Start, lis_.getMBBEndIdx(MBB),
-                           mapValue(ParentVNI, Start)));
+    li_->addRange(LiveRange(Start, lis_.getMBBEndIdx(MBB),
+                            mapValue(ParentVNI, Start)));
   }
 
   // Final block.
   Start = lis_.getMBBStartIdx(MBB);
   if (Start != End)
-    li_.addRange(LiveRange(Start, End, mapValue(ParentVNI, Start)));
+    li_->addRange(LiveRange(Start, End, mapValue(ParentVNI, Start)));
 }
 
 /// addRange - Add live ranges to li_ where [Start;End) intersects parentli_.
 /// All needed values whose def is not inside [Start;End) must be defined
 /// beforehand so mapValue will work.
 void LiveIntervalMap::addRange(SlotIndex Start, SlotIndex End) {
+  assert(li_ && "call reset first");
   LiveInterval::const_iterator B = parentli_.begin(), E = parentli_.end();
   LiveInterval::const_iterator I = std::lower_bound(B, E, Start);
 
