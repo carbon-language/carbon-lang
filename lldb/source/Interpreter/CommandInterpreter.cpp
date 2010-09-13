@@ -457,7 +457,7 @@ CommandInterpreter::GetHelp (CommandReturnObject &result)
 
     if (m_alias_dict.size() > 0)
     {
-        result.AppendMessage("The following is a list of your current command abbreviations (see 'commands alias' for more info):");
+        result.AppendMessage("The following is a list of your current command abbreviations (see 'help commands alias' for more info):");
         result.AppendMessage("");
         max_len = FindLongestCommandWord (m_alias_dict);
 
