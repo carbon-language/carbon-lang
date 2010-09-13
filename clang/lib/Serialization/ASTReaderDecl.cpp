@@ -959,32 +959,41 @@ void ASTDeclReader::VisitClassTemplateDecl(ClassTemplateDecl *D) {
 void ASTDeclReader::VisitClassTemplateSpecializationDecl(
                                            ClassTemplateSpecializationDecl *D) {
   VisitCXXRecordDecl(D);
-
+  
+  ASTContext &C = *Reader.getContext();
   if (Decl *InstD = Reader.GetDecl(Record[Idx++])) {
     if (ClassTemplateDecl *CTD = dyn_cast<ClassTemplateDecl>(InstD)) {
-      D->setInstantiationOf(CTD);
+      D->SpecializedTemplate = CTD;
     } else {
       llvm::SmallVector<TemplateArgument, 8> TemplArgs;
       Reader.ReadTemplateArgumentList(TemplArgs, Cursor, Record, Idx);
-      D->setInstantiationOf(cast<ClassTemplatePartialSpecializationDecl>(InstD),
-                            TemplArgs.data(), TemplArgs.size());
+      TemplateArgumentList *ArgList
+          = new (C) TemplateArgumentList(C, TemplArgs.data(), TemplArgs.size());
+      ClassTemplateSpecializationDecl::SpecializedPartialSpecialization *PS
+          = new (C) ClassTemplateSpecializationDecl::
+                                             SpecializedPartialSpecialization();
+      PS->PartialSpecialization
+          = cast<ClassTemplatePartialSpecializationDecl>(InstD);
+      PS->TemplateArgs = ArgList;
+      D->SpecializedTemplate = PS;
     }
   }
 
   // Explicit info.
   if (TypeSourceInfo *TyInfo = Reader.GetTypeSourceInfo(Cursor, Record, Idx)) {
-    D->setTypeAsWritten(TyInfo);
-    D->setExternLoc(Reader.ReadSourceLocation(Record, Idx));
-    D->setTemplateKeywordLoc(Reader.ReadSourceLocation(Record, Idx));
+    ClassTemplateSpecializationDecl::ExplicitSpecializationInfo *ExplicitInfo
+        = new (C) ClassTemplateSpecializationDecl::ExplicitSpecializationInfo;
+    ExplicitInfo->TypeAsWritten = TyInfo;
+    ExplicitInfo->ExternLoc = Reader.ReadSourceLocation(Record, Idx);
+    ExplicitInfo->TemplateKeywordLoc = Reader.ReadSourceLocation(Record, Idx);
+    D->ExplicitInfo = ExplicitInfo;
   }
 
   llvm::SmallVector<TemplateArgument, 8> TemplArgs;
   Reader.ReadTemplateArgumentList(TemplArgs, Cursor, Record, Idx);
-  D->initTemplateArgs(TemplArgs.data(), TemplArgs.size());
-  SourceLocation POI = Reader.ReadSourceLocation(Record, Idx);
-  if (POI.isValid())
-    D->setPointOfInstantiation(POI);
-  D->setSpecializationKind((TemplateSpecializationKind)Record[Idx++]);
+  D->TemplateArgs.init(C, TemplArgs.data(), TemplArgs.size());
+  D->PointOfInstantiation = Reader.ReadSourceLocation(Record, Idx);
+  D->SpecializationKind = (TemplateSpecializationKind)Record[Idx++];
 
   if (D->isCanonicalDecl()) { // It's kept in the folding set.
     ClassTemplateDecl *CanonPattern

@@ -1280,14 +1280,6 @@ public:
     return TemplateArgs;
   }
 
-  /// \brief Initialize the template arguments of the class template
-  /// specialization.
-  void initTemplateArgs(TemplateArgument *Args, unsigned NumArgs) {
-    assert(TemplateArgs.flat_size() == 0 &&
-           "Template arguments already initialized!");
-    TemplateArgs.init(getASTContext(), Args, NumArgs);
-  }
-
   /// \brief Determine the kind of specialization that this
   /// declaration represents.
   TemplateSpecializationKind getSpecializationKind() const {
@@ -1375,18 +1367,6 @@ public:
     SpecializedTemplate = PS;
   }
 
-  /// \brief Note that this class template specialization is actually an
-  /// instantiation of the given class template partial specialization whose
-  /// template arguments have been deduced.
-  void setInstantiationOf(ClassTemplatePartialSpecializationDecl *PartialSpec,
-                          TemplateArgument *TemplateArgs,
-                          unsigned NumTemplateArgs) {
-    ASTContext &Ctx = getASTContext();
-    setInstantiationOf(PartialSpec,
-                       new (Ctx) TemplateArgumentList(Ctx, TemplateArgs,
-                                                      NumTemplateArgs));
-  }
-
   /// \brief Note that this class template specialization is an instantiation
   /// of the given class template.
   void setInstantiationOf(ClassTemplateDecl *TemplDecl) {
@@ -1458,6 +1438,9 @@ public:
   static bool classof(const ClassTemplatePartialSpecializationDecl *) {
     return true;
   }
+  
+  friend class ASTDeclReader;
+  friend class ASTDeclWriter;
 };
 
 class ClassTemplatePartialSpecializationDecl
