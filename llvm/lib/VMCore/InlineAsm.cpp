@@ -56,18 +56,18 @@ const FunctionType *InlineAsm::getFunctionType() const {
     
 ///Default constructor.
 InlineAsm::ConstraintInfo::ConstraintInfo() :
-  isMultipleAlternative(false),
   Type(isInput), isEarlyClobber(false),
   MatchingInput(-1), isCommutative(false),
-  isIndirect(false), currentAlternativeIndex(0) {
+  isIndirect(false), isMultipleAlternative(false),
+  currentAlternativeIndex(0) {
 }
 
 /// Copy constructor.
 InlineAsm::ConstraintInfo::ConstraintInfo(const ConstraintInfo &other) :
-  isMultipleAlternative(other.isMultipleAlternative),
   Type(other.Type), isEarlyClobber(other.isEarlyClobber),
   MatchingInput(other.MatchingInput), isCommutative(other.isCommutative),
   isIndirect(other.isIndirect), Codes(other.Codes),
+  isMultipleAlternative(other.isMultipleAlternative),
   multipleAlternatives(other.multipleAlternatives),
   currentAlternativeIndex(other.currentAlternativeIndex) {
 }
