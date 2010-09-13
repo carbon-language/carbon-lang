@@ -40,6 +40,7 @@
     <ul>
       <li><a href="#super-cast">Cast of super</a></li>
       <li><a href="#sizeof-interface">Size of interfaces</a></li>
+      <li><a href="#objc_objs-cast">Internal Objective-C types</a></li>
     </ul>
   </li>
   <li><a href="#c++">C++ compatibility</a>
@@ -232,6 +233,27 @@ this problem, use the Objective-C runtime API function
 <pre>
   class_getInstanceSize([NSArray class])
 </pre>
+
+<!-- ======================================================================= -->
+<h3 id="objc_objs-cast">Internal Objective-C types</h3>
+<!-- ======================================================================= -->
+
+<p>GCC allows using pointers to internal Objective-C objects, <tt>struct objc_object*</tt>,
+<tt>struct objc_selector*</tt>, and <tt>struct objc_class*</tt> in place of the types
+<tt>id</tt>, <tt>SEL</tt>, and <tt>Class</tt> respectively. Clang treats the
+internal Objective-C structures as implementation detail and won't do implicit conversions:
+
+<pre>
+t.mm:11:2: error: no matching function for call to 'f'
+        f((struct objc_object *)p);
+        ^
+t.mm:5:6: note: candidate function not viable: no known conversion from 'struct objc_object *' to 'id' for 1st argument
+void f(id x);
+     ^
+</pre>
+
+<p>Code should use types <tt>id</tt>, <tt>SEL</tt>, and <tt>Class</tt>
+instead of the internal types.</p>
 
 <!-- ======================================================================= -->
 <h2 id="c++">C++ compatibility</h3>
