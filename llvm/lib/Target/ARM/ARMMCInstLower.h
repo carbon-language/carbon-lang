@@ -24,7 +24,7 @@ namespace llvm {
   class MachineOperand;
   class Mangler;
   //class ARMSubtarget;
-  
+
 /// ARMMCInstLower - This class is used to lower an MachineInstr into an MCInst.
 class LLVM_LIBRARY_VISIBILITY ARMMCInstLower {
   MCContext &Ctx;
@@ -35,7 +35,7 @@ class LLVM_LIBRARY_VISIBILITY ARMMCInstLower {
 public:
   ARMMCInstLower(MCContext &ctx, Mangler &mang, AsmPrinter &printer)
     : Ctx(ctx), Mang(mang), Printer(printer) {}
-  
+
   void Lower(const MachineInstr *MI, MCInst &OutMI) const;
 
   //MCSymbol *GetPICBaseSymbol() const;
@@ -44,7 +44,7 @@ public:
   MCSymbol *GetJumpTableSymbol(const MachineOperand &MO) const;
   MCSymbol *GetConstantPoolIndexSymbol(const MachineOperand &MO) const;
   MCOperand LowerSymbolOperand(const MachineOperand &MO, MCSymbol *Sym) const;
-  
+
 /*
 private:
   MachineModuleInfoMachO &getMachOMMI() const;

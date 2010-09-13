@@ -34,7 +34,7 @@ const ARMSubtarget &ARMMCInstLower::getSubtarget() const {
 
 MachineModuleInfoMachO &ARMMCInstLower::getMachOMMI() const {
   assert(getSubtarget().isTargetDarwin() &&"Can only get MachO info on darwin");
-  return AsmPrinter.MMI->getObjFileInfo<MachineModuleInfoMachO>(); 
+  return AsmPrinter.MMI->getObjFileInfo<MachineModuleInfoMachO>();
 }
 #endif
 
@@ -45,7 +45,7 @@ GetGlobalAddressSymbol(const MachineOperand &MO) const {
   default: assert(0 && "Unknown target flag on GV operand");
   case 0: break;
   }
-  
+
   return Printer.Mang->getSymbol(MO.getGlobal());
 }
 
@@ -56,7 +56,7 @@ GetExternalSymbolSymbol(const MachineOperand &MO) const {
   default: assert(0 && "Unknown target flag on GV operand");
   case 0: break;
   }
-  
+
   return Printer.GetExternalSymbolSymbol(MO.getSymbolName());
 }
 
@@ -67,13 +67,13 @@ GetJumpTableSymbol(const MachineOperand &MO) const {
   SmallString<256> Name;
   raw_svector_ostream(Name) << Printer.MAI->getPrivateGlobalPrefix() << "JTI"
     << Printer.getFunctionNumber() << '_' << MO.getIndex();
-  
+
 #if 0
   switch (MO.getTargetFlags()) {
     default: llvm_unreachable("Unknown target flag on GV operand");
   }
 #endif
-  
+
   // Create a symbol for the name.
   return Ctx.GetOrCreateSymbol(Name.str());
 }
@@ -83,29 +83,29 @@ GetConstantPoolIndexSymbol(const MachineOperand &MO) const {
   SmallString<256> Name;
   raw_svector_ostream(Name) << Printer.MAI->getPrivateGlobalPrefix() << "CPI"
     << Printer.getFunctionNumber() << '_' << MO.getIndex();
-  
+
 #if 0
   switch (MO.getTargetFlags()) {
   default: llvm_unreachable("Unknown target flag on GV operand");
   }
 #endif
-  
+
   // Create a symbol for the name.
   return Ctx.GetOrCreateSymbol(Name.str());
 }
-  
+
 MCOperand ARMMCInstLower::
 LowerSymbolOperand(const MachineOperand &MO, MCSymbol *Sym) const {
   // FIXME: We would like an efficient form for this, so we don't have to do a
   // lot of extra uniquing.
   const MCExpr *Expr = MCSymbolRefExpr::Create(Sym, Ctx);
-  
+
 #if 0
   switch (MO.getTargetFlags()) {
   default: llvm_unreachable("Unknown target flag on GV operand");
   }
 #endif
-  
+
   if (!MO.isJTI() && MO.getOffset())
     Expr = MCBinaryExpr::CreateAdd(Expr,
                                    MCConstantExpr::Create(MO.getOffset(), Ctx),
@@ -116,10 +116,10 @@ LowerSymbolOperand(const MachineOperand &MO, MCSymbol *Sym) const {
 
 void ARMMCInstLower::Lower(const MachineInstr *MI, MCInst &OutMI) const {
   OutMI.setOpcode(MI->getOpcode());
-  
+
   for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
     const MachineOperand &MO = MI->getOperand(i);
-    
+
     MCOperand MCOp;
     switch (MO.getType()) {
     default:
@@ -155,8 +155,8 @@ void ARMMCInstLower::Lower(const MachineInstr *MI, MCInst &OutMI) const {
                                               MO.getBlockAddress()));
       break;
     }
-    
+
     OutMI.addOperand(MCOp);
   }
-  
+
 }
