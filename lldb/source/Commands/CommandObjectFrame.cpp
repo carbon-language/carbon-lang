@@ -531,7 +531,6 @@ public:
             ValueObjectSP valobj_sp;
             //ValueObjectList &valobj_list = exe_ctx.frame->GetValueObjectList();
             const char *name_cstr = NULL;
-            bool show_fullpaths = true;
             size_t idx;
             if (!m_options.globals.empty())
             {
