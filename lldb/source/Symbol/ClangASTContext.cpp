@@ -1185,7 +1185,8 @@ ClangASTContext::IsAggregateType (void *clang_type)
     if (qual_type->isAggregateType ())
         return true;
 
-    switch (qual_type->getTypeClass())
+    const clang::Type::TypeClass type_class = qual_type->getTypeClass();
+    switch (type_class)
     {
     case clang::Type::IncompleteArray:
     case clang::Type::VariableArray:
@@ -1401,7 +1402,8 @@ ClangASTContext::GetChildClangTypeAtIndex
         child_bitfield_bit_size = 0;
         child_bitfield_bit_offset = 0;
         QualType parent_qual_type(QualType::getFromOpaquePtr(parent_clang_type));
-        switch (parent_qual_type->getTypeClass())
+        const clang::Type::TypeClass parent_type_class = parent_qual_type->getTypeClass();
+        switch (parent_type_class)
         {
         case clang::Type::Builtin:
             switch (cast<clang::BuiltinType>(parent_qual_type)->getKind())
@@ -1897,7 +1899,8 @@ ClangASTContext::GetIndexOfChildMemberWithName
     if (clang_type && name && name[0])
     {
         QualType qual_type(QualType::getFromOpaquePtr(clang_type));
-        switch (qual_type->getTypeClass())
+        const clang::Type::TypeClass type_class = qual_type->getTypeClass();
+        switch (type_class)
         {
         case clang::Type::Record:
             {
@@ -2174,9 +2177,9 @@ ClangASTContext::GetIndexOfChildWithName
     {
         QualType qual_type(QualType::getFromOpaquePtr(clang_type));
         
-        clang::Type::TypeClass qual_type_class = qual_type->getTypeClass();
+        const clang::Type::TypeClass type_class = qual_type->getTypeClass();
 
-        switch (qual_type_class)
+        switch (type_class)
         {
         case clang::Type::Record:
             {
@@ -2402,7 +2405,8 @@ ClangASTContext::GetDeclContextForType (void *clang_type)
         return NULL;
 
     QualType qual_type(QualType::getFromOpaquePtr(clang_type));
-    switch (qual_type->getTypeClass())
+    const clang::Type::TypeClass type_class = qual_type->getTypeClass();
+    switch (type_class)
     {
     case clang::Type::FunctionNoProto:          break;
     case clang::Type::FunctionProto:            break;
@@ -2691,7 +2695,8 @@ ClangASTContext::CreatePointerType (void *clang_type)
     {
         QualType qual_type (QualType::getFromOpaquePtr(clang_type));
 
-        switch (qual_type->getTypeClass())
+        const clang::Type::TypeClass type_class = qual_type->getTypeClass();
+        switch (type_class)
         {
         case clang::Type::ObjCObject:
         case clang::Type::ObjCInterface:
@@ -2743,7 +2748,8 @@ ClangASTContext::IsPointerOrReferenceType (void *clang_type, void **target_type)
         return false;
 
     QualType qual_type (QualType::getFromOpaquePtr(clang_type));
-    switch (qual_type->getTypeClass())
+    const clang::Type::TypeClass type_class = qual_type->getTypeClass();
+    switch (type_class)
     {
     case clang::Type::ObjCObjectPointer:
         if (target_type)
@@ -2803,7 +2809,8 @@ ClangASTContext::IsPointerType (void *clang_type, void **target_type)
     if (clang_type)
     {
         QualType qual_type (QualType::getFromOpaquePtr(clang_type));
-        switch (qual_type->getTypeClass())
+        const clang::Type::TypeClass type_class = qual_type->getTypeClass();
+        switch (type_class)
         {
         case clang::Type::ObjCObjectPointer:
             if (target_type)
@@ -2876,7 +2883,8 @@ ClangASTContext::IsCStringType (void *clang_type, uint32_t &length)
     if (clang_type)
     {
         QualType qual_type (QualType::getFromOpaquePtr(clang_type));
-        switch (qual_type->getTypeClass())
+        const clang::Type::TypeClass type_class = qual_type->getTypeClass();
+        switch (type_class)
         {
         case clang::Type::ConstantArray:
             {
@@ -2934,6 +2942,38 @@ ClangASTContext::IsCStringType (void *clang_type, uint32_t &length)
 }
 
 bool
+ClangASTContext::IsFunctionPointerType (void *clang_type)
+{
+    if (clang_type)
+    {
+        QualType qual_type (QualType::getFromOpaquePtr(clang_type));
+        
+        if (qual_type->isFunctionPointerType())
+            return true;
+    
+        const clang::Type::TypeClass type_class = qual_type->getTypeClass();
+        switch (type_class)
+        {
+        case clang::Type::Typedef:
+            return ClangASTContext::IsFunctionPointerType (cast<TypedefType>(qual_type)->LookThroughTypedefs().getAsOpaquePtr());
+
+        case clang::Type::LValueReference:
+        case clang::Type::RValueReference:
+            {
+                ReferenceType *reference_type = cast<ReferenceType>(qual_type.getTypePtr());
+                if (reference_type)
+                    return ClangASTContext::IsFunctionPointerType (reference_type->getPointeeType().getAsOpaquePtr());
+            }
+            break;
+        }
+    }
+    return false;
+}
+
+    
+
+
+bool
 ClangASTContext::IsArrayType (void *clang_type, void **member_type, uint64_t *size)
 {
     if (!clang_type)
@@ -2941,7 +2981,8 @@ ClangASTContext::IsArrayType (void *clang_type, void **member_type, uint64_t *si
     
     QualType qual_type (QualType::getFromOpaquePtr(clang_type));
     
-    switch (qual_type->getTypeClass())
+    const clang::Type::TypeClass type_class = qual_type->getTypeClass();
+    switch (type_class)
     {
     case clang::Type::ConstantArray:
         if (member_type)

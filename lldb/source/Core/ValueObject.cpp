@@ -390,108 +390,134 @@ ValueObject::GetSummaryAsCString (ExecutionContextScope *exe_scope)
 
             // See if this is a pointer to a C string?
             uint32_t fixed_length = 0;
-            if (clang_type && ClangASTContext::IsCStringType (clang_type, fixed_length))
+            if (clang_type)
             {
-                Process *process = exe_scope->CalculateProcess();
-                if (process != NULL)
+                StreamString sstr;
+
+                if (ClangASTContext::IsCStringType (clang_type, fixed_length))
                 {
-                    StreamString sstr;
-                    lldb::addr_t cstr_address = LLDB_INVALID_ADDRESS;
-                    lldb::AddressType cstr_address_type = eAddressTypeInvalid;
-                    switch (GetValue().GetValueType())
+                    Process *process = exe_scope->CalculateProcess();
+                    if (process != NULL)
                     {
-                    case Value::eValueTypeScalar:
-                        cstr_address = m_value.GetScalar().ULongLong(LLDB_INVALID_ADDRESS);
-                        cstr_address_type = eAddressTypeLoad;
-                        break;
+                        lldb::AddressType cstr_address_type = eAddressTypeInvalid;
+                        lldb::addr_t cstr_address = GetPointerValue (cstr_address_type, true);
 
-                    case Value::eValueTypeLoadAddress:
-                    case Value::eValueTypeFileAddress:
-                    case Value::eValueTypeHostAddress:
+                        if (cstr_address != LLDB_INVALID_ADDRESS)
                         {
-                            uint32_t data_offset = 0;
-                            cstr_address = m_data.GetPointer(&data_offset);
-                            cstr_address_type = m_value.GetValueAddressType();
-                            if (cstr_address_type == eAddressTypeInvalid)
-                                cstr_address_type = eAddressTypeLoad;
-                        }
-                        break;
-                    }
-
-                    if (cstr_address != LLDB_INVALID_ADDRESS)
-                    {
-                        DataExtractor data;
-                        size_t bytes_read = 0;
-                        std::vector<char> data_buffer;
-                        std::vector<char> cstr_buffer;
-                        size_t cstr_length;
-                        Error error;
-                        if (fixed_length > 0)
-                        {
-                            data_buffer.resize(fixed_length);
-                            // Resize the formatted buffer in case every character
-                            // uses the "\xXX" format and one extra byte for a NULL
-                            cstr_buffer.resize(data_buffer.size() * 4 + 1);
-                            data.SetData (&data_buffer.front(), data_buffer.size(), eByteOrderHost);
-                            bytes_read = process->ReadMemory (cstr_address, &data_buffer.front(), fixed_length, error);
-                            if (bytes_read > 0)
+                            DataExtractor data;
+                            size_t bytes_read = 0;
+                            std::vector<char> data_buffer;
+                            std::vector<char> cstr_buffer;
+                            size_t cstr_length;
+                            Error error;
+                            if (fixed_length > 0)
                             {
-                                sstr << '"';
-                                cstr_length = data.Dump (&sstr,
-                                                         0,                 // Start offset in "data"
-                                                         eFormatChar,       // Print as characters
-                                                         1,                 // Size of item (1 byte for a char!)
-                                                         bytes_read,        // How many bytes to print?
-                                                         UINT32_MAX,        // num per line
-                                                         LLDB_INVALID_ADDRESS,// base address
-                                                         0,                 // bitfield bit size
-                                                         0);                // bitfield bit offset
-                                sstr << '"';
-                            }
-                        }
-                        else
-                        {
-                            const size_t k_max_buf_size = 256;
-                            data_buffer.resize (k_max_buf_size + 1);
-                            // NULL terminate in case we don't get the entire C string
-                            data_buffer.back() = '\0';
-                            // Make a formatted buffer that can contain take 4
-                            // bytes per character in case each byte uses the
-                            // "\xXX" format and one extra byte for a NULL
-                            cstr_buffer.resize (k_max_buf_size * 4 + 1);
-
-                            data.SetData (&data_buffer.front(), data_buffer.size(), eByteOrderHost);
-                            size_t total_cstr_len = 0;
-                            while ((bytes_read = process->ReadMemory (cstr_address, &data_buffer.front(), k_max_buf_size, error)) > 0)
-                            {
-                                size_t len = strlen(&data_buffer.front());
-                                if (len == 0)
-                                    break;
-                                if (len > bytes_read)
-                                    len = bytes_read;
-                                if (sstr.GetSize() == 0)
+                                data_buffer.resize(fixed_length);
+                                // Resize the formatted buffer in case every character
+                                // uses the "\xXX" format and one extra byte for a NULL
+                                cstr_buffer.resize(data_buffer.size() * 4 + 1);
+                                data.SetData (&data_buffer.front(), data_buffer.size(), eByteOrderHost);
+                                bytes_read = process->ReadMemory (cstr_address, &data_buffer.front(), fixed_length, error);
+                                if (bytes_read > 0)
+                                {
                                     sstr << '"';
-
-                                cstr_length = data.Dump (&sstr,
-                                                         0,                 // Start offset in "data"
-                                                         eFormatChar,       // Print as characters
-                                                         1,                 // Size of item (1 byte for a char!)
-                                                         len,               // How many bytes to print?
-                                                         UINT32_MAX,        // num per line
-                                                         LLDB_INVALID_ADDRESS,// base address
-                                                         0,                 // bitfield bit size
-                                                         0);                // bitfield bit offset
-
-                                if (len < k_max_buf_size)
-                                    break;
-                                cstr_address += total_cstr_len;
+                                    cstr_length = data.Dump (&sstr,
+                                                             0,                 // Start offset in "data"
+                                                             eFormatChar,       // Print as characters
+                                                             1,                 // Size of item (1 byte for a char!)
+                                                             bytes_read,        // How many bytes to print?
+                                                             UINT32_MAX,        // num per line
+                                                             LLDB_INVALID_ADDRESS,// base address
+                                                             0,                 // bitfield bit size
+                                                             0);                // bitfield bit offset
+                                    sstr << '"';
+                                }
                             }
-                            if (sstr.GetSize() > 0)
-                                sstr << '"';
-                        }
+                            else
+                            {
+                                const size_t k_max_buf_size = 256;
+                                data_buffer.resize (k_max_buf_size + 1);
+                                // NULL terminate in case we don't get the entire C string
+                                data_buffer.back() = '\0';
+                                // Make a formatted buffer that can contain take 4
+                                // bytes per character in case each byte uses the
+                                // "\xXX" format and one extra byte for a NULL
+                                cstr_buffer.resize (k_max_buf_size * 4 + 1);
 
-                        if (sstr.GetSize() > 0)
-                            m_summary_str.assign (sstr.GetData(), sstr.GetSize());
+                                data.SetData (&data_buffer.front(), data_buffer.size(), eByteOrderHost);
+                                size_t total_cstr_len = 0;
+                                while ((bytes_read = process->ReadMemory (cstr_address, &data_buffer.front(), k_max_buf_size, error)) > 0)
+                                {
+                                    size_t len = strlen(&data_buffer.front());
+                                    if (len == 0)
+                                        break;
+                                    if (len > bytes_read)
+                                        len = bytes_read;
+                                    if (sstr.GetSize() == 0)
+                                        sstr << '"';
+
+                                    cstr_length = data.Dump (&sstr,
+                                                             0,                 // Start offset in "data"
+                                                             eFormatChar,       // Print as characters
+                                                             1,                 // Size of item (1 byte for a char!)
+                                                             len,               // How many bytes to print?
+                                                             UINT32_MAX,        // num per line
+                                                             LLDB_INVALID_ADDRESS,// base address
+                                                             0,                 // bitfield bit size
+                                                             0);                // bitfield bit offset
+
+                                    if (len < k_max_buf_size)
+                                        break;
+                                    cstr_address += total_cstr_len;
+                                }
+                                if (sstr.GetSize() > 0)
+                                    sstr << '"';
+                            }
+                        }
+                    }
+                    
+                    if (sstr.GetSize() > 0)
+                        m_summary_str.assign (sstr.GetData(), sstr.GetSize());
+                }
+                else if (ClangASTContext::IsFunctionPointerType (clang_type))
+                {
+                    lldb::AddressType func_ptr_address_type = eAddressTypeInvalid;
+                    lldb::addr_t func_ptr_address = GetPointerValue (func_ptr_address_type, true);
+
+                    if (func_ptr_address != 0 && func_ptr_address != LLDB_INVALID_ADDRESS)
+                    {
+                        switch (func_ptr_address_type)
+                        {
+                        case eAddressTypeInvalid:
+                        case eAddressTypeFile:
+                            break;
+
+                        case eAddressTypeLoad:
+                            {
+                                Address so_addr;
+                                Process *process = exe_scope->CalculateProcess();
+                                if (process != NULL)
+                                {
+                                    if (process->ResolveLoadAddress(func_ptr_address, so_addr))
+                                    {
+                                        so_addr.Dump (&sstr, 
+                                                      exe_scope, 
+                                                      Address::DumpStyleResolvedDescription, 
+                                                      Address::DumpStyleSectionNameOffset);
+                                    }
+                                }
+                            }
+                            break;
+
+                        case eAddressTypeHost:
+                            break;
+                        }
+                    }
+                    if (sstr.GetSize() > 0)
+                    {
+                        m_summary_str.assign (1, '(');
+                        m_summary_str.append (sstr.GetData(), sstr.GetSize());
+                        m_summary_str.append (1, ')');
                     }
                 }
             }
@@ -501,6 +527,7 @@ ValueObject::GetSummaryAsCString (ExecutionContextScope *exe_scope)
         return NULL;
     return m_summary_str.c_str();
 }
+
 
 const char *
 ValueObject::GetObjectDescription (ExecutionContextScope *exe_scope)
@@ -612,6 +639,36 @@ ValueObject::GetValueAsCString (ExecutionContextScope *exe_scope)
     if (m_value_str.empty())
         return NULL;
     return m_value_str.c_str();
+}
+
+addr_t
+ValueObject::GetPointerValue (lldb::AddressType &address_type, bool scalar_is_load_address)
+{
+    lldb::addr_t address = LLDB_INVALID_ADDRESS;
+    address_type = eAddressTypeInvalid;
+    switch (GetValue().GetValueType())
+    {
+    case Value::eValueTypeScalar:
+        if (scalar_is_load_address)
+        {
+            address = m_value.GetScalar().ULongLong(LLDB_INVALID_ADDRESS);
+            address_type = eAddressTypeLoad;
+        }
+        break;
+
+    case Value::eValueTypeLoadAddress:
+    case Value::eValueTypeFileAddress:
+    case Value::eValueTypeHostAddress:
+        {
+            uint32_t data_offset = 0;
+            address = m_data.GetPointer(&data_offset);
+            address_type = m_value.GetValueAddressType();
+            if (address_type == eAddressTypeInvalid)
+                address_type = eAddressTypeLoad;
+        }
+        break;
+    }
+    return address;
 }
 
 bool

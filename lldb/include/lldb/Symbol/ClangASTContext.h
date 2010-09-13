@@ -391,6 +391,9 @@ public:
 
     static bool
     IsCStringType (void *clang_type, uint32_t &length);
+
+    static bool
+    IsFunctionPointerType (void *clang_type);
     
     static bool
     IsArrayType (void *clang_type, void **member_type = NULL, uint64_t *size = NULL);
