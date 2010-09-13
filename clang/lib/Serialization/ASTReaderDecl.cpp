@@ -799,15 +799,16 @@ void ASTDeclReader::VisitCXXRecordDecl(CXXRecordDecl *D) {
   case CXXRecNotTemplate:
     break;
   case CXXRecTemplate:
-    D->setDescribedClassTemplate(
-                        cast<ClassTemplateDecl>(Reader.GetDecl(Record[Idx++])));
+    D->TemplateOrInstantiation
+        = cast<ClassTemplateDecl>(Reader.GetDecl(Record[Idx++]));
     break;
   case CXXRecMemberSpecialization: {
     CXXRecordDecl *RD = cast<CXXRecordDecl>(Reader.GetDecl(Record[Idx++]));
     TemplateSpecializationKind TSK = (TemplateSpecializationKind)Record[Idx++];
     SourceLocation POI = Reader.ReadSourceLocation(Record, Idx);
-    D->setInstantiationOfMemberClass(RD, TSK);
-    D->getMemberSpecializationInfo()->setPointOfInstantiation(POI);
+    MemberSpecializationInfo *MSI = new (C) MemberSpecializationInfo(RD, TSK);
+    MSI->setPointOfInstantiation(POI);
+    D->TemplateOrInstantiation = MSI;
     break;
   }
   }
