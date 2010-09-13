@@ -311,6 +311,7 @@ add_subdirectory(test)
 add_subdirectory(utils/FileCheck)
 add_subdirectory(utils/count)
 add_subdirectory(utils/not)
+add_subdirectory(utils/llvm-lit)
 
 set(LLVM_ENUM_ASM_PRINTERS "")
 set(LLVM_ENUM_ASM_PARSERS "")
