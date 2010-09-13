@@ -136,14 +136,19 @@ StackFrame::StackFrame
         m_flags.Set (eSymbolContextTarget);
     }
     
-    if (m_sc.module_sp.get() == NULL && pc_addr.GetSection())
+    Module *pc_module = pc_addr.GetModule();
+    if (m_sc.module_sp.get() == NULL || m_sc.module_sp.get() != pc_module)
     {
-        Module *pc_module = pc_addr.GetSection()->GetModule();
         if (pc_module)
         {
             m_sc.module_sp = pc_module->GetSP();
             m_flags.Set (eSymbolContextModule);
         }
+        else
+        {
+            m_sc.module_sp.reset();
+        }
+
     }
 }
 
