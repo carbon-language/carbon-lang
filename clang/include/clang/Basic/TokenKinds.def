@@ -381,6 +381,11 @@ ALIAS("_uuidof"      , __uuidof   , KEYMS | KEYBORLAND)
 // Borland Extensions which should be disabled in strict conformance mode.
 ALIAS("_pascal"      , __pascal   , KEYBORLAND)
 
+// Clang Extensions.
+ALIAS("__char16_t"   , char16_t   , KEYCXX)
+ALIAS("__char32_t"   , char32_t   , KEYCXX)
+
+
 //===----------------------------------------------------------------------===//
 // Objective-C @-preceeded keywords.
 //===----------------------------------------------------------------------===//
