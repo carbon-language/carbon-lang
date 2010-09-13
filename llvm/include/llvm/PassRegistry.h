@@ -17,8 +17,7 @@
 #ifndef LLVM_PASSREGISTRY_H
 #define LLVM_PASSREGISTRY_H
 
-#include "llvm/ADT/StringMap.h"
-#include "llvm/System/DataTypes.h"
+#include "llvm/ADT/StringRef.h"
 
 namespace llvm {
 
