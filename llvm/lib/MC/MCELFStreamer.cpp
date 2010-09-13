@@ -147,6 +147,31 @@ void MCELFStreamer::EmitAssignment(MCSymbol *Symbol, const MCExpr *Value) {
   Symbol->setVariableValue(AddValueSymbols(Value));
 }
 
+static void SetBinding(MCSymbolData &SD, unsigned Binding) {
+  assert(Binding == ELF::STB_LOCAL || Binding == ELF::STB_GLOBAL ||
+         Binding == ELF::STB_WEAK);
+  uint32_t OtherFlags = SD.getFlags() & ~(0xf << ELF_STB_Shift);
+  SD.setFlags(OtherFlags | (Binding << ELF_STB_Shift));
+}
+
+static void SetType(MCSymbolData &SD, unsigned Type) {
+  assert(Type == ELF::STT_NOTYPE || Type == ELF::STT_OBJECT ||
+         Type == ELF::STT_FUNC || Type == ELF::STT_SECTION ||
+         Type == ELF::STT_FILE || Type == ELF::STT_COMMON ||
+         Type == ELF::STT_TLS);
+
+  uint32_t OtherFlags = SD.getFlags() & ~(0xf << ELF_STT_Shift);
+  SD.setFlags(OtherFlags | (Type << ELF_STT_Shift));
+}
+
+static void SetVisibility(MCSymbolData &SD, unsigned Visibility) {
+  assert(Visibility == ELF::STV_DEFAULT || Visibility == ELF::STV_INTERNAL ||
+         Visibility == ELF::STV_HIDDEN || Visibility == ELF::STV_PROTECTED);
+
+  uint32_t OtherFlags = SD.getFlags() & ~(0xf << ELF_STV_Shift);
+  SD.setFlags(OtherFlags | (Visibility << ELF_STV_Shift));
+}
+
 void MCELFStreamer::EmitSymbolAttribute(MCSymbol *Symbol,
                                           MCSymbolAttr Attribute) {
   // Indirect symbols are handled differently, to match how 'as' handles
@@ -186,51 +211,49 @@ void MCELFStreamer::EmitSymbolAttribute(MCSymbol *Symbol,
     break;
 
   case MCSA_Global:
-    SD.setFlags(SD.getFlags() | ELF_STB_Global);
+    SetBinding(SD, ELF::STB_GLOBAL);
     SD.setExternal(true);
     break;
 
   case MCSA_WeakReference:
   case MCSA_Weak:
-    SD.setFlags(SD.getFlags() | ELF_STB_Weak);
+    SetBinding(SD, ELF::STB_WEAK);
     break;
 
   case MCSA_Local:
-    // ELF_STB_Local is 0, so zero the ELF_STB area
-    // SD.getFlags() | ELF_STB_Local is a NOP
-    SD.setFlags(SD.getFlags() & ~(0xf << ELF_STB_Shift));
+    SetBinding(SD, ELF::STB_LOCAL);
     break;
 
   case MCSA_ELF_TypeFunction:
-    SD.setFlags(SD.getFlags() | ELF_STT_Func);
+    SetType(SD, ELF::STT_FUNC);
     break;
 
   case MCSA_ELF_TypeObject:
-    SD.setFlags(SD.getFlags() | ELF_STT_Object);
+    SetType(SD, ELF::STT_OBJECT);
     break;
 
   case MCSA_ELF_TypeTLS:
-    SD.setFlags(SD.getFlags() | ELF_STT_Tls);
+    SetType(SD, ELF::STT_TLS);
     break;
 
   case MCSA_ELF_TypeCommon:
-    SD.setFlags(SD.getFlags() | ELF_STT_Common);
+    SetType(SD, ELF::STT_COMMON);
     break;
 
   case MCSA_ELF_TypeNoType:
-    SD.setFlags(SD.getFlags() | ELF_STT_Notype);
+    SetType(SD, ELF::STT_NOTYPE);
     break;
 
   case MCSA_Protected:
-    SD.setFlags(SD.getFlags() | ELF_STV_Protected);
+    SetVisibility(SD, ELF::STV_PROTECTED);
     break;
 
   case MCSA_Hidden:
-    SD.setFlags(SD.getFlags() | ELF_STV_Hidden);
+    SetVisibility(SD, ELF::STV_HIDDEN);
     break;
 
   case MCSA_Internal:
-    SD.setFlags(SD.getFlags() | ELF_STV_Internal);
+    SetVisibility(SD, ELF::STV_INTERNAL);
     break;
   }
 }
@@ -253,7 +276,7 @@ void MCELFStreamer::EmitCommonSymbol(MCSymbol *Symbol, uint64_t Size,
     SD.setSize(MCConstantExpr::Create(Size, getContext()));
   }
 
-  SD.setFlags(SD.getFlags() | ELF_STB_Global);
+  SetBinding(SD, ELF::STB_GLOBAL);
   SD.setExternal(true);
 
   SD.setCommon(Size, ByteAlignment);
