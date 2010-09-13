@@ -1112,6 +1112,7 @@ void ASTStmtReader::VisitCXXDeleteExpr(CXXDeleteExpr *E) {
   VisitExpr(E);
   E->GlobalDelete = Record[Idx++];
   E->ArrayForm = Record[Idx++];
+  E->ArrayFormAsWritten = Record[Idx++];
   E->OperatorDelete = cast_or_null<FunctionDecl>(Reader.GetDecl(Record[Idx++]));
   E->Argument = Reader.ReadSubExpr();
   E->Loc = Reader.ReadSourceLocation(Record, Idx);

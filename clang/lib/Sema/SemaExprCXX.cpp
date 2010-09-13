@@ -1438,6 +1438,7 @@ Sema::ActOnCXXDelete(SourceLocation StartLoc, bool UseGlobal,
   // DR599 amends "pointer type" to "pointer to object type" in both cases.
 
   FunctionDecl *OperatorDelete = 0;
+  bool ArrayFormAsWritten = ArrayForm;
 
   if (!Ex->isTypeDependent()) {
     QualType Type = Ex->getType();
@@ -1514,7 +1515,14 @@ Sema::ActOnCXXDelete(SourceLocation StartLoc, bool UseGlobal,
     //   of the delete-expression. ]
     ImpCastExprToType(Ex, Context.getPointerType(Context.VoidTy), 
                       CK_NoOp);
-    
+
+    if (Pointee->isArrayType() && !ArrayForm) {
+      Diag(StartLoc, diag::warn_delete_array_type)
+          << Type << Ex->getSourceRange()
+          << FixItHint::CreateInsertion(PP.getLocForEndOfToken(StartLoc), "[]");
+      ArrayForm = true;
+    }
+
     DeclarationName DeleteName = Context.DeclarationNames.getCXXOperatorName(
                                       ArrayForm ? OO_Array_Delete : OO_Delete);
 
@@ -1548,7 +1556,8 @@ Sema::ActOnCXXDelete(SourceLocation StartLoc, bool UseGlobal,
   }
 
   return Owned(new (Context) CXXDeleteExpr(Context.VoidTy, UseGlobal, ArrayForm,
-                                           OperatorDelete, Ex, StartLoc));
+                                           ArrayFormAsWritten, OperatorDelete,
+                                           Ex, StartLoc));
 }
 
 /// \brief Check the use of the given variable as a C++ condition in an if,

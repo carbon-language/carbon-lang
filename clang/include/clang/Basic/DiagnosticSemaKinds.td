@@ -2448,6 +2448,8 @@ def warn_delete_incomplete : Warning<
   "deleting pointer to incomplete type %0 may cause undefined behaviour">;
 def err_delete_incomplete_class_type : Warning<
   "deleting incomplete class type %0; no conversions to pointer type">;
+def warn_delete_array_type : Warning<
+  "'delete' applied to a pointer-to-array type %0 treated as delete[]">;
 def err_no_suitable_delete_member_function_found : Error<
   "no suitable member %0 in %1">;
 def err_ambiguous_suitable_delete_member_function_found : Error<

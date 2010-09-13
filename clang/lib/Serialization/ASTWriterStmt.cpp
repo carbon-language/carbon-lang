@@ -1121,6 +1121,7 @@ void ASTStmtWriter::VisitCXXDeleteExpr(CXXDeleteExpr *E) {
   VisitExpr(E);
   Record.push_back(E->isGlobalDelete());
   Record.push_back(E->isArrayForm());
+  Record.push_back(E->isArrayFormAsWritten());
   Writer.AddDeclRef(E->getOperatorDelete(), Record);
   Writer.AddStmt(E->getArgument());
   Writer.AddSourceLocation(E->getSourceRange().getBegin(), Record);

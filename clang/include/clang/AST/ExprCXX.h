@@ -1107,6 +1107,10 @@ class CXXDeleteExpr : public Expr {
   bool GlobalDelete : 1;
   // Is this the array form of delete, i.e. "delete[]"?
   bool ArrayForm : 1;
+  // ArrayFormAsWritten can be different from ArrayForm if 'delete' is applied
+  // to pointer-to-array type (ArrayFormAsWritten will be false while ArrayForm
+  // will be true).
+  bool ArrayFormAsWritten : 1;
   // Points to the operator delete overload that is used. Could be a member.
   FunctionDecl *OperatorDelete;
   // The pointer expression to be deleted.
@@ -1115,15 +1119,17 @@ class CXXDeleteExpr : public Expr {
   SourceLocation Loc;
 public:
   CXXDeleteExpr(QualType ty, bool globalDelete, bool arrayForm,
-                FunctionDecl *operatorDelete, Expr *arg, SourceLocation loc)
+                bool arrayFormAsWritten, FunctionDecl *operatorDelete,
+                Expr *arg, SourceLocation loc)
     : Expr(CXXDeleteExprClass, ty, false, false), GlobalDelete(globalDelete),
-      ArrayForm(arrayForm), OperatorDelete(operatorDelete), Argument(arg),
-      Loc(loc) { }
+      ArrayForm(arrayForm), ArrayFormAsWritten(arrayFormAsWritten),
+      OperatorDelete(operatorDelete), Argument(arg), Loc(loc) { }
   explicit CXXDeleteExpr(EmptyShell Shell)
     : Expr(CXXDeleteExprClass, Shell), OperatorDelete(0), Argument(0) { }
 
   bool isGlobalDelete() const { return GlobalDelete; }
   bool isArrayForm() const { return ArrayForm; }
+  bool isArrayFormAsWritten() const { return ArrayFormAsWritten; }
 
   FunctionDecl *getOperatorDelete() const { return OperatorDelete; }
 
