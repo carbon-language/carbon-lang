@@ -22,6 +22,7 @@
 
 #include "llvm/Pass.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/System/DataTypes.h"
 
 namespace llvm {
 
