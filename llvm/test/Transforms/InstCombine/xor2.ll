@@ -34,7 +34,7 @@ define i32 @test2(i32 %tmp1) {
 define i32 @test3(i32 %tmp1) {
 ; CHECK:      @test3
 ; CHECK-NEXT:   and i32 %tmp1, 32
-; CHECK-NEXT:   or i32 %tmp, 8
+; CHECK-NEXT:   or i32 %ovm, 8
 ; CHECK-NEXT:   ret i32
   %ovm = or i32 %tmp1, 145 
   %ov31 = and i32 %ovm, 177
