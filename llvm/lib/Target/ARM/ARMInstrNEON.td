@@ -3838,6 +3838,13 @@ def  VTBL4
         "vtbl", "8", "$dst, \\{$tbl1, $tbl2, $tbl3, $tbl4\\}, $src", "", []>;
 } // hasExtraSrcRegAllocReq = 1
 
+def  VTBL2Pseudo
+  : PseudoNeonI<(outs DPR:$dst), (ins QPR:$tbl, DPR:$src), IIC_VTB2, "">;
+def  VTBL3Pseudo
+  : PseudoNeonI<(outs DPR:$dst), (ins QQPR:$tbl, DPR:$src), IIC_VTB3, "">;
+def  VTBL4Pseudo
+  : PseudoNeonI<(outs DPR:$dst), (ins QQPR:$tbl, DPR:$src), IIC_VTB4, "">;
+
 //   VTBX     : Vector Table Extension
 def  VTBX1
   : N3V<1,1,0b11,0b1000,1,0, (outs DPR:$dst),
@@ -3862,6 +3869,16 @@ def  VTBX4
         "vtbx", "8", "$dst, \\{$tbl1, $tbl2, $tbl3, $tbl4\\}, $src",
         "$orig = $dst", []>;
 } // hasExtraSrcRegAllocReq = 1
+
+def  VTBX2Pseudo
+  : PseudoNeonI<(outs DPR:$dst), (ins DPR:$orig, QPR:$tbl, DPR:$src),
+                IIC_VTBX2, "$orig = $dst">;
+def  VTBX3Pseudo
+  : PseudoNeonI<(outs DPR:$dst), (ins DPR:$orig, QQPR:$tbl, DPR:$src),
+                IIC_VTBX3, "$orig = $dst">;
+def  VTBX4Pseudo
+  : PseudoNeonI<(outs DPR:$dst), (ins DPR:$orig, QQPR:$tbl, DPR:$src),
+                IIC_VTBX4, "$orig = $dst">;
 
 //===----------------------------------------------------------------------===//
 // NEON instructions for single-precision FP math

@@ -1541,6 +1541,14 @@ class PseudoNLdSt<dag oops, dag iops, InstrItinClass itin, string cstr>
   list<Predicate> Predicates = [HasNEON];
 }
 
+class PseudoNeonI<dag oops, dag iops, InstrItinClass itin, string cstr>
+  : InstARM<AddrModeNone, Size4Bytes, IndexModeNone, Pseudo, NeonDomain, cstr,
+            itin> {
+  let OutOperandList = oops;
+  let InOperandList = !con(iops, (ins pred:$p));
+  list<Predicate> Predicates = [HasNEON];
+}
+
 class NDataI<dag oops, dag iops, Format f, InstrItinClass itin,
              string opc, string dt, string asm, string cstr, list<dag> pattern>
   : NeonI<oops, iops, AddrModeNone, IndexModeNone, f, itin, opc, dt, asm, cstr,

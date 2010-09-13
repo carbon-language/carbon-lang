@@ -1353,17 +1353,10 @@ SDNode *ARMDAGToDAGISel::SelectVTBL(SDNode *N, bool IsExt, unsigned NumVecs,
     RegSeq = SDValue(QuadDRegs(MVT::v4i64, V0, V1, V2, V3), 0);
   }
 
-  // Now extract the D registers back out.
   SmallVector<SDValue, 6> Ops;
   if (IsExt)
     Ops.push_back(N->getOperand(1));
-  Ops.push_back(CurDAG->getTargetExtractSubreg(ARM::dsub_0, dl, VT, RegSeq));
-  Ops.push_back(CurDAG->getTargetExtractSubreg(ARM::dsub_1, dl, VT, RegSeq));
-  if (NumVecs > 2)
-    Ops.push_back(CurDAG->getTargetExtractSubreg(ARM::dsub_2, dl, VT, RegSeq));
-  if (NumVecs > 3)
-    Ops.push_back(CurDAG->getTargetExtractSubreg(ARM::dsub_3, dl, VT, RegSeq));
-
+  Ops.push_back(RegSeq);
   Ops.push_back(N->getOperand(FirstTblReg + NumVecs));
   Ops.push_back(getAL(CurDAG)); // predicate
   Ops.push_back(CurDAG->getRegister(0, MVT::i32)); // predicate register
@@ -2099,18 +2092,18 @@ SDNode *ARMDAGToDAGISel::Select(SDNode *N) {
       break;
 
     case Intrinsic::arm_neon_vtbl2:
-      return SelectVTBL(N, false, 2, ARM::VTBL2);
+      return SelectVTBL(N, false, 2, ARM::VTBL2Pseudo);
     case Intrinsic::arm_neon_vtbl3:
-      return SelectVTBL(N, false, 3, ARM::VTBL3);
+      return SelectVTBL(N, false, 3, ARM::VTBL3Pseudo);
     case Intrinsic::arm_neon_vtbl4:
-      return SelectVTBL(N, false, 4, ARM::VTBL4);
+      return SelectVTBL(N, false, 4, ARM::VTBL4Pseudo);
 
     case Intrinsic::arm_neon_vtbx2:
-      return SelectVTBL(N, true, 2, ARM::VTBX2);
+      return SelectVTBL(N, true, 2, ARM::VTBX2Pseudo);
     case Intrinsic::arm_neon_vtbx3:
-      return SelectVTBL(N, true, 3, ARM::VTBX3);
+      return SelectVTBL(N, true, 3, ARM::VTBX3Pseudo);
     case Intrinsic::arm_neon_vtbx4:
-      return SelectVTBL(N, true, 4, ARM::VTBX4);
+      return SelectVTBL(N, true, 4, ARM::VTBX4Pseudo);
     }
     break;
   }

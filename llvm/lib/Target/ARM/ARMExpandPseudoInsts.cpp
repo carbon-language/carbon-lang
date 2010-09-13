@@ -44,6 +44,8 @@ namespace {
     void ExpandVLD(MachineBasicBlock::iterator &MBBI);
     void ExpandVST(MachineBasicBlock::iterator &MBBI);
     void ExpandLaneOp(MachineBasicBlock::iterator &MBBI);
+    void ExpandVTBL(MachineBasicBlock::iterator &MBBI,
+                    unsigned Opc, bool IsExt, unsigned NumRegs);
   };
   char ARMExpandPseudo::ID = 0;
 }
@@ -326,7 +328,7 @@ static void GetDSubRegs(unsigned Reg, NEONRegSpacing RegSpc,
     D1 = TRI->getSubReg(Reg, ARM::dsub_3);
     D2 = TRI->getSubReg(Reg, ARM::dsub_5);
     D3 = TRI->getSubReg(Reg, ARM::dsub_7);
-  } 
+  }
 }
 
 /// ExpandVLD - Translate VLD pseudo instructions with Q, QQ or QQQQ register
@@ -414,10 +416,10 @@ void ARMExpandPseudo::ExpandVST(MachineBasicBlock::iterator &MBBI) {
   if (NumRegs > 3)
     MIB.addReg(D3);
   MIB = AddDefaultPred(MIB);
-  TransferImpOps(MI, MIB, MIB);
   if (SrcIsKill)
     // Add an implicit kill for the super-reg.
     (*MIB).addRegisterKilled(SrcReg, TRI, true);
+  TransferImpOps(MI, MIB, MIB);
   MI.eraseFromParent();
 }
 
@@ -500,6 +502,42 @@ void ARMExpandPseudo::ExpandLaneOp(MachineBasicBlock::iterator &MBBI) {
   MI.eraseFromParent();
 }
 
+/// ExpandVTBL - Translate VTBL and VTBX pseudo instructions with Q or QQ
+/// register operands to real instructions with D register operands.
+void ARMExpandPseudo::ExpandVTBL(MachineBasicBlock::iterator &MBBI,
+                                 unsigned Opc, bool IsExt, unsigned NumRegs) {
+  MachineInstr &MI = *MBBI;
+  MachineBasicBlock &MBB = *MI.getParent();
+
+  MachineInstrBuilder MIB = BuildMI(MBB, MBBI, MI.getDebugLoc(), TII->get(Opc));
+  unsigned OpIdx = 0;
+
+  // Transfer the destination register operand.
+  MIB.addOperand(MI.getOperand(OpIdx++));
+  if (IsExt)
+    MIB.addOperand(MI.getOperand(OpIdx++));
+
+  bool SrcIsKill = MI.getOperand(OpIdx).isKill();
+  unsigned SrcReg = MI.getOperand(OpIdx++).getReg();
+  unsigned D0, D1, D2, D3;
+  GetDSubRegs(SrcReg, SingleSpc, TRI, D0, D1, D2, D3);
+  MIB.addReg(D0).addReg(D1);
+  if (NumRegs > 2)
+    MIB.addReg(D2);
+  if (NumRegs > 3)
+    MIB.addReg(D3);
+
+  // Copy the other source register operand.
+  MIB.addOperand(MI.getOperand(OpIdx));
+
+  MIB = AddDefaultPred(MIB);
+  if (SrcIsKill)
+    // Add an implicit kill for the super-reg.
+    (*MIB).addRegisterKilled(SrcReg, TRI, true);
+  TransferImpOps(MI, MIB, MIB);
+  MI.eraseFromParent();
+}
+
 bool ARMExpandPseudo::ExpandMBB(MachineBasicBlock &MBB) {
   bool Modified = false;
 
@@ -515,7 +553,7 @@ bool ARMExpandPseudo::ExpandMBB(MachineBasicBlock &MBB) {
       ModifiedOp = false;
       break;
 
-    case ARM::tLDRpci_pic: 
+    case ARM::tLDRpci_pic:
     case ARM::t2LDRpci_pic: {
       unsigned NewLdOpc = (Opcode == ARM::tLDRpci_pic)
         ? ARM::tLDRpci : ARM::t2LDRpci;
@@ -765,6 +803,19 @@ bool ARMExpandPseudo::ExpandMBB(MachineBasicBlock &MBB) {
     case ARM::VST4LNq32Pseudo_UPD:
       ExpandLaneOp(MBBI);
       break;
+
+    case ARM::VTBL2Pseudo:
+      ExpandVTBL(MBBI, ARM::VTBL2, false, 2); break;
+    case ARM::VTBL3Pseudo:
+      ExpandVTBL(MBBI, ARM::VTBL3, false, 3); break;
+    case ARM::VTBL4Pseudo:
+      ExpandVTBL(MBBI, ARM::VTBL4, false, 4); break;
+    case ARM::VTBX2Pseudo:
+      ExpandVTBL(MBBI, ARM::VTBX2, true, 2); break;
+    case ARM::VTBX3Pseudo:
+      ExpandVTBL(MBBI, ARM::VTBX3, true, 3); break;
+    case ARM::VTBX4Pseudo:
+      ExpandVTBL(MBBI, ARM::VTBX4, true, 4); break;
     }
 
     if (ModifiedOp)
