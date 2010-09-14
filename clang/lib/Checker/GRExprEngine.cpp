@@ -1213,7 +1213,7 @@ bool GRExprEngine::ProcessBlockEntrance(const CFGBlock* B,
                                         const ExplodedNode *Pred,
                                         GRBlockCounter BC) {
   return BC.getNumVisited(Pred->getLocationContext()->getCurrentStackFrame(), 
-                          B->getBlockID()) < AMgr.getMaxLoop();
+                          B->getBlockID()) < AMgr.getMaxVisit();
 }
 
 //===----------------------------------------------------------------------===//

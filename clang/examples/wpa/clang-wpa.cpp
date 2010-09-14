@@ -134,7 +134,7 @@ int main(int argc, char **argv) {
                        PP.getLangOptions(), /* PathDiagnostic */ 0,
                        CreateRegionStoreManager,
                        CreateRangeConstraintManager, &Idxer,
-                       /* MaxNodes */ 300000, /* MaxLoop */ 3,
+                       /* MaxNodes */ 300000, /* MaxVisit */ 3,
                        /* VisualizeEG */ false, /* VisualizeEGUbi */ false,
                        /* PurgeDead */ true, /* EagerlyAssume */ false,
                        /* TrimGraph */ false, /* InlineCall */ true, 
