@@ -144,9 +144,6 @@ public:
   unsigned getNumOperands() const { return NumOperands; }
   
   /// isFunctionLocal - Return whether MDNode is local to a function.
-  /// Note: MDNodes are designated as function-local when created, and keep
-  ///       that designation even if their operands are modified to no longer
-  ///       refer to function-local IR.
   bool isFunctionLocal() const {
     return (getSubclassDataFromValue() & FunctionLocalBit) != 0;
   }
