@@ -12,6 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "ARM.h"
 #include "ARMMCInstLower.h"
 //#include "llvm/CodeGen/MachineModuleInfoImpls.h"
 #include "llvm/CodeGen/AsmPrinter.h"
@@ -126,8 +127,8 @@ void ARMMCInstLower::Lower(const MachineInstr *MI, MCInst &OutMI) const {
       MI->dump();
       assert(0 && "unknown operand type");
     case MachineOperand::MO_Register:
-      // Ignore all implicit register operands.
-      if (MO.isImplicit()) continue;
+      // Ignore all non-CPSR implicit register operands.
+      if (MO.isImplicit() && MO.getReg() != ARM::CPSR) continue;
       assert(!MO.getSubReg() && "Subregs should be eliminated!");
       MCOp = MCOperand::CreateReg(MO.getReg());
       break;
