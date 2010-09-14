@@ -656,7 +656,7 @@ def tCMPzi8 : T1pI<(outs), (ins tGPR:$lhs, i32imm:$rhs), IIC_iCMPi,
 }
 
 // CMP register
-let Defs = [CPSR] in {
+let isCompare = 1, Defs = [CPSR] in {
 def tCMPr : T1pI<(outs), (ins tGPR:$lhs, tGPR:$rhs), IIC_iCMPr,
                  "cmp", "\t$lhs, $rhs",
                  [(ARMcmp tGPR:$lhs, tGPR:$rhs)]>,
@@ -837,7 +837,7 @@ def tSXTH  : T1pI<(outs tGPR:$dst), (ins tGPR:$src), IIC_iUNAr,
              T1Misc<{0,0,1,0,0,0,?}>;
 
 // test
-let isCommutable = 1, Defs = [CPSR] in
+let isCompare = 1, isCommutable = 1, Defs = [CPSR] in
 def tTST  : T1pI<(outs), (ins tGPR:$lhs, tGPR:$rhs), IIC_iCMPr,
                  "tst", "\t$lhs, $rhs",
                  [(ARMcmpZ (and tGPR:$lhs, tGPR:$rhs), 0)]>,
