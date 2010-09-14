@@ -34,6 +34,7 @@ public:
   typedef llvm::SmallVector<std::string, 4> path_list;
 
   enum CXXStdlibType {
+    CST_Libcxx,
     CST_Libstdcxx
   };
 

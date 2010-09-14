@@ -175,6 +175,16 @@ std::string ToolChain::ComputeEffectiveClangTriple(const ArgList &Args) const {
 }
 
 ToolChain::CXXStdlibType ToolChain::GetCXXStdlibType(const ArgList &Args) const{
+  if (Arg *A = Args.getLastArg(options::OPT_stdlib_EQ)) {
+    llvm::StringRef Value = A->getValue(Args);
+    if (Value == "libc++")
+      return ToolChain::CST_Libcxx;
+    if (Value == "libstdc++")
+      return ToolChain::CST_Libstdcxx;
+    getDriver().Diag(clang::diag::err_drv_invalid_stdlib_name)
+      << A->getAsString(Args);
+  }
+
   return ToolChain::CST_Libstdcxx;
 }
 
@@ -183,6 +193,11 @@ void ToolChain::AddClangCXXStdlibIncludeArgs(const ArgList &Args,
   CXXStdlibType Type = GetCXXStdlibType(Args);
 
   switch (Type) {
+  case ToolChain::CST_Libcxx:
+    CmdArgs.push_back("-cxx-system-include");
+    CmdArgs.push_back("/usr/include/c++/v1");
+    break;
+
   case ToolChain::CST_Libstdcxx:
     // Currently handled by the mass of goop in InitHeaderSearch.
     break;
@@ -194,6 +209,10 @@ void ToolChain::AddClangCXXStdlibLibArgs(const ArgList &Args,
   CXXStdlibType Type = GetCXXStdlibType(Args);
 
   switch (Type) {
+  case ToolChain::CST_Libcxx:
+    CmdArgs.push_back("-lc++");
+    break;
+
   case ToolChain::CST_Libstdcxx:
     CmdArgs.push_back("-lstdc++");
     break;

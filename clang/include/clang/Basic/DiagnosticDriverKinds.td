@@ -16,6 +16,8 @@ def err_drv_unknown_stdin_type : Error<
 def err_drv_unknown_language : Error<"language not recognized: '%0'">;
 def err_drv_invalid_arch_name : Error<
   "invalid arch name '%0'">;
+def err_drv_invalid_stdlib_name : Error<
+  "invalid library name in argument '%0'">;
 def err_drv_invalid_opt_with_multiple_archs : Error<
   "option '%0' cannot be used with multiple -arch options">;
 def err_drv_invalid_output_with_multiple_archs : Error<

@@ -14,6 +14,7 @@ B<clang> [B<-c>|B<-S>|B<-E>] B<-std=>I<standard> B<-g>
   B<-f>I<feature-option...>
   B<-m>I<machine-option...>
   B<-o> I<output-file>
+  B<-stdlib=>I<library> 
   I<input-filenames>
 
 =head1 DESCRIPTION
@@ -129,6 +130,11 @@ Treat subsequent input files as having type I<language>.
 =item B<-std>=I<language>
 
 Specify the language standard to compile for.
+
+=item B<-stdlib>=I<language>
+
+Specify the C++ standard library to use; supported options are libstdc++ and
+libc++.
 
 =item B<-ansi>
 
