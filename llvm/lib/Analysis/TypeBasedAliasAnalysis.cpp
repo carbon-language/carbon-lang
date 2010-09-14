@@ -44,7 +44,7 @@ namespace {
 
   public:
     TBAANode() : Node(0) {}
-    explicit TBAANode(MDNode *N) : Node(N) {}
+    explicit TBAANode(const MDNode *N) : Node(N) {}
 
     /// getNode - Get the MDNode for this TBAANode.
     const MDNode *getNode() const { return Node; }
@@ -119,21 +119,11 @@ TypeBasedAliasAnalysis::getAnalysisUsage(AnalysisUsage &AU) const {
 AliasAnalysis::AliasResult
 TypeBasedAliasAnalysis::alias(const Location &LocA,
                               const Location &LocB) {
-  // Currently, metadata can only be attached to Instructions.
-  const Instruction *AI = dyn_cast<Instruction>(LocA.Ptr);
-  if (!AI) return MayAlias;
-  const Instruction *BI = dyn_cast<Instruction>(LocB.Ptr);
-  if (!BI) return MayAlias;
-
   // Get the attached MDNodes. If either value lacks a tbaa MDNode, we must
   // be conservative.
-  MDNode *AM =
-    AI->getMetadata(AI->getParent()->getParent()->getParent()
-                      ->getMDKindID("tbaa"));
+  const MDNode *AM = LocA.TBAATag;
   if (!AM) return MayAlias;
-  MDNode *BM =
-    BI->getMetadata(BI->getParent()->getParent()->getParent()
-                      ->getMDKindID("tbaa"));
+  const MDNode *BM = LocB.TBAATag;
   if (!BM) return MayAlias;
 
   // Keep track of the root node for A and B.
@@ -175,13 +165,7 @@ TypeBasedAliasAnalysis::alias(const Location &LocA,
 }
 
 bool TypeBasedAliasAnalysis::pointsToConstantMemory(const Location &Loc) {
-  // Currently, metadata can only be attached to Instructions.
-  const Instruction *I = dyn_cast<Instruction>(Loc.Ptr);
-  if (!I) return false;
-
-  MDNode *M =
-    I->getMetadata(I->getParent()->getParent()->getParent()
-                    ->getMDKindID("tbaa"));
+  const MDNode *M = Loc.TBAATag;
   if (!M) return false;
 
   // If this is an "immutable" type, we can assume the pointer is pointing
