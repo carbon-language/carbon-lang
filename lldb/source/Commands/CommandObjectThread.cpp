@@ -1280,6 +1280,7 @@ public:
         }
 
         process->GetThreadList().SetSelectedThreadByID(new_thread->GetID());
+        result.SetStatus (eReturnStatusSuccessFinishNoResult);
         
         DisplayThreadInfo (interpreter,
                            result.GetOutputStream(),

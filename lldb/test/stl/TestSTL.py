@@ -12,13 +12,11 @@ class STLTestCase(TestBase):
     mydir = "stl"
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
-    @unittest2.expectedFailure
     def test_with_dsym(self):
         """Test that we can successfully step into an STL function."""
         self.buildDsym()
         self.step_into_stl()
 
-    @unittest2.expectedFailure
     def test_with_dwarf(self):
         """Test that we can successfully step into an STL function."""
         self.buildDwarf()
