@@ -14,6 +14,8 @@ class OrderFileTestCase(TestBase):
 
     def test_order_file(self):
         """Test debug symbols follow the correct order by the order file."""
+        self.buildDefault()
+
         exe = os.path.join(os.getcwd(), "a.out")
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 
