@@ -175,10 +175,10 @@ static void printSOImm(raw_ostream &O, int64_t V, bool VerboseAsm,
   // Break it up into two parts that make up a shifter immediate.
   V = ARM_AM::getSOImmVal(V);
   assert(V != -1 && "Not a valid so_imm value!");
-  
+
   unsigned Imm = ARM_AM::getSOImmValImm(V);
   unsigned Rot = ARM_AM::getSOImmValRot(V);
-  
+
   // Print low-level immediate formation info, per
   // A5.1.3: "Data-processing operands - Immediate".
   if (Rot) {
@@ -220,9 +220,9 @@ void ARMInstPrinter::printSORegOperand(const MCInst *MI, unsigned OpNum,
   const MCOperand &MO1 = MI->getOperand(OpNum);
   const MCOperand &MO2 = MI->getOperand(OpNum+1);
   const MCOperand &MO3 = MI->getOperand(OpNum+2);
-  
+
   O << getRegisterName(MO1.getReg());
-  
+
   // Print the shift opc.
   ARM_AM::ShiftOpc ShOpc = ARM_AM::getSORegShOp(MO3.getImm());
   O << ", " << ARM_AM::getShiftOpcStr(ShOpc);
@@ -240,14 +240,14 @@ void ARMInstPrinter::printAddrMode2Operand(const MCInst *MI, unsigned Op,
   const MCOperand &MO1 = MI->getOperand(Op);
   const MCOperand &MO2 = MI->getOperand(Op+1);
   const MCOperand &MO3 = MI->getOperand(Op+2);
-  
+
   if (!MO1.isReg()) {   // FIXME: This is for CP entries, but isn't right.
     printOperand(MI, Op, O);
     return;
   }
-  
+
   O << "[" << getRegisterName(MO1.getReg());
-  
+
   if (!MO2.getReg()) {
     if (ARM_AM::getAM2Offset(MO3.getImm())) // Don't print +0.
       O << ", #"
@@ -256,24 +256,24 @@ void ARMInstPrinter::printAddrMode2Operand(const MCInst *MI, unsigned Op,
     O << "]";
     return;
   }
-  
+
   O << ", "
     << ARM_AM::getAddrOpcStr(ARM_AM::getAM2Op(MO3.getImm()))
     << getRegisterName(MO2.getReg());
-  
+
   if (unsigned ShImm = ARM_AM::getAM2Offset(MO3.getImm()))
     O << ", "
     << ARM_AM::getShiftOpcStr(ARM_AM::getAM2ShiftOpc(MO3.getImm()))
     << " #" << ShImm;
   O << "]";
-}  
+}
 
 void ARMInstPrinter::printAddrMode2OffsetOperand(const MCInst *MI,
                                                  unsigned OpNum,
                                                  raw_ostream &O) {
   const MCOperand &MO1 = MI->getOperand(OpNum);
   const MCOperand &MO2 = MI->getOperand(OpNum+1);
-  
+
   if (!MO1.getReg()) {
     unsigned ImmOffs = ARM_AM::getAM2Offset(MO2.getImm());
     O << '#'
@@ -281,10 +281,10 @@ void ARMInstPrinter::printAddrMode2OffsetOperand(const MCInst *MI,
       << ImmOffs;
     return;
   }
-  
+
   O << ARM_AM::getAddrOpcStr(ARM_AM::getAM2Op(MO2.getImm()))
     << getRegisterName(MO1.getReg());
-  
+
   if (unsigned ShImm = ARM_AM::getAM2Offset(MO2.getImm()))
     O << ", "
     << ARM_AM::getShiftOpcStr(ARM_AM::getAM2ShiftOpc(MO2.getImm()))
@@ -296,15 +296,15 @@ void ARMInstPrinter::printAddrMode3Operand(const MCInst *MI, unsigned OpNum,
   const MCOperand &MO1 = MI->getOperand(OpNum);
   const MCOperand &MO2 = MI->getOperand(OpNum+1);
   const MCOperand &MO3 = MI->getOperand(OpNum+2);
-  
+
   O << '[' << getRegisterName(MO1.getReg());
-  
+
   if (MO2.getReg()) {
     O << ", " << (char)ARM_AM::getAM3Op(MO3.getImm())
       << getRegisterName(MO2.getReg()) << ']';
     return;
   }
-  
+
   if (unsigned ImmOffs = ARM_AM::getAM3Offset(MO3.getImm()))
     O << ", #"
       << ARM_AM::getAddrOpcStr(ARM_AM::getAM3Op(MO3.getImm()))
@@ -317,13 +317,13 @@ void ARMInstPrinter::printAddrMode3OffsetOperand(const MCInst *MI,
                                                  raw_ostream &O) {
   const MCOperand &MO1 = MI->getOperand(OpNum);
   const MCOperand &MO2 = MI->getOperand(OpNum+1);
-  
+
   if (MO1.getReg()) {
     O << (char)ARM_AM::getAM3Op(MO2.getImm())
     << getRegisterName(MO1.getReg());
     return;
   }
-  
+
   unsigned ImmOffs = ARM_AM::getAM3Offset(MO2.getImm());
   O << '#'
     << ARM_AM::getAddrOpcStr(ARM_AM::getAM3Op(MO2.getImm()))
@@ -352,14 +352,14 @@ void ARMInstPrinter::printAddrMode5Operand(const MCInst *MI, unsigned OpNum,
                                            const char *Modifier) {
   const MCOperand &MO1 = MI->getOperand(OpNum);
   const MCOperand &MO2 = MI->getOperand(OpNum+1);
-  
+
   if (!MO1.isReg()) {   // FIXME: This is for CP entries, but isn't right.
     printOperand(MI, OpNum, O);
     return;
   }
-  
+
   O << "[" << getRegisterName(MO1.getReg());
-  
+
   if (unsigned ImmOffs = ARM_AM::getAM5Offset(MO2.getImm())) {
     O << ", #"
       << ARM_AM::getAddrOpcStr(ARM_AM::getAM5Op(MO2.getImm()))
@@ -372,7 +372,7 @@ void ARMInstPrinter::printAddrMode6Operand(const MCInst *MI, unsigned OpNum,
                                            raw_ostream &O) {
   const MCOperand &MO1 = MI->getOperand(OpNum);
   const MCOperand &MO2 = MI->getOperand(OpNum+1);
-  
+
   O << "[" << getRegisterName(MO1.getReg());
   if (MO2.getImm()) {
     // FIXME: Both darwin as and GNU as violate ARM docs here.
@@ -496,7 +496,7 @@ void ARMInstPrinter::printPredicateOperand(const MCInst *MI, unsigned OpNum,
     O << ARMCondCodeToString(CC);
 }
 
-void ARMInstPrinter::printMandatoryPredicateOperand(const MCInst *MI, 
+void ARMInstPrinter::printMandatoryPredicateOperand(const MCInst *MI,
                                                     unsigned OpNum,
                                                     raw_ostream &O) {
   ARMCC::CondCodes CC = (ARMCC::CondCodes)MI->getOperand(OpNum).getImm();
