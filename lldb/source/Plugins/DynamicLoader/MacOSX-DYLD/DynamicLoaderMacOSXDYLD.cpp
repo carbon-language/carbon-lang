@@ -1067,12 +1067,14 @@ DynamicLoaderMacOSXDYLD::GetStepThroughTrampolinePlan (Thread &thread, bool stop
     StackFrame *current_frame = thread.GetStackFrameAtIndex(0).get();
     const SymbolContext &current_context = current_frame->GetSymbolContext(eSymbolContextSymbol);
     Symbol *current_symbol = current_context.symbol;
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP);
 
     if (current_symbol != NULL)
     {
         if (current_symbol->IsTrampoline())
         {
-            const ConstString &trampoline_name = current_symbol->GetMangled().GetName();
+            const ConstString &trampoline_name = current_symbol->GetMangled().GetName(Mangled::ePreferMangled);
+            
             if (trampoline_name)
             {
                 SymbolContextList target_symbols;
@@ -1080,7 +1082,8 @@ DynamicLoaderMacOSXDYLD::GetStepThroughTrampolinePlan (Thread &thread, bool stop
                 images.FindSymbolsWithNameAndType(trampoline_name, eSymbolTypeCode, target_symbols);
                 // FIXME - Make the Run to Address take multiple addresses, and
                 // run to any of them.
-                if (target_symbols.GetSize() == 1)
+                uint32_t num_symbols = target_symbols.GetSize();
+                if (num_symbols == 1)
                 {
                     SymbolContext context;
                     AddressRange addr_range;
@@ -1089,18 +1092,37 @@ DynamicLoaderMacOSXDYLD::GetStepThroughTrampolinePlan (Thread &thread, bool stop
                         context.GetAddressRange (eSymbolContextEverything, addr_range);
                         thread_plan_sp.reset (new ThreadPlanRunToAddress (thread, addr_range.GetBaseAddress(), stop_others));
                     }
-                }
-                else if (target_symbols.GetSize() > 1)
-                {
-                    Log *log = DynamicLoaderMacOSXDYLDLog::GetLogIfAllCategoriesSet (1);
-                    if (log)
+                    else
                     {
-                        log->Printf ("Found more than one symbol for trampoline target: \"%s\"", trampoline_name.AsCString());
+                        if (log)
+                            log->Printf ("Couldn't resolve the symbol context.");
+                    }
+                }
+                else if (num_symbols > 1)
+                {
+                    std::vector<lldb::addr_t>  addresses;
+                    addresses.resize (num_symbols);
+                    for (uint32_t i = 0; i < num_symbols; i++)
+                    {
+                        SymbolContext context;
+                        AddressRange addr_range;
+                        if (target_symbols.GetContextAtIndex(i, context))
+                        {
+                            context.GetAddressRange (eSymbolContextEverything, addr_range);
+                            lldb::addr_t load_addr = addr_range.GetBaseAddress().GetLoadAddress(&(thread.GetProcess()));
+                            addresses[i] = load_addr;
+                        }
+                    }
+                    if (addresses.size() > 0)
+                        thread_plan_sp.reset (new ThreadPlanRunToAddress (thread, addresses, stop_others));
+                    else
+                    {
+                        if (log)
+                            log->Printf ("Couldn't resolve the symbol contexts.");
                     }
                 }
                 else
                 {
-                    Log *log = DynamicLoaderMacOSXDYLDLog::GetLogIfAllCategoriesSet (1);
                     if (log)
                     {
                         log->Printf ("Could not find symbol for trampoline target: \"%s\"", trampoline_name.AsCString());
@@ -1108,6 +1130,11 @@ DynamicLoaderMacOSXDYLD::GetStepThroughTrampolinePlan (Thread &thread, bool stop
                 }
             }
         }
+    }
+    else
+    {
+        if (log)
+            log->Printf ("Could not find symbol for step through.");
     }
 
     if (thread_plan_sp == NULL && m_objc_trampoline_handler_ap.get())

@@ -34,13 +34,13 @@ ThreadPlanRunToAddress::ThreadPlanRunToAddress
     Address &address,
     bool stop_others
 ) :
-    ThreadPlan (ThreadPlan::eKindRunToAddress, "Run to breakpoint plan", thread, eVoteNoOpinion, eVoteNoOpinion),
+    ThreadPlan (ThreadPlan::eKindRunToAddress, "Run to address plan", thread, eVoteNoOpinion, eVoteNoOpinion),
     m_stop_others (stop_others),
-    m_address (LLDB_INVALID_ADDRESS),
-    m_break_id (LLDB_INVALID_BREAK_ID)
+    m_addresses (),
+    m_break_ids ()
 {
-    m_address = address.GetLoadAddress(&m_thread.GetProcess());
-    SetInitialBreakpoint();
+    m_addresses.push_back (address.GetLoadAddress(&m_thread.GetProcess()));
+    SetInitialBreakpoints();
 }
 
 ThreadPlanRunToAddress::ThreadPlanRunToAddress
@@ -49,52 +49,109 @@ ThreadPlanRunToAddress::ThreadPlanRunToAddress
     lldb::addr_t address,
     bool stop_others
 ) :
-    ThreadPlan (ThreadPlan::eKindRunToAddress, "Run to breakpoint plan", thread, eVoteNoOpinion, eVoteNoOpinion),
+    ThreadPlan (ThreadPlan::eKindRunToAddress, "Run to address plan", thread, eVoteNoOpinion, eVoteNoOpinion),
     m_stop_others (stop_others),
-    m_address (address),
-    m_break_id (LLDB_INVALID_BREAK_ID)
+    m_addresses (),
+    m_break_ids ()
 {
-    SetInitialBreakpoint();
+    m_addresses.push_back(address);
+    SetInitialBreakpoints();
+}
+
+ThreadPlanRunToAddress::ThreadPlanRunToAddress
+(
+    Thread &thread,
+    std::vector<lldb::addr_t> &addresses,
+    bool stop_others
+) :
+    ThreadPlan (ThreadPlan::eKindRunToAddress, "Run to address plan", thread, eVoteNoOpinion, eVoteNoOpinion),
+    m_stop_others (stop_others),
+    m_addresses (addresses),
+    m_break_ids ()
+{
+    SetInitialBreakpoints();
 }
 
 void
-ThreadPlanRunToAddress::SetInitialBreakpoint ()
+ThreadPlanRunToAddress::SetInitialBreakpoints ()
 {
-    Breakpoint *breakpoint;
-    breakpoint = m_thread.GetProcess().GetTarget().CreateBreakpoint (m_address, true).get();
-    if (breakpoint != NULL)
+    size_t num_addresses = m_addresses.size();
+    m_break_ids.resize(num_addresses);
+    
+    for (size_t i = 0; i < num_addresses; i++)
     {
-        m_break_id = breakpoint->GetID();
-        breakpoint->SetThreadID(m_thread.GetID());
+        Breakpoint *breakpoint;
+        breakpoint = m_thread.GetProcess().GetTarget().CreateBreakpoint (m_addresses[i], true).get();
+        if (breakpoint != NULL)
+        {
+            m_break_ids[i] = breakpoint->GetID();
+            breakpoint->SetThreadID(m_thread.GetID());
+        }
     }
 }
 
 ThreadPlanRunToAddress::~ThreadPlanRunToAddress ()
 {
-    if (m_break_id != LLDB_INVALID_BREAK_ID)
+    size_t num_break_ids = m_break_ids.size();
+    for (size_t i = 0; i <  num_break_ids; i++)
     {
-        m_thread.GetProcess().GetTarget().RemoveBreakpointByID (m_break_id);
+        m_thread.GetProcess().GetTarget().RemoveBreakpointByID (m_break_ids[i]);
     }
 }
 
 void
 ThreadPlanRunToAddress::GetDescription (Stream *s, lldb::DescriptionLevel level)
 {
+    size_t num_addresses = m_addresses.size();
+    
     if (level == lldb::eDescriptionLevelBrief)
     {
-        s->Printf ("run to address: ");
-        s->Address (m_address, sizeof (addr_t));
+        if (num_addresses == 0)
+        {
+            s->Printf ("run to address with no addresses given.");
+            return;
+        }
+        else if (num_addresses == 1)
+            s->Printf ("run to address: ");
+        else
+            s->Printf ("run to addresses: ");
+            
+        for (size_t i = 0; i < num_addresses; i++)
+        {
+            s->Address (m_addresses[i], sizeof (addr_t));
+            s->Printf(" ");
+        }
     }
     else
     {
-        s->Printf ("Run to address: ");
-        s->Address(m_address, sizeof (addr_t));
-        s->Printf (" using breakpoint: %d - ", m_break_id);
-        Breakpoint *breakpoint = m_thread.GetProcess().GetTarget().GetBreakpointByID (m_break_id).get();
-        if (breakpoint)
-            breakpoint->Dump (s);
+        if (num_addresses == 0)
+        {
+            s->Printf ("run to address with no addresses given.");
+            return;
+        }
+        else if (num_addresses == 1)
+            s->Printf ("Run to address: ");
         else
-            s->Printf ("but the breakpoint has been deleted.");
+        {
+            s->Printf ("Run to addresses: ");
+        }
+            
+        for (size_t i = 0; i < num_addresses; i++)
+        {
+            if (num_addresses > 1)
+            {
+                s->Printf("\n");
+                s->Indent();
+            }
+            
+            s->Address(m_addresses[i], sizeof (addr_t));
+            s->Printf (" using breakpoint: %d - ", m_break_ids[i]);
+            Breakpoint *breakpoint = m_thread.GetProcess().GetTarget().GetBreakpointByID (m_break_ids[i]).get();
+            if (breakpoint)
+                breakpoint->Dump (s);
+            else
+                s->Printf ("but the breakpoint has been deleted.");
+        }
     }
 }
 
@@ -103,10 +160,20 @@ ThreadPlanRunToAddress::ValidatePlan (Stream *error)
 {
     // If we couldn't set the breakpoint for some reason, then this won't
     // work.
-    if(m_break_id == LLDB_INVALID_BREAK_ID)
-        return false;
-    else
-        return true;
+    bool all_bps_good = true;
+    size_t num_break_ids = m_break_ids.size();
+        
+    for (size_t i = 0; i < num_break_ids; i++)
+    {
+        if (m_break_ids[i] == LLDB_INVALID_BREAK_ID)
+        {
+            all_bps_good = false;
+            error->Printf ("Could not set breakpoint for address: ");
+            error->Address (m_addresses[i], sizeof (addr_t));
+            error->Printf ("\n");
+        }
+    }
+    return all_bps_good;
 }
 
 bool
@@ -153,12 +220,16 @@ ThreadPlanRunToAddress::MischiefManaged ()
     if (AtOurAddress())
     {
         // Remove the breakpoint
-        if (m_break_id != LLDB_INVALID_BREAK_ID)
+        size_t num_break_ids = m_break_ids.size();
+        
+        for (size_t i = 0; i < num_break_ids; i++)
         {
-            m_thread.GetProcess().GetTarget().RemoveBreakpointByID (m_break_id);
-            m_break_id = LLDB_INVALID_BREAK_ID;
+            if (m_break_ids[i] != LLDB_INVALID_BREAK_ID)
+            {
+                m_thread.GetProcess().GetTarget().RemoveBreakpointByID (m_break_ids[i]);
+                m_break_ids[i] = LLDB_INVALID_BREAK_ID;
+            }
         }
-
         if (log)
             log->Printf("Completed run to address plan.");
         ThreadPlan::MischiefManaged ();
@@ -172,5 +243,14 @@ bool
 ThreadPlanRunToAddress::AtOurAddress ()
 {
     lldb::addr_t current_address = m_thread.GetRegisterContext()->GetPC();
-    return m_address == current_address;
+    bool found_it = false;
+    for (size_t i = 0; i < m_addresses[i]; i++)
+    {
+        if (m_addresses[i] == current_address)
+        {
+            found_it = true;
+            break;
+        }
+    }
+    return found_it;
 }

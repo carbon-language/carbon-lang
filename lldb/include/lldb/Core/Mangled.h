@@ -51,6 +51,12 @@ public:
         eQualifier,     ///< A language qualifier
         eError          ///< The token failed to parse
     };
+    
+    enum NamePreference
+    {
+        ePreferMangled,
+        ePreferDemangled
+    };
 
     //------------------------------------------------------------------
     /// Mangled::Token structure
@@ -415,13 +421,16 @@ public:
     //----------------------------------------------------------------------
     /// Best name get accessor.
     ///
+    /// @param[in] preference
+    ///     Which name would you prefer to get?
+    ///
     /// @return
-    ///     A const reference to the the mangled name string object if this
-    ///     object has a valid mangled name, else a const reference to the
-    ///     demangled name is returned.
+    ///     A const reference to the the preferred name string object if this
+    ///     object has a valid name of that kind, else a const reference to the
+    ///     other name is returned.
     //----------------------------------------------------------------------
     const ConstString&
-    GetName () const;
+    GetName (NamePreference preference = ePreferDemangled) const;
 
     //----------------------------------------------------------------------
     /// Generate the tokens from the demangled name.

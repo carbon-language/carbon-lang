@@ -95,7 +95,7 @@ Mangled::Clear ()
 int
 Mangled::Compare (const Mangled& a, const Mangled& b)
 {
-    return ConstString::Compare(a.GetName(), a.GetName());
+    return ConstString::Compare(a.GetName(ePreferDemangled), a.GetName(ePreferDemangled));
 }
 
 
@@ -214,12 +214,28 @@ Mangled::GetMangledName () const
 // Get the demangled name if there is one, else return the mangled name.
 //----------------------------------------------------------------------
 const ConstString&
-Mangled::GetName () const
+Mangled::GetName (Mangled::NamePreference preference) const
 {
-    const ConstString& name = GetDemangledName();
-    if (name && !name.IsEmpty())
-        return name;
-    return m_mangled;
+    switch (preference)
+    {
+         case ePreferDemangled:
+        {
+            const ConstString& name = GetDemangledName();
+            if (name && !name.IsEmpty())
+                return name;
+            return m_mangled;
+        }
+        break;
+        case ePreferMangled:
+        {
+            const ConstString& name = GetMangledName();
+            if (name && !name.IsEmpty())
+                return name;
+            return m_demangled;
+        
+        }
+        break;
+    }
 }
 
 //----------------------------------------------------------------------

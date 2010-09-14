@@ -12,6 +12,8 @@
 
 // C Includes
 // C++ Includes
+#include <vector>
+
 // Other libraries and framework includes
 // Project includes
 #include "lldb/lldb-private.h"
@@ -29,6 +31,11 @@ public:
     ThreadPlanRunToAddress (Thread &thread,
                             lldb::addr_t address,
                             bool stop_others);
+
+    ThreadPlanRunToAddress (Thread &thread,
+                            std::vector<lldb::addr_t> &addresses,
+                            bool stop_others);
+
 
     virtual
     ~ThreadPlanRunToAddress ();
@@ -61,13 +68,13 @@ public:
     MischiefManaged ();
 
 protected:
-    void SetInitialBreakpoint();
+    void SetInitialBreakpoints();
     bool AtOurAddress();
 private:
     bool m_stop_others;
-    lldb::addr_t m_address;   // This is the address we are going to run to.
+    std::vector<lldb::addr_t> m_addresses;   // This is the address we are going to run to.
                           // TODO: Would it be useful to have multiple addresses?
-    lldb::user_id_t m_break_id; // This is the breakpoint we are using to stop us at m_address.
+    std::vector<lldb::user_id_t> m_break_ids; // This is the breakpoint we are using to stop us at m_address.
 
     DISALLOW_COPY_AND_ASSIGN (ThreadPlanRunToAddress);
 
