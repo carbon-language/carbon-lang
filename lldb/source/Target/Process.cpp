@@ -2099,10 +2099,10 @@ ProcessInstanceSettings::GetInstanceSettingsValue (const SettingEntry &entry,
     if (var_name == RunArgsVarName())
     {
         if (m_run_args.GetArgumentCount() > 0)
+        {
             for (int i = 0; i < m_run_args.GetArgumentCount(); ++i)
                 value.AppendString (m_run_args.GetArgumentAtIndex (i));
-        else
-            value.AppendString ("");
+        }
     }
     else if (var_name == EnvVarsVarName())
     {
@@ -2116,8 +2116,6 @@ ProcessInstanceSettings::GetInstanceSettingsValue (const SettingEntry &entry,
                 value.AppendString (value_str.GetData());
             }
         }
-        else
-            value.AppendString ("");
     }
     else if (var_name == InputPathVarName())
     {
