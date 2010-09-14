@@ -69,19 +69,20 @@ get_proc_name (lldb_private::unw_addr_space_t as, lldb_private::unw_word_t ip, c
 {
     if (arg == 0)
         return -1;
-    Thread *th = (Thread *) arg;
+    Thread *thread = (Thread *) arg;
+    Target &target = thread->GetProcess().GetTarget();
     Address addr;
-    if (!th->GetProcess().ResolveLoadAddress(ip, addr))
+    if (!target.GetSectionLoadList().ResolveLoadAddress(ip, addr))
         return -1;
     
     SymbolContext sc;
-    if (!th->GetProcess().GetTarget().GetImages().ResolveSymbolContextForAddress (addr, eSymbolContextFunction, sc))
+    if (!target.GetImages().ResolveSymbolContextForAddress (addr, eSymbolContextFunction, sc))
         return -1;
     if (!sc.symbol)
         return -1;
     strlcpy (bufp, sc.symbol->GetMangled().GetMangledName().AsCString(""), buf_len);
     if (offp)
-        *offp = addr.GetLoadAddress(&th->GetProcess()) - sc.symbol->GetValue().GetLoadAddress(&th->GetProcess());
+        *offp = addr.GetLoadAddress(&target) - sc.symbol->GetValue().GetLoadAddress(&target);
     return UNW_ESUCCESS;
 }
 
@@ -93,13 +94,14 @@ find_image_info (lldb_private::unw_addr_space_t as, lldb_private::unw_word_t loa
 {
     if (arg == 0)
         return -1;
-    Thread *th = (Thread *) arg;
+    Thread *thread = (Thread *) arg;
+    Target &target = thread->GetProcess().GetTarget();
     Address addr;
-    if (!th->GetProcess().ResolveLoadAddress(load_addr, addr))
+    if (!target.GetSectionLoadList().ResolveLoadAddress(load_addr, addr))
         return -1;
     
     SymbolContext sc;
-    if (!th->GetProcess().GetTarget().GetImages().ResolveSymbolContextForAddress (addr, eSymbolContextModule, sc))
+    if (!target.GetImages().ResolveSymbolContextForAddress (addr, eSymbolContextModule, sc))
         return -1;
     
     SectionList *sl = sc.module_sp->GetObjectFile()->GetSectionList();
@@ -108,14 +110,14 @@ find_image_info (lldb_private::unw_addr_space_t as, lldb_private::unw_word_t loa
     if (!text_segment_sp)
         return -1;
     
-    *mh = text_segment_sp->GetLoadBaseAddress (&th->GetProcess());
-    *text_start = text_segment_sp->GetLoadBaseAddress (&th->GetProcess());
+    *mh = text_segment_sp->GetLoadBaseAddress (&target);
+    *text_start = text_segment_sp->GetLoadBaseAddress (&target);
     *text_end = *text_start + text_segment_sp->GetByteSize();
     
     static ConstString g_section_name_eh_frame ("__eh_frame");
     SectionSP eh_frame_section_sp = text_segment_sp->GetChildren().FindSectionByName(g_section_name_eh_frame);
     if (eh_frame_section_sp.get()) {
-        *eh_frame = eh_frame_section_sp->GetLoadBaseAddress (&th->GetProcess());
+        *eh_frame = eh_frame_section_sp->GetLoadBaseAddress (&target);
         *eh_frame_len = eh_frame_section_sp->GetByteSize();
     } else {
         *eh_frame = 0;
@@ -125,7 +127,7 @@ find_image_info (lldb_private::unw_addr_space_t as, lldb_private::unw_word_t loa
     static ConstString g_section_name_unwind_info ("__unwind_info");
     SectionSP unwind_info_section_sp = text_segment_sp->GetChildren().FindSectionByName(g_section_name_unwind_info);
     if (unwind_info_section_sp.get()) {
-        *compact_unwind_start = unwind_info_section_sp->GetLoadBaseAddress (&th->GetProcess());
+        *compact_unwind_start = unwind_info_section_sp->GetLoadBaseAddress (&target);
         *compact_unwind_len = unwind_info_section_sp->GetByteSize();
     } else {
         *compact_unwind_start = 0;
@@ -139,17 +141,18 @@ get_proc_bounds (lldb_private::unw_addr_space_t as, lldb_private::unw_word_t ip,
 {
     if (arg == 0)
         return -1;
-    Thread *th = (Thread *) arg;
+    Thread *thread = (Thread *) arg;
+    Target &target = thread->GetProcess().GetTarget();
     Address addr;
-    if (!th->GetProcess().ResolveLoadAddress(ip, addr))
+    if (!target.GetSectionLoadList().ResolveLoadAddress(ip, addr))
         return -1;
     SymbolContext sc;
-    if (!th->GetProcess().GetTarget().GetImages().ResolveSymbolContextForAddress (addr, eSymbolContextFunction | eSymbolContextSymbol, sc))
+    if (!target.GetImages().ResolveSymbolContextForAddress (addr, eSymbolContextFunction | eSymbolContextSymbol, sc))
         return -1;
     if (sc.function)
     {
         lldb::addr_t start, len;
-        start = sc.function->GetAddressRange().GetBaseAddress().GetLoadAddress(&th->GetProcess());
+        start = sc.function->GetAddressRange().GetBaseAddress().GetLoadAddress(&target);
         len = sc.function->GetAddressRange().GetByteSize();
         if (start == LLDB_INVALID_ADDRESS || len == LLDB_INVALID_ADDRESS)
             return -1;
@@ -160,7 +163,7 @@ get_proc_bounds (lldb_private::unw_addr_space_t as, lldb_private::unw_word_t ip,
     if (sc.symbol)
     {
         lldb::addr_t start, len;
-        start = sc.symbol->GetAddressRangeRef().GetBaseAddress().GetLoadAddress(&th->GetProcess());
+        start = sc.symbol->GetAddressRangeRef().GetBaseAddress().GetLoadAddress(&target);
         len = sc.symbol->GetAddressRangeRef().GetByteSize();
         if (start == LLDB_INVALID_ADDRESS)
             return -1;
@@ -260,8 +263,9 @@ instruction_length (lldb_private::unw_addr_space_t as, lldb_private::unw_word_t 
     if (arg == 0)
         return -1;
     Thread *thread = (Thread *) arg;
-    
-    const ArchSpec::CPU arch_cpu = thread->GetProcess().GetTarget().GetArchitecture ().GetGenericCPUType();
+    Target &target = thread->GetProcess().GetTarget();
+
+    const ArchSpec::CPU arch_cpu = target.GetArchitecture ().GetGenericCPUType();
 
     if (arch_cpu == ArchSpec::eCPU_i386)
     {

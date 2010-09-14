@@ -197,7 +197,7 @@ SymbolContext::DumpStopContext
 }
 
 void
-SymbolContext::GetDescription(Stream *s, lldb::DescriptionLevel level, Process *process) const
+SymbolContext::GetDescription(Stream *s, lldb::DescriptionLevel level, Target *target) const
 {
     if (module_sp)
     {
@@ -219,7 +219,7 @@ SymbolContext::GetDescription(Stream *s, lldb::DescriptionLevel level, Process *
     if (function != NULL)
     {
         s->Indent("   Function: ");
-        function->GetDescription (s, level, process);
+        function->GetDescription (s, level, target);
         s->EOL();
 
         Type *func_type = function->GetType();
@@ -251,7 +251,7 @@ SymbolContext::GetDescription(Stream *s, lldb::DescriptionLevel level, Process *
                 s->Indent("     Blocks: ");
             else
                 s->Indent("             ");
-            (*pos)->GetDescription(s, function, level, process);
+            (*pos)->GetDescription(s, function, level, target);
             s->EOL();
         }
     }
@@ -259,14 +259,14 @@ SymbolContext::GetDescription(Stream *s, lldb::DescriptionLevel level, Process *
     if (line_entry.IsValid())
     {
         s->Indent("  LineEntry: ");
-        line_entry.GetDescription (s, level, comp_unit, process, false);
+        line_entry.GetDescription (s, level, comp_unit, target, false);
         s->EOL();
     }
 
     if (symbol != NULL)
     {
         s->Indent("     Symbol: ");
-        symbol->GetDescription(s, level, process);
+        symbol->GetDescription(s, level, target);
         s->EOL();
     }
 }
@@ -287,7 +287,7 @@ SymbolContext::GetResolvedMask () const
 
 
 void
-SymbolContext::Dump(Stream *s, Process *process) const
+SymbolContext::Dump(Stream *s, Target *target) const
 {
     *s << (void *)this << ": ";
     s->Indent();
@@ -310,7 +310,7 @@ SymbolContext::Dump(Stream *s, Process *process) const
     if (function != NULL)
     {
         *s << " {0x" << function->GetID() << "} " << function->GetType()->GetName() << ", address-range = ";
-        function->GetAddressRange().Dump(s, process, Address::DumpStyleLoadAddress, Address::DumpStyleModuleWithFileAddress);
+        function->GetAddressRange().Dump(s, target, Address::DumpStyleLoadAddress, Address::DumpStyleModuleWithFileAddress);
         s->EOL();
         s->Indent();
         Type* func_type = function->GetType();
@@ -331,7 +331,7 @@ SymbolContext::Dump(Stream *s, Process *process) const
     s->EOL();
     s->Indent();
     *s << "LineEntry    = ";
-    line_entry.Dump (s, process, true, Address::DumpStyleLoadAddress, Address::DumpStyleModuleWithFileAddress, true);
+    line_entry.Dump (s, target, true, Address::DumpStyleLoadAddress, Address::DumpStyleModuleWithFileAddress, true);
     s->EOL();
     s->Indent();
     *s << "Symbol       = " << (void *)symbol;
@@ -494,7 +494,7 @@ SymbolContextList::Clear()
 }
 
 void
-SymbolContextList::Dump(Stream *s, Process *process) const
+SymbolContextList::Dump(Stream *s, Target *target) const
 {
 
     *s << (void *)this << ": ";
@@ -506,7 +506,7 @@ SymbolContextList::Dump(Stream *s, Process *process) const
     collection::const_iterator pos, end = m_symbol_contexts.end();
     for (pos = m_symbol_contexts.begin(); pos != end; ++pos)
     {
-        pos->Dump(s, process);
+        pos->Dump(s, target);
     }
     s->IndentLess();
 }

@@ -87,7 +87,7 @@ DumpCompileUnitLineTable
                 LineTable *line_table = sc.comp_unit->GetLineTable();
                 if (line_table)
                     line_table->GetDescription (&strm, 
-                                                interpreter.GetDebugger().GetExecutionContext().process, 
+                                                interpreter.GetDebugger().GetExecutionContext().target, 
                                                 lldb::eDescriptionLevelBrief);
                 else
                     strm << "No line table";
@@ -165,7 +165,7 @@ DumpModuleSymtab (CommandInterpreter &interpreter, Stream &strm, Module *module)
         {
             Symtab *symtab = objfile->GetSymtab();
             if (symtab)
-                symtab->Dump(&strm, interpreter.GetDebugger().GetExecutionContext().process);
+                symtab->Dump(&strm, interpreter.GetDebugger().GetExecutionContext().target);
         }
     }
 }
@@ -180,7 +180,7 @@ DumpModuleSections (CommandInterpreter &interpreter, Stream &strm, Module *modul
         {
             SectionList *section_list = objfile->GetSectionList();
             if (section_list)
-                section_list->Dump(&strm, interpreter.GetDebugger().GetExecutionContext().process, true);
+                section_list->Dump(&strm, interpreter.GetDebugger().GetExecutionContext().target, true);
         }
     }
 }
@@ -217,10 +217,10 @@ LookupAddressInModule
         lldb::addr_t addr = raw_addr - offset;
         Address so_addr;
         SymbolContext sc;
-        Process *process = interpreter.GetDebugger().GetExecutionContext().process;
-        if (process && process->IsAlive())
+        Target *target = interpreter.GetDebugger().GetExecutionContext().target;
+        if (target && !target->GetSectionLoadList().IsEmpty())
         {
-            if (!process->ResolveLoadAddress (addr, so_addr))
+            if (!target->GetSectionLoadList().ResolveLoadAddress (addr, so_addr))
                 return false;
             else if (so_addr.GetModule() != module)
                 return false;
@@ -299,7 +299,7 @@ LookupSymbolInModule (CommandInterpreter &interpreter, Stream &strm, Module *mod
                     {
                         Symbol *symbol = symtab->SymbolAtIndex(match_indexes[i]);
                         strm.Indent ();
-                        symbol->Dump (&strm, interpreter.GetDebugger().GetExecutionContext().process, i);
+                        symbol->Dump (&strm, interpreter.GetDebugger().GetExecutionContext().target, i);
                     }
                     strm.IndentLess ();
                     return num_matches;
@@ -328,8 +328,7 @@ DumpSymbolContextList (CommandInterpreter &interpreter, Stream &strm, SymbolCont
             {
                 if (sc.line_entry.range.GetBaseAddress().IsValid())
                 {
-                    lldb::addr_t vm_addr =
-                                      sc.line_entry.range.GetBaseAddress().GetLoadAddress(interpreter.GetDebugger().GetExecutionContext().process);
+                    lldb::addr_t vm_addr = sc.line_entry.range.GetBaseAddress().GetLoadAddress(interpreter.GetDebugger().GetExecutionContext().target);
                     int addr_size = sizeof (addr_t);
                     Process *process = interpreter.GetDebugger().GetExecutionContext().process;
                     if (process)

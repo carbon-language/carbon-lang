@@ -40,6 +40,13 @@ public:
     {
     }
 
+    bool
+    IsEmpty() const
+    {
+        Mutex::Locker locker(m_mutex);
+        return m_collection.empty();
+    }
+
     size_t
     Erase (const _Key& key)
     {

@@ -66,7 +66,6 @@ Process::Process(Target &target, Listener &listener) :
     Broadcaster ("Process"),
     ProcessInstanceSettings (*(Process::GetSettingsController().get())),
     m_target (target),
-    m_section_load_info (),
     m_public_state (eStateUnloaded),
     m_private_state (eStateUnloaded),
     m_private_state_broadcaster ("lldb.process.internal_state_broadcaster"),
@@ -529,7 +528,7 @@ Process::EnableBreakpointSiteByID (lldb::user_id_t break_id)
 lldb::break_id_t
 Process::CreateBreakpointSite (BreakpointLocationSP &owner, bool use_hardware)
 {
-    const addr_t load_addr = owner->GetAddress().GetLoadAddress (this);
+    const addr_t load_addr = owner->GetAddress().GetLoadAddress (&m_target);
     if (load_addr != LLDB_INVALID_ADDRESS)
     {
         BreakpointSiteSP bp_site_sp;
@@ -1573,103 +1572,6 @@ Process::RunPrivateStateThread ()
 
     m_private_state_thread = LLDB_INVALID_HOST_THREAD;
     return NULL;
-}
-
-addr_t
-Process::GetSectionLoadAddress (const Section *section) const
-{
-    // TODO: add support for the same section having multiple load addresses
-    addr_t section_load_addr = LLDB_INVALID_ADDRESS;
-    if (m_section_load_info.GetFirstKeyForValue (section, section_load_addr))
-        return section_load_addr;
-    return LLDB_INVALID_ADDRESS;
-}
-
-bool
-Process::SectionLoaded (const Section *section, addr_t load_addr)
-{
-    Log *log = lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_SHLIB | LIBLLDB_LOG_VERBOSE);
-
-    if (log)
-        log->Printf ("Process::%s (section = %p (%s.%s), load_addr = 0x%16.16llx)",
-                     __FUNCTION__,
-                     section,
-                     section->GetModule()->GetFileSpec().GetFilename().AsCString(),
-                     section->GetName().AsCString(),
-                     load_addr);
-
-
-    const Section *existing_section = NULL;
-    Mutex::Locker locker(m_section_load_info.GetMutex());
-
-    if (m_section_load_info.GetValueForKeyNoLock (load_addr, existing_section))
-    {
-        if (existing_section == section)
-            return false;   // No change
-    }
-    m_section_load_info.SetValueForKeyNoLock (load_addr, section);
-    return true;    // Changed
-}
-
-size_t
-Process::SectionUnloaded (const Section *section)
-{
-    Log *log = lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_SHLIB | LIBLLDB_LOG_VERBOSE);
-
-    if (log)
-        log->Printf ("Process::%s (section = %p (%s.%s))",
-                     __FUNCTION__,
-                     section,
-                     section->GetModule()->GetFileSpec().GetFilename().AsCString(),
-                     section->GetName().AsCString());
-
-    Mutex::Locker locker(m_section_load_info.GetMutex());
-
-    size_t unload_count = 0;
-    addr_t section_load_addr;
-    while (m_section_load_info.GetFirstKeyForValueNoLock (section, section_load_addr))
-    {
-        unload_count += m_section_load_info.EraseNoLock (section_load_addr);
-    }
-    return unload_count;
-}
-
-bool
-Process::SectionUnloaded (const Section *section, addr_t load_addr)
-{
-    Log *log = lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_SHLIB | LIBLLDB_LOG_VERBOSE);
-
-    if (log)
-        log->Printf ("Process::%s (section = %p (%s.%s), load_addr = 0x%16.16llx)",
-                     __FUNCTION__,
-                     section,
-                     section->GetModule()->GetFileSpec().GetFilename().AsCString(),
-                     section->GetName().AsCString(),
-                     load_addr);
-
-    return m_section_load_info.Erase (load_addr) == 1;
-}
-
-
-bool
-Process::ResolveLoadAddress (addr_t load_addr, Address &so_addr) const
-{
-    addr_t section_load_addr = LLDB_INVALID_ADDRESS;
-    const Section *section = NULL;
-
-    // First find the top level section that this load address exists in
-    if (m_section_load_info.LowerBound (load_addr, section_load_addr, section, true))
-    {
-        addr_t offset = load_addr - section_load_addr;
-        if (offset < section->GetByteSize())
-        {
-            // We have found the top level section, now we need to find the
-            // deepest child section.
-            return section->ResolveContainedAddress (offset, so_addr);
-        }
-    }
-    so_addr.Clear();
-    return false;
 }
 
 //------------------------------------------------------------------

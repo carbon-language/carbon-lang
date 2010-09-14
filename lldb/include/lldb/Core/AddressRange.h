@@ -163,7 +163,7 @@ public:
     ///     in the address range, \b false otherwise.
     //------------------------------------------------------------------
     bool
-    ContainsLoadAddress (const Address &so_addr, Process *process) const;
+    ContainsLoadAddress (const Address &so_addr, Target *target) const;
 
     //------------------------------------------------------------------
     /// Check if the resolved load address \a load_addr is contained
@@ -178,7 +178,7 @@ public:
     ///     range, \b false otherwise.
     //------------------------------------------------------------------
     bool
-    ContainsLoadAddress (lldb::addr_t load_addr, Process *process) const;
+    ContainsLoadAddress (lldb::addr_t load_addr, Target *target) const;
 
     //------------------------------------------------------------------
     /// Dump a description of this object to a Stream.
@@ -203,7 +203,7 @@ public:
     /// @see Address::DumpStyle
     //------------------------------------------------------------------
     bool
-    Dump (Stream *s, Process *process, Address::DumpStyle style, Address::DumpStyle fallback_style = Address::DumpStyleInvalid) const;
+    Dump (Stream *s, Target *target, Address::DumpStyle style, Address::DumpStyle fallback_style = Address::DumpStyleInvalid) const;
 
     //------------------------------------------------------------------
     /// Dump a debug description of this object to a Stream.

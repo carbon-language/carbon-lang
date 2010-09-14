@@ -13,6 +13,7 @@
 #include "lldb/Core/Section.h"
 #include "lldb/Core/Stream.h"
 #include "lldb/Target/Process.h"
+#include "lldb/Target/Target.h"
 
 using namespace lldb;
 using namespace lldb_private;
@@ -173,7 +174,7 @@ Symbol::IsTrampoline () const
 }
 
 void
-Symbol::GetDescription (Stream *s, lldb::DescriptionLevel level, Process *process) const
+Symbol::GetDescription (Stream *s, lldb::DescriptionLevel level, Target *target) const
 {
     *s << "id = " << (const UserID&)*this << ", name = \"" << m_mangled.GetName() << '"';
     const Section *section = m_addr_range.GetBaseAddress().GetSection();
@@ -184,12 +185,12 @@ Symbol::GetDescription (Stream *s, lldb::DescriptionLevel level, Process *proces
             if (m_addr_range.GetByteSize() > 0)
             {
                 s->PutCString (", range = ");
-                m_addr_range.Dump(s, process, Address::DumpStyleLoadAddress, Address::DumpStyleFileAddress);
+                m_addr_range.Dump(s, target, Address::DumpStyleLoadAddress, Address::DumpStyleFileAddress);
             }
             else 
             {
                 s->PutCString (", address = ");
-                m_addr_range.GetBaseAddress().Dump(s, process, Address::DumpStyleLoadAddress, Address::DumpStyleFileAddress);
+                m_addr_range.GetBaseAddress().Dump(s, target, Address::DumpStyleLoadAddress, Address::DumpStyleFileAddress);
             }
         }
         else
@@ -203,7 +204,7 @@ Symbol::GetDescription (Stream *s, lldb::DescriptionLevel level, Process *proces
 }
 
 void
-Symbol::Dump(Stream *s, Process *process, uint32_t index) const
+Symbol::Dump(Stream *s, Target *target, uint32_t index) const
 {
 //  s->Printf("%.*p: ", (int)sizeof(void*) * 2, this);
 //  s->Indent();
@@ -224,7 +225,7 @@ Symbol::Dump(Stream *s, Process *process, uint32_t index) const
 
         s->PutChar(' ');
 
-        if (!m_addr_range.GetBaseAddress().Dump(s, process, Address::DumpStyleLoadAddress))
+        if (!m_addr_range.GetBaseAddress().Dump(s, target, Address::DumpStyleLoadAddress))
             s->Printf("%*s", 18, "");
 
         const char *format = m_size_is_sibling ?

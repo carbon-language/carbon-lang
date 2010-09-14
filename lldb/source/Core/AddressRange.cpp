@@ -11,6 +11,7 @@
 #include "lldb/Core/Module.h"
 #include "lldb/Core/Stream.h"
 #include "lldb/Target/Process.h"
+#include "lldb/Target/Target.h"
 
 using namespace lldb;
 using namespace lldb_private;
@@ -96,15 +97,15 @@ AddressRange::ContainsFileAddress (addr_t file_addr) const
 
 
 bool
-AddressRange::ContainsLoadAddress (const Address &addr, Process *process) const
+AddressRange::ContainsLoadAddress (const Address &addr, Target *target) const
 {
     if (addr.GetSection() == m_base_addr.GetSection())
         return (addr.GetOffset() - m_base_addr.GetOffset()) < GetByteSize();
-    addr_t load_base_addr = GetBaseAddress().GetLoadAddress(process);
+    addr_t load_base_addr = GetBaseAddress().GetLoadAddress(target);
     if (load_base_addr == LLDB_INVALID_ADDRESS)
         return false;
 
-    addr_t load_addr = addr.GetLoadAddress(process);
+    addr_t load_addr = addr.GetLoadAddress(target);
     if (load_addr == LLDB_INVALID_ADDRESS)
         return false;
 
@@ -115,12 +116,12 @@ AddressRange::ContainsLoadAddress (const Address &addr, Process *process) const
 }
 
 bool
-AddressRange::ContainsLoadAddress (addr_t load_addr, Process *process) const
+AddressRange::ContainsLoadAddress (addr_t load_addr, Target *target) const
 {
     if (load_addr == LLDB_INVALID_ADDRESS)
         return false;
 
-    addr_t load_base_addr = GetBaseAddress().GetLoadAddress(process);
+    addr_t load_base_addr = GetBaseAddress().GetLoadAddress(target);
     if (load_base_addr == LLDB_INVALID_ADDRESS)
         return false;
 
@@ -138,12 +139,12 @@ AddressRange::Clear()
 }
 
 bool
-AddressRange::Dump(Stream *s, Process *process, Address::DumpStyle style, Address::DumpStyle fallback_style) const
+AddressRange::Dump(Stream *s, Target *target, Address::DumpStyle style, Address::DumpStyle fallback_style) const
 {
     addr_t vmaddr = LLDB_INVALID_ADDRESS;
     int addr_size = sizeof (addr_t);
-    if (process)
-      addr_size = process->GetAddressByteSize ();
+    if (target && target->GetProcessSP())
+        addr_size = target->GetProcessSP()->GetAddressByteSize ();
 
     bool show_module = false;
     switch (style)
@@ -153,7 +154,7 @@ AddressRange::Dump(Stream *s, Process *process, Address::DumpStyle style, Addres
     case Address::DumpStyleSectionNameOffset:
     case Address::DumpStyleSectionPointerOffset:
         s->PutChar ('[');
-        m_base_addr.Dump(s, process, style, fallback_style);
+        m_base_addr.Dump(s, target, style, fallback_style);
         s->PutChar ('-');
         s->Address (m_base_addr.GetOffset() + GetByteSize(), addr_size);
         s->PutChar (')');
@@ -168,7 +169,7 @@ AddressRange::Dump(Stream *s, Process *process, Address::DumpStyle style, Addres
         break;
 
     case Address::DumpStyleLoadAddress:
-        vmaddr = m_base_addr.GetLoadAddress(process);
+        vmaddr = m_base_addr.GetLoadAddress(target);
         break;
     }
 
@@ -185,7 +186,7 @@ AddressRange::Dump(Stream *s, Process *process, Address::DumpStyle style, Addres
     }
     else if (fallback_style != Address::DumpStyleInvalid)
     {
-        return Dump(s, process, fallback_style, Address::DumpStyleInvalid);
+        return Dump(s, target, fallback_style, Address::DumpStyleInvalid);
     }
 
     return false;

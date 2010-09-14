@@ -218,7 +218,7 @@ DynamicLoaderMacOSXDYLD::ReadDYLDInfoFromMemoryAndSetNotificationCallback(lldb::
                 static ConstString g_dyld_all_image_infos ("dyld_all_image_infos");
                 const Symbol *symbol = dyld_module_sp->FindFirstSymbolWithNameAndType (g_dyld_all_image_infos, eSymbolTypeData);
                 if (symbol)
-                    m_dyld_all_image_infos_addr = symbol->GetValue().GetLoadAddress(m_process);
+                    m_dyld_all_image_infos_addr = symbol->GetValue().GetLoadAddress(&m_process->GetTarget());
             }
 
             // Update all image infos
@@ -263,11 +263,11 @@ DynamicLoaderMacOSXDYLD::UpdateCommPageLoadAddress(Module *module)
                     if (section)
                     {
                         const addr_t new_section_load_addr = section->GetFileAddress ();
-                        const addr_t old_section_load_addr = m_process->GetSectionLoadAddress (section);
+                        const addr_t old_section_load_addr = m_process->GetTarget().GetSectionLoadList().GetSectionLoadAddress (section);
                         if (old_section_load_addr == LLDB_INVALID_ADDRESS ||
                             old_section_load_addr != new_section_load_addr)
                         {
-                            if (m_process->SectionLoaded (section, section->GetFileAddress ()))
+                            if (m_process->GetTarget().GetSectionLoadList().SetSectionLoadAddress (section, section->GetFileAddress ()))
                                 changed = true;
                         }
                     }
@@ -336,11 +336,11 @@ DynamicLoaderMacOSXDYLD::UpdateImageLoadAddress (Module *module, struct DYLDImag
                     SectionSP section_sp(section_list->FindSectionByName(info.segments[i].name));
                     assert (section_sp.get() != NULL);
                     const addr_t new_section_load_addr = info.segments[i].addr + info.slide;
-                    const addr_t old_section_load_addr = m_process->GetSectionLoadAddress (section_sp.get());
+                    const addr_t old_section_load_addr = m_process->GetTarget().GetSectionLoadList().GetSectionLoadAddress (section_sp.get());
                     if (old_section_load_addr == LLDB_INVALID_ADDRESS ||
                         old_section_load_addr != new_section_load_addr)
                     {
-                        if (m_process->SectionLoaded (section_sp.get(), new_section_load_addr))
+                        if (m_process->GetTarget().GetSectionLoadList().SetSectionLoadAddress (section_sp.get(), new_section_load_addr))
                             changed = true;
                     }
                 }
@@ -372,7 +372,7 @@ DynamicLoaderMacOSXDYLD::UnloadImageLoadAddress (Module *module, struct DYLDImag
                     SectionSP section_sp(section_list->FindSectionByName(info.segments[i].name));
                     assert (section_sp.get() != NULL);
                     const addr_t old_section_load_addr = info.segments[i].addr + info.slide;
-                    if (m_process->SectionUnloaded (section_sp.get(), old_section_load_addr))
+                    if (m_process->GetTarget().GetSectionLoadList().SetSectionUnloaded (section_sp.get(), old_section_load_addr))
                         changed = true;
                 }
             }
@@ -1008,7 +1008,7 @@ DynamicLoaderMacOSXDYLD::SetNotificationBreakpoint ()
             // breakpoint gets hit. We will use this to track when shared
             // libraries get loaded/unloaded.
 
-            if (m_process->ResolveLoadAddress(m_dyld_all_image_infos.notification, so_addr))
+            if (m_process->GetTarget().GetSectionLoadList().ResolveLoadAddress(m_dyld_all_image_infos.notification, so_addr))
             {
                 Breakpoint *dyld_break = m_process->GetTarget().CreateBreakpoint (so_addr, true).get();
                 dyld_break->SetCallback (DynamicLoaderMacOSXDYLD::NotifyBreakpointHit, this, true);
@@ -1109,7 +1109,7 @@ DynamicLoaderMacOSXDYLD::GetStepThroughTrampolinePlan (Thread &thread, bool stop
                         if (target_symbols.GetContextAtIndex(i, context))
                         {
                             context.GetAddressRange (eSymbolContextEverything, addr_range);
-                            lldb::addr_t load_addr = addr_range.GetBaseAddress().GetLoadAddress(&(thread.GetProcess()));
+                            lldb::addr_t load_addr = addr_range.GetBaseAddress().GetLoadAddress(&thread.GetProcess().GetTarget());
                             addresses[i] = load_addr;
                         }
                     }

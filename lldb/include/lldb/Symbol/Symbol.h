@@ -61,7 +61,7 @@ public:
     Compare (const ConstString& name, lldb::SymbolType type) const;
 
     void
-    Dump (Stream *s, Process *process, uint32_t index) const;
+    Dump (Stream *s, Target *target, uint32_t index) const;
 
     AddressRange *
     GetAddressRangePtr ();
@@ -109,7 +109,7 @@ public:
     SetFlags (uint32_t flags) { m_flags = flags; }
 
     void
-    GetDescription (Stream *s, lldb::DescriptionLevel level, Process *process) const;
+    GetDescription (Stream *s, lldb::DescriptionLevel level, Target *target) const;
 
     Function *
     GetFunction ();

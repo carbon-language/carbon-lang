@@ -84,13 +84,14 @@ ObjCTrampolineHandler::ObjCTrampolineHandler (ProcessSP process_sp, ModuleSP obj
     ConstString get_impl_name("class_getMethodImplementation");
     ConstString get_impl_stret_name("class_getMethodImplementation_stret");
     
+    Target *target = m_process_sp ? &m_process_sp->GetTarget() : NULL;
     const Symbol *class_getMethodImplementation = m_objc_module_sp->FindFirstSymbolWithNameAndType (get_impl_name, eSymbolTypeCode);
     const Symbol *class_getMethodImplementation_stret = m_objc_module_sp->FindFirstSymbolWithNameAndType (get_impl_stret_name, eSymbolTypeCode);
     
     if (class_getMethodImplementation)
-        m_impl_fn_addr = class_getMethodImplementation->GetValue().GetLoadAddress(m_process_sp.get());
+        m_impl_fn_addr = class_getMethodImplementation->GetValue().GetLoadAddress(target);
     if  (class_getMethodImplementation_stret)
-        m_impl_stret_fn_addr = class_getMethodImplementation_stret->GetValue().GetLoadAddress(m_process_sp.get());
+        m_impl_stret_fn_addr = class_getMethodImplementation_stret->GetValue().GetLoadAddress(target);
     
     // FIXME: Do some kind of logging here.
     if (m_impl_fn_addr == LLDB_INVALID_ADDRESS || m_impl_stret_fn_addr == LLDB_INVALID_ADDRESS)
@@ -111,7 +112,7 @@ ObjCTrampolineHandler::ObjCTrampolineHandler (ProcessSP process_sp, ModuleSP obj
             // Problem is we also need to lookup the dispatch function.  For now we could have a side table of stret & non-stret
             // dispatch functions.  If that's as complex as it gets, we're fine.
             
-            lldb::addr_t sym_addr = msgSend_symbol->GetValue().GetLoadAddress(m_process_sp.get());
+            lldb::addr_t sym_addr = msgSend_symbol->GetValue().GetLoadAddress(target);
             
             m_msgSend_map.insert(std::pair<lldb::addr_t, int>(sym_addr, i));
         }

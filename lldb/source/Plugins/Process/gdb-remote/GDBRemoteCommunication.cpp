@@ -398,8 +398,7 @@ GDBRemoteCommunication::SendPacketNoLock (const char *payload, size_t payload_le
             ProcessGDBRemoteLog::LogIf (GDBR_LOG_PACKETS, "error: failed to send packet: %s", packet.GetData());
         }
         return bytes_written;
-   }
-    //m_error.SetErrorString("Not connected.");
+    }
     return 0;
 }
 

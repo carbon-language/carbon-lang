@@ -197,7 +197,7 @@ public:
     CompareFileAddress (const Address& lhs, const Address& rhs);
 
     static int
-    CompareLoadAddress (const Address& lhs, const Address& rhs, Process *process);
+    CompareLoadAddress (const Address& lhs, const Address& rhs, Target *target);
 
     static int
     CompareModulePointerAndOffset (const Address& lhs, const Address& rhs);
@@ -291,7 +291,7 @@ public:
     ///     the address is currently not loaded.
     //------------------------------------------------------------------
     lldb::addr_t
-    GetLoadAddress (Process *process) const;
+    GetLoadAddress (Target *target) const;
 
     //------------------------------------------------------------------
     /// Get the section relative offset value.

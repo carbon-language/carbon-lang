@@ -91,10 +91,10 @@ public:
     /// @see Address::DumpStyle
     //------------------------------------------------------------------
     void
-    Dump (Stream *s, Process *process, Address::DumpStyle style, Address::DumpStyle fallback_style, bool show_line_ranges);
+    Dump (Stream *s, Target *target, Address::DumpStyle style, Address::DumpStyle fallback_style, bool show_line_ranges);
 
     void
-    GetDescription (Stream *s, Process *process, lldb::DescriptionLevel level);
+    GetDescription (Stream *s, Target *target, lldb::DescriptionLevel level);
 
     //------------------------------------------------------------------
     /// Find a line entry that contains the section offset address \a

@@ -143,6 +143,7 @@ public:
 #endif
 
 protected:
+    friend class SBAddress;
     friend class SBDebugger;
     friend class SBProcess;
 

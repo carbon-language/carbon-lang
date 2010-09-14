@@ -62,7 +62,7 @@ Symtab::GetNumSymbols() const
 }
 
 void
-Symtab::Dump(Stream *s, Process *process) const
+Symtab::Dump(Stream *s, Target *target) const
 {
     const_iterator pos;
     s->Printf("%.*p: ", (int)sizeof(void*) * 2, this);
@@ -92,14 +92,14 @@ Symtab::Dump(Stream *s, Process *process) const
         for (pos = m_symbols.begin(); pos != end; ++pos)
         {
             s->Indent();
-            pos->Dump(s, process, std::distance(begin, pos));
+            pos->Dump(s, target, std::distance(begin, pos));
         }
     }
     s->IndentLess ();
 }
 
 void
-Symtab::Dump(Stream *s, Process *process, std::vector<uint32_t>& indexes) const
+Symtab::Dump(Stream *s, Target *target, std::vector<uint32_t>& indexes) const
 {
     const size_t num_symbols = GetNumSymbols();
     s->Printf("%.*p: ", (int)sizeof(void*) * 2, this);
@@ -118,7 +118,7 @@ Symtab::Dump(Stream *s, Process *process, std::vector<uint32_t>& indexes) const
             if (idx < num_symbols)
             {
                 s->Indent();
-                m_symbols[idx].Dump(s, process, idx);
+                m_symbols[idx].Dump(s, target, idx);
             }
         }
     }

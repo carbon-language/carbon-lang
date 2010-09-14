@@ -188,7 +188,7 @@ public:
     GetDescription (Stream *s, 
                     Function *function, 
                     lldb::DescriptionLevel level, 
-                    Process *process) const;
+                    Target *target) const;
     
     //------------------------------------------------------------------
     /// Get the parent block.

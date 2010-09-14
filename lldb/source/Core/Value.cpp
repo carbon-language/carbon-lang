@@ -558,7 +558,7 @@ Value::GetValueAsData (ExecutionContext *exe_ctx, clang::ASTContext *ast_context
                         if (objfile)
                         {
                             Address so_addr(file_addr, objfile->GetSectionList());
-                            address = so_addr.GetLoadAddress (exe_ctx->process);
+                            address = so_addr.GetLoadAddress (exe_ctx->target);
                             if (address != LLDB_INVALID_ADDRESS)
                             {
                                 address_type = eAddressTypeLoad;

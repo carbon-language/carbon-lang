@@ -24,7 +24,6 @@
 #include "lldb/Core/Event.h"
 #include "lldb/Core/StringList.h"
 #include "lldb/Core/ThreadSafeValue.h"
-#include "lldb/Core/ThreadSafeSTLMap.h"
 #include "lldb/Core/PluginInterface.h"
 #include "lldb/Core/UserSettingsController.h"
 #include "lldb/Breakpoint/BreakpointSiteList.h"
@@ -1459,27 +1458,6 @@ public:
     virtual DynamicLoader *
     GetDynamicLoader ();
 
-    lldb::addr_t
-    GetSectionLoadAddress (const Section *section) const;
-
-    bool
-    ResolveLoadAddress (lldb::addr_t load_addr, Address &so_addr) const;
-
-    bool
-    SectionLoaded (const Section *section, lldb::addr_t load_addr);
-
-    // The old load address should be specified when unloading to ensure we get
-    // the correct instance of the section as a shared library could be loaded
-    // at more than one location.
-    bool
-    SectionUnloaded (const Section *section, lldb::addr_t load_addr);
-
-    // Unload all instances of a section. This function can be used on systems
-    // that don't support multiple copies of the same shared library to be
-    // loaded at the same time.
-    size_t
-    SectionUnloaded (const Section *section);
-
     bool
     IsRunning () const;
     
@@ -1521,12 +1499,10 @@ public:
     GetObjCObjectPrinter();
 
 protected:
-    typedef ThreadSafeSTLMap<lldb::addr_t, const Section *> SectionLoadColl;
     //------------------------------------------------------------------
     // Member variables
     //------------------------------------------------------------------
     Target &                    m_target;               ///< The target that owns this process.
-    SectionLoadColl             m_section_load_info;    ///< A mapping of all currently loaded sections.
     ThreadSafeValue<lldb::StateType>  m_public_state;
     ThreadSafeValue<lldb::StateType>  m_private_state; // The actual state of our process
     Broadcaster                 m_private_state_broadcaster;  // This broadcaster feeds state changed events into the private state thread's listener.

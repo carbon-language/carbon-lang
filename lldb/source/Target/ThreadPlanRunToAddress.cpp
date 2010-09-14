@@ -39,7 +39,7 @@ ThreadPlanRunToAddress::ThreadPlanRunToAddress
     m_addresses (),
     m_break_ids ()
 {
-    m_addresses.push_back (address.GetLoadAddress(&m_thread.GetProcess()));
+    m_addresses.push_back (address.GetLoadAddress(&m_thread.GetProcess().GetTarget()));
     SetInitialBreakpoints();
 }
 

@@ -41,8 +41,8 @@ public:
             Symbol *    Resize (uint32_t count);
             uint32_t    AddSymbol(const Symbol& symbol);
             size_t      GetNumSymbols() const;
-            void        Dump(Stream *s, Process *process) const;
-            void        Dump(Stream *s, Process *process, std::vector<uint32_t>& indexes) const;
+            void        Dump(Stream *s, Target *target) const;
+            void        Dump(Stream *s, Target *target, std::vector<uint32_t>& indexes) const;
             uint32_t    GetIndexForSymbol (const Symbol *symbol) const;
             Symbol *    FindSymbolByID (lldb::user_id_t uid) const;
             Symbol *    SymbolAtIndex (uint32_t idx);

@@ -14,6 +14,8 @@
 		2615DBCB1208B5FC0021781D /* StopInfoMachException.h in Headers */ = {isa = PBXBuildFile; fileRef = 2615DBC91208B5FC0021781D /* StopInfoMachException.h */; };
 		261744781168585B005ADD65 /* SBType.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 261744771168585B005ADD65 /* SBType.cpp */; };
 		2617447A11685869005ADD65 /* SBType.h in Headers */ = {isa = PBXBuildFile; fileRef = 2617447911685869005ADD65 /* SBType.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		2618D7901240115500F2B8FE /* SectionLoadList.h in Headers */ = {isa = PBXBuildFile; fileRef = 2618D78F1240115500F2B8FE /* SectionLoadList.h */; };
+		2618D7921240116900F2B8FE /* SectionLoadList.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2618D7911240116900F2B8FE /* SectionLoadList.cpp */; };
 		261B5A5411C3F2AD00AABD0A /* SharingPtr.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 261B5A5211C3F2AD00AABD0A /* SharingPtr.cpp */; };
 		261B5A5511C3F2AD00AABD0A /* SharingPtr.h in Headers */ = {isa = PBXBuildFile; fileRef = 261B5A5311C3F2AD00AABD0A /* SharingPtr.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		262CFC7711A4510000946C6C /* debugserver in Resources */ = {isa = PBXBuildFile; fileRef = 26CE05A0115C31E50022F371 /* debugserver */; };
@@ -530,6 +532,8 @@
 		2615DBC91208B5FC0021781D /* StopInfoMachException.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = StopInfoMachException.h; path = Utility/StopInfoMachException.h; sourceTree = "<group>"; };
 		261744771168585B005ADD65 /* SBType.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SBType.cpp; path = source/API/SBType.cpp; sourceTree = "<group>"; };
 		2617447911685869005ADD65 /* SBType.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SBType.h; path = include/lldb/API/SBType.h; sourceTree = "<group>"; };
+		2618D78F1240115500F2B8FE /* SectionLoadList.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SectionLoadList.h; path = include/lldb/Target/SectionLoadList.h; sourceTree = "<group>"; };
+		2618D7911240116900F2B8FE /* SectionLoadList.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SectionLoadList.cpp; path = source/Target/SectionLoadList.cpp; sourceTree = "<group>"; };
 		261B5A5211C3F2AD00AABD0A /* SharingPtr.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SharingPtr.cpp; path = source/Utility/SharingPtr.cpp; sourceTree = "<group>"; };
 		261B5A5311C3F2AD00AABD0A /* SharingPtr.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SharingPtr.h; path = include/lldb/Utility/SharingPtr.h; sourceTree = "<group>"; };
 		261E18CC1148966100BADCD3 /* GDBRemoteRegisterContext.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = GDBRemoteRegisterContext.h; path = "source/Plugins/Process/gdb-remote/GDBRemoteRegisterContext.h"; sourceTree = "<group>"; };
@@ -1967,6 +1971,8 @@
 				26BC7F3610F1B90C00F91463 /* Process.cpp */,
 				26BC7DF410F1B81A00F91463 /* RegisterContext.h */,
 				26BC7F3710F1B90C00F91463 /* RegisterContext.cpp */,
+				2618D78F1240115500F2B8FE /* SectionLoadList.h */,
+				2618D7911240116900F2B8FE /* SectionLoadList.cpp */,
 				26BC7DF510F1B81A00F91463 /* StackFrame.h */,
 				26BC7F3810F1B90C00F91463 /* StackFrame.cpp */,
 				26BC7DF610F1B81A00F91463 /* StackFrameList.h */,
@@ -2271,6 +2277,7 @@
 				961FABEB1235F26800F93A47 /* UnwindAssemblyProfiler-x86.h in Headers */,
 				961FAC1F12360C7D00F93A47 /* ArchDefaultUnwindPlan-x86.h in Headers */,
 				268F9D53123AA15200B91E9B /* SBSymbolContextList.h in Headers */,
+				2618D7901240115500F2B8FE /* SectionLoadList.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -2325,6 +2332,7 @@
 			isa = PBXProject;
 			buildConfigurationList = 1DEB91EF08733DB70010E9CD /* Build configuration list for PBXProject "lldb" */;
 			compatibilityVersion = "Xcode 3.1";
+			developmentRegion = English;
 			hasScannedForEncodings = 1;
 			knownRegions = (
 				en,
@@ -2733,6 +2741,7 @@
 				69A01E251236C5D400C660B5 /* Symbols.cpp in Sources */,
 				69A01E261236C5D400C660B5 /* TimeValue.cpp in Sources */,
 				268F9D55123AA16600B91E9B /* SBSymbolContextList.cpp in Sources */,
+				2618D7921240116900F2B8FE /* SectionLoadList.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -10,7 +10,7 @@
 #include "lldb/Core/Section.h"
 #include "lldb/Core/Module.h"
 #include "lldb/Symbol/ObjectFile.h"
-#include "lldb/Target/Process.h"
+#include "lldb/Target/Target.h"
 
 using namespace lldb;
 using namespace lldb_private;
@@ -112,23 +112,23 @@ Section::GetLinkedFileAddress () const
 
 
 addr_t
-Section::GetLoadBaseAddress (Process *process) const
+Section::GetLoadBaseAddress (Target *target) const
 {
     addr_t load_base_addr = LLDB_INVALID_ADDRESS;
     if (m_linked_section)
     {
-        load_base_addr = m_linked_section->GetLoadBaseAddress(process) + m_linked_offset;
+        load_base_addr = m_linked_section->GetLoadBaseAddress(target) + m_linked_offset;
     }
     else
     if (m_parent)
     {
-        load_base_addr = m_parent->GetLoadBaseAddress (process);
+        load_base_addr = m_parent->GetLoadBaseAddress (target);
         if (load_base_addr != LLDB_INVALID_ADDRESS)
             load_base_addr += GetOffset();
     }
     else
     {
-        load_base_addr = process->GetSectionLoadAddress(this);
+        load_base_addr = target->GetSectionLoadList().GetSectionLoadAddress (this);
     }
 
     return load_base_addr;
@@ -222,7 +222,7 @@ Section::Compare (const Section& a, const Section& b)
 
 
 void
-Section::Dump(Stream *s, Process *process) const
+Section::Dump(Stream *s, Target *target) const
 {
     s->Printf("%.*p: ", (int)sizeof(void*) * 2, this);
     s->Indent();
@@ -234,12 +234,12 @@ Section::Dump(Stream *s, Process *process) const
         s->Printf("%39s", "");
     else
     {
-        if (process)
-            addr = GetLoadBaseAddress (process);
+        if (target)
+            addr = GetLoadBaseAddress (target);
 
         if (addr == LLDB_INVALID_ADDRESS)
         {
-            if (process)
+            if (target)
                 resolved = false;
             addr = GetFileAddress();
         }
@@ -258,16 +258,16 @@ Section::Dump(Stream *s, Process *process) const
     {
         addr = LLDB_INVALID_ADDRESS;
 
-        if (process)
+        if (target)
         {
-            addr = m_linked_section->GetLoadBaseAddress(process);
+            addr = m_linked_section->GetLoadBaseAddress(target);
             if (addr != LLDB_INVALID_ADDRESS)
                 addr += m_linked_offset;
         }
 
         if (addr == LLDB_INVALID_ADDRESS)
         {
-            if (process)
+            if (target)
                 resolved = false;
             addr = m_linked_section->GetFileAddress() + m_linked_offset;
         }
@@ -283,7 +283,7 @@ Section::Dump(Stream *s, Process *process) const
         s->Printf(" + 0x%llx\n", m_linked_offset);
     }
 
-    m_children.Dump(s, process, false);
+    m_children.Dump(s, target, false);
 }
 
 void
@@ -668,7 +668,7 @@ SectionList::ContainsSection(user_id_t sect_id) const
 }
 
 void
-SectionList::Dump (Stream *s, Process *process, bool show_header) const
+SectionList::Dump (Stream *s, Target *target, bool show_header) const
 {
     if (show_header && !m_sections.empty())
     {
@@ -678,7 +678,7 @@ SectionList::Dump (Stream *s, Process *process, bool show_header) const
         s->IndentMore();
         s->Printf("%*s", 2*(sizeof(void *) + 2), "");
         s->Indent();
-        s->Printf("SectID     %s Address                             File Off.  File Size  Flags      Section Name\n", process ? "Load" : "File");
+        s->Printf("SectID     %s Address                             File Off.  File Size  Flags      Section Name\n", (target && target->GetSectionLoadList().IsEmpty() == false) ? "Load" : "File");
         s->Printf("%*s", 2*(sizeof(void *) + 2), "");
         s->Indent();
         s->PutCString("---------- ---------------------------------------  ---------- ---------- ---------- ----------------------------\n");
@@ -689,7 +689,7 @@ SectionList::Dump (Stream *s, Process *process, bool show_header) const
     const_iterator end = m_sections.end();
     for (sect_iter = m_sections.begin(); sect_iter != end; ++sect_iter)
     {
-        (*sect_iter)->Dump(s, process);
+        (*sect_iter)->Dump(s, target);
     }
 
     if (show_header && !m_sections.empty())

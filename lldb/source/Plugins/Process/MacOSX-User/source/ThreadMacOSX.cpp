@@ -115,7 +115,7 @@ ThreadMacOSX::GetDispatchQueueName()
         lldb::addr_t dispatch_queue_offsets_addr = LLDB_INVALID_ADDRESS;
         const Symbol *dispatch_queue_offsets_symbol = module_sp->FindFirstSymbolWithNameAndType (ConstString("dispatch_queue_offsets"), eSymbolTypeData);
         if (dispatch_queue_offsets_symbol)
-            dispatch_queue_offsets_addr = dispatch_queue_offsets_symbol->GetValue().GetLoadAddress(&GetProcess());
+            dispatch_queue_offsets_addr = dispatch_queue_offsets_symbol->GetValue().GetLoadAddress(&m_process.GetTarget());
 
         if (dispatch_queue_offsets_addr == LLDB_INVALID_ADDRESS)
             return NULL;

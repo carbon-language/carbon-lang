@@ -8,8 +8,9 @@
 //===----------------------------------------------------------------------===//
 
 #include "lldb/Symbol/UnwindPlan.h"
-#include "lldb/Target/Thread.h"
+#include "lldb/Target/Process.h"
 #include "lldb/Target/RegisterContext.h"
+#include "lldb/Target/Thread.h"
 
 using namespace lldb;
 using namespace lldb_private;
@@ -285,10 +286,10 @@ UnwindPlan::PlanValidAtAddress (Address addr)
 }
 
 void
-UnwindPlan::Dump (Stream& s, Process* process, Thread *thread) const
+UnwindPlan::Dump (Stream& s, Thread *thread) const
 {
     s.Printf ("Address range of this UnwindPlan: ");
-    m_plan_valid_address_range.Dump (&s, process, Address::DumpStyleSectionNameOffset);
+    m_plan_valid_address_range.Dump (&s, &thread->GetProcess().GetTarget(), Address::DumpStyleSectionNameOffset);
     s.Printf ("\n");
     s.Printf ("UnwindPlan register kind %d", m_register_kind);
     switch (m_register_kind)

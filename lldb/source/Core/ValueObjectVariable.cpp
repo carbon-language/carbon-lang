@@ -110,7 +110,7 @@ ValueObjectVariable::UpdateValue (ExecutionContextScope *exe_scope)
         SymbolContext sc;
         variable->CalculateSymbolContext (&sc);
         if (sc.function)
-            loclist_base_load_addr = sc.function->GetAddressRange().GetBaseAddress().GetLoadAddress (exe_ctx.process);
+            loclist_base_load_addr = sc.function->GetAddressRange().GetBaseAddress().GetLoadAddress (exe_ctx.target);
     }
     Value old_value(m_value);
     if (expr.Evaluate (&exe_ctx, GetClangAST(), loclist_base_load_addr, NULL, m_value, &m_error))
@@ -156,7 +156,7 @@ ValueObjectVariable::UpdateValue (ExecutionContextScope *exe_scope)
                         if (objfile)
                         {
                             Address so_addr(file_addr, objfile->GetSectionList());
-                            lldb::addr_t load_addr = so_addr.GetLoadAddress (exe_ctx.process);
+                            lldb::addr_t load_addr = so_addr.GetLoadAddress (exe_ctx.target);
                             if (load_addr != LLDB_INVALID_ADDRESS)
                             {
                                 m_value.SetValueType(Value::eValueTypeLoadAddress);

@@ -10,6 +10,7 @@
 #include "lldb/Symbol/LineEntry.h"
 #include "lldb/Symbol/CompileUnit.h"
 #include "lldb/Target/Process.h"
+#include "lldb/Target/Target.h"
 
 using namespace lldb_private;
 
@@ -100,7 +101,7 @@ bool
 LineEntry::Dump
 (
     Stream *s,
-    Process *process,
+    Target *target,
     bool show_file,
     Address::DumpStyle style,
     Address::DumpStyle fallback_style,
@@ -110,14 +111,14 @@ LineEntry::Dump
     if (show_range)
     {
         // Show address range
-        if (!range.Dump(s, process, style, fallback_style))
+        if (!range.Dump(s, target, style, fallback_style))
             return false;
     }
     else
     {
         // Show address only
         if (!range.GetBaseAddress().Dump(s,
-                                         process,
+                                         target,
                                          style,
                                          fallback_style))
             return false;
@@ -146,18 +147,18 @@ LineEntry::Dump
 }
 
 bool
-LineEntry::GetDescription (Stream *s, lldb::DescriptionLevel level, CompileUnit* cu, Process *process, bool show_address_only) const
+LineEntry::GetDescription (Stream *s, lldb::DescriptionLevel level, CompileUnit* cu, Target *target, bool show_address_only) const
 {
 
     if (level == lldb::eDescriptionLevelBrief || level == lldb::eDescriptionLevelFull)
     {
         if (show_address_only)
         {
-            range.GetBaseAddress().Dump(s, process, Address::DumpStyleLoadAddress, Address::DumpStyleFileAddress);
+            range.GetBaseAddress().Dump(s, target, Address::DumpStyleLoadAddress, Address::DumpStyleFileAddress);
         }
         else
         {
-            range.Dump(s, process, Address::DumpStyleLoadAddress, Address::DumpStyleFileAddress);
+            range.Dump(s, target, Address::DumpStyleLoadAddress, Address::DumpStyleFileAddress);
         }
 
         *s << ": " << file;
@@ -195,7 +196,7 @@ LineEntry::GetDescription (Stream *s, lldb::DescriptionLevel level, CompileUnit*
     }
     else
     {
-        return Dump (s, process, true, Address::DumpStyleLoadAddress, Address::DumpStyleModuleWithFileAddress, true);
+        return Dump (s, target, true, Address::DumpStyleLoadAddress, Address::DumpStyleModuleWithFileAddress, true);
     }
     return true;
 }

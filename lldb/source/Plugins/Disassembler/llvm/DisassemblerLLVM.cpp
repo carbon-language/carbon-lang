@@ -139,14 +139,14 @@ DisassemblerLLVM::Instruction::Dump
 
     int currentOpIndex = -1;
 
-    lldb_private::Process *process = exe_ctx.process;
+    //lldb_private::Process *process = exe_ctx.process;
     std::auto_ptr<RegisterReaderArg> rra;
     
     if (!raw)
     {
         addr_t base_addr = LLDB_INVALID_ADDRESS;
-        if (process && process->IsAlive())
-            base_addr = inst_addr_ptr->GetLoadAddress (process);
+        if (exe_ctx.target && !exe_ctx.target->GetSectionLoadList().IsEmpty())
+            base_addr = inst_addr_ptr->GetLoadAddress (exe_ctx.target);
         if (base_addr == LLDB_INVALID_ADDRESS)
             base_addr = inst_addr_ptr->GetFileAddress ();
         
@@ -246,9 +246,9 @@ DisassemblerLLVM::Instruction::Dump
                                         }
 
                                         lldb_private::Address so_addr;
-                                        if (process && process->IsAlive())
+                                        if (exe_ctx.target && !exe_ctx.target->GetSectionLoadList().IsEmpty())
                                         {
-                                            if (process->ResolveLoadAddress (operand_value, so_addr))
+                                            if (exe_ctx.target->GetSectionLoadList().ResolveLoadAddress (operand_value, so_addr))
                                                 so_addr.Dump(&comment, exe_scope, Address::DumpStyleResolvedDescriptionNoModule, Address::DumpStyleSectionNameOffset);
                                         }
                                         else if (inst_addr_ptr)

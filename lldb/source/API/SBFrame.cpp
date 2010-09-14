@@ -132,7 +132,7 @@ lldb::addr_t
 SBFrame::GetPC () const
 {
     if (m_opaque_sp)
-        return m_opaque_sp->GetFrameCodeAddress().GetLoadAddress (&m_opaque_sp->GetThread().GetProcess());
+        return m_opaque_sp->GetFrameCodeAddress().GetLoadAddress (&m_opaque_sp->GetThread().GetProcess().GetTarget());
     return LLDB_INVALID_ADDRESS;
 }
 

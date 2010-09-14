@@ -1067,7 +1067,8 @@ public:
     {
         bool synchronous_execution = interpreter.GetSynchronous ();
 
-        if (!interpreter.GetDebugger().GetSelectedTarget().get())
+        Target *target = interpreter.GetDebugger().GetSelectedTarget().get();
+        if (target == NULL)
         {
             result.AppendError ("invalid target, set executable file using 'file' command");
             result.SetStatus (eReturnStatusFailed);
@@ -1166,7 +1167,7 @@ public:
                     if (index_ptr == UINT32_MAX)
                         break;
 
-                    addr_t address = line_entry.range.GetBaseAddress().GetLoadAddress(process);
+                    addr_t address = line_entry.range.GetBaseAddress().GetLoadAddress(target);
                     if (address != LLDB_INVALID_ADDRESS)
                         address_list.push_back (address);
                     index_ptr++;

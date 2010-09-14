@@ -387,7 +387,7 @@ LineTable::FindLineEntryIndexByFileIndex (uint32_t start_idx, uint32_t file_idx,
 }
 
 void
-LineTable::Dump (Stream *s, Process *process, Address::DumpStyle style, Address::DumpStyle fallback_style, bool show_line_ranges)
+LineTable::Dump (Stream *s, Target *target, Address::DumpStyle style, Address::DumpStyle fallback_style, bool show_line_ranges)
 {
     const size_t count = m_entries.size();
     LineEntry line_entry;
@@ -395,7 +395,7 @@ LineTable::Dump (Stream *s, Process *process, Address::DumpStyle style, Address:
     for (size_t idx = 0; idx < count; ++idx)
     {
         ConvertEntryAtIndexToLineEntry (idx, line_entry);
-        line_entry.Dump (s, process, prev_file != line_entry.file, style, fallback_style, show_line_ranges);
+        line_entry.Dump (s, target, prev_file != line_entry.file, style, fallback_style, show_line_ranges);
         s->EOL();
         prev_file = line_entry.file;
     }
@@ -403,14 +403,14 @@ LineTable::Dump (Stream *s, Process *process, Address::DumpStyle style, Address:
 
 
 void
-LineTable::GetDescription (Stream *s, Process *process, DescriptionLevel level)
+LineTable::GetDescription (Stream *s, Target *target, DescriptionLevel level)
 {
     const size_t count = m_entries.size();
     LineEntry line_entry;
     for (size_t idx = 0; idx < count; ++idx)
     {
         ConvertEntryAtIndexToLineEntry (idx, line_entry);
-        line_entry.GetDescription (s, level, m_comp_unit, process, true);
+        line_entry.GetDescription (s, level, m_comp_unit, target, true);
         s->EOL();
     }
 }

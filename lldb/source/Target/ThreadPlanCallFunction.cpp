@@ -66,13 +66,13 @@ ThreadPlanCallFunction::ThreadPlanCallFunction (Thread &thread,
     contexts.GetContextAtIndex(0, context);
     
     m_start_addr = context.symbol->GetValue();
-    lldb::addr_t StartLoadAddr = m_start_addr.GetLoadAddress(&process);
+    lldb::addr_t StartLoadAddr = m_start_addr.GetLoadAddress(&target);
 
     if (!thread.SaveFrameZeroState(m_register_backup))
         return;
 
     m_function_addr = function;
-    lldb::addr_t FunctionLoadAddr = m_function_addr.GetLoadAddress(&process);
+    lldb::addr_t FunctionLoadAddr = m_function_addr.GetLoadAddress(&target);
         
     if (!abi->PrepareTrivialCall(thread, 
                                  spBelowRedZone, 
@@ -120,13 +120,13 @@ ThreadPlanCallFunction::ThreadPlanCallFunction (Thread &thread,
     contexts.GetContextAtIndex(0, context);
     
     m_start_addr = context.symbol->GetValue();
-    lldb::addr_t StartLoadAddr = m_start_addr.GetLoadAddress(&process);
+    lldb::addr_t StartLoadAddr = m_start_addr.GetLoadAddress(&target);
     
     if(!thread.SaveFrameZeroState(m_register_backup))
         return;
     
     m_function_addr = function;
-    lldb::addr_t FunctionLoadAddr = m_function_addr.GetLoadAddress(&process);
+    lldb::addr_t FunctionLoadAddr = m_function_addr.GetLoadAddress(&target);
     
     if (!abi->PrepareNormalCall(thread, 
                                 spBelowRedZone, 
@@ -152,9 +152,9 @@ ThreadPlanCallFunction::GetDescription (Stream *s, lldb::DescriptionLevel level)
     else
     {
         if (m_args)
-            s->Printf("Thread plan to call 0x%llx with parsed arguments", m_function_addr.GetLoadAddress(&m_process), m_arg_addr);
+            s->Printf("Thread plan to call 0x%llx with parsed arguments", m_function_addr.GetLoadAddress(&m_process.GetTarget()), m_arg_addr);
         else
-            s->Printf("Thread plan to call 0x%llx void * argument at: 0x%llx", m_function_addr.GetLoadAddress(&m_process), m_arg_addr);
+            s->Printf("Thread plan to call 0x%llx void * argument at: 0x%llx", m_function_addr.GetLoadAddress(&m_process.GetTarget()), m_arg_addr);
     }
 }
 

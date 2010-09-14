@@ -25,6 +25,7 @@
 #include "lldb/Target/ABI.h"
 #include "lldb/Target/ExecutionContextScope.h"
 #include "lldb/Target/PathMappingList.h"
+#include "lldb/Target/SectionLoadList.h"
 
 #include "lldb/API/SBTarget.h"
 
@@ -290,6 +291,20 @@ public:
                 size_t dst_len,
                 Error &error);
     
+    
+
+    SectionLoadList&
+    GetSectionLoadList()
+    {
+        return m_section_load_list;
+    }
+
+    const SectionLoadList&
+    GetSectionLoadList() const
+    {
+        return m_section_load_list;
+    }
+
     //------------------------------------------------------------------
     // lldb::ExecutionContextScope pure virtual functions
     //------------------------------------------------------------------
@@ -323,6 +338,7 @@ protected:
     Debugger &      m_debugger;
     ArchSpec        m_arch_spec;
     ModuleList      m_images;           ///< The list of images for this process (shared libraries and anything dynamically loaded).
+    SectionLoadList m_section_load_list;
     BreakpointList  m_breakpoint_list;
     BreakpointList  m_internal_breakpoint_list;
     // We want to tightly control the process destruction process so

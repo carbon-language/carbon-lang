@@ -399,6 +399,7 @@ SBTarget::Disassemble (lldb::addr_t start_addr, lldb::addr_t end_addr, const cha
 
         // Make sure the process object is alive if we have one (it might be
         // created but we might not be launched yet).
+        
         Process *process = m_opaque_sp->GetProcessSP().get();
         if (process && !process->IsAlive())
             process = NULL;
@@ -410,11 +411,11 @@ SBTarget::Disassemble (lldb::addr_t start_addr, lldb::addr_t end_addr, const cha
             if (!module_sp->ResolveFileAddress (start_addr, range.GetBaseAddress()))
                 range.GetBaseAddress().SetOffset(start_addr);
         }
-        else if (process)
+        else if (m_opaque_sp->GetSectionLoadList().IsEmpty() == false)
         {
             // We don't have a module, se we need to figure out if "start_addr"
             // resolves to anything in a running process.
-            if (!process->ResolveLoadAddress(start_addr, range.GetBaseAddress()))
+            if (!m_opaque_sp->GetSectionLoadList().ResolveLoadAddress (start_addr, range.GetBaseAddress()))
                 range.GetBaseAddress().SetOffset(start_addr);
         }
         else

@@ -46,7 +46,7 @@ public:
     ContainsSection(lldb::user_id_t sect_id) const;
 
     void
-    Dump (Stream *s, Process *process, bool show_header) const;
+    Dump (Stream *s, Target *target, bool show_header) const;
 
     lldb::SectionSP
     FindSectionByName (const ConstString &section_dstr) const;
@@ -137,13 +137,13 @@ public:
     }
 
     void
-    Dump (Stream *s, Process *process) const;
+    Dump (Stream *s, Target *target) const;
 
     void
     DumpName (Stream *s) const;
 
     lldb::addr_t
-    GetLoadBaseAddress (Process *process) const;
+    GetLoadBaseAddress (Target *target) const;
 
     bool
     ResolveContainedAddress (lldb::addr_t offset, Address &so_addr) const;

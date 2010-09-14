@@ -85,10 +85,10 @@ SBAddress::GetFileAddress () const
 }
 
 lldb::addr_t
-SBAddress::GetLoadAddress (const SBProcess &process) const
+SBAddress::GetLoadAddress (const SBTarget &target) const
 {
     if (m_opaque_ap.get())
-        return m_opaque_ap->GetLoadAddress(process.get());
+        return m_opaque_ap->GetLoadAddress(target.get());
     else
         return LLDB_INVALID_ADDRESS;
 }

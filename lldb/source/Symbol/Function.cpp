@@ -326,7 +326,7 @@ Function::GetCompileUnit() const
 
 
 void
-Function::GetDescription(Stream *s, lldb::DescriptionLevel level, Process *process)
+Function::GetDescription(Stream *s, lldb::DescriptionLevel level, Target *target)
 {
     Type* func_type = GetType();
     *s << "id = " << (const UserID&)*this << ", name = \"" << func_type->GetName() << "\", range = ";
@@ -336,7 +336,7 @@ Function::GetDescription(Stream *s, lldb::DescriptionLevel level, Process *proce
         fallback_style = Address::DumpStyleModuleWithFileAddress;
     else
         fallback_style = Address::DumpStyleFileAddress;
-    GetAddressRange().Dump(s, process, Address::DumpStyleLoadAddress, fallback_style);
+    GetAddressRange().Dump(s, target, Address::DumpStyleLoadAddress, fallback_style);
 }
 
 void

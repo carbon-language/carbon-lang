@@ -2246,7 +2246,7 @@ ProcessGDBRemote::GetDispatchQueueNameForThread
 
             const Symbol *dispatch_queue_offsets_symbol = module_sp->FindFirstSymbolWithNameAndType (ConstString("dispatch_queue_offsets"), eSymbolTypeData);
             if (dispatch_queue_offsets_symbol)
-                m_dispatch_queue_offsets_addr = dispatch_queue_offsets_symbol->GetValue().GetLoadAddress(this);
+                m_dispatch_queue_offsets_addr = dispatch_queue_offsets_symbol->GetValue().GetLoadAddress(&m_target);
 
             if (m_dispatch_queue_offsets_addr == LLDB_INVALID_ADDRESS)
                 return NULL;

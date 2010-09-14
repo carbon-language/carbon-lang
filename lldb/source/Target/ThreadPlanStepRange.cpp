@@ -100,7 +100,7 @@ ThreadPlanStepRange::InRange ()
 
     lldb::addr_t pc_load_addr = m_thread.GetRegisterContext()->GetPC();
 
-    ret_value = m_address_range.ContainsLoadAddress(pc_load_addr, &m_thread.GetProcess());
+    ret_value = m_address_range.ContainsLoadAddress(pc_load_addr, &m_thread.GetProcess().GetTarget());
     
     if (!ret_value)
     {
@@ -119,7 +119,7 @@ ThreadPlanStepRange::InRange ()
                 if (log)
                 {
                     StreamString s;
-                    m_address_range.Dump (&s, &m_thread.GetProcess(), Address::DumpStyleLoadAddress);
+                    m_address_range.Dump (&s, &m_thread.GetProcess().GetTarget(), Address::DumpStyleLoadAddress);
 
                     log->Printf ("Step range plan stepped to another range of same line: %s", s.GetData());
                 }
@@ -138,15 +138,13 @@ bool
 ThreadPlanStepRange::InSymbol()
 {
     lldb::addr_t cur_pc = m_thread.GetRegisterContext()->GetPC();
-    Process *process = m_thread.CalculateProcess();
-    
     if (m_addr_context.function != NULL)
     {
-        return m_addr_context.function->GetAddressRange().ContainsLoadAddress (cur_pc, process);
+        return m_addr_context.function->GetAddressRange().ContainsLoadAddress (cur_pc, &m_thread.GetProcess().GetTarget());
     }
     else if (m_addr_context.symbol != NULL)
     {
-        return m_addr_context.symbol->GetAddressRangeRef().ContainsLoadAddress (cur_pc, process);
+        return m_addr_context.symbol->GetAddressRangeRef().ContainsLoadAddress (cur_pc, &m_thread.GetProcess().GetTarget());
     }
     return false;
 }

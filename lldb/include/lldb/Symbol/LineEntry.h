@@ -84,13 +84,13 @@ struct LineEntry
     /// @see Address::DumpStyle
     //------------------------------------------------------------------
     bool
-    Dump (Stream *s, Process *process, bool show_file, Address::DumpStyle style, Address::DumpStyle fallback_style, bool show_range) const;
+    Dump (Stream *s, Target *target, bool show_file, Address::DumpStyle style, Address::DumpStyle fallback_style, bool show_range) const;
 
     bool
     GetDescription (Stream *s, 
                     lldb::DescriptionLevel level, 
                     CompileUnit* cu, 
-                    Process *process, 
+                    Target *target, 
                     bool show_address_only) const;
     
     //------------------------------------------------------------------

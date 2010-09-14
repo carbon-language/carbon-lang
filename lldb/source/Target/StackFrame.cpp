@@ -115,7 +115,7 @@ StackFrame::StackFrame
     m_unwind_frame_index (unwind_frame_index),    
     m_thread (thread),
     m_reg_context_sp (reg_context_sp),
-    m_id (pc_addr.GetLoadAddress (&thread.GetProcess()), cfa, NULL),
+    m_id (pc_addr.GetLoadAddress (&thread.GetProcess().GetTarget()), cfa, NULL),
     m_frame_code_addr (pc_addr),
     m_sc (),
     m_flags (),
@@ -213,7 +213,7 @@ StackFrame::GetFrameCodeAddress()
         // Resolve the PC into a temporary address because if ResolveLoadAddress
         // fails to resolve the address, it will clear the address object...
         Address resolved_pc;
-        if (m_thread.GetProcess().ResolveLoadAddress(m_frame_code_addr.GetOffset(), resolved_pc))
+        if (m_thread.GetProcess().GetTarget().GetSectionLoadList().ResolveLoadAddress(m_frame_code_addr.GetOffset(), resolved_pc))
         {
             m_frame_code_addr = resolved_pc;
             const Section *section = m_frame_code_addr.GetSection();
@@ -488,7 +488,7 @@ StackFrame::GetFrameBaseValue (Scalar &frame_base, Error *error_ptr)
             Value expr_value;
             addr_t loclist_base_addr = LLDB_INVALID_ADDRESS;
             if (m_sc.function->GetFrameBaseExpression().IsLocationList())
-                loclist_base_addr = m_sc.function->GetAddressRange().GetBaseAddress().GetLoadAddress (&m_thread.GetProcess());
+                loclist_base_addr = m_sc.function->GetAddressRange().GetBaseAddress().GetLoadAddress (&m_thread.GetProcess().GetTarget());
 
             if (m_sc.function->GetFrameBaseExpression().Evaluate(&exe_ctx, NULL, loclist_base_addr, NULL, expr_value, &m_frame_base_error) == false)
             {
@@ -629,7 +629,7 @@ StackFrame::Dump (Stream *strm, bool show_frame_index, bool show_fullpaths)
 
     if (show_frame_index)
         strm->Printf("frame #%u: ", m_frame_index);
-    strm->Printf("0x%0*llx ", m_thread.GetProcess().GetAddressByteSize() * 2, GetFrameCodeAddress().GetLoadAddress(&m_thread.GetProcess()));
+    strm->Printf("0x%0*llx ", m_thread.GetProcess().GetAddressByteSize() * 2, GetFrameCodeAddress().GetLoadAddress(&m_thread.GetProcess().GetTarget()));
     GetSymbolContext(eSymbolContextEverything);
     const bool show_module = true;
     const bool show_inline = true;

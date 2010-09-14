@@ -279,7 +279,7 @@ ClangExpressionDeclMap::GetFunctionAddress (const char *name,
     else
         return false;
     
-    ptr = fun_address->GetLoadAddress(m_exe_ctx->process);
+    ptr = fun_address->GetLoadAddress(m_exe_ctx->target);
     
     return true;
 }
@@ -886,7 +886,7 @@ ClangExpressionDeclMap::GetVariableValue(ExecutionContext &exe_ctx,
     {
         SymbolContext var_sc;
         var->CalculateSymbolContext (&var_sc);
-        loclist_base_load_addr = var_sc.function->GetAddressRange().GetBaseAddress().GetLoadAddress (exe_ctx.process);
+        loclist_base_load_addr = var_sc.function->GetAddressRange().GetBaseAddress().GetLoadAddress (exe_ctx.target);
     }
     Error err;
     
@@ -929,7 +929,7 @@ ClangExpressionDeclMap::GetVariableValue(ExecutionContext &exe_ctx,
         
         Address so_addr(var_location->GetScalar().ULongLong(), object_file->GetSectionList());
         
-        lldb::addr_t load_addr = so_addr.GetLoadAddress(m_exe_ctx->process);
+        lldb::addr_t load_addr = so_addr.GetLoadAddress(m_exe_ctx->target);
         
         var_location->GetScalar() = load_addr;
         var_location->SetValueType(Value::eValueTypeLoadAddress);
@@ -1062,7 +1062,7 @@ ClangExpressionDeclMap::AddOneFunction(NameSearchContext &context,
         return;
     }
     
-    lldb::addr_t load_addr = fun_address->GetLoadAddress(m_exe_ctx->process);
+    lldb::addr_t load_addr = fun_address->GetLoadAddress(m_exe_ctx->target);
     fun_location->SetValueType(Value::eValueTypeLoadAddress);
     fun_location->GetScalar() = load_addr;
     

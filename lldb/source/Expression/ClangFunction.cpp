@@ -294,7 +294,7 @@ ClangFunction::WriteFunctionArguments (ExecutionContext &exe_ctx,
     // FIXME: This is fake, and just assumes that it matches that architecture.
     // Make a data extractor and put the address into the right byte order & size.
 
-    uint64_t fun_addr = function_address.GetLoadAddress(exe_ctx.process);
+    uint64_t fun_addr = function_address.GetLoadAddress(exe_ctx.target);
     int first_offset = m_member_offsets[0];
     process->WriteMemory(args_addr_ref + first_offset, &fun_addr, 8, error);
 

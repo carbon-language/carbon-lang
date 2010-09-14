@@ -140,7 +140,7 @@ public:
     ///     The stream to which to dump the object descripton.
     //------------------------------------------------------------------
     void
-    Dump (Stream *s, Process *process) const;
+    Dump (Stream *s, Target *target) const;
 
     //------------------------------------------------------------------
     /// Dump the stop context in this object to a Stream.
@@ -190,7 +190,7 @@ public:
     void
     GetDescription(Stream *s, 
                    lldb::DescriptionLevel level, 
-                   Process *process) const;
+                   Target *target) const;
     
     uint32_t
     GetResolvedMask () const;
@@ -292,7 +292,7 @@ public:
     ///     The stream to which to dump the object descripton.
     //------------------------------------------------------------------
     void
-    Dump(Stream *s, Process *process) const;
+    Dump(Stream *s, Target *target) const;
 
     //------------------------------------------------------------------
     /// Get accessor for a symbol context at index \a idx.

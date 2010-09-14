@@ -11,6 +11,7 @@
 #include "lldb/Core/Module.h"
 #include "lldb/Core/Section.h"
 #include "lldb/Symbol/ObjectFile.h"
+#include "lldb/Target/ExecutionContext.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Target/Target.h"
 
@@ -138,27 +139,30 @@ ReadAddress (ExecutionContextScope *exe_scope, const Address &address, uint32_t 
     addr_t deref_addr = ReadUIntMax64 (exe_scope, address, pointer_size, success);
     if (success)
     {
-        Process *process = exe_scope->CalculateProcess();
-        if (process && process->IsAlive())
+        ExecutionContext exe_ctx;
+        exe_scope->Calculate(exe_ctx);
+        // If we have any sections that are loaded, try and resolve using the
+        // section load list
+        if (exe_ctx.target && !exe_ctx.target->GetSectionLoadList().IsEmpty())
         {
-            if (!process->ResolveLoadAddress (deref_addr, deref_so_addr))
-            {
-                deref_so_addr.SetSection(NULL);
-                deref_so_addr.SetOffset(deref_addr);
-            }
+            if (exe_ctx.target->GetSectionLoadList().ResolveLoadAddress (deref_addr, deref_so_addr))
+                return true;
         }
         else
         {
-            Target *target = exe_scope->CalculateTarget();
-            if (target == NULL)
-                return false;
-
-            if (!target->GetImages().ResolveFileAddress(deref_addr, deref_so_addr))
-            {
-                deref_so_addr.SetSection(NULL);
-                deref_so_addr.SetOffset(deref_addr);
-            }
+            // If we were not running, yet able to read an integer, we must
+            // have a module
+            Module *module = address.GetModule();
+            assert (module);
+            if (module->ResolveFileAddress(deref_addr, deref_so_addr))
+                return true;
         }
+
+        // We couldn't make "deref_addr" into a section offset value, but we were
+        // able to read the address, so we return a section offset address with
+        // no section and "deref_addr" as the offset (address).
+        deref_so_addr.SetSection(NULL);
+        deref_so_addr.SetOffset(deref_addr);
         return true;
     }
     return false;
@@ -334,27 +338,28 @@ Address::GetFileAddress () const
 }
 
 addr_t
-Address::GetLoadAddress (Process *process) const
+Address::GetLoadAddress (Target *target) const
 {
-    if (m_section != NULL)
+    if (m_section == NULL)
     {
-        if (process)
-        {
-            addr_t sect_load_addr = m_section->GetLoadBaseAddress (process);
-
-            if (sect_load_addr != LLDB_INVALID_ADDRESS)
-            {
-                // We have a valid file range, so we can return the file based
-                // address by adding the file base address to our offset
-                return sect_load_addr + m_offset;
-            }
-        }
-       // The section isn't resolved or no process was supplied so we can't
-       // return a valid file address.
-       return LLDB_INVALID_ADDRESS;
+        // No section, we just return the offset since it is the value in this case
+        return m_offset;
     }
-    // No section, we just return the offset since it is the value in this case
-    return m_offset;
+    
+    if (target)
+    {
+        addr_t sect_load_addr = m_section->GetLoadBaseAddress (target);
+
+        if (sect_load_addr != LLDB_INVALID_ADDRESS)
+        {
+            // We have a valid file range, so we can return the file based
+            // address by adding the file base address to our offset
+            return sect_load_addr + m_offset;
+        }
+    }
+    // The section isn't resolved or no process was supplied so we can't
+    // return a valid file address.
+    return LLDB_INVALID_ADDRESS;
 }
 
 bool
@@ -424,7 +429,7 @@ Address::Dump (Stream *s, ExecutionContextScope *exe_scope, DumpStyle style, Dum
 
     case DumpStyleLoadAddress:
         {
-            addr_t load_addr = GetLoadAddress (process);
+            addr_t load_addr = GetLoadAddress (target);
             if (load_addr == LLDB_INVALID_ADDRESS)
             {
                 if (fallback_style != DumpStyleInvalid)
@@ -440,7 +445,7 @@ Address::Dump (Stream *s, ExecutionContextScope *exe_scope, DumpStyle style, Dum
         if (IsSectionOffset())
         {
             lldb::AddressType addr_type = eAddressTypeLoad;
-            addr_t addr = GetLoadAddress (process);
+            addr_t addr = GetLoadAddress (target);
             if (addr == LLDB_INVALID_ADDRESS)
             {
                 addr = GetFileAddress();
@@ -670,7 +675,7 @@ Address::Dump (Stream *s, ExecutionContextScope *exe_scope, DumpStyle style, Dum
                     if (sc.symbol->GetAddressRangePtr() && sc.symbol->GetAddressRangePtr()->GetBaseAddress().GetSection() != GetSection())
                         sc.symbol = NULL;
                 }
-                sc.GetDescription(s, eDescriptionLevelBrief, process);
+                sc.GetDescription(s, eDescriptionLevelBrief, target);
             }
         }
         if (fallback_style != DumpStyleInvalid)
@@ -733,11 +738,11 @@ Address::CompareFileAddress (const Address& a, const Address& b)
 
 
 int
-Address::CompareLoadAddress (const Address& a, const Address& b, Process *process)
+Address::CompareLoadAddress (const Address& a, const Address& b, Target *target)
 {
-    assert (process != NULL);
-    addr_t a_load_addr = a.GetLoadAddress (process);
-    addr_t b_load_addr = b.GetLoadAddress (process);
+    assert (target != NULL);
+    addr_t a_load_addr = a.GetLoadAddress (target);
+    addr_t b_load_addr = b.GetLoadAddress (target);
     if (a_load_addr < b_load_addr)
         return -1;
     if (a_load_addr > b_load_addr)

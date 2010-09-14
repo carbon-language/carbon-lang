@@ -134,8 +134,8 @@ SBBreakpoint::FindLocationByAddress (addr_t vm_addr)
         if (vm_addr != LLDB_INVALID_ADDRESS)
         {
             Address address;
-            Process *sb_process = m_opaque_sp->GetTarget().GetProcessSP().get();
-            if (sb_process == NULL || sb_process->ResolveLoadAddress (vm_addr, address) == false)
+            Target &target = m_opaque_sp->GetTarget();
+            if (target.GetSectionLoadList().ResolveLoadAddress (vm_addr, address) == false)
             {
                 address.SetSection (NULL);
                 address.SetOffset (vm_addr);
@@ -156,8 +156,8 @@ SBBreakpoint::FindLocationIDByAddress (addr_t vm_addr)
         if (vm_addr != LLDB_INVALID_ADDRESS)
         {
             Address address;
-            Process *sb_process = m_opaque_sp->GetTarget().GetProcessSP().get();
-            if (sb_process == NULL || sb_process->ResolveLoadAddress (vm_addr, address) == false)
+            Target &target = m_opaque_sp->GetTarget();
+            if (target.GetSectionLoadList().ResolveLoadAddress (vm_addr, address) == false)
             {
                 address.SetSection (NULL);
                 address.SetOffset (vm_addr);

@@ -178,7 +178,7 @@ public:
 
     UnwindPlan () : m_register_kind(-1), m_row_list(), m_plan_valid_address_range() { }
 
-    void Dump (Stream& s, Process* process, Thread* thread) const;
+    void Dump (Stream& s, Thread* thread) const;
 
     void 
     AppendRow (const Row& row);

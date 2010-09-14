@@ -14,9 +14,11 @@
 #include "lldb/Symbol/Function.h"
 #include "lldb/Symbol/SymbolContext.h"
 #include "lldb/Symbol/Type.h"
+#include "lldb/Target/Process.h"
 #include "lldb/Target/RegisterContext.h"
 #include "lldb/Target/StackFrame.h"
 #include "lldb/Target/Thread.h"
+#include "lldb/Target/Target.h"
 
 using namespace lldb;
 using namespace lldb_private;
@@ -155,14 +157,14 @@ Variable::IsInScope (StackFrame *frame)
             // Currently we only support functions that have things with 
             // locations lists. If this expands, we will need to add support
             assert (sc.function);
-            Process *process = &frame->GetThread().GetProcess();
-            addr_t loclist_base_load_addr = sc.function->GetAddressRange().GetBaseAddress().GetLoadAddress (process);
+            Target *target = &frame->GetThread().GetProcess().GetTarget();
+            addr_t loclist_base_load_addr = sc.function->GetAddressRange().GetBaseAddress().GetLoadAddress (target);
             if (loclist_base_load_addr == LLDB_INVALID_ADDRESS)
                 return false;
             // It is a location list. We just need to tell if the location
             // list contains the current address when converted to a load
             // address
-            return m_location.LocationListContainsAddress (loclist_base_load_addr, frame->GetFrameCodeAddress().GetLoadAddress (process));
+            return m_location.LocationListContainsAddress (loclist_base_load_addr, frame->GetFrameCodeAddress().GetLoadAddress (target));
         }
         else
         {

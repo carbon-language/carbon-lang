@@ -37,6 +37,7 @@ Target::Target(Debugger &debugger) :
     Broadcaster("Target"),
     m_debugger (debugger),
     m_images(),
+    m_section_load_list (),
     m_breakpoint_list (false),
     m_internal_breakpoint_list (true),
     m_process_sp(),
@@ -162,10 +163,8 @@ Target::CreateBreakpoint (lldb::addr_t addr, bool internal)
     // Attempt to resolve our load address if possible, though it is ok if
     // it doesn't resolve to section/offset.
 
-    Process *process = GetProcessSP().get();
     // Try and resolve as a load address if possible
-    if (process)
-        process->ResolveLoadAddress(addr, so_addr);
+    m_section_load_list.ResolveLoadAddress(addr, so_addr);
     if (!so_addr.IsValid())
     {
         // The address didn't resolve, so just set this as an absolute address
@@ -567,7 +566,7 @@ Target::ReadMemory (const Address& addr, void *dst, size_t dst_len, Error &error
     {
         if (process_is_valid)
         {
-            m_process_sp->ResolveLoadAddress (addr.GetOffset(), resolved_addr);
+            m_section_load_list.ResolveLoadAddress (addr.GetOffset(), resolved_addr);
         }
         else
         {
@@ -578,7 +577,7 @@ Target::ReadMemory (const Address& addr, void *dst, size_t dst_len, Error &error
     
     if (process_is_valid)
     {
-        lldb::addr_t load_addr = resolved_addr.GetLoadAddress(m_process_sp.get());
+        lldb::addr_t load_addr = resolved_addr.GetLoadAddress (this);
         if (load_addr == LLDB_INVALID_ADDRESS)
         {
             if (resolved_addr.GetModule() && resolved_addr.GetModule()->GetFileSpec())

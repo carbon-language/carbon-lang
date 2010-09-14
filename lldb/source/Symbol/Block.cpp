@@ -36,7 +36,7 @@ Block::~Block ()
 }
 
 void
-Block::GetDescription(Stream *s, Function *function, lldb::DescriptionLevel level, Process *process) const
+Block::GetDescription(Stream *s, Function *function, lldb::DescriptionLevel level, Target *target) const
 {
     *s << "id = " << ((const UserID&)*this);
 
@@ -45,8 +45,8 @@ Block::GetDescription(Stream *s, Function *function, lldb::DescriptionLevel leve
     {
         
         addr_t base_addr = LLDB_INVALID_ADDRESS;
-        if (process)
-            base_addr = function->GetAddressRange().GetBaseAddress().GetLoadAddress(process);
+        if (target)
+            base_addr = function->GetAddressRange().GetBaseAddress().GetLoadAddress(target);
         if (base_addr == LLDB_INVALID_ADDRESS)
             base_addr = function->GetAddressRange().GetBaseAddress().GetFileAddress();
 

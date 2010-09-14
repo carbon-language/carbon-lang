@@ -39,7 +39,7 @@ public:
     GetFileAddress () const;
 
     addr_t
-    GetLoadAddress (const lldb::SBProcess &process) const;
+    GetLoadAddress (const lldb::SBTarget &target) const;
 
     bool
     OffsetAddress (addr_t offset);

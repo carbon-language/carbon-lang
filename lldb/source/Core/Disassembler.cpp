@@ -155,16 +155,18 @@ Disassembler::Disassemble
             // try and resolve it to something
             if (range.GetBaseAddress().IsSectionOffset() == false)
             {
-                if (process && process->IsAlive())
+                if (exe_ctx.target)
                 {
-                    process->ResolveLoadAddress (range.GetBaseAddress().GetOffset(), range.GetBaseAddress());
-                }
-                else if (exe_ctx.target)
-                {
-                    exe_ctx.target->GetImages().ResolveFileAddress (range.GetBaseAddress().GetOffset(), range.GetBaseAddress());
+                    if (exe_ctx.target->GetSectionLoadList().IsEmpty())
+                    {
+                        exe_ctx.target->GetImages().ResolveFileAddress (range.GetBaseAddress().GetOffset(), range.GetBaseAddress());
+                    }
+                    else
+                    {
+                        exe_ctx.target->GetSectionLoadList().ResolveLoadAddress (range.GetBaseAddress().GetOffset(), range.GetBaseAddress());
+                    }
                 }
             }
-
 
             DataExtractor data;
             size_t bytes_disassembled = disassembler->ParseInstructions (&exe_ctx, range, data);

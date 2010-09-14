@@ -10,6 +10,8 @@
 #include "lldb/Core/ValueObject.h"
 
 // C Includes
+#include <stdlib.h>
+
 // C++ Includes
 // Other libraries and framework includes
 #include "llvm/Support/raw_ostream.h"
@@ -27,8 +29,8 @@
 #include "lldb/Target/ExecutionContext.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Target/RegisterContext.h"
+#include "lldb/Target/Target.h"
 #include "lldb/Target/Thread.h"
-#include <stdlib.h>
 
 using namespace lldb;
 using namespace lldb_private;
@@ -495,10 +497,10 @@ ValueObject::GetSummaryAsCString (ExecutionContextScope *exe_scope)
                         case eAddressTypeLoad:
                             {
                                 Address so_addr;
-                                Process *process = exe_scope->CalculateProcess();
-                                if (process != NULL)
+                                Target *target = exe_scope->CalculateTarget();
+                                if (target && target->GetSectionLoadList().IsEmpty() == false)
                                 {
-                                    if (process->ResolveLoadAddress(func_ptr_address, so_addr))
+                                    if (target->GetSectionLoadList().ResolveLoadAddress(func_ptr_address, so_addr))
                                     {
                                         so_addr.Dump (&sstr, 
                                                       exe_scope, 
