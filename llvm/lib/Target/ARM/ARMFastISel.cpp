@@ -24,6 +24,7 @@
 #include "llvm/GlobalVariable.h"
 #include "llvm/Instructions.h"
 #include "llvm/IntrinsicInst.h"
+#include "llvm/Module.h"
 #include "llvm/CodeGen/Analysis.h"
 #include "llvm/CodeGen/FastISel.h"
 #include "llvm/CodeGen/FunctionLoweringInfo.h"
@@ -121,6 +122,7 @@ class ARMFastISel : public FastISel {
     virtual bool ARMSelectBinaryOp(const Instruction *I, unsigned ISDOpcode);
     virtual bool ARMSelectSIToFP(const Instruction *I);
     virtual bool ARMSelectFPToSI(const Instruction *I);
+    virtual bool ARMSelectSDiv(const Instruction *I);
 
     // Utility routines.
   private:
@@ -139,6 +141,7 @@ class ARMFastISel : public FastISel {
     // Call handling routines.
   private:
     CCAssignFn *CCAssignFnForCall(CallingConv::ID CC, bool Return);
+    bool ARMEmitLibcall(const Instruction *I, Function *F);
 
     // OptionalDef handling routines.
   private:
@@ -931,6 +934,155 @@ CCAssignFn *ARMFastISel::CCAssignFnForCall(CallingConv::ID CC, bool Return) {
   }
 }
 
+// A quick function that will emit a call for a named libcall in F with the
+// vector of passed arguments for the Instruction in I. We can assume that we
+// can emit a call for any libcall we can produce. This is an abridged version 
+// of the full call infrastructure since we won't need to worry about things 
+// like computed function pointers or strange arguments at call sites.
+// TODO: Try to unify this and the normal call bits for ARM, then try to unify
+// with X86.
+bool ARMFastISel::ARMEmitLibcall(const Instruction *I, Function *F) {
+  CallingConv::ID CC = F->getCallingConv();
+  
+  // Handle *simple* calls for now.
+  const Type *RetTy = F->getReturnType();
+  EVT RetVT;
+  if (RetTy->isVoidTy())
+    RetVT = MVT::isVoid;
+  else if (!isTypeLegal(RetTy, RetVT))
+    return false;
+  
+  assert(!F->isVarArg() && "Vararg libcall?!");
+
+  // Abridged from the X86 FastISel call selection mechanism
+  SmallVector<Value*, 8> Args;
+  SmallVector<unsigned, 8> ArgRegs;
+  SmallVector<EVT, 8> ArgVTs;
+  SmallVector<ISD::ArgFlagsTy, 8> ArgFlags;
+  Args.reserve(I->getNumOperands());
+  ArgRegs.reserve(I->getNumOperands());
+  ArgVTs.reserve(I->getNumOperands());
+  ArgFlags.reserve(I->getNumOperands());
+  for (unsigned i = 0; i < Args.size(); ++i) {
+    Value *Op = I->getOperand(i);
+    unsigned Arg = getRegForValue(Op);
+    if (Arg == 0) return false;
+    
+    const Type *ArgTy = Op->getType();
+    EVT ArgVT;
+    if (!isTypeLegal(ArgTy, ArgVT)) return false;
+    
+    ISD::ArgFlagsTy Flags;
+    unsigned OriginalAlignment = TD.getABITypeAlignment(ArgTy);
+    Flags.setOrigAlign(OriginalAlignment);
+    
+    Args.push_back(Op);
+    ArgRegs.push_back(Arg);
+    ArgVTs.push_back(ArgVT);
+    ArgFlags.push_back(Flags);
+  }
+  
+  SmallVector<CCValAssign, 16> ArgLocs;
+  CCState CCInfo(CC, false, TM, ArgLocs, F->getContext());
+  CCInfo.AnalyzeCallOperands(ArgVTs, ArgFlags, CCAssignFnForCall(CC, false));
+  
+  // Process the args.
+  SmallVector<unsigned, 4> RegArgs;
+  for (unsigned i = 0, e = ArgLocs.size(); i != e; ++i) {
+    CCValAssign &VA = ArgLocs[i];
+    unsigned Arg = ArgRegs[VA.getValNo()];
+    EVT ArgVT = ArgVTs[VA.getValNo()];
+    
+    // Should we ever have to promote?
+    switch (VA.getLocInfo()) {
+      case CCValAssign::Full: break;
+      default:
+        assert(false && "Handle arg promotion for libcalls?");
+        return false;
+    }
+    
+    // Now copy/store arg to correct locations.
+    if (VA.isRegLoc()) {
+      BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(TargetOpcode::COPY),
+        VA.getLocReg()).addReg(Arg);
+      RegArgs.push_back(VA.getLocReg());
+    } else {
+      // Need to store
+      return false;
+    }
+  }
+  
+  // Issue the call, BLr9 for darwin, BL otherwise.
+  MachineInstrBuilder MIB;
+  unsigned CallOpc = Subtarget->isTargetDarwin() ? ARM::BLr9 : ARM::BL;
+  MIB = BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(CallOpc))
+        .addGlobalAddress(F, 0, 0);
+  
+  // Add implicit physical register uses to the call.
+  for (unsigned i = 0, e = RegArgs.size(); i != e; ++i)
+    MIB.addReg(RegArgs[i]);
+    
+  // Now the return value.
+  SmallVector<unsigned, 4> UsedRegs;
+  if (RetVT.getSimpleVT().SimpleTy != MVT::isVoid) {
+    SmallVector<CCValAssign, 16> RVLocs;
+    CCState CCInfo(CC, false, TM, RVLocs, F->getContext());
+    CCInfo.AnalyzeCallResult(RetVT, CCAssignFnForCall(CC, true));
+
+    // Copy all of the result registers out of their specified physreg.
+    assert(RVLocs.size() == 1 && "Can't handle multi-value calls!");
+    EVT CopyVT = RVLocs[0].getValVT();
+    TargetRegisterClass* DstRC = TLI.getRegClassFor(CopyVT);
+    
+    unsigned ResultReg = createResultReg(DstRC);
+    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(TargetOpcode::COPY),
+            ResultReg).addReg(RVLocs[0].getLocReg());
+    UsedRegs.push_back(RVLocs[0].getLocReg());
+    
+    // Finally update the result.        
+    UpdateValueMap(I, ResultReg);
+  }
+  
+  // Set all unused physreg defs as dead.
+  static_cast<MachineInstr *>(MIB)->setPhysRegsDeadExcept(UsedRegs, TRI);
+
+  return true;
+}
+
+bool ARMFastISel::ARMSelectSDiv(const Instruction *I) {
+  EVT VT;
+  const Type *Ty = I->getType();
+  if (!isTypeLegal(Ty, VT))
+    return false;
+    
+  // If we have integer div support we should have gotten already, emit a
+  // libcall.
+  RTLIB::Libcall LC = RTLIB::UNKNOWN_LIBCALL;
+  if (VT == MVT::i16)
+    LC = RTLIB::SDIV_I16;
+  else if (VT == MVT::i32)
+    LC = RTLIB::SDIV_I32;
+  else if (VT == MVT::i64)
+    LC = RTLIB::SDIV_I64;
+  else if (VT == MVT::i128)
+    LC = RTLIB::SDIV_I128;
+  assert(LC != RTLIB::UNKNOWN_LIBCALL && "Unsupported SDIV!");
+  
+  // Binary operand with all the same type.
+  std::vector<const Type*> ArgTys;
+  ArgTys.push_back(Ty);
+  ArgTys.push_back(Ty);
+  const FunctionType *FTy = FunctionType::get(Ty, ArgTys, false);
+  Function *F = Function::Create(FTy, GlobalValue::ExternalLinkage,
+                                 TLI.getLibcallName(LC));
+  if (Subtarget->isAAPCS_ABI())
+    F->setCallingConv(CallingConv::ARM_AAPCS);
+  else
+    F->setCallingConv(I->getParent()->getParent()->getCallingConv());
+  
+  return ARMEmitLibcall(I, F);
+}
+
 // TODO: SoftFP support.
 bool ARMFastISel::TargetSelectInstruction(const Instruction *I) {
   // No Thumb-1 for now.
@@ -960,6 +1112,8 @@ bool ARMFastISel::TargetSelectInstruction(const Instruction *I) {
       return ARMSelectBinaryOp(I, ISD::FSUB);
     case Instruction::FMul:
       return ARMSelectBinaryOp(I, ISD::FMUL);
+    case Instruction::SDiv:
+      return ARMSelectSDiv(I);
     default: break;
   }
   return false;
