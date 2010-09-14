@@ -46,6 +46,13 @@ public:
         Mutex::Locker locker(m_mutex);
         return m_collection.empty();
     }
+    
+    void
+    Clear()
+    {
+        Mutex::Locker locker(m_mutex);
+        return m_collection.clear();
+    }
 
     size_t
     Erase (const _Key& key)

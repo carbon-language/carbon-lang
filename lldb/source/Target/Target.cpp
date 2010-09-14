@@ -82,6 +82,7 @@ Target::DeleteCurrentProcess ()
 {
     if (m_process_sp.get())
     {
+        m_section_load_list.Clear();
         if (m_process_sp->IsAlive())
             m_process_sp->Destroy();
         else
