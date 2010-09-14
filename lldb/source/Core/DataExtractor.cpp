@@ -739,62 +739,80 @@ DataExtractor::GetMaxS64Bitfield (uint32_t *offset_ptr, uint32_t size, uint32_t 
 float
 DataExtractor::GetFloat (uint32_t *offset_ptr) const
 {
-    uint32_t val = 0;
-    register uint32_t offset = *offset_ptr;
-
-    if ( ValidOffsetForDataOfSize(offset, sizeof(val)) )
+    typedef float float_type;
+    float_type val = 0.0;
+    const uint8_t *src_data = PeekData (*offset_ptr, sizeof(float_type));
+    
+    if (src_data)
     {
         if (m_byte_order != eByteOrderHost)
-            val = ReadSwapInt32 (m_start, offset);
+        {
+            uint8_t *dst_data = (uint8_t *)&val;
+            for (int i=0; i<sizeof(float_type); ++i)
+                dst_data[sizeof(float_type) - 1 - i] = src_data[i];
+        }
         else
-            val = ReadInt32 (m_start, offset);
+        {
+            ::memcpy (&val, src_data, sizeof (float_type));
+        }
 
         // Advance the offset
         *offset_ptr += sizeof(val);
     }
-    return *((float *)&val);
+    return val;
 }
 
 double
 DataExtractor::GetDouble (uint32_t *offset_ptr) const
 {
-    uint64_t val = 0;
-    register uint32_t offset = *offset_ptr;
-    if ( ValidOffsetForDataOfSize(offset, sizeof(val)) )
+    typedef double float_type;
+    float_type val = 0.0;
+    const uint8_t *src_data = PeekData (*offset_ptr, sizeof(float_type));
+    
+    if (src_data)
     {
         if (m_byte_order != eByteOrderHost)
-            val = ReadSwapInt64 (m_start, offset);
+        {
+            uint8_t *dst_data = (uint8_t *)&val;
+            for (int i=0; i<sizeof(float_type); ++i)
+                dst_data[sizeof(float_type) - 1 - i] = src_data[i];
+        }
         else
-            val = ReadInt64 (m_start, offset);
+        {
+            ::memcpy (&val, src_data, sizeof (float_type));
+        }
 
         // Advance the offset
         *offset_ptr += sizeof(val);
     }
-    return *((double *)&val);
-
+    return val;
 }
 
 
 long double
 DataExtractor::GetLongDouble (uint32_t *offset_ptr) const
 {
-    if (sizeof(long double) == sizeof(uint64_t))
+    typedef long double float_type;
+    float_type val = 0.0;
+    const uint8_t *src_data = PeekData (*offset_ptr, sizeof(float_type));
+    
+    if (src_data)
     {
-        uint64_t val = 0;
-        register uint32_t offset = *offset_ptr;
-        if ( ValidOffsetForDataOfSize(offset, sizeof(val)) )
+        if (m_byte_order != eByteOrderHost)
         {
-            if (m_byte_order != eByteOrderHost)
-                val = ReadSwapInt64 (m_start, offset);
-            else
-                val = ReadInt64 (m_start, offset);
-
-            // Advance the offset
-            *offset_ptr += sizeof(val);
+            uint8_t *dst_data = (uint8_t *)&val;
+            for (int i=0; i<sizeof(float_type); ++i)
+                dst_data[sizeof(float_type) - 1 - i] = src_data[i];
         }
-        return *((long double *)&val);
+        else
+        {
+            ::memcpy (&val, src_data, sizeof (float_type));
+        }
+
+        // Advance the offset
+        *offset_ptr += sizeof(val);
     }
-    return 0.0;
+    return val;
 }
 
 
@@ -1358,18 +1376,15 @@ DataExtractor::Dump
         case eFormatFloat:
             if (sizeof(float) == item_byte_size)
             {
-                uint32_t a32 = GetU32(&offset);
-                s->Printf ("%g", (double)(*((float *)&a32)));
+                s->Printf ("%g", GetFloat (&offset));
             }
             else if (sizeof(double) == item_byte_size)
             {
-                uint64_t a64 = GetU64(&offset);
-                s->Printf ("%lg", (*((double *)&a64)));
+                s->Printf ("%lg", GetDouble(&offset));
             }
-            else if (sizeof(long double) == item_byte_size && sizeof(long double) <= sizeof(uint64_t))
+            else if (sizeof(long double) == item_byte_size)
             {
-                uint64_t a64 = GetU64(&offset);
-                s->Printf ("%Lg", (*((long double *)&a64)));
+                s->Printf ("%Lg", GetLongDouble(&offset));
             }
             break;
 
