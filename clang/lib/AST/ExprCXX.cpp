@@ -149,6 +149,19 @@ Stmt::child_iterator CXXNewExpr::child_end() {
 }
 
 // CXXDeleteExpr
+QualType CXXDeleteExpr::getDestroyedType() const {
+  const Expr *Arg = getArgument();
+  while (const ImplicitCastExpr *ICE = dyn_cast<ImplicitCastExpr>(Arg)) {
+    if (ICE->getCastKind() != CK_UserDefinedConversion &&
+        ICE->getType()->isVoidPointerType())
+      Arg = ICE->getSubExpr();
+    else
+      break;
+  }
+
+  return Arg->getType()->getAs<PointerType>()->getPointeeType();
+}
+
 Stmt::child_iterator CXXDeleteExpr::child_begin() { return &Argument; }
 Stmt::child_iterator CXXDeleteExpr::child_end() { return &Argument+1; }
 

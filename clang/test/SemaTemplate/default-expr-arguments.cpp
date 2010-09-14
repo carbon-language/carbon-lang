@@ -252,3 +252,25 @@ namespace PR8127 {
     void foo( PointerClass<ExternallyImplementedClass> = 0 );
   };
 }
+
+namespace rdar8427926 {
+  template<typename T>
+  struct Boom {
+    ~Boom() {
+      T t;
+      double *******ptr = t; // expected-error 2{{cannot initialize}}
+    }
+  };
+
+  Boom<float> *bfp;
+
+  struct X {
+    void f(Boom<int> = Boom<int>()) { } // expected-note{{requested here}}
+    void g(int x = (delete bfp, 0)); // expected-note{{requested here}}
+  };
+
+  void test(X *x) {
+    x->f();
+    x->g();
+  }
+}

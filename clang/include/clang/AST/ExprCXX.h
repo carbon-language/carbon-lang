@@ -1136,6 +1136,8 @@ public:
   Expr *getArgument() { return cast<Expr>(Argument); }
   const Expr *getArgument() const { return cast<Expr>(Argument); }
 
+  QualType getDestroyedType() const;
+  
   virtual SourceRange getSourceRange() const {
     return SourceRange(Loc, Argument->getLocEnd());
   }

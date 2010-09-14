@@ -5395,6 +5395,17 @@ TreeTransform<Derived>::TransformCXXDeleteExpr(CXXDeleteExpr *E) {
     // FIXME: instantiation-specific.
     if (OperatorDelete)
       SemaRef.MarkDeclarationReferenced(E->getLocStart(), OperatorDelete);
+    
+    if (!E->getArgument()->isTypeDependent()) {
+      QualType Destroyed = SemaRef.Context.getBaseElementType(
+                                                         E->getDestroyedType());
+      if (const RecordType *DestroyedRec = Destroyed->getAs<RecordType>()) {
+        CXXRecordDecl *Record = cast<CXXRecordDecl>(DestroyedRec->getDecl());
+        SemaRef.MarkDeclarationReferenced(E->getLocStart(), 
+                                          SemaRef.LookupDestructor(Record));
+      }
+    }
+    
     return SemaRef.Owned(E->Retain());
   }
 

@@ -3454,8 +3454,12 @@ ExprResult Sema::BuildCXXDefaultArgExpr(SourceLocation CallLoc,
   // be properly destroyed.
   // FIXME: We should really be rebuilding the default argument with new
   // bound temporaries; see the comment in PR5810.
-  for (unsigned i = 0, e = Param->getNumDefaultArgTemporaries(); i != e; ++i)
-    ExprTemporaries.push_back(Param->getDefaultArgTemporary(i));
+  for (unsigned i = 0, e = Param->getNumDefaultArgTemporaries(); i != e; ++i) {
+    CXXTemporary *Temporary = Param->getDefaultArgTemporary(i);
+    MarkDeclarationReferenced(Param->getDefaultArg()->getLocStart(), 
+                    const_cast<CXXDestructorDecl*>(Temporary->getDestructor()));
+    ExprTemporaries.push_back(Temporary);
+  }
 
   // We already type-checked the argument, so we know it works. 
   // Just mark all of the declarations in this potentially-evaluated expression
@@ -7838,6 +7842,13 @@ namespace {
     void VisitCXXDeleteExpr(CXXDeleteExpr *E) {
       if (E->getOperatorDelete())
         S.MarkDeclarationReferenced(E->getLocStart(), E->getOperatorDelete());
+      QualType Destroyed = S.Context.getBaseElementType(E->getDestroyedType());
+      if (const RecordType *DestroyedRec = Destroyed->getAs<RecordType>()) {
+        CXXRecordDecl *Record = cast<CXXRecordDecl>(DestroyedRec->getDecl());
+        S.MarkDeclarationReferenced(E->getLocStart(), 
+                                    S.LookupDestructor(Record));
+      }
+      
       Inherited::VisitCXXDeleteExpr(E);
     }
     
