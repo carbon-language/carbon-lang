@@ -182,10 +182,11 @@ static void PrintCursor(CXCursor Cursor) {
         printf("[");
         for (I = 0; I != N; ++I) {
           CXCursor Ovl = clang_getOverloadedDecl(Referenced, I);
+          CXSourceLocation Loc;
           if (I)
             printf(", ");
           
-          CXSourceLocation Loc = clang_getCursorLocation(Ovl);
+          Loc = clang_getCursorLocation(Ovl);
           clang_getInstantiationLocation(Loc, 0, &line, &column, 0);
           printf("%d:%d", line, column);          
         }
