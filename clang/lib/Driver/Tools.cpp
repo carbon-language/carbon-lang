@@ -637,6 +637,7 @@ void Clang::AddX86TargetArgs(const ArgList &Args,
 
 static bool needsExceptions(const ArgList &Args,  types::ID InputType,
                             const llvm::Triple &Triple) {
+  // Handle -fno-exceptions.
   if (Arg *A = Args.getLastArg(options::OPT_fexceptions,
                                options::OPT_fno_exceptions)) {
     if (A->getOption().matches(options::OPT_fexceptions))
@@ -644,25 +645,23 @@ static bool needsExceptions(const ArgList &Args,  types::ID InputType,
     else
       return false;
   }
-  switch (InputType) {
-  case types::TY_CXX: case types::TY_CXXHeader:
-  case types::TY_PP_CXX: case types::TY_PP_CXXHeader:
-  case types::TY_ObjCXX: case types::TY_ObjCXXHeader:
-  case types::TY_PP_ObjCXX: case types::TY_PP_ObjCXXHeader:
+
+  // Otherwise, C++ inputs use exceptions.
+  if (types::isCXX(InputType))
     return true;
 
-  case types::TY_ObjC: case types::TY_ObjCHeader:
-  case types::TY_PP_ObjC: case types::TY_PP_ObjCHeader:
+  // As do Objective-C non-fragile ABI inputs and all Objective-C inputs on
+  // x86_64 after SnowLeopard.
+  if (types::isObjC(InputType)) {
     if (Args.hasArg(options::OPT_fobjc_nonfragile_abi))
       return true;
     if (Triple.getOS() != llvm::Triple::Darwin)
       return false;
     return (Triple.getDarwinMajorNumber() >= 9 &&
             Triple.getArch() == llvm::Triple::x86_64);
-
-  default:
-    return false;
   }
+
+  return false;
 }
 
 void Clang::ConstructJob(Compilation &C, const JobAction &JA,
