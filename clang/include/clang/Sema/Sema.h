@@ -4107,6 +4107,9 @@ public:
   // For compound assignment, pass both expressions and the converted type.
   QualType CheckAssignmentOperands( // C99 6.5.16.[1,2]
     Expr *lex, Expr *&rex, SourceLocation OpLoc, QualType convertedType);
+  
+  void ConvertPropertyAssignment(Expr *LHS, Expr *&RHS, QualType& LHSTy);
+                                   
   QualType CheckCommaOperands( // C99 6.5.17
     Expr *lex, Expr *&rex, SourceLocation OpLoc);
   QualType CheckConditionalOperands( // C99 6.5.15

@@ -6016,17 +6016,7 @@ QualType Sema::CheckAssignmentOperands(Expr *LHS, Expr *&RHS,
   if (CompoundType.isNull()) {
     QualType LHSTy(LHSType);
     // Simple assignment "x = y".
-    if (const ObjCImplicitSetterGetterRefExpr *OISGE = 
-        dyn_cast<ObjCImplicitSetterGetterRefExpr>(LHS)) {
-      // If using property-dot syntax notation for assignment, and there is a
-      // setter, RHS expression is being passed to the setter argument. So,
-      // type conversion (and comparison) is RHS to setter's argument type.
-      if (const ObjCMethodDecl *SetterMD = OISGE->getSetterMethod()) {
-        ObjCMethodDecl::param_iterator P = SetterMD->param_begin();
-        LHSTy = (*P)->getType();
-      }
-    }
-    
+    ConvertPropertyAssignment(LHS, RHS, LHSTy);
     ConvTy = CheckSingleAssignmentConstraints(LHSTy, RHS);
     // Special case of NSObject attributes on c-style pointer types.
     if (ConvTy == IncompatiblePointer &&
@@ -6180,6 +6170,34 @@ QualType Sema::CheckIncrementDecrementOperand(Expr *Op, SourceLocation OpLoc,
   return isPrefix && getLangOptions().CPlusPlus
     ? ResType : ResType.getUnqualifiedType();
 }
+
+void Sema::ConvertPropertyAssignment(Expr *LHS, Expr *&RHS, QualType& LHSTy) {
+  bool copyInit = false;
+  if (const ObjCImplicitSetterGetterRefExpr *OISGE = 
+      dyn_cast<ObjCImplicitSetterGetterRefExpr>(LHS)) {
+    // If using property-dot syntax notation for assignment, and there is a
+    // setter, RHS expression is being passed to the setter argument. So,
+    // type conversion (and comparison) is RHS to setter's argument type.
+    if (const ObjCMethodDecl *SetterMD = OISGE->getSetterMethod()) {
+      ObjCMethodDecl::param_iterator P = SetterMD->param_begin();
+      LHSTy = (*P)->getType();
+    }
+    copyInit = (getLangOptions().CPlusPlus && LHSTy->isRecordType());
+  } 
+  else 
+      copyInit = (getLangOptions().CPlusPlus && isa<ObjCPropertyRefExpr>(LHS) &&
+                  LHSTy->isRecordType());
+  if (copyInit) {
+    InitializedEntity Entity = 
+    InitializedEntity::InitializeParameter(LHSTy);
+    Expr *Arg = RHS;
+    ExprResult ArgE = PerformCopyInitialization(Entity, SourceLocation(),
+                                                Owned(Arg));
+    if (!ArgE.isInvalid())
+      RHS = ArgE.takeAs<Expr>();
+  }
+}
+  
 
 /// getPrimaryDecl - Helper function for CheckAddressOfOperand().
 /// This routine allows us to typecheck complex/recursive expressions
@@ -6698,8 +6716,9 @@ ExprResult Sema::BuildBinOp(Scope *S, SourceLocation OpLoc,
                             BinaryOperatorKind Opc,
                             Expr *lhs, Expr *rhs) {
   if (getLangOptions().CPlusPlus &&
-      (!isa<ObjCImplicitSetterGetterRefExpr>(lhs) ||
-       rhs->isTypeDependent()) &&
+      ((!isa<ObjCImplicitSetterGetterRefExpr>(lhs) && 
+        !isa<ObjCPropertyRefExpr>(lhs))
+        || rhs->isTypeDependent()) &&
       (lhs->getType()->isOverloadableType() ||
        rhs->getType()->isOverloadableType())) {
     // Find all of the overloaded operators visible from this
