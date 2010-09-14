@@ -1176,6 +1176,7 @@ static void AddFunctionSpecifiers(Sema::ParserCompletionContext CCC,
   case Sema::PCC_Condition:
   case Sema::PCC_RecoveryInFunction:
   case Sema::PCC_Type:
+  case Sema::PCC_ParenthesizedExpression:
     break;
   }
 }
@@ -1205,9 +1206,6 @@ static void AddTypedefResult(ResultBuilder &Results) {
 
 static bool WantTypesInContext(Sema::ParserCompletionContext CCC,
                                const LangOptions &LangOpts) {
-  if (LangOpts.CPlusPlus)
-    return true;
-  
   switch (CCC) {
   case Sema::PCC_Namespace:
   case Sema::PCC_Class:
@@ -1217,16 +1215,19 @@ static bool WantTypesInContext(Sema::ParserCompletionContext CCC,
   case Sema::PCC_Statement:
   case Sema::PCC_RecoveryInFunction:
   case Sema::PCC_Type:
+  case Sema::PCC_ParenthesizedExpression:
     return true;
     
-  case Sema::PCC_ObjCInterface:
-  case Sema::PCC_ObjCImplementation:
   case Sema::PCC_Expression:
   case Sema::PCC_Condition:
+    return LangOpts.CPlusPlus;
+      
+  case Sema::PCC_ObjCInterface:
+  case Sema::PCC_ObjCImplementation:
     return false;
     
   case Sema::PCC_ForInit:
-    return LangOpts.ObjC1 || LangOpts.C99;
+    return LangOpts.CPlusPlus || LangOpts.ObjC1 || LangOpts.C99;
   }
   
   return false;
@@ -1556,6 +1557,7 @@ static void AddOrdinaryNameResults(Sema::ParserCompletionContext CCC,
     AddStorageSpecifiers(CCC, SemaRef.getLangOptions(), Results);
     // Fall through: conditions and statements can have expressions.
 
+  case Sema::PCC_ParenthesizedExpression:
   case Sema::PCC_Expression: {
     CodeCompletionString *Pattern = 0;
     if (SemaRef.getLangOptions().CPlusPlus) {
@@ -2453,6 +2455,9 @@ static enum CodeCompletionContext::Kind mapCodeCompletionContext(Sema &S,
 
   case Sema::PCC_Type:
     return CodeCompletionContext::CCC_Type;
+
+  case Sema::PCC_ParenthesizedExpression:
+    return CodeCompletionContext::CCC_ParenthesizedExpression;
   }
   
   return CodeCompletionContext::CCC_Other;
@@ -2559,6 +2564,7 @@ void Sema::CodeCompleteOrdinaryName(Scope *S,
     Results.setPreferredType(Context.VoidTy);
     // Fall through
       
+  case PCC_ParenthesizedExpression:
   case PCC_Expression:
   case PCC_ForInit:
   case PCC_Condition:
@@ -2591,6 +2597,7 @@ void Sema::CodeCompleteOrdinaryName(Scope *S,
   Results.ExitScope();
 
   switch (CompletionContext) {
+  case PCC_ParenthesizedExpression:
   case PCC_Expression:
   case PCC_Statement:
   case PCC_RecoveryInFunction:

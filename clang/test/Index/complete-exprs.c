@@ -18,6 +18,12 @@ void f3(const char*, ...) __attribute__((sentinel(0)));
 void f4(const char* str) {
   f3(str, NULL);
 }
+
+typedef int type;
+void f5(float f) {
+  (type)f;
+}
+
 // RUN: c-index-test -code-completion-at=%s:7:9 -Xclang -code-completion-patterns %s | FileCheck -check-prefix=CHECK-CC1 %s
 // RUN: env CINDEXTEST_EDITING=1 c-index-test -code-completion-at=%s:7:9 -Xclang -code-completion-patterns %s | FileCheck -check-prefix=CHECK-CC1 %s
 // CHECK-CC1: NotImplemented:{TypedText __PRETTY_FUNCTION__} (60)
@@ -51,3 +57,13 @@ void f4(const char* str) {
 // CHECK-CC6: FunctionDecl:{ResultType void}{TypedText f3}{LeftParen (}{Placeholder const char *, ...}{Text , NULL}{RightParen )} (45)
 // CHECK-CC6: NotImplemented:{TypedText void} (65)
 // CHECK-CC6: NotImplemented:{TypedText volatile} (65)
+
+// RUN: c-index-test -code-completion-at=%s:24:4 -Xclang -code-completion-patterns %s | FileCheck -check-prefix=CHECK-CC7 %s
+// RUN: env CINDEXTEST_EDITING=1 c-index-test -code-completion-at=%s:24:4 -Xclang -code-completion-patterns %s | FileCheck -check-prefix=CHECK-CC7 %s
+// CHECK-CC7: ParmDecl:{ResultType float}{TypedText f} (8)
+// CHECK-CC7: VarDecl:{ResultType struct X}{TypedText f1} (50) (deprecated)
+// CHECK-CC7: FunctionDecl:{ResultType void}{TypedText f2}{LeftParen (}{RightParen )} (50)
+// CHECK-CC7: FunctionDecl:{ResultType void}{TypedText f3}{LeftParen (}{Placeholder const char *, ...}{Text , NULL}{RightParen )} (50)
+// CHECK-CC7: FunctionDecl:{ResultType void}{TypedText f4}{LeftParen (}{Placeholder const char *str}{RightParen )} (50)
+// CHECK-CC7: FunctionDecl:{ResultType void}{TypedText f5}{LeftParen (}{Placeholder float f}{RightParen )} (50)
+// CHECK-CC7: TypedefDecl:{TypedText type}

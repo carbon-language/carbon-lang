@@ -4295,7 +4295,10 @@ public:
     /// in the grammar.
     PCC_RecoveryInFunction,
     /// \brief Code completion occurs where only a type is permitted.
-    PCC_Type
+    PCC_Type,
+    /// \brief Code completion occurs in a parenthesized expression, which
+    /// might also be a type cast.
+    PCC_ParenthesizedExpression
   };
 
   void CodeCompleteOrdinaryName(Scope *S,

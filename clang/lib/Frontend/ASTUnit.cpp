@@ -115,7 +115,8 @@ static unsigned getDeclShowContexts(NamedDecl *ND,
                 | (1 << (CodeCompletionContext::CCC_ObjCIvarList - 1))
                 | (1 << (CodeCompletionContext::CCC_ClassStructUnion - 1))
                 | (1 << (CodeCompletionContext::CCC_Statement - 1))
-                | (1 << (CodeCompletionContext::CCC_Type - 1));
+                | (1 << (CodeCompletionContext::CCC_Type - 1))
+              | (1 << (CodeCompletionContext::CCC_ParenthesizedExpression - 1));
 
     // In C++, types can appear in expressions contexts (for functional casts).
     if (LangOpts.CPlusPlus)
@@ -147,6 +148,7 @@ static unsigned getDeclShowContexts(NamedDecl *ND,
     // Values can appear in these contexts.
     Contexts = (1 << (CodeCompletionContext::CCC_Statement - 1))
              | (1 << (CodeCompletionContext::CCC_Expression - 1))
+             | (1 << (CodeCompletionContext::CCC_ParenthesizedExpression - 1))
              | (1 << (CodeCompletionContext::CCC_ObjCMessageReceiver - 1));
   } else if (isa<ObjCProtocolDecl>(ND)) {
     Contexts = (1 << (CodeCompletionContext::CCC_ObjCProtocolName - 1));
@@ -237,7 +239,8 @@ void ASTUnit::CacheCodeCompletionResults() {
           | (1 << (CodeCompletionContext::CCC_UnionTag - 1))
           | (1 << (CodeCompletionContext::CCC_ClassOrStructTag - 1))
           | (1 << (CodeCompletionContext::CCC_Type - 1))
-          | (1 << (CodeCompletionContext::CCC_PotentiallyQualifiedName - 1));
+          | (1 << (CodeCompletionContext::CCC_PotentiallyQualifiedName - 1))
+          | (1 << (CodeCompletionContext::CCC_ParenthesizedExpression - 1));
 
         if (isa<NamespaceDecl>(Results[I].Declaration) ||
             isa<NamespaceAliasDecl>(Results[I].Declaration))
@@ -279,7 +282,9 @@ void ASTUnit::CacheCodeCompletionResults() {
         | (1 << (CodeCompletionContext::CCC_Expression - 1))
         | (1 << (CodeCompletionContext::CCC_ObjCMessageReceiver - 1))
         | (1 << (CodeCompletionContext::CCC_MacroNameUse - 1))
-        | (1 << (CodeCompletionContext::CCC_PreprocessorExpression - 1));
+        | (1 << (CodeCompletionContext::CCC_PreprocessorExpression - 1))
+        | (1 << (CodeCompletionContext::CCC_ParenthesizedExpression - 1));
+
       
       CachedResult.Priority = Results[I].Priority;
       CachedResult.Kind = Results[I].CursorKind;
@@ -1517,8 +1522,9 @@ namespace {
         | (1 << (CodeCompletionContext::CCC_Expression - 1))
         | (1 << (CodeCompletionContext::CCC_ObjCMessageReceiver - 1))
         | (1 << (CodeCompletionContext::CCC_MemberAccess - 1))
-        | (1 << (CodeCompletionContext::CCC_ObjCProtocolName - 1));
-      
+        | (1 << (CodeCompletionContext::CCC_ObjCProtocolName - 1))
+        | (1 << (CodeCompletionContext::CCC_ParenthesizedExpression - 1));
+
       if (AST.getASTContext().getLangOptions().CPlusPlus)
         NormalContexts |= (1 << (CodeCompletionContext::CCC_EnumTag - 1))
                     | (1 << (CodeCompletionContext::CCC_UnionTag - 1))
@@ -1561,6 +1567,7 @@ void CalculateHiddenNames(const CodeCompletionContext &Context,
   case CodeCompletionContext::CCC_Type:
   case CodeCompletionContext::CCC_Name:
   case CodeCompletionContext::CCC_PotentiallyQualifiedName:
+  case CodeCompletionContext::CCC_ParenthesizedExpression:
     break;
     
   case CodeCompletionContext::CCC_EnumTag:

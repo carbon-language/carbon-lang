@@ -1452,6 +1452,14 @@ Parser::ParseParenExpression(ParenParseOption &ExprType, bool stopIfCastExpr,
   bool isAmbiguousTypeId;
   CastTy = ParsedType();
 
+  if (Tok.is(tok::code_completion)) {
+    Actions.CodeCompleteOrdinaryName(getCurScope(), 
+                 ExprType >= CompoundLiteral? Sema::PCC_ParenthesizedExpression
+                                            : Sema::PCC_Expression);
+    ConsumeCodeCompletionToken();
+    return ExprError();
+  }
+  
   if (ExprType >= CompoundStmt && Tok.is(tok::l_brace)) {
     Diag(Tok, diag::ext_gnu_statement_expr);
     StmtResult Stmt(ParseCompoundStatement(0, true));

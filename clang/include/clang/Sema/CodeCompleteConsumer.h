@@ -212,7 +212,10 @@ public:
     /// \brief Code completion for a selector, as in an @selector expression.
     CCC_SelectorName,
     /// \brief Code completion within a type-qualifier list.
-    CCC_TypeQualifiers
+    CCC_TypeQualifiers,
+    /// \brief Code completion in a parenthesized expression, which means that
+    /// we may also have types here in C and Objective-C (as well as in C++).
+    CCC_ParenthesizedExpression
   };
 
 private:
