@@ -1349,6 +1349,11 @@ void ARMAsmPrinter::printInstructionThroughMCStreamer(const MachineInstr *MI) {
     AddInst.addOperand(MCOperand::CreateReg(MI->getOperand(0).getReg()));
     AddInst.addOperand(MCOperand::CreateReg(ARM::PC));
     AddInst.addOperand(MCOperand::CreateReg(MI->getOperand(1).getReg()));
+    // Add predicate operands.
+    AddInst.addOperand(MCOperand::CreateImm(MI->getOperand(3).getImm()));
+    AddInst.addOperand(MCOperand::CreateReg(MI->getOperand(4).getReg()));
+    // Add 's' bit operand (always reg0 for this)
+    AddInst.addOperand(MCOperand::CreateReg(0));
     OutStreamer.EmitInstruction(AddInst);
     return;
   }
