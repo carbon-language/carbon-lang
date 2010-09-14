@@ -562,6 +562,7 @@ public:
     {
       CleanupStackDepth = CGF.EHStack.stable_begin();
       OldDidCallStackSave = CGF.DidCallStackSave;
+      CGF.DidCallStackSave = false;
     }
 
     /// \brief Exit this cleanup scope, emitting any accumulated
