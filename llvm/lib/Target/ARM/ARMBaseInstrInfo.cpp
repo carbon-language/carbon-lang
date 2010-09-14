@@ -1373,7 +1373,7 @@ AnalyzeCompare(const MachineInstr *MI, unsigned &SrcReg, int &CmpValue) const {
     CmpValue = MI->getOperand(1).getImm();
     return true;
   case ARM::TSTri: {
-      if (MI->getParent()->begin() == MachineBasicBlock::const_iterator(MI))
+      if (&*MI->getParent()->begin() == MI)
         return false;
       const MachineInstr *AND = llvm::prior(MI);
       if (AND->getOpcode() != ARM::ANDri)
@@ -1385,6 +1385,7 @@ AnalyzeCompare(const MachineInstr *MI, unsigned &SrcReg, int &CmpValue) const {
         return true;
       }
     }
+    break;
   }
 
   return false;
