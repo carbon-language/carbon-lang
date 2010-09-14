@@ -217,8 +217,8 @@ Thumb2SizeReduce::VerifyPredAndCC(MachineInstr *MI, const ReduceEntry &Entry,
     /// Old opcode has an optional def of CPSR.
     if (HasCC)
       return true;
-    // If both old opcode does not implicit CPSR def, then it's not ok since
-    // these new opcodes CPSR def is not meant to be thrown away. e.g. CMP.
+    // If old opcode does not implicitly define CPSR, then it's not ok since
+    // these new opcodes' CPSR def is not meant to be thrown away. e.g. CMP.
     if (!HasImplicitCPSRDef(MI->getDesc()))
       return false;
     HasCC = true;
