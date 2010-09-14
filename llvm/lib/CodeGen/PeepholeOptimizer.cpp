@@ -269,7 +269,8 @@ bool PeepholeOptimizer::runOnMachineFunction(MachineFunction &MF) {
            MII = I->begin(), MIE = I->end(); MII != MIE; ) {
       MachineInstr *MI = &*MII;
 
-      if (MI->getDesc().isCompare()) {
+      if (MI->getDesc().isCompare() &&
+          !MI->getDesc().hasUnmodeledSideEffects()) {
         if (OptimizeCmpInstr(MI, MBB, MII))
           Changed = true;
         else
