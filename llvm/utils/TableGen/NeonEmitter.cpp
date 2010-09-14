@@ -912,7 +912,7 @@ void NeonEmitter::run(raw_ostream &OS) {
       OS << "typedef __attribute__(( __vector_size__(";
       
       OS << utostr(8*v*(quad ? 2 : 1)) << ") )) ";
-      if (!quad)
+      if (!quad && v == 1)
         OS << " ";
       
       OS << TypeString('s', TDTypeVec[i]);
