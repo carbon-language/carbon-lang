@@ -228,7 +228,7 @@ def system(*popenargs, **kwargs):
     if 'stdout' in kwargs:
         raise ValueError('stdout argument not allowed, it will be overridden.')
     process = Popen(stdout=PIPE, *popenargs, **kwargs)
-    output, unused_err = process.communicate()
+    output, error = process.communicate()
     retcode = process.poll()
 
     if traceAlways:
@@ -239,8 +239,9 @@ def system(*popenargs, **kwargs):
         print >> sys.stderr
         print >> sys.stderr, "os command:", args
         print >> sys.stderr, "output:", output
-        print >> sys.stderr, "error:", unused_err
-        print >> sys.stderr, "retcode:", retcode
+        print >> sys.stderr, "error (from os comand):", error
+        print >> sys.stderr, "retcode (from os command):", retcode
+        print >> sys.stderr
 
     if retcode:
         cmd = kwargs.get("args")

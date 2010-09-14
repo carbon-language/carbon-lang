@@ -70,6 +70,15 @@ args : specify a list of directory names to search for python Test*.py scripts
 
 Running of this script also sets up the LLDB_TEST environment variable so that
 individual test cases can locate their supporting files correctly.
+
+Environment variables related to loggings:
+
+o LLDB_LOG: if defined, specifies the log file pathname for the 'lldb' subsystem
+  with a default option of 'event process' if LLDB_LOG_OPTION is not defined.
+
+o GDB_REMOTE_LOG: if defined, specifies the log file pathname for the
+  'process.gdb-remote' subsystem with a default option of 'packets' if
+  GDB_REMOTE_LOG_OPTION is not defined.
 """
 
 
@@ -126,14 +135,18 @@ def initTestdirs():
     else:
         # Process possible trace and/or verbose flag.
         index = 1
-        for i in range(1, len(sys.argv) - 1):
+        for i in range(1, len(sys.argv)):
+            if not sys.argv[index].startswith('-'):
+                # End of option processing.
+                break
+
             if sys.argv[index].startswith('-d'):
                 delay = True
                 index += 1
-            if sys.argv[index].startswith('-t'):
+            elif sys.argv[index].startswith('-t'):
                 os.environ["LLDB_COMMAND_TRACE"] = "YES"
                 index += 1
-            if sys.argv[index].startswith('-v'):
+            elif sys.argv[index].startswith('-v'):
                 verbose = 2
                 index += 1
 
@@ -219,7 +232,7 @@ if ("LLDB_LOG" in os.environ):
         res)
     if not res.Succeeded():
         raise Exception('log enable failed (check LLDB_LOG env variable.')
-# Ditto for gdb-remote logging if ${LLDB_LOG} environment variable is defined.
+# Ditto for gdb-remote logging if ${GDB_REMOTE_LOG} environment variable is defined.
 # Use ${GDB_REMOTE_LOG} to specify the log file.
 if ("GDB_REMOTE_LOG" in os.environ):
     if ("GDB_REMOTE_LOG_OPTION" in os.environ):

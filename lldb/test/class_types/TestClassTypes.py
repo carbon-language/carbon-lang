@@ -24,7 +24,6 @@ class ClassTypesTestCase(TestBase):
     # rdar://problem/8378863
     # "frame variable this" returns
     # error: unable to find any variables named 'this'
-    @unittest2.expectedFailure
     def test_with_dwarf_and_run_command(self):
         """Test 'frame variable this' when stopped on a class constructor."""
         self.buildDwarf()
@@ -69,14 +68,25 @@ class ClassTypesTestCase(TestBase):
         filespec = target.GetExecutable()
         self.assertTrue(filespec.IsValid(), VALID_FILESPEC)
 
-        breakpoint = target.BreakpointCreateByLocation(filespec, 73)
-        self.assertTrue(breakpoint.IsValid(), VALID_BREAKPOINT)
-
         fsDir = filespec.GetDirectory()
         fsFile = filespec.GetFilename()
 
         self.assertTrue(fsDir == os.getcwd() and fsFile == "a.out",
                         "FileSpec matches the executable")
+
+        bpfilespec = lldb.SBFileSpec("main.cpp")
+
+        breakpoint = target.BreakpointCreateByLocation(bpfilespec, 73)
+        self.assertTrue(breakpoint.IsValid(), VALID_BREAKPOINT)
+
+        # Verify the breakpoint just created.
+        self.expect("breakpoint list", BREAKPOINT_CREATED,
+            substrs = ['main.cpp:73'])
+
+        self.runCmd("run", RUN_SUCCEEDED)
+
+        # We should be stopped on the breakpoint with a hit count of 1.
+        self.assertTrue(breakpoint.GetHitCount() == 1)
 
 
 if __name__ == '__main__':
