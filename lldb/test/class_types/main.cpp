@@ -66,7 +66,7 @@ protected:
     int m_b_int;
 };
 
-
+#include <cstdio>
 class C : public B
 {
 public:
@@ -74,6 +74,7 @@ public:
         B(ai, bi),
         m_c_int(ci)
     {
+        printf("Within C::ctor() m_c_int=%d\n", m_c_int);
     }
 
     //virtual
