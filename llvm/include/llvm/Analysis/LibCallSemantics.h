@@ -48,7 +48,7 @@ namespace llvm {
       Yes, No, Unknown
     };
     LocResult (*isLocation)(ImmutableCallSite CS,
-                            const Value *Ptr, unsigned Size);
+                            const AliasAnalysis::Location &Loc);
   };
   
   /// LibCallFunctionInfo - Each record in the array of FunctionInfo structs

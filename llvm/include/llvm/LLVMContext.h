@@ -37,7 +37,8 @@ public:
   // Pinned metadata names, which always have the same value.  This is a
   // compile-time performance optimization, not a correctness optimization.
   enum {
-    MD_dbg = 0   // "dbg"
+    MD_dbg = 0,  // "dbg"
+    MD_tbaa = 1  // "tbaa"
   };
   
   /// getMDKindID - Return a unique non-zero ID for the specified metadata kind.

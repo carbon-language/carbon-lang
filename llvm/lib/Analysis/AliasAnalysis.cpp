@@ -30,6 +30,7 @@
 #include "llvm/Function.h"
 #include "llvm/IntrinsicInst.h"
 #include "llvm/Instructions.h"
+#include "llvm/LLVMContext.h"
 #include "llvm/Type.h"
 #include "llvm/Target/TargetData.h"
 using namespace llvm;
@@ -43,15 +44,14 @@ char AliasAnalysis::ID = 0;
 //===----------------------------------------------------------------------===//
 
 AliasAnalysis::AliasResult
-AliasAnalysis::alias(const Value *V1, unsigned V1Size,
-                     const Value *V2, unsigned V2Size) {
+AliasAnalysis::alias(const Location &LocA, const Location &LocB) {
   assert(AA && "AA didn't call InitializeAliasAnalysis in its run method!");
-  return AA->alias(V1, V1Size, V2, V2Size);
+  return AA->alias(LocA, LocB);
 }
 
-bool AliasAnalysis::pointsToConstantMemory(const Value *P) {
+bool AliasAnalysis::pointsToConstantMemory(const Location &Loc) {
   assert(AA && "AA didn't call InitializeAliasAnalysis in its run method!");
-  return AA->pointsToConstantMemory(P);
+  return AA->pointsToConstantMemory(Loc);
 }
 
 void AliasAnalysis::deleteValue(Value *V) {
@@ -66,7 +66,7 @@ void AliasAnalysis::copyValue(Value *From, Value *To) {
 
 AliasAnalysis::ModRefResult
 AliasAnalysis::getModRefInfo(ImmutableCallSite CS,
-                             const Value *P, unsigned Size) {
+                             const Location &Loc) {
   // Don't assert AA because BasicAA calls us in order to make use of the
   // logic here.
 
@@ -81,7 +81,7 @@ AliasAnalysis::getModRefInfo(ImmutableCallSite CS,
     bool doesAlias = false;
     for (ImmutableCallSite::arg_iterator AI = CS.arg_begin(), AE = CS.arg_end();
          AI != AE; ++AI)
-      if (!isNoAlias(*AI, ~0U, P, Size)) {
+      if (!isNoAlias(Location(*AI), Loc)) {
         doesAlias = true;
         break;
       }
@@ -90,9 +90,9 @@ AliasAnalysis::getModRefInfo(ImmutableCallSite CS,
       return NoModRef;
   }
 
-  // If P points to a constant memory location, the call definitely could not
+  // If Loc is a constant memory location, the call definitely could not
   // modify the memory location.
-  if ((Mask & Mod) && pointsToConstantMemory(P))
+  if ((Mask & Mod) && pointsToConstantMemory(Loc))
     Mask = ModRefResult(Mask & ~Mod);
 
   // If this is BasicAA, don't forward.
@@ -100,7 +100,7 @@ AliasAnalysis::getModRefInfo(ImmutableCallSite CS,
 
   // Otherwise, fall back to the next AA in the chain. But we can merge
   // in any mask we've managed to compute.
-  return ModRefResult(AA->getModRefInfo(CS, P, Size) & Mask);
+  return ModRefResult(AA->getModRefInfo(CS, Loc) & Mask);
 }
 
 AliasAnalysis::ModRefResult
@@ -188,31 +188,22 @@ AliasAnalysis::getModRefBehavior(const Function *F) {
   return AA->getModRefBehavior(F);
 }
 
-AliasAnalysis::DependenceResult
-AliasAnalysis::getDependence(const Instruction *First,
-                             const Value *FirstPHITranslatedAddr,
-                             DependenceQueryFlags FirstFlags,
-                             const Instruction *Second,
-                             const Value *SecondPHITranslatedAddr,
-                             DependenceQueryFlags SecondFlags) {
-  assert(AA && "AA didn't call InitializeAliasAnalyais in its run method!");
-  return AA->getDependence(First, FirstPHITranslatedAddr, FirstFlags,
-                           Second, SecondPHITranslatedAddr, SecondFlags);
-}
-
 //===----------------------------------------------------------------------===//
 // AliasAnalysis non-virtual helper method implementation
 //===----------------------------------------------------------------------===//
 
 AliasAnalysis::ModRefResult
-AliasAnalysis::getModRefInfo(const LoadInst *L, const Value *P, unsigned Size) {
+AliasAnalysis::getModRefInfo(const LoadInst *L, const Location &Loc) {
   // Be conservative in the face of volatile.
   if (L->isVolatile())
     return ModRef;
 
   // If the load address doesn't alias the given address, it doesn't read
   // or write the specified memory.
-  if (!alias(L->getOperand(0), getTypeStoreSize(L->getType()), P, Size))
+  if (!alias(Location(L->getOperand(0),
+                      getTypeStoreSize(L->getType()),
+                      L->getMetadata(LLVMContext::MD_tbaa)),
+             Loc))
     return NoModRef;
 
   // Otherwise, a load just reads.
@@ -220,20 +211,22 @@ AliasAnalysis::getModRefInfo(const LoadInst *L, const Value *P, unsigned Size) {
 }
 
 AliasAnalysis::ModRefResult
-AliasAnalysis::getModRefInfo(const StoreInst *S, const Value *P, unsigned Size) {
+AliasAnalysis::getModRefInfo(const StoreInst *S, const Location &Loc) {
   // Be conservative in the face of volatile.
   if (S->isVolatile())
     return ModRef;
 
   // If the store address cannot alias the pointer in question, then the
   // specified memory cannot be modified by the store.
-  if (!alias(S->getOperand(1),
-             getTypeStoreSize(S->getOperand(0)->getType()), P, Size))
+  if (!alias(Location(S->getOperand(1),
+                      getTypeStoreSize(S->getOperand(0)->getType()),
+                      S->getMetadata(LLVMContext::MD_tbaa)),
+             Loc))
     return NoModRef;
 
   // If the pointer is a pointer to constant memory, then it could not have been
   // modified by this store.
-  if (pointsToConstantMemory(P))
+  if (pointsToConstantMemory(Loc))
     return NoModRef;
 
   // Otherwise, a store just writes.
@@ -241,238 +234,22 @@ AliasAnalysis::getModRefInfo(const StoreInst *S, const Value *P, unsigned Size) 
 }
 
 AliasAnalysis::ModRefResult
-AliasAnalysis::getModRefInfo(const VAArgInst *V, const Value *P, unsigned Size) {
+AliasAnalysis::getModRefInfo(const VAArgInst *V, const Location &Loc) {
   // If the va_arg address cannot alias the pointer in question, then the
   // specified memory cannot be accessed by the va_arg.
-  if (!alias(V->getOperand(0), UnknownSize, P, Size))
+  if (!alias(Location(V->getOperand(0),
+                      UnknownSize,
+                      V->getMetadata(LLVMContext::MD_tbaa)),
+             Loc))
     return NoModRef;
 
   // If the pointer is a pointer to constant memory, then it could not have been
   // modified by this va_arg.
-  if (pointsToConstantMemory(P))
+  if (pointsToConstantMemory(Loc))
     return NoModRef;
 
   // Otherwise, a va_arg reads and writes.
   return ModRef;
-}
-
-AliasAnalysis::DependenceResult
-AliasAnalysis::getDependenceViaModRefInfo(const Instruction *First,
-                                          const Value *FirstPHITranslatedAddr,
-                                          DependenceQueryFlags FirstFlags,
-                                          const Instruction *Second,
-                                          const Value *SecondPHITranslatedAddr,
-                                          DependenceQueryFlags SecondFlags) {
-  if (const LoadInst *L = dyn_cast<LoadInst>(First)) {
-    // Be over-conservative with volatile for now.
-    if (L->isVolatile())
-      return Unknown;
-
-    // If we don't have a phi-translated address, use the actual one.
-    if (!FirstPHITranslatedAddr)
-      FirstPHITranslatedAddr = L->getPointerOperand();
-
-    // Forward this query to getModRefInfo.
-    switch (getModRefInfo(Second,
-                          FirstPHITranslatedAddr,
-                          getTypeStoreSize(L->getType()))) {
-    case NoModRef:
-      // Second doesn't reference First's memory, so they're independent.
-      return Independent;
-
-    case Ref:
-      // Second only reads from the memory read from by First. If it
-      // also writes to any other memory, be conservative.
-      if (Second->mayWriteToMemory())
-        return Unknown;
-
-      // If it's loading the same size from the same address, we can
-      // give a more precise result.
-      if (const LoadInst *SecondL = dyn_cast<LoadInst>(Second)) {
-        // If we don't have a phi-translated address, use the actual one.
-        if (!SecondPHITranslatedAddr)
-          SecondPHITranslatedAddr = SecondL->getPointerOperand();
-
-        unsigned LSize = getTypeStoreSize(L->getType());
-        unsigned SecondLSize = getTypeStoreSize(SecondL->getType());
-        if (alias(FirstPHITranslatedAddr, LSize,
-                  SecondPHITranslatedAddr, SecondLSize) ==
-            MustAlias) {
-          // If the loads are the same size, it's ReadThenRead.
-          if (LSize == SecondLSize)
-            return ReadThenRead;
-
-          // If the second load is smaller, it's only ReadThenReadSome.
-          if (LSize > SecondLSize)
-            return ReadThenReadSome;
-        }
-      }
-
-      // Otherwise it's just two loads.
-      return Independent;
-
-    case Mod:
-      // Second only writes to the memory read from by First. If it
-      // also reads from any other memory, be conservative.
-      if (Second->mayReadFromMemory())
-        return Unknown;
-
-      // If it's storing the same size to the same address, we can
-      // give a more precise result.
-      if (const StoreInst *SecondS = dyn_cast<StoreInst>(Second)) {
-        // If we don't have a phi-translated address, use the actual one.
-        if (!SecondPHITranslatedAddr)
-          SecondPHITranslatedAddr = SecondS->getPointerOperand();
-
-        unsigned LSize = getTypeStoreSize(L->getType());
-        unsigned SecondSSize = getTypeStoreSize(SecondS->getType());
-        if (alias(FirstPHITranslatedAddr, LSize,
-                  SecondPHITranslatedAddr, SecondSSize) ==
-            MustAlias) {
-          // If the load and the store are the same size, it's ReadThenWrite.
-          if (LSize == SecondSSize)
-            return ReadThenWrite;
-        }
-      }
-
-      // Otherwise we don't know if it could be writing to other memory.
-      return Unknown;
-
-    case ModRef:
-      // Second reads and writes to the memory read from by First.
-      // We don't have a way to express that.
-      return Unknown;
-    }
-
-  } else if (const StoreInst *S = dyn_cast<StoreInst>(First)) {
-    // Be over-conservative with volatile for now.
-    if (S->isVolatile())
-      return Unknown;
-
-    // If we don't have a phi-translated address, use the actual one.
-    if (!FirstPHITranslatedAddr)
-      FirstPHITranslatedAddr = S->getPointerOperand();
-
-    // Forward this query to getModRefInfo.
-    switch (getModRefInfo(Second,
-                          FirstPHITranslatedAddr,
-                          getTypeStoreSize(S->getValueOperand()->getType()))) {
-    case NoModRef:
-      // Second doesn't reference First's memory, so they're independent.
-      return Independent;
-
-    case Ref:
-      // Second only reads from the memory written to by First. If it
-      // also writes to any other memory, be conservative.
-      if (Second->mayWriteToMemory())
-        return Unknown;
-
-      // If it's loading the same size from the same address, we can
-      // give a more precise result.
-      if (const LoadInst *SecondL = dyn_cast<LoadInst>(Second)) {
-        // If we don't have a phi-translated address, use the actual one.
-        if (!SecondPHITranslatedAddr)
-          SecondPHITranslatedAddr = SecondL->getPointerOperand();
-
-        unsigned SSize = getTypeStoreSize(S->getValueOperand()->getType());
-        unsigned SecondLSize = getTypeStoreSize(SecondL->getType());
-        if (alias(FirstPHITranslatedAddr, SSize,
-                  SecondPHITranslatedAddr, SecondLSize) ==
-            MustAlias) {
-          // If the store and the load are the same size, it's WriteThenRead.
-          if (SSize == SecondLSize)
-            return WriteThenRead;
-
-          // If the load is smaller, it's only WriteThenReadSome.
-          if (SSize > SecondLSize)
-            return WriteThenReadSome;
-        }
-      }
-
-      // Otherwise we don't know if it could be reading from other memory.
-      return Unknown;
-
-    case Mod:
-      // Second only writes to the memory written to by First. If it
-      // also reads from any other memory, be conservative.
-      if (Second->mayReadFromMemory())
-        return Unknown;
-
-      // If it's storing the same size to the same address, we can
-      // give a more precise result.
-      if (const StoreInst *SecondS = dyn_cast<StoreInst>(Second)) {
-        // If we don't have a phi-translated address, use the actual one.
-        if (!SecondPHITranslatedAddr)
-          SecondPHITranslatedAddr = SecondS->getPointerOperand();
-
-        unsigned SSize = getTypeStoreSize(S->getValueOperand()->getType());
-        unsigned SecondSSize = getTypeStoreSize(SecondS->getType());
-        if (alias(FirstPHITranslatedAddr, SSize,
-                  SecondPHITranslatedAddr, SecondSSize) ==
-            MustAlias) {
-          // If the stores are the same size, it's WriteThenWrite.
-          if (SSize == SecondSSize)
-            return WriteThenWrite;
-
-          // If the second store is larger, it's only WriteSomeThenWrite.
-          if (SSize < SecondSSize)
-            return WriteSomeThenWrite;
-        }
-      }
-
-      // Otherwise we don't know if it could be writing to other memory.
-      return Unknown;
-
-    case ModRef:
-      // Second reads and writes to the memory written to by First.
-      // We don't have a way to express that.
-      return Unknown;
-    }
-
-  } else if (const VAArgInst *V = dyn_cast<VAArgInst>(First)) {
-    // If we don't have a phi-translated address, use the actual one.
-    if (!FirstPHITranslatedAddr)
-      FirstPHITranslatedAddr = V->getPointerOperand();
-
-    // Forward this query to getModRefInfo.
-    if (getModRefInfo(Second, FirstPHITranslatedAddr, UnknownSize) == NoModRef)
-      // Second doesn't reference First's memory, so they're independent.
-      return Independent;
-
-  } else if (ImmutableCallSite FirstCS = cast<Value>(First)) {
-    assert(!FirstPHITranslatedAddr &&
-           !SecondPHITranslatedAddr &&
-           "PHI translation with calls not supported yet!");
-
-    // If both instructions are calls/invokes we can use the two-callsite
-    // form of getModRefInfo.
-    if (ImmutableCallSite SecondCS = cast<Value>(Second))
-      // getModRefInfo's arguments are backwards from intuition.
-      switch (getModRefInfo(SecondCS, FirstCS)) {
-      case NoModRef:
-        // Second doesn't reference First's memory, so they're independent.
-        return Independent;
-
-      case Ref:
-        // If they're both read-only, there's no dependence.
-        if (FirstCS.onlyReadsMemory() && SecondCS.onlyReadsMemory())
-          return Independent;
-
-        // Otherwise it's not obvious what we can do here.
-        return Unknown;
-
-      case Mod:
-        // It's not obvious what we can do here.
-        return Unknown;
-
-      case ModRef:
-        // I know, right?
-        return Unknown;
-      }
-  }
-
-  // For anything else, be conservative.
-  return Unknown;
 }
 
 AliasAnalysis::ModRefBehavior
@@ -514,8 +291,8 @@ unsigned AliasAnalysis::getTypeStoreSize(const Type *Ty) {
 /// specified basic block to modify the value pointed to by Ptr.
 ///
 bool AliasAnalysis::canBasicBlockModify(const BasicBlock &BB,
-                                        const Value *Ptr, unsigned Size) {
-  return canInstructionRangeModify(BB.front(), BB.back(), Ptr, Size);
+                                        const Location &Loc) {
+  return canInstructionRangeModify(BB.front(), BB.back(), Loc);
 }
 
 /// canInstructionRangeModify - Return true if it is possible for the execution
@@ -525,7 +302,7 @@ bool AliasAnalysis::canBasicBlockModify(const BasicBlock &BB,
 ///
 bool AliasAnalysis::canInstructionRangeModify(const Instruction &I1,
                                               const Instruction &I2,
-                                              const Value *Ptr, unsigned Size) {
+                                              const Location &Loc) {
   assert(I1.getParent() == I2.getParent() &&
          "Instructions not in same basic block!");
   BasicBlock::const_iterator I = &I1;
@@ -533,7 +310,7 @@ bool AliasAnalysis::canInstructionRangeModify(const Instruction &I1,
   ++E;  // Convert from inclusive to exclusive range.
 
   for (; I != E; ++I) // Check every instruction in range
-    if (getModRefInfo(I, Ptr, Size) & Mod)
+    if (getModRefInfo(I, Loc) & Mod)
       return true;
   return false;
 }

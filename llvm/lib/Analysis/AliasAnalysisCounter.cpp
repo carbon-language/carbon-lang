@@ -94,17 +94,16 @@ namespace {
     }
     
     // FIXME: We could count these too...
-    bool pointsToConstantMemory(const Value *P) {
-      return getAnalysis<AliasAnalysis>().pointsToConstantMemory(P);
+    bool pointsToConstantMemory(const Location &Loc) {
+      return getAnalysis<AliasAnalysis>().pointsToConstantMemory(Loc);
     }
 
     // Forwarding functions: just delegate to a real AA implementation, counting
     // the number of responses...
-    AliasResult alias(const Value *V1, unsigned V1Size,
-                      const Value *V2, unsigned V2Size);
+    AliasResult alias(const Location &LocA, const Location &LocB);
 
     ModRefResult getModRefInfo(ImmutableCallSite CS,
-                               const Value *P, unsigned Size);
+                               const Location &Loc);
     ModRefResult getModRefInfo(ImmutableCallSite CS1,
                                ImmutableCallSite CS2) {
       return AliasAnalysis::getModRefInfo(CS1,CS2);
@@ -121,9 +120,8 @@ ModulePass *llvm::createAliasAnalysisCounterPass() {
 }
 
 AliasAnalysis::AliasResult
-AliasAnalysisCounter::alias(const Value *V1, unsigned V1Size,
-                            const Value *V2, unsigned V2Size) {
-  AliasResult R = getAnalysis<AliasAnalysis>().alias(V1, V1Size, V2, V2Size);
+AliasAnalysisCounter::alias(const Location &LocA, const Location &LocB) {
+  AliasResult R = getAnalysis<AliasAnalysis>().alias(LocA, LocB);
 
   const char *AliasString;
   switch (R) {
@@ -135,11 +133,11 @@ AliasAnalysisCounter::alias(const Value *V1, unsigned V1Size,
 
   if (PrintAll || (PrintAllFailures && R == MayAlias)) {
     errs() << AliasString << ":\t";
-    errs() << "[" << V1Size << "B] ";
-    WriteAsOperand(errs(), V1, true, M);
+    errs() << "[" << LocA.Size << "B] ";
+    WriteAsOperand(errs(), LocA.Ptr, true, M);
     errs() << ", ";
-    errs() << "[" << V2Size << "B] ";
-    WriteAsOperand(errs(), V2, true, M);
+    errs() << "[" << LocB.Size << "B] ";
+    WriteAsOperand(errs(), LocB.Ptr, true, M);
     errs() << "\n";
   }
 
@@ -148,8 +146,8 @@ AliasAnalysisCounter::alias(const Value *V1, unsigned V1Size,
 
 AliasAnalysis::ModRefResult
 AliasAnalysisCounter::getModRefInfo(ImmutableCallSite CS,
-                                    const Value *P, unsigned Size) {
-  ModRefResult R = getAnalysis<AliasAnalysis>().getModRefInfo(CS, P, Size);
+                                    const Location &Loc) {
+  ModRefResult R = getAnalysis<AliasAnalysis>().getModRefInfo(CS, Loc);
 
   const char *MRString;
   switch (R) {
@@ -162,8 +160,8 @@ AliasAnalysisCounter::getModRefInfo(ImmutableCallSite CS,
 
   if (PrintAll || (PrintAllFailures && R == ModRef)) {
     errs() << MRString << ":  Ptr: ";
-    errs() << "[" << Size << "B] ";
-    WriteAsOperand(errs(), P, true, M);
+    errs() << "[" << Loc.Size << "B] ";
+    WriteAsOperand(errs(), Loc.Ptr, true, M);
     errs() << "\t<->" << *CS.getInstruction() << '\n';
   }
   return R;

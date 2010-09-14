@@ -49,8 +49,7 @@ namespace {
   private:
     virtual void getAnalysisUsage(AnalysisUsage &AU) const;
     virtual bool runOnFunction(Function &F);
-    virtual AliasResult alias(const Value *V1, unsigned V1Size,
-                              const Value *V2, unsigned V2Size);
+    virtual AliasResult alias(const Location &LocA, const Location &LocB);
 
     Value *GetBaseValue(const SCEV *S);
   };
@@ -101,17 +100,17 @@ ScalarEvolutionAliasAnalysis::GetBaseValue(const SCEV *S) {
 }
 
 AliasAnalysis::AliasResult
-ScalarEvolutionAliasAnalysis::alias(const Value *A, unsigned ASize,
-                                    const Value *B, unsigned BSize) {
+ScalarEvolutionAliasAnalysis::alias(const Location &LocA,
+                                    const Location &LocB) {
   // If either of the memory references is empty, it doesn't matter what the
   // pointer values are. This allows the code below to ignore this special
   // case.
-  if (ASize == 0 || BSize == 0)
+  if (LocA.Size == 0 || LocB.Size == 0)
     return NoAlias;
 
   // This is ScalarEvolutionAliasAnalysis. Get the SCEVs!
-  const SCEV *AS = SE->getSCEV(const_cast<Value *>(A));
-  const SCEV *BS = SE->getSCEV(const_cast<Value *>(B));
+  const SCEV *AS = SE->getSCEV(const_cast<Value *>(LocA.Ptr));
+  const SCEV *BS = SE->getSCEV(const_cast<Value *>(LocB.Ptr));
 
   // If they evaluate to the same expression, it's a MustAlias.
   if (AS == BS) return MustAlias;
@@ -121,8 +120,8 @@ ScalarEvolutionAliasAnalysis::alias(const Value *A, unsigned ASize,
   if (SE->getEffectiveSCEVType(AS->getType()) ==
       SE->getEffectiveSCEVType(BS->getType())) {
     unsigned BitWidth = SE->getTypeSizeInBits(AS->getType());
-    APInt ASizeInt(BitWidth, ASize);
-    APInt BSizeInt(BitWidth, BSize);
+    APInt ASizeInt(BitWidth, LocA.Size);
+    APInt BSizeInt(BitWidth, LocB.Size);
 
     // Compute the difference between the two pointers.
     const SCEV *BA = SE->getMinusSCEV(BS, AS);
@@ -154,11 +153,15 @@ ScalarEvolutionAliasAnalysis::alias(const Value *A, unsigned ASize,
   // inttoptr and ptrtoint operators.
   Value *AO = GetBaseValue(AS);
   Value *BO = GetBaseValue(BS);
-  if ((AO && AO != A) || (BO && BO != B))
-    if (alias(AO ? AO : A, AO ? UnknownSize : ASize,
-              BO ? BO : B, BO ? UnknownSize : BSize) == NoAlias)
+  if ((AO && AO != LocA.Ptr) || (BO && BO != LocB.Ptr))
+    if (alias(Location(AO ? AO : LocA.Ptr,
+                       AO ? +UnknownSize : LocA.Size,
+                       AO ? 0 : LocA.TBAATag),
+              Location(BO ? BO : LocB.Ptr,
+                       BO ? +UnknownSize : LocB.Size,
+                       BO ? 0 : LocB.TBAATag)) == NoAlias)
       return NoAlias;
 
   // Forward the query to the next analysis.
-  return AliasAnalysis::alias(A, ASize, B, BSize);
+  return AliasAnalysis::alias(LocA, LocB);
 }
