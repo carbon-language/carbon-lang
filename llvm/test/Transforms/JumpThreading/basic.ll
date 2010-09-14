@@ -1,4 +1,4 @@
-; RUN: opt %s -jump-threading -S -enable-jump-threading-lvi | FileCheck %s
+; RUN: opt %s -jump-threading -S | FileCheck %s
 
 declare i32 @f1()
 declare i32 @f2()
