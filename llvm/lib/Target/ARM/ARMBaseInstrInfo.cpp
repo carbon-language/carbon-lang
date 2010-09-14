@@ -1372,6 +1372,19 @@ AnalyzeCompare(const MachineInstr *MI, unsigned &SrcReg, int &CmpValue) const {
     SrcReg = MI->getOperand(0).getReg();
     CmpValue = MI->getOperand(1).getImm();
     return true;
+  case ARM::TSTri: {
+      if (MI->getParent()->begin() == MachineBasicBlock::const_iterator(MI))
+        return false;
+      const MachineInstr *AND = llvm::prior(MI);
+      if (AND->getOpcode() != ARM::ANDri)
+        return false;
+      if (MI->getOperand(0).getReg() == AND->getOperand(1).getReg() &&
+          MI->getOperand(1).getImm() == AND->getOperand(2).getImm()) {
+        SrcReg = AND->getOperand(0).getReg();
+        CmpValue = 0;
+        return true;
+      }
+    }
   }
 
   return false;
@@ -1421,6 +1434,8 @@ OptimizeCompareInstr(MachineInstr *CmpInstr, unsigned SrcReg, int CmpValue,
   switch (MI->getOpcode()) {
   default: break;
   case ARM::ADDri:
+  case ARM::ANDri:
+  case ARM::t2ANDri:
   case ARM::SUBri:
   case ARM::t2ADDri:
   case ARM::t2SUBri:
