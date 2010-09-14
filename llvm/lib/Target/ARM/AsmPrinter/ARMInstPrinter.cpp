@@ -29,73 +29,27 @@ using namespace llvm;
 #undef MachineInstr
 #undef ARMAsmPrinter
 
-static unsigned NextReg(unsigned Reg) {
-  switch (Reg) {
+// Get the constituent sub-regs for a dregpair from a Q register.
+static std::pair<unsigned, unsigned> GetDRegPair(unsigned QReg) {
+  switch (QReg) {
   default:
     assert(0 && "Unexpected register enum");
-
-  case ARM::D0:
-    return ARM::D1;
-  case ARM::D1:
-    return ARM::D2;
-  case ARM::D2:
-    return ARM::D3;
-  case ARM::D3:
-    return ARM::D4;
-  case ARM::D4:
-    return ARM::D5;
-  case ARM::D5:
-    return ARM::D6;
-  case ARM::D6:
-    return ARM::D7;
-  case ARM::D7:
-    return ARM::D8;
-  case ARM::D8:
-    return ARM::D9;
-  case ARM::D9:
-    return ARM::D10;
-  case ARM::D10:
-    return ARM::D11;
-  case ARM::D11:
-    return ARM::D12;
-  case ARM::D12:
-    return ARM::D13;
-  case ARM::D13:
-    return ARM::D14;
-  case ARM::D14:
-    return ARM::D15;
-  case ARM::D15:
-    return ARM::D16;
-  case ARM::D16:
-    return ARM::D17;
-  case ARM::D17:
-    return ARM::D18;
-  case ARM::D18:
-    return ARM::D19;
-  case ARM::D19:
-    return ARM::D20;
-  case ARM::D20:
-    return ARM::D21;
-  case ARM::D21:
-    return ARM::D22;
-  case ARM::D22:
-    return ARM::D23;
-  case ARM::D23:
-    return ARM::D24;
-  case ARM::D24:
-    return ARM::D25;
-  case ARM::D25:
-    return ARM::D26;
-  case ARM::D26:
-    return ARM::D27;
-  case ARM::D27:
-    return ARM::D28;
-  case ARM::D28:
-    return ARM::D29;
-  case ARM::D29:
-    return ARM::D30;
-  case ARM::D30:
-    return ARM::D31;
+  case ARM::Q0:  return std::pair<unsigned, unsigned>(ARM::D0,  ARM::D1);
+  case ARM::Q1:  return std::pair<unsigned, unsigned>(ARM::D2,  ARM::D3);
+  case ARM::Q2:  return std::pair<unsigned, unsigned>(ARM::D4,  ARM::D5);
+  case ARM::Q3:  return std::pair<unsigned, unsigned>(ARM::D6,  ARM::D7);
+  case ARM::Q4:  return std::pair<unsigned, unsigned>(ARM::D8,  ARM::D9);
+  case ARM::Q5:  return std::pair<unsigned, unsigned>(ARM::D10, ARM::D11);
+  case ARM::Q6:  return std::pair<unsigned, unsigned>(ARM::D12, ARM::D13);
+  case ARM::Q7:  return std::pair<unsigned, unsigned>(ARM::D14, ARM::D15);
+  case ARM::Q8:  return std::pair<unsigned, unsigned>(ARM::D16, ARM::D17);
+  case ARM::Q9:  return std::pair<unsigned, unsigned>(ARM::D18, ARM::D19);
+  case ARM::Q10: return std::pair<unsigned, unsigned>(ARM::D20, ARM::D21);
+  case ARM::Q11: return std::pair<unsigned, unsigned>(ARM::D22, ARM::D23);
+  case ARM::Q12: return std::pair<unsigned, unsigned>(ARM::D24, ARM::D25);
+  case ARM::Q13: return std::pair<unsigned, unsigned>(ARM::D26, ARM::D27);
+  case ARM::Q14: return std::pair<unsigned, unsigned>(ARM::D28, ARM::D29);
+  case ARM::Q15: return std::pair<unsigned, unsigned>(ARM::D30, ARM::D31);
   }
 }
 
@@ -189,19 +143,11 @@ void ARMInstPrinter::printOperand(const MCInst *MI, unsigned OpNo,
   if (Op.isReg()) {
     unsigned Reg = Op.getReg();
     if (Modifier && strcmp(Modifier, "dregpair") == 0) {
-      O << '{' << getRegisterName(Reg) << ", "
-               << getRegisterName(NextReg(Reg)) << '}';
-#if 0
-      // FIXME: Breaks e.g. ARM/vmul.ll.
-      assert(0);
-      /*
-      unsigned DRegLo = TRI->getSubReg(Reg, ARM::dsub_0);
-      unsigned DRegHi = TRI->getSubReg(Reg, ARM::dsub_1);
-      O << '{'
-      << getRegisterName(DRegLo) << ',' << getRegisterName(DRegHi)
-      << '}';*/
-#endif
+      std::pair<unsigned, unsigned> dregpair = GetDRegPair(Reg);
+      O << '{' << getRegisterName(dregpair.first) << ", "
+               << getRegisterName(dregpair.second) << '}';
     } else if (Modifier && strcmp(Modifier, "lane") == 0) {
+      // FIXME
       assert(0);
       /*
       unsigned RegNum = ARMRegisterInfo::getRegisterNumbering(Reg);

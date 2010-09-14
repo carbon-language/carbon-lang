@@ -218,9 +218,9 @@ class VLD1DWB<bits<4> op7_4, string Dt>
           "vld1", Dt, "\\{$dst\\}, $addr$offset",
           "$addr.addr = $wb", []>;
 class VLD1QWB<bits<4> op7_4, string Dt>
-  : NLdSt<0,0b10,0b1010,op7_4, (outs QPR:$dst, GPR:$wb),
+  : NLdSt<0,0b10,0b1010,op7_4, (outs DPR:$dst1, DPR:$dst2, GPR:$wb),
           (ins addrmode6:$addr, am6offset:$offset), IIC_VLD2,
-          "vld1", Dt, "${dst:dregpair}, $addr$offset",
+          "vld1", Dt, "\\{$dst1, $dst2\\}, $addr$offset",
           "$addr.addr = $wb", []>;
 
 def VLD1d8_UPD  : VLD1DWB<0b0000, "8">;
@@ -675,8 +675,9 @@ class VST1DWB<bits<4> op7_4, string Dt>
           "vst1", Dt, "\\{$src\\}, $addr$offset", "$addr.addr = $wb", []>;
 class VST1QWB<bits<4> op7_4, string Dt>
   : NLdSt<0, 0b00, 0b1010, op7_4, (outs GPR:$wb),
-          (ins addrmode6:$addr, am6offset:$offset, QPR:$src), IIC_VST,
-          "vst1", Dt, "${src:dregpair}, $addr$offset", "$addr.addr = $wb", []>;
+          (ins addrmode6:$addr, am6offset:$offset, DPR:$src1, DPR:$src2),
+          IIC_VST, "vst1", Dt, "\\{$src1, $src2\\}, $addr$offset",
+          "$addr.addr = $wb", []>;
 
 def VST1d8_UPD  : VST1DWB<0b0000, "8">;
 def VST1d16_UPD : VST1DWB<0b0100, "16">;

@@ -79,22 +79,9 @@ const char *ARMUtils::OpcodeName(unsigned Opcode) {
 }
 
 // Return the register enum Based on RegClass and the raw register number.
-// For DRegPair, see comments below.
 // FIXME: Auto-gened?
-static unsigned getRegisterEnum(BO B, unsigned RegClassID, unsigned RawRegister,
-                                bool DRegPair = false) {
-
-  if (DRegPair && RegClassID == ARM::QPRRegClassID) {
-    // LLVM expects { Dd, Dd+1 } to form a super register; this is not specified
-    // in the ARM Architecture Manual as far as I understand it (A8.6.307).
-    // Therefore, we morph the RegClassID to be the sub register class and don't
-    // subsequently transform the RawRegister encoding when calculating RegNum.
-    //
-    // See also ARMinstPrinter::printOperand() wrt "dregpair" modifier part
-    // where this workaround is meant for.
-    RegClassID = ARM::DPRRegClassID;
-  }
-
+static unsigned
+getRegisterEnum(BO B, unsigned RegClassID, unsigned RawRegister) {
   // For this purpose, we can treat rGPR as if it were GPR.
   if (RegClassID == ARM::rGPRRegClassID) RegClassID = ARM::GPRRegClassID;
 
@@ -2201,22 +2188,6 @@ static unsigned decodeN3VImm(uint32_t insn) {
   return (insn >> 8) & 0xF;
 }
 
-static bool UseDRegPair(unsigned Opcode) {
-  switch (Opcode) {
-  default:
-    return false;
-  case ARM::VLD1q8_UPD:
-  case ARM::VLD1q16_UPD:
-  case ARM::VLD1q32_UPD:
-  case ARM::VLD1q64_UPD:
-  case ARM::VST1q8_UPD:
-  case ARM::VST1q16_UPD:
-  case ARM::VST1q32_UPD:
-  case ARM::VST1q64_UPD:
-    return true;
-  }
-}
-
 // VLD*
 //   D[d] D[d2] ... Rn [TIED_TO Rn] align [Rm]
 // VLD*LN*
@@ -2243,10 +2214,9 @@ static bool DisassembleNLdSt0(MCInst &MI, unsigned Opcode, uint32_t insn,
 
   // We have homogeneous NEON registers for Load/Store.
   unsigned RegClass = 0;
-  bool DRegPair = UseDRegPair(Opcode);
 
   // Double-spaced registers have increments of 2.
-  unsigned Inc = (DblSpaced || DRegPair) ? 2 : 1;
+  unsigned Inc = DblSpaced ? 2 : 1;
 
   unsigned Rn = decodeRn(insn);
   unsigned Rm = decodeRm(insn);
@@ -2292,7 +2262,7 @@ static bool DisassembleNLdSt0(MCInst &MI, unsigned Opcode, uint32_t insn,
     RegClass = OpInfo[OpIdx].RegClass;
     while (OpIdx < NumOps && (unsigned)OpInfo[OpIdx].RegClass == RegClass) {
       MI.addOperand(MCOperand::CreateReg(
-                      getRegisterEnum(B, RegClass, Rd, DRegPair)));
+                      getRegisterEnum(B, RegClass, Rd)));
       Rd += Inc;
       ++OpIdx;
     }
@@ -2311,7 +2281,7 @@ static bool DisassembleNLdSt0(MCInst &MI, unsigned Opcode, uint32_t insn,
 
     while (OpIdx < NumOps && (unsigned)OpInfo[OpIdx].RegClass == RegClass) {
       MI.addOperand(MCOperand::CreateReg(
-                      getRegisterEnum(B, RegClass, Rd, DRegPair)));
+                      getRegisterEnum(B, RegClass, Rd)));
       Rd += Inc;
       ++OpIdx;
     }
