@@ -200,3 +200,13 @@ inw	%dx
 outb	$0x7f
 outw	%dx
 inl	%dx
+
+
+// PR8114
+// CHECK: outb	%al, %dx
+// CHECK: outw	%ax, %dx
+// CHECK: outl	%eax, %dx
+
+out %al, (%dx)
+out %ax, (%dx)
+outl %eax, (%dx)
