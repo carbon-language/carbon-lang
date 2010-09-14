@@ -14,7 +14,7 @@ fi
 
 if [ -z "$CXX" ]
 then
-	CXX=g++
+	CXX=clang++
 fi
 
 if [ -z $MACOSX_DEPLOYMENT_TARGET ]

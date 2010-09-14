@@ -151,7 +151,7 @@ public:
     typedef void                        pointer;
 
     explicit back_insert_iterator(Container& x);
-    back_insert_iterator& operator=(const typename _Container::value_type& value);
+    back_insert_iterator& operator=(const typename Container::value_type& value);
     back_insert_iterator& operator*();
     back_insert_iterator& operator++();
     back_insert_iterator  operator++(int);
@@ -172,7 +172,7 @@ public:
     typedef void                         pointer;
 
     explicit front_insert_iterator(Container& x);
-    front_insert_iterator& operator=(const typename _Container::value_type& value);
+    front_insert_iterator& operator=(const typename Container::value_type& value);
     front_insert_iterator& operator*();
     front_insert_iterator& operator++();
     front_insert_iterator  operator++(int);
@@ -194,7 +194,7 @@ public:
     typedef void                   pointer;
 
     insert_iterator(Container& x, typename Container::iterator i);
-    insert_iterator& operator=(const typename _Container::value_type& value);
+    insert_iterator& operator=(const typename Container::value_type& value);
     insert_iterator& operator*();
     insert_iterator& operator++();
     insert_iterator& operator++(int);
