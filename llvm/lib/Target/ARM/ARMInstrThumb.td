@@ -630,7 +630,7 @@ def tBIC : T1sIt<(outs tGPR:$dst), (ins tGPR:$lhs, tGPR:$rhs), IIC_iALUr,
            T1DataProcessing<0b1110>;
 
 // CMN register
-let Defs = [CPSR] in {
+let isCompare = 1, Defs = [CPSR] in {
 //FIXME: Disable CMN, as CCodes are backwards from compare expectations
 //       Compare-to-zero still works out, just not the relationals
 //def tCMN : T1pI<(outs), (ins tGPR:$lhs, tGPR:$rhs), IIC_iCMPr,
@@ -644,7 +644,7 @@ def tCMNz : T1pI<(outs), (ins tGPR:$lhs, tGPR:$rhs), IIC_iCMPr,
 }
 
 // CMP immediate
-let Defs = [CPSR] in {
+let isCompare = 1, Defs = [CPSR] in {
 def tCMPi8 : T1pI<(outs), (ins tGPR:$lhs, i32imm:$rhs), IIC_iCMPi,
                   "cmp", "\t$lhs, $rhs",
                   [(ARMcmp tGPR:$lhs, imm0_255:$rhs)]>,
