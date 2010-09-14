@@ -60,7 +60,12 @@ static Cl::Kinds ClassifyInternal(ASTContext &Ctx, const Expr *E) {
 
   switch (E->getStmtClass()) {
     // First come the expressions that are always lvalues, unconditionally.
-
+  case Stmt::NoStmtClass:
+#define STMT(Kind, Base) case Expr::Kind##Class:
+#define EXPR(Kind, Base)
+#include "clang/AST/StmtNodes.inc"
+    llvm_unreachable("cannot classify a statement");
+    break;
   case Expr::ObjCIsaExprClass:
     // C++ [expr.prim.general]p1: A string literal is an lvalue.
   case Expr::StringLiteralClass:
@@ -77,13 +82,49 @@ static Cl::Kinds ClassifyInternal(ASTContext &Ctx, const Expr *E) {
     // FIXME: Is this wise? Should they get their own kind?
   case Expr::UnresolvedLookupExprClass:
   case Expr::UnresolvedMemberExprClass:
+  case Expr::CXXDependentScopeMemberExprClass:
+  case Expr::CXXUnresolvedConstructExprClass:
+  case Expr::DependentScopeDeclRefExprClass:
     // ObjC instance variables are lvalues
     // FIXME: ObjC++0x might have different rules
   case Expr::ObjCIvarRefExprClass:
-    // C99 6.5.2.5p5 says that compound literals are lvalues.
-    // FIXME: C++ might have a different opinion.
-  case Expr::CompoundLiteralExprClass:
     return Cl::CL_LValue;
+    // C99 6.5.2.5p5 says that compound literals are lvalues.
+    // In C++, they're class temporaries.
+  case Expr::CompoundLiteralExprClass:
+    return Ctx.getLangOptions().CPlusPlus? Cl::CL_ClassTemporary 
+                                         : Cl::CL_LValue;
+
+    // Expressions that are prvalues.
+  case Expr::CXXBoolLiteralExprClass:
+  case Expr::CXXPseudoDestructorExprClass:
+  case Expr::SizeOfAlignOfExprClass:
+  case Expr::CXXNewExprClass:
+  case Expr::CXXThisExprClass:
+  case Expr::CXXNullPtrLiteralExprClass:
+  case Expr::TypesCompatibleExprClass:
+  case Expr::ImaginaryLiteralClass:
+  case Expr::GNUNullExprClass:
+  case Expr::OffsetOfExprClass:
+  case Expr::CXXThrowExprClass:
+  case Expr::ShuffleVectorExprClass:
+  case Expr::IntegerLiteralClass:
+  case Expr::ObjCSuperExprClass:
+  case Expr::CharacterLiteralClass:
+  case Expr::AddrLabelExprClass:
+  case Expr::CXXDeleteExprClass:
+  case Expr::ImplicitValueInitExprClass:
+  case Expr::BlockExprClass:
+  case Expr::FloatingLiteralClass:
+  case Expr::CXXNoexceptExprClass:
+  case Expr::CXXScalarValueInitExprClass:
+  case Expr::UnaryTypeTraitExprClass:
+  case Expr::ObjCSelectorExprClass:
+  case Expr::ObjCProtocolExprClass:
+  case Expr::ObjCStringLiteralClass:
+  case Expr::ParenListExprClass:
+  case Expr::InitListExprClass:
+    return Cl::CL_PRValue;
 
     // Next come the complicated cases.
 
@@ -207,17 +248,34 @@ static Cl::Kinds ClassifyInternal(ASTContext &Ctx, const Expr *E) {
           cast<ObjCMessageExpr>(E)->getMethodDecl()) {
       return ClassifyUnnamed(Ctx, Method->getResultType());
     }
-
+    return Cl::CL_PRValue;
+      
     // Some C++ expressions are always class temporaries.
   case Expr::CXXConstructExprClass:
   case Expr::CXXTemporaryObjectExprClass:
-  case Expr::CXXScalarValueInitExprClass:
     return Cl::CL_ClassTemporary;
 
-    // Everything we haven't handled is a prvalue.
-  default:
+  case Expr::VAArgExprClass:
+    return ClassifyUnnamed(Ctx, E->getType());
+      
+  case Expr::DesignatedInitExprClass:
+    return ClassifyInternal(Ctx, cast<DesignatedInitExpr>(E)->getInit());
+      
+  case Expr::StmtExprClass: {
+    const CompoundStmt *S = cast<StmtExpr>(E)->getSubStmt();
+    if (const Expr *LastExpr = dyn_cast_or_null<Expr>(S->body_back()))
+      return ClassifyInternal(Ctx, LastExpr);
     return Cl::CL_PRValue;
   }
+      
+  case Expr::CXXUuidofExprClass:
+    // Assume that Microsoft's __uuidof returns an lvalue, like typeid does.
+    // FIXME: Is this really the case?
+    return Cl::CL_LValue;
+  }
+  
+  llvm_unreachable("unhandled expression kind in classification");
+  return Cl::CL_LValue;
 }
 
 /// ClassifyDecl - Return the classification of an expression referencing the
