@@ -1306,7 +1306,7 @@ SVal RegionStoreManager::RetrieveStruct(Store store, const TypedRegion* R) {
 }
 
 SVal RegionStoreManager::RetrieveArray(Store store, const TypedRegion * R) {
-  assert(isa<ConstantArrayType>(R->getValueType()));
+  assert(Ctx.getAsConstantArrayType(R->getValueType()));
   return ValMgr.makeLazyCompoundVal(store, R);
 }
 
