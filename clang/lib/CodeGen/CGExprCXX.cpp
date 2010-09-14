@@ -709,7 +709,7 @@ namespace {
       const FunctionProtoType *FPT
         = OperatorDelete->getType()->getAs<FunctionProtoType>();
       assert(FPT->getNumArgs() == NumPlacementArgs + 1 ||
-             FPT->getNumArgs() == NumPlacementArgs + 2);
+             (FPT->getNumArgs() == 2 && NumPlacementArgs == 0));
 
       CallArgList DeleteArgs;
 
