@@ -16,11 +16,10 @@
 
 #include "llvm/Type.h"
 #include "llvm/ADT/StringRef.h"
+#include "llvm/System/DataTypes.h"
 #include <map>
 
 namespace llvm {
-
-class StringRef;
 
 /// This class provides a symbol table of name/type pairs with operations to
 /// support constructing, searching and iterating over the symbol table. The
