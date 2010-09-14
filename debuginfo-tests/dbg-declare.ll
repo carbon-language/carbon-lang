@@ -53,6 +53,10 @@ entry:
 ; Check handling of an argument referred directly by llvm.dbg.declare where 
 ; llvm.dbg.declare dominates all uses of argument.
 define i32 @f4(i32 %i) nounwind ssp {
+; DEBUGGER: break f4
+; DEBUGGER: c
+; DEBUGGER: p i
+; CHECK: $3 = 45
 entry:
   call void @llvm.dbg.declare(metadata !{i32 %i}, metadata !28), !dbg !29
   ret i32 %i, !dbg !30
@@ -61,6 +65,10 @@ entry:
 ; Check handling of an argument referred directly by llvm.dbg.declare where 
 ; llvm.dbg.declare dominates all uses of argument in separate basic block.
 define i32 @f5(i32 %i) nounwind ssp {
+; DEBUGGER: break f5
+; DEBUGGER: c
+; DEBUGGER: p i
+; CHECK: $4 = 46
 entry:
   call void @llvm.dbg.declare(metadata !{i32 %i}, metadata !32), !dbg !33
   br label %bbr
@@ -87,6 +95,10 @@ entry:
 ; Check handling of an byval argument referred directly by llvm.dbg.declare where 
 ; argument use dominates llvm.dbg.declare.
 define i32 @f8(%struct.XYZ* byval %i) nounwind ssp {
+; DEBUGGER: break f8
+; DEBUGGER: c
+; DEBUGGER: p i.x
+; CHECK: $5 = 51
 entry:
   %tmp = getelementptr inbounds %struct.XYZ* %i, i32 0, i32 1, !dbg !53
   %tmp1 = load i32* %tmp, align 4, !dbg !53
@@ -100,7 +112,7 @@ define i32 @f9(%struct.XYZ* byval %i) nounwind ssp {
 ; DEBUGGER: break f9
 ; DEBUGGER: c
 ; DEBUGGER: p i.x
-; CHECK: $3 = 51
+; CHECK: $6 = 51
 entry:
   call void @llvm.dbg.declare(metadata !{%struct.XYZ* %i}, metadata !55), !dbg !56
   %tmp = getelementptr inbounds %struct.XYZ* %i, i32 0, i32 2, !dbg !57
