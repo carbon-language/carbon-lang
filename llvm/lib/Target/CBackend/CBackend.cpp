@@ -50,6 +50,10 @@
 #include "llvm/System/Host.h"
 #include "llvm/Config/config.h"
 #include <algorithm>
+// Some ms header decided to define setjmp as _setjmp, undo this for this file.
+#ifdef _MSC_VER
+#undef setjmp
+#endif
 using namespace llvm;
 
 extern "C" void LLVMInitializeCBackendTarget() {
