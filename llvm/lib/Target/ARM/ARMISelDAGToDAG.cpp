@@ -1278,8 +1278,8 @@ SDNode *ARMDAGToDAGISel::SelectVLDSTLane(SDNode *N, bool IsLoad,
   Ops.push_back(MemAddr);
   Ops.push_back(Align);
 
-  unsigned Opc = (is64BitVector ? DOpcodes[OpcodeIndex] :
-                  Opc = QOpcodes[OpcodeIndex]);
+  unsigned Opc = (is64BitVector ? DOpcodes[OpcodeIndex] : 
+                                  QOpcodes[OpcodeIndex]);
 
   SDValue SuperReg;
   SDValue V0 = N->getOperand(0+3);
