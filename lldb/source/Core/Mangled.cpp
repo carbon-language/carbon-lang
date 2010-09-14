@@ -218,17 +218,17 @@ Mangled::GetName (Mangled::NamePreference preference) const
 {
     if (preference == ePreferDemangled)
     {
-        const ConstString& name = GetDemangledName();
-        if (name && !name.IsEmpty())
-            return name;
+        // Call the accessor to make sure we get a demangled name in case
+        // it hasn't been demangled yet...
+        if (GetDemangledName())
+            return m_demangled;
         return m_mangled;
     }
     else
     {
-        const ConstString& name = GetMangledName();
-        if (name && !name.IsEmpty())
-            return name;
-        return m_demangled;
+        if (m_mangled)
+            return m_mangled;
+        return GetDemangledName();
     }
 }
 
