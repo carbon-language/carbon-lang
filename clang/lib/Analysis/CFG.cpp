@@ -525,8 +525,12 @@ CFGBlock *CFGBuilder::VisitBinaryOperator(BinaryOperator *B,
       AppendStmt(Block, B, asc);
     }
 
-    Visit(B->getRHS());
-    return Visit(B->getLHS(), AddStmtChoice::AsLValueNotAlwaysAdd);
+    // If visiting RHS causes us to finish 'Block' and the LHS doesn't
+    // create a new block, then we should return RBlock.  Otherwise
+    // we'll incorrectly return NULL.
+    CFGBlock *RBlock = Visit(B->getRHS());
+    CFGBlock *LBlock = Visit(B->getLHS(), AddStmtChoice::AsLValueNotAlwaysAdd);
+    return LBlock ? LBlock : RBlock;
   }
 
   return VisitStmt(B, asc);

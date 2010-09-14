@@ -1142,3 +1142,17 @@ void pr8015_F_FIXME() {
   }
 }
 
+// PR 8141.  Previously the statement expression in the for loop caused
+// the CFG builder to crash.
+struct list_pr8141
+{
+  struct list_pr8141 *tail;
+};
+
+struct list_pr8141 *
+pr8141 (void) {
+  struct list_pr8141 *items;
+  for (;; items = ({ do { } while (0); items->tail; })) // expected-warning{{Dereference of undefined pointer value}}
+    {
+    }
+}
