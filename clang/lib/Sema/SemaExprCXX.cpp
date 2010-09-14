@@ -2008,7 +2008,8 @@ ExprResult Sema::ActOnUnaryTypeTrait(UnaryTypeTrait UTT,
   return BuildUnaryTypeTrait(UTT, KWLoc, TSInfo, RParen);
 }
 
-static bool EvaluateUnaryTypeTrait(Sema &Self, UnaryTypeTrait UTT, QualType T) {
+static bool EvaluateUnaryTypeTrait(Sema &Self, UnaryTypeTrait UTT, QualType T,
+                                   SourceLocation KeyLoc) {
   assert(!T->isDependentType() &&
          "Cannot evaluate traits for dependent types.");
   ASTContext &C = Self.Context;
@@ -2118,17 +2119,20 @@ static bool EvaluateUnaryTypeTrait(Sema &Self, UnaryTypeTrait UTT, QualType T) {
       bool FoundAssign = false;
       bool AllNoThrow = true;
       DeclarationName Name = C.DeclarationNames.getCXXOperatorName(OO_Equal);
-      DeclContext::lookup_const_iterator Op, OpEnd;
-      for (llvm::tie(Op, OpEnd) = RD->lookup(Name);
-           Op != OpEnd; ++Op) {
-        CXXMethodDecl *Operator = cast<CXXMethodDecl>(*Op);
-        if (Operator->isCopyAssignmentOperator()) {
-          FoundAssign = true;
-          const FunctionProtoType *CPT
-              = Operator->getType()->getAs<FunctionProtoType>();
-          if (!CPT->hasEmptyExceptionSpec()) {
-            AllNoThrow = false;
-            break;
+      LookupResult Res(Self, DeclarationNameInfo(Name, KeyLoc),
+                       Sema::LookupOrdinaryName);
+      if (Self.LookupQualifiedName(Res, RD)) {
+        for (LookupResult::iterator Op = Res.begin(), OpEnd = Res.end();
+             Op != OpEnd; ++Op) {
+          CXXMethodDecl *Operator = cast<CXXMethodDecl>(*Op);
+          if (Operator->isCopyAssignmentOperator()) {
+            FoundAssign = true;
+            const FunctionProtoType *CPT
+                = Operator->getType()->getAs<FunctionProtoType>();
+            if (!CPT->hasEmptyExceptionSpec()) {
+              AllNoThrow = false;
+              break;
+            }
           }
         }
       }
@@ -2213,7 +2217,7 @@ static bool EvaluateUnaryTypeTrait(Sema &Self, UnaryTypeTrait UTT, QualType T) {
     //   then the trait is true, else it is false.
     if (const RecordType *Record = T->getAs<RecordType>()) {
       CXXRecordDecl *RD = cast<CXXRecordDecl>(Record->getDecl());
-      if (CXXDestructorDecl *Destructor = RD->getDestructor())
+      if (CXXDestructorDecl *Destructor = Self.LookupDestructor(RD))
         return Destructor->isVirtual();
     }
     return false;
@@ -2241,7 +2245,7 @@ ExprResult Sema::BuildUnaryTypeTrait(UnaryTypeTrait UTT,
 
   bool Value = false;
   if (!T->isDependentType())
-    Value = EvaluateUnaryTypeTrait(*this, UTT, T);
+    Value = EvaluateUnaryTypeTrait(*this, UTT, T, KWLoc);
 
   return Owned(new (Context) UnaryTypeTraitExpr(KWLoc, UTT, TSInfo, Value,
                                                 RParen, Context.BoolTy));

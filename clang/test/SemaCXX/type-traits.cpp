@@ -348,6 +348,7 @@ void has_nothrow_assign() {
   int t21[T(__has_nothrow_assign(HasMultipleNoThrowCopyAssign))];
   int t22[F(__has_nothrow_assign(void))];
   int t23[F(__has_nothrow_assign(cvoid))];
+  int t24[T(__has_nothrow_assign(HasVirtDest))];
 }
 
 void has_nothrow_copy() {
