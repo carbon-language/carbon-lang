@@ -216,25 +216,19 @@ Mangled::GetMangledName () const
 const ConstString&
 Mangled::GetName (Mangled::NamePreference preference) const
 {
-    switch (preference)
+    if (preference == ePreferDemangled)
     {
-         case ePreferDemangled:
-        {
-            const ConstString& name = GetDemangledName();
-            if (name && !name.IsEmpty())
-                return name;
-            return m_mangled;
-        }
-        break;
-        case ePreferMangled:
-        {
-            const ConstString& name = GetMangledName();
-            if (name && !name.IsEmpty())
-                return name;
-            return m_demangled;
-        
-        }
-        break;
+        const ConstString& name = GetDemangledName();
+        if (name && !name.IsEmpty())
+            return name;
+        return m_mangled;
+    }
+    else
+    {
+        const ConstString& name = GetMangledName();
+        if (name && !name.IsEmpty())
+            return name;
+        return m_demangled;
     }
 }
 
