@@ -1156,3 +1156,30 @@ pr8141 (void) {
     {
     }
 }
+
+// <rdar://problem/8424269> - Handle looking at the size of a VLA in
+// ArrayBoundChecker.  Nothing intelligent (yet); just don't crash.
+typedef struct RDar8424269_A {
+  int RDar8424269_C;
+} RDar8424269_A;
+static void RDar8424269_B(RDar8424269_A *p, unsigned char *RDar8424269_D,
+                          const unsigned char *RDar8424269_E, int RDar8424269_F,
+    int b_w, int b_h, int dx, int dy) {
+  int x, y, b, r, l;
+  unsigned char tmp2t[3][RDar8424269_F * (32 + 8)];
+  unsigned char *tmp2 = tmp2t[0];
+  if (p && !p->RDar8424269_C)
+    b = 15;
+  tmp2 = tmp2t[1];
+  if (b & 2) { // expected-warning{{The left operand of '&' is a garbage value}}
+    for (y = 0; y < b_h; y++) {
+      for (x = 0; x < b_w + 1; x++) {
+        int am = 0;
+        tmp2[x] = am;
+      }
+    }
+  }
+  tmp2 = tmp2t[2];
+}
+
+

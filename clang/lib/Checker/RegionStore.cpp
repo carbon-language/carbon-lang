@@ -745,6 +745,14 @@ DefinedOrUnknownSVal RegionStoreManager::getSizeInElements(const GRState *state,
     return UnknownVal();
 
   CharUnits RegionSize = CharUnits::fromQuantity(SizeInt->getSExtValue());
+
+  if (Ctx.getAsVariableArrayType(EleTy)) {
+    // FIXME: We need to track extra state to properly record the size
+    // of VLAs.  Returning UnknownVal here, however, is a stop-gap so that
+    // we don't have a divide-by-zero below.
+    return UnknownVal();
+  }
+
   CharUnits EleSize = Ctx.getTypeSizeInChars(EleTy);
 
   // If a variable is reinterpreted as a type that doesn't fit into a larger
