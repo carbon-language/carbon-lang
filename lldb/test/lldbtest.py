@@ -238,9 +238,9 @@ def system(*popenargs, **kwargs):
             args = list(popenargs)
         print >> sys.stderr
         print >> sys.stderr, "os command:", args
-        print >> sys.stderr, "output:", output
-        print >> sys.stderr, "error (from os comand):", error
-        print >> sys.stderr, "retcode (from os command):", retcode
+        print >> sys.stderr, "stdout:", output
+        print >> sys.stderr, "stderr:", error
+        print >> sys.stderr, "retcode:", retcode
         print >> sys.stderr
 
     if retcode:
