@@ -10,6 +10,7 @@
 #ifndef CLANG_DRIVER_TOOLCHAIN_H_
 #define CLANG_DRIVER_TOOLCHAIN_H_
 
+#include "clang/Driver/Util.h"
 #include "clang/Driver/Types.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/Triple.h"
@@ -31,6 +32,10 @@ namespace driver {
 class ToolChain {
 public:
   typedef llvm::SmallVector<std::string, 4> path_list;
+
+  enum CXXStdlibType {
+    CST_Libstdcxx
+  };
 
 private:
   const HostInfo &Host;
@@ -153,6 +158,20 @@ public:
   /// sets the deployment target) determines the version in the triple passed to
   /// Clang.
   virtual std::string ComputeEffectiveClangTriple(const ArgList &Args) const;
+
+  // GetCXXStdlibType - Determine the C++ standard library type to use with the
+  // given compilation arguments.
+  virtual CXXStdlibType GetCXXStdlibType(const ArgList &Args) const;
+
+  /// AddClangCXXStdlibIncludeArgs - Add the clang -cc1 level arguments to set
+  /// the include paths to use for the given C++ standard library type.
+  virtual void AddClangCXXStdlibIncludeArgs(const ArgList &Args,
+                                            ArgStringList &CmdArgs) const;
+
+  /// AddClangCXXStdlibLibArgs - Add the system specific linker arguments to use
+  /// for the given C++ standard library type.
+  virtual void AddClangCXXStdlibLibArgs(const ArgList &Args,
+                                        ArgStringList &CmdArgs) const;
 };
 
 } // end namespace driver

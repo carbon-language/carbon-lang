@@ -230,6 +230,11 @@ void Clang::AddPreprocessingOptions(const Driver &D,
   Args.AddAllArgs(CmdArgs, options::OPT_D, options::OPT_U);
   Args.AddAllArgs(CmdArgs, options::OPT_I_Group, options::OPT_F);
 
+  // Add C++ include arguments, if needed.
+  types::ID InputType = Inputs[0].getType();
+  if (types::isCXX(InputType))
+    getToolChain().AddClangCXXStdlibIncludeArgs(Args, CmdArgs);
+
   // Add -Wp, and -Xassembler if using the preprocessor.
 
   // FIXME: There is a very unfortunate problem here, some troubled
@@ -2503,10 +2508,8 @@ void darwin::Link::ConstructJob(Compilation &C, const JobAction &JA,
 
   if (!Args.hasArg(options::OPT_nostdlib) &&
       !Args.hasArg(options::OPT_nodefaultlibs)) {
-    // FIXME: g++ is more complicated here, it tries to put -lstdc++
-    // before -lm, for example.
     if (getToolChain().getDriver().CCCIsCXX)
-      CmdArgs.push_back("-lstdc++");
+      getToolChain().AddClangCXXStdlibLibArgs(Args, CmdArgs);
 
     // link_ssp spec is empty.
 
@@ -2797,7 +2800,7 @@ void openbsd::Link::ConstructJob(Compilation &C, const JobAction &JA,
   if (!Args.hasArg(options::OPT_nostdlib) &&
       !Args.hasArg(options::OPT_nodefaultlibs)) {
     if (D.CCCIsCXX) {
-      CmdArgs.push_back("-lstdc++");
+      getToolChain().AddClangCXXStdlibLibArgs(Args, CmdArgs);
       CmdArgs.push_back("-lm");
     }
 
@@ -2941,7 +2944,7 @@ void freebsd::Link::ConstructJob(Compilation &C, const JobAction &JA,
   if (!Args.hasArg(options::OPT_nostdlib) &&
       !Args.hasArg(options::OPT_nodefaultlibs)) {
     if (D.CCCIsCXX) {
-      CmdArgs.push_back("-lstdc++");
+      getToolChain().AddClangCXXStdlibLibArgs(Args, CmdArgs);
       CmdArgs.push_back("-lm");
     }
     // FIXME: For some reason GCC passes -lgcc and -lgcc_s before adding
@@ -3090,7 +3093,7 @@ void minix::Link::ConstructJob(Compilation &C, const JobAction &JA,
   if (!Args.hasArg(options::OPT_nostdlib) &&
       !Args.hasArg(options::OPT_nodefaultlibs)) {
     if (D.CCCIsCXX) {
-      CmdArgs.push_back("-lstdc++");
+      getToolChain().AddClangCXXStdlibLibArgs(Args, CmdArgs);
       CmdArgs.push_back("-lm");
     }
 
@@ -3239,7 +3242,7 @@ void dragonfly::Link::ConstructJob(Compilation &C, const JobAction &JA,
     }
 
     if (D.CCCIsCXX) {
-      CmdArgs.push_back("-lstdc++");
+      getToolChain().AddClangCXXStdlibLibArgs(Args, CmdArgs);
       CmdArgs.push_back("-lm");
     }
 

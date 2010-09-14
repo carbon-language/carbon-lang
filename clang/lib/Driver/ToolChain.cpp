@@ -174,3 +174,28 @@ std::string ToolChain::ComputeEffectiveClangTriple(const ArgList &Args) const {
   return ComputeLLVMTriple(Args);
 }
 
+ToolChain::CXXStdlibType ToolChain::GetCXXStdlibType(const ArgList &Args) const{
+  return ToolChain::CST_Libstdcxx;
+}
+
+void ToolChain::AddClangCXXStdlibIncludeArgs(const ArgList &Args,
+                                             ArgStringList &CmdArgs) const {
+  CXXStdlibType Type = GetCXXStdlibType(Args);
+
+  switch (Type) {
+  case ToolChain::CST_Libstdcxx:
+    // Currently handled by the mass of goop in InitHeaderSearch.
+    break;
+  }
+}
+
+void ToolChain::AddClangCXXStdlibLibArgs(const ArgList &Args,
+                                         ArgStringList &CmdArgs) const {
+  CXXStdlibType Type = GetCXXStdlibType(Args);
+
+  switch (Type) {
+  case ToolChain::CST_Libstdcxx:
+    CmdArgs.push_back("-lstdc++");
+    break;
+  }
+}
