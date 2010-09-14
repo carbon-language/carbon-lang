@@ -100,7 +100,7 @@ public:
 
   // buildCFG - Used by external clients to construct the CFG.
   CFG* buildCFG(const Decl *D, Stmt *Statement, ASTContext *C,
-                bool pruneTriviallyFalseEdges, bool AddEHEdges);
+      CFG::BuildOptions BO);
 
 private:
   // Visitors to walk an AST and construct the CFG.
@@ -187,7 +187,7 @@ private:
   /// TryEvaluateBool - Try and evaluate the Stmt and return 0 or 1
   /// if we can evaluate to a known value, otherwise return -1.
   TryResult TryEvaluateBool(Expr *S) {
-    if (!PruneTriviallyFalseEdges)
+    if (!BuildOpts.PruneTriviallyFalseEdges)
       return TryResult();
 
     Expr::EvalResult Result;
@@ -199,12 +199,7 @@ private:
   }
 
   bool badCFG;
-
-  // True iff trivially false edges should be pruned from the CFG.
-  bool PruneTriviallyFalseEdges;
-
-  // True iff EH edges on CallExprs should be added to the CFG.
-  bool AddEHEdges;
+  CFG::BuildOptions BuildOpts;
 };
 
 // FIXME: Add support for dependent-sized array types in C++?
@@ -227,11 +222,7 @@ static VariableArrayType* FindVA(Type* t) {
 ///  transferred to the caller.  If CFG construction fails, this method returns
 ///  NULL.
 CFG* CFGBuilder::buildCFG(const Decl *D, Stmt* Statement, ASTContext* C,
-                          bool pruneTriviallyFalseEdges,
-                          bool addehedges) {
-
-  AddEHEdges = addehedges;
-  PruneTriviallyFalseEdges = pruneTriviallyFalseEdges;
+    CFG::BuildOptions BO) {
 
   Context = C;
   assert(cfg.get());
@@ -239,6 +230,9 @@ CFG* CFGBuilder::buildCFG(const Decl *D, Stmt* Statement, ASTContext* C,
     return NULL;
 
   badCFG = false;
+  BuildOpts = BO;
+  if (!C->getLangOptions().CPlusPlus)
+    BuildOpts.AddImplicitDtors = false;
 
   // Create an empty block that will serve as the exit block for the CFG.  Since
   // this is the first block added to the CFG, it will be implicitly registered
@@ -592,7 +586,7 @@ CFGBlock *CFGBuilder::VisitCallExpr(CallExpr *C, AddStmtChoice asc) {
 
   // Languages without exceptions are assumed to not throw.
   if (Context->getLangOptions().Exceptions) {
-    if (AddEHEdges)
+    if (BuildOpts.AddEHEdges)
       AddEHEdge = true;
   }
 
@@ -1810,11 +1804,9 @@ CFGBlock* CFG::createBlock() {
 /// buildCFG - Constructs a CFG from an AST.  Ownership of the returned
 ///  CFG is returned to the caller.
 CFG* CFG::buildCFG(const Decl *D, Stmt* Statement, ASTContext *C,
-                   bool PruneTriviallyFalse,
-                   bool AddEHEdges) {
+    BuildOptions BO) {
   CFGBuilder Builder;
-  return Builder.buildCFG(D, Statement, C, PruneTriviallyFalse,
-                          AddEHEdges);
+  return Builder.buildCFG(D, Statement, C, BO);
 }
 
 //===----------------------------------------------------------------------===//

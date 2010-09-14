@@ -59,7 +59,9 @@ CFG *AnalysisContext::getCFG() {
     return getUnoptimizedCFG();
 
   if (!builtCFG) {
-    cfg = CFG::buildCFG(D, getBody(), &D->getASTContext(), true, AddEHEdges);
+    CFG::BuildOptions B;
+    B.AddEHEdges = AddEHEdges;
+    cfg = CFG::buildCFG(D, getBody(), &D->getASTContext(), B);
     // Even when the cfg is not successfully built, we don't
     // want to try building it again.
     builtCFG = true;
@@ -69,8 +71,10 @@ CFG *AnalysisContext::getCFG() {
 
 CFG *AnalysisContext::getUnoptimizedCFG() {
   if (!builtCompleteCFG) {
-    completeCFG = CFG::buildCFG(D, getBody(), &D->getASTContext(),
-                                false, AddEHEdges);
+    CFG::BuildOptions B;
+    B.PruneTriviallyFalseEdges = false;
+    B.AddEHEdges = AddEHEdges;
+    completeCFG = CFG::buildCFG(D, getBody(), &D->getASTContext(), B);
     // Even when the cfg is not successfully built, we don't
     // want to try building it again.
     builtCompleteCFG = true;
