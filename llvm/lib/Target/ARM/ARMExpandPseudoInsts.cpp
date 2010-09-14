@@ -450,8 +450,9 @@ void ARMExpandPseudo::ExpandLaneOp(MachineBasicBlock::iterator &MBBI) {
   }
   assert(Lane < RegElts && "out of range lane for VLD/VST-lane");
 
-  unsigned DstReg, D0, D1, D2, D3;
-  bool DstIsDead;
+  unsigned D0, D1, D2, D3;
+  unsigned DstReg = 0;
+  bool DstIsDead = false;
   if (TableEntry->IsLoad) {
     DstIsDead = MI.getOperand(OpIdx).isDead();
     DstReg = MI.getOperand(OpIdx++).getReg();
