@@ -354,3 +354,21 @@ namespace DeleteParam {
     void operator delete(void* const);
   };
 }
+
+// <rdar://problem/8427878>
+// Test that the correct 'operator delete' is selected to pair with
+// the unexpected placement 'operator new'.
+namespace PairedDelete {
+  template <class T> struct A {
+    A();
+    void *operator new(size_t s, double d = 0);
+    void operator delete(void *p, double d);
+    void operator delete(void *p) {
+      T::dealloc(p);
+    }
+  };
+
+  A<int> *test() {
+    return new A<int>();
+  }
+}

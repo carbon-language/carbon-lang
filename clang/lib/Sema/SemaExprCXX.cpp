@@ -1046,7 +1046,14 @@ bool Sema::FindAllocationFunctions(SourceLocation StartLoc, SourceRange Range,
 
   llvm::SmallVector<std::pair<DeclAccessPair,FunctionDecl*>, 2> Matches;
 
-  if (NumPlaceArgs > 0) {
+  // Whether we're looking for a placement operator delete is dictated
+  // by whether we selected a placement operator new, not by whether
+  // we had explicit placement arguments.  This matters for things like
+  //   struct A { void *operator new(size_t, int = 0); ... };
+  //   A *a = new A()
+  bool isPlacementNew = (NumPlaceArgs > 0 || OperatorNew->param_size() != 1);
+
+  if (isPlacementNew) {
     // C++ [expr.new]p20:
     //   A declaration of a placement deallocation function matches the
     //   declaration of a placement allocation function if it has the
