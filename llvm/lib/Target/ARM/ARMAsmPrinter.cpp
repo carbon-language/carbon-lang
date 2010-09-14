@@ -1343,7 +1343,7 @@ void ARMAsmPrinter::printInstructionThroughMCStreamer(const MachineInstr *MI) {
     OutStreamer.EmitLabel(Label);
 
 
-    // Form and emit tha dd.
+    // Form and emit the add.
     MCInst AddInst;
     AddInst.setOpcode(ARM::ADDrr);
     AddInst.addOperand(MCOperand::CreateReg(MI->getOperand(0).getReg()));
