@@ -298,8 +298,13 @@ ScriptInterpreterPython::InputReaderCallback
     case eInputReaderActivate:
         {
             // Save terminal settings if we can
+            int input_fd;
             FILE *input_fh = reader.GetDebugger().GetInputFileHandle();
-            int input_fd = ::fileno (input_fh);
+            if (input_fh != NULL)
+              input_fd = ::fileno (input_fh);
+            else
+              input_fd = STDIN_FILENO;
+
             script_interpreter->m_termios_valid = ::tcgetattr (input_fd, &script_interpreter->m_termios) == 0;
             struct termios tmp_termios;
             if (::tcgetattr (input_fd, &tmp_termios) == 0)
@@ -335,9 +340,14 @@ ScriptInterpreterPython::InputReaderCallback
         // Restore terminal settings if they were validly saved
         if (script_interpreter->m_termios_valid)
         {
-            ::tcsetattr (::fileno (reader.GetDebugger().GetInputFileHandle()), 
-                         TCSANOW,
-                         &script_interpreter->m_termios);
+            int input_fd;
+            FILE *input_fh = reader.GetDebugger().GetInputFileHandle();
+            if (input_fh != NULL)
+              input_fd = ::fileno (input_fh);
+            else
+              input_fd = STDIN_FILENO;
+            
+            ::tcsetattr (input_fd, TCSANOW, &script_interpreter->m_termios);
         }
         break;
     }
@@ -352,6 +362,15 @@ ScriptInterpreterPython::ExecuteInterpreterLoop (CommandInterpreter &interpreter
     Timer scoped_timer (__PRETTY_FUNCTION__, __PRETTY_FUNCTION__);
 
     Debugger &debugger = interpreter.GetDebugger();
+
+    // At the moment, the only time the debugger does not have an input file handle is when this is called
+    // directly from Python, in which case it is both dangerous and unnecessary (not to mention confusing) to
+    // try to embed a running interpreter loop inside the already running Python interpreter loop, so we won't
+    // do it.
+
+    if (debugger.GetInputFileHandle() == NULL)
+        return;
+
     InputReaderSP reader_sp (new InputReader(debugger));
     if (reader_sp)
     {
@@ -556,6 +575,9 @@ ScriptInterpreterPython::GenerateBreakpointOptionsCommandCallback
   static StringList commands_in_progress;
 
     FILE *out_fh = reader.GetDebugger().GetOutputFileHandle();
+    if (out_fh == NULL)
+        out_fh = stdout;
+
     switch (notification)
     {
     case eInputReaderActivate:

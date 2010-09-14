@@ -464,8 +464,6 @@ public:
                        "Attach to a process.",
                        "process attach <cmd-options>")
     {
-        SetHelpLong("Currently, you must set the executable file before you can attach "
-                    "to a process.\n");
     }
 
     ~CommandObjectProcessAttach ()
