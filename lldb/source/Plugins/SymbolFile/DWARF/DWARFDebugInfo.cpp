@@ -868,7 +868,7 @@ typedef struct DumpInfo
         strm(init_strm),
         die_offset(off),
         recurse_depth(depth),
-        found_depth(UINT_MAX),
+        found_depth(UINT32_MAX),
         found_die(false),
         ancestors()
     {
@@ -959,7 +959,7 @@ static dw_offset_t DumpCallback
                 // We have already found our DIE and are printing it's children. Obey
                 // our recurse depth and return an invalid offset if we get done
                 // dumping all the the children
-                if (dumpInfo->recurse_depth == UINT_MAX || curr_depth <= dumpInfo->found_depth + dumpInfo->recurse_depth)
+                if (dumpInfo->recurse_depth == UINT32_MAX || curr_depth <= dumpInfo->found_depth + dumpInfo->recurse_depth)
                     die->Dump(dwarf2Data, cu, s, 0);
             }
             else if (dumpInfo->die_offset > die->GetOffset())
@@ -1076,7 +1076,7 @@ DWARFDebugInfo::Dump
         else
         {
             s->Printf(" for DIE entry at .debug_info[0x%8.8x]", die_offset);
-            if (recurse_depth != UINT_MAX)
+            if (recurse_depth != UINT32_MAX)
                 s->Printf(" recursing %u levels deep.", recurse_depth);
             s->EOL();
         }

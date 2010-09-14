@@ -61,10 +61,10 @@ public:
     GetSharedPointer (const Section *section, bool check_children) const;
 
     lldb::SectionSP
-    FindSectionContainingFileAddress (lldb::addr_t addr, uint32_t depth = UINT_MAX) const;
+    FindSectionContainingFileAddress (lldb::addr_t addr, uint32_t depth = UINT32_MAX) const;
 
     lldb::SectionSP
-    FindSectionContainingLinkedFileAddress (lldb::addr_t vm_addr) const;
+    FindSectionContainingLinkedFileAddress (lldb::addr_t vm_addr, uint32_t depth) const;
 
     bool
     GetSectionData (const DataExtractor& module_data, DataExtractor& section_data) const;
@@ -81,7 +81,7 @@ public:
     GetNumSections (uint32_t depth) const;
 
     bool
-    ReplaceSection (lldb::user_id_t sect_id, lldb::SectionSP& sect_sp, uint32_t depth = UINT_MAX);
+    ReplaceSection (lldb::user_id_t sect_id, lldb::SectionSP& sect_sp, uint32_t depth = UINT32_MAX);
 
     lldb::SectionSP
     GetSectionAtIndex (uint32_t idx) const;

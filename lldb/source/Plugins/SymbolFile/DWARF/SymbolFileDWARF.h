@@ -218,7 +218,7 @@ protected:
     bool                    ParseCompileUnit(DWARFCompileUnit* cu, lldb::CompUnitSP& compile_unit_sp);
     DWARFCompileUnit*       GetDWARFCompileUnitForUID(lldb::user_id_t cu_uid);
     DWARFCompileUnit*       GetNextUnparsedDWARFCompileUnit(DWARFCompileUnit* prev_cu);
-    lldb_private::CompileUnit*      GetCompUnitForDWARFCompUnit(DWARFCompileUnit* cu, uint32_t cu_idx = UINT_MAX);
+    lldb_private::CompileUnit*      GetCompUnitForDWARFCompUnit(DWARFCompileUnit* cu, uint32_t cu_idx = UINT32_MAX);
     bool                    GetFunction (DWARFCompileUnit* cu, const DWARFDebugInfoEntry* func_die, lldb_private::SymbolContext& sc);
     lldb_private::Function *        ParseCompileUnitFunction (const lldb_private::SymbolContext& sc, const DWARFCompileUnit* dwarf_cu, const DWARFDebugInfoEntry *die);
     size_t                  ParseFunctionBlocks (const lldb_private::SymbolContext& sc,
@@ -234,11 +234,13 @@ protected:
     lldb::VariableSP        ParseVariableDIE(
                                 const lldb_private::SymbolContext& sc,
                                 const DWARFCompileUnit* dwarf_cu,
-                                const DWARFDebugInfoEntry *die);
+                                const DWARFDebugInfoEntry *die,
+                                const lldb::addr_t func_low_pc);
 
     size_t                  ParseVariables(
                                 const lldb_private::SymbolContext& sc,
                                 const DWARFCompileUnit* dwarf_cu,
+                                const lldb::addr_t func_low_pc,
                                 const DWARFDebugInfoEntry *die,
                                 bool parse_siblings,
                                 bool parse_children,

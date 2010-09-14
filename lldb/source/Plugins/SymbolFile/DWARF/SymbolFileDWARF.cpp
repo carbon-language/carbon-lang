@@ -418,19 +418,29 @@ SymbolFileDWARF::DebugAbbrev() const
 DWARFDebugAranges*
 SymbolFileDWARF::DebugAranges()
 {
-    if (m_aranges.get() == NULL)
-    {
-        Timer scoped_timer(__PRETTY_FUNCTION__, "%s this = %p", __PRETTY_FUNCTION__, this);
-        m_aranges.reset(new DWARFDebugAranges());
-        if (m_aranges.get())
-        {
-            const DataExtractor &debug_aranges_data = get_debug_aranges_data();
-            if (debug_aranges_data.GetByteSize() > 0)
-                m_aranges->Extract(debug_aranges_data);
-            else
-                m_aranges->Generate(this);
-        }
-    }
+    // It turns out that llvm-gcc doesn't generate .debug_aranges in .o files
+    // and we are already parsing all of the DWARF because the .debug_pubnames
+    // is useless (it only mentions symbols that are externally visible), so
+    // don't use the .debug_aranges section, we should be using a debug aranges
+    // we got from SymbolFileDWARF::Index().
+
+    if (!m_indexed)
+        Index();
+    
+    
+//    if (m_aranges.get() == NULL)
+//    {
+//        Timer scoped_timer(__PRETTY_FUNCTION__, "%s this = %p", __PRETTY_FUNCTION__, this);
+//        m_aranges.reset(new DWARFDebugAranges());
+//        if (m_aranges.get())
+//        {
+//            const DataExtractor &debug_aranges_data = get_debug_aranges_data();
+//            if (debug_aranges_data.GetByteSize() > 0)
+//                m_aranges->Extract(debug_aranges_data);
+//            else
+//                m_aranges->Generate(this);
+//        }
+//    }
     return m_aranges.get();
 }
 
@@ -1492,7 +1502,7 @@ SymbolFileDWARF::GetCompUnitForDWARFCompUnit(DWARFCompileUnit* cu, uint32_t cu_i
         if (dc_cu.get())
         {
             // Figure out the compile unit index if we weren't given one
-            if (cu_idx == UINT_MAX)
+            if (cu_idx == UINT32_MAX)
                 DebugInfo()->GetCompileUnit(cu->GetOffset(), &cu_idx);
 
             m_obj_file->GetModule()->GetSymbolVendor()->SetCompileUnitAtIndex(dc_cu, cu_idx);
@@ -1507,7 +1517,7 @@ SymbolFileDWARF::GetFunction (DWARFCompileUnit* cu, const DWARFDebugInfoEntry* f
     sc.Clear();
     // Check if the symbol vendor already knows about this compile unit?
     sc.module_sp = m_obj_file->GetModule()->GetSP();
-    sc.comp_unit = GetCompUnitForDWARFCompUnit(cu, UINT_MAX);
+    sc.comp_unit = GetCompUnitForDWARFCompUnit(cu, UINT32_MAX);
 
     sc.function = sc.comp_unit->FindFunctionByUID (func_die->GetOffset()).get();
     if (sc.function == NULL)
@@ -1669,7 +1679,7 @@ SymbolFileDWARF::ResolveSymbolContext(const FileSpec& file_spec, uint32_t line, 
                                 uint32_t line_idx = line_table->FindLineEntryIndexByFileIndex (0, file_idx, line, false, &sc.line_entry);
                                 found_line = sc.line_entry.line;
 
-                                while (line_idx != UINT_MAX)
+                                while (line_idx != UINT32_MAX)
                                 {
                                     sc.function = NULL;
                                     sc.block = NULL;
@@ -1742,6 +1752,8 @@ SymbolFileDWARF::Index ()
     DWARFDebugInfo* debug_info = DebugInfo();
     if (debug_info)
     {
+        m_aranges.reset(new DWARFDebugAranges());
+    
         uint32_t cu_idx = 0;
         const uint32_t num_compile_units = GetNumCompileUnits();
         for (cu_idx = 0; cu_idx < num_compile_units; ++cu_idx)
@@ -1755,7 +1767,9 @@ SymbolFileDWARF::Index ()
                        m_method_name_to_function_die,
                        m_selector_name_to_function_die,
                        m_name_to_global_die, 
-                       m_name_to_type_die);  
+                       m_name_to_type_die,
+                       DebugRanges(),
+                       m_aranges.get());  
             
             // Keep memory down by clearing DIEs if this generate function
             // caused them to be parsed
@@ -1769,6 +1783,7 @@ SymbolFileDWARF::Index ()
         m_selector_name_to_function_die.Sort();
         m_name_to_global_die.Sort(); 
         m_name_to_type_die.Sort();
+        m_aranges->Sort();
     }
 }
 
@@ -1804,10 +1819,10 @@ SymbolFileDWARF::FindGlobalVariables (const ConstString &name, bool append, uint
             sc.module_sp = m_obj_file->GetModule()->GetSP();
             assert (sc.module_sp);
 
-            sc.comp_unit = GetCompUnitForDWARFCompUnit(cu, UINT_MAX);
+            sc.comp_unit = GetCompUnitForDWARFCompUnit(cu, UINT32_MAX);
             assert(sc.comp_unit != NULL);
 
-            ParseVariables(sc, cu_sp.get(), die, false, false, &variables);
+            ParseVariables(sc, cu_sp.get(), LLDB_INVALID_ADDRESS, die, false, false, &variables);
 
             if (variables.GetSize() - original_size >= max_matches)
                 break;
@@ -1854,10 +1869,10 @@ SymbolFileDWARF::FindGlobalVariables(const RegularExpression& regex, bool append
             assert (sc.module_sp);
 
 
-            sc.comp_unit = GetCompUnitForDWARFCompUnit(cu, UINT_MAX);
+            sc.comp_unit = GetCompUnitForDWARFCompUnit(cu, UINT32_MAX);
             assert(sc.comp_unit != NULL);
 
-            ParseVariables(sc, cu_sp.get(), die, false, false, &variables);
+            ParseVariables(sc, cu_sp.get(), LLDB_INVALID_ADDRESS, die, false, false, &variables);
 
             if (variables.GetSize() - original_size >= max_matches)
                 break;
@@ -3308,7 +3323,11 @@ SymbolFileDWARF::ParseVariablesForContext (const SymbolContext& sc)
         if (sc.function)
         {
             const DWARFDebugInfoEntry *function_die = dwarf_cu->GetDIEPtr(sc.function->GetID());
-            return ParseVariables(sc, dwarf_cu, function_die->GetFirstChild(), true, true);
+            
+            dw_addr_t func_lo_pc = function_die->GetAttributeValueAsUnsigned (this, dwarf_cu, DW_AT_low_pc, DW_INVALID_ADDRESS);
+            assert (func_lo_pc != DW_INVALID_ADDRESS);
+
+            return ParseVariables(sc, dwarf_cu, func_lo_pc, function_die->GetFirstChild(), true, true);
         }
         else if (sc.comp_unit)
         {
@@ -3328,7 +3347,7 @@ SymbolFileDWARF::ParseVariablesForContext (const SymbolContext& sc)
                 const size_t num_globals = dwarf_cu->GetNumGlobals();
                 for (size_t idx=0; idx<num_globals; ++idx)
                 {
-                    VariableSP var_sp (ParseVariableDIE(sc, dwarf_cu, dwarf_cu->GetGlobalDIEAtIndex (idx)));
+                    VariableSP var_sp (ParseVariableDIE(sc, dwarf_cu, dwarf_cu->GetGlobalDIEAtIndex (idx), LLDB_INVALID_ADDRESS));
                     if (var_sp)
                     {
                         variables->AddVariable(var_sp);
@@ -3348,7 +3367,8 @@ SymbolFileDWARF::ParseVariableDIE
 (
     const SymbolContext& sc,
     const DWARFCompileUnit* dwarf_cu,
-    const DWARFDebugInfoEntry *die
+    const DWARFDebugInfoEntry *die,
+    const lldb::addr_t func_low_pc
 )
 {
 
@@ -3393,7 +3413,7 @@ SymbolFileDWARF::ParseVariableDIE
 
                             uint32_t block_offset = form_value.BlockData() - debug_info_data.GetDataStart();
                             uint32_t block_length = form_value.Unsigned();
-                            location.SetOpcodeData(get_debug_info_data(), block_offset, block_length, NULL);
+                            location.SetOpcodeData(get_debug_info_data(), block_offset, block_length);
                         }
                         else
                         {
@@ -3403,8 +3423,9 @@ SymbolFileDWARF::ParseVariableDIE
                             size_t loc_list_length = DWARFLocationList::Size(debug_loc_data, debug_loc_offset);
                             if (loc_list_length > 0)
                             {
-                                Address base_address(dwarf_cu->GetBaseAddress(), m_obj_file->GetSectionList());
-                                location.SetOpcodeData(debug_loc_data, debug_loc_offset, loc_list_length, &base_address);
+                                location.SetOpcodeData(debug_loc_data, debug_loc_offset, loc_list_length);
+                                assert (func_low_pc != LLDB_INVALID_ADDRESS);
+                                location.SetLocationListSlide (func_low_pc - dwarf_cu->GetBaseAddress());
                             }
                         }
                     }
@@ -3489,6 +3510,7 @@ SymbolFileDWARF::ParseVariables
 (
     const SymbolContext& sc,
     const DWARFCompileUnit* dwarf_cu,
+    const lldb::addr_t func_low_pc,
     const DWARFDebugInfoEntry *orig_die,
     bool parse_siblings,
     bool parse_children,
@@ -3565,7 +3587,7 @@ SymbolFileDWARF::ParseVariables
                 (tag == DW_TAG_constant) ||
                 (tag == DW_TAG_formal_parameter && sc.function))
             {
-                VariableSP var_sp (ParseVariableDIE(sc, dwarf_cu, die));
+                VariableSP var_sp (ParseVariableDIE(sc, dwarf_cu, die, func_low_pc));
                 if (var_sp)
                 {
                     variables->AddVariable(var_sp);
@@ -3578,7 +3600,7 @@ SymbolFileDWARF::ParseVariables
 
         if (!skip_children && parse_children && die->HasChildren())
         {
-            vars_added += ParseVariables(sc, dwarf_cu, die->GetFirstChild(), true, true);
+            vars_added += ParseVariables(sc, dwarf_cu, func_low_pc, die->GetFirstChild(), true, true);
             //vars_added += ParseVariables(sc, dwarf_cu, die->GetFirstChild(), parse_siblings, parse_children);
         }
 

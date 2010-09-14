@@ -641,7 +641,7 @@ SectionList::FindSectionContainingFileAddress (addr_t vm_addr, uint32_t depth) c
 
 
 SectionSP
-SectionList::FindSectionContainingLinkedFileAddress (addr_t vm_addr) const
+SectionList::FindSectionContainingLinkedFileAddress (addr_t vm_addr, uint32_t depth) const
 {
     SectionSP sect_sp;
     const_iterator sect_iter;
@@ -652,7 +652,10 @@ SectionList::FindSectionContainingLinkedFileAddress (addr_t vm_addr) const
         if (sect->ContainsLinkedFileAddress (vm_addr))
         {
             sect_sp = *sect_iter;
-            break;
+        }
+        else if (depth > 0)
+        {
+            sect_sp = sect->GetChildren().FindSectionContainingLinkedFileAddress (vm_addr, depth - 1);
         }
     }
     return sect_sp;

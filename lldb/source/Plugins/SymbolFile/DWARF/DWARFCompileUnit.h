@@ -26,7 +26,7 @@ public:
                     DWARFDebugInfoEntry** function_die,
                     DWARFDebugInfoEntry** block_die);
 
-    size_t      AppendDIEsWithTag (const dw_tag_t tag, DWARFDIECollection& matching_dies, uint32_t depth = UINT_MAX) const;
+    size_t      AppendDIEsWithTag (const dw_tag_t tag, DWARFDIECollection& matching_dies, uint32_t depth = UINT32_MAX) const;
     void        Clear();
     bool        Verify(lldb_private::Stream *s) const;
     void        Dump(lldb_private::Stream *s) const;
@@ -147,7 +147,9 @@ public:
            lldb_private::UniqueCStringMap<dw_offset_t>& method_name_to_function_die,
            lldb_private::UniqueCStringMap<dw_offset_t>& selector_name_to_function_die,
            lldb_private::UniqueCStringMap<dw_offset_t>& name_to_type_die,
-           lldb_private::UniqueCStringMap<dw_offset_t>& name_to_global_die);
+           lldb_private::UniqueCStringMap<dw_offset_t>& name_to_global_die,
+           const DWARFDebugRanges* debug_ranges,
+           DWARFDebugAranges *aranges);
 
 
 protected:

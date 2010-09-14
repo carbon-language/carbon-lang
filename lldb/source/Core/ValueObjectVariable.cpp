@@ -103,9 +103,17 @@ ValueObjectVariable::UpdateValue (ExecutionContextScope *exe_scope)
 
     Variable *variable = m_variable_sp.get();
     DWARFExpression &expr = variable->LocationExpression();
-    Value old_value(m_value);
+    lldb::addr_t loclist_base_load_addr = LLDB_INVALID_ADDRESS;
     ExecutionContext exe_ctx (exe_scope);
-    if (expr.Evaluate (&exe_ctx, GetClangAST(), NULL, m_value, &m_error))
+    if (expr.IsLocationList())
+    {
+        SymbolContext sc;
+        variable->CalculateSymbolContext (&sc);
+        if (sc.function)
+            loclist_base_load_addr = sc.function->GetAddressRange().GetBaseAddress().GetLoadAddress (exe_ctx.process);
+    }
+    Value old_value(m_value);
+    if (expr.Evaluate (&exe_ctx, GetClangAST(), loclist_base_load_addr, NULL, m_value, &m_error))
     {
         m_value.SetContext(Value::eContextTypeDCVariable, variable);
 

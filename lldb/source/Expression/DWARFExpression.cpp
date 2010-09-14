@@ -16,6 +16,7 @@
 #include "lldb/Core/StreamString.h"
 #include "lldb/Core/Scalar.h"
 #include "lldb/Core/Value.h"
+#include "lldb/Core/VMRange.h"
 
 #include "lldb/Expression/ClangExpressionDeclMap.h"
 #include "lldb/Expression/ClangExpressionVariable.h"
@@ -216,7 +217,7 @@ DW_OP_value_to_name (uint32_t val)
 DWARFExpression::DWARFExpression() :
     m_data(),
     m_reg_kind (eRegisterKindDWARF),
-    m_loclist_base_addr(),
+    m_loclist_slide (LLDB_INVALID_ADDRESS),
     m_expr_locals (NULL),
     m_decl_map (NULL)
 {
@@ -225,22 +226,20 @@ DWARFExpression::DWARFExpression() :
 DWARFExpression::DWARFExpression(const DWARFExpression& rhs) :
     m_data(rhs.m_data),
     m_reg_kind (rhs.m_reg_kind),
-    m_loclist_base_addr(rhs.m_loclist_base_addr),
+    m_loclist_slide(rhs.m_loclist_slide),
     m_expr_locals (rhs.m_expr_locals),
     m_decl_map (rhs.m_decl_map)
 {
 }
 
 
-DWARFExpression::DWARFExpression(const DataExtractor& data, uint32_t data_offset, uint32_t data_length, const Address* loclist_base_addr_ptr) :
+DWARFExpression::DWARFExpression(const DataExtractor& data, uint32_t data_offset, uint32_t data_length) :
     m_data(data, data_offset, data_length),
     m_reg_kind (eRegisterKindDWARF),
-    m_loclist_base_addr(),
+    m_loclist_slide(LLDB_INVALID_ADDRESS),
     m_expr_locals (NULL),
     m_decl_map (NULL)
 {
-    if (loclist_base_addr_ptr)
-        m_loclist_base_addr = *loclist_base_addr_ptr;
 }
 
 //----------------------------------------------------------------------
@@ -271,23 +270,15 @@ DWARFExpression::SetExpressionDeclMap (ClangExpressionDeclMap *decl_map)
 }
 
 void
-DWARFExpression::SetOpcodeData (const DataExtractor& data, const Address* loclist_base_addr_ptr)
+DWARFExpression::SetOpcodeData (const DataExtractor& data)
 {
     m_data = data;
-    if (loclist_base_addr_ptr != NULL)
-        m_loclist_base_addr = *loclist_base_addr_ptr;
-    else
-        m_loclist_base_addr.Clear();
 }
 
 void
-DWARFExpression::SetOpcodeData (const DataExtractor& data, uint32_t data_offset, uint32_t data_length, const Address* loclist_base_addr_ptr)
+DWARFExpression::SetOpcodeData (const DataExtractor& data, uint32_t data_offset, uint32_t data_length)
 {
     m_data.SetData(data, data_offset, data_length);
-    if (loclist_base_addr_ptr != NULL)
-        m_loclist_base_addr = *loclist_base_addr_ptr;
-    else
-        m_loclist_base_addr.Clear();
 }
 
 void
@@ -561,9 +552,9 @@ DWARFExpression::DumpLocation (Stream *s, uint32_t offset, uint32_t length, lldb
 }
 
 void
-DWARFExpression::SetLocationListBaseAddress(Address& base_addr)
+DWARFExpression::SetLocationListSlide (addr_t slide)
 {
-    m_loclist_base_addr = base_addr;
+    m_loclist_slide = slide;
 }
 
 int
@@ -581,18 +572,18 @@ DWARFExpression::SetRegisterKind (int reg_kind)
 bool
 DWARFExpression::IsLocationList() const
 {
-    return m_loclist_base_addr.IsSectionOffset();
+    return m_loclist_slide != LLDB_INVALID_ADDRESS;
 }
 
 void
-DWARFExpression::GetDescription (Stream *s, lldb::DescriptionLevel level) const
+DWARFExpression::GetDescription (Stream *s, lldb::DescriptionLevel level, addr_t location_list_base_addr) const
 {
     if (IsLocationList())
     {
         // We have a location list
         uint32_t offset = 0;
         uint32_t count = 0;
-        Address base_addr(m_loclist_base_addr);
+        addr_t curr_base_addr = location_list_base_addr;
         while (m_data.ValidOffset(offset))
         {
             lldb::addr_t begin_addr_offset = m_data.GetAddress(&offset);
@@ -601,9 +592,8 @@ DWARFExpression::GetDescription (Stream *s, lldb::DescriptionLevel level) const
             {
                 if (count > 0)
                     s->PutCString(", ");
-                AddressRange addr_range(base_addr, end_addr_offset - begin_addr_offset);
-                addr_range.GetBaseAddress().SetOffset(base_addr.GetOffset() + begin_addr_offset);
-                addr_range.Dump (s, NULL, Address::DumpStyleFileAddress);
+                VMRange addr_range(curr_base_addr + begin_addr_offset, curr_base_addr + end_addr_offset);
+                addr_range.Dump(s, 0, 8);
                 s->PutChar('{');
                 uint32_t location_length = m_data.GetU16(&offset);
                 DumpLocation (s, offset, location_length, level);
@@ -620,6 +610,7 @@ DWARFExpression::GetDescription (Stream *s, lldb::DescriptionLevel level) const
                 if (m_data.GetAddressByteSize() == 4 && begin_addr_offset == 0xFFFFFFFFull ||
                     m_data.GetAddressByteSize() == 8 && begin_addr_offset == 0xFFFFFFFFFFFFFFFFull)
                 {
+                    curr_base_addr = end_addr_offset + location_list_base_addr;
                     // We have a new base address
                     if (count > 0)
                         s->PutCString(", ");
@@ -685,25 +676,60 @@ ReadRegisterValueAsScalar
     return false;
 }
 
-bool
-DWARFExpression::LocationListContainsLoadAddress (Process* process, const Address &addr) const
-{
-    return LocationListContainsLoadAddress(process, addr.GetLoadAddress(process));
-}
+//bool
+//DWARFExpression::LocationListContainsLoadAddress (Process* process, const Address &addr) const
+//{
+//    return LocationListContainsLoadAddress(process, addr.GetLoadAddress(process));
+//}
+//
+//bool
+//DWARFExpression::LocationListContainsLoadAddress (Process* process, addr_t load_addr) const
+//{
+//    if (load_addr == LLDB_INVALID_ADDRESS)
+//        return false;
+//
+//    if (IsLocationList())
+//    {
+//        uint32_t offset = 0;
+//
+//        addr_t loc_list_base_addr = m_loclist_slide.GetLoadAddress(process);
+//
+//        if (loc_list_base_addr == LLDB_INVALID_ADDRESS)
+//            return false;
+//
+//        while (m_data.ValidOffset(offset))
+//        {
+//            // We need to figure out what the value is for the location.
+//            addr_t lo_pc = m_data.GetAddress(&offset);
+//            addr_t hi_pc = m_data.GetAddress(&offset);
+//            if (lo_pc == 0 && hi_pc == 0)
+//                break;
+//            else
+//            {
+//                lo_pc += loc_list_base_addr;
+//                hi_pc += loc_list_base_addr;
+//
+//                if (lo_pc <= load_addr && load_addr < hi_pc)
+//                    return true;
+//
+//                offset += m_data.GetU16(&offset);
+//            }
+//        }
+//    }
+//    return false;
+//}
 
 bool
-DWARFExpression::LocationListContainsLoadAddress (Process* process, addr_t load_addr) const
+DWARFExpression::LocationListContainsAddress (lldb::addr_t loclist_base_addr, lldb::addr_t addr) const
 {
-    if (load_addr == LLDB_INVALID_ADDRESS)
+    if (addr == LLDB_INVALID_ADDRESS)
         return false;
 
     if (IsLocationList())
     {
         uint32_t offset = 0;
 
-        addr_t loc_list_base_addr = m_loclist_base_addr.GetLoadAddress(process);
-
-        if (loc_list_base_addr == LLDB_INVALID_ADDRESS)
+        if (loclist_base_addr == LLDB_INVALID_ADDRESS)
             return false;
 
         while (m_data.ValidOffset(offset))
@@ -715,10 +741,10 @@ DWARFExpression::LocationListContainsLoadAddress (Process* process, addr_t load_
                 break;
             else
             {
-                lo_pc += loc_list_base_addr;
-                hi_pc += loc_list_base_addr;
+                lo_pc += loclist_base_addr - m_loclist_slide;
+                hi_pc += loclist_base_addr - m_loclist_slide;
 
-                if (lo_pc <= load_addr && load_addr < hi_pc)
+                if (lo_pc <= addr && addr < hi_pc)
                     return true;
 
                 offset += m_data.GetU16(&offset);
@@ -733,13 +759,14 @@ DWARFExpression::Evaluate
 (
     ExecutionContextScope *exe_scope,
     clang::ASTContext *ast_context,
+    lldb::addr_t loclist_base_load_addr,
     const Value* initial_value_ptr,
     Value& result,
     Error *error_ptr
 ) const
 {
     ExecutionContext exe_ctx (exe_scope);
-    return Evaluate(&exe_ctx, ast_context, initial_value_ptr, result, error_ptr);
+    return Evaluate(&exe_ctx, ast_context, loclist_base_load_addr, initial_value_ptr, result, error_ptr);
 }
 
 bool
@@ -747,6 +774,7 @@ DWARFExpression::Evaluate
 (
     ExecutionContext *exe_ctx,
     clang::ASTContext *ast_context,
+    lldb::addr_t loclist_base_load_addr,
     const Value* initial_value_ptr,
     Value& result,
     Error *error_ptr
@@ -757,43 +785,39 @@ DWARFExpression::Evaluate
         uint32_t offset = 0;
         addr_t pc = exe_ctx->frame->GetRegisterContext()->GetPC();
 
-        if (pc == LLDB_INVALID_ADDRESS)
+        if (loclist_base_load_addr != LLDB_INVALID_ADDRESS)
         {
-            if (error_ptr)
-                error_ptr->SetErrorString("Invalid PC in frame.");
-            return false;
-        }
-
-        addr_t loc_list_base_addr = m_loclist_base_addr.GetLoadAddress(exe_ctx->process);
-
-        if (loc_list_base_addr == LLDB_INVALID_ADDRESS)
-        {
-            if (error_ptr)
-                error_ptr->SetErrorString("Out of scope.");
-            return false;
-        }
-
-        while (m_data.ValidOffset(offset))
-        {
-            // We need to figure out what the value is for the location.
-            addr_t lo_pc = m_data.GetAddress(&offset);
-            addr_t hi_pc = m_data.GetAddress(&offset);
-            if (lo_pc == 0 && hi_pc == 0)
+            if (pc == LLDB_INVALID_ADDRESS)
             {
-                break;
+                if (error_ptr)
+                    error_ptr->SetErrorString("Invalid PC in frame.");
+                return false;
             }
-            else
+
+            addr_t curr_loclist_base_load_addr = loclist_base_load_addr;
+
+            while (m_data.ValidOffset(offset))
             {
-                lo_pc += loc_list_base_addr;
-                hi_pc += loc_list_base_addr;
-
-                uint16_t length = m_data.GetU16(&offset);
-
-                if (length > 0 && lo_pc <= pc && pc < hi_pc)
+                // We need to figure out what the value is for the location.
+                addr_t lo_pc = m_data.GetAddress(&offset);
+                addr_t hi_pc = m_data.GetAddress(&offset);
+                if (lo_pc == 0 && hi_pc == 0)
                 {
-                    return DWARFExpression::Evaluate (exe_ctx, ast_context, m_data, m_expr_locals, m_decl_map, offset, length, m_reg_kind, initial_value_ptr, result, error_ptr);
+                    break;
                 }
-                offset += length;
+                else
+                {
+                    lo_pc += curr_loclist_base_load_addr - m_loclist_slide;
+                    hi_pc += curr_loclist_base_load_addr - m_loclist_slide;
+
+                    uint16_t length = m_data.GetU16(&offset);
+
+                    if (length > 0 && lo_pc <= pc && pc < hi_pc)
+                    {
+                        return DWARFExpression::Evaluate (exe_ctx, ast_context, m_data, m_expr_locals, m_decl_map, offset, length, m_reg_kind, initial_value_ptr, result, error_ptr);
+                    }
+                    offset += length;
+                }
             }
         }
         if (error_ptr)

@@ -355,7 +355,7 @@ DWARFCompileUnit::SetDIERelations()
     // the running average ends up being in the stdout log.
     static size_t g_total_cu_debug_info_size = 0;
     static size_t g_total_num_dies = 0;
-    static size_t g_min_bytes_per_die = UINT_MAX;
+    static size_t g_min_bytes_per_die = UINT32_MAX;
     static size_t g_max_bytes_per_die = 0;
     const size_t num_dies = m_die_array.size();
     const size_t cu_debug_info_size = GetDebugInfoSize();
@@ -555,7 +555,9 @@ DWARFCompileUnit::Index
     lldb_private::UniqueCStringMap<dw_offset_t>& method_name_to_function_die,
     lldb_private::UniqueCStringMap<dw_offset_t>& selector_name_to_function_die,
     lldb_private::UniqueCStringMap<dw_offset_t>& name_to_type_die,
-    lldb_private::UniqueCStringMap<dw_offset_t>& name_to_global_die
+    lldb_private::UniqueCStringMap<dw_offset_t>& name_to_global_die,
+    const DWARFDebugRanges *debug_ranges,
+    DWARFDebugAranges *aranges
 )
 {
     const DataExtractor* debug_str = &m_dwarf2Data->get_debug_str_data();
@@ -599,6 +601,10 @@ DWARFCompileUnit::Index
         bool has_address = false;
         bool has_location = false;
         bool is_global_or_static_variable = false;
+        dw_addr_t lo_pc = DW_INVALID_ADDRESS;
+        dw_addr_t hi_pc = DW_INVALID_ADDRESS;
+        DWARFDebugRanges::RangeList ranges;
+
         dw_offset_t specification_die_offset = DW_INVALID_OFFSET;
         const size_t num_attributes = die.GetAttributes(m_dwarf2Data, this, attributes);
         if (num_attributes > 0)
@@ -634,7 +640,36 @@ DWARFCompileUnit::Index
                     break;
 
                 case DW_AT_low_pc:
+                    has_address = true;
+                    if (tag == DW_TAG_subprogram && attributes.ExtractFormValueAtIndex(m_dwarf2Data, i, form_value))
+                    {
+                        lo_pc = form_value.Unsigned();
+                    }
+                    break;
+
+                case DW_AT_high_pc:
+                    has_address = true;
+                    if (tag == DW_TAG_subprogram && attributes.ExtractFormValueAtIndex(m_dwarf2Data, i, form_value))
+                    {
+                        hi_pc = form_value.Unsigned();
+                    }
+                    break;
+
                 case DW_AT_ranges:
+                    if (tag == DW_TAG_subprogram && attributes.ExtractFormValueAtIndex(m_dwarf2Data, i, form_value))
+                    {
+                        if (debug_ranges)
+                        {
+                            debug_ranges->FindRanges(form_value.Unsigned(), ranges);
+                            // All DW_AT_ranges are relative to the base address of the
+                            // compile unit. We add the compile unit base address to make
+                            // sure all the addresses are properly fixed up.
+                            ranges.AddOffset(GetBaseAddress());
+                        }
+                    }
+                    has_address = true;
+                    break;
+
                 case DW_AT_entry_pc:
                     has_address = true;
                     break;
@@ -691,6 +726,22 @@ DWARFCompileUnit::Index
                     if (attributes.ExtractFormValueAtIndex(m_dwarf2Data, i, form_value))
                         specification_die_offset = form_value.Reference(this);
                     break;
+                }
+            }
+            
+            if (tag == DW_TAG_subprogram)
+            {
+                if (lo_pc != DW_INVALID_ADDRESS && hi_pc != DW_INVALID_ADDRESS)
+                {
+                    aranges->AppendRange (m_offset, lo_pc, hi_pc);
+                }
+                else
+                {
+                    for (size_t i=0, num_ranges = ranges.Size(); i<num_ranges; ++i)
+                    {
+                        const DWARFDebugRanges::Range *range = ranges.RangeAtIndex (i);
+                        aranges->AppendRange (m_offset, range->begin_offset, range->end_offset);
+                    }
                 }
             }
         }

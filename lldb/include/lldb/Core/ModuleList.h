@@ -177,7 +177,7 @@ public:
     ///
     /// @param[in] max_matches
     ///     Allow the number of matches to be limited to \a
-    ///     max_matches. Specify UINT_MAX to get all possible matches.
+    ///     max_matches. Specify UINT32_MAX to get all possible matches.
     ///
     /// @param[in] variable_list
     ///     A list of variables that gets the matches appended to (if
@@ -205,7 +205,7 @@ public:
     ///
     /// @param[in] max_matches
     ///     Allow the number of matches to be limited to \a
-    ///     max_matches. Specify UINT_MAX to get all possible matches.
+    ///     max_matches. Specify UINT32_MAX to get all possible matches.
     ///
     /// @param[in] variable_list
     ///     A list of variables that gets the matches appended to (if
@@ -287,7 +287,7 @@ public:
     ///
     /// @param[in] max_matches
     ///     Allow the number of matches to be limited to \a
-    ///     max_matches. Specify UINT_MAX to get all possible matches.
+    ///     max_matches. Specify UINT32_MAX to get all possible matches.
     ///
     /// @param[in] encoding
     ///     Limit the search to specific types, or get all types if

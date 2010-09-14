@@ -1152,8 +1152,8 @@ RegisterContextMach_arm::NumSupportedHardwareBreakpoints ()
 #if defined (__arm__)
     // Set the init value to something that will let us know that we need to
     // autodetect how many breakpoints are supported dynamically...
-    static uint32_t g_num_supported_hw_breakpoints = UINT_MAX
-    if (g_num_supported_hw_breakpoints == UINT_MAX)
+    static uint32_t g_num_supported_hw_breakpoints = UINT32_MAX;
+    if (g_num_supported_hw_breakpoints == UINT32_MAX)
     {
         // Set this to zero in case we can't tell if there are any HW breakpoints
         g_num_supported_hw_breakpoints = 0;
@@ -1282,8 +1282,8 @@ RegisterContextMach_arm::NumSupportedHardwareWatchpoints ()
 #if defined (__arm__)
     // Set the init value to something that will let us know that we need to
     // autodetect how many watchpoints are supported dynamically...
-    static uint32_t g_num_supported_hw_watchpoints = UINT_MAX;
-    if (g_num_supported_hw_watchpoints == UINT_MAX)
+    static uint32_t g_num_supported_hw_watchpoints = UINT32_MAX;
+    if (g_num_supported_hw_watchpoints == UINT32_MAX)
     {
         // Set this to zero in case we can't tell if there are any HW breakpoints
         g_num_supported_hw_watchpoints = 0;

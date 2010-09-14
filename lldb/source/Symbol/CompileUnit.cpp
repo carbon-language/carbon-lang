@@ -331,7 +331,7 @@ CompileUnit::ResolveSymbolContext
                 // we will use this for our subsequent line exact matches below.
                 found_line = sc.line_entry.line;
 
-                while (line_idx != UINT_MAX)
+                while (line_idx != UINT32_MAX)
                 {
                     sc_list.Append(sc);
                     line_idx = line_table->FindLineEntryIndexByFileIndex (line_idx + 1, file_indexes.front(), found_line, true, &sc.line_entry);
@@ -350,7 +350,7 @@ CompileUnit::ResolveSymbolContext
                 // we will use this for our subsequent line exact matches below.
                 found_line = sc.line_entry.line;
 
-                while (line_idx != UINT_MAX)
+                while (line_idx != UINT32_MAX)
                 {
                     sc_list.Append(sc);
                     line_idx = line_table->FindLineEntryIndexByFileIndex (line_idx + 1, file_indexes, found_line, true, &sc.line_entry);

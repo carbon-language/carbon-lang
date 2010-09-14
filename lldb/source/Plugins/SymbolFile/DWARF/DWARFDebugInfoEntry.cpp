@@ -56,7 +56,7 @@ DWARFDebugInfoEntry::Attributes::FindAttributeIndex(dw_attr_t attr) const
         if (pos->attr == attr)
             return std::distance(beg, pos);
     }
-    return UINT_MAX;
+    return UINT32_MAX;
 }
 
 void
@@ -69,14 +69,14 @@ DWARFDebugInfoEntry::Attributes::Append(const DWARFCompileUnit *cu, dw_offset_t 
 bool
 DWARFDebugInfoEntry::Attributes::ContainsAttribute(dw_attr_t attr) const
 {
-    return FindAttributeIndex(attr) != UINT_MAX;
+    return FindAttributeIndex(attr) != UINT32_MAX;
 }
 
 bool
 DWARFDebugInfoEntry::Attributes::RemoveAttribute(dw_attr_t attr)
 {
     uint32_t attr_index = FindAttributeIndex(attr);
-    if (attr_index != UINT_MAX)
+    if (attr_index != UINT32_MAX)
     {
         m_infos.erase(m_infos.begin() + attr_index);
         return true;
@@ -584,9 +584,9 @@ DWARFDebugInfoEntry::Compare
         if (a_attr_count != b_attr_count)
         {
             uint32_t is_decl_index = a_attrs.FindAttributeIndex(DW_AT_declaration);
-            uint32_t a_name_index = UINT_MAX;
-            uint32_t b_name_index = UINT_MAX;
-            if (is_decl_index != UINT_MAX)
+            uint32_t a_name_index = UINT32_MAX;
+            uint32_t b_name_index = UINT32_MAX;
+            if (is_decl_index != UINT32_MAX)
             {
                 if (a_attr_count == 2)
                 {
@@ -597,13 +597,13 @@ DWARFDebugInfoEntry::Compare
             else
             {
                 is_decl_index = b_attrs.FindAttributeIndex(DW_AT_declaration);
-                if (is_decl_index != UINT_MAX && a_attr_count == 2)
+                if (is_decl_index != UINT32_MAX && a_attr_count == 2)
                 {
                     a_name_index = a_attrs.FindAttributeIndex(DW_AT_name);
                     b_name_index = b_attrs.FindAttributeIndex(DW_AT_name);
                 }
             }
-            if (a_name_index != UINT_MAX && b_name_index != UINT_MAX)
+            if (a_name_index != UINT32_MAX && b_name_index != UINT32_MAX)
             {
                 if (a_attrs.ExtractFormValueAtIndex(dwarf2Data, a_name_index, a_form_value) &&
                     b_attrs.ExtractFormValueAtIndex(dwarf2Data, b_name_index, b_form_value))
@@ -794,6 +794,7 @@ DWARFDebugInfoEntry::GetDIENamesAndRanges
     dw_addr_t lo_pc = DW_INVALID_ADDRESS;
     dw_addr_t hi_pc = DW_INVALID_ADDRESS;
     std::vector<dw_offset_t> die_offsets;
+    bool set_frame_base_loclist_addr = false;
     if (m_abbrevDecl)
     {
         const DataExtractor& debug_info_data = dwarf2Data->get_debug_info_data();
@@ -892,18 +893,26 @@ DWARFDebugInfoEntry::GetDIENamesAndRanges
                         {
                             uint32_t block_offset = form_value.BlockData() - debug_info_data.GetDataStart();
                             uint32_t block_length = form_value.Unsigned();
-                            frame_base->SetOpcodeData(debug_info_data, block_offset, block_length, NULL);
+                            frame_base->SetOpcodeData(debug_info_data, block_offset, block_length);
                         }
                         else
                         {
-                            const DataExtractor&    debug_loc_data = dwarf2Data->get_debug_loc_data();
+                            const DataExtractor &debug_loc_data = dwarf2Data->get_debug_loc_data();
                             const dw_offset_t debug_loc_offset = form_value.Unsigned();
 
                             size_t loc_list_length = DWARFLocationList::Size(debug_loc_data, debug_loc_offset);
                             if (loc_list_length > 0)
                             {
-                                Address base_address(cu->GetBaseAddress(), dwarf2Data->GetObjectFile()->GetSectionList());
-                                frame_base->SetOpcodeData(debug_loc_data, debug_loc_offset, loc_list_length, &base_address);
+                                frame_base->SetOpcodeData(debug_loc_data, debug_loc_offset, loc_list_length);
+                                if (lo_pc != DW_INVALID_ADDRESS)
+                                {
+                                    assert (lo_pc >= cu->GetBaseAddress());
+                                    frame_base->SetLocationListSlide(lo_pc - cu->GetBaseAddress());
+                                }
+                                else
+                                {
+                                    set_frame_base_loclist_addr = true;
+                                }
                             }
                         }
                     }
@@ -927,6 +936,12 @@ DWARFDebugInfoEntry::GetDIENamesAndRanges
             else
                 ranges.AddRange(lo_pc, lo_pc);
         }
+    }
+    
+    if (set_frame_base_loclist_addr)
+    {
+        assert (ranges.LowestAddress(0) >= cu->GetBaseAddress());
+        frame_base->SetLocationListSlide(ranges.LowestAddress(0) - cu->GetBaseAddress());
     }
 
     if (ranges.Size() == 0 || (name == NULL) || (mangled == NULL))

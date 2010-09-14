@@ -294,7 +294,7 @@ LineTable::FindLineEntryIndexByFileIndex
     const size_t count = m_entries.size();
     std::vector<uint32_t>::const_iterator begin_pos = file_indexes.begin();
     std::vector<uint32_t>::const_iterator end_pos = file_indexes.end();
-    size_t best_match = UINT_MAX;
+    size_t best_match = UINT32_MAX;
 
     for (size_t idx = start_idx; idx < count; ++idx)
     {
@@ -329,20 +329,20 @@ LineTable::FindLineEntryIndexByFileIndex
         }
     }
 
-    if (best_match != UINT_MAX)
+    if (best_match != UINT32_MAX)
     {
         if (line_entry_ptr)
             ConvertEntryAtIndexToLineEntry (best_match, *line_entry_ptr);
         return best_match;
     }
-    return UINT_MAX;
+    return UINT32_MAX;
 }
 
 uint32_t
 LineTable::FindLineEntryIndexByFileIndex (uint32_t start_idx, uint32_t file_idx, uint32_t line, bool exact, LineEntry* line_entry_ptr)
 {
     const size_t count = m_entries.size();
-    size_t best_match = UINT_MAX;
+    size_t best_match = UINT32_MAX;
 
     for (size_t idx = start_idx; idx < count; ++idx)
     {
@@ -377,13 +377,13 @@ LineTable::FindLineEntryIndexByFileIndex (uint32_t start_idx, uint32_t file_idx,
         }
     }
 
-    if (best_match != UINT_MAX)
+    if (best_match != UINT32_MAX)
     {
         if (line_entry_ptr)
             ConvertEntryAtIndexToLineEntry (best_match, *line_entry_ptr);
         return best_match;
     }
-    return UINT_MAX;
+    return UINT32_MAX;
 }
 
 void

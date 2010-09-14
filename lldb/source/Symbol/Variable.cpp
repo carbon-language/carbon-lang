@@ -94,7 +94,15 @@ Variable::Dump(Stream *s, bool show_context) const
     if (m_location.IsValid())
     {
         s->PutCString(", location = ");
-        m_location.GetDescription(s, lldb::eDescriptionLevelBrief);
+        lldb::addr_t loclist_base_addr = LLDB_INVALID_ADDRESS;
+        if (m_location.IsLocationList())
+        {
+            SymbolContext variable_sc;
+            m_owner_scope->CalculateSymbolContext(&variable_sc);
+            if (variable_sc.function)
+                loclist_base_addr = variable_sc.function->GetAddressRange().GetBaseAddress().GetFileAddress();
+        }
+        m_location.GetDescription(s, lldb::eDescriptionLevelBrief, loclist_base_addr);
     }
 
     if (m_external)
@@ -130,6 +138,7 @@ Variable::IsInScope (StackFrame *frame)
     switch (m_scope)
     {
     case eValueTypeVariableGlobal:
+    case eValueTypeVariableStatic:
         // Globals and statics are always in scope.
         return true;
 
@@ -140,27 +149,40 @@ Variable::IsInScope (StackFrame *frame)
         // address range?
         if (m_location.IsLocationList())
         {
+            SymbolContext sc;
+            CalculateSymbolContext(&sc);
+            
+            // Currently we only support functions that have things with 
+            // locations lists. If this expands, we will need to add support
+            assert (sc.function);
+            Process *process = &frame->GetThread().GetProcess();
+            addr_t loclist_base_load_addr = sc.function->GetAddressRange().GetBaseAddress().GetLoadAddress (process);
+            if (loclist_base_load_addr == LLDB_INVALID_ADDRESS)
+                return false;
             // It is a location list. We just need to tell if the location
             // list contains the current address when converted to a load
             // address
-            return m_location.LocationListContainsLoadAddress (&frame->GetThread().GetProcess(), frame->GetRegisterContext()->GetPC());
+            return m_location.LocationListContainsAddress (loclist_base_load_addr, frame->GetFrameCodeAddress().GetLoadAddress (process));
         }
         else
         {
             // We don't have a location list, we just need to see if the block
             // that this variable was defined in is currently
-            Block *frame_block = frame->GetSymbolContext(eSymbolContextBlock).block;
+            Block *frame_block = frame->GetFrameBlock();
             if (frame_block)
             {
                 SymbolContext variable_sc;
                 CalculateSymbolContext (&variable_sc);
-                if (variable_sc.function && variable_sc.block)
-                    return variable_sc.block->FindBlockByID(frame_block->GetID()) != NULL;
+                if (frame_block == variable_sc.block)
+                    return true;
+
+                return frame_block->Contains (variable_sc.block);
             }
         }
         break;
 
     default:
+        assert (!"Unhandled case");
         break;
     }
     return false;

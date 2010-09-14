@@ -1024,7 +1024,7 @@ public:
     ///     The number of bytes that this object now contains.
     //------------------------------------------------------------------
     uint32_t
-    SetData (const DataExtractor& data, uint32_t offset = 0, uint32_t length = UINT_MAX);
+    SetData (const DataExtractor& data, uint32_t offset = 0, uint32_t length = UINT32_MAX);
 
     //------------------------------------------------------------------
     /// Adopt a subset of shared data in \a data_sp.
@@ -1052,7 +1052,7 @@ public:
     ///     The number of bytes that this object now contains.
     //------------------------------------------------------------------
     uint32_t
-    SetData (lldb::DataBufferSP& data_sp, uint32_t offset = 0, uint32_t length = UINT_MAX);
+    SetData (lldb::DataBufferSP& data_sp, uint32_t offset = 0, uint32_t length = UINT32_MAX);
 
     //------------------------------------------------------------------
     /// Set the byte_order value.

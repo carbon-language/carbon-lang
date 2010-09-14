@@ -59,8 +59,13 @@ public:
     bool        GetMaxRange(dw_addr_t& lo_pc, dw_addr_t& hi_pc) const;
     bool        Extract(const lldb_private::DataExtractor &debug_aranges_data);
     bool        Generate(SymbolFileDWARF* dwarf2Data);
-    void        InsertRange(dw_offset_t cu_offset, dw_addr_t low_pc, dw_addr_t high_pc);
-    void        InsertRange(const DWARFDebugAranges::Range& range);
+    void        InsertRange (dw_offset_t cu_offset, dw_addr_t low_pc, dw_addr_t high_pc);
+    void        InsertRange (const DWARFDebugAranges::Range& range);
+    
+                // Use append range multiple times and then call sort
+    void        AppendRange (dw_offset_t cu_offset, dw_addr_t low_pc, dw_addr_t high_pc);
+    void        Sort();
+
     const Range* RangeAtIndex(uint32_t idx) const
                 {
                     if (idx < m_aranges.size())

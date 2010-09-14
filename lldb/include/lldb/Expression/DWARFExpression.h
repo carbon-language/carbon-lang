@@ -57,15 +57,10 @@ public:
     ///
     /// @param[in] data_length
     ///     The byte length of the location expression.
-    ///
-    /// @param[in] loclist_base_addr_ptr
-    ///     If non-NULL, the address of the location list in the target 
-    ///     process's .debug_loc section.
     //------------------------------------------------------------------
     DWARFExpression(const DataExtractor& data,
                     uint32_t data_offset,
-                    uint32_t data_length,
-                    const Address* loclist_base_addr_ptr);
+                    uint32_t data_length);
 
     //------------------------------------------------------------------
     /// Copy constructor
@@ -86,9 +81,18 @@ public:
     ///
     /// @param[in] level
     ///     The level of verbosity to use.
+    ///
+    /// @param[in] location_list_base_addr
+    ///     If this is a location list based expression, this is the
+    ///     address of the object that owns it. NOTE: this value is 
+    ///     different from the DWARF version of the location list base
+    ///     address which is compile unit relative. This base address
+    ///     is the address of the object that owns the location list.
     //------------------------------------------------------------------
     void
-    GetDescription (Stream *s, lldb::DescriptionLevel level) const;
+    GetDescription (Stream *s, 
+                    lldb::DescriptionLevel level, 
+                    lldb::addr_t location_list_base_addr) const;
 
     //------------------------------------------------------------------
     /// Return true if the location expression contains data
@@ -115,11 +119,11 @@ public:
     ///     True if IsLocationList() is true and the address was found;
     ///     false otherwise.
     //------------------------------------------------------------------
+//    bool
+//    LocationListContainsLoadAddress (Process* process, const Address &addr) const;
+//
     bool
-    LocationListContainsLoadAddress (Process* process, const Address &addr) const;
-
-    bool
-    LocationListContainsLoadAddress (Process* process, lldb::addr_t load_addr) const;
+    LocationListContainsAddress (lldb::addr_t loclist_base_addr, lldb::addr_t addr) const;
     
     //------------------------------------------------------------------
     /// Make the expression parser read its location information from a
@@ -128,13 +132,9 @@ public:
     /// @param[in] data
     ///     A data extractor configured to read the DWARF location expression's
     ///     bytecode.
-    ///
-    /// @param[in] loclist_base_addr_ptr
-    ///     If non-NULL, the address of the location list in the target 
-    ///     process's .debug_loc section.
     //------------------------------------------------------------------
     void
-    SetOpcodeData(const DataExtractor& data, const Address* loclist_base_addr_ptr);
+    SetOpcodeData(const DataExtractor& data);
 
     //------------------------------------------------------------------
     /// Make the expression parser read its location information from a
@@ -149,23 +149,22 @@ public:
     ///
     /// @param[in] data_length
     ///     The byte length of the location expression.
-    ///
-    /// @param[in] loclist_base_addr_ptr
-    ///     If non-NULL, the address of the location list in the target 
-    ///     process's .debug_loc section.
     //------------------------------------------------------------------
     void
-    SetOpcodeData(const DataExtractor& data, uint32_t data_offset, uint32_t data_length, const Address* loclist_base_addr_ptr);
+    SetOpcodeData(const DataExtractor& data, uint32_t data_offset, uint32_t data_length);
 
     //------------------------------------------------------------------
-    /// Make the expression parser refer to a location list
+    /// Tells the expression that it refers to a location list.
     ///
-    /// @param[in] base_addr
-    ///     The address of the location list in the target process's .debug_loc
-    ///     section.
+    /// @param[in] slide
+    ///     This value should be a slide that is applied to any values
+    ///     in the location list data so the values become zero based
+    ///     offsets into the object that owns the location list. We need
+    ///     to make location lists relative to the objects that own them
+    ///     so we can relink addresses on the fly.
     //------------------------------------------------------------------
     void
-    SetLocationListBaseAddress(Address& base_addr);
+    SetLocationListSlide (lldb::addr_t slide);
 
     //------------------------------------------------------------------
     /// Return the call-frame-info style register kind
@@ -190,6 +189,7 @@ public:
     bool
     Evaluate (ExecutionContextScope *exe_scope,
               clang::ASTContext *ast_context,
+              lldb::addr_t loclist_base_load_addr,
               const Value* initial_value_ptr,
               Value& result,
               Error *error_ptr) const;
@@ -201,6 +201,7 @@ public:
     bool
     Evaluate (ExecutionContext *exe_ctx,
               clang::ASTContext *ast_context,
+              lldb::addr_t loclist_base_load_addr,
               const Value* initial_value_ptr,
               Value& result,
               Error *error_ptr) const;
@@ -318,7 +319,9 @@ protected:
     
     DataExtractor m_data;                       ///< A data extractor capable of reading opcode bytes
     int m_reg_kind;                             ///< One of the defines that starts with LLDB_REGKIND_
-    Address m_loclist_base_addr;                ///< Base address needed for location lists
+    lldb::addr_t m_loclist_slide;               ///< A value used to slide the location list offsets so that 
+                                                ///< they are relative to the object that owns the location list
+                                                ///< (the function for frame base and variable location lists)
     ClangExpressionVariableList *m_expr_locals; ///< The locals used by this expression.  See Evaluate()
     ClangExpressionDeclMap *m_decl_map;         ///< The external variables used by this expression.  See Evaluate()
 };

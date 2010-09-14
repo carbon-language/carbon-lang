@@ -35,7 +35,6 @@ DWARFDebugAranges::DWARFDebugAranges() :
 //----------------------------------------------------------------------
 static bool RangeLessThan (const DWARFDebugAranges::Range& range1, const DWARFDebugAranges::Range& range2)
 {
-//  printf("RangeLessThan -- 0x%8.8x < 0x%8.8x ? %d\n", range1.lo_pc, range1.lo_pc, range1.lo_pc < range2.lo_pc);
     return range1.lo_pc < range2.lo_pc;
 }
 
@@ -273,6 +272,54 @@ DWARFDebugAranges::InsertRange(const DWARFDebugAranges::Range& range)
     m_aranges.insert(insert_pos, range);
 }
 
+
+void
+DWARFDebugAranges::AppendRange (dw_offset_t offset, dw_addr_t low_pc, dw_addr_t high_pc)
+{
+    if (!m_aranges.empty())
+    {
+        if (m_aranges.back().offset == offset && m_aranges.back().hi_pc == low_pc)
+        {
+            m_aranges.back().hi_pc = high_pc;
+            return;
+        }
+    }
+    m_aranges.push_back (DWARFDebugAranges::Range(low_pc, high_pc, offset));
+}
+
+void
+DWARFDebugAranges::Sort()
+{    
+    // Sort our address range entries
+    std::stable_sort (m_aranges.begin(), m_aranges.end(), RangeLessThan);
+
+    // Merge any entries that have the same offset and same start/end address
+    RangeColl::iterator pos = m_aranges.begin();
+    RangeColl::iterator end = m_aranges.end();
+    while (pos != end)
+    {
+        RangeColl::iterator next_pos = pos + 1;
+        if (next_pos != end && 
+            pos->offset == next_pos->offset && 
+            pos->hi_pc == next_pos->lo_pc)
+        {
+            // We have found an entry whose end address it he same as the
+            // next entry's start address and the offsets are the same so 
+            // we can merge these two entries.
+            pos->hi_pc = next_pos->hi_pc;
+            // Erase the next entry that wasn't needed
+            pos = m_aranges.erase (next_pos);
+            // Now recompute the end of the collection
+            end = m_aranges.end();
+        }
+        else
+        {
+            // Two entries have either different offsets or there are gaps
+            // in the address range, move along, nothing to see here.
+            pos = next_pos;
+        }
+    }
+}
 
 //----------------------------------------------------------------------
 // FindAddress

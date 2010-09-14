@@ -830,9 +830,17 @@ ClangExpressionDeclMap::GetVariableValue(ExecutionContext &exe_ctx,
     
     std::auto_ptr<Value> var_location(new Value);
     
+    lldb::addr_t loclist_base_load_addr = LLDB_INVALID_ADDRESS;
+    
+    if (var_location_expr.IsLocationList())
+    {
+        SymbolContext var_sc;
+        var->CalculateSymbolContext (&var_sc);
+        loclist_base_load_addr = var_sc.function->GetAddressRange().GetBaseAddress().GetLoadAddress (exe_ctx.process);
+    }
     Error err;
     
-    if (!var_location_expr.Evaluate(&exe_ctx, exe_ast_ctx, NULL, *var_location.get(), &err))
+    if (!var_location_expr.Evaluate(&exe_ctx, exe_ast_ctx, loclist_base_load_addr, NULL, *var_location.get(), &err))
     {
         if (log)
             log->Printf("Error evaluating location: %s", err.AsCString());

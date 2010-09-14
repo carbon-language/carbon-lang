@@ -1008,7 +1008,7 @@ static bool FindMatchingAddress (const DWARFDebugLine::Row& row1, const DWARFDeb
 uint32_t
 DWARFDebugLine::LineTable::LookupAddress(dw_addr_t address, dw_addr_t cu_high_pc) const
 {
-    uint32_t index = UINT_MAX;
+    uint32_t index = UINT32_MAX;
     if (!rows.empty())
     {
         // Use the lower_bound algorithm to perform a binary search since we know
@@ -1036,7 +1036,7 @@ DWARFDebugLine::LineTable::LookupAddress(dw_addr_t address, dw_addr_t cu_high_pc
                 if (index > 0)
                     --index;
                 else
-                    index = UINT_MAX;
+                    index = UINT32_MAX;
             }
         }
     }

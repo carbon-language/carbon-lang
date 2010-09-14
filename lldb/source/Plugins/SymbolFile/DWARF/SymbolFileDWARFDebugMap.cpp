@@ -617,30 +617,15 @@ SymbolFileDWARFDebugMap::ResolveSymbolContext (const Address& exe_so_addr, uint3
                 {
                     SectionList *oso_section_list = oso_objfile->GetSectionList();
 
+                    SectionSP oso_symbol_section_sp (oso_section_list->FindSectionContainingLinkedFileAddress (exe_file_addr, UINT32_MAX));
 
-                    SectionSP oso_section_sp(oso_section_list->FindSectionByName(exe_so_addr.GetSection()->GetName()));
-                    if (oso_section_sp)
+                    if (oso_symbol_section_sp)
                     {
-                        SectionSP oso_symbol_section_sp (oso_section_sp->GetChildren().FindSectionContainingLinkedFileAddress (exe_file_addr));
-
-                        if (oso_symbol_section_sp)
-                        {
-                            const addr_t linked_file_addr = oso_symbol_section_sp->GetLinkedFileAddress();
-                            Address oso_so_addr (oso_symbol_section_sp.get(), exe_file_addr - linked_file_addr);
-                            if (oso_so_addr.IsSectionOffset())
-                                resolved_flags |= oso_dwarf->ResolveSymbolContext (oso_so_addr, resolve_scope, sc);
-                        }
+                        const addr_t linked_file_addr = oso_symbol_section_sp->GetLinkedFileAddress();
+                        Address oso_so_addr (oso_symbol_section_sp.get(), exe_file_addr - linked_file_addr);
+                        if (oso_so_addr.IsSectionOffset())
+                            resolved_flags |= oso_dwarf->ResolveSymbolContext (oso_so_addr, resolve_scope, sc);
                     }
-                    // Map the load address from in the executable back to a
-                    // section/offset address in the .o file so we can do
-                    // lookups in the .o DWARF.
-//                    Address oso_so_addr (exe_load_addr, false, comp_unit_info->debug_map_sections_sp.get());
-//
-//                    // Make sure we were able to resolve this back to a .o
-//                    // section offset address, and if so, resolve the context
-//                    // for everything that was asked for.
-//                    if (oso_so_addr.IsSectionOffset())
-//                        resolved_flags |= oso_dwarf->ResolveSymbolContext (oso_so_addr, resolve_scope, sc);
                 }
             }
         }

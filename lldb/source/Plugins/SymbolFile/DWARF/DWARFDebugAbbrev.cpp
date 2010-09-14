@@ -45,7 +45,7 @@ DWARFAbbreviationDeclarationSet::Extract(const DataExtractor& data, uint32_t* of
         else
         {
             if (prev_abbr_code + 1 != abbrevDeclaration.Code())
-                m_idx_offset = UINT_MAX;    // Out of order indexes, we can't do O(1) lookups...
+                m_idx_offset = UINT32_MAX;    // Out of order indexes, we can't do O(1) lookups...
         }
         prev_abbr_code = abbrevDeclaration.Code();
     }
@@ -69,7 +69,7 @@ DWARFAbbreviationDeclarationSet::Dump(Stream *s) const
 const DWARFAbbreviationDeclaration*
 DWARFAbbreviationDeclarationSet::GetAbbreviationDeclaration(dw_uleb128_t abbrCode) const
 {
-    if (m_idx_offset == UINT_MAX)
+    if (m_idx_offset == UINT32_MAX)
     {
         DWARFAbbreviationDeclarationCollConstIter pos;
         DWARFAbbreviationDeclarationCollConstIter end = m_decls.end();

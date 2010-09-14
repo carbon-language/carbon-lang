@@ -486,7 +486,11 @@ StackFrame::GetFrameBaseValue (Scalar &frame_base, Error *error_ptr)
             m_flags.Set(GOT_FRAME_BASE);
             ExecutionContext exe_ctx (&m_thread.GetProcess(), &m_thread, this);
             Value expr_value;
-            if (m_sc.function->GetFrameBaseExpression().Evaluate(&exe_ctx, NULL, NULL, expr_value, &m_frame_base_error) < 0)
+            addr_t loclist_base_addr = LLDB_INVALID_ADDRESS;
+            if (m_sc.function->GetFrameBaseExpression().IsLocationList())
+                loclist_base_addr = m_sc.function->GetAddressRange().GetBaseAddress().GetLoadAddress (&m_thread.GetProcess());
+
+            if (m_sc.function->GetFrameBaseExpression().Evaluate(&exe_ctx, NULL, loclist_base_addr, NULL, expr_value, &m_frame_base_error) == false)
             {
                 // We should really have an error if evaluate returns, but in case
                 // we don't, lets set the error to something at least.
