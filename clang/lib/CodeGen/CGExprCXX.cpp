@@ -677,6 +677,62 @@ static void EmitNewInitializer(CodeGenFunction &CGF, const CXXNewExpr *E,
   StoreAnyExprIntoOneUnit(CGF, E, NewPtr);
 }
 
+namespace {
+  /// A cleanup to call the given 'operator delete' function upon
+  /// abnormal exit from a new expression.
+  class CallDeleteDuringNew : public EHScopeStack::Cleanup {
+    size_t NumPlacementArgs;
+    const FunctionDecl *OperatorDelete;
+    llvm::Value *Ptr;
+    llvm::Value *AllocSize;
+
+    RValue *getPlacementArgs() { return reinterpret_cast<RValue*>(this+1); }
+
+  public:
+    static size_t getExtraSize(size_t NumPlacementArgs) {
+      return NumPlacementArgs * sizeof(RValue);
+    }
+
+    CallDeleteDuringNew(size_t NumPlacementArgs,
+                        const FunctionDecl *OperatorDelete,
+                        llvm::Value *Ptr,
+                        llvm::Value *AllocSize) 
+      : NumPlacementArgs(NumPlacementArgs), OperatorDelete(OperatorDelete),
+        Ptr(Ptr), AllocSize(AllocSize) {}
+
+    void setPlacementArg(unsigned I, RValue Arg) {
+      assert(I < NumPlacementArgs && "index out of range");
+      getPlacementArgs()[I] = Arg;
+    }
+
+    void Emit(CodeGenFunction &CGF, bool IsForEH) {
+      const FunctionProtoType *FPT
+        = OperatorDelete->getType()->getAs<FunctionProtoType>();
+      assert(FPT->getNumArgs() == NumPlacementArgs + 1 ||
+             FPT->getNumArgs() == NumPlacementArgs + 2);
+
+      CallArgList DeleteArgs;
+
+      // The first argument is always a void*.
+      FunctionProtoType::arg_type_iterator AI = FPT->arg_type_begin();
+      DeleteArgs.push_back(std::make_pair(RValue::get(Ptr), *AI++));
+
+      // A member 'operator delete' can take an extra 'size_t' argument.
+      if (FPT->getNumArgs() == NumPlacementArgs + 2)
+        DeleteArgs.push_back(std::make_pair(RValue::get(AllocSize), *AI++));
+
+      // Pass the rest of the arguments, which must match exactly.
+      for (unsigned I = 0; I != NumPlacementArgs; ++I)
+        DeleteArgs.push_back(std::make_pair(getPlacementArgs()[I], *AI++));
+
+      // Call 'operator delete'.
+      CGF.EmitCall(CGF.CGM.getTypes().getFunctionInfo(DeleteArgs, FPT),
+                   CGF.CGM.GetAddrOfFunction(OperatorDelete),
+                   ReturnValueSlot(), DeleteArgs, OperatorDelete);
+    }
+  };
+}
+
 llvm::Value *CodeGenFunction::EmitCXXNewExpr(const CXXNewExpr *E) {
   QualType AllocType = E->getAllocatedType();
   if (AllocType->isArrayType())
@@ -769,9 +825,24 @@ llvm::Value *CodeGenFunction::EmitCXXNewExpr(const CXXNewExpr *E) {
                                                    AllocType);
   }
 
+  // If there's an operator delete, enter a cleanup to call it if an
+  // exception is thrown.
+  EHScopeStack::stable_iterator CallOperatorDelete;
+  if (E->getOperatorDelete()) {
+    CallDeleteDuringNew *Cleanup = CGF.EHStack
+      .pushCleanupWithExtra<CallDeleteDuringNew>(EHCleanup,
+                                                 E->getNumPlacementArgs(),
+                                                 E->getOperatorDelete(),
+                                                 NewPtr, AllocSize);
+    for (unsigned I = 0, N = E->getNumPlacementArgs(); I != N; ++I)
+      Cleanup->setPlacementArg(I, NewArgs[I+1].first);
+    CallOperatorDelete = EHStack.stable_begin();
+  }
+
   const llvm::Type *ElementPtrTy
     = ConvertTypeForMem(AllocType)->getPointerTo(AS);
   NewPtr = Builder.CreateBitCast(NewPtr, ElementPtrTy);
+
   if (E->isArray()) {
     EmitNewInitializer(*this, E, NewPtr, NumElements, AllocSizeWithoutCookie);
 
@@ -784,6 +855,11 @@ llvm::Value *CodeGenFunction::EmitCXXNewExpr(const CXXNewExpr *E) {
   } else {
     EmitNewInitializer(*this, E, NewPtr, NumElements, AllocSizeWithoutCookie);
   }
+
+  // Deactivate the 'operator delete' cleanup if we finished
+  // initialization.
+  if (CallOperatorDelete.isValid())
+    DeactivateCleanupBlock(CallOperatorDelete);
   
   if (NullCheckResult) {
     Builder.CreateBr(NewEnd);

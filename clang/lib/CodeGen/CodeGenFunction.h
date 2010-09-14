@@ -285,6 +285,25 @@ public:
     (void) Obj;
   }
 
+  // Feel free to add more variants of the following:
+
+  /// Push a cleanup with non-constant storage requirements on the
+  /// stack.  The cleanup type must provide an additional static method:
+  ///   static size_t getExtraSize(size_t);
+  /// The argument to this method will be the value N, which will also
+  /// be passed as the first argument to the constructor.
+  ///
+  /// The data stored in the extra storage must obey the same
+  /// restrictions as normal cleanup member data.
+  ///
+  /// The pointer returned from this method is valid until the cleanup
+  /// stack is modified.
+  template <class T, class A0, class A1, class A2>
+  T *pushCleanupWithExtra(CleanupKind Kind, size_t N, A0 a0, A1 a1, A2 a2) {
+    void *Buffer = pushCleanup(Kind, sizeof(T) + T::getExtraSize(N));
+    return new (Buffer) T(N, a0, a1, a2);
+  }
+
   /// Pops a cleanup scope off the stack.  This should only be called
   /// by CodeGenFunction::PopCleanupBlock.
   void popCleanup();
@@ -542,7 +561,14 @@ public:
   /// process all branch fixups.
   void PopCleanupBlock(bool FallThroughIsBranchThrough = false);
 
-  void ActivateCleanup(EHScopeStack::stable_iterator Cleanup);
+  /// DeactivateCleanupBlock - Deactivates the given cleanup block.
+  /// The block cannot be reactivated.  Pops it if it's the top of the
+  /// stack.
+  void DeactivateCleanupBlock(EHScopeStack::stable_iterator Cleanup);
+
+  /// ActivateCleanupBlock - Activates an initially-inactive cleanup.
+  /// Cannot be used to resurrect a deactivated cleanup.
+  void ActivateCleanupBlock(EHScopeStack::stable_iterator Cleanup);
 
   /// \brief Enters a new scope for capturing cleanups, all of which
   /// will be executed once the scope is exited.
