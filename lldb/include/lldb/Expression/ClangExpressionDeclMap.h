@@ -342,14 +342,13 @@ private:
     std::string                 m_result_name;              ///< The name of the result variable ($1, for example)
     
     //------------------------------------------------------------------
-    /// Given a symbol context, find a variable that matches the given
-    /// name and type.  We need this for expression re-use; we may not
-    /// always get the same lldb::Variable back, and we want the expression
-    /// to work wherever it can.  Returns the variable defined in the
-    /// tightest scope.
+    /// Given a stack frame, find a variable that matches the given name and 
+    /// type.  We need this for expression re-use; we may not always get the
+    /// same lldb::Variable back, and we want the expression to work wherever 
+    /// it can.  Returns the variable defined in the tightest scope.
     ///
-    /// @param[in] sym_ctx
-    ///     The SymbolContext to search for the variable.
+    /// @param[in] frame
+    ///     The stack frame to use as a basis for finding the variable.
     ///
     /// @param[in] name
     ///     The name as a plain C string.
@@ -362,7 +361,13 @@ private:
     /// @return
     ///     The LLDB Variable found, or NULL if none was found.
     //------------------------------------------------------------------
+#ifdef OLD_CODE
     Variable *FindVariableInScope(const SymbolContext &sym_ctx,
+                                  const char *name,
+                                  TypeFromUser *type = NULL);
+#endif
+    
+    Variable *FindVariableInScope(StackFrame &frame,
                                   const char *name,
                                   TypeFromUser *type = NULL);
     
@@ -410,8 +415,14 @@ private:
     ///
     /// @param[in] var
     ///     The LLDB Variable that needs a Decl.
+    ///
+    /// @param[in] override_name
+    ///     A new name to give the Decl, if the one being looked for needs
+    ///     to be overriden.  Example: this for ___clang_this.
     //------------------------------------------------------------------
-    void AddOneVariable(NameSearchContext &context, Variable *var);
+    void AddOneVariable(NameSearchContext &context, 
+                        Variable *var, 
+                        const char *override_name);
     
     //------------------------------------------------------------------
     /// Use the NameSearchContext to generate a Decl for the given

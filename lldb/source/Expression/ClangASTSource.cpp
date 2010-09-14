@@ -85,11 +85,20 @@ clang::ASTContext *NameSearchContext::GetASTContext() {
     return &ASTSource.Context;
 }
 
-clang::NamedDecl *NameSearchContext::AddVarDecl(void *type) {
+clang::NamedDecl *NameSearchContext::AddVarDecl(void *type,
+                                                const char *override_name) {
+    IdentifierInfo *ii = NULL;
+    
+    if (override_name)
+        ii = &ASTSource.Context.Idents.get(override_name);
+    else
+        ii = Name.getAsIdentifierInfo();
+    
+        
     clang::NamedDecl *Decl = VarDecl::Create(ASTSource.Context, 
                                              const_cast<DeclContext*>(DC), 
                                              SourceLocation(), 
-                                             Name.getAsIdentifierInfo(), 
+                                             ii, 
                                              QualType::getFromOpaquePtr(type), 
                                              0, 
                                              VarDecl::Static, 

@@ -161,8 +161,15 @@ struct NameSearchContext {
     ///
     /// @param[in] type
     ///     The opaque QualType for the VarDecl being registered.
+    ///
+    /// @param[in] override_name
+    ///     In some cases, the name needs to be overridden (such as when
+    ///     searching for ___clang_this, which should resolve to this).
+    ///     This is the name to be used instead of what is being searched
+    ///     for.
     //------------------------------------------------------------------
-    clang::NamedDecl *AddVarDecl(void *type);
+    clang::NamedDecl *AddVarDecl(void *type,
+                                 const char *override_name = NULL);
     
     //------------------------------------------------------------------
     /// Create a FunDecl with the name being searched for and the provided

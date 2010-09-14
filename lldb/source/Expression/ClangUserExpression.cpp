@@ -38,7 +38,13 @@ ClangUserExpression::ClangUserExpression (const char *expr) :
 {
     StreamString m_transformed_stream;
     
-    m_transformed_stream.Printf("extern \"C\" void %s(void *___clang_arg) { %s; }\n",
+    m_transformed_stream.Printf("#define this ___clang_this     \n"
+                                "#define self ___clang_self     \n"
+                                "extern \"C\" void              \n"
+                                "%s(void *___clang_arg)         \n"
+                                "{                              \n"
+                                    "%s;                        \n" 
+                                "}                              \n",
                                 FunctionName(),
                                 m_expr_text.c_str());
     

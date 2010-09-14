@@ -539,7 +539,10 @@ ClangExpressionDeclMap::DoMaterializeOneVariable(bool dematerialize,
 {
     Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS);
     
-    Variable *var = FindVariableInScope(sym_ctx, name, &type);
+    if (!exe_ctx.frame)
+        return false;
+    
+    Variable *var = FindVariableInScope(*exe_ctx.frame, name, &type);
     
     if (!var)
     {
@@ -612,6 +615,7 @@ ClangExpressionDeclMap::DoMaterializeOneVariable(bool dematerialize,
     return true;
 }
 
+#ifdef OLD_CODE
 Variable*
 ClangExpressionDeclMap::FindVariableInScope(const SymbolContext &sym_ctx,
                                             const char *name,
@@ -715,6 +719,43 @@ ClangExpressionDeclMap::FindVariableInScope(const SymbolContext &sym_ctx,
     
     return NULL;
 }
+#endif
+
+Variable *
+ClangExpressionDeclMap::FindVariableInScope(StackFrame &frame,
+                                            const char *name,
+                                            TypeFromUser *type)
+{
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS);
+    
+    ConstString name_cs(name);
+    
+    VariableList *var_list = frame.GetVariableList(true);
+    
+    lldb::VariableSP var = var_list->FindVariable(name_cs);
+    
+    if (!var)
+        return NULL;
+    
+    if (!type)
+        return var.get();
+    
+    if (type->GetASTContext() == var->GetType()->GetClangAST())
+    {
+        if (!ClangASTContext::AreTypesSame(type->GetASTContext(), type->GetOpaqueQualType(), var->GetType()->GetOpaqueClangQualType()))
+            return NULL;
+    }
+    else
+    {
+        if (log)
+            log->PutCString("Skipping a candidate variable because of different AST contexts");
+        return NULL;
+    }
+    
+    return var.get();
+    
+    return NULL;
+}
 
 // Interface for ClangASTSource
 void 
@@ -723,14 +764,23 @@ ClangExpressionDeclMap::GetDecls(NameSearchContext &context,
 {
     Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS);
     
+    const char* override_name = NULL;
+    
+    if (!strcmp(name, "___clang_this"))
+        override_name = "this";
+    if (!strcmp(name, "___clang_self"))
+        override_name = "self";
+    
+    const char *search_name = (override_name ? override_name : name);
+    
     if (log)
-        log->Printf("Hunting for a definition for %s", name);
+        log->Printf("Hunting for a definition for %s", search_name);
     
     // Back out in all cases where we're not fully initialized
     if (!m_exe_ctx || !m_exe_ctx->frame || !m_sym_ctx)
         return;
-        
-    ConstString name_cs(name);
+    
+    ConstString name_cs(search_name);
     SymbolContextList sym_ctxs;
     
     m_sym_ctx->FindFunctionsByName(name_cs, false, sym_ctxs);
@@ -763,10 +813,10 @@ ClangExpressionDeclMap::GetDecls(NameSearchContext &context,
         }
     }
     
-    Variable *var = FindVariableInScope(*m_sym_ctx, name);
+    Variable *var = FindVariableInScope(*m_exe_ctx->frame, search_name);
     
     if (var)
-        AddOneVariable(context, var);
+        AddOneVariable(context, var, override_name);
     
     ClangExpressionVariable *pvar(m_persistent_vars->GetVariable(name));
     
@@ -893,7 +943,8 @@ ClangExpressionDeclMap::GetVariableValue(ExecutionContext &exe_ctx,
 
 void
 ClangExpressionDeclMap::AddOneVariable(NameSearchContext &context,
-                                       Variable* var)
+                                       Variable* var,
+                                       const char *override_name)
 {
     Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS);
     
@@ -906,10 +957,10 @@ ClangExpressionDeclMap::AddOneVariable(NameSearchContext &context,
                                            &ut,
                                            &pt);
     
-    NamedDecl *var_decl = context.AddVarDecl(pt.GetOpaqueQualType());
+    NamedDecl *var_decl = context.AddVarDecl(pt.GetOpaqueQualType(), override_name);
     
     ClangExpressionVariable &entity(m_found_entities.VariableAtIndex(m_found_entities.CreateVariable()));
-    entity.m_name       = context.Name.getAsString();
+    entity.m_name       = (override_name ? override_name : context.Name.getAsString());
     entity.m_user_type  = ut;
     
     entity.EnableParserVars();
