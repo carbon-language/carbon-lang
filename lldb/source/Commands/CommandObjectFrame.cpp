@@ -316,7 +316,8 @@ public:
                      uint32_t ptr_depth,
                      uint32_t curr_depth,
                      uint32_t max_depth,
-                     bool use_objc)
+                     bool use_objc,
+                     bool scope_already_checked)
     {
         if (valobj)
         {
@@ -338,12 +339,18 @@ public:
             const char *name_cstr = root_valobj_name ? root_valobj_name : valobj->GetName().AsCString("");
             s.Printf ("%s = ", name_cstr);
 
+            if (!scope_already_checked && !valobj->IsInScope(exe_scope->CalculateStackFrame()))
+            {
+                s.PutCString("error: out of scope");
+                return;
+            }
+            
             const char *val_cstr = valobj->GetValueAsCString(exe_scope);
             const char *err_cstr = valobj->GetError().AsCString();
 
             if (err_cstr)
             {
-                s.Printf ("error: %s\n", err_cstr);
+                s.Printf ("error: %s", err_cstr);
             }
             else
             {
@@ -395,7 +402,8 @@ public:
                                                  is_ptr_or_ref ? ptr_depth - 1 : ptr_depth,
                                                  curr_depth + 1,
                                                  max_depth,
-                                                 false);
+                                                 false,
+                                                 true);
                                 if (idx + 1 < num_children)
                                     s.PutChar(',');
                             }
@@ -476,13 +484,22 @@ public:
 
                                     if (valobj_sp)
                                     {
-                                        DumpValueObject (result, exe_ctx.frame, valobj_sp.get(), name_cstr, m_options.ptr_depth, 0, m_options.max_depth, false);
-
                                         if (m_options.show_decl && var_sp->GetDeclaration ().GetFile())
                                         {
-                                            var_sp->GetDeclaration ().Dump (&s);
+                                            var_sp->GetDeclaration ().DumpStopContext (&s, false);
+                                            s.PutCString (": ");
                                         }
 
+                                        DumpValueObject (result, 
+                                                         exe_ctx.frame, 
+                                                         valobj_sp.get(), 
+                                                         name_cstr, 
+                                                         m_options.ptr_depth, 
+                                                         0, 
+                                                         m_options.max_depth, 
+                                                         m_options.use_objc, 
+                                                         false);
+                                        
                                         s.EOL();
                                     }
                                 }
@@ -646,7 +663,8 @@ public:
                                                  ptr_depth, 
                                                  0, 
                                                  m_options.max_depth, 
-                                                 m_options.use_objc);
+                                                 m_options.use_objc,
+                                                 false);
 
                                 s.EOL();
                             }
@@ -701,7 +719,6 @@ public:
                             
                             if (dump_variable)
                             {
-                                //DumpVariable (result, &exe_ctx, var_sp.get());
 
                                 // Use the variable object code to make sure we are
                                 // using the same APIs as the the public API will be
@@ -709,22 +726,27 @@ public:
                                 valobj_sp = exe_ctx.frame->GetValueObjectForFrameVariable (var_sp);
                                 if (valobj_sp)
                                 {
-
-                                    if (m_options.show_decl && var_sp->GetDeclaration ().GetFile())
+                                    // When dumping all variables, don't print any variables
+                                    // that are not in scope to avoid extra unneeded output
+                                    if (valobj_sp->IsInScope (exe_ctx.frame))
                                     {
-                                        var_sp->GetDeclaration ().DumpStopContext (&s, false);
-                                        s.PutCString (": ");
-                                    }
-                                    DumpValueObject (result, 
-                                                     exe_ctx.frame, 
-                                                     valobj_sp.get(), 
-                                                     name_cstr, 
-                                                     m_options.ptr_depth, 
-                                                     0, 
-                                                     m_options.max_depth, 
-                                                     m_options.use_objc);
+                                        if (m_options.show_decl && var_sp->GetDeclaration ().GetFile())
+                                        {
+                                            var_sp->GetDeclaration ().DumpStopContext (&s, false);
+                                            s.PutCString (": ");
+                                        }
+                                        DumpValueObject (result, 
+                                                         exe_ctx.frame, 
+                                                         valobj_sp.get(), 
+                                                         name_cstr, 
+                                                         m_options.ptr_depth, 
+                                                         0, 
+                                                         m_options.max_depth, 
+                                                         m_options.use_objc,
+                                                         true);
 
-                                    s.EOL();
+                                        s.EOL();
+                                    }
                                 }
                             }
                         }

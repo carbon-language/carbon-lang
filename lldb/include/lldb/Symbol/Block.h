@@ -133,6 +133,17 @@ public:
     bool
     Contains (const VMRange& range) const;
 
+    //------------------------------------------------------------------
+    /// Check if this object contains "block" as a child block at any
+    /// depth.
+    ///
+    /// @param[in] block
+    ///     A potential child block.
+    ///
+    /// @return
+    ///     Returns \b true if \a block is a child of this block, \b 
+    ///     false otherwise.
+    //------------------------------------------------------------------
     bool
     Contains (const Block *block) const;
 

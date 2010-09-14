@@ -168,15 +168,15 @@ Variable::IsInScope (StackFrame *frame)
         {
             // We don't have a location list, we just need to see if the block
             // that this variable was defined in is currently
-            Block *frame_block = frame->GetFrameBlock();
-            if (frame_block)
+            Block *deepest_frame_block = frame->GetSymbolContext(eSymbolContextBlock).block;
+            if (deepest_frame_block)
             {
                 SymbolContext variable_sc;
                 CalculateSymbolContext (&variable_sc);
-                if (frame_block == variable_sc.block)
+                if (variable_sc.block == deepest_frame_block)
                     return true;
 
-                return frame_block->Contains (variable_sc.block);
+                return variable_sc.block->Contains (deepest_frame_block);
             }
         }
         break;

@@ -239,17 +239,17 @@ Block::Contains (addr_t range_offset) const
 bool
 Block::Contains (const Block *block) const
 {
-    // Block objects can't contain themselves...
     if (this == block)
-        return false;
+        return false; // This block doesn't contain itself...
     
+    // Walk the parent chain for "block" and see if any if them match this block
     const Block *block_parent;
     for (block_parent = block->GetParent();
          block_parent != NULL;
          block_parent = block_parent->GetParent())
     {
-        if (block_parent == block)
-            return true;
+        if (this == block_parent)
+            return true; // One of the parents of "block" is this object!
     }
     return false;
 }
