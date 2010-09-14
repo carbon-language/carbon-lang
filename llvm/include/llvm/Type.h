@@ -12,7 +12,6 @@
 
 #include "llvm/AbstractTypeUser.h"
 #include "llvm/Support/Casting.h"
-#include "llvm/System/DataTypes.h"
 #include "llvm/ADT/GraphTraits.h"
 #include <string>
 #include <vector>

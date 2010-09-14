@@ -25,7 +25,6 @@
 #include "llvm/OperandTraits.h"
 #include "llvm/ADT/APInt.h"
 #include "llvm/ADT/APFloat.h"
-#include "llvm/ADT/SmallVector.h"
 #include <vector>
 
 namespace llvm {
@@ -40,6 +39,8 @@ template<class ConstantClass, class TypeClass, class ValType>
 struct ConstantCreator;
 template<class ConstantClass, class TypeClass>
 struct ConvertConstantType;
+template<typename T, unsigned N>
+class SmallVector;
 
 //===----------------------------------------------------------------------===//
 /// This is the shared class of boolean and integer constants. This class 
