@@ -1570,9 +1570,10 @@ void CGDebugInfo::UpdateLineDirectiveRegion(CGBuilderTy &Builder) {
           && "error handling  #line regions!");
 
   bool SeenThisFile = false;
+  // Chek if current file is already seen earlier.
   for(std::vector<const char *>::iterator I = LineDirectiveFiles.begin(),
         E = LineDirectiveFiles.end(); I != E; ++I)
-    if (!strcmp(PPLoc.getFilename(), *I)) {
+    if (!strcmp(PCLoc.getFilename(), *I)) {
       SeenThisFile = true;
       break;
     }
