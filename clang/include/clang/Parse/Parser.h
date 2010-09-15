@@ -34,7 +34,8 @@ namespace clang {
   class Parser;
   class PragmaUnusedHandler;
   class ColonProtectionRAIIObject;
-
+  class InMessageExpressionRAIIObject;
+  
 /// PrettyStackTraceParserEntry - If a crash happens while the parser is active,
 /// an entry is printed for it.
 class PrettyStackTraceParserEntry : public llvm::PrettyStackTraceEntry {
@@ -75,6 +76,7 @@ namespace prec {
 class Parser : public CodeCompletionHandler {
   friend class PragmaUnusedHandler;
   friend class ColonProtectionRAIIObject;
+  friend class InMessageExpressionRAIIObject;
   friend class ParenBraceBracketBalancer;
   PrettyStackTraceParserEntry CrashInfo;
 
@@ -131,6 +133,13 @@ class Parser : public CodeCompletionHandler {
   /// ColonProtectionRAIIObject RAII object.
   bool ColonIsSacred;
 
+  /// \brief When true, we are directly inside an Ojective-C messsage 
+  /// send expression.
+  ///
+  /// This is managed by the \c InMessageExpressionRAIIObject class, and
+  /// should not be set directly.
+  bool InMessageExpression;
+  
   /// The "depth" of the template parameters currently being parsed.
   unsigned TemplateParameterDepth;
 

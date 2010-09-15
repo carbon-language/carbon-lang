@@ -13,6 +13,7 @@
 
 #include "clang/Parse/ParseDiagnostic.h"
 #include "clang/Parse/Parser.h"
+#include "RAIIObjectsForParser.h"
 #include "clang/Sema/DeclSpec.h"
 #include "clang/Sema/PrettyDeclStackTrace.h"
 #include "clang/Sema/Scope.h"
@@ -1785,6 +1786,8 @@ ExprResult Parser::ParseObjCAtExpression(SourceLocation AtLoc) {
 ///     simple-type-specifier
 ///     typename-specifier
 bool Parser::ParseObjCXXMessageReceiver(bool &IsExpr, void *&TypeOrExpr) {
+  InMessageExpressionRAIIObject InMessage(*this, true);
+
   if (Tok.is(tok::identifier) || Tok.is(tok::coloncolon) || 
       Tok.is(tok::kw_typename) || Tok.is(tok::annot_cxxscope))
     TryAnnotateTypeOrScopeToken();
@@ -1878,6 +1881,8 @@ ExprResult Parser::ParseObjCMessageExpression() {
     SkipUntil(tok::r_square);
     return ExprError();
   }
+  
+  InMessageExpressionRAIIObject InMessage(*this, true);
   
   if (getLang().CPlusPlus) {
     // We completely separate the C and C++ cases because C++ requires
@@ -1992,6 +1997,8 @@ Parser::ParseObjCMessageExpressionBody(SourceLocation LBracLoc,
                                        SourceLocation SuperLoc,
                                        ParsedType ReceiverType,
                                        ExprArg ReceiverExpr) {
+  InMessageExpressionRAIIObject InMessage(*this, true);
+
   if (Tok.is(tok::code_completion)) {
     if (SuperLoc.isValid())
       Actions.CodeCompleteObjCSuperMessage(getCurScope(), SuperLoc, 0, 0);

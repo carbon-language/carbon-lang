@@ -626,12 +626,12 @@ Sema::ObjCMessageKind Sema::getObjCMessageKind(Scope *S,
 }
 
 ExprResult Sema::ActOnSuperMessage(Scope *S, 
-                                               SourceLocation SuperLoc,
-                                               Selector Sel,
-                                               SourceLocation LBracLoc,
-                                               SourceLocation SelectorLoc,
-                                               SourceLocation RBracLoc,
-                                               MultiExprArg Args) {
+                                   SourceLocation SuperLoc,
+                                   Selector Sel,
+                                   SourceLocation LBracLoc,
+                                   SourceLocation SelectorLoc,
+                                   SourceLocation RBracLoc,
+                                   MultiExprArg Args) {
   // Determine whether we are inside a method or not.
   ObjCMethodDecl *Method = getCurMethodDecl();
   if (!Method) {
@@ -702,13 +702,21 @@ ExprResult Sema::ActOnSuperMessage(Scope *S,
 ///
 /// \param Args The message arguments.
 ExprResult Sema::BuildClassMessage(TypeSourceInfo *ReceiverTypeInfo,
-                                               QualType ReceiverType,
-                                               SourceLocation SuperLoc,
-                                               Selector Sel,
-                                               ObjCMethodDecl *Method,
-                                               SourceLocation LBracLoc, 
-                                               SourceLocation RBracLoc,
-                                               MultiExprArg ArgsIn) {
+                                   QualType ReceiverType,
+                                   SourceLocation SuperLoc,
+                                   Selector Sel,
+                                   ObjCMethodDecl *Method,
+                                   SourceLocation LBracLoc, 
+                                   SourceLocation RBracLoc,
+                                   MultiExprArg ArgsIn) {
+  SourceLocation Loc = SuperLoc.isValid()? SuperLoc
+    : ReceiverTypeInfo->getTypeLoc().getLocalSourceRange().getBegin();
+  if (LBracLoc.isInvalid()) {
+    Diag(Loc, diag::err_missing_open_square_message_send)
+      << FixItHint::CreateInsertion(Loc, "[");
+    LBracLoc = Loc;
+  }
+  
   if (ReceiverType->isDependentType()) {
     // If the receiver type is dependent, we can't type-check anything
     // at this point. Build a dependent expression.
@@ -720,9 +728,6 @@ ExprResult Sema::BuildClassMessage(TypeSourceInfo *ReceiverTypeInfo,
                                          Args, NumArgs, RBracLoc));
   }
   
-  SourceLocation Loc = SuperLoc.isValid()? SuperLoc
-             : ReceiverTypeInfo->getTypeLoc().getLocalSourceRange().getBegin();
-
   // Find the class to which we are sending this message.
   ObjCInterfaceDecl *Class = 0;
   const ObjCObjectType *ClassType = ReceiverType->getAs<ObjCObjectType>();
@@ -837,6 +842,15 @@ ExprResult Sema::BuildInstanceMessage(Expr *Receiver,
                                                   SourceLocation LBracLoc, 
                                                   SourceLocation RBracLoc,
                                                   MultiExprArg ArgsIn) {
+  // The location of the receiver.
+  SourceLocation Loc = SuperLoc.isValid()? SuperLoc : Receiver->getLocStart();
+  
+  if (LBracLoc.isInvalid()) {
+    Diag(Loc, diag::err_missing_open_square_message_send)
+      << FixItHint::CreateInsertion(Loc, "[");
+    LBracLoc = Loc;
+  }
+
   // If we have a receiver expression, perform appropriate promotions
   // and determine receiver type.
   if (Receiver) {
@@ -857,9 +871,6 @@ ExprResult Sema::BuildInstanceMessage(Expr *Receiver,
     DefaultFunctionArrayLvalueConversion(Receiver);
     ReceiverType = Receiver->getType();
   }
-
-  // The location of the receiver.
-  SourceLocation Loc = SuperLoc.isValid()? SuperLoc : Receiver->getLocStart();
 
   if (!Method) {
     // Handle messages to id.

@@ -80,6 +80,22 @@ namespace clang {
     }
   };
   
+  class InMessageExpressionRAIIObject {
+    bool &InMessageExpression;
+    bool OldValue;
+    
+  public:
+    InMessageExpressionRAIIObject(Parser &P, bool Value)
+      : InMessageExpression(P.InMessageExpression), 
+        OldValue(P.InMessageExpression) {
+      InMessageExpression = Value;
+    }
+    
+    ~InMessageExpressionRAIIObject() {
+      InMessageExpression = OldValue;
+    }
+  };
+  
   /// \brief RAII object that makes sure paren/bracket/brace count is correct
   /// after declaration/statement parsing, even when there's a parsing error.
   class ParenBraceBracketBalancer {

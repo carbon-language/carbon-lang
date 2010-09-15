@@ -460,7 +460,8 @@ StmtResult Parser::ParseCompoundStatementBody(bool isStmtExpr) {
   PrettyStackTraceLoc CrashInfo(PP.getSourceManager(),
                                 Tok.getLocation(),
                                 "in compound statement ('{}')");
-
+  InMessageExpressionRAIIObject InMessage(*this, false);
+  
   SourceLocation LBraceLoc = ConsumeBrace();  // eat the '{'.
 
   // TODO: "__label__ X, Y, Z;" is the GNU "Local Label" extension.  These are

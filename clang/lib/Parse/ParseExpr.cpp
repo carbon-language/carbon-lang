@@ -576,9 +576,10 @@ ExprResult Parser::ParseCastExpression(bool isUnaryExpression,
     SourceLocation RParenLoc;
     
     {
-      // The inside of the parens don't need to be a colon protected scope.
+      // The inside of the parens don't need to be a colon protected scope, and
+      // isn't immediately a message send.
       ColonProtectionRAIIObject X(*this, false);
-    
+
       Res = ParseParenExpression(ParenExprType, false/*stopIfCastExr*/,
                                  TypeOfCast, CastTy, RParenLoc);
       if (Res.isInvalid()) 
@@ -978,6 +979,19 @@ Parser::ParsePostfixExpressionSuffix(ExprResult LHS) {
   SourceLocation Loc;
   while (1) {
     switch (Tok.getKind()) {
+    case tok::identifier:
+      // If we see identifier: after an expression, and we're not already in a
+      // message send, then this is probably a message send with a missing
+      // opening bracket '['.
+      if (getLang().ObjC1 && !InMessageExpression && 
+          NextToken().is(tok::colon)) {
+        LHS = ParseObjCMessageExpressionBody(SourceLocation(), SourceLocation(),
+                                             ParsedType(), LHS.get());
+        break;
+      }
+        
+      // Fall through; this isn't a message send.
+                
     default:  // Not a postfix-expression suffix.
       return move(LHS);
     case tok::l_square: {  // postfix-expression: p-e '[' expression ']'
@@ -1008,6 +1022,8 @@ Parser::ParsePostfixExpressionSuffix(ExprResult LHS) {
     }
 
     case tok::l_paren: {   // p-e: p-e '(' argument-expression-list[opt] ')'
+      InMessageExpressionRAIIObject InMessage(*this, false);
+      
       ExprVector ArgExprs(Actions);
       CommaLocsTy CommaLocs;
 
@@ -1483,8 +1499,13 @@ Parser::ParseParenExpression(ParenParseOption &ExprType, bool stopIfCastExpr,
       return ParseCXXAmbiguousParenExpression(ExprType, CastTy,
                                               OpenLoc, RParenLoc);
 
-    TypeResult Ty = ParseTypeName();
-
+    TypeResult Ty;
+    
+    {
+      InMessageExpressionRAIIObject InMessage(*this, false);
+      Ty = ParseTypeName();
+    }
+    
     // Match the ')'.
     if (Tok.is(tok::r_paren))
       RParenLoc = ConsumeParen();
@@ -1532,6 +1553,8 @@ Parser::ParseParenExpression(ParenParseOption &ExprType, bool stopIfCastExpr,
     return ExprError();
   } else if (TypeOfCast) {
     // Parse the expression-list.
+    InMessageExpressionRAIIObject InMessage(*this, false);
+    
     ExprVector ArgExprs(Actions);
     CommaLocsTy CommaLocs;
 
@@ -1541,6 +1564,8 @@ Parser::ParseParenExpression(ParenParseOption &ExprType, bool stopIfCastExpr,
                                           move_arg(ArgExprs), TypeOfCast);
     }
   } else {
+    InMessageExpressionRAIIObject InMessage(*this, false);
+    
     Result = ParseExpression();
     ExprType = SimpleExpr;
     if (!Result.isInvalid() && Tok.is(tok::r_paren))
