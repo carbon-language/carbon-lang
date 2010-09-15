@@ -26,6 +26,7 @@
 namespace llvm {
   class raw_ostream;
 }
+
 namespace clang {
   class Decl;
   class Stmt;
