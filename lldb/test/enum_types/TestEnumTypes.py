@@ -17,7 +17,6 @@ class EnumTypesTestCase(TestBase):
 
     # rdar://problem/8394746
     # 'image lookup -t days' returns nothing with dwarf debug format.
-    @unittest2.expectedFailure
     def test_with_dwarf(self):
         """Test 'image lookup -t days' and check for correct display."""
         self.buildDwarf()
