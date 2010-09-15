@@ -26,9 +26,6 @@ public:
     bool
     IsValid() const;
 
-    void
-    Print (FILE *out_file, lldb::SBFrame *frame, bool print_type, bool print_value);
-
     const char *
     GetName();
 
@@ -81,8 +78,6 @@ public:
     void *
     GetOpaqueType();
 
-    //void
-    //DumpType ();
 
     lldb::SBValue
     Dereference ();

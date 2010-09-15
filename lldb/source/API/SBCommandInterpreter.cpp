@@ -18,7 +18,6 @@
 #include "lldb/API/SBBroadcaster.h"
 #include "lldb/API/SBDebugger.h"
 #include "lldb/API/SBCommandReturnObject.h"
-#include "lldb/API/SBCommandContext.h"
 #include "lldb/API/SBSourceManager.h"
 #include "lldb/API/SBCommandInterpreter.h"
 #include "lldb/API/SBProcess.h"
@@ -62,14 +61,6 @@ SBCommandInterpreter::AliasExists (const char *cmd)
     return false;
 }
 
-bool
-SBCommandInterpreter::UserCommandExists (const char *cmd)
-{
-    if (m_opaque_ptr)
-        return m_opaque_ptr->UserCommandExists (cmd);
-    return false;
-}
-
 lldb::ReturnStatus
 SBCommandInterpreter::HandleCommand (const char *command_line, SBCommandReturnObject &result, bool add_to_history)
 {
@@ -107,18 +98,6 @@ SBCommandInterpreter::HandleCompletion (const char *current_line,
     return num_completions;
 }
 
-//const char **
-//SBCommandInterpreter::GetEnvironmentVariables ()
-//{
-//    if (m_opaque_ptr)
-//    {
-//        //const Args *env_vars =  m_opaque_ptr->GetEnvironmentVariables();
-//        //if (env_vars)
-//        //    return env_vars->GetConstArgumentVector ();
-//    }
-//    return NULL;
-//}
-
 bool
 SBCommandInterpreter::HasCommands ()
 {
@@ -136,28 +115,12 @@ SBCommandInterpreter::HasAliases ()
 }
 
 bool
-SBCommandInterpreter::HasUserCommands ()
-{
-    if (m_opaque_ptr)
-        return m_opaque_ptr->HasUserCommands ();
-    return false;
-}
-
-bool
 SBCommandInterpreter::HasAliasOptions ()
 {
     if (m_opaque_ptr)
         return m_opaque_ptr->HasAliasOptions ();
     return false;
 }
-
-//bool
-//SBCommandInterpreter::HasInterpreterVariables ()
-//{
-//    if (m_opaque_ptr)
-//        return m_opaque_ptr->HasInterpreterVariables ();
-//    return false;
-//}
 
 SBProcess
 SBCommandInterpreter::GetProcess ()

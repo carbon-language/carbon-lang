@@ -52,25 +52,6 @@ public:
     GetQueueName() const;
 
     void
-    DisplayFramesForSelectedContext (FILE *out,
-                                    FILE *err,
-                                    uint32_t first_frame,
-                                    uint32_t num_frames,
-                                    bool show_frame_info,
-                                    uint32_t num_frames_with_source,
-                                    uint32_t source_lines_before = 3,
-                                    uint32_t source_lines_after = 3);
-
-    bool
-    DisplaySingleFrameForSelectedContext (FILE *out,
-                                         FILE *err,
-                                         lldb::SBFrame &frame,
-                                         bool show_frame_info,
-                                         bool show_source,
-                                         uint32_t source_lines_after,
-                                         uint32_t source_lines_before);
-
-    void
     StepOver (lldb::RunMode stop_other_threads = lldb::eOnlyDuringStepping);
 
     void

@@ -42,9 +42,6 @@ public:
     IsValid() const;
 
     void
-    Dump (FILE *f);
-
-    void
     ClearAllBreakpointSites ();
 
     lldb::SBBreakpointLocation
@@ -58,9 +55,6 @@ public:
 
     lldb::SBBreakpointLocation
     GetLocationAtIndex (uint32_t index);
-
-    void
-    ListLocations (FILE *, const char *description_level = "full");
 
     void
     SetEnabled (bool enable);
@@ -111,7 +105,7 @@ public:
     GetNumLocations() const;
 
     void
-    GetDescription (FILE *, const char *description_level, bool describe_locations = false);
+    GetDescription (FILE *, const char *description_level);
 
     static lldb::BreakpointEventType
     GetBreakpointEventTypeFromEvent (const lldb::SBEvent& event);

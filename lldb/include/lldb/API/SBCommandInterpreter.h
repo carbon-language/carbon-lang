@@ -36,14 +36,8 @@ public:
     bool
     AliasExists (const char *cmd);
 
-    bool
-    UserCommandExists (const char *cmd);
-
     lldb::SBBroadcaster
     GetBroadcaster ();
-
-    //const char **
-    //GetEnvironmentVariables ();
 
     bool
     HasCommands ();
@@ -52,13 +46,7 @@ public:
     HasAliases ();
 
     bool
-    HasUserCommands ();
-
-    bool
     HasAliasOptions ();
-
-    //bool
-    //HasInterpreterVariables ();
 
     lldb::SBProcess
     GetProcess ();

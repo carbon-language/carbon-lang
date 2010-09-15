@@ -342,13 +342,13 @@ SBProcess::AttachByName (const char *name, bool wait_for_launch)
 }
 
 lldb::pid_t
-SBProcess::AttachByPID (lldb::pid_t attach_pid)  // DEPRECATED: will be removed in a few builds in favor of SBError AttachByPID(pid_t)
+SBProcess::AttachByPID (lldb::pid_t attach_pid) // DEPRECATED: will be removed in a few builds in favor of SBError AttachByPID(pid_t)
 {
     Attach (attach_pid);
     return GetProcessID();
 }
 
-    
+
 SBError
 SBProcess::Attach (lldb::pid_t attach_pid)
 {

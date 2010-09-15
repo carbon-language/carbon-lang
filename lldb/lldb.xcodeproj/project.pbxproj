@@ -29,7 +29,6 @@
 		26680219115FD13D008E1FE4 /* SBBreakpoint.h in Headers */ = {isa = PBXBuildFile; fileRef = 9AF16A9E11402D69007A7B3F /* SBBreakpoint.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		2668021A115FD13D008E1FE4 /* SBBreakpointLocation.h in Headers */ = {isa = PBXBuildFile; fileRef = 9AF16CC611408686007A7B3F /* SBBreakpointLocation.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		2668021B115FD13D008E1FE4 /* SBBroadcaster.h in Headers */ = {isa = PBXBuildFile; fileRef = 9A9830F31125FC5800A56CB0 /* SBBroadcaster.h */; settings = {ATTRIBUTES = (Public, ); }; };
-		2668021C115FD13D008E1FE4 /* SBCommandContext.h in Headers */ = {isa = PBXBuildFile; fileRef = 9A9830F51125FC5800A56CB0 /* SBCommandContext.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		2668021D115FD13D008E1FE4 /* SBCommandInterpreter.h in Headers */ = {isa = PBXBuildFile; fileRef = 9A9830F71125FC5800A56CB0 /* SBCommandInterpreter.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		2668021E115FD13D008E1FE4 /* SBCommandReturnObject.h in Headers */ = {isa = PBXBuildFile; fileRef = 9A9830F91125FC5800A56CB0 /* SBCommandReturnObject.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		2668021F115FD13D008E1FE4 /* SBCommunication.h in Headers */ = {isa = PBXBuildFile; fileRef = 260223E7115F06D500A601A2 /* SBCommunication.h */; settings = {ATTRIBUTES = (Public, ); }; };
@@ -62,7 +61,6 @@
 		26680331116005E9008E1FE4 /* SBCommunication.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 260223E8115F06E500A601A2 /* SBCommunication.cpp */; };
 		26680332116005EA008E1FE4 /* SBCommandReturnObject.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9A9830F81125FC5800A56CB0 /* SBCommandReturnObject.cpp */; };
 		26680333116005EC008E1FE4 /* SBCommandInterpreter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9A9830F61125FC5800A56CB0 /* SBCommandInterpreter.cpp */; };
-		26680334116005ED008E1FE4 /* SBCommandContext.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9A9830F41125FC5800A56CB0 /* SBCommandContext.cpp */; };
 		26680335116005EE008E1FE4 /* SBBroadcaster.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9A9830F21125FC5800A56CB0 /* SBBroadcaster.cpp */; };
 		26680336116005EF008E1FE4 /* SBBreakpointLocation.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9AF16CC7114086A1007A7B3F /* SBBreakpointLocation.cpp */; };
 		26680337116005F1008E1FE4 /* SBBreakpoint.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9AF16A9C11402D5B007A7B3F /* SBBreakpoint.cpp */; };
@@ -1043,8 +1041,6 @@
 		9A82010B10FFB49800182560 /* ScriptInterpreter.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ScriptInterpreter.cpp; path = source/Interpreter/ScriptInterpreter.cpp; sourceTree = "<group>"; };
 		9A9830F21125FC5800A56CB0 /* SBBroadcaster.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SBBroadcaster.cpp; path = source/API/SBBroadcaster.cpp; sourceTree = "<group>"; };
 		9A9830F31125FC5800A56CB0 /* SBBroadcaster.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SBBroadcaster.h; path = include/lldb/API/SBBroadcaster.h; sourceTree = "<group>"; };
-		9A9830F41125FC5800A56CB0 /* SBCommandContext.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SBCommandContext.cpp; path = source/API/SBCommandContext.cpp; sourceTree = "<group>"; };
-		9A9830F51125FC5800A56CB0 /* SBCommandContext.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SBCommandContext.h; path = include/lldb/API/SBCommandContext.h; sourceTree = "<group>"; };
 		9A9830F61125FC5800A56CB0 /* SBCommandInterpreter.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SBCommandInterpreter.cpp; path = source/API/SBCommandInterpreter.cpp; sourceTree = "<group>"; };
 		9A9830F71125FC5800A56CB0 /* SBCommandInterpreter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SBCommandInterpreter.h; path = include/lldb/API/SBCommandInterpreter.h; sourceTree = "<group>"; };
 		9A9830F81125FC5800A56CB0 /* SBCommandReturnObject.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SBCommandReturnObject.cpp; path = source/API/SBCommandReturnObject.cpp; sourceTree = "<group>"; };
@@ -1447,8 +1443,6 @@
 				9AF16CC7114086A1007A7B3F /* SBBreakpointLocation.cpp */,
 				9A9830F31125FC5800A56CB0 /* SBBroadcaster.h */,
 				9A9830F21125FC5800A56CB0 /* SBBroadcaster.cpp */,
-				9A9830F51125FC5800A56CB0 /* SBCommandContext.h */,
-				9A9830F41125FC5800A56CB0 /* SBCommandContext.cpp */,
 				9A9830F71125FC5800A56CB0 /* SBCommandInterpreter.h */,
 				9A9830F61125FC5800A56CB0 /* SBCommandInterpreter.cpp */,
 				9A9830F91125FC5800A56CB0 /* SBCommandReturnObject.h */,
@@ -2221,7 +2215,6 @@
 				26680219115FD13D008E1FE4 /* SBBreakpoint.h in Headers */,
 				2668021A115FD13D008E1FE4 /* SBBreakpointLocation.h in Headers */,
 				2668021B115FD13D008E1FE4 /* SBBroadcaster.h in Headers */,
-				2668021C115FD13D008E1FE4 /* SBCommandContext.h in Headers */,
 				2668021D115FD13D008E1FE4 /* SBCommandInterpreter.h in Headers */,
 				2668021E115FD13D008E1FE4 /* SBCommandReturnObject.h in Headers */,
 				2668021F115FD13D008E1FE4 /* SBCommunication.h in Headers */,
@@ -2692,7 +2685,6 @@
 				26680331116005E9008E1FE4 /* SBCommunication.cpp in Sources */,
 				26680332116005EA008E1FE4 /* SBCommandReturnObject.cpp in Sources */,
 				26680333116005EC008E1FE4 /* SBCommandInterpreter.cpp in Sources */,
-				26680334116005ED008E1FE4 /* SBCommandContext.cpp in Sources */,
 				26680335116005EE008E1FE4 /* SBBroadcaster.cpp in Sources */,
 				26680336116005EF008E1FE4 /* SBBreakpointLocation.cpp in Sources */,
 				26680337116005F1008E1FE4 /* SBBreakpoint.cpp in Sources */,

@@ -44,17 +44,6 @@ SBEvent::~SBEvent()
 {
 }
 
-void
-SBEvent::Dump (FILE *f) const
-{
-    const Event *lldb_event = get();
-    if (lldb_event)
-    {
-        StreamFile str(f);
-        lldb_event->Dump ((Stream *) &str);
-    }
-}
-
 const char *
 SBEvent::GetDataFlavor ()
 {

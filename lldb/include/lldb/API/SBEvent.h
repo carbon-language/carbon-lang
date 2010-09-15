@@ -32,9 +32,6 @@ public:
     bool
     IsValid() const;
 
-    void
-    Dump (FILE *f) const;
-
     const char *
     GetDataFlavor ();
 

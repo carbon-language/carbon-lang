@@ -108,16 +108,6 @@ SBBreakpoint::IsValid() const
 }
 
 void
-SBBreakpoint::Dump (FILE *f)
-{
-    if (m_opaque_sp && f)
-    {
-        lldb_private::StreamFile str (f);
-        m_opaque_sp->Dump (&str);
-    }
-}
-
-void
 SBBreakpoint::ClearAllBreakpointSites ()
 {
     if (m_opaque_sp)
@@ -189,34 +179,6 @@ SBBreakpoint::GetLocationAtIndex (uint32_t index)
         sb_bp_location.SetLocation (m_opaque_sp->GetLocationAtIndex (index));
 
     return sb_bp_location;
-}
-
-void
-SBBreakpoint::ListLocations (FILE* f, const char *description_level)
-{
-    if (m_opaque_sp && f)
-    {
-        DescriptionLevel level;
-        if (strcmp (description_level, "brief") == 0)
-            level = eDescriptionLevelBrief;
-        else if (strcmp (description_level, "full") == 0)
-            level = eDescriptionLevelFull;
-        else if (strcmp (description_level, "verbose") == 0)
-            level = eDescriptionLevelVerbose;
-        else
-            level = eDescriptionLevelBrief;
-
-        StreamFile str (f);
-
-        str.IndentMore();
-        int num_locs = m_opaque_sp->GetNumLocations();
-        for (int i = 0; i < num_locs; ++i)
-        {
-            BreakpointLocation *loc = m_opaque_sp->GetLocationAtIndex (i).get();
-            loc->GetDescription (&str, level);
-            str.EOL();
-        }
-    }
 }
 
 void
@@ -360,7 +322,7 @@ SBBreakpoint::GetNumLocations() const
 }
 
 void
-SBBreakpoint::GetDescription (FILE *f, const char *description_level, bool describe_locations)
+SBBreakpoint::GetDescription (FILE *f, const char *description_level)
 {
     if (f == NULL)
         return;
@@ -381,18 +343,6 @@ SBBreakpoint::GetDescription (FILE *f, const char *description_level, bool descr
 
         m_opaque_sp->GetDescription (&str, level);
         str.EOL();
-        if (describe_locations)
-        {
-          //str.IndentMore();
-          // int num_locs = m_opaque_sp->GetNumLocations();
-          //  for (int i = 0; i < num_locs; ++i)
-          //  {
-          //      BreakpointLocation *loc = m_opaque_sp->FindLocationByIndex (i);
-          //      loc->GetDescription (&str, level);
-          //      str.EOL();
-          //  }
-            ListLocations (f, description_level);
-        }
     }
 }
 
