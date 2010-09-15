@@ -34,6 +34,19 @@ class ClassTypesTestCase(TestBase):
         self.buildDwarf()
         self.breakpoint_creation_by_filespec_python()
 
+    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @unittest2.expectedFailure
+    def test_with_dsym_and_expr_parser(self):
+        """Test 'frame variable this' aand 'expr this' when stopped inside a constructor."""
+        self.buildDsym()
+        self.class_types_expr_parser()
+
+    @unittest2.expectedFailure
+    def test_with_dwarf_and_expr_parser(self):
+        """Test 'frame variable this' aand 'expr this' when stopped inside a constructor."""
+        self.buildDwarf()
+        self.class_types_expr_parser()
+
     def class_types(self):
         """Test 'frame variable this' when stopped on a class constructor."""
         exe = os.path.join(os.getcwd(), "a.out")
@@ -85,8 +98,44 @@ class ClassTypesTestCase(TestBase):
 
         self.runCmd("run", RUN_SUCCEEDED)
 
+        self.runCmd("thread backtrace")
+
         # We should be stopped on the breakpoint with a hit count of 1.
         self.assertTrue(breakpoint.GetHitCount() == 1)
+
+    def class_types_expr_parser(self):
+        """Test 'frame variable this' aand 'expr this' when stopped inside a constructor."""
+        exe = os.path.join(os.getcwd(), "a.out")
+        self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
+
+        # Break on the ctor function of class C.
+        self.expect("breakpoint set -M C", BREAKPOINT_CREATED,
+            startstr = "Breakpoint created: 1: name = 'C', locations = 1")
+
+        self.runCmd("run", RUN_SUCCEEDED)
+
+        # The stop reason of the thread should be breakpoint.
+        self.expect("thread list", STOPPED_DUE_TO_BREAKPOINT,
+            substrs = ['state is Stopped',
+                       'stop reason = breakpoint'])
+
+        # The breakpoint should have a hit count of 1.
+        self.expect("breakpoint list", BREAKPOINT_HIT_ONCE,
+            substrs = [' resolved, hit count = 1'])
+
+        # Continue on inside the ctor() body...
+        self.runCmd("thread step-over")
+
+        # Verify that frame variable this->m_c_int behaves correctly.
+        self.expect("frame variable this->m_c_int", VARIABLES_DISPLAYED_CORRECTLY,
+            startstr = '(int) this->m_c_int = 66')
+
+        # rdar://problem/8430916
+        # expr this->m_c_int returns an incorrect value
+        #
+        # Verify that expr this->m_c_int behaves correctly.
+        self.expect("expr this->m_c_int", VARIABLES_DISPLAYED_CORRECTLY,
+            substrs = ['(int) 66'])
 
 
 if __name__ == '__main__':

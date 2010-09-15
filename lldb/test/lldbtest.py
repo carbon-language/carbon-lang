@@ -452,9 +452,9 @@ class TestBase(unittest2.TestCase):
             process.Continue()
 
             count = count + 1
-            if count == 10:
+            if count == 15:
                 if trace:
-                    print >> sys.stderr, "Reached 10 iterations, giving up..."
+                    print >> sys.stderr, "Reached 15 iterations, giving up..."
                 # Enough iterations already, break out of the loop.
                 return False
 
