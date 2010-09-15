@@ -763,11 +763,8 @@ UserSettingsController::GetAllDefaultSettingValues (StreamString &result_stream)
                 value_string.Printf ("%s ", tmp_value.GetStringAtIndex (j));
         }
 
-        if (! parent_prefix.empty()) // May need to test size() > 0
-            result_stream.Printf ("%s.[DEFAULT].%s (%s) = '%s'\n", prefix, var_name.AsCString(),
-                                  UserSettingsController::GetTypeString (entry.var_type), value_string.GetData());
-        else
-            result_stream.Printf ("[DEFAULT].%s (%s) = '%s'\n", var_name.AsCString(), 
+        if (! parent_prefix.empty())
+            result_stream.Printf ("%s.%s (%s) = '%s'\n", prefix, var_name.AsCString(),
                                   UserSettingsController::GetTypeString (entry.var_type), value_string.GetData());
     }
 }
@@ -775,7 +772,6 @@ UserSettingsController::GetAllDefaultSettingValues (StreamString &result_stream)
 void
 UserSettingsController::GetAllPendingSettingValues (StreamString &result_stream)
 {
-    //StreamString description;
     std::map<std::string, lldb::InstanceSettingsSP>::iterator pos;
 
     std::string parent_prefix;
@@ -799,8 +795,8 @@ UserSettingsController::GetAllPendingSettingValues (StreamString &result_stream)
             StreamString value_str;
 
             if (tmp_value.GetSize() == 0)
-                break;
-            if (tmp_value.GetSize() == 1)
+                value_str.Printf ("");
+            else if (tmp_value.GetSize() == 1)
                 value_str.Printf ("%s", tmp_value.GetStringAtIndex (0));
             else
             {
@@ -864,9 +860,8 @@ UserSettingsController::GetAllInstanceVariableValues (CommandInterpreter &interp
             StreamString tmp_value_str;
 
             if (tmp_value.GetSize() == 0)
-                break;
-
-            if (tmp_value.GetSize() == 1)
+                tmp_value_str.Printf ("");
+            else if (tmp_value.GetSize() == 1)
                 tmp_value_str.Printf ("%s", tmp_value.GetStringAtIndex (0));
             else
             {
@@ -1103,7 +1098,7 @@ UserSettingsController::FindAllSettingsDescriptions (CommandInterpreter &interpr
         {
             ConstString child_prefix = child->GetLevelName();
             StreamString new_prefix;
-            if (! current_prefix.empty() ) // May need to see if size() > 0
+            if (! current_prefix.empty())
                 new_prefix.Printf ("%s.%s", current_prefix.c_str(), child_prefix.AsCString());
             else
                 new_prefix.Printf ("%s", child_prefix.AsCString());
@@ -1130,7 +1125,7 @@ UserSettingsController::GetAllVariableValues (CommandInterpreter &interpreter,
     {
         StreamString full_var_name;
         SettingEntry entry = root->m_settings.global_settings[i];
-        if (! current_prefix.empty())  // May need to see if size() > 0
+        if (! current_prefix.empty())
             full_var_name.Printf ("%s.%s", current_prefix.c_str(), entry.var_name);
         else
             full_var_name.Printf ("%s", entry.var_name);
@@ -1167,7 +1162,7 @@ UserSettingsController::GetAllVariableValues (CommandInterpreter &interpreter,
         {
             ConstString child_prefix = child->GetLevelName();
             StreamString new_prefix;
-            if (! current_prefix.empty()) // May need to see if size() > 0
+            if (! current_prefix.empty())
                 new_prefix.Printf ("%s.%s", current_prefix.c_str(), child_prefix.AsCString());
             else
                 new_prefix.Printf ("%s", child_prefix.AsCString());
@@ -1928,6 +1923,58 @@ UserSettingsController::UpdateEnumVariable (lldb::OptionEnumValueElement *enum_v
         err.SetErrorString ("Invalid enumeration value; cannot update variable.\n");
 }
 
+void
+UserSettingsController::RenameInstanceSettings (const char *old_name, const char *new_name)
+{
+    Mutex::Locker live_mutex (m_live_settings_mutex);
+    Mutex::Locker pending_mutex (m_pending_settings_mutex);
+    std::string old_name_key (old_name);
+    std::string new_name_key (new_name);
+
+    // First, find the live instance settings for the old_name.  If they don't exist in the live settings
+    // list, then this is not a setting that can be renamed.
+
+    if ((old_name_key[0] != '[') || (old_name_key[old_name_key.size() -1] != ']'))
+      {
+        StreamString tmp_str;
+        tmp_str.Printf ("[%s]", old_name);
+          old_name_key = tmp_str.GetData();
+      }
+
+    if ((new_name_key[0] != '[') || (new_name_key[new_name_key.size() -1] != ']'))
+      {
+        StreamString tmp_str;
+        tmp_str.Printf ("[%s]", new_name);
+        new_name_key = tmp_str.GetData();
+      }
+
+    std::map<std::string, InstanceSettings *>::iterator pos;
+
+    pos = m_live_settings.find (old_name_key);
+    if (pos != m_live_settings.end())
+    {
+        InstanceSettings *live_settings = pos->second;
+
+        // Rename the settings.
+        live_settings->ChangeInstanceName (new_name_key);
+
+        // Now see if there are any pending settings for the new name; if so, copy them into live_settings.
+        std::map<std::string,  lldb::InstanceSettingsSP>::iterator pending_pos;
+        pending_pos = m_pending_settings.find (new_name_key);
+        if (pending_pos != m_pending_settings.end())
+        {
+            lldb::InstanceSettingsSP pending_settings_sp = pending_pos->second;
+            live_settings->CopyInstanceSettings (pending_settings_sp, false);
+        }
+
+        // Erase the old entry (under the old name) from live settings.
+        m_live_settings.erase (pos);
+
+        // Add the new entry, with the new name, into live settings.
+        m_live_settings[new_name_key] = live_settings;
+    }
+}
+
 //----------------------------------------------------------------------
 // class InstanceSettings
 //----------------------------------------------------------------------
@@ -1954,3 +2001,11 @@ InstanceSettings::GetDefaultName ()
 
     return g_default_settings_name;
 }
+
+void
+InstanceSettings::ChangeInstanceName (const std::string &new_instance_name)
+{
+    m_instance_name.SetCString (new_instance_name.c_str());
+}
+
+

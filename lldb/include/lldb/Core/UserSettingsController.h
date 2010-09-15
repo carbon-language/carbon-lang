@@ -124,6 +124,9 @@ public:
     void
     UnregisterInstanceSettings (InstanceSettings *instance_settings);
 
+    void
+    RenameInstanceSettings (const char *old_name, const char *new_name);
+
     // -------------------------------------------------------------------------
     // Public static methods
     // -------------------------------------------------------------------------
@@ -324,7 +327,6 @@ private:
     std::vector<lldb::UserSettingsControllerSP> m_children;
     std::map <std::string, lldb::InstanceSettingsSP> m_pending_settings;
     std::map <std::string, InstanceSettings *> m_live_settings;    // live settings should never be NULL (hence 'live')
-
     mutable Mutex m_children_mutex;
     mutable Mutex m_pending_settings_mutex;
     mutable Mutex m_live_settings_mutex;
@@ -375,13 +377,17 @@ public:
     const ConstString &
     GetInstanceName () { return m_instance_name; }
 
+
+    void
+    ChangeInstanceName (const std::string &new_instance_name);
+
     static const ConstString &
     GetDefaultName ();
 
 protected:
 
     UserSettingsController &m_owner;
-    const ConstString m_instance_name;
+    ConstString m_instance_name;
 };
 
 
