@@ -39,6 +39,36 @@ class SettingsCommandTestCase(TestBase):
         self.expect("settings show",
             startstr = "term-width (int) = '70'")
 
+    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    def test_with_dsym(self):
+        """Test that run-args and env-vars are passed to the launched process."""
+        self.buildDsym()
+        self.pass_run_args_and_env_vars()
+
+    def test_with_dwarf(self):
+        """Test that run-args and env-vars are passed to the launched process."""
+        self.buildDwarf()
+        self.pass_run_args_and_env_vars()
+
+    def pass_run_args_and_env_vars(self):
+        """Test that run-args and env-vars are passed to the launched process."""
+        exe = os.path.join(os.getcwd(), "a.out")
+        self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
+
+        # Set the run-args and the env-vars.
+        self.runCmd('settings set process.run-args A B C')
+        self.runCmd('settings set process.env-vars ["MY_ENV_VAR"]=YES')
+
+        self.runCmd("run", RUN_SUCCEEDED)
+
+        # Read the output file produced by running the program.
+        output = open('/tmp/output.txt', 'r').read()
+
+        self.assertTrue(output.startswith("argv[1] matches") and
+                        output.find("argv[2] matches") > 0 and
+                        output.find("argv[3] matches") > 0 and
+                        output.find("Environment variable 'MY_ENV_VAR' successfully passed.") > 0)
+
 
 if __name__ == '__main__':
     import atexit
