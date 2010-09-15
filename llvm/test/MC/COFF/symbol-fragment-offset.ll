@@ -28,7 +28,7 @@ declare i32 @puts(i8* nocapture) nounwind
 ; CHECK:   SizeOfOptionalHeader     = 0
 ; CHECK:   Characteristics          = 0x0
 ; CHECK:   Sections                 = [
-; CHECK:     0 = {
+; CHECK:     1 = {
 ; CHECK:       Name                     = .text
 ; CHECK:       VirtualSize              = 0
 ; CHECK:       VirtualAddress           = 0
@@ -75,7 +75,7 @@ declare i32 @puts(i8* nocapture) nounwind
 ; CHECK:         }
 ; CHECK:       ]
 ; CHECK:     }
-; CHECK:     1 = {
+; CHECK:     2 = {
 ; CHECK:       Name                     = .data
 ; CHECK:       VirtualSize              = 0
 ; CHECK:       VirtualAddress           = 0

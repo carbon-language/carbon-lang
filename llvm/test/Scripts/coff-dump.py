@@ -73,7 +73,7 @@ file = ('struct', [
     (0x4000,      'IMAGE_FILE_UP_SYSTEM_ONLY',          ),
     (0x8000,      'IMAGE_FILE_BYTES_REVERSED_HI',       ),
   ])),
-  ('Sections', ('array', 'NumberOfSections', ('struct', [
+  ('Sections', ('array', '1', 'NumberOfSections', ('struct', [
     ('Name',                 ('scalar',  '<8s', secname)),
     ('VirtualSize',          ('scalar',  '<L',  '%d'   )),
     ('VirtualAddress',       ('scalar',  '<L',  '%d'   )),
@@ -123,7 +123,7 @@ file = ('struct', [
       (0x80000000, 'IMAGE_SCN_MEM_WRITE'),
     ])),
     ('SectionData', ('ptr', 'PointerToRawData', ('blob', 'SizeOfRawData'))),
-    ('Relocations', ('ptr', 'PointerToRelocations', ('array', 'NumberOfRelocations', ('struct', [
+    ('Relocations', ('ptr', 'PointerToRelocations', ('array', '0', 'NumberOfRelocations', ('struct', [
       ('VirtualAddress',   ('scalar', '<L', '0x%X')),
       ('SymbolTableIndex', ('scalar', '<L', '%d'  )),
       ('Type',             ('enum', '<H', '%d', ('MachineType', {
@@ -463,18 +463,20 @@ def handle_struct(entry):
   return newFields
 
 def handle_array(entry):
-  length = entry[1]
-  element = entry[2]
+  start_index = entry[1]
+  length = entry[2]
+  element = entry[3]
 
   newItems = []
 
   write("[\n")
   indent()
 
+  start_index = read_value(start_index)
   value = read_value(length)
 
   for index in xrange(value):
-    write("%d = "%index)
+    write("%d = " % (index + start_index))
     value = handle_element(element)
     write("\n")
     newItems.append(value)
