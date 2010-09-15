@@ -471,6 +471,37 @@ DataExtractor::GetU16 (uint32_t *offset_ptr) const
     return val;
 }
 
+uint16_t
+DataExtractor::GetU16_unchecked (uint32_t *offset_ptr) const
+{
+    uint16_t val = (m_byte_order == eByteOrderHost) ? 
+                        ReadInt16 (m_start, *offset_ptr) :
+                        ReadSwapInt16(m_start, *offset_ptr);
+    *offset_ptr += sizeof(val);
+    return val;
+}
+
+uint32_t
+DataExtractor::GetU32_unchecked (uint32_t *offset_ptr) const
+{
+    uint32_t val = (m_byte_order == eByteOrderHost) ? 
+                        ReadInt32 (m_start, *offset_ptr) :
+                        ReadSwapInt32 (m_start, *offset_ptr);
+    *offset_ptr += sizeof(val);
+    return val;
+}
+
+uint64_t
+DataExtractor::GetU64_unchecked (uint32_t *offset_ptr) const
+{
+    uint64_t val = (m_byte_order == eByteOrderHost) ? 
+                        ReadInt64 (m_start, *offset_ptr) :
+                        ReadSwapInt64 (m_start, *offset_ptr);
+    *offset_ptr += sizeof(val);
+    return val;
+}
+
+
 //----------------------------------------------------------------------
 // Extract "count" uint16_t values from the binary data and update
 // the offset pointed to by "offset_ptr". The extracted data is

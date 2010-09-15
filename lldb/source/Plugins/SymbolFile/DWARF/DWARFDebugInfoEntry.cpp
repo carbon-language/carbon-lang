@@ -37,7 +37,6 @@ extern int g_verbose;
 DWARFDebugInfoEntry::Attributes::Attributes() :
     m_infos()
 {
-    m_infos.reserve(20);
 }
 
 DWARFDebugInfoEntry::Attributes::~Attributes()
@@ -48,9 +47,9 @@ DWARFDebugInfoEntry::Attributes::~Attributes()
 uint32_t
 DWARFDebugInfoEntry::Attributes::FindAttributeIndex(dw_attr_t attr) const
 {
-    std::vector<Info>::const_iterator end = m_infos.end();
-    std::vector<Info>::const_iterator beg = m_infos.begin();
-    std::vector<Info>::const_iterator pos;
+    collection::const_iterator end = m_infos.end();
+    collection::const_iterator beg = m_infos.begin();
+    collection::const_iterator pos;
     for (pos = beg; pos != end; ++pos)
     {
         if (pos->attr == attr)
@@ -101,6 +100,124 @@ DWARFDebugInfoEntry::Attributes::FormValueAsUnsignedAtIndex(SymbolFileDWARF* dwa
     return fail_value;
 }
 
+
+
+bool
+DWARFDebugInfoEntry::FastExtract
+(
+    const DataExtractor& debug_info_data,
+    const DWARFCompileUnit* cu,
+    const uint8_t *fixed_form_sizes,
+    uint32_t* offset_ptr
+)
+{
+    m_offset = *offset_ptr;
+
+    dw_uleb128_t abbrCode = debug_info_data.GetULEB128 (offset_ptr);
+
+    assert (fixed_form_sizes);  // For best performance this should be specified!
+    
+    if (abbrCode)
+    {
+        register uint32_t offset = *offset_ptr;
+
+        m_abbrevDecl = cu->GetAbbreviations()->GetAbbreviationDeclaration(abbrCode);
+        
+        // Skip all data in the .debug_info for the attributes
+        const uint32_t numAttributes = m_abbrevDecl->NumAttributes();
+        register uint32_t i;
+        register dw_form_t form;
+        for (i=0; i<numAttributes; ++i)
+        {
+            form = m_abbrevDecl->GetFormByIndexUnchecked(i);
+
+            const uint8_t fixed_skip_size = fixed_form_sizes [form];
+            if (fixed_skip_size)
+                offset += fixed_skip_size;
+            else
+            {
+                bool form_is_indirect = false;
+                do
+                {
+                    register uint32_t form_size = 0;
+                    switch (form)
+                    {
+                    // Blocks if inlined data that have a length field and the data bytes
+                    // inlined in the .debug_info
+                    case DW_FORM_block      : form_size = debug_info_data.GetULEB128 (&offset);      break;
+                    case DW_FORM_block1     : form_size = debug_info_data.GetU8_unchecked (&offset); break;
+                    case DW_FORM_block2     : form_size = debug_info_data.GetU16_unchecked (&offset);break;
+                    case DW_FORM_block4     : form_size = debug_info_data.GetU32_unchecked (&offset);break;
+
+                    // Inlined NULL terminated C-strings
+                    case DW_FORM_string     :
+                        debug_info_data.GetCStr (&offset);
+                        break;
+
+                    // Compile unit address sized values
+                    case DW_FORM_addr       :
+                    case DW_FORM_ref_addr   :
+                        form_size = cu->GetAddressByteSize();
+                        break;
+
+                    // 1 byte values
+                    case DW_FORM_data1      :
+                    case DW_FORM_flag       :
+                    case DW_FORM_ref1       :
+                        form_size = 1;
+                        break;
+
+                    // 2 byte values
+                    case DW_FORM_data2      :
+                    case DW_FORM_ref2       :
+                        form_size = 2;
+                        break;
+
+                    // 4 byte values
+                    case DW_FORM_strp       :
+                    case DW_FORM_data4      :
+                    case DW_FORM_ref4       :
+                        form_size = 4;
+                        break;
+
+                    // 8 byte values
+                    case DW_FORM_data8      :
+                    case DW_FORM_ref8       :
+                        form_size = 8;
+                        break;
+
+                    // signed or unsigned LEB 128 values
+                    case DW_FORM_sdata      :
+                    case DW_FORM_udata      :
+                    case DW_FORM_ref_udata  :
+                        debug_info_data.Skip_LEB128 (&offset);
+                        break;
+
+                    case DW_FORM_indirect   :
+                        form_is_indirect = true;
+                        form = debug_info_data.GetULEB128 (&offset);
+                        break;
+
+                    default:
+                        *offset_ptr = m_offset;
+                        return false;
+                    }
+                    offset += form_size;
+
+                } while (form_is_indirect);
+            }
+        }
+        *offset_ptr = offset;
+        return true;
+    }
+    else
+    {
+        m_abbrevDecl = NULL;
+        return true;    // NULL debug tag entry
+    }
+
+    return false;
+}
 
 //----------------------------------------------------------------------
 // Extract
@@ -502,254 +619,254 @@ DWARFDebugInfoEntry::DumpAncestry
 //  DWARFDebugInfoEntry::CompareState compare_state;
 //  int result = DWARFDebugInfoEntry::Compare(this, 0x00017ccb, 0x0001eb2b, compare_state, false, true);
 //----------------------------------------------------------------------
-int
-DWARFDebugInfoEntry::Compare
-(
-    SymbolFileDWARF* dwarf2Data,
-    dw_offset_t a_die_offset,
-    dw_offset_t b_die_offset,
-    CompareState &compare_state,
-    bool compare_siblings,
-    bool compare_children
-)
-{
-    if (a_die_offset == b_die_offset)
-        return 0;
-
-    DWARFCompileUnitSP a_cu_sp;
-    DWARFCompileUnitSP b_cu_sp;
-    const DWARFDebugInfoEntry* a_die = dwarf2Data->DebugInfo()->GetDIEPtr(a_die_offset, &a_cu_sp);
-    const DWARFDebugInfoEntry* b_die = dwarf2Data->DebugInfo()->GetDIEPtr(b_die_offset, &b_cu_sp);
-
-    return Compare(dwarf2Data, a_cu_sp.get(), a_die, b_cu_sp.get(), b_die, compare_state, compare_siblings, compare_children);
-}
-
-int
-DWARFDebugInfoEntry::Compare
-(
-    SymbolFileDWARF* dwarf2Data,
-    DWARFCompileUnit* a_cu, const DWARFDebugInfoEntry* a_die,
-    DWARFCompileUnit* b_cu, const DWARFDebugInfoEntry* b_die,
-    CompareState &compare_state,
-    bool compare_siblings,
-    bool compare_children
-)
-{
-    if (a_die == b_die)
-        return 0;
-
-    if (!compare_state.AddTypePair(a_die->GetOffset(), b_die->GetOffset()))
-    {
-        // We are already comparing both of these types, so let
-        // compares complete for the real result
-        return 0;
-    }
-
-    //printf("DWARFDebugInfoEntry::Compare(0x%8.8x, 0x%8.8x)\n", a_die->GetOffset(), b_die->GetOffset());
-
-    // Do we have two valid DIEs?
-    if (a_die && b_die)
-    {
-        // Both DIE are valid
-        int result = 0;
-
-        const dw_tag_t a_tag = a_die->Tag();
-        const dw_tag_t b_tag = b_die->Tag();
-        if (a_tag == 0 && b_tag == 0)
-            return 0;
-
-        //printf("    comparing tags: %s and %s\n", DW_TAG_value_to_name(a_tag), DW_TAG_value_to_name(b_tag));
-
-        if (a_tag < b_tag)
-            return -1;
-        else if (a_tag > b_tag)
-            return 1;
-
-        DWARFDebugInfoEntry::Attributes a_attrs;
-        DWARFDebugInfoEntry::Attributes b_attrs;
-        size_t a_attr_count = a_die->GetAttributes(dwarf2Data, a_cu, a_attrs);
-        size_t b_attr_count = b_die->GetAttributes(dwarf2Data, b_cu, b_attrs);
-        if (a_attr_count != b_attr_count)
-        {
-            a_attrs.RemoveAttribute(DW_AT_sibling);
-            b_attrs.RemoveAttribute(DW_AT_sibling);
-        }
-
-        a_attr_count = a_attrs.Size();
-        b_attr_count = b_attrs.Size();
-
-        DWARFFormValue a_form_value;
-        DWARFFormValue b_form_value;
-
-        if (a_attr_count != b_attr_count)
-        {
-            uint32_t is_decl_index = a_attrs.FindAttributeIndex(DW_AT_declaration);
-            uint32_t a_name_index = UINT32_MAX;
-            uint32_t b_name_index = UINT32_MAX;
-            if (is_decl_index != UINT32_MAX)
-            {
-                if (a_attr_count == 2)
-                {
-                    a_name_index = a_attrs.FindAttributeIndex(DW_AT_name);
-                    b_name_index = b_attrs.FindAttributeIndex(DW_AT_name);
-                }
-            }
-            else
-            {
-                is_decl_index = b_attrs.FindAttributeIndex(DW_AT_declaration);
-                if (is_decl_index != UINT32_MAX && a_attr_count == 2)
-                {
-                    a_name_index = a_attrs.FindAttributeIndex(DW_AT_name);
-                    b_name_index = b_attrs.FindAttributeIndex(DW_AT_name);
-                }
-            }
-            if (a_name_index != UINT32_MAX && b_name_index != UINT32_MAX)
-            {
-                if (a_attrs.ExtractFormValueAtIndex(dwarf2Data, a_name_index, a_form_value) &&
-                    b_attrs.ExtractFormValueAtIndex(dwarf2Data, b_name_index, b_form_value))
-                {
-                    result = DWARFFormValue::Compare (a_form_value, b_form_value, a_cu, b_cu, &dwarf2Data->get_debug_str_data());
-                    if (result == 0)
-                    {
-                        a_attr_count = b_attr_count = 0;
-                        compare_children = false;
-                    }
-                }
-            }
-        }
-
-        if (a_attr_count < b_attr_count)
-            return -1;
-        if (a_attr_count > b_attr_count)
-            return 1;
-
-
-        // The number of attributes are the same...
-        if (a_attr_count > 0)
-        {
-            const DataExtractor* debug_str_data_ptr = &dwarf2Data->get_debug_str_data();
-
-            uint32_t i;
-            for (i=0; i<a_attr_count; ++i)
-            {
-                const dw_attr_t a_attr = a_attrs.AttributeAtIndex(i);
-                const dw_attr_t b_attr = b_attrs.AttributeAtIndex(i);
-                //printf("    comparing attributes\n\t\t0x%8.8x: %s %s\t\t0x%8.8x: %s %s\n",
-                //                a_attrs.DIEOffsetAtIndex(i), DW_FORM_value_to_name(a_attrs.FormAtIndex(i)), DW_AT_value_to_name(a_attr),
-                //                b_attrs.DIEOffsetAtIndex(i), DW_FORM_value_to_name(b_attrs.FormAtIndex(i)), DW_AT_value_to_name(b_attr));
-
-                if (a_attr < b_attr)
-                    return -1;
-                else if (a_attr > b_attr)
-                    return 1;
-
-                switch (a_attr)
-                {
-                // Since we call a form of GetAttributes which inlines the
-                // attributes from DW_AT_abstract_origin and DW_AT_specification
-                // we don't care if their values mismatch...
-                case DW_AT_abstract_origin:
-                case DW_AT_specification:
-                case DW_AT_sibling:
-                case DW_AT_containing_type:
-                    //printf("        action = IGNORE\n");
-                    result = 0;
-                    break;  // ignore
-
-                default:
-                    if (a_attrs.ExtractFormValueAtIndex(dwarf2Data, i, a_form_value) &&
-                        b_attrs.ExtractFormValueAtIndex(dwarf2Data, i, b_form_value))
-                        result = DWARFFormValue::Compare (a_form_value, b_form_value, a_cu, b_cu, debug_str_data_ptr);
-                    break;
-                }
-
-                //printf("\t  result = %i\n", result);
-
-                if (result != 0)
-                {
-                    // Attributes weren't equal, lets see if we care?
-                    switch (a_attr)
-                    {
-                    case DW_AT_decl_file:
-                        // TODO: add the ability to compare files in two different compile units
-                        if (a_cu == b_cu)
-                        {
-                            //printf("        action = RETURN RESULT\n");
-                            return result;  // Only return the compare results when the compile units are the same and the decl_file attributes can be compared
-                        }
-                        else
-                        {
-                            result = 0;
-                            //printf("        action = IGNORE\n");
-                        }
-                        break;
-
-                    default:
-                        switch (a_attrs.FormAtIndex(i))
-                        {
-                        case DW_FORM_ref1:
-                        case DW_FORM_ref2:
-                        case DW_FORM_ref4:
-                        case DW_FORM_ref8:
-                        case DW_FORM_ref_udata:
-                        case DW_FORM_ref_addr:
-                            //printf("    action = COMPARE DIEs 0x%8.8x 0x%8.8x\n", (dw_offset_t)a_form_value.Reference(a_cu), (dw_offset_t)b_form_value.Reference(b_cu));
-                            // These attribute values refer to other DIEs, so lets compare those instead of their DIE offsets...
-                            result = Compare(dwarf2Data, a_form_value.Reference(a_cu), b_form_value.Reference(b_cu), compare_state, false, true);
-                            if (result != 0)
-                                return result;
-                            break;
-
-                        default:
-                            // We do care that they were different, return this result...
-                            //printf("        action = RETURN RESULT\n");
-                            return result;
-                        }
-                    }
-                }
-            }
-        }
-        //printf("    SUCCESS\n\t\t0x%8.8x: %s\n\t\t0x%8.8x: %s\n", a_die->GetOffset(), DW_TAG_value_to_name(a_tag), b_die->GetOffset(), DW_TAG_value_to_name(b_tag));
-
-        if (compare_children)
-        {
-            bool a_has_children = a_die->HasChildren();
-            bool b_has_children = b_die->HasChildren();
-            if (a_has_children == b_has_children)
-            {
-                // Both either have kids or don't
-                if (a_has_children)
-                    result = Compare(   dwarf2Data,
-                                        a_cu, a_die->GetFirstChild(),
-                                        b_cu, b_die->GetFirstChild(),
-                                        compare_state, true, compare_children);
-                else
-                    result = 0;
-            }
-            else if (!a_has_children)
-                result = -1;    // A doesn't have kids, but B does
-            else
-                result = 1; // A has kids, but B doesn't
-        }
-
-        if (compare_siblings)
-        {
-            result = Compare(   dwarf2Data,
-                                a_cu, a_die->GetSibling(),
-                                b_cu, b_die->GetSibling(),
-                                compare_state, true, compare_children);
-        }
-
-        return result;
-    }
-
-    if (a_die == NULL)
-        return -1;  // a_die is NULL, yet b_die is non-NULL
-    else
-        return 1;   // a_die is non-NULL, yet b_die is NULL
-
-}
-
+//int
+//DWARFDebugInfoEntry::Compare
+//(
+//    SymbolFileDWARF* dwarf2Data,
+//    dw_offset_t a_die_offset,
+//    dw_offset_t b_die_offset,
+//    CompareState &compare_state,
+//    bool compare_siblings,
+//    bool compare_children
+//)
+//{
+//    if (a_die_offset == b_die_offset)
+//        return 0;
+//
+//    DWARFCompileUnitSP a_cu_sp;
+//    DWARFCompileUnitSP b_cu_sp;
+//    const DWARFDebugInfoEntry* a_die = dwarf2Data->DebugInfo()->GetDIEPtr(a_die_offset, &a_cu_sp);
+//    const DWARFDebugInfoEntry* b_die = dwarf2Data->DebugInfo()->GetDIEPtr(b_die_offset, &b_cu_sp);
+//
+//    return Compare(dwarf2Data, a_cu_sp.get(), a_die, b_cu_sp.get(), b_die, compare_state, compare_siblings, compare_children);
+//}
+//
+//int
+//DWARFDebugInfoEntry::Compare
+//(
+//    SymbolFileDWARF* dwarf2Data,
+//    DWARFCompileUnit* a_cu, const DWARFDebugInfoEntry* a_die,
+//    DWARFCompileUnit* b_cu, const DWARFDebugInfoEntry* b_die,
+//    CompareState &compare_state,
+//    bool compare_siblings,
+//    bool compare_children
+//)
+//{
+//    if (a_die == b_die)
+//        return 0;
+//
+//    if (!compare_state.AddTypePair(a_die->GetOffset(), b_die->GetOffset()))
+//    {
+//        // We are already comparing both of these types, so let
+//        // compares complete for the real result
+//        return 0;
+//    }
+//
+//    //printf("DWARFDebugInfoEntry::Compare(0x%8.8x, 0x%8.8x)\n", a_die->GetOffset(), b_die->GetOffset());
+//
+//    // Do we have two valid DIEs?
+//    if (a_die && b_die)
+//    {
+//        // Both DIE are valid
+//        int result = 0;
+//
+//        const dw_tag_t a_tag = a_die->Tag();
+//        const dw_tag_t b_tag = b_die->Tag();
+//        if (a_tag == 0 && b_tag == 0)
+//            return 0;
+//
+//        //printf("    comparing tags: %s and %s\n", DW_TAG_value_to_name(a_tag), DW_TAG_value_to_name(b_tag));
+//
+//        if (a_tag < b_tag)
+//            return -1;
+//        else if (a_tag > b_tag)
+//            return 1;
+//
+//        DWARFDebugInfoEntry::Attributes a_attrs;
+//        DWARFDebugInfoEntry::Attributes b_attrs;
+//        size_t a_attr_count = a_die->GetAttributes(dwarf2Data, a_cu, a_attrs);
+//        size_t b_attr_count = b_die->GetAttributes(dwarf2Data, b_cu, b_attrs);
+//        if (a_attr_count != b_attr_count)
+//        {
+//            a_attrs.RemoveAttribute(DW_AT_sibling);
+//            b_attrs.RemoveAttribute(DW_AT_sibling);
+//        }
+//
+//        a_attr_count = a_attrs.Size();
+//        b_attr_count = b_attrs.Size();
+//
+//        DWARFFormValue a_form_value;
+//        DWARFFormValue b_form_value;
+//
+//        if (a_attr_count != b_attr_count)
+//        {
+//            uint32_t is_decl_index = a_attrs.FindAttributeIndex(DW_AT_declaration);
+//            uint32_t a_name_index = UINT32_MAX;
+//            uint32_t b_name_index = UINT32_MAX;
+//            if (is_decl_index != UINT32_MAX)
+//            {
+//                if (a_attr_count == 2)
+//                {
+//                    a_name_index = a_attrs.FindAttributeIndex(DW_AT_name);
+//                    b_name_index = b_attrs.FindAttributeIndex(DW_AT_name);
+//                }
+//            }
+//            else
+//            {
+//                is_decl_index = b_attrs.FindAttributeIndex(DW_AT_declaration);
+//                if (is_decl_index != UINT32_MAX && a_attr_count == 2)
+//                {
+//                    a_name_index = a_attrs.FindAttributeIndex(DW_AT_name);
+//                    b_name_index = b_attrs.FindAttributeIndex(DW_AT_name);
+//                }
+//            }
+//            if (a_name_index != UINT32_MAX && b_name_index != UINT32_MAX)
+//            {
+//                if (a_attrs.ExtractFormValueAtIndex(dwarf2Data, a_name_index, a_form_value) &&
+//                    b_attrs.ExtractFormValueAtIndex(dwarf2Data, b_name_index, b_form_value))
+//                {
+//                    result = DWARFFormValue::Compare (a_form_value, b_form_value, a_cu, b_cu, &dwarf2Data->get_debug_str_data());
+//                    if (result == 0)
+//                    {
+//                        a_attr_count = b_attr_count = 0;
+//                        compare_children = false;
+//                    }
+//                }
+//            }
+//        }
+//
+//        if (a_attr_count < b_attr_count)
+//            return -1;
+//        if (a_attr_count > b_attr_count)
+//            return 1;
+//
+//
+//        // The number of attributes are the same...
+//        if (a_attr_count > 0)
+//        {
+//            const DataExtractor* debug_str_data_ptr = &dwarf2Data->get_debug_str_data();
+//
+//            uint32_t i;
+//            for (i=0; i<a_attr_count; ++i)
+//            {
+//                const dw_attr_t a_attr = a_attrs.AttributeAtIndex(i);
+//                const dw_attr_t b_attr = b_attrs.AttributeAtIndex(i);
+//                //printf("    comparing attributes\n\t\t0x%8.8x: %s %s\t\t0x%8.8x: %s %s\n",
+//                //                a_attrs.DIEOffsetAtIndex(i), DW_FORM_value_to_name(a_attrs.FormAtIndex(i)), DW_AT_value_to_name(a_attr),
+//                //                b_attrs.DIEOffsetAtIndex(i), DW_FORM_value_to_name(b_attrs.FormAtIndex(i)), DW_AT_value_to_name(b_attr));
+//
+//                if (a_attr < b_attr)
+//                    return -1;
+//                else if (a_attr > b_attr)
+//                    return 1;
+//
+//                switch (a_attr)
+//                {
+//                // Since we call a form of GetAttributes which inlines the
+//                // attributes from DW_AT_abstract_origin and DW_AT_specification
+//                // we don't care if their values mismatch...
+//                case DW_AT_abstract_origin:
+//                case DW_AT_specification:
+//                case DW_AT_sibling:
+//                case DW_AT_containing_type:
+//                    //printf("        action = IGNORE\n");
+//                    result = 0;
+//                    break;  // ignore
+//
+//                default:
+//                    if (a_attrs.ExtractFormValueAtIndex(dwarf2Data, i, a_form_value) &&
+//                        b_attrs.ExtractFormValueAtIndex(dwarf2Data, i, b_form_value))
+//                        result = DWARFFormValue::Compare (a_form_value, b_form_value, a_cu, b_cu, debug_str_data_ptr);
+//                    break;
+//                }
+//
+//                //printf("\t  result = %i\n", result);
+//
+//                if (result != 0)
+//                {
+//                    // Attributes weren't equal, lets see if we care?
+//                    switch (a_attr)
+//                    {
+//                    case DW_AT_decl_file:
+//                        // TODO: add the ability to compare files in two different compile units
+//                        if (a_cu == b_cu)
+//                        {
+//                            //printf("        action = RETURN RESULT\n");
+//                            return result;  // Only return the compare results when the compile units are the same and the decl_file attributes can be compared
+//                        }
+//                        else
+//                        {
+//                            result = 0;
+//                            //printf("        action = IGNORE\n");
+//                        }
+//                        break;
+//
+//                    default:
+//                        switch (a_attrs.FormAtIndex(i))
+//                        {
+//                        case DW_FORM_ref1:
+//                        case DW_FORM_ref2:
+//                        case DW_FORM_ref4:
+//                        case DW_FORM_ref8:
+//                        case DW_FORM_ref_udata:
+//                        case DW_FORM_ref_addr:
+//                            //printf("    action = COMPARE DIEs 0x%8.8x 0x%8.8x\n", (dw_offset_t)a_form_value.Reference(a_cu), (dw_offset_t)b_form_value.Reference(b_cu));
+//                            // These attribute values refer to other DIEs, so lets compare those instead of their DIE offsets...
+//                            result = Compare(dwarf2Data, a_form_value.Reference(a_cu), b_form_value.Reference(b_cu), compare_state, false, true);
+//                            if (result != 0)
+//                                return result;
+//                            break;
+//
+//                        default:
+//                            // We do care that they were different, return this result...
+//                            //printf("        action = RETURN RESULT\n");
+//                            return result;
+//                        }
+//                    }
+//                }
+//            }
+//        }
+//        //printf("    SUCCESS\n\t\t0x%8.8x: %s\n\t\t0x%8.8x: %s\n", a_die->GetOffset(), DW_TAG_value_to_name(a_tag), b_die->GetOffset(), DW_TAG_value_to_name(b_tag));
+//
+//        if (compare_children)
+//        {
+//            bool a_has_children = a_die->HasChildren();
+//            bool b_has_children = b_die->HasChildren();
+//            if (a_has_children == b_has_children)
+//            {
+//                // Both either have kids or don't
+//                if (a_has_children)
+//                    result = Compare(   dwarf2Data,
+//                                        a_cu, a_die->GetFirstChild(),
+//                                        b_cu, b_die->GetFirstChild(),
+//                                        compare_state, true, compare_children);
+//                else
+//                    result = 0;
+//            }
+//            else if (!a_has_children)
+//                result = -1;    // A doesn't have kids, but B does
+//            else
+//                result = 1; // A has kids, but B doesn't
+//        }
+//
+//        if (compare_siblings)
+//        {
+//            result = Compare(   dwarf2Data,
+//                                a_cu, a_die->GetSibling(),
+//                                b_cu, b_die->GetSibling(),
+//                                compare_state, true, compare_children);
+//        }
+//
+//        return result;
+//    }
+//
+//    if (a_die == NULL)
+//        return -1;  // a_die is NULL, yet b_die is non-NULL
+//    else
+//        return 1;   // a_die is non-NULL, yet b_die is NULL
+//
+//}
+//
 //
 //int
 //DWARFDebugInfoEntry::Compare
@@ -1208,11 +1325,14 @@ DWARFDebugInfoEntry::GetAttributes
 (
     SymbolFileDWARF* dwarf2Data,
     const DWARFCompileUnit* cu,
+    const uint8_t *fixed_form_sizes,
     DWARFDebugInfoEntry::Attributes& attributes
 ) const
 {
     if (m_abbrevDecl)
     {
+        if (fixed_form_sizes == NULL)
+            fixed_form_sizes = DWARFFormValue::GetFixedFormSizesForAddressSize(cu->GetAddressByteSize());
         uint32_t offset = GetOffset();
         const DataExtractor& debug_info_data = dwarf2Data->get_debug_info_data();
 
@@ -1239,20 +1359,24 @@ DWARFDebugInfoEntry::GetAttributes
                     {
                         die = const_cast<DWARFCompileUnit*>(cu)->GetDIEPtr(die_offset);
                         if (die)
-                            die->GetAttributes(dwarf2Data, cu, attributes);
+                            die->GetAttributes(dwarf2Data, cu, fixed_form_sizes, attributes);
                     }
                     else
                     {
                         DWARFCompileUnitSP cu_sp_ptr;
                         die = const_cast<SymbolFileDWARF*>(dwarf2Data)->DebugInfo()->GetDIEPtr(die_offset, &cu_sp_ptr);
                         if (die)
-                            die->GetAttributes(dwarf2Data, cu_sp_ptr.get(), attributes);
+                            die->GetAttributes(dwarf2Data, cu_sp_ptr.get(), fixed_form_sizes, attributes);
                     }
                 }
             }
             else
             {
-                assert(DWARFFormValue::SkipValue(form, debug_info_data, &offset, cu));
+                const uint8_t fixed_skip_size = fixed_form_sizes [form];
+                if (fixed_skip_size)
+                    offset += fixed_skip_size;
+                else
+                    DWARFFormValue::SkipValue(form, debug_info_data, &offset, cu);
             }
         }
     }

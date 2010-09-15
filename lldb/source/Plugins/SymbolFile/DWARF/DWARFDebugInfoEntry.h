@@ -11,6 +11,9 @@
 #define liblldb_DWARFDebugInfoEntry_h_
 
 #include "SymbolFileDWARF.h"
+
+#include "llvm/ADT/SmallVector.h"
+
 #include "DWARFAbbreviationDeclaration.h"
 #include "DWARFDebugRanges.h"
 #include <vector>
@@ -76,7 +79,9 @@ public:
             dw_attr_t attr;
             dw_form_t form;
         };
-        std::vector<Info> m_infos;
+
+        typedef llvm::SmallVector<Info, 32> collection;
+        collection m_infos;
     };
 
     struct CompareState
@@ -116,6 +121,12 @@ public:
                     const DWARFCompileUnit* cu,
                     DWARFDebugAranges* debug_aranges) const;
 
+    bool        FastExtract(
+                    const lldb_private::DataExtractor& debug_info_data,
+                    const DWARFCompileUnit* cu,
+                    const uint8_t *fixed_form_sizes,
+                    dw_offset_t* offset_ptr);
+
     bool        Extract(
                     SymbolFileDWARF* dwarf2Data,
                     const DWARFCompileUnit* cu,
@@ -131,6 +142,7 @@ public:
     size_t      GetAttributes(
                     SymbolFileDWARF* dwarf2Data,
                     const DWARFCompileUnit* cu,
+                    const uint8_t *fixed_form_sizes,
                     DWARFDebugInfoEntry::Attributes& attrs) const;
 
     dw_offset_t GetAttributeValue(
@@ -196,21 +208,21 @@ public:
                     const dw_offset_t die_offset,
                     lldb_private::Stream *s);
 
-    static int  Compare(
-                    SymbolFileDWARF* dwarf2Data,
-                    dw_offset_t a_die_offset,
-                    dw_offset_t b_die_offset,
-                    CompareState &compare_state,
-                    bool compare_siblings,
-                    bool compare_children);
-
-    static int Compare(
-                    SymbolFileDWARF* dwarf2Data,
-                    DWARFCompileUnit* a_cu, const DWARFDebugInfoEntry* a_die,
-                    DWARFCompileUnit* b_cu, const DWARFDebugInfoEntry* b_die,
-                    CompareState &compare_state,
-                    bool compare_siblings,
-                    bool compare_children);
+//    static int  Compare(
+//                    SymbolFileDWARF* dwarf2Data,
+//                    dw_offset_t a_die_offset,
+//                    dw_offset_t b_die_offset,
+//                    CompareState &compare_state,
+//                    bool compare_siblings,
+//                    bool compare_children);
+//
+//    static int Compare(
+//                    SymbolFileDWARF* dwarf2Data,
+//                    DWARFCompileUnit* a_cu, const DWARFDebugInfoEntry* a_die,
+//                    DWARFCompileUnit* b_cu, const DWARFDebugInfoEntry* b_die,
+//                    CompareState &compare_state,
+//                    bool compare_siblings,
+//                    bool compare_children);
 
     static bool OffsetLessThan (
                     const DWARFDebugInfoEntry& a,

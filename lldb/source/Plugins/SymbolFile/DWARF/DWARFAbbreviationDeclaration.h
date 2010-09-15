@@ -51,6 +51,10 @@ public:
                     {
                         m_attributes[idx].get(attr, form);
                     }
+    dw_form_t       GetFormByIndexUnchecked (uint32_t idx) const
+                    {
+                        return m_attributes[idx].get_form();
+                    }
     void            CopyExcludingAddressAttributes(const DWARFAbbreviationDeclaration& abbr_decl, const uint32_t idx);
     void            CopyChangingStringToStrp(
                         const DWARFAbbreviationDeclaration& abbr_decl,

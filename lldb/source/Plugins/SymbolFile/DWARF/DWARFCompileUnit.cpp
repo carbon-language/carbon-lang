@@ -157,7 +157,7 @@ DWARFCompileUnit::ExtractDIEsIfNeeded (bool cu_die_only)
     uint32_t offset = GetFirstDIEOffset();
     DWARFDebugInfoEntry die;
         // Keep a flat array of the DIE for binary lookup by DIE offset
-    Log *log = LogChannelDWARF::GetLogIfAll(DWARF_LOG_DEBUG_INFO);
+//    Log *log = LogChannelDWARF::GetLogIfAll(DWARF_LOG_DEBUG_INFO);
 //        if (log)
 //            log->Printf("0x%8.8x: Compile Unit: length = 0x%8.8x, version = 0x%4.4x, abbr_offset = 0x%8.8x, addr_size = 0x%2.2x",
 //                        cu->GetOffset(),
@@ -169,17 +169,29 @@ DWARFCompileUnit::ExtractDIEsIfNeeded (bool cu_die_only)
     uint32_t depth = 0;
     // We are in our compile unit, parse starting at the offset
     // we were told to parse
-    while (die.Extract(m_dwarf2Data, this, &offset))
+    const DataExtractor& debug_info_data = m_dwarf2Data->get_debug_info_data();
+
+    const uint8_t *fixed_form_sizes = DWARFFormValue::GetFixedFormSizesForAddressSize (GetAddressByteSize());
+    while (die.FastExtract (debug_info_data, this, fixed_form_sizes, &offset))
     {
-        if (log)
-            log->Printf("0x%8.8x: %*.*s%s%s",
-                        die.GetOffset(),
-                        depth * 2, depth * 2, "",
-                        DW_TAG_value_to_name (die.Tag()),
-                        die.HasChildren() ? " *" : "");
+//        if (log)
+//            log->Printf("0x%8.8x: %*.*s%s%s",
+//                        die.GetOffset(),
+//                        depth * 2, depth * 2, "",
+//                        DW_TAG_value_to_name (die.Tag()),
+//                        die.HasChildren() ? " *" : "");
+
+        if (depth == 0)
+        {
+            uint64_t base_addr = die.GetAttributeValueAsUnsigned(m_dwarf2Data, this, DW_AT_low_pc, LLDB_INVALID_ADDRESS);
+            if (base_addr == LLDB_INVALID_ADDRESS)
+                base_addr = die.GetAttributeValueAsUnsigned(m_dwarf2Data, this, DW_AT_entry_pc, 0);
+            SetBaseAddress (base_addr);
+        }
+
         if (cu_die_only)
         {
-            AddDIE(die);
+            AddDIE (die);
             return 1;
         }
         else if (depth == 0 && initial_die_array_size == 1)
@@ -188,7 +200,7 @@ DWARFCompileUnit::ExtractDIEsIfNeeded (bool cu_die_only)
         }
         else
         {
-            AddDIE(die);
+            AddDIE (die);
         }
 
         const DWARFAbbreviationDeclaration* abbrDecl = die.GetAbbreviationDeclarationPtr();
@@ -203,7 +215,7 @@ DWARFCompileUnit::ExtractDIEsIfNeeded (bool cu_die_only)
             // NULL DIE.
             if (depth > 0)
                 --depth;
-            else
+            if (depth == 0)
                 break;  // We are done with this compile unit!
         }
 
@@ -564,6 +576,8 @@ DWARFCompileUnit::Index
 {
     const DataExtractor* debug_str = &m_dwarf2Data->get_debug_str_data();
 
+    const uint8_t *fixed_form_sizes = DWARFFormValue::GetFixedFormSizesForAddressSize (GetAddressByteSize());
+
     NameToDIE::Info die_info = { cu_idx, 0 };
     DWARFDebugInfoEntry::const_iterator pos;
     DWARFDebugInfoEntry::const_iterator begin = m_die_array.begin();
@@ -609,7 +623,7 @@ DWARFCompileUnit::Index
         DWARFDebugRanges::RangeList ranges;
 
         dw_offset_t specification_die_offset = DW_INVALID_OFFSET;
-        const size_t num_attributes = die.GetAttributes(m_dwarf2Data, this, attributes);
+        const size_t num_attributes = die.GetAttributes(m_dwarf2Data, this, fixed_form_sizes, attributes);
         if (num_attributes > 0)
         {
             uint32_t i;

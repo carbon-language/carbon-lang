@@ -85,6 +85,8 @@ DWARFDebugPubnames::GeneratePubnames(SymbolFileDWARF* dwarf2Data)
 
             DWARFCompileUnit* cu = debug_info->GetCompileUnitAtIndex(cu_idx);
 
+            const uint8_t *fixed_form_sizes = DWARFFormValue::GetFixedFormSizesForAddressSize (cu->GetAddressByteSize());
+
             bool clear_dies = cu->ExtractDIEsIfNeeded (false) > 1;
 
             DWARFDIECollection dies;
@@ -103,7 +105,7 @@ DWARFDebugPubnames::GeneratePubnames(SymbolFileDWARF* dwarf2Data)
                 const char *mangled = NULL;
                 bool add_die = false;
                 bool is_variable = false;
-                const size_t num_attributes = die->GetAttributes(dwarf2Data, cu, attributes);
+                const size_t num_attributes = die->GetAttributes(dwarf2Data, cu, fixed_form_sizes, attributes);
                 if (num_attributes > 0)
                 {
                     uint32_t i;

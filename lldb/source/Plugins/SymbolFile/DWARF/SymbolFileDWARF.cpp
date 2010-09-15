@@ -1024,6 +1024,8 @@ SymbolFileDWARF::ParseChildMembers
 
     size_t count = 0;
     const DWARFDebugInfoEntry *die;
+    const uint8_t *fixed_form_sizes = DWARFFormValue::GetFixedFormSizesForAddressSize (dwarf_cu->GetAddressByteSize());
+
     for (die = parent_die->GetFirstChild(); die != NULL; die = die->GetSibling())
     {
         dw_tag_t tag = die->Tag();
@@ -1033,7 +1035,7 @@ SymbolFileDWARF::ParseChildMembers
         case DW_TAG_member:
             {
                 DWARFDebugInfoEntry::Attributes attributes;
-                const size_t num_attributes = die->GetAttributes(this, dwarf_cu, attributes);
+                const size_t num_attributes = die->GetAttributes(this, dwarf_cu, fixed_form_sizes, attributes);
                 if (num_attributes > 0)
                 {
                     Declaration decl;
@@ -1124,7 +1126,7 @@ SymbolFileDWARF::ParseChildMembers
                     default_accessibility = eAccessPrivate;
                 // TODO: implement DW_TAG_inheritance type parsing
                 DWARFDebugInfoEntry::Attributes attributes;
-                const size_t num_attributes = die->GetAttributes(this, dwarf_cu, attributes);
+                const size_t num_attributes = die->GetAttributes(this, dwarf_cu, fixed_form_sizes, attributes);
                 if (num_attributes > 0)
                 {
                     Declaration decl;
@@ -1915,6 +1917,8 @@ SymbolFileDWARF::ParseChildParameters
     if (parent_die == NULL)
         return 0;
 
+    const uint8_t *fixed_form_sizes = DWARFFormValue::GetFixedFormSizesForAddressSize (dwarf_cu->GetAddressByteSize());
+
     size_t count = 0;
     const DWARFDebugInfoEntry *die;
     for (die = parent_die->GetFirstChild(); die != NULL; die = die->GetSibling())
@@ -1925,7 +1929,7 @@ SymbolFileDWARF::ParseChildParameters
         case DW_TAG_formal_parameter:
             {
                 DWARFDebugInfoEntry::Attributes attributes;
-                const size_t num_attributes = die->GetAttributes(this, dwarf_cu, attributes);
+                const size_t num_attributes = die->GetAttributes(this, dwarf_cu, fixed_form_sizes, attributes);
                 if (num_attributes > 0)
                 {
                     const char *name = NULL;
@@ -2010,13 +2014,15 @@ SymbolFileDWARF::ParseChildEnumerators
 
     size_t enumerators_added = 0;
     const DWARFDebugInfoEntry *die;
+    const uint8_t *fixed_form_sizes = DWARFFormValue::GetFixedFormSizesForAddressSize (dwarf_cu->GetAddressByteSize());
+
     for (die = parent_die->GetFirstChild(); die != NULL; die = die->GetSibling())
     {
         const dw_tag_t tag = die->Tag();
         if (tag == DW_TAG_enumerator)
         {
             DWARFDebugInfoEntry::Attributes attributes;
-            const size_t num_child_attributes = die->GetAttributes(this, dwarf_cu, attributes);
+            const size_t num_child_attributes = die->GetAttributes(this, dwarf_cu, fixed_form_sizes, attributes);
             if (num_child_attributes > 0)
             {
                 const char *name = NULL;
@@ -2081,6 +2087,7 @@ SymbolFileDWARF::ParseChildArrayInfo
         return;
 
     const DWARFDebugInfoEntry *die;
+    const uint8_t *fixed_form_sizes = DWARFFormValue::GetFixedFormSizesForAddressSize (dwarf_cu->GetAddressByteSize());
     for (die = parent_die->GetFirstChild(); die != NULL; die = die->GetSibling())
     {
         const dw_tag_t tag = die->Tag();
@@ -2089,7 +2096,7 @@ SymbolFileDWARF::ParseChildArrayInfo
         case DW_TAG_enumerator:
             {
                 DWARFDebugInfoEntry::Attributes attributes;
-                const size_t num_child_attributes = die->GetAttributes(this, dwarf_cu, attributes);
+                const size_t num_child_attributes = die->GetAttributes(this, dwarf_cu, fixed_form_sizes, attributes);
                 if (num_child_attributes > 0)
                 {
                     const char *name = NULL;
@@ -2131,7 +2138,7 @@ SymbolFileDWARF::ParseChildArrayInfo
         case DW_TAG_subrange_type:
             {
                 DWARFDebugInfoEntry::Attributes attributes;
-                const size_t num_child_attributes = die->GetAttributes(this, dwarf_cu, attributes);
+                const size_t num_child_attributes = die->GetAttributes(this, dwarf_cu, fixed_form_sizes, attributes);
                 if (num_child_attributes > 0)
                 {
                     const char *name = NULL;
@@ -2354,7 +2361,7 @@ SymbolFileDWARF::ParseType(const SymbolContext& sc, const DWARFCompileUnit* dwar
                     // Set a bit that lets us know that we are currently parsing this
                     const_cast<DWARFDebugInfoEntry*>(die)->SetUserData(DIE_IS_BEING_PARSED);
 
-                    const size_t num_attributes = die->GetAttributes(this, dwarf_cu, attributes);
+                    const size_t num_attributes = die->GetAttributes(this, dwarf_cu, NULL, attributes);
                     Declaration decl;
                     uint32_t encoding = 0;
                     size_t byte_size = 0;
@@ -2482,7 +2489,7 @@ SymbolFileDWARF::ParseType(const SymbolContext& sc, const DWARFCompileUnit* dwar
                     LanguageType class_language = eLanguageTypeUnknown;
                     //bool struct_is_class = false;
                     Declaration decl;
-                    const size_t num_attributes = die->GetAttributes(this, dwarf_cu, attributes);
+                    const size_t num_attributes = die->GetAttributes(this, dwarf_cu, NULL, attributes);
                     if (num_attributes > 0)
                     {
                         uint32_t i;
@@ -2637,7 +2644,7 @@ SymbolFileDWARF::ParseType(const SymbolContext& sc, const DWARFCompileUnit* dwar
                     lldb::user_id_t encoding_uid = DW_INVALID_OFFSET;
                     Declaration decl;
 
-                    const size_t num_attributes = die->GetAttributes(this, dwarf_cu, attributes);
+                    const size_t num_attributes = die->GetAttributes(this, dwarf_cu, NULL, attributes);
                     if (num_attributes > 0)
                     {
                         uint32_t i;
@@ -2712,7 +2719,7 @@ SymbolFileDWARF::ParseType(const SymbolContext& sc, const DWARFCompileUnit* dwar
                     clang::FunctionDecl::StorageClass storage = clang::FunctionDecl::None;//, Extern, Static, PrivateExtern
 
 
-                    const size_t num_attributes = die->GetAttributes(this, dwarf_cu, attributes);
+                    const size_t num_attributes = die->GetAttributes(this, dwarf_cu, NULL, attributes);
                     if (num_attributes > 0)
                     {
                         uint32_t i;
@@ -2826,7 +2833,7 @@ SymbolFileDWARF::ParseType(const SymbolContext& sc, const DWARFCompileUnit* dwar
                     int64_t first_index = 0;
                     uint32_t byte_stride = 0;
                     uint32_t bit_stride = 0;
-                    const size_t num_attributes = die->GetAttributes(this, dwarf_cu, attributes);
+                    const size_t num_attributes = die->GetAttributes(this, dwarf_cu, NULL, attributes);
 
                     if (num_attributes > 0)
                     {
@@ -2904,7 +2911,7 @@ SymbolFileDWARF::ParseType(const SymbolContext& sc, const DWARFCompileUnit* dwar
                     dw_offset_t type_die_offset = DW_INVALID_OFFSET;
                     dw_offset_t containing_type_die_offset = DW_INVALID_OFFSET;
 
-                    const size_t num_attributes = die->GetAttributes(this, dwarf_cu, attributes);
+                    const size_t num_attributes = die->GetAttributes(this, dwarf_cu, NULL, attributes);
                     
                     if (num_attributes > 0) {
                         uint32_t i;
@@ -3173,7 +3180,7 @@ SymbolFileDWARF::ParseVariableDIE
     
     const dw_tag_t tag = die->Tag();
     DWARFDebugInfoEntry::Attributes attributes;
-    const size_t num_attributes = die->GetAttributes(this, dwarf_cu, attributes);
+    const size_t num_attributes = die->GetAttributes(this, dwarf_cu, NULL, attributes);
     if (num_attributes > 0)
     {
         const char *name = NULL;

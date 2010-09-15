@@ -719,6 +719,22 @@ public:
     uint8_t
     GetU8 ( uint32_t *offset_ptr) const;
 
+    uint8_t
+    GetU8_unchecked ( uint32_t *offset_ptr) const
+    {
+        uint8_t val = m_start[*offset_ptr];
+        *offset_ptr += sizeof(val);
+        return val;
+    }
+    
+    uint16_t
+    GetU16_unchecked (uint32_t *offset_ptr) const;
+
+    uint32_t
+    GetU32_unchecked (uint32_t *offset_ptr) const;
+
+    uint64_t
+    GetU64_unchecked (uint32_t *offset_ptr) const;
     //------------------------------------------------------------------
     /// Extract \a count uint8_t values from \a *offset_ptr.
     ///
