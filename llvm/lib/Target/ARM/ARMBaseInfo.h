@@ -100,7 +100,7 @@ namespace ARM_MB {
 
   inline static const char *MemBOptToString(unsigned val) {
     switch (val) {
-    default: llvm_unreachable("Unknown memory opetion");
+    default: llvm_unreachable("Unknown memory operation");
     case ST:    return "st";
     case ISH:   return "ish";
     case ISHST: return "ishst";
