@@ -751,6 +751,21 @@ ARMBaseInstrInfo::isStoreToStackSlot(const MachineInstr *MI,
       return MI->getOperand(0).getReg();
     }
     break;
+  case ARM::VST1q64Pseudo:
+    if (MI->getOperand(0).isFI() &&
+        MI->getOperand(2).getSubReg() == 0) {
+      FrameIndex = MI->getOperand(0).getIndex();
+      return MI->getOperand(2).getReg();
+    }
+  case ARM::VSTMQ:
+    if (MI->getOperand(1).isFI() &&
+        MI->getOperand(2).isImm() &&
+        MI->getOperand(2).getImm() == ARM_AM::getAM4ModeImm(ARM_AM::ia) &&
+        MI->getOperand(0).getSubReg() == 0) {
+      FrameIndex = MI->getOperand(1).getIndex();
+      return MI->getOperand(0).getReg();
+    }
+    break;
   }
 
   return 0;
@@ -869,6 +884,13 @@ ARMBaseInstrInfo::isLoadFromStackSlot(const MachineInstr *MI,
     if (MI->getOperand(1).isFI() &&
         MI->getOperand(2).isImm() &&
         MI->getOperand(2).getImm() == 0) {
+      FrameIndex = MI->getOperand(1).getIndex();
+      return MI->getOperand(0).getReg();
+    }
+    break;
+  case ARM::VLD1q64Pseudo:
+    if (MI->getOperand(1).isFI() &&
+        MI->getOperand(0).getSubReg() == 0) {
       FrameIndex = MI->getOperand(1).getIndex();
       return MI->getOperand(0).getReg();
     }
