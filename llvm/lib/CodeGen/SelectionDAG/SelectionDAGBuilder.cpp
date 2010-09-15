@@ -4122,13 +4122,15 @@ SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I, unsigned Intrinsic) {
         // If variable is pinned by a alloca in dominating bb then
         // use StaticAllocaMap.
         if (const AllocaInst *AI = dyn_cast<AllocaInst>(Address)) {
-          DenseMap<const AllocaInst*, int>::iterator SI =
-            FuncInfo.StaticAllocaMap.find(AI);
-          if (SI != FuncInfo.StaticAllocaMap.end()) {
-            SDV = DAG.getDbgValue(Variable, SI->second,
-                                  0, dl, SDNodeOrder);
-            DAG.AddDbgValue(SDV, 0, false);
-            return 0;
+          if (AI->getParent() != DI.getParent()) {
+            DenseMap<const AllocaInst*, int>::iterator SI =
+              FuncInfo.StaticAllocaMap.find(AI);
+            if (SI != FuncInfo.StaticAllocaMap.end()) {
+              SDV = DAG.getDbgValue(Variable, SI->second,
+                                    0, dl, SDNodeOrder);
+              DAG.AddDbgValue(SDV, 0, false);
+              return 0;
+            }
           }
         }
         // Otherwise add undef to help track missing debug info.
