@@ -833,6 +833,15 @@ ParseInstruction(StringRef Name, SMLoc NameLoc,
     Operands.push_back(X86Operand::CreateImm(One, NameLoc, NameLoc));
     std::swap(Operands[1], Operands[2]);
   }
+  
+  // FIXME: Hack to handle recognize "sh[lr]d op,op" -> "shld $1, op,op".
+  if ((Name.startswith("shld") || Name.startswith("shrd")) &&
+      Operands.size() == 3) {
+    const MCExpr *One = MCConstantExpr::Create(1, getParser().getContext());
+    Operands.insert(Operands.begin()+1,
+                    X86Operand::CreateImm(One, NameLoc, NameLoc));
+  }
+  
 
   // FIXME: Hack to handle recognize "in[bwl] <op>".  Canonicalize it to
   // "inb <op>, %al".

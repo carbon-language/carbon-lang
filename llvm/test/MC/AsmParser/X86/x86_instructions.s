@@ -268,3 +268,14 @@ rcl	%bl
 rcll	0xdeadbeef(%ebx,%ecx,8)
 rcr	%ecx
 rcrl	0x12345678
+
+// rdar://8418316
+// CHECK: shldw	$1, %bx, %bx
+// CHECK: shldw	$1, %bx, %bx
+// CHECK: shrdw	$1, %bx, %bx
+// CHECK: shrdw	$1, %bx, %bx
+
+shld	%bx,%bx
+shld	$1, %bx,%bx
+shrd	%bx,%bx
+shrd	$1, %bx,%bx
