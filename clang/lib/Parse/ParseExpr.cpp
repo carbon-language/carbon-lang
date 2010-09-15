@@ -984,7 +984,7 @@ Parser::ParsePostfixExpressionSuffix(ExprResult LHS) {
       // message send, then this is probably a message send with a missing
       // opening bracket '['.
       if (getLang().ObjC1 && !InMessageExpression && 
-          NextToken().is(tok::colon)) {
+          (NextToken().is(tok::colon) || NextToken().is(tok::r_square))) {
         LHS = ParseObjCMessageExpressionBody(SourceLocation(), SourceLocation(),
                                              ParsedType(), LHS.get());
         break;
