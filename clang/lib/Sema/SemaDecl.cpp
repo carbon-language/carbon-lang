@@ -6619,10 +6619,22 @@ void Sema::ActOnFields(Scope* S,
       FD->setInvalidDecl();
       EnclosingDecl->setInvalidDecl();
       continue;
-    } else if (FDTy->isIncompleteArrayType() && i == NumFields - 1 &&
-               Record && !Record->isUnion()) {
+    } else if (FDTy->isIncompleteArrayType() && Record && 
+               ((i == NumFields - 1 && !Record->isUnion()) ||
+                (getLangOptions().Microsoft &&
+                 (i == NumFields - 1 || Record->isUnion())))) {
       // Flexible array member.
-      if (NumNamedMembers < 1) {
+      // Microsoft is more permissive regarding flexible array.
+      // It will accept flexible array in union and also
+	    // as the sole element of a struct/class.
+      if (getLangOptions().Microsoft) {
+        if (Record->isUnion()) 
+          Diag(FD->getLocation(), diag::ext_flexible_array_union)
+            << FD->getDeclName();
+        else if (NumFields == 1) 
+          Diag(FD->getLocation(), diag::ext_flexible_array_empty_aggregate)
+            << FD->getDeclName() << Record->getTagKind();
+      } else  if (NumNamedMembers < 1) {
         Diag(FD->getLocation(), diag::err_flexible_array_empty_struct)
           << FD->getDeclName();
         FD->setInvalidDecl();
@@ -6637,7 +6649,6 @@ void Sema::ActOnFields(Scope* S,
         EnclosingDecl->setInvalidDecl();
         continue;
       }
-      
       // Okay, we have a legal flexible array member at the end of the struct.
       if (Record)
         Record->setHasFlexibleArrayMember(true);

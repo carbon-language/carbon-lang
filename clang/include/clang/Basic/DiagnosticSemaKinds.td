@@ -1965,6 +1965,13 @@ def ext_flexible_array_in_array : Extension<
   "%0 may not be used as an array element due to flexible array member">;
 def err_flexible_array_init_nonempty : Error<
   "non-empty initialization of flexible array member inside subobject">;
+def ext_flexible_array_empty_aggregate : Extension<
+  "flexible array member %0 in otherwise empty %select{struct|class}1 "
+  "is a Microsoft extension">, InGroup<Microsoft>;
+def ext_flexible_array_union : Extension<
+  "flexible array member %0 in a union is a Microsoft extension">,
+  InGroup<Microsoft>;
+
 def err_flexible_array_init_needs_braces : Error<
   "flexible array requires brace-enclosed initializer">;
 def err_illegal_decl_array_of_functions : Error<
@@ -2869,8 +2876,8 @@ def err_anonymous_struct_member_redecl : Error<
 def err_anonymous_record_with_type : Error<
   "types cannot be declared in an anonymous %select{struct|union}0">;
 def ext_anonymous_record_with_type : Extension<
-  "types declared in an anonymous %select{struct|union}0 are a Microsoft extension">,
-  InGroup<Microsoft>;
+  "types declared in an anonymous %select{struct|union}0 are a Microsoft "
+  "extension">, InGroup<Microsoft>;
 def err_anonymous_record_with_function : Error<
   "functions cannot be declared in an anonymous %select{struct|union}0">;
 def err_anonymous_record_with_static : Error<
