@@ -17,7 +17,8 @@ tailrecurse:                                      ; preds = %sw.bb, %entry
   %tmp2 = load i8** %scevgep5
   %0 = ptrtoint i8* %tmp2 to i32
 
-; CHECK:      ands r12, r12, #3
+; CHECK:      and lr, r12, #3
+; CHECK-NEXT: tst r12, #3
 ; CHECK-NEXT: beq LBB0_4
 
 ; T2:      movs r5, #3
