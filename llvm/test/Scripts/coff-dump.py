@@ -17,14 +17,14 @@ def string_table_entry (offset):
 
 def secname(value):
 	if value[0] == '/':
-		return string_table_entry (value [1:].rstrip('\0'))
+		return string_table_entry(value[1:].rstrip('\0'))
 	else:
 		return '%s'
 
 def symname(value):
 	parts = struct.unpack("<2L", value)
-	if parts [0] == 0:
-		return string_table_entry (parts [1])
+	if parts[0] == 0:
+		return string_table_entry(parts[1])
 	else:
 		return '%s'
 
@@ -261,16 +261,16 @@ def write(input):
 		if char == '\n':
 			NewLine = True
 	
-	sys.stdout.write (output)
+	sys.stdout.write(output)
 
 def read(format):
-	return struct.unpack (format, Input.read(struct.calcsize(format)))
+	return struct.unpack(format, Input.read(struct.calcsize(format)))
 
-def read_cstr ():
+def read_cstr():
 	output = ""
 	while True:
-		char = Input.read (1)
-		if len (char) == 0:
+		char = Input.read(1)
+		if len(char) == 0:
 			raise RuntimeError ("EOF while reading cstr")
 		if char == '\0':
 			break
@@ -278,14 +278,14 @@ def read_cstr ():
 	return output
 
 def push_pos(seek_to = None):
-	Stack [0:0] = [Input.tell ()]
+	Stack [0:0] = [Input.tell()]
 	if seek_to:
-		Input.seek (seek_to)
+		Input.seek(seek_to)
 
 def pop_pos():
-	assert(len (Stack) > 0)
-	Input.seek (Stack [0])
-	del Stack [0]
+	assert(len(Stack) > 0)
+	Input.seek(Stack[0])
+	del Stack[0]
 
 def print_binary_data(size):
 	value = ""
@@ -299,14 +299,14 @@ def print_binary_data(size):
 		value += data
 		bytes = ""
 		text = ""
-		for index in xrange (16):
-			if index < len (data):
+		for index in xrange(16):
+			if index < len(data):
 				if index == 8:
 					bytes += "- "
-				ch = ord (data [index])
+				ch = ord(data[index])
 				bytes += "%02X " % ch
 				if ch >= 0x20 and ch <= 0x7F:
-					text += data [index]
+					text += data[index]
 				else:
 					text += "."
 			else:
@@ -314,47 +314,47 @@ def print_binary_data(size):
 					bytes += "  "
 				bytes += "   "
 		
-		write ("%s|%s|\n" % (bytes, text))
+		write("%s|%s|\n" % (bytes, text))
 	return value
 
-idlit = re.compile ("[a-zA-Z][a-zA-Z0-9_-]*")
-numlit = re.compile ("[0-9]+")
+idlit = re.compile("[a-zA-Z][a-zA-Z0-9_-]*")
+numlit = re.compile("[0-9]+")
 
 def read_value(expr):
 
-	input = iter (expr.split ())
+	input = iter(expr.split())
 	
 	def eval():
 		
-		token = input.next ()
+		token = input.next()
 		
 		if expr == 'cstr':
-			return read_cstr ()
+			return read_cstr()
 		if expr == 'true':
 			return True
 		if expr == 'false':
 			return False
 		
-		if len (token) > 1 and token [0] in ('=', '@', '<', '!', '>'):
+		if len(token) > 1 and token[0] in ('=', '@', '<', '!', '>'):
 			val = read(expr)
-			assert (len (val) == 1)
-			return val [0]
+			assert(len(val) == 1)
+			return val[0]
 		
 		if token == '+':
-			return eval () + eval ()
+			return eval() + eval()
 		if token == '-':
-			return eval () - eval ()
+			return eval() - eval()
 		if token == '*':
-			return eval () * eval ()
+			return eval() * eval()
 		if token == '/':
-			return eval () / eval ()
+			return eval() / eval()
 		
-		if idlit.match (token):
-			return Fields [token]
-		if numlit.match (token):
-			return int (token)
+		if idlit.match(token):
+			return Fields[token]
+		if numlit.match(token):
+			return int(token)
 		
-		raise RuntimeError ("unexpected token %s" % repr(token))
+		raise RuntimeError("unexpected token %s" % repr(token))
 	
 	value = eval ()
 	
@@ -365,88 +365,88 @@ def read_value(expr):
 	raise RuntimeError("unexpected input at end of expression")
 
 def write_value(format,value):
-	format_type = type (format)
+	format_type = type(format)
 	if format_type is types.StringType:
-		write (format%value)
+		write(format % value)
 	elif format_type is types.FunctionType:
-		write_value (format (value), value)
+		write_value(format(value), value)
 	elif format_type is types.TupleType:
-		Fields ['this'] = value
-		handle_element (format)
+		Fields['this'] = value
+		handle_element(format)
 	else:
 		raise RuntimeError("unexpected type: %s" % repr(format_type))
 
 def handle_scalar(entry):
-	iformat = entry [1]
-	oformat = entry [2]
+	iformat = entry[1]
+	oformat = entry[2]
 	
-	value = read_value (iformat)
+	value = read_value(iformat)
 	
-	write_value (oformat, value)
+	write_value(oformat, value)
 	
 	return value
 
 def handle_enum(entry):
-	iformat = entry [1]
-	oformat = entry [2]
-	definitions = entry [3]
+	iformat = entry[1]
+	oformat = entry[2]
+	definitions = entry[3]
 	
-	value = read_value (iformat)
+	value = read_value(iformat)
 	
-	if type (definitions) is types.TupleType:
-		selector = read_value (definitions [0])
-		definitions = definitions [1] [selector]
+	if type(definitions) is types.TupleType:
+		selector = read_value(definitions[0])
+		definitions = definitions[1][selector]
 	
 	if value in definitions:
 		description = definitions[value]
 	else:
 		description = "unknown"
 
-	write ("%s (" % description)
-	write_value (oformat, value)
-	write (")")
+	write("%s (" % description)
+	write_value(oformat, value)
+	write(")")
 	
 	return value
 
 def handle_flags(entry):
-	iformat = entry [1]
-	oformat = entry [2]
-	definitions = entry [3]
+	iformat = entry[1]
+	oformat = entry[2]
+	definitions = entry[3]
 	
-	value = read_value (iformat)
+	value = read_value(iformat)
 	
-	write_value (oformat, value)
+	write_value(oformat, value)
 	
-	indent ()
+	indent()
 	for entry in definitions:
-		mask = entry [0]
-		name = entry [1]
+		mask = entry[0]
+		name = entry[1]
 		if len (entry) == 3:
-			map = entry [2]
+			map = entry[2]
 			selection = value & mask
 			if selection in map:
 				write("\n%s" % map[selection])
 			else:
 				write("\n%s <%d>" % (name, selection))
-		elif len (entry) == 2:
+		elif len(entry) == 2:
 			if value & mask != 0:
 				write("\n%s" % name)
-	dedent ()
+	dedent()
 	
 	return value
 
 def handle_struct(entry):
 	global Fields
-	members = entry [1]
+	members = entry[1]
 	
 	newFields = {}
 	
-	write ("{\n");
-	indent ()
+	write("{\n");
+	indent()
 	
 	for member in members:
-		name = member [0]
-		type = member [1]
+		name = member[0]
+		type = member[1]
 		
 		write("%s = "%name.ljust(24))
 		
@@ -454,90 +454,90 @@ def handle_struct(entry):
 		
 		write("\n")
 		
-		Fields [name] = value
-		newFields [name] = value
+		Fields[name] = value
+		newFields[name] = value
 	
-	dedent ()
-	write ("}")
+	dedent()
+	write("}")
 	
 	return newFields
 
 def handle_array(entry):
-	length = entry [1]
-	element = entry [2]
+	length = entry[1]
+	element = entry[2]
 	
 	newItems = []
 	
-	write ("[\n")
-	indent ()
+	write("[\n")
+	indent()
 	
-	value = read_value (length)
+	value = read_value(length)
 	
-	for index in xrange (value):
-		write ("%d = "%index)
+	for index in xrange(value):
+		write("%d = "%index)
 		value = handle_element(element)
-		write ("\n")
-		newItems.append (value)
+		write("\n")
+		newItems.append(value)
 	
-	dedent ()
-	write ("]")
+	dedent()
+	write("]")
 	
 	return newItems
 
 def handle_byte_array(entry):
-	length = entry [1]
-	element = entry [2]
+	length = entry[1]
+	element = entry[2]
 	
 	newItems = []
 	
-	write ("[\n")
-	indent ()
+	write("[\n")
+	indent()
 	
-	value = read_value (length)
-	end_of_array = Input.tell () + value
+	value = read_value(length)
+	end_of_array = Input.tell() + value
 
 	index = 0
-	while Input.tell () < end_of_array:
-		write ("%d = "%index)
+	while Input.tell() < end_of_array:
+		write("%d = "%index)
 		value = handle_element(element)
-		write ("\n")
-		newItems.append (value)
+		write("\n")
+		newItems.append(value)
 		index += 1
 	
-	dedent ()
-	write ("]")
+	dedent()
+	write("]")
 	
 	return newItems
 
 def handle_ptr(entry):
 	offset = entry[1]
-	element = entry [2]
+	element = entry[2]
 	
 	value = None
-	offset = read_value (offset)
+	offset = read_value(offset)
 	
 	if offset != 0:
 		
-		push_pos (offset)
+		push_pos(offset)
 		
-		value = handle_element (element)
+		value = handle_element(element)
 		
-		pop_pos ()
+		pop_pos()
 	
 	else:
-		write ("None")
+		write("None")
 	
 	return value
 
 def handle_blob(entry):
-	length = entry [1]
+	length = entry[1]
 	
-	write ("\n")
-	indent ()
+	write("\n")
+	indent()
 	
-	value = print_binary_data (read_value (length))
+	value = print_binary_data(read_value(length))
 	
-	dedent ()
+	dedent()
 	
 	return value
 
@@ -553,14 +553,14 @@ def handle_element(entry):
 		'byte-array':  handle_byte_array,
 	}
 	
-	if not entry [0] in handlers:
+	if not entry[0] in handlers:
 		raise RuntimeError ("unexpected type '%s'" % str (entry[0]))
 	
-	return handlers [entry [0]] (entry)
+	return handlers[entry[0]](entry)
 
-Input = open (sys.argv [1], "rb")
+Input = open (sys.argv[1], "rb")
 try:
-	handle_element (file)
+	handle_element(file)
 finally:
-	Input.close ()
+	Input.close()
 	Input = None
