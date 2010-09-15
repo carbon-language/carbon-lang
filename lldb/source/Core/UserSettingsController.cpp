@@ -1110,6 +1110,209 @@ UserSettingsController::FindAllSettingsDescriptions (CommandInterpreter &interpr
 }
 
 void
+UserSettingsController::FindSettingsDescriptions (CommandInterpreter &interpreter,
+                                                  lldb::UserSettingsControllerSP root,
+                                                  std::string &current_prefix,
+                                                  const char *search_name,
+                                                  StreamString &result_stream,
+                                                  Error &err)
+{
+    Args names = UserSettingsController::BreakNameIntoPieces (search_name);
+    int num_pieces = names.GetArgumentCount ();
+
+    if (num_pieces == 0)
+        return;
+
+    if (root->GetLevelName().GetLength() > 0)
+    {
+        ConstString prefix (names.GetArgumentAtIndex (0));
+        if (prefix != root->GetLevelName())
+        {
+            std::string parent_prefix;
+            root->BuildParentPrefix (parent_prefix);
+            err.SetErrorStringWithFormat ("Cannot find match for '%s.%s'\n", parent_prefix.c_str(), 
+                                          prefix.AsCString());
+            return;
+        }
+        else
+        {
+            names.Shift();
+            --num_pieces;
+        }
+    }
+
+    // If there's nothing left then dump all global and instance descriptions for this root.
+    if (num_pieces == 0)
+    {
+        StreamString prefix_line;
+        StreamString description;
+        uint32_t max_len;
+        int num_entries = root->m_settings.global_settings.size();
+        
+        max_len = FindMaxNameLength (root->m_settings.global_settings);
+
+        result_stream.Printf ("\n'%s' variables:\n\n", search_name);
+        
+        if (num_entries > 0)
+        {
+            // Write out all "global" variables.
+            for (int i = 0; i < num_entries; ++i)
+            {
+                SettingEntry entry = root->m_settings.global_settings[i];
+                description.Clear();
+                if (entry.var_type == lldb::eSetVarTypeEnum)
+                {
+                    StreamString enum_values_str;
+                    UserSettingsController::PrintEnumValues (entry.enum_values, enum_values_str);
+                    description.Printf ("[static, enum] %s.  Valid values: {%s}  (default: '%s')", entry.description, 
+                                        enum_values_str.GetData(), entry.enum_values[0].string_value);
+                }
+                else if (entry.default_value != NULL)
+                    description.Printf ("[static, %s] %s (default: '%s')", GetTypeString (entry.var_type), 
+                                        entry.description, entry.default_value);
+                else
+                    description.Printf ("[static, %s] %s (default: '')", GetTypeString (entry.var_type), 
+                                        entry.description);
+                interpreter.OutputFormattedHelpText (result_stream, entry.var_name, "--", description.GetData(), 
+                                                     max_len);
+            }
+        }
+        
+        num_entries = root->m_settings.instance_settings.size();
+        max_len = FindMaxNameLength (root->m_settings.instance_settings);
+        
+        if (num_entries > 0)
+        {
+            // Write out all instance variables.
+            for (int i = 0; i < num_entries; ++i)
+            {
+                SettingEntry entry = root->m_settings.instance_settings[i];
+                description.Clear();
+                if (entry.var_type == lldb::eSetVarTypeEnum)
+                {
+                    StreamString enum_values_str;
+                    UserSettingsController::PrintEnumValues (entry.enum_values, enum_values_str);
+                    description.Printf ("[instance, enum] %s.  Valid values: {%s} (default: '%s')", entry.description,
+                                        enum_values_str.GetData(), entry.enum_values[0].string_value);
+                }
+                else if (entry.default_value != NULL)
+                    description.Printf ("[instance, %s] %s (default: '%s')", GetTypeString (entry.var_type), 
+                                        entry.description, entry.default_value);
+                else
+                    description.Printf ("[instance, %s] %s (default: '')", GetTypeString (entry.var_type), 
+                                        entry.description);
+                interpreter.OutputFormattedHelpText (result_stream, entry.var_name, "--", description.GetData(), 
+                                                     max_len);
+            }
+        }
+    }
+    else if (num_pieces == 1)
+    {
+        ConstString var_name (names.GetArgumentAtIndex (0));
+        bool is_global = false;
+
+        const SettingEntry *setting_entry = root->GetGlobalEntry (var_name);
+
+        if (setting_entry == NULL)
+            setting_entry = root->GetInstanceEntry (var_name);
+        else
+            is_global = true;
+
+        // Check to see if it is a global or instance variable name.
+        if (setting_entry != NULL)
+        {
+            StreamString description;
+            if (setting_entry->var_type == lldb::eSetVarTypeEnum)
+            {
+                StreamString enum_values_str;
+                UserSettingsController::PrintEnumValues (setting_entry->enum_values, enum_values_str);
+                description.Printf ("[%s, enum] %s.  Valid values: {%s}  (default: '%s')", 
+                                    (is_global ? "static" : "instance"), 
+                                    setting_entry->description, 
+                                    enum_values_str.GetData(), setting_entry->enum_values[0].string_value);
+            }
+            else if (setting_entry->default_value != NULL)
+                description.Printf ("[%s, %s] %s (default: '%s')", 
+                                    (is_global ? "static" : "instance"), 
+                                    GetTypeString (setting_entry->var_type), 
+                                    setting_entry->description, setting_entry->default_value);
+            else
+                description.Printf ("[%s, %s] %s (default: '')", 
+                                    (is_global ? "static" : "instance"), 
+                                    GetTypeString (setting_entry->var_type), 
+                                    setting_entry->description);
+            interpreter.OutputFormattedHelpText (result_stream, setting_entry->var_name, "--", description.GetData(), 
+                                                 var_name.GetLength());
+        }
+        else
+        {
+            // It must be a child name.
+            int num_children = root->GetNumChildren();
+            bool found = false;
+            for (int i = 0; i < num_children && !found; ++i)
+            {
+                lldb::UserSettingsControllerSP child = root->GetChildAtIndex (i);
+                if (child)
+                {
+                    ConstString child_prefix = child->GetLevelName();
+                    if (child_prefix == var_name)
+                    {
+                        found = true;
+                        UserSettingsController::FindSettingsDescriptions (interpreter, child, current_prefix,
+                                                                          var_name.AsCString(), result_stream, err);
+                    }
+                }
+            }
+            if (!found)
+            {
+                std::string parent_prefix;
+                root->BuildParentPrefix (parent_prefix);
+                err.SetErrorStringWithFormat ("Cannot find match for '%s.%s'\n", parent_prefix.c_str(), search_name);
+                return;
+            }
+        }
+    }
+    else
+    {
+        // It must be a child name; find the child and call this function recursively on child.
+        ConstString child_name (names.GetArgumentAtIndex (0));
+
+        StreamString rest_of_search_name;
+        for (int i = 0; i < num_pieces; ++i)
+        {
+            rest_of_search_name.Printf ("%s", names.GetArgumentAtIndex (i));
+            if ((i + 1) < num_pieces)
+                rest_of_search_name.Printf (".");
+        }
+
+        int num_children = root->GetNumChildren();
+        bool found = false;
+        for (int i = 0; i < num_children && !found; ++i)
+        {
+            lldb::UserSettingsControllerSP child = root->GetChildAtIndex (i);
+            if (child)
+            {
+                ConstString child_prefix = child->GetLevelName();
+                if (child_prefix == child_name)
+                {
+                    found = true;
+                    UserSettingsController::FindSettingsDescriptions (interpreter, child, current_prefix,
+                                                                      rest_of_search_name.GetData(), result_stream,
+                                                                      err);
+                }
+            }
+        }
+        if (!found)
+        {
+            std::string parent_prefix;
+            root->BuildParentPrefix (parent_prefix);
+            err.SetErrorStringWithFormat ("Cannot find match for '%s.%s'\n", parent_prefix.c_str(), search_name);
+            return;
+        }
+    }
+}
+
+void
 UserSettingsController::GetAllVariableValues (CommandInterpreter &interpreter,
                                               lldb::UserSettingsControllerSP root,
                                               std::string &current_prefix,

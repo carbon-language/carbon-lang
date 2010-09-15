@@ -367,8 +367,8 @@ CommandObjectSettingsShow::HandleArgumentCompletion (CommandInterpreter &interpr
 
 CommandObjectSettingsList::CommandObjectSettingsList () :
     CommandObject ("settings list",
-                   "List all the internal debugger settings variables that are available to the user to 'set' or 'show'.",
-                   "settings list")
+                   "List and describe all the internal debugger settings variables that are available to the user to 'set' or 'show', or describe a particular variable or set of variables (by specifying the variable name or a common prefix).",
+                   "settings list [<setting-name> | <setting-name-prefix>]")
 {
 }
 
@@ -379,16 +379,31 @@ CommandObjectSettingsList::~CommandObjectSettingsList()
 
 bool
 CommandObjectSettingsList::Execute (CommandInterpreter &interpreter,
-                                Args& command,
-                                CommandReturnObject &result)
+                                    Args& command,
+                                    CommandReturnObject &result)
 {
     UserSettingsControllerSP root_settings = Debugger::GetSettingsController ();
     std::string current_prefix = root_settings->GetLevelName().AsCString();
 
     Error err;
 
-    UserSettingsController::FindAllSettingsDescriptions (interpreter, root_settings, current_prefix, 
-                                                         result.GetOutputStream(), err);
+    if (command.GetArgumentCount() == 0)
+    {
+        UserSettingsController::FindAllSettingsDescriptions (interpreter, root_settings, current_prefix, 
+                                                             result.GetOutputStream(), err);
+    }
+    else if (command.GetArgumentCount() == 1)
+    {
+        const char *search_name = command.GetArgumentAtIndex (0);
+        UserSettingsController::FindSettingsDescriptions (interpreter, root_settings, current_prefix,
+                                                          search_name, result.GetOutputStream(), err);
+    }
+    else
+    {
+        result.AppendError ("Too many aguments for 'settings list' command.\n");
+        result.SetStatus (eReturnStatusFailed);
+        return false;
+    }
 
     if (err.Fail ())
     {
@@ -401,6 +416,31 @@ CommandObjectSettingsList::Execute (CommandInterpreter &interpreter,
     }
 
     return result.Succeeded();
+}
+
+int
+CommandObjectSettingsList::HandleArgumentCompletion (CommandInterpreter &interpreter,
+                                                     Args &input,
+                                                     int &cursor_index,
+                                                     int &cursor_char_position,
+                                                     OptionElementVector &opt_element_vector,
+                                                     int match_start_point,
+                                                     int max_return_elements,
+                                                     bool &word_complete,
+                                                     StringList &matches)
+{
+    std::string completion_str (input.GetArgumentAtIndex (cursor_index));
+    completion_str.erase (cursor_char_position);
+
+    CommandCompletions::InvokeCommonCompletionCallbacks (interpreter,
+                                                         CommandCompletions::eSettingsNameCompletion,
+                                                         completion_str.c_str(),
+                                                         match_start_point,
+                                                         max_return_elements,
+                                                         NULL,
+                                                         word_complete,
+                                                         matches);
+    return matches.GetSize();
 }
 
 //-------------------------------------------------------------------------

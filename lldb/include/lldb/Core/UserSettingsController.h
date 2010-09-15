@@ -139,6 +139,14 @@ public:
                                  Error &err);
 
     static void
+    FindSettingsDescriptions (CommandInterpreter &interpreter,
+                              lldb::UserSettingsControllerSP root, 
+                              std::string &current_prefix, 
+                              const char *search_name,
+                              StreamString &result_stream,
+                              Error &err);
+
+    static void
     GetAllVariableValues (CommandInterpreter &interpreter,
                           lldb::UserSettingsControllerSP root,
                           std::string &current_prefix,
