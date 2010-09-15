@@ -88,6 +88,7 @@ const PassInfo *PassRegistry::getPassInfo(StringRef Arg) const {
 //
 
 void PassRegistry::registerPass(const PassInfo &PI) {
+  sys::SmartScopedLock<true> Guard(Lock);
   PassRegistryImpl *Impl = static_cast<PassRegistryImpl*>(getImpl());
   bool Inserted =
     Impl->PassInfoMap.insert(std::make_pair(PI.getTypeInfo(),&PI)).second;
@@ -101,6 +102,7 @@ void PassRegistry::registerPass(const PassInfo &PI) {
 }
 
 void PassRegistry::unregisterPass(const PassInfo &PI) {
+  sys::SmartScopedLock<true> Guard(Lock);
   PassRegistryImpl *Impl = static_cast<PassRegistryImpl*>(getImpl());
   PassRegistryImpl::MapType::iterator I = 
     Impl->PassInfoMap.find(PI.getTypeInfo());
@@ -112,6 +114,7 @@ void PassRegistry::unregisterPass(const PassInfo &PI) {
 }
 
 void PassRegistry::enumerateWith(PassRegistrationListener *L) {
+  sys::SmartScopedLock<true> Guard(Lock);
   PassRegistryImpl *Impl = static_cast<PassRegistryImpl*>(getImpl());
   for (PassRegistryImpl::MapType::const_iterator I = Impl->PassInfoMap.begin(),
        E = Impl->PassInfoMap.end(); I != E; ++I)
@@ -124,6 +127,7 @@ void PassRegistry::registerAnalysisGroup(const void *InterfaceID,
                                          const void *PassID,
                                          PassInfo& Registeree,
                                          bool isDefault) {
+  sys::SmartScopedLock<true> Guard(Lock);
   PassInfo *InterfaceInfo =  const_cast<PassInfo*>(getPassInfo(InterfaceID));
   if (InterfaceInfo == 0) {
     // First reference to Interface, register it now.
@@ -159,11 +163,14 @@ void PassRegistry::registerAnalysisGroup(const void *InterfaceID,
 }
 
 void PassRegistry::addRegistrationListener(PassRegistrationListener *L) {
+  sys::SmartScopedLock<true> Guard(Lock);
   PassRegistryImpl *Impl = static_cast<PassRegistryImpl*>(getImpl());
   Impl->Listeners.push_back(L);
 }
 
 void PassRegistry::removeRegistrationListener(PassRegistrationListener *L) {
+  sys::SmartScopedLock<true> Guard(Lock);
+  
   // NOTE: This is necessary, because removeRegistrationListener() can be called
   // as part of the llvm_shutdown sequence.  Since we have no control over the
   // order of that sequence, we need to gracefully handle the case where the
