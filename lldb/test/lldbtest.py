@@ -362,6 +362,8 @@ class TestBase(unittest2.TestCase):
 
             if self.res.Succeeded():
                 break
+            elif running:                
+                print >> sys.stderr, "Run (process launch) command failed!"
 
         # Modify runStarted only if "run" or "process launch" was encountered.
         if running:
