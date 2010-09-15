@@ -22,6 +22,7 @@ typedef int Bool;
 
 + (void)select:(Bool)condition first:(int)a second:(int)b {
   [super selector:condition first:a second:b];
+   super selector:condition first:a second:b];
 }
 @end
 
@@ -53,3 +54,8 @@ typedef int Bool;
 // Check "super" completion at the third identifier
 // RUN: c-index-test -code-completion-at=%s:24:37 %s | FileCheck -check-prefix=CHECK-SELECTOR-SECOND %s
 // CHECK-SELECTOR-SECOND: ObjCClassMethodDecl:{ResultType void}{Informative select:}{Informative first:}{TypedText second:}{Placeholder b} (8)
+
+// Check "super" completion with missing '['.
+// RUN: c-index-test -code-completion-at=%s:25:10 %s | FileCheck -check-prefix=CHECK-SELECTOR-SELECTOR %s
+// RUN: c-index-test -code-completion-at=%s:25:28 %s | FileCheck -check-prefix=CHECK-SELECTOR-FIRST %s
+// RUN: c-index-test -code-completion-at=%s:25:37 %s | FileCheck -check-prefix=CHECK-SELECTOR-SECOND %s

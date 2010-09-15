@@ -2728,6 +2728,10 @@ void Sema::CodeCompleteExpression(Scope *S,
                             Results.data(),Results.size());
 }
 
+void Sema::CodeCompletePostfixExpression(Scope *S, Expr *E) {
+  if (getLangOptions().ObjC1)
+    CodeCompleteObjCInstanceMessage(S, E, 0, 0, false);
+}
 
 static void AddObjCProperties(ObjCContainerDecl *Container, 
                               bool AllowCategories,
@@ -4014,7 +4018,7 @@ void Sema::CodeCompleteObjCPassingType(Scope *S, ObjCDeclSpec &DS) {
 /// common uses of Objective-C. This routine returns that class type,
 /// or NULL if no better result could be determined.
 static ObjCInterfaceDecl *GetAssumedMessageSendExprType(Expr *E) {
-  ObjCMessageExpr *Msg = dyn_cast<ObjCMessageExpr>(E);
+  ObjCMessageExpr *Msg = dyn_cast_or_null<ObjCMessageExpr>(E);
   if (!Msg)
     return 0;
 
@@ -4280,12 +4284,6 @@ void Sema::CodeCompleteObjCSuperMessage(Scope *S, SourceLocation SuperLoc,
 
 void Sema::CodeCompleteObjCClassMessage(Scope *S, ParsedType Receiver,
                                         IdentifierInfo **SelIdents,
-                                        unsigned NumSelIdents) {
-  CodeCompleteObjCClassMessage(S, Receiver, SelIdents, NumSelIdents, false);
-}
-
-void Sema::CodeCompleteObjCClassMessage(Scope *S, ParsedType Receiver,
-                                        IdentifierInfo **SelIdents,
                                         unsigned NumSelIdents,
                                         bool IsSuper) {
   typedef CodeCompletionResult Result;
@@ -4364,12 +4362,6 @@ void Sema::CodeCompleteObjCClassMessage(Scope *S, ParsedType Receiver,
 
 void Sema::CodeCompleteObjCInstanceMessage(Scope *S, ExprTy *Receiver,
                                            IdentifierInfo **SelIdents,
-                                           unsigned NumSelIdents) {
-  CodeCompleteObjCInstanceMessage(S, Receiver, SelIdents, NumSelIdents, false);
-}
-
-void Sema::CodeCompleteObjCInstanceMessage(Scope *S, ExprTy *Receiver,
-                                           IdentifierInfo **SelIdents,
                                            unsigned NumSelIdents,
                                            bool IsSuper) {
   typedef CodeCompletionResult Result;
@@ -4378,8 +4370,9 @@ void Sema::CodeCompleteObjCInstanceMessage(Scope *S, ExprTy *Receiver,
   
   // If necessary, apply function/array conversion to the receiver.
   // C99 6.7.5.3p[7,8].
-  DefaultFunctionArrayLvalueConversion(RecExpr);
-  QualType ReceiverType = RecExpr->getType();
+  if (RecExpr)
+    DefaultFunctionArrayLvalueConversion(RecExpr);
+  QualType ReceiverType = RecExpr? RecExpr->getType() : Context.getObjCIdType();
   
   // Build the set of methods we can see.
   ResultBuilder Results(*this);

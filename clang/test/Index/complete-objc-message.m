@@ -132,6 +132,11 @@ void msg_id(id x) {
 
 void test_ranking(B *b) {
   [b method1];
+  b method1];
+}
+
+void test_overload_2(Overload *ovl) {
+  ovl Method:1 Arg1:1 OtherArg:ovl];
 }
 
 // RUN: c-index-test -code-completion-at=%s:23:19 %s | FileCheck -check-prefix=CHECK-CC1 %s
@@ -234,3 +239,9 @@ void test_ranking(B *b) {
 // RUN: c-index-test -code-completion-at=%s:134:6 %s | FileCheck -check-prefix=CHECK-CCI %s
 // CHECK-CCI: ObjCInstanceMethodDecl:{ResultType void}{TypedText method1} (22)
 // CHECK-CCI: ObjCInstanceMethodDecl:{ResultType void}{TypedText method2} (20)
+
+// Test code completion with a missing opening bracket:
+// RUN: c-index-test -code-completion-at=%s:135:5 %s | FileCheck -check-prefix=CHECK-CCI %s
+// RUN: c-index-test -code-completion-at=%s:139:7 %s | FileCheck -check-prefix=CHECK-CC7 %s
+// RUN: c-index-test -code-completion-at=%s:139:16 %s | FileCheck -check-prefix=CHECK-CC8 %s
+// RUN: c-index-test -code-completion-at=%s:139:23 %s | FileCheck -check-prefix=CHECK-CC9 %s

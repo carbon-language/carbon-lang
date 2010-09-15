@@ -664,12 +664,14 @@ ExprResult Parser::ParseCastExpression(bool isUnaryExpression,
     }
 
     // In an Objective-C method, if we have "super" followed by an identifier,
-    // the token sequence is ill-fomed. However, if there's a ':' or ']' after
+    // the token sequence is ill-formed. However, if there's a ':' or ']' after
     // that identifier, this is probably a message send with a missing open
-    // bracket. Treat it as such.
-    if (getLang().ObjC1 && &II == Ident_super && Tok.is(tok::identifier) &&
+    // bracket. Treat it as such. 
+    if (getLang().ObjC1 && &II == Ident_super && !InMessageExpression &&
         getCurScope()->isInObjcMethodScope() &&
-        (NextToken().is(tok::colon) || NextToken().is(tok::r_square))) {
+        ((Tok.is(tok::identifier) &&
+         (NextToken().is(tok::colon) || NextToken().is(tok::r_square))) ||
+         Tok.is(tok::code_completion))) {
       Res = ParseObjCMessageExpressionBody(SourceLocation(), ILoc, ParsedType(), 
                                            0);
       break;
@@ -991,6 +993,15 @@ Parser::ParsePostfixExpressionSuffix(ExprResult LHS) {
   SourceLocation Loc;
   while (1) {
     switch (Tok.getKind()) {
+    case tok::code_completion:
+      if (InMessageExpression)
+        return move(LHS);
+        
+      Actions.CodeCompletePostfixExpression(getCurScope(), LHS.take());
+      ConsumeCodeCompletionToken();
+      LHS = ExprError();
+      break;
+        
     case tok::identifier:
       // If we see identifier: after an expression, and we're not already in a
       // message send, then this is probably a message send with a missing

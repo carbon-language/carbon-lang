@@ -4313,6 +4313,7 @@ public:
   void CodeCompleteMemberReferenceExpr(Scope *S, Expr *Base,
                                        SourceLocation OpLoc,
                                        bool IsArrow);
+  void CodeCompletePostfixExpression(Scope *S, Expr *LHS);
   void CodeCompleteTag(Scope *S, unsigned TagSpec);
   void CodeCompleteTypeQualifiers(DeclSpec &DS);
   void CodeCompleteCase(Scope *S);
@@ -4351,18 +4352,12 @@ public:
                                     unsigned NumSelIdents);
   void CodeCompleteObjCClassMessage(Scope *S, ParsedType Receiver,
                                     IdentifierInfo **SelIdents,
-                                    unsigned NumSelIdents);
-  void CodeCompleteObjCClassMessage(Scope *S, ParsedType Receiver,
-                                    IdentifierInfo **SelIdents,
                                     unsigned NumSelIdents,
-                                    bool IsSuper);
+                                    bool IsSuper = false);
   void CodeCompleteObjCInstanceMessage(Scope *S, ExprTy *Receiver,
                                        IdentifierInfo **SelIdents,
-                                       unsigned NumSelIdents);
-  void CodeCompleteObjCInstanceMessage(Scope *S, ExprTy *Receiver,
-                                     IdentifierInfo **SelIdents,
-                                     unsigned NumSelIdents,
-                                     bool IsSuper);
+                                       unsigned NumSelIdents,
+                                       bool IsSuper = false);
   void CodeCompleteObjCForCollection(Scope *S, 
                                      DeclGroupPtrTy IterationVar);
   void CodeCompleteObjCSelector(Scope *S,
