@@ -933,13 +933,15 @@ ParseInstruction(StringRef Name, SMLoc NameLoc,
                                              NameLoc, NameLoc));
   }
   
-  // The assembler accepts these instructions with no operand as a synonym for
-  // an instruction acting on st,st(1).  e.g. "faddp" -> "faddp %st(0),%st(1)".
-  //if (() &&
-  //    Operands.size() == 1) {
-  //  Operands.push_back(X86Operand::CreateReg(MatchRegisterName("st(1)"),
-  //                                           NameLoc, NameLoc));
-  //}
+  // The assembler accepts these instructions with two few operands as a synonym
+  // for taking %st(1),%st(0) or X, %st(0).
+  if ((Name == "fcomi" || Name == "fucomi") && Operands.size() < 3) {
+    if (Operands.size() == 1)
+      Operands.push_back(X86Operand::CreateReg(MatchRegisterName("st(1)"),
+                                               NameLoc, NameLoc));
+    Operands.push_back(X86Operand::CreateReg(MatchRegisterName("st(0)"),
+                                             NameLoc, NameLoc));
+  }
   
   return false;
 }
