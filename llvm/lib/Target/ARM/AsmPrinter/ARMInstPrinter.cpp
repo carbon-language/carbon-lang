@@ -12,7 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "asm-printer"
-#include "ARM.h" // FIXME: FACTOR ENUMS BETTER.
+#include "ARMBaseInfo.h"
 #include "ARMInstPrinter.h"
 #include "ARMAddressingModes.h"
 #include "llvm/MC/MCInst.h"
