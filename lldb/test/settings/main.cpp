@@ -10,26 +10,23 @@
 #include <cstdlib>
 #include <string>
 #include <fstream>
+#include <iostream>
 
 int
 main(int argc, char const *argv[])
 {
-    char const *cptr = NULL;
     // The program writes its output to the "output.txt" file.
     std::ofstream outfile("output.txt");
 
-    for (unsigned i = 0, e = sizeof(argv); i < e; ++i) {
-        if ((cptr = argv[i]) == NULL)
-            break;
-
-        std::string str(cptr);
-        if (i == 1 && "A" == str)
+    for (unsigned i = 0; i < argc; ++i) {
+        std::string theArg(argv[i]);
+        if (i == 1 && "A" == theArg)
             outfile << "argv[1] matches\n";
 
-        if (i == 2 && "B" == str)
+        if (i == 2 && "B" == theArg)
             outfile << "argv[2] matches\n";
 
-        if (i == 3 && "C" == str)
+        if (i == 3 && "C" == theArg)
             outfile << "argv[3] matches\n";
     }
 
@@ -39,6 +36,8 @@ main(int argc, char const *argv[])
             outfile << "Environment variable 'MY_ENV_VAR' successfully passed.\n";
         }
     }
+
+    std::cout << "This message should go to standard out.\n";
 
     return 0;
 }
