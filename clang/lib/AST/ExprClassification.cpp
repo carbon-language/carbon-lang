@@ -264,7 +264,7 @@ static Cl::Kinds ClassifyInternal(ASTContext &Ctx, const Expr *E) {
   case Expr::StmtExprClass: {
     const CompoundStmt *S = cast<StmtExpr>(E)->getSubStmt();
     if (const Expr *LastExpr = dyn_cast_or_null<Expr>(S->body_back()))
-      return ClassifyInternal(Ctx, LastExpr);
+      return ClassifyUnnamed(Ctx, LastExpr->getType());
     return Cl::CL_PRValue;
   }
       
