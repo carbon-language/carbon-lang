@@ -552,10 +552,14 @@ static std::string GenOpString(OpKind op, const std::string &proto,
   }
   
   std::string ts = TypeString(proto[0], typestr);
-  std::string s = ts + " r; r";
-  
-  if (structTypes)
-    s += ".val";
+  std::string s;
+  if (op == OpHi || op == OpLo) {
+    s = "union { " + ts + " r; double d; } u; u.d";
+  } else {
+    s = ts + " r; r";
+    if (structTypes)
+      s += ".val";
+  }
   
   s += " = ";
 
@@ -631,10 +635,10 @@ static std::string GenOpString(OpKind op, const std::string &proto,
     s += ", (__neon_int64x1_t)" + b + ", 0, 1)";
     break;
   case OpHi:
-    s += "(__neon_int64x1_t)(((__neon_int64x2_t)" + a + ")[1])";
+    s += "(((__neon_float64x2_t)" + a + ")[1])";
     break;
   case OpLo:
-    s += "(__neon_int64x1_t)(((__neon_int64x2_t)" + a + ")[0])";
+    s += "(((__neon_float64x2_t)" + a + ")[0])";
     break;
   case OpDup:
     s += Duplicate(nElts << (int)quad, typestr, a);
@@ -671,7 +675,10 @@ static std::string GenOpString(OpKind op, const std::string &proto,
     throw "unknown OpKind!";
     break;
   }
-  s += "; return r;";
+  if (op == OpHi || op == OpLo)
+    s += "; return u.r;";
+  else
+    s += "; return r;";
   return s;
 }
 
@@ -922,6 +929,11 @@ void NeonEmitter::run(raw_ostream &OS) {
       OS << TypeString(t, TDTypeVec[i]) << ";\n";
     }
   }
+  OS << "\n";
+  OS << "typedef __attribute__(( __vector_size__(8) ))  "
+    "double __neon_float64x1_t;\n";
+  OS << "typedef __attribute__(( __vector_size__(16) )) "
+    "double __neon_float64x2_t;\n";
   OS << "\n";
 
   // Emit struct typedefs.
