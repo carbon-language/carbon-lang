@@ -386,8 +386,8 @@ DecomposeGEPExpression(const Value *V, int64_t &BaseOffs,
       
       // The GEP index scale ("Scale") scales C1*V+C2, yielding (C1*V+C2)*Scale.
       // This gives us an aggregate computation of (C1*Scale)*V + C2*Scale.
-      BaseOffs += IndexOffset.getZExtValue()*Scale;
-      Scale *= IndexScale.getZExtValue();
+      BaseOffs += IndexOffset.getSExtValue()*Scale;
+      Scale *= IndexScale.getSExtValue();
       
       
       // If we already had an occurrance of this index variable, merge this
@@ -407,7 +407,7 @@ DecomposeGEPExpression(const Value *V, int64_t &BaseOffs,
       // pointer size.
       if (unsigned ShiftBits = 64-TD->getPointerSizeInBits()) {
         Scale <<= ShiftBits;
-        Scale >>= ShiftBits;
+        Scale = (int64_t)Scale >> ShiftBits;
       }
       
       if (Scale) {
