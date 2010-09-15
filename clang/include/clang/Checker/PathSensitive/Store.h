@@ -112,7 +112,7 @@ public:
     return getLValueFieldOrIvar(D, Base);
   }
 
-  virtual SVal getLValueElement(QualType elementType, SVal offset, SVal Base);
+  virtual SVal getLValueElement(QualType elementType, NonLoc offset, SVal Base);
 
   // FIXME: This should soon be eliminated altogether; clients should deal with
   // region extents directly.

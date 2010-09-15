@@ -650,7 +650,9 @@ inline SVal GRState::getLValue(const FieldDecl* D, SVal Base) const {
 }
 
 inline SVal GRState::getLValue(QualType ElementType, SVal Idx, SVal Base) const{
-  return getStateManager().StoreMgr->getLValueElement(ElementType, Idx, Base);
+  if (NonLoc *N = dyn_cast<NonLoc>(&Idx))
+    return getStateManager().StoreMgr->getLValueElement(ElementType, *N, Base);
+  return UnknownVal();
 }
 
 inline const llvm::APSInt *GRState::getSymVal(SymbolRef sym) const {

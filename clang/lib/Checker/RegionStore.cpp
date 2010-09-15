@@ -786,7 +786,7 @@ SVal RegionStoreManager::ArrayToPointer(Loc Array) {
   ArrayType *AT = cast<ArrayType>(T);
   T = AT->getElementType();
 
-  SVal ZeroIdx = ValMgr.makeZeroArrayIndex();
+  NonLoc ZeroIdx = ValMgr.makeZeroArrayIndex();
   return loc::MemRegionVal(MRMgr.getElementRegion(T, ZeroIdx, ArrayR, Ctx));
 }
 
@@ -828,14 +828,14 @@ SVal RegionStoreManager::EvalBinOp(BinaryOperator::Opcode Op, Loc L, NonLoc R,
       else
         EleTy = T->getAs<ObjCObjectPointerType>()->getPointeeType();
 
-      SVal ZeroIdx = ValMgr.makeZeroArrayIndex();
+      const NonLoc &ZeroIdx = ValMgr.makeZeroArrayIndex();
       ER = MRMgr.getElementRegion(EleTy, ZeroIdx, SR, Ctx);
       break;
     }
     case MemRegion::AllocaRegionKind: {
       const AllocaRegion *AR = cast<AllocaRegion>(MR);
       QualType EleTy = Ctx.CharTy; // Create an ElementRegion of bytes.
-      SVal ZeroIdx = ValMgr.makeZeroArrayIndex();
+      NonLoc ZeroIdx = ValMgr.makeZeroArrayIndex();
       ER = MRMgr.getElementRegion(EleTy, ZeroIdx, AR, Ctx);
       break;
     }
@@ -889,8 +889,12 @@ SVal RegionStoreManager::EvalBinOp(BinaryOperator::Opcode Op, Loc L, NonLoc R,
       SVal NewIdx =
         Base->evalBinOp(ValMgr, Op,
                 cast<nonloc::ConcreteInt>(ValMgr.convertToArrayIndex(*Offset)));
+
+      if (!isa<NonLoc>(NewIdx))
+        return UnknownVal();
+
       const MemRegion* NewER =
-        MRMgr.getElementRegion(ER->getElementType(), NewIdx,
+        MRMgr.getElementRegion(ER->getElementType(), cast<NonLoc>(NewIdx),
                                ER->getSuperRegion(), Ctx);
       return ValMgr.makeLoc(NewER);
     }
@@ -1449,7 +1453,7 @@ Store RegionStoreManager::BindArray(Store store, const TypedRegion* R,
     if (VI == VE)
       break;
 
-    SVal Idx = ValMgr.makeArrayIndex(i);
+    const NonLoc &Idx = ValMgr.makeArrayIndex(i);
     const ElementRegion *ER = MRMgr.getElementRegion(ElementTy, Idx, R, Ctx);
 
     if (ElementTy->isStructureOrClassType())

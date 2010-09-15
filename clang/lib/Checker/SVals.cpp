@@ -270,7 +270,7 @@ void SVal::dump() const { dumpToStream(llvm::errs()); }
 void SVal::dumpToStream(llvm::raw_ostream& os) const {
   switch (getBaseKind()) {
     case UnknownKind:
-      os << "Invalid";
+      os << "Unknown";
       break;
     case NonLocKind:
       cast<NonLoc>(this)->dumpToStream(os);

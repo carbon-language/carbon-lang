@@ -194,3 +194,33 @@ void false8() {
   a = (short)a; // no-warning
   test(a);
 }
+
+// This test case previously flagged a warning at 'b == c' because the
+// analyzer previously allowed 'UnknownVal' as the index for ElementRegions.
+typedef struct RDar8431728_F {
+  int RDar8431728_A;
+  unsigned char *RDar8431728_B;
+  int RDar8431728_E[6];
+} RDar8431728_D;
+static inline int RDar8431728_C(RDar8431728_D * s, int n,
+    unsigned char **RDar8431728_B_ptr) {
+  int xy, wrap, pred, a, b, c;
+
+  xy = s->RDar8431728_E[n];
+  wrap = s->RDar8431728_A;
+
+  a = s->RDar8431728_B[xy - 1];
+  b = s->RDar8431728_B[xy - 1 - wrap];
+  c = s->RDar8431728_B[xy - wrap];
+
+  if (b == c) { // no-warning
+    pred = a;
+  } else {
+    pred = c;
+  }
+
+  *RDar8431728_B_ptr = &s->RDar8431728_B[xy];
+
+  return pred;
+}
+

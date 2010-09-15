@@ -788,9 +788,9 @@ class ElementRegion : public TypedRegion {
   friend class MemRegionManager;
 
   QualType ElementType;
-  SVal Index;
+  NonLoc Index;
 
-  ElementRegion(QualType elementType, SVal Idx, const MemRegion* sReg)
+  ElementRegion(QualType elementType, NonLoc Idx, const MemRegion* sReg)
     : TypedRegion(sReg, ElementRegionKind),
       ElementType(elementType), Index(Idx) {
     assert((!isa<nonloc::ConcreteInt>(&Idx) ||
@@ -803,7 +803,7 @@ class ElementRegion : public TypedRegion {
 
 public:
 
-  SVal getIndex() const { return Index; }
+  NonLoc getIndex() const { return Index; }
 
   QualType getValueType() const {
     return ElementType;
@@ -942,7 +942,7 @@ public:
   
   /// getElementRegion - Retrieve the memory region associated with the
   ///  associated element type, index, and super region.
-  const ElementRegion *getElementRegion(QualType elementType, SVal Idx,
+  const ElementRegion *getElementRegion(QualType elementType, NonLoc Idx,
                                         const MemRegion *superRegion,
                                         ASTContext &Ctx);
 
