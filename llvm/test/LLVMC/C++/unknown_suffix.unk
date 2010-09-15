@@ -1,0 +1,9 @@
+// Test that the -x option works for files with unknown suffixes.
+// RUN: llvmc -x c++ %s -o %t
+// RUN: %abs_tmp | grep hello
+// XFAIL: vg
+#include <iostream>
+
+int main() {
+    std::cout << "hello" << '\n';
+}

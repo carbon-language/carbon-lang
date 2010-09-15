@@ -218,10 +218,11 @@ FindToolChain(const sys::Path& In, const std::string* ForceLanguage,
               InputLanguagesSet& InLangs, const LanguageMap& LangMap) const {
 
   // Determine the input language.
-  const std::string* InLang = LangMap.GetLanguage(In);
+  const std::string* InLang = (ForceLanguage ? ForceLanguage
+                               : LangMap.GetLanguage(In));
   if (InLang == 0)
     return 0;
-  const std::string& InLanguage = (ForceLanguage ? *ForceLanguage : *InLang);
+  const std::string& InLanguage = *InLang;
 
   // Add the current input language to the input language set.
   InLangs.insert(InLanguage);
