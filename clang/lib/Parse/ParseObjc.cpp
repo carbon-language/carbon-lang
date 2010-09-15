@@ -1898,7 +1898,7 @@ ExprResult Parser::ParseObjCMessageExpression() {
 
     // Parse the receiver, which is either a type or an expression.
     bool IsExpr;
-    void *TypeOrExpr;
+    void *TypeOrExpr = NULL;
     if (ParseObjCXXMessageReceiver(IsExpr, TypeOrExpr)) {
       SkipUntil(tok::r_square);
       return ExprError();
