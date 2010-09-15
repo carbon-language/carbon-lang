@@ -95,7 +95,7 @@ Mangled::Clear ()
 int
 Mangled::Compare (const Mangled& a, const Mangled& b)
 {
-    return ConstString::Compare(a.GetName(ePreferDemangled), a.GetName(ePreferDemangled));
+    return ConstString::Compare(a.GetName(ePreferMangled), a.GetName(ePreferMangled));
 }
 
 
