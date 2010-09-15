@@ -248,4 +248,12 @@ fucomi
 fucomi	%st(2)
 fucomi	%st(2), %st
 
+// CHECK: fnstsw %ax
+// CHECK: fnstsw %ax
+// CHECK: fnstsw %ax
+// CHECK: fnstsw %ax
 
+fnstsw
+fnstsw %ax
+fnstsw %eax
+fnstsw %al

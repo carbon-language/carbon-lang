@@ -943,6 +943,25 @@ ParseInstruction(StringRef Name, SMLoc NameLoc,
                                              NameLoc, NameLoc));
   }
   
+  // The assembler accepts various amounts of brokenness for fnstsw.
+  if (Name == "fnstsw") {
+    if (Operands.size() == 2 &&
+        static_cast<X86Operand*>(Operands[1])->isReg()) {
+      // "fnstsw al" and "fnstsw eax" -> "fnstw"
+      unsigned Reg = static_cast<X86Operand*>(Operands[1])->Reg.RegNo;
+      if (Reg == MatchRegisterName("eax") ||
+          Reg == MatchRegisterName("al")) {
+        delete Operands[1];
+        Operands.pop_back();
+      }
+    }
+
+    // "fnstw" -> "fnstw %ax"
+    if (Operands.size() == 1)
+      Operands.push_back(X86Operand::CreateReg(MatchRegisterName("ax"),
+                                               NameLoc, NameLoc));
+  }
+  
   return false;
 }
 
