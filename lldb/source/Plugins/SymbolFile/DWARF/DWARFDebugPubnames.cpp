@@ -187,8 +187,6 @@ DWARFDebugPubnames::GeneratePubnames(SymbolFileDWARF* dwarf2Data)
 
                 if (add_die && (name || mangled))
                 {
-                    if (is_variable)
-                        cu->AddGlobal(die);
                     pubnames_set.AddDescriptor(die->GetOffset() - cu_offset, mangled ? mangled : name);
                 }
             }

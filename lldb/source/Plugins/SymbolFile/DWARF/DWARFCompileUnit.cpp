@@ -19,6 +19,7 @@
 #include "DWARFDIECollection.h"
 #include "DWARFFormValue.h"
 #include "LogChannelDWARF.h"
+#include "NameToDIE.h"
 #include "SymbolFileDWARF.h"
 
 using namespace lldb_private;
@@ -524,44 +525,46 @@ DWARFCompileUnit::AppendDIEsWithTag (const dw_tag_t tag, DWARFDIECollection& die
     return dies.Size() - old_size;
 }
 
-void
-DWARFCompileUnit::AddGlobalDIEByIndex (uint32_t die_idx)
-{
-    m_global_die_indexes.push_back (die_idx);
-}
-
-
-void
-DWARFCompileUnit::AddGlobal (const DWARFDebugInfoEntry* die)
-{
-    // Indexes to all file level global and static variables
-    m_global_die_indexes;
-    
-    if (m_die_array.empty())
-        return;
-    
-    const DWARFDebugInfoEntry* first_die = &m_die_array[0];
-    const DWARFDebugInfoEntry* end = first_die + m_die_array.size();
-    if (first_die <= die && die < end)
-        m_global_die_indexes.push_back (die - first_die);
-}
+//void
+//DWARFCompileUnit::AddGlobalDIEByIndex (uint32_t die_idx)
+//{
+//    m_global_die_indexes.push_back (die_idx);
+//}
+//
+//
+//void
+//DWARFCompileUnit::AddGlobal (const DWARFDebugInfoEntry* die)
+//{
+//    // Indexes to all file level global and static variables
+//    m_global_die_indexes;
+//    
+//    if (m_die_array.empty())
+//        return;
+//    
+//    const DWARFDebugInfoEntry* first_die = &m_die_array[0];
+//    const DWARFDebugInfoEntry* end = first_die + m_die_array.size();
+//    if (first_die <= die && die < end)
+//        m_global_die_indexes.push_back (die - first_die);
+//}
 
 
 void
 DWARFCompileUnit::Index 
 (
-    lldb_private::UniqueCStringMap<dw_offset_t>& base_name_to_function_die,
-    lldb_private::UniqueCStringMap<dw_offset_t>& full_name_to_function_die,
-    lldb_private::UniqueCStringMap<dw_offset_t>& method_name_to_function_die,
-    lldb_private::UniqueCStringMap<dw_offset_t>& selector_name_to_function_die,
-    lldb_private::UniqueCStringMap<dw_offset_t>& name_to_type_die,
-    lldb_private::UniqueCStringMap<dw_offset_t>& name_to_global_die,
+    const uint32_t cu_idx,
+    NameToDIE& base_name_to_function_die,
+    NameToDIE& full_name_to_function_die,
+    NameToDIE& method_name_to_function_die,
+    NameToDIE& selector_name_to_function_die,
+    NameToDIE& name_to_global_die,
+    NameToDIE& name_to_type_die,
     const DWARFDebugRanges *debug_ranges,
     DWARFDebugAranges *aranges
 )
 {
     const DataExtractor* debug_str = &m_dwarf2Data->get_debug_str_data();
 
+    NameToDIE::Info die_info = { cu_idx, 0 };
     DWARFDebugInfoEntry::const_iterator pos;
     DWARFDebugInfoEntry::const_iterator begin = m_die_array.begin();
     DWARFDebugInfoEntry::const_iterator end = m_die_array.end();
@@ -746,6 +749,8 @@ DWARFCompileUnit::Index
             }
         }
 
+        die_info.die_idx = std::distance (begin, pos);
+
         switch (tag)
         {
         case DW_TAG_subprogram:
@@ -771,9 +776,8 @@ DWARFCompileUnit::Index
                                 ++method_name;
                                 // Extract the objective C basename and add it to the
                                 // accelerator tables
-                                size_t method_name_len = name_len - (method_name - name) - 1;
-                                ConstString method_const_str (method_name, method_name_len);
-                                selector_name_to_function_die.Append(method_const_str.AsCString(), die.GetOffset());
+                                size_t method_name_len = name_len - (method_name - name) - 1;                                
+                                selector_name_to_function_die.Insert (ConstString (method_name, method_name_len), die_info);
                             }
                         }
                     }
@@ -808,15 +812,16 @@ DWARFCompileUnit::Index
                         }
                     }
 
+
                     if (is_method)
-                        method_name_to_function_die.Append(ConstString(name).AsCString(), die.GetOffset());
+                        method_name_to_function_die.Insert (ConstString(name), die_info);
                     else
-                        base_name_to_function_die.Append(ConstString(name).AsCString(), die.GetOffset());
+                        base_name_to_function_die.Insert (ConstString(name), die_info);
                 }
                 if (mangled.GetMangledName())
-                    full_name_to_function_die.Append(mangled.GetMangledName().AsCString(), die.GetOffset());
+                    full_name_to_function_die.Insert (mangled.GetMangledName(), die_info);
                 if (mangled.GetDemangledName())
-                    full_name_to_function_die.Append(mangled.GetDemangledName().AsCString(), die.GetOffset());
+                    full_name_to_function_die.Insert (mangled.GetDemangledName(), die_info);
             }
             break;
 
@@ -824,11 +829,11 @@ DWARFCompileUnit::Index
             if (has_address)
             {
                 if (name)
-                    base_name_to_function_die.Append(ConstString(name).AsCString(), die.GetOffset());
+                    base_name_to_function_die.Insert (ConstString(name), die_info);
                 if (mangled.GetMangledName())
-                    full_name_to_function_die.Append(mangled.GetMangledName().AsCString(), die.GetOffset());
+                    full_name_to_function_die.Insert (mangled.GetMangledName(), die_info);
                 if (mangled.GetDemangledName())
-                    full_name_to_function_die.Append(mangled.GetDemangledName().AsCString(), die.GetOffset());
+                    full_name_to_function_die.Insert (mangled.GetDemangledName(), die_info);
             }
             break;
         
@@ -844,15 +849,14 @@ DWARFCompileUnit::Index
         case DW_TAG_namespace:
             if (name && is_declaration == false)
             {
-                name_to_type_die.Append(ConstString(name).AsCString(), die.GetOffset());
+                name_to_type_die.Insert (ConstString(name), die_info);
             }
             break;
 
         case DW_TAG_variable:
             if (name && has_location && is_global_or_static_variable)
             {
-                AddGlobalDIEByIndex (std::distance (begin, pos));
-                name_to_global_die.Append(ConstString(name).AsCString(), die.GetOffset());
+                name_to_global_die.Insert (ConstString(name), die_info);
             }
             break;
             

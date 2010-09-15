@@ -13,6 +13,8 @@
 #include "SymbolFileDWARF.h"
 #include "DWARFDebugInfoEntry.h"
 
+class NameToDIE;
+
 class DWARFCompileUnit
 {
 public:
@@ -91,6 +93,12 @@ public:
     }
 
     DWARFDebugInfoEntry*
+    GetDIEAtIndexUnchecked (uint32_t idx)
+    {
+        return &m_die_array[idx];
+    }
+
+    DWARFDebugInfoEntry*
     GetDIEPtr (dw_offset_t die_offset);
 
     const DWARFDebugInfoEntry*
@@ -101,6 +109,7 @@ public:
 
     static uint8_t
     GetDefaultAddressSize();
+
     static void
     SetDefaultAddressSize(uint8_t addr_size);
 
@@ -117,37 +126,20 @@ public:
     }
 
 
+//    void
+//    AddGlobalDIEByIndex (uint32_t die_idx);
+//
+//    void
+//    AddGlobal (const DWARFDebugInfoEntry* die);
+//
     void
-    AddGlobalDIEByIndex (uint32_t die_idx);
-
-    void
-    AddGlobal (const DWARFDebugInfoEntry* die);
-
-    size_t
-    GetNumGlobals () const
-    {
-        return m_global_die_indexes.size();
-    }
-    
-    const DWARFDebugInfoEntry *
-    GetGlobalDIEAtIndex (uint32_t idx)
-    {
-        if (idx < m_global_die_indexes.size())
-        {
-            uint32_t die_idx = m_global_die_indexes[idx];
-            if (die_idx < m_die_array.size())
-                return &m_die_array[die_idx];
-        }
-        return NULL;
-    }
-
-    void
-    Index (lldb_private::UniqueCStringMap<dw_offset_t>& base_name_to_function_die,
-           lldb_private::UniqueCStringMap<dw_offset_t>& full_name_to_function_die,
-           lldb_private::UniqueCStringMap<dw_offset_t>& method_name_to_function_die,
-           lldb_private::UniqueCStringMap<dw_offset_t>& selector_name_to_function_die,
-           lldb_private::UniqueCStringMap<dw_offset_t>& name_to_type_die,
-           lldb_private::UniqueCStringMap<dw_offset_t>& name_to_global_die,
+    Index (const uint32_t cu_idx,
+           NameToDIE& base_name_to_function_die,
+           NameToDIE& full_name_to_function_die,
+           NameToDIE& method_name_to_function_die,
+           NameToDIE& selector_name_to_function_die,
+           NameToDIE& name_to_global_die,
+           NameToDIE& name_to_type_die,
            const DWARFDebugRanges* debug_ranges,
            DWARFDebugAranges *aranges);
 
@@ -164,7 +156,6 @@ protected:
     DWARFDebugInfoEntry::collection
                         m_die_array;    // The compile unit debug information entry item
     std::auto_ptr<DWARFDebugAranges>    m_aranges_ap;   // A table similar to the .debug_aranges table, but this one points to the exact DW_TAG_subprogram DIEs
-    std::vector<uint32_t> m_global_die_indexes; // Indexes to all file level global and static variables
     void *              m_user_data;
 private:
     DISALLOW_COPY_AND_ASSIGN (DWARFCompileUnit);

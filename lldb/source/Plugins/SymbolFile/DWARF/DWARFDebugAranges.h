@@ -75,7 +75,7 @@ public:
     void        Print() const;
     dw_offset_t FindAddress(dw_addr_t address) const;
     bool        IsEmpty() const { return m_aranges.empty(); }
-    void        Dump(lldb_private::Stream *s);
+//    void        Dump(lldb_private::Stream *s);
     uint32_t    NumRanges() const
                 {
                     return m_aranges.size();

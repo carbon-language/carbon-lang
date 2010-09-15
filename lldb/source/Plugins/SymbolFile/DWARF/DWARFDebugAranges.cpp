@@ -167,22 +167,22 @@ DWARFDebugAranges::Range::Dump(Stream *s) const
 //----------------------------------------------------------------------
 // Dump
 //----------------------------------------------------------------------
-void
-DWARFDebugAranges::Dump(SymbolFileDWARF* dwarf2Data, Stream *s)
-{
-    const DataExtractor &debug_aranges_data = dwarf2Data->get_debug_aranges_data();
-    if (debug_aranges_data.ValidOffset(0))
-    {
-        uint32_t offset = 0;
-
-        DWARFDebugArangeSet set;
-        while (set.Extract(debug_aranges_data, &offset))
-            set.Dump(s);
-    }
-    else
-        s->PutCString("< EMPTY >\n");
-}
-
+//void
+//DWARFDebugAranges::Dump(SymbolFileDWARF* dwarf2Data, Stream *s)
+//{
+//    const DataExtractor &debug_aranges_data = dwarf2Data->get_debug_aranges_data();
+//    if (debug_aranges_data.ValidOffset(0))
+//    {
+//        uint32_t offset = 0;
+//
+//        DWARFDebugArangeSet set;
+//        while (set.Extract(debug_aranges_data, &offset))
+//            set.Dump(s);
+//    }
+//    else
+//        s->PutCString("< EMPTY >\n");
+//}
+//
 
 //----------------------------------------------------------------------
 // AppendDebugRanges

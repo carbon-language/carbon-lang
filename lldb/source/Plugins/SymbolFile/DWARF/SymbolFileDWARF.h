@@ -31,6 +31,7 @@
 
 // Project includes
 #include "DWARFDefines.h"
+#include "NameToDIE.h"
 
 
 //----------------------------------------------------------------------
@@ -92,7 +93,8 @@ public:
     virtual size_t          ParseTypes (const lldb_private::SymbolContext& sc);
     virtual size_t          ParseVariablesForContext (const lldb_private::SymbolContext& sc);
 
-    virtual lldb_private::Type*     ResolveTypeUID(lldb::user_id_t type_uid);
+    virtual lldb_private::Type* ResolveTypeUID(lldb::user_id_t type_uid);
+    virtual lldb_private::Type* ResolveType (DWARFCompileUnit* cu, const DWARFDebugInfoEntry* type_die);
     virtual clang::DeclContext* GetClangDeclContextForTypeUID (lldb::user_id_t type_uid);
 
     virtual uint32_t        ResolveSymbolContext (const lldb_private::Address& so_addr, uint32_t resolve_scope, lldb_private::SymbolContext& sc);
@@ -134,14 +136,10 @@ public:
     //virtual CompUnitSP    GetCompUnitAtIndex(size_t cu_idx) = 0;
 
     const lldb_private::DataExtractor&      get_debug_abbrev_data();
-    const lldb_private::DataExtractor&      get_debug_aranges_data();
     const lldb_private::DataExtractor&      get_debug_frame_data();
     const lldb_private::DataExtractor&      get_debug_info_data();
     const lldb_private::DataExtractor&      get_debug_line_data();
     const lldb_private::DataExtractor&      get_debug_loc_data();
-    const lldb_private::DataExtractor&      get_debug_macinfo_data();
-    const lldb_private::DataExtractor&      get_debug_pubnames_data();
-    const lldb_private::DataExtractor&      get_debug_pubtypes_data();
     const lldb_private::DataExtractor&      get_debug_ranges_data();
     const lldb_private::DataExtractor&      get_debug_str_data();
 
@@ -153,19 +151,6 @@ public:
 
     DWARFDebugInfo*         DebugInfo();
     const DWARFDebugInfo*   DebugInfo() const;
-
-//  These shouldn't be used unless we want to dump the DWARF line tables.
-//  DWARFDebugLine*         DebugLine();
-//  const DWARFDebugLine*   DebugLine() const;
-
-//    DWARFDebugPubnames*     DebugPubnames();
-//    const DWARFDebugPubnames* DebugPubnames() const;
-//
-//    DWARFDebugPubnames*     DebugPubBaseTypes();
-//    const DWARFDebugPubnames* DebugPubBaseTypes() const;
-//
-    DWARFDebugPubnames*     DebugPubtypes();
-//    const DWARFDebugPubnames* DebugPubtypes() const;
 
     DWARFDebugRanges*       DebugRanges();
     const DWARFDebugRanges* DebugRanges() const;
@@ -286,7 +271,12 @@ protected:
 
     void                    FindFunctions(
                                 const lldb_private::ConstString &name, 
-                                lldb_private::UniqueCStringMap<dw_offset_t> &name_to_die,
+                                const NameToDIE &name_to_die,
+                                lldb_private::SymbolContextList& sc_list);
+
+    void                    FindFunctions (
+                                const lldb_private::RegularExpression &regex, 
+                                const NameToDIE &name_to_die,
                                 lldb_private::SymbolContextList& sc_list);
 
     lldb_private::Type*     GetUniquedTypeForDIEOffset(dw_offset_t type_die_offset, lldb::TypeSP& owning_type_sp, int32_t child_type, uint32_t idx, bool safe);
@@ -298,14 +288,10 @@ protected:
     lldb_private::Flags             m_flags;
     lldb_private::DataExtractor     m_dwarf_data; 
     lldb_private::DataExtractor     m_data_debug_abbrev;
-    lldb_private::DataExtractor     m_data_debug_aranges;
     lldb_private::DataExtractor     m_data_debug_frame;
     lldb_private::DataExtractor     m_data_debug_info;
     lldb_private::DataExtractor     m_data_debug_line;
     lldb_private::DataExtractor     m_data_debug_loc;
-    lldb_private::DataExtractor     m_data_debug_macinfo;
-    lldb_private::DataExtractor     m_data_debug_pubnames;
-    lldb_private::DataExtractor     m_data_debug_pubtypes;
     lldb_private::DataExtractor     m_data_debug_ranges;
     lldb_private::DataExtractor     m_data_debug_str;
 
@@ -315,31 +301,19 @@ protected:
     std::auto_ptr<DWARFDebugAranges>    m_aranges;
     std::auto_ptr<DWARFDebugInfo>       m_info;
     std::auto_ptr<DWARFDebugLine>       m_line;
-    lldb_private::UniqueCStringMap<dw_offset_t> m_base_name_to_function_die; // All concrete functions
-    lldb_private::UniqueCStringMap<dw_offset_t> m_full_name_to_function_die; // All concrete functions
-    lldb_private::UniqueCStringMap<dw_offset_t> m_method_name_to_function_die;  // All inlined functions
-    lldb_private::UniqueCStringMap<dw_offset_t> m_selector_name_to_function_die;   // All method names for functions of classes
-    lldb_private::UniqueCStringMap<dw_offset_t> m_name_to_global_die;   // Global and static variables
-    lldb_private::UniqueCStringMap<dw_offset_t> m_name_to_type_die;     // All type DIE offsets
+    NameToDIE                           m_function_basename_index;  // All concrete functions
+    NameToDIE                           m_function_fullname_index;  // All concrete functions
+    NameToDIE                           m_function_method_index;    // All inlined functions
+    NameToDIE                           m_function_selector_index;  // All method names for functions of classes
+    NameToDIE                           m_global_index;             // Global and static variables
+    NameToDIE                           m_types_index;              // All type DIE offsets
     bool m_indexed;
 
-//    std::auto_ptr<DWARFDebugPubnames>   m_pubnames;
-//    std::auto_ptr<DWARFDebugPubnames>   m_pubbasetypes; // Just like m_pubtypes, but for DW_TAG_base_type DIEs
-    std::auto_ptr<DWARFDebugPubnames>   m_pubtypes;
     std::auto_ptr<DWARFDebugRanges>     m_ranges;
 
     typedef llvm::DenseMap<const DWARFDebugInfoEntry *, clang::DeclContext *> DIEToDeclContextMap;
     DIEToDeclContextMap m_die_to_decl_ctx;
     
-//  TypeFixupColl   m_type_fixups;
-//  std::vector<Type*> m_indirect_fixups;
-
-//#define LLDB_SYMBOL_FILE_DWARF_SHRINK_TEST 1
-#if defined(LLDB_SYMBOL_FILE_DWARF_SHRINK_TEST)
-
-    typedef std::map<FileSpec, DWARFDIECollection> FSToDIES;
-    void ShrinkDSYM(CompileUnit *dc_cu, DWARFCompileUnit *dw_cu, const FileSpec& cu_fspec, const FileSpec& base_types_cu_fspec, FSToDIES& fs_to_dies, const DWARFDebugInfoEntry *die);
-#endif
 };
 
 #endif  // liblldb_SymbolFileDWARF_h_
