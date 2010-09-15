@@ -1529,51 +1529,63 @@ Parser::ParseParenExpression(ParenParseOption &ExprType, bool stopIfCastExpr,
       Ty = ParseTypeName();
     }
     
-    // Match the ')'.
-    if (Tok.is(tok::r_paren))
-      RParenLoc = ConsumeParen();
-    else
-      MatchRHSPunctuation(tok::r_paren, OpenLoc);
+    // If our type is followed by an identifier and either ':' or ']', then 
+    // this is probably an Objective-C message send where the leading '[' is
+    // missing. Recover as if that were the case.
+    if (!Ty.isInvalid() && Tok.is(tok::identifier) && !InMessageExpression &&
+        getLang().ObjC1 && !Ty.get().get().isNull() &&
+        (NextToken().is(tok::colon) || NextToken().is(tok::r_square)) &&
+        Ty.get().get()->isObjCObjectOrInterfaceType()) {
+      Result = ParseObjCMessageExpressionBody(SourceLocation(), 
+                                              SourceLocation(), 
+                                              Ty.get(), 0);
+    } else {          
+      // Match the ')'.
+      if (Tok.is(tok::r_paren))
+        RParenLoc = ConsumeParen();
+      else
+        MatchRHSPunctuation(tok::r_paren, OpenLoc);
 
-    if (Tok.is(tok::l_brace)) {
-      ExprType = CompoundLiteral;
-      return ParseCompoundLiteralExpression(Ty.get(), OpenLoc, RParenLoc);
-    }
-
-    if (ExprType == CastExpr) {
-      // We parsed '(' type-name ')' and the thing after it wasn't a '{'.
-
-      if (Ty.isInvalid())
-        return ExprError();
-
-      CastTy = Ty.get();
-
-      // Note that this doesn't parse the subsequent cast-expression, it just
-      // returns the parsed type to the callee.
-      if (stopIfCastExpr)
-        return ExprResult();
-      
-      // Reject the cast of super idiom in ObjC.
-      if (Tok.is(tok::identifier) && getLang().ObjC1 &&
-          Tok.getIdentifierInfo() == Ident_super && 
-          getCurScope()->isInObjcMethodScope() &&
-          GetLookAheadToken(1).isNot(tok::period)) {
-        Diag(Tok.getLocation(), diag::err_illegal_super_cast)
-          << SourceRange(OpenLoc, RParenLoc);
-        return ExprError();
+      if (Tok.is(tok::l_brace)) {
+        ExprType = CompoundLiteral;
+        return ParseCompoundLiteralExpression(Ty.get(), OpenLoc, RParenLoc);
       }
 
-      // Parse the cast-expression that follows it next.
-      // TODO: For cast expression with CastTy.
-      Result = ParseCastExpression(false, false, CastTy);
-      if (!Result.isInvalid())
-        Result = Actions.ActOnCastExpr(getCurScope(), OpenLoc, CastTy, RParenLoc,
-                                       Result.take());
-      return move(Result);
-    }
+      if (ExprType == CastExpr) {
+        // We parsed '(' type-name ')' and the thing after it wasn't a '{'.
 
-    Diag(Tok, diag::err_expected_lbrace_in_compound_literal);
-    return ExprError();
+        if (Ty.isInvalid())
+          return ExprError();
+
+        CastTy = Ty.get();
+
+        // Note that this doesn't parse the subsequent cast-expression, it just
+        // returns the parsed type to the callee.
+        if (stopIfCastExpr)
+          return ExprResult();
+        
+        // Reject the cast of super idiom in ObjC.
+        if (Tok.is(tok::identifier) && getLang().ObjC1 &&
+            Tok.getIdentifierInfo() == Ident_super && 
+            getCurScope()->isInObjcMethodScope() &&
+            GetLookAheadToken(1).isNot(tok::period)) {
+          Diag(Tok.getLocation(), diag::err_illegal_super_cast)
+            << SourceRange(OpenLoc, RParenLoc);
+          return ExprError();
+        }
+
+        // Parse the cast-expression that follows it next.
+        // TODO: For cast expression with CastTy.
+        Result = ParseCastExpression(false, false, CastTy);
+        if (!Result.isInvalid())
+          Result = Actions.ActOnCastExpr(getCurScope(), OpenLoc, CastTy, 
+                                         RParenLoc, Result.take());
+        return move(Result);
+      }
+
+      Diag(Tok, diag::err_expected_lbrace_in_compound_literal);
+      return ExprError();
+    }
   } else if (TypeOfCast) {
     // Parse the expression-list.
     InMessageExpressionRAIIObject InMessage(*this, false);

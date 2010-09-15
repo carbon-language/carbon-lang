@@ -786,12 +786,12 @@ ExprResult Sema::BuildClassMessage(TypeSourceInfo *ReceiverTypeInfo,
 // ArgExprs is optional - if it is present, the number of expressions
 // is obtained from Sel.getNumArgs().
 ExprResult Sema::ActOnClassMessage(Scope *S, 
-                                               ParsedType Receiver,
-                                               Selector Sel,
-                                               SourceLocation LBracLoc,
-                                               SourceLocation SelectorLoc,
-                                               SourceLocation RBracLoc,
-                                               MultiExprArg Args) {
+                                   ParsedType Receiver,
+                                   Selector Sel,
+                                   SourceLocation LBracLoc,
+                                   SourceLocation SelectorLoc,
+                                   SourceLocation RBracLoc,
+                                   MultiExprArg Args) {
   TypeSourceInfo *ReceiverTypeInfo;
   QualType ReceiverType = GetTypeFromParser(Receiver, &ReceiverTypeInfo);
   if (ReceiverType.isNull())

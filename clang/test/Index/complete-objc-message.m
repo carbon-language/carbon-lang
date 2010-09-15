@@ -135,7 +135,7 @@ void test_ranking(B *b) {
   b method1];
 }
 
-void test_overload_2(Overload *ovl) {
+void test_overload3(Overload *ovl) {
   ovl Method:1 Arg1:1 OtherArg:ovl];
 }
 
