@@ -896,6 +896,15 @@ ARMBaseInstrInfo::isLoadFromStackSlot(const MachineInstr *MI,
       return MI->getOperand(0).getReg();
     }
     break;
+  case ARM::VLDMQ:
+    if (MI->getOperand(1).isFI() &&
+        MI->getOperand(2).isImm() &&
+        MI->getOperand(2).getImm() == ARM_AM::getAM4ModeImm(ARM_AM::ia) &&
+        MI->getOperand(0).getSubReg() == 0) {
+      FrameIndex = MI->getOperand(1).getIndex();
+      return MI->getOperand(0).getReg();
+    }
+    break;
   }
 
   return 0;
