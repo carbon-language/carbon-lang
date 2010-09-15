@@ -173,8 +173,8 @@ private:
   llvm::DenseMap<const IdentifierInfo *, uint64_t> MacroOffsets;
 
   /// \brief Mapping from macro definitions (as they occur in the preprocessing
-  /// record) to the index into the macro definitions table.
-  llvm::DenseMap<const MacroDefinition *, serialization::IdentID>
+  /// record) to the macro IDs.
+  llvm::DenseMap<const MacroDefinition *, serialization::MacroID>
       MacroDefinitions;
   
   /// \brief Mapping from the macro definition indices in \c MacroDefinitions
@@ -353,7 +353,7 @@ public:
 
   /// \brief Retrieve the ID number corresponding to the given macro 
   /// definition.
-  serialization::IdentID getMacroDefinitionID(MacroDefinition *MD);
+  serialization::MacroID getMacroDefinitionID(MacroDefinition *MD);
   
   /// \brief Emit a reference to a type.
   void AddTypeRef(QualType T, RecordData &Record);

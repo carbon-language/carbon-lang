@@ -1349,7 +1349,7 @@ void ASTWriter::WritePreprocessor(const Preprocessor &PP) {
       
       if (MacroDefinition *MD = dyn_cast<MacroDefinition>(*E)) {
         // Record this macro definition's location.
-        IdentID ID = getMacroDefinitionID(MD);
+        MacroID ID = getMacroDefinitionID(MD);
         if (ID != MacroDefinitionOffsets.size()) {
           if (ID > MacroDefinitionOffsets.size())
             MacroDefinitionOffsets.resize(ID + 1);
@@ -2717,11 +2717,11 @@ IdentID ASTWriter::getIdentifierRef(const IdentifierInfo *II) {
   return ID;
 }
 
-IdentID ASTWriter::getMacroDefinitionID(MacroDefinition *MD) {
+MacroID ASTWriter::getMacroDefinitionID(MacroDefinition *MD) {
   if (MD == 0)
     return 0;
-  
-  IdentID &ID = MacroDefinitions[MD];
+
+  MacroID &ID = MacroDefinitions[MD];
   if (ID == 0)
     ID = MacroDefinitions.size();
   return ID;

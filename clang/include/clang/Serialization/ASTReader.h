@@ -1028,7 +1028,7 @@ public:
   virtual void ReadDefinedMacros();
 
   /// \brief Retrieve the macro definition with the given ID.
-  MacroDefinition *getMacroDefinition(serialization::IdentID ID);
+  MacroDefinition *getMacroDefinition(serialization::MacroID ID);
 
   /// \brief Retrieve the AST context that this AST reader supplements.
   ASTContext *getContext() { return Context; }

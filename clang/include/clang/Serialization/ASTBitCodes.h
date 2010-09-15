@@ -112,10 +112,13 @@ namespace clang {
     typedef llvm::DenseMap<QualType, TypeIdx, UnsafeQualTypeDenseMapInfo>
         TypeIdxMap;
 
-    /// \brief An ID number that refers to an identifier in an AST
-    /// file.
+    /// \brief An ID number that refers to an identifier in an AST file.
     typedef uint32_t IdentID;
 
+    /// \brief An ID number that refers to a macro in an AST file.
+    typedef uint32_t MacroID;
+
+    /// \brief An ID number that refers to an ObjC selctor in an AST file.
     typedef uint32_t SelectorID;
 
     /// \brief Describes the various kinds of blocks that occur within

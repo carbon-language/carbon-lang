@@ -1545,7 +1545,7 @@ void ASTReader::ReadDefinedMacros() {
   }
 }
 
-MacroDefinition *ASTReader::getMacroDefinition(IdentID ID) {
+MacroDefinition *ASTReader::getMacroDefinition(MacroID ID) {
   if (ID == 0 || ID >= MacroDefinitionsLoaded.size())
     return 0;
 
