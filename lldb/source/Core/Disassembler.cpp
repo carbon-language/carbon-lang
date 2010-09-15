@@ -107,7 +107,10 @@ Disassembler::Disassemble
     if (module)
     {
         if (!module->FindFunctions (name, 
-                                    eFunctionNameTypeBase | eFunctionNameTypeFull | eFunctionNameTypeMethod | eFunctionNameTypeSelector, 
+                                    eFunctionNameTypeBase | 
+                                    eFunctionNameTypeFull | 
+                                    eFunctionNameTypeMethod | 
+                                    eFunctionNameTypeSelector, 
                                     true,
                                     sc_list))
             return false;
@@ -115,7 +118,10 @@ Disassembler::Disassemble
     else 
     {
         if (exe_ctx.target->GetImages().FindFunctions (name, 
-                                                       eFunctionNameTypeBase | eFunctionNameTypeFull | eFunctionNameTypeMethod | eFunctionNameTypeSelector,
+                                                       eFunctionNameTypeBase | 
+                                                       eFunctionNameTypeFull | 
+                                                       eFunctionNameTypeMethod | 
+                                                       eFunctionNameTypeSelector,
                                                        false,
                                                        sc_list))
         {
@@ -240,7 +246,8 @@ Disassembler::Disassemble
                                         if (offset != 0)
                                             strm.EOL();
 
-                                        sc.DumpStopContext(&strm, process, addr, true, true, false);
+                                        sc.DumpStopContext(&strm, process, addr, false, true, false);
+                                        strm.EOL();
 
                                         if (sc.comp_unit && sc.line_entry.IsValid())
                                         {

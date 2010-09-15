@@ -96,7 +96,7 @@ public:
     ///     The stream to which to dump the object descripton.
     //------------------------------------------------------------------
     void
-    Dump (Stream *s) const;
+    Dump (Stream *s, bool show_fullpaths) const;
 
     //------------------------------------------------------------------
     /// Get accessor for the declaration information.
@@ -236,7 +236,7 @@ public:
     ///     The stream to which to dump the object descripton.
     //------------------------------------------------------------------
     void
-    Dump(Stream *s) const;
+    Dump(Stream *s, bool show_fullpaths) const;
 
     void
     DumpStopContext (Stream *s) const;

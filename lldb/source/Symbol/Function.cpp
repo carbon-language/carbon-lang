@@ -45,11 +45,11 @@ FunctionInfo::~FunctionInfo()
 }
 
 void
-FunctionInfo::Dump(Stream *s) const
+FunctionInfo::Dump(Stream *s, bool show_fullpaths) const
 {
     if (m_name)
         *s << ", name = \"" << m_name << "\"";
-    m_declaration.Dump(s);
+    m_declaration.Dump(s, show_fullpaths);
 }
 
 
@@ -131,9 +131,9 @@ InlineFunctionInfo::Compare(const InlineFunctionInfo& a, const InlineFunctionInf
 }
 
 void
-InlineFunctionInfo::Dump(Stream *s) const
+InlineFunctionInfo::Dump(Stream *s, bool show_fullpaths) const
 {
-    FunctionInfo::Dump(s);
+    FunctionInfo::Dump(s, show_fullpaths);
     if (m_mangled)
         m_mangled.Dump(s);
 }

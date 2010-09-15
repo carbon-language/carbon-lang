@@ -1834,6 +1834,10 @@ SymbolFileDWARF::FindTypes(const SymbolContext& sc, const ConstString &name, boo
     if (!append)
         types.Clear();
 
+    // Index if we already haven't to make sure the compile units
+    // get indexed and make their global DIE index list
+    if (!m_indexed)
+        Index ();
 
     const uint32_t initial_types_size = types.GetSize();
     DWARFCompileUnit* cu = NULL;

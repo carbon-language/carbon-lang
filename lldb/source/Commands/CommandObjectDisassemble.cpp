@@ -196,7 +196,7 @@ CommandObjectDisassemble::Execute
     ExecutionContext exe_ctx(interpreter.GetDebugger().GetExecutionContext());
 
     if (m_options.show_mixed && m_options.num_lines_context == 0)
-        m_options.num_lines_context = 3;
+        m_options.num_lines_context = 1;
 
     if (!m_options.m_func_name.empty())
     {

@@ -91,7 +91,8 @@ Variable::Dump(Stream *s, bool show_context) const
         s->PutCString(" )");
     }
 
-    m_declaration.Dump(s);
+    bool show_fullpaths = false;
+    m_declaration.Dump(s, show_fullpaths);
 
     if (m_location.IsValid())
     {

@@ -57,11 +57,15 @@ Declaration::Clear()
 }
 
 void
-Declaration::Dump(Stream *s) const
+Declaration::Dump(Stream *s, bool show_fullpaths) const
 {
     if (m_file)
     {
-        *s << ", decl = " << m_file;
+        *s << ", decl = ";
+        if (show_fullpaths)
+            *s << m_file;
+        else
+            *s << m_file.GetFilename();
         if (m_line > 0)
             s->Printf(":%u", m_line);
         if (m_column > 0)

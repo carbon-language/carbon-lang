@@ -878,14 +878,35 @@ SymbolFileDWARFDebugMap::FindFunctions (const RegularExpression& regex, bool app
 
 
 uint32_t
-SymbolFileDWARFDebugMap::FindTypes (const SymbolContext& sc, const ConstString &name, bool append, uint32_t max_matches, TypeList& types)
+SymbolFileDWARFDebugMap::FindTypes 
+(
+    const SymbolContext& sc, 
+    const ConstString &name, 
+    bool append, 
+    uint32_t max_matches, 
+    TypeList& types
+)
 {
-    SymbolFileDWARF *oso_dwarf = GetSymbolFile (sc);
-    if (oso_dwarf)
-        return oso_dwarf->FindTypes (sc, name, append, max_matches, types);
     if (!append)
         types.Clear();
-    return 0;
+
+    const uint32_t initial_types_size = types.GetSize();
+    SymbolFileDWARF *oso_dwarf;
+
+    if (sc.comp_unit)
+    {
+        oso_dwarf = GetSymbolFile (sc);
+        if (oso_dwarf)
+            return oso_dwarf->FindTypes (sc, name, append, max_matches, types);
+    }
+    else
+    {
+        uint32_t oso_idx = 0;
+        while ((oso_dwarf = GetSymbolFileByOSOIndex (oso_idx++)) != NULL)
+            oso_dwarf->FindTypes (sc, name, append, max_matches, types);
+    }
+
+    return types.GetSize() - initial_types_size;
 }
 
 //

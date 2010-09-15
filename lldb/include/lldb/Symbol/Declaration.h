@@ -100,7 +100,7 @@ public:
     ///     The stream to which to dump the object descripton.
     //------------------------------------------------------------------
     void
-    Dump (Stream *s) const;
+    Dump (Stream *s, bool show_fullpaths) const;
 
     void
     DumpStopContext (Stream *s, bool show_fullpaths) const;

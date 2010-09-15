@@ -87,13 +87,15 @@ lldb_private::Type::GetDescription (Stream *s, lldb::DescriptionLevel level, boo
 {
     *s << "id = " << (const UserID&)*this;
 
-    if (show_name && m_name)
+    // Call the name accessor to make sure we resolve the type name
+    if (show_name && GetName())
         *s << ", name = \"" << m_name << '"';
 
-    if (m_byte_size != 0)
+    // Call the get byte size accesor so we resolve our byte size
+    if (GetByteSize())
         s->Printf(", byte-size = %zu", m_byte_size);
-
-    m_decl.Dump(s);
+    bool show_fullpaths = (level == lldb::eDescriptionLevelVerbose);
+    m_decl.Dump(s, show_fullpaths);
 
     if (m_clang_qual_type)
     {
@@ -138,7 +140,8 @@ lldb_private::Type::Dump (Stream *s, bool show_context)
         s->PutCString(" )");
     }
 
-    m_decl.Dump(s);
+    bool show_fullpaths = false;
+    m_decl.Dump (s,show_fullpaths);
 
     if (m_clang_qual_type)
     {

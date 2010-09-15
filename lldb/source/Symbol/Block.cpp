@@ -57,7 +57,10 @@ Block::GetDescription(Stream *s, Function *function, lldb::DescriptionLevel leve
     }
 
     if (m_inlineInfoSP.get() != NULL)
-        m_inlineInfoSP->Dump(s);
+    {
+        bool show_fullpaths = (level == eDescriptionLevelVerbose);
+        m_inlineInfoSP->Dump(s, show_fullpaths);
+    }
 }
 
 void
@@ -83,7 +86,10 @@ Block::Dump(Stream *s, addr_t base_addr, int32_t depth, bool show_context) const
         s->Printf(", parent = {0x%8.8x}", parent_block->GetID());
     }
     if (m_inlineInfoSP.get() != NULL)
-        m_inlineInfoSP->Dump(s);
+    {
+        bool show_fullpaths = false;
+        m_inlineInfoSP->Dump(s, show_fullpaths);
+    }
 
     if (!m_ranges.empty())
     {
