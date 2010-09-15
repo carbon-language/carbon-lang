@@ -1,4 +1,3 @@
-// RUN: rm -f %S/statements.ll
 // RUN: %clang_cc1 -Wreturn-type %s -emit-llvm-only
 
 void test1(int x) {
