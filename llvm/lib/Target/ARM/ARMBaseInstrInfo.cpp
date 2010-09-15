@@ -757,6 +757,7 @@ ARMBaseInstrInfo::isStoreToStackSlot(const MachineInstr *MI,
       FrameIndex = MI->getOperand(0).getIndex();
       return MI->getOperand(2).getReg();
     }
+    break;
   case ARM::VSTMQ:
     if (MI->getOperand(1).isFI() &&
         MI->getOperand(2).isImm() &&
