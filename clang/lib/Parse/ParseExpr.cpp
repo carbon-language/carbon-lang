@@ -663,6 +663,18 @@ ExprResult Parser::ParseCastExpression(bool isUnaryExpression,
       break;
     }
 
+    // In an Objective-C method, if we have "super" followed by an identifier,
+    // the token sequence is ill-fomed. However, if there's a ':' or ']' after
+    // that identifier, this is probably a message send with a missing open
+    // bracket. Treat it as such.
+    if (getLang().ObjC1 && &II == Ident_super && Tok.is(tok::identifier) &&
+        getCurScope()->isInObjcMethodScope() &&
+        (NextToken().is(tok::colon) || NextToken().is(tok::r_square))) {
+      Res = ParseObjCMessageExpressionBody(SourceLocation(), ILoc, ParsedType(), 
+                                           0);
+      break;
+    }
+    
     // Make sure to pass down the right value for isAddressOfOperand.
     if (isAddressOfOperand && isPostfixExpressionSuffixStart())
       isAddressOfOperand = false;

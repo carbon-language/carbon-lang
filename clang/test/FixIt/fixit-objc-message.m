@@ -18,4 +18,18 @@ void f(A *a, int i, int j) {
   a method1:5+2 second:+(3.14159)];
   a method1:[a method1:3 second:j] second:i++]
   a getBlah];
+
+  int array[17];
+  (void)array[a method1:5+2 second:+(3.14159)]];
 }
+
+@interface B : A
+- (int)method1:(int)x second:(float)y;
+@end
+
+@implementation B
+- (int)method1:(int)x second:(float)y {
+  super method1:x second:y];
+  return super getBlah];
+}
+@end
