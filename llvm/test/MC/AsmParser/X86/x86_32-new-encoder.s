@@ -537,3 +537,18 @@ popfl
 	setnl	%bl
 	setng	%bl
 	setnle	%bl
+
+
+
+
+// CHECK: lcalll	$31438, $31438
+// CHECK: lcalll	$31438, $31438
+// CHECK: ljmpl	$31438, $31438
+// CHECK: ljmpl	$31438, $31438
+
+calll	$0x7ace,$0x7ace
+lcalll	$0x7ace,$0x7ace
+jmpl	$0x7ace,$0x7ace
+ljmpl	$0x7ace,$0x7ace
+
+
