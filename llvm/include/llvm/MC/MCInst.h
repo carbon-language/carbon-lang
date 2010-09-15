@@ -36,21 +36,21 @@ class MCOperand {
     kExpr                     ///< Relocatable immediate operand.
   };
   unsigned char Kind;
-  
+
   union {
     unsigned RegVal;
     int64_t ImmVal;
     const MCExpr *ExprVal;
   };
 public:
-  
+
   MCOperand() : Kind(kInvalid) {}
 
   bool isValid() const { return Kind != kInvalid; }
   bool isReg() const { return Kind == kRegister; }
   bool isImm() const { return Kind == kImmediate; }
   bool isExpr() const { return Kind == kExpr; }
-  
+
   /// getReg - Returns the register number.
   unsigned getReg() const {
     assert(isReg() && "This is not a register operand!");
@@ -62,7 +62,7 @@ public:
     assert(isReg() && "This is not a register operand!");
     RegVal = Reg;
   }
-  
+
   int64_t getImm() const {
     assert(isImm() && "This is not an immediate");
     return ImmVal;
@@ -71,7 +71,7 @@ public:
     assert(isImm() && "This is not an immediate");
     ImmVal = Val;
   }
-  
+
   const MCExpr *getExpr() const {
     assert(isExpr() && "This is not an expression");
     return ExprVal;
@@ -80,7 +80,7 @@ public:
     assert(isExpr() && "This is not an expression");
     ExprVal = Val;
   }
-  
+
   static MCOperand CreateReg(unsigned Reg) {
     MCOperand Op;
     Op.Kind = kRegister;
@@ -104,23 +104,23 @@ public:
   void dump() const;
 };
 
-  
+
 /// MCInst - Instances of this class represent a single low-level machine
-/// instruction. 
+/// instruction.
 class MCInst {
   unsigned Opcode;
   SmallVector<MCOperand, 8> Operands;
 public:
   MCInst() : Opcode(0) {}
-  
+
   void setOpcode(unsigned Op) { Opcode = Op; }
-  
+
   unsigned getOpcode() const { return Opcode; }
 
   const MCOperand &getOperand(unsigned i) const { return Operands[i]; }
   MCOperand &getOperand(unsigned i) { return Operands[i]; }
   unsigned getNumOperands() const { return Operands.size(); }
-  
+
   void addOperand(const MCOperand &Op) {
     Operands.push_back(Op);
   }
