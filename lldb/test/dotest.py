@@ -99,16 +99,20 @@ def setupSysPath():
                            'Resources', 'Python')
     relPath = os.path.join(base, 'build', 'Release', 'LLDB.framework',
                            'Resources', 'Python')
+    baiPath = os.path.join(base, 'build', 'BuildAndIntegration',
+                           'LLDB.framework', 'Resources', 'Python')
 
     lldbPath = None
     if os.path.isfile(os.path.join(dbgPath, 'lldb.py')):
         lldbPath = dbgPath
     elif os.path.isfile(os.path.join(relPath, 'lldb.py')):
         lldbPath = relPath
+    elif os.path.isfile(os.path.join(baiPath, 'lldb.py')):
+        lldbPath = baiPath
 
     if not lldbPath:
-        print 'This script requires lldb.py to be in either ' + dbgPath,
-        print ' or' + relPath
+        print 'This script requires lldb.py to be in either ' + dbgPath + ',',
+        print relPath + ', or ' + baiPath
         sys.exit(-1)
 
     sys.path.append(lldbPath)
