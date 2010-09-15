@@ -524,6 +524,7 @@ unsigned TargetData::getAlignment(const Type *Ty, bool abi_or_pref) const {
   case Type::X86_FP80TyID:
     AlignType = FLOAT_ALIGN;
     break;
+  case Type::X86_MMXTyID:
   case Type::VectorTyID:
     AlignType = VECTOR_ALIGN;
     break;

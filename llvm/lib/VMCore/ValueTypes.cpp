@@ -198,6 +198,7 @@ EVT EVT::getEVT(const Type *Ty, bool HandleUnknown){
   case Type::FloatTyID:     return MVT(MVT::f32);
   case Type::DoubleTyID:    return MVT(MVT::f64);
   case Type::X86_FP80TyID:  return MVT(MVT::f80);
+  case Type::X86_MMXTyID:   return MVT(MVT::x86mmx);
   case Type::FP128TyID:     return MVT(MVT::f128);
   case Type::PPC_FP128TyID: return MVT(MVT::ppcf128);
   case Type::PointerTyID:   return MVT(MVT::iPTR);
