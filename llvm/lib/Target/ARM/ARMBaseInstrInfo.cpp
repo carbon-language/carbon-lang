@@ -1453,7 +1453,7 @@ ARMBaseInstrInfo::getNumMicroOps(const MachineInstr *MI,
 
   const TargetInstrDesc &Desc = MI->getDesc();
   unsigned Class = Desc.getSchedClass();
-  unsigned UOps = ItinData->Itineratries[Class].NumMicroOps;
+  unsigned UOps = ItinData->Itineraries[Class].NumMicroOps;
   if (UOps)
     return UOps;
 

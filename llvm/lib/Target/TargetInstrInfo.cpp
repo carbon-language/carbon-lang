@@ -55,7 +55,7 @@ TargetInstrInfo::getNumMicroOps(const MachineInstr *MI,
     return 1;
 
   unsigned Class = MI->getDesc().getSchedClass();
-  unsigned UOps = ItinData->Itineratries[Class].NumMicroOps;
+  unsigned UOps = ItinData->Itineraries[Class].NumMicroOps;
   if (UOps)
     return UOps;
 
