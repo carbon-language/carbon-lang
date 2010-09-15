@@ -1656,7 +1656,7 @@ bool Expr::isTemporaryObject(ASTContext &C, const CXXRecordDecl *TempTy) const {
 
   const Expr *E = skipTemporaryBindingsAndNoOpCasts(this);
 
-  // pr-values of class type are always temporaries.
+  // Temporaries are by definition pr-values of class type.
   if (!E->Classify(C).isPRValue()) return false;
 
   // Black-list implicit derived-to-base conversions, which are the
