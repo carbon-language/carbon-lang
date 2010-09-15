@@ -537,30 +537,44 @@ public:
                 Error error;
                 int attach_pid = m_options.pid;
                 
+                const char *wait_name = NULL;
+
+                if (m_options.name.empty())
+                {
+                    if (old_exec_module_sp)
+                    {
+                        wait_name = old_exec_module_sp->GetFileSpec().GetFilename().AsCString();
+                    }
+                }
+                else
+                {
+                    wait_name = m_options.name.c_str();
+                }
+                
                 // If we are waiting for a process with this name to show up, do that first.
                 if (m_options.waitfor)
                 {
-                    if (m_options.name.empty())
+                        
+                    if (wait_name == NULL)
                     {
-                        result.AppendError("Invalid arguments: must supply a process name with the waitfor option.\n");
+                        result.AppendError("Invalid arguments: must have a file loaded or supply a process name with the waitfor option.\n");
                         result.SetStatus (eReturnStatusFailed);
                         return false;
                     }
+
+                    interpreter.GetDebugger().GetOutputStream().Printf("Waiting to attach to a process named \"%s\".\n", wait_name);
+                    error = process->Attach (wait_name, m_options.waitfor);
+                    if (error.Success())
+                    {
+                        result.SetStatus (eReturnStatusSuccessContinuingNoResult);
+                    }
                     else
                     {
-                        error = process->Attach (m_options.name.c_str(), m_options.waitfor);
-                        if (error.Success())
-                        {
-                            result.SetStatus (eReturnStatusSuccessContinuingNoResult);
-                        }
-                        else
-                        {
-                            result.AppendErrorWithFormat ("Waiting for a process to launch named '%s': %s\n", 
-                                                             m_options.name.c_str(),
-                                                             error.AsCString());
-                            result.SetStatus (eReturnStatusFailed);
-                            return false;                
-                        }
+                        result.AppendErrorWithFormat ("Waiting for a process to launch named '%s': %s\n", 
+                                                         wait_name,
+                                                         error.AsCString());
+                        result.SetStatus (eReturnStatusFailed);
+                        return false;                
                     }
                 }
                 else
@@ -568,21 +582,21 @@ public:
                     // If the process was specified by name look it up, so we can warn if there are multiple
                     // processes with this pid.
                     
-                    if (attach_pid == LLDB_INVALID_PROCESS_ID && !m_options.name.empty())
+                    if (attach_pid == LLDB_INVALID_PROCESS_ID && wait_name != NULL)
                     {
                         std::vector<lldb::pid_t> pids;
                         StringList matches;
                         
-                        process->ListProcessesMatchingName(m_options.name.c_str(), matches, pids);
+                        process->ListProcessesMatchingName(wait_name, matches, pids);
                         if (matches.GetSize() > 1)
                         {
-                            result.AppendErrorWithFormat("More than one process named %s\n", m_options.name.c_str());
+                            result.AppendErrorWithFormat("More than one process named %s\n", wait_name);
                             result.SetStatus (eReturnStatusFailed);
                             return false;
                         }
                         else if (matches.GetSize() == 0)
                         {
-                            result.AppendErrorWithFormat("Could not find a process named %s\n", m_options.name.c_str());
+                            result.AppendErrorWithFormat("Could not find a process named %s\n", wait_name);
                             result.SetStatus (eReturnStatusFailed);
                             return false;
                         }
@@ -673,7 +687,7 @@ CommandObjectProcessAttach::CommandOptions::g_option_table[] =
 {
 { LLDB_OPT_SET_ALL, false, "plugin",       'P', required_argument, NULL, 0, "<plugin>",        "Name of the process plugin you want to use."},
 { LLDB_OPT_SET_1, false, "pid",          'p', required_argument, NULL, 0, "<pid>",           "The process ID of an existing process to attach to."},
-{ LLDB_OPT_SET_2, true,  "name",         'n', required_argument, NULL, 0, "<process-name>",  "The name of the process to attach to."},
+{ LLDB_OPT_SET_2, false,  "name",         'n', required_argument, NULL, 0, "<process-name>",  "The name of the process to attach to."},
 { LLDB_OPT_SET_2, false, "waitfor",      'w', no_argument,       NULL, 0, NULL,              "Wait for the the process with <process-name> to launch."},
 { 0, false, NULL, 0, 0, NULL, 0, NULL, NULL }
 };
