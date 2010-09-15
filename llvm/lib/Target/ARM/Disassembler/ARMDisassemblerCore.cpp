@@ -1573,8 +1573,7 @@ static unsigned decodeVFPRm(uint32_t insn, bool isSPVFP) {
 }
 
 // A7.5.1
-#if 0
-static uint64_t VFPExpandImm(unsigned char byte, unsigned N) {
+static APInt VFPExpandImm(unsigned char byte, unsigned N) {
   assert(N == 32 || N == 64);
 
   uint64_t Result;
@@ -1593,9 +1592,8 @@ static uint64_t VFPExpandImm(unsigned char byte, unsigned N) {
     else
       Result |= 0x1L << 62;
   }
-  return Result;
+  return APInt(N, Result);
 }
-#endif
 
 // VFP Unary Format Instructions:
 //
@@ -1972,10 +1970,11 @@ static bool DisassembleVFPMiscFrm(MCInst &MI, unsigned Opcode, uint32_t insn,
   // Extract/decode the f64/f32 immediate.
   if (OpIdx < NumOps && OpInfo[OpIdx].RegClass < 0
         && !OpInfo[OpIdx].isPredicate() && !OpInfo[OpIdx].isOptionalDef()) {
-    // The asm syntax specifies the before-expanded <imm>.
-    // Not VFPExpandImm(slice(insn,19,16) << 4 | slice(insn, 3, 0),
-    //                  Opcode == ARM::FCONSTD ? 64 : 32)
-    MI.addOperand(MCOperand::CreateImm(slice(insn,19,16)<<4 | slice(insn,3,0)));
+    // The asm syntax specifies the floating point value, not the 8-bit literal.
+    APInt immRaw = VFPExpandImm(slice(insn,19,16) << 4 | slice(insn, 3, 0),
+                             Opcode == ARM::FCONSTD ? 64 : 32);
+    MI.addOperand(MCOperand::CreateFPImm(APFloat(immRaw, true)));
+
     ++OpIdx;
   }
 
