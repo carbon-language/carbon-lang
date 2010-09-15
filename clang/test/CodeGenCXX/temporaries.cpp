@@ -348,10 +348,10 @@ namespace Elision {
   // CHECK: define void @_ZN7Elision5test0Ev()
   void test0() {
     // CHECK:      [[I:%.*]] = alloca [[A:%.*]], align 8
-    // CHECK-NEXT: [[J:%.*]] = alloca [[A:%.*]], align 8
-    // CHECK-NEXT: [[T0:%.*]] = alloca [[A:%.*]], align 8
-    // CHECK-NEXT: [[K:%.*]] = alloca [[A:%.*]], align 8
-    // CHECK-NEXT: [[T1:%.*]] = alloca [[A:%.*]], align 8
+    // CHECK-NEXT: [[J:%.*]] = alloca [[A]], align 8
+    // CHECK-NEXT: [[T0:%.*]] = alloca [[A]], align 8
+    // CHECK-NEXT: [[K:%.*]] = alloca [[A]], align 8
+    // CHECK-NEXT: [[T1:%.*]] = alloca [[A]], align 8
 
     // CHECK-NEXT: call void @_ZN7Elision3fooEv()
     // CHECK-NEXT: call void @_ZN7Elision1AC1Ev([[A]]* [[I]])
@@ -375,8 +375,8 @@ namespace Elision {
 
   // CHECK: define void @_ZN7Elision5test1EbNS_1AE(
   void test1(bool c, A x) {
-    // CHECK:      [[I:%.*]] = alloca [[A:%.*]], align 8
-    // CHECK-NEXT: [[J:%.*]] = alloca [[A:%.*]], align 8
+    // CHECK:      [[I:%.*]] = alloca [[A]], align 8
+    // CHECK-NEXT: [[J:%.*]] = alloca [[A]], align 8
 
     // CHECK:      call void @_ZN7Elision1AC1Ev([[A]]* [[I]])
     // CHECK:      call void @_ZN7Elision1AC1ERKS0_([[A]]* [[I]], [[A]]* [[X:%.*]])
