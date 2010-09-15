@@ -138,15 +138,6 @@ def VLDMQ
           "vldm${addr:submode}${p}\t$addr, ${dst:dregpair}", "",
           [(set QPR:$dst, (v2f64 (load addrmode4:$addr)))]>;
 
-let mayLoad = 1, neverHasSideEffects = 1 in {
-// Use vld1 to load a Q register as a D register pair.
-// This alternative to VLDMQ allows an alignment to be specified.
-// This is equivalent to VLD1q64 except that it has a Q register operand.
-def VLD1q
-  : NLdSt<0,0b10,0b1010,0b1100, (outs QPR:$dst), (ins addrmode6:$addr),
-          IIC_VLD1, "vld1", "64", "${dst:dregpair}, $addr", "", []>;
-} // mayLoad = 1, neverHasSideEffects = 1
-
 // Use vstmia to store a Q register as a D register pair.
 // This is equivalent to VSTMD except that it has a Q register operand
 // instead of a pair of D registers.
@@ -155,15 +146,6 @@ def VSTMQ
           IndexModeNone, IIC_fpStorem,
           "vstm${addr:submode}${p}\t$addr, ${src:dregpair}", "",
           [(store (v2f64 QPR:$src), addrmode4:$addr)]>;
-
-let mayStore = 1, neverHasSideEffects = 1 in {
-// Use vst1 to store a Q register as a D register pair.
-// This alternative to VSTMQ allows an alignment to be specified.
-// This is equivalent to VST1q64 except that it has a Q register operand.
-def VST1q
-  : NLdSt<0,0b00,0b1010,0b1100, (outs), (ins addrmode6:$addr, QPR:$src),
-          IIC_VST, "vst1", "64", "${src:dregpair}, $addr", "", []>;
-} // mayStore = 1, neverHasSideEffects = 1
 
 let mayLoad = 1, neverHasSideEffects = 1, hasExtraDefRegAllocReq = 1 in {
 
