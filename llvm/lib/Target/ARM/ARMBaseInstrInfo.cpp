@@ -573,84 +573,6 @@ unsigned ARMBaseInstrInfo::GetInstSizeInBytes(const MachineInstr *MI) const {
   return 0; // Not reached
 }
 
-unsigned
-ARMBaseInstrInfo::isLoadFromStackSlot(const MachineInstr *MI,
-                                      int &FrameIndex) const {
-  switch (MI->getOpcode()) {
-  default: break;
-  case ARM::LDR:
-  case ARM::t2LDRs:  // FIXME: don't use t2LDRs to access frame.
-    if (MI->getOperand(1).isFI() &&
-        MI->getOperand(2).isReg() &&
-        MI->getOperand(3).isImm() &&
-        MI->getOperand(2).getReg() == 0 &&
-        MI->getOperand(3).getImm() == 0) {
-      FrameIndex = MI->getOperand(1).getIndex();
-      return MI->getOperand(0).getReg();
-    }
-    break;
-  case ARM::t2LDRi12:
-  case ARM::tRestore:
-    if (MI->getOperand(1).isFI() &&
-        MI->getOperand(2).isImm() &&
-        MI->getOperand(2).getImm() == 0) {
-      FrameIndex = MI->getOperand(1).getIndex();
-      return MI->getOperand(0).getReg();
-    }
-    break;
-  case ARM::VLDRD:
-  case ARM::VLDRS:
-    if (MI->getOperand(1).isFI() &&
-        MI->getOperand(2).isImm() &&
-        MI->getOperand(2).getImm() == 0) {
-      FrameIndex = MI->getOperand(1).getIndex();
-      return MI->getOperand(0).getReg();
-    }
-    break;
-  }
-
-  return 0;
-}
-
-unsigned
-ARMBaseInstrInfo::isStoreToStackSlot(const MachineInstr *MI,
-                                     int &FrameIndex) const {
-  switch (MI->getOpcode()) {
-  default: break;
-  case ARM::STR:
-  case ARM::t2STRs: // FIXME: don't use t2STRs to access frame.
-    if (MI->getOperand(1).isFI() &&
-        MI->getOperand(2).isReg() &&
-        MI->getOperand(3).isImm() &&
-        MI->getOperand(2).getReg() == 0 &&
-        MI->getOperand(3).getImm() == 0) {
-      FrameIndex = MI->getOperand(1).getIndex();
-      return MI->getOperand(0).getReg();
-    }
-    break;
-  case ARM::t2STRi12:
-  case ARM::tSpill:
-    if (MI->getOperand(1).isFI() &&
-        MI->getOperand(2).isImm() &&
-        MI->getOperand(2).getImm() == 0) {
-      FrameIndex = MI->getOperand(1).getIndex();
-      return MI->getOperand(0).getReg();
-    }
-    break;
-  case ARM::VSTRD:
-  case ARM::VSTRS:
-    if (MI->getOperand(1).isFI() &&
-        MI->getOperand(2).isImm() &&
-        MI->getOperand(2).getImm() == 0) {
-      FrameIndex = MI->getOperand(1).getIndex();
-      return MI->getOperand(0).getReg();
-    }
-    break;
-  }
-
-  return 0;
-}
-
 void ARMBaseInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
                                    MachineBasicBlock::iterator I, DebugLoc DL,
                                    unsigned DestReg, unsigned SrcReg,
@@ -802,6 +724,38 @@ storeRegToStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
   }
 }
 
+unsigned
+ARMBaseInstrInfo::isStoreToStackSlot(const MachineInstr *MI,
+                                     int &FrameIndex) const {
+  switch (MI->getOpcode()) {
+  default: break;
+  case ARM::STR:
+  case ARM::t2STRs: // FIXME: don't use t2STRs to access frame.
+    if (MI->getOperand(1).isFI() &&
+        MI->getOperand(2).isReg() &&
+        MI->getOperand(3).isImm() &&
+        MI->getOperand(2).getReg() == 0 &&
+        MI->getOperand(3).getImm() == 0) {
+      FrameIndex = MI->getOperand(1).getIndex();
+      return MI->getOperand(0).getReg();
+    }
+    break;
+  case ARM::t2STRi12:
+  case ARM::tSpill:
+  case ARM::VSTRD:
+  case ARM::VSTRS:
+    if (MI->getOperand(1).isFI() &&
+        MI->getOperand(2).isImm() &&
+        MI->getOperand(2).getImm() == 0) {
+      FrameIndex = MI->getOperand(1).getIndex();
+      return MI->getOperand(0).getReg();
+    }
+    break;
+  }
+
+  return 0;
+}
+
 void ARMBaseInstrInfo::
 loadRegFromStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
                      unsigned DestReg, int FI,
@@ -890,6 +844,38 @@ loadRegFromStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
   default:
     llvm_unreachable("Unknown regclass!");
   }
+}
+
+unsigned
+ARMBaseInstrInfo::isLoadFromStackSlot(const MachineInstr *MI,
+                                      int &FrameIndex) const {
+  switch (MI->getOpcode()) {
+  default: break;
+  case ARM::LDR:
+  case ARM::t2LDRs:  // FIXME: don't use t2LDRs to access frame.
+    if (MI->getOperand(1).isFI() &&
+        MI->getOperand(2).isReg() &&
+        MI->getOperand(3).isImm() &&
+        MI->getOperand(2).getReg() == 0 &&
+        MI->getOperand(3).getImm() == 0) {
+      FrameIndex = MI->getOperand(1).getIndex();
+      return MI->getOperand(0).getReg();
+    }
+    break;
+  case ARM::t2LDRi12:
+  case ARM::tRestore:
+  case ARM::VLDRD:
+  case ARM::VLDRS:
+    if (MI->getOperand(1).isFI() &&
+        MI->getOperand(2).isImm() &&
+        MI->getOperand(2).getImm() == 0) {
+      FrameIndex = MI->getOperand(1).getIndex();
+      return MI->getOperand(0).getReg();
+    }
+    break;
+  }
+
+  return 0;
 }
 
 MachineInstr*
