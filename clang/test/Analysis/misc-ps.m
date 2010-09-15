@@ -1129,3 +1129,9 @@ void rdar6351970_c() {
 }
 @end
 
+// PR 8149 - GNU statement expression in condition of ForStmt.
+// This previously triggered an assertion failure in CFGBuilder.
+void pr8149(void) {
+  for (; ({ do { } while (0); 0; });) { }
+}
+
