@@ -100,6 +100,14 @@ public:
 
   virtual void SwitchSection(const MCSection *Section);
 
+  virtual void InitSections() {
+    // FIXME, this is MachO specific, but the testsuite
+    // expects this.
+    SwitchSection(getContext().getMachOSection("__TEXT", "__text",
+                         MCSectionMachO::S_ATTR_PURE_INSTRUCTIONS,
+                         0, SectionKind::getText()));
+  }
+
   virtual void EmitLabel(MCSymbol *Symbol);
 
   virtual void EmitAssemblerFlag(MCAssemblerFlag Flag);

@@ -739,7 +739,7 @@ void MCAssembler::Finish(MCObjectWriter *Writer) {
     // Create dummy fragments to eliminate any empty sections, this simplifies
     // layout.
     if (it->getFragmentList().empty())
-      new MCFillFragment(0, 1, 0, it);
+      new MCDataFragment(it);
 
     it->setOrdinal(SectionIndex++);
   }

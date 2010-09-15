@@ -46,6 +46,7 @@ public:
   /// @name MCStreamer Interface
   /// @{
 
+  virtual void InitSections();
   virtual void EmitLabel(MCSymbol *Symbol);
   virtual void EmitAssemblerFlag(MCAssemblerFlag Flag);
   virtual void EmitAssignment(MCSymbol *Symbol, const MCExpr *Value);
@@ -109,6 +110,13 @@ public:
 };
 
 } // end anonymous namespace.
+
+void MCMachOStreamer::InitSections() {
+  SwitchSection(getContext().getMachOSection("__TEXT", "__text",
+                                    MCSectionMachO::S_ATTR_PURE_INSTRUCTIONS,
+                                    0, SectionKind::getText()));
+
+}
 
 void MCMachOStreamer::EmitLabel(MCSymbol *Symbol) {
   // TODO: This is almost exactly the same as WinCOFFStreamer. Consider merging

@@ -110,6 +110,9 @@ namespace llvm {
     /// This corresponds to assembler directives like .section, .text, etc.
     virtual void SwitchSection(const MCSection *Section) = 0;
 
+    /// InitSections - Create the default sections and set the initial one.
+    virtual void InitSections() = 0;
+
     /// EmitLabel - Emit a label for @p Symbol into the current section.
     ///
     /// This corresponds to an assembler statement such as:

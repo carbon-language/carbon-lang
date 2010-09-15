@@ -46,6 +46,7 @@ public:
   /// @name MCStreamer Interface
   /// @{
 
+  virtual void InitSections();
   virtual void EmitLabel(MCSymbol *Symbol);
   virtual void EmitAssemblerFlag(MCAssemblerFlag Flag);
   virtual void EmitAssignment(MCSymbol *Symbol, const MCExpr *Value);
@@ -109,9 +110,41 @@ public:
   virtual void Finish();
 
   /// @}
+  void SetSection(StringRef Section, unsigned Type, unsigned Flags,
+                  SectionKind Kind) {
+    SwitchSection(getContext().getELFSection(Section, Type, Flags, Kind));
+  }
+
+  void SetSectionData() {
+    SetSection(".data", MCSectionELF::SHT_PROGBITS,
+               MCSectionELF::SHF_WRITE |MCSectionELF::SHF_ALLOC,
+               SectionKind::getDataRel());
+    EmitCodeAlignment(4, 0);
+  }
+  void SetSectionText() {
+    SetSection(".text", MCSectionELF::SHT_PROGBITS,
+               MCSectionELF::SHF_EXECINSTR |
+               MCSectionELF::SHF_ALLOC, SectionKind::getText());
+    EmitCodeAlignment(4, 0);
+  }
+  void SetSectionBss() {
+    SetSection(".bss", MCSectionELF::SHT_NOBITS,
+               MCSectionELF::SHF_WRITE |
+               MCSectionELF::SHF_ALLOC, SectionKind::getBSS());
+    EmitCodeAlignment(4, 0);
+  }
 };
 
 } // end anonymous namespace.
+
+void MCELFStreamer::InitSections() {
+  // This emulates the same behavior of GNU as. This makes it easier
+  // to compare the output as the major sections are in the same order.
+  SetSectionText();
+  SetSectionData();
+  SetSectionBss();
+  SetSectionText();
+}
 
 void MCELFStreamer::EmitLabel(MCSymbol *Symbol) {
   assert(Symbol->isUndefined() && "Cannot define a symbol twice!");

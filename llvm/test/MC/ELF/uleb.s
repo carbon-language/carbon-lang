@@ -1,5 +1,5 @@
-// RUN: llvm-mc -filetype=obj -triple i686-pc-linux-gnu -n %s -o - | elf-dump  --dump-section-data | FileCheck -check-prefix=ELF_32 %s
-// RUN: llvm-mc -filetype=obj -triple x86_64-pc-linux-gnu -n %s -o - | elf-dump  --dump-section-data | FileCheck -check-prefix=ELF_64 %s
+// RUN: llvm-mc -filetype=obj -triple i686-pc-linux-gnu %s -o - | elf-dump  --dump-section-data | FileCheck -check-prefix=ELF_32 %s
+// RUN: llvm-mc -filetype=obj -triple x86_64-pc-linux-gnu %s -o - | elf-dump  --dump-section-data | FileCheck -check-prefix=ELF_64 %s
 // RUN: llvm-mc -filetype=obj -triple i386-apple-darwin9 %s -o - | macho-dump  --dump-section-data | FileCheck -check-prefix=MACHO_32 %s
 // RUN: llvm-mc -filetype=obj -triple x86_64-apple-darwin9 %s -o - | macho-dump  --dump-section-data | FileCheck -check-prefix=MACHO_64 %s
 
