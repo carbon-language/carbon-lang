@@ -307,7 +307,7 @@ if [ "$do_checkout" = "yes" ]; then
 fi
 
 (
-Flavors="Debug Release Release-Asserts"
+Flavors="Debug Release Release+Asserts"
 if [ "$do_64bit" = "yes" ]; then
     Flavors="$Flavors Release-64"
 fi
