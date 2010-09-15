@@ -211,8 +211,10 @@ Communication::StartReadThread (Error *error_ptr)
     char thread_name[1024];
     snprintf(thread_name, sizeof(thread_name), "<lldb.comm.%s>", m_broadcaster_name.AsCString());
 
+    m_read_thread_enabled = true;
     m_read_thread = Host::ThreadCreate (thread_name, Communication::ReadThread, this, error_ptr);
-    m_read_thread_enabled = m_read_thread != LLDB_INVALID_HOST_THREAD;
+    if (m_read_thread == LLDB_INVALID_HOST_THREAD)
+        m_read_thread_enabled = false;
     return m_read_thread_enabled;
 }
 
