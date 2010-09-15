@@ -127,6 +127,10 @@ sys::IdentifyFileType(const char *magic, unsigned length) {
       if (magic[1] == 0x02)
         return COFF_FileType;
       break;
+    case 0x64: // x86-64 Windows.
+      if (magic[1] == char(0x86))
+        return COFF_FileType;
+      break;
 
     default:
       break;
