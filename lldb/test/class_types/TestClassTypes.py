@@ -37,13 +37,13 @@ class ClassTypesTestCase(TestBase):
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @unittest2.expectedFailure
     def test_with_dsym_and_expr_parser(self):
-        """Test 'frame variable this' aand 'expr this' when stopped inside a constructor."""
+        """Test 'frame variable this' and 'expr this' when stopped inside a constructor."""
         self.buildDsym()
         self.class_types_expr_parser()
 
     @unittest2.expectedFailure
     def test_with_dwarf_and_expr_parser(self):
-        """Test 'frame variable this' aand 'expr this' when stopped inside a constructor."""
+        """Test 'frame variable this' and 'expr this' when stopped inside a constructor."""
         self.buildDwarf()
         self.class_types_expr_parser()
 
@@ -104,7 +104,7 @@ class ClassTypesTestCase(TestBase):
         self.assertTrue(breakpoint.GetHitCount() == 1)
 
     def class_types_expr_parser(self):
-        """Test 'frame variable this' aand 'expr this' when stopped inside a constructor."""
+        """Test 'frame variable this' and 'expr this' when stopped inside a constructor."""
         exe = os.path.join(os.getcwd(), "a.out")
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 
