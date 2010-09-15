@@ -65,10 +65,6 @@ protected:
   unsigned getOpcode(int Op) const;
 
 public:
-  /// getRegisterNumbering - Given the enum value for some register, e.g.
-  /// ARM::LR, return the number that it corresponds to (e.g. 14).
-  static unsigned getRegisterNumbering(unsigned Reg);
-
   /// Code Generation virtual methods...
   const unsigned *getCalleeSavedRegs(const MachineFunction *MF = 0) const;
 

@@ -349,7 +349,7 @@ ARMLoadStoreOpt::MergeLDR_STR(MachineBasicBlock &MBB, unsigned SIndex,
   const MachineOperand &PMO = Loc->getOperand(0);
   unsigned PReg = PMO.getReg();
   unsigned PRegNum = PMO.isUndef() ? UINT_MAX
-    : ARMRegisterInfo::getRegisterNumbering(PReg);
+    : getARMRegisterNumbering(PReg);
   unsigned Count = 1;
 
   for (unsigned i = SIndex+1, e = MemOps.size(); i != e; ++i) {
@@ -357,7 +357,7 @@ ARMLoadStoreOpt::MergeLDR_STR(MachineBasicBlock &MBB, unsigned SIndex,
     const MachineOperand &MO = MemOps[i].MBBI->getOperand(0);
     unsigned Reg = MO.getReg();
     unsigned RegNum = MO.isUndef() ? UINT_MAX
-      : ARMRegisterInfo::getRegisterNumbering(Reg);
+      : getARMRegisterNumbering(Reg);
     // Register numbers must be in ascending order.  For VFP, the registers
     // must also be consecutive and there is a limit of 16 double-word
     // registers per instruction.

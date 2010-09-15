@@ -344,7 +344,7 @@ void ARMAsmPrinter::printOperand(const MachineInstr *MI, int OpNum,
         << getRegisterName(DRegLo) << ", " << getRegisterName(DRegHi)
         << '}';
     } else if (Modifier && strcmp(Modifier, "lane") == 0) {
-      unsigned RegNum = ARMRegisterInfo::getRegisterNumbering(Reg);
+      unsigned RegNum = getARMRegisterNumbering(Reg);
       unsigned DReg =
         TM.getRegisterInfo()->getMatchingSuperReg(Reg,
           RegNum & 1 ? ARM::ssub_1 : ARM::ssub_0, &ARM::DPR_VFP2RegClass);
