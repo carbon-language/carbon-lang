@@ -923,6 +923,24 @@ ParseInstruction(StringRef Name, SMLoc NameLoc,
       std::swap(Operands[1], Operands[2]);
     }
   
+  // The assembler accepts these instructions with no operand as a synonym for
+  // an instruction acting on st(1).  e.g. "fxch" -> "fxch %st(1)".
+  if ((Name == "fxch" || Name == "fucom" || Name == "fucomp" ||
+       Name == "faddp" || Name == "fsubp" || Name == "fsubrp" || 
+       Name == "fmulp" || Name == "fdivp" || Name == "fdivrp") &&
+      Operands.size() == 1) {
+    Operands.push_back(X86Operand::CreateReg(MatchRegisterName("st(1)"),
+                                             NameLoc, NameLoc));
+  }
+  
+  // The assembler accepts these instructions with no operand as a synonym for
+  // an instruction acting on st,st(1).  e.g. "faddp" -> "faddp %st(0),%st(1)".
+  //if (() &&
+  //    Operands.size() == 1) {
+  //  Operands.push_back(X86Operand::CreateReg(MatchRegisterName("st(1)"),
+  //                                           NameLoc, NameLoc));
+  //}
+  
   return false;
 }
 
@@ -959,11 +977,10 @@ bool X86ATTAsmParser::ParseDirectiveWord(unsigned Size, SMLoc L) {
 }
 
 
-bool
-X86ATTAsmParser::MatchInstruction(SMLoc IDLoc,
-                                  const SmallVectorImpl<MCParsedAsmOperand*>
-                                    &Operands,
-                                  MCInst &Inst) {
+bool X86ATTAsmParser::
+MatchInstruction(SMLoc IDLoc,
+                 const SmallVectorImpl<MCParsedAsmOperand*> &Operands,
+                 MCInst &Inst) {
   assert(!Operands.empty() && "Unexpect empty operand list!");
 
   bool WasOriginallyInvalidOperand = false;

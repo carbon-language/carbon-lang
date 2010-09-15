@@ -210,3 +210,28 @@ inl	%dx
 out %al, (%dx)
 out %ax, (%dx)
 outl %eax, (%dx)
+
+
+// rdar://8431422
+
+// CHECK: fxch	%st(1)
+// CHECK: fucom	%st(1)
+// CHECK: fucomp	%st(1)
+// CHECK: faddp	%st(1)
+// CHECK: faddp	%st(0)
+// CHECK: fsubp	%st(1)
+// CHECK: fsubrp	%st(1)
+// CHECK: fmulp	%st(1)
+// CHECK: fdivp	%st(1)
+// CHECK: fdivrp	%st(1)
+
+fxch
+fucom
+fucomp
+faddp
+faddp %st
+fsubp
+fsubrp
+fmulp
+fdivp
+fdivrp
