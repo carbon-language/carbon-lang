@@ -288,3 +288,9 @@ shrd	$1, %bx,%bx
 sldt	%ecx
 sldt	%cx
 
+// CHECK: lcalll	*3135175374 
+// CHECK: ljmpl	*3135175374
+lcall	*0xbadeface
+ljmp	*0xbadeface
+
+

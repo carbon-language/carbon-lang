@@ -979,6 +979,16 @@ ParseInstruction(StringRef Name, SMLoc NameLoc,
                                                NameLoc, NameLoc));
   }
   
+  // lcall *x  and ljmp *x  -> lcalll and ljmpl
+  if ((Name == "lcall" || Name == "ljmp") &&
+      Operands.size() == 3 &&
+      static_cast<X86Operand*>(Operands[1])->isToken() &&
+      static_cast<X86Operand*>(Operands[1])->getToken() == "*") {
+    delete Operands[0];
+    Operands[0] = X86Operand::CreateToken(Name == "lcall" ? "lcalll" : "ljmpl",
+                                          NameLoc);
+  }
+  
   return false;
 }
 
