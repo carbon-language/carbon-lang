@@ -1,4 +1,4 @@
-// RUN: llvm-mc -triple x86_64-unknown-unknown %s > %t 2> %t.err
+// RUN: llvm-mc -triple x86_64-unknown-unknown -show-encoding %s > %t 2> %t.err
 // RUN: FileCheck < %t %s
 // RUN: FileCheck --check-prefix=CHECK-STDERR < %t.err %s
 
@@ -279,3 +279,12 @@ shld	%bx,%bx
 shld	$1, %bx,%bx
 shrd	%bx,%bx
 shrd	$1, %bx,%bx
+
+// CHECK: sldtl	%ecx
+// CHECK: encoding: [0x0f,0x00,0xc1]
+// CHECK: sldtw	%cx
+// CHECK: encoding: [0x66,0x0f,0x00,0xc1]
+
+sldt	%ecx
+sldt	%cx
+

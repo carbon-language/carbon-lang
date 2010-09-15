@@ -4359,9 +4359,11 @@ def SGDTm : I<0x01, MRM0m, (outs opaque48mem:$dst), (ins),
 def SIDTm : I<0x01, MRM1m, (outs opaque48mem:$dst), (ins),
               "sidt\t$dst", []>, TB;
 def SLDT16r : I<0x00, MRM0r, (outs GR16:$dst), (ins),
-                "sldt{w}\t$dst", []>, TB;
+                "sldt{w}\t$dst", []>, TB, OpSize;
 def SLDT16m : I<0x00, MRM0m, (outs i16mem:$dst), (ins),
                 "sldt{w}\t$dst", []>, TB;
+def SLDT32r : I<0x00, MRM0r, (outs GR32:$dst), (ins),
+                "sldt{l}\t$dst", []>, TB;
 def LGDTm : I<0x01, MRM2m, (outs), (ins opaque48mem:$src),
               "lgdt\t$src", []>, TB;
 def LIDTm : I<0x01, MRM3m, (outs), (ins opaque48mem:$src),
