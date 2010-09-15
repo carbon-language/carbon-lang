@@ -257,3 +257,14 @@ fnstsw
 fnstsw %ax
 fnstsw %eax
 fnstsw %al
+
+// rdar://8431880
+// CHECK: rclb	$1, %bl
+// CHECK: rcll	$1, 3735928559(%ebx,%ecx,8)
+// CHECK: rcrl	$1, %ecx
+// CHECK: rcrl	$1, 305419896
+
+rcl	%bl
+rcll	0xdeadbeef(%ebx,%ecx,8)
+rcr	%ecx
+rcrl	0x12345678
