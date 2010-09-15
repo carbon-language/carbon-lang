@@ -1066,12 +1066,14 @@ X86ATTAsmParser::MatchInstruction(SMLoc IDLoc,
     // Recover location info for the operand if we know which was the problem.
     SMLoc ErrorLoc = IDLoc;
     if (OrigErrorInfo != ~0U) {
+      if (OrigErrorInfo >= Operands.size())
+        return Error(IDLoc, "too few operands for instruction");
+      
       ErrorLoc = ((X86Operand*)Operands[OrigErrorInfo])->getStartLoc();
       if (ErrorLoc == SMLoc()) ErrorLoc = IDLoc;
     }
 
-    Error(ErrorLoc, "invalid operand for instruction");
-    return true;
+    return Error(ErrorLoc, "invalid operand for instruction");
   }
   
   // If one instruction matched with a missing feature, report this as a
