@@ -16,6 +16,7 @@
 #include "ARMMCInstLower.h"
 //#include "llvm/CodeGen/MachineModuleInfoImpls.h"
 #include "llvm/CodeGen/AsmPrinter.h"
+#include "llvm/Constants.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCContext.h"
@@ -154,6 +155,9 @@ void ARMMCInstLower::Lower(const MachineInstr *MI, MCInst &OutMI) const {
     case MachineOperand::MO_BlockAddress:
       MCOp = LowerSymbolOperand(MO, Printer.GetBlockAddressSymbol(
                                               MO.getBlockAddress()));
+      break;
+    case MachineOperand::MO_FPImmediate:
+      MCOp = MCOperand::CreateFPImm(MO.getFPImm()->getValueAPF());
       break;
     }
 

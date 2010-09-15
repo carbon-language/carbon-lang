@@ -16,6 +16,7 @@
 #ifndef LLVM_MC_MCINST_H
 #define LLVM_MC_MCINST_H
 
+#include "llvm/ADT/APFloat.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/System/DataTypes.h"
@@ -33,6 +34,7 @@ class MCOperand {
     kInvalid,                 ///< Uninitialized.
     kRegister,                ///< Register operand.
     kImmediate,               ///< Immediate operand.
+    kFPImmediate,             ///< Floating-point immediate operand.
     kExpr                     ///< Relocatable immediate operand.
   };
   unsigned char Kind;
@@ -42,13 +44,17 @@ class MCOperand {
     int64_t ImmVal;
     const MCExpr *ExprVal;
   };
+  // This can't go in the union due to the non-trivial copy constructor
+  // of APFloat. It's still only valid for Kind == kFPImmediate, though.
+  APFloat FPImmVal;
 public:
 
-  MCOperand() : Kind(kInvalid) {}
+  MCOperand() : Kind(kInvalid), FPImmVal(0.0) {}
 
   bool isValid() const { return Kind != kInvalid; }
   bool isReg() const { return Kind == kRegister; }
   bool isImm() const { return Kind == kImmediate; }
+  bool isFPImm() const { return Kind == kFPImmediate; }
   bool isExpr() const { return Kind == kExpr; }
 
   /// getReg - Returns the register number.
@@ -72,6 +78,16 @@ public:
     ImmVal = Val;
   }
 
+  const APFloat &getFPImm() const {
+    assert(isFPImm() && "This is not an FP immediate");
+    return FPImmVal;
+  }
+
+  void setFPImm(const APFloat &Val) {
+    assert(isFPImm() && "This is not an FP immediate");
+    FPImmVal = Val;
+  }
+
   const MCExpr *getExpr() const {
     assert(isExpr() && "This is not an expression");
     return ExprVal;
@@ -91,6 +107,12 @@ public:
     MCOperand Op;
     Op.Kind = kImmediate;
     Op.ImmVal = Val;
+    return Op;
+  }
+  static MCOperand CreateFPImm(const APFloat &Val) {
+    MCOperand Op;
+    Op.Kind = kFPImmediate;
+    Op.FPImmVal = Val;
     return Op;
   }
   static MCOperand CreateExpr(const MCExpr *Val) {
