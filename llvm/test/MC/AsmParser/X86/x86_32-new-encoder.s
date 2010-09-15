@@ -551,4 +551,14 @@ lcalll	$0x7ace,$0x7ace
 jmpl	$0x7ace,$0x7ace
 ljmpl	$0x7ace,$0x7ace
 
+// CHECK: lcalll	$31438, $31438
+// CHECK: lcalll	$31438, $31438
+// CHECK: ljmpl	$31438, $31438
+// CHECK: ljmpl	$31438, $31438
+
+call	$0x7ace,$0x7ace
+lcall	$0x7ace,$0x7ace
+jmp	$0x7ace,$0x7ace
+ljmp	$0x7ace,$0x7ace
+
 
