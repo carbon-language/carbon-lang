@@ -1244,20 +1244,27 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   // -fobjc-nonfragile-abi=0 is default.
   if (types::isObjC(InputType)) {
     unsigned Version = 1;
-    if (Args.hasArg(options::OPT_fobjc_nonfragile_abi) ||
-        getToolChain().IsObjCNonFragileABIDefault())
+    if (Args.hasArg(options::OPT_fobjc_nonfragile_abi))
       Version = 2;
+    else if (Args.hasArg(options::OPT_fobjc_nonfragile_abi2) ||
+             getToolChain().IsObjCNonFragileABIDefault())
+      Version = 3;
     if (Arg *A = Args.getLastArg(options::OPT_fobjc_abi_version_EQ)) {
       if (llvm::StringRef(A->getValue(Args)) == "1")
         Version = 1;
       else if (llvm::StringRef(A->getValue(Args)) == "2")
         Version = 2;
+      else if (llvm::StringRef(A->getValue(Args)) == "3")
+        Version = 3;
       else
         D.Diag(clang::diag::err_drv_clang_unsupported) << A->getAsString(Args);
     }
-
-    if (Version == 2) {
-      CmdArgs.push_back("-fobjc-nonfragile-abi");
+  
+    if (Version == 2 || Version == 3) {
+      if (Version == 2)
+        CmdArgs.push_back("-fobjc-nonfragile-abi");
+      else
+        CmdArgs.push_back("-fobjc-nonfragile-abi2");
 
       // -fobjc-dispatch-method is only relevant with the nonfragile-abi, and
       // legacy is the default.
@@ -1270,11 +1277,6 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
           CmdArgs.push_back("-fobjc-dispatch-method=non-legacy");
       }
     }
-
-    // FIXME: -fobjc-nonfragile-abi2 is a transient option meant to expose
-    // features in testing.  It will eventually be removed.
-    if (Args.hasArg(options::OPT_fobjc_nonfragile_abi2))
-      CmdArgs.push_back("-fobjc-nonfragile-abi2");
   }
 
   if (!Args.hasFlag(options::OPT_fassume_sane_operator_new,
