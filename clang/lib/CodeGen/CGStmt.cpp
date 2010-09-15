@@ -75,7 +75,7 @@ void CodeGenFunction::EmitStmt(const Stmt *S) {
     if (!isa<Expr>(S))
       ErrorUnsupported(S, "statement");
 
-    EmitAnyExpr(cast<Expr>(S), 0, false, true);
+    EmitAnyExpr(cast<Expr>(S), AggValueSlot::ignored(), true);
 
     // Expression emitters don't handle unreachable blocks yet, so look for one
     // explicitly here. This handles the common case of a call to a noreturn
@@ -146,7 +146,7 @@ bool CodeGenFunction::EmitSimpleStmt(const Stmt *S) {
 /// this captures the expression result of the last sub-statement and returns it
 /// (for use by the statement expression extension).
 RValue CodeGenFunction::EmitCompoundStmt(const CompoundStmt &S, bool GetLast,
-                                         llvm::Value *AggLoc, bool isAggVol) {
+                                         AggValueSlot AggSlot) {
   PrettyStackTraceLoc CrashInfo(getContext().getSourceManager(),S.getLBracLoc(),
                              "LLVM IR generation of compound statement ('{}')");
 
@@ -184,7 +184,7 @@ RValue CodeGenFunction::EmitCompoundStmt(const CompoundStmt &S, bool GetLast,
 
     EnsureInsertPoint();
 
-    RV = EmitAnyExpr(cast<Expr>(LastStmt), AggLoc);
+    RV = EmitAnyExpr(cast<Expr>(LastStmt), AggSlot);
   }
 
   return RV;
@@ -643,7 +643,7 @@ void CodeGenFunction::EmitReturnStmt(const ReturnStmt &S) {
   } else if (RV->getType()->isAnyComplexType()) {
     EmitComplexExprIntoAddr(RV, ReturnValue, false);
   } else {
-    EmitAggExpr(RV, ReturnValue, false);
+    EmitAggExpr(RV, AggValueSlot::forAddr(ReturnValue, false, true));
   }
 
   EmitBranchThroughCleanup(ReturnBlock);

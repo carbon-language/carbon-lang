@@ -450,14 +450,9 @@ public:
   /// the expression is a default argument.
   bool isDefaultArgument() const;
   
-  /// \brief Determine whether this expression directly creates a
-  /// temporary object (of class type).
-  bool isTemporaryObject() const { return getTemporaryObject() != 0; }
-
-  /// \brief If this expression directly creates a temporary object of
-  /// class type, return the expression that actually constructs that
-  /// temporary object.
-  const Expr *getTemporaryObject() const;
+  /// \brief Determine whether the result of this expression is a
+  /// temporary object of the given class type.
+  bool isTemporaryObject(ASTContext &Ctx, const CXXRecordDecl *TempTy) const;
 
   const Expr *IgnoreParens() const {
     return const_cast<Expr*>(this)->IgnoreParens();

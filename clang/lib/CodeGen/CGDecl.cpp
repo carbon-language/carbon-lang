@@ -761,7 +761,7 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D,
     } else if (Init->getType()->isAnyComplexType()) {
       EmitComplexExprIntoAddr(Init, Loc, isVolatile);
     } else {
-      EmitAggExpr(Init, Loc, isVolatile);
+      EmitAggExpr(Init, AggValueSlot::forAddr(Loc, isVolatile, true));
     }
   }
 

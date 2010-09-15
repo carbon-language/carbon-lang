@@ -321,6 +321,69 @@ public:
   }
 };
 
+/// An aggregate value slot.
+class AggValueSlot {
+  /// The address and associated flags.
+  uintptr_t AddrAndFlags;
+
+  static const uintptr_t VolatileFlag = 0x1;
+  static const uintptr_t LifetimeFlag = 0x2;
+  static const uintptr_t AddrMask = ~(VolatileFlag | LifetimeFlag);
+
+public:
+  /// ignored - Returns an aggregate value slot indicating that the
+  /// aggregate value is being ignored.
+  static AggValueSlot ignored() {
+    AggValueSlot AV;
+    AV.AddrAndFlags = 0;
+    return AV;
+  }
+
+  /// forAddr - Make a slot for an aggregate value.
+  ///
+  /// \param Volatile - true if the slot should be volatile-initialized
+  /// \param LifetimeExternallyManaged - true if the slot's lifetime
+  ///   is being externally managed; false if a destructor should be
+  ///   registered for any temporaries evaluated into the slot
+  static AggValueSlot forAddr(llvm::Value *Addr, bool Volatile,
+                              bool LifetimeExternallyManaged) {
+    AggValueSlot AV;
+    AV.AddrAndFlags = reinterpret_cast<uintptr_t>(Addr);
+    if (Volatile) AV.AddrAndFlags |= VolatileFlag;
+    if (LifetimeExternallyManaged) AV.AddrAndFlags |= LifetimeFlag;
+    return AV;
+  }
+
+  static AggValueSlot forLValue(LValue LV, bool LifetimeExternallyManaged) {
+    return forAddr(LV.getAddress(), LV.isVolatileQualified(),
+                   LifetimeExternallyManaged);
+  }
+
+  bool isLifetimeExternallyManaged() const {
+    return AddrAndFlags & LifetimeFlag;
+  }
+  void setLifetimeExternallyManaged() {
+    AddrAndFlags |= LifetimeFlag;
+  }
+
+  bool isVolatile() const {
+    return AddrAndFlags & VolatileFlag;
+  }
+
+  llvm::Value *getAddr() const {
+    return reinterpret_cast<llvm::Value*>(AddrAndFlags & AddrMask);
+  }
+
+  bool isIgnored() const {
+    return AddrAndFlags == 0;
+  }
+
+  RValue asRValue() const {
+    return RValue::getAggregate(getAddr(), isVolatile());
+  }
+  
+};
+
 }  // end namespace CodeGen
 }  // end namespace clang
 

@@ -1648,46 +1648,31 @@ static const Expr *skipTemporaryBindingsAndNoOpCasts(const Expr *E) {
   return E;
 }
 
-const Expr *Expr::getTemporaryObject() const {
+/// isTemporaryObject - Determines if this expression produces a
+/// temporary of the given class type.
+bool Expr::isTemporaryObject(ASTContext &C, const CXXRecordDecl *TempTy) const {
+  if (!C.hasSameUnqualifiedType(getType(), C.getTypeDeclType(TempTy)))
+    return false;
+
   const Expr *E = skipTemporaryBindingsAndNoOpCasts(this);
 
-  // A cast can produce a temporary object. The object's construction
-  // is represented as a CXXConstructExpr.
-  if (const CastExpr *Cast = dyn_cast<CastExpr>(E)) {
-    // Only user-defined and constructor conversions can produce
-    // temporary objects.
-    if (Cast->getCastKind() != CK_ConstructorConversion &&
-        Cast->getCastKind() != CK_UserDefinedConversion)
-      return 0;
+  // pr-values of class type are always temporaries.
+  if (!E->Classify(C).isPRValue()) return false;
 
-    // Strip off temporary bindings and no-op casts.
-    const Expr *Sub = skipTemporaryBindingsAndNoOpCasts(Cast->getSubExpr());
-
-    // If this is a constructor conversion, see if we have an object
-    // construction.
-    if (Cast->getCastKind() == CK_ConstructorConversion)
-      return dyn_cast<CXXConstructExpr>(Sub);
-
-    // If this is a user-defined conversion, see if we have a call to
-    // a function that itself returns a temporary object.
-    if (Cast->getCastKind() == CK_UserDefinedConversion)
-      if (const CallExpr *CE = dyn_cast<CallExpr>(Sub))
-        if (CE->getCallReturnType()->isRecordType())
-          return CE;
-
-    return 0;
+  // Black-list implicit derived-to-base conversions, which are the
+  // only way we can get a pr-value of class type that doesn't refer
+  // to a temporary of that type.
+  if (isa<ImplicitCastExpr>(E)) {
+    switch (cast<ImplicitCastExpr>(E)->getCastKind()) {
+    case CK_DerivedToBase:
+    case CK_UncheckedDerivedToBase:
+      return false;
+    default:
+      break;
+    }
   }
 
-  // A call returning a class type returns a temporary.
-  if (const CallExpr *CE = dyn_cast<CallExpr>(E)) {
-    if (CE->getCallReturnType()->isRecordType())
-      return CE;
-
-    return 0;
-  }
-
-  // Explicit temporary object constructors create temporaries.
-  return dyn_cast<CXXTemporaryObjectExpr>(E);
+  return true;
 }
 
 /// hasAnyTypeDependentArguments - Determines if any of the expressions

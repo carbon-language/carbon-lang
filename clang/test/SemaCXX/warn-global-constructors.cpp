@@ -25,8 +25,8 @@ namespace test1 {
   A e = A(A());
   A f = A(a); // expected-warning {{global constructor}}
   A g(a); // expected-warning {{global constructor}}
-  A h((A())); // expected-warning {{global constructor}}
-  A i((A(A()))); // expected-warning {{global constructor}}
+  A h((A()));  // elided
+  A i((A(A()))); // elided
 }
 
 namespace test2 {

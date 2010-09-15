@@ -386,8 +386,7 @@ void CodeGenFunction::GenerateObjCSetter(ObjCImplementationDecl *IMP,
                                    FunctionType::ExtInfo()),
              GetCopyStructFn, ReturnValueSlot(), Args);
   } else if (PID->getSetterCXXAssignment()) {
-    EmitAnyExpr(PID->getSetterCXXAssignment(), (llvm::Value *)0, false, true,
-                false);
+    EmitAnyExpr(PID->getSetterCXXAssignment(), AggValueSlot::ignored(), true);
                 
   } else {
     // FIXME: Find a clean way to avoid AST node creation.
@@ -438,8 +437,7 @@ void CodeGenFunction::GenerateObjCCtorDtorMethod(ObjCImplementationDecl *IMP,
       ObjCIvarDecl  *Ivar = cast<ObjCIvarDecl>(Field);
       LValue LV = EmitLValueForIvar(TypeOfSelfObject(), 
                                     LoadObjCSelf(), Ivar, 0);
-      EmitAggExpr(IvarInit->getInit(), LV.getAddress(),
-                  LV.isVolatileQualified(), false, true);
+      EmitAggExpr(IvarInit->getInit(), AggValueSlot::forLValue(LV, true));
     }
     // constructor returns 'self'.
     CodeGenTypes &Types = CGM.getTypes();

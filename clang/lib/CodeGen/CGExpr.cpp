@@ -78,35 +78,31 @@ llvm::Value *CodeGenFunction::EvaluateExprAsBool(const Expr *E) {
   return EmitComplexToScalarConversion(EmitComplexExpr(E), E->getType(),BoolTy);
 }
 
-/// EmitAnyExpr - Emit code to compute the specified expression which can have
-/// any type.  The result is returned as an RValue struct.  If this is an
-/// aggregate expression, the aggloc/agglocvolatile arguments indicate where the
+/// EmitAnyExpr - Emit code to compute the specified expression which
+/// can have any type.  The result is returned as an RValue struct.
+/// If this is an aggregate expression, AggSlot indicates where the
 /// result should be returned.
-RValue CodeGenFunction::EmitAnyExpr(const Expr *E, llvm::Value *AggLoc,
-                                    bool IsAggLocVolatile, bool IgnoreResult,
-                                    bool IsInitializer) {
+RValue CodeGenFunction::EmitAnyExpr(const Expr *E, AggValueSlot AggSlot,
+                                    bool IgnoreResult) {
   if (!hasAggregateLLVMType(E->getType()))
     return RValue::get(EmitScalarExpr(E, IgnoreResult));
   else if (E->getType()->isAnyComplexType())
     return RValue::getComplex(EmitComplexExpr(E, false, false,
                                               IgnoreResult, IgnoreResult));
 
-  EmitAggExpr(E, AggLoc, IsAggLocVolatile, IgnoreResult, IsInitializer);
-  return RValue::getAggregate(AggLoc, IsAggLocVolatile);
+  EmitAggExpr(E, AggSlot, IgnoreResult);
+  return AggSlot.asRValue();
 }
 
 /// EmitAnyExprToTemp - Similary to EmitAnyExpr(), however, the result will
 /// always be accessible even if no aggregate location is provided.
-RValue CodeGenFunction::EmitAnyExprToTemp(const Expr *E,
-                                          bool IsAggLocVolatile,
-                                          bool IsInitializer) {
-  llvm::Value *AggLoc = 0;
+RValue CodeGenFunction::EmitAnyExprToTemp(const Expr *E) {
+  AggValueSlot AggSlot = AggValueSlot::ignored();
 
   if (hasAggregateLLVMType(E->getType()) &&
       !E->getType()->isAnyComplexType())
-    AggLoc = CreateMemTemp(E->getType(), "agg.tmp");
-  return EmitAnyExpr(E, AggLoc, IsAggLocVolatile, /*IgnoreResult=*/false,
-                     IsInitializer);
+    AggSlot = CreateAggTemp(E->getType(), "agg.tmp");
+  return EmitAnyExpr(E, AggSlot);
 }
 
 /// EmitAnyExprToMem - Evaluate an expression into a given memory
@@ -118,7 +114,7 @@ void CodeGenFunction::EmitAnyExprToMem(const Expr *E,
   if (E->getType()->isComplexType())
     EmitComplexExprIntoAddr(E, Location, IsLocationVolatile);
   else if (hasAggregateLLVMType(E->getType()))
-    EmitAggExpr(E, Location, IsLocationVolatile, /*Ignore*/ false, IsInit);
+    EmitAggExpr(E, AggValueSlot::forAddr(Location, IsLocationVolatile, IsInit));
   else {
     RValue RV = RValue::get(EmitScalarExpr(E, /*Ignore*/ false));
     LValue LV = MakeAddrLValue(Location, E->getType());
@@ -247,13 +243,16 @@ EmitExprForReferenceBinding(CodeGenFunction &CGF, const Expr *E,
     }
     
     // Create a reference temporary if necessary.
+    AggValueSlot AggSlot = AggValueSlot::ignored();
     if (CGF.hasAggregateLLVMType(E->getType()) &&
-        !E->getType()->isAnyComplexType())
+        !E->getType()->isAnyComplexType()) {
       ReferenceTemporary = CreateReferenceTemporary(CGF, E->getType(), 
                                                     InitializedDecl);
+      AggSlot = AggValueSlot::forAddr(ReferenceTemporary, false,
+                                      InitializedDecl != 0);
+    }
       
-    RV = CGF.EmitAnyExpr(E, ReferenceTemporary, /*IsAggLocVolatile=*/false,
-                         /*IgnoreResult=*/false, InitializedDecl);
+    RV = CGF.EmitAnyExpr(E, AggSlot);
 
     if (InitializedDecl) {
       // Get the destructor for the reference temporary.
@@ -1673,7 +1672,7 @@ LValue CodeGenFunction::EmitCompoundLiteralLValue(const CompoundLiteralExpr *E){
   const Expr *InitExpr = E->getInitializer();
   LValue Result = MakeAddrLValue(DeclPtr, E->getType());
 
-  EmitAnyExprToMem(InitExpr, DeclPtr, /*Volatile*/ false);
+  EmitAnyExprToMem(InitExpr, DeclPtr, /*Volatile*/ false, /*Init*/ true);
 
   return Result;
 }
@@ -1965,9 +1964,9 @@ LValue CodeGenFunction::EmitVAArgExprLValue(const VAArgExpr *E) {
 }
 
 LValue CodeGenFunction::EmitCXXConstructLValue(const CXXConstructExpr *E) {
-  llvm::Value *Temp = CreateMemTemp(E->getType(), "tmp");
-  EmitCXXConstructExpr(Temp, E);
-  return MakeAddrLValue(Temp, E->getType());
+  AggValueSlot Slot = CreateAggTemp(E->getType(), "tmp");
+  EmitCXXConstructExpr(E, Slot);
+  return MakeAddrLValue(Slot.getAddr(), E->getType());
 }
 
 LValue

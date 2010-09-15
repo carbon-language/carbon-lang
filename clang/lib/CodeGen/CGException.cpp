@@ -457,7 +457,7 @@ static void EmitAnyExprToExn(CodeGenFunction &CGF, const Expr *E,
   // evaluated but before the exception is caught.  But the best way
   // to handle that is to teach EmitAggExpr to do the final copy
   // differently if it can't be elided.
-  CGF.EmitAnyExprToMem(E, TypedExnLoc, /*Volatile*/ false);
+  CGF.EmitAnyExprToMem(E, TypedExnLoc, /*Volatile*/ false, /*IsInit*/ true);
 
   CGF.Builder.CreateStore(llvm::ConstantInt::getFalse(CGF.getLLVMContext()),
                           ShouldFreeVar);

@@ -219,16 +219,12 @@ CodeGenFunction::EmitCXXOperatorMemberCallExpr(const CXXOperatorCallExpr *E,
       LValue LV = EmitLValue(E->getArg(0));
       llvm::Value *This;
       if (LV.isPropertyRef() || LV.isKVCRef()) {
-        llvm::Value *AggLoc  = CreateMemTemp(E->getArg(1)->getType());
-        EmitAggExpr(E->getArg(1), AggLoc, false /*VolatileDest*/);
+        AggValueSlot Slot = CreateAggTemp(E->getArg(1)->getType());
+        EmitAggExpr(E->getArg(1), Slot);
         if (LV.isPropertyRef())
-          EmitObjCPropertySet(LV.getPropertyRefExpr(),
-                              RValue::getAggregate(AggLoc, 
-                                                   false /*VolatileDest*/));
+          EmitObjCPropertySet(LV.getPropertyRefExpr(), Slot.asRValue());
         else
-          EmitObjCPropertySet(LV.getKVCRefExpr(),
-                              RValue::getAggregate(AggLoc, 
-                                                   false /*VolatileDest*/));
+          EmitObjCPropertySet(LV.getKVCRefExpr(), Slot.asRValue());
         return RValue::getAggregate(0, false);
       }
       else
@@ -269,17 +265,16 @@ CodeGenFunction::EmitCXXOperatorMemberCallExpr(const CXXOperatorCallExpr *E,
 }
 
 void
-CodeGenFunction::EmitCXXConstructExpr(llvm::Value *Dest,
-                                      const CXXConstructExpr *E) {
-  assert(Dest && "Must have a destination!");
+CodeGenFunction::EmitCXXConstructExpr(const CXXConstructExpr *E,
+                                      AggValueSlot Dest) {
+  assert(!Dest.isIgnored() && "Must have a destination!");
   const CXXConstructorDecl *CD = E->getConstructor();
   
   // If we require zero initialization before (or instead of) calling the
   // constructor, as can be the case with a non-user-provided default
   // constructor, emit the zero initialization now.
   if (E->requiresZeroInitialization())
-    EmitNullInitialization(Dest, E->getType());
-
+    EmitNullInitialization(Dest.getAddr(), E->getType());
   
   // If this is a call to a trivial default constructor, do nothing.
   if (CD->isTrivial() && CD->isDefaultConstructor())
@@ -289,8 +284,8 @@ CodeGenFunction::EmitCXXConstructExpr(llvm::Value *Dest,
   // its first argument instead, if in fact that argument is a temporary 
   // object.
   if (getContext().getLangOptions().ElideConstructors && E->isElidable()) {
-    if (const Expr *Arg = E->getArg(0)->getTemporaryObject()) {
-      EmitAggExpr(Arg, Dest, false);
+    if (E->getArg(0)->isTemporaryObject(getContext(), CD->getParent())) {
+      EmitAggExpr(E->getArg(0), Dest);
       return;
     }
   }
@@ -302,7 +297,7 @@ CodeGenFunction::EmitCXXConstructExpr(llvm::Value *Dest,
     const llvm::Type *BasePtr = ConvertType(BaseElementTy);
     BasePtr = llvm::PointerType::getUnqual(BasePtr);
     llvm::Value *BaseAddrPtr =
-      Builder.CreateBitCast(Dest, BasePtr);
+      Builder.CreateBitCast(Dest.getAddr(), BasePtr);
     
     EmitCXXAggrConstructorCall(CD, Array, BaseAddrPtr, 
                                E->arg_begin(), E->arg_end());
@@ -315,7 +310,7 @@ CodeGenFunction::EmitCXXConstructExpr(llvm::Value *Dest,
       E->getConstructionKind() == CXXConstructExpr::CK_VirtualBase;
     
     // Call the constructor.
-    EmitCXXConstructorCall(CD, Type, ForVirtualBase, Dest,
+    EmitCXXConstructorCall(CD, Type, ForVirtualBase, Dest.getAddr(),
                            E->arg_begin(), E->arg_end());
   }
 }
@@ -539,8 +534,11 @@ static void StoreAnyExprIntoOneUnit(CodeGenFunction &CGF, const CXXNewExpr *E,
   else if (AllocType->isAnyComplexType())
     CGF.EmitComplexExprIntoAddr(Init, NewPtr, 
                                 AllocType.isVolatileQualified());
-  else
-    CGF.EmitAggExpr(Init, NewPtr, AllocType.isVolatileQualified());
+  else {
+    AggValueSlot Slot
+      = AggValueSlot::forAddr(NewPtr, AllocType.isVolatileQualified(), true);
+    CGF.EmitAggExpr(Init, Slot);
+  }
 }
 
 void

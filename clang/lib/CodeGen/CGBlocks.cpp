@@ -352,7 +352,7 @@ llvm::Value *CodeGenFunction::BuildBlockLiteralTmp(const BlockExpr *BE) {
                         SourceLocation());
       }
 
-      RValue r = EmitAnyExpr(E, Addr, false);
+      RValue r = EmitAnyExpr(E, AggValueSlot::forAddr(Addr, false, true));
       if (r.isScalar()) {
         llvm::Value *Loc = r.getScalarVal();
         const llvm::Type *Ty = Types[i+BlockFields];

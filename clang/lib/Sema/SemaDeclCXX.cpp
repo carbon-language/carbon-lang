@@ -5462,12 +5462,10 @@ Sema::BuildCXXConstructExpr(SourceLocation ConstructLoc, QualType DeclInitType,
   //       with the same cv-unqualified type, the copy/move operation
   //       can be omitted by constructing the temporary object
   //       directly into the target of the omitted copy/move
-  if (Constructor->isCopyConstructor() && ExprArgs.size() >= 1) {
+  if (ConstructKind == CXXConstructExpr::CK_Complete &&
+      Constructor->isCopyConstructor() && ExprArgs.size() >= 1) {
     Expr *SubExpr = ((Expr **)ExprArgs.get())[0];
-    Elidable = SubExpr->isTemporaryObject() &&
-      ConstructKind == CXXConstructExpr::CK_Complete &&
-      Context.hasSameUnqualifiedType(SubExpr->getType(), 
-                           Context.getTypeDeclType(Constructor->getParent()));
+    Elidable = SubExpr->isTemporaryObject(Context, Constructor->getParent());
   }
 
   return BuildCXXConstructExpr(ConstructLoc, DeclInitType, Constructor,

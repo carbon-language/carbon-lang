@@ -1063,7 +1063,7 @@ Value *ScalarExprEmitter::EmitCastExpr(CastExpr *CE) {
         CGF.EmitLoadOfKVCRefLValue(LV, E->getType());
     }
     else
-      CGF.EmitAnyExpr(E, 0, false, true);
+      CGF.EmitAnyExpr(E, AggValueSlot::ignored(), true);
     return 0;
   }
   case CK_VectorSplat: {
@@ -1127,7 +1127,7 @@ Value *ScalarExprEmitter::EmitCastExpr(CastExpr *CE) {
 
   // Okay, this is a cast from an aggregate.  It must be a cast to void.  Just
   // evaluate the result and return.
-  CGF.EmitAggExpr(E, 0, false, true);
+  CGF.EmitAggExpr(E, AggValueSlot::ignored(), true);
   return 0;
 }
 

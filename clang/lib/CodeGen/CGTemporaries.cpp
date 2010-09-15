@@ -77,12 +77,9 @@ void CodeGenFunction::EmitCXXTemporary(const CXXTemporary *Temporary,
 
 RValue
 CodeGenFunction::EmitCXXExprWithTemporaries(const CXXExprWithTemporaries *E,
-                                            llvm::Value *AggLoc,
-                                            bool IsAggLocVolatile,
-                                            bool IsInitializer) {
+                                            AggValueSlot Slot) {
   RunCleanupsScope Scope(*this);
-  return EmitAnyExpr(E->getSubExpr(), AggLoc, IsAggLocVolatile,
-                     /*IgnoreResult=*/false, IsInitializer);
+  return EmitAnyExpr(E->getSubExpr(), Slot);
 }
 
 LValue CodeGenFunction::EmitCXXExprWithTemporariesLValue(

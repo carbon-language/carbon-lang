@@ -362,7 +362,9 @@ static void EmitBaseInitializer(CodeGenFunction &CGF,
                                               BaseClassDecl,
                                               isBaseVirtual);
 
-  CGF.EmitAggExpr(BaseInit->getInit(), V, false, false, true);
+  AggValueSlot AggSlot = AggValueSlot::forAddr(V, false, /*Lifetime*/ true);
+
+  CGF.EmitAggExpr(BaseInit->getInit(), AggSlot);
   
   if (CGF.Exceptions && !BaseClassDecl->hasTrivialDestructor())
     CGF.EHStack.pushCleanup<CallBaseDtor>(EHCleanup, BaseClassDecl,
@@ -388,11 +390,11 @@ static void EmitAggMemberInitializer(CodeGenFunction &CGF,
       Next = CGF.Builder.CreateAdd(ArrayIndex, Next, "inc");
       CGF.Builder.CreateStore(Next, ArrayIndexVar);      
     }
+
+    AggValueSlot Slot = AggValueSlot::forAddr(Dest, LHS.isVolatileQualified(),
+                                              /*Lifetime*/ true);
     
-    CGF.EmitAggExpr(MemberInit->getInit(), Dest, 
-                    LHS.isVolatileQualified(),
-                    /*IgnoreResult*/ false,
-                    /*IsInitializer*/ true);
+    CGF.EmitAggExpr(MemberInit->getInit(), Slot);
     
     return;
   }
