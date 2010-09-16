@@ -14,6 +14,7 @@ class SettingsCommandTestCase(TestBase):
     @classmethod
     def classCleanup(cls):
         system(["/bin/sh", "-c", "rm output.txt"])
+        #system(["/bin/sh", "-c", "rm stdout.txt"])
 
     def test_set_prompt(self):
         """Test that 'set prompt' actually changes the prompt."""
@@ -72,6 +73,29 @@ class SettingsCommandTestCase(TestBase):
                         output.find("argv[2] matches") > 0 and
                         output.find("argv[3] matches") > 0 and
                         output.find("Environment variable 'MY_ENV_VAR' successfully passed.") > 0)
+
+    @unittest2.expectedFailure
+    # rdar://problem/8435794
+    # settings set process.output-path does not seem to work
+    def test_set_output_path(self):
+        """Test that setting process.output-path for the launched process works."""
+        self.buildDefault()
+
+        exe = os.path.join(os.getcwd(), "a.out")
+        self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
+
+        # Set the output-path and verify it is set.
+        self.runCmd("settings set process.output-path 'stdout.txt'")
+        self.expect("settings show process.output-path",
+            startstr = "process.output-path (string) = 'stdout.txt'")
+
+        self.runCmd("run", RUN_SUCCEEDED)
+
+        # Read the output file produced by running the program.
+        output = open('stdout.txt', 'r').read()
+
+        self.assertTrue(
+            output.startswith("This message should go to standard out."))
 
 
 if __name__ == '__main__':
