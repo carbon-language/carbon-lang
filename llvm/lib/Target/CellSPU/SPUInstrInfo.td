@@ -1385,59 +1385,6 @@ class ORRegInst<RegisterClass rclass>:
     ORInst<(outs rclass:$rT), (ins rclass:$rA, rclass:$rB),
            [(set rclass:$rT, (or rclass:$rA, rclass:$rB))]>;
 
-// ORCvtForm: OR conversion form
-//
-// This is used to "convert" the preferred slot to its vector equivalent, as
-// well as convert a vector back to its preferred slot.
-//
-// These are effectively no-ops, but need to exist for proper type conversion
-// and type coercion.
-
-class ORCvtForm<dag OOL, dag IOL, list<dag> pattern = [/* no pattern */]>
-          : SPUInstr<OOL, IOL, "or\t$rT, $rA, $rA", IntegerOp> {
-  bits<7> RA;
-  bits<7> RT;
-
-  let Pattern = pattern;
-
-  let Inst{0-10} = 0b10000010000;
-  let Inst{11-17} = RA;
-  let Inst{18-24} = RA;
-  let Inst{25-31} = RT;
-}
-
-class ORPromoteScalar<RegisterClass rclass>:
-    ORCvtForm<(outs VECREG:$rT), (ins rclass:$rA)>;
-
-class ORExtractElt<RegisterClass rclass>:
-    ORCvtForm<(outs rclass:$rT), (ins VECREG:$rA)>;
-
-/* class ORCvtRegGPRC<RegisterClass rclass>:
-    ORCvtForm<(outs GPRC:$rT), (ins rclass:$rA)>; */
-
-/* class ORCvtGPRCReg<RegisterClass rclass>:
-    ORCvtForm<(outs rclass:$rT), (ins GPRC:$rA)>; */
-    
-class ORCvtFormR32Reg<RegisterClass rclass, list<dag> pattern = [ ]>:
-    ORCvtForm<(outs rclass:$rT), (ins R32C:$rA), pattern>;
-    
-class ORCvtFormRegR32<RegisterClass rclass, list<dag> pattern = [ ]>:
-    ORCvtForm<(outs R32C:$rT), (ins rclass:$rA), pattern>;
-
-class ORCvtFormR64Reg<RegisterClass rclass, list<dag> pattern = [ ]>:
-    ORCvtForm<(outs rclass:$rT), (ins R64C:$rA), pattern>;
-    
-class ORCvtFormRegR64<RegisterClass rclass, list<dag> pattern = [ ]>:
-    ORCvtForm<(outs R64C:$rT), (ins rclass:$rA), pattern>;
-
-class ORCvtGPRCVec:
-    ORCvtForm<(outs VECREG:$rT), (ins GPRC:$rA)>;
-
-class ORCvtVecGPRC:
-    ORCvtForm<(outs GPRC:$rT), (ins VECREG:$rA)>;
-
-class ORCvtVecVec:
-    ORCvtForm<(outs VECREG:$rT), (ins VECREG:$rA)>;
 
 multiclass BitwiseOr
 {
@@ -1468,119 +1415,48 @@ multiclass BitwiseOr
 
   def f64: ORInst<(outs R64FP:$rT), (ins R64FP:$rA, R64FP:$rB),
                   [/* no pattern */]>;
-
-  // scalar->vector promotion, prefslot2vec:
-  def v16i8_i8:  ORPromoteScalar<R8C>;
-  def v8i16_i16: ORPromoteScalar<R16C>;
-  def v4i32_i32: ORPromoteScalar<R32C>;
-  def v2i64_i64: ORPromoteScalar<R64C>;
-  def v4f32_f32: ORPromoteScalar<R32FP>;
-  def v2f64_f64: ORPromoteScalar<R64FP>;
-
-  // vector->scalar demotion, vec2prefslot:
-  def i8_v16i8:  ORExtractElt<R8C>;
-  def i16_v8i16: ORExtractElt<R16C>;
-  def i32_v4i32: ORExtractElt<R32C>;
-  def i64_v2i64: ORExtractElt<R64C>;
-  def f32_v4f32: ORExtractElt<R32FP>;
-  def f64_v2f64: ORExtractElt<R64FP>;
-
-  // Conversion from vector to GPRC
-  def i128_vec:  ORCvtVecGPRC;
-
-  // Conversion from GPRC to vector
-  def vec_i128:  ORCvtGPRCVec;
-
-/*
-  // Conversion from register to GPRC
-  def i128_r64:  ORCvtRegGPRC<R64C>;
-  def i128_f64:  ORCvtRegGPRC<R64FP>;
-  def i128_r32:  ORCvtRegGPRC<R32C>;
-  def i128_f32:  ORCvtRegGPRC<R32FP>;
-  def i128_r16:  ORCvtRegGPRC<R16C>;
-  def i128_r8:   ORCvtRegGPRC<R8C>;
-
-  // Conversion from GPRC to register
-  def r64_i128:  ORCvtGPRCReg<R64C>;
-  def f64_i128:  ORCvtGPRCReg<R64FP>;
-  def r32_i128:  ORCvtGPRCReg<R32C>;
-  def f32_i128:  ORCvtGPRCReg<R32FP>;
-  def r16_i128:  ORCvtGPRCReg<R16C>;
-  def r8_i128:   ORCvtGPRCReg<R8C>;
-*/
-/*
-  // Conversion from register to R32C:
-  def r32_r16:   ORCvtFormRegR32<R16C>;
-  def r32_r8:    ORCvtFormRegR32<R8C>;
-  
-  // Conversion from R32C to register
-  def r32_r16:   ORCvtFormR32Reg<R16C>;
-  def r32_r8:    ORCvtFormR32Reg<R8C>;
-*/
-  
-  // Conversion from R64C to register:
-  def r32_r64:   ORCvtFormR64Reg<R32C>;
-  // def r16_r64:   ORCvtFormR64Reg<R16C>;
-  // def r8_r64:    ORCvtFormR64Reg<R8C>;
-  
-  // Conversion to R64C from register:
-  def r64_r32:   ORCvtFormRegR64<R32C>;
-  // def r64_r16:   ORCvtFormRegR64<R16C>;
-  // def r64_r8:    ORCvtFormRegR64<R8C>;
-
-  // bitconvert patterns:
-  def r32_f32:   ORCvtFormR32Reg<R32FP,
-                                 [(set R32FP:$rT, (bitconvert R32C:$rA))]>;
-  def f32_r32:   ORCvtFormRegR32<R32FP,
-                                 [(set R32C:$rT, (bitconvert R32FP:$rA))]>;
-
-  def r64_f64:   ORCvtFormR64Reg<R64FP,
-                                 [(set R64FP:$rT, (bitconvert R64C:$rA))]>;
-  def f64_r64:   ORCvtFormRegR64<R64FP,
-                                 [(set R64C:$rT, (bitconvert R64FP:$rA))]>;
 }
 
 defm OR : BitwiseOr;
 
-// scalar->vector promotion patterns (preferred slot to vector):
+//===----------------------------------------------------------------------===//
+// SPU::PREFSLOT2VEC and VEC2PREFSLOT re-interpretations of registers
+//===----------------------------------------------------------------------===//
 def : Pat<(v16i8 (SPUprefslot2vec R8C:$rA)),
-          (ORv16i8_i8 R8C:$rA)>;
+          (COPY_TO_REGCLASS R8C:$rA, VECREG)>;
 
 def : Pat<(v8i16 (SPUprefslot2vec R16C:$rA)),
-          (ORv8i16_i16 R16C:$rA)>;
+          (COPY_TO_REGCLASS R16C:$rA, VECREG)>;
 
 def : Pat<(v4i32 (SPUprefslot2vec R32C:$rA)),
-          (ORv4i32_i32 R32C:$rA)>;
+          (COPY_TO_REGCLASS R32C:$rA, VECREG)>;
 
 def : Pat<(v2i64 (SPUprefslot2vec R64C:$rA)),
-          (ORv2i64_i64 R64C:$rA)>;
+          (COPY_TO_REGCLASS R64C:$rA, VECREG)>;
 
 def : Pat<(v4f32 (SPUprefslot2vec R32FP:$rA)),
-          (ORv4f32_f32 R32FP:$rA)>;
+          (COPY_TO_REGCLASS R32FP:$rA, VECREG)>;
 
 def : Pat<(v2f64 (SPUprefslot2vec R64FP:$rA)),
-          (ORv2f64_f64 R64FP:$rA)>;
+          (COPY_TO_REGCLASS R64FP:$rA, VECREG)>;
+ 
+def : Pat<(i8 (SPUvec2prefslot (v16i8 VECREG:$rA))),
+          (COPY_TO_REGCLASS (v16i8 VECREG:$rA), R8C)>;
 
-// ORi*_v*: Used to extract vector element 0 (the preferred slot), otherwise
-// known as converting the vector back to its preferred slot
+def : Pat<(i16 (SPUvec2prefslot (v8i16 VECREG:$rA))),
+          (COPY_TO_REGCLASS (v8i16 VECREG:$rA), R16C)>;
 
-def : Pat<(SPUvec2prefslot (v16i8 VECREG:$rA)),
-          (ORi8_v16i8 VECREG:$rA)>;
+def : Pat<(i32 (SPUvec2prefslot (v4i32 VECREG:$rA))),
+          (COPY_TO_REGCLASS (v4i32 VECREG:$rA), R32C)>;
 
-def : Pat<(SPUvec2prefslot (v8i16 VECREG:$rA)),
-          (ORi16_v8i16 VECREG:$rA)>;
+def : Pat<(i64 (SPUvec2prefslot (v2i64 VECREG:$rA))),
+          (COPY_TO_REGCLASS (v2i64 VECREG:$rA), R64C)>;
 
-def : Pat<(SPUvec2prefslot (v4i32 VECREG:$rA)),
-          (ORi32_v4i32 VECREG:$rA)>;
+def : Pat<(f32 (SPUvec2prefslot (v4f32 VECREG:$rA))),
+          (COPY_TO_REGCLASS (v4f32 VECREG:$rA), R32FP)>;
 
-def : Pat<(SPUvec2prefslot (v2i64 VECREG:$rA)),
-          (ORi64_v2i64 VECREG:$rA)>;
-
-def : Pat<(SPUvec2prefslot (v4f32 VECREG:$rA)),
-          (ORf32_v4f32 VECREG:$rA)>;
-
-def : Pat<(SPUvec2prefslot (v2f64 VECREG:$rA)),
-          (ORf64_v2f64 VECREG:$rA)>;
+def : Pat<(f64 (SPUvec2prefslot (v2f64 VECREG:$rA))),
+          (COPY_TO_REGCLASS (v2f64 VECREG:$rA), R64FP)>;
 
 // Load Register: This is an assembler alias for a bitwise OR of a register
 // against itself. It's here because it brings some clarity to assembly
@@ -4379,30 +4255,43 @@ def : Pat<(v2f64 (bitconvert (v2i64 VECREG:$src))), (v2f64 VECREG:$src)>;
 def : Pat<(v2f64 (bitconvert (v4f32 VECREG:$src))), (v2f64 VECREG:$src)>;
 
 def : Pat<(i128 (bitconvert (v16i8 VECREG:$src))),
-          (ORi128_vec VECREG:$src)>;
+          (COPY_TO_REGCLASS VECREG:$src, GPRC)>;
 def : Pat<(i128 (bitconvert (v8i16 VECREG:$src))),
-          (ORi128_vec VECREG:$src)>;
+          (COPY_TO_REGCLASS VECREG:$src, GPRC)>;
 def : Pat<(i128 (bitconvert (v4i32 VECREG:$src))),
-          (ORi128_vec VECREG:$src)>;
+          (COPY_TO_REGCLASS VECREG:$src, GPRC)>;
 def : Pat<(i128 (bitconvert (v2i64 VECREG:$src))),
-          (ORi128_vec VECREG:$src)>;
+          (COPY_TO_REGCLASS VECREG:$src, GPRC)>;
 def : Pat<(i128 (bitconvert (v4f32 VECREG:$src))),
-          (ORi128_vec VECREG:$src)>;
+          (COPY_TO_REGCLASS VECREG:$src, GPRC)>;
 def : Pat<(i128 (bitconvert (v2f64 VECREG:$src))),
-          (ORi128_vec VECREG:$src)>;
+          (COPY_TO_REGCLASS VECREG:$src, GPRC)>;
 
 def : Pat<(v16i8 (bitconvert (i128 GPRC:$src))),
-          (v16i8 (ORvec_i128 GPRC:$src))>;
+          (v16i8 (COPY_TO_REGCLASS GPRC:$src, VECREG))>;
 def : Pat<(v8i16 (bitconvert (i128 GPRC:$src))),
-          (v8i16 (ORvec_i128 GPRC:$src))>;
+          (v8i16 (COPY_TO_REGCLASS GPRC:$src, VECREG))>;
 def : Pat<(v4i32 (bitconvert (i128 GPRC:$src))),
-          (v4i32 (ORvec_i128 GPRC:$src))>;
+          (v4i32 (COPY_TO_REGCLASS GPRC:$src, VECREG))>;
 def : Pat<(v2i64 (bitconvert (i128 GPRC:$src))),
-          (v2i64 (ORvec_i128 GPRC:$src))>;
+          (v2i64 (COPY_TO_REGCLASS GPRC:$src, VECREG))>;
 def : Pat<(v4f32 (bitconvert (i128 GPRC:$src))),
-          (v4f32 (ORvec_i128 GPRC:$src))>;
+          (v4f32 (COPY_TO_REGCLASS GPRC:$src, VECREG))>;
 def : Pat<(v2f64 (bitconvert (i128 GPRC:$src))),
-          (v2f64 (ORvec_i128 GPRC:$src))>;
+          (v2f64 (COPY_TO_REGCLASS GPRC:$src, VECREG))>;
+
+def : Pat<(i32 (bitconvert R32FP:$rA)),
+          (COPY_TO_REGCLASS R32FP:$rA, R32C)>;
+
+def : Pat<(f32 (bitconvert R32C:$rA)),
+          (COPY_TO_REGCLASS R32C:$rA, R32FP)>;
+
+def : Pat<(i64 (bitconvert R64FP:$rA)),
+          (COPY_TO_REGCLASS R64FP:$rA, R64C)>;
+
+def : Pat<(f64 (bitconvert R64C:$rA)),
+          (COPY_TO_REGCLASS R64C:$rA, R64FP)>;
+
 
 //===----------------------------------------------------------------------===//
 // Instruction patterns:
@@ -4453,11 +4342,12 @@ def : Pat<(i32 (zext R8C:$rSrc)),
 
 // zext 8->64: Zero extend bytes to double words
 def : Pat<(i64 (zext R8C:$rSrc)),
-          (ORi64_v2i64 (SELBv4i32 (ROTQMBYv4i32
-                                    (ORv4i32_i32 (ANDIi8i32 R8C:$rSrc, 0xff)),
+          (COPY_TO_REGCLASS (SELBv4i32 (ROTQMBYv4i32
+                                    (COPY_TO_REGCLASS 
+                                       (ANDIi8i32 R8C:$rSrc,0xff), VECREG),
                                     0x4),
                                   (ILv4i32 0x0),
-                                  (FSMBIv4i32 0x0f0f)))>;
+                                  (FSMBIv4i32 0x0f0f)), R64C)>;
 
 // anyext 8->16: Extend 8->16 bits, irrespective of sign, preserves high bits
 def : Pat<(i16 (anyext R8C:$rSrc)),
@@ -4498,61 +4388,61 @@ def : Pat<(i32 (anyext R16C:$rSrc)),
 //===----------------------------------------------------------------------===//
 
 def : Pat<(i8 (trunc GPRC:$src)),
-          (ORi8_v16i8
+          (COPY_TO_REGCLASS
             (SHUFBgprc GPRC:$src, GPRC:$src,
-                       (IOHLv4i32 (ILHUv4i32 0x0f0f), 0x0f0f)))>;
+                       (IOHLv4i32 (ILHUv4i32 0x0f0f), 0x0f0f)), R8C)>;
 
 def : Pat<(i8 (trunc R64C:$src)),
-          (ORi8_v16i8
+          (COPY_TO_REGCLASS
             (SHUFBv2i64_m32
-              (ORv2i64_i64 R64C:$src),
-              (ORv2i64_i64 R64C:$src),
-              (IOHLv4i32 (ILHUv4i32 0x0707), 0x0707)))>;
+              (COPY_TO_REGCLASS R64C:$src, VECREG),
+              (COPY_TO_REGCLASS R64C:$src, VECREG),
+              (IOHLv4i32 (ILHUv4i32 0x0707), 0x0707)), R8C)>;
 
 def : Pat<(i8 (trunc R32C:$src)),
-          (ORi8_v16i8
+          (COPY_TO_REGCLASS
             (SHUFBv4i32_m32
-               (ORv4i32_i32 R32C:$src),
-               (ORv4i32_i32 R32C:$src),
-               (IOHLv4i32 (ILHUv4i32 0x0303), 0x0303)))>;
+               (COPY_TO_REGCLASS R32C:$src, VECREG),
+               (COPY_TO_REGCLASS R32C:$src, VECREG),
+               (IOHLv4i32 (ILHUv4i32 0x0303), 0x0303)), R8C)>;
 
 def : Pat<(i8 (trunc R16C:$src)),
-          (ORi8_v16i8
+          (COPY_TO_REGCLASS
             (SHUFBv4i32_m32
-               (ORv8i16_i16 R16C:$src),
-               (ORv8i16_i16 R16C:$src),
-               (IOHLv4i32 (ILHUv4i32 0x0303), 0x0303)))>;
+               (COPY_TO_REGCLASS R16C:$src, VECREG),
+               (COPY_TO_REGCLASS R16C:$src, VECREG),
+               (IOHLv4i32 (ILHUv4i32 0x0303), 0x0303)), R8C)>;
 
 def : Pat<(i16 (trunc GPRC:$src)),
-          (ORi16_v8i16
+          (COPY_TO_REGCLASS
             (SHUFBgprc GPRC:$src, GPRC:$src,
-                       (IOHLv4i32 (ILHUv4i32 0x0e0f), 0x0e0f)))>;
+                       (IOHLv4i32 (ILHUv4i32 0x0e0f), 0x0e0f)), R16C)>;
 
 def : Pat<(i16 (trunc R64C:$src)),
-          (ORi16_v8i16
+          (COPY_TO_REGCLASS
             (SHUFBv2i64_m32
-              (ORv2i64_i64 R64C:$src),
-              (ORv2i64_i64 R64C:$src),
-              (IOHLv4i32 (ILHUv4i32 0x0607), 0x0607)))>;
+              (COPY_TO_REGCLASS R64C:$src, VECREG),
+              (COPY_TO_REGCLASS R64C:$src, VECREG),
+              (IOHLv4i32 (ILHUv4i32 0x0607), 0x0607)), R16C)>;
 
 def : Pat<(i16 (trunc R32C:$src)),
-          (ORi16_v8i16
+          (COPY_TO_REGCLASS
             (SHUFBv4i32_m32
-               (ORv4i32_i32 R32C:$src),
-               (ORv4i32_i32 R32C:$src),
-               (IOHLv4i32 (ILHUv4i32 0x0203), 0x0203)))>;
+               (COPY_TO_REGCLASS R32C:$src, VECREG),
+               (COPY_TO_REGCLASS R32C:$src, VECREG),
+               (IOHLv4i32 (ILHUv4i32 0x0203), 0x0203)), R16C)>;
 
 def : Pat<(i32 (trunc GPRC:$src)),
-          (ORi32_v4i32
+          (COPY_TO_REGCLASS
             (SHUFBgprc GPRC:$src, GPRC:$src,
-                       (IOHLv4i32 (ILHUv4i32 0x0c0d), 0x0e0f)))>;
+                       (IOHLv4i32 (ILHUv4i32 0x0c0d), 0x0e0f)), R32C)>;
 
 def : Pat<(i32 (trunc R64C:$src)),
-          (ORi32_v4i32
+          (COPY_TO_REGCLASS
             (SHUFBv2i64_m32
-              (ORv2i64_i64 R64C:$src),
-              (ORv2i64_i64 R64C:$src),
-              (IOHLv4i32 (ILHUv4i32 0x0405), 0x0607)))>;
+              (COPY_TO_REGCLASS R64C:$src, VECREG),
+              (COPY_TO_REGCLASS R64C:$src, VECREG),
+              (IOHLv4i32 (ILHUv4i32 0x0405), 0x0607)), R32C)>;
 
 //===----------------------------------------------------------------------===//
 // Address generation: SPU, like PPC, has to split addresses into high and

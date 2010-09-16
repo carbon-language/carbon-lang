@@ -54,8 +54,8 @@ class I64SETCCNegCond<PatFrag cond, CodeFrag compare>:
 // The i64 seteq fragment that does the scalar->vector conversion and
 // comparison:
 def CEQr64compare:
-    CodeFrag<(CGTIv4i32 (GBv4i32 (CEQv4i32 (ORv2i64_i64 R64C:$rA),
-                                           (ORv2i64_i64 R64C:$rB))), 0xb)>;
+    CodeFrag<(CGTIv4i32 (GBv4i32 (CEQv4i32 (COPY_TO_REGCLASS R64C:$rA, VECREG),
+                                           (COPY_TO_REGCLASS R64C:$rB, VECREG))), 0xb)>;
 
 // The i64 seteq fragment that does the vector comparison
 def CEQv2i64compare:
@@ -67,12 +67,14 @@ def CEQv2i64compare:
 // v2i64 seteq (equality): the setcc result is v4i32
 multiclass CompareEqual64 {
   // Plain old comparison, converts back to i32 scalar
-  def r64: CodeFrag<(ORi32_v4i32 CEQr64compare.Fragment)>;
-  def v2i64: CodeFrag<(ORi32_v4i32 CEQv2i64compare.Fragment)>;
+  def r64: CodeFrag<(i32 (COPY_TO_REGCLASS CEQr64compare.Fragment, R32C))>;
+  def v2i64: CodeFrag<(i32 (COPY_TO_REGCLASS CEQv2i64compare.Fragment, R32C))>;
 
   // SELB mask from FSM:
-  def r64mask: CodeFrag<(ORi32_v4i32 (FSMv4i32 CEQr64compare.Fragment))>;
-  def v2i64mask: CodeFrag<(ORi32_v4i32 (FSMv4i32 CEQv2i64compare.Fragment))>;
+  def r64mask: CodeFrag<(i32 (COPY_TO_REGCLASS 
+                               (FSMv4i32 CEQr64compare.Fragment), R32C))>;
+  def v2i64mask: CodeFrag<(i32 (COPY_TO_REGCLASS 
+                               (FSMv4i32 CEQv2i64compare.Fragment), R32C))>;
 }
 
 defm I64EQ: CompareEqual64;
@@ -89,10 +91,12 @@ def : I64SELECTNegCond<setne, I64EQr64>;
 //-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~
 
 def CLGTr64ugt:
-    CodeFrag<(CLGTv4i32 (ORv2i64_i64 R64C:$rA), (ORv2i64_i64 R64C:$rB))>;
+    CodeFrag<(CLGTv4i32 (COPY_TO_REGCLASS R64C:$rA, VECREG), 
+                        (COPY_TO_REGCLASS R64C:$rB, VECREG))>;
 
 def CLGTr64eq:
-    CodeFrag<(CEQv4i32 (ORv2i64_i64 R64C:$rA), (ORv2i64_i64 R64C:$rB))>;
+    CodeFrag<(CEQv4i32 (COPY_TO_REGCLASS R64C:$rA, VECREG), 
+                       (COPY_TO_REGCLASS R64C:$rB, VECREG))>;
     
 def CLGTr64compare:
     CodeFrag<(SELBv2i64 CLGTr64ugt.Fragment,
@@ -112,12 +116,14 @@ def CLGTv2i64compare:
 
 multiclass CompareLogicalGreaterThan64 {
   // Plain old comparison, converts back to i32 scalar
-  def r64: CodeFrag<(ORi32_v4i32 CLGTr64compare.Fragment)>;
+  def r64: CodeFrag<(i32 (COPY_TO_REGCLASS CLGTr64compare.Fragment, R32C))>;
   def v2i64: CodeFrag<CLGTv2i64compare.Fragment>;
 
   // SELB mask from FSM:
-  def r64mask: CodeFrag<(ORi32_v4i32 (FSMv4i32 CLGTr64compare.Fragment))>;
-  def v2i64mask: CodeFrag<(ORi32_v4i32 (FSMv4i32 CLGTv2i64compare.Fragment))>;
+  def r64mask: CodeFrag<(i32 (COPY_TO_REGCLASS 
+                               (FSMv4i32 CLGTr64compare.Fragment), R32C))>;
+  def v2i64mask: CodeFrag<(i32 (COPY_TO_REGCLASS 
+                               (FSMv4i32 CLGTv2i64compare.Fragment), R32C))>;
 }
 
 defm I64LGT: CompareLogicalGreaterThan64;
@@ -144,12 +150,14 @@ def CLGEv2i64compare:
 
 multiclass CompareLogicalGreaterEqual64 {
   // Plain old comparison, converts back to i32 scalar
-  def r64: CodeFrag<(ORi32_v4i32 CLGEr64compare.Fragment)>;
+  def r64: CodeFrag<(i32 (COPY_TO_REGCLASS CLGEr64compare.Fragment, R32C))>;
   def v2i64: CodeFrag<CLGEv2i64compare.Fragment>;
 
   // SELB mask from FSM:
-  def r64mask: CodeFrag<(ORi32_v4i32 (FSMv4i32 CLGEr64compare.Fragment))>;
-  def v2i64mask: CodeFrag<(ORi32_v4i32 (FSMv4i32 CLGEv2i64compare.Fragment))>;
+  def r64mask: CodeFrag<(i32 (COPY_TO_REGCLASS 
+                           (FSMv4i32 CLGEr64compare.Fragment), R32C))>;
+  def v2i64mask: CodeFrag<(i32 (COPY_TO_REGCLASS 
+                           (FSMv4i32 CLGEv2i64compare.Fragment),R32C))>;
 }
 
 defm I64LGE: CompareLogicalGreaterEqual64;
@@ -168,10 +176,12 @@ def : I64SELECTNegCond<setult, I64LGEr64>;
 //-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~
 
 def CGTr64sgt:
-    CodeFrag<(CGTv4i32 (ORv2i64_i64 R64C:$rA), (ORv2i64_i64 R64C:$rB))>;
+    CodeFrag<(CGTv4i32 (COPY_TO_REGCLASS R64C:$rA, VECREG), 
+                       (COPY_TO_REGCLASS R64C:$rB, VECREG))>;
 
 def CGTr64eq:
-    CodeFrag<(CEQv4i32 (ORv2i64_i64 R64C:$rA), (ORv2i64_i64 R64C:$rB))>;
+    CodeFrag<(CEQv4i32 (COPY_TO_REGCLASS R64C:$rA, VECREG), 
+                       (COPY_TO_REGCLASS R64C:$rB, VECREG))>;
     
 def CGTr64compare:
     CodeFrag<(SELBv2i64 CGTr64sgt.Fragment,
@@ -191,12 +201,14 @@ def CGTv2i64compare:
 
 multiclass CompareGreaterThan64 {
   // Plain old comparison, converts back to i32 scalar
-  def r64: CodeFrag<(ORi32_v4i32 CGTr64compare.Fragment)>;
+  def r64: CodeFrag<(i32 (COPY_TO_REGCLASS CGTr64compare.Fragment, R32C))>;
   def v2i64: CodeFrag<CGTv2i64compare.Fragment>;
 
   // SELB mask from FSM:
-  def r64mask: CodeFrag<(ORi32_v4i32 (FSMv4i32 CGTr64compare.Fragment))>;
-  def v2i64mask: CodeFrag<(ORi32_v4i32 (FSMv4i32 CGTv2i64compare.Fragment))>;
+  def r64mask: CodeFrag<(i32 (COPY_TO_REGCLASS 
+                             (FSMv4i32 CGTr64compare.Fragment), R32C))>;
+  def v2i64mask: CodeFrag<(i32 (COPY_TO_REGCLASS 
+                               (FSMv4i32 CGTv2i64compare.Fragment), R32C))>;
 }
 
 defm I64GT: CompareLogicalGreaterThan64;
@@ -223,12 +235,12 @@ def CGEv2i64compare:
 
 multiclass CompareGreaterEqual64 {
   // Plain old comparison, converts back to i32 scalar
-  def r64: CodeFrag<(ORi32_v4i32 CGEr64compare.Fragment)>;
+  def r64: CodeFrag<(i32 (COPY_TO_REGCLASS CGEr64compare.Fragment, R32C))>;
   def v2i64: CodeFrag<CGEv2i64compare.Fragment>;
 
   // SELB mask from FSM:
-  def r64mask: CodeFrag<(ORi32_v4i32 (FSMv4i32 CGEr64compare.Fragment))>;
-  def v2i64mask: CodeFrag<(ORi32_v4i32 (FSMv4i32 CGEv2i64compare.Fragment))>;
+  def r64mask: CodeFrag<(i32 (COPY_TO_REGCLASS (FSMv4i32 CGEr64compare.Fragment),R32C))>;
+  def v2i64mask: CodeFrag<(i32 (COPY_TO_REGCLASS (FSMv4i32 CGEv2i64compare.Fragment),R32C))>;
 }
 
 defm I64GE: CompareGreaterEqual64;
@@ -255,9 +267,9 @@ class v2i64_add<dag lhs, dag rhs, dag cg_mask>:
     v2i64_add_1<lhs, rhs, v2i64_add_cg<lhs, rhs>.Fragment, cg_mask>;
 
 def : Pat<(SPUadd64 R64C:$rA, R64C:$rB, (v4i32 VECREG:$rCGmask)),
-           (ORi64_v2i64 v2i64_add<(ORv2i64_i64 R64C:$rA),
-                                  (ORv2i64_i64 R64C:$rB),
-                                  (v4i32 VECREG:$rCGmask)>.Fragment)>;
+           (COPY_TO_REGCLASS v2i64_add<(COPY_TO_REGCLASS R64C:$rA, VECREG),
+                                  (COPY_TO_REGCLASS R64C:$rB, VECREG),
+                                  (v4i32 VECREG:$rCGmask)>.Fragment, R64C)>;
 
 def : Pat<(SPUadd64 (v2i64 VECREG:$rA), (v2i64 VECREG:$rB),
                     (v4i32 VECREG:$rCGmask)),
@@ -275,11 +287,12 @@ class v2i64_sub<dag lhs, dag rhs, dag bg, dag bg_mask>:
     CodeFrag<(SFXv4i32 lhs, rhs, (SHUFBv4i32 bg, bg, bg_mask))>;
 
 def : Pat<(SPUsub64 R64C:$rA, R64C:$rB, (v4i32 VECREG:$rCGmask)),
-           (ORi64_v2i64 v2i64_sub<(ORv2i64_i64 R64C:$rA),
-                                  (ORv2i64_i64 R64C:$rB),
-                                  v2i64_sub_bg<(ORv2i64_i64 R64C:$rA),
-                                               (ORv2i64_i64 R64C:$rB)>.Fragment,
-                                  (v4i32 VECREG:$rCGmask)>.Fragment)>;
+           (COPY_TO_REGCLASS 
+               v2i64_sub<(COPY_TO_REGCLASS R64C:$rA, VECREG),
+                         (COPY_TO_REGCLASS R64C:$rB, VECREG),
+                         v2i64_sub_bg<(COPY_TO_REGCLASS R64C:$rA, VECREG),
+                                      (COPY_TO_REGCLASS R64C:$rB, VECREG)>.Fragment,
+                                  (v4i32 VECREG:$rCGmask)>.Fragment, R64C)>;
 
 def : Pat<(SPUsub64 (v2i64 VECREG:$rA), (v2i64 VECREG:$rB),
                     (v4i32 VECREG:$rCGmask)),
@@ -374,9 +387,9 @@ class v2i64_mul<dag rA, dag rB, dag rCGmask>:
               rCGmask>;
 
 def : Pat<(SPUmul64 R64C:$rA, R64C:$rB, (v4i32 VECREG:$rCGmask)),
-          (ORi64_v2i64 v2i64_mul<(ORv2i64_i64 R64C:$rA),
-                                 (ORv2i64_i64 R64C:$rB),
-                                 (v4i32 VECREG:$rCGmask)>.Fragment)>;
+          (COPY_TO_REGCLASS v2i64_mul<(COPY_TO_REGCLASS R64C:$rA, VECREG),
+                                 (COPY_TO_REGCLASS R64C:$rB, VECREG),
+                                 (v4i32 VECREG:$rCGmask)>.Fragment, R64C)>;
 
 def : Pat<(SPUmul64 (v2i64 VECREG:$rA), (v2i64 VECREG:$rB),
                     (v4i32 VECREG:$rCGmask)),
