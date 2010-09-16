@@ -119,7 +119,7 @@ DWARFDebugInfoEntry::FastExtract
     
     if (abbrCode)
     {
-        register uint32_t offset = *offset_ptr;
+        uint32_t offset = *offset_ptr;
 
         m_abbrevDecl = cu->GetAbbreviations()->GetAbbreviationDeclaration(abbrCode);
         

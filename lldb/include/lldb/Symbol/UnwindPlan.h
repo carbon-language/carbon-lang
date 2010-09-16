@@ -44,7 +44,7 @@ public:
         {
         public:
     
-            typedef enum RestoreType
+            enum RestoreType
                 {
                     unspecified,        // not specified, we may be able to assume this 
                                         // is the same register. gcc doesn't specify all 
