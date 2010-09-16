@@ -90,7 +90,8 @@
 #define _LIBCPP_HAS_NO_TEMPLATE_ALIASES
 
 #ifndef __GXX_EXPERIMENTAL_CXX0X__
-#define _LIBCPP_HAS_NO_UNICODE_CHARS
+typedef __char16_t char16_t;
+typedef __char32_t char32_t;
 #endif
 
 #if !(__has_feature(cxx_exceptions))
@@ -220,13 +221,8 @@ using namespace _LIBCPP_NAMESPACE __attribute__((__strong__));
 #endif  // defined(__GNUC__)
 
 #ifdef _LIBCPP_HAS_NO_UNICODE_CHARS
-#ifdef __clang__
-typedef __char16_t char16_t;
-typedef __char32_t char32_t;
-#else
 typedef unsigned short char16_t;
 typedef unsigned int   char32_t;
-#endif
 #endif  // _LIBCPP_HAS_NO_UNICODE_CHARS
 
 #ifdef _LIBCPP_HAS_NO_STATIC_ASSERT
