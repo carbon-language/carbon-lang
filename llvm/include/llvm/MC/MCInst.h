@@ -75,7 +75,7 @@ public:
     ImmVal = Val;
   }
 
-  const double getFPImm() const {
+  double getFPImm() const {
     assert(isFPImm() && "This is not an FP immediate");
     return FPImmVal;
   }
