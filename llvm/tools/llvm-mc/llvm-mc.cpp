@@ -205,19 +205,24 @@ static int AsLexInput(const char *ProgName) {
     case AsmToken::Identifier:
       Out->os() << "identifier: " << Lexer.getTok().getString() << '\n';
       break;
-    case AsmToken::String:
-      Out->os() << "string: " << Lexer.getTok().getString() << '\n';
-      break;
     case AsmToken::Integer:
       Out->os() << "int: " << Lexer.getTok().getString() << '\n';
+      break;
+    case AsmToken::Register:
+      Out->os() << "register: " << Lexer.getTok().getRegVal() << '\n';
+      break;
+    case AsmToken::String:
+      Out->os() << "string: " << Lexer.getTok().getString() << '\n';
       break;
 
     case AsmToken::Amp:            Out->os() << "Amp\n"; break;
     case AsmToken::AmpAmp:         Out->os() << "AmpAmp\n"; break;
+    case AsmToken::At:             Out->os() << "At\n"; break;
     case AsmToken::Caret:          Out->os() << "Caret\n"; break;
     case AsmToken::Colon:          Out->os() << "Colon\n"; break;
     case AsmToken::Comma:          Out->os() << "Comma\n"; break;
     case AsmToken::Dollar:         Out->os() << "Dollar\n"; break;
+    case AsmToken::Dot:            Out->os() << "Dot\n"; break;
     case AsmToken::EndOfStatement: Out->os() << "EndOfStatement\n"; break;
     case AsmToken::Eof:            Out->os() << "Eof\n"; break;
     case AsmToken::Equal:          Out->os() << "Equal\n"; break;
@@ -227,6 +232,9 @@ static int AsLexInput(const char *ProgName) {
     case AsmToken::Greater:        Out->os() << "Greater\n"; break;
     case AsmToken::GreaterEqual:   Out->os() << "GreaterEqual\n"; break;
     case AsmToken::GreaterGreater: Out->os() << "GreaterGreater\n"; break;
+    case AsmToken::Hash:           Out->os() << "Hash\n"; break;
+    case AsmToken::LBrac:          Out->os() << "LBrac\n"; break;
+    case AsmToken::LCurly:         Out->os() << "LCurly\n"; break;
     case AsmToken::LParen:         Out->os() << "LParen\n"; break;
     case AsmToken::Less:           Out->os() << "Less\n"; break;
     case AsmToken::LessEqual:      Out->os() << "LessEqual\n"; break;
@@ -237,6 +245,8 @@ static int AsLexInput(const char *ProgName) {
     case AsmToken::Pipe:           Out->os() << "Pipe\n"; break;
     case AsmToken::PipePipe:       Out->os() << "PipePipe\n"; break;
     case AsmToken::Plus:           Out->os() << "Plus\n"; break;
+    case AsmToken::RBrac:          Out->os() << "RBrac\n"; break;
+    case AsmToken::RCurly:         Out->os() << "RCurly\n"; break;
     case AsmToken::RParen:         Out->os() << "RParen\n"; break;
     case AsmToken::Slash:          Out->os() << "Slash\n"; break;
     case AsmToken::Star:           Out->os() << "Star\n"; break;
