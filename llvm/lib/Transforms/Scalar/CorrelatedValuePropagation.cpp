@@ -19,6 +19,7 @@
 #include "llvm/Analysis/LazyValueInfo.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Transforms/Utils/Local.h"
+#include "llvm/ADT/DepthFirstIterator.h"
 #include "llvm/ADT/Statistic.h"
 using namespace llvm;
 
@@ -166,7 +167,10 @@ bool CorrelatedValuePropagation::runOnFunction(Function &F) {
   
   bool FnChanged = false;
   
-  for (Function::iterator FI = F.begin(), FE = F.end(); FI != FE; ++FI) {
+  // Perform a depth-first walk of the CFG so that we don't waste time
+  // optimizing unreachable blocks.
+  for (df_iterator<BasicBlock*> FI = df_begin(&F.getEntryBlock()),
+       FE = df_end(&F.getEntryBlock()); FI != FE; ++FI) {
     bool BBChanged = false;
     for (BasicBlock::iterator BI = FI->begin(), BE = FI->end(); BI != BE; ) {
       Instruction *II = BI++;
@@ -191,7 +195,7 @@ bool CorrelatedValuePropagation::runOnFunction(Function &F) {
     // Propagating correlated values might leave cruft around.
     // Try to clean it up before we continue.
     if (BBChanged)
-      SimplifyInstructionsInBlock(FI);
+      SimplifyInstructionsInBlock(*FI);
     
     FnChanged |= BBChanged;
   }
