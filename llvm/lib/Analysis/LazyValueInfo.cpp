@@ -201,6 +201,7 @@ public:
           return markOverdefined();
         return markNotConstant(RHS.getNotConstant());
       } else if (isConstantRange()) {
+         // FIXME: This could be made more precise.
         return markOverdefined();
       }
       
@@ -223,9 +224,12 @@ public:
       return markConstantRange(RHS.getConstantRange());
     }
     
-    // RHS must be a constant, we must be undef, constant, or notconstant.
-    assert(!isConstantRange() &&
-           "Constant and ConstantRange cannot be merged.");
+    // RHS must be a constant, we must be constantrange, 
+    // undef, constant, or notconstant.
+    if (isConstantRange()) {
+      // FIXME: This could be made more precise.
+      return markOverdefined();
+    }
     
     if (isUndefined())
       return markConstant(RHS.getConstant());
