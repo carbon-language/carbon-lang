@@ -738,6 +738,7 @@ bool CodeGenPrepare::OptimizeInlineAsmInst(Instruction *I, CallSite CS,
   bool MadeChange = false;
 
   std::vector<TargetLowering::AsmOperandInfo> TargetConstraints = TLI->ParseConstraints(CS);
+  unsigned ArgNo = 0;
   for (unsigned i = 0, e = TargetConstraints.size(); i != e; ++i) {
     TargetLowering::AsmOperandInfo &OpInfo = TargetConstraints[i];
     
@@ -746,9 +747,10 @@ bool CodeGenPrepare::OptimizeInlineAsmInst(Instruction *I, CallSite CS,
 
     if (OpInfo.ConstraintType == TargetLowering::C_Memory &&
         OpInfo.isIndirect) {
-      Value *OpVal = OpInfo.CallOperandVal;
+      Value *OpVal = const_cast<Value *>(CS.getArgument(ArgNo++));
       MadeChange |= OptimizeMemoryInst(I, OpVal, OpVal->getType(), SunkAddrs);
-    }
+    } else if (OpInfo.Type == InlineAsm::isInput)
+      ArgNo++;
   }
 
   return MadeChange;
