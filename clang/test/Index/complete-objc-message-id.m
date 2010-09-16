@@ -31,6 +31,22 @@ void message_id(B *b) {
   return [A alloc];
 }
 @end
+
+@protocol P1
+- (int)P1_method1;
++ (int)P1_method2;
+@end
+
+@protocol P2 <P1>
+- (int)P2_method1;
++ (int)P2_method2;
+@end
+
+void message_qualified_id(id<P2> ip2) {
+  [ip2 P1_method];
+   ip2 P1_method];
+}
+
 // RUN: c-index-test -code-completion-at=%s:24:14 %s | FileCheck -check-prefix=CHECK-CC1 %s
 // CHECK-CC1: ObjCInstanceMethodDecl:{ResultType id}{TypedText autorelease}
 // CHECK-CC1-NOT: B_method
@@ -52,3 +68,7 @@ void message_id(B *b) {
 // CHECK-SELECTOR-PREF: ObjCClassMethodDecl:{ResultType id}{TypedText new} (20)
 // CHECK-SELECTOR-PREF: ObjCClassMethodDecl:{ResultType Class}{TypedText superclass} (20)
 
+// RUN: c-index-test -code-completion-at=%s:46:7 %s | FileCheck -check-prefix=CHECK-INSTANCE-QUAL-ID %s
+// RUN: c-index-test -code-completion-at=%s:47:7 %s | FileCheck -check-prefix=CHECK-INSTANCE-QUAL-ID %s
+// CHECK-INSTANCE-QUAL-ID: ObjCInstanceMethodDecl:{ResultType int}{TypedText P1_method1} (22)
+// CHECK-INSTANCE-QUAL-ID: ObjCInstanceMethodDecl:{ResultType int}{TypedText P2_method1} (20)

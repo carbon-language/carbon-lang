@@ -3869,6 +3869,17 @@ static void AddObjCMethods(ObjCContainerDecl *Container,
     }
   }
   
+  // Visit the protocols of protocols.
+  if (ObjCProtocolDecl *Protocol = dyn_cast<ObjCProtocolDecl>(Container)) {
+    const ObjCList<ObjCProtocolDecl> &Protocols
+      = Protocol->getReferencedProtocols();
+    for (ObjCList<ObjCProtocolDecl>::iterator I = Protocols.begin(),
+                                              E = Protocols.end(); 
+         I != E; ++I)
+      AddObjCMethods(*I, WantInstanceMethods, WantKind, SelIdents, NumSelIdents, 
+                     CurContext, Results, false);    
+  }
+  
   ObjCInterfaceDecl *IFace = dyn_cast<ObjCInterfaceDecl>(Container);
   if (!IFace)
     return;
