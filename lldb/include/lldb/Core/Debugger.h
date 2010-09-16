@@ -77,7 +77,7 @@ protected:
     bool
     ValidTermWidthValue (const char *value, Error err);
 
-    const ConstString
+    static const ConstString
     CreateInstanceName ();
 
     static const ConstString &
