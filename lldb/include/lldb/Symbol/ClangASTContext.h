@@ -92,14 +92,8 @@ public:
         uint32_t dw_ate,
         uint32_t bit_size);
 
-    static void *
-    GetBuiltInType_void(clang::ASTContext *ast_context);
-    
     void *
-    GetBuiltInType_void()
-    {
-        return ClangASTContext::GetBuiltInType_void(m_ast_context_ap.get());
-    }
+    GetBuiltInType_void();
 
     void *
     GetBuiltInType_objc_id();
@@ -159,23 +153,6 @@ public:
                       clang::DeclContext *decl_ctx,
                       lldb::LanguageType language);
 
-    static bool
-    AddMethodToCXXRecordType(clang::ASTContext *ast_context,
-                             void *record_clang_type,
-                             const char *name,
-                             void *method_type);
-    
-    bool
-    AddMethodToCXXRecordType(void *record_clang_type,
-                             const char *name,
-                             void *method_type)
-    {
-        return ClangASTContext::AddMethodToCXXRecordType(m_ast_context_ap.get(),
-                                                         record_clang_type,
-                                                         name,
-                                                         method_type);
-    }
-    
     static bool
     AddFieldToRecordType (clang::ASTContext *ast_context,
                           void *record_qual_type,
