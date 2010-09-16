@@ -353,7 +353,7 @@ class X86_32ABIInfo : public ABIInfo {
   ABIArgInfo getIndirectResult(QualType Ty, bool ByVal = true) const;
 
   /// \brief Return the alignment to use for the given type on the stack.
-  unsigned getTypeStackAlignInBytes(QualType Ty) const;
+  unsigned getTypeStackAlignInBytes(QualType Ty, unsigned Align) const;
 
 public:
 
@@ -580,16 +580,18 @@ static bool isRecordWithSSEVectorType(ASTContext &Context, QualType Ty) {
   return false;
 }
 
-unsigned X86_32ABIInfo::getTypeStackAlignInBytes(QualType Ty) const {
-  // On non-Darwin, the stack type alignment is always 4.
-  if (!IsDarwinVectorABI)
-    return MinABIStackAlignInBytes;
-
-  // Otherwise, if the alignment is less than or equal to 4, use the minimum ABI
-  // alignment.
-  unsigned Align = getContext().getTypeAlign(Ty) / 8;
+unsigned X86_32ABIInfo::getTypeStackAlignInBytes(QualType Ty,
+                                                 unsigned Align) const {
+  // Otherwise, if the alignment is less than or equal to the minimum ABI
+  // alignment, just use the default; the backend will handle this.
   if (Align <= MinABIStackAlignInBytes)
+    return 0; // Use default alignment.
+
+  // On non-Darwin, the stack type alignment is always 4.
+  if (!IsDarwinVectorABI) {
+    // Set explicit alignment, since we may need to realign the top.
     return MinABIStackAlignInBytes;
+  }
 
   // Otherwise, if the type contains an SSE vector type, the alignment is 16.
   if (isRecordWithSSEVectorType(getContext(), Ty))
@@ -602,12 +604,19 @@ ABIArgInfo X86_32ABIInfo::getIndirectResult(QualType Ty, bool ByVal) const {
   if (!ByVal)
     return ABIArgInfo::getIndirect(0, false);
 
-  // Compute the byval alignment. We trust the back-end to honor the
-  // minimum ABI alignment for byval, to make cleaner IR.
-  unsigned Align = getTypeStackAlignInBytes(Ty);
-  if (Align > MinABIStackAlignInBytes)
-    return ABIArgInfo::getIndirect(Align);
-  return ABIArgInfo::getIndirect(0);
+  // Compute the byval alignment.
+  unsigned TypeAlign = getContext().getTypeAlign(Ty) / 8;
+  unsigned StackAlign = getTypeStackAlignInBytes(Ty, TypeAlign);
+  if (StackAlign == 0)
+    return ABIArgInfo::getIndirect(0);
+
+  // If the stack alignment is less than the type alignment, realign the
+  // argument.
+  if (StackAlign < TypeAlign)
+    return ABIArgInfo::getIndirect(StackAlign, /*ByVal=*/true,
+                                   /*Realign=*/true);
+
+  return ABIArgInfo::getIndirect(StackAlign);
 }
 
 ABIArgInfo X86_32ABIInfo::classifyArgumentType(QualType Ty) const {

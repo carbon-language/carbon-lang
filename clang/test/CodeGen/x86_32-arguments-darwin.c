@@ -202,13 +202,13 @@ void f50(struct s50 a0) { }
 struct s51 { vvbp f0; int f1; };
 void f51(struct s51 a0) { }
 
-// CHECK: define void @f52(%struct.s52* byval %x)
+// CHECK: define void @f52(%struct.s52* byval align 4)
 struct s52 {
   long double a;
 };
 void f52(struct s52 x) {}
 
-// CHECK: define void @f53(%struct.s53* byval %x)
+// CHECK: define void @f53(%struct.s53* byval align 4)
 struct __attribute__((aligned(32))) s53 {
   int x;
   int y;
@@ -230,21 +230,21 @@ v4i32 f55(v4i32 arg) { return arg+arg; }
 
 // CHECK: define void @f56(
 // CHECK: i8 signext %a0, %struct.s56_0* byval %a1,
-// CHECK: <2 x i32> %a2, %struct.s56_1* byval %a3,
-// CHECK: i64 %a4.coerce, %struct.s56_2* byval %a5,
+// CHECK: <2 x i32> %a2, %struct.s56_1* byval align 4,
+// CHECK: i64 %a4.coerce, %struct.s56_2* byval align 4,
 // CHECK: <4 x i32> %a6, %struct.s39* byval align 16 %a7,
 // CHECK: <2 x double> %a8, %struct.s56_4* byval align 16 %a9,
-// CHECK: <8 x i32> %a10, %struct.s56_5* byval %a11,
-// CHECK: <4 x double> %a12, %struct.s56_6* byval %a13)
+// CHECK: <8 x i32> %a10, %struct.s56_5* byval align 4,
+// CHECK: <4 x double> %a12, %struct.s56_6* byval align 4)
 
 // CHECK:   call void (i32, ...)* @f56_0(i32 1,
 // CHECK: i32 %{{[^ ]*}}, %struct.s56_0* byval %{{[^ ]*}},
-// CHECK: <2 x i32> %{{[^ ]*}}, %struct.s56_1* byval %{{[^ ]*}},
-// CHECK: i64 %{{[^ ]*}}, %struct.s56_2* byval %{{[^ ]*}},
+// CHECK: <2 x i32> %{{[^ ]*}}, %struct.s56_1* byval align 4 %{{[^ ]*}},
+// CHECK: i64 %{{[^ ]*}}, %struct.s56_2* byval align 4 %{{[^ ]*}},
 // CHECK: <4 x i32> %{{[^ ]*}}, %struct.s39* byval align 16 %{{[^ ]*}},
 // CHECK: <2 x double> %{{[^ ]*}}, %struct.s56_4* byval align 16 %{{[^ ]*}},
-// CHECK: <8 x i32> {{[^ ]*}}, %struct.s56_5* byval %{{[^ ]*}},
-// CHECK: <4 x double> {{[^ ]*}}, %struct.s56_6* byval %{{[^ ]*}})
+// CHECK: <8 x i32> {{[^ ]*}}, %struct.s56_5* byval align 4 %{{[^ ]*}},
+// CHECK: <4 x double> {{[^ ]*}}, %struct.s56_6* byval align 4 %{{[^ ]*}})
 // CHECK: }
 //
 // <rdar://problem/7964854> [i386] clang misaligns long double in structures
