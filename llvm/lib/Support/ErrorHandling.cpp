@@ -69,7 +69,8 @@ void llvm::report_fatal_error(const Twine &Reason) {
     raw_svector_ostream OS(Buffer);
     OS << "LLVM ERROR: " << Reason << "\n";
     StringRef MessageStr = OS.str();
-    (void)::write(2, MessageStr.data(), MessageStr.size());
+    ssize_t written = ::write(2, MessageStr.data(), MessageStr.size());
+    (void)written; // If something went wrong, we deliberately just give up.
   }
 
   // If we reached here, we are failing ungracefully. Run the interrupt handlers
