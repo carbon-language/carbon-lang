@@ -2497,9 +2497,13 @@ ClangASTContext::CreateFunctionDeclaration (const char *name, void *function_cla
 }
 
 void *
-ClangASTContext::CreateFunctionType (void *result_type, void **args, unsigned num_args, bool isVariadic, unsigned TypeQuals)
+ClangASTContext::CreateFunctionType (clang::ASTContext *ast_context,
+                                     void *result_type, 
+                                     void **args, 
+                                     unsigned num_args, 
+                                     bool is_variadic, 
+                                     unsigned type_quals)
 {
-    ASTContext *ast_context = getASTContext();
     assert (ast_context != NULL);
     std::vector<QualType> qual_type_args;
     for (unsigned i=0; i<num_args; ++i)
@@ -2509,8 +2513,8 @@ ClangASTContext::CreateFunctionType (void *result_type, void **args, unsigned nu
     return ast_context->getFunctionType(QualType::getFromOpaquePtr(result_type),
                                         qual_type_args.empty() ? NULL : &qual_type_args.front(),
                                         qual_type_args.size(),
-                                        isVariadic,
-                                        TypeQuals,
+                                        is_variadic,
+                                        type_quals,
                                         false,  // hasExceptionSpec
                                         false,  // hasAnyExceptionSpec,
                                         0,      // NumExs
@@ -2519,7 +2523,7 @@ ClangASTContext::CreateFunctionType (void *result_type, void **args, unsigned nu
 }
 
 ParmVarDecl *
-ClangASTContext::CreateParmeterDeclaration (const char *name, void *return_type, int storage)
+ClangASTContext::CreateParameterDeclaration (const char *name, void *param_type, int storage)
 {
     ASTContext *ast_context = getASTContext();
     assert (ast_context != NULL);
@@ -2527,7 +2531,7 @@ ClangASTContext::CreateParmeterDeclaration (const char *name, void *return_type,
                                 ast_context->getTranslationUnitDecl(),
                                 SourceLocation(),
                                 name && name[0] ? &ast_context->Idents.get(name) : NULL,
-                                QualType::getFromOpaquePtr(return_type),
+                                QualType::getFromOpaquePtr(param_type),
                                 NULL,
                                 (VarDecl::StorageClass)storage,
                                 (VarDecl::StorageClass)storage,

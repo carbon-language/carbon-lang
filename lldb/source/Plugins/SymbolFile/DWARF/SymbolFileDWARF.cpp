@@ -1987,7 +1987,7 @@ SymbolFileDWARF::ParseChildParameters
                     {
                         function_param_types.push_back (dc_type->GetOpaqueClangQualType());
 
-                        clang::ParmVarDecl *param_var_decl = type_list->GetClangASTContext().CreateParmeterDeclaration (name, dc_type->GetOpaqueClangQualType(), storage);
+                        clang::ParmVarDecl *param_var_decl = type_list->GetClangASTContext().CreateParameterDeclaration (name, dc_type->GetOpaqueClangQualType(), storage);
                         assert(param_var_decl);
                         function_param_decls.push_back(param_var_decl);
                     }

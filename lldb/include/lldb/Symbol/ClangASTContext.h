@@ -346,16 +346,32 @@ public:
                                int storage,
                                bool is_inline);
     
-    void *
-    CreateFunctionType (void * result_type,
+    static void *
+    CreateFunctionType (clang::ASTContext *ast_context,
+                        void *result_type,
                         void **args,
                         unsigned num_args,
-                        bool isVariadic,
-                        unsigned TypeQuals);
+                        bool is_variadic,
+                        unsigned type_quals);
+    
+    void *
+    CreateFunctionType (void *result_type,
+                        void **args,
+                        unsigned num_args,
+                        bool is_variadic,
+                        unsigned type_quals)
+    {
+        return ClangASTContext::CreateFunctionType(m_ast_context_ap.get(),
+                                                   result_type,
+                                                   args,
+                                                   num_args,
+                                                   is_variadic,
+                                                   type_quals);
+    }
     
     clang::ParmVarDecl *
-    CreateParmeterDeclaration (const char *name,
-                               void * return_type,
+    CreateParameterDeclaration (const char *name,
+                               void *param_type,
                                int storage);
 
     void
