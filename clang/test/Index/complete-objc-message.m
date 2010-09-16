@@ -141,6 +141,15 @@ void test_overload3(Overload *ovl) {
   (Overload2 Method:1 Arg1:1 OtherArg:ovl]);
 }
 
+@interface C : B
+- (void)method2;
+- (void)method3;
+@end
+
+void test_redundancy(C *c) {
+  [c method2];
+};
+
 // RUN: c-index-test -code-completion-at=%s:23:19 %s | FileCheck -check-prefix=CHECK-CC1 %s
 // CHECK-CC1: {TypedText categoryClassMethod}
 // CHECK-CC1: {TypedText classMethod1:}{Placeholder (id)}{HorizontalSpace  }{Text withKeyword:}{Placeholder (int)}
@@ -241,6 +250,11 @@ void test_overload3(Overload *ovl) {
 // RUN: c-index-test -code-completion-at=%s:134:6 %s | FileCheck -check-prefix=CHECK-CCI %s
 // CHECK-CCI: ObjCInstanceMethodDecl:{ResultType void}{TypedText method1} (22)
 // CHECK-CCI: ObjCInstanceMethodDecl:{ResultType void}{TypedText method2} (20)
+
+// RUN: c-index-test -code-completion-at=%s:150:5 %s | FileCheck -check-prefix=CHECK-REDUNDANT %s
+// CHECK-REDUNDANT: ObjCInstanceMethodDecl:{ResultType void}{TypedText method2} (20)
+// CHECK-REDUNDANT-NOT: ObjCInstanceMethodDecl:{ResultType void}{TypedText method2}
+// CHECK-REDUNDANT: ObjCInstanceMethodDecl:{ResultType void}{TypedText method3} (20)
 
 // Test code completion with a missing opening bracket:
 // RUN: c-index-test -code-completion-at=%s:135:5 %s | FileCheck -check-prefix=CHECK-CCI %s

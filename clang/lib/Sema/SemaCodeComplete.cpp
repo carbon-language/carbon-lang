@@ -22,6 +22,7 @@
 #include "clang/AST/ExprObjC.h"
 #include "clang/Lex/MacroInfo.h"
 #include "clang/Lex/Preprocessor.h"
+#include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringSwitch.h"
@@ -3824,7 +3825,13 @@ static bool isAcceptableObjCMethod(ObjCMethodDecl *Method,
   return isAcceptableObjCSelector(Method->getSelector(), WantKind, SelIdents,
                                   NumSelIdents);
 }
-                                   
+
+namespace {
+  /// \brief A set of selectors, which is used to avoid introducing multiple 
+  /// completions with the same selector into the result set.
+  typedef llvm::SmallPtrSet<Selector, 16> VisitedSelectorSet;
+}
+
 /// \brief Add all of the Objective-C methods in the given Objective-C 
 /// container to the set of results.
 ///
@@ -3848,6 +3855,7 @@ static void AddObjCMethods(ObjCContainerDecl *Container,
                            IdentifierInfo **SelIdents,
                            unsigned NumSelIdents,
                            DeclContext *CurContext,
+                           VisitedSelectorSet &Selectors,
                            ResultBuilder &Results,
                            bool InOriginalClass = true) {
   typedef CodeCompletionResult Result;
@@ -3860,6 +3868,9 @@ static void AddObjCMethods(ObjCContainerDecl *Container,
       if (!isAcceptableObjCMethod(*M, WantKind, SelIdents, NumSelIdents))
         continue;
 
+      if (!Selectors.insert((*M)->getSelector()))
+        continue;
+      
       Result R = Result(*M, 0);
       R.StartParameter = NumSelIdents;
       R.AllParametersAreInformative = (WantKind != MK_Any);
@@ -3877,7 +3888,7 @@ static void AddObjCMethods(ObjCContainerDecl *Container,
                                               E = Protocols.end(); 
          I != E; ++I)
       AddObjCMethods(*I, WantInstanceMethods, WantKind, SelIdents, NumSelIdents, 
-                     CurContext, Results, false);    
+                     CurContext, Selectors, Results, false);    
   }
   
   ObjCInterfaceDecl *IFace = dyn_cast<ObjCInterfaceDecl>(Container);
@@ -3890,13 +3901,14 @@ static void AddObjCMethods(ObjCContainerDecl *Container,
                                             E = Protocols.end(); 
        I != E; ++I)
     AddObjCMethods(*I, WantInstanceMethods, WantKind, SelIdents, NumSelIdents, 
-                   CurContext, Results, false);
+                   CurContext, Selectors, Results, false);
   
   // Add methods in categories.
   for (ObjCCategoryDecl *CatDecl = IFace->getCategoryList(); CatDecl;
        CatDecl = CatDecl->getNextClassCategory()) {
     AddObjCMethods(CatDecl, WantInstanceMethods, WantKind, SelIdents, 
-                   NumSelIdents, CurContext, Results, InOriginalClass);
+                   NumSelIdents, CurContext, Selectors, Results, 
+                   InOriginalClass);
     
     // Add a categories protocol methods.
     const ObjCList<ObjCProtocolDecl> &Protocols 
@@ -3905,23 +3917,26 @@ static void AddObjCMethods(ObjCContainerDecl *Container,
                                               E = Protocols.end();
          I != E; ++I)
       AddObjCMethods(*I, WantInstanceMethods, WantKind, SelIdents, 
-                     NumSelIdents, CurContext, Results, false);
+                     NumSelIdents, CurContext, Selectors, Results, false);
     
     // Add methods in category implementations.
     if (ObjCCategoryImplDecl *Impl = CatDecl->getImplementation())
       AddObjCMethods(Impl, WantInstanceMethods, WantKind, SelIdents, 
-                     NumSelIdents, CurContext, Results, InOriginalClass);
+                     NumSelIdents, CurContext, Selectors, Results, 
+                     InOriginalClass);
   }
   
   // Add methods in superclass.
   if (IFace->getSuperClass())
     AddObjCMethods(IFace->getSuperClass(), WantInstanceMethods, WantKind, 
-                   SelIdents, NumSelIdents, CurContext, Results, false);
+                   SelIdents, NumSelIdents, CurContext, Selectors, Results, 
+                   false);
 
   // Add methods in our implementation, if any.
   if (ObjCImplementationDecl *Impl = IFace->getImplementation())
     AddObjCMethods(Impl, WantInstanceMethods, WantKind, SelIdents,
-                   NumSelIdents, CurContext, Results, InOriginalClass);
+                   NumSelIdents, CurContext, Selectors, Results, 
+                   InOriginalClass);
 }
 
 
@@ -3958,7 +3973,9 @@ void Sema::CodeCompleteObjCPropertyGetter(Scope *S, Decl *ClassDecl,
       }
   }
 
-  AddObjCMethods(Class, true, MK_ZeroArgSelector, 0, 0, CurContext, Results);
+  VisitedSelectorSet Selectors;
+  AddObjCMethods(Class, true, MK_ZeroArgSelector, 0, 0, CurContext, Selectors,
+                 Results);
   Results.ExitScope();
   HandleCodeCompleteResults(this, CodeCompleter,
                             CodeCompletionContext::CCC_Other,
@@ -3999,7 +4016,9 @@ void Sema::CodeCompleteObjCPropertySetter(Scope *S, Decl *ObjCImplDecl,
       }
   }
 
-  AddObjCMethods(Class, true, MK_OneArgSelector, 0, 0, CurContext, Results);
+  VisitedSelectorSet Selectors;
+  AddObjCMethods(Class, true, MK_OneArgSelector, 0, 0, CurContext, 
+                 Selectors, Results);
 
   Results.ExitScope();
   HandleCodeCompleteResults(this, CodeCompleter,
@@ -4357,9 +4376,10 @@ static void AddClassMessageCompletions(Sema &SemaRef, Scope *S,
   if (ObjCMethodDecl *CurMethod = SemaRef.getCurMethodDecl())
     Results.setPreferredSelector(CurMethod->getSelector());
   
+  VisitedSelectorSet Selectors;
   if (CDecl) 
     AddObjCMethods(CDecl, false, MK_Any, SelIdents, NumSelIdents, 
-                   SemaRef.CurContext, Results);  
+                   SemaRef.CurContext, Selectors, Results);  
   else {
     // We're messaging "id" as a type; provide all class/factory methods.
     
@@ -4450,6 +4470,9 @@ void Sema::CodeCompleteObjCInstanceMessage(Scope *S, ExprTy *Receiver,
       ReceiverType = Context.getObjCObjectPointerType(
                                           Context.getObjCInterfaceType(IFace));
   
+  // Keep track of the selectors we've already added.
+  VisitedSelectorSet Selectors;
+  
   // Handle messages to Class. This really isn't a message to an instance
   // method, so we treat it the same way we would treat a message send to a
   // class method.
@@ -4458,7 +4481,7 @@ void Sema::CodeCompleteObjCInstanceMessage(Scope *S, ExprTy *Receiver,
     if (ObjCMethodDecl *CurMethod = getCurMethodDecl()) {
       if (ObjCInterfaceDecl *ClassDecl = CurMethod->getClassInterface())
         AddObjCMethods(ClassDecl, false, MK_Any, SelIdents, NumSelIdents, 
-                       CurContext, Results);
+                       CurContext, Selectors, Results);
     }
   } 
   // Handle messages to a qualified ID ("id<foo>").
@@ -4469,21 +4492,21 @@ void Sema::CodeCompleteObjCInstanceMessage(Scope *S, ExprTy *Receiver,
                                               E = QualID->qual_end(); 
          I != E; ++I)
       AddObjCMethods(*I, true, MK_Any, SelIdents, NumSelIdents, CurContext, 
-                     Results);
+                     Selectors, Results);
   }
   // Handle messages to a pointer to interface type.
   else if (const ObjCObjectPointerType *IFacePtr
                               = ReceiverType->getAsObjCInterfacePointerType()) {
     // Search the class, its superclasses, etc., for instance methods.
     AddObjCMethods(IFacePtr->getInterfaceDecl(), true, MK_Any, SelIdents,
-                   NumSelIdents, CurContext, Results);
+                   NumSelIdents, CurContext, Selectors, Results);
     
     // Search protocols for instance methods.
     for (ObjCObjectPointerType::qual_iterator I = IFacePtr->qual_begin(),
          E = IFacePtr->qual_end(); 
          I != E; ++I)
       AddObjCMethods(*I, true, MK_Any, SelIdents, NumSelIdents, CurContext, 
-                     Results);
+                     Selectors, Results);
   }
   // Handle messages to "id".
   else if (ReceiverType->isObjCIdType()) {
@@ -4512,7 +4535,10 @@ void Sema::CodeCompleteObjCInstanceMessage(Scope *S, ExprTy *Receiver,
         if (!isAcceptableObjCMethod(MethList->Method, MK_Any, SelIdents, 
                                     NumSelIdents))
           continue;
-
+        
+        if (!Selectors.insert(MethList->Method->getSelector()))
+          continue;
+        
         Result R(MethList->Method, 0);
         R.StartParameter = NumSelIdents;
         R.AllParametersAreInformative = false;
