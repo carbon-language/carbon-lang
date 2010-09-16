@@ -392,6 +392,9 @@ public:
     static const ConstString &
     GetDefaultName ();
 
+    static const ConstString &
+    InvalidName ();
+
 protected:
 
     UserSettingsController &m_owner;

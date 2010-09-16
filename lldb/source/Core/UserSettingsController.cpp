@@ -2187,6 +2187,7 @@ InstanceSettings::InstanceSettings (UserSettingsController &owner, const char *i
     m_instance_name (instance_name)
 {
     if ((m_instance_name != InstanceSettings::GetDefaultName())
+        && (m_instance_name !=  InstanceSettings::InvalidName())
         && live_instance)
         m_owner.RegisterInstanceSettings (this);
 }
@@ -2203,6 +2204,14 @@ InstanceSettings::GetDefaultName ()
     static const ConstString g_default_settings_name ("[DEFAULT]");
 
     return g_default_settings_name;
+}
+
+const ConstString &
+InstanceSettings::InvalidName ()
+{
+    static const ConstString g_invalid_name ("Invalid instance name");
+
+    return g_invalid_name;
 }
 
 void

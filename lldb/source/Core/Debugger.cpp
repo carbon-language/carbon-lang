@@ -639,13 +639,20 @@ Debugger::DebuggerInstanceSettings::ValidTermWidthValue (const char *value, Erro
 
 DebuggerInstanceSettings::DebuggerInstanceSettings (UserSettingsController &owner, bool live_instance,
                                                     const char *name) :
-    InstanceSettings (owner, (name == NULL ? CreateInstanceName ().AsCString() : name), live_instance),
+    InstanceSettings (owner, (name == NULL ? InstanceSettings::InvalidName().AsCString() : name), live_instance),
     m_prompt (),
     m_script_lang ()
 {
     // CopyInstanceSettings is a pure virtual function in InstanceSettings; it therefore cannot be called
     // until the vtables for DebuggerInstanceSettings are properly set up, i.e. AFTER all the initializers.
     // For this reason it has to be called here, rather than in the initializer or in the parent constructor.
+    // The same is true of CreateInstanceName().
+
+    if (GetInstanceName() == InstanceSettings::InvalidName())
+    {
+        ChangeInstanceName (std::string (CreateInstanceName().AsCString()));
+        m_owner.RegisterInstanceSettings (this);
+    }
 
     if (live_instance)
     {
