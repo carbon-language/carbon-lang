@@ -640,6 +640,56 @@ bool ARMExpandPseudo::ExpandMBB(MachineBasicBlock &MBB) {
       MI.eraseFromParent();
     }
 
+    case ARM::VLDMQ: {
+      MachineInstrBuilder MIB =
+        BuildMI(MBB, MBBI, MI.getDebugLoc(), TII->get(ARM::VLDMD));
+      unsigned OpIdx = 0;
+      // Grab the Q register destination.
+      bool DstIsDead = MI.getOperand(OpIdx).isDead();
+      unsigned DstReg = MI.getOperand(OpIdx++).getReg();
+      // Copy the addrmode4 operands.
+      MIB.addOperand(MI.getOperand(OpIdx++));
+      MIB.addOperand(MI.getOperand(OpIdx++));
+      // Copy the predicate operands.
+      MIB.addOperand(MI.getOperand(OpIdx++));
+      MIB.addOperand(MI.getOperand(OpIdx++));
+      // Add the destination operands (D subregs).
+      unsigned D0 = TRI->getSubReg(DstReg, ARM::dsub_0);
+      unsigned D1 = TRI->getSubReg(DstReg, ARM::dsub_1);
+      MIB.addReg(D0, RegState::Define | getDeadRegState(DstIsDead))
+        .addReg(D1, RegState::Define | getDeadRegState(DstIsDead));
+      // Add an implicit def for the super-register.
+      MIB.addReg(DstReg, RegState::ImplicitDefine | getDeadRegState(DstIsDead));
+      TransferImpOps(MI, MIB, MIB);
+      MI.eraseFromParent();
+      break;
+    }
+
+    case ARM::VSTMQ: {
+      MachineInstrBuilder MIB =
+        BuildMI(MBB, MBBI, MI.getDebugLoc(), TII->get(ARM::VSTMD));
+      unsigned OpIdx = 0;
+      // Grab the Q register source.
+      bool SrcIsKill = MI.getOperand(OpIdx).isKill();
+      unsigned SrcReg = MI.getOperand(OpIdx++).getReg();
+      // Copy the addrmode4 operands.
+      MIB.addOperand(MI.getOperand(OpIdx++));
+      MIB.addOperand(MI.getOperand(OpIdx++));
+      // Copy the predicate operands.
+      MIB.addOperand(MI.getOperand(OpIdx++));
+      MIB.addOperand(MI.getOperand(OpIdx++));
+      // Add the source operands (D subregs).
+      unsigned D0 = TRI->getSubReg(SrcReg, ARM::dsub_0);
+      unsigned D1 = TRI->getSubReg(SrcReg, ARM::dsub_1);
+      MIB.addReg(D0).addReg(D1);
+      if (SrcIsKill)
+        // Add an implicit kill for the Q register.
+        (*MIB).addRegisterKilled(SrcReg, TRI, true);
+      TransferImpOps(MI, MIB, MIB);
+      MI.eraseFromParent();
+      break;
+    }
+
     case ARM::VLD1q8Pseudo:
     case ARM::VLD1q16Pseudo:
     case ARM::VLD1q32Pseudo:

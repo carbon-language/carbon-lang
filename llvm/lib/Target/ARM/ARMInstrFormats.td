@@ -1331,6 +1331,17 @@ class ASI5<bits<4> opcod1, bits<2> opcod2, dag oops, dag iops,
   let Inst{11-8}  = 0b1010;
 }
 
+// VFP Load / store multiple pseudo instructions.
+class PseudoVFPLdStM<dag oops, dag iops, InstrItinClass itin, string cstr,
+                     list<dag> pattern>
+  : InstARM<AddrMode4, Size4Bytes, IndexModeNone, Pseudo, VFPNeonDomain,
+            cstr, itin> {
+  let OutOperandList = oops;
+  let InOperandList = !con(iops, (ins pred:$p));
+  let Pattern = pattern;
+  list<Predicate> Predicates = [HasVFP2];
+}
+
 // Load / store multiple
 class AXDI4<dag oops, dag iops, IndexMode im, InstrItinClass itin,
             string asm, string cstr, list<dag> pattern>

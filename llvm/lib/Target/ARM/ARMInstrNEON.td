@@ -129,23 +129,17 @@ def nModImm : Operand<i32> {
 // NEON load / store instructions
 //===----------------------------------------------------------------------===//
 
-// Use vldmia to load a Q register as a D register pair.
-// This is equivalent to VLDMD except that it has a Q register operand
-// instead of a pair of D registers.
+// Use VLDM to load a Q register as a D register pair.
+// This is a pseudo instruction that is expanded to VLDMD after reg alloc.
 def VLDMQ
-  : AXDI4<(outs QPR:$dst), (ins addrmode4:$addr, pred:$p),
-          IndexModeNone, IIC_fpLoadm,
-          "vldm${addr:submode}${p}\t$addr, ${dst:dregpair}", "",
-          [(set QPR:$dst, (v2f64 (load addrmode4:$addr)))]>;
+  : PseudoVFPLdStM<(outs QPR:$dst), (ins addrmode4:$addr), IIC_fpLoadm, "",
+                   [(set QPR:$dst, (v2f64 (load addrmode4:$addr)))]>;
 
-// Use vstmia to store a Q register as a D register pair.
-// This is equivalent to VSTMD except that it has a Q register operand
-// instead of a pair of D registers.
+// Use VSTM to store a Q register as a D register pair.
+// This is a pseudo instruction that is expanded to VSTMD after reg alloc.
 def VSTMQ
-  : AXDI4<(outs), (ins QPR:$src, addrmode4:$addr, pred:$p),
-          IndexModeNone, IIC_fpStorem,
-          "vstm${addr:submode}${p}\t$addr, ${src:dregpair}", "",
-          [(store (v2f64 QPR:$src), addrmode4:$addr)]>;
+  : PseudoVFPLdStM<(outs), (ins QPR:$src, addrmode4:$addr), IIC_fpStorem, "",
+                   [(store (v2f64 QPR:$src), addrmode4:$addr)]>;
 
 let mayLoad = 1, neverHasSideEffects = 1, hasExtraDefRegAllocReq = 1 in {
 
