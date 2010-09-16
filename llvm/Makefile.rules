@@ -1326,6 +1326,18 @@ endif
 endif
 
 #---------------------------------------------------------
+# Tool Order File Support
+#---------------------------------------------------------
+
+ifeq ($(HOST_OS),Darwin)
+ifdef TOOL_ORDER_FINE
+
+LD.Flags += -Wl,-order_file,$(TOOL_ORDER_FILE)
+
+endif
+endif
+
+#---------------------------------------------------------
 # Tool Version Info Support
 #---------------------------------------------------------
 
