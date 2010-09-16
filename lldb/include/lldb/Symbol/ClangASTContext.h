@@ -170,7 +170,7 @@ public:
                              const char *name,
                              void *method_type)
     {
-        return ClangASTContext::AddMethodToCXXRecordType(ast_context,
+        return ClangASTContext::AddMethodToCXXRecordType(m_ast_context_ap.get(),
                                                          record_clang_type,
                                                          name,
                                                          method_type);
