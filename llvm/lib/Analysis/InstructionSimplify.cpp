@@ -423,31 +423,44 @@ Value *llvm::SimplifyCmpInst(unsigned Predicate, Value *LHS, Value *RHS,
 /// SimplifyInstruction - See if we can compute a simplified version of this
 /// instruction.  If not, this returns null.
 Value *llvm::SimplifyInstruction(Instruction *I, const TargetData *TD) {
+  Value *Ret = 0;
   switch (I->getOpcode()) {
   default:
     return ConstantFoldInstruction(I, TD);
   case Instruction::Add:
-    return SimplifyAddInst(I->getOperand(0), I->getOperand(1),
-                           cast<BinaryOperator>(I)->hasNoSignedWrap(),
-                           cast<BinaryOperator>(I)->hasNoUnsignedWrap(), TD);
+    Ret = SimplifyAddInst(I->getOperand(0), I->getOperand(1),
+                          cast<BinaryOperator>(I)->hasNoSignedWrap(),
+                          cast<BinaryOperator>(I)->hasNoUnsignedWrap(), TD);
+    break; 
   case Instruction::And:
-    return SimplifyAndInst(I->getOperand(0), I->getOperand(1), TD);
+    Ret =  SimplifyAndInst(I->getOperand(0), I->getOperand(1), TD);
+    break;
   case Instruction::Or:
-    return SimplifyOrInst(I->getOperand(0), I->getOperand(1), TD);
+    Ret = SimplifyOrInst(I->getOperand(0), I->getOperand(1), TD);
+    break;
   case Instruction::ICmp:
-    return SimplifyICmpInst(cast<ICmpInst>(I)->getPredicate(),
-                            I->getOperand(0), I->getOperand(1), TD);
+    Ret = SimplifyICmpInst(cast<ICmpInst>(I)->getPredicate(),
+                           I->getOperand(0), I->getOperand(1), TD);
+    break;
   case Instruction::FCmp:
-    return SimplifyFCmpInst(cast<FCmpInst>(I)->getPredicate(),
-                            I->getOperand(0), I->getOperand(1), TD);
+    Ret = SimplifyFCmpInst(cast<FCmpInst>(I)->getPredicate(),
+                           I->getOperand(0), I->getOperand(1), TD);
+    break;
   case Instruction::Select:
-    return SimplifySelectInst(I->getOperand(0), I->getOperand(1),
+    Ret = SimplifySelectInst(I->getOperand(0), I->getOperand(1),
                               I->getOperand(2), TD);
+    break;
   case Instruction::GetElementPtr: {
     SmallVector<Value*, 8> Ops(I->op_begin(), I->op_end());
-    return SimplifyGEPInst(&Ops[0], Ops.size(), TD);
+    Ret = SimplifyGEPInst(&Ops[0], Ops.size(), TD);
+    break;
   }
   }
+  
+  // It is possible, in situations involving unreachable loops, to
+  // have a replacement that, through recursive simplification, ends up
+  // simplifying to itself.
+  return Ret != I ? Ret : 0;
 }
 
 /// ReplaceAndSimplifyAllUses - Perform From->replaceAllUsesWith(To) and then
