@@ -710,7 +710,7 @@ ExprResult Sema::BuildClassMessage(TypeSourceInfo *ReceiverTypeInfo,
                                    SourceLocation RBracLoc,
                                    MultiExprArg ArgsIn) {
   SourceLocation Loc = SuperLoc.isValid()? SuperLoc
-    : ReceiverTypeInfo->getTypeLoc().getLocalSourceRange().getBegin();
+    : ReceiverTypeInfo->getTypeLoc().getSourceRange().getBegin();
   if (LBracLoc.isInvalid()) {
     Diag(Loc, diag::err_missing_open_square_message_send)
       << FixItHint::CreateInsertion(Loc, "[");

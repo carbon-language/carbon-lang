@@ -821,6 +821,9 @@ Parser::TPResult Parser::isCXXDeclarationSpecifier() {
     if (NextToken().is(tok::l_paren))
       return TPResult::Ambiguous();
 
+    if (isStartOfObjCClassMessageMissingOpenBracket())
+      return TPResult::False();
+      
     return TPResult::True();
 
   // GNU typeof support.

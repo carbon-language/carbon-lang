@@ -21,7 +21,9 @@ void f(A *a, int i, int j) {
 
   int array[17];
   (void)array[a method1:5+2 second:+(3.14159)]];
-  (A method2:5+2 second:3.14159])
+  (A method2:5+2 second:3.14159]);
+  A method2:5+2 second:3.14159]
+  if (A method2:5+2 second:3.14159]) { }
 }
 
 @interface B : A

@@ -2304,7 +2304,10 @@ bool Parser::isTypeSpecifierQualifier() {
 
 /// isDeclarationSpecifier() - Return true if the current token is part of a
 /// declaration specifier.
-bool Parser::isDeclarationSpecifier() {
+///
+/// \param DisambiguatingWithExpression True to indicate that the purpose of
+/// this check is to disambiguate between an expression and a declaration.
+bool Parser::isDeclarationSpecifier(bool DisambiguatingWithExpression) {
   switch (Tok.getKind()) {
   default: return false;
 
@@ -2322,6 +2325,16 @@ bool Parser::isDeclarationSpecifier() {
       return true;
     if (Tok.is(tok::identifier))
       return false;
+      
+    // If we're in Objective-C and we have an Objective-C class type followed
+    // by an identifier and then either ':' or ']', in a place where an 
+    // expression is permitted, then this is probably a class message send
+    // missing the initial '['. In this case, we won't consider this to be
+    // the start of a declaration.
+    if (DisambiguatingWithExpression && 
+        isStartOfObjCClassMessageMissingOpenBracket())
+      return false;
+      
     return isDeclarationSpecifier();
 
   case tok::coloncolon:   // ::foo::bar

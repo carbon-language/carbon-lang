@@ -677,6 +677,35 @@ ExprResult Parser::ParseCastExpression(bool isUnaryExpression,
       break;
     }
     
+    // If we have an Objective-C class name followed by an identifier and
+    // either ':' or ']', this is an Objective-C class message send that's
+    // missing the opening '['. Recovery appropriately.
+    if (getLang().ObjC1 && Tok.is(tok::identifier)) {
+      const Token& Next = NextToken();
+      if (Next.is(tok::colon) || Next.is(tok::r_square))
+        if (ParsedType Type = Actions.getTypeName(II, ILoc, getCurScope()))
+          if (Type.get()->isObjCObjectOrInterfaceType()) {
+            // Fake up a Declarator to use with ActOnTypeName.
+            DeclSpec DS;
+            DS.SetRangeStart(ILoc);
+            DS.SetRangeEnd(ILoc);
+            const char *PrevSpec = 0;
+            unsigned DiagID;
+            DS.SetTypeSpecType(TST_typename, ILoc, PrevSpec, DiagID, Type);
+            
+            Declarator DeclaratorInfo(DS, Declarator::TypeNameContext);
+            TypeResult Ty = Actions.ActOnTypeName(getCurScope(), 
+                                                  DeclaratorInfo);
+            if (Ty.isInvalid())
+              break;
+            
+            Res = ParseObjCMessageExpressionBody(SourceLocation(), 
+                                                 SourceLocation(), 
+                                                 Ty.get(), 0);
+            break;
+          }
+    }
+    
     // Make sure to pass down the right value for isAddressOfOperand.
     if (isAddressOfOperand && isPostfixExpressionSuffixStart())
       isAddressOfOperand = false;
@@ -791,6 +820,32 @@ ExprResult Parser::ParseCastExpression(bool isUnaryExpression,
     Res = ParseCXXThis();
     break;
 
+  case tok::annot_typename:
+    if (isStartOfObjCClassMessageMissingOpenBracket()) {
+      ParsedType Type = getTypeAnnotation(Tok);
+      
+      // Fake up a Declarator to use with ActOnTypeName.
+      DeclSpec DS;
+      DS.SetRangeStart(Tok.getLocation());
+      DS.SetRangeEnd(Tok.getLastLoc());
+
+      const char *PrevSpec = 0;
+      unsigned DiagID;
+      DS.SetTypeSpecType(TST_typename, Tok.getLocation(), PrevSpec, DiagID, 
+                         Type);
+      
+      Declarator DeclaratorInfo(DS, Declarator::TypeNameContext);
+      TypeResult Ty = Actions.ActOnTypeName(getCurScope(), DeclaratorInfo);
+      if (Ty.isInvalid())
+        break;
+
+      ConsumeToken();
+      Res = ParseObjCMessageExpressionBody(SourceLocation(), SourceLocation(),
+                                           Ty.get(), 0);
+      break;
+    }
+    // Fall through
+      
   case tok::kw_char:
   case tok::kw_wchar_t:
   case tok::kw_char16_t:
@@ -806,8 +861,7 @@ ExprResult Parser::ParseCastExpression(bool isUnaryExpression,
   case tok::kw_void:
   case tok::kw_typename:
   case tok::kw_typeof:
-  case tok::kw___vector:
-  case tok::annot_typename: {
+  case tok::kw___vector: {
     if (!getLang().CPlusPlus) {
       Diag(Tok, diag::err_expected_expression);
       return ExprError();

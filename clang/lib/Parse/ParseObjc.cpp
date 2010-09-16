@@ -1862,6 +1862,35 @@ bool Parser::isSimpleObjCMessageExpression() {
          GetLookAheadToken(2).is(tok::identifier);
 }
 
+bool Parser::isStartOfObjCClassMessageMissingOpenBracket() {
+  if (!getLang().ObjC1 || !NextToken().is(tok::identifier) || 
+      InMessageExpression)
+    return false;
+  
+  
+  ParsedType Type;
+
+  if (Tok.is(tok::annot_typename)) 
+    Type = getTypeAnnotation(Tok);
+  else if (Tok.is(tok::identifier))
+    Type = Actions.getTypeName(*Tok.getIdentifierInfo(), Tok.getLocation(), 
+                               getCurScope());
+  else
+    return false;
+  
+  if (!Type.get().isNull() && Type.get()->isObjCObjectOrInterfaceType()) {
+    const Token &AfterNext = GetLookAheadToken(2);
+    if (AfterNext.is(tok::colon) || AfterNext.is(tok::r_square)) {
+      if (Tok.is(tok::identifier))
+        TryAnnotateTypeOrScopeToken();
+      
+      return Tok.is(tok::annot_typename);
+    }
+  }
+
+  return false;
+}
+
 ///   objc-message-expr:
 ///     '[' objc-receiver objc-message-args ']'
 ///

@@ -1242,7 +1242,7 @@ private:
 
   void ParseStructDeclaration(DeclSpec &DS, FieldCallback &Callback);
 
-  bool isDeclarationSpecifier();
+  bool isDeclarationSpecifier(bool DisambiguatingWithExpression = false);
   bool isTypeSpecifierQualifier();
   bool isTypeQualifier() const;
   
@@ -1257,7 +1257,7 @@ private:
   bool isDeclarationStatement() {
     if (getLang().CPlusPlus)
       return isCXXDeclarationStatement();
-    return isDeclarationSpecifier();
+    return isDeclarationSpecifier(true);
   }
 
   /// isSimpleDeclaration - Disambiguates between a declaration or an
@@ -1267,9 +1267,13 @@ private:
   bool isSimpleDeclaration() {
     if (getLang().CPlusPlus)
       return isCXXSimpleDeclaration();
-    return isDeclarationSpecifier();
+    return isDeclarationSpecifier(true);
   }
 
+  /// \brief Determine whether we are currently at the start of an Objective-C
+  /// class message that appears to be missing the open bracket '['.
+  bool isStartOfObjCClassMessageMissingOpenBracket();
+  
   /// \brief Starting with a scope specifier, identifier, or
   /// template-id that refers to the current class, determine whether
   /// this is a constructor declarator.
