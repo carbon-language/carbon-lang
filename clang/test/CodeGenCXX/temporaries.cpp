@@ -344,6 +344,7 @@ namespace Elision {
 
   void foo();
   A fooA();
+  void takeA(A a);
 
   // CHECK: define void @_ZN7Elision5test0Ev()
   void test0() {
@@ -438,6 +439,39 @@ namespace Elision {
     // CHECK-NEXT: [[XSI:%.*]] = getelementptr inbounds [[A]]* [[XSB]], i64 [[I2]]
     // CHECK-NEXT: call void @_ZN7Elision1AD1Ev([[A]]* [[XSI]])
     // CHECK-NEXT: br label
+
+    // CHECK:      call void @_ZN7Elision1AD1Ev([[A]]* [[X]])
+  }
+
+  // rdar://problem/8433352
+  // CHECK: define void @_ZN7Elision5test5Ev([[A]]* sret
+  struct B { A a; B(); };
+  A test5() {
+    // CHECK:      [[AT0:%.*]] = alloca [[A]], align 8
+    // CHECK-NEXT: [[BT0:%.*]] = alloca [[B:%.*]], align 8
+    // CHECK-NEXT: [[X:%.*]] = alloca [[A]], align 8
+    // CHECK-NEXT: [[BT1:%.*]] = alloca [[B]], align 8
+    // CHECK-NEXT: [[BT2:%.*]] = alloca [[B]], align 8
+
+    // CHECK:      call void @_ZN7Elision1BC1Ev([[B]]* [[BT0]])
+    // CHECK-NEXT: [[AM:%.*]] = getelementptr inbounds [[B]]* [[BT0]], i32 0, i32 0
+    // CHECK-NEXT: call void @_ZN7Elision1AC1ERKS0_([[A]]* [[AT0]], [[A]]* [[AM]])
+    // CHECK-NEXT: call void @_ZN7Elision5takeAENS_1AE([[A]]* [[AT0]])
+    // CHECK-NEXT: call void @_ZN7Elision1AD1Ev([[A]]* [[AT0]])
+    // CHECK-NEXT: call void @_ZN7Elision1BD1Ev([[B]]* [[BT0]])
+    takeA(B().a);
+
+    // CHECK-NEXT: call void @_ZN7Elision1BC1Ev([[B]]* [[BT1]])
+    // CHECK-NEXT: [[AM:%.*]] = getelementptr inbounds [[B]]* [[BT1]], i32 0, i32 0
+    // CHECK-NEXT: call void @_ZN7Elision1AC1ERKS0_([[A]]* [[X]], [[A]]* [[AM]])
+    // CHECK-NEXT: call void @_ZN7Elision1BD1Ev([[B]]* [[BT1]])
+    A x = B().a;
+
+    // CHECK-NEXT: call void @_ZN7Elision1BC1Ev([[B]]* [[BT2]])
+    // CHECK-NEXT: [[AM:%.*]] = getelementptr inbounds [[B]]* [[BT2]], i32 0, i32 0
+    // CHECK-NEXT: call void @_ZN7Elision1AC1ERKS0_([[A]]* [[RET:%.*]], [[A]]* [[AM]])
+    // CHECK-NEXT: call void @_ZN7Elision1BD1Ev([[B]]* [[BT2]])
+    return B().a;
 
     // CHECK:      call void @_ZN7Elision1AD1Ev([[A]]* [[X]])
   }

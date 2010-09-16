@@ -1659,9 +1659,10 @@ bool Expr::isTemporaryObject(ASTContext &C, const CXXRecordDecl *TempTy) const {
   // Temporaries are by definition pr-values of class type.
   if (!E->Classify(C).isPRValue()) return false;
 
-  // Black-list implicit derived-to-base conversions, which are the
-  // only way we can get a pr-value of class type that doesn't refer
-  // to a temporary of that type.
+  // Black-list a few cases which yield pr-values of class type that don't
+  // refer to temporaries of that type:
+
+  // - implicit derived-to-base conversions
   if (isa<ImplicitCastExpr>(E)) {
     switch (cast<ImplicitCastExpr>(E)->getCastKind()) {
     case CK_DerivedToBase:
@@ -1671,6 +1672,10 @@ bool Expr::isTemporaryObject(ASTContext &C, const CXXRecordDecl *TempTy) const {
       break;
     }
   }
+
+  // - member expressions (all)
+  if (isa<MemberExpr>(E))
+    return false;
 
   return true;
 }
