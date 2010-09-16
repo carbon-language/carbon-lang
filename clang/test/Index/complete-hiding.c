@@ -25,8 +25,8 @@ void f() {
 // CHECK-CC1: VarDecl:{ResultType int}{TypedText ValueB} (50)
 // RUN: c-index-test -code-completion-at=%s:16:10 %s > %t
 // RUN: FileCheck -check-prefix=CHECK-CC2 -input-file=%t %s
-// CHECK-CC2: StructDecl:{TypedText StructA} (65)
-// CHECK-CC2-NOT: StructDecl:{TypedText StructB} (65)
-// CHECK-CC2: StructDecl:{TypedText StructC} (65)
+// CHECK-CC2: StructDecl:{TypedText StructA} (60)
+// CHECK-CC2-NOT: StructDecl:{TypedText StructB} (60)
+// CHECK-CC2: StructDecl:{TypedText StructC} (60)
 // RUN: env CINDEXTEST_EDITING=1 CINDEXTEST_COMPLETION_CACHING=1 c-index-test -code-completion-at=%s:16:10 %s > %t
 // RUN: FileCheck -check-prefix=CHECK-CC2 -input-file=%t %s

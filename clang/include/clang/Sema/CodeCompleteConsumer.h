@@ -49,10 +49,10 @@ enum {
   CCP_CodePattern = 30,
   /// \brief Priority for a non-type declaration.
   CCP_Declaration = 50,
-  /// \brief Priority for a constant value (e.g., enumerator).
-  CCP_Constant = 60,
   /// \brief Priority for a type.
-  CCP_Type = 65,
+  CCP_Type = 60,
+  /// \brief Priority for a constant value (e.g., enumerator).
+  CCP_Constant = 65,
   /// \brief Priority for a preprocessor macro.
   CCP_Macro = 70,
   /// \brief Priority for a nested-name-specifier.
