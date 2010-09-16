@@ -703,7 +703,7 @@ Sema::ActOnFinishSwitchStmt(SourceLocation SwitchLoc, Stmt *Switch,
     // we still do the analysis to preserve this information in the AST
     // (which can be used by flow-based analyes).
     //
-    const EnumType* ET = CondTypeBeforePromotion->getAs<EnumType>();
+    const EnumType *ET = CondTypeBeforePromotion->getAs<EnumType>();
 
     // If switch has default case, then ignore it.
     if (!CaseListIsErroneous  && !HasConstantCond && ET) {
@@ -760,13 +760,16 @@ Sema::ActOnFinishSwitchStmt(SourceLocation SwitchLoc, Stmt *Switch,
               << ED->getDeclName();
         }
       }
+      
       // Check which enum vals aren't in switch
       CaseValsTy::const_iterator CI = CaseVals.begin();
       CaseRangesTy::const_iterator RI = CaseRanges.begin();
       bool hasCasesNotInSwitch = false;
 
+      llvm::SmallVector<DeclarationName,8> UnhandledNames;
+      
       for (EnumValsTy::const_iterator EI = EnumVals.begin(); EI != EIend; EI++){
-        //Drop unneeded case values
+        // Drop unneeded case values
         llvm::APSInt CIVal;
         while (CI != CaseVals.end() && CI->first < EI->first)
           CI++;
@@ -784,9 +787,30 @@ Sema::ActOnFinishSwitchStmt(SourceLocation SwitchLoc, Stmt *Switch,
         if (RI == CaseRanges.end() || EI->first < RI->first) {
           hasCasesNotInSwitch = true;
           if (!TheDefaultStmt)
-            Diag(CondExpr->getExprLoc(), diag::warn_missing_cases)
-              << EI->second->getDeclName();
+            UnhandledNames.push_back(EI->second->getDeclName());
         }
+      }
+      
+      // Produce a nice diagnostic if multiple values aren't handled.
+      switch (UnhandledNames.size()) {
+      case 0: break;
+      case 1:
+        Diag(CondExpr->getExprLoc(), diag::warn_missing_case1)
+          << UnhandledNames[0];
+        break;
+      case 2:
+        Diag(CondExpr->getExprLoc(), diag::warn_missing_case2)
+          << UnhandledNames[0] << UnhandledNames[1];
+        break;
+      case 3:
+        Diag(CondExpr->getExprLoc(), diag::warn_missing_case3)
+          << UnhandledNames[0] << UnhandledNames[1] << UnhandledNames[2];
+        break;
+      default:
+        Diag(CondExpr->getExprLoc(), diag::warn_missing_cases)
+          << (unsigned)UnhandledNames.size()
+          << UnhandledNames[0] << UnhandledNames[1] << UnhandledNames[2];
+        break;
       }
 
       if (!hasCasesNotInSwitch)
