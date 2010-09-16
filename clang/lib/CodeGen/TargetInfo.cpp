@@ -552,6 +552,33 @@ ABIArgInfo X86_32ABIInfo::classifyReturnType(QualType RetTy) const {
           ABIArgInfo::getExtend() : ABIArgInfo::getDirect());
 }
 
+static bool isRecordWithSSEVectorType(ASTContext &Context, QualType Ty) {
+  const RecordType *RT = Ty->getAs<RecordType>();
+  if (!RT)
+    return 0;
+  const RecordDecl *RD = RT->getDecl();
+
+  // If this is a C++ record, check the bases first.
+  if (const CXXRecordDecl *CXXRD = dyn_cast<CXXRecordDecl>(RD))
+    for (CXXRecordDecl::base_class_const_iterator i = CXXRD->bases_begin(),
+           e = CXXRD->bases_end(); i != e; ++i)
+      if (!isRecordWithSSEVectorType(Context, i->getType()))
+        return false;
+
+  for (RecordDecl::field_iterator i = RD->field_begin(), e = RD->field_end();
+       i != e; ++i) {
+    QualType FT = i->getType();
+
+    if (FT->getAs<VectorType>() && Context.getTypeSize(Ty) == 128)
+      return true;
+
+    if (isRecordWithSSEVectorType(Context, FT))
+      return true;
+  }
+
+  return false;
+}
+
 unsigned X86_32ABIInfo::getTypeStackAlignInBytes(QualType Ty) const {
   // On non-Darwin, the stack type alignment is always 4.
   if (!IsDarwinVectorABI)
@@ -563,9 +590,11 @@ unsigned X86_32ABIInfo::getTypeStackAlignInBytes(QualType Ty) const {
   if (Align <= MinABIStackAlignInBytes)
     return MinABIStackAlignInBytes;
 
-  // Otherwise, if the type contains SSE or MMX vector types, then the alignment
-  // matches that of the struct.
-  return Align;
+  // Otherwise, if the type contains an SSE vector type, the alignment is 16.
+  if (isRecordWithSSEVectorType(getContext(), Ty))
+    return 16;
+
+  return MinABIStackAlignInBytes;
 }
 
 ABIArgInfo X86_32ABIInfo::getIndirectResult(QualType Ty, bool ByVal) const {
