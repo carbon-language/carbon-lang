@@ -29,15 +29,15 @@ namespace CodeGen {
 
 /// The exceptions personality for a function.  When 
 class EHPersonality {
-  const char *PersonalityFn;
+  llvm::StringRef PersonalityFn;
 
   // If this is non-null, this personality requires a non-standard
   // function for rethrowing an exception after a catchall cleanup.
   // This function must have prototype void(void*).
-  const char *CatchallRethrowFn;
+  llvm::StringRef CatchallRethrowFn;
 
-  EHPersonality(const char *PersonalityFn,
-                const char *CatchallRethrowFn = 0)
+  EHPersonality(llvm::StringRef PersonalityFn,
+                llvm::StringRef CatchallRethrowFn = llvm::StringRef())
     : PersonalityFn(PersonalityFn),
       CatchallRethrowFn(CatchallRethrowFn) {}
 
@@ -49,8 +49,8 @@ public:
   static const EHPersonality GNU_CPlusPlus;
   static const EHPersonality GNU_CPlusPlus_SJLJ;
 
-  const char *getPersonalityFnName() const { return PersonalityFn; }
-  const char *getCatchallRethrowFnName() const { return CatchallRethrowFn; }
+  llvm::StringRef getPersonalityFnName() const { return PersonalityFn; }
+  llvm::StringRef getCatchallRethrowFnName() const { return CatchallRethrowFn; }
 };
 
 /// A protected scope for zero-cost EH handling.

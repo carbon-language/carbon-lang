@@ -110,6 +110,8 @@ void CodeGenModule::Release() {
   EmitAnnotations();
   EmitLLVMUsed();
 
+  SimplifyPersonality();
+
   if (getCodeGenOpts().EmitDeclMetadata)
     EmitDeclMetadata();
 }

@@ -613,6 +613,10 @@ private:
   /// lazily; this is only relevant for definitions. The given decl
   /// must be either a function or var decl.
   bool MayDeferGeneration(const ValueDecl *D);
+
+  /// SimplifyPersonality - Check whether we can use a "simpler", more
+  /// core exceptions personality function.
+  void SimplifyPersonality();
 };
 }  // end namespace CodeGen
 }  // end namespace clang

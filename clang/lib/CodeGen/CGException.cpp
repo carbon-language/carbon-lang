@@ -14,6 +14,7 @@
 #include "clang/AST/StmtCXX.h"
 
 #include "llvm/Intrinsics.h"
+#include "llvm/IntrinsicInst.h"
 #include "llvm/Support/CallSite.h"
 
 #include "CGObjCRuntime.h"
@@ -287,7 +288,7 @@ static llvm::Constant *getTerminateFn(CodeGenFunction &CGF) {
 }
 
 static llvm::Constant *getCatchallRethrowFn(CodeGenFunction &CGF,
-                                            const char *Name) {
+                                            llvm::StringRef Name) {
   const llvm::Type *Int8PtrTy =
     llvm::Type::getInt8PtrTy(CGF.getLLVMContext());
   std::vector<const llvm::Type*> Args(1, Int8PtrTy);
@@ -357,17 +358,95 @@ const EHPersonality &EHPersonality::get(const LangOptions &L) {
     return getCPersonality(L);
 }
 
-static llvm::Constant *getPersonalityFn(CodeGenFunction &CGF,
+static llvm::Constant *getPersonalityFn(CodeGenModule &CGM,
                                         const EHPersonality &Personality) {
-  const char *Name = Personality.getPersonalityFnName();
-
   llvm::Constant *Fn =
-    CGF.CGM.CreateRuntimeFunction(llvm::FunctionType::get(
-                                    llvm::Type::getInt32Ty(
-                                      CGF.CGM.getLLVMContext()),
-                                    true),
-                            Name);
-  return llvm::ConstantExpr::getBitCast(Fn, CGF.CGM.PtrToInt8Ty);
+    CGM.CreateRuntimeFunction(llvm::FunctionType::get(
+                                llvm::Type::getInt32Ty(CGM.getLLVMContext()),
+                                true),
+                              Personality.getPersonalityFnName());
+  return Fn;
+}
+
+static llvm::Constant *getOpaquePersonalityFn(CodeGenModule &CGM,
+                                        const EHPersonality &Personality) {
+  llvm::Constant *Fn = getPersonalityFn(CGM, Personality);
+  return llvm::ConstantExpr::getBitCast(Fn, CGM.PtrToInt8Ty);
+}
+
+/// Check whether a personality function could reasonably be swapped
+/// for a C++ personality function.
+static bool PersonalityHasOnlyCXXUses(llvm::Constant *Fn) {
+  for (llvm::Constant::use_iterator
+         I = Fn->use_begin(), E = Fn->use_end(); I != E; ++I) {
+    llvm::User *User = *I;
+
+    // Conditionally white-list bitcasts.
+    if (llvm::ConstantExpr *CE = dyn_cast<llvm::ConstantExpr>(User)) {
+      if (CE->getOpcode() != llvm::Instruction::BitCast) return false;
+      if (!PersonalityHasOnlyCXXUses(CE))
+        return false;
+      continue;
+    }
+
+    // Otherwise, it has to be a selector call.
+    if (!isa<llvm::EHSelectorInst>(User)) return false;
+
+    llvm::EHSelectorInst *Selector = cast<llvm::EHSelectorInst>(User);
+    for (unsigned I = 2, E = Selector->getNumArgOperands(); I != E; ++I) {
+      // Look for something that would've been returned by the ObjC
+      // runtime's GetEHType() method.
+      llvm::GlobalVariable *GV
+        = dyn_cast<llvm::GlobalVariable>(Selector->getArgOperand(I));
+      if (!GV) continue;
+
+      // ObjC EH selector entries are always global variables with
+      // names starting like this.
+      if (GV->getName().startswith("OBJC_EHTYPE"))
+        return false;
+    }
+  }
+
+  return true;
+}
+
+/// Try to use the C++ personality function in ObjC++.  Not doing this
+/// can cause some incompatibilities with gcc, which is more
+/// aggressive about only using the ObjC++ personality in a function
+/// when it really needs it.
+void CodeGenModule::SimplifyPersonality() {
+  // For now, this is really a Darwin-specific operation.
+  if (Context.Target.getTriple().getOS() != llvm::Triple::Darwin)
+    return;
+
+  // If we're not in ObjC++ -fexceptions, there's nothing to do.
+  if (!Features.CPlusPlus || !Features.ObjC1 || !Features.Exceptions)
+    return;
+
+  const EHPersonality &ObjCXX = EHPersonality::get(Features);
+  const EHPersonality &CXX = getCXXPersonality(Features);
+  if (&ObjCXX == &CXX ||
+      ObjCXX.getPersonalityFnName() == CXX.getPersonalityFnName())
+    return;
+
+  llvm::Function *Fn =
+    getModule().getFunction(ObjCXX.getPersonalityFnName());
+
+  // Nothing to do if it's unused.
+  if (!Fn || Fn->use_empty()) return;
+  
+  // Can't do the optimization if it has non-C++ uses.
+  if (!PersonalityHasOnlyCXXUses(Fn)) return;
+
+  // Create the C++ personality function and kill off the old
+  // function.
+  llvm::Constant *CXXFn = getPersonalityFn(*this, CXX);
+
+  // This can happen if the user is screwing with us.
+  if (Fn->getType() != CXXFn->getType()) return;
+
+  Fn->replaceAllUsesWith(CXXFn);
+  Fn->eraseFromParent();
 }
 
 /// Returns the value to inject into a selector to indicate the
@@ -757,7 +836,7 @@ llvm::BasicBlock *CodeGenFunction::EmitLandingPad() {
   // Build the selector arguments.
   llvm::SmallVector<llvm::Value*, 8> EHSelector;
   EHSelector.push_back(Exn);
-  EHSelector.push_back(getPersonalityFn(*this, Personality));
+  EHSelector.push_back(getOpaquePersonalityFn(CGM, Personality));
 
   // Accumulate all the handlers in scope.
   llvm::DenseMap<llvm::Value*, UnwindDest> EHHandlers;
@@ -1502,7 +1581,7 @@ llvm::BasicBlock *CodeGenFunction::getTerminateLandingPad() {
   
   // Tell the backend what the exception table should be:
   // nothing but a catch-all.
-  llvm::Value *Args[3] = { Exn, getPersonalityFn(*this, Personality),
+  llvm::Value *Args[3] = { Exn, getOpaquePersonalityFn(CGM, Personality),
                            getCatchAllValue(*this) };
   Builder.CreateCall(CGM.getIntrinsic(llvm::Intrinsic::eh_selector),
                      Args, Args+3, "eh.selector")
@@ -1553,8 +1632,9 @@ CodeGenFunction::UnwindDest CodeGenFunction::getRethrowDest() {
 
   // This can always be a call because we necessarily didn't find
   // anything on the EH stack which needs our help.
+  llvm::StringRef RethrowName = Personality.getCatchallRethrowFnName();
   llvm::Constant *RethrowFn;
-  if (const char *RethrowName = Personality.getCatchallRethrowFnName())
+  if (!RethrowName.empty())
     RethrowFn = getCatchallRethrowFn(*this, RethrowName);
   else
     RethrowFn = getUnwindResumeOrRethrowFn();
