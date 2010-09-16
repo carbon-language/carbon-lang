@@ -153,12 +153,28 @@ public:
                       clang::DeclContext *decl_ctx,
                       lldb::LanguageType language);
 
-    bool
-    AddFieldToRecordType (void * record_qual_type,
+    static bool
+    AddFieldToRecordType (clang::ASTContext *ast_context,
+                          void *record_qual_type,
                           const char *name,
-                          void * field_type,
+                          void *field_type,
                           lldb::AccessType access,
                           uint32_t bitfield_bit_size);
+    
+    bool
+    AddFieldToRecordType (void *record_qual_type,
+                          const char *name,
+                          void *field_type,
+                          lldb::AccessType access,
+                          uint32_t bitfield_bit_size)
+    {
+        return ClangASTContext::AddFieldToRecordType(m_ast_context_ap.get(),
+                                                     record_qual_type,
+                                                     name,
+                                                     field_type,
+                                                     access,
+                                                     bitfield_bit_size);
+    }
     
     bool
     FieldIsBitfield (clang::FieldDecl* field,
@@ -184,13 +200,31 @@ public:
                      bool isForwardDecl, 
                      bool isInternal);
     
+    static bool
+    AddObjCClassIVar (clang::ASTContext *ast_context,
+                      void *class_opaque_type, 
+                      const char *name, 
+                      void *ivar_opaque_type, 
+                      lldb::AccessType access, 
+                      uint32_t bitfield_bit_size, 
+                      bool isSynthesized);
+    
     bool
     AddObjCClassIVar (void *class_opaque_type, 
                       const char *name, 
                       void *ivar_opaque_type, 
                       lldb::AccessType access, 
                       uint32_t bitfield_bit_size, 
-                      bool isSynthesized);
+                      bool isSynthesized)
+    {
+        return ClangASTContext::AddObjCClassIVar (m_ast_context_ap.get(),
+                                                  class_opaque_type,
+                                                  name,
+                                                  ivar_opaque_type,
+                                                  access,
+                                                  bitfield_bit_size,
+                                                  isSynthesized);
+    }
 
     bool
     SetObjCSuperClass (void *class_clang_type,

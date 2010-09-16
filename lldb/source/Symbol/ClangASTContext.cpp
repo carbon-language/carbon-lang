@@ -806,6 +806,7 @@ ClangASTContext::CreateRecordType (const char *name, int kind, DeclContext *decl
 bool
 ClangASTContext::AddFieldToRecordType 
 (
+    clang::ASTContext *ast_context,
     void *record_clang_type, 
     const char *name, 
     void *field_type, 
@@ -816,8 +817,7 @@ ClangASTContext::AddFieldToRecordType
     if (record_clang_type == NULL || field_type == NULL)
         return false;
 
-    ASTContext *ast_context = getASTContext();
-    IdentifierTable *identifier_table = getIdentifierTable();
+    IdentifierTable *identifier_table = &ast_context->Idents;
 
     assert (ast_context != NULL);
     assert (identifier_table != NULL);
@@ -866,7 +866,8 @@ ClangASTContext::AddFieldToRecordType
             if (objc_class_type)
             {
                 bool isSynthesized = false;
-                ClangASTContext::AddObjCClassIVar (record_clang_type,
+                ClangASTContext::AddObjCClassIVar (ast_context,
+                                                   record_clang_type,
                                                    name,
                                                    field_type,
                                                    access,
@@ -1080,6 +1081,7 @@ ClangASTContext::SetObjCSuperClass (void *class_opaque_type, void *super_opaque_
 bool
 ClangASTContext::AddObjCClassIVar 
 (
+    clang::ASTContext *ast_context,
     void *class_opaque_type, 
     const char *name, 
     void *ivar_opaque_type, 
@@ -1091,8 +1093,7 @@ ClangASTContext::AddObjCClassIVar
     if (class_opaque_type == NULL || ivar_opaque_type == NULL)
         return false;
 
-    ASTContext *ast_context = getASTContext();
-    IdentifierTable *identifier_table = getIdentifierTable();
+    IdentifierTable *identifier_table = &ast_context->Idents;
 
     assert (ast_context != NULL);
     assert (identifier_table != NULL);
