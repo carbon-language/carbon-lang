@@ -48,6 +48,9 @@ suite = unittest2.TestSuite()
 # Delay startup in order for the debugger to attach.
 delay = False
 
+# Ignore the build search path relative to this script to locate the lldb.py module.
+ignore = False
+
 # Default verbosity is 0.
 verbose = 0
 
@@ -67,6 +70,8 @@ Usage: dotest.py [option] [args]
 where options:
 -h   : print this help message and exit (also --help)
 -d   : delay startup for 10 seconds (in order for the debugger to attach)
+-i   : ignore (don't bailout) if 'lldb.py' module cannot be located in the build
+       tree relative to this script; use PYTHONPATH to locate the module
 -t   : trace lldb command execution and result
 -v   : do verbose mode of unittest framework
 
@@ -75,7 +80,9 @@ args : specify a list of directory names to search for python Test*.py scripts
        if empty, search from the curret working directory, instead
 
 Running of this script also sets up the LLDB_TEST environment variable so that
-individual test cases can locate their supporting files correctly.
+individual test cases can locate their supporting files correctly.  The script
+tries to set up Python's search paths for modules by looking at the build tree
+relative to this script.  See also the '-i' option.
 
 Environment variables related to loggings:
 
@@ -86,6 +93,52 @@ o GDB_REMOTE_LOG: if defined, specifies the log file pathname for the
   'process.gdb-remote' subsystem with a default option of 'packets' if
   GDB_REMOTE_LOG_OPTION is not defined.
 """
+
+
+def parseOptionsAndInitTestdirs():
+    """Initialize the list of directories containing our unittest scripts.
+
+    '-h/--help as the first option prints out usage info and exit the program.
+    """
+
+    global delay
+    global inore
+    global verbose
+    global testdirs
+
+    if len(sys.argv) == 1:
+        return
+
+    # Process possible trace and/or verbose flag, among other things.
+    index = 1
+    for i in range(1, len(sys.argv)):
+        if not sys.argv[index].startswith('-'):
+            # End of option processing.
+            break
+
+        if sys.argv[index].find('-h') != -1:
+            usage()
+            sys.exit(0)
+        elif sys.argv[index].startswith('-d'):
+            delay = True
+            index += 1
+        elif sys.argv[index].startswith('-i'):
+            ignore = True
+            index += 1
+        elif sys.argv[index].startswith('-t'):
+            os.environ["LLDB_COMMAND_TRACE"] = "YES"
+            index += 1
+        elif sys.argv[index].startswith('-v'):
+            verbose = 2
+            index += 1
+        else:
+            print "Unknown option: ", sys.argv[index]
+            usage()
+            sys.exit(0)
+
+    # Gather all the dirs passed on the command line.
+    if len(sys.argv) > index:
+        testdirs = map(os.path.abspath, sys.argv[index:])
 
 
 def setupSysPath():
@@ -100,6 +153,16 @@ def setupSysPath():
     os.environ["LLDB_TEST"] = scriptPath
     pluginPath = os.path.join(scriptPath, 'plugins')
 
+    # Append script dir and plugin dir to the sys.path.
+    sys.path.append(scriptPath)
+    sys.path.append(pluginPath)
+    
+    global ignore
+
+    # The '-i' option is used to skip looking for lldb.py in the build tree.
+    if ignore:
+        return
+        
     base = os.path.abspath(os.path.join(scriptPath, os.pardir))
     dbgPath = os.path.join(base, 'build', 'Debug', 'LLDB.framework',
                            'Resources', 'Python')
@@ -121,48 +184,8 @@ def setupSysPath():
         print relPath + ', or ' + baiPath
         sys.exit(-1)
 
-    sys.path.append(lldbPath)
-    sys.path.append(scriptPath)
-    sys.path.append(pluginPath)
-
-
-def initTestdirs():
-    """Initialize the list of directories containing our unittest scripts.
-
-    '-h/--help as the first option prints out usage info and exit the program.
-    """
-
-    global delay
-    global verbose
-    global testdirs
-
-    if len(sys.argv) == 1:
-        pass
-    elif sys.argv[1].find('-h') != -1:
-        # Print usage info and exit.
-        usage()
-        sys.exit(0)
-    else:
-        # Process possible trace and/or verbose flag.
-        index = 1
-        for i in range(1, len(sys.argv)):
-            if not sys.argv[index].startswith('-'):
-                # End of option processing.
-                break
-
-            if sys.argv[index].startswith('-d'):
-                delay = True
-                index += 1
-            elif sys.argv[index].startswith('-t'):
-                os.environ["LLDB_COMMAND_TRACE"] = "YES"
-                index += 1
-            elif sys.argv[index].startswith('-v'):
-                verbose = 2
-                index += 1
-
-        # Gather all the dirs passed on the command line.
-        if len(sys.argv) > index:
-            testdirs = map(os.path.abspath, sys.argv[index:])
+    # This is to locate the lldb.py module.  Insert it right after sys.path[0].
+    sys.path[1:1] = [lldbPath]
 
 
 def visit(prefix, dir, names):
@@ -183,12 +206,12 @@ def visit(prefix, dir, names):
 
 
 #
-# Start the actions by first setting up the module search path for lldb,
-# followed by initializing the test directories, and then walking the directory
-# trees, while collecting the tests into our test suite.
+# Start the actions by first parsing the options while setting up the test
+# directories, followed by setting up the search paths for lldb utilities;
+# then, we walk the directory trees and collect the tests into our test suite.
 #
+parseOptionsAndInitTestdirs()
 setupSysPath()
-initTestdirs()
 
 #
 # If '-d' is specified, do a delay of 10 seconds for the debugger to attach.
