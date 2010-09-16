@@ -638,6 +638,7 @@ bool ARMExpandPseudo::ExpandMBB(MachineBasicBlock &MBB) {
                      .addReg(OddSrc, getKillRegState(SrcIsKill)));
       TransferImpOps(MI, Even, Odd);
       MI.eraseFromParent();
+      break;
     }
 
     case ARM::VLDMQ: {
