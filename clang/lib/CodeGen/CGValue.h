@@ -347,14 +347,16 @@ public:
   /// \param LifetimeExternallyManaged - true if the slot's lifetime
   ///   is being externally managed; false if a destructor should be
   ///   registered for any temporaries evaluated into the slot
+  /// \param RequiresGCollection - true if the slot is located
+  ///   somewhere that ObjC GC calls should be emitted for
   static AggValueSlot forAddr(llvm::Value *Addr, bool Volatile,
                               bool LifetimeExternallyManaged,
                               bool RequiresGCollection=false) {
     AggValueSlot AV;
     AV.AddrAndFlags = reinterpret_cast<uintptr_t>(Addr);
-    if (Volatile) AV.VolatileFlag = 1;
-    if (LifetimeExternallyManaged) AV.LifetimeFlag = 1;
-    if (RequiresGCollection) AV.RequiresGCollection = 1;
+    AV.VolatileFlag = Volatile;
+    AV.LifetimeFlag = LifetimeExternallyManaged;
+    AV.RequiresGCollection = RequiresGCollection;
     return AV;
   }
 
@@ -368,18 +370,18 @@ public:
     return LifetimeFlag;
   }
   void setLifetimeExternallyManaged() {
-    LifetimeFlag = 1;
+    LifetimeFlag = true;
   }
 
   bool isVolatile() const {
     return VolatileFlag;
   }
 
-  bool isRequiresGCollection() const {
+  bool requiresGCollection() const {
     return RequiresGCollection;
   }
   void setRequiresGCollection() {
-    RequiresGCollection = 1;
+    RequiresGCollection = true;
   }
   
   llvm::Value *getAddr() const {
