@@ -79,16 +79,21 @@ TEST(TripleTest, ParsedIDs) {
   EXPECT_EQ(Triple::x86, T.getArch());
   EXPECT_EQ(Triple::Apple, T.getVendor());
   EXPECT_EQ(Triple::Darwin, T.getOS());
+  EXPECT_EQ(Triple::UnknownEnvironment, T.getEnvironment());
 
   T = Triple("x86_64-pc-linux-gnu");
   EXPECT_EQ(Triple::x86_64, T.getArch());
   EXPECT_EQ(Triple::PC, T.getVendor());
   EXPECT_EQ(Triple::Linux, T.getOS());
+  // When environments are defined, change this test to verify the "gnu"
+  // environment.
+  EXPECT_EQ(Triple::UnknownEnvironment, T.getEnvironment());
 
   T = Triple("powerpc-dunno-notsure");
   EXPECT_EQ(Triple::ppc, T.getArch());
   EXPECT_EQ(Triple::UnknownVendor, T.getVendor());
   EXPECT_EQ(Triple::UnknownOS, T.getOS());
+  EXPECT_EQ(Triple::UnknownEnvironment, T.getEnvironment());
 
   T = Triple("huh");
   EXPECT_EQ(Triple::UnknownArch, T.getArch());
@@ -119,10 +124,12 @@ TEST(TripleTest, Normalization) {
   EXPECT_EQ("i386-b-c", Triple::normalize("i386-b-c"));
   EXPECT_EQ("i386-a-c", Triple::normalize("a-i386-c"));
   EXPECT_EQ("i386-a-b", Triple::normalize("a-b-i386"));
+  EXPECT_EQ("i386-a-b-c", Triple::normalize("a-b-c-i386"));
 
   EXPECT_EQ("a-pc-c", Triple::normalize("a-pc-c"));
   EXPECT_EQ("-pc-b-c", Triple::normalize("pc-b-c"));
   EXPECT_EQ("a-pc-b", Triple::normalize("a-b-pc"));
+  EXPECT_EQ("a-pc-b-c", Triple::normalize("a-b-c-pc"));
 
   EXPECT_EQ("a-b-linux", Triple::normalize("a-b-linux"));
   EXPECT_EQ("--linux-b-c", Triple::normalize("linux-b-c"));
@@ -210,6 +217,7 @@ TEST(TripleTest, MutateName) {
   EXPECT_EQ(Triple::UnknownArch, T.getArch());
   EXPECT_EQ(Triple::UnknownVendor, T.getVendor());
   EXPECT_EQ(Triple::UnknownOS, T.getOS());
+  EXPECT_EQ(Triple::UnknownEnvironment, T.getEnvironment());
 
   T.setArchName("i386");
   EXPECT_EQ(Triple::x86, T.getArch());
