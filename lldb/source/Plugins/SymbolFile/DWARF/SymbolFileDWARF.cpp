@@ -488,9 +488,13 @@ SymbolFileDWARF::ParseCompileUnit(DWARFCompileUnit* cu, CompUnitSP& compile_unit
             LanguageType class_language = (LanguageType)cu_die->GetAttributeValueAsUnsigned(this, cu, DW_AT_language, 0);
             if (cu_die_name)
             {
+                FileSpec cu_file_spec;
+
                 if (cu_die_name[0] == '/' || cu_comp_dir == NULL && cu_comp_dir[0])
                 {
-                    compile_unit_sp.reset(new CompileUnit(m_obj_file->GetModule(), cu, cu_die_name, cu->GetOffset(), class_language));
+                    // If we have a full path to the compile unit, we don't need to resolve
+                    // the file.  This can be expensive e.g. when the source files are NFS mounted.
+                    cu_file_spec.SetFile (cu_die_name, false);
                 }
                 else
                 {
@@ -498,10 +502,10 @@ SymbolFileDWARF::ParseCompileUnit(DWARFCompileUnit* cu, CompUnitSP& compile_unit
                     if (*fullpath.rbegin() != '/')
                         fullpath += '/';
                     fullpath += cu_die_name;
-
-                    compile_unit_sp.reset(new CompileUnit(m_obj_file->GetModule(), cu, fullpath.c_str(), cu->GetOffset(), class_language));
+                    cu_file_spec.SetFile (fullpath.c_str(), false);
                 }
 
+                compile_unit_sp.reset(new CompileUnit(m_obj_file->GetModule(), cu, cu_file_spec, cu->GetOffset(), class_language));
                 if (compile_unit_sp.get())
                 {
                     cu->SetUserData(compile_unit_sp.get());

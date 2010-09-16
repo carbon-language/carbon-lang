@@ -183,6 +183,18 @@ FileSpec::FileSpec(const char *pathname) :
 }
 
 //------------------------------------------------------------------
+// Default constructor that can take an optional full path to a
+// file on disk.
+//------------------------------------------------------------------
+FileSpec::FileSpec(const char *pathname, bool resolve_path) :
+    m_directory(),
+    m_filename()
+{
+    if (pathname && pathname[0])
+        SetFile(pathname, resolve_path);
+}
+
+//------------------------------------------------------------------
 // Copy constructor
 //------------------------------------------------------------------
 FileSpec::FileSpec(const FileSpec& rhs) :
@@ -223,14 +235,13 @@ FileSpec::operator= (const FileSpec& rhs)
     return *this;
 }
 
-
 //------------------------------------------------------------------
 // Update the contents of this object with a new path. The path will
 // be split up into a directory and filename and stored as uniqued
 // string values for quick comparison and efficient memory usage.
 //------------------------------------------------------------------
 void
-FileSpec::SetFile(const char *pathname)
+FileSpec::SetFile(const char *pathname, bool resolve)
 {
     m_filename.Clear();
     m_directory.Clear();
@@ -238,8 +249,22 @@ FileSpec::SetFile(const char *pathname)
         return;
 
     char resolved_path[PATH_MAX];
+    bool path_fit = true;
+    
+    if (resolve)
+    {
+        path_fit = (FileSpec::Resolve (pathname, resolved_path, sizeof(resolved_path)) < sizeof(resolved_path) - 1);
+    }
+    else
+    {
+        if (strlen (pathname) > sizeof(resolved_path) - 1)
+            path_fit = false;
+        else
+            strcpy (resolved_path, pathname);
+    }
 
-    if (FileSpec::Resolve (pathname, resolved_path, sizeof(resolved_path)) < sizeof(resolved_path) - 1)
+    
+    if (path_fit)
     {
         char *filename = ::basename (resolved_path);
         if (filename)
@@ -451,6 +476,17 @@ FileSpec::ResolveExecutableLocation ()
     }
     
     return false;
+}
+
+bool
+FileSpec::ResolvePath ()
+{
+    char path_buf[PATH_MAX];
+    
+    if (!GetPath (path_buf, PATH_MAX))
+        return false;
+    SetFile (path_buf, true);
+    return true;
 }
 
 uint64_t

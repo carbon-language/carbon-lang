@@ -525,7 +525,9 @@ DWARFDebugLine::ParseSupportFiles(const DataExtractor& debug_line_data, const ch
                 }
                 fullpath += path;
             }
-            FileSpec file_spec(fullpath.c_str());
+            
+            // We don't need to realpath files in the debug_line tables.
+            FileSpec file_spec(fullpath.c_str(), false);
             support_files.Append(file_spec);
         }
     }

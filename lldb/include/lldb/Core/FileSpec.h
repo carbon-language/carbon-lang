@@ -66,6 +66,23 @@ public:
     explicit FileSpec (const char *path);
 
     //------------------------------------------------------------------
+    /// Default constructor.
+    ///
+    /// Takes an optional full path to a file. If \a path is valid,
+    /// this function will call FileSpec::SetFile (\a path).
+    ///
+    /// @param[in] path
+    ///     The full or partial path to a file.
+    ///
+    /// @param[in] resolve_path
+    ///     If \b true, then we resolve the path with realpath,
+    ///     if \b false we trust the path is in canonical form already.
+    ///
+    /// @see FileSpec::SetFile ()
+    //------------------------------------------------------------------
+    explicit FileSpec (const char *path, bool resolve_path);
+
+    //------------------------------------------------------------------
     /// Copy constructor
     ///
     /// Makes a copy of the uniqued directory and filename strings from
@@ -275,6 +292,17 @@ public:
     //------------------------------------------------------------------
     bool
     ResolveExecutableLocation ();
+    
+    
+    //------------------------------------------------------------------
+    /// Canonicalize this file path (basically running the static Resolve method on it).
+    /// Useful if you asked us not to resolve the file path when you set the file.
+    ///
+    /// @return
+    ///     None.
+    //------------------------------------------------------------------
+    bool
+    ResolvePath ();
 
     uint64_t
     GetByteSize() const;
@@ -429,9 +457,13 @@ public:
     ///
     /// @param[in] path
     ///     A full, partial, or relative path to a file.
+    ///
+    /// @param[in] resolve
+    ///     If \b true, then we will try to resolve links the path using
+    ///     the static FileSpec::Resolve.
     //------------------------------------------------------------------
     void
-    SetFile (const char *path);
+    SetFile (const char *path, bool resolve = true);
 
     //------------------------------------------------------------------
     /// Read the file into an array of strings, one per line.
