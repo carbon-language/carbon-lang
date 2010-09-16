@@ -380,9 +380,6 @@ public:
   bool requiresGCollection() const {
     return RequiresGCollection;
   }
-  void setRequiresGCollection() {
-    RequiresGCollection = true;
-  }
   
   llvm::Value *getAddr() const {
     return Addr;
