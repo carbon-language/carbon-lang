@@ -11,6 +11,10 @@ class SettingsCommandTestCase(TestBase):
 
     mydir = "settings"
 
+    @classmethod
+    def classCleanup(cls):
+        system(["/bin/sh", "-c", "rm output.txt"])
+
     def test_set_prompt(self):
         """Test that 'set prompt' actually changes the prompt."""
 
@@ -62,7 +66,7 @@ class SettingsCommandTestCase(TestBase):
         self.runCmd("run", RUN_SUCCEEDED)
 
         # Read the output file produced by running the program.
-        output = open('/tmp/output.txt', 'r').read()
+        output = open('output.txt', 'r').read()
 
         self.assertTrue(output.startswith("argv[1] matches") and
                         output.find("argv[2] matches") > 0 and

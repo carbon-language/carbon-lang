@@ -13,7 +13,9 @@ class PersistentVariablesTestCase(TestBase):
 
     def test_persistent_variables(self):
         """Test that lldb persistent variables works correctly."""
-        self.runCmd("file ../array_types/a.out", CURRENT_EXECUTABLE_SET)
+        self.buildDefault()
+
+        self.runCmd("file a.out", CURRENT_EXECUTABLE_SET)
 
         self.runCmd("breakpoint set --name main")
 

@@ -271,20 +271,47 @@ class TestBase(unittest2.TestCase):
     # Can be overridden by the LLDB_TIME_WAIT environment variable.
     timeWait = 1.0;
 
-    def setUp(self):
-        #import traceback
-        #traceback.print_stack()
+    # Keep track of the old current working directory.
+    oldcwd = None
 
+    @classmethod
+    def setUpClass(cls):
         # Fail fast if 'mydir' attribute is not overridden.
-        if not self.mydir or len(self.mydir) == 0:
+        if not cls.mydir or len(cls.mydir) == 0:
             raise Exception("Subclasses must override the 'mydir' attribute.")
         # Save old working directory.
-        self.oldcwd = os.getcwd()
+        cls.oldcwd = os.getcwd()
 
         # Change current working directory if ${LLDB_TEST} is defined.
         # See also dotest.py which sets up ${LLDB_TEST}.
         if ("LLDB_TEST" in os.environ):
-            os.chdir(os.path.join(os.environ["LLDB_TEST"], self.mydir));
+            if traceAlways:
+                print "Change dir to:", os.path.join(os.environ["LLDB_TEST"], cls.mydir)
+            os.chdir(os.path.join(os.environ["LLDB_TEST"], cls.mydir))
+
+    @classmethod
+    def tearDownClass(cls):
+        """Do class-wide cleanup."""
+
+        # First, let's do the platform-specific cleanup.
+        module = __import__(sys.platform)
+        if not module.cleanup():
+            raise Exception("Don't know how to do cleanup")
+
+        # Subclass might have specific cleanup function defined.
+        if getattr(cls, "classCleanup", None):
+            if traceAlways:
+                print "Call class-specific cleanup function for class:", cls
+            cls.classCleanup()
+
+        # Restore old working directory.
+        if traceAlways:
+            print "Restore dir to:", cls.oldcwd
+        os.chdir(cls.oldcwd)
+
+    def setUp(self):
+        #import traceback
+        #traceback.print_stack()
 
         if "LLDB_MAX_LAUNCH_COUNT" in os.environ:
             self.maxLaunchCount = int(os.environ["LLDB_MAX_LAUNCH_COUNT"])
@@ -329,9 +356,6 @@ class TestBase(unittest2.TestCase):
             self.assertTrue(rc.Success(), PROCESS_KILLED)
 
         del self.dbg
-
-        # Restore old working directory.
-        os.chdir(self.oldcwd)
 
     def runCmd(self, cmd, msg=None, check=True, trace=False, setCookie=True):
         """

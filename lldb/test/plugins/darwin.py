@@ -50,3 +50,11 @@ def buildDwarf(compiler=None):
 
     # True signifies that we can handle building dsym.
     return True
+
+def cleanup():
+    """Do class-wide cleanup after the test."""
+    if os.path.isfile("Makefile"):
+        lldbtest.system(["/bin/sh", "-c", "make clean"])
+
+    # True signifies that we can handle building dsym.
+    return True
