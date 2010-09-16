@@ -168,9 +168,9 @@ public:
   PathDiagnosticLocation ExecutionContinues(llvm::raw_string_ostream& os,
                                             const ExplodedNode* N);
 
-  Decl const &getCodeDecl() { return R->getEndNode()->getCodeDecl(); }
+  Decl const &getCodeDecl() { return R->getErrorNode()->getCodeDecl(); }
 
-  ParentMap& getParentMap() { return R->getEndNode()->getParentMap(); }
+  ParentMap& getParentMap() { return R->getErrorNode()->getParentMap(); }
 
   const Stmt *getParent(const Stmt *S) {
     return getParentMap().getParent(S);
@@ -1216,13 +1216,13 @@ BugReport::~BugReport() {}
 RangedBugReport::~RangedBugReport() {}
 
 const Stmt* BugReport::getStmt() const {
-  ProgramPoint ProgP = EndNode->getLocation();
+  ProgramPoint ProgP = ErrorNode->getLocation();
   const Stmt *S = NULL;
 
   if (BlockEntrance* BE = dyn_cast<BlockEntrance>(&ProgP)) {
     CFGBlock &Exit = ProgP.getLocationContext()->getCFG()->getExit();
     if (BE->getBlock() == &Exit)
-      S = GetPreviousStmt(EndNode);
+      S = GetPreviousStmt(ErrorNode);
   }
   if (!S)
     S = GetStmt(ProgP);
@@ -1266,8 +1266,8 @@ void BugReport::getRanges(const SourceRange*& beg, const SourceRange*& end) {
 }
 
 SourceLocation BugReport::getLocation() const {
-  if (EndNode)
-    if (const Stmt* S = GetCurrentOrPreviousStmt(EndNode)) {
+  if (ErrorNode)
+    if (const Stmt* S = GetCurrentOrPreviousStmt(ErrorNode)) {
       // For member expressions, return the location of the '.' or '->'.
       if (const MemberExpr *ME = dyn_cast<MemberExpr>(S))
         return ME->getMemberLoc();
@@ -1665,7 +1665,7 @@ FindReportInEquivalenceClass(BugReportEquivClass& EQ,
   // by a sink, simply add all the nodes in the equivalence class to 'Nodes'.
   if (!BT.isSuppressOnSink()) {
     for (BugReportEquivClass::iterator I=EQ.begin(), E=EQ.end(); I!=E; ++I) {
-      const ExplodedNode* N = I->getEndNode();
+      const ExplodedNode* N = I->getErrorNode();
       if (N) {
         R = *I;
         Nodes.push_back(N);
@@ -1684,7 +1684,7 @@ FindReportInEquivalenceClass(BugReportEquivClass& EQ,
 
   for (; I != E; ++I) {
     R = *I;
-    const ExplodedNode *N = R->getEndNode();
+    const ExplodedNode *N = R->getErrorNode();
 
     if (!N)
       continue;

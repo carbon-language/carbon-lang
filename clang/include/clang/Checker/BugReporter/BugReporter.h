@@ -61,7 +61,7 @@ protected:
   BugType& BT;
   std::string ShortDescription;
   std::string Description;
-  const ExplodedNode *EndNode;
+  const ExplodedNode *ErrorNode;
   SourceRange R;
 
 protected:
@@ -81,12 +81,13 @@ public:
             getOriginalNode(const ExplodedNode* N) = 0;
   };
 
-  BugReport(BugType& bt, llvm::StringRef desc, const ExplodedNode *n)
-    : BT(bt), Description(desc), EndNode(n) {}
+  BugReport(BugType& bt, llvm::StringRef desc, const ExplodedNode *errornode)
+    : BT(bt), Description(desc), ErrorNode(errornode) {}
 
   BugReport(BugType& bt, llvm::StringRef shortDesc, llvm::StringRef desc,
-            const ExplodedNode *n)
-  : BT(bt), ShortDescription(shortDesc), Description(desc), EndNode(n) {}
+            const ExplodedNode *errornode)
+  : BT(bt), ShortDescription(shortDesc), Description(desc),
+    ErrorNode(errornode) {}
 
   virtual ~BugReport();
 
@@ -96,7 +97,7 @@ public:
   BugType& getBugType() { return BT; }
 
   // FIXME: Perhaps this should be moved into a subclass?
-  const ExplodedNode* getEndNode() const { return EndNode; }
+  const ExplodedNode* getErrorNode() const { return ErrorNode; }
 
   // FIXME: Do we need this?  Maybe getLocation() should return a ProgramPoint
   // object.
@@ -193,12 +194,13 @@ public:
 class RangedBugReport : public BugReport {
   std::vector<SourceRange> Ranges;
 public:
-  RangedBugReport(BugType& D, llvm::StringRef description, ExplodedNode *n)
-    : BugReport(D, description, n) {}
+  RangedBugReport(BugType& D, llvm::StringRef description,
+                  ExplodedNode *errornode)
+    : BugReport(D, description, errornode) {}
 
   RangedBugReport(BugType& D, llvm::StringRef shortDescription,
-                  llvm::StringRef description, ExplodedNode *n)
-  : BugReport(D, shortDescription, description, n) {}
+                  llvm::StringRef description, ExplodedNode *errornode)
+  : BugReport(D, shortDescription, description, errornode) {}
 
   ~RangedBugReport();
 
@@ -232,12 +234,13 @@ private:
   Creators creators;
 
 public:
-  EnhancedBugReport(BugType& D, llvm::StringRef description, ExplodedNode *n)
-   : RangedBugReport(D, description, n) {}
+  EnhancedBugReport(BugType& D, llvm::StringRef description,
+                    ExplodedNode *errornode)
+   : RangedBugReport(D, description, errornode) {}
 
   EnhancedBugReport(BugType& D, llvm::StringRef shortDescription,
-                   llvm::StringRef description, ExplodedNode *n)
-    : RangedBugReport(D, shortDescription, description, n) {}
+                   llvm::StringRef description, ExplodedNode *errornode)
+    : RangedBugReport(D, shortDescription, description, errornode) {}
 
   ~EnhancedBugReport() {}
 
@@ -279,10 +282,12 @@ private:
   void FlushReport(BugReportEquivClass& EQ);
 
 protected:
-  BugReporter(BugReporterData& d, Kind k) : BugTypes(F.GetEmptySet()), kind(k), D(d) {}
+  BugReporter(BugReporterData& d, Kind k) : BugTypes(F.GetEmptySet()), kind(k),
+                                            D(d) {}
 
 public:
-  BugReporter(BugReporterData& d) : BugTypes(F.GetEmptySet()), kind(BaseBRKind), D(d) {}
+  BugReporter(BugReporterData& d) : BugTypes(F.GetEmptySet()), kind(BaseBRKind),
+                                    D(d) {}
   virtual ~BugReporter();
 
   void FlushReports();

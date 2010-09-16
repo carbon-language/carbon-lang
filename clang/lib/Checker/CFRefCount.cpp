@@ -2442,7 +2442,7 @@ CFRefLeakReport::CFRefLeakReport(CFRefBug& D, const CFRefCount &tf,
   const ExplodedNode* AllocNode = 0;
 
   llvm::tie(AllocNode, AllocBinding) =  // Set AllocBinding.
-    GetAllocationSite(Eng.getStateManager(), getEndNode(), getSymbol());
+    GetAllocationSite(Eng.getStateManager(), getErrorNode(), getSymbol());
 
   // Get the SourceLocation for the allocation site.
   ProgramPoint P = AllocNode->getLocation();

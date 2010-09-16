@@ -3726,7 +3726,7 @@ void GRExprEngine::ViewGraph(bool trim) {
            I2!=E2; ++I2) {
         const BugReportEquivClass& EQ = *I2;
         const BugReport &R = **EQ.begin();
-        ExplodedNode *N = const_cast<ExplodedNode*>(R.getEndNode());
+        ExplodedNode *N = const_cast<ExplodedNode*>(R.getErrorNode());
         if (N) Src.push_back(N);
       }
     }
