@@ -5326,11 +5326,11 @@ bool Sema::isAcceptableTagRedeclaration(const TagDecl *Previous,
 /// TagSpec indicates what kind of tag this is. TUK indicates whether this is a
 /// reference/declaration/definition of a tag.
 Decl *Sema::ActOnTag(Scope *S, unsigned TagSpec, TagUseKind TUK,
-                               SourceLocation KWLoc, CXXScopeSpec &SS,
-                               IdentifierInfo *Name, SourceLocation NameLoc,
-                               AttributeList *Attr, AccessSpecifier AS,
-                               MultiTemplateParamsArg TemplateParameterLists,
-                               bool &OwnedDecl, bool &IsDependent) {
+                     SourceLocation KWLoc, CXXScopeSpec &SS,
+                     IdentifierInfo *Name, SourceLocation NameLoc,
+                     AttributeList *Attr, AccessSpecifier AS,
+                     MultiTemplateParamsArg TemplateParameterLists,
+                     bool &OwnedDecl, bool &IsDependent) {
   // If this is not a definition, it must have a name.
   assert((Name != 0 || TUK == TUK_Definition) &&
          "Nameless record must be a definition!");
@@ -5459,6 +5459,10 @@ Decl *Sema::ActOnTag(Scope *S, unsigned TagSpec, TagUseKind TUK,
       while (isa<RecordDecl>(SearchDC) || isa<EnumDecl>(SearchDC))
         SearchDC = SearchDC->getParent();
     }
+  } else if (S->isFunctionPrototypeScope()) {
+    // If this is an enum declaration in function prototype scope, set its
+    // initial context to the translation unit.
+    SearchDC = Context.getTranslationUnitDecl();
   }
 
   if (Previous.isSingleResult() &&
