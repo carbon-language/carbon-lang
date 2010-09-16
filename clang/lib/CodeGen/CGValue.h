@@ -324,7 +324,7 @@ public:
 /// An aggregate value slot.
 class AggValueSlot {
   /// The address.
-  uintptr_t AddrAndFlags;
+  llvm::Value *Addr;
   
   // Associated flags.
   bool VolatileFlag : 1;
@@ -336,7 +336,7 @@ public:
   /// aggregate value is being ignored.
   static AggValueSlot ignored() {
     AggValueSlot AV;
-    AV.AddrAndFlags = 0;
+    AV.Addr = 0;
     AV.VolatileFlag = AV.LifetimeFlag = AV.RequiresGCollection = 0;
     return AV;
   }
@@ -353,7 +353,7 @@ public:
                               bool LifetimeExternallyManaged,
                               bool RequiresGCollection=false) {
     AggValueSlot AV;
-    AV.AddrAndFlags = reinterpret_cast<uintptr_t>(Addr);
+    AV.Addr = Addr;
     AV.VolatileFlag = Volatile;
     AV.LifetimeFlag = LifetimeExternallyManaged;
     AV.RequiresGCollection = RequiresGCollection;
@@ -385,11 +385,11 @@ public:
   }
   
   llvm::Value *getAddr() const {
-    return reinterpret_cast<llvm::Value*>(AddrAndFlags);
+    return Addr;
   }
 
   bool isIgnored() const {
-    return AddrAndFlags == 0;
+    return Addr == 0;
   }
 
   RValue asRValue() const {
