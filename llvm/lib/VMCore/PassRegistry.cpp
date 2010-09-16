@@ -16,6 +16,7 @@
 #include "llvm/PassSupport.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/ManagedStatic.h"
+#include "llvm/System/Mutex.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/StringMap.h"
@@ -32,6 +33,8 @@ static ManagedStatic<PassRegistry> PassRegistryObj;
 PassRegistry *PassRegistry::getPassRegistry() {
   return &*PassRegistryObj;
 }
+
+sys::SmartMutex<true> Lock;
 
 //===----------------------------------------------------------------------===//
 // PassRegistryImpl
@@ -65,18 +68,21 @@ void *PassRegistry::getImpl() const {
 //
 
 PassRegistry::~PassRegistry() {
+  sys::SmartScopedLock<true> Guard(Lock);
   PassRegistryImpl *Impl = static_cast<PassRegistryImpl*>(pImpl);
   if (Impl) delete Impl;
   pImpl = 0;
 }
 
 const PassInfo *PassRegistry::getPassInfo(const void *TI) const {
+  sys::SmartScopedLock<true> Guard(Lock);
   PassRegistryImpl *Impl = static_cast<PassRegistryImpl*>(getImpl());
   PassRegistryImpl::MapType::const_iterator I = Impl->PassInfoMap.find(TI);
   return I != Impl->PassInfoMap.end() ? I->second : 0;
 }
 
 const PassInfo *PassRegistry::getPassInfo(StringRef Arg) const {
+  sys::SmartScopedLock<true> Guard(Lock);
   PassRegistryImpl *Impl = static_cast<PassRegistryImpl*>(getImpl());
   PassRegistryImpl::StringMapType::const_iterator
     I = Impl->PassInfoStringMap.find(Arg);
@@ -127,7 +133,6 @@ void PassRegistry::registerAnalysisGroup(const void *InterfaceID,
                                          const void *PassID,
                                          PassInfo& Registeree,
                                          bool isDefault) {
-  sys::SmartScopedLock<true> Guard(Lock);
   PassInfo *InterfaceInfo =  const_cast<PassInfo*>(getPassInfo(InterfaceID));
   if (InterfaceInfo == 0) {
     // First reference to Interface, register it now.
@@ -142,6 +147,8 @@ void PassRegistry::registerAnalysisGroup(const void *InterfaceID,
     assert(ImplementationInfo &&
            "Must register pass before adding to AnalysisGroup!");
 
+    sys::SmartScopedLock<true> Guard(Lock);
+    
     // Make sure we keep track of the fact that the implementation implements
     // the interface.
     ImplementationInfo->addInterfaceImplemented(InterfaceInfo);

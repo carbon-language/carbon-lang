@@ -18,7 +18,6 @@
 #define LLVM_PASSREGISTRY_H
 
 #include "llvm/ADT/StringRef.h"
-#include "llvm/System/Mutex.h"
 
 namespace llvm {
 
@@ -33,7 +32,6 @@ struct PassRegistrationListener;
 /// each thread.
 class PassRegistry {
   mutable void *pImpl;
-  mutable sys::SmartMutex<true> Lock;
   void *getImpl() const;
    
 public:
