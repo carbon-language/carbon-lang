@@ -205,7 +205,8 @@ namespace {
                      const MCAsmLayout &Layout);
 
     void WriteSymbolTable(MCDataFragment *F, const MCAssembler &Asm,
-                          const MCAsmLayout &Layout);
+                          const MCAsmLayout &Layout,
+                          unsigned NumRegularSections);
 
     void RecordRelocation(const MCAssembler &Asm, const MCAsmLayout &Layout,
                           const MCFragment *Fragment, const MCFixup &Fixup,
@@ -405,7 +406,8 @@ void ELFObjectWriterImpl::WriteSymbol(MCDataFragment *F, ELFSymbolData &MSD,
 
 void ELFObjectWriterImpl::WriteSymbolTable(MCDataFragment *F,
                                            const MCAssembler &Asm,
-                                           const MCAsmLayout &Layout) {
+                                           const MCAsmLayout &Layout,
+                                           unsigned NumRegularSections) {
   // The string table must be emitted first because we need the index
   // into the string table for all the symbol names.
   assert(StringTable.size() && "Missing string table");
@@ -423,19 +425,15 @@ void ELFObjectWriterImpl::WriteSymbolTable(MCDataFragment *F,
     WriteSymbol(F, MSD, Layout);
   }
 
-  // Write out a symbol table entry for each section.
-  // leaving out the just added .symtab which is at
-  // the very end
+  // Write out a symbol table entry for each regular section.
   unsigned Index = 1;
-  for (MCAssembler::const_iterator it = Asm.begin(),
-       ie = Asm.end(); it != ie; ++it, ++Index) {
+  for (MCAssembler::const_iterator it = Asm.begin();
+       Index <= NumRegularSections; ++it, ++Index) {
     const MCSectionELF &Section =
       static_cast<const MCSectionELF&>(it->getSection());
     // Leave out relocations so we don't have indexes within
     // the relocations messed up
     if (Section.getType() == ELF::SHT_RELA || Section.getType() == ELF::SHT_REL)
-      continue;
-    if (Index == Asm.size())
       continue;
     WriteSymbolEntry(F, 0, ELF::STT_SECTION, 0, 0, ELF::STV_DEFAULT, Index);
     LastLocalSymbolIndex++;
@@ -785,47 +783,40 @@ void ELFObjectWriterImpl::CreateMetadataSections(MCAssembler &Asm,
   const MCSection *SymtabSection;
   unsigned EntrySize = Is64Bit ? ELF::SYMENTRY_SIZE64 : ELF::SYMENTRY_SIZE32;
 
+  unsigned NumRegularSections = Asm.size();
+
+  // We construct .shstrtab, .symtab and .strtab is this order to match gnu as.
+  const MCSection *ShstrtabSection;
+  ShstrtabSection = Ctx.getELFSection(".shstrtab", ELF::SHT_STRTAB, 0,
+                                      SectionKind::getReadOnly(), false);
+  MCSectionData &ShstrtabSD = Asm.getOrCreateSectionData(*ShstrtabSection);
+  ShstrtabSD.setAlignment(1);
+  ShstrtabIndex = Asm.size();
+
   SymtabSection = Ctx.getELFSection(".symtab", ELF::SHT_SYMTAB, 0,
                                     SectionKind::getReadOnly(),
                                     false, EntrySize);
-
   MCSectionData &SymtabSD = Asm.getOrCreateSectionData(*SymtabSection);
-
   SymtabSD.setAlignment(Is64Bit ? 8 : 4);
-
-  F = new MCDataFragment(&SymtabSD);
-
-  // Symbol table
-  WriteSymbolTable(F, Asm, Layout);
-  Asm.AddSectionToTheEnd(SymtabSD, Layout);
 
   const MCSection *StrtabSection;
   StrtabSection = Ctx.getELFSection(".strtab", ELF::SHT_STRTAB, 0,
                                     SectionKind::getReadOnly(), false);
-
   MCSectionData &StrtabSD = Asm.getOrCreateSectionData(*StrtabSection);
   StrtabSD.setAlignment(1);
-
-  // FIXME: This isn't right. If the sections get rearranged this will
-  // be wrong. We need a proper lookup.
   StringTableIndex = Asm.size();
+
+
+  // Symbol table
+  F = new MCDataFragment(&SymtabSD);
+  WriteSymbolTable(F, Asm, Layout, NumRegularSections);
+  Asm.AddSectionToTheEnd(SymtabSD, Layout);
 
   F = new MCDataFragment(&StrtabSD);
   F->getContents().append(StringTable.begin(), StringTable.end());
   Asm.AddSectionToTheEnd(StrtabSD, Layout);
 
-  const MCSection *ShstrtabSection;
-  ShstrtabSection = Ctx.getELFSection(".shstrtab", ELF::SHT_STRTAB, 0,
-                                      SectionKind::getReadOnly(), false);
-
-  MCSectionData &ShstrtabSD = Asm.getOrCreateSectionData(*ShstrtabSection);
-  ShstrtabSD.setAlignment(1);
-
   F = new MCDataFragment(&ShstrtabSD);
-
-  // FIXME: This isn't right. If the sections get rearranged this will
-  // be wrong. We need a proper lookup.
-  ShstrtabIndex = Asm.size();
 
   // Section header string table.
   //
@@ -974,7 +965,7 @@ void ELFObjectWriterImpl::WriteObject(const MCAssembler &Asm,
 
     WriteSecHdrEntry(SectionStringTableIndex[&it->getSection()],
                      Section.getType(), Section.getFlags(),
-                     Layout.getSectionAddress(&SD),
+                     0,
                      SectionOffsetMap.lookup(&SD.getSection()),
                      Layout.getSectionSize(&SD), sh_link,
                      sh_info, SD.getAlignment(),
