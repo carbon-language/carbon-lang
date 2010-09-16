@@ -195,6 +195,7 @@ AttrListPtr::AttrListPtr(const AttrListPtr &P) : AttrList(P.AttrList) {
 }
 
 const AttrListPtr &AttrListPtr::operator=(const AttrListPtr &RHS) {
+  sys::SmartScopedLock<true> Lock(*ALMutex);
   if (AttrList == RHS.AttrList) return *this;
   if (AttrList) AttrList->DropRef();
   AttrList = RHS.AttrList;
