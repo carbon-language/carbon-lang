@@ -634,7 +634,7 @@ void GRExprEngine::ProcessEndWorklist(bool hasWorkRemaining) {
 }
 
 void GRExprEngine::ProcessStmt(const CFGElement CE,GRStmtNodeBuilder& builder) {
-  CurrentStmt = CE.getStmt();
+  CurrentStmt = CE.getAs<CFGStmt>();
   PrettyStackTraceLoc CrashInfo(getContext().getSourceManager(),
                                 CurrentStmt->getLocStart(),
                                 "Error evaluating statement");
@@ -721,7 +721,7 @@ void GRExprEngine::ProcessStmt(const CFGElement CE,GRStmtNodeBuilder& builder) {
     Builder->SetCleanedState(*I == EntryNode ? CleanedState : GetState(*I));
 
     // Visit the statement.
-    if (CE.asLValue())
+    if (CE.getAs<CFGStmt>().asLValue())
       VisitLValue(cast<Expr>(CurrentStmt), *I, Dst);
     else
       Visit(CurrentStmt, *I, Dst);

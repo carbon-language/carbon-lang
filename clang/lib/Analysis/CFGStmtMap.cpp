@@ -50,15 +50,18 @@ static void Accumulate(SMap &SM, CFGBlock *B) {
   // First walk the block-level expressions.
   for (CFGBlock::iterator I = B->begin(), E = B->end(); I != E; ++I) {
     const CFGElement &CE = *I;
-    if (Stmt *S = CE.getStmt()) {
-      CFGBlock *&Entry = SM[S];
-      // If 'Entry' is already initialized (e.g., a terminator was already),
-      // skip.
-      if (Entry)
-        continue;
+    CFGStmt CS = CE.getAs<CFGStmt>();
+    if (!CS.isValid())
+      continue;
+    
+    CFGBlock *&Entry = SM[CS];
+    // If 'Entry' is already initialized (e.g., a terminator was already),
+    // skip.
+    if (Entry)
+      continue;
       
-      Entry = B;
-    }
+    Entry = B;
+    
   }
   
   // Look at the label of the block.

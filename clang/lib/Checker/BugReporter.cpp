@@ -1165,15 +1165,15 @@ static void GenerateExtensivePathDiagnostic(PathDiagnostic& PD,
       }
 
       if (const BlockEntrance *BE = dyn_cast<BlockEntrance>(&P)) {
-        if (const Stmt* S = BE->getFirstStmt()) {
-         if (IsControlFlowExpr(S)) {
-           // Add the proper context for '&&', '||', and '?'.
-           EB.addContext(S);
-         }
-         else
-           EB.addExtendedContext(PDB.getEnclosingStmtLocation(S).asStmt());
+        if (CFGStmt S = BE->getFirstElement().getAs<CFGStmt>()) {
+          if (IsControlFlowExpr(S)) {
+            // Add the proper context for '&&', '||', and '?'.
+            EB.addContext(S);
+          }
+          else
+            EB.addExtendedContext(PDB.getEnclosingStmtLocation(S).asStmt());
         }
-
+        
         break;
       }
     } while (0);

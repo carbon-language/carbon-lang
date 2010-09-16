@@ -129,7 +129,11 @@ static ControlFlowKind CheckFallThrough(AnalysisContext &AC) {
       HasPlainEdge = true;
       continue;
     }
-    Stmt *S = B[B.size()-1];
+    CFGElement CE = B[B.size()-1];
+    CFGStmt CS = CE.getAs<CFGStmt>();
+    if (!CS.isValid())
+      continue;
+    Stmt *S = CS.getStmt();
     if (isa<ReturnStmt>(S)) {
       HasLiveReturn = true;
       continue;

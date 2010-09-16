@@ -1846,15 +1846,19 @@ static BlkExprMapTy* PopulateBlkExprMap(CFG& cfg) {
 
   for (CFG::iterator I=cfg.begin(), E=cfg.end(); I != E; ++I)
     for (CFGBlock::iterator BI=(*I)->begin(), EI=(*I)->end(); BI != EI; ++BI)
-      FindSubExprAssignments(*BI, SubExprAssignments);
+      if (CFGStmt S = BI->getAs<CFGStmt>())
+        FindSubExprAssignments(S, SubExprAssignments);
 
   for (CFG::iterator I=cfg.begin(), E=cfg.end(); I != E; ++I) {
 
     // Iterate over the statements again on identify the Expr* and Stmt* at the
     // block-level that are block-level expressions.
 
-    for (CFGBlock::iterator BI=(*I)->begin(), EI=(*I)->end(); BI != EI; ++BI)
-      if (Expr* Exp = dyn_cast<Expr>(*BI)) {
+    for (CFGBlock::iterator BI=(*I)->begin(), EI=(*I)->end(); BI != EI; ++BI) {
+      CFGStmt CS = BI->getAs<CFGStmt>();
+      if (!CS.isValid())
+        continue;
+      if (Expr* Exp = dyn_cast<Expr>(CS.getStmt())) {
 
         if (BinaryOperator* B = dyn_cast<BinaryOperator>(Exp)) {
           // Assignment expressions that are not nested within another
@@ -1875,6 +1879,7 @@ static BlkExprMapTy* PopulateBlkExprMap(CFG& cfg) {
         unsigned x = M->size();
         (*M)[Exp] = x;
       }
+    }
 
     // Look at terminators.  The condition is a block-level expression.
 
@@ -1959,9 +1964,13 @@ public:
     for (CFG::const_iterator I = cfg->begin(), E = cfg->end(); I != E; ++I ) {
       unsigned j = 1;
       for (CFGBlock::const_iterator BI = (*I)->begin(), BEnd = (*I)->end() ;
-           BI != BEnd; ++BI, ++j )
-        StmtMap[*BI] = std::make_pair((*I)->getBlockID(),j);
+           BI != BEnd; ++BI, ++j ) {
+        CFGStmt CS = BI->getAs<CFGStmt>();
+        if (!CS.isValid())
+          continue;
+        StmtMap[CS] = std::make_pair((*I)->getBlockID(),j);
       }
+    }
   }
 
   virtual ~StmtPrinterHelper() {}
@@ -2090,7 +2099,10 @@ public:
 
 static void print_stmt(llvm::raw_ostream &OS, StmtPrinterHelper* Helper,
                        const CFGElement &E) {
-  Stmt *S = E;
+  CFGStmt CS = E.getAs<CFGStmt>();
+  if (!CS)
+    return;
+  Stmt *S = CS.getStmt();
   
   if (Helper) {
     // special printing for statement-expressions.
