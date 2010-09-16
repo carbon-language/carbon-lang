@@ -147,6 +147,7 @@ namespace {
       (void) llvm::createSinkingPass();
       (void) llvm::createLowerAtomicPass();
       (void) llvm::createCorrelatedValuePropagationPass();
+      (void) llvm::createMemDepPrinter();
 
       (void)new llvm::IntervalPartition();
       (void)new llvm::FindUsedTypes();

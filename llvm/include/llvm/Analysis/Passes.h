@@ -170,6 +170,13 @@ namespace llvm {
 
   // Print module-level debug info metadata in human-readable form.
   ModulePass *createModuleDebugInfoPrinterPass();
+
+  //===--------------------------------------------------------------------===//
+  //
+  // createMemDepPrinter - This pass exhaustively collects all memdep
+  // information and prints it with -analyze.
+  //
+  FunctionPass *createMemDepPrinter();
 }
 
 #endif
