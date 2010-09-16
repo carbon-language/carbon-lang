@@ -11,12 +11,12 @@ class FoundationTestCase(TestBase):
     mydir = "foundation"
 
     def test_with_dsym(self):
-        """Test 'image lookup -t days' and check for correct display."""
+        """Test setting objc breakpoints using regexp-break."""
         self.buildDsym()
         self.break_on_objc_methods()
 
     def test_with_dwarf(self):
-        """Test 'image lookup -t days' and check for correct display."""
+        """Test setting objc breakpoints using regexp-break."""
         self.buildDwarf()
         self.break_on_objc_methods()
 
