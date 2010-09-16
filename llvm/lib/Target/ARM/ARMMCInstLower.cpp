@@ -157,7 +157,8 @@ void ARMMCInstLower::Lower(const MachineInstr *MI, MCInst &OutMI) const {
                                               MO.getBlockAddress()));
       break;
     case MachineOperand::MO_FPImmediate:
-      MCOp = MCOperand::CreateFPImm(MO.getFPImm()->getValueAPF());
+      MCOp =
+        MCOperand::CreateFPImm(MO.getFPImm()->getValueAPF().convertToDouble());
       break;
     }
 

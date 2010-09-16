@@ -747,12 +747,12 @@ void ARMInstPrinter::printT2AddrModeSoRegOperand(const MCInst *MI,
 
 void ARMInstPrinter::printVFPf32ImmOperand(const MCInst *MI, unsigned OpNum,
                                            raw_ostream &O) {
-  O << '#' << MI->getOperand(OpNum).getFPImm().convertToFloat();
+  O << '#' << (float)MI->getOperand(OpNum).getFPImm();
 }
 
 void ARMInstPrinter::printVFPf64ImmOperand(const MCInst *MI, unsigned OpNum,
                                            raw_ostream &O) {
-  O << '#' << MI->getOperand(OpNum).getFPImm().convertToDouble();
+  O << '#' << MI->getOperand(OpNum).getFPImm();
 }
 
 void ARMInstPrinter::printNEONModImmOperand(const MCInst *MI, unsigned OpNum,

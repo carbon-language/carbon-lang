@@ -16,7 +16,6 @@
 #ifndef LLVM_MC_MCINST_H
 #define LLVM_MC_MCINST_H
 
-#include "llvm/ADT/APFloat.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/System/DataTypes.h"
@@ -42,11 +41,9 @@ class MCOperand {
   union {
     unsigned RegVal;
     int64_t ImmVal;
+    double FPImmVal;
     const MCExpr *ExprVal;
   };
-  // This can't go in the union due to the non-trivial copy constructor
-  // of APFloat. It's still only valid for Kind == kFPImmediate, though.
-  APFloat FPImmVal;
 public:
 
   MCOperand() : Kind(kInvalid), FPImmVal(0.0) {}
@@ -78,12 +75,12 @@ public:
     ImmVal = Val;
   }
 
-  const APFloat &getFPImm() const {
+  const double &getFPImm() const {
     assert(isFPImm() && "This is not an FP immediate");
     return FPImmVal;
   }
 
-  void setFPImm(const APFloat &Val) {
+  void setFPImm(double Val) {
     assert(isFPImm() && "This is not an FP immediate");
     FPImmVal = Val;
   }
@@ -109,7 +106,7 @@ public:
     Op.ImmVal = Val;
     return Op;
   }
-  static MCOperand CreateFPImm(const APFloat &Val) {
+  static MCOperand CreateFPImm(double Val) {
     MCOperand Op;
     Op.Kind = kFPImmediate;
     Op.FPImmVal = Val;

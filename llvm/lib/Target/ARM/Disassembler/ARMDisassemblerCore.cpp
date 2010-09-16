@@ -1973,7 +1973,10 @@ static bool DisassembleVFPMiscFrm(MCInst &MI, unsigned Opcode, uint32_t insn,
     // The asm syntax specifies the floating point value, not the 8-bit literal.
     APInt immRaw = VFPExpandImm(slice(insn,19,16) << 4 | slice(insn, 3, 0),
                              Opcode == ARM::FCONSTD ? 64 : 32);
-    MI.addOperand(MCOperand::CreateFPImm(APFloat(immRaw, true)));
+    APFloat immFP = APFloat(immRaw, true);
+    double imm = Opcode == ARM::FCONSTD ? immFP.convertToDouble() :
+      immFP.convertToFloat();
+    MI.addOperand(MCOperand::CreateFPImm(imm));
 
     ++OpIdx;
   }
