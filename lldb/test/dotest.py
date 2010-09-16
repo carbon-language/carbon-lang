@@ -12,6 +12,12 @@ a module which implements a test scenario, namely, Test*.py.
 To specify the directories where "Test*.py" python test scripts are located,
 you need to pass in a list of directory names.  By default, the current
 working directory is searched if nothing is specified on the command line.
+
+Type:
+
+./dotest.py -h
+
+for available options.
 """
 
 import os, signal, sys, time
