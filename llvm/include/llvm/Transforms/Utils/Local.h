@@ -69,6 +69,10 @@ bool RecursivelyDeleteDeadPHINode(PHINode *PN);
 ///
 /// This returns true if it changed the code, note that it can delete
 /// instructions in other blocks as well in this block.
+///
+/// WARNING: Do not use this function on unreachable blocks, as recursive
+/// simplification is not able to handle corner-case scenarios that can
+/// arise in them.
 bool SimplifyInstructionsInBlock(BasicBlock *BB, const TargetData *TD = 0);
     
 //===----------------------------------------------------------------------===//
