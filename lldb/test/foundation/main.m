@@ -10,6 +10,8 @@ int main (int argc, char const *argv[])
     printf("sizeof(id) = %zu\n", sizeof(id));
     printf("sizeof(Class) = %zu\n", sizeof(Class));
     printf("sizeof(SEL) = %zu\n", sizeof(SEL));
+    printf("[str length] = %zu\n", [str length]);
+    printf("str = '%s'\n", [str cStringUsingEncoding: [NSString defaultCStringEncoding]]);
     [pool release];
     return 0;
 }

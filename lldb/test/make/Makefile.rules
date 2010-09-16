@@ -11,12 +11,19 @@
 # SHELL = /bin/sh -x
 
 #----------------------------------------------------------------------
+# If ARCH is not defined, default to x86_64.
+#----------------------------------------------------------------------
+ifeq "$(ARCH)" ""
+	ARCH = x86_64
+endif
+
+#----------------------------------------------------------------------
 # Change any build/tool options needed
 #----------------------------------------------------------------------
 DS := /usr/bin/dsymutil
 DSFLAGS =
 CC = gcc
-CFLAGS ?=-arch x86_64 -gdwarf-2 -O0
+CFLAGS ?=-arch $(ARCH) -gdwarf-2 -O0
 CPLUSPLUSFLAGS +=$(CFLAGS)
 CPPFLAGS +=$(CFLAGS)
 LD = $(CC)
