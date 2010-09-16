@@ -91,12 +91,15 @@ class CFGBuilder {
   typedef llvm::SmallPtrSet<LabelStmt*,5> LabelSetTy;
   LabelSetTy AddressTakenLabels;
 
+  bool badCFG;
+  CFG::BuildOptions BuildOpts;
+
 public:
   explicit CFGBuilder() : cfg(new CFG()), // crew a new CFG
                           Block(NULL), Succ(NULL),
                           ContinueTargetBlock(NULL), BreakTargetBlock(NULL),
                           SwitchTerminatedBlock(NULL), DefaultCaseBlock(NULL),
-                          TryTerminatedBlock(NULL) {}
+                          TryTerminatedBlock(NULL), badCFG(false) {}
 
   // buildCFG - Used by external clients to construct the CFG.
   CFG* buildCFG(const Decl *D, Stmt *Statement, ASTContext *C,
@@ -197,9 +200,6 @@ private:
 
     return TryResult();
   }
-
-  bool badCFG;
-  CFG::BuildOptions BuildOpts;
 };
 
 // FIXME: Add support for dependent-sized array types in C++?
@@ -229,7 +229,6 @@ CFG* CFGBuilder::buildCFG(const Decl *D, Stmt* Statement, ASTContext* C,
   if (!Statement)
     return NULL;
 
-  badCFG = false;
   BuildOpts = BO;
   if (!C->getLangOptions().CPlusPlus)
     BuildOpts.AddImplicitDtors = false;
