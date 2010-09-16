@@ -29,30 +29,6 @@ using namespace llvm;
 #undef MachineInstr
 #undef ARMAsmPrinter
 
-// Get the constituent sub-regs for a dregpair from a Q register.
-static std::pair<unsigned, unsigned> GetDRegPair(unsigned QReg) {
-  switch (QReg) {
-  default:
-    assert(0 && "Unexpected register enum");
-  case ARM::Q0:  return std::pair<unsigned, unsigned>(ARM::D0,  ARM::D1);
-  case ARM::Q1:  return std::pair<unsigned, unsigned>(ARM::D2,  ARM::D3);
-  case ARM::Q2:  return std::pair<unsigned, unsigned>(ARM::D4,  ARM::D5);
-  case ARM::Q3:  return std::pair<unsigned, unsigned>(ARM::D6,  ARM::D7);
-  case ARM::Q4:  return std::pair<unsigned, unsigned>(ARM::D8,  ARM::D9);
-  case ARM::Q5:  return std::pair<unsigned, unsigned>(ARM::D10, ARM::D11);
-  case ARM::Q6:  return std::pair<unsigned, unsigned>(ARM::D12, ARM::D13);
-  case ARM::Q7:  return std::pair<unsigned, unsigned>(ARM::D14, ARM::D15);
-  case ARM::Q8:  return std::pair<unsigned, unsigned>(ARM::D16, ARM::D17);
-  case ARM::Q9:  return std::pair<unsigned, unsigned>(ARM::D18, ARM::D19);
-  case ARM::Q10: return std::pair<unsigned, unsigned>(ARM::D20, ARM::D21);
-  case ARM::Q11: return std::pair<unsigned, unsigned>(ARM::D22, ARM::D23);
-  case ARM::Q12: return std::pair<unsigned, unsigned>(ARM::D24, ARM::D25);
-  case ARM::Q13: return std::pair<unsigned, unsigned>(ARM::D26, ARM::D27);
-  case ARM::Q14: return std::pair<unsigned, unsigned>(ARM::D28, ARM::D29);
-  case ARM::Q15: return std::pair<unsigned, unsigned>(ARM::D30, ARM::D31);
-  }
-}
-
 static unsigned getDPRSuperRegForSPR(unsigned Reg) {
   switch (Reg) {
   default:
@@ -165,11 +141,7 @@ void ARMInstPrinter::printOperand(const MCInst *MI, unsigned OpNo,
   const MCOperand &Op = MI->getOperand(OpNo);
   if (Op.isReg()) {
     unsigned Reg = Op.getReg();
-    if (Modifier && strcmp(Modifier, "dregpair") == 0) {
-      std::pair<unsigned, unsigned> dregpair = GetDRegPair(Reg);
-      O << '{' << getRegisterName(dregpair.first) << ", "
-               << getRegisterName(dregpair.second) << '}';
-    } else if (Modifier && strcmp(Modifier, "lane") == 0) {
+    if (Modifier && strcmp(Modifier, "lane") == 0) {
       unsigned RegNum = getARMRegisterNumbering(Reg);
       unsigned DReg = getDPRSuperRegForSPR(Reg);
       O << getRegisterName(DReg) << '[' << (RegNum & 1) << ']';

@@ -337,13 +337,7 @@ void ARMAsmPrinter::printOperand(const MachineInstr *MI, int OpNum,
   case MachineOperand::MO_Register: {
     unsigned Reg = MO.getReg();
     assert(TargetRegisterInfo::isPhysicalRegister(Reg));
-    if (Modifier && strcmp(Modifier, "dregpair") == 0) {
-      unsigned DRegLo = TM.getRegisterInfo()->getSubReg(Reg, ARM::dsub_0);
-      unsigned DRegHi = TM.getRegisterInfo()->getSubReg(Reg, ARM::dsub_1);
-      O << '{'
-        << getRegisterName(DRegLo) << ", " << getRegisterName(DRegHi)
-        << '}';
-    } else if (Modifier && strcmp(Modifier, "lane") == 0) {
+    if (Modifier && strcmp(Modifier, "lane") == 0) {
       unsigned RegNum = getARMRegisterNumbering(Reg);
       unsigned DReg =
         TM.getRegisterInfo()->getMatchingSuperReg(Reg,
