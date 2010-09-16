@@ -125,11 +125,11 @@ void MemDepPrinter::print(raw_ostream &OS, const Module *M) const {
   for (const_inst_iterator I = inst_begin(*F), E = inst_end(*F); I != E; ++I) {
     const Instruction *Inst = &*I;
 
-    DepSetMap::const_iterator I = Deps.find(Inst);
-    if (I == Deps.end())
+    DepSetMap::const_iterator DI = Deps.find(Inst);
+    if (DI == Deps.end())
       continue;
 
-    const DepSet &InstDeps = I->second;
+    const DepSet &InstDeps = DI->second;
 
     for (DepSet::const_iterator I = InstDeps.begin(), E = InstDeps.end();
          I != E; ++I) {
