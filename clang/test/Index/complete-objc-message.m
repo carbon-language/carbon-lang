@@ -137,6 +137,8 @@ void test_ranking(B *b) {
 
 void test_overload3(Overload *ovl) {
   ovl Method:1 Arg1:1 OtherArg:ovl];
+   Overload2 Method:1 Arg1:1 OtherArg:ovl];
+  (Overload2 Method:1 Arg1:1 OtherArg:ovl]);
 }
 
 // RUN: c-index-test -code-completion-at=%s:23:19 %s | FileCheck -check-prefix=CHECK-CC1 %s
@@ -245,3 +247,10 @@ void test_overload3(Overload *ovl) {
 // RUN: c-index-test -code-completion-at=%s:139:7 %s | FileCheck -check-prefix=CHECK-CC7 %s
 // RUN: c-index-test -code-completion-at=%s:139:16 %s | FileCheck -check-prefix=CHECK-CC8 %s
 // RUN: c-index-test -code-completion-at=%s:139:23 %s | FileCheck -check-prefix=CHECK-CC9 %s
+
+// RUN: c-index-test -code-completion-at=%s:140:14 %s | FileCheck -check-prefix=CHECK-CCC %s
+// RUN: c-index-test -code-completion-at=%s:140:23 %s | FileCheck -check-prefix=CHECK-CCD %s
+// RUN: c-index-test -code-completion-at=%s:140:30 %s | FileCheck -check-prefix=CHECK-CCE %s
+// RUN: c-index-test -code-completion-at=%s:141:14 %s | FileCheck -check-prefix=CHECK-CCC %s
+// RUN: c-index-test -code-completion-at=%s:141:23 %s | FileCheck -check-prefix=CHECK-CCD %s
+// RUN: c-index-test -code-completion-at=%s:141:30 %s | FileCheck -check-prefix=CHECK-CCE %s

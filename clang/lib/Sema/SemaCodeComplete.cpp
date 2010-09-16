@@ -2626,9 +2626,16 @@ void Sema::CodeCompleteOrdinaryName(Scope *S,
                             Results.data(),Results.size());
 }
 
-void Sema::CodeCompleteDeclarator(Scope *S,
-                                  bool AllowNonIdentifiers,
-                                  bool AllowNestedNameSpecifiers) {
+static void AddClassMessageCompletions(Sema &SemaRef, Scope *S, 
+                                       ParsedType Receiver,
+                                       IdentifierInfo **SelIdents,
+                                       unsigned NumSelIdents,
+                                       bool IsSuper,
+                                       ResultBuilder &Results);
+
+void Sema::CodeCompleteDeclSpec(Scope *S, DeclSpec &DS,
+                                bool AllowNonIdentifiers,
+                                bool AllowNestedNameSpecifiers) {
   typedef CodeCompletionResult Result;
   ResultBuilder Results(*this);    
   Results.EnterNewScope();
@@ -2653,6 +2660,27 @@ void Sema::CodeCompleteDeclarator(Scope *S,
     }
   }
   Results.ExitScope();
+
+  // If we're in a context where we might have an expression (rather than a
+  // declaration), and what we've seen so far is an Objective-C type that could
+  // be a receiver of a class message, this may be a class message send with
+  // the initial opening bracket '[' missing. Add appropriate completions.
+  if (AllowNonIdentifiers && !AllowNestedNameSpecifiers &&
+      DS.getTypeSpecType() == DeclSpec::TST_typename &&
+      DS.getStorageClassSpecAsWritten() == DeclSpec::SCS_unspecified &&
+      !DS.isThreadSpecified() && !DS.isExternInLinkageSpec() &&
+      DS.getTypeSpecComplex() == DeclSpec::TSC_unspecified &&
+      DS.getTypeSpecSign() == DeclSpec::TSS_unspecified &&
+      DS.getTypeQualifiers() == 0 &&
+      S && 
+      (S->getFlags() & Scope::DeclScope) != 0 &&
+      (S->getFlags() & (Scope::ClassScope | Scope::TemplateParamScope |
+                        Scope::FunctionPrototypeScope | 
+                        Scope::AtCatchScope)) == 0) {
+    ParsedType T = DS.getRepAsType();
+    if (!T.get().isNull() && T.get()->isObjCObjectOrInterfaceType())
+      AddClassMessageCompletions(*this, S, T, 0, 0, false, Results); 
+  }
 
   // Note that we intentionally suppress macro results here, since we do not
   // encourage using macros to produce the names of entities.
@@ -4282,62 +4310,64 @@ void Sema::CodeCompleteObjCSuperMessage(Scope *S, SourceLocation SuperLoc,
                                       NumSelIdents, /*IsSuper=*/true);
 }
 
-void Sema::CodeCompleteObjCClassMessage(Scope *S, ParsedType Receiver,
-                                        IdentifierInfo **SelIdents,
-                                        unsigned NumSelIdents,
-                                        bool IsSuper) {
+static void AddClassMessageCompletions(Sema &SemaRef, Scope *S, 
+                                       ParsedType Receiver,
+                                       IdentifierInfo **SelIdents,
+                                       unsigned NumSelIdents,
+                                       bool IsSuper,
+                                       ResultBuilder &Results) {
   typedef CodeCompletionResult Result;
   ObjCInterfaceDecl *CDecl = 0;
-
+  
   // If the given name refers to an interface type, retrieve the
   // corresponding declaration.
   if (Receiver) {
-    QualType T = GetTypeFromParser(Receiver, 0);
+    QualType T = SemaRef.GetTypeFromParser(Receiver, 0);
     if (!T.isNull()) 
       if (const ObjCObjectType *Interface = T->getAs<ObjCObjectType>())
         CDecl = Interface->getInterface();
   }
-
+  
   // Add all of the factory methods in this Objective-C class, its protocols,
   // superclasses, categories, implementation, etc.
-  ResultBuilder Results(*this);
   Results.EnterNewScope();
-
+  
   // If this is a send-to-super, try to add the special "super" send 
   // completion.
   if (IsSuper) {
     if (ObjCMethodDecl *SuperMethod
-          = AddSuperSendCompletion(*this, false, SelIdents, NumSelIdents, 
-                                   Results))
+        = AddSuperSendCompletion(SemaRef, false, SelIdents, NumSelIdents, 
+                                 Results))
       Results.Ignore(SuperMethod);
   }
-
+  
   // If we're inside an Objective-C method definition, prefer its selector to
   // others.
-  if (ObjCMethodDecl *CurMethod = getCurMethodDecl())
+  if (ObjCMethodDecl *CurMethod = SemaRef.getCurMethodDecl())
     Results.setPreferredSelector(CurMethod->getSelector());
-
+  
   if (CDecl) 
-    AddObjCMethods(CDecl, false, MK_Any, SelIdents, NumSelIdents, CurContext, 
-                   Results);  
+    AddObjCMethods(CDecl, false, MK_Any, SelIdents, NumSelIdents, 
+                   SemaRef.CurContext, Results);  
   else {
     // We're messaging "id" as a type; provide all class/factory methods.
-
+    
     // If we have an external source, load the entire class method
     // pool from the AST file.
-    if (ExternalSource) {
-      for (uint32_t I = 0, N = ExternalSource->GetNumExternalSelectors();
+    if (SemaRef.ExternalSource) {
+      for (uint32_t I = 0, 
+                    N = SemaRef.ExternalSource->GetNumExternalSelectors();
            I != N; ++I) {
-        Selector Sel = ExternalSource->GetExternalSelector(I);
-        if (Sel.isNull() || MethodPool.count(Sel))
+        Selector Sel = SemaRef.ExternalSource->GetExternalSelector(I);
+        if (Sel.isNull() || SemaRef.MethodPool.count(Sel))
           continue;
-
-        ReadMethodPool(Sel);
+        
+        SemaRef.ReadMethodPool(Sel);
       }
     }
-
-    for (GlobalMethodPool::iterator M = MethodPool.begin(),
-                                    MEnd = MethodPool.end();
+    
+    for (Sema::GlobalMethodPool::iterator M = SemaRef.MethodPool.begin(),
+                                       MEnd = SemaRef.MethodPool.end();
          M != MEnd; ++M) {
       for (ObjCMethodList *MethList = &M->second.second;
            MethList && MethList->Method; 
@@ -4345,16 +4375,25 @@ void Sema::CodeCompleteObjCClassMessage(Scope *S, ParsedType Receiver,
         if (!isAcceptableObjCMethod(MethList->Method, MK_Any, SelIdents, 
                                     NumSelIdents))
           continue;
-
+        
         Result R(MethList->Method, 0);
         R.StartParameter = NumSelIdents;
         R.AllParametersAreInformative = false;
-        Results.MaybeAddResult(R, CurContext);
+        Results.MaybeAddResult(R, SemaRef.CurContext);
       }
     }
   }
+  
+  Results.ExitScope();  
+}
 
-  Results.ExitScope();
+void Sema::CodeCompleteObjCClassMessage(Scope *S, ParsedType Receiver,
+                                        IdentifierInfo **SelIdents,
+                                        unsigned NumSelIdents,
+                                        bool IsSuper) {
+  ResultBuilder Results(*this);
+  AddClassMessageCompletions(*this, S, Receiver, SelIdents, NumSelIdents, IsSuper,
+                             Results);
   HandleCodeCompleteResults(this, CodeCompleter, 
                             CodeCompletionContext::CCC_Other,
                             Results.data(), Results.size());

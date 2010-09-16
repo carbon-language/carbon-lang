@@ -905,8 +905,9 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
           = DSContext == DSC_top_level || 
             (DSContext == DSC_class && DS.isFriendSpecified());
 
-        Actions.CodeCompleteDeclarator(getCurScope(), AllowNonIdentifiers, 
-                                       AllowNestedNameSpecifiers);
+        Actions.CodeCompleteDeclSpec(getCurScope(), DS,
+                                     AllowNonIdentifiers, 
+                                     AllowNestedNameSpecifiers);
         ConsumeCodeCompletionToken();
         return;
       } 

@@ -4303,9 +4303,9 @@ public:
 
   void CodeCompleteOrdinaryName(Scope *S,
                                 ParserCompletionContext CompletionContext);
-  void CodeCompleteDeclarator(Scope *S,
-                              bool AllowNonIdentifiers,
-                              bool AllowNestedNameSpecifiers);
+  void CodeCompleteDeclSpec(Scope *S, DeclSpec &DS,
+                            bool AllowNonIdentifiers,
+                            bool AllowNestedNameSpecifiers);
   
   struct CodeCompleteExpressionData;
   void CodeCompleteExpression(Scope *S, 
