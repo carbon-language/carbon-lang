@@ -92,7 +92,7 @@ public:
         uint32_t dw_ate,
         uint32_t bit_size);
 
-    void *
+    static void *
     GetBuiltInType_void(clang::ASTContext *ast_context);
     
     void *
