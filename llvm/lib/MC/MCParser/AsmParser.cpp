@@ -180,6 +180,7 @@ private:
   bool ParseDirectiveValue(unsigned Size); // ".byte", ".long", ...
   bool ParseDirectiveFill(); // ".fill"
   bool ParseDirectiveSpace(); // ".space"
+  bool ParseDirectiveZero(); // ".zero"
   bool ParseDirectiveSet(); // ".set"
   bool ParseDirectiveOrg(); // ".org"
   // ".align{,32}", ".p2align{,w,l}"
@@ -871,6 +872,8 @@ bool AsmParser::ParseStatement() {
       return ParseDirectiveFill();
     if (IDVal == ".space")
       return ParseDirectiveSpace();
+    if (IDVal == ".zero")
+      return ParseDirectiveZero();
 
     // Symbol attribute directives
 
@@ -1349,6 +1352,25 @@ bool AsmParser::ParseDirectiveSpace() {
 
   // FIXME: Sometimes the fill expr is 'nop' if it isn't supplied, instead of 0.
   getStreamer().EmitFill(NumBytes, FillExpr, DEFAULT_ADDRSPACE);
+
+  return false;
+}
+
+/// ParseDirectiveZero
+///  ::= .zero expression
+bool AsmParser::ParseDirectiveZero() {
+  CheckForValidSection();
+
+  int64_t NumBytes;
+  if (ParseAbsoluteExpression(NumBytes))
+    return true;
+
+  if (getLexer().isNot(AsmToken::EndOfStatement))
+    return TokError("unexpected token in '.zero' directive");
+
+  Lex();
+
+  getStreamer().EmitFill(NumBytes, 0, DEFAULT_ADDRSPACE);
 
   return false;
 }
