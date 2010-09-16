@@ -75,3 +75,14 @@ int array_comparisons() {
 
 }
 
+// Don't issue a warning when either the left or right side of the comparison
+// results from a macro expansion.  <rdar://problem/8435950>
+#define R8435950_A i 
+#define R8435950_B i 
+
+int R8435950(int i) {
+  if (R8435950_A == R8435950_B) // no-warning
+   return 0;
+  return 1;
+}
+

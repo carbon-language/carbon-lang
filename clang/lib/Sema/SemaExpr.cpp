@@ -5437,7 +5437,9 @@ QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation Loc,
   QualType rType = rex->getType();
 
   if (!lType->hasFloatingRepresentation() &&
-      !(lType->isBlockPointerType() && isRelational)) {
+      !(lType->isBlockPointerType() && isRelational) &&
+      !lex->getLocStart().isMacroID() &&
+      !rex->getLocStart().isMacroID()) {
     // For non-floating point types, check for self-comparisons of the form
     // x == x, x != x, x < x, etc.  These always evaluate to a constant, and
     // often indicate logic errors in the program.
@@ -5452,7 +5454,7 @@ QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation Loc,
     Expr *RHSStripped = rex->IgnoreParens();
     if (DeclRefExpr* DRL = dyn_cast<DeclRefExpr>(LHSStripped)) {
       if (DeclRefExpr* DRR = dyn_cast<DeclRefExpr>(RHSStripped)) {
-        if (DRL->getDecl() == DRR->getDecl() && !Loc.isMacroID() &&
+        if (DRL->getDecl() == DRR->getDecl() &&
             !IsWithinTemplateSpecialization(DRL->getDecl())) {
           DiagRuntimeBehavior(Loc, PDiag(diag::warn_comparison_always)
                               << 0 // self-
