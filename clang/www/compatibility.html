@@ -32,6 +32,7 @@
   <li><a href="#c">C compatibility</a>
     <ul>
       <li><a href="#inline">C99 inline functions</a></li>
+      <li><a href="#vector_builtins">"missing" vector __builtin functions</a></li>
       <li><a href="#lvalue-cast">Lvalue casts</a></li>
       <li><a href="#blocks-in-protected-scope">Jumps to within <tt>__block</tt> variable scope</a></li>
     </ul>
@@ -113,6 +114,32 @@ Undefined symbols:
   program also relies on additional C89-specific behavior that cannot
   be changed.</li>
 </ul>
+
+
+<!-- ======================================================================= -->
+<h3 id="vector_builtins">"missing" vector __builtin functions</h3>
+<!-- ======================================================================= -->
+
+<p>The Intel and AMD manuals document a number "<tt>&lt;*mmintrin.h&gt;</tt>"
+header files, which define a standardized API for accessing vector operations
+on X86 CPUs.  These functions have names like <tt>_mm_xor_ps</tt> and
+<tt>_mm256_addsub_pd</tt>.  Compilers have leeway to implement these functions
+however they want.  Since Clang supports an excellent set of <a 
+href="../docs/LanguageExtensions.html#vectors">native vector operations</a>,
+the Clang headers implement these interfaces in terms of the native vector 
+operations.
+</p>
+
+<p>In contrast, GCC implements these functions mostly as a 1-to-1 mapping to
+builtin function calls, like <tt>__builtin_ia32_paddw128</tt>.  These builtin
+functions are an internal implementation detail of GCC, and are not portable to
+the Intel compiler, the Microsoft compiler, or Clang.  If you get build errors
+mentioning these, the fix is simple: switch to the *mmintrin.h functions.</p>
+
+<p>The same issue occurs for NEON and Altivec for the ARM and PowerPC
+architectures respectively.  For these, make sure to use the &lt;arm_neon.h&gt;
+and &lt;altivec.h&gt; headers.</p>
+
 
 <!-- ======================================================================= -->
 <h3 id="lvalue-cast">Lvalue casts</h3>
