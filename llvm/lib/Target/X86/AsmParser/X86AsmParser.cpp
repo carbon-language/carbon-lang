@@ -681,7 +681,8 @@ ParseInstruction(StringRef Name, SMLoc NameLoc,
     .Case("cmovzw",  "cmovew") .Case("cmovzl",  "cmovel")
     .Case("cmovzq",  "cmoveq") .Case("cmovz",   "cmove")
     .Case("fwait", "wait")
-    .Case("movzx", "movzb")
+    .Case("movzx", "movzb")  // FIXME: Not correct.
+    .Case("fildq", "fildll")
     .Default(Name);
 
   // FIXME: Hack to recognize cmp<comparison code>{ss,sd,ps,pd}.

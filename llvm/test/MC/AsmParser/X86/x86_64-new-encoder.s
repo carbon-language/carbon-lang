@@ -248,5 +248,15 @@ popw %gs
 // CHECK: popw	%gs
 // CHECK: encoding: [0x66,0x0f,0xa9]
 
+// rdar://8438816
+fildq -8(%rsp)
+fildll -8(%rsp)
+// CHECK: fildll	-8(%rsp)
+// CHECK: encoding: [0xdf,0x6c,0x24,0xf8]
+// CHECK: fildll	-8(%rsp)
+// CHECK: encoding: [0xdf,0x6c,0x24,0xf8]
+
+
+
 
 
