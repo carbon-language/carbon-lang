@@ -18,6 +18,7 @@
 #include "lldb/Core/Log.h"
 #include "lldb/Core/Stream.h"
 #include "lldb/Symbol/Symbol.h"
+#include "lldb/Symbol/Function.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Target/RegisterContext.h"
 #include "lldb/Target/Thread.h"
@@ -43,10 +44,10 @@ ThreadPlanStepInRange::ThreadPlanStepInRange
     lldb::RunMode stop_others
 ) :
     ThreadPlanStepRange (ThreadPlan::eKindStepInRange, "Step Range stepping in", thread, range, addr_context, stop_others),
-    ThreadPlanShouldStopHere (this, ThreadPlanStepInRange::DefaultShouldStopHereCallback, NULL)
+    ThreadPlanShouldStopHere (this, ThreadPlanStepInRange::DefaultShouldStopHereCallback, NULL),
+    m_step_past_prologue (true)
 {
     SetFlagsToDefault ();
-    // SetAvoidRegexp("^std\\:\\:.*");
 }
 
 ThreadPlanStepInRange::~ThreadPlanStepInRange ()
@@ -125,8 +126,46 @@ ThreadPlanStepInRange::ShouldStop (Event *event_ptr)
     if (!new_plan && FrameIsYounger())
         new_plan = InvokeShouldStopHereCallback();
 
-    if (new_plan == NULL)
+    // If we've stepped in and we are going to stop here, check to see if we were asked to
+    // run past the prologue, and if so do that.
+    
+    if (new_plan == NULL && FrameIsYounger() && m_step_past_prologue)
     {
+        lldb::StackFrameSP curr_frame = m_thread.GetStackFrameAtIndex(0);
+        if (curr_frame)
+        {
+            size_t bytes_to_skip = 0;
+            lldb::addr_t curr_addr = m_thread.GetRegisterContext()->GetPC();
+            Address func_start_address;
+            
+            SymbolContext sc = curr_frame->GetSymbolContext (eSymbolContextFunction | eSymbolContextSymbol);
+            
+            if (sc.function)
+            {
+                func_start_address = sc.function->GetAddressRange().GetBaseAddress();
+                if (curr_addr == func_start_address.GetLoadAddress(m_thread.CalculateTarget()))
+                    bytes_to_skip = sc.function->GetPrologueByteSize();
+            }
+            else if (sc.symbol)
+            {
+                func_start_address = sc.symbol->GetValue();
+                if (curr_addr == func_start_address.GetLoadAddress(m_thread.CalculateTarget()))
+                    bytes_to_skip = sc.symbol->GetPrologueByteSize();
+            }
+            
+            if (bytes_to_skip != 0)
+            {
+                func_start_address.Slide (bytes_to_skip);
+                if (log)
+                    log->Printf ("Pushing past prologue ");
+                    
+                new_plan = m_thread.QueueThreadPlanForRunToAddress(false, func_start_address,true);
+            }
+        }
+    }
+    
+     if (new_plan == NULL)
+     {
         m_no_more_plans = true;
         SetPlanComplete();
         return true;

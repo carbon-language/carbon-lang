@@ -159,6 +159,10 @@ bool
 ThreadPlanStepRange::FrameIsYounger ()
 {
     Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP);
+    
+    // FIXME: Might be better to do this by storing the FrameID we started in and seeing if that is still above
+    // us on the stack.  Counting the whole stack could be expensive.
+    
     uint32_t current_depth = m_thread.GetStackFrameCount();
     if (current_depth == m_stack_depth)
     {

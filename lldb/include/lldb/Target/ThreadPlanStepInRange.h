@@ -73,6 +73,8 @@ private:
 
     static uint32_t s_default_flag_values;
     std::auto_ptr<RegularExpression> m_avoid_regexp_ap;
+    bool m_step_past_prologue;  // FIXME: For now hard-coded to true, we could put a switch in for this if there's
+                                // demand for that.
 
     DISALLOW_COPY_AND_ASSIGN (ThreadPlanStepInRange);
 
