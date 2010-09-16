@@ -3365,7 +3365,7 @@ unsigned clang_isCursorDefinition(CXCursor C) {
 }
 
 unsigned clang_getNumOverloadedDecls(CXCursor C) {
-  if (!C.kind == CXCursor_OverloadedDeclRef)
+  if (C.kind != CXCursor_OverloadedDeclRef)
     return 0;
   
   OverloadedDeclRefStorage Storage = getCursorOverloadedDeclRef(C).first;
@@ -3388,7 +3388,7 @@ unsigned clang_getNumOverloadedDecls(CXCursor C) {
 }
 
 CXCursor clang_getOverloadedDecl(CXCursor cursor, unsigned index) {
-  if (!cursor.kind == CXCursor_OverloadedDeclRef)
+  if (cursor.kind != CXCursor_OverloadedDeclRef)
     return clang_getNullCursor();
 
   if (index >= clang_getNumOverloadedDecls(cursor))
