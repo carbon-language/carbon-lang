@@ -34,13 +34,12 @@ class AggExprEmitter : public StmtVisitor<AggExprEmitter> {
   CGBuilderTy &Builder;
   AggValueSlot Dest;
   bool IgnoreResult;
-  bool RequiresGCollection;
 
   ReturnValueSlot getReturnValueSlot() const {
     // If the destination slot requires garbage collection, we can't
     // use the real return value slot, because we have to use the GC
     // API.
-    if (RequiresGCollection) return ReturnValueSlot();
+    if (Dest.isRequiresGCollection()) return ReturnValueSlot();
 
     return ReturnValueSlot(Dest.getAddr(), Dest.isVolatile());
   }
@@ -52,9 +51,9 @@ class AggExprEmitter : public StmtVisitor<AggExprEmitter> {
 
 public:
   AggExprEmitter(CodeGenFunction &cgf, AggValueSlot Dest,
-                 bool ignore, bool requiresGCollection)
+                 bool ignore)
     : CGF(cgf), Builder(CGF.Builder), Dest(Dest),
-      IgnoreResult(ignore), RequiresGCollection(requiresGCollection) {
+      IgnoreResult(ignore) {
   }
 
   //===--------------------------------------------------------------------===//
@@ -178,7 +177,7 @@ bool AggExprEmitter::TypeRequiresGCollection(QualType T) {
 /// directly into the return value slot.  If GC does interfere, a final
 /// move will be performed.
 void AggExprEmitter::EmitGCMove(const Expr *E, RValue Src) {
-  if (RequiresGCollection) {
+  if (Dest.isRequiresGCollection()) {
     std::pair<uint64_t, unsigned> TypeInfo = 
       CGF.getContext().getTypeInfo(E->getType());
     unsigned long size = TypeInfo.first/8;
@@ -211,7 +210,7 @@ void AggExprEmitter::EmitFinalDestCopy(const Expr *E, RValue Src, bool Ignore) {
     Dest = CGF.CreateAggTemp(E->getType(), "agg.tmp");
   }
 
-  if (RequiresGCollection) {
+  if (Dest.isRequiresGCollection()) {
     std::pair<uint64_t, unsigned> TypeInfo = 
     CGF.getContext().getTypeInfo(E->getType());
     unsigned long size = TypeInfo.first/8;
@@ -370,13 +369,14 @@ void AggExprEmitter::VisitBinAssign(const BinaryOperator *E) {
     CGF.EmitAggExpr(E->getRHS(), Slot);
     CGF.EmitObjCPropertySet(LHS.getKVCRefExpr(), Slot.asRValue());
   } else {
-    bool RequiresGCollection = false;
+    bool GCollection = false;
     if (CGF.getContext().getLangOptions().getGCMode())
-      RequiresGCollection = TypeRequiresGCollection(E->getLHS()->getType());
+      GCollection = TypeRequiresGCollection(E->getLHS()->getType());
 
     // Codegen the RHS so that it stores directly into the LHS.
-    AggValueSlot LHSSlot = AggValueSlot::forLValue(LHS, true);
-    CGF.EmitAggExpr(E->getRHS(), LHSSlot, false, RequiresGCollection);
+    AggValueSlot LHSSlot = AggValueSlot::forLValue(LHS, true, 
+                                                   GCollection);
+    CGF.EmitAggExpr(E->getRHS(), LHSSlot, false);
     EmitFinalDestCopy(E, LHS, true);
   }
 }
@@ -646,14 +646,13 @@ void AggExprEmitter::VisitInitListExpr(InitListExpr *E) {
 //
 // FIXME: Take Qualifiers object.
 void CodeGenFunction::EmitAggExpr(const Expr *E, AggValueSlot Slot,
-                                  bool IgnoreResult,
-                                  bool RequiresGCollection) {
+                                  bool IgnoreResult) {
   assert(E && hasAggregateLLVMType(E->getType()) &&
          "Invalid aggregate expression to emit");
   assert((Slot.getAddr() != 0 || Slot.isIgnored())
          && "slot has bits but no address");
 
-  AggExprEmitter(*this, Slot, IgnoreResult, RequiresGCollection)
+  AggExprEmitter(*this, Slot, IgnoreResult)
     .Visit(const_cast<Expr*>(E));
 }
 

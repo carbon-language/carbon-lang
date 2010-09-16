@@ -323,12 +323,13 @@ public:
 
 /// An aggregate value slot.
 class AggValueSlot {
-  /// The address and associated flags.
+  /// The address.
   uintptr_t AddrAndFlags;
-
-  static const uintptr_t VolatileFlag = 0x1;
-  static const uintptr_t LifetimeFlag = 0x2;
-  static const uintptr_t AddrMask = ~(VolatileFlag | LifetimeFlag);
+  
+  // Associated flags.
+  bool VolatileFlag : 1;
+  bool LifetimeFlag : 1;
+  bool RequiresGCollection : 1;
 
 public:
   /// ignored - Returns an aggregate value slot indicating that the
@@ -336,6 +337,7 @@ public:
   static AggValueSlot ignored() {
     AggValueSlot AV;
     AV.AddrAndFlags = 0;
+    AV.VolatileFlag = AV.LifetimeFlag = AV.RequiresGCollection = 0;
     return AV;
   }
 
@@ -346,32 +348,42 @@ public:
   ///   is being externally managed; false if a destructor should be
   ///   registered for any temporaries evaluated into the slot
   static AggValueSlot forAddr(llvm::Value *Addr, bool Volatile,
-                              bool LifetimeExternallyManaged) {
+                              bool LifetimeExternallyManaged,
+                              bool RequiresGCollection=false) {
     AggValueSlot AV;
     AV.AddrAndFlags = reinterpret_cast<uintptr_t>(Addr);
-    if (Volatile) AV.AddrAndFlags |= VolatileFlag;
-    if (LifetimeExternallyManaged) AV.AddrAndFlags |= LifetimeFlag;
+    if (Volatile) AV.VolatileFlag = 1;
+    if (LifetimeExternallyManaged) AV.LifetimeFlag = 1;
+    if (RequiresGCollection) AV.RequiresGCollection = 1;
     return AV;
   }
 
-  static AggValueSlot forLValue(LValue LV, bool LifetimeExternallyManaged) {
+  static AggValueSlot forLValue(LValue LV, bool LifetimeExternallyManaged,
+                                bool RequiresGCollection=false) {
     return forAddr(LV.getAddress(), LV.isVolatileQualified(),
-                   LifetimeExternallyManaged);
+                   LifetimeExternallyManaged, RequiresGCollection);
   }
 
   bool isLifetimeExternallyManaged() const {
-    return AddrAndFlags & LifetimeFlag;
+    return LifetimeFlag;
   }
   void setLifetimeExternallyManaged() {
-    AddrAndFlags |= LifetimeFlag;
+    LifetimeFlag = 1;
   }
 
   bool isVolatile() const {
-    return AddrAndFlags & VolatileFlag;
+    return VolatileFlag;
   }
 
+  bool isRequiresGCollection() const {
+    return RequiresGCollection;
+  }
+  void setRequiresGCollection() {
+    RequiresGCollection = 1;
+  }
+  
   llvm::Value *getAddr() const {
-    return reinterpret_cast<llvm::Value*>(AddrAndFlags & AddrMask);
+    return reinterpret_cast<llvm::Value*>(AddrAndFlags);
   }
 
   bool isIgnored() const {

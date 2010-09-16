@@ -1551,8 +1551,7 @@ public:
   /// EmitAggExpr - Emit the computation of the specified expression
   /// of aggregate type.  The result is computed into the given slot,
   /// which may be null to indicate that the value is not needed.
-  void EmitAggExpr(const Expr *E, AggValueSlot AS, bool IgnoreResult = false,
-                   bool RequiresGCollection = false);
+  void EmitAggExpr(const Expr *E, AggValueSlot AS, bool IgnoreResult = false);
 
   /// EmitAggExprToLValue - Emit the computation of the specified expression of
   /// aggregate type into a temporary LValue.
