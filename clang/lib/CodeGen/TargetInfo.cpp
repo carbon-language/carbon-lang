@@ -75,7 +75,8 @@ void ABIArgInfo::dump() const {
     break;
   case Indirect:
     OS << "Indirect Align=" << getIndirectAlign()
-       << " Byal=" << getIndirectByVal();
+       << " Byal=" << getIndirectByVal()
+       << " Realign=" << getIndirectRealign();
     break;
   case Expand:
     OS << "Expand";

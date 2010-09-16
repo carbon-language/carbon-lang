@@ -866,9 +866,29 @@ void CodeGenFunction::EmitFunctionProlog(const CGFunctionInfo &FI,
     switch (ArgI.getKind()) {
     case ABIArgInfo::Indirect: {
       llvm::Value *V = AI;
+
       if (hasAggregateLLVMType(Ty)) {
-        // Do nothing, aggregates and complex variables are accessed by
-        // reference.
+        // Aggregates and complex variables are accessed by reference.  All we
+        // need to do is realign the value, if requested
+        if (ArgI.getIndirectRealign()) {
+          llvm::Value *AlignedTemp = CreateMemTemp(Ty, "coerce");
+
+          // Copy from the incoming argument pointer to the temporary with the
+          // appropriate alignment.
+          //
+          // FIXME: We should have a common utility for generating an aggregate
+          // copy.
+          const llvm::Type *I8PtrTy = llvm::Type::getInt8PtrTy(VMContext, 0);
+          unsigned Size = getContext().getTypeSize(Ty) / 8;
+          Builder.CreateCall5(CGM.getMemCpyFn(I8PtrTy, I8PtrTy, IntPtrTy),
+                              Builder.CreateBitCast(AlignedTemp, I8PtrTy),
+                              Builder.CreateBitCast(V, I8PtrTy),
+                              llvm::ConstantInt::get(IntPtrTy, Size),
+                              Builder.getInt32(ArgI.getIndirectAlign()),
+                              /*Volatile=*/Builder.getInt1(false));
+
+          V = AlignedTemp;
+        }
       } else {
         // Load scalar value from indirect argument.
         unsigned Alignment = getContext().getTypeAlignInChars(Ty).getQuantity();
