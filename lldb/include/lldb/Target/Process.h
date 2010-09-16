@@ -81,7 +81,7 @@ protected:
     CopyInstanceSettings (const lldb::InstanceSettingsSP &new_settings,
                           bool pending);
 
-    static const ConstString
+    const ConstString
     CreateInstanceName ();
 
     static const ConstString &
