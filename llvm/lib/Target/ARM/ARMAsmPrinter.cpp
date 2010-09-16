@@ -1351,6 +1351,35 @@ void ARMAsmPrinter::printInstructionThroughMCStreamer(const MachineInstr *MI) {
     OutStreamer.EmitInstruction(AddInst);
     return;
   }
+  case ARM::PICLDR: {
+    // This is a pseudo op for a label + instruction sequence, which looks like:
+    // LPC0:
+    //     ldr r0, [pc, r0]
+    // The LCP0 label is referenced by a constant pool entry in order to get
+    // a PC-relative address at the ldr instruction.
+
+    // Emit the label.
+    // FIXME: MOVE TO SHARED PLACE.
+    unsigned Id = (unsigned)MI->getOperand(2).getImm();
+    const char *Prefix = MAI->getPrivateGlobalPrefix();
+    MCSymbol *Label =OutContext.GetOrCreateSymbol(Twine(Prefix)
+                         + "PC" + Twine(getFunctionNumber()) + "_" + Twine(Id));
+    OutStreamer.EmitLabel(Label);
+
+    // Form and emit the load
+    MCInst LdrInst;
+    LdrInst.setOpcode(ARM::LDR);
+    LdrInst.addOperand(MCOperand::CreateReg(MI->getOperand(0).getReg()));
+    LdrInst.addOperand(MCOperand::CreateReg(ARM::PC));
+    LdrInst.addOperand(MCOperand::CreateReg(MI->getOperand(1).getReg()));
+    LdrInst.addOperand(MCOperand::CreateImm(0));
+    // Add predicate operands.
+    LdrInst.addOperand(MCOperand::CreateImm(MI->getOperand(3).getImm()));
+    LdrInst.addOperand(MCOperand::CreateReg(MI->getOperand(4).getReg()));
+    OutStreamer.EmitInstruction(LdrInst);
+
+    return;
+  }
   case ARM::CONSTPOOL_ENTRY: { // FIXME: Remove asm string from td file.
     /// CONSTPOOL_ENTRY - This instruction represents a floating constant pool
     /// in the function.  The first operand is the ID# for this instruction, the

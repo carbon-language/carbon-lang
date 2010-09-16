@@ -384,7 +384,10 @@ void ARMInstPrinter::printAddrMode6OffsetOperand(const MCInst *MI,
 void ARMInstPrinter::printAddrModePCOperand(const MCInst *MI, unsigned OpNum,
                                             raw_ostream &O,
                                             const char *Modifier) {
-  assert(0 && "FIXME: Implement printAddrModePCOperand");
+  // All instructions using addrmodepc are pseudos and should have been
+  // handled explicitly in printInstructionThroughMCStreamer(). If one got
+  // here, it wasn't, so something's wrong.
+  assert(0 && "Unhandled addrmodepc operand!");
 }
 
 void ARMInstPrinter::printBitfieldInvMaskImmOperand(const MCInst *MI,
