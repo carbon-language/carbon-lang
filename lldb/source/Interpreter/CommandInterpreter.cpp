@@ -86,7 +86,7 @@ CommandInterpreter::Initialize ()
     result.Clear(); HandleCommand ("command alias continue process continue", false, result);
     result.Clear(); HandleCommand ("command alias expr     expression", false, result);
     result.Clear(); HandleCommand ("command alias exit     quit", false, result);
-    result.Clear(); HandleCommand ("command alias b        breakpoint", false, result);
+    result.Clear(); HandleCommand ("command alias b        regexp-break", false, result);
     result.Clear(); HandleCommand ("command alias bt       thread backtrace", false, result);
     result.Clear(); HandleCommand ("command alias si       thread step-inst", false, result);
     result.Clear(); HandleCommand ("command alias step     thread step-in", false, result);
@@ -97,6 +97,8 @@ CommandInterpreter::Initialize ()
     result.Clear(); HandleCommand ("command alias x        memory read", false, result);
     result.Clear(); HandleCommand ("command alias l        source list", false, result);
     result.Clear(); HandleCommand ("command alias list     source list", false, result);
+    result.Clear(); HandleCommand ("command alias p        frame variable", false, result);
+    result.Clear(); HandleCommand ("command alias print    frame variable", false, result);
 }
 
 const char *
