@@ -162,8 +162,8 @@ class LiveIntervalMap {
   ValueMap valueMap_;
 
   // extendTo - Find the last li_ value defined in MBB at or before Idx. The
-  // parentli_ is assumed to be live at Idx. Extend the live range to Idx.
-  // Return the found VNInfo, or NULL.
+  // parentli is assumed to be live at Idx. Extend the live range to include
+  // Idx. Return the found VNInfo, or NULL.
   VNInfo *extendTo(MachineBasicBlock *MBB, SlotIndex Idx);
 
   // addSimpleRange - Add a simple range from parentli_ to li_.
@@ -200,6 +200,14 @@ public:
   /// All needed values whose def is not inside [Start;End) must be defined
   /// beforehand so mapValue will work.
   void addRange(SlotIndex Start, SlotIndex End);
+
+  /// defByCopyFrom - Insert a copy from Reg to li, assuming that Reg carries
+  /// ParentVNI. Add a minimal live range for the new value and return it.
+  VNInfo *defByCopyFrom(unsigned Reg,
+                        const VNInfo *ParentVNI,
+                        MachineBasicBlock &MBB,
+                        MachineBasicBlock::iterator I);
+
 };
 
 
@@ -236,20 +244,6 @@ class SplitEditor {
   /// register class and spill slot as curli.
   LiveInterval *createInterval();
 
-  /// getDupLI - Ensure dupli is created and return it.
-  LiveInterval *getDupLI();
-
-  /// valueMap_ - Map values in cupli to values in openli. These are direct 1-1
-  /// mappings, and do not include values created by inserted copies.
-  DenseMap<const VNInfo*, VNInfo*> valueMap_;
-
-  /// mapValue - Return the openIntv value that corresponds to the given curli
-  /// value.
-  VNInfo *mapValue(const VNInfo *curliVNI);
-
-  /// A dupli value is live through openIntv.
-  bool liveThrough_;
-
   /// All the new intervals created for this split are added to intervals_.
   SmallVectorImpl<LiveInterval*> &intervals_;
 
@@ -259,7 +253,7 @@ class SplitEditor {
 
   /// Insert a COPY instruction curli -> li. Allocate a new value from li
   /// defined by the COPY
-  VNInfo *insertCopy(LiveInterval &LI,
+  VNInfo *insertCopy(LiveIntervalMap &LI,
                      MachineBasicBlock &MBB,
                      MachineBasicBlock::iterator I);
 
@@ -280,9 +274,7 @@ public:
   void enterIntvBefore(SlotIndex Idx);
 
   /// enterIntvAtEnd - Enter openli at the end of MBB.
-  /// PhiMBB is a successor inside openli where a PHI value is created.
-  /// Currently, all entries must share the same PhiMBB.
-  void enterIntvAtEnd(MachineBasicBlock &MBB, MachineBasicBlock &PhiMBB);
+  void enterIntvAtEnd(MachineBasicBlock &MBB);
 
   /// useIntv - indicate that all instructions in MBB should use openli.
   void useIntv(const MachineBasicBlock &MBB);
