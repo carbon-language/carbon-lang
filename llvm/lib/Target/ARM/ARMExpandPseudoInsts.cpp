@@ -367,12 +367,21 @@ void ARMExpandPseudo::ExpandVLD(MachineBasicBlock::iterator &MBBI) {
   if (TableEntry->HasWriteBack)
     MIB.addOperand(MI.getOperand(OpIdx++));
 
-  MIB = AddDefaultPred(MIB);
   // For an instruction writing double-spaced subregs, the pseudo instruction
-  // has an extra operand that is a use of the super-register.  Copy that over
+  // has an extra operand that is a use of the super-register.  Record the
+  // operand index and skip over it.
+  unsigned SrcOpIdx = 0;
+  if (RegSpc == EvenDblSpc || RegSpc == OddDblSpc)
+    SrcOpIdx = OpIdx++;
+
+  // Copy the predicate operands.
+  MIB.addOperand(MI.getOperand(OpIdx++));
+  MIB.addOperand(MI.getOperand(OpIdx++));
+
+  // Copy the super-register source operand used for double-spaced subregs over
   // to the new instruction as an implicit operand.
-  if (RegSpc == EvenDblSpc || RegSpc == OddDblSpc) {
-    MachineOperand MO = MI.getOperand(OpIdx);
+  if (SrcOpIdx != 0) {
+    MachineOperand MO = MI.getOperand(SrcOpIdx);
     MO.setImplicit(true);
     MIB.addOperand(MO);
   }
@@ -407,7 +416,7 @@ void ARMExpandPseudo::ExpandVST(MachineBasicBlock::iterator &MBBI) {
     MIB.addOperand(MI.getOperand(OpIdx++));
 
   bool SrcIsKill = MI.getOperand(OpIdx).isKill();
-  unsigned SrcReg = MI.getOperand(OpIdx).getReg();
+  unsigned SrcReg = MI.getOperand(OpIdx++).getReg();
   unsigned D0, D1, D2, D3;
   GetDSubRegs(SrcReg, RegSpc, TRI, D0, D1, D2, D3);
   MIB.addReg(D0).addReg(D1);
@@ -415,7 +424,11 @@ void ARMExpandPseudo::ExpandVST(MachineBasicBlock::iterator &MBBI) {
     MIB.addReg(D2);
   if (NumRegs > 3)
     MIB.addReg(D3);
-  MIB = AddDefaultPred(MIB);
+
+  // Copy the predicate operands.
+  MIB.addOperand(MI.getOperand(OpIdx++));
+  MIB.addOperand(MI.getOperand(OpIdx++));
+
   if (SrcIsKill)
     // Add an implicit kill for the super-reg.
     (*MIB).addRegisterKilled(SrcReg, TRI, true);
@@ -491,8 +504,12 @@ void ARMExpandPseudo::ExpandLaneOp(MachineBasicBlock::iterator &MBBI) {
 
   // Add the lane number operand.
   MIB.addImm(Lane);
+  OpIdx += 1;
 
-  MIB = AddDefaultPred(MIB);
+  // Copy the predicate operands.
+  MIB.addOperand(MI.getOperand(OpIdx++));
+  MIB.addOperand(MI.getOperand(OpIdx++));
+
   // Copy the super-register source to be an implicit source.
   MO.setImplicit(true);
   MIB.addOperand(MO);
@@ -529,9 +546,12 @@ void ARMExpandPseudo::ExpandVTBL(MachineBasicBlock::iterator &MBBI,
     MIB.addReg(D3);
 
   // Copy the other source register operand.
-  MIB.addOperand(MI.getOperand(OpIdx));
+  MIB.addOperand(MI.getOperand(OpIdx++));
 
-  MIB = AddDefaultPred(MIB);
+  // Copy the predicate operands.
+  MIB.addOperand(MI.getOperand(OpIdx++));
+  MIB.addOperand(MI.getOperand(OpIdx++));
+
   if (SrcIsKill)
     // Add an implicit kill for the super-reg.
     (*MIB).addRegisterKilled(SrcReg, TRI, true);
