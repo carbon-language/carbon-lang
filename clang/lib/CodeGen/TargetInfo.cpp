@@ -336,6 +336,8 @@ ABIArgInfo DefaultABIInfo::classifyArgumentType(QualType Ty) const {
 
 /// X86_32ABIInfo - The X86-32 ABI information.
 class X86_32ABIInfo : public ABIInfo {
+  static const unsigned MinABIStackAlignInBytes = 4;
+
   bool IsDarwinVectorABI;
   bool IsSmallStructInRegABI;
 
@@ -348,6 +350,9 @@ class X86_32ABIInfo : public ABIInfo {
   /// getIndirectResult - Give a source type \arg Ty, return a suitable result
   /// such that the argument will be passed in memory.
   ABIArgInfo getIndirectResult(QualType Ty, bool ByVal = true) const;
+
+  /// \brief Return the alignment to use for the given type on the stack.
+  unsigned getTypeStackAlignInBytes(QualType Ty) const;
 
 public:
 
@@ -547,15 +552,30 @@ ABIArgInfo X86_32ABIInfo::classifyReturnType(QualType RetTy) const {
           ABIArgInfo::getExtend() : ABIArgInfo::getDirect());
 }
 
+unsigned X86_32ABIInfo::getTypeStackAlignInBytes(QualType Ty) const {
+  // On non-Darwin, the stack type alignment is always 4.
+  if (!IsDarwinVectorABI)
+    return MinABIStackAlignInBytes;
+
+  // Otherwise, if the alignment is less than or equal to 4, use the minimum ABI
+  // alignment.
+  unsigned Align = getContext().getTypeAlign(Ty) / 8;
+  if (Align <= MinABIStackAlignInBytes)
+    return MinABIStackAlignInBytes;
+
+  // Otherwise, if the type contains SSE or MMX vector types, then the alignment
+  // matches that of the struct.
+  return Align;
+}
+
 ABIArgInfo X86_32ABIInfo::getIndirectResult(QualType Ty, bool ByVal) const {
   if (!ByVal)
     return ABIArgInfo::getIndirect(0, false);
 
   // Compute the byval alignment. We trust the back-end to honor the
   // minimum ABI alignment for byval, to make cleaner IR.
-  const unsigned MinABIAlign = 4;
-  unsigned Align = getContext().getTypeAlign(Ty) / 8;
-  if (Align > MinABIAlign)
+  unsigned Align = getTypeStackAlignInBytes(Ty);
+  if (Align > MinABIStackAlignInBytes)
     return ABIArgInfo::getIndirect(Align);
   return ABIArgInfo::getIndirect(0);
 }
