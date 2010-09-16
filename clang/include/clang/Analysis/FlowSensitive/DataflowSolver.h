@@ -274,8 +274,8 @@ private:
                     dataflow::forward_analysis_tag) {
 
     for (StmtItr I=ItrTraits::StmtBegin(B), E=ItrTraits::StmtEnd(B); I!=E;++I) {
-      CFGElement E = *I;
-      if (CFGStmt S = E.getAs<CFGStmt>())
+      CFGElement El = *I;
+      if (CFGStmt S = El.getAs<CFGStmt>())
         ProcessStmt(S, recordStmtValues, AnalysisDirTag());
     }
 
@@ -288,8 +288,8 @@ private:
     TF.VisitTerminator(const_cast<CFGBlock*>(B));
 
     for (StmtItr I=ItrTraits::StmtBegin(B), E=ItrTraits::StmtEnd(B); I!=E;++I) {
-      CFGElement E = *I;
-      if (CFGStmt S = E.getAs<CFGStmt>())
+      CFGElement El = *I;
+      if (CFGStmt S = El.getAs<CFGStmt>())
         ProcessStmt(S, recordStmtValues, AnalysisDirTag());
     }
   }
