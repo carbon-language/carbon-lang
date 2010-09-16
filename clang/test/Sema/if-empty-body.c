@@ -14,3 +14,11 @@ void f3() {
   return;    // no empty body warning.
 }
 
+// Don't warn about an empty body if is expanded from a macro.
+void f4(int i) {
+  #define BODY ;
+  if (i == i) // expected-warning{{self-comparison always evaluates to true}}
+    BODY
+  #undef BODY
+}
+

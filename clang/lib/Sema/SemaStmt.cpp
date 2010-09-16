@@ -272,9 +272,12 @@ Sema::ActOnIfStmt(SourceLocation IfLoc, FullExprArg CondVal, Decl *CondVar,
   // this helps prevent bugs due to typos, such as
   // if (condition);
   //   do_stuff();
+  //
+  // NOTE: Do not emit this warning if the body is expanded from a macro.
   if (!elseStmt) {
     if (NullStmt* stmt = dyn_cast<NullStmt>(thenStmt))
-      Diag(stmt->getSemiLoc(), diag::warn_empty_if_body);
+      if (!stmt->getLocStart().isMacroID())
+        Diag(stmt->getSemiLoc(), diag::warn_empty_if_body);
   }
 
   DiagnoseUnusedExprResult(elseStmt);
