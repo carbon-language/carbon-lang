@@ -373,10 +373,30 @@ void DarwinGCC::AddLinkRuntimeLibArgs(const ArgList &Args,
 DarwinClang::DarwinClang(const HostInfo &Host, const llvm::Triple& Triple)
   : Darwin(Host, Triple)
 {
+  getProgramPaths().push_back(getDriver().getInstalledDir());
+  if (getDriver().getInstalledDir() != getDriver().Dir)
+    getProgramPaths().push_back(getDriver().Dir);
+
   // We expect 'as', 'ld', etc. to be adjacent to our install dir.
   getProgramPaths().push_back(getDriver().getInstalledDir());
   if (getDriver().getInstalledDir() != getDriver().Dir)
     getProgramPaths().push_back(getDriver().Dir);
+
+  // For fallback, we need to know how to find the GCC cc1 executables, so we
+  // also add the GCC libexec paths. This is legiy code that can be removed once
+  // fallback is no longer useful.
+  std::string ToolChainDir = "i686-apple-darwin";
+  ToolChainDir += llvm::utostr(DarwinVersion[0]);
+  ToolChainDir += "/4.2.1";
+
+  std::string Path = getDriver().Dir;
+  Path += "/../libexec/gcc/";
+  Path += ToolChainDir;
+  getProgramPaths().push_back(Path);
+
+  Path = "/usr/libexec/gcc/";
+  Path += ToolChainDir;
+  getProgramPaths().push_back(Path);
 }
 
 void DarwinClang::AddLinkSearchPathArgs(const ArgList &Args,
