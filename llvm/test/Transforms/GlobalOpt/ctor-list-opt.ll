@@ -74,7 +74,7 @@ define void @setto(i32* %P, i32 %V) {
 declare double @cos(double)
 
 define internal void @CTOR8() {
-	%X = call double @cos( double 1.000000e+00 )		; <double> [#uses=1]
+	%X = call double @cos( double 0.000000e+00 )		; <double> [#uses=1]
 	store double %X, double* @D
 	ret void
 }
