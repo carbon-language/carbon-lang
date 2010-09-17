@@ -62,11 +62,11 @@ declare i8* @choose(i8*, i8*)
 
 ; CHECK: tail_duplicate_me:
 ; CHECK:      movl $0, GHJK(%rip)
-; CHECK-NEXT: jmpq *%rbx
+; CHECK-NEXT: jmpq *%r
 ; CHECK:      movl $0, GHJK(%rip)
-; CHECK-NEXT: jmpq *%rbx
+; CHECK-NEXT: jmpq *%r
 ; CHECK:      movl $0, GHJK(%rip)
-; CHECK-NEXT: jmpq *%rbx
+; CHECK-NEXT: jmpq *%r
 
 define void @tail_duplicate_me() nounwind {
 entry:

@@ -353,11 +353,11 @@ return:
 
 ; CHECK: count_me_3:
 ; CHECK: call
-; CHECK: movsd   (%r15,%r13,8), %xmm0
-; CHECK: mulsd   (%r14,%r13,8), %xmm0
-; CHECK: movsd   %xmm0, (%r12,%r13,8)
-; CHECK: incq    %r13
-; CHECK: cmpq    %r13, %rbx
+; CHECK: movsd   (%r{{[^,]*}},%r{{[^,]*}},8), %xmm0
+; CHECK: mulsd   (%r{{[^,]*}},%r{{[^,]*}},8), %xmm0
+; CHECK: movsd   %xmm0, (%r{{[^,]*}},%r{{[^,]*}},8)
+; CHECK: incq    %r{{.*}}
+; CHECK: cmpq    %r{{.*}}, %r{{.*}}
 ; CHECK: jne
 
 declare void @use(i64)

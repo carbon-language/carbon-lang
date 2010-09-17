@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=x86 -stats |& not grep machine-sink
+; RUN: llc < %s -march=x86 -stats |& not grep {instructions sunk}
 ; PR3522
 
 target triple = "i386-pc-linux-gnu"
