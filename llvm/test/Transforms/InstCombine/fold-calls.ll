@@ -10,9 +10,9 @@ define double @foo() {
 
 ; This should fold.
 ; CHECK: @bar
-; CHECK:   ret double 0x3FDA6026360C2F91
+; CHECK:   ret double 0.0
 define double @bar() {
-  %t = call double @sin(double 9.0)
+  %t = call double @sin(double 0.0)
   ret double %t
 }
 
