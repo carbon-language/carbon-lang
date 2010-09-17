@@ -26,7 +26,7 @@
 </ul>
 
 <div class="doc_author">
-  <p>Written by: 
+  <p>Written by:
     <a href="mailto:jeffc@jolt-lang.org">Jeff Cohen</a>
   </p>
 </div>
@@ -40,23 +40,30 @@
 
 <div class="doc_text">
 
-  <p>The Visual Studio port has some limitations.  It is suitable for
-  use if you are writing your own compiler front end or otherwise have a
-  need to dynamically generate machine code.  The JIT and interpreter are
-  functional, but it is currently not possible to generate assembly code which
-  is then assembled into an executable.  You can output object files
-  in COFF format, though.  You can also indirectly create executables
-  by using the C backend.</p>
+  <p>Welcome to LLVM on Windows! This document only covers native Windows, not
+  mingw or cygwin. In order to get started, you first need to know some basic
+  information.</p>
 
-  <p><tt>llvm-gcc</tt> is based on GCC, which cannot be bootstrapped
-  using VC++.  There are <tt>llvm-gcc</tt> binaries based on MinGW
-  available on the
-  LLVM <a href="http://www.llvm.org/releases/download.html"> download
-  page</a>.  Eventually, <a href="http://clang.llvm.org">Clang</a>
-  will be able to produce executables on Windows.</p>
+  <p>There are many different projects that compose LLVM. The first is the LLVM
+  suite. This contains all of the tools, libraries, and header files needed to
+  use the low level virtual machine. It contains an assembler, disassembler,
+  bitcode analyzer and bitcode optimizer. It also contains a test suite that can
+  be used to test the LLVM tools.</p>
 
-  <p><tt>bugpoint</tt> does build, but does not work.  The other tools
-  'should' work, but have not been fully tested.</p>
+  <p>Another useful project on Windows is
+  <a href="http://clang.llvm.org/">clang</a>. Clang is a C family
+  ([Objective]C/C++) compiler. Clang fully works on Windows, but does not
+  currently understand all of the Microsoft extensions to C and C++. Because of
+  this, clang cannot parse the C++ standard library included with Visual Studio,
+  nor parts of the Windows Platform SDK. However, most standard C programs do
+  compile. Clang can be used to emit bitcode, directly emit object files or
+  even linked executables using Visual Studio's <tt>link.exe</tt></p>
+
+  <p>The LLVM test suite cannot be run on the Visual Studio port at this
+  time.</p>
+
+  <p>Most of the tools build and work.  <tt>bugpoint</tt> does build, but does
+  not work.</p>
 
   <p>Additional information about the LLVM directory structure and tool chain
   can be found on the main <a href="GettingStarted.html">Getting Started</a>
@@ -85,7 +92,7 @@
 
 <div class="doc_text">
 
-  <p>Any system that can adequately run Visual Studio .NET 2005 SP1 is fine.  
+  <p>Any system that can adequately run Visual Studio .NET 2005 SP1 is fine.
   The LLVM source tree and object files, libraries and executables will consume
   approximately 3GB.</p>
 
@@ -97,16 +104,17 @@
 
   <p>You will need Visual Studio .NET 2005 SP1 or higher.  The VS2005 SP1
   beta and the normal VS2005 still have bugs that are not completely
-  compatible. VS2003 would work except (at last check) it has a bug with
-  friend classes that you can work-around with some minor code rewriting
-  (and please submit a patch if you do).  Earlier versions of Visual Studio
-  do not support the C++ standard well enough and will not work.</p>
-  
+  compatible.  Earlier versions of Visual Studio do not support the C++ standard
+  well enough and will not work.</p>
+
   <p>You will also need the <a href="http://www.cmake.org/">CMake</a> build
   system since it generates the project files you will use to build with.</p>
 
-  <p>
-  Do not install the LLVM directory tree into a path containing spaces (e.g.
+  <p>If you would like to run the LLVM tests you will need
+  <a href="http://www.python.org/">Python</a>. Versions 2.4-2.7 are known to
+  work.</p>
+
+  <p>Do not install the LLVM directory tree into a path containing spaces (e.g.
   C:\Documents and Settings\...) as the configure step will fail.</p>
 
 </div>
@@ -139,27 +147,22 @@
     <li>With anonymous Subversion access:
     <ol>
       <li><tt>cd <i>where-you-want-llvm-to-live</i></tt></li>
-      <li><tt>svn co http://llvm.org/svn/llvm-project/llvm-top/trunk llvm-top
-      </tt></li>
-      <li><tt>make checkout MODULE=llvm</tt>
+      <li><tt>svn co http://llvm.org/svn/llvm-project/llvm/trunk llvm</tt></li>
       <li><tt>cd llvm</tt></li>
     </ol></li>
   </ul></li>
-  
+
   <li> Use <a href="http://www.cmake.org/">CMake</a> to generate up-to-date
     project files:
     <ul>
-      <li>Once CMake is installed then the most simple way is to just
-	start the CMake GUI, select the directory where you have LLVM
-	extracted to, and the default options should all be fine.  One
-	option you may really want to change, regardless of anything
-	else, might be the CMAKE_INSTALL_PREFIX setting to select a
-	directory to INSTALL to once compiling is complete, although
-	installation is not mandatory for using LLVM.  Another
-	important option is LLVM_TARGETS_TO_BUILD, which controls the
-	LLVM target architectures that are included on the build.  If
-	you want to run the <a href="#tutorial">example described
-	below</a> you must set that variable to "X86;CBackend".</li>
+      <li>Once CMake is installed then the simplest way is to just start the
+        CMake GUI, select the directory where you have LLVM extracted to, and the
+        default options should all be fine.  One option you may really want to
+        change, regardless of anything else, might be the CMAKE_INSTALL_PREFIX
+        setting to select a directory to INSTALL to once compiling is complete,
+        although installation is not mandatory for using LLVM.  Another important
+        option is LLVM_TARGETS_TO_BUILD, which controls the LLVM target
+        architectures that are included on the build.
       <li>See the <a href="CMake.html">LLVM CMake guide</a> for
         detailed information about how to configure the LLVM
         build.</li>
@@ -187,6 +190,28 @@
     command line argument or run it from the command line.  The
     program will print the corresponding fibonacci value.</li>
   </ul></li>
+
+  <li>Test LLVM:
+  <ul>
+    <li>The LLVM tests can be run by <tt>cd</tt>ing to the llvm source directory
+        and running:
+
+<div class="doc_code">
+<pre>
+% llvm-lit test
+</pre>
+</div>
+
+    <p>Note that quite a few of these test will fail.</p>
+    </li>
+
+    <li>A specific test or test directory can be run with:</li>
+
+<div class="doc_code">
+<pre>
+% llvm-lit test/path/to/test
+</pre>
+</div>
 
 </ol>
 
@@ -216,7 +241,7 @@ int main() {
 
 <div class="doc_code">
 <pre>
-% llvm-gcc -c hello.c -emit-llvm -o hello.bc
+% clang -c hello.c -emit-llvm -o hello.bc
 </pre>
 </div>
 
@@ -225,22 +250,26 @@ int main() {
          facilities that it required.  You can execute this file directly using
          <tt>lli</tt> tool, compile it to native assembly with the <tt>llc</tt>,
          optimize or analyze it further with the <tt>opt</tt> tool, etc.</p>
-      
-      <p><b>Note: you will need the llvm-gcc binaries from the
-         LLVM <a href="http://www.llvm.org/releases/download.html">
-         download page</a></b></p></li>
+
+      <p>Alternatively you can directly output an executable with clang with:
+      </p>
+
+<div class="doc_code">
+<pre>
+% clang hello.c -o hello.exe
+</pre>
+</div>
+
+  <p>The <tt>-o hello.exe</tt> is required because clang currently outputs
+  <tt>a.out</tt> when neither <tt>-o</tt> nor <tt>-c</tt> are given.</p>
 
   <li><p>Run the program using the just-in-time compiler:</p>
-      
+
 <div class="doc_code">
 <pre>
 % lli hello.bc
 </pre>
 </div>
-
-      <p>Note: this will only work for trivial C programs.  Non-trivial programs
-         (and any C++ program) will have dependencies on the GCC runtime that
-         won't be satisfied by the Microsoft runtime libraries.</p></li>
 
   <li><p>Use the <tt>llvm-dis</tt> utility to take a look at the LLVM assembly
       code:</p>
@@ -251,40 +280,27 @@ int main() {
 </pre>
 </div></li>
 
-  <li><p>Compile the program to C using the LLC code generator:</p>
+  <li><p>Compile the program to object code using the LLC code generator:</p>
 
 <div class="doc_code">
 <pre>
-% llc -march=c hello.bc
+% llc -filetype=obj hello.bc
 </pre>
-
-      <p><b>Note: you need to add the C backend to the LLVM build,
-         which amounts to setting the CMake
-         variable <i>LLVM_TARGETS_TO_BUILD</i> to "X86;CBackend" when
-         you generate the VS solution files. See
-         the <a href="CMake.html">LLVM CMake guide</a> for more
-         information about how to configure the LLVM
-         build.</b></p></li>
-
 </div></li>
 
-  <li><p>Compile to binary using Microsoft C:</p>
+  <li><p>Link to binary using Microsoft link:</p>
 
 <div class="doc_code">
 <pre>
-% cl hello.cbe.c
+% link hello.obj -defaultlib:libcmt
 </pre>
 </div>
-
-    <p>Note: this will only work for trivial C programs.  Non-trivial programs
-      (and any C++ program) will have dependencies on the GCC runtime that won't
-      be satisfied by the Microsoft runtime libraries.</p></li>
 
   <li><p>Execute the native code program:</p>
 
 <div class="doc_code">
 <pre>
-% hello.cbe.exe
+% hello.exe
 </pre>
 </div></li>
 </ol>
