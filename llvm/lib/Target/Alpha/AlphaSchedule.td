@@ -50,7 +50,7 @@ def s_ftoi  : InstrItinClass;
 def s_itof  : InstrItinClass;
 def s_pseudo : InstrItinClass;
 
-//Table 2­4 Instruction Class Latency in Cycles
+//Table 2-4 Instruction Class Latency in Cycles
 //modified some
 
 def Alpha21264Itineraries : ProcessorItineraries<
