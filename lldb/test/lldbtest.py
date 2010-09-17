@@ -113,6 +113,8 @@ else:
 # Some commonly used assert messages.
 #
 
+COMMAND_FAILED_AS_EXPECTED = "Command has failed as expected"
+
 CURRENT_EXECUTABLE_SET = "Current executable set successfully"
 
 PROCESS_IS_VALID = "Process is valid"
@@ -408,7 +410,7 @@ class TestBase(unittest2.TestCase):
 
         If the keyword argument error is set to True, it signifies that the API
         client is expecting the command to fail.  In this case, the error stream
-        from running the command is retrieved and compared againt the golden
+        from running the command is retrieved and compared against the golden
         input, instead.
         """
         trace = (True if traceAlways else trace)

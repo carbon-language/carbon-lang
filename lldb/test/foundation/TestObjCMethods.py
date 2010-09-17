@@ -109,7 +109,7 @@ class FoundationTestCase(TestBase):
             substrs = ["ARG: (MyString *) self",
                        "ARG: (struct objc_selector *) _cmd"])
 
-        self.expect("expr self->non_existent_member", VARIABLES_DISPLAYED_CORRECTLY, error=True,
+        self.expect("expr self->non_existent_member", COMMAND_FAILED_AS_EXPECTED, error=True,
             startstr = "error: 'MyString' does not have a member named 'non_existent_member'")
 
         self.expect("frame variable self->str", VARIABLES_DISPLAYED_CORRECTLY,
