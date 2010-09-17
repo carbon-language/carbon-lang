@@ -22,3 +22,13 @@ void test2() {
 
 #define MAX(A,B) ({ __typeof__(A) __a = (A); __typeof__(B) __b = (B); __a < __b ? __b : __a; })
 void (^foo)(int, int) = ^(int x, int y) { int z = MAX(x, y); };
+
+
+
+// rdar://8445858
+@class Object;
+static Object *g;
+void test3(Object *o) {
+  // this is ok.
+  __sync_bool_compare_and_swap(&g, 0, o);
+}

@@ -427,7 +427,7 @@ Sema::SemaBuiltinAtomicOverloaded(ExprResult TheCallResult) {
 
   QualType ValType =
     FirstArg->getType()->getAs<PointerType>()->getPointeeType();
-  if (!ValType->isIntegerType() && !ValType->isPointerType() &&
+  if (!ValType->isIntegerType() && !ValType->isAnyPointerType() &&
       !ValType->isBlockPointerType()) {
     Diag(DRE->getLocStart(), diag::err_atomic_builtin_must_be_pointer_intptr)
       << FirstArg->getType() << FirstArg->getSourceRange();
