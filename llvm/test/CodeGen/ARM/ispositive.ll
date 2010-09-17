@@ -1,7 +1,7 @@
 ; RUN: llc < %s -march=arm | FileCheck %s
 
 define i32 @test1(i32 %X) {
-; CHECK: mov r0, r0, lsr #31
+; CHECK: lsr{{.*}}#31
 entry:
         icmp slt i32 %X, 0              ; <i1>:0 [#uses=1]
         zext i1 %0 to i32               ; <i32>:1 [#uses=1]

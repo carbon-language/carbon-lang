@@ -36,7 +36,7 @@ define i32 @t12288(i32 %v) nounwind readnone {
 entry:
 ; CHECK: t12288:
 ; CHECK: add r0, r0, r0, lsl #1
-; CHECK: mov     r0, r0, lsl #12
+; CHECK: lsl{{.*}}#12
         %0 = mul i32 %v, 12288
         ret i32 %0
 }

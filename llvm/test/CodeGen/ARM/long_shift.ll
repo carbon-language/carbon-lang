@@ -14,7 +14,7 @@ define i64 @f0(i64 %A, i64 %B) {
 
 define i32 @f1(i64 %x, i64 %y) {
 ; CHECK: f1
-; CHECK: mov r0, r0, lsl r2
+; CHECK: lsl{{.*}}r2
 	%a = shl i64 %x, %y
 	%b = trunc i64 %a to i32
 	ret i32 %b
@@ -22,7 +22,7 @@ define i32 @f1(i64 %x, i64 %y) {
 
 define i32 @f2(i64 %x, i64 %y) {
 ; CHECK: f2
-; CHECK:      mov     r0, r0, lsr r2
+; CHECK:      lsr{{.*}}r2
 ; CHECK-NEXT: rsb     r3, r2, #32
 ; CHECK-NEXT: subs    r2, r2, #32
 ; CHECK-NEXT: orr     r0, r0, r1, lsl r3
@@ -34,7 +34,7 @@ define i32 @f2(i64 %x, i64 %y) {
 
 define i32 @f3(i64 %x, i64 %y) {
 ; CHECK: f3
-; CHECK:      mov     r0, r0, lsr r2
+; CHECK:      lsr{{.*}}r2
 ; CHECK-NEXT: rsb     r3, r2, #32
 ; CHECK-NEXT: subs    r2, r2, #32
 ; CHECK-NEXT: orr     r0, r0, r1, lsl r3
