@@ -32,7 +32,14 @@ static void *DoSearch(const char* symbolName) {
     EXPLICIT_SYMBOL(__ashrdi3);
     EXPLICIT_SYMBOL(__cmpdi2);
     EXPLICIT_SYMBOL(__divdi3);
+
+    // Clang doesn't always link against libgcc.a, which is the only thing which
+    // defines ___eprintf in the modern world. Just don't attempt to export this
+    // symbol when building with Clang.
+#ifndef __clang__
     EXPLICIT_SYMBOL(__eprintf);
+#endif
+
     EXPLICIT_SYMBOL(__fixdfdi);
     EXPLICIT_SYMBOL(__fixsfdi);
     EXPLICIT_SYMBOL(__fixunsdfdi);
