@@ -85,6 +85,32 @@ static void QuoteTarget(llvm::StringRef Target,
   }
 }
 
+static void AddLinkerInputs(const ToolChain &TC,
+                            const InputInfoList &Inputs, const ArgList &Args,
+                            ArgStringList &CmdArgs) {
+  const Driver &D = TC.getDriver();
+
+  for (InputInfoList::const_iterator
+         it = Inputs.begin(), ie = Inputs.end(); it != ie; ++it) {
+    const InputInfo &II = *it;
+
+    if (!TC.HasNativeLLVMSupport()) {
+      // Don't try to pass LLVM inputs unless we have native support.
+      if (II.getType() == types::TY_LLVM_IR ||
+          II.getType() == types::TY_LTO_IR ||
+          II.getType() == types::TY_LLVM_BC ||
+          II.getType() == types::TY_LTO_BC)
+        D.Diag(clang::diag::err_drv_no_linker_llvm_support)
+          << TC.getTripleString();
+    }
+
+    if (II.isFilename())
+      CmdArgs.push_back(II.getFilename());
+    else
+      II.getInputArg().renderAsInput(Args, CmdArgs);
+  }
+}
+
 void Clang::AddPreprocessingOptions(const Driver &D,
                                     const ArgList &Args,
                                     ArgStringList &CmdArgs,
@@ -2484,14 +2510,7 @@ void darwin::Link::ConstructJob(Compilation &C, const JobAction &JA,
 
   getDarwinToolChain().AddLinkSearchPathArgs(Args, CmdArgs);
 
-  for (InputInfoList::const_iterator
-         it = Inputs.begin(), ie = Inputs.end(); it != ie; ++it) {
-    const InputInfo &II = *it;
-    if (II.isFilename())
-      CmdArgs.push_back(II.getFilename());
-    else
-      II.getInputArg().renderAsInput(Args, CmdArgs);
-  }
+  AddLinkerInputs(getToolChain(), Inputs, Args, CmdArgs);
 
   if (LinkingOutput) {
     CmdArgs.push_back("-arch_multiple");
@@ -2606,7 +2625,6 @@ void auroraux::Link::ConstructJob(Compilation &C, const JobAction &JA,
                                   const InputInfoList &Inputs,
                                   const ArgList &Args,
                                   const char *LinkingOutput) const {
-  const Driver &D = getToolChain().getDriver();
   ArgStringList CmdArgs;
 
   if ((!Args.hasArg(options::OPT_nostdlib)) &&
@@ -2661,21 +2679,7 @@ void auroraux::Link::ConstructJob(Compilation &C, const JobAction &JA,
   Args.AddAllArgs(CmdArgs, options::OPT_T_Group);
   Args.AddAllArgs(CmdArgs, options::OPT_e);
 
-  for (InputInfoList::const_iterator
-         it = Inputs.begin(), ie = Inputs.end(); it != ie; ++it) {
-    const InputInfo &II = *it;
-
-    // Don't try to pass LLVM inputs to a generic gcc.
-    if (II.getType() == types::TY_LLVM_IR || II.getType() == types::TY_LTO_IR ||
-        II.getType() == types::TY_LLVM_BC || II.getType() == types::TY_LTO_BC)
-      D.Diag(clang::diag::err_drv_no_linker_llvm_support)
-        << getToolChain().getTripleString();
-
-    if (II.isFilename())
-      CmdArgs.push_back(II.getFilename());
-    else
-      II.getInputArg().renderAsInput(Args, CmdArgs);
-  }
+  AddLinkerInputs(getToolChain(), Inputs, Args, CmdArgs);
 
   if (!Args.hasArg(options::OPT_nostdlib) &&
       !Args.hasArg(options::OPT_nodefaultlibs)) {
@@ -2783,21 +2787,7 @@ void openbsd::Link::ConstructJob(Compilation &C, const JobAction &JA,
   Args.AddAllArgs(CmdArgs, options::OPT_T_Group);
   Args.AddAllArgs(CmdArgs, options::OPT_e);
 
-  for (InputInfoList::const_iterator
-         it = Inputs.begin(), ie = Inputs.end(); it != ie; ++it) {
-    const InputInfo &II = *it;
-
-    // Don't try to pass LLVM inputs to a generic gcc.
-    if (II.getType() == types::TY_LLVM_IR || II.getType() == types::TY_LTO_IR ||
-        II.getType() == types::TY_LLVM_BC || II.getType() == types::TY_LTO_BC)
-      D.Diag(clang::diag::err_drv_no_linker_llvm_support)
-        << getToolChain().getTripleString();
-
-    if (II.isFilename())
-      CmdArgs.push_back(II.getFilename());
-    else
-      II.getInputArg().renderAsInput(Args, CmdArgs);
-  }
+  AddLinkerInputs(getToolChain(), Inputs, Args, CmdArgs);
 
   if (!Args.hasArg(options::OPT_nostdlib) &&
       !Args.hasArg(options::OPT_nodefaultlibs)) {
@@ -2927,21 +2917,7 @@ void freebsd::Link::ConstructJob(Compilation &C, const JobAction &JA,
   Args.AddAllArgs(CmdArgs, options::OPT_Z_Flag);
   Args.AddAllArgs(CmdArgs, options::OPT_r);
 
-  for (InputInfoList::const_iterator
-         it = Inputs.begin(), ie = Inputs.end(); it != ie; ++it) {
-    const InputInfo &II = *it;
-
-    // Don't try to pass LLVM inputs to a generic gcc.
-    if (II.getType() == types::TY_LLVM_IR || II.getType() == types::TY_LTO_IR ||
-        II.getType() == types::TY_LLVM_BC || II.getType() == types::TY_LTO_BC)
-      D.Diag(clang::diag::err_drv_no_linker_llvm_support)
-        << getToolChain().getTripleString();
-
-    if (II.isFilename())
-      CmdArgs.push_back(II.getFilename());
-    else
-      II.getInputArg().renderAsInput(Args, CmdArgs);
-  }
+  AddLinkerInputs(getToolChain(), Inputs, Args, CmdArgs);
 
   if (!Args.hasArg(options::OPT_nostdlib) &&
       !Args.hasArg(options::OPT_nodefaultlibs)) {
@@ -3076,21 +3052,7 @@ void minix::Link::ConstructJob(Compilation &C, const JobAction &JA,
   Args.AddAllArgs(CmdArgs, options::OPT_T_Group);
   Args.AddAllArgs(CmdArgs, options::OPT_e);
 
-  for (InputInfoList::const_iterator
-         it = Inputs.begin(), ie = Inputs.end(); it != ie; ++it) {
-    const InputInfo &II = *it;
-
-    // Don't try to pass LLVM inputs to a generic gcc.
-    if (II.getType() == types::TY_LLVM_IR || II.getType() == types::TY_LTO_IR ||
-        II.getType() == types::TY_LLVM_BC || II.getType() == types::TY_LTO_BC)
-      D.Diag(clang::diag::err_drv_no_linker_llvm_support)
-        << getToolChain().getTripleString();
-
-    if (II.isFilename())
-      CmdArgs.push_back(II.getFilename());
-    else
-      II.getInputArg().renderAsInput(Args, CmdArgs);
-  }
+  AddLinkerInputs(getToolChain(), Inputs, Args, CmdArgs);
 
   if (!Args.hasArg(options::OPT_nostdlib) &&
       !Args.hasArg(options::OPT_nodefaultlibs)) {
@@ -3207,21 +3169,7 @@ void dragonfly::Link::ConstructJob(Compilation &C, const JobAction &JA,
   Args.AddAllArgs(CmdArgs, options::OPT_T_Group);
   Args.AddAllArgs(CmdArgs, options::OPT_e);
 
-  for (InputInfoList::const_iterator
-         it = Inputs.begin(), ie = Inputs.end(); it != ie; ++it) {
-    const InputInfo &II = *it;
-
-    // Don't try to pass LLVM inputs to a generic gcc.
-    if (II.getType() == types::TY_LLVM_IR || II.getType() == types::TY_LTO_IR ||
-        II.getType() == types::TY_LLVM_BC || II.getType() == types::TY_LTO_BC)
-      D.Diag(clang::diag::err_drv_no_linker_llvm_support)
-        << getToolChain().getTripleString();
-
-    if (II.isFilename())
-      CmdArgs.push_back(II.getFilename());
-    else
-      II.getInputArg().renderAsInput(Args, CmdArgs);
-  }
+  AddLinkerInputs(getToolChain(), Inputs, Args, CmdArgs);
 
   if (!Args.hasArg(options::OPT_nostdlib) &&
       !Args.hasArg(options::OPT_nodefaultlibs)) {
@@ -3291,7 +3239,6 @@ void visualstudio::Link::ConstructJob(Compilation &C, const JobAction &JA,
                                       const InputInfoList &Inputs,
                                       const ArgList &Args,
                                       const char *LinkingOutput) const {
-  const Driver &D = getToolChain().getDriver();
   ArgStringList CmdArgs;
 
   if (Output.isFilename()) {
@@ -3307,22 +3254,9 @@ void visualstudio::Link::ConstructJob(Compilation &C, const JobAction &JA,
 
   CmdArgs.push_back("-nologo");
 
-  for (InputInfoList::const_iterator
-    it = Inputs.begin(), ie = Inputs.end(); it != ie; ++it) {
-    const InputInfo &II = *it;
-
-    // Don't try to pass LLVM inputs to visual studio linker.
-    if (II.getType() == types::TY_LLVM_BC)
-      D.Diag(clang::diag::err_drv_no_linker_llvm_support)
-      << getToolChain().getTripleString();
-
-    if (II.isFilename())
-      CmdArgs.push_back(II.getFilename());
-    else
-      II.getInputArg().renderAsInput(Args, CmdArgs);
-  }
+  AddLinkerInputs(getToolChain(), Inputs, Args, CmdArgs);
 
   const char *Exec =
-  Args.MakeArgString(getToolChain().GetProgramPath("link.exe"));
+    Args.MakeArgString(getToolChain().GetProgramPath("link.exe"));
   C.addCommand(new Command(JA, *this, Exec, CmdArgs));
 }
