@@ -1588,9 +1588,9 @@ static APInt VFPExpandImm(unsigned char byte, unsigned N) {
     Result = (uint64_t)slice(byte, 7, 7) << 63 |
              (uint64_t)slice(byte, 5, 0) << 48;
     if (bit6)
-      Result |= 0xffL << 54;
+      Result |= 0xffULL << 54;
     else
-      Result |= 0x1L << 62;
+      Result |= 0x1ULL << 62;
   }
   return APInt(N, Result);
 }
