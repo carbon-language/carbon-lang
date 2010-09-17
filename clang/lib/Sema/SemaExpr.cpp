@@ -6720,7 +6720,7 @@ ExprResult Sema::BuildBinOp(Scope *S, SourceLocation OpLoc,
   if (getLangOptions().CPlusPlus &&
       ((!isa<ObjCImplicitSetterGetterRefExpr>(lhs) && 
         !isa<ObjCPropertyRefExpr>(lhs))
-        || rhs->isTypeDependent()) &&
+        || rhs->isTypeDependent() || Opc != BO_Assign) &&
       (lhs->getType()->isOverloadableType() ||
        rhs->getType()->isOverloadableType())) {
     // Find all of the overloaded operators visible from this

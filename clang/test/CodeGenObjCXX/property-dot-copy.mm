@@ -32,3 +32,37 @@ int main ()
 
         return 0;
 }
+
+// rdar: // 8437253
+extern "C" void exit(...);
+
+struct CGPoint {
+  float x;
+  float y;
+};
+typedef struct CGPoint CGPoint;
+
+extern "C" const CGPoint CGPointZero;
+
+bool operator==(const CGPoint& a, const CGPoint& b);
+
+@interface TIconViewSettings
+@property (assign, nonatomic) CGPoint gridOffset;
+@end
+
+@implementation TIconViewSettings
+- (CGPoint) gridOffset
+{
+ return CGPointZero;
+}
+
+- (void) foo
+{
+        if ((self.gridOffset) == CGPointZero)
+                exit(1);
+
+ if (self.gridOffset == CGPointZero)
+  exit(1);
+}
+@end
+
