@@ -92,8 +92,14 @@ public:
         uint32_t dw_ate,
         uint32_t bit_size);
 
+    static void *
+    GetBuiltInType_void(clang::ASTContext *ast_context);
+    
     void *
-    GetBuiltInType_void();
+    GetBuiltInType_void()
+    {
+        return GetBuiltInType_void(getASTContext());
+    }
 
     void *
     GetBuiltInType_objc_id();
@@ -127,7 +133,7 @@ public:
     AreTypesSame(void *type1,
                  void *type2)
     {
-        return ClangASTContext::AreTypesSame(m_ast_context_ap.get(), type1, type2);
+        return ClangASTContext::AreTypesSame(getASTContext(), type1, type2);
     }
     
     //------------------------------------------------------------------
@@ -168,7 +174,7 @@ public:
                           lldb::AccessType access,
                           uint32_t bitfield_bit_size)
     {
-        return ClangASTContext::AddFieldToRecordType(m_ast_context_ap.get(),
+        return ClangASTContext::AddFieldToRecordType(getASTContext(),
                                                      record_qual_type,
                                                      name,
                                                      field_type,
@@ -217,7 +223,7 @@ public:
                       uint32_t bitfield_bit_size, 
                       bool isSynthesized)
     {
-        return ClangASTContext::AddObjCClassIVar (m_ast_context_ap.get(),
+        return ClangASTContext::AddObjCClassIVar (getASTContext(),
                                                   class_opaque_type,
                                                   name,
                                                   ivar_opaque_type,
@@ -361,7 +367,7 @@ public:
                         bool is_variadic,
                         unsigned type_quals)
     {
-        return ClangASTContext::CreateFunctionType(m_ast_context_ap.get(),
+        return ClangASTContext::CreateFunctionType(getASTContext(),
                                                    result_type,
                                                    args,
                                                    num_args,
@@ -480,6 +486,11 @@ public:
                                uint8_t *dst, 
                                size_t dst_size);
     
+    //------------------------------------------------------------------
+    // Qualifiers
+    //------------------------------------------------------------------
+    static unsigned
+    GetTypeQualifiers(void *clang_type);
 protected:
     //------------------------------------------------------------------
     // Classes that inherit from ClangASTContext can see and modify these

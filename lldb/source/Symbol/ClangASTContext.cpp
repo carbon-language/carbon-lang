@@ -658,9 +658,9 @@ ClangASTContext::GetBuiltinTypeForDWARFEncodingAndBitSize (const char *type_name
 }
 
 void *
-ClangASTContext::GetBuiltInType_void()
+ClangASTContext::GetBuiltInType_void(clang::ASTContext *ast_context)
 {
-    return getASTContext()->VoidTy.getAsOpaquePtr();
+    return ast_context->VoidTy.getAsOpaquePtr();
 }
 
 void *
@@ -3143,4 +3143,14 @@ ClangASTContext::ConvertStringToFloatValue (ASTContext *ast_context, void *clang
         }
     }
     return 0;
+}
+
+unsigned
+ClangASTContext::GetTypeQualifiers(void *clang_type)
+{
+    assert (clang_type);
+    
+    QualType qual_type (QualType::getFromOpaquePtr(clang_type));
+    
+    return qual_type.getQualifiers().getCVRQualifiers();
 }
