@@ -164,11 +164,11 @@ void PrintPPOutputPPCallbacks::WriteLineInfo(unsigned LineNo,
   // Emit #line directives or GNU line markers depending on what mode we're in.
   if (UseLineDirective) {
     OS << "#line" << ' ' << LineNo << ' ' << '"';
-    OS.write(&CurFilename[0], CurFilename.size());
+    OS.write(CurFilename.data(), CurFilename.size());
     OS << '"';
   } else {
     OS << '#' << ' ' << LineNo << ' ' << '"';
-    OS.write(&CurFilename[0], CurFilename.size());
+    OS.write(CurFilename.data(), CurFilename.size());
     OS << '"';
 
     if (ExtraLen)
