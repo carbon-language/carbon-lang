@@ -54,6 +54,11 @@ namespace {
       AU.addPreserved<MachineDominatorTree>();
     }
 
+    virtual void releaseMemory() {
+      ScopeMap.clear();
+      Exps.clear();
+    }
+
   private:
     const unsigned LookAheadLimit;
     typedef ScopedHashTableScope<MachineInstr*, unsigned,
@@ -468,6 +473,8 @@ bool MachineCSE::PerformCSE(MachineDomTreeNode *Node) {
   SmallVector<MachineDomTreeNode*, 8> WorkList;
   DenseMap<MachineDomTreeNode*, MachineDomTreeNode*> ParentMap;
   DenseMap<MachineDomTreeNode*, unsigned> OpenChildren;
+
+  CurrVN = 0;
 
   // Perform a DFS walk to determine the order of visit.
   WorkList.push_back(Node);
