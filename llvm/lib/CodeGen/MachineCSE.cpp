@@ -101,7 +101,7 @@ bool MachineCSE::PerformTrivialCoalescing(MachineInstr *MI,
     unsigned Reg = MO.getReg();
     if (!Reg || TargetRegisterInfo::isPhysicalRegister(Reg))
       continue;
-    if (!MRI->hasOneUse(Reg))
+    if (!MRI->hasOneNonDBGUse(Reg))
       // Only coalesce single use copies. This ensure the copy will be
       // deleted.
       continue;
