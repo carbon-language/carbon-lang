@@ -42,14 +42,14 @@ class EmitAssemblyHelper {
 
   Timer CodeGenerationTime;
 
-  mutable FunctionPassManager *CodeGenPasses;
+  mutable PassManager *CodeGenPasses;
   mutable PassManager *PerModulePasses;
   mutable FunctionPassManager *PerFunctionPasses;
 
 private:
-  FunctionPassManager *getCodeGenPasses() const {
+  PassManager *getCodeGenPasses() const {
     if (!CodeGenPasses) {
-      CodeGenPasses = new FunctionPassManager(TheModule);
+      CodeGenPasses = new PassManager();
       CodeGenPasses->add(new TargetData(TheModule));
     }
     return CodeGenPasses;
@@ -248,7 +248,7 @@ bool EmitAssemblyHelper::AddEmitPasses(BackendAction Action,
     TM->setMCRelaxAll(true);
 
   // Create the code generator passes.
-  FunctionPassManager *PM = getCodeGenPasses();
+  PassManager *PM = getCodeGenPasses();
   CodeGenOpt::Level OptLevel = CodeGenOpt::Default;
 
   switch (CodeGenOpts.OptimizationLevel) {
@@ -320,13 +320,7 @@ void EmitAssemblyHelper::EmitAssembly(BackendAction Action, raw_ostream *OS) {
 
   if (CodeGenPasses) {
     PrettyStackTraceString CrashInfo("Code generation");
-
-    CodeGenPasses->doInitialization();
-    for (Module::iterator I = TheModule->begin(),
-           E = TheModule->end(); I != E; ++I)
-      if (!I->isDeclaration())
-        CodeGenPasses->run(*I);
-    CodeGenPasses->doFinalization();
+    CodeGenPasses->run(*TheModule);
   }
 }
 
