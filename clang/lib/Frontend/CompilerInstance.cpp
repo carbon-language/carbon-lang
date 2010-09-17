@@ -35,6 +35,7 @@
 #include "llvm/System/Host.h"
 #include "llvm/System/Path.h"
 #include "llvm/System/Program.h"
+#include "llvm/System/Signals.h"
 using namespace clang;
 
 CompilerInstance::CompilerInstance()
@@ -370,18 +371,30 @@ void CompilerInstance::createSema(bool CompleteTranslationUnit,
 
 // Output Files
 
-void CompilerInstance::addOutputFile(llvm::StringRef Path,
-                                     llvm::raw_ostream *OS) {
-  assert(OS && "Attempt to add empty stream to output list!");
-  OutputFiles.push_back(std::make_pair(Path, OS));
+void CompilerInstance::addOutputFile(const OutputFile &OutFile) {
+  assert(OutFile.OS && "Attempt to add empty stream to output list!");
+  OutputFiles.push_back(OutFile);
 }
 
 void CompilerInstance::clearOutputFiles(bool EraseFiles) {
-  for (std::list< std::pair<std::string, llvm::raw_ostream*> >::iterator
+  for (std::list<OutputFile>::iterator
          it = OutputFiles.begin(), ie = OutputFiles.end(); it != ie; ++it) {
-    delete it->second;
-    if (EraseFiles && !it->first.empty())
-      llvm::sys::Path(it->first).eraseFromDisk();
+    delete it->OS;
+    if (!it->TempFilename.empty()) {
+      llvm::sys::Path TempPath(it->TempFilename);
+      if (EraseFiles)
+        TempPath.eraseFromDisk();
+      else {
+        std::string Error;
+        if (TempPath.renamePathOnDisk(llvm::sys::Path(it->Filename), &Error)) {
+          getDiagnostics().Report(diag::err_fe_unable_to_rename_temp)
+            << it->TempFilename << it->Filename << Error;
+          TempPath.eraseFromDisk();
+        }
+      }
+    } else if (!it->Filename.empty() && EraseFiles)
+      llvm::sys::Path(it->Filename).eraseFromDisk();
+      
   }
   OutputFiles.clear();
 }
@@ -399,10 +412,11 @@ CompilerInstance::createOutputFile(llvm::StringRef OutputPath,
                                    bool Binary,
                                    llvm::StringRef InFile,
                                    llvm::StringRef Extension) {
-  std::string Error, OutputPathName;
+  std::string Error, OutputPathName, TempPathName;
   llvm::raw_fd_ostream *OS = createOutputFile(OutputPath, Error, Binary,
                                               InFile, Extension,
-                                              &OutputPathName);
+                                              &OutputPathName,
+                                              &TempPathName);
   if (!OS) {
     getDiagnostics().Report(diag::err_fe_unable_to_open_output)
       << OutputPath << Error;
@@ -411,7 +425,8 @@ CompilerInstance::createOutputFile(llvm::StringRef OutputPath,
 
   // Add the output file -- but don't try to remove "-", since this means we are
   // using stdin.
-  addOutputFile((OutputPathName != "-") ? OutputPathName : "", OS);
+  addOutputFile(OutputFile((OutputPathName != "-") ? OutputPathName : "",
+                TempPathName, OS));
 
   return OS;
 }
@@ -422,8 +437,9 @@ CompilerInstance::createOutputFile(llvm::StringRef OutputPath,
                                    bool Binary,
                                    llvm::StringRef InFile,
                                    llvm::StringRef Extension,
-                                   std::string *ResultPathName) {
-  std::string OutFile;
+                                   std::string *ResultPathName,
+                                   std::string *TempPathName) {
+  std::string OutFile, TempFile;
   if (!OutputPath.empty()) {
     OutFile = OutputPath;
   } else if (InFile == "-") {
@@ -436,15 +452,37 @@ CompilerInstance::createOutputFile(llvm::StringRef OutputPath,
   } else {
     OutFile = "-";
   }
+  
+  if (OutFile != "-") {
+    llvm::sys::Path OutPath(OutFile);
+    // Only create the temporary if we can actually write to OutPath, otherwise
+    // we want to fail early.
+    if (!OutPath.exists() ||
+        (OutPath.isRegularFile() && OutPath.canWrite())) {
+      // Create a temporary file.
+      llvm::sys::Path TempPath(OutFile);
+      if (!TempPath.createTemporaryFileOnDisk())
+        TempFile = TempPath.str();
+    }
+  }
+
+  std::string OSFile = OutFile;
+  if (!TempFile.empty())
+    OSFile = TempFile;
 
   llvm::OwningPtr<llvm::raw_fd_ostream> OS(
-    new llvm::raw_fd_ostream(OutFile.c_str(), Error,
+    new llvm::raw_fd_ostream(OSFile.c_str(), Error,
                              (Binary ? llvm::raw_fd_ostream::F_Binary : 0)));
   if (!Error.empty())
     return 0;
 
+  // Make sure the out stream file gets removed if we crash.
+  llvm::sys::RemoveFileOnSignal(llvm::sys::Path(OSFile));
+
   if (ResultPathName)
     *ResultPathName = OutFile;
+  if (TempPathName)
+    *TempPathName = TempFile;
 
   return OS.take();
 }

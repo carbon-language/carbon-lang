@@ -69,6 +69,8 @@ def err_fe_pch_file_modified : Error<
     DefaultFatal;
 def err_fe_unable_to_open_output : Error<
     "unable to open output file '%0': '%1'">;
+def err_fe_unable_to_rename_temp : Error<
+    "unable to rename temporary '%0' to output file '%1': '%2'">;
 def err_fe_unable_to_open_logfile : Error<
     "unable to open logfile file '%0': '%1'">;
 def err_fe_pth_file_has_no_source_header : Error<

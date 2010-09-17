@@ -95,8 +95,23 @@ class CompilerInstance {
   /// The frontend timer
   llvm::OwningPtr<llvm::Timer> FrontendTimer;
 
+  /// \brief Holds information about the output file.
+  ///
+  /// If TempFilename is not empty we must rename it to Filename at the end.
+  /// TempFilename may be empty and Filename non empty if creating the temporary
+  /// failed.
+  struct OutputFile {
+    std::string Filename;
+    std::string TempFilename;
+    llvm::raw_ostream *OS;
+
+    OutputFile(const std::string &filename, const std::string &tempFilename,
+               llvm::raw_ostream *os)
+      : Filename(filename), TempFilename(tempFilename), OS(os) { }
+  };
+
   /// The list of active output files.
-  std::list< std::pair<std::string, llvm::raw_ostream*> > OutputFiles;
+  std::list<OutputFile> OutputFiles;
 
   void operator=(const CompilerInstance &);  // DO NOT IMPLEMENT
   CompilerInstance(const CompilerInstance&); // DO NOT IMPLEMENT
@@ -442,9 +457,8 @@ public:
 
   /// addOutputFile - Add an output file onto the list of tracked output files.
   ///
-  /// \param Path - The path to the output file, or empty.
-  /// \param OS - The output stream, which should be non-null.
-  void addOutputFile(llvm::StringRef Path, llvm::raw_ostream *OS);
+  /// \param OutFile - The output file info.
+  void addOutputFile(const OutputFile &OutFile);
 
   /// clearOutputFiles - Clear the output file list, destroying the contained
   /// output streams.
@@ -565,7 +579,8 @@ public:
   ///
   /// If \arg OutputPath is empty, then createOutputFile will derive an output
   /// path location as \arg BaseInput, with any suffix removed, and \arg
-  /// Extension appended.
+  /// Extension appended. If OutputPath is not stdout createOutputFile will
+  /// create a new temporary file that must be renamed to OutputPath in the end.
   ///
   /// \param OutputPath - If given, the path to the output file.
   /// \param Error [out] - On failure, the error message.
@@ -575,11 +590,14 @@ public:
   /// \param Binary - The mode to open the file in.
   /// \param ResultPathName [out] - If given, the result path name will be
   /// stored here on success.
+  /// \param TempPathName [out] - If given, the temporary file path name
+  /// will be stored here on success.
   static llvm::raw_fd_ostream *
   createOutputFile(llvm::StringRef OutputPath, std::string &Error,
                    bool Binary = true, llvm::StringRef BaseInput = "",
                    llvm::StringRef Extension = "",
-                   std::string *ResultPathName = 0);
+                   std::string *ResultPathName = 0,
+                   std::string *TempPathName = 0);
 
   /// }
   /// @name Initialization Utility Methods
