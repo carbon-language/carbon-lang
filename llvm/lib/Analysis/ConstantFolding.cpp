@@ -33,7 +33,6 @@
 #include "llvm/System/FEnv.h"
 #include <cerrno>
 #include <cmath>
-#include <fenv.h>
 using namespace llvm;
 
 //===----------------------------------------------------------------------===//
