@@ -69,6 +69,8 @@
 		268F9D55123AA16600B91E9B /* SBSymbolContextList.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 268F9D54123AA16600B91E9B /* SBSymbolContextList.cpp */; };
 		26B42B1F1187A92B0079C8C8 /* lldb-include.h in Headers */ = {isa = PBXBuildFile; fileRef = 26B42B1E1187A92B0079C8C8 /* lldb-include.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		26B42C4D1187ABA50079C8C8 /* LLDB.h in Headers */ = {isa = PBXBuildFile; fileRef = 26B42C4C1187ABA50079C8C8 /* LLDB.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		26C72C94124322890068DC16 /* SBStream.h in Headers */ = {isa = PBXBuildFile; fileRef = 26C72C93124322890068DC16 /* SBStream.h */; };
+		26C72C961243229A0068DC16 /* SBStream.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26C72C951243229A0068DC16 /* SBStream.cpp */; };
 		26D27C9F11ED3A4E0024D721 /* ELFHeader.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26D27C9D11ED3A4E0024D721 /* ELFHeader.cpp */; };
 		26D27CA011ED3A4E0024D721 /* ELFHeader.h in Headers */ = {isa = PBXBuildFile; fileRef = 26D27C9E11ED3A4E0024D721 /* ELFHeader.h */; };
 		26D5B06511B07550009A862E /* StoppointCallbackContext.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BC7E0910F1B83100F91463 /* StoppointCallbackContext.cpp */; };
@@ -849,6 +851,8 @@
 		26BC7F3E10F1B90C00F91463 /* ThreadList.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ThreadList.cpp; path = source/Target/ThreadList.cpp; sourceTree = "<group>"; };
 		26BC7F3F10F1B90C00F91463 /* ThreadPlan.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ThreadPlan.cpp; path = source/Target/ThreadPlan.cpp; sourceTree = "<group>"; };
 		26BC7F4C10F1BC1A00F91463 /* ObjectFile.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ObjectFile.cpp; path = source/Symbol/ObjectFile.cpp; sourceTree = "<group>"; };
+		26C72C93124322890068DC16 /* SBStream.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SBStream.h; path = include/lldb/API/SBStream.h; sourceTree = "<group>"; };
+		26C72C951243229A0068DC16 /* SBStream.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SBStream.cpp; path = source/API/SBStream.cpp; sourceTree = "<group>"; };
 		26C81CA411335651004BDC5A /* UUID.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = UUID.h; path = include/lldb/Core/UUID.h; sourceTree = "<group>"; };
 		26C81CA511335651004BDC5A /* UUID.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = UUID.cpp; path = source/Core/UUID.cpp; sourceTree = "<group>"; };
 		26C9DF03113C5B93006B0F94 /* lldb */ = {isa = PBXFileReference; lastKnownFileType = folder; name = lldb; path = include/lldb; sourceTree = "<group>"; };
@@ -1481,6 +1485,8 @@
 				9A9831031125FC5800A56CB0 /* SBProcess.cpp */,
 				9A9831061125FC5800A56CB0 /* SBSourceManager.h */,
 				9A9831051125FC5800A56CB0 /* SBSourceManager.cpp */,
+				26C72C93124322890068DC16 /* SBStream.h */,
+				26C72C951243229A0068DC16 /* SBStream.cpp */,
 				9A357670116E7B5200E8ED2F /* SBStringList.h */,
 				9A357672116E7B6400E8ED2F /* SBStringList.cpp */,
 				26DE205A11618FF600A093E2 /* SBSymbol.h */,
@@ -2278,6 +2284,7 @@
 				268F9D53123AA15200B91E9B /* SBSymbolContextList.h in Headers */,
 				2618D7901240115500F2B8FE /* SectionLoadList.h in Headers */,
 				2618D959124056C700F2B8FE /* NameToDIE.h in Headers */,
+				26C72C94124322890068DC16 /* SBStream.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -2741,6 +2748,7 @@
 				268F9D55123AA16600B91E9B /* SBSymbolContextList.cpp in Sources */,
 				2618D7921240116900F2B8FE /* SectionLoadList.cpp in Sources */,
 				2618D9EB12406FE600F2B8FE /* NameToDIE.cpp in Sources */,
+				26C72C961243229A0068DC16 /* SBStream.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -32,7 +32,7 @@ public:
 
     StreamFile (uint32_t flags, uint32_t addr_size, lldb::ByteOrder byte_order, FILE *f);
 
-    StreamFile (FILE *f);
+    StreamFile (FILE *f, bool tranfer_ownership = false);
 
     StreamFile (uint32_t flags, uint32_t addr_size, lldb::ByteOrder byte_order, const char *path, const char *permissions = "w");
 

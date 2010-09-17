@@ -47,6 +47,8 @@ public:
     void
     Clear ();
 
+protected:
+
 #ifndef SWIG
 
     const lldb_private::StringList *
