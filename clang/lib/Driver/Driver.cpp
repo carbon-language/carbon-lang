@@ -387,6 +387,11 @@ bool Driver::HandleImmediateArgs(const Compilation &C) {
   // The order these options are handled in gcc is all over the place, but we
   // don't expect inconsistencies w.r.t. that to matter in practice.
 
+  if (C.getArgs().hasArg(options::OPT_dumpmachine)) {
+    llvm::outs() << C.getDefaultToolChain().getTripleString() << '\n';
+    return false;
+  }
+
   if (C.getArgs().hasArg(options::OPT_dumpversion)) {
     llvm::outs() << CLANG_VERSION_STRING "\n";
     return false;
