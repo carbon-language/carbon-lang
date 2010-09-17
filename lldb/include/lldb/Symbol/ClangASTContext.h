@@ -182,6 +182,24 @@ public:
                                                      bitfield_bit_size);
     }
     
+    static bool
+    AddMethodToCXXRecordType (clang::ASTContext *ast_context,
+                              void *record_clang_type,
+                              const char *name,
+                              void *method_type);
+    
+    bool
+    AddMethodToCXXRecordType (void *record_clang_type,
+                              const char *name,
+                              void *method_type)
+    
+    {
+        return ClangASTContext::AddMethodToCXXRecordType(getASTContext(),
+                                                         record_clang_type,
+                                                         name,
+                                                         method_type);
+    }
+    
     bool
     FieldIsBitfield (clang::FieldDecl* field,
                      uint32_t& bitfield_bit_size);

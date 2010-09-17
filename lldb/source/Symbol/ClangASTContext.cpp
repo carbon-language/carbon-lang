@@ -804,6 +804,57 @@ ClangASTContext::CreateRecordType (const char *name, int kind, DeclContext *decl
 }
 
 bool
+ClangASTContext::AddMethodToCXXRecordType
+(
+ clang::ASTContext *ast_context,
+ void *record_clang_type,
+ const char *name,
+ void *method_type
+ )
+{
+    if (!record_clang_type || !method_type || !name)
+        return false;
+    
+    assert(ast_context);
+    
+    IdentifierTable *identifier_table = &ast_context->Idents;
+    
+    assert(identifier_table);
+    
+    QualType record_qual_type(QualType::getFromOpaquePtr(record_clang_type));
+    clang::Type *record_type(record_qual_type.getTypePtr());
+    
+    if (!record_type)
+        return false;
+    
+    RecordType *record_recty(dyn_cast<RecordType>(record_type));
+    
+    if (!record_recty)
+        return false;
+    
+    RecordDecl *record_decl = record_recty->getDecl();
+    
+    if (!record_decl)
+        return false;
+    
+    CXXRecordDecl *cxx_record_decl = dyn_cast<CXXRecordDecl>(record_decl);
+    
+    if (!cxx_record_decl)
+        return false;
+    
+    CXXMethodDecl *cxx_method_decl = CXXMethodDecl::Create(*ast_context,
+                                                           cxx_record_decl, 
+                                                           SourceLocation(), 
+                                                           DeclarationName(&identifier_table->get(name)), 
+                                                           QualType::getFromOpaquePtr(method_type), 
+                                                           NULL);
+    
+    cxx_record_decl->addDecl(cxx_method_decl);
+    
+    return true;
+}
+
+bool
 ClangASTContext::AddFieldToRecordType 
 (
     clang::ASTContext *ast_context,
