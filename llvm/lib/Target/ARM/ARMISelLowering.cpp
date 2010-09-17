@@ -326,6 +326,7 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
     setTargetDAGCombine(ISD::ZERO_EXTEND);
     setTargetDAGCombine(ISD::ANY_EXTEND);
     setTargetDAGCombine(ISD::SELECT_CC);
+    setTargetDAGCombine(ISD::BUILD_VECTOR);
   }
 
   computeRegisterProperties();
@@ -4342,6 +4343,31 @@ static SDValue PerformORCombine(SDNode *N,
   return SDValue();
 }
 
+/// PerformBUILD_VECTORCombine - Target-specific dag combine xforms for
+/// ISD::BUILD_VECTOR.
+static SDValue PerformBUILD_VECTORCombine(SDNode *N, SelectionDAG &DAG) {
+  // build_vector(N=ARMISD::VMOVRRD(X), N:1) -> bit_convert(X):
+  // VMOVRRD is introduced when legalizing i64 types.  It forces the i64 value
+  // into a pair of GPRs, which is fine when the value is used as a scalar,
+  // but if the i64 value is converted to a vector, we need to undo the VMOVRRD.
+  if (N->getNumOperands() == 2) {
+    SDValue Op0 = N->getOperand(0);
+    SDValue Op1 = N->getOperand(1);
+    if (Op0.getOpcode() == ISD::BIT_CONVERT)
+      Op0 = Op0.getOperand(0);
+    if (Op1.getOpcode() == ISD::BIT_CONVERT)
+      Op1 = Op1.getOperand(0);
+    if (Op0.getOpcode() == ARMISD::VMOVRRD &&
+        Op0.getNode() == Op1.getNode() &&
+        Op0.getResNo() == 0 && Op1.getResNo() == 1) {
+      return DAG.getNode(ISD::BIT_CONVERT, N->getDebugLoc(),
+                         N->getValueType(0), Op0.getOperand(0));
+    }
+  }
+
+  return SDValue();
+}
+
 /// PerformVMOVRRDCombine - Target-specific dag combine xforms for
 /// ARMISD::VMOVRRD.
 static SDValue PerformVMOVRRDCombine(SDNode *N,
@@ -4760,6 +4786,7 @@ SDValue ARMTargetLowering::PerformDAGCombine(SDNode *N,
   case ISD::SUB:        return PerformSUBCombine(N, DCI);
   case ISD::MUL:        return PerformMULCombine(N, DCI, Subtarget);
   case ISD::OR:         return PerformORCombine(N, DCI, Subtarget);
+  case ISD::BUILD_VECTOR: return PerformBUILD_VECTORCombine(N, DCI.DAG);
   case ARMISD::VMOVRRD: return PerformVMOVRRDCombine(N, DCI);
   case ARMISD::VDUPLANE: return PerformVDUPLANECombine(N, DCI);
   case ISD::INTRINSIC_WO_CHAIN: return PerformIntrinsicCombine(N, DCI.DAG);
