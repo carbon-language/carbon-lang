@@ -2434,7 +2434,7 @@ public:
   // getTrueExpr - Return the subexpression representing the value of the ?:
   //  expression if the condition evaluates to true.  
   Expr *getTrueExpr() const {
-    return cast<Expr>(!Save ? SubExprs[LHS] : SubExprs[COND]);
+    return cast<Expr>(SubExprs[LHS]);
   }
 
   // getFalseExpr - Return the subexpression representing the value of the ?:

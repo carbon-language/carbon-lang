@@ -511,6 +511,11 @@ public:
   /// \brief A mapping from NRVO variables to the flags used to indicate
   /// when the NRVO has been applied to this variable.
   llvm::DenseMap<const VarDecl *, llvm::Value *> NRVOFlags;
+  
+  /// \brief A mapping from 'Save' expression in a conditional expression
+  /// to the IR for this expression. Used to implement IR gen. for Gnu
+  /// extension's missing LHS expression in a conditional operator expression.
+  llvm::DenseMap<const Expr *, llvm::Value *> ConditionalSaveExprs;
 
   EHScopeStack EHStack;
 

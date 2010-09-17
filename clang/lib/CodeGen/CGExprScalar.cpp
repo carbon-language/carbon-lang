@@ -105,6 +105,15 @@ public:
   //                            Visitor Methods
   //===--------------------------------------------------------------------===//
 
+  Value *Visit(Expr *E) {
+    llvm::DenseMap<const Expr *, llvm::Value *>::iterator I = 
+      CGF.ConditionalSaveExprs.find(E);
+    if (I != CGF.ConditionalSaveExprs.end())
+      return I->second;
+      
+    return StmtVisitor<ScalarExprEmitter, Value*>::Visit(E);
+  }
+    
   Value *VisitStmt(Stmt *S) {
     S->dump(CGF.getContext().getSourceManager());
     assert(0 && "Stmt can't have complex result type!");
@@ -112,7 +121,9 @@ public:
   }
   Value *VisitExpr(Expr *S);
   
-  Value *VisitParenExpr(ParenExpr *PE) { return Visit(PE->getSubExpr()); }
+  Value *VisitParenExpr(ParenExpr *PE) {
+    return Visit(PE->getSubExpr()); 
+  }
 
   // Leaves.
   Value *VisitIntegerLiteral(const IntegerLiteral *E) {
@@ -2133,17 +2144,10 @@ VisitConditionalOperator(const ConditionalOperator *E) {
     return Builder.CreateSelect(CondV, LHS, RHS, "cond");
   }
 
-  if (!E->getLHS() && CGF.getContext().getLangOptions().CPlusPlus) {
-    // Does not support GNU missing condition extension in C++ yet (see #7726)
-    CGF.ErrorUnsupported(E, "conditional operator with missing LHS");
-    return llvm::UndefValue::get(ConvertType(E->getType()));
-  }
-  
   llvm::BasicBlock *LHSBlock = CGF.createBasicBlock("cond.true");
   llvm::BasicBlock *RHSBlock = CGF.createBasicBlock("cond.false");
   llvm::BasicBlock *ContBlock = CGF.createBasicBlock("cond.end");
-  Value *CondVal = 0;
-
+  
   // If we don't have the GNU missing condition extension, emit a branch on bool
   // the normal way.
   if (E->getLHS()) {
@@ -2154,8 +2158,12 @@ VisitConditionalOperator(const ConditionalOperator *E) {
     // Otherwise, for the ?: extension, evaluate the conditional and then
     // convert it to bool the hard way.  We do this explicitly because we need
     // the unconverted value for the missing middle value of the ?:.
-    CondVal = CGF.EmitScalarExpr(E->getCond());
-
+    Expr *save = E->getSAVE();
+    assert(save && "VisitConditionalOperator - save is null");
+    // Intentianlly not doing direct assignment to ConditionalSaveExprs[save] !!
+    Value *SaveVal = CGF.EmitScalarExpr(save);
+    CGF.ConditionalSaveExprs[save] = SaveVal;
+    Value *CondVal = Visit(E->getCond());
     // In some cases, EmitScalarConversion will delete the "CondVal" expression
     // if there are no extra uses (an optimization).  Inhibit this by making an
     // extra dead use, because we're going to add a use of CondVal later.  We
@@ -2174,11 +2182,7 @@ VisitConditionalOperator(const ConditionalOperator *E) {
   CGF.EmitBlock(LHSBlock);
 
   // Handle the GNU extension for missing LHS.
-  Value *LHS;
-  if (E->getLHS())
-    LHS = Visit(E->getLHS());
-  else    // Perform promotions, to handle cases like "short ?: int"
-    LHS = EmitScalarConversion(CondVal, E->getCond()->getType(), E->getType());
+  Value *LHS = Visit(E->getTrueExpr());
 
   CGF.EndConditionalBranch();
   LHSBlock = Builder.GetInsertBlock();
