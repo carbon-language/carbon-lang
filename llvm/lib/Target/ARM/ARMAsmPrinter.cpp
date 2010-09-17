@@ -1389,6 +1389,32 @@ void ARMAsmPrinter::printInstructionThroughMCStreamer(const MachineInstr *MI) {
   case ARM::t2MOVi32imm:
     assert(0 && "Should be lowered by thumb2it pass");
   default: break;
+  case ARM::tPICADD: {
+    // This is a pseudo op for a label + instruction sequence, which looks like:
+    // LPC0:
+    //     add r0, pc
+    // This adds the address of LPC0 to r0.
+
+    // Emit the label.
+    // FIXME: MOVE TO SHARED PLACE.
+    unsigned Id = (unsigned)MI->getOperand(2).getImm();
+    const char *Prefix = MAI->getPrivateGlobalPrefix();
+    MCSymbol *Label =OutContext.GetOrCreateSymbol(Twine(Prefix)
+                         + "PC" + Twine(getFunctionNumber()) + "_" + Twine(Id));
+    OutStreamer.EmitLabel(Label);
+
+    // Form and emit the add.
+    MCInst AddInst;
+    AddInst.setOpcode(ARM::tADDhirr);
+    AddInst.addOperand(MCOperand::CreateReg(MI->getOperand(0).getReg()));
+    AddInst.addOperand(MCOperand::CreateReg(MI->getOperand(0).getReg()));
+    AddInst.addOperand(MCOperand::CreateReg(ARM::PC));
+    // Add predicate operands.
+    AddInst.addOperand(MCOperand::CreateImm(ARMCC::AL));
+    AddInst.addOperand(MCOperand::CreateReg(0));
+    OutStreamer.EmitInstruction(AddInst);
+    return;
+  }
   case ARM::PICADD: { // FIXME: Remove asm string from td file.
     // This is a pseudo op for a label + instruction sequence, which looks like:
     // LPC0:
