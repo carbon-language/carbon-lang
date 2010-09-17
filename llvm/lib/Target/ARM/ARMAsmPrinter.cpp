@@ -1524,7 +1524,7 @@ static MCInstPrinter *createARMMCInstPrinter(const Target &T,
                                              unsigned SyntaxVariant,
                                              const MCAsmInfo &MAI) {
   if (SyntaxVariant == 0)
-    return new ARMInstPrinter(MAI, false);
+    return new ARMInstPrinter(MAI);
   return 0;
 }
 

@@ -22,8 +22,7 @@ namespace llvm {
 class ARMInstPrinter : public MCInstPrinter {
   bool VerboseAsm;
 public:
-  ARMInstPrinter(const MCAsmInfo &MAI, bool verboseAsm)
-    : MCInstPrinter(MAI), VerboseAsm(verboseAsm) {}
+  ARMInstPrinter(const MCAsmInfo &MAI) : MCInstPrinter(MAI) {}
 
   virtual void printInst(const MCInst *MI, raw_ostream &O);
 

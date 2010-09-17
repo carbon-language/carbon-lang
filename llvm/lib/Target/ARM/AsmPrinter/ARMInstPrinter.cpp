@@ -160,7 +160,7 @@ void ARMInstPrinter::printOperand(const MCInst *MI, unsigned OpNo,
   }
 }
 
-static void printSOImm(raw_ostream &O, int64_t V, bool VerboseAsm,
+static void printSOImm(raw_ostream &O, int64_t V, raw_ostream *CommentStream,
                        const MCAsmInfo *MAI) {
   // Break it up into two parts that make up a shifter immediate.
   V = ARM_AM::getSOImmVal(V);
@@ -174,9 +174,8 @@ static void printSOImm(raw_ostream &O, int64_t V, bool VerboseAsm,
   if (Rot) {
     O << "#" << Imm << ", " << Rot;
     // Pretty printed version.
-    if (VerboseAsm)
-      O << ' ' << MAI->getCommentString()
-      << ' ' << (int)ARM_AM::rotr32(Imm, Rot);
+    if (CommentStream)
+      *CommentStream << (int)ARM_AM::rotr32(Imm, Rot) << "\n";
   } else {
     O << "#" << Imm;
   }
@@ -189,7 +188,7 @@ void ARMInstPrinter::printSOImmOperand(const MCInst *MI, unsigned OpNum,
                                        raw_ostream &O) {
   const MCOperand &MO = MI->getOperand(OpNum);
   assert(MO.isImm() && "Not a valid so_imm value!");
-  printSOImm(O, MO.getImm(), VerboseAsm, &MAI);
+  printSOImm(O, MO.getImm(), CommentStream, &MAI);
 }
 
 /// printSOImm2PartOperand - SOImm is broken into two pieces using a 'mov'
