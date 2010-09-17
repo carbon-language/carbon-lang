@@ -134,6 +134,9 @@ public:
     SOB_Defined,    // -fwrapv
     SOB_Trapping    // -ftrapv
   };
+  /// The name of the handler function to be called when -ftrapv is specified.
+  /// If none is specified, abort (GCC-compatible behaviour).
+  std::string OverflowHandler;
 
   LangOptions() {
     Trigraphs = BCPLComment = Bool = DollarIdents = AsmPreprocessor = 0;

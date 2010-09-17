@@ -581,7 +581,12 @@ static void LangOptsToArgs(const LangOptions &Opts,
   switch (Opts.getSignedOverflowBehavior()) {
   case LangOptions::SOB_Undefined: break;
   case LangOptions::SOB_Defined:   Res.push_back("-fwrapv"); break;
-  case LangOptions::SOB_Trapping:  Res.push_back("-ftrapv"); break;
+  case LangOptions::SOB_Trapping:  
+    Res.push_back("-ftrapv"); break;
+    if (!Opts.OverflowHandler.empty()) {
+      Res.push_back("-ftrapv-handler");
+      Res.push_back(Opts.OverflowHandler);
+    }
   }
   if (Opts.HeinousExtensions)
     Res.push_back("-fheinous-gnu-extensions");
@@ -1312,8 +1317,12 @@ static void ParseLangArgs(LangOptions &Opts, ArgList &Args, InputKind IK,
   if (Args.hasArg(OPT_fvisibility_inlines_hidden))
     Opts.InlineVisibilityHidden = 1;
   
-  if (Args.hasArg(OPT_ftrapv))
+  if (Args.hasArg(OPT_ftrapv)) {
     Opts.setSignedOverflowBehavior(LangOptions::SOB_Trapping); 
+    // Set the handler, if one is specified.
+    Opts.OverflowHandler =
+        Args.getLastArgValue(OPT_ftrapv_handler);
+  }
   else if (Args.hasArg(OPT_fwrapv))
     Opts.setSignedOverflowBehavior(LangOptions::SOB_Defined); 
 

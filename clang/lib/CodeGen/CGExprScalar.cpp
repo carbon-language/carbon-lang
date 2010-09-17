@@ -1627,18 +1627,56 @@ Value *ScalarExprEmitter::EmitOverflowCheckedBinOp(const BinOpInfo &Ops) {
   Value *overflow = Builder.CreateExtractValue(resultAndOverflow, 1);
 
   // Branch in case of overflow.
+  llvm::BasicBlock *initialBB = Builder.GetInsertBlock();
   llvm::BasicBlock *overflowBB = CGF.createBasicBlock("overflow", CGF.CurFn);
   llvm::BasicBlock *continueBB = CGF.createBasicBlock("nooverflow", CGF.CurFn);
 
   Builder.CreateCondBr(overflow, overflowBB, continueBB);
 
   // Handle overflow with llvm.trap.
-  // TODO: it would be better to generate one of these blocks per function.
-  EmitOverflowBB(overflowBB);
-  
-  // Continue on.
+  const std::string *handlerName = 
+    &CGF.getContext().getLangOptions().OverflowHandler;
+  if (handlerName->empty()) {
+    EmitOverflowBB(overflowBB);
+    Builder.SetInsertPoint(continueBB);
+    return result;
+  }
+
+  // If an overflow handler is set, then we want to call it and then use its
+  // result, if it returns.
+  Builder.SetInsertPoint(overflowBB);
+
+  // Get the overflow handler.
+  const llvm::Type *Int8Ty = llvm::Type::getInt8Ty(VMContext);
+  std::vector<const llvm::Type*> argTypes;
+  argTypes.push_back(CGF.Int64Ty); argTypes.push_back(CGF.Int64Ty);
+  argTypes.push_back(Int8Ty); argTypes.push_back(Int8Ty);
+  llvm::FunctionType *handlerTy =
+      llvm::FunctionType::get(CGF.Int64Ty, argTypes, true);
+  llvm::Value *handler = CGF.CGM.CreateRuntimeFunction(handlerTy, *handlerName);
+
+  // Sign extend the args to 64-bit, so that we can use the same handler for
+  // all types of overflow.
+  llvm::Value *lhs = Builder.CreateSExt(Ops.LHS, CGF.Int64Ty);
+  llvm::Value *rhs = Builder.CreateSExt(Ops.RHS, CGF.Int64Ty);
+
+  // Call the handler with the two arguments, the operation, and the size of
+  // the result.
+  llvm::Value *handlerResult = Builder.CreateCall4(handler, lhs, rhs,
+      Builder.getInt8(OpID),
+      Builder.getInt8(cast<llvm::IntegerType>(opTy)->getBitWidth()));
+
+  // Truncate the result back to the desired size.
+  handlerResult = Builder.CreateTrunc(handlerResult, opTy);
+  Builder.CreateBr(continueBB);
+
   Builder.SetInsertPoint(continueBB);
-  return result;
+  llvm::PHINode *phi = Builder.CreatePHI(opTy);
+  phi->reserveOperandSpace(2);
+  phi->addIncoming(result, initialBB);
+  phi->addIncoming(handlerResult, overflowBB);
+
+  return phi;
 }
 
 Value *ScalarExprEmitter::EmitAdd(const BinOpInfo &Ops) {
