@@ -116,6 +116,8 @@ static void AddLinkerInputs(const ToolChain &TC,
     // Handle reserved library options.
     if (A.getOption().matches(options::OPT_Z_reserved_lib_stdcxx)) {
       TC.AddCXXStdlibLibArgs(Args, CmdArgs);
+    } else if (A.getOption().matches(options::OPT_Z_reserved_lib_cckext)) {
+      TC.AddCCKextLibArgs(Args, CmdArgs);
     } else
       A.renderAsInput(Args, CmdArgs);
   }

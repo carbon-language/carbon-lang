@@ -177,6 +177,11 @@ public:
   /// for the given C++ standard library type.
   virtual void AddCXXStdlibLibArgs(const ArgList &Args,
                                    ArgStringList &CmdArgs) const;
+
+  /// AddCCKextLibArgs - Add the system specific linker arguments to use
+  /// for kernel extensions (Darwin-specific).
+  virtual void AddCCKextLibArgs(const ArgList &Args,
+                                ArgStringList &CmdArgs) const;
 };
 
 } // end namespace driver

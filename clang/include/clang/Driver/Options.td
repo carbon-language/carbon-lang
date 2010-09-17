@@ -749,3 +749,5 @@ def Z_Xlinker__no_demangle : Flag<"-Z-Xlinker-no-demangle">, Flags<[Unsupported,
 // Reserved library options.
 def Z_reserved_lib_stdcxx : Flag<"-Z-reserved-lib-stdc++">,
     Flags<[LinkerInput, NoArgumentUnused, Unsupported]>, Group<reserved_lib_Group>;
+def Z_reserved_lib_cckext : Flag<"-Z-reserved-lib-cckext">,
+    Flags<[LinkerInput, NoArgumentUnused, Unsupported]>, Group<reserved_lib_Group>;

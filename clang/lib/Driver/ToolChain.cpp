@@ -222,3 +222,8 @@ void ToolChain::AddCXXStdlibLibArgs(const ArgList &Args,
     break;
   }
 }
+
+void ToolChain::AddCCKextLibArgs(const ArgList &Args,
+                                 ArgStringList &CmdArgs) const {
+  CmdArgs.push_back("-lcc_kext");
+}

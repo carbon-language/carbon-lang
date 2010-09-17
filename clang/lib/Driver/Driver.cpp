@@ -158,13 +158,21 @@ DerivedArgList *Driver::TranslateInputArgs(const InputArgList &Args) const {
       continue;
     }
 
-    // Rewrite reserved library names, unless -nostdlib is present.
-    if (!HasNostdlib && A->getOption().matches(options::OPT_l)) {
+    // Rewrite reserved library names.
+    if (A->getOption().matches(options::OPT_l)) {
       llvm::StringRef Value = A->getValue(Args);
 
-      if (Value == "stdc++") {
+      // Rewrite unless -nostdlib is present.
+      if (!HasNostdlib && Value == "stdc++") {
         DAL->AddFlagArg(A, Opts->getOption(
                               options::OPT_Z_reserved_lib_stdcxx));
+        continue;
+      }
+
+      // Rewrite unconditionally.
+      if (Value == "cc_kext") {
+        DAL->AddFlagArg(A, Opts->getOption(
+                              options::OPT_Z_reserved_lib_cckext));
         continue;
       }
     }

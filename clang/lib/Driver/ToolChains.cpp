@@ -644,6 +644,27 @@ void DarwinClang::AddCXXStdlibLibArgs(const ArgList &Args,
   }
 }
 
+void DarwinClang::AddCCKextLibArgs(const ArgList &Args,
+                                   ArgStringList &CmdArgs) const {
+
+  // For Darwin platforms, use the compiler-rt-based support library
+  // instead of the gcc-provided one (which is also incidentally
+  // only present in the gcc lib dir, which makes it hard to find).
+
+  llvm::sys::Path P(getDriver().ResourceDir);
+  P.appendComponent("lib");
+  P.appendComponent("darwin");
+  P.appendComponent("libclang_rt.cc_kext.a");
+  
+  // For now, allow missing resource libraries to support developers who may
+  // not have compiler-rt checked out or integrated into their build.
+  if (!P.exists())
+    getDriver().Diag(clang::diag::warn_drv_missing_resource_library)
+      << P.str();
+  else
+    CmdArgs.push_back(Args.MakeArgString(P.str()));
+}
+
 DerivedArgList *Darwin::TranslateArgs(const DerivedArgList &Args,
                                       const char *BoundArch) const {
   DerivedArgList *DAL = new DerivedArgList(Args.getBaseArgs());

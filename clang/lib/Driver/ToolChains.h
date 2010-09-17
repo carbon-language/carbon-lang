@@ -226,6 +226,9 @@ public:
   virtual void AddCXXStdlibLibArgs(const ArgList &Args,
                                    ArgStringList &CmdArgs) const;
 
+  virtual void AddCCKextLibArgs(const ArgList &Args,
+                                ArgStringList &CmdArgs) const;
+
   /// }
 };
 
