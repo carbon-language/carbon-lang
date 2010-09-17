@@ -47,23 +47,25 @@ if(PYTHONINTERP_FOUND)
 
   MAKE_DIRECTORY(${CMAKE_CURRENT_BINARY_DIR}/Unit)
 
+  set(LLVM_SOURCE_DIR ${LLVM_MAIN_SRC_DIR})
+  set(LLVM_BINARY_DIR ${LLVM_BINARY_DIR})
+  set(LLVM_TOOLS_DIR "${LLVM_TOOLS_BINARY_DIR}/${CMAKE_CFG_INTDIR}")
+  set(LLVMGCCDIR "")
+  set(PYTHON_EXECUTABLE ${PYTHON_EXECUTABLE})
+  set(LLVM_BUILD_MODE ${CMAKE_CFG_INTDIR})
+  set(ENABLE_SHARED ${LLVM_SHARED_LIBS_ENABLED})
+  set(SHLIBPATH_VAR ${SHLIBPATH_VAR})
+
+  configure_file(
+    ${CMAKE_CURRENT_SOURCE_DIR}/lit.site.cfg.in
+    ${CMAKE_CURRENT_BINARY_DIR}/lit.site.cfg
+    @ONLY)
+  configure_file(
+    ${CMAKE_CURRENT_SOURCE_DIR}/Unit/lit.site.cfg.in
+    ${CMAKE_CURRENT_BINARY_DIR}/Unit/lit.site.cfg
+    @ONLY)
+
   add_custom_target(check
-    COMMAND sed -e "s#\@LLVM_SOURCE_DIR\@#${LLVM_MAIN_SRC_DIR}#"
-                -e "s#\@LLVM_BINARY_DIR\@#${LLVM_BINARY_DIR}#"
-                -e "s#\@LLVM_TOOLS_DIR\@#${LLVM_TOOLS_BINARY_DIR}/${CMAKE_CFG_INTDIR}#"
-                -e "s#\@LLVMGCCDIR\@##"
-                -e "s#\@PYTHON_EXECUTABLE\@#${PYTHON_EXECUTABLE}#"
-                ${CMAKE_CURRENT_SOURCE_DIR}/lit.site.cfg.in >
-                ${CMAKE_CURRENT_BINARY_DIR}/lit.site.cfg
-    COMMAND sed -e "s#\@LLVM_SOURCE_DIR\@#${LLVM_MAIN_SRC_DIR}#"
-                -e "s#\@LLVM_BINARY_DIR\@#${LLVM_BINARY_DIR}#"
-                -e "s#\@LLVM_TOOLS_DIR\@#${LLVM_TOOLS_BINARY_DIR}/${CMAKE_CFG_INTDIR}#"
-                -e "s#\@LLVMGCCDIR\@##"
-                -e "s#\@LLVM_BUILD_MODE\@#${CMAKE_CFG_INTDIR}#"
-                -e "s#\@ENABLE_SHARED\@#${LLVM_SHARED_LIBS_ENABLED}#"
-                -e "s#\@SHLIBPATH_VAR\@#${SHLIBPATH_VAR}#"
-                ${CMAKE_CURRENT_SOURCE_DIR}/Unit/lit.site.cfg.in >
-                ${CMAKE_CURRENT_BINARY_DIR}/Unit/lit.site.cfg
     COMMAND ${PYTHON_EXECUTABLE}
                 ${LLVM_SOURCE_DIR}/utils/lit/lit.py
                 --param llvm_site_config=${CMAKE_CURRENT_BINARY_DIR}/lit.site.cfg
