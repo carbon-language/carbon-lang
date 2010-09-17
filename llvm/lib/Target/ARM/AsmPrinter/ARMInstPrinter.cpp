@@ -55,6 +55,7 @@ static unsigned getDPRSuperRegForSPR(unsigned Reg) {
 void ARMInstPrinter::printInst(const MCInst *MI, raw_ostream &O) {
   // Check for MOVs and print canonical forms, instead.
   if (MI->getOpcode() == ARM::MOVs) {
+    // FIXME: Thumb variants?
     const MCOperand &Dst = MI->getOperand(0);
     const MCOperand &MO1 = MI->getOperand(1);
     const MCOperand &MO2 = MI->getOperand(2);

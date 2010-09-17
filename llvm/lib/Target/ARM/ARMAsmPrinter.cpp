@@ -1147,11 +1147,78 @@ void ARMAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     OS << ']';
     OS << "+";
     printOperand(MI, NOps-2, OS);
-    OutStreamer.EmitRawText(OS.str());
-    return;
-  }
+  } else if (MI->getOpcode() == ARM::MOVs) {
+    // FIXME: Thumb variants?
+    const MachineOperand &Dst = MI->getOperand(0);
+    const MachineOperand &MO1 = MI->getOperand(1);
+    const MachineOperand &MO2 = MI->getOperand(2);
+    const MachineOperand &MO3 = MI->getOperand(3);
 
-  printInstruction(MI, OS);
+    OS << '\t' << ARM_AM::getShiftOpcStr(ARM_AM::getSORegShOp(MO3.getImm()));
+    printSBitModifierOperand(MI, 6, OS);
+    printPredicateOperand(MI, 4, OS);
+
+    OS << '\t' << getRegisterName(Dst.getReg())
+       << ", " << getRegisterName(MO1.getReg());
+
+    if (ARM_AM::getSORegShOp(MO3.getImm()) != ARM_AM::rrx) {
+      OS << ", ";
+
+      if (MO2.getReg()) {
+        OS << getRegisterName(MO2.getReg());
+        assert(ARM_AM::getSORegOffset(MO3.getImm()) == 0);
+      } else {
+        OS << "#" << ARM_AM::getSORegOffset(MO3.getImm());
+      }
+    }
+  } else
+  // A8.6.123 PUSH
+  if ((MI->getOpcode() == ARM::STM_UPD || MI->getOpcode() == ARM::t2STM_UPD) &&
+      MI->getOperand(0).getReg() == ARM::SP) {
+    const MachineOperand &MO1 = MI->getOperand(2);
+    if (ARM_AM::getAM4SubMode(MO1.getImm()) == ARM_AM::db) {
+      OS << '\t' << "push";
+      printPredicateOperand(MI, 3, OS);
+      OS << '\t';
+      printRegisterList(MI, 5, OS);
+    }
+  } else
+  // A8.6.122 POP
+  if ((MI->getOpcode() == ARM::LDM_UPD || MI->getOpcode() == ARM::t2LDM_UPD) &&
+      MI->getOperand(0).getReg() == ARM::SP) {
+    const MachineOperand &MO1 = MI->getOperand(2);
+    if (ARM_AM::getAM4SubMode(MO1.getImm()) == ARM_AM::ia) {
+      OS << '\t' << "pop";
+      printPredicateOperand(MI, 3, OS);
+      OS << '\t';
+      printRegisterList(MI, 5, OS);
+    }
+  } else
+  // A8.6.355 VPUSH
+  if ((MI->getOpcode() == ARM::VSTMS_UPD || MI->getOpcode() ==ARM::VSTMD_UPD) &&
+      MI->getOperand(0).getReg() == ARM::SP) {
+    const MachineOperand &MO1 = MI->getOperand(2);
+    if (ARM_AM::getAM4SubMode(MO1.getImm()) == ARM_AM::db) {
+      OS << '\t' << "vpush";
+      printPredicateOperand(MI, 3, OS);
+      OS << '\t';
+      printRegisterList(MI, 5, OS);
+    }
+  } else
+  // A8.6.354 VPOP
+  if ((MI->getOpcode() == ARM::VLDMS_UPD || MI->getOpcode() ==ARM::VLDMD_UPD) &&
+      MI->getOperand(0).getReg() == ARM::SP) {
+    const MachineOperand &MO1 = MI->getOperand(2);
+    if (ARM_AM::getAM4SubMode(MO1.getImm()) == ARM_AM::ia) {
+      OS << '\t' << "vpop";
+      printPredicateOperand(MI, 3, OS);
+      OS << '\t';
+      printRegisterList(MI, 5, OS);
+    }
+  } else
+    printInstruction(MI, OS);
+
+  // Output the instruction to the stream
   OutStreamer.EmitRawText(OS.str());
 
   // Make sure the instruction that follows TBB is 2-byte aligned.
