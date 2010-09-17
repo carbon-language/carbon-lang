@@ -694,7 +694,54 @@ bool ARMFastISel::ARMSelectStore(const Instruction *I) {
 
   if (!ARMEmitStore(VT, SrcReg, Reg, Offset /* 0 */)) return false;
 
-  return false;
+  return true;
+}
+
+static ARMCC::CondCodes getComparePred(CmpInst::Predicate Pred) {
+  switch (Pred) {
+    // Needs two compares...
+    case CmpInst::FCMP_ONE:
+    case CmpInst::FCMP_UEQ:    
+    default:
+      assert(false && "Unhandled CmpInst::Predicate!");
+      return ARMCC::AL;
+    case CmpInst::ICMP_EQ:
+    case CmpInst::FCMP_OEQ:
+      return ARMCC::EQ;
+    case CmpInst::ICMP_SGT:
+    case CmpInst::FCMP_OGT:
+      return ARMCC::GT;
+    case CmpInst::ICMP_SGE:
+    case CmpInst::FCMP_OGE:
+      return ARMCC::GE;
+    case CmpInst::ICMP_UGT:
+    case CmpInst::FCMP_UGT:
+      return ARMCC::HI;
+    case CmpInst::FCMP_OLT:
+      return ARMCC::MI;
+    case CmpInst::ICMP_ULE:
+    case CmpInst::FCMP_OLE:
+      return ARMCC::LS;
+    case CmpInst::FCMP_ORD:
+      return ARMCC::VC;
+    case CmpInst::FCMP_UNO:
+      return ARMCC::VS;
+    case CmpInst::FCMP_UGE:
+      return ARMCC::PL;
+    case CmpInst::ICMP_SLT:
+    case CmpInst::FCMP_ULT:
+      return ARMCC::LT;  
+    case CmpInst::ICMP_SLE:
+    case CmpInst::FCMP_ULE:
+      return ARMCC::LE;
+    case CmpInst::FCMP_UNE:
+    case CmpInst::ICMP_NE:
+      return ARMCC::NE;
+    case CmpInst::ICMP_UGE:
+      return ARMCC::HS;
+    case CmpInst::ICMP_ULT:
+      return ARMCC::LO;
+  }
 }
 
 bool ARMFastISel::ARMSelectBranch(const Instruction *I) {
@@ -703,18 +750,28 @@ bool ARMFastISel::ARMSelectBranch(const Instruction *I) {
   MachineBasicBlock *FBB = FuncInfo.MBBMap[BI->getSuccessor(1)];
 
   // Simple branch support.
-  unsigned CondReg = getRegForValue(BI->getCondition());
+  // TODO: Hopefully we've already handled the condition since we won't
+  // have left an update in the value map. See the TODO below in ARMSelectCMP.
+  Value *Cond = BI->getCondition();
+  unsigned CondReg = getRegForValue(Cond);
   if (CondReg == 0) return false;
 
-  unsigned CmpOpc = isThumb ? ARM::t2CMPrr : ARM::CMPrr;
+  ARMCC::CondCodes ARMPred = ARMCC::NE;
+  CmpInst *CI = dyn_cast<CmpInst>(Cond);
+  if (!CI) return false;
+  
+  // Get the compare predicate.
+  ARMPred = getComparePred(CI->getPredicate());
+    
+  // We may not handle every CC for now.
+  if (ARMPred == ARMCC::AL) return false;
+
   unsigned BrOpc = isThumb ? ARM::t2Bcc : ARM::Bcc;
-  AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(CmpOpc))
-                  .addReg(CondReg).addReg(CondReg));
   BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(BrOpc))
-                  .addMBB(TBB).addImm(ARMCC::NE).addReg(ARM::CPSR);
+                  .addMBB(TBB).addImm(ARMPred).addReg(CondReg);
   FastEmitBranch(FBB, DL);
   FuncInfo.MBB->addSuccessor(TBB);
-  return true;
+  return true;  
 }
 
 bool ARMFastISel::ARMSelectCmp(const Instruction *I) {
@@ -730,17 +787,21 @@ bool ARMFastISel::ARMSelectCmp(const Instruction *I) {
     return false;
 
   unsigned CmpOpc;
+  unsigned DestReg;
   switch (VT.getSimpleVT().SimpleTy) {
     default: return false;
     // TODO: Verify compares.
     case MVT::f32:
       CmpOpc = ARM::VCMPES;
+      DestReg = ARM::FPSCR;
       break;
     case MVT::f64:
       CmpOpc = ARM::VCMPED;
+      DestReg = ARM::FPSCR;
       break;
     case MVT::i32:
       CmpOpc = isThumb ? ARM::t2CMPrr : ARM::CMPrr;
+      DestReg = ARM::CPSR;
       break;
   }
 
@@ -759,7 +820,8 @@ bool ARMFastISel::ARMSelectCmp(const Instruction *I) {
     AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
                             TII.get(ARM::FMSTAT)));
 
-  // TODO: How to update the value map when there's no result reg?
+  // Update the value to the implicit def reg.
+  UpdateValueMap(I, DestReg);
   return true;
 }
 
