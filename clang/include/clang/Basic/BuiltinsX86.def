@@ -91,7 +91,7 @@ BUILTIN(__builtin_ia32_pcmpgtd, "V2iV2iV2i", "")
 BUILTIN(__builtin_ia32_maskmovq, "vV8cV8cc*", "")
 BUILTIN(__builtin_ia32_pmovmskb, "iV8c", "")
 BUILTIN(__builtin_ia32_movntq, "vV1LLi*V1LLi", "")
-BUILTIN(__builtin_ia32_palignr, "V8cV8cV8cc", "") // FIXME: Correct type?
+BUILTIN(__builtin_ia32_palignr, "V8cV8cV8cc", "")
 BUILTIN(__builtin_ia32_vec_init_v2si, "V2iii", "")
 BUILTIN(__builtin_ia32_vec_init_v4hi, "V4sssss", "")
 BUILTIN(__builtin_ia32_vec_init_v8qi, "V8ccccccccc", "")
