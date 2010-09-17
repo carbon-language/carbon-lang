@@ -1351,10 +1351,17 @@ void ARMAsmPrinter::printInstructionThroughMCStreamer(const MachineInstr *MI) {
     OutStreamer.EmitInstruction(AddInst);
     return;
   }
-  case ARM::PICLDR: {
+  case ARM::PICSTR:
+  case ARM::PICSTRB:
+  case ARM::PICSTRH:
+  case ARM::PICLDR:
+  case ARM::PICLDRB:
+  case ARM::PICLDRH:
+  case ARM::PICLDRSB:
+  case ARM::PICLDRSH: {
     // This is a pseudo op for a label + instruction sequence, which looks like:
     // LPC0:
-    //     ldr r0, [pc, r0]
+    //     OP r0, [pc, r0]
     // The LCP0 label is referenced by a constant pool entry in order to get
     // a PC-relative address at the ldr instruction.
 
@@ -1367,16 +1374,29 @@ void ARMAsmPrinter::printInstructionThroughMCStreamer(const MachineInstr *MI) {
     OutStreamer.EmitLabel(Label);
 
     // Form and emit the load
-    MCInst LdrInst;
-    LdrInst.setOpcode(ARM::LDR);
-    LdrInst.addOperand(MCOperand::CreateReg(MI->getOperand(0).getReg()));
-    LdrInst.addOperand(MCOperand::CreateReg(ARM::PC));
-    LdrInst.addOperand(MCOperand::CreateReg(MI->getOperand(1).getReg()));
-    LdrInst.addOperand(MCOperand::CreateImm(0));
+    unsigned Opcode;
+    switch (MI->getOpcode()) {
+    default:
+      llvm_unreachable("Unexpected opcode!");
+    case ARM::PICSTR:   Opcode = ARM::STR; break;
+    case ARM::PICSTRB:  Opcode = ARM::STRB; break;
+    case ARM::PICSTRH:  Opcode = ARM::STRH; break;
+    case ARM::PICLDR:   Opcode = ARM::LDR; break;
+    case ARM::PICLDRB:  Opcode = ARM::LDRB; break;
+    case ARM::PICLDRH:  Opcode = ARM::LDRH; break;
+    case ARM::PICLDRSB: Opcode = ARM::LDRSB; break;
+    case ARM::PICLDRSH: Opcode = ARM::LDRSH; break;
+    }
+    MCInst LdStInst;
+    LdStInst.setOpcode(Opcode);
+    LdStInst.addOperand(MCOperand::CreateReg(MI->getOperand(0).getReg()));
+    LdStInst.addOperand(MCOperand::CreateReg(ARM::PC));
+    LdStInst.addOperand(MCOperand::CreateReg(MI->getOperand(1).getReg()));
+    LdStInst.addOperand(MCOperand::CreateImm(0));
     // Add predicate operands.
-    LdrInst.addOperand(MCOperand::CreateImm(MI->getOperand(3).getImm()));
-    LdrInst.addOperand(MCOperand::CreateReg(MI->getOperand(4).getReg()));
-    OutStreamer.EmitInstruction(LdrInst);
+    LdStInst.addOperand(MCOperand::CreateImm(MI->getOperand(3).getImm()));
+    LdStInst.addOperand(MCOperand::CreateReg(MI->getOperand(4).getReg()));
+    OutStreamer.EmitInstruction(LdStInst);
 
     return;
   }
