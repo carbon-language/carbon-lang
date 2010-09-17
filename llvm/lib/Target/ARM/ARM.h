@@ -26,6 +26,11 @@ class ARMBaseTargetMachine;
 class FunctionPass;
 class JITCodeEmitter;
 class formatted_raw_ostream;
+class MCCodeEmitter;
+
+MCCodeEmitter *createARMMCCodeEmitter(const Target &,
+                                      TargetMachine &TM,
+                                      MCContext &Ctx);
 
 FunctionPass *createARMISelDag(ARMBaseTargetMachine &TM,
                                CodeGenOpt::Level OptLevel);
