@@ -3108,6 +3108,13 @@ namespace {
       if (TM->getRelocationModel() != Reloc::PIC_)
         return false;
 
+      X86MachineFunctionInfo *X86FI = MF.getInfo<X86MachineFunctionInfo>();
+      unsigned GlobalBaseReg = X86FI->getGlobalBaseReg();
+
+      // If we didn't need a GlobalBaseReg, don't insert code.
+      if (GlobalBaseReg == 0)
+        return false;
+
       // Insert the set of GlobalBaseReg into the first MBB of the function
       MachineBasicBlock &FirstMBB = MF.front();
       MachineBasicBlock::iterator MBBI = FirstMBB.begin();
@@ -3119,7 +3126,7 @@ namespace {
       if (TM->getSubtarget<X86Subtarget>().isPICStyleGOT())
         PC = RegInfo.createVirtualRegister(X86::GR32RegisterClass);
       else
-        PC = TII->getGlobalBaseReg(&MF);
+        PC = GlobalBaseReg;
   
       // Operand of MovePCtoStack is completely ignored by asm printer. It's
       // only used in JIT code emission as displacement to pc.
@@ -3128,7 +3135,6 @@ namespace {
       // If we're using vanilla 'GOT' PIC style, we should use relative addressing
       // not to pc, but to _GLOBAL_OFFSET_TABLE_ external.
       if (TM->getSubtarget<X86Subtarget>().isPICStyleGOT()) {
-        unsigned GlobalBaseReg = TII->getGlobalBaseReg(&MF);
         // Generate addl $__GLOBAL_OFFSET_TABLE_ + [.-piclabel], %some_register
         BuildMI(FirstMBB, MBBI, DL, TII->get(X86::ADD32ri), GlobalBaseReg)
           .addReg(PC).addExternalSymbol("_GLOBAL_OFFSET_TABLE_",
