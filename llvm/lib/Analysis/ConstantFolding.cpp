@@ -32,6 +32,7 @@
 #include "llvm/Support/MathExtras.h"
 #include <cerrno>
 #include <cmath>
+#include <fenv.h>
 using namespace llvm;
 
 //===----------------------------------------------------------------------===//
@@ -1039,9 +1040,12 @@ llvm::canConstantFoldCallTo(const Function *F) {
 
 static Constant *ConstantFoldFP(double (*NativeFP)(double), double V, 
                                 const Type *Ty) {
+  feclearexcept(FE_ALL_EXCEPT);
   errno = 0;
   V = NativeFP(V);
-  if (errno != 0) {
+  if (errno != 0 ||
+      fetestexcept(FE_DIVBYZERO | FE_UNDERFLOW | FE_OVERFLOW | FE_INVALID)) {
+    feclearexcept(FE_ALL_EXCEPT);
     errno = 0;
     return 0;
   }
@@ -1056,9 +1060,12 @@ static Constant *ConstantFoldFP(double (*NativeFP)(double), double V,
 
 static Constant *ConstantFoldBinaryFP(double (*NativeFP)(double, double),
                                       double V, double W, const Type *Ty) {
+  feclearexcept(FE_ALL_EXCEPT);
   errno = 0;
   V = NativeFP(V, W);
-  if (errno != 0) {
+  if (errno != 0 ||
+      fetestexcept(FE_DIVBYZERO | FE_UNDERFLOW | FE_OVERFLOW | FE_INVALID)) {
+    feclearexcept(FE_ALL_EXCEPT);
     errno = 0;
     return 0;
   }
