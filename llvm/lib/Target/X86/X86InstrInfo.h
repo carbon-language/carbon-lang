@@ -311,12 +311,17 @@ namespace X86II {
     MRM_F0 = 40,
     MRM_F8 = 41,
     MRM_F9 = 42,
+
+    /// RawFrmImm8 - This is used for the ENTER instruction, which has two
+    /// immediates, the first of which is a 16-bit immediate (specified by
+    /// the imm encoding) and the second is a 8-bit fixed value.
+    RawFrmImm8 = 43,
     
     /// RawFrmImm16 - This is used for CALL FAR instructions, which have two
     /// immediates, the first of which is a 16 or 32-bit immediate (specified by
     /// the imm encoding) and the second is a 16-bit fixed value.  In the AMD
     /// manual, this operand is described as pntr16:32 and pntr16:16
-    RawFrmImm16 = 43,
+    RawFrmImm16 = 44,
 
     FormMask       = 63,
 
@@ -528,6 +533,7 @@ namespace X86II {
     case X86II::AddRegFrm:
     case X86II::MRMDestReg:
     case X86II::MRMSrcReg:
+    case X86II::RawFrmImm8:
     case X86II::RawFrmImm16:
        return -1;
     case X86II::MRMDestMem:

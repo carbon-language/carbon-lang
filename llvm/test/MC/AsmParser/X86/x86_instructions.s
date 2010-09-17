@@ -293,3 +293,15 @@ sldt	%cx
 lcall	*0xbadeface
 ljmp	*0xbadeface
 
+
+// rdar://8444631
+// CHECK: enter	$31438, $0
+// CHECK: encoding: [0xc8,0xce,0x7a,0x00]
+// CHECK: enter	$31438, $1
+// CHECK: encoding: [0xc8,0xce,0x7a,0x01]
+// CHECK: enter	$31438, $127
+// CHECK: encoding: [0xc8,0xce,0x7a,0x7f]
+enter $0x7ace,$0
+enter $0x7ace,$1
+enter $0x7ace,$0x7f
+

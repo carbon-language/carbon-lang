@@ -757,8 +757,8 @@ let isCall = 1 in
 
 // Constructing a stack frame.
 
-def ENTER : I<0xC8, RawFrm, (outs), (ins i16imm:$len, i8imm:$lvl),
-              "enter\t$len, $lvl", []>;
+def ENTER : Ii16<0xC8, RawFrmImm8, (outs), (ins i16imm:$len, i8imm:$lvl),
+                 "enter\t$len, $lvl", []>;
 
 // Tail call stuff.
 

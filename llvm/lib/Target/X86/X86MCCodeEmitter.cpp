@@ -828,6 +828,13 @@ EncodeInstruction(const MCInst &MI, raw_ostream &OS,
     EmitByte(BaseOpcode, CurByte, OS);
     break;
       
+  case X86II::RawFrmImm8:
+    EmitByte(BaseOpcode, CurByte, OS);
+    EmitImmediate(MI.getOperand(CurOp++),
+                  X86II::getSizeOfImm(TSFlags), getImmFixupKind(TSFlags),
+                  CurByte, OS, Fixups);
+    EmitImmediate(MI.getOperand(CurOp++), 1, FK_Data_1, CurByte, OS, Fixups);
+    break;
   case X86II::RawFrmImm16:
     EmitByte(BaseOpcode, CurByte, OS);
     EmitImmediate(MI.getOperand(CurOp++),
