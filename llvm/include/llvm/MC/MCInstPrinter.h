@@ -28,21 +28,21 @@ protected:
 public:
   MCInstPrinter(const MCAsmInfo &mai)
     : CommentStream(0), MAI(mai) {}
-  
+
   virtual ~MCInstPrinter();
 
   /// setCommentStream - Specify a stream to emit comments to.
   void setCommentStream(raw_ostream &OS) { CommentStream = &OS; }
-  
+
   /// printInst - Print the specified MCInst to the specified raw_ostream.
   ///
   virtual void printInst(const MCInst *MI, raw_ostream &OS) = 0;
-  
+
   /// getOpcodeName - Return the name of the specified opcode enum (e.g.
   /// "MOV32ri") or empty if we can't resolve it.
   virtual StringRef getOpcodeName(unsigned Opcode) const;
 };
-  
+
 } // namespace llvm
 
 #endif
