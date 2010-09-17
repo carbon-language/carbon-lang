@@ -616,6 +616,9 @@ AsmParser::ApplyModifierToExpr(const MCExpr *E,
     return MCBinaryExpr::Create(BE->getOpcode(), LHS, RHS, getContext());
   }
   }
+
+  assert(0 && "Invalid expression kind!");
+  return 0;
 }
 
 /// ParseExpression - Parse an expression and return it.
