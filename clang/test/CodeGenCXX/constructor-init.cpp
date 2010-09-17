@@ -98,7 +98,7 @@ namespace InitVTable {
   // CHECK-NEXT: [[FNP:%.*]] = getelementptr inbounds i32 ([[B]]*)** [[VTBL]], i64 0
   // CHECK-NEXT: [[FN:%.*]] = load i32 ([[B]]*)** [[FNP]]
   // CHECK-NEXT: [[ARG:%.*]] = call i32 [[FN]]([[B]]* [[THIS]])
-  // CHECK-NEXT: call void @_ZN10InitVTable1AC2Ei({{.*}}* %1, i32 [[ARG]])
+  // CHECK-NEXT: call void @_ZN10InitVTable1AC2Ei({{.*}}* {{%.*}}, i32 [[ARG]])
   // CHECK-NEXT: [[T0:%.*]] = bitcast [[B]]* [[THIS]] to i8***
   // CHECK-NEXT: store i8** getelementptr inbounds ([3 x i8*]* @_ZTVN10InitVTable1BE, i64 0, i64 2), i8*** [[T0]]
   // CHECK-NEXT: ret void
