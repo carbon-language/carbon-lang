@@ -115,7 +115,6 @@ ToolChain *DarwinHostInfo::CreateToolChain(const ArgList &Args,
     // If we recognized the arch, match it to the toolchains we support.
     const char *UseNewToolChain = ::getenv("CCC_ENABLE_NEW_DARWIN_TOOLCHAIN");
     if (UseNewToolChain || 
-        Arch == llvm::Triple::x86 || Arch == llvm::Triple::x86_64 ||
         Arch == llvm::Triple::arm || Arch == llvm::Triple::thumb) {
       TC = new toolchains::DarwinClang(*this, TCTriple);
     } else if (Arch == llvm::Triple::x86 || Arch == llvm::Triple::x86_64) {
