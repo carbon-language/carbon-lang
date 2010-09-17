@@ -94,7 +94,7 @@ SBStringList::AppendList (const char **strv, int strc)
 }
 
 void
-SBStringList::AppendList (SBStringList strings)
+SBStringList::AppendList (const SBStringList &strings)
 {
     if (strings.IsValid())
     {

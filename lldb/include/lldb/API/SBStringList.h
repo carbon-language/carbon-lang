@@ -36,7 +36,7 @@ public:
     AppendList (const char **strv, int strc);
 
     void
-    AppendList (lldb::SBStringList strings);
+    AppendList (const lldb::SBStringList &strings);
 
     uint32_t
     GetSize () const;
@@ -46,8 +46,6 @@ public:
 
     void
     Clear ();
-
-protected:
 
 #ifndef SWIG
 
