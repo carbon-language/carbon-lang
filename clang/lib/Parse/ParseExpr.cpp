@@ -291,8 +291,10 @@ Parser::ParseRHSOfBinaryExpression(ExprResult LHS, prec::Level MinPrec) {
         // In particular, the RHS of the '?' is 'expression', not
         // 'logical-OR-expression' as we might expect.
         TernaryMiddle = ParseExpression();
-        if (TernaryMiddle.isInvalid())
-          return move(TernaryMiddle);
+        if (TernaryMiddle.isInvalid()) {
+          LHS = ExprError();
+          TernaryMiddle = 0;
+        }
       } else {
         // Special case handling of "X ? Y : Z" where Y is empty:
         //   logical-OR-expression '?' ':' conditional-expression   [GNU]
