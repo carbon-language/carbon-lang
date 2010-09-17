@@ -578,6 +578,52 @@ void Darwin::AddDeploymentTarget(DerivedArgList &Args) const {
   setTarget(iPhoneVersion, Major, Minor, Micro);
 }
 
+void DarwinClang::AddClangCXXStdlibLibArgs(const ArgList &Args,
+                                      ArgStringList &CmdArgs) const {
+  CXXStdlibType Type = GetCXXStdlibType(Args);
+
+  switch (Type) {
+  case ToolChain::CST_Libcxx:
+    CmdArgs.push_back("-lc++");
+    break;
+
+  case ToolChain::CST_Libstdcxx: {
+    // Unfortunately, -lstdc++ doesn't always exist in the standard search path;
+    // it was previously found in the gcc lib dir. However, for all the Darwin
+    // platforms we care about it was -lstdc++.6, so we search for that
+    // explicitly if we can't see an obvious -lstdc++ candidate.
+
+    // Check in the sysroot first.
+    if (const Arg *A = Args.getLastArg(options::OPT_isysroot)) {
+      llvm::sys::Path P(A->getValue(Args));
+      P.appendComponent("usr");
+      P.appendComponent("lib");
+      P.appendComponent("libstdc++.dylib");
+
+      if (!P.exists()) {
+        P.eraseComponent();
+        P.appendComponent("libstdc++.6.dylib");
+        if (P.exists()) {
+          CmdArgs.push_back(Args.MakeArgString(P.str()));
+          return;
+        }
+      }
+    }
+
+    // Otherwise, look in the root.
+    if (!llvm::sys::Path("/usr/lib/libstdc++.dylib").exists() &&
+        llvm::sys::Path("/usr/lib/libstdc++.6.dylib").exists()) {
+      CmdArgs.push_back("/usr/lib/libstdc++.6.dylib");
+      return;
+    }
+
+    // Otherwise, let the linker search.
+    CmdArgs.push_back("-lstdc++");
+    break;
+  }
+  }
+}
+
 DerivedArgList *Darwin::TranslateArgs(const DerivedArgList &Args,
                                       const char *BoundArch) const {
   DerivedArgList *DAL = new DerivedArgList(Args.getBaseArgs());
