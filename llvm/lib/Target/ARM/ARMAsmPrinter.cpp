@@ -1466,7 +1466,7 @@ void ARMAsmPrinter::printInstructionThroughMCStreamer(const MachineInstr *MI) {
       V1 = MCOperand::CreateImm(ImmVal & 65535);
       V2 = MCOperand::CreateImm(ImmVal >> 16);
     } else if (MO.isGlobal()) {
-      MCSymbol *Symbol = MCInstLowering.GetGlobalAddressSymbol(MO);
+      MCSymbol *Symbol = MCInstLowering.GetGlobalAddressSymbol(MO.getGlobal());
       const MCSymbolRefExpr *SymRef1 =
         MCSymbolRefExpr::Create(Symbol,
                                 MCSymbolRefExpr::VK_ARM_LO16, OutContext);

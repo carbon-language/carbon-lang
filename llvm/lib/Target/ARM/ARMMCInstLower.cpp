@@ -40,20 +40,39 @@ MachineModuleInfoMachO &ARMMCInstLower::getMachOMMI() const {
 }
 #endif
 
-MCSymbol *ARMMCInstLower::
-GetGlobalAddressSymbol(const MachineOperand &MO) const {
+MCSymbol *ARMMCInstLower::GetGlobalAddressSymbol(const GlobalValue *GV) const {
+  return Printer.Mang->getSymbol(GV);
+}
+
+const MCSymbolRefExpr *ARMMCInstLower::
+GetSymbolRef(const MachineOperand &MO) const {
+  assert(MO.isGlobal() && "Isn't a global address reference?");
   // FIXME: HANDLE PLT references how??
+
+  const MCSymbolRefExpr *SymRef;
+  const MCSymbol *Symbol = GetGlobalAddressSymbol(MO.getGlobal());
+
   switch (MO.getTargetFlags()) {
   default: assert(0 && "Unknown target flag on GV operand");
-  case 0: break;
+  case 0:
+    SymRef = MCSymbolRefExpr::Create(Symbol, MCSymbolRefExpr::VK_None, Ctx);
+    break;
+  case ARMII::MO_LO16:
+    SymRef = MCSymbolRefExpr::Create(Symbol, MCSymbolRefExpr::VK_ARM_LO16, Ctx);
+    break;
+  case ARMII::MO_HI16:
+    SymRef = MCSymbolRefExpr::Create(Symbol, MCSymbolRefExpr::VK_ARM_HI16, Ctx);
+    break;
   }
 
-  return Printer.Mang->getSymbol(MO.getGlobal());
+  return SymRef;
 }
 
 MCSymbol *ARMMCInstLower::
 GetExternalSymbolSymbol(const MachineOperand &MO) const {
   // FIXME: HANDLE PLT references how??
+  // FIXME: This probably needs to be merged with the above SymbolRef stuff
+  // to handle :lower16: and :upper16: (?)
   switch (MO.getTargetFlags()) {
   default: assert(0 && "Unknown target flag on GV operand");
   case 0: break;
@@ -115,6 +134,17 @@ LowerSymbolOperand(const MachineOperand &MO, MCSymbol *Sym) const {
   return MCOperand::CreateExpr(Expr);
 }
 
+MCOperand ARMMCInstLower::
+LowerSymbolRefOperand(const MachineOperand &MO,
+                      const MCSymbolRefExpr *Sym) const {
+  const MCExpr *Expr = Sym;
+  if (!MO.isJTI() && MO.getOffset())
+    Expr = MCBinaryExpr::CreateAdd(Expr,
+                                   MCConstantExpr::Create(MO.getOffset(), Ctx),
+                                   Ctx);
+  return MCOperand::CreateExpr(Expr);
+}
+
 
 void ARMMCInstLower::Lower(const MachineInstr *MI, MCInst &OutMI) const {
   OutMI.setOpcode(MI->getOpcode());
@@ -141,7 +171,7 @@ void ARMMCInstLower::Lower(const MachineInstr *MI, MCInst &OutMI) const {
                        MO.getMBB()->getSymbol(), Ctx));
       break;
     case MachineOperand::MO_GlobalAddress:
-      MCOp = LowerSymbolOperand(MO, GetGlobalAddressSymbol(MO));
+      MCOp = LowerSymbolRefOperand(MO, GetSymbolRef(MO));
       break;
     case MachineOperand::MO_ExternalSymbol:
       MCOp = LowerSymbolOperand(MO, GetExternalSymbolSymbol(MO));

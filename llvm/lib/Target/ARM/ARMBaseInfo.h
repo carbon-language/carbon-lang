@@ -167,6 +167,24 @@ inline static unsigned getARMRegisterNumbering(unsigned Reg) {
   }
 }
 
+namespace ARMII {
+  /// Target Operand Flag enum.
+  enum TOF {
+    //===------------------------------------------------------------------===//
+    // ARM Specific MachineOperand flags.
+
+    MO_NO_FLAG,
+
+    /// MO_LO16 - On a symbol operand, this represents a relocation containing
+    /// lower 16 bit of the address. Used only via movw instruction.
+    MO_LO16,
+
+    /// MO_HI16 - On a symbol operand, this represents a relocation containing
+    /// higher 16 bit of the address. Used only via movt instruction.
+    MO_HI16
+  };
+} // end namespace ARMII
+
 } // end namespace llvm;
 
 #endif
