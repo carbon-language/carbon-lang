@@ -674,6 +674,10 @@ public:
     --ConditionalBranchLevel;
   }
 
+  /// isInConditionalBranch - Return true if we're currently emitting
+  /// one branch or the other of a conditional expression.
+  bool isInConditionalBranch() const { return ConditionalBranchLevel != 0; }
+
 private:
   CGDebugInfo *DebugInfo;
 

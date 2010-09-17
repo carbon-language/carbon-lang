@@ -1431,9 +1431,11 @@ static void SetupCleanupBlockActivation(CodeGenFunction &CGF,
                                         EHScopeStack::stable_iterator C,
                                         ForActivation_t Kind) {
   EHCleanupScope &Scope = cast<EHCleanupScope>(*CGF.EHStack.find(C));
-  assert(!Scope.getActiveFlag() && "scope already has activation flag");
 
-  bool NeedFlag = false;
+  // We always need the flag if we're activating the cleanup, because
+  // we have to assume that the current location doesn't necessarily
+  // dominate all future uses of the cleanup.
+  bool NeedFlag = (Kind == ForActivation);
 
   // Calculate whether the cleanup was used:
 
@@ -1452,16 +1454,17 @@ static void SetupCleanupBlockActivation(CodeGenFunction &CGF,
   // If it hasn't yet been used as either, we're done.
   if (!NeedFlag) return;
 
-  llvm::AllocaInst *Var = CGF.CreateTempAlloca(CGF.Builder.getInt1Ty());
-  Scope.setActiveFlag(Var);
+  llvm::AllocaInst *Var = Scope.getActiveFlag();
+  if (!Var) {
+    Var = CGF.CreateTempAlloca(CGF.Builder.getInt1Ty(), "cleanup.isactive");
+    Scope.setActiveFlag(Var);
 
-  if (Kind == ForActivation) {
-    CGF.InitTempAlloca(Var, CGF.Builder.getFalse());
-    CGF.Builder.CreateStore(CGF.Builder.getTrue(), Var);
-  } else {
-    CGF.InitTempAlloca(Var, CGF.Builder.getTrue());
-    CGF.Builder.CreateStore(CGF.Builder.getFalse(), Var);
+    // Initialize to true or false depending on whether it was
+    // active up to this point.
+    CGF.InitTempAlloca(Var, CGF.Builder.getInt1(Kind == ForDeactivation));
   }
+
+  CGF.Builder.CreateStore(CGF.Builder.getInt1(Kind == ForActivation), Var);
 }
 
 /// Activate a cleanup that was created in an inactivated state.
@@ -1479,7 +1482,7 @@ void CodeGenFunction::ActivateCleanupBlock(EHScopeStack::stable_iterator C) {
 void CodeGenFunction::DeactivateCleanupBlock(EHScopeStack::stable_iterator C) {
   assert(C != EHStack.stable_end() && "deactivating bottom of stack?");
   EHCleanupScope &Scope = cast<EHCleanupScope>(*EHStack.find(C));
-  assert(Scope.isActive() && "double activation");
+  assert(Scope.isActive() && "double deactivation");
 
   // If it's the top of the stack, just pop it.
   if (C == EHStack.stable_begin()) {

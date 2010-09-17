@@ -164,25 +164,77 @@ namespace test2 {
 
 namespace test3 {
   struct A {
-    A(int); A(int, int); ~A();
+    A(int); A(int, int); A(const A&); ~A();
     void *p;
-    void *operator new(size_t, void*, void*);
-    void operator delete(void*, void*, void*);
+    void *operator new(size_t, void*, double);
+    void operator delete(void*, void*, double);
   };
+
+  void *foo();
+  double bar();
+  A makeA(), *makeAPtr();
 
   A *a() {
     // CHECK:    define [[A:%.*]]* @_ZN5test31aEv()
     // CHECK:      [[FOO:%.*]] = call i8* @_ZN5test33fooEv()
-    // CHECK:      [[BAR:%.*]] = call i8* @_ZN5test33barEv()
-    // CHECK:      [[NEW:%.*]] = call i8* @_ZN5test31AnwEmPvS1_(i64 8, i8* [[FOO]], i8* [[BAR]])
+    // CHECK:      [[BAR:%.*]] = call double @_ZN5test33barEv()
+    // CHECK:      [[NEW:%.*]] = call i8* @_ZN5test31AnwEmPvd(i64 8, i8* [[FOO]], double [[BAR]])
     // CHECK-NEXT: [[CAST:%.*]] = bitcast i8* [[NEW]] to [[A]]*
     // CHECK-NEXT: invoke void @_ZN5test31AC1Ei([[A]]* [[CAST]], i32 5)
     // CHECK:      ret [[A]]* [[CAST]]
-    // CHECK:      invoke void @_ZN5test31AdlEPvS1_S1_(i8* [[NEW]], i8* [[FOO]], i8* [[BAR]])
+    // CHECK:      invoke void @_ZN5test31AdlEPvS1_d(i8* [[NEW]], i8* [[FOO]], double [[BAR]])
     // CHECK:      call void @_ZSt9terminatev()
-    extern void *foo(), *bar();
-
     return new(foo(),bar()) A(5);
+  }
+
+  // rdar://problem/8439196
+  A *b(bool cond) {
+
+    // CHECK:    define [[A:%.*]]* @_ZN5test31bEb(i1 zeroext
+    // CHECK:      [[SAVED0:%.*]] = alloca i8*
+    // CHECK-NEXT: [[SAVED1:%.*]] = alloca i8*
+    // CHECK-NEXT: [[CLEANUPACTIVE:%.*]] = alloca i1
+    // CHECK-NEXT: [[TMP:%.*]] = alloca [[A]], align 8
+    // CHECK:      [[TMPACTIVE:%.*]] = alloca i1
+    // CHECK-NEXT: store i1 false, i1* [[TMPACTIVE]]
+    // CHECK-NEXT: store i1 false, i1* [[CLEANUPACTIVE]]
+
+    // CHECK:      [[COND:%.*]] = trunc i8 {{.*}} to i1
+    // CHECK-NEXT: br i1 [[COND]]
+    return (cond ?
+
+    // CHECK:      [[FOO:%.*]] = call i8* @_ZN5test33fooEv()
+    // CHECK-NEXT: [[NEW:%.*]] = call i8* @_ZN5test31AnwEmPvd(i64 8, i8* [[FOO]], double [[CONST:.*]])
+    // CHECK-NEXT: store i8* [[NEW]], i8** [[SAVED0]]
+    // CHECK-NEXT: store i8* [[FOO]], i8** [[SAVED1]]
+    // CHECK-NEXT: store i1 true, i1* [[CLEANUPACTIVE]]
+    // CHECK-NEXT: [[CAST:%.*]] = bitcast i8* [[NEW]] to [[A]]*
+    // CHECK-NEXT: invoke void @_ZN5test35makeAEv([[A]]* sret [[TMP]])
+    // CHECK:      store i1 true, i1* [[TMPACTIVE]]
+    // CHECK-NEXT: invoke void @_ZN5test31AC1ERKS0_([[A]]* [[CAST]], [[A]]* [[TMP]])
+    // CHECK:      store i1 false, i1* [[CLEANUPACTIVE]]
+    // CHECK-NEXT: br label
+    //   -> cond.end
+            new(foo(),10.0) A(makeA()) :
+
+    // CHECK:      [[MAKE:%.*]] = invoke [[A]]* @_ZN5test38makeAPtrEv()
+    // CHECK:      br label
+    //   -> cond.end
+            makeAPtr());
+
+    // cond.end:
+    // CHECK:      [[RESULT:%.*]] = phi [[A]]* {{.*}}[[CAST]]{{.*}}[[MAKE]]
+    // CHECK-NEXT: [[ISACTIVE:%.*]] = load i1* [[TMPACTIVE]]
+    // CHECK-NEXT: br i1 [[ISACTIVE]]
+    // CHECK:      invoke void @_ZN5test31AD1Ev
+    // CHECK:      ret [[A]]* [[RESULT]]
+
+    // in the EH path:
+    // CHECK:      [[ISACTIVE:%.*]] = load i1* [[CLEANUPACTIVE]]
+    // CHECK-NEXT: br i1 [[ISACTIVE]]
+    // CHECK:      [[V0:%.*]] = load i8** [[SAVED0]]
+    // CHECK-NEXT: [[V1:%.*]] = load i8** [[SAVED1]]
+    // CHECK-NEXT: invoke void @_ZN5test31AdlEPvS1_d(i8* [[V0]], i8* [[V1]], double [[CONST]])
   }
 }
 
@@ -206,5 +258,4 @@ namespace test4 {
 
     return new(foo(),bar()) A(5);
   }
-
 }

@@ -1035,7 +1035,8 @@ Decl *TemplateDeclInstantiator::VisitFunctionDecl(FunctionDecl *D,
 
   // Attach the parameters
   for (unsigned P = 0; P < Params.size(); ++P)
-    Params[P]->setOwningFunction(Function);
+    if (Params[P])
+      Params[P]->setOwningFunction(Function);
   Function->setParams(Params.data(), Params.size());
 
   SourceLocation InstantiateAtPOI;
