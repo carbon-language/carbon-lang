@@ -683,15 +683,15 @@ ExprResult Parser::ParseCastExpression(bool isUnaryExpression,
     if (getLang().ObjC1 && Tok.is(tok::identifier)) {
       const Token& Next = NextToken();
       if (Next.is(tok::colon) || Next.is(tok::r_square))
-        if (ParsedType Type = Actions.getTypeName(II, ILoc, getCurScope()))
-          if (Type.get()->isObjCObjectOrInterfaceType()) {
+        if (ParsedType Typ = Actions.getTypeName(II, ILoc, getCurScope()))
+          if (Typ.get()->isObjCObjectOrInterfaceType()) {
             // Fake up a Declarator to use with ActOnTypeName.
             DeclSpec DS;
             DS.SetRangeStart(ILoc);
             DS.SetRangeEnd(ILoc);
             const char *PrevSpec = 0;
             unsigned DiagID;
-            DS.SetTypeSpecType(TST_typename, ILoc, PrevSpec, DiagID, Type);
+            DS.SetTypeSpecType(TST_typename, ILoc, PrevSpec, DiagID, Typ);
             
             Declarator DeclaratorInfo(DS, Declarator::TypeNameContext);
             TypeResult Ty = Actions.ActOnTypeName(getCurScope(), 
