@@ -10,7 +10,8 @@
 #ifdef NON_FIXITS
 void test() {
   // FIXME: not providing fix-its
-  NSstring *str = @"A string"; // expected-error{{use of undeclared identifier 'NSstring'; did you mean 'NSString'?}}
+  NSstring *str = @"A string"; // expected-error{{use of undeclared identifier 'NSstring'; did you mean 'NSString'?}} \
+  // expected-error{{use of undeclared identifier 'str'}}
 }
 #endif
 
