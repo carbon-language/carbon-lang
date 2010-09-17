@@ -72,6 +72,19 @@ void unresolved_exprs(T &x) {
   swap<T>(x, x);
 }
 
+template<typename T, U>
+struct Pair {
+  T first;
+  U second;
+};
+
+template<typename T, typename U>
+void init_list(T t, U u) {
+  typedef U second_type;
+
+  Pair<T, U> p = { t, second_type(u) };
+}
+
 // RUN: c-index-test -test-load-source all %s | FileCheck -check-prefix=CHECK-LOAD %s
 // CHECK-LOAD: index-templates.cpp:4:6: FunctionTemplate=f:4:6 Extent=[3:1 - 4:22]
 // CHECK-LOAD: index-templates.cpp:3:19: TemplateTypeParameter=T:3:19 (Definition) Extent=[3:19 - 3:20]
@@ -140,6 +153,11 @@ void unresolved_exprs(T &x) {
 // CHECK-LOAD: index-templates.cpp:69:3: OverloadedDeclRef=swap[60:6, 59:39, 58:27]
 // CHECK-LOAD: index-templates.cpp:71:6: OverloadedDeclRef=f[63:7, 64:9]
 // CHECK-LOAD: index-templates.cpp:72:3: OverloadedDeclRef=swap[58:27, 59:39]
+// CHECK-LOAD: index-templates.cpp:82:6: FunctionTemplate=init_list:82:6 (Definition)
+// CHECK-LOAD: index-templates.cpp:85:14: VarDecl=p:85:14 (Definition) Extent=[85:14 - 85:39]
+// CHECK-LOAD: index-templates.cpp:85:20: DeclRefExpr=t:82:18 Extent=[85:20 - 85:21]
+// CHECK-LOAD: index-templates.cpp:85:23: TypeRef=second_type:83:13 Extent=[85:23 - 85:34]
+// CHECK-LOAD: index-templates.cpp:85:35: DeclRefExpr=u:82:23 Extent=[85:35 - 85:36]
 
 // RUN: c-index-test -test-load-source-usrs all %s | FileCheck -check-prefix=CHECK-USRS %s
 // CHECK-USRS: index-templates.cpp c:@FT@>3#T#Nt0.0#t>2#T#Nt1.0f#>t0.22t0.0# Extent=[3:1 - 4:22]

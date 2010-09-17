@@ -1663,7 +1663,10 @@ bool CursorVisitor::VisitVAArgExpr(VAArgExpr *E) {
 
 bool CursorVisitor::VisitInitListExpr(InitListExpr *E) {
   // We care about the syntactic form of the initializer list, only.
-  return VisitExpr(E->getSyntacticForm());
+  if (InitListExpr *Syntactic = E->getSyntacticForm())
+    return VisitExpr(Syntactic);
+
+  return VisitExpr(E);
 }
 
 bool CursorVisitor::VisitDesignatedInitExpr(DesignatedInitExpr *E) {
