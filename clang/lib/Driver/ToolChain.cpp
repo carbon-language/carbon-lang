@@ -208,8 +208,8 @@ void ToolChain::AddClangCXXStdlibIncludeArgs(const ArgList &Args,
   }
 }
 
-void ToolChain::AddClangCXXStdlibLibArgs(const ArgList &Args,
-                                         ArgStringList &CmdArgs) const {
+void ToolChain::AddCXXStdlibLibArgs(const ArgList &Args,
+                                    ArgStringList &CmdArgs) const {
   CXXStdlibType Type = GetCXXStdlibType(Args);
 
   switch (Type) {

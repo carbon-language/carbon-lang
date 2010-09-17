@@ -173,10 +173,10 @@ public:
   virtual void AddClangCXXStdlibIncludeArgs(const ArgList &Args,
                                             ArgStringList &CmdArgs) const;
 
-  /// AddClangCXXStdlibLibArgs - Add the system specific linker arguments to use
+  /// AddCXXStdlibLibArgs - Add the system specific linker arguments to use
   /// for the given C++ standard library type.
-  virtual void AddClangCXXStdlibLibArgs(const ArgList &Args,
-                                        ArgStringList &CmdArgs) const;
+  virtual void AddCXXStdlibLibArgs(const ArgList &Args,
+                                   ArgStringList &CmdArgs) const;
 };
 
 } // end namespace driver

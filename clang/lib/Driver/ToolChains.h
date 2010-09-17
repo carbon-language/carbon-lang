@@ -223,8 +223,8 @@ public:
   virtual void AddLinkRuntimeLibArgs(const ArgList &Args,
                                      ArgStringList &CmdArgs) const;
 
-  virtual void AddClangCXXStdlibLibArgs(const ArgList &Args,
-                                        ArgStringList &CmdArgs) const;
+  virtual void AddCXXStdlibLibArgs(const ArgList &Args,
+                                   ArgStringList &CmdArgs) const;
 
   /// }
 };

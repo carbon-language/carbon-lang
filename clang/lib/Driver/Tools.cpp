@@ -115,7 +115,7 @@ static void AddLinkerInputs(const ToolChain &TC,
 
     // Handle reserved library options.
     if (A.getOption().matches(options::OPT_Z_reserved_lib_stdcxx)) {
-      TC.AddClangCXXStdlibLibArgs(Args, CmdArgs);
+      TC.AddCXXStdlibLibArgs(Args, CmdArgs);
     } else
       A.renderAsInput(Args, CmdArgs);
   }
@@ -2540,7 +2540,7 @@ void darwin::Link::ConstructJob(Compilation &C, const JobAction &JA,
   if (!Args.hasArg(options::OPT_nostdlib) &&
       !Args.hasArg(options::OPT_nodefaultlibs)) {
     if (getToolChain().getDriver().CCCIsCXX)
-      getToolChain().AddClangCXXStdlibLibArgs(Args, CmdArgs);
+      getToolChain().AddCXXStdlibLibArgs(Args, CmdArgs);
 
     // link_ssp spec is empty.
 
@@ -2802,7 +2802,7 @@ void openbsd::Link::ConstructJob(Compilation &C, const JobAction &JA,
   if (!Args.hasArg(options::OPT_nostdlib) &&
       !Args.hasArg(options::OPT_nodefaultlibs)) {
     if (D.CCCIsCXX) {
-      getToolChain().AddClangCXXStdlibLibArgs(Args, CmdArgs);
+      getToolChain().AddCXXStdlibLibArgs(Args, CmdArgs);
       CmdArgs.push_back("-lm");
     }
 
@@ -2932,7 +2932,7 @@ void freebsd::Link::ConstructJob(Compilation &C, const JobAction &JA,
   if (!Args.hasArg(options::OPT_nostdlib) &&
       !Args.hasArg(options::OPT_nodefaultlibs)) {
     if (D.CCCIsCXX) {
-      getToolChain().AddClangCXXStdlibLibArgs(Args, CmdArgs);
+      getToolChain().AddCXXStdlibLibArgs(Args, CmdArgs);
       CmdArgs.push_back("-lm");
     }
     // FIXME: For some reason GCC passes -lgcc and -lgcc_s before adding
@@ -3067,7 +3067,7 @@ void minix::Link::ConstructJob(Compilation &C, const JobAction &JA,
   if (!Args.hasArg(options::OPT_nostdlib) &&
       !Args.hasArg(options::OPT_nodefaultlibs)) {
     if (D.CCCIsCXX) {
-      getToolChain().AddClangCXXStdlibLibArgs(Args, CmdArgs);
+      getToolChain().AddCXXStdlibLibArgs(Args, CmdArgs);
       CmdArgs.push_back("-lm");
     }
 
@@ -3202,7 +3202,7 @@ void dragonfly::Link::ConstructJob(Compilation &C, const JobAction &JA,
     }
 
     if (D.CCCIsCXX) {
-      getToolChain().AddClangCXXStdlibLibArgs(Args, CmdArgs);
+      getToolChain().AddCXXStdlibLibArgs(Args, CmdArgs);
       CmdArgs.push_back("-lm");
     }
 

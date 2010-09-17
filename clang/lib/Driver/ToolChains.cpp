@@ -578,7 +578,7 @@ void Darwin::AddDeploymentTarget(DerivedArgList &Args) const {
   setTarget(iPhoneVersion, Major, Minor, Micro);
 }
 
-void DarwinClang::AddClangCXXStdlibLibArgs(const ArgList &Args,
+void DarwinClang::AddCXXStdlibLibArgs(const ArgList &Args,
                                       ArgStringList &CmdArgs) const {
   CXXStdlibType Type = GetCXXStdlibType(Args);
 
