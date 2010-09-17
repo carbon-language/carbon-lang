@@ -397,7 +397,7 @@ class TestBase(unittest2.TestCase):
             self.assertTrue(self.res.Succeeded(),
                             msg if msg else CMD_MSG(cmd))
 
-    def expect(self, cmd, msg=None, startstr=None, substrs=None, trace=False):
+    def expect(self, cmd, msg=None, startstr=None, substrs=None, trace=False, error=False):
         """
         Similar to runCmd; with additional expect style output matching ability.
 
@@ -405,14 +405,25 @@ class TestBase(unittest2.TestCase):
         return status.  The 'msg' parameter specifies an informational assert
         message.  We expect the output from running the command to start with
         'startstr' and matches the substrings contained in 'substrs'.
+
+        If the keyword argument error is set to True, it signifies that the API
+        client is expecting the command to fail.  In this case, the error stream
+        from running the command is retrieved and compared againt the golden
+        input, instead.
         """
         trace = (True if traceAlways else trace)
 
-        # First run the command.
-        self.runCmd(cmd, trace = (True if trace else False))
+        # First run the command.  If we are expecting error, set check=False.
+        self.runCmd(cmd, trace = (True if trace else False), check = not error)
 
         # Then compare the output against expected strings.
-        output = self.res.GetOutput()
+        output = self.res.GetError() if error else self.res.GetOutput()
+
+        # If error is True, the API client expects the command to fail!
+        if error:
+            self.assertFalse(self.res.Succeeded(),
+                             "Command '" + cmd + "' is expected to fail!")
+
         matched = output.startswith(startstr) if startstr else True
 
         if startstr and trace:
