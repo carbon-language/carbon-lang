@@ -1,4 +1,4 @@
-"""Set breakpoint on objective-c class and instance methods in foundation."""
+"""Set breakpoints on objective-c class and instance methods in foundation."""
 
 import os, time
 import unittest2
@@ -10,12 +10,12 @@ class FoundationTestCase(TestBase):
 
     mydir = "foundation"
 
-    def test_with_dsym(self):
+    def test_break_with_dsym(self):
         """Test setting objc breakpoints using 'regexp-break' and 'breakpoint set'."""
         self.buildDsym()
         self.break_on_objc_methods()
 
-    def test_with_dwarf(self):
+    def test_break_with_dwarf(self):
         """Test setting objc breakpoints using 'regexp-break' and 'breakpoint set'."""
         self.buildDwarf()
         self.break_on_objc_methods()
