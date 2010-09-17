@@ -55,9 +55,15 @@ void Sema::ActOnStartOfObjCMethodDef(Scope *FnBodyScope, Decl *D) {
 
   // Introduce all of the other parameters into this scope.
   for (ObjCMethodDecl::param_iterator PI = MDecl->param_begin(),
-       E = MDecl->param_end(); PI != E; ++PI)
+       E = MDecl->param_end(); PI != E; ++PI) {
+    ParmVarDecl *Param = (*PI);
+    if (!Param->isInvalidDecl() &&
+        RequireCompleteType(Param->getLocation(), Param->getType(),
+                            diag::err_typecheck_decl_incomplete_type))
+          Param->setInvalidDecl();
     if ((*PI)->getIdentifier())
       PushOnScopeChains(*PI, FnBodyScope);
+  }
 }
 
 Decl *Sema::
