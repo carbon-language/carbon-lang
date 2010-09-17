@@ -59,6 +59,10 @@ types::ID Darwin::LookupTypeForExtension(const char *Ext) const {
   return Ty;
 }
 
+bool Darwin::HasNativeLLVMSupport() const {
+  return true;
+}
+
 // FIXME: Can we tablegen this?
 static const char *GetArmArchForMArch(llvm::StringRef Value) {
   if (Value == "armv6k")

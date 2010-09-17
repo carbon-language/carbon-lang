@@ -43,6 +43,10 @@ types::ID ToolChain::LookupTypeForExtension(const char *Ext) const {
   return types::lookupTypeForExtension(Ext);
 }
 
+bool ToolChain::HasNativeLLVMSupport() const {
+  return false;
+}
+
 /// getARMTargetCPU - Get the (LLVM) name of the ARM cpu we are targetting.
 //
 // FIXME: tblgen this.

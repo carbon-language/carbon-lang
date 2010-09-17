@@ -98,6 +98,10 @@ public:
 
   // Platform defaults information
 
+  /// HasNativeLTOLinker - Check whether the linker and related tools have
+  /// native LLVM support.
+  virtual bool HasNativeLLVMSupport() const;
+
   /// LookupTypeForExtension - Return the default language type to use for the
   /// given extension.
   virtual types::ID LookupTypeForExtension(const char *Ext) const;
