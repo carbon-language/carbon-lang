@@ -38,6 +38,7 @@ def u_Group               : OptionGroup<"<u group>">;
 
 def pedantic_Group        : OptionGroup<"<pedantic group>">,
   Group<CompileOnly_Group>;
+def reserved_lib_Group   : OptionGroup<"<reserved libs group>">;
 
 // Temporary groups for clang options which we know we don't support,
 // but don't want to verbosely warn the user about.
@@ -742,4 +743,8 @@ def _write_user_dependencies : Flag<"--write-user-dependencies">, Alias<MMD>;
 def _ : Joined<"--">, Flags<[Unsupported]>;
 
 // Special internal option to handle -Xlinker --no-demangle.
-def Z_Xlinker__no_demangle : Flag<"-Z-Xlinker-no-demangle">, Flags<[Unsupported]>;
+def Z_Xlinker__no_demangle : Flag<"-Z-Xlinker-no-demangle">, Flags<[Unsupported, NoArgumentUnused]>;
+
+// Reserved library options.
+def Z_reserved_lib_stdcxx : Flag<"-Z-reserved-lib-stdc++">,
+    Flags<[LinkerInput, NoArgumentUnused, Unsupported]>, Group<reserved_lib_Group>;

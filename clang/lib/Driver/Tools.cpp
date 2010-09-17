@@ -104,10 +104,20 @@ static void AddLinkerInputs(const ToolChain &TC,
           << TC.getTripleString();
     }
 
-    if (II.isFilename())
+    // Add filenames immediately.
+    if (II.isFilename()) {
       CmdArgs.push_back(II.getFilename());
-    else
-      II.getInputArg().renderAsInput(Args, CmdArgs);
+      continue;
+    }
+
+    // Otherwise, this is a linker input argument.
+    const Arg &A = II.getInputArg();
+
+    // Handle reserved library options.
+    if (A.getOption().matches(options::OPT_Z_reserved_lib_stdcxx)) {
+      TC.AddClangCXXStdlibLibArgs(Args, CmdArgs);
+    } else
+      A.renderAsInput(Args, CmdArgs);
   }
 }
 
@@ -3242,7 +3252,8 @@ void visualstudio::Link::ConstructJob(Compilation &C, const JobAction &JA,
   ArgStringList CmdArgs;
 
   if (Output.isFilename()) {
-    CmdArgs.push_back(Args.MakeArgString(std::string("-out:") + Output.getFilename()));
+    CmdArgs.push_back(Args.MakeArgString(std::string("-out:") +
+                                         Output.getFilename()));
   } else {
     assert(Output.isNothing() && "Invalid output.");
   }

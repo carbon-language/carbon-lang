@@ -115,6 +115,7 @@ InputArgList *Driver::ParseArgStrings(const char **ArgBegin,
 DerivedArgList *Driver::TranslateInputArgs(const InputArgList &Args) const {
   DerivedArgList *DAL = new DerivedArgList(Args);
 
+  bool HasNostdlib = Args.hasArg(options::OPT_nostdlib);
   for (ArgList::const_iterator it = Args.begin(),
          ie = Args.end(); it != ie; ++it) {
     const Arg *A = *it;
@@ -155,6 +156,17 @@ DerivedArgList *Driver::TranslateInputArgs(const InputArgList &Args) const {
       DAL->AddSeparateArg(A, Opts->getOption(options::OPT_MF),
                           A->getValue(Args, 1));
       continue;
+    }
+
+    // Rewrite reserved library names, unless -nostdlib is present.
+    if (!HasNostdlib && A->getOption().matches(options::OPT_l)) {
+      llvm::StringRef Value = A->getValue(Args);
+
+      if (Value == "stdc++") {
+        DAL->AddFlagArg(A, Opts->getOption(
+                              options::OPT_Z_reserved_lib_stdcxx));
+        continue;
+      }
     }
 
     DAL->append(*it);
