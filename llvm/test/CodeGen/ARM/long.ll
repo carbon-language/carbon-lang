@@ -14,22 +14,22 @@ entry:
 
 define i64 @f3() {
 ; CHECK: f3:
-; CHECK: mvn{{.*}}-2147483648
+; CHECK: mvn r0, #2, 2
 entry:
         ret i64 2147483647
 }
 
 define i64 @f4() {
 ; CHECK: f4:
-; CHECK: -2147483648
+; CHECK: mov r0, #2, 2
 entry:
         ret i64 2147483648
 }
 
 define i64 @f5() {
 ; CHECK: f5:
-; CHECK: mvn
-; CHECK: mvn{{.*}}-2147483648
+; CHECK: mvn r0, #0
+; CHECK: mvn r1, #2, 2
 entry:
         ret i64 9223372036854775807
 }
