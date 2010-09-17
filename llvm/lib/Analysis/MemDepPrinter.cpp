@@ -16,6 +16,7 @@
 #include "llvm/Support/CallSite.h"
 #include "llvm/Support/InstIterator.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/ADT/SetVector.h"
 using namespace llvm;
 
