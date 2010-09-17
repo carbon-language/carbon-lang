@@ -67,7 +67,7 @@ struct Y {
 namespace PR6421 {
   class T; // expected-note{{forward declaration}}
 
-  class QGenericArgument
+  class QGenericArgument // expected-note{{declared here}}
   {
     template<typename U>
     void foo(T t) // expected-error{{variable has incomplete type}}
@@ -76,7 +76,8 @@ namespace PR6421 {
     void disconnect()
     {
       T* t;
-      bob<QGenericArgument>(t); // expected-error{{undeclared identifier 'bob'}}
+      bob<QGenericArgument>(t); // expected-error{{undeclared identifier 'bob'}} \
+      // expected-error{{does not refer to a value}}
     }
   };
 }

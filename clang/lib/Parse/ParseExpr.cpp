@@ -177,8 +177,6 @@ static prec::Level getBinOpPrecedence(tok::TokenKind Kind,
 ///
 ExprResult Parser::ParseExpression() {
   ExprResult LHS(ParseAssignmentExpression());
-  if (LHS.isInvalid()) return move(LHS);
-
   return ParseRHSOfBinaryExpression(move(LHS), prec::Comma);
 }
 
@@ -190,8 +188,6 @@ ExprResult Parser::ParseExpression() {
 ExprResult
 Parser::ParseExpressionWithLeadingAt(SourceLocation AtLoc) {
   ExprResult LHS(ParseObjCAtExpression(AtLoc));
-  if (LHS.isInvalid()) return move(LHS);
-
   return ParseRHSOfBinaryExpression(move(LHS), prec::Comma);
 }
 
@@ -206,14 +202,13 @@ Parser::ParseExpressionWithLeadingExtension(SourceLocation ExtLoc) {
     ExtensionRAIIObject O(Diags);
 
     LHS = ParseCastExpression(false);
-    if (LHS.isInvalid()) return move(LHS);
   }
 
-  LHS = Actions.ActOnUnaryOp(getCurScope(), ExtLoc, tok::kw___extension__,
-                             LHS.take());
-  if (LHS.isInvalid()) return move(LHS);
+  if (!LHS.isInvalid())
+    LHS = Actions.ActOnUnaryOp(getCurScope(), ExtLoc, tok::kw___extension__,
+                               LHS.take());
 
-  return ParseRHSOfBinaryExpression(LHS.take(), prec::Comma);
+  return ParseRHSOfBinaryExpression(move(LHS), prec::Comma);
 }
 
 /// ParseAssignmentExpression - Parse an expr that doesn't include commas.
@@ -228,9 +223,7 @@ ExprResult Parser::ParseAssignmentExpression() {
     return ParseThrowExpression();
 
   ExprResult LHS(ParseCastExpression(false));
-  if (LHS.isInvalid()) return move(LHS);
-
-  return ParseRHSOfBinaryExpression(LHS.take(), prec::Assignment);
+  return ParseRHSOfBinaryExpression(move(LHS), prec::Assignment);
 }
 
 /// ParseAssignmentExprWithObjCMessageExprStart - Parse an assignment expression
@@ -251,8 +244,7 @@ Parser::ParseAssignmentExprWithObjCMessageExprStart(SourceLocation LBracLoc,
                                      ReceiverType, ReceiverExpr);
   if (R.isInvalid()) return move(R);
   R = ParsePostfixExpressionSuffix(R.take());
-  if (R.isInvalid()) return move(R);
-  return ParseRHSOfBinaryExpression(R.take(), prec::Assignment);
+  return ParseRHSOfBinaryExpression(R, prec::Assignment);
 }
 
 
@@ -264,9 +256,7 @@ ExprResult Parser::ParseConstantExpression() {
                                                Sema::Unevaluated);
 
   ExprResult LHS(ParseCastExpression(false));
-  if (LHS.isInvalid()) return move(LHS);
-
-  return ParseRHSOfBinaryExpression(LHS.take(), prec::Conditional);
+  return ParseRHSOfBinaryExpression(LHS, prec::Conditional);
 }
 
 /// ParseRHSOfBinaryExpression - Parse a binary expression that starts with
@@ -362,9 +352,10 @@ Parser::ParseRHSOfBinaryExpression(ExprResult LHS, prec::Level MinPrec) {
       RHS = ParseAssignmentExpression();
     else
       RHS = ParseCastExpression(false);
-    if (RHS.isInvalid())
-      return move(RHS);
 
+    if (RHS.isInvalid())
+      LHS = ExprError();
+    
     // Remember the precedence of this operator and get the precedence of the
     // operator immediately to the right of the RHS.
     prec::Level ThisPrec = NextTokPrec;
@@ -384,10 +375,11 @@ Parser::ParseRHSOfBinaryExpression(ExprResult LHS, prec::Level MinPrec) {
       // is okay, to bind exactly as tightly.  For example, compile A=B=C=D as
       // A=(B=(C=D)), where each paren is a level of recursion here.
       // The function takes ownership of the RHS.
-      RHS = ParseRHSOfBinaryExpression(RHS.get(), 
+      RHS = ParseRHSOfBinaryExpression(RHS, 
                             static_cast<prec::Level>(ThisPrec + !isRightAssoc));
+
       if (RHS.isInvalid())
-        return move(RHS);
+        LHS = ExprError();
 
       NextTokPrec = getBinOpPrecedence(Tok.getKind(), GreaterThanIsOperator,
                                        getLang().CPlusPlus0x);
@@ -426,9 +418,9 @@ ExprResult Parser::ParseCastExpression(bool isUnaryExpression,
                                                      ParsedType TypeOfCast) {
   bool NotCastExpr;
   ExprResult Res = ParseCastExpression(isUnaryExpression,
-                                             isAddressOfOperand,
-                                             NotCastExpr,
-                                             TypeOfCast);
+                                       isAddressOfOperand,
+                                       NotCastExpr,
+                                       TypeOfCast);
   if (NotCastExpr)
     Diag(Tok, diag::err_expected_expression);
   return move(Res);

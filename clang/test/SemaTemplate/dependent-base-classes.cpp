@@ -105,7 +105,9 @@ namespace PR6081 {
     void f0(const X & k)
     {
       this->template f1<int>()(k); // expected-error{{'f1' following the 'template' keyword does not refer to a template}} \
-      // FIXME: expected-error{{unqualified-id}}
+      // FIXME: expected-error{{unqualified-id}} \
+      // expected-error{{function-style cast or type construction}} \
+      // expected-error{{expected expression}}
     }
   };
 }
