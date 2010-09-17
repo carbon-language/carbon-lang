@@ -30,6 +30,7 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/GetElementPtrTypeIterator.h"
 #include "llvm/Support/MathExtras.h"
+#include "llvm/System/FEnv.h"
 #include <cerrno>
 #include <cmath>
 #include <fenv.h>
@@ -1040,13 +1041,10 @@ llvm::canConstantFoldCallTo(const Function *F) {
 
 static Constant *ConstantFoldFP(double (*NativeFP)(double), double V, 
                                 const Type *Ty) {
-  feclearexcept(FE_ALL_EXCEPT);
-  errno = 0;
+  sys::llvm_fenv_clearexcept();
   V = NativeFP(V);
-  if (errno != 0 ||
-      fetestexcept(FE_DIVBYZERO | FE_UNDERFLOW | FE_OVERFLOW | FE_INVALID)) {
-    feclearexcept(FE_ALL_EXCEPT);
-    errno = 0;
+  if (sys::llvm_fenv_testexcept()) {
+    sys::llvm_fenv_clearexcept();
     return 0;
   }
   
@@ -1060,13 +1058,10 @@ static Constant *ConstantFoldFP(double (*NativeFP)(double), double V,
 
 static Constant *ConstantFoldBinaryFP(double (*NativeFP)(double, double),
                                       double V, double W, const Type *Ty) {
-  feclearexcept(FE_ALL_EXCEPT);
-  errno = 0;
+  sys::llvm_fenv_clearexcept();
   V = NativeFP(V, W);
-  if (errno != 0 ||
-      fetestexcept(FE_DIVBYZERO | FE_UNDERFLOW | FE_OVERFLOW | FE_INVALID)) {
-    feclearexcept(FE_ALL_EXCEPT);
-    errno = 0;
+  if (sys::llvm_fenv_testexcept()) {
+    sys::llvm_fenv_clearexcept();
     return 0;
   }
   

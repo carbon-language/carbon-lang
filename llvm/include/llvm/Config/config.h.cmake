@@ -461,6 +461,9 @@
 /* Define to 1 if you have the <valgrind/valgrind.h> header file. */
 #cmakedefine HAVE_VALGRIND_VALGRIND_H ${HAVE_VALGRIND_VALGRIND_H}
 
+/* Define to 1 if you have the <fenv.h> header file. */
+#cmakedefine HAVE_FENV_H ${HAVE_FENV_H}
+
 /* Define to 1 if you have the <windows.h> header file. */
 #cmakedefine HAVE_WINDOWS_H ${HAVE_WINDOWS_H}
 
