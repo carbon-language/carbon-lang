@@ -4954,6 +4954,7 @@ Sema::CheckTransparentUnionArgumentConstraints(QualType ArgType, Expr *&rExpr) {
 
     if (CheckAssignmentConstraints(it->getType(), rExpr->getType())
           == Compatible) {
+      ImpCastExprToType(rExpr, it->getType(), CK_Unknown);
       InitField = *it;
       break;
     }
