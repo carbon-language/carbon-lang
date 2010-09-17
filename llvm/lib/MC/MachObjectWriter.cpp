@@ -797,7 +797,8 @@ public:
     unsigned Log2Size = getFixupKindLog2Size(Fixup.getKind());
 
     // If this is a 32-bit TLVP reloc it's handled a bit differently.
-    if (Target.getSymA()->getKind() == MCSymbolRefExpr::VK_TLVP) {
+    if (Target.getSymA() &&
+        Target.getSymA()->getKind() == MCSymbolRefExpr::VK_TLVP) {
       RecordTLVPRelocation(Asm, Layout, Fragment, Fixup, Target, FixedValue);
       return;
     }
