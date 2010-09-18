@@ -891,7 +891,7 @@ typedef struct DumpInfo
 // entry is successfully parsed.
 //
 // This function dump DWARF information and obey recurse depth and
-// wether a single DIE is to be dumped (or all of the data).
+// whether a single DIE is to be dumped (or all of the data).
 //----------------------------------------------------------------------
 static dw_offset_t DumpCallback
 (

@@ -58,7 +58,7 @@ DynamicLoader::~DynamicLoader()
 }
 
 //----------------------------------------------------------------------
-// Accessosors to the global setting as to wether to stop at image
+// Accessosors to the global setting as to whether to stop at image
 // (shared library) loading/unloading.
 //----------------------------------------------------------------------
 bool

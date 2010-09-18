@@ -207,7 +207,6 @@ lldb::OptionDefinition
 CommandObjectSettingsSet::CommandOptions::g_option_table[] =
 {
     { LLDB_OPT_SET_1, false, "override", 'o', no_argument, NULL, NULL, NULL, "Causes already existing instances and pending settings to use this new value.  This option only makes sense when setting default values." },
-
     { LLDB_OPT_SET_2, false, "reset", 'r', no_argument,   NULL, NULL, NULL, "Causes value to be reset to the original default for this variable.  No value needs to be specified when this option is used." },
 };
 

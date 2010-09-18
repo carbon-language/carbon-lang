@@ -402,6 +402,76 @@ Options::GenerateOptionUsage
             strm.Printf ("\n");
         strm.Indent (name);
 
+        // First go through and print all options that take no arguments as
+        // a single string. If a command has "-a" "-b" and "-c", this will show
+        // up as [-abc]
+
+        std::set<char> options;
+        std::set<char>::const_iterator options_pos, options_end;
+        bool first;
+        for (i = 0, first = true; i < num_options; ++i)
+        {
+            if (full_options_table[i].usage_mask & opt_set_mask)
+            {
+                // Add current option to the end of out_stream.
+
+                if (full_options_table[i].required == true && 
+                    full_options_table[i].option_has_arg == no_argument)
+                {
+                    options.insert (full_options_table[i].short_option);
+                }
+            }
+        }
+
+        if (options.empty() == false)
+        {
+            // We have some required options with no arguments
+            strm.PutCString(" -");
+            for (i=0; i<2; ++i)            
+                for (options_pos = options.begin(), options_end = options.end();
+                     options_pos != options_end;
+                     ++options_pos)
+                {
+                    if (i==0 && ::isupper (*options_pos))
+                        continue;
+                    if (i==1 && ::islower (*options_pos))
+                        continue;
+                    strm << *options_pos;
+                }
+        }
+
+        for (i = 0, options.clear(); i < num_options; ++i)
+        {
+            if (full_options_table[i].usage_mask & opt_set_mask)
+            {
+                // Add current option to the end of out_stream.
+
+                if (full_options_table[i].required == false &&
+                    full_options_table[i].option_has_arg == no_argument)
+                {
+                    options.insert (full_options_table[i].short_option);
+                }
+            }
+        }
+
+        if (options.empty() == false)
+        {
+            // We have some required options with no arguments
+            strm.PutCString(" [-");
+            for (i=0; i<2; ++i)            
+                for (options_pos = options.begin(), options_end = options.end();
+                     options_pos != options_end;
+                     ++options_pos)
+                {
+                    if (i==0 && ::isupper (*options_pos))
+                        continue;
+                    if (i==1 && ::islower (*options_pos))
+                        continue;
+                    strm << *options_pos;
+                }
+            strm.PutChar(']');
+        }
+
         // First go through and print the required options (list them up front).
         
         for (i = 0; i < num_options; ++i)
@@ -424,8 +494,6 @@ Options::GenerateOptionUsage
                                      full_options_table[i].short_option,
                                      full_options_table[i].argument_name);
                     }
-                    else
-                        strm.Printf (" -%c", full_options_table[i].short_option);
                 }
             }
         }
@@ -446,8 +514,6 @@ Options::GenerateOptionUsage
                     else if (full_options_table[i].option_has_arg == optional_argument)
                         strm.Printf (" [-%c [%s]]", full_options_table[i].short_option,
                                            full_options_table[i].argument_name);
-                    else
-                        strm.Printf (" [-%c]", full_options_table[i].short_option);
                 }
             }
         }
@@ -455,8 +521,7 @@ Options::GenerateOptionUsage
     strm.Printf ("\n\n");
 
     // Now print out all the detailed information about the various options:  long form, short form and help text:
-    //   -- long_name <argument>
-    //   - short <argument>
+    //   --long_name <argument>  ( -short <argument> )
     //   help text
 
     // This variable is used to keep track of which options' info we've printed out, because some options can be in
@@ -507,15 +572,13 @@ Options::GenerateOptionUsage
                     strm.EOL();
                 
                 strm.Indent ();
-                strm.Printf ("-%c ", full_options_table[i].short_option);
+                strm.Printf ("--%s", full_options_table[i].long_option);
                 if (full_options_table[i].argument_name != NULL)
-                    strm.PutCString(full_options_table[i].argument_name);
-                strm.EOL();
-                strm.Indent ();
-                strm.Printf ("--%s ", full_options_table[i].long_option);
+                    strm.Printf (" %s", full_options_table[i].argument_name);
+                strm.Printf ("  ( -%c", full_options_table[i].short_option);
                 if (full_options_table[i].argument_name != NULL)
-                    strm.PutCString(full_options_table[i].argument_name);
-                strm.EOL();
+                    strm.Printf (" %s", full_options_table[i].argument_name);
+                strm.PutCString(" )\n");
                 
                 strm.IndentMore (5);
                 

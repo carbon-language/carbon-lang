@@ -111,7 +111,7 @@ ValueObject::UpdateValueIfNeeded (ExecutionContextScope *exe_scope)
                 UpdateValue (exe_scope);
                 
                 // Update the fact that we tried to update the value for this
-                // value object wether or not we succeed
+                // value object whether or not we succeed
                 m_update_id = stop_id;
                 bool success = m_error.Success();
                 SetValueIsValid (success);

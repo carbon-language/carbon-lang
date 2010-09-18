@@ -436,7 +436,7 @@ public:
     //------------------------------------------------------------------
     /// Check if a plug-in instance can debug the file in \a module.
     ///
-    /// Each plug-in is given a chance to say wether it can debug
+    /// Each plug-in is given a chance to say whether it can debug
     /// the file in \a module. If the Process plug-in instance can
     /// debug a file on the current system, it should return \b true.
     ///

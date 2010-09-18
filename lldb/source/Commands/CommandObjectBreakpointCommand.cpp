@@ -48,7 +48,7 @@ CommandObjectBreakpointCommandAdd::CommandOptions::~CommandOptions ()
 lldb::OptionDefinition
 CommandObjectBreakpointCommandAdd::CommandOptions::g_option_table[] =
 {
-    { LLDB_OPT_SET_ALL, false, "one_liner", 'o', required_argument, NULL, 0, "<one-liner>",
+    { LLDB_OPT_SET_ALL, false, "one-liner", 'o', required_argument, NULL, 0, "<one-liner>",
         "Specify a one-liner inline." },
 
     { LLDB_OPT_SET_1, true, "script",    's', no_argument, NULL, 0, NULL,

@@ -92,7 +92,7 @@ public:
     DidLaunch () = 0;
 
     //------------------------------------------------------------------
-    /// Get wether the process should stop when images change.
+    /// Get whether the process should stop when images change.
     ///
     /// When images (executables and shared libraries) get loaded or
     /// unloaded, often debug sessions will want to try and resolve or
@@ -108,7 +108,7 @@ public:
     GetStopWhenImagesChange () const;
 
     //------------------------------------------------------------------
-    /// Set wether the process should stop when images change.
+    /// Set whether the process should stop when images change.
     ///
     /// When images (executables and shared libraries) get loaded or
     /// unloaded, often debug sessions will want to try and resolve or
@@ -117,7 +117,7 @@ public:
     /// can be overridden using this function callback.
     ///
     /// @param[in] stop
-    ///     Boolean value that indicates wether the process should stop
+    ///     Boolean value that indicates whether the process should stop
     ///     when images change.
     //------------------------------------------------------------------
     void

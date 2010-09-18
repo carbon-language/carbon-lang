@@ -262,7 +262,7 @@ DataExtractor::GetByteOrder () const
     return m_byte_order;
 }
 //------------------------------------------------------------------
-// Set wether this object will endian swap values as it extracts
+// Set whether this object will endian swap values as it extracts
 // data.
 //------------------------------------------------------------------
 void

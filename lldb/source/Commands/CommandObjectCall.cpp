@@ -302,7 +302,7 @@ CommandObjectCall::CommandOptions::g_option_table[] =
 { LLDB_OPT_SET_1, false, "format",     'f', required_argument, NULL, 0, "[ [bool|b] | [bin] | [char|c] | [oct|o] | [dec|i|d|u] | [hex|x] | [float|f] | [cstr|s] ]",  "Specify the format that the expression output should use."},
 { LLDB_OPT_SET_1, false, "debug",      'g', no_argument,       NULL, 0, NULL,                           "Enable verbose debug logging of the expression parsing and evaluation."},
 { LLDB_OPT_SET_1, false, "noexecute",  'n', no_argument,       NULL, 0, "no execute",                   "Only JIT and copy the wrapper & arguments, but don't execute."},
-{ LLDB_OPT_SET_1, false, "useabi",     'a', no_argument,       NULL, 0, NULL,                           "Use the ABI instead of the JIT to marshall arguments."},
+{ LLDB_OPT_SET_1, false, "use-abi",    'a', no_argument,       NULL, 0, NULL,                           "Use the ABI instead of the JIT to marshall arguments."},
 { 0, false, NULL, 0, 0, NULL, NULL, NULL, NULL }
 };
 

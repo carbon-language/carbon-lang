@@ -74,19 +74,19 @@ CommandObjectBreakpointSet::CommandOptions::g_option_table[] =
     { LLDB_OPT_SET_ALL, false, "shlib", 's', required_argument, NULL, CommandCompletions::eModuleCompletion, "<shlib-name>",
         "Set the breakpoint only in this shared library (can use this option multiple times for multiple shlibs)."},
 
-    { LLDB_OPT_SET_ALL, false, "ignore_count", 'k', required_argument,   NULL, 0, "<n>",
+    { LLDB_OPT_SET_ALL, false, "ignore-count", 'i', required_argument,   NULL, 0, "<n>",
         "Set the number of times this breakpoint is sKipped before stopping." },
 
-    { LLDB_OPT_SET_ALL, false, "thread_index", 'x', required_argument, NULL, NULL, "<thread_index>",
-        "The breakpoint stops only for the thread whose indeX matches this argument."},
+    { LLDB_OPT_SET_ALL, false, "thread-index", 'x', required_argument, NULL, NULL, "<thread-index>",
+        "The breakpoint stops only for the thread whose index matches this argument."},
 
-    { LLDB_OPT_SET_ALL, false, "thread_id", 't', required_argument, NULL, NULL, "<thread_id>",
+    { LLDB_OPT_SET_ALL, false, "thread-id", 't', required_argument, NULL, NULL, "<thread-id>",
         "The breakpoint stops only for the thread whose TID matches this argument."},
 
-    { LLDB_OPT_SET_ALL, false, "thread_name", 'T', required_argument, NULL, NULL, "<thread_name>",
+    { LLDB_OPT_SET_ALL, false, "thread-name", 'T', required_argument, NULL, NULL, "<thread-name>",
         "The breakpoint stops only for the thread whose thread name matches this argument."},
 
-    { LLDB_OPT_SET_ALL, false, "queue_name", 'q', required_argument, NULL, NULL, "<queue_name>",
+    { LLDB_OPT_SET_ALL, false, "queue-name", 'q', required_argument, NULL, NULL, "<queue-name>",
         "The breakpoint stops only for threads in the queue whose name is given by this argument."},
 
     { LLDB_OPT_SET_1, false, "file", 'f', required_argument, NULL, CommandCompletions::eSourceFileCompletion, "<filename>",
@@ -116,7 +116,7 @@ CommandObjectBreakpointSet::CommandOptions::g_option_table[] =
     { LLDB_OPT_SET_6, true, "method", 'M', required_argument, NULL, 0, "<method>",
         "Set the breakpoint by C++ method names." },
 
-    { LLDB_OPT_SET_7, true, "func_regex", 'r', required_argument, NULL, 0, "<regular-expression>",
+    { LLDB_OPT_SET_7, true, "func-regex", 'r', required_argument, NULL, 0, "<regex>",
         "Set the breakpoint by function name, evaluating a regular-expression to find the function name(s)." },
 
     { 0, false, NULL, 0, 0, NULL, 0, NULL, NULL }
@@ -186,7 +186,7 @@ CommandObjectBreakpointSet::CommandOptions::SetOptionValue (int option_idx, cons
                 m_modules.push_back (std::string (option_arg));
                 break;
             }
-        case 'k':
+        case 'i':
         {
             m_ignore_count = Args::StringToUInt32(optarg, UINT32_MAX, 0);
             if (m_ignore_count == UINT32_MAX)
@@ -1098,29 +1098,14 @@ CommandObjectBreakpointModify::CommandOptions::~CommandOptions ()
 lldb::OptionDefinition
 CommandObjectBreakpointModify::CommandOptions::g_option_table[] =
 {
-    { LLDB_OPT_SET_ALL, false, "ignore_count", 'k', required_argument,   NULL, 0, NULL,
-        "Set the number of times this breakpoint is sKipped before stopping." },
-
-    { LLDB_OPT_SET_ALL, false, "thread_index",       'x', required_argument, NULL, NULL, "<thread_index>",
-        "The breakpoint stops only for the thread whose indeX matches this argument."},
-
-    { LLDB_OPT_SET_ALL, false, "thread_id",       't', required_argument, NULL, NULL, "<thread_id>",
-        "The breakpoint stops only for the thread whose TID matches this argument."},
-
-    { LLDB_OPT_SET_ALL, false, "thread_name",       'T', required_argument, NULL, NULL, "<thread_name>",
-        "The breakpoint stops only for the thread whose thread name matches this argument."},
-
-    { LLDB_OPT_SET_ALL, false, "queue_name",       'q', required_argument, NULL, NULL, "<queue_name>",
-        "The breakpoint stops only for threads in the queue whose name is given by this argument."},
-
-    { LLDB_OPT_SET_1, false, "enable",       'e', no_argument, NULL, NULL, NULL,
-        "Enable the breakpoint."},
-
-    { LLDB_OPT_SET_2, false, "disable",       'd', no_argument, NULL, NULL, NULL,
-        "Disable the breakpoint."},
-
-
-    { 0, false, NULL, 0, 0, NULL, 0, NULL, NULL }
+{ LLDB_OPT_SET_ALL, false, "ignore-count", 'i', required_argument, NULL, NULL, "<n>", "Set the number of times this breakpoint is skipped before stopping." },
+{ LLDB_OPT_SET_ALL, false, "thread-index", 'x', required_argument, NULL, NULL, "<thread-index>", "The breakpoint stops only for the thread whose indeX matches this argument."},
+{ LLDB_OPT_SET_ALL, false, "thread-id",    't', required_argument, NULL, NULL, "<thread-id>", "The breakpoint stops only for the thread whose TID matches this argument."},
+{ LLDB_OPT_SET_ALL, false, "thread-name",  'T', required_argument, NULL, NULL, "<thread-name>", "The breakpoint stops only for the thread whose thread name matches this argument."},
+{ LLDB_OPT_SET_ALL, false, "queue-name",   'q', required_argument, NULL, NULL, "<queue-name>", "The breakpoint stops only for threads in the queue whose name is given by this argument."},
+{ LLDB_OPT_SET_1,   false, "enable",       'e', no_argument,       NULL, NULL, NULL, "Enable the breakpoint."},
+{ LLDB_OPT_SET_2,   false, "disable",      'd', no_argument,       NULL, NULL, NULL, "Disable the breakpoint."},
+{ 0,                false, NULL,            0 , 0,                 NULL, 0, NULL, NULL }
 };
 
 const lldb::OptionDefinition*
@@ -1145,7 +1130,7 @@ CommandObjectBreakpointModify::CommandOptions::SetOptionValue (int option_idx, c
             m_enable_passed = true;
             m_enable_value = true;
             break;
-        case 'k':
+        case 'i':
         {
             m_ignore_count = Args::StringToUInt32(optarg, UINT32_MAX, 0);
             if (m_ignore_count == UINT32_MAX)

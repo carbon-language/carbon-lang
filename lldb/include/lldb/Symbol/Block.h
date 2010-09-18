@@ -269,7 +269,7 @@ public:
     /// @param[in] add_inline_child_block_variables
     ///     If this is \b false, no child variables of child blocks 
     ///     that are inlined functions will be gotten. If \b true then
-    ///     all child variables will be added regardless of wether they
+    ///     all child variables will be added regardless of whether they
     ///     come from inlined functions or not.
     ///
     /// @return

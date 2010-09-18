@@ -270,7 +270,7 @@ public:
     GetUUID (UUID* uuid) = 0;
 
     //------------------------------------------------------------------
-    /// Gets wether endian swapping should occur when extracting data
+    /// Gets whether endian swapping should occur when extracting data
     /// from this object file.
     ///
     /// @return

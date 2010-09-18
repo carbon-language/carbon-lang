@@ -290,7 +290,12 @@ public:
     CommandObjectFrameVariable (CommandInterpreter &interpreter) :
         CommandObject (interpreter,
                        "frame variable",
-                       "Show specified argument, local variable, static variable or global variable for the current frame.  If none specified, list them all.",
+                       "Show frame variables. All argument and local variables "
+                       "that are in scope will be shown when no arguments are given. "
+                       "If any arguments are specified, they can be names of "
+                       "argument, local, file static and file global variables."
+                       "Children of aggregate variables can be specified such as "
+                       "'var->child.x'.",
                        "frame variable [<cmd-options>] [<var-name1> [<var-name2>...]]")
     {
     }
@@ -766,7 +771,7 @@ CommandObjectFrameVariable::CommandOptions::g_option_table[] =
 { LLDB_OPT_SET_1, false, "debug",      'D', no_argument,       NULL, 0, NULL,        "Enable verbose debug information."},
 { LLDB_OPT_SET_1, false, "depth",      'd', required_argument, NULL, 0, "<count>",   "Set the max recurse depth when dumping aggregate types (default is infinity)."},
 { LLDB_OPT_SET_1, false, "show-globals",'g', no_argument,      NULL, 0, NULL,        "Show the current frame source file global and static variables."},
-{ LLDB_OPT_SET_1, false, "find-global",'G', required_argument, NULL, 0, NULL,        "Find a global variable by name (which might not be in the current stack frame source file)."},
+{ LLDB_OPT_SET_1, false, "find-global",'G', required_argument, NULL, 0, "<name>",    "Find a global variable by name (which might not be in the current stack frame source file)."},
 { LLDB_OPT_SET_1, false, "location",   'L', no_argument,       NULL, 0, NULL,        "Show variable location information."},
 { LLDB_OPT_SET_1, false, "show-declaration", 'c', no_argument, NULL, 0, NULL,        "Show variable declaration information (source file and line where the variable was declared)."},
 { LLDB_OPT_SET_1, false, "name",       'n', required_argument, NULL, 0, "<name>",    "Lookup a variable by name or regex (--regex) for the current execution context."},
