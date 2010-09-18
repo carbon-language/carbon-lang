@@ -2,18 +2,8 @@
 
  - Add --show-unsupported, don't show by default?
 
- - Finish documentation.
-
  - Optionally use multiprocessing.
-
- - Support llvmc and ocaml tests.
 
  - Support valgrind in all configs, and LLVM style valgrind.
 
- - Provide test suite config for running unit tests.
-
  - Support a timeout / ulimit.
-
- - Support "disabling" tests? The advantage of making this distinct from XFAIL
-   is it makes it more obvious that it is a temporary measure (and lit can put
-   in a separate category).
