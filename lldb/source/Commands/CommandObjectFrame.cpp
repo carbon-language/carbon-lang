@@ -442,7 +442,7 @@ public:
         ExecutionContext exe_ctx(m_interpreter.GetDebugger().GetExecutionContext());
         if (exe_ctx.frame == NULL)
         {
-            result.AppendError ("invalid frame");
+            result.AppendError ("you must be stopped in a valid stack frame to view frame variables.");
             result.SetStatus (eReturnStatusFailed);
             return false;
         }
