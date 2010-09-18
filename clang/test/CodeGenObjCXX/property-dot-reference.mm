@@ -16,3 +16,23 @@ void GetURL() const;
 	self.node.GetURL();
 }	// expected-warning {{control reaches end of non-void function}}
 @end
+
+// rdar://8437240
+struct X {
+  int x;
+};
+
+void f0(const X &parent);
+@interface A
+- (const X&) target;
+@end
+void f1(A *a) {
+// CHECK: [[PRP:%.*]] = call %struct.X* bitcast (i8* (i8*, i8*, ...)* @objc_msgSend
+// CHECK-NEXT:call void @_Z2f0RK1X(%struct.X* [[PRP]])
+  f0(a.target);
+
+// CHECK: [[MSG:%.*]] = call %struct.X* bitcast (i8* (i8*, i8*, ...)* @objc_msgSend
+// CHECK-NEXT:call void @_Z2f0RK1X(%struct.X* [[MSG]])
+  f0([a target]);
+}
+

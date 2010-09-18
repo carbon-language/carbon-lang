@@ -196,7 +196,15 @@ EmitExprForReferenceBinding(CodeGenFunction &CGF, const Expr *E,
   if (E->isLvalue(CGF.getContext()) == Expr::LV_Valid) {
     // Emit the expression as an lvalue.
     LValue LV = CGF.EmitLValue(E);
-
+    if (LV.isPropertyRef() || LV.isKVCRef()) {
+      QualType QT = E->getType();
+      RValue RV = 
+        LV.isPropertyRef() ? CGF.EmitLoadOfPropertyRefLValue(LV, QT) 
+                           : CGF.EmitLoadOfKVCRefLValue(LV, QT);
+      assert(RV.isScalar() && "EmitExprForReferenceBinding");
+      return RV.getScalarVal();
+    }
+    
     if (LV.isSimple())
       return LV.getAddress();
     
