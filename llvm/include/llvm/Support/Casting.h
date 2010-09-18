@@ -232,8 +232,8 @@ inline typename cast_retty<X, Y>::ret_type dyn_cast(const Y &Val) {
 // value is accepted.
 //
 template <class X, class Y>
-inline typename cast_retty<X, Y>::ret_type dyn_cast_or_null(const Y &Val) {
-  return (Val && isa<X>(Val)) ? cast<X, Y>(Val) : 0;
+inline typename cast_retty<X, Y*>::ret_type dyn_cast_or_null(Y *Val) {
+  return (Val && isa<X>(Val)) ? cast<X>(Val) : 0;
 }
 
 } // End llvm namespace
