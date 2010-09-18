@@ -403,6 +403,9 @@ void AsmWriterEmitter::EmitPrintInstruction(raw_ostream &O) {
         << "  } else {\n"
         << Commands[0]
         << "  }\n\n";
+    } else if (Commands.size() == 1) {
+      // Emit a single possibility.
+      O << Commands[0] << "\n\n";
     } else {
       O << "  switch ((Bits >> " << (BitsLeft+AsmStrBits) << ") & "
         << ((1 << NumBits)-1) << ") {\n"
