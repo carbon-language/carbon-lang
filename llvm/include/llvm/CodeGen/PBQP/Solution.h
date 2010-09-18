@@ -27,7 +27,8 @@ namespace PBQP {
   class Solution {
   private:
 
-    typedef std::map<Graph::NodeItr, unsigned, NodeItrComparator> SelectionsMap;
+    typedef std::map<Graph::ConstNodeItr, unsigned,
+                     NodeItrComparator> SelectionsMap;
     SelectionsMap selections;
 
     unsigned r0Reductions, r1Reductions, r2Reductions, rNReductions;
@@ -80,7 +81,7 @@ namespace PBQP {
     /// \brief Get a node's selection.
     /// @param nItr Node iterator.
     /// @return The selection for nItr;
-    unsigned getSelection(Graph::NodeItr nItr) const {
+    unsigned getSelection(Graph::ConstNodeItr nItr) const {
       SelectionsMap::const_iterator sItr = selections.find(nItr);
       assert(sItr != selections.end() && "No selection for node.");
       return sItr->second;
