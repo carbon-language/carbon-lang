@@ -57,7 +57,7 @@ public:
     *this = get(II);
     assert(I.getPointer() && "Not a call?");
   }
-
+protected:
   /// CallSiteBase::get - This static method is sort of like a constructor.  It
   /// will create an appropriate call site for a Call or Invoke instruction, but
   /// it can also create a null initialized CallSiteBase object for something
@@ -72,7 +72,7 @@ public:
     }
     return CallSiteBase();
   }
-
+public:
   /// isCall - true if a CallInst is enclosed.
   /// Note that !isCall() does not mean it is an InvokeInst enclosed,
   /// it also could signify a NULL Instruction pointer.
@@ -282,16 +282,6 @@ public:
 
   bool operator==(const CallSite &CS) const { return I == CS.I; }
   bool operator!=(const CallSite &CS) const { return I != CS.I; }
-
-  /// CallSite::get - This static method is sort of like a constructor.  It will
-  /// create an appropriate call site for a Call or Invoke instruction, but it
-  /// can also create a null initialized CallSite object for something which is
-  /// NOT a call site.
-  ///
-  static CallSite get(Value *V) {
-    return Base::get(V);
-  }
-
   bool operator<(const CallSite &CS) const {
     return getInstruction() < CS.getInstruction();
   }
