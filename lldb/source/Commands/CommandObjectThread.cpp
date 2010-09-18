@@ -772,9 +772,9 @@ g_duo_running_mode[] =
 lldb::OptionDefinition
 CommandObjectThreadStepWithTypeAndScope::CommandOptions::g_option_table[] =
 {
-{ LLDB_OPT_SET_1, false, "avoid-no-debug",  'a', required_argument, NULL,               0, "<bool>",    "A boolean value that sets whether step-in will step over functions with no debug information."},
-{ LLDB_OPT_SET_1, false, "run-mode",        'm', required_argument, g_tri_running_mode, 0, "<run-mode>","Determine how to run other threads while stepping the current thread."},
-{ LLDB_OPT_SET_1, false, "step-over-regexp",'r', required_argument, NULL,               0, "<regexp>",  "A regular expression that defines function names to step over."},
+{ LLDB_OPT_SET_1, false, "avoid-no-debug",  'a', required_argument, NULL,               0, "<bool>",     "A boolean value that sets whether step-in will step over functions with no debug information."},
+{ LLDB_OPT_SET_1, false, "run-mode",        'm', required_argument, g_tri_running_mode, 0, "<run-mode>", "Determine how to run other threads while stepping the current thread."},
+{ LLDB_OPT_SET_1, false, "step-over-regexp",'r', required_argument, NULL,               0, "<regexp>",   "A regular expression that defines function names to step over."},
 { 0, false, NULL, 0, 0, NULL, 0, NULL, NULL }
 };
 

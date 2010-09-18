@@ -105,6 +105,13 @@ ValueObjectVariable::UpdateValue (ExecutionContextScope *exe_scope)
     DWARFExpression &expr = variable->LocationExpression();
     lldb::addr_t loclist_base_load_addr = LLDB_INVALID_ADDRESS;
     ExecutionContext exe_ctx (exe_scope);
+    
+    if (exe_ctx.process)
+    {
+        m_data.SetByteOrder(exe_ctx.process->GetByteOrder());
+        m_data.SetAddressByteSize(exe_ctx.process->GetAddressByteSize());
+    }
+
     if (expr.IsLocationList())
     {
         SymbolContext sc;

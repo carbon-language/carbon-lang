@@ -330,7 +330,7 @@ public:
             //const char *loc_cstr = valobj->GetLocationAsCString();
             if (m_options.show_location)
             {
-                s.Printf("@ %s: ", valobj->GetLocationAsCString(exe_scope));
+                s.Printf("%s: ", valobj->GetLocationAsCString(exe_scope));
             }
             if (m_options.debug)
                 s.Printf ("%p ValueObject{%u} ", valobj, valobj->GetID());
