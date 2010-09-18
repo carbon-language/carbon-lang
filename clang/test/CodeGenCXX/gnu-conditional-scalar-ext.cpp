@@ -9,3 +9,16 @@ int main(int argc, char **argv) {
     printf("%p\n", (void *)0xdeadbeef ? : (void *)0xaaaaaa);
     return 0;
 }
+
+// rdar://8446940
+namespace radar8446940 {
+extern "C" void abort();
+
+int main () {
+  char x[1];
+  char *y = x ? : 0;
+
+  if (x != y)
+    abort();
+}
+}

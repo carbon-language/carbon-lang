@@ -4113,9 +4113,11 @@ public:
   QualType CheckCommaOperands( // C99 6.5.17
     Expr *lex, Expr *&rex, SourceLocation OpLoc);
   QualType CheckConditionalOperands( // C99 6.5.15
-    Expr *&cond, Expr *&lhs, Expr *&rhs, SourceLocation questionLoc);
+    Expr *&cond, Expr *&lhs, Expr *&rhs, Expr *&save,
+    SourceLocation questionLoc);
   QualType CXXCheckConditionalOperands( // C++ 5.16
-    Expr *&cond, Expr *&lhs, Expr *&rhs, SourceLocation questionLoc);
+    Expr *&cond, Expr *&lhs, Expr *&rhs, Expr *&save, 
+    SourceLocation questionLoc);
   QualType FindCompositePointerType(SourceLocation Loc, Expr *&E1, Expr *&E2,
                                     bool *NonStandardCompositeType = 0);
 

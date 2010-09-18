@@ -2490,6 +2490,7 @@ static bool ConvertForConditional(Sema &Self, Expr *&E, QualType T) {
 /// See C++ [expr.cond]. Note that LHS is never null, even for the GNU x ?: y
 /// extension. In this case, LHS == Cond. (But they're not aliases.)
 QualType Sema::CXXCheckConditionalOperands(Expr *&Cond, Expr *&LHS, Expr *&RHS,
+                                           Expr *&SAVE,
                                            SourceLocation QuestionLoc) {
   // FIXME: Handle C99's complex types, vector types, block pointers and Obj-C++
   // interface pointers.
@@ -2497,6 +2498,12 @@ QualType Sema::CXXCheckConditionalOperands(Expr *&Cond, Expr *&LHS, Expr *&RHS,
   // C++0x 5.16p1
   //   The first expression is contextually converted to bool.
   if (!Cond->isTypeDependent()) {
+    if (SAVE && Cond->getType()->isArrayType()) {
+      QualType CondTy = Cond->getType();
+      CondTy = Context.getArrayDecayedType(CondTy);
+      ImpCastExprToType(Cond, CondTy, CK_ArrayToPointerDecay);
+      SAVE = LHS = Cond;
+    }
     if (CheckCXXBooleanCondition(Cond))
       return QualType();
   }

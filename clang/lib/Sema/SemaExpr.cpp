@@ -4203,13 +4203,18 @@ ExprResult Sema::ActOnParenOrParenListExpr(SourceLocation L,
 /// In that case, lhs = cond.
 /// C99 6.5.15
 QualType Sema::CheckConditionalOperands(Expr *&Cond, Expr *&LHS, Expr *&RHS,
+                                        Expr *&SAVE,
                                         SourceLocation QuestionLoc) {
   // C++ is sufficiently different to merit its own checker.
   if (getLangOptions().CPlusPlus)
-    return CXXCheckConditionalOperands(Cond, LHS, RHS, QuestionLoc);
+    return CXXCheckConditionalOperands(Cond, LHS, RHS, SAVE, QuestionLoc);
 
   UsualUnaryConversions(Cond);
-  UsualUnaryConversions(LHS);
+  if (SAVE) {
+    SAVE = LHS = Cond;
+  }
+  else
+    UsualUnaryConversions(LHS);
   UsualUnaryConversions(RHS);
   QualType CondTy = Cond->getType();
   QualType LHSTy = LHS->getType();
@@ -4534,8 +4539,8 @@ ExprResult Sema::ActOnConditionalOp(SourceLocation QuestionLoc,
     LHSExpr = SAVEExpr = CondExpr;
   }
 
-  QualType result = CheckConditionalOperands(CondExpr, LHSExpr,
-                                             RHSExpr, QuestionLoc);
+  QualType result = CheckConditionalOperands(CondExpr, LHSExpr, RHSExpr, 
+                                             SAVEExpr, QuestionLoc);
   if (result.isNull())
     return ExprError();
 
