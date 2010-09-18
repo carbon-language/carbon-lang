@@ -555,7 +555,6 @@ bool ARMFastISel::ARMEmitLoad(EVT VT, unsigned &ResultReg,
 
   assert(VT.isSimple() && "Non-simple types are invalid here!");
   unsigned Opc;
-
   switch (VT.getSimpleVT().SimpleTy) {
     default:
       assert(false && "Trying to emit for an unhandled type!");
@@ -637,6 +636,7 @@ bool ARMFastISel::ARMStoreAlloca(const Instruction *I, unsigned SrcReg, EVT VT){
 bool ARMFastISel::ARMEmitStore(EVT VT, unsigned SrcReg,
                                unsigned DstReg, int Offset) {
   unsigned StrOpc;
+  bool isFloat = false;
   switch (VT.getSimpleVT().SimpleTy) {
     default: return false;
     case MVT::i1:
@@ -646,17 +646,25 @@ bool ARMFastISel::ARMEmitStore(EVT VT, unsigned SrcReg,
     case MVT::f32:
       if (!Subtarget->hasVFP2()) return false;
       StrOpc = ARM::VSTRS;
+      isFloat = true;
       break;
     case MVT::f64:
       if (!Subtarget->hasVFP2()) return false;
       StrOpc = ARM::VSTRD;
+      isFloat = true;
       break;
   }
 
+  // The thumb addressing mode has operands swapped from the arm addressing
+  // mode, the floating point one only has two operands.
   if (isThumb)
     AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
                             TII.get(StrOpc), SrcReg)
                     .addReg(DstReg).addImm(Offset).addReg(0));
+  else if (isFloat)
+    AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
+                            TII.get(StrOpc), SrcReg)
+                    .addReg(DstReg).addImm(Offset));
   else
     AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
                             TII.get(StrOpc), SrcReg)
