@@ -58,8 +58,9 @@ public:
     //------------------------------------------------------------------
     // Constructors and Destructors
     //------------------------------------------------------------------
-    CommandObjectLogEnable() :
-        CommandObject ("log enable",
+    CommandObjectLogEnable(CommandInterpreter &interpreter) :
+        CommandObject (interpreter,
+                       "log enable",
                        "Enable logging for a single log channel.",
                        "log enable [<cmd-options>] <channel>")
     {
@@ -77,8 +78,7 @@ public:
     }
 
     virtual bool
-    Execute (CommandInterpreter &interpreter, 
-             Args& args,
+    Execute (Args& args,
              CommandReturnObject &result)
     {
         if (args.GetArgumentCount() < 1)
@@ -95,7 +95,7 @@ public:
 
             if (m_options.log_file.empty())
             {
-                log_stream_sp.reset(new StreamFile(interpreter.GetDebugger().GetOutputFileHandle()));
+                log_stream_sp.reset(new StreamFile(m_interpreter.GetDebugger().GetOutputFileHandle()));
             }
             else
             {
@@ -234,10 +234,11 @@ public:
     //------------------------------------------------------------------
     // Constructors and Destructors
     //------------------------------------------------------------------
-    CommandObjectLogDisable() :
-        CommandObject ("log disable",
-                        "Disable one or more log channels.",
-                        "log disable <channel> [<channel> ...]")
+    CommandObjectLogDisable(CommandInterpreter &interpreter) :
+        CommandObject (interpreter,
+                       "log disable",
+                       "Disable one or more log channels.",
+                       "log disable <channel> [<channel> ...]")
     {
     }
 
@@ -247,8 +248,7 @@ public:
     }
 
     virtual bool
-    Execute (CommandInterpreter &interpreter, 
-             Args& args,
+    Execute (Args& args,
              CommandReturnObject &result)
     {
         const size_t argc = args.GetArgumentCount();
@@ -295,8 +295,9 @@ public:
     //------------------------------------------------------------------
     // Constructors and Destructors
     //------------------------------------------------------------------
-    CommandObjectLogList() :
-        CommandObject ("log list",
+    CommandObjectLogList(CommandInterpreter &interpreter) :
+        CommandObject (interpreter, 
+                       "log list",
                        "List the log categories for one or more log channels.",
                        "log list <channel> [<channel> ...]")
     {
@@ -308,8 +309,7 @@ public:
     }
 
     virtual bool
-    Execute (CommandInterpreter &interpreter, 
-             Args& args,
+    Execute (Args& args,
              CommandReturnObject &result)
     {
         const size_t argc = args.GetArgumentCount();
@@ -358,8 +358,9 @@ public:
     //------------------------------------------------------------------
     // Constructors and Destructors
     //------------------------------------------------------------------
-    CommandObjectLogTimer() :
-        CommandObject ("log timers",
+    CommandObjectLogTimer(CommandInterpreter &interpreter) :
+        CommandObject (interpreter, 
+                       "log timers",
                        "Enable, disable, dump, and reset LLDB internal performance timers.",
                        "log timers < enable | disable | dump | reset >")
     {
@@ -371,8 +372,7 @@ public:
     }
 
     virtual bool
-    Execute (CommandInterpreter &interpreter, 
-             Args& args,
+    Execute (Args& args,
              CommandReturnObject &result)
     {
         const size_t argc = args.GetArgumentCount();
@@ -418,14 +418,15 @@ public:
 // CommandObjectLog constructor
 //----------------------------------------------------------------------
 CommandObjectLog::CommandObjectLog(CommandInterpreter &interpreter) :
-    CommandObjectMultiword ("log",
+    CommandObjectMultiword (interpreter,
+                            "log",
                             "A set of commands for operating on logs.",
                             "log <command> [<command-options>]")
 {
-    LoadSubCommand (interpreter, "enable",  CommandObjectSP (new CommandObjectLogEnable));
-    LoadSubCommand (interpreter, "disable", CommandObjectSP (new CommandObjectLogDisable));
-    LoadSubCommand (interpreter, "list",    CommandObjectSP (new CommandObjectLogList));
-    LoadSubCommand (interpreter, "timers",  CommandObjectSP (new CommandObjectLogTimer));
+    LoadSubCommand ("enable",  CommandObjectSP (new CommandObjectLogEnable (interpreter)));
+    LoadSubCommand ("disable", CommandObjectSP (new CommandObjectLogDisable (interpreter)));
+    LoadSubCommand ("list",    CommandObjectSP (new CommandObjectLogList (interpreter)));
+    LoadSubCommand ("timers",  CommandObjectSP (new CommandObjectLogTimer (interpreter)));
 }
 
 //----------------------------------------------------------------------

@@ -54,7 +54,7 @@ public:
         bool        show_summary;
     };
 
-    CommandObjectExpression ();
+    CommandObjectExpression (CommandInterpreter &interpreter);
 
     virtual
     ~CommandObjectExpression ();
@@ -65,16 +65,14 @@ public:
 
 
     virtual bool
-    Execute (CommandInterpreter &interpreter,
-             Args& command,
+    Execute (Args& command,
              CommandReturnObject &result);
 
     virtual bool
     WantsRawCommandString() { return true; }
 
     virtual bool
-    ExecuteRawCommandString (CommandInterpreter &interpreter,
-                             const char *command,
+    ExecuteRawCommandString (const char *command,
                              CommandReturnObject &result);
 
 protected:

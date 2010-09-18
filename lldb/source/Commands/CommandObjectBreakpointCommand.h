@@ -56,28 +56,25 @@ class CommandObjectBreakpointCommandAdd : public CommandObject
 {
 public:
 
-    CommandObjectBreakpointCommandAdd ();
+    CommandObjectBreakpointCommandAdd (CommandInterpreter &interpreter);
 
     virtual
     ~CommandObjectBreakpointCommandAdd ();
 
     virtual bool
-    Execute (CommandInterpreter &interpreter,
-             Args& command,
+    Execute (Args& command,
              CommandReturnObject &result);
 
     virtual Options *
     GetOptions ();
 
     void
-    CollectDataForBreakpointCommandCallback (CommandInterpreter &interpreter,
-                                             BreakpointOptions *bp_options, 
+    CollectDataForBreakpointCommandCallback (BreakpointOptions *bp_options, 
                                              CommandReturnObject &result);
 
     /// Set a one-liner as the callback for the breakpoint.
     void 
-    SetBreakpointCommandCallback (CommandInterpreter &interpreter,
-                                  BreakpointOptions *bp_options,
+    SetBreakpointCommandCallback (BreakpointOptions *bp_options,
                                   const char *oneliner);
 
     static size_t
@@ -138,14 +135,13 @@ private:
 class CommandObjectBreakpointCommandRemove : public CommandObject
 {
 public:
-    CommandObjectBreakpointCommandRemove ();
+    CommandObjectBreakpointCommandRemove (CommandInterpreter &interpreter);
 
     virtual
     ~CommandObjectBreakpointCommandRemove ();
 
     virtual bool
-    Execute (CommandInterpreter &interpreter,
-             Args& command,
+    Execute (Args& command,
              CommandReturnObject &result);
 
 private:
@@ -158,14 +154,13 @@ private:
 class CommandObjectBreakpointCommandList : public CommandObject
 {
 public:
-    CommandObjectBreakpointCommandList ();
+    CommandObjectBreakpointCommandList (CommandInterpreter &interpreter);
 
     virtual
     ~CommandObjectBreakpointCommandList ();
 
     virtual bool
-    Execute (CommandInterpreter &interpreter,
-             Args& command,
+    Execute (Args& command,
              CommandReturnObject &result);
 
 private:

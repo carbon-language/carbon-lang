@@ -29,22 +29,24 @@ class CommandObjectRegexCommand : public CommandObject
 {
 public:
 
-    CommandObjectRegexCommand (const char *name, const char *help, const char *syntax, uint32_t max_matches);
-
+    CommandObjectRegexCommand (CommandInterpreter &interpreter,
+                               const char *name, 
+                               const char *help, 
+                               const char *syntax, 
+                               uint32_t max_matches);
+    
     virtual
     ~CommandObjectRegexCommand ();
 
     virtual bool
-    Execute (CommandInterpreter &interpreter,
-             Args& command,
+    Execute (Args& command,
              CommandReturnObject &result);
 
     virtual bool
     WantsRawCommandString() { return true; }
 
     virtual bool
-    ExecuteRawCommandString (CommandInterpreter &interpreter,
-                             const char *command,
+    ExecuteRawCommandString (const char *command,
                              CommandReturnObject &result);
 
 

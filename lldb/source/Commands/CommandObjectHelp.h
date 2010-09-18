@@ -26,19 +26,17 @@ class CommandObjectHelp : public CommandObject
 {
 public:
 
-    CommandObjectHelp ();
+    CommandObjectHelp (CommandInterpreter &interpreter);
 
     virtual
     ~CommandObjectHelp ();
 
     virtual bool
-    Execute (CommandInterpreter &interpreter,
-             Args& command,
+    Execute (Args& command,
              CommandReturnObject &result);
 
     virtual int
-    HandleCompletion (CommandInterpreter &interpreter,
-                      Args &input,
+    HandleCompletion (Args &input,
                       int &cursor_index,
                       int &cursor_char_position,
                       int match_start_point,

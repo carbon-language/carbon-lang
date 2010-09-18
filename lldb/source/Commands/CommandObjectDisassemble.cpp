@@ -141,10 +141,11 @@ CommandObjectDisassemble::CommandOptions::g_option_table[] =
 // CommandObjectDisassemble
 //-------------------------------------------------------------------------
 
-CommandObjectDisassemble::CommandObjectDisassemble () :
-    CommandObject ("disassemble",
-                     "Disassemble bytes in the current function, or elsewhere in the executable program as specified by the user.",
-                     "disassemble [<cmd-options>]")
+CommandObjectDisassemble::CommandObjectDisassemble (CommandInterpreter &interpreter) :
+    CommandObject (interpreter,
+                   "disassemble",
+                   "Disassemble bytes in the current function, or elsewhere in the executable program as specified by the user.",
+                   "disassemble [<cmd-options>]")
 {
 }
 
@@ -155,12 +156,11 @@ CommandObjectDisassemble::~CommandObjectDisassemble()
 bool
 CommandObjectDisassemble::Execute
 (
-    CommandInterpreter &interpreter,
     Args& command,
     CommandReturnObject &result
 )
 {
-    Target *target = interpreter.GetDebugger().GetSelectedTarget().get();
+    Target *target = m_interpreter.GetDebugger().GetSelectedTarget().get();
     if (target == NULL)
     {
         result.AppendError ("invalid target, set executable file using 'file' command");
@@ -189,11 +189,15 @@ CommandObjectDisassemble::Execute
 
     if (command.GetArgumentCount() != 0)
     {
-        result.AppendErrorWithFormat ("\"disassemble\" doesn't take any arguments.\n");
+        result.AppendErrorWithFormat ("\"disassemble\" arguments are specified as options.\n");
+        GetOptions()->GenerateOptionUsage (m_interpreter,
+                                           result.GetErrorStream(), 
+                                           this);
+
         result.SetStatus (eReturnStatusFailed);
         return false;
     }
-    ExecutionContext exe_ctx(interpreter.GetDebugger().GetExecutionContext());
+    ExecutionContext exe_ctx(m_interpreter.GetDebugger().GetExecutionContext());
 
     if (m_options.show_mixed && m_options.num_lines_context == 0)
         m_options.num_lines_context = 1;
@@ -202,7 +206,7 @@ CommandObjectDisassemble::Execute
     {
         ConstString name(m_options.m_func_name.c_str());
         
-        if (Disassembler::Disassemble (interpreter.GetDebugger(), 
+        if (Disassembler::Disassemble (m_interpreter.GetDebugger(), 
                                        arch,
                                        exe_ctx,
                                        name,
@@ -260,7 +264,7 @@ CommandObjectDisassemble::Execute
         if (range.GetByteSize() == 0)
             range.SetByteSize(DEFAULT_DISASM_BYTE_SIZE);
 
-        if (Disassembler::Disassemble (interpreter.GetDebugger(), 
+        if (Disassembler::Disassemble (m_interpreter.GetDebugger(), 
                                        arch,
                                        exe_ctx,
                                        range,

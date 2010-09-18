@@ -27,8 +27,9 @@ using namespace lldb_private;
 // CommandObjectScript
 //-------------------------------------------------------------------------
 
-CommandObjectScript::CommandObjectScript (ScriptLanguage script_lang) :
-    CommandObject ("script",
+CommandObjectScript::CommandObjectScript (CommandInterpreter &interpreter, ScriptLanguage script_lang) :
+    CommandObject (interpreter, 
+                   "script",
                    "Pass an expression to the script interpreter for evaluation and return the results. Drop into the interactive interpreter if no expression is given.",
                    "script [<script-expression-for-evaluation>]"),
     m_script_lang (script_lang),
@@ -43,12 +44,11 @@ CommandObjectScript::~CommandObjectScript ()
 bool
 CommandObjectScript::ExecuteRawCommandString
 (
-    CommandInterpreter &interpreter,
     const char *command,
     CommandReturnObject &result
 )
 {
-    ScriptInterpreter *script_interpreter = GetInterpreter (interpreter);
+    ScriptInterpreter *script_interpreter = GetInterpreter ();
 
     if (script_interpreter == NULL)
     {
@@ -57,13 +57,13 @@ CommandObjectScript::ExecuteRawCommandString
     }
 
     if (command == NULL || command[0] == '\0') {
-        script_interpreter->ExecuteInterpreterLoop (interpreter);
+        script_interpreter->ExecuteInterpreterLoop ();
         result.SetStatus (eReturnStatusSuccessFinishNoResult);
         return result.Succeeded();
     }
 
     // We can do better when reporting the status of one-liner script execution.
-    if (script_interpreter->ExecuteOneLine (interpreter, command, &result))
+    if (script_interpreter->ExecuteOneLine (command, &result))
         result.SetStatus(eReturnStatusSuccessFinishNoResult);
     else
         result.SetStatus(eReturnStatusFailed);
@@ -80,7 +80,6 @@ CommandObjectScript::WantsRawCommandString()
 bool
 CommandObjectScript::Execute
 (
-    CommandInterpreter &interpreter,
     Args& command,
     CommandReturnObject &result
 )
@@ -91,18 +90,18 @@ CommandObjectScript::Execute
 
 
 ScriptInterpreter *
-CommandObjectScript::GetInterpreter (CommandInterpreter &interpreter)
+CommandObjectScript::GetInterpreter ()
 {
     if (m_interpreter_ap.get() == NULL)
     {
         switch (m_script_lang)
         {
         case eScriptLanguagePython:
-            m_interpreter_ap.reset (new ScriptInterpreterPython (interpreter));
+            m_interpreter_ap.reset (new ScriptInterpreterPython (m_interpreter));
             break;
 
         case eScriptLanguageNone:
-            m_interpreter_ap.reset (new ScriptInterpreterNone (interpreter));
+            m_interpreter_ap.reset (new ScriptInterpreterNone (m_interpreter));
             break;
         }
     }

@@ -595,38 +595,27 @@ Debugger::DebuggerSettingsController::CreateNewInstanceSettings (const char *ins
 bool
 Debugger::DebuggerInstanceSettings::ValidTermWidthValue (const char *value, Error err)
 {
-    bool valid = true;
+    bool valid = false;
 
     // Verify we have a value string.
-    if (value == NULL
-        || strlen (value) == 0)
+    if (value == NULL || value[0] == '\0')
     {
-        valid = false;
-        err.SetErrorString ("Missing value.  Can't set terminal width without a value.\n");
+        err.SetErrorString ("Missing value. Can't set terminal width without a value.\n");
     }
-
-    // Verify the string consists entirely of digits.
-    if (valid)
+    else
     {
-        int len = strlen (value);
-        for (int i = 0; i < len; ++i)
-            if (! isdigit (value[i]))
-            {
-                valid = false;
-                err.SetErrorStringWithFormat ("'%s' is not a valid representation of an unsigned integer.\n", value);
-            }
-    }
-
-    // Verify the term-width is 'reasonable' (e.g. 10 <= width <= 250).
-    if (valid)
-    {
-        int width = atoi (value);
-        if (width < 10
-            || width > 250)
+        char *end = NULL;
+        const uint32_t width = ::strtoul (value, &end, 0);
+        
+        if (end && end == '\0')
         {
-            valid = false;
-            err.SetErrorString ("Invalid term-width value; value must be between 10 and 250.\n");
+            if (width >= 10 || width <= 1024)
+                valid = true;
+            else
+                err.SetErrorString ("Invalid term-width value; value must be between 10 and 1024.\n");
         }
+        else
+            err.SetErrorStringWithFormat ("'%s' is not a valid unsigned integer string.\n", value);
     }
 
     return valid;
@@ -637,9 +626,14 @@ Debugger::DebuggerInstanceSettings::ValidTermWidthValue (const char *value, Erro
 //  class DebuggerInstanceSettings
 //--------------------------------------------------
 
-DebuggerInstanceSettings::DebuggerInstanceSettings (UserSettingsController &owner, bool live_instance,
-                                                    const char *name) :
+DebuggerInstanceSettings::DebuggerInstanceSettings 
+(
+    UserSettingsController &owner, 
+    bool live_instance,
+    const char *name
+) :
     InstanceSettings (owner, (name == NULL ? InstanceSettings::InvalidName().AsCString() : name), live_instance),
+    m_term_width (80),
     m_prompt (),
     m_script_lang ()
 {
@@ -725,7 +719,7 @@ DebuggerInstanceSettings::UpdateInstanceSettingsVariable (const ConstString &var
     {
         if (ValidTermWidthValue (value, err))
         {
-            m_term_width = atoi (value);
+            m_term_width = ::strtoul (value, NULL, 0);
         }
     }
 }

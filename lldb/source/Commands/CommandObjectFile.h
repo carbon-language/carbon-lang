@@ -28,14 +28,13 @@ class CommandObjectFile : public CommandObject
 {
 public:
 
-    CommandObjectFile ();
+    CommandObjectFile (CommandInterpreter &interpreter);
 
     virtual
     ~CommandObjectFile ();
 
     virtual bool
-    Execute (CommandInterpreter &interpreter,
-             Args& command,
+    Execute (Args& command,
              CommandReturnObject &result);
 
     virtual Options *
@@ -69,8 +68,7 @@ public:
     };
     
     virtual int
-    HandleArgumentCompletion (CommandInterpreter &interpreter,
-                              Args &input,
+    HandleArgumentCompletion (Args &input,
                               int &cursor_index,
                               int &cursor_char_position,
                               OptionElementVector &opt_element_vector,

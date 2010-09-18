@@ -26,10 +26,11 @@ namespace lldb_private {
 class CommandObjectCrossref : public CommandObject
 {
 public:
-    CommandObjectCrossref (const char *name,
-                             const char *help = NULL,
-                             const char *syntax = NULL);
-
+    CommandObjectCrossref (CommandInterpreter &interpreter,
+                           const char *name,
+                           const char *help = NULL,
+                           const char *syntax = NULL);
+    
     virtual
     ~CommandObjectCrossref ();
 
@@ -37,8 +38,7 @@ public:
     GenerateHelpText (CommandReturnObject &result);
 
     virtual bool
-    Execute (CommandInterpreter &interpreter,
-             Args& command,
+    Execute (Args& command,
              CommandReturnObject &result);
 
     virtual bool

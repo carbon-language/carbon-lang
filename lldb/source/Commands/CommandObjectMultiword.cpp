@@ -26,12 +26,13 @@ using namespace lldb_private;
 
 CommandObjectMultiword::CommandObjectMultiword
 (
+    CommandInterpreter &interpreter,
     const char *name,
     const char *help,
     const char *syntax,
     uint32_t flags
 ) :
-    CommandObject (name, help, syntax, flags)
+    CommandObject (interpreter, name, help, syntax, flags)
 {
 }
 
@@ -82,7 +83,6 @@ CommandObjectMultiword::GetSubcommandObject (const char *sub_cmd, StringList *ma
 bool
 CommandObjectMultiword::LoadSubCommand 
 (
-    CommandInterpreter &interpreter, 
     const char *name,
     const CommandObjectSP& cmd_obj
 )
@@ -94,7 +94,7 @@ CommandObjectMultiword::LoadSubCommand
     if (pos == m_subcommand_dict.end())
     {
         m_subcommand_dict[name] = cmd_obj;
-        interpreter.CrossRegisterCommand (name, GetCommandName());
+        m_interpreter.CrossRegisterCommand (name, GetCommandName());
     }
     else
         success = false;
@@ -105,7 +105,6 @@ CommandObjectMultiword::LoadSubCommand
 bool
 CommandObjectMultiword::Execute
 (
-    CommandInterpreter &interpreter,
     Args& args,
     CommandReturnObject &result
 )
@@ -113,7 +112,7 @@ CommandObjectMultiword::Execute
     const size_t argc = args.GetArgumentCount();
     if (argc == 0)
     {
-        GenerateHelpText (interpreter, result);
+        GenerateHelpText (result);
     }
     else
     {
@@ -123,7 +122,7 @@ CommandObjectMultiword::Execute
         {
             if (::strcasecmp (sub_command, "help") == 0)
             {
-                GenerateHelpText (interpreter, result);
+                GenerateHelpText (result);
             }
             else if (!m_subcommand_dict.empty())
             {
@@ -136,7 +135,7 @@ CommandObjectMultiword::Execute
 
                     args.Shift();
 
-                    sub_cmd_obj->ExecuteWithOptions (interpreter, args, result);
+                    sub_cmd_obj->ExecuteWithOptions (args, result);
                 }
                 else
                 {
@@ -179,7 +178,7 @@ CommandObjectMultiword::Execute
 }
 
 void
-CommandObjectMultiword::GenerateHelpText (CommandInterpreter &interpreter, CommandReturnObject &result)
+CommandObjectMultiword::GenerateHelpText (CommandReturnObject &result)
 {
     // First time through here, generate the help text for the object and
     // push it to the return result object as well
@@ -188,7 +187,7 @@ CommandObjectMultiword::GenerateHelpText (CommandInterpreter &interpreter, Comma
     output_stream.PutCString ("The following subcommands are supported:\n\n");
 
     CommandMap::iterator pos;
-    uint32_t max_len = interpreter.FindLongestCommandWord (m_subcommand_dict);
+    uint32_t max_len = m_interpreter.FindLongestCommandWord (m_subcommand_dict);
 
     if (max_len)
         max_len += 4; // Indent the output by 4 spaces.
@@ -197,11 +196,11 @@ CommandObjectMultiword::GenerateHelpText (CommandInterpreter &interpreter, Comma
     {
         std::string indented_command ("    ");
         indented_command.append (pos->first);
-        interpreter.OutputFormattedHelpText (result.GetOutputStream(), 
-                                             indented_command.c_str(),
-                                             "--", 
-                                             pos->second->GetHelp(), 
-                                             max_len);
+        m_interpreter.OutputFormattedHelpText (result.GetOutputStream(), 
+                                               indented_command.c_str(),
+                                               "--", 
+                                               pos->second->GetHelp(), 
+                                               max_len);
     }
 
     output_stream.PutCString ("\nFor more help on any particular subcommand, type 'help <command> <subcommand>'.\n");
@@ -212,7 +211,6 @@ CommandObjectMultiword::GenerateHelpText (CommandInterpreter &interpreter, Comma
 int
 CommandObjectMultiword::HandleCompletion
 (
-    CommandInterpreter &interpreter,
     Args &input,
     int &cursor_index,
     int &cursor_char_position,
@@ -245,8 +243,8 @@ CommandObjectMultiword::HandleCompletion
                 input.Shift();
                 cursor_char_position = 0;
                 input.AppendArgument ("");
-                return cmd_obj->HandleCompletion (interpreter, 
-                                                  input, cursor_index, 
+                return cmd_obj->HandleCompletion (input, 
+                                                  cursor_index, 
                                                   cursor_char_position, 
                                                   match_start_point,
                                                   max_return_elements,
@@ -273,8 +271,7 @@ CommandObjectMultiword::HandleCompletion
             matches.DeleteStringAtIndex(0);
             input.Shift();
             cursor_index--;
-            return sub_command_object->HandleCompletion (interpreter, 
-                                                         input, 
+            return sub_command_object->HandleCompletion (input, 
                                                          cursor_index, 
                                                          cursor_char_position, 
                                                          match_start_point,

@@ -26,14 +26,13 @@ class CommandObjectSyntax : public CommandObject
 {
 public:
 
-    CommandObjectSyntax ();
+    CommandObjectSyntax (CommandInterpreter &interpreter);
 
     virtual
     ~CommandObjectSyntax ();
     
     virtual bool
-    Execute (CommandInterpreter &interpreter,
-             Args& command,
+    Execute (Args& command,
              CommandReturnObject &result);
 
 

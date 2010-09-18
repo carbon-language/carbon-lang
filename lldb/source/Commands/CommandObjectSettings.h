@@ -43,14 +43,13 @@ public:
 class CommandObjectSettingsSet : public CommandObject
 {
 public:
-    CommandObjectSettingsSet ();
+    CommandObjectSettingsSet (CommandInterpreter &interpreter);
 
     virtual
     ~CommandObjectSettingsSet ();
 
     virtual bool
-    Execute (CommandInterpreter &interpreter,
-             Args& command,
+    Execute (Args& command,
              CommandReturnObject &result);
 
     virtual Options *
@@ -86,8 +85,7 @@ public:
     };
 
     virtual int
-    HandleArgumentCompletion (CommandInterpreter &interpreter,
-                              Args &input,
+    HandleArgumentCompletion (Args &input,
                               int &cursor_index,
                               int &cursor_char_position,
                               OptionElementVector &opt_element_vector,
@@ -107,20 +105,18 @@ private:
 class CommandObjectSettingsShow : public CommandObject
 {
 public:
-    CommandObjectSettingsShow ();
+    CommandObjectSettingsShow (CommandInterpreter &interpreter);
 
     virtual
     ~CommandObjectSettingsShow ();
 
     virtual bool
-    Execute (CommandInterpreter &interpreter,
-             Args& command,
+    Execute (Args& command,
              CommandReturnObject &result);
 
 
     virtual int
-    HandleArgumentCompletion (CommandInterpreter &interpreter,
-                              Args &input,
+    HandleArgumentCompletion (Args &input,
                               int &cursor_index,
                               int &cursor_char_position,
                               OptionElementVector &opt_element_vector,
@@ -139,19 +135,17 @@ private:
 class CommandObjectSettingsList : public CommandObject
 {
 public: 
-    CommandObjectSettingsList ();
+    CommandObjectSettingsList (CommandInterpreter &interpreter);
 
     virtual
     ~CommandObjectSettingsList ();
 
     virtual bool
-    Execute (CommandInterpreter &interpreter,
-             Args& command,
+    Execute (Args& command,
              CommandReturnObject &result);
 
     virtual int
-    HandleArgumentCompletion (CommandInterpreter &interpreter,
-                              Args &input,
+    HandleArgumentCompletion (Args &input,
                               int &cursor_index,
                               int &cursor_char_position,
                               OptionElementVector &opt_element_vector,
@@ -170,19 +164,17 @@ private:
 class CommandObjectSettingsRemove : public CommandObject
 {
 public:
-    CommandObjectSettingsRemove ();
+    CommandObjectSettingsRemove (CommandInterpreter &interpreter);
 
     virtual
     ~CommandObjectSettingsRemove ();
 
     virtual bool
-    Execute (CommandInterpreter &interpreter,
-             Args& command,
+    Execute (Args& command,
              CommandReturnObject &result);
 
     virtual int
-    HandleArgumentCompletion (CommandInterpreter &interpreter,
-                              Args &input,
+    HandleArgumentCompletion (Args &input,
                               int &cursor_index,
                               int &cursor_char_position,
                               OptionElementVector &opt_element_vector,
@@ -201,19 +193,17 @@ private:
 class CommandObjectSettingsReplace : public CommandObject
 {
 public:
-    CommandObjectSettingsReplace ();
+    CommandObjectSettingsReplace (CommandInterpreter &interpreter);
 
     virtual
     ~CommandObjectSettingsReplace ();
 
     virtual bool
-    Execute (CommandInterpreter &interpreter,
-             Args& command,
+    Execute (Args& command,
              CommandReturnObject &result);
 
     virtual int
-    HandleArgumentCompletion (CommandInterpreter &interpreter,
-                              Args &input,
+    HandleArgumentCompletion (Args &input,
                               int &cursor_index,
                               int &cursor_char_position,
                               OptionElementVector &opt_element_vector,
@@ -232,19 +222,17 @@ private:
 class CommandObjectSettingsInsertBefore : public CommandObject
 {
 public:
-    CommandObjectSettingsInsertBefore ();
+    CommandObjectSettingsInsertBefore (CommandInterpreter &interpreter);
 
     virtual
     ~CommandObjectSettingsInsertBefore ();
 
     virtual bool
-    Execute (CommandInterpreter &interpreter,
-             Args& command,
+    Execute (Args& command,
              CommandReturnObject &result);
 
     virtual int
-    HandleArgumentCompletion (CommandInterpreter &interpreter,
-                              Args &input,
+    HandleArgumentCompletion (Args &input,
                               int &cursor_index,
                               int &cursor_char_position,
                               OptionElementVector &opt_element_vector,
@@ -263,19 +251,17 @@ private:
 class CommandObjectSettingsInsertAfter : public CommandObject
 {
 public:
-    CommandObjectSettingsInsertAfter ();
+    CommandObjectSettingsInsertAfter (CommandInterpreter &interpreter);
 
     virtual
     ~CommandObjectSettingsInsertAfter ();
 
     virtual bool
-    Execute (CommandInterpreter &interpreter,
-             Args& command,
+    Execute (Args& command,
              CommandReturnObject &result);
 
     virtual int
-    HandleArgumentCompletion (CommandInterpreter &interpreter,
-                              Args &input,
+    HandleArgumentCompletion (Args &input,
                               int &cursor_index,
                               int &cursor_char_position,
                               OptionElementVector &opt_element_vector,
@@ -294,19 +280,17 @@ private:
 class CommandObjectSettingsAppend : public CommandObject
 {
 public:
-    CommandObjectSettingsAppend ();
+    CommandObjectSettingsAppend (CommandInterpreter &interpreter);
 
     virtual
     ~CommandObjectSettingsAppend ();
 
     virtual bool
-    Execute (CommandInterpreter &interpreter,
-             Args& command,
+    Execute (Args& command,
              CommandReturnObject &result);
 
     virtual int
-    HandleArgumentCompletion (CommandInterpreter &interpreter,
-                              Args &input,
+    HandleArgumentCompletion (Args &input,
                               int &cursor_index,
                               int &cursor_char_position,
                               OptionElementVector &opt_element_vector,
@@ -325,19 +309,17 @@ private:
 class CommandObjectSettingsClear : public CommandObject
 {
 public:
-    CommandObjectSettingsClear ();
+    CommandObjectSettingsClear (CommandInterpreter &interpreter);
 
     virtual
     ~CommandObjectSettingsClear ();
 
     virtual bool
-    Execute (CommandInterpreter &interpreter,
-             Args& command,
+    Execute (Args& command,
              CommandReturnObject &result);
 
     virtual int
-    HandleArgumentCompletion (CommandInterpreter &interpreter,
-                              Args &input,
+    HandleArgumentCompletion (Args &input,
                               int &cursor_index,
                               int &cursor_char_position,
                               OptionElementVector &opt_element_vector,

@@ -101,8 +101,9 @@ public:
 
     };
 
-    CommandObjectProcessLaunch () :
-        CommandObject ("process launch",
+    CommandObjectProcessLaunch (CommandInterpreter &interpreter) :
+        CommandObject (interpreter,
+                       "process launch",
                        "Launch the executable in the debugger.",
                        "process launch [<cmd-options>] [<arguments-for-running-the-program>]")
     {
@@ -120,12 +121,11 @@ public:
     }
 
     bool
-    Execute (CommandInterpreter &interpreter,
-             Args& launch_args,
+    Execute (Args& launch_args,
              CommandReturnObject &result)
     {
-        Target *target = interpreter.GetDebugger().GetSelectedTarget().get();
-        bool synchronous_execution = interpreter.GetSynchronous ();
+        Target *target = m_interpreter.GetDebugger().GetSelectedTarget().get();
+        bool synchronous_execution = m_interpreter.GetSynchronous ();
     //    bool launched = false;
     //    bool stopped_after_launch = false;
 
@@ -141,16 +141,13 @@ public:
         Module *exe_module = target->GetExecutableModule().get();
         exe_module->GetFileSpec().GetPath(filename, sizeof(filename));
 
-        Process *process = interpreter.GetDebugger().GetExecutionContext().process;
-        if (process)
+        Process *process = m_interpreter.GetDebugger().GetExecutionContext().process;
+        if (process && process->IsAlive())
         {
-            if (process->IsAlive())
-            {
-               result.AppendErrorWithFormat ("Process %u is currently being debugged, kill the process before running again.\n",
-                                            process->GetID());
-                result.SetStatus (eReturnStatusFailed);
-                return false;
-            }
+            result.AppendErrorWithFormat ("Process %u is currently being debugged, kill the process before running again.\n",
+                                          process->GetID());
+            result.SetStatus (eReturnStatusFailed);
+            return false;
         }
 
         const char *plugin_name;
@@ -159,130 +156,91 @@ public:
         else
             plugin_name = NULL;
 
-        process = target->CreateProcess (interpreter.GetDebugger().GetListener(), plugin_name).get();
+        process = target->CreateProcess (m_interpreter.GetDebugger().GetListener(), plugin_name).get();
 
-        const char *process_name = process->GetInstanceName().AsCString();
-        const char *debugger_instance_name = interpreter.GetDebugger().GetInstanceName().AsCString();
-        StreamString run_args_var_name;
-        StreamString env_vars_var_name;
-        StreamString disable_aslr_var_name;
-        lldb::SettableVariableType var_type;
-        
-        Args *run_args = NULL;
-        run_args_var_name.Printf ("process.[%s].run-args", process_name);
-        StringList run_args_value = Debugger::GetSettingsController()->GetVariable (run_args_var_name.GetData(), 
-                                                                                    var_type, debugger_instance_name);
-
-        if (run_args_value.GetSize() > 0)
+        if (process == NULL)
         {
-            run_args = new Args;
-            for (unsigned i = 0, e = run_args_value.GetSize(); i != e; ++i)
-                run_args->AppendArgument(run_args_value.GetStringAtIndex(i));
-        }
-        
-        Args *environment = NULL;
-        env_vars_var_name.Printf ("process.[%s].env-vars", process_name);
-        StringList env_vars_value = Debugger::GetSettingsController()->GetVariable (env_vars_var_name.GetData(), 
-                                                                                    var_type, debugger_instance_name);
-
-        if (env_vars_value.GetSize() > 0)
-        {
-            environment = new Args;
-            for (unsigned i = 0, e = env_vars_value.GetSize(); i != e; ++i)
-                environment->AppendArgument (env_vars_value.GetStringAtIndex (i));
-        }
-
-        uint32_t launch_flags = eLaunchFlagNone;
-        disable_aslr_var_name.Printf ("process.[%s].disable-aslr", process_name);
-        StringList disable_aslr_value = Debugger::GetSettingsController()->GetVariable(disable_aslr_var_name.GetData(),
-                                                                                       var_type, 
-                                                                                       debugger_instance_name);
-
-        if (disable_aslr_value.GetSize() > 0)
-        {
-            if (strcmp (disable_aslr_value.GetStringAtIndex(0), "true") == 0)
-                launch_flags |= eLaunchFlagDisableASLR;
-
-        }
-
-        // There are two possible sources of args to be passed to the process upon launching:  Those the user
-        // typed at the run command (launch_args); or those the user pre-set in the run-args variable (run_args).
-
-        // If launch_args is empty, use run_args.
-        if (launch_args.GetArgumentCount() == 0)
-        {
-            if (run_args != NULL)
-                launch_args.AppendArguments (*run_args);
-        }
-        else
-        {
-            // launch-args was not empty; use that, AND re-set run-args to contains launch-args values.
-            std::string new_run_args;
-            launch_args.GetCommandString (new_run_args);
-            Debugger::GetSettingsController()->SetVariable (run_args_var_name.GetData(), new_run_args.c_str(), 
-                                                            lldb::eVarSetOperationAssign, false,
-                                                            interpreter.GetDebugger().GetInstanceName().AsCString());
-        }
-
-
-        if (process)
-        {
-            const char *archname = exe_module->GetArchitecture().AsCString();
-
-            const char * stdin_path = NULL;
-            const char * stdout_path = NULL;
-            const char * stderr_path = NULL;
-
-            if (!(m_options.stdin_path.empty() &&
-                m_options.stdout_path.empty() &&
-                m_options.stderr_path.empty()))
-            {
-                stdin_path =    m_options.stdin_path.empty()  ? "/dev/null" : m_options.stdin_path.c_str();
-                stdout_path =   m_options.stdout_path.empty() ? "/dev/null" : m_options.stdout_path.c_str();
-                stderr_path =   m_options.stderr_path.empty() ? "/dev/null" : m_options.stderr_path.c_str();
-            }
-
-            Error error (process->Launch (launch_args.GetConstArgumentVector(),
-                                          environment ? environment->GetConstArgumentVector() : NULL,
-                                          launch_flags,
-                                          stdin_path,
-                                          stdout_path,
-                                          stderr_path));
-                         
-            if (error.Success())
-            {
-                result.AppendMessageWithFormat ("Launching '%s'  (%s)\n", filename, archname);
-                result.SetStatus (eReturnStatusSuccessContinuingNoResult);
-                if (m_options.stop_at_entry == false)
-                {
-                    StateType state = process->WaitForProcessToStop (NULL);
-
-                    if (state == eStateStopped)
-                    {
-                        // Call continue_command.
-                        CommandReturnObject continue_result;
-                        interpreter.HandleCommand("process continue", false, continue_result);
-                    }
-
-                    if (synchronous_execution)
-                    {
-                        result.SetDidChangeProcessState (true);
-                        result.SetStatus (eReturnStatusSuccessFinishNoResult);
-                    }
-                }
-            }
-            else
-            {
-                result.AppendErrorWithFormat ("Process launch failed: %s",
-                                              error.AsCString());
-                result.SetStatus (eReturnStatusFailed);
-            }
-        }
-        else
-        {
-            result.AppendErrorWithFormat ("Process launch failed: unable to create a process object.\n");
+            result.AppendErrorWithFormat ("Failed to find a process plugin for executable");
             result.SetStatus (eReturnStatusFailed);
             return false;
+        }
+
+        // If no launch args were given on the command line, then use any that
+        // might have been set using the "run-args" set variable.
+        if (launch_args.GetArgumentCount() == 0)
+        {
+            if (process->GetRunArguments().GetArgumentCount() > 0)
+                launch_args = process->GetRunArguments();
+        }
+        
+        Args environment;
+        
+        process->GetEnvironmentAsArgs (environment);
+        
+        uint32_t launch_flags = eLaunchFlagNone;
+        
+        if (process->GetDisableASLR())
+            launch_flags |= eLaunchFlagDisableASLR;
+
+        const char *archname = exe_module->GetArchitecture().AsCString();
+
+        const char * stdin_path = NULL;
+        const char * stdout_path = NULL;
+        const char * stderr_path = NULL;
+
+        // Were any standard input/output/error paths given on the command line?
+        if (m_options.stdin_path.empty() &&
+            m_options.stdout_path.empty() &&
+            m_options.stderr_path.empty())
+        {
+            // No standard file handles were given on the command line, check
+            // with the process object in case they were give using "set settings"
+            stdin_path = process->GetStandardInputPath();
+            stdout_path = process->GetStandardOutputPath(); 
+            stderr_path = process->GetStandardErrorPath(); 
+        }
+        else
+        {
+            stdin_path = m_options.stdin_path.empty()  ? NULL : m_options.stdin_path.c_str();
+            stdout_path = m_options.stdout_path.empty() ? NULL : m_options.stdout_path.c_str();
+            stderr_path = m_options.stderr_path.empty() ? NULL : m_options.stderr_path.c_str();
+        }
+
+        if (stdin_path == NULL)
+            stdin_path = "/dev/null";
+        if (stdout_path == NULL)
+            stdout_path = "/dev/null";
+        if (stderr_path == NULL)
+            stderr_path = "/dev/null";
+
+        Error error (process->Launch (launch_args.GetArgumentCount() ? launch_args.GetConstArgumentVector() : NULL,
+                                      environment.GetArgumentCount() ? environment.GetConstArgumentVector() : NULL,
+                                      launch_flags,
+                                      stdin_path,
+                                      stdout_path,
+                                      stderr_path));
+                     
+        if (error.Success())
+        {
+            result.AppendMessageWithFormat ("Launching '%s'  (%s)\n", filename, archname);
+            result.SetStatus (eReturnStatusSuccessContinuingNoResult);
+            if (m_options.stop_at_entry == false)
+            {
+                StateType state = process->WaitForProcessToStop (NULL);
+
+                if (state == eStateStopped)
+                {
+                    // Call continue_command.
+                    CommandReturnObject continue_result;
+                    m_interpreter.HandleCommand("process continue", false, continue_result);
+                }
+
+                if (synchronous_execution)
+                {
+                    result.SetDidChangeProcessState (true);
+                    result.SetStatus (eReturnStatusSuccessFinishNoResult);
+                }
+            }
         }
 
         return result.Succeeded();
@@ -386,7 +344,7 @@ public:
         }
 
         virtual bool
-        HandleOptionArgumentCompletion (CommandInterpreter &interpreter,
+        HandleOptionArgumentCompletion (CommandInterpreter &interpeter, 
                                         Args &input,
                                         int cursor_index,
                                         int char_pos,
@@ -409,7 +367,7 @@ public:
                 
                 // Look to see if there is a -P argument provided, and if so use that plugin, otherwise
                 // use the default plugin.
-                Process *process = interpreter.GetDebugger().GetExecutionContext().process;
+                Process *process = interpeter.GetDebugger().GetExecutionContext().process;
                 bool need_to_delete_process = false;
                 
                 const char *partial_name = NULL;
@@ -418,7 +376,7 @@ public:
                 if (process && process->IsAlive())
                     return true;
                     
-                Target *target = interpreter.GetDebugger().GetSelectedTarget().get();
+                Target *target = interpeter.GetDebugger().GetSelectedTarget().get();
                 if (target == NULL)
                 {
                     // No target has been set yet, for now do host completion.  Otherwise I don't know how we would
@@ -429,7 +387,7 @@ public:
                 }
                 if (!process)
                 {
-                    process = target->CreateProcess (interpreter.GetDebugger().GetListener(), partial_name).get();
+                    process = target->CreateProcess (interpeter.GetDebugger().GetListener(), partial_name).get();
                     need_to_delete_process = true;
                 }
                 
@@ -459,8 +417,9 @@ public:
         bool waitfor;
     };
 
-    CommandObjectProcessAttach () :
-        CommandObject ("process attach",
+    CommandObjectProcessAttach (CommandInterpreter &interpreter) :
+        CommandObject (interpreter,
+                       "process attach",
                        "Attach to a process.",
                        "process attach <cmd-options>")
     {
@@ -471,13 +430,12 @@ public:
     }
 
     bool
-    Execute (CommandInterpreter &interpreter,
-             Args& command,
+    Execute (Args& command,
              CommandReturnObject &result)
     {
-        Target *target = interpreter.GetDebugger().GetSelectedTarget().get();
+        Target *target = m_interpreter.GetDebugger().GetSelectedTarget().get();
 
-        Process *process = interpreter.GetDebugger().GetExecutionContext().process;
+        Process *process = m_interpreter.GetDebugger().GetExecutionContext().process;
         if (process)
         {
             if (process->IsAlive())
@@ -497,19 +455,19 @@ public:
             ArchSpec emptyArchSpec;
             Error error;
             
-            error = interpreter.GetDebugger().GetTargetList().CreateTarget(interpreter.GetDebugger(), 
-                                                                           emptyFileSpec,
-                                                                           emptyArchSpec, 
-                                                                           NULL, 
-                                                                           false,
-                                                                           new_target_sp);
+            error = m_interpreter.GetDebugger().GetTargetList().CreateTarget (m_interpreter.GetDebugger(), 
+                                                                              emptyFileSpec,
+                                                                              emptyArchSpec, 
+                                                                              NULL, 
+                                                                              false,
+                                                                              new_target_sp);
             target = new_target_sp.get();
             if (target == NULL || error.Fail())
             {
                 result.AppendError(error.AsCString("Error creating empty target"));
                 return false;
             }
-            interpreter.GetDebugger().GetTargetList().SetSelectedTarget(target);
+            m_interpreter.GetDebugger().GetTargetList().SetSelectedTarget(target);
         }
         
         // Record the old executable module, we want to issue a warning if the process of attaching changed the
@@ -530,7 +488,7 @@ public:
             if (!m_options.plugin_name.empty())
                 plugin_name = m_options.plugin_name.c_str();
 
-            process = target->CreateProcess (interpreter.GetDebugger().GetListener(), plugin_name).get();
+            process = target->CreateProcess (m_interpreter.GetDebugger().GetListener(), plugin_name).get();
 
             if (process)
             {
@@ -562,7 +520,7 @@ public:
                         return false;
                     }
 
-                    interpreter.GetDebugger().GetOutputStream().Printf("Waiting to attach to a process named \"%s\".\n", wait_name);
+                    m_interpreter.GetDebugger().GetOutputStream().Printf("Waiting to attach to a process named \"%s\".\n", wait_name);
                     error = process->Attach (wait_name, m_options.waitfor);
                     if (error.Success())
                     {
@@ -700,8 +658,9 @@ class CommandObjectProcessContinue : public CommandObject
 {
 public:
 
-    CommandObjectProcessContinue () :
-        CommandObject ("process continue",
+    CommandObjectProcessContinue (CommandInterpreter &interpreter) :
+        CommandObject (interpreter,
+                       "process continue",
                        "Continue execution of all threads in the current process.",
                        "process continue",
                        eFlagProcessMustBeLaunched | eFlagProcessMustBePaused)
@@ -714,12 +673,11 @@ public:
     }
 
     bool
-    Execute (CommandInterpreter &interpreter,
-             Args& command,
+    Execute (Args& command,
              CommandReturnObject &result)
     {
-        Process *process = interpreter.GetDebugger().GetExecutionContext().process;
-        bool synchronous_execution = interpreter.GetSynchronous ();
+        Process *process = m_interpreter.GetDebugger().GetExecutionContext().process;
+        bool synchronous_execution = m_interpreter.GetSynchronous ();
 
         if (process == NULL)
         {
@@ -787,8 +745,9 @@ class CommandObjectProcessDetach : public CommandObject
 {
 public:
 
-    CommandObjectProcessDetach () :
-        CommandObject ("process detach",
+    CommandObjectProcessDetach (CommandInterpreter &interpreter) :
+        CommandObject (interpreter,
+                       "process detach",
                        "Detach from the current process being debugged.",
                        "process detach",
                        eFlagProcessMustBeLaunched)
@@ -800,11 +759,10 @@ public:
     }
 
     bool
-    Execute (CommandInterpreter &interpreter,
-             Args& command,
+    Execute (Args& command,
              CommandReturnObject &result)
     {
-        Process *process = interpreter.GetDebugger().GetExecutionContext().process;
+        Process *process = m_interpreter.GetDebugger().GetExecutionContext().process;
         if (process == NULL)
         {
             result.AppendError ("must have a valid process in order to detach");
@@ -835,8 +793,9 @@ class CommandObjectProcessSignal : public CommandObject
 {
 public:
 
-    CommandObjectProcessSignal () :
-        CommandObject ("process signal",
+    CommandObjectProcessSignal (CommandInterpreter &interpreter) :
+        CommandObject (interpreter,
+                       "process signal",
                        "Send a UNIX signal to the current process being debugged.",
                        "process signal <unix-signal-number>")
     {
@@ -847,11 +806,10 @@ public:
     }
 
     bool
-    Execute (CommandInterpreter &interpreter,
-             Args& command,
+    Execute (Args& command,
              CommandReturnObject &result)
     {
-        Process *process = interpreter.GetDebugger().GetExecutionContext().process;
+        Process *process = m_interpreter.GetDebugger().GetExecutionContext().process;
         if (process == NULL)
         {
             result.AppendError ("no process to signal");
@@ -901,8 +859,9 @@ class CommandObjectProcessInterrupt : public CommandObject
 public:
 
 
-    CommandObjectProcessInterrupt () :
-    CommandObject ("process interrupt",
+    CommandObjectProcessInterrupt (CommandInterpreter &interpreter) :
+    CommandObject (interpreter,
+                   "process interrupt",
                    "Interrupt the current process being debugged.",
                    "process interrupt",
                    eFlagProcessMustBeLaunched)
@@ -914,11 +873,10 @@ public:
     }
 
     bool
-    Execute (CommandInterpreter &interpreter,
-             Args& command,
+    Execute (Args& command,
              CommandReturnObject &result)
     {
-        Process *process = interpreter.GetDebugger().GetExecutionContext().process;
+        Process *process = m_interpreter.GetDebugger().GetExecutionContext().process;
         if (process == NULL)
         {
             result.AppendError ("no process to halt");
@@ -962,8 +920,9 @@ class CommandObjectProcessKill : public CommandObject
 {
 public:
 
-    CommandObjectProcessKill () :
-    CommandObject ("process kill",
+    CommandObjectProcessKill (CommandInterpreter &interpreter) :
+    CommandObject (interpreter, 
+                   "process kill",
                    "Terminate the current process being debugged.",
                    "process kill",
                    eFlagProcessMustBeLaunched)
@@ -975,11 +934,10 @@ public:
     }
 
     bool
-    Execute (CommandInterpreter &interpreter,
-             Args& command,
+    Execute (Args& command,
              CommandReturnObject &result)
     {
-        Process *process = interpreter.GetDebugger().GetExecutionContext().process;
+        Process *process = m_interpreter.GetDebugger().GetExecutionContext().process;
         if (process == NULL)
         {
             result.AppendError ("no process to kill");
@@ -1017,8 +975,9 @@ public:
 class CommandObjectProcessStatus : public CommandObject
 {
 public:
-    CommandObjectProcessStatus () :
-    CommandObject ("process status",
+    CommandObjectProcessStatus (CommandInterpreter &interpreter) :
+    CommandObject (interpreter, 
+                   "process status",
                    "Show the current status and location of executing process.",
                    "process status",
                    0)
@@ -1033,14 +992,13 @@ public:
     bool
     Execute
     (
-        CommandInterpreter &interpreter,
         Args& command,
         CommandReturnObject &result
     )
     {
         StreamString &output_stream = result.GetOutputStream();
         result.SetStatus (eReturnStatusSuccessFinishNoResult);
-        ExecutionContext exe_ctx(interpreter.GetDebugger().GetExecutionContext());
+        ExecutionContext exe_ctx(m_interpreter.GetDebugger().GetExecutionContext());
         if (exe_ctx.process)
         {
             const StateType state = exe_ctx.process->GetState();
@@ -1063,7 +1021,7 @@ public:
                         exe_ctx.thread = exe_ctx.process->GetThreadList().GetThreadAtIndex(0).get();
                     if (exe_ctx.thread != NULL)
                     {
-                        DisplayThreadsInfo (interpreter, &exe_ctx, result, true, true);
+                        DisplayThreadsInfo (m_interpreter, &exe_ctx, result, true, true);
                     }
                     else
                     {
@@ -1092,18 +1050,19 @@ public:
 //-------------------------------------------------------------------------
 
 CommandObjectMultiwordProcess::CommandObjectMultiwordProcess (CommandInterpreter &interpreter) :
-    CommandObjectMultiword ("process",
-                              "A set of commands for operating on a process.",
-                              "process <subcommand> [<subcommand-options>]")
+    CommandObjectMultiword (interpreter,
+                            "process",
+                            "A set of commands for operating on a process.",
+                            "process <subcommand> [<subcommand-options>]")
 {
-    LoadSubCommand (interpreter, "attach",      CommandObjectSP (new CommandObjectProcessAttach ()));
-    LoadSubCommand (interpreter, "launch",      CommandObjectSP (new CommandObjectProcessLaunch ()));
-    LoadSubCommand (interpreter, "continue",    CommandObjectSP (new CommandObjectProcessContinue ()));
-    LoadSubCommand (interpreter, "detach",      CommandObjectSP (new CommandObjectProcessDetach ()));
-    LoadSubCommand (interpreter, "signal",      CommandObjectSP (new CommandObjectProcessSignal ()));
-    LoadSubCommand (interpreter, "status",      CommandObjectSP (new CommandObjectProcessStatus ()));
-    LoadSubCommand (interpreter, "interrupt",   CommandObjectSP (new CommandObjectProcessInterrupt ()));
-    LoadSubCommand (interpreter, "kill",        CommandObjectSP (new CommandObjectProcessKill ()));
+    LoadSubCommand ("attach",      CommandObjectSP (new CommandObjectProcessAttach (interpreter)));
+    LoadSubCommand ("launch",      CommandObjectSP (new CommandObjectProcessLaunch (interpreter)));
+    LoadSubCommand ("continue",    CommandObjectSP (new CommandObjectProcessContinue (interpreter)));
+    LoadSubCommand ("detach",      CommandObjectSP (new CommandObjectProcessDetach (interpreter)));
+    LoadSubCommand ("signal",      CommandObjectSP (new CommandObjectProcessSignal (interpreter)));
+    LoadSubCommand ("status",      CommandObjectSP (new CommandObjectProcessStatus (interpreter)));
+    LoadSubCommand ("interrupt",   CommandObjectSP (new CommandObjectProcessInterrupt (interpreter)));
+    LoadSubCommand ("kill",        CommandObjectSP (new CommandObjectProcessKill (interpreter)));
 }
 
 CommandObjectMultiwordProcess::~CommandObjectMultiwordProcess ()

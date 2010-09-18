@@ -330,8 +330,9 @@ public:
         uint32_t m_start;
     };
 
-    CommandObjectThreadBacktrace () :
-        CommandObject ("thread backtrace",
+    CommandObjectThreadBacktrace (CommandInterpreter &interpreter) :
+        CommandObject (interpreter,
+                       "thread backtrace",
                        "Show the stack for one or more threads.  If no threads are specified, show the currently selected thread.  Use the thread-index \"all\" to see all threads.",
                        "thread backtrace [<thread-index>] ...",
                        eFlagProcessMustBeLaunched | eFlagProcessMustBePaused),
@@ -350,12 +351,7 @@ public:
     }
 
     virtual bool
-    Execute
-    (
-        CommandInterpreter &interpreter,
-        Args& command,
-        CommandReturnObject &result
-    )
+    Execute (Args& command, CommandReturnObject &result)
     {
 
         bool show_frame_info = true;
@@ -365,11 +361,11 @@ public:
         
         if (command.GetArgumentCount() == 0)
         {
-            ExecutionContext exe_ctx(interpreter.GetDebugger().GetExecutionContext());
+            ExecutionContext exe_ctx(m_interpreter.GetDebugger().GetExecutionContext());
             if (exe_ctx.thread)
             {
                 if (DisplayFramesForExecutionContext (exe_ctx.thread,
-                                                      interpreter,
+                                                      m_interpreter,
                                                       result.GetOutputStream(),
                                                       m_options.m_start,
                                                       m_options.m_count,
@@ -389,13 +385,13 @@ public:
         }
         else if (command.GetArgumentCount() == 1 && ::strcmp (command.GetArgumentAtIndex(0), "all") == 0)
         {
-            Process *process = interpreter.GetDebugger().GetExecutionContext().process;
+            Process *process = m_interpreter.GetDebugger().GetExecutionContext().process;
             uint32_t num_threads = process->GetThreadList().GetSize();
             for (uint32_t i = 0; i < num_threads; i++)
             {
                 ThreadSP thread_sp = process->GetThreadList().GetThreadAtIndex(i);
                 if (!DisplayFramesForExecutionContext (thread_sp.get(),
-                                                      interpreter,
+                                                      m_interpreter,
                                                       result.GetOutputStream(),
                                                       m_options.m_start,
                                                       m_options.m_count,
@@ -415,7 +411,7 @@ public:
         else
         {
             uint32_t num_args = command.GetArgumentCount();
-            Process *process = interpreter.GetDebugger().GetExecutionContext().process;
+            Process *process = m_interpreter.GetDebugger().GetExecutionContext().process;
             std::vector<ThreadSP> thread_sps;
 
             for (uint32_t i = 0; i < num_args; i++)
@@ -444,7 +440,7 @@ public:
             for (uint32_t i = 0; i < num_args; i++)
             {
                 if (!DisplayFramesForExecutionContext (thread_sps[i].get(),
-                                                      interpreter,
+                                                      m_interpreter,
                                                       result.GetOutputStream(),
                                                       m_options.m_start,
                                                       m_options.m_count,
@@ -566,13 +562,14 @@ public:
         std::string m_avoid_regexp;
     };
 
-    CommandObjectThreadStepWithTypeAndScope (const char *name,
-                         const char *help,
-                         const char *syntax,
-                         uint32_t flags,
-                         StepType step_type,
-                         StepScope step_scope) :
-        CommandObject (name, help, syntax, flags),
+    CommandObjectThreadStepWithTypeAndScope (CommandInterpreter &interpreter,
+                                             const char *name,
+                                             const char *help,
+                                             const char *syntax,
+                                             uint32_t flags,
+                                             StepType step_type,
+                                             StepScope step_scope) :
+        CommandObject (interpreter, name, help, syntax, flags),
         m_step_type (step_type),
         m_step_scope (step_scope),
         m_options ()
@@ -594,13 +591,12 @@ public:
     virtual bool
     Execute 
     (
-        CommandInterpreter &interpreter,
         Args& command,
         CommandReturnObject &result
     )
     {
-        Process *process = interpreter.GetDebugger().GetExecutionContext().process;
-        bool synchronous_execution = interpreter.GetSynchronous();
+        Process *process = m_interpreter.GetDebugger().GetExecutionContext().process;
+        bool synchronous_execution = m_interpreter.GetSynchronous();
 
         if (process == NULL)
         {
@@ -791,8 +787,9 @@ class CommandObjectThreadContinue : public CommandObject
 {
 public:
 
-    CommandObjectThreadContinue () :
-        CommandObject ("thread continue",
+    CommandObjectThreadContinue (CommandInterpreter &interpreter) :
+        CommandObject (interpreter, 
+                       "thread continue",
                        "Continue execution of one or more threads in an active process.",
                        "thread continue <thread-index> [<thread-index> ...]",
                        eFlagProcessMustBeLaunched | eFlagProcessMustBePaused)
@@ -808,21 +805,20 @@ public:
     virtual bool
     Execute
     (
-        CommandInterpreter &interpreter,
         Args& command,
         CommandReturnObject &result
     )
     {
-        bool synchronous_execution = interpreter.GetSynchronous ();
+        bool synchronous_execution = m_interpreter.GetSynchronous ();
 
-        if (!interpreter.GetDebugger().GetSelectedTarget().get())
+        if (!m_interpreter.GetDebugger().GetSelectedTarget().get())
         {
             result.AppendError ("invalid target, set executable file using 'file' command");
             result.SetStatus (eReturnStatusFailed);
             return false;
         }
 
-        Process *process = interpreter.GetDebugger().GetExecutionContext().process;
+        Process *process = m_interpreter.GetDebugger().GetExecutionContext().process;
         if (process == NULL)
         {
             result.AppendError ("no process exists. Cannot continue");
@@ -1035,8 +1031,9 @@ public:
         // Instance variables to hold the values for command options.
     };
 
-    CommandObjectThreadUntil () :
-        CommandObject ("thread until",
+    CommandObjectThreadUntil (CommandInterpreter &interpreter) :
+        CommandObject (interpreter, 
+                       "thread until",
                        "Run the current or specified thread until it reaches a given line number or leaves the current function.",
                        "thread until [<cmd-options>] <line-number>",
                        eFlagProcessMustBeLaunched | eFlagProcessMustBePaused),
@@ -1060,14 +1057,13 @@ public:
     virtual bool
     Execute 
     (
-        CommandInterpreter &interpreter,
         Args& command,
         CommandReturnObject &result
     )
     {
-        bool synchronous_execution = interpreter.GetSynchronous ();
+        bool synchronous_execution = m_interpreter.GetSynchronous ();
 
-        Target *target = interpreter.GetDebugger().GetSelectedTarget().get();
+        Target *target = m_interpreter.GetDebugger().GetSelectedTarget().get();
         if (target == NULL)
         {
             result.AppendError ("invalid target, set executable file using 'file' command");
@@ -1075,7 +1071,7 @@ public:
             return false;
         }
 
-        Process *process = interpreter.GetDebugger().GetExecutionContext().process;
+        Process *process = m_interpreter.GetDebugger().GetExecutionContext().process;
         if (process == NULL)
         {
             result.AppendError ("need a valid process to step");
@@ -1234,11 +1230,12 @@ class CommandObjectThreadSelect : public CommandObject
 {
 public:
 
-    CommandObjectThreadSelect () :
-        CommandObject ("thread select",
-                         "Select a thread as the currently active thread.",
-                         "thread select <thread-index>",
-                         eFlagProcessMustBeLaunched | eFlagProcessMustBePaused)
+    CommandObjectThreadSelect (CommandInterpreter &interpreter) :
+        CommandObject (interpreter,
+                       "thread select",
+                       "Select a thread as the currently active thread.",
+                       "thread select <thread-index>",
+                       eFlagProcessMustBeLaunched | eFlagProcessMustBePaused)
     {
     }
 
@@ -1251,12 +1248,11 @@ public:
     virtual bool
     Execute 
     (
-        CommandInterpreter &interpreter,
         Args& command,
         CommandReturnObject &result
     )
     {
-        Process *process = interpreter.GetDebugger().GetExecutionContext().process;
+        Process *process = m_interpreter.GetDebugger().GetExecutionContext().process;
         if (process == NULL)
         {
             result.AppendError ("no process");
@@ -1283,7 +1279,7 @@ public:
         process->GetThreadList().SetSelectedThreadByID(new_thread->GetID());
         result.SetStatus (eReturnStatusSuccessFinishNoResult);
         
-        DisplayThreadInfo (interpreter,
+        DisplayThreadInfo (m_interpreter,
                            result.GetOutputStream(),
                            new_thread,
                            false,
@@ -1304,8 +1300,9 @@ class CommandObjectThreadList : public CommandObject
 public:
 
 
-    CommandObjectThreadList ():
-        CommandObject ("thread list",
+    CommandObjectThreadList (CommandInterpreter &interpreter):
+        CommandObject (interpreter,
+                       "thread list",
                        "Show a summary of all current threads in a process.",
                        "thread list",
                        eFlagProcessMustBeLaunched | eFlagProcessMustBePaused)
@@ -1319,14 +1316,13 @@ public:
     bool
     Execute
     (
-        CommandInterpreter &interpreter,
         Args& command,
         CommandReturnObject &result
     )
     {
         StreamString &strm = result.GetOutputStream();
         result.SetStatus (eReturnStatusSuccessFinishNoResult);
-        ExecutionContext exe_ctx(interpreter.GetDebugger().GetExecutionContext());
+        ExecutionContext exe_ctx(m_interpreter.GetDebugger().GetExecutionContext());
         if (exe_ctx.process)
         {
             const StateType state = exe_ctx.process->GetState();
@@ -1350,7 +1346,7 @@ public:
                         exe_ctx.thread = exe_ctx.process->GetThreadList().GetThreadAtIndex(0).get();
                     if (exe_ctx.thread != NULL)
                     {
-                        DisplayThreadsInfo (interpreter, &exe_ctx, result, false, false);
+                        DisplayThreadsInfo (m_interpreter, &exe_ctx, result, false, false);
                     }
                     else
                     {
@@ -1379,50 +1375,60 @@ public:
 //-------------------------------------------------------------------------
 
 CommandObjectMultiwordThread::CommandObjectMultiwordThread (CommandInterpreter &interpreter) :
-    CommandObjectMultiword ("thread",
+    CommandObjectMultiword (interpreter,
+                            "thread",
                             "A set of commands for operating on one or more threads within a running process.",
                             "thread <subcommand> [<subcommand-options>]")
 {
-    LoadSubCommand (interpreter, "backtrace",  CommandObjectSP (new CommandObjectThreadBacktrace ()));
-    LoadSubCommand (interpreter, "continue",   CommandObjectSP (new CommandObjectThreadContinue ()));
-    LoadSubCommand (interpreter, "list",       CommandObjectSP (new CommandObjectThreadList ()));
-    LoadSubCommand (interpreter, "select",     CommandObjectSP (new CommandObjectThreadSelect ()));
-    LoadSubCommand (interpreter, "until",      CommandObjectSP (new CommandObjectThreadUntil ()));
-    LoadSubCommand (interpreter, "step-in",    CommandObjectSP (new CommandObjectThreadStepWithTypeAndScope (
+    LoadSubCommand ("backtrace",  CommandObjectSP (new CommandObjectThreadBacktrace (interpreter)));
+    LoadSubCommand ("continue",   CommandObjectSP (new CommandObjectThreadContinue (interpreter)));
+    LoadSubCommand ("list",       CommandObjectSP (new CommandObjectThreadList (interpreter)));
+    LoadSubCommand ("select",     CommandObjectSP (new CommandObjectThreadSelect (interpreter)));
+    LoadSubCommand ("until",      CommandObjectSP (new CommandObjectThreadUntil (interpreter)));
+    LoadSubCommand ("step-in",    CommandObjectSP (new CommandObjectThreadStepWithTypeAndScope (
+                                                    interpreter,
                                                     "thread step-in",
-                                                     "Source level single step in specified thread (current thread, if none specified).",
-                                                     "thread step-in [<thread-id>]",
-                                                     eFlagProcessMustBeLaunched | eFlagProcessMustBePaused,
-                                                     eStepTypeInto,
-                                                     eStepScopeSource)));
+                                                    "Source level single step in specified thread (current thread, if none specified).",
+                                                    "thread step-in [<thread-id>]",
+                                                    eFlagProcessMustBeLaunched | eFlagProcessMustBePaused,
+                                                    eStepTypeInto,
+                                                    eStepScopeSource)));
     
-    LoadSubCommand (interpreter, "step-out",    CommandObjectSP (new CommandObjectThreadStepWithTypeAndScope ("thread step-out",
-                                                                                      "Finish executing the current fucntion and return to its call site in specified thread (current thread, if none specified).",
-                                                                                      "thread step-out [<thread-id>]",
-                                                                                      eFlagProcessMustBeLaunched | eFlagProcessMustBePaused,
-                                                                                      eStepTypeOut,
-                                                                                      eStepScopeSource)));
+    LoadSubCommand ("step-out",   CommandObjectSP (new CommandObjectThreadStepWithTypeAndScope (
+                                                    interpreter,
+                                                    "thread step-out",
+                                                    "Finish executing the current fucntion and return to its call site in specified thread (current thread, if none specified).",
+                                                    "thread step-out [<thread-id>]",
+                                                    eFlagProcessMustBeLaunched | eFlagProcessMustBePaused,
+                                                    eStepTypeOut,
+                                                    eStepScopeSource)));
 
-    LoadSubCommand (interpreter, "step-over",   CommandObjectSP (new CommandObjectThreadStepWithTypeAndScope ("thread step-over",
-                                                                                      "Source level single step in specified thread (current thread, if none specified), stepping over calls.",
-                                                                                      "thread step-over [<thread-id>]",
-                                                                                      eFlagProcessMustBeLaunched | eFlagProcessMustBePaused,
-                                                                                      eStepTypeOver,
-                                                                                      eStepScopeSource)));
+    LoadSubCommand ("step-over",   CommandObjectSP (new CommandObjectThreadStepWithTypeAndScope (
+                                                    interpreter,
+                                                    "thread step-over",
+                                                    "Source level single step in specified thread (current thread, if none specified), stepping over calls.",
+                                                    "thread step-over [<thread-id>]",
+                                                    eFlagProcessMustBeLaunched | eFlagProcessMustBePaused,
+                                                    eStepTypeOver,
+                                                    eStepScopeSource)));
 
-    LoadSubCommand (interpreter, "step-inst",   CommandObjectSP (new CommandObjectThreadStepWithTypeAndScope ("thread step-inst",
-                                                                                      "Single step one instruction in specified thread (current thread, if none specified).",
-                                                                                      "thread step-inst [<thread-id>]",
-                                                                                      eFlagProcessMustBeLaunched | eFlagProcessMustBePaused,
-                                                                                      eStepTypeTrace,
-                                                                                      eStepScopeInstruction)));
+    LoadSubCommand ("step-inst",   CommandObjectSP (new CommandObjectThreadStepWithTypeAndScope (
+                                                    interpreter,
+                                                    "thread step-inst",
+                                                    "Single step one instruction in specified thread (current thread, if none specified).",
+                                                    "thread step-inst [<thread-id>]",
+                                                    eFlagProcessMustBeLaunched | eFlagProcessMustBePaused,
+                                                    eStepTypeTrace,
+                                                    eStepScopeInstruction)));
 
-    LoadSubCommand (interpreter, "step-inst-over", CommandObjectSP (new CommandObjectThreadStepWithTypeAndScope ("thread step-inst-over",
-                                                                                      "Single step one instruction in specified thread (current thread, if none specified), stepping over calls.",
-                                                                                      "thread step-inst-over [<thread-id>]",
-                                                                                      eFlagProcessMustBeLaunched | eFlagProcessMustBePaused,
-                                                                                      eStepTypeTraceOver,
-                                                                                      eStepScopeInstruction)));
+    LoadSubCommand ("step-inst-over", CommandObjectSP (new CommandObjectThreadStepWithTypeAndScope (
+                                                    interpreter,
+                                                    "thread step-inst-over",
+                                                    "Single step one instruction in specified thread (current thread, if none specified), stepping over calls.",
+                                                    "thread step-inst-over [<thread-id>]",
+                                                    eFlagProcessMustBeLaunched | eFlagProcessMustBePaused,
+                                                    eStepTypeTraceOver,
+                                                    eStepScopeInstruction)));
 }
 
 CommandObjectMultiwordThread::~CommandObjectMultiwordThread ()

@@ -26,14 +26,13 @@ class CommandObjectApropos : public CommandObject
 {
 public:
 
-    CommandObjectApropos ();
+    CommandObjectApropos (CommandInterpreter &interpreter);
 
     virtual
     ~CommandObjectApropos ();
 
     virtual bool
-    Execute (CommandInterpreter &interpreter,
-             Args& command,
+    Execute (Args& command,
              CommandReturnObject &result);
 
 

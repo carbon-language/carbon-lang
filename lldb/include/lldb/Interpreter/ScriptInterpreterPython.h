@@ -25,10 +25,10 @@ public:
     ~ScriptInterpreterPython ();
 
     bool
-    ExecuteOneLine (CommandInterpreter &interpreter, const char *command, CommandReturnObject *result);
+    ExecuteOneLine (const char *command, CommandReturnObject *result);
 
     void
-    ExecuteInterpreterLoop (CommandInterpreter &interpreter);
+    ExecuteInterpreterLoop ();
 
     bool
     ExecuteOneLineWithReturn (const char *in_string, 
@@ -58,14 +58,12 @@ public:
                                 lldb::user_id_t break_loc_id);
 
     void
-    CollectDataForBreakpointCommandCallback (CommandInterpreter &interpreter,
-                                             BreakpointOptions *bp_options,
+    CollectDataForBreakpointCommandCallback (BreakpointOptions *bp_options,
                                              CommandReturnObject &result);
 
     /// Set a Python one-liner as the callback for the breakpoint.
     void 
-    SetBreakpointCommandCallback (CommandInterpreter &interpreter,
-                                  BreakpointOptions *bp_options,
+    SetBreakpointCommandCallback (BreakpointOptions *bp_options,
                                   const char *oneliner);
 
     StringList

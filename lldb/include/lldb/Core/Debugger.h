@@ -65,6 +65,45 @@ public:
                               const ConstString &var_name,
                               StringList &value);
 
+    uint32_t
+    GetTerminalWidth () const
+    {
+        return m_term_width;
+    }
+
+    void
+    SetTerminalWidth (uint32_t term_width)
+    {
+        m_term_width = term_width;
+    }
+    
+    const char *
+    GetPrompt() const
+    {
+        return m_prompt.c_str();
+    }
+
+    void
+    SetPrompt(const char *p)
+    {
+        if (p)
+            m_prompt.assign (p);
+        else
+            m_prompt.assign ("(lldb) ");
+    }
+        
+    lldb::ScriptLanguage 
+    GetScriptLanguage() const
+    {
+        return m_script_lang;
+    }
+
+    void
+    SetScriptLanguage (lldb::ScriptLanguage script_lang)
+    {
+        m_script_lang = script_lang;
+    }
+
 protected:
 
     void
@@ -91,7 +130,7 @@ protected:
   
 private:
 
-    int m_term_width;
+    uint32_t m_term_width;
     std::string m_prompt;
     lldb::ScriptLanguage m_script_lang;
 };

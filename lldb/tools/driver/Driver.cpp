@@ -1105,13 +1105,8 @@ Driver::MainLoop ()
     if (isatty (STDIN_FILENO)
         && ::ioctl (STDIN_FILENO, TIOCGWINSZ, &window_size) == 0)
     {
-        char buffer[256];
-
         if (window_size.ws_col > 0)
-        {
-            ::snprintf (buffer, sizeof(buffer), "settings set term-width %d", window_size.ws_col);
-            m_debugger.HandleCommand ((const char *) buffer);
-        }
+            m_debugger.SetTerminalWidth (window_size.ws_col);
     }
 
     // Since input can be redirected by the debugger, we must insert our editline

@@ -27,7 +27,8 @@ namespace lldb_private {
 class CommandObjectMultiword : public CommandObject
 {
 public:
-    CommandObjectMultiword (const char *name,
+    CommandObjectMultiword (CommandInterpreter &interpreter,
+                            const char *name,
                             const char *help = NULL,
                             const char *syntax = NULL,
                             uint32_t flags = 0);
@@ -39,12 +40,11 @@ public:
     IsMultiwordObject () { return true; }
 
     bool
-    LoadSubCommand (CommandInterpreter &interpreter, 
-                    const char *cmd_name, 
+    LoadSubCommand (const char *cmd_name, 
                     const lldb::CommandObjectSP& command_obj);
 
     void
-    GenerateHelpText (CommandInterpreter &interpreter, CommandReturnObject &result);
+    GenerateHelpText (CommandReturnObject &result);
 
     lldb::CommandObjectSP
     GetSubcommandSP (const char *sub_cmd, StringList *matches = NULL);
@@ -53,13 +53,11 @@ public:
     GetSubcommandObject (const char *sub_cmd, StringList *matches = NULL);
 
     virtual bool
-    Execute (CommandInterpreter &interpreter,
-             Args& command,
+    Execute (Args& command,
              CommandReturnObject &result);
 
     virtual int
-    HandleCompletion (CommandInterpreter &interpreter,
-                      Args &input,
+    HandleCompletion (Args &input,
                       int &cursor_index,
                       int &cursor_char_position,
                       int match_start_point,

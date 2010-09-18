@@ -128,7 +128,6 @@ CommandObjectCall::GetOptions ()
 bool
 CommandObjectCall::Execute
 (
-    CommandInterpreter &interpreter,
     Args &command,
     CommandReturnObject &result
 )

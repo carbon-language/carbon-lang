@@ -85,8 +85,9 @@ CommandObjectFile::CommandOptions::ResetOptionValues ()
 // CommandObjectFile
 //-------------------------------------------------------------------------
 
-CommandObjectFile::CommandObjectFile() :
-    CommandObject ("file",
+CommandObjectFile::CommandObjectFile(CommandInterpreter &interpreter) :
+    CommandObject (interpreter,
+                   "file",
                    "Set the file to be used as the main executable by the debugger.",
                    "file [<cmd-options>] <filename>")
 {
@@ -105,7 +106,6 @@ CommandObjectFile::GetOptions ()
 bool
 CommandObjectFile::Execute
 (
-    CommandInterpreter &interpreter,
     Args& command,
     CommandReturnObject &result
 )
@@ -127,7 +127,7 @@ CommandObjectFile::Execute
         TargetSP target_sp;
 
         ArchSpec arch = m_options.m_arch;
-        Debugger &debugger = interpreter.GetDebugger();
+        Debugger &debugger = m_interpreter.GetDebugger();
         Error error = debugger.GetTargetList().CreateTarget (debugger, file_spec, m_options.m_arch, NULL, true, target_sp);
 
         if (target_sp)
@@ -152,27 +152,28 @@ CommandObjectFile::Execute
 }
 
 int
-CommandObjectFile::HandleArgumentCompletion (CommandInterpreter &interpreter,
-                              Args &input,
-                              int &cursor_index,
-                              int &cursor_char_position,
-                              OptionElementVector &opt_element_vector,
-                              int match_start_point,
-                              int max_return_elements,
-                              bool &word_complete,
-                              StringList &matches)
+CommandObjectFile::HandleArgumentCompletion 
+(
+    Args &input,
+    int &cursor_index,
+    int &cursor_char_position,
+    OptionElementVector &opt_element_vector,
+    int match_start_point,
+    int max_return_elements,
+    bool &word_complete,
+    StringList &matches
+)
 {
-        std::string completion_str (input.GetArgumentAtIndex(cursor_index));
-        completion_str.erase (cursor_char_position);
+    std::string completion_str (input.GetArgumentAtIndex(cursor_index));
+    completion_str.erase (cursor_char_position);
 
-        CommandCompletions::InvokeCommonCompletionCallbacks (interpreter, 
-                                                             CommandCompletions::eDiskFileCompletion,
-                                                             completion_str.c_str(),
-                                                             match_start_point,
-                                                             max_return_elements,
-                                                             NULL,
-                                                             word_complete,
-                                                             matches);
-        return matches.GetSize();
-    
+    CommandCompletions::InvokeCommonCompletionCallbacks (m_interpreter, 
+                                                         CommandCompletions::eDiskFileCompletion,
+                                                         completion_str.c_str(),
+                                                         match_start_point,
+                                                         max_return_elements,
+                                                         NULL,
+                                                         word_complete,
+                                                         matches);
+    return matches.GetSize();
 }

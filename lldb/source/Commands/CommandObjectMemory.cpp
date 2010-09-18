@@ -176,8 +176,9 @@ public:
         uint32_t m_num_per_line;
     };
 
-    CommandObjectMemoryRead () :
-        CommandObject ("memory read",
+    CommandObjectMemoryRead (CommandInterpreter &interpreter) :
+        CommandObject (interpreter,
+                       "memory read",
                        "Read from the memory of the process being debugged.",
                        "memory read [<cmd-options>] <start-addr> [<end-addr>]",
                        eFlagProcessMustBeLaunched)
@@ -196,11 +197,10 @@ public:
     }
 
     virtual bool
-    Execute (CommandInterpreter &interpreter,
-             Args& command,
+    Execute (Args& command,
              CommandReturnObject &result)
     {
-        Process *process = interpreter.GetDebugger().GetExecutionContext().process;
+        Process *process = m_interpreter.GetDebugger().GetExecutionContext().process;
         if (process == NULL)
         {
             result.AppendError("need a process to read memory");
@@ -394,8 +394,9 @@ public:
         uint32_t m_byte_size;
     };
 
-    CommandObjectMemoryWrite () :
-        CommandObject ("memory write",
+    CommandObjectMemoryWrite (CommandInterpreter &interpreter) :
+        CommandObject (interpreter,
+                       "memory write",
                        "Write to the memory of the process being debugged.",
                        "memory write [<cmd-options>] <addr> [value1 value2 ...]",
                        eFlagProcessMustBeLaunched)
@@ -441,11 +442,10 @@ public:
     }
 
     virtual bool
-    Execute (CommandInterpreter &interpreter,
-             Args& command,
+    Execute (Args& command,
              CommandReturnObject &result)
     {
-        Process *process = interpreter.GetDebugger().GetExecutionContext().process;
+        Process *process = m_interpreter.GetDebugger().GetExecutionContext().process;
         if (process == NULL)
         {
             result.AppendError("need a process to read memory");
@@ -677,12 +677,13 @@ CommandObjectMemoryWrite::CommandOptions::g_option_table[] =
 //-------------------------------------------------------------------------
 
 CommandObjectMemory::CommandObjectMemory (CommandInterpreter &interpreter) :
-    CommandObjectMultiword ("memory",
+    CommandObjectMultiword (interpreter,
+                            "memory",
                             "A set of commands for operating on memory.",
                             "memory <subcommand> [<subcommand-options>]")
 {
-    LoadSubCommand (interpreter, "read",  CommandObjectSP (new CommandObjectMemoryRead ()));
-    LoadSubCommand (interpreter, "write", CommandObjectSP (new CommandObjectMemoryWrite ()));
+    LoadSubCommand ("read",  CommandObjectSP (new CommandObjectMemoryRead (interpreter)));
+    LoadSubCommand ("write", CommandObjectSP (new CommandObjectMemoryWrite (interpreter)));
 }
 
 CommandObjectMemory::~CommandObjectMemory ()

@@ -361,27 +361,21 @@ Options::OutputFormattedUsageText
 void
 Options::GenerateOptionUsage
 (
+    CommandInterpreter &interpreter,
     Stream &strm,
-    CommandObject *cmd,
-    const char *debugger_instance_name,
-    const char *program_name)
+    CommandObject *cmd
+)
 {
-    lldb::SettableVariableType var_type;
-    const char *screen_width_str = 
-      Debugger::GetSettingsController()->GetVariable ("term-width", var_type,
-                                                      debugger_instance_name).GetStringAtIndex(0);
-    uint32_t screen_width = atoi (screen_width_str);
-    if (screen_width == 0)
-        screen_width = 80;
+    const uint32_t screen_width = interpreter.GetDebugger().GetTerminalWidth();
 
     const lldb::OptionDefinition *full_options_table = GetDefinitions();
     const uint32_t save_indent_level = strm.GetIndentLevel();
     const char *name;
 
     if (cmd)
-      name = cmd->GetCommandName();
+        name = cmd->GetCommandName();
     else
-      name = program_name;
+        name = "";
 
     strm.PutCString ("\nCommand Options Usage:\n");
 

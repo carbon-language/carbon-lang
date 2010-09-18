@@ -23,10 +23,10 @@ public:
     ~ScriptInterpreterNone ();
 
     bool
-    ExecuteOneLine (CommandInterpreter &interpreter, const char *command, CommandReturnObject *result);
+    ExecuteOneLine (const char *command, CommandReturnObject *result);
 
     void
-    ExecuteInterpreterLoop (CommandInterpreter &interpreter);
+    ExecuteInterpreterLoop ();
 
 };
 

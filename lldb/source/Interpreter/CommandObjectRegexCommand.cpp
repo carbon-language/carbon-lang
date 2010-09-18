@@ -24,12 +24,13 @@ using namespace lldb_private;
 //----------------------------------------------------------------------
 CommandObjectRegexCommand::CommandObjectRegexCommand
 (
+    CommandInterpreter &interpreter,
     const char *name,
     const char *help,
     const char *syntax,
     uint32_t max_matches
 ) :
-    CommandObject (name, help, syntax),
+    CommandObject (interpreter, name, help, syntax),
     m_max_matches (max_matches),
     m_entries ()
 {
@@ -46,7 +47,6 @@ CommandObjectRegexCommand::~CommandObjectRegexCommand()
 bool
 CommandObjectRegexCommand::Execute
 (
-    CommandInterpreter &interpreter,
     Args& command,
     CommandReturnObject &result
 )
@@ -58,7 +58,6 @@ CommandObjectRegexCommand::Execute
 bool
 CommandObjectRegexCommand::ExecuteRawCommandString
 (
-    CommandInterpreter &interpreter,
     const char *command,
     CommandReturnObject &result
 )
@@ -90,7 +89,7 @@ CommandObjectRegexCommand::ExecuteRawCommandString
                 // Interpret the new command and return this as the result!
 //                if (m_options.verbose)
 //                    result.GetOutputStream().Printf("%s\n", new_command.c_str());
-                return interpreter.HandleCommand(new_command.c_str(), true, result);
+                return m_interpreter.HandleCommand(new_command.c_str(), true, result);
             }
         }
         result.SetStatus(eReturnStatusFailed);

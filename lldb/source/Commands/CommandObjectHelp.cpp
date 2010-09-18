@@ -25,8 +25,9 @@ using namespace lldb_private;
 // CommandObjectHelp
 //-------------------------------------------------------------------------
 
-CommandObjectHelp::CommandObjectHelp () :
-    CommandObject ("help",
+CommandObjectHelp::CommandObjectHelp (CommandInterpreter &interpreter) :
+    CommandObject (interpreter,
+                   "help",
                    "Show a list of all debugger commands, or give details about specific commands.",
                    "help [<cmd-name>]")
 {
@@ -38,7 +39,7 @@ CommandObjectHelp::~CommandObjectHelp()
 
 
 bool
-CommandObjectHelp::Execute (CommandInterpreter &interpreter, Args& command, CommandReturnObject &result)
+CommandObjectHelp::Execute (Args& command, CommandReturnObject &result)
 {
     CommandObject::CommandMap::iterator pos;
     CommandObject *cmd_obj;
@@ -49,13 +50,13 @@ CommandObjectHelp::Execute (CommandInterpreter &interpreter, Args& command, Comm
     if (argc == 0)
     {
         result.SetStatus (eReturnStatusSuccessFinishNoResult);
-        interpreter.GetHelp (result);  // General help, for ALL commands.
+        m_interpreter.GetHelp (result);  // General help, for ALL commands.
     }
     else
     {
         // Get command object for the first command argument. Only search built-in command dictionary.
         StringList matches;
-        cmd_obj = interpreter.GetCommandObject (command.GetArgumentAtIndex (0), &matches);
+        cmd_obj = m_interpreter.GetCommandObject (command.GetArgumentAtIndex (0), &matches);
         
         if (cmd_obj != NULL)
         {
@@ -94,10 +95,9 @@ CommandObjectHelp::Execute (CommandInterpreter &interpreter, Args& command, Comm
                 Stream &output_strm = result.GetOutputStream();
                 if (sub_cmd_obj->GetOptions() != NULL)
                 {
-                    interpreter.OutputFormattedHelpText (output_strm, "", "", sub_cmd_obj->GetHelp(), 1);
+                    m_interpreter.OutputFormattedHelpText (output_strm, "", "", sub_cmd_obj->GetHelp(), 1);
                     output_strm.Printf ("\nSyntax: %s\n", sub_cmd_obj->GetSyntax());
-                    sub_cmd_obj->GetOptions()->GenerateOptionUsage (output_strm, sub_cmd_obj,
-                                                                    interpreter.GetDebugger().GetInstanceName().AsCString());
+                    sub_cmd_obj->GetOptions()->GenerateOptionUsage (m_interpreter, output_strm, sub_cmd_obj);
                     const char *long_help = sub_cmd_obj->GetHelpLong();
                     if ((long_help != NULL)
                         && (strlen (long_help) > 0))
@@ -105,8 +105,8 @@ CommandObjectHelp::Execute (CommandInterpreter &interpreter, Args& command, Comm
                 }
                 else if (sub_cmd_obj->IsMultiwordObject())
                 {
-                    interpreter.OutputFormattedHelpText (output_strm, "", "", sub_cmd_obj->GetHelp(), 1);
-                    ((CommandObjectMultiword *) sub_cmd_obj)->GenerateHelpText (interpreter, result);
+                    m_interpreter.OutputFormattedHelpText (output_strm, "", "", sub_cmd_obj->GetHelp(), 1);
+                    ((CommandObjectMultiword *) sub_cmd_obj)->GenerateHelpText (result);
                 }
                 else
                 {
@@ -115,7 +115,7 @@ CommandObjectHelp::Execute (CommandInterpreter &interpreter, Args& command, Comm
                         && (strlen (long_help) > 0))
                         output_strm.Printf ("\n%s", long_help);
                     else
-                        interpreter.OutputFormattedHelpText (output_strm, "", "", sub_cmd_obj->GetHelp(), 1);
+                        m_interpreter.OutputFormattedHelpText (output_strm, "", "", sub_cmd_obj->GetHelp(), 1);
                     output_strm.Printf ("\nSyntax: %s\n", sub_cmd_obj->GetSyntax());
                 }
             }
@@ -145,7 +145,6 @@ CommandObjectHelp::Execute (CommandInterpreter &interpreter, Args& command, Comm
 int
 CommandObjectHelp::HandleCompletion
 (
-    CommandInterpreter &interpreter,
     Args &input,
     int &cursor_index,
     int &cursor_char_position,
@@ -158,15 +157,25 @@ CommandObjectHelp::HandleCompletion
     // Return the completions of the commands in the help system:
     if (cursor_index == 0)
     {
-        return interpreter.HandleCompletionMatches(input, cursor_index, cursor_char_position, match_start_point, 
-                                                   max_return_elements, word_complete, matches);
+        return m_interpreter.HandleCompletionMatches (input, 
+                                                    cursor_index, 
+                                                    cursor_char_position, 
+                                                    match_start_point, 
+                                                    max_return_elements, 
+                                                    word_complete, 
+                                                    matches);
     }
     else
     {
-        CommandObject *cmd_obj = interpreter.GetCommandObject (input.GetArgumentAtIndex(0));
+        CommandObject *cmd_obj = m_interpreter.GetCommandObject (input.GetArgumentAtIndex(0));
         input.Shift();
         cursor_index--;
-        return cmd_obj->HandleCompletion (interpreter, input, cursor_index, cursor_char_position, match_start_point, 
-                                          max_return_elements, word_complete, matches);
+        return cmd_obj->HandleCompletion (input, 
+                                          cursor_index, 
+                                          cursor_char_position, 
+                                          match_start_point, 
+                                          max_return_elements, 
+                                          word_complete, 
+                                          matches);
     }
 }

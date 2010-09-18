@@ -31,10 +31,11 @@ const char *k_space_characters = "\t\n\v\f\r ";
 class CommandObjectCommandsSource : public CommandObject
 {
 public:
-    CommandObjectCommandsSource() :
-        CommandObject ("commands source",
-                   "Read in debugger commands from the file <filename> and execute them.",
-                   "command source <filename>")
+    CommandObjectCommandsSource(CommandInterpreter &interpreter) :
+        CommandObject (interpreter,
+                       "commands source",
+                       "Read in debugger commands from the file <filename> and execute them.",
+                       "command source <filename>")
     {
     }
 
@@ -45,7 +46,6 @@ public:
     bool
     Execute
     (
-        CommandInterpreter &interpreter,
         Args& args,
         CommandReturnObject &result
     )
@@ -89,8 +89,10 @@ public:
                     size_t i;
                     for (i = 0; i<num_commands; ++i)
                     {
-                        result.GetOutputStream().Printf("%s %s\n", interpreter.GetPrompt(), commands[i].c_str());
-                        if (!interpreter.HandleCommand(commands[i].c_str(), false, result))
+                        result.GetOutputStream().Printf ("%s %s\n", 
+                                                         m_interpreter.GetPrompt(), 
+                                                         commands[i].c_str());
+                        if (!m_interpreter.HandleCommand(commands[i].c_str(), false, result))
                             break;
                     }
 
@@ -137,8 +139,9 @@ public:
 class CommandObjectCommandsAlias : public CommandObject
 {
 public:
-    CommandObjectCommandsAlias () :
-        CommandObject ("commands alias",
+    CommandObjectCommandsAlias (CommandInterpreter &interpreter) :
+        CommandObject (interpreter, 
+                       "commands alias",
                        "Allow users to define their own debugger command abbreviations.",
                        "commands alias <new_command> <old_command> [<options-for-aliased-command>]")
     {
@@ -200,7 +203,6 @@ public:
     bool
     Execute
     (
-        CommandInterpreter &interpreter,
         Args& args,
         CommandReturnObject &result
     )
@@ -222,7 +224,7 @@ public:
 
         // Verify that the command is alias'able, and get the appropriate command object.
 
-        if (interpreter.CommandExists (alias_command.c_str()))
+        if (m_interpreter.CommandExists (alias_command.c_str()))
         {
             result.AppendErrorWithFormat ("'%s' is a permanent debugger command and cannot be redefined.\n",
                                          alias_command.c_str());
@@ -230,7 +232,7 @@ public:
         }
         else
         {
-             CommandObjectSP command_obj_sp(interpreter.GetCommandSPExact (actual_command.c_str(), true));
+             CommandObjectSP command_obj_sp(m_interpreter.GetCommandSPExact (actual_command.c_str(), true));
              CommandObjectSP subcommand_obj_sp;
              bool use_subcommand = false;
              if (command_obj_sp.get())
@@ -307,25 +309,25 @@ public:
 
                  // Create the alias.
 
-                 if (interpreter.AliasExists (alias_command.c_str())
-                     || interpreter.UserCommandExists (alias_command.c_str()))
+                 if (m_interpreter.AliasExists (alias_command.c_str())
+                     || m_interpreter.UserCommandExists (alias_command.c_str()))
                  {
-                     OptionArgVectorSP tmp_option_arg_sp (interpreter.GetAliasOptions (alias_command.c_str()));
+                     OptionArgVectorSP tmp_option_arg_sp (m_interpreter.GetAliasOptions (alias_command.c_str()));
                      if (tmp_option_arg_sp.get())
                      {
                          if (option_arg_vector->size() == 0)
-                             interpreter.RemoveAliasOptions (alias_command.c_str());
+                             m_interpreter.RemoveAliasOptions (alias_command.c_str());
                      }
                      result.AppendWarningWithFormat ("Overwriting existing definition for '%s'.\n", 
                                                      alias_command.c_str());
                  }
 
                  if (use_subcommand)
-                     interpreter.AddAlias (alias_command.c_str(), subcommand_obj_sp);
+                     m_interpreter.AddAlias (alias_command.c_str(), subcommand_obj_sp);
                  else
-                     interpreter.AddAlias (alias_command.c_str(), command_obj_sp);
+                     m_interpreter.AddAlias (alias_command.c_str(), command_obj_sp);
                  if (option_arg_vector->size() > 0)
-                     interpreter.AddOrReplaceAliasOptions (alias_command.c_str(), option_arg_vector_sp);
+                     m_interpreter.AddOrReplaceAliasOptions (alias_command.c_str(), option_arg_vector_sp);
                  result.SetStatus (eReturnStatusSuccessFinishNoResult);
              }
              else
@@ -347,8 +349,9 @@ public:
 class CommandObjectCommandsUnalias : public CommandObject
 {
 public:
-    CommandObjectCommandsUnalias () :
-        CommandObject ("commands unalias",
+    CommandObjectCommandsUnalias (CommandInterpreter &interpreter) :
+        CommandObject (interpreter,
+                       "commands unalias",
                        "Allow the user to remove/delete a user-defined command abbreviation.",
                        "unalias <alias-name-to-be-removed>")
     {
@@ -362,7 +365,6 @@ public:
     bool
     Execute
     (
-        CommandInterpreter &interpreter,
         Args& args,
         CommandReturnObject &result
     )
@@ -373,10 +375,10 @@ public:
         if (args.GetArgumentCount() != 0)
         {
             const char *command_name = args.GetArgumentAtIndex(0);
-            cmd_obj = interpreter.GetCommandObject(command_name);
+            cmd_obj = m_interpreter.GetCommandObject(command_name);
             if (cmd_obj)
             {
-                if (interpreter.CommandExists (command_name))
+                if (m_interpreter.CommandExists (command_name))
                 {
                     result.AppendErrorWithFormat ("'%s' is a permanent debugger command and cannot be removed.\n",
                                                   command_name);
@@ -385,9 +387,9 @@ public:
                 else
                 {
 
-                    if (interpreter.RemoveAlias (command_name) == false)
+                    if (m_interpreter.RemoveAlias (command_name) == false)
                     {
-                        if (interpreter.AliasExists (command_name))
+                        if (m_interpreter.AliasExists (command_name))
                             result.AppendErrorWithFormat ("Error occurred while attempting to unalias '%s'.\n", 
                                                           command_name);
                         else
@@ -423,13 +425,14 @@ public:
 //-------------------------------------------------------------------------
 
 CommandObjectMultiwordCommands::CommandObjectMultiwordCommands (CommandInterpreter &interpreter) :
-    CommandObjectMultiword ("commands",
+    CommandObjectMultiword (interpreter,
+                            "commands",
                             "A set of commands for managing or customizing the debugger commands.",
                             "commands <subcommand> [<subcommand-options>]")
 {
-    LoadSubCommand (interpreter, "source",   CommandObjectSP (new CommandObjectCommandsSource ()));
-    LoadSubCommand (interpreter, "alias",   CommandObjectSP (new CommandObjectCommandsAlias ()));
-    LoadSubCommand (interpreter, "unalias", CommandObjectSP (new CommandObjectCommandsUnalias ()));
+    LoadSubCommand ("source",  CommandObjectSP (new CommandObjectCommandsSource (interpreter)));
+    LoadSubCommand ("alias",   CommandObjectSP (new CommandObjectCommandsAlias (interpreter)));
+    LoadSubCommand ("unalias", CommandObjectSP (new CommandObjectCommandsUnalias (interpreter)));
 }
 
 CommandObjectMultiwordCommands::~CommandObjectMultiwordCommands ()

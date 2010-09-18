@@ -96,10 +96,11 @@ class CommandObjectSourceInfo : public CommandObject
     };
  
 public:   
-    CommandObjectSourceInfo() :
-        CommandObject ("source info",
-                         "Display information about the source lines from the current executable's debug info.",
-                         "source info [<cmd-options>]")
+    CommandObjectSourceInfo(CommandInterpreter &interpreter) :
+        CommandObject (interpreter,
+                       "source info",
+                       "Display information about the source lines from the current executable's debug info.",
+                       "source info [<cmd-options>]")
     {
     }
 
@@ -118,7 +119,6 @@ public:
     bool
     Execute
     (
-        CommandInterpreter &interpreter,
         Args& args,
         CommandReturnObject &result
     )
@@ -227,10 +227,11 @@ class CommandObjectSourceList : public CommandObject
     };
  
 public:   
-    CommandObjectSourceList() :
-        CommandObject ("source list",
-                         "Display source code (as specified) based on the current executable's debug info.",
-                         "source list [<cmd-options>] [<filename>]")
+    CommandObjectSourceList(CommandInterpreter &interpreter) :
+        CommandObject (interpreter,
+                       "source list",
+                       "Display source code (as specified) based on the current executable's debug info.",
+                       "source list [<cmd-options>] [<filename>]")
     {
     }
 
@@ -249,7 +250,6 @@ public:
     bool
     Execute
     (
-        CommandInterpreter &interpreter,
         Args& args,
         CommandReturnObject &result
     )
@@ -262,12 +262,12 @@ public:
             result.SetStatus (eReturnStatusFailed);
         }
 
-        ExecutionContext exe_ctx(interpreter.GetDebugger().GetExecutionContext());
+        ExecutionContext exe_ctx(m_interpreter.GetDebugger().GetExecutionContext());
         
         if (!m_options.symbol_name.empty())
         {
             // Displaying the source for a symbol:
-            Target *target = interpreter.GetDebugger().GetSelectedTarget().get();
+            Target *target = m_interpreter.GetDebugger().GetSelectedTarget().get();
             if (target == NULL)
             {
                 result.AppendError ("invalid target, set executable file using 'file' command");
@@ -400,12 +400,12 @@ public:
             char path_buf[PATH_MAX+1];
             start_file.GetPath(path_buf, PATH_MAX);
             result.AppendMessageWithFormat("File: %s.\n", path_buf);
-            interpreter.GetDebugger().GetSourceManager().DisplaySourceLinesWithLineNumbers (start_file,
-                                                                                             line_no,
-                                                                                             0,
-                                                                                             m_options.num_lines,
-                                                                                             "",
-                                                                                             &result.GetOutputStream());
+            m_interpreter.GetDebugger().GetSourceManager().DisplaySourceLinesWithLineNumbers (start_file,
+                                                                                              line_no,
+                                                                                              0,
+                                                                                              m_options.num_lines,
+                                                                                              "",
+                                                                                              &result.GetOutputStream());
             
             result.SetStatus (eReturnStatusSuccessFinishResult);
             return true;
@@ -419,14 +419,14 @@ public:
             // more likely because you typed it once, then typed it again
             if (m_options.start_line == 0)
             {
-                if (interpreter.GetDebugger().GetSourceManager().DisplayMoreWithLineNumbers (&result.GetOutputStream()))
+                if (m_interpreter.GetDebugger().GetSourceManager().DisplayMoreWithLineNumbers (&result.GetOutputStream()))
                 {
                     result.SetStatus (eReturnStatusSuccessFinishResult);
                 }
             }
             else
             {
-                if (interpreter.GetDebugger().GetSourceManager().DisplaySourceLinesWithLineNumbersUsingLastFile(
+                if (m_interpreter.GetDebugger().GetSourceManager().DisplaySourceLinesWithLineNumbersUsingLastFile(
                             m_options.start_line,   // Line to display
                             0,                      // Lines before line to display
                             m_options.num_lines,    // Lines after line to display
@@ -441,7 +441,7 @@ public:
         else
         {
             const char *filename = m_options.file_name.c_str();
-            Target *target = interpreter.GetDebugger().GetSelectedTarget().get();
+            Target *target = m_interpreter.GetDebugger().GetSelectedTarget().get();
             if (target == NULL)
             {
                 result.AppendError ("invalid target, set executable file using 'file' command");
@@ -524,12 +524,12 @@ public:
             {
                 if (sc.comp_unit)
                 {
-                    interpreter.GetDebugger().GetSourceManager().DisplaySourceLinesWithLineNumbers (sc.comp_unit,
-                                                                                                     m_options.start_line,
-                                                                                                     0,
-                                                                                                     m_options.num_lines,
-                                                                                                     "",
-                                                                                                     &result.GetOutputStream());
+                    m_interpreter.GetDebugger().GetSourceManager().DisplaySourceLinesWithLineNumbers (sc.comp_unit,
+                                                                                                      m_options.start_line,
+                                                                                                      0,
+                                                                                                      m_options.num_lines,
+                                                                                                      "",
+                                                                                                      &result.GetOutputStream());
                     
                     result.SetStatus (eReturnStatusSuccessFinishResult);
                 }
@@ -574,12 +574,13 @@ CommandObjectSourceList::CommandOptions::g_option_table[] =
 //-------------------------------------------------------------------------
 
 CommandObjectMultiwordSource::CommandObjectMultiwordSource (CommandInterpreter &interpreter) :
-    CommandObjectMultiword ("source",
+    CommandObjectMultiword (interpreter,
+                            "source",
                             "A set of commands for accessing source file information",
                             "source <subcommand> [<subcommand-options>]")
 {
-    LoadSubCommand (interpreter, "info",   CommandObjectSP (new CommandObjectSourceInfo ()));
-    LoadSubCommand (interpreter, "list",   CommandObjectSP (new CommandObjectSourceList ()));
+    LoadSubCommand ("info",   CommandObjectSP (new CommandObjectSourceInfo (interpreter)));
+    LoadSubCommand ("list",   CommandObjectSP (new CommandObjectSourceList (interpreter)));
 }
 
 CommandObjectMultiwordSource::~CommandObjectMultiwordSource ()

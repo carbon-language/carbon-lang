@@ -26,7 +26,8 @@ class CommandObjectScript : public CommandObject
 {
 public:
 
-    CommandObjectScript (lldb::ScriptLanguage script_lang);
+    CommandObjectScript (CommandInterpreter &interpreter,
+                         lldb::ScriptLanguage script_lang);
 
     virtual
     ~CommandObjectScript ();
@@ -34,17 +35,15 @@ public:
     bool WantsRawCommandString();
 
     virtual bool
-    ExecuteRawCommandString (CommandInterpreter &interpreter,
-                             const char *command,
+    ExecuteRawCommandString (const char *command,
                              CommandReturnObject &result);
 
     virtual bool
-    Execute (CommandInterpreter &interpreter,
-             Args& command,
+    Execute (Args& command,
              CommandReturnObject &result);
 
     ScriptInterpreter *
-    GetInterpreter (CommandInterpreter &interpreter);
+    GetInterpreter ();
 
 private:
     lldb::ScriptLanguage m_script_lang;

@@ -47,7 +47,7 @@ namespace lldb_private {
             static lldb::OptionDefinition g_option_table[];
         };
         
-        CommandObjectArgs ();
+        CommandObjectArgs (CommandInterpreter &interpreter);
         
         virtual
         ~CommandObjectArgs ();
@@ -58,8 +58,7 @@ namespace lldb_private {
         
         
         virtual bool
-        Execute (CommandInterpreter &interpreter,
-                 Args& command,
+        Execute (    Args& command,
                  CommandReturnObject &result);
         
         virtual bool

@@ -247,8 +247,10 @@ CommandObjectBreakpointSet::CommandOptions::ResetOptionValues ()
 //-------------------------------------------------------------------------
 #pragma mark Set
 
-CommandObjectBreakpointSet::CommandObjectBreakpointSet () :
-    CommandObject ("breakpoint set", "Sets a breakpoint or set of breakpoints in the executable.", 
+CommandObjectBreakpointSet::CommandObjectBreakpointSet (CommandInterpreter &interpreter) :
+    CommandObject (interpreter,
+                   "breakpoint set", 
+                   "Sets a breakpoint or set of breakpoints in the executable.", 
                    "breakpoint set <cmd-options>")
 {
 }
@@ -266,12 +268,11 @@ CommandObjectBreakpointSet::GetOptions ()
 bool
 CommandObjectBreakpointSet::Execute
 (
-    CommandInterpreter &interpreter,
     Args& command,
     CommandReturnObject &result
 )
 {
-    Target *target = interpreter.GetDebugger().GetSelectedTarget().get();
+    Target *target = m_interpreter.GetDebugger().GetSelectedTarget().get();
     if (target == NULL)
     {
         result.AppendError ("Invalid target, set executable file using 'file' command.");
@@ -312,7 +313,7 @@ CommandObjectBreakpointSet::Execute
             FileSpec file;
             if (m_options.m_filename.empty())
             {
-                StackFrame *cur_frame = interpreter.GetDebugger().GetExecutionContext().frame;
+                StackFrame *cur_frame = m_interpreter.GetDebugger().GetExecutionContext().frame;
                 if (cur_frame == NULL)
                 {
                     result.AppendError ("Attempting to set breakpoint by line number alone with no selected frame.");
@@ -503,19 +504,20 @@ CommandObjectBreakpointSet::Execute
 #pragma mark MultiwordBreakpoint
 
 CommandObjectMultiwordBreakpoint::CommandObjectMultiwordBreakpoint (CommandInterpreter &interpreter) :
-    CommandObjectMultiword ("breakpoint",
-                              "A set of commands for operating on breakpoints. Also see regexp-break.",
-                              "breakpoint <command> [<command-options>]")
+    CommandObjectMultiword (interpreter, 
+                            "breakpoint",
+                            "A set of commands for operating on breakpoints. Also see regexp-break.",
+                            "breakpoint <command> [<command-options>]")
 {
     bool status;
 
-    CommandObjectSP list_command_object (new CommandObjectBreakpointList ());
-    CommandObjectSP delete_command_object (new CommandObjectBreakpointDelete ());
-    CommandObjectSP enable_command_object (new CommandObjectBreakpointEnable ());
-    CommandObjectSP disable_command_object (new CommandObjectBreakpointDisable ());
-    CommandObjectSP set_command_object (new CommandObjectBreakpointSet ());
+    CommandObjectSP list_command_object (new CommandObjectBreakpointList (interpreter));
+    CommandObjectSP delete_command_object (new CommandObjectBreakpointDelete (interpreter));
+    CommandObjectSP enable_command_object (new CommandObjectBreakpointEnable (interpreter));
+    CommandObjectSP disable_command_object (new CommandObjectBreakpointDisable (interpreter));
+    CommandObjectSP set_command_object (new CommandObjectBreakpointSet (interpreter));
     CommandObjectSP command_command_object (new CommandObjectBreakpointCommand (interpreter));
-    CommandObjectSP modify_command_object (new CommandObjectBreakpointModify());
+    CommandObjectSP modify_command_object (new CommandObjectBreakpointModify(interpreter));
 
     command_command_object->SetCommandName ("breakpoint command");
     enable_command_object->SetCommandName("breakpoint enable");
@@ -524,13 +526,13 @@ CommandObjectMultiwordBreakpoint::CommandObjectMultiwordBreakpoint (CommandInter
     modify_command_object->SetCommandName ("breakpoint modify");
     set_command_object->SetCommandName("breakpoint set");
 
-    status = LoadSubCommand (interpreter, "list",       list_command_object);
-    status = LoadSubCommand (interpreter, "enable",     enable_command_object);
-    status = LoadSubCommand (interpreter, "disable",    disable_command_object);
-    status = LoadSubCommand (interpreter, "delete",     delete_command_object);
-    status = LoadSubCommand (interpreter, "set",        set_command_object);
-    status = LoadSubCommand (interpreter, "command",    command_command_object);
-    status = LoadSubCommand (interpreter, "modify",     modify_command_object);
+    status = LoadSubCommand ("list",       list_command_object);
+    status = LoadSubCommand ("enable",     enable_command_object);
+    status = LoadSubCommand ("disable",    disable_command_object);
+    status = LoadSubCommand ("delete",     delete_command_object);
+    status = LoadSubCommand ("set",        set_command_object);
+    status = LoadSubCommand ("command",    command_command_object);
+    status = LoadSubCommand ("modify",     modify_command_object);
 }
 
 CommandObjectMultiwordBreakpoint::~CommandObjectMultiwordBreakpoint ()
@@ -679,10 +681,11 @@ CommandObjectBreakpointList::CommandOptions::ResetOptionValues ()
 //-------------------------------------------------------------------------
 #pragma mark List
 
-CommandObjectBreakpointList::CommandObjectBreakpointList () :
-    CommandObject ("breakpoint list",
-                     "List some or all breakpoints at configurable levels of detail.",
-                     "breakpoint list [<breakpoint-id>]")
+CommandObjectBreakpointList::CommandObjectBreakpointList (CommandInterpreter &interpreter) :
+    CommandObject (interpreter, 
+                   "breakpoint list",
+                   "List some or all breakpoints at configurable levels of detail.",
+                   "breakpoint list [<breakpoint-id>]")
 {
 }
 
@@ -699,12 +702,11 @@ CommandObjectBreakpointList::GetOptions ()
 bool
 CommandObjectBreakpointList::Execute
 (
-    CommandInterpreter &interpreter,
     Args& args,
     CommandReturnObject &result
 )
 {
-    Target *target = interpreter.GetDebugger().GetSelectedTarget().get();
+    Target *target = m_interpreter.GetDebugger().GetSelectedTarget().get();
     if (target == NULL)
     {
         result.AppendError ("Invalid target, set executable file using 'file' command.");
@@ -769,10 +771,11 @@ CommandObjectBreakpointList::Execute
 //-------------------------------------------------------------------------
 #pragma mark Enable
 
-CommandObjectBreakpointEnable::CommandObjectBreakpointEnable () :
-    CommandObject ("enable",
-                     "Enable the specified disabled breakpoint(s).  If no breakpoints are specified, enable all of them.",
-                     "breakpoint enable [<breakpoint-id> | <breakpoint-id-list>]")
+CommandObjectBreakpointEnable::CommandObjectBreakpointEnable (CommandInterpreter &interpreter) :
+    CommandObject (interpreter,
+                   "enable",
+                   "Enable the specified disabled breakpoint(s).  If no breakpoints are specified, enable all of them.",
+                   "breakpoint enable [<breakpoint-id> | <breakpoint-id-list>]")
 {
     // This command object can either be called via 'enable' or 'breakpoint enable'.  Because it has two different
     // potential invocation methods, we need to be a little tricky about generating the syntax string.
@@ -790,12 +793,11 @@ CommandObjectBreakpointEnable::~CommandObjectBreakpointEnable ()
 bool
 CommandObjectBreakpointEnable::Execute 
 (
-    CommandInterpreter &interpreter,
     Args& args, 
     CommandReturnObject &result
 )
 {
-    Target *target = interpreter.GetDebugger().GetSelectedTarget().get();
+    Target *target = m_interpreter.GetDebugger().GetSelectedTarget().get();
     if (target == NULL)
     {
         result.AppendError ("Invalid target, set executable file using 'file' command.");
@@ -871,8 +873,9 @@ CommandObjectBreakpointEnable::Execute
 //-------------------------------------------------------------------------
 #pragma mark Disable
 
-CommandObjectBreakpointDisable::CommandObjectBreakpointDisable () :
-    CommandObject ("disable",
+CommandObjectBreakpointDisable::CommandObjectBreakpointDisable (CommandInterpreter &interpreter) :
+    CommandObject (interpreter,
+                   "disable",
                    "Disable the specified breakpoint(s) without removing it/them.  If no breakpoints are specified, disable them all.",
                    "disable [<breakpoint-id> | <breakpoint-id-list>]")
 {
@@ -890,12 +893,11 @@ CommandObjectBreakpointDisable::~CommandObjectBreakpointDisable ()
 bool
 CommandObjectBreakpointDisable::Execute
 (
-    CommandInterpreter &interpreter,
     Args& args, 
     CommandReturnObject &result
 )
 {
-    Target *target = interpreter.GetDebugger().GetSelectedTarget().get();
+    Target *target = m_interpreter.GetDebugger().GetSelectedTarget().get();
     if (target == NULL)
     {
         result.AppendError ("Invalid target, set executable file using 'file' command.");
@@ -971,8 +973,9 @@ CommandObjectBreakpointDisable::Execute
 //-------------------------------------------------------------------------
 #pragma mark Delete
 
-CommandObjectBreakpointDelete::CommandObjectBreakpointDelete() :
-    CommandObject ("breakpoint delete",
+CommandObjectBreakpointDelete::CommandObjectBreakpointDelete(CommandInterpreter &interpreter) :
+    CommandObject (interpreter,
+                   "breakpoint delete",
                    "Delete the specified breakpoint(s).  If no breakpoints are specified, delete them all.",
                    "breakpoint delete [<breakpoint-id> | <breakpoint-id-list>]")
 {
@@ -986,12 +989,11 @@ CommandObjectBreakpointDelete::~CommandObjectBreakpointDelete ()
 bool
 CommandObjectBreakpointDelete::Execute 
 (
-    CommandInterpreter &interpreter,
     Args& args, 
     CommandReturnObject &result
 )
 {
-    Target *target = interpreter.GetDebugger().GetSelectedTarget().get();
+    Target *target = m_interpreter.GetDebugger().GetSelectedTarget().get();
     if (target == NULL)
     {
         result.AppendError ("Invalid target, set executable file using 'file' command.");
@@ -1207,8 +1209,10 @@ CommandObjectBreakpointModify::CommandOptions::ResetOptionValues ()
 //-------------------------------------------------------------------------
 #pragma mark Modify
 
-CommandObjectBreakpointModify::CommandObjectBreakpointModify () :
-    CommandObject ("breakpoint modify", "Modify the options on a breakpoint or set of breakpoints in the executable.", 
+CommandObjectBreakpointModify::CommandObjectBreakpointModify (CommandInterpreter &interpreter) :
+    CommandObject (interpreter,
+                   "breakpoint modify", 
+                   "Modify the options on a breakpoint or set of breakpoints in the executable.", 
                    "breakpoint modify <cmd-options> <breakpoint-id> [<breakpoint-id> ...]")
 {
 }
@@ -1226,7 +1230,6 @@ CommandObjectBreakpointModify::GetOptions ()
 bool
 CommandObjectBreakpointModify::Execute
 (
-    CommandInterpreter &interpreter,
     Args& command,
     CommandReturnObject &result
 )
@@ -1238,7 +1241,7 @@ CommandObjectBreakpointModify::Execute
         return false;
     }
 
-    Target *target = interpreter.GetDebugger().GetSelectedTarget().get();
+    Target *target = m_interpreter.GetDebugger().GetSelectedTarget().get();
     if (target == NULL)
     {
         result.AppendError ("Invalid target, set executable file using 'file' command.");

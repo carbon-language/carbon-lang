@@ -38,7 +38,15 @@ using namespace lldb_private;
 // CommandObject
 //-------------------------------------------------------------------------
 
-CommandObject::CommandObject (const char *name, const char *help, const char *syntax, uint32_t flags) :
+CommandObject::CommandObject 
+(
+    CommandInterpreter &interpreter, 
+    const char *name, 
+    const char *help, 
+    const char *syntax, 
+    uint32_t flags
+) :
+    m_interpreter (interpreter),
     m_cmd_name (name),
     m_cmd_help_short (),
     m_cmd_help_long (),
@@ -134,19 +142,17 @@ CommandObject::GetFlags() const
 bool
 CommandObject::ExecuteCommandString
 (
-    CommandInterpreter &interpreter,
     const char *command_line,
     CommandReturnObject &result
 )
 {
     Args command_args(command_line);
-    return ExecuteWithOptions (interpreter, command_args, result);
+    return ExecuteWithOptions (command_args, result);
 }
 
 bool
 CommandObject::ParseOptions
 (
-    CommandInterpreter &interpreter,
     Args& args,
     CommandReturnObject &result
 )
@@ -177,8 +183,7 @@ CommandObject::ParseOptions
             else
             {
                 // No error string, output the usage information into result
-                options->GenerateOptionUsage (result.GetErrorStream(), this,
-                                              interpreter.GetDebugger().GetInstanceName().AsCString());
+                options->GenerateOptionUsage (m_interpreter, result.GetErrorStream(), this);
             }
             // Set the return status to failed (this was an error).
             result.SetStatus (eReturnStatusFailed);
@@ -188,21 +193,16 @@ CommandObject::ParseOptions
     return true;
 }
 bool
-CommandObject::ExecuteWithOptions
-(
-    CommandInterpreter &interpreter,
-    Args& args,
-    CommandReturnObject &result
-)
+CommandObject::ExecuteWithOptions (Args& args, CommandReturnObject &result)
 {
     for (size_t i = 0; i < args.GetArgumentCount();  ++i)
     {
         const char *tmp_str = args.GetArgumentAtIndex (i);
         if (tmp_str[0] == '`')  // back-quote
-            args.ReplaceArgumentAtIndex (i, interpreter.ProcessEmbeddedScriptCommands (tmp_str));
+            args.ReplaceArgumentAtIndex (i, m_interpreter.ProcessEmbeddedScriptCommands (tmp_str));
     }
 
-    Process *process = interpreter.GetDebugger().GetExecutionContext().process;
+    Process *process = m_interpreter.GetDebugger().GetExecutionContext().process;
     if (process == NULL)
     {
         if (GetFlags().IsSet(CommandObject::eFlagProcessMustBeLaunched | CommandObject::eFlagProcessMustBePaused))
@@ -248,11 +248,11 @@ CommandObject::ExecuteWithOptions
         }
     }
     
-    if (!ParseOptions (interpreter, args, result))
+    if (!ParseOptions (args, result))
         return false;
 
     // Call the command-specific version of 'Execute', passing it the already processed arguments.
-    return Execute (interpreter, args, result);
+    return Execute (args, result);
 }
 
 class CommandDictCommandPartialMatch
@@ -300,7 +300,6 @@ CommandObject::AddNamesMatchingPartialString (CommandObject::CommandMap &in_map,
 int
 CommandObject::HandleCompletion
 (
-    CommandInterpreter &interpreter,
     Args &input,
     int &cursor_index,
     int &cursor_char_position,
@@ -341,7 +340,7 @@ CommandObject::HandleCompletion
             input.DeleteArgumentAtIndex(input.GetArgumentCount() - 1);
 
             bool handled_by_options;
-            handled_by_options = cur_options->HandleOptionCompletion (interpreter, 
+            handled_by_options = cur_options->HandleOptionCompletion (m_interpreter, 
                                                                       input,
                                                                       opt_element_vector,
                                                                       cursor_index,
@@ -355,8 +354,7 @@ CommandObject::HandleCompletion
         }
 
         // If we got here, the last word is not an option or an option argument.
-        return HandleArgumentCompletion (interpreter, 
-                                         input,
+        return HandleArgumentCompletion (input,
                                          cursor_index,
                                          cursor_char_position,
                                          opt_element_vector,
@@ -397,7 +395,7 @@ contains_string (const char *s1, const char *s2)
 }
 
 bool
-CommandObject::HelpTextContainsWord (const char *search_word, CommandInterpreter &interpreter)
+CommandObject::HelpTextContainsWord (const char *search_word)
 {
     const char *short_help;
     const char *long_help;
@@ -422,7 +420,7 @@ CommandObject::HelpTextContainsWord (const char *search_word, CommandInterpreter
         && GetOptions() != NULL)
     {
         StreamString usage_help;
-        GetOptions()->GenerateOptionUsage (usage_help, this, interpreter.GetDebugger().GetInstanceName().AsCString());
+        GetOptions()->GenerateOptionUsage (m_interpreter, usage_help, this);
         if (usage_help.GetSize() > 0)
         {
             const char *usage_text = usage_help.GetData();

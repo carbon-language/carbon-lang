@@ -60,14 +60,13 @@ public:
         eSetTypeFunctionRegexp
     } BreakpointSetType;
 
-    CommandObjectBreakpointSet ();
+    CommandObjectBreakpointSet (CommandInterpreter &interpreter);
 
     virtual
     ~CommandObjectBreakpointSet ();
 
     virtual bool
-    Execute (CommandInterpreter &interpreter,
-             Args& command,
+    Execute (Args& command,
              CommandReturnObject &result);
 
     virtual Options *
@@ -127,14 +126,13 @@ class CommandObjectBreakpointModify : public CommandObject
 {
 public:
 
-    CommandObjectBreakpointModify ();
+    CommandObjectBreakpointModify (CommandInterpreter &interpreter);
 
     virtual
     ~CommandObjectBreakpointModify ();
 
     virtual bool
-    Execute (CommandInterpreter &interpreter,
-             Args& command,
+    Execute (Args& command,
              CommandReturnObject &result);
 
     virtual Options *
@@ -187,14 +185,13 @@ private:
 class CommandObjectBreakpointEnable : public CommandObject
 {
 public:
-    CommandObjectBreakpointEnable ();
+    CommandObjectBreakpointEnable (CommandInterpreter &interpreter);
 
     virtual
     ~CommandObjectBreakpointEnable ();
 
     virtual bool
-    Execute (CommandInterpreter &interpreter,
-             Args& command,
+    Execute (Args& command,
              CommandReturnObject &result);
 
 private:
@@ -207,14 +204,13 @@ private:
 class CommandObjectBreakpointDisable : public CommandObject
 {
 public:
-    CommandObjectBreakpointDisable ();
+    CommandObjectBreakpointDisable (CommandInterpreter &interpreter);
 
     virtual
     ~CommandObjectBreakpointDisable ();
 
     virtual bool
-    Execute (CommandInterpreter &interpreter,
-             Args& command,
+    Execute (Args& command,
              CommandReturnObject &result);
 
 private:
@@ -227,14 +223,13 @@ private:
 class CommandObjectBreakpointList : public CommandObject
 {
 public:
-    CommandObjectBreakpointList ();
+    CommandObjectBreakpointList (CommandInterpreter &interpreter);
 
     virtual
     ~CommandObjectBreakpointList ();
 
     virtual bool
-    Execute (CommandInterpreter &interpreter,
-             Args& command,
+    Execute (Args& command,
              CommandReturnObject &result);
 
     virtual Options *
@@ -280,14 +275,13 @@ private:
 class CommandObjectBreakpointDelete : public CommandObject
 {
 public:
-    CommandObjectBreakpointDelete ();
+    CommandObjectBreakpointDelete (CommandInterpreter &interpreter);
 
     virtual
     ~CommandObjectBreakpointDelete ();
 
     virtual bool
-    Execute (CommandInterpreter &interpreter,
-             Args& command,
+    Execute (Args& command,
              CommandReturnObject &result);
 
 private:

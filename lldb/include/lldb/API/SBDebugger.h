@@ -154,6 +154,24 @@ public:
     static lldb::SBStringList
     GetInternalVariableValue (const char *var_name, const char *debugger_instance_name);
 
+    uint32_t
+    GetTerminalWidth () const;
+
+    void
+    SetTerminalWidth (uint32_t term_width);
+
+    const char *
+    GetPrompt() const;
+
+    void
+    SetPrompt (const char *prompt);
+        
+    lldb::ScriptLanguage 
+    GetScriptLanguage() const;
+
+    void
+    SetScriptLanguage (lldb::ScriptLanguage script_lang);
+
 private:
 
 #ifndef SWIG

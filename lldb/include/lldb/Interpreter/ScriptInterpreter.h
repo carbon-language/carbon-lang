@@ -38,15 +38,15 @@ public:
     } ReturnType;
 
 
-    ScriptInterpreter (lldb::ScriptLanguage script_lang);
+    ScriptInterpreter (CommandInterpreter &interpreter, lldb::ScriptLanguage script_lang);
 
     virtual ~ScriptInterpreter ();
 
     virtual bool
-    ExecuteOneLine (CommandInterpreter &interpreter, const char *command, CommandReturnObject *result) = 0;
+    ExecuteOneLine (const char *command, CommandReturnObject *result) = 0;
 
     virtual void
-    ExecuteInterpreterLoop (CommandInterpreter &interpreter) = 0;
+    ExecuteInterpreterLoop () = 0;
 
     virtual bool
     ExecuteOneLineWithReturn (const char *in_string, ReturnType return_type, void *ret_value)
@@ -73,14 +73,12 @@ public:
     }
 
     virtual void 
-    CollectDataForBreakpointCommandCallback (CommandInterpreter &interpreter,
-                                             BreakpointOptions *bp_options,
+    CollectDataForBreakpointCommandCallback (BreakpointOptions *bp_options,
                                              CommandReturnObject &result);
 
     /// Set a one-liner as the callback for the breakpoint.
     virtual void 
-    SetBreakpointCommandCallback (CommandInterpreter &interpreter,
-                                  BreakpointOptions *bp_options,
+    SetBreakpointCommandCallback (BreakpointOptions *bp_options,
                                   const char *oneliner)
     {
         return;
@@ -97,6 +95,9 @@ public:
 
     static std::string
     LanguageToString (lldb::ScriptLanguage);
+
+protected:
+    CommandInterpreter &m_interpreter;
 
 private:
     lldb::ScriptLanguage m_script_lang;

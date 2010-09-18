@@ -23,8 +23,8 @@ using namespace lldb_private;
 // CommandObjectQuit
 //-------------------------------------------------------------------------
 
-CommandObjectQuit::CommandObjectQuit () :
-    CommandObject ("quit", "Quit out of the LLDB debugger.", "quit")
+CommandObjectQuit::CommandObjectQuit (CommandInterpreter &interpreter) :
+    CommandObject (interpreter, "quit", "Quit out of the LLDB debugger.", "quit")
 {
 }
 
@@ -35,12 +35,11 @@ CommandObjectQuit::~CommandObjectQuit ()
 bool
 CommandObjectQuit::Execute
 (
-    CommandInterpreter &interpreter, 
     Args& args,
     CommandReturnObject &result
 )
 {
-    interpreter.BroadcastEvent (CommandInterpreter::eBroadcastBitQuitCommandReceived);
+    m_interpreter.BroadcastEvent (CommandInterpreter::eBroadcastBitQuitCommandReceived);
     result.SetStatus (eReturnStatusQuit);
     return true;
 }

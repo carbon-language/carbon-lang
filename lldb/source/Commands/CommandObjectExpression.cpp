@@ -95,12 +95,12 @@ CommandObjectExpression::CommandOptions::GetDefinitions ()
     return g_option_table;
 }
 
-CommandObjectExpression::CommandObjectExpression () :
-    CommandObject (
-            "expression",
-            "Evaluate an Objective-C++ expression in the current program context, using variables currently in scope.",
-            "expression [<cmd-options>] <expr>"),
-    m_expr_line_count (0),
+CommandObjectExpression::CommandObjectExpression (CommandInterpreter &interpreter) :
+    CommandObject (interpreter,
+                   "expression",
+                   "Evaluate an Objective-C++ expression in the current program context, using variables currently in scope.",
+                   "expression [<cmd-options>] <expr>"),
+m_expr_line_count (0),
     m_expr_lines ()
 {
   SetHelpLong(
@@ -125,7 +125,6 @@ CommandObjectExpression::GetOptions ()
 bool
 CommandObjectExpression::Execute
 (
-    CommandInterpreter &interpreter,
     Args& command,
     CommandReturnObject &result
 )
@@ -259,12 +258,11 @@ CommandObjectExpression::EvaluateExpression (const char *expr, bool bare, Stream
 bool
 CommandObjectExpression::ExecuteRawCommandString
 (
-    CommandInterpreter &interpreter,
     const char *command,
     CommandReturnObject &result
 )
 {
-    m_exe_ctx = interpreter.GetDebugger().GetExecutionContext();
+    m_exe_ctx = m_interpreter.GetDebugger().GetExecutionContext();
 
     m_options.ResetOptionValues();
 
@@ -275,7 +273,7 @@ CommandObjectExpression::ExecuteRawCommandString
         m_expr_lines.clear();
         m_expr_line_count = 0;
         
-        InputReaderSP reader_sp (new InputReader(interpreter.GetDebugger()));
+        InputReaderSP reader_sp (new InputReader(m_interpreter.GetDebugger()));
         if (reader_sp)
         {
             Error err (reader_sp->Initialize (CommandObjectExpression::MultiLineExpressionCallback,
@@ -286,7 +284,7 @@ CommandObjectExpression::ExecuteRawCommandString
                                               true));                       // echo input
             if (err.Success())
             {
-                interpreter.GetDebugger().PushInputReader (reader_sp);
+                m_interpreter.GetDebugger().PushInputReader (reader_sp);
                 result.SetStatus (eReturnStatusSuccessFinishNoResult);
             }
             else
@@ -328,7 +326,7 @@ CommandObjectExpression::ExecuteRawCommandString
         if (end_options)
         {
             Args args (command, end_options - command);
-            if (!ParseOptions (interpreter, args, result))
+            if (!ParseOptions (args, result))
                 return false;
         }
     }

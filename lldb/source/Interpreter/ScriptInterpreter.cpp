@@ -22,7 +22,8 @@
 using namespace lldb;
 using namespace lldb_private;
 
-ScriptInterpreter::ScriptInterpreter (ScriptLanguage script_lang) :
+ScriptInterpreter::ScriptInterpreter (CommandInterpreter &interpreter, ScriptLanguage script_lang) :
+    m_interpreter (interpreter),
     m_script_lang (script_lang),
     m_interpreter_pty ()
 {
@@ -54,7 +55,6 @@ ScriptInterpreter::GetMasterFileDescriptor ()
 void 
 ScriptInterpreter::CollectDataForBreakpointCommandCallback 
 (
-    CommandInterpreter &interpreter,
     BreakpointOptions *bp_options,
     CommandReturnObject &result
 )

@@ -24,11 +24,12 @@ using namespace lldb_private;
 
 CommandObjectCrossref::CommandObjectCrossref
 (
+    CommandInterpreter &interpreter,
     const char *name,
     const char *help,
     const char *syntax
 ) :
-    CommandObject (name, help, syntax),
+    CommandObject (interpreter, name, help, syntax),
     m_crossref_object_types()
 {
 }
@@ -40,7 +41,6 @@ CommandObjectCrossref::~CommandObjectCrossref ()
 bool
 CommandObjectCrossref::Execute
 (
-    CommandInterpreter &interpreter,
     Args& command,
     CommandReturnObject &result
 )

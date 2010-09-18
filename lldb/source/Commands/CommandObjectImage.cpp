@@ -476,10 +476,11 @@ class CommandObjectImageDumpModuleList : public CommandObject
 {
 public:
 
-    CommandObjectImageDumpModuleList (const char *name,
+    CommandObjectImageDumpModuleList (CommandInterpreter &interpreter,
+                                      const char *name,
                                       const char *help,
                                       const char *syntax) :
-        CommandObject (name, help, syntax)
+        CommandObject (interpreter, name, help, syntax)
     {
     }
 
@@ -489,8 +490,7 @@ public:
     }
 
     virtual int
-    HandleArgumentCompletion (CommandInterpreter &interpreter,
-                              Args &input,
+    HandleArgumentCompletion (Args &input,
                               int &cursor_index,
                               int &cursor_char_position,
                               OptionElementVector &opt_element_vector,
@@ -503,7 +503,7 @@ public:
         std::string completion_str (input.GetArgumentAtIndex(cursor_index));
         completion_str.erase (cursor_char_position);
 
-        CommandCompletions::InvokeCommonCompletionCallbacks (interpreter,
+        CommandCompletions::InvokeCommonCompletionCallbacks (m_interpreter,
                                                              CommandCompletions::eModuleCompletion,
                                                              completion_str.c_str(),
                                                              match_start_point,
@@ -519,10 +519,11 @@ class CommandObjectImageDumpSourceFileList : public CommandObject
 {
 public:
 
-    CommandObjectImageDumpSourceFileList (const char *name,
+    CommandObjectImageDumpSourceFileList (CommandInterpreter &interpreter,
+                                          const char *name,
                                           const char *help,
                                           const char *syntax) :
-        CommandObject (name, help, syntax)
+        CommandObject (interpreter, name, help, syntax)
     {
     }
 
@@ -532,8 +533,7 @@ public:
     }
 
     virtual int
-    HandleArgumentCompletion (CommandInterpreter &interpreter,
-                              Args &input,
+    HandleArgumentCompletion (Args &input,
                               int &cursor_index,
                               int &cursor_char_position,
                               OptionElementVector &opt_element_vector,
@@ -546,7 +546,7 @@ public:
         std::string completion_str (input.GetArgumentAtIndex(cursor_index));
         completion_str.erase (cursor_char_position);
 
-        CommandCompletions::InvokeCommonCompletionCallbacks (interpreter, 
+        CommandCompletions::InvokeCommonCompletionCallbacks (m_interpreter, 
                                                              CommandCompletions::eSourceFileCompletion,
                                                              completion_str.c_str(),
                                                              match_start_point,
@@ -562,10 +562,11 @@ public:
 class CommandObjectImageDumpSymtab : public CommandObjectImageDumpModuleList
 {
 public:
-    CommandObjectImageDumpSymtab () :
-        CommandObjectImageDumpModuleList ("image dump symtab",
-                         "Dump the symbol table from one or more executable images.",
-                         "image dump symtab [<file1> ...]")
+    CommandObjectImageDumpSymtab (CommandInterpreter &interpreter) :
+        CommandObjectImageDumpModuleList (interpreter,
+                                          "image dump symtab",
+                                          "Dump the symbol table from one or more executable images.",
+                                          "image dump symtab [<file1> ...]")
     {
     }
 
@@ -575,11 +576,10 @@ public:
     }
 
     virtual bool
-    Execute (CommandInterpreter &interpreter,
-             Args& command,
+    Execute (Args& command,
              CommandReturnObject &result)
     {
-        Target *target = interpreter.GetDebugger().GetSelectedTarget().get();
+        Target *target = m_interpreter.GetDebugger().GetSelectedTarget().get();
         if (target == NULL)
         {
             result.AppendError ("invalid target, set executable file using 'file' command");
@@ -604,7 +604,7 @@ public:
                     for (uint32_t image_idx = 0;  image_idx<num_modules; ++image_idx)
                     {
                         num_dumped++;
-                        DumpModuleSymtab (interpreter, result.GetOutputStream(), target->GetImages().GetModulePointerAtIndex(image_idx));
+                        DumpModuleSymtab (m_interpreter, result.GetOutputStream(), target->GetImages().GetModulePointerAtIndex(image_idx));
                     }
                 }
                 else
@@ -642,7 +642,7 @@ public:
                             if (image_module)
                             {
                                 num_dumped++;
-                                DumpModuleSymtab (interpreter, result.GetOutputStream(), image_module);
+                                DumpModuleSymtab (m_interpreter, result.GetOutputStream(), image_module);
                             }
                         }
                     }
@@ -670,8 +670,9 @@ public:
 class CommandObjectImageDumpSections : public CommandObjectImageDumpModuleList
 {
 public:
-    CommandObjectImageDumpSections () :
-        CommandObjectImageDumpModuleList ("image dump sections",
+    CommandObjectImageDumpSections (CommandInterpreter &interpreter) :
+        CommandObjectImageDumpModuleList (interpreter,
+                                          "image dump sections",
                                           "Dump the sections from one or more executable images.",
                                           "image dump sections [<file1> ...]")
     {
@@ -683,11 +684,10 @@ public:
     }
 
     virtual bool
-    Execute (CommandInterpreter &interpreter,
-             Args& command,
+    Execute (Args& command,
              CommandReturnObject &result)
     {
-        Target *target = interpreter.GetDebugger().GetSelectedTarget().get();
+        Target *target = m_interpreter.GetDebugger().GetSelectedTarget().get();
         if (target == NULL)
         {
             result.AppendError ("invalid target, set executable file using 'file' command");
@@ -712,7 +712,7 @@ public:
                     for (uint32_t image_idx = 0;  image_idx<num_modules; ++image_idx)
                     {
                         num_dumped++;
-                        DumpModuleSections (interpreter, result.GetOutputStream(), target->GetImages().GetModulePointerAtIndex(image_idx));
+                        DumpModuleSections (m_interpreter, result.GetOutputStream(), target->GetImages().GetModulePointerAtIndex(image_idx));
                     }
                 }
                 else
@@ -750,7 +750,7 @@ public:
                             if (image_module)
                             {
                                 num_dumped++;
-                                DumpModuleSections (interpreter, result.GetOutputStream(), image_module);
+                                DumpModuleSections (m_interpreter, result.GetOutputStream(), image_module);
                             }
                         }
                     }
@@ -777,10 +777,11 @@ public:
 class CommandObjectImageDumpSymfile : public CommandObjectImageDumpModuleList
 {
 public:
-    CommandObjectImageDumpSymfile () :
-        CommandObjectImageDumpModuleList ("image dump symfile",
-                         "Dump the debug symbol file for one or more executable images.",
-                         "image dump symfile [<file1> ...]")
+    CommandObjectImageDumpSymfile (CommandInterpreter &interpreter) :
+        CommandObjectImageDumpModuleList (interpreter,
+                                          "image dump symfile",
+                                          "Dump the debug symbol file for one or more executable images.",
+                                          "image dump symfile [<file1> ...]")
     {
     }
 
@@ -790,11 +791,10 @@ public:
     }
 
     virtual bool
-    Execute (CommandInterpreter &interpreter,
-             Args& command,
+    Execute (Args& command,
              CommandReturnObject &result)
     {
-        Target *target = interpreter.GetDebugger().GetSelectedTarget().get();
+        Target *target = m_interpreter.GetDebugger().GetSelectedTarget().get();
         if (target == NULL)
         {
             result.AppendError ("invalid target, set executable file using 'file' command");
@@ -884,10 +884,11 @@ public:
 class CommandObjectImageDumpLineTable : public CommandObjectImageDumpSourceFileList
 {
 public:
-    CommandObjectImageDumpLineTable () :
-        CommandObjectImageDumpSourceFileList ("image dump line-table",
-                         "Dump the debug symbol file for one or more executable images.",
-                         "image dump line-table <source-file1> [<source-file2> ...]")
+    CommandObjectImageDumpLineTable (CommandInterpreter &interpreter) :
+        CommandObjectImageDumpSourceFileList (interpreter,
+                                              "image dump line-table",
+                                              "Dump the debug symbol file for one or more executable images.",
+                                              "image dump line-table <source-file1> [<source-file2> ...]")
     {
     }
 
@@ -897,11 +898,10 @@ public:
     }
 
     virtual bool
-    Execute (CommandInterpreter &interpreter,
-             Args& command,
+    Execute (Args& command,
              CommandReturnObject &result)
     {
-        Target *target = interpreter.GetDebugger().GetSelectedTarget().get();
+        Target *target = m_interpreter.GetDebugger().GetSelectedTarget().get();
         if (target == NULL)
         {
             result.AppendError ("invalid target, set executable file using 'file' command");
@@ -910,7 +910,7 @@ public:
         }
         else
         {
-            ExecutionContext exe_ctx(interpreter.GetDebugger().GetExecutionContext());
+            ExecutionContext exe_ctx(m_interpreter.GetDebugger().GetExecutionContext());
             uint32_t total_num_dumped = 0;
 
             uint32_t addr_byte_size = target->GetArchitecture().GetAddressByteSize();
@@ -935,7 +935,7 @@ public:
                         uint32_t num_dumped = 0;
                         for (uint32_t i = 0; i<num_modules; ++i)
                         {
-                            if (DumpCompileUnitLineTable (interpreter,
+                            if (DumpCompileUnitLineTable (m_interpreter,
                                                           result.GetOutputStream(),
                                                           target->GetImages().GetModulePointerAtIndex(i),
                                                           file_spec,
@@ -973,14 +973,15 @@ public:
     // Constructors and Destructors
     //------------------------------------------------------------------
     CommandObjectImageDump(CommandInterpreter &interpreter) :
-        CommandObjectMultiword ("image dump",
+        CommandObjectMultiword (interpreter, 
+                                "image dump",
                                 "A set of commands for dumping information about one or more executable images; 'line-table' expects a source file name",
                                 "image dump [symtab|sections|symfile|line-table] [<file1> <file2> ...]")
     {
-        LoadSubCommand (interpreter, "symtab",      CommandObjectSP (new CommandObjectImageDumpSymtab ()));
-        LoadSubCommand (interpreter, "sections",    CommandObjectSP (new CommandObjectImageDumpSections ()));
-        LoadSubCommand (interpreter, "symfile",     CommandObjectSP (new CommandObjectImageDumpSymfile ()));
-        LoadSubCommand (interpreter, "line-table",  CommandObjectSP (new CommandObjectImageDumpLineTable ()));
+        LoadSubCommand ("symtab",      CommandObjectSP (new CommandObjectImageDumpSymtab (interpreter)));
+        LoadSubCommand ("sections",    CommandObjectSP (new CommandObjectImageDumpSections (interpreter)));
+        LoadSubCommand ("symfile",     CommandObjectSP (new CommandObjectImageDumpSymfile (interpreter)));
+        LoadSubCommand ("line-table",  CommandObjectSP (new CommandObjectImageDumpLineTable (interpreter)));
     }
 
     virtual
@@ -1045,11 +1046,11 @@ public:
         FormatWidthCollection m_format_array;
     };
 
-    CommandObjectImageList () :
-        CommandObject (
-                "image list",
-                "List current executable and dependent shared library images.",
-                "image list [<cmd-options>]")
+    CommandObjectImageList (CommandInterpreter &interpreter) :
+        CommandObject (interpreter,
+                       "image list",
+                       "List current executable and dependent shared library images.",
+                       "image list [<cmd-options>]")
     {
     }
 
@@ -1066,11 +1067,10 @@ public:
     }
 
     virtual bool
-    Execute (CommandInterpreter &interpreter,
-             Args& command,
+    Execute (Args& command,
              CommandReturnObject &result)
     {
-        Target *target = interpreter.GetDebugger().GetSelectedTarget().get();
+        Target *target = m_interpreter.GetDebugger().GetSelectedTarget().get();
         if (target == NULL)
         {
             result.AppendError ("invalid target, set executable file using 'file' command");
@@ -1322,11 +1322,11 @@ public:
 
     };
 
-    CommandObjectImageLookup () :
-        CommandObject (
-                "image lookup",
-                "Look up information within executable and dependent shared library images.",
-                "image lookup [<cmd-options>] [<file1>...]")
+    CommandObjectImageLookup (CommandInterpreter &interpreter) :
+        CommandObject (interpreter,
+                       "image lookup",
+                       "Look up information within executable and dependent shared library images.",
+                       "image lookup [<cmd-options>] [<file1>...]")
     {
     }
 
@@ -1351,7 +1351,7 @@ public:
         case eLookupTypeAddress:
             if (m_options.m_addr != LLDB_INVALID_ADDRESS)
             {
-                if (LookupAddressInModule (interpreter, 
+                if (LookupAddressInModule (m_interpreter, 
                                            result.GetOutputStream(), 
                                            module, 
                                            eSymbolContextEverything, 
@@ -1368,7 +1368,7 @@ public:
         case eLookupTypeSymbol:
             if (!m_options.m_str.empty())
             {
-                if (LookupSymbolInModule (interpreter, result.GetOutputStream(), module, m_options.m_str.c_str(), m_options.m_use_regex))
+                if (LookupSymbolInModule (m_interpreter, result.GetOutputStream(), module, m_options.m_str.c_str(), m_options.m_use_regex))
                 {
                     result.SetStatus(eReturnStatusSuccessFinishResult);
                     return true;
@@ -1380,7 +1380,7 @@ public:
             if (m_options.m_file)
             {
 
-                if (LookupFileAndLineInModule (interpreter,
+                if (LookupFileAndLineInModule (m_interpreter,
                                                result.GetOutputStream(),
                                                module,
                                                m_options.m_file,
@@ -1396,7 +1396,7 @@ public:
         case eLookupTypeFunction:
             if (!m_options.m_str.empty())
             {
-                if (LookupFunctionInModule (interpreter,
+                if (LookupFunctionInModule (m_interpreter,
                                             result.GetOutputStream(),
                                             module,
                                             m_options.m_str.c_str(),
@@ -1411,7 +1411,7 @@ public:
         case eLookupTypeType:
             if (!m_options.m_str.empty())
             {
-                if (LookupTypeInModule (interpreter,
+                if (LookupTypeInModule (m_interpreter,
                                         result.GetOutputStream(),
                                         module,
                                         m_options.m_str.c_str(),
@@ -1424,7 +1424,7 @@ public:
             break;
 
         default:
-            m_options.GenerateOptionUsage (result.GetErrorStream(), this, interpreter.GetDebugger().GetInstanceName().AsCString());
+            m_options.GenerateOptionUsage (m_interpreter, result.GetErrorStream(), this);
             syntax_error = true;
             break;
         }
@@ -1434,11 +1434,10 @@ public:
     }
 
     virtual bool
-    Execute (CommandInterpreter &interpreter,
-             Args& command,
+    Execute (Args& command,
              CommandReturnObject &result)
     {
-        Target *target = interpreter.GetDebugger().GetSelectedTarget().get();
+        Target *target = m_interpreter.GetDebugger().GetSelectedTarget().get();
         if (target == NULL)
         {
             result.AppendError ("invalid target, set executable file using 'file' command");
@@ -1463,7 +1462,7 @@ public:
                 {
                     for (i = 0; i<num_modules && syntax_error == false; ++i)
                     {
-                        if (LookupInModule (interpreter, target->GetImages().GetModulePointerAtIndex(i), result, syntax_error))
+                        if (LookupInModule (m_interpreter, target->GetImages().GetModulePointerAtIndex(i), result, syntax_error))
                         {
                             result.GetOutputStream().EOL();
                             num_successful_lookups++;
@@ -1504,7 +1503,7 @@ public:
                             Module * image_module = matching_modules.GetModulePointerAtIndex(j);
                             if (image_module)
                             {
-                                if (LookupInModule (interpreter, image_module, result, syntax_error))
+                                if (LookupInModule (m_interpreter, image_module, result, syntax_error))
                                 {
                                     result.GetOutputStream().EOL();
                                     num_successful_lookups++;
@@ -1553,13 +1552,14 @@ CommandObjectImageLookup::CommandOptions::g_option_table[] =
 // CommandObjectImage constructor
 //----------------------------------------------------------------------
 CommandObjectImage::CommandObjectImage(CommandInterpreter &interpreter) :
-    CommandObjectMultiword ("image",
+    CommandObjectMultiword (interpreter,
+                            "image",
                             "A set of commands for accessing information for one or more executable images.",
                             "image <sub-command> ...")
 {
-    LoadSubCommand (interpreter, "dump",    CommandObjectSP (new CommandObjectImageDump (interpreter)));
-    LoadSubCommand (interpreter, "list",    CommandObjectSP (new CommandObjectImageList ()));
-    LoadSubCommand (interpreter, "lookup",  CommandObjectSP (new CommandObjectImageLookup ()));
+    LoadSubCommand ("dump",    CommandObjectSP (new CommandObjectImageDump (interpreter)));
+    LoadSubCommand ("list",    CommandObjectSP (new CommandObjectImageList (interpreter)));
+    LoadSubCommand ("lookup",  CommandObjectSP (new CommandObjectImageLookup (interpreter)));
 }
 
 //----------------------------------------------------------------------

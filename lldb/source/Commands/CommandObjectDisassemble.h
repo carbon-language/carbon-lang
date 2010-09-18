@@ -54,7 +54,7 @@ public:
         static lldb::OptionDefinition g_option_table[];
     };
 
-    CommandObjectDisassemble ();
+    CommandObjectDisassemble (CommandInterpreter &interpreter);
 
     virtual
     ~CommandObjectDisassemble ();
@@ -67,8 +67,7 @@ public:
     }
 
     virtual bool
-    Execute (CommandInterpreter &interpreter,
-             Args& command,
+    Execute (Args& command,
              CommandReturnObject &result);
 
 protected:

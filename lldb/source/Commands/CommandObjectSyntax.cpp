@@ -27,10 +27,11 @@ using namespace lldb_private;
 // CommandObjectSyntax
 //-------------------------------------------------------------------------
 
-CommandObjectSyntax::CommandObjectSyntax () :
-    CommandObject ("syntax",
-                     "Shows the correct syntax for a given debugger command.",
-                     "syntax <command>")
+CommandObjectSyntax::CommandObjectSyntax (CommandInterpreter &interpreter) :
+    CommandObject (interpreter,
+                   "syntax",
+                   "Shows the correct syntax for a given debugger command.",
+                   "syntax <command>")
 {
 }
 
@@ -42,7 +43,6 @@ CommandObjectSyntax::~CommandObjectSyntax()
 bool
 CommandObjectSyntax::Execute
 (
-    CommandInterpreter &interpreter,
     Args& command,
     CommandReturnObject &result
 )
@@ -53,7 +53,7 @@ CommandObjectSyntax::Execute
 
     if (argc > 0)
     {
-        cmd_obj = interpreter.GetCommandObject (command.GetArgumentAtIndex(0));
+        cmd_obj = m_interpreter.GetCommandObject (command.GetArgumentAtIndex(0));
         bool all_okay = true;
         for (int i = 1; i < argc; ++i)
         {

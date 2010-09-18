@@ -75,6 +75,107 @@ public:
                               StringList &value);
 
 
+    const Args &
+    GetRunArguments () const
+    {
+        return m_run_args;
+    }
+
+    void
+    SetRunArguments (const Args &args)
+    {
+        m_run_args = args;
+    }
+
+    size_t
+    GetEnvironmentAsArgs (Args &env) const
+    {
+        dictionary::const_iterator pos, end = m_env_vars.end();
+        for (pos = m_env_vars.begin(); pos != end; ++pos)
+        {
+            std::string env_var_equal_value (pos->first);
+            env_var_equal_value.append(1, '=');
+            env_var_equal_value.append (pos->second);
+            env.AppendArgument (env_var_equal_value.c_str());
+        }
+        return env.GetArgumentCount();
+    }
+
+    const char *
+    GetStandardInputPath () const
+    {
+        if (m_input_path.empty())
+            return NULL;
+        return m_input_path.c_str();
+    }
+
+    void
+    SetStandardInputPath (const char *path)
+    {
+        if (path && path[0])
+            m_input_path.assign (path);
+        else
+        {
+            // Make sure we deallocate memory in string...
+            std::string tmp;
+            tmp.swap (m_input_path);
+        }
+    }
+
+    const char *
+    GetStandardOutputPath () const
+    {
+        if (m_output_path.empty())
+            return NULL;
+        return m_output_path.c_str();
+    }
+
+    void
+    SetStandardOutputPath (const char *path)
+    {
+        if (path && path[0])
+            m_output_path.assign (path);
+        else
+        {
+            // Make sure we deallocate memory in string...
+            std::string tmp;
+            tmp.swap (m_output_path);
+        }
+    }
+
+    const char *
+    GetStandardErrorPath () const
+    {
+        if (m_error_path.empty())
+            return NULL;
+        return m_error_path.c_str();
+    }
+
+    void
+    SetStandardErrorPath (const char *path)
+    {
+        if (path && path[0])
+            m_error_path.assign (path);
+        else
+        {
+            // Make sure we deallocate memory in string...
+            std::string tmp;
+            tmp.swap (m_error_path);
+        }
+    }
+    
+    bool
+    GetDisableASLR () const
+    {
+        return m_disable_aslr;
+    }
+    
+    void
+    SetDisableASLR (bool b)
+    {
+        m_disable_aslr = b;
+    }
+
 protected:
 
     void
@@ -108,8 +209,9 @@ protected:
 
 private:
 
+    typedef std::map<std::string, std::string> dictionary;
     Args m_run_args;
-    std::map<std::string, std::string> m_env_vars;
+    dictionary m_env_vars;
     std::string m_input_path;
     std::string m_output_path;
     std::string m_error_path;

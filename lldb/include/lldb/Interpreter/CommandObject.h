@@ -28,13 +28,20 @@ public:
     typedef std::map<std::string, lldb::CommandObjectSP> CommandMap;
 
 
-    CommandObject (const char *name,
+    CommandObject (CommandInterpreter &interpreter,
+                   const char *name,
                    const char *help = NULL,
                    const char *syntax = NULL,
                    uint32_t flags = 0);
 
     virtual
     ~CommandObject ();
+
+    CommandInterpreter &
+    GetCommandInterpreter ()
+    {
+        return m_interpreter;
+    }
 
     const char *
     GetHelp ();
@@ -89,23 +96,19 @@ public:
 
     // Do not override this
     bool
-    ExecuteCommandString (CommandInterpreter &interpreter,
-                          const char *command,
+    ExecuteCommandString (const char *command,
                           CommandReturnObject &result);
 
     bool
-    ParseOptions (CommandInterpreter &interpreter,
-                  Args& args,
+    ParseOptions (Args& args,
                   CommandReturnObject &result);
 
     bool
-    ExecuteWithOptions (CommandInterpreter &interpreter,
-                        Args& command,
+    ExecuteWithOptions (Args& command,
                         CommandReturnObject &result);
 
     virtual bool
-    ExecuteRawCommandString (CommandInterpreter &interpreter,
-                             const char *command,
+    ExecuteRawCommandString (const char *command,
                              CommandReturnObject &result)
     {
         return false;
@@ -113,8 +116,7 @@ public:
 
 
     virtual bool
-    Execute (CommandInterpreter &interpreter,
-             Args& command,
+    Execute (Args& command,
              CommandReturnObject &result) = 0;
 
     void
@@ -169,8 +171,7 @@ public:
     ///     \btrue if we were in an option, \bfalse otherwise.
     //------------------------------------------------------------------
     virtual int
-    HandleCompletion (CommandInterpreter &interpreter,
-                      Args &input,
+    HandleCompletion (Args &input,
                       int &cursor_index,
                       int &cursor_char_position,
                       int match_start_point,
@@ -219,8 +220,7 @@ public:
     //------------------------------------------------------------------
 
     virtual int
-    HandleArgumentCompletion (CommandInterpreter &interpreter,
-                              Args &input,
+    HandleArgumentCompletion (Args &input,
                               int &cursor_index,
                               int &cursor_char_position,
                               OptionElementVector &opt_element_vector,
@@ -233,7 +233,7 @@ public:
     }
     
     bool
-    HelpTextContainsWord (const char *search_word, CommandInterpreter &interpreter);
+    HelpTextContainsWord (const char *search_word);
 
     //------------------------------------------------------------------
     /// The flags accessor.
@@ -270,6 +270,7 @@ public:
     }
 
 protected:
+    CommandInterpreter &m_interpreter;
     std::string m_cmd_name;
     std::string m_cmd_help_short;
     std::string m_cmd_help_long;

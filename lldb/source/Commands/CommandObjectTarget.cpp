@@ -34,8 +34,9 @@ class CommandObjectTargetImageSearchPathsAdd : public CommandObject
 {
 public:
 
-    CommandObjectTargetImageSearchPathsAdd () :
-        CommandObject ("target image-search-paths add",
+    CommandObjectTargetImageSearchPathsAdd (CommandInterpreter &interpreter) :
+        CommandObject (interpreter,
+                       "target image-search-paths add",
                        "Add new image search paths substitution pairs to the current target.",
                        "target image-search-paths add <path-prefix> <new-path-prefix> [<path-prefix> <new-path-prefix>] ...")
     {
@@ -46,11 +47,10 @@ public:
     }
 
     bool
-    Execute (CommandInterpreter &interpreter,
-             Args& command,
+    Execute (Args& command,
              CommandReturnObject &result)
     {
-        Target *target = interpreter.GetDebugger().GetSelectedTarget().get();
+        Target *target = m_interpreter.GetDebugger().GetSelectedTarget().get();
         if (target)
         {
             uint32_t argc = command.GetArgumentCount();
@@ -97,8 +97,9 @@ class CommandObjectTargetImageSearchPathsClear : public CommandObject
 {
 public:
 
-    CommandObjectTargetImageSearchPathsClear () :
-        CommandObject ("target image-search-paths clear",
+    CommandObjectTargetImageSearchPathsClear (CommandInterpreter &interpreter) :
+        CommandObject (interpreter,
+                       "target image-search-paths clear",
                        "Clear all current image search path substitution pairs from the current target.",
                        "target image-search-paths clear")
     {
@@ -109,11 +110,10 @@ public:
     }
 
     bool
-    Execute (CommandInterpreter &interpreter,
-             Args& command,
+    Execute (Args& command,
              CommandReturnObject &result)
     {
-        Target *target = interpreter.GetDebugger().GetSelectedTarget().get();
+        Target *target = m_interpreter.GetDebugger().GetSelectedTarget().get();
         if (target)
         {
             bool notify = true;
@@ -132,8 +132,9 @@ class CommandObjectTargetImageSearchPathsInsert : public CommandObject
 {
 public:
 
-    CommandObjectTargetImageSearchPathsInsert () :
-        CommandObject ("target image-search-paths insert",
+    CommandObjectTargetImageSearchPathsInsert (CommandInterpreter &interpreter) :
+        CommandObject (interpreter,
+                       "target image-search-paths insert",
                        "Insert a new image search path substitution pair into the current target at the specified index.",
                        "target image-search-paths insert <index> <path-prefix> <new-path-prefix> [<path-prefix> <new-path-prefix>] ...")
     {
@@ -144,11 +145,10 @@ public:
     }
 
     bool
-    Execute (CommandInterpreter &interpreter,
-             Args& command,
+    Execute (Args& command,
              CommandReturnObject &result)
     {
-        Target *target = interpreter.GetDebugger().GetSelectedTarget().get();
+        Target *target = m_interpreter.GetDebugger().GetSelectedTarget().get();
         if (target)
         {
             uint32_t argc = command.GetArgumentCount();
@@ -215,8 +215,9 @@ class CommandObjectTargetImageSearchPathsList : public CommandObject
 {
 public:
 
-    CommandObjectTargetImageSearchPathsList () :
-        CommandObject ("target image-search-paths list",
+    CommandObjectTargetImageSearchPathsList (CommandInterpreter &interpreter) :
+        CommandObject (interpreter,
+                       "target image-search-paths list",
                        "List all current image search path substitution pairs in the current target.",
                        "target image-search-paths list")
     {
@@ -227,11 +228,10 @@ public:
     }
 
     bool
-    Execute (CommandInterpreter &interpreter,
-             Args& command,
+    Execute (Args& command,
              CommandReturnObject &result)
     {
-        Target *target = interpreter.GetDebugger().GetSelectedTarget().get();
+        Target *target = m_interpreter.GetDebugger().GetSelectedTarget().get();
         if (target)
         {
             if (command.GetArgumentCount() != 0)
@@ -256,8 +256,9 @@ class CommandObjectTargetImageSearchPathsQuery : public CommandObject
 {
 public:
 
-    CommandObjectTargetImageSearchPathsQuery () :
-    CommandObject ("target image-search-paths query",
+    CommandObjectTargetImageSearchPathsQuery (CommandInterpreter &interpreter) :
+    CommandObject (interpreter,
+                   "target image-search-paths query",
                    "Transform a path using the first applicable image search path.",
                    "target image-search-paths query <path>")
     {
@@ -268,11 +269,10 @@ public:
     }
 
     bool
-    Execute (CommandInterpreter &interpreter,
-             Args& command,
+    Execute (Args& command,
              CommandReturnObject &result)
     {
-        Target *target = interpreter.GetDebugger().GetSelectedTarget().get();
+        Target *target = m_interpreter.GetDebugger().GetSelectedTarget().get();
         if (target)
         {
             if (command.GetArgumentCount() != 1)
@@ -310,7 +310,8 @@ public:
 //public:
 //
 //    CommandObjectTargetSelect () :
-//    CommandObject ("frame select",
+//    CommandObject (interpreter,
+//                   frame select",
 //                   "Select the current frame by index in the current thread.",
 //                   "frame select <frame-index>")
 //    {
@@ -323,7 +324,7 @@ public:
 //    bool
 //    Execute (Args& command,
 //             Debugger *context,
-//             CommandInterpreter &interpreter,
+//             CommandInterpreter &m_interpreter,
 //             CommandReturnObject &result)
 //    {
 //        ExecutionContext exe_ctx (context->GetExecutionContext());
@@ -344,7 +345,7 @@ public:
 //                    {
 //                        if (DisplayFrameForExecutionContext (exe_ctx.thread,
 //                                                             exe_ctx.frame,
-//                                                             interpreter,
+//                                                             m_interpreter,
 //                                                             result.GetOutputStream(),
 //                                                             true,
 //                                                             true,
@@ -388,15 +389,16 @@ class CommandObjectMultiwordImageSearchPaths : public CommandObjectMultiword
 public:
 
     CommandObjectMultiwordImageSearchPaths (CommandInterpreter &interpreter) :
-        CommandObjectMultiword ("target image-search-paths",
+        CommandObjectMultiword (interpreter, 
+                                "target image-search-paths",
                                 "A set of commands for operating on debugger target image search paths.",
                                 "target image-search-paths <subcommand> [<subcommand-options>]")
     {
-        LoadSubCommand (interpreter, "add",     CommandObjectSP (new CommandObjectTargetImageSearchPathsAdd ()));
-        LoadSubCommand (interpreter, "clear",   CommandObjectSP (new CommandObjectTargetImageSearchPathsClear ()));
-        LoadSubCommand (interpreter, "insert",  CommandObjectSP (new CommandObjectTargetImageSearchPathsInsert ()));
-        LoadSubCommand (interpreter, "list",    CommandObjectSP (new CommandObjectTargetImageSearchPathsList ()));
-        LoadSubCommand (interpreter, "query",   CommandObjectSP (new CommandObjectTargetImageSearchPathsQuery ()));
+        LoadSubCommand ("add",     CommandObjectSP (new CommandObjectTargetImageSearchPathsAdd (interpreter)));
+        LoadSubCommand ("clear",   CommandObjectSP (new CommandObjectTargetImageSearchPathsClear (interpreter)));
+        LoadSubCommand ("insert",  CommandObjectSP (new CommandObjectTargetImageSearchPathsInsert (interpreter)));
+        LoadSubCommand ("list",    CommandObjectSP (new CommandObjectTargetImageSearchPathsList (interpreter)));
+        LoadSubCommand ("query",   CommandObjectSP (new CommandObjectTargetImageSearchPathsQuery (interpreter)));
     }
 
     ~CommandObjectMultiwordImageSearchPaths()
@@ -412,11 +414,12 @@ public:
 //-------------------------------------------------------------------------
 
 CommandObjectMultiwordTarget::CommandObjectMultiwordTarget (CommandInterpreter &interpreter) :
-    CommandObjectMultiword ("target",
+    CommandObjectMultiword (interpreter,
+                            "target",
                             "A set of commands for operating on debugger targets.",
                             "target <subcommand> [<subcommand-options>]")
 {
-    LoadSubCommand (interpreter, "image-search-paths", CommandObjectSP (new CommandObjectMultiwordImageSearchPaths (interpreter)));
+    LoadSubCommand ("image-search-paths", CommandObjectSP (new CommandObjectMultiwordImageSearchPaths (interpreter)));
 }
 
 CommandObjectMultiwordTarget::~CommandObjectMultiwordTarget ()

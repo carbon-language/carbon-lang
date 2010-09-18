@@ -31,8 +31,9 @@ using namespace lldb_private;
 class CommandObjectRegisterRead : public CommandObject
 {
 public:
-    CommandObjectRegisterRead () :
-        CommandObject ("register read",
+    CommandObjectRegisterRead (CommandInterpreter &interpreter) :
+        CommandObject (interpreter, 
+                       "register read",
                        "Dump the contents of one or more register values from the current frame.",
                        "register read [<reg-name1> [<reg-name2> [...]]]",
                        eFlagProcessMustBeLaunched | eFlagProcessMustBePaused)
@@ -47,14 +48,13 @@ public:
     virtual bool
     Execute 
     (
-        CommandInterpreter &interpreter,
         Args& command,
         CommandReturnObject &result
     )
     {
         StreamString &output_stream = result.GetOutputStream();
         DataExtractor reg_data;
-        ExecutionContext exe_ctx(interpreter.GetDebugger().GetExecutionContext());
+        ExecutionContext exe_ctx(m_interpreter.GetDebugger().GetExecutionContext());
         RegisterContext *reg_context = exe_ctx.GetRegisterContext ();
 
         if (reg_context)
@@ -139,8 +139,9 @@ public:
 class CommandObjectRegisterWrite : public CommandObject
 {
 public:
-    CommandObjectRegisterWrite () :
-        CommandObject ("register write",
+    CommandObjectRegisterWrite (CommandInterpreter &interpreter) :
+        CommandObject (interpreter,
+                       "register write",
                        "Modify a single register value.",
                        "register write <reg-name> <value>",
                        eFlagProcessMustBeLaunched | eFlagProcessMustBePaused)
@@ -155,13 +156,12 @@ public:
     virtual bool
     Execute 
     (
-        CommandInterpreter &interpreter,
         Args& command,
         CommandReturnObject &result
     )
     {
         DataExtractor reg_data;
-        ExecutionContext exe_ctx(interpreter.GetDebugger().GetExecutionContext());
+        ExecutionContext exe_ctx(m_interpreter.GetDebugger().GetExecutionContext());
         RegisterContext *reg_context = exe_ctx.GetRegisterContext ();
 
         if (reg_context)
@@ -219,12 +219,13 @@ public:
 // CommandObjectRegister constructor
 //----------------------------------------------------------------------
 CommandObjectRegister::CommandObjectRegister(CommandInterpreter &interpreter) :
-    CommandObjectMultiword ("register",
+    CommandObjectMultiword (interpreter,
+                            "register",
                             "A set of commands to access thread registers.",
                             "register [read|write] ...")
 {
-    LoadSubCommand (interpreter, "read",  CommandObjectSP (new CommandObjectRegisterRead ()));
-    LoadSubCommand (interpreter, "write", CommandObjectSP (new CommandObjectRegisterWrite ()));
+    LoadSubCommand ("read",  CommandObjectSP (new CommandObjectRegisterRead (interpreter)));
+    LoadSubCommand ("write", CommandObjectSP (new CommandObjectRegisterWrite (interpreter)));
 }
 
 

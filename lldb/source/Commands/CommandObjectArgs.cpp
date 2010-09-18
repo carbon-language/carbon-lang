@@ -77,8 +77,9 @@ CommandObjectArgs::CommandOptions::GetDefinitions ()
     return g_option_table;
 }
 
-CommandObjectArgs::CommandObjectArgs () :
-    CommandObject ("args",
+CommandObjectArgs::CommandObjectArgs (CommandInterpreter &interpreter) :
+    CommandObject (interpreter, 
+                   "args",
                    "When stopped at the start of a function, reads function arguments of type (u?)int(8|16|32|64)_t, (void|char)*",
                    "args")
 {
@@ -97,7 +98,6 @@ CommandObjectArgs::GetOptions ()
 bool
 CommandObjectArgs::Execute
 (
-    CommandInterpreter &interpreter,
     Args& args,
     CommandReturnObject &result
 )
@@ -105,7 +105,7 @@ CommandObjectArgs::Execute
     ConstString target_triple;
     
     
-    Process *process = interpreter.GetDebugger().GetExecutionContext().process;
+    Process *process = m_interpreter.GetDebugger().GetExecutionContext().process;
     if (!process)
     {
         result.AppendError ("Args found no process.");
@@ -131,7 +131,7 @@ CommandObjectArgs::Execute
         return false;
     }
     
-    Thread *thread = interpreter.GetDebugger().GetExecutionContext ().thread;
+    Thread *thread = m_interpreter.GetDebugger().GetExecutionContext ().thread;
     
     if (!thread)
     {

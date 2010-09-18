@@ -125,8 +125,9 @@ CommandObjectBreakpointCommandAdd::CommandOptions::ResetOptionValues ()
 //-------------------------------------------------------------------------
 
 
-CommandObjectBreakpointCommandAdd::CommandObjectBreakpointCommandAdd () :
-    CommandObject ("add",
+CommandObjectBreakpointCommandAdd::CommandObjectBreakpointCommandAdd (CommandInterpreter &interpreter) :
+    CommandObject (interpreter,
+                   "add",
                    "Add a set of commands to a breakpoint, to be executed whenever the breakpoint is hit.",
                    "breakpoint command add <cmd-options> <breakpoint-id>")
 {
@@ -239,12 +240,11 @@ CommandObjectBreakpointCommandAdd::~CommandObjectBreakpointCommandAdd ()
 bool
 CommandObjectBreakpointCommandAdd::Execute 
 (
-    CommandInterpreter &interpreter,
     Args& command,
     CommandReturnObject &result
 )
 {
-    Target *target = interpreter.GetDebugger().GetSelectedTarget().get();
+    Target *target = m_interpreter.GetDebugger().GetSelectedTarget().get();
 
     if (target == NULL)
     {
@@ -307,24 +307,20 @@ CommandObjectBreakpointCommandAdd::Execute
                 {
                     // Special handling for one-liner specified inline.
                     if (m_options.m_use_one_liner)
-                        interpreter.GetScriptInterpreter()->SetBreakpointCommandCallback (interpreter,
-                                                                                          bp_options,
-                                                                                          m_options.m_one_liner.c_str());
+                        m_interpreter.GetScriptInterpreter()->SetBreakpointCommandCallback (bp_options,
+                                                                                            m_options.m_one_liner.c_str());
                     else
-                        interpreter.GetScriptInterpreter()->CollectDataForBreakpointCommandCallback (interpreter,
-                                                                                                     bp_options,
-                                                                                                     result);
+                        m_interpreter.GetScriptInterpreter()->CollectDataForBreakpointCommandCallback (bp_options,
+                                                                                                       result);
                 }
                 else
                 {
                     // Special handling for one-liner specified inline.
                     if (m_options.m_use_one_liner)
-                        SetBreakpointCommandCallback (interpreter,
-                                                      bp_options,
+                        SetBreakpointCommandCallback (bp_options,
                                                       m_options.m_one_liner.c_str());
                     else
-                        CollectDataForBreakpointCommandCallback (interpreter, 
-                                                                 bp_options, 
+                        CollectDataForBreakpointCommandCallback (bp_options, 
                                                                  result);
                 }
             }
@@ -345,12 +341,11 @@ const char *g_reader_instructions = "Enter your debugger command(s).  Type 'DONE
 void
 CommandObjectBreakpointCommandAdd::CollectDataForBreakpointCommandCallback
 (
-    CommandInterpreter &interpreter,
     BreakpointOptions *bp_options,
     CommandReturnObject &result
 )
 {
-    InputReaderSP reader_sp (new InputReader(interpreter.GetDebugger()));
+    InputReaderSP reader_sp (new InputReader(m_interpreter.GetDebugger()));
     std::auto_ptr<BreakpointOptions::CommandData> data_ap(new BreakpointOptions::CommandData());
     if (reader_sp && data_ap.get())
     {
@@ -365,7 +360,7 @@ CommandObjectBreakpointCommandAdd::CollectDataForBreakpointCommandCallback
                                           true));                       // echo input
         if (err.Success())
         {
-            interpreter.GetDebugger().PushInputReader (reader_sp);
+            m_interpreter.GetDebugger().PushInputReader (reader_sp);
             result.SetStatus (eReturnStatusSuccessFinishNoResult);
         }
         else
@@ -384,8 +379,7 @@ CommandObjectBreakpointCommandAdd::CollectDataForBreakpointCommandCallback
 
 // Set a one-liner as the callback for the breakpoint.
 void
-CommandObjectBreakpointCommandAdd::SetBreakpointCommandCallback (CommandInterpreter &interpreter,
-                                                                 BreakpointOptions *bp_options,
+CommandObjectBreakpointCommandAdd::SetBreakpointCommandCallback (BreakpointOptions *bp_options,
                                                                  const char *oneliner)
 {
     std::auto_ptr<BreakpointOptions::CommandData> data_ap(new BreakpointOptions::CommandData());
@@ -460,8 +454,9 @@ CommandObjectBreakpointCommandAdd::GenerateBreakpointCommandCallback
 // CommandObjectBreakpointCommandRemove
 //-------------------------------------------------------------------------
 
-CommandObjectBreakpointCommandRemove::CommandObjectBreakpointCommandRemove () :
-    CommandObject ("remove",
+CommandObjectBreakpointCommandRemove::CommandObjectBreakpointCommandRemove (CommandInterpreter &interpreter) :
+    CommandObject (interpreter, 
+                   "remove",
                    "Remove the set of commands from a breakpoint.",
                    "breakpoint command remove <breakpoint-id>")
 {
@@ -474,12 +469,11 @@ CommandObjectBreakpointCommandRemove::~CommandObjectBreakpointCommandRemove ()
 bool
 CommandObjectBreakpointCommandRemove::Execute 
 (
-    CommandInterpreter &interpreter,
     Args& command,
     CommandReturnObject &result
 )
 {
-    Target *target = interpreter.GetDebugger().GetSelectedTarget().get();
+    Target *target = m_interpreter.GetDebugger().GetSelectedTarget().get();
 
     if (target == NULL)
     {
@@ -546,8 +540,9 @@ CommandObjectBreakpointCommandRemove::Execute
 // CommandObjectBreakpointCommandList
 //-------------------------------------------------------------------------
 
-CommandObjectBreakpointCommandList::CommandObjectBreakpointCommandList () :
-    CommandObject ("List",
+CommandObjectBreakpointCommandList::CommandObjectBreakpointCommandList (CommandInterpreter &interpreter) :
+    CommandObject (interpreter,
+                   "list",
                    "List the script or set of commands to be executed when the breakpoint is hit.",
                    "breakpoint command list <breakpoint-id>")
 {
@@ -560,12 +555,11 @@ CommandObjectBreakpointCommandList::~CommandObjectBreakpointCommandList ()
 bool
 CommandObjectBreakpointCommandList::Execute 
 (
-    CommandInterpreter &interpreter,
     Args& command,
     CommandReturnObject &result
 )
 {
-    Target *target = interpreter.GetDebugger().GetSelectedTarget().get();
+    Target *target = m_interpreter.GetDebugger().GetSelectedTarget().get();
 
     if (target == NULL)
     {
@@ -663,22 +657,23 @@ CommandObjectBreakpointCommandList::Execute
 //-------------------------------------------------------------------------
 
 CommandObjectBreakpointCommand::CommandObjectBreakpointCommand (CommandInterpreter &interpreter) :
-    CommandObjectMultiword ("command",
+    CommandObjectMultiword (interpreter,
+                            "command",
                             "A set of commands for adding, removing and examining bits of code to be executed when the breakpoint is hit (breakpoint 'commmands').",
                             "command <sub-command> [<sub-command-options>] <breakpoint-id>")
 {
     bool status;
-    CommandObjectSP add_command_object (new CommandObjectBreakpointCommandAdd ());
-    CommandObjectSP remove_command_object (new CommandObjectBreakpointCommandRemove ());
-    CommandObjectSP list_command_object (new CommandObjectBreakpointCommandList ());
+    CommandObjectSP add_command_object (new CommandObjectBreakpointCommandAdd (interpreter));
+    CommandObjectSP remove_command_object (new CommandObjectBreakpointCommandRemove (interpreter));
+    CommandObjectSP list_command_object (new CommandObjectBreakpointCommandList (interpreter));
 
     add_command_object->SetCommandName ("breakpoint command add");
     remove_command_object->SetCommandName ("breakpoint command remove");
     list_command_object->SetCommandName ("breakpoint command list");
 
-    status = LoadSubCommand (interpreter, "add",    add_command_object);
-    status = LoadSubCommand (interpreter, "remove", remove_command_object);
-    status = LoadSubCommand (interpreter, "list",   list_command_object);
+    status = LoadSubCommand ("add",    add_command_object);
+    status = LoadSubCommand ("remove", remove_command_object);
+    status = LoadSubCommand ("list",   list_command_object);
 }
 
 

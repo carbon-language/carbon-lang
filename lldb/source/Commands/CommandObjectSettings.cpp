@@ -25,31 +25,32 @@ using namespace lldb_private;
 //-------------------------------------------------------------------------
 
 CommandObjectMultiwordSettings::CommandObjectMultiwordSettings (CommandInterpreter &interpreter) :
-    CommandObjectMultiword ("settings",
+    CommandObjectMultiword (interpreter,
+                            "settings",
                             "A set of commands for manipulating internal settable debugger variables.",
                             "settings <command> [<command-options>]")
 {
     bool status;
 
-    CommandObjectSP set_command_object (new CommandObjectSettingsSet ());
-    CommandObjectSP show_command_object (new CommandObjectSettingsShow ());
-    CommandObjectSP list_command_object (new CommandObjectSettingsList ());
-    CommandObjectSP remove_command_object (new CommandObjectSettingsRemove ());
-    CommandObjectSP replace_command_object (new CommandObjectSettingsReplace ());
-    CommandObjectSP insert_before_command_object (new CommandObjectSettingsInsertBefore ());
-    CommandObjectSP insert_after_command_object (new CommandObjectSettingsInsertAfter());
-    CommandObjectSP append_command_object (new CommandObjectSettingsAppend());
-    CommandObjectSP clear_command_object (new CommandObjectSettingsClear());
+    CommandObjectSP set_command_object (new CommandObjectSettingsSet (interpreter));
+    CommandObjectSP show_command_object (new CommandObjectSettingsShow (interpreter));
+    CommandObjectSP list_command_object (new CommandObjectSettingsList (interpreter));
+    CommandObjectSP remove_command_object (new CommandObjectSettingsRemove (interpreter));
+    CommandObjectSP replace_command_object (new CommandObjectSettingsReplace (interpreter));
+    CommandObjectSP insert_before_command_object (new CommandObjectSettingsInsertBefore (interpreter));
+    CommandObjectSP insert_after_command_object (new CommandObjectSettingsInsertAfter(interpreter));
+    CommandObjectSP append_command_object (new CommandObjectSettingsAppend(interpreter));
+    CommandObjectSP clear_command_object (new CommandObjectSettingsClear(interpreter));
 
-    status = LoadSubCommand (interpreter, "set",           set_command_object);
-    status = LoadSubCommand (interpreter, "show",          show_command_object);
-    status = LoadSubCommand (interpreter, "list",          list_command_object);
-    status = LoadSubCommand (interpreter, "remove",        remove_command_object);
-    status = LoadSubCommand (interpreter, "replace",       replace_command_object);
-    status = LoadSubCommand (interpreter, "insert-before", insert_before_command_object);
-    status = LoadSubCommand (interpreter, "insert-after",  insert_after_command_object);
-    status = LoadSubCommand (interpreter, "append",        append_command_object);
-    status = LoadSubCommand (interpreter, "clear",         clear_command_object);
+    status = LoadSubCommand ("set",           set_command_object);
+    status = LoadSubCommand ("show",          show_command_object);
+    status = LoadSubCommand ("list",          list_command_object);
+    status = LoadSubCommand ("remove",        remove_command_object);
+    status = LoadSubCommand ("replace",       replace_command_object);
+    status = LoadSubCommand ("insert-before", insert_before_command_object);
+    status = LoadSubCommand ("insert-after",  insert_after_command_object);
+    status = LoadSubCommand ("append",        append_command_object);
+    status = LoadSubCommand ("clear",         clear_command_object);
 }
 
 CommandObjectMultiwordSettings::~CommandObjectMultiwordSettings ()
@@ -60,8 +61,9 @@ CommandObjectMultiwordSettings::~CommandObjectMultiwordSettings ()
 // CommandObjectSettingsSet
 //-------------------------------------------------------------------------
 
-CommandObjectSettingsSet::CommandObjectSettingsSet () :
-    CommandObject ("settings set",
+CommandObjectSettingsSet::CommandObjectSettingsSet (CommandInterpreter &interpreter) :
+    CommandObject (interpreter,
+                   "settings set",
                    "Set or change the value of a single debugger setting variable.",
                    "settings set [<cmd-options>] <setting-variable-name> <value>"),
     m_options ()
@@ -74,9 +76,7 @@ CommandObjectSettingsSet::~CommandObjectSettingsSet()
 
 
 bool
-CommandObjectSettingsSet::Execute (CommandInterpreter &interpreter,
-                                   Args& command,
-                                   CommandReturnObject &result)
+CommandObjectSettingsSet::Execute (Args& command, CommandReturnObject &result)
 {
     UserSettingsControllerSP root_settings = Debugger::GetSettingsController ();
 
@@ -116,9 +116,11 @@ CommandObjectSettingsSet::Execute (CommandInterpreter &interpreter,
     }
     else
     {
-      Error err = root_settings->SetVariable (var_name_string.c_str(), var_value, lldb::eVarSetOperationAssign, 
+      Error err = root_settings->SetVariable (var_name_string.c_str(), 
+                                              var_value, 
+                                              lldb::eVarSetOperationAssign, 
                                               m_options.m_override, 
-                                              interpreter.GetDebugger().GetInstanceName().AsCString());
+                                              m_interpreter.GetDebugger().GetInstanceName().AsCString());
         if (err.Fail ())
         {
             result.AppendError (err.AsCString());
@@ -132,8 +134,7 @@ CommandObjectSettingsSet::Execute (CommandInterpreter &interpreter,
 }
 
 int
-CommandObjectSettingsSet::HandleArgumentCompletion (CommandInterpreter &interpreter,
-                                                    Args &input,
+CommandObjectSettingsSet::HandleArgumentCompletion (Args &input,
                                                     int &cursor_index,
                                                     int &cursor_char_position,
                                                     OptionElementVector &opt_element_vector,
@@ -147,7 +148,7 @@ CommandObjectSettingsSet::HandleArgumentCompletion (CommandInterpreter &interpre
 
     // Attempting to complete variable name
     if (cursor_index == 1)
-        CommandCompletions::InvokeCommonCompletionCallbacks (interpreter,
+        CommandCompletions::InvokeCommonCompletionCallbacks (m_interpreter,
                                                              CommandCompletions::eSettingsNameCompletion,
                                                              completion_str.c_str(),
                                                              match_start_point,
@@ -258,10 +259,11 @@ CommandObjectSettingsSet::GetOptions ()
 // CommandObjectSettingsShow -- Show current values
 //-------------------------------------------------------------------------
 
-CommandObjectSettingsShow::CommandObjectSettingsShow () :
-    CommandObject ("settings show",
-                    "Show the specified internal debugger setting variable and its value, or show all the currently set variables and their values, if nothing is specified.",
-                    "settings show [<setting-variable-name>]")
+CommandObjectSettingsShow::CommandObjectSettingsShow (CommandInterpreter &interpreter) :
+    CommandObject (interpreter,
+                   "settings show",
+                   "Show the specified internal debugger setting variable and its value, or show all the currently set variables and their values, if nothing is specified.",
+                   "settings show [<setting-variable-name>]")
 {
 }
 
@@ -271,8 +273,7 @@ CommandObjectSettingsShow::~CommandObjectSettingsShow()
 
 
 bool
-CommandObjectSettingsShow::Execute (CommandInterpreter &interpreter,
-                                    Args& command,
+CommandObjectSettingsShow::Execute (                       Args& command,
                                     CommandReturnObject &result)
 {
     UserSettingsControllerSP root_settings = Debugger::GetSettingsController ();
@@ -286,7 +287,7 @@ CommandObjectSettingsShow::Execute (CommandInterpreter &interpreter,
         lldb::SettableVariableType var_type;
         const char *variable_name = command.GetArgumentAtIndex (0);
         StringList value = root_settings->GetVariable (variable_name, var_type, 
-                                                       interpreter.GetDebugger().GetInstanceName().AsCString());
+                                                       m_interpreter.GetDebugger().GetInstanceName().AsCString());
         
         if (value.GetSize() == 0)
         {
@@ -320,8 +321,11 @@ CommandObjectSettingsShow::Execute (CommandInterpreter &interpreter,
     }
     else
     {
-        UserSettingsController::GetAllVariableValues (interpreter, root_settings, current_prefix, 
-                                                      result.GetOutputStream(), err);
+        UserSettingsController::GetAllVariableValues (m_interpreter, 
+                                                      root_settings, 
+                                                      current_prefix, 
+                                                      result.GetOutputStream(), 
+                                                      err);
         if (err.Fail ())
         {
             result.AppendError (err.AsCString());
@@ -337,8 +341,7 @@ CommandObjectSettingsShow::Execute (CommandInterpreter &interpreter,
 }
 
 int
-CommandObjectSettingsShow::HandleArgumentCompletion (CommandInterpreter &interpreter,
-                                                     Args &input,
+CommandObjectSettingsShow::HandleArgumentCompletion (Args &input,
                                                      int &cursor_index,
                                                      int &cursor_char_position,
                                                      OptionElementVector &opt_element_vector,
@@ -350,7 +353,7 @@ CommandObjectSettingsShow::HandleArgumentCompletion (CommandInterpreter &interpr
     std::string completion_str (input.GetArgumentAtIndex (cursor_index));
     completion_str.erase (cursor_char_position);
 
-    CommandCompletions::InvokeCommonCompletionCallbacks (interpreter,
+    CommandCompletions::InvokeCommonCompletionCallbacks (m_interpreter,
                                                          CommandCompletions::eSettingsNameCompletion,
                                                          completion_str.c_str(),
                                                          match_start_point,
@@ -365,8 +368,9 @@ CommandObjectSettingsShow::HandleArgumentCompletion (CommandInterpreter &interpr
 // CommandObjectSettingsList
 //-------------------------------------------------------------------------
 
-CommandObjectSettingsList::CommandObjectSettingsList () :
-    CommandObject ("settings list",
+CommandObjectSettingsList::CommandObjectSettingsList (CommandInterpreter &interpreter) :
+    CommandObject (interpreter, 
+                   "settings list",
                    "List and describe all the internal debugger settings variables that are available to the user to 'set' or 'show', or describe a particular variable or set of variables (by specifying the variable name or a common prefix).",
                    "settings list [<setting-name> | <setting-name-prefix>]")
 {
@@ -378,8 +382,7 @@ CommandObjectSettingsList::~CommandObjectSettingsList()
 
 
 bool
-CommandObjectSettingsList::Execute (CommandInterpreter &interpreter,
-                                    Args& command,
+CommandObjectSettingsList::Execute (                       Args& command,
                                     CommandReturnObject &result)
 {
     UserSettingsControllerSP root_settings = Debugger::GetSettingsController ();
@@ -389,14 +392,21 @@ CommandObjectSettingsList::Execute (CommandInterpreter &interpreter,
 
     if (command.GetArgumentCount() == 0)
     {
-        UserSettingsController::FindAllSettingsDescriptions (interpreter, root_settings, current_prefix, 
-                                                             result.GetOutputStream(), err);
+        UserSettingsController::FindAllSettingsDescriptions (m_interpreter, 
+                                                             root_settings, 
+                                                             current_prefix, 
+                                                             result.GetOutputStream(), 
+                                                             err);
     }
     else if (command.GetArgumentCount() == 1)
     {
         const char *search_name = command.GetArgumentAtIndex (0);
-        UserSettingsController::FindSettingsDescriptions (interpreter, root_settings, current_prefix,
-                                                          search_name, result.GetOutputStream(), err);
+        UserSettingsController::FindSettingsDescriptions (m_interpreter, 
+                                                          root_settings, 
+                                                          current_prefix,
+                                                          search_name, 
+                                                          result.GetOutputStream(), 
+                                                          err);
     }
     else
     {
@@ -419,8 +429,7 @@ CommandObjectSettingsList::Execute (CommandInterpreter &interpreter,
 }
 
 int
-CommandObjectSettingsList::HandleArgumentCompletion (CommandInterpreter &interpreter,
-                                                     Args &input,
+CommandObjectSettingsList::HandleArgumentCompletion (Args &input,
                                                      int &cursor_index,
                                                      int &cursor_char_position,
                                                      OptionElementVector &opt_element_vector,
@@ -432,7 +441,7 @@ CommandObjectSettingsList::HandleArgumentCompletion (CommandInterpreter &interpr
     std::string completion_str (input.GetArgumentAtIndex (cursor_index));
     completion_str.erase (cursor_char_position);
 
-    CommandCompletions::InvokeCommonCompletionCallbacks (interpreter,
+    CommandCompletions::InvokeCommonCompletionCallbacks (m_interpreter,
                                                          CommandCompletions::eSettingsNameCompletion,
                                                          completion_str.c_str(),
                                                          match_start_point,
@@ -447,8 +456,9 @@ CommandObjectSettingsList::HandleArgumentCompletion (CommandInterpreter &interpr
 // CommandObjectSettingsRemove
 //-------------------------------------------------------------------------
 
-CommandObjectSettingsRemove::CommandObjectSettingsRemove () :
-    CommandObject ("settings remove",
+CommandObjectSettingsRemove::CommandObjectSettingsRemove (CommandInterpreter &interpreter) :
+    CommandObject (interpreter, 
+                   "settings remove",
                    "Remove the specified element from an internal debugger settings array or dictionary variable.",
                    "settings remove <setting-variable-name> [<index>|\"key\"]")
 {
@@ -459,8 +469,7 @@ CommandObjectSettingsRemove::~CommandObjectSettingsRemove ()
 }
 
 bool
-CommandObjectSettingsRemove::Execute (CommandInterpreter &interpreter,
-                                     Args& command,
+CommandObjectSettingsRemove::Execute (                        Args& command,
                                      CommandReturnObject &result)
 {
     UserSettingsControllerSP root_settings = Debugger::GetSettingsController ();
@@ -497,8 +506,11 @@ CommandObjectSettingsRemove::Execute (CommandInterpreter &interpreter,
 
     index_value_string = index_value;
 
-    Error err = root_settings->SetVariable (var_name_string.c_str(), NULL, lldb::eVarSetOperationRemove,  
-                                            false, interpreter.GetDebugger().GetInstanceName().AsCString(),
+    Error err = root_settings->SetVariable (var_name_string.c_str(), 
+                                            NULL, 
+                                            lldb::eVarSetOperationRemove,  
+                                            false, 
+                                            m_interpreter.GetDebugger().GetInstanceName().AsCString(),
                                             index_value_string.c_str());
     if (err.Fail ())
     {
@@ -512,8 +524,7 @@ CommandObjectSettingsRemove::Execute (CommandInterpreter &interpreter,
 }
 
 int
-CommandObjectSettingsRemove::HandleArgumentCompletion (CommandInterpreter &interpreter,
-                                                       Args &input,
+CommandObjectSettingsRemove::HandleArgumentCompletion (Args &input,
                                                        int &cursor_index,
                                                        int &cursor_char_position,
                                                        OptionElementVector &opt_element_vector,
@@ -527,7 +538,7 @@ CommandObjectSettingsRemove::HandleArgumentCompletion (CommandInterpreter &inter
 
     // Attempting to complete variable name
     if (cursor_index < 2)
-        CommandCompletions::InvokeCommonCompletionCallbacks (interpreter,
+        CommandCompletions::InvokeCommonCompletionCallbacks (m_interpreter,
                                                              CommandCompletions::eSettingsNameCompletion,
                                                              completion_str.c_str(),
                                                              match_start_point,
@@ -543,8 +554,9 @@ CommandObjectSettingsRemove::HandleArgumentCompletion (CommandInterpreter &inter
 // CommandObjectSettingsReplace
 //-------------------------------------------------------------------------
 
-CommandObjectSettingsReplace::CommandObjectSettingsReplace () :
-    CommandObject ("settings replace",
+CommandObjectSettingsReplace::CommandObjectSettingsReplace (CommandInterpreter &interpreter) :
+    CommandObject (interpreter,
+                   "settings replace",
                    "Replace the specified element from an internal debugger settings array or dictionary variable with the specified new value.",
                    "settings replace <setting-variable-name> [<index>|\"<key>\"] <new-value>")
 {
@@ -555,8 +567,7 @@ CommandObjectSettingsReplace::~CommandObjectSettingsReplace ()
 }
 
 bool
-CommandObjectSettingsReplace::Execute (CommandInterpreter &interpreter,
-                                      Args& command,
+CommandObjectSettingsReplace::Execute (                         Args& command,
                                       CommandReturnObject &result)
 {
     UserSettingsControllerSP root_settings = Debugger::GetSettingsController ();
@@ -607,8 +618,11 @@ CommandObjectSettingsReplace::Execute (CommandInterpreter &interpreter,
     }
     else
     {
-        Error err = root_settings->SetVariable (var_name_string.c_str(), var_value, lldb::eVarSetOperationReplace, 
-                                                false, interpreter.GetDebugger().GetInstanceName().AsCString(),
+        Error err = root_settings->SetVariable (var_name_string.c_str(), 
+                                                var_value, 
+                                                lldb::eVarSetOperationReplace, 
+                                                false, 
+                                                m_interpreter.GetDebugger().GetInstanceName().AsCString(),
                                                 index_value_string.c_str());
         if (err.Fail ())
         {
@@ -623,8 +637,7 @@ CommandObjectSettingsReplace::Execute (CommandInterpreter &interpreter,
 }
 
 int
-CommandObjectSettingsReplace::HandleArgumentCompletion (CommandInterpreter &interpreter,
-                                                        Args &input,
+CommandObjectSettingsReplace::HandleArgumentCompletion (Args &input,
                                                         int &cursor_index,
                                                         int &cursor_char_position,
                                                         OptionElementVector &opt_element_vector,
@@ -638,7 +651,7 @@ CommandObjectSettingsReplace::HandleArgumentCompletion (CommandInterpreter &inte
 
     // Attempting to complete variable name
     if (cursor_index < 2)
-        CommandCompletions::InvokeCommonCompletionCallbacks (interpreter,
+        CommandCompletions::InvokeCommonCompletionCallbacks (m_interpreter,
                                                              CommandCompletions::eSettingsNameCompletion,
                                                              completion_str.c_str(),
                                                              match_start_point,
@@ -654,8 +667,9 @@ CommandObjectSettingsReplace::HandleArgumentCompletion (CommandInterpreter &inte
 // CommandObjectSettingsInsertBefore
 //-------------------------------------------------------------------------
 
-CommandObjectSettingsInsertBefore::CommandObjectSettingsInsertBefore () :
-    CommandObject ("settings insert-before",
+CommandObjectSettingsInsertBefore::CommandObjectSettingsInsertBefore (CommandInterpreter &interpreter) :
+    CommandObject (interpreter,
+                   "settings insert-before",
                    "Insert value(s) into an internal debugger settings array variable, immediately before the specified element.",
                    "settings insert-before <setting-variable-name> [<index>] <new-value>")
 {
@@ -666,8 +680,7 @@ CommandObjectSettingsInsertBefore::~CommandObjectSettingsInsertBefore ()
 }
 
 bool
-CommandObjectSettingsInsertBefore::Execute (CommandInterpreter &interpreter,
-                                           Args& command,
+CommandObjectSettingsInsertBefore::Execute (                              Args& command,
                                            CommandReturnObject &result)
 {
     UserSettingsControllerSP root_settings = Debugger::GetSettingsController ();
@@ -719,8 +732,11 @@ CommandObjectSettingsInsertBefore::Execute (CommandInterpreter &interpreter,
     }
     else
     {
-        Error err = root_settings->SetVariable (var_name_string.c_str(), var_value, lldb::eVarSetOperationInsertBefore,
-                                                false, interpreter.GetDebugger().GetInstanceName().AsCString(),
+        Error err = root_settings->SetVariable (var_name_string.c_str(), 
+                                                var_value, 
+                                                lldb::eVarSetOperationInsertBefore,
+                                                false, 
+                                                m_interpreter.GetDebugger().GetInstanceName().AsCString(),
                                                 index_value_string.c_str());
         if (err.Fail ())
         {
@@ -736,8 +752,7 @@ CommandObjectSettingsInsertBefore::Execute (CommandInterpreter &interpreter,
 
 
 int
-CommandObjectSettingsInsertBefore::HandleArgumentCompletion (CommandInterpreter &interpreter,
-                                                             Args &input,
+CommandObjectSettingsInsertBefore::HandleArgumentCompletion (Args &input,
                                                              int &cursor_index,
                                                              int &cursor_char_position,
                                                              OptionElementVector &opt_element_vector,
@@ -751,7 +766,7 @@ CommandObjectSettingsInsertBefore::HandleArgumentCompletion (CommandInterpreter 
 
     // Attempting to complete variable name
     if (cursor_index < 2)
-        CommandCompletions::InvokeCommonCompletionCallbacks (interpreter,
+        CommandCompletions::InvokeCommonCompletionCallbacks (m_interpreter,
                                                              CommandCompletions::eSettingsNameCompletion,
                                                              completion_str.c_str(),
                                                              match_start_point,
@@ -767,8 +782,9 @@ CommandObjectSettingsInsertBefore::HandleArgumentCompletion (CommandInterpreter 
 // CommandObjectSettingInsertAfter
 //-------------------------------------------------------------------------
 
-CommandObjectSettingsInsertAfter::CommandObjectSettingsInsertAfter () :
-    CommandObject ("settings insert-after",
+CommandObjectSettingsInsertAfter::CommandObjectSettingsInsertAfter (CommandInterpreter &interpreter) :
+    CommandObject (interpreter,
+                   "settings insert-after",
                    "Insert value(s) into an internal debugger settings array variable, immediately after the specified element.",
                    "settings insert-after <setting-variable-name> [<index>] <new-value>")
 {
@@ -779,8 +795,7 @@ CommandObjectSettingsInsertAfter::~CommandObjectSettingsInsertAfter ()
 }
 
 bool
-CommandObjectSettingsInsertAfter::Execute (CommandInterpreter &interpreter,
-                                          Args& command,
+CommandObjectSettingsInsertAfter::Execute (                             Args& command,
                                           CommandReturnObject &result)
 {
     UserSettingsControllerSP root_settings = Debugger::GetSettingsController ();
@@ -832,8 +847,11 @@ CommandObjectSettingsInsertAfter::Execute (CommandInterpreter &interpreter,
     }
     else
     {
-        Error err = root_settings->SetVariable (var_name_string.c_str(), var_value, lldb::eVarSetOperationInsertAfter,
-                                                false, interpreter.GetDebugger().GetInstanceName().AsCString(), 
+        Error err = root_settings->SetVariable (var_name_string.c_str(), 
+                                                var_value, 
+                                                lldb::eVarSetOperationInsertAfter,
+                                                false, 
+                                                m_interpreter.GetDebugger().GetInstanceName().AsCString(), 
                                                 index_value_string.c_str());
         if (err.Fail ())
         {
@@ -849,8 +867,7 @@ CommandObjectSettingsInsertAfter::Execute (CommandInterpreter &interpreter,
 
 
 int
-CommandObjectSettingsInsertAfter::HandleArgumentCompletion (CommandInterpreter &interpreter,
-                                                            Args &input,
+CommandObjectSettingsInsertAfter::HandleArgumentCompletion (Args &input,
                                                             int &cursor_index,
                                                             int &cursor_char_position,
                                                             OptionElementVector &opt_element_vector,
@@ -864,7 +881,7 @@ CommandObjectSettingsInsertAfter::HandleArgumentCompletion (CommandInterpreter &
 
     // Attempting to complete variable name
     if (cursor_index < 2)
-        CommandCompletions::InvokeCommonCompletionCallbacks (interpreter,
+        CommandCompletions::InvokeCommonCompletionCallbacks (m_interpreter,
                                                              CommandCompletions::eSettingsNameCompletion,
                                                              completion_str.c_str(),
                                                              match_start_point,
@@ -880,8 +897,9 @@ CommandObjectSettingsInsertAfter::HandleArgumentCompletion (CommandInterpreter &
 // CommandObjectSettingsAppend
 //-------------------------------------------------------------------------
 
-CommandObjectSettingsAppend::CommandObjectSettingsAppend () :
-    CommandObject ("settings append",
+CommandObjectSettingsAppend::CommandObjectSettingsAppend (CommandInterpreter &interpreter) :
+    CommandObject (interpreter,
+                   "settings append",
                    "Append a new value to the end of an internal debugger settings array, dictionary or string variable.",
                    "settings append <setting-variable-name> <new-value>")
 {
@@ -892,8 +910,7 @@ CommandObjectSettingsAppend::~CommandObjectSettingsAppend ()
 }
 
 bool
-CommandObjectSettingsAppend::Execute (CommandInterpreter &interpreter,
-                                     Args& command,
+CommandObjectSettingsAppend::Execute (                        Args& command,
                                      CommandReturnObject &result)
 {
     UserSettingsControllerSP root_settings = Debugger::GetSettingsController ();
@@ -933,8 +950,11 @@ CommandObjectSettingsAppend::Execute (CommandInterpreter &interpreter,
     }
     else
     {
-        Error err = root_settings->SetVariable (var_name_string.c_str(), var_value, lldb::eVarSetOperationAppend, 
-                                                false, interpreter.GetDebugger().GetInstanceName().AsCString());
+        Error err = root_settings->SetVariable (var_name_string.c_str(), 
+                                                var_value, 
+                                                lldb::eVarSetOperationAppend, 
+                                                false, 
+                                                m_interpreter.GetDebugger().GetInstanceName().AsCString());
         if (err.Fail ())
         {
             result.AppendError (err.AsCString());
@@ -949,8 +969,7 @@ CommandObjectSettingsAppend::Execute (CommandInterpreter &interpreter,
 
 
 int
-CommandObjectSettingsAppend::HandleArgumentCompletion (CommandInterpreter &interpreter,
-                                                       Args &input,
+CommandObjectSettingsAppend::HandleArgumentCompletion (Args &input,
                                                        int &cursor_index,
                                                        int &cursor_char_position,
                                                        OptionElementVector &opt_element_vector,
@@ -964,7 +983,7 @@ CommandObjectSettingsAppend::HandleArgumentCompletion (CommandInterpreter &inter
 
     // Attempting to complete variable name
     if (cursor_index < 2)
-        CommandCompletions::InvokeCommonCompletionCallbacks (interpreter,
+        CommandCompletions::InvokeCommonCompletionCallbacks (m_interpreter,
                                                              CommandCompletions::eSettingsNameCompletion,
                                                              completion_str.c_str(),
                                                              match_start_point,
@@ -980,8 +999,9 @@ CommandObjectSettingsAppend::HandleArgumentCompletion (CommandInterpreter &inter
 // CommandObjectSettingsClear
 //-------------------------------------------------------------------------
 
-CommandObjectSettingsClear::CommandObjectSettingsClear () :
-    CommandObject ("settings clear",
+CommandObjectSettingsClear::CommandObjectSettingsClear (CommandInterpreter &interpreter) :
+    CommandObject (interpreter, 
+                   "settings clear",
                    "Erase all the contents of an internal debugger settings variables; this is only valid for variables with clearable types, i.e. strings, arrays or dictionaries.",
                    "settings clear")
 {
@@ -992,8 +1012,7 @@ CommandObjectSettingsClear::~CommandObjectSettingsClear ()
 }
 
 bool
-CommandObjectSettingsClear::Execute (CommandInterpreter &interpreter,
-                                    Args& command,
+CommandObjectSettingsClear::Execute (                       Args& command,
                                     CommandReturnObject &result)
 {
     UserSettingsControllerSP root_settings = Debugger::GetSettingsController ();
@@ -1015,8 +1034,11 @@ CommandObjectSettingsClear::Execute (CommandInterpreter &interpreter,
         return false;
     }
 
-    Error err = root_settings->SetVariable (var_name, NULL, lldb::eVarSetOperationClear, false, 
-                                            interpreter.GetDebugger().GetInstanceName().AsCString());
+    Error err = root_settings->SetVariable (var_name, 
+                                            NULL, 
+                                            lldb::eVarSetOperationClear, 
+                                            false, 
+                                            m_interpreter.GetDebugger().GetInstanceName().AsCString());
 
     if (err.Fail ())
     {
@@ -1031,8 +1053,7 @@ CommandObjectSettingsClear::Execute (CommandInterpreter &interpreter,
 
 
 int
-CommandObjectSettingsClear::HandleArgumentCompletion (CommandInterpreter &interpreter,
-                                                      Args &input,
+CommandObjectSettingsClear::HandleArgumentCompletion (Args &input,
                                                       int &cursor_index,
                                                       int &cursor_char_position,
                                                       OptionElementVector &opt_element_vector,
@@ -1046,7 +1067,7 @@ CommandObjectSettingsClear::HandleArgumentCompletion (CommandInterpreter &interp
 
     // Attempting to complete variable name
     if (cursor_index < 2)
-        CommandCompletions::InvokeCommonCompletionCallbacks (interpreter,
+        CommandCompletions::InvokeCommonCompletionCallbacks (m_interpreter,
                                                              CommandCompletions::eSettingsNameCompletion,
                                                              completion_str.c_str(),
                                                              match_start_point,

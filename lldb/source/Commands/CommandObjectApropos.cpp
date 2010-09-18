@@ -26,10 +26,11 @@ using namespace lldb_private;
 // CommandObjectApropos
 //-------------------------------------------------------------------------
 
-CommandObjectApropos::CommandObjectApropos () :
-    CommandObject ("apropos",
-                     "Find a list of debugger commands related to a particular word/subject.",
-                     "apropos <search-word>")
+CommandObjectApropos::CommandObjectApropos (CommandInterpreter &interpreter) :
+    CommandObject (interpreter,
+                   "apropos",
+                   "Find a list of debugger commands related to a particular word/subject.",
+                   "apropos <search-word>")
 {
 }
 
@@ -41,7 +42,6 @@ CommandObjectApropos::~CommandObjectApropos()
 bool
 CommandObjectApropos::Execute
 (
-    CommandInterpreter &interpreter,
     Args& args,
     CommandReturnObject &result
 )
@@ -58,7 +58,7 @@ CommandObjectApropos::Execute
             // is private.
             StringList commands_found;
             StringList commands_help;
-            interpreter.FindCommandsForApropos (search_word, commands_found, commands_help);
+            m_interpreter.FindCommandsForApropos (search_word, commands_found, commands_help);
             if (commands_found.GetSize() == 0)
             {
                 result.AppendMessageWithFormat ("No commands found pertaining to '%s'.", search_word);
@@ -77,12 +77,12 @@ CommandObjectApropos::Execute
                 }
 
                 for (size_t i = 0; i < commands_found.GetSize(); ++i)
-                    interpreter.OutputFormattedHelpText (result.GetOutputStream(), 
-                                                         commands_found.GetStringAtIndex(i),
-                                                         "--", commands_help.
-                                                         GetStringAtIndex(i), 
-                                                         max_len);
-
+                    m_interpreter.OutputFormattedHelpText (result.GetOutputStream(), 
+                                                           commands_found.GetStringAtIndex(i),
+                                                           "--", commands_help.
+                                                           GetStringAtIndex(i), 
+                                                           max_len);
+                
             }
             result.SetStatus (eReturnStatusSuccessFinishNoResult);
         }

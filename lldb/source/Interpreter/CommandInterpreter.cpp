@@ -149,29 +149,30 @@ CommandInterpreter::LoadCommandDictionary ()
     bool success;
     script_language = Args::StringToScriptLanguage (value.GetStringAtIndex(0), lldb::eScriptLanguageDefault, &success);
     
-    m_command_dict["apropos"]   = CommandObjectSP (new CommandObjectApropos ());
+    m_command_dict["apropos"]   = CommandObjectSP (new CommandObjectApropos (*this));
     m_command_dict["breakpoint"]= CommandObjectSP (new CommandObjectMultiwordBreakpoint (*this));
-    //m_command_dict["call"]      = CommandObjectSP (new CommandObjectCall ());
+    //m_command_dict["call"]      = CommandObjectSP (new CommandObjectCall (*this));
     m_command_dict["commands"]  = CommandObjectSP (new CommandObjectMultiwordCommands (*this));
-    m_command_dict["disassemble"] = CommandObjectSP (new CommandObjectDisassemble ());
-    m_command_dict["expression"]= CommandObjectSP (new CommandObjectExpression ());
-    m_command_dict["file"]      = CommandObjectSP (new CommandObjectFile ());
+    m_command_dict["disassemble"] = CommandObjectSP (new CommandObjectDisassemble (*this));
+    m_command_dict["expression"]= CommandObjectSP (new CommandObjectExpression (*this));
+    m_command_dict["file"]      = CommandObjectSP (new CommandObjectFile (*this));
     m_command_dict["frame"]     = CommandObjectSP (new CommandObjectMultiwordFrame (*this));
-    m_command_dict["help"]      = CommandObjectSP (new CommandObjectHelp ());
+    m_command_dict["help"]      = CommandObjectSP (new CommandObjectHelp (*this));
     m_command_dict["image"]     = CommandObjectSP (new CommandObjectImage (*this));
     m_command_dict["log"]       = CommandObjectSP (new CommandObjectLog (*this));
     m_command_dict["memory"]    = CommandObjectSP (new CommandObjectMemory (*this));
     m_command_dict["process"]   = CommandObjectSP (new CommandObjectMultiwordProcess (*this));
-    m_command_dict["quit"]      = CommandObjectSP (new CommandObjectQuit ());
+    m_command_dict["quit"]      = CommandObjectSP (new CommandObjectQuit (*this));
     m_command_dict["register"]  = CommandObjectSP (new CommandObjectRegister (*this));
-    m_command_dict["script"]    = CommandObjectSP (new CommandObjectScript (script_language));
+    m_command_dict["script"]    = CommandObjectSP (new CommandObjectScript (*this, script_language));
     m_command_dict["settings"]  = CommandObjectSP (new CommandObjectMultiwordSettings (*this));
     m_command_dict["source"]    = CommandObjectSP (new CommandObjectMultiwordSource (*this));
     m_command_dict["target"]    = CommandObjectSP (new CommandObjectMultiwordTarget (*this));
     m_command_dict["thread"]    = CommandObjectSP (new CommandObjectMultiwordThread (*this));
 
     std::auto_ptr<CommandObjectRegexCommand>
-    break_regex_cmd_ap(new CommandObjectRegexCommand ("regexp-break",
+    break_regex_cmd_ap(new CommandObjectRegexCommand (*this,
+                                                      "regexp-break",
                                                       "Set a breakpoint using a regular expression to specify the location.",
                                                       "regexp-break [<file>:<line>]\nregexp-break [<address>]\nregexp-break <...>", 2));
     if (break_regex_cmd_ap.get())
@@ -574,14 +575,14 @@ CommandInterpreter::HandleCommand
                         stripped_command += strlen(command_cstr);
                         while (isspace(*stripped_command))
                             ++stripped_command;
-                        command_obj->ExecuteRawCommandString (*this, stripped_command, result);
+                        command_obj->ExecuteRawCommandString (stripped_command, result);
                     }
                 }
                 else
                 {
                     // Remove the command from the args.
                     command_args.Shift();
-                    command_obj->ExecuteWithOptions (*this, command_args, result);
+                    command_obj->ExecuteWithOptions (command_args, result);
                 }
             }
             else
@@ -681,8 +682,7 @@ CommandInterpreter::HandleCompletionMatches (Args &parsed_line,
         {
             parsed_line.Shift();
             cursor_index--;
-            num_command_matches = command_object->HandleCompletion (*this,
-                                                                    parsed_line, 
+            num_command_matches = command_object->HandleCompletion (parsed_line, 
                                                                     cursor_index, 
                                                                     cursor_char_position,
                                                                     match_start_point, 
@@ -1010,7 +1010,7 @@ CommandInterpreter::GetScriptInterpreter ()
     if (pos != m_command_dict.end())
     {
         CommandObject *script_cmd_obj = pos->second.get();
-        return ((CommandObjectScript *) script_cmd_obj)->GetInterpreter (*this);
+        return ((CommandObjectScript *) script_cmd_obj)->GetInterpreter ();
     }
     return NULL;
 }
@@ -1041,15 +1041,8 @@ CommandInterpreter::OutputFormattedHelpText (Stream &strm,
                                              const char *help_text,
                                              uint32_t max_word_len)
 {
-    lldb::SettableVariableType var_type;
-    const char *width_value = 
-      Debugger::GetSettingsController()->GetVariable ("term-width", var_type,
-                                                      m_debugger.GetInstanceName().AsCString()).GetStringAtIndex(0);
-    int max_columns = atoi (width_value);
-    // Sanity check max_columns, to cope with emacs shell mode with TERM=dumb
-    // (0 rows; 0 columns;).
-    if (max_columns <= 0) max_columns = 80;
-    
+    const uint32_t max_columns = m_debugger.GetTerminalWidth();
+
     int indent_size = max_word_len + strlen (separator) + 2;
 
     strm.IndentMore (indent_size);
@@ -1135,7 +1128,7 @@ CommandInterpreter::AproposAllSubCommands (CommandObject *cmd_obj, const char *p
           
           complete_command_name.Printf ("%s %s", prefix, command_name);
 
-          if (sub_cmd_obj->HelpTextContainsWord (search_word, *this))
+          if (sub_cmd_obj->HelpTextContainsWord (search_word))
           {
               commands_found.AppendString (complete_command_name.GetData());
               commands_help.AppendString (sub_cmd_obj->GetHelp());
@@ -1159,7 +1152,7 @@ CommandInterpreter::FindCommandsForApropos (const char *search_word, StringList 
         const char *command_name = pos->first.c_str();
         CommandObject *cmd_obj = pos->second.get();
 
-        if (cmd_obj->HelpTextContainsWord (search_word, *this))
+        if (cmd_obj->HelpTextContainsWord (search_word))
         {
             commands_found.AppendString (command_name);
             commands_help.AppendString (cmd_obj->GetHelp());

@@ -157,10 +157,9 @@ public:
                               uint32_t output_max_columns);
 
     void
-    GenerateOptionUsage (Stream &strm,
-                         CommandObject *cmd,
-                         const char *debugger_instance_name,
-                         const char *program_name = NULL);
+    GenerateOptionUsage (CommandInterpreter &interpreter,
+                         Stream &strm,
+                         CommandObject *cmd);
 
     // The following two pure virtual functions must be defined by every class that inherits from
     // this class.

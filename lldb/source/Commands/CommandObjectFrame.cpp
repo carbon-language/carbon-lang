@@ -51,11 +51,12 @@ class CommandObjectFrameInfo : public CommandObject
 {
 public:
 
-    CommandObjectFrameInfo () :
-    CommandObject ("frame info",
-                   "List information about the currently selected frame in the current thread.",
-                   "frame info",
-                   eFlagProcessMustBeLaunched | eFlagProcessMustBePaused)
+    CommandObjectFrameInfo (CommandInterpreter &interpreter) :
+        CommandObject (interpreter,
+                       "frame info",
+                       "List information about the currently selected frame in the current thread.",
+                       "frame info",
+                       eFlagProcessMustBeLaunched | eFlagProcessMustBePaused)
     {
     }
 
@@ -64,11 +65,10 @@ public:
     }
 
     bool
-    Execute (CommandInterpreter &interpreter,
-             Args& command,
+    Execute (Args& command,
              CommandReturnObject &result)
     {
-        ExecutionContext exe_ctx(interpreter.GetDebugger().GetExecutionContext());
+        ExecutionContext exe_ctx(m_interpreter.GetDebugger().GetExecutionContext());
         if (exe_ctx.frame)
         {
             exe_ctx.frame->Dump (&result.GetOutputStream(), true, false);
@@ -94,12 +94,12 @@ class CommandObjectFrameSelect : public CommandObject
 {
 public:
 
-    CommandObjectFrameSelect () :
-    CommandObject ("frame select",
-                   //"Select the current frame by index in the current thread.",
-                   "Select a frame by index from within the current thread and make it the current frame.",
-                   "frame select <frame-index>",
-                   eFlagProcessMustBeLaunched | eFlagProcessMustBePaused)
+    CommandObjectFrameSelect (CommandInterpreter &interpreter) :
+        CommandObject (interpreter,
+                       "frame select",
+                       "Select a frame by index from within the current thread and make it the current frame.",
+                       "frame select <frame-index>",
+                       eFlagProcessMustBeLaunched | eFlagProcessMustBePaused)
     {
     }
 
@@ -108,11 +108,10 @@ public:
     }
 
     bool
-    Execute (CommandInterpreter &interpreter,
-             Args& command,
+    Execute (Args& command,
              CommandReturnObject &result)
     {
-        ExecutionContext exe_ctx (interpreter.GetDebugger().GetExecutionContext());
+        ExecutionContext exe_ctx (m_interpreter.GetDebugger().GetExecutionContext());
         if (exe_ctx.thread)
         {
             if (command.GetArgumentCount() == 1)
@@ -130,14 +129,14 @@ public:
                     {
                         bool already_shown = false;
                         SymbolContext frame_sc(exe_ctx.frame->GetSymbolContext(eSymbolContextLineEntry));
-                        if (interpreter.GetDebugger().UseExternalEditor() && frame_sc.line_entry.file && frame_sc.line_entry.line != 0)
+                        if (m_interpreter.GetDebugger().UseExternalEditor() && frame_sc.line_entry.file && frame_sc.line_entry.line != 0)
                         {
                             already_shown = Host::OpenFileInExternalEditor (frame_sc.line_entry.file, frame_sc.line_entry.line);
                         }
 
                         if (DisplayFrameForExecutionContext (exe_ctx.thread,
                                                              exe_ctx.frame,
-                                                             interpreter,
+                                                             m_interpreter,
                                                              result.GetOutputStream(),
                                                              true,
                                                              !already_shown,
@@ -288,11 +287,11 @@ public:
         // Instance variables to hold the values for command options.
     };
 
-    CommandObjectFrameVariable () :
-        CommandObject (
-                "frame variable",
-                "Show specified argument, local variable, static variable or global variable for the current frame.  If none specified, list them all.",
-                "frame variable [<cmd-options>] [<var-name1> [<var-name2>...]]")
+    CommandObjectFrameVariable (CommandInterpreter &interpreter) :
+        CommandObject (interpreter,
+                       "frame variable",
+                       "Show specified argument, local variable, static variable or global variable for the current frame.  If none specified, list them all.",
+                       "frame variable [<cmd-options>] [<var-name1> [<var-name2>...]]")
     {
     }
 
@@ -431,12 +430,11 @@ public:
     virtual bool
     Execute
     (
-        CommandInterpreter &interpreter,
         Args& command,
         CommandReturnObject &result
     )
     {
-        ExecutionContext exe_ctx(interpreter.GetDebugger().GetExecutionContext());
+        ExecutionContext exe_ctx(m_interpreter.GetDebugger().GetExecutionContext());
         if (exe_ctx.frame == NULL)
         {
             result.AppendError ("invalid frame");
@@ -789,13 +787,14 @@ CommandObjectFrameVariable::CommandOptions::g_option_table[] =
 //-------------------------------------------------------------------------
 
 CommandObjectMultiwordFrame::CommandObjectMultiwordFrame (CommandInterpreter &interpreter) :
-    CommandObjectMultiword ("frame",
+    CommandObjectMultiword (interpreter,
+                            "frame",
                             "A set of commands for operating on the current thread's frames.",
                             "frame <subcommand> [<subcommand-options>]")
 {
-    LoadSubCommand (interpreter, "info",   CommandObjectSP (new CommandObjectFrameInfo ()));
-    LoadSubCommand (interpreter, "select", CommandObjectSP (new CommandObjectFrameSelect ()));
-    LoadSubCommand (interpreter, "variable", CommandObjectSP (new CommandObjectFrameVariable ()));
+    LoadSubCommand ("info",   CommandObjectSP (new CommandObjectFrameInfo (interpreter)));
+    LoadSubCommand ("select", CommandObjectSP (new CommandObjectFrameSelect (interpreter)));
+    LoadSubCommand ("variable", CommandObjectSP (new CommandObjectFrameVariable (interpreter)));
 }
 
 CommandObjectMultiwordFrame::~CommandObjectMultiwordFrame ()

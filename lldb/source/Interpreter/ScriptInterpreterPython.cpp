@@ -144,7 +144,7 @@ _check_and_flush (FILE *stream)
 }
 
 ScriptInterpreterPython::ScriptInterpreterPython (CommandInterpreter &interpreter) :
-    ScriptInterpreter (eScriptLanguagePython),
+    ScriptInterpreter (interpreter, eScriptLanguagePython),
     m_compiled_module (NULL),
     m_termios_valid (false)
 {
@@ -254,9 +254,7 @@ ScriptInterpreterPython::~ScriptInterpreterPython ()
 }
 
 bool
-ScriptInterpreterPython::ExecuteOneLine (CommandInterpreter &interpreter,
-                                         const char *command,
-                                         CommandReturnObject *result = 0)
+ScriptInterpreterPython::ExecuteOneLine (const char *command, CommandReturnObject *result)
 {
     if (command)
     {
@@ -357,11 +355,11 @@ ScriptInterpreterPython::InputReaderCallback
 
 
 void
-ScriptInterpreterPython::ExecuteInterpreterLoop (CommandInterpreter &interpreter)
+ScriptInterpreterPython::ExecuteInterpreterLoop ()
 {
     Timer scoped_timer (__PRETTY_FUNCTION__, __PRETTY_FUNCTION__);
 
-    Debugger &debugger = interpreter.GetDebugger();
+    Debugger &debugger = m_interpreter.GetDebugger();
 
     // At the moment, the only time the debugger does not have an input file handle is when this is called
     // directly from Python, in which case it is both dangerous and unnecessary (not to mention confusing) to
@@ -384,7 +382,7 @@ ScriptInterpreterPython::ExecuteInterpreterLoop (CommandInterpreter &interpreter
         if (error.Success())
         {
             debugger.PushInputReader (reader_sp);
-            ExecuteOneLine (interpreter, "run_python_interpreter(ConsoleDict)");
+            ExecuteOneLine ("run_python_interpreter(ConsoleDict)", NULL);
             debugger.PopInputReader (reader_sp);
         }
     }
@@ -643,11 +641,10 @@ ScriptInterpreterPython::GenerateBreakpointOptionsCommandCallback
 }
 
 void
-ScriptInterpreterPython::CollectDataForBreakpointCommandCallback (CommandInterpreter &interpreter,
-                                                                  BreakpointOptions *bp_options,
+ScriptInterpreterPython::CollectDataForBreakpointCommandCallback (BreakpointOptions *bp_options,
                                                                   CommandReturnObject &result)
 {
-    Debugger &debugger = interpreter.GetDebugger();
+    Debugger &debugger = m_interpreter.GetDebugger();
     InputReaderSP reader_sp (new InputReader (debugger));
 
     if (reader_sp)
@@ -677,8 +674,7 @@ ScriptInterpreterPython::CollectDataForBreakpointCommandCallback (CommandInterpr
 
 // Set a Python one-liner as the callback for the breakpoint.
 void
-ScriptInterpreterPython::SetBreakpointCommandCallback (CommandInterpreter &interpreter,
-                                                       BreakpointOptions *bp_options,
+ScriptInterpreterPython::SetBreakpointCommandCallback (BreakpointOptions *bp_options,
                                                        const char *oneliner)
 {
     std::auto_ptr<BreakpointOptions::CommandData> data_ap(new BreakpointOptions::CommandData());

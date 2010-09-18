@@ -602,6 +602,55 @@ SBDebugger::GetInternalVariableValue (const char *var_name, const char *debugger
     return ret_value;
 }
 
+uint32_t
+SBDebugger::GetTerminalWidth () const
+{
+    if (m_opaque_sp)
+        return m_opaque_sp->GetTerminalWidth ();
+    return 0;
+}
+
+void
+SBDebugger::SetTerminalWidth (uint32_t term_width)
+{
+    if (m_opaque_sp)
+        m_opaque_sp->SetTerminalWidth (term_width);
+}
+
+const char *
+SBDebugger::GetPrompt() const
+{
+    if (m_opaque_sp)
+        return m_opaque_sp->GetPrompt ();
+    return 0;
+}
+
+void
+SBDebugger::SetPrompt (const char *prompt)
+{
+    if (m_opaque_sp)
+        m_opaque_sp->SetPrompt (prompt);
+}
+
+    
+lldb::ScriptLanguage 
+SBDebugger::GetScriptLanguage() const
+{
+    if (m_opaque_sp)
+        return m_opaque_sp->GetScriptLanguage ();
+    return eScriptLanguageNone;
+}
+
+void
+SBDebugger::SetScriptLanguage (lldb::ScriptLanguage script_lang)
+{
+    if (m_opaque_sp)
+        m_opaque_sp->SetScriptLanguage (script_lang);
+}
+
+
+
+
 bool
 SBDebugger::SetUseExternalEditor (bool value)
 {

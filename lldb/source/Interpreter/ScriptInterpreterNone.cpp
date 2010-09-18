@@ -17,7 +17,7 @@ using namespace lldb;
 using namespace lldb_private;
 
 ScriptInterpreterNone::ScriptInterpreterNone (CommandInterpreter &interpreter) :
-    ScriptInterpreter (eScriptLanguageNone)
+    ScriptInterpreter (interpreter, eScriptLanguageNone)
 {
 }
 
@@ -26,16 +26,16 @@ ScriptInterpreterNone::~ScriptInterpreterNone ()
 }
 
 bool
-ScriptInterpreterNone::ExecuteOneLine (CommandInterpreter &interpreter, const char *command, CommandReturnObject *)
+ScriptInterpreterNone::ExecuteOneLine (const char *command, CommandReturnObject *)
 {
-    interpreter.GetDebugger().GetErrorStream().PutCString ("error: there is no embedded script interpreter in this mode.\n");
+    m_interpreter.GetDebugger().GetErrorStream().PutCString ("error: there is no embedded script interpreter in this mode.\n");
     return false;
 }
 
 void
-ScriptInterpreterNone::ExecuteInterpreterLoop (CommandInterpreter &interpreter)
+ScriptInterpreterNone::ExecuteInterpreterLoop ()
 {
-    interpreter.GetDebugger().GetErrorStream().PutCString ("error: there is no embedded script interpreter in this mode.\n");
+    m_interpreter.GetDebugger().GetErrorStream().PutCString ("error: there is no embedded script interpreter in this mode.\n");
 }
 
 
