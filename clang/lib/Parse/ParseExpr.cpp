@@ -242,8 +242,7 @@ Parser::ParseAssignmentExprWithObjCMessageExprStart(SourceLocation LBracLoc,
   ExprResult R
     = ParseObjCMessageExpressionBody(LBracLoc, SuperLoc,
                                      ReceiverType, ReceiverExpr);
-  if (R.isInvalid()) return move(R);
-  R = ParsePostfixExpressionSuffix(R.take());
+  R = ParsePostfixExpressionSuffix(R);
   return ParseRHSOfBinaryExpression(R, prec::Assignment);
 }
 
@@ -576,8 +575,6 @@ ExprResult Parser::ParseCastExpression(bool isUnaryExpression,
 
       Res = ParseParenExpression(ParenExprType, false/*stopIfCastExr*/,
                                  TypeOfCast, CastTy, RParenLoc);
-      if (Res.isInvalid()) 
-        return move(Res);
     }
 
     switch (ParenExprType) {
@@ -1012,8 +1009,7 @@ ExprResult Parser::ParseCastExpression(bool isUnaryExpression,
   }
 
   // These can be followed by postfix-expr pieces.
-  if (Res.isInvalid()) return move(Res);
-  return ParsePostfixExpressionSuffix(Res.get());
+  return ParsePostfixExpressionSuffix(Res);
 }
 
 /// ParsePostfixExpressionSuffix - Once the leading part of a postfix-expression
@@ -1045,7 +1041,7 @@ Parser::ParsePostfixExpressionSuffix(ExprResult LHS) {
       if (InMessageExpression)
         return move(LHS);
         
-      Actions.CodeCompletePostfixExpression(getCurScope(), LHS.take());
+      Actions.CodeCompletePostfixExpression(getCurScope(), LHS);
       ConsumeCodeCompletionToken();
       LHS = ExprError();
       break;
@@ -1099,12 +1095,7 @@ Parser::ParsePostfixExpressionSuffix(ExprResult LHS) {
       CommaLocsTy CommaLocs;
 
       Loc = ConsumeParen();
-
-      if (LHS.isInvalid()) {
-        SkipUntil(tok::r_paren);
-        return ExprError();
-      }
-
+      
       if (Tok.is(tok::code_completion)) {
         Actions.CodeCompleteCall(getCurScope(), LHS.get(), 0, 0);
         ConsumeCodeCompletionToken();
@@ -1114,24 +1105,25 @@ Parser::ParsePostfixExpressionSuffix(ExprResult LHS) {
         if (ParseExpressionList(ArgExprs, CommaLocs, &Sema::CodeCompleteCall,
                                 LHS.get())) {
           SkipUntil(tok::r_paren);
-          return ExprError();
+          LHS = ExprError();
         }
       }
 
       // Match the ')'.
-      if (Tok.isNot(tok::r_paren)) {
+      if (LHS.isInvalid()) {
+        SkipUntil(tok::r_paren);
+      } else if (Tok.isNot(tok::r_paren)) {
         MatchRHSPunctuation(tok::r_paren, Loc);
-        return ExprError();
-      }
-
-      if (!LHS.isInvalid()) {
-        assert((ArgExprs.size() == 0 || ArgExprs.size()-1 == CommaLocs.size())&&
+        LHS = ExprError();
+      } else {
+        assert((ArgExprs.size() == 0 || 
+                ArgExprs.size()-1 == CommaLocs.size())&&
                "Unexpected number of commas!");
         LHS = Actions.ActOnCallExpr(getCurScope(), LHS.take(), Loc,
                                     move_arg(ArgExprs), Tok.getLocation());
+        ConsumeParen();
       }
 
-      ConsumeParen();
       break;
     }
     case tok::arrow:
@@ -1183,7 +1175,7 @@ Parser::ParsePostfixExpressionSuffix(ExprResult LHS) {
                              /*AllowConstructorName=*/false, 
                              ObjectType,
                              Name))
-        return ExprError();
+        LHS = ExprError();
       
       if (!LHS.isInvalid())
         LHS = Actions.ActOnMemberAccessExpr(getCurScope(), LHS.take(), OpLoc, 
@@ -1363,21 +1355,18 @@ ExprResult Parser::ParseBuiltinPrimaryExpression() {
   default: assert(0 && "Not a builtin primary expression!");
   case tok::kw___builtin_va_arg: {
     ExprResult Expr(ParseAssignmentExpression());
-    if (Expr.isInvalid()) {
-      SkipUntil(tok::r_paren);
-      return ExprError();
-    }
 
     if (ExpectAndConsume(tok::comma, diag::err_expected_comma, "",tok::r_paren))
-      return ExprError();
+      Expr = ExprError();
 
     TypeResult Ty = ParseTypeName();
 
     if (Tok.isNot(tok::r_paren)) {
       Diag(Tok, diag::err_expected_rparen);
-      return ExprError();
+      Expr = ExprError();
     }
-    if (Ty.isInvalid())
+
+    if (Expr.isInvalid() || Ty.isInvalid())
       Res = ExprError();
     else
       Res = Actions.ActOnVAArg(StartLoc, Expr.take(), Ty.get(), ConsumeParen());

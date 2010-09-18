@@ -11,6 +11,7 @@
   A *a2;
   z = [a2 method:1];
   blah ? blech : [a2 method:1];
+  (a * a2)([a2 method:1]);
 }
 @end
 
@@ -29,3 +30,4 @@
 // RUN: c-index-test -code-completion-at=%s:12:11 -Xclang -code-completion-patterns %s | FileCheck -check-prefix=CHECK-CC3 %s
 // CHECK-CC3: ObjCInstanceMethodDecl:{ResultType void}{TypedText method:}{Placeholder (int)} (17)
 // RUN: c-index-test -code-completion-at=%s:13:22 -Xclang -code-completion-patterns %s | FileCheck -check-prefix=CHECK-CC3 %s
+// RUN: c-index-test -code-completion-at=%s:14:16 -Xclang -code-completion-patterns %s | FileCheck -check-prefix=CHECK-CC3 %s

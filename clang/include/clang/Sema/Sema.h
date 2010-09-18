@@ -4313,7 +4313,7 @@ public:
   void CodeCompleteMemberReferenceExpr(Scope *S, Expr *Base,
                                        SourceLocation OpLoc,
                                        bool IsArrow);
-  void CodeCompletePostfixExpression(Scope *S, Expr *LHS);
+  void CodeCompletePostfixExpression(Scope *S, ExprResult LHS);
   void CodeCompleteTag(Scope *S, unsigned TagSpec);
   void CodeCompleteTypeQualifiers(DeclSpec &DS);
   void CodeCompleteCase(Scope *S);

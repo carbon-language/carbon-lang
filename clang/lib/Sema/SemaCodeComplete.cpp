@@ -2757,9 +2757,11 @@ void Sema::CodeCompleteExpression(Scope *S,
                             Results.data(),Results.size());
 }
 
-void Sema::CodeCompletePostfixExpression(Scope *S, Expr *E) {
-  if (getLangOptions().ObjC1)
-    CodeCompleteObjCInstanceMessage(S, E, 0, 0, false);
+void Sema::CodeCompletePostfixExpression(Scope *S, ExprResult E) {
+  if (E.isInvalid())
+    CodeCompleteOrdinaryName(S, PCC_RecoveryInFunction);
+  else if (getLangOptions().ObjC1)
+    CodeCompleteObjCInstanceMessage(S, E.take(), 0, 0, false);
 }
 
 static void AddObjCProperties(ObjCContainerDecl *Container, 
