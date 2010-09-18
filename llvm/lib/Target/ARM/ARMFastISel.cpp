@@ -555,6 +555,7 @@ bool ARMFastISel::ARMEmitLoad(EVT VT, unsigned &ResultReg,
 
   assert(VT.isSimple() && "Non-simple types are invalid here!");
   unsigned Opc;
+  bool isFloat = false;
   switch (VT.getSimpleVT().SimpleTy) {
     default:
       assert(false && "Trying to emit for an unhandled type!");
@@ -570,13 +571,27 @@ bool ARMFastISel::ARMEmitLoad(EVT VT, unsigned &ResultReg,
     case MVT::i32:
       Opc = isThumb ? ARM::tLDR : ARM::LDR;
       break;
+    case MVT::f32:
+      Opc = ARM::VLDRS;
+      isFloat = true;
+      break;
+    case MVT::f64:
+      Opc = ARM::VLDRD;
+      isFloat = true;
+      break;
   }
 
   ResultReg = createResultReg(TLI.getRegClassFor(VT));
 
   // TODO: Fix the Addressing modes so that these can share some code.
   // Since this is a Thumb1 load this will work in Thumb1 or 2 mode.
-  if (isThumb)
+  // The thumb addressing mode has operands swapped from the arm addressing
+  // mode, the floating point one only has two operands.
+  if (isFloat)
+    AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
+                            TII.get(Opc), ResultReg)
+                    .addReg(Reg).addImm(Offset));
+  else if (isThumb)
     AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
                             TII.get(Opc), ResultReg)
                     .addReg(Reg).addImm(Offset).addReg(0));
@@ -657,14 +672,15 @@ bool ARMFastISel::ARMEmitStore(EVT VT, unsigned SrcReg,
 
   // The thumb addressing mode has operands swapped from the arm addressing
   // mode, the floating point one only has two operands.
-  if (isThumb)
-    AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
-                            TII.get(StrOpc), SrcReg)
-                    .addReg(DstReg).addImm(Offset).addReg(0));
-  else if (isFloat)
+  if (isFloat)
     AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
                             TII.get(StrOpc), SrcReg)
                     .addReg(DstReg).addImm(Offset));
+  else if (isThumb)
+    AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
+                            TII.get(StrOpc), SrcReg)
+                    .addReg(DstReg).addImm(Offset).addReg(0));
+
   else
     AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
                             TII.get(StrOpc), SrcReg)
