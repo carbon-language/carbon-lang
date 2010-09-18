@@ -45,6 +45,9 @@ class _WritelnDecorator(object):
 # The test suite.
 suite = unittest2.TestSuite()
 
+# The config file is optional.
+configFile = None
+
 # Delay startup in order for the debugger to attach.
 delay = False
 
@@ -69,6 +72,7 @@ def usage():
 Usage: dotest.py [option] [args]
 where options:
 -h   : print this help message and exit (also --help)
+-c   : read a config file specified after this option
 -d   : delay startup for 10 seconds (in order for the debugger to attach)
 -i   : ignore (don't bailout) if 'lldb.py' module cannot be located in the build
        tree relative to this script; use PYTHONPATH to locate the module
@@ -93,6 +97,7 @@ o GDB_REMOTE_LOG: if defined, specifies the log file pathname for the
   'process.gdb-remote' subsystem with a default option of 'packets' if
   GDB_REMOTE_LOG_OPTION is not defined.
 """
+    sys.exit(0)
 
 
 def parseOptionsAndInitTestdirs():
@@ -101,6 +106,7 @@ def parseOptionsAndInitTestdirs():
     '-h/--help as the first option prints out usage info and exit the program.
     """
 
+    global configFile
     global delay
     global inore
     global verbose
@@ -118,7 +124,16 @@ def parseOptionsAndInitTestdirs():
 
         if sys.argv[index].find('-h') != -1:
             usage()
-            sys.exit(0)
+        elif sys.argv[index].startswith('-c'):
+            # Increment by 1 to fetch the config file name option argument.
+            index += 1
+            if index >= len(sys.argv) or sys.argv[index].startswith('-'):
+                usage()
+            configFile = sys.argv[index]
+            if not os.path.isfile(configFile):
+                print "Config file:", configFile, "does not exist!"
+                usage()
+            index += 1
         elif sys.argv[index].startswith('-d'):
             delay = True
             index += 1
@@ -134,7 +149,6 @@ def parseOptionsAndInitTestdirs():
         else:
             print "Unknown option: ", sys.argv[index]
             usage()
-            sys.exit(0)
 
     # Gather all the dirs passed on the command line.
     if len(sys.argv) > index:
