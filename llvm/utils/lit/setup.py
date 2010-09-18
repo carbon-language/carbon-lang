@@ -3,7 +3,7 @@ import lit
 # FIXME: Support distutils?
 from setuptools import setup, find_packages
 setup(
-    name = "Lit",
+    name = "lit",
     version = lit.__version__,
 
     author = lit.__author__,
@@ -14,15 +14,16 @@ setup(
     description = "A Software Testing Tool",
     keywords = 'test C++ automatic discovery',
     long_description = """\
-Lit
-+++
+*lit*
++++++
 
 About
 =====
 
-Lit is a portable tool for executing LLVM and Clang style test suites,
-summarizing their results, and providing indication of failures. Lit is designed
-to be a lightweight testing tool with as simple a user interface as possible.
+*lit* is a portable tool for executing LLVM and Clang style test suites,
+summarizing their results, and providing indication of failures. *lit* is
+designed to be a lightweight testing tool with as simple a user interface as
+possible.
 
 
 Features
@@ -37,15 +38,15 @@ Features
 Documentation
 =============
 
-The offical Lit documentation is in the man page, available online in the `LLVM
-Command Guide http://llvm.org/cmds/lit.html`_.
+The offical *lit* documentation is in the man page, available online at the LLVM
+Command Guide: http://llvm.org/cmds/lit.html.
 
 
 Source
 ======
 
-The Lit source is available as part of LLVM, in the `LLVM SVN repository
-<http://llvm.org/svn/llvm-project/llvm/trunk/utils/lit`_.
+The *lit* source is available as part of LLVM, in the LLVM SVN repository:
+http://llvm.org/svn/llvm-project/llvm/trunk/utils/lit.
 """,
 
     classifiers=[
@@ -55,7 +56,7 @@ The Lit source is available as part of LLVM, in the `LLVM SVN repository
         'License :: OSI Approved :: University of Illinois/NCSA Open Source License',
         'Natural Language :: English',
         'Operating System :: OS Independent',
-        'Progamming Language :: Python',
+        'Programming Language :: Python',
         'Topic :: Software Development :: Testing',
         ],
 
