@@ -210,7 +210,7 @@ std::auto_ptr<PBQPRAProblem> PBQPBuilder::build(
     const LiveInterval &l1 = lis->getInterval(vr1);
     const PBQPRAProblem::AllowedSet &vr1Allowed = p->getAllowedSet(vr1);
 
-    for (RegSet::iterator vr2Itr = llvm::next(vr1Itr);
+    for (RegSet::const_iterator vr2Itr = llvm::next(vr1Itr);
          vr2Itr != vrEnd; ++vr2Itr) {
       unsigned vr2 = *vr2Itr;
       const LiveInterval &l2 = lis->getInterval(vr2);
