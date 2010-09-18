@@ -72,7 +72,7 @@ namespace test6 {
   struct A { ~A(); };
 
   void f1() {
-    static A a; // expected-warning {{global destructor}}
+    static A a;
   }
   void f2() {
     static A& a = *new A;
@@ -84,8 +84,14 @@ namespace pr8095 {
     int x;
     Foo(int x1) : x(x1) {}
   };
-
-  void bar() {
+  void foo() {
     static Foo a(0);
+  }
+
+  struct Bar {
+    ~Bar();
+  };
+  void bar() {
+    static Bar b;
   }
 }
