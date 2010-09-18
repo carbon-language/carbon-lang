@@ -947,6 +947,10 @@ def warn_function_attribute_wrong_type : Warning<
 def warn_gnu_inline_attribute_requires_inline : Warning<
   "'gnu_inline' attribute requires function to be marked 'inline',"
   " attribute ignored">;
+def err_attribute_vecreturn_only_vector_member : Error<
+  "the vecreturn attribute can only be used on a class or structure with one member, which must be a vector">;
+def err_attribute_vecreturn_only_pod_record : Error<
+  "the vecreturn attribute can only be used on a POD (plain old data) class or structure (i.e. no virtual functions)">;
 def err_cconv_change : Error<
   "function declared '%0' here was previously declared "
   "%select{'%2'|without calling convention}1">;

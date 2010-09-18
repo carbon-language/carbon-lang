@@ -724,7 +724,7 @@ static void HandleVecReturnAttr(Decl *d, const AttributeList &Attr,
     return result; // This will be returned in a register
   }
 */
-  if (!isa<CXXRecordDecl>(d)) {
+  if (!isa<RecordDecl>(d)) {
     S.Diag(Attr.getLoc(), diag::err_attribute_wrong_decl_type)
       << Attr.getName() << 9 /*class*/;
     return;
@@ -733,6 +733,27 @@ static void HandleVecReturnAttr(Decl *d, const AttributeList &Attr,
   if (d->getAttr<VecReturnAttr>()) {
     S.Diag(Attr.getLoc(), diag::err_repeat_attribute) << "vecreturn";
     return;
+  }
+
+  RecordDecl *record = cast<RecordDecl>(d);
+  int count = 0;
+
+  if (!isa<CXXRecordDecl>(record)) {
+    S.Diag(Attr.getLoc(), diag::err_attribute_vecreturn_only_vector_member);
+    return;
+  }
+
+  if (!cast<CXXRecordDecl>(record)->isPOD()) {
+    S.Diag(Attr.getLoc(), diag::err_attribute_vecreturn_only_pod_record);
+    return;
+  }
+
+  for (RecordDecl::field_iterator iter = record->field_begin(); iter != record->field_end(); iter++) {
+    if ((count == 1) || !iter->getType()->isVectorType()) {
+      S.Diag(Attr.getLoc(), diag::err_attribute_vecreturn_only_vector_member);
+      return;
+    }
+    count++;
   }
 
   d->addAttr(::new (S.Context) VecReturnAttr(Attr.getLoc(), S.Context));

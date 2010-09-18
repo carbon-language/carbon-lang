@@ -161,3 +161,20 @@ Vector Add(Vector lhs, Vector rhs)
 	result.xyzw = vec_add(lhs.xyzw, rhs.xyzw);
 	return result; // This will (eventually) be returned in a register
 }
+
+// vecreturn attribute test - should error because of virtual function.
+class VectorClassNonPod
+{
+	__vector float xyzw;
+public:
+  VectorClassNonPod() {}
+  virtual ~VectorClassNonPod() {}
+} __attribute__((vecreturn));     // expected-error {{the vecreturn attribute can only be used on a POD (plain old data) class or structure (i.e. no virtual functions)}}
+
+// vecreturn attribute test - should error because of virtual function.
+class VectorClassMultipleMembers
+{
+public:
+	__vector float xyzw;
+	__vector float abcd;
+} __attribute__((vecreturn));     // expected-error {{the vecreturn attribute can only be used on a class or structure with one member, which must be a vector}}
