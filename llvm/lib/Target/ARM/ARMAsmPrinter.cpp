@@ -1383,6 +1383,14 @@ void ARMAsmPrinter::EmitEndOfAsmFile(Module &M) {
 
 //===----------------------------------------------------------------------===//
 
+static MCSymbol *getPICLabel(const char *Prefix, unsigned FunctionNumber,
+                             unsigned LabelId, MCContext &Ctx) {
+
+  MCSymbol *Label = Ctx.GetOrCreateSymbol(Twine(Prefix)
+                       + "PC" + Twine(FunctionNumber) + "_" + Twine(LabelId));
+  return Label;
+}
+
 void ARMAsmPrinter::printInstructionThroughMCStreamer(const MachineInstr *MI) {
   ARMMCInstLower MCInstLowering(OutContext, *Mang, *this);
   switch (MI->getOpcode()) {
@@ -1396,12 +1404,9 @@ void ARMAsmPrinter::printInstructionThroughMCStreamer(const MachineInstr *MI) {
     // This adds the address of LPC0 to r0.
 
     // Emit the label.
-    // FIXME: MOVE TO SHARED PLACE.
-    unsigned Id = (unsigned)MI->getOperand(2).getImm();
-    const char *Prefix = MAI->getPrivateGlobalPrefix();
-    MCSymbol *Label =OutContext.GetOrCreateSymbol(Twine(Prefix)
-                         + "PC" + Twine(getFunctionNumber()) + "_" + Twine(Id));
-    OutStreamer.EmitLabel(Label);
+    OutStreamer.EmitLabel(getPICLabel(MAI->getPrivateGlobalPrefix(),
+                          getFunctionNumber(), MI->getOperand(2).getImm(),
+                          OutContext));
 
     // Form and emit the add.
     MCInst AddInst;
@@ -1422,13 +1427,9 @@ void ARMAsmPrinter::printInstructionThroughMCStreamer(const MachineInstr *MI) {
     // This adds the address of LPC0 to r0.
 
     // Emit the label.
-    // FIXME: MOVE TO SHARED PLACE.
-    unsigned Id = (unsigned)MI->getOperand(2).getImm();
-    const char *Prefix = MAI->getPrivateGlobalPrefix();
-    MCSymbol *Label =OutContext.GetOrCreateSymbol(Twine(Prefix)
-                         + "PC" + Twine(getFunctionNumber()) + "_" + Twine(Id));
-    OutStreamer.EmitLabel(Label);
-
+    OutStreamer.EmitLabel(getPICLabel(MAI->getPrivateGlobalPrefix(),
+                          getFunctionNumber(), MI->getOperand(2).getImm(),
+                          OutContext));
 
     // Form and emit the add.
     MCInst AddInst;
@@ -1459,12 +1460,9 @@ void ARMAsmPrinter::printInstructionThroughMCStreamer(const MachineInstr *MI) {
     // a PC-relative address at the ldr instruction.
 
     // Emit the label.
-    // FIXME: MOVE TO SHARED PLACE.
-    unsigned Id = (unsigned)MI->getOperand(2).getImm();
-    const char *Prefix = MAI->getPrivateGlobalPrefix();
-    MCSymbol *Label =OutContext.GetOrCreateSymbol(Twine(Prefix)
-                         + "PC" + Twine(getFunctionNumber()) + "_" + Twine(Id));
-    OutStreamer.EmitLabel(Label);
+    OutStreamer.EmitLabel(getPICLabel(MAI->getPrivateGlobalPrefix(),
+                          getFunctionNumber(), MI->getOperand(2).getImm(),
+                          OutContext));
 
     // Form and emit the load
     unsigned Opcode;
