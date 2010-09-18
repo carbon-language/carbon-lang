@@ -346,7 +346,7 @@ void IndVarSimplify::RewriteNonIntegerIVs(Loop *L) {
     PHIs.push_back(PN);
 
   for (unsigned i = 0, e = PHIs.size(); i != e; ++i)
-    if (PHINode *PN = dyn_cast_or_null<PHINode>(PHIs[i]))
+    if (PHINode *PN = dyn_cast_or_null<PHINode>(&*PHIs[i]))
       HandleFloatingPointIV(L, PN);
 
   // If the loop previously had floating-point IV, ScalarEvolution
@@ -395,7 +395,7 @@ void IndVarSimplify::EliminateIVComparisons() {
   // which are now dead.
   while (!DeadInsts.empty())
     if (Instruction *Inst =
-          dyn_cast_or_null<Instruction>(DeadInsts.pop_back_val()))
+        dyn_cast_or_null<Instruction>(&*DeadInsts.pop_back_val()))
       RecursivelyDeleteTriviallyDeadInstructions(Inst);
 }
 
@@ -462,7 +462,7 @@ void IndVarSimplify::EliminateIVRemainders() {
   // which are now dead.
   while (!DeadInsts.empty())
     if (Instruction *Inst =
-          dyn_cast_or_null<Instruction>(DeadInsts.pop_back_val()))
+          dyn_cast_or_null<Instruction>(&*DeadInsts.pop_back_val()))
       RecursivelyDeleteTriviallyDeadInstructions(Inst);
 }
 
@@ -725,7 +725,7 @@ void IndVarSimplify::RewriteIVExpressions(Loop *L, SCEVExpander &Rewriter) {
   // which are now dead.
   while (!DeadInsts.empty())
     if (Instruction *Inst =
-          dyn_cast_or_null<Instruction>(DeadInsts.pop_back_val()))
+          dyn_cast_or_null<Instruction>(&*DeadInsts.pop_back_val()))
       RecursivelyDeleteTriviallyDeadInstructions(Inst);
 }
 
