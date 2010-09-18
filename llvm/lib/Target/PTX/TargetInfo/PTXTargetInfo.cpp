@@ -15,8 +15,7 @@ using namespace llvm;
 
 Target llvm::ThePTXTarget;
 
-extern "C" void LLVMInitializePTXTargetInfo()
-{
+extern "C" void LLVMInitializePTXTargetInfo() {
   // see llvm/ADT/Triple.h
   RegisterTarget<Triple::ptx> X(ThePTXTarget, "ptx", "PTX");
 }

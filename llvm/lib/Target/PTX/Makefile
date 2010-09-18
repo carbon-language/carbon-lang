@@ -12,7 +12,14 @@ LIBRARYNAME = LLVMPTXCodeGen
 TARGET = PTX
 
 # Make sure that tblgen is run, first thing.
-BUILT_SOURCES =
+BUILT_SOURCES = PTXGenAsmWriter.inc \
+		PTXGenDAGISel.inc \
+		PTXGenInstrInfo.inc \
+		PTXGenInstrNames.inc \
+		PTXGenRegisterInfo.inc \
+		PTXGenRegisterInfo.h.inc \
+		PTXGenRegisterNames.inc \
+		PTXGenSubtarget.inc
 
 DIRS = AsmPrinter TargetInfo
 

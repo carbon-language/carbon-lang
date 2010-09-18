@@ -18,7 +18,19 @@
 #include "llvm/Target/TargetMachine.h"
 
 namespace llvm {
+  class PTXTargetMachine;
+  class FunctionPass;
+
+  FunctionPass *createPTXISelDag(PTXTargetMachine &TM,
+                                 CodeGenOpt::Level OptLevel);
+
   extern Target ThePTXTarget;
 } // namespace llvm;
+
+// Defines symbolic names for PTX registers.
+#include "PTXGenRegisterNames.inc"
+
+// Defines symbolic names for the PTX instructions.
+#include "PTXGenInstrNames.inc"
 
 #endif // PTX_H
