@@ -204,7 +204,7 @@ std::auto_ptr<PBQPRAProblem> PBQPBuilder::build(
     addSpillCosts(g.getNodeCosts(node), spillCost);
   }
 
-  for (RegSet::iterator vr1Itr = vregs.begin(), vrEnd = vregs.end();
+  for (RegSet::const_iterator vr1Itr = vregs.begin(), vrEnd = vregs.end();
          vr1Itr != vrEnd; ++vr1Itr) {
     unsigned vr1 = *vr1Itr;
     const LiveInterval &l1 = lis->getInterval(vr1);
