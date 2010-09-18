@@ -295,9 +295,8 @@ bool TargetInfo::validateOutputConstraint(ConstraintInfo &Info) const {
       Info.setAllowsMemory();
       break;
     case ',': // multiple alternative constraint.  Pass it.
-      Name++;
       // Handle additional optional '=' or '+' modifiers.
-      if (*Name == '=' || *Name == '+')
+      if (Name[1] == '=' || Name[1] == '+')
         Name++;
       break;
     case '?': // Disparage slightly code.

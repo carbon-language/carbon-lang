@@ -17,3 +17,15 @@ void test2() {
   // CHECK: store i32 {{%[a-zA-Z0-9\.]+}}, i32* [[REGCALLRESULT]]
   asm ("foobar" : "+r"(*foo()));
 }
+
+// PR7338
+void test3(int *vout, int vin)
+{
+  // CHECK: call void asm "opr $0,$1", "=*r|m|r,r|m|r,~{di},~{dirflag},~{fpsr},~{flags}"
+asm(
+		"opr %[vout],%[vin]"
+		: [vout] "=r,=m,=r" (*vout)
+		: [vin] "r,m,r" (vin)
+		: "edi"
+		);
+}

@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -verify %s
+// RUN: %clang_cc1 %s
 
 int a, b, c, d, e, f, g, h, i, j, k, l;
 
