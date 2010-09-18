@@ -1964,6 +1964,8 @@ LValue CodeGenFunction::EmitVAArgExprLValue(const VAArgExpr *E) {
 }
 
 LValue CodeGenFunction::EmitCXXConstructLValue(const CXXConstructExpr *E) {
+  assert(E->getType()->getAsCXXRecordDecl()->hasTrivialDestructor()
+         && "binding l-value to type which needs a temporary");
   AggValueSlot Slot = CreateAggTemp(E->getType(), "tmp");
   EmitCXXConstructExpr(E, Slot);
   return MakeAddrLValue(Slot.getAddr(), E->getType());
@@ -1976,9 +1978,11 @@ CodeGenFunction::EmitCXXTypeidLValue(const CXXTypeidExpr *E) {
 
 LValue
 CodeGenFunction::EmitCXXBindTemporaryLValue(const CXXBindTemporaryExpr *E) {
-  LValue LV = EmitLValue(E->getSubExpr());
-  EmitCXXTemporary(E->getTemporary(), LV.getAddress());
-  return LV;
+  AggValueSlot Slot = CreateAggTemp(E->getType(), "temp.lvalue");
+  Slot.setLifetimeExternallyManaged();
+  EmitAggExpr(E->getSubExpr(), Slot);
+  EmitCXXTemporary(E->getTemporary(), Slot.getAddr());
+  return MakeAddrLValue(Slot.getAddr(), E->getType());
 }
 
 LValue CodeGenFunction::EmitObjCMessageExprLValue(const ObjCMessageExpr *E) {

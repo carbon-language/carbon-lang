@@ -340,7 +340,11 @@ namespace PR7556 {
 }
 
 namespace Elision {
-  struct A { A(); A(const A &); ~A(); void *p; };
+  struct A {
+    A(); A(const A &); ~A();
+    void *p;
+    void foo() const;
+  };
 
   void foo();
   A fooA();
@@ -474,5 +478,18 @@ namespace Elision {
     return B().a;
 
     // CHECK:      call void @_ZN7Elision1AD1Ev([[A]]* [[X]])
+  }
+
+  // Reduced from webkit.
+  // CHECK: define void @_ZN7Elision5test6EPKNS_1CE([[C:%.*]]*
+  struct C { operator A() const; };
+  void test6(const C *x) {
+    // CHECK:      [[T0:%.*]] = alloca [[A]], align 8
+    // CHECK:      [[X:%.*]] = load [[C]]** {{%.*}}, align 8
+    // CHECK-NEXT: call void @_ZNK7Elision1CcvNS_1AEEv([[A]]* sret [[T0]], [[C]]* [[X]])
+    // CHECK-NEXT: call void @_ZNK7Elision1A3fooEv([[A]]* [[T0]])
+    // CHECK-NEXT: call void @_ZN7Elision1AD1Ev([[A]]* [[T0]])
+    // CHECK-NEXT: ret void
+    A(*x).foo();
   }
 }

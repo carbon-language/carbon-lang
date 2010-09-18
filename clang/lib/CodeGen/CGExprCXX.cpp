@@ -280,10 +280,12 @@ CodeGenFunction::EmitCXXConstructExpr(const CXXConstructExpr *E,
   if (CD->isTrivial() && CD->isDefaultConstructor())
     return;
   
-  // Code gen optimization to eliminate copy constructor and return
-  // its first argument instead, if in fact that argument is a temporary 
-  // object.
+  // Elide the constructor if we're constructing from a temporary.
+  // The temporary check is required because Sema sets this on NRVO
+  // returns.
   if (getContext().getLangOptions().ElideConstructors && E->isElidable()) {
+    assert(getContext().hasSameUnqualifiedType(E->getType(),
+                                               E->getArg(0)->getType()));
     if (E->getArg(0)->isTemporaryObject(getContext(), CD->getParent())) {
       EmitAggExpr(E->getArg(0), Dest);
       return;
