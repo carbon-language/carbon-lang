@@ -1100,7 +1100,11 @@ bool ARMFastISel::ARMEmitLibcall(const Instruction *I, Function *F) {
   
   // Issue the call, BLr9 for darwin, BL otherwise.
   MachineInstrBuilder MIB;
-  unsigned CallOpc = Subtarget->isTargetDarwin() ? ARM::BLr9 : ARM::BL;
+  unsigned CallOpc;
+  if(isThumb)
+    CallOpc = Subtarget->isTargetDarwin() ? ARM::tBLr9 : ARM::tBL;
+  else
+    CallOpc = Subtarget->isTargetDarwin() ? ARM::BLr9 : ARM::BL;
   MIB = BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(CallOpc))
         .addGlobalAddress(F, 0, 0);
   
