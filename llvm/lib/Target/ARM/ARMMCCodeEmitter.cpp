@@ -38,6 +38,7 @@ public:
 
   unsigned getNumFixupKinds() const {
     assert(0 && "ARMMCCodeEmitter::getNumFixupKinds() not yet implemented.");
+    return 0;
   }
 
   const MCFixupKindInfo &getFixupKindInfo(MCFixupKind Kind) const {
