@@ -28,6 +28,10 @@
 using namespace clang;
 using namespace CodeGen;
 
+static void ResolveAllBranchFixups(CodeGenFunction &CGF,
+                                   llvm::SwitchInst *Switch,
+                                   llvm::BasicBlock *CleanupEntry);
+
 CodeGenFunction::CodeGenFunction(CodeGenModule &cgm)
   : BlockFunction(cgm, *this, Builder), CGM(cgm),
     Target(CGM.getContext().Target),
@@ -1075,8 +1079,10 @@ void CodeGenFunction::PopCleanupBlock(bool FallthroughIsBranchThrough) {
                           Scope.getBranchAfterBlock(I));
         }
 
+        // If there aren't any enclosing cleanups, we can resolve all
+        // the fixups now.
         if (HasFixups && !HasEnclosingCleanups)
-          ResolveAllBranchFixups(Switch);
+          ResolveAllBranchFixups(*this, Switch, NormalEntry);
       } else {
         // We should always have a branch-through destination in this case.
         assert(BranchThroughDest);
@@ -1325,21 +1331,38 @@ void CodeGenFunction::EmitBranchThroughEHCleanup(UnwindDest Dest) {
 /// All the branch fixups on the EH stack have propagated out past the
 /// outermost normal cleanup; resolve them all by adding cases to the
 /// given switch instruction.
-void CodeGenFunction::ResolveAllBranchFixups(llvm::SwitchInst *Switch) {
+static void ResolveAllBranchFixups(CodeGenFunction &CGF,
+                                   llvm::SwitchInst *Switch,
+                                   llvm::BasicBlock *CleanupEntry) {
   llvm::SmallPtrSet<llvm::BasicBlock*, 4> CasesAdded;
 
-  for (unsigned I = 0, E = EHStack.getNumBranchFixups(); I != E; ++I) {
+  for (unsigned I = 0, E = CGF.EHStack.getNumBranchFixups(); I != E; ++I) {
     // Skip this fixup if its destination isn't set or if we've
     // already treated it.
-    BranchFixup &Fixup = EHStack.getBranchFixup(I);
+    BranchFixup &Fixup = CGF.EHStack.getBranchFixup(I);
     if (Fixup.Destination == 0) continue;
     if (!CasesAdded.insert(Fixup.Destination)) continue;
 
-    Switch->addCase(Builder.getInt32(Fixup.DestinationIndex),
+    // If there isn't an OptimisticBranchBlock, then InitialBranch is
+    // still pointing directly to its destination; forward it to the
+    // appropriate cleanup entry.  This is required in the specific
+    // case of
+    //   { std::string s; goto lbl; }
+    //   lbl:
+    // i.e. where there's an unresolved fixup inside a single cleanup
+    // entry which we're currently popping.
+    if (Fixup.OptimisticBranchBlock == 0) {
+      new llvm::StoreInst(CGF.Builder.getInt32(Fixup.DestinationIndex),
+                          CGF.getNormalCleanupDestSlot(),
+                          Fixup.InitialBranch);
+      Fixup.InitialBranch->setSuccessor(0, CleanupEntry);
+    }
+
+    Switch->addCase(CGF.Builder.getInt32(Fixup.DestinationIndex),
                     Fixup.Destination);
   }
 
-  EHStack.clearFixups();
+  CGF.EHStack.clearFixups();
 }
 
 void CodeGenFunction::ResolveBranchFixups(llvm::BasicBlock *Block) {

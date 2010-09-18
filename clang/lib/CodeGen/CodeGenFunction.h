@@ -414,7 +414,7 @@ public:
   void popNullFixups();
 
   /// Clears the branch-fixups list.  This should only be called by
-  /// CodeGenFunction::ResolveAllBranchFixups.
+  /// ResolveAllBranchFixups.
   void clearFixups() { BranchFixups.clear(); }
 
   /// Gets the next EH destination index.
@@ -625,7 +625,6 @@ public:
   /// the cleanup blocks that have been added.
   void PopCleanupBlocks(EHScopeStack::stable_iterator OldCleanupStackSize);
 
-  void ResolveAllBranchFixups(llvm::SwitchInst *Switch);
   void ResolveBranchFixups(llvm::BasicBlock *Target);
 
   /// The given basic block lies in the current EH scope, but may be a
