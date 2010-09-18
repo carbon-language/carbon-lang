@@ -364,6 +364,9 @@ void IdempotentOperationChecker::VisitEndAnalysis(ExplodedGraph &G,
                                                   BugReporter &BR,
                                                   GRExprEngine &Eng) {
   BugType *BT = new BugType("Idempotent operation", "Dead code");
+  // If a sink is present, we may have not seen the complete path.
+  BT->setSuppressOnSink(true);
+
   // Iterate over the hash to see if we have any paths with definite
   // idempotent operations.
   for (AssumptionMap::const_iterator i = hash.begin(); i != hash.end(); ++i) {
