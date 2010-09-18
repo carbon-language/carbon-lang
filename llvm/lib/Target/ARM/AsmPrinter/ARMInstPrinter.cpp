@@ -387,7 +387,7 @@ void ARMInstPrinter::printAddrModePCOperand(const MCInst *MI, unsigned OpNum,
   // All instructions using addrmodepc are pseudos and should have been
   // handled explicitly in printInstructionThroughMCStreamer(). If one got
   // here, it wasn't, so something's wrong.
-  assert(0 && "Unhandled addrmodepc operand!");
+  llvm_unreachable("Unhandled PC-relative pseudo-instruction!");
 }
 
 void ARMInstPrinter::printBitfieldInvMaskImmOperand(const MCInst *MI,
@@ -522,8 +522,7 @@ void ARMInstPrinter::printNoHashImmediate(const MCInst *MI, unsigned OpNum,
 
 void ARMInstPrinter::printPCLabel(const MCInst *MI, unsigned OpNum,
                                   raw_ostream &O) {
-  // FIXME: remove this.
-  abort();
+  llvm_unreachable("Unhandled PC-relative pseudo-instruction!");
 }
 
 void ARMInstPrinter::printThumbS4ImmOperand(const MCInst *MI, unsigned OpNum,
