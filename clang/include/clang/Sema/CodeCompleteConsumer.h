@@ -59,7 +59,10 @@ enum {
   CCP_NestedNameSpecifier = 75,
   /// \brief Priority for a result that isn't likely to be what the user wants,
   /// but is included for completeness.
-  CCP_Unlikely = 80
+  CCP_Unlikely = 80,
+  
+  /// \brief Priority for the Objective-C "_cmd" implicit parameter.
+  CCP_ObjC_cmd = CCP_Unlikely
 };
 
 /// \brief Priority value deltas that are added to code-completion results

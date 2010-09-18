@@ -389,8 +389,15 @@ unsigned CodeCompletionResult::getPriorityFromDecl(NamedDecl *ND) {
   
   // Context-based decisions.
   DeclContext *DC = ND->getDeclContext()->getRedeclContext();
-  if (DC->isFunctionOrMethod() || isa<BlockDecl>(DC))
+  if (DC->isFunctionOrMethod() || isa<BlockDecl>(DC)) {
+    // _cmd is relatively rare
+    if (ImplicitParamDecl *ImplicitParam = dyn_cast<ImplicitParamDecl>(ND))
+      if (ImplicitParam->getIdentifier() &&
+          ImplicitParam->getIdentifier()->isStr("_cmd"))
+        return CCP_ObjC_cmd;
+    
     return CCP_LocalDeclaration;
+  }
   if (DC->isRecord() || isa<ObjCContainerDecl>(DC))
     return CCP_MemberDeclaration;
   
@@ -399,6 +406,7 @@ unsigned CodeCompletionResult::getPriorityFromDecl(NamedDecl *ND) {
     return CCP_Constant;
   if (isa<TypeDecl>(ND) || isa<ObjCInterfaceDecl>(ND))
     return CCP_Type;
+  
   return CCP_Declaration;
 }
 
