@@ -5478,9 +5478,9 @@ bool SDNode::isOperandOf(SDNode *N) const {
 
 /// reachesChainWithoutSideEffects - Return true if this operand (which must
 /// be a chain) reaches the specified operand without crossing any
-/// side-effecting instructions.  In practice, this looks through token
-/// factors and non-volatile loads.  In order to remain efficient, this only
-/// looks a couple of nodes in, it does not do an exhaustive search.
+/// side-effecting instructions on any chain path.  In practice, this looks 
+/// through token factors and non-volatile loads.  In order to remain efficient, 
+/// this only looks a couple of nodes in, it does not do an exhaustive search.
 bool SDValue::reachesChainWithoutSideEffects(SDValue Dest,
                                                unsigned Depth) const {
   if (*this == Dest) return true;
@@ -5490,12 +5490,12 @@ bool SDValue::reachesChainWithoutSideEffects(SDValue Dest,
   if (Depth == 0) return false;
 
   // If this is a token factor, all inputs to the TF happen in parallel.  If any
-  // of the operands of the TF reach dest, then we can do the xform.
+  // of the operands of the TF does not reach dest, then we cannot do the xform.
   if (getOpcode() == ISD::TokenFactor) {
     for (unsigned i = 0, e = getNumOperands(); i != e; ++i)
-      if (getOperand(i).reachesChainWithoutSideEffects(Dest, Depth-1))
-        return true;
-    return false;
+      if (!getOperand(i).reachesChainWithoutSideEffects(Dest, Depth-1))
+        return false;
+    return true;
   }
 
   // Loads don't have side effects, look through them.
