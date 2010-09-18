@@ -34,6 +34,15 @@
 #include <vector>
 using namespace llvm;
 
+static unsigned GetType(const MCSymbolData &SD) {
+  uint32_t Type = (SD.getFlags() & (0xf << ELF_STT_Shift)) >> ELF_STT_Shift;
+  assert(Type == ELF::STT_NOTYPE || Type == ELF::STT_OBJECT ||
+         Type == ELF::STT_FUNC || Type == ELF::STT_SECTION ||
+         Type == ELF::STT_FILE || Type == ELF::STT_COMMON ||
+         Type == ELF::STT_TLS);
+  return Type;
+}
+
 namespace {
 
   class ELFObjectWriterImpl {
@@ -64,6 +73,10 @@ namespace {
 
       // Support lexicographic sorting.
       bool operator<(const ELFSymbolData &RHS) const {
+        if (GetType(*SymbolData) == ELF::STT_FILE)
+          return true;
+        if (GetType(*RHS.SymbolData) == ELF::STT_FILE)
+          return false;
         return SymbolData->getSymbol().getName() <
                RHS.SymbolData->getSymbol().getName();
       }
