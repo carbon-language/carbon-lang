@@ -37,6 +37,31 @@ _f3:
 	ori r3, r2, 65535
 	blr 
 
+===-------------------------------------------------------------------------===
+
+This code:
+
+unsigned add32carry(unsigned sum, unsigned x) {
+ unsigned z = sum + x;
+ if (sum + x < x)
+     z++;
+ return z;
+}
+
+Should compile to something like:
+
+	addc r3,r3,r4
+	addze r3,r3
+
+instead we get:
+
+	add r3, r4, r3
+	cmplw cr7, r3, r4
+	mfcr r4 ; 1
+	rlwinm r4, r4, 29, 31, 31
+	add r3, r3, r4
+
+Ick.
 
 ===-------------------------------------------------------------------------===
 
