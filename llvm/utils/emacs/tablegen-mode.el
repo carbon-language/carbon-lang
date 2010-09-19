@@ -12,13 +12,11 @@
 (make-face 'td-decorators-face)
 
 (defvar tablegen-font-lock-keywords
-  (let ((kw (mapconcat 'identity
-                       '("class" "defm" "def" "field" "include" "in"
+  (let ((kw (regexp-opt '("class" "defm" "def" "field" "include" "in"
                          "let" "multiclass")
-                       "\\|"))
-        (type-kw (mapconcat 'identity
-                            '("bit" "bits" "code" "dag" "int" "list" "string")
-                            "\\|"))
+                        'words))
+        (type-kw (regexp-opt '("bit" "bits" "code" "dag" "int" "list" "string")
+                             'words))
         )
     (list
      ;; Comments
@@ -36,10 +34,10 @@
 
      '("^[ \t]*\\(@.+\\)" 1 'td-decorators-face)
      ;; Keywords
-     (cons (concat "\\<\\(" kw "\\)\\>[ \n\t(]") 1)
+     (cons (concat kw "[ \n\t(]") 1)
 
      ;; Type keywords
-     (cons (concat "\\<\\(" type-kw "\\)[ \n\t(]") 1)
+     (cons (concat type-kw "[ \n\t(]") 1)
      ))
   "Additional expressions to highlight in TableGen mode.")
 (put 'tablegen-mode 'font-lock-defaults '(tablegen-font-lock-keywords))
