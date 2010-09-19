@@ -2,6 +2,38 @@ Target Independent Opportunities:
 
 //===---------------------------------------------------------------------===//
 
+We should recognize idioms for add-with-carry and turn it into the appropriate
+intrinsics.  This example:
+
+unsigned add32carry(unsigned sum, unsigned x) {
+ unsigned z = sum + x;
+ if (sum + x < x)
+     z++;
+ return z;
+}
+
+Compiles to: clang t.c -S -o - -O3 -fomit-frame-pointer -m64 -mkernel
+
+_add32carry:                            ## @add32carry
+	addl	%esi, %edi
+	cmpl	%esi, %edi
+	sbbl	%eax, %eax
+	andl	$1, %eax
+	addl	%edi, %eax
+	ret
+
+with clang, but to:
+
+_add32carry:
+	leal	(%rsi,%rdi), %eax
+	cmpl	%esi, %eax
+	adcl	$0, %eax
+	ret
+
+with gcc.
+
+//===---------------------------------------------------------------------===//
+
 Dead argument elimination should be enhanced to handle cases when an argument is
 dead to an externally visible function.  Though the argument can't be removed
 from the externally visible function, the caller doesn't need to pass it in.
