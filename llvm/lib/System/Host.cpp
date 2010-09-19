@@ -210,6 +210,8 @@ std::string sys::getHostCPUName() {
                // processors are manufactured using the 45 nm process.
       case 29: // Intel Xeon processor MP. All processors are manufactured using
                // the 45 nm process.
+      case 30: // Intel(R) Core(TM) i7 CPU         870  @ 2.93GHz.
+               // As found in a Summer 2010 model iMac.
       case 37: // Intel Core i7, laptop version.
         return "corei7";
 
