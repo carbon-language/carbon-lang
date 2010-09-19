@@ -59,23 +59,28 @@ public:
     ~UserSettingsController ();
 
     // Pure virtual functions, which all sub-classes must implement.
-
     virtual lldb::InstanceSettingsSP
-    CreateNewInstanceSettings (const char *instance_name) = 0;
-  
-    virtual void
-    UpdateGlobalVariable (const ConstString &var_name,
-                          const char *index_value,
-                          const char *value,
-                          const SettingEntry &entry,
-                          const lldb::VarSetOperationType op,
-                          Error &err) = 0;
+    CreateInstanceSettings (const char *instance_name) = 0;
 
-    virtual void
-    GetGlobalSettingsValue (const ConstString &var_name, 
-                            StringList &value) = 0;
+    // Virtual functions that you can override if you have global settings
+    // (not instance specific).
+    virtual bool
+    SetGlobalVariable (const ConstString &var_name,
+                       const char *index_value,
+                       const char *value,
+                       const SettingEntry &entry,
+                       const lldb::VarSetOperationType op,
+                       Error &err);
 
+    virtual bool
+    GetGlobalVariable (const ConstString &var_name, 
+                       StringList &value);
+    
     // End of pure virtual functions.
+    StringList
+    GetVariable (const char *full_dot_name, 
+                 lldb::SettableVariableType &var_type,
+                 const char *debugger_instance_name);
 
     Error
     SetVariable (const char *full_dot_name, 
@@ -84,11 +89,6 @@ public:
                  const bool override,
                  const char *debugger_instance_name,
                  const char *index_value = NULL);
-
-    StringList
-    GetVariable (const char *full_dot_name, 
-                 lldb::SettableVariableType &var_type,
-                 const char *debugger_instance_name);
 
     const lldb::UserSettingsControllerSP &
     GetParent ();

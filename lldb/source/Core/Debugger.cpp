@@ -12,19 +12,45 @@
 #include "lldb/Core/Debugger.h"
 #include "lldb/Core/InputReader.h"
 #include "lldb/Core/State.h"
+#include "lldb/Core/StreamString.h"
 #include "lldb/Core/Timer.h"
 #include "lldb/Interpreter/CommandInterpreter.h"
 #include "lldb/Target/TargetList.h"
 #include "lldb/Target/Process.h"
+#include "lldb/Target/RegisterContext.h"
+#include "lldb/Target/StopInfo.h"
 #include "lldb/Target/Thread.h"
 
 
 using namespace lldb;
 using namespace lldb_private;
 
-static uint32_t g_shared_debugger_refcount = 0;
 
+static uint32_t g_shared_debugger_refcount = 0;
 static lldb::user_id_t g_unique_id = 1;
+
+#pragma mark Static Functions
+
+static Mutex &
+GetDebuggerListMutex ()
+{
+    static Mutex g_mutex(Mutex::eMutexTypeRecursive);
+    return g_mutex;
+}
+
+typedef std::vector<DebuggerSP> DebuggerList;
+
+static DebuggerList &
+GetDebuggerList()
+{
+    // hide the static debugger list inside a singleton accessor to avoid
+    // global init contructors
+    static DebuggerList g_list;
+    return g_list;
+}
+
+
+#pragma mark Debugger
 
 void
 Debugger::Initialize ()
@@ -47,25 +73,6 @@ Debugger::Terminate ()
         }
     }
 }
-
-typedef std::vector<DebuggerSP> DebuggerList;
-
-static Mutex &
-GetDebuggerListMutex ()
-{
-    static Mutex g_mutex(Mutex::eMutexTypeRecursive);
-    return g_mutex;
-}
-
-static DebuggerList &
-GetDebuggerList()
-{
-    // hide the static debugger list inside a singleton accessor to avoid
-    // global init contructors
-    static DebuggerList g_list;
-    return g_list;
-}
-
 
 DebuggerSP
 Debugger::CreateInstance ()
@@ -547,14 +554,14 @@ Debugger::FindDebuggerWithID (lldb::user_id_t id)
 lldb::UserSettingsControllerSP &
 Debugger::GetSettingsController (bool finish)
 {
-    static lldb::UserSettingsControllerSP g_settings_controller (new DebuggerSettingsController);
+    static lldb::UserSettingsControllerSP g_settings_controller (new SettingsController);
     static bool initialized = false;
 
     if (!initialized)
     {
         initialized = UserSettingsController::InitializeSettingsController (g_settings_controller,
-                                                             Debugger::DebuggerSettingsController::global_settings_table,
-                                                             Debugger::DebuggerSettingsController::instance_settings_table);
+                                                             Debugger::SettingsController::global_settings_table,
+                                                             Debugger::SettingsController::instance_settings_table);
     }
 
     if (finish)
@@ -567,24 +574,659 @@ Debugger::GetSettingsController (bool finish)
     return g_settings_controller;
 }
 
+static void
+TestPromptFormats (StackFrame *frame)
+{
+    if (frame == NULL)
+        return;
+
+    StreamString s;
+    const char *prompt_format =         
+    "{addr = '${addr}'\n}"
+    "{process.id = '${process.id}'\n}"
+    "{process.name = '${process.name}'\n}"
+    "{process.file.basename = '${process.file.basename}'\n}"
+    "{process.file.fullpath = '${process.file.fullpath}'\n}"
+    "{thread.id = '${thread.id}'\n}"
+    "{thread.index = '${thread.index}'\n}"
+    "{thread.name = '${thread.name}'\n}"
+    "{thread.queue = '${thread.queue}'\n}"
+    "{thread.stop-reason = '${thread.stop-reason}'\n}"
+    "{target.arch = '${target.arch}'\n}"
+    "{module.file.basename = '${module.file.basename}'\n}"
+    "{module.file.fullpath = '${module.file.fullpath}'\n}"
+    "{file.basename = '${file.basename}'\n}"
+    "{file.fullpath = '${file.fullpath}'\n}"
+    "{frame.index = '${frame.index}'\n}"
+    "{frame.pc = '${frame.pc}'\n}"
+    "{frame.sp = '${frame.sp}'\n}"
+    "{frame.fp = '${frame.fp}'\n}"
+    "{frame.flags = '${frame.flags}'\n}"
+    "{frame.reg.rdi = '${frame.reg.rdi}'\n}"
+    "{frame.reg.rip = '${frame.reg.rip}'\n}"
+    "{frame.reg.rsp = '${frame.reg.rsp}'\n}"
+    "{frame.reg.rbp = '${frame.reg.rbp}'\n}"
+    "{frame.reg.rflags = '${frame.reg.rflags}'\n}"
+    "{frame.reg.xmm0 = '${frame.reg.xmm0}'\n}"
+    "{frame.reg.carp = '${frame.reg.carp}'\n}"
+    "{function.id = '${function.id}'\n}"
+    "{function.name = '${function.name}'\n}"
+    "{function.addr-offset = '${function.addr-offset}'\n}"
+    "{function.line-offset = '${function.line-offset}'\n}"
+    "{function.pc-offset = '${function.pc-offset}'\n}"
+    "{line.file.basename = '${line.file.basename}'\n}"
+    "{line.file.fullpath = '${line.file.fullpath}'\n}"
+    "{line.number = '${line.number}'\n}"
+    "{line.start-addr = '${line.start-addr}'\n}"
+    "{line.end-addr = '${line.end-addr}'\n}"
+;
+
+    SymbolContext sc (frame->GetSymbolContext(eSymbolContextEverything));
+    ExecutionContext exe_ctx;
+    frame->Calculate(exe_ctx);
+    const char *end = NULL;
+    if (Debugger::FormatPrompt (prompt_format, &sc, &exe_ctx, &sc.line_entry.range.GetBaseAddress(), s, &end))
+    {
+        printf("%s\n", s.GetData());
+    }
+    else
+    {
+        printf ("error: at '%s'\n", end);
+        printf ("what we got: %s\n", s.GetData());
+    }
+}
+
+bool
+Debugger::FormatPrompt 
+(
+    const char *format,
+    const SymbolContext *sc,
+    const ExecutionContext *exe_ctx,
+    const Address *addr,
+    Stream &s,
+    const char **end
+)
+{
+    bool success = true;
+    const char *p;
+    for (p = format; *p != '\0'; ++p)
+    {
+        size_t non_special_chars = ::strcspn (p, "${}\\");
+        if (non_special_chars > 0)
+        {
+            if (success)
+                s.Write (p, non_special_chars);
+            p += non_special_chars;            
+        }
+
+        if (*p == '\0')
+        {
+            break;
+        }
+        else if (*p == '{')
+        {
+            // Start a new scope that must have everything it needs if it is to
+            // to make it into the final output stream "s". If you want to make
+            // a format that only prints out the function or symbol name if there
+            // is one in the symbol context you can use:
+            //      "{function =${function.name}}"
+            // The first '{' starts a new scope that end with the matching '}' at
+            // the end of the string. The contents "function =${function.name}"
+            // will then be evaluated and only be output if there is a function
+            // or symbol with a valid name. 
+            StreamString sub_strm;
+
+            ++p;  // Skip the '{'
+            
+            if (FormatPrompt (p, sc, exe_ctx, addr, sub_strm, &p))
+            {
+                // The stream had all it needed
+                s.Write(sub_strm.GetData(), sub_strm.GetSize());
+            }
+            if (*p != '}')
+            {
+                success = false;
+                break;
+            }
+        }
+        else if (*p == '}')
+        {
+            // End of a enclosing scope
+            break;
+        }
+        else if (*p == '$')
+        {
+            // We have a prompt variable to print
+            ++p;
+            if (*p == '{')
+            {
+                ++p;
+                const char *var_name_begin = p;
+                const char *var_name_end = ::strchr (p, '}');
+
+                if (var_name_end && var_name_begin < var_name_end)
+                {
+                    // if we have already failed to parse, skip this variable
+                    if (success)
+                    {
+                        const char *cstr = NULL;
+                        Address format_addr;
+                        bool calculate_format_addr_function_offset = false;
+                        // Set reg_kind and reg_num to invalid values
+                        RegisterKind reg_kind = kNumRegisterKinds; 
+                        uint32_t reg_num = LLDB_INVALID_REGNUM;
+                        FileSpec format_file_spec;
+                        const lldb::RegisterInfo *reg_info = NULL;
+                        RegisterContext *reg_ctx = NULL;
+
+                        // Each variable must set success to true below...
+                        bool var_success = false;
+                        switch (var_name_begin[0])
+                        {
+                        case 'a':
+                            if (::strncmp (var_name_begin, "addr}", strlen("addr}")) == 0)
+                            {
+                                if (addr && addr->IsValid())
+                                {
+                                    var_success = true;
+                                    format_addr = *addr;
+                                }
+                            }
+                            break;
+
+                        case 'p':
+                            if (::strncmp (var_name_begin, "process.", strlen("process.")) == 0)
+                            {
+                                if (exe_ctx && exe_ctx->process != NULL)
+                                {
+                                    var_name_begin += ::strlen ("process.");
+                                    if (::strncmp (var_name_begin, "id}", strlen("id}")) == 0)
+                                    {
+                                        s.Printf("%i", exe_ctx->process->GetID());
+                                        var_success = true;
+                                    }
+                                    else if ((::strncmp (var_name_begin, "name}", strlen("name}")) == 0) ||
+                                             (::strncmp (var_name_begin, "file.basename}", strlen("file.basename}")) == 0) ||
+                                             (::strncmp (var_name_begin, "file.fullpath}", strlen("file.fullpath}")) == 0))
+                                    {
+                                        ModuleSP exe_module_sp (exe_ctx->process->GetTarget().GetExecutableModule());
+                                        if (exe_module_sp)
+                                        {
+                                            if (var_name_begin[0] == 'n' || var_name_begin[5] == 'f')
+                                            {
+                                                format_file_spec.GetFilename() = exe_module_sp->GetFileSpec().GetFilename();
+                                                var_success = format_file_spec;
+                                            }
+                                            else
+                                            {
+                                                format_file_spec = exe_module_sp->GetFileSpec();
+                                                var_success = format_file_spec;
+                                            }
+                                        }
+                                    }
+                                }                                        
+                            }
+                            break;
+                        
+                        case 't':
+                            if (::strncmp (var_name_begin, "thread.", strlen("thread.")) == 0)
+                            {
+                                if (exe_ctx && exe_ctx->thread)
+                                {
+                                    var_name_begin += ::strlen ("thread.");
+                                    if (::strncmp (var_name_begin, "id}", strlen("id}")) == 0)
+                                    {
+                                        s.Printf("0x%4.4x", exe_ctx->thread->GetID());
+                                        var_success = true;
+                                    }
+                                    else if (::strncmp (var_name_begin, "index}", strlen("index}")) == 0)
+                                    {
+                                        s.Printf("%u", exe_ctx->thread->GetIndexID());
+                                        var_success = true;
+                                    }
+                                    else if (::strncmp (var_name_begin, "name}", strlen("name}")) == 0)
+                                    {
+                                        cstr = exe_ctx->thread->GetName();
+                                        var_success = cstr && cstr[0];
+                                        if (var_success)
+                                            s.PutCString(cstr);
+                                    }
+                                    else if (::strncmp (var_name_begin, "queue}", strlen("queue}")) == 0)
+                                    {
+                                        cstr = exe_ctx->thread->GetQueueName();
+                                        var_success = cstr && cstr[0];
+                                        if (var_success)
+                                            s.PutCString(cstr);
+                                    }
+                                    else if (::strncmp (var_name_begin, "stop-reason}", strlen("stop-reason}")) == 0)
+                                    {
+                                        lldb_private::StopInfo *stop_info = exe_ctx->thread->GetStopInfo ();
+                                        if (stop_info)
+                                        {
+                                            cstr = stop_info->GetDescription();
+                                            if (cstr && cstr[0])
+                                            {
+                                                s.PutCString(cstr);
+                                                var_success = true;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            else if (::strncmp (var_name_begin, "target.", strlen("target.")) == 0)
+                            {
+                                if (sc->target_sp || (exe_ctx && exe_ctx->process))
+                                {
+                                    Target *target = sc->target_sp.get();
+                                    if (target == NULL)
+                                        target = &exe_ctx->process->GetTarget();
+                                    assert (target);
+                                    var_name_begin += ::strlen ("target.");
+                                    if (::strncmp (var_name_begin, "arch}", strlen("arch}")) == 0)
+                                    {
+                                        ArchSpec arch (target->GetArchitecture ());
+                                        if (arch.IsValid())
+                                        {
+                                            s.PutCString (arch.AsCString());
+                                            var_success = true;
+                                        }
+                                    }
+                                }                                        
+                            }
+                            break;
+                            
+                            
+                        case 'm':
+                            if (::strncmp (var_name_begin, "module.", strlen("module.")) == 0)
+                            {
+                                Module *module = sc->module_sp.get();
+                                
+                                if (module)
+                                {
+                                    var_name_begin += ::strlen ("module.");
+                                    
+                                    if (::strncmp (var_name_begin, "file.", strlen("file.")) == 0)
+                                    {
+                                        if (module->GetFileSpec())
+                                        {
+                                            var_name_begin += ::strlen ("file.");
+                                            
+                                            if (::strncmp (var_name_begin, "basename}", strlen("basename}")) == 0)
+                                            {
+                                                format_file_spec.GetFilename() = module->GetFileSpec().GetFilename();
+                                                var_success = format_file_spec;
+                                            }
+                                            else if (::strncmp (var_name_begin, "fullpath}", strlen("fullpath}")) == 0)
+                                            {
+                                                format_file_spec = module->GetFileSpec();
+                                                var_success = format_file_spec;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            break;
+                            
+                        
+                        case 'f':
+                            if (::strncmp (var_name_begin, "file.", strlen("file.")) == 0)
+                            {
+                                if (sc && sc->comp_unit != NULL)
+                                {
+                                    var_name_begin += ::strlen ("file.");
+                                    
+                                    if (::strncmp (var_name_begin, "basename}", strlen("basename}")) == 0)
+                                    {
+                                        format_file_spec.GetFilename() = sc->comp_unit->GetFilename();
+                                        var_success = format_file_spec;
+                                    }
+                                    else if (::strncmp (var_name_begin, "fullpath}", strlen("fullpath}")) == 0)
+                                    {
+                                        format_file_spec = *sc->comp_unit;
+                                        var_success = format_file_spec;
+                                    }
+                                }
+                            }
+                            else if (::strncmp (var_name_begin, "frame.", strlen("frame.")) == 0)
+                            {
+                                if (exe_ctx && exe_ctx->frame)
+                                {
+                                    var_name_begin += ::strlen ("frame.");
+                                    if (::strncmp (var_name_begin, "index}", strlen("index}")) == 0)
+                                    {
+                                        s.Printf("%u", exe_ctx->frame->GetFrameIndex());
+                                        var_success = true;
+                                    }
+                                    else if (::strncmp (var_name_begin, "pc}", strlen("pc}")) == 0)
+                                    {
+                                        reg_kind = eRegisterKindGeneric;
+                                        reg_num = LLDB_REGNUM_GENERIC_PC;
+                                        var_success = true;
+                                    }
+                                    else if (::strncmp (var_name_begin, "sp}", strlen("sp}")) == 0)
+                                    {
+                                        reg_kind = eRegisterKindGeneric;
+                                        reg_num = LLDB_REGNUM_GENERIC_SP;
+                                        var_success = true;
+                                    }
+                                    else if (::strncmp (var_name_begin, "fp}", strlen("fp}")) == 0)
+                                    {
+                                        reg_kind = eRegisterKindGeneric;
+                                        reg_num = LLDB_REGNUM_GENERIC_FP;
+                                        var_success = true;
+                                    }
+                                    else if (::strncmp (var_name_begin, "flags}", strlen("flags}")) == 0)
+                                    {
+                                        reg_kind = eRegisterKindGeneric;
+                                        reg_num = LLDB_REGNUM_GENERIC_FLAGS;
+                                        var_success = true;
+                                    }
+                                    else if (::strncmp (var_name_begin, "reg.", strlen ("reg.")) == 0)
+                                    {
+                                        reg_ctx = exe_ctx->frame->GetRegisterContext();
+                                        if (reg_ctx)
+                                        {
+                                            var_name_begin += ::strlen ("reg.");
+                                            if (var_name_begin < var_name_end)
+                                            {
+                                                std::string reg_name (var_name_begin, var_name_end);
+                                                reg_info = reg_ctx->GetRegisterInfoByName (reg_name.c_str());
+                                                if (reg_info)
+                                                    var_success = true;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            else if (::strncmp (var_name_begin, "function.", strlen("function.")) == 0)
+                            {
+                                if (sc && (sc->function != NULL || sc->symbol != NULL))
+                                {
+                                    var_name_begin += ::strlen ("function.");
+                                    if (::strncmp (var_name_begin, "id}", strlen("id}")) == 0)
+                                    {
+                                        if (sc->function)
+                                            s.Printf("function{0x%8.8x}", sc->function->GetID());
+                                        else
+                                            s.Printf("symbol[%u]", sc->symbol->GetID());
+
+                                        var_success = true;
+                                    }
+                                    else if (::strncmp (var_name_begin, "name}", strlen("name}")) == 0)
+                                    {
+                                        if (sc->function)
+                                            cstr = sc->function->GetName().AsCString (NULL);
+                                        else if (sc->symbol)
+                                            cstr = sc->symbol->GetName().AsCString (NULL);
+                                        if (cstr)
+                                        {
+                                            s.PutCString(cstr);
+                                            var_success = true;
+                                        }
+                                    }
+                                    else if (::strncmp (var_name_begin, "addr-offset}", strlen("addr-offset}")) == 0)
+                                    {
+                                        var_success = addr != NULL;
+                                        if (var_success)
+                                        {
+                                            format_addr = *addr;
+                                            calculate_format_addr_function_offset = true;
+                                        }
+                                    }
+                                    else if (::strncmp (var_name_begin, "line-offset}", strlen("line-offset}")) == 0)
+                                    {
+                                        var_success = sc->line_entry.range.GetBaseAddress().IsValid();
+                                        if (var_success)
+                                        {
+                                            format_addr = sc->line_entry.range.GetBaseAddress();
+                                            calculate_format_addr_function_offset = true;
+                                        }
+                                    }
+                                    else if (::strncmp (var_name_begin, "pc-offset}", strlen("pc-offset}")) == 0)
+                                    {
+                                        var_success = exe_ctx->frame;
+                                        if (var_success)
+                                        {
+                                            format_addr = exe_ctx->frame->GetFrameCodeAddress();
+                                            calculate_format_addr_function_offset = true;
+                                        }
+                                    }
+                                }
+                            }
+                            break;
+
+                        case 'l':
+                            if (::strncmp (var_name_begin, "line.", strlen("line.")) == 0)
+                            {
+                                if (sc && sc->line_entry.IsValid())
+                                {
+                                    var_name_begin += ::strlen ("line.");
+                                    if (::strncmp (var_name_begin, "file.", strlen("file.")) == 0)
+                                    {
+                                        var_name_begin += ::strlen ("file.");
+                                        
+                                        if (::strncmp (var_name_begin, "basename}", strlen("basename}")) == 0)
+                                        {
+                                            format_file_spec.GetFilename() = sc->line_entry.file.GetFilename();
+                                            var_success = format_file_spec;
+                                        }
+                                        else if (::strncmp (var_name_begin, "fullpath}", strlen("fullpath}")) == 0)
+                                        {
+                                            format_file_spec = sc->line_entry.file;
+                                            var_success = format_file_spec;
+                                        }
+                                    }
+                                    else if (::strncmp (var_name_begin, "number}", strlen("number}")) == 0)
+                                    {
+                                        var_success = true;
+                                        s.Printf("%u", sc->line_entry.line);
+                                    }
+                                    else if ((::strncmp (var_name_begin, "start-addr}", strlen("start-addr}")) == 0) ||
+                                             (::strncmp (var_name_begin, "end-addr}", strlen("end-addr}")) == 0))
+                                    {
+                                        var_success = sc && sc->line_entry.range.GetBaseAddress().IsValid();
+                                        if (var_success)
+                                        {
+                                            format_addr = sc->line_entry.range.GetBaseAddress();
+                                            if (var_name_begin[0] == 'e')
+                                                format_addr.Slide (sc->line_entry.range.GetByteSize());
+                                        }
+                                    }
+                                }
+                            }
+                            break;
+                        }
+                        
+                        if (var_success)
+                        {
+                            // If format addr is valid, then we need to print an address
+                            if (reg_num != LLDB_INVALID_REGNUM)
+                            {
+                                // We have a register value to display...
+                                if (reg_num == LLDB_REGNUM_GENERIC_PC && reg_kind == eRegisterKindGeneric)
+                                {
+                                    format_addr = exe_ctx->frame->GetFrameCodeAddress();
+                                }
+                                else
+                                {
+                                    if (reg_ctx == NULL)
+                                        reg_ctx = exe_ctx->frame->GetRegisterContext();
+
+                                    if (reg_ctx)
+                                    {
+                                        if (reg_kind != kNumRegisterKinds)
+                                            reg_num = reg_ctx->ConvertRegisterKindToRegisterNumber(reg_kind, reg_num);
+                                        reg_info = reg_ctx->GetRegisterInfoAtIndex (reg_num);
+                                        var_success = reg_info != NULL;
+                                    }
+                                }
+                            }
+                            
+                            if (reg_info != NULL)
+                            {
+                                DataExtractor reg_data;
+                                var_success = reg_ctx->ReadRegisterBytes (reg_info->kinds[eRegisterKindLLDB], reg_data);
+                                {
+                                    reg_data.Dump(&s, 0, reg_info->format, reg_info->byte_size, 1, UINT32_MAX, LLDB_INVALID_ADDRESS, 0, 0);
+                                }
+                            }                            
+                            
+                            if (format_file_spec)
+                            {
+                                s << format_file_spec;
+                            }
+
+                            // If format addr is valid, then we need to print an address
+                            if (format_addr.IsValid())
+                            {
+                                if (calculate_format_addr_function_offset)
+                                {
+                                    Address func_addr;
+                                    if (sc->function)
+                                        func_addr = sc->function->GetAddressRange().GetBaseAddress();
+                                    else if (sc->symbol && sc->symbol->GetAddressRangePtr())
+                                        func_addr = sc->symbol->GetAddressRangePtr()->GetBaseAddress();
+                                    else
+                                        var_success = false;
+                                    
+                                    if (var_success)
+                                    {
+                                        if (func_addr.GetSection() == format_addr.GetSection())
+                                        {
+                                            addr_t func_file_addr = func_addr.GetFileAddress();
+                                            addr_t addr_file_addr = format_addr.GetFileAddress();
+                                            if (addr_file_addr > func_file_addr)
+                                            {
+                                                s.Printf(" + %llu", addr_file_addr - func_file_addr);
+                                            }
+                                            else if (addr_file_addr < func_file_addr)
+                                            {
+                                                s.Printf(" - %llu", func_file_addr - addr_file_addr);
+                                            }
+                                        }
+                                        else
+                                            var_success = false;
+                                    }
+                                }
+                                else
+                                {
+                                    addr_t vaddr = LLDB_INVALID_ADDRESS;
+                                    if (exe_ctx && exe_ctx->process && !exe_ctx->process->GetTarget().GetSectionLoadList().IsEmpty())
+                                        vaddr = format_addr.GetLoadAddress (&exe_ctx->process->GetTarget());
+                                    if (vaddr == LLDB_INVALID_ADDRESS)
+                                        vaddr = format_addr.GetFileAddress ();
+
+                                    if (vaddr != LLDB_INVALID_ADDRESS)
+                                        s.Printf("0x%16.16llx", vaddr);
+                                    else
+                                        var_success = false;
+                                }
+                            }
+                        }
+
+                        if (var_success == false)
+                            success = false;
+                    }
+                    p = var_name_end;
+                }
+                else
+                    break;
+            }
+            else
+            {
+                // We got a dollar sign with no '{' after it, it must just be a dollar sign
+                s.PutChar(*p);
+            }
+        }
+        else if (*p == '\\')
+        {
+            ++p; // skip the slash
+            switch (*p)
+            {
+            case 'a': s.PutChar ('\a'); break;
+            case 'b': s.PutChar ('\b'); break;
+            case 'f': s.PutChar ('\f'); break;
+            case 'n': s.PutChar ('\n'); break;
+            case 'r': s.PutChar ('\r'); break;
+            case 't': s.PutChar ('\t'); break;
+            case 'v': s.PutChar ('\v'); break;
+            case '\'': s.PutChar ('\''); break; 
+            case '\\': s.PutChar ('\\'); break; 
+            case '0':
+                // 1 to 3 octal chars
+                {
+                    unsigned long octal_value = 0;
+                    ++p;
+                    int i=0;
+                    for (; i<3; ++i)
+                    {
+                        if (*p >= '0' && *p <= '7')
+                            octal_value = octal_value << 3 + (((uint8_t)*p) - '0');
+                        else
+                            break;
+                    }
+                    if (i>0)
+                        s.PutChar (octal_value);
+                    else
+                        s.PutCString ("\\0");
+                }
+                break;
+
+            case 'x':
+                // hex number in the format 
+                {
+                    ++p;
+
+                    if (isxdigit(*p))
+                    {
+                        char hex_str[3] = { 0,0,0 };
+                        hex_str[0] = *p;
+                        ++p;
+                        if (isxdigit(*p))
+                            hex_str[1] = *p;
+                        unsigned long hex_value = strtoul (hex_str, NULL, 16);                    
+                        s.PutChar (hex_value);
+                    }
+                    else
+                    {
+                        s.PutCString ("\\x");
+                    }
+                }
+                break;
+                
+            default:
+                s << '\\' << *p;
+                break;
+            
+            }
+
+        }
+    }
+    if (end) 
+        *end = p;
+    return success;
+}
+
+#pragma mark Debugger::SettingsController
+
 //--------------------------------------------------
-// class Debugger::DebuggerSettingsController
+// class Debugger::SettingsController
 //--------------------------------------------------
 
-Debugger::DebuggerSettingsController::DebuggerSettingsController () :
+Debugger::SettingsController::SettingsController () :
     UserSettingsController ("", lldb::UserSettingsControllerSP())
 {
     m_default_settings.reset (new DebuggerInstanceSettings (*this, false, 
                                                             InstanceSettings::GetDefaultName().AsCString()));
 }
 
-Debugger::DebuggerSettingsController::~DebuggerSettingsController ()
+Debugger::SettingsController::~SettingsController ()
 {
 }
 
 
 lldb::InstanceSettingsSP
-Debugger::DebuggerSettingsController::CreateNewInstanceSettings (const char *instance_name)
+Debugger::SettingsController::CreateInstanceSettings (const char *instance_name)
 {
     DebuggerInstanceSettings *new_settings = new DebuggerInstanceSettings (*(Debugger::GetSettingsController().get()),
                                                                            false, instance_name);
@@ -592,36 +1234,7 @@ Debugger::DebuggerSettingsController::CreateNewInstanceSettings (const char *ins
     return new_settings_sp;
 }
 
-bool
-Debugger::DebuggerInstanceSettings::ValidTermWidthValue (const char *value, Error err)
-{
-    bool valid = false;
-
-    // Verify we have a value string.
-    if (value == NULL || value[0] == '\0')
-    {
-        err.SetErrorString ("Missing value. Can't set terminal width without a value.\n");
-    }
-    else
-    {
-        char *end = NULL;
-        const uint32_t width = ::strtoul (value, &end, 0);
-        
-        if (end && end == '\0')
-        {
-            if (width >= 10 || width <= 1024)
-                valid = true;
-            else
-                err.SetErrorString ("Invalid term-width value; value must be between 10 and 1024.\n");
-        }
-        else
-            err.SetErrorStringWithFormat ("'%s' is not a valid unsigned integer string.\n", value);
-    }
-
-    return valid;
-}
-
-
+#pragma mark DebuggerInstanceSettings
 //--------------------------------------------------
 //  class DebuggerInstanceSettings
 //--------------------------------------------------
@@ -675,12 +1288,43 @@ DebuggerInstanceSettings::operator= (const DebuggerInstanceSettings &rhs)
 {
     if (this != &rhs)
     {
+        m_term_width = rhs.m_term_width;
         m_prompt = rhs.m_prompt;
         m_script_lang = rhs.m_script_lang;
     }
 
     return *this;
 }
+
+bool
+DebuggerInstanceSettings::ValidTermWidthValue (const char *value, Error err)
+{
+    bool valid = false;
+
+    // Verify we have a value string.
+    if (value == NULL || value[0] == '\0')
+    {
+        err.SetErrorString ("Missing value. Can't set terminal width without a value.\n");
+    }
+    else
+    {
+        char *end = NULL;
+        const uint32_t width = ::strtoul (value, &end, 0);
+        
+        if (end && end == '\0')
+        {
+            if (width >= 10 || width <= 1024)
+                valid = true;
+            else
+                err.SetErrorString ("Invalid term-width value; value must be between 10 and 1024.\n");
+        }
+        else
+            err.SetErrorStringWithFormat ("'%s' is not a valid unsigned integer string.\n", value);
+    }
+
+    return valid;
+}
+
 
 void
 DebuggerInstanceSettings::UpdateInstanceSettingsVariable (const ConstString &var_name,
@@ -722,17 +1366,6 @@ DebuggerInstanceSettings::UpdateInstanceSettingsVariable (const ConstString &var
             m_term_width = ::strtoul (value, NULL, 0);
         }
     }
-}
-
-void
-Debugger::DebuggerSettingsController::UpdateGlobalVariable (const ConstString &var_name,
-                                                            const char *index_value,
-                                                            const char *value,
-                                                            const SettingEntry &entry,
-                                                            lldb::VarSetOperationType op,
-                                                            Error &err)
-{
-    // There should not be any global variables at the Debugger level.
 }
 
 void
@@ -784,12 +1417,6 @@ DebuggerInstanceSettings::CopyInstanceSettings (const lldb::InstanceSettingsSP &
     m_script_lang = new_debugger_settings->m_script_lang;
 }
 
-void
-Debugger::DebuggerSettingsController::GetGlobalSettingsValue (const ConstString &var_name,
-                                                              StringList &value)
-{
-    // There should not be any global variables at the Debugger level.
-}
 
 bool
 DebuggerInstanceSettings::BroadcastPromptChange (const ConstString &instance_name, const char *new_prompt)
@@ -866,12 +1493,12 @@ DebuggerInstanceSettings::TermWidthVarName ()
 }
 
 //--------------------------------------------------
-// DebuggerSettingsController Variable Tables
+// SettingsController Variable Tables
 //--------------------------------------------------
 
 
 SettingEntry
-Debugger::DebuggerSettingsController::global_settings_table[] =
+Debugger::SettingsController::global_settings_table[] =
 {
   //{ "var-name",    var-type,      "default", enum-table, init'd, hidden, "help-text"},
   // The Debugger level global table should always be empty; all Debugger settable variables should be instance
@@ -882,7 +1509,7 @@ Debugger::DebuggerSettingsController::global_settings_table[] =
 
 
 SettingEntry
-Debugger::DebuggerSettingsController::instance_settings_table[] =
+Debugger::SettingsController::instance_settings_table[] =
 {
   //{ "var-name",     var-type ,        "default", enum-table, init'd, hidden, "help-text"},
     { "term-width" , eSetVarTypeInt, "80"    , NULL,       false , false , "The maximum number of columns to use for displaying text." },

@@ -143,26 +143,14 @@ class Debugger :
 {
 public:
 
-    class DebuggerSettingsController : public UserSettingsController
+    class SettingsController : public UserSettingsController
     {
     public:
 
-        DebuggerSettingsController ();
+        SettingsController ();
 
         virtual
-        ~DebuggerSettingsController ();
-
-        void
-        UpdateGlobalVariable (const ConstString &var_name,
-                              const char *index_value,
-                              const char *value,
-                              const SettingEntry &entry,
-                              lldb::VarSetOperationType op,
-                              Error&err);
-
-        void
-        GetGlobalSettingsValue (const ConstString &var_name, 
-                                StringList &value);
+        ~SettingsController ();
 
         static SettingEntry global_settings_table[];
         static SettingEntry instance_settings_table[];
@@ -170,13 +158,13 @@ public:
     protected:
 
         lldb::InstanceSettingsSP
-        CreateNewInstanceSettings (const char *instance_name);
+        CreateInstanceSettings (const char *instance_name);
 
     private:
 
         // Class-wide settings.
 
-        DISALLOW_COPY_AND_ASSIGN (DebuggerSettingsController);
+        DISALLOW_COPY_AND_ASSIGN (SettingsController);
     };
 
     static lldb::UserSettingsControllerSP &
@@ -303,6 +291,15 @@ public:
 
     static lldb::DebuggerSP
     FindDebuggerWithInstanceName (const ConstString &instance_name);
+
+    static bool
+    FormatPrompt (const char *format,
+                  const SymbolContext *sc,
+                  const ExecutionContext *exe_ctx,
+                  const Address *addr,
+                  Stream &s,
+                  const char **end);
+
 
 protected:
 

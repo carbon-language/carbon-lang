@@ -954,7 +954,7 @@ Thread::ThreadSettingsController::~ThreadSettingsController ()
 }
 
 lldb::InstanceSettingsSP
-Thread::ThreadSettingsController::CreateNewInstanceSettings (const char *instance_name)
+Thread::ThreadSettingsController::CreateInstanceSettings (const char *instance_name)
 {
     ThreadInstanceSettings *new_settings = new ThreadInstanceSettings (*(Thread::GetSettingsController().get()),
                                                                        false, instance_name);
@@ -1063,18 +1063,6 @@ ThreadInstanceSettings::CopyInstanceSettings (const lldb::InstanceSettingsSP &ne
 }
 
 void
-Thread::ThreadSettingsController::UpdateGlobalVariable (const ConstString &var_name,
-                                                          const char *index_value,
-                                                          const char *value,
-                                                          const SettingEntry &entry,
-                                                          lldb::VarSetOperationType op,
-                                                          Error&err)
-{
-    // Currently 'thread' does not have any global settings.
-}
-
-
-void
 ThreadInstanceSettings::GetInstanceSettingsValue (const SettingEntry &entry,
                                                    const ConstString &var_name,
                                                    StringList &value)
@@ -1092,13 +1080,6 @@ ThreadInstanceSettings::GetInstanceSettingsValue (const SettingEntry &entry,
     }
     else
         value.AppendString ("unrecognized variable name");
-}
-
-void
-Thread::ThreadSettingsController::GetGlobalSettingsValue (const ConstString &var_name,
-                                                            StringList &value)
-{
-    // Currently 'thread' does not have any global settings.
 }
 
 const ConstString

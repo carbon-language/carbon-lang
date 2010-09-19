@@ -1826,14 +1826,14 @@ Process::GetArchSpecForExistingProcess (const char *process_name)
 lldb::UserSettingsControllerSP
 Process::GetSettingsController (bool finish)
 {
-    static UserSettingsControllerSP g_settings_controller (new ProcessSettingsController);
+    static UserSettingsControllerSP g_settings_controller (new SettingsController);
     static bool initialized = false;
 
     if (!initialized)
     {
         initialized = UserSettingsController::InitializeSettingsController (g_settings_controller,
-                                                             Process::ProcessSettingsController::global_settings_table,
-                                                             Process::ProcessSettingsController::instance_settings_table);
+                                                             Process::SettingsController::global_settings_table,
+                                                             Process::SettingsController::instance_settings_table);
     }
 
     if (finish)
@@ -1847,22 +1847,22 @@ Process::GetSettingsController (bool finish)
 }
 
 //--------------------------------------------------------------
-// class Process::ProcessSettingsController
+// class Process::SettingsController
 //--------------------------------------------------------------
 
-Process::ProcessSettingsController::ProcessSettingsController () :
+Process::SettingsController::SettingsController () :
     UserSettingsController ("process", Debugger::GetSettingsController())
 {
     m_default_settings.reset (new ProcessInstanceSettings (*this, false,
                                                            InstanceSettings::GetDefaultName().AsCString()));
 }
 
-Process::ProcessSettingsController::~ProcessSettingsController ()
+Process::SettingsController::~SettingsController ()
 {
 }
 
 lldb::InstanceSettingsSP
-Process::ProcessSettingsController::CreateNewInstanceSettings (const char *instance_name)
+Process::SettingsController::CreateInstanceSettings (const char *instance_name)
 {
     ProcessInstanceSettings *new_settings = new ProcessInstanceSettings (*(Process::GetSettingsController().get()),
                                                                          false, instance_name);
@@ -1989,18 +1989,6 @@ ProcessInstanceSettings::CopyInstanceSettings (const lldb::InstanceSettingsSP &n
 }
 
 void
-Process::ProcessSettingsController::UpdateGlobalVariable (const ConstString &var_name,
-                                                          const char *index_value,
-                                                          const char *value,
-                                                          const SettingEntry &entry,
-                                                          lldb::VarSetOperationType op,
-                                                          Error&err)
-{
-    // Currently 'process' does not have any global settings.
-}
-
-
-void
 ProcessInstanceSettings::GetInstanceSettingsValue (const SettingEntry &entry,
                                                    const ConstString &var_name,
                                                    StringList &value)
@@ -2051,13 +2039,6 @@ ProcessInstanceSettings::GetInstanceSettingsValue (const SettingEntry &entry,
     }
     else
         value.AppendString ("unrecognized variable name");
-}
-
-void
-Process::ProcessSettingsController::GetGlobalSettingsValue (const ConstString &var_name,
-                                                            StringList &value)
-{
-    // Currently 'process' does not have any global settings.
 }
 
 const ConstString
@@ -2132,11 +2113,11 @@ ProcessInstanceSettings::DisableASLRVarName ()
 
 
 //--------------------------------------------------
-// ProcessSettingsController Variable Tables
+// SettingsController Variable Tables
 //--------------------------------------------------
 
 SettingEntry
-Process::ProcessSettingsController::global_settings_table[] =
+Process::SettingsController::global_settings_table[] =
 {
   //{ "var-name",    var-type  ,        "default", enum-table, init'd, hidden, "help-text"},
     {  NULL, eSetVarTypeNone, NULL, NULL, 0, 0, NULL }
@@ -2144,7 +2125,7 @@ Process::ProcessSettingsController::global_settings_table[] =
 
 
 lldb::OptionEnumValueElement
-Process::ProcessSettingsController::g_plugins[] =
+Process::SettingsController::g_plugins[] =
 {
     { eMacosx, "process.macosx", "Use the native MacOSX debugger plugin" },
     { eRemoteDebugger, "process.gdb-remote" , "Use the GDB Remote protocol based debugger plugin" },
@@ -2152,7 +2133,7 @@ Process::ProcessSettingsController::g_plugins[] =
 };
 
 SettingEntry
-Process::ProcessSettingsController::instance_settings_table[] =
+Process::SettingsController::instance_settings_table[] =
 {
   //{ "var-name",    var-type,              "default",      enum-table, init'd, hidden, "help-text"},
     { "run-args",    eSetVarTypeArray,       NULL,          NULL,       false,  false,  "A list containing all the arguments to be passed to the executable when it is run." },

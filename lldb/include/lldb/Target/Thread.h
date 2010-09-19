@@ -93,26 +93,14 @@ public:
 
         virtual
         ~ThreadSettingsController ();
-
-        void
-        UpdateGlobalVariable (const ConstString &var_name,
-                              const char *index_value,
-                              const char *value,
-                              const SettingEntry &entry,
-                              lldb::VarSetOperationType op,
-                              Error&err);
-
-        void
-        GetGlobalSettingsValue (const ConstString &var_name,
-                                StringList &value);
-
+        
         static SettingEntry global_settings_table[];
         static SettingEntry instance_settings_table[];
 
     protected:
 
         lldb::InstanceSettingsSP
-        CreateNewInstanceSettings (const char *instance_name);
+        CreateInstanceSettings (const char *instance_name);
 
     private:
 

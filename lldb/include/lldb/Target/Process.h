@@ -333,26 +333,14 @@ public:
 
     };
 
-    class ProcessSettingsController : public UserSettingsController
+    class SettingsController : public UserSettingsController
     {
     public:
         
-        ProcessSettingsController ();
+        SettingsController ();
 
         virtual
-        ~ProcessSettingsController ();
-
-        void
-        UpdateGlobalVariable (const ConstString &var_name,
-                              const char *index_value,
-                              const char *value,
-                              const SettingEntry &entry,
-                              lldb::VarSetOperationType op,
-                              Error&err);
-
-        void
-        GetGlobalSettingsValue (const ConstString &var_name,
-                                StringList &value);
+        ~SettingsController ();
 
         static SettingEntry global_settings_table[];
         static SettingEntry instance_settings_table[];
@@ -360,7 +348,7 @@ public:
     protected:
 
         lldb::InstanceSettingsSP
-        CreateNewInstanceSettings (const char *instance_name);
+        CreateInstanceSettings (const char *instance_name);
 
         static lldb::OptionEnumValueElement g_plugins[];
 
@@ -368,7 +356,7 @@ public:
 
         // Class-wide settings.
 
-        DISALLOW_COPY_AND_ASSIGN (ProcessSettingsController);
+        DISALLOW_COPY_AND_ASSIGN (SettingsController);
     };
 
 #endif

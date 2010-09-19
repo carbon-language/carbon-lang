@@ -514,6 +514,12 @@ public:
         return m_frame_base;
     }
 
+    const ConstString &
+    GetName() const
+    {
+        return m_mangled.GetName();
+    }
+
     const Mangled &
     GetMangled() const
     {

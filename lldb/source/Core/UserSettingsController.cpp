@@ -39,6 +39,31 @@ UserSettingsController::~UserSettingsController ()
 }
 
 bool
+UserSettingsController::SetGlobalVariable
+(
+    const ConstString &var_name,
+    const char *index_value,
+    const char *value,
+    const SettingEntry &entry,
+    const lldb::VarSetOperationType op,
+    Error &err
+)
+{
+    err.SetErrorString ("UserSettingsController has no global settings");
+    return false;
+}
+
+bool
+UserSettingsController::GetGlobalVariable 
+(
+    const ConstString &var_name, 
+    StringList &value
+)
+{
+    return false;
+}
+
+bool
 UserSettingsController::InitializeSettingsController (lldb::UserSettingsControllerSP &controller_sp,
                                                       SettingEntry *global_settings,
                                                       SettingEntry *instance_settings)
@@ -270,7 +295,7 @@ UserSettingsController::SetVariable (const char *full_dot_name,
                     else
                         value = entry->enum_values[0].string_value;
                 }
-                UpdateGlobalVariable (const_var_name, index_value, value, *entry, op, err);
+                SetGlobalVariable (const_var_name, index_value, value, *entry, op, err);
             }
             else
             {
@@ -472,8 +497,12 @@ UserSettingsController::SetVariable (const char *full_dot_name,
 }
 
 StringList
-UserSettingsController::GetVariable (const char *full_dot_name, lldb::SettableVariableType &var_type, 
-                                     const char *debugger_instance_name)
+UserSettingsController::GetVariable 
+(
+    const char *full_dot_name, 
+    lldb::SettableVariableType &var_type, 
+    const char *debugger_instance_name
+)
 {
     Args names = UserSettingsController::BreakNameIntoPieces (full_dot_name);
     ConstString const_var_name;
@@ -589,7 +618,7 @@ UserSettingsController::GetVariable (const char *full_dot_name, lldb::SettableVa
         else if (global_entry)
         {
             var_type = global_entry->var_type;
-            GetGlobalSettingsValue (const_var_name, value);
+            GetGlobalVariable (const_var_name, value);
         }
         else if (instance_entry)
         {
@@ -720,18 +749,18 @@ UserSettingsController::PendingSettingsForInstance (const ConstString &instance_
 
     pos = m_pending_settings.find (name_str);
     if (pos != m_pending_settings.end())
-      {
+    {
         lldb::InstanceSettingsSP settings_sp = pos->second;
         return settings_sp;
-      }
+    }
     else
-      {
-        lldb::InstanceSettingsSP new_settings_sp = CreateNewInstanceSettings (instance_name.AsCString());
+    {
+        lldb::InstanceSettingsSP new_settings_sp = CreateInstanceSettings (instance_name.AsCString());
         CopyDefaultSettings (new_settings_sp, instance_name, true);
         m_pending_settings[name_str] = new_settings_sp;
         return new_settings_sp;
-      }
-
+    }
+    
     // Should never reach this line.
 
     lldb::InstanceSettingsSP dummy;

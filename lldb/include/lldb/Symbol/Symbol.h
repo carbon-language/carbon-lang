@@ -75,6 +75,9 @@ public:
     const AddressRange &
     GetAddressRangeRef() const { return m_addr_range; }
 
+    const ConstString &
+    GetName () { return m_mangled.GetName(); }
+
     Mangled&
     GetMangled () { return m_mangled; }
 
