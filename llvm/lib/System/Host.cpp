@@ -210,6 +210,7 @@ std::string sys::getHostCPUName() {
                // processors are manufactured using the 45 nm process.
       case 29: // Intel Xeon processor MP. All processors are manufactured using
                // the 45 nm process.
+      case 37: // Intel Core i7, laptop version.
         return "corei7";
 
       case 28: // Intel Atom processor. All processors are manufactured using
