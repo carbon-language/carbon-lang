@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -verify %s -Wno-unreachable-code
+// RUN: %clang_cc1 -fsyntax-only -verify %s -Wno-unreachable-code -Wunused-value
 
 int foo(int X, int Y);
 

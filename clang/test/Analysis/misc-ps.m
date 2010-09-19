@@ -466,7 +466,7 @@ unsigned char test_array_index_bitwidth(const unsigned char *p) {
 // It should not crash.
 void test_block_cast() {
   id test_block_cast_aux();
-  (void (^)(void *))test_block_cast_aux(); // expected-warning{{expression result unused}}
+  (void (^)(void *))test_block_cast_aux();
 }
 
 int OSAtomicCompareAndSwap32Barrier();
@@ -673,7 +673,7 @@ CGFloat rdar7242006(CGFloat x) {
 //  when not explicitly used in an "lvalue" context (as far as the analyzer is
 //  concerned). This previously triggered a crash due to an invalid assertion.
 void pr_4988(void) {
-  pr_4988; // expected-warning{{expression result unused}}
+  pr_4988;
 }
 
 // <rdar://problem/7152418> - A 'signed char' is used as a flag, which is

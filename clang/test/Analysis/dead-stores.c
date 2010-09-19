@@ -300,11 +300,11 @@ void f22() {
   case 7:
     (void)(0 && x);
     (void)y7;
-    (void)(0 || (y8, ({ return; }), 1));  // expected-warning {{expression result unused}}
+    (void)(0 || (y8, ({ return; }), 1));
     (void)x;
     break;
   case 8:
-    (void)(1 && (y9, ({ return; }), 1));  // expected-warning {{expression result unused}}
+    (void)(1 && (y9, ({ return; }), 1));
     (void)x;
     break;
   case 9:

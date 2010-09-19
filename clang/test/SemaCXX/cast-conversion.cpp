@@ -15,8 +15,7 @@ struct B {
 int main () {
   B(10);	// expected-error {{functional-style cast from 'int' to 'B' is not allowed}}
   (B)10;	// expected-error {{C-style cast from 'int' to 'B' is not allowed}}
-  static_cast<B>(10);	// expected-error {{static_cast from 'int' to 'B' is not allowed}} \\
-			// expected-warning {{expression result unused}}
+  static_cast<B>(10);	// expected-error {{static_cast from 'int' to 'B' is not allowed}}
 }
 
 template<class T>

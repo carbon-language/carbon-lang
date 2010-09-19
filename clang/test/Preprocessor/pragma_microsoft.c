@@ -36,5 +36,5 @@ void f()
 
   // If we ever actually *support* __pragma(warning(disable: x)),
   // this warning should go away.
-  MACRO_WITH__PRAGMA // expected-warning {{expression result unused}}
+  MACRO_WITH__PRAGMA
 }

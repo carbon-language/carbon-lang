@@ -27,15 +27,13 @@ void * foo()
       return proc();
     }
     @catch (Frob* ex) {
-      @throw 1,2; // expected-error {{@throw requires an Objective-C object type ('int' invalid)}} \
-				  // expected-warning {{expression result unused}}
+      @throw 1,2; // expected-error {{@throw requires an Objective-C object type ('int' invalid)}}
     }
     @catch (float x) {  // expected-error {{@catch parameter is not a pointer to an interface type}}
       
     }
     @catch(...) {
-      @throw (4,3,proc()); // expected-warning {{expression result unused}} \
-						   // expected-warning {{expression result unused}}
+      @throw (4,3,proc());
     }
   }
 
@@ -48,7 +46,7 @@ void * foo()
 void bar()
 {
   @try {}// expected-error {{@try statement without a @catch and @finally clause}}
-  @"s"; //  expected-warning {{result unused}}
+  @"s";
 }
 
 void baz()

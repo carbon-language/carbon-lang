@@ -2770,16 +2770,16 @@ def ext_typecheck_expression_not_constant_but_accepted : Extension<
   "expression is not a constant, but is accepted as one by GNU extensions">, 
   InGroup<GNU>;
 def warn_unused_expr : Warning<"expression result unused">,
-  InGroup<UnusedValue>;
+  InGroup<UnusedValue>, DefaultIgnore;
 def warn_unused_voidptr : Warning<
   "expression result unused; should this cast be to 'void'?">,
-  InGroup<UnusedValue>;
+  InGroup<UnusedValue>, DefaultIgnore;
 def warn_unused_property_expr : Warning<
  "property access result unused - getters should not be used for side effects">,
-  InGroup<UnusedValue>;
+  InGroup<UnusedValue>, DefaultIgnore;
 def warn_unused_call : Warning<
   "ignoring return value of function declared with %0 attribute">,
-  InGroup<UnusedValue>;
+  InGroup<UnusedValue>, DefaultIgnore;
 
 def err_incomplete_type_used_in_type_trait_expr : Error<
   "incomplete type %0 used in type trait expression">;

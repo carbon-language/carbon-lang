@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only %s > %t 2>&1
+// RUN: %clang_cc1 -fsyntax-only -Wunused-value %s > %t 2>&1
 
 #define M1(x) x
 
