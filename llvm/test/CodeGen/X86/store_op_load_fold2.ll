@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=x86 -x86-asm-syntax=intel | FileCheck %s
+; RUN: llc < %s -mtriple=i686-linux -x86-asm-syntax=intel | FileCheck %s
 
 target datalayout = "e-p:32:32"
         %struct.Macroblock = type { i32, i32, i32, i32, i32, [8 x i32], %struct.Macroblock*, %struct.Macroblock*, i32, [2 x [4 x [4 x [2 x i32]]]], [16 x i8], [16 x i8], i32, i64, [4 x i32], [4 x i32], i64, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i16, double, i32, i32, i32, i32, i32, i32, i32, i32, i32 }
