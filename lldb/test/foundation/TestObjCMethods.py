@@ -23,13 +23,11 @@ class FoundationTestCase(TestBase):
         self.buildDwarf()
         self.break_on_objc_methods()
 
-    @unittest2.expectedFailure
     def test_data_type_and_expr_with_dsym(self):
         """Lookup objective-c data types and evaluate expressions."""
         self.buildDsym()
         self.data_type_and_expr_objc()
 
-    @unittest2.expectedFailure
     def test_data_type_and_expr_with_dwarf(self):
         """Lookup objective-c data types and evaluate expressions."""
         self.buildDwarf()
