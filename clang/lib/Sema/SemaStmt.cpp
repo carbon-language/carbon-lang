@@ -67,6 +67,9 @@ void Sema::ActOnForEachDeclStmt(DeclGroupPtrTy dg) {
 }
 
 void Sema::DiagnoseUnusedExprResult(const Stmt *S) {
+  if (const LabelStmt *Label = dyn_cast_or_null<LabelStmt>(S))
+    return DiagnoseUnusedExprResult(Label->getSubStmt());
+
   const Expr *E = dyn_cast_or_null<Expr>(S);
   if (!E)
     return;

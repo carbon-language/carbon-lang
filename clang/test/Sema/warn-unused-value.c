@@ -52,6 +52,9 @@ void pr4806() {
   volatile int* pj = &j;
   *pi;              // expected-warning {{expression result unused}}
   *pj;
+
+  foo_label:
+  i;                // expected-warning {{expression result unused}}
 }
 
 // Don't warn about unused '||', '&&' expressions that contain assignments.

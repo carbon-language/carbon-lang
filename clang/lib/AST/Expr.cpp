@@ -1225,9 +1225,13 @@ bool Expr::isUnusedResultAWarning(SourceLocation &Loc, SourceRange &R1,
     // however, if the result of the stmt expr is dead, we don't want to emit a
     // warning.
     const CompoundStmt *CS = cast<StmtExpr>(this)->getSubStmt();
-    if (!CS->body_empty())
+    if (!CS->body_empty()) {
       if (const Expr *E = dyn_cast<Expr>(CS->body_back()))
         return E->isUnusedResultAWarning(Loc, R1, R2, Ctx);
+      if (const LabelStmt *Label = dyn_cast<LabelStmt>(CS->body_back()))
+        if (const Expr *E = dyn_cast<Expr>(Label->getSubStmt()))
+          return E->isUnusedResultAWarning(Loc, R1, R2, Ctx);
+    }
 
     if (getType()->isVoidType())
       return false;
