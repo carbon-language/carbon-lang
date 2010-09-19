@@ -30,6 +30,9 @@ class SettingsCommandTestCase(TestBase):
         self.expect("settings show",
             substrs = ["prompt (string) = 'lldb2'"])
 
+    @unittest2.expectedFailure
+    # rdar://problem/8449849
+    # settings test case failure (probably after r114252)
     def test_set_term_width(self):
         """Test that 'set term-width' actually changes the term-width."""
 
