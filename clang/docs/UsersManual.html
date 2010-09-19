@@ -942,16 +942,26 @@ definition.</li>
 <!-- ======================== -->
 <h4 id="target_arch_x86">X86</h4>
 <!-- ======================== -->
-<p>The support for X86 (both 32-bit and 64-bit) is considered stable
-on Darwin (Mac OS/X), Linux, FreeBSD, and Dragonfly BSD: it has been tested to
-correctly compile large C and Objective-C codebases. (FIXME: Anything specific
-we want to say here? Possibly mention some LLVM x86 limitations?)
+
+<p>The support for X86 (both 32-bit and 64-bit) is considered stable on Darwin
+(Mac OS/X), Linux, FreeBSD, and Dragonfly BSD: it has been tested to correctly
+compile many large C, C++, Objective-C, and Objective-C++ codebases.</p>
 
 <!-- ======================== -->
 <h4 id="target_arch_arm">ARM</h4>
 <!-- ======================== -->
-ARM support is mostly feature-complete, but still experimental; it hasn't
-undergone significant testing.
+
+<p>The support for ARM (specifically ARMv6 and ARMv7) is considered stable on
+Darwin (iOS): it has been tested to correctly compile many large C, C++,
+Objective-C, and Objective-C++ codebases.</p>
+
+<p>It is not quite feature complete, the following areas still need work:</p>
+<ul>
+  <li>Vector support (NEON in particular) is not yet well tested and may have
+    ABI errors.</li>
+  <li>Clang only supports a limited number of ARM architectures. It does not yet
+    fully support ARMv5, for example.</li>
+</ul>
 
 <!-- ======================== -->
 <h4 id="target_arch_other">Other platforms</h4>
