@@ -561,10 +561,11 @@ class LabelStmt : public Stmt {
   IdentifierInfo *Label;
   Stmt *SubStmt;
   SourceLocation IdentLoc;
+  bool Used : 1;
 public:
   LabelStmt(SourceLocation IL, IdentifierInfo *label, Stmt *substmt)
     : Stmt(LabelStmtClass), Label(label),
-      SubStmt(substmt), IdentLoc(IL) {}
+      SubStmt(substmt), IdentLoc(IL), Used(false) {}
 
   // \brief Build an empty label statement.
   explicit LabelStmt(EmptyShell Empty) : Stmt(LabelStmtClass, Empty) { }
@@ -577,6 +578,11 @@ public:
   const Stmt *getSubStmt() const { return SubStmt; }
   void setIdentLoc(SourceLocation L) { IdentLoc = L; }
   void setSubStmt(Stmt *SS) { SubStmt = SS; }
+
+  /// \brief Whether this label was used.
+  /// FIXME: Check "used" attribute (requires storing label attributes).
+  bool isUsed() const { return Used; }
+  void setUsed(bool U = true) { Used = U; }
 
   virtual SourceRange getSourceRange() const {
     return SourceRange(IdentLoc, SubStmt->getLocEnd());

@@ -219,6 +219,7 @@ void ASTStmtReader::VisitLabelStmt(LabelStmt *S) {
   S->setID(Reader.GetIdentifierInfo(Record, Idx));
   S->setSubStmt(Reader.ReadSubStmt());
   S->setIdentLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+  S->setUsed(Record[Idx++]);
   Reader.RecordLabelStmt(S, Record[Idx++]);
 }
 

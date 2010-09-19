@@ -994,6 +994,7 @@ Sema::ActOnGotoStmt(SourceLocation GotoLoc, SourceLocation LabelLoc,
   if (LabelDecl == 0)
     LabelDecl = new (Context) LabelStmt(LabelLoc, LabelII, 0);
 
+  LabelDecl->setUsed();
   return Owned(new (Context) GotoStmt(LabelDecl, GotoLoc, LabelLoc));
 }
 

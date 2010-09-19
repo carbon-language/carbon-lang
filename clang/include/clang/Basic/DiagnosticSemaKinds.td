@@ -1899,6 +1899,8 @@ def warn_missing_braces : Warning<
 
 def err_redefinition_of_label : Error<"redefinition of label '%0'">;
 def err_undeclared_label_use : Error<"use of undeclared label '%0'">;
+def warn_unused_label : Warning<"unused label '%0'">,
+  InGroup<UnusedLabel>, DefaultIgnore;
 
 def err_goto_into_protected_scope : Error<"goto into protected scope">;
 def err_switch_into_protected_scope : Error<

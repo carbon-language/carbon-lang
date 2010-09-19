@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -verify -Wunused-value %s
+// RUN: %clang_cc1 -fsyntax-only -verify -Wunused-value -Wunused-label %s
 // RUN: %clang_cc1 -fsyntax-only -verify -Wunused %s
 // RUN: %clang_cc1 -fsyntax-only -verify -Wall %s
 
@@ -53,7 +53,7 @@ void pr4806() {
   *pi;              // expected-warning {{expression result unused}}
   *pj;
 
-  foo_label:
+  foo_label:        // expected-warning {{unused label}}
   i;                // expected-warning {{expression result unused}}
 }
 

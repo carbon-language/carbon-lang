@@ -6871,6 +6871,7 @@ ExprResult Sema::ActOnAddrLabel(SourceLocation OpLoc,
   if (LabelDecl == 0)
     LabelDecl = new (Context) LabelStmt(LabLoc, LabelII, 0);
 
+  LabelDecl->setUsed();
   // Create the AST node.  The address of a label always has type 'void*'.
   return Owned(new (Context) AddrLabelExpr(OpLoc, LabLoc, LabelDecl,
                                        Context.getPointerType(Context.VoidTy)));
@@ -7355,8 +7356,11 @@ ExprResult Sema::ActOnBlockStmtExpr(SourceLocation CaretLoc,
 
     // Verify that we have no forward references left.  If so, there was a goto
     // or address of a label taken, but no definition of it.
-    if (L->getSubStmt() != 0)
+    if (L->getSubStmt() != 0) {
+      if (!L->isUsed())
+        Diag(L->getIdentLoc(), diag::warn_unused_label) << L->getName();
       continue;
+    }
 
     // Emit error.
     Diag(L->getIdentLoc(), diag::err_undeclared_label_use) << L->getName();

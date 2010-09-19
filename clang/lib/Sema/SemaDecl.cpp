@@ -5028,8 +5028,11 @@ Decl *Sema::ActOnFinishFunctionBody(Decl *dcl, Stmt *Body,
     // Verify that we have no forward references left.  If so, there was a goto
     // or address of a label taken, but no definition of it.  Label fwd
     // definitions are indicated with a null substmt.
-    if (L->getSubStmt() != 0)
+    if (L->getSubStmt() != 0) {
+      if (!L->isUsed())
+        Diag(L->getIdentLoc(), diag::warn_unused_label) << L->getName();
       continue;
+    }
 
     // Emit error.
     Diag(L->getIdentLoc(), diag::err_undeclared_label_use) << L->getName();
