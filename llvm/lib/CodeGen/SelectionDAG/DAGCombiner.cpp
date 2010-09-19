@@ -46,7 +46,7 @@ STATISTIC(OpsNarrowed     , "Number of load/op/store narrowed");
 
 namespace {
   static cl::opt<bool>
-    CombinerAA("combiner-alias-analysis", cl::init(true), cl::Hidden,
+    CombinerAA("combiner-alias-analysis", cl::Hidden,
                cl::desc("Turn on alias analysis during testing"));
 
   static cl::opt<bool>
