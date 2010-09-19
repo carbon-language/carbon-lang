@@ -50,9 +50,11 @@ char y[__builtin_constant_p(expr) ? -1 : 1];
 char z[__builtin_constant_p(4) ? 1 : -1];
 
 // Comma tests
-int comma1[0?1,2:3];
-int comma2[1||(1,2)]; // expected-warning {{use of logical || with constant operand}}
-int comma3[(1,2)]; // expected-warning {{size of static array must be an integer constant expression}}
+int comma1[0?1,2:3];  // expected-warning {{expression result unused}}
+int comma2[1||(1,2)]; // expected-warning {{expression result unused}} \
+                      // expected-warning {{use of logical || with constant operand}}
+int comma3[(1,2)]; // expected-warning {{size of static array must be an integer constant expression}} \
+					// expected-warning {{expression result unused}}
 
 // Pointer + __builtin_constant_p
 char pbcp[__builtin_constant_p(4) ? (intptr_t)&expr : 0]; // expected-error {{variable length array declaration not allowed at file scope}}

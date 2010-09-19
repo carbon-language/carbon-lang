@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 %s -fsyntax-only -Wunused-value -verify
+// RUN: %clang_cc1 %s -fsyntax-only -verify
 
 typedef unsigned __uint32_t;
 

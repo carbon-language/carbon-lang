@@ -16,7 +16,7 @@ static void test() {
 
     vec2.z; // expected-error {{vector component access exceeds type 'float2'}}
     vec2.xyzw; // expected-error {{vector component access exceeds type 'float2'}}
-    vec4.xyzw;
+    vec4.xyzw; // expected-warning {{expression result unused}}
     vec4.xyzc; // expected-error {{illegal vector component name 'c'}}
     vec4.s01z; // expected-error {{illegal vector component name 'z'}}
     vec2 = vec4.s01; // legal, shorten

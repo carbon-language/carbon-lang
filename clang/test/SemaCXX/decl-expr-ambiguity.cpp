@@ -12,11 +12,11 @@ void f() {
   __typeof(int)(a,5)<<a; // expected-error {{excess elements in scalar initializer}}
   void(a), ++a;
   if (int(a)+1) {}
-  for (int(a)+1;;) {}
+  for (int(a)+1;;) {} // expected-warning {{expression result unused}}
   a = sizeof(int()+1);
   a = sizeof(int(1));
   typeof(int()+1) a2; // expected-error {{extension used}}
-  (int(1));
+  (int(1)); // expected-warning {{expression result unused}}
 
   // type-id
   (int())1; // expected-error {{C-style cast from 'int' to 'int ()' is not allowed}}
