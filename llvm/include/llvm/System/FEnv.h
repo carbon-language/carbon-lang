@@ -38,7 +38,7 @@ static inline bool llvm_fenv_testexcept() {
   if (errno_val == ERANGE || errno_val == EDOM)
     return true;
 #ifdef HAVE_FENV_H
-  if (fetestexcept(FE_ALL_EXCEPT))
+  if (fetestexcept(FE_ALL_EXCEPT & ~FE_INEXACT))
     return true;
 #endif
   return false;
