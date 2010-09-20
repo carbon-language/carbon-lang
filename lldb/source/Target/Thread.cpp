@@ -1062,11 +1062,11 @@ ThreadInstanceSettings::CopyInstanceSettings (const lldb::InstanceSettingsSP &ne
         m_avoid_regexp_ap.reset ();
 }
 
-void
+bool
 ThreadInstanceSettings::GetInstanceSettingsValue (const SettingEntry &entry,
                                                   const ConstString &var_name,
                                                   StringList &value,
-                                                  Error &err)
+                                                  Error *err)
 {
     if (var_name == StepAvoidRegexpVarName())
     {
@@ -1080,7 +1080,12 @@ ThreadInstanceSettings::GetInstanceSettingsValue (const SettingEntry &entry,
 
     }
     else
-        err.SetErrorStringWithFormat ("unrecognized variable name '%s'", var_name.AsCString());
+    {
+        if (err)
+            err->SetErrorStringWithFormat ("unrecognized variable name '%s'", var_name.AsCString());
+        return false;
+    }
+    return true;
 }
 
 const ConstString

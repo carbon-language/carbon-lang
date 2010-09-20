@@ -562,7 +562,7 @@ UserSettingsController::GetVariable
 
                 if (current_settings != NULL)
                 {
-                    current_settings->GetInstanceSettingsValue (*instance_entry, const_var_name, value, err);
+                    current_settings->GetInstanceSettingsValue (*instance_entry, const_var_name, value, &err);
                 }
                 else
                 {
@@ -575,14 +575,14 @@ UserSettingsController::GetVariable
                     if (pos != m_pending_settings.end())
                     {
                         lldb::InstanceSettingsSP settings_sp = pos->second;
-                        settings_sp->GetInstanceSettingsValue (*instance_entry, const_var_name,  value, err);
+                        settings_sp->GetInstanceSettingsValue (*instance_entry, const_var_name,  value, &err);
                     }
                     else 
                     {
                         if (m_settings.level_name.GetLength() > 0)
                         {
                             // No valid instance name; assume they want the default settings.
-                            m_default_settings->GetInstanceSettingsValue (*instance_entry, const_var_name, value, err);
+                            m_default_settings->GetInstanceSettingsValue (*instance_entry, const_var_name, value, &err);
                         }
                         else
                         {
@@ -595,7 +595,7 @@ UserSettingsController::GetVariable
                             ConstString dbg_name (debugger_instance_name);
                             InstanceSettings *dbg_settings = FindSettingsForInstance (dbg_name);
                             if (dbg_settings)
-                                dbg_settings->GetInstanceSettingsValue (*instance_entry, const_var_name, value, err);
+                                dbg_settings->GetInstanceSettingsValue (*instance_entry, const_var_name, value, &err);
                         }
                     }
                 }
@@ -621,7 +621,7 @@ UserSettingsController::GetVariable
         {
             var_type = instance_entry->var_type;
             if (m_settings.level_name.GetLength() > 0)
-                m_default_settings->GetInstanceSettingsValue  (*instance_entry, const_var_name, value, err);
+                m_default_settings->GetInstanceSettingsValue  (*instance_entry, const_var_name, value, &err);
             else
             {
                 // We're at the Debugger level;  use the debugger's instance settings.
@@ -633,7 +633,7 @@ UserSettingsController::GetVariable
                 ConstString dbg_name (tmp_name.GetData());
                 InstanceSettings *dbg_settings = FindSettingsForInstance (dbg_name);
                 if (dbg_settings)
-                    dbg_settings->GetInstanceSettingsValue (*instance_entry, const_var_name, value, err);
+                    dbg_settings->GetInstanceSettingsValue (*instance_entry, const_var_name, value, &err);
             }
         }
     }
@@ -716,7 +716,7 @@ UserSettingsController::CopyDefaultSettings (const lldb::InstanceSettingsSP &act
         SettingEntry &entry = m_settings.instance_settings[i];
         ConstString var_name (entry.var_name);
         StringList value;
-        m_default_settings->GetInstanceSettingsValue (entry, var_name, value, err);
+        m_default_settings->GetInstanceSettingsValue (entry, var_name, value, NULL);
 
         std::string value_str;
         if (value.GetSize() == 1)
@@ -777,8 +777,7 @@ UserSettingsController::GetAllDefaultSettingValues (StreamString &result_stream)
         SettingEntry &entry = m_settings.instance_settings[i];
         ConstString var_name (entry.var_name);
         StringList tmp_value;
-        Error err;
-        m_default_settings->GetInstanceSettingsValue (entry, var_name, tmp_value, err);
+        m_default_settings->GetInstanceSettingsValue (entry, var_name, tmp_value, NULL);
 
         StreamString value_string;
 
@@ -817,8 +816,7 @@ UserSettingsController::GetAllPendingSettingValues (StreamString &result_stream)
             SettingEntry &entry = m_settings.instance_settings[i];
             ConstString var_name (entry.var_name);
             StringList tmp_value;
-            Error err;
-            settings_sp->GetInstanceSettingsValue (entry, var_name, tmp_value, err);
+            settings_sp->GetInstanceSettingsValue (entry, var_name, tmp_value, NULL);
 
             StreamString value_str;
 
@@ -884,8 +882,7 @@ UserSettingsController::GetAllInstanceVariableValues (CommandInterpreter &interp
             SettingEntry &entry = m_settings.instance_settings[i];
             const ConstString var_name (entry.var_name);
             StringList tmp_value;
-            Error err;
-            settings->GetInstanceSettingsValue (entry, var_name, tmp_value, err);
+            settings->GetInstanceSettingsValue (entry, var_name, tmp_value, NULL);
             StreamString tmp_value_str;
 
             if (tmp_value.GetSize() == 0)

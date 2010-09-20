@@ -1375,11 +1375,11 @@ DebuggerInstanceSettings::UpdateInstanceSettingsVariable (const ConstString &var
     }
 }
 
-void
+bool
 DebuggerInstanceSettings::GetInstanceSettingsValue (const SettingEntry &entry,
                                                     const ConstString &var_name,
                                                     StringList &value,
-                                                    Error &err)
+                                                    Error *err)
 {
     if (var_name == PromptVarName())
     {
@@ -1404,7 +1404,12 @@ DebuggerInstanceSettings::GetInstanceSettingsValue (const SettingEntry &entry,
             value.AppendString ("false");
     }
     else
-        err.SetErrorStringWithFormat ("unrecognized variable name '%s'", var_name.AsCString());
+    {
+        if (err)
+            err->SetErrorStringWithFormat ("unrecognized variable name '%s'", var_name.AsCString());
+        return false;
+    }
+    return true;
 }
 
 void

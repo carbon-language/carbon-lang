@@ -56,11 +56,11 @@ public:
                                     Error &err,
                                     bool pending);
 
-    void
+    bool
     GetInstanceSettingsValue (const SettingEntry &entry,
                               const ConstString &var_name,
                               StringList &value,
-                              Error &err);
+                              Error *err);
 
 protected:
 

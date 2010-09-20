@@ -1988,11 +1988,11 @@ ProcessInstanceSettings::CopyInstanceSettings (const lldb::InstanceSettingsSP &n
     m_disable_aslr = new_process_settings->m_disable_aslr;
 }
 
-void
+bool
 ProcessInstanceSettings::GetInstanceSettingsValue (const SettingEntry &entry,
                                                    const ConstString &var_name,
                                                    StringList &value,
-                                                   Error &err)
+                                                   Error *err)
 {
     if (var_name == RunArgsVarName())
     {
@@ -2039,7 +2039,12 @@ ProcessInstanceSettings::GetInstanceSettingsValue (const SettingEntry &entry,
             value.AppendString ("false");
     }
     else
-        err.SetErrorStringWithFormat ("unrecognized variable name '%s'", var_name.AsCString());
+    {
+        if (err)
+            err->SetErrorStringWithFormat ("unrecognized variable name '%s'", var_name.AsCString());
+        return false;
+    }
+    return true;
 }
 
 const ConstString

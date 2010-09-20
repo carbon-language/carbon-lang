@@ -934,11 +934,11 @@ TargetInstanceSettings::CopyInstanceSettings (const lldb::InstanceSettingsSP &ne
     // Currently 'target' does not have any instance settings.
 }
 
-void
+bool
 TargetInstanceSettings::GetInstanceSettingsValue (const SettingEntry &entry,
                                                   const ConstString &var_name,
                                                   StringList &value,
-                                                  Error &err)
+                                                  Error *err)
 {
     // Currently 'target' does not have any instance settings.
 }

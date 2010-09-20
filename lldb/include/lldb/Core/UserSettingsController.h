@@ -370,11 +370,11 @@ public:
                                     Error &err,
                                     bool pending) = 0;
 
-    virtual void
+    virtual bool
     GetInstanceSettingsValue (const SettingEntry &entry,
                               const ConstString &var_name,
                               StringList &value,
-                              Error &err) = 0;
+                              Error *err) = 0;
 
     virtual void
     CopyInstanceSettings (const lldb::InstanceSettingsSP &new_settings,
