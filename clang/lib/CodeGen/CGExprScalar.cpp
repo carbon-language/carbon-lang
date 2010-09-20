@@ -2169,7 +2169,52 @@ VisitConditionalOperator(const ConditionalOperator *E) {
       return Visit(Live);
   }
 
+  // OpenCL: If the condition is a vector, we can treat this condition like
+  // the select function.
+  if (CGF.getContext().getLangOptions().OpenCL 
+      && E->getCond()->getType()->isVectorType()) {
+    llvm::Value *CondV = CGF.EmitScalarExpr(E->getCond());
+    llvm::Value *LHS = Visit(E->getLHS());
+    llvm::Value *RHS = Visit(E->getRHS());
+    
+    const llvm::Type *condType = ConvertType(E->getCond()->getType());
+    const llvm::VectorType *vecTy = cast<llvm::VectorType>(condType);
+    
+    unsigned numElem = vecTy->getNumElements();      
+    const llvm::Type *elemType = vecTy->getElementType();
+    
+    std::vector<llvm::Constant*> Zvals;
+    for (unsigned i = 0; i < numElem; ++i)
+      Zvals.push_back(llvm::ConstantInt::get(elemType,0));
 
+    llvm::Value *zeroVec = llvm::ConstantVector::get(Zvals);    
+    llvm::Value *TestMSB = Builder.CreateICmpSLT(CondV, zeroVec);
+    llvm::Value *tmp = Builder.CreateSExt(TestMSB, 
+                                          llvm::VectorType::get(elemType,
+                                                                numElem),         
+                                          "sext");
+    llvm::Value *tmp2 = Builder.CreateNot(tmp);
+    
+    // Cast float to int to perform ANDs if necessary.
+    llvm::Value *RHSTmp = RHS;
+    llvm::Value *LHSTmp = LHS;
+    bool wasCast = false;
+    const llvm::VectorType *rhsVTy = cast<llvm::VectorType>(RHS->getType());
+    if (rhsVTy->getElementType()->isFloatTy()) {
+      RHSTmp = Builder.CreateBitCast(RHS, tmp2->getType());
+      LHSTmp = Builder.CreateBitCast(LHS, tmp->getType());
+      wasCast = true;
+    }
+    
+    llvm::Value *tmp3 = Builder.CreateAnd(RHSTmp, tmp2);
+    llvm::Value *tmp4 = Builder.CreateAnd(LHSTmp, tmp);
+    llvm::Value *tmp5 = Builder.CreateOr(tmp3, tmp4, "cond");
+    if (wasCast)
+      tmp5 = Builder.CreateBitCast(tmp5, RHS->getType());
+
+    return tmp5;
+  }
+  
   // If this is a really simple expression (like x ? 4 : 5), emit this as a
   // select instead of as control flow.  We can only do this if it is cheap and
   // safe to evaluate the LHS and RHS unconditionally.

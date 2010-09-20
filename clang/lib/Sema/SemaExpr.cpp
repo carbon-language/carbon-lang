@@ -4222,15 +4222,47 @@ QualType Sema::CheckConditionalOperands(Expr *&Cond, Expr *&LHS, Expr *&RHS,
 
   // first, check the condition.
   if (!CondTy->isScalarType()) { // C99 6.5.15p2
-    Diag(Cond->getLocStart(), diag::err_typecheck_cond_expect_scalar)
-      << CondTy;
-    return QualType();
+    // OpenCL: Sec 6.3.i says the condition is allowed to be a vector or scalar.
+    // Throw an error if its not either.
+    if (getLangOptions().OpenCL) {
+      if (!CondTy->isVectorType()) {
+        Diag(Cond->getLocStart(), 
+             diag::err_typecheck_cond_expect_scalar_or_vector)
+          << CondTy;
+        return QualType();
+      }
+    }
+    else {
+      Diag(Cond->getLocStart(), diag::err_typecheck_cond_expect_scalar)
+        << CondTy;
+      return QualType();
+    }
   }
 
   // Now check the two expressions.
   if (LHSTy->isVectorType() || RHSTy->isVectorType())
     return CheckVectorOperands(QuestionLoc, LHS, RHS);
 
+  // OpenCL: If the condition is a vector, and both operands are scalar,
+  // attempt to implicity convert them to the vector type to act like the
+  // built in select.
+  if (getLangOptions().OpenCL && CondTy->isVectorType()) {
+    // Both operands should be of scalar type.
+    if (!LHSTy->isScalarType()) {
+      Diag(LHS->getLocStart(), diag::err_typecheck_cond_expect_scalar)
+        << CondTy;
+      return QualType();
+    }
+    if (!RHSTy->isScalarType()) {
+      Diag(RHS->getLocStart(), diag::err_typecheck_cond_expect_scalar)
+        << CondTy;
+      return QualType();
+    }
+    // Implicity convert these scalars to the type of the condition.
+    ImpCastExprToType(LHS, CondTy, CK_IntegralCast);
+    ImpCastExprToType(RHS, CondTy, CK_IntegralCast);
+  }
+  
   // If both operands have arithmetic type, do the usual arithmetic conversions
   // to find a common type: C99 6.5.15p3,5.
   if (LHSTy->isArithmeticType() && RHSTy->isArithmeticType()) {
