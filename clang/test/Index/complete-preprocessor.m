@@ -61,16 +61,16 @@ FOO(in,t) value;
 // CHECK-CC4: macro definition:{TypedText BAR} (70)
 // CHECK-CC4: macro definition:{TypedText FOO}{LeftParen (}{Placeholder a}{Comma , }{Placeholder b}{RightParen )} (70)
 // RUN: c-index-test -code-completion-at=%s:14:5 %s | FileCheck -check-prefix=CHECK-CC5 %s
-// CHECK-CC5: NotImplemented:{TypedText const} (60)
-// CHECK-CC5: NotImplemented:{TypedText double} (60)
-// CHECK-CC5: NotImplemented:{TypedText enum} (60)
+// CHECK-CC5: NotImplemented:{TypedText const} (50)
+// CHECK-CC5: NotImplemented:{TypedText double} (50)
+// CHECK-CC5: NotImplemented:{TypedText enum} (50)
 // CHECK-CC5: NotImplemented:{TypedText extern} (30)
-// CHECK-CC5: NotImplemented:{TypedText float} (60)
+// CHECK-CC5: NotImplemented:{TypedText float} (50)
 // CHECK-CC5: macro definition:{TypedText FOO}{LeftParen (}{Placeholder a}{Comma , }{Placeholder b}{RightParen )} (70)
-// CHECK-CC5: TypedefDecl:{TypedText id} (60)
+// CHECK-CC5: TypedefDecl:{TypedText id} (50)
 // CHECK-CC5: NotImplemented:{TypedText inline} (30)
-// CHECK-CC5: NotImplemented:{TypedText int} (60)
-// CHECK-CC5: NotImplemented:{TypedText long} (60)
+// CHECK-CC5: NotImplemented:{TypedText int} (50)
+// CHECK-CC5: NotImplemented:{TypedText long} (50)
 
 // Same tests as above, but with completion caching.
 // RUN: env CINDEXTEST_EDITING=1 CINDEXTEST_COMPLETION_CACHING=1 c-index-test -code-completion-at=%s:4:2 %s | FileCheck -check-prefix=CHECK-CC1 %s

@@ -640,7 +640,7 @@ void ResultBuilder::AdjustResultPriorityForDecl(Result &R) {
     if (ObjCMethodDecl *Method = dyn_cast<ObjCMethodDecl>(R.Declaration))
       if (PreferredSelector == Method->getSelector())
         R.Priority += CCD_SelectorMatch;
-
+  
   // If we have a preferred type, adjust the priority for results with exactly-
   // matching or nearly-matching types.
   if (!PreferredType.isNull()) {

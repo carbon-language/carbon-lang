@@ -46,7 +46,7 @@ void f5(float f) {
 // RUN: c-index-test -code-completion-at=%s:7:2 -Xclang -code-completion-patterns %s | FileCheck -check-prefix=CHECK-CC2 %s
 // CHECK-CC2: macro definition:{TypedText __VERSION__} (70)
 // CHECK-CC2: FunctionDecl:{ResultType int}{TypedText f}{LeftParen (}{Placeholder int}{RightParen )} (50)
-// CHECK-CC2: NotImplemented:{TypedText float} (60)
+// CHECK-CC2: NotImplemented:{TypedText float} (50)
 // CHECK-CC2: ParmDecl:{ResultType int}{TypedText j} (8)
 // CHECK-CC2: NotImplemented:{TypedText sizeof}{LeftParen (}{Placeholder expression-or-type}{RightParen )} (30)
 // RUN: c-index-test -code-completion-at=%s:11:16 -Xclang -code-completion-patterns %s | FileCheck -check-prefix=CHECK-CC4 %s
@@ -55,8 +55,8 @@ void f5(float f) {
 
 // RUN: c-index-test -code-completion-at=%s:19:3 -Xclang -code-completion-patterns %s | FileCheck -check-prefix=CHECK-CC6 %s
 // CHECK-CC6: FunctionDecl:{ResultType void}{TypedText f3}{LeftParen (}{Placeholder const char *, ...}{Text , NULL}{RightParen )} (50)
-// CHECK-CC6: NotImplemented:{TypedText void} (60)
-// CHECK-CC6: NotImplemented:{TypedText volatile} (60)
+// CHECK-CC6: NotImplemented:{TypedText void} (50)
+// CHECK-CC6: NotImplemented:{TypedText volatile} (50)
 
 // RUN: c-index-test -code-completion-at=%s:24:4 -Xclang -code-completion-patterns %s | FileCheck -check-prefix=CHECK-CC7 %s
 // RUN: env CINDEXTEST_EDITING=1 c-index-test -code-completion-at=%s:24:4 -Xclang -code-completion-patterns %s | FileCheck -check-prefix=CHECK-CC7 %s

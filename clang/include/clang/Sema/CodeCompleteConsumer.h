@@ -50,7 +50,7 @@ enum {
   /// \brief Priority for a non-type declaration.
   CCP_Declaration = 50,
   /// \brief Priority for a type.
-  CCP_Type = 60,
+  CCP_Type = CCP_Declaration,
   /// \brief Priority for a constant value (e.g., enumerator).
   CCP_Constant = 65,
   /// \brief Priority for a preprocessor macro.
@@ -606,7 +606,7 @@ public:
     
   void Destroy();
     
-  /// brief Determine a base priority for the given declaration.
+  /// \brief Determine a base priority for the given declaration.
   static unsigned getPriorityFromDecl(NamedDecl *ND);
     
 private:
