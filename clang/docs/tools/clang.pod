@@ -191,7 +191,6 @@ Allow loose type checking rules for implicit vector conversions.
 
 Enable the "Blocks" language feature.
 
-
 =item B<-fobjc-gc-only>
 
 Indicate that Objective-C code should be compiled in GC-only mode, which only
@@ -201,6 +200,22 @@ works when Objective-C Garbage Collection is enabled.
 
 Indicate that Objective-C code should be compiled in hybrid-GC mode, which works
 with both GC and non-GC mode.
+
+=item B<-fobjc-abi-version>=I<version>
+
+Select the Objective-C ABI version to use. Available versions are 1 (legacy
+"fragile" ABI), 2 (non-fragile ABI 1), and 3 (non-fragile ABI 2).
+
+=item B<-fobjc-nonfragile-abi-version>=I<version>
+
+Select the Objective-C non-fragile ABI version to use by default. This will only
+be used as the Objective-C ABI when the non-fragile ABI is enabled (either via
+-fobjc-nonfragile-abi, or because it is the platform default).
+
+=item B<-fobjc-nonfragile-abi>
+
+Enable use of the Objective-C non-fragile ABI. On platforms for which this is
+the default ABI, it can be disabled with B<-fno-objc-nonfragile-abi>.
 
 =back
 

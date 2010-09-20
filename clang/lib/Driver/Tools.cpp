@@ -1287,12 +1287,13 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
 
   // -fobjc-nonfragile-abi=0 is default.
   if (types::isObjC(InputType)) {
+    // Compute the Objective-C ABI "version" to use. Version numbers are
+    // slightly confusing for historical reasons:
+    //   1 - Traditional "fragile" ABI
+    //   2 - Non-fragile ABI, version 1
+    //   3 - Non-fragile ABI, version 2
     unsigned Version = 1;
-    if (Args.hasArg(options::OPT_fobjc_nonfragile_abi))
-      Version = 2;
-    else if (Args.hasArg(options::OPT_fobjc_nonfragile_abi2) ||
-             getToolChain().IsObjCNonFragileABIDefault())
-      Version = 3;
+    // If -fobjc-abi-version= is present, use that to set the version.
     if (Arg *A = Args.getLastArg(options::OPT_fobjc_abi_version_EQ)) {
       if (llvm::StringRef(A->getValue(Args)) == "1")
         Version = 1;
@@ -1302,6 +1303,29 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
         Version = 3;
       else
         D.Diag(clang::diag::err_drv_clang_unsupported) << A->getAsString(Args);
+    } else {
+      // Otherwise, determine if we are using the non-fragile ABI.
+      if (Args.hasFlag(options::OPT_fobjc_nonfragile_abi,
+                       options::OPT_fno_objc_nonfragile_abi,
+                       getToolChain().IsObjCNonFragileABIDefault())) {
+        // Determine the non-fragile ABI version to use.
+        unsigned NonFragileABIVersion = 2;
+
+        if (Arg *A = Args.getLastArg(
+              options::OPT_fobjc_nonfragile_abi_version_EQ)) {
+          if (llvm::StringRef(A->getValue(Args)) == "1")
+            NonFragileABIVersion = 1;
+          else if (llvm::StringRef(A->getValue(Args)) == "2")
+            NonFragileABIVersion = 2;
+          else
+            D.Diag(clang::diag::err_drv_clang_unsupported)
+              << A->getAsString(Args);
+        }
+
+        Version = 1 + NonFragileABIVersion;
+      } else {
+        Version = 1;
+      }
     }
   
     if (Version == 2 || Version == 3) {
