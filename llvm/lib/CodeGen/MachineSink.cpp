@@ -35,10 +35,7 @@ using namespace llvm;
 static cl::opt<bool> 
 SplitEdges("machine-sink-split",
            cl::desc("Split critical edges during machine sinking"),
-           cl::init(false), cl::Hidden);
-static cl::opt<unsigned>
-SplitLimit("split-limit",
-           cl::init(~0u), cl::Hidden);
+           cl::init(true), cl::Hidden);
 
 STATISTIC(NumSunk,      "Number of machine instructions sunk");
 STATISTIC(NumSplit,     "Number of critical edges split");
@@ -311,7 +308,7 @@ MachineBasicBlock *MachineSinking::SplitCriticalEdge(MachineInstr *MI,
     return 0;
 
   // Avoid breaking back edge. From == To means backedge for single BB loop.
-  if (!SplitEdges || NumSplit == SplitLimit || FromBB == ToBB)
+  if (!SplitEdges || FromBB == ToBB)
     return 0;
 
   // Check for backedges of more "complex" loops.
@@ -561,8 +558,6 @@ bool MachineSinking::SinkInstruction(MachineInstr *MI, bool &SawStore) {
     // BreakPHIEdge is true if all the uses are in the successor MBB being
     // sunken into and they are all PHI nodes. In this case, machine-sink must
     // break the critical edge first.
-    if (NumSplit == SplitLimit)
-      return false;
     MachineBasicBlock *NewSucc = SplitCriticalEdge(MI, ParentBlock,
                                                    SuccToSinkTo, BreakPHIEdge);
     if (!NewSucc) {
