@@ -1,20 +1,6 @@
 set(LLVM_NO_RTTI 1)
 
-set(LLVM_USED_LIBS clangBasic clangLex clangAST)
-
-set( LLVM_USED_LIBS
-  clangSerialization
-  clangFrontend
-  clangParse
-  clangSema
-  clangChecker
-  clangAnalysis
-  clangIndex
-  clangRewrite
-  clangAST
-  clangLex
-  clangBasic
-  )
+set(LLVM_USED_LIBS clangBasic clangAST)
 
 add_clang_library(clangIndex
   ASTLocation.cpp
