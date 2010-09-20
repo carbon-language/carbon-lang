@@ -2645,6 +2645,7 @@ static void AddClassMessageCompletions(Sema &SemaRef, Scope *S,
                                        ParsedType Receiver,
                                        IdentifierInfo **SelIdents,
                                        unsigned NumSelIdents,
+                                       bool AtArgumentExpression,
                                        bool IsSuper,
                                        ResultBuilder &Results);
 
@@ -2694,7 +2695,7 @@ void Sema::CodeCompleteDeclSpec(Scope *S, DeclSpec &DS,
                         Scope::AtCatchScope)) == 0) {
     ParsedType T = DS.getRepAsType();
     if (!T.get().isNull() && T.get()->isObjCObjectOrInterfaceType())
-      AddClassMessageCompletions(*this, S, T, 0, 0, false, Results); 
+      AddClassMessageCompletions(*this, S, T, 0, 0, false, false, Results); 
   }
 
   // Note that we intentionally suppress macro results here, since we do not
@@ -4295,7 +4296,8 @@ void Sema::CodeCompleteObjCMessageReceiver(Scope *S) {
 
 void Sema::CodeCompleteObjCSuperMessage(Scope *S, SourceLocation SuperLoc,
                                         IdentifierInfo **SelIdents,
-                                        unsigned NumSelIdents) {
+                                        unsigned NumSelIdents,
+                                        bool AtArgumentExpression) {
   ObjCInterfaceDecl *CDecl = 0;
   if (ObjCMethodDecl *CurMethod = getCurMethodDecl()) {
     // Figure out which interface we're in.
@@ -4319,6 +4321,7 @@ void Sema::CodeCompleteObjCSuperMessage(Scope *S, SourceLocation SuperLoc,
         = Owned(new (Context) ObjCSuperExpr(SuperLoc, SuperTy));
       return CodeCompleteObjCInstanceMessage(S, (Expr *)Super.get(),
                                              SelIdents, NumSelIdents,
+                                             AtArgumentExpression,
                                              /*IsSuper=*/true);
     }
 
@@ -4344,7 +4347,8 @@ void Sema::CodeCompleteObjCSuperMessage(Scope *S, SourceLocation SuperLoc,
       id.setIdentifier(Super, SuperLoc);
       ExprResult SuperExpr = ActOnIdExpression(S, SS, id, false, false);
       return CodeCompleteObjCInstanceMessage(S, (Expr *)SuperExpr.get(),
-                                             SelIdents, NumSelIdents);
+                                             SelIdents, NumSelIdents,
+                                             AtArgumentExpression);
     }
 
     // Fall through
@@ -4354,13 +4358,15 @@ void Sema::CodeCompleteObjCSuperMessage(Scope *S, SourceLocation SuperLoc,
   if (CDecl)
     Receiver = ParsedType::make(Context.getObjCInterfaceType(CDecl));
   return CodeCompleteObjCClassMessage(S, Receiver, SelIdents, 
-                                      NumSelIdents, /*IsSuper=*/true);
+                                      NumSelIdents, AtArgumentExpression,
+                                      /*IsSuper=*/true);
 }
 
 static void AddClassMessageCompletions(Sema &SemaRef, Scope *S, 
                                        ParsedType Receiver,
                                        IdentifierInfo **SelIdents,
                                        unsigned NumSelIdents,
+                                       bool AtArgumentExpression,
                                        bool IsSuper,
                                        ResultBuilder &Results) {
   typedef CodeCompletionResult Result;
@@ -4438,10 +4444,14 @@ static void AddClassMessageCompletions(Sema &SemaRef, Scope *S,
 void Sema::CodeCompleteObjCClassMessage(Scope *S, ParsedType Receiver,
                                         IdentifierInfo **SelIdents,
                                         unsigned NumSelIdents,
+                                        bool AtArgumentExpression,
                                         bool IsSuper) {
+  if (AtArgumentExpression)
+    return CodeCompleteOrdinaryName(S, PCC_Expression);
+
   ResultBuilder Results(*this);
-  AddClassMessageCompletions(*this, S, Receiver, SelIdents, NumSelIdents, IsSuper,
-                             Results);
+  AddClassMessageCompletions(*this, S, Receiver, SelIdents, NumSelIdents, 
+                             AtArgumentExpression, IsSuper, Results);
   HandleCodeCompleteResults(this, CodeCompleter, 
                             CodeCompletionContext::CCC_Other,
                             Results.data(), Results.size());
@@ -4450,7 +4460,11 @@ void Sema::CodeCompleteObjCClassMessage(Scope *S, ParsedType Receiver,
 void Sema::CodeCompleteObjCInstanceMessage(Scope *S, ExprTy *Receiver,
                                            IdentifierInfo **SelIdents,
                                            unsigned NumSelIdents,
+                                           bool AtArgumentExpression,
                                            bool IsSuper) {
+  if (AtArgumentExpression)
+    return CodeCompleteOrdinaryName(S, PCC_Expression);
+  
   typedef CodeCompletionResult Result;
   
   Expr *RecExpr = static_cast<Expr *>(Receiver);

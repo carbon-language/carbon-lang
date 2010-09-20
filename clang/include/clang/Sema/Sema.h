@@ -4351,14 +4351,17 @@ public:
   void CodeCompleteObjCMessageReceiver(Scope *S);
   void CodeCompleteObjCSuperMessage(Scope *S, SourceLocation SuperLoc,
                                     IdentifierInfo **SelIdents,
-                                    unsigned NumSelIdents);
+                                    unsigned NumSelIdents,
+                                    bool AtArgumentExpression);
   void CodeCompleteObjCClassMessage(Scope *S, ParsedType Receiver,
                                     IdentifierInfo **SelIdents,
                                     unsigned NumSelIdents,
+                                    bool AtArgumentExpression,
                                     bool IsSuper = false);
   void CodeCompleteObjCInstanceMessage(Scope *S, ExprTy *Receiver,
                                        IdentifierInfo **SelIdents,
                                        unsigned NumSelIdents,
+                                       bool AtArgumentExpression,
                                        bool IsSuper = false);
   void CodeCompleteObjCForCollection(Scope *S, 
                                      DeclGroupPtrTy IterationVar);

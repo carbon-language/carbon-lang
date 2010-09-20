@@ -2030,12 +2030,14 @@ Parser::ParseObjCMessageExpressionBody(SourceLocation LBracLoc,
 
   if (Tok.is(tok::code_completion)) {
     if (SuperLoc.isValid())
-      Actions.CodeCompleteObjCSuperMessage(getCurScope(), SuperLoc, 0, 0);
+      Actions.CodeCompleteObjCSuperMessage(getCurScope(), SuperLoc, 0, 0,
+                                           false);
     else if (ReceiverType)
-      Actions.CodeCompleteObjCClassMessage(getCurScope(), ReceiverType, 0, 0);
+      Actions.CodeCompleteObjCClassMessage(getCurScope(), ReceiverType, 0, 0,
+                                           false);
     else
       Actions.CodeCompleteObjCInstanceMessage(getCurScope(), ReceiverExpr,
-                                              0, 0);
+                                              0, 0, false);
     ConsumeCodeCompletionToken();
   }
   
@@ -2064,6 +2066,29 @@ Parser::ParseObjCMessageExpressionBody(SourceLocation LBracLoc,
 
       ConsumeToken(); // Eat the ':'.
       ///  Parse the expression after ':'
+      
+      if (Tok.is(tok::code_completion)) {
+        if (SuperLoc.isValid())
+          Actions.CodeCompleteObjCSuperMessage(getCurScope(), SuperLoc, 
+                                               KeyIdents.data(), 
+                                               KeyIdents.size(),
+                                               /*AtArgumentEpression=*/true);
+        else if (ReceiverType)
+          Actions.CodeCompleteObjCClassMessage(getCurScope(), ReceiverType,
+                                               KeyIdents.data(), 
+                                               KeyIdents.size(),
+                                               /*AtArgumentEpression=*/true);
+        else
+          Actions.CodeCompleteObjCInstanceMessage(getCurScope(), ReceiverExpr,
+                                                  KeyIdents.data(), 
+                                                  KeyIdents.size(),
+                                                  /*AtArgumentEpression=*/true);
+
+        ConsumeCodeCompletionToken();
+        SkipUntil(tok::r_square);
+        return ExprError();
+      }
+      
       ExprResult Res(ParseAssignmentExpression());
       if (Res.isInvalid()) {
         // We must manually skip to a ']', otherwise the expression skipper will
@@ -2081,16 +2106,21 @@ Parser::ParseObjCMessageExpressionBody(SourceLocation LBracLoc,
         if (SuperLoc.isValid())
           Actions.CodeCompleteObjCSuperMessage(getCurScope(), SuperLoc, 
                                                KeyIdents.data(), 
-                                               KeyIdents.size());
+                                               KeyIdents.size(),
+                                               /*AtArgumentEpression=*/false);
         else if (ReceiverType)
           Actions.CodeCompleteObjCClassMessage(getCurScope(), ReceiverType,
                                                KeyIdents.data(), 
-                                               KeyIdents.size());
+                                               KeyIdents.size(),
+                                               /*AtArgumentEpression=*/false);
         else
           Actions.CodeCompleteObjCInstanceMessage(getCurScope(), ReceiverExpr,
                                                   KeyIdents.data(), 
-                                                  KeyIdents.size());
+                                                  KeyIdents.size(),
+                                                /*AtArgumentEpression=*/false);
         ConsumeCodeCompletionToken();
+        SkipUntil(tok::r_square);
+        return ExprError();
       }
             
       // Check for another keyword selector.
