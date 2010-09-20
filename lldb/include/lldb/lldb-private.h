@@ -67,11 +67,6 @@ GetVersion ();
 const char *
 GetVoteAsCString (lldb::Vote vote);
 
-
-// The function below can be moved into lldb::Debugger when/if we get one
-ArchSpec &
-GetDefaultArchitecture ();
-
 } // namespace lldb_private
 
 

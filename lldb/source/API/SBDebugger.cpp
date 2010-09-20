@@ -303,7 +303,8 @@ SBDebugger::GetDefaultArchitecture (char *arch_name, size_t arch_name_len)
 {
     if (arch_name && arch_name_len)
     {
-        ArchSpec &default_arch = lldb_private::GetDefaultArchitecture ();
+        ArchSpec default_arch = lldb_private::Target::GetDefaultArchitecture ();
+
         if (default_arch.IsValid())
         {
             ::snprintf (arch_name, arch_name_len, "%s", default_arch.AsCString());
@@ -324,7 +325,7 @@ SBDebugger::SetDefaultArchitecture (const char *arch_name)
         ArchSpec arch (arch_name);
         if (arch.IsValid())
         {
-            lldb_private::GetDefaultArchitecture () = arch;
+            lldb_private::Target::SetDefaultArchitecture (arch);
             return true;
         }
     }
@@ -388,7 +389,7 @@ SBDebugger::CreateTargetWithFileAndArch (const char *filename, const char *archn
     if (m_opaque_sp)
     {
         FileSpec file (filename);
-        ArchSpec arch = lldb_private::GetDefaultArchitecture();
+        ArchSpec arch = lldb_private::Target::GetDefaultArchitecture ();
         TargetSP target_sp;
         Error error;
 
@@ -431,7 +432,7 @@ SBDebugger::CreateTarget (const char *filename)
     if (m_opaque_sp)
     {
         FileSpec file (filename);
-        ArchSpec arch = lldb_private::GetDefaultArchitecture();
+        ArchSpec arch = lldb_private::Target::GetDefaultArchitecture ();
         TargetSP target_sp;
         Error error;
 
@@ -593,12 +594,22 @@ SBDebugger::GetInternalVariableValue (const char *var_name, const char *debugger
 {
     SBStringList ret_value;
     lldb::SettableVariableType var_type;
+    lldb_private:Error err;
 
     lldb::UserSettingsControllerSP root_settings_controller = lldb_private::Debugger::GetSettingsController();
 
-    StringList value = root_settings_controller->GetVariable (var_name, var_type, debugger_instance_name);
-    for (unsigned i = 0; i != value.GetSize(); ++i)
-        ret_value.AppendString (value.GetStringAtIndex(i));
+    StringList value = root_settings_controller->GetVariable (var_name, var_type, debugger_instance_name, err);
+    
+    if (err.Success())
+    {
+        for (unsigned i = 0; i != value.GetSize(); ++i)
+            ret_value.AppendString (value.GetStringAtIndex(i));
+    }
+    else
+    {
+        ret_value.AppendString (err.AsCString());
+    }
+
 
     return ret_value;
 }
@@ -662,10 +673,10 @@ SBDebugger::SetUseExternalEditor (bool value)
 }
 
 bool
-SBDebugger::UseExternalEditor ()
+SBDebugger::GetUseExternalEditor ()
 {
     if (m_opaque_sp)
-        return m_opaque_sp->UseExternalEditor ();
+        return m_opaque_sp->GetUseExternalEditor ();
     else
         return false;
 }

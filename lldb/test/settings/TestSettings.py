@@ -61,8 +61,8 @@ class SettingsCommandTestCase(TestBase):
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 
         # Set the run-args and the env-vars.
-        self.runCmd('settings set process.run-args A B C')
-        self.runCmd('settings set process.env-vars ["MY_ENV_VAR"]=YES')
+        self.runCmd('settings set target.process.run-args A B C')
+        self.runCmd('settings set target.process.env-vars ["MY_ENV_VAR"]=YES')
 
         self.runCmd("run", RUN_SUCCEEDED)
 
@@ -76,18 +76,18 @@ class SettingsCommandTestCase(TestBase):
 
     @unittest2.expectedFailure
     # rdar://problem/8435794
-    # settings set process.output-path does not seem to work
+    # settings set target.process.output-path does not seem to work
     def test_set_output_path(self):
-        """Test that setting process.output-path for the launched process works."""
+        """Test that setting target.process.output-path for the launched process works."""
         self.buildDefault()
 
         exe = os.path.join(os.getcwd(), "a.out")
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 
         # Set the output-path and verify it is set.
-        self.runCmd("settings set process.output-path 'stdout.txt'")
-        self.expect("settings show process.output-path",
-            startstr = "process.output-path (string) = 'stdout.txt'")
+        self.runCmd("settings set target.process.output-path 'stdout.txt'")
+        self.expect("settings show target.process.output-path",
+            startstr = "target.process.output-path (string) = 'stdout.txt'")
 
         self.runCmd("run", RUN_SUCCEEDED)
 

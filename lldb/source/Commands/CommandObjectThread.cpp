@@ -63,7 +63,7 @@ lldb_private::DisplayThreadInfo
             bool already_shown = false;
             StackFrameSP frame_sp = thread->GetStackFrameAtIndex(0);
             SymbolContext frame_sc(frame_sp->GetSymbolContext (eSymbolContextLineEntry));
-            if (interpreter.GetDebugger().UseExternalEditor() && frame_sc.line_entry.file && frame_sc.line_entry.line != 0)
+            if (interpreter.GetDebugger().GetUseExternalEditor() && frame_sc.line_entry.file && frame_sc.line_entry.line != 0)
             {
                 already_shown = Host::OpenFileInExternalEditor (frame_sc.line_entry.file, frame_sc.line_entry.line);
             }

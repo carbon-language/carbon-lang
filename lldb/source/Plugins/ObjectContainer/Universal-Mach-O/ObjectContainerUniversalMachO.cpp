@@ -13,6 +13,7 @@
 #include "lldb/Core/Module.h"
 #include "lldb/Core/PluginManager.h"
 #include "lldb/Symbol/ObjectFile.h"
+#include "lldb/Target/Target.h"
 
 using namespace lldb;
 using namespace lldb_private;
@@ -204,7 +205,7 @@ ObjectContainerUniversalMachO::GetObjectFile (const FileSpec *file)
     // architecture:
     if (!m_module->GetArchitecture().IsValid())
     {
-        arch = lldb_private::GetDefaultArchitecture ();
+        arch = Target::GetDefaultArchitecture ();
         if (!arch.IsValid())
             arch = LLDB_ARCH_DEFAULT;
     }

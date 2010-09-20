@@ -1851,7 +1851,7 @@ Process::GetSettingsController (bool finish)
 //--------------------------------------------------------------
 
 Process::SettingsController::SettingsController () :
-    UserSettingsController ("process", Debugger::GetSettingsController())
+    UserSettingsController ("process", Target::GetSettingsController())
 {
     m_default_settings.reset (new ProcessInstanceSettings (*this, false,
                                                            InstanceSettings::GetDefaultName().AsCString()));
@@ -1991,7 +1991,8 @@ ProcessInstanceSettings::CopyInstanceSettings (const lldb::InstanceSettingsSP &n
 void
 ProcessInstanceSettings::GetInstanceSettingsValue (const SettingEntry &entry,
                                                    const ConstString &var_name,
-                                                   StringList &value)
+                                                   StringList &value,
+                                                   Error &err)
 {
     if (var_name == RunArgsVarName())
     {
@@ -2038,7 +2039,7 @@ ProcessInstanceSettings::GetInstanceSettingsValue (const SettingEntry &entry,
             value.AppendString ("false");
     }
     else
-        value.AppendString ("unrecognized variable name");
+        err.SetErrorStringWithFormat ("unrecognized variable name '%s'", var_name.AsCString());
 }
 
 const ConstString

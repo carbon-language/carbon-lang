@@ -63,7 +63,8 @@ public:
     void
     GetInstanceSettingsValue (const SettingEntry &entry,
                               const ConstString &var_name,
-                              StringList &value);
+                              StringList &value,
+                              Error &err);
 
     uint32_t
     GetTerminalWidth () const
@@ -90,6 +91,7 @@ public:
             m_prompt.assign (p);
         else
             m_prompt.assign ("(lldb) ");
+        BroadcastPromptChange (m_instance_name, m_prompt.c_str());
     }
         
     lldb::ScriptLanguage 
@@ -102,6 +104,20 @@ public:
     SetScriptLanguage (lldb::ScriptLanguage script_lang)
     {
         m_script_lang = script_lang;
+    }
+
+    bool
+    GetUseExternalEditor () const
+    {
+        return m_use_external_editor;
+    }
+
+    bool
+    SetUseExternalEditor (bool use_external_editor_p)
+    {
+        bool old_value = m_use_external_editor;
+        m_use_external_editor = use_external_editor_p;
+        return old_value;
     }
 
 protected:
@@ -128,11 +144,15 @@ protected:
     static const ConstString &
     TermWidthVarName ();
   
+    static const ConstString &
+    UseExternalEditorVarName ();
+
 private:
 
     uint32_t m_term_width;
     std::string m_prompt;
     lldb::ScriptLanguage m_script_lang;
+    bool m_use_external_editor;
 };
 
 
@@ -275,20 +295,6 @@ public:
     static lldb::DebuggerSP
     FindDebuggerWithID (lldb::user_id_t id);
     
-    bool
-    SetUseExternalEditor (bool value)
-    {
-        bool old_value = m_use_external_editor;
-        m_use_external_editor = value;
-        return old_value;
-    }
-    
-    bool
-    UseExternalEditor ()
-    {
-        return m_use_external_editor;
-    }
-
     static lldb::DebuggerSP
     FindDebuggerWithInstanceName (const ConstString &instance_name);
 

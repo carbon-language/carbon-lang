@@ -1064,8 +1064,9 @@ ThreadInstanceSettings::CopyInstanceSettings (const lldb::InstanceSettingsSP &ne
 
 void
 ThreadInstanceSettings::GetInstanceSettingsValue (const SettingEntry &entry,
-                                                   const ConstString &var_name,
-                                                   StringList &value)
+                                                  const ConstString &var_name,
+                                                  StringList &value,
+                                                  Error &err)
 {
     if (var_name == StepAvoidRegexpVarName())
     {
@@ -1076,10 +1077,10 @@ ThreadInstanceSettings::GetInstanceSettingsValue (const SettingEntry &entry,
             regexp_text.append ("\"");
             value.AppendString (regexp_text.c_str());
         }
-        
+
     }
     else
-        value.AppendString ("unrecognized variable name");
+        err.SetErrorStringWithFormat ("unrecognized variable name '%s'", var_name.AsCString());
 }
 
 const ConstString

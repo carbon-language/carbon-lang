@@ -53,7 +53,8 @@ public:
     void
     GetInstanceSettingsValue (const SettingEntry &entry,
                               const ConstString &var_name,
-                              StringList &value);
+                              StringList &value,
+                              Error &err);
 
     RegularExpression *
     GetSymbolsToAvoidRegexp()

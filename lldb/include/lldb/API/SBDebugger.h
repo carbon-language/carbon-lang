@@ -113,7 +113,7 @@ public:
     SetUseExternalEditor (bool input);
     
     bool 
-    UseExternalEditor ();
+    GetUseExternalEditor ();
 
     bool
     GetDefaultArchitecture (char *arch_name, size_t arch_name_len);

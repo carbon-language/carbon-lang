@@ -21,6 +21,7 @@
 #include "lldb/Core/Broadcaster.h"
 #include "lldb/Core/Event.h"
 #include "lldb/Core/ModuleList.h"
+#include "lldb/Core/UserSettingsController.h"
 #include "lldb/Symbol/SymbolContext.h"
 #include "lldb/Target/ABI.h"
 #include "lldb/Target/ExecutionContextScope.h"
@@ -31,12 +32,105 @@
 
 namespace lldb_private {
 
+class TargetInstanceSettings : public InstanceSettings
+{
+public:
+
+    TargetInstanceSettings (UserSettingsController &owner, bool live_instance = true, const char *name = NULL);
+
+    TargetInstanceSettings (const TargetInstanceSettings &rhs);
+
+    virtual
+    ~TargetInstanceSettings ();
+
+    TargetInstanceSettings&
+    operator= (const TargetInstanceSettings &rhs);
+
+    void
+    UpdateInstanceSettingsVariable (const ConstString &var_name,
+                                    const char *index_value,
+                                    const char *value,
+                                    const ConstString &instance_name,
+                                    const SettingEntry &entry,
+                                    lldb::VarSetOperationType op,
+                                    Error &err,
+                                    bool pending);
+
+    void
+    GetInstanceSettingsValue (const SettingEntry &entry,
+                              const ConstString &var_name,
+                              StringList &value,
+                              Error &err);
+
+protected:
+
+    void
+    CopyInstanceSettings (const lldb::InstanceSettingsSP &new_settings,
+                          bool pending);
+
+    const ConstString
+    CreateInstanceName ();
+
+private:
+
+};
+
 class Target :
     public Broadcaster,
-    public ExecutionContextScope
+    public ExecutionContextScope,
+    public TargetInstanceSettings
 {
 public:
     friend class TargetList;
+
+    class SettingsController : public UserSettingsController
+    {
+    public:
+        SettingsController ();
+
+        virtual
+        ~SettingsController ();
+
+        bool
+        SetGlobalVariable (const ConstString &var_name,
+                           const char *index_value,
+                           const char *value,
+                           const SettingEntry &entry,
+                           const lldb::VarSetOperationType op,
+                           Error&err);
+
+        bool
+        GetGlobalVariable (const ConstString &var_name,
+                           StringList &value,
+                           Error &err);
+
+        static SettingEntry global_settings_table[];
+        static SettingEntry instance_settings_table[];
+
+    protected:
+
+        lldb::InstanceSettingsSP
+        CreateInstanceSettings (const char *instance_name);
+
+        static const ConstString &
+        DefArchVarName ();
+
+    private:
+
+        // Class-wide settings.
+        ArchSpec m_default_architecture;
+
+        DISALLOW_COPY_AND_ASSIGN (SettingsController);
+    };
+
+    static lldb::UserSettingsControllerSP
+    GetSettingsController (bool finish = false);
+
+    static ArchSpec
+    GetDefaultArchitecture ();
+
+    static void
+    SetDefaultArchitecture (ArchSpec new_arch);
 
     //------------------------------------------------------------------
     /// Broadcaster event bits definitions.

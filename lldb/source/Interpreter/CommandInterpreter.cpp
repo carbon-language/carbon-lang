@@ -138,16 +138,7 @@ CommandInterpreter::LoadCommandDictionary ()
 
     // Non-CommandObjectCrossref commands can now be created.
 
-    lldb::ScriptLanguage script_language;
-    lldb::SettableVariableType var_type = lldb::eSetVarTypeString;
-    StringList value;
-    const char *dbg_name = GetDebugger().GetInstanceName().AsCString();
-    StreamString var_name;
-    var_name.Printf ("[%s].script-lang", dbg_name);
-    value = Debugger::GetSettingsController()->GetVariable (var_name.GetData(), var_type, 
-                                                            m_debugger.GetInstanceName().AsCString());
-    bool success;
-    script_language = Args::StringToScriptLanguage (value.GetStringAtIndex(0), lldb::eScriptLanguageDefault, &success);
+    lldb::ScriptLanguage script_language = m_debugger.GetScriptLanguage();
     
     m_command_dict["apropos"]   = CommandObjectSP (new CommandObjectApropos (*this));
     m_command_dict["breakpoint"]= CommandObjectSP (new CommandObjectMultiwordBreakpoint (*this));
@@ -778,21 +769,13 @@ CommandInterpreter::~CommandInterpreter ()
 const char *
 CommandInterpreter::GetPrompt ()
 {
-    lldb::SettableVariableType var_type;
-    const char *instance_name = GetDebugger().GetInstanceName().AsCString();
-    StreamString var_name;
-    var_name.Printf ("[%s].prompt", instance_name);
-    return Debugger::GetSettingsController()->GetVariable (var_name.GetData(), var_type, instance_name).GetStringAtIndex(0);
+    return m_debugger.GetPrompt();
 }
 
 void
 CommandInterpreter::SetPrompt (const char *new_prompt)
 {
-    const char *instance_name = GetDebugger().GetInstanceName().AsCString();
-    StreamString name_str;
-    name_str.Printf ("[%s].prompt", instance_name);
-    Debugger::GetSettingsController()->SetVariable (name_str.GetData(), new_prompt, lldb::eVarSetOperationAssign, 
-                                                    false, m_debugger.GetInstanceName().AsCString());
+    m_debugger.SetPrompt (new_prompt);
 }
 
 void

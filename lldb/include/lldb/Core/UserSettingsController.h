@@ -74,13 +74,15 @@ public:
 
     virtual bool
     GetGlobalVariable (const ConstString &var_name, 
-                       StringList &value);
+                       StringList &value,
+                       Error &err);
     
     // End of pure virtual functions.
     StringList
     GetVariable (const char *full_dot_name, 
                  lldb::SettableVariableType &var_type,
-                 const char *debugger_instance_name);
+                 const char *debugger_instance_name,
+                 Error &err);
 
     Error
     SetVariable (const char *full_dot_name, 
@@ -371,7 +373,8 @@ public:
     virtual void
     GetInstanceSettingsValue (const SettingEntry &entry,
                               const ConstString &var_name,
-                              StringList &value) = 0;
+                              StringList &value,
+                              Error &err) = 0;
 
     virtual void
     CopyInstanceSettings (const lldb::InstanceSettingsSP &new_settings,

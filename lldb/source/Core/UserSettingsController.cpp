@@ -57,7 +57,8 @@ bool
 UserSettingsController::GetGlobalVariable 
 (
     const ConstString &var_name, 
-    StringList &value
+    StringList &value,
+    Error &err
 )
 {
     return false;
@@ -92,38 +93,33 @@ UserSettingsController::FinalizeSettingsController (lldb::UserSettingsController
 void
 UserSettingsController::InitializeGlobalVariables ()
 {
-    static bool global_initialized = false;
     int num_entries;
     const char *prefix = GetLevelName().AsCString();
 
-    if (! global_initialized)
+    num_entries = m_settings.global_settings.size();
+    for (int i = 0; i < num_entries; ++i)
     {
-        num_entries = m_settings.global_settings.size();
-        for (int i = 0; i < num_entries; ++i)
+        SettingEntry &entry = m_settings.global_settings[i];
+        if (entry.default_value != NULL)
         {
-            SettingEntry &entry = m_settings.global_settings[i];
-            if (entry.default_value != NULL)
-            {
-                StreamString full_name;
-                if (prefix[0] != '\0')
-                    full_name.Printf ("%s.%s", prefix, entry.var_name);
-                else
-                    full_name.Printf ("%s", entry.var_name);
-                SetVariable (full_name.GetData(), entry.default_value, lldb::eVarSetOperationAssign, false, "");
-            }
-            else if ((entry.var_type == lldb::eSetVarTypeEnum)
-                     && (entry.enum_values != NULL))
-            {
-                StreamString full_name;
-                if (prefix[0] != '\0')
-                    full_name.Printf ("%s.%s", prefix, entry.var_name);
-                else
-                    full_name.Printf ("%s", entry.var_name);
-                SetVariable (full_name.GetData(), entry.enum_values[0].string_value, lldb::eVarSetOperationAssign,
-                             false, "");
-            }
+            StreamString full_name;
+            if (prefix[0] != '\0')
+                full_name.Printf ("%s.%s", prefix, entry.var_name);
+            else
+                full_name.Printf ("%s", entry.var_name);
+            SetVariable (full_name.GetData(), entry.default_value, lldb::eVarSetOperationAssign, false, "");
         }
-        global_initialized = true;
+        else if ((entry.var_type == lldb::eSetVarTypeEnum)
+                 && (entry.enum_values != NULL))
+        {
+            StreamString full_name;
+            if (prefix[0] != '\0')
+                full_name.Printf ("%s.%s", prefix, entry.var_name);
+            else
+                full_name.Printf ("%s", entry.var_name);
+            SetVariable (full_name.GetData(), entry.enum_values[0].string_value, lldb::eVarSetOperationAssign,
+                         false, "");
+        }
     }
 }
 
@@ -501,7 +497,8 @@ UserSettingsController::GetVariable
 (
     const char *full_dot_name, 
     lldb::SettableVariableType &var_type, 
-    const char *debugger_instance_name
+    const char *debugger_instance_name,
+    Error &err
 )
 {
     Args names = UserSettingsController::BreakNameIntoPieces (full_dot_name);
@@ -519,7 +516,7 @@ UserSettingsController::GetVariable
     if ((prefix != m_settings.level_name)
         && (m_settings.level_name.GetLength () > 0))
     {
-        value.AppendString ("Invalid variable name");
+        err.SetErrorString ("Invalid variable name");
         return value;
     }
 
@@ -548,7 +545,7 @@ UserSettingsController::GetVariable
                         new_name += '.';
                     new_name += names.GetArgumentAtIndex (j);
                 }
-                return child->GetVariable (new_name.c_str(), var_type, debugger_instance_name);
+                return child->GetVariable (new_name.c_str(), var_type, debugger_instance_name, err);
             }
         }
 
@@ -565,7 +562,7 @@ UserSettingsController::GetVariable
 
                 if (current_settings != NULL)
                 {
-                    current_settings->GetInstanceSettingsValue (*instance_entry, const_var_name, value);
+                    current_settings->GetInstanceSettingsValue (*instance_entry, const_var_name, value, err);
                 }
                 else
                 {
@@ -578,14 +575,14 @@ UserSettingsController::GetVariable
                     if (pos != m_pending_settings.end())
                     {
                         lldb::InstanceSettingsSP settings_sp = pos->second;
-                        settings_sp->GetInstanceSettingsValue (*instance_entry, const_var_name,  value);
+                        settings_sp->GetInstanceSettingsValue (*instance_entry, const_var_name,  value, err);
                     }
                     else 
                     {
                         if (m_settings.level_name.GetLength() > 0)
                         {
                             // No valid instance name; assume they want the default settings.
-                            m_default_settings->GetInstanceSettingsValue (*instance_entry, const_var_name, value);
+                            m_default_settings->GetInstanceSettingsValue (*instance_entry, const_var_name, value, err);
                         }
                         else
                         {
@@ -598,13 +595,13 @@ UserSettingsController::GetVariable
                             ConstString dbg_name (debugger_instance_name);
                             InstanceSettings *dbg_settings = FindSettingsForInstance (dbg_name);
                             if (dbg_settings)
-                                dbg_settings->GetInstanceSettingsValue (*instance_entry, const_var_name, value);
+                                dbg_settings->GetInstanceSettingsValue (*instance_entry, const_var_name, value, err);
                         }
                     }
                 }
             }
             else
-                value.AppendString ("Invalid variable name");
+                err.SetErrorString ("Invalid variable name");
         }
     }
     else
@@ -613,18 +610,18 @@ UserSettingsController::GetVariable
         if ((global_entry == NULL)
             && (instance_entry == NULL))
         {
-            value.AppendString ("Invalid variable name");
+            err.SetErrorString ("Invalid variable name");
         }
         else if (global_entry)
         {
             var_type = global_entry->var_type;
-            GetGlobalVariable (const_var_name, value);
+            GetGlobalVariable (const_var_name, value, err);
         }
         else if (instance_entry)
         {
             var_type = instance_entry->var_type;
             if (m_settings.level_name.GetLength() > 0)
-                m_default_settings->GetInstanceSettingsValue  (*instance_entry, const_var_name, value);
+                m_default_settings->GetInstanceSettingsValue  (*instance_entry, const_var_name, value, err);
             else
             {
                 // We're at the Debugger level;  use the debugger's instance settings.
@@ -636,7 +633,7 @@ UserSettingsController::GetVariable
                 ConstString dbg_name (tmp_name.GetData());
                 InstanceSettings *dbg_settings = FindSettingsForInstance (dbg_name);
                 if (dbg_settings)
-                    dbg_settings->GetInstanceSettingsValue (*instance_entry, const_var_name, value);
+                    dbg_settings->GetInstanceSettingsValue (*instance_entry, const_var_name, value, err);
             }
         }
     }
@@ -719,7 +716,7 @@ UserSettingsController::CopyDefaultSettings (const lldb::InstanceSettingsSP &act
         SettingEntry &entry = m_settings.instance_settings[i];
         ConstString var_name (entry.var_name);
         StringList value;
-        m_default_settings->GetInstanceSettingsValue (entry, var_name, value);
+        m_default_settings->GetInstanceSettingsValue (entry, var_name, value, err);
 
         std::string value_str;
         if (value.GetSize() == 1)
@@ -780,7 +777,8 @@ UserSettingsController::GetAllDefaultSettingValues (StreamString &result_stream)
         SettingEntry &entry = m_settings.instance_settings[i];
         ConstString var_name (entry.var_name);
         StringList tmp_value;
-        m_default_settings->GetInstanceSettingsValue (entry, var_name, tmp_value);
+        Error err;
+        m_default_settings->GetInstanceSettingsValue (entry, var_name, tmp_value, err);
 
         StreamString value_string;
 
@@ -819,7 +817,8 @@ UserSettingsController::GetAllPendingSettingValues (StreamString &result_stream)
             SettingEntry &entry = m_settings.instance_settings[i];
             ConstString var_name (entry.var_name);
             StringList tmp_value;
-            settings_sp->GetInstanceSettingsValue (entry, var_name, tmp_value);
+            Error err;
+            settings_sp->GetInstanceSettingsValue (entry, var_name, tmp_value, err);
 
             StreamString value_str;
 
@@ -885,7 +884,8 @@ UserSettingsController::GetAllInstanceVariableValues (CommandInterpreter &interp
             SettingEntry &entry = m_settings.instance_settings[i];
             const ConstString var_name (entry.var_name);
             StringList tmp_value;
-            settings->GetInstanceSettingsValue (entry, var_name, tmp_value);
+            Error err;
+            settings->GetInstanceSettingsValue (entry, var_name, tmp_value, err);
             StreamString tmp_value_str;
 
             if (tmp_value.GetSize() == 0)
@@ -1362,7 +1362,7 @@ UserSettingsController::GetAllVariableValues (CommandInterpreter &interpreter,
         else
             full_var_name.Printf ("%s", entry.var_name);
         StringList value = root->GetVariable (full_var_name.GetData(), var_type, 
-                                              interpreter.GetDebugger().GetInstanceName().AsCString());
+                                              interpreter.GetDebugger().GetInstanceName().AsCString(), err);
         description.Clear();
         if (value.GetSize() == 1)   
             description.Printf ("%s (%s) = '%s'", full_var_name.GetData(), GetTypeString (entry.var_type),

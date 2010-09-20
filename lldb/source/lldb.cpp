@@ -79,8 +79,9 @@ lldb_private::Initialize ()
         SymbolVendorMacOSX::Initialize();
 #endif
 	Debugger::GetSettingsController (false);
+        Target::GetSettingsController (false);
 	Process::GetSettingsController (false);
-    Thread::GetSettingsController (false);
+        Thread::GetSettingsController (false);
 #ifdef __linux__
         ProcessLinux::Initialize();
 #endif
@@ -115,9 +116,10 @@ lldb_private::Terminate ()
     SymbolVendorMacOSX::Terminate();
 #endif
 
-    Process::GetSettingsController (true);
-    Debugger::GetSettingsController (true);
     Thread::GetSettingsController (true);
+    Process::GetSettingsController (true);
+    Target::GetSettingsController (true);
+    Debugger::GetSettingsController (true);
     
 #ifdef __linux__
     ProcessLinux::Terminate();
@@ -134,14 +136,6 @@ lldb_private::GetVersion ()
 
     return g_version_string;
 }
-
-ArchSpec &
-lldb_private::GetDefaultArchitecture ()
-{
-    static ArchSpec g_default_arch;
-    return g_default_arch;
-}
-
 
 const char *
 lldb_private::GetVoteAsCString (lldb::Vote vote)

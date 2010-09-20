@@ -272,7 +272,7 @@ CommandObjectSettingsShow::~CommandObjectSettingsShow()
 
 
 bool
-CommandObjectSettingsShow::Execute (                       Args& command,
+CommandObjectSettingsShow::Execute (Args& command,
                                     CommandReturnObject &result)
 {
     UserSettingsControllerSP root_settings = Debugger::GetSettingsController ();
@@ -285,13 +285,13 @@ CommandObjectSettingsShow::Execute (                       Args& command,
         // The user requested to see the value of a particular variable.
         lldb::SettableVariableType var_type;
         const char *variable_name = command.GetArgumentAtIndex (0);
-        StringList value = root_settings->GetVariable (variable_name, var_type, 
-                                                       m_interpreter.GetDebugger().GetInstanceName().AsCString());
+        StringList value = root_settings->GetVariable (variable_name, var_type,
+                                                       m_interpreter.GetDebugger().GetInstanceName().AsCString(),
+                                                       err);
         
-        if (value.GetSize() == 0)
+        if (err.Fail ())
         {
-            result.AppendErrorWithFormat ("Unable to find variable named '%s'. "
-                                          "Try 'show' to see all variable values.\n", variable_name);
+            result.AppendError (err.AsCString());
             result.SetStatus (eReturnStatusFailed);
               
          }
@@ -304,8 +304,10 @@ CommandObjectSettingsShow::Execute (                       Args& command,
                 tmp_str.Printf (" (%s)", UserSettingsController::GetTypeString (var_type));
                 type_name = (char *) tmp_str.GetData();
             }
-            
-            if (value.GetSize() == 1)
+
+            if (value.GetSize() == 0)
+                result.AppendMessageWithFormat ("%s%s = ''\n", variable_name, type_name);
+            else if (value.GetSize() == 1)
                 result.AppendMessageWithFormat ("%s%s = '%s'\n", variable_name, type_name, value.GetStringAtIndex (0));
             else
             {

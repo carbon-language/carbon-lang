@@ -35,6 +35,7 @@ using namespace lldb_private;
 //----------------------------------------------------------------------
 Target::Target(Debugger &debugger) :
     Broadcaster("Target"),
+    TargetInstanceSettings (*(Target::GetSettingsController().get())),
     m_debugger (debugger),
     m_images(),
     m_section_load_list (),
@@ -743,3 +744,233 @@ Target::GetScratchClangASTContext()
 {
     return m_scratch_ast_context_ap.get();
 }
+
+lldb::UserSettingsControllerSP
+Target::GetSettingsController (bool finish)
+{
+    static lldb::UserSettingsControllerSP g_settings_controller (new SettingsController);
+    static bool initialized = false;
+
+    if (!initialized)
+    {
+        initialized = UserSettingsController::InitializeSettingsController (g_settings_controller,
+                                                            Target::SettingsController::global_settings_table,
+                                                            Target::SettingsController::instance_settings_table);
+    }
+
+    if (finish)
+    {
+        UserSettingsController::FinalizeSettingsController (g_settings_controller);
+        g_settings_controller.reset();
+        initialized = false;
+    }
+
+    return g_settings_controller;
+}
+
+ArchSpec
+Target::GetDefaultArchitecture ()
+{
+    lldb::UserSettingsControllerSP settings_controller = Target::GetSettingsController();
+    lldb::SettableVariableType var_type;
+    Error err;
+    StringList result = settings_controller->GetVariable ("target.default-arch", var_type, "[]", err);
+
+    const char *default_name = "";
+    if (result.GetSize() == 1 && err.Success())
+        default_name = result.GetStringAtIndex (0);
+
+    ArchSpec default_arch (default_name);
+    return default_arch;
+}
+
+void
+Target::SetDefaultArchitecture (ArchSpec new_arch)
+{
+    if (new_arch.IsValid())
+        Target::GetSettingsController ()->SetVariable ("target.default-arch", new_arch.AsCString(),
+                                                       lldb::eVarSetOperationAssign, false, "[]");
+}
+
+//--------------------------------------------------------------
+// class Target::SettingsController
+//--------------------------------------------------------------
+
+Target::SettingsController::SettingsController () :
+    UserSettingsController ("target", Debugger::GetSettingsController()),
+    m_default_architecture ()
+{
+    m_default_settings.reset (new TargetInstanceSettings (*this, false,
+                                                          InstanceSettings::GetDefaultName().AsCString()));
+}
+
+Target::SettingsController::~SettingsController ()
+{
+}
+
+lldb::InstanceSettingsSP
+Target::SettingsController::CreateInstanceSettings (const char *instance_name)
+{
+    TargetInstanceSettings *new_settings = new TargetInstanceSettings (*(Target::GetSettingsController().get()),
+                                                                       false, instance_name);
+    lldb::InstanceSettingsSP new_settings_sp (new_settings);
+    return new_settings_sp;
+}
+
+const ConstString &
+Target::SettingsController::DefArchVarName ()
+{
+    static ConstString def_arch_var_name ("default-arch");
+
+    return def_arch_var_name;
+}
+
+bool
+Target::SettingsController::SetGlobalVariable (const ConstString &var_name,
+                                               const char *index_value,
+                                               const char *value,
+                                               const SettingEntry &entry,
+                                               const lldb::VarSetOperationType op,
+                                               Error&err)
+{
+    if (var_name == DefArchVarName())
+    {
+        ArchSpec tmp_spec (value);
+        if (tmp_spec.IsValid())
+            m_default_architecture = tmp_spec;
+        else
+          err.SetErrorStringWithFormat ("'%s' is not a valid architecture.", value);
+    }
+    return true;
+}
+
+
+bool
+Target::SettingsController::GetGlobalVariable (const ConstString &var_name,
+                                               StringList &value,
+                                               Error &err)
+{
+    if (var_name == DefArchVarName())
+    {
+        value.AppendString (m_default_architecture.AsCString());
+        return true;
+    }
+    else
+        err.SetErrorStringWithFormat ("unrecognized variable name '%s'", var_name.AsCString());
+
+    return false;
+}
+
+//--------------------------------------------------------------
+// class TargetInstanceSettings
+//--------------------------------------------------------------
+
+TargetInstanceSettings::TargetInstanceSettings (UserSettingsController &owner, bool live_instance, 
+                                                const char *name) :
+    InstanceSettings (owner, (name == NULL ? InstanceSettings::InvalidName().AsCString() : name), live_instance)
+{
+    // CopyInstanceSettings is a pure virtual function in InstanceSettings; it therefore cannot be called
+    // until the vtables for TargetInstanceSettings are properly set up, i.e. AFTER all the initializers.
+    // For this reason it has to be called here, rather than in the initializer or in the parent constructor.
+    // This is true for CreateInstanceName() too.
+
+    if (GetInstanceName () == InstanceSettings::InvalidName())
+    {
+        ChangeInstanceName (std::string (CreateInstanceName().AsCString()));
+        m_owner.RegisterInstanceSettings (this);
+    }
+
+    if (live_instance)
+    {
+        const lldb::InstanceSettingsSP &pending_settings = m_owner.FindPendingSettings (m_instance_name);
+        CopyInstanceSettings (pending_settings,false);
+        //m_owner.RemovePendingSettings (m_instance_name);
+    }
+}
+
+TargetInstanceSettings::TargetInstanceSettings (const TargetInstanceSettings &rhs) :
+    InstanceSettings (*(Target::GetSettingsController().get()), CreateInstanceName().AsCString())
+{
+    if (m_instance_name != InstanceSettings::GetDefaultName())
+    {
+        const lldb::InstanceSettingsSP &pending_settings = m_owner.FindPendingSettings (m_instance_name);
+        CopyInstanceSettings (pending_settings,false);
+        //m_owner.RemovePendingSettings (m_instance_name);
+    }
+}
+
+TargetInstanceSettings::~TargetInstanceSettings ()
+{
+}
+
+TargetInstanceSettings&
+TargetInstanceSettings::operator= (const TargetInstanceSettings &rhs)
+{
+    if (this != &rhs)
+    {
+    }
+
+    return *this;
+}
+
+
+void
+TargetInstanceSettings::UpdateInstanceSettingsVariable (const ConstString &var_name,
+                                                        const char *index_value,
+                                                        const char *value,
+                                                        const ConstString &instance_name,
+                                                        const SettingEntry &entry,
+                                                        lldb::VarSetOperationType op,
+                                                        Error &err,
+                                                        bool pending)
+{
+    // Currently 'target' does not have any instance settings.
+}
+
+void
+TargetInstanceSettings::CopyInstanceSettings (const lldb::InstanceSettingsSP &new_settings,
+                                               bool pending)
+{
+    // Currently 'target' does not have any instance settings.
+}
+
+void
+TargetInstanceSettings::GetInstanceSettingsValue (const SettingEntry &entry,
+                                                  const ConstString &var_name,
+                                                  StringList &value,
+                                                  Error &err)
+{
+    // Currently 'target' does not have any instance settings.
+}
+
+const ConstString
+TargetInstanceSettings::CreateInstanceName ()
+{
+    static int instance_count = 1;
+    StreamString sstr;
+
+    sstr.Printf ("target_%d", instance_count);
+    ++instance_count;
+
+    const ConstString ret_val (sstr.GetData());
+    return ret_val;
+}
+
+//--------------------------------------------------
+// Target::SettingsController Variable Tables
+//--------------------------------------------------
+
+SettingEntry
+Target::SettingsController::global_settings_table[] =
+{
+  //{ "var-name",    var-type  ,        "default", enum-table, init'd, hidden, "help-text"},
+    { "default-arch", eSetVarTypeString, "x86_64", NULL,       false,  false,   "Default architecture to choose, when there's a choice." },
+    {  NULL, eSetVarTypeNone, NULL, NULL, 0, 0, NULL }
+};
+
+SettingEntry
+Target::SettingsController::instance_settings_table[] =
+{
+  //{ "var-name",    var-type,              "default",      enum-table, init'd, hidden, "help-text"},
+    {  NULL, eSetVarTypeNone, NULL, NULL, 0, 0, NULL }
+};

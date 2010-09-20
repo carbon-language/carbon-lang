@@ -1248,7 +1248,8 @@ DebuggerInstanceSettings::DebuggerInstanceSettings
     InstanceSettings (owner, (name == NULL ? InstanceSettings::InvalidName().AsCString() : name), live_instance),
     m_term_width (80),
     m_prompt (),
-    m_script_lang ()
+    m_script_lang (),
+    m_use_external_editor (false)
 {
     // CopyInstanceSettings is a pure virtual function in InstanceSettings; it therefore cannot be called
     // until the vtables for DebuggerInstanceSettings are properly set up, i.e. AFTER all the initializers.
@@ -1272,7 +1273,8 @@ DebuggerInstanceSettings::DebuggerInstanceSettings
 DebuggerInstanceSettings::DebuggerInstanceSettings (const DebuggerInstanceSettings &rhs) :
     InstanceSettings (*(Debugger::GetSettingsController().get()), CreateInstanceName ().AsCString()),
     m_prompt (rhs.m_prompt),
-    m_script_lang (rhs.m_script_lang)
+    m_script_lang (rhs.m_script_lang),
+    m_use_external_editor (rhs.m_use_external_editor)
 {
     const lldb::InstanceSettingsSP &pending_settings = m_owner.FindPendingSettings (m_instance_name);
     CopyInstanceSettings (pending_settings, false);
@@ -1291,6 +1293,7 @@ DebuggerInstanceSettings::operator= (const DebuggerInstanceSettings &rhs)
         m_term_width = rhs.m_term_width;
         m_prompt = rhs.m_prompt;
         m_script_lang = rhs.m_script_lang;
+        m_use_external_editor = rhs.m_use_external_editor;
     }
 
     return *this;
@@ -1366,12 +1369,17 @@ DebuggerInstanceSettings::UpdateInstanceSettingsVariable (const ConstString &var
             m_term_width = ::strtoul (value, NULL, 0);
         }
     }
+    else if (var_name == UseExternalEditorVarName ())
+    {
+        UserSettingsController::UpdateBooleanVariable (op, m_use_external_editor, value, err);
+    }
 }
 
 void
 DebuggerInstanceSettings::GetInstanceSettingsValue (const SettingEntry &entry,
                                                     const ConstString &var_name,
-                                                    StringList &value)
+                                                    StringList &value,
+                                                    Error &err)
 {
     if (var_name == PromptVarName())
     {
@@ -1388,6 +1396,15 @@ DebuggerInstanceSettings::GetInstanceSettingsValue (const SettingEntry &entry,
         width_str.Printf ("%d", m_term_width);
         value.AppendString (width_str.GetData());
     }
+    else if (var_name == UseExternalEditorVarName())
+    {
+        if (m_use_external_editor)
+            value.AppendString ("true");
+        else
+            value.AppendString ("false");
+    }
+    else
+        err.SetErrorStringWithFormat ("unrecognized variable name '%s'", var_name.AsCString());
 }
 
 void
@@ -1414,7 +1431,9 @@ DebuggerInstanceSettings::CopyInstanceSettings (const lldb::InstanceSettingsSP &
         BroadcastPromptChange (new_name, m_prompt.c_str());
     }
   
+    m_term_width = new_debugger_settings->m_term_width;
     m_script_lang = new_debugger_settings->m_script_lang;
+    m_use_external_editor = new_debugger_settings->m_use_external_editor;
 }
 
 
@@ -1492,6 +1511,14 @@ DebuggerInstanceSettings::TermWidthVarName ()
     return term_width_var_name;
 }
 
+const ConstString &
+DebuggerInstanceSettings::UseExternalEditorVarName ()
+{
+    static ConstString use_external_editor_var_name ("use-external-editor");
+
+    return use_external_editor_var_name;
+}
+
 //--------------------------------------------------
 // SettingsController Variable Tables
 //--------------------------------------------------
@@ -1515,5 +1542,6 @@ Debugger::SettingsController::instance_settings_table[] =
     { "term-width" , eSetVarTypeInt, "80"    , NULL,       false , false , "The maximum number of columns to use for displaying text." },
     { "script-lang" , eSetVarTypeString, "python", NULL,       false,  false,  "The script language to be used for evaluating user-written scripts." },
     { "prompt"      , eSetVarTypeString, "(lldb)", NULL,       false,  false,  "The debugger command line prompt displayed for the user." },
+    { "use-external-editor", eSetVarTypeBool, "false", NULL,   false,  false,  "Whether to use an external editor or not." },
     {  NULL, eSetVarTypeNone, NULL, NULL, 0, 0, NULL }
 };
