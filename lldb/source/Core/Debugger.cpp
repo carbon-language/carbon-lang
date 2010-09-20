@@ -1311,7 +1311,7 @@ DebuggerInstanceSettings::ValidTermWidthValue (const char *value, Error err)
         char *end = NULL;
         const uint32_t width = ::strtoul (value, &end, 0);
         
-        if (end && end == '\0')
+        if (end && end[0] == '\0')
         {
             if (width >= 10 || width <= 1024)
                 valid = true;
