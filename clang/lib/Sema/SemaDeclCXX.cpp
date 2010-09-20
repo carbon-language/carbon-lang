@@ -4458,10 +4458,14 @@ void Sema::DefineImplicitDefaultConstructor(SourceLocation CurrentLocation,
     Diag(CurrentLocation, diag::note_member_synthesized_at) 
       << CXXConstructor << Context.getTagDeclType(ClassDecl);
     Constructor->setInvalidDecl();
-  } else {
-    Constructor->setUsed();
-    MarkVTableUsed(CurrentLocation, ClassDecl);
+    return;
   }
+
+  SourceLocation Loc = Constructor->getLocation();
+  Constructor->setBody(new (Context) CompoundStmt(Context, 0, 0, Loc, Loc));
+
+  Constructor->setUsed();
+  MarkVTableUsed(CurrentLocation, ClassDecl);
 }
 
 CXXDestructorDecl *Sema::DeclareImplicitDestructor(CXXRecordDecl *ClassDecl) {
@@ -4568,6 +4572,9 @@ void Sema::DefineImplicitDestructor(SourceLocation CurrentLocation,
     Destructor->setInvalidDecl();
     return;
   }
+
+  SourceLocation Loc = Destructor->getLocation();
+  Destructor->setBody(new (Context) CompoundStmt(Context, 0, 0, Loc, Loc));
 
   Destructor->setUsed();
   MarkVTableUsed(CurrentLocation, ClassDecl);
