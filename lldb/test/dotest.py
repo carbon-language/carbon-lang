@@ -202,6 +202,26 @@ def setupSysPath():
     sys.path[1:1] = [lldbPath]
 
 
+def doDelay(delta):
+    """Delaying startup for delta-seconds to facilitate debugger attachment."""
+    def alarm_handler(*args):
+        raise Exception("timeout")
+
+    signal.signal(signal.SIGALRM, alarm_handler)
+    signal.alarm(delta)
+    sys.stdout.write("pid=%d\n" % os.getpid())
+    sys.stdout.write("Enter RET to proceed (or timeout after %d seconds):" %
+                     delta)
+    sys.stdout.flush()
+    try:
+        text = sys.stdin.readline()
+    except:
+        text = ""
+    signal.alarm(0)
+    sys.stdout.write("proceeding...\n")
+    pass
+
+
 def visit(prefix, dir, names):
     """Visitor function for os.path.walk(path, visit, arg)."""
 
@@ -219,6 +239,44 @@ def visit(prefix, dir, names):
             suite.addTests(unittest2.defaultTestLoader.loadTestsFromName(base))
 
 
+def lldbLoggings():
+    """Check and do lldb loggings if necessary."""
+
+    # Turn on logging for debugging purposes if ${LLDB_LOG} environment variable is
+    # defined.  Use ${LLDB_LOG} to specify the log file.
+    ci = lldb.DBG.GetCommandInterpreter()
+    res = lldb.SBCommandReturnObject()
+    if ("LLDB_LOG" in os.environ):
+        if ("LLDB_LOG_OPTION" in os.environ):
+            lldb_log_option = os.environ["LLDB_LOG_OPTION"]
+        else:
+            lldb_log_option = "event process"
+        ci.HandleCommand(
+            "log enable -f " + os.environ["LLDB_LOG"] + " lldb " + lldb_log_option,
+            res)
+        if not res.Succeeded():
+            raise Exception('log enable failed (check LLDB_LOG env variable.')
+    # Ditto for gdb-remote logging if ${GDB_REMOTE_LOG} environment variable is defined.
+    # Use ${GDB_REMOTE_LOG} to specify the log file.
+    if ("GDB_REMOTE_LOG" in os.environ):
+        if ("GDB_REMOTE_LOG_OPTION" in os.environ):
+            gdb_remote_log_option = os.environ["GDB_REMOTE_LOG_OPTION"]
+        else:
+            gdb_remote_log_option = "packets"
+        ci.HandleCommand(
+            "log enable -f " + os.environ["GDB_REMOTE_LOG"] + " process.gdb-remote "
+            + gdb_remote_log_option,
+            res)
+        if not res.Succeeded():
+            raise Exception('log enable failed (check GDB_REMOTE_LOG env variable.')
+
+
+############################################
+#                                          #
+# Execution of the test driver starts here #
+#                                          #
+############################################
+
 #
 # Start the actions by first parsing the options while setting up the test
 # directories, followed by setting up the search paths for lldb utilities;
@@ -231,21 +289,7 @@ setupSysPath()
 # If '-d' is specified, do a delay of 10 seconds for the debugger to attach.
 #
 if delay:
-    def alarm_handler(*args):
-        raise Exception("timeout")
-
-    signal.signal(signal.SIGALRM, alarm_handler)
-    signal.alarm(10)
-    sys.stdout.write("pid=" + str(os.getpid()) + '\n')
-    sys.stdout.write("Enter RET to proceed (or timeout after 10 seconds):")
-    sys.stdout.flush()
-    try:
-        text = sys.stdin.readline()
-    except:
-        text = ""
-    signal.alarm(0)
-    sys.stdout.write("proceeding...\n")
-    pass
+    doDelay(10)
 
 #
 # Walk through the testdirs while collecting test cases.
@@ -254,6 +298,8 @@ for testdir in testdirs:
     os.path.walk(testdir, visit, 'Test')
 
 # Now that we have loaded all the test cases, run the whole test suite.
+
+# First, write out the number of collected test cases.
 err.writeln(separator)
 err.writeln("Collected %d test%s" % (suite.countTestCases(),
                                      suite.countTestCases() != 1 and "s" or ""))
@@ -268,33 +314,8 @@ atexit.register(lambda: lldb.SBDebugger.Terminate())
 # Create a singleton SBDebugger in the lldb namespace.
 lldb.DBG = lldb.SBDebugger.Create()
 
-# Turn on logging for debugging purposes if ${LLDB_LOG} environment variable is
-# defined.  Use ${LLDB_LOG} to specify the log file.
-ci = lldb.DBG.GetCommandInterpreter()
-res = lldb.SBCommandReturnObject()
-if ("LLDB_LOG" in os.environ):
-    if ("LLDB_LOG_OPTION" in os.environ):
-        lldb_log_option = os.environ["LLDB_LOG_OPTION"]
-    else:
-        lldb_log_option = "event process"
-    ci.HandleCommand(
-        "log enable -f " + os.environ["LLDB_LOG"] + " lldb " + lldb_log_option,
-        res)
-    if not res.Succeeded():
-        raise Exception('log enable failed (check LLDB_LOG env variable.')
-# Ditto for gdb-remote logging if ${GDB_REMOTE_LOG} environment variable is defined.
-# Use ${GDB_REMOTE_LOG} to specify the log file.
-if ("GDB_REMOTE_LOG" in os.environ):
-    if ("GDB_REMOTE_LOG_OPTION" in os.environ):
-        gdb_remote_log_option = os.environ["GDB_REMOTE_LOG_OPTION"]
-    else:
-        gdb_remote_log_option = "packets"
-    ci.HandleCommand(
-        "log enable -f " + os.environ["GDB_REMOTE_LOG"] + " process.gdb-remote "
-        + gdb_remote_log_option,
-        res)
-    if not res.Succeeded():
-        raise Exception('log enable failed (check GDB_REMOTE_LOG env variable.')
+# Turn on lldb loggings if necessary.
+lldbLoggings()
 
 # Install the control-c handler.
 unittest2.signals.installHandler()
@@ -302,6 +323,8 @@ unittest2.signals.installHandler()
 # Invoke the default TextTestRunner to run the test suite.
 result = unittest2.TextTestRunner(verbosity=verbose).run(suite)
 
+# Terminate the test suite if ${LLDB_TESTSUITE_FORCE_FINISH} is defined.
+# This should not be necessary now.
 if ("LLDB_TESTSUITE_FORCE_FINISH" in os.environ):
     import subprocess
     print "Terminating Test suite..."
