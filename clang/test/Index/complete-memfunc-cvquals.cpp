@@ -60,22 +60,22 @@ void Foo::bingo() volatile {
 
 // Check implicit member access expressions.
 // RUN: c-index-test -code-completion-at=%s:29:2 %s | FileCheck -check-prefix=CHECK-IMPLICIT-NOQUALS %s
-// CHECK-IMPLICIT-NOQUALS: CXXMethod:{ResultType void}{TypedText babble}{LeftParen (}{RightParen )}{Informative  const volatile} (15)
-// CHECK-IMPLICIT-NOQUALS: CXXMethod:{ResultType void}{TypedText bar}{LeftParen (}{RightParen )} (14)
-// CHECK-IMPLICIT-NOQUALS: CXXMethod:{ResultType void}{TypedText baz}{LeftParen (}{RightParen )}{Informative  const} (15)
-// CHECK-IMPLICIT-NOQUALS: CXXMethod:{ResultType void}{TypedText bingo}{LeftParen (}{RightParen )}{Informative  volatile} (15)
+// CHECK-IMPLICIT-NOQUALS: CXXMethod:{ResultType void}{TypedText babble}{LeftParen (}{RightParen )}{Informative  const volatile} (20)
+// CHECK-IMPLICIT-NOQUALS: CXXMethod:{ResultType void}{TypedText bar}{LeftParen (}{RightParen )} (19)
+// CHECK-IMPLICIT-NOQUALS: CXXMethod:{ResultType void}{TypedText baz}{LeftParen (}{RightParen )}{Informative  const} (20)
+// CHECK-IMPLICIT-NOQUALS: CXXMethod:{ResultType void}{TypedText bingo}{LeftParen (}{RightParen )}{Informative  volatile} (20)
 
 // RUN: c-index-test -code-completion-at=%s:33:1 %s | FileCheck -check-prefix=CHECK-IMPLICIT-CONST %s
-// CHECK-IMPLICIT-CONST: CXXMethod:{ResultType void}{TypedText babble}{LeftParen (}{RightParen )}{Informative  const volatile} (15)
+// CHECK-IMPLICIT-CONST: CXXMethod:{ResultType void}{TypedText babble}{LeftParen (}{RightParen )}{Informative  const volatile} (20)
 // CHECK-IMPLICIT-CONST-NOT: bar
-// CHECK-IMPLICIT-CONST: CXXMethod:{ResultType void}{TypedText baz}{LeftParen (}{RightParen )}{Informative  const} (14)
+// CHECK-IMPLICIT-CONST: CXXMethod:{ResultType void}{TypedText baz}{LeftParen (}{RightParen )}{Informative  const} (19)
 // CHECK-IMPLICIT-CONST-NOT: bingo
 // CHECK-IMPLICIT-CONST: theend
 
 // RUN: c-index-test -code-completion-at=%s:37:1 %s | FileCheck -check-prefix=CHECK-IMPLICIT-VOLATILE %s
-// CHECK-IMPLICIT-VOLATILE: CXXMethod:{ResultType void}{TypedText babble}{LeftParen (}{RightParen )}{Informative  const volatile} (15)
+// CHECK-IMPLICIT-VOLATILE: CXXMethod:{ResultType void}{TypedText babble}{LeftParen (}{RightParen )}{Informative  const volatile} (20)
 // CHECK-IMPLICIT-VOLATILE-NOT: baz
-// CHECK-IMPLICIT-VOLATILE: CXXMethod:{ResultType void}{TypedText bingo}{LeftParen (}{RightParen )}{Informative  volatile} (14)
+// CHECK-IMPLICIT-VOLATILE: CXXMethod:{ResultType void}{TypedText bingo}{LeftParen (}{RightParen )}{Informative  volatile} (19)
 
 // RUN: c-index-test -code-completion-at=%s:4:17 %s | FileCheck -check-prefix=CHECK-CVQUAL-AFTER %s
 // CHECK-CVQUAL-AFTER: NotImplemented:{TypedText const} (30)

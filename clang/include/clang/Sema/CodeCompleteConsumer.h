@@ -70,11 +70,6 @@ enum {
 enum {
   /// \brief The result is in a base class.
   CCD_InBaseClass = 2,
-  /// \brief The result is a type match against void.
-  ///
-  /// Since everything converts to "void", we don't give as drastic an 
-  /// adjustment for matching void.
-  CCD_VoidMatch = -5,
   /// \brief The result is a C++ non-static member function whose qualifiers
   /// exactly match the object type on which the member function can be called.
   CCD_ObjectQualifierMatch = -1,

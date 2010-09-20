@@ -54,7 +54,7 @@ void f5(float f) {
 // CHECK-CC4: VarDecl:{ResultType struct X}{TypedText f1} (50) (deprecated)
 
 // RUN: c-index-test -code-completion-at=%s:19:3 -Xclang -code-completion-patterns %s | FileCheck -check-prefix=CHECK-CC6 %s
-// CHECK-CC6: FunctionDecl:{ResultType void}{TypedText f3}{LeftParen (}{Placeholder const char *, ...}{Text , NULL}{RightParen )} (45)
+// CHECK-CC6: FunctionDecl:{ResultType void}{TypedText f3}{LeftParen (}{Placeholder const char *, ...}{Text , NULL}{RightParen )} (50)
 // CHECK-CC6: NotImplemented:{TypedText void} (60)
 // CHECK-CC6: NotImplemented:{TypedText volatile} (60)
 

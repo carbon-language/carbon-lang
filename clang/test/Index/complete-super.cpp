@@ -25,8 +25,8 @@ void B::bar(float real) {
 
 // RUN: c-index-test -code-completion-at=%s:20:3 %s | FileCheck -check-prefix=CHECK-BAR-UNQUAL %s
 // CHECK-BAR-UNQUAL: CXXMethod:{Text A::}{TypedText bar}{LeftParen (}{Placeholder real}{RightParen )} (8)
-// CHECK-BAR-UNQUAL: CXXMethod:{ResultType void}{TypedText bar}{LeftParen (}{Placeholder float real}{RightParen )} (14)
-// CHECK-BAR-UNQUAL: CXXMethod:{ResultType void}{Text A::}{TypedText bar}{LeftParen (}{Placeholder double x}{RightParen )} (16)
+// CHECK-BAR-UNQUAL: CXXMethod:{ResultType void}{TypedText bar}{LeftParen (}{Placeholder float real}{RightParen )} (19)
+// CHECK-BAR-UNQUAL: CXXMethod:{ResultType void}{Text A::}{TypedText bar}{LeftParen (}{Placeholder double x}{RightParen )} (21)
 
 // RUN: c-index-test -code-completion-at=%s:16:6 %s | FileCheck -check-prefix=CHECK-FOO-QUAL %s
 // CHECK-FOO-QUAL: CXXMethod:{TypedText foo}{LeftParen (}{Placeholder a}{Comma , }{Placeholder b}{RightParen )} (8)

@@ -625,12 +625,9 @@ void ResultBuilder::AdjustResultPriorityForPreferredType(Result &R) {
   
   CanQualType TC = SemaRef.Context.getCanonicalType(T);
   // Check for exactly-matching types (modulo qualifiers).
-  if (SemaRef.Context.hasSameUnqualifiedType(PreferredType, TC)) {
-    if (PreferredType->isVoidType())
-      R.Priority += CCD_VoidMatch;
-    else
-      R.Priority /= CCF_ExactTypeMatch;
-  } // Check for nearly-matching types, based on classification of each.
+  if (SemaRef.Context.hasSameUnqualifiedType(PreferredType, TC))
+    R.Priority /= CCF_ExactTypeMatch;
+  // Check for nearly-matching types, based on classification of each.
   else if ((getSimplifiedTypeClass(PreferredType)
                                                == getSimplifiedTypeClass(TC)) &&
            !(PreferredType->isEnumeralType() && TC->isEnumeralType()))
@@ -2571,12 +2568,6 @@ void Sema::CodeCompleteOrdinaryName(Scope *S,
     break;
 
   case PCC_Statement:
-    // For statements that are expressions, we prefer to call 'void' functions 
-    // rather than functions that return a result, since then the result would
-    // be ignored.
-    Results.setPreferredType(Context.VoidTy);
-    // Fall through
-      
   case PCC_ParenthesizedExpression:
   case PCC_Expression:
   case PCC_ForInit:
