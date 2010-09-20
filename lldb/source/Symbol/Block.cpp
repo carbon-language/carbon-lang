@@ -236,6 +236,17 @@ Block::DumpSymbolContext(Stream *s)
     s->Printf(", Block{0x%8.8x}", GetID());
 }
 
+void
+Block::DumpAddressRanges (Stream *s, lldb::addr_t base_addr)
+{
+    if (!m_ranges.empty())
+    {
+        std::vector<VMRange>::const_iterator pos, end = m_ranges.end();
+        for (pos = m_ranges.begin(); pos != end; ++pos)
+            pos->Dump (s, base_addr);
+    }
+}
+
 bool
 Block::Contains (addr_t range_offset) const
 {

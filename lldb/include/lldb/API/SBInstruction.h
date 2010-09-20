@@ -46,6 +46,16 @@ public:
     void
     Print (FILE *out);
 
+    //bool
+    //GetDescription (lldb::SBStream &description);
+
+    // The following function gets called by Python when a user tries to print
+    // an object of this class.  It takes no arguments and returns a
+    // PyObject * representing a char * (and it must be named "__repr__");
+
+    //PyObject *
+    //__repr__ ();
+
 private:
 
     //lldb_private::Disassembler::Instruction::SharedPtr  m_opaque_sp;

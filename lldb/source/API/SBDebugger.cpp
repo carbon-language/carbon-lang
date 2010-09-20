@@ -25,6 +25,7 @@
 #include "lldb/API/SBInputReader.h"
 #include "lldb/API/SBProcess.h"
 #include "lldb/API/SBSourceManager.h"
+#include "lldb/API/SBStream.h"
 #include "lldb/API/SBStringList.h"
 #include "lldb/API/SBTarget.h"
 #include "lldb/API/SBThread.h"
@@ -669,3 +670,26 @@ SBDebugger::UseExternalEditor ()
         return false;
 }
 
+bool
+SBDebugger::GetDescription (SBStream &description)
+{
+    if (m_opaque_sp)
+    {
+        const char *name = m_opaque_sp->GetInstanceName().AsCString();
+        lldb::user_id_t id = m_opaque_sp->GetID();
+        description.Printf ("Debugger (instance: '%s', id: %d)", name, id);
+    }
+    else
+        description.Printf ("No value");
+    
+    return true;
+}
+
+
+PyObject *
+SBDebugger::__repr__ ()
+{
+    SBStream description;
+    GetDescription (description);
+    return PyString_FromString (description.GetData());
+}

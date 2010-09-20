@@ -30,6 +30,7 @@
 #include "lldb/API/SBCommandReturnObject.h"
 #include "lldb/API/SBEvent.h"
 #include "lldb/API/SBThread.h"
+#include "lldb/API/SBStream.h"
 #include "lldb/API/SBStringList.h"
 
 using namespace lldb;
@@ -466,3 +467,29 @@ SBProcess::get() const
     return m_opaque_sp.get();
 }
 
+bool
+SBProcess::GetDescription (SBStream &description)
+{
+    if (m_opaque_sp)
+    {
+        char path[PATH_MAX];
+        GetTarget().GetExecutable().GetPath (path, sizeof(path));
+        description.Printf ("Process {pid: %d, executable %s\n", (int) GetProcessID(), path);
+        description.Printf ("         instance name: %s, state: %s, thread cnt: %d}", 
+                            m_opaque_sp->GetInstanceName().AsCString(), 
+                            SBDebugger::StateAsCString (GetState()), 
+                            GetNumThreads());
+    }
+    else
+        description.Printf ("No value");
+
+    return true;
+}
+
+PyObject *
+SBProcess::__repr__ ()
+{
+    SBStream description;
+    GetDescription (description);
+    return PyString_FromString (description.GetData());
+}

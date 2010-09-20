@@ -9,6 +9,7 @@
 
 #include "lldb/API/SBAddress.h"
 #include "lldb/API/SBProcess.h"
+#include "lldb/API/SBStream.h"
 #include "lldb/Core/Address.h"
 
 using namespace lldb;
@@ -136,3 +137,24 @@ SBAddress::operator*() const
 }
 
 
+bool
+SBAddress::GetDescription (SBStream &description)
+{
+    if (m_opaque_ap.get())
+      {
+        m_opaque_ap->DumpDebug (description.get());
+      }
+    else
+        description.Printf ("No value");
+
+    return true;
+}
+
+PyObject *
+SBAddress::__repr__ ()
+{
+    SBStream description;
+    description.ref();            // Make sure it contains a valid StreamString.
+    GetDescription (description);
+    return PyString_FromString (description.GetData());
+}

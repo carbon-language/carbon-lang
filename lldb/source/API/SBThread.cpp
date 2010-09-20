@@ -11,6 +11,7 @@
 
 #include "lldb/API/SBSymbolContext.h"
 #include "lldb/API/SBFileSpec.h"
+#include "lldb/API/SBStream.h"
 #include "lldb/Core/Debugger.h"
 #include "lldb/Core/Stream.h"
 #include "lldb/Core/StreamFile.h"
@@ -411,4 +412,27 @@ lldb_private::Thread &
 SBThread::operator*()
 {
     return *m_opaque_sp;
+}
+
+bool
+SBThread::GetDescription (SBStream &description)
+{
+    if (m_opaque_sp)
+    {
+        m_opaque_sp->DumpInfo (description.ref(), true, true, true, LLDB_INVALID_INDEX32);
+        description.Printf (" %d frames, (instance name: %s)", GetNumFrames(), 
+                            m_opaque_sp->GetInstanceName().AsCString());
+    }
+    else
+        description.Printf ("No value");
+    
+    return true;
+}
+
+PyObject *
+SBThread::__repr__ ()
+{
+    SBStream description;
+    GetDescription (description);
+    return PyString_FromString (description.GetData());
 }

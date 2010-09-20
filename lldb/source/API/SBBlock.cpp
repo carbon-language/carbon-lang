@@ -9,8 +9,10 @@
 
 #include "lldb/API/SBBlock.h"
 #include "lldb/API/SBFileSpec.h"
+#include "lldb/API/SBStream.h"
 #include "lldb/Symbol/Block.h"
 #include "lldb/Symbol/Function.h"
+#include "lldb/Symbol/SymbolContext.h"
 
 using namespace lldb;
 using namespace lldb_private;
@@ -132,4 +134,36 @@ SBBlock::GetFirstChild ()
 }
 
 
+bool
+SBBlock::GetDescription (SBStream &description)
+{
+    if (m_opaque_ptr)
+      {
+        lldb::user_id_t id = m_opaque_ptr->GetID();
+        description.Printf ("Block: {id: %d} ", id);
+        if (IsInlined())
+          {
+            description.Printf (" (inlined, '%s') ", GetInlinedName());
+          }
+        lldb_private::SymbolContext sc;
+        m_opaque_ptr->CalculateSymbolContext (&sc);
+        if (sc.function)
+          {
+            m_opaque_ptr->DumpAddressRanges (description.get(), 
+                                             sc.function->GetAddressRange().GetBaseAddress().GetFileAddress());
+          }
+      }
+    else
+        description.Printf ("No value");
+    
+    return true;
+}
 
+PyObject *
+SBBlock::__repr__ ()
+{
+    SBStream description;
+    description.ref();
+    GetDescription (description);
+    return PyString_FromString (description.GetData());
+}

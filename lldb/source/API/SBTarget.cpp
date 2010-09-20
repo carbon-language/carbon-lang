@@ -13,6 +13,7 @@
 
 #include "lldb/API/SBFileSpec.h"
 #include "lldb/API/SBModule.h"
+#include "lldb/API/SBStream.h"
 #include "lldb/Breakpoint/BreakpointID.h"
 #include "lldb/Breakpoint/BreakpointIDList.h"
 #include "lldb/Breakpoint/BreakpointList.h"
@@ -499,4 +500,26 @@ SBTarget::Disassemble (const char *function_name, const char *module_name)
                                    false,
                                    out_stream);
     }
+}
+
+bool
+SBTarget::GetDescription (SBStream &description)
+{
+    if (m_opaque_sp)
+      {
+        m_opaque_sp->Dump (description.get());
+      }
+    else
+        description.Printf ("No value");
+    
+    return true;
+}
+
+PyObject *
+SBTarget::__repr__ ()
+{
+    SBStream description;
+    description.ref();
+    GetDescription (description);
+    return PyString_FromString (description.GetData());
 }

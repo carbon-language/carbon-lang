@@ -68,11 +68,18 @@ public:
     bool
     IsResolved ();
 
-    void
-    GetDescription (FILE *f, const char *description_level);
+    bool
+    GetDescription (const char *description_level, lldb::SBStream &description);
 
     SBBreakpoint
     GetBreakpoint ();
+
+    // The following function gets called by Python when a user tries to print
+    // an object of this class.  It takes no arguments and returns a
+    // PyObject * representing a char * (and it must be named "__repr__");
+
+    PyObject *
+    __repr__ ();
 
 private:
     friend class SBBreakpoint;

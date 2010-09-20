@@ -11,6 +11,7 @@
 #include "lldb/API/SBAddress.h"
 #include "lldb/API/SBFileSpec.h"
 #include "lldb/API/SBFileSpec.h"
+#include "lldb/API/SBStream.h"
 #include "lldb/Core/Module.h"
 
 using namespace lldb;
@@ -127,3 +128,24 @@ SBModule::ResolveSymbolContextForAddress (const SBAddress& addr, uint32_t resolv
     return sb_sc;
 }
 
+bool
+SBModule::GetDescription (SBStream &description)
+{
+    if (m_opaque_sp)
+    {
+        m_opaque_sp->Dump (description.get());
+    }
+    else
+        description.Printf ("No value");
+
+    return true;
+}
+
+PyObject *
+SBModule::__repr__ ()
+{
+    SBStream description;
+    description.ref();
+    GetDescription (description);
+    return PyString_FromString (description.GetData());
+}

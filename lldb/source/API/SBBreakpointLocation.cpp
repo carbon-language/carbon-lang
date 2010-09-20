@@ -7,9 +7,15 @@
 //
 //===----------------------------------------------------------------------===//
 
+// In order to guarantee correct working with Python, Python.h *MUST* be
+// the *FIRST* header file included:
+
+#include <Python.h>
+
 #include "lldb/API/SBBreakpointLocation.h"
 #include "lldb/API/SBDefines.h"
 #include "lldb/API/SBDebugger.h"
+#include "lldb/API/SBStream.h"
 
 #include "lldb/lldb-types.h"
 #include "lldb/lldb-defines.h"
@@ -191,12 +197,9 @@ SBBreakpointLocation::SetLocation (const lldb::BreakpointLocationSP &break_loc_s
     m_opaque_sp = break_loc_sp;
 }
 
-void
-SBBreakpointLocation::GetDescription (FILE *f, const char *description_level)
+bool
+SBBreakpointLocation::GetDescription (const char *description_level, SBStream &description)
 {
-    if (f == NULL)
-        return;
-
     if (m_opaque_sp)
     {
         DescriptionLevel level;
@@ -209,11 +212,22 @@ SBBreakpointLocation::GetDescription (FILE *f, const char *description_level)
         else
             level = eDescriptionLevelBrief;
 
-        StreamFile str (f);
-
-        m_opaque_sp->GetDescription (&str, level);
-        str.EOL();
+        m_opaque_sp->GetDescription (description.get(), level);
+        description.get()->EOL();
     }
+    else
+        description.Printf ("No value");
+
+    return true;
+}
+
+PyObject *
+SBBreakpointLocation::__repr__ ()
+{
+    SBStream description;
+    description.ref();
+    GetDescription ("full", description);
+    return PyString_FromString (description.GetData());
 }
 
 SBBreakpoint

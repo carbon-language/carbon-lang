@@ -9,6 +9,7 @@
 
 #include "lldb/API/SBCompileUnit.h"
 #include "lldb/API/SBLineEntry.h"
+#include "lldb/API/SBStream.h"
 #include "lldb/Symbol/CompileUnit.h"
 #include "lldb/Symbol/LineEntry.h"
 #include "lldb/Symbol/LineTable.h"
@@ -117,4 +118,26 @@ const lldb_private::CompileUnit &
 SBCompileUnit::operator*() const
 {
     return *m_opaque_ptr;
+}
+
+bool
+SBCompileUnit::GetDescription (SBStream &description)
+{
+    if (m_opaque_ptr)
+      {
+        m_opaque_ptr->Dump (description.get(), false);
+      }
+    else
+      description.Printf ("No Value");
+    
+    return true;
+}
+
+PyObject *
+SBCompileUnit::__repr__ ()
+{
+    SBStream description;
+    description.ref();
+    GetDescription (description);
+    return PyString_FromString (description.GetData());
 }

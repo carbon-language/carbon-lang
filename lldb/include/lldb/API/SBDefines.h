@@ -10,6 +10,11 @@
 #ifndef LLDB_SBDefines_h_
 #define LLDB_SBDefines_h_
 
+// In order to guarantee correct working with Python, Python.h *MUST* be
+// the *FIRST* header file included:
+
+#include <Python.h>
+
 // C Includes
 // C++ Includes
 // Other libraries and framework includes
@@ -49,6 +54,7 @@ class SBListener;
 class SBModule;
 class SBProcess;
 class SBSourceManager;
+class SBStream;
 class SBStringList;
 class SBSymbol;
 class SBSymbolContext;

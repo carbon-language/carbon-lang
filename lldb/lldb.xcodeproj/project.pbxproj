@@ -2974,6 +2974,7 @@
 				GCC_MODEL_TUNING = G5;
 				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
 				GCC_VERSION = 4.2;
+				HEADER_SEARCH_PATHS = /usr/include/python2.6;
 				INFOPLIST_FILE = "lldb-Info.plist";
 				INSTALL_PATH = /Developer/usr/bin;
 				LIBRARY_SEARCH_PATHS = "$(inherited)";
@@ -3063,6 +3064,7 @@
 				GCC_OPTIMIZATION_LEVEL = 0;
 				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
 				GCC_VERSION = 4.2;
+				HEADER_SEARCH_PATHS = /usr/include/python2.6;
 				INFOPLIST_FILE = "lldb-Info.plist";
 				INSTALL_PATH = /Developer/usr/bin;
 				LIBRARY_SEARCH_PATHS = "$(inherited)";
@@ -3102,6 +3104,7 @@
 				GCC_MODEL_TUNING = G5;
 				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
 				GCC_VERSION = 4.2;
+				HEADER_SEARCH_PATHS = /usr/include/python2.6;
 				INFOPLIST_FILE = "lldb-Info.plist";
 				INSTALL_PATH = /Developer/usr/bin;
 				LIBRARY_SEARCH_PATHS = "$(inherited)";

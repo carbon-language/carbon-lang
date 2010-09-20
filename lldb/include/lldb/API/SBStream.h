@@ -55,6 +55,19 @@ public:
     Clear ();
 
 protected:
+    friend class SBAddress;
+    friend class SBBlock;
+    friend class SBBreakpoint;
+    friend class SBBreakpointLocation;
+    friend class SBCompileUnit;
+    friend class SBEvent;
+    friend class SBFrame;
+    friend class SBFunction;
+    friend class SBModule;
+    friend class SBSymbol;
+    friend class SBSymbolContext;
+    friend class SBTarget;
+    friend class SBThread;
 
 #ifndef SWIG
 

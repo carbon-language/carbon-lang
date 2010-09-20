@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "lldb/API/SBFileSpec.h"
+#include "lldb/API/SBStream.h"
 #include "lldb/Core/FileSpec.h"
 
 using namespace lldb;
@@ -138,3 +139,30 @@ SBFileSpec::SetFileSpec (const lldb_private::FileSpec& fs)
         m_opaque_ap.reset (new FileSpec (fs));
 }
 
+bool
+SBFileSpec::GetDescription (SBStream &description)
+{
+    if (m_opaque_ap.get())
+    {
+        const char *filename = GetFilename();
+        const char *dir_name = GetDirectory();
+        if (!filename && !dir_name)
+            description.Printf ("No value");
+        else if (!dir_name)
+            description.Printf ("%s", filename);
+        else
+            description.Printf ("%s/%s", dir_name, filename);
+    }
+    else
+        description.Printf ("No value");
+    
+    return true;
+}
+
+PyObject *
+SBFileSpec::__repr__ ()
+{
+    SBStream description;
+    GetDescription (description);
+    return PyString_FromString (description.GetData());
+}

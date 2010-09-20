@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "lldb/API/SBType.h"
+#include "lldb/API/SBStream.h"
 #include "lldb/Core/ConstString.h"
 #include "lldb/Symbol/ClangASTContext.h"
 #include "lldb/Symbol/ClangASTType.h"
@@ -144,6 +145,53 @@ SBType::GetPointeeType ()
     return SBType (pointee_type ? m_ast : NULL, pointee_type);
 }
 
+bool
+SBType::GetDescription (SBStream &description)
+{
+    const char *name = GetName();
+    uint64_t byte_size = GetByteSize();
+    uint64_t num_children = GetNumberChildren (true);
+    bool is_ptr = IsPointerType ();
+
+    description.Printf ("type_name: %s, size: %d bytes", (name != NULL ? name : "<unknown type name>"), byte_size);
+    if (is_ptr)
+    {
+        SBType pointee_type = GetPointeeType();
+        const char *pointee_name = pointee_type.GetName();
+        description.Printf (", (* %s)", (pointee_name != NULL ? pointee_name : "<unknown type name>"));
+    }
+    else if (num_children > 0)
+    {
+        description.Printf (", %d members:\n", num_children);
+        for (uint32_t i = 0; i < num_children; ++i)
+        {
+            SBTypeMember field;
+            GetChildAtIndex (true, i, field);
+            const char *field_name = field.GetName();
+            SBType field_type = field.GetType();
+            const char *field_type_name = field_type.GetName();
+            
+            description.Printf ("     %s (type: %s", (field_name != NULL ? field_name : "<unknown member name>"), 
+                                (field_type_name != NULL ? field_type_name : "<unknown type name>"));
+
+            if (field.IsBitfield())
+            {
+                size_t width = field.GetBitfieldWidth ();
+                description.Printf (" , %d bits", (int) width);
+            }
+            description.Printf (")\n");
+        }
+    }
+    return true;
+}
+
+PyObject *
+SBType::__repr__ ()
+{
+    SBStream description;
+    GetDescription (description);
+    return PyString_FromString (description.GetData());
+}
 
 SBTypeMember::SBTypeMember () :
     m_ast (NULL),

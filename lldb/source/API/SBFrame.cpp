@@ -34,6 +34,7 @@
 #include "lldb/API/SBDebugger.h"
 #include "lldb/API/SBValue.h"
 #include "lldb/API/SBAddress.h"
+#include "lldb/API/SBStream.h"
 #include "lldb/API/SBSymbolContext.h"
 #include "lldb/API/SBThread.h"
 
@@ -203,7 +204,13 @@ SBFrame::LookupVar (const char *var_name)
         if (!found)
             var_sp.reset();
     }
-    SBValue sb_value (ValueObjectSP (new ValueObjectVariable (var_sp)));
+    if (var_sp)
+    {
+        SBValue sb_value (ValueObjectSP (new ValueObjectVariable (var_sp)));
+        return sb_value;
+    }
+    
+    SBValue sb_value;
     return sb_value;
 }
 
@@ -249,7 +256,14 @@ SBFrame::LookupVarInScope (const char *var_name, const char *scope)
                 var_sp.reset();
         }
     }
-    SBValue sb_value (ValueObjectSP (new ValueObjectVariable (var_sp)));
+    
+    if (var_sp)
+    {
+        SBValue sb_value (ValueObjectSP (new ValueObjectVariable (var_sp)));
+        return sb_value;
+    }
+    
+    SBValue sb_value;
     return sb_value;
 }
 
@@ -375,3 +389,24 @@ SBFrame::GetRegisters ()
     return value_list;
 }
 
+bool
+SBFrame::GetDescription (SBStream &description)
+{
+    if (m_opaque_sp)
+    {
+        m_opaque_sp->Dump (description.get(), true, false);
+    }
+    else
+        description.Printf ("No value");
+
+    return true;
+}
+
+PyObject *
+SBFrame::__repr__ ()
+{
+    SBStream description;
+    description.ref();
+    GetDescription (description);
+    return PyString_FromString (description.GetData());
+}

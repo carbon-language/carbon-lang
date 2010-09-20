@@ -9,6 +9,7 @@
 
 #include "lldb/API/SBEvent.h"
 #include "lldb/API/SBBroadcaster.h"
+#include "lldb/API/SBStream.h"
 
 #include "lldb/Core/Event.h"
 #include "lldb/Core/Stream.h"
@@ -150,3 +151,24 @@ SBEvent::GetCStringFromEvent (const SBEvent &event)
 }
 
 
+bool
+SBEvent::GetDescription (SBStream &description)
+{
+    if (m_opaque)
+      {
+        m_opaque->Dump (description.get());
+      }
+    else
+      description.Printf ("No value");
+
+    return true;
+}
+
+PyObject *
+SBEvent::__repr__ ()
+{
+    SBStream description;
+    description.ref();
+    GetDescription (description);
+    return PyString_FromString (description.GetData());
+}

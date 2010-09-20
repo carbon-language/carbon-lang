@@ -104,8 +104,8 @@ public:
     size_t
     GetNumLocations() const;
 
-    void
-    GetDescription (FILE *, const char *description_level);
+    bool
+    GetDescription (const char *description_level, lldb::SBStream &description);
 
     static lldb::BreakpointEventType
     GetBreakpointEventTypeFromEvent (const lldb::SBEvent& event);
@@ -115,6 +115,13 @@ public:
     
     static lldb::SBBreakpointLocation
     GetBreakpointLocationAtIndexFromEvent (const lldb::SBEvent& event, uint32_t loc_idx);
+
+    // The following function gets called by Python when a user tries to print
+    // an object of this class.  It takes no arguments and returns a
+    // PyObject * representing a char * (and it must be named "__repr__");
+
+    PyObject *
+    __repr__ ();
 
 private:
     friend class SBBreakpointLocation;

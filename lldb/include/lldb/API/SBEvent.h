@@ -10,10 +10,11 @@
 #ifndef LLDB_SBEvent_h_
 #define LLDB_SBEvent_h_
 
+#include "lldb/API/SBDefines.h"
+
 #include <stdio.h>
 #include <vector>
 
-#include "lldb/API/SBDefines.h"
 
 namespace lldb {
 
@@ -52,6 +53,16 @@ public:
 
     static const char *
     GetCStringFromEvent (const lldb::SBEvent &event);
+
+    bool
+    GetDescription (lldb::SBStream &description);
+
+    // The following function gets called by Python when a user tries to print
+    // an object of this class.  It takes no arguments and returns a
+    // PyObject * representing a char * (and it must be named "__repr__");
+
+   PyObject *
+   __repr__ ();
 
 protected:
     friend class SBListener;

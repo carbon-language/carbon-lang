@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "lldb/API/SBSymbol.h"
+#include "lldb/API/SBStream.h"
 #include "lldb/Symbol/Symbol.h"
 
 using namespace lldb;
@@ -61,4 +62,26 @@ bool
 SBSymbol::operator != (const SBSymbol &rhs) const
 {
     return m_opaque_ptr != rhs.m_opaque_ptr;
+}
+
+bool
+SBSymbol::GetDescription (SBStream &description)
+{
+    if (m_opaque_ptr)
+    {
+        m_opaque_ptr->GetDescription (description.get(), lldb::eDescriptionLevelFull, NULL);
+    }
+    else
+        description.Printf ("No value");
+    
+    return true;
+}
+
+PyObject *
+SBSymbol::__repr__ ()
+{
+    SBStream description;
+    description.ref();
+    GetDescription (description);
+    return PyString_FromString (description.GetData());
 }

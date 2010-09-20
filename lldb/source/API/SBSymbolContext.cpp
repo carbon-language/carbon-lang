@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "lldb/API/SBSymbolContext.h"
+#include "lldb/API/SBStream.h"
 #include "lldb/Symbol/SymbolContext.h"
 
 using namespace lldb;
@@ -146,5 +147,24 @@ SBSymbolContext::get() const
     return m_opaque_ap.get();
 }
 
+bool
+SBSymbolContext::GetDescription (SBStream &description)
+{
+    if (m_opaque_ap.get())
+    {
+        m_opaque_ap->GetDescription (description.get(), lldb::eDescriptionLevelFull, NULL);
+    }
+    else
+        description.Printf ("No value");
 
+    return true;
+}
 
+PyObject *
+SBSymbolContext::__repr__ ()
+{
+    SBStream description;
+    description.ref();
+    GetDescription (description);
+    return PyString_FromString (description.GetData());
+}

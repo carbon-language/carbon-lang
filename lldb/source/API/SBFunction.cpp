@@ -9,6 +9,7 @@
 
 #include "lldb/API/SBFunction.h"
 #include "lldb/API/SBProcess.h"
+#include "lldb/API/SBStream.h"
 #include "lldb/Symbol/Function.h"
 
 using namespace lldb;
@@ -61,4 +62,26 @@ bool
 SBFunction::operator != (const SBFunction &rhs) const
 {
     return m_opaque_ptr != rhs.m_opaque_ptr;
+}
+
+bool
+SBFunction::GetDescription (SBStream &description)
+{
+    if (m_opaque_ptr)
+    {
+        m_opaque_ptr->Dump (description.get(), false);
+    }
+    else
+      description.Printf ("No value");
+
+    return true;
+}
+
+PyObject *
+SBFunction::__repr__ ()
+{
+    SBStream description;
+    description.ref();
+    GetDescription (description);
+    return PyString_FromString (description.GetData());
 }

@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "lldb/API/SBLineEntry.h"
+#include "lldb/API/SBStream.h"
 #include "lldb/Symbol/LineEntry.h"
 
 using namespace lldb;
@@ -152,7 +153,30 @@ SBLineEntry::operator*() const
     return *m_opaque_ap;
 }
 
+bool
+SBLineEntry::GetDescription (SBStream &description)
+{
+    if (m_opaque_ap.get())
+    {
+        // Line entry:  File, line x {, column y}:  Addresses: <start_addr> - <end_addr>
+        char file_path[PATH_MAX*2];
+        m_opaque_ap->file.GetPath (file_path, sizeof (file_path));
+        description.Printf ("Line entry: %s, line %d", file_path, GetLine());
+        if (GetColumn() > 0)
+            description.Printf (", column %d", GetColumn());
+        description.Printf (":  Addresses:  0x%p - 0x%p", GetStartAddress().GetFileAddress() , 
+                            GetEndAddress().GetFileAddress());
+    }
+    else
+        description.Printf ("No value");
 
+    return true;
+}
 
-
-
+PyObject *
+SBLineEntry::__repr__ ()
+{
+    SBStream description; 
+    GetDescription (description);
+    return PyString_FromString (description.GetData());
+}

@@ -8,7 +8,9 @@
 //===----------------------------------------------------------------------===//
 
 #include "lldb/API/SBError.h"
+#include "lldb/API/SBStream.h"
 #include "lldb/Core/Error.h"
+
 #include <stdarg.h>
 
 using namespace lldb;
@@ -178,3 +180,29 @@ SBError::operator*() const
     return *m_opaque_ap;
 }
 
+bool
+SBError::GetDescription (SBStream &description)
+{
+    if (m_opaque_ap.get())
+    {
+        if (Success())
+            description.Printf ("Status: Success");
+        else
+        {
+            const char * err_string = GetCString();
+            description.Printf ("Status:  Error: %s",  (err_string != NULL ? err_string : ""));
+        }
+    }
+    else
+        description.Printf ("No value");
+
+    return true;
+} 
+
+PyObject *
+SBError::__repr__ ()
+{
+    SBStream description;
+    GetDescription (description);
+    return PyString_FromString (description.GetData());
+}

@@ -12,6 +12,7 @@
 #include "lldb/API/SBDebugger.h"
 #include "lldb/API/SBEvent.h"
 #include "lldb/API/SBProcess.h"
+#include "lldb/API/SBStream.h"
 #include "lldb/API/SBThread.h"
 
 #include "lldb/Breakpoint/Breakpoint.h"
@@ -321,12 +322,9 @@ SBBreakpoint::GetNumLocations() const
         return 0;
 }
 
-void
-SBBreakpoint::GetDescription (FILE *f, const char *description_level)
+bool
+SBBreakpoint::GetDescription (const char *description_level, SBStream &description)
 {
-    if (f == NULL)
-        return;
-
     if (m_opaque_sp)
     {
         DescriptionLevel level;
@@ -339,11 +337,23 @@ SBBreakpoint::GetDescription (FILE *f, const char *description_level)
         else
             level = eDescriptionLevelBrief;
 
-        StreamFile str (f);
 
-        m_opaque_sp->GetDescription (&str, level);
-        str.EOL();
+        m_opaque_sp->GetDescription (description.get(), level);
+        description.get()->EOL();
     }
+    else
+        description.Printf ("No value");
+
+    return true;
+}
+
+PyObject *
+SBBreakpoint::__repr__ ()
+{
+    SBStream description;
+    description.ref();
+    GetDescription ("full", description);
+    return PyString_FromString (description.GetData());
 }
 
 bool

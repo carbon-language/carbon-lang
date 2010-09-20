@@ -185,6 +185,10 @@ public:
     DumpSymbolContext(Stream *s);
 
     void
+    DumpAddressRanges (Stream *s,
+                       lldb::addr_t base_addr);
+                      
+    void
     GetDescription (Stream *s, 
                     Function *function, 
                     lldb::DescriptionLevel level, 

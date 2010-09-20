@@ -7,9 +7,10 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "lldb/Interpreter/CommandReturnObject.h"
-
 #include "lldb/API/SBCommandReturnObject.h"
+#include "lldb/API/SBStream.h"
+
+#include "lldb/Interpreter/CommandReturnObject.h"
 
 using namespace lldb;
 using namespace lldb_private;
@@ -160,3 +161,38 @@ SBCommandReturnObject::SetLLDBObjectPtr (CommandReturnObject *ptr)
         m_opaque_ap.reset (ptr);
 }
 
+bool
+SBCommandReturnObject::GetDescription (SBStream &description)
+{
+    if (m_opaque_ap.get())
+    {
+        description.Printf ("Status:  ");
+        lldb::ReturnStatus status = m_opaque_ap->GetStatus();
+        if (status == lldb::eReturnStatusStarted)
+            description.Printf ("Started");
+        else if (status == lldb::eReturnStatusInvalid)
+            description.Printf ("Invalid");
+        else if (m_opaque_ap->Succeeded())
+            description.Printf ("Success");
+        else
+            description.Printf ("Fail");
+
+        if (GetOutputSize() > 0)
+            description.Printf ("\nOutput Message:\n%s", GetOutput());
+
+        if (GetErrorSize() > 0)
+            description.Printf ("\nError Message:\n%s", GetError());
+    }
+    else
+        description.Printf ("No value");
+
+    return true;
+}
+
+PyObject *
+SBCommandReturnObject::__repr__ ()
+{
+    SBStream description;
+    GetDescription (description);
+    return PyString_FromString (description.GetData());
+}
