@@ -6814,6 +6814,13 @@ ExprResult Sema::CreateBuiltinUnaryOp(SourceLocation OpLoc,
     if (!resultType->isScalarType()) // C99 6.5.3.3p1
       return ExprError(Diag(OpLoc, diag::err_typecheck_unary_expr)
         << resultType << Input->getSourceRange());
+    
+    // Do not accept &f if f is overloaded
+    // i.e. void f(int); void f(char); bool b = &f;
+    if (resultType == Context.OverloadTy && 
+        PerformContextuallyConvertToBool(Input)) 
+      return ExprError(); // Diagnostic is uttered above
+
     // LNot always has type int. C99 6.5.3.3p5.
     // In C++, it's bool. C++ 5.3.1p8
     resultType = getLangOptions().CPlusPlus ? Context.BoolTy : Context.IntTy;
