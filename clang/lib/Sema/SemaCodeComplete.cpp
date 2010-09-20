@@ -1087,7 +1087,8 @@ static void AddTypeSpecifierResults(const LangOptions &LangOpts,
   
   if (LangOpts.CPlusPlus) {
     // C++-specific
-    Results.AddResult(Result("bool", CCP_Type));
+    Results.AddResult(Result("bool", CCP_Type + 
+                             (LangOpts.ObjC1? CCD_bool_in_ObjC : 0)));
     Results.AddResult(Result("class", CCP_Type));
     Results.AddResult(Result("wchar_t", CCP_Type));
     
@@ -2308,15 +2309,25 @@ CodeCompleteConsumer::OverloadCandidate::CreateSignatureString(
 }
 
 unsigned clang::getMacroUsagePriority(llvm::StringRef MacroName, 
+                                      const LangOptions &LangOpts,
                                       bool PreferredTypeIsPointer) {
   unsigned Priority = CCP_Macro;
   
-  // Treat the "nil" and "NULL" macros as null pointer constants.
-  if (MacroName.equals("nil") || MacroName.equals("NULL")) {
+  // Treat the "nil", "Nil" and "NULL" macros as null pointer constants.
+  if (MacroName.equals("nil") || MacroName.equals("NULL") || 
+      MacroName.equals("Nil")) {
     Priority = CCP_Constant;
     if (PreferredTypeIsPointer)
       Priority = Priority / CCF_SimilarTypeMatch;
-  }
+  } 
+  // Treat "YES", "NO", "true", and "false" as constants.
+  else if (MacroName.equals("YES") || MacroName.equals("NO") ||
+           MacroName.equals("true") || MacroName.equals("false"))
+    Priority = CCP_Constant;
+  // Treat "bool" as a type.
+  else if (MacroName.equals("bool"))
+    Priority = CCP_Type + (LangOpts.ObjC1? CCD_bool_in_ObjC : 0);
+    
   
   return Priority;
 }
@@ -2394,6 +2405,7 @@ static void AddMacroResults(Preprocessor &PP, ResultBuilder &Results,
        M != MEnd; ++M) {
     Results.AddResult(Result(M->first, 
                              getMacroUsagePriority(M->first->getName(),
+                                                   PP.getLangOptions(),
                                                    TargetTypeIsPointer)));
   }
   Results.ExitScope();

@@ -81,7 +81,11 @@ enum {
   /// \brief The selector of the given message exactly matches the selector
   /// of the current method, which might imply that some kind of delegation
   /// is occurring.
-  CCD_SelectorMatch = -3
+  CCD_SelectorMatch = -3,
+  
+  /// \brief Adjustment to the "bool" type in Objective-C, where the typedef
+  /// "BOOL" is preferred.
+  CCD_bool_in_ObjC = 1
 };
 
 /// \brief Priority value factors by which we will divide or multiply the
@@ -122,9 +126,12 @@ QualType getDeclUsageType(ASTContext &C, NamedDecl *ND);
 ///
 /// \param MacroName The name of the macro.
 ///
+/// \param LangOpts Options describing the current language dialect.
+///
 /// \param PreferredTypeIsPointer Whether the preferred type for the context
 /// of this macro is a pointer type.
 unsigned getMacroUsagePriority(llvm::StringRef MacroName, 
+                               const LangOptions &LangOpts,
                                bool PreferredTypeIsPointer = false);
 
 /// \brief Determine the libclang cursor kind associated with the given
