@@ -572,10 +572,10 @@ Options::GenerateOptionUsage
                     strm.EOL();
                 
                 strm.Indent ();
-                strm.Printf ("--%s", full_options_table[i].long_option);
+                strm.Printf ("-%c", full_options_table[i].short_option);
                 if (full_options_table[i].argument_name != NULL)
                     strm.Printf (" %s", full_options_table[i].argument_name);
-                strm.Printf ("  ( -%c", full_options_table[i].short_option);
+                strm.Printf ("  ( --%s", full_options_table[i].long_option);
                 if (full_options_table[i].argument_name != NULL)
                     strm.Printf (" %s", full_options_table[i].argument_name);
                 strm.PutCString(" )\n");
