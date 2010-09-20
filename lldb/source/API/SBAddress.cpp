@@ -141,9 +141,9 @@ bool
 SBAddress::GetDescription (SBStream &description)
 {
     if (m_opaque_ap.get())
-      {
+    {
         m_opaque_ap->DumpDebug (description.get());
-      }
+    }
     else
         description.Printf ("No value");
 

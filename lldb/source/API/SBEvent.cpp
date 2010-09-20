@@ -155,11 +155,11 @@ bool
 SBEvent::GetDescription (SBStream &description)
 {
     if (m_opaque)
-      {
+    {
         m_opaque->Dump (description.get());
-      }
+    }
     else
-      description.Printf ("No value");
+        description.Printf ("No value");
 
     return true;
 }

@@ -72,7 +72,7 @@ SBFunction::GetDescription (SBStream &description)
         m_opaque_ptr->Dump (description.get(), false);
     }
     else
-      description.Printf ("No value");
+        description.Printf ("No value");
 
     return true;
 }

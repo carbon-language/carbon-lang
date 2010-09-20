@@ -506,9 +506,9 @@ bool
 SBTarget::GetDescription (SBStream &description)
 {
     if (m_opaque_sp)
-      {
+    {
         m_opaque_sp->Dump (description.get());
-      }
+    }
     else
         description.Printf ("No value");
     

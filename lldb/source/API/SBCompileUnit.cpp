@@ -124,11 +124,11 @@ bool
 SBCompileUnit::GetDescription (SBStream &description)
 {
     if (m_opaque_ptr)
-      {
+    {
         m_opaque_ptr->Dump (description.get(), false);
-      }
+    }
     else
-      description.Printf ("No Value");
+        description.Printf ("No Value");
     
     return true;
 }

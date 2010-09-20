@@ -138,21 +138,21 @@ bool
 SBBlock::GetDescription (SBStream &description)
 {
     if (m_opaque_ptr)
-      {
+    {
         lldb::user_id_t id = m_opaque_ptr->GetID();
         description.Printf ("Block: {id: %d} ", id);
         if (IsInlined())
-          {
+        {
             description.Printf (" (inlined, '%s') ", GetInlinedName());
-          }
+        }
         lldb_private::SymbolContext sc;
         m_opaque_ptr->CalculateSymbolContext (&sc);
         if (sc.function)
-          {
+        {
             m_opaque_ptr->DumpAddressRanges (description.get(), 
                                              sc.function->GetAddressRange().GetBaseAddress().GetFileAddress());
-          }
-      }
+        }
+    }
     else
         description.Printf ("No value");
     
