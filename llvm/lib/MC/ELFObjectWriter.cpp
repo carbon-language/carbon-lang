@@ -541,10 +541,13 @@ void ELFObjectWriterImpl::RecordRelocation(const MCAssembler &Asm,
       case X86::reloc_pcrel_4byte:
       case FK_Data_4:
         // check that the offset fits within a signed long
-        if (isInt<32>(Target.getConstant()))
+        if (Target.getConstant() < 0) {
+          assert(isInt<32>(Target.getConstant()));
           Type = ELF::R_X86_64_32S;
-        else
+        } else {
+          assert(isUInt<32>(Target.getConstant()));
           Type = ELF::R_X86_64_32;
+        }
         break;
       case FK_Data_2: Type = ELF::R_X86_64_16; break;
       case X86::reloc_pcrel_1byte:

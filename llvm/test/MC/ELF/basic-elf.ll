@@ -72,7 +72,7 @@ declare i32 @puts(i8* nocapture) nounwind
 ; 64:   ('_relocations', [
 ; 64:     # Relocation 0
 ; 64:     (('r_offset', 5)
-; 64:      ('r_type', 11)
+; 64:      ('r_type', 10)
 ; 64:      ('r_addend', 0)
 ; 64:     ),
 ; 64:     # Relocation 1
@@ -82,7 +82,7 @@ declare i32 @puts(i8* nocapture) nounwind
 ; 64:     ),
 ; 64:     # Relocation 2
 ; 64:     (('r_offset', 15)
-; 64:      ('r_type', 11)
+; 64:      ('r_type', 10)
 ; 64:      ('r_addend', 6)
 ; 64:     ),
 ; 64:     # Relocation 3
