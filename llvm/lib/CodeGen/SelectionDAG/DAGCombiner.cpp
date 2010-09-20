@@ -7030,8 +7030,19 @@ bool DAGCombiner::isAlias(SDValue Ptr1, int64_t Size1,
   if (Base1 == Base2 || (GV1 && (GV1 == GV2)) || (CV1 && (CV1 == CV2)))
     return !((Offset1 + Size1) <= Offset2 || (Offset2 + Size2) <= Offset1);
 
-  // If we know what the bases are, and they aren't identical, then we know they
-  // cannot alias.
+  // It is possible for different frame indices to alias each other, mostly
+  // when tail call optimization reuses return address slots for arguments.
+  // To catch this case, look up the actual index of frame indices to compute
+  // the real alias relationship.
+  if (isFrameIndex1 && isFrameIndex2) {
+    MachineFrameInfo *MFI = DAG.getMachineFunction().getFrameInfo();
+    Offset1 += MFI->getObjectOffset(cast<FrameIndexSDNode>(Base1)->getIndex());
+    Offset2 += MFI->getObjectOffset(cast<FrameIndexSDNode>(Base2)->getIndex());
+    return !((Offset1 + Size1) <= Offset2 || (Offset2 + Size2) <= Offset1);
+  }
+
+  // Otherwise, if we know what the bases are, and they aren't identical, then 
+  // we know they cannot alias.
   if ((isFrameIndex1 || CV1 || GV1) && (isFrameIndex2 || CV2 || GV2))
     return false;
 
