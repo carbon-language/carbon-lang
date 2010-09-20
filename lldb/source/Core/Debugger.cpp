@@ -1313,7 +1313,7 @@ DebuggerInstanceSettings::ValidTermWidthValue (const char *value, Error err)
         
         if (end && end[0] == '\0')
         {
-            if (width >= 10 || width <= 1024)
+            if (width >= 10 && width <= 1024)
                 valid = true;
             else
                 err.SetErrorString ("Invalid term-width value; value must be between 10 and 1024.\n");
