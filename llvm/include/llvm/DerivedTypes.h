@@ -9,7 +9,7 @@
 //
 // This file contains the declarations of classes that represent "derived
 // types".  These are things like "arrays of x" or "structure of x, y, z" or
-// "method returning x taking (y,z) as parameters", etc...
+// "function returning x taking (y,z) as parameters", etc...
 //
 // The implementations of these classes live in the Type.cpp file.
 //
