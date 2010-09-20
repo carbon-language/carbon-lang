@@ -34,6 +34,9 @@ class USRGenerator : public DeclVisitor<USRGenerator> {
   bool IgnoreResults;
   ASTUnit *AU;
   bool generatedLoc;
+  
+  llvm::DenseMap<const Type *, unsigned> TypeSubstitutions;
+  
 public:
   USRGenerator(const CXCursor *C = 0)
     : Out(Buf),
@@ -510,32 +513,6 @@ void USRGenerator::VisitType(QualType T) {
 
     // Mangle in ObjC GC qualifiers?
 
-    if (const PointerType *PT = T->getAs<PointerType>()) {
-      Out << '*';
-      T = PT->getPointeeType();
-      continue;
-    }
-    if (const ReferenceType *RT = T->getAs<ReferenceType>()) {
-      Out << '&';
-      T = RT->getPointeeType();
-      continue;
-    }
-    if (const FunctionProtoType *FT = T->getAs<FunctionProtoType>()) {
-      Out << 'F';
-      VisitType(FT->getResultType());
-      for (FunctionProtoType::arg_type_iterator
-            I = FT->arg_type_begin(), E = FT->arg_type_end(); I!=E; ++I) {
-        VisitType(*I);
-      }
-      if (FT->isVariadic())
-        Out << '.';
-      return;
-    }
-    if (const BlockPointerType *BT = T->getAs<BlockPointerType>()) {
-      Out << 'B';
-      T = BT->getPointeeType();
-      continue;
-    }
     if (const BuiltinType *BT = T->getAs<BuiltinType>()) {
       unsigned char c = '\0';
       switch (BT->getKind()) {
@@ -597,6 +574,46 @@ void USRGenerator::VisitType(QualType T) {
       }
       Out << c;
       return;
+    }
+
+    // If we have already seen this (non-built-in) type, use a substitution
+    // encoding.
+    llvm::DenseMap<const Type *, unsigned>::iterator Substitution
+      = TypeSubstitutions.find(T.getTypePtr());
+    if (Substitution != TypeSubstitutions.end()) {
+      Out << 'S' << Substitution->second << '_';
+      return;
+    } else {
+      // Record this as a substitution.
+      unsigned Number = TypeSubstitutions.size();
+      TypeSubstitutions[T.getTypePtr()] = Number;
+    }
+    
+    if (const PointerType *PT = T->getAs<PointerType>()) {
+      Out << '*';
+      T = PT->getPointeeType();
+      continue;
+    }
+    if (const ReferenceType *RT = T->getAs<ReferenceType>()) {
+      Out << '&';
+      T = RT->getPointeeType();
+      continue;
+    }
+    if (const FunctionProtoType *FT = T->getAs<FunctionProtoType>()) {
+      Out << 'F';
+      VisitType(FT->getResultType());
+      for (FunctionProtoType::arg_type_iterator
+            I = FT->arg_type_begin(), E = FT->arg_type_end(); I!=E; ++I) {
+        VisitType(*I);
+      }
+      if (FT->isVariadic())
+        Out << '.';
+      return;
+    }
+    if (const BlockPointerType *BT = T->getAs<BlockPointerType>()) {
+      Out << 'B';
+      T = BT->getPointeeType();
+      continue;
     }
     if (const ComplexType *CT = T->getAs<ComplexType>()) {
       Out << '<';
