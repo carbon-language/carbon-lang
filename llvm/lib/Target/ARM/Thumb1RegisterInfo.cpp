@@ -597,10 +597,8 @@ Thumb1RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   int Offset = MF.getFrameInfo()->getObjectOffset(FrameIndex) +
                MF.getFrameInfo()->getStackSize() + SPAdj;
 
-  if (AFI->isGPRCalleeSavedArea1Frame(FrameIndex))
-    Offset -= AFI->getGPRCalleeSavedArea1Offset();
-  else if (AFI->isGPRCalleeSavedArea2Frame(FrameIndex))
-    Offset -= AFI->getGPRCalleeSavedArea2Offset();
+  if (AFI->isGPRCalleeSavedAreaFrame(FrameIndex))
+    Offset -= AFI->getGPRCalleeSavedAreaOffset();
   else if (MF.getFrameInfo()->hasVarSizedObjects()) {
     assert(SPAdj == 0 && hasFP(MF) && "Unexpected");
     // There are alloca()'s in this function, must reference off the frame
@@ -709,7 +707,7 @@ void Thumb1RegisterInfo::emitPrologue(MachineFunction &MF) const {
 
   // Determine the sizes of each callee-save spill areas and record which frame
   // belongs to which callee-save spill areas.
-  unsigned GPRCS1Size = 0, GPRCS2Size = 0, DPRCSSize = 0;
+  unsigned GPRCSSize = 0, DPRCSSize = 0;
   int FramePtrSpillFI = 0;
 
   if (VARegSaveSize)
@@ -729,25 +727,15 @@ void Thumb1RegisterInfo::emitPrologue(MachineFunction &MF) const {
     case ARM::R5:
     case ARM::R6:
     case ARM::R7:
-    case ARM::LR:
-      if (Reg == FramePtr)
-        FramePtrSpillFI = FI;
-      AFI->addGPRCalleeSavedArea1Frame(FI);
-      GPRCS1Size += 4;
-      break;
     case ARM::R8:
     case ARM::R9:
     case ARM::R10:
     case ARM::R11:
+    case ARM::LR:
       if (Reg == FramePtr)
         FramePtrSpillFI = FI;
-      if (STI.isTargetDarwin()) {
-        AFI->addGPRCalleeSavedArea2Frame(FI);
-        GPRCS2Size += 4;
-      } else {
-        AFI->addGPRCalleeSavedArea1Frame(FI);
-        GPRCS1Size += 4;
-      }
+      AFI->addGPRCalleeSavedAreaFrame(FI);
+      GPRCSSize += 4;
       break;
     default:
       AFI->addDPRCalleeSavedAreaFrame(FI);
@@ -769,12 +757,10 @@ void Thumb1RegisterInfo::emitPrologue(MachineFunction &MF) const {
   }
 
   // Determine starting offsets of spill areas.
-  unsigned DPRCSOffset  = NumBytes - (GPRCS1Size + GPRCS2Size + DPRCSSize);
-  unsigned GPRCS2Offset = DPRCSOffset + DPRCSSize;
-  unsigned GPRCS1Offset = GPRCS2Offset + GPRCS2Size;
+  unsigned DPRCSOffset  = NumBytes - (GPRCSSize + DPRCSSize);
+  unsigned GPRCSOffset = DPRCSOffset + DPRCSSize;
   AFI->setFramePtrSpillOffset(MFI->getObjectOffset(FramePtrSpillFI) + NumBytes);
-  AFI->setGPRCalleeSavedArea1Offset(GPRCS1Offset);
-  AFI->setGPRCalleeSavedArea2Offset(GPRCS2Offset);
+  AFI->setGPRCalleeSavedAreaOffset(GPRCSOffset);
   AFI->setDPRCalleeSavedAreaOffset(DPRCSOffset);
 
   NumBytes = DPRCSOffset;
@@ -787,8 +773,7 @@ void Thumb1RegisterInfo::emitPrologue(MachineFunction &MF) const {
     MFI->setOffsetAdjustment(MFI->getOffsetAdjustment() -
                              AFI->getFramePtrSpillOffset());
 
-  AFI->setGPRCalleeSavedArea1Size(GPRCS1Size);
-  AFI->setGPRCalleeSavedArea2Size(GPRCS2Size);
+  AFI->setGPRCalleeSavedAreaSize(GPRCSSize);
   AFI->setDPRCalleeSavedAreaSize(DPRCSSize);
 
   // If we need a base pointer, set it up here. It's whatever the value
@@ -849,8 +834,7 @@ void Thumb1RegisterInfo::emitEpilogue(MachineFunction &MF,
     }
 
     // Move SP to start of FP callee save spill area.
-    NumBytes -= (AFI->getGPRCalleeSavedArea1Size() +
-                 AFI->getGPRCalleeSavedArea2Size() +
+    NumBytes -= (AFI->getGPRCalleeSavedAreaSize() +
                  AFI->getDPRCalleeSavedAreaSize());
 
     if (AFI->shouldRestoreSPFromFP()) {

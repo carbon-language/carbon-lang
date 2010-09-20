@@ -55,28 +55,23 @@ class ARMFunctionInfo : public MachineFunctionInfo {
   /// spill stack offset.
   unsigned FramePtrSpillOffset;
 
-  /// GPRCS1Offset, GPRCS2Offset, DPRCSOffset - Starting offset of callee saved
-  /// register spills areas. For Mac OS X:
+  /// GPRCSOffset, GPRCS2Offset, DPRCSOffset - Starting offset of callee saved
+  /// register spills areas (excluding R9 for Mac OS X):
   ///
-  /// GPR callee-saved (1) : r4, r5, r6, r7, lr
-  /// --------------------------------------------
-  /// GPR callee-saved (2) : r8, r10, r11
+  /// GPR callee-saved (1) : r4, r5, r6, r7, r8, r9, r10, r11, lr
   /// --------------------------------------------
   /// DPR callee-saved : d8 - d15
-  unsigned GPRCS1Offset;
-  unsigned GPRCS2Offset;
+  unsigned GPRCSOffset;
   unsigned DPRCSOffset;
 
-  /// GPRCS1Size, GPRCS2Size, DPRCSSize - Sizes of callee saved register spills
+  /// GPRCSSize, GPRCS2Size, DPRCSSize - Sizes of callee saved register spills
   /// areas.
-  unsigned GPRCS1Size;
-  unsigned GPRCS2Size;
+  unsigned GPRCSSize;
   unsigned DPRCSSize;
 
-  /// GPRCS1Frames, GPRCS2Frames, DPRCSFrames - Keeps track of frame indices
+  /// GPRCSFrames, GPRCS2Frames, DPRCSFrames - Keeps track of frame indices
   /// which belong to these spill areas.
-  BitVector GPRCS1Frames;
-  BitVector GPRCS2Frames;
+  BitVector GPRCSFrames;
   BitVector DPRCSFrames;
 
   /// SpilledCSRegs - A BitVector mask of all spilled callee-saved registers.
@@ -101,9 +96,9 @@ public:
     hasThumb2(false),
     VarArgsRegSaveSize(0), HasStackFrame(false), RestoreSPFromFP(false),
     LRSpilledForFarJump(false),
-    FramePtrSpillOffset(0), GPRCS1Offset(0), GPRCS2Offset(0), DPRCSOffset(0),
-    GPRCS1Size(0), GPRCS2Size(0), DPRCSSize(0),
-    GPRCS1Frames(0), GPRCS2Frames(0), DPRCSFrames(0),
+    FramePtrSpillOffset(0), GPRCSOffset(0), DPRCSOffset(0),
+    GPRCSSize(0), DPRCSSize(0),
+    GPRCSFrames(0), DPRCSFrames(0),
     JumpTableUId(0), ConstPoolEntryUId(0), VarArgsFrameIndex(0),
     HasITBlocks(false) {}
 
@@ -112,9 +107,9 @@ public:
     hasThumb2(MF.getTarget().getSubtarget<ARMSubtarget>().hasThumb2()),
     VarArgsRegSaveSize(0), HasStackFrame(false), RestoreSPFromFP(false),
     LRSpilledForFarJump(false),
-    FramePtrSpillOffset(0), GPRCS1Offset(0), GPRCS2Offset(0), DPRCSOffset(0),
-    GPRCS1Size(0), GPRCS2Size(0), DPRCSSize(0),
-    GPRCS1Frames(32), GPRCS2Frames(32), DPRCSFrames(32),
+    FramePtrSpillOffset(0), GPRCSOffset(0), DPRCSOffset(0),
+    GPRCSSize(0), DPRCSSize(0),
+    GPRCSFrames(32), DPRCSFrames(32),
     SpilledCSRegs(MF.getTarget().getRegisterInfo()->getNumRegs()),
     JumpTableUId(0), ConstPoolEntryUId(0), VarArgsFrameIndex(0),
     HasITBlocks(false) {}
@@ -138,31 +133,22 @@ public:
   unsigned getFramePtrSpillOffset() const { return FramePtrSpillOffset; }
   void setFramePtrSpillOffset(unsigned o) { FramePtrSpillOffset = o; }
 
-  unsigned getGPRCalleeSavedArea1Offset() const { return GPRCS1Offset; }
-  unsigned getGPRCalleeSavedArea2Offset() const { return GPRCS2Offset; }
+  unsigned getGPRCalleeSavedAreaOffset() const { return GPRCSOffset; }
   unsigned getDPRCalleeSavedAreaOffset()  const { return DPRCSOffset; }
 
-  void setGPRCalleeSavedArea1Offset(unsigned o) { GPRCS1Offset = o; }
-  void setGPRCalleeSavedArea2Offset(unsigned o) { GPRCS2Offset = o; }
+  void setGPRCalleeSavedAreaOffset(unsigned o) { GPRCSOffset = o; }
   void setDPRCalleeSavedAreaOffset(unsigned o)  { DPRCSOffset = o; }
 
-  unsigned getGPRCalleeSavedArea1Size() const { return GPRCS1Size; }
-  unsigned getGPRCalleeSavedArea2Size() const { return GPRCS2Size; }
+  unsigned getGPRCalleeSavedAreaSize() const { return GPRCSSize; }
   unsigned getDPRCalleeSavedAreaSize()  const { return DPRCSSize; }
 
-  void setGPRCalleeSavedArea1Size(unsigned s) { GPRCS1Size = s; }
-  void setGPRCalleeSavedArea2Size(unsigned s) { GPRCS2Size = s; }
+  void setGPRCalleeSavedAreaSize(unsigned s) { GPRCSSize = s; }
   void setDPRCalleeSavedAreaSize(unsigned s)  { DPRCSSize = s; }
 
-  bool isGPRCalleeSavedArea1Frame(int fi) const {
-    if (fi < 0 || fi >= (int)GPRCS1Frames.size())
+  bool isGPRCalleeSavedAreaFrame(int fi) const {
+    if (fi < 0 || fi >= (int)GPRCSFrames.size())
       return false;
-    return GPRCS1Frames[fi];
-  }
-  bool isGPRCalleeSavedArea2Frame(int fi) const {
-    if (fi < 0 || fi >= (int)GPRCS2Frames.size())
-      return false;
-    return GPRCS2Frames[fi];
+    return GPRCSFrames[fi];
   }
   bool isDPRCalleeSavedAreaFrame(int fi) const {
     if (fi < 0 || fi >= (int)DPRCSFrames.size())
@@ -170,28 +156,16 @@ public:
     return DPRCSFrames[fi];
   }
 
-  void addGPRCalleeSavedArea1Frame(int fi) {
+  void addGPRCalleeSavedAreaFrame(int fi) {
     if (fi >= 0) {
-      int Size = GPRCS1Frames.size();
+      int Size = GPRCSFrames.size();
       if (fi >= Size) {
         Size *= 2;
         if (fi >= Size)
           Size = fi+1;
-        GPRCS1Frames.resize(Size);
+        GPRCSFrames.resize(Size);
       }
-      GPRCS1Frames[fi] = true;
-    }
-  }
-  void addGPRCalleeSavedArea2Frame(int fi) {
-    if (fi >= 0) {
-      int Size = GPRCS2Frames.size();
-      if (fi >= Size) {
-        Size *= 2;
-        if (fi >= Size)
-          Size = fi+1;
-        GPRCS2Frames.resize(Size);
-      }
-      GPRCS2Frames[fi] = true;
+      GPRCSFrames[fi] = true;
     }
   }
   void addDPRCalleeSavedAreaFrame(int fi) {
