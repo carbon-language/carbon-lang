@@ -102,6 +102,15 @@ public:
   //                            Visitor Methods
   //===--------------------------------------------------------------------===//
 
+  ComplexPairTy Visit(Expr *E) {
+    llvm::DenseMap<const Expr *, ComplexPairTy>::iterator I = 
+      CGF.ConditionalSaveComplexExprs.find(E);
+    if (I != CGF.ConditionalSaveComplexExprs.end())
+      return I->second;
+      
+      return StmtVisitor<ComplexExprEmitter, ComplexPairTy>::Visit(E);
+  }
+    
   ComplexPairTy VisitStmt(Stmt *S) {
     S->dump(CGF.getContext().getSourceManager());
     assert(0 && "Stmt can't have complex result type!");
@@ -622,13 +631,6 @@ ComplexPairTy ComplexExprEmitter::VisitBinComma(const BinaryOperator *E) {
 
 ComplexPairTy ComplexExprEmitter::
 VisitConditionalOperator(const ConditionalOperator *E) {
-  if (!E->getLHS()) {
-    CGF.ErrorUnsupported(E, "conditional operator with missing LHS");
-    const llvm::Type *EltTy =
-      CGF.ConvertType(E->getType()->getAs<ComplexType>()->getElementType());
-    llvm::Value *U = llvm::UndefValue::get(EltTy);
-    return ComplexPairTy(U, U);
-  }
 
   TestAndClearIgnoreReal();
   TestAndClearIgnoreImag();
@@ -638,14 +640,19 @@ VisitConditionalOperator(const ConditionalOperator *E) {
   llvm::BasicBlock *RHSBlock = CGF.createBasicBlock("cond.false");
   llvm::BasicBlock *ContBlock = CGF.createBasicBlock("cond.end");
 
-  CGF.EmitBranchOnBoolExpr(E->getCond(), LHSBlock, RHSBlock);
+  if (E->getLHS())
+    CGF.EmitBranchOnBoolExpr(E->getCond(), LHSBlock, RHSBlock);
+  else {
+    Expr *save = E->getSAVE();
+    assert(save && "VisitConditionalOperator - save is null");
+    // Intentianlly not doing direct assignment to ConditionalSaveExprs[save] !!
+    ComplexPairTy SaveVal = Visit(save);
+    CGF.ConditionalSaveComplexExprs[save] = SaveVal;
+    CGF.EmitBranchOnBoolExpr(E->getCond(), LHSBlock, RHSBlock);
+  }
 
   CGF.EmitBlock(LHSBlock);
-
-  // Handle the GNU extension for missing LHS.
-  assert(E->getLHS() && "Must have LHS for complex value");
-
-  ComplexPairTy LHS = Visit(E->getLHS());
+  ComplexPairTy LHS = Visit(E->getTrueExpr());
   LHSBlock = Builder.GetInsertBlock();
   CGF.EmitBranch(ContBlock);
 

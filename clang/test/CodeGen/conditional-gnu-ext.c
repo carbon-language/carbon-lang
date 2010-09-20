@@ -19,3 +19,18 @@ void  test1 () {
   if (x != y)
     abort();
 }
+
+// rdar://8453812
+_Complex int getComplex(_Complex int val) {
+  static int count;
+  if (count++)
+    abort();
+  return val;
+}
+
+_Complex int complx() {
+    _Complex int cond;
+    _Complex int rhs;
+
+    return getComplex(1+2i) ? : rhs;
+}

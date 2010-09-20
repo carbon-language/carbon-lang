@@ -516,6 +516,7 @@ public:
   /// to the IR for this expression. Used to implement IR gen. for Gnu
   /// extension's missing LHS expression in a conditional operator expression.
   llvm::DenseMap<const Expr *, llvm::Value *> ConditionalSaveExprs;
+  llvm::DenseMap<const Expr *, ComplexPairTy> ConditionalSaveComplexExprs;
 
   EHScopeStack EHStack;
 
