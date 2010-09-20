@@ -247,6 +247,9 @@ if delay:
     sys.stdout.write("proceeding...\n")
     pass
 
+#
+# Walk through the testdirs while collecting test cases.
+#
 for testdir in testdirs:
     os.path.walk(testdir, visit, 'Test')
 
