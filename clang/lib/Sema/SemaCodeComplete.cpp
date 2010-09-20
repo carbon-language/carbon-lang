@@ -147,12 +147,16 @@ namespace {
     /// \brief The selector that we prefer.
     Selector PreferredSelector;
     
-    void AdjustResultPriorityForPreferredType(Result &R);
+    /// \brief The completion context in which 
+    CodeCompletionContext CompletionContext;
+    
+    void AdjustResultPriorityForDecl(Result &R);
 
   public:
     explicit ResultBuilder(Sema &SemaRef, LookupFilter Filter = 0)
       : SemaRef(SemaRef), Filter(Filter), AllowNestedNameSpecifiers(false),
-        HasObjectTypeQualifiers(false) { }
+        HasObjectTypeQualifiers(false), 
+        CompletionContext(CodeCompletionContext::CCC_Other) { }
     
     /// \brief Whether we should include code patterns in the completion
     /// results.
@@ -194,6 +198,17 @@ namespace {
     /// a slight priority boost.
     void setPreferredSelector(Selector Sel) {
       PreferredSelector = Sel;
+    }
+    
+    /// \brief Retrieve the code-completion context for which results are
+    /// being collected.
+    const CodeCompletionContext &getCompletionContext() const { 
+      return CompletionContext; 
+    }
+    
+    /// \brief Set the code-completion context.
+    void setCompletionContext(const CodeCompletionContext &CompletionContext) {
+      this->CompletionContext = CompletionContext;
     }
     
     /// \brief Specify whether nested-name-specifiers are allowed.
@@ -618,20 +633,30 @@ QualType clang::getDeclUsageType(ASTContext &C, NamedDecl *ND) {
   return T.getNonReferenceType();
 }
 
-void ResultBuilder::AdjustResultPriorityForPreferredType(Result &R) {
-  QualType T = getDeclUsageType(SemaRef.Context, R.Declaration);
-  if (T.isNull())
-    return;
-  
-  CanQualType TC = SemaRef.Context.getCanonicalType(T);
-  // Check for exactly-matching types (modulo qualifiers).
-  if (SemaRef.Context.hasSameUnqualifiedType(PreferredType, TC))
-    R.Priority /= CCF_ExactTypeMatch;
-  // Check for nearly-matching types, based on classification of each.
-  else if ((getSimplifiedTypeClass(PreferredType)
+void ResultBuilder::AdjustResultPriorityForDecl(Result &R) {
+  // If this is an Objective-C method declaration whose selector matches our
+  // preferred selector, give it a priority boost.
+  if (!PreferredSelector.isNull())
+    if (ObjCMethodDecl *Method = dyn_cast<ObjCMethodDecl>(R.Declaration))
+      if (PreferredSelector == Method->getSelector())
+        R.Priority += CCD_SelectorMatch;
+
+  // If we have a preferred type, adjust the priority for results with exactly-
+  // matching or nearly-matching types.
+  if (!PreferredType.isNull()) {
+    QualType T = getDeclUsageType(SemaRef.Context, R.Declaration);
+    if (!T.isNull()) {
+      CanQualType TC = SemaRef.Context.getCanonicalType(T);
+      // Check for exactly-matching types (modulo qualifiers).
+      if (SemaRef.Context.hasSameUnqualifiedType(PreferredType, TC))
+        R.Priority /= CCF_ExactTypeMatch;
+      // Check for nearly-matching types, based on classification of each.
+      else if ((getSimplifiedTypeClass(PreferredType)
                                                == getSimplifiedTypeClass(TC)) &&
-           !(PreferredType->isEnumeralType() && TC->isEnumeralType()))
-    R.Priority /= CCF_SimilarTypeMatch;  
+               !(PreferredType->isEnumeralType() && TC->isEnumeralType()))
+        R.Priority /= CCF_SimilarTypeMatch;  
+    }
+  }  
 }
 
 void ResultBuilder::MaybeAddResult(Result R, DeclContext *CurContext) {
@@ -713,20 +738,13 @@ void ResultBuilder::MaybeAddResult(Result R, DeclContext *CurContext) {
   if (!AllDeclsFound.insert(CanonDecl))
     return;
 
-  // If this is an Objective-C method declaration whose selector matches our
-  // preferred selector, give it a priority boost.
-  if (!PreferredSelector.isNull())
-    if (ObjCMethodDecl *Method = dyn_cast<ObjCMethodDecl>(R.Declaration))
-      if (PreferredSelector == Method->getSelector())
-        R.Priority += CCD_SelectorMatch;
-
   // If the filter is for nested-name-specifiers, then this result starts a
   // nested-name-specifier.
   if (AsNestedNameSpecifier) {
     R.StartsNestedNameSpecifier = true;
     R.Priority = CCP_NestedNameSpecifier;
-  } else if (!PreferredType.isNull())
-      AdjustResultPriorityForPreferredType(R);
+  } else 
+      AdjustResultPriorityForDecl(R);
       
   // If this result is supposed to have an informative qualifier, add one.
   if (R.QualifierIsInformative && !R.Qualifier &&
@@ -800,15 +818,7 @@ void ResultBuilder::AddResult(Result R, DeclContext *CurContext,
   if (InBaseClass)
     R.Priority += CCD_InBaseClass;
   
-  // If this is an Objective-C method declaration whose selector matches our
-  // preferred selector, give it a priority boost.
-  if (!PreferredSelector.isNull())
-    if (ObjCMethodDecl *Method = dyn_cast<ObjCMethodDecl>(R.Declaration))
-      if (PreferredSelector == Method->getSelector())
-        R.Priority += CCD_SelectorMatch;
-
-  if (!PreferredType.isNull())
-    AdjustResultPriorityForPreferredType(R);
+  AdjustResultPriorityForDecl(R);
   
   if (HasObjectTypeQualifiers)
     if (CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(R.Declaration))
@@ -2550,8 +2560,10 @@ void Sema::CodeCompleteOrdinaryName(Scope *S,
                                     ParserCompletionContext CompletionContext) {
   typedef CodeCompletionResult Result;
   ResultBuilder Results(*this);  
+  Results.setCompletionContext(mapCodeCompletionContext(*this, 
+                                                        CompletionContext));
   Results.EnterNewScope();
-
+  
   // Determine how to filter results, e.g., so that the names of
   // values (functions, enumerators, function templates, etc.) are
   // only allowed where we can have an expression.
@@ -2625,8 +2637,7 @@ void Sema::CodeCompleteOrdinaryName(Scope *S,
   if (CodeCompleter->includeMacros())
     AddMacroResults(PP, Results);
   
-  HandleCodeCompleteResults(this, CodeCompleter,
-                            mapCodeCompletionContext(*this, CompletionContext),
+  HandleCodeCompleteResults(this, CodeCompleter, Results.getCompletionContext(),
                             Results.data(),Results.size());
 }
 
@@ -4256,6 +4267,8 @@ void Sema::CodeCompleteObjCMessageReceiver(Scope *S) {
   
   // Find anything that looks like it could be a message receiver.
   Results.setFilter(&ResultBuilder::IsObjCMessageReceiver);
+  Results.setCompletionContext(CodeCompletionContext::CCC_ObjCMessageReceiver);
+
   CodeCompletionDeclConsumer Consumer(Results, CurContext);
   Results.EnterNewScope();
   LookupVisibleDecls(S, LookupOrdinaryName, Consumer,
@@ -4275,8 +4288,7 @@ void Sema::CodeCompleteObjCMessageReceiver(Scope *S) {
   
   if (CodeCompleter->includeMacros())
     AddMacroResults(PP, Results);
-  HandleCodeCompleteResults(this, CodeCompleter, 
-                            CodeCompletionContext::CCC_ObjCMessageReceiver,
+  HandleCodeCompleteResults(this, CodeCompleter, Results.getCompletionContext(),
                             Results.data(), Results.size());
   
 }
