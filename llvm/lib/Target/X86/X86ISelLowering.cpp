@@ -1587,7 +1587,7 @@ X86TargetLowering::LowerMemArgument(SDValue Chain,
                                     VA.getLocMemOffset(), isImmutable);
     SDValue FIN = DAG.getFrameIndex(FI, getPointerTy());
     return DAG.getLoad(ValVT, dl, Chain, FIN,
-                       PseudoSourceValue::getFixedStack(FI), 0,
+                       MachinePointerInfo(PseudoSourceValue::getFixedStack(FI)),
                        false, false, 0);
   }
 }
@@ -1684,8 +1684,8 @@ X86TargetLowering::LowerFormalArguments(SDValue Chain,
 
     // If value is passed via pointer - do a load.
     if (VA.getLocInfo() == CCValAssign::Indirect)
-      ArgValue = DAG.getLoad(VA.getValVT(), dl, Chain, ArgValue, NULL, 0,
-                             false, false, 0);
+      ArgValue = DAG.getLoad(VA.getValVT(), dl, Chain, ArgValue,
+                             MachinePointerInfo(), false, false, 0);
 
     InVals.push_back(ArgValue);
   }
@@ -1871,7 +1871,8 @@ X86TargetLowering::EmitTailCallLoadRetAddr(SelectionDAG &DAG,
   OutRetAddr = getReturnAddressFrameIndex(DAG);
 
   // Load the "old" Return address.
-  OutRetAddr = DAG.getLoad(VT, dl, Chain, OutRetAddr, NULL, 0, false, false, 0);
+  OutRetAddr = DAG.getLoad(VT, dl, Chain, OutRetAddr, MachinePointerInfo(),
+                           false, false, 0);
   return SDValue(OutRetAddr.getNode(), 1);
 }
 
@@ -4089,13 +4090,14 @@ X86TargetLowering::LowerAsSplatVectorLoad(SDValue SrcOp, EVT VT, DebugLoc dl,
     int EltNo = (Offset - StartOffset) >> 2;
     int Mask[4] = { EltNo, EltNo, EltNo, EltNo };
     EVT VT = (PVT == MVT::i32) ? MVT::v4i32 : MVT::v4f32;
-    SDValue V1 = DAG.getLoad(VT, dl, Chain, Ptr,LD->getSrcValue(),0,
+    SDValue V1 = DAG.getLoad(VT, dl, Chain, Ptr,
+                             LD->getPointerInfo().getWithOffset(StartOffset),
                              false, false, 0);
     // Canonicalize it to a v4i32 shuffle.
     V1 = DAG.getNode(ISD::BIT_CONVERT, dl, MVT::v4i32, V1);
     return DAG.getNode(ISD::BIT_CONVERT, dl, VT,
                        DAG.getVectorShuffle(MVT::v4i32, dl, V1,
-                                            DAG.getUNDEF(MVT::v4i32), &Mask[0]));
+                                            DAG.getUNDEF(MVT::v4i32),&Mask[0]));
   }
 
   return SDValue();
@@ -4149,10 +4151,10 @@ static SDValue EltsFromConsecutiveLoads(EVT VT, SmallVectorImpl<SDValue> &Elts,
   if (LastLoadedElt == NumElems - 1) {
     if (DAG.InferPtrAlignment(LDBase->getBasePtr()) >= 16)
       return DAG.getLoad(VT, dl, LDBase->getChain(), LDBase->getBasePtr(),
-                         LDBase->getSrcValue(), LDBase->getSrcValueOffset(),
+                         LDBase->getPointerInfo(),
                          LDBase->isVolatile(), LDBase->isNonTemporal(), 0);
     return DAG.getLoad(VT, dl, LDBase->getChain(), LDBase->getBasePtr(),
-                       LDBase->getSrcValue(), LDBase->getSrcValueOffset(),
+                       LDBase->getPointerInfo(),
                        LDBase->isVolatile(), LDBase->isNonTemporal(),
                        LDBase->getAlignment());
   } else if (NumElems == 4 && LastLoadedElt == 1) {
@@ -6074,7 +6076,8 @@ X86TargetLowering::LowerGlobalAddress(const GlobalValue *GV, DebugLoc dl,
   // load.
   if (isGlobalStubReference(OpFlags))
     Result = DAG.getLoad(getPointerTy(), dl, DAG.getEntryNode(), Result,
-                         PseudoSourceValue::getGOT(), 0, false, false, 0);
+                         MachinePointerInfo(PseudoSourceValue::getGOT()),
+                         false, false, 0);
 
   // If there was a non-zero offset that we didn't fold, create an explicit
   // addition for it.
@@ -6153,7 +6156,7 @@ static SDValue LowerToTLSExecModel(GlobalAddressSDNode *GA, SelectionDAG &DAG,
                                              MVT::i32));
 
   SDValue ThreadPointer = DAG.getLoad(PtrVT, dl, DAG.getEntryNode(), Base,
-                                      NULL, 0, false, false, 0);
+                                      MachinePointerInfo(), false, false, 0);
 
   unsigned char OperandFlags = 0;
   // Most TLS accesses are not RIP relative, even on x86-64.  One exception is
@@ -6179,7 +6182,8 @@ static SDValue LowerToTLSExecModel(GlobalAddressSDNode *GA, SelectionDAG &DAG,
 
   if (model == TLSModel::InitialExec)
     Offset = DAG.getLoad(PtrVT, dl, DAG.getEntryNode(), Offset,
-                         PseudoSourceValue::getGOT(), 0, false, false, 0);
+                         MachinePointerInfo(PseudoSourceValue::getGOT()),
+                         false, false, 0);
 
   // The address of the thread local variable is the add of the thread
   // pointer with the offset of the variable.
@@ -6378,7 +6382,7 @@ SDValue X86TargetLowering::BuildFILD(SDValue Op, EVT SrcVT, SDValue Chain,
     };
     Chain = DAG.getNode(X86ISD::FST, dl, Tys, Ops, array_lengthof(Ops));
     Result = DAG.getLoad(Op.getValueType(), dl, Chain, StackSlot,
-                         PseudoSourceValue::getFixedStack(SSFI), 0,
+                     MachinePointerInfo(PseudoSourceValue::getFixedStack(SSFI)),
                          false, false, 0);
   }
 
@@ -6452,12 +6456,12 @@ SDValue X86TargetLowering::LowerUINT_TO_FP_i64(SDValue Op,
                                         DAG.getIntPtrConstant(0)));
   SDValue Unpck1 = getUnpackl(DAG, dl, MVT::v4i32, XR1, XR2);
   SDValue CLod0 = DAG.getLoad(MVT::v4i32, dl, DAG.getEntryNode(), CPIdx0,
-                              PseudoSourceValue::getConstantPool(), 0,
+                      MachinePointerInfo(PseudoSourceValue::getConstantPool()),
                               false, false, 16);
   SDValue Unpck2 = getUnpackl(DAG, dl, MVT::v4i32, Unpck1, CLod0);
   SDValue XR2F = DAG.getNode(ISD::BIT_CONVERT, dl, MVT::v2f64, Unpck2);
   SDValue CLod1 = DAG.getLoad(MVT::v2f64, dl, CLod0.getValue(1), CPIdx1,
-                              PseudoSourceValue::getConstantPool(), 0,
+                      MachinePointerInfo(PseudoSourceValue::getConstantPool()),
                               false, false, 16);
   SDValue Sub = DAG.getNode(ISD::FSUB, dl, MVT::v2f64, XR2F, CLod1);
 
@@ -6670,7 +6674,7 @@ SDValue X86TargetLowering::LowerFP_TO_SINT(SDValue Op,
 
   // Load the result.
   return DAG.getLoad(Op.getValueType(), Op.getDebugLoc(),
-                     FIST, StackSlot, NULL, 0, false, false, 0);
+                     FIST, StackSlot, MachinePointerInfo(), false, false, 0);
 }
 
 SDValue X86TargetLowering::LowerFP_TO_UINT(SDValue Op,
@@ -6681,7 +6685,7 @@ SDValue X86TargetLowering::LowerFP_TO_UINT(SDValue Op,
 
   // Load the result.
   return DAG.getLoad(Op.getValueType(), Op.getDebugLoc(),
-                     FIST, StackSlot, NULL, 0, false, false, 0);
+                     FIST, StackSlot, MachinePointerInfo(), false, false, 0);
 }
 
 SDValue X86TargetLowering::LowerFABS(SDValue Op,
@@ -6707,7 +6711,7 @@ SDValue X86TargetLowering::LowerFABS(SDValue Op,
   Constant *C = ConstantVector::get(CV);
   SDValue CPIdx = DAG.getConstantPool(C, getPointerTy(), 16);
   SDValue Mask = DAG.getLoad(VT, dl, DAG.getEntryNode(), CPIdx,
-                             PseudoSourceValue::getConstantPool(), 0,
+                     MachinePointerInfo(PseudoSourceValue::getConstantPool()),
                              false, false, 16);
   return DAG.getNode(X86ISD::FAND, dl, VT, Op.getOperand(0), Mask);
 }
@@ -6734,7 +6738,7 @@ SDValue X86TargetLowering::LowerFNEG(SDValue Op, SelectionDAG &DAG) const {
   Constant *C = ConstantVector::get(CV);
   SDValue CPIdx = DAG.getConstantPool(C, getPointerTy(), 16);
   SDValue Mask = DAG.getLoad(VT, dl, DAG.getEntryNode(), CPIdx,
-                             PseudoSourceValue::getConstantPool(), 0,
+                   MachinePointerInfo(PseudoSourceValue::getConstantPool()),
                              false, false, 16);
   if (VT.isVector()) {
     return DAG.getNode(ISD::BIT_CONVERT, dl, VT,
@@ -6783,7 +6787,7 @@ SDValue X86TargetLowering::LowerFCOPYSIGN(SDValue Op, SelectionDAG &DAG) const {
   Constant *C = ConstantVector::get(CV);
   SDValue CPIdx = DAG.getConstantPool(C, getPointerTy(), 16);
   SDValue Mask1 = DAG.getLoad(SrcVT, dl, DAG.getEntryNode(), CPIdx,
-                              PseudoSourceValue::getConstantPool(), 0,
+                      MachinePointerInfo(PseudoSourceValue::getConstantPool()),
                               false, false, 16);
   SDValue SignBit = DAG.getNode(X86ISD::FAND, dl, SrcVT, Op1, Mask1);
 
@@ -6812,7 +6816,7 @@ SDValue X86TargetLowering::LowerFCOPYSIGN(SDValue Op, SelectionDAG &DAG) const {
   C = ConstantVector::get(CV);
   CPIdx = DAG.getConstantPool(C, getPointerTy(), 16);
   SDValue Mask2 = DAG.getLoad(VT, dl, DAG.getEntryNode(), CPIdx,
-                              PseudoSourceValue::getConstantPool(), 0,
+                      MachinePointerInfo(PseudoSourceValue::getConstantPool()),
                               false, false, 16);
   SDValue Val = DAG.getNode(X86ISD::FAND, dl, VT, Op0, Mask2);
 
@@ -7909,13 +7913,13 @@ SDValue X86TargetLowering::LowerRETURNADDR(SDValue Op,
     return DAG.getLoad(getPointerTy(), dl, DAG.getEntryNode(),
                        DAG.getNode(ISD::ADD, dl, getPointerTy(),
                                    FrameAddr, Offset),
-                       NULL, 0, false, false, 0);
+                       MachinePointerInfo(), false, false, 0);
   }
 
   // Just load the return address.
   SDValue RetAddrFI = getReturnAddressFrameIndex(DAG);
   return DAG.getLoad(getPointerTy(), dl, DAG.getEntryNode(),
-                     RetAddrFI, NULL, 0, false, false, 0);
+                     RetAddrFI, MachinePointerInfo(), false, false, 0);
 }
 
 SDValue X86TargetLowering::LowerFRAMEADDR(SDValue Op, SelectionDAG &DAG) const {
@@ -7928,7 +7932,8 @@ SDValue X86TargetLowering::LowerFRAMEADDR(SDValue Op, SelectionDAG &DAG) const {
   unsigned FrameReg = Subtarget->is64Bit() ? X86::RBP : X86::EBP;
   SDValue FrameAddr = DAG.getCopyFromReg(DAG.getEntryNode(), dl, FrameReg, VT);
   while (Depth--)
-    FrameAddr = DAG.getLoad(VT, dl, DAG.getEntryNode(), FrameAddr, NULL, 0,
+    FrameAddr = DAG.getLoad(VT, dl, DAG.getEntryNode(), FrameAddr,
+                            MachinePointerInfo(),
                             false, false, 0);
   return FrameAddr;
 }
@@ -8141,8 +8146,8 @@ SDValue X86TargetLowering::LowerFLT_ROUNDS_(SDValue Op,
                               DAG.getEntryNode(), StackSlot);
 
   // Load FP Control Word from stack slot
-  SDValue CWD = DAG.getLoad(MVT::i16, dl, Chain, StackSlot, NULL, 0,
-                            false, false, 0);
+  SDValue CWD = DAG.getLoad(MVT::i16, dl, Chain, StackSlot,
+                            MachinePointerInfo(), false, false, 0);
 
   // Transform as necessary
   SDValue CWD1 =
@@ -8296,7 +8301,7 @@ SDValue X86TargetLowering::LowerSHL(SDValue Op, SelectionDAG &DAG) const {
     Constant *C = ConstantVector::get(CV);
     SDValue CPIdx = DAG.getConstantPool(C, getPointerTy(), 16);
     SDValue Addend = DAG.getLoad(VT, dl, DAG.getEntryNode(), CPIdx,
-                                 PseudoSourceValue::getConstantPool(), 0,
+                   MachinePointerInfo(PseudoSourceValue::getConstantPool()),
                                  false, false, 16);
 
     Op = DAG.getNode(ISD::ADD, dl, VT, Op, Addend);
@@ -8318,7 +8323,7 @@ SDValue X86TargetLowering::LowerSHL(SDValue Op, SelectionDAG &DAG) const {
     Constant *C = ConstantVector::get(CVM1);
     SDValue CPIdx = DAG.getConstantPool(C, getPointerTy(), 16);
     SDValue M = DAG.getLoad(VT, dl, DAG.getEntryNode(), CPIdx,
-                            PseudoSourceValue::getConstantPool(), 0,
+                       MachinePointerInfo(PseudoSourceValue::getConstantPool()),
                             false, false, 16);
 
     // r = pblendv(r, psllw(r & (char16)15, 4), a);
@@ -8335,7 +8340,8 @@ SDValue X86TargetLowering::LowerSHL(SDValue Op, SelectionDAG &DAG) const {
     C = ConstantVector::get(CVM2);
     CPIdx = DAG.getConstantPool(C, getPointerTy(), 16);
     M = DAG.getLoad(VT, dl, DAG.getEntryNode(), CPIdx,
-                    PseudoSourceValue::getConstantPool(), 0, false, false, 16);
+                    MachinePointerInfo(PseudoSourceValue::getConstantPool()),
+                    false, false, 16);
     
     // r = pblendv(r, psllw(r & (char16)63, 2), a);
     M = DAG.getNode(ISD::AND, dl, VT, R, M);
@@ -8654,8 +8660,8 @@ void X86TargetLowering::ReplaceNodeResults(SDNode *N,
     if (FIST.getNode() != 0) {
       EVT VT = N->getValueType(0);
       // Return a load from the stack slot.
-      Results.push_back(DAG.getLoad(VT, dl, FIST, StackSlot, NULL, 0,
-                                    false, false, 0));
+      Results.push_back(DAG.getLoad(VT, dl, FIST, StackSlot,
+                                    MachinePointerInfo(), false, false, 0));
     }
     return;
   }
@@ -10063,11 +10069,12 @@ static SDValue PerformEXTRACT_VECTOR_ELTCombine(SDNode *N, SelectionDAG &DAG,
     SDValue OffsetVal = DAG.getConstant(Offset, TLI.getPointerTy());
 
     SDValue ScalarAddr = DAG.getNode(ISD::ADD, dl, Idx.getValueType(),
-                                     OffsetVal, StackPtr);
+                                     StackPtr, OffsetVal);
 
     // Load the scalar.
     SDValue LoadScalar = DAG.getLoad(Extract->getValueType(0), dl, Ch,
-                                     ScalarAddr, NULL, 0, false, false, 0);
+                                     ScalarAddr, MachinePointerInfo(),
+                                     false, false, 0);
 
     // Replace the exact with the load.
     DAG.ReplaceAllUsesOfValueWith(SDValue(Extract, 0), LoadScalar);
@@ -10770,9 +10777,8 @@ static SDValue PerformSTORECombine(SDNode *N, SelectionDAG &DAG,
     // pair instead.
     if (Subtarget->is64Bit() || F64IsLegal) {
       EVT LdVT = Subtarget->is64Bit() ? MVT::i64 : MVT::f64;
-      SDValue NewLd = DAG.getLoad(LdVT, LdDL, Ld->getChain(),
-                                  Ld->getBasePtr(), Ld->getSrcValue(),
-                                  Ld->getSrcValueOffset(), Ld->isVolatile(),
+      SDValue NewLd = DAG.getLoad(LdVT, LdDL, Ld->getChain(), Ld->getBasePtr(),
+                                  Ld->getPointerInfo(), Ld->isVolatile(),
                                   Ld->isNonTemporal(), Ld->getAlignment());
       SDValue NewChain = NewLd.getValue(1);
       if (TokenFactorIndex != -1) {
@@ -10781,7 +10787,7 @@ static SDValue PerformSTORECombine(SDNode *N, SelectionDAG &DAG,
                                Ops.size());
       }
       return DAG.getStore(NewChain, StDL, NewLd, St->getBasePtr(),
-                          St->getSrcValue(), St->getSrcValueOffset(),
+                          St->getPointerInfo(),
                           St->isVolatile(), St->isNonTemporal(),
                           St->getAlignment());
     }
@@ -10792,11 +10798,11 @@ static SDValue PerformSTORECombine(SDNode *N, SelectionDAG &DAG,
                                  DAG.getConstant(4, MVT::i32));
 
     SDValue LoLd = DAG.getLoad(MVT::i32, LdDL, Ld->getChain(), LoAddr,
-                               Ld->getSrcValue(), Ld->getSrcValueOffset(),
+                               Ld->getPointerInfo(),
                                Ld->isVolatile(), Ld->isNonTemporal(),
                                Ld->getAlignment());
     SDValue HiLd = DAG.getLoad(MVT::i32, LdDL, Ld->getChain(), HiAddr,
-                               Ld->getSrcValue(), Ld->getSrcValueOffset()+4,
+                               Ld->getPointerInfo().getWithOffset(4),
                                Ld->isVolatile(), Ld->isNonTemporal(),
                                MinAlign(Ld->getAlignment(), 4));
 
