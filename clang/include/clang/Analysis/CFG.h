@@ -31,6 +31,8 @@ namespace clang {
   class Decl;
   class Stmt;
   class Expr;
+  class VarDecl;
+  class CXXBaseOrMemberInitializer;
   class CFG;
   class PrinterHelper;
   class LangOptions;
@@ -59,9 +61,12 @@ protected:
   // The int bits are used to mark the dtor kind.
   llvm::PointerIntPair<void *, 2> Data2;
 
+  CFGElement(void *Ptr, unsigned Int) : Data1(Ptr, Int) {}
+  CFGElement(void *Ptr1, unsigned Int1, void *Ptr2, unsigned Int2)
+      : Data1(Ptr1, Int1), Data2(Ptr2, Int2) {}
+
 public:
   CFGElement() {}
-  CFGElement(void *Ptr, unsigned Int) : Data1(Ptr, Int) {}
 
   Kind getKind() const { return static_cast<Kind>(Data1.getInt()); }
 
@@ -101,22 +106,57 @@ public:
   }
 };
 
+/// CFGInitializer - Represents C++ base or member initializer from
+/// constructor's initialization list.
 class CFGInitializer : public CFGElement {
 public:
+  CFGInitializer() {}
+  CFGInitializer(CXXBaseOrMemberInitializer* I)
+      : CFGElement(I, Initializer) {}
+
+  CXXBaseOrMemberInitializer* getInitializer() const {
+    return static_cast<CXXBaseOrMemberInitializer*>(Data1.getPointer());
+  }
+  operator CXXBaseOrMemberInitializer*() const { return getInitializer(); }
+
   static bool classof(const CFGElement *E) {
     return E->getKind() == Initializer;
   }
 };
 
+/// CFGImplicitDtor - Represents C++ object destructor imlicitly generated
+/// by compiler on various occasions.
 class CFGImplicitDtor : public CFGElement {
+protected:
+  CFGImplicitDtor(unsigned K, void* P, void* S)
+      : CFGElement(P, Dtor, S, K - DTOR_BEGIN) {}
+
 public:
+  CFGImplicitDtor() {}
+
   static bool classof(const CFGElement *E) {
     return E->getKind() == Dtor;
   }
 };
 
+/// CFGAutomaticObjDtor - Represents C++ object destructor implicit generated
+/// for automatic object or temporary bound to const reference at the point
+/// of leaving its local scope.
 class CFGAutomaticObjDtor: public CFGImplicitDtor {
 public:
+  CFGAutomaticObjDtor() {}
+  CFGAutomaticObjDtor(VarDecl* VD, Stmt* S)
+      : CFGImplicitDtor(AutomaticObjectDtor, VD, S) {}
+
+  VarDecl* getVarDecl() const {
+    return static_cast<VarDecl*>(Data1.getPointer());
+  }
+
+  // Get statement end of which triggered the destructor call.
+  Stmt* getTriggerStmt() const {
+    return static_cast<Stmt*>(Data2.getPointer());
+  }
+
   static bool classof(const CFGElement *E) {
     return E->getKind() == Dtor && E->getDtorKind() == AutomaticObjectDtor;
   }

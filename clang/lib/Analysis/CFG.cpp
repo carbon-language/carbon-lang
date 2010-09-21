@@ -1952,7 +1952,9 @@ namespace {
 
 class StmtPrinterHelper : public PrinterHelper  {
   typedef llvm::DenseMap<Stmt*,std::pair<unsigned,unsigned> > StmtMapTy;
+  typedef llvm::DenseMap<Decl*,std::pair<unsigned,unsigned> > DeclMapTy;
   StmtMapTy StmtMap;
+  DeclMapTy DeclMap;
   signed CurrentBlock;
   unsigned CurrentStmt;
   const LangOptions &LangOpts;
@@ -1963,11 +1965,35 @@ public:
     for (CFG::const_iterator I = cfg->begin(), E = cfg->end(); I != E; ++I ) {
       unsigned j = 1;
       for (CFGBlock::const_iterator BI = (*I)->begin(), BEnd = (*I)->end() ;
-           BI != BEnd; ++BI, ++j ) {
-        CFGStmt CS = BI->getAs<CFGStmt>();
-        if (!CS.isValid())
-          continue;
-        StmtMap[CS] = std::make_pair((*I)->getBlockID(),j);
+           BI != BEnd; ++BI, ++j ) {        
+        if (CFGStmt SE = BI->getAs<CFGStmt>()) {
+          std::pair<unsigned, unsigned> P((*I)->getBlockID(), j);
+          StmtMap[SE] = P;
+
+          if (DeclStmt* DS = dyn_cast<DeclStmt>(SE.getStmt())) {
+              DeclMap[DS->getSingleDecl()] = P;
+            
+          } else if (IfStmt* IS = dyn_cast<IfStmt>(SE.getStmt())) {
+            if (VarDecl* VD = IS->getConditionVariable())
+              DeclMap[VD] = P;
+
+          } else if (ForStmt* FS = dyn_cast<ForStmt>(SE.getStmt())) {
+            if (VarDecl* VD = FS->getConditionVariable())
+              DeclMap[VD] = P;
+
+          } else if (WhileStmt* WS = dyn_cast<WhileStmt>(SE.getStmt())) {
+            if (VarDecl* VD = WS->getConditionVariable())
+              DeclMap[VD] = P;
+
+          } else if (SwitchStmt* SS = dyn_cast<SwitchStmt>(SE.getStmt())) {
+            if (VarDecl* VD = SS->getConditionVariable())
+              DeclMap[VD] = P;
+
+          } else if (CXXCatchStmt* CS = dyn_cast<CXXCatchStmt>(SE.getStmt())) {
+            if (VarDecl* VD = CS->getExceptionDecl())
+              DeclMap[VD] = P;
+          }
+        }
       }
     }
   }
@@ -1978,11 +2004,25 @@ public:
   void setBlockID(signed i) { CurrentBlock = i; }
   void setStmtID(unsigned i) { CurrentStmt = i; }
 
-  virtual bool handledStmt(Stmt* Terminator, llvm::raw_ostream& OS) {
-
-    StmtMapTy::iterator I = StmtMap.find(Terminator);
+  virtual bool handledStmt(Stmt* S, llvm::raw_ostream& OS) {
+    StmtMapTy::iterator I = StmtMap.find(S);
 
     if (I == StmtMap.end())
+      return false;
+
+    if (CurrentBlock >= 0 && I->second.first == (unsigned) CurrentBlock
+                          && I->second.second == CurrentStmt) {
+      return false;
+    }
+
+    OS << "[B" << I->second.first << "." << I->second.second << "]";
+    return true;
+  }
+
+  bool handleDecl(Decl* D, llvm::raw_ostream& OS) {
+    DeclMapTy::iterator I = DeclMap.find(D);
+
+    if (I == DeclMap.end())
       return false;
 
     if (CurrentBlock >= 0 && I->second.first == (unsigned) CurrentBlock
@@ -2095,52 +2135,74 @@ public:
 };
 } // end anonymous namespace
 
-
-static void print_stmt(llvm::raw_ostream &OS, StmtPrinterHelper* Helper,
+static void print_elem(llvm::raw_ostream &OS, StmtPrinterHelper* Helper,
                        const CFGElement &E) {
-  CFGStmt CS = E.getAs<CFGStmt>();
-  if (!CS)
-    return;
-  Stmt *S = CS.getStmt();
-  
-  if (Helper) {
-    // special printing for statement-expressions.
-    if (StmtExpr* SE = dyn_cast<StmtExpr>(S)) {
-      CompoundStmt* Sub = SE->getSubStmt();
+  if (CFGStmt CS = E.getAs<CFGStmt>()) {
+    Stmt *S = CS;
+    
+    if (Helper) {
 
-      if (Sub->child_begin() != Sub->child_end()) {
-        OS << "({ ... ; ";
-        Helper->handledStmt(*SE->getSubStmt()->body_rbegin(),OS);
-        OS << " })\n";
-        return;
+      // special printing for statement-expressions.
+      if (StmtExpr* SE = dyn_cast<StmtExpr>(S)) {
+        CompoundStmt* Sub = SE->getSubStmt();
+
+        if (Sub->child_begin() != Sub->child_end()) {
+          OS << "({ ... ; ";
+          Helper->handledStmt(*SE->getSubStmt()->body_rbegin(),OS);
+          OS << " })\n";
+          return;
+        }
+      }
+      // special printing for comma expressions.
+      if (BinaryOperator* B = dyn_cast<BinaryOperator>(S)) {
+        if (B->getOpcode() == BO_Comma) {
+          OS << "... , ";
+          Helper->handledStmt(B->getRHS(),OS);
+          OS << '\n';
+          return;
+        }
       }
     }
+    S->printPretty(OS, Helper, PrintingPolicy(Helper->getLangOpts()));
 
-    // special printing for comma expressions.
-    if (BinaryOperator* B = dyn_cast<BinaryOperator>(S)) {
-      if (B->getOpcode() == BO_Comma) {
-        OS << "... , ";
-        Helper->handledStmt(B->getRHS(),OS);
-        OS << '\n';
-        return;
-      }
+    if (isa<CXXOperatorCallExpr>(S)) {
+      OS << " (OperatorCall)";    
     }
-  }
+    else if (isa<CXXBindTemporaryExpr>(S)) {
+      OS << " (BindTemporary)";    
+    }
 
-  S->printPretty(OS, Helper, PrintingPolicy(Helper->getLangOpts()));
-  
-  if (isa<CXXOperatorCallExpr>(S)) {
-    OS << " (OperatorCall)";    
-  }
-  else if (isa<CXXBindTemporaryExpr>(S)) {
-    OS << " (BindTemporary)";    
-  }
+    // Expressions need a newline.
+    if (isa<Expr>(S))
+      OS << '\n';
 
+  } else if (CFGInitializer IE = E.getAs<CFGInitializer>()) {
+    CXXBaseOrMemberInitializer* I = IE;
+    if (I->isBaseInitializer())
+      OS << I->getBaseClass()->getAsCXXRecordDecl()->getName();
+    else OS << I->getMember()->getName();
 
-  // Expressions need a newline.
-  if (isa<Expr>(S))
-    OS << '\n';
-}
+    OS << "(";
+    if (Expr* IE = I->getInit())
+      IE->printPretty(OS, Helper, PrintingPolicy(Helper->getLangOpts()));
+    OS << ")";
+
+    if (I->isBaseInitializer())
+      OS << " (Base initializer)\n";
+    else OS << " (Member initializer)\n";
+
+  } else if (CFGAutomaticObjDtor DE = E.getAs<CFGAutomaticObjDtor>()){
+    VarDecl* VD = DE.getVarDecl();
+    Helper->handleDecl(VD, OS);
+
+    Type* T = VD->getType().getTypePtr();
+    if (const ReferenceType* RT = T->getAs<ReferenceType>())
+      T = RT->getPointeeType().getTypePtr();
+
+    OS << ".~" << T->getAsCXXRecordDecl()->getName().str() << "()";
+    OS << " (Implicit destructor)\n";
+  }
+ }
 
 static void print_block(llvm::raw_ostream& OS, const CFG* cfg,
                         const CFGBlock& B,
@@ -2209,7 +2271,7 @@ static void print_block(llvm::raw_ostream& OS, const CFG* cfg,
     if (Helper)
       Helper->setStmtID(j);
 
-    print_stmt(OS,Helper,*I);
+    print_elem(OS,Helper,*I);
   }
 
   // Print the terminator of this block.
