@@ -216,6 +216,10 @@ namespace {
       AllowNestedNameSpecifiers = Allow;
     }
 
+    /// \brief Return the semantic analysis object for which we are collecting
+    /// code completion results.
+    Sema &getSema() const { return SemaRef; }
+    
     /// \brief Determine whether the given declaration is at all interesting
     /// as a code-completion result.
     ///
@@ -4362,6 +4366,40 @@ void Sema::CodeCompleteObjCSuperMessage(Scope *S, SourceLocation SuperLoc,
                                       /*IsSuper=*/true);
 }
 
+/// \brief Given a set of code-completion results for the argument of a message
+/// send, determine the preferred type (if any) for that argument expression.
+static QualType getPreferredArgumentTypeForMessageSend(ResultBuilder &Results,
+                                                       unsigned NumSelIdents) {
+  typedef CodeCompletionResult Result;  
+  ASTContext &Context = Results.getSema().Context;
+  
+  QualType PreferredType;
+  unsigned BestPriority = CCP_Unlikely * 2;
+  Result *ResultsData = Results.data();
+  for (unsigned I = 0, N = Results.size(); I != N; ++I) {
+    Result &R = ResultsData[I];
+    if (R.Kind == Result::RK_Declaration && 
+        isa<ObjCMethodDecl>(R.Declaration)) {
+      if (R.Priority <= BestPriority) {
+        ObjCMethodDecl *Method = cast<ObjCMethodDecl>(R.Declaration);
+        if (NumSelIdents <= Method->param_size()) {
+          QualType MyPreferredType = Method->param_begin()[NumSelIdents - 1]
+                                       ->getType();
+          if (R.Priority < BestPriority || PreferredType.isNull()) {
+            BestPriority = R.Priority;
+            PreferredType = MyPreferredType;
+          } else if (!Context.hasSameUnqualifiedType(PreferredType,
+                                                     MyPreferredType)) {
+            PreferredType = QualType();
+          }
+        }
+      }
+    }
+  }
+
+  return PreferredType;
+}
+
 static void AddClassMessageCompletions(Sema &SemaRef, Scope *S, 
                                        ParsedType Receiver,
                                        IdentifierInfo **SelIdents,
@@ -4446,12 +4484,25 @@ void Sema::CodeCompleteObjCClassMessage(Scope *S, ParsedType Receiver,
                                         unsigned NumSelIdents,
                                         bool AtArgumentExpression,
                                         bool IsSuper) {
-  if (AtArgumentExpression)
-    return CodeCompleteOrdinaryName(S, PCC_Expression);
-
   ResultBuilder Results(*this);
   AddClassMessageCompletions(*this, S, Receiver, SelIdents, NumSelIdents, 
                              AtArgumentExpression, IsSuper, Results);
+  
+  // If we're actually at the argument expression (rather than prior to the 
+  // selector), we're actually performing code completion for an expression.
+  // Determine whether we have a single, best method. If so, we can 
+  // code-complete the expression using the corresponding parameter type as
+  // our preferred type, improving completion results.
+  if (AtArgumentExpression) {
+    QualType PreferredType = getPreferredArgumentTypeForMessageSend(Results, 
+                                                                    NumSelIdents);
+    if (PreferredType.isNull())
+      CodeCompleteOrdinaryName(S, PCC_Expression);
+    else
+      CodeCompleteExpression(S, PreferredType);
+    return;
+  }
+
   HandleCodeCompleteResults(this, CodeCompleter, 
                             CodeCompletionContext::CCC_Other,
                             Results.data(), Results.size());
@@ -4462,9 +4513,6 @@ void Sema::CodeCompleteObjCInstanceMessage(Scope *S, ExprTy *Receiver,
                                            unsigned NumSelIdents,
                                            bool AtArgumentExpression,
                                            bool IsSuper) {
-  if (AtArgumentExpression)
-    return CodeCompleteOrdinaryName(S, PCC_Expression);
-  
   typedef CodeCompletionResult Result;
   
   Expr *RecExpr = static_cast<Expr *>(Receiver);
@@ -4577,8 +4625,24 @@ void Sema::CodeCompleteObjCInstanceMessage(Scope *S, ExprTy *Receiver,
       }
     }
   }
-
   Results.ExitScope();
+  
+  
+  // If we're actually at the argument expression (rather than prior to the 
+  // selector), we're actually performing code completion for an expression.
+  // Determine whether we have a single, best method. If so, we can 
+  // code-complete the expression using the corresponding parameter type as
+  // our preferred type, improving completion results.
+  if (AtArgumentExpression) {
+    QualType PreferredType = getPreferredArgumentTypeForMessageSend(Results, 
+                                                                  NumSelIdents);
+    if (PreferredType.isNull())
+      CodeCompleteOrdinaryName(S, PCC_Expression);
+    else
+      CodeCompleteExpression(S, PreferredType);
+    return;
+  }
+  
   HandleCodeCompleteResults(this, CodeCompleter, 
                             CodeCompletionContext::CCC_Other,
                             Results.data(),Results.size());

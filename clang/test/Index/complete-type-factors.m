@@ -22,9 +22,15 @@ enum Priority test1(enum Priority priority, enum Color color, int integer) {
   c = color;
 }
 
-// FIXME: It would be great for message sends to have the same
-// benefits as function calls, but we don't quite have the
-// infrastructure yet.
+@interface A
++ (void)method:(enum Color)color priority:(enum Priority)priority;
+- (void)method:(enum Color)color priority:(enum Priority)priority;
+@end
+
+void test2(A *a) {
+  [a method:Red priority:High];
+  [A method:Red priority:Low];
+}
 
 // RUN: c-index-test -code-completion-at=%s:16:11 -Xclang -code-completion-patterns %s | FileCheck -check-prefix=CHECK-CC1 %s
 // CHECK-CC1: EnumConstantDecl:{ResultType enum Color}{TypedText Blue} (32)
@@ -105,3 +111,27 @@ enum Priority test1(enum Priority priority, enum Color color, int integer) {
 // CHECK-CC6: EnumConstantDecl:{ResultType enum Color}{TypedText Red} (16)
 // CHECK-CC6: NotImplemented:{TypedText sizeof}{LeftParen (}{Placeholder expression-or-type}{RightParen )} (30)
 // CHECK-CC6: FunctionDecl:{ResultType enum Priority}{TypedText test1}{LeftParen (}{Placeholder enum Priority priority}{Comma , }{Placeholder enum Color color}{Comma , }{Placeholder int integer}{RightParen )} (50)
+// RUN: c-index-test -code-completion-at=%s:31:13 -Xclang -code-completion-patterns %s | FileCheck -check-prefix=CHECK-CC7 %s
+// RUN: c-index-test -code-completion-at=%s:32:13 -Xclang -code-completion-patterns %s | FileCheck -check-prefix=CHECK-CC7 %s
+// CHECK-CC7: ParmDecl:{ResultType A *}{TypedText a} (8)
+// CHECK-CC7: EnumConstantDecl:{ResultType enum Color}{TypedText Blue} (16)
+// CHECK-CC7: FunctionDecl:{ResultType int}{TypedText func1}{LeftParen (}{Placeholder enum Color}{RightParen )} (25)
+// CHECK-CC7: FunctionDecl:{ResultType enum Priority}{TypedText func2}{LeftParen (}{Placeholder int}{RightParen )} (50)
+// CHECK-CC7: FunctionDecl:{ResultType void}{TypedText func3}{LeftParen (}{Placeholder float}{RightParen )} (50)
+// CHECK-CC7: EnumConstantDecl:{ResultType enum Color}{TypedText Green} (16)
+// CHECK-CC7: EnumConstantDecl:{ResultType enum Priority}{TypedText High} (65)
+// CHECK-CC7: EnumConstantDecl:{ResultType enum Priority}{TypedText Low} (65)
+// CHECK-CC7: EnumConstantDecl:{ResultType enum Color}{TypedText Red} (16)
+// CHECK-CC7: FunctionDecl:{ResultType enum Priority}{TypedText test1}{LeftParen (}{Placeholder enum Priority priority}{Comma , }{Placeholder enum Color color}{Comma , }{Placeholder int integer}{RightParen )} (50)
+// RUN: c-index-test -code-completion-at=%s:31:26 -Xclang -code-completion-patterns %s | FileCheck -check-prefix=CHECK-CC8 %s
+// RUN: c-index-test -code-completion-at=%s:32:26 -Xclang -code-completion-patterns %s | FileCheck -check-prefix=CHECK-CC8 %s
+// CHECK-CC8: ParmDecl:{ResultType A *}{TypedText a} (8)
+// CHECK-CC8: EnumConstantDecl:{ResultType enum Color}{TypedText Blue} (65)
+// CHECK-CC8: FunctionDecl:{ResultType int}{TypedText func1}{LeftParen (}{Placeholder enum Color}{RightParen )} (25)
+// CHECK-CC8: FunctionDecl:{ResultType enum Priority}{TypedText func2}{LeftParen (}{Placeholder int}{RightParen )} (12)
+// CHECK-CC8: FunctionDecl:{ResultType void}{TypedText func3}{LeftParen (}{Placeholder float}{RightParen )} (50)
+// CHECK-CC8: EnumConstantDecl:{ResultType enum Color}{TypedText Green} (65)
+// CHECK-CC8: EnumConstantDecl:{ResultType enum Priority}{TypedText High} (16)
+// CHECK-CC8: EnumConstantDecl:{ResultType enum Priority}{TypedText Low} (16)
+// CHECK-CC8: EnumConstantDecl:{ResultType enum Color}{TypedText Red} (65)
+// CHECK-CC8: FunctionDecl:{ResultType enum Priority}{TypedText test1}{LeftParen (}{Placeholder enum Priority priority}{Comma , }{Placeholder enum Color color}{Comma , }{Placeholder int integer}{RightParen )} (12)
