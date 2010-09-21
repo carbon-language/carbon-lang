@@ -137,9 +137,9 @@ Sema::HandlePropertyInClassExtension(Scope *S, ObjCCategoryDecl *CDecl,
     // A case of continuation class adding a new property in the class. This
     // is not what it was meant for. However, gcc supports it and so should we.
     // Make sure setter/getters are declared here.
-    ProcessPropertyDecl(PDecl, CCPrimary);
+    ProcessPropertyDecl(PDecl, CCPrimary, /* redeclaredProperty = */ 0,
+                        /* lexicalDC = */ CDecl);
     return PDecl;
-
   }
 
   // The property 'PIDecl's readonly attribute will be over-ridden
@@ -1099,8 +1099,12 @@ void Sema::ProcessPropertyDecl(ObjCPropertyDecl *property,
     // No instance method of same name as property getter name was found.
     // Declare a getter method and add it to the list of methods
     // for this class.
-    GetterMethod = ObjCMethodDecl::Create(Context, property->getLocation(),
-                             property->getLocation(), property->getGetterName(),
+    SourceLocation Loc = redeclaredProperty ? 
+      redeclaredProperty->getLocation() :
+      property->getLocation();
+
+    GetterMethod = ObjCMethodDecl::Create(Context, Loc, Loc,
+                             property->getGetterName(),
                              property->getType(), 0, CD, true, false, true, 
                              false,
                              (property->getPropertyImplementation() ==
@@ -1110,9 +1114,8 @@ void Sema::ProcessPropertyDecl(ObjCPropertyDecl *property,
     CD->addDecl(GetterMethod);
     // FIXME: Eventually this shouldn't be needed, as the lexical context
     // and the real context should be the same.
-    if (DeclContext *lexicalDC = property->getLexicalDeclContext())
+    if (lexicalDC)
       GetterMethod->setLexicalDeclContext(lexicalDC);
-
   } else
     // A user declared getter will be synthesize when @synthesize of
     // the property with the same name is seen in the @implementation

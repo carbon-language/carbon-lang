@@ -920,12 +920,12 @@ bool CursorVisitor::VisitObjCPropertyDecl(ObjCPropertyDecl *PD) {
   // Visit synthesized methods since they will be skipped when visiting
   // the @interface.
   if (ObjCMethodDecl *MD = prevDecl->getGetterMethodDecl())
-    if (MD->isSynthesized())
+    if (MD->isSynthesized() && MD->getLexicalDeclContext() == CDecl)
       if (Visit(MakeCXCursor(MD, TU)))
         return true;
 
   if (ObjCMethodDecl *MD = prevDecl->getSetterMethodDecl())
-    if (MD->isSynthesized())
+    if (MD->isSynthesized() && MD->getLexicalDeclContext() == CDecl)
       if (Visit(MakeCXCursor(MD, TU)))
         return true;
 

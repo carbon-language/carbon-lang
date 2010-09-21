@@ -21,8 +21,8 @@
 
 // RUN: c-index-test -test-load-source local %s | FileCheck %s
 // CHECK: properties-class-extensions.m:4:12: ObjCInterfaceDecl=Foo:4:12 Extent=[4:1 - 4:23]
-// CHECK: properties-class-extensions.m:9:15: ObjCInstanceMethodDecl=setB::9:15 Extent=[9:15 - 9:16]
-// CHECK: properties-class-extensions.m:9:15: ParmDecl=b:9:15 (Definition) Extent=[9:15 - 9:16]
+// CHECK-not: properties-class-extensions.m:9:15: ObjCInstanceMethodDecl=setB::9:15 Extent=[9:15 - 9:16]
+// CHECK-not: properties-class-extensions.m:9:15: ParmDecl=b:9:15 (Definition) Extent=[9:15 - 9:16]
 // CHECK: properties-class-extensions.m:5:12: ObjCCategoryDecl=Cat:5:12 Extent=[5:1 - 7:5]
 // CHECK: properties-class-extensions.m:5:12: ObjCClassRef=Foo:4:12 Extent=[5:12 - 5:15]
 // CHECK: properties-class-extensions.m:6:15: ObjCPropertyDecl=a:6:15 Extent=[6:15 - 6:16]
@@ -44,7 +44,7 @@
 // CHECK: properties-class-extensions.m:18:12: ObjCClassRef=Bar:15:12 Extent=[18:12 - 18:15]
 // CHECK: properties-class-extensions.m:19:26: ObjCPropertyDecl=bar:19:26 Extent=[19:26 - 19:29]
 // CHECK: properties-class-extensions.m:19:23: TypeRef=id:0:0 Extent=[19:23 - 19:25]
-// CHECK: properties-class-extensions.m:16:25: ObjCInstanceMethodDecl=bar:16:25 Extent=[16:25 - 16:28]
+// CHECK-not: properties-class-extensions.m:16:25: ObjCInstanceMethodDecl=bar:16:25 Extent=[16:25 - 16:28]
 // CHECK: properties-class-extensions.m:19:26: ObjCInstanceMethodDecl=setBar::19:26 Extent=[19:26 - 19:29]
 // CHECK: properties-class-extensions.m:19:26: ParmDecl=bar:19:26 (Definition) Extent=[19:26 - 19:29]
 
