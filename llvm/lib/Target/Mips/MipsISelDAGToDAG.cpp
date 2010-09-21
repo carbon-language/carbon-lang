@@ -84,8 +84,7 @@ private:
   SDNode *Select(SDNode *N);
 
   // Complex Pattern.
-  bool SelectAddr(SDNode *Op, SDValue N, 
-                  SDValue &Base, SDValue &Offset);
+  bool SelectAddr(SDValue N, SDValue &Base, SDValue &Offset);
 
   SDNode *SelectLoadFp64(SDNode *N);
   SDNode *SelectStoreFp64(SDNode *N);
@@ -110,8 +109,7 @@ SDNode *MipsDAGToDAGISel::getGlobalBaseReg() {
 /// ComplexPattern used on MipsInstrInfo
 /// Used on Mips Load/Store instructions
 bool MipsDAGToDAGISel::
-SelectAddr(SDNode *Op, SDValue Addr, SDValue &Offset, SDValue &Base)
-{
+SelectAddr(SDValue Addr, SDValue &Offset, SDValue &Base) {
   // if Address is FI, get the TargetFrameIndex.
   if (FrameIndexSDNode *FIN = dyn_cast<FrameIndexSDNode>(Addr)) {
     Base   = CurDAG->getTargetFrameIndex(FIN->getIndex(), MVT::i32);
@@ -193,7 +191,7 @@ SDNode *MipsDAGToDAGISel::SelectLoadFp64(SDNode *N) {
   SDValue N1 = N->getOperand(1);
   SDValue Offset0, Offset1, Base;
 
-  if (!SelectAddr(N, N1, Offset0, Base) ||
+  if (!SelectAddr(N1, Offset0, Base) ||
       N1.getValueType() != MVT::i32)
     return NULL;
 
@@ -257,7 +255,7 @@ SDNode *MipsDAGToDAGISel::SelectStoreFp64(SDNode *N) {
   SDValue N2 = N->getOperand(2);
   SDValue Offset0, Offset1, Base;
 
-  if (!SelectAddr(N, N2, Offset0, Base) ||
+  if (!SelectAddr(N2, Offset0, Base) ||
       N1.getValueType() != MVT::f64 ||
       N2.getValueType() != MVT::i32)
     return NULL;

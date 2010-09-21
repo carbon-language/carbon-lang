@@ -82,8 +82,8 @@ private:
   SDNode *Select(SDNode *N);
 
   // Address Selection
-  bool SelectAddrRegReg(SDNode *Op, SDValue N, SDValue &Base, SDValue &Index);
-  bool SelectAddrRegImm(SDNode *Op, SDValue N, SDValue &Disp, SDValue &Base);
+  bool SelectAddrRegReg(SDValue N, SDValue &Base, SDValue &Index);
+  bool SelectAddrRegImm(SDValue N, SDValue &Disp, SDValue &Base);
 
   // getI32Imm - Return a target constant with the specified value, of type i32.
   inline SDValue getI32Imm(unsigned Imm) {
@@ -118,7 +118,7 @@ static bool isIntS32Immediate(SDValue Op, int32_t &Imm) {
 /// can be represented as an indexed [r+r] operation.  Returns false if it
 /// can be more efficiently represented with [r+imm].
 bool MBlazeDAGToDAGISel::
-SelectAddrRegReg(SDNode *Op, SDValue N, SDValue &Base, SDValue &Index) {
+SelectAddrRegReg(SDValue N, SDValue &Base, SDValue &Index) {
   if (N.getOpcode() == ISD::FrameIndex) return false;
   if (N.getOpcode() == ISD::TargetExternalSymbol ||
       N.getOpcode() == ISD::TargetGlobalAddress)
@@ -145,9 +145,9 @@ SelectAddrRegReg(SDNode *Op, SDValue N, SDValue &Base, SDValue &Index) {
 /// a signed 32-bit displacement [r+imm], and if it is not better
 /// represented as reg+reg.
 bool MBlazeDAGToDAGISel::
-SelectAddrRegImm(SDNode *Op, SDValue N, SDValue &Disp, SDValue &Base) {
+SelectAddrRegImm(SDValue N, SDValue &Disp, SDValue &Base) {
   // If this can be more profitably realized as r+r, fail.
-  if (SelectAddrRegReg(Op, N, Disp, Base))
+  if (SelectAddrRegReg(N, Disp, Base))
     return false;
 
   if (N.getOpcode() == ISD::ADD || N.getOpcode() == ISD::OR) {

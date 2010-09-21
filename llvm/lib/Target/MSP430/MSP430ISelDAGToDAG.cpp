@@ -120,7 +120,7 @@ namespace {
     SDNode *SelectIndexedBinOp(SDNode *Op, SDValue N1, SDValue N2,
                                unsigned Opc8, unsigned Opc16);
 
-    bool SelectAddr(SDNode *Op, SDValue Addr, SDValue &Base, SDValue &Disp);
+    bool SelectAddr(SDValue Addr, SDValue &Base, SDValue &Disp);
   };
 }  // end anonymous namespace
 
@@ -245,7 +245,7 @@ bool MSP430DAGToDAGISel::MatchAddress(SDValue N, MSP430ISelAddressMode &AM) {
 /// SelectAddr - returns true if it is able pattern match an addressing mode.
 /// It returns the operands which make up the maximal addressing mode it can
 /// match by reference.
-bool MSP430DAGToDAGISel::SelectAddr(SDNode *Op, SDValue N,
+bool MSP430DAGToDAGISel::SelectAddr(SDValue N,
                                     SDValue &Base, SDValue &Disp) {
   MSP430ISelAddressMode AM;
 
@@ -263,7 +263,7 @@ bool MSP430DAGToDAGISel::SelectAddr(SDNode *Op, SDValue N,
     AM.Base.Reg;
 
   if (AM.GV)
-    Disp = CurDAG->getTargetGlobalAddress(AM.GV, Op->getDebugLoc(),
+    Disp = CurDAG->getTargetGlobalAddress(AM.GV, N->getDebugLoc(),
                                           MVT::i16, AM.Disp,
                                           0/*AM.SymbolFlags*/);
   else if (AM.CP)
@@ -289,7 +289,7 @@ SelectInlineAsmMemoryOperand(const SDValue &Op, char ConstraintCode,
   switch (ConstraintCode) {
   default: return true;
   case 'm':   // memory
-    if (!SelectAddr(Op.getNode(), Op, Op0, Op1))
+    if (!SelectAddr(Op, Op0, Op1))
       return true;
     break;
   }

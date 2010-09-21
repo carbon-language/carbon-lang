@@ -44,9 +44,8 @@ public:
   SDNode *Select(SDNode *N);
 
   // Complex Pattern Selectors.
-  bool SelectADDRrr(SDNode *Op, SDValue N, SDValue &R1, SDValue &R2);
-  bool SelectADDRri(SDNode *Op, SDValue N, SDValue &Base,
-                    SDValue &Offset);
+  bool SelectADDRrr(SDValue N, SDValue &R1, SDValue &R2);
+  bool SelectADDRri(SDValue N, SDValue &Base, SDValue &Offset);
 
   /// SelectInlineAsmMemoryOperand - Implement addressing mode selection for
   /// inline asm expressions.
@@ -71,7 +70,7 @@ SDNode* SparcDAGToDAGISel::getGlobalBaseReg() {
   return CurDAG->getRegister(GlobalBaseReg, TLI.getPointerTy()).getNode();
 }
 
-bool SparcDAGToDAGISel::SelectADDRri(SDNode *Op, SDValue Addr,
+bool SparcDAGToDAGISel::SelectADDRri(SDValue Addr,
                                      SDValue &Base, SDValue &Offset) {
   if (FrameIndexSDNode *FIN = dyn_cast<FrameIndexSDNode>(Addr)) {
     Base = CurDAG->getTargetFrameIndex(FIN->getIndex(), MVT::i32);
@@ -112,8 +111,7 @@ bool SparcDAGToDAGISel::SelectADDRri(SDNode *Op, SDValue Addr,
   return true;
 }
 
-bool SparcDAGToDAGISel::SelectADDRrr(SDNode *Op, SDValue Addr,
-                                     SDValue &R1,  SDValue &R2) {
+bool SparcDAGToDAGISel::SelectADDRrr(SDValue Addr, SDValue &R1, SDValue &R2) {
   if (Addr.getOpcode() == ISD::FrameIndex) return false;
   if (Addr.getOpcode() == ISD::TargetExternalSymbol ||
       Addr.getOpcode() == ISD::TargetGlobalAddress)
@@ -196,8 +194,8 @@ SparcDAGToDAGISel::SelectInlineAsmMemoryOperand(const SDValue &Op,
   switch (ConstraintCode) {
   default: return true;
   case 'm':   // memory
-   if (!SelectADDRrr(Op.getNode(), Op, Op0, Op1))
-     SelectADDRri(Op.getNode(), Op, Op0, Op1);
+   if (!SelectADDRrr(Op, Op0, Op1))
+     SelectADDRri(Op, Op0, Op1);
    break;
   }
 

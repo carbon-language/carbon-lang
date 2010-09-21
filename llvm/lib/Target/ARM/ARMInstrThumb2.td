@@ -140,7 +140,8 @@ def t2addrmode_imm8 : Operand<i32>,
 }
 
 def t2am_imm8_offset : Operand<i32>,
-                       ComplexPattern<i32, 1, "SelectT2AddrModeImm8Offset", []>{
+                       ComplexPattern<i32, 1, "SelectT2AddrModeImm8Offset",
+                                      [], [SDNPWantRoot]> {
   let PrintMethod = "printT2AddrModeImm8OffsetOperand";
 }
 

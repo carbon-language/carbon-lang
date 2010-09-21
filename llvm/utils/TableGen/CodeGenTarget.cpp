@@ -407,6 +407,10 @@ ComplexPattern::ComplexPattern(Record *R) {
       Properties |= 1 << SDNPMemOperand;
     } else if (PropList[i]->getName() == "SDNPVariadic") {
       Properties |= 1 << SDNPVariadic;
+    } else if (PropList[i]->getName() == "SDNPWantRoot") {
+      Properties |= 1 << SDNPWantRoot;
+    } else if (PropList[i]->getName() == "SDNPWantParent") {
+      Properties |= 1 << SDNPWantParent;
     } else {
       errs() << "Unsupported SD Node property '" << PropList[i]->getName()
              << "' on ComplexPattern '" << R->getName() << "'!\n";

@@ -379,7 +379,8 @@ def addrmode2 : Operand<i32>,
 }
 
 def am2offset : Operand<i32>,
-                ComplexPattern<i32, 2, "SelectAddrMode2Offset", []> {
+                ComplexPattern<i32, 2, "SelectAddrMode2Offset",
+                [], [SDNPWantRoot]> {
   let PrintMethod = "printAddrMode2OffsetOperand";
   let MIOperandInfo = (ops GPR, i32imm);
 }
@@ -394,7 +395,8 @@ def addrmode3 : Operand<i32>,
 }
 
 def am3offset : Operand<i32>,
-                ComplexPattern<i32, 2, "SelectAddrMode3Offset", []> {
+                ComplexPattern<i32, 2, "SelectAddrMode3Offset",
+                               [], [SDNPWantRoot]> {
   let PrintMethod = "printAddrMode3OffsetOperand";
   let MIOperandInfo = (ops GPR, i32imm);
 }

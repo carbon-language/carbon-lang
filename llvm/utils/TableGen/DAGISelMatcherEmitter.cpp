@@ -649,7 +649,13 @@ void MatcherTableEmitter::EmitPredicateFunctions(formatted_raw_ostream &OS) {
       OS << "    Result.resize(NextRes+" << NumOps << ");\n";
       OS << "    return "  << P.getSelectFunc();
 
-      OS << "(Root, N";
+      OS << "(";
+      // If the complex pattern wants the root of the match, pass it in as the
+      // first argument.
+      if (P.hasProperty(SDNPWantRoot))
+        OS << "Root, ";
+      
+      OS << "N";
       for (unsigned i = 0; i != NumOps; ++i)
         OS << ", Result[NextRes+" << i << ']';
       OS << ");\n";

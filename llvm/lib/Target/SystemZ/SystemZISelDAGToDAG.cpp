@@ -120,18 +120,17 @@ namespace {
     #include "SystemZGenDAGISel.inc"
 
   private:
-    bool SelectAddrRI12Only(SDNode *Op, SDValue& Addr,
+    bool SelectAddrRI12Only(SDValue& Addr,
                             SDValue &Base, SDValue &Disp);
-    bool SelectAddrRI12(SDNode *Op, SDValue& Addr,
+    bool SelectAddrRI12(SDValue& Addr,
                         SDValue &Base, SDValue &Disp,
                         bool is12BitOnly = false);
-    bool SelectAddrRI(SDNode *Op, SDValue& Addr,
-                      SDValue &Base, SDValue &Disp);
-    bool SelectAddrRRI12(SDNode *Op, SDValue Addr,
+    bool SelectAddrRI(SDValue& Addr, SDValue &Base, SDValue &Disp);
+    bool SelectAddrRRI12(SDValue Addr,
                          SDValue &Base, SDValue &Disp, SDValue &Index);
-    bool SelectAddrRRI20(SDNode *Op, SDValue Addr,
+    bool SelectAddrRRI20(SDValue Addr,
                          SDValue &Base, SDValue &Disp, SDValue &Index);
-    bool SelectLAAddr(SDNode *Op, SDValue Addr,
+    bool SelectLAAddr(SDValue Addr,
                       SDValue &Base, SDValue &Disp, SDValue &Index);
 
     SDNode *Select(SDNode *Node);
@@ -353,12 +352,12 @@ void SystemZDAGToDAGISel::getAddressOperands(const SystemZRRIAddressMode &AM,
 
 /// Returns true if the address can be represented by a base register plus
 /// an unsigned 12-bit displacement [r+imm].
-bool SystemZDAGToDAGISel::SelectAddrRI12Only(SDNode *Op, SDValue& Addr,
+bool SystemZDAGToDAGISel::SelectAddrRI12Only(SDValue &Addr,
                                              SDValue &Base, SDValue &Disp) {
-  return SelectAddrRI12(Op, Addr, Base, Disp, /*is12BitOnly*/true);
+  return SelectAddrRI12(Addr, Base, Disp, /*is12BitOnly*/true);
 }
 
-bool SystemZDAGToDAGISel::SelectAddrRI12(SDNode *Op, SDValue& Addr,
+bool SystemZDAGToDAGISel::SelectAddrRI12(SDValue &Addr,
                                          SDValue &Base, SDValue &Disp,
                                          bool is12BitOnly) {
   SystemZRRIAddressMode AM20(/*isRI*/true), AM12(/*isRI*/true);
@@ -408,7 +407,7 @@ bool SystemZDAGToDAGISel::SelectAddrRI12(SDNode *Op, SDValue& Addr,
 
 /// Returns true if the address can be represented by a base register plus
 /// a signed 20-bit displacement [r+imm].
-bool SystemZDAGToDAGISel::SelectAddrRI(SDNode *Op, SDValue& Addr,
+bool SystemZDAGToDAGISel::SelectAddrRI(SDValue& Addr,
                                        SDValue &Base, SDValue &Disp) {
   SystemZRRIAddressMode AM(/*isRI*/true);
   bool Done = false;
@@ -451,7 +450,7 @@ bool SystemZDAGToDAGISel::SelectAddrRI(SDNode *Op, SDValue& Addr,
 
 /// Returns true if the address can be represented by a base register plus
 /// index register plus an unsigned 12-bit displacement [base + idx + imm].
-bool SystemZDAGToDAGISel::SelectAddrRRI12(SDNode *Op, SDValue Addr,
+bool SystemZDAGToDAGISel::SelectAddrRRI12(SDValue Addr,
                                 SDValue &Base, SDValue &Disp, SDValue &Index) {
   SystemZRRIAddressMode AM20, AM12;
   bool Done = false;
@@ -500,7 +499,7 @@ bool SystemZDAGToDAGISel::SelectAddrRRI12(SDNode *Op, SDValue Addr,
 
 /// Returns true if the address can be represented by a base register plus
 /// index register plus a signed 20-bit displacement [base + idx + imm].
-bool SystemZDAGToDAGISel::SelectAddrRRI20(SDNode *Op, SDValue Addr,
+bool SystemZDAGToDAGISel::SelectAddrRRI20(SDValue Addr,
                                 SDValue &Base, SDValue &Disp, SDValue &Index) {
   SystemZRRIAddressMode AM;
   bool Done = false;
@@ -544,7 +543,7 @@ bool SystemZDAGToDAGISel::SelectAddrRRI20(SDNode *Op, SDValue Addr,
 
 /// SelectLAAddr - it calls SelectAddr and determines if the maximal addressing
 /// mode it matches can be cost effectively emitted as an LA/LAY instruction.
-bool SystemZDAGToDAGISel::SelectLAAddr(SDNode *Op, SDValue Addr,
+bool SystemZDAGToDAGISel::SelectLAAddr(SDValue Addr,
                                   SDValue &Base, SDValue &Disp, SDValue &Index) {
   SystemZRRIAddressMode AM;
 
@@ -581,7 +580,7 @@ bool SystemZDAGToDAGISel::TryFoldLoad(SDNode *P, SDValue N,
                                  SDValue &Base, SDValue &Disp, SDValue &Index) {
   if (ISD::isNON_EXTLoad(N.getNode()) &&
       IsLegalToFold(N, P, P, OptLevel))
-    return SelectAddrRRI20(P, N.getOperand(1), Base, Disp, Index);
+    return SelectAddrRRI20(N.getOperand(1), Base, Disp, Index);
   return false;
 }
 

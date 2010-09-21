@@ -197,13 +197,13 @@ namespace {
     bool MatchAddressRecursively(SDValue N, X86ISelAddressMode &AM,
                                  unsigned Depth);
     bool MatchAddressBase(SDValue N, X86ISelAddressMode &AM);
-    bool SelectAddr(SDNode *Op, SDValue N, SDValue &Base,
+    bool SelectAddr(SDValue N, SDValue &Base,
                     SDValue &Scale, SDValue &Index, SDValue &Disp,
                     SDValue &Segment);
-    bool SelectLEAAddr(SDNode *Op, SDValue N, SDValue &Base,
+    bool SelectLEAAddr(SDValue N, SDValue &Base,
                        SDValue &Scale, SDValue &Index, SDValue &Disp,
                        SDValue &Segment);
-    bool SelectTLSADDRAddr(SDNode *Op, SDValue N, SDValue &Base,
+    bool SelectTLSADDRAddr(SDValue N, SDValue &Base,
                            SDValue &Scale, SDValue &Index, SDValue &Disp,
                            SDValue &Segment);
     bool SelectScalarSSELoad(SDNode *Root, SDValue N,
@@ -1147,7 +1147,7 @@ bool X86DAGToDAGISel::MatchAddressBase(SDValue N, X86ISelAddressMode &AM) {
 /// SelectAddr - returns true if it is able pattern match an addressing mode.
 /// It returns the operands which make up the maximal addressing mode it can
 /// match by reference.
-bool X86DAGToDAGISel::SelectAddr(SDNode *Op, SDValue N, SDValue &Base,
+bool X86DAGToDAGISel::SelectAddr(SDValue N, SDValue &Base,
                                  SDValue &Scale, SDValue &Index,
                                  SDValue &Disp, SDValue &Segment) {
   X86ISelAddressMode AM;
@@ -1186,7 +1186,7 @@ bool X86DAGToDAGISel::SelectScalarSSELoad(SDNode *Root,
         IsProfitableToFold(N.getOperand(0), N.getNode(), Root) &&
         IsLegalToFold(N.getOperand(0), N.getNode(), Root, OptLevel)) {
       LoadSDNode *LD = cast<LoadSDNode>(PatternNodeWithChain);
-      if (!SelectAddr(Root, LD->getBasePtr(), Base, Scale, Index, Disp,Segment))
+      if (!SelectAddr(LD->getBasePtr(), Base, Scale, Index, Disp,Segment))
         return false;
       return true;
     }
@@ -1204,7 +1204,7 @@ bool X86DAGToDAGISel::SelectScalarSSELoad(SDNode *Root,
       IsLegalToFold(N.getOperand(0), N.getNode(), Root, OptLevel)) {
     // Okay, this is a zero extending load.  Fold it.
     LoadSDNode *LD = cast<LoadSDNode>(N.getOperand(0).getOperand(0));
-    if (!SelectAddr(Root, LD->getBasePtr(), Base, Scale, Index, Disp, Segment))
+    if (!SelectAddr(LD->getBasePtr(), Base, Scale, Index, Disp, Segment))
       return false;
     PatternNodeWithChain = SDValue(LD, 0);
     return true;
@@ -1215,7 +1215,7 @@ bool X86DAGToDAGISel::SelectScalarSSELoad(SDNode *Root,
 
 /// SelectLEAAddr - it calls SelectAddr and determines if the maximal addressing
 /// mode it matches can be cost effectively emitted as an LEA instruction.
-bool X86DAGToDAGISel::SelectLEAAddr(SDNode *Op, SDValue N,
+bool X86DAGToDAGISel::SelectLEAAddr(SDValue N,
                                     SDValue &Base, SDValue &Scale,
                                     SDValue &Index, SDValue &Disp,
                                     SDValue &Segment) {
@@ -1277,7 +1277,7 @@ bool X86DAGToDAGISel::SelectLEAAddr(SDNode *Op, SDValue N,
 }
 
 /// SelectTLSADDRAddr - This is only run on TargetGlobalTLSAddress nodes.
-bool X86DAGToDAGISel::SelectTLSADDRAddr(SDNode *Op, SDValue N, SDValue &Base,
+bool X86DAGToDAGISel::SelectTLSADDRAddr(SDValue N, SDValue &Base,
                                         SDValue &Scale, SDValue &Index,
                                         SDValue &Disp, SDValue &Segment) {
   assert(N.getOpcode() == ISD::TargetGlobalTLSAddress);
@@ -1310,7 +1310,7 @@ bool X86DAGToDAGISel::TryFoldLoad(SDNode *P, SDValue N,
       !IsLegalToFold(N, P, P, OptLevel))
     return false;
   
-  return SelectAddr(P, N.getOperand(1), Base, Scale, Index, Disp, Segment);
+  return SelectAddr(N.getOperand(1), Base, Scale, Index, Disp, Segment);
 }
 
 /// getGlobalBaseReg - Return an SDNode that returns the value of
@@ -1328,7 +1328,7 @@ SDNode *X86DAGToDAGISel::SelectAtomic64(SDNode *Node, unsigned Opc) {
   SDValue In2L = Node->getOperand(2);
   SDValue In2H = Node->getOperand(3);
   SDValue Tmp0, Tmp1, Tmp2, Tmp3, Tmp4;
-  if (!SelectAddr(In1.getNode(), In1, Tmp0, Tmp1, Tmp2, Tmp3, Tmp4))
+  if (!SelectAddr(In1, Tmp0, Tmp1, Tmp2, Tmp3, Tmp4))
     return NULL;
   MachineSDNode::mmo_iterator MemOp = MF->allocateMemRefsArray(1);
   MemOp[0] = cast<MemSDNode>(Node)->getMemOperand();
@@ -1354,7 +1354,7 @@ SDNode *X86DAGToDAGISel::SelectAtomicLoadAdd(SDNode *Node, EVT NVT) {
   SDValue Ptr = Node->getOperand(1);
   SDValue Val = Node->getOperand(2);
   SDValue Tmp0, Tmp1, Tmp2, Tmp3, Tmp4;
-  if (!SelectAddr(Ptr.getNode(), Ptr, Tmp0, Tmp1, Tmp2, Tmp3, Tmp4))
+  if (!SelectAddr(Ptr, Tmp0, Tmp1, Tmp2, Tmp3, Tmp4))
     return 0;
 
   bool isInc = false, isDec = false, isSub = false, isCN = false;
@@ -1970,7 +1970,7 @@ SelectInlineAsmMemoryOperand(const SDValue &Op, char ConstraintCode,
   case 'v':   // not offsetable    ??
   default: return true;
   case 'm':   // memory
-    if (!SelectAddr(Op.getNode(), Op, Op0, Op1, Op2, Op3, Op4))
+    if (!SelectAddr(Op, Op0, Op1, Op2, Op3, Op4))
       return true;
     break;
   }

@@ -72,48 +72,44 @@ public:
 
   SDNode *Select(SDNode *N);
 
-  bool SelectShifterOperandReg(SDNode *Op, SDValue N, SDValue &A,
+  bool SelectShifterOperandReg(SDValue N, SDValue &A,
                                SDValue &B, SDValue &C);
-  bool SelectAddrMode2(SDNode *Op, SDValue N, SDValue &Base,
+  bool SelectAddrMode2(SDValue N, SDValue &Base,
                        SDValue &Offset, SDValue &Opc);
   bool SelectAddrMode2Offset(SDNode *Op, SDValue N,
                              SDValue &Offset, SDValue &Opc);
-  bool SelectAddrMode3(SDNode *Op, SDValue N, SDValue &Base,
+  bool SelectAddrMode3(SDValue N, SDValue &Base,
                        SDValue &Offset, SDValue &Opc);
   bool SelectAddrMode3Offset(SDNode *Op, SDValue N,
                              SDValue &Offset, SDValue &Opc);
-  bool SelectAddrMode4(SDNode *Op, SDValue N, SDValue &Addr,
-                       SDValue &Mode);
-  bool SelectAddrMode5(SDNode *Op, SDValue N, SDValue &Base,
+  bool SelectAddrMode4(SDValue N, SDValue &Addr, SDValue &Mode);
+  bool SelectAddrMode5(SDValue N, SDValue &Base,
                        SDValue &Offset);
-  bool SelectAddrMode6(SDNode *Op, SDValue N, SDValue &Addr, SDValue &Align);
+  bool SelectAddrMode6(SDValue N, SDValue &Addr, SDValue &Align);
 
-  bool SelectAddrModePC(SDNode *Op, SDValue N, SDValue &Offset,
+  bool SelectAddrModePC(SDValue N, SDValue &Offset,
                         SDValue &Label);
 
-  bool SelectThumbAddrModeRR(SDNode *Op, SDValue N, SDValue &Base,
-                             SDValue &Offset);
-  bool SelectThumbAddrModeRI5(SDNode *Op, SDValue N, unsigned Scale,
+  bool SelectThumbAddrModeRR(SDValue N, SDValue &Base, SDValue &Offset);
+  bool SelectThumbAddrModeRI5(SDValue N, unsigned Scale,
                               SDValue &Base, SDValue &OffImm,
                               SDValue &Offset);
-  bool SelectThumbAddrModeS1(SDNode *Op, SDValue N, SDValue &Base,
+  bool SelectThumbAddrModeS1(SDValue N, SDValue &Base,
                              SDValue &OffImm, SDValue &Offset);
-  bool SelectThumbAddrModeS2(SDNode *Op, SDValue N, SDValue &Base,
+  bool SelectThumbAddrModeS2(SDValue N, SDValue &Base,
                              SDValue &OffImm, SDValue &Offset);
-  bool SelectThumbAddrModeS4(SDNode *Op, SDValue N, SDValue &Base,
+  bool SelectThumbAddrModeS4(SDValue N, SDValue &Base,
                              SDValue &OffImm, SDValue &Offset);
-  bool SelectThumbAddrModeSP(SDNode *Op, SDValue N, SDValue &Base,
-                             SDValue &OffImm);
+  bool SelectThumbAddrModeSP(SDValue N, SDValue &Base, SDValue &OffImm);
 
-  bool SelectT2ShifterOperandReg(SDNode *Op, SDValue N,
+  bool SelectT2ShifterOperandReg(SDValue N,
                                  SDValue &BaseReg, SDValue &Opc);
-  bool SelectT2AddrModeImm12(SDNode *Op, SDValue N, SDValue &Base,
-                             SDValue &OffImm);
-  bool SelectT2AddrModeImm8(SDNode *Op, SDValue N, SDValue &Base,
+  bool SelectT2AddrModeImm12(SDValue N, SDValue &Base, SDValue &OffImm);
+  bool SelectT2AddrModeImm8(SDValue N, SDValue &Base,
                             SDValue &OffImm);
   bool SelectT2AddrModeImm8Offset(SDNode *Op, SDValue N,
                                  SDValue &OffImm);
-  bool SelectT2AddrModeSoReg(SDNode *Op, SDValue N, SDValue &Base,
+  bool SelectT2AddrModeSoReg(SDValue N, SDValue &Base,
                              SDValue &OffReg, SDValue &ShImm);
 
   inline bool Pred_so_imm(SDNode *inN) const {
@@ -223,8 +219,7 @@ static bool isOpcWithIntImmediate(SDNode *N, unsigned Opc, unsigned& Imm) {
 }
 
 
-bool ARMDAGToDAGISel::SelectShifterOperandReg(SDNode *Op,
-                                              SDValue N,
+bool ARMDAGToDAGISel::SelectShifterOperandReg(SDValue N,
                                               SDValue &BaseReg,
                                               SDValue &ShReg,
                                               SDValue &Opc) {
@@ -250,7 +245,7 @@ bool ARMDAGToDAGISel::SelectShifterOperandReg(SDNode *Op,
   return true;
 }
 
-bool ARMDAGToDAGISel::SelectAddrMode2(SDNode *Op, SDValue N,
+bool ARMDAGToDAGISel::SelectAddrMode2(SDValue N,
                                       SDValue &Base, SDValue &Offset,
                                       SDValue &Opc) {
   if (N.getOpcode() == ISD::MUL) {
@@ -399,7 +394,7 @@ bool ARMDAGToDAGISel::SelectAddrMode2Offset(SDNode *Op, SDValue N,
 }
 
 
-bool ARMDAGToDAGISel::SelectAddrMode3(SDNode *Op, SDValue N,
+bool ARMDAGToDAGISel::SelectAddrMode3(SDValue N,
                                       SDValue &Base, SDValue &Offset,
                                       SDValue &Opc) {
   if (N.getOpcode() == ISD::SUB) {
@@ -471,14 +466,13 @@ bool ARMDAGToDAGISel::SelectAddrMode3Offset(SDNode *Op, SDValue N,
   return true;
 }
 
-bool ARMDAGToDAGISel::SelectAddrMode4(SDNode *Op, SDValue N,
-                                      SDValue &Addr, SDValue &Mode) {
+bool ARMDAGToDAGISel::SelectAddrMode4(SDValue N, SDValue &Addr, SDValue &Mode) {
   Addr = N;
   Mode = CurDAG->getTargetConstant(ARM_AM::getAM4ModeImm(ARM_AM::ia), MVT::i32);
   return true;
 }
 
-bool ARMDAGToDAGISel::SelectAddrMode5(SDNode *Op, SDValue N,
+bool ARMDAGToDAGISel::SelectAddrMode5(SDValue N, 
                                       SDValue &Base, SDValue &Offset) {
   if (N.getOpcode() != ISD::ADD) {
     Base = N;
@@ -526,15 +520,14 @@ bool ARMDAGToDAGISel::SelectAddrMode5(SDNode *Op, SDValue N,
   return true;
 }
 
-bool ARMDAGToDAGISel::SelectAddrMode6(SDNode *Op, SDValue N,
-                                      SDValue &Addr, SDValue &Align) {
+bool ARMDAGToDAGISel::SelectAddrMode6(SDValue N, SDValue &Addr, SDValue &Align){
   Addr = N;
   // Default to no alignment.
   Align = CurDAG->getTargetConstant(0, MVT::i32);
   return true;
 }
 
-bool ARMDAGToDAGISel::SelectAddrModePC(SDNode *Op, SDValue N,
+bool ARMDAGToDAGISel::SelectAddrModePC(SDValue N,
                                        SDValue &Offset, SDValue &Label) {
   if (N.getOpcode() == ARMISD::PIC_ADD && N.hasOneUse()) {
     Offset = N.getOperand(0);
@@ -546,7 +539,7 @@ bool ARMDAGToDAGISel::SelectAddrModePC(SDNode *Op, SDValue N,
   return false;
 }
 
-bool ARMDAGToDAGISel::SelectThumbAddrModeRR(SDNode *Op, SDValue N,
+bool ARMDAGToDAGISel::SelectThumbAddrModeRR(SDValue N,
                                             SDValue &Base, SDValue &Offset){
   // FIXME dl should come from the parent load or store, not the address
   if (N.getOpcode() != ISD::ADD) {
@@ -564,12 +557,12 @@ bool ARMDAGToDAGISel::SelectThumbAddrModeRR(SDNode *Op, SDValue N,
 }
 
 bool
-ARMDAGToDAGISel::SelectThumbAddrModeRI5(SDNode *Op, SDValue N,
+ARMDAGToDAGISel::SelectThumbAddrModeRI5(SDValue N,
                                         unsigned Scale, SDValue &Base,
                                         SDValue &OffImm, SDValue &Offset) {
   if (Scale == 4) {
     SDValue TmpBase, TmpOffImm;
-    if (SelectThumbAddrModeSP(Op, N, TmpBase, TmpOffImm))
+    if (SelectThumbAddrModeSP(N, TmpBase, TmpOffImm))
       return false;  // We want to select tLDRspi / tSTRspi instead.
     if (N.getOpcode() == ARMISD::Wrapper &&
         N.getOperand(0).getOpcode() == ISD::TargetConstantPool)
@@ -620,26 +613,26 @@ ARMDAGToDAGISel::SelectThumbAddrModeRI5(SDNode *Op, SDValue N,
   return true;
 }
 
-bool ARMDAGToDAGISel::SelectThumbAddrModeS1(SDNode *Op, SDValue N,
+bool ARMDAGToDAGISel::SelectThumbAddrModeS1(SDValue N,
                                             SDValue &Base, SDValue &OffImm,
                                             SDValue &Offset) {
-  return SelectThumbAddrModeRI5(Op, N, 1, Base, OffImm, Offset);
+  return SelectThumbAddrModeRI5(N, 1, Base, OffImm, Offset);
 }
 
-bool ARMDAGToDAGISel::SelectThumbAddrModeS2(SDNode *Op, SDValue N,
+bool ARMDAGToDAGISel::SelectThumbAddrModeS2(SDValue N,
                                             SDValue &Base, SDValue &OffImm,
                                             SDValue &Offset) {
-  return SelectThumbAddrModeRI5(Op, N, 2, Base, OffImm, Offset);
+  return SelectThumbAddrModeRI5(N, 2, Base, OffImm, Offset);
 }
 
-bool ARMDAGToDAGISel::SelectThumbAddrModeS4(SDNode *Op, SDValue N,
+bool ARMDAGToDAGISel::SelectThumbAddrModeS4(SDValue N,
                                             SDValue &Base, SDValue &OffImm,
                                             SDValue &Offset) {
-  return SelectThumbAddrModeRI5(Op, N, 4, Base, OffImm, Offset);
+  return SelectThumbAddrModeRI5(N, 4, Base, OffImm, Offset);
 }
 
-bool ARMDAGToDAGISel::SelectThumbAddrModeSP(SDNode *Op, SDValue N,
-                                           SDValue &Base, SDValue &OffImm) {
+bool ARMDAGToDAGISel::SelectThumbAddrModeSP(SDValue N,
+                                            SDValue &Base, SDValue &OffImm) {
   if (N.getOpcode() == ISD::FrameIndex) {
     int FI = cast<FrameIndexSDNode>(N)->getIndex();
     Base = CurDAG->getTargetFrameIndex(FI, TLI.getPointerTy());
@@ -674,8 +667,7 @@ bool ARMDAGToDAGISel::SelectThumbAddrModeSP(SDNode *Op, SDValue N,
   return false;
 }
 
-bool ARMDAGToDAGISel::SelectT2ShifterOperandReg(SDNode *Op, SDValue N,
-                                                SDValue &BaseReg,
+bool ARMDAGToDAGISel::SelectT2ShifterOperandReg(SDValue N, SDValue &BaseReg,
                                                 SDValue &Opc) {
   if (DisableShifterOp)
     return false;
@@ -697,7 +689,7 @@ bool ARMDAGToDAGISel::SelectT2ShifterOperandReg(SDNode *Op, SDValue N,
   return false;
 }
 
-bool ARMDAGToDAGISel::SelectT2AddrModeImm12(SDNode *Op, SDValue N,
+bool ARMDAGToDAGISel::SelectT2AddrModeImm12(SDValue N,
                                             SDValue &Base, SDValue &OffImm) {
   // Match simple R + imm12 operands.
 
@@ -722,7 +714,7 @@ bool ARMDAGToDAGISel::SelectT2AddrModeImm12(SDNode *Op, SDValue N,
   }
 
   if (ConstantSDNode *RHS = dyn_cast<ConstantSDNode>(N.getOperand(1))) {
-    if (SelectT2AddrModeImm8(Op, N, Base, OffImm))
+    if (SelectT2AddrModeImm8(N, Base, OffImm))
       // Let t2LDRi8 handle (R - imm8).
       return false;
 
@@ -747,7 +739,7 @@ bool ARMDAGToDAGISel::SelectT2AddrModeImm12(SDNode *Op, SDValue N,
   return true;
 }
 
-bool ARMDAGToDAGISel::SelectT2AddrModeImm8(SDNode *Op, SDValue N,
+bool ARMDAGToDAGISel::SelectT2AddrModeImm8(SDValue N,
                                            SDValue &Base, SDValue &OffImm) {
   // Match simple R - imm8 operands.
   if (N.getOpcode() == ISD::ADD || N.getOpcode() == ISD::SUB) {
@@ -790,7 +782,7 @@ bool ARMDAGToDAGISel::SelectT2AddrModeImm8Offset(SDNode *Op, SDValue N,
   return false;
 }
 
-bool ARMDAGToDAGISel::SelectT2AddrModeSoReg(SDNode *Op, SDValue N,
+bool ARMDAGToDAGISel::SelectT2AddrModeSoReg(SDValue N,
                                             SDValue &Base,
                                             SDValue &OffReg, SDValue &ShImm) {
   // (R - imm8) should be handled by t2LDRi8. The rest are handled by t2LDRi12.
@@ -1017,7 +1009,7 @@ SDNode *ARMDAGToDAGISel::SelectVLD(SDNode *N, unsigned NumVecs,
   DebugLoc dl = N->getDebugLoc();
 
   SDValue MemAddr, Align;
-  if (!SelectAddrMode6(N, N->getOperand(2), MemAddr, Align))
+  if (!SelectAddrMode6(N->getOperand(2), MemAddr, Align))
     return NULL;
 
   SDValue Chain = N->getOperand(0);
@@ -1128,7 +1120,7 @@ SDNode *ARMDAGToDAGISel::SelectVST(SDNode *N, unsigned NumVecs,
   DebugLoc dl = N->getDebugLoc();
 
   SDValue MemAddr, Align;
-  if (!SelectAddrMode6(N, N->getOperand(2), MemAddr, Align))
+  if (!SelectAddrMode6(N->getOperand(2), MemAddr, Align))
     return NULL;
 
   SDValue Chain = N->getOperand(0);
@@ -1248,7 +1240,7 @@ SDNode *ARMDAGToDAGISel::SelectVLDSTLane(SDNode *N, bool IsLoad,
   DebugLoc dl = N->getDebugLoc();
 
   SDValue MemAddr, Align;
-  if (!SelectAddrMode6(N, N->getOperand(2), MemAddr, Align))
+  if (!SelectAddrMode6(N->getOperand(2), MemAddr, Align))
     return NULL;
 
   SDValue Chain = N->getOperand(0);
@@ -1426,7 +1418,7 @@ SelectT2CMOVShiftOp(SDNode *N, SDValue FalseVal, SDValue TrueVal,
                     ARMCC::CondCodes CCVal, SDValue CCR, SDValue InFlag) {
   SDValue CPTmp0;
   SDValue CPTmp1;
-  if (SelectT2ShifterOperandReg(N, TrueVal, CPTmp0, CPTmp1)) {
+  if (SelectT2ShifterOperandReg(TrueVal, CPTmp0, CPTmp1)) {
     unsigned SOVal = cast<ConstantSDNode>(CPTmp1)->getZExtValue();
     unsigned SOShOp = ARM_AM::getSORegShOp(SOVal);
     unsigned Opc = 0;
@@ -1454,7 +1446,7 @@ SelectARMCMOVShiftOp(SDNode *N, SDValue FalseVal, SDValue TrueVal,
   SDValue CPTmp0;
   SDValue CPTmp1;
   SDValue CPTmp2;
-  if (SelectShifterOperandReg(N, TrueVal, CPTmp0, CPTmp1, CPTmp2)) {
+  if (SelectShifterOperandReg(TrueVal, CPTmp0, CPTmp1, CPTmp2)) {
     SDValue CC = CurDAG->getTargetConstant(CCVal, MVT::i32);
     SDValue Ops[] = { FalseVal, CPTmp0, CPTmp1, CPTmp2, CC, CCR, InFlag };
     return CurDAG->SelectNodeTo(N, ARM::MOVCCs, MVT::i32, Ops, 7);

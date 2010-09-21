@@ -104,7 +104,7 @@ namespace {
 
     /// SelectAddrImm - Returns true if the address N can be represented by
     /// a base register plus a signed 16-bit displacement [r+imm].
-    bool SelectAddrImm(SDNode *Op, SDValue N, SDValue &Disp,
+    bool SelectAddrImm(SDValue N, SDValue &Disp,
                        SDValue &Base) {
       return PPCLowering.SelectAddressRegImm(N, Disp, Base, *CurDAG);
     }
@@ -112,7 +112,7 @@ namespace {
     /// SelectAddrImmOffs - Return true if the operand is valid for a preinc
     /// immediate field.  Because preinc imms have already been validated, just
     /// accept it.
-    bool SelectAddrImmOffs(SDNode *Op, SDValue N, SDValue &Out) const {
+    bool SelectAddrImmOffs(SDValue N, SDValue &Out) const {
       Out = N;
       return true;
     }
@@ -120,23 +120,20 @@ namespace {
     /// SelectAddrIdx - Given the specified addressed, check to see if it can be
     /// represented as an indexed [r+r] operation.  Returns false if it can
     /// be represented by [r+imm], which are preferred.
-    bool SelectAddrIdx(SDNode *Op, SDValue N, SDValue &Base,
-                       SDValue &Index) {
+    bool SelectAddrIdx(SDValue N, SDValue &Base, SDValue &Index) {
       return PPCLowering.SelectAddressRegReg(N, Base, Index, *CurDAG);
     }
     
     /// SelectAddrIdxOnly - Given the specified addressed, force it to be
     /// represented as an indexed [r+r] operation.
-    bool SelectAddrIdxOnly(SDNode *Op, SDValue N, SDValue &Base,
-                           SDValue &Index) {
+    bool SelectAddrIdxOnly(SDValue N, SDValue &Base, SDValue &Index) {
       return PPCLowering.SelectAddressRegRegOnly(N, Base, Index, *CurDAG);
     }
 
     /// SelectAddrImmShift - Returns true if the address N can be represented by
     /// a base register plus a signed 14-bit displacement [r+imm*4].  Suitable
     /// for use by STD and friends.
-    bool SelectAddrImmShift(SDNode *Op, SDValue N, SDValue &Disp,
-                            SDValue &Base) {
+    bool SelectAddrImmShift(SDValue N, SDValue &Disp, SDValue &Base) {
       return PPCLowering.SelectAddressRegImmShift(N, Disp, Base, *CurDAG);
     }
       

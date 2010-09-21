@@ -37,8 +37,7 @@ SDNode* PIC16DAGToDAGISel::Select(SDNode *N) {
 
 // SelectDirectAddr - Match a direct address for DAG. 
 // A direct address could be a globaladdress or externalsymbol.
-bool PIC16DAGToDAGISel::SelectDirectAddr(SDNode *Op, SDValue N, 
-                                      SDValue &Address) {
+bool PIC16DAGToDAGISel::SelectDirectAddr(SDValue N, SDValue &Address) {
   // Return true if TGA or ES.
   if (N.getOpcode() == ISD::TargetGlobalAddress
       || N.getOpcode() == ISD::TargetExternalSymbol) {

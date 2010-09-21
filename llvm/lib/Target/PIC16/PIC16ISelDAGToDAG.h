@@ -52,7 +52,7 @@ private:
   SDNode *Select(SDNode *N);
 
   // Match direct address complex pattern.
-  bool SelectDirectAddr(SDNode *Op, SDValue N, SDValue &Address);
+  bool SelectDirectAddr(SDValue N, SDValue &Address);
 
 };
 

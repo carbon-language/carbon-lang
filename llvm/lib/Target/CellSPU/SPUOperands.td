@@ -654,7 +654,11 @@ def memrr : Operand<iPTR> {
 // A-form   : abs     (256K LSA offset)
 // D-form(2): [r+I7]  (7-bit signed offset + reg)
 
-def dform_addr   : ComplexPattern<iPTR, 2, "SelectDFormAddr",     [], []>;
-def xform_addr   : ComplexPattern<iPTR, 2, "SelectXFormAddr",     [], []>;
-def aform_addr   : ComplexPattern<iPTR, 2, "SelectAFormAddr",     [], []>;
-def dform2_addr  : ComplexPattern<iPTR, 2, "SelectDForm2Addr",    [], []>;
+def dform_addr   : ComplexPattern<iPTR, 2, "SelectDFormAddr",
+                                  [], [SDNPWantRoot]>;
+def xform_addr   : ComplexPattern<iPTR, 2, "SelectXFormAddr",
+                                  [], [SDNPWantRoot]>;
+def aform_addr   : ComplexPattern<iPTR, 2, "SelectAFormAddr",
+                                  [], [SDNPWantRoot]>;
+def dform2_addr  : ComplexPattern<iPTR, 2, "SelectDForm2Addr",
+                                  [], [SDNPWantRoot]>;
