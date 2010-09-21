@@ -30,7 +30,7 @@ class locale;
 template <class _Facet> bool has_facet(const locale&) throw();
 template <class _Facet> const _Facet& use_facet(const locale&);
 
-class locale
+class _LIBCPP_VISIBLE locale
 {
 public:
     // types:
@@ -89,10 +89,11 @@ private:
     template <class _Facet> friend const _Facet& use_facet(const locale&);
 };
 
-class locale::facet
+class _LIBCPP_VISIBLE locale::facet
     : public __shared_count
 {
 protected:
+    _LIBCPP_INLINE_VISIBILITY
     explicit facet(size_t __refs = 0)
         : __shared_count(static_cast<long>(__refs)-1) {}
 
@@ -104,14 +105,14 @@ private:
     virtual void __on_zero_shared();
 };
 
-class locale::id
+class _LIBCPP_VISIBLE locale::id
 {
     once_flag      __flag_;
     int32_t        __id_;
 
     static int32_t __next_id;
 public:
-    id() {}
+    _LIBCPP_INLINE_VISIBILITY id() {}
 private:
     void __init();
     void operator=(const id&); // = delete;
@@ -160,27 +161,31 @@ use_facet(const locale& __l)
 // template <class _CharT> class collate;
 
 template <class _CharT>
-class collate
+class _LIBCPP_VISIBLE collate
     : public locale::facet
 {
 public:
     typedef _CharT char_type;
     typedef basic_string<char_type> string_type;
 
+    _LIBCPP_INLINE_VISIBILITY
     explicit collate(size_t __refs = 0)
         : locale::facet(__refs) {}
 
+    _LIBCPP_INLINE_VISIBILITY
     int compare(const char_type* __lo1, const char_type* __hi1,
                 const char_type* __lo2, const char_type* __hi2) const
     {
         return do_compare(__lo1, __hi1, __lo2, __hi2);
     }
 
+    _LIBCPP_INLINE_VISIBILITY
     string_type transform(const char_type* __lo, const char_type* __hi) const
     {
         return do_transform(__lo, __hi);
     }
 
+    _LIBCPP_INLINE_VISIBILITY
     long hash(const char_type* __lo, const char_type* __hi) const
     {
         return do_hash(__lo, __hi);
@@ -235,15 +240,15 @@ collate<_CharT>::do_hash(const char_type* lo, const char_type* hi) const
     return static_cast<long>(h);
 }
 
-extern template class collate<char>;
-extern template class collate<wchar_t>;
+extern template class _LIBCPP_VISIBLE collate<char>;
+extern template class _LIBCPP_VISIBLE collate<wchar_t>;
 
 // template <class CharT> class collate_byname;
 
-template <class _CharT> class collate_byname;
+template <class _CharT> class _LIBCPP_VISIBLE collate_byname;
 
 template <>
-class collate_byname<char>
+class _LIBCPP_VISIBLE collate_byname<char>
     : public collate<char>
 {
     locale_t __l;
@@ -262,7 +267,7 @@ protected:
 };
 
 template <>
-class collate_byname<wchar_t>
+class _LIBCPP_VISIBLE collate_byname<wchar_t>
     : public collate<wchar_t>
 {
     locale_t __l;
@@ -293,7 +298,8 @@ locale::operator()(const basic_string<_CharT, _Traits, _Allocator>& __x,
 
 // template <class charT> class ctype
 
-class ctype_base {
+class _LIBCPP_VISIBLE ctype_base
+{
 public:
     typedef __uint32_t mask;
 
@@ -326,10 +332,10 @@ public:
     _LIBCPP_ALWAYS_INLINE ctype_base() {}
 };
 
-template <class _CharT> class ctype;
+template <class _CharT> class _LIBCPP_VISIBLE ctype;
 
 template <>
-class ctype<wchar_t>
+class _LIBCPP_VISIBLE ctype<wchar_t>
     : public locale::facet,
       public ctype_base
 {
@@ -431,7 +437,7 @@ protected:
 };
 
 template <>
-class ctype<char>
+class _LIBCPP_VISIBLE ctype<char>
     : public locale::facet, public ctype_base
 {
     const mask* __tab_;
@@ -528,7 +534,7 @@ public:
 #else
     static const size_t table_size = 256;  // FIXME: Don't hardcode this.
 #endif
-    const mask* table() const throw() {return __tab_;}
+    _LIBCPP_ALWAYS_INLINE const mask* table() const throw() {return __tab_;}
     static const mask* classic_table() throw();
 
 protected:
@@ -545,10 +551,10 @@ protected:
 
 // template <class CharT> class ctype_byname;
 
-template <class _CharT> class ctype_byname;
+template <class _CharT> class _LIBCPP_VISIBLE ctype_byname;
 
 template <>
-class ctype_byname<char>
+class _LIBCPP_VISIBLE ctype_byname<char>
     : public ctype<char>
 {
     locale_t __l;
@@ -566,7 +572,7 @@ protected:
 };
 
 template <>
-class ctype_byname<wchar_t>
+class _LIBCPP_VISIBLE ctype_byname<wchar_t>
     : public ctype<wchar_t>
 {
     locale_t __l;
@@ -697,7 +703,7 @@ tolower(_CharT __c, const locale& __loc)
 
 // codecvt_base
 
-class codecvt_base
+class _LIBCPP_VISIBLE codecvt_base
 {
 public:
     _LIBCPP_ALWAYS_INLINE codecvt_base() {}
@@ -706,12 +712,12 @@ public:
 
 // template <class internT, class externT, class stateT> class codecvt;
 
-template <class _InternT, class _ExternT, class _StateT> class codecvt;
+template <class _InternT, class _ExternT, class _StateT> class _LIBCPP_VISIBLE codecvt;
 
 // template <> class codecvt<char, char, mbstate_t>
 
 template <>
-class codecvt<char, char, mbstate_t>
+class _LIBCPP_VISIBLE codecvt<char, char, mbstate_t>
     : public locale::facet,
       public codecvt_base
 {
@@ -797,7 +803,7 @@ protected:
 // template <> class codecvt<wchar_t, char, mbstate_t>
 
 template <>
-class codecvt<wchar_t, char, mbstate_t>
+class _LIBCPP_VISIBLE codecvt<wchar_t, char, mbstate_t>
     : public locale::facet,
       public codecvt_base
 {
@@ -880,7 +886,7 @@ protected:
 // template <> class codecvt<char16_t, char, mbstate_t>
 
 template <>
-class codecvt<char16_t, char, mbstate_t>
+class _LIBCPP_VISIBLE codecvt<char16_t, char, mbstate_t>
     : public locale::facet,
       public codecvt_base
 {
@@ -966,7 +972,7 @@ protected:
 // template <> class codecvt<char32_t, char, mbstate_t>
 
 template <>
-class codecvt<char32_t, char, mbstate_t>
+class _LIBCPP_VISIBLE codecvt<char32_t, char, mbstate_t>
     : public locale::facet,
       public codecvt_base
 {
@@ -1052,12 +1058,14 @@ protected:
 // template <class _InternT, class _ExternT, class _StateT> class codecvt_byname
 
 template <class _InternT, class _ExternT, class _StateT>
-class codecvt_byname
+class _LIBCPP_VISIBLE codecvt_byname
     : public codecvt<_InternT, _ExternT, _StateT>
 {
 public:
+    _LIBCPP_ALWAYS_INLINE
     explicit codecvt_byname(const char* __nm, size_t __refs = 0)
         : codecvt<_InternT, _ExternT, _StateT>(__nm, __refs) {}
+    _LIBCPP_ALWAYS_INLINE
     explicit codecvt_byname(const string& __nm, size_t __refs = 0)
         : codecvt<_InternT, _ExternT, _StateT>(__nm.c_str(), __refs) {}
 protected:
@@ -1074,7 +1082,7 @@ extern template class codecvt_byname<wchar_t, char, mbstate_t>;
 extern template class codecvt_byname<char16_t, char, mbstate_t>;
 extern template class codecvt_byname<char32_t, char, mbstate_t>;
 
-void __throw_runtime_error(const char*);
+_LIBCPP_VISIBLE void __throw_runtime_error(const char*);
 
 template <size_t _N>
 struct __narrow_to_utf8
@@ -1258,10 +1266,10 @@ struct __widen_from_utf8<32>
 
 // template <class charT> class numpunct
 
-template <class _CharT> class numpunct;
+template <class _CharT> class _LIBCPP_VISIBLE numpunct;
 
 template <>
-class numpunct<char>
+class _LIBCPP_VISIBLE numpunct<char>
     : public locale::facet
 {
 public:
@@ -1292,7 +1300,7 @@ protected:
 };
 
 template <>
-class numpunct<wchar_t>
+class _LIBCPP_VISIBLE numpunct<wchar_t>
     : public locale::facet
 {
 public:
@@ -1324,10 +1332,10 @@ protected:
 
 // template <class charT> class numpunct_byname
 
-template <class charT> class numpunct_byname;
+template <class charT> class _LIBCPP_VISIBLE numpunct_byname;
 
 template <>
-class numpunct_byname<char>
+class _LIBCPP_VISIBLE numpunct_byname<char>
 : public numpunct<char>
 {
 public:
@@ -1345,7 +1353,7 @@ private:
 };
 
 template <>
-class numpunct_byname<wchar_t>
+class _LIBCPP_VISIBLE numpunct_byname<wchar_t>
 : public numpunct<wchar_t>
 {
 public:
