@@ -326,12 +326,12 @@ public:
   /// in SrcReg and the value it compares against in CmpValue. Return true if
   /// the comparison instruction can be analyzed.
   virtual bool AnalyzeCompare(const MachineInstr *MI, unsigned &SrcReg,
-                              int &CmpValue) const;
+                              int &CmpMask, int &CmpValue) const;
 
   /// OptimizeCompareInstr - Convert the instruction to set the zero flag so
   /// that we can remove a "comparison with zero".
   virtual bool OptimizeCompareInstr(MachineInstr *CmpInstr, unsigned SrcReg,
-                                    int CmpValue,
+                                    int CmpMask, int CmpValue,
                                     MachineBasicBlock::iterator &MII) const;
 
   virtual unsigned getNumMicroOps(const MachineInstr *MI,

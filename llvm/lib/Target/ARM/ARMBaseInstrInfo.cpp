@@ -1376,7 +1376,7 @@ bool llvm::rewriteARMFrameIndex(MachineInstr &MI, unsigned FrameRegIdx,
 }
 
 bool ARMBaseInstrInfo::
-AnalyzeCompare(const MachineInstr *MI, unsigned &SrcReg, int &CmpValue) const {
+AnalyzeCompare(const MachineInstr *MI, unsigned &SrcReg, int &CmpMask, int &CmpValue) const {
   switch (MI->getOpcode()) {
   default: break;
   case ARM::CMPri:
@@ -1384,23 +1384,29 @@ AnalyzeCompare(const MachineInstr *MI, unsigned &SrcReg, int &CmpValue) const {
   case ARM::t2CMPri:
   case ARM::t2CMPzri:
     SrcReg = MI->getOperand(0).getReg();
+    CmpMask = ~0;
     CmpValue = MI->getOperand(1).getImm();
     return true;
-  case ARM::TSTri: {
-    MachineBasicBlock::const_iterator MII(MI);
-    if (MI->getParent()->begin() == MII)
-      return false;
-    const MachineInstr *AND = llvm::prior(MII);
-    if (AND->getOpcode() != ARM::ANDri)
-      return false;
-    if (MI->getOperand(0).getReg() == AND->getOperand(1).getReg() &&
-        MI->getOperand(1).getImm() == AND->getOperand(2).getImm()) {
-      SrcReg = AND->getOperand(0).getReg();
-      CmpValue = 0;
-      return true;
-    }
-    }
-    break;
+  case ARM::TSTri:
+  case ARM::t2TSTri:
+    SrcReg = MI->getOperand(0).getReg();
+    CmpMask = MI->getOperand(1).getImm();
+    CmpValue = 0;
+    return true;
+  }
+
+  return false;
+}
+
+static bool isSuitableForMask(const MachineInstr &MI, unsigned SrcReg,
+                              int CmpMask) {
+  switch (MI.getOpcode()) {
+    case ARM::ANDri:
+    case ARM::t2ANDri:
+      if (SrcReg == MI.getOperand(1).getReg() &&
+          CmpMask == MI.getOperand(2).getImm())
+        return true;
+      break;
   }
 
   return false;
@@ -1410,8 +1416,8 @@ AnalyzeCompare(const MachineInstr *MI, unsigned &SrcReg, int &CmpValue) const {
 /// comparison into one that sets the zero bit in the flags register. Update the
 /// iterator *only* if a transformation took place.
 bool ARMBaseInstrInfo::
-OptimizeCompareInstr(MachineInstr *CmpInstr, unsigned SrcReg, int CmpValue,
-                     MachineBasicBlock::iterator &MII) const {
+OptimizeCompareInstr(MachineInstr *CmpInstr, unsigned SrcReg, int CmpMask,
+                     int CmpValue, MachineBasicBlock::iterator &MII) const {
   if (CmpValue != 0)
     return false;
 
@@ -1422,6 +1428,24 @@ OptimizeCompareInstr(MachineInstr *CmpInstr, unsigned SrcReg, int CmpValue,
     return false;
 
   MachineInstr *MI = &*DI;
+
+  // Masked compares sometimes use the same register as the corresponding 'and'.
+  if (CmpMask != ~0) {
+    if (!isSuitableForMask(*MI, SrcReg, CmpMask)) {
+      MI = 0;
+      for (MachineRegisterInfo::use_iterator UI = MRI.use_begin(SrcReg),
+           UE = MRI.use_end(); UI != UE; ++UI) {
+        if (UI->getParent() != CmpInstr->getParent()) continue;
+        MachineInstr &PotentialAND = *UI;
+        if (!isSuitableForMask(PotentialAND, SrcReg, CmpMask))
+          continue;
+        SrcReg = PotentialAND.getOperand(0).getReg();
+        MI = &PotentialAND;
+        break;
+      }
+      if (!MI) return false;
+    }
+  }
 
   // Conservatively refuse to convert an instruction which isn't in the same BB
   // as the comparison.

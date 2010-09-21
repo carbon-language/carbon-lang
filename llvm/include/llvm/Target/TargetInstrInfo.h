@@ -581,7 +581,7 @@ public:
   /// in SrcReg and the value it compares against in CmpValue. Return true if
   /// the comparison instruction can be analyzed.
   virtual bool AnalyzeCompare(const MachineInstr *MI,
-                              unsigned &SrcReg, int &CmpValue) const {
+                              unsigned &SrcReg, int &Mask, int &Value) const {
     return false;
   }
 
@@ -589,8 +589,8 @@ public:
   /// into something more efficient. E.g., on ARM most instructions can set the
   /// flags register, obviating the need for a separate CMP. Update the iterator
   /// *only* if a transformation took place.
-  virtual bool OptimizeCompareInstr(MachineInstr * /*CmpInstr*/,
-                                    unsigned /*SrcReg*/, int /*CmpValue*/,
+  virtual bool OptimizeCompareInstr(MachineInstr *CmpInstr,
+                                    unsigned SrcReg, int Mask, int Value,
                                     MachineBasicBlock::iterator &) const {
     return false;
   }

@@ -238,13 +238,13 @@ bool PeepholeOptimizer::OptimizeCmpInstr(MachineInstr *MI,
   // If this instruction is a comparison against zero and isn't comparing a
   // physical register, we can try to optimize it.
   unsigned SrcReg;
-  int CmpValue;
-  if (!TII->AnalyzeCompare(MI, SrcReg, CmpValue) ||
+  int CmpMask, CmpValue;
+  if (!TII->AnalyzeCompare(MI, SrcReg, CmpMask, CmpValue) ||
       TargetRegisterInfo::isPhysicalRegister(SrcReg))
     return false;
 
   // Attempt to optimize the comparison instruction.
-  if (TII->OptimizeCompareInstr(MI, SrcReg, CmpValue, NextIter)) {
+  if (TII->OptimizeCompareInstr(MI, SrcReg, CmpMask, CmpValue, NextIter)) {
     ++NumEliminated;
     return true;
   }
