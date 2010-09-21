@@ -335,6 +335,14 @@ void MachineOperand::print(raw_ostream &OS, const TargetMachine *TM) const {
 // MachineMemOperand Implementation
 //===----------------------------------------------------------------------===//
 
+/// getAddrSpace - Return the LLVM IR address space number that this pointer
+/// points into.
+unsigned MachinePointerInfo::getAddrSpace() const {
+  if (V == 0) return 0;
+  return cast<PointerType>(V->getType())->getAddressSpace();
+}
+
+
 MachineMemOperand::MachineMemOperand(MachinePointerInfo ptrinfo, unsigned f,
                                      uint64_t s, unsigned int a)
   : PtrInfo(ptrinfo), Size(s),

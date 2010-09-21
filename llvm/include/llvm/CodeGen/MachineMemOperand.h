@@ -39,6 +39,15 @@ struct MachinePointerInfo {
   
   explicit MachinePointerInfo(const Value *v, int64_t offset = 0)
     : V(v), Offset(offset) {}
+  
+  MachinePointerInfo getWithOffset(int64_t O) const {
+    if (V == 0) return MachinePointerInfo(0, 0);
+    return MachinePointerInfo(V, Offset+O);
+  }
+  
+  /// getAddrSpace - Return the LLVM IR address space number that this pointer
+  /// points into.
+  unsigned getAddrSpace() const;
 };
   
   

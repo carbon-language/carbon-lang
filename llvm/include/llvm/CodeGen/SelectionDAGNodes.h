@@ -909,6 +909,10 @@ public:
   /// reference performed by operation.
   MachineMemOperand *getMemOperand() const { return MMO; }
 
+  const MachinePointerInfo &getPointerInfo() const {
+    return MMO->getPointerInfo();
+  }
+  
   /// refineAlignment - Update this MemSDNode's MachineMemOperand information
   /// to reflect the alignment of NewMMO, if it has a greater alignment.
   /// This must only be used when the new alignment applies to all users of
