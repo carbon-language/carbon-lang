@@ -9,6 +9,12 @@ Description := Static runtime libraries for clang/Darwin.
 Configs :=
 UniversalArchs :=
 
+# Configuration solely for providing access to an eprintf symbol, which may
+# still be referenced from Darwin system headers. This symbol is only ever
+# needed on i386.
+Configs += eprintf
+UniversalArchs.eprintf := i386
+
 # Configuration for targetting 10.4. We need a few functions missing from
 # libgcc_s.10.4.dylib. We only build x86 slices since clang doesn't really
 # support targetting PowerPC.
@@ -38,6 +44,7 @@ override CC := $(patsubst -arch_%,,$(CC))
 
 CFLAGS := -Wall -Werror -O3 -fomit-frame-pointer
 
+FUNCTIONS.eprintf := eprintf
 FUNCTIONS.10.4 := eprintf floatundidf floatundisf floatundixf
 FUNCTIONS.armv6 := switch16 switch32 switch8 switchu8 \
                    save_vfp_d8_d15_regs restore_vfp_d8_d15_regs
