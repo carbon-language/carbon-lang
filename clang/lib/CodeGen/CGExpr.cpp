@@ -495,6 +495,11 @@ LValue CodeGenFunction::EmitCheckedLValue(const Expr *E) {
 /// length type, this is not possible.
 ///
 LValue CodeGenFunction::EmitLValue(const Expr *E) {
+  llvm::DenseMap<const Expr *, LValue>::iterator I = 
+                                      CGF.ConditionalSaveLValueExprs.find(E);
+  if (I != CGF.ConditionalSaveLValueExprs.end())
+    return I->second;
+  
   switch (E->getStmtClass()) {
   default: return EmitUnsupportedLValue(E, "l-value expression");
 
@@ -1694,19 +1699,26 @@ CodeGenFunction::EmitConditionalOperatorLValue(const ConditionalOperator *E) {
         return EmitLValue(Live);
     }
 
-    if (!E->getLHS())
-      return EmitUnsupportedLValue(E, "conditional operator with missing LHS");
-
     llvm::BasicBlock *LHSBlock = createBasicBlock("cond.true");
     llvm::BasicBlock *RHSBlock = createBasicBlock("cond.false");
     llvm::BasicBlock *ContBlock = createBasicBlock("cond.end");
     
-    EmitBranchOnBoolExpr(E->getCond(), LHSBlock, RHSBlock);
+    if (E->getLHS())
+      EmitBranchOnBoolExpr(E->getCond(), LHSBlock, RHSBlock);
+    else {
+      Expr *save = E->getSAVE();
+      assert(save && "VisitConditionalOperator - save is null");
+      // Intentianlly not doing direct assignment to ConditionalSaveExprs[save]
+      LValue SaveVal = EmitLValue(save);
+      ConditionalSaveLValueExprs[save] = SaveVal;
+      EmitBranchOnBoolExpr(E->getCond(), LHSBlock, RHSBlock);
+    }
     
     // Any temporaries created here are conditional.
     BeginConditionalBranch();
     EmitBlock(LHSBlock);
-    LValue LHS = EmitLValue(E->getLHS());
+    LValue LHS = EmitLValue(E->getTrueExpr());
+
     EndConditionalBranch();
     
     if (!LHS.isSimple())

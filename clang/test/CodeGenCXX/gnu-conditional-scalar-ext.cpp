@@ -39,8 +39,25 @@ _Complex int cmplx() {
     return getComplex(1+2i) ? : rhs;
 }
 
+// lvalue test
+void foo (int& lv) {
+  ++lv;
+}
+
+int global = 1;
+
+int &cond() {
+  static int count;
+  if (count++)
+    abort();
+  return global;
+}
+
+
 int main() {
   cmplx();
-  return 0;
+  int rhs = 10;
+  foo (cond()? : rhs);
+  return  global-2;
 }
 }
