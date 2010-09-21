@@ -37,7 +37,7 @@ struct MachinePointerInfo {
   /// Offset - This is an offset from the base Value*.
   int64_t Offset;
   
-  explicit MachinePointerInfo(const Value *v, int64_t offset = 0)
+  explicit MachinePointerInfo(const Value *v = 0, int64_t offset = 0)
     : V(v), Offset(offset) {}
   
   MachinePointerInfo getWithOffset(int64_t O) const {
