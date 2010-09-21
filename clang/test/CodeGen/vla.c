@@ -50,3 +50,12 @@ void f_8403108(unsigned x) {
   }
   // CHECK: call void @llvm.stackrestore(i8*
 }
+
+// pr7827
+void function(short width, int data[][width]) {}
+
+void test() {
+     // CHECK: call void @function(i16 signext 1, i32* null)
+     function(1, 0);
+}
+

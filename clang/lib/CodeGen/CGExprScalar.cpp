@@ -209,8 +209,17 @@ public:
   }
   Value *VisitCastExpr(CastExpr *E) {
     // Make sure to evaluate VLA bounds now so that we have them for later.
-    if (E->getType()->isVariablyModifiedType())
-      CGF.EmitVLASize(E->getType());
+    if (E->getType()->isVariablyModifiedType()) {
+      // Implicit cast of a null pointer to a vla type need not result in vla
+      // size computation which is not always possible in any case (see pr7827).
+      bool NeedSize = true;
+      if (const ImplicitCastExpr *ICE = dyn_cast<ImplicitCastExpr>(E))
+        NeedSize = 
+          !ICE->getSubExpr()->isNullPointerConstant(CGF.getContext(),
+                                                Expr::NPC_ValueDependentIsNull);
+      if (NeedSize)
+        CGF.EmitVLASize(E->getType());
+    }
 
     return EmitCastExpr(E);
   }
