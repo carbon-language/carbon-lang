@@ -6609,65 +6609,63 @@ bool DAGCombiner::SimplifySelectOps(SDNode *TheSelect, SDValue LHS,
         RLD->getPointerInfo().getAddrSpace() != 0)
       return false;
         
+    // Check that the select condition doesn't reach either load.  If so,
+    // folding this will induce a cycle into the DAG.  If not, this is safe to
+    // xform, so create a select of the addresses.
     SDValue Addr;
     if (TheSelect->getOpcode() == ISD::SELECT) {
-      // Check that the condition doesn't reach either load.  If so, folding
-      // this will induce a cycle into the DAG.
-      if ((!LLD->hasAnyUseOfValue(1) ||
-           !LLD->isPredecessorOf(TheSelect->getOperand(0).getNode())) &&
-          (!RLD->hasAnyUseOfValue(1) ||
-           !RLD->isPredecessorOf(TheSelect->getOperand(0).getNode()))) {
-        Addr = DAG.getNode(ISD::SELECT, TheSelect->getDebugLoc(),
-                           LLD->getBasePtr().getValueType(),
-                           TheSelect->getOperand(0), LLD->getBasePtr(),
-                           RLD->getBasePtr());
-      }
+      SDNode *CondNode = TheSelect->getOperand(0).getNode();
+      if ((LLD->hasAnyUseOfValue(1) && LLD->isPredecessorOf(CondNode)) ||
+          (RLD->hasAnyUseOfValue(1) && RLD->isPredecessorOf(CondNode)))
+        return false;
+      Addr = DAG.getNode(ISD::SELECT, TheSelect->getDebugLoc(),
+                         LLD->getBasePtr().getValueType(),
+                         TheSelect->getOperand(0), LLD->getBasePtr(),
+                         RLD->getBasePtr());
     } else {  // Otherwise SELECT_CC
-      // Check that the condition doesn't reach either load.  If so, folding
-      // this will induce a cycle into the DAG.
-      if ((!LLD->hasAnyUseOfValue(1) ||
-           (!LLD->isPredecessorOf(TheSelect->getOperand(0).getNode()) &&
-            !LLD->isPredecessorOf(TheSelect->getOperand(1).getNode()))) &&
-          (!RLD->hasAnyUseOfValue(1) ||
-           (!RLD->isPredecessorOf(TheSelect->getOperand(0).getNode()) &&
-            !RLD->isPredecessorOf(TheSelect->getOperand(1).getNode())))) {
-        Addr = DAG.getNode(ISD::SELECT_CC, TheSelect->getDebugLoc(),
-                           LLD->getBasePtr().getValueType(),
-                           TheSelect->getOperand(0),
-                           TheSelect->getOperand(1),
-                           LLD->getBasePtr(), RLD->getBasePtr(),
-                           TheSelect->getOperand(4));
-      }
+      SDNode *CondLHS = TheSelect->getOperand(0).getNode();
+      SDNode *CondRHS = TheSelect->getOperand(1).getNode();
+
+      if ((LLD->hasAnyUseOfValue(1) &&
+           (LLD->isPredecessorOf(CondLHS) || LLD->isPredecessorOf(CondRHS))) ||
+          (LLD->hasAnyUseOfValue(1) &&
+           (LLD->isPredecessorOf(CondLHS) || LLD->isPredecessorOf(CondRHS))))
+        return false;
+      
+      Addr = DAG.getNode(ISD::SELECT_CC, TheSelect->getDebugLoc(),
+                         LLD->getBasePtr().getValueType(),
+                         TheSelect->getOperand(0),
+                         TheSelect->getOperand(1),
+                         LLD->getBasePtr(), RLD->getBasePtr(),
+                         TheSelect->getOperand(4));
     }
 
-    if (Addr.getNode()) {
-      SDValue Load;
-      if (LLD->getExtensionType() == ISD::NON_EXTLOAD) {
-        Load = DAG.getLoad(TheSelect->getValueType(0),
-                           TheSelect->getDebugLoc(),
-                           // FIXME: Discards pointer info.
-                           LLD->getChain(), Addr, MachinePointerInfo(),
-                           LLD->isVolatile(), LLD->isNonTemporal(),
-                           LLD->getAlignment());
-      } else {
-        Load = DAG.getExtLoad(LLD->getExtensionType(),
-                              TheSelect->getValueType(0),
-                              TheSelect->getDebugLoc(),
-                              // FIXME: Discards pointer info.
-                              LLD->getChain(), Addr, MachinePointerInfo(),
-                              LLD->getMemoryVT(), LLD->isVolatile(),
-                              LLD->isNonTemporal(), LLD->getAlignment());
-      }
-
-      // Users of the select now use the result of the load.
-      CombineTo(TheSelect, Load);
-
-      // Users of the old loads now use the new load's chain.  We know the
-      // old-load value is dead now.
-      CombineTo(LHS.getNode(), Load.getValue(0), Load.getValue(1));
-      CombineTo(RHS.getNode(), Load.getValue(0), Load.getValue(1));
-      return true;
+    SDValue Load;
+    if (LLD->getExtensionType() == ISD::NON_EXTLOAD) {
+      Load = DAG.getLoad(TheSelect->getValueType(0),
+                         TheSelect->getDebugLoc(),
+                         // FIXME: Discards pointer info.
+                         LLD->getChain(), Addr, MachinePointerInfo(),
+                         LLD->isVolatile(), LLD->isNonTemporal(),
+                         LLD->getAlignment());
+    } else {
+      Load = DAG.getExtLoad(LLD->getExtensionType(),
+                            TheSelect->getValueType(0),
+                            TheSelect->getDebugLoc(),
+                            // FIXME: Discards pointer info.
+                            LLD->getChain(), Addr, MachinePointerInfo(),
+                            LLD->getMemoryVT(), LLD->isVolatile(),
+                            LLD->isNonTemporal(), LLD->getAlignment());
     }
+
+    // Users of the select now use the result of the load.
+    CombineTo(TheSelect, Load);
+
+    // Users of the old loads now use the new load's chain.  We know the
+    // old-load value is dead now.
+    CombineTo(LHS.getNode(), Load.getValue(0), Load.getValue(1));
+    CombineTo(RHS.getNode(), Load.getValue(0), Load.getValue(1));
+    return true;
   }
 
   return false;
