@@ -214,10 +214,6 @@ namespace llvm {
       ///   operand #3 optional in flag
       TC_RETURN,
 
-      // LCMPXCHG_DAG, LCMPXCHG8_DAG - Compare and swap.
-      LCMPXCHG_DAG,
-      LCMPXCHG8_DAG,
-
       // FNSTCW16m - Store FP control world into i16 memory.
       FNSTCW16m,
 
@@ -309,7 +305,11 @@ namespace llvm {
       MEMBARRIER,
       MFENCE,
       SFENCE,
-      LFENCE
+      LFENCE,
+      
+      // LCMPXCHG_DAG, LCMPXCHG8_DAG - Compare and swap.
+      LCMPXCHG_DAG,
+      LCMPXCHG8_DAG
 
       // WARNING: Do not add anything in the end unless you want the node to
       // have memop! In fact, starting from ATOMADD64_DAG all opcodes will be
