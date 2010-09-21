@@ -379,10 +379,10 @@ static SDValue ExpandConstantFP(ConstantFPSDNode *CFP, bool UseCP,
   if (Extend)
     return DAG.getExtLoad(ISD::EXTLOAD, OrigVT, dl,
                           DAG.getEntryNode(),
-                          CPIdx, PseudoSourceValue::getConstantPool(),
-                          0, VT, false, false, Alignment);
+                          CPIdx, MachinePointerInfo::getConstantPool(),
+                          VT, false, false, Alignment);
   return DAG.getLoad(OrigVT, dl, DAG.getEntryNode(), CPIdx,
-                     PseudoSourceValue::getConstantPool(), 0, false, false,
+                     MachinePointerInfo::getConstantPool(), false, false,
                      Alignment);
 }
 
@@ -660,7 +660,7 @@ PerformInsertVectorEltInMemory(SDValue Vec, SDValue Val, SDValue Idx,
 
   // Store the vector.
   SDValue Ch = DAG.getStore(DAG.getEntryNode(), dl, Tmp1, StackPtr,
-                            PseudoSourceValue::getFixedStack(SPFI), 0,
+                            MachinePointerInfo::getFixedStack(SPFI),
                             false, false, 0);
 
   // Truncate or zero extend offset to target pointer type.
@@ -671,13 +671,11 @@ PerformInsertVectorEltInMemory(SDValue Vec, SDValue Val, SDValue Idx,
   Tmp3 = DAG.getNode(ISD::MUL, dl, IdxVT, Tmp3,DAG.getConstant(EltSize, IdxVT));
   SDValue StackPtr2 = DAG.getNode(ISD::ADD, dl, IdxVT, Tmp3, StackPtr);
   // Store the scalar value.
-  Ch = DAG.getTruncStore(Ch, dl, Tmp2, StackPtr2,
-                         PseudoSourceValue::getFixedStack(SPFI), 0, EltVT,
+  Ch = DAG.getTruncStore(Ch, dl, Tmp2, StackPtr2, MachinePointerInfo(), EltVT,
                          false, false, 0);
   // Load the updated vector.
   return DAG.getLoad(VT, dl, Ch, StackPtr,
-                     PseudoSourceValue::getFixedStack(SPFI), 0,
-                     false, false, 0);
+                     MachinePointerInfo::getFixedStack(SPFI), false, false, 0);
 }
 
 
@@ -1810,11 +1808,11 @@ SDValue SelectionDAGLegalize::ExpandSCALAR_TO_VECTOR(SDNode *Node) {
 
   SDValue Ch = DAG.getTruncStore(DAG.getEntryNode(), dl, Node->getOperand(0),
                                  StackPtr,
-                                 PseudoSourceValue::getFixedStack(SPFI), 0,
+                                 MachinePointerInfo::getFixedStack(SPFI),
                                  Node->getValueType(0).getVectorElementType(),
                                  false, false, 0);
   return DAG.getLoad(Node->getValueType(0), dl, Ch, StackPtr,
-                     PseudoSourceValue::getFixedStack(SPFI), 0,
+                     MachinePointerInfo::getFixedStack(SPFI),
                      false, false, 0);
 }
 
@@ -1888,7 +1886,7 @@ SDValue SelectionDAGLegalize::ExpandBUILD_VECTOR(SDNode *Node) {
     SDValue CPIdx = DAG.getConstantPool(CP, TLI.getPointerTy());
     unsigned Alignment = cast<ConstantPoolSDNode>(CPIdx)->getAlignment();
     return DAG.getLoad(VT, dl, DAG.getEntryNode(), CPIdx,
-                       PseudoSourceValue::getConstantPool(), 0,
+                       MachinePointerInfo::getConstantPool(),
                        false, false, Alignment);
   }
 
@@ -2189,13 +2187,13 @@ SDValue SelectionDAGLegalize::ExpandLegalINT_TO_FP(bool isSigned,
   SDValue FudgeInReg;
   if (DestVT == MVT::f32)
     FudgeInReg = DAG.getLoad(MVT::f32, dl, DAG.getEntryNode(), CPIdx,
-                             PseudoSourceValue::getConstantPool(), 0,
+                             MachinePointerInfo::getConstantPool(),
                              false, false, Alignment);
   else {
     FudgeInReg =
       LegalizeOp(DAG.getExtLoad(ISD::EXTLOAD, DestVT, dl,
                                 DAG.getEntryNode(), CPIdx,
-                                PseudoSourceValue::getConstantPool(), 0,
+                                MachinePointerInfo::getConstantPool(),
                                 MVT::f32, false, false, Alignment));
   }
 
@@ -3166,7 +3164,7 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node,
 
     EVT MemVT = EVT::getIntegerVT(*DAG.getContext(), EntrySize * 8);
     SDValue LD = DAG.getExtLoad(ISD::SEXTLOAD, PTy, dl, Chain, Addr,
-                                PseudoSourceValue::getJumpTable(), 0, MemVT,
+                                MachinePointerInfo::getJumpTable(), MemVT,
                                 false, false, 0);
     Addr = LD;
     if (TM.getRelocationModel() == Reloc::PIC_) {

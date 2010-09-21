@@ -6769,7 +6769,7 @@ SDValue DAGCombiner::SimplifySelectCC(DebugLoc DL, SDValue N0, SDValue N1,
         CPIdx = DAG.getNode(ISD::ADD, DL, TLI.getPointerTy(), CPIdx,
                             CstOffset);
         return DAG.getLoad(TV->getValueType(0), DL, DAG.getEntryNode(), CPIdx,
-                           PseudoSourceValue::getConstantPool(), 0, false,
+                           MachinePointerInfo::getConstantPool(), false,
                            false, Alignment);
 
       }
