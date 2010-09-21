@@ -398,6 +398,10 @@ bool TargetInfo::validateInputConstraint(ConstraintInfo *OutputConstraints,
       Info.setAllowsRegister();
       Info.setAllowsMemory();
       break;
+    case 'E': // immediate floating point.
+    case 'F': // immediate floating point.
+    case 'p': // address operand.
+      break;
     case ',': // multiple alternative constraint.  Ignore comma.
       break;
     case '?': // Disparage slightly code.
