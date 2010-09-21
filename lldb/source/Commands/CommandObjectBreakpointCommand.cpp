@@ -49,7 +49,7 @@ lldb::OptionDefinition
 CommandObjectBreakpointCommandAdd::CommandOptions::g_option_table[] =
 {
     { LLDB_OPT_SET_ALL, false, "one-liner", 'o', required_argument, NULL, 0, "<one-liner>",
-        "Specify a one-liner inline." },
+        "Specify a one-line breakpoint command inline. Be sure to surround it with quotes." },
 
     { LLDB_OPT_SET_1, true, "script",    's', no_argument, NULL, 0, NULL,
         "Write the breakpoint command script in the default scripting language."},

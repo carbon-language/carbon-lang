@@ -207,7 +207,7 @@ public:
         CommandReturnObject &result
     )
     {
-        const size_t argc = args.GetArgumentCount();
+        size_t argc = args.GetArgumentCount();
 
         if (argc < 2)
         {
@@ -296,15 +296,18 @@ public:
                          args.Shift ();
                          if (result.Succeeded())
                              options->VerifyPartialOptions (result);
-                         if (!result.Succeeded())
-                             return false;
+                         if (!result.Succeeded() && result.GetStatus() != lldb::eReturnStatusStarted)
+                        {
+                            result.AppendError ("Unable to create requested command alias.\n");
+                        }
                      }
-                     else
-                     {
-                         for (size_t i = 0; i < argc; ++i)
-                             option_arg_vector->push_back (OptionArgPair ("<argument>",
-                                                                          std::string (args.GetArgumentAtIndex (i))));
-                     }
+
+                     // Anything remaining in args must be a plain argument.
+                     
+                     argc = args.GetArgumentCount();
+                     for (size_t i = 0; i < argc; ++i)
+                         option_arg_vector->push_back (OptionArgPair ("<argument>",
+                                                                      std::string (args.GetArgumentAtIndex (i))));
                  }
 
                  // Create the alias.

@@ -726,7 +726,7 @@ ScriptInterpreterPython::GenerateBreakpointCommandCallbackData (StringList &user
     }
 
     // Traverse user_input exactly once.  At each line, either copy line into new, auto-generated function, 
-    // increasing indentation by 5 spaces...  ...or copy it exactly as is into the user-written 
+    // increasing indentation by 5 spaces or copy it exactly as is into the user-written 
     // currently-to-be-pushed-to-Python function def.  At the end of each Python function def, push the function 
     // to Python, and clear the function string, to start again.  At the end of it all, if there is anything in 
     // the auto-generated function, push it to Python and add the function call to it to the callback data.
