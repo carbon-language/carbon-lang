@@ -25,6 +25,10 @@
 // FIXME: Are these nothrow/const?
 
 // MMX
+//
+// FIXME: All MMX instructions will be generated via builtins. Any MMX vector
+// types (<1 x i64>, <2 x i32>, etc.) that aren't used by these builtins will be
+// expanded by the back-end.
 BUILTIN(__builtin_ia32_emms, "v", "")
 BUILTIN(__builtin_ia32_femms, "v", "")
 BUILTIN(__builtin_ia32_paddb, "V8cV8cV8c", "")
