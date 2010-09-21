@@ -833,7 +833,7 @@ struct ToolDescription : public RefCountedBase<ToolDescription> {
   StrVector InLanguage;
   std::string InFileOption;
   std::string OutFileOption;
-  std::string OutLanguage;
+  StrVector OutLanguage;
   std::string OutputSuffix;
   unsigned Flags;
   const Init* OnEmpty;
@@ -919,31 +919,34 @@ private:
     toolDesc_.CmdLine = d.getArg(0);
   }
 
-  void onInLanguage (const DagInit& d) {
+  /// onInOutLanguage - Common implementation of on{In,Out}Language().
+  void onInOutLanguage (const DagInit& d, StrVector& OutVec) {
     CheckNumberOfArguments(d, 1);
     Init* arg = d.getArg(0);
 
     // Find out the argument's type.
     if (typeid(*arg) == typeid(StringInit)) {
       // It's a string.
-      toolDesc_.InLanguage.push_back(InitPtrToString(arg));
+      OutVec.push_back(InitPtrToString(arg));
     }
     else {
       // It's a list.
       const ListInit& lst = InitPtrToList(arg);
-      StrVector& out = toolDesc_.InLanguage;
 
       // Copy strings to the output vector.
-      for (ListInit::const_iterator B = lst.begin(), E = lst.end();
-           B != E; ++B) {
-        out.push_back(InitPtrToString(*B));
-      }
+      for (ListInit::const_iterator B = lst.begin(), E = lst.end(); B != E; ++B)
+        OutVec.push_back(InitPtrToString(*B));
 
       // Remove duplicates.
-      std::sort(out.begin(), out.end());
-      StrVector::iterator newE = std::unique(out.begin(), out.end());
-      out.erase(newE, out.end());
+      std::sort(OutVec.begin(), OutVec.end());
+      StrVector::iterator newE = std::unique(OutVec.begin(), OutVec.end());
+      OutVec.erase(newE, OutVec.end());
     }
+  }
+
+
+  void onInLanguage (const DagInit& d) {
+    this->onInOutLanguage(d, toolDesc_.InLanguage);
   }
 
   void onJoin (const DagInit& d) {
@@ -952,8 +955,7 @@ private:
   }
 
   void onOutLanguage (const DagInit& d) {
-    CheckNumberOfArguments(d, 1);
-    toolDesc_.OutLanguage = InitPtrToString(d.getArg(0));
+    this->onInOutLanguage(d, toolDesc_.OutLanguage);
   }
 
   void onOutFileOption (const DagInit& d) {
@@ -1062,18 +1064,29 @@ void FilterNotInGraph (const DagVector& EdgeVector,
 }
 
 /// FillInToolToLang - Fills in two tables that map tool names to
-/// (input, output) languages.  Helper function used by TypecheckGraph().
+/// input & output language names.  Helper function used by TypecheckGraph().
 void FillInToolToLang (const ToolDescriptions& ToolDescs,
                        StringMap<StringSet<> >& ToolToInLang,
-                       StringMap<std::string>& ToolToOutLang) {
+                       StringMap<StringSet<> >& ToolToOutLang) {
   for (ToolDescriptions::const_iterator B = ToolDescs.begin(),
          E = ToolDescs.end(); B != E; ++B) {
     const ToolDescription& D = *(*B);
     for (StrVector::const_iterator B = D.InLanguage.begin(),
            E = D.InLanguage.end(); B != E; ++B)
       ToolToInLang[D.Name].insert(*B);
-    ToolToOutLang[D.Name] = D.OutLanguage;
+    for (StrVector::const_iterator B = D.OutLanguage.begin(),
+           E = D.OutLanguage.end(); B != E; ++B)
+      ToolToOutLang[D.Name].insert(*B);
   }
+}
+
+/// Intersect - Is set intersection non-empty?
+bool Intersect (const StringSet<>& S1, const StringSet<>& S2) {
+  for (StringSet<>::const_iterator B = S1.begin(), E = S1.end(); B != E; ++B) {
+    if (S2.count(B->first()) != 0)
+      return true;
+  }
+  return false;
 }
 
 /// TypecheckGraph - Check that names for output and input languages
@@ -1081,28 +1094,32 @@ void FillInToolToLang (const ToolDescriptions& ToolDescs,
 void TypecheckGraph (const DagVector& EdgeVector,
                      const ToolDescriptions& ToolDescs) {
   StringMap<StringSet<> > ToolToInLang;
-  StringMap<std::string> ToolToOutLang;
+  StringMap<StringSet<> > ToolToOutLang;
 
   FillInToolToLang(ToolDescs, ToolToInLang, ToolToOutLang);
-  StringMap<std::string>::iterator IAE = ToolToOutLang.end();
-  StringMap<StringSet<> >::iterator IBE = ToolToInLang.end();
 
   for (DagVector::const_iterator B = EdgeVector.begin(),
          E = EdgeVector.end(); B != E; ++B) {
     const DagInit* Edge = *B;
     const std::string& NodeA = InitPtrToString(Edge->getArg(0));
     const std::string& NodeB = InitPtrToString(Edge->getArg(1));
-    StringMap<std::string>::iterator IA = ToolToOutLang.find(NodeA);
+    StringMap<StringSet<> >::iterator IA = ToolToOutLang.find(NodeA);
     StringMap<StringSet<> >::iterator IB = ToolToInLang.find(NodeB);
-
-    if (NodeA != "root") {
-      if (IA != IAE && IB != IBE && IB->second.count(IA->second) == 0)
-        throw "Edge " + NodeA + "->" + NodeB
-          + ": output->input language mismatch";
-    }
 
     if (NodeB == "root")
       throw "Edges back to the root are not allowed!";
+
+    if (NodeA != "root") {
+      if (IA == ToolToOutLang.end())
+        throw NodeA + ": no output language defined!";
+      if (IB == ToolToInLang.end())
+        throw NodeB + ": no input language defined!";
+
+      if (!Intersect(IA->second, IB->second)) {
+        throw "Edge " + NodeA + "->" + NodeB
+          + ": output->input language mismatch";
+      }
+    }
   }
 }
 
@@ -2250,11 +2267,8 @@ void EmitInOutLanguageMethods (const ToolDescription& D, raw_ostream& O) {
   O.indent(Indent2) << "return InputLanguages_;\n";
   O.indent(Indent1) << "}\n\n";
 
-  if (D.OutLanguage.empty())
-    throw "Tool " + D.Name + " has no 'out_language' property!";
-
-  O.indent(Indent1) << "const char* OutputLanguage() const {\n";
-  O.indent(Indent2) << "return \"" << D.OutLanguage << "\";\n";
+  O.indent(Indent1) << "const char** OutputLanguages() const {\n";
+  O.indent(Indent2) << "return OutputLanguages_;\n";
   O.indent(Indent1) << "}\n\n";
 }
 
@@ -2299,17 +2313,28 @@ void EmitWorksOnEmptyMethod (const ToolDescription& D,
   O.indent(Indent1) << "}\n\n";
 }
 
+/// EmitStrArray - Emit definition of a 'const char**' static member
+/// variable. Helper used by EmitStaticMemberDefinitions();
+void EmitStrArray(const std::string& Name, const std::string& VarName,
+                  const StrVector& StrVec, raw_ostream& O) {
+  O << "const char* " << Name << "::" << VarName << "[] = {";
+  for (StrVector::const_iterator B = StrVec.begin(), E = StrVec.end();
+       B != E; ++B)
+    O << '\"' << *B << "\", ";
+  O << "0};\n";
+}
+
 /// EmitStaticMemberDefinitions - Emit static member definitions for a
 /// given Tool class.
 void EmitStaticMemberDefinitions(const ToolDescription& D, raw_ostream& O) {
   if (D.InLanguage.empty())
     throw "Tool " + D.Name + " has no 'in_language' property!";
+  if (D.OutLanguage.empty())
+    throw "Tool " + D.Name + " has no 'out_language' property!";
 
-  O << "const char* " << D.Name << "::InputLanguages_[] = {";
-  for (StrVector::const_iterator B = D.InLanguage.begin(),
-         E = D.InLanguage.end(); B != E; ++B)
-    O << '\"' << *B << "\", ";
-  O << "0};\n\n";
+  EmitStrArray(D.Name, "InputLanguages_", D.InLanguage, O);
+  EmitStrArray(D.Name, "OutputLanguages_", D.OutLanguage, O);
+  O << '\n';
 }
 
 /// EmitToolClassDefinition - Emit a Tool class definition.
@@ -2327,7 +2352,8 @@ void EmitToolClassDefinition (const ToolDescription& D,
     O << "Tool";
 
   O << " {\nprivate:\n";
-  O.indent(Indent1) << "static const char* InputLanguages_[];\n\n";
+  O.indent(Indent1) << "static const char* InputLanguages_[];\n";
+  O.indent(Indent1) << "static const char* OutputLanguages_[];\n\n";
 
   O << "public:\n";
   EmitNameMethod(D, O);

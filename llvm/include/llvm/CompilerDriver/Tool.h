@@ -58,7 +58,7 @@ namespace llvmc {
 
     virtual const char*  Name() const = 0;
     virtual const char** InputLanguages() const = 0;
-    virtual const char*  OutputLanguage() const = 0;
+    virtual const char** OutputLanguages() const = 0;
 
     virtual bool IsJoin() const = 0;
     virtual bool WorksOnEmpty() const = 0;
