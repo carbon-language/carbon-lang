@@ -176,7 +176,7 @@ typedef basic_fstream<wchar_t> wfstream;
 _LIBCPP_BEGIN_NAMESPACE_STD
 
 template <class _CharT, class _Traits>
-class basic_filebuf
+class _LIBCPP_VISIBLE basic_filebuf
     : public basic_streambuf<_CharT, _Traits>
 {
 public:
@@ -957,7 +957,7 @@ basic_filebuf<_CharT, _Traits>::__write_mode()
 // basic_ifstream
 
 template <class _CharT, class _Traits>
-class basic_ifstream
+class _LIBCPP_VISIBLE basic_ifstream
     : public basic_istream<_CharT, _Traits>
 {
 public:
@@ -1102,7 +1102,7 @@ basic_ifstream<_CharT, _Traits>::close()
 // basic_ofstream
 
 template <class _CharT, class _Traits>
-class basic_ofstream
+class _LIBCPP_VISIBLE basic_ofstream
     : public basic_ostream<_CharT, _Traits>
 {
 public:
@@ -1247,7 +1247,7 @@ basic_ofstream<_CharT, _Traits>::close()
 // basic_fstream
 
 template <class _CharT, class _Traits>
-class basic_fstream
+class _LIBCPP_VISIBLE basic_fstream
     : public basic_iostream<_CharT, _Traits>
 {
 public:

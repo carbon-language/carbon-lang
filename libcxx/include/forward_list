@@ -174,7 +174,7 @@ struct __forward_begin_node
 
     pointer __next_;
 
-    __forward_begin_node() : __next_(nullptr) {}
+     _LIBCPP_INLINE_VISIBILITY __forward_begin_node() : __next_(nullptr) {}
 };
 
 template <class _Tp, class _VoidPtr>
@@ -198,12 +198,13 @@ template<class, class> class forward_list;
 template<class> class __forward_list_const_iterator;
 
 template <class _NodePtr>
-class __forward_list_iterator
+class _LIBCPP_VISIBLE __forward_list_iterator
 {
     typedef _NodePtr __node_pointer;
 
     __node_pointer __ptr_;
 
+    _LIBCPP_INLINE_VISIBILITY
     explicit __forward_list_iterator(__node_pointer __p) : __ptr_(__p) {}
 
     template<class, class> friend class forward_list;
@@ -224,16 +225,21 @@ public:
 #endif
                                                               pointer;
 
+    _LIBCPP_INLINE_VISIBILITY
     __forward_list_iterator() : __ptr_(nullptr) {}
 
+    _LIBCPP_INLINE_VISIBILITY
     reference operator*() const {return __ptr_->__value_;}
+    _LIBCPP_INLINE_VISIBILITY
     pointer operator->() const {return &__ptr_->__value_;}
 
+    _LIBCPP_INLINE_VISIBILITY
     __forward_list_iterator& operator++()
     {
         __ptr_ = __ptr_->__next_;
         return *this;
     }
+    _LIBCPP_INLINE_VISIBILITY
     __forward_list_iterator operator++(int)
     {
         __forward_list_iterator __t(*this);
@@ -241,21 +247,24 @@ public:
         return __t;
     }
 
-    friend bool operator==(const __forward_list_iterator& __x,
-                           const __forward_list_iterator& __y)
+    friend _LIBCPP_INLINE_VISIBILITY
+    bool operator==(const __forward_list_iterator& __x,
+                    const __forward_list_iterator& __y)
         {return __x.__ptr_ == __y.__ptr_;}
-    friend bool operator!=(const __forward_list_iterator& __x,
-                           const __forward_list_iterator& __y)
+    friend _LIBCPP_INLINE_VISIBILITY
+    bool operator!=(const __forward_list_iterator& __x,
+                    const __forward_list_iterator& __y)
         {return !(__x == __y);}
 };
 
 template <class _NodeConstPtr>
-class __forward_list_const_iterator
+class _LIBCPP_VISIBLE __forward_list_const_iterator
 {
     typedef _NodeConstPtr __node_const_pointer;
 
     __node_const_pointer __ptr_;
 
+    _LIBCPP_INLINE_VISIBILITY
     explicit __forward_list_const_iterator(__node_const_pointer __p)
         : __ptr_(__p) {}
 
@@ -287,18 +296,24 @@ public:
 #endif
                                                               pointer;
 
+    _LIBCPP_INLINE_VISIBILITY
     __forward_list_const_iterator() : __ptr_(nullptr) {}
+    _LIBCPP_INLINE_VISIBILITY
     __forward_list_const_iterator(__forward_list_iterator<__node_pointer> __p)
         : __ptr_(__p.__ptr_) {}
 
+    _LIBCPP_INLINE_VISIBILITY
     reference operator*() const {return __ptr_->__value_;}
+    _LIBCPP_INLINE_VISIBILITY
     pointer operator->() const {return &__ptr_->__value_;}
 
+    _LIBCPP_INLINE_VISIBILITY
     __forward_list_const_iterator& operator++()
     {
         __ptr_ = __ptr_->__next_;
         return *this;
     }
+    _LIBCPP_INLINE_VISIBILITY
     __forward_list_const_iterator operator++(int)
     {
         __forward_list_const_iterator __t(*this);
@@ -306,10 +321,12 @@ public:
         return __t;
     }
 
-    friend bool operator==(const __forward_list_const_iterator& __x,
-                           const __forward_list_const_iterator& __y)
+    friend _LIBCPP_INLINE_VISIBILITY
+    bool operator==(const __forward_list_const_iterator& __x,
+                    const __forward_list_const_iterator& __y)
         {return __x.__ptr_ == __y.__ptr_;}
-    friend bool operator!=(const __forward_list_const_iterator& __x,
+    friend _LIBCPP_INLINE_VISIBILITY
+    bool operator!=(const __forward_list_const_iterator& __x,
                            const __forward_list_const_iterator& __y)
         {return !(__x == __y);}
 };
@@ -337,21 +354,27 @@ protected:
 
     __compressed_pair<__begin_node, __node_allocator> __before_begin_;
 
+    _LIBCPP_INLINE_VISIBILITY
     __node_pointer        __before_begin()
         {return pointer_traits<__node_pointer>::pointer_to(
                                 static_cast<__node&>(__before_begin_.first()));}
+    _LIBCPP_INLINE_VISIBILITY
     __node_const_pointer  __before_begin() const
         {return pointer_traits<__node_const_pointer>::pointer_to(
                           static_cast<const __node&>(__before_begin_.first()));}
 
+    _LIBCPP_INLINE_VISIBILITY
           __node_allocator& __alloc()       {return __before_begin_.second();}
+    _LIBCPP_INLINE_VISIBILITY
     const __node_allocator& __alloc() const {return __before_begin_.second();}
 
     typedef __forward_list_iterator<__node_pointer>             iterator;
     typedef __forward_list_const_iterator<__node_const_pointer> const_iterator;
 
+    _LIBCPP_INLINE_VISIBILITY
     __forward_list_base()
         : __before_begin_(__begin_node()) {}
+    _LIBCPP_INLINE_VISIBILITY
     __forward_list_base(const allocator_type& __a)
         : __before_begin_(__begin_node(), __node_allocator(__a)) {}
 
@@ -367,10 +390,12 @@ protected:
 
     ~__forward_list_base();
 
+    _LIBCPP_INLINE_VISIBILITY
     void __copy_assign_alloc(const __forward_list_base& __x)
         {__copy_assign_alloc(__x, integral_constant<bool,
               __node_traits::propagate_on_container_copy_assignment::value>());}
 
+    _LIBCPP_INLINE_VISIBILITY
     void __move_assign_alloc(__forward_list_base& __x)
         {__move_assign_alloc(__x, integral_constant<bool,
               __node_traits::propagate_on_container_move_assignment::value>());}
@@ -379,7 +404,9 @@ protected:
     void clear();
 
 private:
+    _LIBCPP_INLINE_VISIBILITY
     void __copy_assign_alloc(const __forward_list_base&, false_type) {}
+    _LIBCPP_INLINE_VISIBILITY
     void __copy_assign_alloc(const __forward_list_base& __x, true_type)
     {
         if (__alloc() != __x.__alloc())
@@ -387,16 +414,21 @@ private:
         __alloc() = __x.__alloc();
     }
 
+    _LIBCPP_INLINE_VISIBILITY
     void __move_assign_alloc(__forward_list_base& __x, false_type) {}
+    _LIBCPP_INLINE_VISIBILITY
     void __move_assign_alloc(__forward_list_base& __x, true_type)
         {__alloc() = _STD::move(__x.__alloc());}
 
+    _LIBCPP_INLINE_VISIBILITY
     static void __swap_alloc(__node_allocator& __x, __node_allocator& __y)
         {__swap_alloc(__x, __y, integral_constant<bool,
                          __node_traits::propagate_on_container_swap::value>());}
+    _LIBCPP_INLINE_VISIBILITY
     static void __swap_alloc(__node_allocator& __x, __node_allocator& __y,
                                                                      false_type)
         {}
+    _LIBCPP_INLINE_VISIBILITY
     static void __swap_alloc(__node_allocator& __x, __node_allocator& __y,
                                                                       true_type)
         {
@@ -408,7 +440,7 @@ private:
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 template <class _Tp, class _Alloc>
-inline
+inline _LIBCPP_INLINE_VISIBILITY
 __forward_list_base<_Tp, _Alloc>::__forward_list_base(__forward_list_base&& __x)
     : __before_begin_(_STD::move(__x.__before_begin_))
 {
@@ -416,7 +448,7 @@ __forward_list_base<_Tp, _Alloc>::__forward_list_base(__forward_list_base&& __x)
 }
 
 template <class _Tp, class _Alloc>
-inline
+inline _LIBCPP_INLINE_VISIBILITY
 __forward_list_base<_Tp, _Alloc>::__forward_list_base(__forward_list_base&& __x,
                                                       const allocator_type& __a)
     : __before_begin_(__begin_node(), __node_allocator(__a))
@@ -437,7 +469,7 @@ __forward_list_base<_Tp, _Alloc>::~__forward_list_base()
 }
 
 template <class _Tp, class _Alloc>
-inline
+inline _LIBCPP_INLINE_VISIBILITY
 void
 __forward_list_base<_Tp, _Alloc>::swap(__forward_list_base& __x)
 {
@@ -462,7 +494,7 @@ __forward_list_base<_Tp, _Alloc>::clear()
 }
 
 template <class _Tp, class _Alloc = allocator<_Tp> >
-class forward_list
+class _LIBCPP_VISIBLE forward_list
     : private __forward_list_base<_Tp, _Alloc>
 {
     typedef __forward_list_base<_Tp, _Alloc> base;
@@ -480,7 +512,7 @@ public:
     typedef typename base::iterator       iterator;
     typedef typename base::const_iterator const_iterator;
 
-    forward_list() {} // = default;
+    _LIBCPP_INLINE_VISIBILITY forward_list() {} // = default;
     explicit forward_list(const allocator_type& __a);
     explicit forward_list(size_type __n);
     forward_list(size_type __n, const value_type& __v);
@@ -499,6 +531,7 @@ public:
     forward_list(const forward_list& __x);
     forward_list(const forward_list& __x, const allocator_type& __a);
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
+    _LIBCPP_INLINE_VISIBILITY
     forward_list(forward_list&& __x) : base(_STD::move(__x)) {}
     forward_list(forward_list&& __x, const allocator_type& __a);
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
@@ -523,24 +556,38 @@ public:
     void assign(size_type __n, const value_type& __v);
     void assign(initializer_list<value_type> __il);
 
+    _LIBCPP_INLINE_VISIBILITY
     allocator_type get_allocator() const {return allocator_type(base::__alloc());}
 
+    _LIBCPP_INLINE_VISIBILITY
     iterator       begin()       {return       iterator(base::__before_begin()->__next_);}
+    _LIBCPP_INLINE_VISIBILITY
     const_iterator begin() const {return const_iterator(base::__before_begin()->__next_);}
+    _LIBCPP_INLINE_VISIBILITY
     iterator       end()         {return       iterator(nullptr);}
+    _LIBCPP_INLINE_VISIBILITY
     const_iterator end() const   {return const_iterator(nullptr);}
 
+    _LIBCPP_INLINE_VISIBILITY
     const_iterator cbegin() const {return const_iterator(base::__before_begin()->__next_);}
+    _LIBCPP_INLINE_VISIBILITY
     const_iterator cend() const   {return const_iterator(nullptr);}
 
+    _LIBCPP_INLINE_VISIBILITY
     iterator       before_begin()        {return       iterator(base::__before_begin());}
+    _LIBCPP_INLINE_VISIBILITY
     const_iterator before_begin() const  {return const_iterator(base::__before_begin());}
+    _LIBCPP_INLINE_VISIBILITY
     const_iterator cbefore_begin() const {return const_iterator(base::__before_begin());}
 
+    _LIBCPP_INLINE_VISIBILITY
     bool empty() const {return base::__before_begin()->__next_ == nullptr;}
+    _LIBCPP_INLINE_VISIBILITY
     size_type max_size() const {return numeric_limits<size_type>::max();}
 
+    _LIBCPP_INLINE_VISIBILITY
     reference       front()       {return base::__before_begin()->__next_->__value_;}
+    _LIBCPP_INLINE_VISIBILITY
     const_reference front() const {return base::__before_begin()->__next_->__value_;}
 
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
@@ -563,6 +610,7 @@ public:
     iterator insert_after(const_iterator __p, const value_type& __v);
     iterator insert_after(const_iterator __p, size_type __n, const value_type& __v);
     template <class _InputIterator>
+        _LIBCPP_INLINE_VISIBILITY
         typename enable_if
         <
             __is_input_iterator<_InputIterator>::value,
@@ -575,10 +623,12 @@ public:
     iterator erase_after(const_iterator __p);
     iterator erase_after(const_iterator __f, const_iterator __l);
 
+    _LIBCPP_INLINE_VISIBILITY
     void swap(forward_list& __x) {base::swap(__x);}
 
     void resize(size_type __n);
     void resize(size_type __n, const value_type& __v);
+    _LIBCPP_INLINE_VISIBILITY
     void clear() {base::clear();}
 
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
@@ -594,15 +644,19 @@ public:
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
     void remove(const value_type& __v);
     template <class _Predicate> void remove_if(_Predicate __pred);
+    _LIBCPP_INLINE_VISIBILITY
     void unique() {unique(__equal_to<value_type>());}
     template <class _BinaryPredicate> void unique(_BinaryPredicate __binary_pred);
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
+    _LIBCPP_INLINE_VISIBILITY
     void merge(forward_list&& __x) {merge(_STD::move(__x), __less<value_type>());}
     template <class _Compare> void merge(forward_list&& __x, _Compare __comp);
 #else  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
+    _LIBCPP_INLINE_VISIBILITY
     void merge(forward_list& __x) {merge(__x, __less<value_type>());}
     template <class _Compare> void merge(forward_list& __x, _Compare __comp);
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
+    _LIBCPP_INLINE_VISIBILITY
     void sort() {sort(__less<value_type>());}
     template <class _Compare> void sort(_Compare __comp);
     void reverse();
@@ -630,7 +684,7 @@ private:
 };
 
 template <class _Tp, class _Alloc>
-inline
+inline _LIBCPP_INLINE_VISIBILITY
 forward_list<_Tp, _Alloc>::forward_list(const allocator_type& __a)
     : base(__a)
 {
@@ -777,7 +831,7 @@ forward_list<_Tp, _Alloc>::__move_assign(forward_list& __x, false_type)
 }
 
 template <class _Tp, class _Alloc>
-inline
+inline _LIBCPP_INLINE_VISIBILITY
 forward_list<_Tp, _Alloc>&
 forward_list<_Tp, _Alloc>::operator=(forward_list&& __x)
 {
@@ -789,7 +843,7 @@ forward_list<_Tp, _Alloc>::operator=(forward_list&& __x)
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 template <class _Tp, class _Alloc>
-inline
+inline _LIBCPP_INLINE_VISIBILITY
 forward_list<_Tp, _Alloc>&
 forward_list<_Tp, _Alloc>::operator=(initializer_list<value_type> __il)
 {
@@ -833,7 +887,7 @@ forward_list<_Tp, _Alloc>::assign(size_type __n, const value_type& __v)
 }
 
 template <class _Tp, class _Alloc>
-inline
+inline _LIBCPP_INLINE_VISIBILITY
 void
 forward_list<_Tp, _Alloc>::assign(initializer_list<value_type> __il)
 {
@@ -1344,7 +1398,7 @@ forward_list<_Tp, _Alloc>::__merge(__node_pointer __f1, __node_pointer __f2,
 
 template <class _Tp, class _Alloc>
 template <class _Compare>
-inline
+inline _LIBCPP_INLINE_VISIBILITY
 void
 forward_list<_Tp, _Alloc>::sort(_Compare __comp)
 {
@@ -1419,7 +1473,7 @@ bool operator==(const forward_list<_Tp, _Alloc>& __x,
 }
 
 template <class _Tp, class _Alloc>
-inline
+inline _LIBCPP_INLINE_VISIBILITY
 bool operator!=(const forward_list<_Tp, _Alloc>& __x,
                 const forward_list<_Tp, _Alloc>& __y)
 {
@@ -1427,7 +1481,7 @@ bool operator!=(const forward_list<_Tp, _Alloc>& __x,
 }
 
 template <class _Tp, class _Alloc>
-inline
+inline _LIBCPP_INLINE_VISIBILITY
 bool operator< (const forward_list<_Tp, _Alloc>& __x,
                 const forward_list<_Tp, _Alloc>& __y)
 {
@@ -1436,7 +1490,7 @@ bool operator< (const forward_list<_Tp, _Alloc>& __x,
 }
 
 template <class _Tp, class _Alloc>
-inline
+inline _LIBCPP_INLINE_VISIBILITY
 bool operator> (const forward_list<_Tp, _Alloc>& __x,
                 const forward_list<_Tp, _Alloc>& __y)
 {
@@ -1444,7 +1498,7 @@ bool operator> (const forward_list<_Tp, _Alloc>& __x,
 }
 
 template <class _Tp, class _Alloc>
-inline
+inline _LIBCPP_INLINE_VISIBILITY
 bool operator>=(const forward_list<_Tp, _Alloc>& __x,
                 const forward_list<_Tp, _Alloc>& __y)
 {
@@ -1452,7 +1506,7 @@ bool operator>=(const forward_list<_Tp, _Alloc>& __x,
 }
 
 template <class _Tp, class _Alloc>
-inline
+inline _LIBCPP_INLINE_VISIBILITY
 bool operator<=(const forward_list<_Tp, _Alloc>& __x,
                 const forward_list<_Tp, _Alloc>& __y)
 {
@@ -1460,7 +1514,7 @@ bool operator<=(const forward_list<_Tp, _Alloc>& __x,
 }
 
 template <class _Tp, class _Alloc>
-inline
+inline _LIBCPP_INLINE_VISIBILITY
 void
 swap(forward_list<_Tp, _Alloc>& __x, forward_list<_Tp, _Alloc>& __y)
 {
