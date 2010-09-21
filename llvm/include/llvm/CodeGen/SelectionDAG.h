@@ -654,9 +654,6 @@ public:
                    MachinePointerInfo PtrInfo, bool isVolatile,
                    bool isNonTemporal, unsigned Alignment);
   SDValue getStore(SDValue Chain, DebugLoc dl, SDValue Val, SDValue Ptr,
-                   const Value *V, int SVOffset, bool isVolatile,
-                   bool isNonTemporal, unsigned Alignment);
-  SDValue getStore(SDValue Chain, DebugLoc dl, SDValue Val, SDValue Ptr,
                    MachineMemOperand *MMO);
   SDValue getTruncStore(SDValue Chain, DebugLoc dl, SDValue Val, SDValue Ptr,
                         MachinePointerInfo PtrInfo, EVT TVT,

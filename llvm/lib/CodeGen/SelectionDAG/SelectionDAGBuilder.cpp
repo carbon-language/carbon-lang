@@ -1088,7 +1088,8 @@ void SelectionDAGBuilder::visitRet(const ReturnInst &I) {
       Chains[i] =
         DAG.getStore(Chain, getCurDebugLoc(),
                      SDValue(RetOp.getNode(), RetOp.getResNo() + i),
-                     Add, NULL, Offsets[i], false, false, 0);
+                     // FIXME: better loc info would be nice.
+                     Add, MachinePointerInfo(), false, false, 0);
     }
 
     Chain = DAG.getNode(ISD::TokenFactor, getCurDebugLoc(),
@@ -3000,8 +3001,8 @@ void SelectionDAGBuilder::visitStore(const StoreInst &I) {
                               DAG.getConstant(Offsets[i], PtrVT));
     Chains[i] = DAG.getStore(Root, getCurDebugLoc(),
                              SDValue(Src.getNode(), Src.getResNo() + i),
-                             Add, PtrV, Offsets[i], isVolatile, 
-                             isNonTemporal, Alignment);
+                             Add, MachinePointerInfo(PtrV, Offsets[i]),
+                             isVolatile, isNonTemporal, Alignment);
   }
 
   DAG.setRoot(DAG.getNode(ISD::TokenFactor, getCurDebugLoc(),
@@ -4448,8 +4449,8 @@ SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I, unsigned Intrinsic) {
 
     // Store the stack protector onto the stack.
     Res = DAG.getStore(getRoot(), getCurDebugLoc(), Src, FIN,
-                       PseudoSourceValue::getFixedStack(FI),
-                       0, true, false, 0);
+                       MachinePointerInfo::getFixedStack(FI),
+                       true, false, 0);
     setValue(&I, Res);
     DAG.setRoot(Res);
     return 0;
@@ -5760,7 +5761,7 @@ void SelectionDAGBuilder::visitInlineAsm(ImmutableCallSite CS) {
     SDValue Val = DAG.getStore(Chain, getCurDebugLoc(),
                                StoresToEmit[i].first,
                                getValue(StoresToEmit[i].second),
-                               StoresToEmit[i].second, 0,
+                               MachinePointerInfo(StoresToEmit[i].second),
                                false, false, 0);
     OutChains.push_back(Val);
   }

@@ -4020,16 +4020,6 @@ SDValue SelectionDAG::getStore(SDValue Chain, DebugLoc dl, SDValue Val,
 }
 
 SDValue SelectionDAG::getStore(SDValue Chain, DebugLoc dl, SDValue Val,
-                               SDValue Ptr,
-                 const Value *SV, int SVOffset, bool isVolatile,
-                 bool isNonTemporal, unsigned Alignment) {
-  
-  return getStore(Chain, dl, Val, Ptr, MachinePointerInfo(SV, SVOffset),
-                  isVolatile, isNonTemporal, Alignment);
-}
-
-
-SDValue SelectionDAG::getStore(SDValue Chain, DebugLoc dl, SDValue Val,
                                SDValue Ptr, MachineMemOperand *MMO) {
   EVT VT = Val.getValueType();
   SDVTList VTs = getVTList(MVT::Other);
