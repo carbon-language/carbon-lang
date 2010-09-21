@@ -796,7 +796,7 @@ bool CodeGenPrepare::MoveExtToFormExtLoad(Instruction *I) {
 bool CodeGenPrepare::OptimizeExtUses(Instruction *I) {
   BasicBlock *DefBB = I->getParent();
 
-  // If both result of the {s|z}xt and its source are live out, rewrite all
+  // If the result of a {s|z}ext and its source are both live out, rewrite all
   // other uses of the source with result of extension.
   Value *Src = I->getOperand(0);
   if (Src->hasOneUse())
