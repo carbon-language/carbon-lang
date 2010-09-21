@@ -543,7 +543,8 @@ void AlphaTargetLowering::LowerVAARG(SDNode *N, SDValue &Chain,
   SDValue Tmp = DAG.getNode(ISD::ADD, dl, MVT::i64, VAListP,
                               DAG.getConstant(8, MVT::i64));
   SDValue Offset = DAG.getExtLoad(ISD::SEXTLOAD, MVT::i64, dl, Base.getValue(1),
-                                  Tmp, NULL, 0, MVT::i32, false, false, 0);
+                                  Tmp, MachinePointerInfo(),
+                                  MVT::i32, false, false, 0);
   DataPtr = DAG.getNode(ISD::ADD, dl, MVT::i64, Base, Offset);
   if (N->getValueType(0).isFloatingPoint())
   {
@@ -708,7 +709,7 @@ SDValue AlphaTargetLowering::LowerOperation(SDValue Op,
     SDValue Result;
     if (Op.getValueType() == MVT::i32)
       Result = DAG.getExtLoad(ISD::SEXTLOAD, MVT::i64, dl, Chain, DataPtr,
-                              NULL, 0, MVT::i32, false, false, 0);
+                              MachinePointerInfo(), MVT::i32, false, false, 0);
     else
       Result = DAG.getLoad(Op.getValueType(), dl, Chain, DataPtr,
                            MachinePointerInfo(),
@@ -730,7 +731,7 @@ SDValue AlphaTargetLowering::LowerOperation(SDValue Op,
     SDValue NP = DAG.getNode(ISD::ADD, dl, MVT::i64, SrcP,
                                DAG.getConstant(8, MVT::i64));
     Val = DAG.getExtLoad(ISD::SEXTLOAD, MVT::i64, dl, Result,
-                         NP, NULL,0, MVT::i32, false, false, 0);
+                         NP, MachinePointerInfo(), MVT::i32, false, false, 0);
     SDValue NPD = DAG.getNode(ISD::ADD, dl, MVT::i64, DestP,
                                 DAG.getConstant(8, MVT::i64));
     return DAG.getTruncStore(Val.getValue(1), dl, Val, NPD, NULL, 0, MVT::i32,

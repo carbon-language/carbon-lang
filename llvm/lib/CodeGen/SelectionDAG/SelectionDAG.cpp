@@ -3956,16 +3956,6 @@ SDValue SelectionDAG::getLoad(EVT VT, DebugLoc dl,
   return getLoad(ISD::UNINDEXED, ISD::NON_EXTLOAD, VT, dl, Chain, Ptr, Undef,
                  PtrInfo, VT, isVolatile, isNonTemporal, Alignment);
 }
-SDValue SelectionDAG::getExtLoad(ISD::LoadExtType ExtType, EVT VT, DebugLoc dl,
-                                 SDValue Chain, SDValue Ptr,
-                                 const Value *SV,
-                                 int SVOffset, EVT MemVT,
-                                 bool isVolatile, bool isNonTemporal,
-                                 unsigned Alignment) {
-  SDValue Undef = getUNDEF(Ptr.getValueType());
-  return getLoad(ISD::UNINDEXED, ExtType, VT, dl, Chain, Ptr, Undef,
-                 SV, SVOffset, MemVT, isVolatile, isNonTemporal, Alignment);
-}
 
 SDValue SelectionDAG::getExtLoad(ISD::LoadExtType ExtType, EVT VT, DebugLoc dl,
                                  SDValue Chain, SDValue Ptr,

@@ -1111,8 +1111,7 @@ void DAGTypeLegalizer::ExpandFloatRes_LOAD(SDNode *N, SDValue &Lo,
   assert(LD->getMemoryVT().bitsLE(NVT) && "Float type not round?");
 
   Hi = DAG.getExtLoad(LD->getExtensionType(), NVT, dl, Chain, Ptr,
-                      LD->getSrcValue(), LD->getSrcValueOffset(),
-                      LD->getMemoryVT(), LD->isVolatile(),
+                      LD->getPointerInfo(), LD->getMemoryVT(), LD->isVolatile(),
                       LD->isNonTemporal(), LD->getAlignment());
 
   // Remember the chain.
