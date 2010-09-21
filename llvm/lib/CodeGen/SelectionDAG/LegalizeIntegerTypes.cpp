@@ -889,7 +889,6 @@ SDValue DAGTypeLegalizer::PromoteIntOp_SINT_TO_FP(SDNode *N) {
 SDValue DAGTypeLegalizer::PromoteIntOp_STORE(StoreSDNode *N, unsigned OpNo){
   assert(ISD::isUNINDEXEDStore(N) && "Indexed store during type legalization!");
   SDValue Ch = N->getChain(), Ptr = N->getBasePtr();
-  int SVOffset = N->getSrcValueOffset();
   unsigned Alignment = N->getAlignment();
   bool isVolatile = N->isVolatile();
   bool isNonTemporal = N->isNonTemporal();
@@ -898,8 +897,8 @@ SDValue DAGTypeLegalizer::PromoteIntOp_STORE(StoreSDNode *N, unsigned OpNo){
   SDValue Val = GetPromotedInteger(N->getValue());  // Get promoted value.
 
   // Truncate the value and store the result.
-  return DAG.getTruncStore(Ch, dl, Val, Ptr, N->getSrcValue(),
-                           SVOffset, N->getMemoryVT(),
+  return DAG.getTruncStore(Ch, dl, Val, Ptr, N->getPointerInfo(),
+                           N->getMemoryVT(),
                            isVolatile, isNonTemporal, Alignment);
 }
 
@@ -1524,7 +1523,6 @@ void DAGTypeLegalizer::ExpandIntRes_LOAD(LoadSDNode *N,
   SDValue Ch  = N->getChain();
   SDValue Ptr = N->getBasePtr();
   ISD::LoadExtType ExtType = N->getExtensionType();
-  int SVOffset = N->getSrcValueOffset();
   unsigned Alignment = N->getAlignment();
   bool isVolatile = N->isVolatile();
   bool isNonTemporal = N->isNonTemporal();
@@ -1535,7 +1533,7 @@ void DAGTypeLegalizer::ExpandIntRes_LOAD(LoadSDNode *N,
   if (N->getMemoryVT().bitsLE(NVT)) {
     EVT MemVT = N->getMemoryVT();
 
-    Lo = DAG.getExtLoad(ExtType, NVT, dl, Ch, Ptr, N->getSrcValue(), SVOffset,
+    Lo = DAG.getExtLoad(ExtType, NVT, dl, Ch, Ptr, N->getPointerInfo(),
                         MemVT, isVolatile, isNonTemporal, Alignment);
 
     // Remember the chain.
@@ -1557,7 +1555,7 @@ void DAGTypeLegalizer::ExpandIntRes_LOAD(LoadSDNode *N,
     }
   } else if (TLI.isLittleEndian()) {
     // Little-endian - low bits are at low addresses.
-    Lo = DAG.getLoad(NVT, dl, Ch, Ptr, N->getSrcValue(), SVOffset,
+    Lo = DAG.getLoad(NVT, dl, Ch, Ptr, N->getPointerInfo(),
                      isVolatile, isNonTemporal, Alignment);
 
     unsigned ExcessBits =
@@ -1568,8 +1566,8 @@ void DAGTypeLegalizer::ExpandIntRes_LOAD(LoadSDNode *N,
     unsigned IncrementSize = NVT.getSizeInBits()/8;
     Ptr = DAG.getNode(ISD::ADD, dl, Ptr.getValueType(), Ptr,
                       DAG.getIntPtrConstant(IncrementSize));
-    Hi = DAG.getExtLoad(ExtType, NVT, dl, Ch, Ptr, N->getSrcValue(),
-                        SVOffset+IncrementSize, NEVT,
+    Hi = DAG.getExtLoad(ExtType, NVT, dl, Ch, Ptr,
+                        N->getPointerInfo().getWithOffset(IncrementSize), NEVT,
                         isVolatile, isNonTemporal,
                         MinAlign(Alignment, IncrementSize));
 
@@ -1586,7 +1584,7 @@ void DAGTypeLegalizer::ExpandIntRes_LOAD(LoadSDNode *N,
     unsigned ExcessBits = (EBytes - IncrementSize)*8;
 
     // Load both the high bits and maybe some of the low bits.
-    Hi = DAG.getExtLoad(ExtType, NVT, dl, Ch, Ptr, N->getSrcValue(), SVOffset,
+    Hi = DAG.getExtLoad(ExtType, NVT, dl, Ch, Ptr, N->getPointerInfo(),
                         EVT::getIntegerVT(*DAG.getContext(),
                                           MemVT.getSizeInBits() - ExcessBits),
                         isVolatile, isNonTemporal, Alignment);
@@ -1595,8 +1593,8 @@ void DAGTypeLegalizer::ExpandIntRes_LOAD(LoadSDNode *N,
     Ptr = DAG.getNode(ISD::ADD, dl, Ptr.getValueType(), Ptr,
                       DAG.getIntPtrConstant(IncrementSize));
     // Load the rest of the low bits.
-    Lo = DAG.getExtLoad(ISD::ZEXTLOAD, NVT, dl, Ch, Ptr, N->getSrcValue(),
-                        SVOffset+IncrementSize,
+    Lo = DAG.getExtLoad(ISD::ZEXTLOAD, NVT, dl, Ch, Ptr,
+                        N->getPointerInfo().getWithOffset(IncrementSize),
                         EVT::getIntegerVT(*DAG.getContext(), ExcessBits),
                         isVolatile, isNonTemporal,
                         MinAlign(Alignment, IncrementSize));
@@ -2308,7 +2306,6 @@ SDValue DAGTypeLegalizer::ExpandIntOp_STORE(StoreSDNode *N, unsigned OpNo) {
   EVT NVT = TLI.getTypeToTransformTo(*DAG.getContext(), VT);
   SDValue Ch  = N->getChain();
   SDValue Ptr = N->getBasePtr();
-  int SVOffset = N->getSrcValueOffset();
   unsigned Alignment = N->getAlignment();
   bool isVolatile = N->isVolatile();
   bool isNonTemporal = N->isNonTemporal();
@@ -2319,14 +2316,16 @@ SDValue DAGTypeLegalizer::ExpandIntOp_STORE(StoreSDNode *N, unsigned OpNo) {
 
   if (N->getMemoryVT().bitsLE(NVT)) {
     GetExpandedInteger(N->getValue(), Lo, Hi);
-    return DAG.getTruncStore(Ch, dl, Lo, Ptr, N->getSrcValue(), SVOffset,
+    return DAG.getTruncStore(Ch, dl, Lo, Ptr, N->getPointerInfo(),
                              N->getMemoryVT(), isVolatile, isNonTemporal,
                              Alignment);
-  } else if (TLI.isLittleEndian()) {
+  }
+  
+  if (TLI.isLittleEndian()) {
     // Little-endian - low bits are at low addresses.
     GetExpandedInteger(N->getValue(), Lo, Hi);
 
-    Lo = DAG.getStore(Ch, dl, Lo, Ptr, N->getSrcValue(), SVOffset,
+    Lo = DAG.getStore(Ch, dl, Lo, Ptr, N->getPointerInfo(),
                       isVolatile, isNonTemporal, Alignment);
 
     unsigned ExcessBits =
@@ -2337,50 +2336,49 @@ SDValue DAGTypeLegalizer::ExpandIntOp_STORE(StoreSDNode *N, unsigned OpNo) {
     unsigned IncrementSize = NVT.getSizeInBits()/8;
     Ptr = DAG.getNode(ISD::ADD, dl, Ptr.getValueType(), Ptr,
                       DAG.getIntPtrConstant(IncrementSize));
-    Hi = DAG.getTruncStore(Ch, dl, Hi, Ptr, N->getSrcValue(),
-                           SVOffset+IncrementSize, NEVT,
-                           isVolatile, isNonTemporal,
-                           MinAlign(Alignment, IncrementSize));
-    return DAG.getNode(ISD::TokenFactor, dl, MVT::Other, Lo, Hi);
-  } else {
-    // Big-endian - high bits are at low addresses.  Favor aligned stores at
-    // the cost of some bit-fiddling.
-    GetExpandedInteger(N->getValue(), Lo, Hi);
-
-    EVT ExtVT = N->getMemoryVT();
-    unsigned EBytes = ExtVT.getStoreSize();
-    unsigned IncrementSize = NVT.getSizeInBits()/8;
-    unsigned ExcessBits = (EBytes - IncrementSize)*8;
-    EVT HiVT = EVT::getIntegerVT(*DAG.getContext(),
-                                 ExtVT.getSizeInBits() - ExcessBits);
-
-    if (ExcessBits < NVT.getSizeInBits()) {
-      // Transfer high bits from the top of Lo to the bottom of Hi.
-      Hi = DAG.getNode(ISD::SHL, dl, NVT, Hi,
-                       DAG.getConstant(NVT.getSizeInBits() - ExcessBits,
-                                       TLI.getPointerTy()));
-      Hi = DAG.getNode(ISD::OR, dl, NVT, Hi,
-                       DAG.getNode(ISD::SRL, dl, NVT, Lo,
-                                   DAG.getConstant(ExcessBits,
-                                                   TLI.getPointerTy())));
-    }
-
-    // Store both the high bits and maybe some of the low bits.
-    Hi = DAG.getTruncStore(Ch, dl, Hi, Ptr, N->getSrcValue(),
-                           SVOffset, HiVT, isVolatile, isNonTemporal,
-                           Alignment);
-
-    // Increment the pointer to the other half.
-    Ptr = DAG.getNode(ISD::ADD, dl, Ptr.getValueType(), Ptr,
-                      DAG.getIntPtrConstant(IncrementSize));
-    // Store the lowest ExcessBits bits in the second half.
-    Lo = DAG.getTruncStore(Ch, dl, Lo, Ptr, N->getSrcValue(),
-                           SVOffset+IncrementSize,
-                           EVT::getIntegerVT(*DAG.getContext(), ExcessBits),
-                           isVolatile, isNonTemporal,
+    Hi = DAG.getTruncStore(Ch, dl, Hi, Ptr,
+                           N->getPointerInfo().getWithOffset(IncrementSize),
+                           NEVT, isVolatile, isNonTemporal,
                            MinAlign(Alignment, IncrementSize));
     return DAG.getNode(ISD::TokenFactor, dl, MVT::Other, Lo, Hi);
   }
+
+  // Big-endian - high bits are at low addresses.  Favor aligned stores at
+  // the cost of some bit-fiddling.
+  GetExpandedInteger(N->getValue(), Lo, Hi);
+
+  EVT ExtVT = N->getMemoryVT();
+  unsigned EBytes = ExtVT.getStoreSize();
+  unsigned IncrementSize = NVT.getSizeInBits()/8;
+  unsigned ExcessBits = (EBytes - IncrementSize)*8;
+  EVT HiVT = EVT::getIntegerVT(*DAG.getContext(),
+                               ExtVT.getSizeInBits() - ExcessBits);
+
+  if (ExcessBits < NVT.getSizeInBits()) {
+    // Transfer high bits from the top of Lo to the bottom of Hi.
+    Hi = DAG.getNode(ISD::SHL, dl, NVT, Hi,
+                     DAG.getConstant(NVT.getSizeInBits() - ExcessBits,
+                                     TLI.getPointerTy()));
+    Hi = DAG.getNode(ISD::OR, dl, NVT, Hi,
+                     DAG.getNode(ISD::SRL, dl, NVT, Lo,
+                                 DAG.getConstant(ExcessBits,
+                                                 TLI.getPointerTy())));
+  }
+
+  // Store both the high bits and maybe some of the low bits.
+  Hi = DAG.getTruncStore(Ch, dl, Hi, Ptr, N->getPointerInfo(),
+                         HiVT, isVolatile, isNonTemporal, Alignment);
+
+  // Increment the pointer to the other half.
+  Ptr = DAG.getNode(ISD::ADD, dl, Ptr.getValueType(), Ptr,
+                    DAG.getIntPtrConstant(IncrementSize));
+  // Store the lowest ExcessBits bits in the second half.
+  Lo = DAG.getTruncStore(Ch, dl, Lo, Ptr,
+                         N->getPointerInfo().getWithOffset(IncrementSize),
+                         EVT::getIntegerVT(*DAG.getContext(), ExcessBits),
+                         isVolatile, isNonTemporal,
+                         MinAlign(Alignment, IncrementSize));
+  return DAG.getNode(ISD::TokenFactor, dl, MVT::Other, Lo, Hi);
 }
 
 SDValue DAGTypeLegalizer::ExpandIntOp_TRUNCATE(SDNode *N) {

@@ -2950,7 +2950,7 @@ void SelectionDAGBuilder::visitLoad(const LoadInst &I) {
                             PtrVT, Ptr,
                             DAG.getConstant(Offsets[i], PtrVT));
     SDValue L = DAG.getLoad(ValueVTs[i], getCurDebugLoc(), Root,
-                            A, SV, Offsets[i], isVolatile, 
+                            A, MachinePointerInfo(SV, Offsets[i]), isVolatile, 
                             isNonTemporal, Alignment);
 
     Values[i] = L;
@@ -4616,6 +4616,7 @@ void SelectionDAGBuilder::LowerCallTo(ImmutableCallSite CS, SDValue Callee,
                         FTy->isVarArg(), Outs, FTy->getContext());
 
   SDValue DemoteStackSlot;
+  int DemoteStackIdx = -100;
 
   if (!CanLowerReturn) {
     uint64_t TySize = TLI.getTargetData()->getTypeAllocSize(
@@ -4623,10 +4624,10 @@ void SelectionDAGBuilder::LowerCallTo(ImmutableCallSite CS, SDValue Callee,
     unsigned Align  = TLI.getTargetData()->getPrefTypeAlignment(
                       FTy->getReturnType());
     MachineFunction &MF = DAG.getMachineFunction();
-    int SSFI = MF.getFrameInfo()->CreateStackObject(TySize, Align, false);
+    DemoteStackIdx = MF.getFrameInfo()->CreateStackObject(TySize, Align, false);
     const Type *StackSlotPtrType = PointerType::getUnqual(FTy->getReturnType());
 
-    DemoteStackSlot = DAG.getFrameIndex(SSFI, TLI.getPointerTy());
+    DemoteStackSlot = DAG.getFrameIndex(DemoteStackIdx, TLI.getPointerTy());
     Entry.Node = DemoteStackSlot;
     Entry.Ty = StackSlotPtrType;
     Entry.isSExt = false;
@@ -4720,7 +4721,9 @@ void SelectionDAGBuilder::LowerCallTo(ImmutableCallSite CS, SDValue Callee,
                                 DemoteStackSlot,
                                 DAG.getConstant(Offsets[i], PtrVT));
       SDValue L = DAG.getLoad(Outs[i].VT, getCurDebugLoc(), Result.second,
-                              Add, NULL, Offsets[i], false, false, 1);
+                              Add,
+                  MachinePointerInfo::getFixedStack(DemoteStackIdx, Offsets[i]),
+                              false, false, 1);
       Values[i] = L;
       Chains[i] = L.getValue(1);
     }
@@ -4823,7 +4826,7 @@ static SDValue getMemCmpLoad(const Value *PtrVal, MVT LoadVT,
 
   SDValue Ptr = Builder.getValue(PtrVal);
   SDValue LoadVal = Builder.DAG.getLoad(LoadVT, Builder.getCurDebugLoc(), Root,
-                                        Ptr, PtrVal /*SrcValue*/, 0/*SVOffset*/,
+                                        Ptr, MachinePointerInfo(PtrVal),
                                         false /*volatile*/,
                                         false /*nontemporal*/, 1 /* align=1 */);
 
@@ -5457,7 +5460,8 @@ void SelectionDAGBuilder::visitInlineAsm(ImmutableCallSite CS) {
         int SSFI = MF.getFrameInfo()->CreateStackObject(TySize, Align, false);
         SDValue StackSlot = DAG.getFrameIndex(SSFI, TLI.getPointerTy());
         Chain = DAG.getStore(Chain, getCurDebugLoc(),
-                             OpInfo.CallOperand, StackSlot, NULL, 0,
+                             OpInfo.CallOperand, StackSlot,
+                             MachinePointerInfo::getFixedStack(SSFI),
                              false, false, 0);
         OpInfo.CallOperand = StackSlot;
       }

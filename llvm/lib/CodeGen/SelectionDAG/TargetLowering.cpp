@@ -1916,8 +1916,7 @@ TargetLowering::SimplifySetCC(EVT VT, SDValue N0, SDValue N1,
                               DAG.getConstant(bestOffset, PtrType));
           unsigned NewAlign = MinAlign(Lod->getAlignment(), bestOffset);
           SDValue NewLoad = DAG.getLoad(newVT, dl, Lod->getChain(), Ptr,
-                                        Lod->getSrcValue(), 
-                                        Lod->getSrcValueOffset() + bestOffset,
+                                Lod->getPointerInfo().getWithOffset(bestOffset),
                                         false, false, NewAlign);
           return DAG.getSetCC(dl, VT, 
                               DAG.getNode(ISD::AND, dl, newVT, NewLoad,

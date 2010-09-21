@@ -632,9 +632,6 @@ public:
   SDValue getLoad(EVT VT, DebugLoc dl, SDValue Chain, SDValue Ptr,
                   MachinePointerInfo PtrInfo, bool isVolatile,
                   bool isNonTemporal, unsigned Alignment);
-  SDValue getLoad(EVT VT, DebugLoc dl, SDValue Chain, SDValue Ptr,
-                  const Value *SV, int SVOffset, bool isVolatile,
-                  bool isNonTemporal, unsigned Alignment);
   SDValue getExtLoad(ISD::LoadExtType ExtType, EVT VT, DebugLoc dl,
                      SDValue Chain, SDValue Ptr, MachinePointerInfo PtrInfo,
                      EVT MemVT, bool isVolatile,
