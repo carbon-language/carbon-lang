@@ -271,6 +271,19 @@ namespace llvm {
       return I;
     }
 
+    /// find - Return an iterator pointing to the first range that ends after
+    /// Pos, or end(). This is the same as advanceTo(begin(), Pos), but faster
+    /// when searching large intervals.
+    ///
+    /// If Pos is contained in a LiveRange, that range is returned.
+    /// If Pos is in a hole, the following LiveRange is returned.
+    /// If Pos is beyond endIndex, end() is returned.
+    iterator find(SlotIndex Pos);
+
+    const_iterator find(SlotIndex Pos) const {
+      return const_cast<LiveInterval*>(this)->find(Pos);
+    }
+
     void clear() {
       valnos.clear();
       ranges.clear();
@@ -386,12 +399,18 @@ namespace llvm {
       return index >= endIndex();
     }
 
-    bool liveAt(SlotIndex index) const;
+    bool liveAt(SlotIndex index) const {
+      const_iterator r = find(index);
+      return r != end() && r->start <= index;
+    }
 
     /// killedAt - Return true if a live range ends at index. Note that the kill
     /// point is not contained in the half-open live range. It is usually the
     /// getDefIndex() slot following its last use.
-    bool killedAt(SlotIndex index) const;
+    bool killedAt(SlotIndex index) const {
+      const_iterator r = find(index.getUseIndex());
+      return r != end() && r->end == index;
+    }
 
     /// killedInRange - Return true if the interval has kills in [Start,End).
     /// Note that the kill point is considered the end of a live range, so it is
@@ -421,11 +440,15 @@ namespace llvm {
 
     /// FindLiveRangeContaining - Return an iterator to the live range that
     /// contains the specified index, or end() if there is none.
-    const_iterator FindLiveRangeContaining(SlotIndex Idx) const;
+    iterator FindLiveRangeContaining(SlotIndex Idx) {
+      iterator I = find(Idx);
+      return I != end() && I->start <= Idx ? I : end();
+    }
 
-    /// FindLiveRangeContaining - Return an iterator to the live range that
-    /// contains the specified index, or end() if there is none.
-    iterator FindLiveRangeContaining(SlotIndex Idx);
+    const_iterator FindLiveRangeContaining(SlotIndex Idx) const {
+      const_iterator I = find(Idx);
+      return I != end() && I->start <= Idx ? I : end();
+    }
 
     /// findDefinedVNInfo - Find the by the specified
     /// index (register interval) or defined
@@ -467,7 +490,10 @@ namespace llvm {
 
     /// isInOneLiveRange - Return true if the range specified is entirely in the
     /// a single LiveRange of the live interval.
-    bool isInOneLiveRange(SlotIndex Start, SlotIndex End);
+    bool isInOneLiveRange(SlotIndex Start, SlotIndex End) const {
+      const_iterator r = find(Start);
+      return r != end() && r->containsRange(Start, End);
+    }
 
     /// removeRange - Remove the specified range from this interval.  Note that
     /// the range must be a single LiveRange in its entirety.
