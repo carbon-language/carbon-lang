@@ -308,6 +308,9 @@ public:
   template<typename IT>
   void insert(iterator I, IT S, IT E) { Insts.insert(I, S, E); }
   iterator insert(iterator I, MachineInstr *M) { return Insts.insert(I, M); }
+  iterator insertAfter(iterator I, MachineInstr *M) { 
+    return Insts.insertAfter(I, M); 
+  }
 
   // erase - Remove the specified element or range from the instruction list.
   // These functions delete any instructions removed.
