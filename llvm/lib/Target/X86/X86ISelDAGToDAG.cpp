@@ -404,10 +404,8 @@ static bool isCalleeLoad(SDValue Callee, SDValue &Chain, bool HasCallSeq) {
     return false;
 
   // FIXME: Calls can't fold loads through segment registers yet.
-  if (const Value *Src = LD->getSrcValue())
-    if (const PointerType *PT = dyn_cast<PointerType>(Src->getType()))
-      if (PT->getAddressSpace() >= 256)
-        return false;
+  if (LD->getPointerInfo().getAddrSpace() > 255)
+    return false;
   
   // Now let's find the callseq_start.
   while (HasCallSeq && Chain.getOpcode() != ISD::CALLSEQ_START) {
