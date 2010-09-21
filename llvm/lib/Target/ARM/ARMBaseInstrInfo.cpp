@@ -1455,7 +1455,8 @@ OptimizeCompareInstr(MachineInstr *CmpInstr, unsigned SrcReg, int CmpMask,
 
   // Check that CPSR isn't set between the comparison instruction and the one we
   // want to change.
-  MachineBasicBlock::const_iterator I = CmpInstr, E = MI;
+  MachineBasicBlock::const_iterator I = CmpInstr, E = MI,
+    B = MI->getParent()->begin();
   --I;
   for (; I != E; --I) {
     const MachineInstr &Instr = *I;
@@ -1469,6 +1470,10 @@ OptimizeCompareInstr(MachineInstr *CmpInstr, unsigned SrcReg, int CmpMask,
       if (MO.getReg() == ARM::CPSR)
         return false;
     }
+
+    if (I == B)
+      // The 'and' is below the comparison instruction.
+      return false;
   }
 
   // Set the "zero" bit in CPSR.
