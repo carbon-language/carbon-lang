@@ -1021,6 +1021,7 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
   setTargetDAGCombine(ISD::OR);
   setTargetDAGCombine(ISD::STORE);
   setTargetDAGCombine(ISD::ZERO_EXTEND);
+  setTargetDAGCombine(ISD::ADD);
   if (Subtarget->is64Bit())
     setTargetDAGCombine(ISD::MUL);
 
@@ -10452,6 +10453,27 @@ static SDValue PerformCMOVCombine(SDNode *N, SelectionDAG &DAG,
   return SDValue();
 }
 
+/// PerformAddCombine - Optimize ADD when combined with X86 opcodes.
+static SDValue PerformAddCombine(SDNode *N, SelectionDAG &DAG,
+                                 TargetLowering::DAGCombinerInfo &DCI) {
+  if (DCI.isBeforeLegalize() || DCI.isCalledByLegalizer())
+    return SDValue();
+  
+  EVT VT = N->getValueType(0);
+  SDValue Op1 = N->getOperand(1);
+  if (Op1->getOpcode() == ISD::AND) {
+    SDValue AndOp0 = Op1->getOperand(0);
+    ConstantSDNode *AndOp1 = dyn_cast<ConstantSDNode>(Op1->getOperand(1)); 
+    // (add z, (and (sbbl x, x), 1)) -> (sub z, (sbbl x, x))
+    if (AndOp0->getOpcode() == X86ISD::SETCC_CARRY &&
+        AndOp1 && AndOp1->getZExtValue() == 1) {
+      DebugLoc DL = N->getDebugLoc();
+      return DAG.getNode(ISD::SUB, DL, VT, N->getOperand(0), AndOp0);
+    }
+  }
+  
+  return SDValue();
+}
 
 /// PerformMulCombine - Optimize a single multiply with constant into two
 /// in order to implement it with two cheaper instructions, e.g.
@@ -10938,6 +10960,7 @@ SDValue X86TargetLowering::PerformDAGCombine(SDNode *N,
                         return PerformEXTRACT_VECTOR_ELTCombine(N, DAG, *this);
   case ISD::SELECT:         return PerformSELECTCombine(N, DAG, Subtarget);
   case X86ISD::CMOV:        return PerformCMOVCombine(N, DAG, DCI);
+  case ISD::ADD:            return PerformAddCombine(N, DAG, DCI);
   case ISD::MUL:            return PerformMulCombine(N, DAG, DCI);
   case ISD::SHL:
   case ISD::SRA:
