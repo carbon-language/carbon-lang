@@ -115,7 +115,7 @@ template <int I, class T, size_t N> const T& get(const array<T, N>&);
 _LIBCPP_BEGIN_NAMESPACE_STD
 
 template <class _Tp, size_t _Size>
-struct array
+struct _LIBCPP_VISIBLE array
 {
     // types:
     typedef array __self;
@@ -134,8 +134,10 @@ struct array
     value_type __elems_[_Size > 0 ? _Size : 1];
 
     // No explicit construct/copy/destroy for aggregate type
-    _LIBCPP_INLINE_VISIBILITY void fill(const value_type& __u) {_STD::fill_n(__elems_, _Size, __u);}
-    _LIBCPP_INLINE_VISIBILITY void swap(array& __a) {_STD::swap_ranges(__elems_, __elems_ + _Size, __a.__elems_);}
+    _LIBCPP_INLINE_VISIBILITY void fill(const value_type& __u)
+        {_STD::fill_n(__elems_, _Size, __u);}
+    _LIBCPP_INLINE_VISIBILITY void swap(array& __a)
+        {_STD::swap_ranges(__elems_, __elems_ + _Size, __a.__elems_);}
 
     // iterators:
     _LIBCPP_INLINE_VISIBILITY iterator begin()             {return iterator(__elems_);}
@@ -256,20 +258,22 @@ swap(const array<_Tp, _Size>& __x, const array<_Tp, _Size>& __y)
 }
 
 template <class _Tp, size_t _Size>
-  class tuple_size<array<_Tp, _Size> > : public integral_constant<size_t, _Size> {};
+class _LIBCPP_VISIBLE tuple_size<array<_Tp, _Size> >
+    : public integral_constant<size_t, _Size> {};
 
 template <class _Tp, size_t _Size>
-  class tuple_size<const array<_Tp, _Size> > : public integral_constant<size_t, _Size> {};
+class _LIBCPP_VISIBLE tuple_size<const array<_Tp, _Size> >
+    : public integral_constant<size_t, _Size> {};
 
 template <size_t _Ip, class _Tp, size_t _Size>
-class tuple_element<_Ip, array<_Tp, _Size> >
+class _LIBCPP_VISIBLE tuple_element<_Ip, array<_Tp, _Size> >
 {
 public:
     typedef _Tp type;
 };
 
 template <size_t _Ip, class _Tp, size_t _Size>
-class tuple_element<_Ip, const array<_Tp, _Size> >
+class _LIBCPP_VISIBLE tuple_element<_Ip, const array<_Tp, _Size> >
 {
 public:
     typedef const _Tp type;

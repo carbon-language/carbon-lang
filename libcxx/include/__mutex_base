@@ -20,11 +20,12 @@
 
 _LIBCPP_BEGIN_NAMESPACE_STD
 
-class mutex
+class _LIBCPP_VISIBLE mutex
 {
     pthread_mutex_t __m_;
 
 public:
+    _LIBCPP_INLINE_VISIBILITY
      mutex() {__m_ = (pthread_mutex_t)PTHREAD_MUTEX_INITIALIZER;}
      ~mutex();
 
@@ -38,12 +39,12 @@ public:
     void unlock();
 
     typedef pthread_mutex_t* native_handle_type;
-    native_handle_type native_handle() {return &__m_;}
+    _LIBCPP_INLINE_VISIBILITY native_handle_type native_handle() {return &__m_;}
 };
 
-struct defer_lock_t {};
-struct try_to_lock_t {};
-struct adopt_lock_t {};
+struct _LIBCPP_VISIBLE defer_lock_t {};
+struct _LIBCPP_VISIBLE try_to_lock_t {};
+struct _LIBCPP_VISIBLE adopt_lock_t {};
 
 //constexpr
 extern const
@@ -58,7 +59,7 @@ extern const
 adopt_lock_t  adopt_lock;
 
 template <class _Mutex>
-class lock_guard
+class _LIBCPP_VISIBLE lock_guard
 {
 public:
     typedef _Mutex mutex_type;
@@ -67,10 +68,13 @@ private:
     mutex_type& __m_;
 public:
 
+    _LIBCPP_INLINE_VISIBILITY
     explicit lock_guard(mutex_type& __m)
         : __m_(__m) {__m_.lock();}
+    _LIBCPP_INLINE_VISIBILITY
     lock_guard(mutex_type& __m, adopt_lock_t)
         : __m_(__m) {}
+    _LIBCPP_INLINE_VISIBILITY
     ~lock_guard() {__m_.unlock();}
 
 private:
@@ -79,7 +83,7 @@ private:
 };
 
 template <class _Mutex>
-class unique_lock
+class _LIBCPP_VISIBLE unique_lock
 {
 public:
     typedef _Mutex mutex_type;
@@ -89,21 +93,29 @@ private:
     bool __owns_;
 
 public:
+    _LIBCPP_INLINE_VISIBILITY
     unique_lock() : __m_(nullptr), __owns_(false) {}
+    _LIBCPP_INLINE_VISIBILITY
     explicit unique_lock(mutex_type& __m)
         : __m_(&__m), __owns_(true) {__m_->lock();}
+    _LIBCPP_INLINE_VISIBILITY
     unique_lock(mutex_type& __m, defer_lock_t)
         : __m_(&__m), __owns_(false) {}
+    _LIBCPP_INLINE_VISIBILITY
     unique_lock(mutex_type& __m, try_to_lock_t)
         : __m_(&__m), __owns_(__m.try_lock()) {}
+    _LIBCPP_INLINE_VISIBILITY
     unique_lock(mutex_type& __m, adopt_lock_t)
         : __m_(&__m), __owns_(true) {}
     template <class _Clock, class _Duration>
+    _LIBCPP_INLINE_VISIBILITY
         unique_lock(mutex_type& __m, const chrono::time_point<_Clock, _Duration>& __t)
             : __m_(&__m), __owns_(__m.try_lock_until(__t)) {}
     template <class _Rep, class _Period>
+    _LIBCPP_INLINE_VISIBILITY
         unique_lock(mutex_type& __m, const chrono::duration<_Rep, _Period>& __d)
             : __m_(&__m), __owns_(__m.try_lock_for(__d)) {}
+    _LIBCPP_INLINE_VISIBILITY
     ~unique_lock()
     {
         if (__owns_)
@@ -116,9 +128,11 @@ private:
 
 public:
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
+    _LIBCPP_INLINE_VISIBILITY
     unique_lock(unique_lock&& __u)
         : __m_(__u.__m_), __owns_(__u.__owns_)
         {__u.__m_ = nullptr; __u.__owns_ = false;}
+    _LIBCPP_INLINE_VISIBILITY
     unique_lock& operator=(unique_lock&& __u)
         {
             if (__owns_)
@@ -141,11 +155,13 @@ public:
 
     void unlock();
 
+    _LIBCPP_INLINE_VISIBILITY
     void swap(unique_lock& __u)
     {
         _STD::swap(__m_, __u.__m_);
         _STD::swap(__owns_, __u.__owns_);
     }
+    _LIBCPP_INLINE_VISIBILITY
     mutex_type* release()
     {
         mutex_type* __m = __m_;
@@ -154,9 +170,12 @@ public:
         return __m;
     }
 
+    _LIBCPP_INLINE_VISIBILITY
     bool owns_lock() const {return __owns_;}
+    _LIBCPP_INLINE_VISIBILITY
 //    explicit
         operator bool () const {return __owns_;}
+    _LIBCPP_INLINE_VISIBILITY
     mutex_type* mutex() const {return __m_;}
 };
 
@@ -221,11 +240,11 @@ unique_lock<_Mutex>::unlock()
 }
 
 template <class _Mutex>
-inline
+inline _LIBCPP_INLINE_VISIBILITY
 void
 swap(unique_lock<_Mutex>& __x, unique_lock<_Mutex>& __y) {__x.swap(__y);}
 
-struct cv_status
+struct _LIBCPP_VISIBLE cv_status
 {
     enum _ {
         no_timeout,
@@ -234,15 +253,16 @@ struct cv_status
 
     _ __v_;
 
-    cv_status(_ __v) : __v_(__v) {}
-    operator int() const {return __v_;}
+    _LIBCPP_INLINE_VISIBILITY cv_status(_ __v) : __v_(__v) {}
+    _LIBCPP_INLINE_VISIBILITY operator int() const {return __v_;}
 
 };
 
-class condition_variable
+class _LIBCPP_VISIBLE condition_variable
 {
     pthread_cond_t __cv_;
 public:
+    _LIBCPP_INLINE_VISIBILITY
     condition_variable() {__cv_ = (pthread_cond_t)PTHREAD_COND_INITIALIZER;}
     ~condition_variable();
 
@@ -286,7 +306,7 @@ public:
                  _Predicate __pred);
 
     typedef pthread_cond_t* native_handle_type;
-    native_handle_type native_handle() {return &__cv_;}
+    _LIBCPP_INLINE_VISIBILITY native_handle_type native_handle() {return &__cv_;}
 
 private:
     void __do_timed_wait(unique_lock<mutex>& __lk,
@@ -294,7 +314,7 @@ private:
 };
 
 template <class _To, class _Rep, class _Period>
-inline
+inline _LIBCPP_INLINE_VISIBILITY
 typename enable_if
 <
     chrono::__is_duration<_To>::value,
@@ -370,7 +390,7 @@ condition_variable::wait_for(unique_lock<mutex>& __lk,
 }
 
 template <class _Rep, class _Period, class _Predicate>
-inline
+inline _LIBCPP_INLINE_VISIBILITY
 bool
 condition_variable::wait_for(unique_lock<mutex>& __lk,
                              const chrono::duration<_Rep, _Period>& __d,

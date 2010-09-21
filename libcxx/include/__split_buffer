@@ -132,23 +132,29 @@ public:
     bool __invariants() const;
 
 private:
+    _LIBCPP_INLINE_VISIBILITY
     void __move_assign_alloc(const __split_buffer& __c, true_type)
         {
             __alloc() = _STD::move(__c.__alloc());
         }
 
+    _LIBCPP_INLINE_VISIBILITY
     void __move_assign_alloc(const __split_buffer& __c, false_type)
         {}
 
+    _LIBCPP_INLINE_VISIBILITY
     static void __swap_alloc(__alloc_rr& __x, __alloc_rr& __y)
         {__swap_alloc(__x, __y, integral_constant<bool,
                       __alloc_traits::propagate_on_container_swap::value>());}
 
+    _LIBCPP_INLINE_VISIBILITY
     static void __swap_alloc(__alloc_rr& __x, __alloc_rr& __y, true_type)
         {
             using _STD::swap;
             swap(__x, __y);
         }
+
+    _LIBCPP_INLINE_VISIBILITY
     static void __swap_alloc(__alloc_rr& __x, __alloc_rr& __y, false_type)
         {}
 };

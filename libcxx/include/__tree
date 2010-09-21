@@ -22,12 +22,12 @@
 _LIBCPP_BEGIN_NAMESPACE_STD
 
 template <class, class, class> class __tree;
-template <class, class, class> class __tree_iterator;
-template <class, class, class> class __tree_const_iterator;
-template <class, class, class, class> class map;
-template <class, class, class, class> class multimap;
-template <class, class, class> class set;
-template <class, class, class> class multiset;
+template <class, class, class> class _LIBCPP_VISIBLE __tree_iterator;
+template <class, class, class> class _LIBCPP_VISIBLE __tree_const_iterator;
+template <class, class, class, class> class _LIBCPP_VISIBLE map;
+template <class, class, class, class> class _LIBCPP_VISIBLE multimap;
+template <class, class, class> class _LIBCPP_VISIBLE set;
+template <class, class, class> class _LIBCPP_VISIBLE multiset;
 
 /*
 
@@ -53,7 +53,7 @@ __root, have a non-null __parent_ field.
 // Returns:  true if __x is a left child of its parent, else false
 // Precondition:  __x != nullptr.
 template <class _NodePtr>
-inline
+inline _LIBCPP_INLINE_VISIBILITY
 bool
 __tree_is_left_child(_NodePtr __x)
 {
@@ -119,7 +119,7 @@ __tree_invariant(_NodePtr __root)
 // Returns:  pointer to the left-most node under __x.
 // Precondition:  __x != nullptr.
 template <class _NodePtr>
-inline
+inline _LIBCPP_INLINE_VISIBILITY
 _NodePtr
 __tree_min(_NodePtr __x)
 {
@@ -131,7 +131,7 @@ __tree_min(_NodePtr __x)
 // Returns:  pointer to the right-most node under __x.
 // Precondition:  __x != nullptr.
 template <class _NodePtr>
-inline
+inline _LIBCPP_INLINE_VISIBILITY
 _NodePtr
 __tree_max(_NodePtr __x)
 {
@@ -513,11 +513,13 @@ private:
 public:
     bool __value_constructed;
 
+    _LIBCPP_INLINE_VISIBILITY
     explicit __tree_node_destructor(allocator_type& __na)
         : __na_(__na),
           __value_constructed(false)
         {}
 
+    _LIBCPP_INLINE_VISIBILITY
     void operator()(pointer __p)
     {
         if (__value_constructed)
@@ -538,6 +540,7 @@ public:
     typedef _Pointer pointer;
     pointer __left_;
 
+    _LIBCPP_INLINE_VISIBILITY
     __tree_end_node() : __left_() {}
 };
 
@@ -576,6 +579,7 @@ public:
     pointer __parent_;
     bool __is_black_;
 
+    _LIBCPP_INLINE_VISIBILITY
     __tree_node_base() : __right_(), __parent_(), __is_black_(false) {}
 };
 
@@ -591,9 +595,11 @@ public:
 
 #if !defined(_LIBCPP_HAS_NO_RVALUE_REFERENCES) && !defined(_LIBCPP_HAS_NO_VARIADICS)
     template <class ..._Args>
+        _LIBCPP_INLINE_VISIBILITY
         explicit __tree_node(_Args&& ...__args)
             : __value_(_STD::forward<_Args>(__args)...) {}
 #else  // !defined(_LIBCPP_HAS_NO_RVALUE_REFERENCES) && !defined(_LIBCPP_HAS_NO_VARIADICS)
+    _LIBCPP_INLINE_VISIBILITY
     explicit __tree_node(const value_type& __v)
             : __value_(__v) {}
 #endif  // !defined(_LIBCPP_HAS_NO_RVALUE_REFERENCES) && !defined(_LIBCPP_HAS_NO_VARIADICS)
@@ -603,7 +609,7 @@ template <class> class __map_iterator;
 template <class> class __map_const_iterator;
 
 template <class _Tp, class _NodePtr, class _DiffType>
-class __tree_iterator
+class _LIBCPP_VISIBLE __tree_iterator
 {
     typedef _NodePtr                                              __node_pointer;
     typedef typename pointer_traits<__node_pointer>::element_type __node;
@@ -626,41 +632,48 @@ public:
 #endif
                                        pointer;
 
-    __tree_iterator() {}
+    _LIBCPP_INLINE_VISIBILITY __tree_iterator() {}
 
-    reference operator*() const {return __ptr_->__value_;}
-    pointer operator->() const {return &__ptr_->__value_;}
+    _LIBCPP_INLINE_VISIBILITY reference operator*() const {return __ptr_->__value_;}
+    _LIBCPP_INLINE_VISIBILITY pointer operator->() const {return &__ptr_->__value_;}
 
+    _LIBCPP_INLINE_VISIBILITY
     __tree_iterator& operator++()
         {__ptr_ = static_cast<__node_pointer>(__tree_next(static_cast<__node_base_pointer>(__ptr_)));
          return *this;}
+    _LIBCPP_INLINE_VISIBILITY
     __tree_iterator operator++(int)
         {__tree_iterator __t(*this); ++(*this); return __t;}
 
+    _LIBCPP_INLINE_VISIBILITY
     __tree_iterator& operator--()
         {__ptr_ = static_cast<__node_pointer>(__tree_prev(static_cast<__node_base_pointer>(__ptr_)));
          return *this;}
+    _LIBCPP_INLINE_VISIBILITY
     __tree_iterator operator--(int)
         {__tree_iterator __t(*this); --(*this); return __t;}
 
-    friend bool operator==(const __tree_iterator& __x, const __tree_iterator& __y)
+    friend _LIBCPP_INLINE_VISIBILITY 
+        bool operator==(const __tree_iterator& __x, const __tree_iterator& __y)
         {return __x.__ptr_ == __y.__ptr_;}
-    friend bool operator!=(const __tree_iterator& __x, const __tree_iterator& __y)
+    friend _LIBCPP_INLINE_VISIBILITY
+        bool operator!=(const __tree_iterator& __x, const __tree_iterator& __y)
         {return !(__x == __y);}
 
 private:
+    _LIBCPP_INLINE_VISIBILITY
     explicit __tree_iterator(__node_pointer __p) : __ptr_(__p) {}
     template <class, class, class> friend class __tree;
-    template <class, class, class> friend class __tree_const_iterator;
-    template <class> friend class __map_iterator;
-    template <class, class, class, class> friend class map;
-    template <class, class, class, class> friend class multimap;
-    template <class, class, class> friend class set;
-    template <class, class, class> friend class multiset;
+    template <class, class, class> friend class _LIBCPP_VISIBLE __tree_const_iterator;
+    template <class> friend class _LIBCPP_VISIBLE __map_iterator;
+    template <class, class, class, class> friend class _LIBCPP_VISIBLE map;
+    template <class, class, class, class> friend class _LIBCPP_VISIBLE multimap;
+    template <class, class, class> friend class _LIBCPP_VISIBLE set;
+    template <class, class, class> friend class _LIBCPP_VISIBLE multiset;
 };
 
 template <class _Tp, class _ConstNodePtr, class _DiffType>
-class __tree_const_iterator
+class _LIBCPP_VISIBLE __tree_const_iterator
 {
     typedef _ConstNodePtr                                         __node_pointer;
     typedef typename pointer_traits<__node_pointer>::element_type __node;
@@ -689,7 +702,7 @@ public:
 #endif
                                        pointer;
 
-    __tree_const_iterator() {}
+    _LIBCPP_INLINE_VISIBILITY __tree_const_iterator() {}
 private:
     typedef typename remove_const<__node>::type  __non_const_node;
     typedef typename pointer_traits<__node_pointer>::template
@@ -702,36 +715,44 @@ private:
     typedef __tree_iterator<value_type, __non_const_node_pointer, difference_type>
                                                  __non_const_iterator;
 public:
+    _LIBCPP_INLINE_VISIBILITY
     __tree_const_iterator(__non_const_iterator __p) : __ptr_(__p.__ptr_) {}
 
-    reference operator*() const {return __ptr_->__value_;}
-    pointer operator->() const {return &__ptr_->__value_;}
+    _LIBCPP_INLINE_VISIBILITY reference operator*() const {return __ptr_->__value_;}
+    _LIBCPP_INLINE_VISIBILITY pointer operator->() const {return &__ptr_->__value_;}
 
+    _LIBCPP_INLINE_VISIBILITY
     __tree_const_iterator& operator++()
         {__ptr_ = static_cast<__node_pointer>(__tree_next(static_cast<__node_base_pointer>(__ptr_)));
          return *this;}
+    _LIBCPP_INLINE_VISIBILITY
     __tree_const_iterator operator++(int)
         {__tree_const_iterator __t(*this); ++(*this); return __t;}
 
+    _LIBCPP_INLINE_VISIBILITY
     __tree_const_iterator& operator--()
         {__ptr_ = static_cast<__node_pointer>(__tree_prev(static_cast<__node_base_pointer>(__ptr_)));
          return *this;}
+    _LIBCPP_INLINE_VISIBILITY
     __tree_const_iterator operator--(int)
         {__tree_const_iterator __t(*this); --(*this); return __t;}
 
-    friend bool operator==(const __tree_const_iterator& __x, const __tree_const_iterator& __y)
+    friend _LIBCPP_INLINE_VISIBILITY
+        bool operator==(const __tree_const_iterator& __x, const __tree_const_iterator& __y)
         {return __x.__ptr_ == __y.__ptr_;}
-    friend bool operator!=(const __tree_const_iterator& __x, const __tree_const_iterator& __y)
+    friend _LIBCPP_INLINE_VISIBILITY
+        bool operator!=(const __tree_const_iterator& __x, const __tree_const_iterator& __y)
         {return !(__x == __y);}
 
 private:
+    _LIBCPP_INLINE_VISIBILITY
     explicit __tree_const_iterator(__node_pointer __p) : __ptr_(__p) {}
     template <class, class, class> friend class __tree;
-    template <class, class, class, class> friend class map;
-    template <class, class, class, class> friend class multimap;
-    template <class, class, class> friend class set;
-    template <class, class, class> friend class multiset;
-    template <class> friend class __map_const_iterator;
+    template <class, class, class, class> friend class _LIBCPP_VISIBLE map;
+    template <class, class, class, class> friend class _LIBCPP_VISIBLE multimap;
+    template <class, class, class> friend class _LIBCPP_VISIBLE set;
+    template <class, class, class> friend class _LIBCPP_VISIBLE multiset;
+    template <class> friend class _LIBCPP_VISIBLE __map_const_iterator;
 };
 
 template <class _Tp, class _Compare, class _Allocator>
@@ -782,6 +803,7 @@ private:
     __compressed_pair<size_type, value_compare>        __pair3_;
 
 public:
+    _LIBCPP_INLINE_VISIBILITY
     __node_pointer __end_node()
     {
         return static_cast<__node_pointer>
@@ -789,6 +811,7 @@ public:
                    pointer_traits<__end_node_ptr>::pointer_to(__pair1_.first())
                );
     }
+    _LIBCPP_INLINE_VISIBILITY
     __node_const_pointer __end_node() const
     {
         return static_cast<__node_const_pointer>
@@ -796,22 +819,33 @@ public:
                    pointer_traits<__end_node_const_ptr>::pointer_to(__pair1_.first())
                );
     }
+    _LIBCPP_INLINE_VISIBILITY
           __node_allocator& __node_alloc()       {return __pair1_.second();}
 private:
+    _LIBCPP_INLINE_VISIBILITY
     const __node_allocator& __node_alloc() const {return __pair1_.second();}
+    _LIBCPP_INLINE_VISIBILITY
           __node_pointer& __begin_node()         {return __begin_node_;}
+    _LIBCPP_INLINE_VISIBILITY
     const __node_pointer& __begin_node()   const {return __begin_node_;}
 public:
+    _LIBCPP_INLINE_VISIBILITY
     allocator_type __alloc() const {return allocator_type(__node_alloc());}
 private:
+    _LIBCPP_INLINE_VISIBILITY
           size_type& size()                      {return __pair3_.first();}
 public:
+    _LIBCPP_INLINE_VISIBILITY
     const size_type& size()                const {return __pair3_.first();}
+    _LIBCPP_INLINE_VISIBILITY
           value_compare& value_comp()            {return __pair3_.second();}
+    _LIBCPP_INLINE_VISIBILITY
     const value_compare& value_comp()      const {return __pair3_.second();}
 public:
+    _LIBCPP_INLINE_VISIBILITY
     __node_pointer       __root()
         {return static_cast<__node_pointer>      (__end_node()->__left_);}
+    _LIBCPP_INLINE_VISIBILITY
     __node_const_pointer __root() const
         {return static_cast<__node_const_pointer>(__end_node()->__left_);}
 
@@ -835,11 +869,16 @@ public:
 
     ~__tree();
 
+    _LIBCPP_INLINE_VISIBILITY
           iterator begin()       {return       iterator(__begin_node());}
+    _LIBCPP_INLINE_VISIBILITY
     const_iterator begin() const {return const_iterator(__begin_node());}
+    _LIBCPP_INLINE_VISIBILITY
           iterator end()         {return       iterator(__end_node());}
+    _LIBCPP_INLINE_VISIBILITY
     const_iterator end()   const {return const_iterator(__end_node());}
 
+    _LIBCPP_INLINE_VISIBILITY
     size_type max_size() const {return __node_traits::max_size(__node_alloc());}
 
     void clear();
@@ -908,6 +947,7 @@ public:
         size_type __count_multi(const _Key& __k) const;
 
     template <class _Key>
+        _LIBCPP_INLINE_VISIBILITY
         iterator lower_bound(const _Key& __v)
             {return __lower_bound(__v, __root(), __end_node());}
     template <class _Key>
@@ -915,6 +955,7 @@ public:
                                __node_pointer __root,
                                __node_pointer __result);
     template <class _Key>
+        _LIBCPP_INLINE_VISIBILITY
         const_iterator lower_bound(const _Key& __v) const
             {return __lower_bound(__v, __root(), __end_node());}
     template <class _Key>
@@ -922,6 +963,7 @@ public:
                                      __node_const_pointer __root,
                                      __node_const_pointer __result) const;
     template <class _Key>
+        _LIBCPP_INLINE_VISIBILITY
         iterator upper_bound(const _Key& __v)
             {return __upper_bound(__v, __root(), __end_node());}
     template <class _Key>
@@ -929,6 +971,7 @@ public:
                                __node_pointer __root,
                                __node_pointer __result);
     template <class _Key>
+        _LIBCPP_INLINE_VISIBILITY
         const_iterator upper_bound(const _Key& __v) const
             {return __upper_bound(__v, __root(), __end_node());}
     template <class _Key>
@@ -978,33 +1021,42 @@ private:
 
     void destroy(__node_pointer __nd);
 
+    _LIBCPP_INLINE_VISIBILITY
     void __copy_assign_alloc(const __tree& __t)
         {__copy_assign_alloc(__t, integral_constant<bool,
              __node_traits::propagate_on_container_copy_assignment::value>());}
 
+    _LIBCPP_INLINE_VISIBILITY
     void __copy_assign_alloc(const __tree& __t, true_type)
         {__node_alloc() = __t.__node_alloc();}
+    _LIBCPP_INLINE_VISIBILITY
     void __copy_assign_alloc(const __tree& __t, false_type) {}
 
     void __move_assign(__tree& __t, false_type);
     void __move_assign(__tree& __t, true_type);
 
+    _LIBCPP_INLINE_VISIBILITY
     void __move_assign_alloc(__tree& __t)
         {__move_assign_alloc(__t, integral_constant<bool,
              __node_traits::propagate_on_container_move_assignment::value>());}
 
+    _LIBCPP_INLINE_VISIBILITY
     void __move_assign_alloc(__tree& __t, true_type)
         {__node_alloc() = _STD::move(__t.__node_alloc());}
+    _LIBCPP_INLINE_VISIBILITY
     void __move_assign_alloc(__tree& __t, false_type) {}
 
+    _LIBCPP_INLINE_VISIBILITY
     static void __swap_alloc(__node_allocator& __x, __node_allocator& __y)
         {__swap_alloc(__x, __y, integral_constant<bool,
                       __node_traits::propagate_on_container_swap::value>());}
+    _LIBCPP_INLINE_VISIBILITY
     static void __swap_alloc(__node_allocator& __x, __node_allocator& __y, true_type)
         {
             using _STD::swap;
             swap(__x, __y);
         }
+    _LIBCPP_INLINE_VISIBILITY
     static void __swap_alloc(__node_allocator& __x, __node_allocator& __y, false_type)
         {}
 

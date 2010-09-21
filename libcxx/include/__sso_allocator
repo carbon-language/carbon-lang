@@ -64,7 +64,9 @@ public:
     }
     _LIBCPP_INLINE_VISIBILITY size_type max_size() const throw() {return size_type(~0) / sizeof(_Tp);}
 
+    _LIBCPP_INLINE_VISIBILITY
     bool operator==(__sso_allocator& __a) const {return &buf_ == &__a.buf_;}
+    _LIBCPP_INLINE_VISIBILITY
     bool operator!=(__sso_allocator& __a) const {return &buf_ != &__a.buf_;}
 };
 
