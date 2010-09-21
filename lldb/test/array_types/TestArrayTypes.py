@@ -84,6 +84,14 @@ class ArrayTypesTestCase(TestBase):
         breakpoint = target.BreakpointCreateByLocation("main.c", 42)
         self.assertTrue(breakpoint.IsValid(), VALID_BREAKPOINT)
 
+        bp = repr(breakpoint)
+        self.expect(bp, msg="Breakpoint looks good", exe=False,
+            substrs = ["file ='main.c'",
+                       "line = 42",
+                       "locations = 1"])
+        self.expect(bp, msg="Breakpoint is not resolved as yet", exe=False, matching=False,
+            substrs = ["resolved = 1"])
+
         self.runCmd("run", RUN_SUCCEEDED, setCookie=False)
         # This does not work, and results in the process stopped at dyld_start?
         #process = target.LaunchProcess([''], [''], os.ctermid(), False)
@@ -91,17 +99,34 @@ class ArrayTypesTestCase(TestBase):
         self.process = target.GetProcess()
         self.assertTrue(self.process.IsValid(), PROCESS_IS_VALID)
 
+        #procRepr = repr(self.process)
+        #print "procRepr:", procRepr
+
         # The stop reason of the thread should be breakpoint.
         thread = self.process.GetThreadAtIndex(0)
         self.assertTrue(thread.GetStopReason() == StopReasonEnum("Breakpoint"),
                         STOPPED_DUE_TO_BREAKPOINT)
 
+        #threadRepr = repr(thread)
+        #print "threadRepr:", threadRepr
+
         # The breakpoint should have a hit count of 1.
         self.assertTrue(breakpoint.GetHitCount() == 1, BREAKPOINT_HIT_ONCE)
 
+        bp = repr(breakpoint)
+        self.expect(bp, "Breakpoint looks good and is resolved", exe=False,
+            substrs = ["file ='main.c'",
+                       "line = 42",
+                       "locations = 1",
+                       "resolved = 1"])
+
         # Lookup the "strings" string array variable.
         frame = thread.GetFrameAtIndex(0)
+        #frameRepr = repr(frame)
+        #print "frameRepr:", frameRepr
         variable = frame.LookupVar("strings")
+        #varRepr = repr(variable)
+        #print "varRepr:", varRepr
         self.DebugSBValue(frame, variable)
         self.assertTrue(variable.GetNumChildren() == 4,
                         "Variable 'strings' should have 4 children")

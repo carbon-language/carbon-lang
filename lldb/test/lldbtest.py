@@ -152,8 +152,11 @@ VARIABLES_DISPLAYED_CORRECTLY = "Variable(s) displayed correctly"
 #
 # And a generic "Command '%s' returns successfully" message generator.
 #
-def CMD_MSG(command):
-    return "Command '%s' returns successfully" % (command)
+def CMD_MSG(str, exe):
+    if exe:
+        return "Command '%s' returns successfully" % str
+    else:
+        return "'%s' compares successfully" % str
 
 #
 # Returns the enum from the input string.
@@ -402,9 +405,9 @@ class TestBase(unittest2.TestCase):
 
         if check:
             self.assertTrue(self.res.Succeeded(),
-                            msg if msg else CMD_MSG(cmd))
+                            msg if msg else CMD_MSG(cmd, True))
 
-    def expect(self, cmd, msg=None, patterns=None, startstr=None, substrs=None, trace=False, error=False, matching=True):
+    def expect(self, str, msg=None, patterns=None, startstr=None, substrs=None, trace=False, error=False, matching=True, exe=True):
         """
         Similar to runCmd; with additional expect style output matching ability.
 
@@ -422,19 +425,30 @@ class TestBase(unittest2.TestCase):
         If the keyword argument matching is set to False, it signifies that the API
         client is expecting the output of the command not to match the golden
         input.
+
+        Finally, the required argument 'str' represents the lldb command to be
+        sent to the command interpreter.  In case the keyword argument 'exe' is
+        set to False, the 'str' is treated as a string to be matched/not-matched
+        against the golden input.
         """
         trace = (True if traceAlways else trace)
 
-        # First run the command.  If we are expecting error, set check=False.
-        self.runCmd(cmd, trace = (True if trace else False), check = not error)
+        if exe:
+            # First run the command.  If we are expecting error, set check=False.
+            self.runCmd(str, trace = (True if trace else False), check = not error)
 
-        # Then compare the output against expected strings.
-        output = self.res.GetError() if error else self.res.GetOutput()
+            # Then compare the output against expected strings.
+            output = self.res.GetError() if error else self.res.GetOutput()
 
-        # If error is True, the API client expects the command to fail!
-        if error:
-            self.assertFalse(self.res.Succeeded(),
-                             "Command '" + cmd + "' is expected to fail!")
+            # If error is True, the API client expects the command to fail!
+            if error:
+                self.assertFalse(self.res.Succeeded(),
+                                 "Command '" + str + "' is expected to fail!")
+        else:
+            # No execution required, just compare str against the golden input.
+            output = str
+            if trace:
+                print >> sys.stderr, "look at:", output
 
         # The heading says either "Expecting" or "Not expecting".
         if trace:
@@ -479,7 +493,7 @@ class TestBase(unittest2.TestCase):
                 print >> sys.stderr
 
         self.assertTrue(matched if matching else not matched,
-                        msg if msg else CMD_MSG(cmd))
+                        msg if msg else CMD_MSG(str, exe))
 
     def invoke(self, obj, name, trace=False):
         """Use reflection to call a method dynamically with no argument."""
