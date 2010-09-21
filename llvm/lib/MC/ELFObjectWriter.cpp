@@ -386,6 +386,8 @@ void ELFObjectWriterImpl::WriteSymbol(MCDataFragment *F, ELFSymbolData &MSD,
   if (Data.isCommon() && Data.isExternal())
     Value = Data.getCommonAlignment();
 
+  assert(!(Data.isCommon() && !Data.isExternal()));
+
   if (!Data.isCommon() && !(Data.getFlags() & ELF_STB_Weak))
     if (MCFragment *FF = Data.getFragment())
       Value = Layout.getSymbolAddress(&Data) -
@@ -502,7 +504,10 @@ void ELFObjectWriterImpl::RecordRelocation(const MCAssembler &Asm,
     if (Base) {
       if (F && (!Symbol->isInSection() || SD.isCommon()) && !SD.isExternal()) {
         Index = F->getParent()->getOrdinal() + LocalSymbolData.size() + 1;
-        Value += Layout.getSymbolAddress(&SD);
+
+        MCSectionData *FSD = F->getParent();
+        // Offset of the symbol in the section
+        Value += Layout.getSymbolAddress(&SD) - Layout.getSectionAddress(FSD);
       } else
         Index = getSymbolIndexInSymbolTable(Asm, Symbol);
       if (Base != &SD)
@@ -672,16 +677,16 @@ void ELFObjectWriterImpl::ComputeSymbolTable(MCAssembler &Asm) {
     MSD.SymbolData = it;
     MSD.StringIndex = Entry;
 
-    if (Symbol.isUndefined()) {
+    if (it->isCommon()) {
+      MSD.SectionIndex = ELF::SHN_COMMON;
+      ExternalSymbolData.push_back(MSD);
+    } else if (Symbol.isUndefined()) {
       MSD.SectionIndex = ELF::SHN_UNDEF;
       // XXX: for some reason we dont Emit* this
       it->setFlags(it->getFlags() | ELF_STB_Global);
       UndefinedSymbolData.push_back(MSD);
     } else if (Symbol.isAbsolute()) {
       MSD.SectionIndex = ELF::SHN_ABS;
-      ExternalSymbolData.push_back(MSD);
-    } else if (it->isCommon()) {
-      MSD.SectionIndex = ELF::SHN_COMMON;
       ExternalSymbolData.push_back(MSD);
     } else {
       MSD.SectionIndex = SectionIndexMap.lookup(&Symbol.getSection());

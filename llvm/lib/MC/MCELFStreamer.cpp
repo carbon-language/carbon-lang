@@ -13,6 +13,7 @@
 
 #include "llvm/MC/MCStreamer.h"
 
+#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/MC/MCAssembler.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCCodeEmitter.h"
@@ -109,6 +110,8 @@ public:
   virtual void EmitInstruction(const MCInst &Inst);
   virtual void Finish();
 
+private:
+  SmallPtrSet<MCSymbol *, 16> BindingExplicitlySet;
   /// @}
   void SetSection(StringRef Section, unsigned Type, unsigned Flags,
                   SectionKind Kind) {
@@ -187,6 +190,13 @@ static void SetBinding(MCSymbolData &SD, unsigned Binding) {
   SD.setFlags(OtherFlags | (Binding << ELF_STB_Shift));
 }
 
+static unsigned GetBinding(const MCSymbolData &SD) {
+  uint32_t Binding = (SD.getFlags() & (0xf << ELF_STB_Shift)) >> ELF_STB_Shift;
+  assert(Binding == ELF::STB_LOCAL || Binding == ELF::STB_GLOBAL ||
+         Binding == ELF::STB_WEAK);
+  return Binding;
+}
+
 static void SetType(MCSymbolData &SD, unsigned Type) {
   assert(Type == ELF::STT_NOTYPE || Type == ELF::STT_OBJECT ||
          Type == ELF::STT_FUNC || Type == ELF::STT_SECTION ||
@@ -246,15 +256,19 @@ void MCELFStreamer::EmitSymbolAttribute(MCSymbol *Symbol,
   case MCSA_Global:
     SetBinding(SD, ELF::STB_GLOBAL);
     SD.setExternal(true);
+    BindingExplicitlySet.insert(Symbol);
     break;
 
   case MCSA_WeakReference:
   case MCSA_Weak:
     SetBinding(SD, ELF::STB_WEAK);
+    BindingExplicitlySet.insert(Symbol);
     break;
 
   case MCSA_Local:
     SetBinding(SD, ELF::STB_LOCAL);
+    SD.setExternal(false);
+    BindingExplicitlySet.insert(Symbol);
     break;
 
   case MCSA_ELF_TypeFunction:
@@ -295,7 +309,12 @@ void MCELFStreamer::EmitCommonSymbol(MCSymbol *Symbol, uint64_t Size,
                                        unsigned ByteAlignment) {
   MCSymbolData &SD = getAssembler().getOrCreateSymbolData(*Symbol);
 
-  if ((SD.getFlags() & (0xf << ELF_STB_Shift)) == ELF_STB_Local) {
+  if (!BindingExplicitlySet.count(Symbol)) {
+    SetBinding(SD, ELF::STB_GLOBAL);
+    SD.setExternal(true);
+  }
+
+  if (GetBinding(SD) == ELF_STB_Local) {
     const MCSection *Section = getAssembler().getContext().getELFSection(".bss",
                                                                     MCSectionELF::SHT_NOBITS,
                                                                     MCSectionELF::SHF_WRITE |
@@ -306,13 +325,11 @@ void MCELFStreamer::EmitCommonSymbol(MCSymbol *Symbol, uint64_t Size,
     MCFragment *F = new MCFillFragment(0, 0, Size, &SectData);
     SD.setFragment(F);
     Symbol->setSection(*Section);
-    SD.setSize(MCConstantExpr::Create(Size, getContext()));
+  } else {
+    SD.setCommon(Size, ByteAlignment);
   }
 
-  SetBinding(SD, ELF::STB_GLOBAL);
-  SD.setExternal(true);
-
-  SD.setCommon(Size, ByteAlignment);
+  SD.setSize(MCConstantExpr::Create(Size, getContext()));
 }
 
 void MCELFStreamer::EmitBytes(StringRef Data, unsigned AddrSpace) {

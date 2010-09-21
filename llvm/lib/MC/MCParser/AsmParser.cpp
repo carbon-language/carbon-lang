@@ -961,6 +961,9 @@ bool AsmParser::ParseStatement() {
 
     if (IDVal == ".globl" || IDVal == ".global")
       return ParseDirectiveSymbolAttribute(MCSA_Global);
+    // ELF only? Should it be here?
+    if (IDVal == ".local")
+      return ParseDirectiveSymbolAttribute(MCSA_Local);
     if (IDVal == ".hidden")
       return ParseDirectiveSymbolAttribute(MCSA_Hidden);
     if (IDVal == ".indirect_symbol")
