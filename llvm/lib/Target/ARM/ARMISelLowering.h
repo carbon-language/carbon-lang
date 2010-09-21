@@ -290,6 +290,9 @@ namespace llvm {
     /// materialize the FP immediate as a load from a constant pool.
     virtual bool isFPImmLegal(const APFloat &Imm, EVT VT) const;
 
+    virtual bool getTgtMemIntrinsic(IntrinsicInfo &Info,
+                                    const CallInst &I,
+                                    unsigned Intrinsic) const;
   protected:
     std::pair<const TargetRegisterClass*, uint8_t>
     findRepresentativeClass(EVT VT) const;
