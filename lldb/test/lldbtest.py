@@ -97,6 +97,7 @@ $
 """
 
 import os, sys
+import re
 from subprocess import *
 import time
 import types
@@ -399,19 +400,24 @@ class TestBase(unittest2.TestCase):
             self.assertTrue(self.res.Succeeded(),
                             msg if msg else CMD_MSG(cmd))
 
-    def expect(self, cmd, msg=None, startstr=None, substrs=None, trace=False, error=False):
+    def expect(self, cmd, msg=None, patterns=None, startstr=None, substrs=None, trace=False, error=False, matching=True):
         """
         Similar to runCmd; with additional expect style output matching ability.
 
         Ask the command interpreter to handle the command and then check its
         return status.  The 'msg' parameter specifies an informational assert
         message.  We expect the output from running the command to start with
-        'startstr' and matches the substrings contained in 'substrs'.
+        'startstr', matches the substrings contained in 'substrs', and regexp
+        matches the patterns contained in 'patterns'.
 
         If the keyword argument error is set to True, it signifies that the API
         client is expecting the command to fail.  In this case, the error stream
         from running the command is retrieved and compared against the golden
         input, instead.
+
+        If the keyword argument matching is set to False, it signifies that the API
+        client is expecting the output of the command not to match the golden
+        input.
         """
         trace = (True if traceAlways else trace)
 
@@ -426,25 +432,50 @@ class TestBase(unittest2.TestCase):
             self.assertFalse(self.res.Succeeded(),
                              "Command '" + cmd + "' is expected to fail!")
 
-        matched = output.startswith(startstr) if startstr else True
+        # The heading says either "Expecting" or "Not expecting".
+        if trace:
+            heading = "Expecting" if matching else "Not expecting"
+
+        # Start from the startstr, if specified.
+        # If there's no startstr, set the initial state appropriately.
+        matched = output.startswith(startstr) if startstr else (True if matching else False)
 
         if startstr and trace:
-            print >> sys.stderr, "Expecting start string:", startstr
+            print >> sys.stderr, "%s start string: %s" % (heading, startstr)
             print >> sys.stderr, "Matched" if matched else "Not matched"
             print >> sys.stderr
 
-        if substrs and matched:
+        # Look for sub strings, if specified.
+        keepgoing = matched if matching else not matched
+        if substrs and keepgoing:
             for str in substrs:
                 matched = output.find(str) > 0
                 if trace:
-                    print >> sys.stderr, "Expecting sub string:", str
+                    print >> sys.stderr, "%s sub string: %s" % (heading, str)
                     print >> sys.stderr, "Matched" if matched else "Not matched"
-                if not matched:
+                keepgoing = matched if matching else not matched
+                if not keepgoing:
                     break
             if trace:
                 print >> sys.stderr
 
-        self.assertTrue(matched, msg if msg else CMD_MSG(cmd))
+        # Search for regular expression patterns, if specified.
+        keepgoing = matched if matching else not matched
+        if patterns and keepgoing:
+            for pattern in patterns:
+                # Match Objects always have a boolean value of True.
+                matched = bool(re.search(pattern, output))
+                if trace:
+                    print >> sys.stderr, "%s pattern: %s" % (heading, pattern)
+                    print >> sys.stderr, "Matched" if matched else "Not matched"
+                keepgoing = matched if matching else not matched
+                if not keepgoing:
+                    break
+            if trace:
+                print >> sys.stderr
+
+        self.assertTrue(matched if matching else not matched,
+                        msg if msg else CMD_MSG(cmd))
 
     def invoke(self, obj, name, trace=False):
         """Use reflection to call a method dynamically with no argument."""
