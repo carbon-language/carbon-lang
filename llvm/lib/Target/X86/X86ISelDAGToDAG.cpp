@@ -403,6 +403,12 @@ static bool isCalleeLoad(SDValue Callee, SDValue &Chain, bool HasCallSeq) {
       LD->getExtensionType() != ISD::NON_EXTLOAD)
     return false;
 
+  // FIXME: Calls can't fold loads through segment registers yet.
+  if (const Value *Src = LD->getSrcValue())
+    if (const PointerType *PT = dyn_cast<PointerType>(Src->getType()))
+      if (PT->getAddressSpace() >= 256)
+        return false;
+  
   // Now let's find the callseq_start.
   while (HasCallSeq && Chain.getOpcode() != ISD::CALLSEQ_START) {
     if (!Chain.hasOneUse())
@@ -563,7 +569,7 @@ bool X86DAGToDAGISel::MatchLoad(SDValue N, X86ISelAddressMode &AM) {
 
   SDValue Address = N.getOperand(1);
   if (Address.getOpcode() == X86ISD::SegmentBaseAddress &&
-      !MatchSegmentBaseAddress (Address, AM))
+      !MatchSegmentBaseAddress(Address, AM))
     return false;
 
   return true;
