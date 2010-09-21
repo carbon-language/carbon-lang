@@ -27,6 +27,7 @@ namespace llvm {
 
   class LiveInterval;
   class MachineFunction;
+  class MachineLoopInfo;
 
   /// This class wraps up a PBQP instance representing a register allocation
   /// problem, plus the structures necessary to map back from the PBQP solution
@@ -113,7 +114,6 @@ namespace llvm {
 
     typedef std::set<unsigned> RegSet;
  
-
     /// Default constructor.
     PBQPBuilder() {}
 
@@ -125,6 +125,7 @@ namespace llvm {
     virtual std::auto_ptr<PBQPRAProblem> build(
                                               MachineFunction *mf,
                                               const LiveIntervals *lis,
+                                              const MachineLoopInfo *loopInfo,
                                               const RegSet &vregs);
   private:
 
@@ -134,6 +135,29 @@ namespace llvm {
                               const PBQPRAProblem::AllowedSet &vr1Allowed,
                               const PBQPRAProblem::AllowedSet &vr2Allowed,
                               const TargetRegisterInfo *tri);
+  };
+
+  /// Extended builder which adds coalescing constraints to a problem.
+  class PBQPBuilderWithCoalescing : public PBQPBuilder {
+  public:
+ 
+    /// Build a PBQP instance to represent the register allocation problem for
+    /// the given MachineFunction.
+    virtual std::auto_ptr<PBQPRAProblem> build(
+                                              MachineFunction *mf,
+                                              const LiveIntervals *lis,
+                                              const MachineLoopInfo *loopInfo,
+                                              const RegSet &vregs);   
+
+  private:
+
+    void addPhysRegCoalesce(PBQP::Vector &costVec, unsigned pregOption,
+                            PBQP::PBQPNum benefit);
+
+    void addVirtRegCoalesce(PBQP::Matrix &costMat,
+                            const PBQPRAProblem::AllowedSet &vr1Allowed,
+                            const PBQPRAProblem::AllowedSet &vr2Allowed,
+                            PBQP::PBQPNum benefit);
   };
 
   ///

@@ -58,9 +58,6 @@
 
 namespace llvm {
 
-using namespace PBQP;
-  using namespace PBQP::Heuristics;
-
 static RegisterRegAlloc
 registerPBQPRepAlloc("pbqp", "PBQP register allocator",
                        llvm::createPBQPRegisterAllocator);
@@ -112,10 +109,10 @@ unsigned PBQPRAProblem::getPRegForOption(unsigned vreg, unsigned option) const {
   return allowedSet[option - 1];
 }
 
-std::auto_ptr<PBQPRAProblem> PBQPBuilder::build(
-                                             MachineFunction *mf,
-                                             const LiveIntervals *lis,
-                                             const RegSet &vregs) {
+std::auto_ptr<PBQPRAProblem> PBQPBuilder::build(MachineFunction *mf,
+                                                const LiveIntervals *lis,
+                                                const MachineLoopInfo *loopInfo,
+                                                const RegSet &vregs) {
 
   typedef std::vector<const LiveInterval*> LIVector;
 
@@ -235,10 +232,11 @@ void PBQPBuilder::addSpillCosts(PBQP::Vector &costVec,
   costVec[0] = spillCost;
 }
 
-void PBQPBuilder::addInterferenceCosts(PBQP::Matrix &costMat,
-                                       const PBQPRAProblem::AllowedSet &vr1Allowed,
-                                       const PBQPRAProblem::AllowedSet &vr2Allowed,
-                                       const TargetRegisterInfo *tri) {
+void PBQPBuilder::addInterferenceCosts(
+                                    PBQP::Matrix &costMat,
+                                    const PBQPRAProblem::AllowedSet &vr1Allowed,
+                                    const PBQPRAProblem::AllowedSet &vr2Allowed,
+                                    const TargetRegisterInfo *tri) {
   assert(costMat.getRows() == vr1Allowed.size() + 1 && "Matrix height mismatch.");
   assert(costMat.getCols() == vr2Allowed.size() + 1 && "Matrix width mismatch.");
 
@@ -255,6 +253,115 @@ void PBQPBuilder::addInterferenceCosts(PBQP::Matrix &costMat,
   }
 }
 
+std::auto_ptr<PBQPRAProblem> PBQPBuilderWithCoalescing::build(
+                                                MachineFunction *mf,
+                                                const LiveIntervals *lis,
+                                                const MachineLoopInfo *loopInfo,
+                                                const RegSet &vregs) {
+
+  std::auto_ptr<PBQPRAProblem> p = PBQPBuilder::build(mf, lis, loopInfo, vregs);
+  PBQP::Graph &g = p->getGraph();
+
+  const TargetMachine &tm = mf->getTarget();
+  CoalescerPair cp(*tm.getInstrInfo(), *tm.getRegisterInfo());
+
+  // Scan the machine function and add a coalescing cost whenever CoalescerPair
+  // gives the Ok.
+  for (MachineFunction::const_iterator mbbItr = mf->begin(),
+                                       mbbEnd = mf->end();
+       mbbItr != mbbEnd; ++mbbItr) {
+    const MachineBasicBlock *mbb = &*mbbItr;
+
+    for (MachineBasicBlock::const_iterator miItr = mbb->begin(),
+                                           miEnd = mbb->end();
+         miItr != miEnd; ++miItr) {
+      const MachineInstr *mi = &*miItr;
+
+      if (!mi->isCopy() && !mi->isSubregToReg())
+        continue; // Not coalescable.
+
+      if (!cp.setRegisters(mi))
+        continue; // Not coalescable.
+
+      if (cp.getSrcReg() == cp.getDstReg())
+        continue; // Already coalesced.
+
+      if (cp.isCoalescable(mi)) {
+
+        unsigned dst = cp.getDstReg(),
+                 src = cp.getSrcReg();
+
+
+
+        PBQP::PBQPNum cBenefit = std::pow(10.0f, loopInfo->getLoopDepth(mbb));
+
+        if (cp.isPhys()) {
+          if (!lis->isAllocatable(dst))
+            continue;
+
+          const PBQPRAProblem::AllowedSet &allowed = p->getAllowedSet(src);
+          unsigned pregOpt = 0;  
+          while (pregOpt < allowed.size() && allowed[pregOpt] != dst)
+            ++pregOpt;
+          if (pregOpt < allowed.size()) {
+            ++pregOpt; // +1 to account for spill option.
+            PBQP::Graph::NodeItr node = p->getNodeForVReg(src);
+            addPhysRegCoalesce(g.getNodeCosts(node), pregOpt, cBenefit);
+          }
+        } else {
+          const PBQPRAProblem::AllowedSet *allowed1 = &p->getAllowedSet(dst);
+          const PBQPRAProblem::AllowedSet *allowed2 = &p->getAllowedSet(src);
+          PBQP::Graph::NodeItr node1 = p->getNodeForVReg(dst);
+          PBQP::Graph::NodeItr node2 = p->getNodeForVReg(src);
+          PBQP::Graph::EdgeItr edge = g.findEdge(node1, node2);
+          if (edge == g.edgesEnd()) {
+            edge = g.addEdge(node1, node2, PBQP::Matrix(allowed1->size() + 1,
+                                                        allowed2->size() + 1,
+                                                        0));
+          } else {
+            if (g.getEdgeNode1(edge) == node2) {
+              std::swap(node1, node2);
+              std::swap(allowed1, allowed2);
+            }
+          }
+            
+          addVirtRegCoalesce(g.getEdgeCosts(edge), *allowed1, *allowed2,
+                             cBenefit);
+        }
+      }
+    }
+  }
+
+  return p;
+}
+
+
+void PBQPBuilderWithCoalescing::addPhysRegCoalesce(PBQP::Vector &costVec,
+                                                   unsigned pregOption,
+                                                   PBQP::PBQPNum benefit) {
+  costVec[pregOption] += -benefit;
+}
+
+void PBQPBuilderWithCoalescing::addVirtRegCoalesce(
+                                    PBQP::Matrix &costMat,
+                                    const PBQPRAProblem::AllowedSet &vr1Allowed,
+                                    const PBQPRAProblem::AllowedSet &vr2Allowed,
+                                    PBQP::PBQPNum benefit) {
+
+  assert(costMat.getRows() == vr1Allowed.size() + 1 && "Size mismatch.");
+  assert(costMat.getCols() == vr2Allowed.size() + 1 && "Size mismatch.");
+
+  for (unsigned i = 0; i < vr1Allowed.size(); ++i) {
+    unsigned preg1 = vr1Allowed[i];
+    for (unsigned j = 0; j < vr2Allowed.size(); ++j) {
+      unsigned preg2 = vr2Allowed[j];
+
+      if (preg1 == preg2) {
+        costMat[i + 1][j + 1] += -benefit;
+      } 
+    }
+  }
+}
 
 
 void RegAllocPBQP::getAnalysisUsage(AnalysisUsage &au) const {
@@ -1037,9 +1144,10 @@ bool RegAllocPBQP::runOnMachineFunction(MachineFunction &MF) {
         DEBUG(dbgs() << "  PBQP Regalloc round " << round << ":\n");
 
         std::auto_ptr<PBQPRAProblem> problem =
-          builder->build(mf, lis, vregsToAlloc);
+          builder->build(mf, lis, loopInfo, vregsToAlloc);
         PBQP::Solution solution =
-          HeuristicSolver<Briggs>::solve(problem->getGraph());
+          PBQP::HeuristicSolver<PBQP::Heuristics::Briggs>::solve(
+            problem->getGraph());
 
         pbqpAllocComplete = mapPBQPToRegAlloc2(*problem, solution);
 
@@ -1071,7 +1179,12 @@ bool RegAllocPBQP::runOnMachineFunction(MachineFunction &MF) {
 }
 
 FunctionPass* createPBQPRegisterAllocator() {
-  return new RegAllocPBQP(std::auto_ptr<PBQPBuilder>(new PBQPBuilder()));
+  if (pbqpCoalescing) {
+    return new RegAllocPBQP(
+                 std::auto_ptr<PBQPBuilder>(new PBQPBuilderWithCoalescing()));
+  } // else
+  return new RegAllocPBQP(
+                 std::auto_ptr<PBQPBuilder>(new PBQPBuilder()));
 }
 
 }

@@ -63,8 +63,12 @@ namespace PBQP {
         SpillCostComparator(HeuristicSolverImpl<Briggs> &s)
           : s(&s), g(&s.getGraph()) {}
         bool operator()(Graph::NodeItr n1Itr, Graph::NodeItr n2Itr) const {
-          PBQPNum cost1 = g->getNodeCosts(n1Itr)[0] / s->getSolverDegree(n1Itr),
-                  cost2 = g->getNodeCosts(n2Itr)[0] / s->getSolverDegree(n2Itr);
+          const PBQP::Vector &cv1 = g->getNodeCosts(n1Itr);
+          const PBQP::Vector &cv2 = g->getNodeCosts(n2Itr);
+
+          PBQPNum cost1 = cv1[0] / s->getSolverDegree(n1Itr);
+          PBQPNum cost2 = cv2[0] / s->getSolverDegree(n2Itr);
+
           if (cost1 < cost2)
             return true;
           return false;
