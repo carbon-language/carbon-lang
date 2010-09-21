@@ -3672,7 +3672,19 @@ public:
   void CheckObjCPropertyAttributes(Decl *PropertyPtrTy,
                                    SourceLocation Loc,
                                    unsigned &Attributes);
-  void ProcessPropertyDecl(ObjCPropertyDecl *property, ObjCContainerDecl *DC);
+
+  /// Process the specified property declaration and create decls for the
+  /// setters and getters as needed.
+  /// \param property The property declaration being processed
+  /// \param DC The semantic container for the property
+  /// \param redeclaredProperty Declaration for property if redeclared 
+  ///        in class extension.
+  /// \param lexicalDC Container for redeclaredProperty.
+  void ProcessPropertyDecl(ObjCPropertyDecl *property,
+                           ObjCContainerDecl *DC,
+                           ObjCPropertyDecl *redeclaredProperty = 0,
+                           ObjCContainerDecl *lexicalDC = 0);
+
   void DiagnosePropertyMismatch(ObjCPropertyDecl *Property,
                                 ObjCPropertyDecl *SuperProperty,
                                 const IdentifierInfo *Name);
