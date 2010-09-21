@@ -96,7 +96,7 @@ OK
 $ 
 """
 
-import os, sys
+import os, sys, traceback
 import re
 from subprocess import *
 import time
@@ -305,7 +305,11 @@ class TestBase(unittest2.TestCase):
         if getattr(cls, "classCleanup", None):
             if traceAlways:
                 print "Call class-specific cleanup function for class:", cls
-            cls.classCleanup()
+            try:
+                cls.classCleanup()
+            except:
+                exc_type, exc_value, exc_tb = sys.exc_info()
+                traceback.print_exception(exc_type, exc_value, exc_tb)
 
         # Restore old working directory.
         if traceAlways:

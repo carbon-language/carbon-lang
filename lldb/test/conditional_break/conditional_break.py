@@ -24,15 +24,16 @@ def stop_if_called_from_a():
     # of the leaf function c() is a().  If it's not the right caller, we ask the
     # command interpreter to continue execution.
 
-    print >> sys.stdout, "Checking call frames..."
-    lldbutil.PrintStackTrace(thread)
+    #print >> sys.stdout, "Checking call frames..."
+    #lldbutil.PrintStackTrace(thread)
     if thread.GetNumFrames() >= 2:
         funcs = lldbutil.GetFunctionNames(thread)
-        print >> sys.stdout, funcs[0], "called from", funcs[1]
+        #print >> sys.stdout, funcs[0], "called from", funcs[1]
         if (funcs[0] == 'c' and funcs[1] == 'a'):
-            print >> sys.stdout, "Stopped at c() with immediate caller as a()."
+            #print >> sys.stdout, "Stopped at c() with immediate caller as a()."
+            pass
         else:
-            print >> sys.stdout, "Continuing..."
+            #print >> sys.stdout, "Continuing..."
             ci.HandleCommand("process continue", res)
 
     return True
