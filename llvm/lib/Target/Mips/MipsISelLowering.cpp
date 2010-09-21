@@ -506,7 +506,7 @@ SDValue MipsTargetLowering::LowerGlobalAddress(SDValue Op,
     SDValue GA = DAG.getTargetGlobalAddress(GV, dl, MVT::i32, 0,
                                             MipsII::MO_GOT);
     SDValue ResNode = DAG.getLoad(MVT::i32, dl, 
-                                  DAG.getEntryNode(), GA, NULL, 0,
+                                  DAG.getEntryNode(), GA, MachinePointerInfo(),
                                   false, false, 0);
     // On functions and global targets not internal linked only
     // a load from got/GP is necessary for PIC to work.
@@ -546,7 +546,8 @@ LowerJumpTable(SDValue Op, SelectionDAG &DAG) const
     SDValue Ops[] = { JTI };
     HiPart = DAG.getNode(MipsISD::Hi, dl, DAG.getVTList(MVT::i32), Ops, 1);
   } else // Emit Load from Global Pointer
-    HiPart = DAG.getLoad(MVT::i32, dl, DAG.getEntryNode(), JTI, NULL, 0,
+    HiPart = DAG.getLoad(MVT::i32, dl, DAG.getEntryNode(), JTI,
+                         MachinePointerInfo(),
                          false, false, 0);
 
   SDValue Lo = DAG.getNode(MipsISD::Lo, dl, MVT::i32, JTI);
@@ -584,7 +585,8 @@ LowerConstantPool(SDValue Op, SelectionDAG &DAG) const
     SDValue CP = DAG.getTargetConstantPool(C, MVT::i32, N->getAlignment(), 
                                       N->getOffset(), MipsII::MO_GOT);
     SDValue Load = DAG.getLoad(MVT::i32, dl, DAG.getEntryNode(), 
-                               CP, NULL, 0, false, false, 0);
+                               CP, MachinePointerInfo::getConstantPool(),
+                               false, false, 0);
     SDValue Lo = DAG.getNode(MipsISD::Lo, dl, MVT::i32, CP);
     ResNode = DAG.getNode(ISD::ADD, dl, MVT::i32, Load, Lo);
   }
@@ -937,8 +939,9 @@ MipsTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
 
       // Reload GP value.
       FI = MipsFI->getGPFI();
-      SDValue FIN = DAG.getFrameIndex(FI,getPointerTy());
-      SDValue GPLoad = DAG.getLoad(MVT::i32, dl, Chain, FIN, NULL, 0,
+      SDValue FIN = DAG.getFrameIndex(FI, getPointerTy());
+      SDValue GPLoad = DAG.getLoad(MVT::i32, dl, Chain, FIN,
+                                   MachinePointerInfo::getFixedStack(FI),
                                    false, false, 0);
       Chain = GPLoad.getValue(1);
       Chain = DAG.getCopyToReg(Chain, dl, DAG.getRegister(Mips::GP, MVT::i32), 
@@ -1104,7 +1107,8 @@ MipsTargetLowering::LowerFormalArguments(SDValue Chain,
 
       // Create load nodes to retrieve arguments from the stack
       SDValue FIN = DAG.getFrameIndex(FI, getPointerTy());
-      InVals.push_back(DAG.getLoad(VA.getValVT(), dl, Chain, FIN, NULL, 0,
+      InVals.push_back(DAG.getLoad(VA.getValVT(), dl, Chain, FIN,
+                                   MachinePointerInfo::getFixedStack(FI),
                                    false, false, 0));
     }
   }

@@ -419,10 +419,8 @@ LowerLOAD(SDValue Op, SelectionDAG &DAG) const
       // We've managed to infer better alignment information than the load
       // already has. Use an aligned load.
       //
-      // FIXME: No new alignment information is actually passed here.
-      // Should the offset really be 4?
-      //
-      return DAG.getLoad(getPointerTy(), dl, Chain, BasePtr, NULL, 4,
+      return DAG.getLoad(getPointerTy(), dl, Chain, BasePtr,
+                         MachinePointerInfo(),
                          false, false, 0);
     }
     // Lower to
@@ -440,9 +438,9 @@ LowerLOAD(SDValue Op, SelectionDAG &DAG) const
     SDValue HighAddr = DAG.getNode(ISD::ADD, dl, MVT::i32, Base, HighOffset);
     
     SDValue Low = DAG.getLoad(getPointerTy(), dl, Chain,
-                              LowAddr, NULL, 4, false, false, 0);
+                              LowAddr, MachinePointerInfo(), false, false, 0);
     SDValue High = DAG.getLoad(getPointerTy(), dl, Chain,
-                               HighAddr, NULL, 4, false, false, 0);
+                               HighAddr, MachinePointerInfo(), false, false, 0);
     SDValue LowShifted = DAG.getNode(ISD::SRL, dl, MVT::i32, Low, LowShift);
     SDValue HighShifted = DAG.getNode(ISD::SHL, dl, MVT::i32, High, HighShift);
     SDValue Result = DAG.getNode(ISD::OR, dl, MVT::i32, LowShifted, HighShifted);
@@ -757,7 +755,8 @@ LowerVAARG(SDValue Op, SelectionDAG &DAG) const
   const Value *V = cast<SrcValueSDNode>(Node->getOperand(2))->getValue();
   EVT VT = Node->getValueType(0);
   SDValue VAList = DAG.getLoad(getPointerTy(), dl, Node->getOperand(0),
-                               Node->getOperand(1), V, 0, false, false, 0);
+                               Node->getOperand(1), MachinePointerInfo(V),
+                               false, false, 0);
   // Increment the pointer, VAList, to the next vararg
   SDValue Tmp3 = DAG.getNode(ISD::ADD, dl, getPointerTy(), VAList, 
                      DAG.getConstant(VT.getSizeInBits(), 
@@ -766,7 +765,8 @@ LowerVAARG(SDValue Op, SelectionDAG &DAG) const
   Tmp3 = DAG.getStore(VAList.getValue(1), dl, Tmp3, Node->getOperand(1), V, 0,
                       false, false, 0);
   // Load the actual argument out of the pointer VAList
-  return DAG.getLoad(VT, dl, Tmp3, VAList, NULL, 0, false, false, 0);
+  return DAG.getLoad(VT, dl, Tmp3, VAList, MachinePointerInfo(),
+                     false, false, 0);
 }
 
 SDValue XCoreTargetLowering::
@@ -1079,7 +1079,8 @@ XCoreTargetLowering::LowerCCCArguments(SDValue Chain,
       // Create the SelectionDAG nodes corresponding to a load
       //from this parameter
       SDValue FIN = DAG.getFrameIndex(FI, MVT::i32);
-      InVals.push_back(DAG.getLoad(VA.getLocVT(), dl, Chain, FIN, NULL, 0,
+      InVals.push_back(DAG.getLoad(VA.getLocVT(), dl, Chain, FIN, 
+                                   MachinePointerInfo::getFixedStack(FI),
                                    false, false, 0));
     }
   }

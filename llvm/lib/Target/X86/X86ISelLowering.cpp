@@ -6076,8 +6076,7 @@ X86TargetLowering::LowerGlobalAddress(const GlobalValue *GV, DebugLoc dl,
   // load.
   if (isGlobalStubReference(OpFlags))
     Result = DAG.getLoad(getPointerTy(), dl, DAG.getEntryNode(), Result,
-                         MachinePointerInfo(PseudoSourceValue::getGOT()),
-                         false, false, 0);
+                         MachinePointerInfo::getGOT(), false, false, 0);
 
   // If there was a non-zero offset that we didn't fold, create an explicit
   // addition for it.
@@ -6182,8 +6181,7 @@ static SDValue LowerToTLSExecModel(GlobalAddressSDNode *GA, SelectionDAG &DAG,
 
   if (model == TLSModel::InitialExec)
     Offset = DAG.getLoad(PtrVT, dl, DAG.getEntryNode(), Offset,
-                         MachinePointerInfo(PseudoSourceValue::getGOT()),
-                         false, false, 0);
+                         MachinePointerInfo::getGOT(), false, false, 0);
 
   // The address of the thread local variable is the add of the thread
   // pointer with the offset of the variable.

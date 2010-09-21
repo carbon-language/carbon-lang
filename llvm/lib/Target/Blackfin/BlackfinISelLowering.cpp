@@ -207,7 +207,8 @@ BlackfinTargetLowering::LowerFormalArguments(SDValue Chain,
       unsigned ObjSize = VA.getLocVT().getStoreSize();
       int FI = MFI->CreateFixedObject(ObjSize, VA.getLocMemOffset(), true);
       SDValue FIN = DAG.getFrameIndex(FI, MVT::i32);
-      InVals.push_back(DAG.getLoad(VA.getValVT(), dl, Chain, FIN, NULL, 0,
+      InVals.push_back(DAG.getLoad(VA.getValVT(), dl, Chain, FIN,
+                                   MachinePointerInfo(),
                                    false, false, 0));
     }
   }

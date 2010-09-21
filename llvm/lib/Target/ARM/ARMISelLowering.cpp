@@ -1153,7 +1153,7 @@ ARMTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
       CPAddr = DAG.getNode(ARMISD::Wrapper, dl, MVT::i32, CPAddr);
       Callee = DAG.getLoad(getPointerTy(), dl,
                            DAG.getEntryNode(), CPAddr,
-                           PseudoSourceValue::getConstantPool(), 0,
+                           MachinePointerInfo::getConstantPool(),
                            false, false, 0);
     } else if (ExternalSymbolSDNode *S=dyn_cast<ExternalSymbolSDNode>(Callee)) {
       const char *Sym = S->getSymbol();
@@ -1167,7 +1167,7 @@ ARMTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
       CPAddr = DAG.getNode(ARMISD::Wrapper, dl, MVT::i32, CPAddr);
       Callee = DAG.getLoad(getPointerTy(), dl,
                            DAG.getEntryNode(), CPAddr,
-                           PseudoSourceValue::getConstantPool(), 0,
+                           MachinePointerInfo::getConstantPool(),
                            false, false, 0);
     }
   } else if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Callee)) {
@@ -1189,7 +1189,7 @@ ARMTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
       CPAddr = DAG.getNode(ARMISD::Wrapper, dl, MVT::i32, CPAddr);
       Callee = DAG.getLoad(getPointerTy(), dl,
                            DAG.getEntryNode(), CPAddr,
-                           PseudoSourceValue::getConstantPool(), 0,
+                           MachinePointerInfo::getConstantPool(),
                            false, false, 0);
       SDValue PICLabel = DAG.getConstant(ARMPCLabelIndex, MVT::i32);
       Callee = DAG.getNode(ARMISD::PIC_ADD, dl,
@@ -1211,7 +1211,7 @@ ARMTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
       CPAddr = DAG.getNode(ARMISD::Wrapper, dl, MVT::i32, CPAddr);
       Callee = DAG.getLoad(getPointerTy(), dl,
                            DAG.getEntryNode(), CPAddr,
-                           PseudoSourceValue::getConstantPool(), 0,
+                           MachinePointerInfo::getConstantPool(),
                            false, false, 0);
       SDValue PICLabel = DAG.getConstant(ARMPCLabelIndex, MVT::i32);
       Callee = DAG.getNode(ARMISD::PIC_ADD, dl,
@@ -1595,7 +1595,7 @@ SDValue ARMTargetLowering::LowerBlockAddress(SDValue Op,
   }
   CPAddr = DAG.getNode(ARMISD::Wrapper, DL, PtrVT, CPAddr);
   SDValue Result = DAG.getLoad(PtrVT, DL, DAG.getEntryNode(), CPAddr,
-                               PseudoSourceValue::getConstantPool(), 0,
+                               MachinePointerInfo::getConstantPool(),
                                false, false, 0);
   if (RelocM == Reloc::Static)
     return Result;
@@ -1619,7 +1619,7 @@ ARMTargetLowering::LowerToTLSGeneralDynamicModel(GlobalAddressSDNode *GA,
   SDValue Argument = DAG.getTargetConstantPool(CPV, PtrVT, 4);
   Argument = DAG.getNode(ARMISD::Wrapper, dl, MVT::i32, Argument);
   Argument = DAG.getLoad(PtrVT, dl, DAG.getEntryNode(), Argument,
-                         PseudoSourceValue::getConstantPool(), 0,
+                         MachinePointerInfo::getConstantPool(),
                          false, false, 0);
   SDValue Chain = Argument.getValue(1);
 
@@ -1666,7 +1666,7 @@ ARMTargetLowering::LowerToTLSExecModels(GlobalAddressSDNode *GA,
     Offset = DAG.getTargetConstantPool(CPV, PtrVT, 4);
     Offset = DAG.getNode(ARMISD::Wrapper, dl, MVT::i32, Offset);
     Offset = DAG.getLoad(PtrVT, dl, Chain, Offset,
-                         PseudoSourceValue::getConstantPool(), 0,
+                         MachinePointerInfo::getConstantPool(),
                          false, false, 0);
     Chain = Offset.getValue(1);
 
@@ -1674,7 +1674,7 @@ ARMTargetLowering::LowerToTLSExecModels(GlobalAddressSDNode *GA,
     Offset = DAG.getNode(ARMISD::PIC_ADD, dl, PtrVT, Offset, PICLabel);
 
     Offset = DAG.getLoad(PtrVT, dl, Chain, Offset,
-                         PseudoSourceValue::getConstantPool(), 0,
+                         MachinePointerInfo::getConstantPool(),
                          false, false, 0);
   } else {
     // local exec model
@@ -1682,7 +1682,7 @@ ARMTargetLowering::LowerToTLSExecModels(GlobalAddressSDNode *GA,
     Offset = DAG.getTargetConstantPool(CPV, PtrVT, 4);
     Offset = DAG.getNode(ARMISD::Wrapper, dl, MVT::i32, Offset);
     Offset = DAG.getLoad(PtrVT, dl, Chain, Offset,
-                         PseudoSourceValue::getConstantPool(), 0,
+                         MachinePointerInfo::getConstantPool(),
                          false, false, 0);
   }
 
@@ -1719,15 +1719,14 @@ SDValue ARMTargetLowering::LowerGlobalAddressELF(SDValue Op,
     CPAddr = DAG.getNode(ARMISD::Wrapper, dl, MVT::i32, CPAddr);
     SDValue Result = DAG.getLoad(PtrVT, dl, DAG.getEntryNode(),
                                  CPAddr,
-                                 PseudoSourceValue::getConstantPool(), 0,
+                                 MachinePointerInfo::getConstantPool(),
                                  false, false, 0);
     SDValue Chain = Result.getValue(1);
     SDValue GOT = DAG.getGLOBAL_OFFSET_TABLE(PtrVT);
     Result = DAG.getNode(ISD::ADD, dl, PtrVT, Result, GOT);
     if (!UseGOTOFF)
       Result = DAG.getLoad(PtrVT, dl, Chain, Result,
-                           PseudoSourceValue::getGOT(), 0,
-                           false, false, 0);
+                           MachinePointerInfo::getGOT(), false, false, 0);
     return Result;
   } else {
     // If we have T2 ops, we can materialize the address directly via movt/movw
@@ -1739,7 +1738,7 @@ SDValue ARMTargetLowering::LowerGlobalAddressELF(SDValue Op,
       SDValue CPAddr = DAG.getTargetConstantPool(GV, PtrVT, 4);
       CPAddr = DAG.getNode(ARMISD::Wrapper, dl, MVT::i32, CPAddr);
       return DAG.getLoad(PtrVT, dl, DAG.getEntryNode(), CPAddr,
-                         PseudoSourceValue::getConstantPool(), 0,
+                         MachinePointerInfo::getConstantPool(),
                          false, false, 0);
     }
   }
@@ -1767,7 +1766,7 @@ SDValue ARMTargetLowering::LowerGlobalAddressDarwin(SDValue Op,
   CPAddr = DAG.getNode(ARMISD::Wrapper, dl, MVT::i32, CPAddr);
 
   SDValue Result = DAG.getLoad(PtrVT, dl, DAG.getEntryNode(), CPAddr,
-                               PseudoSourceValue::getConstantPool(), 0,
+                               MachinePointerInfo::getConstantPool(),
                                false, false, 0);
   SDValue Chain = Result.getValue(1);
 
@@ -1777,8 +1776,7 @@ SDValue ARMTargetLowering::LowerGlobalAddressDarwin(SDValue Op,
   }
 
   if (Subtarget->GVIsIndirectSymbol(GV, RelocM))
-    Result = DAG.getLoad(PtrVT, dl, Chain, Result,
-                         PseudoSourceValue::getGOT(), 0,
+    Result = DAG.getLoad(PtrVT, dl, Chain, Result, MachinePointerInfo::getGOT(),
                          false, false, 0);
 
   return Result;
@@ -1800,7 +1798,7 @@ SDValue ARMTargetLowering::LowerGLOBAL_OFFSET_TABLE(SDValue Op,
   SDValue CPAddr = DAG.getTargetConstantPool(CPV, PtrVT, 4);
   CPAddr = DAG.getNode(ARMISD::Wrapper, dl, MVT::i32, CPAddr);
   SDValue Result = DAG.getLoad(PtrVT, dl, DAG.getEntryNode(), CPAddr,
-                               PseudoSourceValue::getConstantPool(), 0,
+                               MachinePointerInfo::getConstantPool(),
                                false, false, 0);
   SDValue PICLabel = DAG.getConstant(ARMPCLabelIndex, MVT::i32);
   return DAG.getNode(ARMISD::PIC_ADD, dl, PtrVT, Result, PICLabel);
@@ -1849,7 +1847,7 @@ ARMTargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op, SelectionDAG &DAG,
     CPAddr = DAG.getNode(ARMISD::Wrapper, dl, MVT::i32, CPAddr);
     SDValue Result =
       DAG.getLoad(PtrVT, dl, DAG.getEntryNode(), CPAddr,
-                  PseudoSourceValue::getConstantPool(), 0,
+                  MachinePointerInfo::getConstantPool(),
                   false, false, 0);
 
     if (RelocM == Reloc::PIC_) {
@@ -1920,7 +1918,7 @@ ARMTargetLowering::GetF64FormalArgument(CCValAssign &VA, CCValAssign &NextVA,
     // Create load node to retrieve arguments from the stack.
     SDValue FIN = DAG.getFrameIndex(FI, getPointerTy());
     ArgValue2 = DAG.getLoad(MVT::i32, dl, Root, FIN,
-                            PseudoSourceValue::getFixedStack(FI), 0,
+                            MachinePointerInfo::getFixedStack(FI),
                             false, false, 0);
   } else {
     Reg = MF.addLiveIn(NextVA.getLocReg(), RC);
@@ -1974,7 +1972,7 @@ ARMTargetLowering::LowerFormalArguments(SDValue Chain,
             int FI = MFI->CreateFixedObject(8, VA.getLocMemOffset(), true);
             SDValue FIN = DAG.getFrameIndex(FI, getPointerTy());
             ArgValue2 = DAG.getLoad(MVT::f64, dl, Chain, FIN,
-                                    PseudoSourceValue::getFixedStack(FI), 0,
+                                    MachinePointerInfo::getFixedStack(FI),
                                     false, false, 0);
           } else {
             ArgValue2 = GetF64FormalArgument(VA, ArgLocs[++i],
@@ -2043,7 +2041,7 @@ ARMTargetLowering::LowerFormalArguments(SDValue Chain,
       // Create load nodes to retrieve arguments from the stack.
       SDValue FIN = DAG.getFrameIndex(FI, getPointerTy());
       InVals.push_back(DAG.getLoad(VA.getValVT(), dl, Chain, FIN,
-                                   PseudoSourceValue::getFixedStack(FI), 0,
+                                   MachinePointerInfo::getFixedStack(FI),
                                    false, false, 0));
     }
   }
@@ -2299,8 +2297,7 @@ static SDValue bitcastf32Toi32(SDValue Op, SelectionDAG &DAG) {
 
   if (LoadSDNode *Ld = dyn_cast<LoadSDNode>(Op))
     return DAG.getLoad(MVT::i32, Op.getDebugLoc(),
-                       Ld->getChain(), Ld->getBasePtr(),
-                       Ld->getSrcValue(), Ld->getSrcValueOffset(),
+                       Ld->getChain(), Ld->getBasePtr(), Ld->getPointerInfo(),
                        Ld->isVolatile(), Ld->isNonTemporal(),
                        Ld->getAlignment());
 
@@ -2319,7 +2316,7 @@ static void expandf64Toi32(SDValue Op, SelectionDAG &DAG,
     SDValue Ptr = Ld->getBasePtr();
     RetVal1 = DAG.getLoad(MVT::i32, Op.getDebugLoc(),
                           Ld->getChain(), Ptr,
-                          Ld->getSrcValue(), Ld->getSrcValueOffset(),
+                          Ld->getPointerInfo(),
                           Ld->isVolatile(), Ld->isNonTemporal(),
                           Ld->getAlignment());
 
@@ -2329,7 +2326,7 @@ static void expandf64Toi32(SDValue Op, SelectionDAG &DAG,
                                  PtrType, Ptr, DAG.getConstant(4, PtrType));
     RetVal2 = DAG.getLoad(MVT::i32, Op.getDebugLoc(),
                           Ld->getChain(), NewPtr,
-                          Ld->getSrcValue(), Ld->getSrcValueOffset() + 4,
+                          Ld->getPointerInfo().getWithOffset(4),
                           Ld->isVolatile(), Ld->isNonTemporal(),
                           NewAlign);
     return;
@@ -2454,14 +2451,14 @@ SDValue ARMTargetLowering::LowerBR_JT(SDValue Op, SelectionDAG &DAG) const {
   }
   if (getTargetMachine().getRelocationModel() == Reloc::PIC_) {
     Addr = DAG.getLoad((EVT)MVT::i32, dl, Chain, Addr,
-                       PseudoSourceValue::getJumpTable(), 0,
+                       MachinePointerInfo::getJumpTable(),
                        false, false, 0);
     Chain = Addr.getValue(1);
     Addr = DAG.getNode(ISD::ADD, dl, PTy, Addr, Table);
     return DAG.getNode(ARMISD::BR_JT, dl, MVT::Other, Chain, Addr, JTI, UId);
   } else {
     Addr = DAG.getLoad(PTy, dl, Chain, Addr,
-                       PseudoSourceValue::getJumpTable(), 0, false, false, 0);
+                       MachinePointerInfo::getJumpTable(), false, false, 0);
     Chain = Addr.getValue(1);
     return DAG.getNode(ARMISD::BR_JT, dl, MVT::Other, Chain, Addr, JTI, UId);
   }
@@ -2533,7 +2530,7 @@ SDValue ARMTargetLowering::LowerRETURNADDR(SDValue Op, SelectionDAG &DAG) const{
     SDValue Offset = DAG.getConstant(4, MVT::i32);
     return DAG.getLoad(VT, dl, DAG.getEntryNode(),
                        DAG.getNode(ISD::ADD, dl, VT, FrameAddr, Offset),
-                       NULL, 0, false, false, 0);
+                       MachinePointerInfo(), false, false, 0);
   }
 
   // Return LR, which contains the return address. Mark it an implicit live-in.
@@ -2552,7 +2549,8 @@ SDValue ARMTargetLowering::LowerFRAMEADDR(SDValue Op, SelectionDAG &DAG) const {
     ? ARM::R7 : ARM::R11;
   SDValue FrameAddr = DAG.getCopyFromReg(DAG.getEntryNode(), dl, FrameReg, VT);
   while (Depth--)
-    FrameAddr = DAG.getLoad(VT, dl, DAG.getEntryNode(), FrameAddr, NULL, 0,
+    FrameAddr = DAG.getLoad(VT, dl, DAG.getEntryNode(), FrameAddr,
+                            MachinePointerInfo(),
                             false, false, 0);
   return FrameAddr;
 }
@@ -3618,8 +3616,7 @@ static SDValue SkipExtension(SDNode *N, SelectionDAG &DAG) {
     return N->getOperand(0);
   LoadSDNode *LD = cast<LoadSDNode>(N);
   return DAG.getLoad(LD->getMemoryVT(), N->getDebugLoc(), LD->getChain(),
-                     LD->getBasePtr(), LD->getSrcValue(),
-                     LD->getSrcValueOffset(), LD->isVolatile(),
+                     LD->getBasePtr(), LD->getPointerInfo(), LD->isVolatile(),
                      LD->isNonTemporal(), LD->getAlignment());
 }
 
