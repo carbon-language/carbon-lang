@@ -3724,12 +3724,6 @@ SDValue SelectionDAG::getAtomic(unsigned Opcode, DebugLoc dl, EVT MemVT,
   if (Alignment == 0)  // Ensure that codegen never sees alignment 0
     Alignment = getEVTAlignment(MemVT);
 
-  // Check if the memory reference references a frame index
-  if (!PtrVal)
-    if (const FrameIndexSDNode *FI =
-          dyn_cast<const FrameIndexSDNode>(Ptr.getNode()))
-      PtrVal = PseudoSourceValue::getFixedStack(FI->getIndex());
-
   MachineFunction &MF = getMachineFunction();
   unsigned Flags = MachineMemOperand::MOLoad | MachineMemOperand::MOStore;
 
@@ -3869,16 +3863,44 @@ SelectionDAG::getLoad(ISD::MemIndexedMode AM, ISD::LoadExtType ExtType,
                       bool isVolatile, bool isNonTemporal,
                       unsigned Alignment) {
 
-  // Check if the memory reference references a frame index
-  if (!SV)
-    if (const FrameIndexSDNode *FI =
-        dyn_cast<const FrameIndexSDNode>(Ptr.getNode()))
-      SV = PseudoSourceValue::getFixedStack(FI->getIndex());
-  
   return getLoad(AM, ExtType, VT, dl, Chain, Ptr, Offset,
                  MachinePointerInfo(SV, SVOffset), MemVT, isVolatile,
                  isNonTemporal, Alignment);
 }
+
+/// InferPointerInfo - If the specified ptr/offset is a frame index, infer a
+/// MachinePointerInfo record from it.  This is particularly useful because the
+/// code generator has many cases where it doesn't bother passing in a
+/// MachinePointerInfo to getLoad or getStore when it has "FI+Cst".
+static MachinePointerInfo InferPointerInfo(SDValue Ptr, int64_t Offset = 0) {
+  // If this is FI+Offset, we can model it.
+  if (const FrameIndexSDNode *FI = dyn_cast<FrameIndexSDNode>(Ptr))
+    return MachinePointerInfo::getFixedStack(FI->getIndex(), Offset);
+
+  // If this is (FI+Offset1)+Offset2, we can model it.
+  if (Ptr.getOpcode() != ISD::ADD ||
+      !isa<ConstantSDNode>(Ptr.getOperand(1)) ||
+      !isa<FrameIndexSDNode>(Ptr.getOperand(0)))
+    return MachinePointerInfo();
+  
+  int FI = cast<FrameIndexSDNode>(Ptr.getOperand(0))->getIndex();
+  return MachinePointerInfo::getFixedStack(FI, Offset+
+                       cast<ConstantSDNode>(Ptr.getOperand(1))->getSExtValue());
+}
+
+/// InferPointerInfo - If the specified ptr/offset is a frame index, infer a
+/// MachinePointerInfo record from it.  This is particularly useful because the
+/// code generator has many cases where it doesn't bother passing in a
+/// MachinePointerInfo to getLoad or getStore when it has "FI+Cst".
+static MachinePointerInfo InferPointerInfo(SDValue Ptr, SDValue OffsetOp) {
+  // If the 'Offset' value isn't a constant, we can't handle this.
+  if (ConstantSDNode *OffsetNode = dyn_cast<ConstantSDNode>(OffsetOp))
+    return InferPointerInfo(Ptr, OffsetNode->getSExtValue());
+  if (OffsetOp.getOpcode() == ISD::UNDEF)
+    return InferPointerInfo(Ptr);
+  return MachinePointerInfo();
+}
+  
 
 SDValue
 SelectionDAG::getLoad(ISD::MemIndexedMode AM, ISD::LoadExtType ExtType,
@@ -3890,12 +3912,18 @@ SelectionDAG::getLoad(ISD::MemIndexedMode AM, ISD::LoadExtType ExtType,
   if (Alignment == 0)  // Ensure that codegen never sees alignment 0
     Alignment = getEVTAlignment(VT);
 
-  MachineFunction &MF = getMachineFunction();
   unsigned Flags = MachineMemOperand::MOLoad;
   if (isVolatile)
     Flags |= MachineMemOperand::MOVolatile;
   if (isNonTemporal)
     Flags |= MachineMemOperand::MONonTemporal;
+  
+  // If we don't have a PtrInfo, infer the trivial frame index case to simplify
+  // clients.
+  if (PtrInfo.V == 0)
+    PtrInfo = InferPointerInfo(Ptr, Offset);
+  
+  MachineFunction &MF = getMachineFunction();
   MachineMemOperand *MMO =
     MF.getMachineMemOperand(PtrInfo, Flags, MemVT.getStoreSize(), Alignment);
   return getLoad(AM, ExtType, VT, dl, Chain, Ptr, Offset, MemVT, MMO);
@@ -3975,8 +4003,8 @@ SelectionDAG::getIndexedLoad(SDValue OrigLoad, DebugLoc dl, SDValue Base,
   assert(LD->getOffset().getOpcode() == ISD::UNDEF &&
          "Load is already a indexed load!");
   return getLoad(AM, LD->getExtensionType(), OrigLoad.getValueType(), dl,
-                 LD->getChain(), Base, Offset, LD->getSrcValue(),
-                 LD->getSrcValueOffset(), LD->getMemoryVT(),
+                 LD->getChain(), Base, Offset, LD->getPointerInfo(),
+                 LD->getMemoryVT(),
                  LD->isVolatile(), LD->isNonTemporal(), LD->getAlignment());
 }
 
@@ -3987,12 +4015,16 @@ SDValue SelectionDAG::getStore(SDValue Chain, DebugLoc dl, SDValue Val,
   if (Alignment == 0)  // Ensure that codegen never sees alignment 0
     Alignment = getEVTAlignment(Val.getValueType());
 
-  MachineFunction &MF = getMachineFunction();
   unsigned Flags = MachineMemOperand::MOStore;
   if (isVolatile)
     Flags |= MachineMemOperand::MOVolatile;
   if (isNonTemporal)
     Flags |= MachineMemOperand::MONonTemporal;
+  
+  if (PtrInfo.V == 0)
+    PtrInfo = InferPointerInfo(Ptr);
+
+  MachineFunction &MF = getMachineFunction();
   MachineMemOperand *MMO =
     MF.getMachineMemOperand(PtrInfo, Flags,
                             Val.getValueType().getStoreSize(), Alignment);
@@ -4004,11 +4036,6 @@ SDValue SelectionDAG::getStore(SDValue Chain, DebugLoc dl, SDValue Val,
                                SDValue Ptr,
                  const Value *SV, int SVOffset, bool isVolatile,
                  bool isNonTemporal, unsigned Alignment) {
-  // Check if the memory reference references a frame index
-  if (!SV)
-    if (const FrameIndexSDNode *FI =
-        dyn_cast<const FrameIndexSDNode>(Ptr.getNode()))
-      SV = PseudoSourceValue::getFixedStack(FI->getIndex());
   
   return getStore(Chain, dl, Val, Ptr, MachinePointerInfo(SV, SVOffset),
                   isVolatile, isNonTemporal, Alignment);
@@ -4044,12 +4071,6 @@ SDValue SelectionDAG::getTruncStore(SDValue Chain, DebugLoc dl, SDValue Val,
                                     bool isVolatile, bool isNonTemporal,
                                     unsigned Alignment) {
 
-  // Check if the memory reference references a frame index
-  if (!SV)
-    if (const FrameIndexSDNode *FI =
-        dyn_cast<const FrameIndexSDNode>(Ptr.getNode()))
-      SV = PseudoSourceValue::getFixedStack(FI->getIndex());
- 
   return getTruncStore(Chain, dl, Val, Ptr, MachinePointerInfo(SV, SVOffset),
                        SVT, isVolatile, isNonTemporal, Alignment);
 }  
@@ -4061,12 +4082,16 @@ SDValue SelectionDAG::getTruncStore(SDValue Chain, DebugLoc dl, SDValue Val,
   if (Alignment == 0)  // Ensure that codegen never sees alignment 0
     Alignment = getEVTAlignment(SVT);
 
-  MachineFunction &MF = getMachineFunction();
   unsigned Flags = MachineMemOperand::MOStore;
   if (isVolatile)
     Flags |= MachineMemOperand::MOVolatile;
   if (isNonTemporal)
     Flags |= MachineMemOperand::MONonTemporal;
+  
+  if (PtrInfo.V == 0)
+    PtrInfo = InferPointerInfo(Ptr);
+
+  MachineFunction &MF = getMachineFunction();
   MachineMemOperand *MMO =
     MF.getMachineMemOperand(PtrInfo, Flags, SVT.getStoreSize(), Alignment);
 
