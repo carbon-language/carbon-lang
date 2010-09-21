@@ -85,15 +85,17 @@ static Value *EmitCallWithBarrier(CodeGenFunction &CGF, Value *Fn,
 /// and the expression node.
 static RValue EmitBinaryAtomic(CodeGenFunction &CGF,
                                Intrinsic::ID Id, const CallExpr *E) {
+  llvm::Value *DestPtr = CGF.EmitScalarExpr(E->getArg(0));
+  unsigned AddrSpace =
+    cast<llvm::PointerType>(DestPtr->getType())->getAddressSpace();
   const llvm::Type *ValueType =
     llvm::IntegerType::get(CGF.getLLVMContext(),
                            CGF.getContext().getTypeSize(E->getType()));
-  const llvm::Type *PtrType = ValueType->getPointerTo();
+  const llvm::Type *PtrType = ValueType->getPointerTo(AddrSpace);
   const llvm::Type *IntrinsicTypes[2] = { ValueType, PtrType };
   Value *AtomF = CGF.CGM.getIntrinsic(Id, IntrinsicTypes, 2);
 
-  Value *Args[2] = { CGF.Builder.CreateBitCast(CGF.EmitScalarExpr(E->getArg(0)),
-                                               PtrType),
+  Value *Args[2] = { CGF.Builder.CreateBitCast(DestPtr, PtrType),
                      EmitCastToInt(CGF, ValueType,
                                    CGF.EmitScalarExpr(E->getArg(1))) };
   return RValue::get(EmitCastFromInt(CGF, E->getType(),
@@ -107,15 +109,18 @@ static RValue EmitBinaryAtomic(CodeGenFunction &CGF,
 static RValue EmitBinaryAtomicPost(CodeGenFunction &CGF,
                                    Intrinsic::ID Id, const CallExpr *E,
                                    Instruction::BinaryOps Op) {
+  llvm::Value *DestPtr = CGF.EmitScalarExpr(E->getArg(0));
+  unsigned AddrSpace =
+    cast<llvm::PointerType>(DestPtr->getType())->getAddressSpace();
+  
   const llvm::Type *ValueType =
     llvm::IntegerType::get(CGF.getLLVMContext(),
                            CGF.getContext().getTypeSize(E->getType()));
-  const llvm::Type *PtrType = ValueType->getPointerTo();
+  const llvm::Type *PtrType = ValueType->getPointerTo(AddrSpace);
   const llvm::Type *IntrinsicTypes[2] = { ValueType, PtrType };
   Value *AtomF = CGF.CGM.getIntrinsic(Id, IntrinsicTypes, 2);
 
-  Value *Args[2] = { CGF.Builder.CreateBitCast(CGF.EmitScalarExpr(E->getArg(0)),
-                                               PtrType),
+  Value *Args[2] = { CGF.Builder.CreateBitCast(DestPtr, PtrType),
                      EmitCastToInt(CGF, ValueType,
                                    CGF.EmitScalarExpr(E->getArg(1))) };
   Value *Result = EmitCallWithBarrier(CGF, AtomF, Args, Args + 2);
@@ -790,7 +795,7 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
   case Builtin::BI__sync_val_compare_and_swap_16: {
     llvm::Value *DestPtr = CGF.EmitScalarExpr(E->getArg(0));
     unsigned AddrSpace =
-      cast<llvm::PointerType>(DestPtr->getType())->getAddressSpace();;
+      cast<llvm::PointerType>(DestPtr->getType())->getAddressSpace();
     const llvm::Type *ValueType =
       llvm::IntegerType::get(CGF.getLLVMContext(),
                              CGF.getContext().getTypeSize(E->getType()));
@@ -816,7 +821,7 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
   case Builtin::BI__sync_bool_compare_and_swap_16: {
     llvm::Value *DestPtr = CGF.EmitScalarExpr(E->getArg(0));
     unsigned AddrSpace =
-      cast<llvm::PointerType>(DestPtr->getType())->getAddressSpace();;
+      cast<llvm::PointerType>(DestPtr->getType())->getAddressSpace();
     const llvm::Type *ValueType =
       llvm::IntegerType::get(CGF.getLLVMContext(),
         CGF.getContext().getTypeSize(E->getArg(1)->getType()));

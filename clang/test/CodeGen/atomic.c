@@ -130,6 +130,7 @@ void release_return(int *lock) {
 }
 
 
+// rdar://8461279 - Atomics with address spaces.
 // CHECK: @addrspace
 void addrspace(int  __attribute__((address_space(256))) * P) {
   __sync_bool_compare_and_swap(P, 0, 1);
@@ -142,5 +143,12 @@ void addrspace(int  __attribute__((address_space(256))) * P) {
   // CHECK: call void @llvm.memory.barrier(i1 true, i1 true, i1 true, i1 true, i1 true)
   // CHECK: call i32 @llvm.atomic.cmp.swap.i32.p256i32(i32 addrspace(256)*{{.*}}, i32 0, i32 1)
   // CHECK: call void @llvm.memory.barrier(i1 true, i1 true, i1 true, i1 true, i1 true)
+  
+  
+  __sync_xor_and_fetch(P, 123);
+  // CHECK: call void @llvm.memory.barrier(i1 true, i1 true, i1 true, i1 true, i1 true)
+  // CHECK: call i32 @llvm.atomic.load.xor.i32.p256i32(i32 addrspace(256)* {{.*}}, i32 123)
+  // CHECK: call void @llvm.memory.barrier(i1 true, i1 true, i1 true, i1 true, i1 true)
+  
 }
 
