@@ -448,7 +448,7 @@ class TestBase(unittest2.TestCase):
             # No execution required, just compare str against the golden input.
             output = str
             if trace:
-                print >> sys.stderr, "look at:", output
+                print >> sys.stderr, "looking at:", output
 
         # The heading says either "Expecting" or "Not expecting".
         if trace:
