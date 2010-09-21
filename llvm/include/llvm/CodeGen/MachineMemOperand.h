@@ -24,6 +24,17 @@ class Value;
 class FoldingSetNodeID;
 class raw_ostream;
 
+/// MachinePointerInfo - This class contains a discriminated union of
+/// information about pointers in memory operands, relating them back to LLVM IR
+/// or to virtual locations (such as frame indices) that are exposed during
+/// codegen.
+struct MachinePointerInfo {
+  const Value *V;
+  int64_t Offset;
+  MachinePointerInfo(const Value *v, int64_t offset) : V(v), Offset(offset) {}
+};
+  
+  
 //===----------------------------------------------------------------------===//
 /// MachineMemOperand - A description of a memory reference used in the backend.
 /// Instead of holding a StoreInst or LoadInst, this class holds the address
@@ -33,10 +44,9 @@ class raw_ostream;
 /// that aren't explicit in the regular LLVM IR.
 ///
 class MachineMemOperand {
-  int64_t Offset;
+  MachinePointerInfo PtrInfo;
   uint64_t Size;
-  const Value *V;
-  unsigned int Flags;
+  unsigned Flags;
 
 public:
   /// Flags values. These may be or'd together.
@@ -65,7 +75,7 @@ public:
   /// other PseudoSourceValue member functions which return objects which stand
   /// for frame/stack pointer relative references and other special references
   /// which are not representable in the high-level IR.
-  const Value *getValue() const { return V; }
+  const Value *getValue() const { return PtrInfo.V; }
 
   /// getFlags - Return the raw flags of the source value, \see MemOperandFlags.
   unsigned int getFlags() const { return Flags & ((1 << MOMaxBits) - 1); }
@@ -73,7 +83,7 @@ public:
   /// getOffset - For normal values, this is a byte offset added to the base
   /// address. For PseudoSourceValue::FPRel values, this is the FrameIndex
   /// number.
-  int64_t getOffset() const { return Offset; }
+  int64_t getOffset() const { return PtrInfo.Offset; }
 
   /// getSize - Return the size in bytes of the memory reference.
   uint64_t getSize() const { return Size; }
@@ -99,7 +109,8 @@ public:
   /// setValue - Change the SourceValue for this MachineMemOperand. This
   /// should only be used when an object is being relocated and all references
   /// to it are being updated.
-  void setValue(const Value *NewSV) { V = NewSV; }
+  void setValue(const Value *NewSV) { PtrInfo.V = NewSV; }
+  void setOffset(int64_t NewOffset) { PtrInfo.Offset = NewOffset; }
 
   /// Profile - Gather unique data for the object.
   ///

@@ -337,8 +337,9 @@ void MachineOperand::print(raw_ostream &OS, const TargetMachine *TM) const {
 
 MachineMemOperand::MachineMemOperand(const Value *v, unsigned int f,
                                      int64_t o, uint64_t s, unsigned int a)
-  : Offset(o), Size(s), V(v),
+  : PtrInfo(v, o), Size(s),
     Flags((f & ((1 << MOMaxBits) - 1)) | ((Log2_32(a) + 1) << MOMaxBits)) {
+  assert((v == 0 || isa<PointerType>(v->getType())) && "invalid pointer value");
   assert(getBaseAlignment() == a && "Alignment is not a power of 2!");
   assert((isLoad() || isStore()) && "Not a load/store!");
 }
@@ -346,9 +347,9 @@ MachineMemOperand::MachineMemOperand(const Value *v, unsigned int f,
 /// Profile - Gather unique data for the object.
 ///
 void MachineMemOperand::Profile(FoldingSetNodeID &ID) const {
-  ID.AddInteger(Offset);
+  ID.AddInteger(getOffset());
   ID.AddInteger(Size);
-  ID.AddPointer(V);
+  ID.AddPointer(getValue());
   ID.AddInteger(Flags);
 }
 
@@ -364,8 +365,7 @@ void MachineMemOperand::refineAlignment(const MachineMemOperand *MMO) {
       ((Log2_32(MMO->getBaseAlignment()) + 1) << MOMaxBits);
     // Also update the base and offset, because the new alignment may
     // not be applicable with the old ones.
-    V = MMO->getValue();
-    Offset = MMO->getOffset();
+    PtrInfo = MMO->PtrInfo;
   }
 }
 
