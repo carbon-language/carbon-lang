@@ -6582,100 +6582,91 @@ bool DAGCombiner::SimplifySelectOps(SDNode *TheSelect, SDValue LHS,
 
   // If this is a select from two identical things, try to pull the operation
   // through the select.
-  if (LHS.getOpcode() == RHS.getOpcode() && LHS.hasOneUse() && RHS.hasOneUse()){
-    // If this is a load and the token chain is identical, replace the select
-    // of two loads with a load through a select of the address to load from.
-    // This triggers in things like "select bool X, 10.0, 123.0" after the FP
-    // constants have been dropped into the constant pool.
-    if (LHS.getOpcode() == ISD::LOAD &&
+  if (LHS.getOpcode() != RHS.getOpcode() ||
+      !LHS.hasOneUse() || !RHS.hasOneUse())
+    return false;
+  
+  // If this is a load and the token chain is identical, replace the select
+  // of two loads with a load through a select of the address to load from.
+  // This triggers in things like "select bool X, 10.0, 123.0" after the FP
+  // constants have been dropped into the constant pool.
+  if (LHS.getOpcode() == ISD::LOAD) {
+    LoadSDNode *LLD = cast<LoadSDNode>(LHS);
+    LoadSDNode *RLD = cast<LoadSDNode>(RHS);
+    
+    // Token chains must be identical.
+    if (LHS.getOperand(0) != RHS.getOperand(0) ||
         // Do not let this transformation reduce the number of volatile loads.
-        !cast<LoadSDNode>(LHS)->isVolatile() &&
-        !cast<LoadSDNode>(RHS)->isVolatile() &&
-        // Token chains must be identical.
-        LHS.getOperand(0) == RHS.getOperand(0)) {
-      LoadSDNode *LLD = cast<LoadSDNode>(LHS);
-      LoadSDNode *RLD = cast<LoadSDNode>(RHS);
-
-      // If this is an EXTLOAD, the VT's must match.
-      if (LLD->getMemoryVT() == RLD->getMemoryVT()) {
+        LLD->isVolatile() || RLD->isVolatile() ||
+        // If this is an EXTLOAD, the VT's must match.
+        LLD->getMemoryVT() != RLD->getMemoryVT() ||
         // FIXME: this discards src value information.  This is
         // over-conservative. It would be beneficial to be able to remember
         // both potential memory locations.  Since we are discarding
         // src value info, don't do the transformation if the memory
         // locations are not in the default address space.
-        unsigned LLDAddrSpace = 0, RLDAddrSpace = 0;
-        if (const Value *LLDVal = LLD->getMemOperand()->getValue()) {
-          if (const PointerType *PT = dyn_cast<PointerType>(LLDVal->getType()))
-            LLDAddrSpace = PT->getAddressSpace();
-        }
-        if (const Value *RLDVal = RLD->getMemOperand()->getValue()) {
-          if (const PointerType *PT = dyn_cast<PointerType>(RLDVal->getType()))
-            RLDAddrSpace = PT->getAddressSpace();
-        }
-        SDValue Addr;
-        if (LLDAddrSpace == 0 && RLDAddrSpace == 0) {
-          if (TheSelect->getOpcode() == ISD::SELECT) {
-            // Check that the condition doesn't reach either load.  If so, folding
-            // this will induce a cycle into the DAG.
-            if ((!LLD->hasAnyUseOfValue(1) ||
-                 !LLD->isPredecessorOf(TheSelect->getOperand(0).getNode())) &&
-                (!RLD->hasAnyUseOfValue(1) ||
-                 !RLD->isPredecessorOf(TheSelect->getOperand(0).getNode()))) {
-              Addr = DAG.getNode(ISD::SELECT, TheSelect->getDebugLoc(),
-                                 LLD->getBasePtr().getValueType(),
-                                 TheSelect->getOperand(0), LLD->getBasePtr(),
-                                 RLD->getBasePtr());
-            }
-          } else {
-            // Check that the condition doesn't reach either load.  If so, folding
-            // this will induce a cycle into the DAG.
-            if ((!LLD->hasAnyUseOfValue(1) ||
-                 (!LLD->isPredecessorOf(TheSelect->getOperand(0).getNode()) &&
-                  !LLD->isPredecessorOf(TheSelect->getOperand(1).getNode()))) &&
-                (!RLD->hasAnyUseOfValue(1) ||
-                 (!RLD->isPredecessorOf(TheSelect->getOperand(0).getNode()) &&
-                  !RLD->isPredecessorOf(TheSelect->getOperand(1).getNode())))) {
-              Addr = DAG.getNode(ISD::SELECT_CC, TheSelect->getDebugLoc(),
-                                 LLD->getBasePtr().getValueType(),
-                                 TheSelect->getOperand(0),
-                                 TheSelect->getOperand(1),
-                                 LLD->getBasePtr(), RLD->getBasePtr(),
-                                 TheSelect->getOperand(4));
-            }
-          }
-        }
-
-        if (Addr.getNode()) {
-          SDValue Load;
-          if (LLD->getExtensionType() == ISD::NON_EXTLOAD) {
-            Load = DAG.getLoad(TheSelect->getValueType(0),
-                               TheSelect->getDebugLoc(),
-                               LLD->getChain(),
-                               Addr, 0, 0,
-                               LLD->isVolatile(),
-                               LLD->isNonTemporal(),
-                               LLD->getAlignment());
-          } else {
-            Load = DAG.getExtLoad(LLD->getExtensionType(),
-                                  TheSelect->getValueType(0),
-                                  TheSelect->getDebugLoc(),
-                                  LLD->getChain(), Addr, 0, 0,
-                                  LLD->getMemoryVT(),
-                                  LLD->isVolatile(),
-                                  LLD->isNonTemporal(),
-                                  LLD->getAlignment());
-          }
-
-          // Users of the select now use the result of the load.
-          CombineTo(TheSelect, Load);
-
-          // Users of the old loads now use the new load's chain.  We know the
-          // old-load value is dead now.
-          CombineTo(LHS.getNode(), Load.getValue(0), Load.getValue(1));
-          CombineTo(RHS.getNode(), Load.getValue(0), Load.getValue(1));
-          return true;
-        }
+        LLD->getPointerInfo().getAddrSpace() != 0 ||
+        RLD->getPointerInfo().getAddrSpace() != 0)
+      return false;
+        
+    SDValue Addr;
+    if (TheSelect->getOpcode() == ISD::SELECT) {
+      // Check that the condition doesn't reach either load.  If so, folding
+      // this will induce a cycle into the DAG.
+      if ((!LLD->hasAnyUseOfValue(1) ||
+           !LLD->isPredecessorOf(TheSelect->getOperand(0).getNode())) &&
+          (!RLD->hasAnyUseOfValue(1) ||
+           !RLD->isPredecessorOf(TheSelect->getOperand(0).getNode()))) {
+        Addr = DAG.getNode(ISD::SELECT, TheSelect->getDebugLoc(),
+                           LLD->getBasePtr().getValueType(),
+                           TheSelect->getOperand(0), LLD->getBasePtr(),
+                           RLD->getBasePtr());
       }
+    } else {  // Otherwise SELECT_CC
+      // Check that the condition doesn't reach either load.  If so, folding
+      // this will induce a cycle into the DAG.
+      if ((!LLD->hasAnyUseOfValue(1) ||
+           (!LLD->isPredecessorOf(TheSelect->getOperand(0).getNode()) &&
+            !LLD->isPredecessorOf(TheSelect->getOperand(1).getNode()))) &&
+          (!RLD->hasAnyUseOfValue(1) ||
+           (!RLD->isPredecessorOf(TheSelect->getOperand(0).getNode()) &&
+            !RLD->isPredecessorOf(TheSelect->getOperand(1).getNode())))) {
+        Addr = DAG.getNode(ISD::SELECT_CC, TheSelect->getDebugLoc(),
+                           LLD->getBasePtr().getValueType(),
+                           TheSelect->getOperand(0),
+                           TheSelect->getOperand(1),
+                           LLD->getBasePtr(), RLD->getBasePtr(),
+                           TheSelect->getOperand(4));
+      }
+    }
+
+    if (Addr.getNode()) {
+      SDValue Load;
+      if (LLD->getExtensionType() == ISD::NON_EXTLOAD) {
+        Load = DAG.getLoad(TheSelect->getValueType(0),
+                           TheSelect->getDebugLoc(),
+                           // FIXME: Discards pointer info.
+                           LLD->getChain(), Addr, MachinePointerInfo(),
+                           LLD->isVolatile(), LLD->isNonTemporal(),
+                           LLD->getAlignment());
+      } else {
+        Load = DAG.getExtLoad(LLD->getExtensionType(),
+                              TheSelect->getValueType(0),
+                              TheSelect->getDebugLoc(),
+                              // FIXME: Discards pointer info.
+                              LLD->getChain(), Addr, MachinePointerInfo(),
+                              LLD->getMemoryVT(), LLD->isVolatile(),
+                              LLD->isNonTemporal(), LLD->getAlignment());
+      }
+
+      // Users of the select now use the result of the load.
+      CombineTo(TheSelect, Load);
+
+      // Users of the old loads now use the new load's chain.  We know the
+      // old-load value is dead now.
+      CombineTo(LHS.getNode(), Load.getValue(0), Load.getValue(1));
+      CombineTo(RHS.getNode(), Load.getValue(0), Load.getValue(1));
+      return true;
     }
   }
 
