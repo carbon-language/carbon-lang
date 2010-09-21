@@ -30,20 +30,18 @@
 #include <algorithm>
 using namespace llvm;
 
-// CompEnd - Compare LiveRange end to Pos.
+// CompEnd - Compare LiveRange ends.
 namespace {
 struct CompEnd {
-  bool operator()(SlotIndex Pos, const LiveRange &LR) const {
-    return Pos < LR.end;
-  }
-  bool operator()(const LiveRange &LR, SlotIndex Pos) const {
-    return LR.end < Pos;
+  bool operator()(const LiveRange &A, const LiveRange &B) const {
+    return A.end < B.end;
   }
 };
 }
 
 LiveInterval::iterator LiveInterval::find(SlotIndex Pos) {
-  return std::upper_bound(begin(), end(), Pos, CompEnd());
+  return std::upper_bound(begin(), end(), LiveRange(SlotIndex(), Pos, 0),
+                          CompEnd());
 }
 
 /// killedInRange - Return true if the interval has kills in [Start,End).
