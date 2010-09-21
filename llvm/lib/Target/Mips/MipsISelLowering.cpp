@@ -605,7 +605,8 @@ SDValue MipsTargetLowering::LowerVASTART(SDValue Op, SelectionDAG &DAG) const {
   // vastart just stores the address of the VarArgsFrameIndex slot into the
   // memory location argument.
   const Value *SV = cast<SrcValueSDNode>(Op.getOperand(2))->getValue();
-  return DAG.getStore(Op.getOperand(0), dl, FI, Op.getOperand(1), SV, 0,
+  return DAG.getStore(Op.getOperand(0), dl, FI, Op.getOperand(1),
+                      MachinePointerInfo(SV),
                       false, false, 0);
 }
 
@@ -865,7 +866,8 @@ MipsTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
 
     // emit ISD::STORE whichs stores the 
     // parameter value to a stack Location
-    MemOpChains.push_back(DAG.getStore(Chain, dl, Arg, PtrOff, NULL, 0,
+    MemOpChains.push_back(DAG.getStore(Chain, dl, Arg, PtrOff,
+                                       MachinePointerInfo(),
                                        false, false, 0));
   }
 
@@ -1144,7 +1146,8 @@ MipsTargetLowering::LowerFormalArguments(SDValue Chain,
       int FI = MFI->CreateFixedObject(4, 0, true);
       MipsFI->recordStoreVarArgsFI(FI, -(4+(StackLoc*4)));
       SDValue PtrOff = DAG.getFrameIndex(FI, getPointerTy());
-      OutChains.push_back(DAG.getStore(Chain, dl, ArgValue, PtrOff, NULL, 0,
+      OutChains.push_back(DAG.getStore(Chain, dl, ArgValue, PtrOff,
+                                       MachinePointerInfo(),
                                        false, false, 0));
 
       // Record the frame index of the first variable argument

@@ -1854,8 +1854,7 @@ X86TargetLowering::LowerMemOpCallTo(SDValue Chain,
   if (Flags.isByVal()) {
     return CreateCopyOfByValArgument(Arg, PtrOff, Chain, Flags, DAG, dl);
   }
-  return DAG.getStore(Chain, dl, Arg, PtrOff,
-                      PseudoSourceValue::getStack(), LocMemOffset,
+  return DAG.getStore(Chain, dl, Arg, PtrOff, MachinePointerInfo(),
                       false, false, 0);
 }
 
@@ -6544,16 +6543,19 @@ SDValue X86TargetLowering::LowerUINT_TO_FP(SDValue Op,
     SDValue OffsetSlot = DAG.getNode(ISD::ADD, dl,
                                      getPointerTy(), StackSlot, WordOff);
     SDValue Store1 = DAG.getStore(DAG.getEntryNode(), dl, Op.getOperand(0),
-                                  StackSlot, NULL, 0, false, false, 0);
+                                  StackSlot, MachinePointerInfo(),
+                                  false, false, 0);
     SDValue Store2 = DAG.getStore(Store1, dl, DAG.getConstant(0, MVT::i32),
-                                  OffsetSlot, NULL, 0, false, false, 0);
+                                  OffsetSlot, MachinePointerInfo(),
+                                  false, false, 0);
     SDValue Fild = BuildFILD(Op, MVT::i64, Store2, StackSlot, DAG);
     return Fild;
   }
 
   assert(SrcVT == MVT::i64 && "Unexpected type in UINT_TO_FP");
   SDValue Store = DAG.getStore(DAG.getEntryNode(), dl, Op.getOperand(0),
-                                StackSlot, NULL, 0, false, false, 0);
+                                StackSlot, MachinePointerInfo(),
+                               false, false, 0);
   // For i64 source, we need to add the appropriate power of 2 if the input
   // was negative.  This is the same as the optimization in
   // DAGTypeLegalizer::ExpandIntOp_UNIT_TO_FP, and for it to be safe here,
@@ -7539,15 +7541,15 @@ SDValue X86TargetLowering::LowerVASTART(SDValue Op, SelectionDAG &DAG) const {
   X86MachineFunctionInfo *FuncInfo = MF.getInfo<X86MachineFunctionInfo>();
 
   const Value *SV = cast<SrcValueSDNode>(Op.getOperand(2))->getValue();
-  DebugLoc dl = Op.getDebugLoc();
+  DebugLoc DL = Op.getDebugLoc();
 
   if (!Subtarget->is64Bit()) {
     // vastart just stores the address of the VarArgsFrameIndex slot into the
     // memory location argument.
     SDValue FR = DAG.getFrameIndex(FuncInfo->getVarArgsFrameIndex(),
                                    getPointerTy());
-    return DAG.getStore(Op.getOperand(0), dl, FR, Op.getOperand(1), SV, 0,
-                        false, false, 0);
+    return DAG.getStore(Op.getOperand(0), DL, FR, Op.getOperand(1),
+                        MachinePointerInfo(SV), false, false, 0);
   }
 
   // __va_list_tag:
@@ -7558,39 +7560,40 @@ SDValue X86TargetLowering::LowerVASTART(SDValue Op, SelectionDAG &DAG) const {
   SmallVector<SDValue, 8> MemOps;
   SDValue FIN = Op.getOperand(1);
   // Store gp_offset
-  SDValue Store = DAG.getStore(Op.getOperand(0), dl,
+  SDValue Store = DAG.getStore(Op.getOperand(0), DL,
                                DAG.getConstant(FuncInfo->getVarArgsGPOffset(),
                                                MVT::i32),
-                               FIN, SV, 0, false, false, 0);
+                               FIN, MachinePointerInfo(SV), false, false, 0);
   MemOps.push_back(Store);
 
   // Store fp_offset
-  FIN = DAG.getNode(ISD::ADD, dl, getPointerTy(),
+  FIN = DAG.getNode(ISD::ADD, DL, getPointerTy(),
                     FIN, DAG.getIntPtrConstant(4));
-  Store = DAG.getStore(Op.getOperand(0), dl,
+  Store = DAG.getStore(Op.getOperand(0), DL,
                        DAG.getConstant(FuncInfo->getVarArgsFPOffset(),
                                        MVT::i32),
-                       FIN, SV, 4, false, false, 0);
+                       FIN, MachinePointerInfo(SV, 4), false, false, 0);
   MemOps.push_back(Store);
 
   // Store ptr to overflow_arg_area
-  FIN = DAG.getNode(ISD::ADD, dl, getPointerTy(),
+  FIN = DAG.getNode(ISD::ADD, DL, getPointerTy(),
                     FIN, DAG.getIntPtrConstant(4));
   SDValue OVFIN = DAG.getFrameIndex(FuncInfo->getVarArgsFrameIndex(),
                                     getPointerTy());
-  Store = DAG.getStore(Op.getOperand(0), dl, OVFIN, FIN, SV, 8,
+  Store = DAG.getStore(Op.getOperand(0), DL, OVFIN, FIN,
+                       MachinePointerInfo(SV, 8),
                        false, false, 0);
   MemOps.push_back(Store);
 
   // Store ptr to reg_save_area.
-  FIN = DAG.getNode(ISD::ADD, dl, getPointerTy(),
+  FIN = DAG.getNode(ISD::ADD, DL, getPointerTy(),
                     FIN, DAG.getIntPtrConstant(8));
   SDValue RSFIN = DAG.getFrameIndex(FuncInfo->getRegSaveFrameIndex(),
                                     getPointerTy());
-  Store = DAG.getStore(Op.getOperand(0), dl, RSFIN, FIN, SV, 16,
-                       false, false, 0);
+  Store = DAG.getStore(Op.getOperand(0), DL, RSFIN, FIN,
+                       MachinePointerInfo(SV, 16), false, false, 0);
   MemOps.push_back(Store);
-  return DAG.getNode(ISD::TokenFactor, dl, MVT::Other,
+  return DAG.getNode(ISD::TokenFactor, DL, MVT::Other,
                      &MemOps[0], MemOps.size());
 }
 
@@ -7956,7 +7959,8 @@ SDValue X86TargetLowering::LowerEH_RETURN(SDValue Op, SelectionDAG &DAG) const {
   SDValue StoreAddr = DAG.getNode(ISD::ADD, dl, getPointerTy(), Frame,
                                   DAG.getIntPtrConstant(TD->getPointerSize()));
   StoreAddr = DAG.getNode(ISD::ADD, dl, getPointerTy(), StoreAddr, Offset);
-  Chain = DAG.getStore(Chain, dl, Handler, StoreAddr, NULL, 0, false, false, 0);
+  Chain = DAG.getStore(Chain, dl, Handler, StoreAddr, MachinePointerInfo(),
+                       false, false, 0);
   Chain = DAG.getCopyToReg(Chain, dl, StoreAddrReg, StoreAddr);
   MF.getRegInfo().addLiveOut(StoreAddrReg);
 
@@ -7991,11 +7995,13 @@ SDValue X86TargetLowering::LowerTRAMPOLINE(SDValue Op,
     unsigned OpCode = ((MOV64ri | N86R11) << 8) | REX_WB; // movabsq r11
     SDValue Addr = Trmp;
     OutChains[0] = DAG.getStore(Root, dl, DAG.getConstant(OpCode, MVT::i16),
-                                Addr, TrmpAddr, 0, false, false, 0);
+                                Addr, MachinePointerInfo(TrmpAddr),
+                                false, false, 0);
 
     Addr = DAG.getNode(ISD::ADD, dl, MVT::i64, Trmp,
                        DAG.getConstant(2, MVT::i64));
-    OutChains[1] = DAG.getStore(Root, dl, FPtr, Addr, TrmpAddr, 2,
+    OutChains[1] = DAG.getStore(Root, dl, FPtr, Addr,
+                                MachinePointerInfo(TrmpAddr, 2),
                                 false, false, 2);
 
     // Load the 'nest' parameter value into R10.
@@ -8004,11 +8010,13 @@ SDValue X86TargetLowering::LowerTRAMPOLINE(SDValue Op,
     Addr = DAG.getNode(ISD::ADD, dl, MVT::i64, Trmp,
                        DAG.getConstant(10, MVT::i64));
     OutChains[2] = DAG.getStore(Root, dl, DAG.getConstant(OpCode, MVT::i16),
-                                Addr, TrmpAddr, 10, false, false, 0);
+                                Addr, MachinePointerInfo(TrmpAddr, 10),
+                                false, false, 0);
 
     Addr = DAG.getNode(ISD::ADD, dl, MVT::i64, Trmp,
                        DAG.getConstant(12, MVT::i64));
-    OutChains[3] = DAG.getStore(Root, dl, Nest, Addr, TrmpAddr, 12,
+    OutChains[3] = DAG.getStore(Root, dl, Nest, Addr,
+                                MachinePointerInfo(TrmpAddr, 12),
                                 false, false, 2);
 
     // Jump to the nested function.
@@ -8016,13 +8024,15 @@ SDValue X86TargetLowering::LowerTRAMPOLINE(SDValue Op,
     Addr = DAG.getNode(ISD::ADD, dl, MVT::i64, Trmp,
                        DAG.getConstant(20, MVT::i64));
     OutChains[4] = DAG.getStore(Root, dl, DAG.getConstant(OpCode, MVT::i16),
-                                Addr, TrmpAddr, 20, false, false, 0);
+                                Addr, MachinePointerInfo(TrmpAddr, 20),
+                                false, false, 0);
 
     unsigned char ModRM = N86R11 | (4 << 3) | (3 << 6); // ...r11
     Addr = DAG.getNode(ISD::ADD, dl, MVT::i64, Trmp,
                        DAG.getConstant(22, MVT::i64));
     OutChains[5] = DAG.getStore(Root, dl, DAG.getConstant(ModRM, MVT::i8), Addr,
-                                TrmpAddr, 22, false, false, 0);
+                                MachinePointerInfo(TrmpAddr, 22),
+                                false, false, 0);
 
     SDValue Ops[] =
       { Trmp, DAG.getNode(ISD::TokenFactor, dl, MVT::Other, OutChains, 6) };
@@ -8084,22 +8094,26 @@ SDValue X86TargetLowering::LowerTRAMPOLINE(SDValue Op,
     const unsigned char N86Reg = RegInfo->getX86RegNum(NestReg);
     OutChains[0] = DAG.getStore(Root, dl,
                                 DAG.getConstant(MOV32ri|N86Reg, MVT::i8),
-                                Trmp, TrmpAddr, 0, false, false, 0);
+                                Trmp, MachinePointerInfo(TrmpAddr),
+                                false, false, 0);
 
     Addr = DAG.getNode(ISD::ADD, dl, MVT::i32, Trmp,
                        DAG.getConstant(1, MVT::i32));
-    OutChains[1] = DAG.getStore(Root, dl, Nest, Addr, TrmpAddr, 1,
+    OutChains[1] = DAG.getStore(Root, dl, Nest, Addr,
+                                MachinePointerInfo(TrmpAddr, 1),
                                 false, false, 1);
 
     const unsigned char JMP = 0xE9; // jmp <32bit dst> opcode.
     Addr = DAG.getNode(ISD::ADD, dl, MVT::i32, Trmp,
                        DAG.getConstant(5, MVT::i32));
     OutChains[2] = DAG.getStore(Root, dl, DAG.getConstant(JMP, MVT::i8), Addr,
-                                TrmpAddr, 5, false, false, 1);
+                                MachinePointerInfo(TrmpAddr, 5),
+                                false, false, 1);
 
     Addr = DAG.getNode(ISD::ADD, dl, MVT::i32, Trmp,
                        DAG.getConstant(6, MVT::i32));
-    OutChains[3] = DAG.getStore(Root, dl, Disp, Addr, TrmpAddr, 6,
+    OutChains[3] = DAG.getStore(Root, dl, Disp, Addr,
+                                MachinePointerInfo(TrmpAddr, 6),
                                 false, false, 1);
 
     SDValue Ops[] =
@@ -10050,8 +10064,8 @@ static SDValue PerformEXTRACT_VECTOR_ELTCombine(SDNode *N, SelectionDAG &DAG,
 
   // Store the value to a temporary stack slot.
   SDValue StackPtr = DAG.CreateStackTemporary(InputVector.getValueType());
-  SDValue Ch = DAG.getStore(DAG.getEntryNode(), dl, InputVector, StackPtr, NULL,
-                            0, false, false, 0);
+  SDValue Ch = DAG.getStore(DAG.getEntryNode(), dl, InputVector, StackPtr,
+                            MachinePointerInfo(), false, false, 0);
 
   // Replace each use (extract) with a load of the appropriate element.
   for (SmallVectorImpl<SDNode *>::iterator UI = Uses.begin(),
@@ -10816,12 +10830,11 @@ static SDValue PerformSTORECombine(SDNode *N, SelectionDAG &DAG,
                          DAG.getConstant(4, MVT::i32));
 
     SDValue LoSt = DAG.getStore(NewChain, StDL, LoLd, LoAddr,
-                                St->getSrcValue(), St->getSrcValueOffset(),
+                                St->getPointerInfo(),
                                 St->isVolatile(), St->isNonTemporal(),
                                 St->getAlignment());
     SDValue HiSt = DAG.getStore(NewChain, StDL, HiLd, HiAddr,
-                                St->getSrcValue(),
-                                St->getSrcValueOffset() + 4,
+                                St->getPointerInfo().getWithOffset(4),
                                 St->isVolatile(),
                                 St->isNonTemporal(),
                                 MinAlign(St->getAlignment(), 4));
