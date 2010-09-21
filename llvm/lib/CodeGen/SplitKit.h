@@ -166,10 +166,6 @@ class LiveIntervalMap {
   // Idx. Return the found VNInfo, or NULL.
   VNInfo *extendTo(MachineBasicBlock *MBB, SlotIndex Idx);
 
-  // addSimpleRange - Add a simple range from parentli_ to li_.
-  // ParentVNI must be live in the [Start;End) interval.
-  void addSimpleRange(SlotIndex Start, SlotIndex End, const VNInfo *ParentVNI);
-
 public:
   LiveIntervalMap(LiveIntervals &lis,
                   const LiveInterval &parentli)
@@ -194,7 +190,23 @@ public:
   /// If ParentVNI has been defined by defValue one or more times, a value that
   /// dominates Idx will be returned. This may require creating extra phi-def
   /// values and adding live ranges to li_.
-  VNInfo *mapValue(const VNInfo *ParentVNI, SlotIndex Idx);
+  /// If simple is not NULL, *simple will indicate if ParentVNI is a simply
+  /// mapped value.
+  VNInfo *mapValue(const VNInfo *ParentVNI, SlotIndex Idx, bool *simple = 0);
+
+  /// isMapped - Return true is ParentVNI is a known mapped value. It may be a
+  /// simple 1-1 mapping or a complex mapping to later defs.
+  bool isMapped(const VNInfo *ParentVNI) const {
+    return valueMap_.count(ParentVNI);
+  }
+
+  /// isComplexMapped - Return true if ParentVNI has received new definitions
+  /// with defValue.
+  bool isComplexMapped(const VNInfo *ParentVNI) const;
+
+  // addSimpleRange - Add a simple range from parentli_ to li_.
+  // ParentVNI must be live in the [Start;End) interval.
+  void addSimpleRange(SlotIndex Start, SlotIndex End, const VNInfo *ParentVNI);
 
   /// addRange - Add live ranges to li_ where [Start;End) intersects parentli_.
   /// All needed values whose def is not inside [Start;End) must be defined
@@ -251,11 +263,16 @@ class SplitEditor {
   /// others from before we got it.
   unsigned firstInterval;
 
-  /// Insert a COPY instruction curli -> li. Allocate a new value from li
-  /// defined by the COPY
-  VNInfo *insertCopy(LiveIntervalMap &LI,
-                     MachineBasicBlock &MBB,
-                     MachineBasicBlock::iterator I);
+  /// intervalsLiveAt - Return true if any member of intervals_ is live at Idx.
+  bool intervalsLiveAt(SlotIndex Idx) const;
+
+  /// Values in curli whose live range has been truncated when entering an open
+  /// li.
+  SmallPtrSet<const VNInfo*, 8> truncatedValues;
+
+  /// addTruncSimpleRange - Add the given simple range to dupli_ after
+  /// truncating any overlap with intervals_.
+  void addTruncSimpleRange(SlotIndex Start, SlotIndex End, VNInfo *VNI);
 
 public:
   /// Create a new SplitEditor for editing the LiveInterval analyzed by SA.
