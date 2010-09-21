@@ -91,6 +91,8 @@ namespace {
       return "ARM Assembly Printer";
     }
 
+    void EmitJumpTable(const MachineInstr *MI);
+    void EmitJump2Table(const MachineInstr *MI);
     void printInstructionThroughMCStreamer(const MachineInstr *MI);
 
 
@@ -1383,6 +1385,59 @@ static MCSymbol *getPICLabel(const char *Prefix, unsigned FunctionNumber,
   return Label;
 }
 
+void ARMAsmPrinter::EmitJump2Table(const MachineInstr *MI) {
+  unsigned Opcode = MI->getOpcode();
+  int OpNum = (Opcode == ARM::t2BR_JT) ? 2 : 1;
+  const MachineOperand &MO1 = MI->getOperand(OpNum);
+  const MachineOperand &MO2 = MI->getOperand(OpNum+1); // Unique Id
+  unsigned JTI = MO1.getIndex();
+
+  // Emit a label for the jump table.
+  MCSymbol *JTISymbol = GetARMJTIPICJumpTableLabel2(JTI, MO2.getImm());
+  OutStreamer.EmitLabel(JTISymbol);
+
+  // Emit each entry of the table.
+  const MachineJumpTableInfo *MJTI = MF->getJumpTableInfo();
+  const std::vector<MachineJumpTableEntry> &JT = MJTI->getJumpTables();
+  const std::vector<MachineBasicBlock*> &JTBBs = JT[JTI].MBBs;
+  bool ByteOffset = false, HalfWordOffset = false;
+  if (MI->getOpcode() == ARM::t2TBB)
+    ByteOffset = true;
+  else if (MI->getOpcode() == ARM::t2TBH)
+    HalfWordOffset = true;
+
+  for (unsigned i = 0, e = JTBBs.size(); i != e; ++i) {
+    MachineBasicBlock *MBB = JTBBs[i];
+    // If this isn't a TBB or TBH, the entries are direct branch instructions.
+    if (!ByteOffset && !HalfWordOffset) {
+      MCInst BrInst;
+      BrInst.setOpcode(ARM::t2B);
+      BrInst.addOperand(MCOperand::CreateExpr(MCSymbolRefExpr::Create(
+            MBB->getSymbol(), OutContext)));
+      OutStreamer.EmitInstruction(BrInst);
+      continue;
+    }
+    // Otherwise it's an offset from the dispatch instruction. Construct an
+    // MCExpr for the entry.
+    assert(0 && "FIXME: TB[BH] jump table!!");
+
+#if 0
+    if (ByteOffset)
+      O << MAI->getData8bitsDirective();
+    else if (HalfWordOffset)
+      O << MAI->getData16bitsDirective();
+
+    if (ByteOffset || HalfWordOffset)
+      O << '(' << *MBB->getSymbol() << "-" << *JTISymbol << ")/2";
+    else
+      O << "\tb.w " << *MBB->getSymbol();
+
+    if (i != e-1)
+      O << '\n';
+#endif
+  }
+}
+
 void ARMAsmPrinter::printInstructionThroughMCStreamer(const MachineInstr *MI) {
   ARMMCInstLower MCInstLowering(OutContext, *Mang, *this);
   switch (MI->getOpcode()) {
@@ -1592,6 +1647,23 @@ void ARMAsmPrinter::printInstructionThroughMCStreamer(const MachineInstr *MI) {
 
     return;
   }
+  case ARM::t2TBB:
+  case ARM::t2TBH:
+  case ARM::t2BR_JT: {
+    // Lower and emit the instruction itself, then the jump table following it.
+    MCInst TmpInst;
+    MCInstLowering.Lower(MI, TmpInst);
+    OutStreamer.EmitInstruction(TmpInst);
+
+    EmitJump2Table(MI);
+    return;
+  }
+  case ARM::tBR_JTr:
+  case ARM::BR_JTr:
+  case ARM::BR_JTm:
+  case ARM::BR_JTadd:
+    abort();
+    break;
   }
 
   MCInst TmpInst;
