@@ -1093,8 +1093,33 @@ ClangASTContext::SetBaseClassesForClassType (void *class_clang_type, CXXBaseSpec
                 CXXRecordDecl *cxx_record_decl = dyn_cast<CXXRecordDecl>(record_type->getDecl());
                 if (cxx_record_decl)
                 {
-                    //cxx_record_decl->setEmpty (false);
                     cxx_record_decl->setBases(base_classes, num_base_classes);
+                    
+                    if (cxx_record_decl->isEmpty())
+                    {
+                        // set empty to false if any bases are virtual, or not empty.
+                    
+                        CXXRecordDecl::base_class_const_iterator base_class, base_class_end;
+                        for (base_class = cxx_record_decl->bases_begin(), base_class_end = cxx_record_decl->bases_end();
+                             base_class != base_class_end;
+                             ++base_class)
+                        {
+                            if (base_class->isVirtual())
+                            {
+                                cxx_record_decl->setEmpty (false);
+                                break;
+                            }
+                            else
+                            {
+                                 const CXXRecordDecl *base_class_decl = cast<CXXRecordDecl>(base_class->getType()->getAs<RecordType>()->getDecl());
+                                 if (!base_class_decl->isEmpty())
+                                 {
+                                    cxx_record_decl->setEmpty (false);
+                                    break;
+                                 }
+                            }
+                        }
+                    }
                     return true;
                 }
             }
