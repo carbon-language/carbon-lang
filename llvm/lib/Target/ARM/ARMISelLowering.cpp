@@ -4194,10 +4194,6 @@ static SDValue PerformMULCombine(SDNode *N,
   if (Subtarget->isThumb1Only())
     return SDValue();
 
-  if (DAG.getMachineFunction().
-      getFunction()->hasFnAttr(Attribute::OptimizeForSize))
-    return SDValue();
-
   if (DCI.isBeforeLegalize() || DCI.isCalledByLegalizer())
     return SDValue();
 
