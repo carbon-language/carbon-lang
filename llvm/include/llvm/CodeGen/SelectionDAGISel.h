@@ -254,7 +254,8 @@ public:
     return 0;
   }
   
-  virtual bool CheckComplexPattern(SDNode *Root, SDValue N, unsigned PatternNo,
+  virtual bool CheckComplexPattern(SDNode *Root, SDNode *Parent, SDValue N,
+                                   unsigned PatternNo,
                                    SmallVectorImpl<SDValue> &Result) {
     assert(0 && "Tblgen should generate the implementation of this!");
     return false;

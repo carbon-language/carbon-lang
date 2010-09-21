@@ -2086,7 +2086,11 @@ SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
       unsigned CPNum = MatcherTable[MatcherIndex++];
       unsigned RecNo = MatcherTable[MatcherIndex++];
       assert(RecNo < RecordedNodes.size() && "Invalid CheckComplexPat");
-      if (!CheckComplexPattern(NodeToMatch, RecordedNodes[RecNo], CPNum,
+      SDNode *Parent = 0;
+      if (NodeStack.size() > 1)
+        Parent = NodeStack[NodeStack.size()-2].getNode();
+      
+      if (!CheckComplexPattern(NodeToMatch, Parent, RecordedNodes[RecNo], CPNum,
                                RecordedNodes))
         break;
       continue;
