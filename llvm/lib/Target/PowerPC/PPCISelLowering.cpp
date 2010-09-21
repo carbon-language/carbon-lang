@@ -1406,15 +1406,17 @@ SDValue PPCTargetLowering::LowerVASTART(SDValue Op, SelectionDAG &DAG,
 
   // Store first byte : number of int regs
   SDValue firstStore = DAG.getTruncStore(Op.getOperand(0), dl, ArgGPR,
-                                         Op.getOperand(1), SV, 0, MVT::i8,
-                                         false, false, 0);
+                                         Op.getOperand(1),
+                                         MachinePointerInfo(SV),
+                                         MVT::i8, false, false, 0);
   uint64_t nextOffset = FPROffset;
   SDValue nextPtr = DAG.getNode(ISD::ADD, dl, PtrVT, Op.getOperand(1),
                                   ConstFPROffset);
 
   // Store second byte : number of float regs
   SDValue secondStore =
-    DAG.getTruncStore(firstStore, dl, ArgFPR, nextPtr, SV, nextOffset, MVT::i8,
+    DAG.getTruncStore(firstStore, dl, ArgFPR, nextPtr,
+                      MachinePointerInfo(SV, nextOffset), MVT::i8,
                       false, false, 0);
   nextOffset += StackOffset;
   nextPtr = DAG.getNode(ISD::ADD, dl, PtrVT, nextPtr, ConstStackOffset);
@@ -1919,7 +1921,7 @@ PPCTargetLowering::LowerFormalArguments_Darwin(
           unsigned VReg = MF.addLiveIn(GPR[GPR_idx], &PPC::GPRCRegClass);
           SDValue Val = DAG.getCopyFromReg(Chain, dl, VReg, PtrVT);
           SDValue Store = DAG.getTruncStore(Val.getValue(1), dl, Val, FIN,
-                                            NULL, 0,
+                                            MachinePointerInfo(),
                                             ObjSize==1 ? MVT::i8 : MVT::i16,
                                             false, false, 0);
           MemOps.push_back(Store);

@@ -512,18 +512,17 @@ LowerSTORE(SDValue Op, SelectionDAG &DAG) const
   DebugLoc dl = Op.getDebugLoc();
   
   if (ST->getAlignment() == 2) {
-    int SVOffset = ST->getSrcValueOffset();
     SDValue Low = Value;
     SDValue High = DAG.getNode(ISD::SRL, dl, MVT::i32, Value,
                                       DAG.getConstant(16, MVT::i32));
     SDValue StoreLow = DAG.getTruncStore(Chain, dl, Low, BasePtr,
-                                         ST->getSrcValue(), SVOffset, MVT::i16,
+                                         ST->getPointerInfo(), MVT::i16,
                                          ST->isVolatile(), ST->isNonTemporal(),
                                          2);
     SDValue HighAddr = DAG.getNode(ISD::ADD, dl, MVT::i32, BasePtr,
                                    DAG.getConstant(2, MVT::i32));
     SDValue StoreHigh = DAG.getTruncStore(Chain, dl, High, HighAddr,
-                                          ST->getSrcValue(), SVOffset + 2,
+                                          ST->getPointerInfo().getWithOffset(2),
                                           MVT::i16, ST->isVolatile(),
                                           ST->isNonTemporal(), 2);
     return DAG.getNode(ISD::TokenFactor, dl, MVT::Other, StoreLow, StoreHigh);

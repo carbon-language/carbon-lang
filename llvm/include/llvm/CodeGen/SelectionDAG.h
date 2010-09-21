@@ -663,10 +663,6 @@ public:
                         bool isNonTemporal, bool isVolatile,
                         unsigned Alignment);
   SDValue getTruncStore(SDValue Chain, DebugLoc dl, SDValue Val, SDValue Ptr,
-                        const Value *SV, int SVOffset, EVT TVT,
-                        bool isNonTemporal, bool isVolatile,
-                        unsigned Alignment);
-  SDValue getTruncStore(SDValue Chain, DebugLoc dl, SDValue Val, SDValue Ptr,
                         EVT TVT, MachineMemOperand *MMO);
   SDValue getIndexedStore(SDValue OrigStoe, DebugLoc dl, SDValue Base,
                            SDValue Offset, ISD::MemIndexedMode AM);

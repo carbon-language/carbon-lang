@@ -1419,7 +1419,7 @@ SDValue DAGTypeLegalizer::ExpandFloatOp_STORE(SDNode *N, unsigned OpNo) {
   GetExpandedOp(ST->getValue(), Lo, Hi);
 
   return DAG.getTruncStore(Chain, N->getDebugLoc(), Hi, Ptr,
-                           ST->getSrcValue(), ST->getSrcValueOffset(),
+                           ST->getPointerInfo(),
                            ST->getMemoryVT(), ST->isVolatile(),
                            ST->isNonTemporal(), ST->getAlignment());
 }

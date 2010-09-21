@@ -395,7 +395,6 @@ SDValue ExpandUnalignedStore(StoreSDNode *ST, SelectionDAG &DAG,
   SDValue Val = ST->getValue();
   EVT VT = Val.getValueType();
   int Alignment = ST->getAlignment();
-  int SVOffset = ST->getSrcValueOffset();
   DebugLoc dl = ST->getDebugLoc();
   if (ST->getMemoryVT().isFloatingPoint() ||
       ST->getMemoryVT().isVector()) {
@@ -405,9 +404,8 @@ SDValue ExpandUnalignedStore(StoreSDNode *ST, SelectionDAG &DAG,
       // same size, then a (misaligned) int store.
       // FIXME: Does not handle truncating floating point stores!
       SDValue Result = DAG.getNode(ISD::BIT_CONVERT, dl, intVT, Val);
-      return DAG.getStore(Chain, dl, Result, Ptr, ST->getSrcValue(),
-                          SVOffset, ST->isVolatile(), ST->isNonTemporal(),
-                          Alignment);
+      return DAG.getStore(Chain, dl, Result, Ptr, ST->getPointerInfo(),
+                          ST->isVolatile(), ST->isNonTemporal(), Alignment);
     } else {
       // Do a (aligned) store to a stack slot, then copy from the stack slot
       // to the final destination using (unaligned) integer loads and stores.
@@ -487,13 +485,13 @@ SDValue ExpandUnalignedStore(StoreSDNode *ST, SelectionDAG &DAG,
   // Store the two parts
   SDValue Store1, Store2;
   Store1 = DAG.getTruncStore(Chain, dl, TLI.isLittleEndian()?Lo:Hi, Ptr,
-                             ST->getSrcValue(), SVOffset, NewStoredVT,
+                             ST->getPointerInfo(), NewStoredVT,
                              ST->isVolatile(), ST->isNonTemporal(), Alignment);
   Ptr = DAG.getNode(ISD::ADD, dl, Ptr.getValueType(), Ptr,
                     DAG.getConstant(IncrementSize, TLI.getPointerTy()));
   Alignment = MinAlign(Alignment, IncrementSize);
   Store2 = DAG.getTruncStore(Chain, dl, TLI.isLittleEndian()?Hi:Lo, Ptr,
-                             ST->getSrcValue(), SVOffset + IncrementSize,
+                             ST->getPointerInfo().getWithOffset(IncrementSize),
                              NewStoredVT, ST->isVolatile(), ST->isNonTemporal(),
                              Alignment);
 
@@ -722,7 +720,6 @@ SDValue SelectionDAGLegalize::OptimizeFloatStore(StoreSDNode* ST) {
   SDValue Tmp1 = ST->getChain();
   SDValue Tmp2 = ST->getBasePtr();
   SDValue Tmp3;
-  int SVOffset = ST->getSrcValueOffset();
   unsigned Alignment = ST->getAlignment();
   bool isVolatile = ST->isVolatile();
   bool isNonTemporal = ST->isNonTemporal();
@@ -733,16 +730,20 @@ SDValue SelectionDAGLegalize::OptimizeFloatStore(StoreSDNode* ST) {
       Tmp3 = DAG.getConstant(CFP->getValueAPF().
                                       bitcastToAPInt().zextOrTrunc(32),
                               MVT::i32);
-      return DAG.getStore(Tmp1, dl, Tmp3, Tmp2, ST->getSrcValue(),
-                          SVOffset, isVolatile, isNonTemporal, Alignment);
-    } else if (CFP->getValueType(0) == MVT::f64) {
+      return DAG.getStore(Tmp1, dl, Tmp3, Tmp2, ST->getPointerInfo(),
+                          isVolatile, isNonTemporal, Alignment);
+    }
+    
+    if (CFP->getValueType(0) == MVT::f64) {
       // If this target supports 64-bit registers, do a single 64-bit store.
       if (getTypeAction(MVT::i64) == Legal) {
         Tmp3 = DAG.getConstant(CFP->getValueAPF().bitcastToAPInt().
                                   zextOrTrunc(64), MVT::i64);
-        return DAG.getStore(Tmp1, dl, Tmp3, Tmp2, ST->getSrcValue(),
-                            SVOffset, isVolatile, isNonTemporal, Alignment);
-      } else if (getTypeAction(MVT::i32) == Legal && !ST->isVolatile()) {
+        return DAG.getStore(Tmp1, dl, Tmp3, Tmp2, ST->getPointerInfo(),
+                            isVolatile, isNonTemporal, Alignment);
+      }
+      
+      if (getTypeAction(MVT::i32) == Legal && !ST->isVolatile()) {
         // Otherwise, if the target supports 32-bit registers, use 2 32-bit
         // stores.  If the target supports neither 32- nor 64-bits, this
         // xform is certainly not worth it.
@@ -751,11 +752,12 @@ SDValue SelectionDAGLegalize::OptimizeFloatStore(StoreSDNode* ST) {
         SDValue Hi = DAG.getConstant(IntVal.lshr(32).trunc(32), MVT::i32);
         if (TLI.isBigEndian()) std::swap(Lo, Hi);
 
-        Lo = DAG.getStore(Tmp1, dl, Lo, Tmp2, ST->getSrcValue(),
-                          SVOffset, isVolatile, isNonTemporal, Alignment);
+        Lo = DAG.getStore(Tmp1, dl, Lo, Tmp2, ST->getPointerInfo(), isVolatile,
+                          isNonTemporal, Alignment);
         Tmp2 = DAG.getNode(ISD::ADD, dl, Tmp2.getValueType(), Tmp2,
                             DAG.getIntPtrConstant(4));
-        Hi = DAG.getStore(Tmp1, dl, Hi, Tmp2, ST->getSrcValue(), SVOffset+4,
+        Hi = DAG.getStore(Tmp1, dl, Hi, Tmp2,
+                          ST->getPointerInfo().getWithOffset(4),
                           isVolatile, isNonTemporal, MinAlign(Alignment, 4U));
 
         return DAG.getNode(ISD::TokenFactor, dl, MVT::Other, Lo, Hi);
@@ -1370,7 +1372,6 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
     StoreSDNode *ST = cast<StoreSDNode>(Node);
     Tmp1 = LegalizeOp(ST->getChain());    // Legalize the chain.
     Tmp2 = LegalizeOp(ST->getBasePtr());  // Legalize the pointer.
-    int SVOffset = ST->getSrcValueOffset();
     unsigned Alignment = ST->getAlignment();
     bool isVolatile = ST->isVolatile();
     bool isNonTemporal = ST->isNonTemporal();
@@ -1411,7 +1412,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
           Tmp3 = DAG.getNode(ISD::BIT_CONVERT, dl,
                              TLI.getTypeToPromoteTo(ISD::STORE, VT), Tmp3);
           Result = DAG.getStore(Tmp1, dl, Tmp3, Tmp2,
-                                ST->getSrcValue(), SVOffset, isVolatile,
+                                ST->getPointerInfo(), isVolatile,
                                 isNonTemporal, Alignment);
           break;
         }
@@ -1430,9 +1431,8 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
         EVT NVT = EVT::getIntegerVT(*DAG.getContext(),
                                     StVT.getStoreSizeInBits());
         Tmp3 = DAG.getZeroExtendInReg(Tmp3, dl, StVT);
-        Result = DAG.getTruncStore(Tmp1, dl, Tmp3, Tmp2, ST->getSrcValue(),
-                                   SVOffset, NVT, isVolatile, isNonTemporal,
-                                   Alignment);
+        Result = DAG.getTruncStore(Tmp1, dl, Tmp3, Tmp2, ST->getPointerInfo(),
+                                   NVT, isVolatile, isNonTemporal, Alignment);
       } else if (StWidth & (StWidth - 1)) {
         // If not storing a power-of-2 number of bits, expand as two stores.
         assert(!StVT.isVector() && "Unsupported truncstore!");
@@ -1450,8 +1450,8 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
         if (TLI.isLittleEndian()) {
           // TRUNCSTORE:i24 X -> TRUNCSTORE:i16 X, TRUNCSTORE@+2:i8 (srl X, 16)
           // Store the bottom RoundWidth bits.
-          Lo = DAG.getTruncStore(Tmp1, dl, Tmp3, Tmp2, ST->getSrcValue(),
-                                 SVOffset, RoundVT,
+          Lo = DAG.getTruncStore(Tmp1, dl, Tmp3, Tmp2, ST->getPointerInfo(),
+                                 RoundVT,
                                  isVolatile, isNonTemporal, Alignment);
 
           // Store the remaining ExtraWidth bits.
@@ -1460,9 +1460,9 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
                              DAG.getIntPtrConstant(IncrementSize));
           Hi = DAG.getNode(ISD::SRL, dl, Tmp3.getValueType(), Tmp3,
                            DAG.getConstant(RoundWidth, TLI.getShiftAmountTy()));
-          Hi = DAG.getTruncStore(Tmp1, dl, Hi, Tmp2, ST->getSrcValue(),
-                                 SVOffset + IncrementSize, ExtraVT, isVolatile,
-                                 isNonTemporal,
+          Hi = DAG.getTruncStore(Tmp1, dl, Hi, Tmp2,
+                             ST->getPointerInfo().getWithOffset(IncrementSize),
+                                 ExtraVT, isVolatile, isNonTemporal,
                                  MinAlign(Alignment, IncrementSize));
         } else {
           // Big endian - avoid unaligned stores.
@@ -1470,17 +1470,16 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
           // Store the top RoundWidth bits.
           Hi = DAG.getNode(ISD::SRL, dl, Tmp3.getValueType(), Tmp3,
                            DAG.getConstant(ExtraWidth, TLI.getShiftAmountTy()));
-          Hi = DAG.getTruncStore(Tmp1, dl, Hi, Tmp2, ST->getSrcValue(),
-                                 SVOffset, RoundVT, isVolatile, isNonTemporal,
-                                 Alignment);
+          Hi = DAG.getTruncStore(Tmp1, dl, Hi, Tmp2, ST->getPointerInfo(),
+                                 RoundVT, isVolatile, isNonTemporal, Alignment);
 
           // Store the remaining ExtraWidth bits.
           IncrementSize = RoundWidth / 8;
           Tmp2 = DAG.getNode(ISD::ADD, dl, Tmp2.getValueType(), Tmp2,
                              DAG.getIntPtrConstant(IncrementSize));
-          Lo = DAG.getTruncStore(Tmp1, dl, Tmp3, Tmp2, ST->getSrcValue(),
-                                 SVOffset + IncrementSize, ExtraVT, isVolatile,
-                                 isNonTemporal,
+          Lo = DAG.getTruncStore(Tmp1, dl, Tmp3, Tmp2,
+                              ST->getPointerInfo().getWithOffset(IncrementSize),
+                                 ExtraVT, isVolatile, isNonTemporal,
                                  MinAlign(Alignment, IncrementSize));
         }
 
@@ -1514,9 +1513,8 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
           // TRUNCSTORE:i16 i32 -> STORE i16
           assert(isTypeLegal(StVT) && "Do not know how to expand this store!");
           Tmp3 = DAG.getNode(ISD::TRUNCATE, dl, StVT, Tmp3);
-          Result = DAG.getStore(Tmp1, dl, Tmp3, Tmp2, ST->getSrcValue(),
-                                SVOffset, isVolatile, isNonTemporal,
-                                Alignment);
+          Result = DAG.getStore(Tmp1, dl, Tmp3, Tmp2, ST->getPointerInfo(),
+                                isVolatile, isNonTemporal, Alignment);
           break;
         }
       }
@@ -1772,7 +1770,7 @@ SDValue SelectionDAGLegalize::EmitStackConvert(SDValue SrcOp,
 
   FrameIndexSDNode *StackPtrFI = cast<FrameIndexSDNode>(FIPtr);
   int SPFI = StackPtrFI->getIndex();
-  const Value *SV = PseudoSourceValue::getFixedStack(SPFI);
+  MachinePointerInfo PtrInfo = MachinePointerInfo::getFixedStack(SPFI);
 
   unsigned SrcSize = SrcOp.getValueType().getSizeInBits();
   unsigned SlotSize = SlotVT.getSizeInBits();
@@ -1786,22 +1784,21 @@ SDValue SelectionDAGLegalize::EmitStackConvert(SDValue SrcOp,
 
   if (SrcSize > SlotSize)
     Store = DAG.getTruncStore(DAG.getEntryNode(), dl, SrcOp, FIPtr,
-                              SV, 0, SlotVT, false, false, SrcAlign);
+                              PtrInfo, SlotVT, false, false, SrcAlign);
   else {
     assert(SrcSize == SlotSize && "Invalid store");
     Store = DAG.getStore(DAG.getEntryNode(), dl, SrcOp, FIPtr,
-                         SV, 0, false, false, SrcAlign);
+                         PtrInfo, false, false, SrcAlign);
   }
 
   // Result is a load from the stack slot.
   if (SlotSize == DestSize)
-    return DAG.getLoad(DestVT, dl, Store, FIPtr, MachinePointerInfo(SV),
+    return DAG.getLoad(DestVT, dl, Store, FIPtr, PtrInfo,
                        false, false, DestAlign);
 
   assert(SlotSize < DestSize && "Unknown extension!");
   return DAG.getExtLoad(ISD::EXTLOAD, DestVT, dl, Store, FIPtr,
-                        MachinePointerInfo(SV), SlotVT,
-                        false, false, DestAlign);
+                        PtrInfo, SlotVT, false, false, DestAlign);
 }
 
 SDValue SelectionDAGLegalize::ExpandSCALAR_TO_VECTOR(SDNode *Node) {

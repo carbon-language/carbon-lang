@@ -5969,8 +5969,7 @@ SDValue DAGCombiner::visitSTORE(SDNode *N) {
     if (unsigned Align = DAG.InferPtrAlignment(Ptr)) {
       if (Align > ST->getAlignment())
         return DAG.getTruncStore(Chain, N->getDebugLoc(), Value,
-                                 Ptr, ST->getSrcValue(),
-                                 ST->getSrcValueOffset(), ST->getMemoryVT(),
+                                 Ptr, ST->getPointerInfo(), ST->getMemoryVT(),
                                  ST->isVolatile(), ST->isNonTemporal(), Align);
     }
   }
@@ -5986,7 +5985,7 @@ SDValue DAGCombiner::visitSTORE(SDNode *N) {
       // Replace the chain to avoid dependency.
       if (ST->isTruncatingStore()) {
         ReplStore = DAG.getTruncStore(BetterChain, N->getDebugLoc(), Value, Ptr,
-                                      ST->getSrcValue(),ST->getSrcValueOffset(),
+                                      ST->getPointerInfo(),
                                       ST->getMemoryVT(), ST->isVolatile(),
                                       ST->isNonTemporal(), ST->getAlignment());
       } else {
@@ -6025,8 +6024,7 @@ SDValue DAGCombiner::visitSTORE(SDNode *N) {
     AddToWorkList(Value.getNode());
     if (Shorter.getNode())
       return DAG.getTruncStore(Chain, N->getDebugLoc(), Shorter,
-                               Ptr, ST->getSrcValue(),
-                               ST->getSrcValueOffset(), ST->getMemoryVT(),
+                               Ptr, ST->getPointerInfo(), ST->getMemoryVT(),
                                ST->isVolatile(), ST->isNonTemporal(),
                                ST->getAlignment());
 
@@ -6059,8 +6057,7 @@ SDValue DAGCombiner::visitSTORE(SDNode *N) {
       TLI.isTruncStoreLegal(Value.getOperand(0).getValueType(),
                             ST->getMemoryVT())) {
     return DAG.getTruncStore(Chain, N->getDebugLoc(), Value.getOperand(0),
-                             Ptr, ST->getSrcValue(),
-                             ST->getSrcValueOffset(), ST->getMemoryVT(),
+                             Ptr, ST->getPointerInfo(), ST->getMemoryVT(),
                              ST->isVolatile(), ST->isNonTemporal(),
                              ST->getAlignment());
   }

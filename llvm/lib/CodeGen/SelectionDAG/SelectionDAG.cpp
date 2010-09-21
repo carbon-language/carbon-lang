@@ -4053,16 +4053,6 @@ SDValue SelectionDAG::getStore(SDValue Chain, DebugLoc dl, SDValue Val,
 }
 
 SDValue SelectionDAG::getTruncStore(SDValue Chain, DebugLoc dl, SDValue Val,
-                                    SDValue Ptr, const Value *SV,
-                                    int SVOffset, EVT SVT,
-                                    bool isVolatile, bool isNonTemporal,
-                                    unsigned Alignment) {
-
-  return getTruncStore(Chain, dl, Val, Ptr, MachinePointerInfo(SV, SVOffset),
-                       SVT, isVolatile, isNonTemporal, Alignment);
-}  
-  
-SDValue SelectionDAG::getTruncStore(SDValue Chain, DebugLoc dl, SDValue Val,
                                     SDValue Ptr, MachinePointerInfo PtrInfo,
                                     EVT SVT,bool isVolatile, bool isNonTemporal,
                                     unsigned Alignment) {
