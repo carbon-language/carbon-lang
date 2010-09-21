@@ -30,14 +30,18 @@
 #include <algorithm>
 using namespace llvm;
 
-// compEnd - Compare LiveRange end to Pos.
-// This argument ordering works for upper_bound.
-static inline bool compEnd(SlotIndex Pos, const LiveRange &LR) {
-  return Pos < LR.end;
-}
+// CompEnd - Compare LiveRange end to Pos.
+struct CompEnd {
+  bool operator()(SlotIndex Pos, const LiveRange &LR) const {
+    return Pos < LR.end;
+  }
+  bool operator()(const LiveRange &LR, SlotIndex Pos) const {
+    return LR.end < Pos;
+  }
+};
 
 LiveInterval::iterator LiveInterval::find(SlotIndex Pos) {
-  return std::upper_bound(begin(), end(), Pos, compEnd);
+  return std::upper_bound(begin(), end(), Pos, CompEnd());
 }
 
 /// killedInRange - Return true if the interval has kills in [Start,End).
