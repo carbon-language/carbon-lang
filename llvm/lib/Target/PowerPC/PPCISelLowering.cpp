@@ -3591,8 +3591,9 @@ SDValue PPCTargetLowering::LowerSINT_TO_FP(SDValue Op,
 
   // STD the extended value into the stack slot.
   MachineMemOperand *MMO =
-    MF.getMachineMemOperand(PseudoSourceValue::getFixedStack(FrameIdx),
-                            MachineMemOperand::MOStore, 0, 8, 8);
+    MF.getMachineMemOperand(
+                MachinePointerInfo(PseudoSourceValue::getFixedStack(FrameIdx)),
+                            MachineMemOperand::MOStore, 8, 8);
   SDValue Ops[] = { DAG.getEntryNode(), Ext64, FIdx };
   SDValue Store =
     DAG.getMemIntrinsicNode(PPCISD::STD_32, dl, DAG.getVTList(MVT::Other),

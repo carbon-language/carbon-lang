@@ -469,8 +469,9 @@ PPCInstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
 
   const MachineFrameInfo &MFI = *MF.getFrameInfo();
   MachineMemOperand *MMO =
-    MF.getMachineMemOperand(PseudoSourceValue::getFixedStack(FrameIdx),
-                            MachineMemOperand::MOStore, /*Offset=*/0,
+    MF.getMachineMemOperand(
+                MachinePointerInfo(PseudoSourceValue::getFixedStack(FrameIdx)),
+                            MachineMemOperand::MOStore,
                             MFI.getObjectSize(FrameIdx),
                             MFI.getObjectAlignment(FrameIdx));
   NewMIs.back()->addMemOperand(MF, MMO);
@@ -590,8 +591,9 @@ PPCInstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
 
   const MachineFrameInfo &MFI = *MF.getFrameInfo();
   MachineMemOperand *MMO =
-    MF.getMachineMemOperand(PseudoSourceValue::getFixedStack(FrameIdx),
-                            MachineMemOperand::MOLoad, /*Offset=*/0,
+    MF.getMachineMemOperand(
+                MachinePointerInfo(PseudoSourceValue::getFixedStack(FrameIdx)),
+                            MachineMemOperand::MOLoad,
                             MFI.getObjectSize(FrameIdx),
                             MFI.getObjectAlignment(FrameIdx));
   NewMIs.back()->addMemOperand(MF, MMO);

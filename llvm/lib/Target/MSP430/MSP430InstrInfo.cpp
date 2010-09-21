@@ -40,8 +40,9 @@ void MSP430InstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
   MachineFrameInfo &MFI = *MF.getFrameInfo();
 
   MachineMemOperand *MMO =
-    MF.getMachineMemOperand(PseudoSourceValue::getFixedStack(FrameIdx),
-                            MachineMemOperand::MOStore, 0,
+    MF.getMachineMemOperand(
+              MachinePointerInfo(PseudoSourceValue::getFixedStack(FrameIdx)),
+                            MachineMemOperand::MOStore,
                             MFI.getObjectSize(FrameIdx),
                             MFI.getObjectAlignment(FrameIdx));
 
@@ -68,8 +69,9 @@ void MSP430InstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
   MachineFrameInfo &MFI = *MF.getFrameInfo();
 
   MachineMemOperand *MMO =
-    MF.getMachineMemOperand(PseudoSourceValue::getFixedStack(FrameIdx),
-                            MachineMemOperand::MOLoad, 0,
+    MF.getMachineMemOperand(
+              MachinePointerInfo(PseudoSourceValue::getFixedStack(FrameIdx)),
+                            MachineMemOperand::MOLoad,
                             MFI.getObjectSize(FrameIdx),
                             MFI.getObjectAlignment(FrameIdx));
 

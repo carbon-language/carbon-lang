@@ -71,8 +71,9 @@ storeRegToStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
     MachineFunction &MF = *MBB.getParent();
     MachineFrameInfo &MFI = *MF.getFrameInfo();
     MachineMemOperand *MMO =
-      MF.getMachineMemOperand(PseudoSourceValue::getFixedStack(FI),
-                              MachineMemOperand::MOStore, 0,
+      MF.getMachineMemOperand(
+                    MachinePointerInfo(PseudoSourceValue::getFixedStack(FI)),
+                              MachineMemOperand::MOStore,
                               MFI.getObjectSize(FI),
                               MFI.getObjectAlignment(FI));
     AddDefaultPred(BuildMI(MBB, I, DL, get(ARM::tSpill))
@@ -99,8 +100,9 @@ loadRegFromStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
     MachineFunction &MF = *MBB.getParent();
     MachineFrameInfo &MFI = *MF.getFrameInfo();
     MachineMemOperand *MMO =
-      MF.getMachineMemOperand(PseudoSourceValue::getFixedStack(FI),
-                              MachineMemOperand::MOLoad, 0,
+      MF.getMachineMemOperand(
+                    MachinePointerInfo(PseudoSourceValue::getFixedStack(FI)),
+                              MachineMemOperand::MOLoad,
                               MFI.getObjectSize(FI),
                               MFI.getObjectAlignment(FI));
     AddDefaultPred(BuildMI(MBB, I, DL, get(ARM::tRestore), DestReg)

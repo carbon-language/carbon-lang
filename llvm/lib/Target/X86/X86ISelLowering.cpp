@@ -9463,8 +9463,9 @@ X86TargetLowering::EmitVAStartSaveXMMRegsWithCustomInserter(
     int64_t Offset = (i - 3) * 16 + VarArgsFPOffset;
     MachineMemOperand *MMO =
       F->getMachineMemOperand(
-        PseudoSourceValue::getFixedStack(RegSaveFrameIndex),
-        MachineMemOperand::MOStore, Offset,
+        MachinePointerInfo(PseudoSourceValue::getFixedStack(RegSaveFrameIndex),
+                           Offset),
+        MachineMemOperand::MOStore,
         /*Size=*/16, /*Align=*/16);
     BuildMI(XMMSaveMBB, DL, TII->get(X86::MOVAPSmr))
       .addFrameIndex(RegSaveFrameIndex)
