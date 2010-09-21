@@ -225,6 +225,11 @@ initialized: \n\
  \n\
 (lldb)  \n\
  \n\
+ \n\
+Final Note:  If you get a warning that no breakpoint command was generated, \n\
+but you did not get any syntax errors, you probably forgot to add a call \n\
+to your functions. \n\
+ \n\
 Special information about debugger command breakpoint commands \n\
 -------------------------------------------------------------- \n\
  \n\
