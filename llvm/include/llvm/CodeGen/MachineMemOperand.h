@@ -29,8 +29,14 @@ class raw_ostream;
 /// or to virtual locations (such as frame indices) that are exposed during
 /// codegen.
 struct MachinePointerInfo {
+  /// V - This is the IR pointer value for the access, or it is null if unknown.
+  /// If this is null, then the access is to a pointer in the default address
+  /// space.
   const Value *V;
+  
+  /// Offset - This is an offset from the base Value*.
   int64_t Offset;
+  
   MachinePointerInfo(const Value *v, int64_t offset) : V(v), Offset(offset) {}
 };
   
@@ -64,9 +70,9 @@ public:
   };
 
   /// MachineMemOperand - Construct an MachineMemOperand object with the
-  /// specified address Value, flags, offset, size, and base alignment.
-  MachineMemOperand(const Value *v, unsigned int f, int64_t o, uint64_t s,
-                    unsigned int base_alignment);
+  /// specified PtrInfo, flags, size, and base alignment.
+  MachineMemOperand(MachinePointerInfo PtrInfo, unsigned flags, uint64_t s,
+                    unsigned base_alignment);
 
   /// getValue - Return the base address of the memory access. This may either
   /// be a normal LLVM IR Value, or one of the special values used in CodeGen.

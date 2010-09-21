@@ -37,6 +37,7 @@ class MCContext;
 class Pass;
 class TargetMachine;
 class TargetRegisterClass;
+struct MachinePointerInfo;
 
 template <>
 struct ilist_traits<MachineBasicBlock>
@@ -372,6 +373,13 @@ public:
                                           int64_t o, uint64_t s,
                                           unsigned base_alignment);
 
+  /// getMachineMemOperand - Allocate a new MachineMemOperand.
+  /// MachineMemOperands are owned by the MachineFunction and need not be
+  /// explicitly deallocated.
+  MachineMemOperand *getMachineMemOperand(MachinePointerInfo PtrInfo,
+                                          unsigned f, uint64_t s,
+                                          unsigned base_alignment);
+  
   /// getMachineMemOperand - Allocate a new MachineMemOperand by copying
   /// an existing one, adjusting by an offset and using the given size.
   /// MachineMemOperands are owned by the MachineFunction and need not be

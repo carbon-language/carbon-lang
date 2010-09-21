@@ -193,17 +193,23 @@ MachineMemOperand *
 MachineFunction::getMachineMemOperand(const Value *v, unsigned f,
                                       int64_t o, uint64_t s,
                                       unsigned base_alignment) {
-  return new (Allocator) MachineMemOperand(v, f, o, s, base_alignment);
+  return new (Allocator) MachineMemOperand(MachinePointerInfo(v, o), f,
+                                           s, base_alignment);
+}
+
+MachineMemOperand *
+MachineFunction::getMachineMemOperand(MachinePointerInfo PtrInfo, unsigned f,
+                                      uint64_t s, unsigned base_alignment) {
+  return new (Allocator) MachineMemOperand(PtrInfo, f, s, base_alignment);
 }
 
 MachineMemOperand *
 MachineFunction::getMachineMemOperand(const MachineMemOperand *MMO,
                                       int64_t Offset, uint64_t Size) {
   return new (Allocator)
-             MachineMemOperand(MMO->getValue(), MMO->getFlags(),
-                               int64_t(uint64_t(MMO->getOffset()) +
-                                       uint64_t(Offset)),
-                               Size, MMO->getBaseAlignment());
+             MachineMemOperand(MachinePointerInfo(MMO->getValue(),
+                                                  MMO->getOffset()+Offset),
+                               MMO->getFlags(), Size, MMO->getBaseAlignment());
 }
 
 MachineInstr::mmo_iterator

@@ -335,11 +335,12 @@ void MachineOperand::print(raw_ostream &OS, const TargetMachine *TM) const {
 // MachineMemOperand Implementation
 //===----------------------------------------------------------------------===//
 
-MachineMemOperand::MachineMemOperand(const Value *v, unsigned int f,
-                                     int64_t o, uint64_t s, unsigned int a)
-  : PtrInfo(v, o), Size(s),
+MachineMemOperand::MachineMemOperand(MachinePointerInfo ptrinfo, unsigned f,
+                                     uint64_t s, unsigned int a)
+  : PtrInfo(ptrinfo), Size(s),
     Flags((f & ((1 << MOMaxBits) - 1)) | ((Log2_32(a) + 1) << MOMaxBits)) {
-  assert((v == 0 || isa<PointerType>(v->getType())) && "invalid pointer value");
+  assert((PtrInfo.V == 0 || isa<PointerType>(PtrInfo.V->getType())) &&
+         "invalid pointer value");
   assert(getBaseAlignment() == a && "Alignment is not a power of 2!");
   assert((isLoad() || isStore()) && "Not a load/store!");
 }
