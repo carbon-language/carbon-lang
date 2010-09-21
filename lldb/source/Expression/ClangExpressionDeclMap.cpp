@@ -300,6 +300,78 @@ ClangExpressionDeclMap::Materialize (ExecutionContext *exe_ctx,
 }
 
 bool 
+ClangExpressionDeclMap::GetObjectPointer(lldb::addr_t &object_ptr,
+                                         ExecutionContext *exe_ctx,
+                                         Error &err)
+{
+    if (!exe_ctx || !exe_ctx->frame || !exe_ctx->target || !exe_ctx->process)
+    {
+        err.SetErrorString("Couldn't load 'this' because the context is incomplete");
+        return false;
+    }
+    
+    if (!m_object_pointer_type.GetOpaqueQualType())
+    {
+        err.SetErrorString("Couldn't load 'this' because its type is unknown");
+        return false;
+    }
+    
+    Variable *object_ptr_var = FindVariableInScope(*exe_ctx->frame, "this", &m_object_pointer_type);
+    
+    if (!object_ptr_var)
+    {
+        err.SetErrorString("Couldn't find 'this' with appropriate type in scope");
+        return false;
+    }
+    
+    std::auto_ptr<lldb_private::Value> location_value(GetVariableValue(*exe_ctx,
+                                                                       object_ptr_var,
+                                                                       m_object_pointer_type.GetASTContext()));
+    
+    if (!location_value.get())
+    {
+        err.SetErrorString("Couldn't get the location for 'this'");
+        return false;
+    }
+    
+    if (location_value->GetValueType() == Value::eValueTypeLoadAddress)
+    {
+        lldb::addr_t value_addr = location_value->GetScalar().ULongLong();
+        uint32_t address_byte_size = exe_ctx->target->GetArchitecture().GetAddressByteSize();
+        lldb::ByteOrder address_byte_order = exe_ctx->process->GetByteOrder();
+        
+        if (ClangASTType::GetClangTypeBitWidth(m_object_pointer_type.GetASTContext(), m_object_pointer_type.GetOpaqueQualType()) != address_byte_size * 8)
+        {
+            err.SetErrorStringWithFormat("'this' is not of an expected pointer size");
+            return false;
+        }
+        
+        DataBufferHeap data;
+        data.SetByteSize(address_byte_size);
+        Error read_error;
+        
+        if (exe_ctx->process->ReadMemory (value_addr, data.GetBytes(), address_byte_size, read_error) != address_byte_size)
+        {
+            err.SetErrorStringWithFormat("Coldn't read 'this' from the target: %s", read_error.AsCString());
+            return false;
+        }
+        
+        DataExtractor extractor(data.GetBytes(), data.GetByteSize(), address_byte_order, address_byte_size);
+        
+        uint32_t offset = 0;
+        
+        object_ptr = extractor.GetPointer(&offset);
+        
+        return true;
+    }
+    else
+    {
+        err.SetErrorString("'this' is not in memory; LLDB must be extended to handle registers");
+        return false;
+    }
+}
+
+bool 
 ClangExpressionDeclMap::Dematerialize (ExecutionContext *exe_ctx,
                                        ClangExpressionVariable *&result,
                                        Error &err)
@@ -763,24 +835,54 @@ ClangExpressionDeclMap::GetDecls(NameSearchContext &context,
                                  const char *name)
 {
     Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS);
-    
-    const char* override_name = NULL;
-    
-    if (!strcmp(name, "___clang_this"))
-        override_name = "this";
-    if (!strcmp(name, "___clang_self"))
-        override_name = "self";
-    
-    const char *search_name = (override_name ? override_name : name);
-    
+        
     if (log)
-        log->Printf("Hunting for a definition for %s", search_name);
+        log->Printf("Hunting for a definition for %s", name);
     
     // Back out in all cases where we're not fully initialized
     if (!m_exe_ctx || !m_exe_ctx->frame || !m_sym_ctx)
         return;
+        
+    ConstString name_cs(name);
     
-    ConstString name_cs(search_name);
+    if (!strcmp(name, "___clang_class"))
+    {
+        // Clang is looking for the type of "this"
+        
+        VariableList *vars = m_exe_ctx->frame->GetVariableList(false);
+        
+        if (!vars)
+            return;
+        
+        lldb::VariableSP this_var = vars->FindVariable(ConstString("this"));
+        
+        if (!this_var)
+            return;
+        
+        Type *this_type = this_var->GetType();
+        
+        if (!this_type)
+            return;
+        
+        TypeFromUser this_user_type(this_type->GetOpaqueClangQualType(),
+                                    this_type->GetClangAST());
+        
+        m_object_pointer_type = this_user_type;
+        
+        void *pointer_target_type;
+        
+        if (!ClangASTContext::IsPointerType(this_user_type.GetOpaqueQualType(),
+                                            &pointer_target_type))
+            return;
+        
+        TypeFromUser class_user_type(pointer_target_type,
+                                     this_type->GetClangAST());
+
+        AddOneType(context, class_user_type, true);
+        
+        return;
+    }
+    
     SymbolContextList sym_ctxs;
     
     m_sym_ctx->FindFunctionsByName(name_cs, false, sym_ctxs);
@@ -813,10 +915,10 @@ ClangExpressionDeclMap::GetDecls(NameSearchContext &context,
         }
     }
     
-    Variable *var = FindVariableInScope(*m_exe_ctx->frame, search_name);
+    Variable *var = FindVariableInScope(*m_exe_ctx->frame, name);
     
     if (var)
-        AddOneVariable(context, var, override_name);
+        AddOneVariable(context, var);
     
     ClangExpressionVariable *pvar(m_persistent_vars->GetVariable(name));
     
@@ -943,8 +1045,7 @@ ClangExpressionDeclMap::GetVariableValue(ExecutionContext &exe_ctx,
 
 void
 ClangExpressionDeclMap::AddOneVariable(NameSearchContext &context,
-                                       Variable* var,
-                                       const char *override_name)
+                                       Variable* var)
 {
     Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS);
     
@@ -957,10 +1058,10 @@ ClangExpressionDeclMap::AddOneVariable(NameSearchContext &context,
                                            &ut,
                                            &pt);
     
-    NamedDecl *var_decl = context.AddVarDecl(pt.GetOpaqueQualType(), override_name);
+    NamedDecl *var_decl = context.AddVarDecl(pt.GetOpaqueQualType());
     
     ClangExpressionVariable &entity(m_found_entities.VariableAtIndex(m_found_entities.CreateVariable()));
-    entity.m_name       = (override_name ? override_name : context.Name.getAsString());
+    entity.m_name       = context.Name.getAsString();
     entity.m_user_type  = ut;
     
     entity.EnableParserVars();
@@ -1081,12 +1182,34 @@ ClangExpressionDeclMap::AddOneFunction(NameSearchContext &context,
 
 void 
 ClangExpressionDeclMap::AddOneType(NameSearchContext &context, 
-                                   Type *type)
+                                   TypeFromUser &ut,
+                                   bool add_method)
 {
-    TypeFromUser ut(type->GetOpaqueClangQualType(),
-                    type->GetClangAST());
+    clang::ASTContext *parser_ast_context = context.GetASTContext();
+    clang::ASTContext *user_ast_context = ut.GetASTContext();
     
-    void *copied_type = ClangASTContext::CopyType(context.GetASTContext(), ut.GetASTContext(), ut.GetOpaqueQualType());
+    void *copied_type = ClangASTContext::CopyType(parser_ast_context, user_ast_context, ut.GetOpaqueQualType());
+ 
+    TypeFromParser parser_type(copied_type, parser_ast_context);
+    
+    if (add_method && ClangASTContext::IsAggregateType(copied_type))
+    {
+        void *args[1];
+        
+        args[0] = ClangASTContext::GetVoidPtrType(parser_ast_context, false);
+        
+        void *method_type = ClangASTContext::CreateFunctionType (parser_ast_context,
+                                                                 ClangASTContext::GetBuiltInType_void(parser_ast_context),
+                                                                 args,
+                                                                 1,
+                                                                 false,
+                                                                 ClangASTContext::GetTypeQualifiers(copied_type));
+        
+        ClangASTContext::AddMethodToCXXRecordType(parser_ast_context,
+                                                  copied_type,
+                                                  "___clang_expr",
+                                                  method_type);
+    }
     
     context.AddTypeDecl(copied_type);
 }

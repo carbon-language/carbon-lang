@@ -27,7 +27,8 @@ public:
                             Address &function,
                             lldb::addr_t arg,
                             bool stop_other_threads,
-                            bool discard_on_error = true);
+                            bool discard_on_error = true,
+                            lldb::addr_t *this_arg = 0);
     
     ThreadPlanCallFunction (Thread &thread,
                             Address &function,

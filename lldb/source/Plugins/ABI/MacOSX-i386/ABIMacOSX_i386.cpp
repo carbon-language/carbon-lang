@@ -57,7 +57,8 @@ ABIMacOSX_i386::PrepareTrivialCall (Thread &thread,
                                     lldb::addr_t sp, 
                                     lldb::addr_t functionAddress, 
                                     lldb::addr_t returnAddress, 
-                                    lldb::addr_t arg) const
+                                    lldb::addr_t arg,
+                                    lldb::addr_t *this_arg) const
 {
     RegisterContext *reg_ctx = thread.GetRegisterContext();
     if (!reg_ctx)
@@ -70,9 +71,12 @@ ABIMacOSX_i386::PrepareTrivialCall (Thread &thread,
     uint32_t eipID = reg_ctx->ConvertRegisterKindToRegisterNumber (eRegisterKindGeneric, LLDB_REGNUM_GENERIC_PC);
     uint32_t espID = reg_ctx->ConvertRegisterKindToRegisterNumber (eRegisterKindGeneric, LLDB_REGNUM_GENERIC_SP);
     
-    // Make room for the argument on the stack
+    // Make room for the argument(s) on the stack
     
-    sp -= 4;
+    if (this_arg)
+        sp -= 8;
+    else
+        sp -= 4;
     
     // Align the SP
     
@@ -80,10 +84,25 @@ ABIMacOSX_i386::PrepareTrivialCall (Thread &thread,
     
     // Write the argument on the stack
     
-    uint32_t argU32 = arg & 0xffffffffull;
     Error error;
-    if (thread.GetProcess().WriteMemory (sp, &argU32, sizeof(argU32), error) != sizeof(argU32))
-        return false;
+    
+    if (this_arg)
+    {
+        uint32_t this_argU32 = *this_arg & 0xffffffffull;
+        uint32_t argU32 = arg & 0xffffffffull;
+                
+        if (thread.GetProcess().WriteMemory(sp, &this_argU32, sizeof(this_argU32), error) != sizeof(this_argU32))
+            return false;
+        if (thread.GetProcess().WriteMemory(sp + 4, &argU32, sizeof(argU32), error) != sizeof(argU32))
+            return false;
+    }
+    else
+    {
+        uint32_t argU32 = arg & 0xffffffffull;
+
+        if (thread.GetProcess().WriteMemory (sp, &argU32, sizeof(argU32), error) != sizeof(argU32))
+            return false;
+    }
     
     // The return address is pushed onto the stack.
     

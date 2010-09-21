@@ -34,7 +34,8 @@ ThreadPlanCallFunction::ThreadPlanCallFunction (Thread &thread,
                                                 Address &function,
                                                 lldb::addr_t arg,
                                                 bool stop_other_threads,
-                                                bool discard_on_error) :
+                                                bool discard_on_error,
+                                                lldb::addr_t *this_arg) :
     ThreadPlan (ThreadPlan::eKindCallFunction, "Call function plan", thread, eVoteNoOpinion, eVoteNoOpinion),
     m_valid (false),
     m_stop_other_threads (stop_other_threads),
@@ -43,7 +44,6 @@ ThreadPlanCallFunction::ThreadPlanCallFunction (Thread &thread,
     m_process (thread.GetProcess()),
     m_thread (thread)
 {
-
     SetOkayToDiscard (discard_on_error);
 
     Process& process = thread.GetProcess();
@@ -78,7 +78,8 @@ ThreadPlanCallFunction::ThreadPlanCallFunction (Thread &thread,
                                  spBelowRedZone, 
                                  FunctionLoadAddr, 
                                  StartLoadAddr, 
-                                 m_arg_addr))
+                                 m_arg_addr,
+                                 this_arg))
         return;
     
     m_valid = true;    

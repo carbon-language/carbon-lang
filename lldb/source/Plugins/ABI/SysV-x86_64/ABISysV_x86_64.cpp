@@ -57,7 +57,8 @@ ABISysV_x86_64::PrepareTrivialCall (Thread &thread,
                                     lldb::addr_t sp, 
                                     lldb::addr_t functionAddress, 
                                     lldb::addr_t returnAddress, 
-                                    lldb::addr_t arg) const
+                                    lldb::addr_t arg,
+                                    lldb::addr_t *this_arg) const
 {
     RegisterContext *reg_ctx = thread.GetRegisterContext();
     if (!reg_ctx)
@@ -74,9 +75,22 @@ ABISysV_x86_64::PrepareTrivialCall (Thread &thread,
     uint32_t rspID = reg_ctx->ConvertRegisterKindToRegisterNumber (eRegisterKindGeneric, LLDB_REGNUM_GENERIC_SP);
 
     // The argument is in %rdi, and not on the stack.
-
-    if (!reg_ctx->WriteRegisterFromUnsigned(rdiID, arg))
-        return false;
+    
+    if (this_arg)
+    {
+        uint32_t rsiID = reg_ctx->GetRegisterInfoByName("rsi", 0)->kinds[eRegisterKindLLDB];
+        
+        if (!reg_ctx->WriteRegisterFromUnsigned(rdiID, *this_arg))
+            return false;
+        
+        if (!reg_ctx->WriteRegisterFromUnsigned(rsiID, arg))
+            return false;
+    }
+    else
+    {
+        if (!reg_ctx->WriteRegisterFromUnsigned(rdiID, arg))
+            return false;
+    }
 
     // First, align the SP
 

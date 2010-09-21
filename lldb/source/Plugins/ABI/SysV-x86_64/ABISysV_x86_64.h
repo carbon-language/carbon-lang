@@ -33,7 +33,8 @@ public:
                         lldb::addr_t sp,
                         lldb::addr_t functionAddress,
                         lldb::addr_t returnAddress, 
-                        lldb::addr_t arg) const;
+                        lldb::addr_t arg,
+                        lldb::addr_t *this_arg) const;
     
     virtual bool
     PrepareNormalCall (Thread &thread,

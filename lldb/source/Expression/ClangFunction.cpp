@@ -359,7 +359,7 @@ ClangFunction::InsertFunction (ExecutionContext &exe_ctx, lldb::addr_t &args_add
 }
 
 ThreadPlan *
-ClangFunction::GetThreadPlanToCallFunction (ExecutionContext &exe_ctx, lldb::addr_t func_addr, lldb::addr_t &args_addr, Stream &errors, bool stop_others, bool discard_on_error)
+ClangFunction::GetThreadPlanToCallFunction (ExecutionContext &exe_ctx, lldb::addr_t func_addr, lldb::addr_t &args_addr, Stream &errors, bool stop_others, bool discard_on_error, lldb::addr_t *this_arg)
 {
     // FIXME: Use the errors Stream for better error reporting.
 
@@ -377,7 +377,9 @@ ClangFunction::GetThreadPlanToCallFunction (ExecutionContext &exe_ctx, lldb::add
     ThreadPlan *new_plan = new ThreadPlanCallFunction (*exe_ctx.thread, 
                                           wrapper_address,
                                           args_addr,
-                                          stop_others, discard_on_error);
+                                          stop_others, 
+                                          discard_on_error,
+                                          this_arg);
     return new_plan;
 }
 
@@ -456,7 +458,8 @@ ClangFunction::ExecuteFunction (
         bool stop_others,
         bool try_all_threads,
         uint32_t single_thread_timeout_usec,
-        Stream &errors)
+        Stream &errors,
+        lldb::addr_t *this_arg)
 {
     // Save this value for restoration of the execution context after we run
     uint32_t tid = exe_ctx.thread->GetIndexID();
@@ -480,7 +483,7 @@ ClangFunction::ExecuteFunction (
 
     ClangFunction::ExecutionResults return_value = eExecutionSetupError;
     
-    lldb::ThreadPlanSP call_plan_sp(ClangFunction::GetThreadPlanToCallFunction(exe_ctx, function_address, void_arg, errors, stop_others, false));
+    lldb::ThreadPlanSP call_plan_sp(ClangFunction::GetThreadPlanToCallFunction(exe_ctx, function_address, void_arg, errors, stop_others, false, this_arg));
     
     ThreadPlanCallFunction *call_plan_ptr = static_cast<ThreadPlanCallFunction *> (call_plan_sp.get());
     

@@ -27,28 +27,21 @@
 #include "lldb/Expression/ASTResultSynthesizer.h"
 #include "lldb/Expression/ClangUserExpression.h"
 #include "lldb/Host/Host.h"
+#include "lldb/Symbol/VariableList.h"
 #include "lldb/Target/ExecutionContext.h"
+#include "lldb/Target/StackFrame.h"
 #include "lldb/Target/Target.h"
 
 using namespace lldb_private;
 
 ClangUserExpression::ClangUserExpression (const char *expr) :
     m_expr_text(expr),
-    m_jit_addr(LLDB_INVALID_ADDRESS)
+    m_transformed_text(),
+    m_jit_addr(LLDB_INVALID_ADDRESS),
+    m_cplusplus(false),
+    m_objectivec(false),
+    m_needs_object_ptr(false)
 {
-    StreamString m_transformed_stream;
-    
-    m_transformed_stream.Printf("#define this ___clang_this     \n"
-                                "#define self ___clang_self     \n"
-                                "extern \"C\" void              \n"
-                                "%s(void *___clang_arg)         \n"
-                                "{                              \n"
-                                    "%s;                        \n" 
-                                "}                              \n",
-                                FunctionName(),
-                                m_expr_text.c_str());
-    
-    m_transformed_text = m_transformed_stream.GetData();
 }
 
 ClangUserExpression::~ClangUserExpression ()
@@ -61,10 +54,64 @@ ClangUserExpression::ASTTransformer (clang::ASTConsumer *passthrough)
     return new ASTResultSynthesizer(passthrough);
 }
 
+void
+ClangUserExpression::ScanContext(ExecutionContext &exe_ctx)
+{
+    if (!exe_ctx.frame)
+        return;
+    
+    VariableList *vars = exe_ctx.frame->GetVariableList(false);
+    
+    if (!vars)
+        return;
+    
+    if (vars->FindVariable(ConstString("this")).get())
+        m_cplusplus = true;
+    else if (vars->FindVariable(ConstString("self")).get())
+        m_objectivec = true;
+}
+
 bool 
 ClangUserExpression::Parse (Stream &error_stream, ExecutionContext &exe_ctx)
 {
     Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS);
+    
+    ScanContext(exe_ctx);
+    
+    StreamString m_transformed_stream;
+    
+    ////////////////////////////////////
+    // Generate the expression
+    //
+
+    if (m_cplusplus)
+    {
+        m_transformed_stream.Printf("void                                   \n"
+                                    "___clang_class::%s(void *___clang_arg) \n"
+                                    "{                                      \n"
+                                    "    %s;                                \n" 
+                                    "}                                      \n",
+                                    FunctionName(),
+                                    m_expr_text.c_str());
+        
+        m_needs_object_ptr = true;
+    }
+    else
+    {
+        m_transformed_stream.Printf("void                           \n"
+                                    "%s(void *___clang_arg)         \n"
+                                    "{                              \n"
+                                    "    %s;                        \n" 
+                                    "}                              \n",
+                                    FunctionName(),
+                                    m_expr_text.c_str());
+    }
+    
+    m_transformed_text = m_transformed_stream.GetData();
+    
+    
+    if (log)
+        log->Printf("Parsing the following code:\n%s", m_transformed_text.c_str());
     
     ////////////////////////////////////
     // Set up the target and compiler
@@ -187,15 +234,27 @@ ClangUserExpression::Execute (Stream &error_stream,
         
         Error materialize_error;
         
+        lldb::addr_t object_ptr = NULL;
+        
+        if (m_needs_object_ptr && !(m_expr_decl_map->GetObjectPointer(object_ptr, &exe_ctx, materialize_error)))
+        {
+            error_stream.Printf("Couldn't get required object pointer: %s\n", materialize_error.AsCString());
+            return false;
+        }
+                
         if (!m_expr_decl_map->Materialize(&exe_ctx, struct_address, materialize_error))
         {
-            error_stream.Printf("Couldn't materialize struct: %s\n", materialize_error.AsCString("unknown error"));
+            error_stream.Printf("Couldn't materialize struct: %s\n", materialize_error.AsCString());
             return false;
         }
         
         if (log)
         {
             log->Printf("Function address  : 0x%llx", (uint64_t)m_jit_addr);
+            
+            if (m_needs_object_ptr)
+                log->Printf("Object pointer    : 0x%llx", (uint64_t)object_ptr);
+            
             log->Printf("Structure address : 0x%llx", (uint64_t)struct_address);
                     
             StreamString args;
@@ -216,7 +275,14 @@ ClangUserExpression::Execute (Stream &error_stream,
         }
         
         ClangFunction::ExecutionResults execution_result = 
-        ClangFunction::ExecuteFunction (exe_ctx, m_jit_addr, struct_address, true, true, 10000, error_stream);
+        ClangFunction::ExecuteFunction (exe_ctx, 
+                                        m_jit_addr, 
+                                        struct_address, 
+                                        true,
+                                        true, 
+                                        10000, 
+                                        error_stream,
+                                        (m_needs_object_ptr ? &object_ptr : NULL));
         
         if (execution_result != ClangFunction::eExecutionCompleted)
         {

@@ -262,6 +262,10 @@ public:
     /// @param[in] errors
     ///     The stream to write errors to.
     ///
+    /// @param[in] this_arg
+    ///     If non-NULL, the function is invoked like a C++ method, with the
+    ///     value pointed to by the pointer as its 'this' argument.
+    ///
     /// @return
     ///     Returns one of the ExecutionResults enum indicating function call status.
 	//------------------------------------------------------------------
@@ -271,7 +275,8 @@ public:
                                              bool stop_others, 
                                              bool try_all_threads, 
                                              uint32_t single_thread_timeout_usec, 
-                                             Stream &errors);
+                                             Stream &errors,
+                                             lldb::addr_t* this_arg = 0);
     
     //------------------------------------------------------------------
     /// Run the function this ClangFunction was created with.
@@ -415,6 +420,10 @@ public:
     /// @param[in] discard_on_error
     ///     True if the thread plan may simply be discarded if an error occurs.
     ///
+    /// @param[in] this_arg
+    ///     If non-NULL, the function is invoked like a C++ method, with the
+    ///     value pointed to by the pointer as its 'this' argument.
+    ///
     /// @return
     ///     A ThreadPlan for executing the function.
 	//------------------------------------------------------------------
@@ -424,7 +433,8 @@ public:
                                  lldb::addr_t &args_addr_ref, 
                                  Stream &errors, 
                                  bool stop_others, 
-                                 bool discard_on_error = true);
+                                 bool discard_on_error = true,
+                                 lldb::addr_t *this_arg = 0);
     
     //------------------------------------------------------------------
     /// Get a thread plan to run the function this ClangFunction was created with.

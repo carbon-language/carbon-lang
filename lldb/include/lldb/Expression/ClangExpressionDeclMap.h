@@ -267,6 +267,27 @@ public:
                      Error &error);
     
     //------------------------------------------------------------------
+    /// [Used by CommandObjectExpression] Get the "this" pointer
+    /// from a given execution context.
+    ///
+    /// @param[out] object_ptr
+    ///     The this pointer.
+    ///
+    /// @param[in] exe_ctx
+    ///     The execution context at which to dump the struct.
+    ///
+    /// @param[in] error
+    ///     An Error to populate with any messages related to
+    ///     finding the "this" pointer.
+    ///
+    /// @return
+    ///     True on success; false otherwise.
+    //------------------------------------------------------------------
+    bool GetObjectPointer(lldb::addr_t &object_ptr,
+                          ExecutionContext *exe_ctx,
+                          Error &error);
+    
+    //------------------------------------------------------------------
     /// [Used by CommandObjectExpression] Pretty-print a materialized
     /// struct, which must have been materialized by Materialize(),
     /// byte for byte on a given stream.
@@ -340,6 +361,7 @@ private:
     lldb::addr_t                m_allocated_area;           ///< The base of the memory allocated for the struct.  Starts on a potentially unaligned address and may therefore be larger than the struct.
     lldb::addr_t                m_materialized_location;    ///< The address at which the struct is placed.  Falls inside the allocated area.
     std::string                 m_result_name;              ///< The name of the result variable ($1, for example)
+    TypeFromUser                m_object_pointer_type;      ///< The type of the "this" variable, if one exists.
     
     //------------------------------------------------------------------
     /// Given a stack frame, find a variable that matches the given name and 
@@ -415,14 +437,9 @@ private:
     ///
     /// @param[in] var
     ///     The LLDB Variable that needs a Decl.
-    ///
-    /// @param[in] override_name
-    ///     A new name to give the Decl, if the one being looked for needs
-    ///     to be overriden.  Example: this for ___clang_this.
     //------------------------------------------------------------------
     void AddOneVariable(NameSearchContext &context, 
-                        Variable *var, 
-                        const char *override_name);
+                        Variable *var);
     
     //------------------------------------------------------------------
     /// Use the NameSearchContext to generate a Decl for the given
@@ -462,9 +479,15 @@ private:
     ///     The NameSearchContext to use when constructing the Decl.
     ///
     /// @param[in] type
-    ///     The LLDB Type that needs to be created.
+    ///     The type that needs to be created.
+    ///
+    /// @param[in] add_method
+    ///     True if a method with signature void ___clang_expr(void*)
+    ///     should be added to the C++ class type passed in
     //------------------------------------------------------------------
-    void AddOneType(NameSearchContext &context, Type *type);
+    void AddOneType(NameSearchContext &context, 
+                    TypeFromUser &type, 
+                    bool add_method = false);
     
     //------------------------------------------------------------------
     /// Actually do the task of materializing or dematerializing the struct.

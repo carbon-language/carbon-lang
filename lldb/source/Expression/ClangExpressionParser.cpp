@@ -326,6 +326,24 @@ ClangExpressionParser::Parse (Stream &stream)
     return num_errors;
 }
 
+static bool FindFunctionInModule (std::string &mangled_name,
+                                  llvm::Module *module,
+                                  const char *orig_name)
+{
+    for (llvm::Module::iterator fi = module->getFunctionList().begin(), fe = module->getFunctionList().end();
+         fi != fe;
+         ++fi)
+    {        
+        if (fi->getName().str().find(orig_name) != std::string::npos)
+        {
+            mangled_name = fi->getName().str();
+            return true;
+        }
+    }
+    
+    return false;
+}
+
 Error
 ClangExpressionParser::MakeDWARF ()
 {
@@ -357,7 +375,16 @@ ClangExpressionParser::MakeDWARF ()
         return err;
     }
     
-    IRToDWARF ir_to_dwarf(*local_variables, decl_map, m_expr.DwarfOpcodeStream());
+    std::string function_name;
+    
+    if (!FindFunctionInModule(function_name, module, m_expr.FunctionName()))
+    {
+        err.SetErrorToGenericError();
+        err.SetErrorStringWithFormat("Couldn't find %s() in the module", m_expr.FunctionName());
+        return err;
+    }
+    
+    IRToDWARF ir_to_dwarf(*local_variables, decl_map, m_expr.DwarfOpcodeStream(), function_name.c_str());
     
     if (!ir_to_dwarf.runOnModule(*module))
     {
@@ -375,6 +402,8 @@ ClangExpressionParser::MakeJIT (lldb::addr_t &func_addr,
                                 lldb::addr_t &func_end, 
                                 ExecutionContext &exe_ctx)
 {
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS);
+
     Error err;
     
     llvm::Module *module = m_code_generator->ReleaseModule();
@@ -384,6 +413,22 @@ ClangExpressionParser::MakeJIT (lldb::addr_t &func_addr,
         err.SetErrorToGenericError();
         err.SetErrorString("IR doesn't contain a module");
         return err;
+    }
+    
+    // Find the actual name of the function (it's often mangled somehow)
+    
+    std::string function_name;
+    
+    if (!FindFunctionInModule(function_name, module, m_expr.FunctionName()))
+    {
+        err.SetErrorToGenericError();
+        err.SetErrorStringWithFormat("Couldn't find %s() in the module", m_expr.FunctionName());
+        return err;
+    }
+    else
+    {
+        if(log)
+            log->Printf("Found function %s for %s", function_name.c_str(), m_expr.FunctionName());
     }
     
     ClangExpressionDeclMap *decl_map = m_expr.DeclMap(); // result can be NULL
@@ -406,7 +451,7 @@ ClangExpressionParser::MakeJIT (lldb::addr_t &func_addr,
         IRForTarget ir_for_target(decl_map, 
                                   target_machine->getTargetData(),
                                   m_expr.NeedsVariableResolution(),
-                                  m_expr.FunctionName());
+                                  function_name.c_str());
         
         if (!ir_for_target.runOnModule(*module))
         {
@@ -417,7 +462,7 @@ ClangExpressionParser::MakeJIT (lldb::addr_t &func_addr,
         
         if (m_expr.NeedsValidation())
         {
-            IRDynamicChecks ir_dynamic_checks(*exe_ctx.process->GetDynamicCheckers(), m_expr.FunctionName());
+            IRDynamicChecks ir_dynamic_checks(*exe_ctx.process->GetDynamicCheckers(), function_name.c_str());
         
             if (!ir_dynamic_checks.runOnModule(*module))
             {
@@ -448,7 +493,7 @@ ClangExpressionParser::MakeJIT (lldb::addr_t &func_addr,
     
     m_execution_engine->DisableLazyCompilation();
     
-    llvm::Function *function = module->getFunction (m_expr.FunctionName());
+    llvm::Function *function = module->getFunction (function_name.c_str());
     
     // We don't actually need the function pointer here, this just forces it to get resolved.
     
@@ -463,7 +508,7 @@ ClangExpressionParser::MakeJIT (lldb::addr_t &func_addr,
         return err;
     }
     
-    m_jitted_functions.push_back (ClangExpressionParser::JittedFunction(m_expr.FunctionName(), (lldb::addr_t)fun_ptr));
+    m_jitted_functions.push_back (ClangExpressionParser::JittedFunction(function_name.c_str(), (lldb::addr_t)fun_ptr));
     
     ExecutionContext &exc_context(exe_ctx);
     
@@ -525,7 +570,7 @@ ClangExpressionParser::MakeJIT (lldb::addr_t &func_addr,
     {
         (*pos).m_remote_addr = m_jit_mm->GetRemoteAddressForLocal ((*pos).m_local_addr);
     
-        if (!(*pos).m_name.compare(m_expr.FunctionName()))
+        if (!(*pos).m_name.compare(function_name.c_str()))
         {
             func_end = m_jit_mm->GetRemoteRangeForLocal ((*pos).m_local_addr).second;
             func_addr = (*pos).m_remote_addr;
@@ -554,7 +599,7 @@ ClangExpressionParser::DisassembleFunction (Stream &stream, ExecutionContext &ex
     
     for (pos = m_jitted_functions.begin(); pos < end; pos++)
     {
-        if (strcmp(pos->m_name.c_str(), name) == 0)
+        if (strstr(pos->m_name.c_str(), name))
         {
             func_local_addr = pos->m_local_addr;
             func_remote_addr = pos->m_remote_addr;

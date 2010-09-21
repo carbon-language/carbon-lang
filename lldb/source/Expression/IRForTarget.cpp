@@ -71,15 +71,35 @@ IRForTarget::createResultVariable(llvm::Module &M,
         return true;
     
     // Find the result variable.  If it doesn't exist, we can give up right here.
-            
-    Value *result_value = M.getNamedValue("___clang_expr_result");
+    
+    ValueSymbolTable& value_symbol_table = M.getValueSymbolTable();
+    
+    const char *result_name = NULL;
+    
+    for (ValueSymbolTable::iterator vi = value_symbol_table.begin(), ve = value_symbol_table.end();
+         vi != ve;
+         ++vi)
+    {
+        if (strstr(vi->first(), "___clang_expr_result"))
+            result_name = vi->first();
+    }
+    
+    if (!result_name)
+    {
+        if (log)
+            log->PutCString("Couldn't find result variable");
+        
+        return true;
+    }
+    
+    Value *result_value = M.getNamedValue(result_name);
     
     if (!result_value)
     {
         if (log)
-            log->PutCString("Couldn't find result variable");
+            log->PutCString("Result variable had no data");
                 
-        return true;
+        return false;
     }
         
     if (log)
@@ -934,6 +954,16 @@ IRForTarget::replaceVariables(Module &M, Function &F)
         return false;
     
     Argument *argument = iter;
+    
+    if (argument->getName().equals("this"))
+    {
+        ++iter;
+        
+        if (iter == F.getArgumentList().end())
+            return false;
+        
+        argument = iter;
+    }
     
     if (!argument->getName().equals("___clang_arg"))
         return false;

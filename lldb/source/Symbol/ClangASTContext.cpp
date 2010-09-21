@@ -807,12 +807,12 @@ bool
 ClangASTContext::AddMethodToCXXRecordType
 (
  clang::ASTContext *ast_context,
- void *record_clang_type,
+ void *record_opaque_type,
  const char *name,
- void *method_type
+ void *method_opaque_type
  )
 {
-    if (!record_clang_type || !method_type || !name)
+    if (!record_opaque_type || !method_opaque_type || !name)
         return false;
     
     assert(ast_context);
@@ -821,7 +821,7 @@ ClangASTContext::AddMethodToCXXRecordType
     
     assert(identifier_table);
     
-    QualType record_qual_type(QualType::getFromOpaquePtr(record_clang_type));
+    QualType record_qual_type(QualType::getFromOpaquePtr(record_opaque_type));
     clang::Type *record_type(record_qual_type.getTypePtr());
     
     if (!record_type)
@@ -842,12 +842,47 @@ ClangASTContext::AddMethodToCXXRecordType
     if (!cxx_record_decl)
         return false;
     
+    QualType method_qual_type(QualType::getFromOpaquePtr(method_opaque_type));
+    
     CXXMethodDecl *cxx_method_decl = CXXMethodDecl::Create(*ast_context,
                                                            cxx_record_decl, 
                                                            SourceLocation(), 
                                                            DeclarationName(&identifier_table->get(name)), 
-                                                           QualType::getFromOpaquePtr(method_type), 
+                                                           method_qual_type, 
                                                            NULL);
+    
+    // Populate the method decl with parameter decls
+    
+    clang::Type *method_type(method_qual_type.getTypePtr());
+    
+    if (!method_type)
+        return false;
+    
+    FunctionProtoType *method_funprototy(dyn_cast<FunctionProtoType>(method_type));
+    
+    if (!method_funprototy)
+        return false;
+    
+    unsigned int num_params = method_funprototy->getNumArgs();
+    
+    ParmVarDecl *params[num_params];
+    
+    for (int param_index = 0;
+         param_index < num_params;
+         ++param_index)
+    {
+        params[param_index] = ParmVarDecl::Create(*ast_context,
+                                                  cxx_method_decl,
+                                                  SourceLocation(),
+                                                  NULL, // anonymous
+                                                  method_funprototy->getArgType(param_index), 
+                                                  NULL,
+                                                  VarDecl::Auto, 
+                                                  VarDecl::Auto,
+                                                  NULL); 
+    }
+    
+    cxx_method_decl->setParams(params, num_params);
     
     cxx_record_decl->addDecl(cxx_method_decl);
     

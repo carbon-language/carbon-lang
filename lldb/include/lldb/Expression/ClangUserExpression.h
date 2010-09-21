@@ -171,6 +171,12 @@ public:
     }
 
 private:
+    //------------------------------------------------------------------
+    /// Populate m_cplusplus and m_objetivec based on the environment.
+    //------------------------------------------------------------------
+    void
+    ScanContext(ExecutionContext &exe_ctx);
+    
     std::string                                 m_expr_text;            ///< The text of the expression, as typed by the user
     std::string                                 m_transformed_text;     ///< The text of the expression, as send to the parser
     
@@ -178,6 +184,10 @@ private:
     std::auto_ptr<ClangExpressionVariableStore> m_local_variables;      ///< The local expression variables, if the expression is DWARF.
     std::auto_ptr<StreamString>                 m_dwarf_opcodes;        ///< The DWARF opcodes for the expression.  May be NULL.
     lldb::addr_t                                m_jit_addr;             ///< The address of the JITted code.  LLDB_INVALID_ADDRESS if invalid.
+    
+    bool                                        m_cplusplus;            ///< True if the expression is compiled as a C++ member function (true if it was parsed when exe_ctx was in a C++ method).
+    bool                                        m_objectivec;           ///< True if the expression is compiled as an Objective-C method (true if it was parsed when exe_ctx was in an Objective-C method).
+    bool                                        m_needs_object_ptr;     ///< True if "this" or "self" must be looked up and passed in.  False if the expression doesn't really use them and they can be NULL.
 };
     
 } // namespace lldb_private
