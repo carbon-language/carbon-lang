@@ -609,13 +609,13 @@ public:
   SDValue getMemIntrinsicNode(unsigned Opcode, DebugLoc dl,
                               const EVT *VTs, unsigned NumVTs,
                               const SDValue *Ops, unsigned NumOps,
-                              EVT MemVT, const Value *srcValue, int SVOff,
+                              EVT MemVT, MachinePointerInfo PtrInfo,
                               unsigned Align = 0, bool Vol = false,
                               bool ReadMem = true, bool WriteMem = true);
 
   SDValue getMemIntrinsicNode(unsigned Opcode, DebugLoc dl, SDVTList VTList,
                               const SDValue *Ops, unsigned NumOps,
-                              EVT MemVT, const Value *srcValue, int SVOff,
+                              EVT MemVT, MachinePointerInfo PtrInfo,
                               unsigned Align = 0, bool Vol = false,
                               bool ReadMem = true, bool WriteMem = true);
 

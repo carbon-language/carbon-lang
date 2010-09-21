@@ -3062,7 +3062,8 @@ void SelectionDAGBuilder::visitTargetIntrinsic(const CallInst &I,
     // This is target intrinsic that touches memory
     Result = DAG.getMemIntrinsicNode(Info.opc, getCurDebugLoc(),
                                      VTs, &Ops[0], Ops.size(),
-                                     Info.memVT, Info.ptrVal, Info.offset,
+                                     Info.memVT,
+                                   MachinePointerInfo(Info.ptrVal, Info.offset),
                                      Info.align, Info.vol,
                                      Info.readMem, Info.writeMem);
   } else if (!HasChain) {

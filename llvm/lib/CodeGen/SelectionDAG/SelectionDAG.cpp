@@ -3795,18 +3795,18 @@ SDValue
 SelectionDAG::getMemIntrinsicNode(unsigned Opcode, DebugLoc dl,
                                   const EVT *VTs, unsigned NumVTs,
                                   const SDValue *Ops, unsigned NumOps,
-                                  EVT MemVT, const Value *srcValue, int SVOff,
+                                  EVT MemVT, MachinePointerInfo PtrInfo,
                                   unsigned Align, bool Vol,
                                   bool ReadMem, bool WriteMem) {
   return getMemIntrinsicNode(Opcode, dl, makeVTList(VTs, NumVTs), Ops, NumOps,
-                             MemVT, srcValue, SVOff, Align, Vol,
+                             MemVT, PtrInfo, Align, Vol,
                              ReadMem, WriteMem);
 }
 
 SDValue
 SelectionDAG::getMemIntrinsicNode(unsigned Opcode, DebugLoc dl, SDVTList VTList,
                                   const SDValue *Ops, unsigned NumOps,
-                                  EVT MemVT, const Value *srcValue, int SVOff,
+                                  EVT MemVT, MachinePointerInfo PtrInfo,
                                   unsigned Align, bool Vol,
                                   bool ReadMem, bool WriteMem) {
   if (Align == 0)  // Ensure that codegen never sees alignment 0
@@ -3821,8 +3821,7 @@ SelectionDAG::getMemIntrinsicNode(unsigned Opcode, DebugLoc dl, SDVTList VTList,
   if (Vol)
     Flags |= MachineMemOperand::MOVolatile;
   MachineMemOperand *MMO =
-    MF.getMachineMemOperand(MachinePointerInfo(srcValue, SVOff), Flags,
-                            MemVT.getStoreSize(), Align);
+    MF.getMachineMemOperand(PtrInfo, Flags, MemVT.getStoreSize(), Align);
 
   return getMemIntrinsicNode(Opcode, dl, VTList, Ops, NumOps, MemVT, MMO);
 }
