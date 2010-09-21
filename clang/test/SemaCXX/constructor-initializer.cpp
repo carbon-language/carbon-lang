@@ -144,9 +144,13 @@ int IntWrapper(int i) { return 0; };
 class InitializeUsingSelfExceptions {
   int A;
   int B;
+  int C;
+  void *P;
   InitializeUsingSelfExceptions(int B)
       : A(IntWrapper(A)),  // Due to a conservative implementation, we do not report warnings inside function/ctor calls even though it is possible to do so.
-        B(B) {}  // Not a warning; B is a local variable.
+        B(B),  // Not a warning; B is a local variable.
+        C(sizeof(C)),  // sizeof doesn't reference contents, do not warn
+        P(&P) {} // address-of doesn't reference contents (the pointer may be dereferenced in the same expression but it would be rare; and weird)
 };
 
 class CopyConstructorTest {

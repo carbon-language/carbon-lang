@@ -1246,6 +1246,14 @@ static bool InitExprContainsUninitializedFields(const Stmt *S,
       *L = ME->getMemberLoc();
       return true;
     }
+  } else if (isa<SizeOfAlignOfExpr>(S)) {
+    // sizeof/alignof doesn't reference contents, do not warn.
+    return false;
+  } else if (const UnaryOperator *UOE = dyn_cast<UnaryOperator>(S)) {
+    // address-of doesn't reference contents (the pointer may be dereferenced
+    // in the same expression but it would be rare; and weird).
+    if (UOE->getOpcode() == UO_AddrOf)
+      return false;
   }
   for (Stmt::const_child_iterator it = S->child_begin(), e = S->child_end();
        it != e; ++it) {
