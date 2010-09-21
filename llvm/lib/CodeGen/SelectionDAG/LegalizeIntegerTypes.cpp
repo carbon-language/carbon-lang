@@ -143,7 +143,7 @@ SDValue DAGTypeLegalizer::PromoteIntRes_Atomic1(AtomicSDNode *N) {
   SDValue Res = DAG.getAtomic(N->getOpcode(), N->getDebugLoc(),
                               N->getMemoryVT(),
                               N->getChain(), N->getBasePtr(),
-                              Op2, N->getSrcValue(), N->getAlignment());
+                              Op2, N->getMemOperand());
   // Legalized the chain result - switch anything that used the old chain to
   // use the new one.
   ReplaceValueWith(SDValue(N, 1), Res.getValue(1));
@@ -155,7 +155,7 @@ SDValue DAGTypeLegalizer::PromoteIntRes_Atomic2(AtomicSDNode *N) {
   SDValue Op3 = GetPromotedInteger(N->getOperand(3));
   SDValue Res = DAG.getAtomic(N->getOpcode(), N->getDebugLoc(),
                               N->getMemoryVT(), N->getChain(), N->getBasePtr(),
-                              Op2, Op3, N->getSrcValue(), N->getAlignment());
+                              Op2, Op3, N->getMemOperand());
   // Legalized the chain result - switch anything that used the old chain to
   // use the new one.
   ReplaceValueWith(SDValue(N, 1), Res.getValue(1));
