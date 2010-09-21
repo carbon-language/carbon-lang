@@ -646,15 +646,27 @@ public:
   SDValue getLoad(ISD::MemIndexedMode AM, ISD::LoadExtType ExtType,
                   EVT VT, DebugLoc dl,
                   SDValue Chain, SDValue Ptr, SDValue Offset,
+                  MachinePointerInfo PtrInfo, EVT MemVT,
+                  bool isVolatile, bool isNonTemporal, unsigned Alignment);
+  SDValue getLoad(ISD::MemIndexedMode AM, ISD::LoadExtType ExtType,
+                  EVT VT, DebugLoc dl,
+                  SDValue Chain, SDValue Ptr, SDValue Offset,
                   EVT MemVT, MachineMemOperand *MMO);
 
   /// getStore - Helper function to build ISD::STORE nodes.
   ///
   SDValue getStore(SDValue Chain, DebugLoc dl, SDValue Val, SDValue Ptr,
-                   const Value *SV, int SVOffset, bool isVolatile,
+                   MachinePointerInfo PtrInfo, bool isVolatile,
+                   bool isNonTemporal, unsigned Alignment);
+  SDValue getStore(SDValue Chain, DebugLoc dl, SDValue Val, SDValue Ptr,
+                   const Value *V, int SVOffset, bool isVolatile,
                    bool isNonTemporal, unsigned Alignment);
   SDValue getStore(SDValue Chain, DebugLoc dl, SDValue Val, SDValue Ptr,
                    MachineMemOperand *MMO);
+  SDValue getTruncStore(SDValue Chain, DebugLoc dl, SDValue Val, SDValue Ptr,
+                        MachinePointerInfo PtrInfo, EVT TVT,
+                        bool isNonTemporal, bool isVolatile,
+                        unsigned Alignment);
   SDValue getTruncStore(SDValue Chain, DebugLoc dl, SDValue Val, SDValue Ptr,
                         const Value *SV, int SVOffset, EVT TVT,
                         bool isNonTemporal, bool isVolatile,
