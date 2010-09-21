@@ -293,7 +293,8 @@ std::auto_ptr<PBQPRAProblem> PBQPBuilderWithCoalescing::build(
 
 
 
-        PBQP::PBQPNum cBenefit = std::pow(10.0f, loopInfo->getLoopDepth(mbb));
+        PBQP::PBQPNum cBenefit =
+          std::pow(10.0f, (float)loopInfo->getLoopDepth(mbb));
 
         if (cp.isPhys()) {
           if (!lis->isAllocatable(dst))
