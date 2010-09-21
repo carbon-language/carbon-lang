@@ -347,8 +347,8 @@ unittest2.signals.installHandler()
 # over different configurations.
 #
 
-iterCompilers = False
 iterArchs = False
+iterCompilers = False
 
 from types import *
 if "archs" in config:
