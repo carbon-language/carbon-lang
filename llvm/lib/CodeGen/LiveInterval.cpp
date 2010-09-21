@@ -31,6 +31,7 @@
 using namespace llvm;
 
 // CompEnd - Compare LiveRange end to Pos.
+namespace {
 struct CompEnd {
   bool operator()(SlotIndex Pos, const LiveRange &LR) const {
     return Pos < LR.end;
@@ -39,6 +40,7 @@ struct CompEnd {
     return LR.end < Pos;
   }
 };
+}
 
 LiveInterval::iterator LiveInterval::find(SlotIndex Pos) {
   return std::upper_bound(begin(), end(), Pos, CompEnd());
