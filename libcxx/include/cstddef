@@ -54,7 +54,7 @@ typedef long double max_align_t;
 
 #ifdef _LIBCPP_HAS_NO_NULLPTR
 
-struct nullptr_t
+struct _LIBCPP_VISIBLE nullptr_t
 {
     void* _;
 

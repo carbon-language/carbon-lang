@@ -115,22 +115,25 @@ class exception_ptr;
 exception_ptr current_exception();
 void rethrow_exception(exception_ptr);  // noreturn
 
-class exception_ptr
+class _LIBCPP_VISIBLE exception_ptr
 {
     void* __ptr_;
 public:
-    exception_ptr()  : __ptr_() {}
-    exception_ptr(nullptr_t) : __ptr_() {}
+    _LIBCPP_INLINE_VISIBILITY exception_ptr()  : __ptr_() {}
+    _LIBCPP_INLINE_VISIBILITY exception_ptr(nullptr_t) : __ptr_() {}
     exception_ptr(const exception_ptr&);
     exception_ptr& operator=(const exception_ptr&);
     ~exception_ptr();
 
+    _LIBCPP_INLINE_VISIBILITY
     // explicit
         operator bool() const {return __ptr_ != nullptr;}
 
-    friend bool operator==(const exception_ptr& __x, const exception_ptr& __y)
+    friend _LIBCPP_INLINE_VISIBILITY
+    bool operator==(const exception_ptr& __x, const exception_ptr& __y)
         {return __x.__ptr_ == __y.__ptr_;}
-    friend bool operator!=(const exception_ptr& __x, const exception_ptr& __y)
+    friend _LIBCPP_INLINE_VISIBILITY
+    bool operator!=(const exception_ptr& __x, const exception_ptr& __y)
         {return !(__x == __y);}
 
     friend exception_ptr current_exception();
@@ -166,7 +169,7 @@ public:
 
     // access functions
     void rethrow_nested /*[[noreturn]]*/ () const;
-    exception_ptr nested_ptr() const {return __ptr_;}
+    _LIBCPP_INLINE_VISIBILITY exception_ptr nested_ptr() const {return __ptr_;}
 };
 
 template <class _Tp>
@@ -174,7 +177,7 @@ struct __nested
     : public _Tp,
       public nested_exception
 {
-    explicit __nested(const _Tp& __t) : _Tp(__t) {}
+    _LIBCPP_INLINE_VISIBILITY explicit __nested(const _Tp& __t) : _Tp(__t) {}
 };
 
 template <class _Tp>
@@ -214,7 +217,7 @@ throw_with_nested (_Tp& __t, typename enable_if<
 }
 
 template <class _E>
-inline
+inline _LIBCPP_INLINE_VISIBILITY
 void
 rethrow_if_nested(const _E& __e, typename enable_if<
                                    is_polymorphic<_E>::value
@@ -226,7 +229,7 @@ rethrow_if_nested(const _E& __e, typename enable_if<
 }
 
 template <class _E>
-inline
+inline _LIBCPP_INLINE_VISIBILITY
 void
 rethrow_if_nested(const _E& __e, typename enable_if<
                                    !is_polymorphic<_E>::value

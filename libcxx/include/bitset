@@ -592,7 +592,7 @@ template <size_t _Size> class bitset;
 template <size_t _Size> struct hash<bitset<_Size> >;
 
 template <size_t _Size>
-class bitset
+class _LIBCPP_VISIBLE bitset
     : private __bitset<_Size == 0 ? 0 : (_Size - 1) / (sizeof(size_t) * CHAR_BIT) + 1, _Size>
 {
     static const unsigned __n_words = _Size == 0 ? 0 : (_Size - 1) / (sizeof(size_t) * CHAR_BIT) + 1;
@@ -656,6 +656,7 @@ public:
 
 private:
 
+    _LIBCPP_INLINE_VISIBILITY
     size_t __hash_code() const {return base::__hash_code();}
 
     friend struct hash<bitset>;
@@ -1010,9 +1011,10 @@ operator^(const bitset<_Size>& __x, const bitset<_Size>& __y)
 }
 
 template <size_t _Size>
-struct hash<bitset<_Size> >
+struct _LIBCPP_VISIBLE hash<bitset<_Size> >
     : public unary_function<bitset<_Size>, size_t>
 {
+    _LIBCPP_INLINE_VISIBILITY
     size_t operator()(const bitset<_Size>& __bs) const
         {return __bs.__hash_code();}
 };

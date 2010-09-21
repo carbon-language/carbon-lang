@@ -253,13 +253,13 @@ template<class T, class charT, class traits>
 
 _LIBCPP_BEGIN_NAMESPACE_STD
 
-template<class _Tp> class complex;
+template<class _Tp> class _LIBCPP_VISIBLE complex;
 
 template<class _Tp> complex<_Tp> operator*(const complex<_Tp>& __z, const complex<_Tp>& __w);
 template<class _Tp> complex<_Tp> operator/(const complex<_Tp>& __x, const complex<_Tp>& __y);
 
 template<class _Tp>
-class complex
+class _LIBCPP_VISIBLE complex
 {
 public:
     typedef _Tp value_type;
@@ -316,11 +316,11 @@ public:
         }
 };
 
-template<> class complex<double>;
-template<> class complex<long double>;
+template<> class _LIBCPP_VISIBLE complex<double>;
+template<> class _LIBCPP_VISIBLE complex<long double>;
 
 template<>
-class complex<float>
+class _LIBCPP_VISIBLE complex<float>
 {
     float __re_;
     float __im_;
@@ -375,7 +375,7 @@ public:
 };
 
 template<>
-class complex<double>
+class _LIBCPP_VISIBLE complex<double>
 {
     double __re_;
     double __im_;
@@ -430,7 +430,7 @@ public:
 };
 
 template<>
-class complex<long double>
+class _LIBCPP_VISIBLE complex<long double>
 {
     long double __re_;
     long double __im_;
@@ -780,20 +780,6 @@ operator!=(const _Tp& __x, const complex<_Tp>& __y)
 {
     return !(__x == __y);
 }
-
-/*
-    Move to <istream>
-
-template<class T, class charT, class traits>
-basic_istream<charT, traits>&
-operator>>(basic_istream<charT, traits>&, complex<T>&);
-
-    Move to <ostream>
-
-template<class T, class charT, class traits>
-basic_ostream<charT, traits>&
-operator<<(basic_ostream<charT, traits>&, const complex<T>&);
-*/
 
 // 26.3.7 values:
 

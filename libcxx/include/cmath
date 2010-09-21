@@ -317,7 +317,7 @@ using ::double_t;
 // abs
 
 template <class _A1>
-_LIBCPP_INLINE_VISIBILITY
+inline _LIBCPP_INLINE_VISIBILITY
 typename enable_if<is_floating_point<_A1>::value, _A1>::type
 abs(_A1 __x) {return fabs(__x);}
 
@@ -330,7 +330,7 @@ inline _LIBCPP_INLINE_VISIBILITY float       acos(float __x)       {return acosf
 inline _LIBCPP_INLINE_VISIBILITY long double acos(long double __x) {return acosl(__x);}
 
 template <class _A1>
-_LIBCPP_INLINE_VISIBILITY
+inline _LIBCPP_INLINE_VISIBILITY
 typename enable_if<is_integral<_A1>::value, double>::type
 acos(_A1 __x) {return acos((double)__x);}
 
@@ -343,7 +343,7 @@ inline _LIBCPP_INLINE_VISIBILITY float       asin(float __x)       {return asinf
 inline _LIBCPP_INLINE_VISIBILITY long double asin(long double __x) {return asinl(__x);}
 
 template <class _A1>
-_LIBCPP_INLINE_VISIBILITY
+inline _LIBCPP_INLINE_VISIBILITY
 typename enable_if<is_integral<_A1>::value, double>::type
 asin(_A1 __x) {return asin((double)__x);}
 
@@ -356,7 +356,7 @@ inline _LIBCPP_INLINE_VISIBILITY float       atan(float __x)       {return atanf
 inline _LIBCPP_INLINE_VISIBILITY long double atan(long double __x) {return atanl(__x);}
 
 template <class _A1>
-_LIBCPP_INLINE_VISIBILITY
+inline _LIBCPP_INLINE_VISIBILITY
 typename enable_if<is_integral<_A1>::value, double>::type
 atan(_A1 __x) {return atan((double)__x);}
 
@@ -369,7 +369,7 @@ inline _LIBCPP_INLINE_VISIBILITY float       atan2(float __y, float __x)        
 inline _LIBCPP_INLINE_VISIBILITY long double atan2(long double __y, long double __x) {return atan2l(__y, __x);}
 
 template <class _A1, class _A2>
-_LIBCPP_INLINE_VISIBILITY
+inline _LIBCPP_INLINE_VISIBILITY
 typename enable_if
 <
     is_arithmetic<_A1>::value &&
@@ -393,7 +393,7 @@ inline _LIBCPP_INLINE_VISIBILITY float       ceil(float __x)       {return ceilf
 inline _LIBCPP_INLINE_VISIBILITY long double ceil(long double __x) {return ceill(__x);}
 
 template <class _A1>
-_LIBCPP_INLINE_VISIBILITY
+inline _LIBCPP_INLINE_VISIBILITY
 typename enable_if<is_integral<_A1>::value, double>::type
 ceil(_A1 __x) {return ceil((double)__x);}
 
@@ -406,7 +406,7 @@ inline _LIBCPP_INLINE_VISIBILITY float       cos(float __x)       {return cosf(_
 inline _LIBCPP_INLINE_VISIBILITY long double cos(long double __x) {return cosl(__x);}
 
 template <class _A1>
-_LIBCPP_ALWAYS_INLINE _LIBCPP_INLINE_VISIBILITY
+inline _LIBCPP_ALWAYS_INLINE _LIBCPP_INLINE_VISIBILITY
 typename enable_if<is_integral<_A1>::value, double>::type
 cos(_A1 __x) {return cos((double)__x);}
 
@@ -419,7 +419,7 @@ inline _LIBCPP_INLINE_VISIBILITY float       cosh(float __x)       {return coshf
 inline _LIBCPP_INLINE_VISIBILITY long double cosh(long double __x) {return coshl(__x);}
 
 template <class _A1>
-_LIBCPP_INLINE_VISIBILITY
+inline _LIBCPP_INLINE_VISIBILITY
 typename enable_if<is_integral<_A1>::value, double>::type
 cosh(_A1 __x) {return cosh((double)__x);}
 
@@ -432,7 +432,7 @@ inline _LIBCPP_INLINE_VISIBILITY float       exp(float __x)       {return expf(_
 inline _LIBCPP_INLINE_VISIBILITY long double exp(long double __x) {return expl(__x);}
 
 template <class _A1>
-_LIBCPP_INLINE_VISIBILITY
+inline _LIBCPP_INLINE_VISIBILITY
 typename enable_if<is_integral<_A1>::value, double>::type
 exp(_A1 __x) {return exp((double)__x);}
 
@@ -445,7 +445,7 @@ inline _LIBCPP_INLINE_VISIBILITY float       fabs(float __x)       {return fabsf
 inline _LIBCPP_INLINE_VISIBILITY long double fabs(long double __x) {return fabsl(__x);}
 
 template <class _A1>
-_LIBCPP_INLINE_VISIBILITY
+inline _LIBCPP_INLINE_VISIBILITY
 typename enable_if<is_integral<_A1>::value, double>::type
 fabs(_A1 __x) {return fabs((double)__x);}
 
@@ -458,7 +458,7 @@ inline _LIBCPP_INLINE_VISIBILITY float       floor(float __x)       {return floo
 inline _LIBCPP_INLINE_VISIBILITY long double floor(long double __x) {return floorl(__x);}
 
 template <class _A1>
-_LIBCPP_INLINE_VISIBILITY
+inline _LIBCPP_INLINE_VISIBILITY
 typename enable_if<is_integral<_A1>::value, double>::type
 floor(_A1 __x) {return floor((double)__x);}
 
@@ -471,7 +471,7 @@ inline _LIBCPP_INLINE_VISIBILITY float       fmod(float __x, float __y)         
 inline _LIBCPP_INLINE_VISIBILITY long double fmod(long double __x, long double __y) {return fmodl(__x, __y);}
 
 template <class _A1, class _A2>
-_LIBCPP_INLINE_VISIBILITY
+inline _LIBCPP_INLINE_VISIBILITY
 typename enable_if
 <
     is_arithmetic<_A1>::value &&
@@ -495,7 +495,7 @@ inline _LIBCPP_INLINE_VISIBILITY float       frexp(float __x, int* __e)       {r
 inline _LIBCPP_INLINE_VISIBILITY long double frexp(long double __x, int* __e) {return frexpl(__x, __e);}
 
 template <class _A1>
-_LIBCPP_INLINE_VISIBILITY
+inline _LIBCPP_INLINE_VISIBILITY
 typename enable_if<is_integral<_A1>::value, double>::type
 frexp(_A1 __x, int* __e) {return frexp((double)__x, __e);}
 
@@ -508,7 +508,7 @@ inline _LIBCPP_INLINE_VISIBILITY float       ldexp(float __x, int __e)       {re
 inline _LIBCPP_INLINE_VISIBILITY long double ldexp(long double __x, int __e) {return ldexpl(__x, __e);}
 
 template <class _A1>
-_LIBCPP_INLINE_VISIBILITY
+inline _LIBCPP_INLINE_VISIBILITY
 typename enable_if<is_integral<_A1>::value, double>::type
 ldexp(_A1 __x, int __e) {return ldexp((double)__x, __e);}
 
@@ -521,7 +521,7 @@ inline _LIBCPP_INLINE_VISIBILITY float       log(float __x)       {return logf(_
 inline _LIBCPP_INLINE_VISIBILITY long double log(long double __x) {return logl(__x);}
 
 template <class _A1>
-_LIBCPP_INLINE_VISIBILITY
+inline _LIBCPP_INLINE_VISIBILITY
 typename enable_if<is_integral<_A1>::value, double>::type
 log(_A1 __x) {return log((double)__x);}
 
@@ -534,7 +534,7 @@ inline _LIBCPP_INLINE_VISIBILITY float       log10(float __x)       {return log1
 inline _LIBCPP_INLINE_VISIBILITY long double log10(long double __x) {return log10l(__x);}
 
 template <class _A1>
-_LIBCPP_INLINE_VISIBILITY
+inline _LIBCPP_INLINE_VISIBILITY
 typename enable_if<is_integral<_A1>::value, double>::type
 log10(_A1 __x) {return log10((double)__x);}
 
@@ -555,7 +555,7 @@ inline _LIBCPP_INLINE_VISIBILITY float       pow(float __x, float __y)          
 inline _LIBCPP_INLINE_VISIBILITY long double pow(long double __x, long double __y) {return powl(__x, __y);}
 
 template <class _A1, class _A2>
-_LIBCPP_INLINE_VISIBILITY
+inline _LIBCPP_INLINE_VISIBILITY
 typename enable_if
 <
     is_arithmetic<_A1>::value &&
@@ -579,7 +579,7 @@ inline _LIBCPP_INLINE_VISIBILITY float       sin(float __x)       {return sinf(_
 inline _LIBCPP_INLINE_VISIBILITY long double sin(long double __x) {return sinl(__x);}
 
 template <class _A1>
-_LIBCPP_INLINE_VISIBILITY
+inline _LIBCPP_INLINE_VISIBILITY
 typename enable_if<is_integral<_A1>::value, double>::type
 sin(_A1 __x) {return sin((double)__x);}
 
@@ -592,7 +592,7 @@ inline _LIBCPP_INLINE_VISIBILITY float       sinh(float __x)       {return sinhf
 inline _LIBCPP_INLINE_VISIBILITY long double sinh(long double __x) {return sinhl(__x);}
 
 template <class _A1>
-_LIBCPP_INLINE_VISIBILITY
+inline _LIBCPP_INLINE_VISIBILITY
 typename enable_if<is_integral<_A1>::value, double>::type
 sinh(_A1 __x) {return sinh((double)__x);}
 
@@ -605,7 +605,7 @@ inline _LIBCPP_INLINE_VISIBILITY float       sqrt(float __x)       {return sqrtf
 inline _LIBCPP_INLINE_VISIBILITY long double sqrt(long double __x) {return sqrtl(__x);}
 
 template <class _A1>
-_LIBCPP_INLINE_VISIBILITY
+inline _LIBCPP_INLINE_VISIBILITY
 typename enable_if<is_integral<_A1>::value, double>::type
 sqrt(_A1 __x) {return sqrt((double)__x);}
 
@@ -618,7 +618,7 @@ inline _LIBCPP_INLINE_VISIBILITY float       tan(float __x)       {return tanf(_
 inline _LIBCPP_INLINE_VISIBILITY long double tan(long double __x) {return tanl(__x);}
 
 template <class _A1>
-_LIBCPP_INLINE_VISIBILITY
+inline _LIBCPP_INLINE_VISIBILITY
 typename enable_if<is_integral<_A1>::value, double>::type
 tan(_A1 __x) {return tan((double)__x);}
 
@@ -631,7 +631,7 @@ inline _LIBCPP_INLINE_VISIBILITY float       tanh(float __x)       {return tanhf
 inline _LIBCPP_INLINE_VISIBILITY long double tanh(long double __x) {return tanhl(__x);}
 
 template <class _A1>
-_LIBCPP_INLINE_VISIBILITY
+inline _LIBCPP_INLINE_VISIBILITY
 typename enable_if<is_integral<_A1>::value, double>::type
 tanh(_A1 __x) {return tanh((double)__x);}
 
@@ -652,7 +652,7 @@ __libcpp_signbit(_A1 __x)
 #undef signbit
 
 template <class _A1>
-_LIBCPP_INLINE_VISIBILITY
+inline _LIBCPP_INLINE_VISIBILITY
 typename enable_if<is_floating_point<_A1>::value, bool>::type
 signbit(_A1 __x)
 {
@@ -678,7 +678,7 @@ __libcpp_fpclassify(_A1 __x)
 #undef fpclassify
 
 template <class _A1>
-_LIBCPP_INLINE_VISIBILITY
+inline _LIBCPP_INLINE_VISIBILITY
 typename enable_if<is_floating_point<_A1>::value, int>::type
 fpclassify(_A1 __x)
 {
@@ -704,7 +704,7 @@ __libcpp_isfinite(_A1 __x)
 #undef isfinite
 
 template <class _A1>
-_LIBCPP_INLINE_VISIBILITY
+inline _LIBCPP_INLINE_VISIBILITY
 typename enable_if<is_floating_point<_A1>::value, bool>::type
 isfinite(_A1 __x)
 {
@@ -730,7 +730,7 @@ __libcpp_isinf(_A1 __x)
 #undef isinf
 
 template <class _A1>
-_LIBCPP_INLINE_VISIBILITY
+inline _LIBCPP_INLINE_VISIBILITY
 typename enable_if<is_floating_point<_A1>::value, bool>::type
 isinf(_A1 __x)
 {
@@ -756,7 +756,7 @@ __libcpp_isnan(_A1 __x)
 #undef isnan
 
 template <class _A1>
-_LIBCPP_INLINE_VISIBILITY
+inline _LIBCPP_INLINE_VISIBILITY
 typename enable_if<is_floating_point<_A1>::value, bool>::type
 isnan(_A1 __x)
 {
@@ -782,7 +782,7 @@ __libcpp_isnormal(_A1 __x)
 #undef isnormal
 
 template <class _A1>
-_LIBCPP_INLINE_VISIBILITY
+inline _LIBCPP_INLINE_VISIBILITY
 typename enable_if<is_floating_point<_A1>::value, bool>::type
 isnormal(_A1 __x)
 {
@@ -808,7 +808,7 @@ __libcpp_isgreater(_A1 __x, _A2 __y)
 #undef isgreater
 
 template <class _A1, class _A2>
-_LIBCPP_INLINE_VISIBILITY
+inline _LIBCPP_INLINE_VISIBILITY
 typename enable_if
 <
     is_floating_point<_A1>::value &&
@@ -839,7 +839,7 @@ __libcpp_isgreaterequal(_A1 __x, _A2 __y)
 #undef isgreaterequal
 
 template <class _A1, class _A2>
-_LIBCPP_INLINE_VISIBILITY
+inline _LIBCPP_INLINE_VISIBILITY
 typename enable_if
 <
     is_floating_point<_A1>::value &&
@@ -870,7 +870,7 @@ __libcpp_isless(_A1 __x, _A2 __y)
 #undef isless
 
 template <class _A1, class _A2>
-_LIBCPP_INLINE_VISIBILITY
+inline _LIBCPP_INLINE_VISIBILITY
 typename enable_if
 <
     is_floating_point<_A1>::value &&
@@ -901,7 +901,7 @@ __libcpp_islessequal(_A1 __x, _A2 __y)
 #undef islessequal
 
 template <class _A1, class _A2>
-_LIBCPP_INLINE_VISIBILITY
+inline _LIBCPP_INLINE_VISIBILITY
 typename enable_if
 <
     is_floating_point<_A1>::value &&
@@ -932,7 +932,7 @@ __libcpp_islessgreater(_A1 __x, _A2 __y)
 #undef islessgreater
 
 template <class _A1, class _A2>
-_LIBCPP_INLINE_VISIBILITY
+inline _LIBCPP_INLINE_VISIBILITY
 typename enable_if
 <
     is_floating_point<_A1>::value &&
@@ -963,7 +963,7 @@ __libcpp_isunordered(_A1 __x, _A2 __y)
 #undef isunordered
 
 template <class _A1, class _A2>
-_LIBCPP_INLINE_VISIBILITY
+inline _LIBCPP_INLINE_VISIBILITY
 typename enable_if
 <
     is_floating_point<_A1>::value &&
@@ -986,7 +986,7 @@ inline _LIBCPP_INLINE_VISIBILITY float       acosh(float __x)       {return acos
 inline _LIBCPP_INLINE_VISIBILITY long double acosh(long double __x) {return acoshl(__x);}
 
 template <class _A1>
-_LIBCPP_INLINE_VISIBILITY
+inline _LIBCPP_INLINE_VISIBILITY
 typename enable_if<is_integral<_A1>::value, double>::type
 acosh(_A1 __x) {return acosh((double)__x);}
 
@@ -999,7 +999,7 @@ inline _LIBCPP_INLINE_VISIBILITY float       asinh(float __x)       {return asin
 inline _LIBCPP_INLINE_VISIBILITY long double asinh(long double __x) {return asinhl(__x);}
 
 template <class _A1>
-_LIBCPP_INLINE_VISIBILITY
+inline _LIBCPP_INLINE_VISIBILITY
 typename enable_if<is_integral<_A1>::value, double>::type
 asinh(_A1 __x) {return asinh((double)__x);}
 
@@ -1012,7 +1012,7 @@ inline _LIBCPP_INLINE_VISIBILITY float       atanh(float __x)       {return atan
 inline _LIBCPP_INLINE_VISIBILITY long double atanh(long double __x) {return atanhl(__x);}
 
 template <class _A1>
-_LIBCPP_INLINE_VISIBILITY
+inline _LIBCPP_INLINE_VISIBILITY
 typename enable_if<is_integral<_A1>::value, double>::type
 atanh(_A1 __x) {return atanh((double)__x);}
 
@@ -1025,7 +1025,7 @@ inline _LIBCPP_INLINE_VISIBILITY float       cbrt(float __x)       {return cbrtf
 inline _LIBCPP_INLINE_VISIBILITY long double cbrt(long double __x) {return cbrtl(__x);}
 
 template <class _A1>
-_LIBCPP_INLINE_VISIBILITY
+inline _LIBCPP_INLINE_VISIBILITY
 typename enable_if<is_integral<_A1>::value, double>::type
 cbrt(_A1 __x) {return cbrt((double)__x);}
 
@@ -1038,7 +1038,7 @@ inline _LIBCPP_INLINE_VISIBILITY float       copysign(float __x, float __y)     
 inline _LIBCPP_INLINE_VISIBILITY long double copysign(long double __x, long double __y) {return copysignl(__x, __y);}
 
 template <class _A1, class _A2>
-_LIBCPP_INLINE_VISIBILITY
+inline _LIBCPP_INLINE_VISIBILITY
 typename enable_if
 <
     is_arithmetic<_A1>::value &&
@@ -1062,7 +1062,7 @@ inline _LIBCPP_INLINE_VISIBILITY float       erf(float __x)       {return erff(_
 inline _LIBCPP_INLINE_VISIBILITY long double erf(long double __x) {return erfl(__x);}
 
 template <class _A1>
-_LIBCPP_INLINE_VISIBILITY
+inline _LIBCPP_INLINE_VISIBILITY
 typename enable_if<is_integral<_A1>::value, double>::type
 erf(_A1 __x) {return erf((double)__x);}
 
@@ -1075,7 +1075,7 @@ inline _LIBCPP_INLINE_VISIBILITY float       erfc(float __x)       {return erfcf
 inline _LIBCPP_INLINE_VISIBILITY long double erfc(long double __x) {return erfcl(__x);}
 
 template <class _A1>
-_LIBCPP_INLINE_VISIBILITY
+inline _LIBCPP_INLINE_VISIBILITY
 typename enable_if<is_integral<_A1>::value, double>::type
 erfc(_A1 __x) {return erfc((double)__x);}
 
@@ -1088,7 +1088,7 @@ inline _LIBCPP_INLINE_VISIBILITY float       exp2(float __x)       {return exp2f
 inline _LIBCPP_INLINE_VISIBILITY long double exp2(long double __x) {return exp2l(__x);}
 
 template <class _A1>
-_LIBCPP_INLINE_VISIBILITY
+inline _LIBCPP_INLINE_VISIBILITY
 typename enable_if<is_integral<_A1>::value, double>::type
 exp2(_A1 __x) {return exp2((double)__x);}
 
@@ -1101,7 +1101,7 @@ inline _LIBCPP_INLINE_VISIBILITY float       expm1(float __x)       {return expm
 inline _LIBCPP_INLINE_VISIBILITY long double expm1(long double __x) {return expm1l(__x);}
 
 template <class _A1>
-_LIBCPP_INLINE_VISIBILITY
+inline _LIBCPP_INLINE_VISIBILITY
 typename enable_if<is_integral<_A1>::value, double>::type
 expm1(_A1 __x) {return expm1((double)__x);}
 
@@ -1114,7 +1114,7 @@ inline _LIBCPP_INLINE_VISIBILITY float       fdim(float __x, float __y)         
 inline _LIBCPP_INLINE_VISIBILITY long double fdim(long double __x, long double __y) {return fdiml(__x, __y);}
 
 template <class _A1, class _A2>
-_LIBCPP_INLINE_VISIBILITY
+inline _LIBCPP_INLINE_VISIBILITY
 typename enable_if
 <
     is_arithmetic<_A1>::value &&
@@ -1134,18 +1134,13 @@ fdim(_A1 __x, _A2 __y)
 inline _LIBCPP_INLINE_VISIBILITY float fmaf(float __x, float __y, float __z) {return (float)((double)__x*__y + __z);}
 #define FP_FAST_FMAF
 
-//#if (defined(__ppc__) || defined(__ppc64__))
-//inline _LIBCPP_INLINE_VISIBILITY double fma(register double __x, register double __y, register double __z) {asm {fmadd __x, __x, __y, __z} return __x;}
-//#define FP_FAST_FMA
-//#else
 using ::fma;
-//#endif
 
 inline _LIBCPP_INLINE_VISIBILITY float       fma(float __x, float __y, float __z)                   {return fmaf(__x, __y, __z);}
 inline _LIBCPP_INLINE_VISIBILITY long double fma(long double __x, long double __y, long double __z) {return fmal(__x, __y, __z);}
 
 template <class _A1, class _A2, class _A3>
-_LIBCPP_INLINE_VISIBILITY
+inline _LIBCPP_INLINE_VISIBILITY
 typename enable_if
 <
     is_arithmetic<_A1>::value &&
@@ -1171,7 +1166,7 @@ inline _LIBCPP_INLINE_VISIBILITY float       fmax(float __x, float __y)         
 inline _LIBCPP_INLINE_VISIBILITY long double fmax(long double __x, long double __y) {return fmaxl(__x, __y);}
 
 template <class _A1, class _A2>
-_LIBCPP_INLINE_VISIBILITY
+inline _LIBCPP_INLINE_VISIBILITY
 typename enable_if
 <
     is_arithmetic<_A1>::value &&
@@ -1195,7 +1190,7 @@ inline _LIBCPP_INLINE_VISIBILITY float       fmin(float __x, float __y)         
 inline _LIBCPP_INLINE_VISIBILITY long double fmin(long double __x, long double __y) {return fminl(__x, __y);}
 
 template <class _A1, class _A2>
-_LIBCPP_INLINE_VISIBILITY
+inline _LIBCPP_INLINE_VISIBILITY
 typename enable_if
 <
     is_arithmetic<_A1>::value &&
@@ -1219,7 +1214,7 @@ inline _LIBCPP_INLINE_VISIBILITY float       hypot(float __x, float __y)        
 inline _LIBCPP_INLINE_VISIBILITY long double hypot(long double __x, long double __y) {return hypotl(__x, __y);}
 
 template <class _A1, class _A2>
-_LIBCPP_INLINE_VISIBILITY
+inline _LIBCPP_INLINE_VISIBILITY
 typename enable_if
 <
     is_arithmetic<_A1>::value &&
@@ -1243,7 +1238,7 @@ inline _LIBCPP_INLINE_VISIBILITY int ilogb(float __x)       {return ilogbf(__x);
 inline _LIBCPP_INLINE_VISIBILITY int ilogb(long double __x) {return ilogbl(__x);}
 
 template <class _A1>
-_LIBCPP_INLINE_VISIBILITY
+inline _LIBCPP_INLINE_VISIBILITY
 typename enable_if<is_integral<_A1>::value, int>::type
 ilogb(_A1 __x) {return ilogb((double)__x);}
 
@@ -1256,7 +1251,7 @@ inline _LIBCPP_INLINE_VISIBILITY float       lgamma(float __x)       {return lga
 inline _LIBCPP_INLINE_VISIBILITY long double lgamma(long double __x) {return lgammal(__x);}
 
 template <class _A1>
-_LIBCPP_INLINE_VISIBILITY
+inline _LIBCPP_INLINE_VISIBILITY
 typename enable_if<is_integral<_A1>::value, double>::type
 lgamma(_A1 __x) {return lgamma((double)__x);}
 
@@ -1269,7 +1264,7 @@ inline _LIBCPP_INLINE_VISIBILITY long long llrint(float __x)       {return llrin
 inline _LIBCPP_INLINE_VISIBILITY long long llrint(long double __x) {return llrintl(__x);}
 
 template <class _A1>
-_LIBCPP_INLINE_VISIBILITY
+inline _LIBCPP_INLINE_VISIBILITY
 typename enable_if<is_integral<_A1>::value, long long>::type
 llrint(_A1 __x) {return llrint((double)__x);}
 
@@ -1282,7 +1277,7 @@ inline _LIBCPP_INLINE_VISIBILITY long long llround(float __x)       {return llro
 inline _LIBCPP_INLINE_VISIBILITY long long llround(long double __x) {return llroundl(__x);}
 
 template <class _A1>
-_LIBCPP_INLINE_VISIBILITY
+inline _LIBCPP_INLINE_VISIBILITY
 typename enable_if<is_integral<_A1>::value, long long>::type
 llround(_A1 __x) {return llround((double)__x);}
 
@@ -1295,7 +1290,7 @@ inline _LIBCPP_INLINE_VISIBILITY float       log1p(float __x)       {return log1
 inline _LIBCPP_INLINE_VISIBILITY long double log1p(long double __x) {return log1pl(__x);}
 
 template <class _A1>
-_LIBCPP_INLINE_VISIBILITY
+inline _LIBCPP_INLINE_VISIBILITY
 typename enable_if<is_integral<_A1>::value, double>::type
 log1p(_A1 __x) {return log1p((double)__x);}
 
@@ -1308,7 +1303,7 @@ inline _LIBCPP_INLINE_VISIBILITY float       log2(float __x)       {return log2f
 inline _LIBCPP_INLINE_VISIBILITY long double log2(long double __x) {return log2l(__x);}
 
 template <class _A1>
-_LIBCPP_INLINE_VISIBILITY
+inline _LIBCPP_INLINE_VISIBILITY
 typename enable_if<is_integral<_A1>::value, double>::type
 log2(_A1 __x) {return log2((double)__x);}
 
@@ -1321,7 +1316,7 @@ inline _LIBCPP_INLINE_VISIBILITY float       logb(float __x)       {return logbf
 inline _LIBCPP_INLINE_VISIBILITY long double logb(long double __x) {return logbl(__x);}
 
 template <class _A1>
-_LIBCPP_INLINE_VISIBILITY
+inline _LIBCPP_INLINE_VISIBILITY
 typename enable_if<is_integral<_A1>::value, double>::type
 logb(_A1 __x) {return logb((double)__x);}
 
@@ -1334,7 +1329,7 @@ inline _LIBCPP_INLINE_VISIBILITY long lrint(float __x)       {return lrintf(__x)
 inline _LIBCPP_INLINE_VISIBILITY long lrint(long double __x) {return lrintl(__x);}
 
 template <class _A1>
-_LIBCPP_INLINE_VISIBILITY
+inline _LIBCPP_INLINE_VISIBILITY
 typename enable_if<is_integral<_A1>::value, long>::type
 lrint(_A1 __x) {return lrint((double)__x);}
 
@@ -1347,7 +1342,7 @@ inline _LIBCPP_INLINE_VISIBILITY long lround(float __x)       {return lroundf(__
 inline _LIBCPP_INLINE_VISIBILITY long lround(long double __x) {return lroundl(__x);}
 
 template <class _A1>
-_LIBCPP_INLINE_VISIBILITY
+inline _LIBCPP_INLINE_VISIBILITY
 typename enable_if<is_integral<_A1>::value, long>::type
 lround(_A1 __x) {return lround((double)__x);}
 
@@ -1365,7 +1360,7 @@ inline _LIBCPP_INLINE_VISIBILITY float       nearbyint(float __x)       {return 
 inline _LIBCPP_INLINE_VISIBILITY long double nearbyint(long double __x) {return nearbyintl(__x);}
 
 template <class _A1>
-_LIBCPP_INLINE_VISIBILITY
+inline _LIBCPP_INLINE_VISIBILITY
 typename enable_if<is_integral<_A1>::value, double>::type
 nearbyint(_A1 __x) {return nearbyint((double)__x);}
 
@@ -1378,7 +1373,7 @@ inline _LIBCPP_INLINE_VISIBILITY float       nextafter(float __x, float __y)    
 inline _LIBCPP_INLINE_VISIBILITY long double nextafter(long double __x, long double __y) {return nextafterl(__x, __y);}
 
 template <class _A1, class _A2>
-_LIBCPP_INLINE_VISIBILITY
+inline _LIBCPP_INLINE_VISIBILITY
 typename enable_if
 <
     is_arithmetic<_A1>::value &&
@@ -1402,7 +1397,7 @@ inline _LIBCPP_INLINE_VISIBILITY float       nexttoward(float __x, long double _
 inline _LIBCPP_INLINE_VISIBILITY long double nexttoward(long double __x, long double __y) {return nexttowardl(__x, __y);}
 
 template <class _A1>
-_LIBCPP_INLINE_VISIBILITY
+inline _LIBCPP_INLINE_VISIBILITY
 typename enable_if<is_integral<_A1>::value, double>::type
 nexttoward(_A1 __x, long double __y) {return nexttoward((double)__x, __y);}
 
@@ -1415,7 +1410,7 @@ inline _LIBCPP_INLINE_VISIBILITY float       remainder(float __x, float __y)    
 inline _LIBCPP_INLINE_VISIBILITY long double remainder(long double __x, long double __y) {return remainderl(__x, __y);}
 
 template <class _A1, class _A2>
-_LIBCPP_INLINE_VISIBILITY
+inline _LIBCPP_INLINE_VISIBILITY
 typename enable_if
 <
     is_arithmetic<_A1>::value &&
@@ -1439,7 +1434,7 @@ inline _LIBCPP_INLINE_VISIBILITY float       remquo(float __x, float __y, int* _
 inline _LIBCPP_INLINE_VISIBILITY long double remquo(long double __x, long double __y, int* __z) {return remquol(__x, __y, __z);}
 
 template <class _A1, class _A2>
-_LIBCPP_INLINE_VISIBILITY
+inline _LIBCPP_INLINE_VISIBILITY
 typename enable_if
 <
     is_arithmetic<_A1>::value &&
@@ -1463,7 +1458,7 @@ inline _LIBCPP_INLINE_VISIBILITY float       rint(float __x)       {return rintf
 inline _LIBCPP_INLINE_VISIBILITY long double rint(long double __x) {return rintl(__x);}
 
 template <class _A1>
-_LIBCPP_INLINE_VISIBILITY
+inline _LIBCPP_INLINE_VISIBILITY
 typename enable_if<is_integral<_A1>::value, double>::type
 rint(_A1 __x) {return rint((double)__x);}
 
@@ -1476,7 +1471,7 @@ inline _LIBCPP_INLINE_VISIBILITY float       round(float __x)       {return roun
 inline _LIBCPP_INLINE_VISIBILITY long double round(long double __x) {return roundl(__x);}
 
 template <class _A1>
-_LIBCPP_INLINE_VISIBILITY
+inline _LIBCPP_INLINE_VISIBILITY
 typename enable_if<is_integral<_A1>::value, double>::type
 round(_A1 __x) {return round((double)__x);}
 
@@ -1489,7 +1484,7 @@ inline _LIBCPP_INLINE_VISIBILITY float       scalbln(float __x, long __y)       
 inline _LIBCPP_INLINE_VISIBILITY long double scalbln(long double __x, long __y) {return scalblnl(__x, __y);}
 
 template <class _A1>
-_LIBCPP_INLINE_VISIBILITY
+inline _LIBCPP_INLINE_VISIBILITY
 typename enable_if<is_integral<_A1>::value, double>::type
 scalbln(_A1 __x, long __y) {return scalbln((double)__x, __y);}
 
@@ -1502,7 +1497,7 @@ inline _LIBCPP_INLINE_VISIBILITY float       scalbn(float __x, int __y)       {r
 inline _LIBCPP_INLINE_VISIBILITY long double scalbn(long double __x, int __y) {return scalbnl(__x, __y);}
 
 template <class _A1>
-_LIBCPP_INLINE_VISIBILITY
+inline _LIBCPP_INLINE_VISIBILITY
 typename enable_if<is_integral<_A1>::value, double>::type
 scalbn(_A1 __x, int __y) {return scalbn((double)__x, __y);}
 
@@ -1515,7 +1510,7 @@ inline _LIBCPP_INLINE_VISIBILITY float       tgamma(float __x)       {return tga
 inline _LIBCPP_INLINE_VISIBILITY long double tgamma(long double __x) {return tgammal(__x);}
 
 template <class _A1>
-_LIBCPP_INLINE_VISIBILITY
+inline _LIBCPP_INLINE_VISIBILITY
 typename enable_if<is_integral<_A1>::value, double>::type
 tgamma(_A1 __x) {return tgamma((double)__x);}
 
@@ -1528,7 +1523,7 @@ inline _LIBCPP_INLINE_VISIBILITY float       trunc(float __x)       {return trun
 inline _LIBCPP_INLINE_VISIBILITY long double trunc(long double __x) {return truncl(__x);}
 
 template <class _A1>
-_LIBCPP_INLINE_VISIBILITY
+inline _LIBCPP_INLINE_VISIBILITY
 typename enable_if<is_integral<_A1>::value, double>::type
 trunc(_A1 __x) {return trunc((double)__x);}
 

@@ -115,7 +115,7 @@ public:
 
 _LIBCPP_BEGIN_NAMESPACE_STD
 
-class condition_variable_any
+class _LIBCPP_VISIBLE condition_variable_any
 {
     condition_variable __cv_;
     shared_ptr<mutex>  __mut_;
@@ -153,11 +153,11 @@ public:
                  _Predicate __pred);
 };
 
-inline
+inline _LIBCPP_INLINE_VISIBILITY
 condition_variable_any::condition_variable_any()
     : __mut_(make_shared<mutex>()) {}
 
-inline
+inline _LIBCPP_INLINE_VISIBILITY
 void
 condition_variable_any::notify_one()
 {
@@ -165,7 +165,7 @@ condition_variable_any::notify_one()
     __cv_.notify_one();
 }
 
-inline
+inline _LIBCPP_INLINE_VISIBILITY
 void
 condition_variable_any::notify_all()
 {
@@ -192,7 +192,7 @@ condition_variable_any::wait(_Lock& __lock)
 }  // __mut_.unlock(), __lock.lock()
 
 template <class _Lock, class _Predicate>
-inline
+inline _LIBCPP_INLINE_VISIBILITY
 void
 condition_variable_any::wait(_Lock& __lock, _Predicate __pred)
 {
@@ -214,7 +214,7 @@ condition_variable_any::wait_until(_Lock& __lock,
 }  // __mut_.unlock(), __lock.lock()
 
 template <class _Lock, class _Clock, class _Duration, class _Predicate>
-inline
+inline _LIBCPP_INLINE_VISIBILITY
 bool
 condition_variable_any::wait_until(_Lock& __lock,
                                    const chrono::time_point<_Clock, _Duration>& __t,
@@ -227,7 +227,7 @@ condition_variable_any::wait_until(_Lock& __lock,
 }
 
 template <class _Lock, class _Rep, class _Period>
-inline
+inline _LIBCPP_INLINE_VISIBILITY
 cv_status
 condition_variable_any::wait_for(_Lock& __lock,
                                  const chrono::duration<_Rep, _Period>& __d)
@@ -236,7 +236,7 @@ condition_variable_any::wait_for(_Lock& __lock,
 }
 
 template <class _Lock, class _Rep, class _Period, class _Predicate>
-inline
+inline _LIBCPP_INLINE_VISIBILITY
 bool
 condition_variable_any::wait_for(_Lock& __lock,
                                  const chrono::duration<_Rep, _Period>& __d,
@@ -246,6 +246,7 @@ condition_variable_any::wait_for(_Lock& __lock,
                       _STD::move(__pred));
 }
 
+_LIBCPP_VISIBLE
 void notify_all_at_thread_exit(condition_variable& cond, unique_lock<mutex> lk);
 
 _LIBCPP_END_NAMESPACE_STD

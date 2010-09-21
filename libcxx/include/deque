@@ -159,7 +159,7 @@ template <class _Tp, class _Allocator> class __deque_base;
 
 template <class _ValueType, class _Pointer, class _Reference, class _MapPointer,
           class _DiffType, _DiffType _BlockSize>
-class __deque_iterator;
+class _LIBCPP_VISIBLE __deque_iterator;
 
 template <class _RAIter,
           class _V2, class _P2, class _R2, class _M2, class _D2, _D2 _B2>
@@ -251,7 +251,7 @@ move_backward(__deque_iterator<_V1, _P1, _R1, _M1, _D1, _B1> __f,
 
 template <class _ValueType, class _Pointer, class _Reference, class _MapPointer,
           class _DiffType, _DiffType _BlockSize>
-class __deque_iterator
+class _LIBCPP_VISIBLE __deque_iterator
 {
     typedef _MapPointer __map_iterator;
 public:
@@ -399,9 +399,9 @@ private:
         : __m_iter_(__m), __ptr_(__p) {}
 
     template <class _Tp, class _A> friend class __deque_base;
-    template <class _Tp, class _A> friend class deque;
+    template <class _Tp, class _A> friend class _LIBCPP_VISIBLE deque;
     template <class _V, class _P, class _R, class _MP, class _D, _D>
-        friend class __deque_iterator;
+        friend class _LIBCPP_VISIBLE __deque_iterator;
 
     template <class _RAIter,
               class _V2, class _P2, class _R2, class _M2, class _D2, _D2 _B2>
@@ -941,6 +941,7 @@ protected:
 
     bool __invariants() const;
 
+    _LIBCPP_INLINE_VISIBILITY
     void __move_assign(__deque_base& __c)
     {
         __map_ = _STD::move(__c.__map_);
@@ -950,28 +951,35 @@ protected:
         __c.__start_ = __c.size() = 0;
     }
 
+    _LIBCPP_INLINE_VISIBILITY
     void __move_assign_alloc(__deque_base& __c)
         {__move_assign_alloc(__c, integral_constant<bool,
                       __alloc_traits::propagate_on_container_move_assignment::value>());}
 
 private:
+    _LIBCPP_INLINE_VISIBILITY
     void __move_assign_alloc(const __deque_base& __c, true_type)
         {
             __alloc() = _STD::move(__c.__alloc());
         }
 
+    _LIBCPP_INLINE_VISIBILITY
     void __move_assign_alloc(const __deque_base& __c, false_type)
         {}
 
+    _LIBCPP_INLINE_VISIBILITY
     static void __swap_alloc(allocator_type& __x, allocator_type& __y)
         {__swap_alloc(__x, __y, integral_constant<bool,
                       __alloc_traits::propagate_on_container_swap::value>());}
 
+    _LIBCPP_INLINE_VISIBILITY
     static void __swap_alloc(allocator_type& __x, allocator_type& __y, true_type)
         {
             using _STD::swap;
             swap(__x, __y);
         }
+
+    _LIBCPP_INLINE_VISIBILITY
     static void __swap_alloc(allocator_type& __x, allocator_type& __y, false_type)
         {}
 };
@@ -1127,7 +1135,7 @@ __deque_base<_Tp, _Allocator>::clear()
 }
 
 template <class _Tp, class _Allocator = allocator<_Tp> >
-class deque
+class _LIBCPP_VISIBLE deque
     : private __deque_base<_Tp, _Allocator>
 {
 public:
@@ -1169,6 +1177,7 @@ public:
     deque(initializer_list<value_type> __il, const allocator_type& __a);
 
     deque& operator=(const deque& __c);
+    _LIBCPP_INLINE_VISIBILITY
     deque& operator=(initializer_list<value_type> __il) {assign(__il); return *this;}
 
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
@@ -1185,34 +1194,48 @@ public:
         void assign(_RAIter __f, _RAIter __l,
                     typename enable_if<__is_random_access_iterator<_RAIter>::value>::type* = 0);
     void assign(size_type __n, const value_type& __v);
+    _LIBCPP_INLINE_VISIBILITY
     void assign(initializer_list<value_type> __il) {assign(__il.begin(), __il.end());}
 
     allocator_type get_allocator() const;
 
     // iterators:
 
+    _LIBCPP_INLINE_VISIBILITY
     iterator       begin()       {return __base::begin();}
+    _LIBCPP_INLINE_VISIBILITY
     const_iterator begin() const {return __base::begin();}
+    _LIBCPP_INLINE_VISIBILITY
     iterator       end()         {return __base::end();}
+    _LIBCPP_INLINE_VISIBILITY
     const_iterator end()   const {return __base::end();}
 
+    _LIBCPP_INLINE_VISIBILITY
     reverse_iterator       rbegin()       {return       reverse_iterator(__base::end());}
+    _LIBCPP_INLINE_VISIBILITY
     const_reverse_iterator rbegin() const {return const_reverse_iterator(__base::end());}
+    _LIBCPP_INLINE_VISIBILITY
     reverse_iterator       rend()         {return       reverse_iterator(__base::begin());}
+    _LIBCPP_INLINE_VISIBILITY
     const_reverse_iterator rend()   const {return const_reverse_iterator(__base::begin());}
 
+    _LIBCPP_INLINE_VISIBILITY
     const_iterator         cbegin()  const {return __base::begin();}
+    _LIBCPP_INLINE_VISIBILITY
     const_iterator         cend()    const {return __base::end();}
+    _LIBCPP_INLINE_VISIBILITY
     const_reverse_iterator crbegin() const {return const_reverse_iterator(__base::end());}
+    _LIBCPP_INLINE_VISIBILITY
     const_reverse_iterator crend()   const {return const_reverse_iterator(__base::begin());}
 
     // capacity:
     _LIBCPP_INLINE_VISIBILITY size_type size() const {return __base::size();}
+    _LIBCPP_INLINE_VISIBILITY
     size_type max_size() const {return __alloc_traits::max_size(__base::__alloc());}
     void resize(size_type __n);
     void resize(size_type __n, const value_type& __v);
     void shrink_to_fit();
-    bool empty() const {return __base::size() == 0;}
+    _LIBCPP_INLINE_VISIBILITY bool empty() const {return __base::size() == 0;}
 
     // element access:
     reference operator[](size_type __i);
@@ -1246,6 +1269,7 @@ public:
     template <class _BiIter>
         iterator insert (const_iterator __p, _BiIter __f, _BiIter __l,
                          typename enable_if<__is_bidirectional_iterator<_BiIter>::value>::type* = 0);
+    _LIBCPP_INLINE_VISIBILITY
     iterator insert(const_iterator __p, initializer_list<value_type> __il)
         {return insert(__p, __il.begin(), __il.end());}
     void pop_front();
@@ -1256,20 +1280,25 @@ public:
     void swap(deque& __c);
     void clear();
 
+    _LIBCPP_INLINE_VISIBILITY
     bool __invariants() const {return __base::__invariants();}
 private:
+    _LIBCPP_INLINE_VISIBILITY
     static size_type __recommend_blocks(size_type __n)
     {
         return __n / __base::__block_size + (__n % __base::__block_size != 0);
     }
+    _LIBCPP_INLINE_VISIBILITY
     size_type __capacity() const
     {
         return __base::__map_.size() == 0 ? 0 : __base::__map_.size() * __base::__block_size - 1;
     }
+    _LIBCPP_INLINE_VISIBILITY
     size_type __front_spare() const
     {
         return __base::__start_;
     }
+    _LIBCPP_INLINE_VISIBILITY
     size_type __back_spare() const
     {
         return __capacity() - (__base::__start_ + __base::size());
@@ -1298,10 +1327,12 @@ private:
     void __move_construct_backward_and_check(iterator __f, iterator __l,
                                              iterator __r, const_pointer& __vt);
 
+    _LIBCPP_INLINE_VISIBILITY
     void __copy_assign_alloc(const deque& __c)
         {__copy_assign_alloc(__c, integral_constant<bool,
                       __alloc_traits::propagate_on_container_copy_assignment::value>());}
 
+    _LIBCPP_INLINE_VISIBILITY
     void __copy_assign_alloc(const deque& __c, true_type)
         {
             if (__base::__alloc() != __c.__alloc())
@@ -1313,6 +1344,7 @@ private:
             __base::__map_.__alloc() = __c.__map_.__alloc();
         }
 
+    _LIBCPP_INLINE_VISIBILITY
     void __copy_assign_alloc(const deque& __c, false_type)
         {}
 
@@ -1401,14 +1433,14 @@ deque<_Tp, _Allocator>::operator=(const deque& __c)
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 template <class _Tp, class _Allocator>
-inline
+inline _LIBCPP_INLINE_VISIBILITY
 deque<_Tp, _Allocator>::deque(deque&& __c)
     : __base(_STD::move(__c))
 {
 }
 
 template <class _Tp, class _Allocator>
-inline
+inline _LIBCPP_INLINE_VISIBILITY
 deque<_Tp, _Allocator>::deque(deque&& __c, const allocator_type& __a)
     : __base(_STD::move(__c), __a)
 {
@@ -1420,7 +1452,7 @@ deque<_Tp, _Allocator>::deque(deque&& __c, const allocator_type& __a)
 }
 
 template <class _Tp, class _Allocator>
-inline
+inline _LIBCPP_INLINE_VISIBILITY
 deque<_Tp, _Allocator>&
 deque<_Tp, _Allocator>::operator=(deque&& __c)
 {
@@ -1501,7 +1533,7 @@ deque<_Tp, _Allocator>::assign(size_type __n, const value_type& __v)
 }
 
 template <class _Tp, class _Allocator>
-inline
+inline _LIBCPP_INLINE_VISIBILITY
 _Allocator
 deque<_Tp, _Allocator>::get_allocator() const
 {
@@ -1560,7 +1592,7 @@ deque<_Tp, _Allocator>::shrink_to_fit()
 }
 
 template <class _Tp, class _Allocator>
-inline
+inline _LIBCPP_INLINE_VISIBILITY
 typename deque<_Tp, _Allocator>::reference
 deque<_Tp, _Allocator>::operator[](size_type __i)
 {
@@ -1569,7 +1601,7 @@ deque<_Tp, _Allocator>::operator[](size_type __i)
 }
 
 template <class _Tp, class _Allocator>
-inline
+inline _LIBCPP_INLINE_VISIBILITY
 typename deque<_Tp, _Allocator>::const_reference
 deque<_Tp, _Allocator>::operator[](size_type __i) const
 {
@@ -1578,7 +1610,7 @@ deque<_Tp, _Allocator>::operator[](size_type __i) const
 }
 
 template <class _Tp, class _Allocator>
-inline
+inline _LIBCPP_INLINE_VISIBILITY
 typename deque<_Tp, _Allocator>::reference
 deque<_Tp, _Allocator>::at(size_type __i)
 {
@@ -1589,7 +1621,7 @@ deque<_Tp, _Allocator>::at(size_type __i)
 }
 
 template <class _Tp, class _Allocator>
-inline
+inline _LIBCPP_INLINE_VISIBILITY
 typename deque<_Tp, _Allocator>::const_reference
 deque<_Tp, _Allocator>::at(size_type __i) const
 {
@@ -1600,7 +1632,7 @@ deque<_Tp, _Allocator>::at(size_type __i) const
 }
 
 template <class _Tp, class _Allocator>
-inline
+inline _LIBCPP_INLINE_VISIBILITY
 typename deque<_Tp, _Allocator>::reference
 deque<_Tp, _Allocator>::front()
 {
@@ -1609,7 +1641,7 @@ deque<_Tp, _Allocator>::front()
 }
 
 template <class _Tp, class _Allocator>
-inline
+inline _LIBCPP_INLINE_VISIBILITY
 typename deque<_Tp, _Allocator>::const_reference
 deque<_Tp, _Allocator>::front() const
 {
@@ -1618,7 +1650,7 @@ deque<_Tp, _Allocator>::front() const
 }
 
 template <class _Tp, class _Allocator>
-inline
+inline _LIBCPP_INLINE_VISIBILITY
 typename deque<_Tp, _Allocator>::reference
 deque<_Tp, _Allocator>::back()
 {
@@ -1627,7 +1659,7 @@ deque<_Tp, _Allocator>::back()
 }
 
 template <class _Tp, class _Allocator>
-inline
+inline _LIBCPP_INLINE_VISIBILITY
 typename deque<_Tp, _Allocator>::const_reference
 deque<_Tp, _Allocator>::back() const
 {
@@ -2665,7 +2697,7 @@ deque<_Tp, _Allocator>::__erase_to_end(const_iterator __f)
 }
 
 template <class _Tp, class _Allocator>
-inline
+inline _LIBCPP_INLINE_VISIBILITY
 void
 deque<_Tp, _Allocator>::swap(deque& __c)
 {
@@ -2673,7 +2705,7 @@ deque<_Tp, _Allocator>::swap(deque& __c)
 }
 
 template <class _Tp, class _Allocator>
-inline
+inline _LIBCPP_INLINE_VISIBILITY
 void
 deque<_Tp, _Allocator>::clear()
 {
