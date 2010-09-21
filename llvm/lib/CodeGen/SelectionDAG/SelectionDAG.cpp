@@ -3855,19 +3855,6 @@ SelectionDAG::getMemIntrinsicNode(unsigned Opcode, DebugLoc dl, SDVTList VTList,
   return SDValue(N, 0);
 }
 
-SDValue
-SelectionDAG::getLoad(ISD::MemIndexedMode AM, ISD::LoadExtType ExtType,
-                      EVT VT, DebugLoc dl, SDValue Chain,
-                      SDValue Ptr, SDValue Offset,
-                      const Value *SV, int SVOffset, EVT MemVT,
-                      bool isVolatile, bool isNonTemporal,
-                      unsigned Alignment) {
-
-  return getLoad(AM, ExtType, VT, dl, Chain, Ptr, Offset,
-                 MachinePointerInfo(SV, SVOffset), MemVT, isVolatile,
-                 isNonTemporal, Alignment);
-}
-
 /// InferPointerInfo - If the specified ptr/offset is a frame index, infer a
 /// MachinePointerInfo record from it.  This is particularly useful because the
 /// code generator has many cases where it doesn't bother passing in a

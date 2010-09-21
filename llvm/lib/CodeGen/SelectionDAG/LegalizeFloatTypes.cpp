@@ -455,7 +455,7 @@ SDValue DAGTypeLegalizer::SoftenFloatRes_LOAD(SDNode *N) {
   if (L->getExtensionType() == ISD::NON_EXTLOAD) {
     NewL = DAG.getLoad(L->getAddressingMode(), L->getExtensionType(),
                        NVT, dl, L->getChain(), L->getBasePtr(), L->getOffset(),
-                       L->getSrcValue(), L->getSrcValueOffset(), NVT,
+                       L->getPointerInfo(), NVT,
                        L->isVolatile(), L->isNonTemporal(), L->getAlignment());
     // Legalized the chain result - switch anything that used the old chain to
     // use the new one.
@@ -466,8 +466,7 @@ SDValue DAGTypeLegalizer::SoftenFloatRes_LOAD(SDNode *N) {
   // Do a non-extending load followed by FP_EXTEND.
   NewL = DAG.getLoad(L->getAddressingMode(), ISD::NON_EXTLOAD,
                      L->getMemoryVT(), dl, L->getChain(),
-                     L->getBasePtr(), L->getOffset(),
-                     L->getSrcValue(), L->getSrcValueOffset(),
+                     L->getBasePtr(), L->getOffset(), L->getPointerInfo(),
                      L->getMemoryVT(), L->isVolatile(),
                      L->isNonTemporal(), L->getAlignment());
   // Legalized the chain result - switch anything that used the old chain to

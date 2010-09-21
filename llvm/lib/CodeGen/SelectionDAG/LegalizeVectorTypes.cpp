@@ -171,7 +171,7 @@ SDValue DAGTypeLegalizer::ScalarizeVecRes_LOAD(LoadSDNode *N) {
                                N->getDebugLoc(),
                                N->getChain(), N->getBasePtr(),
                                DAG.getUNDEF(N->getBasePtr().getValueType()),
-                               N->getSrcValue(), N->getSrcValueOffset(),
+                               N->getPointerInfo(),
                                N->getMemoryVT().getVectorElementType(),
                                N->isVolatile(), N->isNonTemporal(),
                                N->getOriginalAlignment());
@@ -751,8 +751,6 @@ void DAGTypeLegalizer::SplitVecRes_LOAD(LoadSDNode *LD, SDValue &Lo,
   SDValue Ch = LD->getChain();
   SDValue Ptr = LD->getBasePtr();
   SDValue Offset = DAG.getUNDEF(Ptr.getValueType());
-  const Value *SV = LD->getSrcValue();
-  int SVOffset = LD->getSrcValueOffset();
   EVT MemoryVT = LD->getMemoryVT();
   unsigned Alignment = LD->getOriginalAlignment();
   bool isVolatile = LD->isVolatile();
@@ -762,14 +760,15 @@ void DAGTypeLegalizer::SplitVecRes_LOAD(LoadSDNode *LD, SDValue &Lo,
   GetSplitDestVTs(MemoryVT, LoMemVT, HiMemVT);
 
   Lo = DAG.getLoad(ISD::UNINDEXED, ExtType, LoVT, dl, Ch, Ptr, Offset,
-                   SV, SVOffset, LoMemVT, isVolatile, isNonTemporal, Alignment);
+                   LD->getPointerInfo(), LoMemVT, isVolatile, isNonTemporal,
+                   Alignment);
 
   unsigned IncrementSize = LoMemVT.getSizeInBits()/8;
   Ptr = DAG.getNode(ISD::ADD, dl, Ptr.getValueType(), Ptr,
                     DAG.getIntPtrConstant(IncrementSize));
-  SVOffset += IncrementSize;
   Hi = DAG.getLoad(ISD::UNINDEXED, ExtType, HiVT, dl, Ch, Ptr, Offset,
-                   SV, SVOffset, HiMemVT, isVolatile, isNonTemporal, Alignment);
+                   LD->getPointerInfo().getWithOffset(IncrementSize),
+                   HiMemVT, isVolatile, isNonTemporal, Alignment);
 
   // Build a factor node to remember that this load is independent of the
   // other one.
