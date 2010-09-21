@@ -289,7 +289,7 @@ void USRGenerator::VisitObjCMethodDecl(ObjCMethodDecl *D) {
         // ID can be null with invalid code.
         if (ObjCInterfaceDecl *ID = CD->getClassInterface()) {
           Visit(ID);
-	  break;
+          break;
         }
         // Invalid code.  Can't generate USR.
         IgnoreResults = true;
