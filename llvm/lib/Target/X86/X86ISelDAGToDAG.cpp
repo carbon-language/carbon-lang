@@ -197,7 +197,7 @@ namespace {
     bool MatchAddressRecursively(SDValue N, X86ISelAddressMode &AM,
                                  unsigned Depth);
     bool MatchAddressBase(SDValue N, X86ISelAddressMode &AM);
-    bool SelectAddr(SDValue N, SDValue &Base,
+    bool SelectAddr(SDNode *Parent, SDValue N, SDValue &Base,
                     SDValue &Scale, SDValue &Index, SDValue &Disp,
                     SDValue &Segment);
     bool SelectLEAAddr(SDValue N, SDValue &Base,
@@ -1147,7 +1147,11 @@ bool X86DAGToDAGISel::MatchAddressBase(SDValue N, X86ISelAddressMode &AM) {
 /// SelectAddr - returns true if it is able pattern match an addressing mode.
 /// It returns the operands which make up the maximal addressing mode it can
 /// match by reference.
-bool X86DAGToDAGISel::SelectAddr(SDValue N, SDValue &Base,
+///
+/// Parent is the parent node of the addr operand that is being matched.  It
+/// is always a load, store, atomic node, or null.  It is only null when
+/// checking memory operands for inline asm nodes.
+bool X86DAGToDAGISel::SelectAddr(SDNode *Parent, SDValue N, SDValue &Base,
                                  SDValue &Scale, SDValue &Index,
                                  SDValue &Disp, SDValue &Segment) {
   X86ISelAddressMode AM;
@@ -1163,6 +1167,31 @@ bool X86DAGToDAGISel::SelectAddr(SDValue N, SDValue &Base,
   if (!AM.IndexReg.getNode())
     AM.IndexReg = CurDAG->getRegister(0, VT);
 
+  if (Parent &&
+      // This list of opcodes are all the nodes that have an "addr:$ptr" operand
+      // that are not a MemSDNode, and thus don't have proper addrspace info.
+      Parent->getOpcode() != ISD::PREFETCH &&
+      Parent->getOpcode() != ISD::INTRINSIC_W_CHAIN && // unaligned loads, fixme
+      Parent->getOpcode() != ISD::INTRINSIC_VOID && // nontemporal stores.
+      Parent->getOpcode() != X86ISD::VZEXT_LOAD &&
+      Parent->getOpcode() != X86ISD::FLD &&
+      Parent->getOpcode() != X86ISD::FILD &&
+      Parent->getOpcode() != X86ISD::FILD_FLAG &&
+      Parent->getOpcode() != X86ISD::FP_TO_INT16_IN_MEM &&
+      Parent->getOpcode() != X86ISD::FP_TO_INT32_IN_MEM &&
+      Parent->getOpcode() != X86ISD::FP_TO_INT64_IN_MEM &&
+      Parent->getOpcode() != X86ISD::LCMPXCHG_DAG &&
+      Parent->getOpcode() != X86ISD::FST) {
+    unsigned AddrSpace =
+      cast<MemSDNode>(Parent)->getPointerInfo().getAddrSpace();
+    // AddrSpace 256 -> GS, 257 -> FS.
+    if (AddrSpace == 256)
+      AM.Segment = CurDAG->getRegister(X86::GS, VT);
+    if (AddrSpace == 257)
+      AM.Segment = CurDAG->getRegister(X86::FS, VT);
+  }
+  
+  
   getAddressOperands(AM, Base, Scale, Index, Disp, Segment);
   return true;
 }
@@ -1186,7 +1215,7 @@ bool X86DAGToDAGISel::SelectScalarSSELoad(SDNode *Root,
         IsProfitableToFold(N.getOperand(0), N.getNode(), Root) &&
         IsLegalToFold(N.getOperand(0), N.getNode(), Root, OptLevel)) {
       LoadSDNode *LD = cast<LoadSDNode>(PatternNodeWithChain);
-      if (!SelectAddr(LD->getBasePtr(), Base, Scale, Index, Disp,Segment))
+      if (!SelectAddr(LD, LD->getBasePtr(), Base, Scale, Index, Disp, Segment))
         return false;
       return true;
     }
@@ -1204,7 +1233,7 @@ bool X86DAGToDAGISel::SelectScalarSSELoad(SDNode *Root,
       IsLegalToFold(N.getOperand(0), N.getNode(), Root, OptLevel)) {
     // Okay, this is a zero extending load.  Fold it.
     LoadSDNode *LD = cast<LoadSDNode>(N.getOperand(0).getOperand(0));
-    if (!SelectAddr(LD->getBasePtr(), Base, Scale, Index, Disp, Segment))
+    if (!SelectAddr(LD, LD->getBasePtr(), Base, Scale, Index, Disp, Segment))
       return false;
     PatternNodeWithChain = SDValue(LD, 0);
     return true;
@@ -1310,7 +1339,8 @@ bool X86DAGToDAGISel::TryFoldLoad(SDNode *P, SDValue N,
       !IsLegalToFold(N, P, P, OptLevel))
     return false;
   
-  return SelectAddr(N.getOperand(1), Base, Scale, Index, Disp, Segment);
+  return SelectAddr(N.getNode(),
+                    N.getOperand(1), Base, Scale, Index, Disp, Segment);
 }
 
 /// getGlobalBaseReg - Return an SDNode that returns the value of
@@ -1328,7 +1358,7 @@ SDNode *X86DAGToDAGISel::SelectAtomic64(SDNode *Node, unsigned Opc) {
   SDValue In2L = Node->getOperand(2);
   SDValue In2H = Node->getOperand(3);
   SDValue Tmp0, Tmp1, Tmp2, Tmp3, Tmp4;
-  if (!SelectAddr(In1, Tmp0, Tmp1, Tmp2, Tmp3, Tmp4))
+  if (!SelectAddr(Node, In1, Tmp0, Tmp1, Tmp2, Tmp3, Tmp4))
     return NULL;
   MachineSDNode::mmo_iterator MemOp = MF->allocateMemRefsArray(1);
   MemOp[0] = cast<MemSDNode>(Node)->getMemOperand();
@@ -1354,7 +1384,7 @@ SDNode *X86DAGToDAGISel::SelectAtomicLoadAdd(SDNode *Node, EVT NVT) {
   SDValue Ptr = Node->getOperand(1);
   SDValue Val = Node->getOperand(2);
   SDValue Tmp0, Tmp1, Tmp2, Tmp3, Tmp4;
-  if (!SelectAddr(Ptr, Tmp0, Tmp1, Tmp2, Tmp3, Tmp4))
+  if (!SelectAddr(Node, Ptr, Tmp0, Tmp1, Tmp2, Tmp3, Tmp4))
     return 0;
 
   bool isInc = false, isDec = false, isSub = false, isCN = false;
@@ -1970,7 +2000,7 @@ SelectInlineAsmMemoryOperand(const SDValue &Op, char ConstraintCode,
   case 'v':   // not offsetable    ??
   default: return true;
   case 'm':   // memory
-    if (!SelectAddr(Op, Op0, Op1, Op2, Op3, Op4))
+    if (!SelectAddr(0, Op, Op0, Op1, Op2, Op3, Op4))
       return true;
     break;
   }

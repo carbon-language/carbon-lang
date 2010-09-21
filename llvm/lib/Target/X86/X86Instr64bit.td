@@ -1611,16 +1611,6 @@ def TLSCall_64 : I<0, Pseudo, (outs), (ins i64mem:$sym),
                   [(X86TLSCall addr:$sym)]>,
                   Requires<[In64BitMode]>;
 
-let AddedComplexity = 5, isCodeGenOnly = 1 in
-def MOV64GSrm : RI<0x8B, MRMSrcMem, (outs GR64:$dst), (ins i64mem:$src),
-                 "movq\t%gs:$src, $dst",
-                 [(set GR64:$dst, (gsload addr:$src))]>, SegGS;
-
-let AddedComplexity = 5, isCodeGenOnly = 1 in
-def MOV64FSrm : RI<0x8B, MRMSrcMem, (outs GR64:$dst), (ins i64mem:$src),
-                 "movq\t%fs:$src, $dst",
-                 [(set GR64:$dst, (fsload addr:$src))]>, SegFS;
-
 //===----------------------------------------------------------------------===//
 // Atomic Instructions
 //===----------------------------------------------------------------------===//

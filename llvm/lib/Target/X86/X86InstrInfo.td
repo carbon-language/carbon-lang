@@ -337,7 +337,7 @@ def i32i8imm  : Operand<i32> {
 //
 
 // Define X86 specific addressing mode.
-def addr      : ComplexPattern<iPTR, 5, "SelectAddr", [], []>;
+def addr      : ComplexPattern<iPTR, 5, "SelectAddr", [], [SDNPWantParent]>;
 def lea32addr : ComplexPattern<i32, 5, "SelectLEAAddr",
                                [add, sub, mul, X86mul_imm, shl, or, frameindex],
                                []>;
@@ -419,30 +419,11 @@ def immSext8 : PatLeaf<(imm), [{ return immSext8(N); }]>;
 def i16immSExt8  : PatLeaf<(i16 immSext8)>;
 def i32immSExt8  : PatLeaf<(i32 immSext8)>;
 
-/// Load patterns: these constraint the match to the right address space.
-def dsload : PatFrag<(ops node:$ptr), (load node:$ptr), [{
-  if (cast<LoadSDNode>(N)->getPointerInfo().getAddrSpace() > 255)
-    return false;
-  return true;
-}]>;
-
-def gsload : PatFrag<(ops node:$ptr), (load node:$ptr), [{
-  return cast<LoadSDNode>(N)->getPointerInfo().getAddrSpace() == 256;
-}]>;
-
-def fsload : PatFrag<(ops node:$ptr), (load node:$ptr), [{
-  return cast<LoadSDNode>(N)->getPointerInfo().getAddrSpace() == 257;
-}]>;
-
-
 // Helper fragments for loads.
 // It's always safe to treat a anyext i16 load as a i32 load if the i16 is
 // known to be 32-bit aligned or better. Ditto for i8 to i16.
 def loadi16 : PatFrag<(ops node:$ptr), (i16 (unindexedload node:$ptr)), [{
   LoadSDNode *LD = cast<LoadSDNode>(N);
-  if (LD->getPointerInfo().getAddrSpace() > 255)
-    return false;
-
   ISD::LoadExtType ExtType = LD->getExtensionType();
   if (ExtType == ISD::NON_EXTLOAD)
     return true;
@@ -453,8 +434,6 @@ def loadi16 : PatFrag<(ops node:$ptr), (i16 (unindexedload node:$ptr)), [{
 
 def loadi16_anyext : PatFrag<(ops node:$ptr), (i32 (unindexedload node:$ptr)),[{
   LoadSDNode *LD = cast<LoadSDNode>(N);
-  if (LD->getPointerInfo().getAddrSpace() > 255)
-    return false;
   ISD::LoadExtType ExtType = LD->getExtensionType();
   if (ExtType == ISD::EXTLOAD)
     return LD->getAlignment() >= 2 && !LD->isVolatile();
@@ -463,8 +442,6 @@ def loadi16_anyext : PatFrag<(ops node:$ptr), (i32 (unindexedload node:$ptr)),[{
 
 def loadi32 : PatFrag<(ops node:$ptr), (i32 (unindexedload node:$ptr)), [{
   LoadSDNode *LD = cast<LoadSDNode>(N);
-  if (LD->getPointerInfo().getAddrSpace() > 255)
-    return false;
   ISD::LoadExtType ExtType = LD->getExtensionType();
   if (ExtType == ISD::NON_EXTLOAD)
     return true;
@@ -473,11 +450,11 @@ def loadi32 : PatFrag<(ops node:$ptr), (i32 (unindexedload node:$ptr)), [{
   return false;
 }]>;
 
-def loadi8  : PatFrag<(ops node:$ptr), (i8  (dsload node:$ptr))>;
-def loadi64 : PatFrag<(ops node:$ptr), (i64 (dsload node:$ptr))>;
-def loadf32 : PatFrag<(ops node:$ptr), (f32 (dsload node:$ptr))>;
-def loadf64 : PatFrag<(ops node:$ptr), (f64 (dsload node:$ptr))>;
-def loadf80 : PatFrag<(ops node:$ptr), (f80 (dsload node:$ptr))>;
+def loadi8  : PatFrag<(ops node:$ptr), (i8  (load node:$ptr))>;
+def loadi64 : PatFrag<(ops node:$ptr), (i64 (load node:$ptr))>;
+def loadf32 : PatFrag<(ops node:$ptr), (f32 (load node:$ptr))>;
+def loadf64 : PatFrag<(ops node:$ptr), (f64 (load node:$ptr))>;
+def loadf80 : PatFrag<(ops node:$ptr), (f80 (load node:$ptr))>;
 
 def sextloadi16i8  : PatFrag<(ops node:$ptr), (i16 (sextloadi8 node:$ptr))>;
 def sextloadi32i8  : PatFrag<(ops node:$ptr), (i32 (sextloadi8 node:$ptr))>;
@@ -3909,16 +3886,6 @@ def TLSCall_32 : I<0, Pseudo, (outs), (ins i32mem:$sym),
                 [(X86TLSCall addr:$sym)]>,
                 Requires<[In32BitMode]>;
                 
-let AddedComplexity = 5, isCodeGenOnly = 1 in
-def GS_MOV32rm : I<0x8B, MRMSrcMem, (outs GR32:$dst), (ins i32mem:$src),
-                   "movl\t%gs:$src, $dst",
-                   [(set GR32:$dst, (gsload addr:$src))]>, SegGS;
-
-let AddedComplexity = 5, isCodeGenOnly = 1 in
-def FS_MOV32rm : I<0x8B, MRMSrcMem, (outs GR32:$dst), (ins i32mem:$src),
-                   "movl\t%fs:$src, $dst",
-                   [(set GR32:$dst, (fsload addr:$src))]>, SegFS;
-
 //===----------------------------------------------------------------------===//
 // EH Pseudo Instructions
 //
