@@ -122,8 +122,19 @@ int atomic(void) {
   return old;
 }
 
+// CHECK: @release_return
 void release_return(int *lock) {
   // Ensure this is actually returning void all the way through.
   return __sync_lock_release(lock);
   // CHECK: volatile store i32 0, i32* 
 }
+
+
+// CHECK: @addrspace
+void addrspace(int  __attribute__((address_space(256))) * P) {
+  __sync_bool_compare_and_swap(P, 0, 1);
+  // CHECK: call void @llvm.memory.barrier(i1 true, i1 true, i1 true, i1 true, i1 true)
+  // CHECK: call i32 @llvm.atomic.cmp.swap.i32.p256i32(i32 addrspace(256)* %tmp, i32 0, i32 1)
+  // CHECK: call void @llvm.memory.barrier(i1 true, i1 true, i1 true, i1 true, i1 true)
+}
+

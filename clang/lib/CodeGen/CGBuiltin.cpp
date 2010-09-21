@@ -812,17 +812,18 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
   case Builtin::BI__sync_bool_compare_and_swap_4:
   case Builtin::BI__sync_bool_compare_and_swap_8:
   case Builtin::BI__sync_bool_compare_and_swap_16: {
+    llvm::Value *DestPtr = CGF.EmitScalarExpr(E->getArg(0));
+    unsigned AddrSpace =
+      cast<llvm::PointerType>(DestPtr->getType())->getAddressSpace();;
     const llvm::Type *ValueType =
-      llvm::IntegerType::get(
-        CGF.getLLVMContext(),
+      llvm::IntegerType::get(CGF.getLLVMContext(),
         CGF.getContext().getTypeSize(E->getArg(1)->getType()));
-    const llvm::Type *PtrType = ValueType->getPointerTo();
+    const llvm::Type *PtrType = ValueType->getPointerTo(AddrSpace);
     const llvm::Type *IntrinsicTypes[2] = { ValueType, PtrType };
     Value *AtomF = CGM.getIntrinsic(Intrinsic::atomic_cmp_swap,
                                     IntrinsicTypes, 2);
 
-    Value *Args[3] = { Builder.CreateBitCast(CGF.EmitScalarExpr(E->getArg(0)),
-                                             PtrType),
+    Value *Args[3] = { Builder.CreateBitCast(DestPtr, PtrType),
                        EmitCastToInt(CGF, ValueType,
                                      CGF.EmitScalarExpr(E->getArg(1))),
                        EmitCastToInt(CGF, ValueType,
