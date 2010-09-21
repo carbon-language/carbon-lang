@@ -634,7 +634,8 @@ void MatcherTableEmitter::EmitPredicateFunctions(formatted_raw_ostream &OS) {
   // FIXME: This should be const.
   if (!ComplexPatterns.empty()) {
     OS << "bool CheckComplexPattern(SDNode *Root, SDNode *Parent, SDValue N,\n";
-    OS << "      unsigned PatternNo, SmallVectorImpl<SDValue> &Result) {\n";
+    OS << "                         unsigned PatternNo,\n";
+    OS << "         SmallVectorImpl<std::pair<SDValue, SDNode*> > &Result) {\n";
     OS << "  unsigned NextRes = Result.size();\n";
     OS << "  switch (PatternNo) {\n";
     OS << "  default: assert(0 && \"Invalid pattern # in table?\");\n";
@@ -662,7 +663,7 @@ void MatcherTableEmitter::EmitPredicateFunctions(formatted_raw_ostream &OS) {
       
       OS << "N";
       for (unsigned i = 0; i != NumOps; ++i)
-        OS << ", Result[NextRes+" << i << ']';
+        OS << ", Result[NextRes+" << i << "].first";
       OS << ");\n";
     }
     OS << "  }\n";

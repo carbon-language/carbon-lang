@@ -1688,11 +1688,12 @@ MorphNode(SDNode *Node, unsigned TargetOpc, SDVTList VTList,
 /// CheckPatternPredicate - Implements OP_CheckPatternPredicate.
 ALWAYS_INLINE static bool
 CheckSame(const unsigned char *MatcherTable, unsigned &MatcherIndex,
-          SDValue N, const SmallVectorImpl<SDValue> &RecordedNodes) {
+          SDValue N,
+          const SmallVectorImpl<std::pair<SDValue, SDNode*> > &RecordedNodes) {
   // Accept if it is exactly the same as a previously recorded node.
   unsigned RecNo = MatcherTable[MatcherIndex++];
   assert(RecNo < RecordedNodes.size() && "Invalid CheckSame");
-  return N == RecordedNodes[RecNo];
+  return N == RecordedNodes[RecNo].first;
 }
   
 /// CheckPatternPredicate - Implements OP_CheckPatternPredicate.
@@ -1801,7 +1802,7 @@ CheckOrImm(const unsigned char *MatcherTable, unsigned &MatcherIndex,
 static unsigned IsPredicateKnownToFail(const unsigned char *Table,
                                        unsigned Index, SDValue N,
                                        bool &Result, SelectionDAGISel &SDISel,
-                                       SmallVectorImpl<SDValue> &RecordedNodes){
+                 SmallVectorImpl<std::pair<SDValue, SDNode*> > &RecordedNodes) {
   switch (Table[Index++]) {
   default:
     Result = false;
@@ -1924,8 +1925,9 @@ SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
   SmallVector<MatchScope, 8> MatchScopes;
   
   // RecordedNodes - This is the set of nodes that have been recorded by the
-  // state machine.
-  SmallVector<SDValue, 8> RecordedNodes;
+  // state machine.  The second value is the parent of the node, or null if the
+  // root is recorded.
+  SmallVector<std::pair<SDValue, SDNode*>, 8> RecordedNodes;
   
   // MatchedMemRefs - This is the set of MemRef's we've seen in the input
   // pattern.
@@ -2051,10 +2053,14 @@ SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
       MatchScopes.push_back(NewEntry);
       continue;
     }
-    case OPC_RecordNode:
+    case OPC_RecordNode: {
       // Remember this node, it may end up being an operand in the pattern.
-      RecordedNodes.push_back(N);
+      SDNode *Parent = 0;
+      if (NodeStack.size() > 1)
+        Parent = NodeStack[NodeStack.size()-2].getNode();
+      RecordedNodes.push_back(std::make_pair(N, Parent));
       continue;
+    }
         
     case OPC_RecordChild0: case OPC_RecordChild1:
     case OPC_RecordChild2: case OPC_RecordChild3:
@@ -2064,7 +2070,8 @@ SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
       if (ChildNo >= N.getNumOperands())
         break;  // Match fails if out of range child #.
 
-      RecordedNodes.push_back(N->getOperand(ChildNo));
+      RecordedNodes.push_back(std::make_pair(N->getOperand(ChildNo),
+                                             N.getNode()));
       continue;
     }
     case OPC_RecordMemRef:
@@ -2109,11 +2116,8 @@ SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
       unsigned CPNum = MatcherTable[MatcherIndex++];
       unsigned RecNo = MatcherTable[MatcherIndex++];
       assert(RecNo < RecordedNodes.size() && "Invalid CheckComplexPat");
-      SDNode *Parent = 0;
-      if (!NodeStack.empty())
-        Parent = NodeStack[NodeStack.size()-1].getNode();
-      
-      if (!CheckComplexPattern(NodeToMatch, Parent, RecordedNodes[RecNo], CPNum,
+      if (!CheckComplexPattern(NodeToMatch, RecordedNodes[RecNo].second,
+                               RecordedNodes[RecNo].first, CPNum,
                                RecordedNodes))
         break;
       continue;
@@ -2242,14 +2246,16 @@ SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
       int64_t Val = MatcherTable[MatcherIndex++];
       if (Val & 128)
         Val = GetVBR(Val, MatcherTable, MatcherIndex);
-      RecordedNodes.push_back(CurDAG->getTargetConstant(Val, VT));
+      RecordedNodes.push_back(std::pair<SDValue, SDNode*>(
+                                      CurDAG->getTargetConstant(Val, VT), 0));
       continue;
     }
     case OPC_EmitRegister: {
       MVT::SimpleValueType VT =
         (MVT::SimpleValueType)MatcherTable[MatcherIndex++];
       unsigned RegNo = MatcherTable[MatcherIndex++];
-      RecordedNodes.push_back(CurDAG->getRegister(RegNo, VT));
+      RecordedNodes.push_back(std::pair<SDValue, SDNode*>(
+                                      CurDAG->getRegister(RegNo, VT), 0));
       continue;
     }
         
@@ -2257,7 +2263,7 @@ SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
       // Convert from IMM/FPIMM to target version.
       unsigned RecNo = MatcherTable[MatcherIndex++];
       assert(RecNo < RecordedNodes.size() && "Invalid CheckSame");
-      SDValue Imm = RecordedNodes[RecNo];
+      SDValue Imm = RecordedNodes[RecNo].first;
 
       if (Imm->getOpcode() == ISD::Constant) {
         int64_t Val = cast<ConstantSDNode>(Imm)->getZExtValue();
@@ -2267,7 +2273,7 @@ SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
         Imm = CurDAG->getTargetConstantFP(*Val, Imm.getValueType());
       }
       
-      RecordedNodes.push_back(Imm);
+      RecordedNodes.push_back(std::make_pair(Imm, RecordedNodes[RecNo].second));
       continue;
     }
         
@@ -2282,12 +2288,12 @@ SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
       // Read all of the chained nodes.
       unsigned RecNo = Opcode == OPC_EmitMergeInputChains1_1;
       assert(RecNo < RecordedNodes.size() && "Invalid CheckSame");
-      ChainNodesMatched.push_back(RecordedNodes[RecNo].getNode());
+      ChainNodesMatched.push_back(RecordedNodes[RecNo].first.getNode());
         
       // FIXME: What if other value results of the node have uses not matched
       // by this pattern?
       if (ChainNodesMatched.back() != NodeToMatch &&
-          !RecordedNodes[RecNo].hasOneUse()) {
+          !RecordedNodes[RecNo].first.hasOneUse()) {
         ChainNodesMatched.clear();
         break;
       }
@@ -2319,12 +2325,12 @@ SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
       for (unsigned i = 0; i != NumChains; ++i) {
         unsigned RecNo = MatcherTable[MatcherIndex++];
         assert(RecNo < RecordedNodes.size() && "Invalid CheckSame");
-        ChainNodesMatched.push_back(RecordedNodes[RecNo].getNode());
+        ChainNodesMatched.push_back(RecordedNodes[RecNo].first.getNode());
         
         // FIXME: What if other value results of the node have uses not matched
         // by this pattern?
         if (ChainNodesMatched.back() != NodeToMatch &&
-            !RecordedNodes[RecNo].hasOneUse()) {
+            !RecordedNodes[RecNo].first.hasOneUse()) {
           ChainNodesMatched.clear();
           break;
         }
@@ -2352,7 +2358,7 @@ SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
         InputChain = CurDAG->getEntryNode();
       
       InputChain = CurDAG->getCopyToReg(InputChain, NodeToMatch->getDebugLoc(),
-                                        DestPhysReg, RecordedNodes[RecNo],
+                                        DestPhysReg, RecordedNodes[RecNo].first,
                                         InputFlag);
       
       InputFlag = InputChain.getValue(1);
@@ -2363,7 +2369,8 @@ SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
       unsigned XFormNo = MatcherTable[MatcherIndex++];
       unsigned RecNo = MatcherTable[MatcherIndex++];
       assert(RecNo < RecordedNodes.size() && "Invalid CheckSame");
-      RecordedNodes.push_back(RunSDNodeXForm(RecordedNodes[RecNo], XFormNo));
+      SDValue Res = RunSDNodeXForm(RecordedNodes[RecNo].first, XFormNo);
+      RecordedNodes.push_back(std::pair<SDValue,SDNode*>(Res, 0));
       continue;
     }
         
@@ -2406,7 +2413,7 @@ SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
           RecNo = GetVBR(RecNo, MatcherTable, MatcherIndex);
         
         assert(RecNo < RecordedNodes.size() && "Invalid EmitNode");
-        Ops.push_back(RecordedNodes[RecNo]);
+        Ops.push_back(RecordedNodes[RecNo].first);
       }
       
       // If there are variadic operands to add, handle them now.
@@ -2443,7 +2450,8 @@ SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
         // Add all the non-flag/non-chain results to the RecordedNodes list.
         for (unsigned i = 0, e = VTs.size(); i != e; ++i) {
           if (VTs[i] == MVT::Other || VTs[i] == MVT::Flag) break;
-          RecordedNodes.push_back(SDValue(Res, i));
+          RecordedNodes.push_back(std::pair<SDValue,SDNode*>(SDValue(Res, i),
+                                                             0));
         }
         
       } else {
@@ -2499,7 +2507,7 @@ SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
           RecNo = GetVBR(RecNo, MatcherTable, MatcherIndex);
 
         assert(RecNo < RecordedNodes.size() && "Invalid CheckSame");
-        FlagResultNodesMatched.push_back(RecordedNodes[RecNo].getNode());
+        FlagResultNodesMatched.push_back(RecordedNodes[RecNo].first.getNode());
       }
       continue;
     }
@@ -2516,7 +2524,7 @@ SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
           ResSlot = GetVBR(ResSlot, MatcherTable, MatcherIndex);
         
         assert(ResSlot < RecordedNodes.size() && "Invalid CheckSame");
-        SDValue Res = RecordedNodes[ResSlot];
+        SDValue Res = RecordedNodes[ResSlot].first;
         
         assert(i < NodeToMatch->getNumValues() &&
                NodeToMatch->getValueType(i) != MVT::Other &&
