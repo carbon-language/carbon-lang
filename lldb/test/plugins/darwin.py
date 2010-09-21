@@ -7,6 +7,9 @@ to the make command.
 If neither the compiler keyword argument nor the LLDB_CC environment variable is
 specified, no CC make variable is passed to the make command.  The Makefile gets
 to define the default CC being used.
+
+Same idea holds for LLDB_ARCH environment variable, which maps to the ARCH make
+variable.
 """
 
 import os
@@ -16,7 +19,7 @@ import lldbtest
 
 def getCCSpec(compiler):
     """
-    Helper function to return the key-value pair string to specify the compiler
+    Helper function to return the key-value string to specify the compiler
     used for the make system.
     """
     cc = compiler if compiler else None
@@ -26,27 +29,42 @@ def getCCSpec(compiler):
     # Note the leading space character.
     return (" CC=" + cc) if cc else ""
 
+def getArchSpec(architecture):
+    """
+    Helper function to return the key-value string to specify the architecture
+    used for the make system.
+    """
+    arch = architecture if architecture else None
+    if not arch and "LLDB_ARCH" in os.environ:
+        arch = os.environ["LLDB_ARCH"]
 
-def buildDefault(compiler=None):
+    # Note the leading space character.
+    return (" ARCH=" + arch) if arch else ""
+
+
+def buildDefault(architecture=None, compiler=None):
     """Build the binaries the default way."""
     lldbtest.system(["/bin/sh", "-c",
-                     "make clean; make" + getCCSpec(compiler)])
+                     "make clean; make"
+                     + getArchSpec(architecture) + getCCSpec(compiler)])
 
     # True signifies that we can handle building default.
     return True
 
-def buildDsym(compiler=None):
+def buildDsym(architecture=None, compiler=None):
     """Build the binaries with dsym debug info."""
     lldbtest.system(["/bin/sh", "-c",
-                     "make clean; make MAKE_DSYM=YES" + getCCSpec(compiler)])
+                     "make clean; make MAKE_DSYM=YES"
+                     + getArchSpec(architecture) + getCCSpec(compiler)])
 
     # True signifies that we can handle building dsym.
     return True
 
-def buildDwarf(compiler=None):
+def buildDwarf(architecture=None, compiler=None):
     """Build the binaries with dwarf debug info."""
     lldbtest.system(["/bin/sh", "-c",
-                     "make clean; make MAKE_DSYM=NO" + getCCSpec(compiler)])
+                     "make clean; make MAKE_DSYM=NO"
+                     + getArchSpec(architecture) + getCCSpec(compiler)])
 
     # True signifies that we can handle building dsym.
     return True

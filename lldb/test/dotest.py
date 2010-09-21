@@ -48,6 +48,9 @@ suite = unittest2.TestSuite()
 # The config file is optional.
 configFile = None
 
+# The dictionary as a result of sourcing configFile.
+config = {}
+
 # Delay startup in order for the debugger to attach.
 delay = False
 
@@ -63,9 +66,6 @@ testdirs = [ os.getcwd() ]
 # Separator string.
 separator = '-' * 70
 
-# Decorated sys.stderr for our consumption.
-err = _WritelnDecorator(sys.stderr)
-
 
 def usage():
     print """
@@ -73,6 +73,7 @@ Usage: dotest.py [option] [args]
 where options:
 -h   : print this help message and exit (also --help)
 -c   : read a config file specified after this option
+       (see also lldb-trunk/example/test/usage-config)
 -d   : delay startup for 10 seconds (in order for the debugger to attach)
 -i   : ignore (don't bailout) if 'lldb.py' module cannot be located in the build
        tree relative to this script; use PYTHONPATH to locate the module
@@ -153,6 +154,25 @@ def parseOptionsAndInitTestdirs():
     # Gather all the dirs passed on the command line.
     if len(sys.argv) > index:
         testdirs = map(os.path.abspath, sys.argv[index:])
+
+    # Source the configFile if specified.
+    # The side effect, if any, will be felt from this point on.  An example
+    # config file may be these simple two lines:
+    #
+    # sys.stderr = open("/tmp/lldbtest-stderr", "w")
+    # sys.stdout = open("/tmp/lldbtest-stdout", "w")
+    #
+    # which will reassign the two file objects to sys.stderr and sys.stdout,
+    # respectively.
+    #
+    # See also lldb-trunk/example/test/usage-config.
+    global config
+    if configFile:
+        # Pass config (a dictionary) as the locals namespace for side-effect.
+        execfile(configFile, globals(), config)
+        #print "config:", config
+        #print "sys.stderr:", sys.stderr
+        #print "sys.stdout:", sys.stdout
 
 
 def setupSysPath():
@@ -297,13 +317,15 @@ if delay:
 for testdir in testdirs:
     os.path.walk(testdir, visit, 'Test')
 
+#
 # Now that we have loaded all the test cases, run the whole test suite.
+#
 
 # First, write out the number of collected test cases.
-err.writeln(separator)
-err.writeln("Collected %d test%s" % (suite.countTestCases(),
-                                     suite.countTestCases() != 1 and "s" or ""))
-err.writeln()
+sys.stderr.write(separator + "\n")
+sys.stderr.write("Collected %d test%s\n\n"
+                 % (suite.countTestCases(),
+                    suite.countTestCases() != 1 and "s" or ""))
 
 # For the time being, let's bracket the test runner within the
 # lldb.SBDebugger.Initialize()/Terminate() pair.
@@ -320,8 +342,41 @@ lldbLoggings()
 # Install the control-c handler.
 unittest2.signals.installHandler()
 
-# Invoke the default TextTestRunner to run the test suite.
-result = unittest2.TextTestRunner(verbosity=verbose).run(suite)
+#
+# Invoke the default TextTestRunner to run the test suite, possibly iterating
+# over different configurations.
+#
+
+iterCompilers = False
+iterArchs = False
+
+from types import *
+if "archs" in config:
+    archs = config["archs"]
+    if type(archs) is ListType and len(archs) >= 1:
+        iterArchs = True
+if "compilers" in config:
+    compilers = config["compilers"]
+    if type(compilers) is ListType and len(compilers) >= 1:
+        iterCompilers = True
+
+for ia in range(len(archs) if iterArchs else 1):
+    archConfig = ""
+    if iterArchs:
+        os.environ["LLDB_ARCH"] = archs[ia]
+        archConfig = "arch=%s" % archs[ia]
+    for ic in range(len(compilers) if iterCompilers else 1):
+        if iterCompilers:
+            os.environ["LLDB_CC"] = compilers[ic]
+            configString = "%s compiler=%s" % (archConfig, compilers[ic])
+        else:
+            configString = archConfig
+
+        # Invoke the test runner.
+        if iterArchs or iterCompilers:
+            sys.stderr.write("\nConfiguration: " + configString + "\n")
+        result = unittest2.TextTestRunner(stream=sys.stderr, verbosity=verbose).run(suite)
+        
 
 # Terminate the test suite if ${LLDB_TESTSUITE_FORCE_FINISH} is defined.
 # This should not be necessary now.
