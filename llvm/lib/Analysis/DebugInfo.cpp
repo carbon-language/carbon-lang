@@ -701,15 +701,13 @@ Constant *DIFactory::GetTagConstant(unsigned TAG) {
 /// GetOrCreateArray - Create an descriptor for an array of descriptors.
 /// This implicitly uniques the arrays created.
 DIArray DIFactory::GetOrCreateArray(DIDescriptor *Tys, unsigned NumTys) {
-  SmallVector<Value*, 16> Elts;
+  if (NumTys == 0) {
+    Value *Null = llvm::Constant::getNullValue(Type::getInt32Ty(VMContext));
+    return DIArray(MDNode::get(VMContext, &Null, 1));
+  }
 
-  if (NumTys == 0)
-    Elts.push_back(llvm::Constant::getNullValue(Type::getInt32Ty(VMContext)));
-  else
-    for (unsigned i = 0; i != NumTys; ++i)
-      Elts.push_back(Tys[i]);
-
-  return DIArray(MDNode::get(VMContext,Elts.data(), Elts.size()));
+  SmallVector<Value *, 16> Elts(Tys, Tys+NumTys);
+  return DIArray(MDNode::get(VMContext, Elts.data(), Elts.size()));
 }
 
 /// GetOrCreateSubrange - Create a descriptor for a value range.  This
