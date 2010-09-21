@@ -48,6 +48,14 @@ struct MachinePointerInfo {
   /// getAddrSpace - Return the LLVM IR address space number that this pointer
   /// points into.
   unsigned getAddrSpace() const;
+  
+  /// getConstantPool - Return a MachinePointerInfo record that refers to the
+  /// constant pool.
+  static MachinePointerInfo getConstantPool();
+
+  /// getFixedStack - Return a MachinePointerInfo record that refers to the
+  /// the specified FrameIndex.
+  static MachinePointerInfo getFixedStack(int FI, int64_t offset = 0);
 };
   
   

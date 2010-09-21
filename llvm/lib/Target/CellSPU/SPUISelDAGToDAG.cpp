@@ -265,7 +265,7 @@ namespace {
       
       HandleSDNode Dummy(CurDAG->getLoad(vecVT, dl,
                                          CurDAG->getEntryNode(), CGPoolOffset,
-                                         PseudoSourceValue::getConstantPool(),0,
+                                         MachinePointerInfo::getConstantPool(),
                                          false, false, Alignment));
       CurDAG->ReplaceAllUsesWith(SDValue(bvNode, 0), Dummy.getValue());
       if (SDNode *N = SelectCode(Dummy.getValue().getNode()))

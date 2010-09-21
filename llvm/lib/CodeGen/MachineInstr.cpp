@@ -342,6 +342,18 @@ unsigned MachinePointerInfo::getAddrSpace() const {
   return cast<PointerType>(V->getType())->getAddressSpace();
 }
 
+/// getConstantPool - Return a MachinePointerInfo record that refers to the
+/// constant pool.
+MachinePointerInfo MachinePointerInfo::getConstantPool() {
+  return MachinePointerInfo(PseudoSourceValue::getConstantPool());
+}
+
+/// getFixedStack - Return a MachinePointerInfo record that refers to the
+/// the specified FrameIndex.
+MachinePointerInfo MachinePointerInfo::getFixedStack(int FI, int64_t offset) {
+  return MachinePointerInfo(PseudoSourceValue::getFixedStack(FI), offset);
+}
+
 
 MachineMemOperand::MachineMemOperand(MachinePointerInfo ptrinfo, unsigned f,
                                      uint64_t s, unsigned int a)
