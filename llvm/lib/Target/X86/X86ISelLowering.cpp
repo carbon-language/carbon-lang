@@ -1539,7 +1539,7 @@ CreateCopyOfByValArgument(SDValue Src, SDValue Dst, SDValue Chain,
   
   return DAG.getMemcpy(Chain, dl, Dst, Src, SizeNode, Flags.getByValAlign(),
                        /*isVolatile*/false, /*AlwaysInline=*/true,
-                       MachinePointerInfo(0), MachinePointerInfo(0));
+                       MachinePointerInfo(), MachinePointerInfo());
 }
 
 /// IsTailCallConvention - Return true if the calling convention is one that
@@ -1852,10 +1852,11 @@ X86TargetLowering::LowerMemOpCallTo(SDValue Chain,
   unsigned LocMemOffset = FirstStackArgOffset + VA.getLocMemOffset();
   SDValue PtrOff = DAG.getIntPtrConstant(LocMemOffset);
   PtrOff = DAG.getNode(ISD::ADD, dl, getPointerTy(), StackPtr, PtrOff);
-  if (Flags.isByVal()) {
+  if (Flags.isByVal())
     return CreateCopyOfByValArgument(Arg, PtrOff, Chain, Flags, DAG, dl);
-  }
-  return DAG.getStore(Chain, dl, Arg, PtrOff, MachinePointerInfo(),
+
+  return DAG.getStore(Chain, dl, Arg, PtrOff,
+                      MachinePointerInfo::getStack(LocMemOffset),
                       false, false, 0);
 }
 

@@ -362,6 +362,10 @@ MachinePointerInfo MachinePointerInfo::getGOT() {
   return MachinePointerInfo(PseudoSourceValue::getGOT());
 }
 
+MachinePointerInfo MachinePointerInfo::getStack(int64_t Offset) {
+  return MachinePointerInfo(PseudoSourceValue::getStack(), Offset);
+}
+
 MachineMemOperand::MachineMemOperand(MachinePointerInfo ptrinfo, unsigned f,
                                      uint64_t s, unsigned int a)
   : PtrInfo(ptrinfo), Size(s),

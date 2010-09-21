@@ -942,11 +942,11 @@ ARMTargetLowering::LowerMemOpCallTo(SDValue Chain,
   unsigned LocMemOffset = VA.getLocMemOffset();
   SDValue PtrOff = DAG.getIntPtrConstant(LocMemOffset);
   PtrOff = DAG.getNode(ISD::ADD, dl, getPointerTy(), StackPtr, PtrOff);
-  if (Flags.isByVal()) {
+  if (Flags.isByVal())
     return CreateCopyOfByValArgument(Arg, PtrOff, Chain, Flags, DAG, dl);
-  }
+
   return DAG.getStore(Chain, dl, Arg, PtrOff,
-                      PseudoSourceValue::getStack(), LocMemOffset,
+                      MachinePointerInfo::getStack(LocMemOffset),
                       false, false, 0);
 }
 
@@ -1890,8 +1890,8 @@ static SDValue LowerVASTART(SDValue Op, SelectionDAG &DAG) {
   EVT PtrVT = DAG.getTargetLoweringInfo().getPointerTy();
   SDValue FR = DAG.getFrameIndex(FuncInfo->getVarArgsFrameIndex(), PtrVT);
   const Value *SV = cast<SrcValueSDNode>(Op.getOperand(2))->getValue();
-  return DAG.getStore(Op.getOperand(0), dl, FR, Op.getOperand(1), SV, 0,
-                      false, false, 0);
+  return DAG.getStore(Op.getOperand(0), dl, FR, Op.getOperand(1),
+                      MachinePointerInfo(SV), false, false, 0);
 }
 
 SDValue
@@ -2084,8 +2084,8 @@ ARMTargetLowering::LowerFormalArguments(SDValue Chain,
         SDValue Val = DAG.getCopyFromReg(Chain, dl, VReg, MVT::i32);
         SDValue Store =
           DAG.getStore(Val.getValue(1), dl, Val, FIN,
-               PseudoSourceValue::getFixedStack(AFI->getVarArgsFrameIndex()),
-               0, false, false, 0);
+               MachinePointerInfo::getFixedStack(AFI->getVarArgsFrameIndex()),
+                       false, false, 0);
         MemOps.push_back(Store);
         FIN = DAG.getNode(ISD::ADD, dl, getPointerTy(), FIN,
                           DAG.getConstant(4, getPointerTy()));
