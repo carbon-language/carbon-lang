@@ -1181,21 +1181,20 @@ DIVariable DIFactory::CreateVariable(unsigned Tag, DIDescriptor Context,
 /// CreateComplexVariable - Create a new descriptor for the specified variable
 /// which has a complex address expression for its address.
 DIVariable DIFactory::CreateComplexVariable(unsigned Tag, DIDescriptor Context,
-                                            const std::string &Name,
-                                            DIFile F,
+                                            StringRef Name, DIFile F,
                                             unsigned LineNo,
-                                            DIType Ty,
-                                            SmallVector<Value *, 9> &addr) {
-  SmallVector<Value *, 9> Elts;
+                                            DIType Ty, Value *const *Addr,
+                                            unsigned NumAddr) {
+  SmallVector<Value *, 15> Elts;
   Elts.push_back(GetTagConstant(Tag));
   Elts.push_back(Context);
   Elts.push_back(MDString::get(VMContext, Name));
   Elts.push_back(F);
   Elts.push_back(ConstantInt::get(Type::getInt32Ty(VMContext), LineNo));
   Elts.push_back(Ty);
-  Elts.insert(Elts.end(), addr.begin(), addr.end());
+  Elts.append(Addr, Addr+NumAddr);
 
-  return DIVariable(MDNode::get(VMContext, &Elts[0], 6+addr.size()));
+  return DIVariable(MDNode::get(VMContext, Elts.data(), Elts.size()));
 }
 
 

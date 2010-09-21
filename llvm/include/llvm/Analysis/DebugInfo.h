@@ -726,10 +726,9 @@ namespace llvm {
     /// CreateComplexVariable - Create a new descriptor for the specified
     /// variable which has a complex address expression for its address.
     DIVariable CreateComplexVariable(unsigned Tag, DIDescriptor Context,
-                                     const std::string &Name,
-                                     DIFile F, unsigned LineNo,
-                                     DIType Ty,
-                                     SmallVector<Value *, 9> &addr);
+                                     StringRef Name, DIFile F, unsigned LineNo,
+                                     DIType Ty, Value *const *Addr,
+                                     unsigned NumAddr);
 
     /// CreateLexicalBlock - This creates a descriptor for a lexical block
     /// with the specified parent context.
