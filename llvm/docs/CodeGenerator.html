@@ -1862,16 +1862,33 @@ to implement an assembler for your target.</p>
 </div>
 
 
-<!-- ======================================================================= -->
+<!-- *********************************************************************** -->
 <div class="doc_section">
   <a name="nativeassembler">Implementing a Native Assembler</a>
 </div>
+<!-- *********************************************************************** -->
 
 <div class="doc_text">
 
-<p>TODO</p>
+<p>Though you're probably reading this because you want to write or maintain a
+compiler backend, LLVM also fully supports building a native assemblers too.
+We've tried hard to automate the generation of the assembler from the .td files
+(in particular the instruction syntax and encodings), which means that a large
+part of the manual and repetitive data entry can be factored and shared with the
+compiler.</p>
+
+
 
 </div>
+
+
+<!-- ======================================================================= -->
+<div class="doc_subsection">
+  <a name="proepicode">Prolog/Epilog Code Insertion</a>
+</div>
+<div class="doc_text"><p>To Be Written</p></div>
+
+
 
 
 <!-- *********************************************************************** -->
