@@ -256,6 +256,10 @@ public:
   /// \brief Retrieve the type of the base object in a member-access 
   /// expression.
   QualType getBaseType() const { return BaseType; }
+
+  /// \brief Determines whether we want C++ constructors as results within this
+  /// context.
+  bool wantConstructorResults() const;
 };
 
 

@@ -152,6 +152,8 @@ namespace {
     
     void AdjustResultPriorityForDecl(Result &R);
 
+    void MaybeAddConstructorResults(Result R);
+    
   public:
     explicit ResultBuilder(Sema &SemaRef, LookupFilter Filter = 0)
       : SemaRef(SemaRef), Filter(Filter), AllowNestedNameSpecifiers(false),
@@ -480,11 +482,7 @@ bool ResultBuilder::isInterestingDecl(NamedDecl *ND,
         return false;
     }
   }
- 
-  // C++ constructors are never found by name lookup.
-  if (isa<CXXConstructorDecl>(ND))
-    return false;
-  
+   
   if (Filter == &ResultBuilder::IsNestedNameSpecifier ||
       ((isa<NamespaceDecl>(ND) || isa<NamespaceAliasDecl>(ND)) &&
        Filter != &ResultBuilder::IsNamespace &&
@@ -663,6 +661,42 @@ void ResultBuilder::AdjustResultPriorityForDecl(Result &R) {
   }  
 }
 
+void ResultBuilder::MaybeAddConstructorResults(Result R) {
+  if (!SemaRef.getLangOptions().CPlusPlus || !R.Declaration ||
+      !CompletionContext.wantConstructorResults())
+    return;
+  
+  ASTContext &Context = SemaRef.Context;
+  NamedDecl *D = R.Declaration;
+  CXXRecordDecl *Record = 0;
+  if (ClassTemplateDecl *ClassTemplate = dyn_cast<ClassTemplateDecl>(D))
+    Record = ClassTemplate->getTemplatedDecl();
+  else if ((Record = dyn_cast<CXXRecordDecl>(D))) {
+    // Skip specializations and partial specializations.
+    if (isa<ClassTemplateSpecializationDecl>(Record))
+      return;
+  } else {
+    // There are no constructors here.
+    return;
+  }
+  
+  Record = Record->getDefinition();
+  if (!Record)
+    return;
+
+  
+  QualType RecordTy = Context.getTypeDeclType(Record);
+  DeclarationName ConstructorName
+    = Context.DeclarationNames.getCXXConstructorName(
+                                           Context.getCanonicalType(RecordTy));
+  for (DeclContext::lookup_result Ctors = Record->lookup(ConstructorName);
+       Ctors.first != Ctors.second; ++Ctors.first) {
+    R.Declaration = *Ctors.first;
+    R.CursorKind = getCursorKindForDecl(R.Declaration);
+    Results.push_back(R);
+  }
+}
+
 void ResultBuilder::MaybeAddResult(Result R, DeclContext *CurContext) {
   assert(!ShadowMaps.empty() && "Must enter into a results scope");
   
@@ -685,6 +719,10 @@ void ResultBuilder::MaybeAddResult(Result R, DeclContext *CurContext) {
   if (!isInterestingDecl(R.Declaration, AsNestedNameSpecifier))
     return;
       
+  // C++ constructors are never found by name lookup.
+  if (isa<CXXConstructorDecl>(R.Declaration))
+    return;
+
   ShadowMap &SMap = ShadowMaps.back();
   ShadowMapEntry::iterator I, IEnd;
   ShadowMap::iterator NamePos = SMap.find(R.Declaration->getDeclName());
@@ -767,6 +805,9 @@ void ResultBuilder::MaybeAddResult(Result R, DeclContext *CurContext) {
   // map.
   SMap[R.Declaration->getDeclName()].Add(R.Declaration, Results.size());
   Results.push_back(R);
+  
+  if (!AsNestedNameSpecifier)
+    MaybeAddConstructorResults(R);
 }
 
 void ResultBuilder::AddResult(Result R, DeclContext *CurContext, 
@@ -787,6 +828,10 @@ void ResultBuilder::AddResult(Result R, DeclContext *CurContext,
   if (!isInterestingDecl(R.Declaration, AsNestedNameSpecifier))
     return;
   
+  // C++ constructors are never found by name lookup.
+  if (isa<CXXConstructorDecl>(R.Declaration))
+    return;
+
   if (Hiding && CheckHiddenResult(R, CurContext, Hiding))
     return;
       
@@ -840,6 +885,9 @@ void ResultBuilder::AddResult(Result R, DeclContext *CurContext,
   
   // Insert this result into the set of results.
   Results.push_back(R);
+  
+  if (!AsNestedNameSpecifier)
+    MaybeAddConstructorResults(R);
 }
 
 void ResultBuilder::AddResult(Result R) {
@@ -1725,9 +1773,14 @@ static void AddResultTypeChunk(ASTContext &Context,
                                CodeCompletionString *Result) {
   if (!ND)
     return;
-  
+
+  // Skip constructors and conversion functions, which have their return types
+  // built into their names.
+  if (isa<CXXConstructorDecl>(ND) || isa<CXXConversionDecl>(ND))
+    return;
+
   // Determine the type of the declaration (if it has a type).
-  QualType T;
+  QualType T;  
   if (FunctionDecl *Function = dyn_cast<FunctionDecl>(ND))
     T = Function->getResultType();
   else if (ObjCMethodDecl *Method = dyn_cast<ObjCMethodDecl>(ND))
@@ -2019,6 +2072,54 @@ static void AddFunctionTypeQualsToCompletionString(CodeCompletionString *Result,
   Result->AddInformativeChunk(QualsStr);
 }
 
+/// \brief Add the name of the given declaration 
+static void AddTypedNameChunk(ASTContext &Context, NamedDecl *ND,
+                              CodeCompletionString *Result) {
+  typedef CodeCompletionString::Chunk Chunk;
+  
+  DeclarationName Name = ND->getDeclName();
+  if (!Name)
+    return;
+  
+  switch (Name.getNameKind()) {
+  case DeclarationName::Identifier:
+  case DeclarationName::CXXConversionFunctionName:
+  case DeclarationName::CXXOperatorName:
+  case DeclarationName::CXXDestructorName:
+  case DeclarationName::CXXLiteralOperatorName:
+    Result->AddTypedTextChunk(ND->getNameAsString());
+    break;
+      
+  case DeclarationName::CXXUsingDirective:
+  case DeclarationName::ObjCZeroArgSelector:
+  case DeclarationName::ObjCOneArgSelector:
+  case DeclarationName::ObjCMultiArgSelector:
+    break;
+      
+  case DeclarationName::CXXConstructorName: {
+    CXXRecordDecl *Record = 0;
+    QualType Ty = Name.getCXXNameType();
+    if (const RecordType *RecordTy = Ty->getAs<RecordType>())
+      Record = cast<CXXRecordDecl>(RecordTy->getDecl());
+    else if (const InjectedClassNameType *InjectedTy
+                                        = Ty->getAs<InjectedClassNameType>())
+      Record = InjectedTy->getDecl();
+    else {
+      Result->AddTypedTextChunk(ND->getNameAsString());
+      break;
+    }
+    
+    Result->AddTypedTextChunk(Record->getNameAsString());
+    if (ClassTemplateDecl *Template = Record->getDescribedClassTemplate()) {
+      Result->AddChunk(Chunk(CodeCompletionString::CK_LeftAngle));
+      AddTemplateParameterChunks(Context, Template, Result);
+      Result->AddChunk(Chunk(CodeCompletionString::CK_RightAngle));
+    }
+    break;
+  }
+  }
+}
+
 /// \brief If possible, create a new code completion string for the given
 /// result.
 ///
@@ -2027,7 +2128,7 @@ static void AddFunctionTypeQualsToCompletionString(CodeCompletionString *Result,
 /// result is all that is needed.
 CodeCompletionString *
 CodeCompletionResult::CreateCodeCompletionString(Sema &S,
-                                               CodeCompletionString *Result) {
+                                                 CodeCompletionString *Result) {
   typedef CodeCompletionString::Chunk Chunk;
   
   if (Kind == RK_Pattern)
@@ -2092,7 +2193,7 @@ CodeCompletionResult::CreateCodeCompletionString(Sema &S,
   if (FunctionDecl *Function = dyn_cast<FunctionDecl>(ND)) {
     AddQualifierToCompletionString(Result, Qualifier, QualifierIsInformative, 
                                    S.Context);
-    Result->AddTypedTextChunk(Function->getNameAsString());
+    AddTypedNameChunk(S.Context, ND, Result);
     Result->AddChunk(Chunk(CodeCompletionString::CK_LeftParen));
     AddFunctionParameterChunks(S.Context, Function, Result);
     Result->AddChunk(Chunk(CodeCompletionString::CK_RightParen));
@@ -2104,8 +2205,8 @@ CodeCompletionResult::CreateCodeCompletionString(Sema &S,
     AddQualifierToCompletionString(Result, Qualifier, QualifierIsInformative, 
                                    S.Context);
     FunctionDecl *Function = FunTmpl->getTemplatedDecl();
-    Result->AddTypedTextChunk(Function->getNameAsString());
-    
+    AddTypedNameChunk(S.Context, Function, Result);
+
     // Figure out which template parameters are deduced (or have default
     // arguments).
     llvm::SmallVector<bool, 16> Deduced;

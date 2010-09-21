@@ -41,7 +41,7 @@ Z::operator int() const {
 // CHECK-MEMBER: FieldDecl:{ResultType int}{Text X::}{TypedText member}
 // CHECK-MEMBER: FieldDecl:{ResultType float}{Text Y::}{TypedText member}
 // CHECK-MEMBER: CXXMethod:{ResultType void}{Informative Y::}{TypedText memfunc}{LeftParen (}{Optional {Placeholder int i}}{RightParen )}
-// CHECK-MEMBER: CXXConversion:{ResultType int}{TypedText operator int}{LeftParen (}{RightParen )}{Informative  const}
+// CHECK-MEMBER: CXXConversion:{TypedText operator int}{LeftParen (}{RightParen )}{Informative  const}
 // CHECK-MEMBER: CXXMethod:{ResultType Z &}{TypedText operator=}{LeftParen (}{Placeholder const Z &}{RightParen )}
 // CHECK-MEMBER: CXXMethod:{ResultType X &}{Text X::}{TypedText operator=}{LeftParen (}{Placeholder const X &}{RightParen )}
 // CHECK-MEMBER: CXXMethod:{ResultType Y &}{Text Y::}{TypedText operator=}{LeftParen (}{Placeholder const Y &}{RightParen )}

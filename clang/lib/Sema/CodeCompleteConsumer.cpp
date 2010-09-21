@@ -28,6 +28,46 @@ using namespace clang;
 using llvm::StringRef;
 
 //===----------------------------------------------------------------------===//
+// Code completion context implementation
+//===----------------------------------------------------------------------===//
+
+bool CodeCompletionContext::wantConstructorResults() const {
+  switch (Kind) {
+  case CCC_Other:
+  case CCC_Statement:
+  case CCC_Expression:
+  case CCC_ObjCMessageReceiver:
+  case CCC_ParenthesizedExpression:
+    return true;
+    
+  case CCC_TopLevel:
+  case CCC_ObjCInterface:
+  case CCC_ObjCImplementation:
+  case CCC_ObjCIvarList:
+  case CCC_ClassStructUnion:
+  case CCC_MemberAccess:
+  case CCC_EnumTag:
+  case CCC_UnionTag:
+  case CCC_ClassOrStructTag:
+  case CCC_ObjCProtocolName:
+  case CCC_Namespace:
+  case CCC_Type:
+  case CCC_Name:
+  case CCC_PotentiallyQualifiedName:
+  case CCC_MacroName:
+  case CCC_MacroNameUse:
+  case CCC_PreprocessorExpression:
+  case CCC_PreprocessorDirective:
+  case CCC_NaturalLanguage:
+  case CCC_SelectorName:
+  case CCC_TypeQualifiers:
+    return false;
+  }
+  
+  return false;
+}
+
+//===----------------------------------------------------------------------===//
 // Code completion string implementation
 //===----------------------------------------------------------------------===//
 CodeCompletionString::Chunk::Chunk(ChunkKind Kind, llvm::StringRef Text) 
