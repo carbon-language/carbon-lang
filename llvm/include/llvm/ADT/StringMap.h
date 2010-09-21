@@ -137,8 +137,8 @@ public:
   StringMapEntry(unsigned strLen, const ValueTy &V)
     : StringMapEntryBase(strLen), second(V) {}
 
-  StringRef getKey() const { 
-    return StringRef(getKeyData(), getKeyLength()); 
+  StringRef getKey() const {
+    return StringRef(getKeyData(), getKeyLength());
   }
 
   const ValueTy &getValue() const { return second; }
@@ -216,14 +216,14 @@ public:
   static const StringMapEntry &GetStringMapEntryFromValue(const ValueTy &V) {
     return GetStringMapEntryFromValue(const_cast<ValueTy&>(V));
   }
-  
+
   /// GetStringMapEntryFromKeyData - Given key data that is known to be embedded
   /// into a StringMapEntry, return the StringMapEntry itself.
   static StringMapEntry &GetStringMapEntryFromKeyData(const char *KeyData) {
     char *Ptr = const_cast<char*>(KeyData) - sizeof(StringMapEntry<ValueTy>);
     return *reinterpret_cast<StringMapEntry*>(Ptr);
   }
-  
+
 
   /// Destroy - Destroy this StringMapEntry, releasing memory back to the
   /// specified allocator.
@@ -244,7 +244,7 @@ public:
 
 template <typename T> struct ReferenceAdder { typedef T& result; };
 template <typename T> struct ReferenceAdder<T&> { typedef T result; };
-  
+
 /// StringMap - This is an unconventional map that is specialized for handling
 /// keys that are "strings", which are basically ranges of bytes. This does some
 /// funky memory allocation and hashing things to make it extremely efficient,
@@ -257,7 +257,7 @@ public:
   StringMap() : StringMapImpl(static_cast<unsigned>(sizeof(MapEntryTy))) {}
   explicit StringMap(unsigned InitialSize)
     : StringMapImpl(InitialSize, static_cast<unsigned>(sizeof(MapEntryTy))) {}
-  
+
   explicit StringMap(AllocatorTy A)
     : StringMapImpl(static_cast<unsigned>(sizeof(MapEntryTy))), Allocator(A) {}
 
