@@ -134,7 +134,13 @@ void release_return(int *lock) {
 void addrspace(int  __attribute__((address_space(256))) * P) {
   __sync_bool_compare_and_swap(P, 0, 1);
   // CHECK: call void @llvm.memory.barrier(i1 true, i1 true, i1 true, i1 true, i1 true)
-  // CHECK: call i32 @llvm.atomic.cmp.swap.i32.p256i32(i32 addrspace(256)* %tmp, i32 0, i32 1)
+  // CHECK: call i32 @llvm.atomic.cmp.swap.i32.p256i32(i32 addrspace(256)*{{.*}}, i32 0, i32 1)
+  // CHECK: call void @llvm.memory.barrier(i1 true, i1 true, i1 true, i1 true, i1 true)
+  
+  
+  __sync_val_compare_and_swap(P, 0, 1);
+  // CHECK: call void @llvm.memory.barrier(i1 true, i1 true, i1 true, i1 true, i1 true)
+  // CHECK: call i32 @llvm.atomic.cmp.swap.i32.p256i32(i32 addrspace(256)*{{.*}}, i32 0, i32 1)
   // CHECK: call void @llvm.memory.barrier(i1 true, i1 true, i1 true, i1 true, i1 true)
 }
 
