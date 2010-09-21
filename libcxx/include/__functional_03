@@ -196,12 +196,12 @@ mem_fn(_R (_T::* __pm)(_A0, _A1, _A2) const volatile)
 
 // bad_function_call
 
-class bad_function_call
+class _LIBCPP_EXCEPTION_ABI bad_function_call
     : public exception
 {
 };
 
-template<class _Fp> class function; // undefined
+template<class _Fp> class _LIBCPP_VISIBLE function; // undefined
 
 namespace __function
 {
@@ -396,8 +396,9 @@ class __func<_F, _Alloc, _R(_A0)>
 {
     __compressed_pair<_F, _Alloc> __f_;
 public:
-    explicit __func(_F __f) : __f_(_STD::move(__f)) {}
-    explicit __func(_F __f, _Alloc __a) : __f_(_STD::move(__f), _STD::move(__a)) {}
+    _LIBCPP_INLINE_VISIBILITY explicit __func(_F __f) : __f_(_STD::move(__f)) {}
+    _LIBCPP_INLINE_VISIBILITY explicit __func(_F __f, _Alloc __a)
+        : __f_(_STD::move(__f), _STD::move(__a)) {}
     virtual __base<_R(_A0)>* __clone() const;
     virtual void __clone(__base<_R(_A0)>*) const;
     virtual void destroy();
@@ -478,8 +479,9 @@ class __func<_F, _Alloc, _R(_A0, _A1)>
 {
     __compressed_pair<_F, _Alloc> __f_;
 public:
-    explicit __func(_F __f) : __f_(_STD::move(__f)) {}
-    explicit __func(_F __f, _Alloc __a) : __f_(_STD::move(__f), _STD::move(__a)) {}
+    _LIBCPP_INLINE_VISIBILITY explicit __func(_F __f) : __f_(_STD::move(__f)) {}
+    _LIBCPP_INLINE_VISIBILITY explicit __func(_F __f, _Alloc __a)
+        : __f_(_STD::move(__f), _STD::move(__a)) {}
     virtual __base<_R(_A0, _A1)>* __clone() const;
     virtual void __clone(__base<_R(_A0, _A1)>*) const;
     virtual void destroy();
@@ -560,8 +562,9 @@ class __func<_F, _Alloc, _R(_A0, _A1, _A2)>
 {
     __compressed_pair<_F, _Alloc> __f_;
 public:
-    explicit __func(_F __f) : __f_(_STD::move(__f)) {}
-    explicit __func(_F __f, _Alloc __a) : __f_(_STD::move(__f), _STD::move(__a)) {}
+    _LIBCPP_INLINE_VISIBILITY explicit __func(_F __f) : __f_(_STD::move(__f)) {}
+    _LIBCPP_INLINE_VISIBILITY explicit __func(_F __f, _Alloc __a)
+        : __f_(_STD::move(__f), _STD::move(__a)) {}
     virtual __base<_R(_A0, _A1, _A2)>* __clone() const;
     virtual void __clone(__base<_R(_A0, _A1, _A2)>*) const;
     virtual void destroy();
@@ -639,7 +642,7 @@ __func<_F, _Alloc, _R(_A0, _A1, _A2)>::target_type() const
 }  // __function
 
 template<class _R>
-class function<_R()>
+class _LIBCPP_VISIBLE function<_R()>
 {
     typedef __function::__base<_R()> __base;
     aligned_storage<3*sizeof(void*)>::type __buf_;
@@ -653,16 +656,18 @@ public:
     typedef _R result_type;
 
     // 20.7.16.2.1, construct/copy/destroy:
-    explicit function() : __f_(0) {}
-    function(nullptr_t) : __f_(0) {}
+    _LIBCPP_INLINE_VISIBILITY explicit function() : __f_(0) {}
+    _LIBCPP_INLINE_VISIBILITY function(nullptr_t) : __f_(0) {}
     function(const function&);
     template<class _F>
       function(_F,
                typename enable_if<!is_integral<_F>::value>::type* = 0);
 
     template<class _Alloc>
+      _LIBCPP_INLINE_VISIBILITY
       function(allocator_arg_t, const _Alloc&) : __f_(0) {}
     template<class _Alloc>
+      _LIBCPP_INLINE_VISIBILITY
       function(allocator_arg_t, const _Alloc&, nullptr_t) : __f_(0) {}
     template<class _Alloc>
       function(allocator_arg_t, const _Alloc&, const function&);
@@ -685,18 +690,19 @@ public:
     // 20.7.16.2.2, function modifiers:
     void swap(function&);
     template<class _F, class _Alloc>
+      _LIBCPP_INLINE_VISIBILITY
       void assign(_F __f, const _Alloc& __a)
         {function(allocator_arg, __a, __f).swap(*this);}
 
     // 20.7.16.2.3, function capacity:
-    operator bool() const {return __f_;}
+    _LIBCPP_INLINE_VISIBILITY operator bool() const {return __f_;}
 
 private:
     // deleted overloads close possible hole in the type system
     template<class _R2>
-      bool operator==(const function<_R2()>&);// = delete;
+      bool operator==(const function<_R2()>&) const;// = delete;
     template<class _R2>
-      bool operator!=(const function<_R2()>&);// = delete;
+      bool operator!=(const function<_R2()>&) const;// = delete;
 public:
     // 20.7.16.2.4, function invocation:
     _R operator()() const;
@@ -920,7 +926,7 @@ function<_R()>::target() const
 #endif  // _LIBCPP_NO_RTTI
 
 template<class _R, class _A0>
-class function<_R(_A0)>
+class _LIBCPP_VISIBLE function<_R(_A0)>
     : public unary_function<_A0, _R>
 {
     typedef __function::__base<_R(_A0)> __base;
@@ -928,33 +934,42 @@ class function<_R(_A0)>
     __base* __f_;
 
     template <class _F>
+        _LIBCPP_INLINE_VISIBILITY
         static bool __not_null(const _F&) {return true;}
     template <class _R2, class _B0>
+        _LIBCPP_INLINE_VISIBILITY
         static bool __not_null(_R2 (*__p)(_B0)) {return __p;}
     template <class _R2, class _C>
+        _LIBCPP_INLINE_VISIBILITY
         static bool __not_null(_R2 (_C::*__p)()) {return __p;}
     template <class _R2, class _C>
+        _LIBCPP_INLINE_VISIBILITY
         static bool __not_null(_R2 (_C::*__p)() const) {return __p;}
     template <class _R2, class _C>
+        _LIBCPP_INLINE_VISIBILITY
         static bool __not_null(_R2 (_C::*__p)() volatile) {return __p;}
     template <class _R2, class _C>
+        _LIBCPP_INLINE_VISIBILITY
         static bool __not_null(_R2 (_C::*__p)() const volatile) {return __p;}
     template <class _R2, class _B0>
+        _LIBCPP_INLINE_VISIBILITY
         static bool __not_null(const function<_R(_B0)>& __p) {return __p;}
 public:
     typedef _R result_type;
 
     // 20.7.16.2.1, construct/copy/destroy:
-    explicit function() : __f_(0) {}
-    function(nullptr_t) : __f_(0) {}
+    _LIBCPP_INLINE_VISIBILITY explicit function() : __f_(0) {}
+    _LIBCPP_INLINE_VISIBILITY function(nullptr_t) : __f_(0) {}
     function(const function&);
     template<class _F>
       function(_F,
                typename enable_if<!is_integral<_F>::value>::type* = 0);
 
     template<class _Alloc>
+      _LIBCPP_INLINE_VISIBILITY
       function(allocator_arg_t, const _Alloc&) : __f_(0) {}
     template<class _Alloc>
+      _LIBCPP_INLINE_VISIBILITY
       function(allocator_arg_t, const _Alloc&, nullptr_t) : __f_(0) {}
     template<class _Alloc>
       function(allocator_arg_t, const _Alloc&, const function&);
@@ -977,18 +992,19 @@ public:
     // 20.7.16.2.2, function modifiers:
     void swap(function&);
     template<class _F, class _Alloc>
+      _LIBCPP_INLINE_VISIBILITY
       void assign(_F __f, const _Alloc& __a)
         {function(allocator_arg, __a, __f).swap(*this);}
 
     // 20.7.16.2.3, function capacity:
-    operator bool() const {return __f_;}
+    _LIBCPP_INLINE_VISIBILITY operator bool() const {return __f_;}
 
 private:
     // deleted overloads close possible hole in the type system
     template<class _R2, class _B0>
-      bool operator==(const function<_R2(_B0)>&);// = delete;
+      bool operator==(const function<_R2(_B0)>&) const;// = delete;
     template<class _R2, class _B0>
-      bool operator!=(const function<_R2(_B0)>&);// = delete;
+      bool operator!=(const function<_R2(_B0)>&) const;// = delete;
 public:
     // 20.7.16.2.4, function invocation:
     _R operator()(_A0) const;
@@ -1212,7 +1228,7 @@ function<_R(_A0)>::target() const
 #endif  // _LIBCPP_NO_RTTI
 
 template<class _R, class _A0, class _A1>
-class function<_R(_A0, _A1)>
+class _LIBCPP_VISIBLE function<_R(_A0, _A1)>
     : public binary_function<_A0, _A1, _R>
 {
     typedef __function::__base<_R(_A0, _A1)> __base;
@@ -1220,33 +1236,42 @@ class function<_R(_A0, _A1)>
     __base* __f_;
 
     template <class _F>
+        _LIBCPP_INLINE_VISIBILITY
         static bool __not_null(const _F&) {return true;}
     template <class _R2, class _B0, class _B1>
+        _LIBCPP_INLINE_VISIBILITY
         static bool __not_null(_R2 (*__p)(_B0, _B1)) {return __p;}
     template <class _R2, class _C, class _B1>
+        _LIBCPP_INLINE_VISIBILITY
         static bool __not_null(_R2 (_C::*__p)(_B1)) {return __p;}
     template <class _R2, class _C, class _B1>
+        _LIBCPP_INLINE_VISIBILITY
         static bool __not_null(_R2 (_C::*__p)(_B1) const) {return __p;}
     template <class _R2, class _C, class _B1>
+        _LIBCPP_INLINE_VISIBILITY
         static bool __not_null(_R2 (_C::*__p)(_B1) volatile) {return __p;}
     template <class _R2, class _C, class _B1>
+        _LIBCPP_INLINE_VISIBILITY
         static bool __not_null(_R2 (_C::*__p)(_B1) const volatile) {return __p;}
     template <class _R2, class _B0, class _B1>
+        _LIBCPP_INLINE_VISIBILITY
         static bool __not_null(const function<_R(_B0, _B1)>& __p) {return __p;}
 public:
     typedef _R result_type;
 
     // 20.7.16.2.1, construct/copy/destroy:
-    explicit function() : __f_(0) {}
-    function(nullptr_t) : __f_(0) {}
+    _LIBCPP_INLINE_VISIBILITY explicit function() : __f_(0) {}
+    _LIBCPP_INLINE_VISIBILITY function(nullptr_t) : __f_(0) {}
     function(const function&);
     template<class _F>
       function(_F,
                typename enable_if<!is_integral<_F>::value>::type* = 0);
 
     template<class _Alloc>
+      _LIBCPP_INLINE_VISIBILITY
       function(allocator_arg_t, const _Alloc&) : __f_(0) {}
     template<class _Alloc>
+      _LIBCPP_INLINE_VISIBILITY
       function(allocator_arg_t, const _Alloc&, nullptr_t) : __f_(0) {}
     template<class _Alloc>
       function(allocator_arg_t, const _Alloc&, const function&);
@@ -1269,6 +1294,7 @@ public:
     // 20.7.16.2.2, function modifiers:
     void swap(function&);
     template<class _F, class _Alloc>
+      _LIBCPP_INLINE_VISIBILITY
       void assign(_F __f, const _Alloc& __a)
         {function(allocator_arg, __a, __f).swap(*this);}
 
@@ -1278,9 +1304,9 @@ public:
 private:
     // deleted overloads close possible hole in the type system
     template<class _R2, class _B0, class _B1>
-      bool operator==(const function<_R2(_B0, _B1)>&);// = delete;
+      bool operator==(const function<_R2(_B0, _B1)>&) const;// = delete;
     template<class _R2, class _B0, class _B1>
-      bool operator!=(const function<_R2(_B0, _B1)>&);// = delete;
+      bool operator!=(const function<_R2(_B0, _B1)>&) const;// = delete;
 public:
     // 20.7.16.2.4, function invocation:
     _R operator()(_A0, _A1) const;
@@ -1504,40 +1530,49 @@ function<_R(_A0, _A1)>::target() const
 #endif  // _LIBCPP_NO_RTTI
 
 template<class _R, class _A0, class _A1, class _A2>
-class function<_R(_A0, _A1, _A2)>
+class _LIBCPP_VISIBLE function<_R(_A0, _A1, _A2)>
 {
     typedef __function::__base<_R(_A0, _A1, _A2)> __base;
     aligned_storage<3*sizeof(void*)>::type __buf_;
     __base* __f_;
 
     template <class _F>
+        _LIBCPP_INLINE_VISIBILITY
         static bool __not_null(const _F&) {return true;}
     template <class _R2, class _B0, class _B1, class _B2>
+        _LIBCPP_INLINE_VISIBILITY
         static bool __not_null(_R2 (*__p)(_B0, _B1, _B2)) {return __p;}
     template <class _R2, class _C, class _B1, class _B2>
+        _LIBCPP_INLINE_VISIBILITY
         static bool __not_null(_R2 (_C::*__p)(_B1, _B2)) {return __p;}
     template <class _R2, class _C, class _B1, class _B2>
+        _LIBCPP_INLINE_VISIBILITY
         static bool __not_null(_R2 (_C::*__p)(_B1, _B2) const) {return __p;}
     template <class _R2, class _C, class _B1, class _B2>
+        _LIBCPP_INLINE_VISIBILITY
         static bool __not_null(_R2 (_C::*__p)(_B1, _B2) volatile) {return __p;}
     template <class _R2, class _C, class _B1, class _B2>
+        _LIBCPP_INLINE_VISIBILITY
         static bool __not_null(_R2 (_C::*__p)(_B1, _B2) const volatile) {return __p;}
     template <class _R2, class _B0, class _B1, class _B2>
+        _LIBCPP_INLINE_VISIBILITY
         static bool __not_null(const function<_R(_B0, _B1, _B2)>& __p) {return __p;}
 public:
     typedef _R result_type;
 
     // 20.7.16.2.1, construct/copy/destroy:
-    explicit function() : __f_(0) {}
-    function(nullptr_t) : __f_(0) {}
+    _LIBCPP_INLINE_VISIBILITY explicit function() : __f_(0) {}
+    _LIBCPP_INLINE_VISIBILITY function(nullptr_t) : __f_(0) {}
     function(const function&);
     template<class _F>
       function(_F,
                typename enable_if<!is_integral<_F>::value>::type* = 0);
 
     template<class _Alloc>
+      _LIBCPP_INLINE_VISIBILITY
       function(allocator_arg_t, const _Alloc&) : __f_(0) {}
     template<class _Alloc>
+      _LIBCPP_INLINE_VISIBILITY
       function(allocator_arg_t, const _Alloc&, nullptr_t) : __f_(0) {}
     template<class _Alloc>
       function(allocator_arg_t, const _Alloc&, const function&);
@@ -1560,18 +1595,19 @@ public:
     // 20.7.16.2.2, function modifiers:
     void swap(function&);
     template<class _F, class _Alloc>
+      _LIBCPP_INLINE_VISIBILITY
       void assign(_F __f, const _Alloc& __a)
         {function(allocator_arg, __a, __f).swap(*this);}
 
     // 20.7.16.2.3, function capacity:
-    operator bool() const {return __f_;}
+    _LIBCPP_INLINE_VISIBILITY operator bool() const {return __f_;}
 
 private:
     // deleted overloads close possible hole in the type system
     template<class _R2, class _B0, class _B1, class _B2>
-      bool operator==(const function<_R2(_B0, _B1, _B2)>&);// = delete;
+      bool operator==(const function<_R2(_B0, _B1, _B2)>&) const;// = delete;
     template<class _R2, class _B0, class _B1, class _B2>
-      bool operator!=(const function<_R2(_B0, _B1, _B2)>&);// = delete;
+      bool operator!=(const function<_R2(_B0, _B1, _B2)>&) const;// = delete;
 public:
     // 20.7.16.2.4, function invocation:
     _R operator()(_A0, _A1, _A2) const;
@@ -1822,11 +1858,11 @@ swap(function<_F>& __x, function<_F>& __y)
 {return __x.swap(__y);}
 
 template<class _Tp> struct __is_bind_expression : public false_type {};
-template<class _Tp> struct is_bind_expression
+template<class _Tp> struct _LIBCPP_VISIBLE is_bind_expression
     : public __is_bind_expression<typename remove_cv<_Tp>::type> {};
 
 template<class _Tp> struct __is_placeholder : public integral_constant<int, 0> {};
-template<class _Tp> struct is_placeholder
+template<class _Tp> struct _LIBCPP_VISIBLE is_placeholder
     : public __is_placeholder<typename remove_cv<_Tp>::type> {};
 
 namespace placeholders

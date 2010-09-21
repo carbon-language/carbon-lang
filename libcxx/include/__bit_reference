@@ -1028,6 +1028,7 @@ __equal_aligned(__bit_iterator<_C, true> __first1, __bit_iterator<_C, true> __la
 }
 
 template <class _C, bool _IC1, bool _IC2>
+inline _LIBCPP_INLINE_VISIBILITY
 bool
 equal(__bit_iterator<_C, _IC1> __first1, __bit_iterator<_C, _IC1> __last1, __bit_iterator<_C, _IC2> __first2)
 {

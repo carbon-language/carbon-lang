@@ -21,21 +21,21 @@
 _LIBCPP_BEGIN_NAMESPACE_STD
 
 template <class _Arg, class _Result>
-struct unary_function
+struct _LIBCPP_VISIBLE unary_function
 {
     typedef _Arg    argument_type;
     typedef _Result result_type;
 };
 
 template <class _Arg1, class _Arg2, class _Result>
-struct binary_function
+struct _LIBCPP_VISIBLE binary_function
 {
     typedef _Arg1   first_argument_type;
     typedef _Arg2   second_argument_type;
     typedef _Result result_type;
 };
 
-template <class _Tp> struct hash;
+template <class _Tp> struct _LIBCPP_VISIBLE hash;
 
 template <class _Tp>
 struct __has_result_type
@@ -445,7 +445,7 @@ struct __invoke_return
 };
 
 template <class _Tp>
-class reference_wrapper
+class _LIBCPP_VISIBLE reference_wrapper
     : public __weak_result_type<_Tp>
 {
 public:
@@ -467,6 +467,7 @@ public:
 
     // invoke
     template <class... _ArgTypes>
+       _LIBCPP_INLINE_VISIBILITY
        typename __invoke_return<type&, _ArgTypes...>::type
           operator() (_ArgTypes&&... __args) const
           {

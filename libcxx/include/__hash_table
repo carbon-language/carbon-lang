@@ -22,6 +22,7 @@
 
 _LIBCPP_BEGIN_NAMESPACE_STD
 
+_LIBCPP_VISIBLE
 size_t __next_prime(size_t);
 
 template <class _NodePtr>
@@ -32,7 +33,7 @@ struct __hash_node_base
 
     pointer    __next_;
 
-    __hash_node_base() : __next_(nullptr) {}
+    _LIBCPP_INLINE_VISIBILITY __hash_node_base() : __next_(nullptr) {}
 };
 
 template <class _Tp, class _VoidPtr>
@@ -57,10 +58,10 @@ template <class, class, class, class> class __hash_table;
 template <class> class __hash_const_iterator;
 template <class> class __hash_map_iterator;
 template <class> class __hash_map_const_iterator;
-template <class, class, class, class, class> class unordered_map;
+template <class, class, class, class, class> class _LIBCPP_VISIBLE unordered_map;
 
 template <class _NodePtr>
-class __hash_iterator
+class _LIBCPP_VISIBLE __hash_iterator
 {
     typedef _NodePtr __node_pointer;
 
@@ -79,17 +80,21 @@ public:
 #endif
                                                          pointer;
 
-    __hash_iterator() {}
+    _LIBCPP_INLINE_VISIBILITY __hash_iterator() {}
 
-    reference operator*() const {return __node_->__value_;}
-    pointer operator->() const {return addressof(__node_->__value_);}
+    _LIBCPP_INLINE_VISIBILITY
+        reference operator*() const {return __node_->__value_;}
+    _LIBCPP_INLINE_VISIBILITY
+        pointer operator->() const {return addressof(__node_->__value_);}
 
+    _LIBCPP_INLINE_VISIBILITY
     __hash_iterator& operator++()
     {
         __node_ = __node_->__next_;
         return *this;
     }
 
+    _LIBCPP_INLINE_VISIBILITY
     __hash_iterator operator++(int)
     {
         __hash_iterator __t(*this);
@@ -97,25 +102,28 @@ public:
         return __t;
     }
 
-    friend bool operator==(const __hash_iterator& __x, const __hash_iterator& __y)
+    friend _LIBCPP_INLINE_VISIBILITY
+    bool operator==(const __hash_iterator& __x, const __hash_iterator& __y)
         {return __x.__node_ == __y.__node_;}
-    friend bool operator!=(const __hash_iterator& __x, const __hash_iterator& __y)
+    friend _LIBCPP_INLINE_VISIBILITY
+    bool operator!=(const __hash_iterator& __x, const __hash_iterator& __y)
         {return __x.__node_ != __y.__node_;}
 
 private:
+    _LIBCPP_INLINE_VISIBILITY
     __hash_iterator(__node_pointer __node)
         : __node_(__node)
         {}
 
     template <class, class, class, class> friend class __hash_table;
-    template <class> friend class __hash_const_iterator;
-    template <class> friend class __hash_map_iterator;
-    template <class, class, class, class, class> friend class unordered_map;
-    template <class, class, class, class, class> friend class unordered_multimap;
+    template <class> friend class _LIBCPP_VISIBLE __hash_const_iterator;
+    template <class> friend class _LIBCPP_VISIBLE __hash_map_iterator;
+    template <class, class, class, class, class> friend class _LIBCPP_VISIBLE unordered_map;
+    template <class, class, class, class, class> friend class _LIBCPP_VISIBLE unordered_multimap;
 };
 
 template <class _ConstNodePtr>
-class __hash_const_iterator
+class _LIBCPP_VISIBLE __hash_const_iterator
 {
     typedef _ConstNodePtr __node_pointer;
 
@@ -146,20 +154,25 @@ public:
                                                       __non_const_node_pointer;
     typedef __hash_iterator<__non_const_node_pointer> __non_const_iterator;
 
-    __hash_const_iterator() {}
+    _LIBCPP_INLINE_VISIBILITY __hash_const_iterator() {}
+    _LIBCPP_INLINE_VISIBILITY 
     __hash_const_iterator(const __non_const_iterator& __x)
         : __node_(__x.__node_)
         {}
 
-    reference operator*() const {return __node_->__value_;}
-    pointer operator->() const {return addressof(__node_->__value_);}
+    _LIBCPP_INLINE_VISIBILITY
+        reference operator*() const {return __node_->__value_;}
+    _LIBCPP_INLINE_VISIBILITY
+        pointer operator->() const {return addressof(__node_->__value_);}
 
+    _LIBCPP_INLINE_VISIBILITY
     __hash_const_iterator& operator++()
     {
         __node_ = __node_->__next_;
         return *this;
     }
 
+    _LIBCPP_INLINE_VISIBILITY
     __hash_const_iterator operator++(int)
     {
         __hash_const_iterator __t(*this);
@@ -167,26 +180,29 @@ public:
         return __t;
     }
 
-    friend bool operator==(const __hash_const_iterator& __x, const __hash_const_iterator& __y)
+    friend _LIBCPP_INLINE_VISIBILITY
+    bool operator==(const __hash_const_iterator& __x, const __hash_const_iterator& __y)
         {return __x.__node_ == __y.__node_;}
-    friend bool operator!=(const __hash_const_iterator& __x, const __hash_const_iterator& __y)
+    friend _LIBCPP_INLINE_VISIBILITY
+    bool operator!=(const __hash_const_iterator& __x, const __hash_const_iterator& __y)
         {return __x.__node_ != __y.__node_;}
 
 private:
+    _LIBCPP_INLINE_VISIBILITY
     __hash_const_iterator(__node_pointer __node)
         : __node_(__node)
         {}
 
     template <class, class, class, class> friend class __hash_table;
-    template <class> friend class __hash_map_const_iterator;
-    template <class, class, class, class, class> friend class unordered_map;
-    template <class, class, class, class, class> friend class unordered_multimap;
+    template <class> friend class _LIBCPP_VISIBLE __hash_map_const_iterator;
+    template <class, class, class, class, class> friend class _LIBCPP_VISIBLE unordered_map;
+    template <class, class, class, class, class> friend class _LIBCPP_VISIBLE unordered_multimap;
 };
 
-template <class> class __hash_const_local_iterator;
+template <class> class _LIBCPP_VISIBLE __hash_const_local_iterator;
 
 template <class _NodePtr>
-class __hash_local_iterator
+class _LIBCPP_VISIBLE __hash_local_iterator
 {
     typedef _NodePtr __node_pointer;
 
@@ -208,11 +224,14 @@ public:
 #endif
                                                                 pointer;
 
-    __hash_local_iterator() {}
+    _LIBCPP_INLINE_VISIBILITY __hash_local_iterator() {}
 
-    reference operator*() const {return __node_->__value_;}
-    pointer operator->() const {return &__node_->__value_;}
+    _LIBCPP_INLINE_VISIBILITY
+        reference operator*() const {return __node_->__value_;}
+    _LIBCPP_INLINE_VISIBILITY
+        pointer operator->() const {return &__node_->__value_;}
 
+    _LIBCPP_INLINE_VISIBILITY
     __hash_local_iterator& operator++()
     {
         __node_ = __node_->__next_;
@@ -221,6 +240,7 @@ public:
         return *this;
     }
 
+    _LIBCPP_INLINE_VISIBILITY
     __hash_local_iterator operator++(int)
     {
         __hash_local_iterator __t(*this);
@@ -228,12 +248,15 @@ public:
         return __t;
     }
 
-    friend bool operator==(const __hash_local_iterator& __x, const __hash_local_iterator& __y)
+    friend _LIBCPP_INLINE_VISIBILITY
+    bool operator==(const __hash_local_iterator& __x, const __hash_local_iterator& __y)
         {return __x.__node_ == __y.__node_;}
-    friend bool operator!=(const __hash_local_iterator& __x, const __hash_local_iterator& __y)
+    friend _LIBCPP_INLINE_VISIBILITY
+    bool operator!=(const __hash_local_iterator& __x, const __hash_local_iterator& __y)
         {return __x.__node_ != __y.__node_;}
 
 private:
+    _LIBCPP_INLINE_VISIBILITY
     __hash_local_iterator(__node_pointer __node, size_t __bucket,
                           size_t __bucket_count)
         : __node_(__node),
@@ -245,12 +268,12 @@ private:
         }
 
     template <class, class, class, class> friend class __hash_table;
-    template <class> friend class __hash_const_local_iterator;
-    template <class> friend class __hash_map_iterator;
+    template <class> friend class _LIBCPP_VISIBLE __hash_const_local_iterator;
+    template <class> friend class _LIBCPP_VISIBLE __hash_map_iterator;
 };
 
 template <class _ConstNodePtr>
-class __hash_const_local_iterator
+class _LIBCPP_VISIBLE __hash_const_local_iterator
 {
     typedef _ConstNodePtr __node_pointer;
 
@@ -285,16 +308,20 @@ public:
 #endif
                                                        pointer;
 
-    __hash_const_local_iterator() {}
+    _LIBCPP_INLINE_VISIBILITY __hash_const_local_iterator() {}
+    _LIBCPP_INLINE_VISIBILITY
     __hash_const_local_iterator(const __non_const_iterator& __x)
         : __node_(__x.__node_),
           __bucket_(__x.__bucket_),
           __bucket_count_(__x.__bucket_count_)
         {}
 
-    reference operator*() const {return __node_->__value_;}
-    pointer operator->() const {return &__node_->__value_;}
+    _LIBCPP_INLINE_VISIBILITY
+        reference operator*() const {return __node_->__value_;}
+    _LIBCPP_INLINE_VISIBILITY
+        pointer operator->() const {return &__node_->__value_;}
 
+    _LIBCPP_INLINE_VISIBILITY
     __hash_const_local_iterator& operator++()
     {
         __node_ = __node_->__next_;
@@ -303,6 +330,7 @@ public:
         return *this;
     }
 
+    _LIBCPP_INLINE_VISIBILITY
     __hash_const_local_iterator operator++(int)
     {
         __hash_const_local_iterator __t(*this);
@@ -310,12 +338,15 @@ public:
         return __t;
     }
 
-    friend bool operator==(const __hash_const_local_iterator& __x, const __hash_const_local_iterator& __y)
+    friend _LIBCPP_INLINE_VISIBILITY
+    bool operator==(const __hash_const_local_iterator& __x, const __hash_const_local_iterator& __y)
         {return __x.__node_ == __y.__node_;}
-    friend bool operator!=(const __hash_const_local_iterator& __x, const __hash_const_local_iterator& __y)
+    friend _LIBCPP_INLINE_VISIBILITY
+    bool operator!=(const __hash_const_local_iterator& __x, const __hash_const_local_iterator& __y)
         {return __x.__node_ != __y.__node_;}
 
 private:
+    _LIBCPP_INLINE_VISIBILITY
     __hash_const_local_iterator(__node_pointer __node, size_t __bucket,
                                 size_t __bucket_count)
         : __node_(__node),
@@ -327,7 +358,7 @@ private:
         }
 
     template <class, class, class, class> friend class __hash_table;
-    template <class> friend class __hash_map_const_iterator;
+    template <class> friend class _LIBCPP_VISIBLE __hash_map_const_iterator;
 };
 
 template <class _Alloc>
@@ -341,13 +372,17 @@ class __bucket_list_deallocator
 public:
     typedef typename __alloc_traits::pointer pointer;
 
+    _LIBCPP_INLINE_VISIBILITY
     __bucket_list_deallocator()
         : __data_(0) {}
+
+    _LIBCPP_INLINE_VISIBILITY
     __bucket_list_deallocator(const allocator_type& __a, size_type __size)
         : __data_(__size, __a) {}
 
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
+    _LIBCPP_INLINE_VISIBILITY
     __bucket_list_deallocator(__bucket_list_deallocator&& __x)
         : __data_(_STD::move(__x.__data_))
     {
@@ -356,12 +391,13 @@ public:
 
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
-    size_type& size()       {return __data_.first();}
-    size_type  size() const {return __data_.first();}
+    _LIBCPP_INLINE_VISIBILITY size_type& size()       {return __data_.first();}
+    _LIBCPP_INLINE_VISIBILITY size_type  size() const {return __data_.first();}
 
-    allocator_type&       __alloc()       {return __data_.second();}
-    const allocator_type& __alloc() const {return __data_.second();}
+    _LIBCPP_INLINE_VISIBILITY allocator_type&       __alloc()       {return __data_.second();}
+    _LIBCPP_INLINE_VISIBILITY const allocator_type& __alloc() const {return __data_.second();}
 
+    _LIBCPP_INLINE_VISIBILITY
     void operator()(pointer __p)
     {
         __alloc_traits::deallocate(__alloc(), __p, size());
@@ -387,11 +423,13 @@ private:
 public:
     bool __value_constructed;
 
+    _LIBCPP_INLINE_VISIBILITY
     explicit __hash_node_destructor(allocator_type& __na)
         : __na_(__na),
           __value_constructed(false)
         {}
 
+    _LIBCPP_INLINE_VISIBILITY
     void operator()(pointer __p)
     {
         if (__value_constructed)
@@ -457,21 +495,21 @@ private:
     __compressed_pair<float, key_equal>               __p3_;
     // --- Member data end ---
 
-    size_type& size()       {return __p2_.first();}
+    _LIBCPP_INLINE_VISIBILITY size_type& size()       {return __p2_.first();}
 public:
-    size_type  size() const {return __p2_.first();}
+    _LIBCPP_INLINE_VISIBILITY size_type  size() const {return __p2_.first();}
 
-          hasher& hash_function()       {return __p2_.second();}
-    const hasher& hash_function() const {return __p2_.second();}
+    _LIBCPP_INLINE_VISIBILITY       hasher& hash_function()       {return __p2_.second();}
+    _LIBCPP_INLINE_VISIBILITY const hasher& hash_function() const {return __p2_.second();}
 
-    float& max_load_factor()       {return __p3_.first();}
-    float  max_load_factor() const {return __p3_.first();}
+    _LIBCPP_INLINE_VISIBILITY float& max_load_factor()       {return __p3_.first();}
+    _LIBCPP_INLINE_VISIBILITY float  max_load_factor() const {return __p3_.first();}
 
-          key_equal& key_eq()       {return __p3_.second();}
-    const key_equal& key_eq() const {return __p3_.second();}
+    _LIBCPP_INLINE_VISIBILITY       key_equal& key_eq()       {return __p3_.second();}
+    _LIBCPP_INLINE_VISIBILITY const key_equal& key_eq() const {return __p3_.second();}
 
-    __node_allocator&       __node_alloc()       {return __p1_.second();}
-    const __node_allocator& __node_alloc() const {return __p1_.second();}
+    _LIBCPP_INLINE_VISIBILITY __node_allocator&       __node_alloc()       {return __p1_.second();}
+    _LIBCPP_INLINE_VISIBILITY const __node_allocator& __node_alloc() const {return __p1_.second();}
 
 public:
     typedef __hash_iterator<__node_pointer>                   iterator;
@@ -501,6 +539,7 @@ public:
     template <class _InputIterator>
         void __assign_multi(_InputIterator __first, _InputIterator __last);
 
+    _LIBCPP_INLINE_VISIBILITY
     size_type max_size() const
     {
         return allocator_traits<__pointer_allocator>::max_size(
@@ -540,8 +579,10 @@ public:
 
     void clear();
     void rehash(size_type __n);
-    void reserve(size_type __n)
+    _LIBCPP_INLINE_VISIBILITY void reserve(size_type __n)
         {rehash(static_cast<size_type>(ceil(__n / max_load_factor())));}
+
+    _LIBCPP_INLINE_VISIBILITY
     size_type bucket_count() const
     {
         return __bucket_list_.get_deleter().size();
@@ -553,6 +594,7 @@ public:
     const_iterator end() const;
 
     template <class _Key>
+        _LIBCPP_INLINE_VISIBILITY
         size_type bucket(const _Key& __k) const
             {return hash_function()(__k) % bucket_count();}
 
@@ -593,24 +635,25 @@ public:
 
     void swap(__hash_table& __u);
 
+    _LIBCPP_INLINE_VISIBILITY
     size_type max_bucket_count() const
         {return __bucket_list_.get_deleter().__alloc().max_size();}
     size_type bucket_size(size_type __n) const;
-    float load_factor() const
+    _LIBCPP_INLINE_VISIBILITY float load_factor() const
     {
         size_type __bc = bucket_count();
         return __bc != 0 ? (float)size() / __bc : 0.f;
     }
-    void max_load_factor(float __mlf)
+    _LIBCPP_INLINE_VISIBILITY void max_load_factor(float __mlf)
         {max_load_factor() = _STD::max(__mlf, load_factor());}
 
-    local_iterator       begin(size_type __n)
+    _LIBCPP_INLINE_VISIBILITY local_iterator       begin(size_type __n)
         {return local_iterator(__bucket_list_[__n], __n, bucket_count());}
-    local_iterator       end(size_type __n)
+    _LIBCPP_INLINE_VISIBILITY local_iterator       end(size_type __n)
         {return local_iterator(nullptr, __n, bucket_count());}
-    const_local_iterator cbegin(size_type __n) const
+    _LIBCPP_INLINE_VISIBILITY const_local_iterator cbegin(size_type __n) const
         {return const_local_iterator(__bucket_list_[__n], __n, bucket_count());}
-    const_local_iterator cend(size_type __n) const
+    _LIBCPP_INLINE_VISIBILITY const_local_iterator cend(size_type __n) const
         {return const_local_iterator(nullptr, __n, bucket_count());}
 private:
     void __rehash(size_type __n);
@@ -626,26 +669,31 @@ private:
 #endif
     __node_holder __construct_node(const value_type& __v, size_t __hash);
 
+    _LIBCPP_INLINE_VISIBILITY
     void __copy_assign_alloc(const __hash_table& __u)
         {__copy_assign_alloc(__u, integral_constant<bool,
              __node_traits::propagate_on_container_copy_assignment::value>());}
     void __copy_assign_alloc(const __hash_table& __u, true_type);
-    void __copy_assign_alloc(const __hash_table& __u, false_type) {}
+    _LIBCPP_INLINE_VISIBILITY
+        void __copy_assign_alloc(const __hash_table& __u, false_type) {}
 
     void __move_assign(__hash_table& __u, false_type);
     void __move_assign(__hash_table& __u, true_type);
-    void __move_assign_alloc(__hash_table& __u)
+    _LIBCPP_INLINE_VISIBILITY void __move_assign_alloc(__hash_table& __u)
         {__move_assign_alloc(__u, integral_constant<bool,
              __node_traits::propagate_on_container_move_assignment::value>());}
+    _LIBCPP_INLINE_VISIBILITY
     void __move_assign_alloc(__hash_table& __u, true_type)
     {
         __bucket_list_.get_deleter().__alloc() =
                 _STD::move(__u.__bucket_list_.get_deleter().__alloc());
         __node_alloc() = _STD::move(__u.__node_alloc());
     }
-    void __move_assign_alloc(__hash_table&, false_type) {}
+    _LIBCPP_INLINE_VISIBILITY
+        void __move_assign_alloc(__hash_table&, false_type) {}
 
     template <class _A>
+    _LIBCPP_INLINE_VISIBILITY
     static
     void
     __swap_alloc(_A& __x, _A& __y)
@@ -657,6 +705,7 @@ private:
     }
 
     template <class _A>
+    _LIBCPP_INLINE_VISIBILITY
     static
     void
     __swap_alloc(_A& __x, _A& __y, true_type)
@@ -666,6 +715,7 @@ private:
     }
 
     template <class _A>
+    _LIBCPP_INLINE_VISIBILITY
     static
     void
     __swap_alloc(_A& __x, _A& __y, false_type) {}
@@ -675,7 +725,7 @@ private:
 };
 
 template <class _Tp, class _Hash, class _Equal, class _Alloc>
-inline
+inline _LIBCPP_INLINE_VISIBILITY
 __hash_table<_Tp, _Hash, _Equal, _Alloc>::__hash_table()
     : __p2_(0),
       __p3_(1.0f)
@@ -683,7 +733,7 @@ __hash_table<_Tp, _Hash, _Equal, _Alloc>::__hash_table()
 }
 
 template <class _Tp, class _Hash, class _Equal, class _Alloc>
-inline
+inline _LIBCPP_INLINE_VISIBILITY
 __hash_table<_Tp, _Hash, _Equal, _Alloc>::__hash_table(const hasher& __hf,
                                                        const key_equal& __eql)
     : __bucket_list_(nullptr, __bucket_list_deleter()),
@@ -919,7 +969,7 @@ __hash_table<_Tp, _Hash, _Equal, _Alloc>::__move_assign(
 }
 
 template <class _Tp, class _Hash, class _Equal, class _Alloc>
-inline
+inline _LIBCPP_INLINE_VISIBILITY
 __hash_table<_Tp, _Hash, _Equal, _Alloc>&
 __hash_table<_Tp, _Hash, _Equal, _Alloc>::operator=(__hash_table&& __u)
 {
@@ -999,7 +1049,7 @@ __hash_table<_Tp, _Hash, _Equal, _Alloc>::__assign_multi(_InputIterator __first,
 }
 
 template <class _Tp, class _Hash, class _Equal, class _Alloc>
-inline
+inline _LIBCPP_INLINE_VISIBILITY
 typename __hash_table<_Tp, _Hash, _Equal, _Alloc>::iterator
 __hash_table<_Tp, _Hash, _Equal, _Alloc>::begin()
 {
@@ -1007,7 +1057,7 @@ __hash_table<_Tp, _Hash, _Equal, _Alloc>::begin()
 }
 
 template <class _Tp, class _Hash, class _Equal, class _Alloc>
-inline
+inline _LIBCPP_INLINE_VISIBILITY
 typename __hash_table<_Tp, _Hash, _Equal, _Alloc>::iterator
 __hash_table<_Tp, _Hash, _Equal, _Alloc>::end()
 {
@@ -1015,7 +1065,7 @@ __hash_table<_Tp, _Hash, _Equal, _Alloc>::end()
 }
 
 template <class _Tp, class _Hash, class _Equal, class _Alloc>
-inline
+inline _LIBCPP_INLINE_VISIBILITY
 typename __hash_table<_Tp, _Hash, _Equal, _Alloc>::const_iterator
 __hash_table<_Tp, _Hash, _Equal, _Alloc>::begin() const
 {
@@ -1023,7 +1073,7 @@ __hash_table<_Tp, _Hash, _Equal, _Alloc>::begin() const
 }
 
 template <class _Tp, class _Hash, class _Equal, class _Alloc>
-inline
+inline _LIBCPP_INLINE_VISIBILITY
 typename __hash_table<_Tp, _Hash, _Equal, _Alloc>::const_iterator
 __hash_table<_Tp, _Hash, _Equal, _Alloc>::end() const
 {
@@ -1629,7 +1679,7 @@ __hash_table<_Tp, _Hash, _Equal, _Alloc>::remove(const_iterator __p)
 
 template <class _Tp, class _Hash, class _Equal, class _Alloc>
 template <class _Key>
-inline
+inline _LIBCPP_INLINE_VISIBILITY
 typename __hash_table<_Tp, _Hash, _Equal, _Alloc>::size_type
 __hash_table<_Tp, _Hash, _Equal, _Alloc>::__count_unique(const _Key& __k) const
 {
