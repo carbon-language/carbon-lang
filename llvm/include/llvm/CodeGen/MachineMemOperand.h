@@ -56,6 +56,14 @@ struct MachinePointerInfo {
   /// getFixedStack - Return a MachinePointerInfo record that refers to the
   /// the specified FrameIndex.
   static MachinePointerInfo getFixedStack(int FI, int64_t offset = 0);
+  
+  /// getJumpTable - Return a MachinePointerInfo record that refers to a
+  /// jump table entry.
+  static MachinePointerInfo getJumpTable();
+  
+  /// getGOT - Return a MachinePointerInfo record that refers to a
+  /// GOT entry.
+  static MachinePointerInfo getGOT();
 };
   
   

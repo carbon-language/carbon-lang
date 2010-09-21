@@ -354,6 +354,13 @@ MachinePointerInfo MachinePointerInfo::getFixedStack(int FI, int64_t offset) {
   return MachinePointerInfo(PseudoSourceValue::getFixedStack(FI), offset);
 }
 
+MachinePointerInfo MachinePointerInfo::getJumpTable() {
+  return MachinePointerInfo(PseudoSourceValue::getJumpTable());
+}
+
+MachinePointerInfo MachinePointerInfo::getGOT() {
+  return MachinePointerInfo(PseudoSourceValue::getGOT());
+}
 
 MachineMemOperand::MachineMemOperand(MachinePointerInfo ptrinfo, unsigned f,
                                      uint64_t s, unsigned int a)
