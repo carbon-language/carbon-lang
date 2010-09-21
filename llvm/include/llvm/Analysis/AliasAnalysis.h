@@ -97,6 +97,18 @@ public:
                       unsigned S = UnknownSize,
                       const MDNode *N = 0)
       : Ptr(P), Size(S), TBAATag(N) {}
+
+    Location getWithNewPtr(const Value *NewPtr) const {
+      Location Copy(*this);
+      Copy.Ptr = NewPtr;
+      return Copy;
+    }
+
+    Location getWithoutTBAATag() const {
+      Location Copy(*this);
+      Copy.TBAATag = 0;
+      return Copy;
+    }
   };
 
   /// Alias analysis result - Either we know for sure that it does not alias, we
