@@ -388,11 +388,6 @@ namespace llvm {
 
     bool liveAt(SlotIndex index) const;
 
-    // liveBeforeAndAt - Check if the interval is live at the index and the
-    // index just before it. If index is liveAt, check if it starts a new live
-    // range.If it does, then check if the previous live range ends at index-1.
-    bool liveBeforeAndAt(SlotIndex index) const;
-
     /// killedAt - Return true if a live range ends at index. Note that the kill
     /// point is not contained in the half-open live range. It is usually the
     /// getDefIndex() slot following its last use.
