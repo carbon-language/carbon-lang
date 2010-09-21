@@ -587,8 +587,8 @@ public:
   /// getAtomic - Gets a node for an atomic op, produces result and chain and
   /// takes 3 operands
   SDValue getAtomic(unsigned Opcode, DebugLoc dl, EVT MemVT, SDValue Chain,
-                    SDValue Ptr, SDValue Cmp, SDValue Swp, const Value* PtrVal,
-                    unsigned Alignment=0);
+                    SDValue Ptr, SDValue Cmp, SDValue Swp,
+                    MachinePointerInfo PtrInfo, unsigned Alignment=0);
   SDValue getAtomic(unsigned Opcode, DebugLoc dl, EVT MemVT, SDValue Chain,
                     SDValue Ptr, SDValue Cmp, SDValue Swp,
                     MachineMemOperand *MMO);

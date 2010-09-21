@@ -3669,18 +3669,11 @@ SDValue SelectionDAG::getMemset(SDValue Chain, DebugLoc dl, SDValue Dst,
 }
 
 SDValue SelectionDAG::getAtomic(unsigned Opcode, DebugLoc dl, EVT MemVT,
-                                SDValue Chain,
-                                SDValue Ptr, SDValue Cmp,
-                                SDValue Swp, const Value *PtrVal,
+                                SDValue Chain, SDValue Ptr, SDValue Cmp,
+                                SDValue Swp, MachinePointerInfo PtrInfo,
                                 unsigned Alignment) {
   if (Alignment == 0)  // Ensure that codegen never sees alignment 0
     Alignment = getEVTAlignment(MemVT);
-
-  // Check if the memory reference references a frame index
-  if (!PtrVal)
-    if (const FrameIndexSDNode *FI =
-          dyn_cast<const FrameIndexSDNode>(Ptr.getNode()))
-      PtrVal = PseudoSourceValue::getFixedStack(FI->getIndex());
 
   MachineFunction &MF = getMachineFunction();
   unsigned Flags = MachineMemOperand::MOLoad | MachineMemOperand::MOStore;
@@ -3689,8 +3682,7 @@ SDValue SelectionDAG::getAtomic(unsigned Opcode, DebugLoc dl, EVT MemVT,
   Flags |= MachineMemOperand::MOVolatile;
 
   MachineMemOperand *MMO =
-    MF.getMachineMemOperand(MachinePointerInfo(PtrVal), Flags,
-                            MemVT.getStoreSize(), Alignment);
+    MF.getMachineMemOperand(PtrInfo, Flags, MemVT.getStoreSize(), Alignment);
 
   return getAtomic(Opcode, dl, MemVT, Chain, Ptr, Cmp, Swp, MMO);
 }

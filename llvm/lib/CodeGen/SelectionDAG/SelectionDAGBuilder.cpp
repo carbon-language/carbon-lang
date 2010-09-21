@@ -4550,7 +4550,7 @@ SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I, unsigned Intrinsic) {
                     getValue(I.getArgOperand(0)),
                     getValue(I.getArgOperand(1)),
                     getValue(I.getArgOperand(2)),
-                    I.getArgOperand(0));
+                    MachinePointerInfo(I.getArgOperand(0)));
     setValue(&I, L);
     DAG.setRoot(L.getValue(1));
     return 0;
