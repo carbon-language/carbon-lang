@@ -35,6 +35,10 @@ X86SelectionDAGInfo::EmitTargetCodeForMemset(SelectionDAG &DAG, DebugLoc dl,
                                          MachinePointerInfo DstPtrInfo) const {
   ConstantSDNode *ConstantSize = dyn_cast<ConstantSDNode>(Size);
 
+  // If to a segment-relative address space, use the default lowering.
+  if (DstPtrInfo.getAddrSpace() >= 256)
+    return SDValue();
+  
   // If not DWORD aligned or size is more than the threshold, call the library.
   // The libc version is likely to be faster for these cases. It can use the
   // address value and run time information about the CPU.
@@ -187,6 +191,11 @@ X86SelectionDAGInfo::EmitTargetCodeForMemcpy(SelectionDAG &DAG, DebugLoc dl,
   if ((Align & 3) != 0)
     return SDValue();
 
+  // If to a segment-relative address space, use the default lowering.
+  if (DstPtrInfo.getAddrSpace() >= 256 ||
+      SrcPtrInfo.getAddrSpace() >= 256)
+    return SDValue();
+  
   // DWORD aligned
   EVT AVT = MVT::i32;
   if (Subtarget->is64Bit() && ((Align & 0x7) == 0))  // QWORD aligned
