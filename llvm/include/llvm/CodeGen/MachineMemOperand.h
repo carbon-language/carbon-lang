@@ -37,7 +37,8 @@ struct MachinePointerInfo {
   /// Offset - This is an offset from the base Value*.
   int64_t Offset;
   
-  MachinePointerInfo(const Value *v, int64_t offset) : V(v), Offset(offset) {}
+  explicit MachinePointerInfo(const Value *v, int64_t offset = 0)
+    : V(v), Offset(offset) {}
 };
   
   
@@ -74,6 +75,8 @@ public:
   MachineMemOperand(MachinePointerInfo PtrInfo, unsigned flags, uint64_t s,
                     unsigned base_alignment);
 
+  const MachinePointerInfo &getPointerInfo() const { return PtrInfo; }
+  
   /// getValue - Return the base address of the memory access. This may either
   /// be a normal LLVM IR Value, or one of the special values used in CodeGen.
   /// Special values are those obtained via

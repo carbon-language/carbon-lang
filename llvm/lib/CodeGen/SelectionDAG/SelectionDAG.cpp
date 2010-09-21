@@ -3671,7 +3671,7 @@ SDValue SelectionDAG::getMemset(SDValue Chain, DebugLoc dl, SDValue Dst,
 SDValue SelectionDAG::getAtomic(unsigned Opcode, DebugLoc dl, EVT MemVT,
                                 SDValue Chain,
                                 SDValue Ptr, SDValue Cmp,
-                                SDValue Swp, const Value* PtrVal,
+                                SDValue Swp, const Value *PtrVal,
                                 unsigned Alignment) {
   if (Alignment == 0)  // Ensure that codegen never sees alignment 0
     Alignment = getEVTAlignment(MemVT);
@@ -3689,7 +3689,7 @@ SDValue SelectionDAG::getAtomic(unsigned Opcode, DebugLoc dl, EVT MemVT,
   Flags |= MachineMemOperand::MOVolatile;
 
   MachineMemOperand *MMO =
-    MF.getMachineMemOperand(PtrVal, Flags, 0,
+    MF.getMachineMemOperand(MachinePointerInfo(PtrVal), Flags,
                             MemVT.getStoreSize(), Alignment);
 
   return getAtomic(Opcode, dl, MemVT, Chain, Ptr, Cmp, Swp, MMO);
@@ -3742,7 +3742,7 @@ SDValue SelectionDAG::getAtomic(unsigned Opcode, DebugLoc dl, EVT MemVT,
   Flags |= MachineMemOperand::MOVolatile;
 
   MachineMemOperand *MMO =
-    MF.getMachineMemOperand(PtrVal, Flags, 0,
+    MF.getMachineMemOperand(MachinePointerInfo(PtrVal), Flags,
                             MemVT.getStoreSize(), Alignment);
 
   return getAtomic(Opcode, dl, MemVT, Chain, Ptr, Val, MMO);
@@ -3829,7 +3829,7 @@ SelectionDAG::getMemIntrinsicNode(unsigned Opcode, DebugLoc dl, SDVTList VTList,
   if (Vol)
     Flags |= MachineMemOperand::MOVolatile;
   MachineMemOperand *MMO =
-    MF.getMachineMemOperand(srcValue, Flags, SVOff,
+    MF.getMachineMemOperand(MachinePointerInfo(srcValue, SVOff), Flags,
                             MemVT.getStoreSize(), Align);
 
   return getMemIntrinsicNode(Opcode, dl, VTList, Ops, NumOps, MemVT, MMO);
@@ -3890,7 +3890,7 @@ SelectionDAG::getLoad(ISD::MemIndexedMode AM, ISD::LoadExtType ExtType,
   if (isNonTemporal)
     Flags |= MachineMemOperand::MONonTemporal;
   MachineMemOperand *MMO =
-    MF.getMachineMemOperand(SV, Flags, SVOffset,
+    MF.getMachineMemOperand(MachinePointerInfo(SV, SVOffset), Flags, 
                             MemVT.getStoreSize(), Alignment);
   return getLoad(AM, ExtType, VT, dl, Chain, Ptr, Offset, MemVT, MMO);
 }
@@ -3994,7 +3994,7 @@ SDValue SelectionDAG::getStore(SDValue Chain, DebugLoc dl, SDValue Val,
   if (isNonTemporal)
     Flags |= MachineMemOperand::MONonTemporal;
   MachineMemOperand *MMO =
-    MF.getMachineMemOperand(SV, Flags, SVOffset,
+    MF.getMachineMemOperand(MachinePointerInfo(SV, SVOffset), Flags,
                             Val.getValueType().getStoreSize(), Alignment);
 
   return getStore(Chain, dl, Val, Ptr, MMO);
@@ -4044,7 +4044,8 @@ SDValue SelectionDAG::getTruncStore(SDValue Chain, DebugLoc dl, SDValue Val,
   if (isNonTemporal)
     Flags |= MachineMemOperand::MONonTemporal;
   MachineMemOperand *MMO =
-    MF.getMachineMemOperand(SV, Flags, SVOffset, SVT.getStoreSize(), Alignment);
+    MF.getMachineMemOperand(MachinePointerInfo(SV, SVOffset), Flags,
+                            SVT.getStoreSize(), Alignment);
 
   return getTruncStore(Chain, dl, Val, Ptr, SVT, MMO);
 }

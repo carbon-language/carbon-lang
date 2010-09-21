@@ -252,9 +252,9 @@ TargetInstrInfo::foldMemoryOperand(MachineBasicBlock::iterator MI,
     const MachineFrameInfo &MFI = *MF.getFrameInfo();
     assert(MFI.getObjectOffset(FI) != -1);
     MachineMemOperand *MMO =
-      MF.getMachineMemOperand(PseudoSourceValue::getFixedStack(FI),
-                              Flags, /*Offset=*/0,
-                              MFI.getObjectSize(FI),
+      MF.getMachineMemOperand(
+                    MachinePointerInfo(PseudoSourceValue::getFixedStack(FI)),
+                              Flags, MFI.getObjectSize(FI),
                               MFI.getObjectAlignment(FI));
     NewMI->addMemOperand(MF, MMO);
 
