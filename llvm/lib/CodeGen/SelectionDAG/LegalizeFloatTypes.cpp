@@ -779,7 +779,7 @@ SDValue DAGTypeLegalizer::SoftenFloatOp_STORE(SDNode *N, unsigned OpNo) {
     Val = GetSoftenedFloat(Val);
 
   return DAG.getStore(ST->getChain(), dl, Val, ST->getBasePtr(),
-                      ST->getSrcValue(), ST->getSrcValueOffset(),
+                      ST->getPointerInfo(),
                       ST->isVolatile(), ST->isNonTemporal(),
                       ST->getAlignment());
 }

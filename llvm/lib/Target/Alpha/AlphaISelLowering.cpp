@@ -284,8 +284,7 @@ AlphaTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
                                    DAG.getIntPtrConstant(VA.getLocMemOffset()));
 
       MemOpChains.push_back(DAG.getStore(Chain, dl, Arg, PtrOff,
-                                         PseudoSourceValue::getStack(), 0,
-                                         false, false, 0));
+                                         MachinePointerInfo(),false, false, 0));
     }
   }
 
@@ -448,7 +447,7 @@ AlphaTargetLowering::LowerFormalArguments(SDValue Chain,
       int FI = MFI->CreateFixedObject(8, -8 * (6 - i), true);
       if (i == 0) FuncInfo->setVarArgsBase(FI);
       SDValue SDFI = DAG.getFrameIndex(FI, MVT::i64);
-      LS.push_back(DAG.getStore(Chain, dl, argt, SDFI, NULL, 0,
+      LS.push_back(DAG.getStore(Chain, dl, argt, SDFI, MachinePointerInfo(),
                                 false, false, 0));
 
       if (TargetRegisterInfo::isPhysicalRegister(args_float[i]))
@@ -456,7 +455,7 @@ AlphaTargetLowering::LowerFormalArguments(SDValue Chain,
       argt = DAG.getCopyFromReg(Chain, dl, args_float[i], MVT::f64);
       FI = MFI->CreateFixedObject(8, - 8 * (12 - i), true);
       SDFI = DAG.getFrameIndex(FI, MVT::i64);
-      LS.push_back(DAG.getStore(Chain, dl, argt, SDFI, NULL, 0,
+      LS.push_back(DAG.getStore(Chain, dl, argt, SDFI, MachinePointerInfo(),
                                 false, false, 0));
     }
 
@@ -727,7 +726,8 @@ SDValue AlphaTargetLowering::LowerOperation(SDValue Op,
     SDValue Val = DAG.getLoad(getPointerTy(), dl, Chain, SrcP,
                               MachinePointerInfo(SrcS),
                               false, false, 0);
-    SDValue Result = DAG.getStore(Val.getValue(1), dl, Val, DestP, DestS, 0,
+    SDValue Result = DAG.getStore(Val.getValue(1), dl, Val, DestP, 
+                                  MachinePointerInfo(DestS),
                                   false, false, 0);
     SDValue NP = DAG.getNode(ISD::ADD, dl, MVT::i64, SrcP,
                                DAG.getConstant(8, MVT::i64));
@@ -749,8 +749,8 @@ SDValue AlphaTargetLowering::LowerOperation(SDValue Op,
 
     // vastart stores the address of the VarArgsBase and VarArgsOffset
     SDValue FR  = DAG.getFrameIndex(FuncInfo->getVarArgsBase(), MVT::i64);
-    SDValue S1  = DAG.getStore(Chain, dl, FR, VAListP, VAListS, 0,
-                               false, false, 0);
+    SDValue S1  = DAG.getStore(Chain, dl, FR, VAListP,
+                               MachinePointerInfo(VAListS), false, false, 0);
     SDValue SA2 = DAG.getNode(ISD::ADD, dl, MVT::i64, VAListP,
                                 DAG.getConstant(8, MVT::i64));
     return DAG.getTruncStore(S1, dl,

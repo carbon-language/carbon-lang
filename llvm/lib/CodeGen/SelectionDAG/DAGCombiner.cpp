@@ -5741,7 +5741,7 @@ ShrinkLoadReplaceStoreWithStore(const std::pair<unsigned, unsigned> &MaskInfo,
   
   ++OpsNarrowed;
   return DAG.getStore(St->getChain(), St->getDebugLoc(), IVal, Ptr, 
-                      St->getSrcValue(), St->getSrcValueOffset()+StOffset,
+                      St->getPointerInfo().getWithOffset(StOffset),
                       false, false, NewAlign).getNode();
 }
 
@@ -5887,8 +5887,7 @@ SDValue DAGCombiner::visitSTORE(SDNode *N) {
         ((!LegalOperations && !ST->isVolatile()) ||
          TLI.isOperationLegalOrCustom(ISD::STORE, SVT)))
       return DAG.getStore(Chain, N->getDebugLoc(), Value.getOperand(0),
-                          Ptr, ST->getSrcValue(),
-                          ST->getSrcValueOffset(), ST->isVolatile(),
+                          Ptr, ST->getPointerInfo(), ST->isVolatile(),
                           ST->isNonTemporal(), OrigAlign);
   }
 
@@ -5912,8 +5911,7 @@ SDValue DAGCombiner::visitSTORE(SDNode *N) {
           Tmp = DAG.getConstant((uint32_t)CFP->getValueAPF().
                               bitcastToAPInt().getZExtValue(), MVT::i32);
           return DAG.getStore(Chain, N->getDebugLoc(), Tmp,
-                              Ptr, ST->getSrcValue(),
-                              ST->getSrcValueOffset(), ST->isVolatile(),
+                              Ptr, ST->getPointerInfo(), ST->isVolatile(),
                               ST->isNonTemporal(), ST->getAlignment());
         }
         break;
@@ -5924,8 +5922,7 @@ SDValue DAGCombiner::visitSTORE(SDNode *N) {
           Tmp = DAG.getConstant(CFP->getValueAPF().bitcastToAPInt().
                                 getZExtValue(), MVT::i64);
           return DAG.getStore(Chain, N->getDebugLoc(), Tmp,
-                              Ptr, ST->getSrcValue(),
-                              ST->getSrcValueOffset(), ST->isVolatile(),
+                              Ptr, ST->getPointerInfo(), ST->isVolatile(),
                               ST->isNonTemporal(), ST->getAlignment());
         } else if (!ST->isVolatile() &&
                    TLI.isOperationLegalOrCustom(ISD::STORE, MVT::i32)) {
@@ -5937,23 +5934,20 @@ SDValue DAGCombiner::visitSTORE(SDNode *N) {
           SDValue Hi = DAG.getConstant(Val >> 32, MVT::i32);
           if (TLI.isBigEndian()) std::swap(Lo, Hi);
 
-          int SVOffset = ST->getSrcValueOffset();
           unsigned Alignment = ST->getAlignment();
           bool isVolatile = ST->isVolatile();
           bool isNonTemporal = ST->isNonTemporal();
 
           SDValue St0 = DAG.getStore(Chain, ST->getDebugLoc(), Lo,
-                                     Ptr, ST->getSrcValue(),
-                                     ST->getSrcValueOffset(),
+                                     Ptr, ST->getPointerInfo(),
                                      isVolatile, isNonTemporal,
                                      ST->getAlignment());
           Ptr = DAG.getNode(ISD::ADD, N->getDebugLoc(), Ptr.getValueType(), Ptr,
                             DAG.getConstant(4, Ptr.getValueType()));
-          SVOffset += 4;
           Alignment = MinAlign(Alignment, 4U);
           SDValue St1 = DAG.getStore(Chain, ST->getDebugLoc(), Hi,
-                                     Ptr, ST->getSrcValue(),
-                                     SVOffset, isVolatile, isNonTemporal,
+                                     Ptr, ST->getPointerInfo().getWithOffset(4),
+                                     isVolatile, isNonTemporal,
                                      Alignment);
           return DAG.getNode(ISD::TokenFactor, N->getDebugLoc(), MVT::Other,
                              St0, St1);
@@ -5990,7 +5984,7 @@ SDValue DAGCombiner::visitSTORE(SDNode *N) {
                                       ST->isNonTemporal(), ST->getAlignment());
       } else {
         ReplStore = DAG.getStore(BetterChain, N->getDebugLoc(), Value, Ptr,
-                                 ST->getSrcValue(), ST->getSrcValueOffset(),
+                                 ST->getPointerInfo(),
                                  ST->isVolatile(), ST->isNonTemporal(),
                                  ST->getAlignment());
       }

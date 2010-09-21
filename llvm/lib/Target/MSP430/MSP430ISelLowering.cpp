@@ -507,8 +507,7 @@ MSP430TargetLowering::LowerCCCCallTo(SDValue Chain, SDValue Callee,
 
 
       MemOpChains.push_back(DAG.getStore(Chain, dl, Arg, PtrOff,
-                                         PseudoSourceValue::getStack(),
-                                         VA.getLocMemOffset(), false, false, 0));
+                                         MachinePointerInfo(),false, false, 0));
     }
   }
 

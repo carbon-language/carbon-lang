@@ -333,8 +333,7 @@ BlackfinTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
       SDValue OffsetN = DAG.getIntPtrConstant(Offset);
       OffsetN = DAG.getNode(ISD::ADD, dl, MVT::i32, SPN, OffsetN);
       MemOpChains.push_back(DAG.getStore(Chain, dl, Arg, OffsetN,
-                                         PseudoSourceValue::getStack(),
-                                         Offset, false, false, 0));
+                                         MachinePointerInfo(),false, false, 0));
     }
   }
 

@@ -441,7 +441,7 @@ SystemZTargetLowering::LowerCCCCallTo(SDValue Chain, SDValue Callee,
                                    DAG.getIntPtrConstant(Offset));
 
       MemOpChains.push_back(DAG.getStore(Chain, dl, Arg, PtrOff,
-                                         PseudoSourceValue::getStack(), Offset,
+                                         MachinePointerInfo(),
                                          false, false, 0));
     }
   }

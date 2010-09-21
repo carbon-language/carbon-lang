@@ -760,8 +760,8 @@ LowerVAARG(SDValue Op, SelectionDAG &DAG) const
                      DAG.getConstant(VT.getSizeInBits(), 
                                      getPointerTy()));
   // Store the incremented VAList to the legalized pointer
-  Tmp3 = DAG.getStore(VAList.getValue(1), dl, Tmp3, Node->getOperand(1), V, 0,
-                      false, false, 0);
+  Tmp3 = DAG.getStore(VAList.getValue(1), dl, Tmp3, Node->getOperand(1),
+                      MachinePointerInfo(V), false, false, 0);
   // Load the actual argument out of the pointer VAList
   return DAG.getLoad(VT, dl, Tmp3, VAList, MachinePointerInfo(),
                      false, false, 0);
@@ -776,9 +776,8 @@ LowerVASTART(SDValue Op, SelectionDAG &DAG) const
   MachineFunction &MF = DAG.getMachineFunction();
   XCoreFunctionInfo *XFI = MF.getInfo<XCoreFunctionInfo>();
   SDValue Addr = DAG.getFrameIndex(XFI->getVarArgsFrameIndex(), MVT::i32);
-  const Value *SV = cast<SrcValueSDNode>(Op.getOperand(2))->getValue();
-  return DAG.getStore(Op.getOperand(0), dl, Addr, Op.getOperand(1), SV, 0,
-                      false, false, 0);
+  return DAG.getStore(Op.getOperand(0), dl, Addr, Op.getOperand(1), 
+                      MachinePointerInfo(), false, false, 0);
 }
 
 SDValue XCoreTargetLowering::LowerFRAMEADDR(SDValue Op,
@@ -1110,8 +1109,8 @@ XCoreTargetLowering::LowerCCCArguments(SDValue Chain,
         RegInfo.addLiveIn(ArgRegs[i], VReg);
         SDValue Val = DAG.getCopyFromReg(Chain, dl, VReg, MVT::i32);
         // Move argument from virt reg -> stack
-        SDValue Store = DAG.getStore(Val.getValue(1), dl, Val, FIN, NULL, 0,
-                                     false, false, 0);
+        SDValue Store = DAG.getStore(Val.getValue(1), dl, Val, FIN,
+                                     MachinePointerInfo(), false, false, 0);
         MemOps.push_back(Store);
       }
       if (!MemOps.empty())

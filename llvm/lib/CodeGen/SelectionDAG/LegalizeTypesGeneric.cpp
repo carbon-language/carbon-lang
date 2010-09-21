@@ -390,7 +390,6 @@ SDValue DAGTypeLegalizer::ExpandOp_NormalStore(SDNode *N, unsigned OpNo) {
                                      St->getValue().getValueType());
   SDValue Chain = St->getChain();
   SDValue Ptr = St->getBasePtr();
-  int SVOffset = St->getSrcValueOffset();
   unsigned Alignment = St->getAlignment();
   bool isVolatile = St->isVolatile();
   bool isNonTemporal = St->isNonTemporal();
@@ -404,14 +403,14 @@ SDValue DAGTypeLegalizer::ExpandOp_NormalStore(SDNode *N, unsigned OpNo) {
   if (TLI.isBigEndian())
     std::swap(Lo, Hi);
 
-  Lo = DAG.getStore(Chain, dl, Lo, Ptr, St->getSrcValue(), SVOffset,
+  Lo = DAG.getStore(Chain, dl, Lo, Ptr, St->getPointerInfo(),
                     isVolatile, isNonTemporal, Alignment);
 
   Ptr = DAG.getNode(ISD::ADD, dl, Ptr.getValueType(), Ptr,
                     DAG.getIntPtrConstant(IncrementSize));
   assert(isTypeLegal(Ptr.getValueType()) && "Pointers must be legal!");
-  Hi = DAG.getStore(Chain, dl, Hi, Ptr, St->getSrcValue(),
-                    SVOffset + IncrementSize,
+  Hi = DAG.getStore(Chain, dl, Hi, Ptr,
+                    St->getPointerInfo().getWithOffset(IncrementSize),
                     isVolatile, isNonTemporal,
                     MinAlign(Alignment, IncrementSize));
 

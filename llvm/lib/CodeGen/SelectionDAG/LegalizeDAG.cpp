@@ -547,7 +547,7 @@ SDValue ExpandUnalignedLoad(LoadSDNode *LD, SelectionDAG &DAG,
                                  MinAlign(LD->getAlignment(), Offset));
       // Follow the load with a store to the stack slot.  Remember the store.
       Stores.push_back(DAG.getStore(Load.getValue(1), dl, Load, StackPtr,
-                                    NULL, 0, false, false, 0));
+                                    MachinePointerInfo(), false, false, 0));
       // Increment the pointers.
       Offset += RegBytes;
       Ptr = DAG.getNode(ISD::ADD, dl, Ptr.getValueType(), Ptr, Increment);
@@ -1541,8 +1541,8 @@ SDValue SelectionDAGLegalize::ExpandExtractFromVectorThroughStack(SDValue Op) {
   DebugLoc dl = Op.getDebugLoc();
   // Store the value to a temporary stack slot, then LOAD the returned part.
   SDValue StackPtr = DAG.CreateStackTemporary(Vec.getValueType());
-  SDValue Ch = DAG.getStore(DAG.getEntryNode(), dl, Vec, StackPtr, NULL, 0,
-                            false, false, 0);
+  SDValue Ch = DAG.getStore(DAG.getEntryNode(), dl, Vec, StackPtr,
+                            MachinePointerInfo(), false, false, 0);
 
   // Add the offset to the index.
   unsigned EltSize =
@@ -1636,7 +1636,7 @@ SDValue SelectionDAGLegalize::ExpandFCOPYSIGN(SDNode* Node) {
     SDValue StackPtr = DAG.CreateStackTemporary(FloatVT, LoadTy);
     // Then store the float to it.
     SDValue Ch =
-      DAG.getStore(DAG.getEntryNode(), dl, Tmp2, StackPtr, NULL, 0,
+      DAG.getStore(DAG.getEntryNode(), dl, Tmp2, StackPtr, MachinePointerInfo(),
                    false, false, 0);
     if (TLI.isBigEndian()) {
       assert(FloatVT.isByteSized() && "Unsupported floating point type!");
@@ -2066,13 +2066,14 @@ SDValue SelectionDAGLegalize::ExpandLegalINT_TO_FP(bool isSigned,
     }
     // store the lo of the constructed double - based on integer input
     SDValue Store1 = DAG.getStore(DAG.getEntryNode(), dl,
-                                  Op0Mapped, Lo, NULL, 0,
+                                  Op0Mapped, Lo, MachinePointerInfo(),
                                   false, false, 0);
     // initial hi portion of constructed double
     SDValue InitialHi = DAG.getConstant(0x43300000u, MVT::i32);
     // store the hi of the constructed double - biased exponent
-    SDValue Store2=DAG.getStore(Store1, dl, InitialHi, Hi, NULL, 0,
-                                false, false, 0);
+    SDValue Store2 = DAG.getStore(Store1, dl, InitialHi, Hi,
+                                  MachinePointerInfo(),
+                                  false, false, 0);
     // load the constructed double
     SDValue Load = DAG.getLoad(MVT::f64, dl, Store2, StackSlot,
                                MachinePointerInfo(), false, false, 0);
@@ -2686,8 +2687,8 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node,
                           getTypeAllocSize(VT.getTypeForEVT(*DAG.getContext())),
                                        TLI.getPointerTy()));
     // Store the incremented VAList to the legalized pointer
-    Tmp3 = DAG.getStore(VAListLoad.getValue(1), dl, Tmp3, Tmp2, V, 0,
-                        false, false, 0);
+    Tmp3 = DAG.getStore(VAListLoad.getValue(1), dl, Tmp3, Tmp2,
+                        MachinePointerInfo(V), false, false, 0);
     // Load the actual argument out of the pointer VAList
     Results.push_back(DAG.getLoad(VT, dl, Tmp3, VAList, MachinePointerInfo(),
                                   false, false, 0));

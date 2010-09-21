@@ -244,7 +244,8 @@ SparcTargetLowering::LowerFormalArguments(SDValue Chain,
                                                           true);
       SDValue FIPtr = DAG.getFrameIndex(FrameIdx, MVT::i32);
 
-      OutChains.push_back(DAG.getStore(DAG.getRoot(), dl, Arg, FIPtr, NULL, 0,
+      OutChains.push_back(DAG.getStore(DAG.getRoot(), dl, Arg, FIPtr,
+                                       MachinePointerInfo(),
                                        false, false, 0));
       ArgOffset += 4;
     }
@@ -350,7 +351,7 @@ SparcTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
     // FIXME: VERIFY THAT 68 IS RIGHT.
     SDValue PtrOff = DAG.getIntPtrConstant(VA.getLocMemOffset()+68);
     PtrOff = DAG.getNode(ISD::ADD, MVT::i32, StackPtr, PtrOff);
-    MemOpChains.push_back(DAG.getStore(Chain, Arg, PtrOff, NULL, 0,
+    MemOpChains.push_back(DAG.getStore(Chain, Arg, PtrOff, MachinePointerInfo(),
                                        false, false, 0));
   }
 
@@ -397,7 +398,7 @@ SparcTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
       // out the parts as integers.  Top part goes in a reg.
       SDValue StackPtr = DAG.CreateStackTemporary(MVT::f64, MVT::i32);
       SDValue Store = DAG.getStore(DAG.getEntryNode(), dl, 
-                                   Val, StackPtr, NULL, 0,
+                                   Val, StackPtr, MachinePointerInfo(),
                                    false, false, 0);
       // Sparc is big-endian, so the high part comes first.
       SDValue Hi = DAG.getLoad(MVT::i32, dl, Store, StackPtr,
@@ -450,7 +451,7 @@ SparcTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
       SDValue PtrOff = DAG.getConstant(ArgOffset, MVT::i32);
       PtrOff = DAG.getNode(ISD::ADD, dl, MVT::i32, StackPtr, PtrOff);
       MemOpChains.push_back(DAG.getStore(Chain, dl, ValToStore, 
-                                         PtrOff, NULL, 0,
+                                         PtrOff, MachinePointerInfo(),
                                          false, false, 0));
     }
     ArgOffset += ObjSize;
@@ -892,8 +893,8 @@ static SDValue LowerVASTART(SDValue Op, SelectionDAG &DAG,
                 DAG.getConstant(FuncInfo->getVarArgsFrameOffset(),
                                 MVT::i32));
   const Value *SV = cast<SrcValueSDNode>(Op.getOperand(2))->getValue();
-  return DAG.getStore(Op.getOperand(0), dl, Offset, Op.getOperand(1), SV, 0,
-                      false, false, 0);
+  return DAG.getStore(Op.getOperand(0), dl, Offset, Op.getOperand(1),
+                      MachinePointerInfo(SV), false, false, 0);
 }
 
 static SDValue LowerVAARG(SDValue Op, SelectionDAG &DAG) {
@@ -911,7 +912,7 @@ static SDValue LowerVAARG(SDValue Op, SelectionDAG &DAG) {
                                                   MVT::i32));
   // Store the incremented VAList to the legalized pointer
   InChain = DAG.getStore(VAList.getValue(1), dl, NextPtr,
-                         VAListPtr, SV, 0, false, false, 0);
+                         VAListPtr, MachinePointerInfo(SV), false, false, 0);
   // Load the actual argument out of the pointer VAList, unless this is an
   // f64 load.
   if (VT != MVT::f64)

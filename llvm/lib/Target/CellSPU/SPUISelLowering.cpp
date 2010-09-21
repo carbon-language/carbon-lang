@@ -853,7 +853,7 @@ LowerSTORE(SDValue Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
                                      MVT::v4i32, insertEltOp));
 
     result = DAG.getStore(the_chain, dl, result, basePtr,
-                          LN->getSrcValue(), LN->getSrcValueOffset(),
+                          LN->getPointerInfo(),
                           LN->isVolatile(), LN->isNonTemporal(),
                           LN->getAlignment());
 
@@ -1120,7 +1120,7 @@ SPUTargetLowering::LowerFormalArguments(SDValue Chain,
       SDValue FIN = DAG.getFrameIndex(FuncInfo->getVarArgsFrameIndex(), PtrVT);
       unsigned VReg = MF.addLiveIn(ArgRegs[ArgRegIdx], &SPU::R32CRegClass);
       SDValue ArgVal = DAG.getRegister(VReg, MVT::v16i8);
-      SDValue Store = DAG.getStore(Chain, dl, ArgVal, FIN, NULL, 0,
+      SDValue Store = DAG.getStore(Chain, dl, ArgVal, FIN, MachinePointerInfo(),
                                    false, false, 0);
       Chain = Store.getOperand(0);
       MemOps.push_back(Store);
@@ -1220,7 +1220,8 @@ SPUTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
       if (ArgRegIdx != NumArgRegs) {
         RegsToPass.push_back(std::make_pair(VA.getLocReg(), Arg));
       } else {
-        MemOpChains.push_back(DAG.getStore(Chain, dl, Arg, PtrOff, NULL, 0,
+        MemOpChains.push_back(DAG.getStore(Chain, dl, Arg, PtrOff,
+                                           MachinePointerInfo(),
                                            false, false, 0));
         ArgOffset += StackSlotSize;
       }
