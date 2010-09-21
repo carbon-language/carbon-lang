@@ -542,17 +542,17 @@ public:
 
   SDValue getMemcpy(SDValue Chain, DebugLoc dl, SDValue Dst, SDValue Src,
                     SDValue Size, unsigned Align, bool isVol, bool AlwaysInline,
-                    const Value *DstSV, uint64_t DstSVOff,
-                    const Value *SrcSV, uint64_t SrcSVOff);
+                    MachinePointerInfo DstPtrInfo,
+                    MachinePointerInfo SrcPtrInfo);
 
   SDValue getMemmove(SDValue Chain, DebugLoc dl, SDValue Dst, SDValue Src,
                      SDValue Size, unsigned Align, bool isVol,
-                     const Value *DstSV, uint64_t DstOSVff,
-                     const Value *SrcSV, uint64_t SrcSVOff);
+                     MachinePointerInfo DstPtrInfo,
+                     MachinePointerInfo SrcPtrInfo);
 
   SDValue getMemset(SDValue Chain, DebugLoc dl, SDValue Dst, SDValue Src,
                     SDValue Size, unsigned Align, bool isVol,
-                    const Value *DstSV, uint64_t DstSVOff);
+                    MachinePointerInfo DstPtrInfo);
 
   /// getSetCC - Helper function to make it easier to build SetCC's if you just
   /// have an ISD::CondCode instead of an SDValue.
@@ -630,8 +630,15 @@ public:
   /// determined by their operands, and they produce a value AND a token chain.
   ///
   SDValue getLoad(EVT VT, DebugLoc dl, SDValue Chain, SDValue Ptr,
+                  MachinePointerInfo PtrInfo, bool isVolatile,
+                  bool isNonTemporal, unsigned Alignment);
+  SDValue getLoad(EVT VT, DebugLoc dl, SDValue Chain, SDValue Ptr,
                   const Value *SV, int SVOffset, bool isVolatile,
                   bool isNonTemporal, unsigned Alignment);
+  SDValue getExtLoad(ISD::LoadExtType ExtType, EVT VT, DebugLoc dl,
+                     SDValue Chain, SDValue Ptr, MachinePointerInfo PtrInfo,
+                     EVT MemVT, bool isVolatile,
+                     bool isNonTemporal, unsigned Alignment);
   SDValue getExtLoad(ISD::LoadExtType ExtType, EVT VT, DebugLoc dl,
                      SDValue Chain, SDValue Ptr, const Value *SV,
                      int SVOffset, EVT MemVT, bool isVolatile,

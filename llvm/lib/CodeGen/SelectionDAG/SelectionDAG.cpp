@@ -3276,8 +3276,8 @@ static SDValue getMemcpyLoadsAndStores(SelectionDAG &DAG, DebugLoc dl,
                                        SDValue Src, uint64_t Size,
                                        unsigned Align, bool isVol,
                                        bool AlwaysInline,
-                                       const Value *DstSV, uint64_t DstSVOff,
-                                       const Value *SrcSV, uint64_t SrcSVOff) {
+                                       MachinePointerInfo DstPtrInfo,
+                                       MachinePointerInfo SrcPtrInfo) {
   // Turn a memcpy of undef to nop.
   if (Src.getOpcode() == ISD::UNDEF)
     return Chain;
@@ -3334,7 +3334,8 @@ static SDValue getMemcpyLoadsAndStores(SelectionDAG &DAG, DebugLoc dl,
       Value = getMemsetStringVal(VT, dl, DAG, TLI, Str, SrcOff);
       Store = DAG.getStore(Chain, dl, Value,
                            getMemBasePlusOffset(Dst, DstOff, DAG),
-                           DstSV, DstSVOff + DstOff, isVol, false, Align);
+                           DstPtrInfo.getWithOffset(DstOff), isVol,
+                           false, Align);
     } else {
       // The type might not be legal for the target.  This should only happen
       // if the type is smaller than a legal type, as on PPC, so the right
@@ -3345,12 +3346,12 @@ static SDValue getMemcpyLoadsAndStores(SelectionDAG &DAG, DebugLoc dl,
       assert(NVT.bitsGE(VT));
       Value = DAG.getExtLoad(ISD::EXTLOAD, NVT, dl, Chain,
                              getMemBasePlusOffset(Src, SrcOff, DAG),
-                             SrcSV, SrcSVOff + SrcOff, VT, isVol, false,
+                             SrcPtrInfo.getWithOffset(SrcOff), VT, isVol, false,
                              MinAlign(SrcAlign, SrcOff));
       Store = DAG.getTruncStore(Chain, dl, Value,
                                 getMemBasePlusOffset(Dst, DstOff, DAG),
-                                DstSV, DstSVOff + DstOff, VT, isVol, false,
-                                Align);
+                                DstPtrInfo.getWithOffset(DstOff), VT, isVol,
+                                false, Align);
     }
     OutChains.push_back(Store);
     SrcOff += VTSize;
@@ -3366,8 +3367,8 @@ static SDValue getMemmoveLoadsAndStores(SelectionDAG &DAG, DebugLoc dl,
                                         SDValue Src, uint64_t Size,
                                         unsigned Align,  bool isVol,
                                         bool AlwaysInline,
-                                        const Value *DstSV, uint64_t DstSVOff,
-                                        const Value *SrcSV, uint64_t SrcSVOff) {
+                                        MachinePointerInfo DstPtrInfo,
+                                        MachinePointerInfo SrcPtrInfo) {
   // Turn a memmove of undef to nop.
   if (Src.getOpcode() == ISD::UNDEF)
     return Chain;
@@ -3414,7 +3415,8 @@ static SDValue getMemmoveLoadsAndStores(SelectionDAG &DAG, DebugLoc dl,
 
     Value = DAG.getLoad(VT, dl, Chain,
                         getMemBasePlusOffset(Src, SrcOff, DAG),
-                        SrcSV, SrcSVOff + SrcOff, isVol, false, SrcAlign);
+                        SrcPtrInfo.getWithOffset(SrcOff), isVol,
+                        false, SrcAlign);
     LoadValues.push_back(Value);
     LoadChains.push_back(Value.getValue(1));
     SrcOff += VTSize;
@@ -3429,7 +3431,7 @@ static SDValue getMemmoveLoadsAndStores(SelectionDAG &DAG, DebugLoc dl,
 
     Store = DAG.getStore(Chain, dl, LoadValues[i],
                          getMemBasePlusOffset(Dst, DstOff, DAG),
-                         DstSV, DstSVOff + DstOff, isVol, false, Align);
+                         DstPtrInfo.getWithOffset(DstOff), isVol, false, Align);
     OutChains.push_back(Store);
     DstOff += VTSize;
   }
@@ -3442,7 +3444,7 @@ static SDValue getMemsetStores(SelectionDAG &DAG, DebugLoc dl,
                                SDValue Chain, SDValue Dst,
                                SDValue Src, uint64_t Size,
                                unsigned Align, bool isVol,
-                               const Value *DstSV, uint64_t DstSVOff) {
+                               MachinePointerInfo DstPtrInfo) {
   // Turn a memset of undef to nop.
   if (Src.getOpcode() == ISD::UNDEF)
     return Chain;
@@ -3483,7 +3485,8 @@ static SDValue getMemsetStores(SelectionDAG &DAG, DebugLoc dl,
     SDValue Value = getMemsetValue(Src, VT, DAG, dl);
     SDValue Store = DAG.getStore(Chain, dl, Value,
                                  getMemBasePlusOffset(Dst, DstOff, DAG),
-                                 DstSV, DstSVOff + DstOff, isVol, false, 0);
+                                 DstPtrInfo.getWithOffset(DstOff),
+                                 isVol, false, 0);
     OutChains.push_back(Store);
     DstOff += VTSize;
   }
@@ -3495,8 +3498,8 @@ static SDValue getMemsetStores(SelectionDAG &DAG, DebugLoc dl,
 SDValue SelectionDAG::getMemcpy(SDValue Chain, DebugLoc dl, SDValue Dst,
                                 SDValue Src, SDValue Size,
                                 unsigned Align, bool isVol, bool AlwaysInline,
-                                const Value *DstSV, uint64_t DstSVOff,
-                                const Value *SrcSV, uint64_t SrcSVOff) {
+                                MachinePointerInfo DstPtrInfo,
+                                MachinePointerInfo SrcPtrInfo) {
 
   // Check to see if we should lower the memcpy to loads and stores first.
   // For cases within the target-specified limits, this is the best choice.
@@ -3508,7 +3511,7 @@ SDValue SelectionDAG::getMemcpy(SDValue Chain, DebugLoc dl, SDValue Dst,
 
     SDValue Result = getMemcpyLoadsAndStores(*this, dl, Chain, Dst, Src,
                                              ConstantSize->getZExtValue(),Align,
-                                isVol, false, DstSV, DstSVOff, SrcSV, SrcSVOff);
+                                isVol, false, DstPtrInfo, SrcPtrInfo);
     if (Result.getNode())
       return Result;
   }
@@ -3518,7 +3521,7 @@ SDValue SelectionDAG::getMemcpy(SDValue Chain, DebugLoc dl, SDValue Dst,
   SDValue Result =
     TSI.EmitTargetCodeForMemcpy(*this, dl, Chain, Dst, Src, Size, Align,
                                 isVol, AlwaysInline,
-                                DstSV, DstSVOff, SrcSV, SrcSVOff);
+                                DstPtrInfo, SrcPtrInfo);
   if (Result.getNode())
     return Result;
 
@@ -3528,7 +3531,7 @@ SDValue SelectionDAG::getMemcpy(SDValue Chain, DebugLoc dl, SDValue Dst,
     assert(ConstantSize && "AlwaysInline requires a constant size!");
     return getMemcpyLoadsAndStores(*this, dl, Chain, Dst, Src,
                                    ConstantSize->getZExtValue(), Align, isVol,
-                                   true, DstSV, DstSVOff, SrcSV, SrcSVOff);
+                                   true, DstPtrInfo, SrcPtrInfo);
   }
 
   // FIXME: If the memcpy is volatile (isVol), lowering it to a plain libc
@@ -3559,8 +3562,8 @@ SDValue SelectionDAG::getMemcpy(SDValue Chain, DebugLoc dl, SDValue Dst,
 SDValue SelectionDAG::getMemmove(SDValue Chain, DebugLoc dl, SDValue Dst,
                                  SDValue Src, SDValue Size,
                                  unsigned Align, bool isVol,
-                                 const Value *DstSV, uint64_t DstSVOff,
-                                 const Value *SrcSV, uint64_t SrcSVOff) {
+                                 MachinePointerInfo DstPtrInfo,
+                                 MachinePointerInfo SrcPtrInfo) {
 
   // Check to see if we should lower the memmove to loads and stores first.
   // For cases within the target-specified limits, this is the best choice.
@@ -3573,7 +3576,7 @@ SDValue SelectionDAG::getMemmove(SDValue Chain, DebugLoc dl, SDValue Dst,
     SDValue Result =
       getMemmoveLoadsAndStores(*this, dl, Chain, Dst, Src,
                                ConstantSize->getZExtValue(), Align, isVol,
-                               false, DstSV, DstSVOff, SrcSV, SrcSVOff);
+                               false, DstPtrInfo, SrcPtrInfo);
     if (Result.getNode())
       return Result;
   }
@@ -3582,7 +3585,7 @@ SDValue SelectionDAG::getMemmove(SDValue Chain, DebugLoc dl, SDValue Dst,
   // code. If the target chooses to do this, this is the next best.
   SDValue Result =
     TSI.EmitTargetCodeForMemmove(*this, dl, Chain, Dst, Src, Size, Align, isVol,
-                                 DstSV, DstSVOff, SrcSV, SrcSVOff);
+                                 DstPtrInfo, SrcPtrInfo);
   if (Result.getNode())
     return Result;
 
@@ -3611,7 +3614,7 @@ SDValue SelectionDAG::getMemmove(SDValue Chain, DebugLoc dl, SDValue Dst,
 SDValue SelectionDAG::getMemset(SDValue Chain, DebugLoc dl, SDValue Dst,
                                 SDValue Src, SDValue Size,
                                 unsigned Align, bool isVol,
-                                const Value *DstSV, uint64_t DstSVOff) {
+                                MachinePointerInfo DstPtrInfo) {
 
   // Check to see if we should lower the memset to stores first.
   // For cases within the target-specified limits, this is the best choice.
@@ -3623,7 +3626,7 @@ SDValue SelectionDAG::getMemset(SDValue Chain, DebugLoc dl, SDValue Dst,
 
     SDValue Result =
       getMemsetStores(*this, dl, Chain, Dst, Src, ConstantSize->getZExtValue(),
-                      Align, isVol, DstSV, DstSVOff);
+                      Align, isVol, DstPtrInfo);
 
     if (Result.getNode())
       return Result;
@@ -3633,7 +3636,7 @@ SDValue SelectionDAG::getMemset(SDValue Chain, DebugLoc dl, SDValue Dst,
   // code. If the target chooses to do this, this is the next best.
   SDValue Result =
     TSI.EmitTargetCodeForMemset(*this, dl, Chain, Dst, Src, Size, Align, isVol,
-                                DstSV, DstSVOff);
+                                DstPtrInfo);
   if (Result.getNode())
     return Result;
 
@@ -3954,6 +3957,15 @@ SDValue SelectionDAG::getLoad(EVT VT, DebugLoc dl,
                  SV, SVOffset, VT, isVolatile, isNonTemporal, Alignment);
 }
 
+SDValue SelectionDAG::getLoad(EVT VT, DebugLoc dl,
+                              SDValue Chain, SDValue Ptr,
+                              MachinePointerInfo PtrInfo,
+                              bool isVolatile, bool isNonTemporal,
+                              unsigned Alignment) {
+  SDValue Undef = getUNDEF(Ptr.getValueType());
+  return getLoad(ISD::UNINDEXED, ISD::NON_EXTLOAD, VT, dl, Chain, Ptr, Undef,
+                 PtrInfo, VT, isVolatile, isNonTemporal, Alignment);
+}
 SDValue SelectionDAG::getExtLoad(ISD::LoadExtType ExtType, EVT VT, DebugLoc dl,
                                  SDValue Chain, SDValue Ptr,
                                  const Value *SV,
@@ -3964,6 +3976,17 @@ SDValue SelectionDAG::getExtLoad(ISD::LoadExtType ExtType, EVT VT, DebugLoc dl,
   return getLoad(ISD::UNINDEXED, ExtType, VT, dl, Chain, Ptr, Undef,
                  SV, SVOffset, MemVT, isVolatile, isNonTemporal, Alignment);
 }
+
+SDValue SelectionDAG::getExtLoad(ISD::LoadExtType ExtType, EVT VT, DebugLoc dl,
+                                 SDValue Chain, SDValue Ptr,
+                                 MachinePointerInfo PtrInfo, EVT MemVT,
+                                 bool isVolatile, bool isNonTemporal,
+                                 unsigned Alignment) {
+  SDValue Undef = getUNDEF(Ptr.getValueType());
+  return getLoad(ISD::UNINDEXED, ExtType, VT, dl, Chain, Ptr, Undef,
+                 PtrInfo, MemVT, isVolatile, isNonTemporal, Alignment);
+}
+
 
 SDValue
 SelectionDAG::getIndexedLoad(SDValue OrigLoad, DebugLoc dl, SDValue Base,

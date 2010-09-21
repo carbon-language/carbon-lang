@@ -33,10 +33,8 @@ public:
                                   SDValue Dst, SDValue Src,
                                   SDValue Size, unsigned Align,
                                   bool isVolatile, bool AlwaysInline,
-                                  const Value *DstSV,
-                                  uint64_t DstSVOff,
-                                  const Value *SrcSV,
-                                  uint64_t SrcSVOff) const;
+                                  MachinePointerInfo DstPtrInfo,
+                                  MachinePointerInfo SrcPtrInfo) const;
 };
 
 }

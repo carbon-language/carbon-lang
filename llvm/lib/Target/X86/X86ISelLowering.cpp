@@ -1534,10 +1534,11 @@ static SDValue
 CreateCopyOfByValArgument(SDValue Src, SDValue Dst, SDValue Chain,
                           ISD::ArgFlagsTy Flags, SelectionDAG &DAG,
                           DebugLoc dl) {
-  SDValue SizeNode     = DAG.getConstant(Flags.getByValSize(), MVT::i32);
+  SDValue SizeNode = DAG.getConstant(Flags.getByValSize(), MVT::i32);
+  
   return DAG.getMemcpy(Chain, dl, Dst, Src, SizeNode, Flags.getByValAlign(),
                        /*isVolatile*/false, /*AlwaysInline=*/true,
-                       NULL, 0, NULL, 0);
+                       MachinePointerInfo(0), MachinePointerInfo(0));
 }
 
 /// IsTailCallConvention - Return true if the calling convention is one that
@@ -7607,11 +7608,12 @@ SDValue X86TargetLowering::LowerVACOPY(SDValue Op, SelectionDAG &DAG) const {
   SDValue SrcPtr = Op.getOperand(2);
   const Value *DstSV = cast<SrcValueSDNode>(Op.getOperand(3))->getValue();
   const Value *SrcSV = cast<SrcValueSDNode>(Op.getOperand(4))->getValue();
-  DebugLoc dl = Op.getDebugLoc();
+  DebugLoc DL = Op.getDebugLoc();
 
-  return DAG.getMemcpy(Chain, dl, DstPtr, SrcPtr,
+  return DAG.getMemcpy(Chain, DL, DstPtr, SrcPtr,
                        DAG.getIntPtrConstant(24), 8, /*isVolatile*/false,
-                       false, DstSV, 0, SrcSV, 0);
+                       false, 
+                       MachinePointerInfo(DstSV), MachinePointerInfo(SrcSV));
 }
 
 SDValue

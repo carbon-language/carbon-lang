@@ -59,8 +59,8 @@ public:
                           SDValue Op1, SDValue Op2,
                           SDValue Op3, unsigned Align, bool isVolatile,
                           bool AlwaysInline,
-                          const Value *DstSV, uint64_t DstOff,
-                          const Value *SrcSV, uint64_t SrcOff) const {
+                          MachinePointerInfo DstPtrInfo,
+                          MachinePointerInfo SrcPtrInfo) const {
     return SDValue();
   }
 
@@ -75,8 +75,8 @@ public:
                            SDValue Chain,
                            SDValue Op1, SDValue Op2,
                            SDValue Op3, unsigned Align, bool isVolatile,
-                           const Value *DstSV, uint64_t DstOff,
-                           const Value *SrcSV, uint64_t SrcOff) const {
+                           MachinePointerInfo DstPtrInfo,
+                           MachinePointerInfo SrcPtrInfo) const {
     return SDValue();
   }
 
@@ -91,7 +91,7 @@ public:
                           SDValue Chain,
                           SDValue Op1, SDValue Op2,
                           SDValue Op3, unsigned Align, bool isVolatile,
-                          const Value *DstSV, uint64_t DstOff) const {
+                          MachinePointerInfo DstPtrInfo) const {
     return SDValue();
   }
 };

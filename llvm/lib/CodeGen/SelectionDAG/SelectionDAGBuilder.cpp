@@ -4014,7 +4014,8 @@ SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I, unsigned Intrinsic) {
     unsigned Align = cast<ConstantInt>(I.getArgOperand(3))->getZExtValue();
     bool isVol = cast<ConstantInt>(I.getArgOperand(4))->getZExtValue();
     DAG.setRoot(DAG.getMemcpy(getRoot(), dl, Op1, Op2, Op3, Align, isVol, false,
-                              I.getArgOperand(0), 0, I.getArgOperand(1), 0));
+                              MachinePointerInfo(I.getArgOperand(0)),
+                              MachinePointerInfo(I.getArgOperand(1))));
     return 0;
   }
   case Intrinsic::memset: {
@@ -4029,7 +4030,7 @@ SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I, unsigned Intrinsic) {
     unsigned Align = cast<ConstantInt>(I.getArgOperand(3))->getZExtValue();
     bool isVol = cast<ConstantInt>(I.getArgOperand(4))->getZExtValue();
     DAG.setRoot(DAG.getMemset(getRoot(), dl, Op1, Op2, Op3, Align, isVol,
-                              I.getArgOperand(0), 0));
+                              MachinePointerInfo(I.getArgOperand(0))));
     return 0;
   }
   case Intrinsic::memmove: {
@@ -4054,13 +4055,14 @@ SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I, unsigned Intrinsic) {
     if (AA->alias(I.getArgOperand(0), Size, I.getArgOperand(1), Size) ==
         AliasAnalysis::NoAlias) {
       DAG.setRoot(DAG.getMemcpy(getRoot(), dl, Op1, Op2, Op3, Align, isVol, 
-                                false, I.getArgOperand(0), 0,
-                                I.getArgOperand(1), 0));
+                                false, MachinePointerInfo(I.getArgOperand(0)),
+                                MachinePointerInfo(I.getArgOperand(1))));
       return 0;
     }
 
     DAG.setRoot(DAG.getMemmove(getRoot(), dl, Op1, Op2, Op3, Align, isVol,
-                               I.getArgOperand(0), 0, I.getArgOperand(1), 0));
+                               MachinePointerInfo(I.getArgOperand(0)),
+                               MachinePointerInfo(I.getArgOperand(1))));
     return 0;
   }
   case Intrinsic::dbg_declare: {

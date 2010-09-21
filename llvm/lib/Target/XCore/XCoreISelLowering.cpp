@@ -1443,9 +1443,8 @@ SDValue XCoreTargetLowering::PerformDAGCombine(SDNode *N,
         return DAG.getMemmove(Chain, dl, ST->getBasePtr(),
                               LD->getBasePtr(),
                               DAG.getConstant(StoreBits/8, MVT::i32),
-                              Alignment, false, ST->getSrcValue(),
-                              ST->getSrcValueOffset(), LD->getSrcValue(),
-                              LD->getSrcValueOffset());
+                              Alignment, false, ST->getPointerInfo(),
+                              LD->getPointerInfo());
       }
     }
     break;
