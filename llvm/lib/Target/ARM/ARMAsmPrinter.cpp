@@ -1174,47 +1174,39 @@ void ARMAsmPrinter::EmitInstruction(const MachineInstr *MI) {
   } else
   // A8.6.123 PUSH
   if ((MI->getOpcode() == ARM::STM_UPD || MI->getOpcode() == ARM::t2STM_UPD) &&
-      MI->getOperand(0).getReg() == ARM::SP) {
-    const MachineOperand &MO1 = MI->getOperand(2);
-    if (ARM_AM::getAM4SubMode(MO1.getImm()) == ARM_AM::db) {
-      OS << '\t' << "push";
-      printPredicateOperand(MI, 3, OS);
-      OS << '\t';
-      printRegisterList(MI, 5, OS);
-    }
+      MI->getOperand(0).getReg() == ARM::SP &&
+      ARM_AM::getAM4SubMode(MI->getOperand(2).getImm()) == ARM_AM::db) {
+    OS << '\t' << "push";
+    printPredicateOperand(MI, 3, OS);
+    OS << '\t';
+    printRegisterList(MI, 5, OS);
   } else
   // A8.6.122 POP
   if ((MI->getOpcode() == ARM::LDM_UPD || MI->getOpcode() == ARM::t2LDM_UPD) &&
-      MI->getOperand(0).getReg() == ARM::SP) {
-    const MachineOperand &MO1 = MI->getOperand(2);
-    if (ARM_AM::getAM4SubMode(MO1.getImm()) == ARM_AM::ia) {
-      OS << '\t' << "pop";
-      printPredicateOperand(MI, 3, OS);
-      OS << '\t';
-      printRegisterList(MI, 5, OS);
-    }
+      MI->getOperand(0).getReg() == ARM::SP &&
+      ARM_AM::getAM4SubMode(MI->getOperand(2).getImm()) == ARM_AM::ia) {
+    OS << '\t' << "pop";
+    printPredicateOperand(MI, 3, OS);
+    OS << '\t';
+    printRegisterList(MI, 5, OS);
   } else
   // A8.6.355 VPUSH
   if ((MI->getOpcode() == ARM::VSTMS_UPD || MI->getOpcode() ==ARM::VSTMD_UPD) &&
-      MI->getOperand(0).getReg() == ARM::SP) {
-    const MachineOperand &MO1 = MI->getOperand(2);
-    if (ARM_AM::getAM4SubMode(MO1.getImm()) == ARM_AM::db) {
-      OS << '\t' << "vpush";
-      printPredicateOperand(MI, 3, OS);
-      OS << '\t';
-      printRegisterList(MI, 5, OS);
-    }
+      MI->getOperand(0).getReg() == ARM::SP &&
+      ARM_AM::getAM4SubMode(MI->getOperand(2).getImm()) == ARM_AM::db) {
+    OS << '\t' << "vpush";
+    printPredicateOperand(MI, 3, OS);
+    OS << '\t';
+    printRegisterList(MI, 5, OS);
   } else
   // A8.6.354 VPOP
   if ((MI->getOpcode() == ARM::VLDMS_UPD || MI->getOpcode() ==ARM::VLDMD_UPD) &&
-      MI->getOperand(0).getReg() == ARM::SP) {
-    const MachineOperand &MO1 = MI->getOperand(2);
-    if (ARM_AM::getAM4SubMode(MO1.getImm()) == ARM_AM::ia) {
-      OS << '\t' << "vpop";
-      printPredicateOperand(MI, 3, OS);
-      OS << '\t';
-      printRegisterList(MI, 5, OS);
-    }
+      MI->getOperand(0).getReg() == ARM::SP &&
+      ARM_AM::getAM4SubMode(MI->getOperand(2).getImm()) == ARM_AM::ia) {
+    OS << '\t' << "vpop";
+    printPredicateOperand(MI, 3, OS);
+    OS << '\t';
+    printRegisterList(MI, 5, OS);
   } else
     printInstruction(MI, OS);
 
