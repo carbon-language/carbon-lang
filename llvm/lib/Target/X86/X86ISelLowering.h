@@ -523,6 +523,11 @@ namespace llvm {
                                                 const SelectionDAG &DAG,
                                                 unsigned Depth = 0) const;
 
+    // ComputeNumSignBitsForTargetNode - Determine the number of bits in the
+    // operation that are sign bits.
+    virtual unsigned ComputeNumSignBitsForTargetNode(SDValue Op,
+                                                     unsigned Depth) const;
+
     virtual bool
     isGAPlusOffset(SDNode *N, const GlobalValue* &GA, int64_t &Offset) const;
     

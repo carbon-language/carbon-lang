@@ -1424,6 +1424,20 @@ SDValue DAGCombiner::visitADD(SDNode *N) {
                                        N0.getOperand(0).getOperand(1),
                                        N0.getOperand(1)));
 
+  if (N1.getOpcode() == ISD::AND) {
+    SDValue AndOp0 = N1.getOperand(0);
+    ConstantSDNode *AndOp1 = dyn_cast<ConstantSDNode>(N1->getOperand(1)); 
+    unsigned NumSignBits = DAG.ComputeNumSignBits(AndOp0);
+    unsigned DestBits = VT.getScalarType().getSizeInBits();
+    
+    // (add z, (and (sbbl x, x), 1)) -> (sub z, (sbbl x, x))
+    // and similar xforms where the inner op is either ~0 or 0.
+    if (NumSignBits == DestBits && AndOp1 && AndOp1->isOne()) {
+      DebugLoc DL = N->getDebugLoc();
+      return DAG.getNode(ISD::SUB, DL, VT, N->getOperand(0), AndOp0);
+    }
+  }
+
   return SDValue();
 }
 
