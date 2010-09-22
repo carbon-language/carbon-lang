@@ -75,11 +75,10 @@ GetJumpTableSymbol(const MachineOperand &MO) const {
   raw_svector_ostream(Name) << Printer.MAI->getPrivateGlobalPrefix() << "JTI"
     << Printer.getFunctionNumber() << '_' << MO.getIndex();
 
-#if 0
   switch (MO.getTargetFlags()) {
-    default: llvm_unreachable("Unknown target flag on GV operand");
+  default: assert(0 && "Unknown target flag on jump table operand");
+  case 0: break;
   }
-#endif
 
   // Create a symbol for the name.
   return Ctx.GetOrCreateSymbol(Name.str());
@@ -91,11 +90,10 @@ GetConstantPoolIndexSymbol(const MachineOperand &MO) const {
   raw_svector_ostream(Name) << Printer.MAI->getPrivateGlobalPrefix() << "CPI"
     << Printer.getFunctionNumber() << '_' << MO.getIndex();
 
-#if 0
   switch (MO.getTargetFlags()) {
-  default: llvm_unreachable("Unknown target flag on GV operand");
+  default: assert(0 && "Unknown target flag on CPI operand");
+  case 0: break;
   }
-#endif
 
   // Create a symbol for the name.
   return Ctx.GetOrCreateSymbol(Name.str());
@@ -107,11 +105,10 @@ LowerSymbolOperand(const MachineOperand &MO, MCSymbol *Sym) const {
   // lot of extra uniquing.
   const MCExpr *Expr = MCSymbolRefExpr::Create(Sym, Ctx);
 
-#if 0
   switch (MO.getTargetFlags()) {
-  default: llvm_unreachable("Unknown target flag on GV operand");
+  default: assert(0 && "Unknown target flag on Symbol operand");
+  case 0: break;
   }
-#endif
 
   if (!MO.isJTI() && MO.getOffset())
     Expr = MCBinaryExpr::CreateAdd(Expr,
