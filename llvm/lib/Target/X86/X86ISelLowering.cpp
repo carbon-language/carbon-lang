@@ -6384,7 +6384,8 @@ SDValue X86TargetLowering::BuildFILD(SDValue Op, EVT SrcVT, SDValue Chain,
     // shouldn't be necessary except that RFP cannot be live across
     // multiple blocks. When stackifier is fixed, they can be uncoupled.
     MachineFunction &MF = DAG.getMachineFunction();
-    int SSFI = MF.getFrameInfo()->CreateStackObject(8, 8, false);
+    unsigned SSFISize = Op.getValueType().getSizeInBits()/8;
+    int SSFI = MF.getFrameInfo()->CreateStackObject(SSFISize, SSFISize, false);
     SDValue StackSlot = DAG.getFrameIndex(SSFI, getPointerTy());
     Tys = DAG.getVTList(MVT::Other);
     SDValue Ops[] = {
@@ -6393,7 +6394,7 @@ SDValue X86TargetLowering::BuildFILD(SDValue Op, EVT SrcVT, SDValue Chain,
     MachineMemOperand *MMO =
       DAG.getMachineFunction()
       .getMachineMemOperand(MachinePointerInfo::getFixedStack(SSFI),
-                            MachineMemOperand::MOStore, 8, 8);
+                            MachineMemOperand::MOStore, SSFISize, SSFISize);
     
     Chain = DAG.getMemIntrinsicNode(X86ISD::FST, DL, Tys,
                                     Ops, array_lengthof(Ops),
