@@ -336,3 +336,8 @@ fcmovna %st(1), %st(0)  // CHECK: fcmovbe	%st(1), %st(0)
 
 fcmovae %st(1), %st(0)  // CHECK: fcmovnb	%st(1), %st(0)
 fcmova %st(1), %st(0)   // CHECK: fcmovnbe	%st(1), %st(0)
+
+// rdar://8456417
+.byte 88 + 1 & 15  // CHECK: .byte	9
+
+

@@ -700,44 +700,45 @@ static unsigned getBinOpPrecedence(AsmToken::TokenKind K,
     Kind = MCBinaryExpr::LOr;
     return 1;
 
-    // Low Precedence: +, -, ==, !=, <>, <, <=, >, >=
-  case AsmToken::Plus:
-    Kind = MCBinaryExpr::Add;
-    return 2;
-  case AsmToken::Minus:
-    Kind = MCBinaryExpr::Sub;
-    return 2;
-  case AsmToken::EqualEqual:
-    Kind = MCBinaryExpr::EQ;
-    return 2;
-  case AsmToken::ExclaimEqual:
-  case AsmToken::LessGreater:
-    Kind = MCBinaryExpr::NE;
-    return 2;
-  case AsmToken::Less:
-    Kind = MCBinaryExpr::LT;
-    return 2;
-  case AsmToken::LessEqual:
-    Kind = MCBinaryExpr::LTE;
-    return 2;
-  case AsmToken::Greater:
-    Kind = MCBinaryExpr::GT;
-    return 2;
-  case AsmToken::GreaterEqual:
-    Kind = MCBinaryExpr::GTE;
-    return 2;
-
-    // Intermediate Precedence: |, &, ^
+    
+    // Low Precedence: |, &, ^
     //
     // FIXME: gas seems to support '!' as an infix operator?
   case AsmToken::Pipe:
     Kind = MCBinaryExpr::Or;
-    return 3;
+    return 2;
   case AsmToken::Caret:
     Kind = MCBinaryExpr::Xor;
-    return 3;
+    return 2;
   case AsmToken::Amp:
     Kind = MCBinaryExpr::And;
+    return 2;
+      
+    // Intermediate Precedence: +, -, ==, !=, <>, <, <=, >, >=
+  case AsmToken::Plus:
+    Kind = MCBinaryExpr::Add;
+    return 3;
+  case AsmToken::Minus:
+    Kind = MCBinaryExpr::Sub;
+    return 3;
+  case AsmToken::EqualEqual:
+    Kind = MCBinaryExpr::EQ;
+    return 3;
+  case AsmToken::ExclaimEqual:
+  case AsmToken::LessGreater:
+    Kind = MCBinaryExpr::NE;
+    return 3;
+  case AsmToken::Less:
+    Kind = MCBinaryExpr::LT;
+    return 3;
+  case AsmToken::LessEqual:
+    Kind = MCBinaryExpr::LTE;
+    return 3;
+  case AsmToken::Greater:
+    Kind = MCBinaryExpr::GT;
+    return 3;
+  case AsmToken::GreaterEqual:
+    Kind = MCBinaryExpr::GTE;
     return 3;
 
     // Highest Precedence: *, /, %, <<, >>
