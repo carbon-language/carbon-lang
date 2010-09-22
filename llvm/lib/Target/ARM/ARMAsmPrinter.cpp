@@ -1385,6 +1385,47 @@ static MCSymbol *getPICLabel(const char *Prefix, unsigned FunctionNumber,
   return Label;
 }
 
+void ARMAsmPrinter::EmitJumpTable(const MachineInstr *MI) {
+  unsigned Opcode = MI->getOpcode();
+  int OpNum = 1;
+  if (Opcode == ARM::BR_JTadd)
+    OpNum = 2;
+  else if (Opcode == ARM::BR_JTm)
+    OpNum = 3;
+
+  const MachineOperand &MO1 = MI->getOperand(OpNum);
+  const MachineOperand &MO2 = MI->getOperand(OpNum+1); // Unique Id
+  unsigned JTI = MO1.getIndex();
+
+  // Emit a label for the jump table.
+  MCSymbol *JTISymbol = GetARMJTIPICJumpTableLabel2(JTI, MO2.getImm());
+  OutStreamer.EmitLabel(JTISymbol);
+
+  // Emit each entry of the table.
+  const MachineJumpTableInfo *MJTI = MF->getJumpTableInfo();
+  const std::vector<MachineJumpTableEntry> &JT = MJTI->getJumpTables();
+  const std::vector<MachineBasicBlock*> &JTBBs = JT[JTI].MBBs;
+
+  for (unsigned i = 0, e = JTBBs.size(); i != e; ++i) {
+    MachineBasicBlock *MBB = JTBBs[i];
+    // Construct an MCExpr for the entry. We want a value of the form:
+    // (BasicBlockAddr - TableBeginAddr)
+    //
+    // For example, a table with entries jumping to basic blocks BB0 and BB1
+    // would look like:
+    // LJTI_0_0:
+    //    .word (LBB0 - LJTI_0_0)
+    //    .word (LBB1 - LJTI_0_0)
+    const MCExpr *Expr = MCSymbolRefExpr::Create(MBB->getSymbol(), OutContext);
+
+    if (TM.getRelocationModel() == Reloc::PIC_)
+      Expr = MCBinaryExpr::CreateSub(Expr, MCSymbolRefExpr::Create(JTISymbol,
+                                                                   OutContext),
+                                     OutContext);
+    OutStreamer.EmitValue(Expr, 4);
+  }
+}
+
 void ARMAsmPrinter::EmitJump2Table(const MachineInstr *MI) {
   unsigned Opcode = MI->getOpcode();
   int OpNum = (Opcode == ARM::t2BR_JT) ? 2 : 1;
@@ -1664,9 +1705,14 @@ void ARMAsmPrinter::printInstructionThroughMCStreamer(const MachineInstr *MI) {
   case ARM::tBR_JTr:
   case ARM::BR_JTr:
   case ARM::BR_JTm:
-  case ARM::BR_JTadd:
-    abort();
-    break;
+  case ARM::BR_JTadd: {
+    // Lower and emit the instruction itself, then the jump table following it.
+    MCInst TmpInst;
+    MCInstLowering.Lower(MI, TmpInst);
+    OutStreamer.EmitInstruction(TmpInst);
+    EmitJumpTable(MI);
+    return;
+  }
   }
 
   MCInst TmpInst;
