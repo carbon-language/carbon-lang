@@ -212,7 +212,7 @@ namespace llvm {
   private:
     /// ValueIsLoadPair - This is a pair<Value*, bool> where the bool is true if
     /// the dependence is a read only dependence, false if read/write.
-    typedef PointerIntPair<Value*, 1, bool> ValueIsLoadPair;
+    typedef PointerIntPair<const Value*, 1, bool> ValueIsLoadPair;
 
     /// BBSkipFirstBlockPair - This pair is used when caching information for a
     /// block.  If the pointer is null, the cache value is not a full query that
