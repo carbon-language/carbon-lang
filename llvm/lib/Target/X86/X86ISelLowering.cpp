@@ -6321,9 +6321,8 @@ SDValue X86TargetLowering::LowerSINT_TO_FP(SDValue Op,
   EVT SrcVT = Op.getOperand(0).getValueType();
 
   if (SrcVT.isVector()) {
-    if (SrcVT == MVT::v2i32 && Op.getValueType() == MVT::v2f64) {
+    if (SrcVT == MVT::v2i32 && Op.getValueType() == MVT::v2f64)
       return Op;
-    }
     return SDValue();
   }
 
@@ -6355,16 +6354,27 @@ SDValue X86TargetLowering::BuildFILD(SDValue Op, EVT SrcVT, SDValue Chain,
                                      SDValue StackSlot, 
                                      SelectionDAG &DAG) const {
   // Build the FILD
-  DebugLoc dl = Op.getDebugLoc();
+  DebugLoc DL = Op.getDebugLoc();
   SDVTList Tys;
   bool useSSE = isScalarFPTypeInSSEReg(Op.getValueType());
   if (useSSE)
     Tys = DAG.getVTList(MVT::f64, MVT::Other, MVT::Flag);
   else
     Tys = DAG.getVTList(Op.getValueType(), MVT::Other);
+  
+  unsigned ByteSize = SrcVT.getSizeInBits()/8;
+  
+  int SSFI = cast<FrameIndexSDNode>(StackSlot)->getIndex();
+  MachineMemOperand *MMO =
+    DAG.getMachineFunction()
+    .getMachineMemOperand(MachinePointerInfo::getFixedStack(SSFI),
+                          MachineMemOperand::MOLoad, ByteSize, ByteSize);
+  
   SDValue Ops[] = { Chain, StackSlot, DAG.getValueType(SrcVT) };
-  SDValue Result = DAG.getNode(useSSE ? X86ISD::FILD_FLAG : X86ISD::FILD, dl,
-                               Tys, Ops, array_lengthof(Ops));
+  SDValue Result = DAG.getMemIntrinsicNode(useSSE ? X86ISD::FILD_FLAG :
+                                           X86ISD::FILD, DL,
+                                           Tys, Ops, array_lengthof(Ops),
+                                           SrcVT, MMO);
 
   if (useSSE) {
     Chain = Result.getValue(1);
@@ -6380,8 +6390,15 @@ SDValue X86TargetLowering::BuildFILD(SDValue Op, EVT SrcVT, SDValue Chain,
     SDValue Ops[] = {
       Chain, Result, StackSlot, DAG.getValueType(Op.getValueType()), InFlag
     };
-    Chain = DAG.getNode(X86ISD::FST, dl, Tys, Ops, array_lengthof(Ops));
-    Result = DAG.getLoad(Op.getValueType(), dl, Chain, StackSlot,
+    MachineMemOperand *MMO =
+      DAG.getMachineFunction()
+      .getMachineMemOperand(MachinePointerInfo::getFixedStack(SSFI),
+                            MachineMemOperand::MOStore, 8, 8);
+    
+    Chain = DAG.getMemIntrinsicNode(X86ISD::FST, DL, Tys,
+                                    Ops, array_lengthof(Ops),
+                                    Op.getValueType(), MMO);
+    Result = DAG.getLoad(Op.getValueType(), DL, Chain, StackSlot,
                          MachinePointerInfo::getFixedStack(SSFI),
                          false, false, 0);
   }
@@ -6564,9 +6581,16 @@ SDValue X86TargetLowering::LowerUINT_TO_FP(SDValue Op,
   // DAGTypeLegalizer::ExpandIntOp_UNIT_TO_FP, and for it to be safe here,
   // we must be careful to do the computation in x87 extended precision, not
   // in SSE. (The generic code can't know it's OK to do this, or how to.)
+  int SSFI = cast<FrameIndexSDNode>(StackSlot)->getIndex();
+  MachineMemOperand *MMO =
+    DAG.getMachineFunction()
+    .getMachineMemOperand(MachinePointerInfo::getFixedStack(SSFI),
+                          MachineMemOperand::MOLoad, 8, 8);
+  
   SDVTList Tys = DAG.getVTList(MVT::f80, MVT::Other);
   SDValue Ops[] = { Store, StackSlot, DAG.getValueType(MVT::i64) };
-  SDValue Fild = DAG.getNode(X86ISD::FILD, dl, Tys, Ops, 3);
+  SDValue Fild = DAG.getMemIntrinsicNode(X86ISD::FILD, dl, Tys, Ops, 3,
+                                         MVT::i64, MMO);
 
   APInt FF(32, 0x5F800000ULL);
 
@@ -6640,16 +6664,22 @@ FP_TO_INTHelper(SDValue Op, SelectionDAG &DAG, bool IsSigned) const {
 
   SDValue Chain = DAG.getEntryNode();
   SDValue Value = Op.getOperand(0);
-  if (isScalarFPTypeInSSEReg(Op.getOperand(0).getValueType())) {
+  EVT TheVT = Op.getOperand(0).getValueType();
+  if (isScalarFPTypeInSSEReg(TheVT)) {
     assert(DstTy == MVT::i64 && "Invalid FP_TO_SINT to lower!");
     Chain = DAG.getStore(Chain, DL, Value, StackSlot,
                          MachinePointerInfo::getFixedStack(SSFI),
                          false, false, 0);
     SDVTList Tys = DAG.getVTList(Op.getOperand(0).getValueType(), MVT::Other);
     SDValue Ops[] = {
-      Chain, StackSlot, DAG.getValueType(Op.getOperand(0).getValueType())
+      Chain, StackSlot, DAG.getValueType(TheVT)
     };
-    Value = DAG.getNode(X86ISD::FLD, DL, Tys, Ops, 3);
+    
+    MachineMemOperand *MMO =
+      MF.getMachineMemOperand(MachinePointerInfo::getFixedStack(SSFI),
+                              MachineMemOperand::MOLoad, MemSize, MemSize);
+    Value = DAG.getMemIntrinsicNode(X86ISD::FLD, DL, Tys, Ops, 3,
+                                    DstTy, MMO);
     Chain = Value.getValue(1);
     SSFI = MF.getFrameInfo()->CreateStackObject(MemSize, MemSize, false);
     StackSlot = DAG.getFrameIndex(SSFI, getPointerTy());

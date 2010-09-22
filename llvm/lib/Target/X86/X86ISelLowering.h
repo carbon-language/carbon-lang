@@ -57,26 +57,6 @@ namespace llvm {
       /// corresponds to X86::PSRLDQ.
       FSRL,
 
-      /// FILD, FILD_FLAG - This instruction implements SINT_TO_FP with the
-      /// integer source in memory and FP reg result.  This corresponds to the
-      /// X86::FILD*m instructions. It has three inputs (token chain, address,
-      /// and source type) and two outputs (FP value and token chain). FILD_FLAG
-      /// also produces a flag).
-      FILD,
-      FILD_FLAG,
-      
-      /// FLD - This instruction implements an extending load to FP stack slots.
-      /// This corresponds to the X86::FLD32m / X86::FLD64m. It takes a chain
-      /// operand, ptr to load from, and a ValueType node indicating the type
-      /// to load to.
-      FLD,
-
-      /// FST - This instruction implements a truncating store to FP stack
-      /// slots. This corresponds to the X86::FST32m / X86::FST64m. It takes a
-      /// chain operand, value to store, address, and a ValueType to store it
-      /// as.
-      FST,
-
       /// CALL - These operations represent an abstract X86 call
       /// instruction, which includes a bunch of information.  In particular the
       /// operands of these node are:
@@ -309,7 +289,27 @@ namespace llvm {
       /// and token chain).
       FP_TO_INT16_IN_MEM,
       FP_TO_INT32_IN_MEM,
-      FP_TO_INT64_IN_MEM
+      FP_TO_INT64_IN_MEM,
+      
+      /// FILD, FILD_FLAG - This instruction implements SINT_TO_FP with the
+      /// integer source in memory and FP reg result.  This corresponds to the
+      /// X86::FILD*m instructions. It has three inputs (token chain, address,
+      /// and source type) and two outputs (FP value and token chain). FILD_FLAG
+      /// also produces a flag).
+      FILD,
+      FILD_FLAG,
+      
+      /// FLD - This instruction implements an extending load to FP stack slots.
+      /// This corresponds to the X86::FLD32m / X86::FLD64m. It takes a chain
+      /// operand, ptr to load from, and a ValueType node indicating the type
+      /// to load to.
+      FLD,
+      
+      /// FST - This instruction implements a truncating store to FP stack
+      /// slots. This corresponds to the X86::FST32m / X86::FST64m. It takes a
+      /// chain operand, value to store, address, and a ValueType to store it
+      /// as.
+      FST
       
       // WARNING: Do not add anything in the end unless you want the node to
       // have memop! In fact, starting from ATOMADD64_DAG all opcodes will be
