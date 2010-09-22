@@ -1086,10 +1086,11 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
 
     const char *StackProbeSymbol =
       Subtarget->isTargetWindows() ? "_chkstk" : "_alloca";
+    unsigned CallOp = Is64Bit ? X86::CALL64pcrel32 : X86::CALLpcrel32;
     if (!isEAXAlive) {
       BuildMI(MBB, MBBI, DL, TII.get(X86::MOV32ri), X86::EAX)
         .addImm(NumBytes);
-      BuildMI(MBB, MBBI, DL, TII.get(X86::CALLpcrel32))
+      BuildMI(MBB, MBBI, DL, TII.get(CallOp))
         .addExternalSymbol(StackProbeSymbol)
         .addReg(StackPtr,    RegState::Define | RegState::Implicit)
         .addReg(X86::EFLAGS, RegState::Define | RegState::Implicit);
@@ -1102,7 +1103,7 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
       // allocated bytes for EAX.
       BuildMI(MBB, MBBI, DL, TII.get(X86::MOV32ri), X86::EAX)
         .addImm(NumBytes - 4);
-      BuildMI(MBB, MBBI, DL, TII.get(X86::CALLpcrel32))
+      BuildMI(MBB, MBBI, DL, TII.get(CallOp))
         .addExternalSymbol(StackProbeSymbol)
         .addReg(StackPtr,    RegState::Define | RegState::Implicit)
         .addReg(X86::EFLAGS, RegState::Define | RegState::Implicit);
