@@ -32,7 +32,7 @@ class MCAsmStreamer : public MCStreamer {
   const MCAsmInfo &MAI;
   OwningPtr<MCInstPrinter> InstPrinter;
   OwningPtr<MCCodeEmitter> Emitter;
-  
+
   SmallString<128> CommentToEmit;
   raw_svector_ostream CommentStream;
 
@@ -68,7 +68,7 @@ public:
   /// isVerboseAsm - Return true if this streamer supports verbose assembly at
   /// all.
   virtual bool isVerboseAsm() const { return IsVerboseAsm; }
-  
+
   /// hasRawTextSupport - We support EmitRawText.
   virtual bool hasRawTextSupport() const { return true; }
 
@@ -130,19 +130,19 @@ public:
   /// @param Symbol - The common symbol to emit.
   /// @param Size - The size of the common symbol.
   virtual void EmitLocalCommonSymbol(MCSymbol *Symbol, uint64_t Size);
-  
+
   virtual void EmitZerofill(const MCSection *Section, MCSymbol *Symbol = 0,
                             unsigned Size = 0, unsigned ByteAlignment = 0);
 
   virtual void EmitTBSSSymbol (const MCSection *Section, MCSymbol *Symbol,
                                uint64_t Size, unsigned ByteAlignment = 0);
-                               
+
   virtual void EmitBytes(StringRef Data, unsigned AddrSpace);
 
   virtual void EmitValue(const MCExpr *Value, unsigned Size,unsigned AddrSpace);
   virtual void EmitIntValue(uint64_t Value, unsigned Size, unsigned AddrSpace);
   virtual void EmitGPRel32Value(const MCExpr *Value);
-  
+
 
   virtual void EmitFill(uint64_t NumBytes, uint8_t FillValue,
                         unsigned AddrSpace);
@@ -161,14 +161,14 @@ public:
   virtual void EmitDwarfFileDirective(unsigned FileNo, StringRef Filename);
 
   virtual void EmitInstruction(const MCInst &Inst);
-  
+
   /// EmitRawText - If this file is backed by a assembly streamer, this dumps
   /// the specified string in the output .s file.  This capability is
   /// indicated by the hasRawTextSupport() predicate.
   virtual void EmitRawText(StringRef String);
-  
+
   virtual void Finish();
-  
+
   /// @}
 };
 
@@ -180,14 +180,14 @@ public:
 /// verbose assembly output is enabled.
 void MCAsmStreamer::AddComment(const Twine &T) {
   if (!IsVerboseAsm) return;
-  
+
   // Make sure that CommentStream is flushed.
   CommentStream.flush();
-  
+
   T.toVector(CommentToEmit);
   // Each comment goes on its own line.
   CommentToEmit.push_back('\n');
-  
+
   // Tell the comment stream that the vector changed underneath it.
   CommentStream.resync();
 }
@@ -197,10 +197,10 @@ void MCAsmStreamer::EmitCommentsAndEOL() {
     OS << '\n';
     return;
   }
-  
+
   CommentStream.flush();
   StringRef Comments = CommentToEmit.str();
-  
+
   assert(Comments.back() == '\n' &&
          "Comment array not newline terminated");
   do {
@@ -208,10 +208,10 @@ void MCAsmStreamer::EmitCommentsAndEOL() {
     OS.PadToColumn(MAI.getCommentColumn());
     size_t Position = Comments.find('\n');
     OS << MAI.getCommentString() << ' ' << Comments.substr(0, Position) << '\n';
-    
+
     Comments = Comments.substr(Position+1);
   } while (!Comments.empty());
-  
+
   CommentToEmit.clear();
   // Tell the comment stream that the vector changed underneath it.
   CommentStream.resync();
@@ -360,11 +360,11 @@ void MCAsmStreamer::EmitZerofill(const MCSection *Section, MCSymbol *Symbol,
                                  unsigned Size, unsigned ByteAlignment) {
   // Note: a .zerofill directive does not switch sections.
   OS << ".zerofill ";
-  
+
   // This is a mach-o specific directive.
   const MCSectionMachO *MOSection = ((const MCSectionMachO*)Section);
   OS << MOSection->getSegmentName() << "," << MOSection->getSectionName();
-  
+
   if (Symbol != NULL) {
     OS << ',' << *Symbol << ',' << Size;
     if (ByteAlignment != 0)
@@ -382,11 +382,11 @@ void MCAsmStreamer::EmitTBSSSymbol(const MCSection *Section, MCSymbol *Symbol,
   // Instead of using the Section we'll just use the shortcut.
   // This is a mach-o specific directive and section.
   OS << ".tbss " << *Symbol << ", " << Size;
-  
+
   // Output align if we have it.  We default to 1 so don't bother printing
   // that.
   if (ByteAlignment > 1) OS << ", " << Log2_32(ByteAlignment);
-  
+
   EmitEOL();
 }
 
@@ -394,19 +394,19 @@ static inline char toOctal(int X) { return (X&7)+'0'; }
 
 static void PrintQuotedString(StringRef Data, raw_ostream &OS) {
   OS << '"';
-  
+
   for (unsigned i = 0, e = Data.size(); i != e; ++i) {
     unsigned char C = Data[i];
     if (C == '"' || C == '\\') {
       OS << '\\' << (char)C;
       continue;
     }
-    
+
     if (isprint((unsigned char)C)) {
       OS << (char)C;
       continue;
     }
-    
+
     switch (C) {
       case '\b': OS << "\\b"; break;
       case '\f': OS << "\\f"; break;
@@ -421,7 +421,7 @@ static void PrintQuotedString(StringRef Data, raw_ostream &OS) {
         break;
     }
   }
-  
+
   OS << '"';
 }
 
@@ -429,7 +429,7 @@ static void PrintQuotedString(StringRef Data, raw_ostream &OS) {
 void MCAsmStreamer::EmitBytes(StringRef Data, unsigned AddrSpace) {
   assert(CurSection && "Cannot emit contents before setting section!");
   if (Data.empty()) return;
-  
+
   if (Data.size() == 1) {
     OS << MAI.getData8bitsDirective(AddrSpace);
     OS << (unsigned)(unsigned char)Data[0];
@@ -475,7 +475,7 @@ void MCAsmStreamer::EmitIntValue(uint64_t Value, unsigned Size,
     }
     return;
   }
-  
+
   assert(Directive && "Invalid size for machine code value!");
   OS << Directive << truncateToSize(Value, Size);
   EmitEOL();
@@ -492,7 +492,7 @@ void MCAsmStreamer::EmitValue(const MCExpr *Value, unsigned Size,
   case 4: Directive = MAI.getData32bitsDirective(AddrSpace); break;
   case 8: Directive = MAI.getData64bitsDirective(AddrSpace); break;
   }
-  
+
   assert(Directive && "Invalid size for machine code value!");
   OS << Directive << *Value;
   EmitEOL();
@@ -510,7 +510,7 @@ void MCAsmStreamer::EmitGPRel32Value(const MCExpr *Value) {
 void MCAsmStreamer::EmitFill(uint64_t NumBytes, uint8_t FillValue,
                              unsigned AddrSpace) {
   if (NumBytes == 0) return;
-  
+
   if (AddrSpace == 0)
     if (const char *ZeroDirective = MAI.getZeroDirective()) {
       OS << ZeroDirective << NumBytes;
@@ -538,7 +538,7 @@ void MCAsmStreamer::EmitValueToAlignment(unsigned ByteAlignment, int64_t Value,
     case 4: OS << ".p2alignl "; break;
     case 8: llvm_unreachable("Unsupported alignment size!");
     }
-    
+
     if (MAI.getAlignmentIsInBytes())
       OS << ByteAlignment;
     else
@@ -548,13 +548,13 @@ void MCAsmStreamer::EmitValueToAlignment(unsigned ByteAlignment, int64_t Value,
       OS << ", 0x";
       OS.write_hex(truncateToSize(Value, ValueSize));
 
-      if (MaxBytesToEmit) 
+      if (MaxBytesToEmit)
         OS << ", " << MaxBytesToEmit;
     }
     EmitEOL();
     return;
   }
-  
+
   // Non-power of two alignment.  This is not widely supported by assemblers.
   // FIXME: Parameterize this based on MAI.
   switch (ValueSize) {
@@ -567,7 +567,7 @@ void MCAsmStreamer::EmitValueToAlignment(unsigned ByteAlignment, int64_t Value,
 
   OS << ' ' << ByteAlignment;
   OS << ", " << truncateToSize(Value, ValueSize);
-  if (MaxBytesToEmit) 
+  if (MaxBytesToEmit)
     OS << ", " << MaxBytesToEmit;
   EmitEOL();
 }
