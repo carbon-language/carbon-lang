@@ -26,7 +26,7 @@ entry:
 
 ; rdar://8453210
 ; X32: test2:
-; X32: movl	16(%esp), %eax
+; X32: movl	{{.*}}(%esp), %eax
 ; X32: call	*%gs:(%eax)
 
 ; X64: test2:
