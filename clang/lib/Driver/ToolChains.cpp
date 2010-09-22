@@ -501,11 +501,20 @@ void DarwinClang::AddLinkRuntimeLibArgs(const ArgList &Args,
     else if (isMacosxVersionLT(10, 6))
       CmdArgs.push_back("-lgcc_s.10.5");
 
-    // For OS X, we only need a static runtime library when targetting 10.4, to
-    // provide versions of the static functions which were omitted from
-    // 10.4.dylib.
-    if (isMacosxVersionLT(10, 5))
+    // For OS X, we thought we would only need a static runtime library when
+    // targetting 10.4, to provide versions of the static functions which were
+    // omitted from 10.4.dylib.
+    //
+    // Unfortunately, that turned out to not be true, because Darwin system
+    // headers can still use eprintf on i386, and it is not exported from
+    // libSystem. Therefore, we still must provide a runtime library just for
+    // the tiny tiny handful of projects that *might* use that symbol.
+    if (isMacosxVersionLT(10, 5)) {
       DarwinStaticLib = "libclang_rt.10.4.a";
+    } else {
+      if (getTriple().getArch() == llvm::Triple::x86)
+        DarwinStaticLib = "libclang_rt.eprintf.a";
+    }
   }
 
   /// Add the target specific static library, if needed.
