@@ -1659,6 +1659,7 @@ void ARMAsmPrinter::printInstructionThroughMCStreamer(const MachineInstr *MI) {
       V1 = MCOperand::CreateExpr(SymRef1);
       V2 = MCOperand::CreateExpr(SymRef2);
     } else {
+      // FIXME: External symbol?
       MI->dump();
       llvm_unreachable("cannot handle this operand");
     }
