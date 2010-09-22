@@ -52,7 +52,7 @@ namespace std  // purposefully not versioned
 {
 
 template<class _E>
-class initializer_list
+class _LIBCPP_VISIBLE initializer_list
 {
     const _E* __begin_;
     size_t    __size_;

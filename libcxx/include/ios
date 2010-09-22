@@ -222,7 +222,7 @@ _LIBCPP_BEGIN_NAMESPACE_STD
 
 typedef ptrdiff_t streamsize;
 
-class ios_base
+class _LIBCPP_VISIBLE ios_base
 {
 public:
     class failure;
@@ -323,6 +323,7 @@ public:
     void __set_failbit_and_consider_rethrow();
 
 protected:
+    _LIBCPP_INLINE_VISIBILITY
     ios_base() {// purposefully does no initialization
                }
 
@@ -370,7 +371,7 @@ private:
 };
 
 //enum class io_errc
-struct io_errc
+struct _LIBCPP_VISIBLE io_errc
 {
 enum _ {
     stream = 1
@@ -381,9 +382,12 @@ enum _ {
     _LIBCPP_ALWAYS_INLINE operator int() const {return __v_;}
 };
 
-template <> struct is_error_code_enum<io_errc> : public true_type { };
-template <> struct is_error_code_enum<io_errc::_> : public true_type { };
+template <>
+struct _LIBCPP_VISIBLE is_error_code_enum<io_errc> : public true_type { };
+template <>
+struct _LIBCPP_VISIBLE is_error_code_enum<io_errc::_> : public true_type { };
 
+_LIBCPP_VISIBLE
 const error_category& iostream_category();
 
 inline _LIBCPP_INLINE_VISIBILITY
@@ -400,7 +404,7 @@ make_error_condition(io_errc __e)
     return error_condition(static_cast<int>(__e), iostream_category());
 }
 
-class ios_base::failure
+class _LIBCPP_EXCEPTION_ABI ios_base::failure
     : public system_error
 {
 public:
@@ -409,7 +413,7 @@ public:
     virtual ~failure() throw();
 };
 
-class ios_base::Init
+class _LIBCPP_VISIBLE ios_base::Init
 {
 public:
     Init();
@@ -556,7 +560,7 @@ ios_base::exceptions(iostate __except)
 }
 
 template <class _CharT, class _Traits>
-class basic_ios
+class _LIBCPP_VISIBLE basic_ios
     : public ios_base
 {
 public:
@@ -604,12 +608,14 @@ public:
     char_type widen(char __c) const;
 
 protected:
+    _LIBCPP_ALWAYS_INLINE
     basic_ios() {// purposefully does no initialization
                 }
     void init(basic_streambuf<char_type, traits_type>* __sb);
 
     void move(basic_ios& __rhs);
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
+    _LIBCPP_ALWAYS_INLINE
     void move(basic_ios&& __rhs) {move(__rhs);}
 #endif
     void swap(basic_ios& __rhs);

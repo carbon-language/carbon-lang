@@ -43,10 +43,12 @@ class __iom_t1
 {
     ios_base::fmtflags __mask_;
 public:
+    _LIBCPP_INLINE_VISIBILITY
     explicit __iom_t1(ios_base::fmtflags __m) : __mask_(__m) {}
 
     template <class _CharT, class _Traits>
     friend
+    _LIBCPP_INLINE_VISIBILITY
     basic_istream<_CharT, _Traits>&
     operator>>(basic_istream<_CharT, _Traits>& __is, const __iom_t1& __x)
     {
@@ -56,6 +58,7 @@ public:
 
     template <class _CharT, class _Traits>
     friend
+    _LIBCPP_INLINE_VISIBILITY
     basic_ostream<_CharT, _Traits>&
     operator<<(basic_ostream<_CharT, _Traits>& __os, const __iom_t1& __x)
     {
@@ -77,10 +80,12 @@ class __iom_t2
 {
     ios_base::fmtflags __mask_;
 public:
+    _LIBCPP_INLINE_VISIBILITY
     explicit __iom_t2(ios_base::fmtflags __m) : __mask_(__m) {}
 
     template <class _CharT, class _Traits>
     friend
+    _LIBCPP_INLINE_VISIBILITY
     basic_istream<_CharT, _Traits>&
     operator>>(basic_istream<_CharT, _Traits>& __is, const __iom_t2& __x)
     {
@@ -90,6 +95,7 @@ public:
 
     template <class _CharT, class _Traits>
     friend
+    _LIBCPP_INLINE_VISIBILITY
     basic_ostream<_CharT, _Traits>&
     operator<<(basic_ostream<_CharT, _Traits>& __os, const __iom_t2& __x)
     {
@@ -111,10 +117,12 @@ class __iom_t3
 {
     int __base_;
 public:
+    _LIBCPP_INLINE_VISIBILITY
     explicit __iom_t3(int __b) : __base_(__b) {}
 
     template <class _CharT, class _Traits>
     friend
+    _LIBCPP_INLINE_VISIBILITY
     basic_istream<_CharT, _Traits>&
     operator>>(basic_istream<_CharT, _Traits>& __is, const __iom_t3& __x)
     {
@@ -127,6 +135,7 @@ public:
 
     template <class _CharT, class _Traits>
     friend
+    _LIBCPP_INLINE_VISIBILITY
     basic_ostream<_CharT, _Traits>&
     operator<<(basic_ostream<_CharT, _Traits>& __os, const __iom_t3& __x)
     {
@@ -152,10 +161,12 @@ class __iom_t4
 {
     _CharT __fill_;
 public:
+    _LIBCPP_INLINE_VISIBILITY
     explicit __iom_t4(_CharT __c) : __fill_(__c) {}
 
     template <class _Traits>
     friend
+    _LIBCPP_INLINE_VISIBILITY
     basic_ostream<_CharT, _Traits>&
     operator<<(basic_ostream<_CharT, _Traits>& __os, const __iom_t4& __x)
     {
@@ -178,10 +189,12 @@ class __iom_t5
 {
     int __n_;
 public:
+    _LIBCPP_INLINE_VISIBILITY
     explicit __iom_t5(int __n) : __n_(__n) {}
 
     template <class _CharT, class _Traits>
     friend
+    _LIBCPP_INLINE_VISIBILITY
     basic_istream<_CharT, _Traits>&
     operator>>(basic_istream<_CharT, _Traits>& __is, const __iom_t5& __x)
     {
@@ -191,6 +204,7 @@ public:
 
     template <class _CharT, class _Traits>
     friend
+    _LIBCPP_INLINE_VISIBILITY
     basic_ostream<_CharT, _Traits>&
     operator<<(basic_ostream<_CharT, _Traits>& __os, const __iom_t5& __x)
     {
@@ -212,10 +226,12 @@ class __iom_t6
 {
     int __n_;
 public:
+    _LIBCPP_INLINE_VISIBILITY
     explicit __iom_t6(int __n) : __n_(__n) {}
 
     template <class _CharT, class _Traits>
     friend
+    _LIBCPP_INLINE_VISIBILITY
     basic_istream<_CharT, _Traits>&
     operator>>(basic_istream<_CharT, _Traits>& __is, const __iom_t6& __x)
     {
@@ -225,6 +241,7 @@ public:
 
     template <class _CharT, class _Traits>
     friend
+    _LIBCPP_INLINE_VISIBILITY
     basic_ostream<_CharT, _Traits>&
     operator<<(basic_ostream<_CharT, _Traits>& __os, const __iom_t6& __x)
     {
@@ -254,6 +271,7 @@ class __iom_t7
     _MoneyT& __mon_;
     bool __intl_;
 public:
+    _LIBCPP_INLINE_VISIBILITY
     __iom_t7(_MoneyT& __mon, bool __intl)
         : __mon_(__mon), __intl_(__intl) {}
 
@@ -313,6 +331,7 @@ class __iom_t8
     const _MoneyT& __mon_;
     bool __intl_;
 public:
+    _LIBCPP_INLINE_VISIBILITY
     __iom_t8(const _MoneyT& __mon, bool __intl)
         : __mon_(__mon), __intl_(__intl) {}
 
@@ -371,6 +390,7 @@ class __iom_t9
     tm* __tm_;
     const _CharT* __fmt_;
 public:
+    _LIBCPP_INLINE_VISIBILITY
     __iom_t9(tm* __tm, const _CharT* __fmt)
         : __tm_(__tm), __fmt_(__fmt) {}
 
@@ -431,6 +451,7 @@ class __iom_t10
     const tm* __tm_;
     const _CharT* __fmt_;
 public:
+    _LIBCPP_INLINE_VISIBILITY
     __iom_t10(const tm* __tm, const _CharT* __fmt)
         : __tm_(__tm), __fmt_(__fmt) {}
 

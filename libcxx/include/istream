@@ -160,7 +160,7 @@ template <class charT, class traits, class T>
 _LIBCPP_BEGIN_NAMESPACE_STD
 
 template <class _CharT, class _Traits>
-class basic_istream
+class _LIBCPP_VISIBLE basic_istream
     : virtual public basic_ios<_CharT, _Traits>
 {
     streamsize __gc_;
@@ -211,6 +211,7 @@ public:
     basic_istream& operator>>(void*& __p);
 
     // 27.7.1.3 Unformatted input:
+    _LIBCPP_INLINE_VISIBILITY
     streamsize gcount() const {return __gc_;}
     int_type get();
     basic_istream& get(char_type& __c);
@@ -237,7 +238,7 @@ public:
 };
 
 template <class _CharT, class _Traits>
-class basic_istream<_CharT, _Traits>::sentry
+class _LIBCPP_VISIBLE basic_istream<_CharT, _Traits>::sentry
 {
     bool __ok_;
 
@@ -248,6 +249,7 @@ public:
     explicit sentry(basic_istream<_CharT, _Traits>& __is, bool __noskipws = false);
 //    ~sentry() = default;
 
+    _LIBCPP_INLINE_VISIBILITY
     // explicit
         operator bool() const {return __ok_;}
 };
@@ -1477,7 +1479,7 @@ operator>>(basic_istream<_CharT, _Traits>&& __is, _Tp& __x)
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 template <class _CharT, class _Traits>
-class basic_iostream
+class _LIBCPP_VISIBLE basic_iostream
     : public basic_istream<_CharT, _Traits>,
       public basic_ostream<_CharT, _Traits>
 {
@@ -1647,7 +1649,7 @@ getline(basic_istream<_CharT, _Traits>& __is,
 }
 
 template<class _CharT, class _Traits, class _Allocator>
-inline
+inline _LIBCPP_INLINE_VISIBILITY
 basic_istream<_CharT, _Traits>&
 getline(basic_istream<_CharT, _Traits>& __is,
         basic_string<_CharT, _Traits, _Allocator>& __str)
@@ -1658,7 +1660,7 @@ getline(basic_istream<_CharT, _Traits>& __is,
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 template<class _CharT, class _Traits, class _Allocator>
-inline
+inline _LIBCPP_INLINE_VISIBILITY
 basic_istream<_CharT, _Traits>&
 getline(basic_istream<_CharT, _Traits>&& __is,
         basic_string<_CharT, _Traits, _Allocator>& __str, _CharT __dlm)
@@ -1667,7 +1669,7 @@ getline(basic_istream<_CharT, _Traits>&& __is,
 }
 
 template<class _CharT, class _Traits, class _Allocator>
-inline
+inline _LIBCPP_INLINE_VISIBILITY
 basic_istream<_CharT, _Traits>&
 getline(basic_istream<_CharT, _Traits>&& __is,
         basic_string<_CharT, _Traits, _Allocator>& __str)
