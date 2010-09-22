@@ -10,20 +10,21 @@
 #include "llvm/Target/TargetAsmParser.h"
 #include "X86.h"
 #include "X86Subtarget.h"
-#include "llvm/ADT/SmallString.h"
-#include "llvm/ADT/SmallVector.h"
-#include "llvm/ADT/StringSwitch.h"
-#include "llvm/ADT/Twine.h"
+#include "llvm/Target/TargetRegistry.h"
+#include "llvm/Target/TargetAsmParser.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCParser/MCAsmLexer.h"
 #include "llvm/MC/MCParser/MCAsmParser.h"
 #include "llvm/MC/MCParser/MCParsedAsmOperand.h"
+#include "llvm/ADT/SmallString.h"
+#include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/StringExtras.h"
+#include "llvm/ADT/StringSwitch.h"
+#include "llvm/ADT/Twine.h"
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/Target/TargetRegistry.h"
-#include "llvm/Target/TargetAsmParser.h"
 using namespace llvm;
 
 namespace {
@@ -373,14 +374,18 @@ bool X86ATTAsmParser::ParseRegister(unsigned &RegNo,
   // validation later, so maybe there is no need for this here.
   RegNo = MatchRegisterName(Tok.getString());
 
+  // If the match failed, try the register name as lowercase.
+  if (RegNo == 0)
+    RegNo = MatchRegisterName(LowercaseString(Tok.getString()));
+  
   // FIXME: This should be done using Requires<In32BitMode> and
   // Requires<In64BitMode> so "eiz" usage in 64-bit instructions
   // can be also checked.
   if (RegNo == X86::RIZ && !Is64Bit)
     return Error(Tok.getLoc(), "riz register in 64-bit mode only");
 
-  // Parse %st(1) and "%st" as "%st(0)"
-  if (RegNo == 0 && Tok.getString() == "st") {
+  // Parse "%st" as "%st(0)" and "%st(1)", which is multiple tokens.
+  if (RegNo == 0 && (Tok.getString() == "st" || Tok.getString() == "ST")) {
     RegNo = X86::ST0;
     EndLoc = Tok.getLoc();
     Parser.Lex(); // Eat 'st'

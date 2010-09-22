@@ -316,3 +316,6 @@ enter $0x7ace,$0x7f
 // CHECK: encoding: [0xd9,0x18]
 fstp	(%eax)
 
+// rdar://8456364
+// CHECK: movw	%cs, %ax
+mov %CS, %ax
