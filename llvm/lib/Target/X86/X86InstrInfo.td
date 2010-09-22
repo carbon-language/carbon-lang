@@ -111,10 +111,10 @@ def X86setcc_c : SDNode<"X86ISD::SETCC_CARRY", SDTX86SetCC_C>;
 
 def X86cas : SDNode<"X86ISD::LCMPXCHG_DAG", SDTX86cas,
                         [SDNPHasChain, SDNPInFlag, SDNPOutFlag, SDNPMayStore,
-                         SDNPMayLoad]>;
+                         SDNPMayLoad, SDNPMemOperand]>;
 def X86cas8 : SDNode<"X86ISD::LCMPXCHG8_DAG", SDTX86cas8,
                         [SDNPHasChain, SDNPInFlag, SDNPOutFlag, SDNPMayStore,
-                         SDNPMayLoad]>;
+                         SDNPMayLoad, SDNPMemOperand]>;
 def X86AtomAdd64 : SDNode<"X86ISD::ATOMADD64_DAG", SDTX86atomicBinary,
                         [SDNPHasChain, SDNPMayStore, 
                          SDNPMayLoad, SDNPMemOperand]>;

@@ -4113,7 +4113,7 @@ X86TargetLowering::LowerAsSplatVectorLoad(SDValue SrcOp, EVT VT, DebugLoc dl,
 /// rather than undef via VZEXT_LOAD, but we do not detect that case today.
 /// There's even a handy isZeroNode for that purpose.
 static SDValue EltsFromConsecutiveLoads(EVT VT, SmallVectorImpl<SDValue> &Elts,
-                                        DebugLoc &dl, SelectionDAG &DAG) {
+                                        DebugLoc &DL, SelectionDAG &DAG) {
   EVT EltVT = VT.getVectorElementType();
   unsigned NumElems = Elts.size();
   
@@ -4150,18 +4150,20 @@ static SDValue EltsFromConsecutiveLoads(EVT VT, SmallVectorImpl<SDValue> &Elts,
   // consecutive loads for the low half, generate a vzext_load node.
   if (LastLoadedElt == NumElems - 1) {
     if (DAG.InferPtrAlignment(LDBase->getBasePtr()) >= 16)
-      return DAG.getLoad(VT, dl, LDBase->getChain(), LDBase->getBasePtr(),
+      return DAG.getLoad(VT, DL, LDBase->getChain(), LDBase->getBasePtr(),
                          LDBase->getPointerInfo(),
                          LDBase->isVolatile(), LDBase->isNonTemporal(), 0);
-    return DAG.getLoad(VT, dl, LDBase->getChain(), LDBase->getBasePtr(),
+    return DAG.getLoad(VT, DL, LDBase->getChain(), LDBase->getBasePtr(),
                        LDBase->getPointerInfo(),
                        LDBase->isVolatile(), LDBase->isNonTemporal(),
                        LDBase->getAlignment());
   } else if (NumElems == 4 && LastLoadedElt == 1) {
     SDVTList Tys = DAG.getVTList(MVT::v2i64, MVT::Other);
     SDValue Ops[] = { LDBase->getChain(), LDBase->getBasePtr() };
-    SDValue ResNode = DAG.getNode(X86ISD::VZEXT_LOAD, dl, Tys, Ops, 2);
-    return DAG.getNode(ISD::BIT_CONVERT, dl, VT, ResNode);
+    SDValue ResNode = DAG.getMemIntrinsicNode(X86ISD::VZEXT_LOAD, DL, Tys,
+                                              Ops, 2, MVT::i32,
+                                              LDBase->getMemOperand());
+    return DAG.getNode(ISD::BIT_CONVERT, DL, VT, ResNode);
   }
   return SDValue();
 }

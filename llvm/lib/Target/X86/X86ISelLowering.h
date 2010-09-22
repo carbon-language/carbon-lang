@@ -220,9 +220,6 @@ namespace llvm {
       // VZEXT_MOVL - Vector move low and zero extend.
       VZEXT_MOVL,
 
-      // VZEXT_LOAD - Load, scalar_to_vector, and zero extend.
-      VZEXT_LOAD,
-
       // VSHL, VSRL - Vector logical left / right shift.
       VSHL, VSRL,
 
@@ -309,8 +306,11 @@ namespace llvm {
       
       // LCMPXCHG_DAG, LCMPXCHG8_DAG - Compare and swap.
       LCMPXCHG_DAG,
-      LCMPXCHG8_DAG
+      LCMPXCHG8_DAG,
 
+      // VZEXT_LOAD - Load, scalar_to_vector, and zero extend.
+      VZEXT_LOAD
+      
       // WARNING: Do not add anything in the end unless you want the node to
       // have memop! In fact, starting from ATOMADD64_DAG all opcodes will be
       // thought as target memory ops!

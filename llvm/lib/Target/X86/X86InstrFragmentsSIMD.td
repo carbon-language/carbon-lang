@@ -102,7 +102,7 @@ def X86insrtps : SDNode<"X86ISD::INSERTPS",
 def X86vzmovl  : SDNode<"X86ISD::VZEXT_MOVL",
                  SDTypeProfile<1, 1, [SDTCisSameAs<0,1>]>>;
 def X86vzload  : SDNode<"X86ISD::VZEXT_LOAD", SDTLoad,
-                        [SDNPHasChain, SDNPMayLoad]>;
+                        [SDNPHasChain, SDNPMayLoad, SDNPMemOperand]>;
 def X86vshl    : SDNode<"X86ISD::VSHL",      SDTIntShiftOp>;
 def X86vshr    : SDNode<"X86ISD::VSRL",      SDTIntShiftOp>;
 def X86cmpps   : SDNode<"X86ISD::CMPPS",     SDTX86VFCMP>;

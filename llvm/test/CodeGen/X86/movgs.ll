@@ -1,5 +1,5 @@
-; RUN: llc < %s -march=x86 | FileCheck %s --check-prefix=X32
-; RUN: llc < %s -march=x86-64 | FileCheck %s --check-prefix=X64
+; RUN: llc < %s -march=x86 -mattr=sse41 | FileCheck %s --check-prefix=X32
+; RUN: llc < %s -march=x86-64 -mattr=sse41 | FileCheck %s --check-prefix=X64
 
 define i32 @test1() nounwind readonly {
 entry:
@@ -31,3 +31,27 @@ entry:
 
 ; X64: test2:
 ; X64: callq	*%gs:(%rdi)
+
+
+
+
+define <2 x i64> @pmovsxwd_1(i64 addrspace(256)* %p) nounwind readonly {
+entry:
+  %0 = load i64 addrspace(256)* %p
+  %tmp2 = insertelement <2 x i64> zeroinitializer, i64 %0, i32 0
+  %1 = bitcast <2 x i64> %tmp2 to <8 x i16>
+  %2 = tail call <4 x i32> @llvm.x86.sse41.pmovsxwd(<8 x i16> %1) nounwind readnone
+  %3 = bitcast <4 x i32> %2 to <2 x i64>
+  ret <2 x i64> %3
+  
+; X32: pmovsxwd_1:
+; X32: 	movl	4(%esp), %eax
+; X32: 	pmovsxwd	%gs:(%eax), %xmm0
+; X32: 	ret
+
+; X64: pmovsxwd_1:
+; X64:	pmovsxwd	%gs:(%rdi), %xmm0
+; X64:	ret
+}
+
+declare <4 x i32> @llvm.x86.sse41.pmovsxwd(<8 x i16>) nounwind readnone
