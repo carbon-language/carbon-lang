@@ -84,6 +84,7 @@ class ArrayTypesTestCase(TestBase):
         breakpoint = target.BreakpointCreateByLocation("main.c", 42)
         self.assertTrue(breakpoint.IsValid(), VALID_BREAKPOINT)
 
+        # Sanity check the print representation of breakpoint.
         bp = repr(breakpoint)
         self.expect(bp, msg="Breakpoint looks good", exe=False,
             substrs = ["file ='main.c'",
@@ -99,20 +100,24 @@ class ArrayTypesTestCase(TestBase):
         self.process = target.GetProcess()
         self.assertTrue(self.process.IsValid(), PROCESS_IS_VALID)
 
-        #procRepr = repr(self.process)
-        #print "procRepr:", procRepr
+        # Sanity check the print representation of process.
+        proc = repr(self.process)
+        self.expect(proc, msg="Process looks good", exe=False,
+            patterns = ["executable.+array_types.a\.out",
+                        "instance name:.+state: Stopped"])
 
         # The stop reason of the thread should be breakpoint.
         thread = self.process.GetThreadAtIndex(0)
         self.assertTrue(thread.GetStopReason() == StopReasonEnum("Breakpoint"),
                         STOPPED_DUE_TO_BREAKPOINT)
 
-        #threadRepr = repr(thread)
-        #print "threadRepr:", threadRepr
+        #thr = repr(thread)
+        #print "thr:", thr
 
         # The breakpoint should have a hit count of 1.
         self.assertTrue(breakpoint.GetHitCount() == 1, BREAKPOINT_HIT_ONCE)
 
+        # The breakpoint should be resolved by now.
         bp = repr(breakpoint)
         self.expect(bp, "Breakpoint looks good and is resolved", exe=False,
             substrs = ["file ='main.c'",
@@ -122,11 +127,11 @@ class ArrayTypesTestCase(TestBase):
 
         # Lookup the "strings" string array variable.
         frame = thread.GetFrameAtIndex(0)
-        #frameRepr = repr(frame)
-        #print "frameRepr:", frameRepr
+        #frm = repr(frame)
+        #print "frm:", frm
         variable = frame.LookupVar("strings")
-        #varRepr = repr(variable)
-        #print "varRepr:", varRepr
+        #var = repr(variable)
+        #print "var:", var
         self.DebugSBValue(frame, variable)
         self.assertTrue(variable.GetNumChildren() == 4,
                         "Variable 'strings' should have 4 children")
