@@ -17,18 +17,6 @@ import lldbtest
 
 #print "Hello, darwin plugin!"
 
-def getCCSpec(compiler):
-    """
-    Helper function to return the key-value string to specify the compiler
-    used for the make system.
-    """
-    cc = compiler if compiler else None
-    if not cc and "LLDB_CC" in os.environ:
-        cc = os.environ["LLDB_CC"]
-
-    # Note the leading space character.
-    return (" CC=" + cc) if cc else ""
-
 def getArchSpec(architecture):
     """
     Helper function to return the key-value string to specify the architecture
@@ -41,38 +29,69 @@ def getArchSpec(architecture):
     # Note the leading space character.
     return (" ARCH=" + arch) if arch else ""
 
+def getCCSpec(compiler):
+    """
+    Helper function to return the key-value string to specify the compiler
+    used for the make system.
+    """
+    cc = compiler if compiler else None
+    if not cc and "LLDB_CC" in os.environ:
+        cc = os.environ["LLDB_CC"]
 
-def buildDefault(architecture=None, compiler=None):
+    # Note the leading space character.
+    return (" CC=" + cc) if cc else ""
+
+def getCmdLine(d):
+    """
+    Helper function to return a properly formatted command line argument(s)
+    string used for the make system.
+    """
+
+    # If d is None or an empty mapping, just return an empty string.
+    if not d:
+        return ""
+
+    cmdline = " ".join(["%s='%s'" % (k, v) for k, v in d.items()])
+
+    # Note the leading space character.
+    return " " + cmdline
+
+
+def buildDefault(architecture=None, compiler=None, dictionary=None):
     """Build the binaries the default way."""
     lldbtest.system(["/bin/sh", "-c",
                      "make clean; make"
-                     + getArchSpec(architecture) + getCCSpec(compiler)])
+                     + getArchSpec(architecture) + getCCSpec(compiler)
+                     + getCmdLine(dictionary)])
 
     # True signifies that we can handle building default.
     return True
 
-def buildDsym(architecture=None, compiler=None):
+def buildDsym(architecture=None, compiler=None, dictionary=None):
     """Build the binaries with dsym debug info."""
     lldbtest.system(["/bin/sh", "-c",
                      "make clean; make MAKE_DSYM=YES"
-                     + getArchSpec(architecture) + getCCSpec(compiler)])
+                     + getArchSpec(architecture) + getCCSpec(compiler)
+                     + getCmdLine(dictionary)])
 
     # True signifies that we can handle building dsym.
     return True
 
-def buildDwarf(architecture=None, compiler=None):
+def buildDwarf(architecture=None, compiler=None, dictionary=None):
     """Build the binaries with dwarf debug info."""
     lldbtest.system(["/bin/sh", "-c",
                      "make clean; make MAKE_DSYM=NO"
-                     + getArchSpec(architecture) + getCCSpec(compiler)])
+                     + getArchSpec(architecture) + getCCSpec(compiler)
+                     + getCmdLine(dictionary)])
 
     # True signifies that we can handle building dsym.
     return True
 
-def cleanup():
-    """Do class-wide cleanup after the test."""
+def cleanup(dictionary=None):
+    """Perform a platform-specific cleanup after the test."""
     if os.path.isfile("Makefile"):
-        lldbtest.system(["/bin/sh", "-c", "make clean"])
+        lldbtest.system(["/bin/sh", "-c", "make clean" + getCmdLine(dictionary)]
+                        )
 
     # True signifies that we can handle building dsym.
     return True

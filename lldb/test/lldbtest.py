@@ -132,6 +132,8 @@ BREAKPOINT_PENDING_CREATED = "Pending breakpoint created successfully"
 
 BREAKPOINT_HIT_ONCE = "Breakpoint resolved with hit cout = 1"
 
+STEP_OUT_SUCCEEDED = "Thread step-out succeeded"
+
 STOPPED_DUE_TO_BREAKPOINT = "Process state is stopped due to breakpoint"
 
 STOPPED_DUE_TO_STEP_IN = "Process state is stopped due to step in"
@@ -354,6 +356,14 @@ class TestBase(unittest2.TestCase):
         # And the result object.
         self.res = lldb.SBCommandReturnObject()
 
+        # These are for customized teardown cleanup.
+        self.dict = None
+        self.doTearDownCleanup = False
+
+    def setTearDownCleanup(self, dictionary=None):
+        self.dict = dictionary
+        self.doTearDownCleanup = True
+
     def tearDown(self):
         #import traceback
         #traceback.print_stack()
@@ -366,6 +376,12 @@ class TestBase(unittest2.TestCase):
             self.assertTrue(rc.Success(), PROCESS_KILLED)
 
         del self.dbg
+
+        # Perform registered teardown cleanup.
+        if self.doTearDownCleanup:
+            module = __import__(sys.platform)
+            if not module.cleanup(dictionary=self.dict):
+                raise Exception("Don't know how to do cleanup")
 
     def runCmd(self, cmd, msg=None, check=True, trace=False, setCookie=True):
         """
@@ -549,22 +565,22 @@ class TestBase(unittest2.TestCase):
             # End of while loop.
 
 
-    def buildDefault(self, compiler=None):
+    def buildDefault(self, architecture=None, compiler=None, dictionary=None):
         """Platform specific way to build the default binaries."""
         module = __import__(sys.platform)
-        if not module.buildDefault(compiler):
+        if not module.buildDefault(architecture, compiler, dictionary):
             raise Exception("Don't know how to build default binary")
 
-    def buildDsym(self, compiler=None):
+    def buildDsym(self, architecture=None, compiler=None, dictionary=None):
         """Platform specific way to build binaries with dsym info."""
         module = __import__(sys.platform)
-        if not module.buildDsym(compiler):
+        if not module.buildDsym(architecture, compiler, dictionary):
             raise Exception("Don't know how to build binary with dsym")
 
-    def buildDwarf(self, compiler=None):
+    def buildDwarf(self, architecture=None, compiler=None, dictionary=None):
         """Platform specific way to build binaries with dwarf maps."""
         module = __import__(sys.platform)
-        if not module.buildDwarf(compiler):
+        if not module.buildDwarf(architecture, compiler, dictionary):
             raise Exception("Don't know how to build binary with dwarf")
 
     def DebugSBValue(self, frame, val):
