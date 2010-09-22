@@ -274,6 +274,10 @@ void llvm::sys::PrintStackTraceOnErrorSignal() {
 
 #ifdef __APPLE__
 
+int raise(int sig) {
+  return pthread_kill(pthread_self(), SIGABRT);
+}
+
 void __assert_rtn(const char *func,
                   const char *file,
                   int line,
@@ -291,7 +295,7 @@ void __assert_rtn(const char *func,
 #include <pthread.h>
 
 void abort() {
-  pthread_kill(pthread_self(), SIGABRT);
+  raise(SIGABRT);
   usleep(1000);
   __builtin_trap();
 }
