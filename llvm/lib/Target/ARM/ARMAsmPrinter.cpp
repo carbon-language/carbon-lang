@@ -1400,42 +1400,46 @@ void ARMAsmPrinter::EmitJump2Table(const MachineInstr *MI) {
   const MachineJumpTableInfo *MJTI = MF->getJumpTableInfo();
   const std::vector<MachineJumpTableEntry> &JT = MJTI->getJumpTables();
   const std::vector<MachineBasicBlock*> &JTBBs = JT[JTI].MBBs;
-  bool ByteOffset = false, HalfWordOffset = false;
+  unsigned OffsetWidth = 4;
   if (MI->getOpcode() == ARM::t2TBB)
-    ByteOffset = true;
+    OffsetWidth = 1;
   else if (MI->getOpcode() == ARM::t2TBH)
-    HalfWordOffset = true;
+    OffsetWidth = 2;
 
   for (unsigned i = 0, e = JTBBs.size(); i != e; ++i) {
     MachineBasicBlock *MBB = JTBBs[i];
+    const MCExpr *MBBSymbolExpr = MCSymbolRefExpr::Create(MBB->getSymbol(),
+                                                      OutContext);
     // If this isn't a TBB or TBH, the entries are direct branch instructions.
-    if (!ByteOffset && !HalfWordOffset) {
+    if (OffsetWidth == 4) {
       MCInst BrInst;
       BrInst.setOpcode(ARM::t2B);
-      BrInst.addOperand(MCOperand::CreateExpr(MCSymbolRefExpr::Create(
-            MBB->getSymbol(), OutContext)));
+      BrInst.addOperand(MCOperand::CreateExpr(MBBSymbolExpr));
       OutStreamer.EmitInstruction(BrInst);
       continue;
     }
     // Otherwise it's an offset from the dispatch instruction. Construct an
-    // MCExpr for the entry.
-    assert(0 && "FIXME: TB[BH] jump table!!");
-
-#if 0
-    if (ByteOffset)
-      O << MAI->getData8bitsDirective();
-    else if (HalfWordOffset)
-      O << MAI->getData16bitsDirective();
-
-    if (ByteOffset || HalfWordOffset)
-      O << '(' << *MBB->getSymbol() << "-" << *JTISymbol << ")/2";
-    else
-      O << "\tb.w " << *MBB->getSymbol();
-
-    if (i != e-1)
-      O << '\n';
-#endif
+    // MCExpr for the entry. We want a value of the form:
+    // (BasicBlockAddr - TableBeginAddr) / 2
+    //
+    // For example, a TBB table with entries jumping to basic blocks BB0 and BB1
+    // would look like:
+    // LJTI_0_0:
+    //    .byte (LBB0 - LJTI_0_0) / 2
+    //    .byte (LBB1 - LJTI_0_0) / 2
+    const MCExpr *Expr =
+      MCBinaryExpr::CreateSub(MBBSymbolExpr,
+                              MCSymbolRefExpr::Create(JTISymbol, OutContext),
+                              OutContext);
+    Expr = MCBinaryExpr::CreateDiv(Expr, MCConstantExpr::Create(2, OutContext),
+                                   OutContext);
+    OutStreamer.EmitValue(Expr, OffsetWidth);
   }
+
+  // Make sure the instruction that follows TBB is 2-byte aligned.
+  // FIXME: Constant island pass should insert an "ALIGN" instruction instead.
+  if (MI->getOpcode() == ARM::t2TBB)
+    EmitAlignment(1);
 }
 
 void ARMAsmPrinter::printInstructionThroughMCStreamer(const MachineInstr *MI) {
@@ -1654,7 +1658,6 @@ void ARMAsmPrinter::printInstructionThroughMCStreamer(const MachineInstr *MI) {
     MCInst TmpInst;
     MCInstLowering.Lower(MI, TmpInst);
     OutStreamer.EmitInstruction(TmpInst);
-
     EmitJump2Table(MI);
     return;
   }
