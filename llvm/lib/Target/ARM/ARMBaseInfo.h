@@ -181,7 +181,11 @@ namespace ARMII {
 
     /// MO_HI16 - On a symbol operand, this represents a relocation containing
     /// higher 16 bit of the address. Used only via movt instruction.
-    MO_HI16
+    MO_HI16,
+
+    /// MO_PLT - On a symbol operand, this represents an ELF PLT reference on a
+    /// call operand.
+    MO_PLT
   };
 } // end namespace ARMII
 

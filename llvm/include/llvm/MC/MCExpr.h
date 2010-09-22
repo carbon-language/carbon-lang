@@ -137,6 +137,7 @@ public:
     VK_TPOFF,
     VK_ARM_HI16, // The R_ARM_MOVT_ABS relocation (:upper16: in the asm file)
     VK_ARM_LO16, // The R_ARM_MOVW_ABS_NC relocation (:lower16: in the asm file)
+    VK_ARM_PLT,  // ARM-style PLT symbol references. i.e., (PLT) instead of @PLT
     VK_TLVP // Mach-O thread local variable relocation
   };
 

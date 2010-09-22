@@ -43,7 +43,8 @@ public:
   //MCSymbol *GetPICBaseSymbol() const;
   MCSymbol *GetGlobalAddressSymbol(const GlobalValue *GV) const;
   const MCSymbolRefExpr *GetSymbolRef(const MachineOperand &MO) const;
-  MCSymbol *GetExternalSymbolSymbol(const MachineOperand &MO) const;
+  const MCSymbolRefExpr *GetExternalSymbolSymbol(const MachineOperand &MO)
+    const;
   MCSymbol *GetJumpTableSymbol(const MachineOperand &MO) const;
   MCSymbol *GetConstantPoolIndexSymbol(const MachineOperand &MO) const;
   MCOperand LowerSymbolRefOperand(const MachineOperand &MO,

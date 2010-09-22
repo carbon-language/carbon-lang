@@ -33,7 +33,6 @@ MCSymbol *ARMMCInstLower::GetGlobalAddressSymbol(const GlobalValue *GV) const {
 const MCSymbolRefExpr *ARMMCInstLower::
 GetSymbolRef(const MachineOperand &MO) const {
   assert(MO.isGlobal() && "Isn't a global address reference?");
-  // FIXME: HANDLE PLT references how??
 
   const MCSymbolRefExpr *SymRef;
   const MCSymbol *Symbol = GetGlobalAddressSymbol(MO.getGlobal());
@@ -49,22 +48,36 @@ GetSymbolRef(const MachineOperand &MO) const {
   case ARMII::MO_HI16:
     SymRef = MCSymbolRefExpr::Create(Symbol, MCSymbolRefExpr::VK_ARM_HI16, Ctx);
     break;
+  case ARMII::MO_PLT:
+    SymRef = MCSymbolRefExpr::Create(Symbol, MCSymbolRefExpr::VK_ARM_PLT, Ctx);
+    break;
   }
 
   return SymRef;
 }
 
-MCSymbol *ARMMCInstLower::
+const MCSymbolRefExpr *ARMMCInstLower::
 GetExternalSymbolSymbol(const MachineOperand &MO) const {
-  // FIXME: HANDLE PLT references how??
-  // FIXME: This probably needs to be merged with the above SymbolRef stuff
-  // to handle :lower16: and :upper16: (?)
+  const MCSymbolRefExpr *SymRef;
+  const MCSymbol *Symbol = Printer.GetExternalSymbolSymbol(MO.getSymbolName());
+
   switch (MO.getTargetFlags()) {
-  default: assert(0 && "Unknown target flag on GV operand");
-  case 0: break;
+  default: assert(0 && "Unknown target flag on external symbol operand");
+  case 0:
+    SymRef = MCSymbolRefExpr::Create(Symbol, MCSymbolRefExpr::VK_None, Ctx);
+    break;
+  case ARMII::MO_LO16:
+    SymRef = MCSymbolRefExpr::Create(Symbol, MCSymbolRefExpr::VK_ARM_LO16, Ctx);
+    break;
+  case ARMII::MO_HI16:
+    SymRef = MCSymbolRefExpr::Create(Symbol, MCSymbolRefExpr::VK_ARM_HI16, Ctx);
+    break;
+  case ARMII::MO_PLT:
+    SymRef = MCSymbolRefExpr::Create(Symbol, MCSymbolRefExpr::VK_ARM_PLT, Ctx);
+    break;
   }
 
-  return Printer.GetExternalSymbolSymbol(MO.getSymbolName());
+  return SymRef;
 }
 
 
@@ -157,7 +170,7 @@ void ARMMCInstLower::Lower(const MachineInstr *MI, MCInst &OutMI) const {
       MCOp = LowerSymbolRefOperand(MO, GetSymbolRef(MO));
       break;
     case MachineOperand::MO_ExternalSymbol:
-      MCOp = LowerSymbolOperand(MO, GetExternalSymbolSymbol(MO));
+      MCOp = LowerSymbolRefOperand(MO, GetExternalSymbolSymbol(MO));
       break;
     case MachineOperand::MO_JumpTableIndex:
       MCOp = LowerSymbolOperand(MO, GetJumpTableSymbol(MO));

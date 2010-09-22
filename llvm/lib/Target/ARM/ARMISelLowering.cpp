@@ -1195,8 +1195,14 @@ ARMTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
       SDValue PICLabel = DAG.getConstant(ARMPCLabelIndex, MVT::i32);
       Callee = DAG.getNode(ARMISD::PIC_ADD, dl,
                            getPointerTy(), Callee, PICLabel);
-    } else
-      Callee = DAG.getTargetGlobalAddress(GV, dl, getPointerTy());
+    } else {
+      // On ELF targets for PIC code, direct calls should go through the PLT
+      unsigned OpFlags = 0;
+      if (Subtarget->isTargetELF() &&
+                  getTargetMachine().getRelocationModel() == Reloc::PIC_)
+        OpFlags = ARMII::MO_PLT;
+      Callee = DAG.getTargetGlobalAddress(GV, dl, getPointerTy(), 0, OpFlags);
+    }
   } else if (ExternalSymbolSDNode *S = dyn_cast<ExternalSymbolSDNode>(Callee)) {
     isDirect = true;
     bool isStub = Subtarget->isTargetDarwin() &&
@@ -1217,8 +1223,14 @@ ARMTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
       SDValue PICLabel = DAG.getConstant(ARMPCLabelIndex, MVT::i32);
       Callee = DAG.getNode(ARMISD::PIC_ADD, dl,
                            getPointerTy(), Callee, PICLabel);
-    } else
-      Callee = DAG.getTargetExternalSymbol(Sym, getPointerTy());
+    } else {
+      unsigned OpFlags = 0;
+      // On ELF targets for PIC code, direct calls should go through the PLT
+      if (Subtarget->isTargetELF() &&
+                  getTargetMachine().getRelocationModel() == Reloc::PIC_)
+        OpFlags = ARMII::MO_PLT;
+      Callee = DAG.getTargetExternalSymbol(Sym, getPointerTy(), OpFlags);
+    }
   }
 
   // FIXME: handle tail calls differently.
