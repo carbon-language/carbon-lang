@@ -231,6 +231,8 @@ namespace llvm {
       /// TBAATag - The TBAA tag associated with dereferences of the
       /// pointer. May be null if there are no tags or conflicting tags.
       MDNode *TBAATag;
+
+      NonLocalPointerInfo() : TBAATag(0) {}
     };
 
     /// CachedNonLocalPointerInfo - This map stores the cached results of doing
