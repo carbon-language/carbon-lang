@@ -95,9 +95,9 @@ void AnalyzerStatsChecker::VisitEndAnalysis(ExplodedGraph &G,
 
   output << " -> Total CFGBlocks: " << total << " | Unreachable CFGBlocks: "
       << unreachable << " | Aborted Block: "
-      << (Eng.wasBlockAborted() ? "no" : "yes")
+      << (Eng.wasBlockAborted() ? "yes" : "no")
       << " | Empty WorkList: "
-      << (Eng.hasEmptyWorkList() ? "yes" : "no") << "\n";
+      << (Eng.hasEmptyWorkList() ? "yes" : "no");
 
   B.EmitBasicReport("Analyzer Statistics", "Internal Statistics", output.str(),
       D->getLocation());
