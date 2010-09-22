@@ -236,7 +236,7 @@ void MCAsmStreamer::EmitLabel(MCSymbol *Symbol) {
   assert(!Symbol->isVariable() && "Cannot emit a variable symbol!");
   assert(CurSection && "Cannot emit before setting section!");
 
-  OS << *Symbol << ":";
+  OS << *Symbol << MAI.getLabelSuffix();
   EmitEOL();
   Symbol->setSection(*CurSection);
 }

@@ -28,6 +28,7 @@ MCAsmInfo::MCAsmInfo() {
   SeparatorChar = ';';
   CommentColumn = 40;
   CommentString = "#";
+  LabelSuffix = ":";
   GlobalPrefix = "";
   PrivateGlobalPrefix = ".";
   LinkerPrivateGlobalPrefix = "";

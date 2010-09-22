@@ -72,6 +72,9 @@ namespace llvm {
     /// assembler.
     const char *CommentString;               // Defaults to "#"
 
+    /// LabelSuffix - This is appended to emitted labels.
+    const char *LabelSuffix;                 // Defaults to ":"
+
     /// GlobalPrefix - If this is set to a non-empty string, it is prepended
     /// onto all global symbols.  This is often used for "_" or ".".
     const char *GlobalPrefix;                // Defaults to ""
@@ -333,6 +336,9 @@ namespace llvm {
     }
     const char *getCommentString() const {
       return CommentString;
+    }
+    const char *getLabelSuffix() const {
+      return LabelSuffix;
     }
     const char *getGlobalPrefix() const {
       return GlobalPrefix;
