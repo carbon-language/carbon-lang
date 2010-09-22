@@ -40,7 +40,7 @@ class MCELFStreamer : public MCObjectStreamer {
 public:
   MCELFStreamer(MCContext &Context, TargetAsmBackend &TAB,
                   raw_ostream &OS, MCCodeEmitter *Emitter)
-    : MCObjectStreamer(Context, TAB, OS, Emitter) {}
+    : MCObjectStreamer(Context, TAB, OS, Emitter, false) {}
 
   ~MCELFStreamer() {}
 

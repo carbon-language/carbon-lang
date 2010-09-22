@@ -605,6 +605,7 @@ private:
 
   unsigned RelaxAll : 1;
   unsigned SubsectionsViaSymbols : 1;
+  unsigned PadSectionToAlignment : 1;
 
 private:
   /// Evaluate a fixup to a relocatable expression and the value which should be
@@ -676,7 +677,8 @@ public:
   // option is to make this abstract, and have targets provide concrete
   // implementations as we do with AsmParser.
   MCAssembler(MCContext &_Context, TargetAsmBackend &_Backend,
-              MCCodeEmitter &_Emitter, raw_ostream &OS);
+              MCCodeEmitter &_Emitter, bool _PadSectionToAlignment,
+              raw_ostream &OS);
   ~MCAssembler();
 
   MCContext &getContext() const { return Context; }

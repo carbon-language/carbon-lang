@@ -86,7 +86,7 @@ WinCOFFStreamer::WinCOFFStreamer(MCContext &Context,
                                  TargetAsmBackend &TAB,
                                  MCCodeEmitter &CE,
                                  raw_ostream &OS)
-    : MCObjectStreamer(Context, TAB, OS, &CE)
+    : MCObjectStreamer(Context, TAB, OS, &CE, true)
     , CurSymbol(NULL) {
 }
 

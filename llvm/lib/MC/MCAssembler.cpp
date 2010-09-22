@@ -221,9 +221,11 @@ MCSymbolData::MCSymbolData(const MCSymbol &_Symbol, MCFragment *_Fragment,
 /* *** */
 
 MCAssembler::MCAssembler(MCContext &_Context, TargetAsmBackend &_Backend,
-                         MCCodeEmitter &_Emitter, raw_ostream &_OS)
+                         MCCodeEmitter &_Emitter, bool _PadSectionToAlignment,
+                         raw_ostream &_OS)
   : Context(_Context), Backend(_Backend), Emitter(_Emitter),
-    OS(_OS), RelaxAll(false), SubsectionsViaSymbols(false)
+    OS(_OS), RelaxAll(false), SubsectionsViaSymbols(false),
+    PadSectionToAlignment(_PadSectionToAlignment)
 {
 }
 
@@ -712,25 +714,25 @@ void MCAssembler::Finish(MCObjectWriter *Writer) {
   // Insert additional align fragments for concrete sections to explicitly pad
   // the previous section to match their alignment requirements. This is for
   // 'gas' compatibility, it shouldn't strictly be necessary.
-  //
-  // FIXME: This may be Mach-O specific.
-  for (unsigned i = 1, e = Layout.getSectionOrder().size(); i < e; ++i) {
-    MCSectionData *SD = Layout.getSectionOrder()[i];
+  if (PadSectionToAlignment) {
+    for (unsigned i = 1, e = Layout.getSectionOrder().size(); i < e; ++i) {
+      MCSectionData *SD = Layout.getSectionOrder()[i];
 
-    // Ignore sections without alignment requirements.
-    unsigned Align = SD->getAlignment();
-    if (Align <= 1)
-      continue;
+      // Ignore sections without alignment requirements.
+      unsigned Align = SD->getAlignment();
+      if (Align <= 1)
+        continue;
 
-    // Ignore virtual sections, they don't cause file size modifications.
-    if (getBackend().isVirtualSection(SD->getSection()))
-      continue;
+      // Ignore virtual sections, they don't cause file size modifications.
+      if (getBackend().isVirtualSection(SD->getSection()))
+        continue;
 
-    // Otherwise, create a new align fragment at the end of the previous
-    // section.
-    MCAlignFragment *AF = new MCAlignFragment(Align, 0, 1, Align,
-                                              Layout.getSectionOrder()[i - 1]);
-    AF->setOnlyAlignAddress(true);
+      // Otherwise, create a new align fragment at the end of the previous
+      // section.
+      MCAlignFragment *AF = new MCAlignFragment(Align, 0, 1, Align,
+                                                Layout.getSectionOrder()[i - 1]);
+      AF->setOnlyAlignAddress(true);
+    }
   }
 
   // Create dummy fragments and assign section ordinals.
