@@ -1015,6 +1015,14 @@ ParseInstruction(StringRef Name, SMLoc NameLoc,
     Operands[0] = X86Operand::CreateToken("movsl", NameLoc);
   }
   
+  // fstp <mem> -> fstps <mem>.  Without this, we'll default to fstpl due to
+  // suffix searching.
+  if (Name == "fstp" && Operands.size() == 2 &&
+      static_cast<X86Operand*>(Operands[1])->isMem()) {
+    delete Operands[0];
+    Operands[0] = X86Operand::CreateToken("fstps", NameLoc);
+  }
+  
   return false;
 }
 

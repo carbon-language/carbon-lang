@@ -310,3 +310,9 @@ enter $0x7ace,$0
 enter $0x7ace,$1
 enter $0x7ace,$0x7f
 
+
+// rdar://8456389
+// CHECK: fstps	(%eax)
+// CHECK: encoding: [0xd9,0x18]
+fstp	(%eax)
+
