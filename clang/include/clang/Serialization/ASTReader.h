@@ -198,26 +198,7 @@ private:
     PerFileData();
     ~PerFileData();
 
-    /// \brief The AST stat cache installed for this file, if any.
-    ///
-    /// The dynamic type of this stat cache is always ASTStatCache
-    void *StatCache;
-
-    /// \brief The bitstream reader from which we'll read the AST file.
-    llvm::BitstreamReader StreamFile;
-    llvm::BitstreamCursor Stream;
-
-    /// \brief The size of this file, in bits.
-    uint64_t SizeInBits;
-
-    /// \brief The cursor to the start of the preprocessor block, which stores
-    /// all of the macro definitions.
-    llvm::BitstreamCursor MacroCursor;
-      
-    /// DeclsCursor - This is a cursor to the start of the DECLS_BLOCK block. It
-    /// has read all the abbreviations at the start of the block and is ready to
-    /// jump around with these in context.
-    llvm::BitstreamCursor DeclsCursor;
+    // === General information ===
 
     /// \brief The file name of the AST file.
     std::string FileName;
@@ -225,6 +206,17 @@ private:
     /// \brief The memory buffer that stores the data associated with
     /// this AST file.
     llvm::OwningPtr<llvm::MemoryBuffer> Buffer;
+
+    /// \brief The size of this file, in bits.
+    uint64_t SizeInBits;
+
+    /// \brief The bitstream reader from which we'll read the AST file.
+    llvm::BitstreamReader StreamFile;
+
+    /// \brief The main bitstream cursor for the main block.
+    llvm::BitstreamCursor Stream;
+
+    // === Source Locations ===
 
     /// \brief Cursor used to read source location entries.
     llvm::BitstreamCursor SLocEntryCursor;
@@ -236,19 +228,7 @@ private:
     /// AST file.
     const uint32_t *SLocOffsets;
 
-    /// \brief The number of types in this AST file.
-    unsigned LocalNumTypes;
-
-    /// \brief Offset of each type within the bitstream, indexed by the
-    /// type ID, or the representation of a Type*.
-    const uint32_t *TypeOffsets;
-
-    /// \brief The number of declarations in this AST file.
-    unsigned LocalNumDecls;
-
-    /// \brief Offset of each declaration within the bitstream, indexed
-    /// by the declaration ID (-1).
-    const uint32_t *DeclOffsets;
+    // === Identifiers ===
 
     /// \brief The number of identifiers in this AST file.
     unsigned LocalNumIdentifiers;
@@ -262,13 +242,15 @@ private:
 
     /// \brief Actual data for the on-disk hash table.
     ///
-    // This pointer points into a memory buffer, where the on-disk hash
-    // table for identifiers actually lives.
+    /// This pointer points into a memory buffer, where the on-disk hash
+    /// table for identifiers actually lives.
     const char *IdentifierTableData;
 
     /// \brief A pointer to an on-disk hash table of opaque type
     /// IdentifierHashTable.
     void *IdentifierLookupTable;
+
+    // === Macros ===
 
     /// \brief The number of macro definitions in this file.
     unsigned LocalNumMacroDefinitions;
@@ -276,10 +258,26 @@ private:
     /// \brief Offsets of all of the macro definitions in the preprocessing
     /// record in the AST file.
     const uint32_t *MacroDefinitionOffsets;
-      
-    /// \brief The number of preallocated preprocessing entities in the
-    /// preprocessing record.
-    unsigned NumPreallocatedPreprocessingEntities;
+
+    // === Selectors ===
+
+    /// \brief The cursor to the start of the preprocessor block, which stores
+    /// all of the macro definitions.
+    llvm::BitstreamCursor MacroCursor;
+
+    /// \brief The number of selectors new to this file.
+    ///
+    /// This is the number of entries in SelectorOffsets.
+    unsigned LocalNumSelectors;
+
+    /// \brief Offsets into the selector lookup table's data array
+    /// where each selector resides.
+    const uint32_t *SelectorOffsets;
+
+    /// \brief A pointer to the character data that comprises the selector table
+    ///
+    /// The SelectorOffsets table refers into this memory.
+    const unsigned char *SelectorLookupTableData;
 
     /// \brief A pointer to an on-disk hash table of opaque type
     /// ASTSelectorLookupTable.
@@ -288,19 +286,39 @@ private:
     /// instance and factory methods.
     void *SelectorLookupTable;
 
-    /// \brief A pointer to the character data that comprises the selector table
-    ///
-    /// The SelectorOffsets table refers into this memory.
-    const unsigned char *SelectorLookupTableData;
+    // === Declarations ===
+      
+    /// DeclsCursor - This is a cursor to the start of the DECLS_BLOCK block. It
+    /// has read all the abbreviations at the start of the block and is ready to
+    /// jump around with these in context.
+    llvm::BitstreamCursor DeclsCursor;
 
-    /// \brief Offsets into the method pool lookup table's data array
-    /// where each selector resides.
-    const uint32_t *SelectorOffsets;
+    /// \brief The number of declarations in this AST file.
+    unsigned LocalNumDecls;
 
-    /// \brief The number of selectors new to this file.
+    /// \brief Offset of each declaration within the bitstream, indexed
+    /// by the declaration ID (-1).
+    const uint32_t *DeclOffsets;
+
+    // === Types ===
+
+    /// \brief The number of types in this AST file.
+    unsigned LocalNumTypes;
+
+    /// \brief Offset of each type within the bitstream, indexed by the
+    /// type ID, or the representation of a Type*.
+    const uint32_t *TypeOffsets;
+
+    // === Miscellaneous ===
+
+    /// \brief The AST stat cache installed for this file, if any.
     ///
-    /// This is the number of entries in SelectorOffsets.
-    unsigned LocalNumSelectors;
+    /// The dynamic type of this stat cache is always ASTStatCache
+    void *StatCache;
+      
+    /// \brief The number of preallocated preprocessing entities in the
+    /// preprocessing record.
+    unsigned NumPreallocatedPreprocessingEntities;
   };
 
   /// \brief The chain of AST files. The first entry is the one named by the

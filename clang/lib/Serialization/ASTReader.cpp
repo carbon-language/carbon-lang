@@ -4133,12 +4133,13 @@ ASTReader::~ASTReader() {
 }
 
 ASTReader::PerFileData::PerFileData()
-  : StatCache(0), LocalNumSLocEntries(0), LocalNumTypes(0), TypeOffsets(0),
-    LocalNumDecls(0), DeclOffsets(0), LocalNumIdentifiers(0),
-    IdentifierOffsets(0), IdentifierTableData(0), IdentifierLookupTable(0),
-    LocalNumMacroDefinitions(0), MacroDefinitionOffsets(0),
-    NumPreallocatedPreprocessingEntities(0), SelectorLookupTable(0),
-    SelectorLookupTableData(0), SelectorOffsets(0), LocalNumSelectors(0)
+  : SizeInBits(0), LocalNumSLocEntries(0), SLocOffsets(0),
+    LocalNumIdentifiers(0), IdentifierOffsets(0), IdentifierTableData(0),
+    IdentifierLookupTable(0), LocalNumMacroDefinitions(0),
+    MacroDefinitionOffsets(0), LocalNumSelectors(0), SelectorOffsets(0),
+    SelectorLookupTableData(0), SelectorLookupTable(0), LocalNumDecls(0),
+    DeclOffsets(0), LocalNumTypes(0), TypeOffsets(0), StatCache(0),
+    NumPreallocatedPreprocessingEntities(0)
 {}
 
 ASTReader::PerFileData::~PerFileData() {
