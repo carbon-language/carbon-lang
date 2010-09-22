@@ -812,7 +812,7 @@ void ELFObjectWriterImpl::CreateMetadataSections(MCAssembler &Asm,
 
   unsigned NumRegularSections = Asm.size();
 
-  // We construct .shstrtab, .symtab and .strtab is this order to match gnu as.
+  // We construct .shstrtab, .symtab and .strtab in this order to match gnu as.
   const MCSection *ShstrtabSection;
   ShstrtabSection = Ctx.getELFSection(".shstrtab", ELF::SHT_STRTAB, 0,
                                       SectionKind::getReadOnly(), false);
@@ -856,6 +856,7 @@ void ELFObjectWriterImpl::CreateMetadataSections(MCAssembler &Asm,
          ie = Asm.end(); it != ie; ++it) {
     const MCSectionELF &Section =
       static_cast<const MCSectionELF&>(it->getSection());
+    // FIXME: We could merge prefixes like in .text and .text.rela.
 
     // Remember the index into the string table so we can write it
     // into the sh_name field of the section header table.
