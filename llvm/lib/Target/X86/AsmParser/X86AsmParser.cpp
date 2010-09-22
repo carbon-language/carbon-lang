@@ -1009,6 +1009,12 @@ ParseInstruction(StringRef Name, SMLoc NameLoc,
                                           NameLoc);
   }
   
+  // movsd -> movsl (when no operands are specified).
+  if (Name == "movsd" && Operands.size() == 1) {
+    delete Operands[0];
+    Operands[0] = X86Operand::CreateToken("movsl", NameLoc);
+  }
+  
   return false;
 }
 

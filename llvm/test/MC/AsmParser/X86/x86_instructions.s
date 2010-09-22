@@ -83,6 +83,11 @@
 // CHECK: movsb
         rep;movsb
 
+// rdar://8456361
+// CHECK: rep
+// CHECK: movsl
+        rep movsd
+
 // CHECK: rep
 // CHECK: lodsb
         rep;lodsb
