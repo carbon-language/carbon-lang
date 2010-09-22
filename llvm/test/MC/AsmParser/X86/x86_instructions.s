@@ -340,4 +340,16 @@ fcmova %st(1), %st(0)   // CHECK: fcmovnbe	%st(1), %st(0)
 // rdar://8456417
 .byte 88 + 1 & 15  // CHECK: .byte	9
 
-
+// rdar://8456412
+mov %rdx, %cr0
+// CHECK: movq	%rdx, %cr0
+// CHECK: encoding: [0x0f,0x22,0xc2]
+mov %rdx, %cr4
+// CHECK: movq	%rdx, %cr4
+// CHECK: encoding: [0x0f,0x22,0xe2]
+mov %rdx, %cr8
+// CHECK: movq	%rdx, %cr8
+// CHECK: encoding: [0x44,0x0f,0x22,0xc2]
+mov %rdx, %cr15
+// CHECK: movq	%rdx, %cr15
+// CHECK: encoding: [0x44,0x0f,0x22,0xfa]
