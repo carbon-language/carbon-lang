@@ -353,3 +353,11 @@ mov %rdx, %cr8
 mov %rdx, %cr15
 // CHECK: movq	%rdx, %cr15
 // CHECK: encoding: [0x44,0x0f,0x22,0xfa]
+
+// rdar://8456371 - Handle commutable instructions written backward.
+// CHECK: 	faddp	%st(1)
+// CHECK:	fmulp	%st(2)
+faddp %st, %st(1)
+fmulp %st, %st(2)
+
+

@@ -911,6 +911,16 @@ ParseInstruction(StringRef Name, SMLoc NameLoc,
     Operands.erase(Operands.begin() + 2);
   }
 
+  // FIXME: Hack to handle "f{mul*,add*} st(0), $op" the same as
+  // "f{mul*,add*} $op", since they commute.
+  if ((Name.startswith("fmul") || Name.startswith("fadd")) &&
+      Operands.size() == 3 &&
+      static_cast<X86Operand*>(Operands[1])->isReg() &&
+      static_cast<X86Operand*>(Operands[1])->getReg() == X86::ST0) {
+    delete Operands[1];
+    Operands.erase(Operands.begin() + 1);
+  }
+  
   // FIXME: Hack to handle "imul <imm>, B" which is an alias for "imul <imm>, B,
   // B".
   if (Name.startswith("imul") && Operands.size() == 3 &&
