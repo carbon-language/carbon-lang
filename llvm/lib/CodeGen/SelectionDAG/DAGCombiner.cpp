@@ -6808,6 +6808,35 @@ SDValue DAGCombiner::SimplifySelectCC(DebugLoc DL, SDValue N0, SDValue N1,
     }
   }
 
+  // fold (select_cc seteq (and x, y), 0, 0, A) -> (and (shr (shl x)) A)
+  // where y is has a single bit set.
+  // A plaintext description would be, we can turn the SELECT_CC into an AND
+  // when the condition can be materialized as an all-ones register.  Any
+  // single bit-test can be materialized as an all-ones register with
+  // shift-left and shift-right-arith.
+  if (CC == ISD::SETEQ && N0->getOpcode() == ISD::AND &&
+      N0->getValueType(0) == VT &&
+      N1C && N1C->isNullValue() && 
+      N2C && N2C->isNullValue()) {
+    SDValue AndLHS = N0->getOperand(0);
+    ConstantSDNode *ConstAndRHS = dyn_cast<ConstantSDNode>(N0->getOperand(1));
+    if (ConstAndRHS && ConstAndRHS->getAPIntValue().countPopulation() == 1) {
+      // Shift the tested bit over the sign bit.
+      APInt AndMask = ConstAndRHS->getAPIntValue();
+      SDValue ShlAmt =
+        DAG.getConstant(AndMask.countLeadingZeros(), getShiftAmountTy());
+      SDValue Shl = DAG.getNode(ISD::SHL, N0.getDebugLoc(), VT, AndLHS, ShlAmt);
+      
+      // Now arithmetic right shift it all the way over, so the result is either
+      // all-ones, or zero.
+      SDValue ShrAmt =
+        DAG.getConstant(AndMask.getBitWidth()-1, getShiftAmountTy());
+      SDValue Shr = DAG.getNode(ISD::SRA, N0.getDebugLoc(), VT, Shl, ShrAmt);
+      
+      return DAG.getNode(ISD::AND, DL, VT, Shr, N3);
+    }
+  }
+
   // fold select C, 16, 0 -> shl C, 4
   if (N2C && N3C && N3C->isNullValue() && N2C->getAPIntValue().isPowerOf2() &&
       TLI.getBooleanContents() == TargetLowering::ZeroOrOneBooleanContent) {
