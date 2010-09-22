@@ -190,8 +190,7 @@ namespace {
     SDNode *SelectAtomic64(SDNode *Node, unsigned Opc);
     SDNode *SelectAtomicLoadAdd(SDNode *Node, EVT NVT);
 
-    bool MatchSegmentBaseAddress(SDValue N, X86ISelAddressMode &AM);
-    bool MatchLoad(SDValue N, X86ISelAddressMode &AM);
+    bool MatchLoadInAddress(LoadSDNode *N, X86ISelAddressMode &AM);
     bool MatchWrapper(SDValue N, X86ISelAddressMode &AM);
     bool MatchAddress(SDValue N, X86ISelAddressMode &AM);
     bool MatchAddressRecursively(SDValue N, X86ISelAddressMode &AM,
@@ -544,29 +543,27 @@ void X86DAGToDAGISel::EmitFunctionEntryCode() {
 }
 
 
-bool X86DAGToDAGISel::MatchSegmentBaseAddress(SDValue N,
-                                              X86ISelAddressMode &AM) {
-  assert(N.getOpcode() == X86ISD::SegmentBaseAddress);
-  SDValue Segment = N.getOperand(0);
-
-  if (AM.Segment.getNode() == 0) {
-    AM.Segment = Segment;
-    return false;
-  }
-
-  return true;
-}
-
-bool X86DAGToDAGISel::MatchLoad(SDValue N, X86ISelAddressMode &AM) {
+bool X86DAGToDAGISel::MatchLoadInAddress(LoadSDNode *N, X86ISelAddressMode &AM){
+  SDValue Address = N->getOperand(1);
+  
+  // load gs:0 -> GS segment register.
+  // load fs:0 -> FS segment register.
+  //
   // This optimization is valid because the GNU TLS model defines that
   // gs:0 (or fs:0 on X86-64) contains its own address.
   // For more information see http://people.redhat.com/drepper/tls.pdf
-
-  SDValue Address = N.getOperand(1);
-  if (Address.getOpcode() == X86ISD::SegmentBaseAddress &&
-      !MatchSegmentBaseAddress(Address, AM))
-    return false;
-
+  if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(Address))
+    if (C->getSExtValue() == 0 && AM.Segment.getNode() == 0 &&
+        Subtarget->isTargetELF())
+      switch (N->getPointerInfo().getAddrSpace()) {
+      case 256:
+        AM.Segment = CurDAG->getRegister(X86::GS, MVT::i16);
+        return false;
+      case 257:
+        AM.Segment = CurDAG->getRegister(X86::FS, MVT::i16);
+        return false;
+      }
+  
   return true;
 }
 
@@ -751,11 +748,6 @@ bool X86DAGToDAGISel::MatchAddressRecursively(SDValue N, X86ISelAddressMode &AM,
     break;
   }
 
-  case X86ISD::SegmentBaseAddress:
-    if (!MatchSegmentBaseAddress(N, AM))
-      return false;
-    break;
-
   case X86ISD::Wrapper:
   case X86ISD::WrapperRIP:
     if (!MatchWrapper(N, AM))
@@ -763,7 +755,7 @@ bool X86DAGToDAGISel::MatchAddressRecursively(SDValue N, X86ISelAddressMode &AM,
     break;
 
   case ISD::LOAD:
-    if (!MatchLoad(N, AM))
+    if (!MatchLoadInAddress(cast<LoadSDNode>(N), AM))
       return false;
     break;
 
@@ -1151,6 +1143,22 @@ bool X86DAGToDAGISel::SelectAddr(SDNode *Parent, SDValue N, SDValue &Base,
                                  SDValue &Scale, SDValue &Index,
                                  SDValue &Disp, SDValue &Segment) {
   X86ISelAddressMode AM;
+  
+  if (Parent &&
+      // This list of opcodes are all the nodes that have an "addr:$ptr" operand
+      // that are not a MemSDNode, and thus don't have proper addrspace info.
+      Parent->getOpcode() != ISD::PREFETCH &&
+      Parent->getOpcode() != ISD::INTRINSIC_W_CHAIN && // unaligned loads, fixme
+      Parent->getOpcode() != ISD::INTRINSIC_VOID) { // nontemporal stores.
+    unsigned AddrSpace =
+      cast<MemSDNode>(Parent)->getPointerInfo().getAddrSpace();
+    // AddrSpace 256 -> GS, 257 -> FS.
+    if (AddrSpace == 256)
+      AM.Segment = CurDAG->getRegister(X86::GS, MVT::i16);
+    if (AddrSpace == 257)
+      AM.Segment = CurDAG->getRegister(X86::FS, MVT::i16);
+  }
+  
   if (MatchAddress(N, AM))
     return false;
 
@@ -1163,22 +1171,6 @@ bool X86DAGToDAGISel::SelectAddr(SDNode *Parent, SDValue N, SDValue &Base,
   if (!AM.IndexReg.getNode())
     AM.IndexReg = CurDAG->getRegister(0, VT);
 
-  if (Parent &&
-      // This list of opcodes are all the nodes that have an "addr:$ptr" operand
-      // that are not a MemSDNode, and thus don't have proper addrspace info.
-      Parent->getOpcode() != ISD::PREFETCH &&
-      Parent->getOpcode() != ISD::INTRINSIC_W_CHAIN && // unaligned loads, fixme
-      Parent->getOpcode() != ISD::INTRINSIC_VOID) { // nontemporal stores.
-    unsigned AddrSpace =
-      cast<MemSDNode>(Parent)->getPointerInfo().getAddrSpace();
-    // AddrSpace 256 -> GS, 257 -> FS.
-    if (AddrSpace == 256)
-      AM.Segment = CurDAG->getRegister(X86::GS, VT);
-    if (AddrSpace == 257)
-      AM.Segment = CurDAG->getRegister(X86::FS, VT);
-  }
-  
-  
   getAddressOperands(AM, Base, Scale, Index, Disp, Segment);
   return true;
 }

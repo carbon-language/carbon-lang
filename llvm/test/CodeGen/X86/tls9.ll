@@ -5,7 +5,7 @@
 
 @i = external hidden thread_local global i32
 
-define i32 @f() {
+define i32 @f() nounwind {
 entry:
 	%tmp1 = load i32* @i
 	ret i32 %tmp1

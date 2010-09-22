@@ -6150,14 +6150,14 @@ static SDValue LowerToTLSExecModel(GlobalAddressSDNode *GA, SelectionDAG &DAG,
                                    const EVT PtrVT, TLSModel::Model model,
                                    bool is64Bit) {
   DebugLoc dl = GA->getDebugLoc();
-  // Get the Thread Pointer
-  SDValue Base = DAG.getNode(X86ISD::SegmentBaseAddress,
-                             DebugLoc(), PtrVT,
-                             DAG.getRegister(is64Bit? X86::FS : X86::GS,
-                                             MVT::i32));
+  
+  // Get the Thread Pointer, which is %gs:0 (32-bit) or %fs:0 (64-bit).
+  Value *Ptr = Constant::getNullValue(Type::getInt8PtrTy(*DAG.getContext(),
+                                                         is64Bit ? 257 : 256));
 
-  SDValue ThreadPointer = DAG.getLoad(PtrVT, dl, DAG.getEntryNode(), Base,
-                                      MachinePointerInfo(), false, false, 0);
+  SDValue ThreadPointer = DAG.getLoad(PtrVT, dl, DAG.getEntryNode(), 
+                                      DAG.getIntPtrConstant(0),
+                                      MachinePointerInfo(Ptr), false, false, 0);
 
   unsigned char OperandFlags = 0;
   // Most TLS accesses are not RIP relative, even on x86-64.  One exception is
@@ -8845,7 +8845,6 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::FRCP:               return "X86ISD::FRCP";
   case X86ISD::TLSADDR:            return "X86ISD::TLSADDR";
   case X86ISD::TLSCALL:            return "X86ISD::TLSCALL";
-  case X86ISD::SegmentBaseAddress: return "X86ISD::SegmentBaseAddress";
   case X86ISD::EH_RETURN:          return "X86ISD::EH_RETURN";
   case X86ISD::TC_RETURN:          return "X86ISD::TC_RETURN";
   case X86ISD::FNSTCW16m:          return "X86ISD::FNSTCW16m";
