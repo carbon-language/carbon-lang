@@ -772,7 +772,8 @@ bool CodeGenPrepare::MoveExtToFormExtLoad(Instruction *I) {
   // If the load has other users and the truncate is not free, this probably
   // isn't worthwhile.
   if (!LI->hasOneUse() &&
-      TLI && TLI->isTypeLegal(TLI->getValueType(LI->getType())) &&
+      TLI && (TLI->isTypeLegal(TLI->getValueType(LI->getType())) ||
+              !TLI->isTypeLegal(TLI->getValueType(I->getType()))) &&
       !TLI->isTruncateFree(I->getType(), LI->getType()))
     return false;
 
