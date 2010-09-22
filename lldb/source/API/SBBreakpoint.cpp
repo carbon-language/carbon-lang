@@ -337,7 +337,7 @@ SBBreakpoint::GetDescription (const char *description_level, SBStream &descripti
         else
             level = eDescriptionLevelBrief;
 
-
+        description.ref();
         m_opaque_sp->GetDescription (description.get(), level);
         description.get()->EOL();
     }
@@ -345,15 +345,6 @@ SBBreakpoint::GetDescription (const char *description_level, SBStream &descripti
         description.Printf ("No value");
 
     return true;
-}
-
-PyObject *
-SBBreakpoint::__repr__ ()
-{
-    SBStream description;
-    description.ref();
-    GetDescription ("full", description);
-    return PyString_FromString (description.GetData());
 }
 
 bool

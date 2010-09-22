@@ -293,11 +293,3 @@ SBValue::GetDescription (SBStream &description)
 
     return true;
 }
-
-PyObject *
-SBValue::__repr__ ()
-{
-    SBStream description;
-    GetDescription (description);
-    return PyString_FromString (description.GetData());
-}

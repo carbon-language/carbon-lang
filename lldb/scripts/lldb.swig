@@ -156,4 +156,4 @@ typedef int StopReason;
 %include "lldb/API/SBValueList.h"
 %include "lldb/lldb-types.h"
 
-
+%include "./Python/python-extensions.swig"

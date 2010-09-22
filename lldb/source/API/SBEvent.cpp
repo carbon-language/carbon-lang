@@ -156,19 +156,11 @@ SBEvent::GetDescription (SBStream &description)
 {
     if (m_opaque)
     {
+        description.ref();
         m_opaque->Dump (description.get());
     }
     else
         description.Printf ("No value");
 
     return true;
-}
-
-PyObject *
-SBEvent::__repr__ ()
-{
-    SBStream description;
-    description.ref();
-    GetDescription (description);
-    return PyString_FromString (description.GetData());
 }

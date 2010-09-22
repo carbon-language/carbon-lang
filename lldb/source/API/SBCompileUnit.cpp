@@ -125,19 +125,11 @@ SBCompileUnit::GetDescription (SBStream &description)
 {
     if (m_opaque_ptr)
     {
+        description.ref();
         m_opaque_ptr->Dump (description.get(), false);
     }
     else
         description.Printf ("No Value");
     
     return true;
-}
-
-PyObject *
-SBCompileUnit::__repr__ ()
-{
-    SBStream description;
-    description.ref();
-    GetDescription (description);
-    return PyString_FromString (description.GetData());
 }

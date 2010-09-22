@@ -69,19 +69,11 @@ SBFunction::GetDescription (SBStream &description)
 {
     if (m_opaque_ptr)
     {
+        description.ref();
         m_opaque_ptr->Dump (description.get(), false);
     }
     else
         description.Printf ("No value");
 
     return true;
-}
-
-PyObject *
-SBFunction::__repr__ ()
-{
-    SBStream description;
-    description.ref();
-    GetDescription (description);
-    return PyString_FromString (description.GetData());
 }

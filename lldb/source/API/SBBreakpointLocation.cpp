@@ -212,6 +212,7 @@ SBBreakpointLocation::GetDescription (const char *description_level, SBStream &d
         else
             level = eDescriptionLevelBrief;
 
+        description.ref();
         m_opaque_sp->GetDescription (description.get(), level);
         description.get()->EOL();
     }
@@ -219,15 +220,6 @@ SBBreakpointLocation::GetDescription (const char *description_level, SBStream &d
         description.Printf ("No value");
 
     return true;
-}
-
-PyObject *
-SBBreakpointLocation::__repr__ ()
-{
-    SBStream description;
-    description.ref();
-    GetDescription ("full", description);
-    return PyString_FromString (description.GetData());
 }
 
 SBBreakpoint

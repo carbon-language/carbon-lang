@@ -185,14 +185,6 @@ SBType::GetDescription (SBStream &description)
     return true;
 }
 
-PyObject *
-SBType::__repr__ ()
-{
-    SBStream description;
-    GetDescription (description);
-    return PyString_FromString (description.GetData());
-}
-
 SBTypeMember::SBTypeMember () :
     m_ast (NULL),
     m_parent_type (NULL),

@@ -188,11 +188,3 @@ SBCommandReturnObject::GetDescription (SBStream &description)
 
     return true;
 }
-
-PyObject *
-SBCommandReturnObject::__repr__ ()
-{
-    SBStream description;
-    GetDescription (description);
-    return PyString_FromString (description.GetData());
-}

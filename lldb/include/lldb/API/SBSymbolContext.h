@@ -44,6 +44,9 @@ public:
     SBLineEntry     GetLineEntry ();
     SBSymbol        GetSymbol ();
 
+    bool
+    GetDescription (lldb::SBStream &description);
+
 protected:
     friend class SBFrame;
     friend class SBModule;
@@ -58,6 +61,9 @@ protected:
     lldb_private::SymbolContext&
     operator*();
 
+    lldb_private::SymbolContext&
+    ref();
+
     const lldb_private::SymbolContext&
     operator*() const;
 
@@ -70,16 +76,6 @@ protected:
 
     void
     SetSymbolContext (const lldb_private::SymbolContext *sc_ptr);
-
-    bool
-    GetDescription (lldb::SBStream &description);
-
-    // The following function gets called by Python when a user tries to print
-    // an object of this class.  It takes no arguments and returns a
-    // PyObject * representing a char * (and it must be named "__repr__");
-
-    PyObject *
-    __repr__ ();
 
 private:
     std::auto_ptr<lldb_private::SymbolContext> m_opaque_ap;

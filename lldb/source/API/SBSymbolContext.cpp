@@ -32,7 +32,12 @@ SBSymbolContext::SBSymbolContext (const SBSymbolContext& rhs) :
     m_opaque_ap ()
 {
     if (rhs.IsValid())
-        *m_opaque_ap = *rhs.m_opaque_ap;
+    {
+        if (m_opaque_ap.get())
+            *m_opaque_ap = *rhs.m_opaque_ap;
+        else
+            ref() = *rhs.m_opaque_ap;
+    }
 }
 
 SBSymbolContext::~SBSymbolContext ()
@@ -141,6 +146,14 @@ SBSymbolContext::operator*()
     return *m_opaque_ap.get();
 }
 
+lldb_private::SymbolContext&
+SBSymbolContext::ref()
+{
+    if (m_opaque_ap.get() == NULL)
+        m_opaque_ap.reset (new SymbolContext);
+    return *m_opaque_ap.get();
+}
+
 lldb_private::SymbolContext *
 SBSymbolContext::get() const
 {
@@ -152,19 +165,11 @@ SBSymbolContext::GetDescription (SBStream &description)
 {
     if (m_opaque_ap.get())
     {
+        description.ref();
         m_opaque_ap->GetDescription (description.get(), lldb::eDescriptionLevelFull, NULL);
     }
     else
         description.Printf ("No value");
 
     return true;
-}
-
-PyObject *
-SBSymbolContext::__repr__ ()
-{
-    SBStream description;
-    description.ref();
-    GetDescription (description);
-    return PyString_FromString (description.GetData());
 }

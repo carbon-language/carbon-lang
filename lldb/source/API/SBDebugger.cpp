@@ -695,12 +695,3 @@ SBDebugger::GetDescription (SBStream &description)
     
     return true;
 }
-
-
-PyObject *
-SBDebugger::__repr__ ()
-{
-    SBStream description;
-    GetDescription (description);
-    return PyString_FromString (description.GetData());
-}

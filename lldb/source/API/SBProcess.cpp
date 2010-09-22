@@ -485,11 +485,3 @@ SBProcess::GetDescription (SBStream &description)
 
     return true;
 }
-
-PyObject *
-SBProcess::__repr__ ()
-{
-    SBStream description;
-    GetDescription (description);
-    return PyString_FromString (description.GetData());
-}

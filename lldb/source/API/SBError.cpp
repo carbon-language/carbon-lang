@@ -198,11 +198,3 @@ SBError::GetDescription (SBStream &description)
 
     return true;
 } 
-
-PyObject *
-SBError::__repr__ ()
-{
-    SBStream description;
-    GetDescription (description);
-    return PyString_FromString (description.GetData());
-}

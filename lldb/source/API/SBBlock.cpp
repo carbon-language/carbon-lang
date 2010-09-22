@@ -158,12 +158,3 @@ SBBlock::GetDescription (SBStream &description)
     
     return true;
 }
-
-PyObject *
-SBBlock::__repr__ ()
-{
-    SBStream description;
-    description.ref();
-    GetDescription (description);
-    return PyString_FromString (description.GetData());
-}

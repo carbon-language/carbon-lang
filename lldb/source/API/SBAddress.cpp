@@ -140,6 +140,7 @@ SBAddress::operator*() const
 bool
 SBAddress::GetDescription (SBStream &description)
 {
+    description.ref();
     if (m_opaque_ap.get())
     {
         m_opaque_ap->DumpDebug (description.get());
@@ -148,13 +149,4 @@ SBAddress::GetDescription (SBStream &description)
         description.Printf ("No value");
 
     return true;
-}
-
-PyObject *
-SBAddress::__repr__ ()
-{
-    SBStream description;
-    description.ref();            // Make sure it contains a valid StreamString.
-    GetDescription (description);
-    return PyString_FromString (description.GetData());
 }
