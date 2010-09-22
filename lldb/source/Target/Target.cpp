@@ -940,7 +940,9 @@ TargetInstanceSettings::GetInstanceSettingsValue (const SettingEntry &entry,
                                                   StringList &value,
                                                   Error *err)
 {
-    // Currently 'target' does not have any instance settings.
+    if (err)
+        err->SetErrorString ("'target' does not have any instance settings");
+    return false;
 }
 
 const ConstString
