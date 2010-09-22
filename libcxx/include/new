@@ -81,7 +81,7 @@ public:
 
 void __throw_bad_alloc();  // not in C++ spec
 
-struct nothrow_t {};
+struct _LIBCPP_VISIBLE nothrow_t {};
 extern _LIBCPP_VISIBLE const nothrow_t nothrow;
 typedef void (*new_handler)();
 _LIBCPP_VISIBLE new_handler set_new_handler(new_handler) throw();

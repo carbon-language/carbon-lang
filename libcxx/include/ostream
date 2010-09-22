@@ -138,7 +138,7 @@ template <class charT, class traits, class T>
 _LIBCPP_BEGIN_NAMESPACE_STD
 
 template <class _CharT, class _Traits>
-class basic_ostream
+class _LIBCPP_VISIBLE basic_ostream
     : virtual public basic_ios<_CharT, _Traits>
 {
 public:
@@ -203,7 +203,7 @@ protected:
 };
 
 template <class _CharT, class _Traits>
-class basic_ostream<_CharT, _Traits>::sentry
+class _LIBCPP_VISIBLE basic_ostream<_CharT, _Traits>::sentry
 {
     bool __ok_;
     basic_ostream<_CharT, _Traits>& __os_;

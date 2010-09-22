@@ -180,7 +180,7 @@ template<class Callable, class ...Args>
 
 _LIBCPP_BEGIN_NAMESPACE_STD
 
-class recursive_mutex
+class _LIBCPP_VISIBLE recursive_mutex
 {
     pthread_mutex_t __m_;
 
@@ -198,10 +198,11 @@ public:
     void unlock();
 
     typedef pthread_mutex_t* native_handle_type;
+    _LIBCPP_INLINE_VISIBILITY
     native_handle_type native_handle() {return &__m_;}
 };
 
-class timed_mutex
+class _LIBCPP_VISIBLE timed_mutex
 {
     mutex              __m_;
     condition_variable __cv_;
@@ -218,6 +219,7 @@ public:
     void lock();
     bool try_lock();
     template <class _Rep, class _Period>
+        _LIBCPP_INLINE_VISIBILITY
         bool try_lock_for(const chrono::duration<_Rep, _Period>& __d)
             {return try_lock_until(chrono::monotonic_clock::now() + __d);}
     template <class _Clock, class _Duration>
@@ -242,7 +244,7 @@ timed_mutex::try_lock_until(const chrono::time_point<_Clock, _Duration>& __t)
     return false;
 }
 
-class recursive_timed_mutex
+class _LIBCPP_VISIBLE recursive_timed_mutex
 {
     mutex              __m_;
     condition_variable __cv_;
@@ -260,6 +262,7 @@ public:
     void lock();
     bool try_lock();
     template <class _Rep, class _Period>
+        _LIBCPP_INLINE_VISIBILITY
         bool try_lock_for(const chrono::duration<_Rep, _Period>& __d)
             {return try_lock_until(chrono::monotonic_clock::now() + __d);}
     template <class _Clock, class _Duration>
@@ -406,7 +409,7 @@ __lock_first(int __i, _L0& __l0, _L1& __l1, _L2& ...__l2)
 }
 
 template <class _L0, class _L1, class ..._L2>
-inline
+inline _LIBCPP_INLINE_VISIBILITY
 void
 lock(_L0& __l0, _L1& __l1, _L2& ...__l2)
 {
@@ -429,8 +432,9 @@ template<class _Callable>
 
 #endif  // _LIBCPP_HAS_NO_VARIADICS
 
-struct once_flag
+struct _LIBCPP_VISIBLE once_flag
 {
+    _LIBCPP_INLINE_VISIBILITY
     // constexpr
         once_flag() {}
 
@@ -457,11 +461,14 @@ class __call_once_param
     _F __f_;
 public:
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
+    _LIBCPP_INLINE_VISIBILITY
     explicit __call_once_param(_F&& __f) : __f_(_STD::move(__f)) {}
 #else
+    _LIBCPP_INLINE_VISIBILITY
     explicit __call_once_param(const _F& __f) : __f_(__f) {}
 #endif
 
+    _LIBCPP_INLINE_VISIBILITY
     void operator()()
     {
         __f_();

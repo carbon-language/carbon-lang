@@ -167,7 +167,7 @@ bool
 operator< (const queue<_Tp, _Container>& __x,const queue<_Tp, _Container>& __y);
 
 template <class _Tp, class _Container = deque<_Tp> >
-class queue
+class _LIBCPP_VISIBLE queue
 {
 public:
     typedef _Container                               container_type;
@@ -180,39 +180,49 @@ protected:
     container_type c;
 
 public:
+    _LIBCPP_INLINE_VISIBILITY
     queue() : c() {}
+    _LIBCPP_INLINE_VISIBILITY
     explicit queue(const container_type& __c)  : c(__c) {}
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
+    _LIBCPP_INLINE_VISIBILITY
     explicit queue(container_type&& __c) : c(_STD::move(__c)) {}
+    _LIBCPP_INLINE_VISIBILITY
     queue(queue&& __q) : c(_STD::move(__q.c)) {}
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
     template <class _Alloc>
+        _LIBCPP_INLINE_VISIBILITY
         explicit queue(const _Alloc& __a,
                        typename enable_if<uses_allocator<container_type,
                                                          _Alloc>::value>::type* = 0)
             : c(__a) {}
     template <class _Alloc>
+        _LIBCPP_INLINE_VISIBILITY
         queue(const queue& __q, const _Alloc& __a,
                        typename enable_if<uses_allocator<container_type,
                                                          _Alloc>::value>::type* = 0)
             : c(__q.c, __a) {}
     template <class _Alloc>
+        _LIBCPP_INLINE_VISIBILITY
         queue(const container_type& __c, const _Alloc& __a,
                        typename enable_if<uses_allocator<container_type,
                                                          _Alloc>::value>::type* = 0)
             : c(__c, __a) {}
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     template <class _Alloc>
+        _LIBCPP_INLINE_VISIBILITY
         queue(container_type&& __c, const _Alloc& __a,
                        typename enable_if<uses_allocator<container_type,
                                                          _Alloc>::value>::type* = 0)
             : c(_STD::move(__c), __a) {}
     template <class _Alloc>
+        _LIBCPP_INLINE_VISIBILITY
         queue(queue&& __q, const _Alloc& __a,
                        typename enable_if<uses_allocator<container_type,
                                                          _Alloc>::value>::type* = 0)
             : c(_STD::move(__q.c), __a) {}
 
+    _LIBCPP_INLINE_VISIBILITY
     queue& operator=(queue&& __q)
     {
         c = _STD::move(__q.c);
@@ -220,25 +230,36 @@ public:
     }
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
+    _LIBCPP_INLINE_VISIBILITY
     bool      empty() const {return c.empty();}
+    _LIBCPP_INLINE_VISIBILITY
     size_type size() const  {return c.size();}
 
+    _LIBCPP_INLINE_VISIBILITY
     reference       front()       {return c.front();}
+    _LIBCPP_INLINE_VISIBILITY
     const_reference front() const {return c.front();}
+    _LIBCPP_INLINE_VISIBILITY
     reference       back()        {return c.back();}
+    _LIBCPP_INLINE_VISIBILITY
     const_reference back() const  {return c.back();}
 
+    _LIBCPP_INLINE_VISIBILITY
     void push(const value_type& __v) {c.push_back(__v);}
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
+    _LIBCPP_INLINE_VISIBILITY
     void push(value_type&& __v)      {c.push_back(_STD::move(__v));}
 #ifndef _LIBCPP_HAS_NO_VARIADICS
     template <class... _Args>
+        _LIBCPP_INLINE_VISIBILITY
         void emplace(_Args&&... __args)
             {c.emplace_back(_STD::forward<_Args>(__args)...);}
 #endif  // _LIBCPP_HAS_NO_VARIADICS
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
+    _LIBCPP_INLINE_VISIBILITY
     void pop() {c.pop_front();}
 
+    _LIBCPP_INLINE_VISIBILITY
     void swap(queue& __q)
     {
         using _STD::swap;
@@ -247,17 +268,19 @@ public:
 
     template <class _T1, class _C1>
     friend
+    _LIBCPP_INLINE_VISIBILITY
     bool
     operator==(const queue<_T1, _C1>& __x,const queue<_T1, _C1>& __y);
 
     template <class _T1, class _C1>
     friend
+    _LIBCPP_INLINE_VISIBILITY
     bool
     operator< (const queue<_T1, _C1>& __x,const queue<_T1, _C1>& __y);
 };
 
 template <class _Tp, class _Container>
-inline
+inline _LIBCPP_INLINE_VISIBILITY
 bool
 operator==(const queue<_Tp, _Container>& __x,const queue<_Tp, _Container>& __y)
 {
@@ -265,7 +288,7 @@ operator==(const queue<_Tp, _Container>& __x,const queue<_Tp, _Container>& __y)
 }
 
 template <class _Tp, class _Container>
-inline
+inline _LIBCPP_INLINE_VISIBILITY
 bool
 operator< (const queue<_Tp, _Container>& __x,const queue<_Tp, _Container>& __y)
 {
@@ -273,7 +296,7 @@ operator< (const queue<_Tp, _Container>& __x,const queue<_Tp, _Container>& __y)
 }
 
 template <class _Tp, class _Container>
-inline
+inline _LIBCPP_INLINE_VISIBILITY
 bool
 operator!=(const queue<_Tp, _Container>& __x,const queue<_Tp, _Container>& __y)
 {
@@ -281,7 +304,7 @@ operator!=(const queue<_Tp, _Container>& __x,const queue<_Tp, _Container>& __y)
 }
 
 template <class _Tp, class _Container>
-inline
+inline _LIBCPP_INLINE_VISIBILITY
 bool
 operator> (const queue<_Tp, _Container>& __x,const queue<_Tp, _Container>& __y)
 {
@@ -289,7 +312,7 @@ operator> (const queue<_Tp, _Container>& __x,const queue<_Tp, _Container>& __y)
 }
 
 template <class _Tp, class _Container>
-inline
+inline _LIBCPP_INLINE_VISIBILITY
 bool
 operator>=(const queue<_Tp, _Container>& __x,const queue<_Tp, _Container>& __y)
 {
@@ -297,7 +320,7 @@ operator>=(const queue<_Tp, _Container>& __x,const queue<_Tp, _Container>& __y)
 }
 
 template <class _Tp, class _Container>
-inline
+inline _LIBCPP_INLINE_VISIBILITY
 bool
 operator<=(const queue<_Tp, _Container>& __x,const queue<_Tp, _Container>& __y)
 {
@@ -305,7 +328,7 @@ operator<=(const queue<_Tp, _Container>& __x,const queue<_Tp, _Container>& __y)
 }
 
 template <class _Tp, class _Container>
-inline
+inline _LIBCPP_INLINE_VISIBILITY
 void
 swap(queue<_Tp, _Container>& __x, queue<_Tp, _Container>& __y)
 {
@@ -313,14 +336,14 @@ swap(queue<_Tp, _Container>& __x, queue<_Tp, _Container>& __y)
 }
 
 template <class _Tp, class _Container, class _Alloc>
-struct uses_allocator<queue<_Tp, _Container>, _Alloc>
+struct _LIBCPP_VISIBLE uses_allocator<queue<_Tp, _Container>, _Alloc>
     : public uses_allocator<_Container, _Alloc>
 {
 };
 
 template <class _Tp, class _Container = vector<_Tp>,
           class _Compare = less<typename _Container::value_type> >
-class priority_queue
+class _LIBCPP_VISIBLE priority_queue
 {
 public:
     typedef _Container                               container_type;
@@ -335,6 +358,7 @@ protected:
     value_compare comp;
 
 public:
+    _LIBCPP_INLINE_VISIBILITY
     explicit priority_queue(const value_compare& __comp = value_compare())
         : c(), comp(__comp) {}
     priority_queue(const value_compare& __comp, const container_type& __c);
@@ -383,8 +407,11 @@ public:
                                                          _Alloc>::value>::type* = 0);
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
+    _LIBCPP_INLINE_VISIBILITY
     bool            empty() const {return c.empty();}
+    _LIBCPP_INLINE_VISIBILITY
     size_type       size() const  {return c.size();}
+    _LIBCPP_INLINE_VISIBILITY
     const_reference top() const   {return c.front();}
 
     void push(const value_type& __v);
@@ -400,7 +427,7 @@ public:
 };
 
 template <class _Tp, class _Container, class _Compare>
-inline
+inline _LIBCPP_INLINE_VISIBILITY
 priority_queue<_Tp, _Container, _Compare>::priority_queue(const _Compare& __comp,
                                                           const container_type& __c)
     : c(__c),
@@ -412,7 +439,7 @@ priority_queue<_Tp, _Container, _Compare>::priority_queue(const _Compare& __comp
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 template <class _Tp, class _Container, class _Compare>
-inline
+inline _LIBCPP_INLINE_VISIBILITY
 priority_queue<_Tp, _Container, _Compare>::priority_queue(const value_compare& __comp,
                                                           container_type&& __c)
     : c(_STD::move(__c)),
@@ -425,7 +452,7 @@ priority_queue<_Tp, _Container, _Compare>::priority_queue(const value_compare& _
 
 template <class _Tp, class _Container, class _Compare>
 template <class _InputIter>
-inline
+inline _LIBCPP_INLINE_VISIBILITY
 priority_queue<_Tp, _Container, _Compare>::priority_queue(_InputIter __f, _InputIter __l,
                                                           const value_compare& __comp)
     : c(__f, __l),
@@ -436,7 +463,7 @@ priority_queue<_Tp, _Container, _Compare>::priority_queue(_InputIter __f, _Input
 
 template <class _Tp, class _Container, class _Compare>
 template <class _InputIter>
-inline
+inline _LIBCPP_INLINE_VISIBILITY
 priority_queue<_Tp, _Container, _Compare>::priority_queue(_InputIter __f, _InputIter __l,
                                                           const value_compare& __comp,
                                                           const container_type& __c)
@@ -451,7 +478,7 @@ priority_queue<_Tp, _Container, _Compare>::priority_queue(_InputIter __f, _Input
 
 template <class _Tp, class _Container, class _Compare>
 template <class _InputIter>
-inline
+inline _LIBCPP_INLINE_VISIBILITY
 priority_queue<_Tp, _Container, _Compare>::priority_queue(_InputIter __f, _InputIter __l,
                                                           const value_compare& __comp,
                                                           container_type&& __c)
@@ -463,7 +490,7 @@ priority_queue<_Tp, _Container, _Compare>::priority_queue(_InputIter __f, _Input
 }
 
 template <class _Tp, class _Container, class _Compare>
-inline
+inline _LIBCPP_INLINE_VISIBILITY
 priority_queue<_Tp, _Container, _Compare>::priority_queue(priority_queue&& __q)
     : c(_STD::move(__q.c)),
       comp(_STD::move(__q.comp))
@@ -483,7 +510,7 @@ priority_queue<_Tp, _Container, _Compare>::operator=(priority_queue&& __q)
 
 template <class _Tp, class _Container, class _Compare>
 template <class _Alloc>
-inline
+inline _LIBCPP_INLINE_VISIBILITY
 priority_queue<_Tp, _Container, _Compare>::priority_queue(const _Alloc& __a,
                        typename enable_if<uses_allocator<container_type,
                                                          _Alloc>::value>::type*)
@@ -493,7 +520,7 @@ priority_queue<_Tp, _Container, _Compare>::priority_queue(const _Alloc& __a,
 
 template <class _Tp, class _Container, class _Compare>
 template <class _Alloc>
-inline
+inline _LIBCPP_INLINE_VISIBILITY
 priority_queue<_Tp, _Container, _Compare>::priority_queue(const value_compare& __comp,
                                                           const _Alloc& __a,
                        typename enable_if<uses_allocator<container_type,
@@ -505,7 +532,7 @@ priority_queue<_Tp, _Container, _Compare>::priority_queue(const value_compare& _
 
 template <class _Tp, class _Container, class _Compare>
 template <class _Alloc>
-inline
+inline _LIBCPP_INLINE_VISIBILITY
 priority_queue<_Tp, _Container, _Compare>::priority_queue(const value_compare& __comp,
                                                           const container_type& __c,
                                                           const _Alloc& __a,
@@ -519,7 +546,7 @@ priority_queue<_Tp, _Container, _Compare>::priority_queue(const value_compare& _
 
 template <class _Tp, class _Container, class _Compare>
 template <class _Alloc>
-inline
+inline _LIBCPP_INLINE_VISIBILITY
 priority_queue<_Tp, _Container, _Compare>::priority_queue(const priority_queue& __q,
                                                           const _Alloc& __a,
                        typename enable_if<uses_allocator<container_type,
@@ -534,7 +561,7 @@ priority_queue<_Tp, _Container, _Compare>::priority_queue(const priority_queue& 
 
 template <class _Tp, class _Container, class _Compare>
 template <class _Alloc>
-inline
+inline _LIBCPP_INLINE_VISIBILITY
 priority_queue<_Tp, _Container, _Compare>::priority_queue(const value_compare& __comp,
                                                           container_type&& __c,
                                                           const _Alloc& __a,
@@ -548,7 +575,7 @@ priority_queue<_Tp, _Container, _Compare>::priority_queue(const value_compare& _
 
 template <class _Tp, class _Container, class _Compare>
 template <class _Alloc>
-inline
+inline _LIBCPP_INLINE_VISIBILITY
 priority_queue<_Tp, _Container, _Compare>::priority_queue(priority_queue&& __q,
                                                           const _Alloc& __a,
                        typename enable_if<uses_allocator<container_type,
@@ -562,7 +589,7 @@ priority_queue<_Tp, _Container, _Compare>::priority_queue(priority_queue&& __q,
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 template <class _Tp, class _Container, class _Compare>
-inline
+inline _LIBCPP_INLINE_VISIBILITY
 void
 priority_queue<_Tp, _Container, _Compare>::push(const value_type& __v)
 {
@@ -573,7 +600,7 @@ priority_queue<_Tp, _Container, _Compare>::push(const value_type& __v)
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 template <class _Tp, class _Container, class _Compare>
-inline
+inline _LIBCPP_INLINE_VISIBILITY
 void
 priority_queue<_Tp, _Container, _Compare>::push(value_type&& __v)
 {
@@ -585,7 +612,7 @@ priority_queue<_Tp, _Container, _Compare>::push(value_type&& __v)
 
 template <class _Tp, class _Container, class _Compare>
 template <class... _Args>
-inline
+inline _LIBCPP_INLINE_VISIBILITY
 void
 priority_queue<_Tp, _Container, _Compare>::emplace(_Args&&... __args)
 {
@@ -597,7 +624,7 @@ priority_queue<_Tp, _Container, _Compare>::emplace(_Args&&... __args)
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 template <class _Tp, class _Container, class _Compare>
-inline
+inline _LIBCPP_INLINE_VISIBILITY
 void
 priority_queue<_Tp, _Container, _Compare>::pop()
 {
@@ -606,7 +633,7 @@ priority_queue<_Tp, _Container, _Compare>::pop()
 }
 
 template <class _Tp, class _Container, class _Compare>
-inline
+inline _LIBCPP_INLINE_VISIBILITY
 void
 priority_queue<_Tp, _Container, _Compare>::swap(priority_queue& __q)
 {
@@ -616,7 +643,7 @@ priority_queue<_Tp, _Container, _Compare>::swap(priority_queue& __q)
 }
 
 template <class _Tp, class _Container, class _Compare>
-inline
+inline _LIBCPP_INLINE_VISIBILITY
 void
 swap(priority_queue<_Tp, _Container, _Compare>& __x,
      priority_queue<_Tp, _Container, _Compare>& __y)
@@ -625,7 +652,7 @@ swap(priority_queue<_Tp, _Container, _Compare>& __x,
 }
 
 template <class _Tp, class _Container, class _Compare, class _Alloc>
-struct uses_allocator<priority_queue<_Tp, _Container, _Compare>, _Alloc>
+struct _LIBCPP_VISIBLE uses_allocator<priority_queue<_Tp, _Container, _Compare>, _Alloc>
     : public uses_allocator<_Container, _Alloc>
 {
 };
