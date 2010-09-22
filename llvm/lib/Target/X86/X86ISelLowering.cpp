@@ -8158,41 +8158,48 @@ SDValue X86TargetLowering::LowerFLT_ROUNDS_(SDValue Op,
   const TargetFrameInfo &TFI = *TM.getFrameInfo();
   unsigned StackAlignment = TFI.getStackAlignment();
   EVT VT = Op.getValueType();
-  DebugLoc dl = Op.getDebugLoc();
+  DebugLoc DL = Op.getDebugLoc();
 
   // Save FP Control Word to stack slot
   int SSFI = MF.getFrameInfo()->CreateStackObject(2, StackAlignment, false);
   SDValue StackSlot = DAG.getFrameIndex(SSFI, getPointerTy());
 
-  SDValue Chain = DAG.getNode(X86ISD::FNSTCW16m, dl, MVT::Other,
-                              DAG.getEntryNode(), StackSlot);
+  
+  MachineMemOperand *MMO =
+   MF.getMachineMemOperand(MachinePointerInfo::getFixedStack(SSFI),
+                           MachineMemOperand::MOStore, 2, 2);
+  
+  SDValue Ops[] = { DAG.getEntryNode(), StackSlot };
+  SDValue Chain = DAG.getMemIntrinsicNode(X86ISD::FNSTCW16m, DL,
+                                          DAG.getVTList(MVT::Other),
+                                          Ops, 2, MVT::i16, MMO);
 
   // Load FP Control Word from stack slot
-  SDValue CWD = DAG.getLoad(MVT::i16, dl, Chain, StackSlot,
+  SDValue CWD = DAG.getLoad(MVT::i16, DL, Chain, StackSlot,
                             MachinePointerInfo(), false, false, 0);
 
   // Transform as necessary
   SDValue CWD1 =
-    DAG.getNode(ISD::SRL, dl, MVT::i16,
-                DAG.getNode(ISD::AND, dl, MVT::i16,
+    DAG.getNode(ISD::SRL, DL, MVT::i16,
+                DAG.getNode(ISD::AND, DL, MVT::i16,
                             CWD, DAG.getConstant(0x800, MVT::i16)),
                 DAG.getConstant(11, MVT::i8));
   SDValue CWD2 =
-    DAG.getNode(ISD::SRL, dl, MVT::i16,
-                DAG.getNode(ISD::AND, dl, MVT::i16,
+    DAG.getNode(ISD::SRL, DL, MVT::i16,
+                DAG.getNode(ISD::AND, DL, MVT::i16,
                             CWD, DAG.getConstant(0x400, MVT::i16)),
                 DAG.getConstant(9, MVT::i8));
 
   SDValue RetVal =
-    DAG.getNode(ISD::AND, dl, MVT::i16,
-                DAG.getNode(ISD::ADD, dl, MVT::i16,
-                            DAG.getNode(ISD::OR, dl, MVT::i16, CWD1, CWD2),
+    DAG.getNode(ISD::AND, DL, MVT::i16,
+                DAG.getNode(ISD::ADD, DL, MVT::i16,
+                            DAG.getNode(ISD::OR, DL, MVT::i16, CWD1, CWD2),
                             DAG.getConstant(1, MVT::i16)),
                 DAG.getConstant(3, MVT::i16));
 
 
   return DAG.getNode((VT.getSizeInBits() < 16 ?
-                      ISD::TRUNCATE : ISD::ZERO_EXTEND), dl, VT, RetVal);
+                      ISD::TRUNCATE : ISD::ZERO_EXTEND), DL, VT, RetVal);
 }
 
 SDValue X86TargetLowering::LowerCTLZ(SDValue Op, SelectionDAG &DAG) const {

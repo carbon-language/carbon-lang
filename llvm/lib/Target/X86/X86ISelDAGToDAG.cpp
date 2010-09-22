@@ -1169,7 +1169,6 @@ bool X86DAGToDAGISel::SelectAddr(SDNode *Parent, SDValue N, SDValue &Base,
       Parent->getOpcode() != ISD::PREFETCH &&
       Parent->getOpcode() != ISD::INTRINSIC_W_CHAIN && // unaligned loads, fixme
       Parent->getOpcode() != ISD::INTRINSIC_VOID && // nontemporal stores.
-      Parent->getOpcode() != X86ISD::FNSTCW16m &&
       Parent->getOpcode() != X86ISD::FLD &&
       Parent->getOpcode() != X86ISD::FILD &&
       Parent->getOpcode() != X86ISD::FILD_FLAG &&

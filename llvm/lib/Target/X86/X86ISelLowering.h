@@ -205,9 +205,6 @@ namespace llvm {
       ///   operand #3 optional in flag
       TC_RETURN,
 
-      // FNSTCW16m - Store FP control world into i16 memory.
-      FNSTCW16m,
-
       // VZEXT_MOVL - Vector move low and zero extend.
       VZEXT_MOVL,
 
@@ -302,6 +299,8 @@ namespace llvm {
       // VZEXT_LOAD - Load, scalar_to_vector, and zero extend.
       VZEXT_LOAD,
       
+      // FNSTCW16m - Store FP control world into i16 memory.
+      FNSTCW16m,
       
       /// FP_TO_INT*_IN_MEM - This instruction implements FP_TO_SINT with the
       /// integer destination in memory and a FP reg source.  This corresponds
