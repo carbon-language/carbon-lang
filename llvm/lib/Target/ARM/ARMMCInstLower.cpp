@@ -14,7 +14,6 @@
 
 #include "ARM.h"
 #include "ARMMCInstLower.h"
-//#include "llvm/CodeGen/MachineModuleInfoImpls.h"
 #include "llvm/CodeGen/AsmPrinter.h"
 #include "llvm/Constants.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
@@ -22,23 +21,10 @@
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCInst.h"
-//#include "llvm/MC/MCStreamer.h"
 #include "llvm/Target/Mangler.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/ADT/SmallString.h"
 using namespace llvm;
-
-
-#if 0
-const ARMSubtarget &ARMMCInstLower::getSubtarget() const {
-  return AsmPrinter.getSubtarget();
-}
-
-MachineModuleInfoMachO &ARMMCInstLower::getMachOMMI() const {
-  assert(getSubtarget().isTargetDarwin() &&"Can only get MachO info on darwin");
-  return AsmPrinter.MMI->getObjFileInfo<MachineModuleInfoMachO>();
-}
-#endif
 
 MCSymbol *ARMMCInstLower::GetGlobalAddressSymbol(const GlobalValue *GV) const {
   return Printer.Mang->getSymbol(GV);
