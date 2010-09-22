@@ -228,6 +228,9 @@ private:
     /// AST file.
     const uint32_t *SLocOffsets;
 
+    /// \brief The next SourceLocation offset after reading this file.
+    unsigned NextOffset;
+
     // === Identifiers ===
 
     /// \brief The number of identifiers in this AST file.
@@ -325,6 +328,9 @@ private:
   /// user, the last one is the one that doesn't depend on anything further.
   /// That is, the entry I was created with -include-pch I+1.
   llvm::SmallVector<PerFileData*, 2> Chain;
+
+  /// \brief SLocEntries that we're going to preload.
+  llvm::SmallVector<uint64_t, 64> PreloadSLocEntries;
 
   /// \brief Types that have already been loaded from the chain.
   ///

@@ -1863,11 +1863,13 @@ ASTReader::ReadASTBlock(PerFileData &F) {
       TotalNumMethodPoolEntries += Record[1];
       break;
 
-    case REFERENCED_SELECTOR_POOL: {
-      ReferencedSelectorsData.insert(ReferencedSelectorsData.end(),
-          Record.begin(), Record.end());
+    case REFERENCED_SELECTOR_POOL:
+      if (ReferencedSelectorsData.empty())
+        ReferencedSelectorsData.swap(Record);
+      else
+        ReferencedSelectorsData.insert(ReferencedSelectorsData.end(),
+            Record.begin(), Record.end());
       break;
-    }
 
     case PP_COUNTER_VALUE:
       if (!Record.empty() && Listener)
@@ -1877,19 +1879,15 @@ ASTReader::ReadASTBlock(PerFileData &F) {
     case SOURCE_LOCATION_OFFSETS:
       F.SLocOffsets = (const uint32_t *)BlobStart;
       F.LocalNumSLocEntries = Record[0];
-      // We cannot delay this until the entire chain is loaded, because then
-      // source location preloads would also have to be delayed.
-      // FIXME: Is there a reason not to do that?
-      TotalNumSLocEntries += F.LocalNumSLocEntries;
-      SourceMgr.PreallocateSLocEntries(this, TotalNumSLocEntries, Record[1]);
+      F.NextOffset = Record[1];
       break;
 
     case SOURCE_LOCATION_PRELOADS:
-      for (unsigned I = 0, N = Record.size(); I != N; ++I) {
-        ASTReadResult Result = ReadSLocEntryRecord(Record[I]);
-        if (Result != Success)
-          return Result;
-      }
+      if (PreloadSLocEntries.empty())
+        PreloadSLocEntries.swap(Record);
+      else
+        PreloadSLocEntries.insert(PreloadSLocEntries.end(),
+            Record.begin(), Record.end());
       break;
 
     case STAT_CACHE: {
@@ -1996,11 +1994,12 @@ ASTReader::ASTReadResult ASTReader::ReadAST(const std::string &FileName) {
 
   // Here comes stuff that we only do once the entire chain is loaded.
 
-  // Allocate space for loaded identifiers, decls and types.
+  // Allocate space for loaded slocentries, identifiers, decls and types.
   unsigned TotalNumIdentifiers = 0, TotalNumTypes = 0, TotalNumDecls = 0,
            TotalNumPreallocatedPreprocessingEntities = 0, TotalNumMacroDefs = 0,
            TotalNumSelectors = 0;
   for (unsigned I = 0, N = Chain.size(); I != N; ++I) {
+    TotalNumSLocEntries += Chain[I]->LocalNumSLocEntries;
     TotalNumIdentifiers += Chain[I]->LocalNumIdentifiers;
     TotalNumTypes += Chain[I]->LocalNumTypes;
     TotalNumDecls += Chain[I]->LocalNumDecls;
@@ -2009,6 +2008,8 @@ ASTReader::ASTReadResult ASTReader::ReadAST(const std::string &FileName) {
     TotalNumMacroDefs += Chain[I]->LocalNumMacroDefinitions;
     TotalNumSelectors += Chain[I]->LocalNumSelectors;
   }
+  SourceMgr.PreallocateSLocEntries(this, TotalNumSLocEntries,
+                                   Chain.front()->NextOffset);
   IdentifiersLoaded.resize(TotalNumIdentifiers);
   TypesLoaded.resize(TotalNumTypes);
   DeclsLoaded.resize(TotalNumDecls);
@@ -2024,6 +2025,12 @@ ASTReader::ASTReadResult ASTReader::ReadAST(const std::string &FileName) {
     }
   }
   SelectorsLoaded.resize(TotalNumSelectors);
+  // Preload SLocEntries.
+  for (unsigned I = 0, N = PreloadSLocEntries.size(); I != N; ++I) {
+    ASTReadResult Result = ReadSLocEntryRecord(PreloadSLocEntries[I]);
+    if (Result != Success)
+      return Result;
+  }
 
   // Check the predefines buffers.
   if (!DisableValidation && CheckPredefinesBuffers())
