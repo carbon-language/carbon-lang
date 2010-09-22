@@ -943,7 +943,13 @@ ClangASTContext::AddFieldToRecordType
             if (field)
             {
                 record_decl->addDecl(field);
-                return true;
+                
+                if (cxx_record_decl->isPOD())
+                {
+                    if (!field->getType()->isPODType())
+                        cxx_record_decl->setPOD (false);
+                    return true;
+                }
             }
         }
         else
@@ -1095,7 +1101,7 @@ ClangASTContext::SetBaseClassesForClassType (void *class_clang_type, CXXBaseSpec
                 {
                     cxx_record_decl->setBases(base_classes, num_base_classes);
                     
-                    if (cxx_record_decl->isEmpty())
+                    if (cxx_record_decl->isEmpty() || cxx_record_decl->isPOD())
                     {
                         // set empty to false if any bases are virtual, or not empty.
                     
@@ -1107,16 +1113,22 @@ ClangASTContext::SetBaseClassesForClassType (void *class_clang_type, CXXBaseSpec
                             if (base_class->isVirtual())
                             {
                                 cxx_record_decl->setEmpty (false);
+                                cxx_record_decl->setPOD (false);
                                 break;
                             }
                             else
                             {
-                                 const CXXRecordDecl *base_class_decl = cast<CXXRecordDecl>(base_class->getType()->getAs<RecordType>()->getDecl());
-                                 if (!base_class_decl->isEmpty())
-                                 {
+                                QualType base_type (base_class->getType());
+                                
+                                if (!base_type->isPODType())
+                                    cxx_record_decl->setPOD (false);
+
+                                const CXXRecordDecl *base_class_decl = cast<CXXRecordDecl>(base_type->getAs<RecordType>()->getDecl());
+                                if (!base_class_decl->isEmpty())
+                                {
                                     cxx_record_decl->setEmpty (false);
                                     break;
-                                 }
+                                }
                             }
                         }
                     }
