@@ -98,6 +98,7 @@
 #include "lldb/API/SBThread.h"
 #include "lldb/API/SBType.h"
 #include "lldb/API/SBValue.h"
+#include "lldb/API/SBValueList.h"
 using namespace lldb_private;
 %}
 
@@ -152,6 +153,7 @@ typedef int StopReason;
 %include "lldb/API/SBThread.h"
 %include "lldb/API/SBType.h"
 %include "lldb/API/SBValue.h"
+%include "lldb/API/SBValueList.h"
 %include "lldb/lldb-types.h"
 
 

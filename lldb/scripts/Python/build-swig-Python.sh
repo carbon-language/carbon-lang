@@ -35,7 +35,6 @@ HEADER_FILES="${SRC_ROOT}/include/lldb/lldb-types.h"\
 " ${SRC_ROOT}/include/lldb/API/SBBreakpoint.h"\
 " ${SRC_ROOT}/include/lldb/API/SBBreakpointLocation.h"\
 " ${SRC_ROOT}/include/lldb/API/SBBroadcaster.h"\
-" ${SRC_ROOT}/include/lldb/API/SBCommandContext.h"\
 " ${SRC_ROOT}/include/lldb/API/SBCommandInterpreter.h"\
 " ${SRC_ROOT}/include/lldb/API/SBCommandReturnObject.h"\
 " ${SRC_ROOT}/include/lldb/API/SBCompileUnit.h"\
@@ -50,13 +49,15 @@ HEADER_FILES="${SRC_ROOT}/include/lldb/lldb-types.h"\
 " ${SRC_ROOT}/include/lldb/API/SBModule.h"\
 " ${SRC_ROOT}/include/lldb/API/SBProcess.h"\
 " ${SRC_ROOT}/include/lldb/API/SBSourceManager.h"\
+" ${SRC_ROOT}/include/lldb/API/SBStream.h"\
 " ${SRC_ROOT}/include/lldb/API/SBStringList.h"\
 " ${SRC_ROOT}/include/lldb/API/SBSymbol.h"\
 " ${SRC_ROOT}/include/lldb/API/SBSymbolContext.h"\
 " ${SRC_ROOT}/include/lldb/API/SBTarget.h"\
 " ${SRC_ROOT}/include/lldb/API/SBThread.h"\
 " ${SRC_ROOT}/include/lldb/API/SBType.h"\
-" ${SRC_ROOT}/include/lldb/API/SBValue.h"
+" ${SRC_ROOT}/include/lldb/API/SBValue.h"\
+" ${SRC_ROOT}/include/lldb/API/SBValueList.h"
 
 
 if [ $Debug == 1 ]
