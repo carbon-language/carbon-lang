@@ -921,7 +921,22 @@ ClangASTContext::AddFieldToRecordType
 
             CXXRecordDecl *cxx_record_decl = dyn_cast<CXXRecordDecl>(record_decl);
             if (cxx_record_decl)
+            {
+                // NOTE: we currently have some fixes that should be placed
+                // into clang that will automatically set if a record is empty
+                // when each field is added (during the addDecl() method call 
+                // below) so this code should be able to come out when those 
+                // changes make it into llvm/clang, then we can remove this 
+                // code...
+                // Currently SEMA is using the accessors manually to set 
+                // whether a class is empty, is POD, is aggregate, and more.
+                // This code will be moved into CXXRecordDecl so everyone
+                // can benefit.
+                // This will currently work for everything except zero sized 
+                // bitfields which we currently aren't detecting anyway from the
+                // DWARF so it should be ok for now.
                 cxx_record_decl->setEmpty (false);
+            }
 
             clang::Expr *bit_width = NULL;
             if (bitfield_bit_size != 0)
@@ -943,7 +958,18 @@ ClangASTContext::AddFieldToRecordType
             if (field)
             {
                 record_decl->addDecl(field);
-                
+               
+                // NOTE: we currently have some fixes that should be placed
+                // into clang that will automatically set if a record is POD
+                // when each field is added (during the addDecl() method call 
+                // above) so this code should be able to come out when those 
+                // changes make it into llvm/clang, then we can remove this 
+                // code...
+                // Currently SEMA is using the accessors manually to set 
+                // whether a class is empty, is POD, is aggregate, and more.
+                // This code will be moved into CXXRecordDecl so everyone
+                // can benefit.
+ 
                 if (cxx_record_decl->isPOD())
                 {
                     if (!field->getType()->isPODType())
@@ -1101,6 +1127,15 @@ ClangASTContext::SetBaseClassesForClassType (void *class_clang_type, CXXBaseSpec
                 {
                     cxx_record_decl->setBases(base_classes, num_base_classes);
                     
+                    // NOTE: we currently have some fixes that should be placed
+                    // into clang that will automatically set these things when
+                    // they are added (during the setBases() method call above)
+                    // so this code should be able to come out when those changes
+                    // make it into llvm/clang, then we can remove this code...
+                    // Currently SEMA is using the accessors manually to set 
+                    // whether a class is empty, is POD, is aggregate, and more.
+                    // This code will be moved into CXXRecordDecl so everyone
+                    // can benefit.
                     if (cxx_record_decl->isEmpty() || cxx_record_decl->isPOD())
                     {
                         // set empty to false if any bases are virtual, or not empty.
