@@ -6599,7 +6599,7 @@ SDValue X86TargetLowering::LowerUINT_TO_FP(SDValue Op,
 
 std::pair<SDValue,SDValue> X86TargetLowering::
 FP_TO_INTHelper(SDValue Op, SelectionDAG &DAG, bool IsSigned) const {
-  DebugLoc dl = Op.getDebugLoc();
+  DebugLoc DL = Op.getDebugLoc();
 
   EVT DstTy = Op.getValueType();
 
@@ -6628,6 +6628,8 @@ FP_TO_INTHelper(SDValue Op, SelectionDAG &DAG, bool IsSigned) const {
   int SSFI = MF.getFrameInfo()->CreateStackObject(MemSize, MemSize, false);
   SDValue StackSlot = DAG.getFrameIndex(SSFI, getPointerTy());
 
+  
+  
   unsigned Opc;
   switch (DstTy.getSimpleVT().SimpleTy) {
   default: llvm_unreachable("Invalid FP_TO_SINT to lower!");
@@ -6640,22 +6642,27 @@ FP_TO_INTHelper(SDValue Op, SelectionDAG &DAG, bool IsSigned) const {
   SDValue Value = Op.getOperand(0);
   if (isScalarFPTypeInSSEReg(Op.getOperand(0).getValueType())) {
     assert(DstTy == MVT::i64 && "Invalid FP_TO_SINT to lower!");
-    Chain = DAG.getStore(Chain, dl, Value, StackSlot,
+    Chain = DAG.getStore(Chain, DL, Value, StackSlot,
                          MachinePointerInfo::getFixedStack(SSFI),
                          false, false, 0);
     SDVTList Tys = DAG.getVTList(Op.getOperand(0).getValueType(), MVT::Other);
     SDValue Ops[] = {
       Chain, StackSlot, DAG.getValueType(Op.getOperand(0).getValueType())
     };
-    Value = DAG.getNode(X86ISD::FLD, dl, Tys, Ops, 3);
+    Value = DAG.getNode(X86ISD::FLD, DL, Tys, Ops, 3);
     Chain = Value.getValue(1);
     SSFI = MF.getFrameInfo()->CreateStackObject(MemSize, MemSize, false);
     StackSlot = DAG.getFrameIndex(SSFI, getPointerTy());
   }
+  
+  MachineMemOperand *MMO =
+    MF.getMachineMemOperand(MachinePointerInfo::getFixedStack(SSFI),
+                            MachineMemOperand::MOStore, MemSize, MemSize);
 
   // Build the FP_TO_INT*_IN_MEM
   SDValue Ops[] = { Chain, Value, StackSlot };
-  SDValue FIST = DAG.getNode(Opc, dl, MVT::Other, Ops, 3);
+  SDValue FIST = DAG.getMemIntrinsicNode(Opc, DL, DAG.getVTList(MVT::Other),
+                                         Ops, 3, DstTy, MMO);
 
   return std::make_pair(FIST, StackSlot);
 }

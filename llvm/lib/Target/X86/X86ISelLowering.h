@@ -64,16 +64,7 @@ namespace llvm {
       /// also produces a flag).
       FILD,
       FILD_FLAG,
-
-      /// FP_TO_INT*_IN_MEM - This instruction implements FP_TO_SINT with the
-      /// integer destination in memory and a FP reg source.  This corresponds
-      /// to the X86::FIST*m instructions and the rounding mode change stuff. It
-      /// has two inputs (token chain and address) and two outputs (int value
-      /// and token chain).
-      FP_TO_INT16_IN_MEM,
-      FP_TO_INT32_IN_MEM,
-      FP_TO_INT64_IN_MEM,
-
+      
       /// FLD - This instruction implements an extending load to FP stack slots.
       /// This corresponds to the X86::FLD32m / X86::FLD64m. It takes a chain
       /// operand, ptr to load from, and a ValueType node indicating the type
@@ -309,7 +300,17 @@ namespace llvm {
       LCMPXCHG8_DAG,
 
       // VZEXT_LOAD - Load, scalar_to_vector, and zero extend.
-      VZEXT_LOAD
+      VZEXT_LOAD,
+      
+      
+      /// FP_TO_INT*_IN_MEM - This instruction implements FP_TO_SINT with the
+      /// integer destination in memory and a FP reg source.  This corresponds
+      /// to the X86::FIST*m instructions and the rounding mode change stuff. It
+      /// has two inputs (token chain and address) and two outputs (int value
+      /// and token chain).
+      FP_TO_INT16_IN_MEM,
+      FP_TO_INT32_IN_MEM,
+      FP_TO_INT64_IN_MEM
       
       // WARNING: Do not add anything in the end unless you want the node to
       // have memop! In fact, starting from ATOMADD64_DAG all opcodes will be

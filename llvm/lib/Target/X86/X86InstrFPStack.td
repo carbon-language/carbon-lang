@@ -40,13 +40,14 @@ def X86fild         : SDNode<"X86ISD::FILD", SDTX86Fild,
 def X86fildflag     : SDNode<"X86ISD::FILD_FLAG", SDTX86Fild,
                              [SDNPHasChain, SDNPOutFlag, SDNPMayLoad]>;
 def X86fp_to_i16mem : SDNode<"X86ISD::FP_TO_INT16_IN_MEM", SDTX86FpToIMem,
-                             [SDNPHasChain, SDNPMayStore]>;
+                             [SDNPHasChain, SDNPMayStore, SDNPMemOperand]>;
 def X86fp_to_i32mem : SDNode<"X86ISD::FP_TO_INT32_IN_MEM", SDTX86FpToIMem,
-                             [SDNPHasChain, SDNPMayStore]>;
+                             [SDNPHasChain, SDNPMayStore, SDNPMemOperand]>;
 def X86fp_to_i64mem : SDNode<"X86ISD::FP_TO_INT64_IN_MEM", SDTX86FpToIMem,
-                             [SDNPHasChain, SDNPMayStore]>;
+                             [SDNPHasChain, SDNPMayStore, SDNPMemOperand]>;
 def X86fp_cwd_get16 : SDNode<"X86ISD::FNSTCW16m",          SDTX86CwdStore,
-                             [SDNPHasChain, SDNPMayStore, SDNPSideEffect]>;
+                             [SDNPHasChain, SDNPMayStore, SDNPSideEffect,
+                              SDNPMemOperand]>;
 
 //===----------------------------------------------------------------------===//
 // FPStack pattern fragments
