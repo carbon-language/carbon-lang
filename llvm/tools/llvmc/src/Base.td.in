@@ -178,14 +178,20 @@ class llvm_gcc_based <string cmd, string in_lang,
          (switch_on "E"),
               [(forward "E"), (stop_compilation), (output_suffix E_ext)],
          (and (switch_on "E"), (empty "o")), (no_out_file),
-         (switch_on ["emit-llvm", "S"]),
-              [(output_suffix "ll"), (stop_compilation)],
-         (switch_on ["emit-llvm", "c"]), (stop_compilation),
+
+         // ('-emit-llvm') && !('opt') -> stop compilation
+         (and (switch_on "emit-llvm"), (not (switch_on "opt"))),
+              (stop_compilation),
+         // ('-S' && '-emit-llvm') && !('opt') -> output .ll
+         (and (switch_on ["emit-llvm", "S"]), (not (switch_on "opt"))),
+              [(forward "S"), (output_suffix "ll")],
+         // Ususally just output .bc
+         (not (switch_on "fsyntax-only")),
+              [(append_cmd "-c"), (append_cmd "-emit-llvm")],
+
+         // -fsyntax-only
          (switch_on "fsyntax-only"), [(forward "fsyntax-only"),
                                       (no_out_file), (stop_compilation)],
-         (switch_on ["S", "emit-llvm"]), [(forward "S"), (forward "emit-llvm")],
-         (not (or (switch_on ["S", "emit-llvm"]), (switch_on "fsyntax-only"))),
-             [(append_cmd "-c"), (append_cmd "-emit-llvm")],
 
          // Forwards
          (not_empty "Xpreprocessor"), (forward "Xpreprocessor"),
@@ -242,7 +248,10 @@ def opt : Tool<
 [(in_language "llvm-bitcode"),
  (out_language "llvm-bitcode"),
  (output_suffix "opt.bc"),
- (actions (case (not_empty "Wo,"), (forward_value "Wo,"),
+ (actions (case (switch_on "emit-llvm"), (stop_compilation),
+                (switch_on ["emit-llvm", "S"]),
+                [(append_cmd "-S"), (output_suffix "ll")],
+                (not_empty "Wo,"), (forward_value "Wo,"),
                 (switch_on "O1"), (forward "O1"),
                 (switch_on "O2"), (forward "O2"),
                 (switch_on "O3"), (forward "O3"))),
