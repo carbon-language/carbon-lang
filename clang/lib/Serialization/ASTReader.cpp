@@ -1879,7 +1879,7 @@ ASTReader::ReadASTBlock(PerFileData &F) {
     case SOURCE_LOCATION_OFFSETS:
       F.SLocOffsets = (const uint32_t *)BlobStart;
       F.LocalNumSLocEntries = Record[0];
-      F.NextOffset = Record[1];
+      F.LocalSLocSize = Record[1];
       break;
 
     case SOURCE_LOCATION_PRELOADS:
@@ -2000,6 +2000,7 @@ ASTReader::ASTReadResult ASTReader::ReadAST(const std::string &FileName) {
            TotalNumSelectors = 0;
   for (unsigned I = 0, N = Chain.size(); I != N; ++I) {
     TotalNumSLocEntries += Chain[I]->LocalNumSLocEntries;
+    NextSLocOffset += Chain[I]->LocalSLocSize;
     TotalNumIdentifiers += Chain[I]->LocalNumIdentifiers;
     TotalNumTypes += Chain[I]->LocalNumTypes;
     TotalNumDecls += Chain[I]->LocalNumDecls;
@@ -2008,8 +2009,7 @@ ASTReader::ASTReadResult ASTReader::ReadAST(const std::string &FileName) {
     TotalNumMacroDefs += Chain[I]->LocalNumMacroDefinitions;
     TotalNumSelectors += Chain[I]->LocalNumSelectors;
   }
-  SourceMgr.PreallocateSLocEntries(this, TotalNumSLocEntries,
-                                   Chain.front()->NextOffset);
+  SourceMgr.PreallocateSLocEntries(this, TotalNumSLocEntries, NextSLocOffset);
   IdentifiersLoaded.resize(TotalNumIdentifiers);
   TypesLoaded.resize(TotalNumTypes);
   DeclsLoaded.resize(TotalNumDecls);
@@ -4089,9 +4089,9 @@ ASTReader::ASTReader(Preprocessor &PP, ASTContext *Context,
     Diags(PP.getDiagnostics()), SemaObj(0), PP(&PP), Context(Context),
     Consumer(0), isysroot(isysroot), DisableValidation(DisableValidation),
     NumStatHits(0), NumStatMisses(0), NumSLocEntriesRead(0),
-    TotalNumSLocEntries(0), NumStatementsRead(0), TotalNumStatements(0),
-    NumMacrosRead(0), TotalNumMacros(0), NumSelectorsRead(0),
-    NumMethodPoolEntriesRead(0), NumMethodPoolMisses(0),
+    TotalNumSLocEntries(0), NextSLocOffset(0), NumStatementsRead(0),
+    TotalNumStatements(0), NumMacrosRead(0), TotalNumMacros(0),
+    NumSelectorsRead(0), NumMethodPoolEntriesRead(0), NumMethodPoolMisses(0),
     TotalNumMethodPoolEntries(0), NumLexicalDeclContextsRead(0),
     TotalLexicalDeclContexts(0), NumVisibleDeclContextsRead(0),
     TotalVisibleDeclContexts(0), NumCurrentElementsDeserializing(0) {
@@ -4105,12 +4105,12 @@ ASTReader::ASTReader(SourceManager &SourceMgr, FileManager &FileMgr,
     Diags(Diags), SemaObj(0), PP(0), Context(0), Consumer(0),
     isysroot(isysroot), DisableValidation(DisableValidation), NumStatHits(0),
     NumStatMisses(0), NumSLocEntriesRead(0), TotalNumSLocEntries(0),
-    NumStatementsRead(0), TotalNumStatements(0), NumMacrosRead(0),
-    TotalNumMacros(0), NumSelectorsRead(0), NumMethodPoolEntriesRead(0),
-    NumMethodPoolMisses(0), TotalNumMethodPoolEntries(0),
-    NumLexicalDeclContextsRead(0), TotalLexicalDeclContexts(0),
-    NumVisibleDeclContextsRead(0), TotalVisibleDeclContexts(0),
-    NumCurrentElementsDeserializing(0) {
+    NextSLocOffset(0), NumStatementsRead(0), TotalNumStatements(0),
+    NumMacrosRead(0), TotalNumMacros(0), NumSelectorsRead(0),
+    NumMethodPoolEntriesRead(0), NumMethodPoolMisses(0),
+    TotalNumMethodPoolEntries(0), NumLexicalDeclContextsRead(0),
+    TotalLexicalDeclContexts(0), NumVisibleDeclContextsRead(0),
+    TotalVisibleDeclContexts(0), NumCurrentElementsDeserializing(0) {
   RelocatablePCH = false;
 }
 
@@ -4140,7 +4140,7 @@ ASTReader::~ASTReader() {
 }
 
 ASTReader::PerFileData::PerFileData()
-  : SizeInBits(0), LocalNumSLocEntries(0), SLocOffsets(0),
+  : SizeInBits(0), LocalNumSLocEntries(0), SLocOffsets(0), LocalSLocSize(0),
     LocalNumIdentifiers(0), IdentifierOffsets(0), IdentifierTableData(0),
     IdentifierLookupTable(0), LocalNumMacroDefinitions(0),
     MacroDefinitionOffsets(0), LocalNumSelectors(0), SelectorOffsets(0),

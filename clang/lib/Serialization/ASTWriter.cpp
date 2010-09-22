@@ -1228,7 +1228,8 @@ void ASTWriter::WriteSourceManagerBlock(SourceManager &SourceMgr,
   Record.clear();
   Record.push_back(SOURCE_LOCATION_OFFSETS);
   Record.push_back(SLocEntryOffsets.size());
-  Record.push_back(SourceMgr.getNextOffset());
+  unsigned BaseOffset = Chain ? Chain->getNextSLocOffset() : 0;
+  Record.push_back(SourceMgr.getNextOffset() - BaseOffset);
   Stream.EmitRecordWithBlob(SLocOffsetsAbbrev, Record,
                             (const char *)data(SLocEntryOffsets),
                            SLocEntryOffsets.size()*sizeof(SLocEntryOffsets[0]));

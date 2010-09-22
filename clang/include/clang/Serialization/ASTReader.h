@@ -228,8 +228,8 @@ private:
     /// AST file.
     const uint32_t *SLocOffsets;
 
-    /// \brief The next SourceLocation offset after reading this file.
-    unsigned NextOffset;
+    /// \brief The entire size of this module's source location offset range.
+    unsigned LocalSLocSize;
 
     // === Identifiers ===
 
@@ -255,6 +255,10 @@ private:
 
     // === Macros ===
 
+    /// \brief The cursor to the start of the preprocessor block, which stores
+    /// all of the macro definitions.
+    llvm::BitstreamCursor MacroCursor;
+
     /// \brief The number of macro definitions in this file.
     unsigned LocalNumMacroDefinitions;
 
@@ -263,10 +267,6 @@ private:
     const uint32_t *MacroDefinitionOffsets;
 
     // === Selectors ===
-
-    /// \brief The cursor to the start of the preprocessor block, which stores
-    /// all of the macro definitions.
-    llvm::BitstreamCursor MacroCursor;
 
     /// \brief The number of selectors new to this file.
     ///
@@ -568,6 +568,9 @@ private:
   /// \brief The number of source location entries in the chain.
   unsigned TotalNumSLocEntries;
 
+  /// \brief The next offset for a SLocEntry after everything in this reader.
+  unsigned NextSLocOffset;
+
   /// \brief The number of statements (and expressions) de-serialized
   /// from the chain.
   unsigned NumStatementsRead;
@@ -786,6 +789,11 @@ public:
   /// \brief Returns the number of source locations found in the chain.
   unsigned getTotalNumSLocs() const {
     return TotalNumSLocEntries;
+  }
+
+  /// \brief Returns the next SLocEntry offset after the chain.
+  unsigned getNextSLocOffset() const {
+    return NextSLocOffset;
   }
 
   /// \brief Returns the number of identifiers found in the chain.
