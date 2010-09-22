@@ -241,7 +241,7 @@ def llvm_gcc_mxx_pch : llvm_gcc_pch_based
 def opt : Tool<
 [(in_language "llvm-bitcode"),
  (out_language "llvm-bitcode"),
- (output_suffix "bc"),
+ (output_suffix "opt.bc"),
  (actions (case (not_empty "Wo,"), (forward_value "Wo,"),
                 (switch_on "O1"), (forward "O1"),
                 (switch_on "O2"), (forward "O2"),
