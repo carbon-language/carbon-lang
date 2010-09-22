@@ -403,10 +403,6 @@ static bool isCalleeLoad(SDValue Callee, SDValue &Chain, bool HasCallSeq) {
       LD->getExtensionType() != ISD::NON_EXTLOAD)
     return false;
 
-  // FIXME: Calls can't fold loads through segment registers yet.
-  if (LD->getPointerInfo().getAddrSpace() > 255)
-    return false;
-  
   // Now let's find the callseq_start.
   while (HasCallSeq && Chain.getOpcode() != ISD::CALLSEQ_START) {
     if (!Chain.hasOneUse())
