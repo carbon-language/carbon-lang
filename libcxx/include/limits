@@ -425,7 +425,7 @@ protected:
 };
 
 template <class _Tp>
-class numeric_limits
+class _LIBCPP_VISIBLE numeric_limits
     : private __libcpp_numeric_limits<typename remove_cv<_Tp>::type>
 {
     typedef __libcpp_numeric_limits<typename remove_cv<_Tp>::type> __base;
@@ -471,7 +471,7 @@ public:
 };
 
 template <class _Tp>
-class numeric_limits<const _Tp>
+class _LIBCPP_VISIBLE numeric_limits<const _Tp>
     : private numeric_limits<_Tp>
 {
     typedef numeric_limits<_Tp> __base;
@@ -517,7 +517,7 @@ public:
 };
 
 template <class _Tp>
-class numeric_limits<volatile _Tp>
+class _LIBCPP_VISIBLE numeric_limits<volatile _Tp>
     : private numeric_limits<_Tp>
 {
     typedef numeric_limits<_Tp> __base;
@@ -563,7 +563,7 @@ public:
 };
 
 template <class _Tp>
-class numeric_limits<const volatile _Tp>
+class _LIBCPP_VISIBLE numeric_limits<const volatile _Tp>
     : private numeric_limits<_Tp>
 {
     typedef numeric_limits<_Tp> __base;

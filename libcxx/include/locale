@@ -198,7 +198,7 @@ _LIBCPP_BEGIN_NAMESPACE_STD
 #if __APPLE__
 
 template <class _Tp>
-inline
+inline _LIBCPP_INLINE_VISIBILITY
 int
 __nolocale_sprintf(char* __restrict __str,
                    const char* __restrict __format, _Tp __v)
@@ -207,7 +207,7 @@ __nolocale_sprintf(char* __restrict __str,
 }
 
 template <class _Tp>
-inline
+inline _LIBCPP_INLINE_VISIBILITY
 int
 __nolocale_snprintf(char* __restrict __str, size_t __size,
                     const char* __restrict __format, _Tp __v)
@@ -216,7 +216,7 @@ __nolocale_snprintf(char* __restrict __str, size_t __size,
 }
 
 template <class _Tp>
-inline
+inline _LIBCPP_INLINE_VISIBILITY
 int
 __nolocale_snprintf(char* __restrict __str, size_t __size,
                     const char* __restrict __format, int __prec, _Tp __v)
@@ -225,7 +225,7 @@ __nolocale_snprintf(char* __restrict __str, size_t __size,
 }
 
 template <class _Tp>
-inline
+inline _LIBCPP_INLINE_VISIBILITY
 int
 __nolocale_asprintf(char** __ret, const char* __restrict __format, _Tp __v)
 {
@@ -233,7 +233,7 @@ __nolocale_asprintf(char** __ret, const char* __restrict __format, _Tp __v)
 }
 
 template <class _Tp>
-inline
+inline _LIBCPP_INLINE_VISIBILITY
 int
 __nolocale_asprintf(char** __ret, const char* __restrict __format, int __prec,
                                                                         _Tp __v)
@@ -242,7 +242,7 @@ __nolocale_asprintf(char** __ret, const char* __restrict __format, int __prec,
 }
 
 template <class _Tp>
-inline
+inline _LIBCPP_INLINE_VISIBILITY
 int
 __nolocale_sscanf(const char* __restrict __str,
                   const char* __restrict __format, _Tp* __v)
@@ -250,14 +250,14 @@ __nolocale_sscanf(const char* __restrict __str,
     return sscanf_l(__str, 0, __format, __v);
 }
 
-inline
+inline _LIBCPP_INLINE_VISIBILITY
 int
 __nolocale_isxdigit(int __c)
 {
     return isxdigit_l(__c, 0);
 }
 
-inline
+inline _LIBCPP_INLINE_VISIBILITY
 int
 __nolocale_isdigit(int __c)
 {
@@ -265,7 +265,8 @@ __nolocale_isdigit(int __c)
 }
 
 #else  // __APPLE__
-inline int
+inline _LIBCPP_INLINE_VISIBILITY
+int
 __nolocale_sprintf(char* __restrict __str,
                    const char* __restrict __format, ...)
 {
@@ -275,7 +276,8 @@ __nolocale_sprintf(char* __restrict __str,
     va_end(__ap);
     return __result;
 }
-inline int
+inline _LIBCPP_INLINE_VISIBILITY
+int
 __nolocale_snprintf(char* __restrict __str, size_t __size,
                     const char* __restrict __format, ...)
 {
@@ -285,7 +287,8 @@ __nolocale_snprintf(char* __restrict __str, size_t __size,
     va_end(__ap);
     return __result;
 }
-inline int
+inline _LIBCPP_INLINE_VISIBILITY
+int
 __nolocale_asprintf(char** __ret,
                     const char* __restrict __format, ...)
 {
@@ -295,7 +298,8 @@ __nolocale_asprintf(char** __ret,
     va_end(__ap);
     return __result;
 }
-inline int
+inline _LIBCPP_INLINE_VISIBILITY
+int
 __nolocale_sscanf(const char* __restrict __str,
                   const char* __restrict __format, ...)
 {
@@ -305,12 +309,15 @@ __nolocale_sscanf(const char* __restrict __str,
     va_end(__ap);
     return __result;
 }
-inline int
+inline _LIBCPP_INLINE_VISIBILITY
+int
 __nolocale_isxdigit(int __c)
 {
     return isxdigit(__c);
 }
-inline int
+
+inline _LIBCPP_INLINE_VISIBILITY
+int
 __nolocale_isdigit(int __c)
 {
     return isdigit(__c);
@@ -584,7 +591,7 @@ extern template class __num_get<char>;
 extern template class __num_get<wchar_t>;
 
 template <class _CharT, class _InputIterator = istreambuf_iterator<_CharT> >
-class num_get
+class _LIBCPP_VISIBLE num_get
     : public locale::facet,
       private __num_get<_CharT>
 {
@@ -676,6 +683,7 @@ public:
     static locale::id id;
 
 protected:
+    _LIBCPP_ALWAYS_INLINE
     ~num_get() {}
 
     virtual iter_type do_get(iter_type __b, iter_type __e, ios_base& __iob,
@@ -1335,7 +1343,7 @@ extern template class __num_put<char>;
 extern template class __num_put<wchar_t>;
 
 template <class _CharT, class _OutputIterator = ostreambuf_iterator<_CharT> >
-class num_put
+class _LIBCPP_VISIBLE num_put
     : public locale::facet,
       private __num_put<_CharT>
 {
@@ -1406,6 +1414,7 @@ public:
     static locale::id id;
 
 protected:
+    _LIBCPP_ALWAYS_INLINE
     ~num_put() {}
 
     virtual iter_type do_put(iter_type __s, ios_base& __iob, char_type __fl,
@@ -1740,7 +1749,7 @@ __get_up_to_n_digits(_InputIterator& __b, _InputIterator __e,
     return __r;
 }
 
-class time_base
+class _LIBCPP_VISIBLE time_base
 {
 public:
     enum dateorder {no_order, dmy, mdy, ymd, ydm};
@@ -1762,7 +1771,7 @@ protected:
 };
 
 template <class _CharT, class _InputIterator = istreambuf_iterator<_CharT> >
-class time_get
+class _LIBCPP_VISIBLE time_get
     : public locale::facet,
       public time_base,
       private __time_get_c_storage<_CharT>
@@ -1833,6 +1842,7 @@ public:
     static locale::id id;
 
 protected:
+    _LIBCPP_ALWAYS_INLINE
     ~time_get() {}
 
     virtual dateorder do_date_order() const;
@@ -2406,7 +2416,7 @@ private:
 };
 
 template <class _CharT, class _InputIterator = istreambuf_iterator<_CharT> >
-class time_get_byname
+class _LIBCPP_VISIBLE time_get_byname
     : public time_get<_CharT, _InputIterator>,
       private __time_get_storage<_CharT>
 {
@@ -2416,24 +2426,35 @@ public:
     typedef _CharT                  char_type;
     typedef basic_string<char_type> string_type;
 
+    _LIBCPP_INLINE_VISIBILITY
     explicit time_get_byname(const char* __nm, size_t __refs = 0)
         : time_get<_CharT, _InputIterator>(__refs),
           __time_get_storage<_CharT>(__nm) {}
+    _LIBCPP_INLINE_VISIBILITY
     explicit time_get_byname(const string& __nm, size_t __refs = 0)
         : time_get<_CharT, _InputIterator>(__refs),
           __time_get_storage<_CharT>(__nm) {}
 
 protected:
+    _LIBCPP_INLINE_VISIBILITY
     ~time_get_byname() {}
 
+    _LIBCPP_INLINE_VISIBILITY
     virtual dateorder do_date_order() const {return this->__do_date_order();}
 private:
+    _LIBCPP_INLINE_VISIBILITY
     virtual const string_type* __weeks() const  {return this->__weeks_;}
+    _LIBCPP_INLINE_VISIBILITY
     virtual const string_type* __months() const {return this->__months_;}
+    _LIBCPP_INLINE_VISIBILITY
     virtual const string_type* __am_pm() const  {return this->__am_pm_;}
+    _LIBCPP_INLINE_VISIBILITY
     virtual const string_type& __c() const      {return this->__c_;}
+    _LIBCPP_INLINE_VISIBILITY
     virtual const string_type& __r() const      {return this->__r_;}
+    _LIBCPP_INLINE_VISIBILITY
     virtual const string_type& __x() const      {return this->__x_;}
+    _LIBCPP_INLINE_VISIBILITY
     virtual const string_type& __X() const      {return this->__X_;}
 };
 
@@ -2455,7 +2476,7 @@ protected:
 };
 
 template <class _CharT, class _OutputIterator = ostreambuf_iterator<_CharT> >
-class time_put
+class _LIBCPP_VISIBLE time_put
     : public locale::facet,
       private __time_put
 {
@@ -2480,13 +2501,16 @@ public:
     static locale::id id;
 
 protected:
+    _LIBCPP_ALWAYS_INLINE
     ~time_put() {}
     virtual iter_type do_put(iter_type __s, ios_base&, char_type, const tm* __tm,
                              char __fmt, char __mod) const;
 
+    _LIBCPP_ALWAYS_INLINE
     explicit time_put(const char* __nm, size_t __refs)
         : locale::facet(__refs),
           __time_put(__nm) {}
+    _LIBCPP_ALWAYS_INLINE
     explicit time_put(const string& __nm, size_t __refs)
         : locale::facet(__refs),
           __time_put(__nm) {}
@@ -2551,7 +2575,7 @@ extern template class time_put<char>;
 extern template class time_put<wchar_t>;
 
 template <class _CharT, class _OutputIterator = ostreambuf_iterator<_CharT> >
-class time_put_byname
+class _LIBCPP_VISIBLE time_put_byname
     : public time_put<_CharT, _OutputIterator>
 {
 public:
@@ -2564,6 +2588,7 @@ public:
         : time_put<_CharT, _OutputIterator>(__nm, __refs) {}
 
 protected:
+    _LIBCPP_ALWAYS_INLINE
     ~time_put_byname() {}
 };
 
@@ -2572,7 +2597,7 @@ extern template class time_put_byname<wchar_t>;
 
 // money_base
 
-class money_base
+class _LIBCPP_VISIBLE money_base
 {
 public:
     enum part {none, space, symbol, sign, value};
@@ -2584,7 +2609,7 @@ public:
 // moneypunct
 
 template <class _CharT, bool _International = false>
-class moneypunct
+class _LIBCPP_VISIBLE moneypunct
     : public locale::facet,
       public money_base
 {
@@ -2592,6 +2617,7 @@ public:
     typedef _CharT                  char_type;
     typedef basic_string<char_type> string_type;
 
+    _LIBCPP_ALWAYS_INLINE
     explicit moneypunct(size_t __refs = 0)
         : locale::facet(__refs) {}
 
@@ -2609,17 +2635,27 @@ public:
     static const bool intl = _International;
 
 protected:
+    _LIBCPP_ALWAYS_INLINE
     ~moneypunct() {}
 
+    _LIBCPP_ALWAYS_INLINE
     virtual char_type   do_decimal_point() const {return numeric_limits<char_type>::max();}
+    _LIBCPP_ALWAYS_INLINE
     virtual char_type   do_thousands_sep() const {return numeric_limits<char_type>::max();}
+    _LIBCPP_ALWAYS_INLINE
     virtual string      do_grouping()      const {return string();}
+    _LIBCPP_ALWAYS_INLINE
     virtual string_type do_curr_symbol()   const {return string_type();}
+    _LIBCPP_ALWAYS_INLINE
     virtual string_type do_positive_sign() const {return string_type();}
+    _LIBCPP_ALWAYS_INLINE
     virtual string_type do_negative_sign() const {return string_type(1, '-');}
+    _LIBCPP_ALWAYS_INLINE
     virtual int         do_frac_digits()   const {return 0;}
+    _LIBCPP_ALWAYS_INLINE
     virtual pattern     do_pos_format()    const
         {pattern __p = {symbol, sign, none, value}; return __p;}
+    _LIBCPP_ALWAYS_INLINE
     virtual pattern     do_neg_format()    const
         {pattern __p = {symbol, sign, none, value}; return __p;}
 };
@@ -2636,7 +2672,8 @@ extern template class moneypunct<wchar_t, true>;
 // moneypunct_byname
 
 template <class _CharT, bool _International = false>
-class moneypunct_byname : public moneypunct<_CharT, _International>
+class _LIBCPP_VISIBLE moneypunct_byname
+    : public moneypunct<_CharT, _International>
 {
 public:
     typedef money_base::pattern  pattern;
@@ -2652,16 +2689,26 @@ public:
         : moneypunct<_CharT, _International>(__refs) {init(__nm.c_str());}
 
 protected:
+    _LIBCPP_ALWAYS_INLINE
     ~moneypunct_byname() {}
 
+    _LIBCPP_ALWAYS_INLINE
     virtual char_type   do_decimal_point() const {return __decimal_point_;}
+    _LIBCPP_ALWAYS_INLINE
     virtual char_type   do_thousands_sep() const {return __thousands_sep_;}
+    _LIBCPP_ALWAYS_INLINE
     virtual string      do_grouping()      const {return __grouping_;}
+    _LIBCPP_ALWAYS_INLINE
     virtual string_type do_curr_symbol()   const {return __curr_symbol_;}
+    _LIBCPP_ALWAYS_INLINE
     virtual string_type do_positive_sign() const {return __positive_sign_;}
+    _LIBCPP_ALWAYS_INLINE
     virtual string_type do_negative_sign() const {return __negative_sign_;}
+    _LIBCPP_ALWAYS_INLINE
     virtual int         do_frac_digits()   const {return __frac_digits_;}
+    _LIBCPP_ALWAYS_INLINE
     virtual pattern     do_pos_format()    const {return __pos_format_;}
+    _LIBCPP_ALWAYS_INLINE
     virtual pattern     do_neg_format()    const {return __neg_format_;}
 
 private:
@@ -2746,7 +2793,7 @@ extern template class __money_get<char>;
 extern template class __money_get<wchar_t>;
 
 template <class _CharT, class _InputIterator = istreambuf_iterator<_CharT> >
-class money_get
+class _LIBCPP_VISIBLE money_get
     : public locale::facet,
       private __money_get<_CharT>
 {
@@ -2777,6 +2824,7 @@ public:
 
 protected:
 
+    _LIBCPP_ALWAYS_INLINE
     ~money_get() {}
 
     virtual iter_type do_get(iter_type __b, iter_type __e, bool __intl,
@@ -3277,7 +3325,7 @@ extern template class __money_put<char>;
 extern template class __money_put<wchar_t>;
 
 template <class _CharT, class _OutputIterator = ostreambuf_iterator<_CharT> >
-class money_put
+class _LIBCPP_VISIBLE money_put
     : public locale::facet,
       private __money_put<_CharT>
 {
@@ -3307,6 +3355,7 @@ public:
     static locale::id id;
 
 protected:
+    _LIBCPP_ALWAYS_INLINE
     ~money_put() {}
 
     virtual iter_type do_put(iter_type __s, bool __intl, ios_base& __iob,
@@ -3428,7 +3477,7 @@ extern template class money_put<wchar_t>;
 
 // messages
 
-class messages_base
+class _LIBCPP_VISIBLE messages_base
 {
 public:
     typedef nl_catd catalog;
@@ -3437,7 +3486,7 @@ public:
 };
 
 template <class _CharT>
-class messages
+class _LIBCPP_VISIBLE messages
     : public locale::facet,
       public messages_base
 {
@@ -3471,6 +3520,7 @@ public:
     static locale::id id;
 
 protected:
+    _LIBCPP_ALWAYS_INLINE
     ~messages() {}
 
     virtual catalog do_open(const basic_string<char>&, const locale&) const;
@@ -3517,7 +3567,7 @@ extern template class messages<char>;
 extern template class messages<wchar_t>;
 
 template <class _CharT>
-class messages_byname
+class _LIBCPP_VISIBLE messages_byname
     : public messages<_CharT>
 {
 public:
@@ -3533,6 +3583,7 @@ public:
         : messages<_CharT>(__refs) {}
 
 protected:
+    _LIBCPP_ALWAYS_INLINE
     ~messages_byname() {}
 };
 
@@ -3542,7 +3593,7 @@ extern template class messages_byname<wchar_t>;
 template<class _Codecvt, class _Elem = wchar_t,
          class _Wide_alloc = allocator<_Elem>,
          class _Byte_alloc = allocator<char> >
-class wstring_convert
+class _LIBCPP_VISIBLE wstring_convert
 {
 public:
     typedef basic_string<char, char_traits<char>, _Byte_alloc>   byte_string;
@@ -3569,28 +3620,36 @@ public:
 #endif
     ~wstring_convert();
 
+    _LIBCPP_ALWAYS_INLINE
     wide_string from_bytes(char __byte)
         {return from_bytes(&__byte, &__byte+1);}
+    _LIBCPP_ALWAYS_INLINE
     wide_string from_bytes(const char* __ptr)
         {return from_bytes(__ptr, __ptr + char_traits<char>::length(__ptr));}
+    _LIBCPP_ALWAYS_INLINE
     wide_string from_bytes(const byte_string& __str)
         {return from_bytes(__str.data(), __str.data() + __str.size());}
     wide_string from_bytes(const char* __first, const char* __last);
 
+    _LIBCPP_ALWAYS_INLINE
     byte_string to_bytes(_Elem __wchar)
         {return to_bytes(&__wchar, &__wchar+1);}
+    _LIBCPP_ALWAYS_INLINE
     byte_string to_bytes(const _Elem* __wptr)
         {return to_bytes(__wptr, __wptr + char_traits<_Elem>::length(__wptr));}
+    _LIBCPP_ALWAYS_INLINE
     byte_string to_bytes(const wide_string& __wstr)
         {return to_bytes(__wstr.data(), __wstr.data() + __wstr.size());}
     byte_string to_bytes(const _Elem* __first, const _Elem* __last);
 
+    _LIBCPP_ALWAYS_INLINE
     size_t converted() const {return __cvtcount_;}
+    _LIBCPP_ALWAYS_INLINE
     state_type state() const {return __cvtstate_;}
 };
 
 template<class _Codecvt, class _Elem, class _Wide_alloc, class _Byte_alloc>
-inline
+inline _LIBCPP_ALWAYS_INLINE
 wstring_convert<_Codecvt, _Elem, _Wide_alloc, _Byte_alloc>::
     wstring_convert(_Codecvt* __pcvt)
         : __cvtptr_(__pcvt), __cvtstate_(), __cvtcount_(0)
@@ -3598,7 +3657,7 @@ wstring_convert<_Codecvt, _Elem, _Wide_alloc, _Byte_alloc>::
 }
 
 template<class _Codecvt, class _Elem, class _Wide_alloc, class _Byte_alloc>
-inline
+inline _LIBCPP_ALWAYS_INLINE
 wstring_convert<_Codecvt, _Elem, _Wide_alloc, _Byte_alloc>::
     wstring_convert(_Codecvt* __pcvt, state_type __state)
         : __cvtptr_(__pcvt), __cvtstate_(__state), __cvtcount_(0)
@@ -3617,7 +3676,7 @@ wstring_convert<_Codecvt, _Elem, _Wide_alloc, _Byte_alloc>::
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 template<class _Codecvt, class _Elem, class _Wide_alloc, class _Byte_alloc>
-inline
+inline _LIBCPP_ALWAYS_INLINE
 wstring_convert<_Codecvt, _Elem, _Wide_alloc, _Byte_alloc>::
     wstring_convert(wstring_convert&& __wc)
         : __byte_err_string_(_STD::move(__wc.__byte_err_string_)),
@@ -3785,7 +3844,7 @@ wstring_convert<_Codecvt, _Elem, _Wide_alloc, _Byte_alloc>::
 }
 
 template <class _Codecvt, class _Elem = wchar_t, class _Tr = char_traits<_Elem> >
-class wbuffer_convert
+class _LIBCPP_VISIBLE wbuffer_convert
     : public basic_streambuf<_Elem, _Tr>
 {
 public:
@@ -3820,7 +3879,9 @@ public:
                     state_type __state = state_type());
     ~wbuffer_convert();
 
+    _LIBCPP_INLINE_VISIBILITY
     streambuf* rdbuf() const {return __bufptr_;}
+    _LIBCPP_INLINE_VISIBILITY
     streambuf* rdbuf(streambuf* __bytebuf)
     {
         streambuf* __r = __bufptr_;
@@ -3828,6 +3889,7 @@ public:
         return __r;
     }
 
+    _LIBCPP_INLINE_VISIBILITY
     state_type state() const {return __st_;}
 
 protected:

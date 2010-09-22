@@ -187,6 +187,7 @@ struct __list_node_base
     pointer __prev_;
     pointer __next_;
 
+    _LIBCPP_INLINE_VISIBILITY
     __list_node_base()
         : __prev_(static_cast<pointer>(this)),
           __next_(static_cast<pointer>(this))
@@ -205,7 +206,7 @@ template <class, class> class __list_imp;
 template <class, class> class __list_const_iterator;
 
 template <class _Tp, class _VoidPtr>
-class __list_iterator
+class _LIBCPP_VISIBLE __list_iterator
 {
     typedef typename pointer_traits<_VoidPtr>::template
 #ifndef _LIBCPP_HAS_NO_TEMPLATE_ALIASES
@@ -216,6 +217,7 @@ class __list_iterator
 
     __node_pointer __ptr_;
 
+    _LIBCPP_INLINE_VISIBILITY
     explicit __list_iterator(__node_pointer __p) : __ptr_(__p) {}
 
     template<class, class> friend class list;
@@ -234,23 +236,31 @@ public:
                                              pointer;
     typedef typename pointer_traits<pointer>::difference_type difference_type;
 
+    _LIBCPP_INLINE_VISIBILITY
     reference operator*() const {return __ptr_->__value_;}
+    _LIBCPP_INLINE_VISIBILITY
     pointer operator->() const {return &(operator*());}
 
+    _LIBCPP_INLINE_VISIBILITY
     __list_iterator& operator++() {__ptr_ = __ptr_->__next_; return *this;}
+    _LIBCPP_INLINE_VISIBILITY
     __list_iterator operator++(int) {__list_iterator __t(*this); ++(*this); return __t;}
 
+    _LIBCPP_INLINE_VISIBILITY
     __list_iterator& operator--() {__ptr_ = __ptr_->__prev_; return *this;}
+    _LIBCPP_INLINE_VISIBILITY
     __list_iterator operator--(int) {__list_iterator __t(*this); --(*this); return __t;}
 
-    friend bool operator==(const __list_iterator& __x, const __list_iterator& __y)
+    friend _LIBCPP_INLINE_VISIBILITY
+    bool operator==(const __list_iterator& __x, const __list_iterator& __y)
         {return __x.__ptr_ == __y.__ptr_;}
-    friend bool operator!=(const __list_iterator& __x, const __list_iterator& __y)
+    friend _LIBCPP_INLINE_VISIBILITY
+     bool operator!=(const __list_iterator& __x, const __list_iterator& __y)
         {return !(__x == __y);}
 };
 
 template <class _Tp, class _VoidPtr>
-class __list_const_iterator
+class _LIBCPP_VISIBLE __list_const_iterator
 {
     typedef typename pointer_traits<_VoidPtr>::template
 #ifndef _LIBCPP_HAS_NO_TEMPLATE_ALIASES
@@ -261,6 +271,7 @@ class __list_const_iterator
 
     __node_pointer __ptr_;
 
+    _LIBCPP_INLINE_VISIBILITY
     explicit __list_const_iterator(__node_pointer __p) : __ptr_(__p) {}
 
     template<class, class> friend class list;
@@ -278,20 +289,29 @@ public:
                                              pointer;
     typedef typename pointer_traits<pointer>::difference_type difference_type;
 
+    _LIBCPP_INLINE_VISIBILITY
     __list_const_iterator(__list_iterator<_Tp, _VoidPtr> __p) : __ptr_(__p.__ptr_) {}
 
+    _LIBCPP_INLINE_VISIBILITY
     reference operator*() const {return __ptr_->__value_;}
+    _LIBCPP_INLINE_VISIBILITY
     pointer operator->() const {return &(operator*());}
 
+    _LIBCPP_INLINE_VISIBILITY
     __list_const_iterator& operator++() {__ptr_ = __ptr_->__next_; return *this;}
+    _LIBCPP_INLINE_VISIBILITY
     __list_const_iterator operator++(int) {__list_const_iterator __t(*this); ++(*this); return __t;}
 
+    _LIBCPP_INLINE_VISIBILITY
     __list_const_iterator& operator--() {__ptr_ = __ptr_->__prev_; return *this;}
+    _LIBCPP_INLINE_VISIBILITY
     __list_const_iterator operator--(int) {__list_const_iterator __t(*this); --(*this); return __t;}
 
-    friend bool operator==(const __list_const_iterator& __x, const __list_const_iterator& __y)
+    friend _LIBCPP_INLINE_VISIBILITY
+    bool operator==(const __list_const_iterator& __x, const __list_const_iterator& __y)
         {return __x.__ptr_ == __y.__ptr_;}
-    friend bool operator!=(const __list_const_iterator& __x, const __list_const_iterator& __y)
+    friend _LIBCPP_INLINE_VISIBILITY
+    bool operator!=(const __list_const_iterator& __x, const __list_const_iterator& __y)
         {return !(__x == __y);}
 };
 
@@ -327,9 +347,13 @@ protected:
     __node_base __end_;
     __compressed_pair<size_type, __node_allocator> __size_alloc_;
 
+    _LIBCPP_INLINE_VISIBILITY
           size_type& __sz()       {return __size_alloc_.first();}
+    _LIBCPP_INLINE_VISIBILITY
     const size_type& __sz() const {return __size_alloc_.first();}
+    _LIBCPP_INLINE_VISIBILITY
           __node_allocator& __node_alloc()       {return __size_alloc_.second();}
+    _LIBCPP_INLINE_VISIBILITY
     const __node_allocator& __node_alloc() const {return __size_alloc_.second();}
 
     static void __unlink_nodes(__node_base& __f, __node_base& __l);
@@ -338,35 +362,46 @@ protected:
     __list_imp(const allocator_type& __a);
     ~__list_imp();
     void clear();
+    _LIBCPP_INLINE_VISIBILITY
     bool empty() const {return __sz() == 0;}
 
+    _LIBCPP_INLINE_VISIBILITY
           iterator begin()       {return       iterator(__end_.__next_);}
+    _LIBCPP_INLINE_VISIBILITY
     const_iterator begin() const {return const_iterator(__end_.__next_);}
+    _LIBCPP_INLINE_VISIBILITY
           iterator end()       {return       iterator(static_cast<__node_pointer>      (&__end_));}
+    _LIBCPP_INLINE_VISIBILITY
     const_iterator end() const {return const_iterator(static_cast<__node_const_pointer>(&__end_));}
 
     void swap(__list_imp& __c);
 
+    _LIBCPP_INLINE_VISIBILITY
     void __copy_assign_alloc(const __list_imp& __c)
         {__copy_assign_alloc(__c, integral_constant<bool,
                       __node_alloc_traits::propagate_on_container_copy_assignment::value>());}
 
+    _LIBCPP_INLINE_VISIBILITY
     void __move_assign_alloc(__list_imp& __c)
         {__move_assign_alloc(__c, integral_constant<bool,
                       __node_alloc_traits::propagate_on_container_move_assignment::value>());}
 
 private:
+    _LIBCPP_INLINE_VISIBILITY
     static void __swap_alloc(__node_allocator& __x, __node_allocator& __y)
         {__swap_alloc(__x, __y, integral_constant<bool,
                       __node_alloc_traits::propagate_on_container_swap::value>());}
+    _LIBCPP_INLINE_VISIBILITY
     static void __swap_alloc(__node_allocator& __x, __node_allocator& __y, true_type)
         {
             using _STD::swap;
             swap(__x, __y);
         }
+    _LIBCPP_INLINE_VISIBILITY
     static void __swap_alloc(__node_allocator& __x, __node_allocator& __y, false_type)
         {}
 
+    _LIBCPP_INLINE_VISIBILITY
     void __copy_assign_alloc(const __list_imp& __c, true_type)
         {
             if (__node_alloc() != __c.__node_alloc())
@@ -374,21 +409,24 @@ private:
             __node_alloc() = __c.__node_alloc();
         }
 
+    _LIBCPP_INLINE_VISIBILITY
     void __copy_assign_alloc(const __list_imp& __c, false_type)
         {}
 
+    _LIBCPP_INLINE_VISIBILITY
     void __move_assign_alloc(const __list_imp& __c, true_type)
         {
             __node_alloc() = _STD::move(__c.__node_alloc());
         }
 
+    _LIBCPP_INLINE_VISIBILITY
     void __move_assign_alloc(const __list_imp& __c, false_type)
         {}
 };
 
 // Unlink nodes [__f, __l]
 template <class _Tp, class _Alloc>
-inline
+inline _LIBCPP_INLINE_VISIBILITY
 void
 __list_imp<_Tp, _Alloc>::__unlink_nodes(__node_base& __f, __node_base& __l)
 {
@@ -397,14 +435,14 @@ __list_imp<_Tp, _Alloc>::__unlink_nodes(__node_base& __f, __node_base& __l)
 }
 
 template <class _Tp, class _Alloc>
-inline
+inline _LIBCPP_INLINE_VISIBILITY
 __list_imp<_Tp, _Alloc>::__list_imp()
     : __size_alloc_(0)
 {
 }
 
 template <class _Tp, class _Alloc>
-inline
+inline _LIBCPP_INLINE_VISIBILITY
 __list_imp<_Tp, _Alloc>::__list_imp(const allocator_type& __a)
     : __size_alloc_(0, __node_allocator(__a))
 {
@@ -459,7 +497,7 @@ __list_imp<_Tp, _Alloc>::swap(__list_imp& __c)
 }
 
 template <class _Tp, class _Alloc = allocator<_Tp> >
-class list
+class _LIBCPP_VISIBLE list
     : private __list_imp<_Tp, _Alloc>
 {
     typedef __list_imp<_Tp, _Alloc> base;
@@ -484,7 +522,9 @@ public:
     typedef _STD::reverse_iterator<iterator>         reverse_iterator;
     typedef _STD::reverse_iterator<const_iterator>   const_reverse_iterator;
 
+    _LIBCPP_INLINE_VISIBILITY
     list() {}
+    _LIBCPP_INLINE_VISIBILITY
     list(const allocator_type& __a) : base(__a) {}
     list(size_type __n);
     list(size_type __n, const value_type& __x);
@@ -506,6 +546,7 @@ public:
     list(list&& __c, const allocator_type& __a);
     list& operator=(list&& __c);
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
+    _LIBCPP_INLINE_VISIBILITY
     list& operator=(initializer_list<value_type> __il)
         {assign(__il.begin(), __il.end()); return *this;}
 
@@ -513,32 +554,52 @@ public:
         void assign(_InpIter __f, _InpIter __l,
              typename enable_if<__is_input_iterator<_InpIter>::value>::type* = 0);
     void assign(size_type __n, const value_type& __x);
+    _LIBCPP_INLINE_VISIBILITY
     void assign(initializer_list<value_type> __il)
         {assign(__il.begin(), __il.end());}
 
     allocator_type get_allocator() const;
 
+    _LIBCPP_INLINE_VISIBILITY
     size_type size() const     {return base::__sz();}
+    _LIBCPP_INLINE_VISIBILITY
     bool empty() const         {return base::empty();}
+    _LIBCPP_INLINE_VISIBILITY
     size_type max_size() const {return numeric_limits<difference_type>::max();}
 
+    _LIBCPP_INLINE_VISIBILITY
           iterator begin()        {return base::begin();}
+    _LIBCPP_INLINE_VISIBILITY
     const_iterator begin()  const {return base::begin();}
+    _LIBCPP_INLINE_VISIBILITY
           iterator end()          {return base::end();}
+    _LIBCPP_INLINE_VISIBILITY
     const_iterator end()    const {return base::end();}
+    _LIBCPP_INLINE_VISIBILITY
     const_iterator cbegin() const {return base::begin();}
+    _LIBCPP_INLINE_VISIBILITY
     const_iterator cend()   const {return base::end();}
 
+    _LIBCPP_INLINE_VISIBILITY
           reverse_iterator rbegin()        {return       reverse_iterator(end());}
+    _LIBCPP_INLINE_VISIBILITY
     const_reverse_iterator rbegin()  const {return const_reverse_iterator(end());}
+    _LIBCPP_INLINE_VISIBILITY
           reverse_iterator rend()          {return       reverse_iterator(begin());}
+    _LIBCPP_INLINE_VISIBILITY
     const_reverse_iterator rend()    const {return const_reverse_iterator(begin());}
+    _LIBCPP_INLINE_VISIBILITY
     const_reverse_iterator crbegin() const {return const_reverse_iterator(end());}
+    _LIBCPP_INLINE_VISIBILITY
     const_reverse_iterator crend()   const {return const_reverse_iterator(begin());}
 
+    _LIBCPP_INLINE_VISIBILITY
           reference front()        {return base::__end_.__next_->__value_;}
+    _LIBCPP_INLINE_VISIBILITY
     const_reference front() const  {return base::__end_.__next_->__value_;}
+    _LIBCPP_INLINE_VISIBILITY
           reference back()         {return base::__end_.__prev_->__value_;}
+    _LIBCPP_INLINE_VISIBILITY
     const_reference back()  const  {return base::__end_.__prev_->__value_;}
 
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
@@ -563,10 +624,13 @@ public:
     template <class _InpIter>
         iterator insert(const_iterator __p, _InpIter __f, _InpIter __l,
              typename enable_if<__is_input_iterator<_InpIter>::value>::type* = 0);
+    _LIBCPP_INLINE_VISIBILITY
     iterator insert(const_iterator __p, initializer_list<value_type> __il)
         {return insert(__p, __il.begin(), __il.end());}
 
+    _LIBCPP_INLINE_VISIBILITY
     void swap(list& __c) {base::swap(__c);}
+    _LIBCPP_INLINE_VISIBILITY
     void clear() {base::clear();}
 
     void pop_front();
@@ -580,15 +644,18 @@ public:
 
     void splice(const_iterator __p, list& __c);
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
+    _LIBCPP_INLINE_VISIBILITY
     void splice(const_iterator __p, list&& __c) {splice(__p, __c);}
 #endif
     void splice(const_iterator __p, list& __c, const_iterator __i);
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
+    _LIBCPP_INLINE_VISIBILITY
     void splice(const_iterator __p, list&& __c, const_iterator __i)
         {splice(__p, __c, __i);}
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
     void splice(const_iterator __p, list& __c, const_iterator __f, const_iterator __l);
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
+    _LIBCPP_INLINE_VISIBILITY
     void splice(const_iterator __p, list&& __c, const_iterator __f, const_iterator __l)
         {splice(__p, __c, __f, __l);}
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
@@ -600,12 +667,14 @@ public:
         void unique(_BinaryPred __binary_pred);
     void merge(list& __c);
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
+    _LIBCPP_INLINE_VISIBILITY
     void merge(list&& __c) {merge(__c);}
 #endif
     template <class _Comp>
         void merge(list& __c, _Comp __comp);
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     template <class _Comp>
+    _LIBCPP_INLINE_VISIBILITY
         void merge(list&& __c, _Comp __comp) {merge(__c, __comp);}
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
     void sort();
@@ -626,7 +695,7 @@ private:
 
 // Link in nodes [__f, __l] just prior to __p
 template <class _Tp, class _Alloc>
-inline
+inline _LIBCPP_INLINE_VISIBILITY
 void
 list<_Tp, _Alloc>::__link_nodes(__node& __p, __node& __f, __node& __l)
 {
@@ -637,7 +706,7 @@ list<_Tp, _Alloc>::__link_nodes(__node& __p, __node& __f, __node& __l)
 }
 
 template <class _Tp, class _Alloc>
-inline
+inline _LIBCPP_INLINE_VISIBILITY
 typename list<_Tp, _Alloc>::iterator
 list<_Tp, _Alloc>::__iterator(size_type __n)
 {
@@ -726,7 +795,7 @@ list<_Tp, _Alloc>::list(initializer_list<value_type> __il)
 }
 
 template <class _Tp, class _Alloc>
-inline
+inline _LIBCPP_INLINE_VISIBILITY
 list<_Tp, _Alloc>&
 list<_Tp, _Alloc>::operator=(const list& __c)
 {
@@ -741,7 +810,7 @@ list<_Tp, _Alloc>::operator=(const list& __c)
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 template <class _Tp, class _Alloc>
-inline
+inline _LIBCPP_INLINE_VISIBILITY
 list<_Tp, _Alloc>::list(list&& __c)
     : base(allocator_type(_STD::move(__c.__node_alloc())))
 {
@@ -749,7 +818,7 @@ list<_Tp, _Alloc>::list(list&& __c)
 }
 
 template <class _Tp, class _Alloc>
-inline
+inline _LIBCPP_INLINE_VISIBILITY
 list<_Tp, _Alloc>::list(list&& __c, const allocator_type& __a)
     : base(__a)
 {
@@ -763,7 +832,7 @@ list<_Tp, _Alloc>::list(list&& __c, const allocator_type& __a)
 }
 
 template <class _Tp, class _Alloc>
-inline
+inline _LIBCPP_INLINE_VISIBILITY
 list<_Tp, _Alloc>&
 list<_Tp, _Alloc>::operator=(list&& __c)
 {
@@ -827,7 +896,7 @@ list<_Tp, _Alloc>::assign(size_type __n, const value_type& __x)
 }
 
 template <class _Tp, class _Alloc>
-inline
+inline _LIBCPP_INLINE_VISIBILITY
 _Alloc
 list<_Tp, _Alloc>::get_allocator() const
 {
@@ -1316,7 +1385,7 @@ list<_Tp, _Alloc>::remove_if(_Pred __pred)
 }
 
 template <class _Tp, class _Alloc>
-inline
+inline _LIBCPP_INLINE_VISIBILITY
 void
 list<_Tp, _Alloc>::unique()
 {
@@ -1339,7 +1408,7 @@ list<_Tp, _Alloc>::unique(_BinaryPred __binary_pred)
 }
 
 template <class _Tp, class _Alloc>
-inline
+inline _LIBCPP_INLINE_VISIBILITY
 void
 list<_Tp, _Alloc>::merge(list& __c)
 {
@@ -1383,7 +1452,7 @@ list<_Tp, _Alloc>::merge(list& __c, _Comp __comp)
 }
 
 template <class _Tp, class _Alloc>
-inline
+inline _LIBCPP_INLINE_VISIBILITY
 void
 list<_Tp, _Alloc>::sort()
 {
@@ -1392,7 +1461,7 @@ list<_Tp, _Alloc>::sort()
 
 template <class _Tp, class _Alloc>
 template <class _Comp>
-inline
+inline _LIBCPP_INLINE_VISIBILITY
 void
 list<_Tp, _Alloc>::sort(_Comp __comp)
 {
@@ -1401,7 +1470,6 @@ list<_Tp, _Alloc>::sort(_Comp __comp)
 
 template <class _Tp, class _Alloc>
 template <class _Comp>
-inline
 typename list<_Tp, _Alloc>::iterator
 list<_Tp, _Alloc>::__sort(iterator __f1, iterator __e2, size_type __n, _Comp& __comp)
 {
@@ -1477,7 +1545,7 @@ list<_Tp, _Alloc>::reverse()
 }
 
 template <class _Tp, class _Alloc>
-inline
+inline _LIBCPP_INLINE_VISIBILITY
 bool
 operator==(const list<_Tp, _Alloc>& __x, const list<_Tp, _Alloc>& __y)
 {
@@ -1485,7 +1553,7 @@ operator==(const list<_Tp, _Alloc>& __x, const list<_Tp, _Alloc>& __y)
 }
 
 template <class _Tp, class _Alloc>
-inline
+inline _LIBCPP_INLINE_VISIBILITY
 bool
 operator< (const list<_Tp, _Alloc>& __x, const list<_Tp, _Alloc>& __y)
 {
@@ -1493,7 +1561,7 @@ operator< (const list<_Tp, _Alloc>& __x, const list<_Tp, _Alloc>& __y)
 }
 
 template <class _Tp, class _Alloc>
-inline
+inline _LIBCPP_INLINE_VISIBILITY
 bool
 operator!=(const list<_Tp, _Alloc>& __x, const list<_Tp, _Alloc>& __y)
 {
@@ -1501,7 +1569,7 @@ operator!=(const list<_Tp, _Alloc>& __x, const list<_Tp, _Alloc>& __y)
 }
 
 template <class _Tp, class _Alloc>
-inline
+inline _LIBCPP_INLINE_VISIBILITY
 bool
 operator> (const list<_Tp, _Alloc>& __x, const list<_Tp, _Alloc>& __y)
 {
@@ -1509,7 +1577,7 @@ operator> (const list<_Tp, _Alloc>& __x, const list<_Tp, _Alloc>& __y)
 }
 
 template <class _Tp, class _Alloc>
-inline
+inline _LIBCPP_INLINE_VISIBILITY
 bool
 operator>=(const list<_Tp, _Alloc>& __x, const list<_Tp, _Alloc>& __y)
 {
@@ -1517,7 +1585,7 @@ operator>=(const list<_Tp, _Alloc>& __x, const list<_Tp, _Alloc>& __y)
 }
 
 template <class _Tp, class _Alloc>
-inline
+inline _LIBCPP_INLINE_VISIBILITY
 bool
 operator<=(const list<_Tp, _Alloc>& __x, const list<_Tp, _Alloc>& __y)
 {
@@ -1525,7 +1593,7 @@ operator<=(const list<_Tp, _Alloc>& __x, const list<_Tp, _Alloc>& __y)
 }
 
 template <class _Tp, class _Alloc>
-inline
+inline _LIBCPP_INLINE_VISIBILITY
 void
 swap(list<_Tp, _Alloc>& __x, list<_Tp, _Alloc>& __y)
 {
