@@ -4381,8 +4381,7 @@ static SDValue PerformBUILD_VECTORCombine(SDNode *N, SelectionDAG &DAG) {
 
 /// PerformVDUPLANECombine - Target-specific dag combine xforms for
 /// ARMISD::VDUPLANE.
-static SDValue PerformVDUPLANECombine(SDNode *N,
-                                      TargetLowering::DAGCombinerInfo &DCI) {
+static SDValue PerformVDUPLANECombine(SDNode *N, SelectionDAG &DAG) {
   // If the source is already a VMOVIMM or VMVNIMM splat, the VDUPLANE is
   // redundant.
   SDValue Op = N->getOperand(0);
@@ -4404,8 +4403,7 @@ static SDValue PerformVDUPLANECombine(SDNode *N,
   if (EltSize > VT.getVectorElementType().getSizeInBits())
     return SDValue();
 
-  SDValue Res = DCI.DAG.getNode(ISD::BIT_CONVERT, N->getDebugLoc(), VT, Op);
-  return DCI.CombineTo(N, Res, false);
+  return DAG.getNode(ISD::BIT_CONVERT, N->getDebugLoc(), VT, Op);
 }
 
 /// getVShiftImm - Check if this is a valid build_vector for the immediate
@@ -4789,7 +4787,7 @@ SDValue ARMTargetLowering::PerformDAGCombine(SDNode *N,
   case ARMISD::VMOVRRD: return PerformVMOVRRDCombine(N, DCI);
   case ARMISD::VMOVDRR: return PerformVMOVDRRCombine(N, DCI.DAG);
   case ISD::BUILD_VECTOR: return PerformBUILD_VECTORCombine(N, DCI.DAG);
-  case ARMISD::VDUPLANE: return PerformVDUPLANECombine(N, DCI);
+  case ARMISD::VDUPLANE: return PerformVDUPLANECombine(N, DCI.DAG);
   case ISD::INTRINSIC_WO_CHAIN: return PerformIntrinsicCombine(N, DCI.DAG);
   case ISD::SHL:
   case ISD::SRA:
