@@ -45,10 +45,12 @@ _clang_getCursorExtent
 _clang_getCursorKind
 _clang_getCursorKindSpelling
 _clang_getCursorLanguage
+_clang_getCursorLexicalParent
 _clang_getCursorLinkage
 _clang_getCursorLocation
 _clang_getCursorReferenced
 _clang_getCursorResultType
+_clang_getCursorSemanticParent
 _clang_getCursorSpelling
 _clang_getCursorType
 _clang_getCursorUSR

@@ -4018,6 +4018,36 @@ CXLanguageKind clang_getCursorLanguage(CXCursor cursor) {
 
   return CXLanguage_Invalid;
 }
+  
+CXCursor clang_getCursorSemanticParent(CXCursor cursor) {
+  if (clang_isDeclaration(cursor.kind)) {
+    if (Decl *D = getCursorDecl(cursor)) {
+      DeclContext *DC = D->getDeclContext();
+      return MakeCXCursor(cast<Decl>(DC), getCursorASTUnit(cursor));
+    }
+  }
+  
+  if (clang_isStatement(cursor.kind) || clang_isExpression(cursor.kind)) {
+    if (Decl *D = getCursorDecl(cursor))
+      return MakeCXCursor(D, getCursorASTUnit(cursor));
+  }
+  
+  return clang_getNullCursor();
+}
+
+CXCursor clang_getCursorLexicalParent(CXCursor cursor) {
+  if (clang_isDeclaration(cursor.kind)) {
+    if (Decl *D = getCursorDecl(cursor)) {
+      DeclContext *DC = D->getLexicalDeclContext();
+      return MakeCXCursor(cast<Decl>(DC), getCursorASTUnit(cursor));
+    }
+  }
+
+  // FIXME: Note that we can't easily compute the lexical context of a 
+  // statement or expression, so we return nothing.
+  return clang_getNullCursor();
+}
+
 } // end: extern "C"
 
 
