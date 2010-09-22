@@ -118,11 +118,11 @@ ASTResultSynthesizer::SynthesizeResult (FunctionDecl *FunDecl)
         std::string s;
         raw_string_ostream os(s);
         
-        function_decl->print(os);
+        Ctx.getTranslationUnitDecl()->print(os);
         
         os.flush();
         
-        log->Printf("Function AST before transforming:\n%s", s.c_str());
+        log->Printf("AST context before transforming:\n%s", s.c_str());
     }
     
     Stmt *function_body = function_decl->getBody();
