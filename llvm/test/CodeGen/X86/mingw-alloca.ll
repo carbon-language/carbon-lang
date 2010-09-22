@@ -6,7 +6,7 @@ target triple = "i386-pc-mingw32"
 define void @foo1(i32 %N) nounwind {
 entry:
 ; CHECK: _foo1:
-; CHECK: call __alloca
+; CHECK: calll __alloca
 	%tmp14 = alloca i32, i32 %N		; <i32*> [#uses=1]
 	call void @bar1( i32* %tmp14 )
 	ret void
@@ -19,7 +19,7 @@ entry:
 ; CHECK: _foo2:
 ; CHECK: andl $-16, %esp
 ; CHECK: pushl %eax
-; CHECK: call __alloca
+; CHECK: calll __alloca
 ; CHECK: movl	8028(%esp), %eax
 	%A2 = alloca [2000 x i32], align 16		; <[2000 x i32]*> [#uses=1]
 	%A2.sub = getelementptr [2000 x i32]* %A2, i32 0, i32 0		; <i32*> [#uses=1]

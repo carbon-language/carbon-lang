@@ -690,11 +690,13 @@ let isCall = 1 in
       Uses = [ESP] in {
     def CALLpcrel32 : Ii32PCRel<0xE8, RawFrm,
                            (outs), (ins i32imm_pcrel:$dst,variable_ops),
-                           "call\t$dst", []>;
+                           "call{l}\t$dst", []>, Requires<[In32BitMode]>;
     def CALL32r     : I<0xFF, MRM2r, (outs), (ins GR32:$dst, variable_ops),
-                        "call\t{*}$dst", [(X86call GR32:$dst)]>;
+                        "call{l}\t{*}$dst", [(X86call GR32:$dst)]>,
+                         Requires<[In32BitMode]>;
     def CALL32m     : I<0xFF, MRM2m, (outs), (ins i32mem:$dst, variable_ops),
-                        "call\t{*}$dst", [(X86call (loadi32 addr:$dst))]>;
+                        "call{l}\t{*}$dst", [(X86call (loadi32 addr:$dst))]>,
+                        Requires<[In32BitMode]>;
   
     def FARCALL16i  : Iseg16<0x9A, RawFrmImm16, (outs), 
                              (ins i16imm:$off, i16imm:$seg),

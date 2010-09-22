@@ -7,7 +7,7 @@
 define i32 @"$foo"() nounwind {
 ; CHECK: movl	($bar),
 ; CHECK: addl	($qux),
-; CHECK: call	($hen)
+; CHECK: calll	($hen)
   %m = load i32* @"$bar"
   %n = load i32* @"$qux"
   %t = add i32 %m, %n

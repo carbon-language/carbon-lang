@@ -3,7 +3,7 @@
 
 define void @t1(i8* inreg %dst, i8* inreg %src, i8* inreg %len) nounwind {
 ; CHECK: t1:
-; CHECK: call 0
+; CHECK: calll 0
   tail call void null(i8* inreg %dst, i8* inreg %src, i8* inreg %len) nounwind
   ret void
 }

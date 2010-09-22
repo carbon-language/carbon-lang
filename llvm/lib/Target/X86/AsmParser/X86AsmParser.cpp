@@ -1020,6 +1020,14 @@ ParseInstruction(StringRef Name, SMLoc NameLoc,
                                           NameLoc);
   }
   
+  // call foo is not ambiguous with callw.
+  if (Name == "call" && Operands.size() == 2) {
+    const char *NewName = Is64Bit ? "callq" : "calll";
+    delete Operands[0];
+    Operands[0] = X86Operand::CreateToken(NewName, NameLoc);
+    Name = NewName;
+  }
+  
   // movsd -> movsl (when no operands are specified).
   if (Name == "movsd" && Operands.size() == 1) {
     delete Operands[0];

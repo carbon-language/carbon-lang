@@ -12,7 +12,7 @@ entry:
     ret void
     
 ; LINUX:    test0:
-; LINUX:	call	.L0$pb
+; LINUX:	calll	.L0$pb
 ; LINUX-NEXT: .L0$pb:
 ; LINUX-NEXT:	popl
 ; LINUX:	addl	$_GLOBAL_OFFSET_TABLE_+(.L{{.*}}-.L0$pb),
@@ -34,7 +34,7 @@ entry:
     ret void
     
 ; LINUX: test1:
-; LINUX:	call	.L1$pb
+; LINUX:	calll	.L1$pb
 ; LINUX-NEXT: .L1$pb:
 ; LINUX-NEXT:	popl
 ; LINUX:	addl	$_GLOBAL_OFFSET_TABLE_+(.L{{.*}}-.L1$pb), %eax
@@ -54,12 +54,12 @@ entry:
 ; LINUX: test2:
 ; LINUX: 	pushl	%ebx
 ; LINUX-NEXT: 	subl	$8, %esp
-; LINUX-NEXT: 	call	.L2$pb
+; LINUX-NEXT: 	calll	.L2$pb
 ; LINUX-NEXT: .L2$pb:
 ; LINUX-NEXT: 	popl	%ebx
 ; LINUX: 	addl	$_GLOBAL_OFFSET_TABLE_+(.L{{.*}}-.L2$pb), %ebx
 ; LINUX: 	movl	$40, (%esp)
-; LINUX: 	call	malloc@PLT
+; LINUX: 	calll	malloc@PLT
 ; LINUX: 	addl	$8, %esp
 ; LINUX: 	popl	%ebx
 ; LINUX: 	ret
@@ -75,13 +75,13 @@ entry:
     call void(...)* %tmp1()
     ret void
 ; LINUX: test3:
-; LINUX: 	call	.L3$pb
+; LINUX: 	calll	.L3$pb
 ; LINUX-NEXT: .L3$pb:
 ; LINUX: 	popl
 ; LINUX: 	addl	$_GLOBAL_OFFSET_TABLE_+(.L{{.*}}-.L3$pb), %[[REG3:e..]]
 ; LINUX: 	movl	pfoo@GOT(%[[REG3]]),
-; LINUX: 	call	afoo@PLT
-; LINUX: 	call	*
+; LINUX: 	calll	afoo@PLT
+; LINUX: 	calll	*
 }
 
 declare void(...)* @afoo(...)
@@ -91,10 +91,10 @@ entry:
     call void(...)* @foo()
     ret void
 ; LINUX: test4:
-; LINUX: call	.L4$pb
+; LINUX: calll	.L4$pb
 ; LINUX: popl	%ebx
 ; LINUX: addl	$_GLOBAL_OFFSET_TABLE_+(.L{{.*}}-.L4$pb), %ebx
-; LINUX: call	foo@PLT
+; LINUX: calll	foo@PLT
 }
 
 declare void @foo(...)
@@ -112,7 +112,7 @@ entry:
     ret void
     
 ; LINUX: test5:
-; LINUX: 	call	.L5$pb
+; LINUX: 	calll	.L5$pb
 ; LINUX-NEXT: .L5$pb:
 ; LINUX-NEXT: 	popl	%eax
 ; LINUX: 	addl	$_GLOBAL_OFFSET_TABLE_+(.L{{.*}}-.L5$pb), %eax
@@ -134,7 +134,7 @@ entry:
 ; LINUX: .LCPI6_0:
 
 ; LINUX: test6:
-; LINUX:    call .L6$pb
+; LINUX:    calll .L6$pb
 ; LINUX: .L6$pb:
 ; LINUX:    addl	$_GLOBAL_OFFSET_TABLE_+(.L{{.*}}-.L6$pb), 
 ; LINUX:    fldl	.LCPI6_0@GOTOFF(
@@ -186,7 +186,7 @@ bb12:
     ret void
     
 ; LINUX: test7:
-; LINUX:   call	.L7$pb
+; LINUX:   calll	.L7$pb
 ; LINUX: .L7$pb:
 ; LINUX:   addl	$_GLOBAL_OFFSET_TABLE_+(.L{{.*}}-.L7$pb),
 ; LINUX:   .LJTI7_0@GOTOFF(

@@ -11,7 +11,7 @@ target triple = "i386-apple-darwin10.0.0"
 ; Verify that %esi gets spilled before the call.
 ; CHECK: Z4test1SiS
 ; CHECK: movl %esi,{{.*}}(%ebp) 
-; CHECK: call __Z6throwsv
+; CHECK: calll __Z6throwsv
 
 define i8* @_Z4test1SiS_(%struct.S* byval %s1, i32 %n, %struct.S* byval %s2) ssp {
 entry:

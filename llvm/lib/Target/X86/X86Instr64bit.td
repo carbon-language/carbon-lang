@@ -148,10 +148,10 @@ let isCall = 1 in
                         Requires<[In64BitMode, NotWin64]>;
     def CALL64r       : I<0xFF, MRM2r, (outs), (ins GR64:$dst, variable_ops),
                           "call{q}\t{*}$dst", [(X86call GR64:$dst)]>,
-                        Requires<[NotWin64]>;
+                        Requires<[In64BitMode, NotWin64]>;
     def CALL64m       : I<0xFF, MRM2m, (outs), (ins i64mem:$dst, variable_ops),
                           "call{q}\t{*}$dst", [(X86call (loadi64 addr:$dst))]>,
-                        Requires<[NotWin64]>;
+                        Requires<[In64BitMode, NotWin64]>;
                         
     def FARCALL64   : RI<0xFF, MRM3m, (outs), (ins opaque80mem:$dst),
                          "lcall{q}\t{*}$dst", []>;

@@ -13,7 +13,7 @@ entry:
 bb:
   %String2Loc9 = getelementptr inbounds [31 x i8]* %String2Loc, i64 0, i64 0
   call void @llvm.memcpy.i64(i8* %String2Loc9, i8* getelementptr inbounds ([31 x i8]* @.str3, i64 0, i64 0), i64 31, i32 1)
-; I386: call {{_?}}memcpy
+; I386: calll {{_?}}memcpy
 
 ; CORE2: movabsq
 ; CORE2: movabsq

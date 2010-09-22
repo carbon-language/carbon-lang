@@ -561,4 +561,6 @@ lcall	$0x7ace,$0x7ace
 jmp	$0x7ace,$0x7ace
 ljmp	$0x7ace,$0x7ace
 
-
+// rdar://8456370
+// CHECK: calll a
+ calll a

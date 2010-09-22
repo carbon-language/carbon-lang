@@ -11,9 +11,9 @@ define void @zap(i32 %a, i32 %b) nounwind {
 entry:
   ; CHECK: movl {{[0-9]*}}(%esp), %ebx
   ; CHECK-NEXT: movl {{[0-9]*}}(%esp), %ebp
-  ; CHECK-NEXT: call addtwo
+  ; CHECK-NEXT: calll addtwo
   %0 = call cc 10 i32 @addtwo(i32 %a, i32 %b)
-  ; CHECK: call foo
+  ; CHECK: calll foo
   call void @foo() nounwind
   ret void
 }
