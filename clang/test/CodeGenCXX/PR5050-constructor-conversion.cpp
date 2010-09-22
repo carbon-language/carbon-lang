@@ -13,6 +13,6 @@ A f(const B &b) {
 
 // CHECK-LP64: callq    __ZN1AC1ERKS_i
 
-// CHECK-LP32: call     L__ZN1AC1ERKS_i
+// CHECK-LP32: calll     L__ZN1AC1ERKS_i
 
 

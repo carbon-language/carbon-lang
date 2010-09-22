@@ -24,6 +24,6 @@ void foo(MyView *(^obj)(void)) ;
 // CHECK-LP64: callq    _objc_read_weak
 // CHECK-LP64: callq    _objc_read_weak
 
-// CHECK-LP32: call     L_objc_read_weak
-// CHECK-LP32: call     L_objc_read_weak
+// CHECK-LP32: calll     L_objc_read_weak
+// CHECK-LP32: calll     L_objc_read_weak
 

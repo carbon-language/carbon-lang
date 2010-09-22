@@ -59,5 +59,5 @@ COST c2;
 
 // CHECK-LP64: callq    __ZdaPv
 
-// CHECK-LP32: call     L__ZdaPv
+// CHECK-LP32: calll     L__ZdaPv
 

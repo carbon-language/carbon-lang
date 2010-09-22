@@ -78,7 +78,7 @@ void test(Derived bb)
 // CHECK-LP64: callq    __ZN1XcvR1BEv
 // CHECK-LP64: callq    __ZN1AC1ERKS_
 
-// CHECK-LP32: call     L__ZN1XcvR1BEv
-// CHECK-LP32: call     L__ZN1AC1ERKS_
+// CHECK-LP32: calll     L__ZN1XcvR1BEv
+// CHECK-LP32: calll     L__ZN1AC1ERKS_
 
 

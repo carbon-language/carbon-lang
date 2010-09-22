@@ -40,4 +40,4 @@ int main() {
 
 // CHECK-LP64: callq __ZN1SC1Ev
 
-// CHECK-LP32: call L__ZN1SC1Ev
+// CHECK-LP32: calll L__ZN1SC1Ev

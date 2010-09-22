@@ -66,5 +66,5 @@ int main()
 // CHECK-LP64: callq	__ZN1XcvM1BFvvEEv
 // CHECK-LP64: callq	__Z1gM1CFvvE
 
-// CHECK-LP32: call	L__ZN1XcvM1BFvvEEv
-// CHECK-LP32: call	__Z1gM1CFvvE
+// CHECK-LP32: calll	L__ZN1XcvM1BFvvEEv
+// CHECK-LP32: calll	__Z1gM1CFvvE

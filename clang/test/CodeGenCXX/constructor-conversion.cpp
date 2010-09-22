@@ -49,6 +49,6 @@ int main() {
 // CHECK-LP64: callq    __ZN1XC1EPKci
 // CHECK-LP64: callq    __ZN1XC1Ev
 
-// CHECK-LP32: call     L__ZN1XC1Ei
-// CHECK-LP32: call     L__ZN1XC1EPKci
-// CHECK-LP32: call     L__ZN1XC1Ev
+// CHECK-LP32: calll     L__ZN1XC1Ei
+// CHECK-LP32: calll     L__ZN1XC1EPKci
+// CHECK-LP32: calll     L__ZN1XC1Ev
