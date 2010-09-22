@@ -319,3 +319,20 @@ fstp	(%eax)
 // rdar://8456364
 // CHECK: movw	%cs, %ax
 mov %CS, %ax
+
+// rdar://8456391
+fcmovb %st(1), %st(0)   // CHECK: fcmovb	%st(1), %st(0)
+fcmove %st(1), %st(0)   // CHECK: fcmove	%st(1), %st(0)
+fcmovbe %st(1), %st(0)  // CHECK: fcmovbe	%st(1), %st(0)
+fcmovu %st(1), %st(0)   // CHECK: fcmovu	 %st(1), %st(0)
+
+fcmovnb %st(1), %st(0)  // CHECK: fcmovnb	%st(1), %st(0)
+fcmovne %st(1), %st(0)  // CHECK: fcmovne	%st(1), %st(0)
+fcmovnbe %st(1), %st(0) // CHECK: fcmovnbe	%st(1), %st(0)
+fcmovnu %st(1), %st(0)  // CHECK: fcmovnu	%st(1), %st(0)
+
+fcmovnae %st(1), %st(0) // CHECK: fcmovb	%st(1), %st(0)
+fcmovna %st(1), %st(0)  // CHECK: fcmovbe	%st(1), %st(0)
+
+fcmovae %st(1), %st(0)  // CHECK: fcmovnb	%st(1), %st(0)
+fcmova %st(1), %st(0)   // CHECK: fcmovnbe	%st(1), %st(0)

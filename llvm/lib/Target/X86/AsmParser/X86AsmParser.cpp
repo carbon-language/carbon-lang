@@ -685,6 +685,12 @@ ParseInstruction(StringRef Name, SMLoc NameLoc,
     .Case("cmovnzq", "cmovneq").Case("cmovnz",  "cmovne")
     .Case("cmovzw",  "cmovew") .Case("cmovzl",  "cmovel")
     .Case("cmovzq",  "cmoveq") .Case("cmovz",   "cmove")
+    // Floating point stack cmov aliases.
+    .Case("fcmovz", "fcmove")
+    .Case("fcmova", "fcmovnbe")
+    .Case("fcmovnae", "fcmovb")
+    .Case("fcmovna", "fcmovbe")
+    .Case("fcmovae", "fcmovnb")
     .Case("fwait", "wait")
     .Case("movzx", "movzb")  // FIXME: Not correct.
     .Case("fildq", "fildll")
