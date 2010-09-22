@@ -30,6 +30,7 @@ namespace lldb_private
     typedef ThreadPlan * (*ThreadPlanShouldStopHereCallback) (ThreadPlan *current_plan, Flags &flags, void *baton);
     typedef UnwindAssemblyProfiler* (*UnwindAssemblyProfilerCreateInstance) (const ArchSpec &arch);
     typedef ArchDefaultUnwindPlan* (*ArchDefaultUnwindPlanCreateInstance) (const ArchSpec &arch);
+    typedef ArchVolatileRegs* (*ArchVolatileRegsCreateInstance) (const ArchSpec &arch);
 } // namespace lldb_private
 
 #endif  // #if defined(__cplusplus)

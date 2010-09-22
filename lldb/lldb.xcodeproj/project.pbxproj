@@ -369,6 +369,9 @@
 		961FAC19123605A200F93A47 /* ArchDefaultUnwindPlan.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 961FAC18123605A200F93A47 /* ArchDefaultUnwindPlan.cpp */; };
 		961FAC1E12360C7D00F93A47 /* ArchDefaultUnwindPlan-x86.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 961FAC1C12360C7D00F93A47 /* ArchDefaultUnwindPlan-x86.cpp */; };
 		961FAC1F12360C7D00F93A47 /* ArchDefaultUnwindPlan-x86.h in Headers */ = {isa = PBXBuildFile; fileRef = 961FAC1D12360C7D00F93A47 /* ArchDefaultUnwindPlan-x86.h */; };
+		96A6D9C61249D96F00250B38 /* ArchVolatileRegs.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 96A6D9C51249D96F00250B38 /* ArchVolatileRegs.cpp */; };
+		96A6D9C91249D98800250B38 /* ArchVolatileRegs-x86.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 96A6D9C71249D98800250B38 /* ArchVolatileRegs-x86.cpp */; };
+		96A6D9CA1249D98800250B38 /* ArchVolatileRegs-x86.h in Headers */ = {isa = PBXBuildFile; fileRef = 96A6D9C81249D98800250B38 /* ArchVolatileRegs-x86.h */; };
 		9A19A6AF1163BBB200E0D453 /* SBValue.h in Headers */ = {isa = PBXBuildFile; fileRef = 9A19A6A51163BB7E00E0D453 /* SBValue.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		9A19A6B01163BBB300E0D453 /* SBValue.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9A19A6AD1163BB9800E0D453 /* SBValue.cpp */; };
 		9A357583116CFDEE00E8ED2F /* SBValueList.h in Headers */ = {isa = PBXBuildFile; fileRef = 9A357582116CFDEE00E8ED2F /* SBValueList.h */; settings = {ATTRIBUTES = (Public, ); }; };
@@ -1024,6 +1027,9 @@
 		9654F7B91197DA3F00F72B43 /* RemoteUnwindProfile.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RemoteUnwindProfile.h; sourceTree = "<group>"; };
 		9654F7BA1197DA3F00F72B43 /* unw_getcontext.s */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.asm; path = unw_getcontext.s; sourceTree = "<group>"; };
 		9654F7BD1197DA3F00F72B43 /* UnwindCursor.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = UnwindCursor.hpp; sourceTree = "<group>"; };
+		96A6D9C51249D96F00250B38 /* ArchVolatileRegs.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ArchVolatileRegs.cpp; path = source/Utility/ArchVolatileRegs.cpp; sourceTree = "<group>"; };
+		96A6D9C71249D98800250B38 /* ArchVolatileRegs-x86.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = "ArchVolatileRegs-x86.cpp"; path = "Utility/ArchVolatileRegs-x86.cpp"; sourceTree = "<group>"; };
+		96A6D9C81249D98800250B38 /* ArchVolatileRegs-x86.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "ArchVolatileRegs-x86.h"; path = "Utility/ArchVolatileRegs-x86.h"; sourceTree = "<group>"; };
 		9A19A6A51163BB7E00E0D453 /* SBValue.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SBValue.h; path = include/lldb/API/SBValue.h; sourceTree = "<group>"; };
 		9A19A6AD1163BB9800E0D453 /* SBValue.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SBValue.cpp; path = source/API/SBValue.cpp; sourceTree = "<group>"; };
 		9A2771FB1135A35C00E6ADB6 /* ScriptInterpreterNone.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ScriptInterpreterNone.h; path = include/lldb/Interpreter/ScriptInterpreterNone.h; sourceTree = "<group>"; };
@@ -1554,6 +1560,7 @@
 		2682F168115ED9C800CCFF99 /* Utility */ = {
 			isa = PBXGroup;
 			children = (
+				96A6D9C51249D96F00250B38 /* ArchVolatileRegs.cpp */,
 				961FAC18123605A200F93A47 /* ArchDefaultUnwindPlan.cpp */,
 				961FABE41235F15900F93A47 /* UnwindAssemblyProfiler.cpp */,
 				264723A511FA076E00DE380C /* CleanUp.h */,
@@ -1583,6 +1590,8 @@
 		26B4666E11A2080F00CF6220 /* Utility */ = {
 			isa = PBXGroup;
 			children = (
+				96A6D9C71249D98800250B38 /* ArchVolatileRegs-x86.cpp */,
+				96A6D9C81249D98800250B38 /* ArchVolatileRegs-x86.h */,
 				961FAC1C12360C7D00F93A47 /* ArchDefaultUnwindPlan-x86.cpp */,
 				961FAC1D12360C7D00F93A47 /* ArchDefaultUnwindPlan-x86.h */,
 				961FABE81235F26800F93A47 /* UnwindAssemblyProfiler-x86.cpp */,
@@ -2285,6 +2294,7 @@
 				2618D7901240115500F2B8FE /* SectionLoadList.h in Headers */,
 				2618D959124056C700F2B8FE /* NameToDIE.h in Headers */,
 				26C72C94124322890068DC16 /* SBStream.h in Headers */,
+				96A6D9CA1249D98800250B38 /* ArchVolatileRegs-x86.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -2750,6 +2760,8 @@
 				2618D7921240116900F2B8FE /* SectionLoadList.cpp in Sources */,
 				2618D9EB12406FE600F2B8FE /* NameToDIE.cpp in Sources */,
 				26C72C961243229A0068DC16 /* SBStream.cpp in Sources */,
+				96A6D9C61249D96F00250B38 /* ArchVolatileRegs.cpp in Sources */,
+				96A6D9C91249D98800250B38 /* ArchVolatileRegs-x86.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

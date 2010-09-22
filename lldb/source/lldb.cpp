@@ -24,6 +24,7 @@
 #include "Plugins/SymbolFile/Symtab/SymbolFileSymtab.h"
 #include "Plugins/Process/Utility/UnwindAssemblyProfiler-x86.h"
 #include "Plugins/Process/Utility/ArchDefaultUnwindPlan-x86.h"
+#include "Plugins/Process/Utility/ArchVolatileRegs-x86.h"
 
 #ifdef __APPLE__
 #include "Plugins/ABI/MacOSX-i386/ABIMacOSX_i386.h"
@@ -66,7 +67,7 @@ lldb_private::Initialize ()
         SymbolFileDWARFDebugMap::Initialize();
         SymbolFileSymtab::Initialize();
         UnwindAssemblyProfiler_x86::Initialize();
-        ArchDefaultUnwindPlan_x86::Initialize();
+        ArchVolatileRegs_x86::Initialize();
 
 #ifdef __APPLE__
         ABIMacOSX_i386::Initialize();
@@ -105,7 +106,7 @@ lldb_private::Terminate ()
     SymbolFileDWARFDebugMap::Terminate();
     SymbolFileSymtab::Terminate();
     UnwindAssemblyProfiler_x86::Terminate();
-    ArchDefaultUnwindPlan_x86::Terminate();
+    ArchVolatileRegs_x86::Terminate();
 
 #ifdef __APPLE__
     DynamicLoaderMacOSXDYLD::Terminate();

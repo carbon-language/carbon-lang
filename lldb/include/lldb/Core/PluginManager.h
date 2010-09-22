@@ -213,6 +213,23 @@ public:
     static ArchDefaultUnwindPlanCreateInstance
     GetArchDefaultUnwindPlanCreateCallbackForPluginName (const char *name);
 
+    //------------------------------------------------------------------
+    // ArchVolatileRegs
+    //------------------------------------------------------------------
+    static bool
+    RegisterPlugin (const char *name,
+                    const char *description,
+                    ArchVolatileRegsCreateInstance create_callback);
+
+    static bool
+    UnregisterPlugin (ArchVolatileRegsCreateInstance create_callback);
+
+    static ArchVolatileRegsCreateInstance
+    GetArchVolatileRegsCreateCallbackAtIndex (uint32_t idx);
+
+    static ArchVolatileRegsCreateInstance
+    GetArchVolatileRegsCreateCallbackForPluginName (const char *name);
+
 };
 
 
