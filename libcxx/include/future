@@ -447,7 +447,7 @@ template <class R, class Alloc> struct uses_allocator<packaged_task<R>, Alloc>;
 _LIBCPP_BEGIN_NAMESPACE_STD
 
 //enum class future_errc
-struct future_errc
+struct _LIBCPP_VISIBLE future_errc
 {
 enum _ {
     broken_promise,
@@ -458,15 +458,16 @@ enum _ {
 
     _ __v_;
 
-    future_errc(_ __v) : __v_(__v) {}
-    operator int() const {return __v_;}
+    _LIBCPP_INLINE_VISIBILITY future_errc(_ __v) : __v_(__v) {}
+    _LIBCPP_INLINE_VISIBILITY operator int() const {return __v_;}
 
 };
 
-template <> struct is_error_code_enum<future_errc> : public true_type {};
+template <>
+struct _LIBCPP_VISIBLE is_error_code_enum<future_errc> : public true_type {};
 
 //enum class launch
-struct launch
+struct _LIBCPP_VISIBLE launch
 {
 enum _ {
     any,
@@ -476,13 +477,13 @@ enum _ {
 
     _ __v_;
 
-    launch(_ __v) : __v_(__v) {}
-    operator int() const {return __v_;}
+    _LIBCPP_INLINE_VISIBILITY launch(_ __v) : __v_(__v) {}
+    _LIBCPP_INLINE_VISIBILITY operator int() const {return __v_;}
 
 };
 
 //enum class future_status
-struct future_status
+struct _LIBCPP_VISIBLE future_status
 {
 enum _ {
     ready,
@@ -492,11 +493,12 @@ enum _ {
 
     _ __v_;
 
-    future_status(_ __v) : __v_(__v) {}
-    operator int() const {return __v_;}
+    _LIBCPP_INLINE_VISIBILITY future_status(_ __v) : __v_(__v) {}
+    _LIBCPP_INLINE_VISIBILITY operator int() const {return __v_;}
 
 };
 
+_LIBCPP_VISIBLE
 const error_category& future_category();
 
 inline _LIBCPP_INLINE_VISIBILITY
@@ -513,13 +515,14 @@ make_error_condition(future_errc __e)
     return error_condition(static_cast<int>(__e), future_category());
 }
 
-class future_error
+class _LIBCPP_EXCEPTION_ABI future_error
     : public logic_error
 {
     error_code __ec_;
 public:
     future_error(error_code __ec);
 
+    _LIBCPP_INLINE_VISIBILITY
     const error_code& code() const throw() {return __ec_;}
 };
 
@@ -543,17 +546,23 @@ public:
         deferred = 8
     };
 
+    _LIBCPP_INLINE_VISIBILITY
     __assoc_sub_state() : __state_(0) {}
 
+    _LIBCPP_INLINE_VISIBILITY
     bool __has_value() const
         {return (__state_ & __constructed) || (__exception_ != nullptr);}
 
+    _LIBCPP_INLINE_VISIBILITY
     void __set_future_attached() {__state_ |= __future_attached;}
+    _LIBCPP_INLINE_VISIBILITY
     bool __has_future_attached() const {return __state_ & __future_attached;}
 
+    _LIBCPP_INLINE_VISIBILITY
     void __set_deferred() {__state_ |= deferred;}
 
     void __make_ready();
+    _LIBCPP_INLINE_VISIBILITY
     bool __is_ready() const {return __state_ & ready;}
 
     void set_value();
@@ -765,6 +774,7 @@ class __assoc_state_alloc
 
     virtual void __on_zero_shared();
 public:
+    _LIBCPP_INLINE_VISIBILITY
     explicit __assoc_state_alloc(const _Alloc& __a)
         : __alloc_(__a) {}
 };
@@ -789,6 +799,7 @@ class __assoc_state_alloc<_R&, _Alloc>
 
     virtual void __on_zero_shared();
 public:
+    _LIBCPP_INLINE_VISIBILITY
     explicit __assoc_state_alloc(const _Alloc& __a)
         : __alloc_(__a) {}
 };
@@ -811,6 +822,7 @@ class __assoc_sub_state_alloc
 
     virtual void __on_zero_shared();
 public:
+    _LIBCPP_INLINE_VISIBILITY
     explicit __assoc_sub_state_alloc(const _Alloc& __a)
         : __alloc_(__a) {}
 };
@@ -935,7 +947,7 @@ __make_deferred_assoc_state(_F __f);
 #endif
 
 template <class _R>
-class future
+class _LIBCPP_VISIBLE future
 {
     __assoc_state<_R>* __state_;
 
@@ -953,12 +965,15 @@ class future
 #endif
 
 public:
+    _LIBCPP_INLINE_VISIBILITY
     future() : __state_(nullptr) {}
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
+    _LIBCPP_INLINE_VISIBILITY
     future(future&& __rhs)
         : __state_(__rhs.__state_) {__rhs.__state_ = nullptr;}
     future(const future&) = delete;
     future& operator=(const future&) = delete;
+    _LIBCPP_INLINE_VISIBILITY
     future& operator=(future&& __rhs)
         {
             future(std::move(__rhs)).swap(*this);
@@ -975,17 +990,22 @@ public:
     // retrieving the value
     _R get();
 
+    _LIBCPP_INLINE_VISIBILITY
     void swap(future& __rhs) {_STD::swap(__state_, __rhs.__state_);}
 
     // functions to check state
+    _LIBCPP_INLINE_VISIBILITY
     bool valid() const {return __state_ != nullptr;}
 
+    _LIBCPP_INLINE_VISIBILITY
     void wait() const {__state_->wait();}
     template <class _Rep, class _Period>
+        _LIBCPP_INLINE_VISIBILITY
         future_status
         wait_for(const chrono::duration<_Rep, _Period>& __rel_time) const
             {return __state_->wait_for(__rel_time);}
     template <class _Clock, class _Duration>
+        _LIBCPP_INLINE_VISIBILITY
         future_status
         wait_until(const chrono::time_point<_Clock, _Duration>& __abs_time) const
             {return __state_->wait_until(__abs_time);}
@@ -1024,7 +1044,7 @@ future<_R>::get()
 }
 
 template <class _R>
-class future<_R&>
+class _LIBCPP_VISIBLE future<_R&>
 {
     __assoc_state<_R&>* __state_;
 
@@ -1042,12 +1062,15 @@ class future<_R&>
 #endif
 
 public:
+    _LIBCPP_INLINE_VISIBILITY
     future() : __state_(nullptr) {}
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
+    _LIBCPP_INLINE_VISIBILITY
     future(future&& __rhs)
         : __state_(__rhs.__state_) {__rhs.__state_ = nullptr;}
     future(const future&) = delete;
     future& operator=(const future&) = delete;
+    _LIBCPP_INLINE_VISIBILITY
     future& operator=(future&& __rhs)
         {
             future(std::move(__rhs)).swap(*this);
@@ -1064,17 +1087,22 @@ public:
     // retrieving the value
     _R& get();
 
+    _LIBCPP_INLINE_VISIBILITY
     void swap(future& __rhs) {_STD::swap(__state_, __rhs.__state_);}
 
     // functions to check state
+    _LIBCPP_INLINE_VISIBILITY
     bool valid() const {return __state_ != nullptr;}
 
+    _LIBCPP_INLINE_VISIBILITY
     void wait() const {__state_->wait();}
     template <class _Rep, class _Period>
+        _LIBCPP_INLINE_VISIBILITY
         future_status
         wait_for(const chrono::duration<_Rep, _Period>& __rel_time) const
             {return __state_->wait_for(__rel_time);}
     template <class _Clock, class _Duration>
+        _LIBCPP_INLINE_VISIBILITY
         future_status
         wait_until(const chrono::time_point<_Clock, _Duration>& __abs_time) const
             {return __state_->wait_until(__abs_time);}
@@ -1108,7 +1136,7 @@ future<_R&>::get()
 }
 
 template <>
-class future<void>
+class _LIBCPP_VISIBLE future<void>
 {
     __assoc_sub_state* __state_;
 
@@ -1126,12 +1154,15 @@ class future<void>
 #endif
 
 public:
+    _LIBCPP_INLINE_VISIBILITY
     future() : __state_(nullptr) {}
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
+    _LIBCPP_INLINE_VISIBILITY
     future(future&& __rhs)
         : __state_(__rhs.__state_) {__rhs.__state_ = nullptr;}
     future(const future&) = delete;
     future& operator=(const future&) = delete;
+    _LIBCPP_INLINE_VISIBILITY
     future& operator=(future&& __rhs)
         {
             future(std::move(__rhs)).swap(*this);
@@ -1148,17 +1179,22 @@ public:
     // retrieving the value
     void get();
 
+    _LIBCPP_INLINE_VISIBILITY
     void swap(future& __rhs) {_STD::swap(__state_, __rhs.__state_);}
 
     // functions to check state
+    _LIBCPP_INLINE_VISIBILITY
     bool valid() const {return __state_ != nullptr;}
 
+    _LIBCPP_INLINE_VISIBILITY
     void wait() const {__state_->wait();}
     template <class _Rep, class _Period>
+        _LIBCPP_INLINE_VISIBILITY
         future_status
         wait_for(const chrono::duration<_Rep, _Period>& __rel_time) const
             {return __state_->wait_for(__rel_time);}
     template <class _Clock, class _Duration>
+        _LIBCPP_INLINE_VISIBILITY
         future_status
         wait_until(const chrono::time_point<_Clock, _Duration>& __abs_time) const
             {return __state_->wait_until(__abs_time);}
@@ -1177,10 +1213,11 @@ swap(future<_R>& __x, future<_R>& __y)
 template <class> class packaged_task;
 
 template <class _R>
-class promise
+class _LIBCPP_VISIBLE promise
 {
     __assoc_state<_R>* __state_;
 
+    _LIBCPP_INLINE_VISIBILITY
     explicit promise(nullptr_t) : __state_(nullptr) {}
 
     template <class> friend class packaged_task;
@@ -1189,6 +1226,7 @@ public:
     template <class _Alloc>
         promise(allocator_arg_t, const _Alloc& __a);
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
+    _LIBCPP_INLINE_VISIBILITY
     promise(promise&& __rhs)
         : __state_(__rhs.__state_) {__rhs.__state_ = nullptr;}
     promise(const promise& __rhs) = delete;
@@ -1201,6 +1239,7 @@ public:
 
     // assignment
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
+    _LIBCPP_INLINE_VISIBILITY
     promise& operator=(promise&& __rhs)
         {
             promise(std::move(__rhs)).swap(*this);
@@ -1212,6 +1251,7 @@ private:
     promise& operator=(const promise& __rhs);
 public:
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
+    _LIBCPP_INLINE_VISIBILITY
     void swap(promise& __rhs) {_STD::swap(__state_, __rhs.__state_);}
 
     // retrieving the result
@@ -1337,10 +1377,11 @@ promise<_R>::set_exception_at_thread_exit(exception_ptr __p)
 // promise<R&>
 
 template <class _R>
-class promise<_R&>
+class _LIBCPP_VISIBLE promise<_R&>
 {
     __assoc_state<_R&>* __state_;
 
+    _LIBCPP_INLINE_VISIBILITY
     explicit promise(nullptr_t) : __state_(nullptr) {}
 
     template <class> friend class packaged_task;
@@ -1350,6 +1391,7 @@ public:
     template <class _Allocator>
         promise(allocator_arg_t, const _Allocator& __a);
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
+    _LIBCPP_INLINE_VISIBILITY
     promise(promise&& __rhs)
         : __state_(__rhs.__state_) {__rhs.__state_ = nullptr;}
     promise(const promise& __rhs) = delete;
@@ -1362,6 +1404,7 @@ public:
 
     // assignment
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
+    _LIBCPP_INLINE_VISIBILITY
     promise& operator=(promise&& __rhs)
         {
             promise(std::move(__rhs)).swap(*this);
@@ -1373,6 +1416,7 @@ private:
     promise& operator=(const promise& __rhs);
 public:
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
+    _LIBCPP_INLINE_VISIBILITY
     void swap(promise& __rhs) {_STD::swap(__state_, __rhs.__state_);}
 
     // retrieving the result
@@ -1466,10 +1510,11 @@ promise<_R&>::set_exception_at_thread_exit(exception_ptr __p)
 // promise<void>
 
 template <>
-class promise<void>
+class _LIBCPP_VISIBLE promise<void>
 {
     __assoc_sub_state* __state_;
 
+    _LIBCPP_INLINE_VISIBILITY
     explicit promise(nullptr_t) : __state_(nullptr) {}
 
     template <class> friend class packaged_task;
@@ -1479,6 +1524,7 @@ public:
     template <class _Allocator>
         promise(allocator_arg_t, const _Allocator& __a);
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
+    _LIBCPP_INLINE_VISIBILITY
     promise(promise&& __rhs)
         : __state_(__rhs.__state_) {__rhs.__state_ = nullptr;}
     promise(const promise& __rhs) = delete;
@@ -1491,6 +1537,7 @@ public:
 
     // assignment
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
+    _LIBCPP_INLINE_VISIBILITY
     promise& operator=(promise&& __rhs)
         {
             promise(std::move(__rhs)).swap(*this);
@@ -1502,6 +1549,7 @@ private:
     promise& operator=(const promise& __rhs);
 public:
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
+    _LIBCPP_INLINE_VISIBILITY
     void swap(promise& __rhs) {_STD::swap(__state_, __rhs.__state_);}
 
     // retrieving the result
@@ -1536,7 +1584,8 @@ swap(promise<_R>& __x, promise<_R>& __y)
 }
 
 template <class _R, class _Alloc>
-    struct uses_allocator<promise<_R>, _Alloc> : public true_type {};
+    struct _LIBCPP_VISIBLE uses_allocator<promise<_R>, _Alloc>
+        : public true_type {};
 
 #ifndef _LIBCPP_HAS_NO_VARIADICS
 
@@ -1550,7 +1599,9 @@ class __packaged_task_base<_R(_ArgTypes...)>
     __packaged_task_base(const __packaged_task_base&);
     __packaged_task_base& operator=(const __packaged_task_base&);
 public:
+    _LIBCPP_INLINE_VISIBILITY
     __packaged_task_base() {}
+    _LIBCPP_INLINE_VISIBILITY
     virtual ~__packaged_task_base() {}
     virtual void __move_to(__packaged_task_base*) = 0;
     virtual void destroy() = 0;
@@ -1566,10 +1617,14 @@ class __packaged_task_func<_F, _Alloc, _R(_ArgTypes...)>
 {
     __compressed_pair<_F, _Alloc> __f_;
 public:
+    _LIBCPP_INLINE_VISIBILITY
     explicit __packaged_task_func(const _F& __f) : __f_(__f) {}
+    _LIBCPP_INLINE_VISIBILITY
     explicit __packaged_task_func(_F&& __f) : __f_(_STD::move(__f)) {}
+    _LIBCPP_INLINE_VISIBILITY
     __packaged_task_func(const _F& __f, const _Alloc& __a)
         : __f_(__f, __a) {}
+    _LIBCPP_INLINE_VISIBILITY
     __packaged_task_func(_F&& __f, const _Alloc& __a)
         : __f_(_STD::move(__f), __a) {}
     virtual void __move_to(__packaged_task_base<_R(_ArgTypes...)>*);
@@ -1623,6 +1678,7 @@ public:
     typedef _R result_type;
 
     // construct/copy/destroy:
+    _LIBCPP_INLINE_VISIBILITY
     __packaged_task_function() : __f_(nullptr) {}
     template<class _F>
       __packaged_task_function(_F&& __f);
@@ -1791,7 +1847,7 @@ __packaged_task_function<_R(_ArgTypes...)>::operator()(_ArgTypes... __arg) const
 }
 
 template<class _R, class ..._ArgTypes>
-class packaged_task<_R(_ArgTypes...)>
+class _LIBCPP_VISIBLE packaged_task<_R(_ArgTypes...)>
 {
 public:
     typedef _R result_type;
@@ -1802,10 +1858,13 @@ private:
 
 public:
     // construction and destruction
+    _LIBCPP_INLINE_VISIBILITY
     packaged_task() : __p_(nullptr) {}
     template <class _F>
+        _LIBCPP_INLINE_VISIBILITY
         explicit packaged_task(_F&& __f) : __f_(_STD::forward<_F>(__f)) {}
     template <class _F, class _Allocator>
+        _LIBCPP_INLINE_VISIBILITY
         explicit packaged_task(allocator_arg_t, const _Allocator& __a, _F&& __f)
              : __f_(allocator_arg, __a, _STD::forward<_F>(__f)),
                __p_(allocator_arg, __a) {}
@@ -1816,24 +1875,29 @@ public:
     packaged_task& operator=(packaged_task&) = delete;
 
     // move support
+    _LIBCPP_INLINE_VISIBILITY
     packaged_task(packaged_task&& __other)
         : __f_(_STD::move(__other.__f_)), __p_(_STD::move(__other.__p_)) {}
+    _LIBCPP_INLINE_VISIBILITY
     packaged_task& operator=(packaged_task&& __other)
     {
         __f_ = _STD::move(__other.__f_);
         __p_ = _STD::move(__other.__p_);
         return *this;
     }
+    _LIBCPP_INLINE_VISIBILITY
     void swap(packaged_task& __other)
     {
         __f_.swap(__other.__f_);
         __p_.swap(__other.__p_);
     }
 
+    _LIBCPP_INLINE_VISIBILITY
     //explicit
         operator bool() const {return __p_.__state_ != nullptr;}
 
     // result retrieval
+    _LIBCPP_INLINE_VISIBILITY
     future<result_type> get_future() {return __p_.get_future();}
 
     // execution
@@ -1899,7 +1963,7 @@ packaged_task<_R(_ArgTypes...)>::reset()
 }
 
 template<class ..._ArgTypes>
-class packaged_task<void(_ArgTypes...)>
+class _LIBCPP_VISIBLE packaged_task<void(_ArgTypes...)>
 {
 public:
     typedef void result_type;
@@ -1910,10 +1974,13 @@ private:
 
 public:
     // construction and destruction
+    _LIBCPP_INLINE_VISIBILITY
     packaged_task() : __p_(nullptr) {}
     template <class _F>
+        _LIBCPP_INLINE_VISIBILITY
         explicit packaged_task(_F&& __f) : __f_(_STD::forward<_F>(__f)) {}
     template <class _F, class _Allocator>
+        _LIBCPP_INLINE_VISIBILITY
         explicit packaged_task(allocator_arg_t, const _Allocator& __a, _F&& __f)
              : __f_(allocator_arg, __a, _STD::forward<_F>(__f)),
                __p_(allocator_arg, __a) {}
@@ -1924,24 +1991,29 @@ public:
     packaged_task& operator=(packaged_task&) = delete;
 
     // move support
+    _LIBCPP_INLINE_VISIBILITY
     packaged_task(packaged_task&& __other)
         : __f_(_STD::move(__other.__f_)), __p_(_STD::move(__other.__p_)) {}
+    _LIBCPP_INLINE_VISIBILITY
     packaged_task& operator=(packaged_task&& __other)
     {
         __f_ = _STD::move(__other.__f_);
         __p_ = _STD::move(__other.__p_);
         return *this;
     }
+    _LIBCPP_INLINE_VISIBILITY
     void swap(packaged_task& __other)
     {
         __f_.swap(__other.__f_);
         __p_.swap(__other.__p_);
     }
 
+    _LIBCPP_INLINE_VISIBILITY
     //explicit
         operator bool() const {return __p_.__state_ != nullptr;}
 
     // result retrieval
+    _LIBCPP_INLINE_VISIBILITY
     future<result_type> get_future() {return __p_.get_future();}
 
     // execution
@@ -2017,7 +2089,8 @@ swap(packaged_task<_Callable>& __x, packaged_task<_Callable>& __y)
 }
 
 template <class _Callable, class _Alloc>
-struct uses_allocator<packaged_task<_Callable>, _Alloc> : public true_type {};
+struct _LIBCPP_VISIBLE uses_allocator<packaged_task<_Callable>, _Alloc>
+    : public true_type {};
 
 template <class _R, class _F>
 future<_R>
@@ -2069,23 +2142,28 @@ async(_F&& __f, _Args&&... __args)
 // shared_future
 
 template <class _R>
-class shared_future
+class _LIBCPP_VISIBLE shared_future
 {
     __assoc_state<_R>* __state_;
 
 public:
+    _LIBCPP_INLINE_VISIBILITY
     shared_future() : __state_(nullptr) {}
+    _LIBCPP_INLINE_VISIBILITY
     shared_future(const shared_future& __rhs) : __state_(__rhs.__state_)
         {if (__state_) __state_->__add_shared();}
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
+    _LIBCPP_INLINE_VISIBILITY
     shared_future(future<_R>&& __f) : __state_(__f.__state_)
         {__f.__state_ = nullptr;}
+    _LIBCPP_INLINE_VISIBILITY
     shared_future(shared_future&& __rhs) : __state_(__rhs.__state_)
         {__rhs.__state_ = nullptr;}
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
     ~shared_future();
     shared_future& operator=(const shared_future& __rhs);
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
+    _LIBCPP_INLINE_VISIBILITY
     shared_future& operator=(shared_future&& __rhs)
         {
             shared_future(std::move(__rhs)).swap(*this);
@@ -2094,19 +2172,25 @@ public:
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
     // retrieving the value
+    _LIBCPP_INLINE_VISIBILITY
     const _R& get() const {return __state_->copy();}
 
+    _LIBCPP_INLINE_VISIBILITY
     void swap(shared_future& __rhs) {_STD::swap(__state_, __rhs.__state_);}
 
     // functions to check state
+    _LIBCPP_INLINE_VISIBILITY
     bool valid() const {return __state_ != nullptr;}
 
+    _LIBCPP_INLINE_VISIBILITY
     void wait() const {__state_->wait();}
     template <class _Rep, class _Period>
+        _LIBCPP_INLINE_VISIBILITY
         future_status
         wait_for(const chrono::duration<_Rep, _Period>& __rel_time) const
             {return __state_->wait_for(__rel_time);}
     template <class _Clock, class _Duration>
+        _LIBCPP_INLINE_VISIBILITY
         future_status
         wait_until(const chrono::time_point<_Clock, _Duration>& __abs_time) const
             {return __state_->wait_until(__abs_time);}
@@ -2132,23 +2216,28 @@ shared_future<_R>::operator=(const shared_future& __rhs)
 }
 
 template <class _R>
-class shared_future<_R&>
+class _LIBCPP_VISIBLE shared_future<_R&>
 {
     __assoc_state<_R&>* __state_;
 
 public:
+    _LIBCPP_INLINE_VISIBILITY
     shared_future() : __state_(nullptr) {}
+    _LIBCPP_INLINE_VISIBILITY
     shared_future(const shared_future& __rhs) : __state_(__rhs.__state_)
         {if (__state_) __state_->__add_shared();}
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
+    _LIBCPP_INLINE_VISIBILITY
     shared_future(future<_R&>&& __f) : __state_(__f.__state_)
         {__f.__state_ = nullptr;}
+    _LIBCPP_INLINE_VISIBILITY
     shared_future(shared_future&& __rhs) : __state_(__rhs.__state_)
         {__rhs.__state_ = nullptr;}
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
     ~shared_future();
     shared_future& operator=(const shared_future& __rhs);
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
+    _LIBCPP_INLINE_VISIBILITY
     shared_future& operator=(shared_future&& __rhs)
         {
             shared_future(std::move(__rhs)).swap(*this);
@@ -2157,19 +2246,25 @@ public:
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
     // retrieving the value
+    _LIBCPP_INLINE_VISIBILITY
     _R& get() const {return __state_->copy();}
 
+    _LIBCPP_INLINE_VISIBILITY
     void swap(shared_future& __rhs) {_STD::swap(__state_, __rhs.__state_);}
 
     // functions to check state
+    _LIBCPP_INLINE_VISIBILITY
     bool valid() const {return __state_ != nullptr;}
 
+    _LIBCPP_INLINE_VISIBILITY
     void wait() const {__state_->wait();}
     template <class _Rep, class _Period>
+        _LIBCPP_INLINE_VISIBILITY
         future_status
         wait_for(const chrono::duration<_Rep, _Period>& __rel_time) const
             {return __state_->wait_for(__rel_time);}
     template <class _Clock, class _Duration>
+        _LIBCPP_INLINE_VISIBILITY
         future_status
         wait_until(const chrono::time_point<_Clock, _Duration>& __abs_time) const
             {return __state_->wait_until(__abs_time);}
@@ -2195,23 +2290,28 @@ shared_future<_R&>::operator=(const shared_future& __rhs)
 }
 
 template <>
-class shared_future<void>
+class _LIBCPP_VISIBLE shared_future<void>
 {
     __assoc_sub_state* __state_;
 
 public:
+    _LIBCPP_INLINE_VISIBILITY
     shared_future() : __state_(nullptr) {}
+    _LIBCPP_INLINE_VISIBILITY
     shared_future(const shared_future& __rhs) : __state_(__rhs.__state_)
         {if (__state_) __state_->__add_shared();}
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
+    _LIBCPP_INLINE_VISIBILITY
     shared_future(future<void>&& __f) : __state_(__f.__state_)
         {__f.__state_ = nullptr;}
+    _LIBCPP_INLINE_VISIBILITY
     shared_future(shared_future&& __rhs) : __state_(__rhs.__state_)
         {__rhs.__state_ = nullptr;}
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
     ~shared_future();
     shared_future& operator=(const shared_future& __rhs);
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
+    _LIBCPP_INLINE_VISIBILITY
     shared_future& operator=(shared_future&& __rhs)
         {
             shared_future(std::move(__rhs)).swap(*this);
@@ -2220,19 +2320,25 @@ public:
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
     // retrieving the value
+    _LIBCPP_INLINE_VISIBILITY
     void get() const {__state_->copy();}
 
+    _LIBCPP_INLINE_VISIBILITY
     void swap(shared_future& __rhs) {_STD::swap(__state_, __rhs.__state_);}
 
     // functions to check state
+    _LIBCPP_INLINE_VISIBILITY
     bool valid() const {return __state_ != nullptr;}
 
+    _LIBCPP_INLINE_VISIBILITY
     void wait() const {__state_->wait();}
     template <class _Rep, class _Period>
+        _LIBCPP_INLINE_VISIBILITY
         future_status
         wait_for(const chrono::duration<_Rep, _Period>& __rel_time) const
             {return __state_->wait_for(__rel_time);}
     template <class _Clock, class _Duration>
+        _LIBCPP_INLINE_VISIBILITY
         future_status
         wait_until(const chrono::time_point<_Clock, _Duration>& __abs_time) const
             {return __state_->wait_until(__abs_time);}
@@ -2249,16 +2355,19 @@ swap(shared_future<_R>& __x, shared_future<_R>& __y)
 // atomic_future
 
 template <class _R>
-class atomic_future
+class _LIBCPP_VISIBLE atomic_future
 {
     __assoc_state<_R>* __state_;
     mutable mutex __mut_;
 
 public:
+    _LIBCPP_INLINE_VISIBILITY
     atomic_future() : __state_(nullptr) {}
+    _LIBCPP_INLINE_VISIBILITY
     atomic_future(const atomic_future& __rhs) : __state_(__rhs.__state_)
         {if (__state_) __state_->__add_shared();}
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
+    _LIBCPP_INLINE_VISIBILITY
     atomic_future(future<_R>&& __f) : __state_(__f.__state_)
         {__f.__state_ = nullptr;}
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
@@ -2266,19 +2375,24 @@ public:
     atomic_future& operator=(const atomic_future& __rhs);
 
     // retrieving the value
+    _LIBCPP_INLINE_VISIBILITY
     const _R& get() const {return __state_->copy();}
 
     void swap(atomic_future& __rhs);
 
     // functions to check state
+    _LIBCPP_INLINE_VISIBILITY
     bool valid() const {return __state_ != nullptr;}
 
+    _LIBCPP_INLINE_VISIBILITY
     void wait() const {__state_->wait();}
     template <class _Rep, class _Period>
+        _LIBCPP_INLINE_VISIBILITY
         future_status
         wait_for(const chrono::duration<_Rep, _Period>& __rel_time) const
             {return __state_->wait_for(__rel_time);}
     template <class _Clock, class _Duration>
+        _LIBCPP_INLINE_VISIBILITY
         future_status
         wait_until(const chrono::time_point<_Clock, _Duration>& __abs_time) const
             {return __state_->wait_until(__abs_time);}
@@ -2323,16 +2437,19 @@ atomic_future<_R>::swap(atomic_future& __rhs)
 }
 
 template <class _R>
-class atomic_future<_R&>
+class _LIBCPP_VISIBLE atomic_future<_R&>
 {
     __assoc_state<_R&>* __state_;
     mutable mutex __mut_;
 
 public:
+    _LIBCPP_INLINE_VISIBILITY
     atomic_future() : __state_(nullptr) {}
+    _LIBCPP_INLINE_VISIBILITY
     atomic_future(const atomic_future& __rhs) : __state_(__rhs.__state_)
         {if (__state_) __state_->__add_shared();}
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
+    _LIBCPP_INLINE_VISIBILITY
     atomic_future(future<_R&>&& __f) : __state_(__f.__state_)
         {__f.__state_ = nullptr;}
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
@@ -2340,19 +2457,24 @@ public:
     atomic_future& operator=(const atomic_future& __rhs);
 
     // retrieving the value
+    _LIBCPP_INLINE_VISIBILITY
     _R& get() const {return __state_->copy();}
 
     void swap(atomic_future& __rhs);
 
     // functions to check state
+    _LIBCPP_INLINE_VISIBILITY
     bool valid() const {return __state_ != nullptr;}
 
+    _LIBCPP_INLINE_VISIBILITY
     void wait() const {__state_->wait();}
     template <class _Rep, class _Period>
+        _LIBCPP_INLINE_VISIBILITY
         future_status
         wait_for(const chrono::duration<_Rep, _Period>& __rel_time) const
             {return __state_->wait_for(__rel_time);}
     template <class _Clock, class _Duration>
+        _LIBCPP_INLINE_VISIBILITY
         future_status
         wait_until(const chrono::time_point<_Clock, _Duration>& __abs_time) const
             {return __state_->wait_until(__abs_time);}
@@ -2397,16 +2519,19 @@ atomic_future<_R&>::swap(atomic_future& __rhs)
 }
 
 template <>
-class atomic_future<void>
+class _LIBCPP_VISIBLE atomic_future<void>
 {
     __assoc_sub_state* __state_;
     mutable mutex __mut_;
 
 public:
+    _LIBCPP_INLINE_VISIBILITY
     atomic_future() : __state_(nullptr) {}
+    _LIBCPP_INLINE_VISIBILITY
     atomic_future(const atomic_future& __rhs) : __state_(__rhs.__state_)
         {if (__state_) __state_->__add_shared();}
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
+    _LIBCPP_INLINE_VISIBILITY
     atomic_future(future<void>&& __f) : __state_(__f.__state_)
         {__f.__state_ = nullptr;}
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
@@ -2414,19 +2539,24 @@ public:
     atomic_future& operator=(const atomic_future& __rhs);
 
     // retrieving the value
+    _LIBCPP_INLINE_VISIBILITY
     void get() const {__state_->copy();}
 
     void swap(atomic_future& __rhs);
 
     // functions to check state
+    _LIBCPP_INLINE_VISIBILITY
     bool valid() const {return __state_ != nullptr;}
 
+    _LIBCPP_INLINE_VISIBILITY
     void wait() const {__state_->wait();}
     template <class _Rep, class _Period>
+        _LIBCPP_INLINE_VISIBILITY
         future_status
         wait_for(const chrono::duration<_Rep, _Period>& __rel_time) const
             {return __state_->wait_for(__rel_time);}
     template <class _Clock, class _Duration>
+        _LIBCPP_INLINE_VISIBILITY
         future_status
         wait_until(const chrono::time_point<_Clock, _Duration>& __abs_time) const
             {return __state_->wait_until(__abs_time);}
