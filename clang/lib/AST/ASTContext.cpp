@@ -369,6 +369,10 @@ void ASTContext::InitBuiltinTypes() {
   InitBuiltinType(NullPtrTy,           BuiltinType::NullPtr);
 }
 
+Diagnostic &ASTContext::getDiagnostics() const {
+  return SourceMgr.getDiagnostics();
+}
+
 AttrVec& ASTContext::getDeclAttrs(const Decl *D) {
   AttrVec *&Result = DeclAttrs[D];
   if (!Result) {

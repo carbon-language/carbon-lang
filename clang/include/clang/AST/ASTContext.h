@@ -316,6 +316,8 @@ public:
 
   const LangOptions& getLangOptions() const { return LangOpts; }
 
+  Diagnostic &getDiagnostics() const;
+
   FullSourceLoc getFullLoc(SourceLocation Loc) const {
     return FullSourceLoc(Loc,SourceMgr);
   }

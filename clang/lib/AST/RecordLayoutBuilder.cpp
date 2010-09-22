@@ -14,6 +14,7 @@
 #include "clang/AST/Expr.h"
 #include "clang/AST/RecordLayout.h"
 #include "clang/Basic/TargetInfo.h"
+#include "clang/Sema/SemaDiagnostic.h"
 #include "llvm/Support/Format.h"
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/Support/MathExtras.h"
@@ -529,6 +530,9 @@ protected:
   /// Alignment - The current alignment of the record layout.
   unsigned Alignment;
 
+  /// \brief The alignment if attribute packed is not used.
+  unsigned UnpackedAlignment;
+
   llvm::SmallVector<uint64_t, 16> FieldOffsets;
 
   /// Packed - Whether the record is packed or not.
@@ -583,9 +587,9 @@ protected:
 
   RecordLayoutBuilder(ASTContext &Context, EmptySubobjectMap *EmptySubobjects)
     : Context(Context), EmptySubobjects(EmptySubobjects), Size(0), Alignment(8),
-      Packed(false), IsUnion(false), IsMac68kAlign(false),
-      UnfilledBitsInLastByte(0), MaxFieldAlignment(0), DataSize(0),
-      NonVirtualSize(0), NonVirtualAlignment(8), PrimaryBase(0),
+      UnpackedAlignment(Alignment), Packed(false), IsUnion(false),
+      IsMac68kAlign(false), UnfilledBitsInLastByte(0), MaxFieldAlignment(0),
+      DataSize(0), NonVirtualSize(0), NonVirtualAlignment(8), PrimaryBase(0),
       PrimaryBaseIsVirtual(false), FirstNearlyEmptyVBase(0) { }
 
   void Layout(const RecordDecl *D);
@@ -594,7 +598,8 @@ protected:
 
   void LayoutFields(const RecordDecl *D);
   void LayoutField(const FieldDecl *D);
-  void LayoutWideBitField(uint64_t FieldSize, uint64_t TypeSize);
+  void LayoutWideBitField(uint64_t FieldSize, uint64_t TypeSize,
+                          bool FieldPacked, const FieldDecl *D);
   void LayoutBitField(const FieldDecl *D);
 
   /// BaseSubobjectInfoAllocator - Allocator for BaseSubobjectInfo objects.
@@ -661,9 +666,18 @@ protected:
 
   /// FinishLayout - Finalize record layout. Adjust record size based on the
   /// alignment.
-  void FinishLayout();
+  void FinishLayout(const NamedDecl *D);
 
-  void UpdateAlignment(unsigned NewAlignment);
+  void UpdateAlignment(unsigned NewAlignment, unsigned UnpackedNewAlignment);
+  void UpdateAlignment(unsigned NewAlignment) {
+    UpdateAlignment(NewAlignment, NewAlignment);
+  }
+
+  void CheckFieldPadding(uint64_t Offset, uint64_t UnpaddedOffset,
+                          uint64_t UnpackedOffset, unsigned UnpackedAlign,
+                          bool isPacked, const FieldDecl *D);
+
+  DiagnosticBuilder Diag(SourceLocation Loc, unsigned DiagID);
 
   RecordLayoutBuilder(const RecordLayoutBuilder&);   // DO NOT IMPLEMENT
   void operator=(const RecordLayoutBuilder&); // DO NOT IMPLEMENT
@@ -1146,7 +1160,7 @@ void RecordLayoutBuilder::Layout(const RecordDecl *D) {
 
   // Finally, round the size of the total struct up to the alignment of the
   // struct itself.
-  FinishLayout();
+  FinishLayout(D);
 }
 
 void RecordLayoutBuilder::Layout(const CXXRecordDecl *RD) {
@@ -1167,7 +1181,7 @@ void RecordLayoutBuilder::Layout(const CXXRecordDecl *RD) {
 
   // Finally, round the size of the total struct up to the alignment of the
   // struct itself.
-  FinishLayout();
+  FinishLayout(RD);
 
 #ifndef NDEBUG
   // Check that we have base offsets for all bases.
@@ -1215,7 +1229,7 @@ void RecordLayoutBuilder::Layout(const ObjCInterfaceDecl *D) {
 
   // Finally, round the size of the total struct up to the alignment of the
   // struct itself.
-  FinishLayout();
+  FinishLayout(D);
 }
 
 void RecordLayoutBuilder::LayoutFields(const RecordDecl *D) {
@@ -1227,7 +1241,9 @@ void RecordLayoutBuilder::LayoutFields(const RecordDecl *D) {
 }
 
 void RecordLayoutBuilder::LayoutWideBitField(uint64_t FieldSize,
-                                                uint64_t TypeSize) {
+                                             uint64_t TypeSize,
+                                             bool FieldPacked,
+                                             const FieldDecl *D) {
   assert(Context.getLangOptions().CPlusPlus &&
          "Can only have wide bit-fields in C++!");
 
@@ -1258,6 +1274,7 @@ void RecordLayoutBuilder::LayoutWideBitField(uint64_t FieldSize,
   UnfilledBitsInLastByte = 0;
 
   uint64_t FieldOffset;
+  uint64_t UnpaddedFieldOffset = DataSize - UnfilledBitsInLastByte;
 
   if (IsUnion) {
     DataSize = std::max(DataSize, FieldSize);
@@ -1276,6 +1293,9 @@ void RecordLayoutBuilder::LayoutWideBitField(uint64_t FieldSize,
   // Place this field at the current location.
   FieldOffsets.push_back(FieldOffset);
 
+  CheckFieldPadding(FieldOffset, UnpaddedFieldOffset, FieldOffset,
+                    TypeAlign, FieldPacked, D);
+
   // Update the size.
   Size = std::max(Size, DataSize);
 
@@ -1285,7 +1305,8 @@ void RecordLayoutBuilder::LayoutWideBitField(uint64_t FieldSize,
 
 void RecordLayoutBuilder::LayoutBitField(const FieldDecl *D) {
   bool FieldPacked = Packed || D->hasAttr<PackedAttr>();
-  uint64_t FieldOffset = IsUnion ? 0 : (DataSize - UnfilledBitsInLastByte);
+  uint64_t UnpaddedFieldOffset = DataSize - UnfilledBitsInLastByte;
+  uint64_t FieldOffset = IsUnion ? 0 : UnpaddedFieldOffset;
   uint64_t FieldSize = D->getBitWidth()->EvaluateAsInt(Context).getZExtValue();
 
   std::pair<uint64_t, unsigned> FieldInfo = Context.getTypeInfo(D->getType());
@@ -1293,28 +1314,46 @@ void RecordLayoutBuilder::LayoutBitField(const FieldDecl *D) {
   unsigned FieldAlign = FieldInfo.second;
 
   if (FieldSize > TypeSize) {
-    LayoutWideBitField(FieldSize, TypeSize);
+    LayoutWideBitField(FieldSize, TypeSize, FieldPacked, D);
     return;
   }
+
+  // The align if the field is not packed. This is to check if the attribute
+  // was unnecessary (-Wpacked).
+  unsigned UnpackedFieldAlign = FieldAlign;
+  uint64_t UnpackedFieldOffset = FieldOffset;
+  if (!Context.Target.useBitFieldTypeAlignment())
+    UnpackedFieldAlign = 1;
 
   if (FieldPacked || !Context.Target.useBitFieldTypeAlignment())
     FieldAlign = 1;
   FieldAlign = std::max(FieldAlign, D->getMaxAlignment());
+  UnpackedFieldAlign = std::max(UnpackedFieldAlign, D->getMaxAlignment());
 
   // The maximum field alignment overrides the aligned attribute.
-  if (MaxFieldAlignment)
+  if (MaxFieldAlignment) {
     FieldAlign = std::min(FieldAlign, MaxFieldAlignment);
+    UnpackedFieldAlign = std::min(UnpackedFieldAlign, MaxFieldAlignment);
+  }
 
   // Check if we need to add padding to give the field the correct alignment.
   if (FieldSize == 0 || (FieldOffset & (FieldAlign-1)) + FieldSize > TypeSize)
     FieldOffset = llvm::RoundUpToAlignment(FieldOffset, FieldAlign);
 
+  if (FieldSize == 0 ||
+      (UnpackedFieldOffset & (UnpackedFieldAlign-1)) + FieldSize > TypeSize)
+    UnpackedFieldOffset = llvm::RoundUpToAlignment(UnpackedFieldOffset,
+                                                   UnpackedFieldAlign);
+
   // Padding members don't affect overall alignment.
   if (!D->getIdentifier())
-    FieldAlign = 1;
+    FieldAlign = UnpackedFieldAlign = 1;
 
   // Place this field at the current location.
   FieldOffsets.push_back(FieldOffset);
+
+  CheckFieldPadding(FieldOffset, UnpaddedFieldOffset, UnpackedFieldOffset,
+                    UnpackedFieldAlign, FieldPacked, D);
 
   // Update DataSize to include the last byte containing (part of) the bitfield.
   if (IsUnion) {
@@ -1331,7 +1370,7 @@ void RecordLayoutBuilder::LayoutBitField(const FieldDecl *D) {
   Size = std::max(Size, DataSize);
 
   // Remember max struct/class alignment.
-  UpdateAlignment(FieldAlign);
+  UpdateAlignment(FieldAlign, UnpackedFieldAlign);
 }
 
 void RecordLayoutBuilder::LayoutField(const FieldDecl *D) {
@@ -1339,6 +1378,8 @@ void RecordLayoutBuilder::LayoutField(const FieldDecl *D) {
     LayoutBitField(D);
     return;
   }
+
+  uint64_t UnpaddedFieldOffset = DataSize - UnfilledBitsInLastByte;
 
   // Reset the unfilled bits.
   UnfilledBitsInLastByte = 0;
@@ -1366,16 +1407,26 @@ void RecordLayoutBuilder::LayoutField(const FieldDecl *D) {
     FieldAlign = FieldInfo.second;
   }
 
+  // The align if the field is not packed. This is to check if the attribute
+  // was unnecessary (-Wpacked).
+  unsigned UnpackedFieldAlign = FieldAlign;
+  uint64_t UnpackedFieldOffset = FieldOffset;
+
   if (FieldPacked)
     FieldAlign = 8;
   FieldAlign = std::max(FieldAlign, D->getMaxAlignment());
+  UnpackedFieldAlign = std::max(UnpackedFieldAlign, D->getMaxAlignment());
 
   // The maximum field alignment overrides the aligned attribute.
-  if (MaxFieldAlignment)
+  if (MaxFieldAlignment) {
     FieldAlign = std::min(FieldAlign, MaxFieldAlignment);
+    UnpackedFieldAlign = std::min(UnpackedFieldAlign, MaxFieldAlignment);
+  }
 
   // Round up the current record size to the field's alignment boundary.
   FieldOffset = llvm::RoundUpToAlignment(FieldOffset, FieldAlign);
+  UnpackedFieldOffset = llvm::RoundUpToAlignment(UnpackedFieldOffset,
+                                                 UnpackedFieldAlign);
 
   if (!IsUnion && EmptySubobjects) {
     // Check if we can place the field at this offset.
@@ -1388,6 +1439,9 @@ void RecordLayoutBuilder::LayoutField(const FieldDecl *D) {
   // Place this field at the current location.
   FieldOffsets.push_back(FieldOffset);
 
+  CheckFieldPadding(FieldOffset, UnpaddedFieldOffset, UnpackedFieldOffset,
+                    UnpackedFieldAlign, FieldPacked, D);
+
   // Reserve space for this field.
   if (IsUnion)
     Size = std::max(Size, FieldSize);
@@ -1398,29 +1452,102 @@ void RecordLayoutBuilder::LayoutField(const FieldDecl *D) {
   DataSize = Size;
 
   // Remember max struct/class alignment.
-  UpdateAlignment(FieldAlign);
+  UpdateAlignment(FieldAlign, UnpackedFieldAlign);
 }
 
-void RecordLayoutBuilder::FinishLayout() {
+void RecordLayoutBuilder::FinishLayout(const NamedDecl *D) {
   // In C++, records cannot be of size 0.
   if (Context.getLangOptions().CPlusPlus && Size == 0)
     Size = 8;
   // Finally, round the size of the record up to the alignment of the
   // record itself.
+  uint64_t UnpaddedSize = Size - UnfilledBitsInLastByte;
+  uint64_t UnpackedSize = llvm::RoundUpToAlignment(Size, UnpackedAlignment);
   Size = llvm::RoundUpToAlignment(Size, Alignment);
+
+  unsigned CharBitNum = Context.Target.getCharWidth();
+  if (const RecordDecl *RD = dyn_cast<RecordDecl>(D)) {
+    // Warn if padding was introduced to the struct/class/union.
+    if (Size > UnpaddedSize) {
+      unsigned PadSize = Size - UnpaddedSize;
+      bool InBits = true;
+      if (PadSize % CharBitNum == 0) {
+        PadSize = PadSize / CharBitNum;
+        InBits = false;
+      }
+      Diag(RD->getLocation(), diag::warn_padded_struct_size)
+          << Context.getTypeDeclType(RD)
+          << PadSize
+          << (InBits ? 1 : 0) /*(byte|bit)*/ << (PadSize > 1); // plural or not
+    }
+
+    // Warn if we packed it unnecessarily. If the alignment is 1 byte don't
+    // bother since there won't be alignment issues.
+    if (Packed && UnpackedAlignment > CharBitNum && Size == UnpackedSize)
+      Diag(D->getLocation(), diag::warn_unnecessary_packed)
+          << Context.getTypeDeclType(RD);
+  }
 }
 
-void RecordLayoutBuilder::UpdateAlignment(unsigned NewAlignment) {
+void RecordLayoutBuilder::UpdateAlignment(unsigned NewAlignment,
+                                          unsigned UnpackedNewAlignment) {
   // The alignment is not modified when using 'mac68k' alignment.
   if (IsMac68kAlign)
     return;
 
-  if (NewAlignment <= Alignment)
+  if (NewAlignment > Alignment) {
+    assert(llvm::isPowerOf2_32(NewAlignment && "Alignment not a power of 2"));
+    Alignment = NewAlignment;
+  }
+
+  if (UnpackedNewAlignment > UnpackedAlignment) {
+    assert(llvm::isPowerOf2_32(UnpackedNewAlignment &&
+           "Alignment not a power of 2"));
+    UnpackedAlignment = UnpackedNewAlignment;
+  }
+}
+
+void RecordLayoutBuilder::CheckFieldPadding(uint64_t Offset,
+                                            uint64_t UnpaddedOffset,
+                                            uint64_t UnpackedOffset,
+                                            unsigned UnpackedAlign,
+                                            bool isPacked,
+                                            const FieldDecl *D) {
+  // We let objc ivars without warning, objc interfaces generally are not used
+  // for padding tricks.
+  if (isa<ObjCIvarDecl>(D))
     return;
 
-  assert(llvm::isPowerOf2_32(NewAlignment && "Alignment not a power of 2"));
+  unsigned CharBitNum = Context.Target.getCharWidth();
 
-  Alignment = NewAlignment;
+  // Warn if padding was introduced to the struct/class.
+  if (!IsUnion && Offset > UnpaddedOffset) {
+    unsigned PadSize = Offset - UnpaddedOffset;
+    bool InBits = true;
+    if (PadSize % CharBitNum == 0) {
+      PadSize = PadSize / CharBitNum;
+      InBits = false;
+    }
+    if (D->getIdentifier())
+      Diag(D->getLocation(), diag::warn_padded_struct_field)
+          << (D->getParent()->isStruct() ? 0 : 1) // struct|class
+          << Context.getTypeDeclType(D->getParent())
+          << PadSize
+          << (InBits ? 1 : 0) /*(byte|bit)*/ << (PadSize > 1) // plural or not
+          << D->getIdentifier();
+    else
+      Diag(D->getLocation(), diag::warn_padded_struct_anon_field)
+          << (D->getParent()->isStruct() ? 0 : 1) // struct|class
+          << Context.getTypeDeclType(D->getParent())
+          << PadSize
+          << (InBits ? 1 : 0) /*(byte|bit)*/ << (PadSize > 1); // plural or not
+  }
+
+  // Warn if we packed it unnecessarily. If the alignment is 1 byte don't
+  // bother since there won't be alignment issues.
+  if (isPacked && UnpackedAlign > CharBitNum && Offset == UnpackedOffset)
+    Diag(D->getLocation(), diag::warn_unnecessary_packed)
+        << D->getIdentifier();
 }
 
 const CXXMethodDecl *
@@ -1461,6 +1588,12 @@ RecordLayoutBuilder::ComputeKeyFunction(const CXXRecordDecl *RD) {
   }
 
   return 0;
+}
+
+DiagnosticBuilder
+RecordLayoutBuilder::Diag(SourceLocation Loc, unsigned DiagID) {
+  return Context.getDiagnostics().Report(
+                        FullSourceLoc(Loc, Context.getSourceManager()), DiagID);
 }
 
 // This class implements layout specific to the Microsoft ABI.

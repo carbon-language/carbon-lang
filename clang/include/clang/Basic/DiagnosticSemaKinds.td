@@ -1825,6 +1825,19 @@ def err_vm_func_decl : Error<
 def err_array_too_large : Error<
   "array is too large (%0 elements)">;
 
+// -Wpadded, -Wpacked
+def warn_padded_struct_field : Warning<
+  "padding %select{struct|class}0 %1 with %2 %select{byte|bit}3%select{|s}4 "
+  "to align %5">, InGroup<Padded>, DefaultIgnore;
+def warn_padded_struct_anon_field : Warning<
+  "padding %select{struct|class}0 %1 with %2 %select{byte|bit}3%select{|s}4 "
+  "to align anonymous bit-field">, InGroup<Padded>, DefaultIgnore;
+def warn_padded_struct_size : Warning<
+  "padding size of %0 with %1 %select{byte|bit}2%select{|s}3 "
+  "to alignment boundary">, InGroup<Padded>, DefaultIgnore;
+def warn_unnecessary_packed : Warning<
+  "packed attribute is unnecessary for %0">, InGroup<Packed>, DefaultIgnore;
+
 def err_typecheck_negative_array_size : Error<"array size is negative">;
 def warn_typecheck_function_qualifiers : Warning<
   "qualifier on function type %0 has unspecified behavior">;
