@@ -322,9 +322,15 @@ void MCELFStreamer::EmitCommonSymbol(MCSymbol *Symbol, uint64_t Size,
                                                                     SectionKind::getBSS());
 
     MCSectionData &SectData = getAssembler().getOrCreateSectionData(*Section);
+    new MCAlignFragment(ByteAlignment, 0, 1, ByteAlignment, &SectData);
+
     MCFragment *F = new MCFillFragment(0, 0, Size, &SectData);
     SD.setFragment(F);
     Symbol->setSection(*Section);
+
+    // Update the maximum alignment of the section if necessary.
+    if (ByteAlignment > SectData.getAlignment())
+      SectData.setAlignment(ByteAlignment);
   } else {
     SD.setCommon(Size, ByteAlignment);
   }
