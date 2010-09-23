@@ -42,11 +42,11 @@ class GlobalVariablesTestCase(TestBase):
 
         # Check that GLOBAL scopes are indicated for the variables.
         self.expect("frame variable -s -g -a", VARIABLES_DISPLAYED_CORRECTLY,
-            substrs = ['GLOBAL: (char const *) g_file_static_cstr',
-                       '"g_file_static_cstr"',
-                       'GLOBAL: (int) g_file_global_int = 42',
-                       'GLOBAL: (char const *) g_file_global_cstr',
-                       '"g_file_global_cstr"'])
+            substrs = ['GLOBAL: (int) g_file_global_int = 42',
+                       'GLOBAL: (const char *) g_file_global_cstr',
+                       '"g_file_global_cstr"',
+                       'GLOBAL: (const char *) g_file_static_cstr',
+                       '"g_file_static_cstr"'])
 
 
 if __name__ == '__main__':
