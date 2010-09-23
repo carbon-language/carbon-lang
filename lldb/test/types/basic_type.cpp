@@ -125,8 +125,8 @@ main (int argc, char const *argv[])
     
 #ifdef T_PRINTF_FORMAT
     printf ("%s: a = '" T_PRINTF_FORMAT "'\n", T_CSTR, a);
-    printf ("%s*: a = %p => '" T_PRINTF_FORMAT "'\n", T_CSTR, a_ptr, *a_ptr);
-    printf ("%s&: a = %p => '" T_PRINTF_FORMAT "'\n", T_CSTR, &a_ref, a_ref);
+    printf ("%s*: %p => *a_ptr = '" T_PRINTF_FORMAT "'\n", T_CSTR, a_ptr, *a_ptr);
+    printf ("%s&: @%p => a_ref = '" T_PRINTF_FORMAT "'\n", T_CSTR, &a_ref, a_ref);
 
     printf ("%s[2]: a_array_bounded[0] = '" T_PRINTF_FORMAT "'\n", T_CSTR, a_array_bounded[0]);
     printf ("%s[2]: a_array_bounded[1] = '" T_PRINTF_FORMAT "'\n", T_CSTR, a_array_bounded[1]);
@@ -152,9 +152,9 @@ main (int argc, char const *argv[])
     printf ("(a_union_zero_t*) a_union_zero_ptr = %p, a_union_zero_ptr->a = '" T_PRINTF_FORMAT "'\n", a_union_zero_ptr, a_union_zero_ptr->a);
     printf ("(a_union_zero_t&) a_union_zero_ref = %p, a_union_zero_ref.a = '" T_PRINTF_FORMAT "'\n", &a_union_zero_ref, a_union_zero_ref.a);
 
-    printf ("(a_union_nonzero_t) a_union_nonzero.a = '" T_PRINTF_FORMAT "'\n", a_union_nonzero.u.a);
-    printf ("(a_union_nonzero_t*) a_union_nonzero_ptr = %p, a_union_nonzero_ptr->a = '" T_PRINTF_FORMAT "'\n", a_union_nonzero_ptr, a_union_nonzero_ptr->u.a);
-    printf ("(a_union_nonzero_t&) a_union_nonzero_ref = %p, a_union_nonzero_ref.a = '" T_PRINTF_FORMAT "'\n", &a_union_nonzero_ref, a_union_nonzero_ref.u.a);
+    printf ("(a_union_nonzero_t) a_union_nonzero.u.a = '" T_PRINTF_FORMAT "'\n", a_union_nonzero.u.a);
+    printf ("(a_union_nonzero_t*) a_union_nonzero_ptr = %p, a_union_nonzero_ptr->u.a = '" T_PRINTF_FORMAT "'\n", a_union_nonzero_ptr, a_union_nonzero_ptr->u.a);
+    printf ("(a_union_nonzero_t&) a_union_nonzero_ref = %p, a_union_nonzero_ref.u.a = '" T_PRINTF_FORMAT "'\n", &a_union_nonzero_ref, a_union_nonzero_ref.u.a);
 
     printf ("(a_struct_t[2]) a_struct_array_bounded[0].a = '" T_PRINTF_FORMAT "'\n", a_struct_array_bounded[0].a);
     printf ("(a_struct_t[2]) a_struct_array_bounded[0].b = '" T_PRINTF_FORMAT "'\n", a_struct_array_bounded[0].b);

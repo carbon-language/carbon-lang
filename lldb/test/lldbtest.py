@@ -483,7 +483,7 @@ class TestBase(unittest2.TestCase):
         keepgoing = matched if matching else not matched
         if substrs and keepgoing:
             for str in substrs:
-                matched = output.find(str) > 0
+                matched = output.find(str) != -1
                 if trace:
                     print >> sys.stderr, "%s sub string: %s" % (heading, str)
                     print >> sys.stderr, "Matched" if matched else "Not matched"
