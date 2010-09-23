@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -triple=x86_64-none-none -Wpadded -Wpacked -verify %s -emit-llvm -o %t
+// RUN: %clang_cc1 -triple=x86_64-none-none -Wpadded -Wpacked -verify %s -emit-llvm-only
 
 struct S1 {
   char c;
