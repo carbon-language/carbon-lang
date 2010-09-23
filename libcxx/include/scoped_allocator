@@ -181,12 +181,14 @@ private:
 
 protected:
 
+    _LIBCPP_INLINE_VISIBILITY
     __scoped_allocator_storage() {}
 
     template <class _OuterA2,
               class = typename enable_if<
                         is_constructible<outer_allocator_type, _OuterA2>::value
                       >::type>
+        _LIBCPP_INLINE_VISIBILITY
         __scoped_allocator_storage(_OuterA2&& __outerAlloc,
                                    const _InnerAllocs& ...__innerAllocs)
             : outer_allocator_type(_STD::forward<_OuterA2>(__outerAlloc)),
@@ -196,6 +198,7 @@ protected:
               class = typename enable_if<
                         is_constructible<outer_allocator_type, const _OuterA2&>::value
                       >::type>
+        _LIBCPP_INLINE_VISIBILITY
         __scoped_allocator_storage(
             const __scoped_allocator_storage<_OuterA2, _InnerAllocs...>& __other)
             : outer_allocator_type(__other.outer_allocator()),
@@ -205,6 +208,7 @@ protected:
               class = typename enable_if<
                         is_constructible<outer_allocator_type, _OuterA2>::value
                       >::type>
+        _LIBCPP_INLINE_VISIBILITY
         __scoped_allocator_storage(
             __scoped_allocator_storage<_OuterA2, _InnerAllocs...>&& __other)
             : outer_allocator_type(_STD::move(__other.outer_allocator())),
@@ -214,22 +218,28 @@ protected:
               class = typename enable_if<
                         is_constructible<outer_allocator_type, _OuterA2>::value
                       >::type>
-    __scoped_allocator_storage(_OuterA2&& __o,
-                               const inner_allocator_type& __i)
-        : outer_allocator_type(_STD::forward<_OuterA2>(__o)),
-          __inner_(__i)
-    {
-    }
+        _LIBCPP_INLINE_VISIBILITY
+        __scoped_allocator_storage(_OuterA2&& __o,
+                                   const inner_allocator_type& __i)
+            : outer_allocator_type(_STD::forward<_OuterA2>(__o)),
+              __inner_(__i)
+        {
+        }
 
+    _LIBCPP_INLINE_VISIBILITY
     inner_allocator_type& inner_allocator()             {return __inner_;}
+    _LIBCPP_INLINE_VISIBILITY
     const inner_allocator_type& inner_allocator() const {return __inner_;}
 
+    _LIBCPP_INLINE_VISIBILITY
     outer_allocator_type& outer_allocator()
         {return static_cast<outer_allocator_type&>(*this);}
+    _LIBCPP_INLINE_VISIBILITY
     const outer_allocator_type& outer_allocator() const
         {return static_cast<const outer_allocator_type&>(*this);}
 
     scoped_allocator_adaptor<outer_allocator_type, _InnerAllocs...>
+    _LIBCPP_INLINE_VISIBILITY
     select_on_container_copy_construction() const
         {
             return scoped_allocator_adaptor<outer_allocator_type, _InnerAllocs...>
@@ -252,12 +262,14 @@ class __scoped_allocator_storage<_OuterAlloc>
 protected:
     typedef scoped_allocator_adaptor<_OuterAlloc> inner_allocator_type;
 
+    _LIBCPP_INLINE_VISIBILITY
     __scoped_allocator_storage() {}
 
     template <class _OuterA2,
               class = typename enable_if<
                         is_constructible<outer_allocator_type, _OuterA2>::value
                       >::type>
+        _LIBCPP_INLINE_VISIBILITY
         __scoped_allocator_storage(_OuterA2&& __outerAlloc)
             : outer_allocator_type(_STD::forward<_OuterA2>(__outerAlloc)) {}
 
@@ -265,6 +277,7 @@ protected:
               class = typename enable_if<
                         is_constructible<outer_allocator_type, const _OuterA2&>::value
                       >::type>
+        _LIBCPP_INLINE_VISIBILITY
         __scoped_allocator_storage(
             const __scoped_allocator_storage<_OuterA2>& __other)
             : outer_allocator_type(__other.outer_allocator()) {}
@@ -273,20 +286,26 @@ protected:
               class = typename enable_if<
                         is_constructible<outer_allocator_type, _OuterA2>::value
                       >::type>
+        _LIBCPP_INLINE_VISIBILITY
         __scoped_allocator_storage(
             __scoped_allocator_storage<_OuterA2>&& __other)
             : outer_allocator_type(_STD::move(__other.outer_allocator())) {}
 
+    _LIBCPP_INLINE_VISIBILITY
     inner_allocator_type& inner_allocator()
         {return static_cast<inner_allocator_type&>(*this);}
+    _LIBCPP_INLINE_VISIBILITY
     const inner_allocator_type& inner_allocator() const
         {return static_cast<const inner_allocator_type&>(*this);}
 
+    _LIBCPP_INLINE_VISIBILITY
     outer_allocator_type& outer_allocator()
         {return static_cast<outer_allocator_type&>(*this);}
+    _LIBCPP_INLINE_VISIBILITY
     const outer_allocator_type& outer_allocator() const
         {return static_cast<const outer_allocator_type&>(*this);}
 
+    _LIBCPP_INLINE_VISIBILITY
     scoped_allocator_adaptor<outer_allocator_type>
     select_on_container_copy_construction() const
         {return scoped_allocator_adaptor<outer_allocator_type>(
@@ -323,6 +342,7 @@ template <class _Alloc, bool = __has_outer_allocator<_Alloc>::value>
 struct __outermost
 {
     typedef _Alloc type;
+    _LIBCPP_INLINE_VISIBILITY
     type& operator()(type& __a) const {return __a;}
 };
 
@@ -334,12 +354,13 @@ struct __outermost<_Alloc, true>
                         decltype(_STD::declval<_Alloc>().outer_allocator())
                      >::type                                    _OuterAlloc;
     typedef typename __outermost<_OuterAlloc>::type             type;
+    _LIBCPP_INLINE_VISIBILITY
     type& operator()(_Alloc& __a) const
         {return __outermost<_OuterAlloc>()(__a.outer_allocator());}
 };
 
 template <class _OuterAlloc, class... _InnerAllocs>
-class scoped_allocator_adaptor<_OuterAlloc, _InnerAllocs...>
+class _LIBCPP_VISIBLE scoped_allocator_adaptor<_OuterAlloc, _InnerAllocs...>
     : public __scoped_allocator_storage<_OuterAlloc, _InnerAllocs...>
 {
     typedef __scoped_allocator_storage<_OuterAlloc, _InnerAllocs...> base;
@@ -381,11 +402,13 @@ public:
         > other;
     };
 
+    _LIBCPP_INLINE_VISIBILITY
     scoped_allocator_adaptor() {}
     template <class _OuterA2,
               class = typename enable_if<
                         is_constructible<outer_allocator_type, _OuterA2>::value
                       >::type>
+        _LIBCPP_INLINE_VISIBILITY
         scoped_allocator_adaptor(_OuterA2&& __outerAlloc,
                                  const _InnerAllocs& ...__innerAllocs)
             : base(_STD::forward<_OuterA2>(__outerAlloc), __innerAllocs...) {}
@@ -394,6 +417,7 @@ public:
               class = typename enable_if<
                         is_constructible<outer_allocator_type, const _OuterA2&>::value
                       >::type>
+        _LIBCPP_INLINE_VISIBILITY
         scoped_allocator_adaptor(
             const scoped_allocator_adaptor<_OuterA2, _InnerAllocs...>& __other)
                 : base(__other) {}
@@ -401,41 +425,52 @@ public:
               class = typename enable_if<
                         is_constructible<outer_allocator_type, _OuterA2>::value
                       >::type>
+        _LIBCPP_INLINE_VISIBILITY
         scoped_allocator_adaptor(
             scoped_allocator_adaptor<_OuterA2, _InnerAllocs...>&& __other)
                 : base(_STD::move(__other)) {}
 
     // ~scoped_allocator_adaptor() = default;
 
+    _LIBCPP_INLINE_VISIBILITY
     inner_allocator_type& inner_allocator()
         {return base::inner_allocator();}
+    _LIBCPP_INLINE_VISIBILITY
     const inner_allocator_type& inner_allocator() const
         {return base::inner_allocator();}
 
+    _LIBCPP_INLINE_VISIBILITY
     outer_allocator_type& outer_allocator()
         {return base::outer_allocator();}
+    _LIBCPP_INLINE_VISIBILITY
     const outer_allocator_type& outer_allocator() const
         {return base::outer_allocator();}
 
+    _LIBCPP_INLINE_VISIBILITY
     pointer allocate(size_type __n)
         {return allocator_traits<outer_allocator_type>::
             allocate(outer_allocator(), __n);}
+    _LIBCPP_INLINE_VISIBILITY
     pointer allocate(size_type __n, const_void_pointer __hint)
         {return allocator_traits<outer_allocator_type>::
             allocate(outer_allocator(), __n, __hint);}
 
+    _LIBCPP_INLINE_VISIBILITY
     void deallocate(pointer __p, size_type __n)
         {allocator_traits<outer_allocator_type>::
             deallocate(outer_allocator(), __p, __n);}
 
+    _LIBCPP_INLINE_VISIBILITY
     size_type max_size() const
-        {allocator_traits<outer_allocator_type>::max_size(outer_allocator());}
+        {return allocator_traits<outer_allocator_type>::max_size(outer_allocator());}
 
     template <class _Tp, class... _Args>
+        _LIBCPP_INLINE_VISIBILITY
         void construct(_Tp* __p, _Args&& ...__args)
             {__construct(__uses_alloc_ctor<_Tp, inner_allocator_type, _Args...>(),
                          __p, _STD::forward<_Args>(__args)...);}
     template <class _Tp>
+        _LIBCPP_INLINE_VISIBILITY
         void destroy(_Tp* __p)
             {
                 typedef __outermost<outer_allocator_type> _OM;
@@ -443,6 +478,7 @@ public:
                                          destroy(_OM()(outer_allocator()), __p);
             }
 
+    _LIBCPP_INLINE_VISIBILITY
     scoped_allocator_adaptor select_on_container_copy_construction() const
         {return base::select_on_container_copy_construction();}
 
@@ -452,11 +488,13 @@ private:
               class = typename enable_if<
                         is_constructible<outer_allocator_type, _OuterA2>::value
                       >::type>
+    _LIBCPP_INLINE_VISIBILITY
     scoped_allocator_adaptor(_OuterA2&& __o,
                              const inner_allocator_type& __i)
         : base(_STD::forward<_OuterA2>(__o), __i) {}
 
     template <class _Tp, class... _Args>
+        _LIBCPP_INLINE_VISIBILITY
         void __construct(integral_constant<int, 0>, _Tp* __p, _Args&& ...__args)
             {
                 typedef __outermost<outer_allocator_type> _OM;
@@ -469,6 +507,7 @@ private:
             }
 
     template <class _Tp, class... _Args>
+        _LIBCPP_INLINE_VISIBILITY
         void __construct(integral_constant<int, 1>, _Tp* __p, _Args&& ...__args)
             {
                 typedef __outermost<outer_allocator_type> _OM;
@@ -483,6 +522,7 @@ private:
             }
 
     template <class _Tp, class... _Args>
+        _LIBCPP_INLINE_VISIBILITY
         void __construct(integral_constant<int, 2>, _Tp* __p, _Args&& ...__args)
             {
                 typedef __outermost<outer_allocator_type> _OM;
