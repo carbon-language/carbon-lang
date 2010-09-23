@@ -10,7 +10,7 @@ set(CMAKE_MODULE_PATH
   "${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules"
   )
 
-set(PACKAGE_VERSION "2.8")
+set(PACKAGE_VERSION "2.9")
 include(VersionFromVCS)
 add_version_info_from_vcs(PACKAGE_VERSION)
 
