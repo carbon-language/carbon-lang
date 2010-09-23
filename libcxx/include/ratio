@@ -220,7 +220,7 @@ public:
 };
 
 template <intmax_t _Num, intmax_t _Den = 1>
-class ratio
+class _LIBCPP_VISIBLE ratio
 {
     static_assert(__static_abs<_Num>::value >= 0, "ratio numerator is out of range");
     static_assert(_Den != 0, "ratio divide by 0");
@@ -260,7 +260,7 @@ typedef ratio<   1000000000000000LL, 1LL> peta;
 typedef ratio<1000000000000000000LL, 1LL> exa;
 
 template <class _R1, class _R2>
-struct ratio_multiply
+struct _LIBCPP_VISIBLE ratio_multiply
 {
 private:
     static const intmax_t __gcd_n1_d2 = __static_gcd<_R1::num, _R2::den>::value;
@@ -274,7 +274,7 @@ public:
 };
 
 template <class _R1, class _R2>
-struct ratio_divide
+struct _LIBCPP_VISIBLE ratio_divide
 {
 private:
     static const intmax_t __gcd_n1_n2 = __static_gcd<_R1::num, _R2::num>::value;
@@ -288,7 +288,7 @@ public:
 };
 
 template <class _R1, class _R2>
-struct ratio_add
+struct _LIBCPP_VISIBLE ratio_add
 {
 private:
     static const intmax_t __gcd_n1_n2 = __static_gcd<_R1::num, _R2::num>::value;
@@ -310,7 +310,7 @@ public:
 };
 
 template <class _R1, class _R2>
-struct ratio_subtract
+struct _LIBCPP_VISIBLE ratio_subtract
 {
 private:
     static const intmax_t __gcd_n1_n2 = __static_gcd<_R1::num, _R2::num>::value;
@@ -334,11 +334,11 @@ public:
 // ratio_equal
 
 template <class _R1, class _R2>
-struct ratio_equal
+struct _LIBCPP_VISIBLE ratio_equal
     : public integral_constant<bool, _R1::num == _R2::num && _R1::den == _R2::den> {};
 
 template <class _R1, class _R2>
-struct ratio_not_equal
+struct _LIBCPP_VISIBLE ratio_not_equal
     : public integral_constant<bool, !ratio_equal<_R1, _R2>::value> {};
 
 // ratio_less
@@ -397,19 +397,19 @@ struct __ratio_less<_R1, _R2, -1LL, -1LL>
 };
 
 template <class _R1, class _R2>
-struct ratio_less
+struct _LIBCPP_VISIBLE ratio_less
     : public integral_constant<bool, __ratio_less<_R1, _R2>::value> {};
 
 template <class _R1, class _R2>
-struct ratio_less_equal
+struct _LIBCPP_VISIBLE ratio_less_equal
     : public integral_constant<bool, !ratio_less<_R2, _R1>::value> {};
 
 template <class _R1, class _R2>
-struct ratio_greater
+struct _LIBCPP_VISIBLE ratio_greater
     : public integral_constant<bool, ratio_less<_R2, _R1>::value> {};
 
 template <class _R1, class _R2>
-struct ratio_greater_equal
+struct _LIBCPP_VISIBLE ratio_greater_equal
     : public integral_constant<bool, !ratio_less<_R1, _R2>::value> {};
 
 template <class _R1, class _R2>

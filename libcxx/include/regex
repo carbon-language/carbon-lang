@@ -717,10 +717,6 @@ typedef regex_token_iterator<wstring::const_iterator> wsregex_token_iterator;
 } // std
 */
 
-// temporary!
-#include <sstream>
-#include <cassert>
-
 #include <__config>
 #include <stdexcept>
 #include <__locale>
@@ -755,7 +751,7 @@ enum syntax_option_type
     egrep      = 1 << 8
 };
 
-inline
+inline _LIBCPP_INLINE_VISIBILITY
 /*constexpr*/
 syntax_option_type
 operator~(syntax_option_type __x)
@@ -763,7 +759,7 @@ operator~(syntax_option_type __x)
     return syntax_option_type(~int(__x));
 }
 
-inline
+inline _LIBCPP_INLINE_VISIBILITY
 /*constexpr*/
 syntax_option_type
 operator&(syntax_option_type __x, syntax_option_type __y)
@@ -771,7 +767,7 @@ operator&(syntax_option_type __x, syntax_option_type __y)
     return syntax_option_type(int(__x) & int(__y));
 }
 
-inline
+inline _LIBCPP_INLINE_VISIBILITY
 /*constexpr*/
 syntax_option_type
 operator|(syntax_option_type __x, syntax_option_type __y)
@@ -779,7 +775,7 @@ operator|(syntax_option_type __x, syntax_option_type __y)
     return syntax_option_type(int(__x) | int(__y));
 }
 
-inline
+inline _LIBCPP_INLINE_VISIBILITY
 /*constexpr*/
 syntax_option_type
 operator^(syntax_option_type __x, syntax_option_type __y)
@@ -787,7 +783,7 @@ operator^(syntax_option_type __x, syntax_option_type __y)
     return syntax_option_type(int(__x) ^ int(__y));
 }
 
-inline
+inline _LIBCPP_INLINE_VISIBILITY
 /*constexpr*/
 syntax_option_type&
 operator&=(syntax_option_type& __x, syntax_option_type __y)
@@ -796,7 +792,7 @@ operator&=(syntax_option_type& __x, syntax_option_type __y)
     return __x;
 }
 
-inline
+inline _LIBCPP_INLINE_VISIBILITY
 /*constexpr*/
 syntax_option_type&
 operator|=(syntax_option_type& __x, syntax_option_type __y)
@@ -805,7 +801,7 @@ operator|=(syntax_option_type& __x, syntax_option_type __y)
     return __x;
 }
 
-inline
+inline _LIBCPP_INLINE_VISIBILITY
 /*constexpr*/
 syntax_option_type&
 operator^=(syntax_option_type& __x, syntax_option_type __y)
@@ -834,7 +830,7 @@ enum match_flag_type
     __no_update_pos   = 1 << 11
 };
 
-inline
+inline _LIBCPP_INLINE_VISIBILITY
 /*constexpr*/
 match_flag_type
 operator~(match_flag_type __x)
@@ -842,7 +838,7 @@ operator~(match_flag_type __x)
     return match_flag_type(~int(__x));
 }
 
-inline
+inline _LIBCPP_INLINE_VISIBILITY
 /*constexpr*/
 match_flag_type
 operator&(match_flag_type __x, match_flag_type __y)
@@ -850,7 +846,7 @@ operator&(match_flag_type __x, match_flag_type __y)
     return match_flag_type(int(__x) & int(__y));
 }
 
-inline
+inline _LIBCPP_INLINE_VISIBILITY
 /*constexpr*/
 match_flag_type
 operator|(match_flag_type __x, match_flag_type __y)
@@ -858,7 +854,7 @@ operator|(match_flag_type __x, match_flag_type __y)
     return match_flag_type(int(__x) | int(__y));
 }
 
-inline
+inline _LIBCPP_INLINE_VISIBILITY
 /*constexpr*/
 match_flag_type
 operator^(match_flag_type __x, match_flag_type __y)
@@ -866,7 +862,7 @@ operator^(match_flag_type __x, match_flag_type __y)
     return match_flag_type(int(__x) ^ int(__y));
 }
 
-inline
+inline _LIBCPP_INLINE_VISIBILITY
 /*constexpr*/
 match_flag_type&
 operator&=(match_flag_type& __x, match_flag_type __y)
@@ -875,7 +871,7 @@ operator&=(match_flag_type& __x, match_flag_type __y)
     return __x;
 }
 
-inline
+inline _LIBCPP_INLINE_VISIBILITY
 /*constexpr*/
 match_flag_type&
 operator|=(match_flag_type& __x, match_flag_type __y)
@@ -884,7 +880,7 @@ operator|=(match_flag_type& __x, match_flag_type __y)
     return __x;
 }
 
-inline
+inline _LIBCPP_INLINE_VISIBILITY
 /*constexpr*/
 match_flag_type&
 operator^=(match_flag_type& __x, match_flag_type __y)
@@ -922,11 +918,12 @@ class _LIBCPP_EXCEPTION_ABI regex_error
 public:
     explicit regex_error(regex_constants::error_type __ecode);
     virtual ~regex_error() throw();
+     _LIBCPP_INLINE_VISIBILITY
     regex_constants::error_type code() const {return __code_;}
 };
 
 template <class _CharT>
-struct regex_traits
+struct _LIBCPP_VISIBLE regex_traits
 {
 public:
     typedef _CharT                  char_type;
@@ -943,30 +940,37 @@ private:
 public:
     regex_traits();
 
+    _LIBCPP_INLINE_VISIBILITY
     static size_t length(const char_type* __p)
         {return char_traits<char_type>::length(__p);}
+    _LIBCPP_INLINE_VISIBILITY
     char_type translate(char_type __c) const {return __c;}
     char_type translate_nocase(char_type __c) const;
     template <class _ForwardIterator>
         string_type
         transform(_ForwardIterator __f, _ForwardIterator __l) const;
     template <class _ForwardIterator>
+        _LIBCPP_INLINE_VISIBILITY
         string_type
         transform_primary( _ForwardIterator __f, _ForwardIterator __l) const
             {return __transform_primary(__f, __l, char_type());}
     template <class _ForwardIterator>
+        _LIBCPP_INLINE_VISIBILITY
         string_type
         lookup_collatename(_ForwardIterator __f, _ForwardIterator __l) const
             {return __lookup_collatename(__f, __l, char_type());}
     template <class _ForwardIterator>
+        _LIBCPP_INLINE_VISIBILITY
         char_class_type
         lookup_classname(_ForwardIterator __f, _ForwardIterator __l,
                          bool __icase = false) const
             {return __lookup_classname(__f, __l, __icase, char_type());}
     bool isctype(char_type __c, char_class_type __m) const;
+    _LIBCPP_INLINE_VISIBILITY
     int value(char_type __ch, int __radix) const
         {return __value(__ch, __radix);}
     locale_type imbue(locale_type __l);
+    _LIBCPP_INLINE_VISIBILITY
     locale_type getloc()const {return __loc_;}
 
 private:
@@ -996,6 +1000,7 @@ private:
                            bool __icase, wchar_t) const;
 
     static int __value(unsigned char __ch, int __radix);
+    _LIBCPP_INLINE_VISIBILITY
     int __value(char __ch, int __radix) const
         {return __value(static_cast<unsigned char>(__ch), __radix);}
     int __value(wchar_t __ch, int __radix) const;
@@ -1215,7 +1220,7 @@ regex_traits<_CharT>::__value(unsigned char __ch, int __radix)
 }
 
 template <class _CharT>
-inline
+inline _LIBCPP_INLINE_VISIBILITY
 int
 regex_traits<_CharT>::__value(wchar_t __ch, int __radix) const
 {
@@ -1256,22 +1261,11 @@ struct __state
     const __node<_CharT>* __node_;
     regex_constants::match_flag_type __flags_;
 
+    _LIBCPP_INLINE_VISIBILITY
     __state()
         : __do_(0), __first_(nullptr), __current_(nullptr), __last_(nullptr),
           __node_(nullptr), __flags_() {}
 };
-
-template <class _CharT>
-ostream&
-operator<<(ostream& os, const __state<_CharT>& c)
-{
-    os << c.__do_;
-    if (c.__node_)
-        os << ", " << c.__node_->speak();
-else
-        os << ", null";
-    return os;
-}
 
 // __node
 
@@ -1283,13 +1277,15 @@ class __node
 public:
     typedef _STD::__state<_CharT> __state;
 
+    _LIBCPP_INLINE_VISIBILITY
     __node() {}
+    _LIBCPP_INLINE_VISIBILITY
     virtual ~__node() {}
 
+    _LIBCPP_INLINE_VISIBILITY
     virtual void __exec(__state&) const {};
+    _LIBCPP_INLINE_VISIBILITY
     virtual void __exec_split(bool, __state&) const {};
-
-    virtual string speak() const {return "__node";}
 };
 
 // __end_state
@@ -1301,11 +1297,10 @@ class __end_state
 public:
     typedef _STD::__state<_CharT> __state;
 
+    _LIBCPP_INLINE_VISIBILITY
     __end_state() {}
 
     virtual void __exec(__state&) const;
-
-    virtual string speak() const {return "end state";}
 };
 
 template <class _CharT>
@@ -1324,10 +1319,13 @@ class __has_one_state
     __node<_CharT>* __first_;
 
 public:
+    _LIBCPP_INLINE_VISIBILITY
     explicit __has_one_state(__node<_CharT>* __s)
         : __first_(__s) {}
 
+    _LIBCPP_INLINE_VISIBILITY
     __node<_CharT>*  first() const {return __first_;}
+    _LIBCPP_INLINE_VISIBILITY
     __node<_CharT>*& first()       {return __first_;}
 };
 
@@ -1340,6 +1338,7 @@ class __owns_one_state
     typedef __has_one_state<_CharT> base;
 
 public:
+    _LIBCPP_INLINE_VISIBILITY
     explicit __owns_one_state(__node<_CharT>* __s)
         : base(__s) {}
 
@@ -1363,12 +1362,11 @@ class __empty_state
 public:
     typedef _STD::__state<_CharT> __state;
 
+    _LIBCPP_INLINE_VISIBILITY
     explicit __empty_state(__node<_CharT>* __s)
         : base(__s) {}
 
     virtual void __exec(__state&) const;
-
-    virtual string speak() const {return "empty state";}
 };
 
 template <class _CharT>
@@ -1390,12 +1388,11 @@ class __empty_non_own_state
 public:
     typedef _STD::__state<_CharT> __state;
 
+    _LIBCPP_INLINE_VISIBILITY
     explicit __empty_non_own_state(__node<_CharT>* __s)
         : base(__s) {}
 
     virtual void __exec(__state&) const;
-
-    virtual string speak() const {return "empty non-owning state";}
 };
 
 template <class _CharT>
@@ -1417,12 +1414,11 @@ class __repeat_one_loop
 public:
     typedef _STD::__state<_CharT> __state;
 
+    _LIBCPP_INLINE_VISIBILITY
     explicit __repeat_one_loop(__node<_CharT>* __s)
         : base(__s) {}
 
     virtual void __exec(__state&) const;
-
-    virtual string speak() const {return "repeat loop";}
 };
 
 template <class _CharT>
@@ -1444,12 +1440,15 @@ class __owns_two_states
     base* __second_;
 
 public:
+    _LIBCPP_INLINE_VISIBILITY
     explicit __owns_two_states(__node<_CharT>* __s1, base* __s2)
         : base(__s1), __second_(__s2) {}
 
     virtual ~__owns_two_states();
 
+    _LIBCPP_INLINE_VISIBILITY
     base*  second() const {return __second_;}
+    _LIBCPP_INLINE_VISIBILITY
     base*& second()       {return __second_;}
 };
 
@@ -1477,6 +1476,7 @@ class __loop
 public:
     typedef _STD::__state<_CharT> __state;
 
+    _LIBCPP_INLINE_VISIBILITY
     explicit __loop(unsigned __loop_id,
                           __node<_CharT>* __s1, __owns_one_state<_CharT>* __s2,
                           unsigned __mexp_begin, unsigned __mexp_end,
@@ -1490,17 +1490,8 @@ public:
     virtual void __exec(__state& __s) const;
     virtual void __exec_split(bool __second, __state& __s) const;
 
-    virtual string speak() const
-    {
-        ostringstream os;
-        os << "loop "<< __loop_id_ << " {" << __min_ << ',' << __max_ << "}";
-        if (!__greedy_)
-            os << " not";
-        os << " greedy";
-        return os.str();
-    }
-
 private:
+    _LIBCPP_INLINE_VISIBILITY
     void __init_repeat(__state& __s) const
     {
         __s.__loop_data_[__loop_id_].second = __s.__current_;
@@ -1584,19 +1575,13 @@ class __alternate
 public:
     typedef _STD::__state<_CharT> __state;
 
+    _LIBCPP_INLINE_VISIBILITY
     explicit __alternate(__owns_one_state<_CharT>* __s1,
                          __owns_one_state<_CharT>* __s2)
         : base(__s1, __s2) {}
 
     virtual void __exec(__state& __s) const;
     virtual void __exec_split(bool __second, __state& __s) const;
-
-    virtual string speak() const
-    {
-        ostringstream os;
-        os << "__alternate";
-        return os.str();
-    }
 };
 
 template <class _CharT>
@@ -1629,17 +1614,11 @@ class __begin_marked_subexpression
 public:
     typedef _STD::__state<_CharT> __state;
 
+    _LIBCPP_INLINE_VISIBILITY
     explicit __begin_marked_subexpression(unsigned __mexp, __node<_CharT>* __s)
         : base(__s), __mexp_(__mexp) {}
 
     virtual void __exec(__state&) const;
-
-    virtual string speak() const
-    {
-        ostringstream os;
-        os << "begin marked expr " << __mexp_;
-        return os.str();
-    }
 };
 
 template <class _CharT>
@@ -1663,17 +1642,11 @@ class __end_marked_subexpression
 public:
     typedef _STD::__state<_CharT> __state;
 
+    _LIBCPP_INLINE_VISIBILITY
     explicit __end_marked_subexpression(unsigned __mexp, __node<_CharT>* __s)
         : base(__s), __mexp_(__mexp) {}
 
     virtual void __exec(__state&) const;
-
-    virtual string speak() const
-    {
-        ostringstream os;
-        os << "end marked expr " << __mexp_;
-        return os.str();
-    }
 };
 
 template <class _CharT>
@@ -1698,17 +1671,11 @@ class __back_ref
 public:
     typedef _STD::__state<_CharT> __state;
 
+    _LIBCPP_INLINE_VISIBILITY
     explicit __back_ref(unsigned __mexp, __node<_CharT>* __s)
         : base(__s), __mexp_(__mexp) {}
 
     virtual void __exec(__state&) const;
-
-    virtual string speak() const
-    {
-        ostringstream os;
-        os << "__back_ref " << __mexp_;
-        return os.str();
-    }
 };
 
 template <class _CharT>
@@ -1752,18 +1719,12 @@ class __back_ref_icase
 public:
     typedef _STD::__state<_CharT> __state;
 
+    _LIBCPP_INLINE_VISIBILITY
     explicit __back_ref_icase(const _Traits& __traits, unsigned __mexp,
                               __node<_CharT>* __s)
         : base(__s), __traits_(__traits), __mexp_(__mexp) {}
 
     virtual void __exec(__state&) const;
-
-    virtual string speak() const
-    {
-        ostringstream os;
-        os << "__back_ref_icase " << __mexp_;
-        return os.str();
-    }
 };
 
 template <class _CharT, class _Traits>
@@ -1813,18 +1774,12 @@ class __back_ref_collate
 public:
     typedef _STD::__state<_CharT> __state;
 
+    _LIBCPP_INLINE_VISIBILITY
     explicit __back_ref_collate(const _Traits& __traits, unsigned __mexp,
                               __node<_CharT>* __s)
         : base(__s), __traits_(__traits), __mexp_(__mexp) {}
 
     virtual void __exec(__state&) const;
-
-    virtual string speak() const
-    {
-        ostringstream os;
-        os << "__back_ref_collate " << __mexp_;
-        return os.str();
-    }
 };
 
 template <class _CharT, class _Traits>
@@ -1874,21 +1829,12 @@ class __word_boundary
 public:
     typedef _STD::__state<_CharT> __state;
 
+    _LIBCPP_INLINE_VISIBILITY
     explicit __word_boundary(const _Traits& __traits, bool __invert,
                              __node<_CharT>* __s)
         : base(__s), __traits_(__traits), __invert_(__invert) {}
 
     virtual void __exec(__state&) const;
-
-    virtual string speak() const
-    {
-        ostringstream os;
-        if (!__invert_)
-            os << "__word_boundary";
-        else
-            os << "not __word_boundary";
-        return os.str();
-    }
 };
 
 template <class _CharT, class _Traits>
@@ -1951,17 +1897,11 @@ class __r_anchor
 public:
     typedef _STD::__state<_CharT> __state;
 
+    _LIBCPP_INLINE_VISIBILITY
     __r_anchor(__node<_CharT>* __s)
         : base(__s) {}
 
     virtual void __exec(__state&) const;
-
-    virtual string speak() const
-    {
-        ostringstream os;
-        os << "right anchor";
-        return os.str();
-    }
 };
 
 template <class _CharT>
@@ -1991,17 +1931,11 @@ class __match_any
 public:
     typedef _STD::__state<_CharT> __state;
 
+    _LIBCPP_INLINE_VISIBILITY
     __match_any(__node<_CharT>* __s)
         : base(__s) {}
 
     virtual void __exec(__state&) const;
-
-    virtual string speak() const
-    {
-        ostringstream os;
-        os << "match any";
-        return os.str();
-    }
 };
 
 template <class _CharT>
@@ -2032,17 +1966,11 @@ class __match_any_but_newline
 public:
     typedef _STD::__state<_CharT> __state;
 
+    _LIBCPP_INLINE_VISIBILITY
     __match_any_but_newline(__node<_CharT>* __s)
         : base(__s) {}
 
     virtual void __exec(__state&) const;
-
-    virtual string speak() const
-    {
-        ostringstream os;
-        os << "match any but newline";
-        return os.str();
-    }
 };
 
 // __match_char
@@ -2060,17 +1988,11 @@ class __match_char
 public:
     typedef _STD::__state<_CharT> __state;
 
+    _LIBCPP_INLINE_VISIBILITY
     __match_char(_CharT __c, __node<_CharT>* __s)
         : base(__s), __c_(__c) {}
 
     virtual void __exec(__state&) const;
-
-    virtual string speak() const
-    {
-        ostringstream os;
-        os << "match char " << __c_;
-        return os.str();
-    }
 };
 
 template <class _CharT>
@@ -2106,17 +2028,11 @@ class __match_char_icase
 public:
     typedef _STD::__state<_CharT> __state;
 
+    _LIBCPP_INLINE_VISIBILITY
     __match_char_icase(const _Traits& __traits, _CharT __c, __node<_CharT>* __s)
         : base(__s), __traits_(__traits), __c_(__traits.translate_nocase(__c)) {}
 
     virtual void __exec(__state&) const;
-
-    virtual string speak() const
-    {
-        ostringstream os;
-        os << "match char icase " << __c_;
-        return os.str();
-    }
 };
 
 template <class _CharT, class _Traits>
@@ -2153,17 +2069,11 @@ class __match_char_collate
 public:
     typedef _STD::__state<_CharT> __state;
 
+    _LIBCPP_INLINE_VISIBILITY
     __match_char_collate(const _Traits& __traits, _CharT __c, __node<_CharT>* __s)
         : base(__s), __traits_(__traits), __c_(__traits.translate(__c)) {}
 
     virtual void __exec(__state&) const;
-
-    virtual string speak() const
-    {
-        ostringstream os;
-        os << "match char icase " << __c_;
-        return os.str();
-    }
 };
 
 template <class _CharT, class _Traits>
@@ -2211,6 +2121,7 @@ class __bracket_expression
 public:
     typedef _STD::__state<_CharT> __state;
 
+    _LIBCPP_INLINE_VISIBILITY
     __bracket_expression(const _Traits& __traits, __node<_CharT>* __s,
                                  bool __negate, bool __icase, bool __collate)
         : base(__s), __traits_(__traits), __mask_(), __neg_mask_(),
@@ -2219,8 +2130,10 @@ public:
 
     virtual void __exec(__state&) const;
 
+    _LIBCPP_INLINE_VISIBILITY
     bool __negated() const {return __negate_;}
 
+    _LIBCPP_INLINE_VISIBILITY
     void __add_char(_CharT __c)
         {
             if (__icase_)
@@ -2230,6 +2143,7 @@ public:
             else
                 __chars_.push_back(__c);
         }
+    _LIBCPP_INLINE_VISIBILITY
     void __add_neg_char(_CharT __c)
         {
             if (__icase_)
@@ -2239,6 +2153,7 @@ public:
             else
                 __neg_chars_.push_back(__c);
         }
+    _LIBCPP_INLINE_VISIBILITY
     void __add_range(string_type __b, string_type __e)
         {
             if (__collate_)
@@ -2275,6 +2190,7 @@ public:
                 __ranges_.push_back(make_pair(_STD::move(__b), _STD::move(__e)));
             }
         }
+    _LIBCPP_INLINE_VISIBILITY
     void __add_digraph(_CharT __c1, _CharT __c2)
         {
             if (__icase_)
@@ -2286,19 +2202,15 @@ public:
             else
                 __digraphs_.push_back(make_pair(__c1, __c2));
         }
+    _LIBCPP_INLINE_VISIBILITY
     void __add_equivalence(const string_type& __s)
         {__equivalences_.push_back(__s);}
+    _LIBCPP_INLINE_VISIBILITY
     void __add_class(ctype_base::mask __mask)
         {__mask_ |= __mask;}
+    _LIBCPP_INLINE_VISIBILITY
     void __add_neg_class(ctype_base::mask __mask)
         {__neg_mask_ |= __mask;}
-
-    virtual string speak() const
-    {
-        ostringstream os;
-        os << "__bracket_expression ";
-        return os.str();
-    }
 };
 
 template <class _CharT, class _Traits>
@@ -2462,7 +2374,7 @@ __exit:
 template <class, class> class __lookahead;
 
 template <class _CharT, class _Traits = regex_traits<_CharT> >
-class basic_regex
+class _LIBCPP_VISIBLE basic_regex
 {
 public:
     // types:
@@ -2497,14 +2409,17 @@ public:
     static const/*expr*/ regex_constants::syntax_option_type egrep = regex_constants::egrep;
 
     // construct/copy/destroy:
+    _LIBCPP_INLINE_VISIBILITY
     basic_regex()
         : __flags_(), __marked_count_(0), __loop_count_(0), __open_count_(0),
           __end_(0), __left_anchor_(false)
         {}
+    _LIBCPP_INLINE_VISIBILITY
     explicit basic_regex(const value_type* __p, flag_type __f = regex_constants::ECMAScript)
         : __flags_(__f), __marked_count_(0), __loop_count_(0), __open_count_(0),
           __end_(0), __left_anchor_(false)
         {__parse(__p, __p + __traits_.length(__p));}
+    _LIBCPP_INLINE_VISIBILITY
     basic_regex(const value_type* __p, size_t __len, flag_type __f)
         : __flags_(__f), __marked_count_(0), __loop_count_(0), __open_count_(0),
           __end_(0), __left_anchor_(false)
@@ -2512,17 +2427,20 @@ public:
 //     basic_regex(const basic_regex&) = default;
 //     basic_regex(basic_regex&&) = default;
     template <class _ST, class _SA>
+        _LIBCPP_INLINE_VISIBILITY
         explicit basic_regex(const basic_string<value_type, _ST, _SA>& __p,
                              flag_type __f = regex_constants::ECMAScript)
         : __flags_(__f), __marked_count_(0), __loop_count_(0), __open_count_(0),
           __end_(0), __left_anchor_(false)
         {__parse(__p.begin(), __p.end());}
     template <class _ForwardIterator>
+        _LIBCPP_INLINE_VISIBILITY
         basic_regex(_ForwardIterator __first, _ForwardIterator __last,
                     flag_type __f = regex_constants::ECMAScript)
         : __flags_(__f), __marked_count_(0), __loop_count_(0), __open_count_(0),
           __end_(0), __left_anchor_(false)
         {__parse(__first, __last);}
+    _LIBCPP_INLINE_VISIBILITY
     basic_regex(initializer_list<value_type> __il,
                 flag_type __f = regex_constants::ECMAScript)
         : __flags_(__f), __marked_count_(0), __loop_count_(0), __open_count_(0),
@@ -2533,27 +2451,35 @@ public:
 
 //     basic_regex& operator=(const basic_regex&) = default;
 //     basic_regex& operator=(basic_regex&&) = default;
+    _LIBCPP_INLINE_VISIBILITY
     basic_regex& operator=(const value_type* __p)
         {return assign(__p);}
+    _LIBCPP_INLINE_VISIBILITY
     basic_regex& operator=(initializer_list<value_type> __il)
         {return assign(__il);}
     template <class _ST, class _SA>
+        _LIBCPP_INLINE_VISIBILITY
         basic_regex& operator=(const basic_string<value_type, _ST, _SA>& __p)
         {return assign(__p);}
 
     // assign:
+    _LIBCPP_INLINE_VISIBILITY
     basic_regex& assign(const basic_regex& __that)
         {return *this = __that;}
+    _LIBCPP_INLINE_VISIBILITY
     basic_regex& assign(const value_type* __p, flag_type __f = regex_constants::ECMAScript)
         {return assign(__p, __p + __traits_.length(__p), __f);}
+    _LIBCPP_INLINE_VISIBILITY
     basic_regex& assign(const value_type* __p, size_t __len, flag_type __f)
         {return assign(__p, __p + __len, __f);}
     template <class _ST, class _SA>
+        _LIBCPP_INLINE_VISIBILITY
         basic_regex& assign(const basic_string<value_type, _ST, _SA>& __s,
                             flag_type __f = regex_constants::ECMAScript)
             {return assign(__s.begin(), __s.end(), __f);}
 
     template <class _InputIterator>
+        _LIBCPP_INLINE_VISIBILITY
         typename enable_if
         <
              __is_input_iterator  <_InputIterator>::value &&
@@ -2568,6 +2494,7 @@ public:
         }
 
 private:
+    _LIBCPP_INLINE_VISIBILITY
     void __member_init(flag_type __f)
     {
         __flags_ = __f;
@@ -2580,6 +2507,7 @@ private:
 public:
 
     template <class _ForwardIterator>
+        _LIBCPP_INLINE_VISIBILITY
         typename enable_if
         <
             __is_forward_iterator<_ForwardIterator>::value,
@@ -2592,27 +2520,33 @@ public:
             __parse(__first, __last);
         }
 
+    _LIBCPP_INLINE_VISIBILITY
     basic_regex& assign(initializer_list<value_type> __il,
                         flag_type __f = regex_constants::ECMAScript)
         {return assign(__il.begin(), __il.end(), __f);}
 
     // const operations:
+    _LIBCPP_INLINE_VISIBILITY
     unsigned mark_count() const {return __marked_count_;}
+    _LIBCPP_INLINE_VISIBILITY
     flag_type flags() const {return __flags_;}
 
     // locale:
+    _LIBCPP_INLINE_VISIBILITY
     locale_type imbue(locale_type __loc)
     {
         __member_init(ECMAScript);
         __start_.reset();
         return __traits_.imbue(__loc);
     }
+    _LIBCPP_INLINE_VISIBILITY
     locale_type getloc() const {return __traits_.getloc();}
 
     // swap:
     void swap(basic_regex& __r);
 
 private:
+    _LIBCPP_INLINE_VISIBILITY
     unsigned __loop_count() const {return __loop_count_;}
 
     template <class _ForwardIterator>
@@ -2755,14 +2689,17 @@ private:
         __parse_awk_escape(_ForwardIterator __first, _ForwardIterator __last,
                           basic_string<_CharT>* __str = nullptr);
 
+    _LIBCPP_INLINE_VISIBILITY
     void __push_l_anchor() {__left_anchor_ = true;}
     void __push_r_anchor();
     void __push_match_any();
     void __push_match_any_but_newline();
+    _LIBCPP_INLINE_VISIBILITY
     void __push_greedy_inf_repeat(size_t __min, __owns_one_state<_CharT>* __s,
                                   unsigned __mexp_begin = 0, unsigned __mexp_end = 0)
         {__push_loop(__min, numeric_limits<size_t>::max(), __s,
                      __mexp_begin, __mexp_end);}
+    _LIBCPP_INLINE_VISIBILITY
     void __push_nongreedy_inf_repeat(size_t __min, __owns_one_state<_CharT>* __s,
                                   unsigned __mexp_begin = 0, unsigned __mexp_end = 0)
         {__push_loop(__min, numeric_limits<size_t>::max(), __s,
@@ -2895,20 +2832,11 @@ class __lookahead
 public:
     typedef _STD::__state<_CharT> __state;
 
+    _LIBCPP_INLINE_VISIBILITY
     __lookahead(const basic_regex<_CharT, _Traits>& __exp, bool __invert, __node<_CharT>* __s)
         : base(__s), __exp_(__exp), __invert_(__invert) {}
 
     virtual void __exec(__state&) const;
-
-    virtual string speak() const
-    {
-        ostringstream os;
-        if (__invert_)
-            os << "not lookahead";
-        else
-            os << "lookahead";
-        return os.str();
-    }
 };
 
 template <class _CharT, class _Traits>
@@ -4744,7 +4672,7 @@ typedef basic_regex<wchar_t> wregex;
 // sub_match
 
 template <class _BidirectionalIterator>
-class sub_match
+class _LIBCPP_VISIBLE sub_match
     : public pair<_BidirectionalIterator, _BidirectionalIterator>
 {
 public:
@@ -4755,17 +4683,23 @@ public:
 
     bool matched;
 
+    _LIBCPP_INLINE_VISIBILITY
     difference_type length() const
         {return matched ? _STD::distance(this->first, this->second) : 0;}
+    _LIBCPP_INLINE_VISIBILITY
     string_type str() const
         {return matched ? string_type(this->first, this->second) : string_type();}
+    _LIBCPP_INLINE_VISIBILITY
     operator string_type() const
         {return str();}
 
+    _LIBCPP_INLINE_VISIBILITY
     int compare(const sub_match& __s) const
         {return str().compare(__s.str());}
+    _LIBCPP_INLINE_VISIBILITY
     int compare(const string_type& __s) const
         {return str().compare(__s);}
+    _LIBCPP_INLINE_VISIBILITY
     int compare(const value_type* __s) const
         {return str().compare(__s);}
 };
@@ -5158,7 +5092,7 @@ operator<<(basic_ostream<_CharT, _ST>& __os, const sub_match<_BiIter>& __m)
 }
 
 template <class _BidirectionalIterator, class _Allocator>
-class match_results
+class _LIBCPP_VISIBLE match_results
 {
 public:
     typedef _Allocator                                        allocator_type;
@@ -5190,26 +5124,39 @@ public:
 //    ~match_results() = default;
 
     // size:
+    _LIBCPP_INLINE_VISIBILITY
     size_type size() const {return __matches_.size();}
+    _LIBCPP_INLINE_VISIBILITY
     size_type max_size() const {return __matches_.max_size();}
+    _LIBCPP_INLINE_VISIBILITY
     bool empty() const {return size() == 0;}
 
     // element access:
+    _LIBCPP_INLINE_VISIBILITY
     difference_type length(size_type __sub = 0) const
         {return (*this)[__sub].length();}
+    _LIBCPP_INLINE_VISIBILITY
     difference_type position(size_type __sub = 0) const
         {return _STD::distance(__position_start_, (*this)[__sub].first);}
+    _LIBCPP_INLINE_VISIBILITY
     string_type str(size_type __sub = 0) const
         {return (*this)[__sub].str();}
+    _LIBCPP_INLINE_VISIBILITY
     const_reference operator[](size_type __n) const
         {return __n < __matches_.size() ? __matches_[__n] : __unmatched_;}
 
+    _LIBCPP_INLINE_VISIBILITY
     const_reference prefix() const {return __prefix_;}
+    _LIBCPP_INLINE_VISIBILITY
     const_reference suffix() const {return __suffix_;}
 
+    _LIBCPP_INLINE_VISIBILITY
     const_iterator begin() const {return empty() ? __matches_.end() : __matches_.begin() + 1;}
+    _LIBCPP_INLINE_VISIBILITY
     const_iterator end() const {return __matches_.end();}
+    _LIBCPP_INLINE_VISIBILITY
     const_iterator cbegin() const {return empty() ? __matches_.end() : __matches_.begin() + 1;}
+    _LIBCPP_INLINE_VISIBILITY
     const_iterator cend() const {return __matches_.end();}
 
     // format:
@@ -5219,11 +5166,13 @@ public:
                const char_type* __fmt_last,
                regex_constants::match_flag_type __flags = regex_constants::format_default) const;
     template <class _OutputIter, class _ST, class _SA>
+        _LIBCPP_INLINE_VISIBILITY
         _OutputIter
         format(_OutputIter __out, const basic_string<char_type, _ST, _SA>& __fmt,
                regex_constants::match_flag_type __flags = regex_constants::format_default) const
             {return format(__out, __fmt.data(), __fmt.data() + __fmt.size(), __flags);}
     template <class _ST, class _SA>
+        _LIBCPP_INLINE_VISIBILITY
         basic_string<char_type, _ST, _SA>
         format(const basic_string<char_type, _ST, _SA>& __fmt,
                regex_constants::match_flag_type __flags = regex_constants::format_default) const
@@ -5233,6 +5182,7 @@ public:
                    __flags);
             return __r;
         }
+    _LIBCPP_INLINE_VISIBILITY
     string_type
         format(const char_type* __fmt,
                regex_constants::match_flag_type __flags = regex_constants::format_default) const
@@ -5244,12 +5194,14 @@ public:
         }
 
     // allocator:
+    _LIBCPP_INLINE_VISIBILITY
     allocator_type get_allocator() const {return __matches_.get_allocator();}
 
     // swap:
     void swap(match_results& __m);
 
     template <class _B, class _A>
+        _LIBCPP_INLINE_VISIBILITY
         void __assign(_BidirectionalIterator __f, _BidirectionalIterator __l,
                       const match_results<_B, _A>& __m, bool __no_update_pos)
     {
@@ -5917,7 +5869,7 @@ regex_match(const basic_string<_CharT, _ST, _SA>& __s,
 template <class _BidirectionalIterator,
           class _CharT = typename iterator_traits<_BidirectionalIterator>::value_type,
           class _Traits = regex_traits<_CharT> >
-class regex_iterator
+class _LIBCPP_VISIBLE regex_iterator
 {
 public:
     typedef basic_regex<_CharT, _Traits>          regex_type;
@@ -5941,12 +5893,16 @@ public:
                    regex_constants::match_flag_type __m = regex_constants::match_default);
 
     bool operator==(const regex_iterator& __x) const;
+    _LIBCPP_INLINE_VISIBILITY
     bool operator!=(const regex_iterator& __x) const {return !(*this == __x);}
 
+    _LIBCPP_INLINE_VISIBILITY
     reference operator*() const {return  __match_;}
+    _LIBCPP_INLINE_VISIBILITY
     pointer operator->() const  {return &__match_;}
 
     regex_iterator& operator++();
+    _LIBCPP_INLINE_VISIBILITY
     regex_iterator operator++(int)
     {
         regex_iterator __t(*this);
@@ -6025,7 +5981,7 @@ typedef regex_iterator<wstring::const_iterator> wsregex_iterator;
 template <class _BidirectionalIterator,
           class _CharT = typename iterator_traits<_BidirectionalIterator>::value_type,
           class _Traits = regex_traits<_CharT> >
-class regex_token_iterator
+class _LIBCPP_VISIBLE regex_token_iterator
 {
 public:
     typedef basic_regex<_CharT, _Traits>      regex_type;
@@ -6070,12 +6026,16 @@ public:
     regex_token_iterator& operator=(const regex_token_iterator&);
 
     bool operator==(const regex_token_iterator& __x) const;
+    _LIBCPP_INLINE_VISIBILITY
     bool operator!=(const regex_token_iterator& __x) const {return !(*this == __x);}
 
+    _LIBCPP_INLINE_VISIBILITY
     const value_type& operator*() const {return *__result_;}
+    _LIBCPP_INLINE_VISIBILITY
     const value_type* operator->() const {return __result_;}
 
     regex_token_iterator& operator++();
+    _LIBCPP_INLINE_VISIBILITY
     regex_token_iterator operator++(int)
     {
         regex_token_iterator __t(*this);
