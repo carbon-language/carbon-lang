@@ -135,7 +135,7 @@ private:
 
 _LIBCPP_BEGIN_NAMESPACE_STD
 
-class strstreambuf
+class _LIBCPP_VISIBLE strstreambuf
     : public streambuf
 {
 public:
@@ -187,20 +187,25 @@ private:
     void __init(char* __gnext, streamsize __n, char* __pbeg);
 };
 
-class istrstream
+class _LIBCPP_VISIBLE istrstream
     : public istream
 {
 public:
+    _LIBCPP_INLINE_VISIBILITY
     explicit istrstream(const char* __s)
         : istream(&__sb_), __sb_(__s, 0) {}
+    _LIBCPP_INLINE_VISIBILITY
     explicit istrstream(char* __s)
         : istream(&__sb_), __sb_(__s, 0) {}
+    _LIBCPP_INLINE_VISIBILITY
     istrstream(const char* __s, streamsize __n)
         : istream(&__sb_), __sb_(__s, __n) {}
+    _LIBCPP_INLINE_VISIBILITY
     istrstream(char* __s, streamsize __n)
         : istream(&__sb_), __sb_(__s, __n) {}
 
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
+    _LIBCPP_INLINE_VISIBILITY
     istrstream(istrstream&& __rhs)
         : istream(_STD::move(__rhs)),
           __sb_(_STD::move(__rhs.__sb_))
@@ -208,6 +213,7 @@ public:
         istream::set_rdbuf(&__sb_);
     }
 
+    _LIBCPP_INLINE_VISIBILITY
     istrstream& operator=(istrstream&& __rhs)
     {
         istream::operator=(_STD::move(__rhs));
@@ -218,31 +224,37 @@ public:
 
     virtual ~istrstream();
 
+    _LIBCPP_INLINE_VISIBILITY
     void swap(istrstream& __rhs)
     {
         istream::swap(__rhs);
         __sb_.swap(__rhs.__sb_);
     }
 
+    _LIBCPP_INLINE_VISIBILITY
     strstreambuf* rdbuf() const {return const_cast<strstreambuf*>(&__sb_);}
+    _LIBCPP_INLINE_VISIBILITY
     char *str() {return __sb_.str();}
 
 private:
     strstreambuf __sb_;
 };
 
-class ostrstream
+class _LIBCPP_VISIBLE ostrstream
     : public ostream
 {
 public:
+    _LIBCPP_INLINE_VISIBILITY
     ostrstream()
         : ostream(&__sb_) {}
+    _LIBCPP_INLINE_VISIBILITY
     ostrstream(char* __s, int __n, ios_base::openmode __mode = ios_base::out)
         : ostream(&__sb_),
           __sb_(__s, __n, __s + (__mode & ios::app ? strlen(__s) : 0))
         {}
 
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
+    _LIBCPP_INLINE_VISIBILITY
     ostrstream(ostrstream&& __rhs)
         : ostream(_STD::move(__rhs)),
           __sb_(_STD::move(__rhs.__sb_))
@@ -250,6 +262,7 @@ public:
         ostream::set_rdbuf(&__sb_);
     }
 
+    _LIBCPP_INLINE_VISIBILITY
     ostrstream& operator=(ostrstream&& __rhs)
     {
         ostream::operator=(_STD::move(__rhs));
@@ -260,22 +273,27 @@ public:
 
     virtual ~ostrstream();
 
+    _LIBCPP_INLINE_VISIBILITY
     void swap(ostrstream& __rhs)
     {
         ostream::swap(__rhs);
         __sb_.swap(__rhs.__sb_);
     }
 
+    _LIBCPP_INLINE_VISIBILITY
     strstreambuf* rdbuf() const {return const_cast<strstreambuf*>(&__sb_);}
+    _LIBCPP_INLINE_VISIBILITY
     void freeze(bool __freezefl = true) {__sb_.freeze(__freezefl);}
+    _LIBCPP_INLINE_VISIBILITY
     char* str()         {return __sb_.str();}
+    _LIBCPP_INLINE_VISIBILITY
     int pcount() const  {return __sb_.pcount();}
 
 private:
     strstreambuf __sb_; // exposition only
 };
 
-class strstream
+class _LIBCPP_VISIBLE strstream
     : public iostream
 {
 public:
@@ -286,14 +304,17 @@ public:
     typedef char_traits<char>::off_type off_type;
 
     // constructors/destructor
+    _LIBCPP_INLINE_VISIBILITY
     strstream()
         : iostream(&__sb_) {}
+    _LIBCPP_INLINE_VISIBILITY
     strstream(char* __s, int __n, ios_base::openmode __mode = ios_base::in | ios_base::out)
         : iostream(&__sb_),
           __sb_(__s, __n, __s + (__mode & ios::app ? strlen(__s) : 0))
         {}
 
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
+    _LIBCPP_INLINE_VISIBILITY
     strstream(strstream&& __rhs)
         : iostream(_STD::move(__rhs)),
           __sb_(_STD::move(__rhs.__sb_))
@@ -301,6 +322,7 @@ public:
         iostream::set_rdbuf(&__sb_);
     }
 
+    _LIBCPP_INLINE_VISIBILITY
     strstream& operator=(strstream&& __rhs)
     {
         iostream::operator=(_STD::move(__rhs));
@@ -311,6 +333,7 @@ public:
 
     virtual ~strstream();
 
+    _LIBCPP_INLINE_VISIBILITY
     void swap(strstream& __rhs)
     {
         iostream::swap(__rhs);
@@ -318,9 +341,13 @@ public:
     }
 
     // Members:
+    _LIBCPP_INLINE_VISIBILITY
     strstreambuf* rdbuf() const {return const_cast<strstreambuf*>(&__sb_);}
+    _LIBCPP_INLINE_VISIBILITY
     void freeze(bool __freezefl = true) {__sb_.freeze(__freezefl);}
+    _LIBCPP_INLINE_VISIBILITY
     int pcount() const {return __sb_.pcount();}
+    _LIBCPP_INLINE_VISIBILITY
     char* str()        {return __sb_.str();}
 
 private:

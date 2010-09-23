@@ -118,8 +118,11 @@ public:
     __thread_specific_ptr();
     ~__thread_specific_ptr();
 
+    _LIBCPP_INLINE_VISIBILITY
     pointer get() const {return static_cast<_Tp*>(pthread_getspecific(__key_));}
+    _LIBCPP_INLINE_VISIBILITY
     pointer operator*() const {return *get();}
+    _LIBCPP_INLINE_VISIBILITY
     pointer operator->() const {return get();}
     pointer release();
     void reset(pointer __p = nullptr);
@@ -175,7 +178,7 @@ __thread_id get_id();
 
 }  // this_thread
 
-class __thread_id
+class _LIBCPP_VISIBLE __thread_id
 {
     // FIXME: pthread_t is a pointer on Darwin but a long on Linux.
     // NULL is the no-thread value on Darwin.  Someone needs to check
@@ -183,40 +186,50 @@ class __thread_id
     pthread_t __id_;
 
 public:
+    _LIBCPP_INLINE_VISIBILITY
     __thread_id() : __id_(0) {}
 
-    friend bool operator==(__thread_id __x, __thread_id __y)
+    friend _LIBCPP_INLINE_VISIBILITY
+        bool operator==(__thread_id __x, __thread_id __y)
         {return __x.__id_ == __y.__id_;}
-    friend bool operator!=(__thread_id __x, __thread_id __y)
+    friend _LIBCPP_INLINE_VISIBILITY
+        bool operator!=(__thread_id __x, __thread_id __y)
         {return !(__x == __y);}
-    friend bool operator< (__thread_id __x, __thread_id __y)
+    friend _LIBCPP_INLINE_VISIBILITY
+        bool operator< (__thread_id __x, __thread_id __y)
         {return __x.__id_ < __y.__id_;}
-    friend bool operator<=(__thread_id __x, __thread_id __y)
+    friend _LIBCPP_INLINE_VISIBILITY
+        bool operator<=(__thread_id __x, __thread_id __y)
         {return !(__y < __x);}
-    friend bool operator> (__thread_id __x, __thread_id __y)
+    friend _LIBCPP_INLINE_VISIBILITY
+        bool operator> (__thread_id __x, __thread_id __y)
         {return   __y < __x ;}
-    friend bool operator>=(__thread_id __x, __thread_id __y)
+    friend _LIBCPP_INLINE_VISIBILITY
+        bool operator>=(__thread_id __x, __thread_id __y)
         {return !(__x < __y);}
 
     template<class _CharT, class _Traits>
     friend
+    _LIBCPP_INLINE_VISIBILITY
     basic_ostream<_CharT, _Traits>&
     operator<<(basic_ostream<_CharT, _Traits>& __os, __thread_id __id)
         {return __os << __id.__id_;}
 
 private:
+    _LIBCPP_INLINE_VISIBILITY
     __thread_id(pthread_t __id) : __id_(__id) {}
 
     friend __thread_id this_thread::get_id();
-    friend class thread;
+    friend class _LIBCPP_VISIBLE thread;
 };
 
 template<class _Tp> struct hash;
 
 template<>
-struct hash<__thread_id>
+struct _LIBCPP_VISIBLE hash<__thread_id>
     : public unary_function<__thread_id, size_t>
 {
+    _LIBCPP_INLINE_VISIBILITY
     size_t operator()(__thread_id __v) const
     {
         const size_t* const __p = reinterpret_cast<const size_t*>(&__v);
@@ -227,7 +240,7 @@ struct hash<__thread_id>
 namespace this_thread
 {
 
-inline
+inline _LIBCPP_INLINE_VISIBILITY
 __thread_id
 get_id()
 {
@@ -236,7 +249,7 @@ get_id()
 
 }  // this_thread
 
-class thread
+class _LIBCPP_VISIBLE thread
 {
     pthread_t __t_;
 
@@ -251,6 +264,7 @@ public:
     typedef __thread_id id;
     typedef pthread_t native_handle_type;
 
+    _LIBCPP_INLINE_VISIBILITY
     thread() : __t_(0) {}
 #ifndef _LIBCPP_HAS_NO_VARIADICS
     template <class _F, class ..._Args,
@@ -266,16 +280,21 @@ public:
     ~thread();
 
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
+    _LIBCPP_INLINE_VISIBILITY
     thread(thread&& __t) : __t_(__t.__t_) {__t.__t_ = 0;}
     thread& operator=(thread&& __t);
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
+    _LIBCPP_INLINE_VISIBILITY
     void swap(thread& __t) {_STD::swap(__t_, __t.__t_);}
 
+    _LIBCPP_INLINE_VISIBILITY
     bool joinable() const {return __t_ != 0;}
     void join();
     void detach();
+    _LIBCPP_INLINE_VISIBILITY
     id get_id() const {return __t_;}
+    _LIBCPP_INLINE_VISIBILITY
     native_handle_type native_handle() {return __t_;}
 
     static unsigned hardware_concurrency();
@@ -345,7 +364,7 @@ thread::thread(_F __f)
 
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
-inline
+inline _LIBCPP_INLINE_VISIBILITY
 thread&
 thread::operator=(thread&& __t)
 {
@@ -358,7 +377,7 @@ thread::operator=(thread&& __t)
 
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
-inline
+inline _LIBCPP_INLINE_VISIBILITY
 void swap(thread& __x, thread& __y) {__x.swap(__y);}
 
 namespace this_thread
@@ -390,7 +409,7 @@ sleep_until(const chrono::time_point<_Clock, _Duration>& __t)
 }
 
 template <class _Duration>
-inline
+inline _LIBCPP_INLINE_VISIBILITY
 void
 sleep_until(const chrono::time_point<chrono::monotonic_clock, _Duration>& __t)
 {
@@ -398,7 +417,7 @@ sleep_until(const chrono::time_point<chrono::monotonic_clock, _Duration>& __t)
     sleep_for(__t - monotonic_clock::now());
 }
 
-inline
+inline _LIBCPP_INLINE_VISIBILITY
 void yield() {sched_yield();}
 
 }  // this_thread

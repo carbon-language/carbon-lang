@@ -229,12 +229,14 @@ _LIBCPP_BEGIN_NAMESPACE_STD
 
 // is_error_code_enum
 
-template <class _Tp> struct is_error_code_enum
+template <class _Tp>
+struct _LIBCPP_VISIBLE is_error_code_enum
     : public false_type {};
 
 // is_error_condition_enum
 
-template <class _Tp> struct is_error_condition_enum
+template <class _Tp>
+struct _LIBCPP_VISIBLE is_error_condition_enum
     : public false_type {};
 
 // Some error codes are not present on all platforms, so we provide equivalents
@@ -342,15 +344,19 @@ enum _ {
 
     _ __v_;
 
+    _LIBCPP_ALWAYS_INLINE
     errc(_ __v) : __v_(__v) {}
+    _LIBCPP_ALWAYS_INLINE
     operator int() const {return __v_;}
 
 };
 
-template <> struct is_error_condition_enum<errc>
+template <>
+struct _LIBCPP_VISIBLE is_error_condition_enum<errc>
     : true_type { };
 
-template <> struct is_error_condition_enum<errc::_>
+template <>
+struct _LIBCPP_VISIBLE is_error_condition_enum<errc::_>
     : true_type { };
 
 class error_condition;
@@ -360,7 +366,7 @@ class error_code;
 
 class __do_message;
 
-class error_category
+class _LIBCPP_VISIBLE error_category
 {
 public:
     virtual ~error_category();
@@ -399,7 +405,7 @@ public:
 const error_category& generic_category();
 const error_category& system_category();
 
-class error_condition
+class _LIBCPP_VISIBLE error_condition
 {
     int __val_;
     const error_category* __cat_;
@@ -469,7 +475,7 @@ operator<(const error_condition& __x, const error_condition& __y)
 
 // error_code
 
-class error_code
+class _LIBCPP_VISIBLE error_code
 {
     int __val_;
     const error_category* __cat_;
@@ -588,9 +594,10 @@ bool
 operator!=(const error_condition& __x, const error_condition& __y) {return !(__x == __y);}
 
 template <>
-struct hash<error_code>
+struct _LIBCPP_VISIBLE hash<error_code>
     : public unary_function<error_code, size_t>
 {
+    _LIBCPP_INLINE_VISIBILITY
     size_t operator()(const error_code& __ec) const
     {
         return static_cast<size_t>(__ec.value());
@@ -599,7 +606,7 @@ struct hash<error_code>
 
 // system_error
 
-class system_error
+class _LIBCPP_VISIBLE system_error
     : public runtime_error
 {
     error_code __ec_;

@@ -117,7 +117,7 @@ protected:
 _LIBCPP_BEGIN_NAMESPACE_STD
 
 template <class _CharT, class _Traits>
-class basic_streambuf
+class _LIBCPP_VISIBLE basic_streambuf
 {
 public:
     // types:
