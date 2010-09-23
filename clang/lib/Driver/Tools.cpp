@@ -1414,8 +1414,8 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   // Color diagnostics are the default, unless the terminal doesn't support
   // them.
   if (Args.hasFlag(options::OPT_fcolor_diagnostics,
-                   options::OPT_fno_color_diagnostics) &&
-      llvm::sys::Process::StandardErrHasColors())
+                   options::OPT_fno_color_diagnostics,
+                   llvm::sys::Process::StandardErrHasColors()))
     CmdArgs.push_back("-fcolor-diagnostics");
 
   if (!Args.hasFlag(options::OPT_fshow_source_location,
