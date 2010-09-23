@@ -1,4 +1,4 @@
-//===--- Driver.cpp - Clang GCC Compatible Driver -----------------------*-===//
+//===--- Driver.cpp - Clang GCC Compatible Driver -------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
