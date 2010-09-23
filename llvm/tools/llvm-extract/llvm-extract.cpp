@@ -26,6 +26,7 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/SystemUtils.h"
 #include "llvm/System/Signals.h"
+#include "llvm/ADT/SmallPtrSet.h"
 #include <memory>
 using namespace llvm;
 
@@ -102,13 +103,39 @@ int main(int argc, char **argv) {
   }
 
   // Materialize requisite global values.
-  for (size_t i = 0, e = GVs.size(); i != e; ++i) {
-    GlobalValue *GV = GVs[i];
-    if (GV->isMaterializable()) {
-      std::string ErrInfo;
-      if (GV->Materialize(&ErrInfo)) {
-        errs() << argv[0] << ": error reading input: " << ErrInfo << "\n";
-        return 1;
+  if (!DeleteFn)
+    for (size_t i = 0, e = GVs.size(); i != e; ++i) {
+      GlobalValue *GV = GVs[i];
+      if (GV->isMaterializable()) {
+        std::string ErrInfo;
+        if (GV->Materialize(&ErrInfo)) {
+          errs() << argv[0] << ": error reading input: " << ErrInfo << "\n";
+          return 1;
+        }
+      }
+    }
+  else {
+    // Deleting. Materialize every GV that's *not* in GVs.
+    SmallPtrSet<GlobalValue *, 8> GVSet(GVs.begin(), GVs.end());
+    for (Module::global_iterator I = M->global_begin(), E = M->global_end();
+         I != E; ++I) {
+      GlobalVariable *G = I;
+      if (!GVSet.count(G) && G->isMaterializable()) {
+        std::string ErrInfo;
+        if (G->Materialize(&ErrInfo)) {
+          errs() << argv[0] << ": error reading input: " << ErrInfo << "\n";
+          return 1;
+        }
+      }
+    }
+    for (Module::iterator I = M->begin(), E = M->end(); I != E; ++I) {
+      Function *F = I;
+      if (!GVSet.count(F) && F->isMaterializable()) {
+        std::string ErrInfo;
+        if (F->Materialize(&ErrInfo)) {
+          errs() << argv[0] << ": error reading input: " << ErrInfo << "\n";
+          return 1;
+        }
       }
     }
   }
