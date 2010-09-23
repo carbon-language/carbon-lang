@@ -1002,6 +1002,24 @@ SDNode *ARMDAGToDAGISel::QuadQRegs(EVT VT, SDValue V0, SDValue V1,
   return CurDAG->getMachineNode(TargetOpcode::REG_SEQUENCE, dl, VT, Ops, 8);
 }
 
+/// GetVLDSTAlign - Get the alignment (in bytes) for the alignment operand
+/// of a NEON VLD or VST instruction.  The supported values depend on the
+/// number of registers being loaded.
+static unsigned GetVLDSTAlign(SDNode *N, unsigned NumVecs, bool is64BitVector) {
+  unsigned NumRegs = NumVecs;
+  if (!is64BitVector && NumVecs < 3)
+    NumRegs *= 2;
+
+  unsigned Alignment = cast<MemIntrinsicSDNode>(N)->getAlignment();
+  if (Alignment >= 32 && NumRegs == 4)
+    return 32;
+  if (Alignment >= 16 && (NumRegs == 2 || NumRegs == 4))
+    return 16;
+  if (Alignment >= 8)
+    return 8;
+  return 0;
+}
+
 SDNode *ARMDAGToDAGISel::SelectVLD(SDNode *N, unsigned NumVecs,
                                    unsigned *DOpcodes, unsigned *QOpcodes0,
                                    unsigned *QOpcodes1) {
@@ -1016,20 +1034,7 @@ SDNode *ARMDAGToDAGISel::SelectVLD(SDNode *N, unsigned NumVecs,
   EVT VT = N->getValueType(0);
   bool is64BitVector = VT.is64BitVector();
 
-  // Set the alignment.  The supported values depend on the number of
-  // registers being loaded.
-  unsigned NumRegs = NumVecs;
-  if (!is64BitVector && NumVecs < 3)
-    NumRegs *= 2;
-  unsigned Alignment = cast<MemIntrinsicSDNode>(N)->getAlignment();
-  if (Alignment >= 32 && NumRegs == 4)
-    Alignment = 32;
-  else if (Alignment >= 16 && (NumRegs == 2 || NumRegs == 4))
-    Alignment = 16;
-  else if (Alignment >= 8)
-    Alignment = 8;
-  else
-    Alignment = 0;
+  unsigned Alignment = GetVLDSTAlign(N, NumVecs, is64BitVector);
   Align = CurDAG->getTargetConstant(Alignment, MVT::i32);
 
   unsigned OpcodeIndex;
@@ -1142,6 +1147,9 @@ SDNode *ARMDAGToDAGISel::SelectVST(SDNode *N, unsigned NumVecs,
   SDValue Chain = N->getOperand(0);
   EVT VT = N->getOperand(3).getValueType();
   bool is64BitVector = VT.is64BitVector();
+
+  unsigned Alignment = GetVLDSTAlign(N, NumVecs, is64BitVector);
+  Align = CurDAG->getTargetConstant(Alignment, MVT::i32);
 
   unsigned OpcodeIndex;
   switch (VT.getSimpleVT().SimpleTy) {

@@ -2,18 +2,20 @@
 
 define void @vst2i8(i8* %A, <8 x i8>* %B) nounwind {
 ;CHECK: vst2i8:
-;CHECK: vst2.8
+;Check the alignment value.  Max for this instruction is 128 bits:
+;CHECK: vst2.8 {d0, d1}, [r0, :64]
 	%tmp1 = load <8 x i8>* %B
-	call void @llvm.arm.neon.vst2.v8i8(i8* %A, <8 x i8> %tmp1, <8 x i8> %tmp1, i32 1)
+	call void @llvm.arm.neon.vst2.v8i8(i8* %A, <8 x i8> %tmp1, <8 x i8> %tmp1, i32 8)
 	ret void
 }
 
 define void @vst2i16(i16* %A, <4 x i16>* %B) nounwind {
 ;CHECK: vst2i16:
-;CHECK: vst2.16
+;Check the alignment value.  Max for this instruction is 128 bits:
+;CHECK: vst2.16 {d0, d1}, [r0, :128]
 	%tmp0 = bitcast i16* %A to i8*
 	%tmp1 = load <4 x i16>* %B
-	call void @llvm.arm.neon.vst2.v4i16(i8* %tmp0, <4 x i16> %tmp1, <4 x i16> %tmp1, i32 1)
+	call void @llvm.arm.neon.vst2.v4i16(i8* %tmp0, <4 x i16> %tmp1, <4 x i16> %tmp1, i32 32)
 	ret void
 }
 
@@ -37,36 +39,40 @@ define void @vst2f(float* %A, <2 x float>* %B) nounwind {
 
 define void @vst2i64(i64* %A, <1 x i64>* %B) nounwind {
 ;CHECK: vst2i64:
-;CHECK: vst1.64
+;Check the alignment value.  Max for this instruction is 128 bits:
+;CHECK: vst1.64 {d0, d1}, [r0, :128]
 	%tmp0 = bitcast i64* %A to i8*
 	%tmp1 = load <1 x i64>* %B
-	call void @llvm.arm.neon.vst2.v1i64(i8* %tmp0, <1 x i64> %tmp1, <1 x i64> %tmp1, i32 1)
+	call void @llvm.arm.neon.vst2.v1i64(i8* %tmp0, <1 x i64> %tmp1, <1 x i64> %tmp1, i32 32)
 	ret void
 }
 
 define void @vst2Qi8(i8* %A, <16 x i8>* %B) nounwind {
 ;CHECK: vst2Qi8:
-;CHECK: vst2.8
+;Check the alignment value.  Max for this instruction is 256 bits:
+;CHECK: vst2.8 {d0, d1, d2, d3}, [r0, :64]
 	%tmp1 = load <16 x i8>* %B
-	call void @llvm.arm.neon.vst2.v16i8(i8* %A, <16 x i8> %tmp1, <16 x i8> %tmp1, i32 1)
+	call void @llvm.arm.neon.vst2.v16i8(i8* %A, <16 x i8> %tmp1, <16 x i8> %tmp1, i32 8)
 	ret void
 }
 
 define void @vst2Qi16(i16* %A, <8 x i16>* %B) nounwind {
 ;CHECK: vst2Qi16:
-;CHECK: vst2.16
+;Check the alignment value.  Max for this instruction is 256 bits:
+;CHECK: vst2.16 {d0, d1, d2, d3}, [r0, :128]
 	%tmp0 = bitcast i16* %A to i8*
 	%tmp1 = load <8 x i16>* %B
-	call void @llvm.arm.neon.vst2.v8i16(i8* %tmp0, <8 x i16> %tmp1, <8 x i16> %tmp1, i32 1)
+	call void @llvm.arm.neon.vst2.v8i16(i8* %tmp0, <8 x i16> %tmp1, <8 x i16> %tmp1, i32 16)
 	ret void
 }
 
 define void @vst2Qi32(i32* %A, <4 x i32>* %B) nounwind {
 ;CHECK: vst2Qi32:
-;CHECK: vst2.32
+;Check the alignment value.  Max for this instruction is 256 bits:
+;CHECK: vst2.32 {d0, d1, d2, d3}, [r0, :256]
 	%tmp0 = bitcast i32* %A to i8*
 	%tmp1 = load <4 x i32>* %B
-	call void @llvm.arm.neon.vst2.v4i32(i8* %tmp0, <4 x i32> %tmp1, <4 x i32> %tmp1, i32 1)
+	call void @llvm.arm.neon.vst2.v4i32(i8* %tmp0, <4 x i32> %tmp1, <4 x i32> %tmp1, i32 64)
 	ret void
 }
 
