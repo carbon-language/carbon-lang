@@ -89,7 +89,7 @@ static char Narrow(const char t) {
       return 'i';
     case 'f':
       return 'h';
-    default: throw "unhandled type in narrow!";
+    default: throw "unhandled type in widen!";
   }
   return '\0';
 }
@@ -154,10 +154,6 @@ static char ModType(const char mod, char type, bool &quad, bool &poly,
       break;
     case 'n':
       type = Widen(type);
-      break;
-    case 'i':
-      type = 'i';
-      scal = true;
       break;
     case 'l':
       type = 'l';
@@ -811,27 +807,14 @@ static std::string GenBuiltin(const std::string &name, const std::string &proto,
   
   for (unsigned i = 1, e = proto.size(); i != e; ++i, ++arg) {
     std::string args = std::string(&arg, 1);
-    bool argquad = quad;
-    bool scal = false;
-
-    (void) ModType(proto[i], type, argquad, dummy, dummy, scal, dummy, dummy);
-    bool explicitcast = define && !scal;
-
     if (define)
       args = "(" + args + ")";
-    if (explicitcast) {
-      unsigned builtinelts = quad ? 16 : 8;
-      args = "(__neon_int8x" + utostr(builtinelts) + "_t)(" + args;
-    }
     
     // Handle multiple-vector values specially, emitting each subvector as an
     // argument to the __builtin.
-    if (structTypes && (proto[i] >= '2') && (proto[i] <= '4')) {
+    if (structTypes && (proto[i] == '2' || proto[i] == '3' || proto[i] == '4')){
       for (unsigned vi = 0, ve = proto[i] - '0'; vi != ve; ++vi) {
         s += args + ".val[" + utostr(vi) + "].val";
-        if (explicitcast)
-          s += ")";
-        
         if ((vi + 1) < ve)
           s += ", ";
       }
@@ -846,10 +829,10 @@ static std::string GenBuiltin(const std::string &name, const std::string &proto,
     else
       s += args;
     
-    if (structTypes && !scal)
+    if (structTypes && proto[i] != 's' && proto[i] != 'i' && proto[i] != 'l' &&
+        proto[i] != 'p' && proto[i] != 'c' && proto[i] != 'a') {
       s += ".val";
-    if (explicitcast)
-      s += ")";
+    }
     if ((i + 1) < e)
       s += ", ";
   }
