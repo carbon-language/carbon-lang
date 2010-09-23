@@ -44,7 +44,7 @@
       <li><a href="#projects"><tt>llvm/projects</tt></a></li>
       <li><a href="#runtime"><tt>llvm/runtime</tt></a></li>
       <li><a href="#test"><tt>llvm/test</tt></a></li>
-      <li><a href="#llvmtest"><tt>llvm-test</tt></a></li>
+      <li><a href="#test-suite"><tt>test-suite</tt></a></li>
       <li><a href="#tools"><tt>llvm/tools</tt></a></li>
       <li><a href="#utils"><tt>llvm/utils</tt></a></li>
       <li><a href="#win32"><tt>llvm/win32</tt></a></li>
@@ -80,11 +80,12 @@
 <p>Welcome to LLVM! In order to get started, you first need to know some
 basic information.</p>
 
-<p>First, LLVM comes in two pieces. The first piece is the LLVM suite. This
-contains all of the tools, libraries, and header files needed to use the low
-level virtual machine.  It contains an assembler, disassembler, bitcode
-analyzer and bitcode optimizer.  It also contains a test suite that can be
-used to test the LLVM tools and the GCC front end.</p>
+<p>First, LLVM comes in three pieces. The first piece is the LLVM
+suite. This contains all of the tools, libraries, and header files
+needed to use the low level virtual machine.  It contains an
+assembler, disassembler, bitcode analyzer and bitcode optimizer.  It
+also contains basic regression tests that can be used to test the LLVM
+tools and the GCC front end.</p>
 
 <p>The second piece is the GCC front end.  This component provides a version of
 GCC that compiles C and C++ code into LLVM bitcode.  Currently, the GCC front
@@ -93,7 +94,7 @@ compiled into LLVM bitcode, a program can be manipulated with the LLVM tools
 from the LLVM suite.</p>
 
 <p>
-There is a third, optional piece called llvm-test.  It is a suite of programs
+There is a third, optional piece called Test Suite.  It is a suite of programs
 with a testing harness that can be used to further test LLVM's functionality
 and performance.
 </p>
@@ -142,6 +143,7 @@ and performance.
       <li><tt>cd <i>where-you-want-llvm-to-live</i></tt>
       <li><tt>cd llvm/projects</tt>
       <li><tt>gunzip --stdout llvm-test-<i>version</i>.tar.gz | tar -xvf -</tt>
+      <li><tt>mv llvm-test-<i>version</i> test-suite</tt>
     </ol></li>
 
   </ul></li>
@@ -162,7 +164,7 @@ and performance.
         <p>Optionally, specify for <i>directory</i> the full pathname of the 
         C/C++ front end installation to use with this LLVM configuration. If
         not specified, the PATH will be searched.  This is only needed if you
-        want to run the testsuite or do some special kinds of LLVM builds.</p></li>
+        want to run test-suite or do some special kinds of LLVM builds.</p></li>
         <li><tt>--enable-spec2000=<i>directory</i></tt>
             <p>Enable the SPEC2000 benchmarks for testing.  The SPEC2000
             benchmarks should be available in
@@ -684,7 +686,7 @@ compressed with the gzip program.
   <dd>Source release for the LLVM libraries and tools.<br></dd>
 
   <dt><tt>llvm-test-x.y.tar.gz</tt></dt>
-  <dd>Source release for the LLVM test suite.</dd>
+  <dd>Source release for the LLVM test-suite.</dd>
 
   <dt><tt>llvm-gcc-4.2-x.y.source.tar.gz</tt></dt>
   <dd>Source release of the llvm-gcc-4.2 front end.  See README.LLVM in the root
@@ -751,7 +753,7 @@ you get it from the Subversion repository:</p>
 <div class="doc_code">
 <pre>
 % cd llvm/projects
-% svn co http://llvm.org/svn/llvm-project/test-suite/trunk llvm-test
+% svn co http://llvm.org/svn/llvm-project/test-suite/trunk test-suite
 </pre>
 </div>
 
@@ -774,7 +776,7 @@ instructions</a> to successfully get and build the LLVM GCC front-end.</p>
 
 <p>Before configuring and compiling the LLVM suite (or if you want to use just the LLVM
 GCC front end) you can optionally extract the front end from the binary distribution.
-It is used for running the llvm-test testsuite and for compiling C/C++ programs.  Note that
+It is used for running the LLVM test-suite and for compiling C/C++ programs.  Note that
 you can optionally <a href="GCCFEBuildInstrs.html">build llvm-gcc yourself</a> after building the
 main LLVM repository.</p>
 
@@ -795,9 +797,9 @@ to your <tt>PATH</tt> environment variable.  For example, if you uncompressed th
 
 <p>If you now want to build LLVM from source, when you configure LLVM, it will 
 automatically detect <tt>llvm-gcc</tt>'s presence (if it is in your path) enabling its
-use in llvm-test.  Note that you can always build or install <tt>llvm-gcc</tt> at any
+use in test-suite.  Note that you can always build or install <tt>llvm-gcc</tt> at any
 point after building the main LLVM repository: just reconfigure llvm and 
-llvm-test will pick it up.
+test-suite will pick it up.
 </p>
 
 <p>As a convenience for Windows users, the front end binaries for MinGW/x86 include
@@ -1348,7 +1350,7 @@ end to compile.</p>
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection"><a name="llvmtest"><tt>test-suite</tt></a></div>
+<div class="doc_subsection"><a name="test-suite"><tt>test-suite</tt></a></div>
 <div class="doc_text">
   <p>This is not a directory in the normal llvm module; it is a separate
   Subversion
@@ -1408,7 +1410,7 @@ information is in the <a href="CommandGuide/index.html">Command Guide</a>.</p>
 
   <dt><tt><b>llvm-ld</b></tt></dt>
   <dd><tt>llvm-ld</tt> is a general purpose and extensible linker for LLVM. 
-  This is the linker invoked by <tt>llvmc</tt>. It performsn standard link time
+  This is the linker invoked by <tt>llvmc</tt>. It performs standard link time
   optimizations and allows optimization modules to be loaded and run so that 
   language specific optimizations can be applied at link time.</dd>
 
