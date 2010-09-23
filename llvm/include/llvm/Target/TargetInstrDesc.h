@@ -99,6 +99,7 @@ namespace TID {
     HasOptionalDef,
     Return,
     Call,
+    ConditionalMove,
     Barrier,
     Terminator,
     Branch,
@@ -350,6 +351,12 @@ public:
   /// isCompare - Return true if this instruction is a comparison.
   bool isCompare() const {
     return Flags & (1 << TID::Compare);
+  }
+  
+  /// isConditionalMove - Return true if this instruction can be considered a
+  /// conditional move, like CMOV on X86 or MOVCC on ARM.
+  bool isConditionalMove() const {
+    return Flags & (1 << TID::ConditionalMove);
   }
   
   /// isNotDuplicable - Return true if this instruction cannot be safely

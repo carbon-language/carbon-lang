@@ -274,6 +274,7 @@ void InstrInfoEmitter::emitRecord(const CodeGenInstruction &Inst, unsigned Num,
   if (Inst.isBarrier)          OS << "|(1<<TID::Barrier)";
   if (Inst.hasDelaySlot)       OS << "|(1<<TID::DelaySlot)";
   if (Inst.isCall)             OS << "|(1<<TID::Call)";
+  if (Inst.isConditionalMove)  OS << "|(1<<TID::ConditionalMove)";
   if (Inst.canFoldAsLoad)      OS << "|(1<<TID::FoldableAsLoad)";
   if (Inst.mayLoad)            OS << "|(1<<TID::MayLoad)";
   if (Inst.mayStore)           OS << "|(1<<TID::MayStore)";
