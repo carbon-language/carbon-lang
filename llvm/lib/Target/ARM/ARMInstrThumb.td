@@ -866,7 +866,7 @@ let usesCustomInserter = 1 in  // Expanded after instruction selection.
 
 
 // 16-bit movcc in IT blocks for Thumb2.
-let neverHasSideEffects = 1, isConditionalMove = 1 in {
+let neverHasSideEffects = 1 in {
 def tMOVCCr : T1pIt<(outs GPR:$dst), (ins GPR:$lhs, GPR:$rhs), IIC_iCMOVr,
                     "mov", "\t$dst, $rhs", []>,
               T1Special<{1,0,?,?}>;
@@ -874,7 +874,7 @@ def tMOVCCr : T1pIt<(outs GPR:$dst), (ins GPR:$lhs, GPR:$rhs), IIC_iCMOVr,
 def tMOVCCi : T1pIt<(outs tGPR:$dst), (ins tGPR:$lhs, i32imm:$rhs), IIC_iCMOVi,
                     "mov", "\t$dst, $rhs", []>,
               T1General<{1,0,0,?,?}>;
-} // neverHasSideEffects, isConditionalMove
+} // neverHasSideEffects
 
 // tLEApcrel - Load a pc-relative address into a register without offending the
 // assembler.

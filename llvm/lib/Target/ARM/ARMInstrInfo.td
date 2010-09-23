@@ -2391,7 +2391,7 @@ def BCCZi64 : PseudoInst<(outs),
 // Conditional moves
 // FIXME: should be able to write a pattern for ARMcmov, but can't use
 // a two-value operand where a dag node expects two operands. :(
-let neverHasSideEffects = 1, isConditionalMove = 1 in {
+let neverHasSideEffects = 1 in {
 def MOVCCr : AI1<0b1101, (outs GPR:$dst), (ins GPR:$false, GPR:$true), DPFrm,
                 IIC_iCMOVr, "mov", "\t$dst, $true",
       [/*(set GPR:$dst, (ARMcmov GPR:$false, GPR:$true, imm:$cc, CCR:$ccr))*/]>,
@@ -2415,7 +2415,7 @@ def MOVCCi : AI1<0b1101, (outs GPR:$dst),
                 RegConstraint<"$false = $dst">, UnaryDP {
   let Inst{25} = 1;
 }
-} // neverHasSideEffects, isConditionalMove
+} // neverHasSideEffects
 
 //===----------------------------------------------------------------------===//
 // Atomic operations intrinsics

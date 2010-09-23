@@ -1269,7 +1269,7 @@ let Constraints = "$src1 = $dst" in {
 // Conditional moves
 let Uses = [EFLAGS] in {
 
-let isConditionalMove = 1, Predicates = [HasCMov] in {
+let Predicates = [HasCMov] in {
 let isCommutable = 1 in {
 def CMOVB16rr : I<0x42, MRMSrcReg,       // if <u, GR16 = GR16
                   (outs GR16:$dst), (ins GR16:$src1, GR16:$src2),
@@ -1657,7 +1657,7 @@ def CMOVNO32rm : I<0x41, MRMSrcMem,       // if !overflow, GR32 = [mem32]
                    [(set GR32:$dst, (X86cmov GR32:$src1, (loadi32 addr:$src2),
                                     X86_COND_NO, EFLAGS))]>,
                   TB;
-} // isConditionalMove, Predicates = [HasCMov]
+} // Predicates = [HasCMov]
 
 // X86 doesn't have 8-bit conditional moves. Use a customInserter to
 // emit control flow. An alternative to this is to mark i8 SELECT as Promote,

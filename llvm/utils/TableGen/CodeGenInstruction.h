@@ -124,7 +124,6 @@ namespace llvm {
     bool isBranch;
     bool isIndirectBranch;
     bool isCompare;
-    bool isConditionalMove;
     bool isBarrier;
     bool isCall;
     bool canFoldAsLoad;

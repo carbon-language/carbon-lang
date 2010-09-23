@@ -2169,7 +2169,7 @@ defm t2TEQ  : T2I_cmp_irs<0b0100, "teq",
 // Conditional moves
 // FIXME: should be able to write a pattern for ARMcmov, but can't use
 // a two-value operand where a dag node expects two operands. :(
-let neverHasSideEffects = 1, isConditionalMove = 1 in {
+let neverHasSideEffects = 1 in {
 def t2MOVCCr : T2I<(outs rGPR:$dst), (ins rGPR:$false, rGPR:$true), IIC_iCMOVr,
                    "mov", ".w\t$dst, $true",
    [/*(set rGPR:$dst, (ARMcmov rGPR:$false, rGPR:$true, imm:$cc, CCR:$ccr))*/]>,
@@ -2221,7 +2221,7 @@ def t2MOVCCror : T2I_movcc_sh<0b11, (outs rGPR:$dst),
                              (ins rGPR:$false, rGPR:$true, i32imm:$rhs),
                              IIC_iCMOVsi, "ror", ".w\t$dst, $true, $rhs", []>,
                  RegConstraint<"$false = $dst">;
-} // neverHasSideEffects, isConditionalMove
+} // neverHasSideEffects
 
 //===----------------------------------------------------------------------===//
 // Atomic operations intrinsics

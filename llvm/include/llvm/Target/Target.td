@@ -201,7 +201,6 @@ class Instruction {
   bit isCompare    = 0;     // Is this instruction a comparison instruction?
   bit isBarrier    = 0;     // Can control flow fall through this instruction?
   bit isCall       = 0;     // Is this instruction a call instruction?
-  bit isConditionalMove = 0; // Is this instruction a conditional move instr?
   bit canFoldAsLoad = 0;    // Can this be folded as a simple memory operand?
   bit mayLoad      = 0;     // Is it possible for this inst to read memory?
   bit mayStore     = 0;     // Is it possible for this inst to write memory?
