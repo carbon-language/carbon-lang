@@ -19,10 +19,22 @@
 @property (readwrite) id bar;
 @end
 
+// Another test, this one involving protocols, where the @property should
+// not appear in the @interface.
+@class Rdar8467189_Bar;
+@protocol Rdar8467189_FooProtocol
+@property (readonly) Rdar8467189_Bar *Rdar8467189_Bar;
+@end
+@interface Rdar8467189_Foo <Rdar8467189_FooProtocol>
+@end
+@interface Rdar8467189_Foo ()
+@property (readwrite) Rdar8467189_Bar *Rdar8467189_Bar;
+@end
+
 // RUN: c-index-test -test-load-source local %s | FileCheck %s
 // CHECK: properties-class-extensions.m:4:12: ObjCInterfaceDecl=Foo:4:12 Extent=[4:1 - 4:23]
-// CHECK-not: properties-class-extensions.m:9:15: ObjCInstanceMethodDecl=setB::9:15 Extent=[9:15 - 9:16]
-// CHECK-not: properties-class-extensions.m:9:15: ParmDecl=b:9:15 (Definition) Extent=[9:15 - 9:16]
+// CHECK-NOT: properties-class-extensions.m:9:15: ObjCInstanceMethodDecl=setB::9:15 Extent=[9:15 - 9:16]
+// CHECK-NOT: properties-class-extensions.m:9:15: ParmDecl=b:9:15 (Definition) Extent=[9:15 - 9:16]
 // CHECK: properties-class-extensions.m:5:12: ObjCCategoryDecl=Cat:5:12 Extent=[5:1 - 7:5]
 // CHECK: properties-class-extensions.m:5:12: ObjCClassRef=Foo:4:12 Extent=[5:12 - 5:15]
 // CHECK: properties-class-extensions.m:6:15: ObjCPropertyDecl=a:6:15 Extent=[6:15 - 6:16]
@@ -44,8 +56,24 @@
 // CHECK: properties-class-extensions.m:18:12: ObjCClassRef=Bar:15:12 Extent=[18:12 - 18:15]
 // CHECK: properties-class-extensions.m:19:26: ObjCPropertyDecl=bar:19:26 Extent=[19:26 - 19:29]
 // CHECK: properties-class-extensions.m:19:23: TypeRef=id:0:0 Extent=[19:23 - 19:25]
-// CHECK-not: properties-class-extensions.m:16:25: ObjCInstanceMethodDecl=bar:16:25 Extent=[16:25 - 16:28]
+// CHECK-NOT: properties-class-extensions.m:16:25: ObjCInstanceMethodDecl=bar:16:25 Extent=[16:25 - 16:28]
 // CHECK: properties-class-extensions.m:19:26: ObjCInstanceMethodDecl=setBar::19:26 Extent=[19:26 - 19:29]
 // CHECK: properties-class-extensions.m:19:26: ParmDecl=bar:19:26 (Definition) Extent=[19:26 - 19:29]
-
+// CHECK: properties-class-extensions.m:24:1: UnexposedDecl=[24:8] Extent=[24:1 - 24:23]
+// CHECK: properties-class-extensions.m:24:8: ObjCClassRef=Rdar8467189_Bar:24:8 Extent=[24:8 - 24:23]
+// CHECK: properties-class-extensions.m:25:1: ObjCProtocolDecl=Rdar8467189_FooProtocol:25:1 (Definition) Extent=[25:1 - 27:5]
+// CHECK: properties-class-extensions.m:26:39: ObjCPropertyDecl=Rdar8467189_Bar:26:39 Extent=[26:39 - 26:54]
+// CHECK: properties-class-extensions.m:26:22: ObjCClassRef=Rdar8467189_Bar:24:8 Extent=[26:22 - 26:37]
+// CHECK: properties-class-extensions.m:26:39: ObjCInstanceMethodDecl=Rdar8467189_Bar:26:39 Extent=[26:39 - 26:54]
+// CHECK: properties-class-extensions.m:28:12: ObjCInterfaceDecl=Rdar8467189_Foo:28:12 Extent=[28:1 - 29:5]
+// CHECK: properties-class-extensions.m:28:29: ObjCProtocolRef=Rdar8467189_FooProtocol:25:1 Extent=[28:29 - 28:52]
+// CHECK-NOT: properties-class-extensions.m:31:40: ObjCPropertyDecl=Rdar8467189_Bar:31:40 Extent=[31:40 - 31:55]
+// CHECK-NOT: properties-class-extensions.m:31:23: ObjCClassRef=Rdar8467189_Bar:24:8 Extent=[31:23 - 31:38]
+// CHECK: properties-class-extensions.m:30:12: ObjCCategoryDecl=:30:12 Extent=[30:1 - 32:5]
+// CHECK: properties-class-extensions.m:30:12: ObjCClassRef=Rdar8467189_Foo:28:12 Extent=[30:12 - 30:27]
+// CHECK: properties-class-extensions.m:31:40: ObjCPropertyDecl=Rdar8467189_Bar:31:40 Extent=[31:40 - 31:55]
+// CHECK: properties-class-extensions.m:31:23: ObjCClassRef=Rdar8467189_Bar:24:8 Extent=[31:23 - 31:38]
+// CHECK: properties-class-extensions.m:31:40: ObjCInstanceMethodDecl=Rdar8467189_Bar:31:40 Extent=[31:40 - 31:55]
+// CHECK: properties-class-extensions.m:31:40: ObjCInstanceMethodDecl=setRdar8467189_Bar::31:40 Extent=[31:40 - 31:55]
+// CHECK: properties-class-extensions.m:31:40: ParmDecl=Rdar8467189_Bar:31:40 (Definition) Extent=[31:40 - 31:55]
 

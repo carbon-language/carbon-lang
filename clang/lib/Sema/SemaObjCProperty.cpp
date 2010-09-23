@@ -31,7 +31,8 @@ Decl *Sema::ActOnProperty(Scope *S, SourceLocation AtLoc,
                           Selector SetterSel,
                           Decl *ClassCategory,
                           bool *isOverridingProperty,
-                          tok::ObjCKeywordKind MethodImplKind) {
+                          tok::ObjCKeywordKind MethodImplKind,
+                          DeclContext *lexicalDC) {
   unsigned Attributes = ODS.getPropertyAttributes();
   bool isReadWrite = ((Attributes & ObjCDeclSpec::DQ_PR_readwrite) ||
                       // default is readwrite!
@@ -70,6 +71,9 @@ Decl *Sema::ActOnProperty(Scope *S, SourceLocation AtLoc,
                                  GetterSel, SetterSel,
                                  isAssign, isReadWrite,
                                  Attributes, TSI, MethodImplKind);
+  if (lexicalDC)
+    Res->setLexicalDeclContext(lexicalDC);
+
   // Validate the attributes on the @property.
   CheckObjCPropertyAttributes(Res, AtLoc, Attributes);
   return Res;
@@ -172,7 +176,8 @@ Sema::HandlePropertyInClassExtension(Scope *S, ObjCCategoryDecl *CDecl,
                       PIDecl->getGetterName(),
                       PIDecl->getSetterName(),
                       CCPrimary, isOverridingProperty,
-                      MethodImplKind);
+                      MethodImplKind,
+                      /* lexicalDC = */ CDecl);
       PIDecl = cast<ObjCPropertyDecl>(ProtocolPtrTy);
     }
     PIDecl->makeitReadWriteAttribute();

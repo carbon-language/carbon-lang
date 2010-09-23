@@ -3712,7 +3712,8 @@ public:
                       Selector GetterSel, Selector SetterSel,
                       Decl *ClassCategory,
                       bool *OverridingProperty,
-                      tok::ObjCKeywordKind MethodImplKind);
+                      tok::ObjCKeywordKind MethodImplKind,
+                      DeclContext *lexicalDC = 0);
 
   Decl *ActOnPropertyImplDecl(Scope *S,
                               SourceLocation AtLoc,
