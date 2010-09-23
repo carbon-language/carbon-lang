@@ -62,6 +62,8 @@ int EDInst::stringify() {
   
   if (Disassembler.printInst(String, *Inst))
     return StringifyResult.setResult(-1);
+
+  String.push_back('\n');
   
   return StringifyResult.setResult(0);
 }
