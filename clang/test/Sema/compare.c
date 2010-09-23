@@ -288,3 +288,20 @@ int test6(unsigned i, unsigned power) {
   unsigned x = (i < (1 << power) ? i : 0);
   return x != 3 ? 1 << power : i;
 }
+
+// <rdar://problem/8414119> enum >= (enum)0 comparison should not generate any warnings
+enum rdar8414119_Vals { X, Y, Z };
+#define ZERO 0
+#define CHECK(x) (x >= X)
+void rdar8414119_foo(enum rdar8414119_Vals v) {
+  if (CHECK(v)) // no-warning
+   return;
+  if (v >= X) // no-warning
+   return;
+}
+int rdar8414119_bar(unsigned x) {
+  return x >= ZERO; // no-warning
+}
+#undef ZERO
+#undef CHECK
+

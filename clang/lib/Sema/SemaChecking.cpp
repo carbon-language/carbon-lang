@@ -2449,7 +2449,17 @@ bool IsSameFloatAfterCast(const APValue &value,
 
 void AnalyzeImplicitConversions(Sema &S, Expr *E);
 
-bool IsZero(Sema &S, Expr *E) {
+static bool IsZero(Sema &S, Expr *E) {
+  // Suppress cases where we are comparing against an enum constant.
+  if (const DeclRefExpr *DR =
+      dyn_cast<DeclRefExpr>(E->IgnoreParenImpCasts()))
+    if (isa<EnumConstantDecl>(DR->getDecl()))
+      return false;
+
+  // Suppress cases where the '0' value is expanded from a macro.
+  if (E->getLocStart().isMacroID())
+    return false;
+
   llvm::APSInt Value;
   return E->isIntegerConstantExpr(Value, S.Context) && Value == 0;
 }
