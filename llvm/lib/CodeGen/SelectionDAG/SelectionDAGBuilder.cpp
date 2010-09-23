@@ -1503,10 +1503,11 @@ void SelectionDAGBuilder::visitSwitchCase(CaseBlock &CB,
                                MVT::Other, getControlRoot(), Cond,
                                DAG.getBasicBlock(CB.TrueBB));
 
-  // Insert the false branch.
-  if (CB.FalseBB != NextBlock)
-    BrCond = DAG.getNode(ISD::BR, dl, MVT::Other, BrCond,
-                         DAG.getBasicBlock(CB.FalseBB));
+  // Insert the false branch. Do this even if it's a fall through branch,
+  // this makes it easier to do DAG optimizations which require inverting
+  // the branch condition.
+  BrCond = DAG.getNode(ISD::BR, dl, MVT::Other, BrCond,
+                       DAG.getBasicBlock(CB.FalseBB));
 
   DAG.setRoot(BrCond);
 }
