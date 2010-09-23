@@ -43,6 +43,20 @@ static unsigned GetType(const MCSymbolData &SD) {
   return Type;
 }
 
+static unsigned GetBinding(const MCSymbolData &SD) {
+  uint32_t Binding = (SD.getFlags() & (0xf << ELF_STB_Shift)) >> ELF_STB_Shift;
+  assert(Binding == ELF::STB_LOCAL || Binding == ELF::STB_GLOBAL ||
+         Binding == ELF::STB_WEAK);
+  return Binding;
+}
+
+static void SetBinding(MCSymbolData &SD, unsigned Binding) {
+  assert(Binding == ELF::STB_LOCAL || Binding == ELF::STB_GLOBAL ||
+         Binding == ELF::STB_WEAK);
+  uint32_t OtherFlags = SD.getFlags() & ~(0xf << ELF_STB_Shift);
+  SD.setFlags(OtherFlags | (Binding << ELF_STB_Shift));
+}
+
 namespace {
 
   class ELFObjectWriterImpl {
@@ -460,16 +474,15 @@ void ELFObjectWriterImpl::WriteSymbolTable(MCDataFragment *F,
     assert((Data.getFlags() & ELF_STB_Global) &&
            "External symbol requires STB_GLOBAL flag");
     WriteSymbol(F, MSD, Layout);
-    if ((Data.getFlags() & (0xf << ELF_STB_Shift)) == ELF_STB_Local)
+    if (GetBinding(Data) == ELF::STB_LOCAL)
       LastLocalSymbolIndex++;
   }
 
   for (unsigned i = 0, e = UndefinedSymbolData.size(); i != e; ++i) {
     ELFSymbolData &MSD = UndefinedSymbolData[i];
     MCSymbolData &Data = *MSD.SymbolData;
-    Data.setFlags(Data.getFlags() | ELF_STB_Global);
     WriteSymbol(F, MSD, Layout);
-    if ((Data.getFlags() & (0xf << ELF_STB_Shift)) == ELF_STB_Local)
+    if (GetBinding(Data) == ELF::STB_LOCAL)
       LastLocalSymbolIndex++;
   }
 }
@@ -682,8 +695,10 @@ void ELFObjectWriterImpl::ComputeSymbolTable(MCAssembler &Asm) {
       ExternalSymbolData.push_back(MSD);
     } else if (Symbol.isUndefined()) {
       MSD.SectionIndex = ELF::SHN_UNDEF;
-      // XXX: for some reason we dont Emit* this
-      it->setFlags(it->getFlags() | ELF_STB_Global);
+      // FIXME: Undefined symbols are global, but this is the first place we
+      // are able to set it.
+      if (GetBinding(*it) == ELF::STB_LOCAL)
+        SetBinding(*it, ELF::STB_GLOBAL);
       UndefinedSymbolData.push_back(MSD);
     } else if (Symbol.isAbsolute()) {
       MSD.SectionIndex = ELF::SHN_ABS;
