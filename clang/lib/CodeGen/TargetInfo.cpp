@@ -2391,6 +2391,10 @@ ABIArgInfo ARMABIInfo::classifyReturnType(QualType RetTy) const {
   if (RetTy->isVoidType())
     return ABIArgInfo::getIgnore();
 
+  // Large vector types should be returned via memory.
+  if (RetTy->isVectorType() && getContext().getTypeSize(RetTy) > 128)
+    return ABIArgInfo::getIndirect(0);
+
   if (!isAggregateTypeForABI(RetTy)) {
     // Treat an enum type as its underlying type.
     if (const EnumType *EnumTy = RetTy->getAs<EnumType>())

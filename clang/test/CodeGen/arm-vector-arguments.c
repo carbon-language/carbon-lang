@@ -11,3 +11,19 @@
 int8x16_t f0(int8x16_t a0, int8x16_t a1) {
   return vzipq_s8(a0, a1).val[0];
 }
+
+// Test direct vector passing.
+
+typedef float T_float32x2 __attribute__ ((__vector_size__ (8)));
+typedef float T_float32x4 __attribute__ ((__vector_size__ (16)));
+typedef float T_float32x8 __attribute__ ((__vector_size__ (32)));
+typedef float T_float32x16 __attribute__ ((__vector_size__ (64)));
+
+// CHECK: define <2 x float> @f1_0(<2 x float> %{{.*}})
+T_float32x2 f1_0(T_float32x2 a0) { return a0; }
+// CHECK: define <4 x float> @f1_1(<4 x float> %{{.*}})
+T_float32x4 f1_1(T_float32x4 a0) { return a0; }
+// CHECK: define void @f1_2(<8 x float>* sret %{{.*}}, <8 x float> %{{.*}})
+T_float32x8 f1_2(T_float32x8 a0) { return a0; }
+// CHECK: define void @f1_3(<16 x float>* sret %{{.*}}, <16 x float> %{{.*}})
+T_float32x16 f1_3(T_float32x16 a0) { return a0; }
