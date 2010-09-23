@@ -99,7 +99,7 @@ public:
   /// hasNoSignedWrap - Test whether this operation is known to never
   /// undergo signed overflow, aka the nsw property.
   bool hasNoSignedWrap() const {
-    return SubclassOptionalData & NoSignedWrap;
+    return static_cast<bool>(SubclassOptionalData & NoSignedWrap);
   }
 
   static inline bool classof(const OverflowingBinaryOperator *) { return true; }
