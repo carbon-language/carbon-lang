@@ -1729,7 +1729,7 @@ void ARMAsmPrinter::printInstructionThroughMCStreamer(const MachineInstr *MI) {
     // FIXME: Remove this special case when they do.
     if (!Subtarget->isTargetDarwin()) {
       //.long 0xe7ffdefe ${:comment} trap
-      uint32_t Val = 0xe7ffdefeUL;
+      uint32_t Val = 0xe7ffdefeeUL;
       OutStreamer.AddComment("trap");
       OutStreamer.EmitIntValue(Val, 4);
       return;
