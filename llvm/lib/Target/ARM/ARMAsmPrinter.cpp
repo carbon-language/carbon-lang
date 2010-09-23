@@ -1216,7 +1216,7 @@ void ARMAsmPrinter::EmitInstruction(const MachineInstr *MI) {
   // FIXME: This really should be in AsmPrinter/ARMInstPrinter.cpp, not here.
   //        Need a way to ask "isTargetDarwin()" there, first, though.
   if (MI->getOpcode() == ARM::TRAP && !Subtarget->isTargetDarwin()) {
-    OS << "\t.long\t2147348462\t\t" << MAI->getCommentString() << "trap";
+    OS << "\t.long\t3892305662\t\t" << MAI->getCommentString() << "trap";
   } else if (MI->getOpcode() == ARM::tTRAP && !Subtarget->isTargetDarwin()) {
     OS << "\t.short\t57086\t\t\t" << MAI->getCommentString() << " trap";
   } else
@@ -1729,7 +1729,7 @@ void ARMAsmPrinter::printInstructionThroughMCStreamer(const MachineInstr *MI) {
     // FIXME: Remove this special case when they do.
     if (!Subtarget->isTargetDarwin()) {
       //.long 0xe7ffdefe ${:comment} trap
-      uint32_t Val = 0xe7ffdefee;
+      uint32_t Val = 0xe7ffdefe;
       OutStreamer.AddComment("trap");
       OutStreamer.EmitIntValue(Val, 4);
       return;
@@ -1740,8 +1740,8 @@ void ARMAsmPrinter::printInstructionThroughMCStreamer(const MachineInstr *MI) {
     // Non-Darwin binutils don't yet support the "trap" mnemonic.
     // FIXME: Remove this special case when they do.
     if (!Subtarget->isTargetDarwin()) {
-      //.long 0xe7ffdefe ${:comment} trap
-      uint32_t Val = 0xdefe;
+      //.short 57086 ${:comment} trap
+      uint16_t Val = 0xdefe;
       OutStreamer.AddComment("trap");
       OutStreamer.EmitIntValue(Val, 2);
       return;
