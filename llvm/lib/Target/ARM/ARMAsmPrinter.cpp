@@ -1748,6 +1748,83 @@ void ARMAsmPrinter::printInstructionThroughMCStreamer(const MachineInstr *MI) {
     }
     break;
   }
+  case ARM::Int_eh_sjlj_setjmp_nofp:
+  case ARM::Int_eh_sjlj_setjmp: { // FIXME: Remove asmstring from td file.
+    // Two incoming args: GPR:$src, GPR:$val
+    // add $val, pc, #8
+    // str $val, [$src, #+4]
+    // mov r0, #0
+    // add pc, pc, #0
+    // mov r0, #1
+    unsigned SrcReg = MI->getOperand(0).getReg();
+    unsigned ValReg = MI->getOperand(1).getReg();
+
+    {
+      MCInst TmpInst;
+      TmpInst.setOpcode(ARM::ADDri);
+      TmpInst.addOperand(MCOperand::CreateReg(ValReg));
+      TmpInst.addOperand(MCOperand::CreateReg(ARM::PC));
+      TmpInst.addOperand(MCOperand::CreateImm(8));
+      // Predicate.
+      TmpInst.addOperand(MCOperand::CreateImm(ARMCC::AL));
+      TmpInst.addOperand(MCOperand::CreateReg(0));
+      // 's' bit operand (always reg0 for this).
+      TmpInst.addOperand(MCOperand::CreateReg(0));
+      OutStreamer.AddComment("eh_setjmp begin");
+      OutStreamer.EmitInstruction(TmpInst);
+    }
+    {
+      MCInst TmpInst;
+      TmpInst.setOpcode(ARM::STR);
+      TmpInst.addOperand(MCOperand::CreateReg(ValReg));
+      TmpInst.addOperand(MCOperand::CreateReg(SrcReg));
+      TmpInst.addOperand(MCOperand::CreateReg(0));
+      TmpInst.addOperand(MCOperand::CreateImm(4));
+      // Predicate.
+      TmpInst.addOperand(MCOperand::CreateImm(ARMCC::AL));
+      TmpInst.addOperand(MCOperand::CreateReg(0));
+      OutStreamer.EmitInstruction(TmpInst);
+    }
+    {
+      MCInst TmpInst;
+      TmpInst.setOpcode(ARM::MOVi);
+      TmpInst.addOperand(MCOperand::CreateReg(ARM::R0));
+      TmpInst.addOperand(MCOperand::CreateImm(0));
+      // Predicate.
+      TmpInst.addOperand(MCOperand::CreateImm(ARMCC::AL));
+      TmpInst.addOperand(MCOperand::CreateReg(0));
+      // 's' bit operand (always reg0 for this).
+      TmpInst.addOperand(MCOperand::CreateReg(0));
+      OutStreamer.EmitInstruction(TmpInst);
+    }
+    {
+      MCInst TmpInst;
+      TmpInst.setOpcode(ARM::ADDri);
+      TmpInst.addOperand(MCOperand::CreateReg(ARM::PC));
+      TmpInst.addOperand(MCOperand::CreateReg(ARM::PC));
+      TmpInst.addOperand(MCOperand::CreateImm(0));
+      // Predicate.
+      TmpInst.addOperand(MCOperand::CreateImm(ARMCC::AL));
+      TmpInst.addOperand(MCOperand::CreateReg(0));
+      // 's' bit operand (always reg0 for this).
+      TmpInst.addOperand(MCOperand::CreateReg(0));
+      OutStreamer.EmitInstruction(TmpInst);
+    }
+    {
+      MCInst TmpInst;
+      TmpInst.setOpcode(ARM::MOVi);
+      TmpInst.addOperand(MCOperand::CreateReg(ARM::R0));
+      TmpInst.addOperand(MCOperand::CreateImm(1));
+      // Predicate.
+      TmpInst.addOperand(MCOperand::CreateImm(ARMCC::AL));
+      TmpInst.addOperand(MCOperand::CreateReg(0));
+      // 's' bit operand (always reg0 for this).
+      TmpInst.addOperand(MCOperand::CreateReg(0));
+      OutStreamer.AddComment("eh_setjmp end");
+      OutStreamer.EmitInstruction(TmpInst);
+    }
+    return;
+  }
   }
 
   MCInst TmpInst;
