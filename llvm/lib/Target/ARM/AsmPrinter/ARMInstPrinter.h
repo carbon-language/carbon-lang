@@ -20,7 +20,6 @@ namespace llvm {
   class MCOperand;
 
 class ARMInstPrinter : public MCInstPrinter {
-  bool VerboseAsm;
 public:
   ARMInstPrinter(const MCAsmInfo &MAI) : MCInstPrinter(MAI) {}
 
