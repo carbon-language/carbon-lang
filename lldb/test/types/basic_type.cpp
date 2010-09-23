@@ -137,9 +137,9 @@ main (int argc, char const *argv[])
     printf ("(a_class) a_class_instance.m_a = '" T_PRINTF_FORMAT "'\n", a_class_instance.get_a());
     printf ("(a_class) a_class_instance.m_b = '" T_PRINTF_FORMAT "'\n", a_class_instance.get_b());
     printf ("(a_class*) a_class_ptr = %p, a_class_ptr->m_a = '" T_PRINTF_FORMAT "'\n", a_class_ptr, a_class_ptr->get_a());
-    printf ("(a_class*) a_class_ptr = %p, a_class_ptr->b_a = '" T_PRINTF_FORMAT "'\n", a_class_ptr, a_class_ptr->get_b());
+    printf ("(a_class*) a_class_ptr = %p, a_class_ptr->m_b = '" T_PRINTF_FORMAT "'\n", a_class_ptr, a_class_ptr->get_b());
     printf ("(a_class&) a_class_ref = %p, a_class_ref.m_a = '" T_PRINTF_FORMAT "'\n", &a_class_ref, a_class_ref.get_a());
-    printf ("(a_class&) a_class_ref = %p, a_class_ref.b_a = '" T_PRINTF_FORMAT "'\n", &a_class_ref, a_class_ref.get_b());
+    printf ("(a_class&) a_class_ref = %p, a_class_ref.m_b = '" T_PRINTF_FORMAT "'\n", &a_class_ref, a_class_ref.get_b());
 
     printf ("(a_struct_t) a_struct.a = '" T_PRINTF_FORMAT "'\n", a_struct.a);
     printf ("(a_struct_t) a_struct.b = '" T_PRINTF_FORMAT "'\n", a_struct.b);
