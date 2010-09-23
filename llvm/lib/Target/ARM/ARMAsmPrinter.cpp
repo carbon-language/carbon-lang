@@ -1210,6 +1210,16 @@ void ARMAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     OS << '\t';
     printRegisterList(MI, 5, OS);
   } else
+  // TRAP and tTRAP need special handling for non-Darwin. The GNU binutils
+  // don't (yet) support the 'trap' mnemonic. (Use decimal, not hex, to
+  // be consistent with the MC instruction printer.)
+  // FIXME: This really should be in AsmPrinter/ARMInstPrinter.cpp, not here.
+  //        Need a way to ask "isTargetDarwin()" there, first, though.
+  if (MI->getOpcode() == ARM::TRAP && !Subtarget->isTargetDarwin()) {
+    OS << "\t.long\t2147348462\t\t" << MAI->getCommentString() << "trap";
+  } else if (MI->getOpcode() == ARM::tTRAP && !Subtarget->isTargetDarwin()) {
+    OS << "\t.short\t57086\t\t\t" << MAI->getCommentString() << " trap";
+  } else
     printInstruction(MI, OS);
 
   // Output the instruction to the stream
@@ -1713,6 +1723,30 @@ void ARMAsmPrinter::printInstructionThroughMCStreamer(const MachineInstr *MI) {
     OutStreamer.EmitInstruction(TmpInst);
     EmitJumpTable(MI);
     return;
+  }
+  case ARM::TRAP: {
+    // Non-Darwin binutils don't yet support the "trap" mnemonic.
+    // FIXME: Remove this special case when they do.
+    if (!Subtarget->isTargetDarwin()) {
+      //.long 0xe7ffdefe ${:comment} trap
+      uint32_t Val = 0xe7ffdefee;
+      OutStreamer.AddComment("trap");
+      OutStreamer.EmitIntValue(Val, 4);
+      return;
+    }
+    break;
+  }
+  case ARM::tTRAP: {
+    // Non-Darwin binutils don't yet support the "trap" mnemonic.
+    // FIXME: Remove this special case when they do.
+    if (!Subtarget->isTargetDarwin()) {
+      //.long 0xe7ffdefe ${:comment} trap
+      uint32_t Val = 0xdefe;
+      OutStreamer.AddComment("trap");
+      OutStreamer.EmitIntValue(Val, 2);
+      return;
+    }
+    break;
   }
   }
 

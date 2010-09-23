@@ -815,11 +815,9 @@ def DBG : AI<(outs), (ins i32imm:$opt), MiscFrm, NoItinerary, "dbg", "\t$opt",
 }
 
 // A5.4 Permanently UNDEFINED instructions.
-// FIXME: Temporary emitted as raw bytes until this pseudo-op will be added to
-// binutils
 let isBarrier = 1, isTerminator = 1 in
 def TRAP : AXI<(outs), (ins), MiscFrm, NoItinerary, 
-               ".long 0xe7ffdefe ${:comment} trap", [(trap)]>,
+               "trap", [(trap)]>,
            Requires<[IsARM]> {
   let Inst{27-25} = 0b011;
   let Inst{24-20} = 0b11111;
