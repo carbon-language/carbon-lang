@@ -281,7 +281,7 @@ bool MachineSinking::isWorthBreakingCriticalEdge(MachineInstr *MI,
   if (!CEBCandidates.insert(std::make_pair(From, To)))
     return true;
 
-  if (!(MI->isCopyLike() || MI->getDesc().isAsCheapAsAMove()))
+  if (!MI->isCopy() && !MI->getDesc().isAsCheapAsAMove())
     return true;
 
   // MI is cheap, we probably don't want to break the critical edge for it.
@@ -368,9 +368,18 @@ MachineBasicBlock *MachineSinking::SplitCriticalEdge(MachineInstr *MI,
   return FromBB->SplitCriticalEdge(ToBB, this);
 }
 
+static bool AvoidsSinking(MachineInstr *MI, MachineRegisterInfo *MRI) {
+  return MI->isInsertSubreg() || MI->isSubregToReg() || MI->isRegSequence();
+}
+
 /// SinkInstruction - Determine whether it is safe to sink the specified machine
 /// instruction out of its current block into a successor.
 bool MachineSinking::SinkInstruction(MachineInstr *MI, bool &SawStore) {
+  // Don't sink insert_subreg, subreg_to_reg, reg_sequence. These are meant to
+  // be close to the source to make it easier to coalesce.
+  if (AvoidsSinking(MI, MRI))
+    return false;
+
   // Check if it's safe to move the instruction.
   if (!MI->isSafeToMove(TII, AA, SawStore))
     return false;
