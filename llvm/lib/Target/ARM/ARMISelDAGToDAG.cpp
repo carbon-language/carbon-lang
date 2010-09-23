@@ -1016,6 +1016,22 @@ SDNode *ARMDAGToDAGISel::SelectVLD(SDNode *N, unsigned NumVecs,
   EVT VT = N->getValueType(0);
   bool is64BitVector = VT.is64BitVector();
 
+  // Set the alignment.  The supported values depend on the number of
+  // registers being loaded.
+  unsigned NumRegs = NumVecs;
+  if (!is64BitVector && NumVecs < 3)
+    NumRegs *= 2;
+  unsigned Alignment = cast<MemIntrinsicSDNode>(N)->getAlignment();
+  if (Alignment >= 32 && NumRegs == 4)
+    Alignment = 32;
+  else if (Alignment >= 16 && (NumRegs == 2 || NumRegs == 4))
+    Alignment = 16;
+  else if (Alignment >= 8)
+    Alignment = 8;
+  else
+    Alignment = 0;
+  Align = CurDAG->getTargetConstant(Alignment, MVT::i32);
+
   unsigned OpcodeIndex;
   switch (VT.getSimpleVT().SimpleTy) {
   default: llvm_unreachable("unhandled vld type");
