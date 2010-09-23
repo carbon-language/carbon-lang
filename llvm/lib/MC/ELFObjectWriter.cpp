@@ -856,7 +856,7 @@ void ELFObjectWriterImpl::CreateMetadataSections(MCAssembler &Asm,
          ie = Asm.end(); it != ie; ++it) {
     const MCSectionELF &Section =
       static_cast<const MCSectionELF&>(it->getSection());
-    // FIXME: We could merge prefixes like in .text and .text.rela.
+    // FIXME: We could merge suffixes like in .text and .rela.text.
 
     // Remember the index into the string table so we can write it
     // into the sh_name field of the section header table.
