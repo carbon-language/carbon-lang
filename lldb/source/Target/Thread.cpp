@@ -1129,3 +1129,8 @@ Thread::ThreadSettingsController::instance_settings_table[] =
     {  NULL, eSetVarTypeNone, NULL, NULL, 0, 0, NULL }
 };
 
+lldb::StackFrameSP
+Thread::GetStackFrameSPForStackFramePtr (StackFrame *stack_frame_ptr)
+{
+    return GetStackFrameList().GetStackFrameSPForStackFramePtr (stack_frame_ptr);
+}

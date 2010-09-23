@@ -143,6 +143,9 @@ public:
 
     virtual void
     Calculate (ExecutionContext &exe_ctx);
+    
+    lldb::StackFrameSP
+    GetSP ();
 
 protected:
     friend class StackFrameList;

@@ -680,3 +680,9 @@ StackFrame::HasCachedData () const
         return true;
     return false;
 }
+
+lldb::StackFrameSP
+StackFrame::GetSP ()
+{
+    return m_thread.GetStackFrameSPForStackFramePtr (this);
+}

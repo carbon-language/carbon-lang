@@ -58,6 +58,9 @@ public:
     
     void
     Dump (Stream *s);
+    
+    lldb::StackFrameSP
+    GetStackFrameSPForStackFramePtr (StackFrame *stack_frame_ptr);
 
 protected:
 

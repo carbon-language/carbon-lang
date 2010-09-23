@@ -611,6 +611,9 @@ public:
 
     virtual void
     Calculate (ExecutionContext &exe_ctx);
+    
+    lldb::StackFrameSP
+    GetStackFrameSPForStackFramePtr (StackFrame *stack_frame_ptr);
 
 protected:
 

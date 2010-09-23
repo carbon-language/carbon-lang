@@ -513,3 +513,23 @@ StackFrameList::Merge (std::auto_ptr<StackFrameList>& curr_ap, lldb::StackFrameL
 
 
 }
+
+lldb::StackFrameSP
+StackFrameList::GetStackFrameSPForStackFramePtr (StackFrame *stack_frame_ptr)
+{
+    const_iterator pos;
+    const_iterator begin = m_frames.begin();
+    const_iterator end = m_frames.end();
+    lldb::StackFrameSP ret_sp;
+    
+    for (pos = begin; pos != end; ++pos)
+    {
+        if (pos->get() == stack_frame_ptr)
+        {
+            ret_sp = (*pos);
+            break;
+        }
+    }
+    return ret_sp;
+}
+
