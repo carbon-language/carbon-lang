@@ -1366,7 +1366,7 @@ def BTS64mi8 : RIi8<0xBA, MRM5m, (outs), (ins i64mem:$src1, i64i8imm:$src2),
 } // Defs = [EFLAGS]
 
 // Conditional moves
-let Uses = [EFLAGS], Constraints = "$src1 = $dst" in {
+let isConditionalMove = 1, Uses = [EFLAGS], Constraints = "$src1 = $dst" in {
 let isCommutable = 1 in {
 def CMOVB64rr : RI<0x42, MRMSrcReg,       // if <u, GR64 = GR64
                    (outs GR64:$dst), (ins GR64:$src1, GR64:$src2),
@@ -1530,7 +1530,7 @@ def CMOVNO64rm : RI<0x41, MRMSrcMem,       // if !overflow, GR64 = [mem64]
                    "cmovno{q}\t{$src2, $dst|$dst, $src2}",
                     [(set GR64:$dst, (X86cmov GR64:$src1, (loadi64 addr:$src2),
                                      X86_COND_NO, EFLAGS))]>, TB;
-} // Constraints = "$src1 = $dst"
+} // isConditionalMove, Constraints = "$src1 = $dst"
 
 // Use sbb to materialize carry flag into a GPR.
 // FIXME: This are pseudo ops that should be replaced with Pat<> patterns.
