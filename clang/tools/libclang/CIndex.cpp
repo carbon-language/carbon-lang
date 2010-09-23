@@ -2309,6 +2309,7 @@ struct ReparseTranslationUnitInfo {
   unsigned options;
   int result;
 };
+
 static void clang_reparseTranslationUnit_Impl(void *UserData) {
   ReparseTranslationUnitInfo *RTUI =
     static_cast<ReparseTranslationUnitInfo*>(UserData);
@@ -2321,6 +2322,9 @@ static void clang_reparseTranslationUnit_Impl(void *UserData) {
 
   if (!TU)
     return;
+
+  ASTUnit *CXXUnit = static_cast<ASTUnit *>(TU);
+  ASTUnit::ConcurrencyCheck Check(*CXXUnit);
   
   llvm::SmallVector<ASTUnit::RemappedFile, 4> RemappedFiles;
   for (unsigned I = 0; I != num_unsaved_files; ++I) {
@@ -2331,10 +2335,10 @@ static void clang_reparseTranslationUnit_Impl(void *UserData) {
                                            Buffer));
   }
   
-  if (!static_cast<ASTUnit *>(TU)->Reparse(RemappedFiles.data(),
-                                           RemappedFiles.size()))
-      RTUI->result = 0;
+  if (!CXXUnit->Reparse(RemappedFiles.data(), RemappedFiles.size()))
+    RTUI->result = 0;
 }
+
 int clang_reparseTranslationUnit(CXTranslationUnit TU,
                                  unsigned num_unsaved_files,
                                  struct CXUnsavedFile *unsaved_files,
