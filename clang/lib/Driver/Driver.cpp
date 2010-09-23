@@ -1151,15 +1151,21 @@ const char *Driver::GetNamedOutputPath(Compilation &C,
                                        const char *BaseInput,
                                        bool AtTopLevel) const {
   llvm::PrettyStackTraceString CrashInfo("Computing output path");
+
+  // Default to writing to stdout.
+  if (AtTopLevel && isa<PreprocessJobAction>(JA)) {
+    if (Arg *DepOutput = C.getArgs().getLastArg(options::OPT_MF))
+      return C.addResultFile(DepOutput->getValue(C.getArgs()));
+    if (Arg *FinalOutput = C.getArgs().getLastArg(options::OPT_o))
+      return C.addResultFile(FinalOutput->getValue(C.getArgs()));
+    return "-";
+  }
+
   // Output to a user requested destination?
   if (AtTopLevel && !isa<DsymutilJobAction>(JA)) {
     if (Arg *FinalOutput = C.getArgs().getLastArg(options::OPT_o))
       return C.addResultFile(FinalOutput->getValue(C.getArgs()));
   }
-
-  // Default to writing to stdout?
-  if (AtTopLevel && isa<PreprocessJobAction>(JA))
-    return "-";
 
   // Output to a temporary file?
   if (!AtTopLevel && !C.getArgs().hasArg(options::OPT_save_temps)) {
