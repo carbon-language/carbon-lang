@@ -2078,41 +2078,9 @@ void GRExprEngine::VisitCall(const CallExpr* CE, ExplodedNode* Pred,
   if (const PointerType *FnTypePtr = FnType->getAs<PointerType>())
     Proto = FnTypePtr->getPointeeType()->getAs<FunctionProtoType>();
 
-  // Create a worklist to process the arguments.
-  llvm::SmallVector<CallExprWLItem, 20> WorkList;
-  WorkList.reserve(AE - AI);
-  WorkList.push_back(CallExprWLItem(AI, Pred));
-
+  // Evaluate the arguments.
   ExplodedNodeSet ArgsEvaluated;
-
-  while (!WorkList.empty()) {
-    CallExprWLItem Item = WorkList.back();
-    WorkList.pop_back();
-
-    if (Item.I == AE) {
-      ArgsEvaluated.insert(Item.N);
-      continue;
-    }
-
-    // Evaluate the argument.
-    ExplodedNodeSet Tmp;
-    const unsigned ParamIdx = Item.I - AI;
-
-    bool VisitAsLvalue = false;
-    if (Proto && ParamIdx < Proto->getNumArgs())
-      VisitAsLvalue = Proto->getArgType(ParamIdx)->isReferenceType();
-
-    if (VisitAsLvalue)
-      VisitLValue(*Item.I, Item.N, Tmp);
-    else
-      Visit(*Item.I, Item.N, Tmp);
-
-    // Enqueue evaluating the next argument on the worklist.
-    ++(Item.I);
-
-    for (ExplodedNodeSet::iterator NI=Tmp.begin(), NE=Tmp.end(); NI!=NE; ++NI)
-      WorkList.push_back(CallExprWLItem(Item.I, *NI));
-  }
+  EvalArguments(CE->arg_begin(), CE->arg_end(), Proto, Pred, ArgsEvaluated);
 
   // Now process the call itself.
   ExplodedNodeSet DstTmp;
@@ -2130,7 +2098,6 @@ void GRExprEngine::VisitCall(const CallExpr* CE, ExplodedNode* Pred,
   // Finally, evaluate the function call.  We try each of the checkers
   // to see if the can evaluate the function call.
   ExplodedNodeSet DstTmp3;
-
 
   for (ExplodedNodeSet::iterator DI = DstTmp.begin(), DE = DstTmp.end();
        DI != DE; ++DI) {

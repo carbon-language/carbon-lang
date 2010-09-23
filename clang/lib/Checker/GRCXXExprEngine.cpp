@@ -17,9 +17,22 @@
 
 using namespace clang;
 
+namespace {
+class CallExprWLItem {
+public:
+  CallExpr::const_arg_iterator I;
+  ExplodedNode *N;
+
+  CallExprWLItem(const CallExpr::const_arg_iterator &i, ExplodedNode *n)
+    : I(i), N(n) {}
+};
+}
+
 void GRExprEngine::EvalArguments(ConstExprIterator AI, ConstExprIterator AE,
                                  const FunctionProtoType *FnType, 
                                  ExplodedNode *Pred, ExplodedNodeSet &Dst) {
+
+
   llvm::SmallVector<CallExprWLItem, 20> WorkList;
   WorkList.reserve(AE - AI);
   WorkList.push_back(CallExprWLItem(AI, Pred));
@@ -33,10 +46,13 @@ void GRExprEngine::EvalArguments(ConstExprIterator AI, ConstExprIterator AE,
       continue;
     }
 
+    // Evaluate the argument.
     ExplodedNodeSet Tmp;
     const unsigned ParamIdx = Item.I - AI;
-    bool VisitAsLvalue = FnType? FnType->getArgType(ParamIdx)->isReferenceType()
-                               : false;
+    const bool VisitAsLvalue = FnType && ParamIdx < FnType->getNumArgs() 
+      ? FnType->getArgType(ParamIdx)->isReferenceType()
+      : false;
+
     if (VisitAsLvalue)
       VisitLValue(*Item.I, Item.N, Tmp);
     else

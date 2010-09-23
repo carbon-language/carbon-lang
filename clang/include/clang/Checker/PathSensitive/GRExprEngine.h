@@ -116,15 +116,6 @@ class GRExprEngine : public GRSubEngine {
   
   llvm::OwningPtr<GRTransferFuncs> TF;
 
-  class CallExprWLItem {
-  public:
-    CallExpr::const_arg_iterator I;
-    ExplodedNode *N;
-
-    CallExprWLItem(const CallExpr::const_arg_iterator &i, ExplodedNode *n)
-      : I(i), N(n) {}
-  };
-
 public:
   GRExprEngine(AnalysisManager &mgr, GRTransferFuncs *tf);
 
