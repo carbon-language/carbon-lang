@@ -284,9 +284,11 @@ ARMBaseInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,MachineBasicBlock *&TBB,
       LastInst->eraseFromParent();
       LastInst = SecondLastInst;
       LastOpc = LastInst->getOpcode();
-      if (I == MBB.begin() || !isUnpredicatedTerminator(--I))
-        break;
-      else {
+      if (I == MBB.begin() || !isUnpredicatedTerminator(--I)) {
+        // Return now the only terminator is an unconditional branch.
+        TBB = LastInst->getOperand(0).getMBB();
+        return false;
+      } else {
         SecondLastInst = I;
         SecondLastOpc = SecondLastInst->getOpcode();
       }
