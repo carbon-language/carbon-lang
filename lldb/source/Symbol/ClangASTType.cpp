@@ -479,7 +479,7 @@ ClangASTType::DumpValue
             {
                 if (enum_pos->getInitVal() == enum_value)
                 {
-                    s->Printf("%s", enum_pos->getNameAsCString());
+                    s->Printf("%s", enum_pos->getNameAsString().c_str());
                     return;
                 }
             }
@@ -655,7 +655,7 @@ ClangASTType::DumpTypeValue
                 {
                     if (enum_pos->getInitVal() == enum_value)
                     {
-                        s->PutCString (enum_pos->getNameAsCString());
+                        s->PutCString (enum_pos->getNameAsString().c_str());
                         return true;
                     }
                 }

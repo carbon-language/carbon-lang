@@ -14,9 +14,7 @@
 #include "clang/AST/DeclGroup.h"
 #include "clang/AST/Expr.h"
 #include "clang/AST/Stmt.h"
-#include "clang/Parse/Action.h"
 #include "clang/Parse/Parser.h"
-#include "clang/Parse/Scope.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/raw_ostream.h"
 #include "lldb/Core/Log.h"
@@ -30,8 +28,7 @@ ASTResultSynthesizer::ASTResultSynthesizer(ASTConsumer *passthrough) :
     m_ast_context (NULL),
     m_passthrough (passthrough),
     m_passthrough_sema (NULL),
-    m_sema (NULL),
-    m_action (NULL)
+    m_sema (NULL)
 {
     if (!m_passthrough)
         return;
@@ -73,8 +70,7 @@ ASTResultSynthesizer::TransformTopLevelDecl(Decl* D)
     
     if (m_ast_context &&
         function_decl &&
-        !strcmp(function_decl->getNameAsCString(),
-                "___clang_expr"))
+        !function_decl->getNameInfo().getAsString().compare("___clang_expr"))
     {
         SynthesizeResult(function_decl);
     }
@@ -176,8 +172,8 @@ ASTResultSynthesizer::SynthesizeResult (FunctionDecl *FunDecl)
                                                   &result_id, 
                                                   expr_qual_type, 
                                                   NULL, 
-                                                  VarDecl::Static, 
-                                                  VarDecl::Static);
+                                                  SC_Static, 
+                                                  SC_Static);
     
     if (!result_decl)
         return false;
@@ -187,27 +183,24 @@ ASTResultSynthesizer::SynthesizeResult (FunctionDecl *FunDecl)
     ///////////////////////////////
     // call AddInitializerToDecl
     //
-    
-    Parser::DeclPtrTy result_decl_ptr;
-    result_decl_ptr.set(result_decl);
-    
-    m_action->AddInitializerToDecl(result_decl_ptr, Parser::ExprArg(*m_action, last_expr));
+        
+    m_sema->AddInitializerToDecl(result_decl, last_expr);
     
     /////////////////////////////////
     // call ConvertDeclToDeclGroup
     //
     
-    Parser::DeclGroupPtrTy result_decl_group_ptr;
+    Sema::DeclGroupPtrTy result_decl_group_ptr;
     
-    result_decl_group_ptr = m_action->ConvertDeclToDeclGroup(result_decl_ptr);
+    result_decl_group_ptr = m_sema->ConvertDeclToDeclGroup(result_decl);
     
     ////////////////////////
     // call ActOnDeclStmt
     //
     
-    Parser::OwningStmtResult result_initialization_stmt_result(m_action->ActOnDeclStmt(result_decl_group_ptr,
-                                                                                       SourceLocation(),
-                                                                                       SourceLocation()));
+    StmtResult result_initialization_stmt_result(m_sema->ActOnDeclStmt(result_decl_group_ptr,
+                                                                       SourceLocation(),
+                                                                       SourceLocation()));
     
     ////////////////////////////////////////////////
     // replace the old statement with the new one
@@ -269,7 +262,6 @@ void
 ASTResultSynthesizer::InitializeSema(Sema &S)
 {
     m_sema = &S;
-    m_action = reinterpret_cast<Action*>(m_sema);
     
     if (m_passthrough_sema)
         m_passthrough_sema->InitializeSema(S);
@@ -279,7 +271,6 @@ void
 ASTResultSynthesizer::ForgetSema() 
 {
     m_sema = NULL;
-    m_action = NULL;
     
     if (m_passthrough_sema)
         m_passthrough_sema->ForgetSema();

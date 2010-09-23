@@ -10,6 +10,7 @@
 #ifndef liblldb_ClangASTSource_h_
 #define liblldb_ClangASTSource_h_
 
+#include "clang/Basic/IdentifierTable.h"
 #include "clang/Sema/ExternalSemaSource.h"
 
 namespace lldb_private {
@@ -88,8 +89,13 @@ public:
     /// @return
     ///     Whatever SetExternalVisibleDeclsForName returns.
     //------------------------------------------------------------------
-    clang::DeclContext::lookup_result FindExternalVisibleDeclsByName(const clang::DeclContext *DC,
-                                                                     clang::DeclarationName Name);
+    clang::DeclContextLookupResult FindExternalVisibleDeclsByName(const clang::DeclContext *DC,
+                                                                  clang::DeclarationName Name);
+    
+    //------------------------------------------------------------------
+    /// Interface stub.
+    //------------------------------------------------------------------
+    void MaterializeVisibleDecls(const clang::DeclContext *DC);
 	
     //------------------------------------------------------------------
     /// Interface stub that returns true.

@@ -13,6 +13,7 @@
 // C++ Includes
 // Other libraries and framework includes
 // Project includes
+#include "clang/AST/DeclarationName.h"
 #include "lldb/lldb-private.h"
 #include "lldb/Core/Address.h"
 #include "lldb/Core/Error.h"
@@ -1205,12 +1206,12 @@ ClangExpressionDeclMap::AddOneType(NameSearchContext &context,
                                                                  false,
                                                                  ClangASTContext::GetTypeQualifiers(copied_type));
         
-        ClangASTContext::AddMethodToCXXRecordType (parser_ast_context,
-                                                   copied_type,
-                                                   "___clang_expr",
-                                                   method_type,
-                                                   lldb::eAccessPublic,
-                                                   false);
+        ClangASTContext::AddMethodToCXXRecordType(parser_ast_context,
+                                                  copied_type,
+                                                  "___clang_expr",
+                                                  method_type,
+                                                  lldb::eAccessPublic,
+                                                  false);
     }
     
     context.AddTypeDecl(copied_type);

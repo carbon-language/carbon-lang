@@ -15,9 +15,8 @@
 #include "clang/AST/Expr.h"
 #include "clang/AST/RecordLayout.h"
 #include "clang/AST/Stmt.h"
-#include "clang/Parse/Action.h"
 #include "clang/Parse/Parser.h"
-#include "clang/Parse/Scope.h"
+#include "clang/Sema/Sema.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/raw_ostream.h"
 #include "lldb/Core/Log.h"
@@ -111,7 +110,7 @@ ASTStructExtractor::ExtractFromTopLevelDecl(Decl* D)
     
     if (m_ast_context &&
         function_decl &&
-        !m_function.m_wrapper_function_name.compare(function_decl->getNameAsCString()))
+        !m_function.m_wrapper_function_name.compare(function_decl->getNameAsString().c_str()))
     {
         ExtractFromFunctionDecl(function_decl);
     }

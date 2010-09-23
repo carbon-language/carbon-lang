@@ -25,15 +25,14 @@ our @llvm_clang_slices; # paths to the single architecture static libraries (arc
 
 our $llvm_configuration = $ENV{LLVM_CONFIGURATION};
 
-our $llvm_revision = "'{2010-08-02T16:00}'";
+our $llvm_revision = "'{2010-09-22T21:20}'";
 our $llvm_source_dir = "$ENV{SRCROOT}";
 our $cc = "$ENV{DEVELOPER_BIN_DIR}/gcc-4.2";
 our $cxx = "$ENV{DEVELOPER_BIN_DIR}/g++-4.2";
 our @archs = split (/\s+/, $ENV{ARCHS});
 
 our @archive_files = (  
-	"$llvm_configuration/lib/libplugin_llvmc_Base.a",
-	"$llvm_configuration/lib/libplugin_llvmc_Clang.a",
+    "$llvm_configuration/lib/libclang.a",
 	"$llvm_configuration/lib/libclangAnalysis.a",
 	"$llvm_configuration/lib/libclangAST.a",
 	"$llvm_configuration/lib/libclangBasic.a",
@@ -45,6 +44,7 @@ our @archive_files = (
 	"$llvm_configuration/lib/libclangRewrite.a",
 	"$llvm_configuration/lib/libclangParse.a",
 	"$llvm_configuration/lib/libclangSema.a",
+    "$llvm_configuration/lib/libclangSerialization.a",
 	"$llvm_configuration/lib/libCompilerDriver.a",
 	"$llvm_configuration/lib/libEnhancedDisassembly.a",
 	"$llvm_configuration/lib/libLLVMAnalysis.a",
@@ -407,6 +407,7 @@ sub create_single_llvm_arhive_for_arch
 	}
 	close (FILES);
     do_command ("libtool -static -o '$arch_output_file' -filelist '$files'");
+    do_command ("ranlib '$arch_output_file'");
 
 	foreach $object_dir (@object_dirs)
 	{

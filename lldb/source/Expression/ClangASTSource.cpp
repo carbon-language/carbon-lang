@@ -74,6 +74,11 @@ DeclContext::lookup_result ClangASTSource::FindExternalVisibleDeclsByName(const 
     return SetExternalVisibleDeclsForName(DC, Name, Decls);
 }
 
+void ClangASTSource::MaterializeVisibleDecls(const DeclContext *DC)
+{
+    return;
+}
+
 // This is used to support iterating through an entire lexical context,
 // which isn't something the debugger should ever need to do.
 bool ClangASTSource::FindExternalLexicalDecls(const DeclContext *DC, llvm::SmallVectorImpl<Decl*> &Decls) {
@@ -94,8 +99,8 @@ clang::NamedDecl *NameSearchContext::AddVarDecl(void *type) {
                                              ii, 
                                              QualType::getFromOpaquePtr(type), 
                                              0, 
-                                             VarDecl::Static, 
-                                             VarDecl::Static);
+                                             SC_Static, 
+                                             SC_Static);
     Decls.push_back(Decl);
     
     return Decl;
@@ -108,8 +113,8 @@ clang::NamedDecl *NameSearchContext::AddFunDecl(void *type) {
                                                      Name.getAsIdentifierInfo(),
                                                      QualType::getFromOpaquePtr(type),
                                                      NULL,
-                                                     FunctionDecl::Static,
-                                                     FunctionDecl::Static,
+                                                     SC_Static,
+                                                     SC_Static,
                                                      false,
                                                      true);
     
@@ -138,8 +143,8 @@ clang::NamedDecl *NameSearchContext::AddFunDecl(void *type) {
                                                          NULL,
                                                          ArgQT,
                                                          NULL,
-                                                         ParmVarDecl::Static,
-                                                         ParmVarDecl::Static,
+                                                         SC_Static,
+                                                         SC_Static,
                                                          NULL);
         }
         

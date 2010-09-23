@@ -1126,7 +1126,7 @@ SymbolFileDWARF::ParseChildMembers
                 unsigned type_quals = 0;
                 AccessType accessibility = default_accessibility;
 
-                clang::FunctionDecl::StorageClass storage = clang::FunctionDecl::None;//, Extern, Static, PrivateExtern
+                clang::FunctionDecl::StorageClass storage = clang::SC_None;//, Extern, Static, PrivateExtern
                 const char *type_name_cstr = NULL;
                 ConstString type_name_dbstr;
 
@@ -1157,10 +1157,10 @@ SymbolFileDWARF::ParseChildMembers
                             case DW_AT_external:
                                 if (form_value.Unsigned())
                                 {
-                                    if (storage == clang::FunctionDecl::None)
-                                        storage = clang::FunctionDecl::Extern;
+                                    if (storage == clang::SC_None)
+                                        storage = clang::SC_Extern;
                                     else
-                                        storage = clang::FunctionDecl::PrivateExtern;
+                                        storage = clang::SC_PrivateExtern;
                                 }
                                 break;
                             case DW_AT_inline:
@@ -2058,7 +2058,7 @@ SymbolFileDWARF::ParseChildParameters
                     bool is_artificial = false;
                     // one of None, Auto, Register, Extern, Static, PrivateExtern
 
-                    clang::VarDecl::StorageClass storage = clang::VarDecl::None;
+                    clang::StorageClass storage = clang::SC_None;
                     uint32_t i;
                     for (i=0; i<num_attributes; ++i)
                     {
@@ -2841,7 +2841,7 @@ SymbolFileDWARF::ParseType(const SymbolContext& sc, const DWARFCompileUnit* dwar
                     bool is_variadic = false;
                     bool is_inline = false;
                     unsigned type_quals = 0;
-                    clang::FunctionDecl::StorageClass storage = clang::FunctionDecl::None;//, Extern, Static, PrivateExtern
+                    clang::StorageClass storage = clang::SC_None;//, Extern, Static, PrivateExtern
 
 
                     const size_t num_attributes = die->GetAttributes(this, dwarf_cu, NULL, attributes);
@@ -2871,10 +2871,10 @@ SymbolFileDWARF::ParseType(const SymbolContext& sc, const DWARFCompileUnit* dwar
                                 case DW_AT_external:
                                     if (form_value.Unsigned())
                                     {
-                                        if (storage == clang::FunctionDecl::None)
-                                            storage = clang::FunctionDecl::Extern;
+                                        if (storage == clang::SC_None)
+                                            storage = clang::SC_Extern;
                                         else
-                                            storage = clang::FunctionDecl::PrivateExtern;
+                                            storage = clang::SC_PrivateExtern;
                                     }
                                     break;
                                 case DW_AT_inline:

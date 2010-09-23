@@ -173,7 +173,6 @@ private:
     ClangExpression                            &m_expr;                 ///< The expression to be parsed
     
     std::string                                 m_target_triple;        ///< The target triple used to initialize LLVM
-    std::auto_ptr<clang::TextDiagnosticBuffer>  m_diagnostic_buffer;    ///< The container for errors produced by the compiler
     std::auto_ptr<clang::CompilerInstance>      m_compiler;             ///< The Clang compiler used to parse expressions into IR
     std::auto_ptr<clang::Builtin::Context>      m_builtin_context;      ///< Context for Clang built-ins
     std::auto_ptr<clang::ASTContext>            m_ast_context;          ///< The AST context used to hold types and names for the parser

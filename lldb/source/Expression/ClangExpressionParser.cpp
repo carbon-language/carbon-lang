@@ -43,8 +43,8 @@
 #include "clang/Frontend/TextDiagnosticPrinter.h"
 #include "clang/Frontend/VerifyDiagnosticsClient.h"
 #include "clang/Lex/Preprocessor.h"
+#include "clang/Parse/ParseAST.h"
 #include "clang/Rewrite/FrontendActions.h"
-#include "clang/Sema/ParseAST.h"
 #include "clang/Sema/SemaConsumer.h"
 
 #include "llvm/ADT/StringRef.h"
@@ -239,8 +239,7 @@ ClangExpressionParser::ClangExpressionParser(const char *target_triple,
     
     // 4. Set up the diagnostic buffer for reporting errors
     
-    m_diagnostic_buffer.reset(new clang::TextDiagnosticBuffer);
-    m_compiler->getDiagnostics().setClient(m_diagnostic_buffer.get());
+    m_compiler->getDiagnostics().setClient(new clang::TextDiagnosticBuffer);
     
     // 5. Set up the source management objects inside the compiler
     
@@ -288,12 +287,14 @@ ClangExpressionParser::~ClangExpressionParser()
 unsigned
 ClangExpressionParser::Parse (Stream &stream)
 {
-    m_diagnostic_buffer->FlushDiagnostics (m_compiler->getDiagnostics());
+    TextDiagnosticBuffer *diag_buf = static_cast<TextDiagnosticBuffer*>(m_compiler->getDiagnostics().getClient());
+        
+    diag_buf->FlushDiagnostics (m_compiler->getDiagnostics());
     
     MemoryBuffer *memory_buffer = MemoryBuffer::getMemBufferCopy(m_expr.Text(), __FUNCTION__);
     FileID memory_buffer_file_id = m_compiler->getSourceManager().createMainFileIDForMemBuffer (memory_buffer);
     
-    m_diagnostic_buffer->BeginSourceFile(m_compiler->getLangOpts(), &m_compiler->getPreprocessor());
+    diag_buf->BeginSourceFile(m_compiler->getLangOpts(), &m_compiler->getPreprocessor());
     
     ASTConsumer *ast_transformer = m_expr.ASTTransformer(m_code_generator.get());
     
@@ -302,21 +303,21 @@ ClangExpressionParser::Parse (Stream &stream)
     else 
         ParseAST(m_compiler->getPreprocessor(), m_code_generator.get(), m_compiler->getASTContext());    
     
-    m_diagnostic_buffer->EndSourceFile();
+    diag_buf->EndSourceFile();
     
     TextDiagnosticBuffer::const_iterator diag_iterator;
     
     int num_errors = 0;
         
-    for (diag_iterator = m_diagnostic_buffer->warn_begin();
-         diag_iterator != m_diagnostic_buffer->warn_end();
+    for (diag_iterator = diag_buf->warn_begin();
+         diag_iterator != diag_buf->warn_end();
          ++diag_iterator)
         stream.Printf("warning: %s\n", (*diag_iterator).second.c_str());
     
     num_errors = 0;
     
-    for (diag_iterator = m_diagnostic_buffer->err_begin();
-         diag_iterator != m_diagnostic_buffer->err_end();
+    for (diag_iterator = diag_buf->err_begin();
+         diag_iterator != diag_buf->err_end();
          ++diag_iterator)
     {
         num_errors++;

@@ -847,15 +847,16 @@ ClangASTContext::AddMethodToCXXRecordType
     QualType method_qual_type(QualType::getFromOpaquePtr(method_opaque_type));
     
     CXXMethodDecl *cxx_method_decl = CXXMethodDecl::Create(*ast_context,
-                                                           cxx_record_decl, 
-                                                           SourceLocation(), 
-                                                           DeclarationName(&identifier_table->get(name)), 
-                                                           method_qual_type, 
+                                                           cxx_record_decl,
+                                                           DeclarationNameInfo(DeclarationName(&identifier_table->get(name)), SourceLocation()),
+                                                           method_qual_type,
                                                            NULL);
     
-    cxx_method_decl->setAccess (ConvertAccessTypeToAccessSpecifier (access));
-    cxx_method_decl->setVirtualAsWritten (is_virtual);
-
+    clang::AccessSpecifier AS = ConvertAccessTypeToAccessSpecifier(access);
+    
+    cxx_method_decl->setAccess(AS);
+    cxx_method_decl->setVirtualAsWritten(is_virtual);
+    
     // Populate the method decl with parameter decls
     clang::Type *method_type(method_qual_type.getTypePtr());
     
@@ -881,8 +882,8 @@ ClangASTContext::AddMethodToCXXRecordType
                                                   NULL, // anonymous
                                                   method_funprototy->getArgType(param_index), 
                                                   NULL,
-                                                  VarDecl::Auto, 
-                                                  VarDecl::Auto,
+                                                  SC_Auto, 
+                                                  SC_Auto,
                                                   NULL); 
     }
     
@@ -946,7 +947,7 @@ ClangASTContext::AddFieldToRecordType
             if (bitfield_bit_size != 0)
             {
                 APInt bitfield_bit_size_apint(ast_context->getTypeSize(ast_context->IntTy), bitfield_bit_size);
-                bit_width = new (*ast_context)IntegerLiteral (bitfield_bit_size_apint, ast_context->IntTy, SourceLocation());
+                bit_width = new (*ast_context)IntegerLiteral (*ast_context, bitfield_bit_size_apint, ast_context->IntTy, SourceLocation());
             }
             FieldDecl *field = FieldDecl::Create (*ast_context,
                                                   record_decl,
@@ -1277,7 +1278,7 @@ ClangASTContext::AddObjCClassIVar
                 if (bitfield_bit_size != 0)
                 {
                     APInt bitfield_bit_size_apint(ast_context->getTypeSize(ast_context->IntTy), bitfield_bit_size);
-                    bit_width = new (*ast_context)IntegerLiteral (bitfield_bit_size_apint, ast_context->IntTy, SourceLocation());
+                    bit_width = new (*ast_context)IntegerLiteral (*ast_context, bitfield_bit_size_apint, ast_context->IntTy, SourceLocation());
                 }
                 
                 ObjCIvarDecl *field = ObjCIvarDecl::Create (*ast_context,

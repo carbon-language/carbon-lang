@@ -186,14 +186,14 @@ public:
     AddMethodToCXXRecordType (clang::ASTContext *ast_context,
                               void *record_opaque_type,
                               const char *name,
-                              void *method_opaque_type,
+                              void *method_type,
                               lldb::AccessType access,
                               bool is_virtual);
     
     clang::CXXMethodDecl *
     AddMethodToCXXRecordType (void *record_opaque_type,
                               const char *name,
-                              void *method_opaque_type,
+                              void *method_type,
                               lldb::AccessType access,
                               bool is_virtual)
     
@@ -201,7 +201,7 @@ public:
         return ClangASTContext::AddMethodToCXXRecordType(getASTContext(),
                                                          record_opaque_type,
                                                          name,
-                                                         method_opaque_type,
+                                                         method_type,
                                                          access,
                                                          is_virtual);
     }

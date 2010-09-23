@@ -128,7 +128,6 @@ private:
     clang::ASTConsumer *m_passthrough;          ///< The ASTConsumer down the chain, for passthrough.  NULL if it's a SemaConsumer.
     clang::SemaConsumer *m_passthrough_sema;    ///< The SemaConsumer down the chain, for passthrough.  NULL if it's an ASTConsumer.
     clang::Sema *m_sema;                        ///< The Sema to use.
-    clang::Action *m_action;                    ///< The Sema to use, cast to an Action so it's usable.
 };
 
 }

@@ -34,7 +34,7 @@ IRForTarget::IRForTarget(lldb_private::ClangExpressionDeclMap *decl_map,
                          const TargetData *target_data,
                          bool resolve_vars,
                          const char *func_name) :
-    ModulePass(&ID),
+    ModulePass(ID),
     m_decl_map(decl_map),
     m_target_data(target_data),
     m_sel_registerName(NULL),
@@ -728,12 +728,22 @@ IRForTarget::resolveExternals(Module &M, BasicBlock &BB)
 
 static bool isGuardVariableRef(Value *V)
 {
-    ConstantExpr *C = dyn_cast<ConstantExpr>(V);
+    Constant *C;
     
-    if (!C || C->getOpcode() != Instruction::BitCast)
+    if (!(C = dyn_cast<Constant>(V)))
         return false;
     
-    GlobalVariable *GV = dyn_cast<GlobalVariable>(C->getOperand(0));
+    ConstantExpr *CE;
+    
+    if ((CE = dyn_cast<ConstantExpr>(V)))
+    {
+        if (CE->getOpcode() != Instruction::BitCast)
+            return false;
+        
+        C = CE->getOperand(0);
+    }
+    
+    GlobalVariable *GV = dyn_cast<GlobalVariable>(C);
     
     if (!GV || !GV->hasName() || !GV->getName().startswith("_ZGV"))
         return false;
