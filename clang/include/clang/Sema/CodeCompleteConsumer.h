@@ -146,7 +146,7 @@ class Sema;
 class CodeCompletionContext {
 public:
   enum Kind {
-    /// \brief An unspecified code-completion context.
+    /// \brief An unspecified code-completion context, where the 
     CCC_Other,
     /// \brief Code completion occurred within a "top-level" completion context,
     /// e.g., at namespace or global scope.
@@ -220,7 +220,10 @@ public:
     CCC_TypeQualifiers,
     /// \brief Code completion in a parenthesized expression, which means that
     /// we may also have types here in C and Objective-C (as well as in C++).
-    CCC_ParenthesizedExpression
+    CCC_ParenthesizedExpression,
+    /// \brief An unknown context, in which we are recovering from a parsing 
+    /// error and don't know which completions we should give.
+    CCC_Recovery
   };
 
 private:

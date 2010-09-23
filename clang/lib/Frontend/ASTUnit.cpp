@@ -142,7 +142,7 @@ static unsigned getDeclShowContexts(NamedDecl *ND,
       
       if (LangOpts.CPlusPlus)
         IsNestedNameSpecifier = true;
-    } else if (isa<ClassTemplateDecl>(ND) || isa<TemplateTemplateParmDecl>(ND))
+    } else if (isa<ClassTemplateDecl>(ND))
       IsNestedNameSpecifier = true;
   } else if (isa<ValueDecl>(ND) || isa<FunctionTemplateDecl>(ND)) {
     // Values can appear in these contexts.
@@ -1523,7 +1523,8 @@ namespace {
         | (1 << (CodeCompletionContext::CCC_ObjCMessageReceiver - 1))
         | (1 << (CodeCompletionContext::CCC_MemberAccess - 1))
         | (1 << (CodeCompletionContext::CCC_ObjCProtocolName - 1))
-        | (1 << (CodeCompletionContext::CCC_ParenthesizedExpression - 1));
+        | (1 << (CodeCompletionContext::CCC_ParenthesizedExpression - 1))
+        | (1 << (CodeCompletionContext::CCC_Recovery - 1));
 
       if (AST.getASTContext().getLangOptions().CPlusPlus)
         NormalContexts |= (1 << (CodeCompletionContext::CCC_EnumTag - 1))
@@ -1553,7 +1554,7 @@ void CalculateHiddenNames(const CodeCompletionContext &Context,
                           llvm::StringSet<> &HiddenNames) {
   bool OnlyTagNames = false;
   switch (Context.getKind()) {
-  case CodeCompletionContext::CCC_Other:
+  case CodeCompletionContext::CCC_Recovery:
   case CodeCompletionContext::CCC_TopLevel:
   case CodeCompletionContext::CCC_ObjCInterface:
   case CodeCompletionContext::CCC_ObjCImplementation:
@@ -1584,6 +1585,7 @@ void CalculateHiddenNames(const CodeCompletionContext &Context,
   case CodeCompletionContext::CCC_NaturalLanguage:
   case CodeCompletionContext::CCC_SelectorName:
   case CodeCompletionContext::CCC_TypeQualifiers:
+  case CodeCompletionContext::CCC_Other:
     // We're looking for nothing, or we're looking for names that cannot
     // be hidden.
     return;
@@ -1628,7 +1630,7 @@ void AugmentedCodeCompleteConsumer::ProcessCodeCompleteResults(Sema &S,
   // Merge the results we were given with the results we cached.
   bool AddedResult = false;
   unsigned InContexts  
-    = (Context.getKind() == CodeCompletionContext::CCC_Other? NormalContexts
+    = (Context.getKind() == CodeCompletionContext::CCC_Recovery? NormalContexts
                                             : (1 << (Context.getKind() - 1)));
 
   // Contains the set of names that are hidden by "local" completion results.

@@ -33,7 +33,7 @@ using llvm::StringRef;
 
 bool CodeCompletionContext::wantConstructorResults() const {
   switch (Kind) {
-  case CCC_Other:
+  case CCC_Recovery:
   case CCC_Statement:
   case CCC_Expression:
   case CCC_ObjCMessageReceiver:
@@ -61,6 +61,7 @@ bool CodeCompletionContext::wantConstructorResults() const {
   case CCC_NaturalLanguage:
   case CCC_SelectorName:
   case CCC_TypeQualifiers:
+  case CCC_Other:
     return false;
   }
   
