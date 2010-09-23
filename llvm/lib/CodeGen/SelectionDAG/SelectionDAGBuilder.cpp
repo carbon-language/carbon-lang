@@ -1617,8 +1617,9 @@ void SelectionDAGBuilder::visitBitTestHeader(BitTestBlock &B,
                                 MVT::Other, CopyTo, RangeCmp,
                                 DAG.getBasicBlock(B.Default));
 
-  BrRange = DAG.getNode(ISD::BR, getCurDebugLoc(), MVT::Other, CopyTo,
-                        DAG.getBasicBlock(MBB));
+  if (MBB != NextBlock)
+    BrRange = DAG.getNode(ISD::BR, getCurDebugLoc(), MVT::Other, CopyTo,
+                          DAG.getBasicBlock(MBB));
 
   DAG.setRoot(BrRange);
 }
@@ -1671,8 +1672,9 @@ void SelectionDAGBuilder::visitBitTestCase(MachineBasicBlock* NextMBB,
   if (++BBI != FuncInfo.MF->end())
     NextBlock = BBI;
 
-  BrAnd = DAG.getNode(ISD::BR, getCurDebugLoc(), MVT::Other, BrAnd,
-                      DAG.getBasicBlock(NextMBB));
+  if (NextMBB != NextBlock)
+    BrAnd = DAG.getNode(ISD::BR, getCurDebugLoc(), MVT::Other, BrAnd,
+                        DAG.getBasicBlock(NextMBB));
 
   DAG.setRoot(BrAnd);
 }
