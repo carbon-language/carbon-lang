@@ -275,13 +275,29 @@ ARMBaseInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,MachineBasicBlock *&TBB,
 
   // Get the instruction before it if it is a terminator.
   MachineInstr *SecondLastInst = I;
+  unsigned SecondLastOpc = SecondLastInst->getOpcode();
+
+  // If AllowModify is true and the block ends with two or more unconditional
+  // branches, delete all but the first unconditional branch.
+  if (AllowModify && isUncondBranchOpcode(LastOpc)) {
+    while (isUncondBranchOpcode(SecondLastOpc)) {
+      LastInst->eraseFromParent();
+      LastInst = SecondLastInst;
+      LastOpc = LastInst->getOpcode();
+      if (I == MBB.begin() || !isUnpredicatedTerminator(--I))
+        break;
+      else {
+        SecondLastInst = I;
+        SecondLastOpc = SecondLastInst->getOpcode();
+      }
+    }
+  }
 
   // If there are three terminators, we don't know what sort of block this is.
   if (SecondLastInst && I != MBB.begin() && isUnpredicatedTerminator(--I))
     return true;
 
   // If the block ends with a B and a Bcc, handle it.
-  unsigned SecondLastOpc = SecondLastInst->getOpcode();
   if (isCondBranchOpcode(SecondLastOpc) && isUncondBranchOpcode(LastOpc)) {
     TBB =  SecondLastInst->getOperand(0).getMBB();
     Cond.push_back(SecondLastInst->getOperand(1));
