@@ -35,7 +35,7 @@ namespace {
 
       (void) llvm::createFastRegisterAllocator();
       (void) llvm::createLinearScanRegisterAllocator();
-      (void) llvm::createPBQPRegisterAllocator();
+      (void) llvm::createDefaultPBQPRegisterAllocator();
 
       (void) llvm::createSimpleRegisterCoalescer();
       

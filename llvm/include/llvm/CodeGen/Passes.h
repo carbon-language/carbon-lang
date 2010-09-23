@@ -103,7 +103,7 @@ namespace llvm {
   /// PBQPRegisterAllocation Pass - This pass implements the Partitioned Boolean
   /// Quadratic Prograaming (PBQP) based register allocator.
   ///
-  FunctionPass *createPBQPRegisterAllocator();
+  FunctionPass *createDefaultPBQPRegisterAllocator();
 
   /// SimpleRegisterCoalescing Pass - Coalesce all copies possible.  Can run
   /// independently of the register allocator.
