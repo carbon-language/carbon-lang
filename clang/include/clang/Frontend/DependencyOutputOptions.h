@@ -24,7 +24,7 @@ public:
                                      /// dependency, which can avoid some 'make'
                                      /// problems.
 
-  /// The file to write depencency output to.
+  /// The file to write dependency output to.
   std::string OutputFile;
 
   /// A list of names to use as the targets in the dependency file; this list
