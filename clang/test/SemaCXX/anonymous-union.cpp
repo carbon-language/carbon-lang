@@ -155,3 +155,23 @@ namespace test4 {
     (void) a.us1; // expected-error {{private member}}
   }
 }
+
+typedef void *voidPtr;
+
+void f2() {
+    union { int **ctxPtr; void **voidPtr; };
+}
+
+void foo_PR6741() {
+    union {
+        char *m_a;
+        int *m_b;
+    };
+ 
+    if(1) {
+        union {
+            char *m_a;
+            int *m_b;
+        };
+    }
+}

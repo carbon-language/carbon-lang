@@ -1707,11 +1707,10 @@ static bool CheckAnonMemberRedeclaration(Sema &SemaRef,
 
   // Pick a representative declaration.
   NamedDecl *PrevDecl = R.getRepresentativeDecl()->getUnderlyingDecl();
-  if (PrevDecl && Owner->isRecord()) {
-    RecordDecl *Record = cast<RecordDecl>(Owner);
-    if (!SemaRef.isDeclInScope(PrevDecl, Record, S))
-      return false;
-  }
+  assert(PrevDecl && "Expected a non-null Decl");
+
+  if (!SemaRef.isDeclInScope(PrevDecl, Owner, S))
+    return false;
 
   SemaRef.Diag(NameLoc, diagnostic) << Name;
   SemaRef.Diag(PrevDecl->getLocation(), diag::note_previous_declaration);
