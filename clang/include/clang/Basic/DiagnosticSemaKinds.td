@@ -2303,6 +2303,8 @@ def error_no_subobject_property_setting : Error<
 def ext_freestanding_complex : Extension<
   "complex numbers are an extension in a freestanding C99 implementation">;
 
+// FIXME: Remove when we support imaginary.
+def err_imaginary_not_supported : Error<"imaginary types are not supported">;
 
 // Obj-c expressions
 def warn_root_inst_method_not_found : Warning<

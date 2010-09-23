@@ -392,8 +392,9 @@ static QualType ConvertDeclSpecToType(Sema &TheSema,
     Result = Context.getVectorType(Result, 128/typeSize, AltiVecSpec);
   }
 
-  assert(DS.getTypeSpecComplex() != DeclSpec::TSC_imaginary &&
-         "FIXME: imaginary types not supported yet!");
+  // FIXME: Imaginary.
+  if (DS.getTypeSpecComplex() == DeclSpec::TSC_imaginary)
+    TheSema.Diag(DS.getTypeSpecComplexLoc(), diag::err_imaginary_not_supported);
 
   // See if there are any attributes on the declspec that apply to the type (as
   // opposed to the decl).
