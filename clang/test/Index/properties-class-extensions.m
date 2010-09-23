@@ -31,6 +31,13 @@
 @property (readwrite) Rdar8467189_Bar *Rdar8467189_Bar;
 @end
 
+// Test if the @property added in an extension is not reported in the @interface.
+@interface Qux
+@end
+@interface Qux ()
+@property (assign, readwrite) id qux;
+@end
+
 // RUN: c-index-test -test-load-source local %s | FileCheck %s
 // CHECK: properties-class-extensions.m:4:12: ObjCInterfaceDecl=Foo:4:12 Extent=[4:1 - 4:23]
 // CHECK-NOT: properties-class-extensions.m:9:15: ObjCInstanceMethodDecl=setB::9:15 Extent=[9:15 - 9:16]
@@ -76,4 +83,12 @@
 // CHECK: properties-class-extensions.m:31:40: ObjCInstanceMethodDecl=Rdar8467189_Bar:31:40 Extent=[31:40 - 31:55]
 // CHECK: properties-class-extensions.m:31:40: ObjCInstanceMethodDecl=setRdar8467189_Bar::31:40 Extent=[31:40 - 31:55]
 // CHECK: properties-class-extensions.m:31:40: ParmDecl=Rdar8467189_Bar:31:40 (Definition) Extent=[31:40 - 31:55]
+// CHECK: properties-class-extensions.m:35:12: ObjCInterfaceDecl=Qux:35:12 Extent=[35:1 - 36:5]
+// CHECK: properties-class-extensions.m:37:12: ObjCCategoryDecl=:37:12 Extent=[37:1 - 39:5]
+// CHECK: properties-class-extensions.m:37:12: ObjCClassRef=Qux:35:12 Extent=[37:12 - 37:15]
+// CHECK: properties-class-extensions.m:38:34: ObjCPropertyDecl=qux:38:34 Extent=[38:34 - 38:37]
+// CHECK: properties-class-extensions.m:38:31: TypeRef=id:0:0 Extent=[38:31 - 38:33]
+// CHECK: properties-class-extensions.m:38:34: ObjCInstanceMethodDecl=qux:38:34 Extent=[38:34 - 38:37]
+// CHECK: properties-class-extensions.m:38:34: ObjCInstanceMethodDecl=setQux::38:34 Extent=[38:34 - 38:37]
+// CHECK: properties-class-extensions.m:38:34: ParmDecl=qux:38:34 (Definition) Extent=[38:34 - 38:37]
 
