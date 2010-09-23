@@ -144,23 +144,26 @@ namespace std
 
 _LIBCPP_BEGIN_NAMESPACE_STD
 
-template <bool _B, class _If, class _Then> struct conditional           {typedef _If type;};
-template <class _If, class _Then> struct conditional<false, _If, _Then> {typedef _Then type;};
+template <bool _B, class _If, class _Then>
+    struct _LIBCPP_VISIBLE conditional {typedef _If type;};
+template <class _If, class _Then>
+    struct _LIBCPP_VISIBLE conditional<false, _If, _Then> {typedef _Then type;};
 
-template <bool, class _Tp = void> struct enable_if {};
-template <class _Tp> struct enable_if<true, _Tp> {typedef _Tp type;};
+template <bool, class _Tp = void> struct _LIBCPP_VISIBLE enable_if {};
+template <class _Tp> struct _LIBCPP_VISIBLE enable_if<true, _Tp> {typedef _Tp type;};
 
 struct __two {char _[2];};
 
 // helper class:
 
 template <class _Tp, _Tp __v>
-struct integral_constant
+struct _LIBCPP_VISIBLE integral_constant
 {
     static constexpr _Tp      value = __v;
     typedef _Tp               value_type;
     typedef integral_constant type;
 #ifndef _LIBCPP_HAS_NO_CONSTEXPR
+    _LIBCPP_INLINE_VISIBILITY
     constexpr operator value_type() {return value;}
 #endif
 };
@@ -173,27 +176,27 @@ typedef integral_constant<bool, false> false_type;
 
 // is_const
 
-template <class _Tp> struct is_const            : public false_type {};
-template <class _Tp> struct is_const<_Tp const> : public true_type {};
+template <class _Tp> struct _LIBCPP_VISIBLE is_const            : public false_type {};
+template <class _Tp> struct _LIBCPP_VISIBLE is_const<_Tp const> : public true_type {};
 
 // is_volatile
 
-template <class _Tp> struct is_volatile               : public false_type {};
-template <class _Tp> struct is_volatile<_Tp volatile> : public true_type {};
+template <class _Tp> struct _LIBCPP_VISIBLE is_volatile               : public false_type {};
+template <class _Tp> struct _LIBCPP_VISIBLE is_volatile<_Tp volatile> : public true_type {};
 
 // remove_const
 
-template <class _Tp> struct remove_const            {typedef _Tp type;};
-template <class _Tp> struct remove_const<const _Tp> {typedef _Tp type;};
+template <class _Tp> struct _LIBCPP_VISIBLE remove_const            {typedef _Tp type;};
+template <class _Tp> struct _LIBCPP_VISIBLE remove_const<const _Tp> {typedef _Tp type;};
 
 // remove_volatile
 
-template <class _Tp> struct remove_volatile               {typedef _Tp type;};
-template <class _Tp> struct remove_volatile<volatile _Tp> {typedef _Tp type;};
+template <class _Tp> struct _LIBCPP_VISIBLE remove_volatile               {typedef _Tp type;};
+template <class _Tp> struct _LIBCPP_VISIBLE remove_volatile<volatile _Tp> {typedef _Tp type;};
 
 // remove_cv
 
-template <class _Tp> struct remove_cv
+template <class _Tp> struct _LIBCPP_VISIBLE remove_cv
 {typedef typename remove_volatile<typename remove_const<_Tp>::type>::type type;};
 
 // is_void
@@ -201,7 +204,8 @@ template <class _Tp> struct remove_cv
 template <class _Tp> struct __is_void       : public false_type {};
 template <>          struct __is_void<void> : public true_type {};
 
-template <class _Tp> struct is_void : public __is_void<typename remove_cv<_Tp>::type> {};
+template <class _Tp> struct _LIBCPP_VISIBLE is_void
+    : public __is_void<typename remove_cv<_Tp>::type> {};
 
 // is_integral
 
@@ -224,7 +228,8 @@ template <>          struct __is_integral<unsigned long>      : public true_type
 template <>          struct __is_integral<long long>          : public true_type {};
 template <>          struct __is_integral<unsigned long long> : public true_type {};
 
-template <class _Tp> struct is_integral : public __is_integral<typename remove_cv<_Tp>::type> {};
+template <class _Tp> struct _LIBCPP_VISIBLE is_integral
+    : public __is_integral<typename remove_cv<_Tp>::type> {};
 
 // is_floating_point
 
@@ -233,35 +238,40 @@ template <>          struct __is_floating_point<float>       : public true_type 
 template <>          struct __is_floating_point<double>      : public true_type {};
 template <>          struct __is_floating_point<long double> : public true_type {};
 
-template <class _Tp> struct is_floating_point : public __is_floating_point<typename remove_cv<_Tp>::type> {};
+template <class _Tp> struct _LIBCPP_VISIBLE is_floating_point
+    : public __is_floating_point<typename remove_cv<_Tp>::type> {};
 
 // is_array
 
-template <class _Tp> struct            is_array            : public false_type {};
-template <class _Tp> struct            is_array<_Tp[]>     : public true_type {};
-template <class _Tp, size_t _Np> struct is_array<_Tp[_Np]> : public true_type {};
+template <class _Tp> struct _LIBCPP_VISIBLE is_array
+    : public false_type {};
+template <class _Tp> struct _LIBCPP_VISIBLE is_array<_Tp[]>
+    : public true_type {};
+template <class _Tp, size_t _Np> struct _LIBCPP_VISIBLE is_array<_Tp[_Np]>
+    : public true_type {};
 
 // is_pointer
 
 template <class _Tp> struct __is_pointer       : public false_type {};
 template <class _Tp> struct __is_pointer<_Tp*> : public true_type {};
 
-template <class _Tp> struct is_pointer : public __is_pointer<typename remove_cv<_Tp>::type> {};
+template <class _Tp> struct _LIBCPP_VISIBLE is_pointer
+    : public __is_pointer<typename remove_cv<_Tp>::type> {};
 
 // is_reference
 
-template <class _Tp> struct is_lvalue_reference       : public false_type {};
-template <class _Tp> struct is_lvalue_reference<_Tp&> : public true_type {};
+template <class _Tp> struct _LIBCPP_VISIBLE is_lvalue_reference       : public false_type {};
+template <class _Tp> struct _LIBCPP_VISIBLE is_lvalue_reference<_Tp&> : public true_type {};
 
-template <class _Tp> struct is_rvalue_reference        : public false_type {};
+template <class _Tp> struct _LIBCPP_VISIBLE is_rvalue_reference        : public false_type {};
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
-template <class _Tp> struct is_rvalue_reference<_Tp&&> : public true_type {};
+template <class _Tp> struct _LIBCPP_VISIBLE is_rvalue_reference<_Tp&&> : public true_type {};
 #endif
 
-template <class _Tp> struct is_reference        : public false_type {};
-template <class _Tp> struct is_reference<_Tp&>  : public true_type {};
+template <class _Tp> struct _LIBCPP_VISIBLE is_reference        : public false_type {};
+template <class _Tp> struct _LIBCPP_VISIBLE is_reference<_Tp&>  : public true_type {};
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
-template <class _Tp> struct is_reference<_Tp&&> : public true_type {};
+template <class _Tp> struct _LIBCPP_VISIBLE is_reference<_Tp&&> : public true_type {};
 #endif
 
 #if defined(__clang__) || (__GNUC__ > 4) || (__GNUC__ == 4 && __GNUC_MINOR__ >= 3)
@@ -272,13 +282,14 @@ template <class _Tp> struct is_reference<_Tp&&> : public true_type {};
 
 #ifdef _LIBCPP_HAS_TYPE_TRAITS
 
-template <class _Tp> struct is_union
+template <class _Tp> struct _LIBCPP_VISIBLE is_union
     : public integral_constant<bool, __is_union(_Tp)> {};
 
 #else  // _LIBCPP_HAS_TYPE_TRAITS
 
 template <class _Tp> struct __libcpp_union : public false_type {};
-template <class _Tp> struct is_union : public __libcpp_union<typename remove_cv<_Tp>::type> {};
+template <class _Tp> struct _LIBCPP_VISIBLE is_union
+    : public __libcpp_union<typename remove_cv<_Tp>::type> {};
 
 #endif  // _LIBCPP_HAS_TYPE_TRAITS
 
@@ -286,7 +297,7 @@ template <class _Tp> struct is_union : public __libcpp_union<typename remove_cv<
 
 #ifdef _LIBCPP_HAS_TYPE_TRAITS
 
-template <class _Tp> struct is_class
+template <class _Tp> struct _LIBCPP_VISIBLE is_class
     : public integral_constant<bool, __is_class(_Tp)> {};
 
 #else  // _LIBCPP_HAS_TYPE_TRAITS
@@ -297,7 +308,7 @@ template <class _Tp> char  __test(int _Tp::*);
 template <class _Tp> __two __test(...);
 }
 
-template <class _Tp> struct is_class
+template <class _Tp> struct _LIBCPP_VISIBLE is_class
     : public integral_constant<bool, sizeof(__is_class_imp::__test<_Tp>(0)) == 1 && !is_union<_Tp>::value> {};
 
 #endif  // _LIBCPP_HAS_TYPE_TRAITS
@@ -320,14 +331,15 @@ struct __is_function
     {};
 template <class _Tp> struct __is_function<_Tp, true> : public false_type {};
 
-template <class _Tp> struct is_function : public __is_function<_Tp> {};
+template <class _Tp> struct _LIBCPP_VISIBLE is_function
+    : public __is_function<_Tp> {};
 
 // is_member_function_pointer
 
 template <class _Tp> struct            __is_member_function_pointer             : public false_type {};
 template <class _Tp, class _Up> struct __is_member_function_pointer<_Tp _Up::*> : public is_function<_Tp> {};
 
-template <class _Tp> struct is_member_function_pointer
+template <class _Tp> struct _LIBCPP_VISIBLE is_member_function_pointer
     : public __is_member_function_pointer<typename remove_cv<_Tp>::type> {};
 
 // is_member_pointer
@@ -335,12 +347,12 @@ template <class _Tp> struct is_member_function_pointer
 template <class _Tp>            struct __is_member_pointer             : public false_type {};
 template <class _Tp, class _Up> struct __is_member_pointer<_Tp _Up::*> : public true_type {};
 
-template <class _Tp> struct is_member_pointer
+template <class _Tp> struct _LIBCPP_VISIBLE is_member_pointer
     : public __is_member_pointer<typename remove_cv<_Tp>::type> {};
 
 // is_member_object_pointer
 
-template <class _Tp> struct is_member_object_pointer
+template <class _Tp> struct _LIBCPP_VISIBLE is_member_object_pointer
     : public integral_constant<bool, is_member_pointer<_Tp>::value &&
                                     !is_member_function_pointer<_Tp>::value> {};
 
@@ -348,12 +360,12 @@ template <class _Tp> struct is_member_object_pointer
 
 #ifdef _LIBCPP_HAS_TYPE_TRAITS
 
-template <class _Tp> struct is_enum
+template <class _Tp> struct _LIBCPP_VISIBLE is_enum
     : public integral_constant<bool, __is_enum(_Tp)> {};
 
 #else  // _LIBCPP_HAS_TYPE_TRAITS
 
-template <class _Tp> struct is_enum
+template <class _Tp> struct _LIBCPP_VISIBLE is_enum
     : public integral_constant<bool, !is_void<_Tp>::value             &&
                                      !is_integral<_Tp>::value         &&
                                      !is_floating_point<_Tp>::value   &&
@@ -369,19 +381,19 @@ template <class _Tp> struct is_enum
 
 // is_arithmetic
 
-template <class _Tp> struct is_arithmetic
+template <class _Tp> struct _LIBCPP_VISIBLE is_arithmetic
     : public integral_constant<bool, is_integral<_Tp>::value      ||
                                      is_floating_point<_Tp>::value> {};
 
 // is_fundamental
 
-template <class _Tp> struct is_fundamental
+template <class _Tp> struct _LIBCPP_VISIBLE is_fundamental
     : public integral_constant<bool, is_void<_Tp>::value      ||
                                      is_arithmetic<_Tp>::value> {};
 
 // is_scalar
 
-template <class _Tp> struct is_scalar
+template <class _Tp> struct _LIBCPP_VISIBLE is_scalar
     : public integral_constant<bool, is_arithmetic<_Tp>::value     ||
                                      is_member_pointer<_Tp>::value ||
                                      is_pointer<_Tp>::value        ||
@@ -389,7 +401,7 @@ template <class _Tp> struct is_scalar
 
 // is_object
 
-template <class _Tp> struct is_object
+template <class _Tp> struct _LIBCPP_VISIBLE is_object
     : public integral_constant<bool, is_scalar<_Tp>::value ||
                                      is_array<_Tp>::value  ||
                                      is_union<_Tp>::value  ||
@@ -397,7 +409,8 @@ template <class _Tp> struct is_object
 
 // is_compound
 
-template <class _Tp> struct is_compound : public integral_constant<bool, !is_fundamental<_Tp>::value> {};
+template <class _Tp> struct _LIBCPP_VISIBLE is_compound
+    : public integral_constant<bool, !is_fundamental<_Tp>::value> {};
 
 // add_const
 
@@ -409,7 +422,8 @@ struct __add_const             {typedef _Tp type;};
 template <class _Tp>
 struct __add_const<_Tp, false> {typedef const _Tp type;};
 
-template <class _Tp> struct add_const {typedef typename __add_const<_Tp>::type type;};
+template <class _Tp> struct _LIBCPP_VISIBLE add_const
+    {typedef typename __add_const<_Tp>::type type;};
 
 // add_volatile
 
@@ -421,36 +435,38 @@ struct __add_volatile             {typedef _Tp type;};
 template <class _Tp>
 struct __add_volatile<_Tp, false> {typedef volatile _Tp type;};
 
-template <class _Tp> struct add_volatile {typedef typename __add_volatile<_Tp>::type type;};
+template <class _Tp> struct _LIBCPP_VISIBLE add_volatile
+    {typedef typename __add_volatile<_Tp>::type type;};
 
 // add_cv
 
-template <class _Tp> struct add_cv {typedef typename add_const<typename add_volatile<_Tp>::type>::type type;};
+template <class _Tp> struct _LIBCPP_VISIBLE add_cv
+    {typedef typename add_const<typename add_volatile<_Tp>::type>::type type;};
 
 // remove_reference
 
-template <class _Tp> struct remove_reference        {typedef _Tp type;};
-template <class _Tp> struct remove_reference<_Tp&>  {typedef _Tp type;};
+template <class _Tp> struct _LIBCPP_VISIBLE remove_reference        {typedef _Tp type;};
+template <class _Tp> struct _LIBCPP_VISIBLE remove_reference<_Tp&>  {typedef _Tp type;};
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
-template <class _Tp> struct remove_reference<_Tp&&> {typedef _Tp type;};
+template <class _Tp> struct _LIBCPP_VISIBLE remove_reference<_Tp&&> {typedef _Tp type;};
 #endif
 
 // add_lvalue_reference
 
-template <class _Tp> struct add_lvalue_reference                      {typedef _Tp& type;};
-template <class _Tp> struct add_lvalue_reference<_Tp&>                {typedef _Tp& type;};  // for older compiler
-template <>          struct add_lvalue_reference<void>                {typedef void type;};
-template <>          struct add_lvalue_reference<const void>          {typedef const void type;};
-template <>          struct add_lvalue_reference<volatile void>       {typedef volatile void type;};
-template <>          struct add_lvalue_reference<const volatile void> {typedef const volatile void type;};
+template <class _Tp> struct _LIBCPP_VISIBLE add_lvalue_reference                      {typedef _Tp& type;};
+template <class _Tp> struct _LIBCPP_VISIBLE add_lvalue_reference<_Tp&>                {typedef _Tp& type;};  // for older compiler
+template <>          struct _LIBCPP_VISIBLE add_lvalue_reference<void>                {typedef void type;};
+template <>          struct _LIBCPP_VISIBLE add_lvalue_reference<const void>          {typedef const void type;};
+template <>          struct _LIBCPP_VISIBLE add_lvalue_reference<volatile void>       {typedef volatile void type;};
+template <>          struct _LIBCPP_VISIBLE add_lvalue_reference<const volatile void> {typedef const volatile void type;};
 
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
-template <class _Tp> struct add_rvalue_reference                      {typedef _Tp&& type;};
-template <>          struct add_rvalue_reference<void>                {typedef void type;};
-template <>          struct add_rvalue_reference<const void>          {typedef const void type;};
-template <>          struct add_rvalue_reference<volatile void>       {typedef volatile void type;};
-template <>          struct add_rvalue_reference<const volatile void> {typedef const volatile void type;};
+template <class _Tp> struct _LIBCPP_VISIBLE  add_rvalue_reference                     {typedef _Tp&& type;};
+template <>          struct _LIBCPP_VISIBLE add_rvalue_reference<void>                {typedef void type;};
+template <>          struct _LIBCPP_VISIBLE add_rvalue_reference<const void>          {typedef const void type;};
+template <>          struct _LIBCPP_VISIBLE add_rvalue_reference<volatile void>       {typedef volatile void type;};
+template <>          struct _LIBCPP_VISIBLE add_rvalue_reference<const volatile void> {typedef const volatile void type;};
 
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
@@ -475,15 +491,16 @@ struct __any
 
 // remove_pointer
 
-template <class _Tp> struct remove_pointer                      {typedef _Tp type;};
-template <class _Tp> struct remove_pointer<_Tp*>                {typedef _Tp type;};
-template <class _Tp> struct remove_pointer<_Tp* const>          {typedef _Tp type;};
-template <class _Tp> struct remove_pointer<_Tp* volatile>       {typedef _Tp type;};
-template <class _Tp> struct remove_pointer<_Tp* const volatile> {typedef _Tp type;};
+template <class _Tp> struct _LIBCPP_VISIBLE remove_pointer                      {typedef _Tp type;};
+template <class _Tp> struct _LIBCPP_VISIBLE remove_pointer<_Tp*>                {typedef _Tp type;};
+template <class _Tp> struct _LIBCPP_VISIBLE remove_pointer<_Tp* const>          {typedef _Tp type;};
+template <class _Tp> struct _LIBCPP_VISIBLE remove_pointer<_Tp* volatile>       {typedef _Tp type;};
+template <class _Tp> struct _LIBCPP_VISIBLE remove_pointer<_Tp* const volatile> {typedef _Tp type;};
 
 // add_pointer
 
-template <class _Tp> struct add_pointer {typedef typename remove_reference<_Tp>::type* type;};
+template <class _Tp> struct _LIBCPP_VISIBLE add_pointer
+    {typedef typename remove_reference<_Tp>::type* type;};
 
 // is_signed
 
@@ -498,7 +515,7 @@ struct __is_signed : public ___is_signed<_Tp> {};
 
 template <class _Tp> struct __is_signed<_Tp, false> : public false_type {};
 
-template <class _Tp> struct is_signed : public __is_signed<_Tp> {};
+template <class _Tp> struct _LIBCPP_VISIBLE is_signed : public __is_signed<_Tp> {};
 
 // is_unsigned
 
@@ -513,38 +530,52 @@ struct __is_unsigned : public ___is_unsigned<_Tp> {};
 
 template <class _Tp> struct __is_unsigned<_Tp, false> : public false_type {};
 
-template <class _Tp> struct is_unsigned : public __is_unsigned<_Tp> {};
+template <class _Tp> struct _LIBCPP_VISIBLE is_unsigned : public __is_unsigned<_Tp> {};
 
 // rank
 
-template <class _Tp> struct rank                       : public integral_constant<size_t, 0> {};
-template <class _Tp> struct rank<_Tp[]>                : public integral_constant<size_t, rank<_Tp>::value + 1> {};
-template <class _Tp, size_t _Np> struct rank<_Tp[_Np]> : public integral_constant<size_t, rank<_Tp>::value + 1> {};
+template <class _Tp> struct _LIBCPP_VISIBLE rank
+    : public integral_constant<size_t, 0> {};
+template <class _Tp> struct _LIBCPP_VISIBLE rank<_Tp[]>
+    : public integral_constant<size_t, rank<_Tp>::value + 1> {};
+template <class _Tp, size_t _Np> struct _LIBCPP_VISIBLE rank<_Tp[_Np]>
+    : public integral_constant<size_t, rank<_Tp>::value + 1> {};
 
 // extent
 
-template <class _Tp, unsigned _Ip = 0>         struct extent                : public integral_constant<size_t, 0> {};
-template <class _Tp>                           struct extent<_Tp[], 0>      : public integral_constant<size_t, 0> {};
-template <class _Tp, unsigned _Ip>             struct extent<_Tp[], _Ip>    : public integral_constant<size_t, extent<_Tp, _Ip-1>::value> {};
-template <class _Tp, size_t _Np>               struct extent<_Tp[_Np], 0>   : public integral_constant<size_t, _Np> {};
-template <class _Tp, size_t _Np, unsigned _Ip> struct extent<_Tp[_Np], _Ip> : public integral_constant<size_t, extent<_Tp, _Ip-1>::value> {};
+template <class _Tp, unsigned _Ip = 0> struct _LIBCPP_VISIBLE extent
+    : public integral_constant<size_t, 0> {};
+template <class _Tp> struct _LIBCPP_VISIBLE extent<_Tp[], 0>
+    : public integral_constant<size_t, 0> {};
+template <class _Tp, unsigned _Ip> struct _LIBCPP_VISIBLE extent<_Tp[], _Ip>
+    : public integral_constant<size_t, extent<_Tp, _Ip-1>::value> {};
+template <class _Tp, size_t _Np> struct _LIBCPP_VISIBLE extent<_Tp[_Np], 0>
+    : public integral_constant<size_t, _Np> {};
+template <class _Tp, size_t _Np, unsigned _Ip> struct _LIBCPP_VISIBLE extent<_Tp[_Np], _Ip>
+    : public integral_constant<size_t, extent<_Tp, _Ip-1>::value> {};
 
 // remove_extent
 
-template <class _Tp>             struct remove_extent           {typedef _Tp type;};
-template <class _Tp>             struct remove_extent<_Tp[]>    {typedef _Tp type;};
-template <class _Tp, size_t _Np> struct remove_extent<_Tp[_Np]> {typedef _Tp type;};
+template <class _Tp> struct _LIBCPP_VISIBLE remove_extent
+    {typedef _Tp type;};
+template <class _Tp> struct _LIBCPP_VISIBLE remove_extent<_Tp[]>
+    {typedef _Tp type;};
+template <class _Tp, size_t _Np> struct _LIBCPP_VISIBLE remove_extent<_Tp[_Np]>
+    {typedef _Tp type;};
 
 // remove_all_extents
 
-template <class _Tp>             struct remove_all_extents           {typedef _Tp type;};
-template <class _Tp>             struct remove_all_extents<_Tp[]>    {typedef typename remove_all_extents<_Tp>::type type;};
-template <class _Tp, size_t _Np> struct remove_all_extents<_Tp[_Np]> {typedef typename remove_all_extents<_Tp>::type type;};
+template <class _Tp> struct _LIBCPP_VISIBLE remove_all_extents
+    {typedef _Tp type;};
+template <class _Tp> struct _LIBCPP_VISIBLE remove_all_extents<_Tp[]>
+    {typedef typename remove_all_extents<_Tp>::type type;};
+template <class _Tp, size_t _Np> struct _LIBCPP_VISIBLE remove_all_extents<_Tp[_Np]>
+    {typedef typename remove_all_extents<_Tp>::type type;};
 
 // is_same
 
-template <class _Tp, class _Up> struct is_same           : public false_type {};
-template <class _Tp>            struct is_same<_Tp, _Tp> : public true_type {};
+template <class _Tp, class _Up> struct _LIBCPP_VISIBLE is_same           : public false_type {};
+template <class _Tp>            struct _LIBCPP_VISIBLE is_same<_Tp, _Tp> : public true_type {};
 
 // is_abstract
 
@@ -559,7 +590,7 @@ struct __libcpp_abstract : public integral_constant<bool, sizeof(__is_abstract_i
 
 template <class _Tp> struct __libcpp_abstract<_Tp, false> : public false_type {};
 
-template <class _Tp> struct is_abstract : public __libcpp_abstract<_Tp> {};
+template <class _Tp> struct _LIBCPP_VISIBLE is_abstract : public __libcpp_abstract<_Tp> {};
 
 // is_convertible
 
@@ -656,7 +687,8 @@ template <class _T1, class _T2> struct __is_convertible<_T1, _T2, 1, 3> : public
 template <class _T1, class _T2> struct __is_convertible<_T1, _T2, 2, 3> : public false_type {};
 template <class _T1, class _T2> struct __is_convertible<_T1, _T2, 3, 3> : public true_type {};
 
-template <class _T1, class _T2> struct is_convertible : public __is_convertible<_T1, _T2>
+template <class _T1, class _T2> struct _LIBCPP_VISIBLE is_convertible
+    : public __is_convertible<_T1, _T2>
 {
     static const size_t __complete_check1 = __is_convertible_check<_T1>::__v;
     static const size_t __complete_check2 = __is_convertible_check<_T2>::__v;
@@ -705,7 +737,7 @@ struct __libcpp_base_of<_Bp, _Dp, true, true, false>
     : public integral_constant<bool, __is_base_of_imp<_Bp, _Dp>::value> {};
 
 template <class _Bp, class _Dp>
-struct is_base_of
+struct _LIBCPP_VISIBLE is_base_of
     : public __libcpp_base_of<typename remove_cv<_Bp>::type, typename remove_cv<_Dp>::type>
 {
 };
@@ -729,7 +761,7 @@ struct __libcpp_empty : public integral_constant<bool, sizeof(__is_empty1<_Tp>) 
 
 template <class _Tp> struct __libcpp_empty<_Tp, false> : public false_type {};
 
-template <class _Tp> struct is_empty : public __libcpp_empty<_Tp> {};
+template <class _Tp> struct _LIBCPP_VISIBLE is_empty : public __libcpp_empty<_Tp> {};
 
 // is_polymorphic
 
@@ -742,13 +774,14 @@ struct __libcpp_polymorphic
 
 template <class _Tp> struct __libcpp_polymorphic<_Tp, false> : public false_type {};
 
-template <class _Tp> struct is_polymorphic : public __libcpp_polymorphic<_Tp> {};
+template <class _Tp> struct _LIBCPP_VISIBLE is_polymorphic
+    : public __libcpp_polymorphic<_Tp> {};
 
 // has_trivial_default_constructor
 
 #ifdef _LIBCPP_HAS_TYPE_TRAITS
 
-template <class _Tp> struct has_trivial_default_constructor
+template <class _Tp> struct _LIBCPP_VISIBLE has_trivial_default_constructor
     : public integral_constant<bool, __has_trivial_constructor(_Tp)> {};
 
 #else  // _LIBCPP_HAS_TYPE_TRAITS
@@ -756,7 +789,7 @@ template <class _Tp> struct has_trivial_default_constructor
 template <class _Tp> struct __has_trivial_default_constructor
     : public integral_constant<bool, is_scalar<_Tp>::value> {};
 
-template <class _Tp> struct has_trivial_default_constructor
+template <class _Tp> struct _LIBCPP_VISIBLE has_trivial_default_constructor
     : public __has_trivial_default_constructor<typename remove_all_extents<_Tp>::type> {};
 
 #endif  // _LIBCPP_HAS_TYPE_TRAITS
@@ -765,12 +798,12 @@ template <class _Tp> struct has_trivial_default_constructor
 
 #ifdef _LIBCPP_HAS_TYPE_TRAITS
 
-template <class _Tp> struct has_nothrow_default_constructor
+template <class _Tp> struct _LIBCPP_VISIBLE has_nothrow_default_constructor
     : public integral_constant<bool, __has_nothrow_constructor(_Tp)> {};
 
 #else  // _LIBCPP_HAS_TYPE_TRAITS
 
-template <class _Tp> struct has_nothrow_default_constructor
+template <class _Tp> struct _LIBCPP_VISIBLE has_nothrow_default_constructor
     : public has_trivial_default_constructor<_Tp> {};
 
 #endif  // _LIBCPP_HAS_TYPE_TRAITS
@@ -779,12 +812,12 @@ template <class _Tp> struct has_nothrow_default_constructor
 
 #ifdef _LIBCPP_HAS_TYPE_TRAITS
 
-template <class _Tp> struct has_trivial_copy_constructor
+template <class _Tp> struct _LIBCPP_VISIBLE has_trivial_copy_constructor
     : public integral_constant<bool, __has_trivial_copy(_Tp)> {};
 
 #else  // _LIBCPP_HAS_TYPE_TRAITS
 
-template <class _Tp> struct has_trivial_copy_constructor
+template <class _Tp> struct _LIBCPP_VISIBLE has_trivial_copy_constructor
     : public integral_constant<bool, is_scalar<_Tp>::value ||
                                      is_reference<_Tp>::value> {};
 
@@ -794,30 +827,31 @@ template <class _Tp> struct has_trivial_copy_constructor
 
 #ifdef _LIBCPP_HAS_TYPE_TRAITS
 
-template <class _Tp> struct has_nothrow_copy_constructor
+template <class _Tp> struct _LIBCPP_VISIBLE has_nothrow_copy_constructor
     : public integral_constant<bool, __has_nothrow_copy(_Tp)> {};
 
 #else  // _LIBCPP_HAS_TYPE_TRAITS
 
-template <class _Tp> struct has_nothrow_copy_constructor
+template <class _Tp> struct _LIBCPP_VISIBLE has_nothrow_copy_constructor
     : public has_trivial_copy_constructor<_Tp> {};
 
 #endif  // _LIBCPP_HAS_TYPE_TRAITS
 
 // has_nothrow_move_constructor
 
-template <class _Tp> struct has_nothrow_move_constructor : public has_nothrow_copy_constructor<_Tp> {};
+template <class _Tp> struct _LIBCPP_VISIBLE has_nothrow_move_constructor
+    : public has_nothrow_copy_constructor<_Tp> {};
 
 // has_trivial_copy_assign
 
 #ifdef _LIBCPP_HAS_TYPE_TRAITS
 
-template <class _Tp> struct has_trivial_copy_assign
+template <class _Tp> struct _LIBCPP_VISIBLE has_trivial_copy_assign
     : public integral_constant<bool, __has_trivial_assign(_Tp)> {};
 
 #else  // _LIBCPP_HAS_TYPE_TRAITS
 
-template <class _Tp> struct has_trivial_copy_assign
+template <class _Tp> struct _LIBCPP_VISIBLE has_trivial_copy_assign
     : public integral_constant<bool, is_scalar<_Tp>::value &&
                                     !is_const<_Tp>::value> {};
 
@@ -827,12 +861,12 @@ template <class _Tp> struct has_trivial_copy_assign
 
 #ifdef _LIBCPP_HAS_TYPE_TRAITS
 
-template <class _Tp> struct has_nothrow_copy_assign
+template <class _Tp> struct _LIBCPP_VISIBLE has_nothrow_copy_assign
     : public integral_constant<bool, __has_nothrow_assign(_Tp)> {};
 
 #else  // _LIBCPP_HAS_TYPE_TRAITS
 
-template <class _Tp> struct has_nothrow_copy_assign
+template <class _Tp> struct _LIBCPP_VISIBLE has_nothrow_copy_assign
     : public has_trivial_copy_assign<_Tp> {};
 
 #endif  // _LIBCPP_HAS_TYPE_TRAITS
@@ -841,7 +875,7 @@ template <class _Tp> struct has_nothrow_copy_assign
 
 #ifdef _LIBCPP_HAS_TYPE_TRAITS
 
-template <class _Tp> struct has_trivial_destructor
+template <class _Tp> struct _LIBCPP_VISIBLE has_trivial_destructor
     : public integral_constant<bool, __has_trivial_destructor(_Tp)> {};
 
 #else  // _LIBCPP_HAS_TYPE_TRAITS
@@ -850,7 +884,7 @@ template <class _Tp> struct __libcpp_trivial_destructor
     : public integral_constant<bool, is_scalar<_Tp>::value ||
                                      is_reference<_Tp>::value> {};
 
-template <class _Tp> struct has_trivial_destructor
+template <class _Tp> struct _LIBCPP_VISIBLE has_trivial_destructor
     : public __libcpp_trivial_destructor<typename remove_all_extents<_Tp>::type> {};
 
 #endif  // _LIBCPP_HAS_TYPE_TRAITS
@@ -859,12 +893,13 @@ template <class _Tp> struct has_trivial_destructor
 
 #ifdef _LIBCPP_HAS_TYPE_TRAITS
 
-template <class _Tp> struct has_virtual_destructor
+template <class _Tp> struct _LIBCPP_VISIBLE has_virtual_destructor
     : public integral_constant<bool, __has_virtual_destructor(_Tp)> {};
 
 #else  // _LIBCPP_HAS_TYPE_TRAITS
 
-template <class _Tp> struct has_virtual_destructor : public false_type {};
+template <class _Tp> struct _LIBCPP_VISIBLE has_virtual_destructor
+    : public false_type {};
 
 #endif  // _LIBCPP_HAS_TYPE_TRAITS
 
@@ -872,15 +907,16 @@ template <class _Tp> struct has_virtual_destructor : public false_type {};
 
 #ifdef _LIBCPP_HAS_TYPE_TRAITS
 
-template <class _Tp> struct is_pod
+template <class _Tp> struct _LIBCPP_VISIBLE is_pod
     : public integral_constant<bool, __is_pod(_Tp)> {};
 
 #else  // _LIBCPP_HAS_TYPE_TRAITS
 
-template <class _Tp> struct is_pod : public integral_constant<bool, has_trivial_default_constructor<_Tp>::value   &&
-                                                                    has_trivial_copy_constructor<_Tp>::value      &&
-                                                                    has_trivial_copy_assign<_Tp>::value    &&
-                                                                    has_trivial_destructor<_Tp>::value> {};
+template <class _Tp> struct _LIBCPP_VISIBLE is_pod
+    : public integral_constant<bool, has_trivial_default_constructor<_Tp>::value   &&
+                                     has_trivial_copy_constructor<_Tp>::value      &&
+                                     has_trivial_copy_assign<_Tp>::value    &&
+                                     has_trivial_destructor<_Tp>::value> {};
 
 #endif  // _LIBCPP_HAS_TYPE_TRAITS
 
@@ -888,7 +924,7 @@ template <class _Tp> struct is_pod : public integral_constant<bool, has_trivial_
 
 template <class _Tp> struct __alignment_of {_Tp _;};
 
-template <class _Tp> struct alignment_of
+template <class _Tp> struct _LIBCPP_VISIBLE alignment_of
     : public integral_constant<size_t, __alignof__(__alignment_of<typename remove_all_extents<_Tp>::type>)> {};
 
 // aligned_storage
@@ -968,7 +1004,7 @@ struct __find_max_align<__type_list<_Hp, _Tp>, _Len>
     : public integral_constant<size_t, __select_align<_Len, _Hp::value, __find_max_align<_Tp, _Len>::value>::value> {};
 
 template <size_t _Len, const size_t _Align = __find_max_align<__all_types, _Len>::value>
-struct aligned_storage
+struct _LIBCPP_VISIBLE aligned_storage
 {
     typedef typename __find_pod<__all_types, _Align>::type _Aligner;
     static_assert(!is_void<_Aligner>::value, "");
@@ -981,7 +1017,7 @@ struct aligned_storage
 
 #define _CREATE_ALIGNED_STORAGE_SPECIALIZATION(n) \
 template <size_t _Len>\
-struct aligned_storage<_Len, n>\
+struct __attribute__ ((__visibility__("default"))) aligned_storage<_Len, n>\
 {\
     struct type\
     {\
@@ -1161,7 +1197,7 @@ template <> struct __make_signed<  signed long long, true> {typedef long long ty
 template <> struct __make_signed<unsigned long long, true> {typedef long long type;};
 
 template <class _Tp>
-struct make_signed
+struct _LIBCPP_VISIBLE make_signed
 {
     typedef typename __apply_cv<_Tp, typename __make_signed<typename remove_cv<_Tp>::type>::type>::type type;
 };
@@ -1186,7 +1222,7 @@ template <> struct __make_unsigned<  signed long long, true> {typedef unsigned l
 template <> struct __make_unsigned<unsigned long long, true> {typedef unsigned long long type;};
 
 template <class _Tp>
-struct make_unsigned
+struct _LIBCPP_VISIBLE make_unsigned
 {
     typedef typename __apply_cv<_Tp, typename __make_unsigned<typename remove_cv<_Tp>::type>::type>::type type;
 };
@@ -1194,21 +1230,21 @@ struct make_unsigned
 #ifdef _LIBCPP_HAS_NO_VARIADICS
 
 template <class _Tp, class _Up = void, class V = void>
-struct common_type
+struct _LIBCPP_VISIBLE common_type
 {
 public:
     typedef typename common_type<typename common_type<_Tp, _Up>::type, V>::type type;
 };
 
 template <class _Tp>
-struct common_type<_Tp, void, void>
+struct _LIBCPP_VISIBLE common_type<_Tp, void, void>
 {
 public:
     typedef _Tp type;
 };
 
 template <class _Tp, class _Up>
-struct common_type<_Tp, _Up, void>
+struct _LIBCPP_VISIBLE common_type<_Tp, _Up, void>
 {
 private:
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
@@ -1228,13 +1264,13 @@ public:
 template <class ..._Tp> struct common_type;
 
 template <class _Tp>
-struct common_type<_Tp>
+struct _LIBCPP_VISIBLE common_type<_Tp>
 {
     typedef _Tp type;
 };
 
 template <class _Tp, class _Up>
-struct common_type<_Tp, _Up>
+struct _LIBCPP_VISIBLE common_type<_Tp, _Up>
 {
 private:
     static _Tp&& __t();
@@ -1245,7 +1281,7 @@ public:
 };
 
 template <class _Tp, class _Up, class ..._Vp>
-struct common_type<_Tp, _Up, _Vp...>
+struct _LIBCPP_VISIBLE common_type<_Tp, _Up, _Vp...>
 {
     typedef typename common_type<typename common_type<_Tp, _Up>::type, _Vp...>::type type;
 };
@@ -1281,13 +1317,13 @@ struct __is_assignable
 
 // has_copy_assign
 
-template <class _Tp> struct has_copy_assign
+template <class _Tp> struct _LIBCPP_VISIBLE has_copy_assign
     : public __is_assignable<_Tp&, const _Tp&> {};
 
-template <class _Tp> struct has_copy_assign<_Tp[]>
+template <class _Tp> struct _LIBCPP_VISIBLE has_copy_assign<_Tp[]>
     : public false_type {};
 
-template <class _Tp> struct has_copy_assign<_Tp&>
+template <class _Tp> struct _LIBCPP_VISIBLE has_copy_assign<_Tp&>
     : public false_type {};
 
 // move
@@ -1378,12 +1414,14 @@ class __rv
     typedef typename remove_reference<_Tp>::type _Trr;
     _Trr& t_;
 public:
+    _LIBCPP_INLINE_VISIBILITY
     _Trr* operator->() {return &t_;}
+    _LIBCPP_INLINE_VISIBILITY
     explicit __rv(_Trr& __t) : t_(__t) {}
 };
 
 template <class _Tp>
-inline
+inline _LIBCPP_INLINE_VISIBILITY
 typename enable_if
 <
     !is_convertible<_Tp, __rv<_Tp> >::value,
@@ -1395,7 +1433,7 @@ move(_Tp& __t)
 }
 
 template <class _Tp>
-inline
+inline _LIBCPP_INLINE_VISIBILITY
 typename enable_if
 <
     is_convertible<_Tp, __rv<_Tp> >::value,
@@ -1407,7 +1445,7 @@ move(_Tp& __t)
 }
 
 template <class _Tp, class _Up>
-inline
+inline _LIBCPP_INLINE_VISIBILITY
 typename enable_if
 <
     !is_convertible<_Tp, __rv<_Tp> >::value,
@@ -1419,7 +1457,7 @@ forward(_Up& __t)
 }
 
 template <class _Tp, class _Up>
-inline
+inline _LIBCPP_INLINE_VISIBILITY
 typename enable_if
 <
     !is_convertible<_Tp, __rv<_Tp> >::value,
@@ -1431,7 +1469,7 @@ forward(const _Up& __t)
 }
 
 template <class _Tp, class _Up>
-inline
+inline _LIBCPP_INLINE_VISIBILITY
 typename enable_if
 <
     is_convertible<_Tp, __rv<_Tp> >::value,
@@ -1443,7 +1481,7 @@ forward(_Up& __t)
 }
 
 template <class _Tp, class _Up>
-inline
+inline _LIBCPP_INLINE_VISIBILITY
 typename enable_if
 <
     is_convertible<_Tp, __rv<_Tp> >::value,
@@ -1457,7 +1495,7 @@ forward(const _Up& __t)
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 template <class _Tp>
-struct decay
+struct _LIBCPP_VISIBLE decay
 {
 private:
     typedef typename remove_reference<_Tp>::type _Up;
@@ -1559,7 +1597,7 @@ class __result_of<_Fn(_Tp, _ArgTypes...), false>  // _Fn must be member pointer
 // result_of
 
 template <class _Fn, class ..._ArgTypes>
-class result_of<_Fn(_ArgTypes...)>
+class _LIBCPP_VISIBLE result_of<_Fn(_ArgTypes...)>
     : public __result_of<_Fn(_ArgTypes...),
                          is_class<typename remove_reference<_Fn>::type>::value ||
                          is_function<typename remove_pointer<
@@ -1601,7 +1639,7 @@ public:
 };
 
 template <class _Fn>
-class result_of<_Fn()>
+class _LIBCPP_VISIBLE result_of<_Fn()>
     : public __result_of<_Fn(),
                          is_class<typename remove_reference<_Fn>::type>::value ||
                          is_function<typename remove_pointer<
@@ -1613,7 +1651,7 @@ class result_of<_Fn()>
 };
 
 template <class _Fn, class _A0>
-class result_of<_Fn(_A0)>
+class _LIBCPP_VISIBLE result_of<_Fn(_A0)>
     : public __result_of<_Fn(_A0),
                          is_class<typename remove_reference<_Fn>::type>::value ||
                          is_function<typename remove_pointer<
@@ -1625,7 +1663,7 @@ class result_of<_Fn(_A0)>
 };
 
 template <class _Fn, class _A0, class _A1>
-class result_of<_Fn(_A0, _A1)>
+class _LIBCPP_VISIBLE result_of<_Fn(_A0, _A1)>
     : public __result_of<_Fn(_A0, _A1),
                          is_class<typename remove_reference<_Fn>::type>::value ||
                          is_function<typename remove_pointer<
@@ -1637,7 +1675,7 @@ class result_of<_Fn(_A0, _A1)>
 };
 
 template <class _Fn, class _A0, class _A1, class _A2>
-class result_of<_Fn(_A0, _A1, _A2)>
+class _LIBCPP_VISIBLE result_of<_Fn(_A0, _A1, _A2)>
     : public __result_of<_Fn(_A0, _A1, _A2),
                          is_class<typename remove_reference<_Fn>::type>::value ||
                          is_function<typename remove_pointer<
@@ -1742,7 +1780,7 @@ struct __contains_void<_A0, _Args...>
 //      is_constructible entry point
 
 template <class _Tp, class... _Args>
-struct is_constructible
+struct _LIBCPP_VISIBLE is_constructible
     : public __is_constructible_void_check<__contains_void<_Tp, _Args...>::value
                                         || is_abstract<_Tp>::value,
                                            _Tp, _Args...>
@@ -1771,7 +1809,7 @@ struct __is_constructible<false, _A[], _Args...>
     {};
 
 template <class _Tp>
-struct has_default_constructor
+struct _LIBCPP_VISIBLE has_default_constructor
     : public is_constructible<_Tp>
     {};
 
@@ -1823,7 +1861,7 @@ struct __is_constructible0_void_check<true, _Tp>
 //      has_default_constructor entry point
 
 template <class _Tp>
-struct has_default_constructor
+struct _LIBCPP_VISIBLE has_default_constructor
     : public __is_constructible0_void_check<is_void<_Tp>::value
                                         || is_abstract<_Tp>::value,
                                            _Tp>
@@ -1851,14 +1889,14 @@ struct __is_constructible0_imp<false, _A[]>
 #ifndef _LIBCPP_HAS_NO_ADVANCED_SFINAE
 
 template <class _Tp>
-struct has_copy_constructor
+struct _LIBCPP_VISIBLE has_copy_constructor
     : public is_constructible<_Tp, typename add_lvalue_reference<const _Tp>::type>
     {};
 
 #else  // _LIBCPP_HAS_NO_ADVANCED_SFINAE
 
 template <class _Tp>
-struct has_copy_constructor
+struct _LIBCPP_VISIBLE has_copy_constructor
     : public has_nothrow_copy_constructor<_Tp>
     {};
 

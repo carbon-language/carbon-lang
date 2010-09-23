@@ -330,18 +330,22 @@ protected:
         void __destruct_at_end(const_pointer __new_last, false_type);
         void __destruct_at_end(const_pointer __new_last, true_type);
 
+    _LIBCPP_INLINE_VISIBILITY
     void __copy_assign_alloc(const __vector_base& __c)
         {__copy_assign_alloc(__c, integral_constant<bool,
                       __alloc_traits::propagate_on_container_copy_assignment::value>());}
 
+    _LIBCPP_INLINE_VISIBILITY
     void __move_assign_alloc(__vector_base& __c)
         {__move_assign_alloc(__c, integral_constant<bool,
                       __alloc_traits::propagate_on_container_move_assignment::value>());}
 
+    _LIBCPP_INLINE_VISIBILITY
     static void __swap_alloc(allocator_type& __x, allocator_type& __y)
         {__swap_alloc(__x, __y, integral_constant<bool,
                       __alloc_traits::propagate_on_container_swap::value>());}
 private:
+    _LIBCPP_INLINE_VISIBILITY
     void __copy_assign_alloc(const __vector_base& __c, true_type)
         {
             if (__alloc() != __c.__alloc())
@@ -353,22 +357,27 @@ private:
             __alloc() = __c.__alloc();
         }
 
+    _LIBCPP_INLINE_VISIBILITY
     void __copy_assign_alloc(const __vector_base& __c, false_type)
         {}
 
+    _LIBCPP_INLINE_VISIBILITY
     void __move_assign_alloc(const __vector_base& __c, true_type)
         {
             __alloc() = _STD::move(__c.__alloc());
         }
 
+    _LIBCPP_INLINE_VISIBILITY
     void __move_assign_alloc(const __vector_base& __c, false_type)
         {}
 
+    _LIBCPP_INLINE_VISIBILITY
     static void __swap_alloc(allocator_type& __x, allocator_type& __y, true_type)
         {
             using _STD::swap;
             swap(__x, __y);
         }
+    _LIBCPP_INLINE_VISIBILITY
     static void __swap_alloc(allocator_type& __x, allocator_type& __y, false_type)
         {}
 };
@@ -478,6 +487,7 @@ public:
     vector(initializer_list<value_type> __il);
     vector(initializer_list<value_type> __il, const allocator_type& __a);
 #ifdef _LIBCPP_DEBUG
+    _LIBCPP_INLINE_VISIBILITY
     ~vector() {__invalidate_all_iterators();}
 #endif
 
@@ -489,6 +499,7 @@ public:
     vector(vector&& __x, const allocator_type& __a);
     vector& operator=(vector&& __x);
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
+    _LIBCPP_INLINE_VISIBILITY
     vector& operator=(initializer_list<value_type> __il)
         {assign(__il.begin(), __il.end()); return *this;}
 
@@ -509,6 +520,7 @@ public:
         assign(_ForwardIterator __first, _ForwardIterator __last);
 
     void assign(size_type __n, const_reference __u);
+    _LIBCPP_INLINE_VISIBILITY
     void assign(initializer_list<value_type> __il)
         {assign(__il.begin(), __il.end());}
 
@@ -585,6 +597,7 @@ public:
             iterator
         >::type
         insert(const_iterator __position, _ForwardIterator __first, _ForwardIterator __last);
+    _LIBCPP_INLINE_VISIBILITY
     iterator insert(const_iterator __position, initializer_list<value_type> __il)
         {return insert(__position, __il.begin(), __il.end());}
 
@@ -1776,6 +1789,7 @@ public:
     vector(vector&& __v, const allocator_type& __a);
     vector& operator=(vector&& __v);
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
+    _LIBCPP_INLINE_VISIBILITY
     vector& operator=(initializer_list<value_type> __il)
         {assign(__il.begin(), __il.end()); return *this;}
 
@@ -1796,6 +1810,7 @@ public:
         assign(_ForwardIterator __first, _ForwardIterator __last);
 
     void assign(size_type __n, const value_type& __x);
+    _LIBCPP_INLINE_VISIBILITY
     void assign(initializer_list<value_type> __il)
         {assign(__il.begin(), __il.end());}
 
@@ -1855,6 +1870,7 @@ public:
             iterator
         >::type
         insert(const_iterator __position, _ForwardIterator __first, _ForwardIterator __last);
+    _LIBCPP_INLINE_VISIBILITY
     iterator insert(const_iterator __position, initializer_list<value_type> __il)
         {return insert(__position, __il.begin(), __il.end());}
 
@@ -1906,9 +1922,11 @@ private:
         {return iterator(const_cast<__storage_pointer>(__p.__seg_), __p.__ctz_);}
 #endif  // _LIBCPP_DEBUG
 
+    _LIBCPP_INLINE_VISIBILITY
     void __copy_assign_alloc(const vector& __v)
         {__copy_assign_alloc(__v, integral_constant<bool,
                       __storage_traits::propagate_on_container_copy_assignment::value>());}
+    _LIBCPP_INLINE_VISIBILITY
     void __copy_assign_alloc(const vector& __c, true_type)
         {
             if (__alloc() != __c.__alloc())
@@ -1916,31 +1934,38 @@ private:
             __alloc() = __c.__alloc();
         }
 
+    _LIBCPP_INLINE_VISIBILITY
     void __copy_assign_alloc(const vector& __c, false_type)
         {}
 
     void __move_assign(vector& __c, false_type);
     void __move_assign(vector& __c, true_type);
+    _LIBCPP_INLINE_VISIBILITY
     void __move_assign_alloc(vector& __c)
         {__move_assign_alloc(__c, integral_constant<bool,
                       __storage_traits::propagate_on_container_move_assignment::value>());}
+    _LIBCPP_INLINE_VISIBILITY
     void __move_assign_alloc(const vector& __c, true_type)
         {
             __alloc() = _STD::move(__c.__alloc());
         }
 
+    _LIBCPP_INLINE_VISIBILITY
     void __move_assign_alloc(const vector& __c, false_type)
         {}
 
+    _LIBCPP_INLINE_VISIBILITY
     static void __swap_alloc(__storage_allocator& __x, __storage_allocator& __y)
         {__swap_alloc(__x, __y, integral_constant<bool,
                       __storage_traits::propagate_on_container_swap::value>());}
 
+    _LIBCPP_INLINE_VISIBILITY
     static void __swap_alloc(__storage_allocator& __x, __storage_allocator& __y, true_type)
         {
             using _STD::swap;
             swap(__x, __y);
         }
+    _LIBCPP_INLINE_VISIBILITY
     static void __swap_alloc(__storage_allocator& __x, __storage_allocator& __y, false_type)
         {}
 
@@ -1951,7 +1976,7 @@ private:
     friend class __bit_iterator<vector, false>;
     friend class __bit_iterator<vector, true>;
     friend class __bit_array<vector>;
-    friend struct hash<vector>;
+    friend struct _LIBCPP_VISIBLE hash<vector>;
 };
 
 template <class _Allocator>
@@ -2722,9 +2747,10 @@ vector<bool, _Allocator>::__hash_code() const
 }
 
 template <class _Allocator>
-struct hash<vector<bool, _Allocator> >
+struct _LIBCPP_VISIBLE hash<vector<bool, _Allocator> >
     : public unary_function<vector<bool, _Allocator>, size_t>
 {
+    _LIBCPP_INLINE_VISIBILITY
     size_t operator()(const vector<bool, _Allocator>& __vec) const
         {return __vec.__hash_code();}
 };

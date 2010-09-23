@@ -73,21 +73,27 @@ class _LIBCPP_EXCEPTION_ABI type_info
 protected:
     const char* __type_name;
 
+    _LIBCPP_INLINE_VISIBILITY
     explicit type_info(const char* __n)
         : __type_name(__n) {}
 
 public:
     virtual ~type_info();
 
+    _LIBCPP_INLINE_VISIBILITY
     const char* name() const {return __type_name;}
 
+    _LIBCPP_INLINE_VISIBILITY
     bool before(const type_info& __arg) const
         {return __type_name < __arg.__type_name;}
+    _LIBCPP_INLINE_VISIBILITY
     size_t hash_code() const throw()
         {return *reinterpret_cast<const size_t*>(&__type_name);}
 
+    _LIBCPP_INLINE_VISIBILITY
     bool operator==(const type_info& __arg) const
         {return __type_name == __arg.__type_name;}
+    _LIBCPP_INLINE_VISIBILITY
     bool operator!=(const type_info& __arg) const
         {return !operator==(__arg);}
 
