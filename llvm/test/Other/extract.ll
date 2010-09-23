@@ -10,13 +10,18 @@
 ; CHECK: define void @foo() {
 ; CHECK:   ret void
 ; CHECK: }
+
+; The linkonce_odr linkage for foo() should be changed to external linkage.
+; DELETE: declare void @foo()
 ; DELETE: define void @bar() {
+; DELETE:   call void @foo()
 ; DELETE:   ret void
 ; DELETE: }
 
-define void @foo() {
+define linkonce_odr void @foo() {
   ret void
 }
 define void @bar() {
+  call void @foo()
   ret void
 }

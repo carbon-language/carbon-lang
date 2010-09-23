@@ -50,24 +50,22 @@ namespace {
 
       // Visit the GlobalVariables.
       for (Module::global_iterator I = M.global_begin(), E = M.global_end();
-           I != E; ++I)
-        if (!I->isDeclaration()) {
-          if (I->hasLocalLinkage())
-            I->setVisibility(GlobalValue::HiddenVisibility);
-          I->setLinkage(GlobalValue::ExternalLinkage);
-          if (deleteStuff == (bool)Named.count(I))
-            I->setInitializer(0);
-        }
+           I != E; ++I) {
+        if (I->hasLocalLinkage())
+          I->setVisibility(GlobalValue::HiddenVisibility);
+        I->setLinkage(GlobalValue::ExternalLinkage);
+        if (deleteStuff == (bool)Named.count(I) && !I->isDeclaration())
+          I->setInitializer(0);
+      }
 
       // Visit the Functions.
-      for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
-        if (!I->isDeclaration()) {
-          if (I->hasLocalLinkage())
-            I->setVisibility(GlobalValue::HiddenVisibility);
-          I->setLinkage(GlobalValue::ExternalLinkage);
-          if (deleteStuff == (bool)Named.count(I))
-            I->deleteBody();
-        }
+      for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I) {
+        if (I->hasLocalLinkage())
+          I->setVisibility(GlobalValue::HiddenVisibility);
+        I->setLinkage(GlobalValue::ExternalLinkage);
+        if (deleteStuff == (bool)Named.count(I) && !I->isDeclaration())
+          I->deleteBody();
+      }
 
       return true;
     }
