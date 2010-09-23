@@ -3,6 +3,7 @@
 // RUN:   -target-cpu cortex-a8 \
 // RUN:   -mfloat-abi soft \
 // RUN:   -target-feature +soft-float-abi \
+// RUN:   -ffreestanding \
 // RUN:   -emit-llvm -w -o - %s | FileCheck %s
 
 #include <arm_neon.h>
