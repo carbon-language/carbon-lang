@@ -1108,18 +1108,133 @@ SymbolFileDWARF::ParseChildMembers
 
         case DW_TAG_subprogram:
             {
+                DWARFDebugInfoEntry::Attributes attributes;
                 is_a_class = true;
                 if (default_accessibility == eAccessNone)
                     default_accessibility = eAccessPrivate;
-                // TODO: implement DW_TAG_subprogram type parsing
-//              UserDefTypeChildInfo method_info(die->GetOffset());
-//
-//              FunctionSP func_sp (sc.comp_unit->FindFunctionByUID (die->GetOffset()));
-//              if (func_sp.get() == NULL)
-//                  ParseCompileUnitFunction(sc, dwarf_cu, die);
-//
-//              method_info.SetEncodingTypeUID(die->GetOffset());
-//              struct_udt->AddMethod(method_info);
+                    
+                //printf("0x%8.8x: %s (ParesTypes)\n", die->GetOffset(), DW_TAG_value_to_name(tag));
+                // Set a bit that lets us know that we are currently parsing this
+                const_cast<DWARFDebugInfoEntry*>(die)->SetUserData(DIE_IS_BEING_PARSED);
+
+                const char *mangled = NULL;
+                dw_offset_t type_die_offset = DW_INVALID_OFFSET;
+                Declaration decl;
+                bool is_variadic = false;
+                bool is_inline = false;
+                bool is_virtual = false;
+                unsigned type_quals = 0;
+                AccessType accessibility = default_accessibility;
+
+                clang::FunctionDecl::StorageClass storage = clang::FunctionDecl::None;//, Extern, Static, PrivateExtern
+                const char *type_name_cstr = NULL;
+                ConstString type_name_dbstr;
+
+
+                const size_t num_attributes = die->GetAttributes(this, dwarf_cu, NULL, attributes);
+                if (num_attributes > 0)
+                {
+                    uint32_t i;
+                    for (i=0; i<num_attributes; ++i)
+                    {
+                        const dw_attr_t attr = attributes.AttributeAtIndex(i);
+                        DWARFFormValue form_value;
+                        if (attributes.ExtractFormValueAtIndex(this, i, form_value))
+                        {
+                            switch (attr)
+                            {
+                            case DW_AT_decl_file:   decl.SetFile(sc.comp_unit->GetSupportFiles().GetFileSpecAtIndex(form_value.Unsigned())); break;
+                            case DW_AT_decl_line:   decl.SetLine(form_value.Unsigned()); break;
+                            case DW_AT_decl_column: decl.SetColumn(form_value.Unsigned()); break;
+                            case DW_AT_name:
+                                type_name_cstr = form_value.AsCString(&get_debug_str_data());
+                                break;
+
+                            case DW_AT_MIPS_linkage_name:   mangled = form_value.AsCString(&get_debug_str_data()); break;
+                            case DW_AT_type:                type_die_offset = form_value.Reference(dwarf_cu); break;
+                            case DW_AT_accessibility:       accessibility = DW_ACCESS_to_AccessType(form_value.Unsigned()); break;
+                            //case DW_AT_declaration:         is_forward_declaration = form_value.Unsigned() != 0; break;
+                            case DW_AT_external:
+                                if (form_value.Unsigned())
+                                {
+                                    if (storage == clang::FunctionDecl::None)
+                                        storage = clang::FunctionDecl::Extern;
+                                    else
+                                        storage = clang::FunctionDecl::PrivateExtern;
+                                }
+                                break;
+                            case DW_AT_inline:
+                                is_inline = form_value.Unsigned() != 0;
+                                break;
+
+
+                            case DW_AT_virtuality:
+                                is_virtual = form_value.Unsigned() != 0; 
+                                break;
+
+                            case DW_AT_allocated:
+                            case DW_AT_associated:
+                            case DW_AT_address_class:
+                            case DW_AT_artificial:
+                            case DW_AT_calling_convention:
+                            case DW_AT_data_location:
+                            case DW_AT_elemental:
+                            case DW_AT_entry_pc:
+                            case DW_AT_explicit:
+                            case DW_AT_frame_base:
+                            case DW_AT_high_pc:
+                            case DW_AT_low_pc:
+                            case DW_AT_object_pointer:
+                            case DW_AT_prototyped:
+                            case DW_AT_pure:
+                            case DW_AT_ranges:
+                            case DW_AT_recursive:
+                            case DW_AT_return_addr:
+                            case DW_AT_segment:
+                            case DW_AT_specification:
+                            case DW_AT_start_scope:
+                            case DW_AT_static_link:
+                            case DW_AT_trampoline:
+                            case DW_AT_visibility:
+                            case DW_AT_vtable_elem_location:
+                            case DW_AT_abstract_origin:
+                            case DW_AT_description:
+                            case DW_AT_sibling:
+                                break;
+                            }
+                        }
+                    }
+
+                    void *return_clang_type = NULL;
+                    Type *func_type = ResolveTypeUID(type_die_offset);
+                    if (func_type)
+                        return_clang_type = func_type->GetOpaqueClangQualType();
+                    else
+                        return_clang_type = type_list->GetClangASTContext().GetBuiltInType_void();
+
+                    std::vector<void *> function_param_types;
+                    std::vector<clang::ParmVarDecl*> function_param_decls;
+
+                    // Parse the function children for the parameters
+                    bool skip_artificial = true;
+
+                    ParseChildParameters (sc, type_sp, dwarf_cu, die, skip_artificial, type_list, function_param_types, function_param_decls);
+
+                    void *method_function_proto = type_list->GetClangASTContext().CreateFunctionType (return_clang_type, &function_param_types[0], function_param_types.size(), is_variadic, type_quals);
+                    if (type_name_cstr)
+                    {
+                        clang::CXXMethodDecl *method_decl = type_list->GetClangASTContext().AddMethodToCXXRecordType (class_clang_type, 
+                                                                                                                      type_name_cstr,
+                                                                                                                      method_function_proto,
+                                                                                                                      accessibility,
+                                                                                                                      is_virtual);                                                                                                                           
+                        assert (method_decl);
+                        //m_die_to_decl_ctx[die] = method_decl;
+                    }
+
+                    const_cast<DWARFDebugInfoEntry*>(die)->SetUserData(type_sp.get());
+                    assert(type_sp.get());
+                }
             }
             break;
 
@@ -1913,6 +2028,7 @@ SymbolFileDWARF::ParseChildParameters
     TypeSP& type_sp,
     const DWARFCompileUnit* dwarf_cu,
     const DWARFDebugInfoEntry *parent_die,
+    bool skip_artificial,
     TypeList* type_list,
     std::vector<void *>& function_param_types,
     std::vector<clang::ParmVarDecl*>& function_param_decls
@@ -1939,6 +2055,7 @@ SymbolFileDWARF::ParseChildParameters
                     const char *name = NULL;
                     Declaration decl;
                     dw_offset_t param_type_die_offset = DW_INVALID_OFFSET;
+                    bool is_artificial = false;
                     // one of None, Auto, Register, Extern, Static, PrivateExtern
 
                     clang::VarDecl::StorageClass storage = clang::VarDecl::None;
@@ -1956,6 +2073,7 @@ SymbolFileDWARF::ParseChildParameters
                             case DW_AT_decl_column: decl.SetColumn(form_value.Unsigned()); break;
                             case DW_AT_name:        name = form_value.AsCString(&get_debug_str_data()); break;
                             case DW_AT_type:        param_type_die_offset = form_value.Reference(dwarf_cu); break;
+                            case DW_AT_artificial:  is_artificial = form_value.Unsigned() != 0; break;
                             case DW_AT_location:
     //                          if (form_value.BlockData())
     //                          {
@@ -1967,7 +2085,6 @@ SymbolFileDWARF::ParseChildParameters
     //                          {
     //                          }
     //                          break;
-                            case DW_AT_artificial:
                             case DW_AT_const_value:
                             case DW_AT_default_value:
                             case DW_AT_description:
@@ -1982,6 +2099,10 @@ SymbolFileDWARF::ParseChildParameters
                             }
                         }
                     }
+
+                    if (skip_artificial && is_artificial)
+                        continue;
+
                     Type *dc_type = ResolveTypeUID(param_type_die_offset);
                     if (dc_type)
                     {
@@ -2717,7 +2838,7 @@ SymbolFileDWARF::ParseType(const SymbolContext& sc, const DWARFCompileUnit* dwar
                     const char *mangled = NULL;
                     dw_offset_t type_die_offset = DW_INVALID_OFFSET;
                     Declaration decl;
-                    bool isVariadic = false;
+                    bool is_variadic = false;
                     bool is_inline = false;
                     unsigned type_quals = 0;
                     clang::FunctionDecl::StorageClass storage = clang::FunctionDecl::None;//, Extern, Static, PrivateExtern
@@ -2805,9 +2926,10 @@ SymbolFileDWARF::ParseType(const SymbolContext& sc, const DWARFCompileUnit* dwar
                         std::vector<clang::ParmVarDecl*> function_param_decls;
 
                         // Parse the function children for the parameters
-                        ParseChildParameters(sc, type_sp, dwarf_cu, die, type_list, function_param_types, function_param_decls);
+                        bool skip_artificial = false;
+                        ParseChildParameters(sc, type_sp, dwarf_cu, die, skip_artificial, type_list, function_param_types, function_param_decls);
 
-                        clang_type = type_list->GetClangASTContext().CreateFunctionType (return_clang_type, &function_param_types[0], function_param_types.size(), isVariadic, type_quals);
+                        clang_type = type_list->GetClangASTContext().CreateFunctionType (return_clang_type, &function_param_types[0], function_param_types.size(), is_variadic, type_quals);
                         if (type_name_cstr)
                         {
                             clang::FunctionDecl *function_decl = type_list->GetClangASTContext().CreateFunctionDeclaration (type_name_cstr, clang_type, storage, is_inline);

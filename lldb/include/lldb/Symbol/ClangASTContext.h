@@ -182,22 +182,28 @@ public:
                                                      bitfield_bit_size);
     }
     
-    static bool
+    static clang::CXXMethodDecl *
     AddMethodToCXXRecordType (clang::ASTContext *ast_context,
-                              void *record_clang_type,
+                              void *record_opaque_type,
                               const char *name,
-                              void *method_type);
+                              void *method_opaque_type,
+                              lldb::AccessType access,
+                              bool is_virtual);
     
-    bool
-    AddMethodToCXXRecordType (void *record_clang_type,
+    clang::CXXMethodDecl *
+    AddMethodToCXXRecordType (void *record_opaque_type,
                               const char *name,
-                              void *method_type)
+                              void *method_opaque_type,
+                              lldb::AccessType access,
+                              bool is_virtual)
     
     {
         return ClangASTContext::AddMethodToCXXRecordType(getASTContext(),
-                                                         record_clang_type,
+                                                         record_opaque_type,
                                                          name,
-                                                         method_type);
+                                                         method_opaque_type,
+                                                         access,
+                                                         is_virtual);
     }
     
     bool

@@ -803,14 +803,16 @@ ClangASTContext::CreateRecordType (const char *name, int kind, DeclContext *decl
     return ast_context->getTagDeclType(decl).getAsOpaquePtr();
 }
 
-bool
+CXXMethodDecl *
 ClangASTContext::AddMethodToCXXRecordType
 (
- clang::ASTContext *ast_context,
- void *record_opaque_type,
- const char *name,
- void *method_opaque_type
- )
+    clang::ASTContext *ast_context,
+    void *record_opaque_type,
+    const char *name,
+    void *method_opaque_type,
+    lldb::AccessType access,
+    bool is_virtual
+)
 {
     if (!record_opaque_type || !method_opaque_type || !name)
         return false;
@@ -825,22 +827,22 @@ ClangASTContext::AddMethodToCXXRecordType
     clang::Type *record_type(record_qual_type.getTypePtr());
     
     if (!record_type)
-        return false;
+        return NULL;
     
     RecordType *record_recty(dyn_cast<RecordType>(record_type));
     
     if (!record_recty)
-        return false;
+        return NULL;
     
     RecordDecl *record_decl = record_recty->getDecl();
     
     if (!record_decl)
-        return false;
+        return NULL;
     
     CXXRecordDecl *cxx_record_decl = dyn_cast<CXXRecordDecl>(record_decl);
     
     if (!cxx_record_decl)
-        return false;
+        return NULL;
     
     QualType method_qual_type(QualType::getFromOpaquePtr(method_opaque_type));
     
@@ -851,17 +853,19 @@ ClangASTContext::AddMethodToCXXRecordType
                                                            method_qual_type, 
                                                            NULL);
     
+    cxx_method_decl->setAccess (ConvertAccessTypeToAccessSpecifier (access));
+    cxx_method_decl->setVirtualAsWritten (is_virtual);
+
     // Populate the method decl with parameter decls
-    
     clang::Type *method_type(method_qual_type.getTypePtr());
     
     if (!method_type)
-        return false;
+        return NULL;
     
     FunctionProtoType *method_funprototy(dyn_cast<FunctionProtoType>(method_type));
     
     if (!method_funprototy)
-        return false;
+        return NULL;
     
     unsigned int num_params = method_funprototy->getNumArgs();
     
@@ -886,7 +890,7 @@ ClangASTContext::AddMethodToCXXRecordType
     
     cxx_record_decl->addDecl(cxx_method_decl);
     
-    return true;
+    return cxx_method_decl;
 }
 
 bool

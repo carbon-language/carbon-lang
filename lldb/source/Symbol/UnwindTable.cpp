@@ -7,18 +7,19 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "lldb/Symbol/ObjectFile.h"
+#include "lldb/Symbol/UnwindTable.h"
 
+#include <stdio.h>
+
+#include "lldb/lldb-forward.h"
+
+#include "lldb/Core/Module.h"
+#include "lldb/Core/Section.h"
+#include "lldb/Symbol/ObjectFile.h"
 #include "lldb/Symbol/FuncUnwinders.h"
 #include "lldb/Symbol/SymbolContext.h"
-#include "lldb/Core/Section.h"
-#include "lldb/Core/Module.h"
-#include "lldb/lldb-forward.h"
-#include "lldb/Utility/UnwindAssemblyProfiler.h"
 #include "lldb/Symbol/DWARFCallFrameInfo.h"
-
-#include "lldb/Symbol/UnwindTable.h"
-#include <stdio.h>
+#include "lldb/Utility/UnwindAssemblyProfiler.h"
 
 // There is one UnwindTable object per ObjectFile.
 // It contains a list of Unwind objects -- one per function, populated lazily -- for the ObjectFile.

@@ -584,6 +584,9 @@
 		268F9D54123AA16600B91E9B /* SBSymbolContextList.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SBSymbolContextList.cpp; path = source/API/SBSymbolContextList.cpp; sourceTree = "<group>"; };
 		269416AD119A024800FF2715 /* CommandObjectTarget.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CommandObjectTarget.cpp; path = source/Commands/CommandObjectTarget.cpp; sourceTree = "<group>"; };
 		269416AE119A024800FF2715 /* CommandObjectTarget.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CommandObjectTarget.h; path = source/Commands/CommandObjectTarget.h; sourceTree = "<group>"; };
+		269FF07D12494F7D00225026 /* FuncUnwinders.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = FuncUnwinders.h; path = include/lldb/Symbol/FuncUnwinders.h; sourceTree = "<group>"; };
+		269FF07F12494F8E00225026 /* UnwindPlan.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = UnwindPlan.h; path = include/lldb/Symbol/UnwindPlan.h; sourceTree = "<group>"; };
+		269FF08112494FC200225026 /* UnwindTable.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = UnwindTable.h; path = include/lldb/Symbol/UnwindTable.h; sourceTree = "<group>"; };
 		26A0604711A5BC7A00F75969 /* Baton.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Baton.h; path = include/lldb/Core/Baton.h; sourceTree = "<group>"; };
 		26A0604811A5D03C00F75969 /* Baton.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Baton.cpp; path = source/Core/Baton.cpp; sourceTree = "<group>"; };
 		26A3B4AC1181454800381BC2 /* ObjectContainerBSDArchive.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ObjectContainerBSDArchive.cpp; sourceTree = "<group>"; };
@@ -1741,9 +1744,6 @@
 		26BC7C4B10F1B6C100F91463 /* Symbol */ = {
 			isa = PBXGroup;
 			children = (
-				961FABB81235DE1600F93A47 /* FuncUnwinders.cpp */,
-				961FABB91235DE1600F93A47 /* UnwindPlan.cpp */,
-				961FABBA1235DE1600F93A47 /* UnwindTable.cpp */,
 				26BC7C5510F1B6E900F91463 /* Block.h */,
 				26BC7F1310F1B8EC00F91463 /* Block.cpp */,
 				26BC7C5610F1B6E900F91463 /* ClangASTContext.h */,
@@ -1758,6 +1758,8 @@
 				26BC7F1710F1B8EC00F91463 /* DWARFCallFrameInfo.cpp */,
 				26BC7C5A10F1B6E900F91463 /* Function.h */,
 				26BC7F1810F1B8EC00F91463 /* Function.cpp */,
+				269FF07D12494F7D00225026 /* FuncUnwinders.h */,
+				961FABB81235DE1600F93A47 /* FuncUnwinders.cpp */,
 				26BC7C5B10F1B6E900F91463 /* LineEntry.h */,
 				26BC7F1910F1B8EC00F91463 /* LineEntry.cpp */,
 				26BC7C5C10F1B6E900F91463 /* LineTable.h */,
@@ -1781,6 +1783,10 @@
 				26BC7F2010F1B8EC00F91463 /* Type.cpp */,
 				26BC7C6610F1B6E900F91463 /* TypeList.h */,
 				26BC7F2110F1B8EC00F91463 /* TypeList.cpp */,
+				269FF07F12494F8E00225026 /* UnwindPlan.h */,
+				961FABB91235DE1600F93A47 /* UnwindPlan.cpp */,
+				269FF08112494FC200225026 /* UnwindTable.h */,
+				961FABBA1235DE1600F93A47 /* UnwindTable.cpp */,
 				26BC7C6710F1B6E900F91463 /* Variable.h */,
 				26BC7F2210F1B8EC00F91463 /* Variable.cpp */,
 				26BC7C6810F1B6E900F91463 /* VariableList.h */,

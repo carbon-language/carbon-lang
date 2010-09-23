@@ -37,6 +37,7 @@ namespace clang
     class CXXBaseSpecifier;
     class CXXBoolLiteralExpr;
     class CXXFunctionalCastExpr;
+    class CXXMethodDecl;
     class CXXNamedCastExpr;
     class CXXRecordDecl;
     class CXXThisExpr;
