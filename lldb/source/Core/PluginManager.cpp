@@ -392,7 +392,127 @@ PluginManager::GetDynamicLoaderCreateCallbackForPluginName (const char *name)
 }
 
 
+#pragma mark LanguageRuntime
 
+
+struct LanguageRuntimeInstance
+{
+    LanguageRuntimeInstance() :
+        name(),
+        description(),
+        create_callback(NULL)
+    {
+    }
+
+    std::string name;
+    std::string description;
+    LanguageRuntimeCreateInstance create_callback;
+};
+
+typedef std::vector<LanguageRuntimeInstance> LanguageRuntimeInstances;
+
+static bool
+AccessLanguageRuntimeInstances (PluginAction action, LanguageRuntimeInstance &instance, uint32_t index)
+{
+    static LanguageRuntimeInstances g_plugin_instances;
+
+    switch (action)
+    {
+        case ePluginRegisterInstance:
+            if (instance.create_callback)
+            {
+                g_plugin_instances.push_back (instance);
+                return true;
+            }
+            break;
+
+        case ePluginUnregisterInstance:
+            if (instance.create_callback)
+            {
+                LanguageRuntimeInstances::iterator pos, end = g_plugin_instances.end();
+                for (pos = g_plugin_instances.begin(); pos != end; ++ pos)
+                {
+                    if (pos->create_callback == instance.create_callback)
+                    {
+                        g_plugin_instances.erase(pos);
+                        return true;
+                    }
+                }
+            }
+            break;
+
+        case ePluginGetInstanceAtIndex:
+            if (index < g_plugin_instances.size())
+            {
+                instance = g_plugin_instances[index];
+                return true;
+            }
+            break;
+
+        default:
+            break;
+    }
+    return false;
+}
+
+
+bool
+PluginManager::RegisterPlugin
+    (
+        const char *name,
+        const char *description,
+        LanguageRuntimeCreateInstance create_callback
+     )
+{
+    if (create_callback)
+    {
+        LanguageRuntimeInstance instance;
+        assert (name && name[0]);
+        instance.name = name;
+        if (description && description[0])
+            instance.description = description;
+        instance.create_callback = create_callback;
+        return AccessLanguageRuntimeInstances (ePluginRegisterInstance, instance, 0);
+    }
+    return false;
+}
+
+bool
+PluginManager::UnregisterPlugin (LanguageRuntimeCreateInstance create_callback)
+{
+    if (create_callback)
+    {
+        LanguageRuntimeInstance instance;
+        instance.create_callback = create_callback;
+        return AccessLanguageRuntimeInstances (ePluginUnregisterInstance, instance, 0);
+    }
+    return false;
+}
+
+LanguageRuntimeCreateInstance
+PluginManager::GetLanguageRuntimeCreateCallbackAtIndex (uint32_t idx)
+{
+    LanguageRuntimeInstance instance;
+    if (AccessLanguageRuntimeInstances (ePluginGetInstanceAtIndex, instance, idx))
+        return instance.create_callback;
+    return NULL;
+}
+
+LanguageRuntimeCreateInstance
+PluginManager::GetLanguageRuntimeCreateCallbackForPluginName (const char *name)
+{
+    if (name && name[0])
+    {
+        LanguageRuntimeInstance instance;
+        std::string ss_name(name);
+        for (uint32_t idx = 0; AccessLanguageRuntimeInstances (ePluginGetInstanceAtIndex, instance, idx); ++idx)
+        {
+            if (instance.name == ss_name)
+                return instance.create_callback;
+        }
+    }
+    return NULL;
+}
 
 #pragma mark ObjectFile
 

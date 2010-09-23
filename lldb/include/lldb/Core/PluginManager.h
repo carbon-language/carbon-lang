@@ -73,6 +73,24 @@ public:
 
 
     //------------------------------------------------------------------
+    // LanguageRuntime
+    //------------------------------------------------------------------
+    static bool
+    RegisterPlugin (const char *name,
+                    const char *description,
+                    LanguageRuntimeCreateInstance create_callback);
+
+    static bool
+    UnregisterPlugin (LanguageRuntimeCreateInstance create_callback);
+
+    static LanguageRuntimeCreateInstance
+    GetLanguageRuntimeCreateCallbackAtIndex (uint32_t idx);
+
+    static LanguageRuntimeCreateInstance
+    GetLanguageRuntimeCreateCallbackForPluginName (const char *name);
+
+
+    //------------------------------------------------------------------
     // ObjectFile
     //------------------------------------------------------------------
     static bool

@@ -21,6 +21,9 @@
 #include "lldb/Interpreter/CommandInterpreter.h"
 #include "lldb/Host/Host.h"
 #include "lldb/Target/ABI.h"
+#include "lldb/Target/LanguageRuntime.h"
+#include "lldb/Target/CPPLanguageRuntime.h"
+#include "lldb/Target/ObjCLanguageRuntime.h"
 #include "lldb/Target/RegisterContext.h"
 #include "lldb/Target/StopInfo.h"
 #include "lldb/Target/Target.h"
@@ -458,6 +461,41 @@ Process::GetABI()
     }
 
     return m_abi_sp.get();
+}
+
+LanguageRuntime *
+Process::GetLanguageRuntime(lldb::LanguageType language)
+{
+    LanguageRuntimeCollection::iterator pos;
+    pos = m_language_runtimes.find (language);
+    if (pos == m_language_runtimes.end())
+    {
+        lldb::LanguageRuntimeSP runtime(LanguageRuntime::FindPlugin(this, language));
+        
+        m_language_runtimes[language] 
+            = runtime;
+        return runtime.get();
+    }
+    else
+        return (*pos).second.get();
+}
+
+CPPLanguageRuntime *
+Process::GetCPPLanguageRuntime ()
+{
+    LanguageRuntime *runtime = GetLanguageRuntime(eLanguageTypeC_plus_plus);
+    if (runtime != NULL && runtime->GetLanguageType() == eLanguageTypeC_plus_plus)
+        return static_cast<CPPLanguageRuntime *> (runtime);
+    return NULL;
+}
+
+ObjCLanguageRuntime *
+Process::GetObjCLanguageRuntime ()
+{
+    LanguageRuntime *runtime = GetLanguageRuntime(eLanguageTypeObjC);
+    if (runtime != NULL && runtime->GetLanguageType() == eLanguageTypeObjC)
+        return static_cast<ObjCLanguageRuntime *> (runtime);
+    return NULL;
 }
 
 BreakpointSiteList &

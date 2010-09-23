@@ -823,3 +823,17 @@ ValueObject::GetSyntheticArrayMemberFromPointer (int32_t index, bool can_create)
     }
     return synthetic_child_sp;
 }
+
+bool
+ValueObject::SetDynamicValue ()
+{
+    if (!IsPointerOrReferenceType())
+        return false;
+        
+    // Check that the runtime class is correct for determining the most specific class.
+    // If it is a C++ class, see if it is dynamic:
+    //if (!decl->isDynamicClass())
+    //    return false;
+        
+    return true;
+}

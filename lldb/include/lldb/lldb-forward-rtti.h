@@ -40,6 +40,7 @@ namespace lldb {
     typedef SharedPtr<lldb_private::InlineFunctionInfo>::Type InlineFunctionInfoSP;
     typedef SharedPtr<lldb_private::InputReader>::Type InputReaderSP;
     typedef SharedPtr<lldb_private::InstanceSettings>::Type InstanceSettingsSP;
+    typedef SharedPtr<lldb_private::LanguageRuntime>::Type LanguageRuntimeSP;
     typedef SharedPtr<lldb_private::LineTable>::Type LineTableSP;
     typedef SharedPtr<lldb_private::Listener>::Type ListenerSP;
     typedef SharedPtr<lldb_private::Log>::Type LogSP;

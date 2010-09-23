@@ -1548,6 +1548,15 @@ public:
 
     virtual DynamicLoader *
     GetDynamicLoader ();
+    
+    virtual LanguageRuntime *
+    GetLanguageRuntime (lldb::LanguageType language);
+
+    virtual CPPLanguageRuntime *
+    GetCPPLanguageRuntime ();
+
+    virtual ObjCLanguageRuntime *
+    GetObjCLanguageRuntime ();
 
     bool
     IsRunning () const;
@@ -1616,6 +1625,9 @@ protected:
     ConstString                 m_target_triple;
     lldb::ABISP                 m_abi_sp;
     ObjCObjectPrinter           m_objc_object_printer;
+    
+    typedef std::map<lldb::LanguageType, lldb::LanguageRuntimeSP> LanguageRuntimeCollection; 
+    LanguageRuntimeCollection m_language_runtimes;
 
     size_t
     RemoveBreakpointOpcodesFromBuffer (lldb::addr_t addr, size_t size, uint8_t *buf) const;

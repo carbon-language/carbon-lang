@@ -175,6 +175,15 @@ public:
 
     lldb::ValueObjectSP
     GetSyntheticArrayMemberFromPointer (int32_t index, bool can_create);
+    
+    lldb::ValueObjectSP
+    GetDynamicValue ()
+    {
+        return m_dynamic_value_sp;
+    }
+    
+    bool
+    SetDynamicValue ();
 
 protected:
     //------------------------------------------------------------------
@@ -198,6 +207,7 @@ protected:
                                               // in that the summary is consed up by us, the object_desc_string is builtin.
     std::vector<lldb::ValueObjectSP> m_children;
     std::map<ConstString, lldb::ValueObjectSP> m_synthetic_children;
+    lldb::ValueObjectSP m_dynamic_value_sp;
     bool                m_value_is_valid:1,
                         m_value_did_change:1,
                         m_children_count_valid:1,

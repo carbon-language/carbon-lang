@@ -22,6 +22,7 @@ namespace lldb_private
     typedef ObjectContainer* (*ObjectContainerCreateInstance) (Module* module, lldb::DataBufferSP& dataSP, const FileSpec *file, lldb::addr_t offset, lldb::addr_t length);
     typedef ObjectFile* (*ObjectFileCreateInstance) (Module* module, lldb::DataBufferSP& dataSP, const FileSpec* file, lldb::addr_t offset, lldb::addr_t length);
     typedef LogChannel* (*LogChannelCreateInstance) ();
+    typedef LanguageRuntime *(*LanguageRuntimeCreateInstance) (Process *process, lldb::LanguageType language);
     typedef Process* (*ProcessCreateInstance) (Target &target, Listener &listener);
     typedef SymbolFile* (*SymbolFileCreateInstance) (ObjectFile* obj_file);
     typedef SymbolVendor* (*SymbolVendorCreateInstance) (Module *module);   // Module can be NULL for default system symbol vendor
