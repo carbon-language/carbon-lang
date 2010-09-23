@@ -31,6 +31,7 @@
 #include "llvm/Transforms/Utils/BuildLibCalls.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallSet.h"
+#include "llvm/ADT/Statistic.h"
 #include "llvm/Assembly/Writer.h"
 #include "llvm/Support/CallSite.h"
 #include "llvm/Support/CommandLine.h"
@@ -42,10 +43,12 @@
 using namespace llvm;
 using namespace llvm::PatternMatch;
 
+STATISTIC(NumElim,  "Number of blocks eliminated");
+
 static cl::opt<bool>
 CriticalEdgeSplit("cgp-critical-edge-splitting",
                   cl::desc("Split critical edges during codegen prepare"),
-                  cl::init(true), cl::Hidden);
+                  cl::init(false), cl::Hidden);
 
 namespace {
   class CodeGenPrepare : public FunctionPass {
@@ -302,6 +305,7 @@ void CodeGenPrepare::EliminateMostlyEmptyBlock(BasicBlock *BB) {
     PFI->removeEdge(ProfileInfo::getEdge(BB, DestBB));
   }
   BB->eraseFromParent();
+  ++NumElim;
 
   DEBUG(dbgs() << "AFTER:\n" << *DestBB << "\n\n\n");
 }

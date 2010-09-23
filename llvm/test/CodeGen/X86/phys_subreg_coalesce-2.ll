@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=x86 | grep mov | count 5
+; RUN: llc < %s -march=x86 | grep mov | count 4
 ; PR2659
 
 define i32 @binomial(i32 %n, i32 %k) nounwind {

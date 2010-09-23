@@ -68,7 +68,7 @@ bb26.preheader:                                   ; preds = %imix_test.exit
 
 bb23:                                             ; preds = %imix_test.exit
   unreachable
-; X86-32: %bb26.preheader.bb28_crit_edge
+; X86-32: %bb26.preheader
 ; X86-32: movl -16(%ebp),
 ; X86-32-NEXT: .align 4
 ; X86-32-NEXT: %bb28
