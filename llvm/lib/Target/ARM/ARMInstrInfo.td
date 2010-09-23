@@ -2685,7 +2685,7 @@ let Defs =
                                AddrModeNone, SizeSpecial, IndexModeNone,
                                Pseudo, NoItinerary,
                            "add\t$val, pc, #8\t${:comment} eh_setjmp begin\n\t"
-                           "str\t$val, [$src, #+4]\n\t"
+                           "str\t$val, [$src, #4]\n\t"
                            "mov\tr0, #0\n\t"
                            "add\tpc, pc, #0\n\t"
                            "mov\tr0, #1 ${:comment} eh_setjmp end", "",
@@ -2700,7 +2700,7 @@ let Defs =
                                    AddrModeNone, SizeSpecial, IndexModeNone,
                                    Pseudo, NoItinerary,
                            "add\t$val, pc, #8\t${:comment} eh_setjmp begin\n\t"
-                           "str\t$val, [$src, #+4]\n\t"
+                           "str\t$val, [$src, #4]\n\t"
                            "mov\tr0, #0\n\t"
                            "add\tpc, pc, #0\n\t"
                            "mov\tr0, #1 ${:comment} eh_setjmp end", "",
