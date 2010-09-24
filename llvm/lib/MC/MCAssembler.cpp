@@ -451,7 +451,7 @@ uint64_t MCAssembler::ComputeFragmentSize(MCAsmLayout &Layout,
     int64_t Offset = TargetLocation - FragmentOffset;
     if (Offset < 0 || Offset >= 0x40000000)
       report_fatal_error("invalid .org offset '" + Twine(TargetLocation) +
-                         "' (at offset '" + Twine(FragmentOffset) + "'");
+                         "' (at offset '" + Twine(FragmentOffset) + "')");
 
     return Offset;
   }
