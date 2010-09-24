@@ -515,9 +515,12 @@ void ELFObjectWriterImpl::RecordRelocation(const MCAssembler &Asm,
     }
 
     if (Base) {
-      if (F && (!Symbol->isInSection() || SD.isCommon()) && !SD.isExternal()) {
+      if (F && !SD.isExternal()) {
         Index = F->getParent()->getOrdinal() + LocalSymbolData.size() + 1;
-        Value += Layout.getSymbolAddress(&SD);
+
+        MCSectionData *FSD = F->getParent();
+        // Offset of the symbol in the section
+        Value += Layout.getSymbolAddress(&SD) - Layout.getSectionAddress(FSD);
       } else
         Index = getSymbolIndexInSymbolTable(Asm, Symbol);
       if (Base != &SD)
