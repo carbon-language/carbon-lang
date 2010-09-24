@@ -53,6 +53,14 @@ const BlockAddress *ARMConstantPoolValue::getBlockAddress() const {
   return dyn_cast_or_null<BlockAddress>(CVal);
 }
 
+static bool CPV_streq(const char *S1, const char *S2) {
+  if (S1 == S2)
+    return true;
+  if (S1 && S2 && strcmp(S1, S2) == 0)
+    return true;
+  return false;
+}
+
 int ARMConstantPoolValue::getExistingMachineCPValue(MachineConstantPool *CP,
                                                     unsigned Alignment) {
   unsigned AlignMask = Alignment - 1;
@@ -65,8 +73,8 @@ int ARMConstantPoolValue::getExistingMachineCPValue(MachineConstantPool *CP,
       if (CPV->CVal == CVal &&
           CPV->LabelId == LabelId &&
           CPV->PCAdjust == PCAdjust &&
-          (CPV->S == S || strcmp(CPV->S, S) == 0) &&
-          (CPV->Modifier == Modifier || strcmp(CPV->Modifier, Modifier) == 0))
+          CPV_streq(CPV->S, S) &&
+          CPV_streq(CPV->Modifier, Modifier))
         return i;
     }
   }
@@ -91,8 +99,8 @@ ARMConstantPoolValue::hasSameValue(ARMConstantPoolValue *ACPV) {
   if (ACPV->Kind == Kind &&
       ACPV->CVal == CVal &&
       ACPV->PCAdjust == PCAdjust &&
-      (ACPV->S == S || strcmp(ACPV->S, S) == 0) &&
-      (ACPV->Modifier == Modifier || strcmp(ACPV->Modifier, Modifier) == 0)) {
+      CPV_streq(ACPV->S, S) &&
+      CPV_streq(ACPV->Modifier, Modifier)) {
     if (ACPV->LabelId == LabelId)
       return true;
     // Two PC relative constpool entries containing the same GV address or
