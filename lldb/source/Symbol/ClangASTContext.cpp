@@ -811,7 +811,9 @@ ClangASTContext::AddMethodToCXXRecordType
     const char *name,
     void *method_opaque_type,
     lldb::AccessType access,
-    bool is_virtual
+    bool is_virtual,
+    bool is_static,
+    bool is_inline
 )
 {
     if (!record_opaque_type || !method_opaque_type || !name)
@@ -824,51 +826,56 @@ ClangASTContext::AddMethodToCXXRecordType
     assert(identifier_table);
     
     QualType record_qual_type(QualType::getFromOpaquePtr(record_opaque_type));
-    clang::Type *record_type(record_qual_type.getTypePtr());
+
+    clang::Type *clang_type(record_qual_type.getTypePtr());
     
-    if (!record_type)
+    if (clang_type == NULL)
         return NULL;
     
-    RecordType *record_recty(dyn_cast<RecordType>(record_type));
+    RecordType *record_clang_type(dyn_cast<RecordType>(clang_type));
     
-    if (!record_recty)
+    if (record_clang_type == NULL)
         return NULL;
     
-    RecordDecl *record_decl = record_recty->getDecl();
+    RecordDecl *record_decl = record_clang_type->getDecl();
     
-    if (!record_decl)
+    if (record_decl == NULL)
         return NULL;
     
     CXXRecordDecl *cxx_record_decl = dyn_cast<CXXRecordDecl>(record_decl);
     
-    if (!cxx_record_decl)
+    if (cxx_record_decl == NULL)
         return NULL;
     
-    QualType method_qual_type(QualType::getFromOpaquePtr(method_opaque_type));
+    QualType method_qual_type (QualType::getFromOpaquePtr (method_opaque_type));
     
-    CXXMethodDecl *cxx_method_decl = CXXMethodDecl::Create(*ast_context,
-                                                           cxx_record_decl,
-                                                           DeclarationNameInfo(DeclarationName(&identifier_table->get(name)), SourceLocation()),
-                                                           method_qual_type,
-                                                           NULL);
+    CXXMethodDecl *cxx_method_decl = CXXMethodDecl::Create (*ast_context,
+                                                            cxx_record_decl,
+                                                            DeclarationNameInfo (DeclarationName (&identifier_table->get(name)), SourceLocation()),
+                                                            method_qual_type,
+                                                            NULL, // TypeSourceInfo *
+                                                            is_static,
+                                                            SC_None,
+                                                            is_inline);
     
-    clang::AccessSpecifier AS = ConvertAccessTypeToAccessSpecifier(access);
     
-    cxx_method_decl->setAccess(AS);
-    cxx_method_decl->setVirtualAsWritten(is_virtual);
+    clang::AccessSpecifier access_specifier = ConvertAccessTypeToAccessSpecifier (access);
+    
+    cxx_method_decl->setAccess (access_specifier);
+    cxx_method_decl->setVirtualAsWritten (is_virtual);
     
     // Populate the method decl with parameter decls
     clang::Type *method_type(method_qual_type.getTypePtr());
     
-    if (!method_type)
+    if (method_type == NULL)
         return NULL;
     
-    FunctionProtoType *method_funprototy(dyn_cast<FunctionProtoType>(method_type));
+    FunctionProtoType *method_function_prototype (dyn_cast<FunctionProtoType>(method_type));
     
-    if (!method_funprototy)
+    if (!method_function_prototype)
         return NULL;
     
-    unsigned int num_params = method_funprototy->getNumArgs();
+    unsigned int num_params = method_function_prototype->getNumArgs();
     
     ParmVarDecl *params[num_params];
     
@@ -876,20 +883,20 @@ ClangASTContext::AddMethodToCXXRecordType
          param_index < num_params;
          ++param_index)
     {
-        params[param_index] = ParmVarDecl::Create(*ast_context,
-                                                  cxx_method_decl,
-                                                  SourceLocation(),
-                                                  NULL, // anonymous
-                                                  method_funprototy->getArgType(param_index), 
-                                                  NULL,
-                                                  SC_Auto, 
-                                                  SC_Auto,
-                                                  NULL); 
+        params[param_index] = ParmVarDecl::Create (*ast_context,
+                                                   cxx_method_decl,
+                                                   SourceLocation(),
+                                                   NULL, // anonymous
+                                                   method_function_prototype->getArgType(param_index), 
+                                                   NULL,
+                                                   SC_None, 
+                                                   SC_None,
+                                                   NULL); 
     }
     
-    cxx_method_decl->setParams(params, num_params);
+    cxx_method_decl->setParams (params, num_params);
     
-    cxx_record_decl->addDecl(cxx_method_decl);
+    cxx_record_decl->addDecl (cxx_method_decl);
     
     return cxx_method_decl;
 }
@@ -988,14 +995,14 @@ ClangASTContext::AddFieldToRecordType
             ObjCObjectType *objc_class_type = dyn_cast<ObjCObjectType>(clang_type);
             if (objc_class_type)
             {
-                bool isSynthesized = false;
+                bool is_synthesized = false;
                 ClangASTContext::AddObjCClassIVar (ast_context,
                                                    record_clang_type,
                                                    name,
                                                    field_type,
                                                    access,
                                                    bitfield_bit_size,
-                                                   isSynthesized);
+                                                   is_synthesized);
             }
         }
     }
@@ -1250,7 +1257,7 @@ ClangASTContext::AddObjCClassIVar
     void *ivar_opaque_type, 
     AccessType access, 
     uint32_t bitfield_bit_size, 
-    bool isSynthesized
+    bool is_synthesized
 )
 {
     if (class_opaque_type == NULL || ivar_opaque_type == NULL)
@@ -1289,7 +1296,7 @@ ClangASTContext::AddObjCClassIVar
                                                             NULL, // TypeSourceInfo *
                                                             ConvertAccessTypeToObjCIvarAccessControl (access),
                                                             bit_width,
-                                                            isSynthesized);
+                                                            is_synthesized);
                 
                 if (field)
                 {
@@ -1334,7 +1341,132 @@ ClangASTContext::ObjCDeclHasIVars (ObjCInterfaceDecl *class_interface_decl, bool
     }
     return false;            
 }
+
+clang::ObjCMethodDecl *
+ClangASTContext::AddMethodToObjCObjectType
+(
+    clang::ASTContext *ast_context,
+    void *class_opaque_type, 
+    const char *name,  // the full symbol name as seen in the symbol table ("-[NString stringWithCString:]")
+    void *method_opaque_type,
+    lldb::AccessType access
+)
+{
+    if (class_opaque_type == NULL || method_opaque_type == NULL)
+        return NULL;
+
+    IdentifierTable *identifier_table = &ast_context->Idents;
+
+    assert (ast_context != NULL);
+    assert (identifier_table != NULL);
+
+    QualType class_qual_type(QualType::getFromOpaquePtr(class_opaque_type));
+
+    clang::Type *class_type = class_qual_type.getTypePtr();
+    if (class_type == NULL)
+        return NULL;
+
+    ObjCObjectType *objc_class_type = dyn_cast<ObjCObjectType>(class_type);
+
+    if (objc_class_type == NULL)
+        return NULL;
+
+    ObjCInterfaceDecl *class_interface_decl = objc_class_type->getInterface();
+            
+    if (class_interface_decl == NULL)
+        return NULL;
     
+    const char *selector_start = ::strchr (name, ' ');
+    if (selector_start == NULL)
+        return NULL;
+    
+    selector_start++;
+    if (!(::isalpha (selector_start[0]) || selector_start[0] == '_'))
+        return NULL;
+    llvm::SmallVector<IdentifierInfo *, 12> selector_idents;
+
+    size_t len;
+    const char *start;
+    for (start = selector_start, len = ::strcspn(start, ":]");
+         start && *start != '\0' && *start != ']';
+         start += len + 1)
+    {
+        selector_idents.push_back (&identifier_table->get (StringRef (start, len)));
+    }
+
+    
+    if (selector_idents.size() == 0)
+        return 0;
+
+    clang::Selector method_selector = ast_context->Selectors.getSelector (selector_idents.size(),
+                                                                          selector_idents.data());
+    
+    QualType method_qual_type (QualType::getFromOpaquePtr (method_opaque_type));
+
+    // Populate the method decl with parameter decls
+    clang::Type *method_type(method_qual_type.getTypePtr());
+    
+    if (method_type == NULL)
+        return NULL;
+    
+    FunctionProtoType *method_function_prototype (dyn_cast<FunctionProtoType>(method_type));
+    
+    if (!method_function_prototype)
+        return NULL;
+    
+
+    bool is_variadic = false;
+    bool is_synthesized = false;
+    bool is_defined = false;
+    ObjCMethodDecl::ImplementationControl imp_control = ObjCMethodDecl::None;
+
+    const unsigned num_args = method_function_prototype->getNumArgs();
+
+    ObjCMethodDecl *objc_method_decl = ObjCMethodDecl::Create (*ast_context,
+                                                               SourceLocation(), // beginLoc,
+                                                               SourceLocation(), // endLoc, 
+                                                               method_selector,
+                                                               method_function_prototype->getResultType(),
+                                                               NULL, // TypeSourceInfo *ResultTInfo,
+                                                               GetDeclContextForType (class_opaque_type),
+                                                               name[0] == '-',
+                                                               is_variadic,
+                                                               is_synthesized,
+                                                               is_defined,
+                                                               imp_control,
+                                                               num_args);
+
+
+    if (objc_method_decl == NULL)
+        return NULL;
+
+    if (num_args > 0)
+    {
+        llvm::SmallVector<ParmVarDecl *, 12> params;
+            
+        for (int param_index = 0; param_index < num_args; ++param_index)
+        {
+            params.push_back (ParmVarDecl::Create (*ast_context,
+                                                   objc_method_decl,
+                                                   SourceLocation(),
+                                                   NULL, // anonymous
+                                                   method_function_prototype->getArgType(param_index), 
+                                                   NULL,
+                                                   SC_Auto, 
+                                                   SC_Auto,
+                                                   NULL));
+        }
+        
+        objc_method_decl->setMethodParams(*ast_context, params.data(), params.size(), num_args);
+    }
+    
+    class_interface_decl->addDecl (objc_method_decl);
+
+
+    return objc_method_decl;
+}
+
+
 
 #pragma mark Aggregate Types
 
@@ -3043,6 +3175,32 @@ ClangASTContext::IsFloatingPointType (void *clang_type, uint32_t &count, bool &i
     }
     return false;
 }
+
+bool
+ClangASTContext::IsCXXClassType (void *clang_type)
+{
+    if (clang_type)
+    {
+        QualType qual_type (QualType::getFromOpaquePtr(clang_type));
+        if (qual_type->getAsCXXRecordDecl() != NULL)
+            return true;
+    }
+    return false;
+}
+
+bool 
+ClangASTContext::IsObjCClassType (void *clang_type)
+{
+    if (clang_type)
+    {
+        QualType qual_type (QualType::getFromOpaquePtr(clang_type));
+        if (qual_type->isObjCObjectOrInterfaceType())
+            return true;
+    }
+    return false;
+}
+
+
 
 
 bool

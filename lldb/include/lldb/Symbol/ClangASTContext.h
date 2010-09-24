@@ -174,12 +174,12 @@ public:
                           lldb::AccessType access,
                           uint32_t bitfield_bit_size)
     {
-        return ClangASTContext::AddFieldToRecordType(getASTContext(),
-                                                     record_qual_type,
-                                                     name,
-                                                     field_type,
-                                                     access,
-                                                     bitfield_bit_size);
+        return ClangASTContext::AddFieldToRecordType (getASTContext(),
+                                                      record_qual_type,
+                                                      name,
+                                                      field_type,
+                                                      access,
+                                                      bitfield_bit_size);
     }
     
     static clang::CXXMethodDecl *
@@ -188,22 +188,28 @@ public:
                               const char *name,
                               void *method_type,
                               lldb::AccessType access,
-                              bool is_virtual);
+                              bool is_virtual,
+                              bool is_static,
+                              bool is_inline);
     
     clang::CXXMethodDecl *
     AddMethodToCXXRecordType (void *record_opaque_type,
                               const char *name,
                               void *method_type,
                               lldb::AccessType access,
-                              bool is_virtual)
+                              bool is_virtual,
+                              bool is_static,
+                              bool is_inline)
     
     {
-        return ClangASTContext::AddMethodToCXXRecordType(getASTContext(),
-                                                         record_opaque_type,
-                                                         name,
-                                                         method_type,
-                                                         access,
-                                                         is_virtual);
+        return ClangASTContext::AddMethodToCXXRecordType (getASTContext(),
+                                                          record_opaque_type,
+                                                          name,
+                                                          method_type,
+                                                          access,
+                                                          is_virtual,
+                                                          is_static,
+                                                          is_inline);
     }
     
     bool
@@ -267,7 +273,28 @@ public:
     ObjCDeclHasIVars (clang::ObjCInterfaceDecl *class_interface_decl, 
                       bool check_superclass);
 
-    
+
+    static clang::ObjCMethodDecl *
+    AddMethodToObjCObjectType (clang::ASTContext *ast_context,
+                               void *class_opaque_type, 
+                               const char *name,  // the full symbol name as seen in the symbol table ("-[NString stringWithCString:]")
+                               void *method_opaque_type,
+                               lldb::AccessType access);
+
+    clang::ObjCMethodDecl *
+    AddMethodToObjCObjectType (void *class_opaque_type, 
+                               const char *name,  // the full symbol name as seen in the symbol table ("-[NString stringWithCString:]")
+                               void *method_opaque_type,
+                               lldb::AccessType access)
+    {
+        return AddMethodToObjCObjectType (getASTContext(),
+                                          class_opaque_type,
+                                          name,
+                                          method_opaque_type,
+                                          access);
+    }
+
+
     //------------------------------------------------------------------
     // Aggregate Types
     //------------------------------------------------------------------
@@ -494,6 +521,12 @@ public:
     
     static bool
     IsFloatingPointType (void *clang_type, uint32_t &count, bool &is_complex);
+
+    static bool
+    IsCXXClassType (void *clang_type);
+    
+    static bool
+    IsObjCClassType (void *clang_type);
 
     //static bool
     //ConvertFloatValueToString (clang::ASTContext *ast_context, 

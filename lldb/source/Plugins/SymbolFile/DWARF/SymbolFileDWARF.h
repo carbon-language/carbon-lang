@@ -162,7 +162,7 @@ public:
     SupportedVersion(uint16_t version);
 
     clang::DeclContext *
-    GetClangDeclContextForDIE (const DWARFCompileUnit *cu, const DWARFDebugInfoEntry *die);
+    GetClangDeclContextForDIE (DWARFCompileUnit *cu, const DWARFDebugInfoEntry *die);
 
     clang::DeclContext *
     GetClangDeclContextForDIEOffset (dw_offset_t die_offset);
@@ -200,31 +200,31 @@ protected:
     };
 
     DISALLOW_COPY_AND_ASSIGN (SymbolFileDWARF);
-    bool                    ParseCompileUnit(DWARFCompileUnit* cu, lldb::CompUnitSP& compile_unit_sp);
+    bool                    ParseCompileUnit (DWARFCompileUnit* cu, lldb::CompUnitSP& compile_unit_sp);
     DWARFCompileUnit*       GetDWARFCompileUnitForUID(lldb::user_id_t cu_uid);
     DWARFCompileUnit*       GetNextUnparsedDWARFCompileUnit(DWARFCompileUnit* prev_cu);
     lldb_private::CompileUnit*      GetCompUnitForDWARFCompUnit(DWARFCompileUnit* cu, uint32_t cu_idx = UINT32_MAX);
     bool                    GetFunction (DWARFCompileUnit* cu, const DWARFDebugInfoEntry* func_die, lldb_private::SymbolContext& sc);
-    lldb_private::Function *        ParseCompileUnitFunction (const lldb_private::SymbolContext& sc, const DWARFCompileUnit* dwarf_cu, const DWARFDebugInfoEntry *die);
+    lldb_private::Function *        ParseCompileUnitFunction (const lldb_private::SymbolContext& sc, DWARFCompileUnit* dwarf_cu, const DWARFDebugInfoEntry *die);
     size_t                  ParseFunctionBlocks (const lldb_private::SymbolContext& sc,
                                                  lldb_private::Block *parent_block,
-                                                 const DWARFCompileUnit* dwarf_cu,
+                                                 DWARFCompileUnit* dwarf_cu,
                                                  const DWARFDebugInfoEntry *die,
                                                  lldb::addr_t subprogram_low_pc,
                                                  bool parse_siblings,
                                                  bool parse_children);
-    size_t                  ParseTypes (const lldb_private::SymbolContext& sc, const DWARFCompileUnit* dwarf_cu, const DWARFDebugInfoEntry *die, bool parse_siblings, bool parse_children);
-    lldb::TypeSP            ParseType (const lldb_private::SymbolContext& sc, const DWARFCompileUnit* dwarf_cu, const DWARFDebugInfoEntry *die, bool &type_is_new);
+    size_t                  ParseTypes (const lldb_private::SymbolContext& sc, DWARFCompileUnit* dwarf_cu, const DWARFDebugInfoEntry *die, bool parse_siblings, bool parse_children);
+    lldb::TypeSP            ParseType (const lldb_private::SymbolContext& sc, DWARFCompileUnit* dwarf_cu, const DWARFDebugInfoEntry *die, bool &type_is_new);
 
     lldb::VariableSP        ParseVariableDIE(
                                 const lldb_private::SymbolContext& sc,
-                                const DWARFCompileUnit* dwarf_cu,
+                                DWARFCompileUnit* dwarf_cu,
                                 const DWARFDebugInfoEntry *die,
                                 const lldb::addr_t func_low_pc);
 
     size_t                  ParseVariables(
                                 const lldb_private::SymbolContext& sc,
-                                const DWARFCompileUnit* dwarf_cu,
+                                DWARFCompileUnit* dwarf_cu,
                                 const lldb::addr_t func_low_pc,
                                 const DWARFDebugInfoEntry *die,
                                 bool parse_siblings,
@@ -234,7 +234,7 @@ protected:
     size_t                  ParseChildMembers(
                                 const lldb_private::SymbolContext& sc,
                                 lldb::TypeSP& type_sp,
-                                const DWARFCompileUnit* dwarf_cu,
+                                DWARFCompileUnit* dwarf_cu,
                                 const DWARFDebugInfoEntry *die,
                                 void *class_clang_type,
                                 const lldb::LanguageType class_language,
@@ -246,7 +246,7 @@ protected:
     size_t                  ParseChildParameters(
                                 const lldb_private::SymbolContext& sc,
                                 lldb::TypeSP& type_sp,
-                                const DWARFCompileUnit* dwarf_cu,
+                                DWARFCompileUnit* dwarf_cu,
                                 const DWARFDebugInfoEntry *parent_die,
                                 bool skip_artificial,
                                 lldb_private::TypeList* type_list,
@@ -258,12 +258,12 @@ protected:
                                 lldb::TypeSP& type_sp,
                                 void *enumerator_qual_type,
                                 uint32_t enumerator_byte_size,
-                                const DWARFCompileUnit* dwarf_cu,
+                                DWARFCompileUnit* dwarf_cu,
                                 const DWARFDebugInfoEntry *enum_die);
 
     void                    ParseChildArrayInfo(
                                 const lldb_private::SymbolContext& sc,
-                                const DWARFCompileUnit* dwarf_cu,
+                                DWARFCompileUnit* dwarf_cu,
                                 const DWARFDebugInfoEntry *parent_die,
                                 int64_t& first_index,
                                 std::vector<uint64_t>& element_orders,

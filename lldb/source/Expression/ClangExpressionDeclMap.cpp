@@ -1206,12 +1206,18 @@ ClangExpressionDeclMap::AddOneType(NameSearchContext &context,
                                                                  false,
                                                                  ClangASTContext::GetTypeQualifiers(copied_type));
         
-        ClangASTContext::AddMethodToCXXRecordType(parser_ast_context,
-                                                  copied_type,
-                                                  "___clang_expr",
-                                                  method_type,
-                                                  lldb::eAccessPublic,
-                                                  false);
+        const bool is_virtual = false;
+        const bool is_static = false;
+        const bool is_inline = false;
+
+        ClangASTContext::AddMethodToCXXRecordType (parser_ast_context,
+                                                   copied_type,
+                                                   "___clang_expr",
+                                                   method_type,
+                                                   lldb::eAccessPublic,
+                                                   is_virtual,
+                                                   is_static,
+                                                   is_inline);
     }
     
     context.AddTypeDecl(copied_type);
