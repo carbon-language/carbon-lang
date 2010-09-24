@@ -209,7 +209,7 @@ class BasicTypesTestCase(TestBase):
         self.runCmd("run", RUN_SUCCEEDED)
         self.runCmd("thread step-out", STEP_OUT_SUCCEEDED)
 
-        self.runCmd("frame variable")
+        #self.runCmd("frame variable")
 
         # Now iterate through the golden list, comparing against the output from
         # 'frame variable var'.
