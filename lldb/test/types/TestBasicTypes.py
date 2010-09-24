@@ -19,6 +19,62 @@ class BasicTypesTestCase(TestBase):
     # printf() stmts (see basic_type.cpp).
     pattern = re.compile(" (\*?a[^=]*) = '([^=]*)'$")
 
+    def test_char_type_with_dsym(self):
+        """Test that char-type variables are displayed correctly."""
+        d = {'CXX_SOURCES': 'char.cpp'}
+        self.buildDsym(dictionary=d)
+        self.setTearDownCleanup(dictionary=d)
+        self.char_type()
+
+    def test_char_type_with_dwarf(self):
+        """Test that char-type variables are displayed correctly."""
+        d = {'CXX_SOURCES': 'char.cpp'}
+        self.buildDwarf(dictionary=d)
+        self.setTearDownCleanup(dictionary=d)
+        self.char_type()
+
+    def test_unsigned_char_type_with_dsym(self):
+        """Test that 'unsigned_char'-type variables are displayed correctly."""
+        d = {'CXX_SOURCES': 'unsigned_char.cpp'}
+        self.buildDsym(dictionary=d)
+        self.setTearDownCleanup(dictionary=d)
+        self.unsigned_char_type()
+
+    def test_unsigned_char_type_with_dwarf(self):
+        """Test that 'unsigned char'-type variables are displayed correctly."""
+        d = {'CXX_SOURCES': 'unsigned_char.cpp'}
+        self.buildDwarf(dictionary=d)
+        self.setTearDownCleanup(dictionary=d)
+        self.unsigned_char_type()
+
+    def test_short_type_with_dsym(self):
+        """Test that short-type variables are displayed correctly."""
+        d = {'CXX_SOURCES': 'short.cpp'}
+        self.buildDsym(dictionary=d)
+        self.setTearDownCleanup(dictionary=d)
+        self.short_type()
+
+    def test_short_type_with_dwarf(self):
+        """Test that short-type variables are displayed correctly."""
+        d = {'CXX_SOURCES': 'short.cpp'}
+        self.buildDwarf(dictionary=d)
+        self.setTearDownCleanup(dictionary=d)
+        self.short_type()
+
+    def test_unsigned_short_type_with_dsym(self):
+        """Test that 'unsigned_short'-type variables are displayed correctly."""
+        d = {'CXX_SOURCES': 'unsigned_short.cpp'}
+        self.buildDsym(dictionary=d)
+        self.setTearDownCleanup(dictionary=d)
+        self.unsigned_short_type()
+
+    def test_unsigned_short_type_with_dwarf(self):
+        """Test that 'unsigned short'-type variables are displayed correctly."""
+        d = {'CXX_SOURCES': 'unsigned_short.cpp'}
+        self.buildDwarf(dictionary=d)
+        self.setTearDownCleanup(dictionary=d)
+        self.unsigned_short_type()
+
     def test_int_type_with_dsym(self):
         """Test that int-type variables are displayed correctly."""
         d = {'CXX_SOURCES': 'int.cpp'}
@@ -75,6 +131,22 @@ class BasicTypesTestCase(TestBase):
         self.setTearDownCleanup(dictionary=d)
         self.unsigned_long_type()
 
+    def char_type(self):
+        """Test that char-type variables are displayed correctly."""
+        self.generic_type_tester("char", quotedDisplay=True)
+
+    def unsigned_char_type(self):
+        """Test that 'unsigned char'-type variables are displayed correctly."""
+        self.generic_type_tester("unsigned char", quotedDisplay=True)
+
+    def short_type(self):
+        """Test that short-type variables are displayed correctly."""
+        self.generic_type_tester("short")
+
+    def unsigned_short_type(self):
+        """Test that 'unsigned short'-type variables are displayed correctly."""
+        self.generic_type_tester("unsigned short")
+
     def int_type(self):
         """Test that int-type variables are displayed correctly."""
         self.generic_type_tester("int")
@@ -91,7 +163,7 @@ class BasicTypesTestCase(TestBase):
         """Test that 'unsigned long'-type variables are displayed correctly."""
         self.generic_type_tester("unsigned long")
 
-    def generic_type_tester(self, type):
+    def generic_type_tester(self, type, quotedDisplay=False):
         """Test that variables with basic types are displayed correctly."""
 
         # First, capture the golden output emitted by the oracle, i.e., the
@@ -137,6 +209,8 @@ class BasicTypesTestCase(TestBase):
         self.runCmd("run", RUN_SUCCEEDED)
         self.runCmd("thread step-out", STEP_OUT_SUCCEEDED)
 
+        self.runCmd("frame variable")
+
         # Now iterate through the golden list, comparing against the output from
         # 'frame variable var'.
         for var, val in gl:
@@ -155,8 +229,9 @@ class BasicTypesTestCase(TestBase):
                           (dt, type))
 
             # The (var, val) pair must match, too.
+            nv = (" %s = '%s'" if quotedDisplay else " %s = %s") % (var, val)
             self.expect(output, Msg(var, val), exe=False,
-                substrs = [" %s = %s" % (var, val)])
+                substrs = [nv])
 
 
 if __name__ == '__main__':
