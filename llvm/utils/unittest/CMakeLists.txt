@@ -20,15 +20,17 @@ if(WIN32)
   add_definitions(-DGTEST_OS_WINDOWS=1)
 endif()
 
-add_llvm_library(gtest
-  googletest/gtest.cc
-  googletest/gtest-death-test.cc
-  googletest/gtest-filepath.cc
-  googletest/gtest-port.cc
-  googletest/gtest-test-part.cc
-  googletest/gtest-typed-test.cc
-  )
+if (LLVM_INCLUDE_TESTS OR LLVM_BUILD_TESTS)
+  add_llvm_library(gtest
+    googletest/gtest.cc
+    googletest/gtest-death-test.cc
+    googletest/gtest-filepath.cc
+    googletest/gtest-port.cc
+    googletest/gtest-test-part.cc
+    googletest/gtest-typed-test.cc
+    )
 
-add_llvm_library(gtest_main
-  UnitTestMain/TestMain.cpp
-  )
+  add_llvm_library(gtest_main
+    UnitTestMain/TestMain.cpp
+    )
+endif()
