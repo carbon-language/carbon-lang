@@ -18,13 +18,13 @@ tailrecurse:                                      ; preds = %sw.bb, %entry
   %0 = ptrtoint i8* %tmp2 to i32
 
 ; CHECK:      ands r12, r12, #3
-; CHECK-NEXT: beq LBB0_4
+; CHECK-NEXT: beq LBB0_2
 
 ; T2:      movs r5, #3
 ; T2-NEXT: mov r6, r4
 ; T2-NEXT: ands r6, r5
 ; T2-NEXT: tst r4, r5
-; T2-NEXT: beq LBB0_5
+; T2-NEXT: beq LBB0_3
 
   %and = and i32 %0, 3
   %tst = icmp eq i32 %and, 0

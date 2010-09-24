@@ -76,11 +76,6 @@ ARMInterworking("arm-interworking", cl::Hidden,
   cl::desc("Enable / disable ARM interworking (for debugging only)"),
   cl::init(true));
 
-static cl::opt<bool>
-EnableARMCodePlacement("arm-code-placement", cl::Hidden,
-  cl::desc("Enable code placement pass for ARM"),
-  cl::init(false));
-
 void ARMTargetLowering::addTypeForNEON(EVT VT, EVT PromotedLdStVT,
                                        EVT PromotedBitwiseVT) {
   if (VT != PromotedLdStVT) {
@@ -550,8 +545,7 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
   // are at least 4 bytes aligned.
   setMinStackArgumentAlignment(4);
 
-  if (EnableARMCodePlacement)
-    benefitFromCodePlacementOpt = true;
+  benefitFromCodePlacementOpt = true;
 }
 
 std::pair<const TargetRegisterClass*, uint8_t>
