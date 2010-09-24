@@ -65,9 +65,21 @@ int AsmLexer::getNextChar() {
 }
 
 /// LexIdentifier: [a-zA-Z_.][a-zA-Z0-9_$.@]*
+static bool IsIdentifierChar(char c) {
+  return isalnum(c) || c == '_' || c == '$' || c == '.' || c == '@';
+}
 AsmToken AsmLexer::LexIdentifier() {
-  while (isalnum(*CurPtr) || *CurPtr == '_' || *CurPtr == '$' ||
-         *CurPtr == '.' || *CurPtr == '@')
+  // Check for floating point literals.
+  if (CurPtr[-1] == '.' && isdigit(*CurPtr)) {
+    while (isdigit(*CurPtr))
+      ++CurPtr;
+    if (!IsIdentifierChar(*CurPtr)) {
+      return AsmToken(AsmToken::Real,
+                      StringRef(TokStart, CurPtr - TokStart));
+    }
+  }
+
+  while (IsIdentifierChar(*CurPtr))
     ++CurPtr;
   
   // Handle . as a special case.
@@ -124,7 +136,6 @@ static void SkipIgnoredIntegerSuffix(const char *&CurPtr) {
     CurPtr += 3;
 }
 
-
 /// LexDigit: First character is [0-9].
 ///   Local Label: [0-9][:]
 ///   Forward/Backward Label: [0-9][fb]
@@ -132,13 +143,21 @@ static void SkipIgnoredIntegerSuffix(const char *&CurPtr) {
 ///   Octal integer: 0[0-7]+
 ///   Hex integer: 0x[0-9a-fA-F]+
 ///   Decimal integer: [1-9][0-9]*
-/// TODO: FP literal.
 AsmToken AsmLexer::LexDigit() {
   // Decimal integer: [1-9][0-9]*
   if (CurPtr[-1] != '0') {
     while (isdigit(*CurPtr))
       ++CurPtr;
-    
+
+    // Check for floating point literals.
+    if (*CurPtr == '.') {
+      ++CurPtr;
+      while (isdigit(*CurPtr))
+        ++CurPtr;
+
+      return AsmToken(AsmToken::Real, StringRef(TokStart, CurPtr - TokStart));
+    }
+
     StringRef Result(TokStart, CurPtr - TokStart);
 
     long long Value;

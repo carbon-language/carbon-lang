@@ -33,6 +33,9 @@ public:
     // Integer values.
     Integer,
     
+    // Real values.
+    Real,
+    
     // Register values (stored in IntVal).  Only used by TargetAsmLexer.
     Register,
     

@@ -208,6 +208,9 @@ static int AsLexInput(const char *ProgName) {
     case AsmToken::Integer:
       Out->os() << "int: " << Lexer.getTok().getString() << '\n';
       break;
+    case AsmToken::Real:
+      Out->os() << "real: " << Lexer.getTok().getString() << '\n';
+      break;
     case AsmToken::Register:
       Out->os() << "register: " << Lexer.getTok().getRegVal() << '\n';
       break;
