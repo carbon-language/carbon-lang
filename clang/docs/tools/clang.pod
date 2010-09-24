@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-clang - the Clang C and Objective-C compiler
+clang - the Clang C, C++, and Objective-C compiler
 
 =head1 SYNOPSIS
 
@@ -19,7 +19,7 @@ B<clang> [B<-c>|B<-S>|B<-E>] B<-std=>I<standard> B<-g>
 
 =head1 DESCRIPTION
 
-B<clang> is a C and Objective-C compiler which encompasses preprocessing,
+B<clang> is a C, C++, and Objective-C compiler which encompasses preprocessing,
 parsing, optimization, code generation, assembly, and linking.  Depending on
 which high-level mode setting is passed, Clang will stop before doing a full
 link.  While Clang is highly integrated, it is important to understand the
@@ -38,7 +38,8 @@ the other tools.
 
 This stage handles tokenization of the input source file, macro expansion,
 #include expansion and handling of other preprocessor directives.  The output of
-this stage is typically called a ".i" (for C) or ".mi" (for Objective-C) file.
+this stage is typically called a ".i" (for C), ".ii" (for C++), ".mi" (for 
+Objective-C) , or ".mii" (for Objective-C++) file.
 
 =item B<Parsing and Semantic Analysis>
 
