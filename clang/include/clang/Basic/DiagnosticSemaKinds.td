@@ -1466,7 +1466,8 @@ def err_template_spec_decl_out_of_scope_global : Error<
 def ext_template_spec_decl_out_of_scope_global : ExtWarn<
   "%select{class template|class template partial|function template|member "
   "function|static data member|member class}0 specialization of %1 must "
-  "originally be declared in the global scope; accepted as a C++0x extension">;
+  "originally be declared in the global scope; accepted as a C++0x extension">,
+  InGroup<CXX0x>;
 def err_template_spec_decl_out_of_scope : Error<
   "%select{class template|class template partial|function template|member "
   "function|static data member|member class}0 specialization of %1 must "
@@ -1474,7 +1475,8 @@ def err_template_spec_decl_out_of_scope : Error<
 def ext_template_spec_decl_out_of_scope : ExtWarn<
   "%select{class template|class template partial|function template|member "
   "function|static data member|member class}0 specialization of %1 must "
-  "originally be declared in namespace %2; accepted as a C++0x extension">;
+  "originally be declared in namespace %2; accepted as a C++0x extension">,
+  InGroup<CXX0x>;
 def err_template_spec_redecl_out_of_scope : Error<
   "%select{class template|class template partial|function template|member "
   "function|static data member|member class}0 specialization of %1 not in a "
@@ -1618,7 +1620,8 @@ def note_previous_explicit_instantiation : Note<
     "previous explicit instantiation is here">;
 def ext_explicit_instantiation_after_specialization : Extension<
     "explicit instantiation of %0 that occurs after an explicit "
-    "specialization will be ignored (C++0x extension)">;
+    "specialization will be ignored (C++0x extension)">,
+    InGroup<CXX0x>;
 def note_previous_template_specialization : Note<
     "previous template specialization is here">;
 def err_explicit_instantiation_enum : Error<
@@ -2464,7 +2467,8 @@ def err_array_size_ambiguous_conversion : Error<
   "enumeration type">;
 def ext_array_size_conversion : Extension<
   "implicit conversion from array size expression of type %0 to "
-  "%select{integral|enumeration}1 type %2 is a C++0x extension">;
+  "%select{integral|enumeration}1 type %2 is a C++0x extension">,
+  InGroup<CXX0x>;
   
 def err_default_init_const : Error<
   "default initialization of an object of const type %0"
@@ -2878,7 +2882,7 @@ def err_in_class_initializer_bad_type : Error<
   "static data member of type %0 must be initialized out of line">;
 def ext_in_class_initializer_float_type : ExtWarn<
   "in-class initializer for static data member of type %0 "
-  "is a C++0x extension">;
+  "is a C++0x extension">, InGroup<CXX0x>;
 def err_in_class_initializer_non_constant : Error<
   "in-class initializer is not a constant expression">;
 
@@ -3042,7 +3046,7 @@ def warn_not_compound_assign : Warning<
 
 // C++0x explicit conversion operators
 def warn_explicit_conversion_functions : Warning<
-  "explicit conversion functions are a C++0x extension">;
+  "explicit conversion functions are a C++0x extension">, InGroup<CXX0x>;
 
 def warn_printf_write_back : Warning<
   "use of '%%n' in format string discouraged (potentially insecure)">,

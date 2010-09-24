@@ -226,6 +226,10 @@ def : DiagGroup<"comments", [Comment]>;         // -Wcomments = -Wcomment
 def NonGCC : DiagGroup<"non-gcc",
     [SignCompare, Conversion, LiteralRange]>;
 
+// A warning group for warnings about using C++0x features as extensions in
+// earlier C++ versions.
+def CXX0x : DiagGroup<"c++0x-extensions">;
+
 // A warning group for warnings about GCC extensions.
 def GNU : DiagGroup<"gnu", [GNUDesignator, VLA]>;
 

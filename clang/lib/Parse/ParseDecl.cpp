@@ -589,8 +589,12 @@ Decl *Parser::ParseDeclarationAfterDeclarator(Declarator &D,
   // Parse declarator '=' initializer.
   if (Tok.is(tok::equal)) {
     ConsumeToken();
-    if (getLang().CPlusPlus0x && Tok.is(tok::kw_delete)) {
+    if (Tok.is(tok::kw_delete)) {
       SourceLocation DelLoc = ConsumeToken();
+      
+      if (!getLang().CPlusPlus0x)
+        Diag(DelLoc, diag::warn_deleted_function_accepted_as_extension);
+
       Actions.SetDeclDeleted(ThisDecl, DelLoc);
     } else {
       if (getLang().CPlusPlus && D.getCXXScopeSpec().isSet()) {

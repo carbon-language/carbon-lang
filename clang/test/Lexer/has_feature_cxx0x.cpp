@@ -70,7 +70,7 @@ int no_static_assert();
 // CHECK-0X: has_static_assert
 // CHECK-NO-0X: no_static_assert
 
-
+// We accept this as an extension.
 #if __has_feature(cxx_deleted_functions)
 int deleted_functions();
 #else
@@ -78,7 +78,7 @@ int no_deleted_functions();
 #endif
 
 // CHECK-0X: deleted_functions
-// CHECK-NO-0X: no_deleted_functions
+// CHECK-NO-0X: deleted_functions
 
 
 #if __has_feature(cxx_rvalue_references)

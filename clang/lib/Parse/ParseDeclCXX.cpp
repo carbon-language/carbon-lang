@@ -1443,7 +1443,9 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
     //   '=' 'delete'
     if (Tok.is(tok::equal)) {
       ConsumeToken();
-      if (getLang().CPlusPlus0x && Tok.is(tok::kw_delete)) {
+      if (Tok.is(tok::kw_delete)) {
+        if (!getLang().CPlusPlus0x)
+          Diag(Tok, diag::warn_deleted_function_accepted_as_extension);
         ConsumeToken();
         Deleted = true;
       } else {
