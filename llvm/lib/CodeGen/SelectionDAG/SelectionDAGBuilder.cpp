@@ -3970,9 +3970,11 @@ SelectionDAGBuilder::EmitFuncArgumentDbgValue(const Value *V, MDNode *Variable,
 }
 
 // VisualStudio defines setjmp as _setjmp
-#if defined(_MSC_VER) && defined(setjmp)
-#define setjmp_undefined_for_visual_studio
-#undef setjmp
+#if defined(_MSC_VER) && defined(setjmp) && \
+                         !defined(setjmp_undefined_for_msvc)
+#  pragma push_macro("setjmp")
+#  undef setjmp
+#  define setjmp_undefined_for_msvc
 #endif
 
 /// visitIntrinsicCall - Lower the call to the specified intrinsic function.  If

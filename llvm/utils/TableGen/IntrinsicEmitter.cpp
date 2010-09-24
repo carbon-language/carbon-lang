@@ -68,16 +68,19 @@ void IntrinsicEmitter::run(raw_ostream &OS) {
 
 void IntrinsicEmitter::EmitPrefix(raw_ostream &OS) {
   OS << "// VisualStudio defines setjmp as _setjmp\n"
-        "#if defined(_MSC_VER) && defined(setjmp)\n"
+        "#if defined(_MSC_VER) && defined(setjmp) && \\\n"
+        "                         !defined(setjmp_undefined_for_msvc)\n"
         "#  pragma push_macro(\"setjmp\")\n"
         "#  undef setjmp\n"
+        "#  define setjmp_undefined_for_msvc\n"
         "#endif\n\n";
 }
 
 void IntrinsicEmitter::EmitSuffix(raw_ostream &OS) {
-  OS << "#if defined(_MSC_VER)\n"
+  OS << "#if defined(_MSC_VER) && defined(setjmp_undefined_for_msvc)\n"
         "// let's return it to _setjmp state\n"
         "#  pragma pop_macro(\"setjmp\")\n"
+        "#  undef setjmp_undefined_for_msvc\n"
         "#endif\n\n";
 }
 
