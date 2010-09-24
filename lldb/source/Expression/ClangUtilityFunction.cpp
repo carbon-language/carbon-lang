@@ -44,6 +44,10 @@ ClangUtilityFunction::ClangUtilityFunction (const char *text,
 {
 }
 
+ClangUtilityFunction::~ClangUtilityFunction ()
+{
+}
+
 //------------------------------------------------------------------
 /// Install the utility function into a process
 ///

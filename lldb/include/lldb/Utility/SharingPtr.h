@@ -13,7 +13,7 @@
 #include <algorithm>
 #include <memory>
 
-namespace lldb {
+namespace lldb_private {
 
 namespace imp {
 

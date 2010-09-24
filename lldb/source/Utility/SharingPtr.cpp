@@ -9,7 +9,7 @@
 
 #include "lldb/Utility/SharingPtr.h"
 
-namespace lldb {
+namespace lldb_private {
 
 namespace imp
 {

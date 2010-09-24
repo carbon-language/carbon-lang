@@ -52,6 +52,9 @@ public:
     ClangUtilityFunction (const char *text, 
                           const char *name);
     
+    virtual 
+    ~ClangUtilityFunction ();
+
     //------------------------------------------------------------------
     /// Install the utility function into a process
     ///
