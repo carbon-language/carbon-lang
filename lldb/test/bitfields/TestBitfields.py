@@ -108,6 +108,9 @@ class BitfieldsTestCase(TestBase):
                         bits.GetByteSize() == 4,
                         "(Bits)bits with byte size of 4 and 8 children")
 
+        # Notice the pattern of int(b1.GetValue(frame), 0).  We pass a base of 0
+        # so that the proper radix is determined based on the contents of the
+        # string.
         b1 = bits.GetChildAtIndex(0)
         self.DebugSBValue(frame, b1)
         self.assertTrue(b1.GetName() == "b1" and

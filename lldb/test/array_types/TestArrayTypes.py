@@ -148,6 +148,9 @@ class ArrayTypesTestCase(TestBase):
                         "Variable 'char_16' should have 16 children")
 
         # Lookup the "ushort_matrix" ushort[] array variable.
+        # Notice the pattern of int(child0_2.GetValue(frame), 0).  We pass a
+        # base of 0 so that the proper radix is determined based on the contents
+        # of the string.  Same applies to long().
         variable = frame.LookupVar("ushort_matrix")
         self.DebugSBValue(frame, variable)
         self.assertTrue(variable.GetNumChildren() == 2,
@@ -158,7 +161,7 @@ class ArrayTypesTestCase(TestBase):
                         "Variable 'ushort_matrix[0]' should have 3 children")
         child0_2 = child0.GetChildAtIndex(2)
         self.DebugSBValue(frame, child0_2)
-        self.assertTrue(int(child0_2.GetValue(frame), 16) == 3,
+        self.assertTrue(int(child0_2.GetValue(frame), 0) == 3,
                         "ushort_matrix[0][2] == 3")
 
         # Lookup the "long_6" char array variable.
@@ -168,7 +171,7 @@ class ArrayTypesTestCase(TestBase):
                         "Variable 'long_6' should have 6 children")
         child5 = variable.GetChildAtIndex(5)
         self.DebugSBValue(frame, child5)
-        self.assertTrue(long(child5.GetValue(frame)) == 6,
+        self.assertTrue(long(child5.GetValue(frame), 0) == 6,
                         "long_6[5] == 6")
 
 
