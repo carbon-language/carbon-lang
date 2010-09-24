@@ -5434,6 +5434,26 @@ void SelectionDAGBuilder::visitInlineAsm(ImmutableCallSite CS) {
   for (unsigned i = 0, e = ConstraintOperands.size(); i != e; ++i) {
     SDISelAsmOperandInfo &OpInfo = ConstraintOperands[i];
 
+    // If this is an output operand with a matching input operand, look up the
+    // matching input. If their types mismatch, e.g. one is an integer, the
+    // other is floating point, or their sizes are different, flag it as an
+    // error.
+    if (OpInfo.hasMatchingInput()) {
+      SDISelAsmOperandInfo &Input = ConstraintOperands[OpInfo.MatchingInput];
+      
+      if (OpInfo.ConstraintVT != Input.ConstraintVT) {
+        if ((OpInfo.ConstraintVT.isInteger() !=
+             Input.ConstraintVT.isInteger()) ||
+            (OpInfo.ConstraintVT.getSizeInBits() !=
+             Input.ConstraintVT.getSizeInBits())) {
+          report_fatal_error("Unsupported asm: input constraint"
+                             " with a matching output constraint of"
+                             " incompatible type!");
+        }
+        Input.ConstraintVT = OpInfo.ConstraintVT;
+      }
+    }
+
     // Compute the constraint code and ConstraintType to use.
     TLI.ComputeConstraintToUse(OpInfo, OpInfo.CallOperand, &DAG);
 
