@@ -1,4 +1,4 @@
-// Test that the ivars created via default synthesis are not reported.
+// <rdar://problem/8470540> - Test that the ivars created via default synthesis are not reported.
 @class NSArray, NSString, NSButton;
 @interface TestA
 {
