@@ -30,3 +30,12 @@ void f() {
         id a;
         id b = bar((id <Proto>)a);
 }
+
+// rdar://8472487
+@protocol NSObject @end
+@class NSRunLoop;
+
+@protocol CoreDAVTaskManager <NSObject> 
+  @property (retain) NSRunLoop *workRunLoop;  
+@end
+

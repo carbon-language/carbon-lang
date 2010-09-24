@@ -962,6 +962,10 @@ void RewriteObjC::RewriteProtocolDecl(ObjCProtocolDecl *PDecl) {
        I != E; ++I)
     RewriteMethodDeclaration(*I);
 
+  for (ObjCInterfaceDecl::prop_iterator I = PDecl->prop_begin(),
+       E = PDecl->prop_end(); I != E; ++I)
+    RewriteProperty(*I);
+  
   // Lastly, comment out the @end.
   SourceLocation LocEnd = PDecl->getAtEndRange().getBegin();
   ReplaceText(LocEnd, strlen("@end"), "/* @end */");
