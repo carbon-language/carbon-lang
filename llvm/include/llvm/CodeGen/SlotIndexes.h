@@ -405,9 +405,6 @@ namespace llvm {
     /// and MBB id.
     std::vector<IdxMBBPair> idx2MBBMap;
 
-    typedef DenseMap<const MachineBasicBlock*, SlotIndex> TerminatorGapsMap;
-    TerminatorGapsMap terminatorGaps;
-
     // IndexListEntry allocator.
     BumpPtrAllocator ileAllocator;
 
@@ -577,14 +574,6 @@ namespace llvm {
       MBB2IdxMap::const_iterator itr = mbb2IdxMap.find(mbb);
       assert(itr != mbb2IdxMap.end() && "MBB not found in maps.");
       return itr->second.second;
-    }
-
-    /// Returns the terminator gap for the given index.
-    SlotIndex getTerminatorGap(const MachineBasicBlock *mbb) {
-      TerminatorGapsMap::iterator itr = terminatorGaps.find(mbb);
-      assert(itr != terminatorGaps.end() &&
-             "All MBBs should have terminator gaps in their indexes.");
-      return itr->second;
     }
 
     /// Returns the basic block which the given index falls in.
@@ -789,7 +778,6 @@ namespace llvm {
       MachineFunction::iterator nextMBB =
         llvm::next(MachineFunction::iterator(mbb));
       IndexListEntry *startEntry = createEntry(0, 0);
-      IndexListEntry *terminatorEntry = createEntry(0, 0); 
       IndexListEntry *nextEntry = 0;
 
       if (nextMBB == mbb->getParent()->end()) {
@@ -799,14 +787,9 @@ namespace llvm {
       }
 
       insert(nextEntry, startEntry);
-      insert(nextEntry, terminatorEntry);
 
       SlotIndex startIdx(startEntry, SlotIndex::LOAD);
-      SlotIndex terminatorIdx(terminatorEntry, SlotIndex::PHI_BIT);
       SlotIndex endIdx(nextEntry, SlotIndex::LOAD);
-
-      terminatorGaps.insert(
-        std::make_pair(mbb, terminatorIdx));
 
       mbb2IdxMap.insert(
         std::make_pair(mbb, std::make_pair(startIdx, endIdx)));

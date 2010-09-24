@@ -61,7 +61,6 @@ void SlotIndexes::releaseMemory() {
   mi2iMap.clear();
   mbb2IdxMap.clear();
   idx2MBBMap.clear();
-  terminatorGaps.clear();
   clearList();
 }
 
@@ -112,13 +111,6 @@ bool SlotIndexes::runOnMachineFunction(MachineFunction &fn) {
       if (mi->isDebugValue())
         continue;
 
-      if (miItr == mbb->getFirstTerminator()) {
-        push_back(createEntry(0, index));
-        terminatorGaps.insert(
-          std::make_pair(mbb, SlotIndex(back(), SlotIndex::PHI_BIT)));
-        index += SlotIndex::NUM;
-      }
-
       // Insert a store index for the instr.
       push_back(createEntry(mi, index));
 
@@ -133,13 +125,6 @@ bool SlotIndexes::runOnMachineFunction(MachineFunction &fn) {
         Slots = 1;
 
       index += (Slots + 1) * SlotIndex::NUM;
-    }
-
-    if (mbb->getFirstTerminator() == mbb->end()) {
-      push_back(createEntry(0, index));
-      terminatorGaps.insert(
-        std::make_pair(mbb, SlotIndex(back(), SlotIndex::PHI_BIT)));
-      index += SlotIndex::NUM;
     }
 
     // One blank instruction at the end.
@@ -179,7 +164,7 @@ void SlotIndexes::renumberIndexes() {
     curEntry->setIndex(index);
 
     if (curEntry->getInstr() == 0) {
-      // MBB start entry or terminator gap. Just step index by 1.
+      // MBB start entry. Just step index by 1.
       index += SlotIndex::NUM;
     }
     else {

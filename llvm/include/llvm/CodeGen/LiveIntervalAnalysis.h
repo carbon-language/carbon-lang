@@ -227,10 +227,6 @@ namespace llvm {
       return indexes_->getMBBFromIndex(index);
     }
 
-    SlotIndex getMBBTerminatorGap(const MachineBasicBlock *mbb) {
-      return indexes_->getTerminatorGap(mbb);
-    }
-
     SlotIndex InsertMachineInstrInMaps(MachineInstr *MI) {
       return indexes_->insertMachineInstrInMaps(MI);
     }
