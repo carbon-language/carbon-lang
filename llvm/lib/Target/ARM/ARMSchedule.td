@@ -45,6 +45,7 @@ def IIC_iLoadru    : InstrItinClass;
 def IIC_iLoadsiu   : InstrItinClass;
 def IIC_iLoadm     : InstrItinClass<0>;  // micro-coded
 def IIC_iLoadmBr   : InstrItinClass<0>;  // micro-coded
+def IIC_iLoadiALU  : InstrItinClass;
 def IIC_iStorei    : InstrItinClass;
 def IIC_iStorer    : InstrItinClass;
 def IIC_iStoresi   : InstrItinClass;

@@ -33,7 +33,7 @@ def CortexA9Itineraries : ProcessorItineraries<
   // Move instructions, unconditional
   InstrItinData<IIC_iMOVi   , [InstrStage<1, [A9_Pipe0, A9_Pipe1]>], [1]>,
   InstrItinData<IIC_iMOVix2 , [InstrStage<1, [A9_Pipe0, A9_Pipe1]>,
-                               InstrStage<1, [A9_Pipe0, A9_Pipe1]>], [1]>,
+                               InstrStage<1, [A9_Pipe0, A9_Pipe1]>], [2]>,
   InstrItinData<IIC_iMOVr   , [InstrStage<1, [A9_Pipe0, A9_Pipe1]>], [1, 1]>,
   InstrItinData<IIC_iMOVsi  , [InstrStage<1, [A9_Pipe0, A9_Pipe1]>], [1, 1]>,
   InstrItinData<IIC_iMOVsr  , [InstrStage<2, [A9_Pipe0, A9_Pipe1]>], [2, 2, 1]>,
@@ -114,6 +114,12 @@ def CortexA9Itineraries : ProcessorItineraries<
   InstrItinData<IIC_iLoadmBr , [InstrStage<1, [A9_Pipe1]>,
                                 InstrStage<1, [A9_LSPipe]>,
                                 InstrStage<1, [A9_Pipe0, A9_Pipe1]>]>,
+
+  //
+  // iLoadi + iALUr for t2LDRpci_pic.
+  InstrItinData<IIC_iLoadiALU, [InstrStage<1, [A9_Pipe1]>,
+                                InstrStage<1, [A9_LSPipe]>,
+                                InstrStage<1, [A9_Pipe0, A9_Pipe1]>], [4, 1]>,
 
   // Integer store pipeline
   ///

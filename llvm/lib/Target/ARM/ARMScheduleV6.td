@@ -46,6 +46,8 @@ def ARMV6Itineraries : ProcessorItineraries<
   InstrItinData<IIC_iMOVr    , [InstrStage<1, [V6_Pipe]>], [2, 2]>,
   InstrItinData<IIC_iMOVsi   , [InstrStage<1, [V6_Pipe]>], [2, 1]>,
   InstrItinData<IIC_iMOVsr   , [InstrStage<2, [V6_Pipe]>], [3, 2, 1]>,
+  InstrItinData<IIC_iMOVix2  , [InstrStage<1, [V6_Pipe]>,
+                                InstrStage<1, [V6_Pipe]>], [2]>,
   //
   // Move instructions, conditional
   InstrItinData<IIC_iCMOVi   , [InstrStage<1, [V6_Pipe]>], [3]>,
@@ -90,6 +92,11 @@ def ARMV6Itineraries : ProcessorItineraries<
   // Load multiple plus branch
   InstrItinData<IIC_iLoadmBr , [InstrStage<3, [V6_Pipe]>,
                                 InstrStage<1, [V6_Pipe]>]>,
+
+  //
+  // iLoadi + iALUr for t2LDRpci_pic.
+  InstrItinData<IIC_iLoadiALU, [InstrStage<1, [V6_Pipe]>,
+                                InstrStage<1, [V6_Pipe]>], [3, 1]>,
 
   // Integer store pipeline
   //
