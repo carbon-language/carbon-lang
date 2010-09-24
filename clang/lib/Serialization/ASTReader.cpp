@@ -3362,11 +3362,11 @@ void ASTReader::InitializeSema(Sema &S) {
 
   // Makes sure any declarations that were deserialized "too early"
   // still get added to the identifier's declaration chains.
-  if (SemaObj->TUScope) {
-    for (unsigned I = 0, N = PreloadedDecls.size(); I != N; ++I) {
+  for (unsigned I = 0, N = PreloadedDecls.size(); I != N; ++I) {
+    if (SemaObj->TUScope)
       SemaObj->TUScope->AddDecl(PreloadedDecls[I]);
-      SemaObj->IdResolver.AddDecl(PreloadedDecls[I]);
-    }
+
+    SemaObj->IdResolver.AddDecl(PreloadedDecls[I]);
   }
   PreloadedDecls.clear();
 
@@ -3564,8 +3564,8 @@ ASTReader::SetGloballyVisibleDecls(IdentifierInfo *II,
         // and add it to the declaration chain for this identifier, so
         // that (unqualified) name lookup will find it.
         SemaObj->TUScope->AddDecl(D);
-        SemaObj->IdResolver.AddDeclToIdentifierChain(II, D);
       }
+      SemaObj->IdResolver.AddDeclToIdentifierChain(II, D);
     } else {
       // Queue this declaration so that it will be added to the
       // translation unit scope and identifier's declaration chain
