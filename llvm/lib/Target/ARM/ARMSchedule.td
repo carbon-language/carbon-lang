@@ -23,6 +23,7 @@ def IIC_iCMPr      : InstrItinClass;
 def IIC_iCMPsi     : InstrItinClass;
 def IIC_iCMPsr     : InstrItinClass;
 def IIC_iMOVi      : InstrItinClass;
+def IIC_iMOVix2    : InstrItinClass;
 def IIC_iMOVr      : InstrItinClass;
 def IIC_iMOVsi     : InstrItinClass;
 def IIC_iMOVsr     : InstrItinClass;

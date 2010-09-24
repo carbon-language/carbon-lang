@@ -2729,9 +2729,11 @@ def Int_eh_sjlj_longjmp : XI<(outs), (ins GPR:$src, GPR:$scratch),
 // Large immediate handling.
 
 // Two piece so_imms.
+// FIXME: Expand this in ARMExpandPseudoInsts.
+// FIXME: Remove this when we can do generalized remat.
 let isReMaterializable = 1 in
 def MOVi2pieces : AI1x2<(outs GPR:$dst), (ins so_imm2part:$src),
-                         Pseudo, IIC_iMOVi,
+                         Pseudo, IIC_iMOVix2,
                          "mov", "\t$dst, $src",
                          [(set GPR:$dst, so_imm2part:$src)]>,
                   Requires<[IsARM, NoV6T2]>;
@@ -2754,7 +2756,7 @@ def : ARMPat<(add GPR:$LHS, so_neg_imm2part:$RHS),
 // as a single unit instead of having to handle reg inputs.
 // FIXME: Remove this when we can do generalized remat.
 let isReMaterializable = 1 in
-def MOVi32imm : AI1x2<(outs GPR:$dst), (ins i32imm:$src), Pseudo, IIC_iMOVi,
+def MOVi32imm : AI1x2<(outs GPR:$dst), (ins i32imm:$src), Pseudo, IIC_iMOVix2,
                    "movw", "\t$dst, ${src:lo16}\n\tmovt${p}\t$dst, ${src:hi16}",
                      [(set GPR:$dst, (i32 imm:$src))]>,
                Requires<[IsARM, HasV6T2]>;

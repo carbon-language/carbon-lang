@@ -50,6 +50,8 @@ def CortexA8Itineraries : ProcessorItineraries<
   //
   // Move instructions, unconditional
   InstrItinData<IIC_iMOVi , [InstrStage<1, [A8_Pipe0, A8_Pipe1]>], [1]>,
+  InstrItinData<IIC_iMOVix2,[InstrStage<1, [A8_Pipe0, A8_Pipe1]>,
+                             InstrStage<1, [A8_Pipe0, A8_Pipe1]>], [1]>,
   InstrItinData<IIC_iMOVr , [InstrStage<1, [A8_Pipe0, A8_Pipe1]>], [1, 1]>,
   InstrItinData<IIC_iMOVsi, [InstrStage<1, [A8_Pipe0, A8_Pipe1]>], [1, 1]>,
   InstrItinData<IIC_iMOVsr, [InstrStage<1, [A8_Pipe0, A8_Pipe1]>], [1, 1, 1]>,
