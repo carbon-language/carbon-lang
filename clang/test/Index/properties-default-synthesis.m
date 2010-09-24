@@ -27,7 +27,7 @@
 }
 @end
 
-// RUN: c-index-test -test-load-source local %s | FileCheck %s
+// RUN: c-index-test -test-load-source local -cc1 -triple x86_64-apple-darwin10.0.0 -fsyntax-only %s | FileCheck %s
 // CHECK: properties-default-synthesis.m:2:1: UnexposedDecl=[2:8, 2:17, 2:27] Extent=[2:1 - 2:35]
 // CHECK: properties-default-synthesis.m:2:8: ObjCClassRef=NSArray:2:8 Extent=[2:8 - 2:15]
 // CHECK: properties-default-synthesis.m:2:17: ObjCClassRef=NSString:2:17 Extent=[2:17 - 2:25]
