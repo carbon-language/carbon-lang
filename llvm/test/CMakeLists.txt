@@ -18,7 +18,7 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 else() # Default for all other unix like systems.
   # CMake hardcodes the library locaction using rpath.
   # Therefore LD_LIBRARY_PATH is not required to run binaries in the
-  # build dir. We pass it anyways. 
+  # build dir. We pass it anyways.
   set(SHLIBPATH_VAR "LD_LIBRARY_PATH")
 endif()
 

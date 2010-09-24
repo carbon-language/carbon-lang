@@ -44,7 +44,7 @@ class GoogleTest(object):
                 index += 1
             while len(nested_tests) > index:
                 nested_tests.pop()
-            
+
             ln = ln[index*2:]
             if ln.endswith('.'):
                 nested_tests.append(ln)
@@ -84,7 +84,7 @@ class GoogleTest(object):
 
         out, err, exitCode = TestRunner.executeCommand(
             cmd, env=test.config.environment)
-            
+
         if not exitCode:
             return Test.PASS,''
 

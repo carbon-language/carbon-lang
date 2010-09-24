@@ -202,15 +202,15 @@ elseif (LLVM_NATIVE_ARCH MATCHES "xcore")
 elseif (LLVM_NATIVE_ARCH MATCHES "msp430")
   set(LLVM_NATIVE_ARCH MSP430)
 else ()
-  message(STATUS 
+  message(STATUS
     "Unknown architecture ${LLVM_NATIVE_ARCH}; lli will not JIT code")
   set(LLVM_NATIVE_ARCH)
 endif ()
-  
+
 if (LLVM_NATIVE_ARCH)
   list(FIND LLVM_TARGETS_TO_BUILD ${LLVM_NATIVE_ARCH} NATIVE_ARCH_IDX)
   if (NATIVE_ARCH_IDX EQUAL -1)
-    message(STATUS 
+    message(STATUS
       "Native target ${LLVM_NATIVE_ARCH} is not selected; lli will not JIT code")
     set(LLVM_NATIVE_ARCH)
   else ()
