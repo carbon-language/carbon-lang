@@ -11,6 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/ADT/APFloat.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/StringSwitch.h"
@@ -178,6 +179,7 @@ private:
   // Directive Parsing.
   bool ParseDirectiveAscii(bool ZeroTerminated); // ".ascii", ".asciiz"
   bool ParseDirectiveValue(unsigned Size); // ".byte", ".long", ...
+  bool ParseDirectiveRealValue(const fltSemantics &); // ".single", ...
   bool ParseDirectiveFill(); // ".fill"
   bool ParseDirectiveSpace(); // ".space"
   bool ParseDirectiveZero(); // ".zero"
@@ -926,6 +928,10 @@ bool AsmParser::ParseStatement() {
       return ParseDirectiveValue(4);
     if (IDVal == ".quad")
       return ParseDirectiveValue(8);
+    if (IDVal == ".single")
+      return ParseDirectiveRealValue(APFloat::IEEEsingle);
+    if (IDVal == ".double")
+      return ParseDirectiveRealValue(APFloat::IEEEdouble);
 
     if (IDVal == ".align") {
       bool IsPow2 = !getContext().getAsmInfo().getAlignmentIsInBytes();
@@ -1399,6 +1405,56 @@ bool AsmParser::ParseDirectiveValue(unsigned Size) {
         break;
       
       // FIXME: Improve diagnostic.
+      if (getLexer().isNot(AsmToken::Comma))
+        return TokError("unexpected token in directive");
+      Lex();
+    }
+  }
+
+  Lex();
+  return false;
+}
+
+/// ParseDirectiveRealValue
+///  ::= (.single | .double) [ expression (, expression)* ]
+bool AsmParser::ParseDirectiveRealValue(const fltSemantics &Semantics) {
+  if (getLexer().isNot(AsmToken::EndOfStatement)) {
+    CheckForValidSection();
+
+    for (;;) {
+      // We don't truly support arithmetic on floating point expressions, so we
+      // have to manually parse unary prefixes.
+      bool IsNeg = false;
+      if (getLexer().is(AsmToken::Minus)) {
+        Lex();
+        IsNeg = true;
+      } else if (getLexer().is(AsmToken::Plus))
+        Lex();
+
+      if (getLexer().isNot(AsmToken::Integer) && 
+          getLexer().isNot(AsmToken::Real))
+        return TokError("unexpected token in directive");
+
+      // Convert to an APFloat.
+      APFloat Value(Semantics);
+      if (Value.convertFromString(getTok().getString(),
+                                  APFloat::rmNearestTiesToEven) ==
+          APFloat::opInvalidOp)
+        return TokError("invalid floating point literal");
+      if (IsNeg)
+        Value.changeSign();
+
+      // Consume the numeric token.
+      Lex();
+
+      // Emit the value as an integer.
+      APInt AsInt = Value.bitcastToAPInt();
+      getStreamer().EmitIntValue(AsInt.getLimitedValue(),
+                                 AsInt.getBitWidth() / 8, DEFAULT_ADDRSPACE);
+
+      if (getLexer().is(AsmToken::EndOfStatement))
+        break;
+      
       if (getLexer().isNot(AsmToken::Comma))
         return TokError("unexpected token in directive");
       Lex();
