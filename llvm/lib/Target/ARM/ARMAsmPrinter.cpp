@@ -236,6 +236,8 @@ namespace {
                                           const MachineBasicBlock *MBB) const;
     MCSymbol *GetARMJTIPICJumpTableLabel2(unsigned uid, unsigned uid2) const;
 
+    MCSymbol *GetARMSJLJEHLabel(void) const;
+
     /// EmitMachineConstantPoolValue - Print a machine constantpool value to
     /// the .s file.
     virtual void EmitMachineConstantPoolValue(MachineConstantPoolValue *MCPV) {
@@ -950,6 +952,14 @@ GetARMJTIPICJumpTableLabel2(unsigned uid, unsigned uid2) const {
   SmallString<60> Name;
   raw_svector_ostream(Name) << MAI->getPrivateGlobalPrefix() << "JTI"
     << getFunctionNumber() << '_' << uid << '_' << uid2;
+  return OutContext.GetOrCreateSymbol(Name.str());
+}
+
+
+MCSymbol *ARMAsmPrinter::GetARMSJLJEHLabel(void) const {
+  SmallString<60> Name;
+  raw_svector_ostream(Name) << MAI->getPrivateGlobalPrefix() << "SJLJEH"
+    << getFunctionNumber();
   return OutContext.GetOrCreateSymbol(Name.str());
 }
 
@@ -1748,6 +1758,91 @@ void ARMAsmPrinter::printInstructionThroughMCStreamer(const MachineInstr *MI) {
     }
     break;
   }
+  case ARM::t2Int_eh_sjlj_setjmp:
+  case ARM::t2Int_eh_sjlj_setjmp_nofp:
+  case ARM::tInt_eh_sjlj_setjmp: { // FIXME: Remove asmstring from td file.
+    // Two incoming args: GPR:$src, GPR:$val
+    // mov $val, pc
+    // adds $val, #7
+    // str $val, [$src, #4]
+    // movs r0, #0
+    // b 1f
+    // movs r0, #1
+    // 1:
+    unsigned SrcReg = MI->getOperand(0).getReg();
+    unsigned ValReg = MI->getOperand(1).getReg();
+    MCSymbol *Label = GetARMSJLJEHLabel();
+    {
+      MCInst TmpInst;
+      TmpInst.setOpcode(ARM::tMOVgpr2tgpr);
+      TmpInst.addOperand(MCOperand::CreateReg(ValReg));
+      TmpInst.addOperand(MCOperand::CreateReg(ARM::PC));
+      // 's' bit operand
+      TmpInst.addOperand(MCOperand::CreateReg(ARM::CPSR));
+      OutStreamer.AddComment("eh_setjmp begin");
+      OutStreamer.EmitInstruction(TmpInst);
+    }
+    {
+      MCInst TmpInst;
+      TmpInst.setOpcode(ARM::tADDi3);
+      TmpInst.addOperand(MCOperand::CreateReg(ValReg));
+      // 's' bit operand
+      TmpInst.addOperand(MCOperand::CreateReg(ARM::CPSR));
+      TmpInst.addOperand(MCOperand::CreateReg(ValReg));
+      TmpInst.addOperand(MCOperand::CreateImm(7));
+      // Predicate.
+      TmpInst.addOperand(MCOperand::CreateImm(ARMCC::AL));
+      TmpInst.addOperand(MCOperand::CreateReg(0));
+      OutStreamer.EmitInstruction(TmpInst);
+    }
+    {
+      MCInst TmpInst;
+      TmpInst.setOpcode(ARM::tSTR);
+      TmpInst.addOperand(MCOperand::CreateReg(ValReg));
+      TmpInst.addOperand(MCOperand::CreateReg(SrcReg));
+      // The offset immediate is #4. The operand value is scaled by 4 for the
+      // tSTR instruction.
+      TmpInst.addOperand(MCOperand::CreateImm(1));
+      TmpInst.addOperand(MCOperand::CreateReg(0));
+      // Predicate.
+      TmpInst.addOperand(MCOperand::CreateImm(ARMCC::AL));
+      TmpInst.addOperand(MCOperand::CreateReg(0));
+      OutStreamer.EmitInstruction(TmpInst);
+    }
+    {
+      MCInst TmpInst;
+      TmpInst.setOpcode(ARM::tMOVi8);
+      TmpInst.addOperand(MCOperand::CreateReg(ARM::R0));
+      TmpInst.addOperand(MCOperand::CreateReg(ARM::CPSR));
+      TmpInst.addOperand(MCOperand::CreateImm(0));
+      // Predicate.
+      TmpInst.addOperand(MCOperand::CreateImm(ARMCC::AL));
+      TmpInst.addOperand(MCOperand::CreateReg(0));
+      OutStreamer.EmitInstruction(TmpInst);
+    }
+    {
+      const MCExpr *SymbolExpr = MCSymbolRefExpr::Create(Label, OutContext);
+      MCInst TmpInst;
+      TmpInst.setOpcode(ARM::tB);
+      TmpInst.addOperand(MCOperand::CreateExpr(SymbolExpr));
+      OutStreamer.EmitInstruction(TmpInst);
+    }
+    {
+      MCInst TmpInst;
+      TmpInst.setOpcode(ARM::tMOVi8);
+      TmpInst.addOperand(MCOperand::CreateReg(ARM::R0));
+      TmpInst.addOperand(MCOperand::CreateReg(ARM::CPSR));
+      TmpInst.addOperand(MCOperand::CreateImm(1));
+      // Predicate.
+      TmpInst.addOperand(MCOperand::CreateImm(ARMCC::AL));
+      TmpInst.addOperand(MCOperand::CreateReg(0));
+      OutStreamer.AddComment("eh_setjmp end");
+      OutStreamer.EmitInstruction(TmpInst);
+    }
+    OutStreamer.EmitLabel(Label);
+    return;
+  }
+
   case ARM::Int_eh_sjlj_setjmp_nofp:
   case ARM::Int_eh_sjlj_setjmp: { // FIXME: Remove asmstring from td file.
     // Two incoming args: GPR:$src, GPR:$val
