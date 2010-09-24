@@ -971,10 +971,15 @@ void Sema::DefaultSynthesizeProperties (Scope *S, ObjCImplDecl* IMPDecl,
         continue;
     }
 
-    ActOnPropertyImplDecl(S, IMPDecl->getLocation(), IMPDecl->getLocation(),
-                          true, IMPDecl,
+
+    // We use invalid SourceLocations for the synthesized ivars since they
+    // aren't really synthesized at a particular location; they just exist.
+    // Saying that they are located at the @implementation isn't really going
+    // to help users.
+    ActOnPropertyImplDecl(S, SourceLocation(), SourceLocation(),
+                          true,IMPDecl,
                           Prop->getIdentifier(), Prop->getIdentifier());
-  }    
+  }
 }
 
 void Sema::DiagnoseUnimplementedProperties(Scope *S, ObjCImplDecl* IMPDecl,
