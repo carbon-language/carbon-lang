@@ -1,5 +1,5 @@
-#define T long
-#define T_CSTR "long"
+#define T unsigned long
+#define T_CSTR "unsigned long"
 
 #ifdef __LP64__
 #define T_VALUE_1 110011101111

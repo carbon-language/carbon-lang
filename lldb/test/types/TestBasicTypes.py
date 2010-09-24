@@ -33,6 +33,20 @@ class BasicTypesTestCase(TestBase):
         self.setTearDownCleanup(dictionary=d)
         self.int_type()
 
+    def test_unsigned_int_type_with_dsym(self):
+        """Test that 'unsigned_int'-type variables are displayed correctly."""
+        d = {'CXX_SOURCES': 'unsigned_int.cpp'}
+        self.buildDsym(dictionary=d)
+        self.setTearDownCleanup(dictionary=d)
+        self.unsigned_int_type()
+
+    def test_unsigned_int_type_with_dwarf(self):
+        """Test that 'unsigned int'-type variables are displayed correctly."""
+        d = {'CXX_SOURCES': 'unsigned_int.cpp'}
+        self.buildDwarf(dictionary=d)
+        self.setTearDownCleanup(dictionary=d)
+        self.unsigned_int_type()
+
     def test_long_type_with_dsym(self):
         """Test that long-type variables are displayed correctly."""
         d = {'CXX_SOURCES': 'long.cpp'}
@@ -47,13 +61,35 @@ class BasicTypesTestCase(TestBase):
         self.setTearDownCleanup(dictionary=d)
         self.long_type()
 
+    def test_unsigned_long_type_with_dsym(self):
+        """Test that 'unsigned long'-type variables are displayed correctly."""
+        d = {'CXX_SOURCES': 'unsigned_long.cpp'}
+        self.buildDsym(dictionary=d)
+        self.setTearDownCleanup(dictionary=d)
+        self.unsigned_long_type()
+
+    def test_unsigned_long_type_with_dwarf(self):
+        """Test that 'unsigned long'-type variables are displayed correctly."""
+        d = {'CXX_SOURCES': 'unsigned_long.cpp'}
+        self.buildDwarf(dictionary=d)
+        self.setTearDownCleanup(dictionary=d)
+        self.unsigned_long_type()
+
     def int_type(self):
         """Test that int-type variables are displayed correctly."""
         self.generic_type_tester("int")
 
+    def unsigned_int_type(self):
+        """Test that 'unsigned int'-type variables are displayed correctly."""
+        self.generic_type_tester("unsigned int")
+
     def long_type(self):
         """Test that long-type variables are displayed correctly."""
         self.generic_type_tester("long")
+
+    def unsigned_long_type(self):
+        """Test that 'unsigned long'-type variables are displayed correctly."""
+        self.generic_type_tester("unsigned long")
 
     def generic_type_tester(self, type):
         """Test that variables with basic types are displayed correctly."""
@@ -106,8 +142,20 @@ class BasicTypesTestCase(TestBase):
         for var, val in gl:
             self.runCmd("frame variable %s" % var)
             output = self.res.GetOutput()
+            
+            # Extract the display type and canonicalize its atoms into a set.
+            # Same for the input type string.
+            dt = re.match("^\((.*)\)", output).group(1)
+            ds = set(dt.split())
+            ts = set(type.split())
+
+            # The display type set must be a superset of the input type set.
+            if not ds.issuperset(ts):
+                self.fail("The display type: %s must match the input type: %s" %
+                          (dt, type))
+
+            # The (var, val) pair must match, too.
             self.expect(output, Msg(var, val), exe=False,
-                patterns = ["\(%s.*\)" % type],
                 substrs = [" %s = %s" % (var, val)])
 
 
