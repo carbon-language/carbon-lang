@@ -305,7 +305,6 @@ add_subdirectory(lib/Analysis/IPA)
 add_subdirectory(lib/MC)
 add_subdirectory(lib/MC/MCParser)
 add_subdirectory(lib/MC/MCDisassembler)
-add_subdirectory(test)
 
 add_subdirectory(utils/FileCheck)
 add_subdirectory(utils/count)
@@ -369,6 +368,12 @@ add_subdirectory(tools)
 
 option(LLVM_BUILD_EXAMPLES "Build LLVM example programs." OFF)
 add_subdirectory(examples)
+
+option(LLVM_BUILD_TESTS "Build LLVM unit tests." OFF)
+add_subdirectory(test)
+add_subdirectory(utils/unittest)
+add_subdirectory(unittests)
+
 
 add_subdirectory(cmake/modules)
 
