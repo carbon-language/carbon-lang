@@ -145,7 +145,7 @@ static void SkipIgnoredIntegerSuffix(const char *&CurPtr) {
 ///   Decimal integer: [1-9][0-9]*
 AsmToken AsmLexer::LexDigit() {
   // Decimal integer: [1-9][0-9]*
-  if (CurPtr[-1] != '0') {
+  if (CurPtr[-1] != '0' || CurPtr[0] == '.') {
     while (isdigit(*CurPtr))
       ++CurPtr;
 

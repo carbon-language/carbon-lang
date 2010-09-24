@@ -10,3 +10,6 @@
 # CHECK: .quad	4597526701198935065
 # CHECK: .quad	-4600933674317040845
 .double 5, .232, -11.1
+
+# CHECK: .quad  0
+.double 0.0
