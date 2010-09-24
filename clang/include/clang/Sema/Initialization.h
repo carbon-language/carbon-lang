@@ -152,16 +152,20 @@ public:
   }
   
   /// \brief Create the initialization entity for a parameter.
-  static InitializedEntity InitializeParameter(ParmVarDecl *Parm) {
-    return InitializedEntity(Parm);
+  static InitializedEntity InitializeParameter(ASTContext &Context,
+                                               ParmVarDecl *Parm) {
+    InitializedEntity Res(Parm);
+    Res.Type = Context.getVariableArrayDecayedType(Res.Type);
+    return Res;
   }
 
   /// \brief Create the initialization entity for a parameter that is
   /// only known by its type.
-  static InitializedEntity InitializeParameter(QualType Type) {
+  static InitializedEntity InitializeParameter(ASTContext &Context,
+                                               QualType Type) {
     InitializedEntity Entity;
     Entity.Kind = EK_Parameter;
-    Entity.Type = Type;
+    Entity.Type = Context.getVariableArrayDecayedType(Type);
     Entity.Parent = 0;
     Entity.VariableOrMember = 0;
     return Entity;

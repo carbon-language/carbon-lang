@@ -52,10 +52,24 @@ void f_8403108(unsigned x) {
 }
 
 // pr7827
-void function(short width, int data[][width]) {}
+void function(short width, int data[][width]) {} // expected-note {{passing argument to parameter 'data' here}}
 
 void test() {
+     int bork[4][13];
      // CHECK: call void @function(i16 signext 1, i32* null)
      function(1, 0);
+     // CHECK: call void @function(i16 signext 1, i32* inttoptr
+     function(1, 0xbadbeef); // expected-warning {{incompatible integer to pointer conversion passing}}
+     // CHECK: call void @function(i16 signext 1, i32* {{.*}})
+     function(1, bork);
+}
+
+void function1(short width, int data[][width][width]) {}
+void test1() {
+     int bork[4][13][15];
+     // CHECK: call void @function1(i16 signext 1, i32* {{.*}})
+     function1(1, bork);
+     // CHECK: call void @function(i16 signext 1, i32* {{.*}}) 
+     function(1, bork[2]);
 }
 

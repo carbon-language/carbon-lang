@@ -625,6 +625,9 @@ llvm::Value *CodeGenFunction::EmitVLASize(QualType Ty) {
   EnsureInsertPoint();
 
   if (const VariableArrayType *VAT = getContext().getAsVariableArrayType(Ty)) {
+    // unknown size indication requires no size computation.
+    if (!VAT->getSizeExpr())
+      return 0;
     llvm::Value *&SizeEntry = VLASizeMap[VAT->getSizeExpr()];
 
     if (!SizeEntry) {

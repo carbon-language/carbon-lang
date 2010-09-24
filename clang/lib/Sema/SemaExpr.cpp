@@ -3435,7 +3435,7 @@ ExprResult Sema::BuildCXXDefaultArgExpr(SourceLocation CallLoc,
 
     // Check the expression as an initializer for the parameter.
     InitializedEntity Entity
-      = InitializedEntity::InitializeParameter(Param);
+      = InitializedEntity::InitializeParameter(Context, Param);
     InitializationKind Kind
       = InitializationKind::CreateCopy(Param->getLocation(),
              /*FIXME:EqualLoc*/UninstExpr->getSourceRange().getBegin());
@@ -3564,10 +3564,9 @@ bool Sema::GatherArgumentsForCall(SourceLocation CallLoc,
       if (FDecl && i < FDecl->getNumParams())
         Param = FDecl->getParamDecl(i);
 
-
       InitializedEntity Entity =
-        Param? InitializedEntity::InitializeParameter(Param)
-             : InitializedEntity::InitializeParameter(ProtoArgType);
+        Param? InitializedEntity::InitializeParameter(Context, Param)
+             : InitializedEntity::InitializeParameter(Context, ProtoArgType);
       ExprResult ArgE = PerformCopyInitialization(Entity,
                                                         SourceLocation(),
                                                         Owned(Arg));
@@ -6232,12 +6231,12 @@ void Sema::ConvertPropertyAssignment(Expr *LHS, Expr *&RHS, QualType& LHSTy) {
                   LHSTy->isRecordType());
   if (copyInit) {
     InitializedEntity Entity = 
-    InitializedEntity::InitializeParameter(LHSTy);
+    InitializedEntity::InitializeParameter(Context, LHSTy);
     Expr *Arg = RHS;
     ExprResult ArgE = PerformCopyInitialization(Entity, SourceLocation(),
                                                 Owned(Arg));
     if (!ArgE.isInvalid())
-      RHS = ArgE.takeAs<Expr>();
+      RHS = ArgE.takeAs<Expr>(); 
   }
 }
   

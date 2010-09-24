@@ -3281,7 +3281,17 @@ inline bool QualType::isCanonical() const {
 
 inline bool QualType::isCanonicalAsParam() const {
   if (hasLocalQualifiers()) return false;
+  
   const Type *T = getTypePtr();
+  if ((*this)->isPointerType()) {
+    QualType BaseType = (*this)->getAs<PointerType>()->getPointeeType();
+    if (isa<VariableArrayType>(BaseType)) {
+      ArrayType *AT = dyn_cast<ArrayType>(BaseType);
+      VariableArrayType *VAT = cast<VariableArrayType>(AT);
+      if (VAT->getSizeExpr())
+        T = BaseType.getTypePtr();
+    }
+  }
   return T->isCanonicalUnqualified() &&
            !isa<FunctionType>(T) && !isa<ArrayType>(T);
 }

@@ -6864,6 +6864,7 @@ Sema::CreateOverloadedUnaryOp(SourceLocation OpLoc, unsigned OpcIn,
         // Convert the arguments.
         ExprResult InputInit
           = PerformCopyInitialization(InitializedEntity::InitializeParameter(
+                                                      Context,
                                                       FnDecl->getParamDecl(0)),
                                       SourceLocation(), 
                                       Input);
@@ -7045,6 +7046,7 @@ Sema::CreateOverloadedBinOp(SourceLocation OpLoc,
           ExprResult Arg1
             = PerformCopyInitialization(
                                         InitializedEntity::InitializeParameter(
+                                                        Context,
                                                         FnDecl->getParamDecl(0)),
                                         SourceLocation(),
                                         Owned(Args[1]));
@@ -7061,6 +7063,7 @@ Sema::CreateOverloadedBinOp(SourceLocation OpLoc,
           ExprResult Arg0
             = PerformCopyInitialization(
                                         InitializedEntity::InitializeParameter(
+                                                        Context,
                                                         FnDecl->getParamDecl(0)),
                                         SourceLocation(),
                                         Owned(Args[0]));
@@ -7070,6 +7073,7 @@ Sema::CreateOverloadedBinOp(SourceLocation OpLoc,
           ExprResult Arg1
             = PerformCopyInitialization(
                                         InitializedEntity::InitializeParameter(
+                                                        Context,
                                                         FnDecl->getParamDecl(1)),
                                         SourceLocation(),
                                         Owned(Args[1]));
@@ -7229,6 +7233,7 @@ Sema::CreateOverloadedArraySubscriptExpr(SourceLocation LLoc,
         // Convert the arguments.
         ExprResult InputInit
           = PerformCopyInitialization(InitializedEntity::InitializeParameter(
+                                                      Context,
                                                       FnDecl->getParamDecl(0)),
                                       SourceLocation(), 
                                       Owned(Args[1]));
@@ -7666,6 +7671,7 @@ Sema::BuildCallToObjectOfClassType(Scope *S, Expr *Object,
 
       ExprResult InputInit
         = PerformCopyInitialization(InitializedEntity::InitializeParameter(
+                                                    Context,
                                                     Method->getParamDecl(i)),
                                     SourceLocation(), Arg);
       

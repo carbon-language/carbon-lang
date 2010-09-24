@@ -1714,12 +1714,26 @@ private:
            E = CallArgTypeInfo->arg_type_end(); I != E; ++I, ++Arg) {
         assert(Arg != ArgEnd && "Running over edge of argument list!");
         QualType ArgType = *I;
-
+#ifndef NDEBUG
+        QualType ActualArgType = Arg->getType();
+        if (ArgType->isPointerType() && ActualArgType->isPointerType()) {
+          QualType ActualBaseType = 
+            ActualArgType->getAs<PointerType>()->getPointeeType();
+          QualType ArgBaseType = 
+            ArgType->getAs<PointerType>()->getPointeeType();
+          if (ArgBaseType->isVariableArrayType()) {
+            if (const VariableArrayType *VAT =
+                getContext().getAsVariableArrayType(ActualBaseType)) {
+              if (!VAT->getSizeExpr())
+                ActualArgType = ArgType;
+            }
+          }
+        }
         assert(getContext().getCanonicalType(ArgType.getNonReferenceType()).
                getTypePtr() ==
-               getContext().getCanonicalType(Arg->getType()).getTypePtr() &&
+               getContext().getCanonicalType(ActualArgType).getTypePtr() &&
                "type mismatch in call argument!");
-
+#endif
         Args.push_back(std::make_pair(EmitCallArg(*Arg, ArgType),
                                       ArgType));
       }

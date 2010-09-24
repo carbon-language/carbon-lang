@@ -568,6 +568,14 @@ public:
   QualType getConstantArrayType(QualType EltTy, const llvm::APInt &ArySize,
                                 ArrayType::ArraySizeModifier ASM,
                                 unsigned EltTypeQuals);
+  
+  /// getUnknownSizeVariableArrayType - Return a variable array type with
+  /// all variable indices replaced with unknow [*] size.
+  QualType getUnknownSizeVariableArrayType(QualType Ty);
+  
+  /// getVariableArrayDecayedType - Returns a vla type where known sizes
+  /// are replaced with [*]
+  QualType getVariableArrayDecayedType(QualType Ty);
 
   /// getVectorType - Return the unique reference to a vector type of
   /// the specified element type and size. VectorType must be a built-in type.

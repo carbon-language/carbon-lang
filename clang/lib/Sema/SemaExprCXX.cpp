@@ -1194,6 +1194,7 @@ bool Sema::FindAllocationOverload(SourceLocation StartLoc, SourceRange Range,
     for (unsigned i = 0; (i < NumArgs && i < NumArgsInFnDecl); ++i) {
       ExprResult Result
         = PerformCopyInitialization(InitializedEntity::InitializeParameter(
+                                                       Context,
                                                        FnDecl->getParamDecl(i)),
                                     SourceLocation(),
                                     Owned(Args[i]->Retain()));

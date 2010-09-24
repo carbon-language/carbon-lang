@@ -1413,6 +1413,54 @@ QualType ASTContext::getConstantArrayType(QualType EltTy,
   return QualType(New, 0);
 }
 
+/// getIncompleteArrayType - Returns a unique reference to the type for a
+/// incomplete array of the specified element type.
+QualType ASTContext::getUnknownSizeVariableArrayType(QualType Ty) {
+  QualType ElemTy = getBaseElementType(Ty);
+  DeclarationName Name;
+  llvm::SmallVector<QualType, 8> ATypes;
+  QualType ATy = Ty;
+  while (const ArrayType *AT = getAsArrayType(ATy)) {
+    ATypes.push_back(ATy);
+    ATy = AT->getElementType();
+  }
+  for (int i = ATypes.size() - 1; i >= 0; i--) {
+    if (const VariableArrayType *VAT = getAsVariableArrayType(ATypes[i])) {
+      ElemTy = getVariableArrayType(ElemTy, /*ArraySize*/0, ArrayType::Star,
+                                    0, VAT->getBracketsRange());
+    }
+    else if (const ConstantArrayType *CAT = getAsConstantArrayType(ATypes[i])) {
+      llvm::APSInt ConstVal(CAT->getSize());
+      ElemTy = getConstantArrayType(ElemTy, ConstVal, ArrayType::Normal, 0);
+    }
+    else if (getAsIncompleteArrayType(ATypes[i])) {
+      ElemTy = getVariableArrayType(ElemTy, /*ArraySize*/0, ArrayType::Normal,
+                                    0, SourceRange());
+    }
+    else
+      assert(false && "DependentArrayType is seen");
+  }
+  return ElemTy;
+}
+
+/// getVariableArrayDecayedType - Returns a vla type where known sizes
+/// are replaced with [*]
+QualType ASTContext::getVariableArrayDecayedType(QualType Ty) {
+  if (Ty->isPointerType()) {
+    QualType BaseType = Ty->getAs<PointerType>()->getPointeeType();
+    if (isa<VariableArrayType>(BaseType)) {
+      ArrayType *AT = dyn_cast<ArrayType>(BaseType);
+      VariableArrayType *VAT = cast<VariableArrayType>(AT);
+      if (VAT->getSizeExpr()) {
+        Ty = getUnknownSizeVariableArrayType(BaseType);
+        Ty = getPointerType(Ty);
+      }
+    }
+  }
+  return Ty;
+}
+
+
 /// getVariableArrayType - Returns a non-unique reference to the type for a
 /// variable array of the specified element type.
 QualType ASTContext::getVariableArrayType(QualType EltTy,
@@ -2396,8 +2444,8 @@ CanQualType ASTContext::getCanonicalParamType(QualType T) {
   // Push qualifiers into arrays, and then discard any remaining
   // qualifiers.
   T = getCanonicalType(T);
+  T = getVariableArrayDecayedType(T);
   const Type *Ty = T.getTypePtr();
-
   QualType Result;
   if (isa<ArrayType>(Ty)) {
     Result = getArrayDecayedType(QualType(Ty,0));
@@ -2736,7 +2784,6 @@ const ArrayType *ASTContext::getAsArrayType(QualType T) {
                                               VAT->getIndexTypeCVRQualifiers(),
                                               VAT->getBracketsRange()));
 }
-
 
 /// getArrayDecayedType - Return the properly qualified result of decaying the
 /// specified array type to a pointer.  This operation is non-trivial when

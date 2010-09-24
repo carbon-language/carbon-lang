@@ -125,7 +125,8 @@ Sema::SetParamDefaultArgument(ParmVarDecl *Param, Expr *Arg,
   //   the same semantic constraints as the initializer expression in
   //   a declaration of a variable of the parameter type, using the
   //   copy-initialization semantics (8.5).
-  InitializedEntity Entity = InitializedEntity::InitializeParameter(Param);
+  InitializedEntity Entity = InitializedEntity::InitializeParameter(Context,
+                                                                    Param);
   InitializationKind Kind = InitializationKind::CreateCopy(Param->getLocation(),
                                                            EqualLoc);
   InitializationSequence InitSeq(*this, Entity, Kind, &Arg, 1);

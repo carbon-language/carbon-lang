@@ -241,7 +241,8 @@ bool Sema::CheckMessageArgumentTypes(Expr **Args, unsigned NumArgs,
                               << argExpr->getSourceRange()))
       return true;
 
-    InitializedEntity Entity = InitializedEntity::InitializeParameter(Param);
+    InitializedEntity Entity = InitializedEntity::InitializeParameter(Context,
+                                                                      Param);
     ExprResult ArgE = PerformCopyInitialization(Entity,
                                                       SourceLocation(),
                                                       Owned(argExpr->Retain()));
