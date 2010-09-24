@@ -53,26 +53,26 @@ class BitfieldsTestCase(TestBase):
 
         # This should display correctly.
         self.expect("frame variable bits", VARIABLES_DISPLAYED_CORRECTLY,
-            substrs = ['(uint32_t:1) b1 = 0x00000001,',
-                       '(uint32_t:2) b2 = 0x00000003,',
-                       '(uint32_t:3) b3 = 0x00000007,',
-                       '(uint32_t:4) b4 = 0x0000000f,',
-                       '(uint32_t:5) b5 = 0x0000001f,',
-                       '(uint32_t:6) b6 = 0x0000003f,',
-                       '(uint32_t:7) b7 = 0x0000007f,',
-                       '(uint32_t:4) four = 0x0000000f'])
+            substrs = ['(uint32_t:1) b1 = 1,',
+                       '(uint32_t:2) b2 = 3,',
+                       '(uint32_t:3) b3 = 7,',
+                       '(uint32_t:4) b4 = 15,',
+                       '(uint32_t:5) b5 = 31,',
+                       '(uint32_t:6) b6 = 63,',
+                       '(uint32_t:7) b7 = 127,',
+                       '(uint32_t:4) four = 15'])
 
         # And so should this.
         # rdar://problem/8348251
         self.expect("frame variable", VARIABLES_DISPLAYED_CORRECTLY,
-            substrs = ['(uint32_t:1) b1 = 0x00000001,',
-                       '(uint32_t:2) b2 = 0x00000003,',
-                       '(uint32_t:3) b3 = 0x00000007,',
-                       '(uint32_t:4) b4 = 0x0000000f,',
-                       '(uint32_t:5) b5 = 0x0000001f,',
-                       '(uint32_t:6) b6 = 0x0000003f,',
-                       '(uint32_t:7) b7 = 0x0000007f,',
-                       '(uint32_t:4) four = 0x0000000f'])
+            substrs = ['(uint32_t:1) b1 = 1,',
+                       '(uint32_t:2) b2 = 3,',
+                       '(uint32_t:3) b3 = 7,',
+                       '(uint32_t:4) b4 = 15,',
+                       '(uint32_t:5) b5 = 31,',
+                       '(uint32_t:6) b6 = 63,',
+                       '(uint32_t:7) b7 = 127,',
+                       '(uint32_t:4) four = 15'])
 
     def bitfields_variable_python(self):
         """Use Python APIs to inspect a bitfields variable."""
@@ -113,24 +113,24 @@ class BitfieldsTestCase(TestBase):
         self.assertTrue(b1.GetName() == "b1" and
                         b1.GetTypeName() == "uint32_t:1" and
                         b1.IsInScope(frame) and
-                        int(b1.GetValue(frame), 16) == 0x01,
-                        'bits.b1 has type uint32_t:1, is in scope, and == 0x01')
+                        int(b1.GetValue(frame), 0) == 1,
+                        'bits.b1 has type uint32_t:1, is in scope, and == 1')
 
         b7 = bits.GetChildAtIndex(6)
         self.DebugSBValue(frame, b7)
         self.assertTrue(b7.GetName() == "b7" and
                         b7.GetTypeName() == "uint32_t:7" and
                         b7.IsInScope(frame) and
-                        int(b7.GetValue(frame), 16) == 0x7f,
-                        'bits.b7 has type uint32_t:7, is in scope, and == 0x7f')
+                        int(b7.GetValue(frame), 0) == 127,
+                        'bits.b7 has type uint32_t:7, is in scope, and == 127')
 
         four = bits.GetChildAtIndex(7)
         self.DebugSBValue(frame, four)
         self.assertTrue(four.GetName() == "four" and
                         four.GetTypeName() == "uint32_t:4" and
                         four.IsInScope(frame) and
-                        int(four.GetValue(frame), 16) == 0x0f,
-                        'bits.four has type uint32_t:4, is in scope, and == 0x0f')
+                        int(four.GetValue(frame), 0) == 15,
+                        'bits.four has type uint32_t:4, is in scope, and == 15')
 
         # Now kill the process, and we are done.
         rc = target.GetProcess().Kill()

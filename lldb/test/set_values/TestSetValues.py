@@ -65,7 +65,7 @@ class SetValuesTestCase(TestBase):
         # main.c:36
         # Check that 'frame variable' displays the correct data type and value.
         self.expect("frame variable", VARIABLES_DISPLAYED_CORRECTLY,
-            startstr = "(short unsigned int) i = 0x0021")
+            startstr = "(short unsigned int) i = 33")
 
         # TODO:
         # Now set variable 'i' and check that it is correctly displayed.
