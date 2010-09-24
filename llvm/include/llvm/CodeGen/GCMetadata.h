@@ -36,6 +36,7 @@
 #include "llvm/Pass.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/StringMap.h"
+#include "llvm/Support/DebugLoc.h"
 
 namespace llvm {
   class AsmPrinter;
@@ -59,8 +60,10 @@ namespace llvm {
   struct GCPoint {
     GC::PointKind Kind; //< The kind of the safe point.
     MCSymbol *Label;    //< A label.
+    DebugLoc Loc;
 
-    GCPoint(GC::PointKind K, MCSymbol *L) : Kind(K), Label(L) {}
+    GCPoint(GC::PointKind K, MCSymbol *L, DebugLoc DL)
+        : Kind(K), Label(L), Loc(DL) {}
   };
 
   /// GCRoot - Metadata for a pointer to an object managed by the garbage
@@ -121,8 +124,8 @@ namespace llvm {
     /// addSafePoint - Notes the existence of a safe point. Num is the ID of the
     /// label just prior to the safe point (if the code generator is using
     /// MachineModuleInfo).
-    void addSafePoint(GC::PointKind Kind, MCSymbol *Label) {
-      SafePoints.push_back(GCPoint(Kind, Label));
+    void addSafePoint(GC::PointKind Kind, MCSymbol *Label, DebugLoc DL) {
+      SafePoints.push_back(GCPoint(Kind, Label, DL));
     }
 
     /// getFrameSize/setFrameSize - Records the function's frame size.
