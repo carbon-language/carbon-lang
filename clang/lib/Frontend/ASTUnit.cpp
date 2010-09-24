@@ -84,6 +84,9 @@ ASTUnit::~ASTUnit() {
 
   ClearCachedCompletionResults();
   
+  if (TimerGroup)
+    TimerGroup->printAll(llvm::errs());
+
   for (unsigned I = 0, N = Timers.size(); I != N; ++I)
     delete Timers[I];
 }

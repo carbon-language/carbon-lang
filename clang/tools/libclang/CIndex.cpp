@@ -34,8 +34,10 @@
 #include "llvm/Support/CrashRecoveryContext.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/Timer.h"
+#include "llvm/System/Mutex.h"
 #include "llvm/System/Program.h"
 #include "llvm/System/Signals.h"
+#include "llvm/System/Threading.h"
 
 // Needed to define L_TMPNAM on some systems.
 #include <cstdio>
@@ -1910,12 +1912,24 @@ bool CursorVisitor::VisitAttributes(Decl *D) {
   return false;
 }
 
+static llvm::sys::Mutex EnableMultithreadingMutex;
+static bool EnabledMultithreading;
+
 extern "C" {
 CXIndex clang_createIndex(int excludeDeclarationsFromPCH,
                           int displayDiagnostics) {
   // We use crash recovery to make some of our APIs more reliable, implicitly
   // enable it.
   llvm::CrashRecoveryContext::Enable();
+
+  // Enable support for multithreading in LLVM.
+  {
+    llvm::sys::ScopedLock L(EnableMultithreadingMutex);
+    if (!EnabledMultithreading) {
+      llvm::llvm_start_multithreaded();
+      EnabledMultithreading = true;
+    }
+  }
 
   CIndexer *CIdxr = new CIndexer();
   if (excludeDeclarationsFromPCH)
@@ -1928,8 +1942,6 @@ CXIndex clang_createIndex(int excludeDeclarationsFromPCH,
 void clang_disposeIndex(CXIndex CIdx) {
   if (CIdx)
     delete static_cast<CIndexer *>(CIdx);
-  if (getenv("LIBCLANG_TIMING"))
-    llvm::TimerGroup::printAll(llvm::errs());
 }
 
 void clang_setUseExternalASTGeneration(CXIndex CIdx, int value) {
