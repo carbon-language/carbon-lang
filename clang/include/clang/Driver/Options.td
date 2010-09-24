@@ -234,6 +234,7 @@ def fPIC : Flag<"-fPIC">, Group<f_Group>;
 def fPIE : Flag<"-fPIE">, Group<f_Group>;
 def fno_PIE : Flag<"-fno-PIE">, Group<f_Group>;
 def faccess_control : Flag<"-faccess-control">, Group<f_Group>;
+def fallow_unsupported : Flag<"-fallow-unsupported">, Group<f_Group>;
 def fapple_kext : Flag<"-fapple-kext">, Group<f_Group>;
 def fasm : Flag<"-fasm">, Group<f_Group>;
 def fasm_blocks : Flag<"-fasm-blocks">, Group<clang_ignored_f_Group>;
