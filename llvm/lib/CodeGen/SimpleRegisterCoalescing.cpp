@@ -124,7 +124,7 @@ bool SimpleRegisterCoalescing::AdjustCopiesBackFrom(const CoalescerPair &CP,
   // Get the location that B is defined at.  Two options: either this value has
   // an unknown definition point or it is defined at CopyIdx.  If unknown, we
   // can't process it.
-  if (!BValNo->getCopy()) return false;
+  if (!BValNo->isDefByCopy()) return false;
   assert(BValNo->def == CopyIdx && "Copy doesn't define the value?");
 
   // AValNo is the value number in A that defines the copy, A3 in the example.
@@ -266,10 +266,6 @@ bool SimpleRegisterCoalescing::HasOtherReachingDefs(LiveInterval &IntA,
     for (; BI != IntB.ranges.end() && AI->end >= BI->start; ++BI) {
       if (BI->valno == BValNo)
         continue;
-      // When BValNo is null, we're looking for a dummy clobber-value for a subreg.
-      if (!BValNo && li_->getInstructionFromIndex(BI->valno->def) == 0 &&
-          !BI->valno->getCopy())
-        continue;
       if (BI->start <= AI->start && BI->end > AI->start)
         return true;
       if (BI->start > AI->start && BI->start < AI->end)
@@ -342,7 +338,7 @@ bool SimpleRegisterCoalescing::RemoveCopyByCommutingDef(const CoalescerPair &CP,
   // Get the location that B is defined at.  Two options: either this value has
   // an unknown definition point or it is defined at CopyIdx.  If unknown, we
   // can't process it.
-  if (!BValNo->getCopy()) return false;
+  if (!BValNo->isDefByCopy()) return false;
   assert(BValNo->def == CopyIdx && "Copy doesn't define the value?");
 
   // AValNo is the value number in A that defines the copy, A3 in the example.
@@ -873,7 +869,7 @@ void SimpleRegisterCoalescing::RemoveCopyFlag(unsigned DstReg,
   if (li_->hasInterval(DstReg)) {
     LiveInterval &LI = li_->getInterval(DstReg);
     if (const LiveRange *LR = LI.getLiveRangeContaining(DefIdx))
-      if (LR->valno->getCopy() == CopyMI)
+      if (LR->valno->def == DefIdx)
         LR->valno->setCopy(0);
   }
   if (!TargetRegisterInfo::isPhysicalRegister(DstReg))
@@ -883,7 +879,7 @@ void SimpleRegisterCoalescing::RemoveCopyFlag(unsigned DstReg,
       continue;
     LiveInterval &LI = li_->getInterval(*AS);
     if (const LiveRange *LR = LI.getLiveRangeContaining(DefIdx))
-      if (LR->valno->getCopy() == CopyMI)
+      if (LR->valno->def == DefIdx)
         LR->valno->setCopy(0);
   }
 }
@@ -1316,7 +1312,7 @@ bool SimpleRegisterCoalescing::JoinIntervals(CoalescerPair &CP) {
   for (LiveInterval::vni_iterator i = LHS.vni_begin(), e = LHS.vni_end();
        i != e; ++i) {
     VNInfo *VNI = *i;
-    if (VNI->isUnused() || VNI->getCopy() == 0)  // Src not defined by a copy?
+    if (VNI->isUnused() || !VNI->isDefByCopy())  // Src not defined by a copy?
       continue;
 
     // Never join with a register that has EarlyClobber redefs.
@@ -1340,7 +1336,7 @@ bool SimpleRegisterCoalescing::JoinIntervals(CoalescerPair &CP) {
   for (LiveInterval::vni_iterator i = RHS.vni_begin(), e = RHS.vni_end();
        i != e; ++i) {
     VNInfo *VNI = *i;
-    if (VNI->isUnused() || VNI->getCopy() == 0)  // Src not defined by a copy?
+    if (VNI->isUnused() || !VNI->isDefByCopy())  // Src not defined by a copy?
       continue;
 
     // Never join with a register that has EarlyClobber redefs.

@@ -90,6 +90,10 @@ namespace llvm {
     /// undefined behavior.
     void setCopy(MachineInstr *c) { copy = c; }
 
+    /// isDefByCopy - Return true when this value was defined by a copy-like
+    /// instruction as determined by MachineInstr::isCopyLike.
+    bool isDefByCopy() const { return copy != 0; }
+
     /// Returns true if one or more kills are PHI nodes.
     bool hasPHIKill() const { return flags & HAS_PHI_KILL; }
     /// Set the PHI kill flag on this value.
