@@ -363,17 +363,28 @@ add_subdirectory(lib/Archive)
 
 add_subdirectory(projects)
 
-option(LLVM_BUILD_TOOLS "Build LLVM tool programs." ON)
-add_subdirectory(tools)
+option(LLVM_BUILD_TOOLS
+  "Build the LLVM tools. If OFF, just generate build targets." ON)
+option(LLVM_INCLUDE_TOOLS "Generate build targets for the LLVM tools." ON)
+if( LLVM_INCLUDE_TOOLS )
+  add_subdirectory(tools)
+endif()
 
-option(LLVM_BUILD_EXAMPLES "Build LLVM example programs." OFF)
-add_subdirectory(examples)
+option(LLVM_BUILD_EXAMPLES
+  "Build the LLVM example programs. If OFF, just generate build targets." OFF)
+option(LLVM_INCLUDE_EXAMPLES "Generate build targets for the LLVM examples" ON)
+if( LLVM_INCLUDE_EXAMPLES )
+  add_subdirectory(examples)
+endif()
 
-option(LLVM_BUILD_TESTS "Build LLVM unit tests." OFF)
-add_subdirectory(test)
-add_subdirectory(utils/unittest)
-add_subdirectory(unittests)
-
+option(LLVM_BUILD_TESTS
+  "Build LLVM unit tests. If OFF, just generate build targes." OFF)
+option(LLVM_INCLUDE_TESTS "Generate build targets for the LLVM unit tests." ON)
+if( LLVM_INCLUDE_TESTS )
+  add_subdirectory(test)
+  add_subdirectory(utils/unittest)
+  add_subdirectory(unittests)
+endif()
 
 add_subdirectory(cmake/modules)
 

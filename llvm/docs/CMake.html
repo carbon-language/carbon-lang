@@ -257,10 +257,20 @@
     with a makefile-based system executing <i>make llvm-as</i> on the
     root of your build directory.</dd>
 
+  <dt><b>LLVM_INCLUDE_TOOLS</b>:BOOL</dt>
+  <dd>Generate build targets for the LLVM tools. Defaults to
+    ON. You can use that option for disabling the generation of build
+    targets for the LLVM tools.</dd>
+
   <dt><b>LLVM_BUILD_EXAMPLES</b>:BOOL</dt>
   <dd>Build LLVM examples. Defaults to OFF. Targets for building each
     example are generated in any case. See documentation
     for <i>LLVM_BUILD_TOOLS</i> above for more details.</dd>
+
+  <dt><b>LLVM_INCLUDE_EXAMPLES</b>:BOOL</dt>
+  <dd>Generate build targets for the LLVM examples. Defaults to
+    ON. You can use that option for disabling the generation of build
+    targets for the LLVM examples.</dd>
 
   <dt><b>LLVM_ENABLE_THREADS</b>:BOOL</dt>
   <dd>Build with threads support, if available. Defaults to ON.</dd>
