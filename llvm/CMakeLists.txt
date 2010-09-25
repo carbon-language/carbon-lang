@@ -364,18 +364,12 @@ add_subdirectory(lib/Archive)
 add_subdirectory(projects)
 
 option(LLVM_BUILD_TOOLS "Build LLVM tool programs." ON)
-option(LLVM_INCLUDE_TOOLS
-  "Include LLVM tool programs as an available target." ON)
 add_subdirectory(tools)
 
 option(LLVM_BUILD_EXAMPLES "Build LLVM example programs." OFF)
-option(LLVM_INCLUDE_EXAMPLES
-  "Include LLVM example programs as an available target." OFF)
 add_subdirectory(examples)
 
 option(LLVM_BUILD_TESTS "Build LLVM unit tests." OFF)
-option(LLVM_INCLUDE_TESTS
-  "Include LLVM unit tests as an available target." OFF)
 add_subdirectory(test)
 add_subdirectory(utils/unittest)
 add_subdirectory(unittests)
