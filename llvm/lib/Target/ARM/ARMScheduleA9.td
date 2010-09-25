@@ -52,6 +52,10 @@ def CortexA9Itineraries : ProcessorItineraries<
   InstrItinData<IIC_iUNAsi  , [InstrStage<2, [A9_Pipe0, A9_Pipe1]>], [2, 1]>,
   InstrItinData<IIC_iUNAsr  , [InstrStage<3, [A9_Pipe0, A9_Pipe1]>], [2, 1, 1]>,
   //
+  // Zero and sign extension instructions
+  InstrItinData<IIC_iEXTr , [InstrStage<1, [A9_Pipe0, A9_Pipe1]>], [2, 1]>,
+  InstrItinData<IIC_iEXTAr, [InstrStage<1, [A9_Pipe0, A9_Pipe1]>], [3, 1, 1]>,
+  //
   // Compare instructions
   InstrItinData<IIC_iCMPi   , [InstrStage<1, [A9_Pipe0, A9_Pipe1]>], [2]>,
   InstrItinData<IIC_iCMPr   , [InstrStage<1, [A9_Pipe0, A9_Pipe1]>], [2, 2]>,

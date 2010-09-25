@@ -18,6 +18,8 @@ def IIC_iALUsr     : InstrItinClass;
 def IIC_iUNAr      : InstrItinClass;
 def IIC_iUNAsi     : InstrItinClass;
 def IIC_iUNAsr     : InstrItinClass;
+def IIC_iEXTr      : InstrItinClass;
+def IIC_iEXTAr     : InstrItinClass;
 def IIC_iCMPi      : InstrItinClass;
 def IIC_iCMPr      : InstrItinClass;
 def IIC_iCMPsi     : InstrItinClass;

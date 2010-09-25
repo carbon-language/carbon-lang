@@ -42,6 +42,10 @@ def CortexA8Itineraries : ProcessorItineraries<
   InstrItinData<IIC_iUNAsi, [InstrStage<1, [A8_Pipe0, A8_Pipe1]>], [2, 1]>,
   InstrItinData<IIC_iUNAsr, [InstrStage<1, [A8_Pipe0, A8_Pipe1]>], [2, 1, 1]>,
   //
+  // Zero and sign extension instructions
+  InstrItinData<IIC_iEXTr , [InstrStage<1, [A8_Pipe0, A8_Pipe1]>], [1, 1]>,
+  InstrItinData<IIC_iEXTAr, [InstrStage<1, [A8_Pipe0, A8_Pipe1]>], [2, 2, 1]>,
+  //
   // Compare instructions
   InstrItinData<IIC_iCMPi , [InstrStage<1, [A8_Pipe0, A8_Pipe1]>], [2]>,
   InstrItinData<IIC_iCMPr , [InstrStage<1, [A8_Pipe0, A8_Pipe1]>], [2, 2]>,
