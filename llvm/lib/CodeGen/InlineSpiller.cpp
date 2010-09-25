@@ -233,8 +233,7 @@ bool InlineSpiller::reMaterializeFor(MachineBasicBlock::iterator MI) {
   }
   DEBUG(dbgs() << "\t        " << UseIdx << '\t' << *MI);
 
-  VNInfo *DefVNI = NewLI.getNextValue(DefIdx, 0, true,
-                                       lis_.getVNInfoAllocator());
+  VNInfo *DefVNI = NewLI.getNextValue(DefIdx, 0, lis_.getVNInfoAllocator());
   NewLI.addRange(LiveRange(DefIdx, UseIdx.getDefIndex(), DefVNI));
   DEBUG(dbgs() << "\tinterval: " << NewLI << '\n');
   return true;
@@ -249,7 +248,7 @@ void InlineSpiller::reMaterializeAll() {
   for (LiveInterval::const_vni_iterator I = li_->vni_begin(),
        E = li_->vni_end(); I != E; ++I) {
     VNInfo *VNI = *I;
-    if (VNI->isUnused() || !VNI->isDefAccurate())
+    if (VNI->isUnused())
       continue;
     MachineInstr *DefMI = lis_.getInstructionFromIndex(VNI->def);
     if (!DefMI || !tii_.isTriviallyReMaterializable(DefMI))
@@ -283,7 +282,7 @@ void InlineSpiller::reMaterializeAll() {
     lis_.RemoveMachineInstrFromMaps(DefMI);
     vrm_.RemoveMachineInstrFromMaps(DefMI);
     DefMI->eraseFromParent();
-    VNI->setIsDefAccurate(false);
+    VNI->def = lis_.getZeroIndex();
     anyRemoved = true;
   }
 
@@ -366,7 +365,7 @@ void InlineSpiller::insertReload(LiveInterval &NewLI,
   SlotIndex LoadIdx = lis_.InsertMachineInstrInMaps(MI).getDefIndex();
   vrm_.addSpillSlotUse(stackSlot_, MI);
   DEBUG(dbgs() << "\treload:  " << LoadIdx << '\t' << *MI);
-  VNInfo *LoadVNI = NewLI.getNextValue(LoadIdx, 0, true,
+  VNInfo *LoadVNI = NewLI.getNextValue(LoadIdx, 0,
                                        lis_.getVNInfoAllocator());
   NewLI.addRange(LiveRange(LoadIdx, Idx, LoadVNI));
 }
@@ -381,8 +380,7 @@ void InlineSpiller::insertSpill(LiveInterval &NewLI,
   SlotIndex StoreIdx = lis_.InsertMachineInstrInMaps(MI).getDefIndex();
   vrm_.addSpillSlotUse(stackSlot_, MI);
   DEBUG(dbgs() << "\tspilled: " << StoreIdx << '\t' << *MI);
-  VNInfo *StoreVNI = NewLI.getNextValue(Idx, 0, true,
-                                        lis_.getVNInfoAllocator());
+  VNInfo *StoreVNI = NewLI.getNextValue(Idx, 0, lis_.getVNInfoAllocator());
   NewLI.addRange(LiveRange(Idx, StoreIdx, StoreVNI));
 }
 

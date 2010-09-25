@@ -218,7 +218,7 @@ bool SimpleRegisterCoalescing::AdjustCopiesBackFrom(const CoalescerPair &CP,
         continue;
       LiveInterval &SRLI = li_->getInterval(*SR);
       SRLI.addRange(LiveRange(FillerStart, FillerEnd,
-                              SRLI.getNextValue(FillerStart, 0, true,
+                              SRLI.getNextValue(FillerStart, 0,
                                                 li_->getVNInfoAllocator())));
     }
   }
@@ -267,7 +267,8 @@ bool SimpleRegisterCoalescing::HasOtherReachingDefs(LiveInterval &IntA,
       if (BI->valno == BValNo)
         continue;
       // When BValNo is null, we're looking for a dummy clobber-value for a subreg.
-      if (!BValNo && !BI->valno->isDefAccurate() && !BI->valno->getCopy())
+      if (!BValNo && li_->getInstructionFromIndex(BI->valno->def) == 0 &&
+          !BI->valno->getCopy())
         continue;
       if (BI->start <= AI->start && BI->end > AI->start)
         return true;
@@ -351,12 +352,11 @@ bool SimpleRegisterCoalescing::RemoveCopyByCommutingDef(const CoalescerPair &CP,
   assert(ALR != IntA.end() && "Live range not found!");
   VNInfo *AValNo = ALR->valno;
   // If other defs can reach uses of this def, then it's not safe to perform
-  // the optimization. FIXME: Do isPHIDef and isDefAccurate both need to be
-  // tested?
-  if (AValNo->isPHIDef() || !AValNo->isDefAccurate() ||
-      AValNo->isUnused() || AValNo->hasPHIKill())
-    return false;
+  // the optimization.
   MachineInstr *DefMI = li_->getInstructionFromIndex(AValNo->def);
+  if (AValNo->isPHIDef() || DefMI == 0 || AValNo->isUnused() ||
+      AValNo->hasPHIKill())
+    return false;
   if (!DefMI)
     return false;
   const TargetInstrDesc &TID = DefMI->getDesc();
@@ -652,9 +652,8 @@ bool SimpleRegisterCoalescing::ReMaterializeTrivialDef(LiveInterval &SrcInt,
   assert(SrcLR != SrcInt.end() && "Live range not found!");
   VNInfo *ValNo = SrcLR->valno;
   // If other defs can reach uses of this def, then it's not safe to perform
-  // the optimization. FIXME: Do isPHIDef and isDefAccurate both need to be
-  // tested?
-  if (ValNo->isPHIDef() || !ValNo->isDefAccurate() ||
+  // the optimization.
+  if (ValNo->isPHIDef() || li_->getInstructionFromIndex(ValNo->def)==0 ||
       ValNo->isUnused() || ValNo->hasPHIKill())
     return false;
   MachineInstr *DefMI = li_->getInstructionFromIndex(ValNo->def);

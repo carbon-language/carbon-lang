@@ -144,7 +144,7 @@ protected:
         vrm->addSpillSlotUse(ss, loadInstr);
         SlotIndex endIndex = loadIndex.getNextIndex();
         VNInfo *loadVNI =
-          newLI->getNextValue(loadIndex, 0, true, lis->getVNInfoAllocator());
+          newLI->getNextValue(loadIndex, 0, lis->getVNInfoAllocator());
         newLI->addRange(LiveRange(loadIndex, endIndex, loadVNI));
       }
 
@@ -158,7 +158,7 @@ protected:
         vrm->addSpillSlotUse(ss, storeInstr);
         SlotIndex beginIndex = storeIndex.getPrevIndex();
         VNInfo *storeVNI =
-          newLI->getNextValue(beginIndex, 0, true, lis->getVNInfoAllocator());
+          newLI->getNextValue(beginIndex, 0, lis->getVNInfoAllocator());
         newLI->addRange(LiveRange(beginIndex, storeIndex, storeVNI));
       }
 
@@ -297,7 +297,8 @@ private:
 
   /// Extract the given value number from the interval.
   LiveInterval* extractVNI(LiveInterval *li, VNInfo *vni) const {
-    assert(vni->isDefAccurate() || vni->isPHIDef());
+    assert((lis->getInstructionFromIndex(vni->def) != 0 || vni->isPHIDef()) &&
+           "Def index not sane?");
 
     // Create a new vreg and live interval, copy VNI ranges over.
     const TargetRegisterClass *trc = mri->getRegClass(li->reg);
@@ -335,8 +336,11 @@ private:
                                      tii->get(TargetOpcode::COPY), newVReg)
                                .addReg(li->reg, RegState::Kill);
       SlotIndex copyIdx = lis->InsertMachineInstrInMaps(copyMI);
-      VNInfo *phiDefVNI = li->getNextValue(lis->getMBBStartIdx(defMBB),
-                                           0, false, lis->getVNInfoAllocator());
+      SlotIndex phiDefIdx = lis->getMBBStartIdx(defMBB);
+      assert(lis->getInstructionFromIndex(phiDefIdx) == 0 &&
+             "PHI def index points at actual instruction.");
+      VNInfo *phiDefVNI = li->getNextValue(phiDefIdx,
+                                           0, lis->getVNInfoAllocator());
       phiDefVNI->setIsPHIDef(true);
       li->addRange(LiveRange(phiDefVNI->def, copyIdx.getDefIndex(), phiDefVNI));
       LiveRange *oldPHIDefRange =
@@ -358,7 +362,6 @@ private:
       newVNI->def = copyIdx.getDefIndex();
       newVNI->setCopy(copyMI);
       newVNI->setIsPHIDef(false); // not a PHI def anymore.
-      newVNI->setIsDefAccurate(true);
     } else {
       // non-PHI def. Rename the def. If it's two-addr that means renaming the
       // use and inserting a new copy too.
@@ -391,7 +394,7 @@ private:
           li->getLiveRangeContaining(newVNI->def.getUseIndex());
         origUseRange->end = copyIdx.getDefIndex();
         VNInfo *copyVNI = newLI->getNextValue(copyIdx.getDefIndex(), copyMI,
-                                              true, lis->getVNInfoAllocator());
+                                              lis->getVNInfoAllocator());
         LiveRange copyRange(copyIdx.getDefIndex(),defIdx.getDefIndex(),copyVNI);
         newLI->addRange(copyRange);
       }
@@ -448,7 +451,7 @@ private:
         // Insert a new range & vni for the two-address-to-copy value. This
         // will be attached to the new live interval.
         VNInfo *copyVNI =
-          newLI->getNextValue(useIdx.getDefIndex(), 0, true,
+          newLI->getNextValue(useIdx.getDefIndex(), 0,
                               lis->getVNInfoAllocator());
         LiveRange copyRange(useIdx.getDefIndex(),copyIdx.getDefIndex(),copyVNI);
         newLI->addRange(copyRange);
@@ -481,8 +484,7 @@ private:
       }
 
       VNInfo *newKillVNI = li->getNextValue(copyIdx.getDefIndex(),
-                                            copyMI, true,
-                                            lis->getVNInfoAllocator());
+                                            copyMI, lis->getVNInfoAllocator());
       newKillVNI->setHasPHIKill(true);
       li->addRange(LiveRange(copyIdx.getDefIndex(),
                              lis->getMBBEndIdx(killMBB),

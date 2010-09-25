@@ -140,7 +140,6 @@ namespace llvm {
       VNInfo *newVal = getNewVNI(preHeaderRange->valno);
       newVal->def = copyDefIdx;
       newVal->setCopy(copy);
-      newVal->setIsDefAccurate(true);
       li.removeRange(copyDefIdx, ls.lis->getMBBEndIdx(preHeader), true);
 
       getNewLI()->addRange(LiveRange(copyDefIdx,
@@ -174,12 +173,13 @@ namespace llvm {
         
         // Blow away output range definition.
         outRange->valno->def = ls.lis->getInvalidIndex();
-        outRange->valno->setIsDefAccurate(false);
         li.removeRange(ls.lis->getMBBStartIdx(outBlock), copyDefIdx);
 
+        SlotIndex newDefIdx = ls.lis->getMBBStartIdx(outBlock);
+        assert(ls.lis->getInstructionFromIndex(newDefIdx) == 0 &&
+               "PHI def index points at actual instruction.");
         VNInfo *newVal =
-          getNewLI()->getNextValue(ls.lis->getMBBStartIdx(outBlock),
-                                   0, false, ls.lis->getVNInfoAllocator());
+          getNewLI()->getNextValue(newDefIdx, 0, ls.lis->getVNInfoAllocator());
 
         getNewLI()->addRange(LiveRange(ls.lis->getMBBStartIdx(outBlock),
                                        copyDefIdx, newVal));
@@ -513,8 +513,10 @@ namespace llvm {
       if (!insertRange)
         continue;
 
-      VNInfo *newVal = li.getNextValue(lis->getMBBStartIdx(preHeader),
-                                       0, false, lis->getVNInfoAllocator());
+      SlotIndex newDefIdx = lis->getMBBStartIdx(preHeader);
+      assert(lis->getInstructionFromIndex(newDefIdx) == 0 &&
+             "PHI def index points at actual instruction.");
+      VNInfo *newVal = li.getNextValue(newDefIdx, 0, lis->getVNInfoAllocator());
       li.addRange(LiveRange(lis->getMBBStartIdx(preHeader),
                             lis->getMBBEndIdx(preHeader),
                             newVal));
@@ -611,8 +613,11 @@ namespace llvm {
                          lis->getMBBEndIdx(splitBlock), true);
         }
       } else if (intersects) {
-        VNInfo *newVal = li.getNextValue(lis->getMBBStartIdx(splitBlock),
-                                         0, false, lis->getVNInfoAllocator());
+        SlotIndex newDefIdx = lis->getMBBStartIdx(splitBlock);
+        assert(lis->getInstructionFromIndex(newDefIdx) == 0 &&
+               "PHI def index points at actual instruction.");
+        VNInfo *newVal = li.getNextValue(newDefIdx, 0,
+                                         lis->getVNInfoAllocator());
         li.addRange(LiveRange(lis->getMBBStartIdx(splitBlock),
                               lis->getMBBEndIdx(splitBlock),
                               newVal));

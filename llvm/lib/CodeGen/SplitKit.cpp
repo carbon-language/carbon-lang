@@ -365,7 +365,7 @@ VNInfo *LiveIntervalMap::defValue(const VNInfo *ParentVNI, SlotIndex Idx) {
   assert(parentli_.getVNInfoAt(Idx) == ParentVNI && "Bad ParentVNI");
 
   // Create a new value.
-  VNInfo *VNI = li_->getNextValue(Idx, 0, true, lis_.getVNInfoAllocator());
+  VNInfo *VNI = li_->getNextValue(Idx, 0, lis_.getVNInfoAllocator());
 
   // Use insert for lookup, so we can add missing values with a second lookup.
   std::pair<ValueMap::iterator,bool> InsP =
@@ -468,7 +468,7 @@ VNInfo *LiveIntervalMap::mapValue(const VNInfo *ParentVNI, SlotIndex Idx,
 
       // We have a collision between the old and new VNI at Succ. That means
       // neither dominates and we need a new phi-def.
-      VNI = li_->getNextValue(Start, 0, true, lis_.getVNInfoAllocator());
+      VNI = li_->getNextValue(Start, 0, lis_.getVNInfoAllocator());
       VNI->setIsPHIDef(true);
       InsP.first->second = VNI;
 

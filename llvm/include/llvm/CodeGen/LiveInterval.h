@@ -39,25 +39,13 @@ namespace llvm {
   /// This class holds information about a machine level values, including
   /// definition and use points.
   ///
-  /// Care must be taken in interpreting the def index of the value. The
-  /// following rules apply:
-  ///
-  /// If the isDefAccurate() method returns false then def does not contain the
-  /// index of the defining MachineInstr, or even (necessarily) to a
-  /// MachineInstr at all. In general such a def index is not meaningful
-  /// and should not be used. The exception is that, for values originally
-  /// defined by PHI instructions, after PHI elimination def will contain the
-  /// index of the MBB in which the PHI originally existed. This can be used
-  /// to insert code (spills or copies) which deals with the value, which will
-  /// be live in to the block.
   class VNInfo {
   private:
     enum {
       HAS_PHI_KILL    = 1,
       REDEF_BY_EC     = 1 << 1,
       IS_PHI_DEF      = 1 << 2,
-      IS_UNUSED       = 1 << 3,
-      IS_DEF_ACCURATE = 1 << 4
+      IS_UNUSED       = 1 << 3
     };
 
     MachineInstr *copy;
@@ -73,10 +61,8 @@ namespace llvm {
     SlotIndex def;
 
     /// VNInfo constructor.
-    /// d is presumed to point to the actual defining instr. If it doesn't
-    /// setIsDefAccurate(false) should be called after construction.
     VNInfo(unsigned i, SlotIndex d, MachineInstr *c)
-      : copy(c), flags(IS_DEF_ACCURATE), id(i), def(d)
+      : copy(c), flags(0), id(i), def(d)
     { }
 
     /// VNInfo construtor, copies values from orig, except for the value number.
@@ -144,16 +130,6 @@ namespace llvm {
         flags |= IS_UNUSED;
       else
         flags &= ~IS_UNUSED;
-    }
-
-    /// Returns true if the def is accurate.
-    bool isDefAccurate() const { return flags & IS_DEF_ACCURATE; }
-    /// Set the "is def accurate" flag on this value.
-    void setIsDefAccurate(bool defAccurate) {
-      if (defAccurate)
-        flags |= IS_DEF_ACCURATE;
-      else
-        flags &= ~IS_DEF_ACCURATE;
     }
   };
 
@@ -320,10 +296,9 @@ namespace llvm {
     /// getNextValue - Create a new value number and return it.  MIIdx specifies
     /// the instruction that defines the value number.
     VNInfo *getNextValue(SlotIndex def, MachineInstr *CopyMI,
-                       bool isDefAccurate, VNInfo::Allocator &VNInfoAllocator) {
+                         VNInfo::Allocator &VNInfoAllocator) {
       VNInfo *VNI =
         new (VNInfoAllocator) VNInfo((unsigned)valnos.size(), def, CopyMI);
-      VNI->setIsDefAccurate(isDefAccurate);
       valnos.push_back(VNI);
       return VNI;
     }
