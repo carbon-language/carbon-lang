@@ -13,10 +13,7 @@
 //
 // SlotIndex is mostly a proxy for entries of the SlotIndexList, a class which
 // is held is LiveIntervals and provides the real numbering. This allows
-// LiveIntervals to perform largely transparent renumbering. The SlotIndex
-// class does hold a PHI bit, which determines whether the index relates to a
-// PHI use or def point, or an actual instruction. See the SlotIndex class
-// description for futher information.
+// LiveIntervals to perform largely transparent renumbering.
 //===----------------------------------------------------------------------===//
 
 #ifndef LLVM_CODEGEN_SLOTINDEXES_H
@@ -130,12 +127,10 @@ namespace llvm {
 
     enum Slot { LOAD, USE, DEF, STORE, NUM };
 
-    static const unsigned PHI_BIT = 1 << 2;
+    PointerIntPair<IndexListEntry*, 2, unsigned> lie;
 
-    PointerIntPair<IndexListEntry*, 3, unsigned> lie;
-
-    SlotIndex(IndexListEntry *entry, unsigned phiAndSlot)
-      : lie(entry, phiAndSlot) {
+    SlotIndex(IndexListEntry *entry, unsigned slot)
+      : lie(entry, slot) {
       assert(entry != 0 && "Attempt to construct index with 0 pointer.");
     }
 
@@ -149,7 +144,7 @@ namespace llvm {
 
     /// Returns the slot for this SlotIndex.
     Slot getSlot() const {
-      return static_cast<Slot>(lie.getInt()  & ~PHI_BIT);
+      return static_cast<Slot>(lie.getInt());
     }
 
     static inline unsigned getHashValue(const SlotIndex &v) {
@@ -166,22 +161,13 @@ namespace llvm {
     static inline SlotIndex getTombstoneKey() {
       return SlotIndex(IndexListEntry::getTombstoneKeyEntry(), 0);
     }
-    
+
     /// Construct an invalid index.
     SlotIndex() : lie(IndexListEntry::getEmptyKeyEntry(), 0) {}
 
-    // Construct a new slot index from the given one, set the phi flag on the
-    // new index to the value of the phi parameter.
-    SlotIndex(const SlotIndex &li, bool phi)
-      : lie(&li.entry(), phi ? PHI_BIT | li.getSlot() : (unsigned)li.getSlot()){
-      assert(lie.getPointer() != 0 &&
-             "Attempt to construct index with 0 pointer.");
-    }
-
-    // Construct a new slot index from the given one, set the phi flag on the
-    // new index to the value of the phi parameter, and the slot to the new slot.
-    SlotIndex(const SlotIndex &li, bool phi, Slot s)
-      : lie(&li.entry(), phi ? PHI_BIT | s : (unsigned)s) {
+    // Construct a new slot index from the given one, and set the slot.
+    SlotIndex(const SlotIndex &li, Slot s)
+      : lie(&li.entry(), unsigned(s)) {
       assert(lie.getPointer() != 0 &&
              "Attempt to construct index with 0 pointer.");
     }
@@ -234,11 +220,6 @@ namespace llvm {
     /// Return the distance from this index to the given one.
     int distance(SlotIndex other) const {
       return other.getIndex() - getIndex();
-    }
-
-    /// Returns the state of the PHI bit.
-    bool isPHI() const {
-      return lie.getInt() & PHI_BIT;
     }
 
     /// isLoad - Return true if this is a LOAD slot.

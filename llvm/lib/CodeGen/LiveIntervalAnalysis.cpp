@@ -393,8 +393,7 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
       // Create interval with one of a NEW value number.  Note that this value
       // number isn't actually defined by an instruction, weird huh? :)
       if (PHIJoin) {
-        ValNo = interval.getNextValue(SlotIndex(Start, true), 0, false,
-                                      VNInfoAllocator);
+        ValNo = interval.getNextValue(Start, 0, false, VNInfoAllocator);
         ValNo->setIsPHIDef(true);
       }
       LiveRange LR(Start, killIdx, ValNo);
@@ -673,8 +672,7 @@ void LiveIntervals::handleLiveInRegister(MachineBasicBlock *MBB,
   }
 
   VNInfo *vni =
-    interval.getNextValue(SlotIndex(getMBBStartIdx(MBB), true),
-                          0, false, VNInfoAllocator);
+    interval.getNextValue(getMBBStartIdx(MBB), 0, false, VNInfoAllocator);
   vni->setIsPHIDef(true);
   LiveRange LR(start, end, vni);
 

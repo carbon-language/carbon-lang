@@ -178,8 +178,7 @@ namespace llvm {
         li.removeRange(ls.lis->getMBBStartIdx(outBlock), copyDefIdx);
 
         VNInfo *newVal =
-          getNewLI()->getNextValue(SlotIndex(ls.lis->getMBBStartIdx(outBlock),
-                                             true),
+          getNewLI()->getNextValue(ls.lis->getMBBStartIdx(outBlock),
                                    0, false, ls.lis->getVNInfoAllocator());
 
         getNewLI()->addRange(LiveRange(ls.lis->getMBBStartIdx(outBlock),
