@@ -697,13 +697,15 @@ bool MemCpyOpt::processMemCpy(MemCpyInst *M) {
                                  M->getParent()->getParent()->getParent(),
                                  M->getIntrinsicID(), ArgTys, 3);
     
+  // Make sure to use the alignment of the source since we're changing the
+  // location we're reading from.
+  // TODO: Is this worth it if we're creating a less aligned memcpy? For
+  // example we could be moving from movaps -> movq on x86.
   Value *Args[5] = {
     M->getRawDest(), MDep->getRawSource(), M->getLength(),
-    M->getAlignmentCst(), M->getVolatileCst()
+    MDep->getAlignmentCst(), M->getVolatileCst()
   };
-  
   CallInst *C = CallInst::Create(MemCpyFun, Args, Args+5, "", M);
-  
   
   // If C and M don't interfere, then this is a valid transformation.  If they
   // did, this would mean that the two sources overlap, which would be bad.
