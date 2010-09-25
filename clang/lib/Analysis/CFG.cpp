@@ -52,6 +52,116 @@ private:
   Kind k;
 };
 
+/// LocalScope - Node in tree of local scopes created for C++ implicit
+/// destructor calls generation. It contains list of automatic variables
+/// declared in the scope and link to position in previous scope this scope
+/// began in.
+///
+/// The process of creating local scopes is as follows:
+/// - Init CFGBuilder::ScopePos with invalid position (equivalent for null),
+/// - Before processing statements in scope (e.g. CompoundStmt) create
+///   LocalScope object using CFGBuilder::ScopePos as link to previous scope
+///   and set CFGBuilder::ScopePos to the end of new scope,
+/// - On every occurance of VarDecl increase CFGBuilder::ScopePos if it points
+///   at this VarDecl,
+/// - For every normal (without jump) end of scope add to CFGBlock destructors
+///   for objects in the current scope,
+/// - For every jump add to CFGBlock destructors for objects
+///   between CFGBuilder::ScopePos and local scope position saved for jump
+///   target. Thanks to C++ restrictions on goto jumps we can be sure that
+///   jump target position will be on the path to root from CFGBuilder::ScopePos
+///   (adding any variable that doesn't need constructor to be called to
+///   LocalScope can break this assumption),
+///
+class LocalScope {
+public:
+  typedef llvm::SmallVector<VarDecl*, 4> AutomaticVarsTy;
+
+  /// const_iterator - Iterates local scope backwards and jumps to previous
+  /// scope on reaching the begining of currently iterated scope.
+  class const_iterator {
+    const LocalScope* Scope;
+
+    /// VarIter is guaranteed to be greater then 0 for every valid iterator.
+    /// Invalid iterator (with null Scope) has VarIter equal to 0.
+    unsigned VarIter;
+
+  public:
+    /// Create invalid iterator. Dereferencing invalid iterator is not allowed.
+    /// Incrementing invalid iterator is allowed and will result in invalid
+    /// iterator.
+    const_iterator()
+        : Scope(NULL), VarIter(0) {}
+
+    /// Create valid iterator. In case when S.Prev is an invalid iterator and
+    /// I is equal to 0, this will create invalid iterator.
+    const_iterator(const LocalScope& S, unsigned I)
+        : Scope(&S), VarIter(I) {
+      // Iterator to "end" of scope is not allowed. Handle it by going up
+      // in scopes tree possibly up to invalid iterator in the root.
+      if (VarIter == 0 && Scope)
+        *this = Scope->Prev;
+    }
+
+    VarDecl* const* operator->() const {
+      assert (Scope && "Dereferencing invalid iterator is not allowed");
+      assert (VarIter != 0 && "Iterator has invalid value of VarIter member");
+      return &Scope->Vars[VarIter - 1];
+    }
+    VarDecl* operator*() const {
+      return *this->operator->();
+    }
+
+    const_iterator& operator++() {
+      if (!Scope)
+        return *this;
+
+      assert (VarIter != 0 && "Iterator has invalid value of VarIter member");
+      --VarIter;
+      if (VarIter == 0)
+        *this = Scope->Prev;
+      return *this;
+    }
+
+    bool operator==(const const_iterator& rhs) const {
+      return Scope == rhs.Scope && VarIter == rhs.VarIter;
+    }
+    bool operator!=(const const_iterator& rhs) const {
+      return !(*this == rhs);
+    }
+  };
+
+  friend class const_iterator;
+
+private:
+  /// Automatic variables in order of declaration.
+  AutomaticVarsTy Vars;
+  /// Iterator to variable in previous scope that was declared just before
+  /// begin of this scope.
+  const_iterator Prev;
+
+public:
+  /// Constructs empty scope linked to previous scope in specified place.
+  LocalScope(const_iterator P)
+      : Vars()
+      , Prev(P) {}
+
+  /// Begin of scope in direction of CFG building (backwards).
+  const_iterator begin() const { return const_iterator(*this, Vars.size()); }
+};
+
+/// BlockScopePosPair - Structure for specifing position in CFG during its build
+/// proces. It consists of CFGBlock that specifies position in CFG graph and
+/// LocalScope::const_iterator that specifies position in LocalScope graph.
+struct BlockScopePosPair {
+  BlockScopePosPair() {}
+  BlockScopePosPair(CFGBlock* B, LocalScope::const_iterator S)
+      : Block(B), ScopePos(S) {}
+
+  CFGBlock*                   Block;
+  LocalScope::const_iterator  ScopePos;
+};
+
 /// CFGBuilder - This class implements CFG construction from an AST.
 ///   The builder is stateful: an instance of the builder should be used to only
 ///   construct a single CFG.
@@ -67,24 +177,30 @@ private:
 ///  implicit fall-throughs without extra basic blocks.
 ///
 class CFGBuilder {
+  typedef BlockScopePosPair JumpTarget;
+  typedef BlockScopePosPair JumpSource;
+
   ASTContext *Context;
   llvm::OwningPtr<CFG> cfg;
 
   CFGBlock* Block;
   CFGBlock* Succ;
-  CFGBlock* ContinueTargetBlock;
-  CFGBlock* BreakTargetBlock;
+  JumpTarget ContinueJumpTarget;
+  JumpTarget BreakJumpTarget;
   CFGBlock* SwitchTerminatedBlock;
   CFGBlock* DefaultCaseBlock;
   CFGBlock* TryTerminatedBlock;
 
-  // LabelMap records the mapping from Label expressions to their blocks.
-  typedef llvm::DenseMap<LabelStmt*,CFGBlock*> LabelMapTy;
+  // Current position in local scope.
+  LocalScope::const_iterator ScopePos;
+
+  // LabelMap records the mapping from Label expressions to their jump targets.
+  typedef llvm::DenseMap<LabelStmt*, JumpTarget> LabelMapTy;
   LabelMapTy LabelMap;
 
   // A list of blocks that end with a "goto" that must be backpatched to their
   // resolved targets upon completion of CFG construction.
-  typedef std::vector<CFGBlock*> BackpatchBlocksTy;
+  typedef std::vector<JumpSource> BackpatchBlocksTy;
   BackpatchBlocksTy BackpatchBlocks;
 
   // A list of labels whose address has been taken (for indirect gotos).
@@ -97,7 +213,6 @@ class CFGBuilder {
 public:
   explicit CFGBuilder() : cfg(new CFG()), // crew a new CFG
                           Block(NULL), Succ(NULL),
-                          ContinueTargetBlock(NULL), BreakTargetBlock(NULL),
                           SwitchTerminatedBlock(NULL), DefaultCaseBlock(NULL),
                           TryTerminatedBlock(NULL), badCFG(false) {}
 
@@ -259,7 +374,7 @@ CFG* CFGBuilder::buildCFG(const Decl *D, Stmt* Statement, ASTContext* C,
   for (BackpatchBlocksTy::iterator I = BackpatchBlocks.begin(),
                                    E = BackpatchBlocks.end(); I != E; ++I ) {
 
-    CFGBlock* B = *I;
+    CFGBlock* B = I->Block;
     GotoStmt* G = cast<GotoStmt>(B->getTerminator());
     LabelMapTy::iterator LI = LabelMap.find(G->getLabel());
 
@@ -267,7 +382,8 @@ CFG* CFGBuilder::buildCFG(const Decl *D, Stmt* Statement, ASTContext* C,
     // incomplete AST.  Handle this by not registering a successor.
     if (LI == LabelMap.end()) continue;
 
-    AddSuccessor(B, LI->second);
+    JumpTarget JT = LI->second;
+    AddSuccessor(B, JT.Block);
   }
 
   // Add successors to the Indirect Goto Dispatch block (if we have one).
@@ -282,7 +398,7 @@ CFG* CFGBuilder::buildCFG(const Decl *D, Stmt* Statement, ASTContext* C,
       // at an incomplete AST.  Handle this by not registering a successor.
       if (LI == LabelMap.end()) continue;
       
-      AddSuccessor(B, LI->second);
+      AddSuccessor(B, LI->second.Block);
     }
 
   // Create an empty entry block that has no predecessors.
@@ -549,9 +665,9 @@ CFGBlock *CFGBuilder::VisitBreakStmt(BreakStmt *B) {
 
   // If there is no target for the break, then we are looking at an incomplete
   // AST.  This means that the CFG cannot be constructed.
-  if (BreakTargetBlock)
-    AddSuccessor(Block, BreakTargetBlock);
-  else
+  if (BreakJumpTarget.Block) {
+    AddSuccessor(Block, BreakJumpTarget.Block);
+  } else
     badCFG = true;
 
 
@@ -921,7 +1037,7 @@ CFGBlock* CFGBuilder::VisitLabelStmt(LabelStmt* L) {
     LabelBlock = createBlock(); // scopes that only contains NullStmts.
 
   assert(LabelMap.find(L) == LabelMap.end() && "label already in map");
-  LabelMap[ L ] = LabelBlock;
+  LabelMap[ L ] = JumpTarget(LabelBlock, ScopePos);
 
   // Labels partition blocks, so this is the end of the basic block we were
   // processing (L is the block's label).  Because this is label (and we have
@@ -952,15 +1068,19 @@ CFGBlock* CFGBuilder::VisitGotoStmt(GotoStmt* G) {
 
   if (I == LabelMap.end())
     // We will need to backpatch this block later.
-    BackpatchBlocks.push_back(Block);
-  else
-    AddSuccessor(Block, I->second);
+    BackpatchBlocks.push_back(JumpSource(Block, ScopePos));
+  else {
+    JumpTarget JT = I->second;
+    AddSuccessor(Block, JT.Block);
+  }
 
   return Block;
 }
 
 CFGBlock* CFGBuilder::VisitForStmt(ForStmt* F) {
   CFGBlock* LoopSuccessor = NULL;
+
+  LocalScope::const_iterator LoopBeginScopePos = ScopePos;
 
   // "for" is a control-flow statement.  Thus we stop processing the current
   // block.
@@ -973,8 +1093,8 @@ CFGBlock* CFGBuilder::VisitForStmt(ForStmt* F) {
 
   // Save the current value for the break targets.
   // All breaks should go to the code following the loop.
-  SaveAndRestore<CFGBlock*> save_break(BreakTargetBlock);
-  BreakTargetBlock = LoopSuccessor;
+  SaveAndRestore<JumpTarget> save_break(BreakJumpTarget);
+  BreakJumpTarget = JumpTarget(LoopSuccessor, LoopBeginScopePos);
 
   // Because of short-circuit evaluation, the condition of the loop can span
   // multiple basic blocks.  Thus we need the "Entry" and "Exit" blocks that
@@ -1025,8 +1145,8 @@ CFGBlock* CFGBuilder::VisitForStmt(ForStmt* F) {
     assert(F->getBody());
 
    // Save the current values for Block, Succ, and continue targets.
-   SaveAndRestore<CFGBlock*> save_Block(Block), save_Succ(Succ),
-      save_continue(ContinueTargetBlock);
+   SaveAndRestore<CFGBlock*> save_Block(Block), save_Succ(Succ);
+   SaveAndRestore<JumpTarget> save_continue(ContinueJumpTarget);
 
     // Create a new block to contain the (bottom) of the loop body.
     Block = NULL;
@@ -1050,18 +1170,18 @@ CFGBlock* CFGBuilder::VisitForStmt(ForStmt* F) {
       Block = 0;
     }
 
-    ContinueTargetBlock = Succ;
+    ContinueJumpTarget = JumpTarget(Succ, LoopBeginScopePos);
 
     // The starting block for the loop increment is the block that should
     // represent the 'loop target' for looping back to the start of the loop.
-    ContinueTargetBlock->setLoopTarget(F);
+    ContinueJumpTarget.Block->setLoopTarget(F);
 
     // Now populate the body block, and in the process create new blocks as we
     // walk the body of the loop.
     CFGBlock* BodyBlock = addStmt(F->getBody());
 
     if (!BodyBlock)
-      BodyBlock = ContinueTargetBlock; // can happen for "for (...;...;...) ;"
+      BodyBlock = ContinueJumpTarget.Block;//can happen for "for (...;...;...);"
     else if (badCFG)
       return 0;
 
@@ -1170,11 +1290,12 @@ CFGBlock* CFGBuilder::VisitObjCForCollectionStmt(ObjCForCollectionStmt* S) {
   // Now create the true branch.
   {
     // Save the current values for Succ, continue and break targets.
-    SaveAndRestore<CFGBlock*> save_Succ(Succ),
-      save_continue(ContinueTargetBlock), save_break(BreakTargetBlock);
+    SaveAndRestore<CFGBlock*> save_Succ(Succ);
+    SaveAndRestore<JumpTarget> save_continue(ContinueJumpTarget),
+        save_break(BreakJumpTarget);
 
-    BreakTargetBlock = LoopSuccessor;
-    ContinueTargetBlock = EntryConditionBlock;
+    BreakJumpTarget = JumpTarget(LoopSuccessor, ScopePos);
+    ContinueJumpTarget = JumpTarget(EntryConditionBlock, ScopePos);
 
     CFGBlock* BodyBlock = addStmt(S->getBody());
 
@@ -1229,6 +1350,8 @@ CFGBlock* CFGBuilder::VisitObjCAtTryStmt(ObjCAtTryStmt* S) {
 
 CFGBlock* CFGBuilder::VisitWhileStmt(WhileStmt* W) {
   CFGBlock* LoopSuccessor = NULL;
+
+  LocalScope::const_iterator LoopBeginScopePos = ScopePos;
 
   // "while" is a control-flow statement.  Thus we stop processing the current
   // block.
@@ -1285,9 +1408,9 @@ CFGBlock* CFGBuilder::VisitWhileStmt(WhileStmt* W) {
     assert(W->getBody());
 
     // Save the current values for Block, Succ, and continue and break targets
-    SaveAndRestore<CFGBlock*> save_Block(Block), save_Succ(Succ),
-                              save_continue(ContinueTargetBlock),
-                              save_break(BreakTargetBlock);
+    SaveAndRestore<CFGBlock*> save_Block(Block), save_Succ(Succ);
+    SaveAndRestore<JumpTarget> save_continue(ContinueJumpTarget),
+        save_break(BreakJumpTarget);
 
     // Create an empty block to represent the transition block for looping back
     // to the head of the loop.
@@ -1295,10 +1418,10 @@ CFGBlock* CFGBuilder::VisitWhileStmt(WhileStmt* W) {
     assert(Succ == EntryConditionBlock);
     Succ = createBlock();
     Succ->setLoopTarget(W);
-    ContinueTargetBlock = Succ;
+    ContinueJumpTarget = JumpTarget(Succ, LoopBeginScopePos);
 
     // All breaks should go to the code following the loop.
-    BreakTargetBlock = LoopSuccessor;
+    BreakJumpTarget = JumpTarget(LoopSuccessor, LoopBeginScopePos);
 
     // NULL out Block to force lazy instantiation of blocks for the body.
     Block = NULL;
@@ -1307,7 +1430,7 @@ CFGBlock* CFGBuilder::VisitWhileStmt(WhileStmt* W) {
     CFGBlock* BodyBlock = addStmt(W->getBody());
 
     if (!BodyBlock)
-      BodyBlock = ContinueTargetBlock; // can happen for "while(...) ;"
+      BodyBlock = ContinueJumpTarget.Block; // can happen for "while(...) ;"
     else if (Block) {
       if (badCFG)
         return 0;
@@ -1420,15 +1543,15 @@ CFGBlock *CFGBuilder::VisitDoStmt(DoStmt* D) {
     assert(D->getBody());
 
     // Save the current values for Block, Succ, and continue and break targets
-    SaveAndRestore<CFGBlock*> save_Block(Block), save_Succ(Succ),
-      save_continue(ContinueTargetBlock),
-      save_break(BreakTargetBlock);
+    SaveAndRestore<CFGBlock*> save_Block(Block), save_Succ(Succ);
+    SaveAndRestore<JumpTarget> save_continue(ContinueJumpTarget),
+        save_break(BreakJumpTarget);
 
     // All continues within this loop should go to the condition block
-    ContinueTargetBlock = EntryConditionBlock;
+    ContinueJumpTarget = JumpTarget(EntryConditionBlock, ScopePos);
 
     // All breaks should go to the code following the loop.
-    BreakTargetBlock = LoopSuccessor;
+    BreakJumpTarget = JumpTarget(LoopSuccessor, ScopePos);
 
     // NULL out Block to force lazy instantiation of blocks for the body.
     Block = NULL;
@@ -1486,9 +1609,9 @@ CFGBlock* CFGBuilder::VisitContinueStmt(ContinueStmt* C) {
 
   // If there is no target for the continue, then we are looking at an
   // incomplete AST.  This means the CFG cannot be constructed.
-  if (ContinueTargetBlock)
-    AddSuccessor(Block, ContinueTargetBlock);
-  else
+  if (ContinueJumpTarget.Block) {
+    AddSuccessor(Block, ContinueJumpTarget.Block);
+  } else
     badCFG = true;
 
   return Block;
@@ -1535,8 +1658,8 @@ CFGBlock* CFGBuilder::VisitSwitchStmt(SwitchStmt* Terminator) {
 
   // Save the current "switch" context.
   SaveAndRestore<CFGBlock*> save_switch(SwitchTerminatedBlock),
-                            save_break(BreakTargetBlock),
                             save_default(DefaultCaseBlock);
+  SaveAndRestore<JumpTarget> save_break(BreakJumpTarget);
 
   // Set the "default" case to be the block after the switch statement.  If the
   // switch statement contains a "default:", this value will be overwritten with
@@ -1549,7 +1672,7 @@ CFGBlock* CFGBuilder::VisitSwitchStmt(SwitchStmt* Terminator) {
   // Now process the switch body.  The code after the switch is the implicit
   // successor.
   Succ = SwitchSuccessor;
-  BreakTargetBlock = SwitchSuccessor;
+  BreakJumpTarget = JumpTarget(SwitchSuccessor, ScopePos);
 
   // When visiting the body, the case statements should automatically get linked
   // up to the switch.  We also don't keep a pointer to the body, since all
