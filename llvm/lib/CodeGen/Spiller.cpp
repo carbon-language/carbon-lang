@@ -458,7 +458,7 @@ private:
     // Iterate over any PHI kills - we'll need to insert new copies for them.
     for (LiveInterval::iterator LRI = newLI->begin(), LRE = newLI->end();
          LRI != LRE; ++LRI) {
-      if (LRI->valno != newVNI || LRI->end.isPHI())
+      if (LRI->valno != newVNI)
         continue;
       SlotIndex killIdx = LRI->end;
       MachineBasicBlock *killMBB = lis->getMBBFromIndex(killIdx);
