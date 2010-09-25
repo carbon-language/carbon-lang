@@ -1,4 +1,13 @@
-; RUN: opt < %s -gvn -enable-load-pre -S | not grep {tmp3 = load}
+; RUN: opt < %s -gvn -enable-load-pre -S | FileCheck %s
+; This testcase assumed we'll PRE the load into %for.cond, but we don't actually
+; verify that doing so is safe.  If there didn't _happen_ to be a load in
+; %for.end, we would actually be lengthening the execution on some paths, and
+; we were never actually checking that case.  Now we actually do perform some
+; conservative checking to make sure we don't make paths longer, but we don't
+; currently get this case, which we got lucky on previously.
+;
+; Now that that faulty assumption is corrected, test that we DON'T incorrectly
+; hoist the load.  Doing the right thing for the wrong reasons is still a bug.
 
 @p = external global i32
 define i32 @f(i32 %n) nounwind {
@@ -13,6 +22,8 @@ for.cond:		; preds = %for.inc, %entry
 for.cond.for.end_crit_edge:		; preds = %for.cond
 	br label %for.end
 
+; CHECK: for.body:
+; CHECK-NEXT: %tmp3 = load i32* @p
 for.body:		; preds = %for.cond
 	%tmp3 = load i32* @p		; <i32> [#uses=1]
 	%dec = add i32 %tmp3, -1		; <i32> [#uses=2]
@@ -20,6 +31,7 @@ for.body:		; preds = %for.cond
 	%cmp6 = icmp slt i32 %dec, 0		; <i1> [#uses=1]
 	br i1 %cmp6, label %for.body.for.end_crit_edge, label %for.inc
 
+; CHECK: for.body.for.end_crit_edge:
 for.body.for.end_crit_edge:		; preds = %for.body
 	br label %for.end
 

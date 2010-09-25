@@ -1532,8 +1532,14 @@ bool GVN::processNonLocalLoad(LoadInst *LI,
       return false;
     if (Blockers.count(TmpBB))
       return false;
+    
+    // If any of these blocks has more than one successor (i.e. if the edge we
+    // just traversed was critical), then there are other paths through this 
+    // block along which the load may not be anticipated.  Hoisting the load 
+    // above this block would be adding the load to execution paths along
+    // which it was not previously executed.
     if (TmpBB->getTerminator()->getNumSuccessors() != 1)
-      allSingleSucc = false;
+      return false;
   }
 
   assert(TmpBB);
