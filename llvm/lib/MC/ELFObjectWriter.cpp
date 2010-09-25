@@ -487,6 +487,13 @@ void ELFObjectWriterImpl::WriteSymbolTable(MCDataFragment *F,
   }
 }
 
+static const MCSymbolData *getAtom(const MCSymbolData &SD) {
+  if (!SD.getFragment())
+    return 0;
+
+  return SD.getFragment()->getAtom();
+}
+
 // FIXME: this is currently X86/X86_64 only
 void ELFObjectWriterImpl::RecordRelocation(const MCAssembler &Asm,
                                            const MCAsmLayout &Layout,
@@ -502,7 +509,7 @@ void ELFObjectWriterImpl::RecordRelocation(const MCAssembler &Asm,
   if (!Target.isAbsolute()) {
     const MCSymbol *Symbol = &Target.getSymA()->getSymbol();
     MCSymbolData &SD = Asm.getSymbolData(*Symbol);
-    const MCSymbolData *Base = Asm.getAtom(Layout, &SD);
+    const MCSymbolData *Base = getAtom(SD);
     MCFragment *F = SD.getFragment();
 
     // Avoid relocations for cases like jumps and calls in the same file.
@@ -515,7 +522,7 @@ void ELFObjectWriterImpl::RecordRelocation(const MCAssembler &Asm,
     }
 
     if (Base) {
-      if (F && !SD.isExternal()) {
+      if (Base != &SD) {
         Index = F->getParent()->getOrdinal() + LocalSymbolData.size() + 1;
 
         MCSectionData *FSD = F->getParent();
@@ -523,8 +530,6 @@ void ELFObjectWriterImpl::RecordRelocation(const MCAssembler &Asm,
         Value += Layout.getSymbolAddress(&SD) - Layout.getSectionAddress(FSD);
       } else
         Index = getSymbolIndexInSymbolTable(Asm, Symbol);
-      if (Base != &SD)
-        Value += Layout.getSymbolAddress(&SD) - Layout.getSymbolAddress(Base);
       Addend = Value;
       // Compensate for the addend on i386.
       if (Is64Bit)
@@ -537,11 +542,14 @@ void ELFObjectWriterImpl::RecordRelocation(const MCAssembler &Asm,
 
         MCSectionData *FSD = F->getParent();
         // Offset of the symbol in the section
-        Addend = Layout.getSymbolAddress(&SD) - Layout.getSectionAddress(FSD);
+        Value += Layout.getSymbolAddress(&SD) - Layout.getSectionAddress(FSD);
       } else {
-        FixedValue = Value;
-        return;
+        Index = getSymbolIndexInSymbolTable(Asm, Symbol);
       }
+      Addend = Value;
+      // Compensate for the addend on i386.
+      if (Is64Bit)
+        Value = 0;
     }
   }
 

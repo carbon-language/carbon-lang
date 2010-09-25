@@ -83,7 +83,7 @@ declare i32 @puts(i8* nocapture) nounwind
 ; 64:     # Relocation 2
 ; 64:     (('r_offset', 15)
 ; 64:      ('r_type', 10)
-; 64:      ('r_addend', 6)
+; 64:      ('r_addend', 0)
 ; 64:     ),
 ; 64:     # Relocation 3
 ; 64:     (('r_offset', 20)

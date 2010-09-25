@@ -191,6 +191,12 @@ public:
     : X86AsmBackend(T), OSType(_OSType) {
     HasAbsolutizedSet = true;
     HasScatteredSymbols = true;
+    HasReliableSymbolDifference = true;
+  }
+
+  virtual bool doesSectionRequireSymbols(const MCSection &Section) const {
+    const MCSectionELF &ES = static_cast<const MCSectionELF&>(Section);
+    return ES.getFlags() & MCSectionELF::SHF_MERGE;
   }
 
   bool isVirtualSection(const MCSection &Section) const {
