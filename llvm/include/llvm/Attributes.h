@@ -223,7 +223,7 @@ public:
   /// paramHasAttr - Return true if the specified parameter index has the
   /// specified attribute set.
   bool paramHasAttr(unsigned Idx, Attributes Attr) const {
-    return static_cast<bool>(getAttributes(Idx) & Attr);
+    return (getAttributes(Idx) & Attr) != 0;
   }
 
   /// getParamAlignment - Return the alignment for the specified function

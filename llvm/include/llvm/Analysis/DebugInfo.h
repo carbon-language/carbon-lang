@@ -160,8 +160,8 @@ namespace llvm {
     /// module does not contain any main compile unit then the code generator
     /// will emit multiple compile units in the output object file.
 
-    bool isMain() const                { return getUnsignedField(6); }
-    bool isOptimized() const           { return getUnsignedField(7); }
+    bool isMain() const                { return getUnsignedField(6) != 0; }
+    bool isOptimized() const           { return getUnsignedField(7) != 0; }
     StringRef getFlags() const       { return getStringField(8);   }
     unsigned getRunTimeVersion() const { return getUnsignedField(9); }
 
