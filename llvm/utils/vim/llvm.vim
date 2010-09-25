@@ -49,6 +49,7 @@ syn keyword llvmKeyword hidden protected default
 syn keyword llvmKeyword except deplibs
 syn keyword llvmKeyword volatile fastcc coldcc cc ccc
 syn keyword llvmKeyword x86_stdcallcc x86_fastcallcc
+syn keyword llvmKeyword ptx_kernel ptx_device
 syn keyword llvmKeyword signext zeroext inreg sret nounwind noreturn
 syn keyword llvmKeyword nocapture byval nest readnone readonly noalias
 syn keyword llvmKeyword inlinehint noinline alwaysinline optsize ssp sspreq

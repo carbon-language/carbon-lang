@@ -32,6 +32,7 @@ const char *PTXTargetLowering::getTargetNodeName(unsigned Opcode) const {
   switch (Opcode) {
     default:           llvm_unreachable("Unknown opcode");
     case PTXISD::EXIT: return "PTXISD::EXIT";
+    case PTXISD::RET:  return "PTXISD::RET";
   }
 }
 
@@ -58,5 +59,25 @@ SDValue PTXTargetLowering::
               const SmallVectorImpl<SDValue> &OutVals,
               DebugLoc dl,
               SelectionDAG &DAG) const {
-  return DAG.getNode(PTXISD::EXIT, dl, MVT::Other, Chain);
+  assert(!isVarArg && "PTX does not support var args.");
+
+  switch (CallConv) {
+    default:
+      llvm_unreachable("Unsupported calling convention.");
+    case CallingConv::PTX_Kernel:
+      assert(Outs.size() == 0 && "Kernel must return void.");
+      return DAG.getNode(PTXISD::EXIT, dl, MVT::Other, Chain);
+    case CallingConv::PTX_Device:
+      assert(Outs.size() <= 1 && "Can at most return one value.");
+      break;
+  }
+
+  // PTX_Device
+
+  if (Outs.size() == 0)
+    return DAG.getNode(PTXISD::RET, dl, MVT::Other, Chain);
+
+  // TODO: allocate return register
+  SDValue Flag;
+  return DAG.getNode(PTXISD::RET, dl, MVT::Other, Chain, Flag);
 }

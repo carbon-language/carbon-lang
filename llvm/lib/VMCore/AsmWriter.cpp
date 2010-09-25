@@ -1579,6 +1579,8 @@ void AssemblyWriter::printFunction(const Function *F) {
   case CallingConv::ARM_AAPCS:    Out << "arm_aapcscc "; break;
   case CallingConv::ARM_AAPCS_VFP:Out << "arm_aapcs_vfpcc "; break;
   case CallingConv::MSP430_INTR:  Out << "msp430_intrcc "; break;
+  case CallingConv::PTX_Kernel:   Out << "ptx_kernel"; break;
+  case CallingConv::PTX_Device:   Out << "ptx_device"; break;
   default: Out << "cc" << F->getCallingConv() << " "; break;
   }
 
@@ -1847,6 +1849,8 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
     case CallingConv::ARM_AAPCS:    Out << " arm_aapcscc "; break;
     case CallingConv::ARM_AAPCS_VFP:Out << " arm_aapcs_vfpcc "; break;
     case CallingConv::MSP430_INTR:  Out << " msp430_intrcc "; break;
+    case CallingConv::PTX_Kernel:   Out << " ptx_kernel"; break;
+    case CallingConv::PTX_Device:   Out << " ptx_device"; break;
     default: Out << " cc" << CI->getCallingConv(); break;
     }
 
@@ -1901,6 +1905,8 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
     case CallingConv::ARM_AAPCS:    Out << " arm_aapcscc "; break;
     case CallingConv::ARM_AAPCS_VFP:Out << " arm_aapcs_vfpcc "; break;
     case CallingConv::MSP430_INTR:  Out << " msp430_intrcc "; break;
+    case CallingConv::PTX_Kernel:   Out << " ptx_kernel"; break;
+    case CallingConv::PTX_Device:   Out << " ptx_device"; break;
     default: Out << " cc" << II->getCallingConv(); break;
     }
 

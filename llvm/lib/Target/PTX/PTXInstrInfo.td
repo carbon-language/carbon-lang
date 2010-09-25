@@ -23,6 +23,8 @@ include "PTXInstrFormats.td"
 
 def PTXexit
   : SDNode<"PTXISD::EXIT", SDTNone, [SDNPHasChain]>;
+def PTXret
+  : SDNode<"PTXISD::RET",  SDTNone, [SDNPHasChain]>;
 
 //===----------------------------------------------------------------------===//
 // Instructions
@@ -30,4 +32,5 @@ def PTXexit
 
 let isReturn = 1, isTerminator = 1, isBarrier = 1 in {
   def EXIT : InstPTX<(outs), (ins), "exit", [(PTXexit)]>;
+  def RET  : InstPTX<(outs), (ins), "ret",  [(PTXret)]>;
 }

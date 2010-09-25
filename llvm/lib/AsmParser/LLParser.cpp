@@ -1084,6 +1084,8 @@ bool LLParser::ParseOptionalVisibility(unsigned &Res) {
 ///   ::= 'arm_aapcscc'
 ///   ::= 'arm_aapcs_vfpcc'
 ///   ::= 'msp430_intrcc'
+///   ::= 'ptx_kernel'
+///   ::= 'ptx_device'
 ///   ::= 'cc' UINT
 ///
 bool LLParser::ParseOptionalCallingConv(CallingConv::ID &CC) {
@@ -1099,6 +1101,8 @@ bool LLParser::ParseOptionalCallingConv(CallingConv::ID &CC) {
   case lltok::kw_arm_aapcscc:    CC = CallingConv::ARM_AAPCS; break;
   case lltok::kw_arm_aapcs_vfpcc:CC = CallingConv::ARM_AAPCS_VFP; break;
   case lltok::kw_msp430_intrcc:  CC = CallingConv::MSP430_INTR; break;
+  case lltok::kw_ptx_kernel:     CC = CallingConv::PTX_Kernel; break;
+  case lltok::kw_ptx_device:     CC = CallingConv::PTX_Device; break;
   case lltok::kw_cc: {
       unsigned ArbitraryCC;
       Lex.Lex();

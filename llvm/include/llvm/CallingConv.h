@@ -79,7 +79,15 @@ namespace CallingConv {
     /// X86_ThisCall - Similar to X86_StdCall. Passes first argument in ECX,
     /// others via stack. Callee is responsible for stack cleaning. MSVC uses
     /// this by default for methods in its ABI.
-    X86_ThisCall = 70
+    X86_ThisCall = 70,
+
+    /// PTX_Kernel - Call to a PTX kernel.
+    /// Passes all arguments in parameter space.
+    PTX_Kernel = 71,
+
+    /// PTX_Device - Call to a PTX device function.
+    /// Passes all arguments in register or parameter space.
+    PTX_Device = 72
   };
 } // End CallingConv namespace
 
