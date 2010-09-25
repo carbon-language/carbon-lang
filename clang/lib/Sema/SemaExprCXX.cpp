@@ -2592,8 +2592,16 @@ QualType Sema::CXXCheckConditionalOperands(Expr *&Cond, Expr *&LHS, Expr *&RHS,
   //   the result is of that type [...]
   bool Same = Context.hasSameType(LTy, RTy);
   if (Same && LHS->isLvalue(Context) == Expr::LV_Valid &&
-      RHS->isLvalue(Context) == Expr::LV_Valid)
-    return LTy;
+      RHS->isLvalue(Context) == Expr::LV_Valid) {
+    // In this context, property reference is really a message call and
+    // is not considered an l-value.
+    bool lhsProperty = (isa<ObjCPropertyRefExpr>(LHS) || 
+                        isa<ObjCImplicitSetterGetterRefExpr>(LHS));
+    bool rhsProperty = (isa<ObjCPropertyRefExpr>(RHS) || 
+                        isa<ObjCImplicitSetterGetterRefExpr>(RHS));
+    if (!lhsProperty && !rhsProperty)
+      return LTy;
+  }
 
   // C++0x 5.16p5
   //   Otherwise, the result is an rvalue. If the second and third operands
