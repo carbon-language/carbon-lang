@@ -1693,9 +1693,18 @@ void gcc::Common::ConstructJob(Compilation &C, const JobAction &JA,
 
     if (II.isFilename())
       CmdArgs.push_back(II.getFilename());
-    else
+    else {
+      const Arg &A = II.getInputArg();
+
+      // Reverse translate some rewritten options.
+      if (A.getOption().matches(options::OPT_Z_reserved_lib_stdcxx)) {
+        CmdArgs.push_back("-lstdc++");
+        continue;
+      }
+
       // Don't render as input, we need gcc to do the translations.
-      II.getInputArg().render(Args, CmdArgs);
+      A.render(Args, CmdArgs);
+    }
   }
 
   const char *GCCName = getToolChain().getDriver().getCCCGenericGCCName().c_str();
