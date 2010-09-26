@@ -349,10 +349,9 @@ bool SimpleRegisterCoalescing::RemoveCopyByCommutingDef(const CoalescerPair &CP,
   VNInfo *AValNo = ALR->valno;
   // If other defs can reach uses of this def, then it's not safe to perform
   // the optimization.
-  MachineInstr *DefMI = li_->getInstructionFromIndex(AValNo->def);
-  if (AValNo->isPHIDef() || DefMI == 0 || AValNo->isUnused() ||
-      AValNo->hasPHIKill())
+  if (AValNo->isPHIDef() || AValNo->isUnused() || AValNo->hasPHIKill())
     return false;
+  MachineInstr *DefMI = li_->getInstructionFromIndex(AValNo->def);
   if (!DefMI)
     return false;
   const TargetInstrDesc &TID = DefMI->getDesc();
@@ -649,10 +648,11 @@ bool SimpleRegisterCoalescing::ReMaterializeTrivialDef(LiveInterval &SrcInt,
   VNInfo *ValNo = SrcLR->valno;
   // If other defs can reach uses of this def, then it's not safe to perform
   // the optimization.
-  if (ValNo->isPHIDef() || li_->getInstructionFromIndex(ValNo->def)==0 ||
-      ValNo->isUnused() || ValNo->hasPHIKill())
+  if (ValNo->isPHIDef() || ValNo->isUnused() || ValNo->hasPHIKill())
     return false;
   MachineInstr *DefMI = li_->getInstructionFromIndex(ValNo->def);
+  if (!DefMI)
+    return false;
   assert(DefMI && "Defining instruction disappeared");
   const TargetInstrDesc &TID = DefMI->getDesc();
   if (!TID.isAsCheapAsAMove())

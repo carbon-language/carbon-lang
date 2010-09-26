@@ -807,8 +807,7 @@ bool PreAllocSplitting::Rematerialize(unsigned VReg, VNInfo* ValNo,
   MachineBasicBlock& MBB = *RestorePt->getParent();
   
   MachineBasicBlock::iterator KillPt = BarrierMBB->end();
-  if (LIs->getInstructionFromIndex(ValNo->def) == 0 ||
-      DefMI->getParent() == BarrierMBB)
+  if (!DefMI || DefMI->getParent() == BarrierMBB)
     KillPt = findSpillPoint(BarrierMBB, Barrier, NULL, RefsInMBB);
   else
     KillPt = llvm::next(MachineBasicBlock::iterator(DefMI));
@@ -1005,7 +1004,7 @@ bool PreAllocSplitting::SplitRegLiveInterval(LiveInterval *LI) {
   SlotIndex SpillIndex;
   MachineInstr *SpillMI = NULL;
   int SS = -1;
-  if (LIs->getInstructionFromIndex(ValNo->def) == 0) {
+  if (!DefMI) {
     // If we don't know where the def is we must split just before the barrier.
     if ((SpillMI = FoldSpill(LI->reg, RC, 0, Barrier,
                             BarrierMBB, SS, RefsInMBB))) {

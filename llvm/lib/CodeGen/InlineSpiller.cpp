@@ -282,7 +282,7 @@ void InlineSpiller::reMaterializeAll() {
     lis_.RemoveMachineInstrFromMaps(DefMI);
     vrm_.RemoveMachineInstrFromMaps(DefMI);
     DefMI->eraseFromParent();
-    VNI->def = lis_.getZeroIndex();
+    VNI->def = SlotIndex();
     anyRemoved = true;
   }
 
