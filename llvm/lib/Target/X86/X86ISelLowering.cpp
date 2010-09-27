@@ -9660,8 +9660,8 @@ X86TargetLowering::EmitLoweredTLSCall(MachineInstr *MI,
     = static_cast<const X86InstrInfo*>(getTargetMachine().getInstrInfo());
   DebugLoc DL = MI->getDebugLoc();
   MachineFunction *F = BB->getParent();
-  bool IsWin64 = Subtarget->isTargetWin64();
-  
+
+  assert(Subtarget->isTargetDarwin() && "Darwin only instr emitted?");
   assert(MI->getOperand(3).isGlobal() && "This should be a global");
   
   if (Subtarget->is64Bit()) {
@@ -9672,7 +9672,7 @@ X86TargetLowering::EmitLoweredTLSCall(MachineInstr *MI,
     .addGlobalAddress(MI->getOperand(3).getGlobal(), 0, 
                       MI->getOperand(3).getTargetFlags())
     .addReg(0);
-    MIB = BuildMI(*BB, MI, DL, TII->get(IsWin64 ? X86::WINCALL64m : X86::CALL64m));
+    MIB = BuildMI(*BB, MI, DL, TII->get(X86::CALL64m));
     addDirectMem(MIB, X86::RDI);
   } else if (getTargetMachine().getRelocationModel() != Reloc::PIC_) {
     MachineInstrBuilder MIB = BuildMI(*BB, MI, DL,
