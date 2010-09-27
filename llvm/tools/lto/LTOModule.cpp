@@ -327,24 +327,24 @@ void LTOModule::addDefinedSymbol(GlobalValue *def, Mangler &mangler,
   // set definition part
   if (def->hasWeakLinkage() || def->hasLinkOnceLinkage() ||
       def->hasLinkerPrivateWeakLinkage() ||
-      def->hasLinkerPrivateWeakDefAutoLinkage()) {
+      def->hasLinkerPrivateWeakDefAutoLinkage())
     attr |= LTO_SYMBOL_DEFINITION_WEAK;
-  }
-  else if (def->hasCommonLinkage()) {
+  else if (def->hasCommonLinkage())
     attr |= LTO_SYMBOL_DEFINITION_TENTATIVE;
-  }
-  else {
+  else
     attr |= LTO_SYMBOL_DEFINITION_REGULAR;
-  }
 
   // set scope part
   if (def->hasHiddenVisibility())
     attr |= LTO_SYMBOL_SCOPE_HIDDEN;
   else if (def->hasProtectedVisibility())
     attr |= LTO_SYMBOL_SCOPE_PROTECTED;
-  else if (def->hasExternalLinkage() || def->hasWeakLinkage()
-           || def->hasLinkOnceLinkage() || def->hasCommonLinkage())
+  else if (def->hasExternalLinkage() || def->hasWeakLinkage() ||
+           def->hasLinkOnceLinkage() || def->hasCommonLinkage() ||
+           def->hasLinkerPrivateWeakLinkage())
     attr |= LTO_SYMBOL_SCOPE_DEFAULT;
+  else if (def->hasLinkerPrivateWeakDefAutoLinkage())
+    attr |= LTO_SYMBOL_SCOPE_DEFAULT_CAN_BE_HIDDEN;
   else
     attr |= LTO_SYMBOL_SCOPE_INTERNAL;
 
