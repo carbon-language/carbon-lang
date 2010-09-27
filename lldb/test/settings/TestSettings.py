@@ -19,8 +19,8 @@ class SettingsCommandTestCase(TestBase):
     def test_set_prompt(self):
         """Test that 'set prompt' actually changes the prompt."""
 
-        # Use '-o' option to override the existing instance setting.
-        self.runCmd("settings set -o prompt 'lldb2'")
+        # Set prompt to 'lldb2'.
+        self.runCmd("settings set prompt 'lldb2'")
 
         # Immediately test the setting.
         self.expect("settings show prompt",
@@ -29,6 +29,9 @@ class SettingsCommandTestCase(TestBase):
         # The overall display should also reflect the new setting.
         self.expect("settings show",
             substrs = ["prompt (string) = 'lldb2'"])
+
+        # Use '-r' option to reset to the original default prompt.
+        self.runCmd("settings set -r prompt")
 
     def test_set_term_width(self):
         """Test that 'set term-width' actually changes the term-width."""
