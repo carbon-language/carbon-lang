@@ -19,6 +19,7 @@
 
 // Other libraries and framework includes
 // Project includes
+#include "llvm/ADT/DenseMap.h"
 #include "lldb/Core/ClangForward.h"
 #include "lldb/Core/Value.h"
 #include "lldb/Expression/ClangExpressionVariable.h"
@@ -363,6 +364,16 @@ private:
     std::string                 m_result_name;              ///< The name of the result variable ($1, for example)
     TypeFromUser                m_object_pointer_type;      ///< The type of the "this" variable, if one exists.
     
+    llvm::DenseMap <const char*, bool>  m_lookedup_types;   ///< Contains each type that has been looked up in the current type lookup stack.
+                                                            ///< m_lookedup_types is used to gate the type search in GetDecls().  If a name is
+                                                            ///< not in it, the following procedure occurs:
+                                                            ///<   1 The name is added to m_lookedup_types.
+                                                            ///<   2 The type is looked up and added, potentially causing more type loookups.
+                                                            ///<   3 The name is removed from m_lookedup_types.
+                                                            ///< There must be no non-fatal error path that permits the type search to complete
+                                                            ///< without removing the name from m_lookedup_types at the end.
+                                                            ///< m_lookedup_type assumes single threadedness.
+      
     //------------------------------------------------------------------
     /// Given a stack frame, find a variable that matches the given name and 
     /// type.  We need this for expression re-use; we may not always get the
@@ -383,12 +394,6 @@ private:
     /// @return
     ///     The LLDB Variable found, or NULL if none was found.
     //------------------------------------------------------------------
-#ifdef OLD_CODE
-    Variable *FindVariableInScope(const SymbolContext &sym_ctx,
-                                  const char *name,
-                                  TypeFromUser *type = NULL);
-#endif
-    
     Variable *FindVariableInScope(StackFrame &frame,
                                   const char *name,
                                   TypeFromUser *type = NULL);

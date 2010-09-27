@@ -688,112 +688,6 @@ ClangExpressionDeclMap::DoMaterializeOneVariable(bool dematerialize,
     return true;
 }
 
-#ifdef OLD_CODE
-Variable*
-ClangExpressionDeclMap::FindVariableInScope(const SymbolContext &sym_ctx,
-                                            const char *name,
-                                            TypeFromUser *type)
-{
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS);
-
-    if (m_sym_ctx->function == NULL || m_sym_ctx->block == NULL)
-    {
-        if (log)
-            log->Printf("function = %p, block = %p", m_sym_ctx->function, m_sym_ctx->block);
-        return NULL;
-    }
-    
-    ConstString name_cs(name);
-    
-    Block *current_block;
-    
-    for (current_block = m_sym_ctx->block; 
-         current_block != NULL; 
-         current_block = current_block->GetParent())
-    {        
-        lldb::VariableListSP var_list = current_block->GetVariableList(false, true);
-        
-        if (!var_list)
-            continue;
-        
-        lldb::VariableSP var = var_list->FindVariable(name_cs);
-        
-        if (!var)
-            continue;
-        
-        // var->GetType()->GetClangAST() is the program's AST context and holds
-        // var->GetType()->GetOpaqueClangQualType().
-        
-        // type is m_type for one of the struct members, which was added by 
-        // AddValueToStruct.  That type was extracted from the AST context of
-        // the compiler in IRForTarget.  The original for the type was copied
-        // out of the program's AST context by AddOneVariable.
-        
-        // So that we can compare these two without having to copy back
-        // something we already had in the original AST context, we maintain 
-        // m_orig_type and m_ast_context (which are passed into
-        // MaterializeOneVariable by Materialize) for each variable.
-        
-        if (!type)
-            return var.get();
-        
-        if (type->GetASTContext() == var->GetType()->GetClangAST())
-        {
-            if (!ClangASTContext::AreTypesSame(type->GetASTContext(), type->GetOpaqueQualType(), var->GetType()->GetOpaqueClangQualType()))
-                continue;
-        }
-        else
-        {
-            if (log)
-                log->PutCString("Skipping a candidate variable because of different AST contexts");
-            continue;
-        }
-        
-        return var.get();
-    }
-    
-    {
-        CompileUnit *compile_unit = m_sym_ctx->comp_unit;
-        
-        if (!compile_unit)
-        {
-            if (log)
-                log->Printf("compile_unit = %p", compile_unit);
-            return NULL;
-        }
-        
-        lldb::VariableListSP var_list = compile_unit->GetVariableList(true);
-        
-        if (!var_list)
-            return NULL;
-        
-        lldb::VariableSP var = var_list->FindVariable(name_cs);
-        
-        if (!var)
-            return NULL;
-
-        if (!type)
-            return var.get();
-        
-        if (type->GetASTContext() == var->GetType()->GetClangAST())
-        {
-            if (!ClangASTContext::AreTypesSame(type->GetASTContext(), type->GetOpaqueQualType(), var->GetType()->GetOpaqueClangQualType()))
-                return NULL;
-        }
-        else
-        {
-            if (log)
-                log->PutCString("Skipping a candidate variable because of different AST contexts");
-            return NULL;
-        }
-        
-        return var.get();
-    }
-    
-    return NULL;
-}
-#endif
-
 Variable *
 ClangExpressionDeclMap::FindVariableInScope(StackFrame &frame,
                                             const char *name,
@@ -926,12 +820,32 @@ ClangExpressionDeclMap::GetDecls(NameSearchContext &context,
     if (pvar)
         AddOneVariable(context, pvar);
     
-    /* Commented out pending resolution of a loop when the TagType is imported
-    lldb::TypeSP type = m_sym_ctx->FindTypeByName(name_cs);
     
-    if (type.get())
-        AddOneType(context, type.get());
-    */
+    // See information on gating of this operation next to the definition for
+    // m_lookedup_types.
+    
+    const char *name_uniq = name_cs.GetCString();
+    
+    if (m_lookedup_types.find(name_uniq) == m_lookedup_types.end())
+    {
+        // 1 The name is added to m_lookedup_types.
+        m_lookedup_types.insert(std::pair<const char*, bool>(name_uniq, true));
+        
+        // 2 The type is looked up and added, potentially causing more type loookups.
+        lldb::TypeSP type = m_sym_ctx->FindTypeByName(name_cs);
+        
+        if (type.get())
+        {
+            TypeFromUser user_type(type->GetOpaqueClangQualType(),
+                                   type->GetClangAST());
+            
+            AddOneType(context, user_type, false);
+        }
+        
+        // 3 The name is removed from m_lookedup_types.
+        m_lookedup_types.erase(name_uniq);
+    }
+    
 }
         
 Value *
