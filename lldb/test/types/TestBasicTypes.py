@@ -1,5 +1,5 @@
 """
-Test that variables of basic types are displayed correctly.
+Test that variables of integer basic types are displayed correctly.
 """
 
 import os, time
