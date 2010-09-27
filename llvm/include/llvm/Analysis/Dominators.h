@@ -361,8 +361,15 @@ public:
     return dominatedBySlowTreeWalk(A, B);
   }
 
-  inline bool properlyDominates(NodeT *A, NodeT *B) {
-    return properlyDominates(getNode(A), getNode(B));
+  inline bool properlyDominates(const NodeT *A, const NodeT *B) {
+    if (A == B)
+      return false;
+
+    // Cast away the const qualifiers here. This is ok since
+    // this function doesn't actually return the values returned
+    // from getNode.
+    return properlyDominates(getNode(const_cast<NodeT *>(A)),
+                             getNode(const_cast<NodeT *>(B)));
   }
 
   bool dominatedBySlowTreeWalk(const DomTreeNodeBase<NodeT> *A,
@@ -476,6 +483,13 @@ public:
     }
 
     return NULL;
+  }
+
+  const NodeT *findNearestCommonDominator(const NodeT *A, const NodeT *B) {
+    // Cast away the const qualifiers here. This is ok since
+    // const is re-introduced on the return type.
+    return findNearestCommonDominator(const_cast<NodeT *>(A),
+                                      const_cast<NodeT *>(B));
   }
 
   //===--------------------------------------------------------------------===//
@@ -767,13 +781,18 @@ public:
     return DT->properlyDominates(A, B);
   }
 
-  bool properlyDominates(BasicBlock *A, BasicBlock *B) const {
+  bool properlyDominates(const BasicBlock *A, const BasicBlock *B) const {
     return DT->properlyDominates(A, B);
   }
 
   /// findNearestCommonDominator - Find nearest common dominator basic block
   /// for basic block A and B. If there is no such block then return NULL.
   inline BasicBlock *findNearestCommonDominator(BasicBlock *A, BasicBlock *B) {
+    return DT->findNearestCommonDominator(A, B);
+  }
+
+  inline const BasicBlock *findNearestCommonDominator(const BasicBlock *A,
+                                                      const BasicBlock *B) {
     return DT->findNearestCommonDominator(A, B);
   }
 
