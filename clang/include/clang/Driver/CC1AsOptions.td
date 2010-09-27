@@ -46,6 +46,7 @@ def _help : Flag<"--help">, Alias<help>;
 def version : Flag<"-version">,
   HelpText<"Print the assembler version">;
 def _version : Flag<"--version">, Alias<version>;
+def v : Flag<"-v">, Alias<version>;
 
 // Generic forwarding to LLVM options. This should only be used for debugging
 // and experimental features.
