@@ -94,20 +94,17 @@ public:
 
   void writeGraph(bool ShortNames = false,
                   const std::string &Title = "") {
-    // Start the graph emission process...
-    GraphWriter<GraphType> W(O, G, ShortNames);
-
     // Output the header for the graph...
-    W.writeHeader(Title);
+    writeHeader(Title);
 
     // Emit all of the nodes in the graph...
-    W.writeNodes();
+    writeNodes();
 
     // Output any customizations on the graph
-    DOTGraphTraits<GraphType>::addCustomGraphFeatures(G, W);
+    DOTGraphTraits<GraphType>::addCustomGraphFeatures(G, *this);
 
     // Output the end of the graph
-    W.writeFooter();
+    writeFooter();
   }
 
   void writeHeader(const std::string &Title) {
