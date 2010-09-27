@@ -20,6 +20,24 @@ declare i32 @puts(i8* nocapture) nounwind
 ; 32:   (('sh_name', 0) # ''
 
 ; 32:   # '.text'
+
+; 32: ('st_bind', 0)
+; 32: ('st_type', 3)
+
+; 32: ('st_bind', 0)
+; 32: ('st_type', 3)
+
+; 32: ('st_bind', 0)
+; 32: ('st_type', 3)
+
+; 32:   # 'main'
+; 32:   ('st_bind', 1)
+; 32-NEXT: ('st_type', 2)
+
+; 32:   # 'puts'
+; 32:   ('st_bind', 1)
+; 32-NEXT: ('st_type', 0)
+
 ; 32:   # '.rel.text'
 
 ; 32:   ('_relocations', [
@@ -41,24 +59,6 @@ declare i32 @puts(i8* nocapture) nounwind
 ; 32:     ),
 ; 32:   ])
 
-; 32: ('st_bind', 0)
-; 32: ('st_type', 3)
-
-; 32: ('st_bind', 0)
-; 32: ('st_type', 3)
-
-; 32: ('st_bind', 0)
-; 32: ('st_type', 3)
-
-; 32:   # 'main'
-; 32:   ('st_bind', 1)
-; 32-NEXT: ('st_type', 2)
-
-; 32:   # 'puts'
-; 32:   ('st_bind', 1)
-; 32-NEXT: ('st_type', 0)
-
-
 ; 64: ('e_indent[EI_CLASS]', 2)
 ; 64: ('e_indent[EI_DATA]', 1)
 ; 64: ('e_indent[EI_VERSION]', 1)
@@ -67,6 +67,24 @@ declare i32 @puts(i8* nocapture) nounwind
 ; 64:   (('sh_name', 0) # ''
 
 ; 64:   # '.text'
+
+; 64: ('st_bind', 0)
+; 64: ('st_type', 3)
+
+; 64: ('st_bind', 0)
+; 64: ('st_type', 3)
+
+; 64: ('st_bind', 0)
+; 64: ('st_type', 3)
+
+; 64:   # 'main'
+; 64-NEXT: ('st_bind', 1)
+; 64-NEXT: ('st_type', 2)
+
+; 64:   # 'puts'
+; 64-NEXT: ('st_bind', 1)
+; 64-NEXT: ('st_type', 0)
+
 ; 64:   # '.rela.text'
 
 ; 64:   ('_relocations', [
@@ -91,20 +109,3 @@ declare i32 @puts(i8* nocapture) nounwind
 ; 64:      ('r_addend', -4)
 ; 64:     ),
 ; 64:   ])
-
-; 64: ('st_bind', 0)
-; 64: ('st_type', 3)
-
-; 64: ('st_bind', 0)
-; 64: ('st_type', 3)
-
-; 64: ('st_bind', 0)
-; 64: ('st_type', 3)
-
-; 64:   # 'main'
-; 64-NEXT: ('st_bind', 1)
-; 64-NEXT: ('st_type', 2)
-
-; 64:   # 'puts'
-; 64-NEXT: ('st_bind', 1)
-; 64-NEXT: ('st_type', 0)

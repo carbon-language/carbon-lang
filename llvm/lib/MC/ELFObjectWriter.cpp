@@ -839,8 +839,6 @@ void ELFObjectWriterImpl::CreateMetadataSections(MCAssembler &Asm,
   MCContext &Ctx = Asm.getContext();
   MCDataFragment *F;
 
-  WriteRelocations(Asm, Layout);
-
   const MCSection *SymtabSection;
   unsigned EntrySize = Is64Bit ? ELF::SYMENTRY_SIZE64 : ELF::SYMENTRY_SIZE32;
 
@@ -867,6 +865,7 @@ void ELFObjectWriterImpl::CreateMetadataSections(MCAssembler &Asm,
   StrtabSD.setAlignment(1);
   StringTableIndex = Asm.size();
 
+  WriteRelocations(Asm, Layout);
 
   // Symbol table
   F = new MCDataFragment(&SymtabSD);

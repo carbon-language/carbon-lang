@@ -9,6 +9,11 @@
         .text
         movsd   .Lfoo(%rip), %xmm1
 
+// Symbol number 1 is .Lfoo
+
+// CHECK:      # Symbol 1
+// CHECK-NEXT: (('st_name', 1) # '.Lfoo'
+
 // Relocation refers to symbol 1
 
 // CHECK:       ('_relocations', [
@@ -19,8 +24,3 @@
 // CHECK-NEXT:    ('r_addend',
 // CHECK-NEXT:   ),
 // CHECK-NEXT:  ])
-
-// Symbol number 1 is .Lfoo
-
-// CHECK:      # Symbol 1
-// CHECK-NEXT: (('st_name', 1) # '.Lfoo'
