@@ -70,8 +70,6 @@ void llvm::DisplayGraph(const sys::Path &Filename, bool wait,
     Filename.eraseFromDisk();
 
 #elif HAVE_XDOT_PY
-  sys::Path XDotPy();
-
   std::vector<const char*> args;
   args.push_back(LLVM_PATH_XDOT_PY);
   args.push_back(Filename.c_str());
