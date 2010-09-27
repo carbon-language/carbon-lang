@@ -153,16 +153,19 @@ bb30:
 ; an unconditional jump to complete a two-way conditional branch.
 
 ; CHECK: c_expand_expr_stmt:
-; CHECK:        jmp .LBB3_11
-; CHECK-NEXT: .LBB3_9:
+; CHECK:        jmp .LBB3_7
+; CHECK-NEXT: .LBB3_12:
 ; CHECK-NEXT:   movq 8(%rax), %rax
-; CHECK-NEXT:   xorb %dl, %dl
 ; CHECK-NEXT:   movb 16(%rax), %al
 ; CHECK-NEXT:   cmpb $16, %al
-; CHECK-NEXT:   je .LBB3_11
+; CHECK-NEXT:   je .LBB3_6
 ; CHECK-NEXT:   cmpb $23, %al
-; CHECK-NEXT:   jne .LBB3_14
-; CHECK-NEXT: .LBB3_11:
+; CHECK-NEXT:   je .LBB3_6
+; CHECK-NEXT:   jmp .LBB3_15
+; CHECK-NEXT: .LBB3_14:
+; CHECK-NEXT:   cmpb $23, %bl
+; CHECK-NEXT:   jne .LBB3_15
+; CHECK-NEXT: .LBB3_15:
 
 %0 = type { %struct.rtx_def* }
 %struct.lang_decl = type opaque

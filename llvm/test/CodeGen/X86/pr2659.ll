@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=x86 -mtriple=i686-apple-darwin9.4.0 | grep movl | count 4
+; RUN: llc < %s -march=x86 -mtriple=i686-apple-darwin9.4.0 | grep movl | count 5
 ; RUN: llc < %s -march=x86 -mtriple=i686-apple-darwin9.4.0 | FileCheck %s
 ; PR2659
 
@@ -14,11 +14,10 @@ forcond.preheader:              ; preds = %entry
   %cmp44 = icmp eq i32 %k, 0            ; <i1> [#uses=1]
   br i1 %cmp44, label %afterfor, label %forbody
 
-; CHECK: %forcond.preheader
+; CHECK: %forcond.preheader.forbody_crit_edge
 ; CHECK: movl $1
 ; CHECK-NOT: xorl
-; CHECK-NOT: movl
-; CHECK-NEXT: je
+; CHECK-NEXT: movl
 
 ifthen:         ; preds = %entry
   ret i32 0
