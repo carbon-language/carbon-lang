@@ -708,10 +708,6 @@ public:
   /// which means that the class contains or inherits a virtual function.
   bool isPolymorphic() const { return data().Polymorphic; }
 
-  /// setPolymorphic - Set whether this class is polymorphic (C++
-  /// [class.virtual]).
-  void setPolymorphic(bool Poly) { data().Polymorphic = Poly; }
-
   /// isAbstract - Whether this class is abstract (C++ [class.abstract]),
   /// which means that the class contains or inherits a pure virtual function.
   bool isAbstract() const { return data().Abstract; }

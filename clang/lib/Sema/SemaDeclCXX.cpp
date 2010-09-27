@@ -516,12 +516,6 @@ Sema::CheckBaseSpecifier(CXXRecordDecl *Class,
 void Sema::SetClassDeclAttributesFromBase(CXXRecordDecl *Class,
                                           const CXXRecordDecl *BaseClass,
                                           bool BaseIsVirtual) {
-  // C++ [class.virtual]p1:
-  //   A class that [...] inherits a virtual function is called a polymorphic
-  //   class.
-  if (BaseClass->isPolymorphic())
-    Class->setPolymorphic(true);
-
   if (BaseIsVirtual) {
     // C++ [class.ctor]p5:
     //   A constructor is trivial if its class has no virtual base classes.

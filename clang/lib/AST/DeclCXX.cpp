@@ -110,6 +110,12 @@ CXXRecordDecl::setBases(CXXBaseSpecifier const * const *Bases,
     if (!BaseClassDecl->isEmpty())
       data().Empty = false;
     
+    // C++ [class.virtual]p1:
+    //   A class that declares or inherits a virtual function is called a 
+    //   polymorphic class.
+    if (BaseClassDecl->isPolymorphic())
+      data().Polymorphic = true;
+    
     // Now go through all virtual bases of this base and add them.
     for (CXXRecordDecl::base_class_iterator VBase =
           BaseClassDecl->vbases_begin(),
@@ -298,6 +304,11 @@ CXXRecordDecl::addedMember(Decl *D) {
       // Virtual functions make the class non-empty.
       // FIXME: Standard ref?
       data().Empty = false;
+
+      // C++ [class.virtual]p1:
+      //   A class that declares or inherits a virtual function is called a 
+      //   polymorphic class.
+      data().Polymorphic = true;
     }
   }
   
@@ -640,7 +651,6 @@ void CXXRecordDecl::removeConversion(const NamedDecl *ConvDecl) {
 
 void CXXRecordDecl::setMethodAsVirtual(FunctionDecl *Method) {
   Method->setVirtualAsWritten(true);
-  setPolymorphic(true);
   setHasTrivialConstructor(false);
   setHasTrivialCopyConstructor(false);
   setHasTrivialCopyAssignment(false);
