@@ -910,11 +910,10 @@ ParseInstruction(StringRef Name, SMLoc NameLoc,
     delete Operands[2];
     Operands.erase(Operands.begin() + 2);
   }
-
-  // FIXME: Hack to handle "f{mul*,add*} st(0), $op" the same as
-  // "f{mul*,add*} $op", since they commute.
-  if ((Name.startswith("fmul") || Name.startswith("fadd")) &&
-      Operands.size() == 3 &&
+  
+  // FIXME: Hack to handle "f{mulp,addp} st(0), $op" the same as
+  // "f{mulp,addp} $op", since they commute.
+  if ((Name == "fmulp" || Name == "faddp") && Operands.size() == 3 &&
       static_cast<X86Operand*>(Operands[1])->isReg() &&
       static_cast<X86Operand*>(Operands[1])->getReg() == X86::ST0) {
     delete Operands[1];

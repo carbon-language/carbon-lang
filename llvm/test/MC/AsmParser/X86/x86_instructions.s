@@ -360,6 +360,22 @@ mov %rdx, %cr15
 faddp %st, %st(1)
 fmulp %st, %st(2)
 
+// rdar://8468087 - Encode these accurately, they are not synonyms.
+// CHECK: fmul	%st(0), %st(1)
+// CHECK: encoding: [0xdc,0xc9]
+// CHECK: fmul	%st(1)
+// CHECK: encoding: [0xd8,0xc9]
+fmul %st, %st(1)
+fmul %st(1), %st
+
+// CHECK: fadd	%st(0), %st(1)
+// CHECK: encoding: [0xdc,0xc1]
+// CHECK: fadd	%st(1)
+// CHECK: encoding: [0xd8,0xc1]
+fadd %st, %st(1)
+fadd %st(1), %st
+
+
 // rdar://8416805
 // CHECK: xorb	%al, %al
 // CHECK: encoding: [0x30,0xc0]
