@@ -1,4 +1,4 @@
-; RUN: llc < %s -mtriple=armv7-apple-darwin | FileCheck %s
+; RUN: llc < %s -mtriple=armv7-apple-darwin -cgp-critical-edge-splitting=0 | FileCheck %s
 ; PHI elimination shouldn't break backedge.
 ; rdar://8263994
 
