@@ -1334,7 +1334,7 @@ void ASTWriter::WritePreprocessor(const Preprocessor &PP) {
   // If the preprocessor has a preprocessing record, emit it.
   unsigned NumPreprocessingRecords = 0;
   if (PPRec) {
-    unsigned IndexBase = PPRec->getNumPreallocatedEntities();
+    unsigned IndexBase = Chain ? PPRec->getNumPreallocatedEntities() : 0;
     for (PreprocessingRecord::iterator E = PPRec->begin(Chain),
                                        EEnd = PPRec->end(Chain);
          E != EEnd; ++E) {
