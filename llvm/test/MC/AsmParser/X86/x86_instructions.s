@@ -360,4 +360,18 @@ mov %rdx, %cr15
 faddp %st, %st(1)
 fmulp %st, %st(2)
 
+// rdar://8416805
+// CHECK: xorb	%al, %al
+// CHECK: encoding: [0x30,0xc0]
+// CHECK: xorw	%di, %di
+// CHECK: encoding: [0x66,0x31,0xff]
+// CHECK: xorl	%esi, %esi
+// CHECK: encoding: [0x31,0xf6]
+// CHECK: xorq	%rsi, %rsi
+// CHECK: encoding: [0x48,0x31,0xf6]
+clrb    %al
+clr    %di
+clr    %esi
+clr    %rsi
+
 

@@ -1052,6 +1052,17 @@ ParseInstruction(StringRef Name, SMLoc NameLoc,
     Operands[0] = X86Operand::CreateToken("fstps", NameLoc);
   }
   
+  
+  // "clr <reg>" -> "xor <reg>, <reg>".
+  if ((Name == "clrb" || Name == "clrw" || Name == "clrl" || Name == "clrq" ||
+       Name == "clr") && Operands.size() == 2 &&
+      static_cast<X86Operand*>(Operands[1])->isReg()) {
+    unsigned RegNo = static_cast<X86Operand*>(Operands[1])->getReg();
+    Operands.push_back(X86Operand::CreateReg(RegNo, NameLoc, NameLoc));
+    delete Operands[0];
+    Operands[0] = X86Operand::CreateToken("xor", NameLoc);
+  }
+  
   return false;
 }
 
