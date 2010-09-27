@@ -899,7 +899,7 @@ void AllocaInst::setAlignment(unsigned Align) {
 
 bool AllocaInst::isArrayAllocation() const {
   if (ConstantInt *CI = dyn_cast<ConstantInt>(getOperand(0)))
-    return CI->getZExtValue() != 1;
+    return !CI->isOne();
   return true;
 }
 
