@@ -19,6 +19,7 @@ TEST(SmallBitVectorTest, TrivialOperation) {
   EXPECT_EQ(0U, Vec.count());
   EXPECT_EQ(0U, Vec.size());
   EXPECT_FALSE(Vec.any());
+  EXPECT_TRUE(Vec.all());
   EXPECT_TRUE(Vec.none());
   EXPECT_TRUE(Vec.empty());
 
@@ -26,6 +27,7 @@ TEST(SmallBitVectorTest, TrivialOperation) {
   EXPECT_EQ(5U, Vec.count());
   EXPECT_EQ(5U, Vec.size());
   EXPECT_TRUE(Vec.any());
+  EXPECT_TRUE(Vec.all());
   EXPECT_FALSE(Vec.none());
   EXPECT_FALSE(Vec.empty());
 
@@ -33,6 +35,7 @@ TEST(SmallBitVectorTest, TrivialOperation) {
   EXPECT_EQ(5U, Vec.count());
   EXPECT_EQ(11U, Vec.size());
   EXPECT_TRUE(Vec.any());
+  EXPECT_FALSE(Vec.all());
   EXPECT_FALSE(Vec.none());
   EXPECT_FALSE(Vec.empty());
 
@@ -40,6 +43,7 @@ TEST(SmallBitVectorTest, TrivialOperation) {
   EXPECT_EQ(6U, Inv.count());
   EXPECT_EQ(11U, Inv.size());
   EXPECT_TRUE(Inv.any());
+  EXPECT_FALSE(Inv.all());
   EXPECT_FALSE(Inv.none());
   EXPECT_FALSE(Inv.empty());
 
@@ -120,6 +124,7 @@ TEST(SmallBitVectorTest, TrivialOperation) {
   EXPECT_EQ(0U, Vec.count());
   EXPECT_EQ(130U, Vec.size());
   EXPECT_FALSE(Vec.any());
+  EXPECT_FALSE(Vec.all());
   EXPECT_TRUE(Vec.none());
   EXPECT_FALSE(Vec.empty());
 
@@ -127,6 +132,7 @@ TEST(SmallBitVectorTest, TrivialOperation) {
   EXPECT_EQ(0U, Inv.count());
   EXPECT_EQ(0U, Inv.size());
   EXPECT_FALSE(Inv.any());
+  EXPECT_TRUE(Inv.all());
   EXPECT_TRUE(Inv.none());
   EXPECT_TRUE(Inv.empty());
 
@@ -134,6 +140,7 @@ TEST(SmallBitVectorTest, TrivialOperation) {
   EXPECT_EQ(0U, Vec.count());
   EXPECT_EQ(0U, Vec.size());
   EXPECT_FALSE(Vec.any());
+  EXPECT_TRUE(Vec.all());
   EXPECT_TRUE(Vec.none());
   EXPECT_TRUE(Vec.empty());
 }

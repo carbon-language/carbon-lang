@@ -127,6 +127,12 @@ public:
     return false;
   }
 
+  /// all - Returns true if all bits are set.
+  bool all() const {
+    // TODO: Optimize this.
+    return count() == size();
+  }
+
   /// none - Returns true if none of the bits are set.
   bool none() const {
     return !any();

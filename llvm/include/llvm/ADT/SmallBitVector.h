@@ -187,6 +187,13 @@ public:
     return getPointer()->any();
   }
 
+  /// all - Returns true if all bits are set.
+  bool all() const {
+    if (isSmall())
+      return getSmallBits() == (uintptr_t(1) << getSmallSize()) - 1;
+    return getPointer()->all();
+  }
+
   /// none - Returns true if none of the bits are set.
   bool none() const {
     if (isSmall())
