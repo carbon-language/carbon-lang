@@ -1334,12 +1334,14 @@ void ASTWriter::WritePreprocessor(const Preprocessor &PP) {
   // If the preprocessor has a preprocessing record, emit it.
   unsigned NumPreprocessingRecords = 0;
   if (PPRec) {
-    for (PreprocessingRecord::iterator E = PPRec->begin(), EEnd = PPRec->end();
+    unsigned IndexBase = PPRec->getNumPreallocatedEntities();
+    for (PreprocessingRecord::iterator E = PPRec->begin(Chain),
+                                       EEnd = PPRec->end(Chain);
          E != EEnd; ++E) {
       Record.clear();
       
       if (MacroInstantiation *MI = dyn_cast<MacroInstantiation>(*E)) {
-        Record.push_back(NumPreprocessingRecords++);
+        Record.push_back(IndexBase + NumPreprocessingRecords++);
         AddSourceLocation(MI->getSourceRange().getBegin(), Record);
         AddSourceLocation(MI->getSourceRange().getEnd(), Record);
         AddIdentifierRef(MI->getName(), Record);
@@ -1359,7 +1361,7 @@ void ASTWriter::WritePreprocessor(const Preprocessor &PP) {
         } else
           MacroDefinitionOffsets.push_back(Stream.GetCurrentBitNo());
         
-        Record.push_back(NumPreprocessingRecords++);
+        Record.push_back(IndexBase + NumPreprocessingRecords++);
         Record.push_back(ID);
         AddSourceLocation(MD->getSourceRange().getBegin(), Record);
         AddSourceLocation(MD->getSourceRange().getEnd(), Record);

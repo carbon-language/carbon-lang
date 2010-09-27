@@ -1474,7 +1474,7 @@ void ASTReader::ReadMacroRecord(llvm::BitstreamCursor &Stream, uint64_t Offset){
       MacroDefinitionsLoaded[Record[1]] = MD;
       return;
     }
-  }
+    }
   }
 }
 
