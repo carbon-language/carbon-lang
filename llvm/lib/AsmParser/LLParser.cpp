@@ -22,7 +22,6 @@
 #include "llvm/Operator.h"
 #include "llvm/ValueSymbolTable.h"
 #include "llvm/ADT/SmallPtrSet.h"
-#include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
@@ -52,7 +51,7 @@ bool LLParser::ValidateEndOfModule() {
         
         if (SlotNo >= NumberedMetadata.size() || NumberedMetadata[SlotNo] == 0)
           return Error(MDList[i].Loc, "use of undefined metadata '!" +
-                       utostr(SlotNo) + "'");
+                       Twine(SlotNo) + "'");
         Inst->setMetadata(MDList[i].MDKind, NumberedMetadata[SlotNo]);
       }
     }
@@ -109,7 +108,7 @@ bool LLParser::ValidateEndOfModule() {
   if (!ForwardRefTypeIDs.empty())
     return Error(ForwardRefTypeIDs.begin()->second.second,
                  "use of undefined type '%" +
-                 utostr(ForwardRefTypeIDs.begin()->first) + "'");
+                 Twine(ForwardRefTypeIDs.begin()->first) + "'");
 
   if (!ForwardRefVals.empty())
     return Error(ForwardRefVals.begin()->second.second,
@@ -119,12 +118,12 @@ bool LLParser::ValidateEndOfModule() {
   if (!ForwardRefValIDs.empty())
     return Error(ForwardRefValIDs.begin()->second.second,
                  "use of undefined value '@" +
-                 utostr(ForwardRefValIDs.begin()->first) + "'");
+                 Twine(ForwardRefValIDs.begin()->first) + "'");
 
   if (!ForwardRefMDNodes.empty())
     return Error(ForwardRefMDNodes.begin()->second.second,
                  "use of undefined metadata '!" +
-                 utostr(ForwardRefMDNodes.begin()->first) + "'");
+                 Twine(ForwardRefMDNodes.begin()->first) + "'");
 
 
   // Look for intrinsic functions and CallInst that need to be upgraded
@@ -317,7 +316,7 @@ bool LLParser::ParseUnnamedType() {
   if (Lex.getKind() == lltok::LocalVarID) {
     if (Lex.getUIntVal() != TypeID)
       return Error(Lex.getLoc(), "type expected to be numbered '%" +
-                   utostr(TypeID) + "'");
+                   Twine(TypeID) + "'");
     Lex.Lex(); // eat LocalVarID;
 
     if (ParseToken(lltok::equal, "expected '=' after name"))
@@ -444,7 +443,7 @@ bool LLParser::ParseUnnamedGlobal() {
   if (Lex.getKind() == lltok::GlobalID) {
     if (Lex.getUIntVal() != VarID)
       return Error(Lex.getLoc(), "variable expected to be numbered '%" +
-                   utostr(VarID) + "'");
+                   Twine(VarID) + "'");
     Lex.Lex(); // eat GlobalID;
 
     if (ParseToken(lltok::equal, "expected '=' after name"))
@@ -855,7 +854,7 @@ GlobalValue *LLParser::GetGlobalVal(unsigned ID, const Type *Ty, LocTy Loc) {
   // If we have the value in the symbol table or fwd-ref table, return it.
   if (Val) {
     if (Val->getType() == Ty) return Val;
-    Error(Loc, "'@" + utostr(ID) + "' defined with type '" +
+    Error(Loc, "'@" + Twine(ID) + "' defined with type '" +
           Val->getType()->getDescription() + "'");
     return 0;
   }
@@ -1782,7 +1781,7 @@ bool LLParser::PerFunctionState::FinishFunction() {
   if (!ForwardRefValIDs.empty())
     return P.Error(ForwardRefValIDs.begin()->second.second,
                    "use of undefined value '%" +
-                   utostr(ForwardRefValIDs.begin()->first) + "'");
+                   Twine(ForwardRefValIDs.begin()->first) + "'");
   return false;
 }
 
@@ -1850,9 +1849,9 @@ Value *LLParser::PerFunctionState::GetVal(unsigned ID, const Type *Ty,
   if (Val) {
     if (Val->getType() == Ty) return Val;
     if (Ty->isLabelTy())
-      P.Error(Loc, "'%" + utostr(ID) + "' is not a basic block");
+      P.Error(Loc, "'%" + Twine(ID) + "' is not a basic block");
     else
-      P.Error(Loc, "'%" + utostr(ID) + "' defined with type '" +
+      P.Error(Loc, "'%" + Twine(ID) + "' defined with type '" +
               Val->getType()->getDescription() + "'");
     return 0;
   }
@@ -1894,7 +1893,7 @@ bool LLParser::PerFunctionState::SetInstName(int NameID,
 
     if (unsigned(NameID) != NumberedVals.size())
       return P.Error(NameLoc, "instruction expected to be numbered '%" +
-                     utostr(NumberedVals.size()) + "'");
+                     Twine(NumberedVals.size()) + "'");
 
     std::map<unsigned, std::pair<Value*, LocTy> >::iterator FI =
       ForwardRefValIDs.find(NameID);
@@ -2072,7 +2071,7 @@ bool LLParser::ParseValID(ValID &ID, PerFunctionState *PFS) {
     for (unsigned i = 1, e = Elts.size(); i != e; ++i)
       if (Elts[i]->getType() != Elts[0]->getType())
         return Error(FirstEltLoc,
-                     "vector element #" + utostr(i) +
+                     "vector element #" + Twine(i) +
                     " is not of type '" + Elts[0]->getType()->getDescription());
 
     ID.ConstantVal = ConstantVector::get(Elts.data(), Elts.size());
@@ -2105,7 +2104,7 @@ bool LLParser::ParseValID(ValID &ID, PerFunctionState *PFS) {
     for (unsigned i = 0, e = Elts.size(); i != e; ++i) {
       if (Elts[i]->getType() != Elts[0]->getType())
         return Error(FirstEltLoc,
-                     "array element #" + utostr(i) +
+                     "array element #" + Twine(i) +
                      " is not of type '" +Elts[0]->getType()->getDescription());
     }
 
@@ -2718,7 +2717,7 @@ bool LLParser::ParseFunctionHeader(Function *&Fn, bool isDefine) {
 
     if (NameID != NumberedVals.size())
       return TokError("function expected to be numbered '%" +
-                      utostr(NumberedVals.size()) + "'");
+                      Twine(NumberedVals.size()) + "'");
   } else {
     return TokError("expected function name");
   }
@@ -2825,7 +2824,7 @@ bool LLParser::ParseFunctionHeader(Function *&Fn, bool isDefine) {
       Fn = cast<Function>(I->second.first);
       if (Fn->getType() != PFT)
         return Error(NameLoc, "type of definition and forward reference of '@" +
-                     utostr(NumberedVals.size()) +"' disagree");
+                     Twine(NumberedVals.size()) + "' disagree");
       ForwardRefValIDs.erase(I);
     }
   }

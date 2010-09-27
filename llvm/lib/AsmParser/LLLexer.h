@@ -62,8 +62,8 @@ namespace llvm {
     const APFloat &getAPFloatVal() const { return APFloatVal; }
 
 
-    bool Error(LocTy L, const std::string &Msg) const;
-    bool Error(const std::string &Msg) const { return Error(getLoc(), Msg); }
+    bool Error(LocTy L, const Twine &Msg) const;
+    bool Error(const Twine &Msg) const { return Error(getLoc(), Msg); }
     std::string getFilename() const;
 
   private:

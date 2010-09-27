@@ -26,6 +26,7 @@ namespace llvm {
   class MemoryBuffer;
   class SourceMgr;
   class SMDiagnostic;
+  class Twine;
   class raw_ostream;
 
 /// SourceMgr - This owns the files read by a parser, handles include stacks,
@@ -125,7 +126,7 @@ public:
   /// @param Type - If non-null, the kind of message (e.g., "error") which is
   /// prefixed to the message.
   /// @param ShowLine - Should the diagnostic show the source line.
-  void PrintMessage(SMLoc Loc, const std::string &Msg, const char *Type,
+  void PrintMessage(SMLoc Loc, const Twine &Msg, const char *Type,
                     bool ShowLine = true) const;
 
 
@@ -136,7 +137,7 @@ public:
   /// prefixed to the message.
   /// @param ShowLine - Should the diagnostic show the source line.
   SMDiagnostic GetMessage(SMLoc Loc,
-                          const std::string &Msg, const char *Type,
+                          const Twine &Msg, const char *Type,
                           bool ShowLine = true) const;
 
 

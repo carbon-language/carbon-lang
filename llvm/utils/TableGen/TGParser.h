@@ -15,6 +15,7 @@
 #define TGPARSER_H
 
 #include "TGLexer.h"
+#include "llvm/ADT/Twine.h"
 #include "llvm/Support/SourceMgr.h"
 #include <map>
 
@@ -53,11 +54,11 @@ public:
   /// routines return true on error, or false on success.
   bool ParseFile();
   
-  bool Error(SMLoc L, const std::string &Msg) const {
+  bool Error(SMLoc L, const Twine &Msg) const {
     Lex.PrintError(L, Msg);
     return true;
   }
-  bool TokError(const std::string &Msg) const {
+  bool TokError(const Twine &Msg) const {
     return Error(Lex.getLoc(), Msg);
   }
 private:  // Semantic analysis methods.

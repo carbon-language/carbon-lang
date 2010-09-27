@@ -23,7 +23,8 @@ namespace llvm {
 class MemoryBuffer;
 class SourceMgr;
 class SMLoc;
-  
+class Twine;
+
 namespace tgtok {
   enum TokKind {
     // Markers
@@ -95,14 +96,14 @@ public:
 
   SMLoc getLoc() const;
 
-  void PrintError(const char *Loc, const std::string &Msg) const;
-  void PrintError(SMLoc Loc, const std::string &Msg) const;
+  void PrintError(const char *Loc, const Twine &Msg) const;
+  void PrintError(SMLoc Loc, const Twine &Msg) const;
   
 private:
   /// LexToken - Read the next token and return its code.
   tgtok::TokKind LexToken();
   
-  tgtok::TokKind ReturnError(const char *Loc, const std::string &Msg);
+  tgtok::TokKind ReturnError(const char *Loc, const Twine &Msg);
   
   int getNextChar();
   void SkipBCPLComment();

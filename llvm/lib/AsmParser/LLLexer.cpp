@@ -15,18 +15,19 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/Instruction.h"
 #include "llvm/LLVMContext.h"
+#include "llvm/ADT/Twine.h"
+#include "llvm/Assembly/Parser.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/Assembly/Parser.h"
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
 using namespace llvm;
 
-bool LLLexer::Error(LocTy ErrorLoc, const std::string &Msg) const {
+bool LLLexer::Error(LocTy ErrorLoc, const Twine &Msg) const {
   ErrorInfo = SM.GetMessage(ErrorLoc, Msg, "error");
   return true;
 }

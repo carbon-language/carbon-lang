@@ -149,8 +149,10 @@ private:
   void HandleMacroExit();
 
   void PrintMacroInstantiations();
-  void PrintMessage(SMLoc Loc, const std::string &Msg, const char *Type) const;
-    
+  void PrintMessage(SMLoc Loc, const Twine &Msg, const char *Type) const {
+    SrcMgr.PrintMessage(Loc, Msg, Type);
+  }
+
   /// EnterIncludeFile - Enter the specified file. This returns true on failure.
   bool EnterIncludeFile(const std::string &Filename);
 
@@ -317,22 +319,17 @@ void AsmParser::PrintMacroInstantiations() {
 }
 
 void AsmParser::Warning(SMLoc L, const Twine &Msg) {
-  PrintMessage(L, Msg.str(), "warning");
+  PrintMessage(L, Msg, "warning");
   PrintMacroInstantiations();
 }
 
 bool AsmParser::Error(SMLoc L, const Twine &Msg) {
   HadError = true;
-  PrintMessage(L, Msg.str(), "error");
+  PrintMessage(L, Msg, "error");
   PrintMacroInstantiations();
   return true;
 }
 
-void AsmParser::PrintMessage(SMLoc Loc, const std::string &Msg, 
-                             const char *Type) const {
-  SrcMgr.PrintMessage(Loc, Msg, Type);
-}
-                  
 bool AsmParser::EnterIncludeFile(const std::string &Filename) {
   int NewBuf = SrcMgr.AddIncludeFile(Filename, Lexer.getLoc());
   if (NewBuf == -1)

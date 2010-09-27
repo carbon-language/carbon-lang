@@ -1490,7 +1490,7 @@ raw_ostream &operator<<(raw_ostream &OS, const RecordKeeper &RK);
 
 extern RecordKeeper Records;
 
-void PrintError(SMLoc ErrorLoc, const std::string &Msg);
+void PrintError(SMLoc ErrorLoc, const Twine &Msg);
 
 } // End llvm namespace
 

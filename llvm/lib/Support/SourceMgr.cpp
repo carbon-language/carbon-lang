@@ -13,6 +13,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/ADT/Twine.h"
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/raw_ostream.h"
@@ -135,7 +136,7 @@ void SourceMgr::PrintIncludeStack(SMLoc IncludeLoc, raw_ostream &OS) const {
 ///
 /// @param Type - If non-null, the kind of message (e.g., "error") which is
 /// prefixed to the message.
-SMDiagnostic SourceMgr::GetMessage(SMLoc Loc, const std::string &Msg,
+SMDiagnostic SourceMgr::GetMessage(SMLoc Loc, const Twine &Msg,
                                    const char *Type, bool ShowLine) const {
 
   // First thing to do: find the current buffer containing the specified
@@ -162,19 +163,18 @@ SMDiagnostic SourceMgr::GetMessage(SMLoc Loc, const std::string &Msg,
   }
 
   std::string PrintedMsg;
-  if (Type) {
-    PrintedMsg = Type;
-    PrintedMsg += ": ";
-  }
-  PrintedMsg += Msg;
+  raw_string_ostream OS(PrintedMsg);
+  if (Type)
+    OS << Type << ": ";
+  OS << Msg;
 
   return SMDiagnostic(*this, Loc,
                       CurMB->getBufferIdentifier(), FindLineNumber(Loc, CurBuf),
-                      Loc.getPointer()-LineStart, PrintedMsg,
+                      Loc.getPointer()-LineStart, OS.str(),
                       LineStr, ShowLine);
 }
 
-void SourceMgr::PrintMessage(SMLoc Loc, const std::string &Msg,
+void SourceMgr::PrintMessage(SMLoc Loc, const Twine &Msg,
                              const char *Type, bool ShowLine) const {
   // Report the message with the diagnostic handler if present.
   if (DiagHandler) {

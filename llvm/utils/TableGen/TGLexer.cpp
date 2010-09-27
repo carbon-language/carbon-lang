@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "TGLexer.h"
+#include "llvm/ADT/Twine.h"
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Config/config.h"
@@ -36,17 +37,17 @@ SMLoc TGLexer::getLoc() const {
 
 /// ReturnError - Set the error to the specified string at the specified
 /// location.  This is defined to always return tgtok::Error.
-tgtok::TokKind TGLexer::ReturnError(const char *Loc, const std::string &Msg) {
+tgtok::TokKind TGLexer::ReturnError(const char *Loc, const Twine &Msg) {
   PrintError(Loc, Msg);
   return tgtok::Error;
 }
 
 
-void TGLexer::PrintError(const char *Loc, const std::string &Msg) const {
+void TGLexer::PrintError(const char *Loc, const Twine &Msg) const {
   SrcMgr.PrintMessage(SMLoc::getFromPointer(Loc), Msg, "error");
 }
 
-void TGLexer::PrintError(SMLoc Loc, const std::string &Msg) const {
+void TGLexer::PrintError(SMLoc Loc, const Twine &Msg) const {
   SrcMgr.PrintMessage(Loc, Msg, "error");
 }
 
