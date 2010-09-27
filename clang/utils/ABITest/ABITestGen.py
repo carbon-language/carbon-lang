@@ -356,6 +356,9 @@ def main():
     parser.add_option("", "--use-random-seed", dest="useRandomSeed",
                       help="use random value for initial random number generator seed",
                       action='store_true', default=False)
+    parser.add_option("", "--skip", dest="skipTests",
+                      help="add a test index to skip",
+                      type=int, action='append', default=[])
     parser.add_option("-o", "--output", dest="output", metavar="FILE",
                       help="write output to FILE  [default %default]",
                       type=str, default='-')
@@ -639,11 +642,14 @@ def main():
     if args:
         [write(int(a)) for a in args]
 
+    skipTests = set(opts.skipTests)
     for i in range(opts.count):
         if opts.mode=='linear':
             index = opts.minIndex + i
         else:
             index = opts.minIndex + int((opts.maxIndex-opts.minIndex) * random.random())
+        if index in skipTests:
+            continue
         write(index)
 
     P.finish()
