@@ -54,25 +54,19 @@ public:
   // FIXME: Part of this logic is duplicated in the MCELFStreamer. What is
   // the best way for us to get access to it?
   bool ParseSectionDirectiveData(StringRef, SMLoc) {
-    bool ret =  ParseSectionSwitch(".data", MCSectionELF::SHT_PROGBITS,
+    return ParseSectionSwitch(".data", MCSectionELF::SHT_PROGBITS,
                               MCSectionELF::SHF_WRITE |MCSectionELF::SHF_ALLOC,
                               SectionKind::getDataRel());
-    getStreamer().EmitCodeAlignment(4, 0);
-    return ret;
   }
   bool ParseSectionDirectiveText(StringRef, SMLoc) {
-    bool ret = ParseSectionSwitch(".text", MCSectionELF::SHT_PROGBITS,
+    return ParseSectionSwitch(".text", MCSectionELF::SHT_PROGBITS,
                               MCSectionELF::SHF_EXECINSTR |
                               MCSectionELF::SHF_ALLOC, SectionKind::getText());
-    getStreamer().EmitCodeAlignment(4, 0);
-    return ret;
   }
   bool ParseSectionDirectiveBSS(StringRef, SMLoc) {
-    bool ret = ParseSectionSwitch(".bss", MCSectionELF::SHT_NOBITS,
+    return ParseSectionSwitch(".bss", MCSectionELF::SHT_NOBITS,
                               MCSectionELF::SHF_WRITE |
                               MCSectionELF::SHF_ALLOC, SectionKind::getBSS());
-    getStreamer().EmitCodeAlignment(4, 0);
-    return ret;
   }
   bool ParseSectionDirectiveRoData(StringRef, SMLoc) {
     return ParseSectionSwitch(".rodata", MCSectionELF::SHT_PROGBITS,
