@@ -1599,6 +1599,9 @@ bool X86FastISel::X86SelectCall(const Instruction *I) {
       break;
     }
     case CCValAssign::AExt: {
+      // We don't handle MMX parameters yet.
+      if (VA.getLocVT().isVector() && VA.getLocVT().getSizeInBits() == 128)
+        return false;
       bool Emitted = X86FastEmitExtend(ISD::ANY_EXTEND, VA.getLocVT(),
                                        Arg, ArgVT, Arg);
       if (!Emitted)
