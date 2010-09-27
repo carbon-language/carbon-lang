@@ -54,7 +54,7 @@
 using namespace llvm;
 
 static cl::opt<bool>
-EnableMCInst("enable-arm-mcinst-printer", cl::Hidden,
+EnableMCInst("enable-arm-mcinst-printer", cl::Hidden, cl::init(true),
             cl::desc("enable experimental asmprinter gunk in the arm backend"));
 
 namespace llvm {
