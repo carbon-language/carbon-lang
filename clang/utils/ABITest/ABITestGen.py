@@ -272,7 +272,8 @@ class TypePrinter:
                 code = 'lld'
             elif t.name.endswith('long'):
                 code = 'ld'
-            elif t.name.split(' ')[-1] in ('_Bool','char','short','int'):
+            elif t.name.split(' ')[-1] in ('_Bool','char','short',
+                                           'int','unsigned'):
                 code = 'd'
             elif t.name in ('float','double'):
                 code = 'f'
@@ -456,7 +457,8 @@ def main():
                      action="store", type=str, default='v2i16, v1i64, v2i32, v4i16, v8i8, v2f32, v2i64, v4i32, v8i16, v16i8, v2f64, v4f32, v16f32', metavar="N")
     group.add_option("", "--bit-fields", dest="bitFields",
                      help="comma separated list 'type:width' bit-field specifiers [default %default]",
-                     action="store", type=str, default="char:0,char:4,unsigned:0,unsigned:4,unsigned:13,unsigned:24")
+                     action="store", type=str, default=(
+            "char:0,char:4,int:0,unsigned:1,int:1,int:4,int:13,int:24"))
     group.add_option("", "--max-args", dest="functionMaxArgs",
                      help="maximum number of arguments per function [default %default]",
                      action="store", type=int, default=4, metavar="N")
