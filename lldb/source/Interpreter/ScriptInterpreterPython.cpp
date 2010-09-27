@@ -627,7 +627,7 @@ ScriptInterpreterPython::GenerateBreakpointOptionsCommandCallback
                         }
                     }
                     else
-                      ::fprintf (out_fh, "Warning: No command attached to breakpoint.\n");
+                        ::fprintf (out_fh, "Warning: No command attached to breakpoint.\n");
                 }
                 else
                 {
@@ -684,12 +684,18 @@ ScriptInterpreterPython::SetBreakpointCommandCallback (BreakpointOptions *bp_opt
     // It's necessary to set both user_source and script_source to the oneliner.
     // The former is used to generate callback description (as in breakpoint command list)
     // while the latter is used for Python to interpret during the actual callback.
+
     data_ap->user_source.AppendString (oneliner);
-    data_ap->script_source.AppendString (oneliner);
 
-    BatonSP baton_sp (new BreakpointOptions::CommandBaton (data_ap.release()));
-    bp_options->SetCallback (ScriptInterpreterPython::BreakpointCallbackFunction, baton_sp);
-
+    if (GenerateBreakpointCommandCallbackData (data_ap->user_source, data_ap->script_source))
+    {
+        if (data_ap->script_source.GetSize() == 1)
+        {
+            BatonSP baton_sp (new BreakpointOptions::CommandBaton (data_ap.release()));
+            bp_options->SetCallback (ScriptInterpreterPython::BreakpointCallbackFunction, baton_sp);
+        }
+    }
+    
     return;
 }
 
