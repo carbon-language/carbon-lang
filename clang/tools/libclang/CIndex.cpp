@@ -1965,7 +1965,8 @@ CXTranslationUnit clang_createTranslationUnit(CXIndex CIdx,
 }
 
 unsigned clang_defaultEditingTranslationUnitOptions() {
-  return CXTranslationUnit_PrecompiledPreamble;
+  return CXTranslationUnit_PrecompiledPreamble | 
+         CXTranslationUnit_CacheCompletionResults;
 }
   
 CXTranslationUnit
