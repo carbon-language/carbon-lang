@@ -1764,6 +1764,9 @@ bool Expr::isConstantInitializer(ASTContext &Ctx, bool IsForRef) const {
   case ParenExprClass:
     return cast<ParenExpr>(this)->getSubExpr()
       ->isConstantInitializer(Ctx, IsForRef);
+  case ChooseExprClass:
+    return cast<ChooseExpr>(this)->getChosenSubExpr(Ctx)
+      ->isConstantInitializer(Ctx, IsForRef);
   case UnaryOperatorClass: {
     const UnaryOperator* Exp = cast<UnaryOperator>(this);
     if (Exp->getOpcode() == UO_Extension)

@@ -3,9 +3,10 @@
 struct foo { int a, b; };
 
 static struct foo t = (struct foo){0,0};
-static struct foo t2 = {0,0}; 
+static struct foo t1 = __builtin_choose_expr(0, (struct foo){0,0}, (struct foo){0,0});
+static struct foo t2 = {0,0};
 static struct foo t3 = t2; // -expected-error {{initializer element is not a compile-time constant}}
-static int *p = (int []){2,4}; 
+static int *p = (int []){2,4};
 static int x = (int){1};
 
 static int *p2 = (int []){2,x}; // -expected-error {{initializer element is not a compile-time constant}}
