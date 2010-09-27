@@ -204,6 +204,29 @@ protected:
   /// GVIsIndirectSymbol - true if the GV will be accessed via an indirect
   /// symbol.
   bool GVIsIndirectSymbol(const GlobalValue *GV, Reloc::Model RelocM) const;
+
+  /// getDataLayout() - returns the ARM/Thumb specific TargetLayout string
+  std::string getDataLayout() const {
+    if (isThumb()) {
+      if (isAPCS_ABI()) {
+        return std::string("e-p:32:32-f64:32:32-i64:32:32-"
+                           "i16:16:32-i8:8:32-i1:8:32-"
+                           "v128:32:128-v64:32:64-a:0:32-n32");
+      } else {
+        return std::string("e-p:32:32-f64:64:64-i64:64:64-"
+                           "i16:16:32-i8:8:32-i1:8:32-"
+                           "v128:64:128-v64:64:64-a:0:32-n32");
+      }
+    } else {
+      if (isAPCS_ABI()) {
+        return std::string("e-p:32:32-f64:32:32-i64:32:32-"
+                           "v128:32:128-v64:32:64-n32");
+      } else {
+        return std::string("e-p:32:32-f64:64:64-i64:64:64-"
+                           "v128:64:128-v64:64:64-n32");
+      }
+    }
+  };
 };
 } // End llvm namespace
 

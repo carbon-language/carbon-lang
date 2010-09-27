@@ -31,6 +31,26 @@ static MCAsmInfo *createMCAsmInfo(const Target &T, StringRef TT) {
   }
 }
 
+// This is duplicated code. Refactor this.
+static MCStreamer *createMCStreamer(const Target &T, const std::string &TT,
+                                    MCContext &Ctx, TargetAsmBackend &TAB,
+                                    raw_ostream &_OS,
+                                    MCCodeEmitter *_Emitter,
+                                    bool RelaxAll) {
+  Triple TheTriple(TT);
+  switch (TheTriple.getOS()) {
+  case Triple::Darwin:
+    return createMachOStreamer(Ctx, TAB, _OS, _Emitter, RelaxAll);
+  case Triple::MinGW32:
+  case Triple::MinGW64:
+  case Triple::Cygwin:
+  case Triple::Win32:
+    assert(0 && "ARM does not support Windows COFF format"); break;
+  default:
+    return createELFStreamer(Ctx, TAB, _OS, _Emitter, RelaxAll);
+  }
+}
+
 extern "C" void LLVMInitializeARMTarget() {
   // Register the target.
   RegisterTargetMachine<ARMTargetMachine> X(TheARMTarget);
@@ -39,6 +59,19 @@ extern "C" void LLVMInitializeARMTarget() {
   // Register the target asm info.
   RegisterAsmInfoFn A(TheARMTarget, createMCAsmInfo);
   RegisterAsmInfoFn B(TheThumbTarget, createMCAsmInfo);
+
+  // Register the MC Code Emitter
+  TargetRegistry::RegisterCodeEmitter(TheARMTarget,
+                                      createARMMCCodeEmitter);
+  TargetRegistry::RegisterCodeEmitter(TheThumbTarget,
+                                      createARMMCCodeEmitter);
+
+  // Register the object streamer.
+  TargetRegistry::RegisterObjectStreamer(TheARMTarget,
+                                         createMCStreamer);
+  TargetRegistry::RegisterObjectStreamer(TheThumbTarget,
+                                         createMCStreamer);
+
 }
 
 /// TargetMachine ctor - Create an ARM architecture model.
@@ -51,18 +84,17 @@ ARMBaseTargetMachine::ARMBaseTargetMachine(const Target &T,
     Subtarget(TT, FS, isThumb),
     FrameInfo(Subtarget),
     JITInfo(),
-    InstrItins(Subtarget.getInstrItineraryData()) {
+    InstrItins(Subtarget.getInstrItineraryData()),
+    DataLayout(Subtarget.getDataLayout()),
+    ELFWriterInfo(*this)
+{
   DefRelocModel = getRelocationModel();
 }
 
 ARMTargetMachine::ARMTargetMachine(const Target &T, const std::string &TT,
                                    const std::string &FS)
-  : ARMBaseTargetMachine(T, TT, FS, false), InstrInfo(Subtarget),
-    DataLayout(Subtarget.isAPCS_ABI() ?
-               std::string("e-p:32:32-f64:32:32-i64:32:32-"
-                           "v128:32:128-v64:32:64-n32") :
-               std::string("e-p:32:32-f64:64:64-i64:64:64-"
-                           "v128:64:128-v64:64:64-n32")),
+  : ARMBaseTargetMachine(T, TT, FS, false),
+    InstrInfo(Subtarget),
     TLInfo(*this),
     TSInfo(*this) {
   if (!Subtarget.hasARMOps())
@@ -76,13 +108,6 @@ ThumbTargetMachine::ThumbTargetMachine(const Target &T, const std::string &TT,
     InstrInfo(Subtarget.hasThumb2()
               ? ((ARMBaseInstrInfo*)new Thumb2InstrInfo(Subtarget))
               : ((ARMBaseInstrInfo*)new Thumb1InstrInfo(Subtarget))),
-    DataLayout(Subtarget.isAPCS_ABI() ?
-               std::string("e-p:32:32-f64:32:32-i64:32:32-"
-                           "i16:16:32-i8:8:32-i1:8:32-"
-                           "v128:32:128-v64:32:64-a:0:32-n32") :
-               std::string("e-p:32:32-f64:64:64-i64:64:64-"
-                           "i16:16:32-i8:8:32-i1:8:32-"
-                           "v128:64:128-v64:64:64-a:0:32-n32")),
     TLInfo(*this),
     TSInfo(*this) {
 }

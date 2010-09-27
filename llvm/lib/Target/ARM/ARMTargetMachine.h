@@ -16,7 +16,9 @@
 
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetData.h"
+#include "llvm/MC/MCStreamer.h"
 #include "ARMInstrInfo.h"
+#include "ARMELFWriterInfo.h"
 #include "ARMFrameInfo.h"
 #include "ARMJITInfo.h"
 #include "ARMSubtarget.h"
@@ -38,9 +40,18 @@ private:
   InstrItineraryData  InstrItins;
   Reloc::Model        DefRelocModel;    // Reloc model before it's overridden.
 
+protected:
+  const TargetData    DataLayout;       // Calculates type size & alignment
+  ARMELFWriterInfo    ELFWriterInfo;
+
 public:
   ARMBaseTargetMachine(const Target &T, const std::string &TT,
                        const std::string &FS, bool isThumb);
+
+  virtual const TargetData       *getTargetData() const { return &DataLayout; }
+  virtual const ARMELFWriterInfo *getELFWriterInfo() const {
+    return Subtarget.isTargetELF() ? &ELFWriterInfo : 0;
+  };
 
   virtual const ARMFrameInfo     *getFrameInfo() const { return &FrameInfo; }
   virtual       ARMJITInfo       *getJITInfo()         { return &JITInfo; }
@@ -63,7 +74,6 @@ public:
 ///
 class ARMTargetMachine : public ARMBaseTargetMachine {
   ARMInstrInfo        InstrInfo;
-  const TargetData    DataLayout;       // Calculates type size & alignment
   ARMTargetLowering   TLInfo;
   ARMSelectionDAGInfo TSInfo;
 public:
@@ -93,7 +103,6 @@ public:
 class ThumbTargetMachine : public ARMBaseTargetMachine {
   // Either Thumb1InstrInfo or Thumb2InstrInfo.
   OwningPtr<ARMBaseInstrInfo> InstrInfo;
-  const TargetData    DataLayout;   // Calculates type size & alignment
   ARMTargetLowering   TLInfo;
   ARMSelectionDAGInfo TSInfo;
 public:
