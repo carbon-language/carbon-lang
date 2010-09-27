@@ -65,7 +65,7 @@ public:
   typedef llvm::SmallVector<AuxSymbol, 1> AuxiliarySymbols;
 
   name             Name;
-  size_t           Index;
+  int              Index;
   AuxiliarySymbols Aux;
   COFFSymbol      *Other;
   COFFSection     *Section;
@@ -96,7 +96,7 @@ public:
   COFF::section Header;
 
   std::string          Name;
-  size_t               Number;
+  int                  Number;
   MCSectionData const *MCData;
   COFFSymbol          *Symbol;
   relocations          Relocations;
