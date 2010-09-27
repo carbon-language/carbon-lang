@@ -518,11 +518,11 @@ public:
     } else if (Target.getSymB()) { // A - B + constant
       const MCSymbol *A = &Target.getSymA()->getSymbol();
       MCSymbolData &A_SD = Asm.getSymbolData(*A);
-      const MCSymbolData *A_Base = Asm.getAtom(Layout, &A_SD);
+      const MCSymbolData *A_Base = Asm.getAtom(&A_SD);
 
       const MCSymbol *B = &Target.getSymB()->getSymbol();
       MCSymbolData &B_SD = Asm.getSymbolData(*B);
-      const MCSymbolData *B_Base = Asm.getAtom(Layout, &B_SD);
+      const MCSymbolData *B_Base = Asm.getAtom(&B_SD);
 
       // Neither symbol can be modified.
       if (Target.getSymA()->getKind() != MCSymbolRefExpr::VK_None ||
@@ -567,7 +567,7 @@ public:
     } else {
       const MCSymbol *Symbol = &Target.getSymA()->getSymbol();
       MCSymbolData &SD = Asm.getSymbolData(*Symbol);
-      const MCSymbolData *Base = Asm.getAtom(Layout, &SD);
+      const MCSymbolData *Base = Asm.getAtom(&SD);
 
       // Relocations inside debug sections always use local relocations when
       // possible. This seems to be done because the debugger doesn't fully

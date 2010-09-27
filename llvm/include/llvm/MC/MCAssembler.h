@@ -650,8 +650,7 @@ private:
 public:
   /// Find the symbol which defines the atom containing the given symbol, or
   /// null if there is no such symbol.
-  const MCSymbolData *getAtom(const MCAsmLayout &Layout,
-                              const MCSymbolData *Symbol) const;
+  const MCSymbolData *getAtom(const MCSymbolData *Symbol) const;
 
   /// Check whether a particular symbol is visible to the linker and is required
   /// in the symbol table, or whether it can be discarded by the assembler. This

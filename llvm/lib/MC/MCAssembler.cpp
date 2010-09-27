@@ -291,7 +291,7 @@ static bool isScatteredFixupFullyResolved(const MCAssembler &Asm,
     if (A->getKind() != MCSymbolRefExpr::VK_None)
       return false;
 
-    A_Base = Asm.getAtom(Layout, &Asm.getSymbolData(A->getSymbol()));
+    A_Base = Asm.getAtom(&Asm.getSymbolData(A->getSymbol()));
     if (!A_Base)
       return false;
   }
@@ -301,7 +301,7 @@ static bool isScatteredFixupFullyResolved(const MCAssembler &Asm,
     if (B->getKind() != MCSymbolRefExpr::VK_None)
       return false;
 
-    B_Base = Asm.getAtom(Layout, &Asm.getSymbolData(B->getSymbol()));
+    B_Base = Asm.getAtom(&Asm.getSymbolData(B->getSymbol()));
     if (!B_Base)
       return false;
   }
@@ -328,8 +328,7 @@ bool MCAssembler::isSymbolLinkerVisible(const MCSymbol &Symbol) const {
   return getBackend().doesSectionRequireSymbols(Symbol.getSection());
 }
 
-const MCSymbolData *MCAssembler::getAtom(const MCAsmLayout &Layout,
-                                         const MCSymbolData *SD) const {
+const MCSymbolData *MCAssembler::getAtom(const MCSymbolData *SD) const {
   // Linker visible symbols define atoms.
   if (isSymbolLinkerVisible(SD->getSymbol()))
     return SD;
