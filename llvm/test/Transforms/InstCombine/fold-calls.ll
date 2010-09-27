@@ -1,10 +1,5 @@
 ; RUN: opt -instcombine -S < %s | FileCheck %s
 
-; This test is inexplicably still failing, which suggests a bug in the host
-; libm. It appears that sin(inf) returns NaN without setting a floating point
-; exception.
-; XFAIL: arm-pc-linux-gnu
-
 ; This shouldn't fold, because sin(inf) is invalid.
 ; CHECK: @foo
 ; CHECK:   %t = call double @sin(double 0x7FF0000000000000)

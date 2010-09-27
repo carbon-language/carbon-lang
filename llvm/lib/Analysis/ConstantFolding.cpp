@@ -1094,6 +1094,13 @@ llvm::ConstantFoldCall(Function *F,
 
       if (!Ty->isFloatTy() && !Ty->isDoubleTy())
         return 0;
+
+      /// We only fold functions with finite arguments. Folding NaN and inf is
+      /// likely to be aborted with an exception anyway, and some host libms
+      /// have known errors raising exceptions.
+      if (Op->getValueAPF().isNaN() || Op->getValueAPF().isInfinity())
+        return 0;
+
       /// Currently APFloat versions of these functions do not exist, so we use
       /// the host native double versions.  Float versions are not called
       /// directly but for all these it is true (float)(f((double)arg)) ==
