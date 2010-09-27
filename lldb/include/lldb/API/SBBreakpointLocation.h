@@ -76,6 +76,7 @@ public:
 
 private:
     friend class SBBreakpoint;
+    friend class lldb_private::ScriptInterpreterPython;
 
     SBBreakpointLocation (const lldb::BreakpointLocationSP &break_loc_sp);
     

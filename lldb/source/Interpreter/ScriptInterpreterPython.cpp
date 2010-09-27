@@ -717,220 +717,44 @@ ScriptInterpreterPython::GenerateBreakpointCommandCallbackData (StringList &user
 {
     static int num_created_functions = 0;
     user_input.RemoveBlankLines ();
-    int num_lines = user_input.GetSize();
+    int num_lines = user_input.GetSize ();
+    StreamString sstr;
 
-    if (num_lines == 1)
-    {
-        callback_data.AppendString (user_input.GetStringAtIndex (0));
-        return true;
-    }
+    // Take what the user wrote, wrap it all up inside one big auto-generated Python function, passing in the
+    // frame and breakpoint location as parameters to the function.
 
-    // Traverse user_input exactly once.  At each line, either copy line into new, auto-generated function, 
-    // increasing indentation by 5 spaces or copy it exactly as is into the user-written 
-    // currently-to-be-pushed-to-Python function def.  At the end of each Python function def, push the function 
-    // to Python, and clear the function string, to start again.  At the end of it all, if there is anything in 
-    // the auto-generated function, push it to Python and add the function call to it to the callback data.
 
-    bool inside_user_python_function_def = false;
-    std::string whitespace = " \t";
+    sstr.Printf ("lldb_autogen_python_bp_callback_func_%d", num_created_functions);
+    ++num_created_functions;
+    std::string auto_generated_function_name = sstr.GetData();
 
+    sstr.Clear();
     StringList auto_generated_function;
-    StringList user_defined_function;
 
-    StringList *current_function_def = &auto_generated_function;
-    std::string auto_generated_function_name ("lldb_autogen_python_bp_callback_func_");
+    // Create the function name & definition string.
+
+    sstr.Printf ("def %s (frame, bp_loc):", auto_generated_function_name.c_str());
+    auto_generated_function.AppendString (sstr.GetData());
+
+    // Wrap everything up inside the function, increasing the indentation.
 
     for (int i = 0; i < num_lines; ++i)
     {
-        std::string current_line (user_input.GetStringAtIndex(i));
-        size_t idx = current_line.find_first_of (whitespace);
-        if (idx != std::string::npos)
-        {
-            if (idx == 0) // line starts with indentation...
-            {
-                if (inside_user_python_function_def)
-                {
-                    // Add this line to the user's python function definition.
-                    current_function_def->AppendString (current_line.c_str());
-                }
-                else
-                {
-                    // Add this line to our auto-generated function; increase original indentation by 5.
-                    StreamString tmp_str;
-                    tmp_str.Printf ("     %s", current_line.c_str());
-                    current_function_def->AppendString (tmp_str.GetData());
-                }
-            }
-            else  // line does not start with indentation...
-            {
-                // First, check to see if we just finished a user-written function definition; if so,
-                // wrap it up and send it to Python.
-
-                if (inside_user_python_function_def && (user_defined_function.GetSize() > 0))
-                {
-                    if (! ExportFunctionDefinitionToInterpreter (user_defined_function))
-                    {
-                        // User entered incorrect Python syntax.  We should not attempt to continue.
-                        // Clear the callback data, and return immediately.
-                        callback_data.Clear();
-                        return false;
-                    }
-
-                    // User defined function was successfully sent to Python.  Clean up after it.
-                    user_defined_function.Clear();
-                    inside_user_python_function_def = false;
-                    current_function_def = &auto_generated_function;
-                }
-
-                // Next, check to see if we are at the start of a user-defined Python function.
-                std::string first_word = current_line.substr (0, idx);
-                if (first_word.compare ("def") == 0)
-                {
-                    // Start the user defined function properly:
-                    inside_user_python_function_def = true;
-                    current_function_def = &user_defined_function;
-                    current_function_def->AppendString (current_line.c_str());
-                }
-                else
-                {
-                    // We are in "loose" Python code that we need to collect and put into the auto-generated
-                    // function.
-                    StreamString tmp_str;
-                    current_function_def = &auto_generated_function;
-                    if (current_function_def->GetSize() == 0)
-                    {
-                        // Create the function name, and add insert the function def line.
-                        tmp_str.Printf ("%d", num_created_functions);
-                        ++num_created_functions;
-                        auto_generated_function_name.append (tmp_str.GetData());
-
-                        tmp_str.Clear();
-                        tmp_str.Printf ("def %s ():", auto_generated_function_name.c_str());
-                        current_function_def->AppendString (tmp_str.GetData());
-                    }
-                    tmp_str.Clear();
-                    
-                    // Indent the line an extra 5 spaces and add it to our auto-generated function.
-                    tmp_str.Printf ("     %s", current_line.c_str());
-                    current_function_def->AppendString (tmp_str.GetData());
-                } // else we are in loose Python code
-            } // else current line does not start with indentatin
-        }
-        else
-        {
-            // There was no white space on the line (and therefore no indentation either).
-
-            // First, check to see if we just finished a user-written function definition; if so,
-            // wrap it up and send it to Python.
-            
-            if (inside_user_python_function_def && (user_defined_function.GetSize() > 0))
-            {
-                if (! ExportFunctionDefinitionToInterpreter (user_defined_function))
-                {
-                    // User entered incorrect Python syntax.  We should not attempt to continue.
-                    // Clear the callback data, and return immediately.
-                    callback_data.Clear();
-                    return false;
-                }
-                
-                // User defined function was successfully sent to Python.  Clean up after it.
-                user_defined_function.Clear();
-                inside_user_python_function_def = false;
-                current_function_def = &auto_generated_function;
-            }
-            
-            // We cannot be at the start of a function definition (they contain white space) so we
-            // must have "loose" python code.
-            
-            StreamString tmp_str;
-            current_function_def = &auto_generated_function;
-            if (current_function_def->GetSize() == 0)
-            {
-                // Create the function name, and add insert the function def line.
-                tmp_str.Printf ("%d", num_created_functions);
-                ++num_created_functions;
-                auto_generated_function_name.append (tmp_str.GetData());
-                
-                tmp_str.Clear();
-                tmp_str.Printf ("def %s ():", auto_generated_function_name.c_str());
-                current_function_def->AppendString (tmp_str.GetData());
-            }
-            tmp_str.Clear();
-            
-            // Indent the line an extra 5 spaces and add it to our auto-generated function.
-            tmp_str.Printf ("     %s", current_line.c_str());
-            current_function_def->AppendString (tmp_str.GetData());
-            
-        } // else there was no white space on the line.
-    } 
-
-    // Perhaps the last line of input was also the last line of a user-defined function; if so,
-    // attempt to push the function down to Python.
-
-    if (inside_user_python_function_def && (user_defined_function.GetSize() > 0))
-    {
-        if (! ExportFunctionDefinitionToInterpreter (user_defined_function))
-        {
-            callback_data.Clear();
-            return false;
-        }
+        sstr.Clear ();
+        sstr.Printf ("     %s", user_input.GetStringAtIndex (i));
+        auto_generated_function.AppendString (sstr.GetData());
     }
 
+    // Verify that the results are valid Python.
 
-    if (auto_generated_function.GetSize() > 0)
+    if (!ExportFunctionDefinitionToInterpreter (auto_generated_function))
     {
-        // Export the auto-generated function to Python.
-        if (ExportFunctionDefinitionToInterpreter (auto_generated_function))
-        {
-            // The export succeeded; the syntax must be ok. Generate the function call and put
-            // it in the callback data.
-            StreamString tmp_str;
-            tmp_str.Printf ("%s ()", auto_generated_function_name.c_str());
-            callback_data.AppendString (tmp_str.GetData());
-            return true;
-        }
-        else
-        {
-            // Syntax error!
-            callback_data.Clear();
-            return false;
-        }
-    }
-    else
-    {
-        // If there was any code, it consisted entirely of function defs, without any calls to the functions.
-        // No actual exectuable code was therefore generated.  (Function calls would have looked like "loose" python,
-        // and would have been collected into the auto-generated function.)
         return false;
     }
+
+    // Store the name of the auto-generated function to be called.
+
+    callback_data.AppendString (auto_generated_function_name.c_str());
+    return true;
 }
 
-bool
-ScriptInterpreterPython::BreakpointCallbackFunction 
-(
-    void *baton, 
-    StoppointCallbackContext *context,
-    lldb::user_id_t break_id, 
-    lldb::user_id_t break_loc_id
-)
-{
-    bool ret_value = true;
-    bool temp_bool;
-
-    BreakpointOptions::CommandData *bp_option_data =  (BreakpointOptions::CommandData *) baton;
-
-    const char *python_string = bp_option_data->script_source.GetStringAtIndex(0);
-
-    if (python_string != NULL)
-    {
-        bool success = context->exe_ctx.target->GetDebugger().
-                                                GetCommandInterpreter().
-                                                GetScriptInterpreter()->ExecuteOneLineWithReturn (python_string,
-                                                                                             ScriptInterpreter::eBool,
-                                                                                             (void *) &temp_bool);
-        if (success)
-          ret_value = temp_bool;
-    }
-
-    return ret_value;
-}

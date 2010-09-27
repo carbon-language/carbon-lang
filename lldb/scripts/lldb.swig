@@ -99,6 +99,15 @@
 #include "lldb/API/SBType.h"
 #include "lldb/API/SBValue.h"
 #include "lldb/API/SBValueList.h"
+#include "lldb/Interpreter/ScriptInterpreterPython.h"
+#include "lldb/Breakpoint/Breakpoint.h"
+#include "lldb/Breakpoint/BreakpointLocation.h"
+#include "lldb/Breakpoint/StoppointCallbackContext.h"
+#include "lldb/Target/ExecutionContext.h"
+#include "lldb/Target/StackFrame.h"
+#include "lldb/Target/Target.h"
+#include "lldb/Target/Thread.h"
+#include "lldb/lldb-forward-rtti.h"
 using namespace lldb_private;
 %}
 
@@ -157,3 +166,97 @@ typedef int StopReason;
 %include "lldb/lldb-types.h"
 
 %include "./Python/python-extensions.swig"
+
+
+%wrapper %{
+
+
+bool
+ScriptInterpreterPython::BreakpointCallbackFunction (void *baton,
+                                                     StoppointCallbackContext *context,
+                                                     lldb::user_id_t break_id,
+                                                     lldb::user_id_t break_loc_id)
+{
+    bool ret_value = true;
+    
+    BreakpointOptions::CommandData *bp_option_data = (BreakpointOptions::CommandData *) baton;
+    const char *python_function_name = bp_option_data->script_source.GetStringAtIndex (0);
+    
+    if (python_function_name != NULL 
+        && python_function_name[0] != '\0')
+    {
+        Thread *thread = context->exe_ctx.thread;
+        Target *target = context->exe_ctx.target;
+        const lldb::StackFrameSP stop_frame_sp = thread->GetStackFrameSPForStackFramePtr (context->exe_ctx.frame);
+        lldb::BreakpointSP breakpoint_sp = target->GetBreakpointByID (break_id);
+        const lldb::BreakpointLocationSP bp_loc_sp = breakpoint_sp->FindLocationByID (break_loc_id);
+        
+        lldb::SBFrame sb_frame (stop_frame_sp);
+        lldb::SBBreakpointLocation sb_bp_loc (bp_loc_sp);
+        
+        if (!sb_bp_loc.IsValid() || !sb_frame.IsValid())
+            return ret_value;
+        
+
+        PyObject *Frame_PyObj = SWIG_NewPointerObj((void *) &sb_frame, SWIGTYPE_p_lldb__SBFrame, 0);
+        PyObject *Bp_Loc_PyObj = SWIG_NewPointerObj ((void *) &sb_bp_loc, SWIGTYPE_p_lldb__SBBreakpointLocation, 0);
+        
+        if (Frame_PyObj == NULL
+            || Bp_Loc_PyObj == NULL)
+            return ret_value;
+
+        PyObject *pmodule, *pdict, *pfunc;
+        PyObject *pargs, *pvalue;
+        
+        pmodule = PyImport_AddModule ("__main__");
+        if (pmodule != NULL)
+        {
+            pdict = PyModule_GetDict (pmodule);
+            if (pdict != NULL)
+            {
+                pfunc = PyObject_GetAttrString (pmodule, python_function_name);
+                if (pfunc && PyCallable_Check (pfunc))
+                {
+                    pargs = PyTuple_New (2);
+                    if (pargs == NULL)
+                    {
+                        if (PyErr_Occurred())
+                            PyErr_Clear();
+                        return ret_value;
+                    }
+                    
+                    PyTuple_SetItem (pargs, 0, Frame_PyObj);  // This "steals" a reference to Frame_PyObj
+                    PyTuple_SetItem (pargs, 1, Bp_Loc_PyObj); // This "steals" a reference to Bp_Loc_PyObj
+                    pvalue = PyObject_CallObject (pfunc, pargs);
+                    Py_DECREF (pargs);
+                    
+                    if (pvalue != NULL)
+                    {
+                        Py_DECREF (pvalue);
+                    }
+                    else if (PyErr_Occurred ())
+                    {
+                        PyErr_Clear();
+                    }
+                    Py_DECREF (pfunc);
+                }
+                else if (PyErr_Occurred())
+                {
+                    PyErr_Clear();
+                }
+            }
+            else if (PyErr_Occurred())
+            {
+                PyErr_Clear();
+            }
+        }
+        else if (PyErr_Occurred ())
+        {
+            PyErr_Clear ();
+        }
+    }
+
+    return ret_value;
+}
+
+%}

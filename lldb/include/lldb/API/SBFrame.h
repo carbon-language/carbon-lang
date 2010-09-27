@@ -123,6 +123,7 @@ protected:
 
 private:
     friend class SBThread;
+    friend class lldb_private::ScriptInterpreterPython;
 
 #ifndef SWIG
 
