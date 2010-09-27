@@ -1952,35 +1952,35 @@ Value *CodeGenFunction::EmitX86BuiltinExpr(unsigned BuiltinID,
     default: assert(0 && "Unsupported shift intrinsic!");
     case X86::BI__builtin_ia32_pslldi:
       name = "pslldi";
-      ID = Intrinsic::x86_mmx_pslli_d;
+      ID = Intrinsic::x86_mmx_psll_d;
       break;
     case X86::BI__builtin_ia32_psllqi:
       name = "psllqi";
-      ID = Intrinsic::x86_mmx_pslli_q;
+      ID = Intrinsic::x86_mmx_psll_q;
       break;
     case X86::BI__builtin_ia32_psllwi:
       name = "psllwi";
-      ID = Intrinsic::x86_mmx_pslli_w;
+      ID = Intrinsic::x86_mmx_psll_w;
       break;
     case X86::BI__builtin_ia32_psradi:
       name = "psradi";
-      ID = Intrinsic::x86_mmx_psrai_d;
+      ID = Intrinsic::x86_mmx_psra_d;
       break;
     case X86::BI__builtin_ia32_psrawi:
       name = "psrawi";
-      ID = Intrinsic::x86_mmx_psrai_w;
+      ID = Intrinsic::x86_mmx_psra_w;
       break;
     case X86::BI__builtin_ia32_psrldi:
       name = "psrldi";
-      ID = Intrinsic::x86_mmx_psrli_d;
+      ID = Intrinsic::x86_mmx_psrl_d;
       break;
     case X86::BI__builtin_ia32_psrlqi:
       name = "psrlqi";
-      ID = Intrinsic::x86_mmx_psrli_q;
+      ID = Intrinsic::x86_mmx_psrl_q;
       break;
     case X86::BI__builtin_ia32_psrlwi:
       name = "psrlwi";
-      ID = Intrinsic::x86_mmx_psrli_w;
+      ID = Intrinsic::x86_mmx_psrl_w;
       break;
     }
     llvm::Function *F = CGM.getIntrinsic(ID);
