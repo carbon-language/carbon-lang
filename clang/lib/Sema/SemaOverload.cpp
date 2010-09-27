@@ -5525,7 +5525,7 @@ OverloadCandidateKind ClassifyOverloadCandidate(Sema &S,
     if (!Meth->isImplicit())
       return isTemplate ? oc_method_template : oc_method;
 
-    assert(Meth->isCopyAssignment()
+    assert(Meth->isCopyAssignmentOperator()
            && "implicit method is not copy assignment operator?");
     return oc_implicit_copy_assignment;
   }

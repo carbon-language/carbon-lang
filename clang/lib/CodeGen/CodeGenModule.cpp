@@ -867,7 +867,7 @@ CodeGenModule::GetOrCreateLLVMFunction(llvm::StringRef MangledName,
         DeferredDeclsToEmit.push_back(D);
       }
     } else if (const CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(FD)) {
-      if (MD->isCopyAssignment() && MD->isImplicit()) {
+      if (MD->isImplicit() && MD->isCopyAssignmentOperator()) {
         assert(MD->isUsed() && "Sema doesn't consider CopyAssignment as used.");
         DeferredDeclsToEmit.push_back(D);
       }

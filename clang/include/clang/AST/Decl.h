@@ -1102,7 +1102,6 @@ private:
   bool HasWrittenPrototype : 1;
   bool IsDeleted : 1;
   bool IsTrivial : 1; // sunk from CXXMethodDecl
-  bool IsCopyAssignment : 1;  // sunk from CXXMethodDecl
   bool HasImplicitReturnZero : 1;
 
   /// \brief End part of this FunctionDecl's source range.
@@ -1182,7 +1181,6 @@ protected:
       SClass(S), SClassAsWritten(SCAsWritten), IsInline(isInline),
       IsVirtualAsWritten(false), IsPure(false), HasInheritedPrototype(false),
       HasWrittenPrototype(true), IsDeleted(false), IsTrivial(false),
-      IsCopyAssignment(false),
       HasImplicitReturnZero(false),
       EndRangeLoc(NameInfo.getEndLoc()),
       TemplateOrSpecialization(),
@@ -1290,9 +1288,6 @@ public:
   /// the class has been fully built by Sema.
   bool isTrivial() const { return IsTrivial; }
   void setTrivial(bool IT) { IsTrivial = IT; }
-
-  bool isCopyAssignment() const { return IsCopyAssignment; }
-  void setCopyAssignment(bool CA) { IsCopyAssignment = CA; }
 
   /// Whether falling off this function implicitly returns null/zero.
   /// If a more specific implicit return value is required, front-ends

@@ -114,7 +114,7 @@ RValue CodeGenFunction::EmitCXXMemberCallExpr(const CXXMemberCallExpr *CE,
   if (MD->isTrivial()) {
     if (isa<CXXDestructorDecl>(MD)) return RValue::get(0);
 
-    assert(MD->isCopyAssignment() && "unknown trivial member function");
+    assert(MD->isCopyAssignmentOperator() && "unknown trivial member function");
     // We don't like to generate the trivial copy assignment operator when
     // it isn't necessary; just produce the proper effect here.
     llvm::Value *RHS = EmitLValue(*CE->arg_begin()).getAddress();
@@ -211,7 +211,7 @@ CodeGenFunction::EmitCXXOperatorMemberCallExpr(const CXXOperatorCallExpr *E,
                                                ReturnValueSlot ReturnValue) {
   assert(MD->isInstance() &&
          "Trying to emit a member call expr on a static method!");
-  if (MD->isCopyAssignment()) {
+  if (MD->isCopyAssignmentOperator()) {
     const CXXRecordDecl *ClassDecl = cast<CXXRecordDecl>(MD->getDeclContext());
     if (ClassDecl->hasTrivialCopyAssignment()) {
       assert(!ClassDecl->hasUserDeclaredCopyAssignment() &&

@@ -284,10 +284,8 @@ CXXRecordDecl::addedMember(Decl *D) {
       // If this is the implicit copy constructor, note that we have now
       // declared it.
       // FIXME: Move constructors
-      if (Method->getOverloadedOperator() == OO_Equal) {
+      if (Method->getOverloadedOperator() == OO_Equal)
         data().DeclaredCopyAssignment = true;
-        Method->setCopyAssignment(true);
-      }
     }
     
     // Nothing else to do for implicitly-declared members.
@@ -359,8 +357,7 @@ CXXRecordDecl::addedMember(Decl *D) {
         return;
       
       // This is a copy assignment operator.
-      // Note on the decl that it is a copy assignment operator.
-      Method->setCopyAssignment(true);
+      // FIXME: Move assignment operators.
       
       // Suppress the implicit declaration of a copy constructor.
       data().UserDeclaredCopyAssignment = true;

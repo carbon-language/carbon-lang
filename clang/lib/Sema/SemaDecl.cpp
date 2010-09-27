@@ -1063,7 +1063,8 @@ Sema::CXXSpecialMember Sema::getSpecialMember(const CXXMethodDecl *MD) {
   if (isa<CXXDestructorDecl>(MD))
     return Sema::CXXDestructor;
   
-  assert(MD->isCopyAssignment() && "Must have copy assignment operator");
+  assert(MD->isCopyAssignmentOperator() && 
+         "Must have copy assignment operator");
   return Sema::CXXCopyAssignment;
 }
 
