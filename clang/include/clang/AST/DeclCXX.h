@@ -404,6 +404,16 @@ class CXXRecordDecl : public RecordDecl {
   void CheckConversionFunction(NamedDecl *D);
 #endif
   
+  friend class DeclContext;
+  
+  /// \brief Notify the class that another constructor has
+  /// been added. 
+  ///
+  /// This routine helps maintain information about the class based on which 
+  /// constructors have been added. It will be invoked by DeclContext::addDecl()
+  /// whenever a constructor is added to this record.
+  void addedConstructor(CXXConstructorDecl *ConDecl);  
+  
 protected:
   CXXRecordDecl(Kind K, TagKind TK, DeclContext *DC,
                 SourceLocation L, IdentifierInfo *Id,
@@ -558,12 +568,6 @@ public:
     return data().DeclaredDefaultConstructor;
   }
   
-  /// \brief Note whether this class has already had its default constructor 
-  /// implicitly declared or doesn't need one.
-  void setDeclaredDefaultConstructor(bool DDC) {
-    data().DeclaredDefaultConstructor = DDC;
-  }
-  
   /// hasConstCopyConstructor - Determines whether this class has a
   /// copy constructor that accepts a const-qualified argument.
   bool hasConstCopyConstructor(ASTContext &Context) const;
@@ -584,11 +588,6 @@ public:
   /// a unique copy-assignment operator could not be found.
   CXXMethodDecl *getCopyAssignmentOperator(bool ArgIsConst) const;
   
-  /// addedConstructor - Notify the class that another constructor has
-  /// been added. This routine helps maintain information about the
-  /// class based on which constructors have been added.
-  void addedConstructor(ASTContext &Context, CXXConstructorDecl *ConDecl);
-
   /// hasUserDeclaredConstructor - Whether this class has any
   /// user-declared constructors. When true, a default constructor
   /// will not be implicitly declared.
@@ -609,12 +608,6 @@ public:
   /// This value is used for lazy creation of copy constructors.
   bool hasDeclaredCopyConstructor() const {
     return data().DeclaredCopyConstructor;
-  }
-  
-  /// \brief Note whether this class has already had its copy constructor 
-  /// declared.
-  void setDeclaredCopyConstructor(bool DCC) {
-    data().DeclaredCopyConstructor = DCC;
   }
   
   /// addedAssignmentOperator - Notify the class that another assignment

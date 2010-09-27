@@ -2985,13 +2985,6 @@ void Sema::CheckConstructor(CXXConstructorDecl *Constructor) {
       Constructor->setInvalidDecl();
     }
   }
-
-  // Notify the class that we've added a constructor.  In principle we
-  // don't need to do this for out-of-line declarations; in practice
-  // we only instantiate the most recent declaration of a method, so
-  // we have to call this for everything but friends.
-  if (!Constructor->getFriendObjectKind())
-    ClassDecl->addedConstructor(Context, Constructor);
 }
 
 /// CheckDestructor - Checks a fully-formed destructor definition for
@@ -4441,7 +4434,6 @@ CXXConstructorDecl *Sema::DeclareImplicitDefaultConstructor(
   DefaultCon->setTrivial(ClassDecl->hasTrivialConstructor());
   
   // Note that we have declared this constructor.
-  ClassDecl->setDeclaredDefaultConstructor(true);
   ++ASTContext::NumImplicitDefaultConstructorsDeclared;
   
   if (Scope *S = getScopeForContext(ClassDecl))
@@ -5412,7 +5404,6 @@ CXXConstructorDecl *Sema::DeclareImplicitCopyConstructor(
   CopyConstructor->setTrivial(ClassDecl->hasTrivialCopyConstructor());
   
   // Note that we have declared this constructor.
-  ClassDecl->setDeclaredCopyConstructor(true);
   ++ASTContext::NumImplicitCopyConstructorsDeclared;
   
   // Add the parameter to the constructor.

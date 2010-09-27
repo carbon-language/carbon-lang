@@ -778,6 +778,14 @@ void DeclContext::addHiddenDecl(Decl *D) {
   } else {
     FirstDecl = LastDecl = D;
   }
+  
+  if (CXXRecordDecl *Record = dyn_cast<CXXRecordDecl>(this)) {
+    Decl *InnerD = D;
+    if (FunctionTemplateDecl *FunTmpl = dyn_cast<FunctionTemplateDecl>(D))
+      InnerD = FunTmpl->getTemplatedDecl();
+    if (CXXConstructorDecl *Constructor = dyn_cast<CXXConstructorDecl>(InnerD))
+      Record->addedConstructor(Constructor);
+  }
 }
 
 void DeclContext::addDecl(Decl *D) {

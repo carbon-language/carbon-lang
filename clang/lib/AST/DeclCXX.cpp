@@ -259,9 +259,25 @@ CXXMethodDecl *CXXRecordDecl::getCopyAssignmentOperator(bool ArgIsConst) const {
 }
 
 void
-CXXRecordDecl::addedConstructor(ASTContext &Context,
-                                CXXConstructorDecl *ConDecl) {
-  assert(!ConDecl->isImplicit() && "addedConstructor - not for implicit decl");
+CXXRecordDecl::addedConstructor(CXXConstructorDecl *Constructor) {
+  // Ignore friends.
+  if (Constructor->getFriendObjectKind())
+    return;
+  
+  if (Constructor->isImplicit()) {
+    // If this is the implicit default constructor, note that we have now
+    // declared it.
+    if (Constructor->isDefaultConstructor())
+      data().DeclaredDefaultConstructor = true;
+    // If this is the implicit copy constructor, note that we have now
+    // declared it.
+    else if (Constructor->isCopyConstructor())
+      data().DeclaredCopyConstructor = true;
+    
+    // Nothing else to do for implicitly-declared constructors.
+    return;
+  }
+  
   // Note that we have a user-declared constructor.
   data().UserDeclaredConstructor = true;
 
@@ -285,7 +301,8 @@ CXXRecordDecl::addedConstructor(ASTContext &Context,
 
   // Note when we have a user-declared copy constructor, which will
   // suppress the implicit declaration of a copy constructor.
-  if (ConDecl->isCopyConstructor()) {
+  if (!Constructor->getDescribedFunctionTemplate() &&
+      Constructor->isCopyConstructor()) {
     data().UserDeclaredCopyConstructor = true;
     data().DeclaredCopyConstructor = true;
     
@@ -293,7 +310,6 @@ CXXRecordDecl::addedConstructor(ASTContext &Context,
     //   A copy constructor is trivial if it is implicitly declared.
     // FIXME: C++0x: don't do this for "= default" copy constructors.
     data().HasTrivialCopyConstructor = false;
-    
   }
 }
 
