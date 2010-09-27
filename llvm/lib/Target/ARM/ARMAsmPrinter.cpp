@@ -1920,6 +1920,60 @@ void ARMAsmPrinter::printInstructionThroughMCStreamer(const MachineInstr *MI) {
     }
     return;
   }
+  case ARM::Int_eh_sjlj_longjmp: {
+    // ldr sp, [$src, #8]
+    // ldr $scratch, [$src, #4]
+    // ldr r7, [$src]
+    // bx $scratch
+    unsigned SrcReg = MI->getOperand(0).getReg();
+    unsigned ScratchReg = MI->getOperand(1).getReg();
+    {
+      MCInst TmpInst;
+      TmpInst.setOpcode(ARM::LDR);
+      TmpInst.addOperand(MCOperand::CreateReg(ARM::SP));
+      TmpInst.addOperand(MCOperand::CreateReg(SrcReg));
+      TmpInst.addOperand(MCOperand::CreateReg(0));
+      TmpInst.addOperand(MCOperand::CreateImm(8));
+      // Predicate.
+      TmpInst.addOperand(MCOperand::CreateImm(ARMCC::AL));
+      TmpInst.addOperand(MCOperand::CreateReg(0));
+      OutStreamer.EmitInstruction(TmpInst);
+    }
+    {
+      MCInst TmpInst;
+      TmpInst.setOpcode(ARM::LDR);
+      TmpInst.addOperand(MCOperand::CreateReg(ScratchReg));
+      TmpInst.addOperand(MCOperand::CreateReg(SrcReg));
+      TmpInst.addOperand(MCOperand::CreateReg(0));
+      TmpInst.addOperand(MCOperand::CreateImm(4));
+      // Predicate.
+      TmpInst.addOperand(MCOperand::CreateImm(ARMCC::AL));
+      TmpInst.addOperand(MCOperand::CreateReg(0));
+      OutStreamer.EmitInstruction(TmpInst);
+    }
+    {
+      MCInst TmpInst;
+      TmpInst.setOpcode(ARM::LDR);
+      TmpInst.addOperand(MCOperand::CreateReg(ARM::R7));
+      TmpInst.addOperand(MCOperand::CreateReg(SrcReg));
+      TmpInst.addOperand(MCOperand::CreateReg(0));
+      TmpInst.addOperand(MCOperand::CreateImm(0));
+      // Predicate.
+      TmpInst.addOperand(MCOperand::CreateImm(ARMCC::AL));
+      TmpInst.addOperand(MCOperand::CreateReg(0));
+      OutStreamer.EmitInstruction(TmpInst);
+    }
+    {
+      MCInst TmpInst;
+      TmpInst.setOpcode(ARM::BRIND);
+      TmpInst.addOperand(MCOperand::CreateReg(ScratchReg));
+      // Predicate.
+      TmpInst.addOperand(MCOperand::CreateImm(ARMCC::AL));
+      TmpInst.addOperand(MCOperand::CreateReg(0));
+      OutStreamer.EmitInstruction(TmpInst);
+    }
+    return;
+  }
   }
 
   MCInst TmpInst;
