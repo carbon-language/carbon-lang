@@ -57,6 +57,9 @@ delay = False
 # Ignore the build search path relative to this script to locate the lldb.py module.
 ignore = False
 
+# The regular expression pattern to match against eligible filenames as our test cases.
+regexp = None
+
 # Default verbosity is 0.
 verbose = 0
 
@@ -77,6 +80,7 @@ where options:
 -d   : delay startup for 10 seconds (in order for the debugger to attach)
 -i   : ignore (don't bailout) if 'lldb.py' module cannot be located in the build
        tree relative to this script; use PYTHONPATH to locate the module
+-p   : specify a regexp filename pattern for inclusion in the test suite
 -t   : trace lldb command execution and result
 -v   : do verbose mode of unittest framework
 
@@ -109,7 +113,8 @@ def parseOptionsAndInitTestdirs():
 
     global configFile
     global delay
-    global inore
+    global ignore
+    global regexp
     global verbose
     global testdirs
 
@@ -140,6 +145,13 @@ def parseOptionsAndInitTestdirs():
             index += 1
         elif sys.argv[index].startswith('-i'):
             ignore = True
+            index += 1
+        elif sys.argv[index].startswith('-p'):
+            # Increment by 1 to fetch the reg exp pattern argument.
+            index += 1
+            if index >= len(sys.argv) or sys.argv[index].startswith('-'):
+                usage()
+            regexp = sys.argv[index]
             index += 1
         elif sys.argv[index].startswith('-t'):
             os.environ["LLDB_COMMAND_TRACE"] = "YES"
@@ -246,13 +258,24 @@ def visit(prefix, dir, names):
     """Visitor function for os.path.walk(path, visit, arg)."""
 
     global suite
+    global regexp
 
     for name in names:
         if os.path.isdir(os.path.join(dir, name)):
             continue
 
         if '.py' == os.path.splitext(name)[1] and name.startswith(prefix):
-            # We found a pattern match for our test case.  Add it to the suite.
+            # Try to match the regexp pattern, if specified.
+            if regexp:
+                import re
+                if re.search(regexp, name):
+                    #print "Filename: '%s' matches pattern: '%s'" % (name, regexp)
+                    pass
+                else:
+                    #print "Filename: '%s' does not match pattern: '%s'" % (name, regexp)
+                    continue
+
+            # We found a match for our test case.  Add it to the suite.
             if not sys.path.count(dir):
                 sys.path.append(dir)
             base = os.path.splitext(name)[0]
