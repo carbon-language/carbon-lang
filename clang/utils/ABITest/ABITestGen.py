@@ -23,6 +23,7 @@ class TypePrinter:
         self.testValues = {}
         self.testReturnValues = {}
         self.layoutTests = []
+        self.declarations = set()
 
         if info:
             for f in (self.output,self.outputHeader,self.outputTests,self.outputDriver):
@@ -64,21 +65,25 @@ class TypePrinter:
             print >>self.outputDriver, '  return 0;'
             print >>self.outputDriver, '}'        
 
+    def addDeclaration(self, decl):
+        if decl in self.declarations:
+            return False
+
+        self.declarations.add(decl)
+        if self.outputHeader:
+            print >>self.outputHeader, decl
+        else:
+            print >>self.output, decl
+            if self.outputTests:
+                print >>self.outputTests, decl
+        return True
+
     def getTypeName(self, T):
-        if isinstance(T,BuiltinType):
-            return T.name
         name = self.types.get(T)
         if name is None:            
-            name = 'T%d'%(len(self.types),)
             # Reserve slot
             self.types[T] = None
-            if self.outputHeader:
-                print >>self.outputHeader,T.getTypedefDef(name, self)
-            else:
-                print >>self.output,T.getTypedefDef(name, self)
-                if self.outputTests:
-                    print >>self.outputTests,T.getTypedefDef(name, self)
-            self.types[T] = name
+            self.types[T] = name = T.getTypeName(self)
         return name
     
     def writeLayoutTest(self, i, ty):
