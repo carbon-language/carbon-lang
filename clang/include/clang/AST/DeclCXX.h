@@ -704,9 +704,6 @@ public:
   /// a check for union-ness.
   bool isEmpty() const { return data().Empty; }
 
-  /// Set whether this class is empty (C++0x [meta.unary.prop])
-  void setEmpty(bool Emp) { data().Empty = Emp; }
-
   /// isPolymorphic - Whether this class is polymorphic (C++ [class.virtual]),
   /// which means that the class contains or inherits a virtual function.
   bool isPolymorphic() const { return data().Polymorphic; }

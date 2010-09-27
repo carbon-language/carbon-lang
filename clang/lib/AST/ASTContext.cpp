@@ -3138,10 +3138,6 @@ QualType ASTContext::getObjCFastEnumerationStateType() {
       Field->setAccess(AS_public);
       ObjCFastEnumerationStateTypeDecl->addDecl(Field);
     }
-    if (getLangOptions().CPlusPlus)
-      if (CXXRecordDecl *CXXRD = 
-            dyn_cast<CXXRecordDecl>(ObjCFastEnumerationStateTypeDecl))
-        CXXRD->setEmpty(false);
 
     ObjCFastEnumerationStateTypeDecl->completeDefinition();
   }
