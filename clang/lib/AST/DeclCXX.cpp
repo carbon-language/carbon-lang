@@ -278,9 +278,9 @@ CXXRecordDecl::addedMember(Decl *D) {
       // declared it.
       else if (Constructor->isCopyConstructor())
         data().DeclaredCopyConstructor = true;
-    }
-    // FIXME: Destructors
-    else if (CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(D)) {
+    } else if (isa<CXXDestructorDecl>(D)) {
+      data().DeclaredDestructor = true;
+    } else if (CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(D)) {
       // If this is the implicit copy constructor, note that we have now
       // declared it.
       // FIXME: Move constructors
@@ -330,8 +330,14 @@ CXXRecordDecl::addedMember(Decl *D) {
     return;
   }
 
-  // FIXME: Destructors.
+  // Handle (user-declared) destructors.
+  if (isa<CXXDestructorDecl>(D)) {
+    data().DeclaredDestructor = true;
+    data().UserDeclaredDestructor = true;
+    return;
+  }
   
+  // Handle (user-declared) member functions.
   if (CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(D)) {
     if (Method->getOverloadedOperator() == OO_Equal) {
       // We're interested specifically in copy assignment operators.

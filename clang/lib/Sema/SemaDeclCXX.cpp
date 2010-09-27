@@ -4534,7 +4534,6 @@ CXXDestructorDecl *Sema::DeclareImplicitDestructor(CXXRecordDecl *ClassDecl) {
   Destructor->setTrivial(ClassDecl->hasTrivialDestructor());
   
   // Note that we have declared this destructor.
-  ClassDecl->setDeclaredDestructor(true);
   ++ASTContext::NumImplicitDestructorsDeclared;
   
   // Introduce this destructor into its scope.

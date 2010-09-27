@@ -3931,7 +3931,6 @@ void Sema::CheckFunctionDeclaration(Scope *S, FunctionDecl *NewFD,
         }
       }
 
-      Record->setUserDeclaredDestructor(true);
       // C++ [class]p4: A POD-struct is an aggregate class that has [...] no
       // user-defined destructor.
       Record->setPOD(false);

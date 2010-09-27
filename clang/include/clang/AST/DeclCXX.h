@@ -631,25 +631,11 @@ public:
     return data().UserDeclaredDestructor;
   }
 
-  /// setUserDeclaredDestructor - Set whether this class has a
-  /// user-declared destructor. If not set by the time the class is
-  /// fully defined, a destructor will be implicitly declared.
-  void setUserDeclaredDestructor(bool UCD) {
-    data().UserDeclaredDestructor = UCD;
-    if (UCD)
-      data().DeclaredDestructor = true;
-  }
-
   /// \brief Determine whether this class has had its destructor declared,
   /// either via the user or via an implicit declaration.
   ///
   /// This value is used for lazy creation of destructors.
   bool hasDeclaredDestructor() const { return data().DeclaredDestructor; }
-  
-  /// \brief Note whether this class has already had its destructor declared.
-  void setDeclaredDestructor(bool DD) {
-    data().DeclaredDestructor = DD;
-  }
   
   /// getConversions - Retrieve the overload set containing all of the
   /// conversion functions in this class.
