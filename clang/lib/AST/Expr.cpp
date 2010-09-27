@@ -1862,6 +1862,13 @@ bool Expr::isNullPointerConstant(ASTContext &Ctx,
   if (getType()->isNullPtrType())
     return true;
 
+  if (const RecordType *UT = getType()->getAsUnionType())
+    if (UT && UT->getDecl()->hasAttr<TransparentUnionAttr>())
+      if (const CompoundLiteralExpr *CLE = dyn_cast<CompoundLiteralExpr>(this)){
+        const Expr *InitExpr = CLE->getInitializer();
+        if (const InitListExpr *ILE = dyn_cast<InitListExpr>(InitExpr))
+          return ILE->getInit(0)->isNullPointerConstant(Ctx, NPC);
+      }
   // This expression must be an integer type.
   if (!getType()->isIntegerType() || 
       (Ctx.getLangOptions().CPlusPlus && getType()->isEnumeralType()))

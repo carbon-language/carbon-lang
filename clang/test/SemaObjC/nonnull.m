@@ -48,3 +48,22 @@ foo (int i1, int i2, int i3, void (^cp1)(), void (^cp2)(), void (^cp3)())
 }
 
 void func5(int) NONNULL_ATTR; //  no warning
+
+// rdar://6857843
+struct dispatch_object_s {
+    int x;
+};
+
+typedef union {
+    long first;
+    struct dispatch_object_s *_do;
+} dispatch_object_t __attribute__((transparent_union));
+
+__attribute__((nonnull))
+void _dispatch_queue_push_list(dispatch_object_t _head); // no warning
+
+void func6(dispatch_object_t _head) {
+  _dispatch_queue_push_list(0); // expected-warning {{null passed to a callee which requires a non-null argument}}
+  _dispatch_queue_push_list(_head._do);  // no warning
+}
+

@@ -371,6 +371,19 @@ static void HandleNonNullAttr(Decl *d, const AttributeList &Attr, Sema &S) {
       QualType T = getFunctionOrMethodArgType(d, I);
       if (T->isAnyPointerType() || T->isBlockPointerType())
         NonNullArgs.push_back(I);
+      else if (const RecordType *UT = T->getAsUnionType()) {
+        if (UT && UT->getDecl()->hasAttr<TransparentUnionAttr>()) {
+          RecordDecl *UD = UT->getDecl();
+          for (RecordDecl::field_iterator it = UD->field_begin(),
+               itend = UD->field_end(); it != itend; ++it) {
+            T = it->getType();
+            if (T->isAnyPointerType() || T->isBlockPointerType()) {
+              NonNullArgs.push_back(I);
+              break;
+            }
+          }
+        }
+      }
     }
 
     // No pointer arguments?  The attribute in this case is
