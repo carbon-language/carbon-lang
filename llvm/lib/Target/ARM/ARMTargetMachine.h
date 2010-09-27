@@ -51,7 +51,7 @@ public:
   virtual const TargetData       *getTargetData() const { return &DataLayout; }
   virtual const ARMELFWriterInfo *getELFWriterInfo() const {
     return Subtarget.isTargetELF() ? &ELFWriterInfo : 0;
-  };
+  }
 
   virtual const ARMFrameInfo     *getFrameInfo() const { return &FrameInfo; }
   virtual       ARMJITInfo       *getJITInfo()         { return &JITInfo; }

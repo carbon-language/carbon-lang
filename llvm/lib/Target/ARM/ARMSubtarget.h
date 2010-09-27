@@ -226,7 +226,7 @@ protected:
                            "v128:64:128-v64:64:64-n32");
       }
     }
-  };
+  }
 };
 } // End llvm namespace
 
