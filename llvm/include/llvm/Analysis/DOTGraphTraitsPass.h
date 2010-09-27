@@ -67,7 +67,7 @@ struct DOTGraphTraitsPrinter : public FunctionPass {
     Title = GraphName + " for '" + F.getNameStr() + "' function";
 
     if (ErrorInfo.empty())
-      WriteGraph(File, Graph, Simple, Name, Title);
+      WriteGraph(File, Graph, Simple, Title);
     else
       errs() << "  error opening file for writing!";
     errs() << "\n";

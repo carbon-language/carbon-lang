@@ -92,11 +92,11 @@ public:
     DTraits = DOTTraits(SN);
   }
 
-  void writeHeader(const std::string &Name) {
+  void writeHeader(const std::string &Title) {
     std::string GraphName = DTraits.getGraphName(G);
 
-    if (!Name.empty())
-      O << "digraph \"" << DOT::EscapeString(Name) << "\" {\n";
+    if (!Title.empty())
+      O << "digraph \"" << DOT::EscapeString(Title) << "\" {\n";
     else if (!GraphName.empty())
       O << "digraph \"" << DOT::EscapeString(GraphName) << "\" {\n";
     else
@@ -105,8 +105,8 @@ public:
     if (DTraits.renderGraphFromBottomUp())
       O << "\trankdir=\"BT\";\n";
 
-    if (!Name.empty())
-      O << "\tlabel=\"" << DOT::EscapeString(Name) << "\";\n";
+    if (!Title.empty())
+      O << "\tlabel=\"" << DOT::EscapeString(Title) << "\";\n";
     else if (!GraphName.empty())
       O << "\tlabel=\"" << DOT::EscapeString(GraphName) << "\";\n";
     O << DTraits.getGraphProperties(G);
@@ -282,7 +282,6 @@ public:
 template<typename GraphType>
 raw_ostream &WriteGraph(raw_ostream &O, const GraphType &G,
                         bool ShortNames = false,
-                        const std::string &Name = "",
                         const std::string &Title = "") {
   // Start the graph emission process...
   GraphWriter<GraphType> W(O, G, ShortNames);
@@ -322,7 +321,7 @@ sys::Path WriteGraph(const GraphType &G, const std::string &Name,
   raw_fd_ostream O(Filename.c_str(), ErrorInfo);
 
   if (ErrorInfo.empty()) {
-    llvm::WriteGraph(O, G, ShortNames, Name, Title);
+    llvm::WriteGraph(O, G, ShortNames, Title);
     errs() << " done. \n";
   } else {
     errs() << "error opening file '" << Filename.str() << "' for writing!\n";
