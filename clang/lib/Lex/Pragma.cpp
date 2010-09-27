@@ -494,7 +494,7 @@ void Preprocessor::HandlePragmaMessage(Token &Tok) {
   SourceLocation MessageLoc = Tok.getLocation();
   Lex(Tok);
   bool ExpectClosingParen = false;
-  switch(Tok.getKind()) {
+  switch (Tok.getKind()) {
   case tok::l_paren:
     // We have a MSVC style pragma message.
     ExpectClosingParen = true;
