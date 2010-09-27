@@ -908,8 +908,7 @@ void DwarfDebug::addToContextOwner(DIE *Die, DIDescriptor Context) {
     DIE *ContextDIE = getOrCreateNameSpace(DINameSpace(Context));
     ContextDIE->addChild(Die);
   } else if (Context.isSubprogram()) {
-    DIE *ContextDIE = createSubprogramDIE(DISubprogram(Context),
-                                          /*MakeDecl=*/false);
+    DIE *ContextDIE = createSubprogramDIE(DISubprogram(Context));
     ContextDIE->addChild(Die);
   } else if (DIE *ContextDIE = getCompileUnit(Context)->getDIE(Context))
     ContextDIE->addChild(Die);
@@ -1278,7 +1277,7 @@ DIE *DwarfDebug::createMemberDIE(DIDerivedType DT) {
 }
 
 /// createSubprogramDIE - Create new DIE using SP.
-DIE *DwarfDebug::createSubprogramDIE(DISubprogram SP, bool MakeDecl) {
+DIE *DwarfDebug::createSubprogramDIE(DISubprogram SP) {
   CompileUnit *SPCU = getCompileUnit(SP);
   DIE *SPDie = SPCU->getDIE(SP);
   if (SPDie)
@@ -1323,7 +1322,7 @@ DIE *DwarfDebug::createSubprogramDIE(DISubprogram SP, bool MakeDecl) {
                                             SP.getContainingType()));
   }
 
-  if (MakeDecl || !SP.isDefinition()) {
+  if (!SP.isDefinition()) {
     addUInt(SPDie, dwarf::DW_AT_declaration, dwarf::DW_FORM_flag, 1);
 
     // Add arguments. Do not add arguments for subprogram definition. They will

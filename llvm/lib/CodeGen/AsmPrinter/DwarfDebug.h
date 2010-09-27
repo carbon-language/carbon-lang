@@ -422,7 +422,7 @@ private:
   DIE *createMemberDIE(DIDerivedType DT);
 
   /// createSubprogramDIE - Create new DIE using SP.
-  DIE *createSubprogramDIE(DISubprogram SP, bool MakeDecl = false);
+  DIE *createSubprogramDIE(DISubprogram SP);
 
   /// getOrCreateDbgScope - Create DbgScope for the scope.
   DbgScope *getOrCreateDbgScope(const MDNode *Scope, const MDNode *InlinedAt);
