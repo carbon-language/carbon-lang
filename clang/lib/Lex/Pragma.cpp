@@ -483,22 +483,31 @@ void Preprocessor::HandlePragmaComment(Token &Tok) {
     Callbacks->PragmaComment(CommentLoc, II, ArgumentString);
 }
 
-/// HandlePragmaMessage - Handle the microsoft #pragma message extension.  The
-/// syntax is:
-///   #pragma message(messagestring)
-/// messagestring is a string, which is fully macro expanded, and permits string
-/// concatenation, embedded escape characters etc.  See MSDN for more details.
+/// HandlePragmaMessage - Handle the microsoft and gcc #pragma message
+/// extension.  The syntax is:
+///   #pragma message(string)
+/// OR, in GCC mode:
+///   #pragma message string
+/// string is a string, which is fully macro expanded, and permits string
+/// concatenation, embedded escape characters, etc... See MSDN for more details.
 void Preprocessor::HandlePragmaMessage(Token &Tok) {
   SourceLocation MessageLoc = Tok.getLocation();
   Lex(Tok);
-  if (Tok.isNot(tok::l_paren)) {
+  bool ExpectClosingParen = false;
+  switch(Tok.getKind()) {
+  case tok::l_paren:
+    // We have a MSVC style pragma message.
+    ExpectClosingParen = true;
+    // Read the string.
+    Lex(Tok);
+    break;
+  case tok::string_literal:
+    // We have a GCC style pragma message, and we just read the string.
+    break;
+  default:
     Diag(MessageLoc, diag::err_pragma_message_malformed);
     return;
   }
-
-  // Read the string.
-  Lex(Tok);
-  
 
   // We need at least one string.
   if (Tok.isNot(tok::string_literal)) {
@@ -527,11 +536,13 @@ void Preprocessor::HandlePragmaMessage(Token &Tok) {
 
   llvm::StringRef MessageString(Literal.GetString(), Literal.GetStringLength());
 
-  if (Tok.isNot(tok::r_paren)) {
-    Diag(Tok.getLocation(), diag::err_pragma_message_malformed);
-    return;
+  if (ExpectClosingParen) {
+    if (Tok.isNot(tok::r_paren)) {
+      Diag(Tok.getLocation(), diag::err_pragma_message_malformed);
+      return;
+    }
+    Lex(Tok);  // eat the r_paren.
   }
-  Lex(Tok);  // eat the r_paren.
 
   if (Tok.isNot(tok::eom)) {
     Diag(Tok.getLocation(), diag::err_pragma_message_malformed);
@@ -1001,6 +1012,7 @@ void Preprocessor::RegisterBuiltinPragmas() {
   AddPragmaHandler(new PragmaMarkHandler());
   AddPragmaHandler(new PragmaPushMacroHandler());
   AddPragmaHandler(new PragmaPopMacroHandler());
+  AddPragmaHandler(new PragmaMessageHandler());
 
   // #pragma GCC ...
   AddPragmaHandler("GCC", new PragmaPoisonHandler());
@@ -1022,6 +1034,5 @@ void Preprocessor::RegisterBuiltinPragmas() {
   // MS extensions.
   if (Features.Microsoft) {
     AddPragmaHandler(new PragmaCommentHandler());
-    AddPragmaHandler(new PragmaMessageHandler());
   }
 }
