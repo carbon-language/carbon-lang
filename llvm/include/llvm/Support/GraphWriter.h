@@ -92,6 +92,24 @@ public:
     DTraits = DOTTraits(SN);
   }
 
+  void writeGraph(bool ShortNames = false,
+                  const std::string &Title = "") {
+    // Start the graph emission process...
+    GraphWriter<GraphType> W(O, G, ShortNames);
+
+    // Output the header for the graph...
+    W.writeHeader(Title);
+
+    // Emit all of the nodes in the graph...
+    W.writeNodes();
+
+    // Output any customizations on the graph
+    DOTGraphTraits<GraphType>::addCustomGraphFeatures(G, W);
+
+    // Output the end of the graph
+    W.writeFooter();
+  }
+
   void writeHeader(const std::string &Title) {
     std::string GraphName = DTraits.getGraphName(G);
 
@@ -286,17 +304,9 @@ raw_ostream &WriteGraph(raw_ostream &O, const GraphType &G,
   // Start the graph emission process...
   GraphWriter<GraphType> W(O, G, ShortNames);
 
-  // Output the header for the graph...
-  W.writeHeader(Title);
+  // Emit the graph.
+  W.writeGraph(ShortNames, Title);
 
-  // Emit all of the nodes in the graph...
-  W.writeNodes();
-
-  // Output any customizations on the graph
-  DOTGraphTraits<GraphType>::addCustomGraphFeatures(G, W);
-
-  // Output the end of the graph
-  W.writeFooter();
   return O;
 }
 
