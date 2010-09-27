@@ -1447,7 +1447,7 @@ Sema::InstantiateClassMembers(SourceLocation PointOfInstantiation,
         if (CheckSpecializationInstantiationRedecl(PointOfInstantiation, TSK, 
                                                    Function, 
                                         MSInfo->getTemplateSpecializationKind(),
-                                              MSInfo->getPointOfInstantiation(), 
+                                              MSInfo->getPointOfInstantiation(),
                                                    SuppressNew) ||
             SuppressNew)
           continue;
@@ -1483,7 +1483,7 @@ Sema::InstantiateClassMembers(SourceLocation PointOfInstantiation,
         if (CheckSpecializationInstantiationRedecl(PointOfInstantiation, TSK, 
                                                    Var, 
                                         MSInfo->getTemplateSpecializationKind(),
-                                              MSInfo->getPointOfInstantiation(), 
+                                              MSInfo->getPointOfInstantiation(),
                                                    SuppressNew) ||
             SuppressNew)
           continue;
@@ -1518,11 +1518,11 @@ Sema::InstantiateClassMembers(SourceLocation PointOfInstantiation,
       if (MSInfo->getTemplateSpecializationKind()
                                                 == TSK_ExplicitSpecialization)
         continue;
-      
+
       if (CheckSpecializationInstantiationRedecl(PointOfInstantiation, TSK, 
                                                  Record, 
                                         MSInfo->getTemplateSpecializationKind(),
-                                              MSInfo->getPointOfInstantiation(), 
+                                              MSInfo->getPointOfInstantiation(),
                                                  SuppressNew) ||
           SuppressNew)
         continue;
@@ -1549,6 +1549,13 @@ Sema::InstantiateClassMembers(SourceLocation PointOfInstantiation,
         InstantiateClass(PointOfInstantiation, Record, Pattern,
                          TemplateArgs,
                          TSK);
+      } else {
+        if (TSK == TSK_ExplicitInstantiationDefinition &&
+            Record->getTemplateSpecializationKind() ==
+                TSK_ExplicitInstantiationDeclaration) {
+          Record->setTemplateSpecializationKind(TSK);
+          MarkVTableUsed(PointOfInstantiation, Record, true);
+        }
       }
       
       Pattern = cast_or_null<CXXRecordDecl>(Record->getDefinition());
