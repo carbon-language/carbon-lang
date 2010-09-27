@@ -1661,7 +1661,12 @@ bool Expr::isTemporaryObject(ASTContext &C, const CXXRecordDecl *TempTy) const {
   const Expr *E = skipTemporaryBindingsAndNoOpCasts(this);
 
   // Temporaries are by definition pr-values of class type.
-  if (!E->Classify(C).isPRValue()) return false;
+  if (!E->Classify(C).isPRValue()) {
+    // In this context, property reference is a message call and is pr-value.
+    if (!isa<ObjCPropertyRefExpr>(E) && 
+        !isa<ObjCImplicitSetterGetterRefExpr>(E))
+      return false;
+  }
 
   // Black-list a few cases which yield pr-values of class type that don't
   // refer to temporaries of that type:

@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -emit-llvm -o - %s
+// RUN: %clang_cc1 -triple x86_64-apple-darwin10 -emit-llvm -o - %s | FileCheck %s
 
 struct CGRect {
   char* origin;
@@ -22,6 +22,8 @@ extern "C" bool CGRectIsEmpty(CGRect);
     CGRect dataRect;
     CGRect virtualBounds;
 
+// CHECK: [[SRC:%.*]] = call %struct.CGRect bitcast (i8* (i8*, i8*, ...)* @objc_msgSend
+// CHECK-NEXT:store %struct.CGRect [[SRC]], %struct.CGRect*
   dataRect = CGRectIsEmpty(virtualBounds) ? self.bounds : virtualBounds;
   dataRect = CGRectIsEmpty(virtualBounds) ? [self bounds] : virtualBounds;
   dataRect = CGRectIsEmpty(virtualBounds) ? virtualBounds : self.bounds;
