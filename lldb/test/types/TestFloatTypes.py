@@ -2,11 +2,11 @@
 Test that variables of floating point types are displayed correctly.
 """
 
-import TestBasicTypes
+import AbstractBase
 import unittest2
 import lldb
 
-class FloatTypesTestCase(TestBasicTypes.AbstractBase):
+class FloatTypesTestCase(AbstractBase.GenericTester):
 
     mydir = "types"
 

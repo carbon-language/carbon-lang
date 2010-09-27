@@ -2,11 +2,11 @@
 Test that variables of integer basic types are displayed correctly.
 """
 
-import TestBasicTypes
+import AbstractBase
 import unittest2
 import lldb
 
-class IntegerTypesTestCase(TestBasicTypes.AbstractBase):
+class IntegerTypesTestCase(AbstractBase.GenericTester):
 
     mydir = "types"
 

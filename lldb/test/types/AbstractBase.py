@@ -10,7 +10,7 @@ from lldbtest import *
 def Msg(var, val):
     return "'frame variable %s' matches the compiler's output: %s" % (var, val)
 
-class AbstractBase(TestBase):
+class GenericTester(TestBase):
 
     # This is the pattern by design to match the " var = 'value'" output from
     # printf() stmts (see basic_type.cpp).
