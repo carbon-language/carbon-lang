@@ -263,6 +263,11 @@ class TypePrinter:
         if output is None:
             output = self.output
         if isinstance(t, BuiltinType):
+            value_expr = name
+            if t.name.split(' ')[-1] == '_Bool':
+                # Hack to work around PR5579.
+                value_expr = "%s ? 2 : 0" % name
+
             if t.name.endswith('long long'):
                 code = 'lld'
             elif t.name.endswith('long'):
@@ -275,7 +280,8 @@ class TypePrinter:
                 code = 'Lf'
             else:
                 code = 'p'
-            print >>output, '%*sprintf("%s: %s = %%%s\\n", %s);'%(indent, '', prefix, name, code, name) 
+            print >>output, '%*sprintf("%s: %s = %%%s\\n", %s);'%(
+                indent, '', prefix, name, code, value_expr)
         elif isinstance(t, EnumType):
             print >>output, '%*sprintf("%s: %s = %%d\\n", %s);'%(indent, '', prefix, name, name)
         elif isinstance(t, RecordType):
