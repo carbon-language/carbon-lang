@@ -8,7 +8,7 @@ import lldb
 from lldbtest import *
 
 def Msg(var, val):
-    return "'frame variable %s' matches the compiler's output: %s" % (var, val)
+    return "'frame variable %s' matches the output (from compiled code): %s" % (var, val)
 
 class GenericTester(TestBase):
 
