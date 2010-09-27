@@ -403,3 +403,7 @@ cdqe  // CHECK: cltq
 cwde  // CHECK: cwtl
 cwtl  // CHECK: cwtl
 
+// rdar://8416805
+cbw   // CHECK: cbtw
+cwd   // CHECK: cwtd
+cdq   // CHECK: cltd
