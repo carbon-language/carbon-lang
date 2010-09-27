@@ -66,6 +66,7 @@ FUNCTIONS.armv5 := $(FUNCTIONS) \
                 sync_synchronize 
 			
 FUNCTIONS.armv6 := $(FUNCTIONS) \
+				comparedf2 comparesf2 \
                 adddf3vfp addsf3vfp bswapdi2 bswapsi2 divdf3vfp \
                 divsf3vfp eqdf2vfp eqsf2vfp extendsfdf2vfp \
                 fixdfsivfp fixsfsivfp fixunsdfsivfp fixunssfsivfp \
@@ -80,6 +81,7 @@ FUNCTIONS.armv6 := $(FUNCTIONS) \
                 restore_vfp_d8_d15_regs save_vfp_d8_d15_regs \
                 sync_synchronize 
 FUNCTIONS.armv7 := $(FUNCTIONS) \
+				comparedf2 comparesf2 \
                 adddf3vfp addsf3vfp bswapdi2 bswapsi2 divdf3vfp \
                 divsf3vfp eqdf2vfp eqsf2vfp extendsfdf2vfp \
                 fixdfsivfp fixsfsivfp fixunsdfsivfp fixunssfsivfp \
