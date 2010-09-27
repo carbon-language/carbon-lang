@@ -33,6 +33,7 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringExtras.h"
+#include "llvm/ADT/Triple.h"
 using namespace llvm;
 using namespace dwarf;
 
@@ -450,6 +451,19 @@ void TargetLoweringObjectFileMachO::Initialize(MCContext &Ctx,
   IsFunctionEHSymbolGlobal = true;
   IsFunctionEHFrameSymbolPrivate = false;
   SupportsWeakOmittedEHFrame = false;
+
+  Triple T(((LLVMTargetMachine&)TM).getTargetTriple());
+  if (T.getOS() == Triple::Darwin) {
+    switch (T.getDarwinMajorNumber()) {
+    case 7:  // 10.3 Panther.
+    case 8:  // 10.4 Tiger.
+      CommDirectiveSupportsAlignment = false;
+      break;
+    case 9:   // 10.5 Leopard.
+    case 10:  // 10.6 SnowLeopard.
+      break;
+    }
+  }
   
   TargetLoweringObjectFile::Initialize(Ctx, TM);
 

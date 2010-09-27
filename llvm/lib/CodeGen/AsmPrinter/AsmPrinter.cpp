@@ -282,8 +282,12 @@ void AsmPrinter::EmitGlobalVariable(const GlobalVariable *GV) {
     
     // Handle common symbols.
     if (GVKind.isCommon()) {
+      unsigned Align = 1 << AlignLog;
+      if (!getObjFileLowering().getCommDirectiveSupportsAlignment())
+        Align = 0;
+          
       // .comm _foo, 42, 4
-      OutStreamer.EmitCommonSymbol(GVSym, Size, 1 << AlignLog);
+      OutStreamer.EmitCommonSymbol(GVSym, Size, Align);
       return;
     }
     
@@ -301,11 +305,15 @@ void AsmPrinter::EmitGlobalVariable(const GlobalVariable *GV) {
       OutStreamer.EmitLocalCommonSymbol(GVSym, Size);
       return;
     }
+
+    unsigned Align = 1 << AlignLog;
+    if (!getObjFileLowering().getCommDirectiveSupportsAlignment())
+      Align = 0;
     
     // .local _foo
     OutStreamer.EmitSymbolAttribute(GVSym, MCSA_Local);
     // .comm _foo, 42, 4
-    OutStreamer.EmitCommonSymbol(GVSym, Size, 1 << AlignLog);
+    OutStreamer.EmitCommonSymbol(GVSym, Size, Align);
     return;
   }
   

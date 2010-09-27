@@ -1,5 +1,6 @@
 ; RUN: llc < %s -mtriple=powerpc-linux-gnu | FileCheck %s -check-prefix=ELF
 ; RUN: llc < %s -mtriple=powerpc-apple-darwin9 | FileCheck %s -check-prefix=DARWIN
+; RUN: llc < %s -mtriple=powerpc-apple-darwin8 | FileCheck %s -check-prefix=DARWIN8
 
 @a = global i1 true
 ; no alignment
@@ -40,3 +41,6 @@
 @bar = common global [75 x i8] zeroinitializer, align 128
 ;ELF: .comm bar,75,128
 ;DARWIN: .comm _bar,75,7
+
+;; Darwin8 doesn't support aligned comm.  Just miscompile this.
+; DARWIN8: .comm _bar,75 ;

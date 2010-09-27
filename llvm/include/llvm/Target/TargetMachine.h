@@ -280,6 +280,8 @@ private:
   
 public:
   
+  const std::string &getTargetTriple() const { return TargetTriple; }
+  
   /// addPassesToEmitFile - Add passes to the specified pass manager to get the
   /// specified file emitted.  Typically this will involve several steps of code
   /// generation.  If OptLevel is None, the code generator should emit code as

@@ -92,6 +92,11 @@ protected:
   // information for a TLS variable, it'll go here.
   const MCSection *TLSExtraDataSection;
   
+  /// CommDirectiveSupportsAlignment - True if .comm supports alignment.  This
+  /// is a hack for as long as we support 10.4 Tiger, whose assembler doesn't
+  /// support alignment on comm.
+  bool CommDirectiveSupportsAlignment;
+  
   /// SupportsWeakEmptyEHFrame - True if target object file supports a
   /// weak_definition of constant 0 for an omitted EH frame.
   bool SupportsWeakOmittedEHFrame;
@@ -128,6 +133,10 @@ public:
     return SupportsWeakOmittedEHFrame;
   }
   
+  bool getCommDirectiveSupportsAlignment() const {
+    return CommDirectiveSupportsAlignment;
+  }
+
   const MCSection *getTextSection() const { return TextSection; }
   const MCSection *getDataSection() const { return DataSection; }
   const MCSection *getBSSSection() const { return BSSSection; }
