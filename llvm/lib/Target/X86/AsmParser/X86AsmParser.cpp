@@ -634,6 +634,8 @@ ParseInstruction(StringRef Name, SMLoc NameLoc,
     .Case("repnz", "repne")
     .Case("iret", "iretl")
     .Case("sysret", "sysretl")
+    .Case("cwde", "cwtl")
+    .Case("cdqe", "cltq")
     .Case("smovb", "movsb")
     .Case("smovw", "movsw")
     .Case("smovl", "movsl")

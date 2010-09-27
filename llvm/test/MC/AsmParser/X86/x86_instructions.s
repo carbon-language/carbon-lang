@@ -397,4 +397,9 @@ clr    %di
 clr    %esi
 clr    %rsi
 
+// rdar://8456378
+cltq  // CHECK: cltq
+cdqe  // CHECK: cltq
+cwde  // CHECK: cwtl
+cwtl  // CHECK: cwtl
 
