@@ -193,18 +193,21 @@ public:
         {static_assert(!is_reference<_Hp>::value,
               "Attempted to default construct a reference element in a tuple");}
 
-    template <class _Tp>
+    template <class _Tp,
+              class = typename enable_if<is_constructible<_Hp, _Tp>::value>::type>
         _LIBCPP_INLINE_VISIBILITY
         explicit __tuple_leaf(_Tp&& __t)
             : value(_STD::forward<_Tp>(__t))
-        {static_assert(!is_lvalue_reference<_Hp>::value ||
+        {static_assert(!is_reference<_Hp>::value ||
                         is_lvalue_reference<_Hp>::value &&
                         (is_lvalue_reference<_Tp>::value ||
                          is_same<typename remove_reference<_Tp>::type,
                                  reference_wrapper<
                                     typename remove_reference<_Hp>::type
                                  >
-                                >::value),
+                                >::value) ||
+                        (is_rvalue_reference<_Hp>::value &&
+                         !is_lvalue_reference<_Tp>::value),
        "Attempted to construct a reference element in a tuple with an rvalue");}
 
     template <class _Tp, class _Alloc>
@@ -248,6 +251,10 @@ public:
                                  >
                                 >::value),
        "Attempted to construct a reference element in a tuple with an rvalue");}
+
+    __tuple_leaf(const __tuple_leaf& __t)
+        : value(__t.get())
+        {static_assert(!is_rvalue_reference<_Hp>::value, "Can not copy a tuple with rvalue reference member");}
 
     template <class _Tp>
         _LIBCPP_INLINE_VISIBILITY
@@ -297,7 +304,8 @@ public:
         __tuple_leaf(integral_constant<int, 2>, const _Alloc& __a)
             : _Hp(__a) {}
 
-    template <class _Tp>
+    template <class _Tp,
+              class = typename enable_if<is_constructible<_Hp, _Tp>::value>::type>
         _LIBCPP_INLINE_VISIBILITY
         explicit __tuple_leaf(_Tp&& __t)
             : _Hp(_STD::forward<_Tp>(__t)) {}
