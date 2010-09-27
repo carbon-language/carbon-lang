@@ -89,8 +89,8 @@ class GraphWriter {
 
 public:
   GraphWriter(raw_ostream &o, const GraphType &g, bool SN) : O(o), G(g) {
-  DTraits = DOTTraits(SN);
-}
+    DTraits = DOTTraits(SN);
+  }
 
   void writeHeader(const std::string &Name) {
     std::string GraphName = DTraits.getGraphName(G);
