@@ -325,7 +325,9 @@ void LTOModule::addDefinedSymbol(GlobalValue *def, Mangler &mangler,
   }
 
   // set definition part
-  if (def->hasWeakLinkage() || def->hasLinkOnceLinkage()) {
+  if (def->hasWeakLinkage() || def->hasLinkOnceLinkage() ||
+      def->hasLinkerPrivateWeakLinkage() ||
+      def->hasLinkerPrivateWeakDefAutoLinkage()) {
     attr |= LTO_SYMBOL_DEFINITION_WEAK;
   }
   else if (def->hasCommonLinkage()) {
