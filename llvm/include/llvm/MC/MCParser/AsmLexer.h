@@ -61,6 +61,7 @@ private:
   AsmToken LexLineComment();
   AsmToken LexDigit();
   AsmToken LexQuote();
+  AsmToken LexFloatLiteral();
 };
   
 } // end namespace llvm

@@ -13,3 +13,20 @@
 
 # CHECK: .quad  0
 .double 0.0
+
+# CHECK: .quad  -4570379565595099136
+.double -1.2e3
+# CHECK: .quad  -4690170861623122860
+.double -1.2e-5
+# CHECK: .quad  -4465782973978902528
+.double -1.2e+10
+# CHECK: .quad  4681608360884174848
+.double 1e5
+# CHECK: .quad  4681608360884174848
+.double 1.e5
+# CHECK: .quad  4611686018427387904
+.double 2.
+
+// APFloat should reject these with an error, not crash:
+//.double -1.2e+
+//.double -1.2e
