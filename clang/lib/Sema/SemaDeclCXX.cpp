@@ -527,14 +527,6 @@ void Sema::SetClassDeclAttributesFromBase(CXXRecordDecl *Class,
   if (BaseClass->isPolymorphic())
     Class->setPolymorphic(true);
 
-  // C++ [dcl.init.aggr]p1:
-  //   An aggregate is [...] a class with [...] no base classes [...].
-  Class->setAggregate(false);
-
-  // C++ [class]p4:
-  //   A POD-struct is an aggregate class...
-  Class->setPOD(false);
-
   if (BaseIsVirtual) {
     // C++ [class.ctor]p5:
     //   A constructor is trivial if its class has no virtual base classes.

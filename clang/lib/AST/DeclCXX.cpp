@@ -97,6 +97,14 @@ CXXRecordDecl::setBases(CXXBaseSpecifier const * const *Bases,
     CXXRecordDecl *BaseClassDecl
       = cast<CXXRecordDecl>(BaseType->getAs<RecordType>()->getDecl());
 
+    // C++ [dcl.init.aggr]p1:
+    //   An aggregate is [...] a class with [...] no base classes [...].
+    data().Aggregate = false;    
+    
+    // C++ [class]p4:
+    //   A POD-struct is an aggregate class...
+    data().PlainOldData = false;
+    
     // Now go through all virtual bases of this base and add them.
     for (CXXRecordDecl::base_class_iterator VBase =
           BaseClassDecl->vbases_begin(),
@@ -268,6 +276,18 @@ CXXRecordDecl::addedMember(Decl *D) {
   if (FunTmpl)
     D = FunTmpl->getTemplatedDecl();
   
+  if (CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(D)) {
+    if (Method->isVirtual()) {
+      // C++ [dcl.init.aggr]p1:
+      //   An aggregate is an array or a class with [...] no virtual functions.
+      data().Aggregate = false;
+      
+      // C++ [class]p4:
+      //   A POD-struct is an aggregate class...
+      data().PlainOldData = false;
+    }
+  }
+  
   if (D->isImplicit()) {
     if (CXXConstructorDecl *Constructor = dyn_cast<CXXConstructorDecl>(D)) {
       // If this is the implicit default constructor, note that we have now
@@ -334,6 +354,12 @@ CXXRecordDecl::addedMember(Decl *D) {
   if (isa<CXXDestructorDecl>(D)) {
     data().DeclaredDestructor = true;
     data().UserDeclaredDestructor = true;
+    
+    // C++ [class]p4: 
+    //   A POD-struct is an aggregate class that has [...] no user-defined 
+    //   destructor.
+    data().PlainOldData = false;
+    
     return;
   }
   
@@ -381,6 +407,28 @@ CXXRecordDecl::addedMember(Decl *D) {
     }
     
     return;
+  }
+  
+  // Handle non-static data members.
+  if (FieldDecl *Field = dyn_cast<FieldDecl>(D)) {
+    // C++ [dcl.init.aggr]p1:
+    //   An aggregate is an array or a class (clause 9) with [...] no
+    //   private or protected non-static data members (clause 11).
+    //
+    // A POD must be an aggregate.    
+    if (D->getAccess() == AS_private || D->getAccess() == AS_protected) {
+      data().Aggregate = false;
+      data().PlainOldData = false;
+    }
+    
+    // C++ [class]p9:
+    //   A POD struct is a class that is both a trivial class and a 
+    //   standard-layout class, and has no non-static data members of type 
+    //   non-POD struct, non-POD union (or array of such types).
+    ASTContext &Context = getASTContext();
+    QualType T = Context.getBaseElementType(Field->getType());
+    if (!T->isPODType())
+      data().PlainOldData = false;
   }
 }
 
@@ -566,8 +614,6 @@ void CXXRecordDecl::removeConversion(const NamedDecl *ConvDecl) {
 
 void CXXRecordDecl::setMethodAsVirtual(FunctionDecl *Method) {
   Method->setVirtualAsWritten(true);
-  setAggregate(false);
-  setPOD(false);
   setEmpty(false);
   setPolymorphic(true);
   setHasTrivialConstructor(false);
