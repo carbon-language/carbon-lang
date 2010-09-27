@@ -19,8 +19,8 @@ declare i32 @printf(i8* nocapture, ...) nounwind
 ; CHECK:   MachineType              = IMAGE_FILE_MACHINE_I386 (0x14C)
 ; CHECK:   NumberOfSections         = 2
 ; CHECK:   TimeDateStamp            = {{[0-9]+}}
-; CHECK:   PointerToSymbolTable     = 0x99
-; CHECK:   NumberOfSymbols          = 7
+; CHECK:   PointerToSymbolTable     = 0x{{[0-9A-F]+}}
+; CHECK:   NumberOfSymbols          = 6
 ; CHECK:   SizeOfOptionalHeader     = 0
 ; CHECK:   Characteristics          = 0x0
 ; CHECK:   Sections                 = [
@@ -28,9 +28,9 @@ declare i32 @printf(i8* nocapture, ...) nounwind
 ; CHECK:       Name                     = .text
 ; CHECK:       VirtualSize              = 0
 ; CHECK:       VirtualAddress           = 0
-; CHECK:       SizeOfRawData            = 21
-; CHECK:       PointerToRawData         = 0x64
-; CHECK:       PointerToRelocations     = 0x79
+; CHECK:       SizeOfRawData            = {{[0-9]+}}
+; CHECK:       PointerToRawData         = 0x{{[0-9A-F]+}}
+; CHECK:       PointerToRelocations     = 0x{{[0-9A-F]+}}
 ; CHECK:       PointerToLineNumbers     = 0x0
 ; CHECK:       NumberOfRelocations      = 2
 ; CHECK:       NumberOfLineNumbers      = 0
@@ -40,20 +40,18 @@ declare i32 @printf(i8* nocapture, ...) nounwind
 ; CHECK:         IMAGE_SCN_MEM_EXECUTE
 ; CHECK:         IMAGE_SCN_MEM_READ
 ; CHECK:       SectionData              =
-; CHECK:         83 EC 04 C7 04 24 00 00 - 00 00 E8 00 00 00 00 31 |.....$.........1|
-; CHECK:         C0 83 C4 04 C3                                    |.....|
 ; CHECK:       Relocations              = [
 ; CHECK:         0 = {
-; CHECK:           VirtualAddress           = 0x6
-; CHECK:           SymbolTableIndex         = 5
+; CHECK:           VirtualAddress           = 0x{{[0-9A-F]+}}
+; CHECK:           SymbolTableIndex         = 2
 ; CHECK:           Type                     = IMAGE_REL_I386_DIR32 (6)
-; CHECK:           SymbolName               = _main
+; CHECK:           SymbolName               =
 ; CHECK:         }
 ; CHECK:         1 = {
-; CHECK:           VirtualAddress           = 0xB
-; CHECK:           SymbolTableIndex         = 6
+; CHECK:           VirtualAddress           = 0x{{[0-9A-F]+}}
+; CHECK:           SymbolTableIndex         = 5
 ; CHECK:           Type                     = IMAGE_REL_I386_REL32 (20)
-; CHECK:           SymbolName               = L_.str
+; CHECK:           SymbolName               = _main
 ; CHECK:         }
 ; CHECK:       ]
 ; CHECK:     }
@@ -61,8 +59,8 @@ declare i32 @printf(i8* nocapture, ...) nounwind
 ; CHECK:       Name                     = .data
 ; CHECK:       VirtualSize              = 0
 ; CHECK:       VirtualAddress           = 0
-; CHECK:       SizeOfRawData            = 12
-; CHECK:       PointerToRawData         = 0x8D
+; CHECK:       SizeOfRawData            = {{[0-9]+}}
+; CHECK:       PointerToRawData         = 0x{{[0-9A-F]+}}
 ; CHECK:       PointerToRelocations     = 0x0
 ; CHECK:       PointerToLineNumbers     = 0x0
 ; CHECK:       NumberOfRelocations      = 0
@@ -113,16 +111,6 @@ declare i32 @printf(i8* nocapture, ...) nounwind
 ; CHECK:       AuxillaryData            =
 ; CHECK:     }
 ; CHECK:     3 = {
-; CHECK:       Name                     = L_.str
-; CHECK:       Value                    = 0
-; CHECK:       SectionNumber            = 2
-; CHECK:       SimpleType               = IMAGE_SYM_TYPE_NULL (0)
-; CHECK:       ComplexType              = IMAGE_SYM_DTYPE_NULL (0)
-; CHECK:       StorageClass             = IMAGE_SYM_CLASS_STATIC (3)
-; CHECK:       NumberOfAuxSymbols       = 0
-; CHECK:       AuxillaryData            =
-; CHECK:     }
-; CHECK:     4 = {
 ; CHECK:       Name                     = _printf
 ; CHECK:       Value                    = 0
 ; CHECK:       SectionNumber            = 0
