@@ -69,6 +69,32 @@ void llvm::DisplayGraph(const sys::Path &Filename, bool wait,
   else
     Filename.eraseFromDisk();
 
+#elif HAVE_XDOT_PY
+  sys::Path XDotPy();
+
+  std::vector<const char*> args;
+  args.push_back(LLVM_PATH_XDOT_PY);
+  args.push_back(Filename.c_str());
+
+  switch (program) {
+  case GraphProgram::DOT:   args.push_back("-f"); args.push_back("dot"); break;
+  case GraphProgram::FDP:   args.push_back("-f"); args.push_back("fdp"); break;
+  case GraphProgram::NEATO: args.push_back("-f"); args.push_back("neato");break;
+  case GraphProgram::TWOPI: args.push_back("-f"); args.push_back("twopi");break;
+  case GraphProgram::CIRCO: args.push_back("-f"); args.push_back("circo");break;
+  default: errs() << "Unknown graph layout name; using default.\n";
+  }
+  
+  args.push_back(0);
+
+  errs() << "Running 'xdot.py' program... ";
+  if (sys::Program::ExecuteAndWait(sys::Path(LLVM_PATH_XDOT_PY),
+                                   &args[0],0,0,0,0,&ErrMsg))
+    errs() << "Error viewing graph " << Filename.str() << ": " << ErrMsg
+           << "\n";
+  else
+    Filename.eraseFromDisk();
+
 #elif (HAVE_GV && (HAVE_DOT || HAVE_FDP || HAVE_NEATO || \
                    HAVE_TWOPI || HAVE_CIRCO))
   sys::Path PSFilename = Filename;

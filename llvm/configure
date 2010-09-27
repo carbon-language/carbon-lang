@@ -729,6 +729,7 @@ TWOPI
 CIRCO
 GV
 DOTTY
+XDOT_PY
 PERL
 HAVE_PERL
 INSTALL_PROGRAM
@@ -7834,6 +7835,62 @@ cat >>confdefs.h <<_ACEOF
 _ACEOF
 
 fi
+# Extract the first word of "xdot.py", so it can be a program name with args.
+set dummy xdot.py; ac_word=$2
+{ echo "$as_me:$LINENO: checking for $ac_word" >&5
+echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6; }
+if test "${ac_cv_path_XDOT_PY+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  case $XDOT_PY in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_XDOT_PY="$XDOT_PY" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+  for ac_exec_ext in '' $ac_executable_extensions; do
+  if { test -f "$as_dir/$ac_word$ac_exec_ext" && $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; }; then
+    ac_cv_path_XDOT_PY="$as_dir/$ac_word$ac_exec_ext"
+    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+done
+IFS=$as_save_IFS
+
+  test -z "$ac_cv_path_XDOT_PY" && ac_cv_path_XDOT_PY="echo xdot.py"
+  ;;
+esac
+fi
+XDOT_PY=$ac_cv_path_XDOT_PY
+if test -n "$XDOT_PY"; then
+  { echo "$as_me:$LINENO: result: $XDOT_PY" >&5
+echo "${ECHO_T}$XDOT_PY" >&6; }
+else
+  { echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6; }
+fi
+
+
+if test "$XDOT_PY" != "echo xdot.py" ; then
+
+cat >>confdefs.h <<\_ACEOF
+#define HAVE_XDOT_PY 1
+_ACEOF
+
+    if test "$llvm_cv_os_type" = "MingW" ; then
+    XDOT_PY=`echo $XDOT_PY | sed 's/^\/\([A-Za-z]\)\//\1:\//' `
+  fi
+
+cat >>confdefs.h <<_ACEOF
+#define LLVM_PATH_XDOT_PY "$XDOT_PY${EXEEXT}"
+_ACEOF
+
+fi
 
 
 # Extract the first word of "perl", so it can be a program name with args.
@@ -11394,7 +11451,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 11397 "configure"
+#line 11454 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -21640,6 +21697,7 @@ TWOPI!$TWOPI$ac_delim
 CIRCO!$CIRCO$ac_delim
 GV!$GV$ac_delim
 DOTTY!$DOTTY$ac_delim
+XDOT_PY!$XDOT_PY$ac_delim
 PERL!$PERL$ac_delim
 HAVE_PERL!$HAVE_PERL$ac_delim
 INSTALL_PROGRAM!$INSTALL_PROGRAM$ac_delim
@@ -21705,7 +21763,7 @@ LIBOBJS!$LIBOBJS$ac_delim
 LTLIBOBJS!$LTLIBOBJS$ac_delim
 _ACEOF
 
-  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 93; then
+  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 94; then
     break
   elif $ac_last_try; then
     { { echo "$as_me:$LINENO: error: could not make $CONFIG_STATUS" >&5
