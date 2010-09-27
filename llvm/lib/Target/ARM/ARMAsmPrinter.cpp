@@ -1974,6 +1974,73 @@ void ARMAsmPrinter::printInstructionThroughMCStreamer(const MachineInstr *MI) {
     }
     return;
   }
+  case ARM::tInt_eh_sjlj_longjmp: {
+    // ldr $scratch, [$src, #8]
+    // mov sp, $scratch
+    // ldr $scratch, [$src, #4]
+    // ldr r7, [$src]
+    // bx $scratch
+    unsigned SrcReg = MI->getOperand(0).getReg();
+    unsigned ScratchReg = MI->getOperand(1).getReg();
+    {
+      MCInst TmpInst;
+      TmpInst.setOpcode(ARM::tLDR);
+      TmpInst.addOperand(MCOperand::CreateReg(ScratchReg));
+      TmpInst.addOperand(MCOperand::CreateReg(SrcReg));
+      // The offset immediate is #8. The operand value is scaled by 4 for the
+      // tSTR instruction.
+      TmpInst.addOperand(MCOperand::CreateImm(2));
+      TmpInst.addOperand(MCOperand::CreateReg(0));
+      // Predicate.
+      TmpInst.addOperand(MCOperand::CreateImm(ARMCC::AL));
+      TmpInst.addOperand(MCOperand::CreateReg(0));
+      OutStreamer.EmitInstruction(TmpInst);
+    }
+    {
+      MCInst TmpInst;
+      TmpInst.setOpcode(ARM::tMOVtgpr2gpr);
+      TmpInst.addOperand(MCOperand::CreateReg(ARM::SP));
+      TmpInst.addOperand(MCOperand::CreateReg(ScratchReg));
+      // Predicate.
+      TmpInst.addOperand(MCOperand::CreateImm(ARMCC::AL));
+      TmpInst.addOperand(MCOperand::CreateReg(0));
+      OutStreamer.EmitInstruction(TmpInst);
+    }
+    {
+      MCInst TmpInst;
+      TmpInst.setOpcode(ARM::tLDR);
+      TmpInst.addOperand(MCOperand::CreateReg(ScratchReg));
+      TmpInst.addOperand(MCOperand::CreateReg(SrcReg));
+      TmpInst.addOperand(MCOperand::CreateImm(1));
+      TmpInst.addOperand(MCOperand::CreateReg(0));
+      // Predicate.
+      TmpInst.addOperand(MCOperand::CreateImm(ARMCC::AL));
+      TmpInst.addOperand(MCOperand::CreateReg(0));
+      OutStreamer.EmitInstruction(TmpInst);
+    }
+    {
+      MCInst TmpInst;
+      TmpInst.setOpcode(ARM::tLDR);
+      TmpInst.addOperand(MCOperand::CreateReg(ARM::R7));
+      TmpInst.addOperand(MCOperand::CreateReg(SrcReg));
+      TmpInst.addOperand(MCOperand::CreateImm(0));
+      TmpInst.addOperand(MCOperand::CreateReg(0));
+      // Predicate.
+      TmpInst.addOperand(MCOperand::CreateImm(ARMCC::AL));
+      TmpInst.addOperand(MCOperand::CreateReg(0));
+      OutStreamer.EmitInstruction(TmpInst);
+    }
+    {
+      MCInst TmpInst;
+      TmpInst.setOpcode(ARM::tBX_RET_vararg);
+      TmpInst.addOperand(MCOperand::CreateReg(ScratchReg));
+      // Predicate.
+      TmpInst.addOperand(MCOperand::CreateImm(ARMCC::AL));
+      TmpInst.addOperand(MCOperand::CreateReg(0));
+      OutStreamer.EmitInstruction(TmpInst);
+    }
+    return;
+  }
   }
 
   MCInst TmpInst;
