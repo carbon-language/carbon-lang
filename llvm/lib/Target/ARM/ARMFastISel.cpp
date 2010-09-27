@@ -113,16 +113,16 @@ class ARMFastISel : public FastISel {
 
     // Instruction selection routines.
   private:
-    virtual bool ARMSelectLoad(const Instruction *I);
-    virtual bool ARMSelectStore(const Instruction *I);
-    virtual bool ARMSelectBranch(const Instruction *I);
-    virtual bool ARMSelectCmp(const Instruction *I);
-    virtual bool ARMSelectFPExt(const Instruction *I);
-    virtual bool ARMSelectFPTrunc(const Instruction *I);
-    virtual bool ARMSelectBinaryOp(const Instruction *I, unsigned ISDOpcode);
-    virtual bool ARMSelectSIToFP(const Instruction *I);
-    virtual bool ARMSelectFPToSI(const Instruction *I);
-    virtual bool ARMSelectSDiv(const Instruction *I);
+    virtual bool SelectLoad(const Instruction *I);
+    virtual bool SelectStore(const Instruction *I);
+    virtual bool SelectBranch(const Instruction *I);
+    virtual bool SelectCmp(const Instruction *I);
+    virtual bool SelectFPExt(const Instruction *I);
+    virtual bool SelectFPTrunc(const Instruction *I);
+    virtual bool SelectBinaryOp(const Instruction *I, unsigned ISDOpcode);
+    virtual bool SelectSIToFP(const Instruction *I);
+    virtual bool SelectFPToSI(const Instruction *I);
+    virtual bool SelectSDiv(const Instruction *I);
 
     // Utility routines.
   private:
@@ -602,7 +602,7 @@ bool ARMFastISel::ARMEmitLoad(EVT VT, unsigned &ResultReg,
   return true;
 }
 
-bool ARMFastISel::ARMSelectLoad(const Instruction *I) {
+bool ARMFastISel::SelectLoad(const Instruction *I) {
   // Verify we have a legal type before going any further.
   EVT VT;
   if (!isLoadTypeLegal(I->getType(), VT))
@@ -689,7 +689,7 @@ bool ARMFastISel::ARMEmitStore(EVT VT, unsigned SrcReg,
   return true;
 }
 
-bool ARMFastISel::ARMSelectStore(const Instruction *I) {
+bool ARMFastISel::SelectStore(const Instruction *I) {
   Value *Op0 = I->getOperand(0);
   unsigned SrcReg = 0;
 
@@ -768,14 +768,14 @@ static ARMCC::CondCodes getComparePred(CmpInst::Predicate Pred) {
   }
 }
 
-bool ARMFastISel::ARMSelectBranch(const Instruction *I) {
+bool ARMFastISel::SelectBranch(const Instruction *I) {
   const BranchInst *BI = cast<BranchInst>(I);
   MachineBasicBlock *TBB = FuncInfo.MBBMap[BI->getSuccessor(0)];
   MachineBasicBlock *FBB = FuncInfo.MBBMap[BI->getSuccessor(1)];
 
   // Simple branch support.
   // TODO: Hopefully we've already handled the condition since we won't
-  // have left an update in the value map. See the TODO below in ARMSelectCMP.
+  // have left an update in the value map. See the TODO below in SelectCMP.
   Value *Cond = BI->getCondition();
   unsigned CondReg = getRegForValue(Cond);
   if (CondReg == 0) return false;
@@ -798,7 +798,7 @@ bool ARMFastISel::ARMSelectBranch(const Instruction *I) {
   return true;  
 }
 
-bool ARMFastISel::ARMSelectCmp(const Instruction *I) {
+bool ARMFastISel::SelectCmp(const Instruction *I) {
   const CmpInst *CI = cast<CmpInst>(I);
 
   EVT VT;
@@ -849,7 +849,7 @@ bool ARMFastISel::ARMSelectCmp(const Instruction *I) {
   return true;
 }
 
-bool ARMFastISel::ARMSelectFPExt(const Instruction *I) {
+bool ARMFastISel::SelectFPExt(const Instruction *I) {
   // Make sure we have VFP and that we're extending float to double.
   if (!Subtarget->hasVFP2()) return false;
 
@@ -868,7 +868,7 @@ bool ARMFastISel::ARMSelectFPExt(const Instruction *I) {
   return true;
 }
 
-bool ARMFastISel::ARMSelectFPTrunc(const Instruction *I) {
+bool ARMFastISel::SelectFPTrunc(const Instruction *I) {
   // Make sure we have VFP and that we're truncating double to float.
   if (!Subtarget->hasVFP2()) return false;
 
@@ -887,7 +887,7 @@ bool ARMFastISel::ARMSelectFPTrunc(const Instruction *I) {
   return true;
 }
 
-bool ARMFastISel::ARMSelectSIToFP(const Instruction *I) {
+bool ARMFastISel::SelectSIToFP(const Instruction *I) {
   // Make sure we have VFP.
   if (!Subtarget->hasVFP2()) return false;
   
@@ -917,7 +917,7 @@ bool ARMFastISel::ARMSelectSIToFP(const Instruction *I) {
   return true;
 }
 
-bool ARMFastISel::ARMSelectFPToSI(const Instruction *I) {
+bool ARMFastISel::SelectFPToSI(const Instruction *I) {
   // Make sure we have VFP.
   if (!Subtarget->hasVFP2()) return false;
   
@@ -950,7 +950,7 @@ bool ARMFastISel::ARMSelectFPToSI(const Instruction *I) {
   return true;
 }
 
-bool ARMFastISel::ARMSelectBinaryOp(const Instruction *I, unsigned ISDOpcode) {
+bool ARMFastISel::SelectBinaryOp(const Instruction *I, unsigned ISDOpcode) {
   EVT VT  = TLI.getValueType(I->getType(), true);
 
   // We can get here in the case when we want to use NEON for our fp
@@ -1139,7 +1139,7 @@ bool ARMFastISel::ARMEmitLibcall(const Instruction *I, Function *F) {
   return true;
 }
 
-bool ARMFastISel::ARMSelectSDiv(const Instruction *I) {
+bool ARMFastISel::SelectSDiv(const Instruction *I) {
   EVT VT;
   const Type *Ty = I->getType();
   if (!isTypeLegal(Ty, VT))
@@ -1180,30 +1180,30 @@ bool ARMFastISel::TargetSelectInstruction(const Instruction *I) {
 
   switch (I->getOpcode()) {
     case Instruction::Load:
-      return ARMSelectLoad(I);
+      return SelectLoad(I);
     case Instruction::Store:
-      return ARMSelectStore(I);
+      return SelectStore(I);
     case Instruction::Br:
-      return ARMSelectBranch(I);
+      return SelectBranch(I);
     case Instruction::ICmp:
     case Instruction::FCmp:
-      return ARMSelectCmp(I);
+      return SelectCmp(I);
     case Instruction::FPExt:
-      return ARMSelectFPExt(I);
+      return SelectFPExt(I);
     case Instruction::FPTrunc:
-      return ARMSelectFPTrunc(I);
+      return SelectFPTrunc(I);
     case Instruction::SIToFP:
-      return ARMSelectSIToFP(I);
+      return SelectSIToFP(I);
     case Instruction::FPToSI:
-      return ARMSelectFPToSI(I);
+      return SelectFPToSI(I);
     case Instruction::FAdd:
-      return ARMSelectBinaryOp(I, ISD::FADD);
+      return SelectBinaryOp(I, ISD::FADD);
     case Instruction::FSub:
-      return ARMSelectBinaryOp(I, ISD::FSUB);
+      return SelectBinaryOp(I, ISD::FSUB);
     case Instruction::FMul:
-      return ARMSelectBinaryOp(I, ISD::FMUL);
+      return SelectBinaryOp(I, ISD::FMUL);
     case Instruction::SDiv:
-      return ARMSelectSDiv(I);
+      return SelectSDiv(I);
     default: break;
   }
   return false;
