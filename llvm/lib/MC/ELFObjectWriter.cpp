@@ -388,24 +388,32 @@ void ELFObjectWriterImpl::WriteSymbolEntry(MCDataFragment *F, uint64_t name,
   }
 }
 
+static uint64_t SymbolValue(MCSymbolData &Data, const MCAsmLayout &Layout) {
+  if (Data.isCommon() && Data.isExternal())
+    return Data.getCommonAlignment();
+
+  const MCSymbol &Symbol = Data.getSymbol();
+  if (!Symbol.isInSection())
+    return 0;
+
+  if (!Data.isCommon() && !(Data.getFlags() & ELF_STB_Weak))
+    if (MCFragment *FF = Data.getFragment())
+      return Layout.getSymbolAddress(&Data) -
+             Layout.getSectionAddress(FF->getParent());
+
+  return 0;
+}
+
 void ELFObjectWriterImpl::WriteSymbol(MCDataFragment *F, ELFSymbolData &MSD,
                                       const MCAsmLayout &Layout) {
   MCSymbolData &Data = *MSD.SymbolData;
   uint8_t Info = (Data.getFlags() & 0xff);
   uint8_t Other = ((Data.getFlags() & 0xf00) >> ELF_STV_Shift);
-  uint64_t Value = 0;
+  uint64_t Value = SymbolValue(Data, Layout);
   uint64_t Size = 0;
   const MCExpr *ESize;
 
-  if (Data.isCommon() && Data.isExternal())
-    Value = Data.getCommonAlignment();
-
   assert(!(Data.isCommon() && !Data.isExternal()));
-
-  if (!Data.isCommon() && !(Data.getFlags() & ELF_STB_Weak))
-    if (MCFragment *FF = Data.getFragment())
-      Value = Layout.getSymbolAddress(&Data) -
-              Layout.getSectionAddress(FF->getParent());
 
   ESize = Data.getSize();
   if (Data.getSize()) {
