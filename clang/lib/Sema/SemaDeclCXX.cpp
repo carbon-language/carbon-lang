@@ -4942,7 +4942,6 @@ CXXMethodDecl *Sema::DeclareImplicitCopyAssignment(CXXRecordDecl *ClassDecl) {
   CopyAssignment->setParams(&FromParam, 1);
   
   // Note that we have added this copy-assignment operator.
-  ClassDecl->setDeclaredCopyAssignment(true);
   ++ASTContext::NumImplicitCopyAssignmentOperatorsDeclared;
   
   if (Scope *S = getScopeForContext(ClassDecl))
@@ -5950,15 +5949,6 @@ bool Sema::CheckOverloadedOperatorDeclaration(FunctionDecl *FnDecl) {
       return Diag(LastParam->getLocation(),
                   diag::err_operator_overload_post_incdec_must_be_int)
         << LastParam->getType() << (Op == OO_MinusMinus);
-  }
-
-  // Notify the class if it got an assignment operator.
-  if (Op == OO_Equal) {
-    // Would have returned earlier otherwise.
-    assert(isa<CXXMethodDecl>(FnDecl) &&
-      "Overloaded = not member, but not filtered.");
-    CXXMethodDecl *Method = cast<CXXMethodDecl>(FnDecl);
-    Method->getParent()->addedAssignmentOperator(Context, Method);
   }
 
   return false;

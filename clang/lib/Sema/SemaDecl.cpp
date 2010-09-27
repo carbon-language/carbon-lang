@@ -544,7 +544,9 @@ static bool IsDisallowedCopyOrAssign(const CXXMethodDecl *D) {
 
   if (const CXXConstructorDecl *CD = dyn_cast<CXXConstructorDecl>(D))
     return CD->isCopyConstructor();
-  return D->isCopyAssignment();
+  if (const CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(D))
+    return Method->isCopyAssignmentOperator();
+  return false;
 }
 
 bool Sema::ShouldWarnIfUnusedFileScopedDecl(const DeclaratorDecl *D) const {

@@ -259,99 +259,126 @@ CXXMethodDecl *CXXRecordDecl::getCopyAssignmentOperator(bool ArgIsConst) const {
 }
 
 void
-CXXRecordDecl::addedConstructor(CXXConstructorDecl *Constructor) {
-  // Ignore friends.
-  if (Constructor->getFriendObjectKind())
+CXXRecordDecl::addedMember(Decl *D) {
+  // Ignore friends and invalid declarations.
+  if (D->getFriendObjectKind() || D->isInvalidDecl())
     return;
   
-  if (Constructor->isImplicit()) {
-    // If this is the implicit default constructor, note that we have now
-    // declared it.
-    if (Constructor->isDefaultConstructor())
-      data().DeclaredDefaultConstructor = true;
-    // If this is the implicit copy constructor, note that we have now
-    // declared it.
-    else if (Constructor->isCopyConstructor())
+  FunctionTemplateDecl *FunTmpl = dyn_cast<FunctionTemplateDecl>(D);
+  if (FunTmpl)
+    D = FunTmpl->getTemplatedDecl();
+  
+  if (D->isImplicit()) {
+    if (CXXConstructorDecl *Constructor = dyn_cast<CXXConstructorDecl>(D)) {
+      // If this is the implicit default constructor, note that we have now
+      // declared it.
+      if (Constructor->isDefaultConstructor())
+        data().DeclaredDefaultConstructor = true;
+      // If this is the implicit copy constructor, note that we have now
+      // declared it.
+      else if (Constructor->isCopyConstructor())
+        data().DeclaredCopyConstructor = true;
+    }
+    // FIXME: Destructors
+    else if (CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(D)) {
+      // If this is the implicit copy constructor, note that we have now
+      // declared it.
+      // FIXME: Move constructors
+      if (Method->getOverloadedOperator() == OO_Equal) {
+        data().DeclaredCopyAssignment = true;
+        Method->setCopyAssignment(true);
+      }
+    }
+    
+    // Nothing else to do for implicitly-declared members.
+    return;
+  }
+  
+  // Handle (user-declared) constructors.
+  if (CXXConstructorDecl *Constructor = dyn_cast<CXXConstructorDecl>(D)) {
+    // Note that we have a user-declared constructor.
+    data().UserDeclaredConstructor = true;
+
+    // Note that we have no need of an implicitly-declared default constructor.
+    data().DeclaredDefaultConstructor = true;
+    
+    // C++ [dcl.init.aggr]p1:
+    //   An aggregate is an array or a class (clause 9) with no
+    //   user-declared constructors (12.1) [...].
+    data().Aggregate = false;
+
+    // C++ [class]p4:
+    //   A POD-struct is an aggregate class [...]
+    data().PlainOldData = false;
+
+    // C++ [class.ctor]p5:
+    //   A constructor is trivial if it is an implicitly-declared default
+    //   constructor.
+    // FIXME: C++0x: don't do this for "= default" default constructors.
+    data().HasTrivialConstructor = false;
+
+    // Note when we have a user-declared copy constructor, which will
+    // suppress the implicit declaration of a copy constructor.
+    if (!FunTmpl && Constructor->isCopyConstructor()) {
+      data().UserDeclaredCopyConstructor = true;
       data().DeclaredCopyConstructor = true;
+      
+      // C++ [class.copy]p6:
+      //   A copy constructor is trivial if it is implicitly declared.
+      // FIXME: C++0x: don't do this for "= default" copy constructors.
+      data().HasTrivialCopyConstructor = false;
+    }
     
-    // Nothing else to do for implicitly-declared constructors.
     return;
   }
+
+  // FIXME: Destructors.
   
-  // Note that we have a user-declared constructor.
-  data().UserDeclaredConstructor = true;
-
-  // Note that we have no need of an implicitly-declared default constructor.
-  data().DeclaredDefaultConstructor = true;
-  
-  // C++ [dcl.init.aggr]p1:
-  //   An aggregate is an array or a class (clause 9) with no
-  //   user-declared constructors (12.1) [...].
-  data().Aggregate = false;
-
-  // C++ [class]p4:
-  //   A POD-struct is an aggregate class [...]
-  data().PlainOldData = false;
-
-  // C++ [class.ctor]p5:
-  //   A constructor is trivial if it is an implicitly-declared default
-  //   constructor.
-  // FIXME: C++0x: don't do this for "= default" default constructors.
-  data().HasTrivialConstructor = false;
-
-  // Note when we have a user-declared copy constructor, which will
-  // suppress the implicit declaration of a copy constructor.
-  if (!Constructor->getDescribedFunctionTemplate() &&
-      Constructor->isCopyConstructor()) {
-    data().UserDeclaredCopyConstructor = true;
-    data().DeclaredCopyConstructor = true;
+  if (CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(D)) {
+    if (Method->getOverloadedOperator() == OO_Equal) {
+      // We're interested specifically in copy assignment operators.
+      const FunctionProtoType *FnType 
+        = Method->getType()->getAs<FunctionProtoType>();
+      assert(FnType && "Overloaded operator has no proto function type.");
+      assert(FnType->getNumArgs() == 1 && !FnType->isVariadic());
+      
+      // Copy assignment operators must be non-templates.
+      if (Method->getPrimaryTemplate() || FunTmpl)
+        return;
+      
+      ASTContext &Context = getASTContext();
+      QualType ArgType = FnType->getArgType(0);
+      if (const LValueReferenceType *Ref =ArgType->getAs<LValueReferenceType>())
+        ArgType = Ref->getPointeeType();
+      
+      ArgType = ArgType.getUnqualifiedType();
+      QualType ClassType = Context.getCanonicalType(Context.getTypeDeclType(
+                                             const_cast<CXXRecordDecl*>(this)));
+      
+      if (!Context.hasSameUnqualifiedType(ClassType, ArgType))
+        return;
+      
+      // This is a copy assignment operator.
+      // Note on the decl that it is a copy assignment operator.
+      Method->setCopyAssignment(true);
+      
+      // Suppress the implicit declaration of a copy constructor.
+      data().UserDeclaredCopyAssignment = true;
+      data().DeclaredCopyAssignment = true;
+      
+      // C++ [class.copy]p11:
+      //   A copy assignment operator is trivial if it is implicitly declared.
+      // FIXME: C++0x: don't do this for "= default" copy operators.
+      data().HasTrivialCopyAssignment = false;
+      
+      // C++ [class]p4:
+      //   A POD-struct is an aggregate class that [...] has no user-defined copy
+      //   assignment operator [...].
+      data().PlainOldData = false;
+    }
     
-    // C++ [class.copy]p6:
-    //   A copy constructor is trivial if it is implicitly declared.
-    // FIXME: C++0x: don't do this for "= default" copy constructors.
-    data().HasTrivialCopyConstructor = false;
+    return;
   }
-}
-
-void CXXRecordDecl::addedAssignmentOperator(ASTContext &Context,
-                                            CXXMethodDecl *OpDecl) {
-  // We're interested specifically in copy assignment operators.
-  const FunctionProtoType *FnType = OpDecl->getType()->getAs<FunctionProtoType>();
-  assert(FnType && "Overloaded operator has no proto function type.");
-  assert(FnType->getNumArgs() == 1 && !FnType->isVariadic());
-  
-  // Copy assignment operators must be non-templates.
-  if (OpDecl->getPrimaryTemplate() || OpDecl->getDescribedFunctionTemplate())
-    return;
-  
-  QualType ArgType = FnType->getArgType(0);
-  if (const LValueReferenceType *Ref = ArgType->getAs<LValueReferenceType>())
-    ArgType = Ref->getPointeeType();
-
-  ArgType = ArgType.getUnqualifiedType();
-  QualType ClassType = Context.getCanonicalType(Context.getTypeDeclType(
-    const_cast<CXXRecordDecl*>(this)));
-
-  if (!Context.hasSameUnqualifiedType(ClassType, ArgType))
-    return;
-
-  // This is a copy assignment operator.
-  // Note on the decl that it is a copy assignment operator.
-  OpDecl->setCopyAssignment(true);
-
-  // Suppress the implicit declaration of a copy constructor.
-  data().UserDeclaredCopyAssignment = true;
-  data().DeclaredCopyAssignment = true;
-  
-  // C++ [class.copy]p11:
-  //   A copy assignment operator is trivial if it is implicitly declared.
-  // FIXME: C++0x: don't do this for "= default" copy operators.
-  data().HasTrivialCopyAssignment = false;
-
-  // C++ [class]p4:
-  //   A POD-struct is an aggregate class that [...] has no user-defined copy
-  //   assignment operator [...].
-  data().PlainOldData = false;
 }
 
 static CanQualType GetConversionType(ASTContext &Context, NamedDecl *Conv) {

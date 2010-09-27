@@ -406,13 +406,12 @@ class CXXRecordDecl : public RecordDecl {
   
   friend class DeclContext;
   
-  /// \brief Notify the class that another constructor has
-  /// been added. 
+  /// \brief Notify the class that member has been added.
   ///
   /// This routine helps maintain information about the class based on which 
-  /// constructors have been added. It will be invoked by DeclContext::addDecl()
-  /// whenever a constructor is added to this record.
-  void addedConstructor(CXXConstructorDecl *ConDecl);  
+  /// members have been added. It will be invoked by DeclContext::addDecl()
+  /// whenever a member is added to this record.
+  void addedMember(Decl *D);
   
 protected:
   CXXRecordDecl(Kind K, TagKind TK, DeclContext *DC,
@@ -610,11 +609,6 @@ public:
     return data().DeclaredCopyConstructor;
   }
   
-  /// addedAssignmentOperator - Notify the class that another assignment
-  /// operator has been added. This routine helps maintain information about the
-  /// class based on which operators have been added.
-  void addedAssignmentOperator(ASTContext &Context, CXXMethodDecl *OpDecl);
-
   /// hasUserDeclaredCopyAssignment - Whether this class has a
   /// user-declared copy assignment operator. When false, a copy
   /// assigment operator will be implicitly declared.
@@ -628,12 +622,6 @@ public:
   /// This value is used for lazy creation of copy assignment operators.
   bool hasDeclaredCopyAssignment() const {
     return data().DeclaredCopyAssignment;
-  }
-  
-  /// \brief Note whether this class has already had its copy assignment 
-  /// operator declared.
-  void setDeclaredCopyAssignment(bool DCA) {
-    data().DeclaredCopyAssignment = DCA;
   }
   
   /// hasUserDeclaredDestructor - Whether this class has a
