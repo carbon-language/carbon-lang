@@ -92,8 +92,7 @@ public:
     DTraits = DOTTraits(SN);
   }
 
-  void writeGraph(bool ShortNames = false,
-                  const std::string &Title = "") {
+  void writeGraph(const std::string &Title = "") {
     // Output the header for the graph...
     writeHeader(Title);
 
@@ -302,7 +301,7 @@ raw_ostream &WriteGraph(raw_ostream &O, const GraphType &G,
   GraphWriter<GraphType> W(O, G, ShortNames);
 
   // Emit the graph.
-  W.writeGraph(ShortNames, Title);
+  W.writeGraph(Title);
 
   return O;
 }
