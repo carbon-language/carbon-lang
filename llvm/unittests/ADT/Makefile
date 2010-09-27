@@ -9,7 +9,7 @@
 
 LEVEL = ../..
 TESTNAME = ADT
-LINK_COMPONENTS := core support
+LINK_COMPONENTS := support
 
 include $(LEVEL)/Makefile.config
 
