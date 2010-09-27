@@ -152,7 +152,7 @@ endif
 .PHONY: clean
 dsym:	$(DSYM)
 all:	$(EXE) $(DSYM)
-clean:
+clean::
 ifeq "$(DYLIB_NAME)" ""
 	rm -rf "$(EXE)" "$(DSYM)" $(OBJECTS) $(PREREQS)
 else

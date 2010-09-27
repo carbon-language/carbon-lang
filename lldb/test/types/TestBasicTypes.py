@@ -131,39 +131,75 @@ class BasicTypesTestCase(TestBase):
         self.setTearDownCleanup(dictionary=d)
         self.unsigned_long_type()
 
+    def test_long_long_type_with_dsym(self):
+        """Test that 'long long'-type variables are displayed correctly."""
+        d = {'CXX_SOURCES': 'long_long.cpp'}
+        self.buildDsym(dictionary=d)
+        self.setTearDownCleanup(dictionary=d)
+        self.long_long_type()
+
+    def test_long_long_type_with_dwarf(self):
+        """Test that 'long long'-type variables are displayed correctly."""
+        d = {'CXX_SOURCES': 'long_long.cpp'}
+        self.buildDwarf(dictionary=d)
+        self.setTearDownCleanup(dictionary=d)
+        self.long_long_type()
+
+    def test_unsigned_long_long_type_with_dsym(self):
+        """Test that 'unsigned long long'-type variables are displayed correctly."""
+        d = {'CXX_SOURCES': 'unsigned_long_long.cpp'}
+        self.buildDsym(dictionary=d)
+        self.setTearDownCleanup(dictionary=d)
+        self.unsigned_long_long_type()
+
+    def test_unsigned_long_long_type_with_dwarf(self):
+        """Test that 'unsigned long long'-type variables are displayed correctly."""
+        d = {'CXX_SOURCES': 'unsigned_long_long.cpp'}
+        self.buildDwarf(dictionary=d)
+        self.setTearDownCleanup(dictionary=d)
+        self.unsigned_long_long_type()
+
     def char_type(self):
         """Test that char-type variables are displayed correctly."""
-        self.generic_type_tester("char", quotedDisplay=True)
+        self.generic_type_tester(set(['char']), quotedDisplay=True)
 
     def unsigned_char_type(self):
         """Test that 'unsigned char'-type variables are displayed correctly."""
-        self.generic_type_tester("unsigned char", quotedDisplay=True)
+        self.generic_type_tester(set(['unsigned', 'char']), quotedDisplay=True)
 
     def short_type(self):
         """Test that short-type variables are displayed correctly."""
-        self.generic_type_tester("short")
+        self.generic_type_tester(set(['short']))
 
     def unsigned_short_type(self):
         """Test that 'unsigned short'-type variables are displayed correctly."""
-        self.generic_type_tester("unsigned short")
+        self.generic_type_tester(set(['unsigned', 'short']))
 
     def int_type(self):
         """Test that int-type variables are displayed correctly."""
-        self.generic_type_tester("int")
+        self.generic_type_tester(set(['int']))
 
     def unsigned_int_type(self):
         """Test that 'unsigned int'-type variables are displayed correctly."""
-        self.generic_type_tester("unsigned int")
+        self.generic_type_tester(set(['unsigned', 'int']))
 
     def long_type(self):
         """Test that long-type variables are displayed correctly."""
-        self.generic_type_tester("long")
+        self.generic_type_tester(set(['long']))
 
     def unsigned_long_type(self):
         """Test that 'unsigned long'-type variables are displayed correctly."""
-        self.generic_type_tester("unsigned long")
+        self.generic_type_tester(set(['unsigned', 'long']))
 
-    def generic_type_tester(self, type, quotedDisplay=False):
+    def long_long_type(self):
+        """Test that long long-type variables are displayed correctly."""
+        self.generic_type_tester(set(['long long']))
+
+    def unsigned_long_long_type(self):
+        """Test that 'unsigned long long'-type variables are displayed correctly."""
+        self.generic_type_tester(set(['unsigned', 'long long']))
+
+    def generic_type_tester(self, atoms, quotedDisplay=False):
         """Test that variables with basic types are displayed correctly."""
 
         # First, capture the golden output emitted by the oracle, i.e., the
@@ -217,16 +253,16 @@ class BasicTypesTestCase(TestBase):
             self.runCmd("frame variable %s" % var)
             output = self.res.GetOutput()
             
-            # Extract the display type and canonicalize its atoms into a set.
-            # Same for the input type string.
+            # The input type is in a canonical form as a set named atoms.
+            # The display type string must conatin each and every element.
             dt = re.match("^\((.*)\)", output).group(1)
-            ds = set(dt.split())
-            ts = set(type.split())
 
-            # The display type set must be a superset of the input type set.
-            if not ds.issuperset(ts):
-                self.fail("The display type: %s must match the input type: %s" %
-                          (dt, type))
+            # Expect the display type string to contain each and every atoms.
+            self.expect(dt,
+                        "Display type: '%s' must contain the type atoms: '%s'" %
+                        (dt, atoms),
+                        exe=False,
+                substrs = list(atoms))
 
             # The (var, val) pair must match, too.
             nv = (" %s = '%s'" if quotedDisplay else " %s = %s") % (var, val)
