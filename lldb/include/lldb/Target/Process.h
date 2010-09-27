@@ -365,6 +365,9 @@ public:
     static lldb::UserSettingsControllerSP
     GetSettingsController (bool finish = false);
 
+    void
+    UpdateInstanceName ();
+
     //------------------------------------------------------------------
     /// Construct with a shared pointer to a target, and the Process listener.
     //------------------------------------------------------------------

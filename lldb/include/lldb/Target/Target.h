@@ -132,6 +132,9 @@ public:
     static void
     SetDefaultArchitecture (ArchSpec new_arch);
 
+    void
+    UpdateInstanceName ();
+
     //------------------------------------------------------------------
     /// Broadcaster event bits definitions.
     //------------------------------------------------------------------

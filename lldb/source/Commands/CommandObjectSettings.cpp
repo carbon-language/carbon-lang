@@ -194,7 +194,7 @@ CommandObjectSettingsSet::HandleArgumentCompletion (Args &input,
 
 CommandObjectSettingsSet::CommandOptions::CommandOptions () :
     Options (),
-    m_override (false),
+    m_override (true),
     m_reset (false)
 {
 }
@@ -206,7 +206,7 @@ CommandObjectSettingsSet::CommandOptions::~CommandOptions ()
 lldb::OptionDefinition
 CommandObjectSettingsSet::CommandOptions::g_option_table[] =
 {
-    { LLDB_OPT_SET_1, false, "override", 'o', no_argument, NULL, NULL, NULL, "Causes already existing instances and pending settings to use this new value.  This option only makes sense when setting default values." },
+    { LLDB_OPT_SET_1, false, "no_override", 'n', no_argument, NULL, NULL, NULL, "Prevents already existing instances and pending settings from being assigned this new value.  Using this option means that only the default or specified instance setting values will be updated." },
     { LLDB_OPT_SET_2, false, "reset", 'r', no_argument,   NULL, NULL, NULL, "Causes value to be reset to the original default for this variable.  No value needs to be specified when this option is used." },
 };
 
@@ -224,8 +224,8 @@ CommandObjectSettingsSet::CommandOptions::SetOptionValue (int option_idx, const 
 
     switch (short_option)
     {
-        case 'o':
-            m_override = true;
+        case 'n':
+            m_override = false;
             break;
         case 'r':
             m_reset = true;
@@ -243,7 +243,7 @@ CommandObjectSettingsSet::CommandOptions::ResetOptionValues ()
 {
     Options::ResetOptionValues ();
     
-    m_override = false;
+    m_override = true;
     m_reset = false;
 }
 
@@ -510,7 +510,7 @@ CommandObjectSettingsRemove::Execute (                        Args& command,
     Error err = root_settings->SetVariable (var_name_string.c_str(), 
                                             NULL, 
                                             lldb::eVarSetOperationRemove,  
-                                            false, 
+                                            true, 
                                             m_interpreter.GetDebugger().GetInstanceName().AsCString(),
                                             index_value_string.c_str());
     if (err.Fail ())
@@ -622,7 +622,7 @@ CommandObjectSettingsReplace::Execute (                         Args& command,
         Error err = root_settings->SetVariable (var_name_string.c_str(), 
                                                 var_value, 
                                                 lldb::eVarSetOperationReplace, 
-                                                false, 
+                                                true, 
                                                 m_interpreter.GetDebugger().GetInstanceName().AsCString(),
                                                 index_value_string.c_str());
         if (err.Fail ())
@@ -736,7 +736,7 @@ CommandObjectSettingsInsertBefore::Execute (                              Args& 
         Error err = root_settings->SetVariable (var_name_string.c_str(), 
                                                 var_value, 
                                                 lldb::eVarSetOperationInsertBefore,
-                                                false, 
+                                                true, 
                                                 m_interpreter.GetDebugger().GetInstanceName().AsCString(),
                                                 index_value_string.c_str());
         if (err.Fail ())
@@ -851,7 +851,7 @@ CommandObjectSettingsInsertAfter::Execute (                             Args& co
         Error err = root_settings->SetVariable (var_name_string.c_str(), 
                                                 var_value, 
                                                 lldb::eVarSetOperationInsertAfter,
-                                                false, 
+                                                true, 
                                                 m_interpreter.GetDebugger().GetInstanceName().AsCString(), 
                                                 index_value_string.c_str());
         if (err.Fail ())
@@ -911,8 +911,8 @@ CommandObjectSettingsAppend::~CommandObjectSettingsAppend ()
 }
 
 bool
-CommandObjectSettingsAppend::Execute (                        Args& command,
-                                     CommandReturnObject &result)
+CommandObjectSettingsAppend::Execute (Args& command,
+                                      CommandReturnObject &result)
 {
     UserSettingsControllerSP root_settings = Debugger::GetSettingsController ();
 
@@ -954,7 +954,7 @@ CommandObjectSettingsAppend::Execute (                        Args& command,
         Error err = root_settings->SetVariable (var_name_string.c_str(), 
                                                 var_value, 
                                                 lldb::eVarSetOperationAppend, 
-                                                false, 
+                                                true, 
                                                 m_interpreter.GetDebugger().GetInstanceName().AsCString());
         if (err.Fail ())
         {

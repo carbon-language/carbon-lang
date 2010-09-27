@@ -581,7 +581,7 @@ SBDebugger::SetInternalVariable (const char *var_name, const char *value, const 
 {
     lldb::UserSettingsControllerSP root_settings_controller = lldb_private::Debugger::GetSettingsController();
 
-    Error err = root_settings_controller->SetVariable (var_name, value, lldb::eVarSetOperationAssign, false,
+    Error err = root_settings_controller->SetVariable (var_name, value, lldb::eVarSetOperationAssign, true,
                                                        debugger_instance_name);
     SBError sb_error;
     sb_error.SetError (err);

@@ -87,6 +87,8 @@ Process::Process(Target &target, Listener &listener) :
     m_objc_object_printer(*this),
     m_persistent_vars()
 {
+    UpdateInstanceName();
+
     Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_OBJECT);
     if (log)
         log->Printf ("%p Process::Process()", this);
@@ -1882,6 +1884,20 @@ Process::GetSettingsController (bool finish)
     }
 
     return g_settings_controller;
+}
+
+void
+Process::UpdateInstanceName ()
+{
+    ModuleSP module_sp = GetTarget().GetExecutableModule();
+    if (module_sp)
+    {
+        StreamString sstr;
+        sstr.Printf ("%s", module_sp->GetFileSpec().GetFilename().AsCString());
+                    
+	Process::GetSettingsController()->RenameInstanceSettings (GetInstanceName().AsCString(),
+                                                                  sstr.GetData());
+    }
 }
 
 //--------------------------------------------------------------

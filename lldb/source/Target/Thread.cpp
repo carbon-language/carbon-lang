@@ -62,6 +62,7 @@ Thread::Thread (Process &process, lldb::tid_t tid) :
         log->Printf ("%p Thread::Thread(tid = 0x%4.4x)", this, GetID());
 
     QueueFundamentalPlan(true);
+    UpdateInstanceName();
 }
 
 
@@ -936,6 +937,21 @@ Thread::GetSettingsController (bool finish)
     }
 
     return g_settings_controller;
+}
+
+void
+Thread::UpdateInstanceName ()
+{
+    StreamString sstr;
+    const char *name = GetName();
+
+    if (name && name[0] != '\0')
+        sstr.Printf ("%s", name);
+    else if ((GetIndexID() != 0) || (GetID() != 0))
+        sstr.Printf ("0x%4.4x", GetIndexID(), GetID());
+
+    if (sstr.GetSize() > 0)
+	Thread::GetSettingsController()->RenameInstanceSettings (GetInstanceName().AsCString(), sstr.GetData());
 }
 
 //--------------------------------------------------------------

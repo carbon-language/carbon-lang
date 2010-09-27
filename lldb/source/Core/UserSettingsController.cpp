@@ -347,14 +347,14 @@ UserSettingsController::SetVariable (const char *full_dot_name,
                         OverrideAllInstances (const_var_name, value, op, index_value, err);
 
                         // Update all pending records as well.
-                        std::map<std::string, lldb::InstanceSettingsSP>::iterator pos, end = m_pending_settings.end();
-                        for (pos = m_pending_settings.begin(); pos != end; end++)
-                        {
-                            const ConstString instance_name (pos->first.c_str());
-                            lldb::InstanceSettingsSP setting_sp = pos->second;
-                            setting_sp->UpdateInstanceSettingsVariable (const_var_name, index_value, value, 
-                                                                        instance_name, *entry, op, err, true);
-                        }
+//                        std::map<std::string, lldb::InstanceSettingsSP>::iterator pos, end = m_pending_settings.end();
+//                        for (pos = m_pending_settings.begin(); pos != end; end++)
+//                        {
+//                            const ConstString instance_name (pos->first.c_str());
+//                            lldb::InstanceSettingsSP setting_sp = pos->second;
+//                            setting_sp->UpdateInstanceSettingsVariable (const_var_name, index_value, value, 
+//                                                                        instance_name, *entry, op, err, true);
+//                        }
                     }
                 }
             }
@@ -2164,18 +2164,24 @@ UserSettingsController::RenameInstanceSettings (const char *old_name, const char
     // list, then this is not a setting that can be renamed.
 
     if ((old_name_key[0] != '[') || (old_name_key[old_name_key.size() -1] != ']'))
-      {
+    {
         StreamString tmp_str;
         tmp_str.Printf ("[%s]", old_name);
           old_name_key = tmp_str.GetData();
-      }
+    }
 
     if ((new_name_key[0] != '[') || (new_name_key[new_name_key.size() -1] != ']'))
-      {
+    {
         StreamString tmp_str;
         tmp_str.Printf ("[%s]", new_name);
         new_name_key = tmp_str.GetData();
-      }
+    }
+
+    if (old_name_key.compare (new_name_key) == 0) 
+        return;
+
+    size_t len = new_name_key.length();
+    std::string stripped_new_name = new_name_key.substr (1, len-2);  // new name without the '[ ]'
 
     std::map<std::string, InstanceSettings *>::iterator pos;
 
@@ -2185,7 +2191,7 @@ UserSettingsController::RenameInstanceSettings (const char *old_name, const char
         InstanceSettings *live_settings = pos->second;
 
         // Rename the settings.
-        live_settings->ChangeInstanceName (new_name_key);
+        live_settings->ChangeInstanceName (stripped_new_name);
 
         // Now see if there are any pending settings for the new name; if so, copy them into live_settings.
         std::map<std::string,  lldb::InstanceSettingsSP>::iterator pending_pos;

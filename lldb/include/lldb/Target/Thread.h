@@ -159,6 +159,9 @@ public:
         lldb::DataBufferSP m_data_sp;
     };
 
+    void
+    UpdateInstanceName ();
+
     static lldb::UserSettingsControllerSP
     GetSettingsController (bool finish = false);
 

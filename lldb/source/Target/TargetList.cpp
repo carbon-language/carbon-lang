@@ -101,6 +101,9 @@ TargetList::CreateTarget
             target_sp->SetExecutableModule (exe_module_sp, get_dependent_files);
         }
     }
+
+    if (target_sp.get())
+        target_sp->UpdateInstanceName();
     
     if (target_sp.get())
     {

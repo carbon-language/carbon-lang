@@ -425,6 +425,8 @@ Target::SetExecutableModule (ModuleSP& executable_sp, bool get_dependent_files)
             m_scratch_ast_context_ap.reset (new ClangASTContext(target_triple.GetCString()));
         }
     }
+
+    UpdateInstanceName();
 }
 
 
@@ -792,6 +794,21 @@ Target::SetDefaultArchitecture (ArchSpec new_arch)
                                                        lldb::eVarSetOperationAssign, false, "[]");
 }
 
+void
+Target::UpdateInstanceName ()
+{
+    StreamString sstr;
+    
+    ModuleSP module_sp = GetExecutableModule();
+    if (module_sp)
+    {
+        sstr.Printf ("%s_%s", module_sp->GetFileSpec().GetFilename().AsCString(), 
+                     module_sp->GetArchitecture().AsCString());
+	Target::GetSettingsController()->RenameInstanceSettings (GetInstanceName().AsCString(),
+								 sstr.GetData());
+    }
+}
+
 //--------------------------------------------------------------
 // class Target::SettingsController
 //--------------------------------------------------------------
@@ -948,9 +965,9 @@ TargetInstanceSettings::GetInstanceSettingsValue (const SettingEntry &entry,
 const ConstString
 TargetInstanceSettings::CreateInstanceName ()
 {
-    static int instance_count = 1;
     StreamString sstr;
-
+    static int instance_count = 1;
+    
     sstr.Printf ("target_%d", instance_count);
     ++instance_count;
 
