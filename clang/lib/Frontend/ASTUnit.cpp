@@ -749,20 +749,9 @@ bool ASTUnit::Parse(llvm::MemoryBuffer *OverrideMainBuffer) {
                         getSourceManager());
       StoredDiagnostics[I].setLocation(Loc);
     }
-
-    if (getenv("LIBCLANG_LOGGING"))
-      fprintf(stderr, "libclang: using precompiled preamble for \"%s\" at "
-              "\"%s\"\n",
-              OriginalSourceFile.c_str(),
-              PreambleFile.c_str());
-
   } else {
     PreprocessorOpts.PrecompiledPreambleBytes.first = 0;
     PreprocessorOpts.PrecompiledPreambleBytes.second = false;
-
-    if (getenv("LIBCLANG_LOGGING"))
-      fprintf(stderr, "libclang: not using precompiled preamble for \"%s\"\n",
-              OriginalSourceFile.c_str());
   }
   
   llvm::OwningPtr<TopLevelDeclTrackerAction> Act;
@@ -1226,13 +1215,6 @@ llvm::MemoryBuffer *ASTUnit::getMainBufferWithPrecompiledPreamble(
   // Create the source manager.
   Clang.setSourceManager(new SourceManager(getDiagnostics()));
   
-  if (getenv("LIBCLANG_LOGGING"))
-    fprintf(stderr, "libclang: creating precompiled preamble for \"%s\" at "
-            "\"%s\" (%u bytes)\n",
-            OriginalSourceFile.c_str(),
-            PreamblePCHPath.c_str(),
-            (unsigned)Preamble.size());
-
   llvm::OwningPtr<PrecompilePreambleAction> Act;
   Act.reset(new PrecompilePreambleAction(*this));
   if (!Act->BeginSourceFile(Clang, Clang.getFrontendOpts().Inputs[0].second,
@@ -1247,11 +1229,6 @@ llvm::MemoryBuffer *ASTUnit::getMainBufferWithPrecompiledPreamble(
     PreambleRebuildCounter = DefaultPreambleRebuildInterval;
     PreprocessorOpts.eraseRemappedFile(
                                PreprocessorOpts.remapped_file_buffer_end() - 1);
-
-    if (getenv("LIBCLANG_LOGGING"))
-      fprintf(stderr, "libclang: precompiled preamble compilation for \"%s\" "
-              "failed\n", OriginalSourceFile.c_str());
-
     return 0;
   }
   
@@ -1262,10 +1239,7 @@ llvm::MemoryBuffer *ASTUnit::getMainBufferWithPrecompiledPreamble(
   if (Diagnostics->hasErrorOccurred()) {
     // There were errors parsing the preamble, so no precompiled header was
     // generated. Forget that we even tried.
-
-    if (getenv("LIBCLANG_LOGGING"))
-      fprintf(stderr, "libclang: precompiled preamble compilation for \"%s\" "
-              "failed\n", OriginalSourceFile.c_str());
+    // FIXME: Should we leave a note for ourselves to try again?
     llvm::sys::Path(FrontendOpts.OutputFile).eraseFromDisk();
     Preamble.clear();
     if (CreatedPreambleBuffer)
@@ -1304,11 +1278,7 @@ llvm::MemoryBuffer *ASTUnit::getMainBufferWithPrecompiledPreamble(
   
   if (PreambleTimer)
     PreambleTimer->stopTimer();
-
-  if (getenv("LIBCLANG_LOGGING"))
-    fprintf(stderr, "libclang: precompiled preamble for \"%s\" completed\n",
-            OriginalSourceFile.c_str());
- 
+  
   PreambleRebuildCounter = 1;
   PreprocessorOpts.eraseRemappedFile(
                                PreprocessorOpts.remapped_file_buffer_end() - 1);
