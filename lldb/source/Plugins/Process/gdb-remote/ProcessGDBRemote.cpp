@@ -1133,14 +1133,58 @@ Error
 ProcessGDBRemote::WillDetach ()
 {
     Error error;
-    const StateType state = m_private_state.GetValue();
 
-    if (IsRunning(state))
-        error.SetErrorString("Process must be stopped in order to detach.");
-
+    if (m_gdb_comm.IsRunning())
+    {
+        bool timed_out = false;
+        Mutex::Locker locker;
+        if (!m_gdb_comm.SendInterrupt (locker, 2, &timed_out))
+        {
+            if (timed_out)
+                error.SetErrorString("timed out sending interrupt packet");
+            else
+                error.SetErrorString("unknown error sending interrupt packet");
+        }
+    }
     return error;
 }
 
+Error
+ProcessGDBRemote::DoDetach()
+{
+    Error error;
+    Log *log = ProcessGDBRemoteLog::GetLogIfAllCategoriesSet(GDBR_LOG_PROCESS);
+    if (log)
+        log->Printf ("ProcessGDBRemote::DoDetach()");
+
+    DisableAllBreakpointSites ();
+
+    StringExtractorGDBRemote response;
+    size_t response_size = m_gdb_comm.SendPacketAndWaitForResponse("D", response, 2, false);
+    if (response_size)
+    {
+        if (response.IsOKPacket())
+        {
+            if (log)
+                log->Printf ("ProcessGDBRemote::DoDetach() detach was successful");
+
+        }
+        else if (log)
+        {
+            log->Printf ("ProcessGDBRemote::DoDestroy() detach failed: %s", response.GetStringRef().c_str());
+        }
+    }
+    else if (log)
+    {
+        log->PutCString ("ProcessGDBRemote::DoDestroy() detach failed for unknown reasons");
+    }
+    StopAsyncThread ();
+    m_gdb_comm.StopReadThread();
+    KillDebugserverProcess ();
+    m_gdb_comm.Disconnect();    // Disconnect from the debug server.
+    SetPublicState (eStateDetached);
+    return error;
+}
 
 Error
 ProcessGDBRemote::DoDestroy ()
@@ -1572,57 +1616,6 @@ ProcessGDBRemote::DoSignal (int signo)
 
     if (!m_gdb_comm.SendAsyncSignal (signo))
         error.SetErrorStringWithFormat("failed to send signal %i", signo);
-    return error;
-}
-
-
-Error
-ProcessGDBRemote::DoDetach()
-{
-    Error error;
-    Log *log = ProcessGDBRemoteLog::GetLogIfAllCategoriesSet(GDBR_LOG_PROCESS);
-    if (log)
-        log->Printf ("ProcessGDBRemote::DoDetach()");
-
-    //    if (DoSIGSTOP (true))
-    //    {
-    //        CloseChildFileDescriptors ();
-    //
-    //        // Scope for "locker" so we can reply to all of our exceptions (the SIGSTOP
-    //        // exception).
-    //        {
-    //            Mutex::Locker locker(m_exception_messages_mutex);
-    //            ReplyToAllExceptions();
-    //        }
-    //
-    //        // Shut down the exception thread and cleanup our exception remappings
-    //        Task().ShutDownExceptionThread();
-    //
-    //        pid_t pid = GetID();
-    //
-    //        // Detach from our process while we are stopped.
-    //        errno = 0;
-    //
-    //        // Detach from our process
-    //        ::ptrace (PT_DETACH, pid, (caddr_t)1, 0);
-    //
-    //        error.SetErrorToErrno();
-    //
-    //        if (log || error.Fail())
-    //            error.PutToLog(log, "::ptrace (PT_DETACH, %u, (caddr_t)1, 0)", pid);
-    //
-    //        // Resume our task
-    //        Task().Resume();
-    //
-    //        // NULL our task out as we have already retored all exception ports
-    //        Task().Clear();
-    //
-    //        // Clear out any notion of the process we once were
-    //        Clear();
-    //
-    //        SetPrivateState (eStateDetached);
-    //        return true;
-    //    }
     return error;
 }
 

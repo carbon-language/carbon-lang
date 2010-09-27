@@ -280,8 +280,12 @@ protected:
                                 const NameToDIE &name_to_die,
                                 lldb_private::SymbolContextList& sc_list);
 
-    lldb_private::Type*     GetUniquedTypeForDIEOffset(dw_offset_t type_die_offset, lldb::TypeSP& owning_type_sp, int32_t child_type, uint32_t idx, bool safe);
-    lldb::TypeSP            GetTypeForDIE(DWARFCompileUnit *cu, const DWARFDebugInfoEntry* die, lldb::TypeSP& owning_type_sp, int32_t child_type, uint32_t idx);
+    lldb::TypeSP            GetTypeForDIE (DWARFCompileUnit *cu, 
+                                           const DWARFDebugInfoEntry* die, 
+                                           lldb::TypeSP& owning_type_sp, 
+                                           int32_t child_type, 
+                                           uint32_t idx);
+
     uint32_t                FindTypes(std::vector<dw_offset_t> die_offsets, uint32_t max_matches, lldb_private::TypeList& types);
 
     void                    Index();
@@ -313,7 +317,11 @@ protected:
     std::auto_ptr<DWARFDebugRanges>     m_ranges;
 
     typedef llvm::DenseMap<const DWARFDebugInfoEntry *, clang::DeclContext *> DIEToDeclContextMap;
+    typedef llvm::DenseMap<const DWARFDebugInfoEntry *, lldb_private::Type *> DIEToTypePtr;
+    typedef llvm::DenseMap<const DWARFDebugInfoEntry *, lldb::VariableSP> DIEToVariableSP;
     DIEToDeclContextMap m_die_to_decl_ctx;
+    DIEToTypePtr m_die_to_type;
+    DIEToVariableSP m_die_to_variable_sp;
     
 };
 

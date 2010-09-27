@@ -52,7 +52,7 @@
 
 #include <map>
 
-#define DIE_IS_BEING_PARSED ((void*)1)
+#define DIE_IS_BEING_PARSED ((lldb_private::Type*)1)
 
 using namespace lldb;
 using namespace lldb_private;
@@ -609,10 +609,7 @@ SymbolFileDWARF::ParseCompileUnitFunction (const SymbolContext& sc, DWARFCompile
             if (decl_file != 0 || decl_line != 0 || decl_column != 0)
                 decl_ap.reset(new Declaration(sc.comp_unit->GetSupportFiles().GetFileSpecAtIndex(decl_file), decl_line, decl_column));
 
-            Type *func_type = NULL;
-
-            if (die->GetUserData() != DIE_IS_BEING_PARSED)
-                func_type = (Type*)die->GetUserData();
+            Type *func_type = m_die_to_type.lookup (die);
 
             assert(func_type == NULL || func_type != DIE_IS_BEING_PARSED);
 
@@ -1215,17 +1212,7 @@ SymbolFileDWARF::ResolveTypeUID (lldb::user_id_t type_uid)
         DWARFCompileUnitSP cu_sp;
         const DWARFDebugInfoEntry* type_die = debug_info->GetDIEPtr(type_uid, &cu_sp);
         if (type_die != NULL)
-        {
-            void *type = type_die->GetUserData();
-            if (type == NULL)
-            {
-                TypeSP owning_type_sp;
-                GetTypeForDIE(cu_sp.get(), type_die, owning_type_sp, 0, 0);
-                type = type_die->GetUserData();
-            }
-            if (type != DIE_IS_BEING_PARSED)
-                return (Type *)type;
-        }
+            return ResolveType (cu_sp.get(), type_die);
     }
     return NULL;
 }
@@ -1235,15 +1222,14 @@ SymbolFileDWARF::ResolveType (DWARFCompileUnit* cu, const DWARFDebugInfoEntry* t
 {
     if (type_die != NULL)
     {
-        void *type = type_die->GetUserData();
+        Type *type = m_die_to_type.lookup (type_die);
         if (type == NULL)
         {
             TypeSP owning_type_sp;
-            TypeSP type_sp(GetTypeForDIE(cu, type_die, owning_type_sp, 0, 0));
-            type = type_die->GetUserData();
+            type = GetTypeForDIE(cu, type_die, owning_type_sp, 0, 0).get();
         }
-        if (type != DIE_IS_BEING_PARSED)
-            return (Type *)type;
+        assert (type != DIE_IS_BEING_PARSED);
+        return type;
     }
     return NULL;
 }
@@ -2238,38 +2224,26 @@ SymbolFileDWARF::ParseChildArrayInfo
     }
 }
 
-Type*
-SymbolFileDWARF::GetUniquedTypeForDIEOffset(dw_offset_t type_die_offset, TypeSP& owning_type_sp, int32_t child_type, uint32_t idx, bool safe)
-{
-    if (type_die_offset != DW_INVALID_OFFSET)
-    {
-        DWARFCompileUnitSP cu_sp;
-        const DWARFDebugInfoEntry* type_die = DebugInfo()->GetDIEPtr(type_die_offset, &cu_sp);
-        assert(type_die != NULL);
-        GetTypeForDIE(cu_sp.get(), type_die, owning_type_sp, child_type, idx);
-        // Return the uniqued type if there is one
-        Type* type = (Type*)type_die->GetUserData();
-        if (type == DIE_IS_BEING_PARSED && safe)
-            return NULL;
-        return type;
-    }
-    return NULL;
-}
-
 TypeSP
-SymbolFileDWARF::GetTypeForDIE(DWARFCompileUnit *cu, const DWARFDebugInfoEntry* die, TypeSP& owning_type_sp, int32_t child_type, uint32_t idx)
+SymbolFileDWARF::GetTypeForDIE 
+(
+    DWARFCompileUnit *cu, 
+    const DWARFDebugInfoEntry* die, 
+    TypeSP& owning_type_sp, 
+    int32_t child_type, 
+    uint32_t idx
+)
 {
     TypeSP type_sp;
     if (die != NULL)
     {
         assert(cu != NULL);
-        Type *type_ptr = (Type *)die->GetUserData();
+        Type *type_ptr = m_die_to_type.lookup (die);
         if (type_ptr == NULL)
         {
             SymbolContext sc(GetCompUnitForDWARFCompUnit(cu));
             bool type_is_new = false;
             type_sp = ParseType(sc, cu, die, type_is_new);
-            type_ptr = (Type *)die->GetUserData();
             if (owning_type_sp.get() == NULL)
                 owning_type_sp = type_sp;
         }
@@ -2349,10 +2323,12 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
     AccessType accessibility = eAccessNone;
     if (die != NULL)
     {
-        const dw_tag_t tag = die->Tag();
-        if (die->GetUserData() == NULL)
+        Type *type_ptr = m_die_to_type.lookup (die);
+        if (type_ptr == NULL)
         {
             type_is_new = true;
+
+            const dw_tag_t tag = die->Tag();
 
             bool is_forward_declaration = false;
             DWARFDebugInfoEntry::Attributes attributes;
@@ -2376,7 +2352,7 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                 {
                     //printf("0x%8.8x: %s (ParesTypes)\n", die->GetOffset(), DW_TAG_value_to_name(tag));
                     // Set a bit that lets us know that we are currently parsing this
-                    const_cast<DWARFDebugInfoEntry*>(die)->SetUserData(DIE_IS_BEING_PARSED);
+                    m_die_to_type[die] = DIE_IS_BEING_PARSED;
 
                     const size_t num_attributes = die->GetAttributes(this, dwarf_cu, NULL, attributes);
                     Declaration decl;
@@ -2480,8 +2456,7 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                         
                     type_sp.reset( new Type(die->GetOffset(), this, type_name_dbstr, byte_size, NULL, encoding_uid, encoding_uid_type, &decl, clang_type));
 
-                    const_cast<DWARFDebugInfoEntry*>(die)->SetUserData(type_sp.get());
-
+                    m_die_to_type[die] = type_sp.get();
 
 //                  Type* encoding_type = GetUniquedTypeForDIEOffset(encoding_uid, type_sp, NULL, 0, 0, false);
 //                  if (encoding_type != NULL)
@@ -2500,7 +2475,7 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                 {
                     //printf("0x%8.8x: %s (ParesTypes)\n", die->GetOffset(), DW_TAG_value_to_name(tag));
                     // Set a bit that lets us know that we are currently parsing this
-                    const_cast<DWARFDebugInfoEntry*>(die)->SetUserData(DIE_IS_BEING_PARSED);
+                    m_die_to_type[die] = DIE_IS_BEING_PARSED;
 
                     size_t byte_size = 0;
                     LanguageType class_language = eLanguageTypeUnknown;
@@ -2589,7 +2564,7 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                     m_die_to_decl_ctx[die] = ClangASTContext::GetDeclContextForType (clang_type);
                     type_sp.reset( new Type(die->GetOffset(), this, type_name_dbstr, byte_size, NULL, LLDB_INVALID_UID, Type::eIsTypeWithUID, &decl, clang_type));
 
-                    const_cast<DWARFDebugInfoEntry*>(die)->SetUserData(type_sp.get());
+                    m_die_to_type[die] = type_sp.get();
 
 //                  assert(type_sp.get());
 //                  if (accessibility)
@@ -2655,7 +2630,7 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                 {
                     //printf("0x%8.8x: %s (ParesTypes)\n", die->GetOffset(), DW_TAG_value_to_name(tag));
                     // Set a bit that lets us know that we are currently parsing this
-                    const_cast<DWARFDebugInfoEntry*>(die)->SetUserData(DIE_IS_BEING_PARSED);
+                    m_die_to_type[die] = DIE_IS_BEING_PARSED;
 
                     size_t byte_size = 0;
                     lldb::user_id_t encoding_uid = DW_INVALID_OFFSET;
@@ -2707,7 +2682,7 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                         m_die_to_decl_ctx[die] = ClangASTContext::GetDeclContextForType (clang_type);
                         type_sp.reset( new Type(die->GetOffset(), this, type_name_dbstr, byte_size, NULL, encoding_uid, Type::eIsTypeWithUID, &decl, clang_type));
 
-                        const_cast<DWARFDebugInfoEntry*>(die)->SetUserData(type_sp.get());
+                        m_die_to_type[die] = type_sp.get();
 
                         if (die->HasChildren())
                         {
@@ -2725,7 +2700,7 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                 {
                     //printf("0x%8.8x: %s (ParesTypes)\n", die->GetOffset(), DW_TAG_value_to_name(tag));
                     // Set a bit that lets us know that we are currently parsing this
-                    const_cast<DWARFDebugInfoEntry*>(die)->SetUserData(DIE_IS_BEING_PARSED);
+                    m_die_to_type[die] = DIE_IS_BEING_PARSED;
 
                     const char *mangled = NULL;
                     dw_offset_t type_die_offset = DW_INVALID_OFFSET;
@@ -2820,6 +2795,10 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
 
                         // Parse the function children for the parameters
                         bool skip_artificial = true;
+                        if (die->GetOffset() == 1340212) // REMOVE THIS BEFORE CHECKIN
+                        { // REMOVE THIS BEFORE CHECKIN
+                            printf("this one!\n"); // REMOVE THIS BEFORE CHECKIN
+                        } // REMOVE THIS BEFORE CHECKIN
                         ParseChildParameters (sc, type_sp, dwarf_cu, die, skip_artificial, type_list, function_param_types, function_param_decls);
 
                         // clang_type will get the function prototype clang type after this call
@@ -2908,7 +2887,7 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                         }
                         type_sp.reset( new Type(die->GetOffset(), this, type_name_dbstr, 0, NULL, LLDB_INVALID_UID, Type::eIsTypeWithUID, &decl, clang_type));
 
-                        const_cast<DWARFDebugInfoEntry*>(die)->SetUserData(type_sp.get());
+                        m_die_to_type[die] = type_sp.get();
                         assert(type_sp.get());
                     }
                 }
@@ -2918,7 +2897,7 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                 {
                     //printf("0x%8.8x: %s (ParesTypes)\n", die->GetOffset(), DW_TAG_value_to_name(tag));
                     // Set a bit that lets us know that we are currently parsing this
-                    const_cast<DWARFDebugInfoEntry*>(die)->SetUserData(DIE_IS_BEING_PARSED);
+                    m_die_to_type[die] = DIE_IS_BEING_PARSED;
 
                     size_t byte_size = 0;
                     lldb::user_id_t type_die_offset = DW_INVALID_OFFSET;
@@ -2993,7 +2972,7 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                             }
                             ConstString empty_name;
                             type_sp.reset( new Type(die->GetOffset(), this, empty_name, array_element_bit_stride / 8, NULL, LLDB_INVALID_UID, Type::eIsTypeWithUID, &decl, clang_type));
-                            const_cast<DWARFDebugInfoEntry*>(die)->SetUserData(type_sp.get());
+                            m_die_to_type[die] = type_sp.get();
                         }
                     }
                 }
@@ -3035,7 +3014,7 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                         size_t byte_size = ClangASTType::GetClangTypeBitWidth (type_list->GetClangASTContext().getASTContext(), clang_type) / 8;
 
                         type_sp.reset( new Type(die->GetOffset(), this, type_name_dbstr, byte_size, NULL, LLDB_INVALID_UID, Type::eIsTypeWithUID, NULL, clang_type));
-                        const_cast<DWARFDebugInfoEntry*>(die)->SetUserData(type_sp.get());
+                        m_die_to_type[die] = type_sp.get();
                     }
                                             
                     break;
@@ -3078,43 +3057,14 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                 {
                     // We are ready to put this type into the uniqued list up at the module level
                     TypeSP uniqued_type_sp(m_obj_file->GetModule()->GetTypeList()->InsertUnique(type_sp));
-
-                    const_cast<DWARFDebugInfoEntry*>(die)->SetUserData(uniqued_type_sp.get());
-
                     type_sp = uniqued_type_sp;
+                    m_die_to_type[die] = type_sp.get();
                 }
             }
         }
-        else
+        else if (type_ptr != DIE_IS_BEING_PARSED)
         {
-            switch (tag)
-            {
-            case DW_TAG_base_type:
-            case DW_TAG_pointer_type:
-            case DW_TAG_reference_type:
-            case DW_TAG_typedef:
-            case DW_TAG_const_type:
-            case DW_TAG_restrict_type:
-            case DW_TAG_volatile_type:
-            case DW_TAG_structure_type:
-            case DW_TAG_union_type:
-            case DW_TAG_class_type:
-            case DW_TAG_enumeration_type:
-            case DW_TAG_subprogram:
-            case DW_TAG_subroutine_type:
-            case DW_TAG_array_type:
-                {
-                    Type *existing_type = (Type*)die->GetUserData();
-                    if (existing_type != DIE_IS_BEING_PARSED)
-                    {
-                        type_sp = m_obj_file->GetModule()->GetTypeList()->FindType(existing_type->GetID());
-                    }
-                }
-                break;
-            default:
-                //assert(!"invalid type tag...");
-                break;
-            }
+            type_sp = m_obj_file->GetModule()->GetTypeList()->FindType(type_ptr->GetID());
         }
     }
     return type_sp;
@@ -3280,7 +3230,6 @@ SymbolFileDWARF::ParseVariableDIE
         const char *mangled = NULL;
         Declaration decl;
         uint32_t i;
-        TypeSP type_sp;
         Type *var_type = NULL;
         DWARFExpression location;
         bool is_external = false;
@@ -3300,7 +3249,7 @@ SymbolFileDWARF::ParseVariableDIE
                 case DW_AT_decl_column: decl.SetColumn(form_value.Unsigned()); break;
                 case DW_AT_name:        name = form_value.AsCString(&get_debug_str_data()); break;
                 case DW_AT_MIPS_linkage_name: mangled = form_value.AsCString(&get_debug_str_data()); break;
-                case DW_AT_type:        var_type = GetUniquedTypeForDIEOffset(form_value.Reference(dwarf_cu), type_sp, 0, 0, false); break;
+                case DW_AT_type:        var_type = ResolveTypeUID(form_value.Reference(dwarf_cu)); break;
                 case DW_AT_external:    is_external = form_value.Unsigned() != 0; break;
                 case DW_AT_location:
                     {
@@ -3396,7 +3345,8 @@ SymbolFileDWARF::ParseVariableDIE
                                        location, 
                                        is_external, 
                                        is_artificial));
-            const_cast<DWARFDebugInfoEntry*>(die)->SetUserData(var_sp.get());
+            
+            m_die_to_variable_sp[die] = var_sp;
         }
     }
     return var_sp;
@@ -3477,7 +3427,7 @@ SymbolFileDWARF::ParseVariables
         dw_tag_t tag = die->Tag();
 
         // Check to see if we have already parsed this variable or constant?
-        if (die->GetUserData() == NULL)
+        if (m_die_to_variable_sp[die].get() == NULL)
         {
             // We haven't already parsed it, lets do that now.
             if ((tag == DW_TAG_variable) ||

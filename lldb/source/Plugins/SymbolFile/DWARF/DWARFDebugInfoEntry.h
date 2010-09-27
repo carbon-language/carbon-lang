@@ -105,8 +105,7 @@ public:
                     m_offset        (DW_INVALID_OFFSET),
                     m_parent_idx    (0),
                     m_sibling_idx   (0),
-                    m_abbrevDecl    (NULL),
-                    m_user_data     (NULL)
+                    m_abbrevDecl    (NULL)
                 {
                 }
 
@@ -319,14 +318,11 @@ public:
     }
     const DWARFAbbreviationDeclaration* GetAbbreviationDeclarationPtr() const { return m_abbrevDecl; }
 
-    void *      GetUserData() const { return m_user_data; }
-    void        SetUserData(void *d) const { m_user_data = d; }
 protected:
     dw_offset_t                         m_offset;       // Offset within the .debug_info of the start of this entry
     uint32_t                            m_parent_idx;   // How many to subtract from "this" to get the parent. If zero this die has no parent
     uint32_t                            m_sibling_idx;  // How many to add to "this" to get the sibling.
     const DWARFAbbreviationDeclaration* m_abbrevDecl;
-    mutable void *                      m_user_data;    // Flags for use by the parsers
 };
 
 #endif  // liblldb_DWARFDebugInfoEntry_h_
