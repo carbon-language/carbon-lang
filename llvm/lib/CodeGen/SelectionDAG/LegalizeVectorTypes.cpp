@@ -1572,7 +1572,8 @@ SDValue DAGTypeLegalizer::WidenVecRes_BIT_CONVERT(SDNode *N) {
 
   unsigned WidenSize = WidenVT.getSizeInBits();
   unsigned InSize = InVT.getSizeInBits();
-  if (WidenSize % InSize == 0) {
+  // x86mmx is not an acceptable vector element type, so don't try.
+  if (WidenSize % InSize == 0 && InVT != MVT::x86mmx) {
     // Determine new input vector type.  The new input vector type will use
     // the same element type (if its a vector) or use the input type as a
     // vector.  It is the same size as the type to widen to.
@@ -2049,7 +2050,8 @@ SDValue DAGTypeLegalizer::WidenVecOp_BIT_CONVERT(SDNode *N) {
   // Check if we can convert between two legal vector types and extract.
   unsigned InWidenSize = InWidenVT.getSizeInBits();
   unsigned Size = VT.getSizeInBits();
-  if (InWidenSize % Size == 0 && !VT.isVector()) {
+  // x86mmx is not an acceptable vector element type, so don't try.
+  if (InWidenSize % Size == 0 && !VT.isVector() && VT != MVT::x86mmx) {
     unsigned NewNumElts = InWidenSize / Size;
     EVT NewVT = EVT::getVectorVT(*DAG.getContext(), VT, NewNumElts);
     if (TLI.isTypeSynthesizable(NewVT)) {
