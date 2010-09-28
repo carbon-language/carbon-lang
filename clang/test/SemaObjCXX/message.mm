@@ -92,3 +92,23 @@ void test_I5(I5 *i5, String s) {
   [i5 method:"hello" other:s];
   [i5 method:s other:"world"]; // expected-error{{non-const lvalue reference to type 'String' cannot bind to a value of unrelated type 'const char [6]'}}
 }
+
+// <rdar://problem/8483253>
+@interface A
+
+struct X { };
+
++ (A *)create:(void (*)(void *x, X r, void *data))callback
+	      callbackData:(void *)callback_data;
+
+@end
+
+
+void foo(void)
+{
+  void *fun;
+  void *ptr;
+  X r;
+  A *im = [A create:(void (*)(void *cgl_ctx, X r, void *data)) fun
+             callbackData:ptr];
+}

@@ -671,7 +671,7 @@ ExprResult Parser::ParseCastExpression(bool isUnaryExpression,
     // If we have an Objective-C class name followed by an identifier and
     // either ':' or ']', this is an Objective-C class message send that's
     // missing the opening '['. Recovery appropriately.
-    if (getLang().ObjC1 && Tok.is(tok::identifier)) {
+    if (getLang().ObjC1 && Tok.is(tok::identifier) && !InMessageExpression) {
       const Token& Next = NextToken();
       if (Next.is(tok::colon) || Next.is(tok::r_square))
         if (ParsedType Typ = Actions.getTypeName(II, ILoc, getCurScope()))
