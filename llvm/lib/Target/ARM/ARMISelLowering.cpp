@@ -4807,15 +4807,7 @@ SDValue ARMTargetLowering::PerformDAGCombine(SDNode *N,
 }
 
 bool ARMTargetLowering::allowsUnalignedMemoryAccesses(EVT VT) const {
-  if (!Subtarget->hasV6Ops())
-    // Pre-v6 does not support unaligned mem access.
-    return false;
-
-  // v6+ may or may not support unaligned mem access depending on the system
-  // configuration.
-  // FIXME: This is pretty conservative. Should we provide cmdline option to
-  // control the behaviour?
-  if (!Subtarget->isTargetDarwin())
+  if (!Subtarget->allowsUnalignedMem())
     return false;
 
   switch (VT.getSimpleVT().SimpleTy) {
