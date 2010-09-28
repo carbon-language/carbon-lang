@@ -796,7 +796,7 @@ bool BitcodeReader::ParseMetadata() {
       if (NextBitCode == bitc::METADATA_NAMED_NODE) {
         LLVM2_7MetadataDetected = true;
       } else if (NextBitCode != bitc::METADATA_NAMED_NODE2)
-        assert ( 0 && "Inavlid Named Metadata record");
+        assert ( 0 && "Invalid Named Metadata record");
 
       // Read named metadata elements.
       unsigned Size = Record.size();
