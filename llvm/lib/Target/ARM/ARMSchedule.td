@@ -156,7 +156,7 @@ def IIC_VTBX4      : InstrItinClass;
 //===----------------------------------------------------------------------===//
 // Processor instruction itineraries.
 
-def GenericItineraries : ProcessorItineraries<[], []>;
+def GenericItineraries : ProcessorItineraries<[], [], []>;
 
 include "ARMScheduleV6.td"
 include "ARMScheduleA8.td"

@@ -40,6 +40,9 @@ class SubtargetEmitter : public TableGenBackend {
                                 unsigned &NStages);
   void FormItineraryOperandCycleString(Record *ItinData, std::string &ItinString,
                                        unsigned &NOperandCycles);
+  void FormItineraryBypassString(const std::string &Names,
+                                 Record *ItinData,
+                                 std::string &ItinString, unsigned NOperandCycles);
   void EmitStageAndOperandCycleData(raw_ostream &OS, unsigned NItinClasses,
                      std::map<std::string, unsigned> &ItinClassesMap,
                      std::vector<Record*> &ItinClassList,

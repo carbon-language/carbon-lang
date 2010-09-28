@@ -26,7 +26,7 @@ def A9_DRegsN  : FuncUnit; // FP register set, NEON side
 // Dual issue pipeline represented by A9_Pipe0 | A9_Pipe1
 //
 def CortexA9Itineraries : ProcessorItineraries<
-  [A9_NPipe, A9_DRegsN, A9_DRegsVFP, A9_LSPipe, A9_Pipe0, A9_Pipe1], [
+  [A9_NPipe, A9_DRegsN, A9_DRegsVFP, A9_LSPipe, A9_Pipe0, A9_Pipe1], [], [
   // Two fully-pipelined integer ALU pipelines
   // FIXME: There are no operand latencies for these instructions at all!
   //

@@ -19,7 +19,7 @@ def V6_Pipe : FuncUnit; // pipeline
 // Scheduling information derived from "ARM1176JZF-S Technical Reference Manual"
 //
 def ARMV6Itineraries : ProcessorItineraries<
-  [V6_Pipe], [
+  [V6_Pipe], [], [
   //
   // No operand cycles
   InstrItinData<IIC_iALUx    , [InstrStage<1, [V6_Pipe]>]>,

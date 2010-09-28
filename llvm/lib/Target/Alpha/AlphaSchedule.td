@@ -54,7 +54,7 @@ def s_pseudo : InstrItinClass;
 //modified some
 
 def Alpha21264Itineraries : ProcessorItineraries<
-  [L0, L1, FST0, FST1, U0, U1, FA, FM], [
+  [L0, L1, FST0, FST1, U0, U1, FA, FM], [], [
   InstrItinData<s_ild    , [InstrStage<3, [L0, L1]>]>,
   InstrItinData<s_fld    , [InstrStage<4, [L0, L1]>]>,
   InstrItinData<s_ist    , [InstrStage<0, [L0, L1]>]>,

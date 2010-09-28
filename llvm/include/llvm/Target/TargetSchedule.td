@@ -22,6 +22,14 @@
 //  
 class FuncUnit;
 
+//===----------------------------------------------------------------------===//
+// Pipeline bypass / forwarding - These values specifies the symbolic names of
+// pipeline bypasses which can be used to forward results of instructions
+// that are forwarded to uses.
+class Bypass;
+
+def NoBypass : Bypass;
+
 class ReservationKind<bits<1> val> {
   int Value = val;
 }
@@ -81,22 +89,26 @@ def NoItinerary : InstrItinClass;
 // instruction itinerary class (name) to its itinerary data.
 //
 class InstrItinData<InstrItinClass Class, list<InstrStage> stages,
-                    list<int> operandcycles = []> {
+                    list<int> operandcycles = [],
+                    list<Bypass> bypasses = []> {
   InstrItinClass TheClass = Class;
   list<InstrStage> Stages = stages;
   list<int> OperandCycles = operandcycles;
+  list<Bypass> Bypasses = bypasses;
 }
 
 //===----------------------------------------------------------------------===//
 // Processor itineraries - These values represent the set of all itinerary
 // classes for a given chip set.
 //
-class ProcessorItineraries<list<FuncUnit> fu, list<InstrItinData> iid> {
+class ProcessorItineraries<list<FuncUnit> fu, list<Bypass> bp,
+                           list<InstrItinData> iid> {
   list<FuncUnit> FU = fu;
+  list<Bypass> BP = bp;
   list<InstrItinData> IID = iid;
 }
 
 // NoItineraries - A marker that can be used by processors without schedule
 // info.
-def NoItineraries : ProcessorItineraries<[], []>;
+def NoItineraries : ProcessorItineraries<[], [], []>;
 

@@ -13,7 +13,7 @@
 
 
 def G3Itineraries : ProcessorItineraries<
-  [IU1, IU2, FPU1, BPU, SRU, SLU], [
+  [IU1, IU2, FPU1, BPU, SRU, SLU], [], [
   InstrItinData<IntGeneral  , [InstrStage<1, [IU1, IU2]>]>,
   InstrItinData<IntCompare  , [InstrStage<1, [IU1, IU2]>]>,
   InstrItinData<IntDivW     , [InstrStage<19, [IU1]>]>,

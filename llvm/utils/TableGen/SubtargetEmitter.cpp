@@ -262,6 +262,24 @@ void SubtargetEmitter::FormItineraryOperandCycleString(Record *ItinData,
   }
 }
 
+void SubtargetEmitter::FormItineraryBypassString(const std::string &Name,
+                                                 Record *ItinData,
+                                                 std::string &ItinString,
+                                                 unsigned NOperandCycles) {
+  const std::vector<Record*> &BypassList =
+    ItinData->getValueAsListOfDefs("Bypasses");
+  unsigned N = BypassList.size();
+  for (unsigned i = 0; i < N;) {
+    ItinString += Name + "Bypass::" + BypassList[i]->getName();
+    if (++i < N) ItinString += ", ";
+  }
+
+  for (; N < NOperandCycles;) {
+    ItinString += " 0";
+    if (++N < NOperandCycles) ItinString += ", ";
+  }
+}
+
 //
 // EmitStageAndOperandCycleData - Generate unique itinerary stages and
 // operand cycle tables.  Record itineraries for processors.
@@ -296,6 +314,16 @@ void SubtargetEmitter::EmitStageAndOperandCycleData(raw_ostream &OS,
          << " = 1 << " << j << ";\n";
 
     OS << "}\n";
+
+    std::vector<Record*> BPs = Proc->getValueAsListOfDefs("BP");
+    OS << "\n// Pipeline bypasses for itineraries \"" << Name << "\"\n"
+       << "namespace " << Name << "Bypass {\n";
+
+    for (unsigned j = 0, BPN = BPs.size(); j < BPN; ++j)
+      OS << "  const unsigned " << BPs[j]->getName()
+         << " = 1 << " << j << ";\n";
+
+    OS << "}\n";
   }
 
   // Begin stages table
@@ -305,6 +333,10 @@ void SubtargetEmitter::EmitStageAndOperandCycleData(raw_ostream &OS,
   // Begin operand cycle table
   std::string OperandCycleTable = "static const unsigned OperandCycles[] = {\n";
   OperandCycleTable += "  0, // No itinerary\n";
+
+  // Begin pipeline bypass table
+  std::string BypassTable = "static const unsigned Bypasses[] = {\n";
+  BypassTable += "  0, // No itinerary\n";
         
   unsigned StageCount = 1, OperandCycleCount = 1;
   unsigned ItinStageEnum = 1, ItinOperandCycleEnum = 1;
@@ -342,6 +374,10 @@ void SubtargetEmitter::EmitStageAndOperandCycleData(raw_ostream &OS,
       FormItineraryOperandCycleString(ItinData, ItinOperandCycleString,
                                       NOperandCycles);
 
+      std::string ItinBypassString;
+      FormItineraryBypassString(Name, ItinData, ItinBypassString,
+                                NOperandCycles);
+
       // Check to see if stage already exists and create if it doesn't
       unsigned FindStage = 0;
       if (NStages > 0) {
@@ -367,6 +403,11 @@ void SubtargetEmitter::EmitStageAndOperandCycleData(raw_ostream &OS,
           // Record Itin class number.
           ItinOperandCycleMap[ItinOperandCycleString] = 
             FindOperandCycle = OperandCycleCount;
+
+          // Emit as bypass, // index
+          BypassTable += ItinBypassString + ", // " + 
+            itostr(ItinOperandCycleEnum) + "\n";
+
           OperandCycleCount += NOperandCycles;
           ItinOperandCycleEnum++;
         }
@@ -389,7 +430,7 @@ void SubtargetEmitter::EmitStageAndOperandCycleData(raw_ostream &OS,
     // Add process itinerary to list
     ProcList.push_back(ItinList);
   }
-  
+
   // Closing stage
   StageTable += "  { 0, 0, 0, llvm::InstrStage::Required } // End itinerary\n";
   StageTable += "};\n";
@@ -398,9 +439,13 @@ void SubtargetEmitter::EmitStageAndOperandCycleData(raw_ostream &OS,
   OperandCycleTable += "  0 // End itinerary\n";
   OperandCycleTable += "};\n";
 
+  BypassTable += "  0 // End itinerary\n";
+  BypassTable += "};\n";
+
   // Emit tables.
   OS << StageTable;
   OS << OperandCycleTable;
+  OS << BypassTable;
   
   // Emit size of tables
   OS<<"\nenum {\n";

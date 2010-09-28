@@ -25,7 +25,8 @@ def A8_NLSPipe : FuncUnit; // NEON LS pipe
 // Dual issue pipeline represented by A8_Pipe0 | A8_Pipe1
 //
 def CortexA8Itineraries : ProcessorItineraries<
-  [A8_Issue, A8_Pipe0, A8_Pipe1, A8_LdSt0, A8_LdSt1, A8_NPipe, A8_NLSPipe], [
+  [A8_Issue, A8_Pipe0, A8_Pipe1, A8_LdSt0, A8_LdSt1, A8_NPipe, A8_NLSPipe],
+  [], [
   // Two fully-pipelined integer ALU pipelines
   //
   // No operand cycles
