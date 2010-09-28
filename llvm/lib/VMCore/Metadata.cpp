@@ -343,9 +343,7 @@ void MDNode::replaceOperand(MDNodeOperand *Op, Value *To) {
   FoldingSetNodeID ID;
   Profile(ID);
   void *InsertPoint;
-  MDNode *N = pImpl->MDNodeSet.FindNodeOrInsertPos(ID, InsertPoint);
-
-  if (N) {
+  if (MDNode *N = pImpl->MDNodeSet.FindNodeOrInsertPos(ID, InsertPoint)) {
     N->replaceAllUsesWith(this);
     N->destroy();
     N = pImpl->MDNodeSet.FindNodeOrInsertPos(ID, InsertPoint);
