@@ -39,9 +39,9 @@
 /// o static uint16_t decodeThumbInstruction(field_t insn) - the decoding
 /// function for a Thumb instruction.
 ///
-#include "../ARMGenDecoderTables.inc"
+#include "ARMGenDecoderTables.inc"
 
-#include "../ARMGenEDInfo.inc"
+#include "ARMGenEDInfo.inc"
 
 using namespace llvm;
 
