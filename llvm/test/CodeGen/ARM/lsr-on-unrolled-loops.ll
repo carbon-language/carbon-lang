@@ -627,8 +627,7 @@ bb24:                                             ; preds = %bb23
 ; in a register, and it shouldn't require any reloads here.
 
 ;      CHECK: @ %bb24
-; CHECK-NEXT: @   in Loop: Header=BB1_1 Depth=1
-; CHECK-NEXT: sub{{.*}} [[REGISTER:(r[0-9]+)|(lr)]], #1
+; CHECK: subs{{.*}} [[REGISTER:(r[0-9]+)|(lr)]], #1
 ; CHECK-NEXT: bne.w
 
   %92 = icmp eq i32 %tmp81, %indvar78             ; <i1> [#uses=1]

@@ -1195,22 +1195,36 @@ bool ARMBaseInstrInfo::isSchedulingBoundary(const MachineInstr *MI,
   return false;
 }
 
-bool ARMBaseInstrInfo::
-isProfitableToIfCvt(MachineBasicBlock &MBB, unsigned NumInstrs) const {
+bool ARMBaseInstrInfo::isProfitableToIfCvt(MachineBasicBlock &MBB,
+                                           unsigned NumInstrs,
+                                           float Probability) const {
   if (!NumInstrs)
     return false;
-  if (Subtarget.getCPUString() == "generic")
-    // Generic (and overly aggressive) if-conversion limits for testing.
-    return NumInstrs <= 10;
-  else if (Subtarget.hasV7Ops())
-    return NumInstrs <= 3;
-  return NumInstrs <= 2;
+  
+  // Attempt to estimate the relative costs of predication versus branching.
+  float UnpredCost = Probability * NumInstrs;
+  UnpredCost += 2.0; // FIXME: Should model a misprediction cost.
+  
+  float PredCost = NumInstrs;
+  
+  return PredCost < UnpredCost;
+  
 }
   
 bool ARMBaseInstrInfo::
 isProfitableToIfCvt(MachineBasicBlock &TMBB, unsigned NumT,
-                    MachineBasicBlock &FMBB, unsigned NumF) const {
-  return NumT && NumF && NumT <= 2 && NumF <= 2;
+                    MachineBasicBlock &FMBB, unsigned NumF,
+                    float Probability) const {
+  if (!NumT || !NumF)
+    return false;
+  
+  // Attempt to estimate the relative costs of predication versus branching.
+  float UnpredCost = Probability * NumT + (1.0 - Probability) * NumF;
+  UnpredCost += 2.0; // FIXME: Should model a misprediction cost.
+  
+  float PredCost = NumT + NumF;
+  
+  return PredCost < UnpredCost;
 }
 
 /// getInstrPredicate - If instruction is predicated, returns its predicate

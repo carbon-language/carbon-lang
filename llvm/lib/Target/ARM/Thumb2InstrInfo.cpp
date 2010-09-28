@@ -28,16 +28,6 @@
 
 using namespace llvm;
 
-static cl::opt<unsigned>
-IfCvtLimit("thumb2-ifcvt-limit", cl::Hidden,
-           cl::desc("Thumb2 if-conversion limit (default 3)"),
-           cl::init(3));
-
-static cl::opt<unsigned>
-IfCvtDiamondLimit("thumb2-ifcvt-diamond-limit", cl::Hidden,
-                  cl::desc("Thumb2 diamond if-conversion limit (default 3)"),
-                  cl::init(3));
-
 Thumb2InstrInfo::Thumb2InstrInfo(const ARMSubtarget &STI)
   : ARMBaseInstrInfo(STI), RI(*this, STI) {
 }
@@ -103,21 +93,6 @@ Thumb2InstrInfo::isLegalToSplitMBBAt(MachineBasicBlock &MBB,
                                      MachineBasicBlock::iterator MBBI) const {
   unsigned PredReg = 0;
   return llvm::getITInstrPredicate(MBBI, PredReg) == ARMCC::AL;
-}
-
-bool Thumb2InstrInfo::isProfitableToIfCvt(MachineBasicBlock &MBB,
-                                          unsigned NumInstrs) const {
-  return NumInstrs && NumInstrs <= IfCvtLimit;
-}
-  
-bool Thumb2InstrInfo::
-isProfitableToIfCvt(MachineBasicBlock &TMBB, unsigned NumT,
-                    MachineBasicBlock &FMBB, unsigned NumF) const {
-  // FIXME: Catch optimization such as:
-  //        r0 = movne
-  //        r0 = moveq
-  return NumT && NumF &&
-    NumT <= (IfCvtDiamondLimit) && NumF <= (IfCvtDiamondLimit);
 }
 
 void Thumb2InstrInfo::copyPhysReg(MachineBasicBlock &MBB,

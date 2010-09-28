@@ -191,13 +191,13 @@ namespace {
     void MergeBlocks(BBInfo &ToBBI, BBInfo &FromBBI, bool AddEdges = true);
 
     bool MeetIfcvtSizeLimit(MachineBasicBlock &BB, unsigned Size) const {
-      return Size > 0 && TII->isProfitableToIfCvt(BB, Size);
+      return Size > 0 && TII->isProfitableToIfCvt(BB, Size, 0.5);
     }
 
     bool MeetIfcvtSizeLimit(MachineBasicBlock &TBB, unsigned TSize,
                             MachineBasicBlock &FBB, unsigned FSize) const {
       return TSize > 0 && FSize > 0 &&
-        TII->isProfitableToIfCvt(TBB, TSize, FBB, FSize);
+        TII->isProfitableToIfCvt(TBB, TSize, FBB, FSize, 0.5);
     }
 
     // blockAlwaysFallThrough - Block ends without a terminator.
@@ -444,7 +444,7 @@ bool IfConverter::ValidSimple(BBInfo &TrueBBI, unsigned &Dups) const {
 
   if (TrueBBI.BB->pred_size() > 1) {
     if (TrueBBI.CannotBeCopied ||
-        !TII->isProfitableToDupForIfCvt(*TrueBBI.BB, TrueBBI.NonPredSize))
+        !TII->isProfitableToDupForIfCvt(*TrueBBI.BB, TrueBBI.NonPredSize, 0.5))
       return false;
     Dups = TrueBBI.NonPredSize;
   }
@@ -481,7 +481,7 @@ bool IfConverter::ValidTriangle(BBInfo &TrueBBI, BBInfo &FalseBBI,
           ++Size;
       }
     }
-    if (!TII->isProfitableToDupForIfCvt(*TrueBBI.BB, Size))
+    if (!TII->isProfitableToDupForIfCvt(*TrueBBI.BB, Size, 0.5))
       return false;
     Dups = Size;
   }
