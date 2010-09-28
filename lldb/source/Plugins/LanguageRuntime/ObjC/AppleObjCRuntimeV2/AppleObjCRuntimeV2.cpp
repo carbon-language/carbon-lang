@@ -37,6 +37,10 @@ static const char *pluginShort = "language.apple.objc.v2";
 bool
 AppleObjCRuntimeV2::GetObjectDescription (Stream &str, ValueObject &object, ExecutionContextScope *exe_scope)
 {
+
+    if (!m_read_objc_library)
+        return false;
+        
     ExecutionContext exe_ctx;
     exe_scope->Calculate(exe_ctx);
     
@@ -186,7 +190,8 @@ ThreadPlanSP
 AppleObjCRuntimeV2::GetStepThroughTrampolinePlan (Thread &thread, bool stop_others)
 {
     ThreadPlanSP thread_plan_sp;
-    thread_plan_sp = m_objc_trampoline_handler_ap->GetStepThroughDispatchPlan (thread, stop_others);
+    if (m_objc_trampoline_handler_ap.get())
+        thread_plan_sp = m_objc_trampoline_handler_ap->GetStepThroughDispatchPlan (thread, stop_others);
     return thread_plan_sp;
 }
 
