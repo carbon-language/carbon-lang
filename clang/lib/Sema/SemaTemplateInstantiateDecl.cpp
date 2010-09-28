@@ -1996,9 +1996,10 @@ TemplateDeclInstantiator::InitMethodInstantiation(CXXMethodDecl *New,
   if (InitFunctionInstantiation(New, Tmpl))
     return true;
 
+  CXXRecordDecl *Record = cast<CXXRecordDecl>(Owner);
   New->setAccess(Tmpl->getAccess());
   if (Tmpl->isVirtualAsWritten())
-    New->setVirtualAsWritten(true);
+    Record->setMethodAsVirtual(New);
 
   // FIXME: attributes
   // FIXME: New needs a pointer to Tmpl

@@ -502,6 +502,8 @@ Sema::CheckBaseSpecifier(CXXRecordDecl *Class,
     return 0;
   }
 
+  SetClassDeclAttributesFromBase(Class, CXXBaseDecl, Virtual);
+
   if (BaseDecl->isInvalidDecl())
     Class->setInvalidDecl();
   
@@ -509,6 +511,73 @@ Sema::CheckBaseSpecifier(CXXRecordDecl *Class,
   return new (Context) CXXBaseSpecifier(SpecifierRange, Virtual,
                                         Class->getTagKind() == TTK_Class,
                                         Access, TInfo);
+}
+
+void Sema::SetClassDeclAttributesFromBase(CXXRecordDecl *Class,
+                                          const CXXRecordDecl *BaseClass,
+                                          bool BaseIsVirtual) {
+  // A class with a non-empty base class is not empty.
+  // FIXME: Standard ref?
+  if (!BaseClass->isEmpty())
+    Class->setEmpty(false);
+
+  // C++ [class.virtual]p1:
+  //   A class that [...] inherits a virtual function is called a polymorphic
+  //   class.
+  if (BaseClass->isPolymorphic())
+    Class->setPolymorphic(true);
+
+  // C++ [dcl.init.aggr]p1:
+  //   An aggregate is [...] a class with [...] no base classes [...].
+  Class->setAggregate(false);
+
+  // C++ [class]p4:
+  //   A POD-struct is an aggregate class...
+  Class->setPOD(false);
+
+  if (BaseIsVirtual) {
+    // C++ [class.ctor]p5:
+    //   A constructor is trivial if its class has no virtual base classes.
+    Class->setHasTrivialConstructor(false);
+
+    // C++ [class.copy]p6:
+    //   A copy constructor is trivial if its class has no virtual base classes.
+    Class->setHasTrivialCopyConstructor(false);
+
+    // C++ [class.copy]p11:
+    //   A copy assignment operator is trivial if its class has no virtual
+    //   base classes.
+    Class->setHasTrivialCopyAssignment(false);
+
+    // C++0x [meta.unary.prop] is_empty:
+    //    T is a class type, but not a union type, with ... no virtual base
+    //    classes
+    Class->setEmpty(false);
+  } else {
+    // C++ [class.ctor]p5:
+    //   A constructor is trivial if all the direct base classes of its
+    //   class have trivial constructors.
+    if (!BaseClass->hasTrivialConstructor())
+      Class->setHasTrivialConstructor(false);
+
+    // C++ [class.copy]p6:
+    //   A copy constructor is trivial if all the direct base classes of its
+    //   class have trivial copy constructors.
+    if (!BaseClass->hasTrivialCopyConstructor())
+      Class->setHasTrivialCopyConstructor(false);
+
+    // C++ [class.copy]p11:
+    //   A copy assignment operator is trivial if all the direct base classes
+    //   of its class have trivial copy assignment operators.
+    if (!BaseClass->hasTrivialCopyAssignment())
+      Class->setHasTrivialCopyAssignment(false);
+  }
+
+  // C++ [class.ctor]p3:
+  //   A destructor is trivial if all the direct base classes of its class
+  //   have trivial destructors.
+  if (!BaseClass->hasTrivialDestructor())
+    Class->setHasTrivialDestructor(false);
 }
 
 /// ActOnBaseSpecifier - Parsed a base specifier. A base specifier is

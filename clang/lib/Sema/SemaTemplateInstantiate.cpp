@@ -1091,6 +1091,13 @@ Sema::SubstBaseSpecifiers(CXXRecordDecl *Instantiation,
          Base = Pattern->bases_begin(), BaseEnd = Pattern->bases_end();
        Base != BaseEnd; ++Base) {
     if (!Base->getType()->isDependentType()) {
+      const CXXRecordDecl *BaseDecl =
+        cast<CXXRecordDecl>(Base->getType()->getAs<RecordType>()->getDecl());
+      
+      // Make sure to set the attributes from the base.
+      SetClassDeclAttributesFromBase(Instantiation, BaseDecl, 
+                                     Base->isVirtual());
+      
       InstantiatedBases.push_back(new (Context) CXXBaseSpecifier(*Base));
       continue;
     }

@@ -688,11 +688,22 @@ public:
   /// no base classes, and no virtual functions (C++ [dcl.init.aggr]p1).
   bool isAggregate() const { return data().Aggregate; }
 
+  /// setAggregate - Set whether this class is an aggregate (C++
+  /// [dcl.init.aggr]).
+  void setAggregate(bool Agg) { data().Aggregate = Agg; }
+
+  /// setMethodAsVirtual - Make input method virtual and set the necesssary 
+  /// special function bits and other bits accordingly.
+  void setMethodAsVirtual(FunctionDecl *Method);
+
   /// isPOD - Whether this class is a POD-type (C++ [class]p4), which is a class
   /// that is an aggregate that has no non-static non-POD data members, no
   /// reference data members, no user-defined copy assignment operator and no
   /// user-defined destructor.
   bool isPOD() const { return data().PlainOldData; }
+
+  /// setPOD - Set whether this class is a POD-type (C++ [class]p4).
+  void setPOD(bool POD) { data().PlainOldData = POD; }
 
   /// isEmpty - Whether this class is empty (C++0x [meta.unary.prop]), which
   /// means it has a virtual function, virtual base, data member (other than
@@ -700,9 +711,16 @@ public:
   /// a check for union-ness.
   bool isEmpty() const { return data().Empty; }
 
+  /// Set whether this class is empty (C++0x [meta.unary.prop])
+  void setEmpty(bool Emp) { data().Empty = Emp; }
+
   /// isPolymorphic - Whether this class is polymorphic (C++ [class.virtual]),
   /// which means that the class contains or inherits a virtual function.
   bool isPolymorphic() const { return data().Polymorphic; }
+
+  /// setPolymorphic - Set whether this class is polymorphic (C++
+  /// [class.virtual]).
+  void setPolymorphic(bool Poly) { data().Polymorphic = Poly; }
 
   /// isAbstract - Whether this class is abstract (C++ [class.abstract]),
   /// which means that the class contains or inherits a pure virtual function.
@@ -715,10 +733,20 @@ public:
   // (C++ [class.ctor]p5)
   bool hasTrivialConstructor() const { return data().HasTrivialConstructor; }
 
+  // setHasTrivialConstructor - Set whether this class has a trivial constructor
+  // (C++ [class.ctor]p5)
+  void setHasTrivialConstructor(bool TC) { data().HasTrivialConstructor = TC; }
+
   // hasTrivialCopyConstructor - Whether this class has a trivial copy
   // constructor (C++ [class.copy]p6)
   bool hasTrivialCopyConstructor() const {
     return data().HasTrivialCopyConstructor;
+  }
+
+  // setHasTrivialCopyConstructor - Set whether this class has a trivial
+  // copy constructor (C++ [class.copy]p6)
+  void setHasTrivialCopyConstructor(bool TC) {
+    data().HasTrivialCopyConstructor = TC;
   }
 
   // hasTrivialCopyAssignment - Whether this class has a trivial copy
@@ -727,9 +755,19 @@ public:
     return data().HasTrivialCopyAssignment;
   }
 
+  // setHasTrivialCopyAssignment - Set whether this class has a
+  // trivial copy assignment operator (C++ [class.copy]p11)
+  void setHasTrivialCopyAssignment(bool TC) {
+    data().HasTrivialCopyAssignment = TC;
+  }
+
   // hasTrivialDestructor - Whether this class has a trivial destructor
   // (C++ [class.dtor]p3)
   bool hasTrivialDestructor() const { return data().HasTrivialDestructor; }
+
+  // setHasTrivialDestructor - Set whether this class has a trivial destructor
+  // (C++ [class.dtor]p3)
+  void setHasTrivialDestructor(bool TC) { data().HasTrivialDestructor = TC; }
 
   /// \brief If this record is an instantiation of a member class,
   /// retrieves the member class from which it was instantiated.

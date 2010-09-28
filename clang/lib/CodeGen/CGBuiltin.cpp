@@ -1869,6 +1869,33 @@ Value *CodeGenFunction::EmitARMBuiltinExpr(unsigned BuiltinID,
   }
 }
 
+llvm::Value *
+CodeGenFunction::BuildVector(const llvm::SmallVectorImpl<llvm::Value*> &Ops) {
+  assert((Ops.size() & (Ops.size() - 1)) == 0 &&
+         "Not a power-of-two sized vector!");
+  bool AllConstants = true;
+  for (unsigned I = 0, E = Ops.size(); I != E && AllConstants; ++I)
+    AllConstants &= isa<Constant>(Ops[I]);
+
+  // If this is a constant vector, create a ConstantVector.
+  if (AllConstants) {
+    std::vector<Constant*> CstOps;
+    for (unsigned I = 0, E = Ops.size(); I != E; ++I)
+      CstOps.push_back(cast<Constant>(Ops[I]));
+    return ConstantVector::get(CstOps);
+  }
+
+  // Otherwise, insertelement the values to build the vector.
+  Value *Result =
+    llvm::UndefValue::get(llvm::VectorType::get(Ops[0]->getType(), Ops.size()));
+
+  for (unsigned I = 0, E = Ops.size(); I != E; ++I)
+    Result = Builder.CreateInsertElement(Result, Ops[I],
+     llvm::ConstantInt::get(llvm::Type::getInt32Ty(VMContext), I));
+
+  return Result;
+}
+
 Value *CodeGenFunction::EmitX86BuiltinExpr(unsigned BuiltinID,
                                            const CallExpr *E) {
 
@@ -1986,6 +2013,11 @@ Value *CodeGenFunction::EmitX86BuiltinExpr(unsigned BuiltinID,
     llvm::Function *F = CGM.getIntrinsic(ID);
     return Builder.CreateCall(F, &Ops[0], &Ops[0] + Ops.size(), name);
   }
+  case X86::BI__builtin_ia32_vec_init_v8qi:
+  case X86::BI__builtin_ia32_vec_init_v4hi:
+  case X86::BI__builtin_ia32_vec_init_v2si:
+    return Builder.CreateBitCast(BuildVector(Ops),
+                                 llvm::Type::getX86_MMXTy(VMContext));
   case X86::BI__builtin_ia32_cmpps: {
     llvm::Function *F = CGM.getIntrinsic(Intrinsic::x86_sse_cmp_ps);
     return Builder.CreateCall(F, &Ops[0], &Ops[0] + Ops.size(), "cmpps");
@@ -2034,37 +2066,6 @@ Value *CodeGenFunction::EmitX86BuiltinExpr(unsigned BuiltinID,
     // cast pointer to i64 & store
     Ops[0] = Builder.CreateBitCast(Ops[0], PtrTy);
     return Builder.CreateStore(Ops[1], Ops[0]);
-  }
-  case X86::BI__builtin_ia32_palignr: {
-    unsigned shiftVal = cast<llvm::ConstantInt>(Ops[2])->getZExtValue();
-    
-    // If palignr is shifting the pair of input vectors less than 9 bytes,
-    // emit a shuffle instruction.
-    if (shiftVal <= 8) {
-      llvm::SmallVector<llvm::Constant*, 8> Indices;
-      for (unsigned i = 0; i != 8; ++i)
-        Indices.push_back(llvm::ConstantInt::get(Int32Ty, shiftVal + i));
-      
-      Value* SV = llvm::ConstantVector::get(Indices.begin(), Indices.size());
-      return Builder.CreateShuffleVector(Ops[1], Ops[0], SV, "palignr");
-    }
-    
-    // If palignr is shifting the pair of input vectors more than 8 but less
-    // than 16 bytes, emit a logical right shift of the destination.
-    if (shiftVal < 16) {
-      // MMX has these as 1 x i64 vectors for some odd optimization reasons.
-      const llvm::Type *VecTy = llvm::VectorType::get(Int64Ty, 1);
-      
-      Ops[0] = Builder.CreateBitCast(Ops[0], VecTy, "cast");
-      Ops[1] = llvm::ConstantInt::get(VecTy, (shiftVal-8) * 8);
-      
-      // create i32 constant
-      llvm::Function *F = CGM.getIntrinsic(Intrinsic::x86_mmx_psrl_q);
-      return Builder.CreateCall(F, &Ops[0], &Ops[0] + 2, "palignr");
-    }
-    
-    // If palignr is shifting the pair of vectors more than 32 bytes, emit zero.
-    return llvm::Constant::getNullValue(ConvertType(E->getType()));
   }
   case X86::BI__builtin_ia32_palignr128: {
     unsigned shiftVal = cast<llvm::ConstantInt>(Ops[2])->getZExtValue();

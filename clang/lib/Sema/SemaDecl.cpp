@@ -1958,8 +1958,11 @@ Decl *Sema::BuildAnonymousStructOrUnion(Scope *S, DeclSpec &DS,
                              TInfo,
                              /*BitWidth=*/0, /*Mutable=*/false);
     Anon->setAccess(AS);
-    if (getLangOptions().CPlusPlus)
+    if (getLangOptions().CPlusPlus) {
       FieldCollector->Add(cast<FieldDecl>(Anon));
+      if (!cast<CXXRecordDecl>(Record)->isEmpty())
+        cast<CXXRecordDecl>(OwningClass)->setEmpty(false);
+    }
   } else {
     DeclSpec::SCS SCSpec = DS.getStorageClassSpec();
     assert(SCSpec != DeclSpec::SCS_typedef &&
@@ -3425,7 +3428,8 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
         << FixItHint::CreateRemoval(D.getDeclSpec().getVirtualSpecLoc());
     } else {
       // Okay: Add virtual to the method.
-      NewFD->setVirtualAsWritten(true);
+      CXXRecordDecl *CurClass = cast<CXXRecordDecl>(DC);
+      CurClass->setMethodAsVirtual(NewFD);
     }
   }
 
@@ -3926,6 +3930,15 @@ void Sema::CheckFunctionDeclaration(Scope *S, FunctionDecl *NewFD,
           return NewFD->setInvalidDecl();
         }
       }
+
+      // C++ [class]p4: A POD-struct is an aggregate class that has [...] no
+      // user-defined destructor.
+      Record->setPOD(false);
+
+      // C++ [class.dtor]p3: A destructor is trivial if it is an implicitly-
+      // declared destructor.
+      // FIXME: C++0x: don't do this for "= default" destructors
+      Record->setHasTrivialDestructor(false);
     } else if (CXXConversionDecl *Conversion
                = dyn_cast<CXXConversionDecl>(NewFD)) {
       ActOnConversionDeclarator(Conversion);
@@ -6179,9 +6192,27 @@ FieldDecl *Sema::CheckFieldDecl(DeclarationName Name, QualType T,
   }
 
   if (!InvalidDecl && getLangOptions().CPlusPlus) {
+    CXXRecordDecl* CXXRecord = cast<CXXRecordDecl>(Record);
+
+    if (!T->isPODType())
+      CXXRecord->setPOD(false);
+    if (!ZeroWidth)
+      CXXRecord->setEmpty(false);
+    if (T->isReferenceType())
+      CXXRecord->setHasTrivialConstructor(false);
+
     if (const RecordType *RT = EltTy->getAs<RecordType>()) {
       CXXRecordDecl* RDecl = cast<CXXRecordDecl>(RT->getDecl());
       if (RDecl->getDefinition()) {
+        if (!RDecl->hasTrivialConstructor())
+          CXXRecord->setHasTrivialConstructor(false);
+        if (!RDecl->hasTrivialCopyConstructor())
+          CXXRecord->setHasTrivialCopyConstructor(false);
+        if (!RDecl->hasTrivialCopyAssignment())
+          CXXRecord->setHasTrivialCopyAssignment(false);
+        if (!RDecl->hasTrivialDestructor())
+          CXXRecord->setHasTrivialDestructor(false);
+
         // C++ 9.5p1: An object of a class with a non-trivial
         // constructor, a non-trivial copy constructor, a non-trivial
         // destructor, or a non-trivial copy assignment operator
@@ -6204,6 +6235,18 @@ FieldDecl *Sema::CheckFieldDecl(DeclarationName Name, QualType T,
     Diag(Loc, diag::warn_attribute_weak_on_field);
 
   NewFD->setAccess(AS);
+
+  // C++ [dcl.init.aggr]p1:
+  //   An aggregate is an array or a class (clause 9) with [...] no
+  //   private or protected non-static data members (clause 11).
+  // A POD must be an aggregate.
+  if (getLangOptions().CPlusPlus &&
+      (AS == AS_private || AS == AS_protected)) {
+    CXXRecordDecl *CXXRecord = cast<CXXRecordDecl>(Record);
+    CXXRecord->setAggregate(false);
+    CXXRecord->setPOD(false);
+  }
+
   return NewFD;
 }
 
