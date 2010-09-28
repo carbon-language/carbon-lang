@@ -1494,6 +1494,7 @@ void ASTReader::ReadDefinedMacros() {
 
     RecordData Record;
     while (true) {
+      uint64_t Offset = Cursor.GetCurrentBitNo();
       unsigned Code = Cursor.ReadCode();
       if (Code == llvm::bitc::END_BLOCK) {
         if (Cursor.ReadBlockEnd()) {
@@ -1538,7 +1539,8 @@ void ASTReader::ReadDefinedMacros() {
       case PP_MACRO_INSTANTIATION:
       case PP_MACRO_DEFINITION:
         // Read the macro record.
-        ReadMacroRecord(Chain[N - I - 1]->Stream, Cursor.GetCurrentBitNo());
+        // FIXME: That's a stupid way to do this. We should reuse this cursor.
+        ReadMacroRecord(Chain[N - I - 1]->Stream, Offset);
         break;
       }
     }
@@ -3190,9 +3192,8 @@ bool ASTReader::FindExternalLexicalDecls(const DeclContext *DC,
       continue;
 
     // Load all of the declaration IDs
-    for (const DeclID *ID = I->LexicalDecls,
-                           *IDE = ID + I->NumLexicalDecls;
-        ID != IDE; ++ID) {
+    for (const DeclID *ID = I->LexicalDecls, *IDE = ID + I->NumLexicalDecls;
+         ID != IDE; ++ID) {
       Decl *D = GetDecl(*ID);
       assert(D && "Null decl in lexical decls");
       Decls.push_back(D);
