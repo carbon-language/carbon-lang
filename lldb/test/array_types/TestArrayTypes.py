@@ -111,8 +111,13 @@ class ArrayTypesTestCase(TestBase):
         self.assertTrue(thread.GetStopReason() == StopReasonEnum("Breakpoint"),
                         STOPPED_DUE_TO_BREAKPOINT)
 
-        #thr = repr(thread)
-        #print "thr:", thr
+        # Sanity check the print representation of thread.
+        thr = repr(thread)
+        self.expect(thr, "Thread looks good with stop reason = breakpoint", exe=False,
+            substrs = ["thread #%d: tid = 0x%4.4x" % (thread.GetIndexID(), thread.GetThreadID()),
+                       "stop reason = breakpoint",
+                       "queue = %s" % thread.GetQueueName() if thread.GetQueueName() else "",
+                       "%d frames" % thread.GetNumFrames()])
 
         # The breakpoint should have a hit count of 1.
         self.assertTrue(breakpoint.GetHitCount() == 1, BREAKPOINT_HIT_ONCE)
@@ -125,13 +130,21 @@ class ArrayTypesTestCase(TestBase):
                        "locations = 1",
                        "resolved = 1"])
 
-        # Lookup the "strings" string array variable.
+        # Sanity check the print representation of frame.
         frame = thread.GetFrameAtIndex(0)
-        #frm = repr(frame)
-        #print "frm:", frm
+        frm = repr(frame)
+        self.expect(frm, "Thread looks good with correct frame function", exe=False,
+            substrs = ["frame #%d" % frame.GetFrameID(),
+                       "a.out`%s" % frame.GetFunction().GetName()])
+
+        # Lookup the "strings" string array variable and sanity check its print
+        # representation.
         variable = frame.LookupVar("strings")
-        #var = repr(variable)
-        #print "var:", var
+        var = repr(variable)
+        self.expect(var, "Variable for 'strings' looks good with correct type and size", exe=False,
+            substrs = ["name: '%s'" % variable.GetName(),
+                       "type: %s" % variable.GetTypeName(),
+                       "size: %d" % variable.GetByteSize()])
         self.DebugSBValue(frame, variable)
         self.assertTrue(variable.GetNumChildren() == 4,
                         "Variable 'strings' should have 4 children")
