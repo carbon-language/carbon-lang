@@ -3444,8 +3444,7 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
         << FixItHint::CreateRemoval(D.getDeclSpec().getVirtualSpecLoc());
     } else {
       // Okay: Add virtual to the method.
-      CXXRecordDecl *CurClass = cast<CXXRecordDecl>(DC);
-      CurClass->setMethodAsVirtual(NewFD);
+      NewFD->setVirtualAsWritten(true);
     }
   }
 
@@ -3946,11 +3945,6 @@ void Sema::CheckFunctionDeclaration(Scope *S, FunctionDecl *NewFD,
           return NewFD->setInvalidDecl();
         }
       }
-
-      // C++ [class.dtor]p3: A destructor is trivial if it is an implicitly-
-      // declared destructor.
-      // FIXME: C++0x: don't do this for "= default" destructors
-      Record->setHasTrivialDestructor(false);
     } else if (CXXConversionDecl *Conversion
                = dyn_cast<CXXConversionDecl>(NewFD)) {
       ActOnConversionDeclarator(Conversion);
@@ -6204,23 +6198,9 @@ FieldDecl *Sema::CheckFieldDecl(DeclarationName Name, QualType T,
   }
 
   if (!InvalidDecl && getLangOptions().CPlusPlus) {
-    CXXRecordDecl* CXXRecord = cast<CXXRecordDecl>(Record);
-
-    if (T->isReferenceType())
-      CXXRecord->setHasTrivialConstructor(false);
-
     if (const RecordType *RT = EltTy->getAs<RecordType>()) {
       CXXRecordDecl* RDecl = cast<CXXRecordDecl>(RT->getDecl());
       if (RDecl->getDefinition()) {
-        if (!RDecl->hasTrivialConstructor())
-          CXXRecord->setHasTrivialConstructor(false);
-        if (!RDecl->hasTrivialCopyConstructor())
-          CXXRecord->setHasTrivialCopyConstructor(false);
-        if (!RDecl->hasTrivialCopyAssignment())
-          CXXRecord->setHasTrivialCopyAssignment(false);
-        if (!RDecl->hasTrivialDestructor())
-          CXXRecord->setHasTrivialDestructor(false);
-
         // C++ 9.5p1: An object of a class with a non-trivial
         // constructor, a non-trivial copy constructor, a non-trivial
         // destructor, or a non-trivial copy assignment operator

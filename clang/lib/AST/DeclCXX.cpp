@@ -110,6 +110,12 @@ CXXRecordDecl::setBases(CXXBaseSpecifier const * const *Bases,
     if (!BaseClassDecl->isEmpty())
       data().Empty = false;
     
+    // C++ [class.virtual]p1:
+    //   A class that declares or inherits a virtual function is called a 
+    //   polymorphic class.
+    if (BaseClassDecl->isPolymorphic())
+      data().Polymorphic = true;
+    
     // Now go through all virtual bases of this base and add them.
     for (CXXRecordDecl::base_class_iterator VBase =
           BaseClassDecl->vbases_begin(),
@@ -128,7 +134,45 @@ CXXRecordDecl::setBases(CXXBaseSpecifier const * const *Bases,
       //    T is a class type, but not a union type, with ... no virtual base
       //    classes
       data().Empty = false;
+      
+      // C++ [class.ctor]p5:
+      //   A constructor is trivial if its class has no virtual base classes.
+      data().HasTrivialConstructor = false;
+      
+      // C++ [class.copy]p6:
+      //   A copy constructor is trivial if its class has no virtual base 
+      //   classes.
+      data().HasTrivialCopyConstructor = false;
+      
+      // C++ [class.copy]p11:
+      //   A copy assignment operator is trivial if its class has no virtual
+      //   base classes.
+      data().HasTrivialCopyAssignment = false;
+    } else {
+      // C++ [class.ctor]p5:
+      //   A constructor is trivial if all the direct base classes of its
+      //   class have trivial constructors.
+      if (!BaseClassDecl->hasTrivialConstructor())
+        data().HasTrivialConstructor = false;
+      
+      // C++ [class.copy]p6:
+      //   A copy constructor is trivial if all the direct base classes of its
+      //   class have trivial copy constructors.
+      if (!BaseClassDecl->hasTrivialCopyConstructor())
+        data().HasTrivialCopyConstructor = false;
+      
+      // C++ [class.copy]p11:
+      //   A copy assignment operator is trivial if all the direct base classes
+      //   of its class have trivial copy assignment operators.
+      if (!BaseClassDecl->hasTrivialCopyAssignment())
+        data().HasTrivialCopyAssignment = false;
     }
+    
+    // C++ [class.ctor]p3:
+    //   A destructor is trivial if all the direct base classes of its class
+    //   have trivial destructors.
+    if (!BaseClassDecl->hasTrivialDestructor())
+      data().HasTrivialDestructor = false;
   }
   
   if (VBases.empty())
@@ -298,6 +342,17 @@ CXXRecordDecl::addedMember(Decl *D) {
       // Virtual functions make the class non-empty.
       // FIXME: Standard ref?
       data().Empty = false;
+
+      // C++ [class.virtual]p1:
+      //   A class that declares or inherits a virtual function is called a 
+      //   polymorphic class.
+      data().Polymorphic = true;
+      
+      // None of the special member functions are trivial.
+      data().HasTrivialConstructor = false;
+      data().HasTrivialCopyConstructor = false;
+      data().HasTrivialCopyAssignment = false;
+      // FIXME: Destructor?
     }
   }
   
@@ -379,6 +434,13 @@ CXXRecordDecl::addedMember(Decl *D) {
     //   destructor.
     data().PlainOldData = false;
     
+    // C++ [class.dtor]p3: 
+    //   A destructor is trivial if it is an implicitly-declared destructor and
+    //   [...].
+    //
+    // FIXME: C++0x: don't do this for "= default" destructors
+    data().HasTrivialDestructor = false;
+    
     return;
   }
   
@@ -448,6 +510,22 @@ CXXRecordDecl::addedMember(Decl *D) {
     QualType T = Context.getBaseElementType(Field->getType());
     if (!T->isPODType())
       data().PlainOldData = false;
+    if (T->isReferenceType())
+      data().HasTrivialConstructor = false;
+    
+    if (const RecordType *RecordTy = T->getAs<RecordType>()) {
+      CXXRecordDecl* FieldRec = cast<CXXRecordDecl>(RecordTy->getDecl());
+      if (FieldRec->getDefinition()) {
+        if (!FieldRec->hasTrivialConstructor())
+          data().HasTrivialConstructor = false;
+        if (!FieldRec->hasTrivialCopyConstructor())
+          data().HasTrivialCopyConstructor = false;
+        if (!FieldRec->hasTrivialCopyAssignment())
+          data().HasTrivialCopyAssignment = false;
+        if (!FieldRec->hasTrivialDestructor())
+          data().HasTrivialDestructor = false;
+      }
+    }
     
     // If this is not a zero-length bit-field, then the class is not empty.
     if (data().Empty) {
@@ -642,14 +720,6 @@ void CXXRecordDecl::removeConversion(const NamedDecl *ConvDecl) {
   }
 
   llvm_unreachable("conversion not found in set!");
-}
-
-void CXXRecordDecl::setMethodAsVirtual(FunctionDecl *Method) {
-  Method->setVirtualAsWritten(true);
-  setPolymorphic(true);
-  setHasTrivialConstructor(false);
-  setHasTrivialCopyConstructor(false);
-  setHasTrivialCopyAssignment(false);
 }
 
 CXXRecordDecl *CXXRecordDecl::getInstantiatedFromMemberClass() const {
