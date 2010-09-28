@@ -134,7 +134,7 @@ class ARMFastISel : public FastISel {
     bool ARMStoreAlloca(const Instruction *I, unsigned SrcReg, EVT VT);
     bool ARMComputeRegOffset(const Value *Obj, unsigned &Reg, int &Offset);
     unsigned ARMMaterializeFP(const ConstantFP *CFP, EVT VT);
-    unsigned ARMMaterializeInt(const Constant *C);
+    unsigned ARMMaterializeInt(const Constant *C, EVT VT);
     unsigned ARMMoveToFPReg(EVT VT, unsigned SrcReg);
     unsigned ARMMoveToIntReg(EVT VT, unsigned SrcReg);
 
@@ -404,8 +404,11 @@ unsigned ARMFastISel::ARMMaterializeFP(const ConstantFP *CFP, EVT VT) {
   return DestReg;
 }
 
-// TODO: Verify 64-bit.
-unsigned ARMFastISel::ARMMaterializeInt(const Constant *C) {
+unsigned ARMFastISel::ARMMaterializeInt(const Constant *C, EVT VT) {
+  
+  // For now 32-bit only.
+  if (VT.getSimpleVT().SimpleTy != MVT::i32) return false;
+  
   // MachineConstantPool wants an explicit alignment.
   unsigned Align = TD.getPrefTypeAlignment(C->getType());
   if (Align == 0) {
@@ -413,7 +416,7 @@ unsigned ARMFastISel::ARMMaterializeInt(const Constant *C) {
     Align = TD.getTypeAllocSize(C->getType());
   }
   unsigned Idx = MCP.getConstantPoolIndex(C, Align);
-  unsigned DestReg = createResultReg(TLI.getRegClassFor(MVT::i32));
+  unsigned DestReg = createResultReg(TLI.getRegClassFor(VT));
   
   if (isThumb)
     AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
@@ -437,7 +440,7 @@ unsigned ARMFastISel::TargetMaterializeConstant(const Constant *C) {
 
   if (const ConstantFP *CFP = dyn_cast<ConstantFP>(C))
     return ARMMaterializeFP(CFP, VT);
-  return ARMMaterializeInt(C);
+  return ARMMaterializeInt(C, VT);
 }
 
 bool ARMFastISel::isTypeLegal(const Type *Ty, EVT &VT) {
