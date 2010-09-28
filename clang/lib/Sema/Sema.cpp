@@ -20,6 +20,7 @@
 #include "llvm/ADT/APFloat.h"
 #include "clang/Sema/CXXFieldCollector.h"
 #include "clang/Sema/ExternalSemaSource.h"
+#include "clang/Sema/ObjCMethodList.h"
 #include "clang/Sema/PrettyDeclStackTrace.h"
 #include "clang/Sema/Scope.h"
 #include "clang/Sema/ScopeInfo.h"
@@ -552,6 +553,11 @@ BlockScopeInfo *Sema::getCurBlock() {
 
 // Pin this vtable to this file.
 ExternalSemaSource::~ExternalSemaSource() {}
+
+std::pair<ObjCMethodList, ObjCMethodList>
+ExternalSemaSource::ReadMethodPool(Selector Sel) {
+  return std::pair<ObjCMethodList, ObjCMethodList>();
+}
 
 void PrettyDeclStackTraceEntry::print(llvm::raw_ostream &OS) const {
   SourceLocation Loc = this->Loc;
