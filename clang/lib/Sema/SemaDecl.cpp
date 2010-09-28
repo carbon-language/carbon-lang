@@ -1691,6 +1691,25 @@ Decl *Sema::ParsedFreeStandingDeclSpec(Scope *S, AccessSpecifier AS,
   return TagD;
 }
 
+/// ActOnVlaStmt - This rouine if finds a vla expression in a decl spec.
+/// builds a statement for it and returns it so it is evaluated.
+StmtResult Sema::ActOnVlaStmt(const DeclSpec &DS) {
+  StmtResult R;
+  if (DS.getTypeSpecType() == DeclSpec::TST_typeofExpr) {
+    Expr *Exp = DS.getRepAsExpr();
+    QualType Ty = Exp->getType();
+    if (Ty->isPointerType()) {
+      do
+        Ty = Ty->getAs<PointerType>()->getPointeeType();
+      while (Ty->isPointerType());
+    }
+    if (Ty->isVariableArrayType()) {
+      R = ActOnExprStmt(MakeFullExpr(Exp));
+    }
+  }
+  return R;
+}
+
 /// We are trying to inject an anonymous member into the given scope;
 /// check if there's an existing declaration that can't be overloaded.
 ///

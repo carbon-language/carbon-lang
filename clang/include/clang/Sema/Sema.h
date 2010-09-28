@@ -761,6 +761,8 @@ public:
   /// no declarator (e.g. "struct foo;") is parsed.
   Decl *ParsedFreeStandingDeclSpec(Scope *S, AccessSpecifier AS,
                                    DeclSpec &DS);
+  
+  StmtResult ActOnVlaStmt(const DeclSpec &DS);
 
   Decl *BuildAnonymousStructOrUnion(Scope *S, DeclSpec &DS,
                                     AccessSpecifier AS,

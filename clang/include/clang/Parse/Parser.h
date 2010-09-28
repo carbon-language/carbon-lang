@@ -1137,9 +1137,11 @@ private:
   // C99 6.8: Statements and Blocks.
 
   StmtResult ParseStatement() {
-    return ParseStatementOrDeclaration(true);
+    StmtVector Stmts(Actions);
+    return ParseStatementOrDeclaration(Stmts, true);
   }
-  StmtResult ParseStatementOrDeclaration(bool OnlyStatement = false);
+  StmtResult ParseStatementOrDeclaration(StmtVector& Stmts,
+                                         bool OnlyStatement = false);
   StmtResult ParseLabeledStatement(AttributeList *Attr);
   StmtResult ParseCaseStatement(AttributeList *Attr);
   StmtResult ParseDefaultStatement(AttributeList *Attr);
@@ -1193,9 +1195,11 @@ private:
     DSC_top_level // top-level/namespace declaration context
   };
 
-  DeclGroupPtrTy ParseDeclaration(unsigned Context, SourceLocation &DeclEnd,
+  DeclGroupPtrTy ParseDeclaration(StmtVector &Stmts,
+                                  unsigned Context, SourceLocation &DeclEnd,
                                   CXX0XAttributeList Attr);
-  DeclGroupPtrTy ParseSimpleDeclaration(unsigned Context,
+  DeclGroupPtrTy ParseSimpleDeclaration(StmtVector &Stmts,
+                                        unsigned Context,
                                         SourceLocation &DeclEnd,
                                         AttributeList *Attr,
                                         bool RequireSemi);

@@ -519,14 +519,16 @@ Parser::DeclGroupPtrTy Parser::ParseExternalDeclaration(CXX0XAttributeList Attr,
     // A function definition cannot start with a these keywords.
     {
       SourceLocation DeclEnd;
-      return ParseDeclaration(Declarator::FileContext, DeclEnd, Attr);
+      StmtVector Stmts(Actions);
+      return ParseDeclaration(Stmts, Declarator::FileContext, DeclEnd, Attr);
     }
 
   case tok::kw_inline:
     if (getLang().CPlusPlus && NextToken().is(tok::kw_namespace)) {
       // Inline namespaces. Allowed as an extension even in C++03.
       SourceLocation DeclEnd;
-      return ParseDeclaration(Declarator::FileContext, DeclEnd, Attr);
+      StmtVector Stmts(Actions);
+      return ParseDeclaration(Stmts, Declarator::FileContext, DeclEnd, Attr);
     }
     goto dont_know;
 

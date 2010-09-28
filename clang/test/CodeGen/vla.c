@@ -73,3 +73,15 @@ void test1() {
      function(1, bork[2]);
 }
 
+// rdar://8476159
+static int GLOB;
+int test2(int n)
+{
+  GLOB = 0;
+  char b[1][n+3];			/* Variable length array.  */
+  // CHECK:  [[tmp_1:%.*]] = load i32* @GLOB, align 4
+  // CHECK-NEXT: add nsw i32 [[tmp_1]], 1
+  __typeof__(b[GLOB++]) c;
+  return GLOB;
+}
+

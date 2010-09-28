@@ -320,7 +320,8 @@ AttributeList* Parser::ParseBorlandTypeAttributes(AttributeList *CurrAttr) {
 /// [C++0x] static_assert-declaration
 ///         others... [FIXME]
 ///
-Parser::DeclGroupPtrTy Parser::ParseDeclaration(unsigned Context,
+Parser::DeclGroupPtrTy Parser::ParseDeclaration(StmtVector &Stmts,
+                                                unsigned Context,
                                                 SourceLocation &DeclEnd,
                                                 CXX0XAttributeList Attr) {
   ParenBraceBracketBalancer BalancerRAIIObj(*this);
@@ -344,7 +345,8 @@ Parser::DeclGroupPtrTy Parser::ParseDeclaration(unsigned Context,
       SingleDecl = ParseNamespace(Context, DeclEnd, InlineLoc);
       break;
     }
-    return ParseSimpleDeclaration(Context, DeclEnd, Attr.AttrList, true);
+    return ParseSimpleDeclaration(Stmts, Context, DeclEnd, Attr.AttrList, 
+                                  true);
   case tok::kw_namespace:
     if (Attr.HasAttr)
       Diag(Attr.Range.getBegin(), diag::err_attributes_not_allowed)
@@ -361,7 +363,8 @@ Parser::DeclGroupPtrTy Parser::ParseDeclaration(unsigned Context,
     SingleDecl = ParseStaticAssertDeclaration(DeclEnd);
     break;
   default:
-    return ParseSimpleDeclaration(Context, DeclEnd, Attr.AttrList, true);
+    return ParseSimpleDeclaration(Stmts, Context, DeclEnd, Attr.AttrList, 
+                                  true);
   }
   
   // This routine returns a DeclGroup, if the thing we parsed only contains a
@@ -376,7 +379,8 @@ Parser::DeclGroupPtrTy Parser::ParseDeclaration(unsigned Context,
 ///
 /// If RequireSemi is false, this does not check for a ';' at the end of the
 /// declaration.  If it is true, it checks for and eats it.
-Parser::DeclGroupPtrTy Parser::ParseSimpleDeclaration(unsigned Context,
+Parser::DeclGroupPtrTy Parser::ParseSimpleDeclaration(StmtVector &Stmts, 
+                                                      unsigned Context,
                                                       SourceLocation &DeclEnd,
                                                       AttributeList *Attr,
                                                       bool RequireSemi) {
@@ -386,6 +390,9 @@ Parser::DeclGroupPtrTy Parser::ParseSimpleDeclaration(unsigned Context,
     DS.AddAttributes(Attr);
   ParseDeclarationSpecifiers(DS, ParsedTemplateInfo(), AS_none,
                             getDeclSpecContextFromDeclaratorContext(Context));
+  StmtResult R = Actions.ActOnVlaStmt(DS);
+  if (R.isUsable())
+    Stmts.push_back(R.release());
 
   // C99 6.7.2.3p6: Handle "struct-or-union identifier;", "enum { X };"
   // declaration-specifiers init-declarator-list[opt] ';'

@@ -75,7 +75,7 @@ using namespace clang;
 /// [OBC]   '@' 'throw' ';'
 ///
 StmtResult
-Parser::ParseStatementOrDeclaration(bool OnlyStatement) {
+Parser::ParseStatementOrDeclaration(StmtVector &Stmts, bool OnlyStatement) {
   const char *SemiError = 0;
   StmtResult Res;
   
@@ -101,7 +101,7 @@ Parser::ParseStatementOrDeclaration(bool OnlyStatement) {
   case tok::code_completion:
     Actions.CodeCompleteOrdinaryName(getCurScope(), Sema::PCC_Statement);
     ConsumeCodeCompletionToken();
-    return ParseStatementOrDeclaration(OnlyStatement);
+    return ParseStatementOrDeclaration(Stmts, OnlyStatement);
       
   case tok::identifier:
     if (NextToken().is(tok::colon)) { // C99 6.8.1: labeled-statement
@@ -114,7 +114,7 @@ Parser::ParseStatementOrDeclaration(bool OnlyStatement) {
     if ((getLang().CPlusPlus || !OnlyStatement) && isDeclarationStatement()) {
       SourceLocation DeclStart = Tok.getLocation(), DeclEnd;
       AttrList.take(); //Passing 'Attr' to ParseDeclaration transfers ownership.
-      DeclGroupPtrTy Decl = ParseDeclaration(Declarator::BlockContext, DeclEnd,
+      DeclGroupPtrTy Decl = ParseDeclaration(Stmts, Declarator::BlockContext, DeclEnd,
                                              Attr);
       return Actions.ActOnDeclStmt(Decl, DeclStart, DeclEnd);
     }
@@ -466,12 +466,11 @@ StmtResult Parser::ParseCompoundStatementBody(bool isStmtExpr) {
   // TODO: "__label__ X, Y, Z;" is the GNU "Local Label" extension.  These are
   // only allowed at the start of a compound stmt regardless of the language.
 
-  typedef StmtVector StmtsTy;
-  StmtsTy Stmts(Actions);
+  StmtVector Stmts(Actions);
   while (Tok.isNot(tok::r_brace) && Tok.isNot(tok::eof)) {
     StmtResult R;
     if (Tok.isNot(tok::kw___extension__)) {
-      R = ParseStatementOrDeclaration(false);
+      R = ParseStatementOrDeclaration(Stmts, false);
     } else {
       // __extension__ can start declarations and it can also be a unary
       // operator for expressions.  Consume multiple __extension__ markers here
@@ -492,7 +491,8 @@ StmtResult Parser::ParseCompoundStatementBody(bool isStmtExpr) {
         ExtensionRAIIObject O(Diags);
 
         SourceLocation DeclStart = Tok.getLocation(), DeclEnd;
-        DeclGroupPtrTy Res = ParseDeclaration(Declarator::BlockContext, DeclEnd,
+        DeclGroupPtrTy Res = ParseDeclaration(Stmts,
+                                              Declarator::BlockContext, DeclEnd,
                                               Attr);
         R = Actions.ActOnDeclStmt(Res, DeclStart, DeclEnd);
       } else {
@@ -1015,8 +1015,9 @@ StmtResult Parser::ParseForStatement(AttributeList *Attr) {
       AttrList = ParseCXX0XAttributes().AttrList;
 
     SourceLocation DeclStart = Tok.getLocation(), DeclEnd;
-    DeclGroupPtrTy DG = ParseSimpleDeclaration(Declarator::ForContext, DeclEnd,
-                                               AttrList, false);
+    StmtVector Stmts(Actions);
+    DeclGroupPtrTy DG = ParseSimpleDeclaration(Stmts, Declarator::ForContext, 
+                                               DeclEnd, AttrList, false);
     FirstPart = Actions.ActOnDeclStmt(DG, DeclStart, Tok.getLocation());
 
     if (Tok.is(tok::semi)) {  // for (int x = 4;
