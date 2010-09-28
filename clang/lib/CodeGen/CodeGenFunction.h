@@ -536,9 +536,6 @@ public:
 
   llvm::BasicBlock *getInvokeDestImpl();
 
-  // Build a vector out of the supplied Values.
-  llvm::Value *BuildVector(const llvm::SmallVectorImpl<llvm::Value*> &Ops);
-
 public:
   /// ObjCEHValueStack - Stack of Objective-C exception values, used for
   /// rethrows.
