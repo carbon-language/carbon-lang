@@ -141,7 +141,7 @@ class ARMFastISel : public FastISel {
     // Call handling routines.
   private:
     CCAssignFn *CCAssignFnForCall(CallingConv::ID CC, bool Return);
-    bool ARMEmitLibcall(const Instruction *I, Function *F);
+    bool ARMEmitLibcall(const Instruction *I, RTLIB::Libcall Call);
 
     // OptionalDef handling routines.
   private:
@@ -1028,19 +1028,20 @@ CCAssignFn *ARMFastISel::CCAssignFnForCall(CallingConv::ID CC, bool Return) {
 // like computed function pointers or strange arguments at call sites.
 // TODO: Try to unify this and the normal call bits for ARM, then try to unify
 // with X86.
-bool ARMFastISel::ARMEmitLibcall(const Instruction *I, Function *F) {
-  CallingConv::ID CC = F->getCallingConv();
-  
+bool ARMFastISel::ARMEmitLibcall(const Instruction *I, RTLIB::Libcall Call) {
+  CallingConv::ID CC = TLI.getLibcallCallingConv(Call);
+    
   // Handle *simple* calls for now.
-  const Type *RetTy = F->getReturnType();
+  const Type *RetTy = I->getType();
   EVT RetVT;
   if (RetTy->isVoidTy())
     RetVT = MVT::isVoid;
   else if (!isTypeLegal(RetTy, RetVT))
     return false;
   
-  assert(!F->isVarArg() && "Vararg libcall?!");
-
+  // For now we're using BLX etc on the assumption that we have v5t ops.
+  if (!Subtarget->hasV5TOps()) return false;
+  
   // Abridged from the X86 FastISel call selection mechanism
   SmallVector<Value*, 8> Args;
   SmallVector<unsigned, 8> ArgRegs;
@@ -1050,7 +1051,7 @@ bool ARMFastISel::ARMEmitLibcall(const Instruction *I, Function *F) {
   ArgRegs.reserve(I->getNumOperands());
   ArgVTs.reserve(I->getNumOperands());
   ArgFlags.reserve(I->getNumOperands());
-  for (unsigned i = 0; i < Args.size(); ++i) {
+  for (unsigned i = 0; i < I->getNumOperands(); ++i) {
     Value *Op = I->getOperand(i);
     unsigned Arg = getRegForValue(Op);
     if (Arg == 0) return false;
@@ -1070,8 +1071,17 @@ bool ARMFastISel::ARMEmitLibcall(const Instruction *I, Function *F) {
   }
   
   SmallVector<CCValAssign, 16> ArgLocs;
-  CCState CCInfo(CC, false, TM, ArgLocs, F->getContext());
+  CCState CCInfo(CC, false, TM, ArgLocs,
+                 I->getParent()->getParent()->getContext());
   CCInfo.AnalyzeCallOperands(ArgVTs, ArgFlags, CCAssignFnForCall(CC, false));
+  
+  // Get a count of how many bytes are to be pushed on the stack.
+  unsigned NumBytes = CCInfo.getNextStackOffset();
+
+  // Issue CALLSEQ_START
+  unsigned AdjStackDown = TM.getRegisterInfo()->getCallFrameSetupOpcode();
+  BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(AdjStackDown))
+    .addImm(NumBytes);
   
   // Process the args.
   SmallVector<unsigned, 4> RegArgs;
@@ -1091,7 +1101,8 @@ bool ARMFastISel::ARMEmitLibcall(const Instruction *I, Function *F) {
     // Now copy/store arg to correct locations.
     if (VA.isRegLoc()) {
       BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(TargetOpcode::COPY),
-        VA.getLocReg()).addReg(Arg);
+              VA.getLocReg())
+      .addReg(Arg);
       RegArgs.push_back(VA.getLocReg());
     } else {
       // Need to store
@@ -1099,25 +1110,32 @@ bool ARMFastISel::ARMEmitLibcall(const Instruction *I, Function *F) {
     }
   }
   
-  // Issue the call, BLr9 for darwin, BL otherwise.
+  // Issue the call, BLXr9 for darwin, BLX otherwise. This uses V5 ops.
+  // TODO: Turn this into the table of arm call ops.  
   MachineInstrBuilder MIB;
   unsigned CallOpc;
   if(isThumb)
-    CallOpc = Subtarget->isTargetDarwin() ? ARM::tBLr9 : ARM::tBL;
+    CallOpc = Subtarget->isTargetDarwin() ? ARM::tBLXi_r9 : ARM::tBLXi;
   else
     CallOpc = Subtarget->isTargetDarwin() ? ARM::BLr9 : ARM::BL;
   MIB = BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(CallOpc))
-        .addGlobalAddress(F, 0, 0);
-  
+        .addExternalSymbol(TLI.getLibcallName(Call));
+    
   // Add implicit physical register uses to the call.
   for (unsigned i = 0, e = RegArgs.size(); i != e; ++i)
     MIB.addReg(RegArgs[i]);
+    
+  // Issue CALLSEQ_END
+  unsigned AdjStackUp = TM.getRegisterInfo()->getCallFrameDestroyOpcode();
+  BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(AdjStackUp))
+    .addImm(NumBytes).addImm(0);
     
   // Now the return value.
   SmallVector<unsigned, 4> UsedRegs;
   if (RetVT.getSimpleVT().SimpleTy != MVT::isVoid) {
     SmallVector<CCValAssign, 16> RVLocs;
-    CCState CCInfo(CC, false, TM, RVLocs, F->getContext());
+    CCState CCInfo(CC, false, TM, RVLocs, 
+                   I->getParent()->getParent()->getContext());
     CCInfo.AnalyzeCallResult(RetVT, CCAssignFnForCall(CC, true));
 
     // Copy all of the result registers out of their specified physreg.
@@ -1136,7 +1154,6 @@ bool ARMFastISel::ARMEmitLibcall(const Instruction *I, Function *F) {
   
   // Set all unused physreg defs as dead.
   static_cast<MachineInstr *>(MIB)->setPhysRegsDeadExcept(UsedRegs, TRI);
-
   return true;
 }
 
@@ -1162,20 +1179,8 @@ bool ARMFastISel::SelectSDiv(const Instruction *I) {
   else if (VT == MVT::i128)
     LC = RTLIB::SDIV_I128;
   assert(LC != RTLIB::UNKNOWN_LIBCALL && "Unsupported SDIV!");
-  
-  // Binary operand with all the same type.
-  std::vector<const Type*> ArgTys;
-  ArgTys.push_back(Ty);
-  ArgTys.push_back(Ty);
-  const FunctionType *FTy = FunctionType::get(Ty, ArgTys, false);
-  Function *F = Function::Create(FTy, GlobalValue::ExternalLinkage,
-                                 TLI.getLibcallName(LC));
-  if (Subtarget->isAAPCS_ABI())
-    F->setCallingConv(CallingConv::ARM_AAPCS);
-  else
-    F->setCallingConv(I->getParent()->getParent()->getCallingConv());
-  
-  return ARMEmitLibcall(I, F);
+    
+  return ARMEmitLibcall(I, LC);
 }
 
 // TODO: SoftFP support.
