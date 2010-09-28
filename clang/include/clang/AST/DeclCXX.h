@@ -688,10 +688,6 @@ public:
   /// no base classes, and no virtual functions (C++ [dcl.init.aggr]p1).
   bool isAggregate() const { return data().Aggregate; }
 
-  /// setMethodAsVirtual - Make input method virtual and set the necesssary 
-  /// special function bits and other bits accordingly.
-  void setMethodAsVirtual(FunctionDecl *Method);
-
   /// isPOD - Whether this class is a POD-type (C++ [class]p4), which is a class
   /// that is an aggregate that has no non-static non-POD data members, no
   /// reference data members, no user-defined copy assignment operator and no
@@ -719,20 +715,10 @@ public:
   // (C++ [class.ctor]p5)
   bool hasTrivialConstructor() const { return data().HasTrivialConstructor; }
 
-  // setHasTrivialConstructor - Set whether this class has a trivial constructor
-  // (C++ [class.ctor]p5)
-  void setHasTrivialConstructor(bool TC) { data().HasTrivialConstructor = TC; }
-
   // hasTrivialCopyConstructor - Whether this class has a trivial copy
   // constructor (C++ [class.copy]p6)
   bool hasTrivialCopyConstructor() const {
     return data().HasTrivialCopyConstructor;
-  }
-
-  // setHasTrivialCopyConstructor - Set whether this class has a trivial
-  // copy constructor (C++ [class.copy]p6)
-  void setHasTrivialCopyConstructor(bool TC) {
-    data().HasTrivialCopyConstructor = TC;
   }
 
   // hasTrivialCopyAssignment - Whether this class has a trivial copy
@@ -741,19 +727,9 @@ public:
     return data().HasTrivialCopyAssignment;
   }
 
-  // setHasTrivialCopyAssignment - Set whether this class has a
-  // trivial copy assignment operator (C++ [class.copy]p11)
-  void setHasTrivialCopyAssignment(bool TC) {
-    data().HasTrivialCopyAssignment = TC;
-  }
-
   // hasTrivialDestructor - Whether this class has a trivial destructor
   // (C++ [class.dtor]p3)
   bool hasTrivialDestructor() const { return data().HasTrivialDestructor; }
-
-  // setHasTrivialDestructor - Set whether this class has a trivial destructor
-  // (C++ [class.dtor]p3)
-  void setHasTrivialDestructor(bool TC) { data().HasTrivialDestructor = TC; }
 
   /// \brief If this record is an instantiation of a member class,
   /// retrieves the member class from which it was instantiated.

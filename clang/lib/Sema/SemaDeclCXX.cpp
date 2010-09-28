@@ -502,8 +502,6 @@ Sema::CheckBaseSpecifier(CXXRecordDecl *Class,
     return 0;
   }
 
-  SetClassDeclAttributesFromBase(Class, CXXBaseDecl, Virtual);
-
   if (BaseDecl->isInvalidDecl())
     Class->setInvalidDecl();
   
@@ -511,49 +509,6 @@ Sema::CheckBaseSpecifier(CXXRecordDecl *Class,
   return new (Context) CXXBaseSpecifier(SpecifierRange, Virtual,
                                         Class->getTagKind() == TTK_Class,
                                         Access, TInfo);
-}
-
-void Sema::SetClassDeclAttributesFromBase(CXXRecordDecl *Class,
-                                          const CXXRecordDecl *BaseClass,
-                                          bool BaseIsVirtual) {
-  if (BaseIsVirtual) {
-    // C++ [class.ctor]p5:
-    //   A constructor is trivial if its class has no virtual base classes.
-    Class->setHasTrivialConstructor(false);
-
-    // C++ [class.copy]p6:
-    //   A copy constructor is trivial if its class has no virtual base classes.
-    Class->setHasTrivialCopyConstructor(false);
-
-    // C++ [class.copy]p11:
-    //   A copy assignment operator is trivial if its class has no virtual
-    //   base classes.
-    Class->setHasTrivialCopyAssignment(false);
-  } else {
-    // C++ [class.ctor]p5:
-    //   A constructor is trivial if all the direct base classes of its
-    //   class have trivial constructors.
-    if (!BaseClass->hasTrivialConstructor())
-      Class->setHasTrivialConstructor(false);
-
-    // C++ [class.copy]p6:
-    //   A copy constructor is trivial if all the direct base classes of its
-    //   class have trivial copy constructors.
-    if (!BaseClass->hasTrivialCopyConstructor())
-      Class->setHasTrivialCopyConstructor(false);
-
-    // C++ [class.copy]p11:
-    //   A copy assignment operator is trivial if all the direct base classes
-    //   of its class have trivial copy assignment operators.
-    if (!BaseClass->hasTrivialCopyAssignment())
-      Class->setHasTrivialCopyAssignment(false);
-  }
-
-  // C++ [class.ctor]p3:
-  //   A destructor is trivial if all the direct base classes of its class
-  //   have trivial destructors.
-  if (!BaseClass->hasTrivialDestructor())
-    Class->setHasTrivialDestructor(false);
 }
 
 /// ActOnBaseSpecifier - Parsed a base specifier. A base specifier is
