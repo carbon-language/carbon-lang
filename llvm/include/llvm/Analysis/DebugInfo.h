@@ -763,6 +763,11 @@ namespace llvm {
     /// InsertDbgValueIntrinsic - Insert a new llvm.dbg.value intrinsic call.
     Instruction *InsertDbgValueIntrinsic(llvm::Value *V, uint64_t Offset,
                                        DIVariable D, Instruction *InsertBefore);
+
+    // RecordType - Record DIType in a module such that it is not lost even if
+    // it is not referenced through debug info anchors.
+    void RecordType(DIType T);
+
   private:
     Constant *GetTagConstant(unsigned TAG);
   };

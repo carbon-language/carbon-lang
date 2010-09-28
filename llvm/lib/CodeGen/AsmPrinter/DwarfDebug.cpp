@@ -2056,6 +2056,10 @@ void DwarfDebug::beginModule(Module *M) {
     for (unsigned i = 0, e = NMD->getNumOperands(); i != e; ++i)
       getOrCreateTypeDIE(DIType(NMD->getOperand(i)));
 
+  if (NamedMDNode *NMD = M->getNamedMetadata("llvm.dbg.ty"))
+    for (unsigned i = 0, e = NMD->getNumOperands(); i != e; ++i)
+      getOrCreateTypeDIE(DIType(NMD->getOperand(i)));
+
   // Prime section data.
   SectionMap.insert(Asm->getObjFileLowering().getTextSection());
 

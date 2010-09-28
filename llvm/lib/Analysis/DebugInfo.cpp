@@ -1306,6 +1306,14 @@ Instruction *DIFactory::InsertDbgValueIntrinsic(Value *V, uint64_t Offset,
   return CallInst::Create(ValueFn, Args, Args+3, "", InsertAtEnd);
 }
 
+// RecordType - Record DIType in a module such that it is not lost even if
+// it is not referenced through debug info anchors.
+void DIFactory::RecordType(DIType T) {
+  NamedMDNode *NMD = M.getOrInsertNamedMetadata("llvm.dbg.ty");
+  NMD->addOperand(T);
+}
+
+
 //===----------------------------------------------------------------------===//
 // DebugInfoFinder implementations.
 //===----------------------------------------------------------------------===//
