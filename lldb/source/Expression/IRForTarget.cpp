@@ -12,6 +12,7 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/InstrTypes.h"
 #include "llvm/Instructions.h"
+#include "llvm/Intrinsics.h"
 #include "llvm/Module.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/ValueSymbolTable.h"
@@ -633,34 +634,29 @@ IRForTarget::MaybeHandleCall(Module &M,
         }
     }
     
-    std::string str = fun->getName().str();
+    std::string str;
     
-    if (str.find("llvm.") == 0)
+    if (fun->isIntrinsic())
     {
-        // Probably a LLVM built-in.  Let's try again, but looking up the original.
-        //
-        //      +- builtin_name_offset [in this case, 5]
-        //      |
-        //      |====| builtin_name_length [in this case, 6]
-        // 0    |     
-        // |    |     +- builtin_name_end [in this case, 11]
-        // V    V     V
-        // llvm.______.i32.u8
-        // 012345678901234567
-        // 0         1
+        Intrinsic::ID intrinsic_id = (Intrinsic::ID)fun->getIntrinsicID();
         
-        size_t builtin_name_offset = sizeof("llvm.") - 1;
-        size_t builtin_name_end = str.find('.', builtin_name_offset);
-        
-        if (builtin_name_end == str.npos)
-            builtin_name_end = str.size() + 1;
-        
-        size_t builtin_name_length = builtin_name_end - builtin_name_offset;
-        
-        str = str.substr(builtin_name_offset, builtin_name_length);
+        switch (intrinsic_id)
+        {
+        default:
+            if (log)
+                log->Printf("Unresolved intrinsic %s", Intrinsic::getName(intrinsic_id).c_str());
+            return false;
+        case Intrinsic::memcpy:
+            str = "memcpy";
+            break;
+        }
         
         if (log)
-            log->Printf("Extracted builtin function name %s", str.c_str());
+            log->Printf("Resolved intrinsic name %s", str.c_str());
+    }
+    else
+    {
+        str = fun->getName().str();
     }
     
     clang::NamedDecl *fun_decl = DeclForGlobalValue(M, fun);
