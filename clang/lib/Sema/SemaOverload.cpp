@@ -1728,10 +1728,11 @@ bool Sema::CheckPointerConversion(Expr *From, QualType ToType,
                                   CXXCastPath& BasePath,
                                   bool IgnoreBaseAccess) {
   QualType FromType = From->getType();
+  bool IsCStyleOrFunctionalCast = IgnoreBaseAccess;
 
   if (CXXBoolLiteralExpr* LitBool
                           = dyn_cast<CXXBoolLiteralExpr>(From->IgnoreParens()))
-    if (LitBool->getValue() == false)
+    if (!IsCStyleOrFunctionalCast && LitBool->getValue() == false)
       Diag(LitBool->getExprLoc(), diag::warn_init_pointer_from_false)
         << ToType;
 
