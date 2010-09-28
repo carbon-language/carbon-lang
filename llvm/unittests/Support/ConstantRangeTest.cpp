@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Support/ConstantRange.h"
+#include "llvm/Instructions.h"
 
 #include "gtest/gtest.h"
 
@@ -427,6 +428,13 @@ TEST_F(ConstantRangeTest, Lshr) {
                                            APInt(16, (0xaaa >> 0xa) + 1)));
   EXPECT_EQ(Some.lshr(Wrap), ConstantRange(APInt(16, 0), APInt(16, 0xaaa)));
   EXPECT_EQ(Wrap.lshr(Wrap), Full);
+}
+
+TEST(ConstantRange, MakeICmpRegion) {
+  // PR8250
+  ConstantRange SMax = ConstantRange(APInt::getSignedMaxValue(32));
+  EXPECT_TRUE(ConstantRange::makeICmpRegion(ICmpInst::ICMP_SGT,
+                                            SMax).isEmptySet());
 }
 
 }  // anonymous namespace
