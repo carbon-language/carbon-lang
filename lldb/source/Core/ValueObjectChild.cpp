@@ -204,4 +204,3 @@ ValueObjectChild::IsInScope (StackFrame *frame)
 {
     return m_parent->IsInScope (frame);
 }
-

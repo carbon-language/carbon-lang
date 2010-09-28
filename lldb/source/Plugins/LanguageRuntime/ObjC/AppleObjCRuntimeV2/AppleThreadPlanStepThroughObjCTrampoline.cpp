@@ -1,4 +1,4 @@
-//===-- ThreadPlanStepThroughObjCTrampoline.cpp --------------------------*- C++ -*-===//
+//===-- AppleThreadPlanStepThroughObjCTrampoline.cpp --------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -11,12 +11,14 @@
 // C++ Includes
 // Other libraries and framework includes
 // Project includes
-#include "ThreadPlanStepThroughObjCTrampoline.h"
+#include "AppleThreadPlanStepThroughObjCTrampoline.h"
+#include "AppleObjCTrampolineHandler.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Target/Thread.h"
 #include "lldb/Expression/ClangExpression.h"
 #include "lldb/Expression/ClangFunction.h"
 #include "lldb/Target/ExecutionContext.h"
+#include "lldb/Target/ObjCLanguageRuntime.h"
 #include "lldb/Target/ThreadPlanRunToAddress.h"
 #include "lldb/Core/Log.h"
 
@@ -25,22 +27,23 @@ using namespace lldb_private;
 //----------------------------------------------------------------------
 // ThreadPlanStepThroughObjCTrampoline constructor
 //----------------------------------------------------------------------
-ThreadPlanStepThroughObjCTrampoline::ThreadPlanStepThroughObjCTrampoline(
+AppleThreadPlanStepThroughObjCTrampoline::AppleThreadPlanStepThroughObjCTrampoline(
         Thread &thread, 
-        ObjCTrampolineHandler *trampoline_handler, 
+        AppleObjCTrampolineHandler *trampoline_handler, 
         lldb::addr_t args_addr, 
         lldb::addr_t object_ptr, 
         lldb::addr_t class_ptr, 
         lldb::addr_t sel_ptr, 
         bool stop_others) :
-    ThreadPlan (ThreadPlan::eKindGeneric, "MacOSX Step through ObjC Trampoline", thread, eVoteNoOpinion, eVoteNoOpinion),
-    m_args_addr (args_addr),
+    ThreadPlan (ThreadPlan::eKindGeneric, "MacOSX Step through ObjC Trampoline", thread, 
+        lldb::eVoteNoOpinion, lldb::eVoteNoOpinion),
     m_stop_others (stop_others),
-    m_objc_trampoline_handler (trampoline_handler),
-    m_impl_function (trampoline_handler->GetLookupImplementationWrapperFunction()),
     m_object_ptr (object_ptr),
     m_class_ptr (class_ptr),
-    m_sel_ptr (sel_ptr)
+    m_sel_ptr (sel_ptr),
+    m_args_addr (args_addr),
+    m_objc_trampoline_handler (trampoline_handler),
+    m_impl_function (trampoline_handler->GetLookupImplementationWrapperFunction())
 {
     
 }
@@ -48,12 +51,12 @@ ThreadPlanStepThroughObjCTrampoline::ThreadPlanStepThroughObjCTrampoline(
 //----------------------------------------------------------------------
 // Destructor
 //----------------------------------------------------------------------
-ThreadPlanStepThroughObjCTrampoline::~ThreadPlanStepThroughObjCTrampoline()
+AppleThreadPlanStepThroughObjCTrampoline::~AppleThreadPlanStepThroughObjCTrampoline()
 {
 }
 
 void
-ThreadPlanStepThroughObjCTrampoline::DidPush ()
+AppleThreadPlanStepThroughObjCTrampoline::DidPush ()
 {
     StreamString errors;
     ExecutionContext exc_context;
@@ -64,7 +67,7 @@ ThreadPlanStepThroughObjCTrampoline::DidPush ()
 }
 
 void
-ThreadPlanStepThroughObjCTrampoline::GetDescription (Stream *s,
+AppleThreadPlanStepThroughObjCTrampoline::GetDescription (Stream *s,
                 lldb::DescriptionLevel level)
 {
     if (level == lldb::eDescriptionLevelBrief)
@@ -77,13 +80,13 @@ ThreadPlanStepThroughObjCTrampoline::GetDescription (Stream *s,
 }
                 
 bool
-ThreadPlanStepThroughObjCTrampoline::ValidatePlan (Stream *error)
+AppleThreadPlanStepThroughObjCTrampoline::ValidatePlan (Stream *error)
 {
     return true;
 }
 
 bool
-ThreadPlanStepThroughObjCTrampoline::PlanExplainsStop ()
+AppleThreadPlanStepThroughObjCTrampoline::PlanExplainsStop ()
 {
     // This plan should actually never stop when it is on the top of the plan
     // stack, since it does all it's running in client plans.
@@ -91,13 +94,13 @@ ThreadPlanStepThroughObjCTrampoline::PlanExplainsStop ()
 }
 
 lldb::StateType
-ThreadPlanStepThroughObjCTrampoline::RunState ()
+AppleThreadPlanStepThroughObjCTrampoline::RunState ()
 {
     return eStateRunning;
 }
 
 bool
-ThreadPlanStepThroughObjCTrampoline::ShouldStop (Event *event_ptr)
+AppleThreadPlanStepThroughObjCTrampoline::ShouldStop (Event *event_ptr)
 {
     if (m_func_sp.get() == NULL || m_thread.IsThreadPlanDone(m_func_sp.get()))
     {
@@ -115,7 +118,9 @@ ThreadPlanStepThroughObjCTrampoline::ShouldStop (Event *event_ptr)
             if (log)
                 log->Printf("Running to ObjC method implementation: 0x%llx", target_addr);
             
-            m_objc_trampoline_handler->AddToCache (m_class_ptr, m_sel_ptr, target_addr);
+            ObjCLanguageRuntime *objc_runtime = GetThread().GetProcess().GetObjCLanguageRuntime();
+            assert (objc_runtime != NULL);
+            objc_runtime->AddToMethodCache (m_class_ptr, m_sel_ptr, target_addr);
 
             // Extract the target address from the value:
             
@@ -136,7 +141,7 @@ ThreadPlanStepThroughObjCTrampoline::ShouldStop (Event *event_ptr)
 // The base class MischiefManaged does some cleanup - so you have to call it
 // in your MischiefManaged derived class.
 bool
-ThreadPlanStepThroughObjCTrampoline::MischiefManaged ()
+AppleThreadPlanStepThroughObjCTrampoline::MischiefManaged ()
 {
     if (IsPlanComplete())
         return true;
@@ -145,7 +150,7 @@ ThreadPlanStepThroughObjCTrampoline::MischiefManaged ()
 }
 
 bool
-ThreadPlanStepThroughObjCTrampoline::WillStop()
+AppleThreadPlanStepThroughObjCTrampoline::WillStop()
 {
     return true;
 }

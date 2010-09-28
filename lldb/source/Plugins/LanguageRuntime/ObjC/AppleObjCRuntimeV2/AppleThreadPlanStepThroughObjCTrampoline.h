@@ -1,4 +1,4 @@
-//===-- ThreadPlanStepThroughObjCTrampoline.h --------------------------*- C++ -*-===//
+//===-- AppleThreadPlanStepThroughObjCTrampoline.h --------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef lldb_ThreadPlanStepThroughObjCTrampoline_h_
-#define lldb_ThreadPlanStepThroughObjCTrampoline_h_
+#ifndef lldb_AppleThreadPlanStepThroughObjCTrampoline_h_
+#define lldb_AppleThreadPlanStepThroughObjCTrampoline_h_
 
 // C Includes
 // C++ Includes
@@ -17,26 +17,26 @@
 #include "lldb/lldb-types.h"
 #include "lldb/lldb-enumerations.h"
 #include "lldb/Target/ThreadPlan.h"
-#include "ObjCTrampolineHandler.h"
+#include "AppleObjCTrampolineHandler.h"
 
 namespace lldb_private 
 {
 
-class ThreadPlanStepThroughObjCTrampoline : public ThreadPlan
+class AppleThreadPlanStepThroughObjCTrampoline : public ThreadPlan
 {
 public:
 	//------------------------------------------------------------------
 	// Constructors and Destructors
 	//------------------------------------------------------------------
-	ThreadPlanStepThroughObjCTrampoline(Thread &thread, 
-                                        ObjCTrampolineHandler *trampoline_handler, 
+	AppleThreadPlanStepThroughObjCTrampoline(Thread &thread, 
+                                        AppleObjCTrampolineHandler *trampoline_handler, 
                                         lldb::addr_t args_addr, 
                                         lldb::addr_t object_ptr, 
                                         lldb::addr_t class_ptr, 
                                         lldb::addr_t sel_ptr, 
                                         bool stop_others);
     
-	virtual ~ThreadPlanStepThroughObjCTrampoline();
+	virtual ~AppleThreadPlanStepThroughObjCTrampoline();
 
     virtual void
     GetDescription (Stream *s,
@@ -70,26 +70,27 @@ public:
 
 protected:
 	//------------------------------------------------------------------
-	// Classes that inherit from ThreadPlanStepThroughObjCTrampoline can see and modify these
+	// Classes that inherit from AppleThreadPlanStepThroughObjCTrampoline can see and modify these
 	//------------------------------------------------------------------
 	
 private:
 	//------------------------------------------------------------------
-	// For ThreadPlanStepThroughObjCTrampoline only
+	// For AppleThreadPlanStepThroughObjCTrampoline only
 	//------------------------------------------------------------------
+    bool m_stop_others;
+    lldb::addr_t m_object_ptr;
+    lldb::addr_t m_class_ptr;
+    lldb::addr_t m_sel_ptr;
+
     ThreadPlanSP m_func_sp;       // This is the function call plan.  We fill it at start, then set it
                                   // to NULL when this plan is done.  That way we know to go to:
     lldb::addr_t m_args_addr;     // Stores the address for our step through function result structure.
     ThreadPlanSP m_run_to_sp;     // The plan that runs to the target.
-    bool m_stop_others;
-    ObjCTrampolineHandler *m_objc_trampoline_handler;
+    AppleObjCTrampolineHandler *m_objc_trampoline_handler;
     ClangFunction *m_impl_function;  // This is a pointer to a impl function that 
                                      // is owned by the client that pushes this plan.
-    lldb::addr_t m_object_ptr;
-    lldb::addr_t m_class_ptr;
-    lldb::addr_t m_sel_ptr;
 };
 
 } // namespace lldb_private
 
-#endif	// lldb_ThreadPlanStepThroughObjCTrampoline_h_
+#endif	// lldb_AppleThreadPlanStepThroughObjCTrampoline_h_

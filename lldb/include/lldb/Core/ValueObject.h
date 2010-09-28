@@ -59,6 +59,9 @@ public:
     virtual ConstString
     GetTypeName() = 0;
 
+    virtual lldb::LanguageType
+    GetObjectRuntimeLanguage();
+    
     virtual void
     UpdateValue (ExecutionContextScope *exe_scope) = 0;
 

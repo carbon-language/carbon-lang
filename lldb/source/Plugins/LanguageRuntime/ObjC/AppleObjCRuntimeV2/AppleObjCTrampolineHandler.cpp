@@ -1,4 +1,4 @@
-//===-- ObjCTrampolineHandler.cpp ----------------------------*- C++ -*-===//
+//===-- AppleObjCTrampolineHandler.cpp ----------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,59 +7,61 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "ObjCTrampolineHandler.h"
+#include "AppleObjCTrampolineHandler.h"
 
 // C Includes
 // C++ Includes
 // Other libraries and framework includes
 // Project includes
-#include "lldb/Core/Module.h"
+#include "AppleThreadPlanStepThroughObjCTrampoline.h"
+
 #include "lldb/Core/ConstString.h"
 #include "lldb/Core/FileSpec.h"
-#include "lldb/Target/Thread.h"
+#include "lldb/Core/Log.h"
+#include "lldb/Core/Module.h"
+#include "lldb/Core/Value.h"
+#include "lldb/Expression/ClangFunction.h"
+#include "lldb/Symbol/ClangASTContext.h"
+#include "lldb/Target/ObjCLanguageRuntime.h"
+#include "lldb/Target/Process.h"
 #include "lldb/Target/RegisterContext.h"
 #include "lldb/Target/Target.h"
-#include "lldb/Target/Process.h"
-#include "lldb/Core/Value.h"
-#include "lldb/Symbol/ClangASTContext.h"
-#include "lldb/Expression/ClangFunction.h"
-#include "lldb/Core/Log.h"
+#include "lldb/Target/Thread.h"
 #include "lldb/Target/ExecutionContext.h"
-#include "ThreadPlanStepThroughObjCTrampoline.h"
 #include "lldb/Target/ThreadPlanRunToAddress.h"
 
 using namespace lldb;
 using namespace lldb_private;
 
-const ObjCTrampolineHandler::DispatchFunction
-ObjCTrampolineHandler::g_dispatch_functions[] =
+const AppleObjCTrampolineHandler::DispatchFunction
+AppleObjCTrampolineHandler::g_dispatch_functions[] =
 {
     // NAME                              STRET  SUPER  FIXUP TYPE
-    {"objc_msgSend",                     false, false, ObjCTrampolineHandler::DispatchFunction::eFixUpNone    },
-    {"objc_msgSend_fixup",               false, false, ObjCTrampolineHandler::DispatchFunction::eFixUpToFix   },
-    {"objc_msgSend_fixedup",             false, false, ObjCTrampolineHandler::DispatchFunction::eFixUpFixed   },
-    {"objc_msgSend_stret",               true,  false, ObjCTrampolineHandler::DispatchFunction::eFixUpNone    },
-    {"objc_msgSend_stret_fixup",         true,  false, ObjCTrampolineHandler::DispatchFunction::eFixUpToFix   },
-    {"objc_msgSend_stret_fixedup",       true,  false, ObjCTrampolineHandler::DispatchFunction::eFixUpFixed   },
-    {"objc_msgSend_fpret",               false, false, ObjCTrampolineHandler::DispatchFunction::eFixUpNone    },
-    {"objc_msgSend_fpret_fixup",         false, false, ObjCTrampolineHandler::DispatchFunction::eFixUpToFix   },
-    {"objc_msgSend_fpret_fixedup",       false, false, ObjCTrampolineHandler::DispatchFunction::eFixUpFixed   },
-    {"objc_msgSend_fp2ret",              false, false, ObjCTrampolineHandler::DispatchFunction::eFixUpNone    },
-    {"objc_msgSend_fp2ret_fixup",        false, false, ObjCTrampolineHandler::DispatchFunction::eFixUpToFix   },
-    {"objc_msgSend_fp2ret_fixedup",      false, false, ObjCTrampolineHandler::DispatchFunction::eFixUpFixed   },
-    {"objc_msgSendSuper",                false, true,  ObjCTrampolineHandler::DispatchFunction::eFixUpNone    },
-    {"objc_msgSendSuper_stret",          true,  true,  ObjCTrampolineHandler::DispatchFunction::eFixUpNone    },
-    {"objc_msgSendSuper2",               false, true,  ObjCTrampolineHandler::DispatchFunction::eFixUpNone    },
-    {"objc_msgSendSuper2_fixup",         false, true,  ObjCTrampolineHandler::DispatchFunction::eFixUpToFix   },
-    {"objc_msgSendSuper2_fixedup",       false, true,  ObjCTrampolineHandler::DispatchFunction::eFixUpFixed   },
-    {"objc_msgSendSuper2_stret",         true,  true,  ObjCTrampolineHandler::DispatchFunction::eFixUpNone    },
-    {"objc_msgSendSuper2_stret_fixup",   true,  true,  ObjCTrampolineHandler::DispatchFunction::eFixUpToFix   },
-    {"objc_msgSendSuper2_stret_fixedup", true,  true,  ObjCTrampolineHandler::DispatchFunction::eFixUpFixed   },
+    {"objc_msgSend",                     false, false, AppleObjCTrampolineHandler::DispatchFunction::eFixUpNone    },
+    {"objc_msgSend_fixup",               false, false, AppleObjCTrampolineHandler::DispatchFunction::eFixUpToFix   },
+    {"objc_msgSend_fixedup",             false, false, AppleObjCTrampolineHandler::DispatchFunction::eFixUpFixed   },
+    {"objc_msgSend_stret",               true,  false, AppleObjCTrampolineHandler::DispatchFunction::eFixUpNone    },
+    {"objc_msgSend_stret_fixup",         true,  false, AppleObjCTrampolineHandler::DispatchFunction::eFixUpToFix   },
+    {"objc_msgSend_stret_fixedup",       true,  false, AppleObjCTrampolineHandler::DispatchFunction::eFixUpFixed   },
+    {"objc_msgSend_fpret",               false, false, AppleObjCTrampolineHandler::DispatchFunction::eFixUpNone    },
+    {"objc_msgSend_fpret_fixup",         false, false, AppleObjCTrampolineHandler::DispatchFunction::eFixUpToFix   },
+    {"objc_msgSend_fpret_fixedup",       false, false, AppleObjCTrampolineHandler::DispatchFunction::eFixUpFixed   },
+    {"objc_msgSend_fp2ret",              false, false, AppleObjCTrampolineHandler::DispatchFunction::eFixUpNone    },
+    {"objc_msgSend_fp2ret_fixup",        false, false, AppleObjCTrampolineHandler::DispatchFunction::eFixUpToFix   },
+    {"objc_msgSend_fp2ret_fixedup",      false, false, AppleObjCTrampolineHandler::DispatchFunction::eFixUpFixed   },
+    {"objc_msgSendSuper",                false, true,  AppleObjCTrampolineHandler::DispatchFunction::eFixUpNone    },
+    {"objc_msgSendSuper_stret",          true,  true,  AppleObjCTrampolineHandler::DispatchFunction::eFixUpNone    },
+    {"objc_msgSendSuper2",               false, true,  AppleObjCTrampolineHandler::DispatchFunction::eFixUpNone    },
+    {"objc_msgSendSuper2_fixup",         false, true,  AppleObjCTrampolineHandler::DispatchFunction::eFixUpToFix   },
+    {"objc_msgSendSuper2_fixedup",       false, true,  AppleObjCTrampolineHandler::DispatchFunction::eFixUpFixed   },
+    {"objc_msgSendSuper2_stret",         true,  true,  AppleObjCTrampolineHandler::DispatchFunction::eFixUpNone    },
+    {"objc_msgSendSuper2_stret_fixup",   true,  true,  AppleObjCTrampolineHandler::DispatchFunction::eFixUpToFix   },
+    {"objc_msgSendSuper2_stret_fixedup", true,  true,  AppleObjCTrampolineHandler::DispatchFunction::eFixUpFixed   },
     {NULL}
 };
 
 bool
-ObjCTrampolineHandler::ModuleIsObjCLibrary (const ModuleSP &module_sp)
+AppleObjCTrampolineHandler::ModuleIsObjCLibrary (const ModuleSP &module_sp)
 {
     const FileSpec &module_file_spec = module_sp->GetFileSpec();
     static ConstString ObjCName ("libobjc.A.dylib");
@@ -73,7 +75,7 @@ ObjCTrampolineHandler::ModuleIsObjCLibrary (const ModuleSP &module_sp)
     return false;
 }
 
-ObjCTrampolineHandler::ObjCTrampolineHandler (ProcessSP process_sp, ModuleSP objc_module) :
+AppleObjCTrampolineHandler::AppleObjCTrampolineHandler (ProcessSP process_sp, ModuleSP objc_module) :
     m_process_sp (process_sp),
     m_objc_module_sp (objc_module),
     m_impl_fn_addr (LLDB_INVALID_ADDRESS),
@@ -120,7 +122,7 @@ ObjCTrampolineHandler::ObjCTrampolineHandler (ProcessSP process_sp, ModuleSP obj
 }
 
 ThreadPlanSP
-ObjCTrampolineHandler::GetStepThroughDispatchPlan (Thread &thread, bool stop_others)
+AppleObjCTrampolineHandler::GetStepThroughDispatchPlan (Thread &thread, bool stop_others)
 {
     ThreadPlanSP ret_plan_sp;
     lldb::addr_t curr_pc = thread.GetRegisterContext()->GetPC();
@@ -234,8 +236,9 @@ ObjCTrampolineHandler::GetStepThroughDispatchPlan (Thread &thread, bool stop_oth
                         dispatch_values.GetValueAtIndex(0)->GetScalar().ULongLong(),
                         dispatch_values.GetValueAtIndex(1)->GetScalar().ULongLong());
         }
-        
-        lldb::addr_t impl_addr = LookupInCache (dispatch_values.GetValueAtIndex(0)->GetScalar().ULongLong(),
+        ObjCLanguageRuntime *objc_runtime = m_process_sp->GetObjCLanguageRuntime ();
+        assert(objc_runtime != NULL);
+        lldb::addr_t impl_addr = objc_runtime->LookupInMethodCache (dispatch_values.GetValueAtIndex(0)->GetScalar().ULongLong(),
                                                 dispatch_values.GetValueAtIndex(1)->GetScalar().ULongLong());
                                                 
         if (impl_addr == LLDB_INVALID_ADDRESS)
@@ -281,7 +284,7 @@ ObjCTrampolineHandler::GetStepThroughDispatchPlan (Thread &thread, bool stop_oth
             if (!m_impl_function->WriteFunctionArguments (exec_ctx, args_addr, resolve_address, dispatch_values, errors))
                 return ret_plan_sp;
         
-            ret_plan_sp.reset (new ThreadPlanStepThroughObjCTrampoline (thread, this, args_addr, 
+            ret_plan_sp.reset (new AppleThreadPlanStepThroughObjCTrampoline (thread, this, args_addr, 
                                                                         argument_values.GetValueAtIndex(0)->GetScalar().ULongLong(),
                                                                         dispatch_values.GetValueAtIndex(0)->GetScalar().ULongLong(),
                                                                         dispatch_values.GetValueAtIndex(1)->GetScalar().ULongLong(),
@@ -299,29 +302,8 @@ ObjCTrampolineHandler::GetStepThroughDispatchPlan (Thread &thread, bool stop_oth
     return ret_plan_sp;
 }
 
-void
-ObjCTrampolineHandler::AddToCache (lldb::addr_t class_addr, lldb::addr_t selector, lldb::addr_t impl_addr)
-{
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP);
-    if (log)
-    {
-        log->Printf ("Caching: class 0x%llx selector 0x%llx implementation 0x%llx.", class_addr, selector, impl_addr);
-    }
-    m_impl_cache.insert (std::pair<ClassAndSel,lldb::addr_t> (ClassAndSel(class_addr, selector), impl_addr));
-}
-
-lldb::addr_t
-ObjCTrampolineHandler::LookupInCache (lldb::addr_t class_addr, lldb::addr_t selector)
-{
-    MsgImplMap::iterator pos, end = m_impl_cache.end();
-    pos = m_impl_cache.find (ClassAndSel(class_addr, selector));
-    if (pos != end)
-        return (*pos).second;
-    return LLDB_INVALID_ADDRESS;
-}
-
 ClangFunction *
-ObjCTrampolineHandler::GetLookupImplementationWrapperFunction ()
+AppleObjCTrampolineHandler::GetLookupImplementationWrapperFunction ()
 {
     return m_impl_function.get();
 }

@@ -322,7 +322,7 @@ ClangFunction::WriteFunctionArguments (ExecutionContext &exe_ctx,
         
         if (arg_value->GetValueType() == Value::eValueTypeHostAddress &&
             arg_value->GetContextType() == Value::eContextTypeOpaqueClangQualType &&
-            ClangASTContext::IsPointerType(arg_value->GetValueOpaqueClangQualType()))
+            ClangASTContext::IsPointerType(arg_value->GetOpaqueClangQualType()))
             continue;
         
         const Scalar &arg_scalar = arg_value->ResolveValue(&exe_ctx, m_clang_ast_context->getASTContext());

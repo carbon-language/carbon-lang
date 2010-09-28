@@ -17,6 +17,7 @@
 #include "lldb/Core/Log.h"
 #include "lldb/Core/Stream.h"
 #include "lldb/Target/DynamicLoader.h"
+#include "lldb/Target/ObjCLanguageRuntime.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Target/RegisterContext.h"
 
@@ -93,6 +94,14 @@ ThreadPlanStepThrough::WillResume (StateType resume_state, bool current_plan)
     if (current_plan)
     {
         ThreadPlanSP sub_plan_sp(m_thread.GetProcess().GetDynamicLoader()->GetStepThroughTrampolinePlan (m_thread, m_stop_others));
+            // If that didn't come up with anything, try the ObjC runtime plugin:
+        if (sub_plan_sp == NULL)
+        {
+            ObjCLanguageRuntime *objc_runtime = m_thread.GetProcess().GetObjCLanguageRuntime();
+            if (objc_runtime)
+                sub_plan_sp = objc_runtime->GetStepThroughTrampolinePlan (m_thread, m_stop_others);
+        }
+
         if (sub_plan_sp != NULL)
             PushPlan (sub_plan_sp);
     }

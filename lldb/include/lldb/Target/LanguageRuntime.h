@@ -14,8 +14,10 @@
 // C++ Includes
 // Other libraries and framework includes
 // Project includes
+#include "lldb/lldb-include.h"
 #include "lldb/Core/PluginInterface.h"
 #include "lldb/lldb-private.h"
+#include "lldb/Target/ExecutionContextScope.h"
 
 namespace lldb_private {
 
@@ -32,13 +34,19 @@ public:
     virtual lldb::LanguageType
     GetLanguageType () const = 0;
     
+    virtual bool
+    GetObjectDescription (Stream &str, ValueObject &object, ExecutionContextScope *exe_scope) = 0;
+    
+    virtual lldb::ValueObjectSP
+    GetDynamicValue (lldb::ValueObjectSP in_value, ExecutionContextScope *exe_scope) = 0;
+    
 protected:
     //------------------------------------------------------------------
     // Classes that inherit from LanguageRuntime can see and modify these
     //------------------------------------------------------------------
     LanguageRuntime(Process *process);
+    Process *m_process;
 private:
-    Process *m_process_ptr;
     DISALLOW_COPY_AND_ASSIGN (LanguageRuntime);
 };
 

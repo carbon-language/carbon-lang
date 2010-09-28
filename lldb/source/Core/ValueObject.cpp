@@ -15,6 +15,7 @@
 // C++ Includes
 // Other libraries and framework includes
 #include "llvm/Support/raw_ostream.h"
+#include "clang/AST/Type.h"
 
 // Project includes
 #include "lldb/Core/DataBufferHeap.h"
@@ -27,6 +28,7 @@
 #include "lldb/Symbol/Type.h"
 
 #include "lldb/Target/ExecutionContext.h"
+#include "lldb/Target/LanguageRuntime.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Target/RegisterContext.h"
 #include "lldb/Target/Target.h"
@@ -530,44 +532,25 @@ ValueObject::GetSummaryAsCString (ExecutionContextScope *exe_scope)
     return m_summary_str.c_str();
 }
 
-
 const char *
 ValueObject::GetObjectDescription (ExecutionContextScope *exe_scope)
 {
     if (!m_object_desc_str.empty())
         return m_object_desc_str.c_str();
         
-    if (!ClangASTContext::IsPointerType (GetOpaqueClangQualType()))
-        return NULL;
-    
     if (!GetValueIsValid())
         return NULL;
     
     Process *process = exe_scope->CalculateProcess();
-    
-    if (!process)
+    if (process == NULL)
         return NULL;
-    
-    Scalar scalar;
-    
-    if (!ClangASTType::GetValueAsScalar (GetClangAST(),
-                                        GetOpaqueClangQualType(),
-                                        GetDataExtractor(),
-                                        0,
-                                        GetByteSize(),
-                                        scalar))
-        return NULL;
-                        
-    ExecutionContext exe_ctx;
-    exe_scope->Calculate(exe_ctx);
-    
-    Value val(scalar);
-    val.SetContext(Value::eContextTypeOpaqueClangQualType, 
-                   ClangASTContext::GetVoidPtrType(GetClangAST(), false));
-                   
+        
     StreamString s;
-    // FIXME: Check the runtime this object belongs to and get the appropriate object printer for the object kind.
-    if (process->GetObjCObjectPrinter().PrintObject(s, val, exe_ctx))
+    
+    lldb::LanguageType language = GetObjectRuntimeLanguage();
+    LanguageRuntime *runtime = process->GetLanguageRuntime(language);
+    
+    if (runtime && runtime->GetObjectDescription(s, *this, exe_scope))
     {
         m_object_desc_str.append (s.GetData());
     }
@@ -770,6 +753,39 @@ ValueObject::Write ()
 
 }
 
+lldb::LanguageType
+ValueObject::GetObjectRuntimeLanguage ()
+{
+    void *opaque_qual_type = GetOpaqueClangQualType();
+    if (opaque_qual_type == NULL)
+        return lldb::eLanguageTypeC;
+    
+    // If the type is a reference, then resolve it to what it refers to first:     
+    clang::QualType qual_type (clang::QualType::getFromOpaquePtr(opaque_qual_type).getNonReferenceType());
+    if (qual_type->isAnyPointerType())
+    {
+        if (qual_type->isObjCObjectPointerType())
+            return lldb::eLanguageTypeObjC;
+
+        clang::QualType pointee_type (qual_type->getPointeeType());
+        if (pointee_type->getCXXRecordDeclForPointerType() != NULL)
+            return lldb::eLanguageTypeC_plus_plus;
+        if (pointee_type->isObjCObjectOrInterfaceType())
+            return lldb::eLanguageTypeObjC;
+        if (pointee_type->isObjCClassType())
+            return lldb::eLanguageTypeObjC;
+    }
+    else
+    {
+        if (ClangASTContext::IsObjCClassType (opaque_qual_type))
+            return lldb::eLanguageTypeObjC;
+        if (ClangASTContext::IsCXXClassType (opaque_qual_type));
+            return lldb::eLanguageTypeC_plus_plus;
+    }
+            
+    return lldb::eLanguageTypeC;
+}
+
 void
 ValueObject::AddSyntheticChild (const ConstString &key, ValueObjectSP& valobj_sp)
 {
@@ -832,8 +848,6 @@ ValueObject::SetDynamicValue ()
         
     // Check that the runtime class is correct for determining the most specific class.
     // If it is a C++ class, see if it is dynamic:
-    //if (!decl->isDynamicClass())
-    //    return false;
-        
+    
     return true;
 }

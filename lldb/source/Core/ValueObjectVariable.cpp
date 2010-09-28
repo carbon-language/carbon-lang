@@ -93,8 +93,6 @@ ValueObjectVariable::GetValueType() const
     return lldb::eValueTypeInvalid;
 }
 
-
-
 void
 ValueObjectVariable::UpdateValue (ExecutionContextScope *exe_scope)
 {

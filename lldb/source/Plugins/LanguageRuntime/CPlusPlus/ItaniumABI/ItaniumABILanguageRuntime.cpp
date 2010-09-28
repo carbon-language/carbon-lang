@@ -29,6 +29,26 @@ static const char *pluginName = "ItaniumABILanguageRuntime";
 static const char *pluginDesc = "Itanium ABI for the C++ language";
 static const char *pluginShort = "language.itanium";
 
+lldb::ValueObjectSP
+ItaniumABILanguageRuntime::GetDynamicValue (ValueObjectSP in_value, ExecutionContextScope *exe_scope)
+{
+    ValueObjectSP ret_sp;
+    return ret_sp;
+}
+
+bool
+ItaniumABILanguageRuntime::IsVTableName (const char *name)
+{
+    if (name == NULL)
+        return false;
+        
+    // Can we maybe ask Clang about this?
+    if (strstr (name, "_vptr$") == name)
+        return true;
+    else
+        return false;
+}
+
 //------------------------------------------------------------------
 // Static Functions
 //------------------------------------------------------------------
@@ -95,17 +115,4 @@ Log *
 ItaniumABILanguageRuntime::EnablePluginLogging (Stream *strm, Args &command)
 {
     return NULL;
-}
-
-bool
-ItaniumABILanguageRuntime::IsVTableName (const char *name)
-{
-    if (name == NULL)
-        return false;
-        
-    // Can we maybe ask Clang about this?
-    if (strstr (name, "_vptr$") == name)
-        return true;
-    else
-        return false;
 }

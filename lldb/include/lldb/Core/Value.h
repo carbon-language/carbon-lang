@@ -119,9 +119,6 @@ public:
     lldb::Format
     GetValueDefaultFormat ();
 
-    void *
-    GetValueOpaqueClangQualType ();
-
     size_t
     GetValueByteSize (clang::ASTContext *ast_context, Error *error_ptr);
 

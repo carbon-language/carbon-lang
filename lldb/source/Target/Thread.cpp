@@ -16,6 +16,7 @@
 #include "lldb/Host/Host.h"
 #include "lldb/Target/DynamicLoader.h"
 #include "lldb/Target/ExecutionContext.h"
+#include "lldb/Target/ObjCLanguageRuntime.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Target/RegisterContext.h"
 #include "lldb/Target/StopInfo.h"
@@ -662,7 +663,16 @@ Thread::QueueThreadPlanForStepOut (bool abort_other_plans, SymbolContext *addr_c
 ThreadPlan *
 Thread::QueueThreadPlanForStepThrough (bool abort_other_plans, bool stop_other_threads)
 {
+    // Try the dynamic loader first:
     ThreadPlanSP thread_plan_sp(GetProcess().GetDynamicLoader()->GetStepThroughTrampolinePlan (*this, stop_other_threads));
+    // If that didn't come up with anything, try the ObjC runtime plugin:
+    if (thread_plan_sp.get() == NULL)
+    {
+        ObjCLanguageRuntime *objc_runtime = GetProcess().GetObjCLanguageRuntime();
+        if (objc_runtime)
+            thread_plan_sp = objc_runtime->GetStepThroughTrampolinePlan (*this, stop_other_threads);
+    }
+    
     if (thread_plan_sp.get() == NULL)
     {
         thread_plan_sp.reset(new ThreadPlanStepThrough (*this, stop_other_threads));

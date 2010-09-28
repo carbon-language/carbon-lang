@@ -36,6 +36,9 @@ public:
     virtual bool
     IsVTableName (const char *name) = 0;
     
+    virtual bool
+    GetObjectDescription (Stream &str, ValueObject &object, ExecutionContextScope *exe_scope);
+    
 protected:
     //------------------------------------------------------------------
     // Classes that inherit from CPPLanguageRuntime can see and modify these

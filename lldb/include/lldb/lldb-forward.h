@@ -87,7 +87,6 @@ class   Module;
 class   ModuleList;
 class   Mutex;
 class   ObjCLanguageRuntime;
-class   ObjCObjectPrinter;
 class   ObjectContainer;
 class   ObjectFile;
 class   Options;

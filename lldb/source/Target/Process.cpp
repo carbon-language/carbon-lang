@@ -84,7 +84,6 @@ Process::Process(Target &target, Listener &listener) :
     m_notifications (),
     m_listener(listener),
     m_unix_signals (),
-    m_objc_object_printer(*this),
     m_persistent_vars()
 {
     UpdateInstanceName();
@@ -1837,12 +1836,6 @@ ClangPersistentVariables &
 Process::GetPersistentVariables()
 {
     return m_persistent_vars;
-}
-
-ObjCObjectPrinter &
-Process::GetObjCObjectPrinter()
-{
-    return m_objc_object_printer;
 }
 
 uint32_t

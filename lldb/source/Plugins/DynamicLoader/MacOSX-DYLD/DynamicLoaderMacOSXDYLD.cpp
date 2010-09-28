@@ -15,6 +15,7 @@
 #include "lldb/Core/PluginManager.h"
 #include "lldb/Core/State.h"
 #include "lldb/Symbol/ObjectFile.h"
+#include "lldb/Target/ObjCLanguageRuntime.h"
 #include "lldb/Target/RegisterContext.h"
 #include "lldb/Target/Target.h"
 #include "lldb/Target/Thread.h"
@@ -61,8 +62,7 @@ DynamicLoaderMacOSXDYLD::DynamicLoaderMacOSXDYLD (Process* process) :
     m_dyld_all_image_infos(),
     m_break_id(LLDB_INVALID_BREAK_ID),
     m_dyld_image_infos(),
-    m_mutex(Mutex::eMutexTypeRecursive),
-    m_objc_trampoline_handler_ap(NULL)
+    m_mutex(Mutex::eMutexTypeRecursive)
 {
 }
 
@@ -648,14 +648,15 @@ DynamicLoaderMacOSXDYLD::UpdateAllImageInfos()
             // to save time.
             // Also, I'm assuming there can be only one libobjc dylib loaded...
             
-            if (m_objc_trampoline_handler_ap.get() == NULL)
+            ObjCLanguageRuntime *objc_runtime = m_process->GetObjCLanguageRuntime();
+            if (objc_runtime != NULL && !objc_runtime->HasReadObjCLibrary())
             {
                 size_t num_modules = loaded_module_list.GetSize();
                 for (int i = 0; i < num_modules; i++)
                 {
-                    if (ObjCTrampolineHandler::ModuleIsObjCLibrary (loaded_module_list.GetModuleAtIndex (i)))
+                    if (objc_runtime->IsModuleObjCLibrary (loaded_module_list.GetModuleAtIndex (i)))
                     {
-                        m_objc_trampoline_handler_ap.reset (new ObjCTrampolineHandler(m_process->GetSP(), loaded_module_list.GetModuleAtIndex (i)));
+                        objc_runtime->ReadObjCLibrary (loaded_module_list.GetModuleAtIndex (i));
                         break;
                     }
                 }
@@ -1137,9 +1138,6 @@ DynamicLoaderMacOSXDYLD::GetStepThroughTrampolinePlan (Thread &thread, bool stop
             log->Printf ("Could not find symbol for step through.");
     }
 
-    if (thread_plan_sp == NULL && m_objc_trampoline_handler_ap.get())
-        thread_plan_sp = m_objc_trampoline_handler_ap->GetStepThroughDispatchPlan (thread, stop_others);
-        
     return thread_plan_sp;
 }
 

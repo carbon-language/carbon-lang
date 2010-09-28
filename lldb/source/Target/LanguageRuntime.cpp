@@ -35,7 +35,8 @@ LanguageRuntime::FindPlugin (Process *process, lldb::LanguageType language)
 //----------------------------------------------------------------------
 // Constructor
 //----------------------------------------------------------------------
-LanguageRuntime::LanguageRuntime(Process *process)
+LanguageRuntime::LanguageRuntime(Process *process) :
+    m_process (process)
 {
 }
 

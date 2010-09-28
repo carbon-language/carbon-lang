@@ -25,8 +25,6 @@
 #include "lldb/Host/Mutex.h"
 #include "lldb/Target/Process.h"
 
-#include "ObjCTrampolineHandler.h"
-
 class DynamicLoaderMacOSXDYLD : public lldb_private::DynamicLoader
 {
 public:
@@ -352,7 +350,6 @@ protected:
     DYLDImageInfo::collection m_dyld_image_infos;   // Current shared libraries information
     mutable lldb_private::Mutex m_mutex;
     lldb_private::Process::Notifications m_notification_callbacks;
-    std::auto_ptr<lldb_private::ObjCTrampolineHandler> m_objc_trampoline_handler_ap;
 
 private:
     DISALLOW_COPY_AND_ASSIGN (DynamicLoaderMacOSXDYLD);

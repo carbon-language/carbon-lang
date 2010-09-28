@@ -30,7 +30,6 @@
 #include "lldb/Expression/ClangPersistentVariables.h"
 #include "lldb/Expression/IRDynamicChecks.h"
 #include "lldb/Target/ExecutionContextScope.h"
-#include "lldb/Target/ObjCObjectPrinter.h"
 #include "lldb/Target/ThreadList.h"
 #include "lldb/Target/UnixSignals.h"
 
@@ -1598,9 +1597,6 @@ public:
     ClangPersistentVariables &
     GetPersistentVariables();
     
-    ObjCObjectPrinter &
-    GetObjCObjectPrinter();
-
 protected:
     //------------------------------------------------------------------
     // Member variables
@@ -1627,7 +1623,6 @@ protected:
     UnixSignals                 m_unix_signals;         /// This is the current signal set for this process.
     ConstString                 m_target_triple;
     lldb::ABISP                 m_abi_sp;
-    ObjCObjectPrinter           m_objc_object_printer;
     
     typedef std::map<lldb::LanguageType, lldb::LanguageRuntimeSP> LanguageRuntimeCollection; 
     LanguageRuntimeCollection m_language_runtimes;

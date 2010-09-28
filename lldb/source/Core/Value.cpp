@@ -206,18 +206,6 @@ Value::Dump (Stream* strm)
                 Value::GetContextTypeAsCString(m_context_type));
 }
 
-void *
-Value::GetOpaqueClangQualType()
-{
-    if (m_context_type == eContextTypeValue)
-        return ((Value*)m_context)->GetOpaqueClangQualType ();
-    
-    if (m_context_type == eContextTypeOpaqueClangQualType)
-        return m_context;
-    
-    return NULL;
-}
-
 Value::ValueType
 Value::GetValueType() const
 {
@@ -429,10 +417,10 @@ Value::GetValueByteSize (clang::ASTContext *ast_context, Error *error_ptr)
 }
 
 void *
-Value::GetValueOpaqueClangQualType ()
+Value::GetOpaqueClangQualType ()
 {
     if (m_context_type == eContextTypeValue)
-        return ((Value*)m_context)->GetValueOpaqueClangQualType();
+        return ((Value*)m_context)->GetOpaqueClangQualType();
     
     switch (m_context_type)
     {
