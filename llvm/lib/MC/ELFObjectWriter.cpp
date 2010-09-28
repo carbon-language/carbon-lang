@@ -689,10 +689,13 @@ void ELFObjectWriterImpl::ComputeSymbolTable(MCAssembler &Asm) {
     const MCSymbol &Symbol = it->getSymbol();
 
     // Ignore non-linker visible symbols.
-    if (!Asm.isSymbolLinkerVisible(Symbol))
+    if (!Asm.isSymbolLinkerVisible(Symbol) && !Symbol.isUndefined())
       continue;
 
     if (!it->isExternal() && !Symbol.isUndefined())
+      continue;
+
+    if (Symbol.isVariable())
       continue;
 
     uint64_t &Entry = StringIndexMap[Symbol.getName()];
