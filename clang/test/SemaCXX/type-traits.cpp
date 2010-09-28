@@ -20,6 +20,13 @@ struct HasOp { void operator *(); };
 struct HasConv { operator int(); };
 struct HasAssign { void operator =(int); };
 
+struct HasAnonymousUnion {
+  union {
+    int i;
+    float f;
+  };
+};
+
 // Not PODs
 typedef const void cvoid;
 struct Derives : POD {};
@@ -84,6 +91,7 @@ void is_pod()
   int t12[T(__is_pod(HasConv))];
   int t13[T(__is_pod(HasAssign))];
   int t14[T(__is_pod(IntArNB))];
+  int t15[T(__is_pod(HasAnonymousUnion))];
 
   int t21[F(__is_pod(Derives))];
   int t22[F(__is_pod(HasCons))];
@@ -131,6 +139,7 @@ void is_empty()
   int t27[F(__is_empty(BitOnly))];
   int t28[F(__is_empty(void))];
   int t29[F(__is_empty(IntArNB))];
+  int t30[F(__is_empty(HasAnonymousUnion))];
 //  int t27[F(__is_empty(DerivesVirt))];
 }
 
@@ -141,6 +150,7 @@ void is_class()
   int t01[T(__is_class(Derives))];
   int t02[T(__is_class(HasPriv))];
   int t03[T(__is_class(ClassType))];
+  int t04[T(__is_class(HasAnonymousUnion))];
 
   int t11[F(__is_class(int))];
   int t12[F(__is_class(Enum))];
@@ -167,6 +177,7 @@ void is_union()
   int t15[F(__is_union(UnionAr))];
   int t16[F(__is_union(cvoid))];
   int t17[F(__is_union(IntArNB))];
+  int t18[F(__is_union(HasAnonymousUnion))];
 }
 
 typedef Enum EnumType;
@@ -185,6 +196,7 @@ void is_enum()
   int t17[F(__is_enum(ClassType))];
   int t18[F(__is_enum(cvoid))];
   int t19[F(__is_enum(IntArNB))];
+  int t20[F(__is_enum(HasAnonymousUnion))];
 }
 
 typedef HasVirt Polymorph;

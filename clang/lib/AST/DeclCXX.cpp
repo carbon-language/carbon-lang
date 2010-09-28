@@ -105,6 +105,11 @@ CXXRecordDecl::setBases(CXXBaseSpecifier const * const *Bases,
     //   A POD-struct is an aggregate class...
     data().PlainOldData = false;
     
+    // A class with a non-empty base class is not empty.
+    // FIXME: Standard ref?
+    if (!BaseClassDecl->isEmpty())
+      data().Empty = false;
+    
     // Now go through all virtual bases of this base and add them.
     for (CXXRecordDecl::base_class_iterator VBase =
           BaseClassDecl->vbases_begin(),
@@ -118,8 +123,12 @@ CXXRecordDecl::setBases(CXXBaseSpecifier const * const *Bases,
       // Add this base if it's not already in the list.
       if (SeenVBaseTypes.insert(C.getCanonicalType(BaseType)))
           VBases.push_back(Base);
+      
+      // C++0x [meta.unary.prop] is_empty:
+      //    T is a class type, but not a union type, with ... no virtual base
+      //    classes
+      data().Empty = false;
     }
-
   }
   
   if (VBases.empty())
@@ -285,6 +294,10 @@ CXXRecordDecl::addedMember(Decl *D) {
       // C++ [class]p4:
       //   A POD-struct is an aggregate class...
       data().PlainOldData = false;
+      
+      // Virtual functions make the class non-empty.
+      // FIXME: Standard ref?
+      data().Empty = false;
     }
   }
   
@@ -298,18 +311,24 @@ CXXRecordDecl::addedMember(Decl *D) {
       // declared it.
       else if (Constructor->isCopyConstructor())
         data().DeclaredCopyConstructor = true;
-    } else if (isa<CXXDestructorDecl>(D)) {
+      return;
+    } 
+
+    if (isa<CXXDestructorDecl>(D)) {
       data().DeclaredDestructor = true;
-    } else if (CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(D)) {
+      return;
+    } 
+
+    if (CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(D)) {
       // If this is the implicit copy constructor, note that we have now
       // declared it.
       // FIXME: Move constructors
       if (Method->getOverloadedOperator() == OO_Equal)
         data().DeclaredCopyAssignment = true;
+      return;
     }
-    
-    // Nothing else to do for implicitly-declared members.
-    return;
+
+    // Any other implicit declarations are handled like normal declarations.
   }
   
   // Handle (user-declared) constructors.
@@ -429,6 +448,19 @@ CXXRecordDecl::addedMember(Decl *D) {
     QualType T = Context.getBaseElementType(Field->getType());
     if (!T->isPODType())
       data().PlainOldData = false;
+    
+    // If this is not a zero-length bit-field, then the class is not empty.
+    if (data().Empty) {
+      if (!Field->getBitWidth())
+        data().Empty = false;
+      else if (!Field->getBitWidth()->isTypeDependent() &&
+               !Field->getBitWidth()->isValueDependent()) {
+        llvm::APSInt Bits;
+        if (Field->getBitWidth()->isIntegerConstantExpr(Bits, Context))
+          if (!!Bits)
+            data().Empty = false;
+      } 
+    }
   }
 }
 
@@ -614,7 +646,6 @@ void CXXRecordDecl::removeConversion(const NamedDecl *ConvDecl) {
 
 void CXXRecordDecl::setMethodAsVirtual(FunctionDecl *Method) {
   Method->setVirtualAsWritten(true);
-  setEmpty(false);
   setPolymorphic(true);
   setHasTrivialConstructor(false);
   setHasTrivialCopyConstructor(false);

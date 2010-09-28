@@ -516,11 +516,6 @@ Sema::CheckBaseSpecifier(CXXRecordDecl *Class,
 void Sema::SetClassDeclAttributesFromBase(CXXRecordDecl *Class,
                                           const CXXRecordDecl *BaseClass,
                                           bool BaseIsVirtual) {
-  // A class with a non-empty base class is not empty.
-  // FIXME: Standard ref?
-  if (!BaseClass->isEmpty())
-    Class->setEmpty(false);
-
   // C++ [class.virtual]p1:
   //   A class that [...] inherits a virtual function is called a polymorphic
   //   class.
@@ -540,11 +535,6 @@ void Sema::SetClassDeclAttributesFromBase(CXXRecordDecl *Class,
     //   A copy assignment operator is trivial if its class has no virtual
     //   base classes.
     Class->setHasTrivialCopyAssignment(false);
-
-    // C++0x [meta.unary.prop] is_empty:
-    //    T is a class type, but not a union type, with ... no virtual base
-    //    classes
-    Class->setEmpty(false);
   } else {
     // C++ [class.ctor]p5:
     //   A constructor is trivial if all the direct base classes of its

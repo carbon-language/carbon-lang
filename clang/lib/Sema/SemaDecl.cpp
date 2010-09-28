@@ -1958,11 +1958,8 @@ Decl *Sema::BuildAnonymousStructOrUnion(Scope *S, DeclSpec &DS,
                              TInfo,
                              /*BitWidth=*/0, /*Mutable=*/false);
     Anon->setAccess(AS);
-    if (getLangOptions().CPlusPlus) {
+    if (getLangOptions().CPlusPlus)
       FieldCollector->Add(cast<FieldDecl>(Anon));
-      if (!cast<CXXRecordDecl>(Record)->isEmpty())
-        cast<CXXRecordDecl>(OwningClass)->setEmpty(false);
-    }
   } else {
     DeclSpec::SCS SCSpec = DS.getStorageClassSpec();
     assert(SCSpec != DeclSpec::SCS_typedef &&
@@ -6190,8 +6187,6 @@ FieldDecl *Sema::CheckFieldDecl(DeclarationName Name, QualType T,
   if (!InvalidDecl && getLangOptions().CPlusPlus) {
     CXXRecordDecl* CXXRecord = cast<CXXRecordDecl>(Record);
 
-    if (!ZeroWidth)
-      CXXRecord->setEmpty(false);
     if (T->isReferenceType())
       CXXRecord->setHasTrivialConstructor(false);
 
