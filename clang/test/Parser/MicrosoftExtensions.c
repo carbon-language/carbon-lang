@@ -30,6 +30,10 @@ void foo() {
 
 typedef bool (__stdcall __stdcall *blarg)(int);
 
+void local_callconv()
+{
+  bool (__stdcall *p)(int);
+}
 
 // Charify extension.
 #define FOO(x) #@x
