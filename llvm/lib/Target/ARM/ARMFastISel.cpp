@@ -417,13 +417,13 @@ unsigned ARMFastISel::ARMMaterializeInt(const Constant *C) {
   
   if (isThumb)
     AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
-                            TII.get(ARM::t2LDRpci))
-                    .addReg(DestReg).addConstantPoolIndex(Idx));
+                            TII.get(ARM::t2LDRpci), DestReg)
+                    .addConstantPoolIndex(Idx));
   else
     // The extra reg and immediate are for addrmode2.
     AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
-                            TII.get(ARM::LDRcp))
-                            .addReg(DestReg).addConstantPoolIndex(Idx)
+                            TII.get(ARM::LDRcp), DestReg)
+                    .addConstantPoolIndex(Idx)
                     .addReg(0).addImm(0));
 
   return DestReg;
