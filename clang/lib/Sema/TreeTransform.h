@@ -758,8 +758,9 @@ public:
   StmtResult RebuildLabelStmt(SourceLocation IdentLoc,
                                     IdentifierInfo *Id,
                                     SourceLocation ColonLoc,
-                                    Stmt *SubStmt) {
-    return SemaRef.ActOnLabelStmt(IdentLoc, Id, ColonLoc, SubStmt);
+                                    Stmt *SubStmt, bool HasUnusedAttr) {
+    return SemaRef.ActOnLabelStmt(IdentLoc, Id, ColonLoc, SubStmt,
+                                  HasUnusedAttr);
   }
 
   /// \brief Build a new "if" statement.
@@ -3562,7 +3563,7 @@ TreeTransform<Derived>::TransformLabelStmt(LabelStmt *S) {
   // FIXME: Pass the real colon location in.
   SourceLocation ColonLoc = SemaRef.PP.getLocForEndOfToken(S->getIdentLoc());
   return getDerived().RebuildLabelStmt(S->getIdentLoc(), S->getID(), ColonLoc,
-                                       SubStmt.get());
+                                       SubStmt.get(), S->HasUnusedAttribute());
 }
 
 template<typename Derived>

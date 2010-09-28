@@ -241,10 +241,9 @@ StmtResult Parser::ParseLabeledStatement(AttributeList *Attr) {
   if (SubStmt.isInvalid())
     SubStmt = Actions.ActOnNullStmt(ColonLoc);
 
-  // FIXME: use attributes?
   return Actions.ActOnLabelStmt(IdentTok.getLocation(),
                                 IdentTok.getIdentifierInfo(),
-                                ColonLoc, SubStmt.get());
+                                ColonLoc, SubStmt.get(), AttrList.take());
 }
 
 /// ParseCaseStatement

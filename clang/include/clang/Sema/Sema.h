@@ -1540,10 +1540,12 @@ public:
   StmtResult ActOnDefaultStmt(SourceLocation DefaultLoc,
                                       SourceLocation ColonLoc,
                                       Stmt *SubStmt, Scope *CurScope);
-  StmtResult ActOnLabelStmt(SourceLocation IdentLoc,
-                                    IdentifierInfo *II,
-                                    SourceLocation ColonLoc,
-                                    Stmt *SubStmt);
+  StmtResult ActOnLabelStmt(SourceLocation IdentLoc, IdentifierInfo *II,
+                            SourceLocation ColonLoc, Stmt *SubStmt,
+                            const AttributeList *Attr);
+  StmtResult ActOnLabelStmt(SourceLocation IdentLoc, IdentifierInfo *II,
+                            SourceLocation ColonLoc, Stmt *SubStmt,
+                            bool HasUnusedAttr);
   StmtResult ActOnIfStmt(SourceLocation IfLoc,
                                  FullExprArg CondVal, Decl *CondVar,
                                  Stmt *ThenVal,

@@ -227,13 +227,35 @@ Sema::ActOnDefaultStmt(SourceLocation DefaultLoc, SourceLocation ColonLoc,
 
 StmtResult
 Sema::ActOnLabelStmt(SourceLocation IdentLoc, IdentifierInfo *II,
-                     SourceLocation ColonLoc, Stmt *SubStmt) {
+                     SourceLocation ColonLoc, Stmt *SubStmt,
+                     const AttributeList *Attr) {
+  // According to GCC docs, "the only attribute that makes sense after a label
+  // is 'unused'".
+  bool HasUnusedAttr = false;
+  llvm::OwningPtr<const AttributeList> AttrList(Attr);
+  for (const AttributeList* a = AttrList.get(); a; a = a->getNext()) {
+    if (a->getKind() == AttributeList::AT_unused) {
+      HasUnusedAttr = true;
+    } else {
+      Diag(a->getLoc(), diag::warn_label_attribute_not_unused);
+      a->setInvalid(true);
+    }
+  }
+
+  return ActOnLabelStmt(IdentLoc, II, ColonLoc, SubStmt, HasUnusedAttr);
+}
+
+StmtResult
+Sema::ActOnLabelStmt(SourceLocation IdentLoc, IdentifierInfo *II,
+                     SourceLocation ColonLoc, Stmt *SubStmt,
+                     bool HasUnusedAttr) {
   // Look up the record for this label identifier.
   LabelStmt *&LabelDecl = getCurFunction()->LabelMap[II];
 
   // If not forward referenced or defined already, just create a new LabelStmt.
   if (LabelDecl == 0)
-    return Owned(LabelDecl = new (Context) LabelStmt(IdentLoc, II, SubStmt));
+    return Owned(LabelDecl = new (Context) LabelStmt(IdentLoc, II, SubStmt,
+                                                     HasUnusedAttr));
 
   assert(LabelDecl->getID() == II && "Label mismatch!");
 
@@ -249,6 +271,7 @@ Sema::ActOnLabelStmt(SourceLocation IdentLoc, IdentifierInfo *II,
   // definition.  Fill in the forward definition and return it.
   LabelDecl->setIdentLoc(IdentLoc);
   LabelDecl->setSubStmt(SubStmt);
+  LabelDecl->setUnusedAttribute(HasUnusedAttr);
   return Owned(LabelDecl);
 }
 

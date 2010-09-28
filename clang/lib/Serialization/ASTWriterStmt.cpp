@@ -214,6 +214,7 @@ void ASTStmtWriter::VisitLabelStmt(LabelStmt *S) {
   Writer.AddStmt(S->getSubStmt());
   Writer.AddSourceLocation(S->getIdentLoc(), Record);
   Record.push_back(S->isUsed());
+  Record.push_back(S->HasUnusedAttribute());
   Record.push_back(Writer.GetLabelID(S));
   Code = serialization::STMT_LABEL;
 }

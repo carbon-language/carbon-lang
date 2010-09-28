@@ -962,6 +962,8 @@ def err_regparm_mismatch : Error<"function declared with with regparm(%0) "
   "attribute was previously declared %plural{0:without the regparm|1:"
   "with the regparm(1)|2:with the regparm(2)|3:with the regparm(3)|:with the"
   "regparm}1 attribute">;
+def warn_label_attribute_not_unused : Warning<
+  "The only valid attribute for labels is 'unused'">;
 
 def warn_impcast_vector_scalar : Warning<
   "implicit conversion turns vector to scalar: %0 to %1">,
