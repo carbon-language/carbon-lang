@@ -80,8 +80,12 @@ IRForTarget::createResultVariable(llvm::Module &M,
          vi != ve;
          ++vi)
     {
-        if (strstr(vi->first(), "___clang_expr_result"))
+        if (strstr(vi->first(), "___clang_expr_result") &&
+            !strstr(vi->first(), "GV")) 
+        {
             result_name = vi->first();
+            break;
+        }
     }
     
     if (!result_name)
@@ -91,6 +95,9 @@ IRForTarget::createResultVariable(llvm::Module &M,
         
         return true;
     }
+    
+    if (log)
+        log->Printf("Result name: %s", result_name);
     
     Value *result_value = M.getNamedValue(result_name);
     
@@ -626,6 +633,36 @@ IRForTarget::MaybeHandleCall(Module &M,
         }
     }
     
+    std::string str = fun->getName().str();
+    
+    if (str.find("llvm.") == 0)
+    {
+        // Probably a LLVM built-in.  Let's try again, but looking up the original.
+        //
+        //      +- builtin_name_offset [in this case, 5]
+        //      |
+        //      |====| builtin_name_length [in this case, 6]
+        // 0    |     
+        // |    |     +- builtin_name_end [in this case, 11]
+        // V    V     V
+        // llvm.______.i32.u8
+        // 012345678901234567
+        // 0         1
+        
+        size_t builtin_name_offset = sizeof("llvm.") - 1;
+        size_t builtin_name_end = str.find('.', builtin_name_offset);
+        
+        if (builtin_name_end == str.npos)
+            builtin_name_end = str.size() + 1;
+        
+        size_t builtin_name_length = builtin_name_end - builtin_name_offset;
+        
+        str = str.substr(builtin_name_offset, builtin_name_length);
+        
+        if (log)
+            log->Printf("Extracted builtin function name %s", str.c_str());
+    }
+    
     clang::NamedDecl *fun_decl = DeclForGlobalValue(M, fun);
     uint64_t fun_addr;
     Value **fun_value_ptr = NULL;
@@ -636,10 +673,10 @@ IRForTarget::MaybeHandleCall(Module &M,
         {
             fun_value_ptr = NULL;
             
-            if (!m_decl_map->GetFunctionAddress(fun->getName().str().c_str(), fun_addr))
+            if (!m_decl_map->GetFunctionAddress(str.c_str(), fun_addr))
             {
                 if (log)
-                    log->Printf("Function %s had no address", fun->getName().str().c_str());
+                    log->Printf("Function %s had no address", str.c_str());
                 
                 return false;
             }
@@ -647,16 +684,15 @@ IRForTarget::MaybeHandleCall(Module &M,
     }
     else 
     {
-        if (!m_decl_map->GetFunctionAddress(fun->getName().str().c_str(), fun_addr))
+        if (!m_decl_map->GetFunctionAddress(str.c_str(), fun_addr))
         {
             if (log)
-                log->Printf("Metadataless function %s had no address", fun->getName().str().c_str());
-            return false;
+                log->Printf("Metadataless function %s had no address", str.c_str());
         }
     }
         
     if (log)
-        log->Printf("Found %s at %llx", fun->getName().str().c_str(), fun_addr);
+        log->Printf("Found %s at %llx", str.c_str(), fun_addr);
     
     Value *fun_addr_ptr;
             
@@ -678,7 +714,7 @@ IRForTarget::MaybeHandleCall(Module &M,
     
     C->setCalledFunction(fun_addr_ptr);
     
-    ConstantArray *func_name = (ConstantArray*)ConstantArray::get(M.getContext(), fun->getName());
+    ConstantArray *func_name = (ConstantArray*)ConstantArray::get(M.getContext(), str);
     
     Value *values[1];
     values[0] = func_name;
