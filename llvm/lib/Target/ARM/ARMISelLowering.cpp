@@ -241,13 +241,157 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
   setLibcallName(RTLIB::SRL_I128, 0);
   setLibcallName(RTLIB::SRA_I128, 0);
 
-  // Libcalls should use the AAPCS base standard ABI, even if hard float
-  // is in effect, as per the ARM RTABI specification, section 4.1.2.
   if (Subtarget->isAAPCS_ABI()) {
-    for (int i = 0; i < RTLIB::UNKNOWN_LIBCALL; ++i) {
-      setLibcallCallingConv(static_cast<RTLIB::Libcall>(i),
-                            CallingConv::ARM_AAPCS);
-    }
+    // Double-precision floating-point arithmetic helper functions 
+    // RTABI chapter 4.1.2, Table 2
+    setLibcallName(RTLIB::ADD_F64, "__aeabi_dadd");
+    setLibcallName(RTLIB::DIV_F64, "__aeabi_ddiv");
+    setLibcallName(RTLIB::MUL_F64, "__aeabi_dmul");
+    setLibcallName(RTLIB::SUB_F64, "__aeabi_dsub");
+    setLibcallCallingConv(RTLIB::ADD_F64, CallingConv::ARM_AAPCS);
+    setLibcallCallingConv(RTLIB::DIV_F64, CallingConv::ARM_AAPCS);
+    setLibcallCallingConv(RTLIB::MUL_F64, CallingConv::ARM_AAPCS);
+    setLibcallCallingConv(RTLIB::SUB_F64, CallingConv::ARM_AAPCS);
+
+    // Double-precision floating-point comparison helper functions
+    // RTABI chapter 4.1.2, Table 3
+    setLibcallName(RTLIB::OEQ_F64, "__aeabi_dcmpeq");
+    setCmpLibcallCC(RTLIB::OEQ_F64, ISD::SETNE);
+    setLibcallName(RTLIB::UNE_F64, "__aeabi_dcmpeq");
+    setCmpLibcallCC(RTLIB::UNE_F64, ISD::SETEQ);
+    setLibcallName(RTLIB::OLT_F64, "__aeabi_dcmplt");
+    setCmpLibcallCC(RTLIB::OLT_F64, ISD::SETNE);
+    setLibcallName(RTLIB::OLE_F64, "__aeabi_dcmple");
+    setCmpLibcallCC(RTLIB::OLE_F64, ISD::SETNE);
+    setLibcallName(RTLIB::OGE_F64, "__aeabi_dcmpge");
+    setCmpLibcallCC(RTLIB::OGE_F64, ISD::SETNE);
+    setLibcallName(RTLIB::OGT_F64, "__aeabi_dcmpgt");
+    setCmpLibcallCC(RTLIB::OGT_F64, ISD::SETNE);
+    setLibcallName(RTLIB::UO_F64,  "__aeabi_dcmpun");
+    setCmpLibcallCC(RTLIB::UO_F64,  ISD::SETNE);
+    setLibcallName(RTLIB::O_F64,   "__aeabi_dcmpun");
+    setCmpLibcallCC(RTLIB::O_F64,   ISD::SETEQ);
+    setLibcallCallingConv(RTLIB::OEQ_F64, CallingConv::ARM_AAPCS);
+    setLibcallCallingConv(RTLIB::UNE_F64, CallingConv::ARM_AAPCS);
+    setLibcallCallingConv(RTLIB::OLT_F64, CallingConv::ARM_AAPCS);
+    setLibcallCallingConv(RTLIB::OLE_F64, CallingConv::ARM_AAPCS);
+    setLibcallCallingConv(RTLIB::OGE_F64, CallingConv::ARM_AAPCS);
+    setLibcallCallingConv(RTLIB::OGT_F64, CallingConv::ARM_AAPCS);
+    setLibcallCallingConv(RTLIB::UO_F64, CallingConv::ARM_AAPCS);
+    setLibcallCallingConv(RTLIB::O_F64, CallingConv::ARM_AAPCS);
+
+    // Single-precision floating-point arithmetic helper functions
+    // RTABI chapter 4.1.2, Table 4
+    setLibcallName(RTLIB::ADD_F32, "__aeabi_fadd");
+    setLibcallName(RTLIB::DIV_F32, "__aeabi_fdiv");
+    setLibcallName(RTLIB::MUL_F32, "__aeabi_fmul");
+    setLibcallName(RTLIB::SUB_F32, "__aeabi_fsub");
+    setLibcallCallingConv(RTLIB::ADD_F32, CallingConv::ARM_AAPCS);
+    setLibcallCallingConv(RTLIB::DIV_F32, CallingConv::ARM_AAPCS);
+    setLibcallCallingConv(RTLIB::MUL_F32, CallingConv::ARM_AAPCS);
+    setLibcallCallingConv(RTLIB::SUB_F32, CallingConv::ARM_AAPCS);
+
+    // Single-precision floating-point comparison helper functions
+    // RTABI chapter 4.1.2, Table 5
+    setLibcallName(RTLIB::OEQ_F32, "__aeabi_fcmpeq");
+    setCmpLibcallCC(RTLIB::OEQ_F32, ISD::SETNE);
+    setLibcallName(RTLIB::UNE_F32, "__aeabi_fcmpeq");
+    setCmpLibcallCC(RTLIB::UNE_F32, ISD::SETEQ);
+    setLibcallName(RTLIB::OLT_F32, "__aeabi_fcmplt");
+    setCmpLibcallCC(RTLIB::OLT_F32, ISD::SETNE);
+    setLibcallName(RTLIB::OLE_F32, "__aeabi_fcmple");
+    setCmpLibcallCC(RTLIB::OLE_F32, ISD::SETNE);
+    setLibcallName(RTLIB::OGE_F32, "__aeabi_fcmpge");
+    setCmpLibcallCC(RTLIB::OGE_F32, ISD::SETNE);
+    setLibcallName(RTLIB::OGT_F32, "__aeabi_fcmpgt");
+    setCmpLibcallCC(RTLIB::OGT_F32, ISD::SETNE);
+    setLibcallName(RTLIB::UO_F32,  "__aeabi_fcmpun");
+    setCmpLibcallCC(RTLIB::UO_F32,  ISD::SETNE);
+    setLibcallName(RTLIB::O_F32,   "__aeabi_fcmpun");
+    setCmpLibcallCC(RTLIB::O_F32,   ISD::SETEQ);
+    setLibcallCallingConv(RTLIB::OEQ_F32, CallingConv::ARM_AAPCS);
+    setLibcallCallingConv(RTLIB::UNE_F32, CallingConv::ARM_AAPCS);
+    setLibcallCallingConv(RTLIB::OLT_F32, CallingConv::ARM_AAPCS);
+    setLibcallCallingConv(RTLIB::OLE_F32, CallingConv::ARM_AAPCS);
+    setLibcallCallingConv(RTLIB::OGE_F32, CallingConv::ARM_AAPCS);
+    setLibcallCallingConv(RTLIB::OGT_F32, CallingConv::ARM_AAPCS);
+    setLibcallCallingConv(RTLIB::UO_F32, CallingConv::ARM_AAPCS);
+    setLibcallCallingConv(RTLIB::O_F32, CallingConv::ARM_AAPCS);
+
+    // Floating-point to integer conversions.
+    // RTABI chapter 4.1.2, Table 6
+    setLibcallName(RTLIB::FPTOSINT_F64_I32, "__aeabi_d2iz");
+    setLibcallName(RTLIB::FPTOUINT_F64_I32, "__aeabi_d2uiz");
+    setLibcallName(RTLIB::FPTOSINT_F64_I64, "__aeabi_d2lz");
+    setLibcallName(RTLIB::FPTOUINT_F64_I64, "__aeabi_d2ulz");
+    setLibcallName(RTLIB::FPTOSINT_F32_I32, "__aeabi_f2iz");
+    setLibcallName(RTLIB::FPTOUINT_F32_I32, "__aeabi_f2uiz");
+    setLibcallName(RTLIB::FPTOSINT_F32_I64, "__aeabi_f2lz");
+    setLibcallName(RTLIB::FPTOUINT_F32_I64, "__aeabi_f2ulz");
+    setLibcallCallingConv(RTLIB::FPTOSINT_F64_I32, CallingConv::ARM_AAPCS);
+    setLibcallCallingConv(RTLIB::FPTOUINT_F64_I32, CallingConv::ARM_AAPCS);
+    setLibcallCallingConv(RTLIB::FPTOSINT_F64_I64, CallingConv::ARM_AAPCS);
+    setLibcallCallingConv(RTLIB::FPTOUINT_F64_I64, CallingConv::ARM_AAPCS);
+    setLibcallCallingConv(RTLIB::FPTOSINT_F32_I32, CallingConv::ARM_AAPCS);
+    setLibcallCallingConv(RTLIB::FPTOUINT_F32_I32, CallingConv::ARM_AAPCS);
+    setLibcallCallingConv(RTLIB::FPTOSINT_F32_I64, CallingConv::ARM_AAPCS);
+    setLibcallCallingConv(RTLIB::FPTOUINT_F32_I64, CallingConv::ARM_AAPCS);
+
+    // Conversions between floating types.
+    // RTABI chapter 4.1.2, Table 7
+    setLibcallName(RTLIB::FPROUND_F64_F32, "__aeabi_d2f");
+    setLibcallName(RTLIB::FPEXT_F32_F64,   "__aeabi_f2d");
+    setLibcallCallingConv(RTLIB::FPROUND_F64_F32, CallingConv::ARM_AAPCS);
+    setLibcallCallingConv(RTLIB::FPEXT_F32_F64, CallingConv::ARM_AAPCS);   
+
+    // Integer to floating-point conversions.
+    // RTABI chapter 4.1.2, Table 8
+    setLibcallName(RTLIB::SINTTOFP_I32_F64, "__aeabi_i2d");
+    setLibcallName(RTLIB::UINTTOFP_I32_F64, "__aeabi_ui2d");
+    setLibcallName(RTLIB::SINTTOFP_I64_F64, "__aeabi_l2d");
+    setLibcallName(RTLIB::UINTTOFP_I64_F64, "__aeabi_ul2d");
+    setLibcallName(RTLIB::SINTTOFP_I32_F32, "__aeabi_i2f");
+    setLibcallName(RTLIB::UINTTOFP_I32_F32, "__aeabi_ui2f");
+    setLibcallName(RTLIB::SINTTOFP_I64_F32, "__aeabi_l2f");
+    setLibcallName(RTLIB::UINTTOFP_I64_F32, "__aeabi_ul2f");
+    setLibcallCallingConv(RTLIB::SINTTOFP_I32_F64, CallingConv::ARM_AAPCS);
+    setLibcallCallingConv(RTLIB::UINTTOFP_I32_F64, CallingConv::ARM_AAPCS);
+    setLibcallCallingConv(RTLIB::SINTTOFP_I64_F64, CallingConv::ARM_AAPCS);
+    setLibcallCallingConv(RTLIB::UINTTOFP_I64_F64, CallingConv::ARM_AAPCS);
+    setLibcallCallingConv(RTLIB::SINTTOFP_I32_F32, CallingConv::ARM_AAPCS);
+    setLibcallCallingConv(RTLIB::UINTTOFP_I32_F32, CallingConv::ARM_AAPCS);
+    setLibcallCallingConv(RTLIB::SINTTOFP_I64_F32, CallingConv::ARM_AAPCS);
+    setLibcallCallingConv(RTLIB::UINTTOFP_I64_F32, CallingConv::ARM_AAPCS);
+
+    // Long long helper functions
+    // RTABI chapter 4.2, Table 9
+    setLibcallName(RTLIB::MUL_I64,  "__aeabi_lmul");
+    setLibcallName(RTLIB::SDIV_I64, "__aeabi_ldivmod");
+    setLibcallName(RTLIB::UDIV_I64, "__aeabi_uldivmod");
+    setLibcallName(RTLIB::SHL_I64, "__aeabi_llsl");
+    setLibcallName(RTLIB::SRL_I64, "__aeabi_llsr");
+    setLibcallName(RTLIB::SRA_I64, "__aeabi_lasr");
+    setLibcallCallingConv(RTLIB::MUL_I64, CallingConv::ARM_AAPCS);
+    setLibcallCallingConv(RTLIB::SDIV_I64, CallingConv::ARM_AAPCS);
+    setLibcallCallingConv(RTLIB::UDIV_I64, CallingConv::ARM_AAPCS);
+    setLibcallCallingConv(RTLIB::SHL_I64, CallingConv::ARM_AAPCS);
+    setLibcallCallingConv(RTLIB::SRL_I64, CallingConv::ARM_AAPCS);
+    setLibcallCallingConv(RTLIB::SRA_I64, CallingConv::ARM_AAPCS);
+
+    // Integer division functions
+    // RTABI chapter 4.3.1
+    setLibcallName(RTLIB::SDIV_I8,  "__aeabi_idiv");
+    setLibcallName(RTLIB::SDIV_I16, "__aeabi_idiv");
+    setLibcallName(RTLIB::SDIV_I32, "__aeabi_idiv");
+    setLibcallName(RTLIB::UDIV_I8,  "__aeabi_uidiv");
+    setLibcallName(RTLIB::UDIV_I16, "__aeabi_uidiv");
+    setLibcallName(RTLIB::UDIV_I32, "__aeabi_uidiv");
+    setLibcallCallingConv(RTLIB::SDIV_I8, CallingConv::ARM_AAPCS);
+    setLibcallCallingConv(RTLIB::SDIV_I16, CallingConv::ARM_AAPCS);
+    setLibcallCallingConv(RTLIB::SDIV_I32, CallingConv::ARM_AAPCS);
+    setLibcallCallingConv(RTLIB::UDIV_I8, CallingConv::ARM_AAPCS);
+    setLibcallCallingConv(RTLIB::UDIV_I16, CallingConv::ARM_AAPCS);
+    setLibcallCallingConv(RTLIB::UDIV_I32, CallingConv::ARM_AAPCS);    
   }
 
   if (Subtarget->isThumb1Only())

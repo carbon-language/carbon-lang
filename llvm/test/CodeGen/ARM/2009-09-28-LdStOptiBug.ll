@@ -5,7 +5,7 @@
 
 define void @foo(%0* noalias nocapture sret %agg.result, double %x.0, double %y.0) nounwind {
 ; CHECK: foo:
-; CHECK: bl __adddf3
+; CHECK: bl __aeabi_dadd
 ; CHECK-NOT: strd
 ; CHECK: mov
   %x76 = fmul double %y.0, 0.000000e+00           ; <double> [#uses=1]
