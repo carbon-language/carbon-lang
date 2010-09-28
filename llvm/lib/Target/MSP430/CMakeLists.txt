@@ -21,5 +21,3 @@ add_llvm_target(MSP430CodeGen
   MSP430TargetMachine.cpp
   MSP430SelectionDAGInfo.cpp
   )
-
-target_link_libraries (LLVMMSP430CodeGen LLVMSelectionDAG)

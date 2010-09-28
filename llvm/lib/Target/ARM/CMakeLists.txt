@@ -49,4 +49,7 @@ add_llvm_target(ARMCodeGen
   Thumb2SizeReduction.cpp
   )
 
-target_link_libraries (LLVMARMCodeGen LLVMARMAsmPrinter LLVMSelectionDAG)
+# The ARM CodeGen library depends on the AsmPrinter for just an
+# vtable, but GenLibDeps.pl is unable to detect it. So without this
+# the build fails with "undefined reference to `vtable for ..."
+target_link_libraries(LLVMARMCodeGen LLVMARMAsmPrinter)

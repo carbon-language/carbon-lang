@@ -20,5 +20,3 @@ add_llvm_target(SystemZCodeGen
   SystemZTargetMachine.cpp
   SystemZSelectionDAGInfo.cpp
   )
-
-target_link_libraries (LLVMSystemZCodeGen LLVMSelectionDAG)

@@ -50,5 +50,3 @@ add_llvm_library(LLVMAnalysis
   TypeBasedAliasAnalysis.cpp
   ValueTracking.cpp
   )
-
-target_link_libraries (LLVMAnalysis LLVMSupport)

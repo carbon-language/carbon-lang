@@ -18,5 +18,3 @@ add_llvm_target(PTXCodeGen
   PTXSubtarget.cpp
   PTXTargetMachine.cpp
   )
-
-target_link_libraries (LLVMPTXCodeGen LLVMSelectionDAG)

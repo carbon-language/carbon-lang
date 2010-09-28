@@ -8,4 +8,3 @@ add_llvm_library(LLVMAsmPrinter
   OcamlGCPrinter.cpp
   )
 
-target_link_libraries (LLVMAsmPrinter LLVMMCParser)
