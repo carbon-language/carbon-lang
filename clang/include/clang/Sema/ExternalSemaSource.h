@@ -18,7 +18,7 @@
 
 namespace clang {
 
-class ObjCMethodList;
+struct ObjCMethodList;
 class Sema;
 
 /// \brief An abstract interface that should be implemented by
