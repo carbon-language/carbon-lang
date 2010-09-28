@@ -11,8 +11,6 @@ class PersistentVariablesTestCase(TestBase):
 
     mydir = "persistent_variables"
 
-    @unittest2.expectedFailure
-    # Fails as of r114384.
     def test_persistent_variables(self):
         """Test that lldb persistent variables works correctly."""
         self.buildDefault()
