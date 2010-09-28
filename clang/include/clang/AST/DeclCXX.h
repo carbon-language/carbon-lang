@@ -688,10 +688,6 @@ public:
   /// no base classes, and no virtual functions (C++ [dcl.init.aggr]p1).
   bool isAggregate() const { return data().Aggregate; }
 
-  /// setAggregate - Set whether this class is an aggregate (C++
-  /// [dcl.init.aggr]).
-  void setAggregate(bool Agg) { data().Aggregate = Agg; }
-
   /// setMethodAsVirtual - Make input method virtual and set the necesssary 
   /// special function bits and other bits accordingly.
   void setMethodAsVirtual(FunctionDecl *Method);
@@ -701,9 +697,6 @@ public:
   /// reference data members, no user-defined copy assignment operator and no
   /// user-defined destructor.
   bool isPOD() const { return data().PlainOldData; }
-
-  /// setPOD - Set whether this class is a POD-type (C++ [class]p4).
-  void setPOD(bool POD) { data().PlainOldData = POD; }
 
   /// isEmpty - Whether this class is empty (C++0x [meta.unary.prop]), which
   /// means it has a virtual function, virtual base, data member (other than
