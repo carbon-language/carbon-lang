@@ -212,6 +212,8 @@ namespace {
     void EmitStartOfAsmFile(Module &M);
     void EmitEndOfAsmFile(Module &M);
 
+    void PrintDebugValueComment(const MachineInstr *MI, raw_ostream &OS);
+
     MachineLocation getDebugValueLocation(const MachineInstr *MI) const {
       MachineLocation Location;
       assert (MI->getNumOperands() == 4 && "Invalid no. of machine operands!");
@@ -1146,19 +1148,7 @@ void ARMAsmPrinter::EmitInstruction(const MachineInstr *MI) {
   SmallString<128> Str;
   raw_svector_ostream OS(Str);
   if (MI->getOpcode() == ARM::DBG_VALUE) {
-    unsigned NOps = MI->getNumOperands();
-    assert(NOps==4);
-    OS << '\t' << MAI->getCommentString() << "DEBUG_VALUE: ";
-    // cast away const; DIetc do not take const operands for some reason.
-    DIVariable V(const_cast<MDNode *>(MI->getOperand(NOps-1).getMetadata()));
-    OS << V.getName();
-    OS << " <- ";
-    // Frame address.  Currently handles register +- offset only.
-    assert(MI->getOperand(0).isReg() && MI->getOperand(1).isImm());
-    OS << '['; printOperand(MI, 0, OS); OS << '+'; printOperand(MI, 1, OS);
-    OS << ']';
-    OS << "+";
-    printOperand(MI, NOps-2, OS);
+    PrintDebugValueComment(MI, OS);
   } else if (MI->getOpcode() == ARM::MOVs) {
     // FIXME: Thumb variants?
     const MachineOperand &Dst = MI->getOperand(0);
@@ -1503,12 +1493,38 @@ void ARMAsmPrinter::EmitJump2Table(const MachineInstr *MI) {
     EmitAlignment(1);
 }
 
+void ARMAsmPrinter::PrintDebugValueComment(const MachineInstr *MI,
+                                           raw_ostream &OS) {
+  unsigned NOps = MI->getNumOperands();
+  assert(NOps==4);
+  OS << '\t' << MAI->getCommentString() << "DEBUG_VALUE: ";
+  // cast away const; DIetc do not take const operands for some reason.
+  DIVariable V(const_cast<MDNode *>(MI->getOperand(NOps-1).getMetadata()));
+  OS << V.getName();
+  OS << " <- ";
+  // Frame address.  Currently handles register +- offset only.
+  assert(MI->getOperand(0).isReg() && MI->getOperand(1).isImm());
+  OS << '['; printOperand(MI, 0, OS); OS << '+'; printOperand(MI, 1, OS);
+  OS << ']';
+  OS << "+";
+  printOperand(MI, NOps-2, OS);
+}
+
 void ARMAsmPrinter::printInstructionThroughMCStreamer(const MachineInstr *MI) {
   ARMMCInstLower MCInstLowering(OutContext, *Mang, *this);
   switch (MI->getOpcode()) {
   case ARM::t2MOVi32imm:
     assert(0 && "Should be lowered by thumb2it pass");
   default: break;
+  case ARM::DBG_VALUE: {
+    if (isVerbose() && OutStreamer.hasRawTextSupport()) {
+      SmallString<128> TmpStr;
+      raw_svector_ostream OS(TmpStr);
+      PrintDebugValueComment(MI, OS);
+      OutStreamer.EmitRawText(StringRef(OS.str()));
+    }
+    return;
+  }
   case ARM::tPICADD: {
     // This is a pseudo op for a label + instruction sequence, which looks like:
     // LPC0:
