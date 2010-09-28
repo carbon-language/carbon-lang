@@ -339,15 +339,14 @@ void MDNode::replaceOperand(MDNodeOperand *Op, Value *To) {
 
   // Now that the node is out of the folding set, get ready to reinsert it.
   // First, check to see if another node with the same operands already exists
-  // in the set.  If it doesn't exist, this returns the position to insert it.
+  // in the set.  If so, then this node is redundant.
   FoldingSetNodeID ID;
   Profile(ID);
   void *InsertPoint;
   if (MDNode *N = pImpl->MDNodeSet.FindNodeOrInsertPos(ID, InsertPoint)) {
-    N->replaceAllUsesWith(this);
-    N->destroy();
-    N = pImpl->MDNodeSet.FindNodeOrInsertPos(ID, InsertPoint);
-    assert(N == 0 && "shouldn't be in the map now!"); (void)N;
+    replaceAllUsesWith(N);
+    destroy();
+    return;
   }
 
   // InsertPoint will have been set by the FindNodeOrInsertPos call.
