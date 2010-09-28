@@ -66,6 +66,7 @@ set(LLVM_ALL_TARGETS
   MSP430
   PIC16
   PowerPC
+  PTX
   Sparc
   SystemZ
   X86
