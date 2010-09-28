@@ -185,6 +185,18 @@ ARMSubtarget::GVIsIndirectSymbol(const GlobalValue *GV,
   return false;
 }
 
+unsigned ARMSubtarget::getMispredictionPenalty() const {
+  // If we have a reasonable estimate of the pipeline depth, then we can
+  // estimate the penalty of a misprediction based on that.
+  if (isCortexA8())
+    return 13;
+  else if (isCortexA9())
+    return 8;
+  
+  // Otherwise, just return a sensible default.
+  return 10;
+}
+
 bool ARMSubtarget::enablePostRAScheduler(
            CodeGenOpt::Level OptLevel,
            TargetSubtarget::AntiDepBreakMode& Mode,

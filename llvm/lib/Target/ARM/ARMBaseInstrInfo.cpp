@@ -1203,7 +1203,8 @@ bool ARMBaseInstrInfo::isProfitableToIfCvt(MachineBasicBlock &MBB,
   
   // Attempt to estimate the relative costs of predication versus branching.
   float UnpredCost = Probability * NumInstrs;
-  UnpredCost += 2.0; // FIXME: Should model a misprediction cost.
+  UnpredCost += 1.0; // The branch itself
+  UnpredCost += 0.1 * Subtarget.getMispredictionPenalty();
   
   float PredCost = NumInstrs;
   
@@ -1220,7 +1221,8 @@ isProfitableToIfCvt(MachineBasicBlock &TMBB, unsigned NumT,
   
   // Attempt to estimate the relative costs of predication versus branching.
   float UnpredCost = Probability * NumT + (1.0 - Probability) * NumF;
-  UnpredCost += 2.0; // FIXME: Should model a misprediction cost.
+  UnpredCost += 1.0; // The branch itself
+  UnpredCost += 0.1 * Subtarget.getMispredictionPenalty();
   
   float PredCost = NumT + NumF;
   
