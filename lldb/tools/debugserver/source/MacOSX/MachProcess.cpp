@@ -130,7 +130,7 @@ MachProcess::SetProcessID(pid_t pid)
     Clear();
     // Set the current PID appropriately
     if (pid == 0)
-        m_pid == ::getpid ();
+        m_pid = ::getpid ();
     else
         m_pid = pid;
     return m_pid;    // Return actualy PID in case a zero pid was passed in

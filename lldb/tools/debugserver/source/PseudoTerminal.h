@@ -26,7 +26,7 @@ public:
         invalid_pid = -1
     };
 
-    typedef enum Error
+    enum Error
     {
         success                                     = 0,
         err_posix_openpt_failed                     = -2,

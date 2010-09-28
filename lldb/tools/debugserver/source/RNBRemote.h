@@ -239,7 +239,7 @@ protected:
 
     // gdb can send multiple Z/z packets for the same address and
     // these calls must be ref counted.
-    typedef struct Breakpoint
+    struct Breakpoint
     {
         Breakpoint(nub_break_t breakID) :
             m_breakID(breakID),
