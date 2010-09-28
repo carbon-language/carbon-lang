@@ -444,19 +444,27 @@ getExprForDwarfGlobalReference(const GlobalValue *GV, Mangler *Mang,
 
 void TargetLoweringObjectFileMachO::Initialize(MCContext &Ctx,
                                                const TargetMachine &TM) {
+  // _foo.eh symbols are currently always exported so that the linker knows
+  // about them.  This is not necessary on 10.6 and later, but it
+  // doesn't hurt anything.
+  // FIXME: I need to get this from Triple.
   IsFunctionEHSymbolGlobal = true;
   IsFunctionEHFrameSymbolPrivate = false;
   SupportsWeakOmittedEHFrame = false;
 
   Triple T(((LLVMTargetMachine&)TM).getTargetTriple());
   if (T.getOS() == Triple::Darwin) {
-    unsigned MajNum = T.getDarwinMajorNumber();
-    if (MajNum == 7 || MajNum == 8) // 10.3 Panther, 10.4 Tiger
+    switch (T.getDarwinMajorNumber()) {
+    case 7:  // 10.3 Panther.
+    case 8:  // 10.4 Tiger.
       CommDirectiveSupportsAlignment = false;
-    if (MajNum > 9)                 // 10.6 SnowLeopard
-      IsFunctionEHSymbolGlobal = false;
+      break;
+    case 9:   // 10.5 Leopard.
+    case 10:  // 10.6 SnowLeopard.
+      break;
+    }
   }
-
+  
   TargetLoweringObjectFile::Initialize(Ctx, TM);
 
   TextSection // .text
