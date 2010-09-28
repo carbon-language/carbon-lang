@@ -53,13 +53,15 @@ bool ARMELFWriterInfo::isPCRelativeRel(unsigned RelTy) const {
 }
 
 unsigned ARMELFWriterInfo::getAbsoluteLabelMachineRelTy() const {
-  assert(0 && "ARMELFWriterInfo::getAbsoluteLabelMachineRelTy() not implemented");
+  assert(0 &&
+         "ARMELFWriterInfo::getAbsoluteLabelMachineRelTy() not implemented");
   return 0;
 }
 
 long int ARMELFWriterInfo::computeRelocation(unsigned SymOffset,
                                              unsigned RelOffset,
                                              unsigned RelTy) const {
-  assert(0 && "ARMELFWriterInfo::getAbsoluteLabelMachineRelTy() not implemented");
+  assert(0 &&
+         "ARMELFWriterInfo::getAbsoluteLabelMachineRelTy() not implemented");
   return 0;
 }

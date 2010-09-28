@@ -12,7 +12,8 @@
 // global). Such a transformation can significantly reduce the register pressure
 // when many globals are involved.
 //
-// For example, consider the code which touches several global variables at once:
+// For example, consider the code which touches several global variables at 
+// once:
 //
 // static int foo[N], bar[N], baz[N];
 //
@@ -48,7 +49,7 @@
 //  str     r0, [r5], #4
 //
 //  note that we saved 2 registers here almostly "for free".
-// ===----------------------------------------------------------------------===//
+// ===---------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "arm-global-merge"
 #include "ARM.h"
