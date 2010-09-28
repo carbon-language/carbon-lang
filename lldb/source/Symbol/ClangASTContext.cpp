@@ -817,7 +817,7 @@ ClangASTContext::AddMethodToCXXRecordType
 )
 {
     if (!record_opaque_type || !method_opaque_type || !name)
-        return false;
+        return NULL;
     
     assert(ast_context);
     

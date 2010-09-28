@@ -779,7 +779,7 @@ ValueObject::GetObjectRuntimeLanguage ()
     {
         if (ClangASTContext::IsObjCClassType (opaque_qual_type))
             return lldb::eLanguageTypeObjC;
-        if (ClangASTContext::IsCXXClassType (opaque_qual_type));
+        if (ClangASTContext::IsCXXClassType (opaque_qual_type))
             return lldb::eLanguageTypeC_plus_plus;
     }
             
