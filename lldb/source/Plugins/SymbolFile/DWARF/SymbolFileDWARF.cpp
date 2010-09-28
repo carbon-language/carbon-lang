@@ -2561,6 +2561,10 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                     assert (tag_decl_kind != -1);
                     clang_type = type_list->GetClangASTContext().CreateRecordType (type_name_cstr, tag_decl_kind, GetClangDeclContextForDIE (dwarf_cu, die), class_language);
 
+                    // Store a forward declaration to this class type in case any 
+                    // parameters in any class methods need it for the clang 
+                    // types for function prototypes. 
+                    m_die_to_clang_type[die] = clang_type;
                     m_die_to_decl_ctx[die] = ClangASTContext::GetDeclContextForType (clang_type);
                     type_sp.reset( new Type(die->GetOffset(), this, type_name_dbstr, byte_size, NULL, LLDB_INVALID_UID, Type::eIsTypeWithUID, &decl, clang_type));
 
@@ -2795,10 +2799,6 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
 
                         // Parse the function children for the parameters
                         bool skip_artificial = true;
-                        if (die->GetOffset() == 1340212) // REMOVE THIS BEFORE CHECKIN
-                        { // REMOVE THIS BEFORE CHECKIN
-                            printf("this one!\n"); // REMOVE THIS BEFORE CHECKIN
-                        } // REMOVE THIS BEFORE CHECKIN
                         ParseChildParameters (sc, type_sp, dwarf_cu, die, skip_artificial, type_list, function_param_types, function_param_decls);
 
                         // clang_type will get the function prototype clang type after this call

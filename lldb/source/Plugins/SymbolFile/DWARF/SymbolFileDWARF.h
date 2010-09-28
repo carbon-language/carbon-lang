@@ -319,9 +319,11 @@ protected:
     typedef llvm::DenseMap<const DWARFDebugInfoEntry *, clang::DeclContext *> DIEToDeclContextMap;
     typedef llvm::DenseMap<const DWARFDebugInfoEntry *, lldb_private::Type *> DIEToTypePtr;
     typedef llvm::DenseMap<const DWARFDebugInfoEntry *, lldb::VariableSP> DIEToVariableSP;
+    typedef llvm::DenseMap<const DWARFDebugInfoEntry *, void *> DIEToClangType;
     DIEToDeclContextMap m_die_to_decl_ctx;
     DIEToTypePtr m_die_to_type;
     DIEToVariableSP m_die_to_variable_sp;
+    DIEToClangType m_die_to_clang_type;
     
 };
 
