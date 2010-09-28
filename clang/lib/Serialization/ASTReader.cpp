@@ -3180,7 +3180,9 @@ bool ASTReader::FindExternalLexicalDecls(const DeclContext *DC,
 
   // There might be lexical decls in multiple parts of the chain, for the TU
   // at least.
-  DeclContextInfos &Infos = DeclContextOffsets[DC];
+  // DeclContextOffsets might reallocate as we load additional decls below,
+  // so make a copy of the vector.
+  DeclContextInfos Infos = DeclContextOffsets[DC];
   for (DeclContextInfos::iterator I = Infos.begin(), E = Infos.end();
        I != E; ++I) {
     // IDs can be 0 if this context doesn't contain declarations.
@@ -3190,8 +3192,11 @@ bool ASTReader::FindExternalLexicalDecls(const DeclContext *DC,
     // Load all of the declaration IDs
     for (const DeclID *ID = I->LexicalDecls,
                            *IDE = ID + I->NumLexicalDecls;
-         ID != IDE; ++ID)
-      Decls.push_back(GetDecl(*ID));
+        ID != IDE; ++ID) {
+      Decl *D = GetDecl(*ID);
+      assert(D && "Null decl in lexical decls");
+      Decls.push_back(D);
+    }
   }
 
   ++NumLexicalDeclContextsRead;
