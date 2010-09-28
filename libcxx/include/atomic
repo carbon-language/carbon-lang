@@ -21,8 +21,12 @@ namespace std
 
 typedef enum memory_order
 {
-    memory_order_relaxed, memory_order_consume, memory_order_acquire,
-    memory_order_release, memory_order_acq_rel, memory_order_seq_cst
+    memory_order_relaxed,
+    memory_order_consume,  // load-consume
+    memory_order_acquire,  // load-acquire
+    memory_order_release,  // store-release
+    memory_order_acq_rel,  // store-release load-acquire
+    memory_order_seq_cst   // store-release load-acquire
 } memory_order;
 
 template <class T> T kill_dependency(T y);
@@ -2412,6 +2416,19 @@ void atomic_signal_fence(memory_order);
 
 _LIBCPP_BEGIN_NAMESPACE_STD
 
+typedef enum memory_order
+{
+    memory_order_relaxed, memory_order_consume, memory_order_acquire,
+    memory_order_release, memory_order_acq_rel, memory_order_seq_cst
+} memory_order;
+
+template <class _Tp>
+inline _LIBCPP_INLINE_VISIBILITY
+_Tp
+kill_dependency(_Tp __y)
+{
+    return __y;
+}
 
 _LIBCPP_END_NAMESPACE_STD
 
