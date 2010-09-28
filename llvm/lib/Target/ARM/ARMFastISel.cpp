@@ -397,8 +397,9 @@ unsigned ARMFastISel::ARMMaterializeFP(const ConstantFP *CFP, EVT VT) {
   unsigned Opc = is64bit ? ARM::VLDRD : ARM::VLDRS;
   
   // The extra reg is for addrmode5.
-  AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(Opc))
-                  .addReg(DestReg).addConstantPoolIndex(Idx)
+  AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(Opc),
+                          DestReg)
+                  .addConstantPoolIndex(Idx)
                   .addReg(0));
   return DestReg;
 }
