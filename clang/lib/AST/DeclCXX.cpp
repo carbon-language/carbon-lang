@@ -319,8 +319,13 @@ CXXMethodDecl *CXXRecordDecl::getCopyAssignmentOperator(bool ArgIsConst) const {
   return GetBestOverloadCandidateSimple(Found);
 }
 
-void
-CXXRecordDecl::addedMember(Decl *D) {
+void CXXRecordDecl::markedVirtualFunctionPure() {
+  // C++ [class.abstract]p2: 
+  //   A class is abstract if it has at least one pure virtual function.
+  data().Abstract = true;
+}
+
+void CXXRecordDecl::addedMember(Decl *D) {
   // Ignore friends and invalid declarations.
   if (D->getFriendObjectKind() || D->isInvalidDecl())
     return;

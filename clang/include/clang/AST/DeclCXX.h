@@ -412,6 +412,9 @@ class CXXRecordDecl : public RecordDecl {
   /// members have been added. It will be invoked by DeclContext::addDecl()
   /// whenever a member is added to this record.
   void addedMember(Decl *D);
+
+  void markedVirtualFunctionPure();
+  friend void FunctionDecl::setPure(bool);
   
 protected:
   CXXRecordDecl(Kind K, TagKind TK, DeclContext *DC,

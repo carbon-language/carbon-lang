@@ -966,6 +966,13 @@ void FunctionDecl::setBody(Stmt *B) {
     EndRangeLoc = B->getLocEnd();
 }
 
+void FunctionDecl::setPure(bool P) {
+  IsPure = P;
+  if (P)
+    if (CXXRecordDecl *Parent = dyn_cast<CXXRecordDecl>(getDeclContext()))
+      Parent->markedVirtualFunctionPure();
+}
+
 bool FunctionDecl::isMain() const {
   ASTContext &Context = getASTContext();
   return !Context.getLangOptions().Freestanding &&

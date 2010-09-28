@@ -1280,7 +1280,7 @@ public:
   /// Whether this virtual function is pure, i.e. makes the containing class
   /// abstract.
   bool isPure() const { return IsPure; }
-  void setPure(bool P = true) { IsPure = P; }
+  void setPure(bool P = true);
 
   /// Whether this function is "trivial" in some specialized C++ senses.
   /// Can only be true for default constructors, copy constructors,

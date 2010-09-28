@@ -6668,9 +6668,6 @@ bool Sema::CheckOverridingFunctionAttributes(const CXXMethodDecl *New,
 bool Sema::CheckPureMethod(CXXMethodDecl *Method, SourceRange InitRange) {
   if (Method->isVirtual() || Method->getParent()->isDependentContext()) {
     Method->setPure();
-    
-    // A class is abstract if at least one function is pure virtual.
-    Method->getParent()->setAbstract(true);
     return false;
   } 
 
