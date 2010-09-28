@@ -85,3 +85,55 @@ class GenericTester(TestBase):
             nv = (" %s = '%s'" if quotedDisplay else " %s = %s") % (var, val)
             self.expect(output, Msg(var, val), exe=False,
                 substrs = [nv])
+
+    def generic_type_expr_tester(self, atoms, quotedDisplay=False):
+        """Test that variable expressions with basic types are evaluated correctly."""
+
+        # First, capture the golden output emitted by the oracle, i.e., the
+        # series of printf statements.
+        go = system("./a.out")
+        # This golden list contains a list of (variable, value) pairs extracted
+        # from the golden output.
+        gl = []
+
+        # Scan the golden output line by line, looking for the pattern:
+        #
+        #     variable = 'value'
+        #
+        for line in go.split(os.linesep):
+            match = self.pattern.search(line)
+            if match:
+                var, val = match.group(1), match.group(2)
+                gl.append((var, val))
+        #print "golden list:", gl
+
+        # Bring the program to the point where we can issue a series of
+        # 'frame variable' command.
+        self.runCmd("file a.out", CURRENT_EXECUTABLE_SET)
+        self.runCmd("breakpoint set --name Puts")
+        self.runCmd("run", RUN_SUCCEEDED)
+        self.runCmd("thread step-out", STEP_OUT_SUCCEEDED)
+
+        #self.runCmd("frame variable")
+
+        # Now iterate through the golden list, comparing against the output from
+        # 'frame variable var'.
+        for var, val in gl:
+            self.runCmd("expr %s" % var)
+            output = self.res.GetOutput()
+            
+            # The input type is in a canonical form as a set named atoms.
+            # The display type string must conatin each and every element.
+            #dt = re.match("^\((.*)\)", output).group(1)
+
+            # Expect the display type string to contain each and every atoms.
+            #self.expect(dt,
+            #            "Display type: '%s' must contain the type atoms: '%s'" %
+            #            (dt, atoms),
+            #            exe=False,
+            #    substrs = list(atoms))
+
+            # The (var, val) pair must match, too.
+            #nv = (" %s = '%s'" if quotedDisplay else " %s = %s") % (var, val)
+            #self.expect(output, Msg(var, val), exe=False,
+            #    substrs = [nv])
