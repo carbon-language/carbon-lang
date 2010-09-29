@@ -501,6 +501,13 @@ namespace llvm {
     }
     unsigned getLineNumber() const      { return getUnsignedField(4); }
     DIType getType() const              { return getFieldAs<DIType>(5); }
+    
+    /// isArtificial - Return true if this variable is marked as "artificial".
+    bool isArtificial() const    { 
+      if (getVersion() <= llvm::LLVMDebugVersion8)
+        return false;
+      return (getUnsignedField(6) & FlagArtificial) != 0;
+    }
 
 
     /// Verify - Verify that a variable descriptor is well formed.
@@ -738,7 +745,8 @@ namespace llvm {
     DIVariable CreateVariable(unsigned Tag, DIDescriptor Context,
                               StringRef Name,
                               DIFile F, unsigned LineNo,
-                              DIType Ty, bool AlwaysPreserve = false);
+                              DIType Ty, bool AlwaysPreserve = false,
+                              unsigned Flags = 0);
 
     /// CreateComplexVariable - Create a new descriptor for the specified
     /// variable which has a complex address expression for its address.

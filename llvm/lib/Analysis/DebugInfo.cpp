@@ -109,7 +109,9 @@ Function *DIDescriptor::getFunctionField(unsigned Elt) const {
 }
 
 unsigned DIVariable::getNumAddrElements() const {
-  return DbgNode->getNumOperands()-6;
+  if (getVersion() <= llvm::LLVMDebugVersion8)
+    return DbgNode->getNumOperands()-6;
+  return DbgNode->getNumOperands()-7;
 }
 
 
@@ -1145,7 +1147,8 @@ DIVariable DIFactory::CreateVariable(unsigned Tag, DIDescriptor Context,
                                      StringRef Name,
                                      DIFile F,
                                      unsigned LineNo,
-                                     DIType Ty, bool AlwaysPreserve) {
+                                     DIType Ty, bool AlwaysPreserve,
+                                     unsigned Flags) {
   Value *Elts[] = {
     GetTagConstant(Tag),
     Context,
@@ -1153,8 +1156,9 @@ DIVariable DIFactory::CreateVariable(unsigned Tag, DIDescriptor Context,
     F,
     ConstantInt::get(Type::getInt32Ty(VMContext), LineNo),
     Ty,
+    ConstantInt::get(Type::getInt32Ty(VMContext), Flags)
   };
-  MDNode *Node = MDNode::get(VMContext, &Elts[0], 6);
+  MDNode *Node = MDNode::get(VMContext, &Elts[0], 7);
   if (AlwaysPreserve) {
     // The optimizer may remove local variable. If there is an interest
     // to preserve variable info in such situation then stash it in a
