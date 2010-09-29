@@ -732,6 +732,9 @@ appropriate nops inserted to ensure restartability.</li>
 
 <div class="doc_text">
 
+<p>The C backend has numerous problems and is not being actively maintained.
+Depending on it for anything serious is not advised.</p>
+
 <ul>
 <li><a href="http://llvm.org/PR802">The C backend has only basic support for
     inline assembly code</a>.</li>
@@ -747,40 +750,27 @@ appropriate nops inserted to ensure restartability.</li>
 
 <!-- ======================================================================= -->
 <div class="doc_subsection">
-  <a name="c-fe">Known problems with the llvm-gcc C and C++ front-end</a>
+  <a name="llvm-gcc">Known problems with the llvm-gcc front-end</a>
 </div>
 
 <div class="doc_text">
 
-<p>The only major language feature of GCC not supported by llvm-gcc is
-    the <tt>__builtin_apply</tt> family of builtins.   However, some extensions
-    are only supported on some targets.  For example, trampolines are only
-    supported on some targets (these are used when you take the address of a
-    nested function).</p>
+<p>llvm-gcc is generally very stable for the C family of languages.  The only
+   major language feature of GCC not supported by llvm-gcc is the
+   <tt>__builtin_apply</tt> family of builtins.   However, some extensions
+   are only supported on some targets.  For example, trampolines are only
+   supported on some targets (these are used when you take the address of a
+   nested function).</p>
 
-</div>
+<p>Fortran support generally works, but there are still several unresolved bugs
+   in <a href="http://llvm.org/bugs/">Bugzilla</a>.  Please see the
+   tools/gfortran component for details.  Note that llvm-gcc is missing major
+   Fortran performance work in the frontend and library that went into GCC after
+   4.2.  If you are interested in Fortran, we recommend that you consider using
+   <a href="#dragonegg">dragonegg</a> instead.</p>
 
-<!-- ======================================================================= -->
-<div class="doc_subsection">
-  <a name="fortran-fe">Known problems with the llvm-gcc Fortran front-end</a>
-</div>
-
-<div class="doc_text">
-<ul>
-<li>Fortran support generally works, but there are still several unresolved bugs
-    in <a href="http://llvm.org/bugs/">Bugzilla</a>.  Please see the
-    tools/gfortran component for details.</li>
-</ul>
-</div>
-
-<!-- ======================================================================= -->
-<div class="doc_subsection">
-  <a name="ada-fe">Known problems with the llvm-gcc Ada front-end</a>
-</div>
-
-<div class="doc_text">
-The llvm-gcc 4.2 Ada compiler works fairly well; however, this is not a mature
-technology, and problems should be expected.
+<p>The llvm-gcc 4.2 Ada compiler has basic functionality. However, this is not a
+mature technology, and problems should be expected.  For example:</p>
 <ul>
 <li>The Ada front-end currently only builds on X86-32.  This is mainly due
 to lack of trampoline support (pointers to nested functions) on other platforms.
