@@ -43,6 +43,18 @@ class DocumentXML::DeclPrinter : public DeclVisitor<DocumentXML::DeclPrinter> {
       Visit(*i);
       Doc.toParent();
     }
+
+    for (RecordDecl::decl_iterator i = RD->decls_begin(),
+                                   e = RD->decls_end(); i != e; ++i) {
+      Decl *d = *i;
+      if (isa<RecordDecl>(d)) {
+        RecordDecl* pRec = cast<RecordDecl>(d);
+        if (pRec->isDefinition()) {
+          Visit(pRec);
+          Doc.toParent();
+        }
+      }
+    }
   }
 
   void addSubNodes(CXXRecordDecl* RD) {

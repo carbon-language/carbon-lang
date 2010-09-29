@@ -188,3 +188,11 @@ void f10() {
 
   x = (struct f10_s0) { .iv0 = "name" };
 }
+
+// Nested structures.
+struct s11 {
+  struct s11_2 {
+    int f0;
+  } f0;
+  int f1;
+};
