@@ -179,6 +179,18 @@ static MCFixupKind getImmFixupKind(uint64_t TSFlags) {
   }
 }
 
+/// Is32BitMemOperand - Return true if the specified instruction with a memory
+/// operand should emit the 0x67 prefix byte in 64-bit mode due to a 32-bit
+/// memory operand.  Op specifies the operand # of the memoperand.
+static bool Is32BitMemOperand(const MCInst &MI, unsigned Op) {
+  const MCOperand &BaseReg  = MI.getOperand(Op+X86::AddrBaseReg);
+  const MCOperand &IndexReg = MI.getOperand(Op+X86::AddrIndexReg);
+  
+  if (BaseReg.getReg() != 0 && X86::GR32RegClass.contains(BaseReg.getReg()) ||
+      IndexReg.getReg() != 0 && X86::GR32RegClass.contains(IndexReg.getReg()))
+    return true;
+  return false;
+}
 
 void X86MCCodeEmitter::
 EmitImmediate(const MCOperand &DispOp, unsigned Size, MCFixupKind FixupKind,
@@ -221,10 +233,10 @@ void X86MCCodeEmitter::EmitMemModRMByte(const MCInst &MI, unsigned Op,
                                         uint64_t TSFlags, unsigned &CurByte,
                                         raw_ostream &OS,
                                         SmallVectorImpl<MCFixup> &Fixups) const{
-  const MCOperand &Disp     = MI.getOperand(Op+3);
-  const MCOperand &Base     = MI.getOperand(Op);
-  const MCOperand &Scale    = MI.getOperand(Op+1);
-  const MCOperand &IndexReg = MI.getOperand(Op+2);
+  const MCOperand &Disp     = MI.getOperand(Op+X86::AddrDisp);
+  const MCOperand &Base     = MI.getOperand(Op+X86::AddrBaseReg);
+  const MCOperand &Scale    = MI.getOperand(Op+X86::AddrScaleAmt);
+  const MCOperand &IndexReg = MI.getOperand(Op+X86::AddrIndexReg);
   unsigned BaseReg = Base.getReg();
 
   // Handle %rip relative addressing.
@@ -713,7 +725,8 @@ void X86MCCodeEmitter::EmitOpcodePrefix(uint64_t TSFlags, unsigned &CurByte,
     EmitByte(0x66, CurByte, OS);
 
   // Emit the address size opcode prefix as needed.
-  if (TSFlags & X86II::AdSize)
+  if ((TSFlags & X86II::AdSize) ||
+      (MemOperand != -1 && Is64BitMode && Is32BitMemOperand(MI, MemOperand)))
     EmitByte(0x67, CurByte, OS);
 
   bool Need0FPrefix = false;
