@@ -1433,16 +1433,29 @@ AnalyzeCompare(const MachineInstr *MI, unsigned &SrcReg, int &CmpMask,
   return false;
 }
 
-static bool isSuitableForMask(const MachineInstr &MI, unsigned SrcReg,
+/// isSuitableForMask - Identify a suitable 'and' instruction that
+/// operates on the given source register and applies the same mask
+/// as a 'tst' instruction. Provide a limited look-through for copies.
+/// When successful, MI will hold the found instruction.
+static bool isSuitableForMask(MachineInstr *&MI, unsigned SrcReg,
                               int CmpMask, bool CommonUse) {
-  switch (MI.getOpcode()) {
+  switch (MI->getOpcode()) {
     case ARM::ANDri:
     case ARM::t2ANDri:
-      if (CmpMask != MI.getOperand(2).getImm())
+      if (CmpMask != MI->getOperand(2).getImm())
         return false;
-      if (SrcReg == MI.getOperand(CommonUse ? 1 : 0).getReg())
+      if (SrcReg == MI->getOperand(CommonUse ? 1 : 0).getReg())
         return true;
       break;
+    case ARM::COPY: {
+      // Walk down one instruction which is potentially an 'and'.
+      const MachineInstr &Copy = *MI;
+      MachineBasicBlock::iterator AND(next(MachineBasicBlock::iterator(MI)));
+      if (AND == MI->getParent()->end()) return false;
+      MI = AND;
+      return isSuitableForMask(MI, Copy.getOperand(0).getReg(),
+                               CmpMask, true);
+    }
   }
 
   return false;
@@ -1467,16 +1480,15 @@ OptimizeCompareInstr(MachineInstr *CmpInstr, unsigned SrcReg, int CmpMask,
 
   // Masked compares sometimes use the same register as the corresponding 'and'.
   if (CmpMask != ~0) {
-      if (!isSuitableForMask(*MI, SrcReg, CmpMask, false)) {
+    if (!isSuitableForMask(MI, SrcReg, CmpMask, false)) {
       MI = 0;
       for (MachineRegisterInfo::use_iterator UI = MRI.use_begin(SrcReg),
            UE = MRI.use_end(); UI != UE; ++UI) {
         if (UI->getParent() != CmpInstr->getParent()) continue;
-        MachineInstr &PotentialAND = *UI;
+        MachineInstr *PotentialAND = &*UI;
         if (!isSuitableForMask(PotentialAND, SrcReg, CmpMask, true))
           continue;
-        SrcReg = PotentialAND.getOperand(0).getReg();
-        MI = &PotentialAND;
+        MI = PotentialAND;
         break;
       }
       if (!MI) return false;
