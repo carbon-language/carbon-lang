@@ -604,7 +604,7 @@ def tADDhirr : T1pIt<(outs GPR:$dst), (ins GPR:$lhs, GPR:$rhs), IIC_iALUr,
 
 // And register
 let isCommutable = 1 in
-def tAND : T1sIt<(outs tGPR:$dst), (ins tGPR:$lhs, tGPR:$rhs), IIC_iALUr,
+def tAND : T1sIt<(outs tGPR:$dst), (ins tGPR:$lhs, tGPR:$rhs), IIC_iBITr,
                  "and", "\t$dst, $rhs",
                  [(set tGPR:$dst, (and tGPR:$lhs, tGPR:$rhs))]>,
            T1DataProcessing<0b0000>;
@@ -622,7 +622,7 @@ def tASRrr : T1sIt<(outs tGPR:$dst), (ins tGPR:$lhs, tGPR:$rhs), IIC_iMOVsr,
              T1DataProcessing<0b0100>;
 
 // BIC register
-def tBIC : T1sIt<(outs tGPR:$dst), (ins tGPR:$lhs, tGPR:$rhs), IIC_iALUr,
+def tBIC : T1sIt<(outs tGPR:$dst), (ins tGPR:$lhs, tGPR:$rhs), IIC_iBITr,
                  "bic", "\t$dst, $rhs",
                  [(set tGPR:$dst, (and tGPR:$lhs, (not tGPR:$rhs)))]>,
            T1DataProcessing<0b1110>;
@@ -675,7 +675,7 @@ def tCMPzhir : T1pI<(outs), (ins GPR:$lhs, GPR:$rhs), IIC_iCMPr,
 
 // XOR register
 let isCommutable = 1 in
-def tEOR : T1sIt<(outs tGPR:$dst), (ins tGPR:$lhs, tGPR:$rhs), IIC_iALUr,
+def tEOR : T1sIt<(outs tGPR:$dst), (ins tGPR:$lhs, tGPR:$rhs), IIC_iBITr,
                  "eor", "\t$dst, $rhs",
                  [(set tGPR:$dst, (xor tGPR:$lhs, tGPR:$rhs))]>,
            T1DataProcessing<0b0001>;
@@ -751,7 +751,7 @@ def tMVN : T1sI<(outs tGPR:$dst), (ins tGPR:$src), IIC_iMOVr,
 
 // bitwise or register
 let isCommutable = 1 in
-def tORR : T1sIt<(outs tGPR:$dst), (ins tGPR:$lhs, tGPR:$rhs),  IIC_iALUr,
+def tORR : T1sIt<(outs tGPR:$dst), (ins tGPR:$lhs, tGPR:$rhs),  IIC_iBITr,
                  "orr", "\t$dst, $rhs",
                  [(set tGPR:$dst, (or tGPR:$lhs, tGPR:$rhs))]>,
            T1DataProcessing<0b1100>;

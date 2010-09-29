@@ -452,26 +452,27 @@ include "ARMInstrFormats.td"
 
 /// AsI1_bin_irs - Defines a set of (op r, {so_imm|r|so_reg}) patterns for a
 /// binop that produces a value.
-multiclass AsI1_bin_irs<bits<4> opcod, string opc, PatFrag opnode,
-                        bit Commutable = 0> {
+multiclass AsI1_bin_irs<bits<4> opcod, string opc,
+                     InstrItinClass iii, InstrItinClass iir, InstrItinClass iis,
+                        PatFrag opnode, bit Commutable = 0> {
   // The register-immediate version is re-materializable. This is useful
   // in particular for taking the address of a local.
   let isReMaterializable = 1 in {
   def ri : AsI1<opcod, (outs GPR:$dst), (ins GPR:$a, so_imm:$b), DPFrm,
-               IIC_iALUi, opc, "\t$dst, $a, $b",
+               iii, opc, "\t$dst, $a, $b",
                [(set GPR:$dst, (opnode GPR:$a, so_imm:$b))]> {
     let Inst{25} = 1;
   }
   }
   def rr : AsI1<opcod, (outs GPR:$dst), (ins GPR:$a, GPR:$b), DPFrm,
-               IIC_iALUr, opc, "\t$dst, $a, $b",
+               iir, opc, "\t$dst, $a, $b",
                [(set GPR:$dst, (opnode GPR:$a, GPR:$b))]> {
     let Inst{11-4} = 0b00000000;
     let Inst{25} = 0;
     let isCommutable = Commutable;
   }
   def rs : AsI1<opcod, (outs GPR:$dst), (ins GPR:$a, so_reg:$b), DPSoRegFrm,
-               IIC_iALUsr, opc, "\t$dst, $a, $b",
+               iis, opc, "\t$dst, $a, $b",
                [(set GPR:$dst, (opnode GPR:$a, so_reg:$b))]> {
     let Inst{25} = 0;
   }
@@ -480,16 +481,17 @@ multiclass AsI1_bin_irs<bits<4> opcod, string opc, PatFrag opnode,
 /// AI1_bin_s_irs - Similar to AsI1_bin_irs except it sets the 's' bit so the
 /// instruction modifies the CPSR register.
 let Defs = [CPSR] in {
-multiclass AI1_bin_s_irs<bits<4> opcod, string opc, PatFrag opnode,
-                         bit Commutable = 0> {
+multiclass AI1_bin_s_irs<bits<4> opcod, string opc,
+                     InstrItinClass iii, InstrItinClass iir, InstrItinClass iis,
+                         PatFrag opnode, bit Commutable = 0> {
   def ri : AI1<opcod, (outs GPR:$dst), (ins GPR:$a, so_imm:$b), DPFrm,
-               IIC_iALUi, opc, "\t$dst, $a, $b",
+               iii, opc, "\t$dst, $a, $b",
                [(set GPR:$dst, (opnode GPR:$a, so_imm:$b))]> {
     let Inst{20} = 1;
     let Inst{25} = 1;
   }
   def rr : AI1<opcod, (outs GPR:$dst), (ins GPR:$a, GPR:$b), DPFrm,
-               IIC_iALUr, opc, "\t$dst, $a, $b",
+               iir, opc, "\t$dst, $a, $b",
                [(set GPR:$dst, (opnode GPR:$a, GPR:$b))]> {
     let isCommutable = Commutable;
     let Inst{11-4} = 0b00000000;
@@ -497,7 +499,7 @@ multiclass AI1_bin_s_irs<bits<4> opcod, string opc, PatFrag opnode,
     let Inst{25} = 0;
   }
   def rs : AI1<opcod, (outs GPR:$dst), (ins GPR:$a, so_reg:$b), DPSoRegFrm,
-               IIC_iALUsr, opc, "\t$dst, $a, $b",
+               iis, opc, "\t$dst, $a, $b",
                [(set GPR:$dst, (opnode GPR:$a, so_reg:$b))]> {
     let Inst{20} = 1;
     let Inst{25} = 0;
@@ -1599,7 +1601,7 @@ defm UXTAB16 : AI_exta_rrot_np<0b01101100, "uxtab16">;
 
 def SBFX  : I<(outs GPR:$dst),
               (ins GPR:$src, imm0_31:$lsb, imm0_31:$width),
-               AddrMode1, Size4Bytes, IndexModeNone, DPFrm, IIC_iALUi,
+               AddrMode1, Size4Bytes, IndexModeNone, DPFrm, IIC_iBITi,
                "sbfx", "\t$dst, $src, $lsb, $width", "", []>,
                Requires<[IsARM, HasV6T2]> {
   let Inst{27-21} = 0b0111101;
@@ -1608,7 +1610,7 @@ def SBFX  : I<(outs GPR:$dst),
 
 def UBFX  : I<(outs GPR:$dst),
               (ins GPR:$src, imm0_31:$lsb, imm0_31:$width),
-               AddrMode1, Size4Bytes, IndexModeNone, DPFrm, IIC_iALUi,
+               AddrMode1, Size4Bytes, IndexModeNone, DPFrm, IIC_iBITi,
                "ubfx", "\t$dst, $src, $lsb, $width", "", []>,
                Requires<[IsARM, HasV6T2]> {
   let Inst{27-21} = 0b0111111;
@@ -1620,14 +1622,18 @@ def UBFX  : I<(outs GPR:$dst),
 //
 
 defm ADD  : AsI1_bin_irs<0b0100, "add",
+                         IIC_iALUi, IIC_iALUr, IIC_iALUsr,
                          BinOpFrag<(add  node:$LHS, node:$RHS)>, 1>;
 defm SUB  : AsI1_bin_irs<0b0010, "sub",
+                         IIC_iALUi, IIC_iALUr, IIC_iALUsr,
                          BinOpFrag<(sub  node:$LHS, node:$RHS)>>;
 
 // ADD and SUB with 's' bit set.
 defm ADDS : AI1_bin_s_irs<0b0100, "adds",
+                          IIC_iALUi, IIC_iALUr, IIC_iALUsr,
                           BinOpFrag<(addc node:$LHS, node:$RHS)>, 1>;
 defm SUBS : AI1_bin_s_irs<0b0010, "subs",
+                          IIC_iALUi, IIC_iALUr, IIC_iALUsr,
                           BinOpFrag<(subc node:$LHS, node:$RHS)>>;
 
 defm ADC : AI1_adde_sube_irs<0b0101, "adc",
@@ -1855,14 +1861,19 @@ def : ARMV6Pat<(int_arm_usat GPR:$a, imm:$pos), (USAT imm:$pos, GPR:$a, 0)>;
 //
 
 defm AND   : AsI1_bin_irs<0b0000, "and",
+                          IIC_iBITi, IIC_iBITr, IIC_iBITsr,
                           BinOpFrag<(and node:$LHS, node:$RHS)>, 1>;
 defm ANDS  : AI1_bin_s_irs<0b0000, "and",
+                           IIC_iBITi, IIC_iBITr, IIC_iBITsr,
                            BinOpFrag<(ARMand node:$LHS, node:$RHS)>, 1>;
 defm ORR   : AsI1_bin_irs<0b1100, "orr",
+                          IIC_iBITi, IIC_iBITr, IIC_iBITsr,
                           BinOpFrag<(or  node:$LHS, node:$RHS)>, 1>;
 defm EOR   : AsI1_bin_irs<0b0001, "eor",
+                          IIC_iBITi, IIC_iBITr, IIC_iBITsr,
                           BinOpFrag<(xor node:$LHS, node:$RHS)>, 1>;
 defm BIC   : AsI1_bin_irs<0b1110, "bic",
+                          IIC_iBITi, IIC_iBITr, IIC_iBITsr,
                           BinOpFrag<(and node:$LHS, (not node:$RHS))>>;
 
 def BFC    : I<(outs GPR:$dst), (ins GPR:$src, bf_inv_mask_imm:$imm),
@@ -2287,7 +2298,7 @@ def asr_amt : PatLeaf<(i32 imm), [{
 // will match the pattern below.
 def PKHTB : AMiscA1I<0b01101000, (outs GPR:$dst),
                                  (ins GPR:$src1, GPR:$src2, shift_imm:$sh),
-               IIC_iALUsi, "pkhtb", "\t$dst, $src1, $src2$sh",
+               IIC_iBITsi, "pkhtb", "\t$dst, $src1, $src2$sh",
                [(set GPR:$dst, (or (and GPR:$src1, 0xFFFF0000),
                                    (and (sra GPR:$src2, asr_amt:$sh),
                                         0xFFFF)))]>,

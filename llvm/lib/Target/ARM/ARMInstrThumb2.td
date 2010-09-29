@@ -213,10 +213,11 @@ multiclass T2I_un_irs<bits<4> opcod, string opc, PatFrag opnode,
 /// T2I_bin_irs - Defines a set of (op reg, {so_imm|r|so_reg}) patterns for a
 /// binary operation that produces a value. These are predicable and can be
 /// changed to modify CPSR.
-multiclass T2I_bin_irs<bits<4> opcod, string opc, PatFrag opnode,
-                       bit Commutable = 0, string wide = ""> {
+multiclass T2I_bin_irs<bits<4> opcod, string opc,
+                     InstrItinClass iii, InstrItinClass iir, InstrItinClass iis,
+                       PatFrag opnode, bit Commutable = 0, string wide = ""> {
    // shifted imm
-   def ri : T2sI<(outs rGPR:$dst), (ins rGPR:$lhs, t2_so_imm:$rhs), IIC_iALUi,
+   def ri : T2sI<(outs rGPR:$dst), (ins rGPR:$lhs, t2_so_imm:$rhs), iii,
                  opc, "\t$dst, $lhs, $rhs",
                  [(set rGPR:$dst, (opnode rGPR:$lhs, t2_so_imm:$rhs))]> {
      let Inst{31-27} = 0b11110;
@@ -226,7 +227,7 @@ multiclass T2I_bin_irs<bits<4> opcod, string opc, PatFrag opnode,
      let Inst{15} = 0;
    }
    // register
-   def rr : T2sI<(outs rGPR:$dst), (ins rGPR:$lhs, rGPR:$rhs), IIC_iALUr,
+   def rr : T2sI<(outs rGPR:$dst), (ins rGPR:$lhs, rGPR:$rhs), iir,
                  opc, !strconcat(wide, "\t$dst, $lhs, $rhs"),
                  [(set rGPR:$dst, (opnode rGPR:$lhs, rGPR:$rhs))]> {
      let isCommutable = Commutable;
@@ -239,7 +240,7 @@ multiclass T2I_bin_irs<bits<4> opcod, string opc, PatFrag opnode,
      let Inst{5-4} = 0b00; // type
    }
    // shifted register
-   def rs : T2sI<(outs rGPR:$dst), (ins rGPR:$lhs, t2_so_reg:$rhs), IIC_iALUsi,
+   def rs : T2sI<(outs rGPR:$dst), (ins rGPR:$lhs, t2_so_reg:$rhs), iis,
                  opc, !strconcat(wide, "\t$dst, $lhs, $rhs"),
                  [(set rGPR:$dst, (opnode rGPR:$lhs, t2_so_reg:$rhs))]> {
      let Inst{31-27} = 0b11101;
@@ -251,9 +252,10 @@ multiclass T2I_bin_irs<bits<4> opcod, string opc, PatFrag opnode,
 
 /// T2I_bin_w_irs - Same as T2I_bin_irs except these operations need
 //  the ".w" prefix to indicate that they are wide.
-multiclass T2I_bin_w_irs<bits<4> opcod, string opc, PatFrag opnode,
-                         bit Commutable = 0> :
-    T2I_bin_irs<opcod, opc, opnode, Commutable, ".w">;
+multiclass T2I_bin_w_irs<bits<4> opcod, string opc,
+                     InstrItinClass iii, InstrItinClass iir, InstrItinClass iis,
+                         PatFrag opnode, bit Commutable = 0> :
+    T2I_bin_irs<opcod, opc, iii, iir, iis, opnode, Commutable, ".w">;
 
 /// T2I_rbin_is - Same as T2I_bin_irs except the order of operands are
 /// reversed.  The 'rr' form is only defined for the disassembler; for codegen
@@ -295,10 +297,11 @@ multiclass T2I_rbin_irs<bits<4> opcod, string opc, PatFrag opnode> {
 /// T2I_bin_s_irs - Similar to T2I_bin_irs except it sets the 's' bit so the
 /// instruction modifies the CPSR register.
 let Defs = [CPSR] in {
-multiclass T2I_bin_s_irs<bits<4> opcod, string opc, PatFrag opnode,
-                         bit Commutable = 0> {
+multiclass T2I_bin_s_irs<bits<4> opcod, string opc,
+                     InstrItinClass iii, InstrItinClass iir, InstrItinClass iis,
+                         PatFrag opnode, bit Commutable = 0> {
    // shifted imm
-   def ri : T2I<(outs rGPR:$dst), (ins GPR:$lhs, t2_so_imm:$rhs), IIC_iALUi,
+   def ri : T2I<(outs rGPR:$dst), (ins GPR:$lhs, t2_so_imm:$rhs), iii,
                 !strconcat(opc, "s"), ".w\t$dst, $lhs, $rhs",
                 [(set rGPR:$dst, (opnode GPR:$lhs, t2_so_imm:$rhs))]> {
      let Inst{31-27} = 0b11110;
@@ -308,7 +311,7 @@ multiclass T2I_bin_s_irs<bits<4> opcod, string opc, PatFrag opnode,
      let Inst{15} = 0;
    }
    // register
-   def rr : T2I<(outs rGPR:$dst), (ins GPR:$lhs, rGPR:$rhs), IIC_iALUr,
+   def rr : T2I<(outs rGPR:$dst), (ins GPR:$lhs, rGPR:$rhs), iir,
                 !strconcat(opc, "s"), ".w\t$dst, $lhs, $rhs",
                 [(set rGPR:$dst, (opnode GPR:$lhs, rGPR:$rhs))]> {
      let isCommutable = Commutable;
@@ -321,7 +324,7 @@ multiclass T2I_bin_s_irs<bits<4> opcod, string opc, PatFrag opnode,
      let Inst{5-4} = 0b00; // type
    }
    // shifted register
-   def rs : T2I<(outs rGPR:$dst), (ins GPR:$lhs, t2_so_reg:$rhs), IIC_iALUsi,
+   def rs : T2I<(outs rGPR:$dst), (ins GPR:$lhs, t2_so_reg:$rhs), iis,
                 !strconcat(opc, "s"), ".w\t$dst, $lhs, $rhs",
                 [(set rGPR:$dst, (opnode GPR:$lhs, t2_so_reg:$rhs))]> {
      let Inst{31-27} = 0b11101;
@@ -761,7 +764,7 @@ multiclass T2I_bin_rrot<bits<3> opcod, string opc, PatFrag opnode> {
 // DO variant - disassembly only, no pattern
 
 multiclass T2I_bin_rrot_DO<bits<3> opcod, string opc> {
-  def rr     : T2I<(outs rGPR:$dst), (ins rGPR:$LHS, rGPR:$RHS), IIC_iALUr,
+  def rr     : T2I<(outs rGPR:$dst), (ins rGPR:$LHS, rGPR:$RHS), IIC_iEXTAr,
                   opc, "\t$dst, $LHS, $RHS", []> {
      let Inst{31-27} = 0b11111;
      let Inst{26-23} = 0b0100;
@@ -771,7 +774,7 @@ multiclass T2I_bin_rrot_DO<bits<3> opcod, string opc> {
      let Inst{5-4} = 0b00; // rotate
    }
   def rr_rot : T2I<(outs rGPR:$dst), (ins rGPR:$LHS, rGPR:$RHS, i32imm:$rot),
-                  IIC_iALUsr, opc, "\t$dst, $LHS, $RHS, ror $rot", []> {
+                  IIC_iEXTAsr, opc, "\t$dst, $LHS, $RHS, ror $rot", []> {
      let Inst{31-27} = 0b11111;
      let Inst{26-23} = 0b0100;
      let Inst{22-20} = opcod;
@@ -1387,8 +1390,10 @@ defm t2SUB  : T2I_bin_ii12rs<0b101, "sub",
 
 // ADD and SUB with 's' bit set. No 12-bit immediate (T4) variants.
 defm t2ADDS : T2I_bin_s_irs <0b1000, "add",
+                             IIC_iALUi, IIC_iALUr, IIC_iALUsi,
                              BinOpFrag<(addc node:$LHS, node:$RHS)>, 1>;
 defm t2SUBS : T2I_bin_s_irs <0b1101, "sub",
+                             IIC_iALUi, IIC_iALUr, IIC_iALUsi,
                              BinOpFrag<(subc node:$LHS, node:$RHS)>>;
 
 defm t2ADC  : T2I_adde_sube_irs<0b1010, "adc",
@@ -1626,16 +1631,21 @@ def t2MOVsra_flag : T2I<(outs rGPR:$dst), (ins rGPR:$src), IIC_iMOVsi,
 //
 
 defm t2AND  : T2I_bin_w_irs<0b0000, "and",
+                            IIC_iBITi, IIC_iBITr, IIC_iBITsi,
                             BinOpFrag<(and node:$LHS, node:$RHS)>, 1>;
 defm t2ORR  : T2I_bin_w_irs<0b0010, "orr",
+                            IIC_iBITi, IIC_iBITr, IIC_iBITsi,
                             BinOpFrag<(or  node:$LHS, node:$RHS)>, 1>;
 defm t2EOR  : T2I_bin_w_irs<0b0100, "eor",
+                            IIC_iBITi, IIC_iBITr, IIC_iBITsi,
                             BinOpFrag<(xor node:$LHS, node:$RHS)>, 1>;
 
 defm t2BIC  : T2I_bin_w_irs<0b0001, "bic",
+                            IIC_iBITi, IIC_iBITr, IIC_iBITsi,
                             BinOpFrag<(and node:$LHS, (not node:$RHS))>>;
 
 defm t2ANDS : T2I_bin_s_irs<0b0000, "and",
+                            IIC_iBITi, IIC_iBITr, IIC_iBITsi,
                             BinOpFrag<(ARMand node:$LHS, node:$RHS)>, 1>;
 
 let Constraints = "$src = $dst" in
@@ -1650,7 +1660,7 @@ def t2BFC : T2I<(outs rGPR:$dst), (ins rGPR:$src, bf_inv_mask_imm:$imm),
 }
 
 def t2SBFX: T2I<(outs rGPR:$dst), (ins rGPR:$src, imm0_31:$lsb, imm0_31:$width),
-                 IIC_iALUi, "sbfx", "\t$dst, $src, $lsb, $width", []> {
+                 IIC_iBITi, "sbfx", "\t$dst, $src, $lsb, $width", []> {
   let Inst{31-27} = 0b11110;
   let Inst{25} = 1;
   let Inst{24-20} = 0b10100;
@@ -1658,7 +1668,7 @@ def t2SBFX: T2I<(outs rGPR:$dst), (ins rGPR:$src, imm0_31:$lsb, imm0_31:$width),
 }
 
 def t2UBFX: T2I<(outs rGPR:$dst), (ins rGPR:$src, imm0_31:$lsb, imm0_31:$width),
-                 IIC_iALUi, "ubfx", "\t$dst, $src, $lsb, $width", []> {
+                 IIC_iBITi, "ubfx", "\t$dst, $src, $lsb, $width", []> {
   let Inst{31-27} = 0b11110;
   let Inst{25} = 1;
   let Inst{24-20} = 0b11100;
@@ -1669,7 +1679,7 @@ def t2UBFX: T2I<(outs rGPR:$dst), (ins rGPR:$src, imm0_31:$lsb, imm0_31:$width),
 let Constraints = "$src = $dst" in
 def t2BFI : T2I<(outs rGPR:$dst),
                 (ins rGPR:$src, rGPR:$val, bf_inv_mask_imm:$imm),
-                IIC_iALUi, "bfi", "\t$dst, $val, $imm",
+                IIC_iBITi, "bfi", "\t$dst, $val, $imm",
                 [(set rGPR:$dst, (ARMbfi rGPR:$src, rGPR:$val,
                                  bf_inv_mask_imm:$imm))]> {
   let Inst{31-27} = 0b11110;
@@ -1678,8 +1688,9 @@ def t2BFI : T2I<(outs rGPR:$dst),
   let Inst{15} = 0;
 }
 
-defm t2ORN  : T2I_bin_irs<0b0011, "orn", BinOpFrag<(or  node:$LHS,
-                          (not node:$RHS))>, 0, "">;
+defm t2ORN  : T2I_bin_irs<0b0011, "orn",
+                          IIC_iBITi, IIC_iBITr, IIC_iBITsi,
+                          BinOpFrag<(or  node:$LHS, (not node:$RHS))>, 0, "">;
 
 // Prefer over of t2EORri ra, rb, -1 because mvn has 16-bit version
 let AddedComplexity = 1 in
@@ -2095,7 +2106,7 @@ def t2REVSH : T2I_misc<0b01, 0b11, (outs rGPR:$dst), (ins rGPR:$src), IIC_iUNAr,
                           (shl rGPR:$src, (i32 8))), i16))]>;
 
 def t2PKHBT : T2I<(outs rGPR:$dst), (ins rGPR:$src1, rGPR:$src2, shift_imm:$sh),
-                  IIC_iALUsi, "pkhbt", "\t$dst, $src1, $src2$sh",
+                  IIC_iBITsi, "pkhbt", "\t$dst, $src1, $src2$sh",
                   [(set rGPR:$dst, (or (and rGPR:$src1, 0xFFFF),
                                       (and (shl rGPR:$src2, lsl_amt:$sh),
                                            0xFFFF0000)))]>,
@@ -2118,7 +2129,7 @@ def : T2Pat<(or (and rGPR:$src1, 0xFFFF), (shl rGPR:$src2, imm16_31:$sh)),
 // Note: Shifts of 1-15 bits will be transformed to srl instead of sra and
 // will match the pattern below.
 def t2PKHTB : T2I<(outs rGPR:$dst), (ins rGPR:$src1, rGPR:$src2, shift_imm:$sh),
-                  IIC_iALUsi, "pkhtb", "\t$dst, $src1, $src2$sh",
+                  IIC_iBITsi, "pkhtb", "\t$dst, $src1, $src2$sh",
                   [(set rGPR:$dst, (or (and rGPR:$src1, 0xFFFF0000),
                                        (and (sra rGPR:$src2, asr_amt:$sh),
                                             0xFFFF)))]>,

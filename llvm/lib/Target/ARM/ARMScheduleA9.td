@@ -47,6 +47,12 @@ def CortexA9Itineraries : ProcessorItineraries<
   InstrItinData<IIC_iALUsi, [InstrStage<2, [A9_Pipe0, A9_Pipe1]>], [2, 2, 1]>,
   InstrItinData<IIC_iALUsr,[InstrStage<3, [A9_Pipe0, A9_Pipe1]>], [2, 2, 1, 1]>,
   //
+  // Bitwise Instructions that produce a result
+  InstrItinData<IIC_iBITi , [InstrStage<1, [A9_Pipe0, A9_Pipe1]>], [2, 2]>,
+  InstrItinData<IIC_iBITr , [InstrStage<1, [A9_Pipe0, A9_Pipe1]>], [2, 2, 2]>,
+  InstrItinData<IIC_iBITsi, [InstrStage<2, [A9_Pipe0, A9_Pipe1]>], [2, 2, 1]>,
+  InstrItinData<IIC_iBITsr,[InstrStage<3, [A9_Pipe0, A9_Pipe1]>], [2, 2, 1, 1]>,
+  //
   // Unary Instructions that produce a result
   InstrItinData<IIC_iUNAr   , [InstrStage<1, [A9_Pipe0, A9_Pipe1]>], [2, 2]>,
   InstrItinData<IIC_iUNAsi  , [InstrStage<2, [A9_Pipe0, A9_Pipe1]>], [2, 1]>,
@@ -54,6 +60,7 @@ def CortexA9Itineraries : ProcessorItineraries<
   // Zero and sign extension instructions
   InstrItinData<IIC_iEXTr , [InstrStage<1, [A9_Pipe0, A9_Pipe1]>], [2, 1]>,
   InstrItinData<IIC_iEXTAr, [InstrStage<2, [A9_Pipe0, A9_Pipe1]>], [3, 1, 1]>,
+  InstrItinData<IIC_iEXTAsr,[InstrStage<2, [A9_Pipe0, A9_Pipe1]>],[3, 1, 1, 1]>,
   //
   // Compare instructions
   InstrItinData<IIC_iCMPi   , [InstrStage<1, [A9_Pipe0, A9_Pipe1]>], [2]>,
