@@ -193,10 +193,10 @@ native-build [OPTIONS...] FILE
 
 llvm-native-g++ is a wrapper around the LLVM command-line tools which generates
 a native object (.o) file by compiling FILE with llvm-g++, and then running 
-an LLVM back-end (CBE by default) over the resulting bytecode, and then
+an LLVM back-end (CBE by default) over the resulting bitcode, and then
 compiling the resulting code to a native object file.
 
-If called as "native-build", it compiles bytecode to native code, and takes
+If called as "native-build", it compiles bitcode to native code, and takes
 different options.
 
 =head1 OPTIONS

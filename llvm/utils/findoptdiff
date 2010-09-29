@@ -14,7 +14,7 @@
 #      second build contains some experimental optimization features that
 #      are suspected of producing a misoptimization.
 #
-#      The script takes two bytecode files, one from each build. They are
+#      The script takes two bitcode files, one from each build. They are
 #      presumed to be a compilation of the same program or program fragment
 #      with the only difference being the builds.
 #
@@ -39,9 +39,9 @@
 #      llvm2
 #          is the path to the second llvm build dir
 #      bc1
-#          is the bytecode file for the first llvm environment
+#          is the bitcode file for the first llvm environment
 #      bc2
-#          is the bytecode file for the second llvm environment
+#          is the bitcode file for the second llvm environment
 #      filter1
 #          is an optional filter for filtering the llvm1 generated assembly
 #      filter2

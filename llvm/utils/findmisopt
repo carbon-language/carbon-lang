@@ -7,7 +7,7 @@
 #      it from finding a problem unless the set of failing optimizations are
 #      known and given to it on the command line.
 #
-#      Given a bytecode file that produces correct output (or return code), 
+#      Given a bitcode file that produces correct output (or return code), 
 #      this script will run through all the optimizations passes that gccas
 #      uses (in the same order) and will narrow down which optimizations
 #      cause the program either generate different output or return a 
@@ -21,7 +21,7 @@
 #
 #   Where:
 #      bcfile 
-#          is the bytecode file input (the unoptimized working case)
+#          is the bitcode file input (the unoptimized working case)
 #      outdir
 #          is a directory into which intermediate results are placed
 #      progargs
