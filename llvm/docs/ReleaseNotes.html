@@ -19,7 +19,6 @@
   <li><a href="#externalproj">External Projects Using LLVM 2.8</a></li>
   <li><a href="#whatsnew">What's New in LLVM 2.8?</a></li>
   <li><a href="GettingStarted.html">Installation Instructions</a></li>
-  <li><a href="#portability">Portability and Supported Platforms</a></li>
   <li><a href="#knownproblems">Known Problems</a></li>
   <li><a href="#additionalinfo">Additional Information</a></li>
 </ol>
@@ -28,11 +27,13 @@
   <p>Written by the <a href="http://llvm.org">LLVM Team</a></p>
 </div>
 
+<!--
 <h1 style="color:red">These are in-progress notes for the upcoming LLVM 2.8
 release.<br>
 You may prefer the
 <a href="http://llvm.org/releases/2.7/docs/ReleaseNotes.html">LLVM 2.7
 Release Notes</a>.</h1>
+-->
 
 <!-- *********************************************************************** -->
 <div class="doc_section">
@@ -71,18 +72,16 @@ Almost dead code.
 -->
  
    
-<!-- Features that need text if they're finished for 2.8:
+<!-- Features that need text if they're finished for 2.9:
   combiner-aa?
   strong phi elim
   llvm.dbg.value: variable debug info for optimized code
   loop dependence analysis
   TBAA
+  CorrelatedValuePropagation
  -->
-
- <!-- for announcement email:
- Logo web page.
- Many new papers added to /pubs/
-   -->
+ 
+ <!-- Announcement, lldb, libc++ -->
 
 <!-- *********************************************************************** -->
 <div class="doc_section">
@@ -115,12 +114,13 @@ through expressive diagnostics, a high level of conformance to language
 standards, fast compilation, and low memory use. Like LLVM, Clang provides a
 modular, library-based architecture that makes it suitable for creating or
 integrating with other development tools. Clang is considered a
-production-quality compiler for C and Objective-C on x86 (32- and 64-bit).</p>
+production-quality compiler for C, Objective-C, C++ and Objective-C++ on x86
+(32- and 64-bit), and for darwin-arm targets.</p>
 
 <p>In the LLVM 2.8 time-frame, the Clang team has made many improvements:</p>
 
 <ul>
-
+<li>Surely these guys have done something</li>
 </ul>
 </div>
 
@@ -240,6 +240,42 @@ LLVM MC Project Blog Post</a>.
 <p>2.8 status here</p>
 </div>	
 
+<!--=========================================================================-->
+<div class="doc_subsection">
+<a name="lldb">LLDB: Low Level Debugger</a>
+</div>
+
+<div class="doc_text">
+<p>
+<a href="http://lldb.llvm.org/">LLDB</a> is</p>
+
+<p>
+</p>
+
+<p>
+2.8 status here.
+</p>
+
+</div>
+
+<!--=========================================================================-->
+<div class="doc_subsection">
+<a name="libc++">libc++: C++ Standard Library</a>
+</div>
+
+<div class="doc_text">
+<p>
+<a href="http://libc++.llvm.org/">libc++</a> is</p>
+
+<p>
+</p>
+
+<p>
+2.8 status here.
+</p>
+
+</div>
+
 
 <!-- *********************************************************************** -->
 <div class="doc_section">
@@ -282,6 +318,7 @@ organization changes have happened:
 </p>
 
 <ul>
+<li>libc++ and lldb are new</li>
 </ul>
 </div>
 
@@ -554,37 +591,6 @@ API changes are:</p>
 </div>
 
 
-
-<!-- *********************************************************************** -->
-<div class="doc_section">
-  <a name="portability">Portability and Supported Platforms</a>
-</div>
-<!-- *********************************************************************** -->
-
-<div class="doc_text">
-
-<p>LLVM is known to work on the following platforms:</p>
-
-<ul>
-<li>Intel and AMD machines (IA32, X86-64, AMD64, EMT-64) running Red Hat
-    Linux, Fedora Core, FreeBSD and AuroraUX (and probably other unix-like
-    systems).</li>
-<li>PowerPC and X86-based Mac OS X systems, running 10.4 and above in 32-bit
-    and 64-bit modes.</li>
-<li>Intel and AMD machines running on Win32 using MinGW libraries (native).</li>
-<li>Intel and AMD machines running on Win32 with the Cygwin libraries (limited
-    support is available for native builds with Visual C++).</li>
-<li>Sun x86 and AMD64 machines running Solaris 10, OpenSolaris 0906.</li>
-<li>Alpha-based machines running Debian GNU/Linux.</li>
-</ul>
-
-<p>The core LLVM infrastructure uses GNU autoconf to adapt itself
-to the machine and operating system on which it is built.  However, minor
-porting may be required to get LLVM to work on new platforms.  We welcome your
-portability patches and reports of successful builds or error messages.</p>
-
-</div>
-
 <!-- *********************************************************************** -->
 <div class="doc_section">
   <a name="knownproblems">Known Problems</a>
@@ -597,18 +603,6 @@ portability patches and reports of successful builds or error messages.</p>
 listed by component.  If you run into a problem, please check the <a
 href="http://llvm.org/bugs/">LLVM bug database</a> and submit a bug if
 there isn't already one.</p>
-
-<ul>    
-<li>LLVM will not correctly compile on Solaris and/or OpenSolaris
-using the stock GCC 3.x.x series 'out the box',
-See: <a href="GettingStarted.html#brokengcc">Broken versions of GCC and other tools</a>.
-However, A <a href="http://pkg.auroraux.org/GCC">Modern GCC Build</a>
-for x86/x86-64 has been made available from the third party AuroraUX Project
-that has been meticulously tested for bootstrapping LLVM &amp; Clang.</li>
-<li>There have been reports of Solaris and/or OpenSolaris build failures due
-to an incompatibility in the nm program as well. The nm from binutils does seem
-to work.</li>
-</ul>
 
 </div>
 
