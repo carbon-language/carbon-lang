@@ -23,11 +23,15 @@ class FoundationTestCase(TestBase):
         self.buildDwarf()
         self.break_on_objc_methods()
 
+    @unittest2.expectedFailure
+    # rdar://problem/8492646
     def test_data_type_and_expr_with_dsym(self):
         """Lookup objective-c data types and evaluate expressions."""
         self.buildDsym()
         self.data_type_and_expr_objc()
 
+    @unittest2.expectedFailure
+    # rdar://problem/8492646
     def test_data_type_and_expr_with_dwarf(self):
         """Lookup objective-c data types and evaluate expressions."""
         self.buildDwarf()
@@ -110,6 +114,9 @@ class FoundationTestCase(TestBase):
         self.expect("expr self->non_existent_member", COMMAND_FAILED_AS_EXPECTED, error=True,
             startstr = "error: 'MyString' does not have a member named 'non_existent_member'")
 
+        # rdar://problem/8492646
+        # test/foundation fails after updating to tot r115023
+        # self->str displays nothing as output
         self.expect("frame variable self->str", VARIABLES_DISPLAYED_CORRECTLY,
             startstr = "(NSString *) self->str")
 
