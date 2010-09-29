@@ -19,7 +19,6 @@
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCExpr.h"
-#include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCParser/AsmCond.h"
 #include "llvm/MC/MCParser/AsmLexer.h"
 #include "llvm/MC/MCParser/MCAsmParser.h"
@@ -1047,14 +1046,9 @@ bool AsmParser::ParseStatement() {
   }
 
   // If parsing succeeded, match the instruction.
-  if (!HadError) {
-    MCInst Inst;
-    if (!getTargetParser().MatchInstruction(IDLoc, ParsedOperands, Inst)) {
-      // Emit the instruction on success.
-      Out.EmitInstruction(Inst);
-    } else
-      HadError = true;
-  }
+  if (!HadError)
+    HadError = getTargetParser().MatchAndEmitInstruction(IDLoc, ParsedOperands,
+                                                         Out);
 
   // Free any parsed operands.
   for (unsigned i = 0, e = ParsedOperands.size(); i != e; ++i)

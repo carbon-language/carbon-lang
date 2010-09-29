@@ -80,16 +80,18 @@ private:
 
   bool ParseDirectiveSyntax(SMLoc L);
 
-  bool MatchInstruction(SMLoc IDLoc,
+  bool MatchAndEmitInstruction(SMLoc IDLoc,
                         const SmallVectorImpl<MCParsedAsmOperand*> &Operands,
-                        MCInst &Inst) {
+                        MCStreamer &Out) {
+    MCInst Inst;
     unsigned ErrorInfo;
-    if (MatchInstructionImpl(Operands, Inst, ErrorInfo) == Match_Success)
+    if (MatchInstructionImpl(Operands, Inst, ErrorInfo) == Match_Success) {
+      Out.EmitInstruction(Inst);
       return false;
+    }
 
     // FIXME: We should give nicer diagnostics about the exact failure.
     Error(IDLoc, "unrecognized instruction");
-
     return true;
   }
 

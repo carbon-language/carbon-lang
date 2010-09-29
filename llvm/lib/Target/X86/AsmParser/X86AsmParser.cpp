@@ -36,7 +36,7 @@ class X86ATTAsmParser : public TargetAsmParser {
 
 protected:
   unsigned Is64Bit : 1;
-
+  
 private:
   MCAsmParser &getParser() const { return Parser; }
 
@@ -51,9 +51,9 @@ private:
 
   bool ParseDirectiveWord(unsigned Size, SMLoc L);
 
-  bool MatchInstruction(SMLoc IDLoc,
-                        const SmallVectorImpl<MCParsedAsmOperand*> &Operands,
-                        MCInst &Inst);
+  bool MatchAndEmitInstruction(SMLoc IDLoc,
+                           const SmallVectorImpl<MCParsedAsmOperand*> &Operands,
+                               MCStreamer &Out);
 
   /// @name Auto-generated Matcher Functions
   /// {
@@ -66,7 +66,7 @@ private:
 public:
   X86ATTAsmParser(const Target &T, MCAsmParser &_Parser, TargetMachine &TM)
     : TargetAsmParser(T), Parser(_Parser), TM(TM) {
-
+      
     // Initialize the set of available features.
     setAvailableFeatures(ComputeAvailableFeatures(
                            &TM.getSubtarget<X86Subtarget>()));
@@ -1108,17 +1108,19 @@ bool X86ATTAsmParser::ParseDirectiveWord(unsigned Size, SMLoc L) {
 
 
 bool X86ATTAsmParser::
-MatchInstruction(SMLoc IDLoc,
-                 const SmallVectorImpl<MCParsedAsmOperand*> &Operands,
-                 MCInst &Inst) {
+MatchAndEmitInstruction(SMLoc IDLoc,
+                        const SmallVectorImpl<MCParsedAsmOperand*> &Operands,
+                        MCStreamer &Out) {
   assert(!Operands.empty() && "Unexpect empty operand list!");
 
   bool WasOriginallyInvalidOperand = false;
   unsigned OrigErrorInfo;
+  MCInst Inst;
   
   // First, try a direct match.
   switch (MatchInstructionImpl(Operands, Inst, OrigErrorInfo)) {
   case Match_Success:
+    Out.EmitInstruction(Inst);
     return false;
   case Match_MissingFeature:
     Error(IDLoc, "instruction requires a CPU feature not currently enabled");
@@ -1165,8 +1167,10 @@ MatchInstruction(SMLoc IDLoc,
   unsigned NumSuccessfulMatches =
     (MatchB == Match_Success) + (MatchW == Match_Success) +
     (MatchL == Match_Success) + (MatchQ == Match_Success);
-  if (NumSuccessfulMatches == 1)
+  if (NumSuccessfulMatches == 1) {
+    Out.EmitInstruction(Inst);
     return false;
+  }
 
   // Otherwise, the match failed, try to produce a decent error message.
 
