@@ -430,3 +430,9 @@ cvttpd2dq (%rax), %xmm0 // CHECK: cvttpd2dq (%rax), %xmm0
 
 cvttps2dq %xmm1, %xmm0  // CHECK: cvttps2dq %xmm1, %xmm0
 cvttps2dq (%rax), %xmm0 // CHECK: cvttps2dq (%rax), %xmm0
+
+// rdar://8456376 - llvm-mc rejects 'roundss'
+roundss $0xE, %xmm0, %xmm0 // CHECK: encoding: [0x66,0x0f,0x3a,0x0a,0xc0,0x0e]
+roundps $0xE, %xmm0, %xmm0 // CHECK: encoding: [0x66,0x0f,0x3a,0x08,0xc0,0x0e]
+roundsd $0xE, %xmm0, %xmm0 // CHECK: encoding: [0x66,0x0f,0x3a,0x0b,0xc0,0x0e]
+roundpd $0xE, %xmm0, %xmm0 // CHECK: encoding: [0x66,0x0f,0x3a,0x09,0xc0,0x0e]

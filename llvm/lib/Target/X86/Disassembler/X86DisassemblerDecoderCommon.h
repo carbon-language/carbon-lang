@@ -248,6 +248,7 @@ struct ContextDecision {
   ENUM_ENTRY(TYPE_M64,        "8-byte")                                        \
   ENUM_ENTRY(TYPE_LEA,        "Effective address")                             \
   ENUM_ENTRY(TYPE_M128,       "16-byte (SSE/SSE2)")                            \
+  ENUM_ENTRY(TYPE_M256,       "256-byte (AVX)")                                \
   ENUM_ENTRY(TYPE_M1616,      "2+2-byte segment+offset address")               \
   ENUM_ENTRY(TYPE_M1632,      "2+4-byte")                                      \
   ENUM_ENTRY(TYPE_M1664,      "2+8-byte")                                      \

@@ -2343,8 +2343,8 @@ MachineInstr* X86InstrInfo::foldMemoryOperandImpl(MachineFunction &MF,
     case X86::Int_CVTSS2SDrr:
     case X86::RCPSSr:
     case X86::RCPSSr_Int:
-    case X86::ROUNDSDr_Int:
-    case X86::ROUNDSSr_Int:
+    case X86::ROUNDSDr:
+    case X86::ROUNDSSr:
     case X86::RSQRTSSr:
     case X86::RSQRTSSr_Int:
     case X86::SQRTSSr:
@@ -2395,8 +2395,8 @@ MachineInstr* X86InstrInfo::foldMemoryOperandImpl(MachineFunction &MF,
     case X86::Int_CVTSS2SDrr:
     case X86::RCPSSr:
     case X86::RCPSSr_Int:
-    case X86::ROUNDSDr_Int:
-    case X86::ROUNDSSr_Int:
+    case X86::ROUNDSDr:
+    case X86::ROUNDSSr:
     case X86::RSQRTSSr:
     case X86::RSQRTSSr_Int:
     case X86::SQRTSSr:

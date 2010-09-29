@@ -4365,7 +4365,7 @@ multiclass sse41_fp_unop_rm<bits<8> opcps, bits<8> opcpd, string OpcodeStr,
                             Intrinsic V4F32Int, Intrinsic V2F64Int> {
   // Intrinsic operation, reg.
   // Vector intrinsic operation, reg
-  def PSr_Int : SS4AIi8<opcps, MRMSrcReg,
+  def PSr : SS4AIi8<opcps, MRMSrcReg,
                     (outs RC:$dst), (ins RC:$src1, i32i8imm:$src2),
                     !strconcat(OpcodeStr,
                     "ps\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
@@ -4373,7 +4373,7 @@ multiclass sse41_fp_unop_rm<bits<8> opcps, bits<8> opcpd, string OpcodeStr,
                     OpSize;
 
   // Vector intrinsic operation, mem
-  def PSm_Int : Ii8<opcps, MRMSrcMem,
+  def PSm : Ii8<opcps, MRMSrcMem,
                     (outs RC:$dst), (ins f256mem:$src1, i32i8imm:$src2),
                     !strconcat(OpcodeStr,
                     "ps\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
@@ -4383,7 +4383,7 @@ multiclass sse41_fp_unop_rm<bits<8> opcps, bits<8> opcpd, string OpcodeStr,
                 Requires<[HasSSE41]>;
 
   // Vector intrinsic operation, reg
-  def PDr_Int : SS4AIi8<opcpd, MRMSrcReg,
+  def PDr : SS4AIi8<opcpd, MRMSrcReg,
                     (outs RC:$dst), (ins RC:$src1, i32i8imm:$src2),
                     !strconcat(OpcodeStr,
                     "pd\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
@@ -4391,7 +4391,7 @@ multiclass sse41_fp_unop_rm<bits<8> opcps, bits<8> opcpd, string OpcodeStr,
                     OpSize;
 
   // Vector intrinsic operation, mem
-  def PDm_Int : SS4AIi8<opcpd, MRMSrcMem,
+  def PDm : SS4AIi8<opcpd, MRMSrcMem,
                     (outs RC:$dst), (ins f256mem:$src1, i32i8imm:$src2),
                     !strconcat(OpcodeStr,
                     "pd\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
@@ -4404,28 +4404,28 @@ multiclass sse41_fp_unop_rm_avx_p<bits<8> opcps, bits<8> opcpd,
                    RegisterClass RC, X86MemOperand x86memop, string OpcodeStr> {
   // Intrinsic operation, reg.
   // Vector intrinsic operation, reg
-  def PSr : SS4AIi8<opcps, MRMSrcReg,
+  def PSr_AVX : SS4AIi8<opcps, MRMSrcReg,
                     (outs RC:$dst), (ins RC:$src1, i32i8imm:$src2),
                     !strconcat(OpcodeStr,
                     "ps\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
                     []>, OpSize;
 
   // Vector intrinsic operation, mem
-  def PSm : Ii8<opcps, MRMSrcMem,
+  def PSm_AVX : Ii8<opcps, MRMSrcMem,
                     (outs RC:$dst), (ins x86memop:$src1, i32i8imm:$src2),
                     !strconcat(OpcodeStr,
                     "ps\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
                     []>, TA, OpSize, Requires<[HasSSE41]>;
 
   // Vector intrinsic operation, reg
-  def PDr : SS4AIi8<opcpd, MRMSrcReg,
+  def PDr_AVX : SS4AIi8<opcpd, MRMSrcReg,
                     (outs RC:$dst), (ins RC:$src1, i32i8imm:$src2),
                     !strconcat(OpcodeStr,
                     "pd\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
                     []>, OpSize;
 
   // Vector intrinsic operation, mem
-  def PDm : SS4AIi8<opcpd, MRMSrcMem,
+  def PDm_AVX : SS4AIi8<opcpd, MRMSrcMem,
                     (outs RC:$dst), (ins x86memop:$src1, i32i8imm:$src2),
                     !strconcat(OpcodeStr,
                     "pd\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
@@ -4437,7 +4437,7 @@ multiclass sse41_fp_binop_rm<bits<8> opcss, bits<8> opcsd,
                             Intrinsic F32Int,
                             Intrinsic F64Int, bit Is2Addr = 1> {
   // Intrinsic operation, reg.
-  def SSr_Int : SS4AIi8<opcss, MRMSrcReg,
+  def SSr : SS4AIi8<opcss, MRMSrcReg,
         (outs VR128:$dst), (ins VR128:$src1, VR128:$src2, i32i8imm:$src3),
         !if(Is2Addr,
             !strconcat(OpcodeStr,
@@ -4448,7 +4448,7 @@ multiclass sse41_fp_binop_rm<bits<8> opcss, bits<8> opcsd,
         OpSize;
 
   // Intrinsic operation, mem.
-  def SSm_Int : SS4AIi8<opcss, MRMSrcMem,
+  def SSm : SS4AIi8<opcss, MRMSrcMem,
         (outs VR128:$dst), (ins VR128:$src1, ssmem:$src2, i32i8imm:$src3),
         !if(Is2Addr,
             !strconcat(OpcodeStr,
@@ -4460,7 +4460,7 @@ multiclass sse41_fp_binop_rm<bits<8> opcss, bits<8> opcsd,
         OpSize;
 
   // Intrinsic operation, reg.
-  def SDr_Int : SS4AIi8<opcsd, MRMSrcReg,
+  def SDr : SS4AIi8<opcsd, MRMSrcReg,
         (outs VR128:$dst), (ins VR128:$src1, VR128:$src2, i32i8imm:$src3),
         !if(Is2Addr,
             !strconcat(OpcodeStr,
@@ -4471,7 +4471,7 @@ multiclass sse41_fp_binop_rm<bits<8> opcss, bits<8> opcsd,
         OpSize;
 
   // Intrinsic operation, mem.
-  def SDm_Int : SS4AIi8<opcsd, MRMSrcMem,
+  def SDm : SS4AIi8<opcsd, MRMSrcMem,
         (outs VR128:$dst), (ins VR128:$src1, sdmem:$src2, i32i8imm:$src3),
         !if(Is2Addr,
             !strconcat(OpcodeStr,
@@ -4486,28 +4486,28 @@ multiclass sse41_fp_binop_rm<bits<8> opcss, bits<8> opcsd,
 multiclass sse41_fp_binop_rm_avx_s<bits<8> opcss, bits<8> opcsd,
                                    string OpcodeStr> {
   // Intrinsic operation, reg.
-  def SSr : SS4AIi8<opcss, MRMSrcReg,
+  def SSr_AVX : SS4AIi8<opcss, MRMSrcReg,
         (outs VR128:$dst), (ins VR128:$src1, VR128:$src2, i32i8imm:$src3),
         !strconcat(OpcodeStr,
                 "ss\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}"),
         []>, OpSize;
 
   // Intrinsic operation, mem.
-  def SSm : SS4AIi8<opcss, MRMSrcMem,
+  def SSm_AVX : SS4AIi8<opcss, MRMSrcMem,
         (outs VR128:$dst), (ins VR128:$src1, ssmem:$src2, i32i8imm:$src3),
         !strconcat(OpcodeStr,
                 "ss\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}"),
         []>, OpSize;
 
   // Intrinsic operation, reg.
-  def SDr : SS4AIi8<opcsd, MRMSrcReg,
+  def SDr_AVX : SS4AIi8<opcsd, MRMSrcReg,
         (outs VR128:$dst), (ins VR128:$src1, VR128:$src2, i32i8imm:$src3),
             !strconcat(OpcodeStr,
                 "sd\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}"),
         []>, OpSize;
 
   // Intrinsic operation, mem.
-  def SDm : SS4AIi8<opcsd, MRMSrcMem,
+  def SDm_AVX : SS4AIi8<opcsd, MRMSrcMem,
         (outs VR128:$dst), (ins VR128:$src1, sdmem:$src2, i32i8imm:$src3),
             !strconcat(OpcodeStr,
                 "sd\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}"),
