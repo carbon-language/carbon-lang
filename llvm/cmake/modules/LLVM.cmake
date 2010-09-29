@@ -6,6 +6,8 @@ set(llvm_libs @llvm_libs@)
 
 set(llvm_lib_targets @llvm_lib_targets@)
 
+set(LLVM_ALL_TARGETS @LLVM_ALL_TARGETS@)
+
 set(LLVM_TARGETS_TO_BUILD @LLVM_TARGETS_TO_BUILD@)
 
 set(LLVM_TOOLS_BINARY_DIR @LLVM_TOOLS_BINARY_DIR@)
