@@ -270,7 +270,7 @@ llvm::DIType CGDebugInfo::CreateType(const BuiltinType *BT,
   case BuiltinType::ObjCClass:
     return DebugFactory.CreateCompositeType(llvm::dwarf::DW_TAG_structure_type,
                                             Unit, "objc_class", Unit, 0, 0, 0, 0,
-                                            llvm::DIType::FlagFwdDecl, 
+                                            llvm::DIDescriptor::FlagFwdDecl, 
                                             llvm::DIType(), llvm::DIArray());
   case BuiltinType::ObjCId: {
     // typedef struct objc_class *Class;
@@ -281,7 +281,7 @@ llvm::DIType CGDebugInfo::CreateType(const BuiltinType *BT,
     llvm::DIType OCTy = 
       DebugFactory.CreateCompositeType(llvm::dwarf::DW_TAG_structure_type,
                                        Unit, "objc_class", Unit, 0, 0, 0, 0,
-                                       llvm::DIType::FlagFwdDecl, 
+                                       llvm::DIDescriptor::FlagFwdDecl, 
                                        llvm::DIType(), llvm::DIArray());
     unsigned Size = CGM.getContext().getTypeSize(CGM.getContext().VoidPtrTy);
     
@@ -459,7 +459,7 @@ llvm::DIType CGDebugInfo::CreateType(const BlockPointerType *Ty,
   Elements = DebugFactory.GetOrCreateArray(EltTys.data(), EltTys.size());
   EltTys.clear();
 
-  unsigned Flags = llvm::DIType::FlagAppleBlock;
+  unsigned Flags = llvm::DIDescriptor::FlagAppleBlock;
   unsigned LineNo = getLineNumber(CurLoc);
 
   EltTy = DebugFactory.CreateCompositeType(Tag, Unit, "__block_descriptor",
@@ -595,9 +595,9 @@ CollectRecordFields(const RecordDecl *RD, llvm::DIFile Unit,
     unsigned Flags = 0;
     AccessSpecifier Access = I->getAccess();
     if (Access == clang::AS_private)
-      Flags |= llvm::DIType::FlagPrivate;
+      Flags |= llvm::DIDescriptor::FlagPrivate;
     else if (Access == clang::AS_protected)
-      Flags |= llvm::DIType::FlagProtected;
+      Flags |= llvm::DIDescriptor::FlagProtected;
 
     // Create a DW_TAG_member node to remember the offset of this field in the
     // struct.  FIXME: This is an absolutely insane way to capture this
@@ -698,6 +698,9 @@ CGDebugInfo::CreateCXXMemberFunction(const CXXMethodDecl *Method,
     ContainingType = RecordTy;
   }
 
+  unsigned Flags = 0;
+  if (Method->isImplicit())
+    Flags |= llvm::DIDescriptor::FlagArtificial;
   llvm::DISubprogram SP =
     DebugFactory.CreateSubprogram(RecordTy , MethodName, MethodName, 
                                   MethodLinkageName,
@@ -705,7 +708,7 @@ CGDebugInfo::CreateCXXMemberFunction(const CXXMethodDecl *Method,
                                   MethodTy, /*isLocalToUnit=*/false, 
                                   /* isDefintion=*/ false,
                                   Virtuality, VIndex, ContainingType,
-                                  Method->isImplicit(),
+                                  Flags,
                                   CGM.getLangOptions().Optimize);
   
   // Don't cache ctors or dtors since we have to emit multiple functions for
@@ -783,15 +786,15 @@ CollectCXXBases(const CXXRecordDecl *RD, llvm::DIFile Unit,
       // virtual base offset offset is -ve. The code generator emits dwarf
       // expression where it expects +ve number.
       BaseOffset = 0 - CGM.getVTables().getVirtualBaseOffsetOffset(RD, Base);
-      BFlags = llvm::DIType::FlagVirtual;
+      BFlags = llvm::DIDescriptor::FlagVirtual;
     } else
       BaseOffset = RL.getBaseClassOffset(Base);
     
     AccessSpecifier Access = BI->getAccessSpecifier();
     if (Access == clang::AS_private)
-      BFlags |= llvm::DIType::FlagPrivate;
+      BFlags |= llvm::DIDescriptor::FlagPrivate;
     else if (Access == clang::AS_protected)
-      BFlags |= llvm::DIType::FlagProtected;
+      BFlags |= llvm::DIDescriptor::FlagProtected;
     
     llvm::DIType DTy =
       DebugFactory.CreateDerivedType(llvm::dwarf::DW_TAG_inheritance,
@@ -902,7 +905,7 @@ llvm::DIType CGDebugInfo::CreateType(const RecordType *Ty,
     llvm::DICompositeType FwdDecl =
       DebugFactory.CreateCompositeType(Tag, FDContext, RD->getName(),
                                        DefUnit, Line, 0, 0, 0,
-                                       llvm::DIType::FlagFwdDecl,
+                                       llvm::DIDescriptor::FlagFwdDecl,
                                        llvm::DIType(), llvm::DIArray());
 
       return FwdDecl;
@@ -1098,9 +1101,9 @@ llvm::DIType CGDebugInfo::CreateType(const ObjCInterfaceType *Ty,
 
     unsigned Flags = 0;
     if (Field->getAccessControl() == ObjCIvarDecl::Protected)
-      Flags = llvm::DIType::FlagProtected;
+      Flags = llvm::DIDescriptor::FlagProtected;
     else if (Field->getAccessControl() == ObjCIvarDecl::Private)
-      Flags = llvm::DIType::FlagPrivate;
+      Flags = llvm::DIDescriptor::FlagPrivate;
 
     // Create a DW_TAG_member node to remember the offset of this field in the
     // struct.  FIXME: This is an absolutely insane way to capture this
@@ -1498,13 +1501,15 @@ void CGDebugInfo::EmitFunctionStart(GlobalDecl GD, QualType FnType,
   // statement representing function body.
   llvm::DIFile Unit = getOrCreateFile(CurLoc);
   unsigned LineNo = getLineNumber(CurLoc);
-
+  unsigned Flags = 0;
+  if (D->isImplicit())
+    Flags |= llvm::DIDescriptor::FlagArtificial;
   llvm::DISubprogram SP =
     DebugFactory.CreateSubprogram(Unit, Name, Name, LinkageName, Unit, LineNo,
                                   getOrCreateType(FnType, Unit),
                                   Fn->hasInternalLinkage(), true/*definition*/,
                                   0, 0, llvm::DIType(),
-                                  D->isImplicit(),
+                                  Flags,
                                   CGM.getLangOptions().Optimize, Fn);
 
   // Push function on region stack.
@@ -1689,7 +1694,7 @@ llvm::DIType CGDebugInfo::EmitTypeForVarWithBlocksAttr(const ValueDecl *VD,
   llvm::DIArray Elements = 
     DebugFactory.GetOrCreateArray(EltTys.data(), EltTys.size());
   
-  unsigned Flags = llvm::DIType::FlagBlockByrefStruct;
+  unsigned Flags = llvm::DIDescriptor::FlagBlockByrefStruct;
   
   return DebugFactory.CreateCompositeType(llvm::dwarf::DW_TAG_structure_type, 
                                           Unit, "", Unit,
