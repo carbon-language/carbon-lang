@@ -96,12 +96,12 @@ class FoundationTestCase(TestBase):
         # Lookup objc data type MyString and evaluate some expressions.
 
         self.expect("image lookup -t NSString", DATA_TYPES_DISPLAYED_CORRECTLY,
-            substrs = ["@interface NSString : NSObject@end"])
+            substrs = ['name = "NSString"',
+                       'clang_type = "@interface NSString@end"'])
 
         self.expect("image lookup -t MyString", DATA_TYPES_DISPLAYED_CORRECTLY,
-            substrs = ["@interface MyString : NSObject",
-                       "NSString * str;",
-                       "NSDate * date;"])
+            substrs = ['name = "MyString"',
+                       'clang_type = "@interface MyString'])
 
         self.expect("frame variable -s", VARIABLES_DISPLAYED_CORRECTLY,
             substrs = ["ARG: (MyString *) self",
