@@ -212,6 +212,13 @@ BreakpointIDList::FindAndReplaceIDRanges (Args &old_args, Target *target, Comman
 
                     BreakpointID::ParseCanonicalReference (bp_id_str.c_str(), &bp_id, &bp_loc_id);
                     BreakpointSP breakpoint_sp = target->GetBreakpointByID (bp_id);
+                    if (! breakpoint_sp)
+                    {
+                        new_args.Clear();
+                        result.AppendErrorWithFormat ("'%d' is not a valid breakpoint ID.\n", bp_id);
+                        result.SetStatus (eReturnStatusFailed);
+                        return;
+                    }
                     const size_t num_locations = breakpoint_sp->GetNumLocations();
                     for (size_t j = 0; j < num_locations; ++j)
                     {
