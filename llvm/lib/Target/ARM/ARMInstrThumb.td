@@ -744,7 +744,7 @@ def tMUL : T1sIt<(outs tGPR:$dst), (ins tGPR:$lhs, tGPR:$rhs), IIC_iMUL32,
            T1DataProcessing<0b1101>;
 
 // move inverse register
-def tMVN : T1sI<(outs tGPR:$dst), (ins tGPR:$src), IIC_iMOVr,
+def tMVN : T1sI<(outs tGPR:$dst), (ins tGPR:$src), IIC_iMVNr,
                 "mvn", "\t$dst, $src",
                 [(set tGPR:$dst, (not tGPR:$src))]>,
            T1DataProcessing<0b1111>;
@@ -836,7 +836,7 @@ def tSXTH  : T1pI<(outs tGPR:$dst), (ins tGPR:$src), IIC_iUNAr,
 
 // test
 let isCompare = 1, isCommutable = 1, Defs = [CPSR] in
-def tTST  : T1pI<(outs), (ins tGPR:$lhs, tGPR:$rhs), IIC_iCMPr,
+def tTST  : T1pI<(outs), (ins tGPR:$lhs, tGPR:$rhs), IIC_iTSTr,
                  "tst", "\t$lhs, $rhs",
                  [(ARMcmpZ (and tGPR:$lhs, tGPR:$rhs), 0)]>,
             T1DataProcessing<0b1000>;

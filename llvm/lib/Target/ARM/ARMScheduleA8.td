@@ -59,19 +59,31 @@ def CortexA8Itineraries : ProcessorItineraries<
   InstrItinData<IIC_iCMPsi, [InstrStage<1, [A8_Pipe0, A8_Pipe1]>], [2, 1]>,
   InstrItinData<IIC_iCMPsr, [InstrStage<1, [A8_Pipe0, A8_Pipe1]>], [2, 1, 1]>,
   //
+  // Test instructions
+  InstrItinData<IIC_iTSTi , [InstrStage<1, [A8_Pipe0, A8_Pipe1]>], [2]>,
+  InstrItinData<IIC_iTSTr , [InstrStage<1, [A8_Pipe0, A8_Pipe1]>], [2, 2]>,
+  InstrItinData<IIC_iTSTsi, [InstrStage<1, [A8_Pipe0, A8_Pipe1]>], [2, 1]>,
+  InstrItinData<IIC_iTSTsr, [InstrStage<1, [A8_Pipe0, A8_Pipe1]>], [2, 1, 1]>,
+  //
   // Move instructions, unconditional
   InstrItinData<IIC_iMOVi , [InstrStage<1, [A8_Pipe0, A8_Pipe1]>], [1]>,
-  InstrItinData<IIC_iMOVix2,[InstrStage<1, [A8_Pipe0, A8_Pipe1]>,
-                             InstrStage<1, [A8_Pipe0, A8_Pipe1]>], [2]>,
   InstrItinData<IIC_iMOVr , [InstrStage<1, [A8_Pipe0, A8_Pipe1]>], [1, 1]>,
   InstrItinData<IIC_iMOVsi, [InstrStage<1, [A8_Pipe0, A8_Pipe1]>], [1, 1]>,
   InstrItinData<IIC_iMOVsr, [InstrStage<1, [A8_Pipe0, A8_Pipe1]>], [1, 1, 1]>,
+  InstrItinData<IIC_iMOVix2,[InstrStage<1, [A8_Pipe0, A8_Pipe1]>,
+                             InstrStage<1, [A8_Pipe0, A8_Pipe1]>], [2]>,
   //
   // Move instructions, conditional
   InstrItinData<IIC_iCMOVi , [InstrStage<1, [A8_Pipe0, A8_Pipe1]>], [2]>,
   InstrItinData<IIC_iCMOVr , [InstrStage<1, [A8_Pipe0, A8_Pipe1]>], [2, 1]>,
   InstrItinData<IIC_iCMOVsi, [InstrStage<1, [A8_Pipe0, A8_Pipe1]>], [2, 1]>,
   InstrItinData<IIC_iCMOVsr, [InstrStage<1, [A8_Pipe0, A8_Pipe1]>], [2, 1, 1]>,
+  //
+  // MVN instructions
+  InstrItinData<IIC_iMVNi , [InstrStage<1, [A8_Pipe0, A8_Pipe1]>], [1]>,
+  InstrItinData<IIC_iMVNr , [InstrStage<1, [A8_Pipe0, A8_Pipe1]>], [1, 1]>,
+  InstrItinData<IIC_iMVNsi, [InstrStage<1, [A8_Pipe0, A8_Pipe1]>], [1, 1]>,
+  InstrItinData<IIC_iMVNsr, [InstrStage<1, [A8_Pipe0, A8_Pipe1]>], [1, 1, 1]>,
 
   // Integer multiply pipeline
   // Result written in E5, but that is relative to the last cycle of multicycle,

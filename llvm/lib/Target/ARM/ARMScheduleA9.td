@@ -28,15 +28,21 @@ def A9_DRegsN  : FuncUnit; // FP register set, NEON side
 def CortexA9Itineraries : ProcessorItineraries<
   [A9_NPipe, A9_DRegsN, A9_DRegsVFP, A9_LSPipe, A9_Pipe0, A9_Pipe1], [], [
   // Two fully-pipelined integer ALU pipelines
-  // FIXME: There are no operand latencies for these instructions at all!
+
   //
   // Move instructions, unconditional
   InstrItinData<IIC_iMOVi   , [InstrStage<1, [A9_Pipe0, A9_Pipe1]>], [1]>,
-  InstrItinData<IIC_iMOVix2 , [InstrStage<1, [A9_Pipe0, A9_Pipe1]>,
-                               InstrStage<1, [A9_Pipe0, A9_Pipe1]>], [2]>,
   InstrItinData<IIC_iMOVr   , [InstrStage<1, [A9_Pipe0, A9_Pipe1]>], [1, 1]>,
   InstrItinData<IIC_iMOVsi  , [InstrStage<1, [A9_Pipe0, A9_Pipe1]>], [1, 1]>,
   InstrItinData<IIC_iMOVsr  , [InstrStage<2, [A9_Pipe0, A9_Pipe1]>], [2, 2, 1]>,
+  InstrItinData<IIC_iMOVix2 , [InstrStage<1, [A9_Pipe0, A9_Pipe1]>,
+                               InstrStage<1, [A9_Pipe0, A9_Pipe1]>], [2]>,
+  //
+  // MVN instructions
+  InstrItinData<IIC_iMVNi   , [InstrStage<1, [A9_Pipe0, A9_Pipe1]>], [1]>,
+  InstrItinData<IIC_iMVNr   , [InstrStage<1, [A9_Pipe0, A9_Pipe1]>], [1, 1]>,
+  InstrItinData<IIC_iMVNsi  , [InstrStage<1, [A9_Pipe0, A9_Pipe1]>], [1, 1]>,
+  InstrItinData<IIC_iMVNsr  , [InstrStage<2, [A9_Pipe0, A9_Pipe1]>], [2, 2, 1]>,
   //
   // No operand cycles
   InstrItinData<IIC_iALUx    , [InstrStage<1, [A9_Pipe0, A9_Pipe1]>]>,
@@ -67,6 +73,12 @@ def CortexA9Itineraries : ProcessorItineraries<
   InstrItinData<IIC_iCMPr   , [InstrStage<1, [A9_Pipe0, A9_Pipe1]>], [2, 2]>,
   InstrItinData<IIC_iCMPsi  , [InstrStage<2, [A9_Pipe0, A9_Pipe1]>], [2, 1]>,
   InstrItinData<IIC_iCMPsr  , [InstrStage<3, [A9_Pipe0, A9_Pipe1]>], [2, 1, 1]>,
+  //
+  // Test instructions
+  InstrItinData<IIC_iTSTi   , [InstrStage<1, [A9_Pipe0, A9_Pipe1]>], [2]>,
+  InstrItinData<IIC_iTSTr   , [InstrStage<1, [A9_Pipe0, A9_Pipe1]>], [2, 2]>,
+  InstrItinData<IIC_iTSTsi  , [InstrStage<2, [A9_Pipe0, A9_Pipe1]>], [2, 1]>,
+  InstrItinData<IIC_iTSTsr  , [InstrStage<3, [A9_Pipe0, A9_Pipe1]>], [2, 1, 1]>,
   //
   // Move instructions, conditional
   InstrItinData<IIC_iCMOVi  , [InstrStage<1, [A9_Pipe0, A9_Pipe1]>], [2]>,

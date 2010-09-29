@@ -511,15 +511,16 @@ multiclass AI1_bin_s_irs<bits<4> opcod, string opc,
 /// patterns. Similar to AsI1_bin_irs except the instruction does not produce
 /// a explicit result, only implicitly set CPSR.
 let isCompare = 1, Defs = [CPSR] in {
-multiclass AI1_cmp_irs<bits<4> opcod, string opc, PatFrag opnode,
-                       bit Commutable = 0> {
-  def ri : AI1<opcod, (outs), (ins GPR:$a, so_imm:$b), DPFrm, IIC_iCMPi,
+multiclass AI1_cmp_irs<bits<4> opcod, string opc,
+                     InstrItinClass iii, InstrItinClass iir, InstrItinClass iis,
+                       PatFrag opnode, bit Commutable = 0> {
+  def ri : AI1<opcod, (outs), (ins GPR:$a, so_imm:$b), DPFrm, iii,
                opc, "\t$a, $b",
                [(opnode GPR:$a, so_imm:$b)]> {
     let Inst{20} = 1;
     let Inst{25} = 1;
   }
-  def rr : AI1<opcod, (outs), (ins GPR:$a, GPR:$b), DPFrm, IIC_iCMPr,
+  def rr : AI1<opcod, (outs), (ins GPR:$a, GPR:$b), DPFrm, iir,
                opc, "\t$a, $b",
                [(opnode GPR:$a, GPR:$b)]> {
     let Inst{11-4} = 0b00000000;
@@ -527,7 +528,7 @@ multiclass AI1_cmp_irs<bits<4> opcod, string opc, PatFrag opnode,
     let Inst{25} = 0;
     let isCommutable = Commutable;
   }
-  def rs : AI1<opcod, (outs), (ins GPR:$a, so_reg:$b), DPSoRegFrm, IIC_iCMPsr,
+  def rs : AI1<opcod, (outs), (ins GPR:$a, so_reg:$b), DPSoRegFrm, iis,
                opc, "\t$a, $b",
                [(opnode GPR:$a, so_reg:$b)]> {
     let Inst{20} = 1;
@@ -1896,20 +1897,20 @@ def BFI    : I<(outs GPR:$dst), (ins GPR:$src, GPR:$val, bf_inv_mask_imm:$imm),
   let Inst{6-4}   = 0b001; // Rn: Inst{3-0} != 15
 }
 
-def  MVNr  : AsI1<0b1111, (outs GPR:$dst), (ins GPR:$src), DPFrm, IIC_iMOVr,
+def  MVNr  : AsI1<0b1111, (outs GPR:$dst), (ins GPR:$src), DPFrm, IIC_iMVNr,
                   "mvn", "\t$dst, $src",
                   [(set GPR:$dst, (not GPR:$src))]>, UnaryDP {
   let Inst{25} = 0;
   let Inst{11-4} = 0b00000000;
 }
 def  MVNs  : AsI1<0b1111, (outs GPR:$dst), (ins so_reg:$src), DPSoRegFrm,
-                  IIC_iMOVsr, "mvn", "\t$dst, $src",
+                  IIC_iMVNsr, "mvn", "\t$dst, $src",
                   [(set GPR:$dst, (not so_reg:$src))]>, UnaryDP {
   let Inst{25} = 0;
 }
 let isReMaterializable = 1, isAsCheapAsAMove = 1 in
 def  MVNi  : AsI1<0b1111, (outs GPR:$dst), (ins so_imm:$imm), DPFrm,
-                  IIC_iMOVi, "mvn", "\t$dst, $imm",
+                  IIC_iMVNi, "mvn", "\t$dst, $imm",
                   [(set GPR:$dst, so_imm_not:$imm)]>,UnaryDP {
     let Inst{25} = 1;
 }
@@ -2319,6 +2320,7 @@ def : ARMV6Pat<(or (and GPR:$src1, 0xFFFF0000),
 //
 
 defm CMP  : AI1_cmp_irs<0b1010, "cmp",
+                        IIC_iCMPi, IIC_iCMPr, IIC_iCMPsr,
                         BinOpFrag<(ARMcmp node:$LHS, node:$RHS)>>;
 
 // FIXME: We have to be careful when using the CMN instruction and comparison
@@ -2367,13 +2369,17 @@ defm CMP  : AI1_cmp_irs<0b1010, "cmp",
 
 // Note that TST/TEQ don't set all the same flags that CMP does!
 defm TST  : AI1_cmp_irs<0b1000, "tst",
+                        IIC_iTSTi, IIC_iTSTr, IIC_iTSTsr,
                         BinOpFrag<(ARMcmpZ (and node:$LHS, node:$RHS), 0)>, 1>;
 defm TEQ  : AI1_cmp_irs<0b1001, "teq",
+                        IIC_iTSTi, IIC_iTSTr, IIC_iTSTsr,
                         BinOpFrag<(ARMcmpZ (xor node:$LHS, node:$RHS), 0)>, 1>;
 
 defm CMPz  : AI1_cmp_irs<0b1010, "cmp",
+                         IIC_iCMPi, IIC_iCMPr, IIC_iCMPsr,
                          BinOpFrag<(ARMcmpZ node:$LHS, node:$RHS)>>;
 defm CMNz  : AI1_cmp_irs<0b1011, "cmn",
+                         IIC_iCMPi, IIC_iCMPr, IIC_iCMPsr,
                          BinOpFrag<(ARMcmpZ node:$LHS,(ineg node:$RHS))>>;
 
 //def : ARMPat<(ARMcmp GPR:$src, so_imm_neg:$imm),

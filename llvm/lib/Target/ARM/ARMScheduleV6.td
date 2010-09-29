@@ -51,6 +51,12 @@ def ARMV6Itineraries : ProcessorItineraries<
   InstrItinData<IIC_iCMPsi   , [InstrStage<1, [V6_Pipe]>], [2, 1]>,
   InstrItinData<IIC_iCMPsr   , [InstrStage<2, [V6_Pipe]>], [3, 2, 1]>,
   //
+  // Test instructions
+  InstrItinData<IIC_iTSTi    , [InstrStage<1, [V6_Pipe]>], [2]>,
+  InstrItinData<IIC_iTSTr    , [InstrStage<1, [V6_Pipe]>], [2, 2]>,
+  InstrItinData<IIC_iTSTsi   , [InstrStage<1, [V6_Pipe]>], [2, 1]>,
+  InstrItinData<IIC_iTSTsr   , [InstrStage<2, [V6_Pipe]>], [3, 2, 1]>,
+  //
   // Move instructions, unconditional
   InstrItinData<IIC_iMOVi    , [InstrStage<1, [V6_Pipe]>], [2]>,
   InstrItinData<IIC_iMOVr    , [InstrStage<1, [V6_Pipe]>], [2, 2]>,
@@ -64,6 +70,12 @@ def ARMV6Itineraries : ProcessorItineraries<
   InstrItinData<IIC_iCMOVr   , [InstrStage<1, [V6_Pipe]>], [3, 2]>,
   InstrItinData<IIC_iCMOVsi  , [InstrStage<1, [V6_Pipe]>], [3, 1]>,
   InstrItinData<IIC_iCMOVsr  , [InstrStage<1, [V6_Pipe]>], [4, 2, 1]>,
+  //
+  // MVN instructions
+  InstrItinData<IIC_iMVNi    , [InstrStage<1, [V6_Pipe]>], [2]>,
+  InstrItinData<IIC_iMVNr    , [InstrStage<1, [V6_Pipe]>], [2, 2]>,
+  InstrItinData<IIC_iMVNsi   , [InstrStage<1, [V6_Pipe]>], [2, 1]>,
+  InstrItinData<IIC_iMVNsr   , [InstrStage<2, [V6_Pipe]>], [3, 2, 1]>,
 
   // Integer multiply pipeline
   //

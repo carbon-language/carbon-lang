@@ -170,10 +170,11 @@ def t2addrmode_so_reg : Operand<i32>,
 /// T2I_un_irs - Defines a set of (op reg, {so_imm|r|so_reg}) patterns for a
 /// unary operation that produces a value. These are predicable and can be
 /// changed to modify CPSR.
-multiclass T2I_un_irs<bits<4> opcod, string opc, PatFrag opnode,
-                      bit Cheap = 0, bit ReMat = 0> {
+multiclass T2I_un_irs<bits<4> opcod, string opc,
+                     InstrItinClass iii, InstrItinClass iir, InstrItinClass iis,
+                      PatFrag opnode, bit Cheap = 0, bit ReMat = 0> {
    // shifted imm
-   def i : T2sI<(outs rGPR:$dst), (ins t2_so_imm:$src), IIC_iMOVi,
+   def i : T2sI<(outs rGPR:$dst), (ins t2_so_imm:$src), iii,
                 opc, "\t$dst, $src",
                 [(set rGPR:$dst, (opnode t2_so_imm:$src))]> {
      let isAsCheapAsAMove = Cheap;
@@ -186,7 +187,7 @@ multiclass T2I_un_irs<bits<4> opcod, string opc, PatFrag opnode,
      let Inst{15} = 0;
    }
    // register
-   def r : T2sI<(outs rGPR:$dst), (ins rGPR:$src), IIC_iMOVr,
+   def r : T2sI<(outs rGPR:$dst), (ins rGPR:$src), iir,
                 opc, ".w\t$dst, $src",
                 [(set rGPR:$dst, (opnode rGPR:$src))]> {
      let Inst{31-27} = 0b11101;
@@ -199,7 +200,7 @@ multiclass T2I_un_irs<bits<4> opcod, string opc, PatFrag opnode,
      let Inst{5-4} = 0b00; // type
    }
    // shifted register
-   def s : T2sI<(outs rGPR:$dst), (ins t2_so_reg:$src), IIC_iMOVsi,
+   def s : T2sI<(outs rGPR:$dst), (ins t2_so_reg:$src), iis,
                 opc, ".w\t$dst, $src",
                 [(set rGPR:$dst, (opnode t2_so_reg:$src))]> {
      let Inst{31-27} = 0b11101;
@@ -531,9 +532,11 @@ multiclass T2I_sh_ir<bits<2> opcod, string opc, PatFrag opnode> {
 /// patterns. Similar to T2I_bin_irs except the instruction does not produce
 /// a explicit result, only implicitly set CPSR.
 let isCompare = 1, Defs = [CPSR] in {
-multiclass T2I_cmp_irs<bits<4> opcod, string opc, PatFrag opnode> {
+multiclass T2I_cmp_irs<bits<4> opcod, string opc,
+                     InstrItinClass iii, InstrItinClass iir, InstrItinClass iis,
+                       PatFrag opnode> {
    // shifted imm
-   def ri : T2I<(outs), (ins GPR:$lhs, t2_so_imm:$rhs), IIC_iCMPi,
+   def ri : T2I<(outs), (ins GPR:$lhs, t2_so_imm:$rhs), iii,
                 opc, ".w\t$lhs, $rhs",
                 [(opnode GPR:$lhs, t2_so_imm:$rhs)]> {
      let Inst{31-27} = 0b11110;
@@ -544,7 +547,7 @@ multiclass T2I_cmp_irs<bits<4> opcod, string opc, PatFrag opnode> {
      let Inst{11-8} = 0b1111; // Rd
    }
    // register
-   def rr : T2I<(outs), (ins GPR:$lhs, rGPR:$rhs), IIC_iCMPr,
+   def rr : T2I<(outs), (ins GPR:$lhs, rGPR:$rhs), iir,
                 opc, ".w\t$lhs, $rhs",
                 [(opnode GPR:$lhs, rGPR:$rhs)]> {
      let Inst{31-27} = 0b11101;
@@ -557,7 +560,7 @@ multiclass T2I_cmp_irs<bits<4> opcod, string opc, PatFrag opnode> {
      let Inst{5-4} = 0b00; // type
    }
    // shifted register
-   def rs : T2I<(outs), (ins GPR:$lhs, t2_so_reg:$rhs), IIC_iCMPsi,
+   def rs : T2I<(outs), (ins GPR:$lhs, t2_so_reg:$rhs), iis,
                 opc, ".w\t$lhs, $rhs",
                 [(opnode GPR:$lhs, t2_so_reg:$rhs)]> {
      let Inst{31-27} = 0b11101;
@@ -1694,7 +1697,9 @@ defm t2ORN  : T2I_bin_irs<0b0011, "orn",
 
 // Prefer over of t2EORri ra, rb, -1 because mvn has 16-bit version
 let AddedComplexity = 1 in
-defm t2MVN  : T2I_un_irs <0b0011, "mvn", UnOpFrag<(not node:$Src)>, 1, 1>;
+defm t2MVN  : T2I_un_irs <0b0011, "mvn",
+                          IIC_iMOVi, IIC_iMOVr, IIC_iMOVsi,
+                          UnOpFrag<(not node:$Src)>, 1, 1>;
 
 
 let AddedComplexity = 1 in
@@ -2155,8 +2160,10 @@ def : T2Pat<(or (and rGPR:$src1, 0xFFFF0000),
 //  Comparison Instructions...
 //
 defm t2CMP  : T2I_cmp_irs<0b1101, "cmp",
+                          IIC_iCMPi, IIC_iCMPr, IIC_iCMPsi,
                           BinOpFrag<(ARMcmp node:$LHS, node:$RHS)>>;
 defm t2CMPz : T2I_cmp_irs<0b1101, "cmp",
+                          IIC_iCMPi, IIC_iCMPr, IIC_iCMPsi,
                           BinOpFrag<(ARMcmpZ node:$LHS, node:$RHS)>>;
 
 //FIXME: Disable CMN, as CCodes are backwards from compare expectations
@@ -2164,6 +2171,7 @@ defm t2CMPz : T2I_cmp_irs<0b1101, "cmp",
 //defm t2CMN  : T2I_cmp_irs<0b1000, "cmn",
 //                          BinOpFrag<(ARMcmp node:$LHS,(ineg node:$RHS))>>;
 defm t2CMNz : T2I_cmp_irs<0b1000, "cmn",
+                          IIC_iCMPi, IIC_iCMPr, IIC_iCMPsi,
                           BinOpFrag<(ARMcmpZ node:$LHS,(ineg node:$RHS))>>;
 
 //def : T2Pat<(ARMcmp  GPR:$src, t2_so_imm_neg:$imm),
@@ -2173,8 +2181,10 @@ def : T2Pat<(ARMcmpZ  GPR:$src, t2_so_imm_neg:$imm),
             (t2CMNzri GPR:$src, t2_so_imm_neg:$imm)>;
 
 defm t2TST  : T2I_cmp_irs<0b0000, "tst",
+                          IIC_iTSTi, IIC_iTSTr, IIC_iTSTsi,
                           BinOpFrag<(ARMcmpZ (and node:$LHS, node:$RHS), 0)>>;
 defm t2TEQ  : T2I_cmp_irs<0b0100, "teq",
+                          IIC_iTSTi, IIC_iTSTr, IIC_iTSTsi,
                           BinOpFrag<(ARMcmpZ (xor node:$LHS, node:$RHS), 0)>>;
 
 // Conditional moves
