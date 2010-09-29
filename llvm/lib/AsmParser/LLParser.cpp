@@ -1248,7 +1248,7 @@ bool LLParser::ParseIndexList(SmallVectorImpl<unsigned> &Indices,
       AteExtraComma = true;
       return false;
     }
-    unsigned Idx;
+    unsigned Idx = 0;
     if (ParseUInt32(Idx)) return true;
     Indices.push_back(Idx);
   }
