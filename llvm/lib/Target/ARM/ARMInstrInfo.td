@@ -369,8 +369,22 @@ def imm0_31 : Operand<i32>, PatLeaf<(imm), [{
 
 // Define ARM specific addressing modes.
 
-// addrmode2 := reg +/- reg shop imm
-// addrmode2 := reg +/- imm12
+// addrmode2base := reg +/- imm12
+//
+def addrmode2base : Operand<i32>,
+                ComplexPattern<i32, 3, "SelectAddrMode2Base", []> {
+  let PrintMethod = "printAddrMode2Operand";
+  let MIOperandInfo = (ops GPR:$base, GPR:$offsreg, i32imm:$offsimm);
+}
+// addrmode2shop := reg +/- reg shop imm
+//
+def addrmode2shop : Operand<i32>,
+                ComplexPattern<i32, 3, "SelectAddrMode2ShOp", []> {
+  let PrintMethod = "printAddrMode2Operand";
+  let MIOperandInfo = (ops GPR:$base, GPR:$offsreg, i32imm:$offsimm);
+}
+
+// addrmode2 := (addrmode2base || addrmode2shop)
 //
 def addrmode2 : Operand<i32>,
                 ComplexPattern<i32, 3, "SelectAddrMode2", []> {
