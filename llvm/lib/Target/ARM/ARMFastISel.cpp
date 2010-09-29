@@ -778,24 +778,18 @@ bool ARMFastISel::SelectBranch(const Instruction *I) {
   MachineBasicBlock *FBB = FuncInfo.MBBMap[BI->getSuccessor(1)];
 
   // Simple branch support.
-  // TODO: Hopefully we've already handled the condition since we won't
-  // have left an update in the value map. See the TODO below in SelectCMP.
-  Value *Cond = BI->getCondition();
-  unsigned CondReg = getRegForValue(Cond);
+  // TODO: Try to avoid the re-computation in some places.
+  unsigned CondReg = getRegForValue(BI->getCondition());
   if (CondReg == 0) return false;
 
-  CmpInst *CI = dyn_cast<CmpInst>(Cond);
-  if (!CI) return false;
+  // Re-set the flags just in case.
+  unsigned CmpOpc = isThumb ? ARM::t2CMPri : ARM::CMPri;
+  AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(CmpOpc))
+                  .addReg(CondReg).addImm(1));
   
-  // Get the compare predicate.
-  ARMCC::CondCodes ARMPred = getComparePred(CI->getPredicate());
-    
-  // We may not handle every CC for now.
-  if (ARMPred == ARMCC::AL) return false;
-
   unsigned BrOpc = isThumb ? ARM::t2Bcc : ARM::Bcc;
   BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(BrOpc))
-                  .addMBB(TBB).addImm(ARMPred).addReg(CondReg);
+                  .addMBB(TBB).addImm(ARMCC::EQ).addReg(ARM::CPSR);
   FastEmitBranch(FBB, DL);
   FuncInfo.MBB->addSuccessor(TBB);
   return true;  
@@ -814,23 +808,29 @@ bool ARMFastISel::SelectCmp(const Instruction *I) {
     return false;
 
   unsigned CmpOpc;
-  unsigned DestReg;
+  unsigned CondReg;
   switch (VT.getSimpleVT().SimpleTy) {
     default: return false;
     // TODO: Verify compares.
     case MVT::f32:
       CmpOpc = ARM::VCMPES;
-      DestReg = ARM::FPSCR;
+      CondReg = ARM::FPSCR;
       break;
     case MVT::f64:
       CmpOpc = ARM::VCMPED;
-      DestReg = ARM::FPSCR;
+      CondReg = ARM::FPSCR;
       break;
     case MVT::i32:
       CmpOpc = isThumb ? ARM::t2CMPrr : ARM::CMPrr;
-      DestReg = ARM::CPSR;
+      CondReg = ARM::CPSR;
       break;
   }
+
+  // Get the compare predicate.
+  ARMCC::CondCodes ARMPred = getComparePred(CI->getPredicate());
+    
+  // We may not handle every CC for now.
+  if (ARMPred == ARMCC::AL) return false;
 
   unsigned Arg1 = getRegForValue(CI->getOperand(0));
   if (Arg1 == 0) return false;
@@ -847,7 +847,17 @@ bool ARMFastISel::SelectCmp(const Instruction *I) {
     AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
                             TII.get(ARM::FMSTAT)));
 
-  // Update the value to the implicit def reg.
+  // Now set a register based on the comparison. Explicitly set the predicates
+  // here.
+  unsigned MovCCOpc = isThumb ? ARM::tMOVCCi : ARM::MOVCCi;
+  unsigned DestReg = createResultReg(ARM::GPRRegisterClass);
+  Constant *Zero 
+    = ConstantInt::get(Type::getInt32Ty(I->getType()->getContext()), 0);
+  unsigned ZeroReg = TargetMaterializeConstant(Zero);
+  BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(MovCCOpc), DestReg)
+          .addReg(ZeroReg).addImm(1)
+          .addImm(ARMPred).addReg(CondReg);
+
   UpdateValueMap(I, DestReg);
   return true;
 }
