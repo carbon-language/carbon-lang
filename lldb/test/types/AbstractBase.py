@@ -16,6 +16,9 @@ class GenericTester(TestBase):
     # printf() stmts (see basic_type.cpp).
     pattern = re.compile(" (\*?a[^=]*) = '([^=]*)'$")
 
+    # Assert message.
+    DATA_TYPE_GROKKED = "Data type from expr parser output is parsed correctly"
+
     def generic_type_tester(self, atoms, quotedDisplay=False):
         """Test that variables with basic types are displayed correctly."""
 
@@ -80,7 +83,7 @@ class GenericTester(TestBase):
             try:
                 dt = re.match("^\((.*)\)", output).group(1)
             except:
-                self.fail("Data type from expression parser is parsed correctly")
+                self.fail(self.DATA_TYPE_GROKKED)
 
             # Expect the display type string to contain each and every atoms.
             self.expect(dt,
@@ -140,7 +143,7 @@ class GenericTester(TestBase):
             try:
                 dt = re.match("^\$[0-9]+ = \((.*)\)", output).group(1)
             except:
-                self.fail("Data type from expression parser is parsed correctly")
+                self.fail(self.DATA_TYPE_GROKKED)
 
             # Expect the display type string to contain each and every atoms.
             self.expect(dt,
