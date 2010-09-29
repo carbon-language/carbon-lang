@@ -928,7 +928,9 @@ class ImplicitParamDecl : public VarDecl {
 protected:
   ImplicitParamDecl(Kind DK, DeclContext *DC, SourceLocation L,
                     IdentifierInfo *Id, QualType Tw)
-    : VarDecl(DK, DC, L, Id, Tw, /*TInfo=*/0, SC_None, SC_None) {}
+    : VarDecl(DK, DC, L, Id, Tw, /*TInfo=*/0, SC_None, SC_None) {
+    setImplicit();
+  }
 public:
   static ImplicitParamDecl *Create(ASTContext &C, DeclContext *DC,
                                    SourceLocation L, IdentifierInfo *Id,
