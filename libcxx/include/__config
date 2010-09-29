@@ -114,8 +114,9 @@ typedef __char32_t char32_t;
 #define _LIBCPP_HAS_NO_ATTRIBUTES
 #endif
 
-#if !(__has_feature(cxx_deleted_functions))
 #define _LIBCPP_HAS_NO_DEFAULTED_FUNCTIONS
+
+#if !(__has_feature(cxx_deleted_functions))
 #define _LIBCPP_HAS_NO_DELETED_FUNCTIONS
 #endif  // !(__has_feature(cxx_deleted_functions))
 

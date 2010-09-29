@@ -2411,6 +2411,7 @@ void atomic_signal_fence(memory_order);
 */
 
 #include <__config>
+#include <initializer_list>
 
 #pragma GCC system_header
 
@@ -2429,6 +2430,71 @@ kill_dependency(_Tp __y)
 {
     return __y;
 }
+
+// flag type and operations
+
+struct __atomic_flag_init {};
+
+typedef struct atomic_flag
+{
+    bool __flg_;
+
+    bool test_and_set(memory_order __o = memory_order_seq_cst) volatile
+    {
+        switch (__o)
+        {
+        case memory_order_relaxed:
+        case memory_order_consume:
+        case memory_order_acquire:
+            return __sync_lock_test_and_set(&__flg_, true);
+        case memory_order_release:
+        case memory_order_acq_rel:
+        case memory_order_seq_cst:
+            bool __r = __sync_lock_test_and_set(&__flg_, true);
+            __sync_synchronize();
+            return __r;
+        }
+    }
+
+    bool test_and_set(memory_order __o = memory_order_seq_cst)
+        {return const_cast<volatile atomic_flag*>(this)->test_and_set(__o);}
+    void clear(memory_order = memory_order_seq_cst) volatile;
+    void clear(memory_order = memory_order_seq_cst);
+
+#ifndef _LIBCPP_HAS_NO_DEFAULTED_FUNCTIONS
+    atomic_flag() = default;
+#else
+    atomic_flag() {};
+#endif
+
+#if 0
+
+#ifndef _LIBCPP_HAS_NO_DELETED_FUNCTIONS
+    atomic_flag(const atomic_flag&) = delete;
+    atomic_flag& operator=(const atomic_flag&) = delete;
+    atomic_flag& operator=(const atomic_flag&) volatile = delete;
+#else
+private:
+    atomic_flag(const atomic_flag&);
+    atomic_flag& operator=(const atomic_flag&);
+    atomic_flag& operator=(const atomic_flag&) volatile;
+public:
+#endif
+#else
+    atomic_flag(__atomic_flag_init) : __flg_(false) {}  // temporary
+#endif
+} atomic_flag;
+
+bool atomic_flag_test_and_set(volatile atomic_flag*);
+bool atomic_flag_test_and_set(atomic_flag*);
+bool atomic_flag_test_and_set_explicit(volatile atomic_flag*, memory_order);
+bool atomic_flag_test_and_set_explicit(atomic_flag*, memory_order);
+void atomic_flag_clear(volatile atomic_flag*);
+void atomic_flag_clear(atomic_flag*);
+void atomic_flag_clear_explicit(volatile atomic_flag*, memory_order);
+void atomic_flag_clear_explicit(atomic_flag*, memory_order);
+
+#define ATOMIC_FLAG_INIT _STD::__atomic_flag_init()
 
 _LIBCPP_END_NAMESPACE_STD
 
