@@ -652,9 +652,9 @@ defm Int_CVTSS2SI : sse12_cvt_sint<0x2D, VR128, GR32, int_x86_sse_cvtss2si,
 defm Int_CVTSS2SI64 : sse12_cvt_sint<0x2D, VR128, GR64, int_x86_sse_cvtss2si64,
                       f32mem, load, "cvtss2si{q}">, XS, REX_W;
 defm CVTSD2SI : sse12_cvt_sint<0x2D, VR128, GR32, int_x86_sse2_cvtsd2si,
-                f128mem, load, "cvtsd2si">, XD;
+                f128mem, load, "cvtsd2si{l}">, XD;
 defm CVTSD2SI64 : sse12_cvt_sint<0x2D, VR128, GR64, int_x86_sse2_cvtsd2si64,
-                  f128mem, load, "cvtsd2si">, XD, REX_W;
+                  f128mem, load, "cvtsd2si{q}">, XD, REX_W;
 
 
 let isAsmParserOnly = 1 in {

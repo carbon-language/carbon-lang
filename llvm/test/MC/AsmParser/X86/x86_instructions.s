@@ -419,11 +419,16 @@ fstsw (%rax)
 
 // rdar://8456382 - cvtsd2si support.
 cvtsd2si	%xmm1, %rax
-// CHECK: cvtsd2si	%xmm1, %rax
+// CHECK: cvtsd2siq	%xmm1, %rax
 // CHECK: encoding: [0xf2,0x48,0x0f,0x2d,0xc1]
 cvtsd2si	%xmm1, %eax
-// CHECK: cvtsd2si	%xmm1, %eax
+// CHECK: cvtsd2sil	%xmm1, %eax
 // CHECK: encoding: [0xf2,0x0f,0x2d,0xc1]
+
+cvtsd2siq %xmm0, %rax // CHECK: cvtsd2siq	%xmm0, %rax
+cvtsd2sil %xmm0, %eax // CHECK: cvtsd2sil	%xmm0, %eax
+cvtsd2si %xmm0, %rax  // CHECK: cvtsd2siq	%xmm0, %rax
+
 
 cvttpd2dq %xmm1, %xmm0  // CHECK: cvttpd2dq %xmm1, %xmm0
 cvttpd2dq (%rax), %xmm0 // CHECK: cvttpd2dq (%rax), %xmm0
