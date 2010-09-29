@@ -158,12 +158,7 @@ bool LoopUnroll::runOnLoop(Loop *L, LPPassManager &LPM) {
       DEBUG(dbgs() << "  Not unrolling loop with inlinable calls.\n");
       return false;
     }
-    
-    // NOTE: We multiply by the loop depth because unrolling inner loops of
-    // very deep nests tends to result in high register pressure, which we don't
-    // currently recover from very well.  When and if the register allocator/
-    // spiller improves to compensate, this should be re-evaluated.
-    uint64_t Size = (uint64_t)LoopSize*Count*L->getLoopDepth();
+    uint64_t Size = (uint64_t)LoopSize*Count;
     if (TripCount != 1 && Size > CurrentThreshold) {
       DEBUG(dbgs() << "  Too large to fully unroll with count: " << Count
             << " because size: " << Size << ">" << CurrentThreshold << "\n");
