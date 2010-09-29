@@ -218,7 +218,7 @@ protected:
   std::string getDataLayout() const {
     if (isThumb()) {
       if (isAPCS_ABI()) {
-        return std::string("e-p:32:32-f64:32:32-i64:32:32-"
+        return std::string("e-p:32:32-f64:32:64-i64:32:64-"
                            "i16:16:32-i8:8:32-i1:8:32-"
                            "v128:32:128-v64:32:64-a:0:32-n32");
       } else {
@@ -228,7 +228,7 @@ protected:
       }
     } else {
       if (isAPCS_ABI()) {
-        return std::string("e-p:32:32-f64:32:32-i64:32:32-"
+        return std::string("e-p:32:32-f64:32:64-i64:32:64-"
                            "v128:32:128-v64:32:64-n32");
       } else {
         return std::string("e-p:32:32-f64:64:64-i64:64:64-"

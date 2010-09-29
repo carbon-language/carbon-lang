@@ -1370,7 +1370,7 @@ ARMPreAllocLoadStoreOpt::CanFormLdStDWord(MachineInstr *Op0, MachineInstr *Op1,
   unsigned Align = (*Op0->memoperands_begin())->getAlignment();
   const Function *Func = MF->getFunction();
   unsigned ReqAlign = STI->hasV6Ops()
-    ? TD->getPrefTypeAlignment(Type::getInt64Ty(Func->getContext())) 
+    ? TD->getABITypeAlignment(Type::getInt64Ty(Func->getContext())) 
     : 8;  // Pre-v6 need 8-byte align
   if (Align < ReqAlign)
     return false;
