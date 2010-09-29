@@ -7,12 +7,12 @@ public:
 };
 
 int foo::bar(int x) {
-  // CHECK: {{i1 false, i1 true(, i[0-9]+ [^\}]+[}]|[}]) ; \[ DW_TAG_subprogram \]}}
+  // CHECK: {{i32 [0-9]+, i1 true(, i[0-9]+ [^\}]+[}]|[}]) ; \[ DW_TAG_subprogram \]}}
     return x*4 + 1;
 }
 
 int foo::baz(int x) {
-  // CHECK: {{i1 false, i1 true(, i[0-9]+ [^\},]+[}]|[}]) ; \[ DW_TAG_subprogram \]}}
+  // CHECK: {{i32 [0-9]+, i1 true(, i[0-9]+ [^\},]+[}]|[}]) ; \[ DW_TAG_subprogram \]}}
     return x*4 + 1;
 }
 

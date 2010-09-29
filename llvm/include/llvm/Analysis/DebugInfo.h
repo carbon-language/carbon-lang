@@ -46,6 +46,16 @@ namespace llvm {
   /// This should not be stored in a container, because underly MDNode may
   /// change in certain situations.
   class DIDescriptor {
+  public:
+    enum {
+      FlagPrivate          = 1 << 0,
+      FlagProtected        = 1 << 1,
+      FlagFwdDecl          = 1 << 2,
+      FlagAppleBlock       = 1 << 3,
+      FlagBlockByrefStruct = 1 << 4,
+      FlagVirtual          = 1 << 5,
+      FlagArtificial       = 1 << 6
+    };
   protected:
     const MDNode *DbgNode;
 
@@ -203,17 +213,6 @@ namespace llvm {
   /// others do not require a huge and empty descriptor full of zeros.
   class DIType : public DIScope {
   public:
-    enum {
-      FlagPrivate          = 1 << 0,
-      FlagProtected        = 1 << 1,
-      FlagFwdDecl          = 1 << 2,
-      FlagAppleBlock       = 1 << 3,
-      FlagBlockByrefStruct = 1 << 4,
-      FlagVirtual          = 1 << 5,
-      FlagArtificial       = 1 << 6  // To identify artificial arguments in
-                                     // a subroutine type. e.g. "this" in c++.
-    };
-
   protected:
     // This ctor is used when the Tag has already been validated by a derived
     // ctor.
@@ -396,7 +395,12 @@ namespace llvm {
     DICompositeType getContainingType() const {
       return getFieldAs<DICompositeType>(13);
     }
-    unsigned isArtificial() const    { return getUnsignedField(14); }
+    unsigned isArtificial() const    { 
+      if (getVersion() <= llvm::LLVMDebugVersion8)
+        return getUnsignedField(14); 
+      return (getUnsignedField(14) & FlagArtificial) != 0;
+    }
+
     unsigned isOptimized() const;
 
     StringRef getFilename() const    { 
@@ -691,7 +695,7 @@ namespace llvm {
                                   unsigned VK = 0,
                                   unsigned VIndex = 0,
                                   DIType = DIType(),
-                                  bool isArtificial = 0,
+                                  unsigned Flags = 0,
                                   bool isOptimized = false,
                                   Function *Fn = 0);
 

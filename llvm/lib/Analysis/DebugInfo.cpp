@@ -1009,7 +1009,7 @@ DISubprogram DIFactory::CreateSubprogram(DIDescriptor Context,
                                          bool isDefinition,
                                          unsigned VK, unsigned VIndex,
                                          DIType ContainingType,
-                                         bool isArtificial,
+                                         unsigned Flags,
                                          bool isOptimized,
                                          Function *Fn) {
 
@@ -1028,7 +1028,7 @@ DISubprogram DIFactory::CreateSubprogram(DIDescriptor Context,
     ConstantInt::get(Type::getInt32Ty(VMContext), (unsigned)VK),
     ConstantInt::get(Type::getInt32Ty(VMContext), VIndex),
     ContainingType,
-    ConstantInt::get(Type::getInt1Ty(VMContext), isArtificial),
+    ConstantInt::get(Type::getInt32Ty(VMContext), Flags),
     ConstantInt::get(Type::getInt1Ty(VMContext), isOptimized),
     Fn
   };
@@ -1062,7 +1062,7 @@ DISubprogram DIFactory::CreateSubprogramDefinition(DISubprogram &SPDeclaration){
     DeclNode->getOperand(11), // Virtuality
     DeclNode->getOperand(12), // VIndex
     DeclNode->getOperand(13), // Containting Type
-    DeclNode->getOperand(14), // isArtificial
+    DeclNode->getOperand(14), // Flags
     DeclNode->getOperand(15), // isOptimized
     SPDeclaration.getFunction()
   };
