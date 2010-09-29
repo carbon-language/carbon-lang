@@ -2415,6 +2415,85 @@ void atomic_signal_fence(memory_order);
 
 #pragma GCC system_header
 
+// Begin "Intrinsics"
+
+inline _LIBCPP_INLINE_VISIBILITY
+bool
+__test_and_set_relaxed(volatile bool* __b)
+{
+    return __sync_lock_test_and_set(__b, true);
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+bool
+__test_and_set_consume(volatile bool* __b)
+{
+    return __sync_lock_test_and_set(__b, true);
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+bool
+__test_and_set_acquire(volatile bool* __b)
+{
+    return __sync_lock_test_and_set(__b, true);
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+bool
+__test_and_set_release(volatile bool* __b)
+{
+    __sync_synchronize();
+    return __sync_lock_test_and_set(__b, true);
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+bool
+__test_and_set_acq_rel(volatile bool* __b)
+{
+    __sync_synchronize();
+    return __sync_lock_test_and_set(__b, true);
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+bool
+__test_and_set_seq_cst(volatile bool* __b)
+{
+    __sync_synchronize();
+    return __sync_lock_test_and_set(__b, true);
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+void
+__atomic_store_relaxed(volatile bool* __b, bool __x)
+{
+    __sync_lock_test_and_set(__b, __x);
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+void
+__atomic_store_consume(volatile bool* __b, bool __x)
+{
+    __sync_lock_test_and_set(__b, __x);
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+void
+__atomic_store_release(volatile bool* __b, bool __x)
+{
+    __sync_synchronize();
+    __sync_lock_test_and_set(__b, __x);
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+void
+__atomic_store_seq_cst(volatile bool* __b, bool __x)
+{
+    __sync_synchronize();
+    __sync_lock_test_and_set(__b, __x);
+}
+
+// End "Intrinsics"
+
 _LIBCPP_BEGIN_NAMESPACE_STD
 
 typedef enum memory_order
@@ -2433,41 +2512,53 @@ kill_dependency(_Tp __y)
 
 // flag type and operations
 
-struct __atomic_flag_init {};
+struct atomic_flag;
 
-typedef struct atomic_flag
+bool atomic_flag_test_and_set(volatile atomic_flag*);
+bool atomic_flag_test_and_set(atomic_flag*);
+bool atomic_flag_test_and_set_explicit(volatile atomic_flag*, memory_order);
+bool atomic_flag_test_and_set_explicit(atomic_flag*, memory_order);
+void atomic_flag_clear(volatile atomic_flag*);
+void atomic_flag_clear(atomic_flag*);
+void atomic_flag_clear_explicit(volatile atomic_flag*, memory_order);
+void atomic_flag_clear_explicit(atomic_flag*, memory_order);
+
+typedef struct _LIBCPP_VISIBLE atomic_flag
 {
     bool __flg_;
 
-    bool test_and_set(memory_order __o = memory_order_seq_cst) volatile
-    {
-        switch (__o)
-        {
-        case memory_order_relaxed:
-        case memory_order_consume:
-        case memory_order_acquire:
-            return __sync_lock_test_and_set(&__flg_, true);
-        case memory_order_release:
-        case memory_order_acq_rel:
-        case memory_order_seq_cst:
-            bool __r = __sync_lock_test_and_set(&__flg_, true);
-            __sync_synchronize();
-            return __r;
-        }
-    }
+    _LIBCPP_INLINE_VISIBILITY
+    bool test_and_set() volatile
+        {return atomic_flag_test_and_set(this);}
+    _LIBCPP_INLINE_VISIBILITY
+    bool test_and_set(memory_order __o) volatile
+        {return atomic_flag_test_and_set_explicit(this, __o);}
+    _LIBCPP_INLINE_VISIBILITY
+    bool test_and_set()
+        {return atomic_flag_test_and_set(this);}
+    _LIBCPP_INLINE_VISIBILITY
+    bool test_and_set(memory_order __o)
+        {return atomic_flag_test_and_set_explicit(this, __o);}
 
-    bool test_and_set(memory_order __o = memory_order_seq_cst)
-        {return const_cast<volatile atomic_flag*>(this)->test_and_set(__o);}
-    void clear(memory_order = memory_order_seq_cst) volatile;
-    void clear(memory_order = memory_order_seq_cst);
+    _LIBCPP_INLINE_VISIBILITY
+    void clear() volatile
+        {atomic_flag_clear(this);}
+    _LIBCPP_INLINE_VISIBILITY
+    void clear(memory_order __o) volatile
+        {atomic_flag_clear_explicit(this, __o);}
+    _LIBCPP_INLINE_VISIBILITY
+    void clear()
+        {atomic_flag_clear(this);}
+    _LIBCPP_INLINE_VISIBILITY
+    void clear(memory_order __o)
+        {atomic_flag_clear_explicit(this, __o);}
 
 #ifndef _LIBCPP_HAS_NO_DEFAULTED_FUNCTIONS
     atomic_flag() = default;
 #else
-    atomic_flag() {};
+    _LIBCPP_INLINE_VISIBILITY
+    atomic_flag() : __flg_(false) {};
 #endif
-
-#if 0
 
 #ifndef _LIBCPP_HAS_NO_DELETED_FUNCTIONS
     atomic_flag(const atomic_flag&) = delete;
@@ -2480,21 +2571,93 @@ private:
     atomic_flag& operator=(const atomic_flag&) volatile;
 public:
 #endif
-#else
-    atomic_flag(__atomic_flag_init) : __flg_(false) {}  // temporary
-#endif
 } atomic_flag;
 
-bool atomic_flag_test_and_set(volatile atomic_flag*);
-bool atomic_flag_test_and_set(atomic_flag*);
-bool atomic_flag_test_and_set_explicit(volatile atomic_flag*, memory_order);
-bool atomic_flag_test_and_set_explicit(atomic_flag*, memory_order);
-void atomic_flag_clear(volatile atomic_flag*);
-void atomic_flag_clear(atomic_flag*);
-void atomic_flag_clear_explicit(volatile atomic_flag*, memory_order);
-void atomic_flag_clear_explicit(atomic_flag*, memory_order);
+inline _LIBCPP_INLINE_VISIBILITY
+bool
+atomic_flag_test_and_set(volatile atomic_flag* __f)
+{
+    return __test_and_set_seq_cst(&__f->__flg_);
+}
 
-#define ATOMIC_FLAG_INIT _STD::__atomic_flag_init()
+inline _LIBCPP_INLINE_VISIBILITY
+bool
+atomic_flag_test_and_set(atomic_flag* __f)
+{
+    return atomic_flag_test_and_set(const_cast<volatile atomic_flag*>(__f));
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+bool
+atomic_flag_test_and_set_explicit(volatile atomic_flag* __f, memory_order __o)
+{
+    switch (__o)
+    {
+    case memory_order_relaxed:
+        return __test_and_set_relaxed(&__f->__flg_);
+    case memory_order_consume:
+        return __test_and_set_consume(&__f->__flg_);
+    case memory_order_acquire:
+        return __test_and_set_acquire(&__f->__flg_);
+    case memory_order_release:
+        return __test_and_set_release(&__f->__flg_);
+    case memory_order_acq_rel:
+        return __test_and_set_acq_rel(&__f->__flg_);
+    case memory_order_seq_cst:
+        return __test_and_set_seq_cst(&__f->__flg_);
+    }
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+bool
+atomic_flag_test_and_set_explicit(atomic_flag* __f, memory_order __o)
+{
+    return atomic_flag_test_and_set_explicit(const_cast<volatile atomic_flag*>(__f), __o);
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+void
+atomic_flag_clear(volatile atomic_flag* __f)
+{
+    return __atomic_store_seq_cst(&__f->__flg_, false);
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+void
+atomic_flag_clear(atomic_flag* __f)
+{
+    atomic_flag_clear(const_cast<volatile atomic_flag*>(__f));
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+void
+atomic_flag_clear_explicit(volatile atomic_flag* __f, memory_order __o)
+{
+    switch (__o)
+    {
+    case memory_order_relaxed:
+        __atomic_store_relaxed(&__f->__flg_, false);
+        break;
+    case memory_order_consume:
+        __atomic_store_consume(&__f->__flg_, false);
+        break;
+    case memory_order_release:
+        __atomic_store_release(&__f->__flg_, false);
+        break;
+    case memory_order_seq_cst:
+        __atomic_store_seq_cst(&__f->__flg_, false);
+        break;
+    }
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+void
+atomic_flag_clear_explicit(atomic_flag* __f, memory_order __o)
+{
+    atomic_flag_clear_explicit(const_cast<volatile atomic_flag*>(__f), __o);
+}
+
+#define ATOMIC_FLAG_INIT {false}
 
 _LIBCPP_END_NAMESPACE_STD
 

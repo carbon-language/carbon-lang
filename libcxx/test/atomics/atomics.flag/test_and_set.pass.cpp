@@ -19,7 +19,7 @@
 
 int main()
 {
-    std::atomic_flag f = ATOMIC_FLAG_INIT;
+    std::atomic_flag f;
     assert(f.test_and_set() == 0);
     assert(f.test_and_set() == 1);
 }
