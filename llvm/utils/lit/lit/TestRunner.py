@@ -178,6 +178,13 @@ def executeShCmd(cmd, cfg, cwd, results):
         else:
             input = subprocess.PIPE
 
+    # Explicitly close any redirected files. We need to do this now because we
+    # need to release any handles we may have on the temporary files (important
+    # on Win32, for example). Since we have already spawned the subprocess, our
+    # handles have already been transferred so we do not need them anymore.
+    for f in opened_files:
+        f.close()
+
     # FIXME: There is probably still deadlock potential here. Yawn.
     procData = [None] * len(procs)
     procData[-1] = procs[-1].communicate()
@@ -214,10 +221,6 @@ def executeShCmd(cmd, cfg, cwd, results):
                 exitCode = max(exitCode, res)
         else:
             exitCode = res
-
-    # Explicitly close any redirected files.
-    for f in opened_files:
-        f.close()
 
     # Remove any named temporary files we created.
     for f in named_temp_files:
