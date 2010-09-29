@@ -54,8 +54,8 @@ void AnalyzerStatsChecker::VisitEndAnalysis(ExplodedGraph &G,
     if (!LC)
       LC = P.getLocationContext();
 
-    if (const BlockEdge *BE = dyn_cast<BlockEdge>(&P)) {
-      const CFGBlock *CB = BE->getDst();
+    if (const BlockEntrance *BE = dyn_cast<BlockEntrance>(&P)) {
+      const CFGBlock *CB = BE->getBlock();
       reachable.insert(CB);
     }
   }
@@ -101,4 +101,17 @@ void AnalyzerStatsChecker::VisitEndAnalysis(ExplodedGraph &G,
 
   B.EmitBasicReport("Analyzer Statistics", "Internal Statistics", output.str(),
       D->getLocation());
+
+  // Emit warning for each block we bailed out on
+  typedef GRCoreEngine::BlocksAborted::const_iterator AbortedIterator;
+  const GRCoreEngine &CE = Eng.getCoreEngine();
+  for (AbortedIterator I = CE.blocks_aborted_begin(),
+      E = CE.blocks_aborted_end(); I != E; ++I) {
+    const BlockEdge &BE =  I->first;
+    const CFGBlock *Exit = BE.getDst();
+    const CFGElement &CE = Exit->front();
+    if (const CFGStmt *CS = dyn_cast<CFGStmt>(&CE))
+      B.EmitBasicReport("Bailout Point", "Internal Statistics", "The analyzer "
+          "stopped analyzing at this point", CS->getStmt()->getLocStart());
+  }
 }
