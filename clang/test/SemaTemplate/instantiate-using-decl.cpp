@@ -61,3 +61,22 @@ namespace test2 {
 
   template void bar(char *);
 }
+
+namespace test3 {
+  template <typename T> struct t {
+    struct s1 {
+      T f1() const;
+    };
+    struct s2 : s1 {
+      using s1::f1;
+      T f1() const;
+    };
+  };
+
+  void f2()
+  {
+    t<int>::s2 a;
+    t<int>::s2 const & b = a;
+    b.f1();
+  }
+}

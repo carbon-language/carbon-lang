@@ -1558,8 +1558,24 @@ Decl *TemplateDeclInstantiator::VisitUsingDirectiveDecl(UsingDirectiveDecl *D) {
 }
 
 Decl *TemplateDeclInstantiator::VisitUsingDecl(UsingDecl *D) {
-  // The nested name specifier is non-dependent, so no transformation
-  // is required. The same holds for the name info.
+
+  // The nested name specifier may be dependent, for example
+  //     template <typename T> struct t {
+  //       struct s1 { T f1(); };
+  //       struct s2 : s1 { using s1::f1; };
+  //     };
+  //     template struct t<int>;
+  // Here, in using s1::f1, s1 refers to t<T>::s1;
+  // we need to substitute for t<int>::s1.
+  NestedNameSpecifier *NNS =
+      SemaRef.SubstNestedNameSpecifier(D->getTargetNestedNameDecl(),
+      D->getNestedNameRange(),
+      TemplateArgs);
+  if (!NNS)
+      return 0;
+
+  // The name info is non-dependent, so no transformation
+  // is required.
   DeclarationNameInfo NameInfo = D->getNameInfo();
 
   // We only need to do redeclaration lookups if we're in a class
@@ -1573,12 +1589,12 @@ Decl *TemplateDeclInstantiator::VisitUsingDecl(UsingDecl *D) {
   UsingDecl *NewUD = UsingDecl::Create(SemaRef.Context, Owner,
                                        D->getNestedNameRange(),
                                        D->getUsingLocation(),
-                                       D->getTargetNestedNameDecl(),
+                                       NNS,
                                        NameInfo,
                                        D->isTypeName());
 
   CXXScopeSpec SS;
-  SS.setScopeRep(D->getTargetNestedNameDecl());
+  SS.setScopeRep(NNS);
   SS.setRange(D->getNestedNameRange());
 
   if (CheckRedeclaration) {
