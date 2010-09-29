@@ -1194,6 +1194,9 @@ bool X86FastISel::X86SelectSelect(const Instruction *I) {
   if (VT == MVT::Other || !isTypeLegal(I->getType(), VT))
     return false;
   
+  // We only use cmov here, if we don't have a cmov instruction bail.
+  if (!Subtarget->hasCMov()) return false;
+  
   unsigned Opc = 0;
   const TargetRegisterClass *RC = NULL;
   if (VT.getSimpleVT() == MVT::i16) {
