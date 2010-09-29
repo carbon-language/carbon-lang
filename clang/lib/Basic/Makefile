@@ -16,9 +16,11 @@ LIBRARYNAME := clangBasic
 
 include $(CLANG_LEVEL)/Makefile
 
-SVN_REVISION := $(shell $(LLVM_SRC_ROOT)/utils/GetSourceVersion $(PROJ_SRC_DIR)/../..)
+SVN_REVISION := $(strip \
+	$(shell $(LLVM_SRC_ROOT)/utils/GetSourceVersion $(PROJ_SRC_DIR)/../..))
 
-SVN_REPOSITORY := $(shell $(LLVM_SRC_ROOT)/utils/GetRepositoryPath $(PROJ_SRC_DIR)/../..) 
+SVN_REPOSITORY := $(strip \
+	$(shell $(LLVM_SRC_ROOT)/utils/GetRepositoryPath $(PROJ_SRC_DIR)/../..))
 
 CPP.Defines += -I$(PROJ_SRC_DIR)/../../include -I$(PROJ_OBJ_DIR)/../../include \
          -DSVN_REVISION='"$(SVN_REVISION)"' -DSVN_REPOSITORY='"$(SVN_REPOSITORY)"'
