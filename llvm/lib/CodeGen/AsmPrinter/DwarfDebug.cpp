@@ -1267,7 +1267,8 @@ DIE *DwarfDebug::createMemberDIE(DIDerivedType DT) {
   else if (DT.isPrivate())
     addUInt(MemberDie, dwarf::DW_AT_accessibility, dwarf::DW_FORM_flag,
             dwarf::DW_ACCESS_private);
-  else if (DT.getTag() == dwarf::DW_TAG_inheritance)
+  // Otherwise C++ member and base classes are considered public.
+  else if (DT.getCompileUnit().getLanguage() == dwarf::DW_LANG_C_plus_plus)
     addUInt(MemberDie, dwarf::DW_AT_accessibility, dwarf::DW_FORM_flag,
             dwarf::DW_ACCESS_public);
   if (DT.isVirtual())
@@ -3166,6 +3167,14 @@ void DwarfDebug::emitDIE(DIE *Die) {
         Asm->EmitLabelDifference(L->getValue(), DwarfDebugLocSectionSym, 4);
       } else
         Values[i]->EmitValue(Asm, Form);
+      break;
+    }
+    case dwarf::DW_AT_accessibility: {
+      if (Asm->isVerbose()) {
+        DIEInteger *V = cast<DIEInteger>(Values[i]);
+        Asm->OutStreamer.AddComment(dwarf::AccessibilityString(V->getValue()));
+      }
+      Values[i]->EmitValue(Asm, Form);
       break;
     }
     default:
