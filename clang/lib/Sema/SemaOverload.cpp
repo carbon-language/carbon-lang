@@ -6348,8 +6348,8 @@ Sema::ResolveAddressOfOverloadedFunction(Expr *From, QualType ToType,
         // FIXME: make a note of the failed deduction for diagnostics.
         (void)Result;
       } else {
-        // FIXME: If the match isn't exact, shouldn't we just drop this as
-        // a candidate? Find a testcase before changing the code.
+        // Template argument deduction ensures that we have an exact match.
+        // This function template specicalization works.
         assert(FunctionType
                  == Context.getCanonicalType(Specialization->getType()));
         Matches.push_back(std::make_pair(I.getPair(),

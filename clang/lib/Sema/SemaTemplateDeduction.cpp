@@ -1865,10 +1865,20 @@ Sema::DeduceTemplateArguments(FunctionTemplateDecl *FunctionTemplate,
                                       Deduced, 0))
       return Result;
   }
-  
-  return FinishTemplateArgumentDeduction(FunctionTemplate, Deduced,
-                                         NumExplicitlySpecified,
-                                         Specialization, Info);
+
+  if (TemplateDeductionResult Result 
+        = FinishTemplateArgumentDeduction(FunctionTemplate, Deduced,
+                                          NumExplicitlySpecified,
+                                          Specialization, Info))
+    return Result;
+
+  // If the requested function type does not match the actual type of the
+  // specialization, template argument deduction fails.
+  if (!ArgFunctionType.isNull() &&
+      !Context.hasSameType(ArgFunctionType, Specialization->getType()))
+    return TDK_NonDeducedMismatch;
+
+  return TDK_Success;
 }
 
 /// \brief Deduce template arguments for a templated conversion
