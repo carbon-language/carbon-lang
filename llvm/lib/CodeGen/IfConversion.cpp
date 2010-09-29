@@ -786,20 +786,20 @@ IfConverter::BBInfo &IfConverter::AnalyzeBlock(MachineBasicBlock *BB,
   // General heuristics are:
   //   - backedge -> 90% taken
   //   - early exit -> 20% taken
-  float Prediction = 0.5;
+  float Prediction = 0.5f;
   MachineLoop *Loop = MLI->getLoopFor(BB);
   if (Loop) {
     if (TrueBBI.BB == Loop->getHeader())
-      Prediction = 0.9;
+      Prediction = 0.9f;
     else if (FalseBBI.BB == Loop->getHeader())
-      Prediction = 0.1;
-    
+      Prediction = 0.1f;
+
     MachineLoop *TrueLoop = MLI->getLoopFor(TrueBBI.BB);
     MachineLoop *FalseLoop = MLI->getLoopFor(FalseBBI.BB);
     if (!TrueLoop || TrueLoop->getParentLoop() == Loop)
-      Prediction = 0.2;
+      Prediction = 0.2f;
     else if (!FalseLoop || FalseLoop->getParentLoop() == Loop)
-      Prediction = 0.8;
+      Prediction = 0.8f;
   }
   
   if (CanRevCond && ValidDiamond(TrueBBI, FalseBBI, Dups, Dups2) &&
