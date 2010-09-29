@@ -625,24 +625,34 @@ Driver::ParseArgs (int argc, const char *argv[], FILE *out_fh, bool &exit)
     return error;
 }
 
-void
+size_t
 Driver::GetProcessSTDOUT ()
 {
     //  The process has stuff waiting for stdout; get it and write it out to the appropriate place.
     char stdio_buffer[1024];
     size_t len;
+    size_t total_bytes = 0;
     while ((len = m_debugger.GetSelectedTarget().GetProcess().GetSTDOUT (stdio_buffer, sizeof (stdio_buffer))) > 0)
+    {
         m_io_channel_ap->OutWrite (stdio_buffer, len);
+        total_bytes += len;
+    }
+    return total_bytes;
 }
 
-void
+size_t
 Driver::GetProcessSTDERR ()
 {
     //  The process has stuff waiting for stderr; get it and write it out to the appropriate place.
     char stdio_buffer[1024];
     size_t len;
+    size_t total_bytes = 0;
     while ((len = m_debugger.GetSelectedTarget().GetProcess().GetSTDERR (stdio_buffer, sizeof (stdio_buffer))) > 0)
+    {
         m_io_channel_ap->ErrWrite (stdio_buffer, len);
+        total_bytes += len;
+    }
+    return total_bytes;
 }
 
 void
@@ -721,20 +731,23 @@ Driver::HandleProcessEvent (const SBEvent &event)
     {
         // The process has stdout available, get it and write it out to the
         // appropriate place.
-        GetProcessSTDOUT ();
+        if (GetProcessSTDOUT ())
+            m_io_channel_ap->RefreshPrompt();
     }
     else if (event_type & SBProcess::eBroadcastBitSTDERR)
     {
         // The process has stderr available, get it and write it out to the
         // appropriate place.
-        GetProcessSTDERR ();
+        if (GetProcessSTDERR ())
+            m_io_channel_ap->RefreshPrompt();
     }
     else if (event_type & SBProcess::eBroadcastBitStateChanged)
     {
         // Drain all stout and stderr so we don't see any output come after
         // we print our prompts
-        GetProcessSTDOUT ();
-        GetProcessSTDERR ();
+        if (GetProcessSTDOUT ()
+            || GetProcessSTDERR ())
+            m_io_channel_ap->RefreshPrompt();
 
         // Something changed in the process;  get the event and report the process's current status and location to
         // the user.
@@ -766,8 +779,13 @@ Driver::HandleProcessEvent (const SBEvent &event)
             break;
 
         case eStateExited:
-            m_debugger.HandleCommand("process status");
-            m_io_channel_ap->RefreshPrompt();
+            {
+                SBCommandReturnObject result;
+                m_debugger.GetCommandInterpreter().HandleCommand("process status", result, false);
+                m_io_channel_ap->ErrWrite (result.GetError(), result.GetErrorSize());
+                m_io_channel_ap->OutWrite (result.GetOutput(), result.GetOutputSize());
+                m_io_channel_ap->RefreshPrompt();
+            }
             break;
 
         case eStateStopped:
@@ -781,12 +799,16 @@ Driver::HandleProcessEvent (const SBEvent &event)
                 int message_len = ::snprintf (message, sizeof(message), "Process %d stopped and was programmatically restarted.\n",
                                               process.GetProcessID());
                 m_io_channel_ap->OutWrite(message, message_len);
+                m_io_channel_ap->RefreshPrompt ();
             }
             else
             {
+                SBCommandReturnObject result;
                 UpdateSelectedThread ();
-                m_debugger.HandleCommand("process status");
-                m_io_channel_ap->RefreshPrompt();
+                m_debugger.GetCommandInterpreter().HandleCommand("process status", result, false);
+                m_io_channel_ap->ErrWrite (result.GetError(), result.GetErrorSize());
+                m_io_channel_ap->OutWrite (result.GetOutput(), result.GetOutputSize());
+                m_io_channel_ap->RefreshPrompt ();
             }
             break;
         }

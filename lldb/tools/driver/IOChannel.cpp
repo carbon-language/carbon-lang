@@ -29,6 +29,10 @@ typedef std::map<EditLine *, std::string> PromptMap;
 const char *g_default_prompt = "(lldb) ";
 PromptMap g_prompt_map;
 
+#define NSEC_PER_USEC   1000ull
+#define USEC_PER_SEC    1000000ull
+#define NSEC_PER_SEC    1000000000ull
+
 static const char*
 el_prompt(EditLine *el)
 {
@@ -156,6 +160,8 @@ IOChannel::IOChannel
     Driver *driver
 ) :
     SBBroadcaster ("IOChannel"),
+    m_output_mutex (),
+    m_enter_elgets_time (),
     m_driver (driver),
     m_read_thread (LLDB_INVALID_HOST_THREAD),
     m_read_thread_should_exit (false),
@@ -187,6 +193,25 @@ IOChannel::IOChannel
     ::history (m_history, &m_history_event, H_SETUNIQUE, 1);
     // Load history
     HistorySaveLoad (false);
+
+    // Set up mutex to make sure OutErr, OutWrite and RefreshPrompt do not interfere
+    // with each other when writing.
+
+    int error;
+    ::pthread_mutexattr_t attr;
+    error = ::pthread_mutexattr_init (&attr);
+    assert (error == 0);
+    error = ::pthread_mutexattr_settype (&attr, PTHREAD_MUTEX_RECURSIVE);
+    assert (error == 0);
+    error = ::pthread_mutex_init (&m_output_mutex, &attr);
+    assert (error == 0);
+    error = ::pthread_mutexattr_destroy (&attr);
+    assert (error == 0);
+
+    // Initialize time that ::el_gets was last called.
+
+    m_enter_elgets_time.tv_sec = 0;
+    m_enter_elgets_time.tv_usec = 0;
 }
 
 IOChannel::~IOChannel ()
@@ -205,6 +230,8 @@ IOChannel::~IOChannel ()
         ::el_end (m_edit_line);
         m_edit_line = NULL;
     }
+
+    ::pthread_mutex_destroy (&m_output_mutex);
 }
 
 void
@@ -231,7 +258,23 @@ IOChannel::LibeditGetInput (std::string &new_line)
     if (m_edit_line != NULL)
     {
         int line_len = 0;
+
+        // Set boolean indicating whether or not el_gets is trying to get input (i.e. whether or not to attempt
+        // to refresh the prompt after writing data).
+        SetGettingCommand (true);
+        
+        // Get the current time just before calling el_gets; this is used by OutWrite, ErrWrite, and RefreshPrompt
+        // to make sure they have given el_gets enough time to write the prompt before they attempt to write
+        // anything.
+
+        ::gettimeofday (&m_enter_elgets_time, NULL);
+
+        // Call el_gets to prompt the user and read the user's input.
         const char *line = ::el_gets (m_edit_line, &line_len);
+        
+        // Re-set the boolean indicating whether or not el_gets is trying to get input.
+        SetGettingCommand (false);
+
         if (line)
         {
             // strip any newlines off the end of the string...
@@ -399,6 +442,23 @@ IOChannel::Stop ()
 void
 IOChannel::RefreshPrompt ()
 {
+    // If we are not in the middle of getting input from the user, there is no need to 
+    // refresh the prompt.
+
+    if (! IsGettingCommand())
+        return;
+
+    // Compare the current time versus the last time el_gets was called.  If less than
+    // 10000 microseconds (10000000 nanoseconds) have elapsed, wait 10000 microseconds, to ensure el_gets had time
+    // to finish writing the prompt before we start writing here.
+
+    if (ElapsedNanoSecondsSinceEnteringElGets() < 10000000)
+        usleep (10000);
+
+    // Use the mutex to make sure OutWrite, ErrWrite and Refresh prompt do not interfere with
+    // each other's output.
+
+    IOLocker locker (m_output_mutex);
     ::el_set (m_edit_line, EL_REFRESH);
 }
 
@@ -407,7 +467,20 @@ IOChannel::OutWrite (const char *buffer, size_t len)
 {
     if (len == 0)
         return;
-    ::fwrite (buffer, 1, len, m_out_file);
+
+    // Compare the current time versus the last time el_gets was called.  If less than
+    // 10000 microseconds (10000000 nanoseconds) have elapsed, wait 10000 microseconds, to ensure el_gets had time
+    // to finish writing the prompt before we start writing here.
+
+    if (ElapsedNanoSecondsSinceEnteringElGets() < 10000000)
+        usleep (10000);
+
+    {
+        // Use the mutex to make sure OutWrite, ErrWrite and Refresh prompt do not interfere with
+        // each other's output.
+        IOLocker locker (m_output_mutex);
+        ::fwrite (buffer, 1, len, m_out_file);
+    }
 }
 
 void
@@ -415,7 +488,20 @@ IOChannel::ErrWrite (const char *buffer, size_t len)
 {
     if (len == 0)
         return;
-    ::fwrite (buffer, 1, len, m_err_file);
+
+    // Compare the current time versus the last time el_gets was called.  If less than
+    // 10000 microseconds (10000000 nanoseconds) have elapsed, wait 10000 microseconds, to ensure el_gets had time
+    // to finish writing the prompt before we start writing here.
+
+    if (ElapsedNanoSecondsSinceEnteringElGets() < 10000000)
+        usleep (10000);
+
+    {
+        // Use the mutex to make sure OutWrite, ErrWrite and Refresh prompt do not interfere with
+        // each other's output.
+        IOLocker locker (m_output_mutex);
+        ::fwrite (buffer, 1, len, m_err_file);
+    }
 }
 
 void
@@ -451,4 +537,49 @@ bool
 IOChannel::CommandQueueIsEmpty () const
 {
     return m_command_queue.empty();
+}
+
+bool
+IOChannel::IsGettingCommand () const
+{
+    return m_getting_command;
+}
+
+void
+IOChannel::SetGettingCommand (bool new_value)
+{
+    m_getting_command = new_value;
+}
+
+uint64_t
+IOChannel::Nanoseconds (const struct timeval &time_val) const
+{
+    uint64_t nanoseconds = time_val.tv_sec * NSEC_PER_SEC + time_val.tv_usec * NSEC_PER_USEC;
+
+    return nanoseconds;
+}
+
+uint64_t
+IOChannel::ElapsedNanoSecondsSinceEnteringElGets ()
+{
+    if (! IsGettingCommand())
+        return 0;
+
+    struct timeval current_time;
+    ::gettimeofday (&current_time, NULL);
+    return (Nanoseconds (current_time) - Nanoseconds (m_enter_elgets_time));
+}
+
+IOLocker::IOLocker (pthread_mutex_t &mutex) :
+    m_mutex_ptr (&mutex)
+{
+    if (m_mutex_ptr)
+        ::pthread_mutex_lock (m_mutex_ptr);
+        
+}
+
+IOLocker::~IOLocker ()
+{
+    if (m_mutex_ptr)
+        ::pthread_mutex_unlock (m_mutex_ptr);
 }

@@ -133,10 +133,10 @@ private:
     void
     ResetOptionValues ();
 
-    void
+    size_t
     GetProcessSTDOUT ();
 
-    void
+    size_t
     GetProcessSTDERR ();
 
     void

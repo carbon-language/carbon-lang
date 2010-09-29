@@ -15,6 +15,8 @@
 
 #include <editline/readline.h>
 #include <histedit.h>
+#include <pthread.h>
+#include <sys/time.h>
 
 #include "Driver.h"
 
@@ -89,10 +91,24 @@ public:
     static unsigned char 
     ElCompletionFn (EditLine *e, int ch);
 
+protected:
+
     bool
     IsGettingCommand () const;
 
+    void
+    SetGettingCommand (bool new_value);
+
+    uint64_t
+    Nanoseconds (const struct timeval &time_val) const;
+
+    uint64_t
+    ElapsedNanoSecondsSinceEnteringElGets ();
+    
 private:
+
+    pthread_mutex_t m_output_mutex;
+    struct timeval m_enter_elgets_time;
 
     Driver *m_driver;
     lldb::thread_t m_read_thread;
@@ -112,6 +128,24 @@ private:
 
     unsigned char
     HandleCompletion (EditLine *e, int ch);
+};
+
+class IOLocker 
+{
+public:
+
+    IOLocker (pthread_mutex_t &mutex);
+
+    ~IOLocker ();
+
+protected:
+
+    pthread_mutex_t *m_mutex_ptr;
+
+private:
+
+    IOLocker (const IOLocker&);
+    const IOLocker& operator= (const IOLocker&);
 };
 
 #endif  // lldb_IOChannel_h_
