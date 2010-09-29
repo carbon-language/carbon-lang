@@ -2694,60 +2694,6 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                         m_forward_decl_clang_type_to_die[clang_type] = die;
                     }
 
-#if 0
-                    type_list->GetClangASTContext().StartTagDeclarationDefinition (clang_type);
-                    if (die->HasChildren())
-                    {
-                        std::vector<clang::CXXBaseSpecifier *> base_classes;
-                        std::vector<int> member_accessibilities;
-                        bool is_a_class = false;
-                        ParseChildMembers (sc, 
-                                           dwarf_cu, 
-                                           die, 
-                                           clang_type,
-                                           class_language,
-                                           base_classes, 
-                                           member_accessibilities, 
-                                           default_accessibility, 
-                                           is_a_class);
-
-                        // If we have a DW_TAG_structure_type instead of a DW_TAG_class_type we
-                        // need to tell the clang type it is actually a class.
-                        if (class_language != eLanguageTypeObjC)
-                        {
-                            if (is_a_class && tag_decl_kind != clang::TTK_Class)
-                                type_list->GetClangASTContext().SetTagTypeKind (clang_type, clang::TTK_Class);
-                        }
-
-                        // Since DW_TAG_structure_type gets used for both classes
-                        // and structures, we may need to set any DW_TAG_member
-                        // fields to have a "private" access if none was specified.
-                        // When we parsed the child members we tracked that actual
-                        // accessibility value for each DW_TAG_member in the
-                        // "member_accessibilities" array. If the value for the
-                        // member is zero, then it was set to the "default_accessibility"
-                        // which for structs was "public". Below we correct this
-                        // by setting any fields to "private" that weren't correctly
-                        // set.
-                        if (is_a_class && !member_accessibilities.empty())
-                        {
-                            // This is a class and all members that didn't have
-                            // their access specified are private.
-                            type_list->GetClangASTContext().SetDefaultAccessForRecordFields (clang_type, eAccessPrivate, &member_accessibilities.front(), member_accessibilities.size());
-                        }
-
-                        if (!base_classes.empty())
-                        {
-                            type_list->GetClangASTContext().SetBaseClassesForClassType (clang_type, &base_classes.front(), base_classes.size());
-
-                            // Clang will copy each CXXBaseSpecifier in "base_classes"
-                            // so we have to free them all.
-                            ClangASTContext::DeleteBaseClassSpecifiers (&base_classes.front(), base_classes.size());
-                        }
-                        
-                    }
-                    type_list->GetClangASTContext().CompleteTagDeclarationDefinition (clang_type);
-#endif // #if 0
                 }
                 break;
 
@@ -2826,14 +2772,6 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                         m_forward_decl_die_to_clang_type[die] = clang_type;
                         m_forward_decl_clang_type_to_die[clang_type] = die;
 
-#if 0
-                        if (die->HasChildren())
-                        {
-                            type_list->GetClangASTContext().StartTagDeclarationDefinition (clang_type);
-                            ParseChildEnumerators(sc, enumerator_clang_type, byte_size, dwarf_cu, die);
-                            type_list->GetClangASTContext().CompleteTagDeclarationDefinition (clang_type);
-                        }
-#endif // #if 0
                     }
                 }
                 break;
@@ -2978,6 +2916,11 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
 
                                     if (class_opaque_type)
                                     {
+                                        // If accessibility isn't set to anything valid, assume public for 
+                                        // now...
+                                        if (accessibility == eAccessNone)
+                                            accessibility = eAccessPublic;
+
                                         clang::ObjCMethodDecl *objc_method_decl;
                                         objc_method_decl = type_list->GetClangASTContext().AddMethodToObjCObjectType (class_opaque_type, 
                                                                                                                       type_name_cstr,
@@ -2998,6 +2941,11 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                                         clang_type_t class_opaque_type = class_type->GetClangType (true);
                                         if (ClangASTContext::IsCXXClassType (class_opaque_type))
                                         {
+                                            // Neither GCC 4.2 nor clang++ currently set a valid accessibility
+                                            // in the DWARF for C++ methods... Default to public for now...
+                                            if (accessibility == eAccessNone)
+                                                accessibility = eAccessPublic;
+
                                             clang::CXXMethodDecl *cxx_method_decl;
                                             cxx_method_decl = type_list->GetClangASTContext().AddMethodToCXXRecordType (class_opaque_type, 
                                                                                                                         type_name_cstr,
