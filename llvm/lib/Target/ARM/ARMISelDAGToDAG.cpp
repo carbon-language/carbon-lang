@@ -289,7 +289,7 @@ bool ARMDAGToDAGISel::SelectAddrMode2(SDValue N,
   }
 
   // Match simple R +/- imm12 operands.
-  if (N.getOpcode() == ISD::ADD)
+  if (N.getOpcode() == ISD::ADD) {
     if (ConstantSDNode *RHS = dyn_cast<ConstantSDNode>(N.getOperand(1))) {
       int RHSC = (int)RHS->getZExtValue();
       if ((RHSC >= 0 && RHSC < 0x1000) ||
@@ -312,6 +312,7 @@ bool ARMDAGToDAGISel::SelectAddrMode2(SDValue N,
         return true;
       }
     }
+  }
 
   // Otherwise this is R +/- [possibly shifted] R.
   ARM_AM::AddrOpc AddSub = N.getOpcode() == ISD::ADD ? ARM_AM::add:ARM_AM::sub;
