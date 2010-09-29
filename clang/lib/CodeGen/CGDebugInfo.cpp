@@ -621,13 +621,6 @@ CGDebugInfo::getOrCreateMethodType(const CXXMethodDecl *Method,
                                0),
                       Unit);
   
-  unsigned BFlags=0;
-  AccessSpecifier Access = Method->getAccess();
-  if (Access == clang::AS_private)
-    BFlags |= llvm::DIType::FlagPrivate;
-  else if (Access == clang::AS_protected)
-    BFlags |= llvm::DIType::FlagProtected;
-
   // Add "this" pointer.
 
   llvm::DIArray Args = llvm::DICompositeType(FnTy).getTypeArray();
