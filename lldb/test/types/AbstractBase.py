@@ -124,16 +124,24 @@ class GenericTester(TestBase):
             
             # The input type is in a canonical form as a set named atoms.
             # The display type string must conatin each and every element.
-            #dt = re.match("^\((.*)\)", output).group(1)
+            #
+            # Example:
+            #     runCmd: expr a
+            #     output: $0 = (double) 1100.12
+            #
+            try:
+                dt = re.match("^\$[0-9]+ = \((.*)\)", output).group(1)
+            except:
+                self.fail("Data type from expression parser is parsed correctly")
 
             # Expect the display type string to contain each and every atoms.
-            #self.expect(dt,
-            #            "Display type: '%s' must contain the type atoms: '%s'" %
-            #            (dt, atoms),
-            #            exe=False,
-            #    substrs = list(atoms))
+            self.expect(dt,
+                        "Display type: '%s' must contain the type atoms: '%s'" %
+                        (dt, atoms),
+                        exe=False,
+                substrs = list(atoms))
 
-            # The (var, val) pair must match, too.
-            #nv = (" %s = '%s'" if quotedDisplay else " %s = %s") % (var, val)
-            #self.expect(output, Msg(var, val), exe=False,
-            #    substrs = [nv])
+            # The val part must match, too.
+            valPart = ("'%s'" if quotedDisplay else "%s") % val
+            self.expect(output, Msg(var, val), exe=False,
+                substrs = [valPart])
