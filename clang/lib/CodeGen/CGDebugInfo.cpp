@@ -701,6 +701,12 @@ CGDebugInfo::CreateCXXMemberFunction(const CXXMethodDecl *Method,
   unsigned Flags = 0;
   if (Method->isImplicit())
     Flags |= llvm::DIDescriptor::FlagArtificial;
+  AccessSpecifier Access = Method->getAccess();
+  if (Access == clang::AS_private)
+    Flags |= llvm::DIDescriptor::FlagPrivate;
+  else if (Access == clang::AS_protected)
+    Flags |= llvm::DIDescriptor::FlagProtected;
+
   llvm::DISubprogram SP =
     DebugFactory.CreateSubprogram(RecordTy , MethodName, MethodName, 
                                   MethodLinkageName,
