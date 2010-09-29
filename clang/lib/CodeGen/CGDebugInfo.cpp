@@ -1729,12 +1729,15 @@ void CGDebugInfo::EmitDeclare(const VarDecl *VD, unsigned Tag,
   // Get location information.
   unsigned Line = getLineNumber(VD->getLocation());
   unsigned Column = getColumnNumber(VD->getLocation());
-
+  unsigned Flags = 0;
+  if (VD->isImplicit())
+    Flags |= llvm::DIDescriptor::FlagArtificial;
   // Create the descriptor for the variable.
   llvm::DIVariable D =
     DebugFactory.CreateVariable(Tag, llvm::DIDescriptor(RegionStack.back()),
-                                VD->getName(),
-                                Unit, Line, Ty, CGM.getLangOptions().Optimize);
+                                VD->getName(), Unit, Line, Ty, 
+                                CGM.getLangOptions().Optimize, Flags);
+
   // Insert an llvm.dbg.declare into the current block.
   llvm::Instruction *Call =
     DebugFactory.InsertDeclare(Storage, D, Builder.GetInsertBlock());
