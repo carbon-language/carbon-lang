@@ -1420,9 +1420,11 @@ let AddedComplexity = 10 in {
 /// sse12_extr_sign_mask - sse 1 & 2 unpack and interleave
 multiclass sse12_extr_sign_mask<RegisterClass RC, Intrinsic Int, string asm,
                                 Domain d> {
-  def rr : PI<0x50, MRMSrcReg, (outs GR32:$dst), (ins RC:$src),
-              !strconcat(asm, "\t{$src, $dst|$dst, $src}"),
+  def rr32 : PI<0x50, MRMSrcReg, (outs GR32:$dst), (ins RC:$src),
+                !strconcat(asm, "\t{$src, $dst|$dst, $src}"),
                      [(set GR32:$dst, (Int RC:$src))], d>;
+  def rr64 : PI<0x50, MRMSrcReg, (outs GR64:$dst), (ins RC:$src),
+                !strconcat(asm, "\t{$src, $dst|$dst, $src}"), [], d>, REX_W;
 }
 
 // Mask creation
