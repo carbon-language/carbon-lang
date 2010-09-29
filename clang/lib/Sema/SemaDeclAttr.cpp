@@ -650,9 +650,9 @@ static void HandleAliasAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   d->addAttr(::new (S.Context) AliasAttr(Attr.getLoc(), S.Context, Str->getString()));
 }
 
-static void HandleAlwaysInlineAttr(Decl *d, const AttributeList &Attr,
+static void HandleNakedAttr(Decl *d, const AttributeList &Attr,
                                    Sema &S) {
-  // check the attribute arguments.
+  // Check the attribute arguments.
   if (Attr.getNumArgs() != 0) {
     S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 0;
     return;
@@ -660,7 +660,24 @@ static void HandleAlwaysInlineAttr(Decl *d, const AttributeList &Attr,
 
   if (!isa<FunctionDecl>(d)) {
     S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type)
-    << Attr.getName() << 0 /*function*/;
+      << Attr.getName() << 0 /*function*/;
+    return;
+  }
+
+  d->addAttr(::new (S.Context) NakedAttr(Attr.getLoc(), S.Context));
+}
+
+static void HandleAlwaysInlineAttr(Decl *d, const AttributeList &Attr,
+                                   Sema &S) {
+  // Check the attribute arguments.
+  if (Attr.getNumArgs() != 0) {
+    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 0;
+    return;
+  }
+
+  if (!isa<FunctionDecl>(d)) {
+    S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type)
+      << Attr.getName() << 0 /*function*/;
     return;
   }
 
@@ -668,7 +685,7 @@ static void HandleAlwaysInlineAttr(Decl *d, const AttributeList &Attr,
 }
 
 static void HandleMallocAttr(Decl *d, const AttributeList &Attr, Sema &S) {
-  // check the attribute arguments.
+  // Check the attribute arguments.
   if (Attr.getNumArgs() != 0) {
     S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 0;
     return;
@@ -2281,6 +2298,7 @@ static void ProcessDeclAttribute(Scope *scope, Decl *D,
   case AttributeList::AT_ownership_takes:
   case AttributeList::AT_ownership_holds:
       HandleOwnershipAttr     (D, Attr, S); break;
+  case AttributeList::AT_naked:       HandleNakedAttr       (D, Attr, S); break;
   case AttributeList::AT_noreturn:    HandleNoReturnAttr    (D, Attr, S); break;
   case AttributeList::AT_nothrow:     HandleNothrowAttr     (D, Attr, S); break;
   case AttributeList::AT_override:    HandleOverrideAttr    (D, Attr, S); break;

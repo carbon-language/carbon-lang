@@ -83,6 +83,7 @@ public:
     AT_hiding,
     AT_malloc,
     AT_mode,
+    AT_naked,
     AT_nodebug,
     AT_noinline,
     AT_no_instrument_function,

@@ -73,6 +73,7 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo *Name) {
     .Case("unused", AT_unused)
     .Case("aligned", AT_aligned)
     .Case("cleanup", AT_cleanup)
+    .Case("naked", AT_naked)
     .Case("nodebug", AT_nodebug)
     .Case("nonnull", AT_nonnull)
     .Case("nothrow", AT_nothrow)

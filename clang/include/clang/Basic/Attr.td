@@ -245,6 +245,10 @@ def MSP430Interrupt : Attr {
   let Args = [UnsignedArgument<"Number">];
 }
 
+def Naked : Attr {
+  let Spellings = ["naked"];
+}
+
 def NoDebug : Attr {
   let Spellings = ["nodebug"];
 }
