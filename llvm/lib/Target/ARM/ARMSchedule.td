@@ -14,6 +14,7 @@ def IIC_iALUx      : InstrItinClass;
 def IIC_iALUi      : InstrItinClass;
 def IIC_iALUr      : InstrItinClass;
 def IIC_iALUsi     : InstrItinClass;
+def IIC_iALUsir    : InstrItinClass;
 def IIC_iALUsr     : InstrItinClass;
 def IIC_iBITi      : InstrItinClass;
 def IIC_iBITr      : InstrItinClass;

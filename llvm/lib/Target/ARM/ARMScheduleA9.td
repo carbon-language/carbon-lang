@@ -23,10 +23,14 @@ def A9_NPipe   : FuncUnit; // NEON ALU/MUL pipe
 def A9_DRegsVFP: FuncUnit; // FP register set, VFP side
 def A9_DRegsN  : FuncUnit; // FP register set, NEON side
 
+// Bypasses
+def A9_LdBypass : Bypass;
+
 // Dual issue pipeline represented by A9_Pipe0 | A9_Pipe1
 //
 def CortexA9Itineraries : ProcessorItineraries<
-  [A9_NPipe, A9_DRegsN, A9_DRegsVFP, A9_LSPipe, A9_Pipe0, A9_Pipe1], [], [
+  [A9_NPipe, A9_DRegsN, A9_DRegsVFP, A9_LSPipe, A9_Pipe0, A9_Pipe1],
+  [A9_LdBypass], [
   // Two fully-pipelined integer ALU pipelines
 
   //
@@ -39,19 +43,30 @@ def CortexA9Itineraries : ProcessorItineraries<
                                InstrStage<1, [A9_Pipe0, A9_Pipe1]>], [2]>,
   //
   // MVN instructions
-  InstrItinData<IIC_iMVNi   , [InstrStage<1, [A9_Pipe0, A9_Pipe1]>], [1]>,
-  InstrItinData<IIC_iMVNr   , [InstrStage<1, [A9_Pipe0, A9_Pipe1]>], [1, 1]>,
-  InstrItinData<IIC_iMVNsi  , [InstrStage<1, [A9_Pipe0, A9_Pipe1]>], [1, 1]>,
-  InstrItinData<IIC_iMVNsr  , [InstrStage<2, [A9_Pipe0, A9_Pipe1]>], [2, 2, 1]>,
+  InstrItinData<IIC_iMVNi   , [InstrStage<1, [A9_Pipe0, A9_Pipe1]>],
+                              [1]>,
+  InstrItinData<IIC_iMVNr   , [InstrStage<1, [A9_Pipe0, A9_Pipe1]>],
+                              [1, 1], [NoBypass, A9_LdBypass]>,
+  InstrItinData<IIC_iMVNsi  , [InstrStage<1, [A9_Pipe0, A9_Pipe1]>],
+                              [1, 1]>,
+  InstrItinData<IIC_iMVNsr  , [InstrStage<2, [A9_Pipe0, A9_Pipe1]>],
+                              [2, 2, 1]>,
   //
   // No operand cycles
   InstrItinData<IIC_iALUx    , [InstrStage<1, [A9_Pipe0, A9_Pipe1]>]>,
   //
   // Binary Instructions that produce a result
-  InstrItinData<IIC_iALUi , [InstrStage<1, [A9_Pipe0, A9_Pipe1]>], [2, 2]>,
-  InstrItinData<IIC_iALUr , [InstrStage<1, [A9_Pipe0, A9_Pipe1]>], [2, 2, 2]>,
-  InstrItinData<IIC_iALUsi, [InstrStage<2, [A9_Pipe0, A9_Pipe1]>], [2, 2, 1]>,
-  InstrItinData<IIC_iALUsr,[InstrStage<3, [A9_Pipe0, A9_Pipe1]>], [2, 2, 1, 1]>,
+  InstrItinData<IIC_iALUi , [InstrStage<1, [A9_Pipe0, A9_Pipe1]>],
+                            [2, 2], [NoBypass, A9_LdBypass]>,
+  InstrItinData<IIC_iALUr , [InstrStage<1, [A9_Pipe0, A9_Pipe1]>],
+                            [2, 2, 2], [NoBypass, A9_LdBypass, A9_LdBypass]>,
+  InstrItinData<IIC_iALUsi, [InstrStage<2, [A9_Pipe0, A9_Pipe1]>],
+                            [2, 2, 1], [NoBypass, A9_LdBypass, NoBypass]>,
+  InstrItinData<IIC_iALUsir,[InstrStage<2, [A9_Pipe0, A9_Pipe1]>],
+                            [2, 1, 2], [NoBypass, NoBypass, A9_LdBypass]>,
+  InstrItinData<IIC_iALUsr,[InstrStage<3, [A9_Pipe0, A9_Pipe1]>],
+                            [2, 2, 1, 1],
+                            [NoBypass, A9_LdBypass, NoBypass, NoBypass]>,
   //
   // Bitwise Instructions that produce a result
   InstrItinData<IIC_iBITi , [InstrStage<1, [A9_Pipe0, A9_Pipe1]>], [2, 2]>,
@@ -69,10 +84,14 @@ def CortexA9Itineraries : ProcessorItineraries<
   InstrItinData<IIC_iEXTAsr,[InstrStage<2, [A9_Pipe0, A9_Pipe1]>],[3, 1, 1, 1]>,
   //
   // Compare instructions
-  InstrItinData<IIC_iCMPi   , [InstrStage<1, [A9_Pipe0, A9_Pipe1]>], [2]>,
-  InstrItinData<IIC_iCMPr   , [InstrStage<1, [A9_Pipe0, A9_Pipe1]>], [2, 2]>,
-  InstrItinData<IIC_iCMPsi  , [InstrStage<2, [A9_Pipe0, A9_Pipe1]>], [2, 1]>,
-  InstrItinData<IIC_iCMPsr  , [InstrStage<3, [A9_Pipe0, A9_Pipe1]>], [2, 1, 1]>,
+  InstrItinData<IIC_iCMPi   , [InstrStage<1, [A9_Pipe0, A9_Pipe1]>],
+                              [2], [A9_LdBypass]>,
+  InstrItinData<IIC_iCMPr   , [InstrStage<1, [A9_Pipe0, A9_Pipe1]>],
+                              [2, 2], [A9_LdBypass, A9_LdBypass]>,
+  InstrItinData<IIC_iCMPsi  , [InstrStage<2, [A9_Pipe0, A9_Pipe1]>],
+                              [2, 1], [A9_LdBypass, NoBypass]>,
+  InstrItinData<IIC_iCMPsr  , [InstrStage<3, [A9_Pipe0, A9_Pipe1]>],
+                              [2, 1, 1], [A9_LdBypass, NoBypass, NoBypass]>,
   //
   // Test instructions
   InstrItinData<IIC_iTSTi   , [InstrStage<1, [A9_Pipe0, A9_Pipe1]>], [2]>,
@@ -105,31 +124,38 @@ def CortexA9Itineraries : ProcessorItineraries<
   //
   // Immediate offset
   InstrItinData<IIC_iLoadi   , [InstrStage<1, [A9_Pipe1]>,
-                                InstrStage<1, [A9_LSPipe]>], [3, 1]>,
+                                InstrStage<1, [A9_LSPipe]>],
+                               [3, 1], [A9_LdBypass]>,
   //
   // Register offset
   InstrItinData<IIC_iLoadr   , [InstrStage<1, [A9_Pipe1]>,
-                                InstrStage<1, [A9_LSPipe]>], [3, 1, 1]>,
+                                InstrStage<1, [A9_LSPipe]>],
+                               [3, 1, 1], [A9_LdBypass]>,
   //
   // Scaled register offset
   InstrItinData<IIC_iLoadsi  , [InstrStage<1, [A9_Pipe1]>,
-                                InstrStage<2, [A9_LSPipe]>], [4, 1, 1]>,
+                                InstrStage<2, [A9_LSPipe]>],
+                               [4, 1, 1], [A9_LdBypass]>,
   //
   // Immediate offset with update
   InstrItinData<IIC_iLoadiu  , [InstrStage<1, [A9_Pipe1]>,
-                                InstrStage<2, [A9_LSPipe]>], [3, 2, 1]>,
+                                InstrStage<2, [A9_LSPipe]>],
+                               [3, 2, 1], [A9_LdBypass]>,
   //
   // Register offset with update
   InstrItinData<IIC_iLoadru  , [InstrStage<1, [A9_Pipe1]>,
-                                InstrStage<2, [A9_LSPipe]>], [3, 2, 1, 1]>,
+                                InstrStage<2, [A9_LSPipe]>],
+                               [3, 2, 1, 1], [A9_LdBypass]>,
   //
   // Scaled register offset with update
   InstrItinData<IIC_iLoadsiu , [InstrStage<1, [A9_Pipe1]>,
-                                InstrStage<2, [A9_LSPipe]>], [4, 3, 1, 1]>,
+                                InstrStage<2, [A9_LSPipe]>],
+                               [4, 3, 1, 1], [A9_LdBypass]>,
   //
   // Load multiple
   InstrItinData<IIC_iLoadm   , [InstrStage<1, [A9_Pipe1]>,
-                                InstrStage<1, [A9_LSPipe]>]>,
+                                InstrStage<1, [A9_LSPipe]>],
+                               [3], [A9_LdBypass]>,
 
   //
   // Load multiple plus branch
@@ -141,7 +167,8 @@ def CortexA9Itineraries : ProcessorItineraries<
   // iLoadi + iALUr for t2LDRpci_pic.
   InstrItinData<IIC_iLoadiALU, [InstrStage<1, [A9_Pipe1]>,
                                 InstrStage<1, [A9_LSPipe]>,
-                                InstrStage<1, [A9_Pipe0, A9_Pipe1]>], [4, 1]>,
+                                InstrStage<1, [A9_Pipe0, A9_Pipe1]>],
+                               [2, 1]>,
 
   // Integer store pipeline
   ///

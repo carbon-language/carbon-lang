@@ -527,26 +527,23 @@ void ScheduleDAGInstrs::ComputeOperandLatency(SUnit *Def, SUnit *Use,
   MachineInstr *DefMI = Def->getInstr();
   int DefIdx = DefMI->findRegisterDefOperandIdx(Reg);
   if (DefIdx != -1) {
-    int DefCycle = InstrItins->getOperandCycle(DefMI->getDesc().getSchedClass(),
-                                               DefIdx);
-    if (DefCycle >= 0) {
-      MachineInstr *UseMI = Use->getInstr();
-      const unsigned UseClass = UseMI->getDesc().getSchedClass();
+    unsigned DefClass = DefMI->getDesc().getSchedClass();
+    MachineInstr *UseMI = Use->getInstr();
+    unsigned UseClass = UseMI->getDesc().getSchedClass();
 
-      // For all uses of the register, calculate the maxmimum latency
-      int Latency = -1;
-      for (unsigned i = 0, e = UseMI->getNumOperands(); i != e; ++i) {
-        const MachineOperand &MO = UseMI->getOperand(i);
-        if (!MO.isReg() || !MO.isUse())
-          continue;
-        unsigned MOReg = MO.getReg();
-        if (MOReg != Reg)
-          continue;
+    // For all uses of the register, calculate the maxmimum latency
+    int Latency = -1;
+    for (unsigned i = 0, e = UseMI->getNumOperands(); i != e; ++i) {
+      const MachineOperand &MO = UseMI->getOperand(i);
+      if (!MO.isReg() || !MO.isUse())
+        continue;
+      unsigned MOReg = MO.getReg();
+      if (MOReg != Reg)
+        continue;
 
-        int UseCycle = InstrItins->getOperandCycle(UseClass, i);
-        if (UseCycle >= 0)
-          Latency = std::max(Latency, DefCycle - UseCycle + 1);
-      }
+      int UseCycle = InstrItins->getOperandLatency(DefClass, DefIdx,
+                                                   UseClass, i);
+      Latency = std::max(Latency, UseCycle);
 
       // If we found a latency, then replace the existing dependence latency.
       if (Latency >= 0)

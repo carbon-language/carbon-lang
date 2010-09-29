@@ -269,14 +269,14 @@ void SubtargetEmitter::FormItineraryBypassString(const std::string &Name,
   const std::vector<Record*> &BypassList =
     ItinData->getValueAsListOfDefs("Bypasses");
   unsigned N = BypassList.size();
-  for (unsigned i = 0; i < N;) {
+  unsigned i = 0;
+  for (; i < N;) {
     ItinString += Name + "Bypass::" + BypassList[i]->getName();
-    if (++i < N) ItinString += ", ";
+    if (++i < NOperandCycles) ItinString += ", ";
   }
-
-  for (; N < NOperandCycles;) {
+  for (; i < NOperandCycles;) {
     ItinString += " 0";
-    if (++N < NOperandCycles) ItinString += ", ";
+    if (++i < NOperandCycles) ItinString += ", ";
   }
 }
 
@@ -316,14 +316,17 @@ void SubtargetEmitter::EmitStageAndOperandCycleData(raw_ostream &OS,
     OS << "}\n";
 
     std::vector<Record*> BPs = Proc->getValueAsListOfDefs("BP");
-    OS << "\n// Pipeline bypasses for itineraries \"" << Name << "\"\n"
-       << "namespace " << Name << "Bypass {\n";
+    if (BPs.size()) {
+      OS << "\n// Pipeline forwarding pathes for itineraries \"" << Name
+         << "\"\n" << "namespace " << Name << "Bypass {\n";
 
-    for (unsigned j = 0, BPN = BPs.size(); j < BPN; ++j)
-      OS << "  const unsigned " << BPs[j]->getName()
-         << " = 1 << " << j << ";\n";
+      OS << "  const unsigned NoBypass = 0;\n";
+      for (unsigned j = 0, BPN = BPs.size(); j < BPN; ++j)
+        OS << "  const unsigned " << BPs[j]->getName()
+           << " = 1 << " << j << ";\n";
 
-    OS << "}\n";
+      OS << "}\n";
+    }
   }
 
   // Begin stages table
@@ -335,12 +338,12 @@ void SubtargetEmitter::EmitStageAndOperandCycleData(raw_ostream &OS,
   OperandCycleTable += "  0, // No itinerary\n";
 
   // Begin pipeline bypass table
-  std::string BypassTable = "static const unsigned Bypasses[] = {\n";
+  std::string BypassTable = "static const unsigned ForwardingPathes[] = {\n";
   BypassTable += "  0, // No itinerary\n";
         
   unsigned StageCount = 1, OperandCycleCount = 1;
   unsigned ItinStageEnum = 1, ItinOperandCycleEnum = 1;
-  std::map<std::string, unsigned> ItinStageMap, ItinOperandCycleMap;
+  std::map<std::string, unsigned> ItinStageMap, ItinOperandMap;
   for (unsigned i = 0, N = ProcItinList.size(); i < N; i++) {
     // Next record
     Record *Proc = ProcItinList[i];
@@ -395,13 +398,14 @@ void SubtargetEmitter::EmitStageAndOperandCycleData(raw_ostream &OS,
       // Check to see if operand cycle already exists and create if it doesn't
       unsigned FindOperandCycle = 0;
       if (NOperandCycles > 0) {
-        FindOperandCycle = ItinOperandCycleMap[ItinOperandCycleString];
+        std::string ItinOperandString = ItinOperandCycleString+ItinBypassString;
+        FindOperandCycle = ItinOperandMap[ItinOperandString];
         if (FindOperandCycle == 0) {
           // Emit as  cycle, // index
           OperandCycleTable += ItinOperandCycleString + ", // " + 
             itostr(ItinOperandCycleEnum) + "\n";
           // Record Itin class number.
-          ItinOperandCycleMap[ItinOperandCycleString] = 
+          ItinOperandMap[ItinOperandCycleString] = 
             FindOperandCycle = OperandCycleCount;
 
           // Emit as bypass, // index
@@ -622,7 +626,8 @@ void SubtargetEmitter::ParseFeaturesFunction(raw_ostream &OS) {
     OS << "\n"
        << "  InstrItinerary *Itinerary = (InstrItinerary *)"
        <<              "Features.getInfo(ProcItinKV, ProcItinKVSize);\n"
-       << "  InstrItins = InstrItineraryData(Stages, OperandCycles, Itinerary);\n";
+       << "  InstrItins = InstrItineraryData(Stages, OperandCycles, "
+       << "ForwardingPathes, Itinerary);\n";
   }
 
   OS << "  return Features.getCPU();\n"

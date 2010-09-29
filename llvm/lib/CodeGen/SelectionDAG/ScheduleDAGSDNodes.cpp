@@ -457,24 +457,24 @@ void ScheduleDAGSDNodes::ComputeOperandLatency(SDNode *Def, SDNode *Use,
     return;
 
   unsigned DefIdx = Use->getOperand(OpIdx).getResNo();
-  if (Def->isMachineOpcode()) {
-    const TargetInstrDesc &II = TII->get(Def->getMachineOpcode());
-    if (DefIdx >= II.getNumDefs())
-      return;
-    int DefCycle = InstrItins->getOperandCycle(II.getSchedClass(), DefIdx);
-    if (DefCycle < 0)
-      return;
-    int UseCycle = 1;
-    if (Use->isMachineOpcode()) {
-      const unsigned UseClass = TII->get(Use->getMachineOpcode()).getSchedClass();
-      UseCycle = InstrItins->getOperandCycle(UseClass, OpIdx);
-    }
-    if (UseCycle >= 0) {
-      int Latency = DefCycle - UseCycle + 1;
-      if (Latency >= 0)
-        dep.setLatency(Latency);
-    }
+  if (!Def->isMachineOpcode())
+    return;
+
+  const TargetInstrDesc &II = TII->get(Def->getMachineOpcode());
+  if (DefIdx >= II.getNumDefs())
+    return;
+
+  int Latency = 0;
+  if (!Use->isMachineOpcode()) {
+    Latency = InstrItins->getOperandCycle(II.getSchedClass(), DefIdx);
+  } else {
+    unsigned DefClass = II.getSchedClass();
+    unsigned UseClass = TII->get(Use->getMachineOpcode()).getSchedClass();
+    Latency = InstrItins->getOperandLatency(DefClass, DefIdx, UseClass, OpIdx);
   }
+
+  if (Latency >= 0)
+    dep.setLatency(Latency);
 }
 
 void ScheduleDAGSDNodes::dumpNode(const SUnit *SU) const {

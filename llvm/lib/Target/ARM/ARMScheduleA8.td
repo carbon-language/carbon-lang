@@ -36,6 +36,7 @@ def CortexA8Itineraries : ProcessorItineraries<
   InstrItinData<IIC_iALUi ,[InstrStage<1, [A8_Pipe0, A8_Pipe1]>], [2, 2]>,
   InstrItinData<IIC_iALUr ,[InstrStage<1, [A8_Pipe0, A8_Pipe1]>], [2, 2, 2]>,
   InstrItinData<IIC_iALUsi,[InstrStage<1, [A8_Pipe0, A8_Pipe1]>], [2, 2, 1]>,
+  InstrItinData<IIC_iALUsir,[InstrStage<1,[A8_Pipe0, A8_Pipe1]>], [2, 1, 2]>,
   InstrItinData<IIC_iALUsr,[InstrStage<1, [A8_Pipe0, A8_Pipe1]>], [2, 2, 1, 1]>,
   //
   // Bitwise Instructions that produce a result

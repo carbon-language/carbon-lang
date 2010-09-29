@@ -285,7 +285,7 @@ multiclass T2I_rbin_irs<bits<4> opcod, string opc, PatFrag opnode> {
      let Inst{5-4} = 0b00; // type
    }
    // shifted register
-   def rs : T2sI<(outs rGPR:$dst), (ins rGPR:$rhs, t2_so_reg:$lhs), IIC_iALUsi,
+   def rs : T2sI<(outs rGPR:$dst), (ins rGPR:$rhs, t2_so_reg:$lhs), IIC_iALUsir,
                  opc, "\t$dst, $rhs, $lhs",
                  [(set rGPR:$dst, (opnode t2_so_reg:$lhs, rGPR:$rhs))]> {
      let Inst{31-27} = 0b11101;
@@ -1698,7 +1698,7 @@ defm t2ORN  : T2I_bin_irs<0b0011, "orn",
 // Prefer over of t2EORri ra, rb, -1 because mvn has 16-bit version
 let AddedComplexity = 1 in
 defm t2MVN  : T2I_un_irs <0b0011, "mvn",
-                          IIC_iMOVi, IIC_iMOVr, IIC_iMOVsi,
+                          IIC_iMVNi, IIC_iMVNr, IIC_iMVNsi,
                           UnOpFrag<(not node:$Src)>, 1, 1>;
 
 
