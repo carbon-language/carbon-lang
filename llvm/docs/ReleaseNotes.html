@@ -75,13 +75,37 @@ Almost dead code.
 <!-- Features that need text if they're finished for 2.9:
   combiner-aa?
   strong phi elim
-  llvm.dbg.value: variable debug info for optimized code
   loop dependence analysis
   TBAA
   CorrelatedValuePropagation
  -->
  
  <!-- Announcement, lldb, libc++ -->
+ 
+ <!-- to write:
+  MachineCSE tuned and on by default.
+  llvm.dbg.value: variable debug info for optimized code
+  MC Assembler backend is now real, does relaxation and is bitwise identical
+    with darwin assembler in huge majority of all cases.
+  new GHC calling convention
+  New half float intrinsics LangRef.html#int_fp16
+  Rewrote tblgen's type inference for backends to be more consistent and
+     diagnose more target bugs.  This also allows limited support for writing
+     patterns for instructions that return multiple results, e.g. a virtual
+     register and a flag result.  Stuff that used 'parallel' before should use
+     this.
+  New ARM/Thumb disassembler support in MC.
+  New SSEDomainFix pass: 
+    On Nehalem and newer CPUs there is a 2 cycle latency penalty on using a
+    register in a different domain than where it was defined. Some instructions
+    have equvivalents for different domains, like por/orps/orpd.  The
+    SSEDomainFix pass tries to minimize the number of domain crossings by
+    changing between equvivalent opcodes where possible.
+  Support for the Intel AES instructions in the assembler.
+  memcpy, memmove, and memset now take address space qualified pointers + volatile.
+  
+ -->
+ 
 
 <!-- *********************************************************************** -->
 <div class="doc_section">
@@ -237,7 +261,10 @@ href="http://blog.llvm.org/2010/04/intro-to-llvm-mc-project.html">Intro to the
 LLVM MC Project Blog Post</a>.
 </p>
 
-<p>2.8 status here</p>
+<p>2.8 status here.  Basic correctness, some obscure missing instructions on
+   mainline, on by default in clang.
+   Entire compiler backend converted to use mcstreamer.
+   </p>
 </div>	
 
 <!--=========================================================================-->
@@ -319,6 +346,7 @@ organization changes have happened:
 
 <ul>
 <li>libc++ and lldb are new</li>
+<li>Debugging optimized code support.</li>
 </ul>
 </div>
 
