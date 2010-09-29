@@ -78,7 +78,7 @@ public:
   /// explaining the match failure.
   virtual bool 
   MatchAndEmitInstruction(SMLoc IDLoc,
-                          const SmallVectorImpl<MCParsedAsmOperand*> &Operands,
+                          SmallVectorImpl<MCParsedAsmOperand*> &Operands,
                           MCStreamer &Out) = 0;
   
 };

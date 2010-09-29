@@ -81,8 +81,8 @@ private:
   bool ParseDirectiveSyntax(SMLoc L);
 
   bool MatchAndEmitInstruction(SMLoc IDLoc,
-                        const SmallVectorImpl<MCParsedAsmOperand*> &Operands,
-                        MCStreamer &Out) {
+                               SmallVectorImpl<MCParsedAsmOperand*> &Operands,
+                               MCStreamer &Out) {
     MCInst Inst;
     unsigned ErrorInfo;
     if (MatchInstructionImpl(Operands, Inst, ErrorInfo) == Match_Success) {

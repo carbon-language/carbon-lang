@@ -407,3 +407,11 @@ cwtl  // CHECK: cwtl
 cbw   // CHECK: cbtw
 cwd   // CHECK: cwtd
 cdq   // CHECK: cltd
+
+// rdar://8456378 and PR7557 - fstsw
+fstsw %ax
+// CHECK: wait
+// CHECK: fnstsw %ax
+fstsw (%rax)
+// CHECK: wait
+// CHECK: fnstsw (%rax)

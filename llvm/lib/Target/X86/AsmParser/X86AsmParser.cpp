@@ -52,7 +52,7 @@ private:
   bool ParseDirectiveWord(unsigned Size, SMLoc L);
 
   bool MatchAndEmitInstruction(SMLoc IDLoc,
-                           const SmallVectorImpl<MCParsedAsmOperand*> &Operands,
+                               SmallVectorImpl<MCParsedAsmOperand*> &Operands,
                                MCStreamer &Out);
 
   /// @name Auto-generated Matcher Functions
@@ -1109,10 +1109,24 @@ bool X86ATTAsmParser::ParseDirectiveWord(unsigned Size, SMLoc L) {
 
 bool X86ATTAsmParser::
 MatchAndEmitInstruction(SMLoc IDLoc,
-                        const SmallVectorImpl<MCParsedAsmOperand*> &Operands,
+                        SmallVectorImpl<MCParsedAsmOperand*> &Operands,
                         MCStreamer &Out) {
   assert(!Operands.empty() && "Unexpect empty operand list!");
+  X86Operand *Op = static_cast<X86Operand*>(Operands[0]);
+  assert(Op->isToken() && "Leading operand should always be a mnemonic!");
 
+  // First, handle aliases that expand to multiple instructions.
+  // FIXME: This should be replaced with a real .td file alias mechanism.
+  if (Op->getToken() == "fstsw") {
+    MCInst Inst;
+    Inst.setOpcode(X86::WAIT);
+    Out.EmitInstruction(Inst);
+
+    delete Operands[0];
+    Operands[0] = X86Operand::CreateToken("fnstsw", IDLoc);
+  }
+  
+  
   bool WasOriginallyInvalidOperand = false;
   unsigned OrigErrorInfo;
   MCInst Inst;
@@ -1136,9 +1150,6 @@ MatchAndEmitInstruction(SMLoc IDLoc,
   // valid prefixes, and we could just infer the right unambiguous
   // type. However, that requires substantially more matcher support than the
   // following hack.
-
-  X86Operand *Op = static_cast<X86Operand*>(Operands[0]);
-  assert(Op->isToken() && "Leading operand should always be a mnemonic!");
   
   // Change the operand to point to a temporary token.
   StringRef Base = Op->getToken();
