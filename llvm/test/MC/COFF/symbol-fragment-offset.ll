@@ -146,7 +146,7 @@ declare i32 @puts(i8* nocapture) nounwind
 ; CHECK:       SectionNumber            = 2
 ; CHECK:       SimpleType               = IMAGE_SYM_TYPE_NULL (0)
 ; CHECK:       ComplexType              = IMAGE_SYM_DTYPE_NULL (0)
-; CHECK:       StorageClass             = IMAGE_SYM_CLASS_LABEL (6)
+; CHECK:       StorageClass             = IMAGE_SYM_CLASS_STATIC (3)
 ; CHECK:       NumberOfAuxSymbols       = 0
 ; CHECK:       AuxillaryData            =
 
