@@ -15,7 +15,7 @@ fi
 
 cd $1
 if [ -d .svn ]; then
-  svnversion
+  svnversion | sed -e "s#\([0-9]*\)[A-Z]*#\1#"
 elif [ -d .git/svn ]; then
   git svn info | grep 'Revision:' | cut -d: -f2-
 elif [ -d .git ]; then
