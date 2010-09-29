@@ -118,6 +118,7 @@ void UnreachableMachineBlockElim::getAnalysisUsage(AnalysisUsage &AU) const {
 
 bool UnreachableMachineBlockElim::runOnMachineFunction(MachineFunction &F) {
   SmallPtrSet<MachineBasicBlock*, 8> Reachable;
+  bool ModifiedPHI = false;
 
   MMI = getAnalysisIfAvailable<MachineModuleInfo>();
   MachineDominatorTree *MDT = getAnalysisIfAvailable<MachineDominatorTree>();
@@ -179,6 +180,7 @@ bool UnreachableMachineBlockElim::runOnMachineFunction(MachineFunction &F) {
         if (!preds.count(phi->getOperand(i).getMBB())) {
           phi->RemoveOperand(i);
           phi->RemoveOperand(i-1);
+          ModifiedPHI = true;
         }
 
       if (phi->getNumOperands() == 3) {
@@ -188,6 +190,7 @@ bool UnreachableMachineBlockElim::runOnMachineFunction(MachineFunction &F) {
         MachineInstr* temp = phi;
         ++phi;
         temp->eraseFromParent();
+        ModifiedPHI = true;
 
         if (Input != Output)
           F.getRegInfo().replaceRegWith(Output, Input);
@@ -201,5 +204,5 @@ bool UnreachableMachineBlockElim::runOnMachineFunction(MachineFunction &F) {
 
   F.RenumberBlocks();
 
-  return DeadBlocks.size();
+  return (DeadBlocks.size() || ModifiedPHI);
 }
