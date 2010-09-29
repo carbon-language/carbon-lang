@@ -6692,7 +6692,64 @@ void Sema::ActOnFields(Scope* S,
 
   // Okay, we successfully defined 'Record'.
   if (Record) {
-    Record->completeDefinition();
+    bool Completed = false;
+    if (CXXRecordDecl *CXXRecord = dyn_cast<CXXRecordDecl>(Record)) {
+      if (!CXXRecord->isInvalidDecl()) {
+        // Set access bits correctly on the directly-declared conversions.
+        UnresolvedSetImpl *Convs = CXXRecord->getConversionFunctions();
+        for (UnresolvedSetIterator I = Convs->begin(), E = Convs->end(); 
+             I != E; ++I)
+          Convs->setAccess(I, (*I)->getAccess());
+        
+        if (!CXXRecord->isDependentType()) {
+          // Add any implicitly-declared members to this class.
+          AddImplicitlyDeclaredMembersToClass(CXXRecord);
+
+          // If we have virtual base classes, we may end up finding multiple 
+          // final overriders for a given virtual function. Check for this 
+          // problem now.
+          if (CXXRecord->getNumVBases()) {
+            CXXFinalOverriderMap FinalOverriders;
+            CXXRecord->getFinalOverriders(FinalOverriders);
+            
+            for (CXXFinalOverriderMap::iterator M = FinalOverriders.begin(), 
+                                             MEnd = FinalOverriders.end();
+                 M != MEnd; ++M) {
+              for (OverridingMethods::iterator SO = M->second.begin(), 
+                                            SOEnd = M->second.end();
+                   SO != SOEnd; ++SO) {
+                assert(SO->second.size() > 0 && 
+                       "Virtual function without overridding functions?");
+                if (SO->second.size() == 1)
+                  continue;
+                
+                // C++ [class.virtual]p2:
+                //   In a derived class, if a virtual member function of a base
+                //   class subobject has more than one final overrider the
+                //   program is ill-formed.
+                Diag(Record->getLocation(), diag::err_multiple_final_overriders)
+                  << (NamedDecl *)M->first << Record;
+                Diag(M->first->getLocation(), 
+                     diag::note_overridden_virtual_function);
+                for (OverridingMethods::overriding_iterator 
+                          OM = SO->second.begin(), 
+                       OMEnd = SO->second.end();
+                     OM != OMEnd; ++OM)
+                  Diag(OM->Method->getLocation(), diag::note_final_overrider)
+                    << (NamedDecl *)M->first << OM->Method->getParent();
+                
+                Record->setInvalidDecl();
+              }
+            }
+            CXXRecord->completeDefinition(&FinalOverriders);
+            Completed = true;
+          }
+        }
+      }
+    }
+    
+    if (!Completed)
+      Record->completeDefinition();
   } else {
     ObjCIvarDecl **ClsFields =
       reinterpret_cast<ObjCIvarDecl**>(RecFields.data());

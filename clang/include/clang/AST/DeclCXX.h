@@ -711,9 +711,6 @@ public:
   /// which means that the class contains or inherits a pure virtual function.
   bool isAbstract() const { return data().Abstract; }
 
-  /// setAbstract - Set whether this class is abstract (C++ [class.abstract])
-  void setAbstract(bool Abs) { data().Abstract = Abs; }
-
   // hasTrivialConstructor - Whether this class has a trivial constructor
   // (C++ [class.ctor]p5)
   bool hasTrivialConstructor() const { return data().HasTrivialConstructor; }
@@ -982,6 +979,27 @@ public:
     return (PathAccess > DeclAccess ? PathAccess : DeclAccess);
   }
 
+  /// \brief Indicates that the definition of this class is now complete.
+  virtual void completeDefinition();
+
+  /// \brief Indicates that the definition of this class is now complete, 
+  /// and provides a final overrider map to help determine
+  /// 
+  /// \param FinalOverriders The final overrider map for this class, which can
+  /// be provided as an optimization for abstract-class checking. If NULL,
+  /// final overriders will be computed if they are needed to complete the
+  /// definition.
+  void completeDefinition(CXXFinalOverriderMap *FinalOverriders);
+  
+  /// \brief Determine whether this class may end up being abstract, even though
+  /// it is not yet known to be abstract.
+  ///
+  /// \returns true if this class is not known to be abstract but has any
+  /// base classes that are abstract. In this case, \c completeDefinition()
+  /// will need to compute final overriders to determine whether the class is
+  /// actually abstract.
+  bool mayBeAbstract() const;
+  
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
   static bool classofKind(Kind K) {
     return K >= firstCXXRecord && K <= lastCXXRecord;

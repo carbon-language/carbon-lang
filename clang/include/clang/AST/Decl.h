@@ -1862,6 +1862,11 @@ protected:
   typedef Redeclarable<TagDecl> redeclarable_base;
   virtual TagDecl *getNextRedeclaration() { return RedeclLink.getNext(); }
 
+  /// @brief Completes the definition of this tag declaration.
+  ///
+  /// This is a helper function for derived classes.
+  void completeDefinition();    
+    
 public:
   typedef redeclarable_base::redecl_iterator redecl_iterator;
   redecl_iterator redecls_begin() const {
@@ -1925,9 +1930,6 @@ public:
   /// of this tag declaration. It will set the tag type into a state
   /// where it is in the process of being defined.
   void startDefinition();
-
-  /// @brief Completes the definition of this tag declaration.
-  void completeDefinition();
 
   /// getDefinition - Returns the TagDecl that actually defines this
   ///  struct/union/class/enum.  When determining whether or not a
@@ -2247,7 +2249,7 @@ public:
 
   /// completeDefinition - Notes that the definition of this type is
   /// now complete.
-  void completeDefinition();
+  virtual void completeDefinition();
 
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
   static bool classof(const RecordDecl *D) { return true; }

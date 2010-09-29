@@ -2505,83 +2505,8 @@ static void CheckAbstractClassUsage(AbstractUsageInfo &Info,
 /// completing, introducing implicitly-declared members, checking for
 /// abstract types, etc.
 void Sema::CheckCompletedCXXClass(CXXRecordDecl *Record) {
-  if (!Record || Record->isInvalidDecl())
+  if (!Record)
     return;
-
-  if (!Record->isDependentType())
-    AddImplicitlyDeclaredMembersToClass(Record);
-  
-  if (Record->isInvalidDecl())
-    return;
-
-  // Set access bits correctly on the directly-declared conversions.
-  UnresolvedSetImpl *Convs = Record->getConversionFunctions();
-  for (UnresolvedSetIterator I = Convs->begin(), E = Convs->end(); I != E; ++I)
-    Convs->setAccess(I, (*I)->getAccess());
-
-  // Determine whether we need to check for final overriders. We do
-  // this either when there are virtual base classes (in which case we
-  // may end up finding multiple final overriders for a given virtual
-  // function) or any of the base classes is abstract (in which case
-  // we might detect that this class is abstract).
-  bool CheckFinalOverriders = false;
-  if (Record->isPolymorphic() && !Record->isInvalidDecl() &&
-      !Record->isDependentType()) {
-    if (Record->getNumVBases())
-      CheckFinalOverriders = true;
-    else if (!Record->isAbstract()) {
-      for (CXXRecordDecl::base_class_const_iterator B = Record->bases_begin(),
-                                                 BEnd = Record->bases_end();
-           B != BEnd; ++B) {
-        CXXRecordDecl *BaseDecl 
-          = cast<CXXRecordDecl>(B->getType()->getAs<RecordType>()->getDecl());
-        if (BaseDecl->isAbstract()) {
-          CheckFinalOverriders = true; 
-          break;
-        }
-      }
-    }
-  }
-
-  if (CheckFinalOverriders) {
-    CXXFinalOverriderMap FinalOverriders;
-    Record->getFinalOverriders(FinalOverriders);
-
-    for (CXXFinalOverriderMap::iterator M = FinalOverriders.begin(), 
-                                     MEnd = FinalOverriders.end();
-         M != MEnd; ++M) {
-      for (OverridingMethods::iterator SO = M->second.begin(), 
-                                    SOEnd = M->second.end();
-           SO != SOEnd; ++SO) {
-        assert(SO->second.size() > 0 && 
-               "All virtual functions have overridding virtual functions");
-        if (SO->second.size() == 1) {
-          // C++ [class.abstract]p4:
-          //   A class is abstract if it contains or inherits at least one
-          //   pure virtual function for which the final overrider is pure
-          //   virtual.
-          if (SO->second.front().Method->isPure())
-            Record->setAbstract(true);
-          continue;
-        }
-
-        // C++ [class.virtual]p2:
-        //   In a derived class, if a virtual member function of a base
-        //   class subobject has more than one final overrider the
-        //   program is ill-formed.
-        Diag(Record->getLocation(), diag::err_multiple_final_overriders)
-          << (NamedDecl *)M->first << Record;
-        Diag(M->first->getLocation(), diag::note_overridden_virtual_function);
-        for (OverridingMethods::overriding_iterator OM = SO->second.begin(), 
-                                                 OMEnd = SO->second.end();
-             OM != OMEnd; ++OM)
-          Diag(OM->Method->getLocation(), diag::note_final_overrider)
-            << (NamedDecl *)M->first << OM->Method->getParent();
-        
-        Record->setInvalidDecl();
-      }
-    }
-  }
 
   if (Record->isAbstract() && !Record->isInvalidDecl()) {
     AbstractUsageInfo Info(*this, Record);

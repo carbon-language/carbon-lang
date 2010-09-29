@@ -14,6 +14,7 @@
 #include "clang/AST/DeclCXX.h"
 #include "clang/AST/DeclTemplate.h"
 #include "clang/AST/ASTContext.h"
+#include "clang/AST/CXXInheritance.h"
 #include "clang/AST/Expr.h"
 #include "clang/AST/TypeLoc.h"
 #include "clang/Basic/IdentifierTable.h"
@@ -792,6 +793,63 @@ CXXDestructorDecl *CXXRecordDecl::getDestructor() const {
   assert(++I == E && "Found more than one destructor!");
 
   return Dtor;
+}
+
+void CXXRecordDecl::completeDefinition() {
+  completeDefinition(0);
+}
+
+void CXXRecordDecl::completeDefinition(CXXFinalOverriderMap *FinalOverriders) {
+  RecordDecl::completeDefinition();
+  
+  // If the class may be abstract (but hasn't been marked as such), check for
+  // any pure final overriders.
+  if (mayBeAbstract()) {
+    CXXFinalOverriderMap MyFinalOverriders;
+    if (!FinalOverriders) {
+      getFinalOverriders(MyFinalOverriders);
+      FinalOverriders = &MyFinalOverriders;
+    }
+    
+    bool Done = false;
+    for (CXXFinalOverriderMap::iterator M = FinalOverriders->begin(), 
+                                     MEnd = FinalOverriders->end();
+         M != MEnd && !Done; ++M) {
+      for (OverridingMethods::iterator SO = M->second.begin(), 
+                                    SOEnd = M->second.end();
+           SO != SOEnd && !Done; ++SO) {
+        assert(SO->second.size() > 0 && 
+               "All virtual functions have overridding virtual functions");
+        
+        // C++ [class.abstract]p4:
+        //   A class is abstract if it contains or inherits at least one
+        //   pure virtual function for which the final overrider is pure
+        //   virtual.
+        if (SO->second.front().Method->isPure()) {
+          data().Abstract = true;
+          Done = true;
+          break;
+        }
+      }
+    }
+  }
+}
+
+bool CXXRecordDecl::mayBeAbstract() const {
+  if (data().Abstract || isInvalidDecl() || !data().Polymorphic ||
+      isDependentContext())
+    return false;
+  
+  for (CXXRecordDecl::base_class_const_iterator B = bases_begin(),
+                                             BEnd = bases_end();
+       B != BEnd; ++B) {
+    CXXRecordDecl *BaseDecl 
+      = cast<CXXRecordDecl>(B->getType()->getAs<RecordType>()->getDecl());
+    if (BaseDecl->isAbstract())
+      return true;
+  }
+  
+  return false;
 }
 
 CXXMethodDecl *
