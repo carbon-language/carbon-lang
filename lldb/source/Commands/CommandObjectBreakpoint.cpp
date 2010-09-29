@@ -275,7 +275,7 @@ CommandObjectBreakpointSet::Execute
     Target *target = m_interpreter.GetDebugger().GetSelectedTarget().get();
     if (target == NULL)
     {
-        result.AppendError ("Invalid target, set executable file using 'file' command.");
+        result.AppendError ("Invalid target.  Must set target before setting breakpoints (see 'file' command).");
         result.SetStatus (eReturnStatusFailed);
         return false;
     }
@@ -709,7 +709,7 @@ CommandObjectBreakpointList::Execute
     Target *target = m_interpreter.GetDebugger().GetSelectedTarget().get();
     if (target == NULL)
     {
-        result.AppendError ("Invalid target, set executable file using 'file' command.");
+        result.AppendError ("Invalid target. No current target or breakpoints.");
         result.SetStatus (eReturnStatusSuccessFinishNoResult);
         return true;
     }
@@ -800,7 +800,7 @@ CommandObjectBreakpointEnable::Execute
     Target *target = m_interpreter.GetDebugger().GetSelectedTarget().get();
     if (target == NULL)
     {
-        result.AppendError ("Invalid target, set executable file using 'file' command.");
+        result.AppendError ("Invalid target.  No existing target or breakpoints.");
         result.SetStatus (eReturnStatusFailed);
         return false;
     }
@@ -900,7 +900,7 @@ CommandObjectBreakpointDisable::Execute
     Target *target = m_interpreter.GetDebugger().GetSelectedTarget().get();
     if (target == NULL)
     {
-        result.AppendError ("Invalid target, set executable file using 'file' command.");
+        result.AppendError ("Invalid target.  No existing target or breakpoints.");
         result.SetStatus (eReturnStatusFailed);
         return false;
     }
@@ -996,7 +996,7 @@ CommandObjectBreakpointDelete::Execute
     Target *target = m_interpreter.GetDebugger().GetSelectedTarget().get();
     if (target == NULL)
     {
-        result.AppendError ("Invalid target, set executable file using 'file' command.");
+        result.AppendError ("Invalid target. No existing target or breakpoints.");
         result.SetStatus (eReturnStatusFailed);
         return false;
     }
@@ -1229,7 +1229,7 @@ CommandObjectBreakpointModify::Execute
     Target *target = m_interpreter.GetDebugger().GetSelectedTarget().get();
     if (target == NULL)
     {
-        result.AppendError ("Invalid target, set executable file using 'file' command.");
+        result.AppendError ("Invalid target.  No existing target or breakpoints.");
         result.SetStatus (eReturnStatusFailed);
         return false;
     }

@@ -195,6 +195,35 @@ BreakpointIDList::FindAndReplaceIDRanges (Args &old_args, Target *target, Comman
             is_range = true;
             i = i+2;
         }
+        else
+        {
+            // See if user has specified id.*
+            std::string tmp_str = old_args.GetArgumentAtIndex (i);
+            size_t pos = tmp_str.find ('.');
+            if (pos != std::string::npos)
+            {
+                std::string bp_id_str = tmp_str.substr (0, pos);
+                if (BreakpointID::IsValidIDExpression (bp_id_str.c_str())
+                    && tmp_str[pos+1] == '*'
+                    && tmp_str.length() == (pos + 2))
+                {
+                    break_id_t bp_id;
+                    break_id_t bp_loc_id;
+
+                    BreakpointID::ParseCanonicalReference (bp_id_str.c_str(), &bp_id, &bp_loc_id);
+                    BreakpointSP breakpoint_sp = target->GetBreakpointByID (bp_id);
+                    const size_t num_locations = breakpoint_sp->GetNumLocations();
+                    for (size_t j = 0; j < num_locations; ++j)
+                    {
+                        BreakpointLocation *bp_loc = breakpoint_sp->GetLocationAtIndex(j).get();
+                        StreamString canonical_id_str;
+                        BreakpointID::GetCanonicalReference (&canonical_id_str, bp_id, bp_loc->GetID());
+                        new_args.AppendArgument (canonical_id_str.GetData());
+                    }
+                }
+                
+            }
+        }
 
         if (is_range)
         {
@@ -226,6 +255,25 @@ BreakpointIDList::FindAndReplaceIDRanges (Args &old_args, Target *target, Comman
 
             // We have valid range starting & ending breakpoint IDs.  Go through all the breakpoints in the
             // target and find all the breakpoints that fit into this range, and add them to new_args.
+            
+            // Next check to see if we have location id's.  If so, make sure the start_bp_id and end_bp_id are
+            // for the same breakpoint; otherwise we have an illegal range: breakpoint id ranges that specify
+            // bp locations are NOT allowed to cross major bp id numbers.
+            
+            if  ((start_loc_id != LLDB_INVALID_BREAK_ID)
+                || (end_loc_id != LLDB_INVALID_BREAK_ID))
+            {
+                if (start_bp_id != end_bp_id)
+                {
+                    new_args.Clear();
+                    result.AppendErrorWithFormat ("Invalid range: Ranges that specify particular breakpoint locations"
+                                                  " must be within the same major breakpoint; you specified two"
+                                                  " different major breakpoints, %d and %d.\n", 
+                                                  start_bp_id, end_bp_id);
+                    result.SetStatus (eReturnStatusFailed);
+                    return;
+                }
+            }
 
             const BreakpointList& breakpoints = target->GetBreakpointList();
             const size_t num_breakpoints = breakpoints.GetSize();
@@ -284,7 +332,9 @@ BreakpointIDList::FindAndReplaceIDRanges (Args &old_args, Target *target, Comman
 }
 
 bool
-BreakpointIDList::StringContainsIDRangeExpression (const char *in_string, uint32_t *range_start_len, uint32_t *range_end_pos)
+BreakpointIDList::StringContainsIDRangeExpression (const char *in_string, 
+                                                   uint32_t *range_start_len, 
+                                                   uint32_t *range_end_pos)
 {
     bool is_range_expression = false;
     std::string arg_str = in_string;
