@@ -6,7 +6,6 @@ import AbstractBase
 import unittest2
 import lldb
 
-@unittest2.skip("rdar://problem/8488437 test/types/TestIntegerTypesExpr.py asserts")
 class IntegerTypesTestCase(AbstractBase.GenericTester):
 
     mydir = "types"
