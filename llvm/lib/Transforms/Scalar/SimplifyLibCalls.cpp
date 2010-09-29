@@ -252,21 +252,14 @@ struct StrChrOpt : public LibCallOptimization {
 
     // strchr can find the nul character.
     Str += '\0';
-    char CharValue = CharC->getSExtValue();
 
     // Compute the offset.
-    uint64_t i = 0;
-    while (1) {
-      if (i == Str.size())    // Didn't find the char.  strchr returns null.
-        return Constant::getNullValue(CI->getType());
-      // Did we find our match?
-      if (Str[i] == CharValue)
-        break;
-      ++i;
-    }
+    size_t I = Str.find(CharC->getSExtValue());
+    if (I == std::string::npos) // Didn't find the char.  strchr returns null.
+      return Constant::getNullValue(CI->getType());
 
     // strchr(s+n,c)  -> gep(s+n+i,c)
-    Value *Idx = ConstantInt::get(Type::getInt64Ty(*Context), i);
+    Value *Idx = ConstantInt::get(Type::getInt64Ty(*Context), I);
     return B.CreateGEP(SrcStr, Idx, "strchr");
   }
 };
