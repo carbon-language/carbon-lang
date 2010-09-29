@@ -921,8 +921,10 @@ ParseInstruction(StringRef Name, SMLoc NameLoc,
   }
   
   // FIXME: Hack to handle "f{mulp,addp} st(0), $op" the same as
-  // "f{mulp,addp} $op", since they commute.
-  if ((Name == "fmulp" || Name == "faddp") && Operands.size() == 3 &&
+  // "f{mulp,addp} $op", since they commute.  We also allow fdivrp/fsubrp even
+  // though they don't commute, solely because gas does support this.
+  if ((Name=="fmulp" || Name=="faddp" || Name=="fsubrp" || Name=="fdivrp") &&
+      Operands.size() == 3 &&
       static_cast<X86Operand*>(Operands[1])->isReg() &&
       static_cast<X86Operand*>(Operands[1])->getReg() == X86::ST0) {
     delete Operands[1];

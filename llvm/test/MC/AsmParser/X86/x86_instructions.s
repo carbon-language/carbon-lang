@@ -466,3 +466,11 @@ movmskpd	%xmm6, %rax
 movmskpd	%xmm6, %eax
 // CHECK: movmskpd	%xmm6, %eax
 // CHECK: encoding: [0x66,0x0f,0x50,0xc6]
+
+// rdar://8491845 - Gas supports commuted forms of non-commutable instructions.
+fdivrp %st(0), %st(1) // CHECK: encoding: [0xde,0xf9]
+fdivrp %st(1), %st(0) // CHECK: encoding: [0xde,0xf9]
+
+fsubrp %ST(0), %ST(1) // CHECK: encoding: [0xde,0xe9]
+fsubrp %ST(1), %ST(0) // CHECK: encoding: [0xde,0xe9]
+
