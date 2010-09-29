@@ -415,3 +415,13 @@ fstsw %ax
 fstsw (%rax)
 // CHECK: wait
 // CHECK: fnstsw (%rax)
+
+
+// rdar://8456382 - cvtsd2si support.
+cvtsd2si	%xmm1, %rax
+// CHECK: cvtsd2si	%xmm1, %rax
+// CHECK: encoding: [0xf2,0x48,0x0f,0x2d,0xc1]
+cvtsd2si	%xmm1, %eax
+// CHECK: cvtsd2si	%xmm1, %eax
+// CHECK: encoding: [0xf2,0x0f,0x2d,0xc1]
+

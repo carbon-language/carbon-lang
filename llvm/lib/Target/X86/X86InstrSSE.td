@@ -651,13 +651,11 @@ defm Int_CVTSS2SI : sse12_cvt_sint<0x2D, VR128, GR32, int_x86_sse_cvtss2si,
                       f32mem, load, "cvtss2si">, XS;
 defm Int_CVTSS2SI64 : sse12_cvt_sint<0x2D, VR128, GR64, int_x86_sse_cvtss2si64,
                       f32mem, load, "cvtss2si{q}">, XS, REX_W;
-defm Int_CVTSD2SI : sse12_cvt_sint<0x2D, VR128, GR32, int_x86_sse2_cvtsd2si,
-                      f128mem, load, "cvtsd2si">, XD;
-defm Int_CVTSD2SI64 : sse12_cvt_sint<0x2D, VR128, GR64, int_x86_sse2_cvtsd2si64,
-                        f128mem, load, "cvtsd2si">, XD, REX_W;
+defm CVTSD2SI : sse12_cvt_sint<0x2D, VR128, GR32, int_x86_sse2_cvtsd2si,
+                f128mem, load, "cvtsd2si">, XD;
+defm CVTSD2SI64 : sse12_cvt_sint<0x2D, VR128, GR64, int_x86_sse2_cvtsd2si64,
+                  f128mem, load, "cvtsd2si">, XD, REX_W;
 
-defm CVTSD2SI64 : sse12_cvt_s_np<0x2D, VR128, GR64, f64mem, "cvtsd2si{q}">, XD,
-                        REX_W;
 
 let isAsmParserOnly = 1 in {
   defm Int_VCVTSI2SS : sse12_cvt_sint_3addr<0x2A, GR32, VR128,
