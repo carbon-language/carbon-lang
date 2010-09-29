@@ -720,14 +720,14 @@ void X86MCCodeEmitter::EmitOpcodePrefix(uint64_t TSFlags, unsigned &CurByte,
   if ((TSFlags & X86II::Op0Mask) == X86II::REP)
     EmitByte(0xF3, CurByte, OS);
 
-  // Emit the operand size opcode prefix as needed.
-  if (TSFlags & X86II::OpSize)
-    EmitByte(0x66, CurByte, OS);
-
   // Emit the address size opcode prefix as needed.
   if ((TSFlags & X86II::AdSize) ||
       (MemOperand != -1 && Is64BitMode && Is32BitMemOperand(MI, MemOperand)))
     EmitByte(0x67, CurByte, OS);
+  
+  // Emit the operand size opcode prefix as needed.
+  if (TSFlags & X86II::OpSize)
+    EmitByte(0x66, CurByte, OS);
 
   bool Need0FPrefix = false;
   switch (TSFlags & X86II::Op0Mask) {
