@@ -562,7 +562,7 @@ bool ARMFastISel::ARMEmitLoad(EVT VT, unsigned &ResultReg,
   bool isFloat = false;
   switch (VT.getSimpleVT().SimpleTy) {
     default:
-      assert(false && "Trying to emit for an unhandled type!");
+      // This is mostly going to be Neon/vector support.
       return false;
     case MVT::i16:
       Opc = isThumb ? ARM::tLDRH : ARM::LDRH;
