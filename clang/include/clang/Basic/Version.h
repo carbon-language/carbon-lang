@@ -48,7 +48,7 @@ namespace clang {
   
   /// \brief Retrieves the repository revision number (or identifer) from which
   ///  this Clang was built.
-  std::string getClangRevision();
+  llvm::StringRef getClangRevision();
   
   /// \brief Retrieves the full repository version that is an amalgamation of
   ///  the information in getClangRepositoryPath() and getClangRevision().
