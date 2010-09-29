@@ -77,61 +77,61 @@ public:
     // Basic Types
     //------------------------------------------------------------------
 
-    void *
+    lldb::clang_type_t
     GetBuiltinTypeForEncodingAndBitSize (lldb::Encoding encoding,
                                           uint32_t bit_size);
     
-    static void *
+    static lldb::clang_type_t
     GetBuiltinTypeForEncodingAndBitSize (clang::ASTContext *ast_context,
                                          lldb::Encoding encoding,
                                          uint32_t bit_size);
 
-    void *
+    lldb::clang_type_t
     GetBuiltinTypeForDWARFEncodingAndBitSize (
         const char *type_name,
         uint32_t dw_ate,
         uint32_t bit_size);
 
-    static void *
+    static lldb::clang_type_t
     GetBuiltInType_void(clang::ASTContext *ast_context);
     
-    void *
+    lldb::clang_type_t
     GetBuiltInType_void()
     {
         return GetBuiltInType_void(getASTContext());
     }
 
-    void *
+    lldb::clang_type_t
     GetBuiltInType_objc_id();
 
-    void *
+    lldb::clang_type_t
     GetBuiltInType_objc_Class();
 
-    void *
+    lldb::clang_type_t
     GetBuiltInType_objc_selector();
 
-    void *
+    lldb::clang_type_t
     GetCStringType(bool is_const);
 
-    void *
+    lldb::clang_type_t
     GetVoidPtrType(bool is_const);
     
-    static void *
+    static lldb::clang_type_t
     GetVoidPtrType(clang::ASTContext *ast_context, bool is_const);
     
-    static void *
+    static lldb::clang_type_t
     CopyType(clang::ASTContext *dest_context, 
              clang::ASTContext *source_context,
-             void *clang_type);
+             lldb::clang_type_t clang_type);
     
     static bool
     AreTypesSame(clang::ASTContext *ast_context,
-                 void *type1,
-                 void *type2);
+                 lldb::clang_type_t type1,
+                 lldb::clang_type_t type2);
     
     bool
-    AreTypesSame(void *type1,
-                 void *type2)
+    AreTypesSame(lldb::clang_type_t type1,
+                 lldb::clang_type_t type2)
     {
         return ClangASTContext::AreTypesSame(getASTContext(), type1, type2);
     }
@@ -140,20 +140,20 @@ public:
     // CVR modifiers
     //------------------------------------------------------------------
 
-    static void *
-    AddConstModifier (void *clang_type);
+    static lldb::clang_type_t
+    AddConstModifier (lldb::clang_type_t clang_type);
 
-    static void *
-    AddRestrictModifier (void *clang_type);
+    static lldb::clang_type_t
+    AddRestrictModifier (lldb::clang_type_t clang_type);
 
-    static void *
-    AddVolatileModifier (void *clang_type);
+    static lldb::clang_type_t
+    AddVolatileModifier (lldb::clang_type_t clang_type);
 
     //------------------------------------------------------------------
     // Structure, Unions, Classes
     //------------------------------------------------------------------
 
-    void *
+    lldb::clang_type_t
     CreateRecordType (const char *name,
                       int kind,
                       clang::DeclContext *decl_ctx,
@@ -161,16 +161,16 @@ public:
 
     static bool
     AddFieldToRecordType (clang::ASTContext *ast_context,
-                          void *record_qual_type,
+                          lldb::clang_type_t record_qual_type,
                           const char *name,
-                          void *field_type,
+                          lldb::clang_type_t field_type,
                           lldb::AccessType access,
                           uint32_t bitfield_bit_size);
     
     bool
-    AddFieldToRecordType (void *record_qual_type,
+    AddFieldToRecordType (lldb::clang_type_t record_qual_type,
                           const char *name,
-                          void *field_type,
+                          lldb::clang_type_t field_type,
                           lldb::AccessType access,
                           uint32_t bitfield_bit_size)
     {
@@ -184,18 +184,18 @@ public:
     
     static clang::CXXMethodDecl *
     AddMethodToCXXRecordType (clang::ASTContext *ast_context,
-                              void *record_opaque_type,
+                              lldb::clang_type_t record_opaque_type,
                               const char *name,
-                              void *method_type,
+                              lldb::clang_type_t method_type,
                               lldb::AccessType access,
                               bool is_virtual,
                               bool is_static,
                               bool is_inline);
     
     clang::CXXMethodDecl *
-    AddMethodToCXXRecordType (void *record_opaque_type,
+    AddMethodToCXXRecordType (lldb::clang_type_t record_opaque_type,
                               const char *name,
-                              void *method_type,
+                              lldb::clang_type_t method_type,
                               lldb::AccessType access,
                               bool is_virtual,
                               bool is_static,
@@ -225,12 +225,12 @@ public:
     RecordHasFields (const clang::RecordDecl *record_decl);
 
     void
-    SetDefaultAccessForRecordFields (void *clang_type,
+    SetDefaultAccessForRecordFields (lldb::clang_type_t clang_type,
                                      int default_accessibility,
                                      int *assigned_accessibilities,
                                      size_t num_assigned_accessibilities);
 
-    void *
+    lldb::clang_type_t
     CreateObjCClass (const char *name, 
                      clang::DeclContext *decl_ctx, 
                      bool isForwardDecl, 
@@ -238,17 +238,17 @@ public:
     
     static bool
     AddObjCClassIVar (clang::ASTContext *ast_context,
-                      void *class_opaque_type, 
+                      lldb::clang_type_t class_opaque_type, 
                       const char *name, 
-                      void *ivar_opaque_type, 
+                      lldb::clang_type_t ivar_opaque_type, 
                       lldb::AccessType access, 
                       uint32_t bitfield_bit_size, 
                       bool isSynthesized);
     
     bool
-    AddObjCClassIVar (void *class_opaque_type, 
+    AddObjCClassIVar (lldb::clang_type_t class_opaque_type, 
                       const char *name, 
-                      void *ivar_opaque_type, 
+                      lldb::clang_type_t ivar_opaque_type, 
                       lldb::AccessType access, 
                       uint32_t bitfield_bit_size, 
                       bool isSynthesized)
@@ -263,11 +263,11 @@ public:
     }
 
     bool
-    SetObjCSuperClass (void *class_clang_type,
-                       void *superclass_clang_type);
+    SetObjCSuperClass (lldb::clang_type_t class_clang_type,
+                       lldb::clang_type_t superclass_clang_type);
 
     static bool
-    ObjCTypeHasIVars (void *class_clang_type, bool check_superclass);
+    ObjCTypeHasIVars (lldb::clang_type_t class_clang_type, bool check_superclass);
 
     static bool
     ObjCDeclHasIVars (clang::ObjCInterfaceDecl *class_interface_decl, 
@@ -276,15 +276,15 @@ public:
 
     static clang::ObjCMethodDecl *
     AddMethodToObjCObjectType (clang::ASTContext *ast_context,
-                               void *class_opaque_type, 
+                               lldb::clang_type_t class_opaque_type, 
                                const char *name,  // the full symbol name as seen in the symbol table ("-[NString stringWithCString:]")
-                               void *method_opaque_type,
+                               lldb::clang_type_t method_opaque_type,
                                lldb::AccessType access);
 
     clang::ObjCMethodDecl *
-    AddMethodToObjCObjectType (void *class_opaque_type, 
+    AddMethodToObjCObjectType (lldb::clang_type_t class_opaque_type, 
                                const char *name,  // the full symbol name as seen in the symbol table ("-[NString stringWithCString:]")
-                               void *method_opaque_type,
+                               lldb::clang_type_t method_opaque_type,
                                lldb::AccessType access)
     {
         return AddMethodToObjCObjectType (getASTContext(),
@@ -299,15 +299,15 @@ public:
     // Aggregate Types
     //------------------------------------------------------------------
     static bool
-    IsAggregateType (void *clang_type);
+    IsAggregateType (lldb::clang_type_t clang_type);
 
     static uint32_t
-    GetNumChildren (void *clang_type,
+    GetNumChildren (lldb::clang_type_t clang_type,
                     bool omit_empty_base_classes);
 
-    void *
+    lldb::clang_type_t
     GetChildClangTypeAtIndex (const char *parent_name,
-                              void * parent_clang_type,
+                              lldb::clang_type_t  parent_clang_type,
                               uint32_t idx,
                               bool transparent_pointers,
                               bool omit_empty_base_classes,
@@ -317,10 +317,10 @@ public:
                               uint32_t &child_bitfield_bit_size,
                               uint32_t &child_bitfield_bit_offset);
     
-    static void *
+    static lldb::clang_type_t
     GetChildClangTypeAtIndex (clang::ASTContext *ast_context,
                               const char *parent_name,
-                              void * parent_clang_type,
+                              lldb::clang_type_t  parent_clang_type,
                               uint32_t idx,
                               bool transparent_pointers,
                               bool omit_empty_base_classes,
@@ -334,7 +334,7 @@ public:
     // and member member names in "clang_type" only, not descendants.
     static uint32_t
     GetIndexOfChildWithName (clang::ASTContext *ast_context,
-                             void *clang_type,
+                             lldb::clang_type_t clang_type,
                              const char *name,
                              bool omit_empty_base_classes);
 
@@ -345,7 +345,7 @@ public:
     // so we catch all names that match a given child name, not just the first.
     static size_t
     GetIndexOfChildMemberWithName (clang::ASTContext *ast_context,
-                                   void *clang_type,
+                                   lldb::clang_type_t clang_type,
                                    const char *name,
                                    bool omit_empty_base_classes,
                                    std::vector<uint32_t>& child_indexes);
@@ -355,7 +355,7 @@ public:
     //------------------------------------------------------------------
 
     bool
-    SetTagTypeKind (void * tag_qual_type,
+    SetTagTypeKind (lldb::clang_type_t  tag_qual_type,
                     int kind);
 
     //------------------------------------------------------------------
@@ -363,7 +363,7 @@ public:
     //------------------------------------------------------------------
 
     clang::CXXBaseSpecifier *
-    CreateBaseClassSpecifier (void * base_class_type,
+    CreateBaseClassSpecifier (lldb::clang_type_t  base_class_type,
                               lldb::AccessType access,
                               bool is_virtual,
                               bool base_of_class);
@@ -373,7 +373,7 @@ public:
                                unsigned num_base_classes);
 
     bool
-    SetBaseClassesForClassType (void * class_clang_type,
+    SetBaseClassesForClassType (lldb::clang_type_t  class_clang_type,
                                 clang::CXXBaseSpecifier const * const *base_classes,
                                 unsigned num_base_classes);
 
@@ -382,7 +382,7 @@ public:
     //------------------------------------------------------------------
 
     static clang::DeclContext *
-    GetDeclContextForType (void * qual_type);
+    GetDeclContextForType (lldb::clang_type_t  qual_type);
 
     //------------------------------------------------------------------
     // Namespace Declarations
@@ -399,21 +399,21 @@ public:
 
     clang::FunctionDecl *
     CreateFunctionDeclaration (const char *name,
-                               void * function_Type,
+                               lldb::clang_type_t  function_Type,
                                int storage,
                                bool is_inline);
     
-    static void *
+    static lldb::clang_type_t
     CreateFunctionType (clang::ASTContext *ast_context,
-                        void *result_type,
-                        void **args,
+                        lldb::clang_type_t result_type,
+                        lldb::clang_type_t *args,
                         unsigned num_args,
                         bool is_variadic,
                         unsigned type_quals);
     
-    void *
-    CreateFunctionType (void *result_type,
-                        void **args,
+    lldb::clang_type_t
+    CreateFunctionType (lldb::clang_type_t result_type,
+                        lldb::clang_type_t *args,
                         unsigned num_args,
                         bool is_variadic,
                         unsigned type_quals)
@@ -428,7 +428,7 @@ public:
     
     clang::ParmVarDecl *
     CreateParameterDeclaration (const char *name,
-                               void *param_type,
+                               lldb::clang_type_t param_type,
                                int storage);
 
     void
@@ -440,8 +440,8 @@ public:
     // Array Types
     //------------------------------------------------------------------
 
-    void *
-    CreateArrayType (void * element_type,
+    lldb::clang_type_t
+    CreateArrayType (lldb::clang_type_t  element_type,
                      size_t element_count,
                      uint32_t bit_stride);
 
@@ -449,20 +449,23 @@ public:
     // Tag Declarations
     //------------------------------------------------------------------
     bool
-    StartTagDeclarationDefinition (void * qual_type);
+    StartTagDeclarationDefinition (lldb::clang_type_t  qual_type);
 
     bool
-    CompleteTagDeclarationDefinition (void * qual_type);
+    CompleteTagDeclarationDefinition (lldb::clang_type_t  qual_type);
 
     //------------------------------------------------------------------
     // Enumeration Types
     //------------------------------------------------------------------
-    void *
-    CreateEnumerationType (const Declaration &decl, const char *name, void *integer_qual_type);
+    lldb::clang_type_t
+    CreateEnumerationType (const Declaration &decl, const char *name, lldb::clang_type_t integer_qual_type);
 
+    static lldb::clang_type_t
+    GetEnumerationIntegerType (lldb::clang_type_t enum_clang_type);
+    
     bool
-    AddEnumerationValueToEnumerationType (void * enum_qual_type,
-                                          void * enumerator_qual_type,
+    AddEnumerationValueToEnumerationType (lldb::clang_type_t  enum_qual_type,
+                                          lldb::clang_type_t  enumerator_qual_type,
                                           const Declaration &decl,
                                           const char *name,
                                           int64_t enum_value,
@@ -471,66 +474,66 @@ public:
     //------------------------------------------------------------------
     // Pointers & References
     //------------------------------------------------------------------
-    void *
-    CreatePointerType (void *clang_type);
+    lldb::clang_type_t
+    CreatePointerType (lldb::clang_type_t clang_type);
 
-    void *
-    CreateLValueReferenceType (void *clang_type);
+    lldb::clang_type_t
+    CreateLValueReferenceType (lldb::clang_type_t clang_type);
 
-    void *
-    CreateRValueReferenceType (void *clang_type);
+    lldb::clang_type_t
+    CreateRValueReferenceType (lldb::clang_type_t clang_type);
 
-    void *
-    CreateMemberPointerType (void * clang_pointee_type,
-                             void * clang_class_type);
+    lldb::clang_type_t
+    CreateMemberPointerType (lldb::clang_type_t  clang_pointee_type,
+                             lldb::clang_type_t  clang_class_type);
 
     size_t
     GetPointerBitSize ();
 
     static bool
-    IsIntegerType (void *clang_type, bool &is_signed);
+    IsIntegerType (lldb::clang_type_t clang_type, bool &is_signed);
     
     static bool
-    IsPointerType (void *clang_type, void **target_type = NULL);
+    IsPointerType (lldb::clang_type_t clang_type, lldb::clang_type_t *target_type = NULL);
 
     static bool
-    IsPointerOrReferenceType (void *clang_type, void **target_type = NULL);
+    IsPointerOrReferenceType (lldb::clang_type_t clang_type, lldb::clang_type_t *target_type = NULL);
 
     static bool
-    IsCStringType (void *clang_type, uint32_t &length);
+    IsCStringType (lldb::clang_type_t clang_type, uint32_t &length);
 
     static bool
-    IsFunctionPointerType (void *clang_type);
+    IsFunctionPointerType (lldb::clang_type_t clang_type);
     
     static bool
-    IsArrayType (void *clang_type, void **member_type = NULL, uint64_t *size = NULL);
+    IsArrayType (lldb::clang_type_t clang_type, lldb::clang_type_t *member_type = NULL, uint64_t *size = NULL);
 
     //------------------------------------------------------------------
     // Typedefs
     //------------------------------------------------------------------
-    void *
+    lldb::clang_type_t
     CreateTypedefType (const char *name,
-                       void *clang_type,
+                       lldb::clang_type_t clang_type,
                        clang::DeclContext *decl_ctx);
 
     //------------------------------------------------------------------
     // Type names
     //------------------------------------------------------------------
     static std::string
-    GetTypeName(void *clang_type);
+    GetTypeName(lldb::clang_type_t clang_type);
     
     static bool
-    IsFloatingPointType (void *clang_type, uint32_t &count, bool &is_complex);
+    IsFloatingPointType (lldb::clang_type_t clang_type, uint32_t &count, bool &is_complex);
 
     static bool
-    IsCXXClassType (void *clang_type);
+    IsCXXClassType (lldb::clang_type_t clang_type);
     
     static bool
-    IsObjCClassType (void *clang_type);
+    IsObjCClassType (lldb::clang_type_t clang_type);
 
     //static bool
     //ConvertFloatValueToString (clang::ASTContext *ast_context, 
-    //                           void *clang_type, 
+    //                           lldb::clang_type_t clang_type, 
     //                           const uint8_t* bytes, 
     //                           size_t byte_size, 
     //                           int apint_byte_order, 
@@ -538,7 +541,7 @@ public:
     
     static size_t
     ConvertStringToFloatValue (clang::ASTContext *ast_context, 
-                               void *clang_type, 
+                               lldb::clang_type_t clang_type, 
                                const char *s, 
                                uint8_t *dst, 
                                size_t dst_size);
@@ -547,7 +550,7 @@ public:
     // Qualifiers
     //------------------------------------------------------------------
     static unsigned
-    GetTypeQualifiers(void *clang_type);
+    GetTypeQualifiers(lldb::clang_type_t clang_type);
 protected:
     //------------------------------------------------------------------
     // Classes that inherit from ClangASTContext can see and modify these

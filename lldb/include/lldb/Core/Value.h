@@ -72,7 +72,7 @@ public:
     GetProxyTarget();
 
     void *
-    GetOpaqueClangQualType();
+    GetClangType();
 
     ValueType
     GetValueType() const;

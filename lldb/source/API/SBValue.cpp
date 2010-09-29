@@ -241,7 +241,7 @@ void *
 SBValue::GetOpaqueType()
 {
     if (m_opaque_sp)
-        return m_opaque_sp->GetOpaqueClangQualType();
+        return m_opaque_sp->GetClangType();
     return NULL;
 }
 

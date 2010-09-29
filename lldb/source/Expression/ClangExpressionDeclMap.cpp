@@ -709,7 +709,7 @@ ClangExpressionDeclMap::FindVariableInScope(StackFrame &frame,
     
     if (type->GetASTContext() == var->GetType()->GetClangAST())
     {
-        if (!ClangASTContext::AreTypesSame(type->GetASTContext(), type->GetOpaqueQualType(), var->GetType()->GetOpaqueClangQualType()))
+        if (!ClangASTContext::AreTypesSame(type->GetASTContext(), type->GetOpaqueQualType(), var->GetType()->GetClangType()))
             return NULL;
     }
     else
@@ -759,7 +759,7 @@ ClangExpressionDeclMap::GetDecls(NameSearchContext &context,
         if (!this_type)
             return;
         
-        TypeFromUser this_user_type(this_type->GetOpaqueClangQualType(),
+        TypeFromUser this_user_type(this_type->GetClangType(),
                                     this_type->GetClangAST());
         
         m_object_pointer_type = this_user_type;
@@ -836,7 +836,7 @@ ClangExpressionDeclMap::GetDecls(NameSearchContext &context,
         
         if (type.get())
         {
-            TypeFromUser user_type(type->GetOpaqueClangQualType(),
+            TypeFromUser user_type(type->GetClangType(),
                                    type->GetClangAST());
             
             AddOneType(context, user_type, false);
@@ -866,7 +866,7 @@ ClangExpressionDeclMap::GetVariableValue(ExecutionContext &exe_ctx,
         return NULL;
     }
     
-    void *var_opaque_type = var_type->GetOpaqueClangQualType();
+    void *var_opaque_type = var_type->GetClangType();
     
     if (!var_opaque_type)
     {
@@ -1043,7 +1043,7 @@ ClangExpressionDeclMap::AddOneFunction(NameSearchContext &context,
             return;
         }
         
-        fun_opaque_type = fun_type->GetOpaqueClangQualType();
+        fun_opaque_type = fun_type->GetClangType();
         
         if (!fun_opaque_type)
         {

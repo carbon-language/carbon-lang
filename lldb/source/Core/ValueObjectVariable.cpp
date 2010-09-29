@@ -46,11 +46,11 @@ ValueObjectVariable::~ValueObjectVariable()
 }
 
 void *
-ValueObjectVariable::GetOpaqueClangQualType ()
+ValueObjectVariable::GetClangType ()
 {
     Type *var_type = m_variable_sp->GetType();
     if (var_type)
-        return var_type->GetOpaqueClangQualType();
+        return var_type->GetClangType();
     return NULL;
 }
 
@@ -172,7 +172,7 @@ ValueObjectVariable::UpdateValue (ExecutionContextScope *exe_scope)
                 }
             }
 
-            if (ClangASTContext::IsAggregateType (GetOpaqueClangQualType()))
+            if (ClangASTContext::IsAggregateType (GetClangType()))
             {
                 // this value object represents an aggregate type whose
                 // children have values, but this object does not. So we

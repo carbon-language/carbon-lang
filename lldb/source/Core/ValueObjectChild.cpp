@@ -52,7 +52,7 @@ ValueObjectChild::~ValueObjectChild()
 }
 
 void *
-ValueObjectChild::GetOpaqueClangQualType()
+ValueObjectChild::GetClangType()
 {
     return m_clang_type;
 }
@@ -104,7 +104,7 @@ ValueObjectChild::GetTypeName()
 {
     if (m_type_name.IsEmpty())
     {
-        m_type_name = ClangASTType::GetClangTypeName (GetOpaqueClangQualType());
+        m_type_name = ClangASTType::GetClangTypeName (GetClangType());
         if (m_type_name)
         {
             if (m_bitfield_bit_size > 0)
@@ -139,13 +139,13 @@ ValueObjectChild::UpdateValue (ExecutionContextScope *exe_scope)
             Value::ValueType value_type = parent->GetValue().GetValueType();
             m_value.SetValueType (value_type);
 
-            if (ClangASTContext::IsPointerOrReferenceType (parent->GetOpaqueClangQualType()))
+            if (ClangASTContext::IsPointerOrReferenceType (parent->GetClangType()))
             {
                 uint32_t offset = 0;
                 m_value.GetScalar() = parent->GetDataExtractor().GetPointer(&offset);
                 // For pointers, m_byte_offset should only ever be set if we
                 // ValueObject::GetSyntheticArrayMemberFromPointer() was called
-                if (ClangASTContext::IsPointerType (parent->GetOpaqueClangQualType()) && m_byte_offset)
+                if (ClangASTContext::IsPointerType (parent->GetClangType()) && m_byte_offset)
                     m_value.GetScalar() += m_byte_offset;
                 if (value_type == Value::eValueTypeScalar ||
                     value_type == Value::eValueTypeFileAddress)

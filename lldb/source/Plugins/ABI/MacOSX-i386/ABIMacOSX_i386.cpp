@@ -236,7 +236,7 @@ ABIMacOSX_i386::PrepareNormalCall (Thread &thread,
                 return false;
             case Value::eContextTypeOpaqueClangQualType:
                 {
-                    void *val_type = val->GetOpaqueClangQualType();
+                    void *val_type = val->GetClangType();
                     uint32_t cstr_length;
                     
                     if (ClangASTContext::IsCStringType (val_type, cstr_length))
@@ -435,7 +435,7 @@ ABIMacOSX_i386::GetArgumentValues (Thread &thread,
                 return false;
             case Value::eContextTypeOpaqueClangQualType:
             {
-                void *value_type = value->GetOpaqueClangQualType();
+                void *value_type = value->GetClangType();
                 bool is_signed;
                 
                 if (ClangASTContext::IsIntegerType (value_type, is_signed))
@@ -484,7 +484,7 @@ ABIMacOSX_i386::GetReturnValue (Thread &thread,
             
             RegisterContext *reg_ctx = thread.GetRegisterContext();
             
-            void *value_type = value.GetOpaqueClangQualType();
+            void *value_type = value.GetClangType();
             bool is_signed;
             
             if (ClangASTContext::IsIntegerType (value_type, is_signed))

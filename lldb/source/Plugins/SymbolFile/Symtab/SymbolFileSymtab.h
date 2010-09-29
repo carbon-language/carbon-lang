@@ -74,6 +74,9 @@ public:
     virtual lldb_private::Type*
     ResolveTypeUID(lldb::user_id_t type_uid);
 
+    virtual lldb::clang_type_t
+    ResolveClangOpaqueTypeDefinition (lldb::clang_type_t clang_Type);
+
     virtual uint32_t
     ResolveSymbolContext (const lldb_private::Address& so_addr, uint32_t resolve_scope, lldb_private::SymbolContext& sc);
 

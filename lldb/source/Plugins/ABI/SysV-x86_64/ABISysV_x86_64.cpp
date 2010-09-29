@@ -266,7 +266,7 @@ ABISysV_x86_64::GetArgumentValues (Thread &thread,
             return false;
         case Value::eContextTypeOpaqueClangQualType:
             {
-                void *value_type = value->GetOpaqueClangQualType();
+                void *value_type = value->GetClangType();
                 bool is_signed;
                 
                 if (ClangASTContext::IsIntegerType (value_type, is_signed))
@@ -309,7 +309,7 @@ ABISysV_x86_64::GetReturnValue (Thread &thread,
             return false;
         case Value::eContextTypeOpaqueClangQualType:
         {
-            void *value_type = value.GetOpaqueClangQualType();
+            void *value_type = value.GetClangType();
             bool is_signed;
             
             RegisterContext *reg_ctx = thread.GetRegisterContext();

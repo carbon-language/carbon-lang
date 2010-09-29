@@ -402,7 +402,7 @@ Function::GetType() const
 Type
 Function::GetReturnType ()
 {
-    clang::QualType clang_type (clang::QualType::getFromOpaquePtr(GetType()->GetOpaqueClangQualType()));
+    clang::QualType clang_type (clang::QualType::getFromOpaquePtr(GetType()->GetClangType()));
     assert (clang_type->isFunctionType());
     clang::FunctionType *function_type = dyn_cast<clang::FunctionType> (clang_type);
     clang::QualType fun_return_qualtype = function_type->getResultType();
@@ -421,7 +421,7 @@ Function::GetReturnType ()
 int
 Function::GetArgumentCount ()
 {
-    clang::QualType clang_type (clang::QualType::getFromOpaquePtr(GetType()->GetOpaqueClangQualType()));
+    clang::QualType clang_type (clang::QualType::getFromOpaquePtr(GetType()->GetClangType()));
     assert (clang_type->isFunctionType());
     if (!clang_type->isFunctionProtoType())
         return -1;
@@ -436,7 +436,7 @@ Function::GetArgumentCount ()
 const Type
 Function::GetArgumentTypeAtIndex (size_t idx)
 {
-    clang::QualType clang_type (clang::QualType::getFromOpaquePtr(GetType()->GetOpaqueClangQualType()));
+    clang::QualType clang_type (clang::QualType::getFromOpaquePtr(GetType()->GetClangType()));
    assert (clang_type->isFunctionType());
    if (!clang_type->isFunctionProtoType())
         return Type();
@@ -465,7 +465,7 @@ Function::GetArgumentTypeAtIndex (size_t idx)
 const char *
 Function::GetArgumentNameAtIndex (size_t idx)
 {
-   clang::Type *clang_type = static_cast<clang::QualType *>(GetType()->GetOpaqueClangQualType())->getTypePtr();
+   clang::Type *clang_type = static_cast<clang::QualType *>(GetType()->GetClangType())->getTypePtr();
    assert (clang_type->isFunctionType());
    if (!clang_type->isFunctionProtoType())
        return NULL;
@@ -475,7 +475,7 @@ Function::GetArgumentNameAtIndex (size_t idx)
 bool
 Function::IsVariadic ()
 {
-   const clang::Type *clang_type = static_cast<clang::QualType *>(GetType()->GetOpaqueClangQualType())->getTypePtr();
+   const clang::Type *clang_type = static_cast<clang::QualType *>(GetType()->GetClangType())->getTypePtr();
    assert (clang_type->isFunctionType());
    if (!clang_type->isFunctionProtoType())
         return false;

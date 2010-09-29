@@ -83,7 +83,7 @@ ClangFunction::ClangFunction(const char *target_triple,
     m_JITted (false)
 {
     m_function_addr = m_function_ptr->GetAddressRange().GetBaseAddress();
-    m_function_return_qual_type = m_function_ptr->GetReturnType().GetOpaqueClangQualType();
+    m_function_return_qual_type = m_function_ptr->GetReturnType().GetClangType();
 }
 
 //----------------------------------------------------------------------
@@ -153,7 +153,7 @@ ClangFunction::CompileFunction (Stream &errors)
         else
         {
             Value *arg_value = m_arg_values.GetValueAtIndex(i);
-            void *clang_qual_type = arg_value->GetOpaqueClangQualType ();
+            void *clang_qual_type = arg_value->GetClangType ();
             if (clang_qual_type != NULL)
             {
                 type_stdstr = ClangASTContext::GetTypeName(clang_qual_type);
@@ -322,7 +322,7 @@ ClangFunction::WriteFunctionArguments (ExecutionContext &exe_ctx,
         
         if (arg_value->GetValueType() == Value::eValueTypeHostAddress &&
             arg_value->GetContextType() == Value::eContextTypeOpaqueClangQualType &&
-            ClangASTContext::IsPointerType(arg_value->GetOpaqueClangQualType()))
+            ClangASTContext::IsPointerType(arg_value->GetClangType()))
             continue;
         
         const Scalar &arg_scalar = arg_value->ResolveValue(&exe_ctx, m_clang_ast_context->getASTContext());

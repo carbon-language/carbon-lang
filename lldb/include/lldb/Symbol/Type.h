@@ -35,16 +35,16 @@ public:
         eTypeUIDSynthetic
     } EncodingUIDType;
 
-    Type(lldb::user_id_t uid,
-           SymbolFile* symbol_file,
-           const ConstString &name,
-           uint64_t byte_size,
-           SymbolContextScope *context,
-           lldb::user_id_t encoding_uid,
-           EncodingUIDType encoding_type,
-           const Declaration& decl,
-           void *clang_qual_type);
-
+    Type (lldb::user_id_t uid,
+          SymbolFile* symbol_file,
+          const ConstString &name,
+          uint64_t byte_size,
+          SymbolContextScope *context,
+          lldb::user_id_t encoding_uid,
+          EncodingUIDType encoding_type,
+          const Declaration& decl,
+          lldb::clang_type_t clang_qual_type);
+    
     // This makes an invalid type.  Used for functions that return a Type when they
     // get an error.
     Type();
@@ -171,8 +171,8 @@ public:
     const lldb_private::Declaration &
     GetDeclaration () const;
 
-    void *
-    GetOpaqueClangQualType ();
+    lldb::clang_type_t 
+    GetClangType (bool forward_decl_is_ok = false);
 
     clang::ASTContext *
     GetClangAST ();
@@ -180,7 +180,7 @@ public:
     ClangASTContext &
     GetClangASTContext ();
 
-    void *
+    lldb::clang_type_t 
     GetChildClangTypeAtIndex (const char *parent_name,
                               uint32_t idx,
                               bool transparent_pointers,
@@ -202,9 +202,9 @@ protected:
     lldb::user_id_t m_encoding_uid;
     EncodingUIDType m_encoding_uid_type;
     Declaration m_decl;
-    void *m_clang_qual_type;
+    lldb::clang_type_t m_clang_qual_type;
 
-    bool ResolveClangType();
+    bool ResolveClangType(bool forward_decl_is_ok = false);
 };
 
 } // namespace lldb_private

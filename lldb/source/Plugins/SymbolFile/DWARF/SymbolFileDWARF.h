@@ -94,6 +94,8 @@ public:
     virtual size_t          ParseVariablesForContext (const lldb_private::SymbolContext& sc);
 
     virtual lldb_private::Type* ResolveTypeUID(lldb::user_id_t type_uid);
+    virtual lldb::clang_type_t ResolveClangOpaqueTypeDefinition (lldb::clang_type_t clang_opaque_type);
+
     virtual lldb_private::Type* ResolveType (DWARFCompileUnit* cu, const DWARFDebugInfoEntry* type_die);
     virtual clang::DeclContext* GetClangDeclContextForTypeUID (lldb::user_id_t type_uid);
 
@@ -214,7 +216,7 @@ protected:
                                                  bool parse_siblings,
                                                  bool parse_children);
     size_t                  ParseTypes (const lldb_private::SymbolContext& sc, DWARFCompileUnit* dwarf_cu, const DWARFDebugInfoEntry *die, bool parse_siblings, bool parse_children);
-    lldb::TypeSP            ParseType (const lldb_private::SymbolContext& sc, DWARFCompileUnit* dwarf_cu, const DWARFDebugInfoEntry *die, bool &type_is_new);
+    lldb::TypeSP            ParseType (const lldb_private::SymbolContext& sc, DWARFCompileUnit* dwarf_cu, const DWARFDebugInfoEntry *die, bool *type_is_new);
 
     lldb::VariableSP        ParseVariableDIE(
                                 const lldb_private::SymbolContext& sc,
@@ -233,10 +235,9 @@ protected:
 
     size_t                  ParseChildMembers(
                                 const lldb_private::SymbolContext& sc,
-                                lldb::TypeSP& type_sp,
                                 DWARFCompileUnit* dwarf_cu,
                                 const DWARFDebugInfoEntry *die,
-                                void *class_clang_type,
+                                lldb::clang_type_t class_clang_type,
                                 const lldb::LanguageType class_language,
                                 std::vector<clang::CXXBaseSpecifier *>& base_classes,
                                 std::vector<int>& member_accessibilities,
@@ -250,13 +251,12 @@ protected:
                                 const DWARFDebugInfoEntry *parent_die,
                                 bool skip_artificial,
                                 lldb_private::TypeList* type_list,
-                                std::vector<void *>& function_args,
+                                std::vector<lldb::clang_type_t>& function_args,
                                 std::vector<clang::ParmVarDecl*>& function_param_decls);
 
     size_t                  ParseChildEnumerators(
                                 const lldb_private::SymbolContext& sc,
-                                lldb::TypeSP& type_sp,
-                                void *enumerator_qual_type,
+                                lldb::clang_type_t enumerator_qual_type,
                                 uint32_t enumerator_byte_size,
                                 DWARFCompileUnit* dwarf_cu,
                                 const DWARFDebugInfoEntry *enum_die);
@@ -281,10 +281,7 @@ protected:
                                 lldb_private::SymbolContextList& sc_list);
 
     lldb::TypeSP            GetTypeForDIE (DWARFCompileUnit *cu, 
-                                           const DWARFDebugInfoEntry* die, 
-                                           lldb::TypeSP& owning_type_sp, 
-                                           int32_t child_type, 
-                                           uint32_t idx);
+                                           const DWARFDebugInfoEntry* die);
 
     uint32_t                FindTypes(std::vector<dw_offset_t> die_offsets, uint32_t max_matches, lldb_private::TypeList& types);
 
@@ -319,12 +316,13 @@ protected:
     typedef llvm::DenseMap<const DWARFDebugInfoEntry *, clang::DeclContext *> DIEToDeclContextMap;
     typedef llvm::DenseMap<const DWARFDebugInfoEntry *, lldb_private::Type *> DIEToTypePtr;
     typedef llvm::DenseMap<const DWARFDebugInfoEntry *, lldb::VariableSP> DIEToVariableSP;
-    typedef llvm::DenseMap<const DWARFDebugInfoEntry *, void *> DIEToClangType;
+    typedef llvm::DenseMap<const DWARFDebugInfoEntry *, lldb::clang_type_t> DIEToClangType;
+    typedef llvm::DenseMap<lldb::clang_type_t, const DWARFDebugInfoEntry *> ClangTypeToDIE;
     DIEToDeclContextMap m_die_to_decl_ctx;
     DIEToTypePtr m_die_to_type;
     DIEToVariableSP m_die_to_variable_sp;
-    DIEToClangType m_die_to_clang_type;
-    
+    DIEToClangType m_forward_decl_die_to_clang_type;
+    ClangTypeToDIE m_forward_decl_clang_type_to_die;
 };
 
 #endif  // liblldb_SymbolFileDWARF_h_

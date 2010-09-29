@@ -263,7 +263,7 @@ ValueObject::GetIndexOfChildWithName (const ConstString &name)
 {
     bool omit_empty_base_classes = true;
     return ClangASTContext::GetIndexOfChildWithName (GetClangAST(),
-                                                     GetOpaqueClangQualType(),
+                                                     GetClangType(),
                                                      name.AsCString(),
                                                      omit_empty_base_classes);
 }
@@ -276,7 +276,7 @@ ValueObject::GetChildMemberWithName (const ConstString &name, bool can_create)
     // need a vector of indexes that can get us down to the correct child
     std::vector<uint32_t> child_indexes;
     clang::ASTContext *clang_ast = GetClangAST();
-    void *clang_type = GetOpaqueClangQualType();
+    void *clang_type = GetClangType();
     bool omit_empty_base_classes = true;
     const size_t num_child_indexes =  ClangASTContext::GetIndexOfChildMemberWithName (clang_ast,
                                                                                       clang_type,
@@ -349,7 +349,7 @@ ValueObject::CreateChildAtIndex (uint32_t idx, bool synthetic_array_member, int3
     uint32_t child_bitfield_bit_offset = 0;
     const bool transparent_pointers = synthetic_array_member == false;
     clang::ASTContext *clang_ast = GetClangAST();
-    void *clang_type = GetOpaqueClangQualType();
+    void *clang_type = GetClangType();
     void *child_clang_type;
     child_clang_type = ClangASTContext::GetChildClangTypeAtIndex (clang_ast,
                                                                   GetName().AsCString(),
@@ -390,7 +390,7 @@ ValueObject::GetSummaryAsCString (ExecutionContextScope *exe_scope)
     {
         if (m_summary_str.empty())
         {
-            void *clang_type = GetOpaqueClangQualType();
+            void *clang_type = GetClangType();
 
             // See if this is a pointer to a C string?
             uint32_t fixed_length = 0;
@@ -561,7 +561,7 @@ const char *
 ValueObject::GetValueAsCString (ExecutionContextScope *exe_scope)
 {
     // If our byte size is zero this is an aggregate type that has children
-    if (ClangASTContext::IsAggregateType (GetOpaqueClangQualType()) == false)
+    if (ClangASTContext::IsAggregateType (GetClangType()) == false)
     {
         if (UpdateValueIfNeeded(exe_scope))
         {
@@ -575,7 +575,7 @@ ValueObject::GetValueAsCString (ExecutionContextScope *exe_scope)
                 case Value::eContextTypeDCType:
                 case Value::eContextTypeDCVariable:
                     {
-                        void *clang_type = GetOpaqueClangQualType ();
+                        void *clang_type = GetClangType ();
                         if (clang_type)
                         {
                             StreamString sstr;
@@ -665,7 +665,7 @@ ValueObject::SetValueFromCString (ExecutionContextScope *exe_scope, const char *
         return false;
 
     uint32_t count = 0;
-    lldb::Encoding encoding = ClangASTType::GetEncoding (GetOpaqueClangQualType(), count);
+    lldb::Encoding encoding = ClangASTType::GetEncoding (GetClangType(), count);
 
     char *end = NULL;
     const size_t byte_size = GetByteSize();
@@ -717,7 +717,7 @@ ValueObject::SetValueFromCString (ExecutionContextScope *exe_scope, const char *
                 m_data.SetByteOrder(eByteOrderHost);
                 const size_t converted_byte_size = ClangASTContext::ConvertStringToFloatValue (
                                                         GetClangAST(),
-                                                        GetOpaqueClangQualType(),
+                                                        GetClangType(),
                                                         value_str,
                                                         dst,
                                                         byte_size);
@@ -756,7 +756,7 @@ ValueObject::Write ()
 lldb::LanguageType
 ValueObject::GetObjectRuntimeLanguage ()
 {
-    void *opaque_qual_type = GetOpaqueClangQualType();
+    void *opaque_qual_type = GetClangType();
     if (opaque_qual_type == NULL)
         return lldb::eLanguageTypeC;
     
@@ -805,13 +805,13 @@ ValueObject::GetSyntheticChild (const ConstString &key) const
 bool
 ValueObject::IsPointerType ()
 {
-    return ClangASTContext::IsPointerType (GetOpaqueClangQualType());
+    return ClangASTContext::IsPointerType (GetClangType());
 }
 
 bool
 ValueObject::IsPointerOrReferenceType ()
 {
-    return ClangASTContext::IsPointerOrReferenceType(GetOpaqueClangQualType());
+    return ClangASTContext::IsPointerOrReferenceType(GetClangType());
 }
 
 ValueObjectSP

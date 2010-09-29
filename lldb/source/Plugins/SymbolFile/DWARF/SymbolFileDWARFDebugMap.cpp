@@ -592,6 +592,12 @@ SymbolFileDWARFDebugMap::ResolveTypeUID(lldb::user_id_t type_uid)
     return NULL;
 }
 
+lldb::clang_type_t
+SymbolFileDWARFDebugMap::ResolveClangOpaqueTypeDefinition (lldb::clang_type_t clang_Type)
+{
+    // We have a struct/union/class/enum that needs to be fully resolved.
+    return NULL;
+}
 
 uint32_t
 SymbolFileDWARFDebugMap::ResolveSymbolContext (const Address& exe_so_addr, uint32_t resolve_scope, SymbolContext& sc)

@@ -52,7 +52,7 @@ public:
     GetClangAST ();
 
     virtual void *
-    GetOpaqueClangQualType ();
+    GetClangType ();
 
     virtual lldb::ValueType
     GetValueType() const;

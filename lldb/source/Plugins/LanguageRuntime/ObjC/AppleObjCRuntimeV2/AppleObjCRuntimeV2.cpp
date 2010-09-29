@@ -51,7 +51,7 @@ AppleObjCRuntimeV2::GetObjectDescription (Stream &str, ValueObject &object, Exec
     assert (m_process == exe_ctx.process);
     
     // ObjC objects can only be pointers:
-    if (!ClangASTContext::IsPointerType (object.GetOpaqueClangQualType()))
+    if (!ClangASTContext::IsPointerType (object.GetClangType()))
         return NULL;
     
     // Get the function address for the print function.
@@ -63,7 +63,7 @@ AppleObjCRuntimeV2::GetObjectDescription (Stream &str, ValueObject &object, Exec
     Scalar scalar;
     
     if (!ClangASTType::GetValueAsScalar (object.GetClangAST(),
-                                        object.GetOpaqueClangQualType(),
+                                        object.GetClangType(),
                                         object.GetDataExtractor(),
                                         0,
                                         object.GetByteSize(),

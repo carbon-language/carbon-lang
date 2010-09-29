@@ -59,7 +59,8 @@ public:
     virtual size_t          ParseTypes (const lldb_private::SymbolContext& sc);
     virtual size_t          ParseVariablesForContext (const lldb_private::SymbolContext& sc);
 
-    virtual lldb_private::Type*     ResolveTypeUID (lldb::user_id_t type_uid);
+    virtual lldb_private::Type* ResolveTypeUID (lldb::user_id_t type_uid);
+    virtual lldb::clang_type_t  ResolveClangOpaqueTypeDefinition (lldb::clang_type_t clang_Type);
     virtual uint32_t        ResolveSymbolContext (const lldb_private::Address& so_addr, uint32_t resolve_scope, lldb_private::SymbolContext& sc);
     virtual uint32_t        ResolveSymbolContext (const lldb_private::FileSpec& file_spec, uint32_t line, bool check_inlines, uint32_t resolve_scope, lldb_private::SymbolContextList& sc_list);
     virtual uint32_t        FindGlobalVariables (const lldb_private::ConstString &name, bool append, uint32_t max_matches, lldb_private::VariableList& variables);

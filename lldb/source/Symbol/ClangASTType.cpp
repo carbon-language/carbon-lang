@@ -804,6 +804,29 @@ ClangASTType::GetTypeBitAlign (clang::ASTContext *ast_context, void *opaque_clan
     return 0;
 }
 
+
+bool
+ClangASTType::IsDefined()
+{
+    return ClangASTType::IsDefined (m_type);
+}
+
+
+bool
+ClangASTType::IsDefined (void *opaque_clang_qual_type)
+{
+    clang::QualType qual_type(clang::QualType::getFromOpaquePtr(opaque_clang_qual_type));
+    clang::TagType *tag_type = dyn_cast<clang::TagType>(qual_type.getTypePtr());
+    if (tag_type)
+    {
+        clang::TagDecl *tag_decl = tag_type->getDecl();
+        if (tag_decl)
+            return tag_decl->getDefinition() != NULL;
+        return false;
+    }
+    return true;
+}
+
 void
 ClangASTType::DumpTypeDescription (Stream *s)
 {

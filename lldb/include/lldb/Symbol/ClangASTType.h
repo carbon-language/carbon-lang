@@ -189,6 +189,13 @@ public:
                       size_t data_byte_size,
                       Scalar &value);
 
+
+    bool
+    IsDefined();
+
+    static bool
+    IsDefined (void *opaque_clang_qual_type);
+
     bool
     SetValueFromScalar (const Scalar &value,
                         Stream &strm);

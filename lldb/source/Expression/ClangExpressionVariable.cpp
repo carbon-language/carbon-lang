@@ -97,7 +97,7 @@ ClangExpressionVariable::Print (Stream &output_stream,
     if (format == lldb::eFormatDefault)
         format = val.GetValueDefaultFormat ();
     
-    void *clang_type = val.GetOpaqueClangQualType ();
+    void *clang_type = val.GetClangType ();
     
     output_stream.Printf("%s = ", m_name.c_str());
     

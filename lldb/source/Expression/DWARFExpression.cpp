@@ -2136,7 +2136,7 @@ DWARFExpression::Evaluate
                     return false;
                 }
                 
-                void *array_type = array_val.GetOpaqueClangQualType();
+                void *array_type = array_val.GetClangType();
                 
                 void *member_type;
                 uint64_t size = 0;
@@ -2214,7 +2214,7 @@ DWARFExpression::Evaluate
                 {
                 case Value::eContextTypeOpaqueClangQualType:
                     {
-                        void *clang_type = stack.back().GetOpaqueClangQualType();
+                        void *clang_type = stack.back().GetClangType();
                         
                         if (ClangASTContext::IsAggregateType (clang_type))
                         {
@@ -2434,7 +2434,7 @@ DWARFExpression::Evaluate
                     return false;
                 }
                     
-                void *ptr_type = tmp.GetOpaqueClangQualType();
+                void *ptr_type = tmp.GetClangType();
                 void *target_type;
             
                 if (!ClangASTContext::IsPointerType(ptr_type, &target_type))
@@ -2483,7 +2483,7 @@ DWARFExpression::Evaluate
                 Value *proxy = expr_local_variable->CreateProxy();
                 stack.push_back(*proxy);
                 delete proxy;
-                //stack.back().SetContext (Value::eContextTypeOpaqueClangQualType, expr_local_variable->GetOpaqueClangQualType());
+                //stack.back().SetContext (Value::eContextTypeOpaqueClangQualType, expr_local_variable->GetClangType());
                 */
             }
             break;

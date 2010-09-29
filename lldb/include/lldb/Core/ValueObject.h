@@ -45,7 +45,7 @@ public:
     GetClangAST () = 0;
 
     virtual void *
-    GetOpaqueClangQualType () = 0;
+    GetClangType () = 0;
 
     virtual lldb::ValueType
     GetValueType() const = 0;

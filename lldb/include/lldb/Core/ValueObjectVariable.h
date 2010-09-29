@@ -37,7 +37,7 @@ public:
     GetClangAST ();
 
     virtual void *
-    GetOpaqueClangQualType ();
+    GetClangType ();
 
     virtual ConstString
     GetTypeName();

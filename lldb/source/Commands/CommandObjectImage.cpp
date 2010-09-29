@@ -429,7 +429,7 @@ LookupTypeInModule
                     {
                         // Resolve the clang type so that any forward references
                         // to types that haven't yet been parsed will get parsed.
-                        type_sp->GetOpaqueClangQualType ();
+                        type_sp->GetClangType ();
                         type_sp->GetDescription (&strm, eDescriptionLevelFull, true);
                     }
                     strm.EOL();

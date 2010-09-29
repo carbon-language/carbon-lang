@@ -43,7 +43,7 @@ ValueObjectRegisterContext::~ValueObjectRegisterContext()
 }
 
 void *
-ValueObjectRegisterContext::GetOpaqueClangQualType ()
+ValueObjectRegisterContext::GetClangType ()
 {
     return NULL;
 }
@@ -120,7 +120,7 @@ ValueObjectRegisterSet::~ValueObjectRegisterSet()
 }
 
 void *
-ValueObjectRegisterSet::GetOpaqueClangQualType ()
+ValueObjectRegisterSet::GetClangType ()
 {
     return NULL;
 }
@@ -228,7 +228,7 @@ ValueObjectRegister::~ValueObjectRegister()
 }
 
 void *
-ValueObjectRegister::GetOpaqueClangQualType ()
+ValueObjectRegister::GetClangType ()
 {
     if (m_clang_type == NULL && m_reg_info)
     {
@@ -251,7 +251,7 @@ ConstString
 ValueObjectRegister::GetTypeName()
 {
     if (m_type_name.IsEmpty())
-        m_type_name = ClangASTType::GetClangTypeName (GetOpaqueClangQualType());
+        m_type_name = ClangASTType::GetClangTypeName (GetClangType());
     return m_type_name;
 }
 

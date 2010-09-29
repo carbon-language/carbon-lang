@@ -417,10 +417,10 @@ Value::GetValueByteSize (clang::ASTContext *ast_context, Error *error_ptr)
 }
 
 void *
-Value::GetOpaqueClangQualType ()
+Value::GetClangType ()
 {
     if (m_context_type == eContextTypeValue)
-        return ((Value*)m_context)->GetOpaqueClangQualType();
+        return ((Value*)m_context)->GetClangType();
     
     switch (m_context_type)
     {
@@ -436,12 +436,12 @@ Value::GetOpaqueClangQualType ()
 
     case eContextTypeDCType:
         if (GetType())
-            return GetType()->GetOpaqueClangQualType();
+            return GetType()->GetClangType();
         break;
 
     case eContextTypeDCVariable:
         if (GetVariable())
-            return GetVariable()->GetType()->GetOpaqueClangQualType();
+            return GetVariable()->GetType()->GetClangType();
         break;
     }
 
@@ -669,7 +669,7 @@ Value::ResolveValue(ExecutionContext *exe_ctx, clang::ASTContext *ast_context)
     
     if (m_context_type == eContextTypeOpaqueClangQualType)
     {
-        void *opaque_clang_qual_type = GetOpaqueClangQualType();
+        void *opaque_clang_qual_type = GetClangType();
         switch (m_value_type)
         {
         case eValueTypeScalar:               // raw scalar value

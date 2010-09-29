@@ -360,7 +360,7 @@ public:
             {
                 const char *sum_cstr = valobj->GetSummaryAsCString(exe_scope);
 
-                const bool is_aggregate = ClangASTContext::IsAggregateType (valobj->GetOpaqueClangQualType());
+                const bool is_aggregate = ClangASTContext::IsAggregateType (valobj->GetClangType());
 
                 if (val_cstr)
                     s.PutCString(val_cstr);
@@ -384,7 +384,7 @@ public:
                     if (is_aggregate)
                         s.PutChar('{');
 
-                    bool is_ptr_or_ref = ClangASTContext::IsPointerOrReferenceType (valobj->GetOpaqueClangQualType());
+                    bool is_ptr_or_ref = ClangASTContext::IsPointerOrReferenceType (valobj->GetClangType());
                     
                     if (is_ptr_or_ref && ptr_depth == 0)
                         return;
