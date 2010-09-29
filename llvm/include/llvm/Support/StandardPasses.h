@@ -104,7 +104,6 @@ namespace llvm {
       PM->add(createDeadArgEliminationPass());  // Dead argument elimination
     }
     PM->add(createInstructionCombiningPass());  // Clean up after IPCP & DAE
-    PM->add(createJumpThreadingPass());         // Clean up after IPCP & DAE
     PM->add(createCFGSimplificationPass());     // Clean up after IPCP & DAE
     
     // Start of CallGraph SCC passes.
