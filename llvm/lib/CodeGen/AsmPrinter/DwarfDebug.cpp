@@ -1069,8 +1069,19 @@ void DwarfDebug::constructTypeDIE(DIE &Buffer, DICompositeType CTy) {
     for (unsigned i = 0; i < N; ++i) {
       DIDescriptor Element = Elements.getElement(i);
       DIE *ElemDie = NULL;
-      if (Element.isSubprogram())
+      if (Element.isSubprogram()) {
+        DISubprogram SP(Element);
         ElemDie = createSubprogramDIE(DISubprogram(Element));
+        if (SP.isProtected())
+          addUInt(ElemDie, dwarf::DW_AT_accessibility, dwarf::DW_FORM_flag,
+                  dwarf::DW_ACCESS_protected);
+        else if (SP.isPrivate())
+          addUInt(ElemDie, dwarf::DW_AT_accessibility, dwarf::DW_FORM_flag,
+                  dwarf::DW_ACCESS_private);
+        else 
+          addUInt(ElemDie, dwarf::DW_AT_accessibility, dwarf::DW_FORM_flag,
+            dwarf::DW_ACCESS_public);
+      }
       else if (Element.isVariable()) {
         DIVariable DV(Element);
         ElemDie = new DIE(dwarf::DW_TAG_variable);

@@ -400,7 +400,20 @@ namespace llvm {
         return getUnsignedField(14); 
       return (getUnsignedField(14) & FlagArtificial) != 0;
     }
-
+    /// isPrivate - Return true if this subprogram has "private"
+    /// access specifier.
+    bool isPrivate() const    { 
+      if (getVersion() <= llvm::LLVMDebugVersion8)
+        return false;
+      return (getUnsignedField(14) & FlagPrivate) != 0;
+    }
+    /// isProtected - Return true if this subprogram has "protected"
+    /// access specifier.
+    bool isProtected() const    { 
+      if (getVersion() <= llvm::LLVMDebugVersion8)
+        return false;
+      return (getUnsignedField(14) & FlagProtected) != 0;
+    }
     unsigned isOptimized() const;
 
     StringRef getFilename() const    { 
