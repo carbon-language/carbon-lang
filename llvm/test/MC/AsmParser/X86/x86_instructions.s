@@ -425,3 +425,8 @@ cvtsd2si	%xmm1, %eax
 // CHECK: cvtsd2si	%xmm1, %eax
 // CHECK: encoding: [0xf2,0x0f,0x2d,0xc1]
 
+cvttpd2dq %xmm1, %xmm0  // CHECK: cvttpd2dq %xmm1, %xmm0
+cvttpd2dq (%rax), %xmm0 // CHECK: cvttpd2dq (%rax), %xmm0
+
+cvttps2dq %xmm1, %xmm0  // CHECK: cvttps2dq %xmm1, %xmm0
+cvttps2dq (%rax), %xmm0 // CHECK: cvttps2dq (%rax), %xmm0
