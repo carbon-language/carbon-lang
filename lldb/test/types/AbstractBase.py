@@ -72,6 +72,11 @@ class GenericTester(TestBase):
             
             # The input type is in a canonical form as a set named atoms.
             # The display type string must conatin each and every element.
+            #
+            # Example:
+            #     runCmd: frame variable a_array_bounded[0]
+            #     output: (char) a_array_bounded[0] = 'a'
+            #
             dt = re.match("^\((.*)\)", output).group(1)
 
             # Expect the display type string to contain each and every atoms.
