@@ -143,6 +143,16 @@ class ARMFastISel : public FastISel {
     // Call handling routines.
   private:
     CCAssignFn *CCAssignFnForCall(CallingConv::ID CC, bool Return);
+    bool ProcessCallArgs(SmallVectorImpl<Value*> &Args, 
+                         SmallVectorImpl<unsigned> &ArgRegs,
+                         SmallVectorImpl<EVT> &ArgVTs,
+                         SmallVectorImpl<ISD::ArgFlagsTy> &ArgFlags,
+                         SmallVectorImpl<unsigned> &RegArgs,
+                         CallingConv::ID CC,
+                         unsigned &NumBytes);
+    bool FinishCall(EVT RetVT, SmallVectorImpl<unsigned> &UsedRegs,
+                    const Instruction *I, CallingConv::ID CC,
+                    unsigned &NumBytes);
     bool ARMEmitLibcall(const Instruction *I, RTLIB::Libcall Call);
 
     // OptionalDef handling routines.
@@ -1035,6 +1045,85 @@ CCAssignFn *ARMFastISel::CCAssignFnForCall(CallingConv::ID CC, bool Return) {
   }
 }
 
+bool ARMFastISel::ProcessCallArgs(SmallVectorImpl<Value*> &Args,
+                                  SmallVectorImpl<unsigned> &ArgRegs,
+                                  SmallVectorImpl<EVT> &ArgVTs,
+                                  SmallVectorImpl<ISD::ArgFlagsTy> &ArgFlags,
+                                  SmallVectorImpl<unsigned> &RegArgs,
+                                  CallingConv::ID CC,
+                                  unsigned &NumBytes) {
+  SmallVector<CCValAssign, 16> ArgLocs;
+  CCState CCInfo(CC, false, TM, ArgLocs, *Context);
+  CCInfo.AnalyzeCallOperands(ArgVTs, ArgFlags, CCAssignFnForCall(CC, false));
+
+  // Get a count of how many bytes are to be pushed on the stack.
+  NumBytes = CCInfo.getNextStackOffset();
+
+  // Issue CALLSEQ_START
+  unsigned AdjStackDown = TM.getRegisterInfo()->getCallFrameSetupOpcode();
+  BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(AdjStackDown))
+          .addImm(NumBytes);
+
+  // Process the args.
+  for (unsigned i = 0, e = ArgLocs.size(); i != e; ++i) {
+    CCValAssign &VA = ArgLocs[i];
+    unsigned Arg = ArgRegs[VA.getValNo()];
+    EVT ArgVT = ArgVTs[VA.getValNo()];
+
+                                      // Should we ever have to promote?
+    switch (VA.getLocInfo()) {
+      case CCValAssign::Full: break;
+      default:
+      assert(false && "Handle arg promotion for libcalls?");
+      return false;
+    }
+
+    // Now copy/store arg to correct locations.
+    if (VA.isRegLoc()) {
+      BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(TargetOpcode::COPY),
+        VA.getLocReg())
+        .addReg(Arg);
+      RegArgs.push_back(VA.getLocReg());
+    } else {
+      // Need to store
+      return false;
+    }
+  }
+  
+  return true;
+}
+
+bool ARMFastISel::FinishCall(EVT RetVT, SmallVectorImpl<unsigned> &UsedRegs,
+                             const Instruction *I, CallingConv::ID CC,
+                             unsigned &NumBytes) {
+  // Issue CALLSEQ_END
+  unsigned AdjStackUp = TM.getRegisterInfo()->getCallFrameDestroyOpcode();
+  BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(AdjStackUp))
+          .addImm(NumBytes).addImm(0);
+
+  // Now the return value.
+  if (RetVT.getSimpleVT().SimpleTy != MVT::isVoid) {
+    SmallVector<CCValAssign, 16> RVLocs;
+    CCState CCInfo(CC, false, TM, RVLocs, *Context);
+    CCInfo.AnalyzeCallResult(RetVT, CCAssignFnForCall(CC, true));
+
+    // Copy all of the result registers out of their specified physreg.
+    assert(RVLocs.size() == 1 && "Can't handle multi-value calls!");
+    EVT CopyVT = RVLocs[0].getValVT();
+    TargetRegisterClass* DstRC = TLI.getRegClassFor(CopyVT);
+
+    unsigned ResultReg = createResultReg(DstRC);
+    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(TargetOpcode::COPY),
+            ResultReg).addReg(RVLocs[0].getLocReg());
+    UsedRegs.push_back(RVLocs[0].getLocReg());
+
+    // Finally update the result.        
+    UpdateValueMap(I, ResultReg);
+  }
+
+  return true;                           
+}
+
 // A quick function that will emit a call for a named libcall in F with the
 // vector of passed arguments for the Instruction in I. We can assume that we
 // can emit a call for any libcall we can produce. This is an abridged version 
@@ -1056,7 +1145,7 @@ bool ARMFastISel::ARMEmitLibcall(const Instruction *I, RTLIB::Libcall Call) {
   // For now we're using BLX etc on the assumption that we have v5t ops.
   if (!Subtarget->hasV5TOps()) return false;
   
-  // Abridged from the X86 FastISel call selection mechanism
+  // Set up the argument vectors.
   SmallVector<Value*, 8> Args;
   SmallVector<unsigned, 8> ArgRegs;
   SmallVector<EVT, 8> ArgVTs;
@@ -1084,44 +1173,11 @@ bool ARMFastISel::ARMEmitLibcall(const Instruction *I, RTLIB::Libcall Call) {
     ArgFlags.push_back(Flags);
   }
   
-  SmallVector<CCValAssign, 16> ArgLocs;
-  CCState CCInfo(CC, false, TM, ArgLocs, *Context);
-  CCInfo.AnalyzeCallOperands(ArgVTs, ArgFlags, CCAssignFnForCall(CC, false));
-  
-  // Get a count of how many bytes are to be pushed on the stack.
-  unsigned NumBytes = CCInfo.getNextStackOffset();
-
-  // Issue CALLSEQ_START
-  unsigned AdjStackDown = TM.getRegisterInfo()->getCallFrameSetupOpcode();
-  BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(AdjStackDown))
-    .addImm(NumBytes);
-  
-  // Process the args.
+  // Handle the arguments now that we've gotten them.
   SmallVector<unsigned, 4> RegArgs;
-  for (unsigned i = 0, e = ArgLocs.size(); i != e; ++i) {
-    CCValAssign &VA = ArgLocs[i];
-    unsigned Arg = ArgRegs[VA.getValNo()];
-    EVT ArgVT = ArgVTs[VA.getValNo()];
-    
-    // Should we ever have to promote?
-    switch (VA.getLocInfo()) {
-      case CCValAssign::Full: break;
-      default:
-        assert(false && "Handle arg promotion for libcalls?");
-        return false;
-    }
-    
-    // Now copy/store arg to correct locations.
-    if (VA.isRegLoc()) {
-      BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(TargetOpcode::COPY),
-              VA.getLocReg())
-      .addReg(Arg);
-      RegArgs.push_back(VA.getLocReg());
-    } else {
-      // Need to store
-      return false;
-    }
-  }
+  unsigned NumBytes;
+  if (!ProcessCallArgs(Args, ArgRegs, ArgVTs, ArgFlags, RegArgs, CC, NumBytes))
+    return false;
   
   // Issue the call, BLXr9 for darwin, BLX otherwise. This uses V5 ops.
   // TODO: Turn this into the table of arm call ops.  
@@ -1138,34 +1194,13 @@ bool ARMFastISel::ARMEmitLibcall(const Instruction *I, RTLIB::Libcall Call) {
   for (unsigned i = 0, e = RegArgs.size(); i != e; ++i)
     MIB.addReg(RegArgs[i]);
     
-  // Issue CALLSEQ_END
-  unsigned AdjStackUp = TM.getRegisterInfo()->getCallFrameDestroyOpcode();
-  BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(AdjStackUp))
-    .addImm(NumBytes).addImm(0);
-    
-  // Now the return value.
-  SmallVector<unsigned, 4> UsedRegs;
-  if (RetVT.getSimpleVT().SimpleTy != MVT::isVoid) {
-    SmallVector<CCValAssign, 16> RVLocs;
-    CCState CCInfo(CC, false, TM, RVLocs, *Context);
-    CCInfo.AnalyzeCallResult(RetVT, CCAssignFnForCall(CC, true));
-
-    // Copy all of the result registers out of their specified physreg.
-    assert(RVLocs.size() == 1 && "Can't handle multi-value calls!");
-    EVT CopyVT = RVLocs[0].getValVT();
-    TargetRegisterClass* DstRC = TLI.getRegClassFor(CopyVT);
-    
-    unsigned ResultReg = createResultReg(DstRC);
-    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(TargetOpcode::COPY),
-            ResultReg).addReg(RVLocs[0].getLocReg());
-    UsedRegs.push_back(RVLocs[0].getLocReg());
-    
-    // Finally update the result.        
-    UpdateValueMap(I, ResultReg);
-  }
+  // Finish off the call including any return values.
+  SmallVector<unsigned, 4> UsedRegs;  
+  if (!FinishCall(RetVT, UsedRegs, I, CC, NumBytes)) return false;
   
   // Set all unused physreg defs as dead.
   static_cast<MachineInstr *>(MIB)->setPhysRegsDeadExcept(UsedRegs, TRI);
+  
   return true;
 }
 
