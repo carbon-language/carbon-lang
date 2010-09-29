@@ -414,7 +414,7 @@ void WinCOFFObjectWriter::DefineSymbol(MCSymbolData const &SymbolData,
     bool external = SymbolData.isExternal() || (SymbolData.Fragment == NULL);
 
     coff_symbol->Data.StorageClass =
-      external ? COFF::IMAGE_SYM_CLASS_EXTERNAL : COFF::IMAGE_SYM_CLASS_LABEL;
+      external ? COFF::IMAGE_SYM_CLASS_EXTERNAL : COFF::IMAGE_SYM_CLASS_STATIC;
   }
 
   if (SymbolData.getFlags() & COFF::SF_WeakReference) {
