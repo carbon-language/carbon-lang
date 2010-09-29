@@ -186,8 +186,8 @@ static bool Is32BitMemOperand(const MCInst &MI, unsigned Op) {
   const MCOperand &BaseReg  = MI.getOperand(Op+X86::AddrBaseReg);
   const MCOperand &IndexReg = MI.getOperand(Op+X86::AddrIndexReg);
   
-  if (BaseReg.getReg() != 0 && X86::GR32RegClass.contains(BaseReg.getReg()) ||
-      IndexReg.getReg() != 0 && X86::GR32RegClass.contains(IndexReg.getReg()))
+  if ((BaseReg.getReg() != 0 && X86::GR32RegClass.contains(BaseReg.getReg())) ||
+      (IndexReg.getReg() != 0 && X86::GR32RegClass.contains(IndexReg.getReg())))
     return true;
   return false;
 }
