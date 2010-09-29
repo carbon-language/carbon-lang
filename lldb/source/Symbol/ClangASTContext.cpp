@@ -931,25 +931,6 @@ ClangASTContext::AddFieldToRecordType
         {
             RecordDecl *record_decl = record_type->getDecl();
 
-            CXXRecordDecl *cxx_record_decl = dyn_cast<CXXRecordDecl>(record_decl);
-            if (cxx_record_decl)
-            {
-                // NOTE: we currently have some fixes that should be placed
-                // into clang that will automatically set if a record is empty
-                // when each field is added (during the addDecl() method call 
-                // below) so this code should be able to come out when those 
-                // changes make it into llvm/clang, then we can remove this 
-                // code...
-                // Currently SEMA is using the accessors manually to set 
-                // whether a class is empty, is POD, is aggregate, and more.
-                // This code will be moved into CXXRecordDecl so everyone
-                // can benefit.
-                // This will currently work for everything except zero sized 
-                // bitfields which we currently aren't detecting anyway from the
-                // DWARF so it should be ok for now.
-                cxx_record_decl->setEmpty (false);
-            }
-
             clang::Expr *bit_width = NULL;
             if (bitfield_bit_size != 0)
             {
@@ -970,24 +951,6 @@ ClangASTContext::AddFieldToRecordType
             if (field)
             {
                 record_decl->addDecl(field);
-               
-                // NOTE: we currently have some fixes that should be placed
-                // into clang that will automatically set if a record is POD
-                // when each field is added (during the addDecl() method call 
-                // above) so this code should be able to come out when those 
-                // changes make it into llvm/clang, then we can remove this 
-                // code...
-                // Currently SEMA is using the accessors manually to set 
-                // whether a class is empty, is POD, is aggregate, and more.
-                // This code will be moved into CXXRecordDecl so everyone
-                // can benefit.
- 
-                if (cxx_record_decl->isPOD())
-                {
-                    if (!field->getType()->isPODType())
-                        cxx_record_decl->setPOD (false);
-                    return true;
-                }
             }
         }
         else
@@ -1138,47 +1101,6 @@ ClangASTContext::SetBaseClassesForClassType (clang_type_t class_clang_type, CXXB
                 if (cxx_record_decl)
                 {
                     cxx_record_decl->setBases(base_classes, num_base_classes);
-                    
-                    // NOTE: we currently have some fixes that should be placed
-                    // into clang that will automatically set these things when
-                    // they are added (during the setBases() method call above)
-                    // so this code should be able to come out when those changes
-                    // make it into llvm/clang, then we can remove this code...
-                    // Currently SEMA is using the accessors manually to set 
-                    // whether a class is empty, is POD, is aggregate, and more.
-                    // This code will be moved into CXXRecordDecl so everyone
-                    // can benefit.
-                    if (cxx_record_decl->isEmpty() || cxx_record_decl->isPOD())
-                    {
-                        // set empty to false if any bases are virtual, or not empty.
-                    
-                        CXXRecordDecl::base_class_const_iterator base_class, base_class_end;
-                        for (base_class = cxx_record_decl->bases_begin(), base_class_end = cxx_record_decl->bases_end();
-                             base_class != base_class_end;
-                             ++base_class)
-                        {
-                            if (base_class->isVirtual())
-                            {
-                                cxx_record_decl->setEmpty (false);
-                                cxx_record_decl->setPOD (false);
-                                break;
-                            }
-                            else
-                            {
-                                QualType base_type (base_class->getType());
-                                
-                                if (!base_type->isPODType())
-                                    cxx_record_decl->setPOD (false);
-
-                                const CXXRecordDecl *base_class_decl = cast<CXXRecordDecl>(base_type->getAs<RecordType>()->getDecl());
-                                if (!base_class_decl->isEmpty())
-                                {
-                                    cxx_record_decl->setEmpty (false);
-                                    break;
-                                }
-                            }
-                        }
-                    }
                     return true;
                 }
             }
@@ -2892,18 +2814,31 @@ ClangASTContext::CompleteTagDeclarationDefinition (clang_type_t clang_type)
     if (clang_type)
     {
         QualType qual_type (QualType::getFromOpaquePtr(clang_type));
-        clang::Type *t = qual_type.getTypePtr();
-        if (t)
+        
+        CXXRecordDecl *cxx_record_decl = qual_type->getAsCXXRecordDecl();
+        
+        if (cxx_record_decl)
         {
-            TagType *tag_type = dyn_cast<TagType>(t);
-            if (tag_type)
+            cxx_record_decl->completeDefinition();
+            
+            return true;
+        }
+        
+        const EnumType *enum_type = dyn_cast<EnumType>(qual_type.getTypePtr());
+        
+        if (enum_type)
+        {
+            EnumDecl *enum_decl = enum_type->getDecl();
+            
+            if (enum_decl)
             {
-                TagDecl *tag_decl = tag_type->getDecl();
-                if (tag_decl)
-                {
-                    tag_decl->completeDefinition();
-                    return true;
-                }
+                /// TODO This really needs to be fixed.
+                
+                unsigned NumPositiveBits = 1;
+                unsigned NumNegativeBits = 0;
+                
+                enum_decl->completeDefinition(enum_decl->getIntegerType(), enum_decl->getIntegerType(), NumPositiveBits, NumNegativeBits);
+                return true;
             }
         }
     }
