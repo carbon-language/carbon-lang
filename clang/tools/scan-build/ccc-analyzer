@@ -406,6 +406,9 @@ my %Uniqued;
 
 # Forward arguments to gcc.
 my $Status = system($Compiler,@ARGV);
+if  (defined $ENV{'CCC_ANALYZER_LOG'}) {
+  print "$Compiler @ARGV\n";
+}
 if ($Status) { exit($Status >> 8); }
 
 # Get the analysis options.
