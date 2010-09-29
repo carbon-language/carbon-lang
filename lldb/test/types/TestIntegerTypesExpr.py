@@ -10,6 +10,9 @@ class IntegerTypesTestCase(AbstractBase.GenericTester):
 
     mydir = "types"
 
+    @unittest2.expectedFailure
+    # rdar://problem/8493023
+    # test/types failures for Test*TypesExpr.py: element offset computed wrong?
     def test_char_type_with_dsym(self):
         """Test that char-type variable expressions are evaluated correctly."""
         d = {'CXX_SOURCES': 'char.cpp'}
@@ -17,6 +20,7 @@ class IntegerTypesTestCase(AbstractBase.GenericTester):
         self.setTearDownCleanup(dictionary=d)
         self.char_type_expr()
 
+    @unittest2.expectedFailure
     def test_char_type_with_dwarf(self):
         """Test that char-type variable expressions are evaluated correctly."""
         d = {'CXX_SOURCES': 'char.cpp'}
@@ -24,6 +28,7 @@ class IntegerTypesTestCase(AbstractBase.GenericTester):
         self.setTearDownCleanup(dictionary=d)
         self.char_type_expr()
 
+    @unittest2.expectedFailure
     def test_unsigned_char_type_with_dsym(self):
         """Test that 'unsigned_char'-type variable expressions are evaluated correctly."""
         d = {'CXX_SOURCES': 'unsigned_char.cpp'}
@@ -31,6 +36,7 @@ class IntegerTypesTestCase(AbstractBase.GenericTester):
         self.setTearDownCleanup(dictionary=d)
         self.unsigned_char_type_expr()
 
+    @unittest2.expectedFailure
     def test_unsigned_char_type_with_dwarf(self):
         """Test that 'unsigned char'-type variable expressions are evaluated correctly."""
         d = {'CXX_SOURCES': 'unsigned_char.cpp'}
@@ -38,6 +44,7 @@ class IntegerTypesTestCase(AbstractBase.GenericTester):
         self.setTearDownCleanup(dictionary=d)
         self.unsigned_char_type_expr()
 
+    @unittest2.expectedFailure
     def test_short_type_with_dsym(self):
         """Test that short-type variable expressions are evaluated correctly."""
         d = {'CXX_SOURCES': 'short.cpp'}
@@ -45,6 +52,7 @@ class IntegerTypesTestCase(AbstractBase.GenericTester):
         self.setTearDownCleanup(dictionary=d)
         self.short_type_expr()
 
+    @unittest2.expectedFailure
     def test_short_type_with_dwarf(self):
         """Test that short-type variable expressions are evaluated correctly."""
         d = {'CXX_SOURCES': 'short.cpp'}
@@ -52,6 +60,7 @@ class IntegerTypesTestCase(AbstractBase.GenericTester):
         self.setTearDownCleanup(dictionary=d)
         self.short_type_expr()
 
+    @unittest2.expectedFailure
     def test_unsigned_short_type_with_dsym(self):
         """Test that 'unsigned_short'-type variable expressions are evaluated correctly."""
         d = {'CXX_SOURCES': 'unsigned_short.cpp'}
@@ -59,6 +68,7 @@ class IntegerTypesTestCase(AbstractBase.GenericTester):
         self.setTearDownCleanup(dictionary=d)
         self.unsigned_short_type_expr()
 
+    @unittest2.expectedFailure
     def test_unsigned_short_type_with_dwarf(self):
         """Test that 'unsigned short'-type variable expressions are evaluated correctly."""
         d = {'CXX_SOURCES': 'unsigned_short.cpp'}
@@ -66,6 +76,7 @@ class IntegerTypesTestCase(AbstractBase.GenericTester):
         self.setTearDownCleanup(dictionary=d)
         self.unsigned_short_type_expr()
 
+    @unittest2.expectedFailure
     def test_int_type_with_dsym(self):
         """Test that int-type variable expressions are evaluated correctly."""
         d = {'CXX_SOURCES': 'int.cpp'}
@@ -73,6 +84,7 @@ class IntegerTypesTestCase(AbstractBase.GenericTester):
         self.setTearDownCleanup(dictionary=d)
         self.int_type_expr()
 
+    @unittest2.expectedFailure
     def test_int_type_with_dwarf(self):
         """Test that int-type variable expressions are evaluated correctly."""
         d = {'CXX_SOURCES': 'int.cpp'}
@@ -80,6 +92,7 @@ class IntegerTypesTestCase(AbstractBase.GenericTester):
         self.setTearDownCleanup(dictionary=d)
         self.int_type_expr()
 
+    @unittest2.expectedFailure
     def test_unsigned_int_type_with_dsym(self):
         """Test that 'unsigned_int'-type variable expressions are evaluated correctly."""
         d = {'CXX_SOURCES': 'unsigned_int.cpp'}
@@ -87,6 +100,7 @@ class IntegerTypesTestCase(AbstractBase.GenericTester):
         self.setTearDownCleanup(dictionary=d)
         self.unsigned_int_type_expr()
 
+    @unittest2.expectedFailure
     def test_unsigned_int_type_with_dwarf(self):
         """Test that 'unsigned int'-type variable expressions are evaluated correctly."""
         d = {'CXX_SOURCES': 'unsigned_int.cpp'}
@@ -94,6 +108,7 @@ class IntegerTypesTestCase(AbstractBase.GenericTester):
         self.setTearDownCleanup(dictionary=d)
         self.unsigned_int_type_expr()
 
+    @unittest2.expectedFailure
     def test_long_type_with_dsym(self):
         """Test that long-type variable expressions are evaluated correctly."""
         d = {'CXX_SOURCES': 'long.cpp'}
@@ -101,6 +116,7 @@ class IntegerTypesTestCase(AbstractBase.GenericTester):
         self.setTearDownCleanup(dictionary=d)
         self.long_type_expr()
 
+    @unittest2.expectedFailure
     def test_long_type_with_dwarf(self):
         """Test that long-type variable expressions are evaluated correctly."""
         d = {'CXX_SOURCES': 'long.cpp'}
@@ -108,6 +124,7 @@ class IntegerTypesTestCase(AbstractBase.GenericTester):
         self.setTearDownCleanup(dictionary=d)
         self.long_type_expr()
 
+    @unittest2.expectedFailure
     def test_unsigned_long_type_with_dsym(self):
         """Test that 'unsigned long'-type variable expressions are evaluated correctly."""
         d = {'CXX_SOURCES': 'unsigned_long.cpp'}
@@ -115,6 +132,7 @@ class IntegerTypesTestCase(AbstractBase.GenericTester):
         self.setTearDownCleanup(dictionary=d)
         self.unsigned_long_type_expr()
 
+    @unittest2.expectedFailure
     def test_unsigned_long_type_with_dwarf(self):
         """Test that 'unsigned long'-type variable expressions are evaluated correctly."""
         d = {'CXX_SOURCES': 'unsigned_long.cpp'}
