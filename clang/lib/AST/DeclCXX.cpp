@@ -493,6 +493,30 @@ void CXXRecordDecl::addedMember(Decl *D) {
       data().PlainOldData = false;
     }
     
+    // Keep the list of conversion functions up-to-date.
+    if (CXXConversionDecl *Conversion = dyn_cast<CXXConversionDecl>(D)) {
+      // We don't record specializations.
+      if (Conversion->getPrimaryTemplate())
+        return;
+      
+      // FIXME: We intentionally don't use the decl's access here because it
+      // hasn't been set yet.  That's really just a misdesign in Sema.
+
+      if (FunTmpl) {
+        if (FunTmpl->getPreviousDeclaration())
+          data().Conversions.replace(FunTmpl->getPreviousDeclaration(),
+                                     FunTmpl);
+        else
+          data().Conversions.addDecl(FunTmpl);
+      } else {
+        if (Conversion->getPreviousDeclaration())
+          data().Conversions.replace(Conversion->getPreviousDeclaration(),
+                                     Conversion);
+        else
+          data().Conversions.addDecl(Conversion);        
+      }
+    }
+    
     return;
   }
   
@@ -546,6 +570,12 @@ void CXXRecordDecl::addedMember(Decl *D) {
       } 
     }
   }
+  
+  // Handle using declarations of conversion functions.
+  if (UsingShadowDecl *Shadow = dyn_cast<UsingShadowDecl>(D))
+    if (Shadow->getDeclName().getNameKind()
+          == DeclarationName::CXXConversionFunctionName)
+      data().Conversions.addDecl(Shadow, Shadow->getAccess());
 }
 
 static CanQualType GetConversionType(ASTContext &Context, NamedDecl *Conv) {
@@ -833,6 +863,12 @@ void CXXRecordDecl::completeDefinition(CXXFinalOverriderMap *FinalOverriders) {
       }
     }
   }
+  
+  // Set access bits correctly on the directly-declared conversions.
+  for (UnresolvedSetIterator I = data().Conversions.begin(), 
+                             E = data().Conversions.end(); 
+       I != E; ++I)
+    data().Conversions.setAccess(I, (*I)->getAccess());
 }
 
 bool CXXRecordDecl::mayBeAbstract() const {

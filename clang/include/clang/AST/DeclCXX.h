@@ -657,13 +657,6 @@ public:
     return getConversionFunctions()->end();
   }
 
-  /// Replaces a conversion function with a new declaration.
-  ///
-  /// Returns true if the old conversion was found.
-  bool replaceConversion(const NamedDecl* Old, NamedDecl *New) {
-    return getConversionFunctions()->replace(Old, New);
-  }
-
   /// Removes a conversion function from this class.  The conversion
   /// function must currently be a member of this class.  Furthermore,
   /// this class must currently be in the process of being defined.
@@ -672,18 +665,6 @@ public:
   /// getVisibleConversionFunctions - get all conversion functions visible
   /// in current class; including conversion function templates.
   const UnresolvedSetImpl *getVisibleConversionFunctions();
-
-  /// addConversionFunction - Registers a conversion function which
-  /// this class declares directly.
-  void addConversionFunction(NamedDecl *Decl) {
-#ifndef NDEBUG
-    CheckConversionFunction(Decl);
-#endif
-
-    // We intentionally don't use the decl's access here because it
-    // hasn't been set yet.  That's really just a misdesign in Sema.
-    data().Conversions.addDecl(Decl);
-  }
 
   /// isAggregate - Whether this class is an aggregate (C++
   /// [dcl.init.aggr]), which is a class with no user-declared

@@ -3107,25 +3107,10 @@ Decl *Sema::ActOnConversionDeclarator(CXXConversionDecl *Conversion) {
       << ClassType << ConvType;
   }
 
-  if (Conversion->getPrimaryTemplate()) {
-    // ignore specializations
-  } else if (Conversion->getPreviousDeclaration()) {
-    if (FunctionTemplateDecl *ConversionTemplate
-                                  = Conversion->getDescribedFunctionTemplate()) {
-      if (ClassDecl->replaceConversion(
-                                   ConversionTemplate->getPreviousDeclaration(),
-                                       ConversionTemplate))
-        return ConversionTemplate;
-    } else if (ClassDecl->replaceConversion(Conversion->getPreviousDeclaration(),
-                                            Conversion))
-      return Conversion;
-    assert(Conversion->isInvalidDecl() && "Conversion should not get here.");
-  } else if (FunctionTemplateDecl *ConversionTemplate
-               = Conversion->getDescribedFunctionTemplate())
-    ClassDecl->addConversionFunction(ConversionTemplate);
-  else 
-    ClassDecl->addConversionFunction(Conversion);
-
+  if (FunctionTemplateDecl *ConversionTemplate
+                                = Conversion->getDescribedFunctionTemplate())
+    return ConversionTemplate;
+  
   return Conversion;
 }
 
@@ -3669,20 +3654,16 @@ UsingShadowDecl *Sema::BuildUsingShadowDecl(Scope *S,
     = UsingShadowDecl::Create(Context, CurContext,
                               UD->getLocation(), UD, Target);
   UD->addShadowDecl(Shadow);
-
+  
+  Shadow->setAccess(UD->getAccess());
+  if (Orig->isInvalidDecl() || UD->isInvalidDecl())
+    Shadow->setInvalidDecl();
+  
   if (S)
     PushOnScopeChains(Shadow, S);
   else
     CurContext->addDecl(Shadow);
-  Shadow->setAccess(UD->getAccess());
 
-  // Register it as a conversion if appropriate.
-  if (Shadow->getDeclName().getNameKind()
-        == DeclarationName::CXXConversionFunctionName)
-    cast<CXXRecordDecl>(CurContext)->addConversionFunction(Shadow);
-
-  if (Orig->isInvalidDecl() || UD->isInvalidDecl())
-    Shadow->setInvalidDecl();
 
   return Shadow;
 }
