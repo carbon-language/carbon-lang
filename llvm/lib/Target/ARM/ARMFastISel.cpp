@@ -784,12 +784,11 @@ bool ARMFastISel::SelectBranch(const Instruction *I) {
   unsigned CondReg = getRegForValue(Cond);
   if (CondReg == 0) return false;
 
-  ARMCC::CondCodes ARMPred = ARMCC::NE;
   CmpInst *CI = dyn_cast<CmpInst>(Cond);
   if (!CI) return false;
   
   // Get the compare predicate.
-  ARMPred = getComparePred(CI->getPredicate());
+  ARMCC::CondCodes ARMPred = getComparePred(CI->getPredicate());
     
   // We may not handle every CC for now.
   if (ARMPred == ARMCC::AL) return false;
