@@ -35,13 +35,11 @@ class ClassTypesTestCase(TestBase):
         self.breakpoint_creation_by_filespec_python()
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
-    @unittest2.expectedFailure
     def test_with_dsym_and_expr_parser(self):
         """Test 'frame variable this' and 'expr this' when stopped inside a constructor."""
         self.buildDsym()
         self.class_types_expr_parser()
 
-    @unittest2.expectedFailure
     def test_with_dwarf_and_expr_parser(self):
         """Test 'frame variable this' and 'expr this' when stopped inside a constructor."""
         self.buildDwarf()
@@ -69,7 +67,7 @@ class ClassTypesTestCase(TestBase):
 
         # We should be stopped on the ctor function of class C.
         self.expect("frame variable this", VARIABLES_DISPLAYED_CORRECTLY,
-            startstr = '(class C *const) this = ')
+            substrs = ['C *const) this = '])
 
     def breakpoint_creation_by_filespec_python(self):
         """Use Python APIs to create a breakpoint by (filespec, line)."""
