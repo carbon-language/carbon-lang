@@ -53,10 +53,6 @@
 #include <cctype>
 using namespace llvm;
 
-static cl::opt<bool>
-EnableMCInst("enable-arm-mcinst-printer", cl::Hidden, cl::init(true),
-            cl::desc("enable experimental asmprinter gunk in the arm backend"));
-
 namespace llvm {
   namespace ARM {
     enum DW_ISA {
@@ -93,8 +89,6 @@ namespace {
 
     void EmitJumpTable(const MachineInstr *MI);
     void EmitJump2Table(const MachineInstr *MI);
-    void printInstructionThroughMCStreamer(const MachineInstr *MI);
-
 
     void printOperand(const MachineInstr *MI, int OpNum, raw_ostream &O,
                       const char *Modifier = 0);
@@ -1136,101 +1130,6 @@ bool ARMAsmPrinter::PrintAsmMemoryOperand(const MachineInstr *MI,
   return false;
 }
 
-void ARMAsmPrinter::EmitInstruction(const MachineInstr *MI) {
-  if (EnableMCInst) {
-    printInstructionThroughMCStreamer(MI);
-    return;
-  }
-
-  if (MI->getOpcode() == ARM::CONSTPOOL_ENTRY)
-    EmitAlignment(2);
-
-  SmallString<128> Str;
-  raw_svector_ostream OS(Str);
-  if (MI->getOpcode() == ARM::DBG_VALUE) {
-    PrintDebugValueComment(MI, OS);
-  } else if (MI->getOpcode() == ARM::MOVs) {
-    // FIXME: Thumb variants?
-    const MachineOperand &Dst = MI->getOperand(0);
-    const MachineOperand &MO1 = MI->getOperand(1);
-    const MachineOperand &MO2 = MI->getOperand(2);
-    const MachineOperand &MO3 = MI->getOperand(3);
-
-    OS << '\t' << ARM_AM::getShiftOpcStr(ARM_AM::getSORegShOp(MO3.getImm()));
-    printSBitModifierOperand(MI, 6, OS);
-    printPredicateOperand(MI, 4, OS);
-
-    OS << '\t' << getRegisterName(Dst.getReg())
-       << ", " << getRegisterName(MO1.getReg());
-
-    if (ARM_AM::getSORegShOp(MO3.getImm()) != ARM_AM::rrx) {
-      OS << ", ";
-
-      if (MO2.getReg()) {
-        OS << getRegisterName(MO2.getReg());
-        assert(ARM_AM::getSORegOffset(MO3.getImm()) == 0);
-      } else {
-        OS << "#" << ARM_AM::getSORegOffset(MO3.getImm());
-      }
-    }
-  } else
-  // A8.6.123 PUSH
-  if ((MI->getOpcode() == ARM::STM_UPD || MI->getOpcode() == ARM::t2STM_UPD) &&
-      MI->getOperand(0).getReg() == ARM::SP &&
-      ARM_AM::getAM4SubMode(MI->getOperand(2).getImm()) == ARM_AM::db) {
-    OS << '\t' << "push";
-    printPredicateOperand(MI, 3, OS);
-    OS << '\t';
-    printRegisterList(MI, 5, OS);
-  } else
-  // A8.6.122 POP
-  if ((MI->getOpcode() == ARM::LDM_UPD || MI->getOpcode() == ARM::t2LDM_UPD) &&
-      MI->getOperand(0).getReg() == ARM::SP &&
-      ARM_AM::getAM4SubMode(MI->getOperand(2).getImm()) == ARM_AM::ia) {
-    OS << '\t' << "pop";
-    printPredicateOperand(MI, 3, OS);
-    OS << '\t';
-    printRegisterList(MI, 5, OS);
-  } else
-  // A8.6.355 VPUSH
-  if ((MI->getOpcode() == ARM::VSTMS_UPD || MI->getOpcode() ==ARM::VSTMD_UPD) &&
-      MI->getOperand(0).getReg() == ARM::SP &&
-      ARM_AM::getAM4SubMode(MI->getOperand(2).getImm()) == ARM_AM::db) {
-    OS << '\t' << "vpush";
-    printPredicateOperand(MI, 3, OS);
-    OS << '\t';
-    printRegisterList(MI, 5, OS);
-  } else
-  // A8.6.354 VPOP
-  if ((MI->getOpcode() == ARM::VLDMS_UPD || MI->getOpcode() ==ARM::VLDMD_UPD) &&
-      MI->getOperand(0).getReg() == ARM::SP &&
-      ARM_AM::getAM4SubMode(MI->getOperand(2).getImm()) == ARM_AM::ia) {
-    OS << '\t' << "vpop";
-    printPredicateOperand(MI, 3, OS);
-    OS << '\t';
-    printRegisterList(MI, 5, OS);
-  } else
-  // TRAP and tTRAP need special handling for non-Darwin. The GNU binutils
-  // don't (yet) support the 'trap' mnemonic. (Use decimal, not hex, to
-  // be consistent with the MC instruction printer.)
-  // FIXME: This really should be in AsmPrinter/ARMInstPrinter.cpp, not here.
-  //        Need a way to ask "isTargetDarwin()" there, first, though.
-  if (MI->getOpcode() == ARM::TRAP && !Subtarget->isTargetDarwin()) {
-    OS << "\t.long\t3892305662\t\t" << MAI->getCommentString() << "trap";
-  } else if (MI->getOpcode() == ARM::tTRAP && !Subtarget->isTargetDarwin()) {
-    OS << "\t.short\t57086\t\t\t" << MAI->getCommentString() << " trap";
-  } else
-    printInstruction(MI, OS);
-
-  // Output the instruction to the stream
-  OutStreamer.EmitRawText(OS.str());
-
-  // Make sure the instruction that follows TBB is 2-byte aligned.
-  // FIXME: Constant island pass should insert an "ALIGN" instruction instead.
-  if (MI->getOpcode() == ARM::t2TBB)
-    EmitAlignment(1);
-}
-
 void ARMAsmPrinter::EmitStartOfAsmFile(Module &M) {
   if (Subtarget->isTargetDarwin()) {
     Reloc::Model RelocM = TM.getRelocationModel();
@@ -1510,7 +1409,7 @@ void ARMAsmPrinter::PrintDebugValueComment(const MachineInstr *MI,
   printOperand(MI, NOps-2, OS);
 }
 
-void ARMAsmPrinter::printInstructionThroughMCStreamer(const MachineInstr *MI) {
+void ARMAsmPrinter::EmitInstruction(const MachineInstr *MI) {
   ARMMCInstLower MCInstLowering(OutContext, *Mang, *this);
   switch (MI->getOpcode()) {
   case ARM::t2MOVi32imm:
