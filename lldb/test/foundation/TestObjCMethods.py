@@ -126,12 +126,15 @@ class FoundationTestCase(TestBase):
             startstr = "(NSDate *) self->date")
 
         # TODO: use expression parser.
+        # self.runCmd("expr self->str")
+        # self.runCmd("expr self->date")
+
         # (lldb) expr self->str
-        # error: instance variable 'str' is protected
+        # error: 'MyString' does not have a member named 'str'
         # error: 1 errors parsing expression
         # Couldn't parse the expresssion
         # (lldb) expr self->date
-        # error: instance variable 'date' is protected
+        # error: 'MyString' does not have a member named 'date'
         # error: 1 errors parsing expression
         # Couldn't parse the expresssion
 
