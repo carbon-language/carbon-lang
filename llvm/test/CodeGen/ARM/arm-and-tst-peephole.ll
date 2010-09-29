@@ -19,16 +19,16 @@ tailrecurse:                                      ; preds = %sw.bb, %entry
   %0 = ptrtoint i8* %tmp2 to i32
 
 ; CHECK:      ands r12, r12, #3
-; CHECK-NEXT: beq .LBB0_2
+; CHECK-NEXT: beq
 
 ; THUMB:      movs r5, #3
 ; THUMB-NEXT: mov r6, r4
 ; THUMB-NEXT: ands r6, r5
 ; THUMB-NEXT: tst r4, r5
-; THUMB-NEXT: beq .LBB0_3
+; THUMB-NEXT: beq
 
 ; T2:      ands r12, r12, #3
-; T2-NEXT: beq .LBB0_3
+; T2-NEXT: beq
 
   %and = and i32 %0, 3
   %tst = icmp eq i32 %and, 0
