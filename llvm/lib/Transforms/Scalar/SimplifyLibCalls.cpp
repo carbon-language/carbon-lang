@@ -272,6 +272,47 @@ struct StrChrOpt : public LibCallOptimization {
 };
 
 //===---------------------------------------===//
+// 'strrchr' Optimizations
+
+struct StrRChrOpt : public LibCallOptimization {
+  virtual Value *CallOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
+    // Verify the "strrchr" function prototype.
+    const FunctionType *FT = Callee->getFunctionType();
+    if (FT->getNumParams() != 2 ||
+        FT->getReturnType() != Type::getInt8PtrTy(*Context) ||
+        FT->getParamType(0) != FT->getReturnType())
+      return 0;
+
+    Value *SrcStr = CI->getArgOperand(0);
+    ConstantInt *CharC = dyn_cast<ConstantInt>(CI->getArgOperand(1));
+
+    // Cannot fold anything if we're not looking for a constant.
+    if (!CharC)
+      return 0;
+
+    std::string Str;
+    if (!GetConstantStringInfo(SrcStr, Str)) {
+      // strrchr(s, 0) -> strchr(s, 0)
+      if (TD && CharC->isZero())
+        return EmitStrChr(SrcStr, '\0', B, TD);
+      return 0;
+    }
+
+    // strrchr can find the nul character.
+    Str += '\0';
+
+    // Compute the offset.
+    size_t I = Str.rfind(CharC->getSExtValue());
+    if (I == std::string::npos) // Didn't find the char. Return null.
+      return Constant::getNullValue(CI->getType());
+
+    // strrchr(s+n,c) -> gep(s+n+i,c)
+    Value *Idx = ConstantInt::get(Type::getInt64Ty(*Context), I);
+    return B.CreateGEP(SrcStr, Idx, "strrchr");
+  }
+};
+
+//===---------------------------------------===//
 // 'strcmp' Optimizations
 
 struct StrCmpOpt : public LibCallOptimization {
@@ -1220,8 +1261,8 @@ namespace {
   class SimplifyLibCalls : public FunctionPass {
     StringMap<LibCallOptimization*> Optimizations;
     // String and Memory LibCall Optimizations
-    StrCatOpt StrCat; StrNCatOpt StrNCat; StrChrOpt StrChr; StrCmpOpt StrCmp;
-    StrNCmpOpt StrNCmp; StrCpyOpt StrCpy; StrCpyOpt StrCpyChk;
+    StrCatOpt StrCat; StrNCatOpt StrNCat; StrChrOpt StrChr; StrRChrOpt StrRChr;
+    StrCmpOpt StrCmp; StrNCmpOpt StrNCmp; StrCpyOpt StrCpy; StrCpyOpt StrCpyChk;
     StrNCpyOpt StrNCpy; StrLenOpt StrLen;
     StrToOpt StrTo; StrStrOpt StrStr;
     MemCmpOpt MemCmp; MemCpyOpt MemCpy; MemMoveOpt MemMove; MemSetOpt MemSet;
@@ -1269,6 +1310,7 @@ void SimplifyLibCalls::InitOptimizations() {
   Optimizations["strcat"] = &StrCat;
   Optimizations["strncat"] = &StrNCat;
   Optimizations["strchr"] = &StrChr;
+  Optimizations["strrchr"] = &StrRChr;
   Optimizations["strcmp"] = &StrCmp;
   Optimizations["strncmp"] = &StrNCmp;
   Optimizations["strcpy"] = &StrCpy;
@@ -2173,10 +2215,6 @@ bool SimplifyLibCalls::doInitialization(Module &M) {
 // stpcpy:
 //   * stpcpy(str, "literal") ->
 //           llvm.memcpy(str,"literal",strlen("literal")+1,1)
-// strrchr:
-//   * strrchr(s,c) -> reverse_offset_of_in(c,s)
-//      (if c is a constant integer and s is a constant string)
-//   * strrchr(s1,0) -> strchr(s1,0)
 //
 // strpbrk:
 //   * strpbrk(s,a) -> offset_in_for(s,a)
