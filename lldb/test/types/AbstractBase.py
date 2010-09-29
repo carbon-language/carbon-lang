@@ -77,7 +77,10 @@ class GenericTester(TestBase):
             #     runCmd: frame variable a_array_bounded[0]
             #     output: (char) a_array_bounded[0] = 'a'
             #
-            dt = re.match("^\((.*)\)", output).group(1)
+            try:
+                dt = re.match("^\((.*)\)", output).group(1)
+            except:
+                self.fail("Data type from expression parser is parsed correctly")
 
             # Expect the display type string to contain each and every atoms.
             self.expect(dt,
