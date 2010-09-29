@@ -159,8 +159,16 @@ bool GRCoreEngine::ExecuteWorkList(const LocationContext *L, unsigned Steps,
       GenerateNode(StartLoc, InitState, 0);
   }
 
-  while (Steps && WList->hasWork()) {
-    --Steps;
+  // Check if we have a steps limit
+  bool UnlimitedSteps = Steps == 0;
+
+  while (WList->hasWork()) {
+    if (!UnlimitedSteps) {
+      if (Steps == 0)
+        break;
+      --Steps;
+    }
+
     const GRWorkListUnit& WU = WList->Dequeue();
 
     // Set the current block counter.
