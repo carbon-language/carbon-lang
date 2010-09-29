@@ -613,7 +613,7 @@ bool JumpThreading::ProcessBlock(BasicBlock *BB) {
     TerminatorInst *BBTerm = BB->getTerminator();
     for (unsigned i = 0, e = BBTerm->getNumSuccessors(); i != e; ++i) {
       if (i == BestSucc) continue;
-      RemovePredecessorAndSimplify(BBTerm->getSuccessor(i), BB, TD);
+      BBTerm->getSuccessor(i)->removePredecessor(BB, true);
     }
     
     DEBUG(dbgs() << "  In block '" << BB->getName()
@@ -664,7 +664,7 @@ bool JumpThreading::ProcessBlock(BasicBlock *BB) {
         if (PI == PE) {
           unsigned ToRemove = Baseline == LazyValueInfo::True ? 1 : 0;
           unsigned ToKeep = Baseline == LazyValueInfo::True ? 0 : 1;
-          RemovePredecessorAndSimplify(CondBr->getSuccessor(ToRemove), BB, TD);
+          CondBr->getSuccessor(ToRemove)->removePredecessor(BB, true);
           BranchInst::Create(CondBr->getSuccessor(ToKeep), CondBr);
           CondBr->eraseFromParent();
           return true;
@@ -1470,7 +1470,7 @@ bool JumpThreading::ThreadEdge(BasicBlock *BB,
   TerminatorInst *PredTerm = PredBB->getTerminator();
   for (unsigned i = 0, e = PredTerm->getNumSuccessors(); i != e; ++i)
     if (PredTerm->getSuccessor(i) == BB) {
-      RemovePredecessorAndSimplify(BB, PredBB, TD);
+      BB->removePredecessor(PredBB, true);
       PredTerm->setSuccessor(i, NewBB);
     }
   
@@ -1620,7 +1620,7 @@ bool JumpThreading::DuplicateCondBranchOnPHIIntoPred(BasicBlock *BB,
   
   // PredBB no longer jumps to BB, remove entries in the PHI node for the edge
   // that we nuked.
-  RemovePredecessorAndSimplify(BB, PredBB, TD);
+  BB->removePredecessor(PredBB, true);
   
   // Remove the unconditional branch at the end of the PredBB block.
   OldPredBranch->eraseFromParent();

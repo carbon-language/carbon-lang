@@ -484,3 +484,30 @@ bb269.us.us:
 bb288.bb289.loopexit_crit_edge:
   unreachable
 }
+
+; PR 8247
+%struct.S1 = type { i8, i8 }
+@func_89.l_245 = internal constant %struct.S1 { i8 33, i8 6 }, align 1
+define void @func_89(i16 zeroext %p_90, %struct.S1* nocapture %p_91, i32* nocapture %p_92) nounwind ssp {
+entry:
+  store i32 0, i32* %p_92, align 4
+  br i1 false, label %lbl_260, label %if.else
+
+if.else:                                          ; preds = %entry
+  br label %for.cond
+
+for.cond:                                         ; preds = %lbl_260, %if.else
+  %l_245.0 = phi i16 [ %l_245.1, %lbl_260 ], [ 33, %if.else ]
+  %l_261.0 = phi i32 [ %and, %lbl_260 ], [ 255, %if.else ]
+  %tobool21 = icmp ult i16 %l_245.0, 256
+  br i1 %tobool21, label %if.end, label %lbl_260
+
+lbl_260:                                          ; preds = %for.cond, %entry
+  %l_245.1 = phi i16 [ 1569, %entry ], [ %l_245.0, %for.cond ]
+  %l_261.1 = phi i32 [ 255, %entry ], [ %l_261.0, %for.cond ]
+  %and = and i32 %l_261.1, 1
+  br label %for.cond
+
+if.end:                                           ; preds = %for.cond
+  ret void
+}
