@@ -61,8 +61,9 @@ class ARMFastISel : public FastISel {
   const TargetLowering &TLI;
   const ARMFunctionInfo *AFI;
 
-  // Convenience variable to avoid checking all the time.
+  // Convenience variables to avoid some queries.
   bool isThumb;
+  LLVMContext *Context;
 
   public:
     explicit ARMFastISel(FunctionLoweringInfo &funcInfo)
@@ -73,6 +74,7 @@ class ARMFastISel : public FastISel {
       Subtarget = &TM.getSubtarget<ARMSubtarget>();
       AFI = funcInfo.MF->getInfo<ARMFunctionInfo>();
       isThumb = AFI->isThumbFunction();
+      Context = &funcInfo.Fn->getContext();
     }
 
     // Code from FastISel.cpp.
@@ -852,7 +854,7 @@ bool ARMFastISel::SelectCmp(const Instruction *I) {
   unsigned MovCCOpc = isThumb ? ARM::tMOVCCi : ARM::MOVCCi;
   unsigned DestReg = createResultReg(ARM::GPRRegisterClass);
   Constant *Zero 
-    = ConstantInt::get(Type::getInt32Ty(I->getType()->getContext()), 0);
+    = ConstantInt::get(Type::getInt32Ty(*Context), 0);
   unsigned ZeroReg = TargetMaterializeConstant(Zero);
   BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(MovCCOpc), DestReg)
           .addReg(ZeroReg).addImm(1)
@@ -1083,8 +1085,7 @@ bool ARMFastISel::ARMEmitLibcall(const Instruction *I, RTLIB::Libcall Call) {
   }
   
   SmallVector<CCValAssign, 16> ArgLocs;
-  CCState CCInfo(CC, false, TM, ArgLocs,
-                 I->getParent()->getParent()->getContext());
+  CCState CCInfo(CC, false, TM, ArgLocs, *Context);
   CCInfo.AnalyzeCallOperands(ArgVTs, ArgFlags, CCAssignFnForCall(CC, false));
   
   // Get a count of how many bytes are to be pushed on the stack.
@@ -1146,8 +1147,7 @@ bool ARMFastISel::ARMEmitLibcall(const Instruction *I, RTLIB::Libcall Call) {
   SmallVector<unsigned, 4> UsedRegs;
   if (RetVT.getSimpleVT().SimpleTy != MVT::isVoid) {
     SmallVector<CCValAssign, 16> RVLocs;
-    CCState CCInfo(CC, false, TM, RVLocs, 
-                   I->getParent()->getParent()->getContext());
+    CCState CCInfo(CC, false, TM, RVLocs, *Context);
     CCInfo.AnalyzeCallResult(RetVT, CCAssignFnForCall(CC, true));
 
     // Copy all of the result registers out of their specified physreg.
