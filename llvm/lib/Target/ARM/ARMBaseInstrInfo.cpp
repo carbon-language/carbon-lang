@@ -40,6 +40,10 @@ static cl::opt<bool>
 EnableARM3Addr("enable-arm-3-addr-conv", cl::Hidden,
                cl::desc("Enable ARM 2-addr to 3-addr conv"));
 
+static cl::opt<bool>
+OldARMIfConv("old-arm-if-conversion", cl::Hidden,
+             cl::desc("Use old-style ARM if-conversion heuristics"));
+
 ARMBaseInstrInfo::ARMBaseInstrInfo(const ARMSubtarget& STI)
   : TargetInstrInfoImpl(ARMInsts, array_lengthof(ARMInsts)),
     Subtarget(STI) {
@@ -1201,6 +1205,16 @@ bool ARMBaseInstrInfo::isProfitableToIfCvt(MachineBasicBlock &MBB,
   if (!NumInstrs)
     return false;
   
+  // Use old-style heuristics
+  if (OldARMIfConv) {
+    if (Subtarget.getCPUString() == "generic")
+      // Generic (and overly aggressive) if-conversion limits for testing.
+      return NumInstrs <= 10;
+    else if (Subtarget.hasV7Ops())
+      return NumInstrs <= 3;
+    return NumInstrs <= 2;
+  }
+  
   // Attempt to estimate the relative costs of predication versus branching.
   float UnpredCost = Probability * NumInstrs;
   UnpredCost += 1.0; // The branch itself
@@ -1216,6 +1230,11 @@ bool ARMBaseInstrInfo::
 isProfitableToIfCvt(MachineBasicBlock &TMBB, unsigned NumT,
                     MachineBasicBlock &FMBB, unsigned NumF,
                     float Probability) const {
+  // Use old-style if-conversion heuristics
+  if (OldARMIfConv) {
+    return NumT && NumF && NumT <= 2 && NumF <= 2;
+  }
+
   if (!NumT || !NumF)
     return false;
   
