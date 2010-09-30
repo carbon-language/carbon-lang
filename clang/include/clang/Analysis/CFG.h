@@ -124,7 +124,7 @@ public:
   }
 };
 
-/// CFGImplicitDtor - Represents C++ object destructor imlicitly generated
+/// CFGImplicitDtor - Represents C++ object destructor implicitly generated
 /// by compiler on various occasions.
 class CFGImplicitDtor : public CFGElement {
 protected:
@@ -221,6 +221,11 @@ class CFGBlock {
     typedef ImplTy::const_iterator                        const_reverse_iterator;
   
     void push_back(CFGElement e, BumpVectorContext &C) { Impl.push_back(e, C); }
+    reverse_iterator insert(reverse_iterator I, size_t Cnt, CFGElement E,
+        BumpVectorContext& C) {
+      return Impl.insert(I, Cnt, E, C);
+    }
+
     CFGElement front() const { return Impl.back(); }
     CFGElement back() const { return Impl.front(); }
     
@@ -426,6 +431,18 @@ public:
   
   void appendStmt(Stmt* Statement, BumpVectorContext &C, bool asLValue) {
     Elements.push_back(CFGStmt(Statement, asLValue), C);
+  }
+  
+  // Destructors must be inserted in reversed order. So insertion is in two
+  // steps. First we prepare space for some number of elements, then we insert
+  // the elements beginning at the last position in prepared space.
+  iterator beginAutomaticObjDtorsInsert(iterator I, size_t Cnt,
+      BumpVectorContext& C) {
+    return iterator(Elements.insert(I.base(), Cnt, CFGElement(), C));
+  }
+  iterator insertAutomaticObjDtor(iterator I, VarDecl* VD, Stmt* S) {
+    *I = CFGAutomaticObjDtor(VD, S);
+    return ++I;
   }
 };
 

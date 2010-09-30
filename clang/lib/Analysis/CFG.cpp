@@ -310,6 +310,13 @@ private:
     B->appendStmt(S, cfg->getBumpVectorContext(), asc.asLValue());
   }
 
+  void insertAutomaticObjDtors(CFGBlock* Blk, CFGBlock::iterator I,
+    LocalScope::const_iterator B, LocalScope::const_iterator E, Stmt* S);
+  void appendAutomaticObjDtors(CFGBlock* Blk, LocalScope::const_iterator B,
+      LocalScope::const_iterator E, Stmt* S);
+  void prependAutomaticObjDtorsWithTerminator(CFGBlock* Blk,
+      LocalScope::const_iterator B, LocalScope::const_iterator E);
+
   void AddSuccessor(CFGBlock *B, CFGBlock *S) {
     B->addSuccessor(S, cfg->getBumpVectorContext());
   }
@@ -445,6 +452,36 @@ CFGBlock* CFGBuilder::createBlock(bool add_successor) {
   if (add_successor && Succ)
     AddSuccessor(B, Succ);
   return B;
+}
+
+/// insertAutomaticObjDtors - Insert destructor CFGElements for variables with
+/// automatic storage duration to CFGBlock's elements vector. Insertion will be
+/// performed in place specified with iterator.
+void CFGBuilder::insertAutomaticObjDtors(CFGBlock* Blk, CFGBlock::iterator I,
+    LocalScope::const_iterator B, LocalScope::const_iterator E, Stmt* S) {
+  BumpVectorContext& C = cfg->getBumpVectorContext();
+  I = Blk->beginAutomaticObjDtorsInsert(I, B.distance(E), C);
+  while (B != E)
+    I = Blk->insertAutomaticObjDtor(I, *B++, S);
+}
+
+/// appendAutomaticObjDtors - Append destructor CFGElements for variables with
+/// automatic storage duration to CFGBlock's elements vector. Elements will be
+/// appended to physical end of the vector which happens to be logical
+/// beginning.
+void CFGBuilder::appendAutomaticObjDtors(CFGBlock* Blk,
+    LocalScope::const_iterator B, LocalScope::const_iterator E, Stmt* S) {
+  insertAutomaticObjDtors(Blk, Blk->begin(), B, E, S);
+}
+
+/// prependAutomaticObjDtorsWithTerminator - Prepend destructor CFGElements for
+/// variables with automatic storage duration to CFGBlock's elements vector.
+/// Elements will be prepended to physical beginning of the vector which
+/// happens to be logical end. Use blocks terminator as statement that specifies
+/// destructors call site.
+void CFGBuilder::prependAutomaticObjDtorsWithTerminator(CFGBlock* Blk,
+    LocalScope::const_iterator B, LocalScope::const_iterator E) {
+  insertAutomaticObjDtors(Blk, Blk->end(), B, E, Blk->getTerminator());
 }
 
 /// Visit - Walk the subtree of a statement and add extra
