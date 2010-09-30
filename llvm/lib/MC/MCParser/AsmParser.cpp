@@ -1696,7 +1696,7 @@ bool AsmParser::ParseDirectiveSymbolAttribute(MCSymbolAttr Attr) {
   }
 
   Lex();
-  return false;  
+  return false;
 }
 
 /// ParseDirectiveELFType
