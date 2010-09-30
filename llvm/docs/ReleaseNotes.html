@@ -103,7 +103,28 @@ Almost dead code.
     changing between equvivalent opcodes where possible.
   Support for the Intel AES instructions in the assembler.
   memcpy, memmove, and memset now take address space qualified pointers + volatile.
-  
+  per-instruction debug info metadata is much faster and uses less space (new DebugLoc class).
+  -ffunction-sections and -fdata-sections are supported on ELF targets.
+  Now iterate function passes when a cgsccpassmanager detects a devirtualization
+  -momit-leaf-frame-pointer now supported.
+  New -regalloc=fast,  =local got removed
+  New -regalloc=default option that chooses a register allocator based on the -O optimization level.
+  New "trap values" concept: http://llvm.org/docs/LangRef.html#trapvalues
+  Improved trip count analysis for <= and >= loops, and uses sign overflow info.
+  REMOVED: SCCVN pass.
+  X86 backend attempts to promote 16-bit integer operations to 32-bits to avoid
+     0x66 prefixes, which are slow on some microarchitectures and bloat the code
+     on others.
+  X87 fp stackifier is global!
+  LTO debug info support?
+  NEON: Better performance for QQQQ (4-consecutive Q register) instructions.  New reg sequence abstraction?
+  New support for X86 "thiscall" calling convention (x86_thiscallcc in IR).
+  ARM: Better scheduling (list-hybrid, hybrid?)
+  New SubRegIndex tblgen class for targets -> jakob
+  ARM: Tail call support.
+  AVX support in the MC assembler.  Full compiler support not done yet.
+  Atomics now get legalized when not natively supported (jim g)
+  ARM: General performance work and tuning.
  -->
  
 
@@ -145,6 +166,7 @@ production-quality compiler for C, Objective-C, C++ and Objective-C++ on x86
 
 <ul>
 <li>Surely these guys have done something</li>
+<li>X86-64 abi improvements? Did they make it in?</li>
 </ul>
 </div>
 
@@ -244,29 +266,6 @@ supported, and only on linux and darwin (darwin needs an additional gcc patch).
 
 </div>
 
-
-<!--=========================================================================-->
-<div class="doc_subsection">
-<a name="mc">llvm-mc: Machine Code Toolkit</a>
-</div>
-
-<div class="doc_text">
-<p>
-The LLVM Machine Code (aka MC) sub-project of LLVM was created to solve a number
-of problems in the realm of assembly, disassembly, object file format handling,
-and a number of other related areas that CPU instruction-set level tools work
-in. It is a sub-project of LLVM which provides it with a number of advantages
-over other compilers that do not have tightly integrated assembly-level tools.
-For a gentle introduction, please see the <a
-href="http://blog.llvm.org/2010/04/intro-to-llvm-mc-project.html">Intro to the
-LLVM MC Project Blog Post</a>.
-</p>
-
-<p>2.8 status here.  Basic correctness, some obscure missing instructions on
-   mainline, on by default in clang.
-   Entire compiler backend converted to use mcstreamer.
-   </p>
-</div>	
 
 <!--=========================================================================-->
 <div class="doc_subsection">
@@ -584,6 +583,33 @@ release includes a few major enhancements and additions to the optimizers:</p>
 </ul>
 
 </div>
+
+<!--=========================================================================-->
+<div class="doc_subsection">
+<a name="mc">MC Level Improvements</a>
+</div>
+
+<div class="doc_text">
+<p>
+FIXME: Rewrite.
+
+The LLVM Machine Code (aka MC) sub-project of LLVM was created to solve a number
+of problems in the realm of assembly, disassembly, object file format handling,
+and a number of other related areas that CPU instruction-set level tools work
+in. It is a sub-project of LLVM which provides it with a number of advantages
+over other compilers that do not have tightly integrated assembly-level tools.
+For a gentle introduction, please see the <a
+href="http://blog.llvm.org/2010/04/intro-to-llvm-mc-project.html">Intro to the
+LLVM MC Project Blog Post</a>.
+</p>
+
+<p>2.8 status here.  Basic correctness, some obscure missing instructions on
+   mainline, on by default in clang.
+   Entire compiler backend converted to use mcstreamer.
+   </p>
+</div>	
+
+
 
 <!--=========================================================================-->
 <div class="doc_subsection">
