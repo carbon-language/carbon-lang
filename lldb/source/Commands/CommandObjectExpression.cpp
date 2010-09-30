@@ -107,7 +107,7 @@ CommandObjectExpression::CommandObjectExpression (CommandInterpreter &interprete
                    "expression",
                    "Evaluate a C/ObjC/C++ expression in the current program context, using variables currently in scope.",
                    "expression [<cmd-options>] <expr>"),
-m_expr_line_count (0),
+    m_expr_line_count (0),
     m_expr_lines ()
 {
   SetHelpLong(
