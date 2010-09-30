@@ -40,6 +40,7 @@ public:
                                   /// aliases to base ctors when possible.
   unsigned DataSections      : 1; /// Set when -fdata-sections is enabled
   unsigned DebugInfo         : 1; /// Should generate debug info (-g).
+  unsigned LimitDebugInfo    : 1; /// Limit generated debug info to reduce size.
   unsigned DisableFPElim     : 1; /// Set when -fomit-frame-pointer is enabled.
   unsigned DisableLLVMOpts   : 1; /// Don't run any optimizations, for use in
                                   /// getting .bc files that correspond to the
@@ -109,6 +110,7 @@ public:
     CXXCtorDtorAliases = 0;
     DataSections = 0;
     DebugInfo = 0;
+    LimitDebugInfo = 0;
     DisableFPElim = 0;
     DisableLLVMOpts = 0;
     DisableRedZone = 0;

@@ -98,7 +98,7 @@ class CGDebugInfo {
   llvm::DIType getOrCreateVTablePtrType(llvm::DIFile F);
   llvm::DINameSpace getOrCreateNameSpace(const NamespaceDecl *N, 
                                          llvm::DIDescriptor Unit);
-
+  llvm::DIType CreatePointeeType(QualType PointeeTy, llvm::DIFile F);
   llvm::DIType CreatePointerLikeType(unsigned Tag,
                                      const Type *Ty, QualType PointeeTy,
                                      llvm::DIFile F);
@@ -189,6 +189,8 @@ public:
   void EmitGlobalVariable(const ValueDecl *VD, llvm::ConstantInt *Init, 
                           CGBuilderTy &Builder);
 
+  /// getOrCreateRecordType - Emit record type's standalone debug info. 
+  llvm::DIType getOrCreateRecordType(QualType Ty, SourceLocation L);
 private:
   /// EmitDeclare - Emit call to llvm.dbg.declare for a variable declaration.
   void EmitDeclare(const VarDecl *decl, unsigned Tag, llvm::Value *AI,

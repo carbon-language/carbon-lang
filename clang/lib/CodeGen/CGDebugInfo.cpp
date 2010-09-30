@@ -413,12 +413,44 @@ llvm::DIType CGDebugInfo::CreateType(const PointerType *Ty,
                                Ty->getPointeeType(), Unit);
 }
 
+/// CreatePointeeType - Create PointTee type. If Pointee is a record
+/// then emit record's fwd if debug info size reduction is enabled.
+llvm::DIType CGDebugInfo::CreatePointeeType(QualType PointeeTy,
+                                            llvm::DIFile Unit) {
+  if (!CGM.getCodeGenOpts().LimitDebugInfo)
+    return getOrCreateType(PointeeTy, Unit);
+  
+  if (const RecordType *RTy = dyn_cast<RecordType>(PointeeTy)) {
+    RecordDecl *RD = RTy->getDecl();
+    unsigned RTag;
+    if (RD->isStruct())
+      RTag = llvm::dwarf::DW_TAG_structure_type;
+    else if (RD->isUnion())
+      RTag = llvm::dwarf::DW_TAG_union_type;
+    else {
+      assert(RD->isClass() && "Unknown RecordType!");
+      RTag = llvm::dwarf::DW_TAG_class_type;
+    }
+
+    llvm::DIFile DefUnit = getOrCreateFile(RD->getLocation());
+    unsigned Line = getLineNumber(RD->getLocation());
+    llvm::DIDescriptor FDContext =
+      getContextDescriptor(dyn_cast<Decl>(RD->getDeclContext()), Unit);
+  
+    return
+      DebugFactory.CreateCompositeType(RTag, FDContext, RD->getName(),
+                                       DefUnit, Line, 0, 0, 0,
+                                       llvm::DIType::FlagFwdDecl,
+                                       llvm::DIType(), llvm::DIArray());
+  }
+  return getOrCreateType(PointeeTy, Unit);
+
+}
+
 llvm::DIType CGDebugInfo::CreatePointerLikeType(unsigned Tag,
                                                 const Type *Ty, 
                                                 QualType PointeeTy,
                                                 llvm::DIFile Unit) {
-  llvm::DIType EltTy = getOrCreateType(PointeeTy, Unit);
-
   // Bit size, align and offset of the type.
   
   // Size is always the size of a pointer. We can't use getTypeSize here
@@ -427,10 +459,10 @@ llvm::DIType CGDebugInfo::CreatePointerLikeType(unsigned Tag,
     CGM.getContext().Target.getPointerWidth(PointeeTy.getAddressSpace());
   uint64_t Align = CGM.getContext().getTypeAlign(Ty);
 
-  return
-    DebugFactory.CreateDerivedType(Tag, Unit, "", Unit,
-                                   0, Size, Align, 0, 0, EltTy);
-  
+  return DebugFactory.CreateDerivedType(Tag, Unit, "", Unit,
+                                        0, Size, Align, 0, 0, 
+                                        CreatePointeeType(PointeeTy, Unit));
+
 }
 
 llvm::DIType CGDebugInfo::CreateType(const BlockPointerType *Ty,
@@ -875,6 +907,14 @@ CollectVTableInfo(const CXXRecordDecl *RD, llvm::DIFile Unit,
                                      0, Size, 0, 0, 0, 
                                      getOrCreateVTablePtrType(Unit));
   EltTys.push_back(VPTR);
+}
+
+/// getOrCreateRecordType - Emit record type's standalone debug info. 
+llvm::DIType CGDebugInfo::getOrCreateRecordType(QualType RTy, 
+                                                SourceLocation Loc) {
+  llvm::DIType T =  getOrCreateType(RTy, getOrCreateFile(Loc));
+  DebugFactory.RecordType(T);
+  return T;
 }
 
 /// CreateType - get structure or union type.

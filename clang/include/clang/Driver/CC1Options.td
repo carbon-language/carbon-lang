@@ -131,6 +131,8 @@ def dwarf_debug_flags : Separate<"-dwarf-debug-flags">,
 def g : Flag<"-g">, HelpText<"Generate source level debug information">;
 def fcatch_undefined_behavior : Flag<"-fcatch-undefined-behavior">,
     HelpText<"Generate runtime checks for undefined behavior.">;
+def flimit_debug_info : Flag<"-flimit-debug-info">,
+  HelpText<"Limit debug information produced to reduce size of debug binary">;
 def fno_common : Flag<"-fno-common">,
   HelpText<"Compile common globals like normal definitions">;
 def no_implicit_float : Flag<"-no-implicit-float">,
