@@ -101,6 +101,9 @@ public:
   /// has no actual object file contents.
   virtual bool isVirtualSection(const MCSection &Section) const = 0;
 
+  /// getPointerSize - Get the pointer size in bytes.
+  virtual unsigned getPointerSize() const = 0;
+
   /// ApplyFixup - Apply the \arg Value for given \arg Fixup into the provided
   /// data fragment, at the offset specified by the fixup and following the
   /// fixup kind as appropriate.

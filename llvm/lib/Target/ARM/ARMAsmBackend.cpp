@@ -84,6 +84,10 @@ public:
                                /*IsLittleEndian=*/true,
                                /*HasRelocationAddend=*/false);
   }
+
+  unsigned getPointerSize() const {
+    return 4;
+  };
 };
 
 // Fixme: can we raise this to share code between Darwin and ELF?
@@ -115,6 +119,10 @@ public:
   MCObjectWriter *createObjectWriter(raw_ostream &OS) const {
     return new MachObjectWriter(OS, /*Is64Bit=*/false);
   }
+
+  unsigned getPointerSize() const {
+    return 4;
+  };
 
   virtual bool doesSectionRequireSymbols(const MCSection &Section) const {
     return false;
