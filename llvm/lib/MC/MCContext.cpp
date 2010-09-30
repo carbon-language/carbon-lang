@@ -160,6 +160,10 @@ getELFSection(StringRef Section, unsigned Type, unsigned Flags,
   StringMapEntry<const MCSectionELF*> &Entry = Map.GetOrCreateValue(Section);
   if (Entry.getValue()) return Entry.getValue();
   
+  // Possibly refine the entry size first.
+  if (!EntrySize) {
+    EntrySize = MCSectionELF::DetermineEntrySize(Kind);
+  }
   MCSectionELF *Result = new (*this) MCSectionELF(Entry.getKey(), Type, Flags,
                                                   Kind, IsExplicit, EntrySize);
   Entry.setValue(Result);
