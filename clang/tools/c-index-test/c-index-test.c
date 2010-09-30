@@ -980,7 +980,7 @@ int perform_code_completion(int argc, const char **argv, int timing_only) {
   struct CXUnsavedFile *unsaved_files = 0;
   int num_unsaved_files = 0;
   CXCodeCompleteResults *results = 0;
-  CXTranslationUnit *TU = 0;
+  CXTranslationUnit TU = 0;
   
   if (timing_only)
     input += strlen("-code-completion-timing=");
