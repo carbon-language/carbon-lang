@@ -67,6 +67,12 @@ extern "C" void LLVMInitializeARMTarget() {
   TargetRegistry::RegisterCodeEmitter(TheThumbTarget,
                                       createARMMCCodeEmitter);
 
+  // Register the asm backend.
+  TargetRegistry::RegisterAsmBackend(TheARMTarget,
+                                     createARMAsmBackend);
+  TargetRegistry::RegisterAsmBackend(TheThumbTarget,
+                                     createARMAsmBackend);
+
   // Register the object streamer.
   TargetRegistry::RegisterObjectStreamer(TheARMTarget,
                                          createMCStreamer);

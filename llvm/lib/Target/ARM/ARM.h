@@ -27,10 +27,13 @@ class FunctionPass;
 class JITCodeEmitter;
 class formatted_raw_ostream;
 class MCCodeEmitter;
+class TargetAsmBackend;
 
 MCCodeEmitter *createARMMCCodeEmitter(const Target &,
                                       TargetMachine &TM,
                                       MCContext &Ctx);
+
+TargetAsmBackend *createARMAsmBackend(const Target &, const std::string &);
 
 FunctionPass *createARMISelDag(ARMBaseTargetMachine &TM,
                                CodeGenOpt::Level OptLevel);

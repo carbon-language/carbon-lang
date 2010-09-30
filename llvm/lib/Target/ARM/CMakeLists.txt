@@ -16,6 +16,7 @@ tablegen(ARMGenEDInfo.inc -gen-enhanced-disassembly-info)
 tablegen(ARMGenDecoderTables.inc -gen-arm-decoder)
 
 add_llvm_target(ARMCodeGen
+  ARMAsmBackend.cpp
   ARMAsmPrinter.cpp
   ARMBaseInstrInfo.cpp
   ARMBaseRegisterInfo.cpp
