@@ -339,7 +339,9 @@ bool ARMAsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNum,
     default: return true;  // Unknown modifier.
     case 'a': // Print as a memory address.
       if (MI->getOperand(OpNum).isReg()) {
-        O << "[" << ARMInstPrinter::getRegisterName(MI->getOperand(OpNum).getReg()) << "]";
+        O << "["
+          << ARMInstPrinter::getRegisterName(MI->getOperand(OpNum).getReg())
+          << "]";
         return false;
       }
       // Fallthrough
