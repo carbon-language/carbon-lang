@@ -21,8 +21,9 @@
 
 PREVISIT(ArraySubscriptExpr, Stmt)
 PREVISIT(BinaryOperator, Stmt)
-PREVISIT(CallExpr, Stmt)
-PREVISIT(CXXOperatorCallExpr, CallExpr)
+PREVISIT(CallExpr, GenericCall)
+PREVISIT(CXXOperatorCallExpr, GenericCall)
+PREVISIT(CXXMemberCallExpr, GenericCall)
 PREVISIT(DeclStmt, Stmt)
 PREVISIT(ObjCAtSynchronizedStmt, Stmt)
 PREVISIT(ObjCMessageExpr, Stmt)
@@ -30,8 +31,9 @@ PREVISIT(ReturnStmt, Stmt)
 
 POSTVISIT(BlockExpr, Stmt)
 POSTVISIT(BinaryOperator, Stmt)
-POSTVISIT(CallExpr, Stmt)
-POSTVISIT(CXXOperatorCallExpr, CallExpr)
+POSTVISIT(CallExpr, GenericCall)
+POSTVISIT(CXXOperatorCallExpr, GenericCall)
+POSTVISIT(CXXMemberCallExpr, GenericCall)
 POSTVISIT(ObjCMessageExpr, Stmt)
 
 #undef PREVISIT
