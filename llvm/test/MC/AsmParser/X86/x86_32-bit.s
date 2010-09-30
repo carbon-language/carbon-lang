@@ -1,5 +1,4 @@
 // RUN: llvm-mc -triple i386-unknown-unknown %s | FileCheck %s
-// XFAIL: *
 
 // CHECK: 	movb	$127, 3735928559(%ebx,%ecx,8)
         	movb	$0x7f,0xdeadbeef(%ebx,%ecx,8)
@@ -244,19 +243,19 @@
 // CHECK: 	sarl	3735928559(%ebx,%ecx,8)
         	sarl	0xdeadbeef(%ebx,%ecx,8)
 
-// CHECK: 	call	*%ecx
+// CHECK: 	calll	*%ecx
         	call	*%ecx
 
-// CHECK: 	call	*3735928559(%ebx,%ecx,8)
+// CHECK: 	calll	*3735928559(%ebx,%ecx,8)
         	call	*0xdeadbeef(%ebx,%ecx,8)
 
-// CHECK: 	call	*3735928559(%ebx,%ecx,8)
+// CHECK: 	calll	*3735928559(%ebx,%ecx,8)
         	call	*0xdeadbeef(%ebx,%ecx,8)
 
-// CHECK: 	jmp	*3735928559(%ebx,%ecx,8)  # TAILCALL
+// CHECK: 	jmpl	*3735928559(%ebx,%ecx,8)
         	jmp	*0xdeadbeef(%ebx,%ecx,8)
 
-// CHECK: 	jmp	*3735928559(%ebx,%ecx,8)  # TAILCALL
+// CHECK: 	jmpl	*3735928559(%ebx,%ecx,8)
         	jmp	*0xdeadbeef(%ebx,%ecx,8)
 
 // CHECK: 	ljmpl	*3735928559(%ebx,%ecx,8)
