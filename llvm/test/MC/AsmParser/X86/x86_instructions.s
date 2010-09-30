@@ -421,6 +421,16 @@ fstcw (%rsp)
 // CHECK: wait
 // CHECK: fnstcw (%rsp)
 
+// PR8259
+fstcw (%rsp)
+// CHECK: wait
+// CHECK: fnstcw (%rsp)
+
+// PR8258
+finit
+// CHECK: wait
+// CHECK: fninit
+
 
 // rdar://8456382 - cvtsd2si support.
 cvtsd2si	%xmm1, %rax
