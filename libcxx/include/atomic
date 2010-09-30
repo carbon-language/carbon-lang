@@ -2411,7 +2411,6 @@ void atomic_signal_fence(memory_order);
 */
 
 #include <__config>
-#include <initializer_list>
 
 #pragma GCC system_header
 
@@ -2419,36 +2418,28 @@ void atomic_signal_fence(memory_order);
 
 inline _LIBCPP_INLINE_VISIBILITY
 bool
-__test_and_set_relaxed(volatile bool* __b)
+__exchange_relaxed(volatile bool* __b)
 {
     return __sync_lock_test_and_set(__b, true);
 }
 
 inline _LIBCPP_INLINE_VISIBILITY
 bool
-__test_and_set_consume(volatile bool* __b)
+__exchange_consume(volatile bool* __b)
 {
     return __sync_lock_test_and_set(__b, true);
 }
 
 inline _LIBCPP_INLINE_VISIBILITY
 bool
-__test_and_set_acquire(volatile bool* __b)
+__exchange_acquire(volatile bool* __b)
 {
     return __sync_lock_test_and_set(__b, true);
 }
 
 inline _LIBCPP_INLINE_VISIBILITY
 bool
-__test_and_set_release(volatile bool* __b)
-{
-    __sync_synchronize();
-    return __sync_lock_test_and_set(__b, true);
-}
-
-inline _LIBCPP_INLINE_VISIBILITY
-bool
-__test_and_set_acq_rel(volatile bool* __b)
+__exchange_release(volatile bool* __b)
 {
     __sync_synchronize();
     return __sync_lock_test_and_set(__b, true);
@@ -2456,7 +2447,15 @@ __test_and_set_acq_rel(volatile bool* __b)
 
 inline _LIBCPP_INLINE_VISIBILITY
 bool
-__test_and_set_seq_cst(volatile bool* __b)
+__exchange_acq_rel(volatile bool* __b)
+{
+    __sync_synchronize();
+    return __sync_lock_test_and_set(__b, true);
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+bool
+__exchange_seq_cst(volatile bool* __b)
 {
     __sync_synchronize();
     return __sync_lock_test_and_set(__b, true);
@@ -2577,7 +2576,7 @@ inline _LIBCPP_INLINE_VISIBILITY
 bool
 atomic_flag_test_and_set(volatile atomic_flag* __f)
 {
-    return __test_and_set_seq_cst(&__f->__flg_);
+    return __exchange_seq_cst(&__f->__flg_);
 }
 
 inline _LIBCPP_INLINE_VISIBILITY
@@ -2594,17 +2593,17 @@ atomic_flag_test_and_set_explicit(volatile atomic_flag* __f, memory_order __o)
     switch (__o)
     {
     case memory_order_relaxed:
-        return __test_and_set_relaxed(&__f->__flg_);
+        return __exchange_relaxed(&__f->__flg_);
     case memory_order_consume:
-        return __test_and_set_consume(&__f->__flg_);
+        return __exchange_consume(&__f->__flg_);
     case memory_order_acquire:
-        return __test_and_set_acquire(&__f->__flg_);
+        return __exchange_acquire(&__f->__flg_);
     case memory_order_release:
-        return __test_and_set_release(&__f->__flg_);
+        return __exchange_release(&__f->__flg_);
     case memory_order_acq_rel:
-        return __test_and_set_acq_rel(&__f->__flg_);
+        return __exchange_acq_rel(&__f->__flg_);
     case memory_order_seq_cst:
-        return __test_and_set_seq_cst(&__f->__flg_);
+        return __exchange_seq_cst(&__f->__flg_);
     }
 }
 
