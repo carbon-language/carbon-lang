@@ -39,3 +39,12 @@ void f() {
   @property (retain) NSRunLoop *workRunLoop;  
 @end
 
+
+// rdar://8475819
+@protocol some_protocol;
+
+void foo (int n)
+{
+  id<some_protocol> array[n];
+}
+

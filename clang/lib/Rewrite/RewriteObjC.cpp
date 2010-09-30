@@ -2109,6 +2109,10 @@ bool RewriteObjC::needToScanForQualifiers(QualType T) {
     T = T->getPointeeType();
     return T->isObjCQualifiedInterfaceType();
   }
+  if (T->isArrayType()) {
+    QualType ElemTy = Context->getBaseElementType(T);
+    return needToScanForQualifiers(ElemTy);
+  }
   return false;
 }
 
