@@ -225,11 +225,11 @@ SBTarget::BreakpointCreateByName (const char *symbol_name, const char *module_na
         if (module_name && module_name[0])
         {
             FileSpec module_file_spec(module_name);
-            *sb_bp = m_opaque_sp->CreateBreakpoint (&module_file_spec, symbol_name, false);
+            *sb_bp = m_opaque_sp->CreateBreakpoint (&module_file_spec, symbol_name, eFunctionNameTypeFull | eFunctionNameTypeBase, false);
         }
         else
         {
-            *sb_bp = m_opaque_sp->CreateBreakpoint (NULL, symbol_name, false);
+            *sb_bp = m_opaque_sp->CreateBreakpoint (NULL, symbol_name, eFunctionNameTypeFull | eFunctionNameTypeBase, false);
         }
     }
     return sb_bp;
