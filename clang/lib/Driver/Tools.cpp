@@ -212,11 +212,15 @@ void Clang::AddPreprocessingOptions(const Driver &D,
   // wonky, but we include looking for .gch so we can support seamless
   // replacement into a build system already set up to be generating
   // .gch files.
+  bool RenderedImplicitInclude = false;
   for (arg_iterator it = Args.filtered_begin(options::OPT_clang_i_Group),
          ie = Args.filtered_end(); it != ie; ++it) {
     const Arg *A = it;
 
     if (A->getOption().matches(options::OPT_include)) {
+      bool IsFirstImplicitInclude = !RenderedImplicitInclude;
+      RenderedImplicitInclude = true;
+
       // Use PCH if the user requested it.
       bool UsePCH = D.CCCUsePCH;
 
@@ -250,13 +254,19 @@ void Clang::AddPreprocessingOptions(const Driver &D,
       }
 
       if (FoundPCH || FoundPTH) {
-        A->claim();
-        if (UsePCH)
-          CmdArgs.push_back("-include-pch");
-        else
-          CmdArgs.push_back("-include-pth");
-        CmdArgs.push_back(Args.MakeArgString(P.str()));
-        continue;
+        if (IsFirstImplicitInclude) {
+          A->claim();
+          if (UsePCH)
+            CmdArgs.push_back("-include-pch");
+          else
+            CmdArgs.push_back("-include-pth");
+          CmdArgs.push_back(Args.MakeArgString(P.str()));
+          continue;
+        } else {
+          // Ignore the PCH if not first on command line and emit warning.
+          D.Diag(clang::diag::warn_drv_pch_not_first_include)
+              << P.str() << A->getAsString(Args);
+        }
       }
     }
 
