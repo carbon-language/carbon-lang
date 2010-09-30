@@ -132,6 +132,8 @@ BREAKPOINT_PENDING_CREATED = "Pending breakpoint created successfully"
 
 BREAKPOINT_HIT_ONCE = "Breakpoint resolved with hit cout = 1"
 
+BREAKPOINT_HIT_TWICE = "Breakpoint resolved with hit cout = 2"
+
 STEP_OUT_SUCCEEDED = "Thread step-out succeeded"
 
 STOPPED_DUE_TO_BREAKPOINT = "Process state is stopped due to breakpoint"
@@ -294,7 +296,7 @@ class TestBase(unittest2.TestCase):
         # See also dotest.py which sets up ${LLDB_TEST}.
         if ("LLDB_TEST" in os.environ):
             if traceAlways:
-                print "Change dir to:", os.path.join(os.environ["LLDB_TEST"], cls.mydir)
+                print >> sys.stderr, "Change dir to:", os.path.join(os.environ["LLDB_TEST"], cls.mydir)
             os.chdir(os.path.join(os.environ["LLDB_TEST"], cls.mydir))
 
     @classmethod
@@ -309,7 +311,7 @@ class TestBase(unittest2.TestCase):
         # Subclass might have specific cleanup function defined.
         if getattr(cls, "classCleanup", None):
             if traceAlways:
-                print "Call class-specific cleanup function for class:", cls
+                print >> sys.stderr, "Call class-specific cleanup function for class:", cls
             try:
                 cls.classCleanup()
             except:
@@ -318,7 +320,7 @@ class TestBase(unittest2.TestCase):
 
         # Restore old working directory.
         if traceAlways:
-            print "Restore dir to:", cls.oldcwd
+            print >> sys.stderr, "Restore dir to:", cls.oldcwd
         os.chdir(cls.oldcwd)
 
     def setUp(self):
@@ -521,7 +523,7 @@ class TestBase(unittest2.TestCase):
                         name + "is a method name of object: " + str(obj))
         result = method()
         if trace:
-            print str(method) + ":",  result
+            print >> sys.stderr, str(method) + ":",  result
         return result
 
     def breakAfterLaunch(self, process, func, trace=False):
