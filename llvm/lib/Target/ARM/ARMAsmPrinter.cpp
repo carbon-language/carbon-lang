@@ -696,7 +696,7 @@ void ARMAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     OutStreamer.EmitInstruction(AddInst);
     return;
   }
-  case ARM::PICADD: { // FIXME: Remove asm string from td file.
+  case ARM::PICADD: {
     // This is a pseudo op for a label + instruction sequence, which looks like:
     // LPC0:
     //     add r0, pc, r0
@@ -767,7 +767,7 @@ void ARMAsmPrinter::EmitInstruction(const MachineInstr *MI) {
 
     return;
   }
-  case ARM::CONSTPOOL_ENTRY: { // FIXME: Remove asm string from td file.
+  case ARM::CONSTPOOL_ENTRY: {
     /// CONSTPOOL_ENTRY - This instruction represents a floating constant pool
     /// in the function.  The first operand is the ID# for this instruction, the
     /// second is the index into the MachineConstantPool that this is, the third
@@ -786,7 +786,8 @@ void ARMAsmPrinter::EmitInstruction(const MachineInstr *MI) {
 
     return;
   }
-  case ARM::MOVi2pieces: { // FIXME: Remove asmstring from td file.
+  case ARM::MOVi2pieces: {
+    // FIXME: We'd like to remove the asm string in the .td file, but the
     // This is a hack that lowers as a two instruction sequence.
     unsigned DstReg = MI->getOperand(0).getReg();
     unsigned ImmVal = (unsigned)MI->getOperand(1).getImm();
@@ -823,7 +824,8 @@ void ARMAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     }
     return;
   }
-  case ARM::MOVi32imm: { // FIXME: Remove asmstring from td file.
+  case ARM::MOVi32imm: {
+    // FIXME: We'd like to remove the asm string in the .td file, but the
     // This is a hack that lowers as a two instruction sequence.
     unsigned DstReg = MI->getOperand(0).getReg();
     const MachineOperand &MO = MI->getOperand(1);
@@ -924,7 +926,7 @@ void ARMAsmPrinter::EmitInstruction(const MachineInstr *MI) {
   }
   case ARM::t2Int_eh_sjlj_setjmp:
   case ARM::t2Int_eh_sjlj_setjmp_nofp:
-  case ARM::tInt_eh_sjlj_setjmp: { // FIXME: Remove asmstring from td file.
+  case ARM::tInt_eh_sjlj_setjmp: {
     // Two incoming args: GPR:$src, GPR:$val
     // mov $val, pc
     // adds $val, #7
@@ -1008,7 +1010,7 @@ void ARMAsmPrinter::EmitInstruction(const MachineInstr *MI) {
   }
 
   case ARM::Int_eh_sjlj_setjmp_nofp:
-  case ARM::Int_eh_sjlj_setjmp: { // FIXME: Remove asmstring from td file.
+  case ARM::Int_eh_sjlj_setjmp: {
     // Two incoming args: GPR:$src, GPR:$val
     // add $val, pc, #8
     // str $val, [$src, #+4]

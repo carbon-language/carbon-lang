@@ -688,8 +688,7 @@ multiclass AI1_adde_sube_s_irs<bits<4> opcod, string opc, PatFrag opnode,
 let neverHasSideEffects = 1, isNotDuplicable = 1 in
 def CONSTPOOL_ENTRY :
 PseudoInst<(outs), (ins cpinst_operand:$instid, cpinst_operand:$cpidx,
-                    i32imm:$size), NoItinerary,
-           "${instid:label} ${cpidx:cpentry}", []>;
+                    i32imm:$size), NoItinerary, "", []>;
 
 // FIXME: Marking these as hasSideEffects is necessary to prevent machine DCE
 // from removing one half of the matched pairs. That breaks PEI, which assumes
@@ -845,41 +844,41 @@ def TRAP : AXI<(outs), (ins), MiscFrm, NoItinerary,
 // Address computation and loads and stores in PIC mode.
 let isNotDuplicable = 1 in {
 def PICADD : AXI1<0b0100, (outs GPR:$dst), (ins GPR:$a, pclabel:$cp, pred:$p),
-                  Pseudo, IIC_iALUr, "\n$cp:\n\tadd$p\t$dst, pc, $a",
+                  Pseudo, IIC_iALUr, "",
                    [(set GPR:$dst, (ARMpic_add GPR:$a, imm:$cp))]>;
 
 let AddedComplexity = 10 in {
 def PICLDR  : AXI2ldw<(outs GPR:$dst), (ins addrmodepc:$addr, pred:$p),
-                  Pseudo, IIC_iLoad_r, "\n${addr:label}:\n\tldr$p\t$dst, $addr",
+                  Pseudo, IIC_iLoad_r, "",
                   [(set GPR:$dst, (load addrmodepc:$addr))]>;
 
 def PICLDRH : AXI3ldh<(outs GPR:$dst), (ins addrmodepc:$addr, pred:$p),
-            Pseudo, IIC_iLoad_bh_r, "\n${addr:label}:\n\tldrh${p}\t$dst, $addr",
+            Pseudo, IIC_iLoad_bh_r, "",
                   [(set GPR:$dst, (zextloadi16 addrmodepc:$addr))]>;
 
 def PICLDRB : AXI2ldb<(outs GPR:$dst), (ins addrmodepc:$addr, pred:$p),
-            Pseudo, IIC_iLoad_bh_r, "\n${addr:label}:\n\tldrb${p}\t$dst, $addr",
+            Pseudo, IIC_iLoad_bh_r, "",
                   [(set GPR:$dst, (zextloadi8 addrmodepc:$addr))]>;
 
 def PICLDRSH : AXI3ldsh<(outs GPR:$dst), (ins addrmodepc:$addr, pred:$p),
-           Pseudo, IIC_iLoad_bh_r, "\n${addr:label}:\n\tldrsh${p}\t$dst, $addr",
+           Pseudo, IIC_iLoad_bh_r, "",
                   [(set GPR:$dst, (sextloadi16 addrmodepc:$addr))]>;
 
 def PICLDRSB : AXI3ldsb<(outs GPR:$dst), (ins addrmodepc:$addr, pred:$p),
-           Pseudo, IIC_iLoad_bh_r, "\n${addr:label}:\n\tldrsb${p}\t$dst, $addr",
+           Pseudo, IIC_iLoad_bh_r, "",
                   [(set GPR:$dst, (sextloadi8 addrmodepc:$addr))]>;
 }
 let AddedComplexity = 10 in {
 def PICSTR  : AXI2stw<(outs), (ins GPR:$src, addrmodepc:$addr, pred:$p),
-               Pseudo, IIC_iStore_r, "\n${addr:label}:\n\tstr$p\t$src, $addr",
+               Pseudo, IIC_iStore_r, "",
                [(store GPR:$src, addrmodepc:$addr)]>;
 
 def PICSTRH : AXI3sth<(outs), (ins GPR:$src, addrmodepc:$addr, pred:$p),
-           Pseudo, IIC_iStore_bh_r, "\n${addr:label}:\n\tstrh${p}\t$src, $addr",
+           Pseudo, IIC_iStore_bh_r, "",
                [(truncstorei16 GPR:$src, addrmodepc:$addr)]>;
 
 def PICSTRB : AXI2stb<(outs), (ins GPR:$src, addrmodepc:$addr, pred:$p),
-           Pseudo, IIC_iStore_bh_r, "\n${addr:label}:\n\tstrb${p}\t$src, $addr",
+           Pseudo, IIC_iStore_bh_r, "",
                [(truncstorei8 GPR:$src, addrmodepc:$addr)]>;
 }
 } // isNotDuplicable = 1

@@ -208,8 +208,7 @@ def tCPS : T1I<(outs), (ins cps_opt:$opt), NoItinerary, "cps$opt",
 
 // For both thumb1 and thumb2.
 let isNotDuplicable = 1 in
-def tPICADD : TIt<(outs GPR:$dst), (ins GPR:$lhs, pclabel:$cp), IIC_iALUr,
-                 "\n$cp:\n\tadd\t$dst, pc",
+def tPICADD : TIt<(outs GPR:$dst), (ins GPR:$lhs, pclabel:$cp), IIC_iALUr, "",
                  [(set GPR:$dst, (ARMpic_add GPR:$lhs, imm:$cp))]>,
               T1Special<{0,0,?,?}> {
   let Inst{6-3} = 0b1111; // A8.6.6 Rm = pc
