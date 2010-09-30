@@ -38,7 +38,7 @@ public:
   ~X86MCCodeEmitter() {}
 
   unsigned getNumFixupKinds() const {
-    return 5;
+    return 6;
   }
 
   const MCFixupKindInfo &getFixupKindInfo(MCFixupKind Kind) const {
@@ -47,7 +47,8 @@ public:
       { "reloc_pcrel_1byte", 0, 1 * 8, MCFixupKindInfo::FKF_IsPCRel },
       { "reloc_pcrel_2byte", 0, 2 * 8, MCFixupKindInfo::FKF_IsPCRel },
       { "reloc_riprel_4byte", 0, 4 * 8, MCFixupKindInfo::FKF_IsPCRel },
-      { "reloc_riprel_4byte_movq_load", 0, 4 * 8, MCFixupKindInfo::FKF_IsPCRel }
+      { "reloc_riprel_4byte_movq_load", 0, 4 * 8, MCFixupKindInfo::FKF_IsPCRel },
+      { "reloc_signed_4byte", 0, 4 * 8, 0}
     };
 
     if (Kind < FirstTargetFixupKind)
@@ -307,7 +308,8 @@ void X86MCCodeEmitter::EmitMemModRMByte(const MCInst &MI, unsigned Op,
 
     // Otherwise, emit the most general non-SIB encoding: [REG+disp32]
     EmitByte(ModRMByte(2, RegOpcodeField, BaseRegNo), CurByte, OS);
-    EmitImmediate(Disp, 4, FK_Data_4, CurByte, OS, Fixups);
+    EmitImmediate(Disp, 4, MCFixupKind(X86::reloc_signed_4byte), CurByte, OS,
+                  Fixups);
     return;
   }
 
@@ -367,7 +369,8 @@ void X86MCCodeEmitter::EmitMemModRMByte(const MCInst &MI, unsigned Op,
   if (ForceDisp8)
     EmitImmediate(Disp, 1, FK_Data_1, CurByte, OS, Fixups);
   else if (ForceDisp32 || Disp.getImm() != 0)
-    EmitImmediate(Disp, 4, FK_Data_4, CurByte, OS, Fixups);
+    EmitImmediate(Disp, 4, MCFixupKind(X86::reloc_signed_4byte), CurByte, OS,
+                  Fixups);
 }
 
 /// EmitVEXOpcodePrefix - AVX instructions are encoded using a opcode prefix
@@ -983,10 +986,16 @@ EncodeInstruction(const MCInst &MI, raw_ostream &OS,
       RegNum |= GetX86RegNum(MO) << 4;
       EmitImmediate(MCOperand::CreateImm(RegNum), 1, FK_Data_1, CurByte, OS,
                     Fixups);
-    } else
+    } else {
+      unsigned FixupKind;
+      if (MI.getOpcode() == X86::MOV64ri32 || MI.getOpcode() == X86::MOV64mi32)
+        FixupKind = X86::reloc_signed_4byte;
+      else
+        FixupKind = getImmFixupKind(TSFlags);
       EmitImmediate(MI.getOperand(CurOp++),
-                    X86II::getSizeOfImm(TSFlags), getImmFixupKind(TSFlags),
+                    X86II::getSizeOfImm(TSFlags), MCFixupKind(FixupKind),
                     CurByte, OS, Fixups);
+    }
   }
 
 

@@ -28,6 +28,7 @@
 #include <vector>
 using namespace llvm;
 
+// FIXME: this has been copied from (or to) X86AsmBackend.cpp
 static unsigned getFixupKindLog2Size(unsigned Kind) {
   switch (Kind) {
   default: llvm_unreachable("invalid fixup kind!");
@@ -38,6 +39,7 @@ static unsigned getFixupKindLog2Size(unsigned Kind) {
   case X86::reloc_pcrel_4byte:
   case X86::reloc_riprel_4byte:
   case X86::reloc_riprel_4byte_movq_load:
+  case X86::reloc_signed_4byte:
   case FK_Data_4: return 2;
   case FK_Data_8: return 3;
   }

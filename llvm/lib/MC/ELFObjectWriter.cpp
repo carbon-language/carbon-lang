@@ -577,16 +577,13 @@ void ELFObjectWriterImpl::RecordRelocation(const MCAssembler &Asm,
       switch ((unsigned)Fixup.getKind()) {
       default: llvm_unreachable("invalid fixup kind!");
       case FK_Data_8: Type = ELF::R_X86_64_64; break;
+      case X86::reloc_signed_4byte:
       case X86::reloc_pcrel_4byte:
+        assert(isInt<32>(Target.getConstant()));
+        Type = ELF::R_X86_64_32S;
+        break;
       case FK_Data_4:
-        // check that the offset fits within a signed long
-        if (Target.getConstant() < 0) {
-          assert(isInt<32>(Target.getConstant()));
-          Type = ELF::R_X86_64_32S;
-        } else {
-          assert(isUInt<32>(Target.getConstant()));
-          Type = ELF::R_X86_64_32;
-        }
+        Type = ELF::R_X86_64_32;
         break;
       case FK_Data_2: Type = ELF::R_X86_64_16; break;
       case X86::reloc_pcrel_1byte:
@@ -599,6 +596,10 @@ void ELFObjectWriterImpl::RecordRelocation(const MCAssembler &Asm,
     } else {
       switch ((unsigned)Fixup.getKind()) {
       default: llvm_unreachable("invalid fixup kind!");
+
+      // FIXME: Should we avoid selecting reloc_signed_4byte in 32 bit mode
+      // instead?
+      case X86::reloc_signed_4byte:
       case X86::reloc_pcrel_4byte:
       case FK_Data_4: Type = ELF::R_386_32; break;
       case FK_Data_2: Type = ELF::R_386_16; break;

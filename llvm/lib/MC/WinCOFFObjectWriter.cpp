@@ -679,6 +679,7 @@ void WinCOFFObjectWriter::RecordRelocation(const MCAssembler &Asm,
     FixedValue += 4;
     break;
   case FK_Data_4:
+  case X86::reloc_signed_4byte:
     Reloc.Data.Type = Is64Bit ? COFF::IMAGE_REL_AMD64_ADDR32
                               : COFF::IMAGE_REL_I386_DIR32;
     break;
