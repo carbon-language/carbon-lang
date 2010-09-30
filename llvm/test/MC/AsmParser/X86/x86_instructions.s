@@ -416,6 +416,11 @@ fstsw (%rax)
 // CHECK: wait
 // CHECK: fnstsw (%rax)
 
+// PR8259
+fstcw (%rsp)
+// CHECK: wait
+// CHECK: fnstcw (%rsp)
+
 
 // rdar://8456382 - cvtsd2si support.
 cvtsd2si	%xmm1, %rax
@@ -473,4 +478,5 @@ fdivrp %st(1), %st(0) // CHECK: encoding: [0xde,0xf9]
 
 fsubrp %ST(0), %ST(1) // CHECK: encoding: [0xde,0xe9]
 fsubrp %ST(1), %ST(0) // CHECK: encoding: [0xde,0xe9]
+
 

@@ -1119,13 +1119,19 @@ MatchAndEmitInstruction(SMLoc IDLoc,
 
   // First, handle aliases that expand to multiple instructions.
   // FIXME: This should be replaced with a real .td file alias mechanism.
-  if (Op->getToken() == "fstsw") {
+  if (Op->getToken() == "fstsw" || Op->getToken() == "fstcw") {
     MCInst Inst;
     Inst.setOpcode(X86::WAIT);
     Out.EmitInstruction(Inst);
 
     delete Operands[0];
-    Operands[0] = X86Operand::CreateToken("fnstsw", IDLoc);
+    const char *Repl =
+      StringSwitch<const char*>(Op->getToken())
+        .Case("fstsw", "fnstsw")
+        .Case("fstcw", "fnstcw")
+        .Default(0);
+    assert(Repl && "Unknown wait-prefixed instruction");
+    Operands[0] = X86Operand::CreateToken(Repl, IDLoc);
   }
   
   
