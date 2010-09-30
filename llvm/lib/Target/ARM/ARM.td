@@ -16,6 +16,7 @@
 
 include "llvm/Target/Target.td"
 
+
 //===----------------------------------------------------------------------===//
 // ARM Subtarget features.
 //
@@ -184,6 +185,17 @@ include "ARMInstrInfo.td"
 
 def ARMInstrInfo : InstrInfo;
 
+
+//===----------------------------------------------------------------------===//
+// Assembly printer
+//===----------------------------------------------------------------------===//
+// ARM Uses the MC printer for asm output, so make sure the TableGen
+// AsmWriter bits get associated with the correct class.
+def ARMAsmWriter : AsmWriter {
+  string AsmWriterClassName  = "InstPrinter";
+  bit isMCAsmWriter = 1;
+}
+
 //===----------------------------------------------------------------------===//
 // Declare the target which we are implementing
 //===----------------------------------------------------------------------===//
@@ -191,4 +203,6 @@ def ARMInstrInfo : InstrInfo;
 def ARM : Target {
   // Pull in Instruction Info:
   let InstructionSet = ARMInstrInfo;
+
+  let AssemblyWriters = [ARMAsmWriter];
 }

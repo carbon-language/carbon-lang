@@ -22,12 +22,7 @@
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 
-// Include the auto-generated portion of the assembly writer.
-#define MachineInstr MCInst
-#define ARMAsmPrinter ARMInstPrinter  // FIXME: REMOVE.
 #include "ARMGenAsmWriter.inc"
-#undef MachineInstr
-#undef ARMAsmPrinter
 
 static unsigned getDPRSuperRegForSPR(unsigned Reg) {
   switch (Reg) {
