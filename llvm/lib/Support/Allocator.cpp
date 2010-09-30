@@ -44,6 +44,12 @@ char *BumpPtrAllocator::AlignPtr(char *Ptr, size_t Alignment) {
 /// StartNewSlab - Allocate a new slab and move the bump pointers over into
 /// the new slab.  Modifies CurPtr and End.
 void BumpPtrAllocator::StartNewSlab() {
+  // If we allocated a big number of slabs already it's likely that we're going
+  // to allocate more. Increase slab size to reduce mallocs and possibly memory
+  // overhead. The factors are chosen conservatively to avoid overallocation.
+  if (BytesAllocated >= SlabSize * 128)
+    SlabSize *= 2;
+
   MemSlab *NewSlab = Allocator.Allocate(SlabSize);
   NewSlab->NextPtr = CurSlab;
   CurSlab = NewSlab;
