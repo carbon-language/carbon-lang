@@ -65,17 +65,22 @@ struct ClangExpressionVariable
     ClangExpressionVariable(const ClangExpressionVariable &cev);
     
     //----------------------------------------------------------------------
-    /// If the variable contains its own data, make a Value point at it
+    /// If the variable contains its own data, make a Value point at it.
+    /// If \a exe_ctx in not NULL, the value will be resolved in with
+    /// that execution context.
     ///
     /// @param[in] value
     ///     The value to point at the data.
+    ///
+    /// @param[in] exe_ctx
+    ///     The execution context to use to resolve \a value.
     ///
     /// @return
     ///     True on success; false otherwise (in particular, if this variable
     ///     does not contain its own data).
     //----------------------------------------------------------------------
     bool
-    PointValueAtData(Value &value);
+    PointValueAtData(Value &value, ExecutionContext *exe_ctx);
     
     //----------------------------------------------------------------------
     /// The following values should stay valid for the life of the variable

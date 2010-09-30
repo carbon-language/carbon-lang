@@ -39,6 +39,9 @@ public:
     virtual bool
     GetObjectDescription (Stream &str, ValueObject &object, ExecutionContextScope *exe_scope);
     
+    virtual bool
+    GetObjectDescription (Stream &str, Value &value, ExecutionContextScope *exe_scope);
+    
 protected:
     //------------------------------------------------------------------
     // Classes that inherit from CPPLanguageRuntime can see and modify these

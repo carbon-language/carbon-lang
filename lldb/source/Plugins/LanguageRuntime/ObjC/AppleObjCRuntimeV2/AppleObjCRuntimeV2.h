@@ -31,6 +31,9 @@ public:
     
     // These are generic runtime functions:
     virtual bool
+    GetObjectDescription (Stream &str, Value &value, ExecutionContextScope *exe_scope);
+    
+    virtual bool
     GetObjectDescription (Stream &str, ValueObject &object, ExecutionContextScope *exe_scope);
     
     virtual lldb::ValueObjectSP

@@ -33,3 +33,10 @@ CPPLanguageRuntime::GetObjectDescription (Stream &str, ValueObject &object, Exec
     // C++ has no generic way to do this.
     return false;
 }
+
+bool
+CPPLanguageRuntime::GetObjectDescription (Stream &str, Value &value, ExecutionContextScope *exe_scope)
+{
+    // C++ has no generic way to do this.
+    return false;
+}

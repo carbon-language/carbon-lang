@@ -50,22 +50,13 @@ ClangExpressionVariable::Print (Stream &output_stream,
 {
     Error err;
     
-    if (!m_data_vars.get() || !m_data_vars->m_data)
+    Value val;
+    if (!PointValueAtData (val, &exe_ctx))
     {
         err.SetErrorToGenericError();
         err.SetErrorStringWithFormat("Variable doesn't contain a value");
         return err;
     }
-    
-    Value val;
-    
-    clang::ASTContext *ast_context = m_user_type.GetASTContext();
-    
-    val.SetContext (Value::eContextTypeOpaqueClangQualType, m_user_type.GetOpaqueQualType ());
-    val.SetValueType (Value::eValueTypeHostAddress);
-    val.GetScalar() = (uint64_t)m_data_vars->m_data->GetBytes ();
-    
-    val.ResolveValue (&exe_ctx, ast_context);
     
     if (val.GetContextType () == Value::eContextTypeInvalid &&
         val.GetValueType () == Value::eValueTypeScalar &&
@@ -77,6 +68,8 @@ ClangExpressionVariable::Print (Stream &output_stream,
         return err;
     }
     
+    clang::ASTContext *ast_context = m_user_type.GetASTContext();
+
     // The expression result is more complex and requires special handling
     DataExtractor data;
     Error expr_error = val.GetValueAsData (&exe_ctx, ast_context, data, 0);
@@ -165,14 +158,18 @@ ClangExpressionVariable::ClangExpressionVariable(const ClangExpressionVariable &
 }
 
 bool
-ClangExpressionVariable::PointValueAtData(Value &value)
+ClangExpressionVariable::PointValueAtData(Value &value, ExecutionContext *exe_ctx)
 {
-    if (!m_data_vars.get())
+    if (!m_data_vars.get() || !m_data_vars->m_data)
         return false;
     
     value.SetContext(Value::eContextTypeOpaqueClangQualType, m_user_type.GetOpaqueQualType());
     value.SetValueType(Value::eValueTypeHostAddress);
     value.GetScalar() = (uint64_t)m_data_vars->m_data->GetBytes();
+    clang::ASTContext *ast_context = m_user_type.GetASTContext();
+
+    if (exe_ctx)
+        value.ResolveValue (exe_ctx, ast_context);
     
     return true;
 }

@@ -667,7 +667,8 @@ ClangFunction::ExecuteFunction (
     // Thread we ran the function in may have gone away because we ran the target
     // Check that it's still there.
     exe_ctx.thread = exe_ctx.process->GetThreadList().FindThreadByIndexID(tid, true).get();
-    exe_ctx.frame = exe_ctx.thread->GetStackFrameAtIndex(0).get();
+    if (exe_ctx.thread)
+        exe_ctx.frame = exe_ctx.thread->GetStackFrameAtIndex(0).get();
     
     // Also restore the current process'es selected frame & thread, since this function calling may
     // be done behind the user's back.

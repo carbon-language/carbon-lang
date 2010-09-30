@@ -50,6 +50,7 @@ public:
         lldb::Encoding  encoding;
         lldb::Format    format;
         bool        debug;
+        bool        print_object;
         bool        show_types;
         bool        show_summary;
     };

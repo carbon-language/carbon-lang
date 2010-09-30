@@ -10,6 +10,8 @@
 #include "AppleObjCRuntimeV2.h"
 #include "AppleObjCTrampolineHandler.h"
 
+#include "clang/AST/Type.h"
+
 #include "lldb/Core/ConstString.h"
 #include "lldb/Core/Error.h"
 #include "lldb/Core/Log.h"
@@ -38,26 +40,9 @@ bool
 AppleObjCRuntimeV2::GetObjectDescription (Stream &str, ValueObject &object, ExecutionContextScope *exe_scope)
 {
 
-    if (!m_read_objc_library)
-        return false;
-        
-    ExecutionContext exe_ctx;
-    exe_scope->Calculate(exe_ctx);
-    
-    if (!exe_ctx.process)
-        return false;
-    
-    // We need other parts of the exe_ctx, but the processes have to match.
-    assert (m_process == exe_ctx.process);
-    
     // ObjC objects can only be pointers:
     if (!ClangASTContext::IsPointerType (object.GetClangType()))
         return NULL;
-    
-    // Get the function address for the print function.
-    const Address *function_address = GetPrintForDebuggerAddr();
-    if (!function_address)
-        return false;
     
     // Make the argument list: we pass one arg, the address of our pointer, to the print function.
     Scalar scalar;
@@ -70,12 +55,60 @@ AppleObjCRuntimeV2::GetObjectDescription (Stream &str, ValueObject &object, Exec
                                         scalar))
         return NULL;
                         
-    Value val(scalar);
-    val.SetContext(Value::eContextTypeOpaqueClangQualType, 
-                   ClangASTContext::GetVoidPtrType(object.GetClangAST(), false));
+    Value val(scalar);                   
+    return GetObjectDescription(str, val, exe_scope);
                    
+}
+bool
+AppleObjCRuntimeV2::GetObjectDescription (Stream &str, Value &value, ExecutionContextScope *exe_scope)
+{
+    if (!m_read_objc_library)
+        return false;
+        
+    ExecutionContext exe_ctx;
+    exe_scope->Calculate(exe_ctx);
+    
+    if (!exe_ctx.process)
+        return false;
+    
+    // We need other parts of the exe_ctx, but the processes have to match.
+    assert (m_process == exe_ctx.process);
+    
+    // Get the function address for the print function.
+    const Address *function_address = GetPrintForDebuggerAddr();
+    if (!function_address)
+        return false;
+    
+    if (value.GetClangType())
+    {
+        clang::QualType value_type = clang::QualType::getFromOpaquePtr (value.GetClangType());
+        if (!value_type->isObjCObjectPointerType())
+        {
+            str.Printf ("Value doesn't point to an ObjC object.\n");
+            return false;
+        }
+        // FIXME: If we use the real types here then we end up crashing in the expression parser.
+        // For now, forcing this to be a generic pointer makes it work...
+#if 1
+        ClangASTContext *ast_context = exe_ctx.target->GetScratchClangASTContext();
+        if (value.GetContextType() == Value::eContextTypeOpaqueClangQualType)
+        {
+            value.SetContext(Value::eContextTypeOpaqueClangQualType, ast_context->GetVoidPtrType(false));
+        }
+#endif
+    }
+    else 
+    {
+        // If it is not a pointer, see if we can make it into a pointer.
+        ClangASTContext *ast_context = exe_ctx.target->GetScratchClangASTContext();
+        void *opaque_type_ptr = ast_context->GetBuiltInType_objc_id();
+        if (opaque_type_ptr == NULL)
+            opaque_type_ptr = ast_context->GetVoidPtrType(false);
+        value.SetContext(Value::eContextTypeOpaqueClangQualType, opaque_type_ptr);    
+    }
+
     ValueList arg_value_list;
-    arg_value_list.PushValue(val);
+    arg_value_list.PushValue(value);
     
     // This is the return value:
     const char *target_triple = exe_ctx.process->GetTargetTriple().GetCString();

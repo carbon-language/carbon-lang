@@ -17,6 +17,8 @@
 #include "lldb/lldb-include.h"
 #include "lldb/Core/PluginInterface.h"
 #include "lldb/lldb-private.h"
+#include "lldb/Core/ValueObject.h"
+#include "lldb/Core/Value.h"
 #include "lldb/Target/ExecutionContextScope.h"
 
 namespace lldb_private {
@@ -36,6 +38,9 @@ public:
     
     virtual bool
     GetObjectDescription (Stream &str, ValueObject &object, ExecutionContextScope *exe_scope) = 0;
+    
+    virtual bool
+    GetObjectDescription (Stream &str, Value &value, ExecutionContextScope *exe_scope) = 0;
     
     virtual lldb::ValueObjectSP
     GetDynamicValue (lldb::ValueObjectSP in_value, ExecutionContextScope *exe_scope) = 0;

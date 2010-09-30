@@ -16,6 +16,7 @@
 #include "lldb/Interpreter/Args.h"
 #include "lldb/Core/Value.h"
 #include "lldb/Core/InputReader.h"
+#include "lldb/Core/ValueObjectVariable.h"
 #include "lldb/Expression/ClangExpressionVariable.h"
 #include "lldb/Expression/ClangUserExpression.h"
 #include "lldb/Expression/ClangFunction.h"
@@ -24,6 +25,7 @@
 #include "lldb/Core/Debugger.h"
 #include "lldb/Interpreter/CommandInterpreter.h"
 #include "lldb/Interpreter/CommandReturnObject.h"
+#include "lldb/Target/ObjCLanguageRuntime.h"
 #include "lldb/Symbol/ObjectFile.h"
 #include "lldb/Symbol/Variable.h"
 #include "lldb/Target/Process.h"
@@ -69,6 +71,10 @@ CommandObjectExpression::CommandOptions::SetOptionValue (int option_idx, const c
     case 'f':
         error = Args::StringToFormat(option_arg, format);
         break;
+        
+    case 'o':
+        print_object = true;
+        break;
 
     default:
         error.SetErrorStringWithFormat("Invalid short option character '%c'.\n", short_option);
@@ -85,6 +91,7 @@ CommandObjectExpression::CommandOptions::ResetOptionValues ()
     //language.Clear();
     debug = false;
     format = eFormatDefault;
+    print_object = false;
     show_types = true;
     show_summary = true;
 }
@@ -230,16 +237,36 @@ CommandObjectExpression::EvaluateExpression (const char *expr, bool bare, Stream
     {
         StreamString ss;
         
-        Error rc = expr_result->Print (ss, 
-                                       m_exe_ctx, 
-                                       m_options.format,
-                                       m_options.show_types,
-                                       m_options.show_summary,
-                                       m_options.debug);
-        
-        if (rc.Fail()) {
-            error_stream.Printf ("Couldn't print result : %s\n", rc.AsCString());
-            return false;
+        if (m_options.print_object)
+        {
+            Value result_value;
+            if (expr_result->PointValueAtData(result_value, &m_exe_ctx))
+            {                
+                bool obj_result;
+                ObjCLanguageRuntime *runtime = m_exe_ctx.process->GetObjCLanguageRuntime();
+                obj_result = runtime->GetObjectDescription (ss, result_value, m_exe_ctx.GetBestExecutionContextScope());
+                if (!obj_result)
+                {
+                    error_stream.Printf ("Could not get object description: %s.\n", ss.GetData());
+                    return false;
+                }
+                // Sometimes the description doesn't have a newline on the end.  For now, I'll just add one here, if
+                ss.Printf("\n");
+            }
+        }
+        else
+        {
+            Error rc = expr_result->Print (ss, 
+                                           m_exe_ctx, 
+                                           m_options.format,
+                                           m_options.show_types,
+                                           m_options.show_summary,
+                                           m_options.debug);
+            
+            if (rc.Fail()) {
+                error_stream.Printf ("Couldn't print result : %s\n", rc.AsCString());
+                return false;
+            }
         }
 
         output_stream.PutCString(ss.GetString().c_str());
@@ -345,7 +372,8 @@ lldb::OptionDefinition
 CommandObjectExpression::CommandOptions::g_option_table[] =
 {
   //{ LLDB_OPT_SET_ALL, false, "language",   'l', required_argument, NULL, 0, "[c|c++|objc|objc++]",          "Sets the language to use when parsing the expression."},
-{ LLDB_OPT_SET_ALL, false, "format",     'f', required_argument, NULL, 0, "[ [bool|b] | [bin] | [char|c] | [oct|o] | [dec|i|d|u] | [hex|x] | [float|f] | [cstr|s] ]",  "Specify the format that the expression output should use."},
+{ LLDB_OPT_SET_1, false, "format",     'f', required_argument, NULL, 0, "[ [bool|b] | [bin] | [char|c] | [oct|o] | [dec|i|d|u] | [hex|x] | [float|f] | [cstr|s] ]",  "Specify the format that the expression output should use."},
+{ LLDB_OPT_SET_2, false, "object-description",     'o', no_argument,       NULL, 0, NULL,                           "Print the object description of the value resulting from the expression"},
 { LLDB_OPT_SET_ALL, false, "debug",      'g', no_argument,       NULL, 0, NULL,                           "Enable verbose debug logging of the expression parsing and evaluation."},
 { LLDB_OPT_SET_ALL, false, "use-ir",     'i', no_argument,       NULL, 0, NULL,                           "[Temporary] Instructs the expression evaluator to use IR instead of ASTs."},
 { 0, false, NULL, 0, 0, NULL, NULL, NULL, NULL }
