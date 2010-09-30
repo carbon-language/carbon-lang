@@ -745,19 +745,12 @@ bool Path::getMagicNumber(std::string& Magic, unsigned len) const {
   return true;
 }
 
-// Implements renamePathOnDisk as a CopyFile + eraseFromDisk on Windows.
-// Using MoveFileEx was causing mysterious ACCESS_DENIED error when used
-// within a multithreaded lit/python context.
-// FIXME: put back MoveFileEx when the source of the problem is resolved.
 bool
 Path::renamePathOnDisk(const Path& newName, std::string* ErrMsg) {
-  if (*this == newName)
-    return false;
-  
-  if (CopyFile(newName, *this, ErrMsg))
-    return true;
-  
-  return eraseFromDisk(true, ErrMsg);
+  if (!MoveFileEx(path.c_str(), newName.c_str(), MOVEFILE_REPLACE_EXISTING))
+    return MakeErrMsg(ErrMsg, "Can't move '" + path + "' to '" + newName.path
+        + "': ");
+  return false;
 }
 
 bool
