@@ -386,11 +386,11 @@ if "compilers" in config:
 for ia in range(len(archs) if iterArchs else 1):
     archConfig = ""
     if iterArchs:
-        os.environ["LLDB_ARCH"] = archs[ia]
+        os.environ["ARCH"] = archs[ia]
         archConfig = "arch=%s" % archs[ia]
     for ic in range(len(compilers) if iterCompilers else 1):
         if iterCompilers:
-            os.environ["LLDB_CC"] = compilers[ic]
+            os.environ["CC"] = compilers[ic]
             configString = "%s compiler=%s" % (archConfig, compilers[ic])
         else:
             configString = archConfig

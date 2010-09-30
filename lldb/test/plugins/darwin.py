@@ -23,8 +23,8 @@ def getArchSpec(architecture):
     used for the make system.
     """
     arch = architecture if architecture else None
-    if not arch and "LLDB_ARCH" in os.environ:
-        arch = os.environ["LLDB_ARCH"]
+    if not arch and "ARCH" in os.environ:
+        arch = os.environ["ARCH"]
 
     # Note the leading space character.
     return (" ARCH=" + arch) if arch else ""
@@ -35,8 +35,8 @@ def getCCSpec(compiler):
     used for the make system.
     """
     cc = compiler if compiler else None
-    if not cc and "LLDB_CC" in os.environ:
-        cc = os.environ["LLDB_CC"]
+    if not cc and "CC" in os.environ:
+        cc = os.environ["CC"]
 
     # Note the leading space character.
     return (" CC=" + cc) if cc else ""

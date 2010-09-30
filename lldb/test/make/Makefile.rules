@@ -22,7 +22,7 @@ endif
 #----------------------------------------------------------------------
 DS := /usr/bin/dsymutil
 DSFLAGS =
-CC = gcc
+CC ?= gcc
 CFLAGS ?=-arch $(ARCH) -gdwarf-2 -O0
 CXXFLAGS +=$(CFLAGS)
 LD = $(CC)
