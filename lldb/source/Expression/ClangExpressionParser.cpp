@@ -436,21 +436,7 @@ ClangExpressionParser::MakeJIT (lldb::addr_t &func_addr,
     
     if (decl_map)
     {
-        std::string target_error;
-        
-        const llvm::Target *target = llvm::TargetRegistry::lookupTarget(m_target_triple, target_error);
-        
-        if (!target)
-        {
-            err.SetErrorToGenericError();
-            err.SetErrorStringWithFormat("Couldn't find a target for %s", m_target_triple.c_str());
-            return err;
-        }
-        
-        std::auto_ptr<llvm::TargetMachine> target_machine(target->createTargetMachine(m_target_triple, ""));
-        
         IRForTarget ir_for_target(decl_map, 
-                                  target_machine->getTargetData(),
                                   m_expr.NeedsVariableResolution(),
                                   function_name.c_str());
         

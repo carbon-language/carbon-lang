@@ -32,26 +32,36 @@ using namespace llvm;
 static char ID;
 
 IRForTarget::IRForTarget(lldb_private::ClangExpressionDeclMap *decl_map,
-                         const TargetData *target_data,
                          bool resolve_vars,
                          const char *func_name) :
     ModulePass(ID),
     m_decl_map(decl_map),
-    m_target_data(target_data),
     m_sel_registerName(NULL),
     m_func_name(func_name),
     m_resolve_vars(resolve_vars)
 {
 }
 
-/* A handy utility function used at several places in the code */
+/* Handy utility functions used at several places in the code */
 
 static std::string 
-PrintValue(Value *V, bool truncate = false)
+PrintValue(const Value *V, bool truncate = false)
 {
     std::string s;
     raw_string_ostream rso(s);
     V->print(rso);
+    rso.flush();
+    if (truncate)
+        s.resize(s.length() - 1);
+    return s;
+}
+
+static std::string
+PrintType(const Type *T, bool truncate = false)
+{
+    std::string s;
+    raw_string_ostream rso(s);
+    T->print(rso);
     rso.flush();
     if (truncate)
         s.resize(s.length() - 1);
@@ -578,23 +588,34 @@ IRForTarget::MaybeHandleVariable(Module &M,
         
         std::string name = named_decl->getName().str();
         
-        void *qual_type = NULL;
+        void *opaque_type = NULL;
         clang::ASTContext *ast_context = NULL;
         
         if (clang::ValueDecl *value_decl = dyn_cast<clang::ValueDecl>(named_decl))
         {
-            qual_type = value_decl->getType().getAsOpaquePtr();
+            opaque_type = value_decl->getType().getAsOpaquePtr();
             ast_context = &value_decl->getASTContext();
         }
         else
         {
             return false;
         }
+        
+        clang::QualType qual_type(clang::QualType::getFromOpaquePtr(opaque_type));
             
         const Type *value_type = global_variable->getType();
-        
-        size_t value_size = m_target_data->getTypeStoreSize(value_type);
-        off_t value_alignment = m_target_data->getPrefTypeAlignment(value_type);
+                
+        size_t value_size = (ast_context->getTypeSize(qual_type) + 7) / 8;
+        off_t value_alignment = (ast_context->getTypeAlign(qual_type) + 7) / 8;
+                
+        if (log)
+            log->Printf("Type of %s is [clang %s, lldb %s] [size %d, align %d]", 
+                        name.c_str(), 
+                        qual_type.getAsString().c_str(), 
+                        PrintType(value_type).c_str(), 
+                        value_size, 
+                        value_alignment);
+
         
         if (named_decl && !m_decl_map->AddValueToStruct(named_decl,
                                                         name.c_str(),
@@ -1103,6 +1124,13 @@ IRForTarget::runOnModule(Module &M)
             return false;
     }
     
+    ///////////////////////////////
+    // Run function-level passes
+    //
+    
+    if (!replaceVariables(M, *function))
+        return false;
+    
     if (log)
     {
         std::string s;
@@ -1114,13 +1142,6 @@ IRForTarget::runOnModule(Module &M)
         
         log->Printf("Module after preparing for execution: \n%s", s.c_str());
     }
-    
-    ///////////////////////////////
-    // Run function-level passes
-    //
-    
-    if (!replaceVariables(M, *function))
-        return false;
     
     return true;    
 }

@@ -19,7 +19,6 @@ namespace llvm {
     class Function;
     class Instruction;
     class Module;
-    class TargetData;
     class Value;
 }
 
@@ -52,11 +51,6 @@ public:
     ///     for use in looking up globals and allocating the argument
     ///     struct.  See the documentation for ClangExpressionDeclMap.
     ///
-    /// @param[in] target_data
-    ///     The data layout information for the target.  This information is
-    ///     used to determine the sizes of types that have been lowered into
-    ///     IR types.
-    ///
     /// @param[in] func_name
     ///     The name of the function to prepare for execution in the target.
     ///
@@ -66,7 +60,6 @@ public:
     ///     are resolved.
     //------------------------------------------------------------------
     IRForTarget(lldb_private::ClangExpressionDeclMap *decl_map,
-                const llvm::TargetData *target_data,
                 bool resolve_vars,
                 const char* func_name = "___clang_expr");
     
@@ -305,7 +298,6 @@ private:
     
     std::string                             m_func_name;            ///< The name of the function to translate
     lldb_private::ClangExpressionDeclMap   *m_decl_map;             ///< The DeclMap containing the Decls 
-    const llvm::TargetData                 *m_target_data;          ///< The TargetData for use in determining type sizes
     llvm::Constant                         *m_sel_registerName;     ///< The address of the function sel_registerName, cast to the appropriate function pointer type
 };
 
