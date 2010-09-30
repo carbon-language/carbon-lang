@@ -66,7 +66,7 @@ public:
     static  void *          ExceptionThread (void *arg);
             task_t          TaskPort () const { return m_task; }
             task_t          TaskPortForProcessID (DNBError &err);
-    static  task_t          TaskPortForProcessID (pid_t pid, DNBError &err);
+    static  task_t          TaskPortForProcessID (pid_t pid, DNBError &err, uint32_t num_retries = 10, uint32_t usec_interval = 10000);
 
             MachProcess *   Process () { return m_process; }
     const   MachProcess *   Process () const { return m_process; }

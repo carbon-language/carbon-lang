@@ -214,29 +214,40 @@ MachTask::TaskPortForProcessID (DNBError &err)
 // MachTask::TaskPortForProcessID
 //----------------------------------------------------------------------
 task_t
-MachTask::TaskPortForProcessID (pid_t pid, DNBError &err)
+MachTask::TaskPortForProcessID (pid_t pid, DNBError &err, uint32_t num_retries, uint32_t usec_interval)
 {
-    task_t task = TASK_NULL;
-    if (pid != INVALID_NUB_PROCESS)
-    {
-        mach_port_t task_self = mach_task_self ();
-        err = ::task_for_pid ( task_self, pid, &task);
-        if (DNBLogCheckLogBit(LOG_TASK) || err.Fail())
-        {
-            char str[1024];
-            ::snprintf (str,
-                        sizeof(str),
-                        "::task_for_pid ( target_tport = 0x%4.4x, pid = %d, &task ) => err = 0x%8.8x (%s)",
-                        task_self,
-                        pid,
-                        err.Error(),
-                        err.AsString() ? err.AsString() : "success");
-            if (err.Fail())
-                err.SetErrorString(str);
-            err.LogThreaded(str);
-        }
-    }
-    return task;
+	if (pid != INVALID_NUB_PROCESS)
+	{
+		DNBError err;
+		mach_port_t task_self = mach_task_self ();	
+		task_t task = TASK_NULL;
+		for (uint32_t i=0; i<num_retries; i++)
+		{	
+			err = ::task_for_pid ( task_self, pid, &task);
+
+            if (DNBLogCheckLogBit(LOG_TASK) || err.Fail())
+            {
+                char str[1024];
+                ::snprintf (str,
+                            sizeof(str),
+                            "::task_for_pid ( target_tport = 0x%4.4x, pid = %d, &task ) => err = 0x%8.8x (%s)",
+                            task_self,
+                            pid,
+                            err.Error(),
+                            err.AsString() ? err.AsString() : "success");
+                if (err.Fail())
+                    err.SetErrorString(str);
+                err.LogThreaded(str);
+            }
+
+			if (err.Success())
+				return task;
+
+			// Sleep a bit and try again
+			::usleep (usec_interval);
+		}
+	}
+	return TASK_NULL;
 }
 
 
