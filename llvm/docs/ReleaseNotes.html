@@ -240,28 +240,33 @@ Soft float support
 <div class="doc_text">
 <p>
 <a href="http://dragonegg.llvm.org/">DragonEgg</a> is a port of llvm-gcc to
-gcc-4.5.  Unlike llvm-gcc, which makes many intrusive changes to the underlying
-gcc-4.2 code, dragonegg in theory does not require any gcc-4.5 modifications
-whatsoever (currently one small patch is needed).  This is thanks to the new
-<a href="http://gcc.gnu.org/wiki/plugins">gcc plugin architecture</a>, which
-makes it possible to modify the behaviour of gcc at runtime by loading a plugin,
-which is nothing more than a dynamic library which conforms to the gcc plugin
-interface.  DragonEgg is a gcc plugin that causes the LLVM optimizers to be run
-instead of the gcc optimizers, and the LLVM code generators instead of the gcc
-code generators, just like llvm-gcc.  To use it, you add
-"-fplugin=path/dragonegg.so" to the gcc-4.5 command line, and gcc-4.5 magically
-becomes llvm-gcc-4.5!
+gcc-4.5.  Unlike llvm-gcc, dragonegg in theory does not require any gcc-4.5
+modifications whatsoever (currently one small patch is needed) thanks to the
+new <a href="http://gcc.gnu.org/wiki/plugins">gcc plugin architecture</a>.
+DragonEgg is a gcc plugin that makes gcc-4.5 use the LLVM optimizers and code
+generators instead of gcc's, just like with llvm-gcc.
 </p>
 
 <p>
-DragonEgg is still a work in progress.  Currently C works very well, while C++,
-Ada and Fortran work fairly well.  All other languages either don't work at all,
-or only work poorly.  For the moment only the x86-32 and x86-64 targets are
-supported, and only on linux and darwin (darwin needs an additional gcc patch).
+DragonEgg is still a work in progress, but it is able to compile a lot of code,
+for example all of gcc, LLVM and clang.  Currently Ada, C, C++ and Fortran work
+well, while all other languages either don't work at all or only work poorly.
+For the moment only the x86-32 and x86-64 targets are supported, and only on
+linux and darwin (darwin may need additional gcc patches).
 </p>
 
 <p>
-2.8 status here.
+The 2.8 release has the following notable changes:
+<ul>
+<li>The plugin loads faster due to exporting fewer symbols.</li>
+<li>Additional vector operations such as addps256 are now supported.</li>
+<li>Ada global variables with no initial value are no longer zero initialized,
+resulting in better optimization.</li>
+<li>The '-fplugin-arg-dragonegg-enable-gcc-optzns' flag now runs all gcc
+optimizers, rather than just a handful.</li>
+<li>Fortran programs using common variables now link correctly.</li>
+<li>GNU OMP constructs no longer crash the compiler.</li>
+</ul>
 </p>
 
 </div>
