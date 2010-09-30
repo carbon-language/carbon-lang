@@ -104,7 +104,7 @@ class BreakpointCommandTestCase(TestBase):
                        'stop reason = breakpoint'])
 
         # The breakpoint should have a hit count of 2.
-        self.expect("breakpoint list", BREAKPOINT_HIT_ONCE,
+        self.expect("breakpoint list", BREAKPOINT_HIT_TWICE,
             substrs = ['resolved, hit count = 2'])
 
 
