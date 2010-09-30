@@ -242,7 +242,8 @@ unsigned Lexer::MeasureTokenLength(SourceLocation Loc,
     return 0;
 
   // Create a lexer starting at the beginning of this token.
-  Lexer TheLexer(Loc, LangOpts, Buffer.begin(), StrData, Buffer.end());
+  Lexer TheLexer(SM.getLocForStartOfFile(LocInfo.first), LangOpts,
+                 Buffer.begin(), StrData, Buffer.end());
   TheLexer.SetCommentRetentionState(true);
   Token TheTok;
   TheLexer.LexFromRawLexer(TheTok);
