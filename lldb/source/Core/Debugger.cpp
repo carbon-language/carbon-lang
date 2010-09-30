@@ -155,8 +155,7 @@ Debugger::Debugger () :
     m_command_interpreter_ap (new CommandInterpreter (*this, eScriptLanguageDefault, false)),
     m_exe_ctx (),
     m_input_readers (),
-    m_input_reader_data (),
-    m_use_external_editor(false)
+    m_input_reader_data ()
 {
     m_command_interpreter_ap->Initialize ();
 }

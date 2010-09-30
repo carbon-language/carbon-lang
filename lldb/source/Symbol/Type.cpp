@@ -33,22 +33,24 @@ lldb_private::Type::Type
     lldb::user_id_t uid,
     SymbolFile* symbol_file,
     const ConstString &name,
-    uint64_t byte_size,
+    uint32_t byte_size,
     SymbolContextScope *context,
-    lldb::user_id_t encoding_uid,
-    EncodingUIDType encoding_uid_type,
+    uintptr_t encoding_data,
+    EncodingDataType encoding_data_type,
     const Declaration& decl,
-    clang_type_t clang_type
+    clang_type_t clang_type,
+    bool is_forward_decl
 ) :
     UserID (uid),
     m_name (name),
-    m_byte_size (byte_size),
     m_symbol_file (symbol_file),
     m_context (context),
-    m_encoding_uid (encoding_uid),
-    m_encoding_uid_type (encoding_uid_type),
+    m_byte_size (byte_size),
+    m_encoding_data_type (encoding_data_type),
+    m_encoding_data (encoding_data),
     m_decl (decl),
-    m_clang_qual_type (clang_type)
+    m_clang_qual_type (clang_type),
+    m_is_forward_decl (is_forward_decl)
 {
 }
 
@@ -58,10 +60,11 @@ lldb_private::Type::Type () :
     m_byte_size (0),
     m_symbol_file (NULL),
     m_context (),
-    m_encoding_uid (0),
-    m_encoding_uid_type (eTypeInvalid),
+    m_encoding_data (0),
+    m_encoding_data_type (eEncodingInvalid),
     m_decl (),
-    m_clang_qual_type (NULL)
+    m_clang_qual_type (NULL),
+    m_is_forward_decl (false)
 {
 }
 
@@ -76,7 +79,7 @@ lldb_private::Type::operator= (const Type& rhs)
         m_byte_size = rhs.m_byte_size;
         m_symbol_file = rhs.m_symbol_file;
         m_context = rhs.m_context;
-        m_encoding_uid = rhs.m_encoding_uid;
+        m_encoding_data = rhs.m_encoding_data;
         m_decl = rhs.m_decl;
         m_clang_qual_type = rhs.m_clang_qual_type;
     }
@@ -105,19 +108,21 @@ lldb_private::Type::GetDescription (Stream *s, lldb::DescriptionLevel level, boo
         ClangASTType::DumpTypeDescription (GetClangAST(), m_clang_qual_type, s);
         *s << '"';
     }
-    else if (m_encoding_uid != LLDB_INVALID_UID)
+    else if (m_encoding_data != LLDB_INVALID_UID)
     {
-        s->Printf(", type_uid = 0x%8.8x", m_encoding_uid);
-        switch (m_encoding_uid_type)
+        s->Printf(", type_uid = 0x%8.8x", m_encoding_data);
+        switch (m_encoding_data_type)
         {
-        case eIsTypeWithUID: s->PutCString(" (unresolved type)"); break;
-        case eIsConstTypeWithUID: s->PutCString(" (unresolved const type)"); break;
-        case eIsRestrictTypeWithUID: s->PutCString(" (unresolved restrict type)"); break;
-        case eIsVolatileTypeWithUID: s->PutCString(" (unresolved volatile type)"); break;
-        case eTypedefToTypeWithUID: s->PutCString(" (unresolved typedef)"); break;
-        case ePointerToTypeWithUID: s->PutCString(" (unresolved pointer)"); break;
-        case eLValueReferenceToTypeWithUID: s->PutCString(" (unresolved L value reference)"); break;
-        case eRValueReferenceToTypeWithUID: s->PutCString(" (unresolved R value reference)"); break;
+        case eEncodingIsUID: s->PutCString(" (unresolved type)"); break;
+        case eEncodingIsConstUID: s->PutCString(" (unresolved const type)"); break;
+        case eEncodingIsRestrictUID: s->PutCString(" (unresolved restrict type)"); break;
+        case eEncodingIsVolatileUID: s->PutCString(" (unresolved volatile type)"); break;
+        case eEncodingIsTypedefUID: s->PutCString(" (unresolved typedef)"); break;
+        case eEncodingIsPointerUID: s->PutCString(" (unresolved pointer)"); break;
+        case eEncodingIsLValueReferenceUID: s->PutCString(" (unresolved L value reference)"); break;
+        case eEncodingIsRValueReferenceUID: s->PutCString(" (unresolved R value reference)"); break;
+        case eEncodingIsSyntheticUID: s->PutCString(" (synthetic type)"); break;
+        case eEncodingIsTypePtr: s->PutCString(" (Type *)"); break;
         }
     }    
 }
@@ -151,19 +156,21 @@ lldb_private::Type::Dump (Stream *s, bool show_context)
 
         ClangASTType::DumpTypeDescription (GetClangAST(), m_clang_qual_type, s);
     }
-    else if (m_encoding_uid != LLDB_INVALID_UID)
+    else if (m_encoding_data != LLDB_INVALID_UID)
     {
-        *s << ", type_uid = " << m_encoding_uid;
-        switch (m_encoding_uid_type)
+        *s << ", type_data = " << (uint64_t)m_encoding_data;
+        switch (m_encoding_data_type)
         {
-        case eIsTypeWithUID: s->PutCString(" (unresolved type)"); break;
-        case eIsConstTypeWithUID: s->PutCString(" (unresolved const type)"); break;
-        case eIsRestrictTypeWithUID: s->PutCString(" (unresolved restrict type)"); break;
-        case eIsVolatileTypeWithUID: s->PutCString(" (unresolved volatile type)"); break;
-        case eTypedefToTypeWithUID: s->PutCString(" (unresolved typedef)"); break;
-        case ePointerToTypeWithUID: s->PutCString(" (unresolved pointer)"); break;
-        case eLValueReferenceToTypeWithUID: s->PutCString(" (unresolved L value reference)"); break;
-        case eRValueReferenceToTypeWithUID: s->PutCString(" (unresolved R value reference)"); break;
+        case eEncodingIsUID: s->PutCString(" (unresolved type)"); break;
+        case eEncodingIsConstUID: s->PutCString(" (unresolved const type)"); break;
+        case eEncodingIsRestrictUID: s->PutCString(" (unresolved restrict type)"); break;
+        case eEncodingIsVolatileUID: s->PutCString(" (unresolved volatile type)"); break;
+        case eEncodingIsTypedefUID: s->PutCString(" (unresolved typedef)"); break;
+        case eEncodingIsPointerUID: s->PutCString(" (unresolved pointer)"); break;
+        case eEncodingIsLValueReferenceUID: s->PutCString(" (unresolved L value reference)"); break;
+        case eEncodingIsRValueReferenceUID: s->PutCString(" (unresolved R value reference)"); break;
+        case eEncodingIsSyntheticUID: s->PutCString(" (synthetic type)"); break;
+        case eEncodingIsTypePtr: s->PutCString(" (Type *)"); break;
         }
     }
 
@@ -241,16 +248,16 @@ lldb_private::Type::GetByteSize()
 {
     if (m_byte_size == 0)
     {
-        switch (m_encoding_uid_type)
+        switch (m_encoding_data_type)
         {
-        case eIsTypeWithUID:
-        case eIsConstTypeWithUID:
-        case eIsRestrictTypeWithUID:
-        case eIsVolatileTypeWithUID:
-        case eTypedefToTypeWithUID:
-            if (m_encoding_uid != LLDB_INVALID_UID)
+        case eEncodingIsUID:
+        case eEncodingIsConstUID:
+        case eEncodingIsRestrictUID:
+        case eEncodingIsVolatileUID:
+        case eEncodingIsTypedefUID:
+            if (m_encoding_data != LLDB_INVALID_UID)
             {
-                Type *encoding_type = m_symbol_file->ResolveTypeUID (m_encoding_uid);
+                Type *encoding_type = m_symbol_file->ResolveTypeUID (m_encoding_data);
                 if (encoding_type)
                     m_byte_size = encoding_type->GetByteSize();
             }
@@ -262,9 +269,9 @@ lldb_private::Type::GetByteSize()
             break;
 
         // If we are a pointer or reference, then this is just a pointer size;
-        case ePointerToTypeWithUID:
-        case eLValueReferenceToTypeWithUID:
-        case eRValueReferenceToTypeWithUID:
+        case eEncodingIsPointerUID:
+        case eEncodingIsLValueReferenceUID:
+        case eEncodingIsRValueReferenceUID:
             m_byte_size = GetTypeList()->GetClangASTContext().GetPointerBitSize() / 8;
             break;
         }
@@ -400,113 +407,132 @@ lldb_private::Type::GetDeclaration () const
 bool
 lldb_private::Type::ResolveClangType (bool forward_decl_is_ok)
 {
+//    static int g_depth = 0;
+//    g_depth++;
+//    printf ("%.*sType::ResolveClangType (forward = %i) uid = 0x%8.8x, name = %s\n", g_depth, "", forward_decl_is_ok, m_uid, m_name.AsCString()); 
+    Type *encoding_type = NULL;
     if (m_clang_qual_type == NULL)
     {
         TypeList *type_list = GetTypeList();
-        if (m_encoding_uid != LLDB_INVALID_UID)
+        if (m_encoding_data != LLDB_INVALID_UID)
         {
-            Type *encoding_type = m_symbol_file->ResolveTypeUID(m_encoding_uid);
+            encoding_type = m_symbol_file->ResolveTypeUID(m_encoding_data);
             if (encoding_type)
             {
-
-                switch (m_encoding_uid_type)
+                switch (m_encoding_data_type)
                 {
-                case eIsTypeWithUID:
+                case eEncodingIsUID:
                     m_clang_qual_type = encoding_type->GetClangType();
                     break;
 
-                case eIsConstTypeWithUID:
-                    m_clang_qual_type = ClangASTContext::AddConstModifier (encoding_type->GetClangType(forward_decl_is_ok));
+                case eEncodingIsConstUID:
+                    m_clang_qual_type = ClangASTContext::AddConstModifier (encoding_type->GetClangType(true));
                     break;
 
-                case eIsRestrictTypeWithUID:
-                    m_clang_qual_type = ClangASTContext::AddRestrictModifier (encoding_type->GetClangType(forward_decl_is_ok));
+                case eEncodingIsRestrictUID:
+                    m_clang_qual_type = ClangASTContext::AddRestrictModifier (encoding_type->GetClangType(true));
                     break;
 
-                case eIsVolatileTypeWithUID:
-                    m_clang_qual_type = ClangASTContext::AddVolatileModifier (encoding_type->GetClangType(forward_decl_is_ok));
+                case eEncodingIsVolatileUID:
+                    m_clang_qual_type = ClangASTContext::AddVolatileModifier (encoding_type->GetClangType(true));
                     break;
 
-                case eTypedefToTypeWithUID:
-                    m_clang_qual_type = type_list->CreateClangTypedefType (this, encoding_type, forward_decl_is_ok);
+                case eEncodingIsTypedefUID:
+                    m_clang_qual_type = type_list->CreateClangTypedefType (this, encoding_type, true);
                     // Clear the name so it can get fully qualified in case the
                     // typedef is in a namespace.
                     m_name.Clear();
                     break;
 
-                case ePointerToTypeWithUID:
-                    m_clang_qual_type = type_list->CreateClangPointerType (encoding_type, forward_decl_is_ok);
+                case eEncodingIsPointerUID:
+                    m_clang_qual_type = type_list->CreateClangPointerType (encoding_type, true);
                     break;
 
-                case eLValueReferenceToTypeWithUID:
-                    m_clang_qual_type = type_list->CreateClangLValueReferenceType (encoding_type, forward_decl_is_ok);
+                case eEncodingIsLValueReferenceUID:
+                    m_clang_qual_type = type_list->CreateClangLValueReferenceType (encoding_type, true);
                     break;
 
-                case eRValueReferenceToTypeWithUID:
-                    m_clang_qual_type = type_list->CreateClangRValueReferenceType (encoding_type, forward_decl_is_ok);
+                case eEncodingIsRValueReferenceUID:
+                    m_clang_qual_type = type_list->CreateClangRValueReferenceType (encoding_type, true);
                     break;
 
                 default:
-                    assert(!"Unhandled encoding_uid_type.");
+                    assert(!"Unhandled encoding_data_type.");
                     break;
                 }
+                
+                if (encoding_type)
+                {
+                    m_encoding_data_type = eEncodingIsTypePtr;
+                    m_encoding_data = (uintptr_t)encoding_type;
+                }
             }
-            // Return here since we won't need to check if this is a forward 
-            // declaration below since we already obeyed this above.
-            return m_clang_qual_type != NULL;
         }
         else
         {
             // We have no encoding type, return void?
             clang_type_t void_clang_type = type_list->GetClangASTContext().GetBuiltInType_void();
-            switch (m_encoding_uid_type)
+            switch (m_encoding_data_type)
             {
-            case eIsTypeWithUID:
+            case eEncodingIsUID:
                 m_clang_qual_type = void_clang_type;
                 break;
 
-            case eIsConstTypeWithUID:
+            case eEncodingIsConstUID:
                 m_clang_qual_type = ClangASTContext::AddConstModifier (void_clang_type);
                 break;
 
-            case eIsRestrictTypeWithUID:
+            case eEncodingIsRestrictUID:
                 m_clang_qual_type = ClangASTContext::AddRestrictModifier (void_clang_type);
                 break;
 
-            case eIsVolatileTypeWithUID:
+            case eEncodingIsVolatileUID:
                 m_clang_qual_type = ClangASTContext::AddVolatileModifier (void_clang_type);
                 break;
 
-            case eTypedefToTypeWithUID:
+            case eEncodingIsTypedefUID:
                 m_clang_qual_type = type_list->GetClangASTContext().CreateTypedefType (m_name.AsCString(), void_clang_type, NULL);
                 break;
 
-            case ePointerToTypeWithUID:
+            case eEncodingIsPointerUID:
                 m_clang_qual_type = type_list->GetClangASTContext().CreatePointerType (void_clang_type);
                 break;
 
-            case eLValueReferenceToTypeWithUID:
+            case eEncodingIsLValueReferenceUID:
                 m_clang_qual_type = type_list->GetClangASTContext().CreateLValueReferenceType (void_clang_type);
                 break;
 
-            case eRValueReferenceToTypeWithUID:
+            case eEncodingIsRValueReferenceUID:
                 m_clang_qual_type = type_list->GetClangASTContext().CreateRValueReferenceType (void_clang_type);
                 break;
 
             default:
-                assert(!"Unhandled encoding_uid_type.");
+                assert(!"Unhandled encoding_data_type.");
                 break;
             }
         }
     }
     
     // Check if we have a forward reference to a class/struct/union/enum?
-    if (!forward_decl_is_ok && !ClangASTType::IsDefined (m_clang_qual_type))
+    if (m_is_forward_decl && m_clang_qual_type && !forward_decl_is_ok)
     {
-        // We have a forward declaration, we need to resolve it to a complete
-        // definition.
-        m_symbol_file->ResolveClangOpaqueTypeDefinition (m_clang_qual_type);
+        m_is_forward_decl = false;
+        if (!ClangASTType::IsDefined (m_clang_qual_type))
+        {
+            // We have a forward declaration, we need to resolve it to a complete
+            // definition.
+            m_symbol_file->ResolveClangOpaqueTypeDefinition (m_clang_qual_type);
+        }
+        else
+        {
+            if (encoding_type == NULL)
+                encoding_type = GetEncodingType ();
+            if (encoding_type != NULL)
+                encoding_type->ResolveClangType (forward_decl_is_ok);
+        }
     }
+//    if (g_depth > 0)
+//        --g_depth;
     return m_clang_qual_type != NULL;
 }
 

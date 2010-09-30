@@ -268,8 +268,11 @@ public:
     static ArchSpec
     GetArchSpecForExistingProcess (const char *process_name);
     
+    static lldb::pid_t
+    LaunchApplication (const FileSpec &file_spec);
+    
     static bool
-    OpenFileInExternalEditor (FileSpec &file_spec, uint32_t line_no);
+    OpenFileInExternalEditor (const FileSpec &file_spec, uint32_t line_no);
 
 };
 

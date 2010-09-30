@@ -2444,7 +2444,7 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
             DWARFDebugInfoEntry::Attributes attributes;
             const char *type_name_cstr = NULL;
             ConstString type_name_dbstr;
-            Type::EncodingUIDType encoding_uid_type = Type::eIsTypeWithUID;
+            Type::EncodingDataType encoding_data_type = Type::eEncodingIsUID;
             clang_type_t clang_type = NULL;
 
             TypeList* type_list = m_obj_file->GetModule()->GetTypeList();
@@ -2508,37 +2508,37 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                     case DW_TAG_pointer_type:
                         // The encoding_uid will be embedded into the
                         // Type object and will be looked up when the Type::GetClangType()
-                        encoding_uid_type = Type::ePointerToTypeWithUID;
+                        encoding_data_type = Type::eEncodingIsPointerUID;
                         break;
 
                     case DW_TAG_reference_type:
                         // The encoding_uid will be embedded into the
                         // Type object and will be looked up when the Type::GetClangType()
-                        encoding_uid_type = Type::eLValueReferenceToTypeWithUID;
+                        encoding_data_type = Type::eEncodingIsLValueReferenceUID;
                         break;
 
                     case DW_TAG_typedef:
                         // The encoding_uid will be embedded into the
                         // Type object and will be looked up when the Type::GetClangType()
-                        encoding_uid_type = Type::eTypedefToTypeWithUID;
+                        encoding_data_type = Type::eEncodingIsTypedefUID;
                         break;
 
                     case DW_TAG_const_type:
                         // The encoding_uid will be embedded into the
                         // Type object and will be looked up when the Type::GetClangType()
-                        encoding_uid_type = Type::eIsConstTypeWithUID; //ClangASTContext::AddConstModifier (clang_type);
+                        encoding_data_type = Type::eEncodingIsConstUID; //ClangASTContext::AddConstModifier (clang_type);
                         break;
 
                     case DW_TAG_restrict_type:
                         // The encoding_uid will be embedded into the
                         // Type object and will be looked up when the Type::GetClangType()
-                        encoding_uid_type = Type::eIsRestrictTypeWithUID; //ClangASTContext::AddRestrictModifier (clang_type);
+                        encoding_data_type = Type::eEncodingIsRestrictUID; //ClangASTContext::AddRestrictModifier (clang_type);
                         break;
 
                     case DW_TAG_volatile_type:
                         // The encoding_uid will be embedded into the
                         // Type object and will be looked up when the Type::GetClangType()
-                        encoding_uid_type = Type::eIsVolatileTypeWithUID; //ClangASTContext::AddVolatileModifier (clang_type);
+                        encoding_data_type = Type::eEncodingIsVolatileUID; //ClangASTContext::AddVolatileModifier (clang_type);
                         break;
                     }
 
@@ -2563,7 +2563,7 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                         }
                     }
                         
-                    type_sp.reset( new Type(die->GetOffset(), this, type_name_dbstr, byte_size, NULL, encoding_uid, encoding_uid_type, &decl, clang_type));
+                    type_sp.reset( new Type(die->GetOffset(), this, type_name_dbstr, byte_size, NULL, encoding_uid, encoding_data_type, &decl, clang_type, clang_type == NULL));
 
                     m_die_to_type[die] = type_sp.get();
 
@@ -2679,21 +2679,27 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                     // parameters in any class methods need it for the clang 
                     // types for function prototypes. 
                     m_die_to_decl_ctx[die] = ClangASTContext::GetDeclContextForType (clang_type);
-                    type_sp.reset( new Type(die->GetOffset(), this, type_name_dbstr, byte_size, NULL, LLDB_INVALID_UID, Type::eIsTypeWithUID, &decl, clang_type));
+                    type_sp.reset( new Type(die->GetOffset(), this, type_name_dbstr, byte_size, NULL, LLDB_INVALID_UID, Type::eEncodingIsUID, &decl, clang_type, true));
 
                     m_die_to_type[die] = type_sp.get();
 
-                    // Leave this as a forward declaration until we need
-                    // to know the details of the type. lldb_private::Type
-                    // will automatically call the SymbolFile virtual function
-                    // "SymbolFileDWARF::ResolveClangOpaqueTypeDefinition(Type *)"
-                    // When the definition needs to be defined.
-                    if (clang_type_was_created)
+                    if (die->HasChildren() == false)
                     {
+                        // No children for this struct/union/class, lets finish it
+                        type_list->GetClangASTContext().StartTagDeclarationDefinition (clang_type);
+                        type_list->GetClangASTContext().CompleteTagDeclarationDefinition (clang_type);
+                    }
+                    else if (clang_type_was_created)
+                    {
+                        // Leave this as a forward declaration until we need
+                        // to know the details of the type. lldb_private::Type
+                        // will automatically call the SymbolFile virtual function
+                        // "SymbolFileDWARF::ResolveClangOpaqueTypeDefinition(Type *)"
+                        // When the definition needs to be defined.
                         m_forward_decl_die_to_clang_type[die] = clang_type;
                         m_forward_decl_clang_type_to_die[clang_type] = die;
                     }
-
+                    
                 }
                 break;
 
@@ -2760,7 +2766,7 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                         }
 
                         m_die_to_decl_ctx[die] = ClangASTContext::GetDeclContextForType (clang_type);
-                        type_sp.reset( new Type(die->GetOffset(), this, type_name_dbstr, byte_size, NULL, encoding_uid, Type::eIsTypeWithUID, &decl, clang_type));
+                        type_sp.reset( new Type(die->GetOffset(), this, type_name_dbstr, byte_size, NULL, encoding_uid, Type::eEncodingIsUID, &decl, clang_type, true));
 
                         m_die_to_type[die] = type_sp.get();
 
@@ -2972,7 +2978,7 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                                     type_list->GetClangASTContext().SetFunctionParameters (function_decl, &function_param_decls.front(), function_param_decls.size());
                             }
                         }
-                        type_sp.reset( new Type(die->GetOffset(), this, type_name_dbstr, 0, NULL, LLDB_INVALID_UID, Type::eIsTypeWithUID, &decl, clang_type));
+                        type_sp.reset( new Type(die->GetOffset(), this, type_name_dbstr, 0, NULL, LLDB_INVALID_UID, Type::eEncodingIsUID, &decl, clang_type, false));
 
                         m_die_to_type[die] = type_sp.get();
                         assert(type_sp.get());
@@ -3057,7 +3063,7 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                                 array_element_bit_stride = array_element_bit_stride * num_elements;
                             }
                             ConstString empty_name;
-                            type_sp.reset( new Type(die->GetOffset(), this, empty_name, array_element_bit_stride / 8, NULL, LLDB_INVALID_UID, Type::eIsTypeWithUID, &decl, clang_type));
+                            type_sp.reset( new Type(die->GetOffset(), this, empty_name, array_element_bit_stride / 8, NULL, LLDB_INVALID_UID, Type::eEncodingIsUID, &decl, clang_type, false));
                             m_die_to_type[die] = type_sp.get();
                         }
                     }
@@ -3099,7 +3105,7 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
 
                         size_t byte_size = ClangASTType::GetClangTypeBitWidth (type_list->GetClangASTContext().getASTContext(), clang_type) / 8;
 
-                        type_sp.reset( new Type(die->GetOffset(), this, type_name_dbstr, byte_size, NULL, LLDB_INVALID_UID, Type::eIsTypeWithUID, NULL, clang_type));
+                        type_sp.reset( new Type(die->GetOffset(), this, type_name_dbstr, byte_size, NULL, LLDB_INVALID_UID, Type::eEncodingIsUID, NULL, clang_type, false));
                         m_die_to_type[die] = type_sp.get();
                     }
                                             

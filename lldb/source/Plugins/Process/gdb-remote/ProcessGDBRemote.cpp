@@ -366,6 +366,7 @@ ProcessGDBRemote::WillLaunchOrAttach ()
     return error;
 }
 
+//#define LAUNCH_WITH_LAUNCH_SERVICES 1
 //----------------------------------------------------------------------
 // Process Control
 //----------------------------------------------------------------------
@@ -381,10 +382,18 @@ ProcessGDBRemote::DoLaunch
     const char *stderr_path
 )
 {
+    Error error;
+#if defined (LAUNCH_WITH_LAUNCH_SERVICES)
+    FileSpec app_file_spec (argv[0]);
+    pid_t pid = Host::LaunchApplication (app_file_spec);
+    if (pid != LLDB_INVALID_PROCESS_ID)
+        error = DoAttachToProcessWithID (pid);
+    else
+        error.SetErrorString("failed");
+#else
     //  ::LogSetBitMask (GDBR_LOG_DEFAULT);
     //  ::LogSetOptions (LLDB_LOG_OPTION_THREADSAFE | LLDB_LOG_OPTION_PREPEND_TIMESTAMP | LLDB_LOG_OPTION_PREPEND_PROC_AND_THREAD);
     //  ::LogSetLogFile ("/dev/stdout");
-    Error error;
 
     ObjectFile * object_file = module->GetObjectFile();
     if (object_file)
@@ -497,9 +506,9 @@ ProcessGDBRemote::DoLaunch
         SetID(LLDB_INVALID_PROCESS_ID);
         error.SetErrorStringWithFormat("Failed to get object file from '%s' for arch %s.\n", module->GetFileSpec().GetFilename().AsCString(), module->GetArchitecture().AsCString());
     }
-
-    // Return the process ID we have
+#endif
     return error;
+
 }
 
 
@@ -621,9 +630,13 @@ ProcessGDBRemote::DidLaunchOrAttach ()
 void
 ProcessGDBRemote::DidLaunch ()
 {
+#if defined (LAUNCH_WITH_LAUNCH_SERVICES)
+    DidAttach ();
+#else
     DidLaunchOrAttach ();
     if (m_dynamic_loader_ap.get())
         m_dynamic_loader_ap->DidLaunch();
+#endif
 }
 
 Error

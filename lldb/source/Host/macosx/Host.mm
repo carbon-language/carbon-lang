@@ -12,11 +12,13 @@
 #include "lldb/Core/Log.h"
 
 #include "cfcpp/CFCBundle.h"
+#include "cfcpp/CFCMutableDictionary.h"
 #include "cfcpp/CFCReleaser.h"
 #include "cfcpp/CFCString.h"
 
 #include <objc/objc-auto.h>
 
+#include <ApplicationServices/ApplicationServices.h>
 #include <Carbon/Carbon.h>
 #include <Foundation/Foundation.h>
 
@@ -112,8 +114,44 @@ Host::ResolveExecutableInBundle (FileSpec *file)
   return false;
 }
 
+lldb::pid_t
+Host::LaunchApplication (const FileSpec &app_file_spec)
+{
+    char app_path[PATH_MAX];
+    app_file_spec.GetPath(app_path, sizeof(app_path));
+
+    LSApplicationParameters app_params;
+    ::bzero (&app_params, sizeof (app_params));
+    app_params.flags = kLSLaunchDefaults | 
+                       kLSLaunchDontAddToRecents | 
+                       kLSLaunchDontSwitch |
+                       kLSLaunchNewInstance;// | 0x00001000;
+    
+    FSRef app_fsref;
+    CFCString app_cfstr (app_path, kCFStringEncodingUTF8);
+    
+    OSStatus error = ::FSPathMakeRef ((const UInt8 *)app_path, &app_fsref, false);
+    
+    // If we found the app, then store away the name so we don't have to re-look it up.
+    if (error != noErr)
+        return LLDB_INVALID_PROCESS_ID;
+    
+    app_params.application = &app_fsref;
+
+    ProcessSerialNumber psn;
+
+    error = ::LSOpenApplication (&app_params, &psn);
+
+    if (error != noErr)
+        return LLDB_INVALID_PROCESS_ID;
+
+    ::pid_t pid = LLDB_INVALID_PROCESS_ID;
+    error = ::GetProcessPID(&psn, &pid);
+    return pid;
+}
+
 bool
-Host::OpenFileInExternalEditor (FileSpec &file_spec, uint32_t line_no)
+Host::OpenFileInExternalEditor (const FileSpec &file_spec, uint32_t line_no)
 {
     // We attach this to an 'odoc' event to specify a particular selection
     typedef struct {

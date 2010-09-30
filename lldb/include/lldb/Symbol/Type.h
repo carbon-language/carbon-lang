@@ -23,27 +23,29 @@ class Type : public UserID
 public:
     typedef enum
     {
-        eTypeInvalid,
-        eIsTypeWithUID,                 ///< This type is the type whose UID is m_encoding_uid
-        eIsConstTypeWithUID,            ///< This type is the type whose UID is m_encoding_uid with the const qualifier added
-        eIsRestrictTypeWithUID,         ///< This type is the type whose UID is m_encoding_uid with the restrict qualifier added
-        eIsVolatileTypeWithUID,         ///< This type is the type whose UID is m_encoding_uid with the volatile qualifier added
-        eTypedefToTypeWithUID,          ///< This type is pointer to a type whose UID is m_encoding_uid
-        ePointerToTypeWithUID,          ///< This type is pointer to a type whose UID is m_encoding_uid
-        eLValueReferenceToTypeWithUID,  ///< This type is L value reference to a type whose UID is m_encoding_uid
-        eRValueReferenceToTypeWithUID,   ///< This type is R value reference to a type whose UID is m_encoding_uid
-        eTypeUIDSynthetic
-    } EncodingUIDType;
+        eEncodingInvalid,
+        eEncodingIsUID,         ///< This type is the type whose UID is m_encoding_uid
+        eEncodingIsConstUID,            ///< This type is the type whose UID is m_encoding_uid with the const qualifier added
+        eEncodingIsRestrictUID,         ///< This type is the type whose UID is m_encoding_uid with the restrict qualifier added
+        eEncodingIsVolatileUID,         ///< This type is the type whose UID is m_encoding_uid with the volatile qualifier added
+        eEncodingIsTypedefUID,          ///< This type is pointer to a type whose UID is m_encoding_uid
+        eEncodingIsPointerUID,          ///< This type is pointer to a type whose UID is m_encoding_uid
+        eEncodingIsLValueReferenceUID,  ///< This type is L value reference to a type whose UID is m_encoding_uid
+        eEncodingIsRValueReferenceUID,  ///< This type is R value reference to a type whose UID is m_encoding_uid
+        eEncodingIsSyntheticUID,
+        eEncodingIsTypePtr              ///< m_encoding_data is a "lldb_private::Type *"
+    } EncodingDataType;
 
     Type (lldb::user_id_t uid,
           SymbolFile* symbol_file,
           const ConstString &name,
-          uint64_t byte_size,
+          uint32_t byte_size,
           SymbolContextScope *context,
-          lldb::user_id_t encoding_uid,
-          EncodingUIDType encoding_type,
+          uintptr_t encoding_uid,
+          EncodingDataType encoding_type,
           const Declaration& decl,
-          lldb::clang_type_t clang_qual_type);
+          lldb::clang_type_t clang_qual_type,
+          bool is_forward_decl);
     
     // This makes an invalid type.  Used for functions that return a Type when they
     // get an error.
@@ -91,7 +93,7 @@ public:
     bool
     IsValidType ()
     {
-        return m_encoding_uid_type != eTypeInvalid;
+        return m_encoding_data_type != eEncodingInvalid;
     }
 
     void
@@ -196,14 +198,22 @@ public:
 
 protected:
     ConstString m_name;
-    uint64_t m_byte_size;
     SymbolFile *m_symbol_file;
     SymbolContextScope *m_context; // The symbol context in which this type is defined
-    lldb::user_id_t m_encoding_uid;
-    EncodingUIDType m_encoding_uid_type;
+    uint64_t m_byte_size;
+    EncodingDataType m_encoding_data_type;
+    uintptr_t m_encoding_data;
     Declaration m_decl;
     lldb::clang_type_t m_clang_qual_type;
+    bool m_is_forward_decl;
 
+    Type *
+    GetEncodingType ()
+    {
+        if (m_encoding_data_type == eEncodingIsTypePtr)
+            return (Type *)m_encoding_data;
+        return NULL;
+    }
     bool ResolveClangType(bool forward_decl_is_ok = false);
 };
 

@@ -333,7 +333,6 @@ protected:
 
     std::stack<lldb::InputReaderSP> m_input_readers;
     std::string m_input_reader_data;
-    bool m_use_external_editor;   // FIXME: Convert this to a set/show variable on the debugger.
 
 private:
 
