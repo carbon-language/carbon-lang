@@ -284,7 +284,8 @@ bool ELFAsmParser::ParseDirectiveSection(StringRef, SMLoc) {
                      ? SectionKind::getText()
                      : SectionKind::getDataRel();
   getStreamer().SwitchSection(getContext().getELFSection(SectionName, Type,
-                                                         Flags, Kind, false));
+                                                         Flags, Kind, false,
+                                                         Size));
   return false;
 }
 
