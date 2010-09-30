@@ -731,11 +731,3 @@ void ARMInstPrinter::printNEONModImmOperand(const MCInst *MI, unsigned OpNum,
   uint64_t Val = ARM_AM::decodeNEONModImm(EncodedImm, EltBits);
   O << "#0x" << utohexstr(Val);
 }
-
-void ARMInstPrinter::PrintSpecial(const MCInst *MI, raw_ostream &O,
-                                  const char *Kind) {
-  if (strcmp(Kind, "comment") == 0)
-    O << "@";
-  else
-    abort();
-}
