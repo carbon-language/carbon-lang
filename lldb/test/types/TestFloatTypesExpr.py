@@ -10,9 +10,9 @@ class FloatTypesTestCase(AbstractBase.GenericTester):
 
     mydir = "types"
 
-    @unittest2.expectedFailure
     # rdar://problem/8493023
-    # test/types failures for Test*TypesExpr.py: element offset computed wrong?
+    # test/types failures for Test*TypesExpr.py: element offset computed wrong and sign error?
+
     def test_float_types_with_dsym(self):
         """Test that float-type variable expressions are evaluated correctly."""
         d = {'CXX_SOURCES': 'float.cpp'}
@@ -20,7 +20,6 @@ class FloatTypesTestCase(AbstractBase.GenericTester):
         self.setTearDownCleanup(dictionary=d)
         self.float_type_expr()
 
-    @unittest2.expectedFailure
     def test_float_type_with_dwarf(self):
         """Test that float-type variable expressions are evaluated correctly."""
         d = {'CXX_SOURCES': 'float.cpp'}
@@ -28,7 +27,6 @@ class FloatTypesTestCase(AbstractBase.GenericTester):
         self.setTearDownCleanup(dictionary=d)
         self.float_type_expr()
 
-    @unittest2.expectedFailure
     def test_double_type_with_dsym(self):
         """Test that double-type variable expressions are evaluated correctly."""
         d = {'CXX_SOURCES': 'double.cpp'}
@@ -36,7 +34,6 @@ class FloatTypesTestCase(AbstractBase.GenericTester):
         self.setTearDownCleanup(dictionary=d)
         self.double_type_expr()
 
-    @unittest2.expectedFailure
     def test_double_type_with_dwarf(self):
         """Test that double-type variable expressions are evaluated correctly."""
         d = {'CXX_SOURCES': 'double.cpp'}
