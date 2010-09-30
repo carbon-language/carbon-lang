@@ -2715,11 +2715,7 @@ let Defs =
   def Int_eh_sjlj_setjmp : XI<(outs), (ins GPR:$src, GPR:$val),
                                AddrModeNone, SizeSpecial, IndexModeNone,
                                Pseudo, NoItinerary,
-                           "add\t$val, pc, #8\t${:comment} eh_setjmp begin\n\t"
-                           "str\t$val, [$src, #4]\n\t"
-                           "mov\tr0, #0\n\t"
-                           "add\tpc, pc, #0\n\t"
-                           "mov\tr0, #1 ${:comment} eh_setjmp end", "",
+                            "${:comment} EH.SJLJ.SETJMP PSEUDO", "",
                          [(set R0, (ARMeh_sjlj_setjmp GPR:$src, GPR:$val))]>,
                            Requires<[IsARM, HasVFP2]>;
 }
@@ -2730,11 +2726,7 @@ let Defs =
   def Int_eh_sjlj_setjmp_nofp : XI<(outs), (ins GPR:$src, GPR:$val),
                                    AddrModeNone, SizeSpecial, IndexModeNone,
                                    Pseudo, NoItinerary,
-                           "add\t$val, pc, #8\t${:comment} eh_setjmp begin\n\t"
-                           "str\t$val, [$src, #4]\n\t"
-                           "mov\tr0, #0\n\t"
-                           "add\tpc, pc, #0\n\t"
-                           "mov\tr0, #1 ${:comment} eh_setjmp end", "",
+                            "${:comment} EH.SJLJ.SETJMP PSEUDO", "",
                          [(set R0, (ARMeh_sjlj_setjmp GPR:$src, GPR:$val))]>,
                                 Requires<[IsARM, NoVFP]>;
 }
@@ -2745,10 +2737,7 @@ let isBarrier = 1, hasSideEffects = 1, isTerminator = 1,
 def Int_eh_sjlj_longjmp : XI<(outs), (ins GPR:$src, GPR:$scratch),
                              AddrModeNone, SizeSpecial, IndexModeNone,
                              Pseudo, NoItinerary,
-                             "ldr\tsp, [$src, #8]\n\t"
-                             "ldr\t$scratch, [$src, #4]\n\t"
-                             "ldr\tr7, [$src]\n\t"
-                             "bx\t$scratch", "",
+                            "${:comment} EH.SJLJ.LONGJMP PSEUDO", "",
                          [(ARMeh_sjlj_longjmp GPR:$src, GPR:$scratch)]>,
                                 Requires<[IsARM, IsDarwin]>;
 }

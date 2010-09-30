@@ -2447,13 +2447,7 @@ let Defs =
     D31 ], hasSideEffects = 1, isBarrier = 1 in {
   def t2Int_eh_sjlj_setjmp : Thumb2XI<(outs), (ins tGPR:$src, tGPR:$val),
                                AddrModeNone, SizeSpecial, NoItinerary,
-                               "mov\t$val, pc\t${:comment} begin eh.setjmp\n\t"
-                               "adds\t$val, #7\n\t"
-                               "str\t$val, [$src, #4]\n\t"
-                               "movs\tr0, #0\n\t"
-                               "b\t1f\n\t"
-                               "movs\tr0, #1\t${:comment} end eh.setjmp\n\t"
-                               "1:", "",
+                               "${:comment} EH.SJLJ.SETJMP PSEUDO", "",
                           [(set R0, (ARMeh_sjlj_setjmp tGPR:$src, tGPR:$val))]>,
                              Requires<[IsThumb2, HasVFP2]>;
 }
@@ -2463,13 +2457,7 @@ let Defs =
   hasSideEffects = 1, isBarrier = 1 in {
   def t2Int_eh_sjlj_setjmp_nofp : Thumb2XI<(outs), (ins tGPR:$src, tGPR:$val),
                                AddrModeNone, SizeSpecial, NoItinerary,
-                               "mov\t$val, pc\t${:comment} begin eh.setjmp\n\t"
-                               "adds\t$val, #7\n\t"
-                               "str\t$val, [$src, #4]\n\t"
-                               "movs\tr0, #0\n\t"
-                               "b\t1f\n\t"
-                               "movs\tr0, #1\t${:comment} end eh.setjmp\n\t"
-                               "1:", "",
+                               "${:comment} EH.SJLJ.SETJMP PSEUDO", "",
                           [(set R0, (ARMeh_sjlj_setjmp tGPR:$src, tGPR:$val))]>,
                                   Requires<[IsThumb2, NoVFP]>;
 }
