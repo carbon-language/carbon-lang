@@ -584,6 +584,67 @@ struct StrToOpt : public LibCallOptimization {
 };
 
 //===---------------------------------------===//
+// 'strspn' Optimizations
+
+struct StrSpnOpt : public LibCallOptimization {
+  virtual Value *CallOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
+    const FunctionType *FT = Callee->getFunctionType();
+    if (FT->getNumParams() != 2 ||
+        FT->getParamType(0) != Type::getInt8PtrTy(*Context) ||
+        FT->getParamType(1) != FT->getParamType(0) ||
+        !FT->getReturnType()->isIntegerTy())
+      return 0;
+
+    std::string S1, S2;
+    bool HasS1 = GetConstantStringInfo(CI->getArgOperand(0), S1);
+    bool HasS2 = GetConstantStringInfo(CI->getArgOperand(1), S2);
+
+    // strspn(s, "") -> 0
+    // strspn("", s) -> 0
+    if ((HasS1 && S1.empty()) || (HasS2 && S2.empty()))
+      return Constant::getNullValue(CI->getType());
+
+    // Constant folding.
+    if (HasS1 && HasS2)
+      return ConstantInt::get(CI->getType(), strspn(S1.c_str(), S2.c_str()));
+
+    return 0;
+  }
+};
+
+//===---------------------------------------===//
+// 'strcspn' Optimizations
+
+struct StrCSpnOpt : public LibCallOptimization {
+  virtual Value *CallOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
+    const FunctionType *FT = Callee->getFunctionType();
+    if (FT->getNumParams() != 2 ||
+        FT->getParamType(0) != Type::getInt8PtrTy(*Context) ||
+        FT->getParamType(1) != FT->getParamType(0) ||
+        !FT->getReturnType()->isIntegerTy())
+      return 0;
+
+    std::string S1, S2;
+    bool HasS1 = GetConstantStringInfo(CI->getArgOperand(0), S1);
+    bool HasS2 = GetConstantStringInfo(CI->getArgOperand(1), S2);
+
+    // strcspn("", s) -> 0
+    if (HasS1 && S1.empty())
+      return Constant::getNullValue(CI->getType());
+
+    // Constant folding.
+    if (HasS1 && HasS2)
+      return ConstantInt::get(CI->getType(), strcspn(S1.c_str(), S2.c_str()));
+
+    // strcspn(s, "") -> strlen(s)
+    if (TD && HasS2 && S2.empty())
+      return EmitStrLen(CI->getArgOperand(0), B, TD);
+
+    return 0;
+  }
+};
+
+//===---------------------------------------===//
 // 'strstr' Optimizations
 
 struct StrStrOpt : public LibCallOptimization {
@@ -1297,7 +1358,7 @@ namespace {
     StrCatOpt StrCat; StrNCatOpt StrNCat; StrChrOpt StrChr; StrRChrOpt StrRChr;
     StrCmpOpt StrCmp; StrNCmpOpt StrNCmp; StrCpyOpt StrCpy; StrCpyOpt StrCpyChk;
     StrNCpyOpt StrNCpy; StrLenOpt StrLen; StrPBrkOpt StrPBrk;
-    StrToOpt StrTo; StrStrOpt StrStr;
+    StrToOpt StrTo; StrSpnOpt StrSpn; StrCSpnOpt StrCSpn; StrStrOpt StrStr;
     MemCmpOpt MemCmp; MemCpyOpt MemCpy; MemMoveOpt MemMove; MemSetOpt MemSet;
     // Math Library Optimizations
     PowOpt Pow; Exp2Opt Exp2; UnaryDoubleFPOpt UnaryDoubleFP;
@@ -1357,6 +1418,8 @@ void SimplifyLibCalls::InitOptimizations() {
   Optimizations["strtoll"] = &StrTo;
   Optimizations["strtold"] = &StrTo;
   Optimizations["strtoull"] = &StrTo;
+  Optimizations["strspn"] = &StrSpn;
+  Optimizations["strcspn"] = &StrCSpn;
   Optimizations["strstr"] = &StrStr;
   Optimizations["memcmp"] = &MemCmp;
   Optimizations["memcpy"] = &MemCpy;
@@ -2249,14 +2312,6 @@ bool SimplifyLibCalls::doInitialization(Module &M) {
 // stpcpy:
 //   * stpcpy(str, "literal") ->
 //           llvm.memcpy(str,"literal",strlen("literal")+1,1)
-//
-// strspn, strcspn:
-//   * strspn(s,a)   -> const_int (if both args are constant)
-//   * strspn("",a)  -> 0
-//   * strspn(s,"")  -> 0
-//   * strcspn(s,a)  -> const_int (if both args are constant)
-//   * strcspn("",a) -> 0
-//   * strcspn(s,"") -> strlen(a)
 //
 // tan, tanf, tanl:
 //   * tan(atan(x)) -> x

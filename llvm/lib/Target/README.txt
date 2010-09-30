@@ -1340,12 +1340,6 @@ void foo (int a, struct T b)
 
 simplifylibcalls should do several optimizations for strspn/strcspn:
 
-strcspn(x, "") -> strlen(x)
-strcspn("", x) -> 0
-strspn("", x) -> 0
-strspn(x, "") -> strlen(x)
-strspn(x, "a") -> strchr(x, 'a')-x
-
 strcspn(x, "a") -> inlined loop for up to 3 letters (similarly for strspn):
 
 size_t __strcspn_c3 (__const char *__s, int __reject1, int __reject2,
