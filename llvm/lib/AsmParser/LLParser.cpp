@@ -1131,7 +1131,6 @@ bool LLParser::ParseInstructionMetadata(Instruction *Inst,
     Lex.Lex();
 
     MDNode *Node;
-    unsigned NodeID;
     SMLoc Loc = Lex.getLoc();
 
     if (ParseToken(lltok::exclaim, "expected '!' here"))
@@ -1148,6 +1147,7 @@ bool LLParser::ParseInstructionMetadata(Instruction *Inst,
       assert(ID.Kind == ValID::t_MDNode);
       Inst->setMetadata(MDK, ID.MDNodeVal);
     } else {
+      unsigned NodeID = 0;
       if (ParseMDNodeID(Node, NodeID))
         return true;
       if (Node) {
