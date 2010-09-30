@@ -1,6 +1,6 @@
 #include <stdio.h>
 
-#define INLINE_ME __inline__ __attribute__((always_inline))
+#define INLINE inline __attribute__((always_inline))
 
 int
 func_not_inlined (void)
@@ -9,7 +9,7 @@ func_not_inlined (void)
     return 0;
 }
 
-INLINE_ME int
+INLINE int
 func_inlined (void)
 {
     static int func_inline_call_count = 0;
@@ -18,6 +18,8 @@ func_inlined (void)
     printf ("Returning func_inlined call count: %d.\n", func_inline_call_count);
     return func_inline_call_count;
 }
+
+extern int func_inlined (void);
 
 int
 main (int argc, char **argv)

@@ -34,9 +34,8 @@ class BreakpointLocationsTestCase(TestBase):
         # The breakpoint list should show 3 locations.
         self.expect("breakpoint list", "Breakpoint locations shown correctly",
             substrs = ["1: file ='main.c', line = 19, locations = 3"],
-            patterns = ["1\.1: where = a.out`func_inlined .+unresolved, hit count = 0",
-                        "1\.2: where = a.out`main .+\[inlined\].+unresolved, hit count = 0",
-                        "1\.3: where = a.out`main .+\[inlined\].+unresolved, hit count = 0"])
+            patterns = ["where = a.out`func_inlined .+unresolved, hit count = 0",
+                        "where = a.out`main .+\[inlined\].+unresolved, hit count = 0"])
 
         # The 'breakpoint disable 3.*' command should fail gracefully.
         self.expect("breakpoint disable 3.*",
@@ -66,21 +65,22 @@ class BreakpointLocationsTestCase(TestBase):
         # Run the program againt.  We should stop on the two breakpoint locations.
         self.runCmd("run", RUN_SUCCEEDED)
 
-        self.expect("thread backtrace", "Stopped on an inlined location",
-            substrs = ["stop reason = breakpoint 1.2"],
-            patterns = ["frame #0: .+\[inlined\]"])
+        # Stopped once.
+        self.expect("thread backtrace", STOPPED_DUE_TO_BREAKPOINT,
+            substrs = ["stop reason = breakpoint 1."])
 
+        # Continue the program, there should be another stop.
         self.runCmd("process continue")
 
-        self.expect("thread backtrace", "Stopped on an inlined location",
-            substrs = ["stop reason = breakpoint 1.3"],
-            patterns = ["frame #0: .+\[inlined\]"])
+        # Stopped again.
+        self.expect("thread backtrace", STOPPED_DUE_TO_BREAKPOINT,
+            substrs = ["stop reason = breakpoint 1."])
 
         # At this point, the 3 locations should all have "hit count = 2".
         self.expect("breakpoint list", "Expect all 3 breakpoints with hit count of 2",
-            patterns = ["1\.1: where = a.out`func_inlined .+ resolved, hit count = 2 +Options: disabled",
-                        "1\.2: where = a.out`main .+\[inlined\].+ resolved, hit count = 2",
-                        "1\.3: where = a.out`main .+\[inlined\].+ resolved, hit count = 2"])
+            patterns = ["1\.1: .+ resolved, hit count = 2 +Options: disabled",
+                        "1\.2: .+ resolved, hit count = 2",
+                        "1\.3: .+ resolved, hit count = 2"])
 
 
 if __name__ == '__main__':
