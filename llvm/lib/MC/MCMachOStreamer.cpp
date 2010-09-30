@@ -158,9 +158,9 @@ void MCMachOStreamer::EmitAssemblerFlag(MCAssemblerFlag Flag) {
   case MCAF_SubsectionsViaSymbols:
     getAssembler().setSubsectionsViaSymbols(true);
     return;
+  default:
+    llvm_unreachable("invalid assembler flag!");
   }
-
-  assert(0 && "invalid assembler flag!");
 }
 
 void MCMachOStreamer::EmitAssignment(MCSymbol *Symbol, const MCExpr *Value) {
