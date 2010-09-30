@@ -1003,6 +1003,32 @@ bool ARMFastISel::SelectFPToSI(const Instruction *I) {
   return true;
 }
 
+bool ARMFastISel::SelectSDiv(const Instruction *I) {
+  EVT VT;
+  const Type *Ty = I->getType();
+  if (!isTypeLegal(Ty, VT))
+    return false;
+
+  // If we have integer div support we should have selected this automagically.
+  // In case we have a real miss go ahead and return false and we'll pick
+  // it up later.
+  if (Subtarget->hasDivide()) return false;  
+  
+  // Otherwise emit a libcall.
+  RTLIB::Libcall LC = RTLIB::UNKNOWN_LIBCALL;
+  if (VT == MVT::i16)
+    LC = RTLIB::SDIV_I16;
+  else if (VT == MVT::i32)
+    LC = RTLIB::SDIV_I32;
+  else if (VT == MVT::i64)
+    LC = RTLIB::SDIV_I64;
+  else if (VT == MVT::i128)
+    LC = RTLIB::SDIV_I128;
+  assert(LC != RTLIB::UNKNOWN_LIBCALL && "Unsupported SDIV!");
+    
+  return ARMEmitLibcall(I, LC);
+}
+
 bool ARMFastISel::SelectBinaryOp(const Instruction *I, unsigned ISDOpcode) {
   EVT VT  = TLI.getValueType(I->getType(), true);
 
@@ -1230,32 +1256,6 @@ bool ARMFastISel::ARMEmitLibcall(const Instruction *I, RTLIB::Libcall Call) {
   static_cast<MachineInstr *>(MIB)->setPhysRegsDeadExcept(UsedRegs, TRI);
   
   return true;
-}
-
-bool ARMFastISel::SelectSDiv(const Instruction *I) {
-  EVT VT;
-  const Type *Ty = I->getType();
-  if (!isTypeLegal(Ty, VT))
-    return false;
-
-  // If we have integer div support we should have selected this automagically.
-  // In case we have a real miss go ahead and return false and we'll pick
-  // it up later.
-  if (Subtarget->hasDivide()) return false;  
-  
-  // Otherwise emit a libcall.
-  RTLIB::Libcall LC = RTLIB::UNKNOWN_LIBCALL;
-  if (VT == MVT::i16)
-    LC = RTLIB::SDIV_I16;
-  else if (VT == MVT::i32)
-    LC = RTLIB::SDIV_I32;
-  else if (VT == MVT::i64)
-    LC = RTLIB::SDIV_I64;
-  else if (VT == MVT::i128)
-    LC = RTLIB::SDIV_I128;
-  assert(LC != RTLIB::UNKNOWN_LIBCALL && "Unsupported SDIV!");
-    
-  return ARMEmitLibcall(I, LC);
 }
 
 bool ARMFastISel::SelectCall(const Instruction *I) {
