@@ -36,6 +36,10 @@ public:
   void RelaxInstruction(const MCInst &Inst, MCInst &Res) const;
 
   bool WriteNopData(uint64_t Count, MCObjectWriter *OW) const;
+
+  unsigned getPointerSize() const {
+    return 4;
+  }
 };
 
 bool ARMAsmBackend::MayNeedRelaxation(const MCInst &Inst) const {
@@ -84,10 +88,6 @@ public:
                                /*IsLittleEndian=*/true,
                                /*HasRelocationAddend=*/false);
   }
-
-  unsigned getPointerSize() const {
-    return 4;
-  }
 };
 
 // Fixme: can we raise this to share code between Darwin and ELF?
@@ -118,10 +118,6 @@ public:
 
   MCObjectWriter *createObjectWriter(raw_ostream &OS) const {
     return new MachObjectWriter(OS, /*Is64Bit=*/false);
-  }
-
-  unsigned getPointerSize() const {
-    return 4;
   }
 
   virtual bool doesSectionRequireSymbols(const MCSection &Section) const {
