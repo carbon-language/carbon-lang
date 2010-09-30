@@ -9,6 +9,7 @@
 
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCExpr.h"
+#include "llvm/MC/MCObjectWriter.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/Twine.h"
@@ -33,6 +34,24 @@ raw_ostream &MCStreamer::GetCommentOS() {
 void MCStreamer::EmitIntValue(uint64_t Value, unsigned Size,
                               unsigned AddrSpace) {
   EmitValue(MCConstantExpr::Create(Value, getContext()), Size, AddrSpace);
+}
+
+// EmitULEB128Value - Special case of EmitValue that emits a ULEB128 of the
+// Value as the sequence of ULEB128 encoded bytes.
+void MCStreamer::EmitULEB128Value(uint64_t Value, unsigned AddrSpace) {
+  SmallString<32> Tmp;
+  raw_svector_ostream OS(Tmp);
+  MCObjectWriter::EncodeULEB128(Value, OS);
+  EmitBytes(OS.str(), AddrSpace);
+}
+
+// EmitSLEB128Value - Special case of EmitValue that emits a SLEB128 of the
+// Value as the sequence of ULEB128 encoded bytes.
+void MCStreamer::EmitSLEB128Value(int64_t Value, unsigned AddrSpace) {
+  SmallString<32> Tmp;
+  raw_svector_ostream OS(Tmp);
+  MCObjectWriter::EncodeSLEB128(Value, OS);
+  EmitBytes(OS.str(), AddrSpace);
 }
 
 void MCStreamer::EmitSymbolValue(const MCSymbol *Sym, unsigned Size,

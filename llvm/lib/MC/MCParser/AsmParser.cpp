@@ -2056,7 +2056,7 @@ bool GenericAsmParser::ParseDirectiveLoc(StringRef, SMLoc DirectiveLoc) {
     Lex();
   }
 
-  unsigned Flags = 0;
+  unsigned Flags = DWARF2_LINE_DEFAULT_IS_STMT ? DWARF2_FLAG_IS_STMT : 0;
   unsigned Isa = 0;
   if (getLexer().isNot(AsmToken::EndOfStatement)) {
     for (;;) {

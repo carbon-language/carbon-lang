@@ -13,8 +13,10 @@
 #include "llvm/MC/MCCodeEmitter.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCObjectWriter.h"
+#include "llvm/MC/MCSection.h"
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/MC/MCValue.h"
+#include "llvm/MC/MCDwarf.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/StringExtras.h"
@@ -349,6 +351,20 @@ uint64_t MCAssembler::ComputeFragmentSize(MCAsmLayout &Layout,
 
     return Offset;
   }
+
+  case MCFragment::FT_Dwarf: {
+    const MCDwarfLineAddrFragment &OF = cast<MCDwarfLineAddrFragment>(F);
+
+    // The AddrDelta is really unsigned and it can only increase.
+    int64_t AddrDelta;
+
+    OF.getAddrDelta().EvaluateAsAbsolute(AddrDelta, &Layout);
+
+    int64_t LineDelta;
+    LineDelta = OF.getLineDelta();
+
+    return MCDwarfLineAddr::ComputeSize(LineDelta, AddrDelta);
+  }
   }
 
   assert(0 && "invalid fragment kind");
@@ -504,6 +520,20 @@ static void WriteFragmentData(const MCAssembler &Asm, const MCAsmLayout &Layout,
     for (uint64_t i = 0, e = FragmentSize; i != e; ++i)
       OW->Write8(uint8_t(OF.getValue()));
 
+    break;
+  }
+
+  case MCFragment::FT_Dwarf: {
+    const MCDwarfLineAddrFragment &OF = cast<MCDwarfLineAddrFragment>(F);
+
+    // The AddrDelta is really unsigned and it can only increase.
+    int64_t AddrDelta;
+    OF.getAddrDelta().EvaluateAsAbsolute(AddrDelta, &Layout);
+
+    int64_t LineDelta;
+    LineDelta = OF.getLineDelta();
+
+    MCDwarfLineAddr::Write(OW, LineDelta, (uint64_t)AddrDelta);
     break;
   }
   }
@@ -872,6 +902,7 @@ void MCFragment::dump() {
   case MCFragment::FT_Fill:  OS << "MCFillFragment"; break;
   case MCFragment::FT_Inst:  OS << "MCInstFragment"; break;
   case MCFragment::FT_Org:   OS << "MCOrgFragment"; break;
+  case MCFragment::FT_Dwarf: OS << "MCDwarfFragment"; break;
   }
 
   OS << "<MCFragment " << (void*) this << " LayoutOrder:" << LayoutOrder
@@ -930,6 +961,13 @@ void MCFragment::dump() {
     const MCOrgFragment *OF = cast<MCOrgFragment>(this);
     OS << "\n       ";
     OS << " Offset:" << OF->getOffset() << " Value:" << OF->getValue();
+    break;
+  }
+  case MCFragment::FT_Dwarf:  {
+    const MCDwarfLineAddrFragment *OF = cast<MCDwarfLineAddrFragment>(this);
+    OS << "\n       ";
+    OS << " AddrDelta:" << OF->getAddrDelta()
+       << " LineDelta:" << OF->getLineDelta();
     break;
   }
   }
