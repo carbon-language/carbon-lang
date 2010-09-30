@@ -2207,6 +2207,19 @@ size_t SelectionDAGBuilder::Clusterify(CaseVector& Cases,
   return numCmps;
 }
 
+void SelectionDAGBuilder::UpdateSplitBlock(MachineBasicBlock *First,
+                                           MachineBasicBlock *Last) {
+  // Update JTCases.
+  for (unsigned i = 0, e = JTCases.size(); i != e; ++i)
+    if (JTCases[i].first.HeaderBB == First)
+      JTCases[i].first.HeaderBB = Last;
+
+  // Update BitTestCases.
+  for (unsigned i = 0, e = BitTestCases.size(); i != e; ++i)
+    if (BitTestCases[i].Parent == First)
+      BitTestCases[i].Parent = Last;
+}
+
 void SelectionDAGBuilder::visitSwitch(const SwitchInst &SI) {
   MachineBasicBlock *SwitchMBB = FuncInfo.MBB;
 

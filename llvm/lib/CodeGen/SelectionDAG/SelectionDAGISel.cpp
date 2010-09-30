@@ -564,12 +564,18 @@ void SelectionDAGISel::CodeGenAndEmitDAG() {
 
   // Emit machine code to BB.  This can change 'BB' to the last block being
   // inserted into.
+  MachineBasicBlock *FirstMBB = FuncInfo->MBB, *LastMBB;
   {
     NamedRegionTimer T("Instruction Creation", GroupName, TimePassesIsEnabled);
 
-    FuncInfo->MBB = Scheduler->EmitSchedule();
+    LastMBB = FuncInfo->MBB = Scheduler->EmitSchedule();
     FuncInfo->InsertPt = Scheduler->InsertPos;
   }
+
+  // If the block was split, make sure we update any references that are used to
+  // update PHI nodes later on.
+  if (FirstMBB != LastMBB)
+    SDB->UpdateSplitBlock(FirstMBB, LastMBB);
 
   // Free the scheduler state.
   {
