@@ -2556,7 +2556,7 @@ typedef struct _LIBCPP_VISIBLE atomic_flag
     atomic_flag() = default;
 #else
     _LIBCPP_INLINE_VISIBILITY
-    atomic_flag() : __flg_(false) {};
+    atomic_flag() {};
 #endif
 
 #ifndef _LIBCPP_HAS_NO_DELETED_FUNCTIONS
