@@ -162,6 +162,10 @@ namespace llvm {
 
     bool ValidateDwarfFileNumber(unsigned FileNumber);
 
+    bool hasDwarfFiles(void) {
+      return MCDwarfFiles.size() != 0;
+    }
+
     const std::vector<MCDwarfFile *> &getMCDwarfFiles() {
       return MCDwarfFiles;
     }

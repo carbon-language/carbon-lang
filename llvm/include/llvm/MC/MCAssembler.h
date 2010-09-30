@@ -49,7 +49,8 @@ public:
     FT_Data,
     FT_Fill,
     FT_Inst,
-    FT_Org
+    FT_Org,
+    FT_Dwarf
   };
 
 private:
@@ -335,6 +336,36 @@ public:
     return F->getKind() == MCFragment::FT_Org;
   }
   static bool classof(const MCOrgFragment *) { return true; }
+};
+
+class MCDwarfLineAddrFragment : public MCFragment {
+  /// LineDelta - the value of the difference between the two line numbers
+  /// between two .loc dwarf directives.
+  int64_t LineDelta;
+
+  /// AddrDelta - The expression for the difference of the two symbols that
+  /// make up the address delta between two .loc dwarf directives.
+  const MCExpr *AddrDelta;
+
+public:
+  MCDwarfLineAddrFragment(int64_t _LineDelta, const MCExpr &_AddrDelta,
+                      MCSectionData *SD = 0)
+    : MCFragment(FT_Dwarf, SD),
+      LineDelta(_LineDelta), AddrDelta(&_AddrDelta) {}
+
+  /// @name Accessors
+  /// @{
+
+  int64_t getLineDelta() const { return LineDelta; }
+
+  const MCExpr &getAddrDelta() const { return *AddrDelta; }
+
+  /// @}
+
+  static bool classof(const MCFragment *F) {
+    return F->getKind() == MCFragment::FT_Dwarf;
+  }
+  static bool classof(const MCDwarfLineAddrFragment *) { return true; }
 };
 
 // FIXME: Should this be a separate class, or just merged into MCSection? Since

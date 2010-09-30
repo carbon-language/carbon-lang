@@ -235,10 +235,18 @@ namespace llvm {
     virtual void EmitIntValue(uint64_t Value, unsigned Size,
                               unsigned AddrSpace = 0);
 
+    /// EmitULEB128Value - Special case of EmitValue that takes an ULEB128 and
+    /// emits the needed bytes for the encoded value.
+    virtual void EmitULEB128Value(uint64_t Value, unsigned AddrSpace = 0);
+
+    /// EmitSLEB128Value - Special case of EmitValue that takes an SLEB128 and
+    /// emits the needed bytes for the encoded value.
+    virtual void EmitSLEB128Value(int64_t Value, unsigned AddrSpace = 0);
+
     /// EmitSymbolValue - Special case of EmitValue that avoids the client
     /// having to pass in a MCExpr for MCSymbols.
     virtual void EmitSymbolValue(const MCSymbol *Sym, unsigned Size,
-                                 unsigned AddrSpace);
+                                 unsigned AddrSpace = 0);
 
     /// EmitGPRel32Value - Emit the expression @p Value into the output as a
     /// gprel32 (32-bit GP relative) value.

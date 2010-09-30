@@ -510,6 +510,7 @@ enum dwarf_constants {
   DW_DSC_range = 0x01,
 
   // Line Number Standard Opcode Encodings
+  DW_LNS_extended_op = 0x00,
   DW_LNS_copy = 0x01,
   DW_LNS_advance_pc = 0x02,
   DW_LNS_advance_line = 0x03,
