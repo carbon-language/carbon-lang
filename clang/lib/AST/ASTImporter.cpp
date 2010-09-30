@@ -3130,8 +3130,8 @@ SourceRange ASTImporter::Import(SourceRange FromRange) {
 }
 
 FileID ASTImporter::Import(FileID FromID) {
-  llvm::DenseMap<unsigned, FileID>::iterator Pos
-    = ImportedFileIDs.find(FromID.getHashValue());
+  llvm::DenseMap<FileID, FileID>::iterator Pos
+    = ImportedFileIDs.find(FromID);
   if (Pos != ImportedFileIDs.end())
     return Pos->second;
   
@@ -3164,7 +3164,7 @@ FileID ASTImporter::Import(FileID FromID) {
   }
   
   
-  ImportedFileIDs[FromID.getHashValue()] = ToID;
+  ImportedFileIDs[FromID] = ToID;
   return ToID;
 }
 

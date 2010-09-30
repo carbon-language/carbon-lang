@@ -63,7 +63,7 @@ namespace clang {
 
     /// \brief Mapping from the already-imported FileIDs in the "from" source
     /// manager to the corresponding FileIDs in the "to" source manager.
-    llvm::DenseMap<unsigned, FileID> ImportedFileIDs;
+    llvm::DenseMap<FileID, FileID> ImportedFileIDs;
     
     /// \brief Imported, anonymous tag declarations that are missing their 
     /// corresponding typedefs.
