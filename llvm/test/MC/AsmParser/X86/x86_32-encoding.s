@@ -1,5 +1,4 @@
 // RUN: llvm-mc -triple i386-unknown-unknown --show-encoding %s | FileCheck %s
-// XFAIL: *
 
 
 // CHECK: movb	$127, 3735928559(%ebx,%ecx,8)
@@ -1634,23 +1633,23 @@
 // CHECK:  encoding: [0xd1,0x3d,0x78,0x56,0x34,0x12]
         	sarl	0x12345678
 
-// CHECK: call	*%ecx
+// CHECK: calll	*%ecx
 // CHECK:  encoding: [0xff,0xd1]
         	call	*%ecx
 
-// CHECK: call	*3735928559(%ebx,%ecx,8)
+// CHECK: calll	*3735928559(%ebx,%ecx,8)
 // CHECK:  encoding: [0xff,0x94,0xcb,0xef,0xbe,0xad,0xde]
         	call	*0xdeadbeef(%ebx,%ecx,8)
 
-// CHECK: call	*3135175374
+// CHECK: calll	*3135175374
 // CHECK:  encoding: [0xff,0x15,0xce,0xfa,0xde,0xba]
         	call	*0xbadeface
 
-// CHECK: call	*3735928559(%ebx,%ecx,8)
+// CHECK: calll	*3735928559(%ebx,%ecx,8)
 // CHECK:  encoding: [0xff,0x94,0xcb,0xef,0xbe,0xad,0xde]
         	call	*0xdeadbeef(%ebx,%ecx,8)
 
-// CHECK: call	*3135175374
+// CHECK: calll	*3135175374
 // CHECK:  encoding: [0xff,0x15,0xce,0xfa,0xde,0xba]
         	call	*0xbadeface
 
@@ -1658,19 +1657,19 @@
 // CHECK:  encoding: [0x66,0xff,0x1d,0xed,0x7e,0x00,0x00]
         	lcallw	*0x7eed
 
-// CHECK: jmp	*3735928559(%ebx,%ecx,8)
+// CHECK: jmpl	*3735928559(%ebx,%ecx,8)
 // CHECK:  encoding: [0xff,0xa4,0xcb,0xef,0xbe,0xad,0xde]
         	jmp	*0xdeadbeef(%ebx,%ecx,8)
 
-// CHECK: jmp	*3135175374
+// CHECK: jmpl	*3135175374
 // CHECK:  encoding: [0xff,0x25,0xce,0xfa,0xde,0xba]
         	jmp	*0xbadeface
 
-// CHECK: jmp	*3735928559(%ebx,%ecx,8)
+// CHECK: jmpl	*3735928559(%ebx,%ecx,8)
 // CHECK:  encoding: [0xff,0xa4,0xcb,0xef,0xbe,0xad,0xde]
         	jmp	*0xdeadbeef(%ebx,%ecx,8)
 
-// CHECK: jmp	*3135175374
+// CHECK: jmpl	*3135175374
 // CHECK:  encoding: [0xff,0x25,0xce,0xfa,0xde,0xba]
         	jmp	*0xbadeface
 
@@ -9964,7 +9963,7 @@
 
 // rdar://8017638
 // CHECK: aeskeygenassist	$128, %xmm1, %xmm2
-// CHECK:  encoding: [0x66,0x0f,0x3a,0xdf,0x14,0x82,0x80]
+// CHECK:  encoding: [0x66,0x0f,0x3a,0xdf,0xd1,0x80]
 		aeskeygenassist $128, %xmm1, %xmm2
 
 // rdar://7910087
@@ -9986,7 +9985,7 @@
 
 // radr://7901779
 // CHECK: pushl   $127
-// CHECK:  encoding: [0x6a,0xfe]
+// CHECK:  encoding: [0x6a,0x7f]
           pushl   $127
 
 // CHECK: pushw   $254
