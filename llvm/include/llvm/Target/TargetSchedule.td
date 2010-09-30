@@ -27,7 +27,6 @@ class FuncUnit;
 // pipeline bypasses which can be used to forward results of instructions
 // that are forwarded to uses.
 class Bypass;
-
 def NoBypass : Bypass;
 
 class ReservationKind<bits<1> val> {
@@ -88,6 +87,23 @@ def NoItinerary : InstrItinClass;
 // Instruction itinerary data - These values provide a runtime map of an 
 // instruction itinerary class (name) to its itinerary data.
 //
+// OperandCycles are optional "cycle counts". They specify the cycle after
+// instruction issue the values which correspond to specific operand indices
+// are defined or read. Bypasses are optional "pipeline forwarding pathes", if
+// a def by an instruction is available on a specific bypass and the use can
+// read from the same bypass, then the operand use latency is reduced by one.
+//
+//  InstrItinData<IIC_iLoad_i , [InstrStage<1, [A9_Pipe1]>,
+//                               InstrStage<1, [A9_AGU]>],
+//                              [3, 1], [A9_LdBypass]>,
+//  InstrItinData<IIC_iMVNr   , [InstrStage<1, [A9_Pipe0, A9_Pipe1]>],
+//                              [1, 1], [NoBypass, A9_LdBypass]>,
+//
+// In this example, the instruction of IIC_iLoadi reads its input on cycle 1
+// (after issue) and the result of the load is available on cycle 3. The result
+// is available via forwarding path A9_LdBypass. If it's used by the first
+// source operand of instructions of IIC_iMVNr class, then the operand latency
+// is reduced by 1.
 class InstrItinData<InstrItinClass Class, list<InstrStage> stages,
                     list<int> operandcycles = [],
                     list<Bypass> bypasses = []> {
