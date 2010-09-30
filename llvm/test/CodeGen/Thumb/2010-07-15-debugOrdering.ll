@@ -10,7 +10,7 @@
 define void @_Z19getClosestDiagonal3ii(%0* noalias sret, i32, i32) nounwind {
 ; CHECK: blx ___muldf3
 ; CHECK: blx ___muldf3
-; CHECK: beq LBB0_8
+; CHECK: beq LBB0_7
 ; CHECK: blx ___muldf3
 ; <label>:3
   switch i32 %1, label %4 [

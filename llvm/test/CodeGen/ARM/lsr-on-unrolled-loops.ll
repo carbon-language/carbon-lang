@@ -624,11 +624,11 @@ bb23:                                             ; preds = %bb22, %bb20, %bb9, 
 bb24:                                             ; preds = %bb23
 
 ; LSR should use count-down iteration to avoid requiring the trip count
-; in a register, and it shouldn't require any reloads here.
+; in a register.
 
 ;      CHECK: @ %bb24
 ; CHECK: subs{{.*}} [[REGISTER:(r[0-9]+)|(lr)]], #1
-; CHECK-NEXT: bne.w
+; CHECK: bne.w
 
   %92 = icmp eq i32 %tmp81, %indvar78             ; <i1> [#uses=1]
   %indvar.next79 = add i32 %indvar78, 1           ; <i32> [#uses=1]
