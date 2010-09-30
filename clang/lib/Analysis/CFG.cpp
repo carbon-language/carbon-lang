@@ -62,7 +62,7 @@ private:
 /// - Before processing statements in scope (e.g. CompoundStmt) create
 ///   LocalScope object using CFGBuilder::ScopePos as link to previous scope
 ///   and set CFGBuilder::ScopePos to the end of new scope,
-/// - On every occurance of VarDecl increase CFGBuilder::ScopePos if it points
+/// - On every occurrence of VarDecl increase CFGBuilder::ScopePos if it points
 ///   at this VarDecl,
 /// - For every normal (without jump) end of scope add to CFGBlock destructors
 ///   for objects in the current scope,
@@ -78,7 +78,7 @@ public:
   typedef llvm::SmallVector<VarDecl*, 4> AutomaticVarsTy;
 
   /// const_iterator - Iterates local scope backwards and jumps to previous
-  /// scope on reaching the begining of currently iterated scope.
+  /// scope on reaching the beginning of currently iterated scope.
   class const_iterator {
     const LocalScope* Scope;
 
@@ -122,6 +122,11 @@ public:
         *this = Scope->Prev;
       return *this;
     }
+    const_iterator operator++(int) {
+      const_iterator P = *this;
+      ++*this;
+      return P;
+    }
 
     bool operator==(const const_iterator& rhs) const {
       return Scope == rhs.Scope && VarIter == rhs.VarIter;
@@ -129,6 +134,12 @@ public:
     bool operator!=(const const_iterator& rhs) const {
       return !(*this == rhs);
     }
+
+    operator bool() const {
+      return *this != const_iterator();
+    }
+
+    int distance(const_iterator L);
   };
 
   friend class const_iterator;
@@ -148,11 +159,31 @@ public:
 
   /// Begin of scope in direction of CFG building (backwards).
   const_iterator begin() const { return const_iterator(*this, Vars.size()); }
+
+  void addVar(VarDecl* VD) {
+    Vars.push_back(VD);
+  }
 };
 
-/// BlockScopePosPair - Structure for specifing position in CFG during its build
-/// proces. It consists of CFGBlock that specifies position in CFG graph and
-/// LocalScope::const_iterator that specifies position in LocalScope graph.
+/// distance - Calculates distance from this to L. L must be reachable from this
+/// (with use of ++ operator). Cost of calculating the distance is linear w.r.t.
+/// number of scopes between this and L.
+int LocalScope::const_iterator::distance(LocalScope::const_iterator L) {
+  int D = 0;
+  const_iterator F = *this;
+  while (F.Scope != L.Scope) {
+    assert (F != const_iterator()
+        && "L iterator is not reachable from F iterator.");
+    D += F.VarIter;
+    F = F.Scope->Prev;
+  }
+  D += F.VarIter - L.VarIter;
+  return D;
+}
+
+/// BlockScopePosPair - Structure for specifying position in CFG during its
+/// build process. It consists of CFGBlock that specifies position in CFG graph
+/// and  LocalScope::const_iterator that specifies position in LocalScope graph.
 struct BlockScopePosPair {
   BlockScopePosPair() {}
   BlockScopePosPair(CFGBlock* B, LocalScope::const_iterator S)
