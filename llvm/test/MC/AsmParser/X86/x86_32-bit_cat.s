@@ -4,7 +4,6 @@
 // the file x86_32-encoding.s (and other tests that encode are in x86_32-bit.s).
 
 // RUN: llvm-mc -triple i386-unknown-unknown %s | FileCheck %s
-// XFAIL: *
 
 
 // CHECK: 	movb	$127, 3735928559(%ebx,%ecx,8)
@@ -1285,34 +1284,34 @@
 // CHECK: 	sarl	305419896
         	sarl	0x12345678
 
-// CHECK: 	call	3133065982
-        	call	0xbabecafe
+// CHECK: 	calll	3133065982
+        	calll	0xbabecafe
 
-// CHECK: 	call	*3735928559(%ebx,%ecx,8)
-        	call	*0xdeadbeef(%ebx,%ecx,8)
+// CHECK: 	calll	*3735928559(%ebx,%ecx,8)
+        	calll	*0xdeadbeef(%ebx,%ecx,8)
 
-// CHECK: 	call	3133065982
-        	call	0xbabecafe
+// CHECK: 	calll	3133065982
+        	calll	0xbabecafe
 
-// CHECK: 	call	305419896
-        	call	0x12345678
+// CHECK: 	calll	305419896
+        	calll	0x12345678
 
-// CHECK: 	call	*3135175374
+// CHECK: 	calll	*3135175374
         	call	*0xbadeface
 
-// CHECK: 	call	*3735928559(%ebx,%ecx,8)
+// CHECK: 	calll	*3735928559(%ebx,%ecx,8)
         	call	*0xdeadbeef(%ebx,%ecx,8)
 
-// CHECK: 	call	32493
+// CHECK: 	calll	32493
         	call	0x7eed
 
-// CHECK: 	call	3133065982
+// CHECK: 	calll	3133065982
         	call	0xbabecafe
 
-// CHECK: 	call	305419896
+// CHECK: 	calll	305419896
         	call	0x12345678
 
-// CHECK: 	call	*3135175374
+// CHECK: 	calll	*3135175374
         	call	*0xbadeface
 
 // CHECK: 	lcallw	*32493
@@ -1330,7 +1329,7 @@
 // CHECK: 	jmp	-77129852792157442
         	jmp	0xfeedfacebabecafe
 
-// CHECK: 	jmp	*3735928559(%ebx,%ecx,8)
+// CHECK: 	jmpl	*3735928559(%ebx,%ecx,8)
         	jmp	*0xdeadbeef(%ebx,%ecx,8)
 
 // CHECK: 	jmp	32493
@@ -1342,10 +1341,10 @@
 // CHECK: 	jmp	305419896
         	jmp	0x12345678
 
-// CHECK: 	jmp	*3135175374
+// CHECK: 	jmpl	*3135175374
         	jmp	*0xbadeface
 
-// CHECK: 	jmp	*3735928559(%ebx,%ecx,8)
+// CHECK: 	jmpl	*3735928559(%ebx,%ecx,8)
         	jmp	*0xdeadbeef(%ebx,%ecx,8)
 
 // CHECK: 	jmp	32493
@@ -1357,7 +1356,7 @@
 // CHECK: 	jmp	305419896
         	jmp	0x12345678
 
-// CHECK: 	jmp	*3135175374
+// CHECK: 	jmpl	*3135175374
         	jmp	*0xbadeface
 
 // CHECK: 	ljmpl	*3735928559(%ebx,%ecx,8)
