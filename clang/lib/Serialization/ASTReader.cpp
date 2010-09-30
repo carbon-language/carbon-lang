@@ -263,7 +263,36 @@ bool PCHValidator::ReadPredefinesBuffer(const PCHPredefinesBlocks &Buffers,
 
   llvm::SmallVector<llvm::StringRef, 8> CmdLineLines;
   Left.split(CmdLineLines, "\n", /*MaxSplit=*/-1, /*KeepEmpty=*/false);
-  Right.split(CmdLineLines, "\n", /*MaxSplit=*/-1, /*KeepEmpty=*/false);
+
+  // Pick out implicit #includes after the PCH and don't consider them for
+  // validation; we will insert them into SuggestedPredefines so that the
+  // preprocessor includes them.
+  std::string IncludesAfterPCH;
+  llvm::SmallVector<llvm::StringRef, 8> AfterPCHLines;
+  Right.split(AfterPCHLines, "\n", /*MaxSplit=*/-1, /*KeepEmpty=*/false);
+  for (unsigned i = 0, e = AfterPCHLines.size(); i != e; ++i) {
+    if (AfterPCHLines[i].startswith("#include ")) {
+      IncludesAfterPCH += AfterPCHLines[i];
+      IncludesAfterPCH += '\n';
+    } else {
+      CmdLineLines.push_back(AfterPCHLines[i]);
+    }
+  }
+
+  // Make sure we add the includes last into SuggestedPredefines before we
+  // exit this function.
+  struct AddIncludesRAII {
+    std::string &SuggestedPredefines;
+    std::string &IncludesAfterPCH;
+
+    AddIncludesRAII(std::string &SuggestedPredefines,
+                    std::string &IncludesAfterPCH)
+      : SuggestedPredefines(SuggestedPredefines),
+        IncludesAfterPCH(IncludesAfterPCH) { }
+    ~AddIncludesRAII() {
+      SuggestedPredefines += IncludesAfterPCH;
+    }
+  } AddIncludes(SuggestedPredefines, IncludesAfterPCH);
 
   // Sort both sets of predefined buffer lines, since we allow some extra
   // definitions and they may appear at any point in the output.
@@ -281,6 +310,11 @@ bool PCHValidator::ReadPredefinesBuffer(const PCHPredefinesBlocks &Buffers,
   bool ConflictingDefines = false;
   for (unsigned I = 0, N = MissingPredefines.size(); I != N; ++I) {
     llvm::StringRef Missing = MissingPredefines[I];
+    if (Missing.startswith("#include ")) {
+      // An -include was specified when generating the PCH; it is included in
+      // the PCH, just ignore it.
+      continue;
+    }
     if (!Missing.startswith("#define ")) {
       Reader.Diag(diag::warn_pch_compiler_options_mismatch);
       return true;
