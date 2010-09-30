@@ -157,13 +157,21 @@ void GRExprEngine::VisitCXXMemberCallExpr(const CXXMemberCallExpr *MCE,
       VisitLValue(ObjArgExpr, *I, AllArgsEvaluated);
   }
 
+  // Allow checkers to pre-visit the member call.
+  ExplodedNodeSet PreVisitChecks;
+  CheckerVisit(MCE, PreVisitChecks, AllArgsEvaluated, PreVisitStmtCallback);
+
+  // Now evaluate the call itself.
   const CXXMethodDecl *MD = cast<CXXMethodDecl>(ME->getMemberDecl());
   assert(MD && "not a CXXMethodDecl?");
 
-  if (!(MD->isThisDeclarationADefinition() && AMgr.shouldInlineCall()))
+  if (!(MD->isThisDeclarationADefinition() && AMgr.shouldInlineCall())) {
     // FIXME: conservative method call evaluation.
+    CheckerVisit(MCE, Dst, PreVisitChecks, PostVisitStmtCallback);
     return;
+  }
 
+  ExplodedNodeSet SetupThis;
   const StackFrameContext *SFC = AMgr.getStackFrame(MD, 
                                                     Pred->getLocationContext(),
                                                     MCE, 
@@ -171,15 +179,20 @@ void GRExprEngine::VisitCXXMemberCallExpr(const CXXMemberCallExpr *MCE,
                                                     Builder->getIndex());
   const CXXThisRegion *ThisR = getCXXThisRegion(MD, SFC);
   CallEnter Loc(MCE, SFC->getAnalysisContext(), Pred->getLocationContext());
-  for (ExplodedNodeSet::iterator I = AllArgsEvaluated.begin(),
-         E = AllArgsEvaluated.end(); I != E; ++I) {
+  for (ExplodedNodeSet::iterator I = PreVisitChecks.begin(),
+         E = PreVisitChecks.end(); I != E; ++I) {
     // Set up 'this' region.
     const GRState *state = GetState(*I);
     state = state->bindLoc(loc::MemRegionVal(ThisR),state->getSVal(ObjArgExpr));
-    ExplodedNode *N = Builder->generateNode(Loc, state, *I);
-    if (N)
-      Dst.Add(N);
+    SetupThis.Add(Builder->generateNode(Loc, state, *I));
   }
+
+  // FIXME: Perform the actual method call.  Right now all we do is evaluate
+  // the arguments.
+
+  // Perform post-visit.
+  CheckerVisit(MCE, Dst, /* FIXME: don't forget to update later */ SetupThis,
+               PostVisitStmtCallback);
 }
 
 void GRExprEngine::VisitCXXNewExpr(const CXXNewExpr *CNE, ExplodedNode *Pred,
