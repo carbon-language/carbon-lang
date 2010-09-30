@@ -304,7 +304,19 @@ private:
   CFGBlock *addStmt(Stmt *S) {
     return Visit(S, AddStmtChoice::AlwaysAdd);
   }
+  CFGBlock *addAutomaticObjDtors(LocalScope::const_iterator B,
+      LocalScope::const_iterator E, Stmt* S);
 
+  // Local scopes creation.
+  LocalScope* createOrReuseLocalScope(LocalScope* Scope);
+
+  LocalScope* addLocalScopeForStmt(Stmt* S, LocalScope* Scope = NULL);
+  LocalScope* addLocalScopeForDeclStmt(DeclStmt* DS, LocalScope* Scope = NULL);
+  LocalScope* addLocalScopeForVarDecl(VarDecl* VD, LocalScope* Scope = NULL);
+
+  void addLocalScopeAndDtors(Stmt* S);
+
+  // Interface to CFGBlock - adding CFGElements.
   void AppendStmt(CFGBlock *B, Stmt *S,
                   AddStmtChoice asc = AddStmtChoice::AlwaysAdd) {
     B->appendStmt(S, cfg->getBumpVectorContext(), asc.asLValue());
@@ -452,6 +464,125 @@ CFGBlock* CFGBuilder::createBlock(bool add_successor) {
   if (add_successor && Succ)
     AddSuccessor(B, Succ);
   return B;
+}
+
+/// addAutomaticObjDtors - Add to current block automatic objects destructors
+/// for objects in range of local scope positions. Use S as trigger statement
+/// for destructors.
+CFGBlock* CFGBuilder::addAutomaticObjDtors(LocalScope::const_iterator B,
+    LocalScope::const_iterator E, Stmt* S) {
+  if (!BuildOpts.AddImplicitDtors)
+    return Block;
+  if (B == E)
+    return Block;
+
+  autoCreateBlock();
+  appendAutomaticObjDtors(Block, B, E, S);
+  return Block;
+}
+
+/// createOrReuseLocalScope - If Scope is NULL create new LocalScope. Either
+/// way return valid LocalScope object.
+LocalScope* CFGBuilder::createOrReuseLocalScope(LocalScope* Scope) {
+  if (!Scope) {
+    Scope = cfg->getAllocator().Allocate<LocalScope>();
+    new (Scope) LocalScope(ScopePos);
+  }
+  return Scope;
+}
+
+/// addLocalScopeForStmt - Add LocalScope to local scopes tree for statement
+/// that should create implicit scope (e.g. if/else substatements). Will reuse
+/// Scope if not NULL.
+LocalScope* CFGBuilder::addLocalScopeForStmt(Stmt* S, LocalScope* Scope) {
+  if (!BuildOpts.AddImplicitDtors)
+    return Scope;
+
+  // For compound statement we will be creating explicit scope.
+  if (CompoundStmt* CS = dyn_cast<CompoundStmt>(S)) {
+    for (CompoundStmt::body_iterator BI = CS->body_begin(), BE = CS->body_end()
+        ; BI != BE; ++BI) {
+      Stmt* SI = *BI;
+      if (LabelStmt* LS = dyn_cast<LabelStmt>(SI))
+        SI = LS->getSubStmt();
+      if (DeclStmt* DS = dyn_cast<DeclStmt>(SI))
+        Scope = addLocalScopeForDeclStmt(DS, Scope);
+    }
+    return Scope;
+  }
+
+  // For any other statement scope will be implicit and as such will be
+  // interesting only for DeclStmt.
+  if (LabelStmt* LS = dyn_cast<LabelStmt>(S))
+    S = LS->getSubStmt();
+  if (DeclStmt* DS = dyn_cast<DeclStmt>(S))
+    Scope = addLocalScopeForDeclStmt(DS, Scope);
+  return Scope;
+}
+
+/// addLocalScopeForDeclStmt - Add LocalScope for declaration statement. Will
+/// reuse Scope if not NULL.
+LocalScope* CFGBuilder::addLocalScopeForDeclStmt(DeclStmt* DS,
+    LocalScope* Scope) {
+  if (!BuildOpts.AddImplicitDtors)
+    return Scope;
+
+  for (DeclStmt::decl_iterator DI = DS->decl_begin(), DE = DS->decl_end()
+      ; DI != DE; ++DI) {
+    if (VarDecl* VD = dyn_cast<VarDecl>(*DI))
+      Scope = addLocalScopeForVarDecl(VD, Scope);
+  }
+  return Scope;
+}
+
+/// addLocalScopeForVarDecl - Add LocalScope for variable declaration. It will
+/// create add scope for automatic objects and temporary objects bound to
+/// const reference. Will reuse Scope if not NULL.
+LocalScope* CFGBuilder::addLocalScopeForVarDecl(VarDecl* VD,
+    LocalScope* Scope) {
+  if (!BuildOpts.AddImplicitDtors)
+    return Scope;
+
+  // Check if variable is local.
+  switch (VD->getStorageClass()) {
+  case SC_None:
+  case SC_Auto:
+  case SC_Register:
+    break;
+  default: return Scope;
+  }
+
+  // Check for const references bound to temporary. Set type to pointee.
+  QualType QT = VD->getType();
+  if (const ReferenceType* RT = QT.getTypePtr()->getAs<ReferenceType>()) {
+    QT = RT->getPointeeType();
+    if (!QT.isConstQualified())
+      return Scope;
+    if (!VD->getInit() || !VD->getInit()->Classify(*Context).isRValue())
+      return Scope;
+  }
+
+  // Check if type is a C++ class with non-trivial destructor.
+  const RecordType* RT = QT.getTypePtr()->getAs<RecordType>();
+  if (!RT || cast<CXXRecordDecl>(RT->getDecl())->hasTrivialDestructor())
+    return Scope;
+
+  // Add the variable to scope
+  Scope = createOrReuseLocalScope(Scope);
+  Scope->addVar(VD);
+  ScopePos = Scope->begin();
+  return Scope;
+}
+
+/// addLocalScopeAndDtors - For given statement add local scope for it and
+/// add destructors that will cleanup the scope. Will reuse Scope if not NULL.
+void CFGBuilder::addLocalScopeAndDtors(Stmt* S) {
+  if (!BuildOpts.AddImplicitDtors)
+    return;
+
+  LocalScope::const_iterator scopeBeginPos = ScopePos;
+  addLocalScopeForStmt(S, NULL);
+  addAutomaticObjDtors(ScopePos, scopeBeginPos, S);
 }
 
 /// insertAutomaticObjDtors - Insert destructor CFGElements for variables with
