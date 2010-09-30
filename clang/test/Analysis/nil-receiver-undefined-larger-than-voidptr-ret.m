@@ -2,11 +2,14 @@
 // RUN: %clang_cc1 -triple i386-apple-darwin8 -analyze -analyzer-experimental-internal-checks -analyzer-check-objc-mem -analyzer-constraints=basic -analyzer-store=region %s 2>&1 | FileCheck -check-prefix=darwin8 %s
 // RUN: %clang_cc1 -triple i386-apple-darwin9 -analyze -analyzer-experimental-internal-checks -analyzer-check-objc-mem -analyzer-constraints=basic -analyzer-store=basic %s 2>&1 | FileCheck -check-prefix=darwin9 %s
 // RUN: %clang_cc1 -triple i386-apple-darwin9 -analyze -analyzer-experimental-internal-checks -analyzer-check-objc-mem -analyzer-constraints=basic -analyzer-store=region %s 2>&1 | FileCheck -check-prefix=darwin9 %s
+// RUN: %clang_cc1 -triple thumbv6-apple-darwin4.0.0-iphoneos -analyze -analyzer-experimental-internal-checks -analyzer-check-objc-mem -analyzer-constraints=basic -analyzer-store=basic %s 2>&1 | FileCheck -check-prefix=darwin9 %s
+// RUN: %clang_cc1 -triple thumbv6-apple-darwin4.0.0-iphoneos -analyze -analyzer-experimental-internal-checks -analyzer-check-objc-mem -analyzer-constraints=basic -analyzer-store=region %s 2>&1 | FileCheck -check-prefix=darwin9 %s
 
 @interface MyClass {}
 - (void *)voidPtrM;
 - (int)intM;
 - (long long)longlongM;
+- (unsigned long long)unsignedLongLongM;
 - (double)doubleM;
 - (long double)longDoubleM;
 - (void)voidM;
@@ -15,6 +18,7 @@
 - (void *)voidPtrM { return (void *)0; }
 - (int)intM { return 0; }
 - (long long)longlongM { return 0; }
+- (unsigned long long)unsignedLongLongM { return 0; }
 - (double)doubleM { return 0.0; }
 - (long double)longDoubleM { return 0.0; }
 - (void)voidM {}
@@ -30,20 +34,20 @@ void createFoo() {
 void createFoo2() {
   MyClass *obj = 0;  
   
-  long double ld = [obj longDoubleM]; // expected-warning{{The receiver of message 'longDoubleM' is nil and returns a value of type 'long double' that will be garbage}}
+  long double ld = [obj longDoubleM];
 }
 
 void createFoo3() {
   MyClass *obj;
   obj = 0;  
   
-  long long ll = [obj longlongM]; // expected-warning{{The receiver of message 'longlongM' is nil and returns a value of type 'long long' that will be garbage}}
+  long long ll = [obj longlongM];
 }
 
 void createFoo4() {
   MyClass *obj = 0;  
   
-  double d = [obj doubleM]; // expected-warning{{The receiver of message 'doubleM' is nil and returns a value of type 'double' that will be garbage}}
+  double d = [obj doubleM];
 }
 
 void createFoo5() {
@@ -52,16 +56,23 @@ void createFoo5() {
   double d = [obj doubleM]; // no-warning
 }
 
+void createFoo6() {
+  MyClass *obj;
+  obj = 0;  
+  
+  unsigned long long ull = [obj unsignedLongLongM];
+}
+
 void handleNilPruneLoop(MyClass *obj) {
   if (!!obj)
     return;
   
   // Test if [obj intM] evaluates to 0, thus pruning the entire loop.
   for (int i = 0; i < [obj intM]; i++) {
-    long long j = [obj longlongM]; // no-warning
+    long long j = [obj longlongM];
   }
   
-  long long j = [obj longlongM]; // expected-warning{{The receiver of message 'longlongM' is nil and returns a value of type 'long long' that will be garbage}}
+  long long j = [obj longlongM];
 }
 
 int handleVoidInComma() {
@@ -72,11 +83,16 @@ int handleVoidInComma() {
 int marker(void) { // control reaches end of non-void function
 }
 
-// CHECK-darwin8: control reaches end of non-void function
+
 // CHECK-darwin8: warning: The receiver of message 'longDoubleM' is nil and returns a value of type 'long double' that will be garbage
 // CHECK-darwin8: warning: The receiver of message 'longlongM' is nil and returns a value of type 'long long' that will be garbage
 // CHECK-darwin8: warning: The receiver of message 'doubleM' is nil and returns a value of type 'double' that will be garbage
+// CHECK-darwin8: warning: The receiver of message 'unsignedLongLongM' is nil and returns a value of type 'unsigned long long' that will be garbage
 // CHECK-darwin8: warning: The receiver of message 'longlongM' is nil and returns a value of type 'long long' that will be garbage
-// CHECK-darwin8: 5 warnings generated
-// CHECK-darwin9: control reaches end of non-void function
+// CHECK-darwin9-NOT: warning: The receiver of message 'longDoubleM' is nil and returns a value of type 'long double' that will be garbage
+// CHECK-darwin9-NOT: warning: The receiver of message 'longlongM' is nil and returns a value of type 'long long' that will be garbage
+// CHECK-darwin9-NOT: warning: The receiver of message 'doubleM' is nil and returns a value of type 'double' that will be garbage
+// CHECK-darwin9-NOT: warning: The receiver of message 'unsignedLongLongM' is nil and returns a value of type 'unsigned long long' that will be garbage
+// CHECK-darwin9-NOT: warning: The receiver of message 'longlongM' is nil and returns a value of type 'long long' that will be garbage
 // CHECK-darwin9: 1 warning generated
+

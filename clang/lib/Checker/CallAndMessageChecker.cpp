@@ -276,7 +276,9 @@ void CallAndMessageChecker::EmitNilReceiverBug(CheckerContext &C,
 
 static bool SupportsNilWithFloatRet(const llvm::Triple &triple) {
   return triple.getVendor() == llvm::Triple::Apple &&
-         triple.getDarwinMajorNumber() >= 9;
+         (triple.getDarwinMajorNumber() >= 9 || 
+          triple.getArch() == llvm::Triple::arm || 
+          triple.getArch() == llvm::Triple::thumb);
 }
 
 void CallAndMessageChecker::HandleNilReceiver(CheckerContext &C,
@@ -318,7 +320,8 @@ void CallAndMessageChecker::HandleNilReceiver(CheckerContext &C,
           (Ctx.FloatTy == CanRetTy ||
            Ctx.DoubleTy == CanRetTy ||
            Ctx.LongDoubleTy == CanRetTy ||
-           Ctx.LongLongTy == CanRetTy))) {
+           Ctx.LongLongTy == CanRetTy ||
+           Ctx.UnsignedLongLongTy == CanRetTy))) {
       if (ExplodedNode* N = C.GenerateSink(state))
         EmitNilReceiverBug(C, ME, N);
       return;
