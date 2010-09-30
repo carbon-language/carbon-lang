@@ -128,10 +128,14 @@ namespace llvm {
       /// relative displacements.
       WrapperRIP,
 
-      /// MOVQ2DQ - Copies a 64-bit value from a vector to another vector.
-      /// Can be used to move a vector value from a MMX register to a XMM
-      /// register.
+      /// MOVQ2DQ - Copies a 64-bit value from an MMX vector to the low word
+      /// of an XMM vector, with the high word zero filled.
       MOVQ2DQ,
+
+      /// MOVDQ2Q - Copies a 64-bit value from the low word of an XMM vector
+      /// to an MMX vector.  If you think this is too close to the previous
+      /// mnemonic, so do I; blame Intel.
+      MOVDQ2Q,
 
       /// PEXTRB - Extract an 8-bit value from a vector and zero extend it to
       /// i32, corresponds to X86::PEXTRB.

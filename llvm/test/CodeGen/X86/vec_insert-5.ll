@@ -1,15 +1,16 @@
 ; RUN: llc < %s -march=x86 -mattr=+sse2 > %t
-; RUN: grep psllq %t | grep 32
+; RUN: grep shll %t | grep 12
 ; RUN: grep pslldq %t | grep 12
 ; RUN: grep psrldq %t | grep 8
 ; RUN: grep psrldq %t | grep 12
+; There are no MMX operations in @t1
 
-define void  @t1(i32 %a, <1 x i64>* %P) nounwind {
+define void  @t1(i32 %a, x86_mmx* %P) nounwind {
        %tmp12 = shl i32 %a, 12
        %tmp21 = insertelement <2 x i32> undef, i32 %tmp12, i32 1
        %tmp22 = insertelement <2 x i32> %tmp21, i32 0, i32 0
-       %tmp23 = bitcast <2 x i32> %tmp22 to <1 x i64>
-       store <1 x i64> %tmp23, <1 x i64>* %P
+       %tmp23 = bitcast <2 x i32> %tmp22 to x86_mmx
+       store x86_mmx %tmp23, x86_mmx* %P
        ret void
 }
 

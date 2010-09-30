@@ -288,37 +288,224 @@ static bool UpgradeIntrinsicFunction1(Function *F, Function *&NewFn) {
     break;
   case 'x': 
     // This fixes all MMX shift intrinsic instructions to take a
-    // v1i64 instead of a v2i32 as the second parameter.
-    if (Name.compare(5,10,"x86.mmx.ps",10) == 0 &&
-        (Name.compare(13,4,"psll", 4) == 0 ||
-         Name.compare(13,4,"psra", 4) == 0 ||
-         Name.compare(13,4,"psrl", 4) == 0) && Name[17] != 'i') {
-      
-      const llvm::Type *VT =
-                    VectorType::get(IntegerType::get(FTy->getContext(), 64), 1);
-      
-      // We don't have to do anything if the parameter already has
-      // the correct type.
-      if (FTy->getParamType(1) == VT)
-        break;
-      
-      //  We first need to change the name of the old (bad) intrinsic, because 
-      //  its type is incorrect, but we cannot overload that name. We 
-      //  arbitrarily unique it here allowing us to construct a correctly named 
-      //  and typed function below.
-      F->setName("");
+    // x86_mmx instead of a v1i64, v2i32, v4i16, or v8i8.
+    if (Name.compare(5, 8, "x86.mmx.", 8) == 0) {
+      const Type *X86_MMXTy = VectorType::getX86_MMXTy(FTy->getContext());
 
-      assert(FTy->getNumParams() == 2 && "MMX shift intrinsics take 2 args!");
-      
-      //  Now construct the new intrinsic with the correct name and type. We 
-      //  leave the old function around in order to query its type, whatever it 
-      //  may be, and correctly convert up to the new type.
-      NewFn = cast<Function>(M->getOrInsertFunction(Name, 
-                                                    FTy->getReturnType(),
-                                                    FTy->getParamType(0),
-                                                    VT,
-                                                    (Type *)0));
-      return true;
+      if (Name.compare(13, 4, "padd", 4) == 0   ||
+          Name.compare(13, 4, "psub", 4) == 0   ||
+          Name.compare(13, 4, "pmul", 4) == 0   ||
+          Name.compare(13, 5, "pmadd", 5) == 0  ||
+          Name.compare(13, 4, "pand", 4) == 0   ||
+          Name.compare(13, 3, "por", 3) == 0    ||
+          Name.compare(13, 4, "pxor", 4) == 0   ||
+          Name.compare(13, 4, "pavg", 4) == 0   ||
+          Name.compare(13, 4, "pmax", 4) == 0   ||
+          Name.compare(13, 4, "pmin", 4) == 0   ||
+          Name.compare(13, 4, "psad", 4) == 0   ||
+          Name.compare(13, 4, "psll", 4) == 0   ||
+          Name.compare(13, 4, "psrl", 4) == 0   ||
+          Name.compare(13, 4, "psra", 4) == 0   ||
+          Name.compare(13, 4, "pack", 4) == 0   ||
+          Name.compare(13, 6, "punpck", 6) == 0 ||
+          Name.compare(13, 4, "pcmp", 4) == 0) {
+        assert(FTy->getNumParams() == 2 && "MMX intrinsic takes 2 args!");
+        const Type *SecondParamTy = X86_MMXTy;
+
+        if (Name.compare(13, 5, "pslli", 5) == 0 ||
+            Name.compare(13, 5, "psrli", 5) == 0 ||
+            Name.compare(13, 5, "psrai", 5) == 0)
+          SecondParamTy = FTy->getParamType(1);
+
+        // Don't do anything if it has the correct types.
+        if (FTy->getReturnType() == X86_MMXTy &&
+            FTy->getParamType(0) == X86_MMXTy &&
+            FTy->getParamType(1) == SecondParamTy)
+          break;
+
+        // We first need to change the name of the old (bad) intrinsic, because
+        // its type is incorrect, but we cannot overload that name. We
+        // arbitrarily unique it here allowing us to construct a correctly named
+        // and typed function below.
+        F->setName("");
+
+        // Now construct the new intrinsic with the correct name and type. We
+        // leave the old function around in order to query its type, whatever it
+        // may be, and correctly convert up to the new type.
+        NewFn = cast<Function>(M->getOrInsertFunction(Name, 
+                                                      X86_MMXTy, X86_MMXTy,
+                                                      SecondParamTy, (Type*)0));
+        return true;
+      }
+
+      if (Name.compare(13, 8, "maskmovq", 8) == 0) {
+        // Don't do anything if it has the correct types.
+        if (FTy->getParamType(0) == X86_MMXTy &&
+            FTy->getParamType(1) == X86_MMXTy)
+          break;
+
+        F->setName("");
+        NewFn = cast<Function>(M->getOrInsertFunction(Name, 
+                                                      FTy->getReturnType(),
+                                                      X86_MMXTy,
+                                                      X86_MMXTy,
+                                                      FTy->getParamType(2),
+                                                      (Type*)0));
+        return true;
+      }
+
+      if (Name.compare(13, 8, "pmovmskb", 8) == 0) {
+        if (FTy->getParamType(0) == X86_MMXTy)
+          break;
+
+        F->setName("");
+        NewFn = cast<Function>(M->getOrInsertFunction(Name, 
+                                                      FTy->getReturnType(),
+                                                      X86_MMXTy,
+                                                      (Type*)0));
+        return true;
+      }
+
+      if (Name.compare(13, 5, "movnt", 5) == 0) {
+        if (FTy->getParamType(1) == X86_MMXTy)
+          break;
+
+        F->setName("");
+        NewFn = cast<Function>(M->getOrInsertFunction(Name, 
+                                                      FTy->getReturnType(),
+                                                      FTy->getParamType(0),
+                                                      X86_MMXTy,
+                                                      (Type*)0));
+        return true;
+      }
+
+      if (Name.compare(13, 7, "palignr", 7) == 0) {
+        if (FTy->getReturnType() == X86_MMXTy &&
+            FTy->getParamType(0) == X86_MMXTy &&
+            FTy->getParamType(1) == X86_MMXTy)
+          break;
+
+        F->setName("");
+        NewFn = cast<Function>(M->getOrInsertFunction(Name, 
+                                                      X86_MMXTy,
+                                                      X86_MMXTy,
+                                                      X86_MMXTy,
+                                                      FTy->getParamType(2),
+                                                      (Type*)0));
+        return true;
+      }
+
+      if (Name.compare(13, 5, "pextr", 5) == 0) {
+        if (FTy->getParamType(0) == X86_MMXTy)
+          break;
+
+        F->setName("");
+        NewFn = cast<Function>(M->getOrInsertFunction(Name, 
+                                                      FTy->getReturnType(),
+                                                      X86_MMXTy,
+                                                      FTy->getParamType(1),
+                                                      (Type*)0));
+        return true;
+      }
+
+      if (Name.compare(13, 5, "pinsr", 5) == 0) {
+        if (FTy->getReturnType() == X86_MMXTy &&
+            FTy->getParamType(0) == X86_MMXTy)
+          break;
+
+        F->setName("");
+        NewFn = cast<Function>(M->getOrInsertFunction(Name, 
+                                                      X86_MMXTy,
+                                                      X86_MMXTy,
+                                                      FTy->getParamType(1),
+                                                      FTy->getParamType(2),
+                                                      (Type*)0));
+        return true;
+      }
+
+      if (Name.compare(13, 12, "cvtsi32.si64", 12) == 0) {
+        if (FTy->getReturnType() == X86_MMXTy)
+          break;
+
+        F->setName("");
+        NewFn = cast<Function>(M->getOrInsertFunction(Name, 
+                                                      X86_MMXTy,
+                                                      FTy->getParamType(0),
+                                                      (Type*)0));
+        return true;
+      }
+
+      if (Name.compare(13, 12, "cvtsi64.si32", 12) == 0) {
+        if (FTy->getParamType(0) == X86_MMXTy)
+          break;
+
+        F->setName("");
+        NewFn = cast<Function>(M->getOrInsertFunction(Name, 
+                                                      FTy->getReturnType(),
+                                                      X86_MMXTy,
+                                                      (Type*)0));
+        return true;
+      }
+
+      if (Name.compare(13, 8, "vec.init", 8) == 0) {
+        if (FTy->getReturnType() == X86_MMXTy)
+          break;
+
+        F->setName("");
+
+        if (Name.compare(21, 2, ".b", 2) == 0)
+          NewFn = cast<Function>(M->getOrInsertFunction(Name, 
+                                                        X86_MMXTy,
+                                                        FTy->getParamType(0),
+                                                        FTy->getParamType(1),
+                                                        FTy->getParamType(2),
+                                                        FTy->getParamType(3),
+                                                        FTy->getParamType(4),
+                                                        FTy->getParamType(5),
+                                                        FTy->getParamType(6),
+                                                        FTy->getParamType(7),
+                                                        (Type*)0));
+        else if (Name.compare(21, 2, ".w", 2) == 0)
+          NewFn = cast<Function>(M->getOrInsertFunction(Name, 
+                                                        X86_MMXTy,
+                                                        FTy->getParamType(0),
+                                                        FTy->getParamType(1),
+                                                        FTy->getParamType(2),
+                                                        FTy->getParamType(3),
+                                                        (Type*)0));
+        else if (Name.compare(21, 2, ".d", 2) == 0)
+          NewFn = cast<Function>(M->getOrInsertFunction(Name, 
+                                                        X86_MMXTy,
+                                                        FTy->getParamType(0),
+                                                        FTy->getParamType(1),
+                                                        (Type*)0));
+        return true;
+      }
+
+
+      if (Name.compare(13, 9, "vec.ext.d", 9) == 0) {
+        if (FTy->getReturnType() == X86_MMXTy &&
+            FTy->getParamType(0) == X86_MMXTy)
+          break;
+
+        F->setName("");
+        NewFn = cast<Function>(M->getOrInsertFunction(Name, 
+                                                      X86_MMXTy,
+                                                      X86_MMXTy,
+                                                      FTy->getParamType(1),
+                                                      (Type*)0));
+        return true;
+      }
+
+      if (Name.compare(13, 9, "emms", 4) == 0 ||
+          Name.compare(13, 9, "femms", 5) == 0) {
+        NewFn = 0;
+        break;
+      }
+
+      // We really shouldn't get here ever.
+      assert(0 && "Invalid MMX intrinsic!");
+      break;
     } else if (Name.compare(5,17,"x86.sse2.loadh.pd",17) == 0 ||
                Name.compare(5,17,"x86.sse2.loadl.pd",17) == 0 ||
                Name.compare(5,16,"x86.sse2.movl.dq",16) == 0 ||
@@ -430,6 +617,38 @@ static Instruction *CallVABD(CallInst *CI, Value *Arg0, Value *Arg1) {
   Operands[1] = Arg1;
   return CallInst::Create(VABD, Operands, Operands+2, 
                           "upgraded."+CI->getName(), CI);
+}
+
+/// ConstructNewCallInst - Construct a new CallInst with the signature of NewFn.
+static void ConstructNewCallInst(Function *NewFn, CallInst *OldCI,
+                                 Value **Operands, unsigned NumOps,
+                                 bool AssignName = true) {
+  // Construct a new CallInst.
+  CallInst *NewCI =
+    CallInst::Create(NewFn, Operands, Operands + NumOps,
+                     AssignName ? "upgraded." + OldCI->getName() : "", OldCI);
+
+  NewCI->setTailCall(OldCI->isTailCall());
+  NewCI->setCallingConv(OldCI->getCallingConv());
+
+  // Handle any uses of the old CallInst.
+  if (!OldCI->use_empty()) {
+    // If the type has changed, add a cast.
+    Instruction *I = OldCI;
+    if (OldCI->getType() != NewCI->getType()) {
+      Function *OldFn = OldCI->getCalledFunction();
+      CastInst *RetCast =
+        CastInst::Create(CastInst::getCastOpcode(NewCI, true,
+                                                 OldFn->getReturnType(), true),
+                         NewCI, OldFn->getReturnType(), NewCI->getName(),OldCI);
+      I = RetCast;
+    }
+    // Replace all uses of the old call with the new cast which has the 
+    // correct type.
+    OldCI->replaceAllUsesWith(I);
+  }
+  // Clean up the old call now that it has been completely upgraded.
+  OldCI->eraseFromParent();
 }
 
 // UpgradeIntrinsicCall - Upgrade a call to an old intrinsic to be a call the 
@@ -759,40 +978,246 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
     break;
   }        
 
+  case Intrinsic::x86_mmx_padd_b:
+  case Intrinsic::x86_mmx_padd_w:
+  case Intrinsic::x86_mmx_padd_d:
+  case Intrinsic::x86_mmx_padd_q:
+  case Intrinsic::x86_mmx_padds_b:
+  case Intrinsic::x86_mmx_padds_w:
+  case Intrinsic::x86_mmx_paddus_b:
+  case Intrinsic::x86_mmx_paddus_w:
+  case Intrinsic::x86_mmx_psub_b:
+  case Intrinsic::x86_mmx_psub_w:
+  case Intrinsic::x86_mmx_psub_d:
+  case Intrinsic::x86_mmx_psub_q:
+  case Intrinsic::x86_mmx_psubs_b:
+  case Intrinsic::x86_mmx_psubs_w:
+  case Intrinsic::x86_mmx_psubus_b:
+  case Intrinsic::x86_mmx_psubus_w:
+  case Intrinsic::x86_mmx_pmulh_w:
+  case Intrinsic::x86_mmx_pmull_w:
+  case Intrinsic::x86_mmx_pmulhu_w:
+  case Intrinsic::x86_mmx_pmulu_dq:
+  case Intrinsic::x86_mmx_pmadd_wd:
+  case Intrinsic::x86_mmx_pand:
+  case Intrinsic::x86_mmx_pandn:
+  case Intrinsic::x86_mmx_por:
+  case Intrinsic::x86_mmx_pxor:
+  case Intrinsic::x86_mmx_pavg_b:
+  case Intrinsic::x86_mmx_pavg_w:
+  case Intrinsic::x86_mmx_pmaxu_b:
+  case Intrinsic::x86_mmx_pmaxs_w:
+  case Intrinsic::x86_mmx_pminu_b:
+  case Intrinsic::x86_mmx_pmins_w:
+  case Intrinsic::x86_mmx_psad_bw:
+  case Intrinsic::x86_mmx_psll_w:
   case Intrinsic::x86_mmx_psll_d:
   case Intrinsic::x86_mmx_psll_q:
-  case Intrinsic::x86_mmx_psll_w:
-  case Intrinsic::x86_mmx_psra_d:
-  case Intrinsic::x86_mmx_psra_w:
+  case Intrinsic::x86_mmx_pslli_w:
+  case Intrinsic::x86_mmx_pslli_d:
+  case Intrinsic::x86_mmx_pslli_q:
+  case Intrinsic::x86_mmx_psrl_w:
   case Intrinsic::x86_mmx_psrl_d:
   case Intrinsic::x86_mmx_psrl_q:
-  case Intrinsic::x86_mmx_psrl_w: {
+  case Intrinsic::x86_mmx_psrli_w:
+  case Intrinsic::x86_mmx_psrli_d:
+  case Intrinsic::x86_mmx_psrli_q:
+  case Intrinsic::x86_mmx_psra_w:
+  case Intrinsic::x86_mmx_psra_d:
+  case Intrinsic::x86_mmx_psrai_w:
+  case Intrinsic::x86_mmx_psrai_d:
+  case Intrinsic::x86_mmx_packsswb:
+  case Intrinsic::x86_mmx_packssdw:
+  case Intrinsic::x86_mmx_packuswb:
+  case Intrinsic::x86_mmx_punpckhbw:
+  case Intrinsic::x86_mmx_punpckhwd:
+  case Intrinsic::x86_mmx_punpckhdq:
+  case Intrinsic::x86_mmx_punpcklbw:
+  case Intrinsic::x86_mmx_punpcklwd:
+  case Intrinsic::x86_mmx_punpckldq:
+  case Intrinsic::x86_mmx_pcmpeq_b:
+  case Intrinsic::x86_mmx_pcmpeq_w:
+  case Intrinsic::x86_mmx_pcmpeq_d:
+  case Intrinsic::x86_mmx_pcmpgt_b:
+  case Intrinsic::x86_mmx_pcmpgt_w:
+  case Intrinsic::x86_mmx_pcmpgt_d: {
     Value *Operands[2];
     
-    Operands[0] = CI->getArgOperand(0);
-    
-    // Cast the second parameter to the correct type.
-    BitCastInst *BC = new BitCastInst(CI->getArgOperand(1), 
-                                      NewFn->getFunctionType()->getParamType(1),
-                                      "upgraded.", CI);
-    Operands[1] = BC;
-    
-    //  Construct a new CallInst
-    CallInst *NewCI = CallInst::Create(NewFn, Operands, Operands+2, 
-                                       "upgraded."+CI->getName(), CI);
-    NewCI->setTailCall(CI->isTailCall());
-    NewCI->setCallingConv(CI->getCallingConv());
-    
-    //  Handle any uses of the old CallInst.
-    if (!CI->use_empty())
-      //  Replace all uses of the old call with the new cast which has the 
-      //  correct type.
-      CI->replaceAllUsesWith(NewCI);
-    
-    //  Clean up the old call now that it has been completely upgraded.
-    CI->eraseFromParent();
+    // Cast the operand to the X86 MMX type.
+    Operands[0] = new BitCastInst(CI->getArgOperand(0), 
+                                  NewFn->getFunctionType()->getParamType(0),
+                                  "upgraded.", CI);
+
+    switch (NewFn->getIntrinsicID()) {
+    default:
+      // Cast to the X86 MMX type.
+      Operands[1] = new BitCastInst(CI->getArgOperand(1), 
+                                    NewFn->getFunctionType()->getParamType(1),
+                                    "upgraded.", CI);
+      break;
+    case Intrinsic::x86_mmx_pslli_w:
+    case Intrinsic::x86_mmx_pslli_d:
+    case Intrinsic::x86_mmx_pslli_q:
+    case Intrinsic::x86_mmx_psrli_w:
+    case Intrinsic::x86_mmx_psrli_d:
+    case Intrinsic::x86_mmx_psrli_q:
+    case Intrinsic::x86_mmx_psrai_w:
+    case Intrinsic::x86_mmx_psrai_d:
+      // These take an i32 as their second parameter.
+      Operands[1] = CI->getArgOperand(1);
+      break;
+    }
+
+    ConstructNewCallInst(NewFn, CI, Operands, 2);
     break;
-  }        
+  }
+  case Intrinsic::x86_mmx_maskmovq: {
+    Value *Operands[3];
+
+    // Cast the operands to the X86 MMX type.
+    Operands[0] = new BitCastInst(CI->getArgOperand(0), 
+                                  NewFn->getFunctionType()->getParamType(0),
+                                  "upgraded.", CI);
+    Operands[1] = new BitCastInst(CI->getArgOperand(1), 
+                                  NewFn->getFunctionType()->getParamType(1),
+                                  "upgraded.", CI);
+    Operands[2] = CI->getArgOperand(2);
+
+    ConstructNewCallInst(NewFn, CI, Operands, 3, false);
+    break;
+  }
+  case Intrinsic::x86_mmx_pmovmskb: {
+    Value *Operands[1];
+
+    // Cast the operand to the X86 MMX type.
+    Operands[0] = new BitCastInst(CI->getArgOperand(0), 
+                                  NewFn->getFunctionType()->getParamType(0),
+                                  "upgraded.", CI);
+
+    ConstructNewCallInst(NewFn, CI, Operands, 1);
+    break;
+  }
+  case Intrinsic::x86_mmx_movnt_dq: {
+    Value *Operands[2];
+
+    Operands[0] = CI->getArgOperand(0);
+
+    // Cast the operand to the X86 MMX type.
+    Operands[1] = new BitCastInst(CI->getArgOperand(1),
+                                  NewFn->getFunctionType()->getParamType(1),
+                                  "upgraded.", CI);
+
+    ConstructNewCallInst(NewFn, CI, Operands, 2, false);
+    break;
+  }
+  case Intrinsic::x86_mmx_palignr_b: {
+    Value *Operands[3];
+
+    // Cast the operands to the X86 MMX type.
+    Operands[0] = new BitCastInst(CI->getArgOperand(0),
+                                  NewFn->getFunctionType()->getParamType(0),
+                                  "upgraded.", CI);
+    Operands[1] = new BitCastInst(CI->getArgOperand(1),
+                                  NewFn->getFunctionType()->getParamType(1),
+                                  "upgraded.", CI);
+    Operands[2] = CI->getArgOperand(2);
+
+    ConstructNewCallInst(NewFn, CI, Operands, 3);
+    break;
+  }
+  case Intrinsic::x86_mmx_pextr_w: {
+    Value *Operands[2];
+
+    // Cast the operands to the X86 MMX type.
+    Operands[0] = new BitCastInst(CI->getArgOperand(0),
+                                  NewFn->getFunctionType()->getParamType(0),
+                                  "upgraded.", CI);
+    Operands[1] = CI->getArgOperand(1);
+
+    ConstructNewCallInst(NewFn, CI, Operands, 2);
+    break;
+  }
+  case Intrinsic::x86_mmx_pinsr_w: {
+    Value *Operands[3];
+
+    // Cast the operands to the X86 MMX type.
+    Operands[0] = new BitCastInst(CI->getArgOperand(0),
+                                  NewFn->getFunctionType()->getParamType(0),
+                                  "upgraded.", CI);
+    Operands[1] = CI->getArgOperand(1);
+    Operands[2] = CI->getArgOperand(2);
+
+    ConstructNewCallInst(NewFn, CI, Operands, 3);
+    break;
+  }
+#if 0
+  case Intrinsic::x86_mmx_cvtsi32_si64: {
+    // The return type needs to be changed.
+    Value *Operands[1];
+    Operands[0] = CI->getArgOperand(0);
+    ConstructNewCallInst(NewFn, CI, Operands, 1);
+    break;
+  }
+  case Intrinsic::x86_mmx_cvtsi64_si32: {
+    Value *Operands[1];
+
+    // Cast the operand to the X86 MMX type.
+    Operands[0] = new BitCastInst(CI->getArgOperand(0),
+                                  NewFn->getFunctionType()->getParamType(0),
+                                  "upgraded.", CI);
+
+    ConstructNewCallInst(NewFn, CI, Operands, 1);
+    break;
+  }
+  case Intrinsic::x86_mmx_vec_init_b:
+  case Intrinsic::x86_mmx_vec_init_w:
+  case Intrinsic::x86_mmx_vec_init_d: {
+    // The return type needs to be changed.
+    Value *Operands[8];
+    unsigned NumOps = 0;
+
+    switch (NewFn->getIntrinsicID()) {
+    default: break;
+    case Intrinsic::x86_mmx_vec_init_b: NumOps = 8; break;
+    case Intrinsic::x86_mmx_vec_init_w: NumOps = 4; break;
+    case Intrinsic::x86_mmx_vec_init_d: NumOps = 2; break;
+    }
+
+    switch (NewFn->getIntrinsicID()) {
+    default: break;
+    case Intrinsic::x86_mmx_vec_init_b:
+      Operands[7] = CI->getArgOperand(7);
+      Operands[6] = CI->getArgOperand(6);
+      Operands[5] = CI->getArgOperand(5);
+      Operands[4] = CI->getArgOperand(4);
+      // FALLTHRU
+    case Intrinsic::x86_mmx_vec_init_w:
+      Operands[3] = CI->getArgOperand(3);
+      Operands[2] = CI->getArgOperand(2);
+      // FALLTHRU
+    case Intrinsic::x86_mmx_vec_init_d:
+      Operands[1] = CI->getArgOperand(1);
+      Operands[0] = CI->getArgOperand(0);
+      break;
+    }
+
+    ConstructNewCallInst(NewFn, CI, Operands, NumOps);
+    break;
+  }
+  case Intrinsic::x86_mmx_vec_ext_d: {
+    Value *Operands[2];
+
+    // Cast the operand to the X86 MMX type.
+    Operands[0] = new BitCastInst(CI->getArgOperand(0),
+                                  NewFn->getFunctionType()->getParamType(0),
+                                  "upgraded.", CI);
+    Operands[1] = CI->getArgOperand(1);
+
+    ConstructNewCallInst(NewFn, CI, Operands, 2);
+    break;
+  }
+#endif
+
   case Intrinsic::ctlz:
   case Intrinsic::ctpop:
   case Intrinsic::cttz: {

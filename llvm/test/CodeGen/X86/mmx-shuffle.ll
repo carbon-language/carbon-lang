@@ -22,8 +22,10 @@ entry:
 	%tmp542 = bitcast <2 x i32> %tmp529 to <4 x i16>		; <<4 x i16>> [#uses=1]
 	%tmp543 = add <4 x i16> %tmp542, < i16 0, i16 16448, i16 24672, i16 28784 >		; <<4 x i16>> [#uses=1]
 	%tmp555 = bitcast <4 x i16> %tmp543 to <8 x i8>		; <<8 x i8>> [#uses=1]
-	tail call void @llvm.x86.mmx.maskmovq( <8 x i8> zeroinitializer, <8 x i8> %tmp555, i8* null )
+        %tmp556 = bitcast <8 x i8> %tmp555 to x86_mmx
+        %tmp557 = bitcast <8 x i8> zeroinitializer to x86_mmx
+	tail call void @llvm.x86.mmx.maskmovq( x86_mmx %tmp557, x86_mmx %tmp556, i8* null )
 	ret void
 }
 
-declare void @llvm.x86.mmx.maskmovq(<8 x i8>, <8 x i8>, i8*)
+declare void @llvm.x86.mmx.maskmovq(x86_mmx, x86_mmx, i8*)

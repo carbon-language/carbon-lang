@@ -5,10 +5,10 @@ target triple = "i686-apple-darwin8"
 
 define void @test(<1 x i64> %c64, <1 x i64> %mask1, i8* %P) {
 entry:
-	%tmp4 = bitcast <1 x i64> %mask1 to <8 x i8>		; <<8 x i8>> [#uses=1]
-	%tmp6 = bitcast <1 x i64> %c64 to <8 x i8>		; <<8 x i8>> [#uses=1]
-	tail call void @llvm.x86.mmx.maskmovq( <8 x i8> %tmp6, <8 x i8> %tmp4, i8* %P )
+	%tmp4 = bitcast <1 x i64> %mask1 to x86_mmx		; <x86_mmx> [#uses=1]
+	%tmp6 = bitcast <1 x i64> %c64 to x86_mmx		; <x86_mmx> [#uses=1]
+	tail call void @llvm.x86.mmx.maskmovq( x86_mmx %tmp4, x86_mmx %tmp6, i8* %P )
 	ret void
 }
 
-declare void @llvm.x86.mmx.maskmovq(<8 x i8>, <8 x i8>, i8*)
+declare void @llvm.x86.mmx.maskmovq(x86_mmx, x86_mmx, i8*)

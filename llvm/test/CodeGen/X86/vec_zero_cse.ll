@@ -1,5 +1,6 @@
-; RUN: llc < %s -relocation-model=static -march=x86 -mcpu=yonah | grep pxor | count 2
-; RUN: llc < %s -relocation-model=static -march=x86 -mcpu=yonah | grep pcmpeqd | count 2
+; RUN: llc < %s -relocation-model=static -march=x86 -mcpu=yonah | grep pxor | count 1
+; RUN: llc < %s -relocation-model=static -march=x86 -mcpu=yonah | grep pcmpeqd | count 1
+; 64-bit stores here do not use MMX.
 
 @M1 = external global <1 x i64>
 @M2 = external global <2 x i32>

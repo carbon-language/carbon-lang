@@ -173,10 +173,20 @@ bool Type::canLosslesslyBitCastTo(const Type *Ty) const {
     return false;
 
   // Vector -> Vector conversions are always lossless if the two vector types
-  // have the same size, otherwise not.
-  if (const VectorType *thisPTy = dyn_cast<VectorType>(this))
+  // have the same size, otherwise not.  Also, 64-bit vector types can be
+  // converted to x86mmx.
+  if (const VectorType *thisPTy = dyn_cast<VectorType>(this)) {
     if (const VectorType *thatPTy = dyn_cast<VectorType>(Ty))
       return thisPTy->getBitWidth() == thatPTy->getBitWidth();
+    if (Ty->getTypeID() == Type::X86_MMXTyID &&
+        thisPTy->getBitWidth() == 64)
+      return true;
+  }
+
+  if (this->getTypeID() == Type::X86_MMXTyID)
+    if (const VectorType *thatPTy = dyn_cast<VectorType>(Ty))
+      if (thatPTy->getBitWidth() == 64)
+        return true;
 
   // At this point we have only various mismatches of the first class types
   // remaining and ptr->ptr. Just select the lossless conversions. Everything

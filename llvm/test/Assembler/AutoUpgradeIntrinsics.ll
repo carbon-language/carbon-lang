@@ -7,7 +7,7 @@
 ; RUN: llvm-as < %s | llvm-dis | \
 ; RUN:   not grep {llvm\\.bswap\\.i\[0-9\]*\\.i\[0-9\]*}
 ; RUN: llvm-as < %s | llvm-dis | \
-; RUN:   grep {llvm\\.x86\\.mmx\\.ps} | grep {\\\<2 x i32\\\>} | count 6
+; RUN:   grep {llvm\\.x86\\.mmx\\.ps} | grep {x86_mmx} | count 16
 
 declare i32 @llvm.ctpop.i28(i28 %val)
 declare i32 @llvm.cttz.i29(i29 %val)

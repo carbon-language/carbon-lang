@@ -17,11 +17,13 @@ entry:
 	br i1 false, label %bb.nph144.split, label %bb133
 
 bb.nph144.split:		; preds = %entry
-	tail call void @llvm.x86.mmx.maskmovq( <8 x i8> zeroinitializer, <8 x i8> zeroinitializer, i8* null ) nounwind
+        %tmp = bitcast <8 x i8> zeroinitializer to x86_mmx
+        %tmp2 = bitcast <8 x i8> zeroinitializer to x86_mmx
+	tail call void @llvm.x86.mmx.maskmovq( x86_mmx %tmp, x86_mmx %tmp2, i8* null ) nounwind
 	unreachable
 
 bb133:		; preds = %entry
 	ret void
 }
 
-declare void @llvm.x86.mmx.maskmovq(<8 x i8>, <8 x i8>, i8*) nounwind
+declare void @llvm.x86.mmx.maskmovq(x86_mmx, x86_mmx, i8*) nounwind

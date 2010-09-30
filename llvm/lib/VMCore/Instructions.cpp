@@ -2360,6 +2360,8 @@ bool CastInst::isCastable(const Type *SrcTy, const Type *DestTy) {
     } else {                                    // Casting from something else
       return false;
     }
+  } else if (DestTy->isX86_MMXTy()) {     
+    return SrcBits == 64;
   } else {                                      // Casting to something else
     return false;
   }
@@ -2441,6 +2443,10 @@ CastInst::getCastOpcode(
       return BitCast;                             // vector -> vector
     } else if (DestPTy->getBitWidth() == SrcBits) {
       return BitCast;                               // float/int -> vector
+    } else if (SrcTy->isX86_MMXTy()) {
+      assert(DestPTy->getBitWidth()==64 &&
+             "Casting X86_MMX to vector of wrong width");
+      return BitCast;                             // MMX to 64-bit vector
     } else {
       assert(!"Illegal cast to vector (wrong type or size)");
     }
@@ -2451,6 +2457,14 @@ CastInst::getCastOpcode(
       return IntToPtr;                              // int -> ptr
     } else {
       assert(!"Casting pointer to other than pointer or int");
+    }
+  } else if (DestTy->isX86_MMXTy()) {
+    if (const VectorType *SrcPTy = dyn_cast<VectorType>(SrcTy)) {
+      assert(SrcPTy->getBitWidth()==64 &&
+             "Casting vector of wrong width to X86_MMX");
+      return BitCast;                               // 64-bit vector to MMX
+    } else {
+      assert(!"Illegal cast to X86_MMX");
     }
   } else {
     assert(!"Casting to type that is not first-class");

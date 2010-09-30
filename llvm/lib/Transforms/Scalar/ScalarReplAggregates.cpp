@@ -321,6 +321,9 @@ bool ConvertToScalarInfo::CanConvertToScalar(Value *V, uint64_t Offset) {
       // Don't break volatile loads.
       if (LI->isVolatile())
         return false;
+      // Don't touch MMX operations.
+      if (LI->getType()->isX86_MMXTy())
+        return false;
       MergeInType(LI->getType(), Offset);
       continue;
     }
@@ -328,6 +331,9 @@ bool ConvertToScalarInfo::CanConvertToScalar(Value *V, uint64_t Offset) {
     if (StoreInst *SI = dyn_cast<StoreInst>(User)) {
       // Storing the pointer, not into the value?
       if (SI->getOperand(0) == V || SI->isVolatile()) return false;
+      // Don't touch MMX operations.
+      if (SI->getOperand(0)->getType()->isX86_MMXTy())
+        return false;
       MergeInType(SI->getOperand(0)->getType(), Offset);
       continue;
     }
