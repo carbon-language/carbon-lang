@@ -29,7 +29,7 @@ namespace {
 class ARMAsmBackend : public TargetAsmBackend {
 public:
   ARMAsmBackend(const Target &T)
-    : TargetAsmBackend(T) {    
+    : TargetAsmBackend(T) {
   }
 
   bool MayNeedRelaxation(const MCInst &Inst) const;
@@ -51,7 +51,7 @@ void ARMAsmBackend::RelaxInstruction(const MCInst &Inst, MCInst &Res) const {
 
 bool ARMAsmBackend::WriteNopData(uint64_t Count, MCObjectWriter *OW) const {
   assert(0 && "ARMAsmBackend::WriteNopData() unimplemented");
-  if ((Count % 4) != 0) {    
+  if ((Count % 4) != 0) {
     // Fixme: % 2 for Thumb?
     return false;
   }
@@ -126,7 +126,7 @@ void DarwinARMAsmBackend::ApplyFixup(const MCFixup &Fixup, MCDataFragment &DF,
                                   uint64_t Value) const {
   assert(0 && "DarwinARMAsmBackend::ApplyFixup() unimplemented");
 }
-} // end anonymous namespace 
+} // end anonymous namespace
 
 TargetAsmBackend *llvm::createARMAsmBackend(const Target &T,
                                             const std::string &TT) {
