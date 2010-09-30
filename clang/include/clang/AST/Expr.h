@@ -367,7 +367,7 @@ public:
   bool isEvaluatable(ASTContext &Ctx) const;
 
   /// HasSideEffects - This routine returns true for all those expressions
-  /// which must be evaluated each time and must not be optimization away 
+  /// which must be evaluated each time and must not be optimized away 
   /// or evaluated at compile time. Example is a function call, volatile
   /// variable read.
   bool HasSideEffects(ASTContext &Ctx) const;
