@@ -500,11 +500,22 @@ void ELFObjectWriterImpl::WriteSymbolTable(MCDataFragment *F,
   }
 }
 
-static const MCSymbolData *getAtom(const MCSymbolData &SD) {
-  if (!SD.getFragment())
-    return 0;
+static bool ShouldRelocOnSymbol(const MCSymbolData &SD,
+                                const MCValue &Target) {
+  const MCSymbol &Symbol = SD.getSymbol();
+  if (Symbol.isUndefined())
+    return true;
 
-  return SD.getFragment()->getAtom();
+  const MCSectionELF &Section =
+    static_cast<const MCSectionELF&>(Symbol.getSection());
+
+  if (Section.getFlags() & MCSectionELF::SHF_MERGE)
+    return Target.getConstant() != 0;
+
+  if (SD.isExternal())
+    return true;
+
+  return false;
 }
 
 // FIXME: this is currently X86/X86_64 only
@@ -522,48 +533,30 @@ void ELFObjectWriterImpl::RecordRelocation(const MCAssembler &Asm,
   if (!Target.isAbsolute()) {
     const MCSymbol *Symbol = &Target.getSymA()->getSymbol();
     MCSymbolData &SD = Asm.getSymbolData(*Symbol);
-    const MCSymbolData *Base = getAtom(SD);
     MCFragment *F = SD.getFragment();
 
-    // Avoid relocations for cases like jumps and calls in the same file.
+    // Check that this case has already been fully resolved before we get
+    // here.
     if (Symbol->isDefined() && !SD.isExternal() &&
         IsPCRel &&
         &Fragment->getParent()->getSection() == &Symbol->getSection()) {
-      uint64_t FixupAddr = Layout.getFragmentAddress(Fragment) + Fixup.getOffset();
-      FixedValue = Layout.getSymbolAddress(&SD) + Target.getConstant() - FixupAddr;
+      llvm_unreachable("We don't need a relocation in this case.");
       return;
     }
 
-    if (Base) {
-      if (Base != &SD) {
-        Index = F->getParent()->getOrdinal() + LocalSymbolData.size() + 1;
+    bool RelocOnSymbol = ShouldRelocOnSymbol(SD, Target);
+    if (!RelocOnSymbol) {
+      Index = F->getParent()->getOrdinal() + LocalSymbolData.size() + 1;
 
-        MCSectionData *FSD = F->getParent();
-        // Offset of the symbol in the section
-        Value += Layout.getSymbolAddress(&SD) - Layout.getSectionAddress(FSD);
-      } else
-        Index = getSymbolIndexInSymbolTable(Asm, Symbol);
-      Addend = Value;
-      // Compensate for the addend on i386.
-      if (Is64Bit)
-        Value = 0;
-    } else {
-      if (F) {
-        // Index of the section in .symtab against this symbol
-        // is being relocated + 2 (empty section + abs. symbols).
-        Index = F->getParent()->getOrdinal() + LocalSymbolData.size() + 1;
-
-        MCSectionData *FSD = F->getParent();
-        // Offset of the symbol in the section
-        Value += Layout.getSymbolAddress(&SD) - Layout.getSectionAddress(FSD);
-      } else {
-        Index = getSymbolIndexInSymbolTable(Asm, Symbol);
-      }
-      Addend = Value;
-      // Compensate for the addend on i386.
-      if (Is64Bit)
-        Value = 0;
-    }
+      MCSectionData *FSD = F->getParent();
+      // Offset of the symbol in the section
+      Value += Layout.getSymbolAddress(&SD) - Layout.getSectionAddress(FSD);
+    } else
+      Index = getSymbolIndexInSymbolTable(Asm, Symbol);
+    Addend = Value;
+    // Compensate for the addend on i386.
+    if (Is64Bit)
+      Value = 0;
   }
 
   FixedValue = Value;
