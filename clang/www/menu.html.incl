@@ -32,7 +32,7 @@
   <div class="submenu">
     <label>Communication</label>
     <a href="http://lists.cs.uiuc.edu/mailman/listinfo/cfe-dev">cfe-dev List</a>
-    <a href="http://lists.cs.uiuc.edu/mailman/listinfo/cfe-commits">cfe-commit List</a>
+    <a href="http://lists.cs.uiuc.edu/mailman/listinfo/cfe-commits">cfe-commits List</a>
     <a href="irc://irc.oftc.net/llvm">IRC: irc.oftc.net#llvm</a>
     <a href="http://llvm.org/bugs/">Bug Reports</a>
   </div>
