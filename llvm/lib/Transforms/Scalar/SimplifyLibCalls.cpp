@@ -223,7 +223,8 @@ struct StrChrOpt : public LibCallOptimization {
     const FunctionType *FT = Callee->getFunctionType();
     if (FT->getNumParams() != 2 ||
         FT->getReturnType() != Type::getInt8PtrTy(*Context) ||
-        FT->getParamType(0) != FT->getReturnType())
+        FT->getParamType(0) != FT->getReturnType() ||
+        !FT->getParamType(1)->isIntegerTy(32))
       return 0;
 
     Value *SrcStr = CI->getArgOperand(0);
@@ -273,7 +274,8 @@ struct StrRChrOpt : public LibCallOptimization {
     const FunctionType *FT = Callee->getFunctionType();
     if (FT->getNumParams() != 2 ||
         FT->getReturnType() != Type::getInt8PtrTy(*Context) ||
-        FT->getParamType(0) != FT->getReturnType())
+        FT->getParamType(0) != FT->getReturnType() ||
+        !FT->getParamType(1)->isIntegerTy(32))
       return 0;
 
     Value *SrcStr = CI->getArgOperand(0);
