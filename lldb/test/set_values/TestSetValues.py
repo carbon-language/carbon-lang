@@ -97,7 +97,7 @@ class SetValuesTestCase(TestBase):
         # rdar://problem/8422727
         # set_values test directory: 'frame variable' shows only (long double) i =
         self.expect("frame variable", VARIABLES_DISPLAYED_CORRECTLY,
-            startstr = "(long double) i = ")
+            startstr = "(long double) i = 3.14159")
 
         # TODO:
         # Now set variable 'i' and check that it is correctly displayed.
