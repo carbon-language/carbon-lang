@@ -215,8 +215,23 @@ bool MCExpr::EvaluateAsAbsolute(int64_t &Res, const MCAsmLayout *Layout) const {
     return true;
   }
 
-  if (!EvaluateAsRelocatable(Value, Layout) || !Value.isAbsolute())
+  if (!EvaluateAsRelocatable(Value, Layout) || !Value.isAbsolute()) {
+    // EvaluateAsAbsolute is defined to return the "current value" of
+    // the expression if we are given a Layout object, even in cases
+    // when the value is not fixed.
+    if (Layout) {
+      Res = Value.getConstant();
+      if (Value.getSymA()) {
+	Res += Layout->getSymbolAddress(
+          &Layout->getAssembler().getSymbolData(Value.getSymA()->getSymbol()));
+      }
+      if (Value.getSymB()) {
+	Res -= Layout->getSymbolAddress(
+          &Layout->getAssembler().getSymbolData(Value.getSymB()->getSymbol()));
+      }
+    }
     return false;
+  }
 
   Res = Value.getConstant();
   return true;
