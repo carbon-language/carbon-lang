@@ -2714,8 +2714,7 @@ let Defs =
     D31 ], hasSideEffects = 1, isBarrier = 1 in {
   def Int_eh_sjlj_setjmp : XI<(outs), (ins GPR:$src, GPR:$val),
                                AddrModeNone, SizeSpecial, IndexModeNone,
-                               Pseudo, NoItinerary,
-                            "${:comment} EH.SJLJ.SETJMP PSEUDO", "",
+                               Pseudo, NoItinerary, "", "",
                          [(set R0, (ARMeh_sjlj_setjmp GPR:$src, GPR:$val))]>,
                            Requires<[IsARM, HasVFP2]>;
 }
@@ -2725,8 +2724,7 @@ let Defs =
   hasSideEffects = 1, isBarrier = 1 in {
   def Int_eh_sjlj_setjmp_nofp : XI<(outs), (ins GPR:$src, GPR:$val),
                                    AddrModeNone, SizeSpecial, IndexModeNone,
-                                   Pseudo, NoItinerary,
-                            "${:comment} EH.SJLJ.SETJMP PSEUDO", "",
+                                   Pseudo, NoItinerary, "", "",
                          [(set R0, (ARMeh_sjlj_setjmp GPR:$src, GPR:$val))]>,
                                 Requires<[IsARM, NoVFP]>;
 }
@@ -2736,8 +2734,7 @@ let isBarrier = 1, hasSideEffects = 1, isTerminator = 1,
     Defs = [ R7, LR, SP ] in {
 def Int_eh_sjlj_longjmp : XI<(outs), (ins GPR:$src, GPR:$scratch),
                              AddrModeNone, SizeSpecial, IndexModeNone,
-                             Pseudo, NoItinerary,
-                            "${:comment} EH.SJLJ.LONGJMP PSEUDO", "",
+                             Pseudo, NoItinerary, "", "",
                          [(ARMeh_sjlj_longjmp GPR:$src, GPR:$scratch)]>,
                                 Requires<[IsARM, IsDarwin]>;
 }

@@ -2446,8 +2446,7 @@ let Defs =
     D16, D17, D18, D19, D20, D21, D22, D23, D24, D25, D26, D27, D28, D29, D30,
     D31 ], hasSideEffects = 1, isBarrier = 1 in {
   def t2Int_eh_sjlj_setjmp : Thumb2XI<(outs), (ins tGPR:$src, tGPR:$val),
-                               AddrModeNone, SizeSpecial, NoItinerary,
-                               "${:comment} EH.SJLJ.SETJMP PSEUDO", "",
+                               AddrModeNone, SizeSpecial, NoItinerary, "", "",
                           [(set R0, (ARMeh_sjlj_setjmp tGPR:$src, tGPR:$val))]>,
                              Requires<[IsThumb2, HasVFP2]>;
 }
@@ -2456,8 +2455,7 @@ let Defs =
   [ R0,  R1,  R2,  R3,  R4,  R5,  R6,  R7,  R8,  R9,  R10, R11, R12, LR ],
   hasSideEffects = 1, isBarrier = 1 in {
   def t2Int_eh_sjlj_setjmp_nofp : Thumb2XI<(outs), (ins tGPR:$src, tGPR:$val),
-                               AddrModeNone, SizeSpecial, NoItinerary,
-                               "${:comment} EH.SJLJ.SETJMP PSEUDO", "",
+                               AddrModeNone, SizeSpecial, NoItinerary, "", "",
                           [(set R0, (ARMeh_sjlj_setjmp tGPR:$src, tGPR:$val))]>,
                                   Requires<[IsThumb2, NoVFP]>;
 }

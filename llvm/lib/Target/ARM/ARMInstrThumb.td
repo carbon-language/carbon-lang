@@ -918,8 +918,7 @@ let Defs =
   [ R0,  R1,  R2,  R3,  R4,  R5,  R6,  R7, R12 ], hasSideEffects = 1,
    isBarrier = 1  in {
   def tInt_eh_sjlj_setjmp : ThumbXI<(outs),(ins tGPR:$src, tGPR:$val),
-                              AddrModeNone, SizeSpecial, NoItinerary,
-                             "${:comment} EH.SJLJ.SETJMP PSEUDO", "",
+                              AddrModeNone, SizeSpecial, NoItinerary, "", "",
                    [(set R0, (ARMeh_sjlj_setjmp tGPR:$src, tGPR:$val))]>;
 }
 
@@ -928,8 +927,7 @@ let isBarrier = 1, hasSideEffects = 1, isTerminator = 1,
     Defs = [ R7, LR, SP ] in {
 def tInt_eh_sjlj_longjmp : XI<(outs), (ins GPR:$src, GPR:$scratch),
                              AddrModeNone, SizeSpecial, IndexModeNone,
-                             Pseudo, NoItinerary,
-                             "${:comment} EH.SJLJ.LONGJMP PSEUDO", "",
+                             Pseudo, NoItinerary, "", "",
                          [(ARMeh_sjlj_longjmp GPR:$src, GPR:$scratch)]>,
                                 Requires<[IsThumb, IsDarwin]>;
 }
