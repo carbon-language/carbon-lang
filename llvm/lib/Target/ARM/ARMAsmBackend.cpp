@@ -15,7 +15,6 @@
 #include "llvm/MC/MCAssembler.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCObjectWriter.h"
-#include "llvm/MC/MCSectionCOFF.h"
 #include "llvm/MC/MCSectionELF.h"
 #include "llvm/MC/MCSectionMachO.h"
 #include "llvm/MC/MachObjectWriter.h"
@@ -87,7 +86,7 @@ public:
   }
 };
 
-// Fixme: can we raise this to share code bet. Darwin and ELF?
+// Fixme: can we raise this to share code between Darwin and ELF?
 void ELFARMAsmBackend::ApplyFixup(const MCFixup &Fixup, MCDataFragment &DF,
                                   uint64_t Value) const {
   assert(0 && "ELFARMAsmBackend::ApplyFixup() unimplemented");
