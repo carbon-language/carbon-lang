@@ -2,6 +2,19 @@
 // RUN: FileCheck < %t %s
 // RUN: FileCheck --check-prefix=CHECK-STDERR < %t.err %s
 
+
+// Suffix inference:
+
+// CHECK: addl $0, %eax
+        add $0, %eax
+// CHECK: addb $255, %al
+        add $0xFF, %al
+// CHECK: orq %rax, %rdx
+        or %rax, %rdx
+// CHECK: shlq $3, %rax
+        shl $3, %rax
+
+
 // CHECK: subb %al, %al
         subb %al, %al
 
@@ -749,4 +762,27 @@ fildll -8(%rsp)
 // CHECK: encoding: [0xdf,0x6c,0x24,0xf8]
 // CHECK: fildll	-8(%rsp)
 // CHECK: encoding: [0xdf,0x6c,0x24,0xf8]
+
+// CHECK: callq a
+        callq a
+
+// CHECK: leaq	-40(%rbp), %r15
+	leaq	-40(%rbp), %r15
+
+
+
+// rdar://8013734 - Alias dr6=db6
+mov %dr6, %rax
+mov %db6, %rax
+// CHECK: movq	%dr6, %rax
+// CHECK: movq	%dr6, %rax
+
+
+// INC/DEC encodings.
+incb %al  // CHECK:	incb	%al # encoding: [0xfe,0xc0]
+incw %ax  // CHECK:	incw	%ax # encoding: [0x66,0xff,0xc0]
+incl %eax // CHECK:	incl	%eax # encoding: [0xff,0xc0]
+decb %al  // CHECK:	decb	%al # encoding: [0xfe,0xc8]
+decw %ax  // CHECK:	decw	%ax # encoding: [0x66,0xff,0xc8]
+decl %eax // CHECK:	decl	%eax # encoding: [0xff,0xc8]
 

@@ -564,3 +564,22 @@ ljmp	$0x7ace,$0x7ace
 // rdar://8456370
 // CHECK: calll a
  calll a
+
+// CHECK:	incb	%al # encoding: [0xfe,0xc0]
+	incb %al
+
+// CHECK:	incw	%ax # encoding: [0x66,0x40]
+	incw %ax
+
+// CHECK:	incl	%eax # encoding: [0x40]
+	incl %eax
+
+// CHECK:	decb	%al # encoding: [0xfe,0xc8]
+	decb %al
+
+// CHECK:	decw	%ax # encoding: [0x66,0x48]
+	decw %ax
+
+// CHECK:	decl	%eax # encoding: [0x48]
+	decl %eax
+
