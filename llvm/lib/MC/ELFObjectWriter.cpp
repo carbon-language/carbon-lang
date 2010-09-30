@@ -274,6 +274,11 @@ namespace {
     void WriteRelocationsFragment(const MCAssembler &Asm, MCDataFragment *F,
                                   const MCSectionData *SD);
 
+    bool IsFixupFullyResolved(const MCAssembler &Asm,
+                              const MCValue Target,
+                              bool IsPCRel,
+                              const MCFragment *DF) const;
+
     void WriteObject(const MCAssembler &Asm, const MCAsmLayout &Layout);
   };
 
@@ -775,7 +780,7 @@ void ELFObjectWriterImpl::WriteRelocation(MCAssembler &Asm, MCAsmLayout &Layout,
 
     WriteRelocationsFragment(Asm, F, &SD);
 
-    Asm.AddSectionToTheEnd(RelaSD, Layout);
+    Asm.AddSectionToTheEnd(*Writer, RelaSD, Layout);
   }
 }
 
@@ -873,11 +878,11 @@ void ELFObjectWriterImpl::CreateMetadataSections(MCAssembler &Asm,
   // Symbol table
   F = new MCDataFragment(&SymtabSD);
   WriteSymbolTable(F, Asm, Layout, NumRegularSections);
-  Asm.AddSectionToTheEnd(SymtabSD, Layout);
+  Asm.AddSectionToTheEnd(*Writer, SymtabSD, Layout);
 
   F = new MCDataFragment(&StrtabSD);
   F->getContents().append(StringTable.begin(), StringTable.end());
-  Asm.AddSectionToTheEnd(StrtabSD, Layout);
+  Asm.AddSectionToTheEnd(*Writer, StrtabSD, Layout);
 
   F = new MCDataFragment(&ShstrtabSD);
 
@@ -903,7 +908,41 @@ void ELFObjectWriterImpl::CreateMetadataSections(MCAssembler &Asm,
     F->getContents() += '\x00';
   }
 
-  Asm.AddSectionToTheEnd(ShstrtabSD, Layout);
+  Asm.AddSectionToTheEnd(*Writer, ShstrtabSD, Layout);
+}
+
+bool ELFObjectWriterImpl::IsFixupFullyResolved(const MCAssembler &Asm,
+                                               const MCValue Target,
+                                               bool IsPCRel,
+                                               const MCFragment *DF) const {
+  // If this is a PCrel relocation, find the section this fixup value is
+  // relative to.
+  const MCSection *BaseSection = 0;
+  if (IsPCRel) {
+    BaseSection = &DF->getParent()->getSection();
+    assert(BaseSection);
+  }
+
+  const MCSection *SectionA = 0;
+  const MCSymbol *SymbolA = 0;
+  if (const MCSymbolRefExpr *A = Target.getSymA()) {
+    SymbolA = &A->getSymbol();
+    SectionA = &SymbolA->getSection();
+  }
+
+  const MCSection *SectionB = 0;
+  if (const MCSymbolRefExpr *B = Target.getSymB()) {
+    SectionB = &B->getSymbol().getSection();
+  }
+
+  if (!BaseSection)
+    return SectionA == SectionB;
+
+  const MCSymbolData &DataA = Asm.getSymbolData(*SymbolA);
+  if (DataA.isExternal())
+    return false;
+
+  return !SectionB && BaseSection == SectionA;
 }
 
 void ELFObjectWriterImpl::WriteObject(const MCAssembler &Asm,
@@ -1062,6 +1101,14 @@ void ELFObjectWriter::RecordRelocation(const MCAssembler &Asm,
                                        uint64_t &FixedValue) {
   ((ELFObjectWriterImpl*) Impl)->RecordRelocation(Asm, Layout, Fragment, Fixup,
                                                   Target, FixedValue);
+}
+
+bool ELFObjectWriter::IsFixupFullyResolved(const MCAssembler &Asm,
+                                           const MCValue Target,
+                                           bool IsPCRel,
+                                           const MCFragment *DF) const {
+  return ((ELFObjectWriterImpl*) Impl)->IsFixupFullyResolved(Asm, Target,
+                                                             IsPCRel, DF);
 }
 
 void ELFObjectWriter::WriteObject(const MCAssembler &Asm,

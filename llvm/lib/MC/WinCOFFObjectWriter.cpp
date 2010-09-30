@@ -181,6 +181,11 @@ public:
                         MCValue Target,
                         uint64_t &FixedValue);
 
+  virtual bool IsFixupFullyResolved(const MCAssembler &Asm,
+                                    const MCValue Target,
+                                    bool IsPCRel,
+                                    const MCFragment *DF) const;
+
   void WriteObject(const MCAssembler &Asm, const MCAsmLayout &Layout);
 };
 }
@@ -688,6 +693,13 @@ void WinCOFFObjectWriter::RecordRelocation(const MCAssembler &Asm,
   }
 
   coff_section->Relocations.push_back(Reloc);
+}
+
+bool WinCOFFObjectWriter::IsFixupFullyResolved(const MCAssembler &Asm,
+                                               const MCValue Target,
+                                               bool IsPCRel,
+                                               const MCFragment *DF) const {
+  return false;
 }
 
 void WinCOFFObjectWriter::WriteObject(const MCAssembler &Asm,

@@ -621,17 +621,19 @@ private:
   /// \return Whether the fixup value was fully resolved. This is true if the
   /// \arg Value result is fixed, otherwise the value may change due to
   /// relocation.
-  bool EvaluateFixup(const MCAsmLayout &Layout,
+  bool EvaluateFixup(const MCObjectWriter &Writer, const MCAsmLayout &Layout,
                      const MCFixup &Fixup, const MCFragment *DF,
                      MCValue &Target, uint64_t &Value) const;
 
   /// Check whether a fixup can be satisfied, or whether it needs to be relaxed
   /// (increased in size, in order to hold its value correctly).
-  bool FixupNeedsRelaxation(const MCFixup &Fixup, const MCFragment *DF,
+  bool FixupNeedsRelaxation(const MCObjectWriter &Writer,
+                            const MCFixup &Fixup, const MCFragment *DF,
                             const MCAsmLayout &Layout) const;
 
   /// Check whether the given fragment needs relaxation.
-  bool FragmentNeedsRelaxation(const MCInstFragment *IF,
+  bool FragmentNeedsRelaxation(const MCObjectWriter &Writer,
+                               const MCInstFragment *IF,
                                const MCAsmLayout &Layout) const;
 
   /// Compute the effective fragment size assuming it is layed out at the given
@@ -642,7 +644,7 @@ private:
 
   /// LayoutOnce - Perform one layout iteration and return true if any offsets
   /// were adjusted.
-  bool LayoutOnce(MCAsmLayout &Layout);
+  bool LayoutOnce(const MCObjectWriter &Writer, MCAsmLayout &Layout);
 
   /// FinishLayout - Finalize a layout, including fragment lowering.
   void FinishLayout(MCAsmLayout &Layout);
@@ -664,7 +666,8 @@ public:
   void WriteSectionData(const MCSectionData *Section, const MCAsmLayout &Layout,
                         MCObjectWriter *OW) const;
 
-  void AddSectionToTheEnd(MCSectionData &SD, MCAsmLayout &Layout);
+  void AddSectionToTheEnd(const MCObjectWriter &Writer, MCSectionData &SD,
+                          MCAsmLayout &Layout);
 
 public:
   /// Construct a new assembler instance.

@@ -75,6 +75,16 @@ public:
                                 const MCFixup &Fixup, MCValue Target,
                                 uint64_t &FixedValue) = 0;
 
+  /// Check if a fixup is fully resolved.
+  ///
+  /// This routine is used by the assembler to let the file format decide
+  /// if a fixup is not fully resolved. For example, one that crosses
+  /// two sections on ELF.
+  virtual bool IsFixupFullyResolved(const MCAssembler &Asm,
+                                    const MCValue Target,
+                                    bool IsPCRel,
+                                    const MCFragment *DF) const = 0;
+
   /// Write the object file.
   ///
   /// This routine is called by the assembler after layout and relaxation is
