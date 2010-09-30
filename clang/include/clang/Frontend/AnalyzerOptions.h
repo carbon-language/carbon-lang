@@ -76,6 +76,8 @@ public:
   unsigned EnableExperimentalInternalChecks : 1;
   unsigned InlineCall : 1;
   unsigned UnoptimizedCFG : 1;
+  unsigned CFGAddImplicitDtors : 1;
+  unsigned CFGAddInitializers : 1;
 
 public:
   AnalyzerOptions() {
@@ -94,6 +96,8 @@ public:
     EnableExperimentalChecks = 0;
     EnableExperimentalInternalChecks = 0;
     UnoptimizedCFG = 0;
+    CFGAddImplicitDtors = 0;
+    CFGAddInitializers = 0;
   }
 };
 

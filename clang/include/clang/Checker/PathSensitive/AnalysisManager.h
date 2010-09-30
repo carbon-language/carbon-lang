@@ -76,10 +76,11 @@ public:
                   idx::Indexer *idxer,
                   unsigned maxnodes, unsigned maxvisit,
                   bool vizdot, bool vizubi, bool purge, bool eager, bool trim,
-                  bool inlinecall, bool useUnoptimizedCFG)
+                  bool inlinecall, bool useUnoptimizedCFG,
+                  bool addImplicitDtors, bool addInitializers)
 
-    : AnaCtxMgr(useUnoptimizedCFG), Ctx(ctx), Diags(diags), LangInfo(lang),
-      PD(pd),
+    : AnaCtxMgr(useUnoptimizedCFG, addImplicitDtors, addInitializers),
+      Ctx(ctx), Diags(diags), LangInfo(lang), PD(pd),
       CreateStoreMgr(storemgr), CreateConstraintMgr(constraintmgr),Idxer(idxer),
       AScope(ScopeDecl), MaxNodes(maxnodes), MaxVisit(maxvisit),
       VisualizeEGDot(vizdot), VisualizeEGUbi(vizubi), PurgeDead(purge),

@@ -718,7 +718,9 @@ void GRCallEnterNodeBuilder::GenerateNode(const GRState *state,
                          OldMgr.shouldEagerlyAssume(),
                          OldMgr.shouldTrimGraph(),
                          OldMgr.shouldInlineCall(),
-                     OldMgr.getAnalysisContextManager().getUseUnoptimizedCFG());
+                     OldMgr.getAnalysisContextManager().getUseUnoptimizedCFG(),
+                     OldMgr.getAnalysisContextManager().getAddImplicitDtors(),
+                     OldMgr.getAnalysisContextManager().getAddInitializers());
     llvm::OwningPtr<GRTransferFuncs> TF(MakeCFRefCountTF(AMgr.getASTContext(),
                                                          /* GCEnabled */ false,
                                                         AMgr.getLangOptions()));

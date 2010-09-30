@@ -61,6 +61,8 @@ CFG *AnalysisContext::getCFG() {
   if (!builtCFG) {
     CFG::BuildOptions B;
     B.AddEHEdges = AddEHEdges;
+    B.AddImplicitDtors = AddImplicitDtors;
+    B.AddInitializers = AddInitializers;
     cfg = CFG::buildCFG(D, getBody(), &D->getASTContext(), B);
     // Even when the cfg is not successfully built, we don't
     // want to try building it again.
@@ -74,6 +76,8 @@ CFG *AnalysisContext::getUnoptimizedCFG() {
     CFG::BuildOptions B;
     B.PruneTriviallyFalseEdges = false;
     B.AddEHEdges = AddEHEdges;
+    B.AddImplicitDtors = AddImplicitDtors;
+    B.AddInitializers = AddInitializers;
     completeCFG = CFG::buildCFG(D, getBody(), &D->getASTContext(), B);
     // Even when the cfg is not successfully built, we don't
     // want to try building it again.
@@ -126,7 +130,8 @@ AnalysisContext *AnalysisContextManager::getContext(const Decl *D,
                                                     idx::TranslationUnit *TU) {
   AnalysisContext *&AC = Contexts[D];
   if (!AC)
-    AC = new AnalysisContext(D, TU, UseUnoptimizedCFG);
+    AC = new AnalysisContext(D, TU, UseUnoptimizedCFG, false,
+        AddImplicitDtors, AddInitializers);
 
   return AC;
 }
