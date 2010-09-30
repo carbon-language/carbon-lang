@@ -212,7 +212,9 @@ Program::Execute(const Path &path, const char **args, const char **envp,
       envp = const_cast<const char **>(*_NSGetEnviron());
 #endif
 
-    pid_t PID;
+    // Explicitly initialized to prevent what appears to be a valgrind false
+    // positive.
+    pid_t PID = 0;
     int Err = posix_spawn(&PID, path.c_str(), &FileActions, /*attrp*/0,
                           const_cast<char **>(args), const_cast<char **>(envp));
                           
