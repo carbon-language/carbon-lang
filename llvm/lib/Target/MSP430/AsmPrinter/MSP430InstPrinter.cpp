@@ -24,9 +24,7 @@ using namespace llvm;
 
 
 // Include the auto-generated portion of the assembly writer.
-#define MachineInstr MCInst
 #include "MSP430GenAsmWriter.inc"
-#undef MachineInstr
 
 void MSP430InstPrinter::printInst(const MCInst *MI, raw_ostream &O) {
   printInstruction(MI, O);

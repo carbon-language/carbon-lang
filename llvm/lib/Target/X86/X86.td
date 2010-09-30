@@ -196,10 +196,12 @@ def ATTAsmParser : AsmParser {
 def ATTAsmWriter : AsmWriter {
   string AsmWriterClassName  = "ATTInstPrinter";
   int Variant = 0;
+  bit isMCAsmWriter = 1;
 }
 def IntelAsmWriter : AsmWriter {
   string AsmWriterClassName  = "IntelInstPrinter";
   int Variant = 1;
+  bit isMCAsmWriter = 1;
 }
 
 def X86 : Target {

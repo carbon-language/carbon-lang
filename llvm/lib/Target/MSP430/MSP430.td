@@ -52,6 +52,7 @@ def MSP430InstrInfo : InstrInfo;
 
 def MSP430InstPrinter : AsmWriter {
   string AsmWriterClassName  = "InstPrinter";
+  bit isMCAsmWriter = 1;
 }
 
 //===----------------------------------------------------------------------===//

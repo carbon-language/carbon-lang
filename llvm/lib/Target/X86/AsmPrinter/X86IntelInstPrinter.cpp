@@ -24,10 +24,8 @@
 using namespace llvm;
 
 // Include the auto-generated portion of the assembly writer.
-#define MachineInstr MCInst
 #define GET_INSTRUCTION_NAME
 #include "X86GenAsmWriter1.inc"
-#undef MachineInstr
 
 void X86IntelInstPrinter::printInst(const MCInst *MI, raw_ostream &OS) {
   printInstruction(MI, OS);
