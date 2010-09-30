@@ -56,7 +56,7 @@ bool ARMAsmBackend::WriteNopData(uint64_t Count, MCObjectWriter *OW) const {
     return false;
   }
   return false;
-};
+}
 } // end anonymous namespace
 
 namespace {
