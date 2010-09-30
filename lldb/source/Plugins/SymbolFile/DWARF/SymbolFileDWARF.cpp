@@ -2679,7 +2679,8 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                     // parameters in any class methods need it for the clang 
                     // types for function prototypes. 
                     m_die_to_decl_ctx[die] = ClangASTContext::GetDeclContextForType (clang_type);
-                    type_sp.reset( new Type(die->GetOffset(), this, type_name_dbstr, byte_size, NULL, LLDB_INVALID_UID, Type::eEncodingIsUID, &decl, clang_type, true));
+                    const bool is_forward_decl = die->HasChildren();
+                    type_sp.reset( new Type(die->GetOffset(), this, type_name_dbstr, byte_size, NULL, LLDB_INVALID_UID, Type::eEncodingIsUID, &decl, clang_type, is_forward_decl));
 
                     m_die_to_type[die] = type_sp.get();
 

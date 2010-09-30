@@ -32,8 +32,7 @@ public:
         eEncodingIsPointerUID,          ///< This type is pointer to a type whose UID is m_encoding_uid
         eEncodingIsLValueReferenceUID,  ///< This type is L value reference to a type whose UID is m_encoding_uid
         eEncodingIsRValueReferenceUID,  ///< This type is R value reference to a type whose UID is m_encoding_uid
-        eEncodingIsSyntheticUID,
-        eEncodingIsTypePtr              ///< m_encoding_data is a "lldb_private::Type *"
+        eEncodingIsSyntheticUID
     } EncodingDataType;
 
     Type (lldb::user_id_t uid,
@@ -93,7 +92,7 @@ public:
     bool
     IsValidType ()
     {
-        return m_encoding_data_type != eEncodingInvalid;
+        return m_encoding_uid_type != eEncodingInvalid;
     }
 
     void
@@ -200,20 +199,17 @@ protected:
     ConstString m_name;
     SymbolFile *m_symbol_file;
     SymbolContextScope *m_context; // The symbol context in which this type is defined
-    uint64_t m_byte_size;
-    EncodingDataType m_encoding_data_type;
-    uintptr_t m_encoding_data;
+    Type *m_encoding_type;
+    EncodingDataType m_encoding_uid_type;
+    uint32_t m_encoding_uid;
+    uint32_t m_byte_size;
+    bool m_is_forward_decl;
     Declaration m_decl;
     lldb::clang_type_t m_clang_qual_type;
-    bool m_is_forward_decl;
 
     Type *
-    GetEncodingType ()
-    {
-        if (m_encoding_data_type == eEncodingIsTypePtr)
-            return (Type *)m_encoding_data;
-        return NULL;
-    }
+    GetEncodingType ();
+    
     bool ResolveClangType(bool forward_decl_is_ok = false);
 };
 
