@@ -105,7 +105,7 @@ CommandObjectExpression::CommandOptions::GetDefinitions ()
 CommandObjectExpression::CommandObjectExpression (CommandInterpreter &interpreter) :
     CommandObject (interpreter,
                    "expression",
-                   "Evaluate an Objective-C++ expression in the current program context, using variables currently in scope.",
+                   "Evaluate a C/ObjC/C++ expression in the current program context, using variables currently in scope.",
                    "expression [<cmd-options>] <expr>"),
 m_expr_line_count (0),
     m_expr_lines ()
