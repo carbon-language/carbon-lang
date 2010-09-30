@@ -111,6 +111,12 @@ class FoundationTestCase(TestBase):
             substrs = ["ARG: (MyString *) self",
                        "ARG: (struct objc_selector *) _cmd"])
 
+        # Test new feature with r115115:
+        # Add "-o" option to "expression" which prints the object description if available.
+        self.expect("expr -o -- self", "Object description displayed correctly",
+            startstr = "Hello from ",
+            substrs = ["a.out", "with timestamp: "])
+
         self.expect("expr self->non_existent_member", COMMAND_FAILED_AS_EXPECTED, error=True,
             startstr = "error: 'MyString' does not have a member named 'non_existent_member'")
 
