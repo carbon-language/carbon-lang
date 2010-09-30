@@ -431,6 +431,10 @@ finit
 // CHECK: wait
 // CHECK: fninit
 
+fsave	32493
+// CHECK: wait
+// CHECK: fnsave 32493
+
 
 // rdar://8456382 - cvtsd2si support.
 cvtsd2si	%xmm1, %rax
