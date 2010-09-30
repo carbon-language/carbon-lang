@@ -162,7 +162,8 @@ production-quality compiler for C, Objective-C, C++ and Objective-C++ on x86
    future</a>!).  The tool is very good at finding bugs that occur on specific
    paths through code, such as on error conditions.</p>
 
-<p>In the LLVM 2.8 time-frame, 
+<p>The LLVM 2.8 release fixes a number of bugs and slightly improves precision
+   over 2.7, but there are no major new features in the release. 
 </p>
 
 </div>
@@ -317,6 +318,124 @@ LLVM MC Project Blog Post</a>.
    projects that have already been updated to work with LLVM 2.8.</p>
 </div>
 
+<!--=========================================================================-->
+<div class="doc_subsection">
+<a name="tce">TTA-based Codesign Environment (TCE)</a>
+</div>
+
+<div class="doc_text">
+<p>
+<a href="http://tce.cs.tut.fi/">TCE</a> is a toolset for designing
+application-specific processors (ASP) based on the Transport triggered
+architecture (TTA). The toolset provides a complete co-design flow from C/C++
+programs down to synthesizable VHDL and parallel program binaries. Processor
+customization points include the register files, function units, supported
+operations, and the interconnection network.</p>
+
+<p>TCE uses llvm-gcc/Clang and LLVM for C/C++ language support, target
+independent optimizations and also for parts of code generation. It generates
+new LLVM-based code generators "on the fly" for the designed TTA processors and
+loads them in to the compiler backend as runtime libraries to avoid per-target
+recompilation of larger parts of the compiler chain.</p>
+
+</div>
+
+<!--=========================================================================-->
+<div class="doc_subsection">
+<a name="Horizon">Horizon Bytecode Compiler</a>
+</div>
+
+<div class="doc_text">
+<p>
+<a href="http://www.quokforge.org/projects/horizon">Horizon</a> is a bytecode
+language and compiler written on top of LLVM, intended for producing
+single-address-space managed code operating systems that
+run faster than the equivalent multiple-address-space C systems.
+More in-depth blurb is available on <a 
+href="http://www.quokforge.org/projects/horizon/wiki/Wiki">the wiki</a>.</p>
+
+</div>
+
+<!--=========================================================================-->
+<div class="doc_subsection">
+<a name="clamav">Clam AntiVirus</a>
+</div>
+
+<div class="doc_text">
+<p>
+<a href=http://www.clamav.net>Clam AntiVirus</a> is an open source (GPL)
+anti-virus toolkit for UNIX, designed especially for e-mail scanning on mail
+gateways.  Since version 0.96 it has <a
+href="http://vrt-sourcefire.blogspot.com/2010/09/introduction-to-clamavs-low-level.html">bytecode
+signatures</a> that allow writing detections for complex malware. It
+uses LLVM's JIT to speed up the execution of bytecode on
+X86,X86-64,PPC32/64, falling back to its own interpreter otherwise.
+The git version was updated to work with LLVM 2.8
+</p>
+
+<p>The <a
+href="http://git.clamav.net/gitweb?p=clamav-bytecode-compiler.git;a=blob_plain;f=docs/user/clambc-user.pdf">
+ClamAV bytecode compiler</a> uses Clang and LLVM to compile a C-like
+language, insert runtime checks, and generate ClamAV bytecode.</p>
+
+</div>
+
+<!--=========================================================================-->
+<div class="doc_subsection">
+<a name="pure">Pure</a>
+</div>
+
+<div class="doc_text">
+<p>
+<a href="http://pure-lang.googlecode.com/">Pure</a>
+is an algebraic/functional
+programming language based on term rewriting. Programs are collections
+of equations which are used to evaluate expressions in a symbolic
+fashion. Pure offers dynamic typing, eager and lazy evaluation, lexical
+closures, a hygienic macro system (also based on term rewriting),
+built-in list and matrix support (including list and matrix
+comprehensions) and an easy-to-use C interface. The interpreter uses
+LLVM as a backend to JIT-compile Pure programs to fast native code.</p>
+
+<p>Pure versions 0.44 and later have been tested and are known to work with
+LLVM 2.8 (and continue to work with older LLVM releases >= 2.5).</p>
+
+</div>
+
+<!--=========================================================================-->
+<div class="doc_subsection">
+<a name="GHC">Glasgow Haskell Compiler (GHC)</a>
+</div>
+
+<div class="doc_text">
+<p>
+<a href="http://www.haskell.org/ghc/">GHC</a> is an open source,
+state-of-the-art programming suite for
+Haskell, a standard lazy functional programming language. It includes
+an optimizing static compiler generating good code for a variety of
+platforms, together with an interactive system for convenient, quick
+development.</p>
+
+<p>In addition to the existing C and native code generators, GHC 7.0 now
+supports an <a
+href="http://hackage.haskell.org/trac/ghc/wiki/Commentary/Compiler/Backends/LLVM">LLVM
+code generator</a>. GHC supports LLVM 2.7 and later.</p>
+
+</div>
+
+<!--=========================================================================-->
+<div class="doc_subsection">
+<a name="Clay">Clay Programming Language</a>
+</div>
+
+<div class="doc_text">
+<p>
+<a href="http://www.haskell.org/ghc/">Clay</a> is a new systems programming
+language that is specifically designed for generic programming. It makes
+generic programming very concise thanks to whole program type propagation. It
+uses LLVM as its backend.</p>
+
+</div>
 
 <!-- *********************************************************************** -->
 <div class="doc_section">
