@@ -850,36 +850,36 @@ def PICADD : AXI1<0b0100, (outs GPR:$dst), (ins GPR:$a, pclabel:$cp, pred:$p),
 
 let AddedComplexity = 10 in {
 def PICLDR  : AXI2ldw<(outs GPR:$dst), (ins addrmodepc:$addr, pred:$p),
-                  Pseudo, IIC_iLoadr, "\n${addr:label}:\n\tldr$p\t$dst, $addr",
+                  Pseudo, IIC_iLoad_r, "\n${addr:label}:\n\tldr$p\t$dst, $addr",
                   [(set GPR:$dst, (load addrmodepc:$addr))]>;
 
 def PICLDRH : AXI3ldh<(outs GPR:$dst), (ins addrmodepc:$addr, pred:$p),
-                Pseudo, IIC_iLoadr, "\n${addr:label}:\n\tldrh${p}\t$dst, $addr",
+            Pseudo, IIC_iLoad_bh_r, "\n${addr:label}:\n\tldrh${p}\t$dst, $addr",
                   [(set GPR:$dst, (zextloadi16 addrmodepc:$addr))]>;
 
 def PICLDRB : AXI2ldb<(outs GPR:$dst), (ins addrmodepc:$addr, pred:$p),
-                Pseudo, IIC_iLoadr, "\n${addr:label}:\n\tldrb${p}\t$dst, $addr",
+            Pseudo, IIC_iLoad_bh_r, "\n${addr:label}:\n\tldrb${p}\t$dst, $addr",
                   [(set GPR:$dst, (zextloadi8 addrmodepc:$addr))]>;
 
 def PICLDRSH : AXI3ldsh<(outs GPR:$dst), (ins addrmodepc:$addr, pred:$p),
-               Pseudo, IIC_iLoadr, "\n${addr:label}:\n\tldrsh${p}\t$dst, $addr",
+           Pseudo, IIC_iLoad_bh_r, "\n${addr:label}:\n\tldrsh${p}\t$dst, $addr",
                   [(set GPR:$dst, (sextloadi16 addrmodepc:$addr))]>;
 
 def PICLDRSB : AXI3ldsb<(outs GPR:$dst), (ins addrmodepc:$addr, pred:$p),
-               Pseudo, IIC_iLoadr, "\n${addr:label}:\n\tldrsb${p}\t$dst, $addr",
+           Pseudo, IIC_iLoad_bh_r, "\n${addr:label}:\n\tldrsb${p}\t$dst, $addr",
                   [(set GPR:$dst, (sextloadi8 addrmodepc:$addr))]>;
 }
 let AddedComplexity = 10 in {
 def PICSTR  : AXI2stw<(outs), (ins GPR:$src, addrmodepc:$addr, pred:$p),
-               Pseudo, IIC_iStorer, "\n${addr:label}:\n\tstr$p\t$src, $addr",
+               Pseudo, IIC_iStore_r, "\n${addr:label}:\n\tstr$p\t$src, $addr",
                [(store GPR:$src, addrmodepc:$addr)]>;
 
 def PICSTRH : AXI3sth<(outs), (ins GPR:$src, addrmodepc:$addr, pred:$p),
-               Pseudo, IIC_iStorer, "\n${addr:label}:\n\tstrh${p}\t$src, $addr",
+           Pseudo, IIC_iStore_bh_r, "\n${addr:label}:\n\tstrh${p}\t$src, $addr",
                [(truncstorei16 GPR:$src, addrmodepc:$addr)]>;
 
 def PICSTRB : AXI2stb<(outs), (ins GPR:$src, addrmodepc:$addr, pred:$p),
-               Pseudo, IIC_iStorer, "\n${addr:label}:\n\tstrb${p}\t$src, $addr",
+           Pseudo, IIC_iStore_bh_r, "\n${addr:label}:\n\tstrb${p}\t$src, $addr",
                [(truncstorei8 GPR:$src, addrmodepc:$addr)]>;
 }
 } // isNotDuplicable = 1
@@ -1235,90 +1235,90 @@ def RFE  : ABXI<{1,0,0,?}, (outs), (ins addrmode4:$addr, GPR:$base),
 
 // Load
 let canFoldAsLoad = 1, isReMaterializable = 1 in
-def LDR  : AI2ldw<(outs GPR:$dst), (ins addrmode2:$addr), LdFrm, IIC_iLoadr,
+def LDR  : AI2ldw<(outs GPR:$dst), (ins addrmode2:$addr), LdFrm, IIC_iLoad_r,
                "ldr", "\t$dst, $addr",
                [(set GPR:$dst, (load addrmode2:$addr))]>;
 
 // Special LDR for loads from non-pc-relative constpools.
 let canFoldAsLoad = 1, mayLoad = 1, neverHasSideEffects = 1,
     isReMaterializable = 1 in
-def LDRcp : AI2ldw<(outs GPR:$dst), (ins addrmode2:$addr), LdFrm, IIC_iLoadr,
+def LDRcp : AI2ldw<(outs GPR:$dst), (ins addrmode2:$addr), LdFrm, IIC_iLoad_r,
                  "ldr", "\t$dst, $addr", []>;
 
 // Loads with zero extension
 def LDRH  : AI3ldh<(outs GPR:$dst), (ins addrmode3:$addr), LdMiscFrm,
-                  IIC_iLoadr, "ldrh", "\t$dst, $addr",
+                  IIC_iLoad_bh_r, "ldrh", "\t$dst, $addr",
                   [(set GPR:$dst, (zextloadi16 addrmode3:$addr))]>;
 
 def LDRB  : AI2ldb<(outs GPR:$dst), (ins addrmode2:$addr), LdFrm,
-                  IIC_iLoadr, "ldrb", "\t$dst, $addr",
+                  IIC_iLoad_bh_r, "ldrb", "\t$dst, $addr",
                   [(set GPR:$dst, (zextloadi8 addrmode2:$addr))]>;
 
 // Loads with sign extension
 def LDRSH : AI3ldsh<(outs GPR:$dst), (ins addrmode3:$addr), LdMiscFrm,
-                   IIC_iLoadr, "ldrsh", "\t$dst, $addr",
+                   IIC_iLoad_bh_r, "ldrsh", "\t$dst, $addr",
                    [(set GPR:$dst, (sextloadi16 addrmode3:$addr))]>;
 
 def LDRSB : AI3ldsb<(outs GPR:$dst), (ins addrmode3:$addr), LdMiscFrm,
-                   IIC_iLoadr, "ldrsb", "\t$dst, $addr",
+                   IIC_iLoad_bh_r, "ldrsb", "\t$dst, $addr",
                    [(set GPR:$dst, (sextloadi8 addrmode3:$addr))]>;
 
 let mayLoad = 1, neverHasSideEffects = 1, hasExtraDefRegAllocReq = 1 in {
 // Load doubleword
 def LDRD : AI3ldd<(outs GPR:$dst1, GPR:$dst2), (ins addrmode3:$addr), LdMiscFrm,
-                 IIC_iLoadr, "ldrd", "\t$dst1, $addr",
+                 IIC_iLoad_d_r, "ldrd", "\t$dst1, $addr",
                  []>, Requires<[IsARM, HasV5TE]>;
 
 // Indexed loads
 def LDR_PRE  : AI2ldwpr<(outs GPR:$dst, GPR:$base_wb),
-                     (ins addrmode2:$addr), LdFrm, IIC_iLoadru,
+                     (ins addrmode2:$addr), LdFrm, IIC_iLoad_ru,
                      "ldr", "\t$dst, $addr!", "$addr.base = $base_wb", []>;
 
 def LDR_POST : AI2ldwpo<(outs GPR:$dst, GPR:$base_wb),
-                     (ins GPR:$base, am2offset:$offset), LdFrm, IIC_iLoadru,
+                     (ins GPR:$base, am2offset:$offset), LdFrm, IIC_iLoad_ru,
                      "ldr", "\t$dst, [$base], $offset", "$base = $base_wb", []>;
 
 def LDRH_PRE  : AI3ldhpr<(outs GPR:$dst, GPR:$base_wb),
-                     (ins addrmode3:$addr), LdMiscFrm, IIC_iLoadru,
+                     (ins addrmode3:$addr), LdMiscFrm, IIC_iLoad_bh_ru,
                      "ldrh", "\t$dst, $addr!", "$addr.base = $base_wb", []>;
 
 def LDRH_POST : AI3ldhpo<(outs GPR:$dst, GPR:$base_wb),
-                     (ins GPR:$base,am3offset:$offset), LdMiscFrm, IIC_iLoadru,
+                  (ins GPR:$base,am3offset:$offset), LdMiscFrm, IIC_iLoad_bh_ru,
                     "ldrh", "\t$dst, [$base], $offset", "$base = $base_wb", []>;
 
 def LDRB_PRE  : AI2ldbpr<(outs GPR:$dst, GPR:$base_wb),
-                     (ins addrmode2:$addr), LdFrm, IIC_iLoadru,
+                     (ins addrmode2:$addr), LdFrm, IIC_iLoad_bh_ru,
                      "ldrb", "\t$dst, $addr!", "$addr.base = $base_wb", []>;
 
 def LDRB_POST : AI2ldbpo<(outs GPR:$dst, GPR:$base_wb),
-                     (ins GPR:$base,am2offset:$offset), LdFrm, IIC_iLoadru,
+                     (ins GPR:$base,am2offset:$offset), LdFrm, IIC_iLoad_bh_ru,
                     "ldrb", "\t$dst, [$base], $offset", "$base = $base_wb", []>;
 
 def LDRSH_PRE : AI3ldshpr<(outs GPR:$dst, GPR:$base_wb),
-                      (ins addrmode3:$addr), LdMiscFrm, IIC_iLoadru,
+                      (ins addrmode3:$addr), LdMiscFrm, IIC_iLoad_bh_ru,
                       "ldrsh", "\t$dst, $addr!", "$addr.base = $base_wb", []>;
 
 def LDRSH_POST: AI3ldshpo<(outs GPR:$dst, GPR:$base_wb),
-                      (ins GPR:$base,am3offset:$offset), LdMiscFrm, IIC_iLoadru,
+                  (ins GPR:$base,am3offset:$offset), LdMiscFrm, IIC_iLoad_bh_ru,
                    "ldrsh", "\t$dst, [$base], $offset", "$base = $base_wb", []>;
 
 def LDRSB_PRE : AI3ldsbpr<(outs GPR:$dst, GPR:$base_wb),
-                      (ins addrmode3:$addr), LdMiscFrm, IIC_iLoadru,
+                      (ins addrmode3:$addr), LdMiscFrm, IIC_iLoad_bh_ru,
                       "ldrsb", "\t$dst, $addr!", "$addr.base = $base_wb", []>;
 
 def LDRSB_POST: AI3ldsbpo<(outs GPR:$dst, GPR:$base_wb),
-                      (ins GPR:$base,am3offset:$offset), LdMiscFrm, IIC_iLoadru,
+                    (ins GPR:$base,am3offset:$offset), LdMiscFrm, IIC_iLoad_ru,
                    "ldrsb", "\t$dst, [$base], $offset", "$base = $base_wb", []>;
 
 // For disassembly only
 def LDRD_PRE : AI3lddpr<(outs GPR:$dst1, GPR:$dst2, GPR:$base_wb),
-                        (ins addrmode3:$addr), LdMiscFrm, IIC_iLoadr,
+                        (ins addrmode3:$addr), LdMiscFrm, IIC_iLoad_d_ru,
                  "ldrd", "\t$dst1, $dst2, $addr!", "$addr.base = $base_wb", []>,
                 Requires<[IsARM, HasV5TE]>;
 
 // For disassembly only
 def LDRD_POST : AI3lddpo<(outs GPR:$dst1, GPR:$dst2, GPR:$base_wb),
-                       (ins GPR:$base,am3offset:$offset), LdMiscFrm, IIC_iLoadr,
+                   (ins GPR:$base,am3offset:$offset), LdMiscFrm, IIC_iLoad_d_ru,
             "ldrd", "\t$dst1, $dst2, [$base], $offset", "$base = $base_wb", []>,
                 Requires<[IsARM, HasV5TE]>;
 
@@ -1327,94 +1327,94 @@ def LDRD_POST : AI3lddpo<(outs GPR:$dst1, GPR:$dst2, GPR:$base_wb),
 // LDRT, LDRBT, LDRSBT, LDRHT, LDRSHT are for disassembly only.
 
 def LDRT : AI2ldwpo<(outs GPR:$dst, GPR:$base_wb),
-                   (ins GPR:$base, am2offset:$offset), LdFrm, IIC_iLoadru,
+                   (ins GPR:$base, am2offset:$offset), LdFrm, IIC_iLoad_ru,
                    "ldrt", "\t$dst, [$base], $offset", "$base = $base_wb", []> {
   let Inst{21} = 1; // overwrite
 }
 
 def LDRBT : AI2ldbpo<(outs GPR:$dst, GPR:$base_wb),
-                  (ins GPR:$base,am2offset:$offset), LdFrm, IIC_iLoadru,
+                  (ins GPR:$base,am2offset:$offset), LdFrm, IIC_iLoad_bh_ru,
                   "ldrbt", "\t$dst, [$base], $offset", "$base = $base_wb", []> {
   let Inst{21} = 1; // overwrite
 }
 
 def LDRSBT : AI3ldsbpo<(outs GPR:$dst, GPR:$base_wb),
-                 (ins GPR:$base,am3offset:$offset), LdMiscFrm, IIC_iLoadru,
+                 (ins GPR:$base,am3offset:$offset), LdMiscFrm, IIC_iLoad_bh_ru,
                  "ldrsbt", "\t$dst, [$base], $offset", "$base = $base_wb", []> {
   let Inst{21} = 1; // overwrite
 }
 
 def LDRHT : AI3ldhpo<(outs GPR:$dst, GPR:$base_wb),
-                  (ins GPR:$base, am3offset:$offset), LdMiscFrm, IIC_iLoadru,
+                 (ins GPR:$base, am3offset:$offset), LdMiscFrm, IIC_iLoad_bh_ru,
                   "ldrht", "\t$dst, [$base], $offset", "$base = $base_wb", []> {
   let Inst{21} = 1; // overwrite
 }
 
 def LDRSHT : AI3ldshpo<(outs GPR:$dst, GPR:$base_wb),
-                 (ins GPR:$base,am3offset:$offset), LdMiscFrm, IIC_iLoadru,
+                 (ins GPR:$base,am3offset:$offset), LdMiscFrm, IIC_iLoad_bh_ru,
                  "ldrsht", "\t$dst, [$base], $offset", "$base = $base_wb", []> {
   let Inst{21} = 1; // overwrite
 }
 
 // Store
-def STR  : AI2stw<(outs), (ins GPR:$src, addrmode2:$addr), StFrm, IIC_iStorer,
+def STR  : AI2stw<(outs), (ins GPR:$src, addrmode2:$addr), StFrm, IIC_iStore_r,
                "str", "\t$src, $addr",
                [(store GPR:$src, addrmode2:$addr)]>;
 
 // Stores with truncate
 def STRH : AI3sth<(outs), (ins GPR:$src, addrmode3:$addr), StMiscFrm,
-               IIC_iStorer, "strh", "\t$src, $addr",
+               IIC_iStore_bh_r, "strh", "\t$src, $addr",
                [(truncstorei16 GPR:$src, addrmode3:$addr)]>;
 
-def STRB : AI2stb<(outs), (ins GPR:$src, addrmode2:$addr), StFrm, IIC_iStorer,
-               "strb", "\t$src, $addr",
+def STRB : AI2stb<(outs), (ins GPR:$src, addrmode2:$addr), StFrm,
+               IIC_iStore_bh_r, "strb", "\t$src, $addr",
                [(truncstorei8 GPR:$src, addrmode2:$addr)]>;
 
 // Store doubleword
 let mayStore = 1, neverHasSideEffects = 1, hasExtraSrcRegAllocReq = 1 in
 def STRD : AI3std<(outs), (ins GPR:$src1, GPR:$src2, addrmode3:$addr),
-               StMiscFrm, IIC_iStorer,
+               StMiscFrm, IIC_iStore_d_r,
                "strd", "\t$src1, $addr", []>, Requires<[IsARM, HasV5TE]>;
 
 // Indexed stores
 def STR_PRE  : AI2stwpr<(outs GPR:$base_wb),
                      (ins GPR:$src, GPR:$base, am2offset:$offset),
-                     StFrm, IIC_iStoreru,
+                     StFrm, IIC_iStore_ru,
                     "str", "\t$src, [$base, $offset]!", "$base = $base_wb",
                     [(set GPR:$base_wb,
                       (pre_store GPR:$src, GPR:$base, am2offset:$offset))]>;
 
 def STR_POST : AI2stwpo<(outs GPR:$base_wb),
                      (ins GPR:$src, GPR:$base,am2offset:$offset),
-                     StFrm, IIC_iStoreru,
+                     StFrm, IIC_iStore_ru,
                     "str", "\t$src, [$base], $offset", "$base = $base_wb",
                     [(set GPR:$base_wb,
                       (post_store GPR:$src, GPR:$base, am2offset:$offset))]>;
 
 def STRH_PRE : AI3sthpr<(outs GPR:$base_wb),
                      (ins GPR:$src, GPR:$base,am3offset:$offset),
-                     StMiscFrm, IIC_iStoreru,
+                     StMiscFrm, IIC_iStore_ru,
                      "strh", "\t$src, [$base, $offset]!", "$base = $base_wb",
                     [(set GPR:$base_wb,
                       (pre_truncsti16 GPR:$src, GPR:$base,am3offset:$offset))]>;
 
 def STRH_POST: AI3sthpo<(outs GPR:$base_wb),
                      (ins GPR:$src, GPR:$base,am3offset:$offset),
-                     StMiscFrm, IIC_iStoreru,
+                     StMiscFrm, IIC_iStore_bh_ru,
                      "strh", "\t$src, [$base], $offset", "$base = $base_wb",
                     [(set GPR:$base_wb, (post_truncsti16 GPR:$src,
                                          GPR:$base, am3offset:$offset))]>;
 
 def STRB_PRE : AI2stbpr<(outs GPR:$base_wb),
                      (ins GPR:$src, GPR:$base,am2offset:$offset),
-                     StFrm, IIC_iStoreru,
+                     StFrm, IIC_iStore_bh_ru,
                      "strb", "\t$src, [$base, $offset]!", "$base = $base_wb",
                     [(set GPR:$base_wb, (pre_truncsti8 GPR:$src,
                                          GPR:$base, am2offset:$offset))]>;
 
 def STRB_POST: AI2stbpo<(outs GPR:$base_wb),
                      (ins GPR:$src, GPR:$base,am2offset:$offset),
-                     StFrm, IIC_iStoreru,
+                     StFrm, IIC_iStore_bh_ru,
                      "strb", "\t$src, [$base], $offset", "$base = $base_wb",
                     [(set GPR:$base_wb, (post_truncsti8 GPR:$src,
                                          GPR:$base, am2offset:$offset))]>;
@@ -1422,14 +1422,14 @@ def STRB_POST: AI2stbpo<(outs GPR:$base_wb),
 // For disassembly only
 def STRD_PRE : AI3stdpr<(outs GPR:$base_wb),
                      (ins GPR:$src1, GPR:$src2, GPR:$base, am3offset:$offset),
-                     StMiscFrm, IIC_iStoreru,
+                     StMiscFrm, IIC_iStore_d_ru,
                      "strd", "\t$src1, $src2, [$base, $offset]!",
                      "$base = $base_wb", []>;
 
 // For disassembly only
 def STRD_POST: AI3stdpo<(outs GPR:$base_wb),
                      (ins GPR:$src1, GPR:$src2, GPR:$base, am3offset:$offset),
-                     StMiscFrm, IIC_iStoreru,
+                     StMiscFrm, IIC_iStore_d_ru,
                      "strd", "\t$src1, $src2, [$base], $offset",
                      "$base = $base_wb", []>;
 
@@ -1437,7 +1437,7 @@ def STRD_POST: AI3stdpo<(outs GPR:$base_wb),
 
 def STRT : AI2stwpo<(outs GPR:$base_wb),
                     (ins GPR:$src, GPR:$base,am2offset:$offset),
-                    StFrm, IIC_iStoreru,
+                    StFrm, IIC_iStore_ru,
                     "strt", "\t$src, [$base], $offset", "$base = $base_wb",
                     [/* For disassembly only; pattern left blank */]> {
   let Inst{21} = 1; // overwrite
@@ -1445,7 +1445,7 @@ def STRT : AI2stwpo<(outs GPR:$base_wb),
 
 def STRBT : AI2stbpo<(outs GPR:$base_wb),
                      (ins GPR:$src, GPR:$base,am2offset:$offset),
-                     StFrm, IIC_iStoreru,
+                     StFrm, IIC_iStore_bh_ru,
                      "strbt", "\t$src, [$base], $offset", "$base = $base_wb",
                      [/* For disassembly only; pattern left blank */]> {
   let Inst{21} = 1; // overwrite
@@ -1453,7 +1453,7 @@ def STRBT : AI2stbpo<(outs GPR:$base_wb),
 
 def STRHT: AI3sthpo<(outs GPR:$base_wb),
                     (ins GPR:$src, GPR:$base,am3offset:$offset),
-                    StMiscFrm, IIC_iStoreru,
+                    StMiscFrm, IIC_iStore_bh_ru,
                     "strht", "\t$src, [$base], $offset", "$base = $base_wb",
                     [/* For disassembly only; pattern left blank */]> {
   let Inst{21} = 1; // overwrite
@@ -1616,7 +1616,7 @@ defm UXTAB16 : AI_exta_rrot_np<0b01101100, "uxtab16">;
 
 def SBFX  : I<(outs GPR:$dst),
               (ins GPR:$src, imm0_31:$lsb, imm0_31:$width),
-               AddrMode1, Size4Bytes, IndexModeNone, DPFrm, IIC_iBITi,
+               AddrMode1, Size4Bytes, IndexModeNone, DPFrm, IIC_iUNAsi,
                "sbfx", "\t$dst, $src, $lsb, $width", "", []>,
                Requires<[IsARM, HasV6T2]> {
   let Inst{27-21} = 0b0111101;
@@ -1625,7 +1625,7 @@ def SBFX  : I<(outs GPR:$dst),
 
 def UBFX  : I<(outs GPR:$dst),
               (ins GPR:$src, imm0_31:$lsb, imm0_31:$width),
-               AddrMode1, Size4Bytes, IndexModeNone, DPFrm, IIC_iBITi,
+               AddrMode1, Size4Bytes, IndexModeNone, DPFrm, IIC_iUNAsi,
                "ubfx", "\t$dst, $src, $lsb, $width", "", []>,
                Requires<[IsARM, HasV6T2]> {
   let Inst{27-21} = 0b0111111;
@@ -2024,7 +2024,7 @@ def SMMLSR : AMul2I <0b0111010, (outs GPR:$dst), (ins GPR:$a, GPR:$b, GPR:$c),
 
 multiclass AI_smul<string opc, PatFrag opnode> {
   def BB : AMulxyI<0b0001011, (outs GPR:$dst), (ins GPR:$a, GPR:$b),
-              IIC_iMUL32, !strconcat(opc, "bb"), "\t$dst, $a, $b",
+              IIC_iMUL16, !strconcat(opc, "bb"), "\t$dst, $a, $b",
               [(set GPR:$dst, (opnode (sext_inreg GPR:$a, i16),
                                       (sext_inreg GPR:$b, i16)))]>,
            Requires<[IsARM, HasV5TE]> {
@@ -2033,7 +2033,7 @@ multiclass AI_smul<string opc, PatFrag opnode> {
            }
 
   def BT : AMulxyI<0b0001011, (outs GPR:$dst), (ins GPR:$a, GPR:$b),
-              IIC_iMUL32, !strconcat(opc, "bt"), "\t$dst, $a, $b",
+              IIC_iMUL16, !strconcat(opc, "bt"), "\t$dst, $a, $b",
               [(set GPR:$dst, (opnode (sext_inreg GPR:$a, i16),
                                       (sra GPR:$b, (i32 16))))]>,
            Requires<[IsARM, HasV5TE]> {
@@ -2042,7 +2042,7 @@ multiclass AI_smul<string opc, PatFrag opnode> {
            }
 
   def TB : AMulxyI<0b0001011, (outs GPR:$dst), (ins GPR:$a, GPR:$b),
-              IIC_iMUL32, !strconcat(opc, "tb"), "\t$dst, $a, $b",
+              IIC_iMUL16, !strconcat(opc, "tb"), "\t$dst, $a, $b",
               [(set GPR:$dst, (opnode (sra GPR:$a, (i32 16)),
                                       (sext_inreg GPR:$b, i16)))]>,
            Requires<[IsARM, HasV5TE]> {
@@ -2051,7 +2051,7 @@ multiclass AI_smul<string opc, PatFrag opnode> {
            }
 
   def TT : AMulxyI<0b0001011, (outs GPR:$dst), (ins GPR:$a, GPR:$b),
-              IIC_iMUL32, !strconcat(opc, "tt"), "\t$dst, $a, $b",
+              IIC_iMUL16, !strconcat(opc, "tt"), "\t$dst, $a, $b",
               [(set GPR:$dst, (opnode (sra GPR:$a, (i32 16)),
                                       (sra GPR:$b, (i32 16))))]>,
             Requires<[IsARM, HasV5TE]> {
