@@ -24,13 +24,15 @@ DS := /usr/bin/dsymutil
 DSFLAGS =
 CC = gcc
 CFLAGS ?=-arch $(ARCH) -gdwarf-2 -O0
-CPLUSPLUSFLAGS +=$(CFLAGS)
-CPPFLAGS +=$(CFLAGS)
+CXXFLAGS +=$(CFLAGS)
 LD = $(CC)
 LDFLAGS ?= $(CFLAGS)
 OBJECTS =
 EXE = a.out
 DSYM = $(EXE).dSYM
+
+# Function that returns the counterpart C++ compiler.
+cxx_compiler = $(if $(findstring clang,$(1)), clang++, $(if $(findstring llvm-gcc,$(1)), llvm-g++, g++))
 
 #----------------------------------------------------------------------
 # dylib settings
@@ -52,6 +54,7 @@ endif
 #----------------------------------------------------------------------
 ifneq "$(strip $(CXX_SOURCES))" ""
 	OBJECTS +=$(strip $(CXX_SOURCES:.cpp=.o))
+	CXX = $(call cxx_compiler,$(CC))
 	LD = g++
 endif
 
@@ -68,6 +71,7 @@ endif
 #----------------------------------------------------------------------
 ifneq "$(strip $(OBJCXX_SOURCES))" ""
 	OBJECTS +=$(strip $(OBJCXX_SOURCES:.mm=.o))
+	CXX = $(call cxx_compiler,$(CC))
 	LD = g++
 	ifeq $(findstring lobjc,$(LDFLAGS)) ""
 		LDFLAGS +=-lobjc
