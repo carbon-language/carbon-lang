@@ -416,7 +416,7 @@ void ARMAsmPrinter::EmitStartOfAsmFile(Module &M) {
   }
 
   // Use unified assembler syntax.
-  OutStreamer.EmitRawText(StringRef("\t.syntax unified"));
+  OutStreamer.EmitAssemblerFlag(MCAF_SyntaxUnified);
 
   // Emit ARM Build Attributes
   if (Subtarget->isTargetELF()) {

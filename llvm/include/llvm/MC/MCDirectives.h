@@ -43,6 +43,7 @@ enum MCSymbolAttr {
 };
 
 enum MCAssemblerFlag {
+  MCAF_SyntaxUnified,         ///< .syntax (ARM/ELF)
   MCAF_SubsectionsViaSymbols  ///< .subsections_via_symbols (MachO)
 };
   
