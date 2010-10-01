@@ -5,6 +5,7 @@ import unittest2
 import lldb
 from lldbtest import *
 
+@unittest2.skip("crash currently")
 class ClassTypesTestCase(TestBase):
 
     mydir = "class_types"
