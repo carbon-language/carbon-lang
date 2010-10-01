@@ -396,8 +396,6 @@ CFG* CFGBuilder::buildCFG(const Decl *D, Stmt* Statement, ASTContext* C,
     return NULL;
 
   BuildOpts = BO;
-  if (!C->getLangOptions().CPlusPlus)
-    BuildOpts.AddImplicitDtors = false;
 
   // Create an empty block that will serve as the exit block for the CFG.  Since
   // this is the first block added to the CFG, it will be implicitly registered
