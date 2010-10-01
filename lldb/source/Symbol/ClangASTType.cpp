@@ -975,7 +975,7 @@ ClangASTType::GetValueAsScalar
         case lldb::eEncodingSint:
             if (byte_size <= sizeof(long long))
             {
-                int64_t sval64 = (int64_t)data.GetMaxU64 (&offset, byte_size);
+                int64_t sval64 = data.GetMaxS64 (&offset, byte_size);
                 if (byte_size <= sizeof(int))
                 {
                     value = (int)sval64;

@@ -51,7 +51,7 @@ ClangExpressionVariable::Print (Stream &output_stream,
     Error err;
     
     Value val;
-    if (!PointValueAtData (val, &exe_ctx))
+    if (!PointValueAtData (val, NULL))
     {
         err.SetErrorToGenericError();
         err.SetErrorStringWithFormat("Variable doesn't contain a value");
