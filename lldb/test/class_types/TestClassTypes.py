@@ -5,7 +5,6 @@ import unittest2
 import lldb
 from lldbtest import *
 
-@unittest2.skip("crash currently: rdar://problem/8502549")
 class ClassTypesTestCase(TestBase):
 
     mydir = "class_types"
@@ -35,12 +34,14 @@ class ClassTypesTestCase(TestBase):
         self.buildDwarf()
         self.breakpoint_creation_by_filespec_python()
 
+    @unittest2.skip("crash currently: rdar://problem/8502549")
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     def test_with_dsym_and_expr_parser(self):
         """Test 'frame variable this' and 'expr this' when stopped inside a constructor."""
         self.buildDsym()
         self.class_types_expr_parser()
 
+    @unittest2.skip("crash currently: rdar://problem/8502549")
     def test_with_dwarf_and_expr_parser(self):
         """Test 'frame variable this' and 'expr this' when stopped inside a constructor."""
         self.buildDwarf()
@@ -52,8 +53,8 @@ class ClassTypesTestCase(TestBase):
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 
         # Break on the ctor function of class C.
-        self.expect("breakpoint set -f main.cpp -l 73", BREAKPOINT_CREATED,
-            startstr = "Breakpoint created: 1: file ='main.cpp', line = 73, locations = 1")
+        self.expect("breakpoint set -f main.cpp -l 93", BREAKPOINT_CREATED,
+            startstr = "Breakpoint created: 1: file ='main.cpp', line = 93, locations = 1")
 
         self.runCmd("run", RUN_SUCCEEDED)
 
@@ -88,12 +89,12 @@ class ClassTypesTestCase(TestBase):
 
         bpfilespec = lldb.SBFileSpec("main.cpp")
 
-        breakpoint = target.BreakpointCreateByLocation(bpfilespec, 73)
+        breakpoint = target.BreakpointCreateByLocation(bpfilespec, 93)
         self.assertTrue(breakpoint.IsValid(), VALID_BREAKPOINT)
 
         # Verify the breakpoint just created.
         self.expect("breakpoint list", BREAKPOINT_CREATED,
-            substrs = ['main.cpp:73'])
+            substrs = ['main.cpp:93'])
 
         self.runCmd("run", RUN_SUCCEEDED)
 
