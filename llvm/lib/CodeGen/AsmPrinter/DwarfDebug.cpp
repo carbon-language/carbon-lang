@@ -1081,6 +1081,8 @@ void DwarfDebug::constructTypeDIE(DIE &Buffer, DICompositeType CTy) {
         else 
           addUInt(ElemDie, dwarf::DW_AT_accessibility, dwarf::DW_FORM_flag,
             dwarf::DW_ACCESS_public);
+        if (SP.isExplicit())
+          addUInt(ElemDie, dwarf::DW_AT_explicit, dwarf::DW_FORM_flag, 1);
       }
       else if (Element.isVariable()) {
         DIVariable DV(Element);

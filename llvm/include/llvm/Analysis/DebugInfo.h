@@ -54,7 +54,8 @@ namespace llvm {
       FlagAppleBlock       = 1 << 3,
       FlagBlockByrefStruct = 1 << 4,
       FlagVirtual          = 1 << 5,
-      FlagArtificial       = 1 << 6
+      FlagArtificial       = 1 << 6,
+      FlagExplicit         = 1 << 7
     };
   protected:
     const MDNode *DbgNode;
@@ -414,6 +415,13 @@ namespace llvm {
         return false;
       return (getUnsignedField(14) & FlagProtected) != 0;
     }
+    /// isExplicit - Return true if this subprogram is marked as explicit.
+    bool isExplicit() const    { 
+      if (getVersion() <= llvm::LLVMDebugVersion8)
+        return false;
+      return (getUnsignedField(14) & FlagExplicit) != 0;
+    }
+
     unsigned isOptimized() const;
 
     StringRef getFilename() const    { 
