@@ -109,7 +109,6 @@ public:
   void printNEONModImmOperand(const MCInst *MI, unsigned OpNum, raw_ostream &O);
 
   void printPCLabel(const MCInst *MI, unsigned OpNum, raw_ostream &O);
-  void PrintSpecial(const MCInst *MI, raw_ostream &O, const char *Kind) {}
 };
 
 }
