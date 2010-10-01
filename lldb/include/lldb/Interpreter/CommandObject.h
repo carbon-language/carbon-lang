@@ -17,6 +17,7 @@
 
 #include "lldb/lldb-private.h"
 #include "lldb/Interpreter/Args.h"
+#include "lldb/Interpreter/CommandCompletions.h"
 #include "lldb/Core/StringList.h"
 #include "lldb/Core/Flags.h"
 
@@ -25,8 +26,29 @@ namespace lldb_private {
 class CommandObject
 {
 public:
-    typedef std::map<std::string, lldb::CommandObjectSP> CommandMap;
 
+    typedef const char *(ArgumentHelpCallbackFunction) ();
+    
+    struct ArgumentTableEntry  // Entries in the main argument information table
+    {
+        lldb::CommandArgumentType  arg_type;
+        const char *arg_name;
+        CommandCompletions::CommonCompletionTypes completion_type;
+        ArgumentHelpCallbackFunction  *help_function;
+        const char *help_text;
+    };
+    
+    struct CommandArgumentData  // Used to build individual command argument lists
+    {
+        lldb::CommandArgumentType arg_type;
+        lldb::ArgumentRepetitionType arg_repetition;
+    };
+    
+    typedef std::vector<CommandArgumentData> CommandArgumentEntry; // Used to build individual command argument lists
+
+    static ArgumentTableEntry g_arguments_data[lldb::eArgTypeLastArg];   // Main argument information table
+
+    typedef std::map<std::string, lldb::CommandObjectSP> CommandMap;
 
     CommandObject (CommandInterpreter &interpreter,
                    const char *name,
@@ -88,6 +110,30 @@ public:
     virtual Options *
     GetOptions ();
 
+    static const ArgumentTableEntry*
+    GetArgumentTable ();
+
+    static const lldb::CommandArgumentType
+    LookupArgumentName (const char *arg_name);
+
+    static ArgumentTableEntry *
+    FindArgumentDataByType (lldb::CommandArgumentType arg_type);
+
+    int
+    GetNumArgumentEntries ();
+
+    CommandArgumentEntry *
+    GetArgumentEntryAtIndex (int idx);
+
+    static void
+    GetArgumentHelp (Stream &str, lldb::CommandArgumentType arg_type, CommandInterpreter &interpreter);
+
+    const char *
+    GetArgumentName (lldb::CommandArgumentType arg_type);
+
+    void
+    GetFormattedCommandArguments (Stream &str);
+    
     enum 
     {
         eFlagProcessMustBeLaunched = (1 << 0),
@@ -277,6 +323,7 @@ protected:
     std::string m_cmd_syntax;
     bool m_is_alias;
     Flags       m_flags;
+    std::vector<CommandArgumentEntry> m_arguments;
 };
 
 } // namespace lldb_private

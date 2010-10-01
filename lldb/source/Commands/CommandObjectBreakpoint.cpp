@@ -685,8 +685,20 @@ CommandObjectBreakpointList::CommandObjectBreakpointList (CommandInterpreter &in
     CommandObject (interpreter, 
                    "breakpoint list",
                    "List some or all breakpoints at configurable levels of detail.",
-                   "breakpoint list [<breakpoint-id>]")
+                   NULL)
 {
+    CommandArgumentEntry arg;
+    CommandArgumentData bp_id_arg;
+
+    // Define the first (and only) variant of this arg.
+    bp_id_arg.arg_type = eArgTypeBreakpointID;
+    bp_id_arg.arg_repetition = eArgRepeatStar;
+
+    // There is only one variant this argument could be; put it into the argument entry.
+    arg.push_back (bp_id_arg);
+
+    // Push the data for the first argument into the m_arguments vector.
+    m_arguments.push_back (arg);
 }
 
 CommandObjectBreakpointList::~CommandObjectBreakpointList ()
@@ -774,14 +786,28 @@ CommandObjectBreakpointList::Execute
 CommandObjectBreakpointEnable::CommandObjectBreakpointEnable (CommandInterpreter &interpreter) :
     CommandObject (interpreter,
                    "enable",
-                   "Enable the specified disabled breakpoint(s).  If no breakpoints are specified, enable all of them.",
-                   "breakpoint enable [<breakpoint-id> | <breakpoint-id-list>]")
+                   "Enable the specified disabled breakpoint(s). If no breakpoints are specified, enable all of them.",
+                   NULL)
 {
-    // This command object can either be called via 'enable' or 'breakpoint enable'.  Because it has two different
-    // potential invocation methods, we need to be a little tricky about generating the syntax string.
-    //StreamString tmp_string;
-    //tmp_string.Printf ("%s <breakpoint-id>", GetCommandName());
-    //m_cmd_syntax.assign (tmp_string.GetData(), tmp_string.GetSize());
+    CommandArgumentEntry arg;
+    CommandArgumentData bp_id_arg;
+    CommandArgumentData bp_id_range_arg;
+
+    // Create the first variant for the first (and only) argument for this command.
+    bp_id_arg.arg_type = eArgTypeBreakpointID;
+    bp_id_arg.arg_repetition = eArgRepeatStar;
+
+    // Create the second variant for the first (and only) argument for this command.
+    bp_id_range_arg.arg_type = eArgTypeBreakpointIDRange;
+    bp_id_range_arg.arg_repetition = eArgRepeatStar;
+
+    // The first (and only) argument for this command could be either a bp_id or a bp_id_range.
+    // Push both variants into the entry for the first argument for this command.
+    arg.push_back (bp_id_arg);         
+    arg.push_back (bp_id_range_arg);    
+    
+    // Add the entry for the first argument for this command to the object's arguments vector.
+    m_arguments.push_back (arg);   
 }
 
 
@@ -875,15 +901,29 @@ CommandObjectBreakpointEnable::Execute
 
 CommandObjectBreakpointDisable::CommandObjectBreakpointDisable (CommandInterpreter &interpreter) :
     CommandObject (interpreter,
-                   "disable",
+                   "breakpoint disable",
                    "Disable the specified breakpoint(s) without removing it/them.  If no breakpoints are specified, disable them all.",
-                   "disable [<breakpoint-id> | <breakpoint-id-list>]")
+                   NULL)
 {
-    // This command object can either be called via 'enable' or 'breakpoint enable'.  Because it has two different
-    // potential invocation methods, we need to be a little tricky about generating the syntax string.
-    //StreamString tmp_string;
-    //tmp_string.Printf ("%s <breakpoint-id>", GetCommandName());
-    //m_cmd_syntax.assign(tmp_string.GetData(), tmp_string.GetSize());
+    CommandArgumentEntry arg;
+    CommandArgumentData bp_id_arg;
+    CommandArgumentData bp_id_range_arg;
+
+    // Create the first variant for the first (and only) argument for this command.
+    bp_id_arg.arg_type = eArgTypeBreakpointID;
+    bp_id_arg.arg_repetition = eArgRepeatStar;
+
+    // Create the second variant for the first (and only) argument for this command.
+    bp_id_range_arg.arg_type = eArgTypeBreakpointIDRange;
+    bp_id_range_arg.arg_repetition = eArgRepeatStar;
+
+    // The first (and only) argument for this command could be either a bp_id or a bp_id_range.
+    // Push both variants into the entry for the first argument for this command.
+    arg.push_back (bp_id_arg);         
+    arg.push_back (bp_id_range_arg);    
+    
+    // Add the entry for the first argument for this command to the object's arguments vector.
+    m_arguments.push_back (arg);   
 }
 
 CommandObjectBreakpointDisable::~CommandObjectBreakpointDisable ()
@@ -977,8 +1017,27 @@ CommandObjectBreakpointDelete::CommandObjectBreakpointDelete(CommandInterpreter 
     CommandObject (interpreter,
                    "breakpoint delete",
                    "Delete the specified breakpoint(s).  If no breakpoints are specified, delete them all.",
-                   "breakpoint delete [<breakpoint-id> | <breakpoint-id-list>]")
+                   NULL)
 {
+    CommandArgumentEntry arg;
+    CommandArgumentData bp_id_arg;
+    CommandArgumentData bp_id_range_arg;
+
+    // Create the first variant for the first (and only) argument for this command.
+    bp_id_arg.arg_type = eArgTypeBreakpointID;
+    bp_id_arg.arg_repetition = eArgRepeatStar;
+
+    // Create the second variant for the first (and only) argument for this command.
+    bp_id_range_arg.arg_type = eArgTypeBreakpointIDRange;
+    bp_id_range_arg.arg_repetition = eArgRepeatStar;
+
+    // The first (and only) argument for this command could be either a bp_id or a bp_id_range.
+    // Push both variants into the entry for the first argument for this command.
+    arg.push_back (bp_id_arg);         
+    arg.push_back (bp_id_range_arg);    
+    
+    // Add the entry for the first argument for this command to the object's arguments vector.
+    m_arguments.push_back (arg);   
 }
 
 
@@ -1198,8 +1257,27 @@ CommandObjectBreakpointModify::CommandObjectBreakpointModify (CommandInterpreter
     CommandObject (interpreter,
                    "breakpoint modify", 
                    "Modify the options on a breakpoint or set of breakpoints in the executable.", 
-                   "breakpoint modify <cmd-options> <breakpoint-id> [<breakpoint-id> ...]")
+                   NULL)
 {
+    CommandArgumentEntry arg;
+    CommandArgumentData bp_id_arg;
+    CommandArgumentData bp_id_range_arg;
+
+    // Create the first variant for the first (and only) argument for this command.
+    bp_id_arg.arg_type = eArgTypeBreakpointID;
+    bp_id_arg.arg_repetition = eArgRepeatPlus;
+
+    // Create the second variant for the first (and only) argument for this command.
+    bp_id_range_arg.arg_type = eArgTypeBreakpointIDRange;
+    bp_id_range_arg.arg_repetition = eArgRepeatPlus;
+
+    // The first (and only) argument for this command could be either a bp_id or a bp_id_range.
+    // Push both variants into the entry for the first argument for this command.
+    arg.push_back (bp_id_arg);         
+    arg.push_back (bp_id_range_arg);    
+    
+    // Add the entry for the first argument for this command to the object's arguments vector.
+    m_arguments.push_back (arg);   
 }
 
 CommandObjectBreakpointModify::~CommandObjectBreakpointModify ()

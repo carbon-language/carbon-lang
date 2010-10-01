@@ -95,7 +95,14 @@ CommandObjectHelp::Execute (Args& command, CommandReturnObject &result)
                 Stream &output_strm = result.GetOutputStream();
                 if (sub_cmd_obj->GetOptions() != NULL)
                 {
-                    m_interpreter.OutputFormattedHelpText (output_strm, "", "", sub_cmd_obj->GetHelp(), 1);
+                    if (sub_cmd_obj->WantsRawCommandString())
+                    {
+                        std::string help_text (sub_cmd_obj->GetHelp());
+                        help_text.append ("  This command takes 'raw' input (no need to quote stuff).");
+                        m_interpreter.OutputFormattedHelpText (output_strm, "", "", help_text.c_str(), 1);
+                    }
+                    else
+                        m_interpreter.OutputFormattedHelpText (output_strm, "", "", sub_cmd_obj->GetHelp(), 1);
                     output_strm.Printf ("\nSyntax: %s\n", sub_cmd_obj->GetSyntax());
                     sub_cmd_obj->GetOptions()->GenerateOptionUsage (m_interpreter, output_strm, sub_cmd_obj);
                     const char *long_help = sub_cmd_obj->GetHelpLong();
@@ -105,7 +112,14 @@ CommandObjectHelp::Execute (Args& command, CommandReturnObject &result)
                 }
                 else if (sub_cmd_obj->IsMultiwordObject())
                 {
-                    m_interpreter.OutputFormattedHelpText (output_strm, "", "", sub_cmd_obj->GetHelp(), 1);
+                    if (sub_cmd_obj->WantsRawCommandString())
+                    {
+                        std::string help_text (sub_cmd_obj->GetHelp());
+                        help_text.append ("  This command takes 'raw' input (no need to quote stuff).");
+                        m_interpreter.OutputFormattedHelpText (output_strm, "", "", help_text.c_str(), 1);
+                    }
+                    else
+                        m_interpreter.OutputFormattedHelpText (output_strm, "", "", sub_cmd_obj->GetHelp(), 1);
                     ((CommandObjectMultiword *) sub_cmd_obj)->GenerateHelpText (result);
                 }
                 else
@@ -114,6 +128,12 @@ CommandObjectHelp::Execute (Args& command, CommandReturnObject &result)
                     if ((long_help != NULL)
                         && (strlen (long_help) > 0))
                         output_strm.Printf ("\n%s", long_help);
+                    else if (sub_cmd_obj->WantsRawCommandString())
+                    {
+                        std::string help_text (sub_cmd_obj->GetHelp());
+                        help_text.append ("  This command takes 'raw' input (no need to quote stuff).");
+                        m_interpreter.OutputFormattedHelpText (output_strm, "", "", help_text.c_str(), 1);
+                    }
                     else
                         m_interpreter.OutputFormattedHelpText (output_strm, "", "", sub_cmd_obj->GetHelp(), 1);
                     output_strm.Printf ("\nSyntax: %s\n", sub_cmd_obj->GetSyntax());
@@ -132,10 +152,21 @@ CommandObjectHelp::Execute (Args& command, CommandReturnObject &result)
         }
         else
         {
-            result.AppendErrorWithFormat 
-            ("'%s' is not a known command.\nTry 'help' to see a current list of commands.\n",
-             command.GetArgumentAtIndex(0));
-            result.SetStatus (eReturnStatusFailed);
+            // Maybe the user is asking for help about a command argument rather than a command.
+            const CommandArgumentType arg_type = CommandObject::LookupArgumentName (command.GetArgumentAtIndex (0));
+            if (arg_type != eArgTypeLastArg)
+            {
+                Stream &output_strm = result.GetOutputStream ();
+                CommandObject::GetArgumentHelp (output_strm, arg_type, m_interpreter);
+                result.SetStatus (eReturnStatusSuccessFinishNoResult);
+            }
+            else
+            {
+                result.AppendErrorWithFormat 
+                    ("'%s' is not a known command.\nTry 'help' to see a current list of commands.\n",
+                     command.GetArgumentAtIndex(0));
+                result.SetStatus (eReturnStatusFailed);
+            }
         }
     }
     

@@ -503,6 +503,75 @@ typedef enum VarSetOperationType
     eVarSetOperationInvalid
 } VarSetOperationType;
 
+//----------------------------------------------------------------------
+/// Command argument types.
+///
+//----------------------------------------------------------------------
+
+typedef enum CommandArgumentType
+{
+    eArgTypeAddress = 0,
+    eArgTypeArchitecture,
+    eArgTypeBoolean,
+    eArgTypeBreakpointID,
+    eArgTypeBreakpointIDRange,
+    eArgTypeByteSize,
+    eArgTypeChannel,
+    eArgTypeCount,
+    eArgTypeExpression,
+    eArgTypeFilename,
+    eArgTypeFormat,
+    eArgTypeFullName,
+    eArgTypeFunctionName,
+    eArgTypeIndex,
+    eArgTypeLineNum,
+    eArgTypeMethod,
+    eArgTypeName,
+    eArgTypeNumLines,
+    eArgTypeNumberPerLine,
+    eArgTypeOffset,
+    eArgTypeOther,
+    eArgTypePath, 
+    eArgTypePathPrefix,
+    eArgTypePathPrefixPair,
+    eArgTypePid,
+    eArgTypePlugin,
+    eArgTypeProcessName,
+    eArgTypeQueueName,
+    eArgTypeRegisterName,
+    eArgTypeRegularExpression,
+    eArgTypeRunMode,
+    eArgTypeSearchWord,
+    eArgTypeSelector,
+    eArgTypeSettingIndex,
+    eArgTypeSettingKey,
+    eArgTypeSettingPrefix,
+    eArgTypeSettingVariableName,
+    eArgTypeShlibName,
+    eArgTypeSourceFile,
+    eArgTypeStartAddress,
+    eArgTypeSymbol,
+    eArgTypeThreadID,
+    eArgTypeThreadIndex,
+    eArgTypeThreadName,
+    eArgTypeUUID,
+    eArgTypeUnixSignalNumber,
+    eArgTypeVarName,
+    eArgTypeValue,
+    eArgTypeWidth,
+    eArgTypeNone,
+    eArgTypeLastArg  // Always keep this entry as the last entry in this enumeration!!
+} CommandArgumentType;
+
+typedef enum ArgumentRepetitionType
+{
+    eArgRepeatPlain,    // Exactly one occurrence
+    eArgRepeatOptional, // At most one occurrence, but it's optional
+    eArgRepeatPlus,     // One or more occurrences
+    eArgRepeatStar      // Zero or more occurrences
+} ArgumentRepetitionType;
+
+
 } // namespace lldb
 
 

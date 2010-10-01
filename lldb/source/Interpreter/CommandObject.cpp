@@ -52,7 +52,8 @@ CommandObject::CommandObject
     m_cmd_help_long (),
     m_cmd_syntax (),
     m_is_alias (false),
-    m_flags (flags)
+    m_flags (flags),
+    m_arguments()
 {
     if (help && help[0])
         m_cmd_help_short = help;
@@ -79,6 +80,20 @@ CommandObject::GetHelpLong ()
 const char *
 CommandObject::GetSyntax ()
 {
+    if (m_cmd_syntax.length() == 0)
+    {
+        StreamString syntax_str;
+        syntax_str.Printf ("%s", GetCommandName());
+        if (GetOptions() != NULL)
+            syntax_str.Printf (" <cmd-options> ");
+        if (m_arguments.size() > 0)
+        {
+            syntax_str.Printf (" ");
+            GetFormattedCommandArguments (syntax_str);
+        }
+        m_cmd_syntax = syntax_str.GetData ();
+    }
+
     return m_cmd_syntax.c_str();
 }
 
@@ -431,3 +446,188 @@ CommandObject::HelpTextContainsWord (const char *search_word)
 
     return found_word;
 }
+
+int
+CommandObject::GetNumArgumentEntries  ()
+{
+    return m_arguments.size();
+}
+
+CommandObject::CommandArgumentEntry *
+CommandObject::GetArgumentEntryAtIndex (int idx)
+{
+    if (idx < m_arguments.size())
+        return &(m_arguments[idx]);
+
+    return NULL;
+}
+
+CommandObject::ArgumentTableEntry *
+CommandObject::FindArgumentDataByType (CommandArgumentType arg_type)
+{
+    const ArgumentTableEntry *table = CommandObject::GetArgumentTable();
+
+    for (int i = 0; i < eArgTypeLastArg; ++i)
+        if (table[i].arg_type == arg_type)
+            return (ArgumentTableEntry *) &(table[i]);
+
+    return NULL;
+}
+
+void
+CommandObject::GetArgumentHelp (Stream &str, CommandArgumentType arg_type, CommandInterpreter &interpreter)
+{
+    const ArgumentTableEntry* table = CommandObject::GetArgumentTable();
+    ArgumentTableEntry *entry = (ArgumentTableEntry *) &(table[arg_type]);
+    
+    // The table is *supposed* to be kept in arg_type order, but someone *could* have messed it up...
+
+    if (entry->arg_type != arg_type)
+        entry = CommandObject::FindArgumentDataByType (arg_type);
+
+    if (!entry)
+        return;
+
+    StreamString name_str;
+    name_str.Printf ("<%s>", entry->arg_name);
+
+    if (entry->help_function != NULL)
+        interpreter.OutputFormattedHelpText (str, name_str.GetData(), "--", (*(entry->help_function)) (),
+                                             name_str.GetSize());
+    else
+        interpreter.OutputFormattedHelpText (str, name_str.GetData(), "--", entry->help_text, name_str.GetSize());
+}
+
+const char *
+CommandObject::GetArgumentName (CommandArgumentType arg_type)
+{
+    return CommandObject::GetArgumentTable()[arg_type].arg_name;
+}
+
+void
+CommandObject::GetFormattedCommandArguments (Stream &str)
+{
+    int num_args = m_arguments.size();
+    for (int i = 0; i < num_args; ++i)
+    {
+        if (i > 0)
+            str.Printf (" ");
+        CommandArgumentEntry arg_entry = m_arguments[i];
+        int num_alternatives = arg_entry.size();
+        StreamString names;
+        for (int j = 0; j < num_alternatives; ++j)
+        {
+            if (j > 0)
+                names.Printf (" | ");
+            names.Printf ("%s", GetArgumentName (arg_entry[j].arg_type));
+        }
+        switch (arg_entry[0].arg_repetition)
+        {
+            case eArgRepeatPlain:
+                str.Printf ("<%s>", names.GetData());
+                break;
+            case eArgRepeatPlus:
+                str.Printf ("<%s> [<%s> [...]]", names.GetData(), names.GetData());
+                break;
+            case eArgRepeatStar:
+                str.Printf ("[<%s> [<%s> [...]]]", names.GetData(), names.GetData());
+                break;
+            case eArgRepeatOptional:
+                str.Printf ("[<%s>]", names.GetData());
+                break;
+        }
+    }
+}
+
+const CommandArgumentType
+CommandObject::LookupArgumentName (const char *arg_name)
+{
+    CommandArgumentType return_type = eArgTypeLastArg;
+
+    std::string arg_name_str (arg_name);
+    size_t len = arg_name_str.length();
+    if (arg_name[0] == '<'
+        && arg_name[len-1] == '>')
+        arg_name_str = arg_name_str.substr (1, len-2);
+
+    for (int i = 0; i < eArgTypeLastArg; ++i)
+        if (arg_name_str.compare (g_arguments_data[i].arg_name) == 0)
+            return_type = g_arguments_data[i].arg_type;
+
+    return return_type;
+}
+
+static const char *
+BreakpointIDHelpTextCallback ()
+{
+    return "Breakpoint ID's consist major and minor numbers;  the major number corresponds to the single entity that was created with a 'breakpoint set' command; the minor numbers correspond to all the locations that were actually found/set based on the major breakpoint.  A full breakpoint ID might look like 3.14, meaning the 14th location set for the 3rd breakpoint.  You can specify all the locations of a breakpoint by just indicating the major breakpoint number. A valid breakpoint id consists either of just the major id number, or the major number, a dot, and the location number (e.g. 3 or 3.2 could both be valid breakpoint ids).";
+}
+
+static const char *
+BreakpointIDRangeHelpTextCallback ()
+{
+    return "A 'breakpoint id range' is a manner of specifying multiple breakpoints. This can be done  through several mechanisms.  The easiest way is to just enter a space-separated list of breakpoint ids.  To specify all the breakpoint locations under a major breakpoint, you can use the major breakpoint number followed by '.*', eg. '5.*' means all the locations under breakpoint 5.  You can also indicate a range of breakpoints by using <start-bp-id> - <end-bp-id>.  The start-bp-id and end-bp-id for a range can be any valid breakpoint ids.  It is not legal, however, to specify a range using specific locations that cross major breakpoint numbers.  I.e. 3.2 - 3.7 is legal; 2 - 5 is legal; but 3.2 - 4.4 is not legal.";
+}
+
+CommandObject::ArgumentTableEntry
+CommandObject::g_arguments_data[] =
+{
+    { eArgTypeAddress, "address", CommandCompletions::eNoCompletion, NULL, "Help text goes here." },
+    { eArgTypeArchitecture, "architecture", CommandCompletions::eNoCompletion, NULL, "Help text goes here." },
+    { eArgTypeBoolean, "boolean", CommandCompletions::eNoCompletion, NULL, "Help text goes here." },
+    { eArgTypeBreakpointID, "breakpoint-id", CommandCompletions::eNoCompletion, BreakpointIDHelpTextCallback, NULL },
+    { eArgTypeBreakpointIDRange, "breakpoint-id-range", CommandCompletions::eNoCompletion, BreakpointIDRangeHelpTextCallback, NULL },
+    { eArgTypeByteSize, "byte-size", CommandCompletions::eNoCompletion, NULL, "Help text goes here." },
+    { eArgTypeChannel, "channel", CommandCompletions::eNoCompletion, NULL, "Help text goes here." },
+    { eArgTypeCount, "count", CommandCompletions::eNoCompletion, NULL, "Help text goes here." },
+    { eArgTypeExpression, "expression", CommandCompletions::eNoCompletion, NULL, "Help text goes here." },
+    { eArgTypeFilename, "filename", CommandCompletions::eNoCompletion, NULL, "Help text goes here." },
+    { eArgTypeFormat, "format", CommandCompletions::eNoCompletion, NULL, "Help text goes here." },
+    { eArgTypeFullName, "full-name", CommandCompletions::eNoCompletion, NULL, "Help text goes here." },
+    { eArgTypeFunctionName, "function-name", CommandCompletions::eNoCompletion, NULL, "Help text goes here." },
+    { eArgTypeIndex, "index", CommandCompletions::eNoCompletion, NULL, "Help text goes here." },
+    { eArgTypeLineNum, "line-num", CommandCompletions::eNoCompletion, NULL, "Help text goes here." },
+    { eArgTypeMethod, "method", CommandCompletions::eNoCompletion, NULL, "Help text goes here." },
+    { eArgTypeName, "name", CommandCompletions::eNoCompletion, NULL, "Help text goes here." },
+    { eArgTypeNumLines, "num-lines", CommandCompletions::eNoCompletion, NULL, "Help text goes here." },
+    { eArgTypeNumberPerLine, "number-per-line", CommandCompletions::eNoCompletion, NULL, "Help text goes here." },
+    { eArgTypeOffset, "offset", CommandCompletions::eNoCompletion, NULL, "Help text goes here." },
+    { eArgTypeOther, "other", CommandCompletions::eNoCompletion, NULL, "Help text goes here." },
+    { eArgTypePath, "path", CommandCompletions::eNoCompletion, NULL, "Help text goes here." },
+    { eArgTypePathPrefix, "path-prefix", CommandCompletions::eNoCompletion, NULL, "Help text goes here." },
+    { eArgTypePathPrefixPair, "path-prefix-pair", CommandCompletions::eNoCompletion, NULL, "Help text goes here." },
+    { eArgTypePid, "pid", CommandCompletions::eNoCompletion, NULL, "Help text goes here." },
+    { eArgTypePlugin, "plugin", CommandCompletions::eNoCompletion, NULL, "Help text goes here." },
+    { eArgTypeProcessName, "process-name", CommandCompletions::eNoCompletion, NULL, "Help text goes here." },
+    { eArgTypeQueueName, "queue-name", CommandCompletions::eNoCompletion, NULL, "Help text goes here." },
+    { eArgTypeRegisterName, "register-name", CommandCompletions::eNoCompletion, NULL, "Help text goes here." },
+    { eArgTypeRegularExpression, "regular-expression", CommandCompletions::eNoCompletion, NULL, "Help text goes here." },
+    { eArgTypeRunMode, "run-mode", CommandCompletions::eNoCompletion, NULL, "Help text goes here." },
+    { eArgTypeSearchWord, "search-word", CommandCompletions::eNoCompletion, NULL, "Help text goes here." },
+    { eArgTypeSelector, "selector", CommandCompletions::eNoCompletion, NULL, "Help text goes here." },
+    { eArgTypeSettingIndex, "setting-index", CommandCompletions::eNoCompletion, NULL, "Help text goes here." },
+    { eArgTypeSettingKey, "setting-key", CommandCompletions::eNoCompletion, NULL, "Help text goes here." },
+    { eArgTypeSettingPrefix, "setting-prefix", CommandCompletions::eNoCompletion, NULL, "Help text goes here." },
+    { eArgTypeSettingVariableName, "setting-variable-name", CommandCompletions::eNoCompletion, NULL, "Help text goes here." },
+    { eArgTypeShlibName, "shlib-name", CommandCompletions::eNoCompletion, NULL, "Help text goes here." },
+    { eArgTypeSourceFile, "source-file", CommandCompletions::eNoCompletion, NULL, "Help text goes here." },
+    { eArgTypeStartAddress, "start-address", CommandCompletions::eNoCompletion, NULL, "Help text goes here." },
+    { eArgTypeSymbol, "symbol", CommandCompletions::eNoCompletion, NULL, "Help text goes here." },
+    { eArgTypeThreadID, "thread-id", CommandCompletions::eNoCompletion, NULL, "Help text goes here." },
+    { eArgTypeThreadIndex, "thread-index", CommandCompletions::eNoCompletion, NULL, "Help text goes here." },
+    { eArgTypeThreadName, "thread-name", CommandCompletions::eNoCompletion, NULL, "Help text goes here." },
+    { eArgTypeUUID, "UUID", CommandCompletions::eNoCompletion, NULL, "Help text goes here." },
+    { eArgTypeUnixSignalNumber, "unix-signal-number", CommandCompletions::eNoCompletion, NULL, "Help text goes here." },
+    { eArgTypeVarName, "var-name", CommandCompletions::eNoCompletion, NULL, "Help text goes here." },
+    { eArgTypeValue, "value", CommandCompletions::eNoCompletion, NULL, "Help text goes here." },
+    { eArgTypeWidth, "width", CommandCompletions::eNoCompletion, NULL, "Help text goes here." },
+    { eArgTypeNone, "none", CommandCompletions::eNoCompletion, NULL, "Help text goes here." },
+};
+
+const CommandObject::ArgumentTableEntry*
+CommandObject::GetArgumentTable ()
+{
+    return CommandObject::g_arguments_data;
+}
+
+

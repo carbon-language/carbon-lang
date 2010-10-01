@@ -372,8 +372,13 @@ Options::GenerateOptionUsage
     const uint32_t save_indent_level = strm.GetIndentLevel();
     const char *name;
 
+    StreamString arguments_str;
+
     if (cmd)
+    {
         name = cmd->GetCommandName();
+        cmd->GetFormattedCommandArguments (arguments_str);
+    }
     else
         name = "";
 
@@ -517,6 +522,8 @@ Options::GenerateOptionUsage
                 }
             }
         }
+        if (arguments_str.GetSize() > 0)
+            strm.Printf (" %s", arguments_str.GetData());
     }
     strm.Printf ("\n\n");
 

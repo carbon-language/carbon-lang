@@ -196,11 +196,22 @@ CommandObjectMultiword::GenerateHelpText (CommandReturnObject &result)
     {
         std::string indented_command ("    ");
         indented_command.append (pos->first);
-        m_interpreter.OutputFormattedHelpText (result.GetOutputStream(), 
-                                               indented_command.c_str(),
-                                               "--", 
-                                               pos->second->GetHelp(), 
-                                               max_len);
+        if (pos->second->WantsRawCommandString ())
+        {
+            std::string help_text (pos->second->GetHelp());
+            help_text.append ("  This command takes 'raw' input (no need to quote stuff).");
+            m_interpreter.OutputFormattedHelpText (result.GetOutputStream(),
+                                                   indented_command.c_str(),
+                                                   "--",
+                                                   help_text.c_str(),
+                                                   max_len);
+        }
+        else
+            m_interpreter.OutputFormattedHelpText (result.GetOutputStream(), 
+                                                   indented_command.c_str(),
+                                                   "--", 
+                                                   pos->second->GetHelp(), 
+                                                   max_len);
     }
 
     output_stream.PutCString ("\nFor more help on any particular subcommand, type 'help <command> <subcommand>'.\n");
