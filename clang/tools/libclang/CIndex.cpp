@@ -2518,20 +2518,26 @@ CXFile clang_getFile(CXTranslationUnit tu, const char *file_name) {
 //===----------------------------------------------------------------------===//
 
 static Decl *getDeclFromExpr(Stmt *E) {
+  if (CastExpr *CE = dyn_cast<CastExpr>(E))
+    return getDeclFromExpr(CE->getSubExpr());
+
   if (DeclRefExpr *RefExpr = dyn_cast<DeclRefExpr>(E))
     return RefExpr->getDecl();
   if (MemberExpr *ME = dyn_cast<MemberExpr>(E))
     return ME->getMemberDecl();
   if (ObjCIvarRefExpr *RE = dyn_cast<ObjCIvarRefExpr>(E))
     return RE->getDecl();
-
+  if (ObjCPropertyRefExpr *PRE = dyn_cast<ObjCPropertyRefExpr>(E))
+    return PRE->getProperty();
+      
   if (CallExpr *CE = dyn_cast<CallExpr>(E))
     return getDeclFromExpr(CE->getCallee());
-  if (CastExpr *CE = dyn_cast<CastExpr>(E))
-    return getDeclFromExpr(CE->getSubExpr());
   if (ObjCMessageExpr *OME = dyn_cast<ObjCMessageExpr>(E))
     return OME->getMethodDecl();
 
+  if (ObjCProtocolExpr *PE = dyn_cast<ObjCProtocolExpr>(E))
+    return PE->getProtocol();
+  
   return 0;
 }
 

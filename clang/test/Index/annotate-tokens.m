@@ -77,9 +77,18 @@ extern int ibaction_test(void);
     int second = [self foo:0];
     return local;
 }
+- (int)othermethod:(IBOutletTests *)ibt {
+  return *ibt.aPropOutlet;
+}
 @end
 
-// RUN: c-index-test -test-annotate-tokens=%s:1:1:80:4 %s -DIBOutlet='__attribute__((iboutlet))' -DIBAction='void)__attribute__((ibaction)' | FileCheck %s
+@protocol Proto @end
+
+void f() {
+  (void)@protocol(Proto);
+}
+
+// RUN: c-index-test -test-annotate-tokens=%s:1:1:89:2 %s -DIBOutlet='__attribute__((iboutlet))' -DIBAction='void)__attribute__((ibaction)' | FileCheck %s
 // CHECK: Punctuation: "@" [1:1 - 1:2] ObjCInterfaceDecl=Foo:1:12
 // CHECK: Keyword: "interface" [1:2 - 1:11] ObjCInterfaceDecl=Foo:1:12
 // CHECK: Identifier: "Foo" [1:12 - 1:15] ObjCInterfaceDecl=Foo:1:12
@@ -347,5 +356,44 @@ extern int ibaction_test(void);
 // CHECK: Identifier: "local" [78:12 - 78:17] DeclRefExpr=local:76:9
 // CHECK: Punctuation: ";" [78:17 - 78:18] UnexposedStmt=
 // CHECK: Punctuation: "}" [79:1 - 79:2] UnexposedStmt=
-// CHECK: Punctuation: "@" [80:1 - 80:2] ObjCImplementationDecl=R7974151:70:1 (Definition)
-// CHECK: Keyword: "end" [80:2 - 80:5]
+// CHECK: Punctuation: "-" [80:1 - 80:2] ObjCInstanceMethodDecl=othermethod::80:1 (Definition)
+// CHECK: Punctuation: "(" [80:3 - 80:4] ObjCInstanceMethodDecl=othermethod::80:1 (Definition)
+// CHECK: Keyword: "int" [80:4 - 80:7] ObjCInstanceMethodDecl=othermethod::80:1 (Definition)
+// CHECK: Punctuation: ")" [80:7 - 80:8] ObjCInstanceMethodDecl=othermethod::80:1 (Definition)
+// CHECK: Identifier: "othermethod" [80:8 - 80:19] ObjCInstanceMethodDecl=othermethod::80:1 (Definition)
+// CHECK: Punctuation: ":" [80:19 - 80:20] ObjCInstanceMethodDecl=othermethod::80:1 (Definition)
+// CHECK: Punctuation: "(" [80:20 - 80:21] ObjCInstanceMethodDecl=othermethod::80:1 (Definition)
+// CHECK: Identifier: "IBOutletTests" [80:21 - 80:34] ObjCClassRef=IBOutletTests:51:12
+// CHECK: Punctuation: "*" [80:35 - 80:36] ParmDecl=ibt:80:37 (Definition)
+// CHECK: Punctuation: ")" [80:36 - 80:37] ParmDecl=ibt:80:37 (Definition)
+// CHECK: Identifier: "ibt" [80:37 - 80:40] ParmDecl=ibt:80:37 (Definition)
+// CHECK: Punctuation: "{" [80:41 - 80:42] UnexposedStmt=
+// CHECK: Keyword: "return" [81:3 - 81:9] UnexposedStmt=
+// CHECK: Punctuation: "*" [81:10 - 81:11] UnexposedExpr=
+// CHECK: Identifier: "ibt" [81:11 - 81:14] DeclRefExpr=ibt:80:37
+// CHECK: Punctuation: "." [81:14 - 81:15] MemberRefExpr=aPropOutlet:56:26
+// CHECK: Identifier: "aPropOutlet" [81:15 - 81:26] MemberRefExpr=aPropOutlet:56:26
+// CHECK: Punctuation: ";" [81:26 - 81:27] UnexposedStmt=
+// CHECK: Punctuation: "}" [82:1 - 82:2] UnexposedStmt=
+// CHECK: Punctuation: "@" [83:1 - 83:2] ObjCImplementationDecl=R7974151:70:1 (Definition)
+// CHECK: Keyword: "end" [83:2 - 83:5]
+// CHECK: Punctuation: "@" [85:1 - 85:2] ObjCProtocolDecl=Proto:85:1 (Definition)
+// CHECK: Keyword: "protocol" [85:2 - 85:10] ObjCProtocolDecl=Proto:85:1 (Definition)
+// CHECK: Identifier: "Proto" [85:11 - 85:16] ObjCProtocolDecl=Proto:85:1 (Definition)
+// CHECK: Punctuation: "@" [85:17 - 85:18] ObjCProtocolDecl=Proto:85:1 (Definition)
+// CHECK: Keyword: "end" [85:18 - 85:21] ObjCProtocolDecl=Proto:85:1 (Definition)
+// CHECK: Keyword: "void" [87:1 - 87:5] FunctionDecl=f:87:6 (Definition)
+// CHECK: Identifier: "f" [87:6 - 87:7] FunctionDecl=f:87:6 (Definition)
+// CHECK: Punctuation: "(" [87:7 - 87:8] FunctionDecl=f:87:6 (Definition)
+// CHECK: Punctuation: ")" [87:8 - 87:9] FunctionDecl=f:87:6 (Definition)
+// CHECK: Punctuation: "{" [87:10 - 87:11] UnexposedStmt=
+// CHECK: Punctuation: "(" [88:3 - 88:4] UnexposedExpr=Proto:85:1
+// CHECK: Keyword: "void" [88:4 - 88:8] UnexposedExpr=Proto:85:1
+// CHECK: Punctuation: ")" [88:8 - 88:9] UnexposedExpr=Proto:85:1
+// CHECK: Punctuation: "@" [88:9 - 88:10] UnexposedExpr=Proto:85:1
+// CHECK: Keyword: "protocol" [88:10 - 88:18] UnexposedExpr=Proto:85:1
+// CHECK: Punctuation: "(" [88:18 - 88:19] UnexposedExpr=Proto:85:1
+// CHECK: Identifier: "Proto" [88:19 - 88:24] UnexposedExpr=Proto:85:1
+// CHECK: Punctuation: ")" [88:24 - 88:25] UnexposedExpr=Proto:85:1
+// CHECK: Punctuation: ";" [88:25 - 88:26] UnexposedStmt=
+// CHECK: Punctuation: "}" [89:1 - 89:2] UnexposedStmt=
