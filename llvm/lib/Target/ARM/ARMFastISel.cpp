@@ -718,17 +718,17 @@ bool ARMFastISel::ARMEmitStore(EVT VT, unsigned SrcReg,
   // mode, the floating point one only has two operands.
   if (isFloat)
     AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
-                            TII.get(StrOpc), SrcReg)
-                    .addReg(DstReg).addImm(Offset));
+                            TII.get(StrOpc))
+                    .addReg(SrcReg).addReg(DstReg).addImm(Offset));
   else if (isThumb)
     AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
-                            TII.get(StrOpc), SrcReg)
-                    .addReg(DstReg).addImm(Offset).addReg(0));
+                            TII.get(StrOpc))
+                    .addReg(SrcReg).addReg(DstReg).addImm(Offset).addReg(0));
 
   else
     AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
-                            TII.get(StrOpc), SrcReg)
-                    .addReg(DstReg).addReg(0).addImm(Offset));
+                            TII.get(StrOpc))
+                    .addReg(SrcReg).addReg(DstReg).addReg(0).addImm(Offset));
 
   return true;
 }
