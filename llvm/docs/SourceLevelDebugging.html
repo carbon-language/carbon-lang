@@ -789,11 +789,11 @@ DW_TAG_return_variable = 258
 
 <div class="doc_text">
 <pre>
-  void %<a href="#format_common_declare">llvm.dbg.declare</a>({}*, metadata)
+  void %<a href="#format_common_declare">llvm.dbg.declare</a>(metadata, metadata)
 </pre>
 
 <p>This intrinsic provides information about a local element (ex. variable.) The
-   first argument is the alloca for the variable, cast to a <tt>{}*</tt>. The
+   first argument is metadata holding alloca for the variable.</tt>. The
    second argument is
    the <tt>%<a href="#format_variables">llvm.dbg.variable</a></tt> containing
    the description of the variable. </p>
