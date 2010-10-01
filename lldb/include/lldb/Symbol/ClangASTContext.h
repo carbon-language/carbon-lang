@@ -190,7 +190,8 @@ public:
                               lldb::AccessType access,
                               bool is_virtual,
                               bool is_static,
-                              bool is_inline);
+                              bool is_inline,
+                              bool is_explicit);
     
     clang::CXXMethodDecl *
     AddMethodToCXXRecordType (lldb::clang_type_t record_opaque_type,
@@ -199,7 +200,8 @@ public:
                               lldb::AccessType access,
                               bool is_virtual,
                               bool is_static,
-                              bool is_inline)
+                              bool is_inline,
+                              bool is_explicit)
     
     {
         return ClangASTContext::AddMethodToCXXRecordType (getASTContext(),
@@ -209,7 +211,8 @@ public:
                                                           access,
                                                           is_virtual,
                                                           is_static,
-                                                          is_inline);
+                                                          is_inline,
+                                                          is_explicit);
     }
     
     bool

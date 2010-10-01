@@ -1119,11 +1119,12 @@ ClangExpressionDeclMap::AddOneType(NameSearchContext &context,
                                                                  1,
                                                                  false,
                                                                  ClangASTContext::GetTypeQualifiers(copied_type));
-        
+
         const bool is_virtual = false;
         const bool is_static = false;
         const bool is_inline = false;
-
+        const bool is_explicit = false;
+        
         ClangASTContext::AddMethodToCXXRecordType (parser_ast_context,
                                                    copied_type,
                                                    "___clang_expr",
@@ -1131,7 +1132,8 @@ ClangExpressionDeclMap::AddOneType(NameSearchContext &context,
                                                    lldb::eAccessPublic,
                                                    is_virtual,
                                                    is_static,
-                                                   is_inline);
+                                                   is_inline,
+                                                   is_explicit);
     }
     
     context.AddTypeDecl(copied_type);

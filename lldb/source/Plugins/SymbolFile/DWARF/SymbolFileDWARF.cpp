@@ -2797,6 +2797,7 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                     bool is_inline = false;
                     bool is_static = false;
                     bool is_virtual = false;
+                    bool is_explicit = false;
 
                     unsigned type_quals = 0;
                     clang::StorageClass storage = clang::SC_None;//, Extern, Static, PrivateExtern
@@ -2828,6 +2829,8 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                                 case DW_AT_declaration:         is_forward_declaration = form_value.Unsigned() != 0; break;
                                 case DW_AT_inline:              is_inline = form_value.Unsigned() != 0; break;
                                 case DW_AT_virtuality:          is_virtual = form_value.Unsigned() != 0;  break;
+                                case DW_AT_explicit:            is_explicit = form_value.Unsigned() != 0;  break; 
+
                                 case DW_AT_external:
                                     if (form_value.Unsigned())
                                     {
@@ -2846,7 +2849,6 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                                 case DW_AT_data_location:
                                 case DW_AT_elemental:
                                 case DW_AT_entry_pc:
-                                case DW_AT_explicit:
                                 case DW_AT_frame_base:
                                 case DW_AT_high_pc:
                                 case DW_AT_low_pc:
@@ -2872,11 +2874,16 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                         }
 
                         clang_type_t return_clang_type = NULL;
-                        Type *func_type = ResolveTypeUID(type_die_offset);
+                        Type *func_type = NULL;
+                        
+                        if (type_die_offset != DW_INVALID_OFFSET)
+                            func_type = ResolveTypeUID(type_die_offset);
+
                         if (func_type)
                             return_clang_type = func_type->GetClangType(true);
                         else
                             return_clang_type = type_list->GetClangASTContext().GetBuiltInType_void();
+
 
                         std::vector<clang_type_t> function_param_types;
                         std::vector<clang::ParmVarDecl*> function_param_decls;
@@ -2887,6 +2894,7 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
 
                         // clang_type will get the function prototype clang type after this call
                         clang_type = type_list->GetClangASTContext().CreateFunctionType (return_clang_type, &function_param_types[0], function_param_types.size(), is_variadic, type_quals);
+
                         if (type_name_cstr)
                         {
                             bool type_handled = false;
@@ -2960,7 +2968,8 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                                                                                                                         accessibility,
                                                                                                                         is_virtual,
                                                                                                                         is_static,
-                                                                                                                        is_inline);
+                                                                                                                        is_inline,
+                                                                                                                        is_explicit);
                                             type_handled = cxx_method_decl != NULL;
                                         }
                                     }

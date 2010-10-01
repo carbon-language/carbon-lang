@@ -813,7 +813,8 @@ ClangASTContext::AddMethodToCXXRecordType
     lldb::AccessType access,
     bool is_virtual,
     bool is_static,
-    bool is_inline
+    bool is_inline,
+    bool is_explicit
 )
 {
     if (!record_opaque_type || !method_opaque_type || !name)
@@ -849,15 +850,34 @@ ClangASTContext::AddMethodToCXXRecordType
     
     QualType method_qual_type (QualType::getFromOpaquePtr (method_opaque_type));
     
-    CXXMethodDecl *cxx_method_decl = CXXMethodDecl::Create (*ast_context,
-                                                            cxx_record_decl,
-                                                            DeclarationNameInfo (DeclarationName (&identifier_table->get(name)), SourceLocation()),
-                                                            method_qual_type,
-                                                            NULL, // TypeSourceInfo *
-                                                            is_static,
-                                                            SC_None,
-                                                            is_inline);
+    CXXMethodDecl *cxx_method_decl = NULL;
     
+    DeclarationName decl_name (&identifier_table->get(name));
+    
+    if (name[0] == '~' || decl_name == record_decl->getDeclName())
+    {
+        bool is_implicitly_declared = false;
+        cxx_method_decl = CXXConstructorDecl::Create (*ast_context,
+                                                      cxx_record_decl,
+                                                      DeclarationNameInfo (decl_name, SourceLocation()),
+                                                      method_qual_type,
+                                                      NULL, // TypeSourceInfo *
+                                                      is_explicit, 
+                                                      is_inline,
+                                                      is_implicitly_declared);
+    }
+    else
+    {    
+        cxx_method_decl = CXXMethodDecl::Create (*ast_context,
+                                                 cxx_record_decl,
+                                                 DeclarationNameInfo (decl_name, SourceLocation()),
+                                                 method_qual_type,
+                                                 NULL, // TypeSourceInfo *
+                                                 is_static,
+                                                 SC_None,
+                                                 is_inline);
+    }
+        
     
     AccessSpecifier access_specifier = ConvertAccessTypeToAccessSpecifier (access);
     
