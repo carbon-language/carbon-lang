@@ -138,6 +138,18 @@ void test_for_jumps() {
   A f;
 }
 
+void test_catch_const_ref() {
+  try {
+  } catch (const A& e) {
+  }
+}
+
+void test_catch_copy() {
+  try {
+  } catch (A e) {
+  }
+}
+
 // CHECK:  [ B2 (ENTRY) ]
 // CHECK:     Predecessors (0):
 // CHECK:     Successors (1): B1
@@ -725,4 +737,33 @@ void test_for_jumps() {
 // CHECK:     Successors (1): B2
 // CHECK:  [ B0 (EXIT) ]
 // CHECK:     Predecessors (2): B1 B5
+// CHECK:     Successors (0):
+// CHECK:  [ B3 (ENTRY) ]
+// CHECK:     Predecessors (0):
+// CHECK:     Successors (1): B0
+// CHECK:  [ B1 ]
+// CHECK:       T: try ...
+// CHECK:     Predecessors (0):
+// CHECK:     Successors (2): B2 B0
+// CHECK:  [ B2 ]
+// CHECK:     catch (const A &e):
+// CHECK:     Predecessors (1): B1
+// CHECK:     Successors (1): B0
+// CHECK:  [ B0 (EXIT) ]
+// CHECK:     Predecessors (3): B2 B1 B3
+// CHECK:     Successors (0):
+// CHECK:  [ B3 (ENTRY) ]
+// CHECK:     Predecessors (0):
+// CHECK:     Successors (1): B0
+// CHECK:  [ B1 ]
+// CHECK:       T: try ...
+// CHECK:     Predecessors (0):
+// CHECK:     Successors (2): B2 B0
+// CHECK:  [ B2 ]
+// CHECK:     catch (A e):
+// CHECK:       1: .~A() (Implicit destructor)
+// CHECK:     Predecessors (1): B1
+// CHECK:     Successors (1): B0
+// CHECK:  [ B0 (EXIT) ]
+// CHECK:     Predecessors (3): B2 B1 B3
 // CHECK:     Successors (0):

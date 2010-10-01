@@ -2154,6 +2154,18 @@ CFGBlock* CFGBuilder::VisitCXXCatchStmt(CXXCatchStmt* CS) {
   // CXXCatchStmt are treated like labels, so they are the first statement in a
   // block.
 
+  // Save local scope position because in case of exception variable ScopePos
+  // won't be restored when traversing AST.
+  SaveAndRestore<LocalScope::const_iterator> save_scope_pos(ScopePos);
+
+  // Create local scope for possible exception variable.
+  // Store scope position. Add implicit destructor.
+  if (VarDecl* VD = CS->getExceptionDecl()) {
+    LocalScope::const_iterator BeginScopePos = ScopePos;
+    addLocalScopeForVarDecl(VD);
+    addAutomaticObjDtors(ScopePos, BeginScopePos, CS);
+  }
+
   if (CS->getHandlerBlock())
     addStmt(CS->getHandlerBlock());
 
