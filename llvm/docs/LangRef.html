@@ -62,6 +62,7 @@
         <ol>
           <li><a href="#t_integer">Integer Type</a></li>
           <li><a href="#t_floating">Floating Point Types</a></li>
+          <li><a href="#t_x86mmx">X86mmx Type</a></li>
           <li><a href="#t_void">Void Type</a></li>
           <li><a href="#t_label">Label Type</a></li>
           <li><a href="#t_metadata">Metadata Type</a></li>
@@ -1484,6 +1485,7 @@ Classifications</a> </div>
       <td><a href="#t_label">label</a>,
           <a href="#t_void">void</a>,
           <a href="#t_floating">floating point</a>,
+          <a href="#t_x86mmx">x86mmx</a>,
           <a href="#t_metadata">metadata</a>.</td>
     </tr>
     <tr>
@@ -1567,6 +1569,21 @@ Classifications</a> </div>
     <tr><td><tt>ppc_fp128</tt></td><td>128-bit floating point value (two 64-bits)</td></tr>
   </tbody>
 </table>
+
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection"> <a name="t_x86mmx">X86mmx Type</a> </div>
+
+<div class="doc_text">
+
+<h5>Overview:</h5>
+<p>The x86mmx type represents a value held in an MMX register on an x86 machine.  The operations allowed on it are quite limited:  parameters and return values, load and store, and bitcast.  User-specified MMX instructions are represented as intrinsic or asm calls with arguments and/or results of this type.  There are no arrays, vectors or constants of this type.</p>
+
+<h5>Syntax:</h5>
+<pre>
+  void
+</pre>
 
 </div>
 
@@ -2050,6 +2067,7 @@ Classifications</a> </div>
    they match the long double format on your target.  All hexadecimal formats
    are big-endian (sign bit at the left).</p>
 
+<p>There are no constants of type x86mmx.</p>
 </div>
 
 <!-- ======================================================================= -->
