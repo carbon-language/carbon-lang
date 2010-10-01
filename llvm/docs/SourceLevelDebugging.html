@@ -461,14 +461,16 @@ provide details such as name, type and where the variable is defined.</p>
 <pre>
 !3 = metadata !{
   i32,     ;; Tag = 13 + <a href="#LLVMDebugVersion">LLVMDebugVersion</a> (DW_TAG_lexical_block)
-  metadata ;; Reference to context descriptor
+  metadata,;; Reference to context descriptor
+  i32,     ;; Line number
+  i32      ;; Column number
 }
 </pre>
 </div>
 
 <p>These descriptors provide debug information about nested blocks within a
-   subprogram.  The array of member descriptors is used to define local
-   variables and deeper nested blocks.</p>
+   subprogram. The line number and column numbers are used to dinstinguish
+   two lexical blocks at same depth. </p>
 
 </div>
 
