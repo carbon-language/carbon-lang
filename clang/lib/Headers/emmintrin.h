@@ -777,11 +777,8 @@ _mm_xor_si128(__m128i a, __m128i b)
   return a ^ b;
 }
 
-static __inline__ __m128i __attribute__((__always_inline__, __nodebug__))
-_mm_slli_si128(__m128i a, int imm)
-{
-  return __builtin_ia32_pslldqi128(a, imm * 8);
-}
+#define _mm_slli_si128(VEC, IMM) \
+  ((__m128i)__builtin_ia32_pslldqi128(VEC, (IMM)*8))
 
 static __inline__ __m128i __attribute__((__always_inline__, __nodebug__))
 _mm_slli_epi16(__m128i a, int count)
