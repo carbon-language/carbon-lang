@@ -4,6 +4,7 @@
 
 define x86_mmx @mmx_movzl(x86_mmx %x) nounwind  {
 entry:
+; CHECK: mmx_movzl
 ; FIXMEHECK: pinsrd
 ; FIXMEHECK: pinsrd
         %tmp = bitcast x86_mmx %x to <2 x i32> 

@@ -1,8 +1,8 @@
 ; RUN: llc < %s -march=x86 -mattr=+mmx,+sse2 -mtriple=x86_64-apple-darwin10 | FileCheck %s
-; RUN: llc < %s -march=x86 -mattr=+mmx,+sse2 -mtriple=x86_64-apple-darwin10 | FileCheck %s
 ; There are no MMX operations in bork; promoted to XMM.
 
 define void @bork(<1 x i64>* %x) {
+; CHECK: bork
 ; FIXMEHECK: pextrd
 entry:
 	%tmp2 = load <1 x i64>* %x		; <<1 x i64>> [#uses=1]
@@ -17,6 +17,7 @@ entry:
 ; pork uses MMX.
 
 define void @pork(x86_mmx* %x) {
+; CHECK: pork
 ; FIXMEHECK: punpckhdq
 entry:
 	%tmp2 = load x86_mmx* %x		; <x86_mmx> [#uses=1]
