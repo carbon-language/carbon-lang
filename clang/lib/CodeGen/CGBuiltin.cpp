@@ -43,9 +43,9 @@ static void EmitMemoryBarrier(CodeGenFunction &CGF,
 
 static Value *EmitCastToInt(CodeGenFunction &CGF,
                             const llvm::Type *ToType, Value *Val) {
-  if (Val->getType()->isPointerTy()) {
+  if (Val->getType()->isPointerTy())
     return CGF.Builder.CreatePtrToInt(Val, ToType);
-  }
+
   assert(Val->getType()->isIntegerTy() &&
          "Used a non-integer and non-pointer type with atomic builtin");
   assert(Val->getType()->getScalarSizeInBits() <=
@@ -160,7 +160,7 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
     if (Result.Val.isInt())
       return RValue::get(llvm::ConstantInt::get(VMContext,
                                                 Result.Val.getInt()));
-    else if (Result.Val.isFloat())
+    if (Result.Val.isFloat())
       return RValue::get(ConstantFP::get(VMContext, Result.Val.getFloat()));
   }
 
