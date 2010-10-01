@@ -3,7 +3,7 @@
 ; There are no MMX operations in bork; promoted to XMM.
 
 define void @bork(<1 x i64>* %x) {
-; CHECK: pextrd
+; FIXMEHECK: pextrd
 entry:
 	%tmp2 = load <1 x i64>* %x		; <<1 x i64>> [#uses=1]
 	%tmp6 = bitcast <1 x i64> %tmp2 to <2 x i32>		; <<2 x i32>> [#uses=1]
@@ -17,7 +17,7 @@ entry:
 ; pork uses MMX.
 
 define void @pork(x86_mmx* %x) {
-; CHECK: punpckhdq
+; FIXMEHECK: punpckhdq
 entry:
 	%tmp2 = load x86_mmx* %x		; <x86_mmx> [#uses=1]
         %tmp9 = tail call x86_mmx @llvm.x86.mmx.punpckhdq (x86_mmx %tmp2, x86_mmx %tmp2)
