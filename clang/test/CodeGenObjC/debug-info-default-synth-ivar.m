@@ -1,4 +1,4 @@
-// RUN: %clang -fverbose-asm -g -S %s -o - | grep DW_AT_name | count 42
+// RUN: %clang -m64 -fverbose-asm -g -S %s -o - | grep DW_AT_name | count 42
 // rdar://8493239
 
 @class NSString;
