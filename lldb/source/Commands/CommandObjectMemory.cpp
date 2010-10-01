@@ -317,11 +317,11 @@ protected:
 lldb::OptionDefinition
 CommandObjectMemoryRead::CommandOptions::g_option_table[] =
 {
-    { LLDB_OPT_SET_1, false, "format",       'f', required_argument, NULL, 0, "<format>",   "The format that will be used to display the memory. Defaults to bytes with ASCII (--format=Y)."},
-    { LLDB_OPT_SET_1, false, "size",         's', required_argument, NULL, 0, "<byte-size>","The size in bytes to use when displaying with the selected format."},
-    { LLDB_OPT_SET_1, false, "num-per-line", 'l', required_argument, NULL, 0, "<N>",        "The number of items per line to display."},
-    { LLDB_OPT_SET_1, false, "count",        'c', required_argument, NULL, 0, "<N>",        "The number of total items to display."},
-    { 0, false, NULL, 0, 0, NULL, 0, NULL, NULL }
+    { LLDB_OPT_SET_1, false, "format",       'f', required_argument, NULL, 0, eArgTypeFormat,   "The format that will be used to display the memory. Defaults to bytes with ASCII (--format=Y)."},
+    { LLDB_OPT_SET_1, false, "size",         's', required_argument, NULL, 0, eArgTypeByteSize,"The size in bytes to use when displaying with the selected format."},
+    { LLDB_OPT_SET_1, false, "num-per-line", 'l', required_argument, NULL, 0, eArgTypeNumberPerLine,        "The number of items per line to display."},
+    { LLDB_OPT_SET_1, false, "count",        'c', required_argument, NULL, 0, eArgTypeCount,        "The number of total items to display."},
+    { 0, false, NULL, 0, 0, NULL, 0, eArgTypeNone, NULL }
 };
 
 
@@ -666,9 +666,9 @@ protected:
 lldb::OptionDefinition
 CommandObjectMemoryWrite::CommandOptions::g_option_table[] =
 {
-    { LLDB_OPT_SET_1, false, "format", 'f', required_argument, NULL, 0, "<format>",   "The format value types that will be decoded and written to memory."},
-    { LLDB_OPT_SET_1, false, "size",   's', required_argument, NULL, 0, "<byte-size>","The size in bytes of the values to write to memory."},
-    { 0, false, NULL, 0, 0, NULL, 0, NULL, NULL }
+    { LLDB_OPT_SET_1, false, "format", 'f', required_argument, NULL, 0, eArgTypeFormat,   "The format value types that will be decoded and written to memory."},
+    { LLDB_OPT_SET_1, false, "size",   's', required_argument, NULL, 0, eArgTypeByteSize,"The size in bytes of the values to write to memory."},
+    { 0, false, NULL, 0, 0, NULL, 0, eArgTypeNone, NULL }
 };
 
 

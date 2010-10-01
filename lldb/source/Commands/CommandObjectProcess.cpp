@@ -261,12 +261,12 @@ protected:
 lldb::OptionDefinition
 CommandObjectProcessLaunch::CommandOptions::g_option_table[] =
 {
-{ LLDB_OPT_SET_1, false, "stop-at-entry", 's', no_argument,       NULL, 0, NULL,        "Stop at the entry point of the program when launching a process."},
-{ LLDB_OPT_SET_1, false, "stdin",         'i', required_argument, NULL, 0, "<path>",    "Redirect stdin for the process to <path>."},
-{ LLDB_OPT_SET_1, false, "stdout",        'o', required_argument, NULL, 0, "<path>",    "Redirect stdout for the process to <path>."},
-{ LLDB_OPT_SET_1, false, "stderr",        'e', required_argument, NULL, 0, "<path>",    "Redirect stderr for the process to <path>."},
-{ LLDB_OPT_SET_1, false, "plugin",        'p', required_argument, NULL, 0, "<plugin>",  "Name of the process plugin you want to use."},
-{ 0, false, NULL, 0, 0, NULL, 0, NULL, NULL }
+{ LLDB_OPT_SET_1, false, "stop-at-entry", 's', no_argument,       NULL, 0, eArgTypeNone,        "Stop at the entry point of the program when launching a process."},
+{ LLDB_OPT_SET_1, false, "stdin",         'i', required_argument, NULL, 0, eArgTypePath,    "Redirect stdin for the process to <path>."},
+{ LLDB_OPT_SET_1, false, "stdout",        'o', required_argument, NULL, 0, eArgTypePath,    "Redirect stdout for the process to <path>."},
+{ LLDB_OPT_SET_1, false, "stderr",        'e', required_argument, NULL, 0, eArgTypePath,    "Redirect stderr for the process to <path>."},
+{ LLDB_OPT_SET_1, false, "plugin",        'p', required_argument, NULL, 0, eArgTypePlugin,  "Name of the process plugin you want to use."},
+{ 0, false, NULL, 0, 0, NULL, 0, eArgTypeNone, NULL }
 };
 
 
@@ -643,11 +643,11 @@ protected:
 lldb::OptionDefinition
 CommandObjectProcessAttach::CommandOptions::g_option_table[] =
 {
-{ LLDB_OPT_SET_ALL, false, "plugin", 'P', required_argument, NULL, 0, "<plugin>",        "Name of the process plugin you want to use."},
-{ LLDB_OPT_SET_1,   false, "pid",    'p', required_argument, NULL, 0, "<pid>",           "The process ID of an existing process to attach to."},
-{ LLDB_OPT_SET_2,   false, "name",   'n', required_argument, NULL, 0, "<process-name>",  "The name of the process to attach to."},
-{ LLDB_OPT_SET_2,   false, "waitfor",'w', no_argument,       NULL, 0, NULL,              "Wait for the the process with <process-name> to launch."},
-{ 0, false, NULL, 0, 0, NULL, 0, NULL, NULL }
+{ LLDB_OPT_SET_ALL, false, "plugin", 'P', required_argument, NULL, 0, eArgTypePlugin,        "Name of the process plugin you want to use."},
+{ LLDB_OPT_SET_1,   false, "pid",    'p', required_argument, NULL, 0, eArgTypePid,           "The process ID of an existing process to attach to."},
+{ LLDB_OPT_SET_2,   false, "name",   'n', required_argument, NULL, 0, eArgTypeProcessName,  "The name of the process to attach to."},
+{ LLDB_OPT_SET_2,   false, "waitfor",'w', no_argument,       NULL, 0, eArgTypeNone,              "Wait for the the process with <process-name> to launch."},
+{ 0, false, NULL, 0, 0, NULL, 0, eArgTypeNone, NULL }
 };
 
 //-------------------------------------------------------------------------

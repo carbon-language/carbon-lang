@@ -128,7 +128,7 @@ public:
     static void
     GetArgumentHelp (Stream &str, lldb::CommandArgumentType arg_type, CommandInterpreter &interpreter);
 
-    const char *
+    static const char *
     GetArgumentName (lldb::CommandArgumentType arg_type);
 
     void

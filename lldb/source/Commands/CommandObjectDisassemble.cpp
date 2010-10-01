@@ -120,19 +120,19 @@ CommandObjectDisassemble::CommandOptions::GetDefinitions ()
 lldb::OptionDefinition
 CommandObjectDisassemble::CommandOptions::g_option_table[] =
 {
-{ LLDB_OPT_SET_ALL, false, "bytes",    'b', no_argument,       NULL, 0, NULL,             "Show opcode bytes when disassembling."},
-{ LLDB_OPT_SET_ALL, false, "context",  'c', required_argument, NULL, 0, "<num-lines>",    "Number of context lines of source to show."},
-{ LLDB_OPT_SET_ALL, false, "mixed",    'm', no_argument,       NULL, 0, NULL,             "Enable mixed source and assembly display."},
-{ LLDB_OPT_SET_ALL, false, "raw",      'r', no_argument,       NULL, 0, NULL,             "Print raw disassembly with no symbol information."},
+{ LLDB_OPT_SET_ALL, false, "bytes",    'b', no_argument,       NULL, 0, eArgTypeNone,             "Show opcode bytes when disassembling."},
+{ LLDB_OPT_SET_ALL, false, "context",  'c', required_argument, NULL, 0, eArgTypeNumLines,    "Number of context lines of source to show."},
+{ LLDB_OPT_SET_ALL, false, "mixed",    'm', no_argument,       NULL, 0, eArgTypeNone,             "Enable mixed source and assembly display."},
+{ LLDB_OPT_SET_ALL, false, "raw",      'r', no_argument,       NULL, 0, eArgTypeNone,             "Print raw disassembly with no symbol information."},
 
-{ LLDB_OPT_SET_1, true, "start-address",  's', required_argument, NULL, 0, "<start-address>",      "Address to start disassembling."},
-{ LLDB_OPT_SET_1, false, "end-address",  'e', required_argument, NULL, 0, "<end-address>",      "Address to start disassembling."},
+{ LLDB_OPT_SET_1, true, "start-address",  's', required_argument, NULL, 0, eArgTypeAddress,      "Address to start disassembling."},
+{ LLDB_OPT_SET_1, false, "end-address",  'e', required_argument, NULL, 0, eArgTypeAddress,      "Address to start disassembling."},
 
-{ LLDB_OPT_SET_2, true, "name",     'n', required_argument, NULL, CommandCompletions::eSymbolCompletion, "<function-name>",             "Disassemble entire contents of the given function name."},
+{ LLDB_OPT_SET_2, true, "name",     'n', required_argument, NULL, CommandCompletions::eSymbolCompletion, eArgTypeFunctionName,             "Disassemble entire contents of the given function name."},
 
-{ LLDB_OPT_SET_3, false, "current-frame",     'f', no_argument, NULL, 0, "<current-frame>",             "Disassemble entire contents of the current frame's function."},
+//{ LLDB_OPT_SET_3, false, "current-frame",     'f', no_argument, NULL, 0, "<current-frame>",             "Disassemble entire contents of the current frame's function."},
 
-{ 0, false, NULL, 0, 0, NULL, 0, NULL, NULL }
+{ 0, false, NULL, 0, 0, NULL, 0, eArgTypeNone, NULL }
 };
 
 

@@ -501,7 +501,14 @@ CommandObject::GetArgumentHelp (Stream &str, CommandArgumentType arg_type, Comma
 const char *
 CommandObject::GetArgumentName (CommandArgumentType arg_type)
 {
-    return CommandObject::GetArgumentTable()[arg_type].arg_name;
+    ArgumentTableEntry *entry = (ArgumentTableEntry *) &(CommandObject::GetArgumentTable()[arg_type]);
+
+    // The table is *supposed* to be kept in arg_type order, but someone *could* have messed it up...
+
+    if (entry->arg_type != arg_type)
+        entry = CommandObject::FindArgumentDataByType (arg_type);
+
+    return entry->arg_name;
 }
 
 void
@@ -574,15 +581,17 @@ CommandObject::g_arguments_data[] =
 {
     { eArgTypeAddress, "address", CommandCompletions::eNoCompletion, NULL, "Help text goes here." },
     { eArgTypeArchitecture, "architecture", CommandCompletions::eNoCompletion, NULL, "Help text goes here." },
-    { eArgTypeBoolean, "boolean", CommandCompletions::eNoCompletion, NULL, "Help text goes here." },
+    { eArgTypeBoolean, "boolean", CommandCompletions::eNoCompletion, NULL, "A Boolean value: 'true' or 'false'" },
     { eArgTypeBreakpointID, "breakpoint-id", CommandCompletions::eNoCompletion, BreakpointIDHelpTextCallback, NULL },
     { eArgTypeBreakpointIDRange, "breakpoint-id-range", CommandCompletions::eNoCompletion, BreakpointIDRangeHelpTextCallback, NULL },
     { eArgTypeByteSize, "byte-size", CommandCompletions::eNoCompletion, NULL, "Help text goes here." },
     { eArgTypeChannel, "channel", CommandCompletions::eNoCompletion, NULL, "Help text goes here." },
-    { eArgTypeCount, "count", CommandCompletions::eNoCompletion, NULL, "Help text goes here." },
+    { eArgTypeCount, "count", CommandCompletions::eNoCompletion, NULL, "An unsigned integer." },
     { eArgTypeExpression, "expression", CommandCompletions::eNoCompletion, NULL, "Help text goes here." },
-    { eArgTypeFilename, "filename", CommandCompletions::eNoCompletion, NULL, "Help text goes here." },
+    { eArgTypeExprFormat, "expression-format", CommandCompletions::eNoCompletion, NULL, "[ [bool|b] | [bin] | [char|c] | [oct|o] | [dec|i|d|u] | [hex|x] | [float|f] | [cstr|s] ]" },
+    { eArgTypeFilename, "filename", CommandCompletions::eNoCompletion, NULL, "The name of a file (can include path)." },
     { eArgTypeFormat, "format", CommandCompletions::eNoCompletion, NULL, "Help text goes here." },
+    { eArgTypeFrameNum, "frame-num", CommandCompletions::eNoCompletion, NULL, "Help text goes here." },
     { eArgTypeFullName, "full-name", CommandCompletions::eNoCompletion, NULL, "Help text goes here." },
     { eArgTypeFunctionName, "function-name", CommandCompletions::eNoCompletion, NULL, "Help text goes here." },
     { eArgTypeIndex, "index", CommandCompletions::eNoCompletion, NULL, "Help text goes here." },
@@ -592,6 +601,7 @@ CommandObject::g_arguments_data[] =
     { eArgTypeNumLines, "num-lines", CommandCompletions::eNoCompletion, NULL, "Help text goes here." },
     { eArgTypeNumberPerLine, "number-per-line", CommandCompletions::eNoCompletion, NULL, "Help text goes here." },
     { eArgTypeOffset, "offset", CommandCompletions::eNoCompletion, NULL, "Help text goes here." },
+    { eArgTypeOneLiner, "one-line-breakpoint-command", CommandCompletions::eNoCompletion, NULL, "A breakpoint command that is entered as a single line of text." },
     { eArgTypeOther, "other", CommandCompletions::eNoCompletion, NULL, "Help text goes here." },
     { eArgTypePath, "path", CommandCompletions::eNoCompletion, NULL, "Help text goes here." },
     { eArgTypePathPrefix, "path-prefix", CommandCompletions::eNoCompletion, NULL, "Help text goes here." },
@@ -603,6 +613,7 @@ CommandObject::g_arguments_data[] =
     { eArgTypeRegisterName, "register-name", CommandCompletions::eNoCompletion, NULL, "Help text goes here." },
     { eArgTypeRegularExpression, "regular-expression", CommandCompletions::eNoCompletion, NULL, "Help text goes here." },
     { eArgTypeRunMode, "run-mode", CommandCompletions::eNoCompletion, NULL, "Help text goes here." },
+    { eArgTypeScriptLang, "script-language", CommandCompletions::eNoCompletion, NULL, "Help text goes here." },
     { eArgTypeSearchWord, "search-word", CommandCompletions::eNoCompletion, NULL, "Help text goes here." },
     { eArgTypeSelector, "selector", CommandCompletions::eNoCompletion, NULL, "Help text goes here." },
     { eArgTypeSettingIndex, "setting-index", CommandCompletions::eNoCompletion, NULL, "Help text goes here." },

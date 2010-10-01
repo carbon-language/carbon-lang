@@ -467,9 +467,9 @@ protected:
 lldb::OptionDefinition
 CommandObjectThreadBacktrace::CommandOptions::g_option_table[] =
 {
-{ LLDB_OPT_SET_1, false, "count", 'c', required_argument, NULL, 0, "<count>", "How many frames to display (-1 for all)"},
-{ LLDB_OPT_SET_1, false, "start", 's', required_argument, NULL, 0, "<start>", "Frame in which to start the backtrace"},
-{ 0, false, NULL, 0, 0, NULL, 0, NULL, NULL }
+{ LLDB_OPT_SET_1, false, "count", 'c', required_argument, NULL, 0, eArgTypeCount, "How many frames to display (-1 for all)"},
+{ LLDB_OPT_SET_1, false, "start", 's', required_argument, NULL, 0, eArgTypeFrameNum, "Frame in which to start the backtrace"},
+{ 0, false, NULL, 0, 0, NULL, 0, eArgTypeNone, NULL }
 };
 
 enum StepScope
@@ -772,10 +772,10 @@ g_duo_running_mode[] =
 lldb::OptionDefinition
 CommandObjectThreadStepWithTypeAndScope::CommandOptions::g_option_table[] =
 {
-{ LLDB_OPT_SET_1, false, "avoid-no-debug",  'a', required_argument, NULL,               0, "<bool>",     "A boolean value that sets whether step-in will step over functions with no debug information."},
-{ LLDB_OPT_SET_1, false, "run-mode",        'm', required_argument, g_tri_running_mode, 0, "<run-mode>", "Determine how to run other threads while stepping the current thread."},
-{ LLDB_OPT_SET_1, false, "step-over-regexp",'r', required_argument, NULL,               0, "<regexp>",   "A regular expression that defines function names to step over."},
-{ 0, false, NULL, 0, 0, NULL, 0, NULL, NULL }
+{ LLDB_OPT_SET_1, false, "avoid-no-debug",  'a', required_argument, NULL,               0, eArgTypeBoolean,     "A boolean value that sets whether step-in will step over functions with no debug information."},
+{ LLDB_OPT_SET_1, false, "run-mode",        'm', required_argument, g_tri_running_mode, 0, eArgTypeRunMode, "Determine how to run other threads while stepping the current thread."},
+{ LLDB_OPT_SET_1, false, "step-over-regexp",'r', required_argument, NULL,               0, eArgTypeRegularExpression,   "A regular expression that defines function names to step over."},
+{ 0, false, NULL, 0, 0, NULL, 0, eArgTypeNone, NULL }
 };
 
 
@@ -1215,10 +1215,10 @@ protected:
 lldb::OptionDefinition
 CommandObjectThreadUntil::CommandOptions::g_option_table[] =
 {
-{ LLDB_OPT_SET_1, false, "frame",   'f', required_argument, NULL,               0, "<frame>",   "Frame index for until operation - defaults to 0"},
-{ LLDB_OPT_SET_1, false, "thread",  't', required_argument, NULL,               0, "<thread>",  "Thread index for the thread for until operation"},
-{ LLDB_OPT_SET_1, false, "run-mode",'m', required_argument, g_duo_running_mode, 0, "<run_mode>","Determine how to run other threads while stepping this one"},
-{ 0, false, NULL, 0, 0, NULL, 0, NULL, NULL }
+{ LLDB_OPT_SET_1, false, "frame",   'f', required_argument, NULL,               0, eArgTypeFrameNum,   "Frame index for until operation - defaults to 0"},
+{ LLDB_OPT_SET_1, false, "thread",  't', required_argument, NULL,               0, eArgTypeThreadIndex,  "Thread index for the thread for until operation"},
+{ LLDB_OPT_SET_1, false, "run-mode",'m', required_argument, g_duo_running_mode, 0, eArgTypeRunMode,"Determine how to run other threads while stepping this one"},
+{ 0, false, NULL, 0, 0, NULL, 0, eArgTypeNone, NULL }
 };
 
 

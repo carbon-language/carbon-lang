@@ -206,8 +206,9 @@ CommandObjectSettingsSet::CommandOptions::~CommandOptions ()
 lldb::OptionDefinition
 CommandObjectSettingsSet::CommandOptions::g_option_table[] =
 {
-    { LLDB_OPT_SET_1, false, "no-override", 'n', no_argument, NULL, NULL, NULL, "Prevents already existing instances and pending settings from being assigned this new value.  Using this option means that only the default or specified instance setting values will be updated." },
-    { LLDB_OPT_SET_2, false, "reset", 'r', no_argument,   NULL, NULL, NULL, "Causes value to be reset to the original default for this variable.  No value needs to be specified when this option is used." },
+    { LLDB_OPT_SET_1, false, "no-override", 'n', no_argument, NULL, NULL, eArgTypeNone, "Prevents already existing instances and pending settings from being assigned this new value.  Using this option means that only the default or specified instance setting values will be updated." },
+    { LLDB_OPT_SET_2, false, "reset", 'r', no_argument,   NULL, NULL, eArgTypeNone, "Causes value to be reset to the original default for this variable.  No value needs to be specified when this option is used." },
+    { 0, false, NULL, 0, 0, NULL, 0, eArgTypeNone, NULL }
 };
 
 const lldb::OptionDefinition*

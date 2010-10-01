@@ -768,22 +768,22 @@ protected:
 lldb::OptionDefinition
 CommandObjectFrameVariable::CommandOptions::g_option_table[] =
 {
-{ LLDB_OPT_SET_1, false, "debug",      'D', no_argument,       NULL, 0, NULL,        "Enable verbose debug information."},
-{ LLDB_OPT_SET_1, false, "depth",      'd', required_argument, NULL, 0, "<count>",   "Set the max recurse depth when dumping aggregate types (default is infinity)."},
-{ LLDB_OPT_SET_1, false, "show-globals",'g', no_argument,      NULL, 0, NULL,        "Show the current frame source file global and static variables."},
-{ LLDB_OPT_SET_1, false, "find-global",'G', required_argument, NULL, 0, "<name>",    "Find a global variable by name (which might not be in the current stack frame source file)."},
-{ LLDB_OPT_SET_1, false, "location",   'L', no_argument,       NULL, 0, NULL,        "Show variable location information."},
-{ LLDB_OPT_SET_1, false, "show-declaration", 'c', no_argument, NULL, 0, NULL,        "Show variable declaration information (source file and line where the variable was declared)."},
-{ LLDB_OPT_SET_1, false, "name",       'n', required_argument, NULL, 0, "<name>",    "Lookup a variable by name or regex (--regex) for the current execution context."},
-{ LLDB_OPT_SET_1, false, "no-args",    'a', no_argument,       NULL, 0, NULL,        "Omit function arguments."},
-{ LLDB_OPT_SET_1, false, "no-locals",  'l', no_argument,       NULL, 0, NULL,        "Omit local variables."},
-{ LLDB_OPT_SET_1, false, "no-types",   't', no_argument,       NULL, 0, NULL,        "Omit variable type names."},
-{ LLDB_OPT_SET_1, false, "no-summary", 'y', no_argument,       NULL, 0, NULL,        "Omit summary information."},
-{ LLDB_OPT_SET_1, false, "scope",      's', no_argument,       NULL, 0, NULL,        "Show variable scope (argument, local, global, static)."},
-{ LLDB_OPT_SET_1, false, "objc",       'o', no_argument,       NULL, 0, NULL,        "When looking up a variable by name (--name), print as an Objective-C object."},
-{ LLDB_OPT_SET_1, false, "ptr-depth",  'p', required_argument, NULL, 0, "<count>",   "The number of pointers to be traversed when dumping values (default is zero)."},
-{ LLDB_OPT_SET_1, false, "regex",      'r', no_argument,       NULL, 0, NULL,        "The <name> argument for name lookups are regular expressions."},
-{ 0, false, NULL, 0, 0, NULL, NULL, NULL, NULL }
+{ LLDB_OPT_SET_1, false, "debug",      'D', no_argument,       NULL, 0, eArgTypeNone,    "Enable verbose debug information."},
+{ LLDB_OPT_SET_1, false, "depth",      'd', required_argument, NULL, 0, eArgTypeCount,   "Set the max recurse depth when dumping aggregate types (default is infinity)."},
+{ LLDB_OPT_SET_1, false, "show-globals",'g', no_argument,      NULL, 0, eArgTypeNone,    "Show the current frame source file global and static variables."},
+{ LLDB_OPT_SET_1, false, "find-global",'G', required_argument, NULL, 0, eArgTypeVarName, "Find a global variable by name (which might not be in the current stack frame source file)."},
+{ LLDB_OPT_SET_1, false, "location",   'L', no_argument,       NULL, 0, eArgTypeNone,    "Show variable location information."},
+{ LLDB_OPT_SET_1, false, "show-declaration", 'c', no_argument, NULL, 0, eArgTypeNone,    "Show variable declaration information (source file and line where the variable was declared)."},
+{ LLDB_OPT_SET_1, false, "name",       'n', required_argument, NULL, 0, eArgTypeVarName, "Lookup a variable by name or regex (--regex) for the current execution context."},
+{ LLDB_OPT_SET_1, false, "no-args",    'a', no_argument,       NULL, 0, eArgTypeNone,    "Omit function arguments."},
+{ LLDB_OPT_SET_1, false, "no-locals",  'l', no_argument,       NULL, 0, eArgTypeNone,    "Omit local variables."},
+{ LLDB_OPT_SET_1, false, "no-types",   't', no_argument,       NULL, 0, eArgTypeNone,    "Omit variable type names."},
+{ LLDB_OPT_SET_1, false, "no-summary", 'y', no_argument,       NULL, 0, eArgTypeNone,    "Omit summary information."},
+{ LLDB_OPT_SET_1, false, "scope",      's', no_argument,       NULL, 0, eArgTypeNone,    "Show variable scope (argument, local, global, static)."},
+{ LLDB_OPT_SET_1, false, "objc",       'o', no_argument,       NULL, 0, eArgTypeNone,    "When looking up a variable by name (--name), print as an Objective-C object."},
+{ LLDB_OPT_SET_1, false, "ptr-depth",  'p', required_argument, NULL, 0, eArgTypeCount,   "The number of pointers to be traversed when dumping values (default is zero)."},
+{ LLDB_OPT_SET_1, false, "regex",      'r', no_argument,       NULL, 0, eArgTypeCount,    "The <name> argument for name lookups are regular expressions."},
+{ 0, false, NULL, 0, 0, NULL, NULL, eArgTypeNone, NULL }
 };
 #pragma mark CommandObjectMultiwordFrame
 

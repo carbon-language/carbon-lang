@@ -139,7 +139,7 @@ namespace lldb {
         int             option_has_arg; // no_argument, required_argument or optional_argument
         OptionEnumValueElement *enum_values;// If non-NULL an array of enum values.
         uint32_t        completionType; // Cookie the option class can use to do define the argument completion.
-        CONST_CHAR_PTR  argument_name;  // Text name to be use in usage text to refer to the option's value.
+        lldb::CommandArgumentType argument_type; // Type of argument this option takes
         CONST_CHAR_PTR  usage_text;     // Full text explaining what this options does and what (if any) argument to
                                         // pass it.
     } OptionDefinition;

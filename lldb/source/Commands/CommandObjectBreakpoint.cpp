@@ -71,28 +71,28 @@ CommandObjectBreakpointSet::CommandOptions::~CommandOptions ()
 lldb::OptionDefinition
 CommandObjectBreakpointSet::CommandOptions::g_option_table[] =
 {
-    { LLDB_OPT_SET_ALL, false, "shlib", 's', required_argument, NULL, CommandCompletions::eModuleCompletion, "<shlib-name>",
+    { LLDB_OPT_SET_ALL, false, "shlib", 's', required_argument, NULL, CommandCompletions::eModuleCompletion, eArgTypeShlibName,
         "Set the breakpoint only in this shared library (can use this option multiple times for multiple shlibs)."},
 
-    { LLDB_OPT_SET_ALL, false, "ignore-count", 'i', required_argument,   NULL, 0, "<n>",
-        "Set the number of times this breakpoint is sKipped before stopping." },
+    { LLDB_OPT_SET_ALL, false, "ignore-count", 'i', required_argument,   NULL, 0, eArgTypeCount,
+        "Set the number of times this breakpoint is skipped before stopping." },
 
-    { LLDB_OPT_SET_ALL, false, "thread-index", 'x', required_argument, NULL, NULL, "<thread-index>",
+    { LLDB_OPT_SET_ALL, false, "thread-index", 'x', required_argument, NULL, NULL, eArgTypeThreadIndex,
         "The breakpoint stops only for the thread whose index matches this argument."},
 
-    { LLDB_OPT_SET_ALL, false, "thread-id", 't', required_argument, NULL, NULL, "<thread-id>",
+    { LLDB_OPT_SET_ALL, false, "thread-id", 't', required_argument, NULL, NULL, eArgTypeThreadID,
         "The breakpoint stops only for the thread whose TID matches this argument."},
 
-    { LLDB_OPT_SET_ALL, false, "thread-name", 'T', required_argument, NULL, NULL, "<thread-name>",
+    { LLDB_OPT_SET_ALL, false, "thread-name", 'T', required_argument, NULL, NULL, eArgTypeThreadName,
         "The breakpoint stops only for the thread whose thread name matches this argument."},
 
-    { LLDB_OPT_SET_ALL, false, "queue-name", 'q', required_argument, NULL, NULL, "<queue-name>",
+    { LLDB_OPT_SET_ALL, false, "queue-name", 'q', required_argument, NULL, NULL, eArgTypeQueueName,
         "The breakpoint stops only for threads in the queue whose name is given by this argument."},
 
-    { LLDB_OPT_SET_1, false, "file", 'f', required_argument, NULL, CommandCompletions::eSourceFileCompletion, "<filename>",
+    { LLDB_OPT_SET_1, false, "file", 'f', required_argument, NULL, CommandCompletions::eSourceFileCompletion, eArgTypeFilename,
         "Set the breakpoint by source location in this particular file."},
 
-    { LLDB_OPT_SET_1, true, "line", 'l', required_argument, NULL, 0, "<linenum>",
+    { LLDB_OPT_SET_1, true, "line", 'l', required_argument, NULL, 0, eArgTypeLineNum,
         "Set the breakpoint by source location at this particular line."},
 
     // Comment out this option for the moment, as we don't actually use it, but will in the future.
@@ -100,26 +100,26 @@ CommandObjectBreakpointSet::CommandOptions::g_option_table[] =
     //    { 0, false, "column",     'c', required_argument, NULL, "<column>",
     //    "Set the breakpoint by source location at this particular column."},
 
-    { LLDB_OPT_SET_2, true, "address", 'a', required_argument, NULL, 0, "<address>",
+    { LLDB_OPT_SET_2, true, "address", 'a', required_argument, NULL, 0, eArgTypeAddress,
         "Set the breakpoint by address, at the specified address."},
 
-    { LLDB_OPT_SET_3, true, "name", 'n', required_argument, NULL, CommandCompletions::eSymbolCompletion, "<name>",
+    { LLDB_OPT_SET_3, true, "name", 'n', required_argument, NULL, CommandCompletions::eSymbolCompletion, eArgTypeFunctionName,
         "Set the breakpoint by function name - for C++ this means namespaces and arguments will be ignored." },
 
-    { LLDB_OPT_SET_4, true, "fullname", 'F', required_argument, NULL, CommandCompletions::eSymbolCompletion, "<fullname>",
+    { LLDB_OPT_SET_4, true, "fullname", 'F', required_argument, NULL, CommandCompletions::eSymbolCompletion, eArgTypeFullName,
         "Set the breakpoint by fully qualified function names. For C++ this means namespaces and all arguemnts, and "
         "for Objective C this means a full function prototype with class and selector." },
 
-    { LLDB_OPT_SET_5, true, "selector", 'S', required_argument, NULL, 0, "<selector>",
+    { LLDB_OPT_SET_5, true, "selector", 'S', required_argument, NULL, 0, eArgTypeSelector,
         "Set the breakpoint by ObjC selector name." },
 
-    { LLDB_OPT_SET_6, true, "method", 'M', required_argument, NULL, 0, "<method>",
+    { LLDB_OPT_SET_6, true, "method", 'M', required_argument, NULL, 0, eArgTypeMethod,
         "Set the breakpoint by C++ method names." },
 
-    { LLDB_OPT_SET_7, true, "func-regex", 'r', required_argument, NULL, 0, "<regex>",
+    { LLDB_OPT_SET_7, true, "func-regex", 'r', required_argument, NULL, 0, eArgTypeRegularExpression,
         "Set the breakpoint by function name, evaluating a regular-expression to find the function name(s)." },
 
-    { 0, false, NULL, 0, 0, NULL, 0, NULL, NULL }
+    { 0, false, NULL, 0, 0, NULL, 0, eArgTypeNone, NULL }
 };
 
 const lldb::OptionDefinition*
@@ -616,21 +616,21 @@ CommandObjectBreakpointList::CommandOptions::~CommandOptions ()
 lldb::OptionDefinition
 CommandObjectBreakpointList::CommandOptions::g_option_table[] =
 {
-    { LLDB_OPT_SET_ALL, false, "internal", 'i', no_argument, NULL, 0, NULL,
+    { LLDB_OPT_SET_ALL, false, "internal", 'i', no_argument, NULL, 0, eArgTypeNone,
         "Show debugger internal breakpoints" },
 
-    { LLDB_OPT_SET_1, false, "brief",    'b', no_argument, NULL, 0, NULL,
+    { LLDB_OPT_SET_1, false, "brief",    'b', no_argument, NULL, 0, eArgTypeNone,
         "Give a brief description of the breakpoint (no location info)."},
 
     // FIXME: We need to add an "internal" command, and then add this sort of thing to it.
     // But I need to see it for now, and don't want to wait.
-    { LLDB_OPT_SET_2, false, "full",    'f', no_argument, NULL, 0, NULL,
+    { LLDB_OPT_SET_2, false, "full",    'f', no_argument, NULL, 0, eArgTypeNone,
         "Give a full description of the breakpoint and its locations."},
 
-    { LLDB_OPT_SET_3, false, "verbose", 'v', no_argument, NULL, 0, NULL,
+    { LLDB_OPT_SET_3, false, "verbose", 'v', no_argument, NULL, 0, eArgTypeNone,
         "Explain everything we know about the breakpoint (for debugging debugger bugs)." },
 
-    { 0, false, NULL, 0, 0, NULL, 0, NULL, NULL }
+    { 0, false, NULL, 0, 0, NULL, 0, eArgTypeNone, NULL }
 };
 
 const lldb::OptionDefinition*
@@ -1157,14 +1157,14 @@ CommandObjectBreakpointModify::CommandOptions::~CommandOptions ()
 lldb::OptionDefinition
 CommandObjectBreakpointModify::CommandOptions::g_option_table[] =
 {
-{ LLDB_OPT_SET_ALL, false, "ignore-count", 'i', required_argument, NULL, NULL, "<n>", "Set the number of times this breakpoint is skipped before stopping." },
-{ LLDB_OPT_SET_ALL, false, "thread-index", 'x', required_argument, NULL, NULL, "<thread-index>", "The breakpoint stops only for the thread whose indeX matches this argument."},
-{ LLDB_OPT_SET_ALL, false, "thread-id",    't', required_argument, NULL, NULL, "<thread-id>", "The breakpoint stops only for the thread whose TID matches this argument."},
-{ LLDB_OPT_SET_ALL, false, "thread-name",  'T', required_argument, NULL, NULL, "<thread-name>", "The breakpoint stops only for the thread whose thread name matches this argument."},
-{ LLDB_OPT_SET_ALL, false, "queue-name",   'q', required_argument, NULL, NULL, "<queue-name>", "The breakpoint stops only for threads in the queue whose name is given by this argument."},
-{ LLDB_OPT_SET_1,   false, "enable",       'e', no_argument,       NULL, NULL, NULL, "Enable the breakpoint."},
-{ LLDB_OPT_SET_2,   false, "disable",      'd', no_argument,       NULL, NULL, NULL, "Disable the breakpoint."},
-{ 0,                false, NULL,            0 , 0,                 NULL, 0, NULL, NULL }
+{ LLDB_OPT_SET_ALL, false, "ignore-count", 'i', required_argument, NULL, NULL, eArgTypeCount, "Set the number of times this breakpoint is skipped before stopping." },
+{ LLDB_OPT_SET_ALL, false, "thread-index", 'x', required_argument, NULL, NULL, eArgTypeThreadIndex, "The breakpoint stops only for the thread whose indeX matches this argument."},
+{ LLDB_OPT_SET_ALL, false, "thread-id",    't', required_argument, NULL, NULL, eArgTypeThreadID, "The breakpoint stops only for the thread whose TID matches this argument."},
+{ LLDB_OPT_SET_ALL, false, "thread-name",  'T', required_argument, NULL, NULL, eArgTypeThreadName, "The breakpoint stops only for the thread whose thread name matches this argument."},
+{ LLDB_OPT_SET_ALL, false, "queue-name",   'q', required_argument, NULL, NULL, eArgTypeQueueName, "The breakpoint stops only for threads in the queue whose name is given by this argument."},
+{ LLDB_OPT_SET_1,   false, "enable",       'e', no_argument,       NULL, NULL, eArgTypeNone, "Enable the breakpoint."},
+{ LLDB_OPT_SET_2,   false, "disable",      'd', no_argument,       NULL, NULL, eArgTypeNone, "Disable the breakpoint."},
+{ 0,                false, NULL,            0 , 0,                 NULL, 0, eArgTypeNone, NULL }
 };
 
 const lldb::OptionDefinition*

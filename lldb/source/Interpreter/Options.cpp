@@ -484,20 +484,21 @@ Options::GenerateOptionUsage
             if (full_options_table[i].usage_mask & opt_set_mask)
             {
                 // Add current option to the end of out_stream.
-
+                CommandArgumentType arg_type = full_options_table[i].argument_type;
+                
                 if (full_options_table[i].required)
                 {
                     if (full_options_table[i].option_has_arg == required_argument)
                     {
-                        strm.Printf (" -%c %s",
-                                    full_options_table[i].short_option,
-                                    full_options_table[i].argument_name);
+                        strm.Printf (" -%c <%s>",
+                                     full_options_table[i].short_option, 
+                                     CommandObject::GetArgumentName (arg_type));
                     }
                     else if (full_options_table[i].option_has_arg == optional_argument)
                     {
-                        strm.Printf (" -%c [%s]",
+                        strm.Printf (" -%c [<%s>]",
                                      full_options_table[i].short_option,
-                                     full_options_table[i].argument_name);
+                                     CommandObject::GetArgumentName (arg_type));
                     }
                 }
             }
@@ -511,14 +512,16 @@ Options::GenerateOptionUsage
             {
                 // Add current option to the end of out_stream.
 
+                CommandArgumentType arg_type = full_options_table[i].argument_type;
+                
                 if (! full_options_table[i].required)
                 {
                     if (full_options_table[i].option_has_arg == required_argument)
-                        strm.Printf (" [-%c %s]", full_options_table[i].short_option,
-                                           full_options_table[i].argument_name);
+                        strm.Printf (" [-%c <%s>]", full_options_table[i].short_option,
+                                     CommandObject::GetArgumentName (arg_type));
                     else if (full_options_table[i].option_has_arg == optional_argument)
-                        strm.Printf (" [-%c [%s]]", full_options_table[i].short_option,
-                                           full_options_table[i].argument_name);
+                        strm.Printf (" [-%c [<%s>]]", full_options_table[i].short_option,
+                                     CommandObject::GetArgumentName (arg_type));
                 }
             }
         }
@@ -578,13 +581,18 @@ Options::GenerateOptionUsage
                 else
                     strm.EOL();
                 
+                CommandArgumentType arg_type = full_options_table[i].argument_type;
+                
+                StreamString arg_name_str;
+                arg_name_str.Printf ("<%s>", CommandObject::GetArgumentName (arg_type));
+
                 strm.Indent ();
                 strm.Printf ("-%c", full_options_table[i].short_option);
-                if (full_options_table[i].argument_name != NULL)
-                    strm.Printf (" %s", full_options_table[i].argument_name);
+                if (arg_type != eArgTypeNone)
+                    strm.Printf (" <%s>",  CommandObject::GetArgumentName (arg_type));
                 strm.Printf ("  ( --%s", full_options_table[i].long_option);
-                if (full_options_table[i].argument_name != NULL)
-                    strm.Printf (" %s", full_options_table[i].argument_name);
+                if (arg_type != eArgTypeNone)
+                    strm.Printf (" <%s>", CommandObject::GetArgumentName (arg_type));
                 strm.PutCString(" )\n");
                 
                 strm.IndentMore (5);

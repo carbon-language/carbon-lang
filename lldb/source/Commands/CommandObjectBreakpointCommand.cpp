@@ -48,19 +48,19 @@ CommandObjectBreakpointCommandAdd::CommandOptions::~CommandOptions ()
 lldb::OptionDefinition
 CommandObjectBreakpointCommandAdd::CommandOptions::g_option_table[] =
 {
-    { LLDB_OPT_SET_ALL, false, "one-liner", 'o', required_argument, NULL, 0, "<one-liner>",
+    { LLDB_OPT_SET_ALL, false, "one-liner", 'o', required_argument, NULL, NULL, eArgTypeOneLiner,
         "Specify a one-line breakpoint command inline. Be sure to surround it with quotes." },
 
-    { LLDB_OPT_SET_1, true, "script",    's', no_argument, NULL, 0, NULL,
+    { LLDB_OPT_SET_1,   true, "script",     's', no_argument,       NULL, NULL, eArgTypeNone,
         "Write the breakpoint command script in the default scripting language."},
 
-    { LLDB_OPT_SET_2, true, "python",    'p', no_argument, NULL, 0, NULL,
+    { LLDB_OPT_SET_2,   true, "python",     'p', no_argument,       NULL, NULL, eArgTypeNone,
         "Write the breakpoint command script in the Python scripting language."},
-
-    { LLDB_OPT_SET_3, true, "commands",  'c', no_argument, NULL, 0, NULL,
+ 
+    { LLDB_OPT_SET_3,   true, "commands",   'c', no_argument,       NULL, NULL, eArgTypeNone,
         "Write the breakpoint command script using standard debugger commands."},
 
-    { 0, false, NULL, 0, 0, NULL, 0, NULL, NULL }
+    { 0, false, NULL, 0, 0, NULL, 0, eArgTypeNone, NULL }
 };
 
 const lldb::OptionDefinition*

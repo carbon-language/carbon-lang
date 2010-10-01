@@ -134,9 +134,9 @@ protected:
 lldb::OptionDefinition
 CommandObjectSourceInfo::CommandOptions::g_option_table[] =
 {
-{ LLDB_OPT_SET_1, false, "line",       'l', required_argument, NULL, 0, "<line>",    "The line number at which to start the display source."},
-{ LLDB_OPT_SET_1, false, "file",       'f', required_argument, NULL, CommandCompletions::eSourceFileCompletion, "<file>",    "The file from which to display source."},
-{ 0, false, NULL, 0, 0, NULL, 0, NULL, NULL }
+{ LLDB_OPT_SET_1, false, "line",       'l', required_argument, NULL, 0, eArgTypeLineNum,    "The line number at which to start the display source."},
+{ LLDB_OPT_SET_1, false, "file",       'f', required_argument, NULL, CommandCompletions::eSourceFileCompletion, eArgTypeFilename,    "The file from which to display source."},
+{ 0, false, NULL, 0, 0, NULL, 0, eArgTypeNone, NULL }
 };
 
 #pragma mark CommandObjectSourceList
@@ -558,12 +558,12 @@ protected:
 lldb::OptionDefinition
 CommandObjectSourceList::CommandOptions::g_option_table[] =
 {
-{ LLDB_OPT_SET_ALL, false, "count",    'c', required_argument, NULL, 0, "<count>",   "The number of source lines to display."},
-{ LLDB_OPT_SET_ALL, false, "shlib",    's', required_argument, NULL, CommandCompletions::eModuleCompletion, "<shlib-name>", "Look up the source file in the given shared library."},
-{ LLDB_OPT_SET_1, false, "file",       'f', required_argument, NULL, CommandCompletions::eSourceFileCompletion, "<file>",    "The file from which to display source."},
-{ LLDB_OPT_SET_1, false, "line",       'l', required_argument, NULL, 0, "<line>",    "The line number at which to start the display source."},
-{ LLDB_OPT_SET_2, false, "name",       'n', required_argument, NULL, CommandCompletions::eSymbolCompletion, "<symbol>",    "The name of a function whose source to display."},
-{ 0, false, NULL, 0, 0, NULL, 0, NULL, NULL }
+{ LLDB_OPT_SET_ALL, false, "count",    'c', required_argument, NULL, 0, eArgTypeCount,   "The number of source lines to display."},
+{ LLDB_OPT_SET_ALL, false, "shlib",    's', required_argument, NULL, CommandCompletions::eModuleCompletion, eArgTypeShlibName, "Look up the source file in the given shared library."},
+{ LLDB_OPT_SET_1, false, "file",       'f', required_argument, NULL, CommandCompletions::eSourceFileCompletion, eArgTypeFilename,    "The file from which to display source."},
+{ LLDB_OPT_SET_1, false, "line",       'l', required_argument, NULL, 0, eArgTypeLineNum,    "The line number at which to start the display source."},
+{ LLDB_OPT_SET_2, false, "name",       'n', required_argument, NULL, CommandCompletions::eSymbolCompletion, eArgTypeSymbol,    "The name of a function whose source to display."},
+{ 0, false, NULL, 0, 0, NULL, 0, eArgTypeNone, NULL }
 };
 
 #pragma mark CommandObjectMultiwordSource

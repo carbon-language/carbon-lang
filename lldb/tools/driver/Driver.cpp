@@ -51,34 +51,34 @@ reset_stdin_termios ()
 
 static lldb::OptionDefinition g_options[] =
 {
-    { LLDB_OPT_SET_1,  true, "help", 'h',  no_argument,        NULL,  NULL,  NULL,
+    { LLDB_OPT_SET_1,  true, "help", 'h',  no_argument,        NULL,  NULL,  eArgTypeNone,
         "Prints out the usage information for the LLDB debugger." },
 
-    { LLDB_OPT_SET_2,  true, "version", 'v',  no_argument,        NULL,  NULL,  NULL,
+    { LLDB_OPT_SET_2,  true, "version", 'v',  no_argument,        NULL,  NULL,  eArgTypeNone,
         "Prints out the current version number of the LLDB debugger." },
 
-    { LLDB_OPT_SET_3,  true, "arch", 'a',  required_argument,  NULL,  NULL,  "<architecture>",
+    { LLDB_OPT_SET_3,  true, "arch", 'a',  required_argument,  NULL,  NULL,  eArgTypeArchitecture,
         "Tells the debugger to use the specified architecture when starting and running the program.  <architecture> must be one of the architectures for which the program was compiled." },
 
-    { LLDB_OPT_SET_3 | LLDB_OPT_SET_4,  false,  "script-language",'l',  required_argument,  NULL,  NULL,  "<scripting-language>",
+    { LLDB_OPT_SET_3 | LLDB_OPT_SET_4,  false,  "script-language",'l',  required_argument,  NULL,  NULL,  eArgTypeScriptLang,
         "Tells the debugger to use the specified scripting language for user-defined scripts, rather than the default.  Valid scripting languages that can be specified include Python, Perl, Ruby and Tcl.  Currently only the Python extensions have been implemented." },
 
-    { LLDB_OPT_SET_3 | LLDB_OPT_SET_4,  false,  "debug",          'd',  no_argument,        NULL,  NULL,  NULL,
+    { LLDB_OPT_SET_3 | LLDB_OPT_SET_4,  false,  "debug",          'd',  no_argument,        NULL,  NULL,  eArgTypeNone,
         "Tells the debugger to print out extra information for debugging itself." },
 
-    { LLDB_OPT_SET_3 | LLDB_OPT_SET_4,  false,  "source",         's',  required_argument,  NULL,  NULL,  "<file>",
+    { LLDB_OPT_SET_3 | LLDB_OPT_SET_4,  false,  "source",         's',  required_argument,  NULL,  NULL,  eArgTypeFilename,
         "Tells the debugger to read in and execute the file <file>, which should contain lldb commands." },
 
-    { LLDB_OPT_SET_3,  true,  "file",           'f',  required_argument,  NULL,  NULL,  "<filename>",
+    { LLDB_OPT_SET_3,  true,  "file",           'f',  required_argument,  NULL,  NULL,  eArgTypeFilename,
         "Tells the debugger to use the file <filename> as the program to be debugged." },
 
-    { LLDB_OPT_SET_ALL,  false,  "editor",           'e',  no_argument,  NULL,  NULL,  NULL,
+    { LLDB_OPT_SET_ALL,  false,  "editor",           'e',  no_argument,  NULL,  NULL,  eArgTypeNone,
         "Tells the debugger to open source files using the host's \"external editor\" mechanism." },
 
-//    { LLDB_OPT_SET_4,  true,  "crash-log",      'c',  required_argument,  NULL,  NULL,  "<file>",
+//    { LLDB_OPT_SET_4,  true,  "crash-log",      'c',  required_argument,  NULL,  NULL,  eArgTypeFilename,
 //        "Load executable images from a crash log for symbolication." },
 
-    { 0, false, NULL, 0, 0, NULL, NULL,  NULL, NULL }
+    { 0, false, NULL, 0, 0, NULL, NULL,  eArgTypeNone, NULL }
 };
 
 
@@ -173,6 +173,35 @@ OutputFormattedUsageText (FILE *out, int indent, const char *text, int output_ma
     }
 }
 
+void 
+GetArgumentName (const CommandArgumentType arg_type, std::string &arg_name)
+{
+    //Fudge this function here, since we can't call the "real" version in lldb_private::CommandObject...
+
+    switch (arg_type)
+    {
+        // Make cases for all the arg_types used in Driver.cpp
+
+        case eArgTypeNone:
+            arg_name = "";
+            break;
+
+        case eArgTypeArchitecture:
+            arg_name = "architecture";
+            break;
+    
+        case eArgTypeScriptLang:
+            arg_name = "script-language";
+            break;
+
+        case eArgTypeFilename:
+            arg_name = "filename";
+            break;
+    }
+    return;
+}
+
+
 void
 ShowUsage (FILE *out, lldb::OptionDefinition *option_table, Driver::OptionData data)
 {
@@ -227,21 +256,24 @@ ShowUsage (FILE *out, lldb::OptionDefinition *option_table, Driver::OptionData d
         {
             if (option_table[i].usage_mask & opt_set_mask)
             {
+                CommandArgumentType arg_type = option_table[i].argument_type;
+                std::string arg_name;
+                GetArgumentName (arg_type, arg_name);
                 if (option_table[i].required)
                 {
                     if (option_table[i].option_has_arg == required_argument)
-                        fprintf (out, " -%c %s", option_table[i].short_option, option_table[i].argument_name);
+                        fprintf (out, " -%c <%s>", option_table[i].short_option, arg_name.c_str());
                     else if (option_table[i].option_has_arg == optional_argument)
-                        fprintf (out, " -%c [%s]", option_table[i].short_option, option_table[i].argument_name);
+                        fprintf (out, " -%c [<%s>]", option_table[i].short_option, arg_name.c_str());
                     else
                         fprintf (out, " -%c", option_table[i].short_option);
                 }
                 else
                 {
                     if (option_table[i].option_has_arg == required_argument)
-                        fprintf (out, " [-%c %s]", option_table[i].short_option, option_table[i].argument_name);
+                        fprintf (out, " [-%c <%s>]", option_table[i].short_option, arg_name.c_str());
                     else if (option_table[i].option_has_arg == optional_argument)
-                        fprintf (out, " [-%c [%s]]", option_table[i].short_option, option_table[i].argument_name);
+                        fprintf (out, " [-%c [<%s>]]", option_table[i].short_option, arg_name.c_str());
                     else
                         fprintf (out, " [-%c]", option_table[i].short_option);
                 }
@@ -270,14 +302,18 @@ ShowUsage (FILE *out, lldb::OptionDefinition *option_table, Driver::OptionData d
         pos = options_seen.find (option_table[i].short_option);
         if (pos == options_seen.end())
         {
+            CommandArgumentType arg_type = option_table[i].argument_type;
+            std::string arg_name;
+            GetArgumentName (arg_type, arg_name);
+
             options_seen.insert (option_table[i].short_option);
             fprintf (out, "%*s-%c ", indent_level, "", option_table[i].short_option);
-            if (option_table[i].argument_name != NULL)
-                fprintf (out, "%s", option_table[i].argument_name);
+            if (arg_type != eArgTypeNone)
+                fprintf (out, "<%s>", arg_name.c_str());
             fprintf (out, "\n");
             fprintf (out, "%*s--%s ", indent_level, "", option_table[i].long_option);
-            if (option_table[i].argument_name != NULL)
-                fprintf (out, "%s", option_table[i].argument_name);
+            if (arg_type != eArgTypeNone)
+                fprintf (out, "<%s>", arg_name.c_str());
             fprintf (out, "\n");
             indent_level += 5;
             OutputFormattedUsageText (out, indent_level, option_table[i].usage_text, screen_width);
