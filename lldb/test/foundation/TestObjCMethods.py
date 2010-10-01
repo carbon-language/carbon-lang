@@ -108,8 +108,9 @@ class FoundationTestCase(TestBase):
                        'clang_type = "@interface MyString'])
 
         self.expect("frame variable -s", VARIABLES_DISPLAYED_CORRECTLY,
-            substrs = ["ARG: (MyString *) self",
-                       "ARG: (SEL) _cmd"])
+            substrs = ["ARG: (MyString *) self"],
+            patterns = ["ARG: \(.*\) _cmd",
+                        "(struct objc_selector *)|(SEL)"])
 
         # Test new feature with r115115:
         # Add "-o" option to "expression" which prints the object description if available.
