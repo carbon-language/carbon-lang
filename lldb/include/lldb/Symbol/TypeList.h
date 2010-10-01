@@ -56,18 +56,18 @@ public:
     GetClangASTContext ();
 
     void *
-    CreateClangPointerType (Type *type, bool forward_decl_is_ok);
+    CreateClangPointerType (Type *type);
 
     void *
-    CreateClangTypedefType (Type *typedef_type, Type *base_type, bool forward_decl_is_ok);
+    CreateClangTypedefType (Type *typedef_type, Type *base_type);
 
     // For C++98 references (&)
     void *
-    CreateClangLValueReferenceType (Type *type, bool forward_decl_is_ok);
+    CreateClangLValueReferenceType (Type *type);
 
     // For C++0x references (&&)
     void *
-    CreateClangRValueReferenceType (Type *type, bool forward_decl_is_ok);
+    CreateClangRValueReferenceType (Type *type);
 
 private:
     typedef std::vector<lldb::TypeSP> collection;

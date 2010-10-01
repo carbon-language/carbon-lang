@@ -29,6 +29,12 @@ DWARFDIECollection::Insert(const DWARFDebugInfoEntry *die)
     return true;
 }
 
+void
+DWARFDIECollection::Append (const DWARFDebugInfoEntry *die)
+{
+    m_dies.push_back (die);
+}
+
 const DWARFDebugInfoEntry *
 DWARFDIECollection::GetDIEPtrAtIndex(uint32_t idx) const
 {

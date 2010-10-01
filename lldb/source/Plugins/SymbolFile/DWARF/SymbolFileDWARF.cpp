@@ -52,6 +52,15 @@
 
 #include <map>
 
+//#define ENABLE_DEBUG_PRINTF // COMMENT OUT THIS LINE PRIOR TO CHECKIN
+
+#ifdef ENABLE_DEBUG_PRINTF
+#include <stdio.h>
+#define DEBUG_PRINTF(fmt, ...) printf(fmt, ## __VA_ARGS__)
+#else
+#define DEBUG_PRINTF(fmt, ...)
+#endif
+
 #define DIE_IS_BEING_PARSED ((lldb_private::Type*)1)
 
 using namespace lldb;
@@ -579,8 +588,30 @@ SymbolFileDWARF::ParseCompileUnitFunction (const SymbolContext& sc, DWARFCompile
     int call_column = 0;
     DWARFExpression frame_base;
 
-    // Parse the function prototype as a type that can then be added to concrete function instance
-    ParseTypes (sc, dwarf_cu, die, false, false);
+    assert (die->Tag() == DW_TAG_subprogram);
+    
+    if (die->Tag() != DW_TAG_subprogram)
+        return NULL;
+
+    const DWARFDebugInfoEntry *parent_die = die->GetParent();
+    switch (parent_die->Tag())
+    {
+    case DW_TAG_structure_type:
+    case DW_TAG_class_type:
+        // We have methods of a class or struct
+        {
+            Type *class_type = ResolveType (dwarf_cu, parent_die);
+            if (class_type)
+                class_type->GetClangType();
+        }
+        break;
+
+    default:
+        // Parse the function prototype as a type that can then be added to concrete function instance
+        ParseTypes (sc, dwarf_cu, die, false, false);
+        break;
+    }
+    
     //FixupTypes();
 
     if (die->GetDIENamesAndRanges(this, dwarf_cu, name, mangled, func_ranges, decl_file, decl_line, decl_column, call_file, call_line, call_column, &frame_base))
@@ -1013,6 +1044,7 @@ SymbolFileDWARF::ParseChildMembers
     const LanguageType class_language,
     std::vector<clang::CXXBaseSpecifier *>& base_classes,
     std::vector<int>& member_accessibilities,
+    DWARFDIECollection& member_function_dies,
     AccessType& default_accessibility,
     bool &is_a_class
 )
@@ -1103,8 +1135,8 @@ SymbolFileDWARF::ParseChildMembers
             break;
 
         case DW_TAG_subprogram:
-            // Let the type parsing code handle this one for us...
-            ResolveType (dwarf_cu, die);
+            // Let the type parsing code handle this one for us. 
+            member_function_dies.Append (die);
             break;
 
         case DW_TAG_inheritance:
@@ -1220,7 +1252,7 @@ lldb::clang_type_t
 SymbolFileDWARF::ResolveClangOpaqueTypeDefinition (lldb::clang_type_t clang_type)
 {
     // We have a struct/union/class/enum that needs to be fully resolved.
-    const DWARFDebugInfoEntry* die = m_forward_decl_clang_type_to_die.lookup (clang_type);
+    const DWARFDebugInfoEntry* die = m_forward_decl_clang_type_to_die.lookup (ClangASTType::RemoveFastQualifiers(clang_type));
     assert (die);
     if (die == NULL)
         return NULL;
@@ -1230,6 +1262,7 @@ SymbolFileDWARF::ResolveClangOpaqueTypeDefinition (lldb::clang_type_t clang_type
 
     const dw_tag_t tag = die->Tag();
 
+    DEBUG_PRINTF ("0x%8.8x: %s (\"%s\") - resolve forward declaration...\n", die->GetOffset(), DW_TAG_value_to_name(tag), type->GetName().AsCString());
     assert (clang_type);
     DWARFDebugInfoEntry::Attributes attributes;
 
@@ -1240,82 +1273,96 @@ SymbolFileDWARF::ResolveClangOpaqueTypeDefinition (lldb::clang_type_t clang_type
     case DW_TAG_structure_type:
     case DW_TAG_union_type:
     case DW_TAG_class_type:
-            type_list->GetClangASTContext().StartTagDeclarationDefinition (clang_type);
-            if (die->HasChildren())
+        type_list->GetClangASTContext().StartTagDeclarationDefinition (clang_type);
+        if (die->HasChildren())
+        {
+            LanguageType class_language = eLanguageTypeUnknown;
+            if (ClangASTContext::IsObjCClassType (clang_type))
+                class_language = eLanguageTypeObjC;
+
+            int tag_decl_kind = -1;
+            AccessType default_accessibility = eAccessNone;
+            if (tag == DW_TAG_structure_type)
             {
-                LanguageType class_language = eLanguageTypeUnknown;
-                if (ClangASTContext::IsObjCClassType (clang_type))
-                    class_language = eLanguageTypeObjC;
-
-                int tag_decl_kind = -1;
-                AccessType default_accessibility = eAccessNone;
-                if (tag == DW_TAG_structure_type)
-                {
-                    tag_decl_kind = clang::TTK_Struct;
-                    default_accessibility = eAccessPublic;
-                }
-                else if (tag == DW_TAG_union_type)
-                {
-                    tag_decl_kind = clang::TTK_Union;
-                    default_accessibility = eAccessPublic;
-                }
-                else if (tag == DW_TAG_class_type)
-                {
-                    tag_decl_kind = clang::TTK_Class;
-                    default_accessibility = eAccessPrivate;
-                }
-
-                SymbolContext sc(GetCompUnitForDWARFCompUnit(cu));
-                std::vector<clang::CXXBaseSpecifier *> base_classes;
-                std::vector<int> member_accessibilities;
-                bool is_a_class = false;
-                ParseChildMembers (sc, 
-                                   cu, 
-                                   die, 
-                                   clang_type,
-                                   class_language,
-                                   base_classes, 
-                                   member_accessibilities, 
-                                   default_accessibility, 
-                                   is_a_class);
-
-                // If we have a DW_TAG_structure_type instead of a DW_TAG_class_type we
-                // need to tell the clang type it is actually a class.
-                if (class_language != eLanguageTypeObjC)
-                {
-                    if (is_a_class && tag_decl_kind != clang::TTK_Class)
-                        type_list->GetClangASTContext().SetTagTypeKind (clang_type, clang::TTK_Class);
-                }
-
-                // Since DW_TAG_structure_type gets used for both classes
-                // and structures, we may need to set any DW_TAG_member
-                // fields to have a "private" access if none was specified.
-                // When we parsed the child members we tracked that actual
-                // accessibility value for each DW_TAG_member in the
-                // "member_accessibilities" array. If the value for the
-                // member is zero, then it was set to the "default_accessibility"
-                // which for structs was "public". Below we correct this
-                // by setting any fields to "private" that weren't correctly
-                // set.
-                if (is_a_class && !member_accessibilities.empty())
-                {
-                    // This is a class and all members that didn't have
-                    // their access specified are private.
-                    type_list->GetClangASTContext().SetDefaultAccessForRecordFields (clang_type, eAccessPrivate, &member_accessibilities.front(), member_accessibilities.size());
-                }
-
-                if (!base_classes.empty())
-                {
-                    type_list->GetClangASTContext().SetBaseClassesForClassType (clang_type, &base_classes.front(), base_classes.size());
-
-                    // Clang will copy each CXXBaseSpecifier in "base_classes"
-                    // so we have to free them all.
-                    ClangASTContext::DeleteBaseClassSpecifiers (&base_classes.front(), base_classes.size());
-                }
-                
+                tag_decl_kind = clang::TTK_Struct;
+                default_accessibility = eAccessPublic;
             }
-            type_list->GetClangASTContext().CompleteTagDeclarationDefinition (clang_type);
-            return clang_type;
+            else if (tag == DW_TAG_union_type)
+            {
+                tag_decl_kind = clang::TTK_Union;
+                default_accessibility = eAccessPublic;
+            }
+            else if (tag == DW_TAG_class_type)
+            {
+                tag_decl_kind = clang::TTK_Class;
+                default_accessibility = eAccessPrivate;
+            }
+
+            SymbolContext sc(GetCompUnitForDWARFCompUnit(cu));
+            std::vector<clang::CXXBaseSpecifier *> base_classes;
+            std::vector<int> member_accessibilities;
+            bool is_a_class = false;
+            // Parse members and base classes first
+            DWARFDIECollection member_function_dies;
+
+            ParseChildMembers (sc, 
+                               cu, 
+                               die, 
+                               clang_type,
+                               class_language,
+                               base_classes, 
+                               member_accessibilities,
+                               member_function_dies,
+                               default_accessibility, 
+                               is_a_class);
+
+            // Now parse any methods if there were any...
+            size_t num_functions = member_function_dies.Size();                
+            if (num_functions > 0)
+            {
+                for (size_t i=0; i<num_functions; ++i)
+                {
+                    ResolveType(cu, member_function_dies.GetDIEPtrAtIndex(i));
+                }
+            }
+            
+            // If we have a DW_TAG_structure_type instead of a DW_TAG_class_type we
+            // need to tell the clang type it is actually a class.
+            if (class_language != eLanguageTypeObjC)
+            {
+                if (is_a_class && tag_decl_kind != clang::TTK_Class)
+                    type_list->GetClangASTContext().SetTagTypeKind (clang_type, clang::TTK_Class);
+            }
+
+            // Since DW_TAG_structure_type gets used for both classes
+            // and structures, we may need to set any DW_TAG_member
+            // fields to have a "private" access if none was specified.
+            // When we parsed the child members we tracked that actual
+            // accessibility value for each DW_TAG_member in the
+            // "member_accessibilities" array. If the value for the
+            // member is zero, then it was set to the "default_accessibility"
+            // which for structs was "public". Below we correct this
+            // by setting any fields to "private" that weren't correctly
+            // set.
+            if (is_a_class && !member_accessibilities.empty())
+            {
+                // This is a class and all members that didn't have
+                // their access specified are private.
+                type_list->GetClangASTContext().SetDefaultAccessForRecordFields (clang_type, eAccessPrivate, &member_accessibilities.front(), member_accessibilities.size());
+            }
+
+            if (!base_classes.empty())
+            {
+                type_list->GetClangASTContext().SetBaseClassesForClassType (clang_type, &base_classes.front(), base_classes.size());
+
+                // Clang will copy each CXXBaseSpecifier in "base_classes"
+                // so we have to free them all.
+                ClangASTContext::DeleteBaseClassSpecifiers (&base_classes.front(), base_classes.size());
+            }
+            
+        }
+        type_list->GetClangASTContext().CompleteTagDeclarationDefinition (clang_type);
+        return clang_type;
 
     case DW_TAG_enumeration_type:
         type_list->GetClangASTContext().StartTagDeclarationDefinition (clang_type);
@@ -2097,9 +2144,9 @@ SymbolFileDWARF::ParseChildParameters
                         Type *type = ResolveTypeUID(param_type_die_offset);
                         if (type)
                         {
-                            function_param_types.push_back (type->GetClangType(true));
+                            function_param_types.push_back (type->GetClangForwardType());
 
-                            clang::ParmVarDecl *param_var_decl = type_list->GetClangASTContext().CreateParameterDeclaration (name, type->GetClangType(), storage);
+                            clang::ParmVarDecl *param_var_decl = type_list->GetClangASTContext().CreateParameterDeclaration (name, type->GetClangForwardType(), storage);
                             assert(param_var_decl);
                             function_param_decls.push_back(param_var_decl);
                         }
@@ -2498,6 +2545,8 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                         }
                     }
 
+                    DEBUG_PRINTF ("0x%8.8x: %s (\"%s\") type => 0x%8.8x\n", die->GetOffset(), DW_TAG_value_to_name(tag), type_name_cstr, encoding_uid);
+
                     switch (tag)
                     {
                     default:
@@ -2648,6 +2697,8 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                         }
                     }
 
+                    DEBUG_PRINTF ("0x%8.8x: %s (\"%s\")\n", die->GetOffset(), DW_TAG_value_to_name(tag), type_name_cstr);
+
                     int tag_decl_kind = -1;
                     AccessType default_accessibility = eAccessNone;
                     if (tag == DW_TAG_structure_type)
@@ -2698,7 +2749,7 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                         // "SymbolFileDWARF::ResolveClangOpaqueTypeDefinition(Type *)"
                         // When the definition needs to be defined.
                         m_forward_decl_die_to_clang_type[die] = clang_type;
-                        m_forward_decl_clang_type_to_die[clang_type] = die;
+                        m_forward_decl_clang_type_to_die[ClangASTType::RemoveFastQualifiers (clang_type)] = die;
                     }
                     
                 }
@@ -2753,6 +2804,8 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                             }
                         }
 
+                        DEBUG_PRINTF ("0x%8.8x: %s (\"%s\")\n", die->GetOffset(), DW_TAG_value_to_name(tag), type_name_cstr);
+
                         clang_type_t enumerator_clang_type = NULL;
                         clang_type = m_forward_decl_die_to_clang_type.lookup (die);
                         if (clang_type == NULL)
@@ -2777,7 +2830,7 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                         // "SymbolFileDWARF::ResolveClangOpaqueTypeDefinition(Type *)"
                         // When the definition needs to be defined.
                         m_forward_decl_die_to_clang_type[die] = clang_type;
-                        m_forward_decl_clang_type_to_die[clang_type] = die;
+                        m_forward_decl_clang_type_to_die[ClangASTType::RemoveFastQualifiers (clang_type)] = die;
 
                     }
                 }
@@ -2873,6 +2926,8 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                             }
                         }
 
+                        DEBUG_PRINTF ("0x%8.8x: %s (\"%s\")\n", die->GetOffset(), DW_TAG_value_to_name(tag), type_name_cstr);
+
                         clang_type_t return_clang_type = NULL;
                         Type *func_type = NULL;
                         
@@ -2880,7 +2935,7 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                             func_type = ResolveTypeUID(type_die_offset);
 
                         if (func_type)
-                            return_clang_type = func_type->GetClangType(true);
+                            return_clang_type = func_type->GetClangForwardType();
                         else
                             return_clang_type = type_list->GetClangASTContext().GetBuiltInType_void();
 
@@ -2953,7 +3008,7 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                                     Type *class_type = ResolveType (dwarf_cu, parent_die);
                                     if (class_type)
                                     {
-                                        clang_type_t class_opaque_type = class_type->GetClangType (true);
+                                        clang_type_t class_opaque_type = class_type->GetClangForwardType();
                                         if (ClangASTContext::IsCXXClassType (class_opaque_type))
                                         {
                                             // Neither GCC 4.2 nor clang++ currently set a valid accessibility
@@ -3048,6 +3103,8 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                                 }
                             }
                         }
+
+                        DEBUG_PRINTF ("0x%8.8x: %s (\"%s\")\n", die->GetOffset(), DW_TAG_value_to_name(tag), type_name_cstr);
 
                         Type *element_type = ResolveTypeUID(type_die_offset);
 

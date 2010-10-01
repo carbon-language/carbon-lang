@@ -172,8 +172,15 @@ public:
     const lldb_private::Declaration &
     GetDeclaration () const;
 
+    // Get the clang type, and resolve definitions for any 
+    // class/struct/union/enum types completely.
     lldb::clang_type_t 
-    GetClangType (bool forward_decl_is_ok = false);
+    GetClangType ();
+
+    // Get the clang type and leave class/struct/union/enum types as forward
+    // declarations if they haven't already been fully defined.
+    lldb::clang_type_t 
+    GetClangForwardType ();
 
     clang::ASTContext *
     GetClangAST ();

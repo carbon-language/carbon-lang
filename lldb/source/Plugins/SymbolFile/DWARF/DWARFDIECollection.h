@@ -25,6 +25,9 @@ public:
     }
 
     void
+    Append (const DWARFDebugInfoEntry *die);
+
+    void
     Dump(lldb_private::Stream *s, const char* title) const;
 
     const DWARFDebugInfoEntry*

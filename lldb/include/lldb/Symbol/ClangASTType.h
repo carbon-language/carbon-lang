@@ -28,7 +28,7 @@ namespace lldb_private {
 class ClangASTType
 {
 protected:
-    ClangASTType (void *type, clang::ASTContext *ast_context) :
+    ClangASTType (lldb::clang_type_t type, clang::ASTContext *ast_context) :
         m_type (type),
         m_ast  (ast_context) 
     {
@@ -57,7 +57,7 @@ protected:
     }
     
 public:
-    void *
+    lldb::clang_type_t
     GetOpaqueQualType() const
     { 
         return m_type; 
@@ -73,19 +73,19 @@ public:
     GetClangTypeName ();
 
     static ConstString
-    GetClangTypeName (void *clang_type);
+    GetClangTypeName (lldb::clang_type_t clang_type);
 
     uint64_t
     GetClangTypeBitWidth ();
 
     static uint64_t
-    GetClangTypeBitWidth (clang::ASTContext *ast_context, void *opaque_clang_qual_type);
+    GetClangTypeBitWidth (clang::ASTContext *ast_context, lldb::clang_type_t opaque_clang_qual_type);
 
     size_t
     GetTypeBitAlign ();
     
     static size_t
-    GetTypeBitAlign (clang::ASTContext *ast_context, void *clang_type);
+    GetTypeBitAlign (clang::ASTContext *ast_context, lldb::clang_type_t clang_type);
 
     void
     DumpValue (ExecutionContext *exe_ctx,
@@ -103,7 +103,7 @@ public:
 
     static void
     DumpValue (clang::ASTContext *ast_context,
-               void *opaque_clang_qual_type,
+               lldb::clang_type_t opaque_clang_qual_type,
                ExecutionContext *exe_ctx,
                Stream *s,
                lldb::Format format,
@@ -129,7 +129,7 @@ public:
     
     static bool
     DumpTypeValue (clang::ASTContext *ast_context,
-                   void *opaque_clang_qual_type,
+                   lldb::clang_type_t opaque_clang_qual_type,
                    Stream *s,
                    lldb::Format format,
                    const DataExtractor &data,
@@ -148,7 +148,7 @@ public:
     
     static void
     DumpSummary (clang::ASTContext *ast_context,
-                 void *opaque_clang_qual_type,
+                 lldb::clang_type_t opaque_clang_qual_type,
                  ExecutionContext *exe_ctx,
                  Stream *s,
                  const DataExtractor &data,
@@ -160,20 +160,20 @@ public:
     
     static void
     DumpTypeDescription (clang::ASTContext *ast_context,
-                         void *opaque_clang_qual_type,
+                         lldb::clang_type_t opaque_clang_qual_type,
                          Stream *s);
                          
     lldb::Encoding
     GetEncoding (uint32_t &count);                 
 
     static lldb::Encoding
-    GetEncoding (void *opaque_clang_qual_type, uint32_t &count);
+    GetEncoding (lldb::clang_type_t opaque_clang_qual_type, uint32_t &count);
 
     lldb::Format
     GetFormat ();
                  
     static lldb::Format
-    GetFormat (void *opaque_clang_qual_type);
+    GetFormat (lldb::clang_type_t opaque_clang_qual_type);
 
     bool
     GetValueAsScalar (const DataExtractor &data,
@@ -183,7 +183,7 @@ public:
 
     static bool
     GetValueAsScalar (clang::ASTContext *ast_context,
-                      void *opaque_clang_qual_type,
+                      lldb::clang_type_t opaque_clang_qual_type,
                       const DataExtractor &data,
                       uint32_t data_offset,
                       size_t data_byte_size,
@@ -194,7 +194,7 @@ public:
     IsDefined();
 
     static bool
-    IsDefined (void *opaque_clang_qual_type);
+    IsDefined (lldb::clang_type_t opaque_clang_qual_type);
 
     bool
     SetValueFromScalar (const Scalar &value,
@@ -202,7 +202,7 @@ public:
 
     static bool
     SetValueFromScalar (clang::ASTContext *ast_context,
-                        void *opaque_clang_qual_type,
+                        lldb::clang_type_t opaque_clang_qual_type,
                         const Scalar &value,
                         Stream &strm);
 
@@ -214,7 +214,7 @@ public:
 
     static bool
     ReadFromMemory (clang::ASTContext *ast_context,
-                    void *opaque_clang_qual_type,
+                    lldb::clang_type_t opaque_clang_qual_type,
                     ExecutionContext *exe_ctx,
                     lldb::addr_t addr,
                     lldb::AddressType address_type,
@@ -228,17 +228,20 @@ public:
 
     static bool
     WriteToMemory (clang::ASTContext *ast_context,
-                   void *opaque_clang_qual_type,
+                   lldb::clang_type_t opaque_clang_qual_type,
                    ExecutionContext *exe_ctx,
                    lldb::addr_t addr,
                    lldb::AddressType address_type,
                    StreamString &new_value);
 
-    void *
+    lldb::clang_type_t
     GetPointeeType ();
 
-    static void *
-    GetPointeeType (void *opaque_clang_qual_type);
+    static lldb::clang_type_t
+    GetPointeeType (lldb::clang_type_t opaque_clang_qual_type);
+
+    static lldb::clang_type_t
+    RemoveFastQualifiers (lldb::clang_type_t);
 
 private:
     void               *m_type;

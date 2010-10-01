@@ -36,6 +36,7 @@
 #include "lldb/Target/ExecutionContext.h"
 #include "lldb/Target/Process.h"
 
+using namespace lldb;
 using namespace lldb_private;
 
 ClangASTType::~ClangASTType()
@@ -49,12 +50,12 @@ ClangASTType::GetClangTypeName ()
 }
 
 ConstString
-ClangASTType::GetClangTypeName (void *opaque_clang_qual_type)
+ClangASTType::GetClangTypeName (clang_type_t clang_type)
 {
     ConstString clang_type_name;
-    if (opaque_clang_qual_type)
+    if (clang_type)
     {
-        clang::QualType qual_type(clang::QualType::getFromOpaquePtr(opaque_clang_qual_type));
+        clang::QualType qual_type(clang::QualType::getFromOpaquePtr(clang_type));
 
         const clang::TypedefType *typedef_type = qual_type->getAs<clang::TypedefType>();
         if (typedef_type)
@@ -80,18 +81,18 @@ ClangASTType::GetClangTypeName (void *opaque_clang_qual_type)
 }
 
 
-void *
+clang_type_t
 ClangASTType::GetPointeeType ()
 {
     return GetPointeeType (m_type);
 }
 
-void *
-ClangASTType::GetPointeeType (void *opaque_clang_qual_type)
+clang_type_t
+ClangASTType::GetPointeeType (clang_type_t clang_type)
 {
-    if (opaque_clang_qual_type)
+    if (clang_type)
     {
-        clang::QualType qual_type(clang::QualType::getFromOpaquePtr(opaque_clang_qual_type));
+        clang::QualType qual_type(clang::QualType::getFromOpaquePtr(clang_type));
         
         return qual_type.getTypePtr()->getPointeeType().getAsOpaquePtr();
     }
@@ -106,10 +107,10 @@ ClangASTType::GetEncoding (uint32_t &count)
 
 
 lldb::Encoding
-ClangASTType::GetEncoding (void *opaque_clang_qual_type, uint32_t &count)
+ClangASTType::GetEncoding (clang_type_t clang_type, uint32_t &count)
 {
     count = 1;
-    clang::QualType qual_type(clang::QualType::getFromOpaquePtr(opaque_clang_qual_type));
+    clang::QualType qual_type(clang::QualType::getFromOpaquePtr(clang_type));
 
     switch (qual_type->getTypeClass())
     {
@@ -201,9 +202,9 @@ ClangASTType::GetFormat ()
 }
 
 lldb::Format
-ClangASTType::GetFormat (void *opaque_clang_qual_type)
+ClangASTType::GetFormat (clang_type_t clang_type)
 {
-    clang::QualType qual_type(clang::QualType::getFromOpaquePtr(opaque_clang_qual_type));
+    clang::QualType qual_type(clang::QualType::getFromOpaquePtr(clang_type));
 
     switch (qual_type->getTypeClass())
     {
@@ -321,7 +322,7 @@ void
 ClangASTType::DumpValue
 (
     clang::ASTContext *ast_context,
-    void *opaque_clang_qual_type,
+    clang_type_t clang_type,
     ExecutionContext *exe_ctx,
     Stream *s,
     lldb::Format format,
@@ -336,7 +337,7 @@ ClangASTType::DumpValue
     uint32_t depth
 )
 {
-    clang::QualType qual_type(clang::QualType::getFromOpaquePtr(opaque_clang_qual_type));
+    clang::QualType qual_type(clang::QualType::getFromOpaquePtr(clang_type));
     switch (qual_type->getTypeClass())
     {
     case clang::Type::Record:
@@ -588,7 +589,7 @@ ClangASTType::DumpValue
         data.Dump(s, data_byte_offset, format, data_byte_size, 1, UINT32_MAX, LLDB_INVALID_ADDRESS, bitfield_bit_size, bitfield_bit_offset);
 
         if (show_summary)
-            DumpSummary (ast_context, opaque_clang_qual_type, exe_ctx, s, data, data_byte_offset, data_byte_size);
+            DumpSummary (ast_context, clang_type, exe_ctx, s, data, data_byte_offset, data_byte_size);
         break;
     }
 }
@@ -623,7 +624,7 @@ bool
 ClangASTType::DumpTypeValue
 (
     clang::ASTContext *ast_context,
-    void *opaque_clang_qual_type,
+    clang_type_t clang_type,
     Stream *s,
     lldb::Format format,
     const lldb_private::DataExtractor &data,
@@ -633,8 +634,8 @@ ClangASTType::DumpTypeValue
     uint32_t bitfield_bit_offset
 )
 {
-    clang::QualType qual_type(clang::QualType::getFromOpaquePtr(opaque_clang_qual_type));
-    if (ClangASTContext::IsAggregateType (opaque_clang_qual_type))
+    clang::QualType qual_type(clang::QualType::getFromOpaquePtr(clang_type));
+    if (ClangASTContext::IsAggregateType (clang_type))
     {
         return 0;
     }
@@ -729,7 +730,7 @@ void
 ClangASTType::DumpSummary
 (
     clang::ASTContext *ast_context,
-    void *opaque_clang_qual_type,
+    clang_type_t clang_type,
     ExecutionContext *exe_ctx,
     Stream *s,
     const lldb_private::DataExtractor &data,
@@ -738,8 +739,8 @@ ClangASTType::DumpSummary
 )
 {
     uint32_t length = 0;
-    clang::QualType qual_type(clang::QualType::getFromOpaquePtr(opaque_clang_qual_type));
-    if (ClangASTContext::IsCStringType (opaque_clang_qual_type, length))
+    clang::QualType qual_type(clang::QualType::getFromOpaquePtr(clang_type));
+    if (ClangASTContext::IsCStringType (clang_type, length))
     {
 
         if (exe_ctx && exe_ctx->process)
@@ -783,10 +784,10 @@ ClangASTType::GetClangTypeBitWidth ()
 }
 
 uint64_t
-ClangASTType::GetClangTypeBitWidth (clang::ASTContext *ast_context, void *opaque_clang_qual_type)
+ClangASTType::GetClangTypeBitWidth (clang::ASTContext *ast_context, clang_type_t clang_type)
 {
-    if (ast_context && opaque_clang_qual_type)
-        return ast_context->getTypeSize(clang::QualType::getFromOpaquePtr(opaque_clang_qual_type));
+    if (ast_context && clang_type)
+        return ast_context->getTypeSize(clang::QualType::getFromOpaquePtr(clang_type));
     return 0;
 }
 
@@ -797,10 +798,10 @@ ClangASTType::GetTypeBitAlign ()
 }
 
 size_t
-ClangASTType::GetTypeBitAlign (clang::ASTContext *ast_context, void *opaque_clang_qual_type)
+ClangASTType::GetTypeBitAlign (clang::ASTContext *ast_context, clang_type_t clang_type)
 {
-    if (ast_context && opaque_clang_qual_type)
-        return ast_context->getTypeAlign(clang::QualType::getFromOpaquePtr(opaque_clang_qual_type));
+    if (ast_context && clang_type)
+        return ast_context->getTypeAlign(clang::QualType::getFromOpaquePtr(clang_type));
     return 0;
 }
 
@@ -813,9 +814,9 @@ ClangASTType::IsDefined()
 
 
 bool
-ClangASTType::IsDefined (void *opaque_clang_qual_type)
+ClangASTType::IsDefined (clang_type_t clang_type)
 {
-    clang::QualType qual_type(clang::QualType::getFromOpaquePtr(opaque_clang_qual_type));
+    clang::QualType qual_type(clang::QualType::getFromOpaquePtr(clang_type));
     clang::TagType *tag_type = dyn_cast<clang::TagType>(qual_type.getTypePtr());
     if (tag_type)
     {
@@ -836,11 +837,11 @@ ClangASTType::DumpTypeDescription (Stream *s)
 // Dump the full description of a type. For classes this means all of the
 // ivars and member functions, for structs/unions all of the members. 
 void
-ClangASTType::DumpTypeDescription (clang::ASTContext *ast_context, void *opaque_clang_qual_type, Stream *s)
+ClangASTType::DumpTypeDescription (clang::ASTContext *ast_context, clang_type_t clang_type, Stream *s)
 {
-    if (opaque_clang_qual_type)
+    if (clang_type)
     {
-        clang::QualType qual_type(clang::QualType::getFromOpaquePtr(opaque_clang_qual_type));
+        clang::QualType qual_type(clang::QualType::getFromOpaquePtr(clang_type));
 
         llvm::SmallVector<char, 1024> buf;
         llvm::raw_svector_ostream llvm_ostrm (buf);
@@ -922,23 +923,23 @@ bool
 ClangASTType::GetValueAsScalar
 (
     clang::ASTContext *ast_context,
-    void *opaque_clang_qual_type,
+    clang_type_t clang_type,
     const lldb_private::DataExtractor &data,
     uint32_t data_byte_offset,
     size_t data_byte_size,
     Scalar &value
 )
 {
-    clang::QualType qual_type(clang::QualType::getFromOpaquePtr(opaque_clang_qual_type));
+    clang::QualType qual_type(clang::QualType::getFromOpaquePtr(clang_type));
 
-    if (ClangASTContext::IsAggregateType (opaque_clang_qual_type))
+    if (ClangASTContext::IsAggregateType (clang_type))
     {
         return false;   // Aggregate types don't have scalar values
     }
     else
     {
         uint32_t count = 0;
-        lldb::Encoding encoding = GetEncoding (opaque_clang_qual_type, count);
+        lldb::Encoding encoding = GetEncoding (clang_type, count);
 
         if (encoding == lldb::eEncodingInvalid || count != 1)
             return false;
@@ -1065,19 +1066,19 @@ bool
 ClangASTType::SetValueFromScalar
 (
     clang::ASTContext *ast_context,
-    void *opaque_clang_qual_type,
+    clang_type_t clang_type,
     const Scalar &value,
     Stream &strm
 )
 {
-    clang::QualType qual_type(clang::QualType::getFromOpaquePtr(opaque_clang_qual_type));
+    clang::QualType qual_type(clang::QualType::getFromOpaquePtr(clang_type));
 
     // Aggregate types don't have scalar values
-    if (!ClangASTContext::IsAggregateType (opaque_clang_qual_type))
+    if (!ClangASTContext::IsAggregateType (clang_type))
     {
         strm.GetFlags().Set(Stream::eBinary);
         uint32_t count = 0;
-        lldb::Encoding encoding = GetEncoding (opaque_clang_qual_type, count);
+        lldb::Encoding encoding = GetEncoding (clang_type, count);
 
         if (encoding == lldb::eEncodingInvalid || count != 1)
             return false;
@@ -1163,7 +1164,7 @@ bool
 ClangASTType::ReadFromMemory
 (
     clang::ASTContext *ast_context,
-    void *opaque_clang_qual_type,
+    clang_type_t clang_type,
     lldb_private::ExecutionContext *exe_ctx,
     lldb::addr_t addr,
     lldb::AddressType address_type,
@@ -1176,7 +1177,7 @@ ClangASTType::ReadFromMemory
         // context (which Module it came from)
         return false;
     }
-    clang::QualType qual_type(clang::QualType::getFromOpaquePtr(opaque_clang_qual_type));
+    clang::QualType qual_type(clang::QualType::getFromOpaquePtr(clang_type));
 
     const uint32_t byte_size = (ast_context->getTypeSize (qual_type) + 7) / 8;
     if (data.GetByteSize() < byte_size)
@@ -1227,7 +1228,7 @@ bool
 ClangASTType::WriteToMemory
 (
     clang::ASTContext *ast_context,
-    void *opaque_clang_qual_type,
+    clang_type_t clang_type,
     lldb_private::ExecutionContext *exe_ctx,
     lldb::addr_t addr,
     lldb::AddressType address_type,
@@ -1240,7 +1241,7 @@ ClangASTType::WriteToMemory
         // context (which Module it came from)
         return false;
     }
-    clang::QualType qual_type(clang::QualType::getFromOpaquePtr(opaque_clang_qual_type));
+    clang::QualType qual_type(clang::QualType::getFromOpaquePtr(clang_type));
     const uint32_t byte_size = (ast_context->getTypeSize (qual_type) + 7) / 8;
 
     if (byte_size > 0)
@@ -1264,3 +1265,10 @@ ClangASTType::WriteToMemory
 }
 
 
+lldb::clang_type_t
+ClangASTType::RemoveFastQualifiers (lldb::clang_type_t clang_type)
+{
+    clang::QualType qual_type(clang::QualType::getFromOpaquePtr(clang_type));
+    qual_type.removeFastQualifiers();
+    return qual_type.getAsOpaquePtr();
+}

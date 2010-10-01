@@ -241,6 +241,7 @@ protected:
                                 const lldb::LanguageType class_language,
                                 std::vector<clang::CXXBaseSpecifier *>& base_classes,
                                 std::vector<int>& member_accessibilities,
+                                DWARFDIECollection& member_function_dies,
                                 lldb::AccessType &default_accessibility,
                                 bool &is_a_class);
 

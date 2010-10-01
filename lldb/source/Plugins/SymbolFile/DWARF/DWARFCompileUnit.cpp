@@ -530,7 +530,7 @@ DWARFCompileUnit::AppendDIEsWithTag (const dw_tag_t tag, DWARFDIECollection& die
     for (pos = m_die_array.begin(); pos != end; ++pos)
     {
         if (pos->Tag() == tag)
-            dies.Insert(&(*pos));
+            dies.Append (&(*pos));
     }
 
     // Return the number of DIEs added to the collection

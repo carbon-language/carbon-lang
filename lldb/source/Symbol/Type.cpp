@@ -439,34 +439,34 @@ lldb_private::Type::ResolveClangType (bool forward_decl_is_ok)
                 break;
 
             case eEncodingIsConstUID:
-                m_clang_qual_type = ClangASTContext::AddConstModifier (encoding_type->GetClangType(true));
+                m_clang_qual_type = ClangASTContext::AddConstModifier (encoding_type->GetClangForwardType());
                 break;
 
             case eEncodingIsRestrictUID:
-                m_clang_qual_type = ClangASTContext::AddRestrictModifier (encoding_type->GetClangType(true));
+                m_clang_qual_type = ClangASTContext::AddRestrictModifier (encoding_type->GetClangForwardType());
                 break;
 
             case eEncodingIsVolatileUID:
-                m_clang_qual_type = ClangASTContext::AddVolatileModifier (encoding_type->GetClangType(true));
+                m_clang_qual_type = ClangASTContext::AddVolatileModifier (encoding_type->GetClangForwardType());
                 break;
 
             case eEncodingIsTypedefUID:
-                m_clang_qual_type = type_list->CreateClangTypedefType (this, encoding_type, true);
+                m_clang_qual_type = type_list->CreateClangTypedefType (this, encoding_type);
                 // Clear the name so it can get fully qualified in case the
                 // typedef is in a namespace.
                 m_name.Clear();
                 break;
 
             case eEncodingIsPointerUID:
-                m_clang_qual_type = type_list->CreateClangPointerType (encoding_type, true);
+                m_clang_qual_type = type_list->CreateClangPointerType (encoding_type);
                 break;
 
             case eEncodingIsLValueReferenceUID:
-                m_clang_qual_type = type_list->CreateClangLValueReferenceType (encoding_type, true);
+                m_clang_qual_type = type_list->CreateClangLValueReferenceType (encoding_type);
                 break;
 
             case eEncodingIsRValueReferenceUID:
-                m_clang_qual_type = type_list->CreateClangRValueReferenceType (encoding_type, true);
+                m_clang_qual_type = type_list->CreateClangRValueReferenceType (encoding_type);
                 break;
 
             default:
@@ -584,11 +584,19 @@ lldb_private::Type::GetChildClangTypeAtIndex
 }
 
 
+clang_type_t 
+lldb_private::Type::GetClangType ()
+{
+    const bool forward_decl_is_ok = false;
+    ResolveClangType(forward_decl_is_ok);
+    return m_clang_qual_type;
+}
 
 clang_type_t 
-lldb_private::Type::GetClangType (bool forward_decl_is_ok)
+lldb_private::Type::GetClangForwardType ()
 {
-    ResolveClangType(forward_decl_is_ok);
+    const bool forward_decl_is_ok = true;
+    ResolveClangType (forward_decl_is_ok);
     return m_clang_qual_type;
 }
 

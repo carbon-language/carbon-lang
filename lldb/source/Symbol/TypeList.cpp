@@ -208,31 +208,33 @@ TypeList::GetClangASTContext ()
 }
 
 void *
-TypeList::CreateClangPointerType (Type *type, bool forward_decl_is_ok)
+TypeList::CreateClangPointerType (Type *type)
 {
     assert(type);
-    return m_ast.CreatePointerType(type->GetClangType(forward_decl_is_ok));
+    return m_ast.CreatePointerType(type->GetClangForwardType());
 }
 
 void *
-TypeList::CreateClangTypedefType (Type *typedef_type, Type *base_type, bool forward_decl_is_ok)
+TypeList::CreateClangTypedefType (Type *typedef_type, Type *base_type)
 {
     assert(typedef_type && base_type);
-    return m_ast.CreateTypedefType(typedef_type->GetName().AsCString(), base_type->GetClangType(forward_decl_is_ok), typedef_type->GetSymbolFile()->GetClangDeclContextForTypeUID(typedef_type->GetID()));
+    return m_ast.CreateTypedefType (typedef_type->GetName().AsCString(), 
+                                    base_type->GetClangForwardType(), 
+                                    typedef_type->GetSymbolFile()->GetClangDeclContextForTypeUID(typedef_type->GetID()));
 }
 
 void *
-TypeList::CreateClangLValueReferenceType (Type *type, bool forward_decl_is_ok)
+TypeList::CreateClangLValueReferenceType (Type *type)
 {
     assert(type);
-    return m_ast.CreateLValueReferenceType(type->GetClangType(forward_decl_is_ok));
+    return m_ast.CreateLValueReferenceType(type->GetClangForwardType());
 }
 
 void *
-TypeList::CreateClangRValueReferenceType (Type *type, bool forward_decl_is_ok)
+TypeList::CreateClangRValueReferenceType (Type *type)
 {
     assert(type);
-    return m_ast.CreateRValueReferenceType (type->GetClangType(forward_decl_is_ok));
+    return m_ast.CreateRValueReferenceType (type->GetClangForwardType());
 }
 
 
