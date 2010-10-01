@@ -778,7 +778,7 @@ _mm_xor_si128(__m128i a, __m128i b)
 }
 
 #define _mm_slli_si128(VEC, IMM) \
-  ((__m128i)__builtin_ia32_pslldqi128(VEC, (IMM)*8))
+  ((__m128i)__builtin_ia32_pslldqi128((__m128i)(VEC), (IMM)*8))
 
 static __inline__ __m128i __attribute__((__always_inline__, __nodebug__))
 _mm_slli_epi16(__m128i a, int count)
@@ -840,11 +840,9 @@ _mm_sra_epi32(__m128i a, __m128i count)
   return (__m128i)__builtin_ia32_psrad128((__v4si)a, (__v4si)count);
 }
 
-static __inline__ __m128i __attribute__((__always_inline__, __nodebug__))
-_mm_srli_si128(__m128i a, int imm)
-{
-  return __builtin_ia32_psrldqi128(a, imm * 8);
-}
+
+#define _mm_srli_si128(VEC, IMM) \
+  ((__m128i)__builtin_ia32_psrldqi128((__m128i)(VEC), (IMM)*8))
 
 static __inline__ __m128i __attribute__((__always_inline__, __nodebug__))
 _mm_srli_epi16(__m128i a, int count)
