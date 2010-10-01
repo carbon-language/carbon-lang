@@ -811,6 +811,10 @@ def err_auto_not_allowed : Error<
   "|class member|exception declaration|template parameter|block literal}0">;
 def err_auto_var_requires_init : Error<
   "declaration of variable %0 with type %1 requires an initializer">;
+def err_auto_missing_trailing_return : Error<
+  "'auto' return without trailing return type">;
+def err_trailing_return_without_auto : Error<
+  "trailing return type without 'auto' return">;
   
 // C++0x attributes
 def err_repeat_attribute : Error<"'%0' attribute cannot be repeated">;

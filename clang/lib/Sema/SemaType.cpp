@@ -994,7 +994,30 @@ TypeSourceInfo *Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
                           &ReturnTypeInfo);
     break;
   }
-  
+
+  // Check for auto functions and trailing return type and adjust the
+  // return type accordingly.
+  if (getLangOptions().CPlusPlus0x && D.isFunctionDeclarator()) {
+    const DeclaratorChunk::FunctionTypeInfo &FTI = D.getTypeObject(0).Fun;
+    if (T == Context.UndeducedAutoTy) {
+      if (FTI.TrailingReturnType) {
+          T = GetTypeFromParser(ParsedType::getFromOpaquePtr(FTI.TrailingReturnType),
+                                &ReturnTypeInfo);
+      }
+      else {
+          Diag(D.getDeclSpec().getTypeSpecTypeLoc(),
+               diag::err_auto_missing_trailing_return);
+          T = Context.IntTy;
+          D.setInvalidType(true);
+      }
+    }
+    else if (FTI.TrailingReturnType) {
+      Diag(D.getDeclSpec().getTypeSpecTypeLoc(),
+           diag::err_trailing_return_without_auto);
+      D.setInvalidType(true);
+    }
+  }
+
   if (T.isNull())
     return Context.getNullTypeSourceInfo();
 
@@ -1635,6 +1658,7 @@ namespace {
       assert(Chunk.Kind == DeclaratorChunk::Function);
       TL.setLParenLoc(Chunk.Loc);
       TL.setRParenLoc(Chunk.EndLoc);
+      TL.setTrailingReturn(!!Chunk.Fun.TrailingReturnType);
 
       const DeclaratorChunk::FunctionTypeInfo &FTI = Chunk.Fun;
       for (unsigned i = 0, e = TL.getNumArgs(), tpi = 0; i != e; ++i) {

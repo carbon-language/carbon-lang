@@ -2928,20 +2928,33 @@ TreeTransform<Derived>::TransformFunctionProtoType(TypeLocBuilder &TLB,
   // the parameters, because users tend to expect this (even if they shouldn't
   // rely on it!).
   //
-  // FIXME: When we implement late-specified return types, we'll need to
-  // instantiate the return tpe *after* the parameter types in that case,
-  // since the return type can then refer to the parameters themselves (via
-  // decltype, sizeof, etc.).
+  // When the function has a trailing return type, we instantiate the
+  // parameters before the return type,  since the return type can then refer
+  // to the parameters themselves (via decltype, sizeof, etc.).
+  //
   llvm::SmallVector<QualType, 4> ParamTypes;
   llvm::SmallVector<ParmVarDecl*, 4> ParamDecls;
   FunctionProtoType *T = TL.getTypePtr();
-  QualType ResultType = getDerived().TransformType(TLB, TL.getResultLoc());
-  if (ResultType.isNull())
-    return QualType();
 
-  if (getDerived().TransformFunctionTypeParams(TL, ParamTypes, ParamDecls))
-    return QualType();  
-  
+  QualType ResultType;
+
+  if (TL.getTrailingReturn()) {
+    if (getDerived().TransformFunctionTypeParams(TL, ParamTypes, ParamDecls))
+      return QualType();
+
+    ResultType = getDerived().TransformType(TLB, TL.getResultLoc());
+    if (ResultType.isNull())
+      return QualType();
+  }
+  else {
+    ResultType = getDerived().TransformType(TLB, TL.getResultLoc());
+    if (ResultType.isNull())
+      return QualType();
+
+    if (getDerived().TransformFunctionTypeParams(TL, ParamTypes, ParamDecls))
+      return QualType();
+  }
+
   QualType Result = TL.getType();
   if (getDerived().AlwaysRebuild() ||
       ResultType != T->getResultType() ||
@@ -2959,6 +2972,7 @@ TreeTransform<Derived>::TransformFunctionProtoType(TypeLocBuilder &TLB,
   FunctionProtoTypeLoc NewTL = TLB.push<FunctionProtoTypeLoc>(Result);
   NewTL.setLParenLoc(TL.getLParenLoc());
   NewTL.setRParenLoc(TL.getRParenLoc());
+  NewTL.setTrailingReturn(TL.getTrailingReturn());
   for (unsigned i = 0, e = NewTL.getNumArgs(); i != e; ++i)
     NewTL.setArg(i, ParamDecls[i]);
 
@@ -2983,6 +2997,7 @@ QualType TreeTransform<Derived>::TransformFunctionNoProtoType(
   FunctionNoProtoTypeLoc NewTL = TLB.push<FunctionNoProtoTypeLoc>(Result);
   NewTL.setLParenLoc(TL.getLParenLoc());
   NewTL.setRParenLoc(TL.getRParenLoc());
+  NewTL.setTrailingReturn(false);
 
   return Result;
 }

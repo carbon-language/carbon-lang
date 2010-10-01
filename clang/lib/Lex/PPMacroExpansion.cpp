@@ -518,6 +518,7 @@ static bool HasFeature(const Preprocessor &PP, const IdentifierInfo *II) {
            .Case("cxx_exceptions", LangOpts.Exceptions)
            .Case("cxx_rtti", LangOpts.RTTI)
            .Case("cxx_static_assert", LangOpts.CPlusPlus0x)
+           .Case("cxx_trailing_return", LangOpts.CPlusPlus0x)
            .Case("objc_nonfragile_abi", LangOpts.ObjCNonFragileABI)
            .Case("objc_weak_class", LangOpts.ObjCNonFragileABI)
            .Case("ownership_holds", true)

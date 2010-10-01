@@ -3024,6 +3024,8 @@ void Parser::ParseFunctionDeclarator(SourceLocation LParenLoc, Declarator &D,
   // lparen is already consumed!
   assert(D.isPastIdentifier() && "Should not call before identifier!");
 
+  ParsedType TrailingReturnType;
+
   // This parameter list may be empty.
   if (Tok.is(tok::r_paren)) {
     if (RequiresArg) {
@@ -3055,6 +3057,11 @@ void Parser::ParseFunctionDeclarator(SourceLocation LParenLoc, Declarator &D,
         assert(Exceptions.size() == ExceptionRanges.size() &&
                "Produced different number of exception types and ranges.");
       }
+
+      // Parse trailing-return-type.
+      if (getLang().CPlusPlus0x && Tok.is(tok::arrow)) {
+        TrailingReturnType = ParseTrailingReturnType().get();
+      }
     }
 
     // Remember that we parsed a function type, and remember the attributes.
@@ -3069,7 +3076,8 @@ void Parser::ParseFunctionDeclarator(SourceLocation LParenLoc, Declarator &D,
                                                Exceptions.data(),
                                                ExceptionRanges.data(),
                                                Exceptions.size(),
-                                               LParenLoc, RParenLoc, D),
+                                               LParenLoc, RParenLoc, D,
+                                               TrailingReturnType),
                   EndLoc);
     return;
   }
@@ -3260,9 +3268,6 @@ void Parser::ParseFunctionDeclarator(SourceLocation LParenLoc, Declarator &D,
     ConsumeToken();
   }
 
-  // Leave prototype scope.
-  PrototypeScope.Exit();
-
   // If we have the closing ')', eat it.
   SourceLocation RParenLoc = MatchRHSPunctuation(tok::r_paren, LParenLoc);
   SourceLocation EndLoc = RParenLoc;
@@ -3289,7 +3294,18 @@ void Parser::ParseFunctionDeclarator(SourceLocation LParenLoc, Declarator &D,
       assert(Exceptions.size() == ExceptionRanges.size() &&
              "Produced different number of exception types and ranges.");
     }
+
+    // Parse trailing-return-type.
+    if (getLang().CPlusPlus0x && Tok.is(tok::arrow)) {
+      TrailingReturnType = ParseTrailingReturnType().get();
+    }
   }
+
+  // FIXME: We should leave the prototype scope before parsing the exception
+  // specification, and then reenter it when parsing the trailing return type.
+
+  // Leave prototype scope.
+  PrototypeScope.Exit();
 
   // Remember that we parsed a function type, and remember the attributes.
   D.AddTypeInfo(DeclaratorChunk::getFunction(/*proto*/true, IsVariadic,
@@ -3301,7 +3317,8 @@ void Parser::ParseFunctionDeclarator(SourceLocation LParenLoc, Declarator &D,
                                              Exceptions.data(),
                                              ExceptionRanges.data(),
                                              Exceptions.size(),
-                                             LParenLoc, RParenLoc, D),
+                                             LParenLoc, RParenLoc, D,
+                                             TrailingReturnType),
                 EndLoc);
 }
 

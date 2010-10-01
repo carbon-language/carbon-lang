@@ -1871,6 +1871,25 @@ bool Parser::ParseExceptionSpecification(SourceLocation &EndLoc,
   return false;
 }
 
+/// ParseTrailingReturnType - Parse a trailing return type on a new-style
+/// function declaration.
+TypeResult Parser::ParseTrailingReturnType() {
+  assert(Tok.is(tok::arrow) && "expected arrow");
+
+  ConsumeToken();
+
+  // FIXME: Need to suppress declarations when parsing this typename.
+  // Otherwise in this function definition:
+  //
+  //   auto f() -> struct X {}
+  //
+  // struct X is parsed as class definition because of the trailing
+  // brace.
+
+  SourceRange Range;
+  return ParseTypeName(&Range);
+}
+
 /// \brief We have just started parsing the definition of a new class,
 /// so push that class onto our stack of classes that is currently
 /// being parsed.

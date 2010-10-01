@@ -1733,6 +1733,7 @@ QualType ASTContext::getFunctionType(QualType ResultTy,const QualType *ArgArray,
                                      bool hasAnyExceptionSpec, unsigned NumExs,
                                      const QualType *ExArray,
                                      const FunctionType::ExtInfo &Info) {
+
   const CallingConv CallConv= Info.getCC();
   // Unique functions, to guarantee there is only one function of a particular
   // structure.

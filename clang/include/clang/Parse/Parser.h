@@ -1062,6 +1062,10 @@ private:
                                    bool &hasAnyExceptionSpec);
 
   //===--------------------------------------------------------------------===//
+  // C++0x 8: Function declaration trailing-return-type
+  TypeResult ParseTrailingReturnType();
+
+  //===--------------------------------------------------------------------===//
   // C++ 2.13.5: C++ Boolean Literals
   ExprResult ParseCXXBoolLiteral();
 

@@ -812,6 +812,7 @@ public:
 
 struct FunctionLocInfo {
   SourceLocation LParenLoc, RParenLoc;
+  bool TrailingReturn;
 };
 
 /// \brief Wrapper for source info for functions.
@@ -839,6 +840,13 @@ public:
     getLocalData()->RParenLoc = Loc;
   }
 
+  bool getTrailingReturn() const {
+    return getLocalData()->TrailingReturn;
+  }
+  void setTrailingReturn(bool Trailing) {
+    getLocalData()->TrailingReturn = Trailing;
+  }
+
   unsigned getNumArgs() const {
     if (isa<FunctionNoProtoType>(getTypePtr()))
       return 0;
@@ -858,6 +866,7 @@ public:
   void initializeLocal(SourceLocation Loc) {
     setLParenLoc(Loc);
     setRParenLoc(Loc);
+    setTrailingReturn(false);
     for (unsigned i = 0, e = getNumArgs(); i != e; ++i)
       setArg(i, NULL);
   }

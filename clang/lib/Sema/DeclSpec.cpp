@@ -59,7 +59,8 @@ DeclaratorChunk DeclaratorChunk::getFunction(bool hasProto, bool isVariadic,
                                              unsigned NumExceptions,
                                              SourceLocation LPLoc,
                                              SourceLocation RPLoc,
-                                             Declarator &TheDeclarator) {
+                                             Declarator &TheDeclarator,
+                                             ParsedType TrailingReturnType) {
   DeclaratorChunk I;
   I.Kind                 = Function;
   I.Loc                  = LPLoc;
@@ -76,6 +77,7 @@ DeclaratorChunk DeclaratorChunk::getFunction(bool hasProto, bool isVariadic,
   I.Fun.hasAnyExceptionSpec = hasAnyExceptionSpec;
   I.Fun.NumExceptions    = NumExceptions;
   I.Fun.Exceptions       = 0;
+  I.Fun.TrailingReturnType   = TrailingReturnType.getAsOpaquePtr();
 
   // new[] an argument array if needed.
   if (NumArgs) {

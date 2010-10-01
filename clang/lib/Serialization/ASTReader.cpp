@@ -2942,6 +2942,7 @@ void TypeLocReader::VisitExtVectorTypeLoc(ExtVectorTypeLoc TL) {
 void TypeLocReader::VisitFunctionTypeLoc(FunctionTypeLoc TL) {
   TL.setLParenLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
   TL.setRParenLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+  TL.setTrailingReturn(Record[Idx++]);
   for (unsigned i = 0, e = TL.getNumArgs(); i != e; ++i) {
     TL.setArg(i, cast_or_null<ParmVarDecl>(Reader.GetDecl(Record[Idx++])));
   }
