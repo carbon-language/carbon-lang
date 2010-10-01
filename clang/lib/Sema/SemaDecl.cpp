@@ -3687,51 +3687,61 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
   }
 
   if (D.getCXXScopeSpec().isSet() && !NewFD->isInvalidDecl()) {
-    // Fake up an access specifier if it's supposed to be a class member.
-    if (!Redeclaration && isa<CXXRecordDecl>(NewFD->getDeclContext()))
-      NewFD->setAccess(AS_public);
+    if (!CurContext->isRecord()) {
+      // Fake up an access specifier if it's supposed to be a class member.
+      if (!Redeclaration && isa<CXXRecordDecl>(NewFD->getDeclContext()))
+        NewFD->setAccess(AS_public);
 
-    // An out-of-line member function declaration must also be a
-    // definition (C++ [dcl.meaning]p1).
-    // Note that this is not the case for explicit specializations of
-    // function templates or member functions of class templates, per
-    // C++ [temp.expl.spec]p2. We also allow these declarations as an extension
-    // for compatibility with old SWIG code which likes to generate them.
-    if (!IsFunctionDefinition && !isFriend &&
-        !isFunctionTemplateSpecialization && !isExplicitSpecialization) {
-      Diag(NewFD->getLocation(), diag::ext_out_of_line_declaration)
-        << D.getCXXScopeSpec().getRange();
-    }
-    if (!Redeclaration && !(isFriend && CurContext->isDependentContext())) {
-      // The user tried to provide an out-of-line definition for a
-      // function that is a member of a class or namespace, but there
-      // was no such member function declared (C++ [class.mfct]p2,
-      // C++ [namespace.memdef]p2). For example:
+      // An out-of-line member function declaration must also be a
+      // definition (C++ [dcl.meaning]p1).
+      // Note that this is not the case for explicit specializations of
+      // function templates or member functions of class templates, per
+      // C++ [temp.expl.spec]p2. We also allow these declarations as an extension
+      // for compatibility with old SWIG code which likes to generate them.
+      if (!IsFunctionDefinition && !isFriend &&
+          !isFunctionTemplateSpecialization && !isExplicitSpecialization) {
+        Diag(NewFD->getLocation(), diag::ext_out_of_line_declaration)
+          << D.getCXXScopeSpec().getRange();
+      }
+      if (!Redeclaration && !(isFriend && CurContext->isDependentContext())) {
+        // The user tried to provide an out-of-line definition for a
+        // function that is a member of a class or namespace, but there
+        // was no such member function declared (C++ [class.mfct]p2,
+        // C++ [namespace.memdef]p2). For example:
+        //
+        // class X {
+        //   void f() const;
+        // };
+        //
+        // void X::f() { } // ill-formed
+        //
+        // Complain about this problem, and attempt to suggest close
+        // matches (e.g., those that differ only in cv-qualifiers and
+        // whether the parameter types are references).
+        Diag(D.getIdentifierLoc(), diag::err_member_def_does_not_match)
+          << Name << DC << D.getCXXScopeSpec().getRange();
+        NewFD->setInvalidDecl();
+
+        LookupResult Prev(*this, Name, D.getIdentifierLoc(), LookupOrdinaryName,
+                          ForRedeclaration);
+        LookupQualifiedName(Prev, DC);
+        assert(!Prev.isAmbiguous() &&
+               "Cannot have an ambiguity in previous-declaration lookup");
+        for (LookupResult::iterator Func = Prev.begin(), FuncEnd = Prev.end();
+             Func != FuncEnd; ++Func) {
+          if (isa<FunctionDecl>(*Func) &&
+              isNearlyMatchingFunction(Context, cast<FunctionDecl>(*Func), NewFD))
+            Diag((*Func)->getLocation(), diag::note_member_def_close_match);
+        }
+      }
+    } else if (!isFriend) { 
+      // The user provided a superfluous scope specifier inside a class definition:
       //
       // class X {
-      //   void f() const;
+      //   void X::f();
       // };
-      //
-      // void X::f() { } // ill-formed
-      //
-      // Complain about this problem, and attempt to suggest close
-      // matches (e.g., those that differ only in cv-qualifiers and
-      // whether the parameter types are references).
-      Diag(D.getIdentifierLoc(), diag::err_member_def_does_not_match)
-        << Name << DC << D.getCXXScopeSpec().getRange();
-      NewFD->setInvalidDecl();
-
-      LookupResult Prev(*this, Name, D.getIdentifierLoc(), LookupOrdinaryName,
-                        ForRedeclaration);
-      LookupQualifiedName(Prev, DC);
-      assert(!Prev.isAmbiguous() &&
-             "Cannot have an ambiguity in previous-declaration lookup");
-      for (LookupResult::iterator Func = Prev.begin(), FuncEnd = Prev.end();
-           Func != FuncEnd; ++Func) {
-        if (isa<FunctionDecl>(*Func) &&
-            isNearlyMatchingFunction(Context, cast<FunctionDecl>(*Func), NewFD))
-          Diag((*Func)->getLocation(), diag::note_member_def_close_match);
-      }
+      Diag(NewFD->getLocation(), diag::warn_member_extra_qualification)
+        << Name << FixItHint::CreateRemoval(D.getCXXScopeSpec().getRange());
     }
   }
 

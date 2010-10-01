@@ -66,3 +66,8 @@ CT<1> main(void); // expected-error{{'main' must return 'int'}}
 // typedef CT<1> mainT(void);
 // mainT main; // TODO
 
+// extra qualification on member
+class C {
+  int C::foo();
+};
+

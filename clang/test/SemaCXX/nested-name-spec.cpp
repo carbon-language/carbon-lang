@@ -244,3 +244,7 @@ namespace PR7133 {
     return false;
   }
 }
+
+class CLASS {
+  void CLASS::foo2(); // expected-warning {{extra qualification on member 'foo2'}}
+};
