@@ -28,6 +28,11 @@
 
 using namespace llvm;
 
+static cl::opt<bool>
+OldT2IfCvt("old-thumb2-ifcvt", cl::Hidden,
+           cl::desc("Use old-style Thumb2 if-conversion heuristics"),
+           cl::init(false));
+
 Thumb2InstrInfo::Thumb2InstrInfo(const ARMSubtarget &STI)
   : ARMBaseInstrInfo(STI), RI(*this, STI) {
 }
@@ -36,6 +41,30 @@ unsigned Thumb2InstrInfo::getUnindexedOpcode(unsigned Opc) const {
   // FIXME
   return 0;
 }
+
+bool Thumb2InstrInfo::isProfitableToIfCvt(MachineBasicBlock &MBB,
+                                          unsigned NumInstrs,
+                                          float Prediction) const {
+  if (!OldT2IfCvt)
+    return ARMBaseInstrInfo::isProfitableToIfCvt(MBB, NumInstrs, Prediction);
+  return NumInstrs && NumInstrs <= 3;
+}
+  
+bool Thumb2InstrInfo::
+isProfitableToIfCvt(MachineBasicBlock &TMBB, unsigned NumT,
+                    MachineBasicBlock &FMBB, unsigned NumF,
+                    float Prediction) const {
+  if (!OldT2IfCvt)
+    return ARMBaseInstrInfo::isProfitableToIfCvt(TMBB, NumT,
+                                                 FMBB, NumF, Prediction);
+    
+  // FIXME: Catch optimization such as:
+  //        r0 = movne
+  //        r0 = moveq
+  return NumT && NumF &&
+    NumT <= 3 && NumF <= 3;
+}
+
 
 void
 Thumb2InstrInfo::ReplaceTailWithBranchTo(MachineBasicBlock::iterator Tail,
