@@ -1114,9 +1114,8 @@ llvm::DIType CGDebugInfo::CreateType(const ObjCInterfaceType *Ty,
   const ASTRecordLayout &RL = CGM.getContext().getASTObjCInterfaceLayout(ID);
 
   unsigned FieldNo = 0;
-  for (ObjCInterfaceDecl::ivar_iterator I = ID->ivar_begin(),
-         E = ID->ivar_end();  I != E; ++I, ++FieldNo) {
-    ObjCIvarDecl *Field = *I;
+  for (ObjCIvarDecl *Field = ID->all_declared_ivar_begin(); Field;
+       Field = Field->getNextIvar()) {
     llvm::DIType FieldTy = getOrCreateType(Field->getType(), Unit);
 
     llvm::StringRef FieldName = Field->getName();
