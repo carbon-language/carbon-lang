@@ -182,19 +182,6 @@ Sema::CheckBuiltinFunctionCall(unsigned BuiltinID, CallExpr *TheCall) {
     if (SemaBuiltinFPClassification(TheCall, 1))
       return ExprError();
     break;
-  case Builtin::BI__builtin_return_address:
-  case Builtin::BI__builtin_frame_address: {
-    llvm::APSInt Result;
-    if (SemaBuiltinConstantArg(TheCall, 0, Result))
-      return ExprError();
-    break;
-  }
-  case Builtin::BI__builtin_eh_return_data_regno: {
-    llvm::APSInt Result;
-    if (SemaBuiltinConstantArg(TheCall, 0, Result))
-      return ExprError();
-    break;
-  }
   case Builtin::BI__builtin_shufflevector:
     return SemaBuiltinShuffleVector(TheCall);
     // TheCall will be freed by the smart pointer here, but that's fine, since
@@ -251,15 +238,6 @@ Sema::CheckBuiltinFunctionCall(unsigned BuiltinID, CallExpr *TheCall) {
 }
 
 bool Sema::CheckX86BuiltinFunctionCall(unsigned BuiltinID, CallExpr *TheCall) {
-  switch (BuiltinID) {
-  case X86::BI__builtin_ia32_palignr128:
-  case X86::BI__builtin_ia32_palignr: {
-    llvm::APSInt Result;
-    if (SemaBuiltinConstantArg(TheCall, 2, Result))
-      return true;
-    break;
-  }
-  }
   return false;
 }
 
