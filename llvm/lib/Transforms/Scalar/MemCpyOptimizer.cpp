@@ -697,13 +697,18 @@ bool MemCpyOpt::processMemCpy(MemCpyInst *M) {
                                  M->getParent()->getParent()->getParent(),
                                  M->getIntrinsicID(), ArgTys, 3);
     
-  // Make sure to use the alignment of the source since we're changing the
-  // location we're reading from.
+  // Make sure to use the lesser of the alignment of the source and the dest
+  // since we're changing where we're reading from, but don't want to increase
+  // the alignment past what can be read from or written to.
   // TODO: Is this worth it if we're creating a less aligned memcpy? For
   // example we could be moving from movaps -> movq on x86.
+  unsigned Align = std::min(MDep->getAlignmentCst()->getZExtValue(),
+                            M->getAlignmentCst()->getZExtValue());
+  LLVMContext &Context = M->getContext();
+  ConstantInt *AlignCI = ConstantInt::get(Type::getInt32Ty(Context), Align);
   Value *Args[5] = {
     M->getRawDest(), MDep->getRawSource(), M->getLength(),
-    MDep->getAlignmentCst(), M->getVolatileCst()
+    AlignCI, M->getVolatileCst()
   };
   CallInst *C = CallInst::Create(MemCpyFun, Args, Args+5, "", M);
   
