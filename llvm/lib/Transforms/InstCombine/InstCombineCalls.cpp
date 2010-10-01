@@ -280,7 +280,8 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
 
     // memmove/cpy/set of zero bytes is a noop.
     if (Constant *NumBytes = dyn_cast<Constant>(MI->getLength())) {
-      if (NumBytes->isNullValue()) return EraseInstFromFunction(CI);
+      if (NumBytes->isNullValue())
+        return EraseInstFromFunction(CI);
 
       if (ConstantInt *CI = dyn_cast<ConstantInt>(NumBytes))
         if (CI->getZExtValue() == 1) {
@@ -289,6 +290,10 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
           // alignment is sufficient.
         }
     }
+    
+    // No other transformations apply to volatile transfers.
+    if (MI->isVolatile())
+      return 0;
 
     // If we have a memmove and the source operation is a constant global,
     // then the source and dest pointers can't alias, so we can change this
