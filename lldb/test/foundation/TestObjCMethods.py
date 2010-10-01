@@ -109,7 +109,7 @@ class FoundationTestCase(TestBase):
 
         self.expect("frame variable -s", VARIABLES_DISPLAYED_CORRECTLY,
             substrs = ["ARG: (MyString *) self",
-                       "ARG: (struct objc_selector *) _cmd"])
+                       "ARG: (SEL) _cmd"])
 
         # Test new feature with r115115:
         # Add "-o" option to "expression" which prints the object description if available.
