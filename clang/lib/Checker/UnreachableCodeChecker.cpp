@@ -31,7 +31,7 @@
 using namespace clang;
 
 namespace {
-class UnreachableCodeChecker : public CheckerVisitor<UnreachableCodeChecker> {
+class UnreachableCodeChecker : public Checker {
 public:
   static void *getTag();
   void VisitEndAnalysis(ExplodedGraph &G,
