@@ -8,8 +8,8 @@ entry:
 
 bb26:		; preds = %bb26, %entry
 
-; CHECK:  addl  %eax, %ebx
-; CHECK:  adcl  %edx, %ebp
+; CHECK:  addl  %e
+; CHECK:  adcl  %e
 
 	%i.037.0 = phi i32 [ 0, %entry ], [ %tmp25, %bb26 ]		; <i32> [#uses=3]
 	%sum.035.0 = phi <1 x i64> [ zeroinitializer, %entry ], [ %tmp22, %bb26 ]		; <<1 x i64>> [#uses=1]
