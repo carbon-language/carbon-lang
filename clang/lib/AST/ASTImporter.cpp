@@ -1966,7 +1966,6 @@ Decl *ASTNodeImporter::VisitFunctionDecl(FunctionDecl *D) {
   ToFunction->setAccess(D->getAccess());
   ToFunction->setLexicalDeclContext(LexicalDC);
   Importer.Imported(D, ToFunction);
-  LexicalDC->addDecl(ToFunction);
 
   // Set the parameters.
   for (unsigned I = 0, N = Parameters.size(); I != N; ++I) {
@@ -1976,7 +1975,10 @@ Decl *ASTNodeImporter::VisitFunctionDecl(FunctionDecl *D) {
   ToFunction->setParams(Parameters.data(), Parameters.size());
 
   // FIXME: Other bits to merge?
-  
+
+  // Add this function to the lexical context.
+  LexicalDC->addDecl(ToFunction);
+
   return ToFunction;
 }
 
