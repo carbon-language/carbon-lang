@@ -81,6 +81,11 @@ namespace llvm {
     unsigned getFlags() const { return flags; }
     void setFlags(unsigned flags) { this->flags = flags; }
 
+    /// Merge flags from another VNInfo
+    void mergeFlags(const VNInfo *VNI) {
+      flags = (flags | VNI->flags) & ~IS_UNUSED;
+    }
+
     /// For a register interval, if this VN was definied by a copy instr
     /// getCopy() returns a pointer to it, otherwise returns 0.
     /// For a stack interval the behaviour of this method is undefined.

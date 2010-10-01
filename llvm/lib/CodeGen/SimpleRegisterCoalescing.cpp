@@ -423,10 +423,6 @@ bool SimpleRegisterCoalescing::RemoveCopyByCommutingDef(const CoalescerPair &CP,
   unsigned OpIdx = NewMI->findRegisterUseOperandIdx(IntA.reg, false);
   NewMI->getOperand(OpIdx).setIsKill();
 
-  bool BHasPHIKill = BValNo->hasPHIKill();
-  SmallVector<VNInfo*, 4> BDeadValNos;
-  std::map<SlotIndex, SlotIndex> BExtend;
-
   // If ALR and BLR overlaps and end of BLR extends beyond end of ALR, e.g.
   // A = or A, B
   // ...
@@ -435,9 +431,6 @@ bool SimpleRegisterCoalescing::RemoveCopyByCommutingDef(const CoalescerPair &CP,
   // C = A<kill>
   // ...
   //   = B
-  bool Extended = BLR->end > ALR->end && ALR->end != ALR->start;
-  if (Extended)
-    BExtend[ALR->end] = BLR->end;
 
   // Update uses of IntA of the specific Val# with IntB.
   for (MachineRegisterInfo::use_iterator UI = mri_->use_begin(IntA.reg),
@@ -463,50 +456,23 @@ bool SimpleRegisterCoalescing::RemoveCopyByCommutingDef(const CoalescerPair &CP,
       UseMO.setReg(NewReg);
     if (UseMI == CopyMI)
       continue;
-    if (UseMO.isKill()) {
-      if (Extended)
-        UseMO.setIsKill(false);
-    }
     if (!UseMI->isCopy())
       continue;
     if (UseMI->getOperand(0).getReg() != IntB.reg ||
         UseMI->getOperand(0).getSubReg())
       continue;
 
-    // This copy will become a noop. If it's defining a new val#,
-    // remove that val# as well. However this live range is being
-    // extended to the end of the existing live range defined by the copy.
+    // This copy will become a noop. If it's defining a new val#, merge it into
+    // BValNo.
     SlotIndex DefIdx = UseIdx.getDefIndex();
-    const LiveRange *DLR = IntB.getLiveRangeContaining(DefIdx);
-    if (!DLR)
+    VNInfo *DVNI = IntB.getVNInfoAt(DefIdx);
+    if (!DVNI)
       continue;
     DEBUG(dbgs() << "\t\tnoop: " << DefIdx << '\t' << *UseMI);
-    BHasPHIKill |= DLR->valno->hasPHIKill();
-    assert(DLR->valno->def == DefIdx);
-    BDeadValNos.push_back(DLR->valno);
-    BExtend[DLR->start] = DLR->end;
+    assert(DVNI->def == DefIdx);
+    BValNo = IntB.MergeValueNumberInto(BValNo, DVNI);
     JoinedCopies.insert(UseMI);
   }
-
-  // We need to insert a new liverange: [ALR.start, LastUse). It may be we can
-  // simply extend BLR if CopyMI doesn't end the range.
-
-  // Remove val#'s defined by copies that will be coalesced away.
-  for (unsigned i = 0, e = BDeadValNos.size(); i != e; ++i) {
-    VNInfo *DeadVNI = BDeadValNos[i];
-    if (TargetRegisterInfo::isPhysicalRegister(IntB.reg)) {
-      for (const unsigned *AS = tri_->getAliasSet(IntB.reg); *AS; ++AS) {
-        if (!li_->hasInterval(*AS))
-          continue;
-        LiveInterval &ASLI = li_->getInterval(*AS);
-        if (const LiveRange *ASLR = ASLI.getLiveRangeContaining(DeadVNI->def))
-          ASLI.removeValNo(ASLR->valno);
-      }
-    }
-    IntB.removeValNo(BDeadValNos[i]);
-  }
-  DEBUG(dbgs() << "\t\ttrimmed:  " << IntB << '\n');
-
 
   // Extend BValNo by merging in IntA live ranges of AValNo. Val# definition
   // is updated.
@@ -516,14 +482,8 @@ bool SimpleRegisterCoalescing::RemoveCopyByCommutingDef(const CoalescerPair &CP,
   for (LiveInterval::iterator AI = IntA.begin(), AE = IntA.end();
        AI != AE; ++AI) {
     if (AI->valno != AValNo) continue;
-    SlotIndex End = AI->end;
-    std::map<SlotIndex, SlotIndex>::iterator
-      EI = BExtend.find(End);
-    if (EI != BExtend.end())
-      End = EI->second;
-    IntB.addRange(LiveRange(AI->start, End, ValNo));
+    IntB.addRange(LiveRange(AI->start, AI->end, ValNo));
   }
-  ValNo->setHasPHIKill(BHasPHIKill);
   DEBUG(dbgs() << "\t\textended: " << IntB << '\n');
 
   IntA.removeValNo(AValNo);

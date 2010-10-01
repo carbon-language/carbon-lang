@@ -582,6 +582,9 @@ VNInfo* LiveInterval::MergeValueNumberInto(VNInfo *V1, VNInfo *V2) {
     }
   }
 
+  // Merge the relevant flags.
+  V2->mergeFlags(V1);
+
   // Now that V1 is dead, remove it.
   markValNoForDeletion(V1);
 
