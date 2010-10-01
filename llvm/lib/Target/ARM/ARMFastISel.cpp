@@ -19,6 +19,7 @@
 #include "ARMRegisterInfo.h"
 #include "ARMTargetMachine.h"
 #include "ARMSubtarget.h"
+#include "ARMConstantPoolValue.h"
 #include "llvm/CallingConv.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/GlobalVariable.h"
@@ -59,7 +60,7 @@ class ARMFastISel : public FastISel {
   const TargetMachine &TM;
   const TargetInstrInfo &TII;
   const TargetLowering &TLI;
-  const ARMFunctionInfo *AFI;
+  ARMFunctionInfo *AFI;
 
   // Convenience variables to avoid some queries.
   bool isThumb;
@@ -139,6 +140,7 @@ class ARMFastISel : public FastISel {
     bool ARMComputeRegOffset(const Value *Obj, unsigned &Reg, int &Offset);
     unsigned ARMMaterializeFP(const ConstantFP *CFP, EVT VT);
     unsigned ARMMaterializeInt(const Constant *C, EVT VT);
+    unsigned ARMMaterializeGV(const GlobalValue *GV, EVT VT);
     unsigned ARMMoveToFPReg(EVT VT, unsigned SrcReg);
     unsigned ARMMoveToIntReg(EVT VT, unsigned SrcReg);
 
@@ -446,6 +448,11 @@ unsigned ARMFastISel::ARMMaterializeInt(const Constant *C, EVT VT) {
   return DestReg;
 }
 
+unsigned ARMFastISel::ARMMaterializeGV(const GlobalValue *GV, EVT VT) {
+  // Disable currently...
+  return 0;
+}
+
 unsigned ARMFastISel::TargetMaterializeConstant(const Constant *C) {
   EVT VT = TLI.getValueType(C->getType(), true);
 
@@ -454,7 +461,12 @@ unsigned ARMFastISel::TargetMaterializeConstant(const Constant *C) {
 
   if (const ConstantFP *CFP = dyn_cast<ConstantFP>(C))
     return ARMMaterializeFP(CFP, VT);
-  return ARMMaterializeInt(C, VT);
+  else if (const GlobalValue *GV = dyn_cast<GlobalValue>(C))
+    return ARMMaterializeGV(GV, VT);
+  else if (isa<ConstantInt>(C))
+    return ARMMaterializeInt(C, VT);
+  
+  return 0;
 }
 
 unsigned ARMFastISel::TargetMaterializeAlloca(const AllocaInst *AI) {
