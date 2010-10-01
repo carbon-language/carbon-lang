@@ -304,8 +304,9 @@ private:
   CFGBlock *addStmt(Stmt *S) {
     return Visit(S, AddStmtChoice::AlwaysAdd);
   }
-  CFGBlock *addAutomaticObjDtors(LocalScope::const_iterator B,
-      LocalScope::const_iterator E, Stmt* S);
+
+  void addAutomaticObjDtors(LocalScope::const_iterator B,
+                            LocalScope::const_iterator E, Stmt* S);
 
   // Local scopes creation.
   LocalScope* createOrReuseLocalScope(LocalScope* Scope);
@@ -470,16 +471,16 @@ CFGBlock* CFGBuilder::createBlock(bool add_successor) {
 /// addAutomaticObjDtors - Add to current block automatic objects destructors
 /// for objects in range of local scope positions. Use S as trigger statement
 /// for destructors.
-CFGBlock* CFGBuilder::addAutomaticObjDtors(LocalScope::const_iterator B,
-    LocalScope::const_iterator E, Stmt* S) {
+void CFGBuilder::addAutomaticObjDtors(LocalScope::const_iterator B,
+                                      LocalScope::const_iterator E, Stmt* S) {
   if (!BuildOpts.AddImplicitDtors)
-    return Block;
+    return;
+
   if (B == E)
-    return Block;
+    return;
 
   autoCreateBlock();
   appendAutomaticObjDtors(Block, B, E, S);
-  return Block;
 }
 
 /// createOrReuseLocalScope - If Scope is NULL create new LocalScope. Either
