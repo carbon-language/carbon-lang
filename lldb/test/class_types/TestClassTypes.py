@@ -5,7 +5,7 @@ import unittest2
 import lldb
 from lldbtest import *
 
-@unittest2.skip("crash currently")
+@unittest2.skip("crash currently: rdar://problem/8502549")
 class ClassTypesTestCase(TestBase):
 
     mydir = "class_types"
