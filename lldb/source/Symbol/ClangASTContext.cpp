@@ -803,6 +803,197 @@ ClangASTContext::CreateRecordType (const char *name, int kind, DeclContext *decl
     return ast_context->getTagDeclType(decl).getAsOpaquePtr();
 }
 
+static bool
+IsOperator (const char *name, OverloadedOperatorKind &op_kind)
+{
+    if (name == NULL || name[0] == '\0')
+        return false;
+    
+    if (::strstr(name, "operator ") != name)
+        return false;
+    
+    const char *post_op_name = name + 9;
+        
+    // This is an operator, set the overloaded operator kind to invalid
+    // in case this is a conversion operator...
+    op_kind = NUM_OVERLOADED_OPERATORS;
+
+    switch (post_op_name[0])
+    {
+    case 'n':
+        if  (strcmp (post_op_name, "new") == 0)  
+            op_kind = OO_New;
+        else if (strcmp (post_op_name, "new[]") == 0)  
+            op_kind = OO_Array_New;
+        break;
+
+    case 'd':
+        if (strcmp (post_op_name, "delete") == 0)
+            op_kind = OO_Delete;
+        else if (strcmp (post_op_name, "delete[]") == 0)  
+            op_kind = OO_Array_Delete;
+        break;
+    
+    case '+':
+        if (post_op_name[1] == '\0')
+            op_kind = OO_Plus;
+        else if (post_op_name[2] == '\0')
+        {
+            if (post_op_name[1] == '=')
+                op_kind = OO_PlusEqual;
+            else if (post_op_name[1] == '+')
+                op_kind = OO_PlusPlus;
+        }
+        break;
+
+    case '-':
+        if (post_op_name[1] == '\0')
+            op_kind = OO_Minus;
+        else if (post_op_name[2] == '\0')
+        {
+            switch (post_op_name[1])
+            {
+            case '=': op_kind = OO_MinusEqual; break;
+            case '-': op_kind = OO_MinusMinus; break;
+            case '>': op_kind = OO_Arrow; break;
+            }
+        }
+        else if (post_op_name[3] == '\0')
+        {
+            if (post_op_name[2] == '*')
+                op_kind = OO_ArrowStar; break;
+        }
+        break;
+        
+    case '*':
+        if (post_op_name[1] == '\0')
+            op_kind = OO_Star;
+        else if (post_op_name[1] == '=' && post_op_name[2] == '\0')
+            op_kind = OO_StarEqual;
+        break;
+    
+    case '/':
+        if (post_op_name[1] == '\0')
+            op_kind = OO_Slash;
+        else if (post_op_name[1] == '=' && post_op_name[2] == '\0')
+            op_kind = OO_SlashEqual;
+        break;
+    
+    case '%':
+        if (post_op_name[1] == '\0')
+            op_kind = OO_Percent;
+        else if (post_op_name[1] == '=' && post_op_name[2] == '\0')
+            op_kind = OO_PercentEqual;
+        break;
+
+
+    case '^':
+        if (post_op_name[1] == '\0')
+            op_kind = OO_Caret;
+        else if (post_op_name[1] == '=' && post_op_name[2] == '\0')
+            op_kind = OO_CaretEqual;
+        break;
+
+    case '&':
+        if (post_op_name[1] == '\0')
+            op_kind = OO_Amp;
+        else if (post_op_name[2] == '\0')
+        {
+            switch (post_op_name[1])
+            {
+            case '=': op_kind = OO_AmpEqual; break;
+            case '&': op_kind = OO_AmpAmp; break;
+            }   
+        }
+        break;
+
+    case '|':
+        if (post_op_name[1] == '\0')
+            op_kind = OO_Pipe;
+        else if (post_op_name[2] == '\0')
+        {
+            switch (post_op_name[1])
+            {
+            case '=': op_kind = OO_PipeEqual; break;
+            case '|': op_kind = OO_PipePipe; break;
+            }   
+        }
+        break;
+    
+    case '~':
+        if (post_op_name[1] == '\0')
+            op_kind = OO_Tilde;
+        break;
+    
+    case '!':
+        if (post_op_name[1] == '\0')
+            op_kind = OO_Exclaim;
+        else if (post_op_name[1] == '=' && post_op_name[2] == '\0')
+            op_kind = OO_ExclaimEqual;
+        break;
+
+    case '=':
+        if (post_op_name[1] == '\0')
+            op_kind = OO_Equal;
+        else if (post_op_name[1] == '=' && post_op_name[2] == '\0')
+            op_kind = OO_EqualEqual;
+        break;
+    
+    case '<':
+        if (post_op_name[1] == '\0')
+            op_kind = OO_Less;
+        else if (post_op_name[2] == '\0')
+        {
+            switch (post_op_name[1])
+            {
+            case '<': op_kind = OO_LessLess; break;
+            case '=': op_kind = OO_LessEqual; break;
+            }   
+        }
+        else if (post_op_name[3] == '\0')
+        {
+            if (post_op_name[2] == '=')
+                op_kind = OO_LessLessEqual;
+        }
+        break;
+
+    case '>':
+        if (post_op_name[1] == '\0')
+            op_kind = OO_Greater;
+        else if (post_op_name[2] == '\0')
+        {
+            switch (post_op_name[1])
+            {
+            case '>': op_kind = OO_GreaterGreater; break;
+            case '=': op_kind = OO_GreaterEqual; break;
+            }   
+        }
+        else if (post_op_name[1] == '>' && 
+                 post_op_name[2] == '=' && 
+                 post_op_name[3] == '\0')
+        {
+                op_kind = OO_GreaterGreaterEqual;
+        }
+        break;
+        
+    case ',':
+        if (post_op_name[1] == '\0')
+            op_kind = OO_Comma;
+        break;
+    
+    case '(':
+        if (post_op_name[1] == ')' && post_op_name[2] == '\0')
+            op_kind = OO_Call;
+        break;
+    
+    case '[':
+        if (post_op_name[1] == ']' && post_op_name[2] == '\0')
+            op_kind = OO_Subscript;
+        break;
+    }
+
+    return true;
+}
 CXXMethodDecl *
 ClangASTContext::AddMethodToCXXRecordType
 (
@@ -854,7 +1045,7 @@ ClangASTContext::AddMethodToCXXRecordType
     
     DeclarationName decl_name (&identifier_table->get(name));
 
-    DeclarationNameInfo decl_name_info (decl_name, SourceLocation());
+    ;
     const bool is_implicitly_declared = false;
     
     clang::Type *method_type(method_qual_type.getTypePtr());
@@ -873,7 +1064,7 @@ ClangASTContext::AddMethodToCXXRecordType
     {
         cxx_method_decl = CXXDestructorDecl::Create (*ast_context,
                                                      cxx_record_decl,
-                                                     decl_name_info,
+                                                     DeclarationNameInfo (ast_context->DeclarationNames.getCXXDestructorName (ast_context->getCanonicalType (method_qual_type)), SourceLocation()),
                                                      method_qual_type,
                                                      is_inline,
                                                      is_implicitly_declared);
@@ -882,7 +1073,7 @@ ClangASTContext::AddMethodToCXXRecordType
     {
         cxx_method_decl = CXXConstructorDecl::Create (*ast_context,
                                                       cxx_record_decl,
-                                                      decl_name_info,
+                                                      DeclarationNameInfo (ast_context->DeclarationNames.getCXXConstructorName (ast_context->getCanonicalType (method_qual_type)), SourceLocation()),
                                                       method_qual_type,
                                                       NULL, // TypeSourceInfo *
                                                       is_explicit, 
@@ -891,26 +1082,39 @@ ClangASTContext::AddMethodToCXXRecordType
     }
     else
     {   
-        // TODO: verify this is an ok way to see if this is a C++ conversion
-        // operator. I am currently checking for "operator " following by a valid
-        // first character of a type name (A-Z, a-z, or _)...
-        if ((num_params == 0) && 
-            (::strstr(name, "operator ") == name) &&
-            (::isalpha(name[9]) || name[9] == '_'))
+    
+        OverloadedOperatorKind op_kind = NUM_OVERLOADED_OPERATORS;
+        if (IsOperator (name, op_kind))
         {
-            cxx_method_decl = CXXConversionDecl::Create (*ast_context,
+            if (op_kind != NUM_OVERLOADED_OPERATORS)
+            {
+                cxx_method_decl = CXXMethodDecl::Create (*ast_context,
                                                          cxx_record_decl,
-                                                         decl_name_info,
+                                                         DeclarationNameInfo (ast_context->DeclarationNames.getCXXOperatorName (op_kind), SourceLocation()),
                                                          method_qual_type,
                                                          NULL, // TypeSourceInfo *
-                                                         is_inline,
-                                                         is_explicit);
+                                                         is_static,
+                                                         SC_None,
+                                                         is_inline);
+            }
+            else if (num_params == 0)
+            {
+                // Conversion operators don't take params...
+                cxx_method_decl = CXXConversionDecl::Create (*ast_context,
+                                                             cxx_record_decl,
+                                                             DeclarationNameInfo (ast_context->DeclarationNames.getCXXConversionFunctionName (ast_context->getCanonicalType (method_qual_type)), SourceLocation()),
+                                                             method_qual_type,
+                                                             NULL, // TypeSourceInfo *
+                                                             is_inline,
+                                                             is_explicit);
+            }
         }
-        else
+        
+        if (cxx_method_decl == NULL)
         {
             cxx_method_decl = CXXMethodDecl::Create (*ast_context,
                                                      cxx_record_decl,
-                                                     decl_name_info,
+                                                     DeclarationNameInfo (decl_name, SourceLocation()),
                                                      method_qual_type,
                                                      NULL, // TypeSourceInfo *
                                                      is_static,
@@ -918,8 +1122,7 @@ ClangASTContext::AddMethodToCXXRecordType
                                                      is_inline);
         }
     }
-        
-    
+
     AccessSpecifier access_specifier = ConvertAccessTypeToAccessSpecifier (access);
     
     cxx_method_decl->setAccess (access_specifier);
