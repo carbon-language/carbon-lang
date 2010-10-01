@@ -264,6 +264,17 @@ def system(*popenargs, **kwargs):
 class TestBase(unittest2.TestCase):
     """This LLDB abstract base class is meant to be subclassed."""
 
+    @classmethod
+    def skipLongRunningTest(cls):
+        """
+        By default, we skip long running test case.
+        This can be overridden by passing '-l' to the test driver (dotest.py).
+        """
+        if "LLDB_SKIP_LONG_RUNNING_TEST" in os.environ and "NO" == os.environ["LLDB_SKIP_LONG_RUNNING_TEST"]:
+            return False
+        else:
+            return True
+
     # The concrete subclass should override this attribute.
     mydir = None
 
@@ -286,6 +297,11 @@ class TestBase(unittest2.TestCase):
 
     @classmethod
     def setUpClass(cls):
+        """
+        Python unittest framework class setup fixture.
+        Do current directory manipulation.
+        """
+
         # Fail fast if 'mydir' attribute is not overridden.
         if not cls.mydir or len(cls.mydir) == 0:
             raise Exception("Subclasses must override the 'mydir' attribute.")
@@ -301,7 +317,10 @@ class TestBase(unittest2.TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        """Do class-wide cleanup."""
+        """
+        Python unittest framework class teardown fixture.
+        Do class-wide cleanup.
+        """
 
         # First, let's do the platform-specific cleanup.
         module = __import__(sys.platform)

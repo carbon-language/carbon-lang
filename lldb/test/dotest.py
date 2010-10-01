@@ -57,6 +57,9 @@ delay = False
 # Ignore the build search path relative to this script to locate the lldb.py module.
 ignore = False
 
+# By default, we skip long running test case.  Use "-l" option to override.
+skipLongRunningTest = True
+
 # The regular expression pattern to match against eligible filenames as our test cases.
 regexp = None
 
@@ -80,6 +83,7 @@ where options:
 -d   : delay startup for 10 seconds (in order for the debugger to attach)
 -i   : ignore (don't bailout) if 'lldb.py' module cannot be located in the build
        tree relative to this script; use PYTHONPATH to locate the module
+-l   : don't skip long running test
 -p   : specify a regexp filename pattern for inclusion in the test suite
 -t   : trace lldb command execution and result
 -v   : do verbose mode of unittest framework
@@ -114,6 +118,7 @@ def parseOptionsAndInitTestdirs():
     global configFile
     global delay
     global ignore
+    global skipLongRunningTest
     global regexp
     global verbose
     global testdirs
@@ -145,6 +150,9 @@ def parseOptionsAndInitTestdirs():
             index += 1
         elif sys.argv[index].startswith('-i'):
             ignore = True
+            index += 1
+        elif sys.argv[index].startswith('-l'):
+            skipLongRunningTest = False
             index += 1
         elif sys.argv[index].startswith('-p'):
             # Increment by 1 to fetch the reg exp pattern argument.
@@ -333,6 +341,11 @@ setupSysPath()
 #
 if delay:
     doDelay(10)
+
+#
+# If '-l' is specified, do not skip the long running tests.
+if not skipLongRunningTest:
+    os.environ["LLDB_SKIP_LONG_RUNNING_TEST"] = "NO"
 
 #
 # Walk through the testdirs while collecting test cases.
