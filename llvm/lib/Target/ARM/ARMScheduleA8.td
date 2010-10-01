@@ -487,6 +487,10 @@ def CortexA8Itineraries : ProcessorItineraries<
   InstrItinData<IIC_VBINQ,    [InstrStage<1, [A8_Pipe0, A8_Pipe1]>,
                                InstrStage<2, [A8_NPipe]>], [6, 2, 2]>,
   //
+  // Move
+  InstrItinData<IIC_VMOV,     [InstrStage<1, [A8_Pipe0, A8_Pipe1]>,
+                               InstrStage<1, [A8_NPipe]>], [1, 1]>,
+  //
   // Move Immediate
   InstrItinData<IIC_VMOVImm,  [InstrStage<1, [A8_Pipe0, A8_Pipe1]>,
                                InstrStage<1, [A8_NPipe]>], [3]>,
@@ -520,6 +524,10 @@ def CortexA8Itineraries : ProcessorItineraries<
   // Integer to Lane Move
   InstrItinData<IIC_VMOVISL , [InstrStage<1, [A8_Pipe0, A8_Pipe1]>,
                                InstrStage<2, [A8_NLSPipe]>], [3, 1, 1]>,
+  //
+  // Vector narrow move
+  InstrItinData<IIC_VMOVN   , [InstrStage<1, [A8_Pipe0, A8_Pipe1]>,
+                               InstrStage<1, [A8_NPipe]>], [3, 1]>,
   //
   // Double-register Permute
   InstrItinData<IIC_VPERMD,   [InstrStage<1, [A8_Pipe0, A8_Pipe1]>,

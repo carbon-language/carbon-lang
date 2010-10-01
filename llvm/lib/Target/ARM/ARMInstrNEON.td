@@ -3177,7 +3177,7 @@ def  VSHLLi32 : N2VLShMax<1, 1, 0b111010, 0b0011, 0, 0, 0, "vshll", "i32",
                           v2i64, v2i32, NEONvshlli>;
 
 //   VSHRN    : Vector Shift Right and Narrow
-defm VSHRN    : N2VNSh_HSD<0,1,0b1000,0,0,1, IIC_VSHLiD, "vshrn", "i",
+defm VSHRN    : N2VNSh_HSD<0,1,0b1000,0,0,1, IIC_VMOVN, "vshrn", "i",
                            NEONvshrn>;
 
 //   VRSHL    : Vector Rounding Shift
@@ -3284,7 +3284,7 @@ class VNEGD<bits<2> size, string OpcodeStr, string Dt, ValueType Ty>
         [(set DPR:$dst, (Ty (vnegd DPR:$src)))]>;
 class VNEGQ<bits<2> size, string OpcodeStr, string Dt, ValueType Ty>
   : N2V<0b11, 0b11, size, 0b01, 0b00111, 1, 0, (outs QPR:$dst), (ins QPR:$src),
-        IIC_VSHLiD, OpcodeStr, Dt, "$dst, $src", "",
+        IIC_VSHLiQ, OpcodeStr, Dt, "$dst, $src", "",
         [(set QPR:$dst, (Ty (vnegq QPR:$src)))]>;
 
 //   VNEG     : Vector Negate (integer)
@@ -3349,9 +3349,9 @@ def  VSWPq    : N2VX<0b11, 0b11, 0b00, 0b10, 0b00000, 1, 0,
 
 let neverHasSideEffects = 1 in {
 def  VMOVDneon: N3VX<0, 0, 0b10, 0b0001, 0, 1, (outs DPR:$dst), (ins DPR:$src),
-                     N3RegFrm, IIC_VMOVD, "vmov", "$dst, $src", "", []>;
+                     N3RegFrm, IIC_VMOV, "vmov", "$dst, $src", "", []>;
 def  VMOVQ    : N3VX<0, 0, 0b10, 0b0001, 1, 1, (outs QPR:$dst), (ins QPR:$src),
-                     N3RegFrm, IIC_VMOVD, "vmov", "$dst, $src", "", []>;
+                     N3RegFrm, IIC_VMOV, "vmov", "$dst, $src", "", []>;
 
 // Pseudo vector move instructions for QQ and QQQQ registers. This should
 // be expanded after register allocation is completed.
@@ -3577,7 +3577,7 @@ class VDUPLND<bits<4> op19_16, string OpcodeStr, string Dt,
 class VDUPLNQ<bits<4> op19_16, string OpcodeStr, string Dt,
               ValueType ResTy, ValueType OpTy>
   : NVDupLane<op19_16, 1, (outs QPR:$dst), (ins DPR:$src, nohash_imm:$lane),
-              IIC_VMOVD, OpcodeStr, Dt, "$dst, $src[$lane]",
+              IIC_VMOVQ, OpcodeStr, Dt, "$dst, $src[$lane]",
               [(set QPR:$dst, (ResTy (NEONvduplane (OpTy DPR:$src),
                                       imm:$lane)))]>;
 
@@ -3616,11 +3616,11 @@ def  VDUPfdf  : N2V<0b11, 0b11, {?,1}, {0,0}, 0b11000, 0, 0,
 
 def  VDUPfqf  : N2V<0b11, 0b11, {?,1}, {0,0}, 0b11000, 1, 0,
                     (outs QPR:$dst), (ins SPR:$src),
-                    IIC_VMOVD, "vdup", "32", "$dst, ${src:lane}", "",
+                    IIC_VMOVQ, "vdup", "32", "$dst, ${src:lane}", "",
                     [(set QPR:$dst, (v4f32 (NEONvdup (f32 SPR:$src))))]>;
 
 //   VMOVN    : Vector Narrowing Move
-defm VMOVN    : N2VN_HSD<0b11,0b11,0b10,0b00100,0,0, IIC_VMOVD,
+defm VMOVN    : N2VN_HSD<0b11,0b11,0b10,0b00100,0,0, IIC_VMOVN,
                          "vmovn", "i", trunc>;
 //   VQMOVN   : Vector Saturating Narrowing Move
 defm VQMOVNs  : N2VNInt_HSD<0b11,0b11,0b10,0b00101,0,0, IIC_VQUNAiD,
@@ -3684,7 +3684,7 @@ class VREV64D<bits<2> op19_18, string OpcodeStr, string Dt, ValueType Ty>
         [(set DPR:$dst, (Ty (NEONvrev64 (Ty DPR:$src))))]>;
 class VREV64Q<bits<2> op19_18, string OpcodeStr, string Dt, ValueType Ty>
   : N2V<0b11, 0b11, op19_18, 0b00, 0b00000, 1, 0, (outs QPR:$dst),
-        (ins QPR:$src), IIC_VMOVD, 
+        (ins QPR:$src), IIC_VMOVQ, 
         OpcodeStr, Dt, "$dst, $src", "",
         [(set QPR:$dst, (Ty (NEONvrev64 (Ty QPR:$src))))]>;
 
@@ -3707,7 +3707,7 @@ class VREV32D<bits<2> op19_18, string OpcodeStr, string Dt, ValueType Ty>
         [(set DPR:$dst, (Ty (NEONvrev32 (Ty DPR:$src))))]>;
 class VREV32Q<bits<2> op19_18, string OpcodeStr, string Dt, ValueType Ty>
   : N2V<0b11, 0b11, op19_18, 0b00, 0b00001, 1, 0, (outs QPR:$dst),
-        (ins QPR:$src), IIC_VMOVD, 
+        (ins QPR:$src), IIC_VMOVQ, 
         OpcodeStr, Dt, "$dst, $src", "",
         [(set QPR:$dst, (Ty (NEONvrev32 (Ty QPR:$src))))]>;
 
@@ -3726,7 +3726,7 @@ class VREV16D<bits<2> op19_18, string OpcodeStr, string Dt, ValueType Ty>
         [(set DPR:$dst, (Ty (NEONvrev16 (Ty DPR:$src))))]>;
 class VREV16Q<bits<2> op19_18, string OpcodeStr, string Dt, ValueType Ty>
   : N2V<0b11, 0b11, op19_18, 0b00, 0b00010, 1, 0, (outs QPR:$dst),
-        (ins QPR:$src), IIC_VMOVD, 
+        (ins QPR:$src), IIC_VMOVQ, 
         OpcodeStr, Dt, "$dst, $src", "",
         [(set QPR:$dst, (Ty (NEONvrev16 (Ty QPR:$src))))]>;
 

@@ -801,6 +801,14 @@ def CortexA9Itineraries : ProcessorItineraries<
                                InstrStage<1, [A9_Pipe1]>,
                                InstrStage<4, [A9_MUX0, A9_NPipe]>],
                               [9, 3, 2, 1]>,
+
+  //
+  // Move
+  InstrItinData<IIC_VMOV,     [InstrStage<1, [A9_DRegsN],   0, Required>,
+                               InstrStage<1, [A9_DRegsVFP], 0, Reserved>,
+                               InstrStage<1, [A9_Pipe1]>,
+                               InstrStage<1, [A9_MUX0, A9_NPipe]>],
+                              [1,1]>,
   //
   // Move Immediate
   InstrItinData<IIC_VMOVImm,  [InstrStage<1, [A9_DRegsN],   0, Required>,
@@ -819,14 +827,12 @@ def CortexA9Itineraries : ProcessorItineraries<
                               [2, 1]>,
   //
   // Quad-register Permute Move
-  // Result written in N2, but that is relative to the last cycle of multicycle,
-  // so we use 3 for those cases
   InstrItinData<IIC_VMOVQ,    [InstrStage<1, [A9_DRegsN],   0, Required>,
   // FIXME: all latencies are arbitrary, no information is available
-                               InstrStage<4, [A9_DRegsVFP], 0, Reserved>,
+                               InstrStage<3, [A9_DRegsVFP], 0, Reserved>,
                                InstrStage<1, [A9_Pipe1]>,
-                               InstrStage<2, [A9_MUX0, A9_NPipe]>],
-                              [3, 1]>,
+                               InstrStage<1, [A9_MUX0, A9_NPipe]>],
+                              [2, 1]>,
   //
   // Integer to Single-precision Move
   InstrItinData<IIC_VMOVIS ,  [InstrStage<1, [A9_DRegsN],   0, Required>,
@@ -868,6 +874,14 @@ def CortexA9Itineraries : ProcessorItineraries<
                                InstrStage<2, [A9_MUX0, A9_NPipe]>],
                               [3, 1, 1]>,
 
+  //
+  // Vector narrow move
+  InstrItinData<IIC_VMOVN,    [InstrStage<1, [A9_DRegsN],   0, Required>,
+                               // Extra latency cycles since wbck is 6 cycles
+                               InstrStage<7, [A9_DRegsVFP], 0, Reserved>,
+                               InstrStage<1, [A9_Pipe1]>,
+                               InstrStage<1, [A9_MUX0, A9_NPipe]>],
+                              [3, 1]>,
   //
   // Double-register FP Unary
   InstrItinData<IIC_VUNAD,    [InstrStage<1, [A9_DRegsN],   0, Required>,
