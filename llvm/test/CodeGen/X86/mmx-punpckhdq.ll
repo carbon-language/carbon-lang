@@ -1,5 +1,5 @@
-; RRUN: llc < %s -march=x86 -mattr=+mmx | grep pextrd
-; RRUN: llc < %s -march=x86 -mattr=+mmx | grep punpckhdq | count 1
+; RUN: llc < %s -march=x86 -mattr=+mmx,+sse2 | grep pextrd
+; RUN: llc < %s -march=x86 -mattr=+mmx,+sse2 | grep punpckhdq | count 1
 ; There are no MMX operations in bork; promoted to XMM.
 
 define void @bork(<1 x i64>* %x) {

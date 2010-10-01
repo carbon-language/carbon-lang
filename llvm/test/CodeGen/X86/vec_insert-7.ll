@@ -1,4 +1,4 @@
-; RRUN: llc < %s -march=x86 -mattr=+mmx,+sse -mtriple=i686-apple-darwin9 -o - | grep pinsrd | count 2
+; RUN: llc < %s -march=x86 -mattr=+mmx,+sse2 -mtriple=i686-apple-darwin9 -o - | grep pinsrd | count 2
 ; MMX insertelement is not available; these are promoted to XMM.
 ; (Without SSE they are split to two ints, and the code is much better.)
 

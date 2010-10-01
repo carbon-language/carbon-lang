@@ -1,5 +1,5 @@
-; RUN: llc < %s -march=x86 -mattr=+mmx,+sse | grep movq
-; RUN: llc < %s -march=x86 -mattr=+mmx,+sse | grep pshufd
+; RUN: llc < %s -march=x86 -mattr=+mmx,+sse2 | grep movq
+; RUN: llc < %s -march=x86 -mattr=+mmx,+sse2 | grep pshufd
 ; This is not an MMX operation; promoted to XMM.
 
 define x86_mmx @qux(i32 %A) nounwind {
