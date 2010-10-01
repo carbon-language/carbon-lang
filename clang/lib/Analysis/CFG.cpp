@@ -310,7 +310,7 @@ private:
   // Local scopes creation.
   LocalScope* createOrReuseLocalScope(LocalScope* Scope);
 
-  LocalScope* addLocalScopeForStmt(Stmt* S, LocalScope* Scope = NULL);
+  void addLocalScopeForStmt(Stmt* S);
   LocalScope* addLocalScopeForDeclStmt(DeclStmt* DS, LocalScope* Scope = NULL);
   LocalScope* addLocalScopeForVarDecl(VarDecl* VD, LocalScope* Scope = NULL);
 
@@ -493,11 +493,12 @@ LocalScope* CFGBuilder::createOrReuseLocalScope(LocalScope* Scope) {
 }
 
 /// addLocalScopeForStmt - Add LocalScope to local scopes tree for statement
-/// that should create implicit scope (e.g. if/else substatements). Will reuse
-/// Scope if not NULL.
-LocalScope* CFGBuilder::addLocalScopeForStmt(Stmt* S, LocalScope* Scope) {
+/// that should create implicit scope (e.g. if/else substatements). 
+void CFGBuilder::addLocalScopeForStmt(Stmt* S) {
   if (!BuildOpts.AddImplicitDtors)
-    return Scope;
+    return;
+
+  LocalScope *Scope = 0;
 
   // For compound statement we will be creating explicit scope.
   if (CompoundStmt* CS = dyn_cast<CompoundStmt>(S)) {
@@ -509,7 +510,7 @@ LocalScope* CFGBuilder::addLocalScopeForStmt(Stmt* S, LocalScope* Scope) {
       if (DeclStmt* DS = dyn_cast<DeclStmt>(SI))
         Scope = addLocalScopeForDeclStmt(DS, Scope);
     }
-    return Scope;
+    return;
   }
 
   // For any other statement scope will be implicit and as such will be
@@ -517,8 +518,7 @@ LocalScope* CFGBuilder::addLocalScopeForStmt(Stmt* S, LocalScope* Scope) {
   if (LabelStmt* LS = dyn_cast<LabelStmt>(S))
     S = LS->getSubStmt();
   if (DeclStmt* DS = dyn_cast<DeclStmt>(S))
-    Scope = addLocalScopeForDeclStmt(DS, Scope);
-  return Scope;
+    addLocalScopeForDeclStmt(DS, 0);
 }
 
 /// addLocalScopeForDeclStmt - Add LocalScope for declaration statement. Will
@@ -582,7 +582,7 @@ void CFGBuilder::addLocalScopeAndDtors(Stmt* S) {
     return;
 
   LocalScope::const_iterator scopeBeginPos = ScopePos;
-  addLocalScopeForStmt(S, NULL);
+  addLocalScopeForStmt(S);
   addAutomaticObjDtors(ScopePos, scopeBeginPos, S);
 }
 
