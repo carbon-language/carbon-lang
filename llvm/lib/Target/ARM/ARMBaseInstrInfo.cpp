@@ -41,7 +41,7 @@ EnableARM3Addr("enable-arm-3-addr-conv", cl::Hidden,
                cl::desc("Enable ARM 2-addr to 3-addr conv"));
 
 static cl::opt<bool>
-OldARMIfConv("old-arm-if-conversion", cl::Hidden,
+OldARMIfCvt("old-arm-ifcvt", cl::Hidden,
              cl::desc("Use old-style ARM if-conversion heuristics"));
 
 ARMBaseInstrInfo::ARMBaseInstrInfo(const ARMSubtarget& STI)
@@ -1206,11 +1206,11 @@ bool ARMBaseInstrInfo::isProfitableToIfCvt(MachineBasicBlock &MBB,
     return false;
   
   // Use old-style heuristics
-  if (OldARMIfConv) {
+  if (OldARMIfCvt) {
     if (Subtarget.getCPUString() == "generic")
       // Generic (and overly aggressive) if-conversion limits for testing.
       return NumInstrs <= 10;
-    else if (Subtarget.hasV7Ops())
+    if (Subtarget.hasV7Ops())
       return NumInstrs <= 3;
     return NumInstrs <= 2;
   }
@@ -1231,7 +1231,7 @@ isProfitableToIfCvt(MachineBasicBlock &TMBB, unsigned NumT,
                     MachineBasicBlock &FMBB, unsigned NumF,
                     float Probability) const {
   // Use old-style if-conversion heuristics
-  if (OldARMIfConv) {
+  if (OldARMIfCvt) {
     return NumT && NumF && NumT <= 2 && NumF <= 2;
   }
 
