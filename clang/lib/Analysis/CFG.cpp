@@ -1136,6 +1136,18 @@ CFGBlock* CFGBuilder::VisitIfStmt(IfStmt* I) {
   // middle of a block, we stop processing that block.  That block is then the
   // implicit successor for the "then" and "else" clauses.
 
+  // Save local scope position because in case of condition variable ScopePos
+  // won't be restored when traversing AST.
+  SaveAndRestore<LocalScope::const_iterator> save_scope_pos(ScopePos);
+
+  // Create local scope for possible condition variable.
+  // Store scope position. Add implicit destructor.
+  if (VarDecl* VD = I->getConditionVariable()) {
+    LocalScope::const_iterator BeginScopePos = ScopePos;
+    addLocalScopeForVarDecl(VD);
+    addAutomaticObjDtors(ScopePos, BeginScopePos, I);
+  }
+
   // The block we were proccessing is now finished.  Make it the successor
   // block.
   if (Block) {
@@ -1153,6 +1165,12 @@ CFGBlock* CFGBuilder::VisitIfStmt(IfStmt* I) {
     // NULL out Block so that the recursive call to Visit will
     // create a new basic block.
     Block = NULL;
+
+    // If branch is not a compound statement create implicit scope
+    // and add destructors.
+    if (!isa<CompoundStmt>(Else))
+      addLocalScopeAndDtors(Else);
+
     ElseBlock = addStmt(Else);
 
     if (!ElseBlock) // Can occur when the Else body has all NullStmts.
@@ -1170,6 +1188,12 @@ CFGBlock* CFGBuilder::VisitIfStmt(IfStmt* I) {
     assert(Then);
     SaveAndRestore<CFGBlock*> sv(Succ);
     Block = NULL;
+
+    // If branch is not a compound statement create implicit scope
+    // and add destructors.
+    if (!isa<CompoundStmt>(Then))
+      addLocalScopeAndDtors(Then);
+
     ThenBlock = addStmt(Then);
 
     if (!ThenBlock) {
