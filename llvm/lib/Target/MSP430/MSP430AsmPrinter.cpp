@@ -15,7 +15,7 @@
 #define DEBUG_TYPE "asm-printer"
 #include "MSP430.h"
 #include "MSP430InstrInfo.h"
-#include "AsmPrinter/MSP430InstPrinter.h"
+#include "InstPrinter/MSP430InstPrinter.h"
 #include "MSP430MCAsmInfo.h"
 #include "MSP430MCInstLower.h"
 #include "MSP430TargetMachine.h"
