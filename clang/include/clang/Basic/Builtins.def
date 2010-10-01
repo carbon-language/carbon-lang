@@ -38,12 +38,13 @@
 //  SJ -> sigjmp_buf
 //  . -> "...".  This may only occur at the end of the function list.
 //
-// Types maybe prefixed with the following modifiers:
+// Types may be prefixed with the following modifiers:
 //  L   -> long (e.g. Li for 'long int')
 //  LL  -> long long
 //  LLL -> __int128_t (e.g. LLLi)
 //  S   -> signed
 //  U   -> unsigned
+//  I   -> Required to constant fold to an integer constant expression.
 //
 // Types may be postfixed with the following modifiers:
 // * -> pointer (optionally followed by an address space number)
@@ -367,7 +368,7 @@ BUILTIN(__builtin___vfprintf_chk, "iP*icC*a", "FP:2:")
 BUILTIN(__builtin___vprintf_chk, "iicC*a", "FP:1:")
 
 BUILTIN(__builtin_expect, "LiLiLi"   , "nc")
-BUILTIN(__builtin_prefetch, "vvC*.", "nc")
+BUILTIN(__builtin_prefetch, "vvC*.", "nIc")
 BUILTIN(__builtin_trap, "v", "nr")
 BUILTIN(__builtin_unreachable, "v", "nr")
 BUILTIN(__builtin_shufflevector, "v."   , "nc")

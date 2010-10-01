@@ -5187,12 +5187,16 @@ static QualType DecodeTypeFromStr(const char *&Str, ASTContext &Context,
   // Modifiers.
   int HowLong = 0;
   bool Signed = false, Unsigned = false;
-
+  bool RequiresIntegerConstant = false;
+  
   // Read the modifiers first.
   bool Done = false;
   while (!Done) {
     switch (*Str++) {
     default: Done = true; --Str; break;
+    case 'I':
+      RequiresIntegerConstant = true;
+      break;
     case 'S':
       assert(!Unsigned && "Can't use both 'S' and 'U' modifiers!");
       assert(!Signed && "Can't use 'S' modifier multiple times!");
@@ -5362,6 +5366,9 @@ static QualType DecodeTypeFromStr(const char *&Str, ASTContext &Context,
         break;
     }
   }
+  
+  assert((!RequiresIntegerConstant || Type->isIntegralOrEnumerationType()) &&
+         "Integer constant 'I' type must be an integer"); 
 
   return Type;
 }
