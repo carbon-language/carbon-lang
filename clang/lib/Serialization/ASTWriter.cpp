@@ -1276,7 +1276,13 @@ void ASTWriter::WritePreprocessor(const Preprocessor &PP) {
     // Don't emit builtin macros like __LINE__ to the AST file unless they have
     // been redefined by the header (in which case they are not isBuiltinMacro).
     // Also skip macros from a AST file if we're chaining.
-    if (MI->isBuiltinMacro() || (Chain && MI->isFromAST()))
+
+    // FIXME: There is a (probably minor) optimization we could do here, if
+    // the macro comes from the original PCH but the identifier comes from a
+    // chained PCH, by storing the offset into the original PCH rather than
+    // writing the macro definition a second time.
+    if (MI->isBuiltinMacro() || 
+        (Chain && I->first->isFromAST() && MI->isFromAST()))
       continue;
 
     AddIdentifierRef(I->first, Record);

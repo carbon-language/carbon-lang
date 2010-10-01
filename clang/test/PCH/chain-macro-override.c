@@ -6,8 +6,9 @@
 // RUN: %clang_cc1 -emit-pch -o %t2 %S/Inputs/chain-macro-override2.h -include-pch %t1 -chained-pch
 // RUN: %clang_cc1 -include-pch %t2 -fsyntax-only -verify %s
 
-void foo() {
+int foo() {
   f();
   g();
   h();
+  return x;
 }
