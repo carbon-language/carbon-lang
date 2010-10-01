@@ -61,7 +61,6 @@ STATISTIC(NumPRELoad,   "Number of loads PRE'd");
 static cl::opt<bool> EnablePRE("enable-pre",
                                cl::init(true), cl::Hidden);
 static cl::opt<bool> EnableLoadPRE("enable-load-pre", cl::init(true));
-static cl::opt<bool> EnableFullLoadPRE("enable-full-load-pre", cl::init(false));
 
 //===----------------------------------------------------------------------===//
 //                         ValueTable Class
@@ -1604,14 +1603,13 @@ bool GVN::processNonLocalLoad(LoadInst *LI,
   unsigned NumUnavailablePreds = PredLoads.size();
   assert(NumUnavailablePreds != 0 &&
          "Fully available value should be eliminated above!");
-  if (!EnableFullLoadPRE) {
-    // If this load is unavailable in multiple predecessors, reject it.
-    // FIXME: If we could restructure the CFG, we could make a common pred with
-    // all the preds that don't have an available LI and insert a new load into
-    // that one block.
-    if (NumUnavailablePreds != 1)
+  
+  // If this load is unavailable in multiple predecessors, reject it.
+  // FIXME: If we could restructure the CFG, we could make a common pred with
+  // all the preds that don't have an available LI and insert a new load into
+  // that one block.
+  if (NumUnavailablePreds != 1)
       return false;
-  }
 
   // Check if the load can safely be moved to all the unavailable predecessors.
   bool CanDoPRE = true;

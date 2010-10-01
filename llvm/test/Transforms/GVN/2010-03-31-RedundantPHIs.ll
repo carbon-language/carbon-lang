@@ -1,4 +1,4 @@
-; RUN: opt < %s -gvn -enable-full-load-pre -S | FileCheck %s
+; RUN: opt < %s -gvn -S | FileCheck %s
 
 define i8* @cat(i8* %s1, ...) nounwind {
 entry:
