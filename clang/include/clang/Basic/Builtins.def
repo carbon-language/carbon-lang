@@ -368,7 +368,7 @@ BUILTIN(__builtin___vfprintf_chk, "iP*icC*a", "FP:2:")
 BUILTIN(__builtin___vprintf_chk, "iicC*a", "FP:1:")
 
 BUILTIN(__builtin_expect, "LiLiLi"   , "nc")
-BUILTIN(__builtin_prefetch, "vvC*.", "nIc")
+BUILTIN(__builtin_prefetch, "vvC*.", "nc")
 BUILTIN(__builtin_trap, "v", "nr")
 BUILTIN(__builtin_unreachable, "v", "nr")
 BUILTIN(__builtin_shufflevector, "v."   , "nc")
