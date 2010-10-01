@@ -853,13 +853,36 @@ ClangASTContext::AddMethodToCXXRecordType
     CXXMethodDecl *cxx_method_decl = NULL;
     
     DeclarationName decl_name (&identifier_table->get(name));
+
+    DeclarationNameInfo decl_name_info (decl_name, SourceLocation());
+    const bool is_implicitly_declared = false;
     
-    if (name[0] == '~' || decl_name == record_decl->getDeclName())
+    clang::Type *method_type(method_qual_type.getTypePtr());
+    
+    if (method_type == NULL)
+        return NULL;
+
+    FunctionProtoType *method_function_prototype (dyn_cast<FunctionProtoType>(method_type));
+    
+    if (!method_function_prototype)
+        return NULL;
+    
+    unsigned int num_params = method_function_prototype->getNumArgs();
+    
+    if (name[0] == '~')
     {
-        bool is_implicitly_declared = false;
+        cxx_method_decl = CXXDestructorDecl::Create (*ast_context,
+                                                     cxx_record_decl,
+                                                     decl_name_info,
+                                                     method_qual_type,
+                                                     is_inline,
+                                                     is_implicitly_declared);
+    }
+    else if (decl_name == record_decl->getDeclName())
+    {
         cxx_method_decl = CXXConstructorDecl::Create (*ast_context,
                                                       cxx_record_decl,
-                                                      DeclarationNameInfo (decl_name, SourceLocation()),
+                                                      decl_name_info,
                                                       method_qual_type,
                                                       NULL, // TypeSourceInfo *
                                                       is_explicit, 
@@ -867,15 +890,33 @@ ClangASTContext::AddMethodToCXXRecordType
                                                       is_implicitly_declared);
     }
     else
-    {    
-        cxx_method_decl = CXXMethodDecl::Create (*ast_context,
-                                                 cxx_record_decl,
-                                                 DeclarationNameInfo (decl_name, SourceLocation()),
-                                                 method_qual_type,
-                                                 NULL, // TypeSourceInfo *
-                                                 is_static,
-                                                 SC_None,
-                                                 is_inline);
+    {   
+        // TODO: verify this is an ok way to see if this is a C++ conversion
+        // operator. I am currently checking for "operator " following by a valid
+        // first character of a type name (A-Z, a-z, or _)...
+        if ((num_params == 0) && 
+            (::strstr(name, "operator ") == name) &&
+            (::isalpha(name[9]) || name[9] == '_'))
+        {
+            cxx_method_decl = CXXConversionDecl::Create (*ast_context,
+                                                         cxx_record_decl,
+                                                         decl_name_info,
+                                                         method_qual_type,
+                                                         NULL, // TypeSourceInfo *
+                                                         is_inline,
+                                                         is_explicit);
+        }
+        else
+        {
+            cxx_method_decl = CXXMethodDecl::Create (*ast_context,
+                                                     cxx_record_decl,
+                                                     decl_name_info,
+                                                     method_qual_type,
+                                                     NULL, // TypeSourceInfo *
+                                                     is_static,
+                                                     SC_None,
+                                                     is_inline);
+        }
     }
         
     
@@ -885,17 +926,6 @@ ClangASTContext::AddMethodToCXXRecordType
     cxx_method_decl->setVirtualAsWritten (is_virtual);
     
     // Populate the method decl with parameter decls
-    clang::Type *method_type(method_qual_type.getTypePtr());
-    
-    if (method_type == NULL)
-        return NULL;
-    
-    FunctionProtoType *method_function_prototype (dyn_cast<FunctionProtoType>(method_type));
-    
-    if (!method_function_prototype)
-        return NULL;
-    
-    unsigned int num_params = method_function_prototype->getNumArgs();
     
     ParmVarDecl *params[num_params];
     

@@ -7,6 +7,22 @@
 //
 //===----------------------------------------------------------------------===//
 
+class Conversion
+{
+public:
+    Conversion (int i) :
+      m_i (i)
+      {}
+
+    operator bool()
+    {
+        return m_i != 0;
+    }
+    
+private:
+    int m_i;
+};
+
 class A
 {
 public:
@@ -103,5 +119,8 @@ main (int argc, char const *argv[])
     A a(12);
     B b(22,33);
     C c(44,55,66);
-    return b.GetIntegerB() - a.GetInteger() + c.GetInteger();
+    Conversion conv(1);
+    if (conv)
+        return b.GetIntegerB() - a.GetInteger() + c.GetInteger();
+    return 0;
 }
