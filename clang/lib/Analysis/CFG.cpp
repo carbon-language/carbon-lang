@@ -518,13 +518,13 @@ void CFGBuilder::addLocalScopeForStmt(Stmt* S) {
   if (LabelStmt* LS = dyn_cast<LabelStmt>(S))
     S = LS->getSubStmt();
   if (DeclStmt* DS = dyn_cast<DeclStmt>(S))
-    addLocalScopeForDeclStmt(DS, 0);
+    addLocalScopeForDeclStmt(DS);
 }
 
 /// addLocalScopeForDeclStmt - Add LocalScope for declaration statement. Will
 /// reuse Scope if not NULL.
 LocalScope* CFGBuilder::addLocalScopeForDeclStmt(DeclStmt* DS,
-    LocalScope* Scope) {
+                                                 LocalScope* Scope) {
   if (!BuildOpts.AddImplicitDtors)
     return Scope;
 
@@ -540,7 +540,7 @@ LocalScope* CFGBuilder::addLocalScopeForDeclStmt(DeclStmt* DS,
 /// create add scope for automatic objects and temporary objects bound to
 /// const reference. Will reuse Scope if not NULL.
 LocalScope* CFGBuilder::addLocalScopeForVarDecl(VarDecl* VD,
-    LocalScope* Scope) {
+                                                LocalScope* Scope) {
   if (!BuildOpts.AddImplicitDtors)
     return Scope;
 
