@@ -17,7 +17,7 @@
 #include "ARMBuildAttrs.h"
 #include "ARMAddressingModes.h"
 #include "ARMConstantPoolValue.h"
-#include "AsmPrinter/ARMInstPrinter.h"
+#include "InstPrinter/ARMInstPrinter.h"
 #include "ARMMachineFunctionInfo.h"
 #include "ARMMCInstLower.h"
 #include "ARMTargetMachine.h"
