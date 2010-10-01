@@ -131,6 +131,24 @@ ExprResult
 Sema::CheckBuiltinFunctionCall(unsigned BuiltinID, CallExpr *TheCall) {
   ExprResult TheCallResult(Owned(TheCall));
 
+  // Find out if any arguments are required to be integer constant expressions.
+  unsigned ICEArguments = 0;
+  ASTContext::GetBuiltinTypeError Error;
+  Context.GetBuiltinType(BuiltinID, Error, &ICEArguments);
+  if (Error != ASTContext::GE_None)
+    ICEArguments = 0;  // Don't diagnose previously diagnosed errors.
+  
+  // If any arguments are required to be ICE's, check and diagnose.
+  for (unsigned ArgNo = 0; ICEArguments != 0; ++ArgNo) {
+    // Skip arguments not required to be ICE's.
+    if ((ICEArguments & (1 << ArgNo)) == 0) continue;
+    
+    llvm::APSInt Result;
+    if (SemaBuiltinConstantArg(TheCall, ArgNo, Result))
+      return true;
+    ICEArguments &= ~(1 << ArgNo);
+  }
+  
   switch (BuiltinID) {
   case Builtin::BI__builtin___CFStringMakeConstantString:
     assert(TheCall->getNumArgs() == 1 &&
