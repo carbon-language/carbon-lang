@@ -384,7 +384,8 @@ def CortexA8Itineraries : ProcessorItineraries<
   InstrItinData<IIC_fpLoad32, [InstrStage<1, [A8_Issue], 0>,
                                InstrStage<1, [A8_Pipe0, A8_Pipe1]>,
                                InstrStage<1, [A8_LdSt0], 0>,
-                               InstrStage<1, [A8_NLSPipe]>]>,
+                               InstrStage<1, [A8_NLSPipe]>],
+                              [2, 1]>,
   //
   // Double-precision FP Load
   // use A8_Issue to enforce the 1 load/store per cycle limit
@@ -393,7 +394,8 @@ def CortexA8Itineraries : ProcessorItineraries<
                                InstrStage<1, [A8_Pipe1]>,
                                InstrStage<1, [A8_Pipe0, A8_Pipe1]>,
                                InstrStage<1, [A8_LdSt0], 0>,
-                               InstrStage<1, [A8_NLSPipe]>]>,
+                               InstrStage<1, [A8_NLSPipe]>],
+                              [2, 1]>,
   //
   // FP Load Multiple
   // use A8_Issue to enforce the 1 load/store per cycle limit
@@ -409,7 +411,8 @@ def CortexA8Itineraries : ProcessorItineraries<
   InstrItinData<IIC_fpStore32,[InstrStage<1, [A8_Issue], 0>,
                                InstrStage<1, [A8_Pipe0, A8_Pipe1]>,
                                InstrStage<1, [A8_LdSt0], 0>,
-                               InstrStage<1, [A8_NLSPipe]>]>,
+                               InstrStage<1, [A8_NLSPipe]>],
+                              [1, 1]>,
   //
   // Double-precision FP Store
   // use A8_Issue to enforce the 1 load/store per cycle limit
@@ -418,7 +421,8 @@ def CortexA8Itineraries : ProcessorItineraries<
                                InstrStage<1, [A8_Pipe1]>,
                                InstrStage<1, [A8_Pipe0, A8_Pipe1]>,
                                InstrStage<1, [A8_LdSt0], 0>,
-                               InstrStage<1, [A8_NLSPipe]>]>,
+                               InstrStage<1, [A8_NLSPipe]>],
+                              [1, 1]>,
   //
   // FP Store Multiple
   // use A8_Issue to enforce the 1 load/store per cycle limit

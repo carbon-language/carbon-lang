@@ -482,13 +482,16 @@ def CortexA9Itineraries : ProcessorItineraries<
   InstrItinData<IIC_fpLoad32, [InstrStage<1, [A9_DRegsVFP], 0, Required>,
                                InstrStage<2, [A9_DRegsN],   0, Reserved>,
                                InstrStage<1, [A9_Pipe1], 0>,
-                               InstrStage<1, [A9_MUX0, A9_NPipe]>]>,
+                               InstrStage<1, [A9_MUX0, A9_NPipe]>],
+                              [1, 1]>,
   //
   // Double-precision FP Load
+  // FIXME: Result latency is 1 if address is 64-bit aligned.
   InstrItinData<IIC_fpLoad64, [InstrStage<1, [A9_DRegsVFP], 0, Required>,
                                InstrStage<2, [A9_DRegsN],   0, Reserved>,
                                InstrStage<1, [A9_Pipe1], 0>,
-                               InstrStage<1, [A9_MUX0, A9_NPipe]>]>,
+                               InstrStage<1, [A9_MUX0, A9_NPipe]>],
+                              [2, 1]>,
   //
   // FP Load Multiple
   InstrItinData<IIC_fpLoadm,  [InstrStage<1, [A9_DRegsVFP], 0, Required>,
@@ -500,13 +503,15 @@ def CortexA9Itineraries : ProcessorItineraries<
   InstrItinData<IIC_fpStore32,[InstrStage<1, [A9_DRegsVFP], 0, Required>,
                                InstrStage<2, [A9_DRegsN],   0, Reserved>,
                                InstrStage<1, [A9_Pipe1], 0>,
-                               InstrStage<1, [A9_MUX0, A9_NPipe]>]>,
+                               InstrStage<1, [A9_MUX0, A9_NPipe]>],
+                              [1, 1]>,
   //
   // Double-precision FP Store
   InstrItinData<IIC_fpStore64,[InstrStage<1, [A9_DRegsVFP], 0, Required>,
                                InstrStage<2, [A9_DRegsN],   0, Reserved>,
                                InstrStage<1, [A9_Pipe1], 0>,
-                               InstrStage<1, [A9_MUX0, A9_NPipe]>]>,
+                               InstrStage<1, [A9_MUX0, A9_NPipe]>],
+                              [1, 1]>,
   //
   // FP Store Multiple
   InstrItinData<IIC_fpStorem, [InstrStage<1, [A9_DRegsVFP], 0, Required>,
