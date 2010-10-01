@@ -126,13 +126,11 @@ def t_addrmode_sp : Operand<i32>,
 // these will always be in pairs, and asserts if it finds otherwise. Better way?
 let Defs = [SP], Uses = [SP], hasSideEffects = 1 in {
 def tADJCALLSTACKUP :
-PseudoInst<(outs), (ins i32imm:$amt1, i32imm:$amt2), NoItinerary,
-           "${:comment} tADJCALLSTACKUP $amt1",
+PseudoInst<(outs), (ins i32imm:$amt1, i32imm:$amt2), NoItinerary, "",
            [(ARMcallseq_end imm:$amt1, imm:$amt2)]>, Requires<[IsThumb1Only]>;
 
 def tADJCALLSTACKDOWN :
-PseudoInst<(outs), (ins i32imm:$amt), NoItinerary,
-           "${:comment} tADJCALLSTACKDOWN $amt",
+PseudoInst<(outs), (ins i32imm:$amt), NoItinerary, "",
            [(ARMcallseq_start imm:$amt)]>, Requires<[IsThumb1Only]>;
 }
 
@@ -365,7 +363,7 @@ let isBranch = 1, isTerminator = 1 in {
   // Far jump
   let Defs = [LR] in
   def tBfar : TIx2<0b11110, 0b11, 1, (outs), (ins brtarget:$target), IIC_Br,
-                    "bl\t$target\t${:comment} far jump",[]>;
+                    "bl\t$target",[]>;
 
   def tBR_JTr : T1JTI<(outs),
                       (ins tGPR:$target, jtblock_operand:$jt, i32imm:$id),
@@ -860,7 +858,7 @@ def tUXTH  : T1pI<(outs tGPR:$dst), (ins tGPR:$src), IIC_iUNAr,
 let usesCustomInserter = 1 in  // Expanded after instruction selection.
   def tMOVCCr_pseudo :
   PseudoInst<(outs tGPR:$dst), (ins tGPR:$false, tGPR:$true, pred:$cc),
-              NoItinerary, "${:comment} tMOVCCr $cc",
+              NoItinerary, "",
              [/*(set tGPR:$dst, (ARMcmov tGPR:$false, tGPR:$true, imm:$cc))*/]>;
 
 
@@ -1014,8 +1012,7 @@ def : T1Pat<(i32 imm0_255_comp:$src),
 // scheduling.
 let isReMaterializable = 1 in
 def tLDRpci_pic : PseudoInst<(outs GPR:$dst), (ins i32imm:$addr, pclabel:$cp),
-                   NoItinerary,
-                   "${:comment} ldr.n\t$dst, $addr\n$cp:\n\tadd\t$dst, pc",
+                   NoItinerary, "",
                [(set GPR:$dst, (ARMpic_add (load (ARMWrapper tconstpool:$addr)),
                                            imm:$cp))]>,
                Requires<[IsThumb1Only]>;

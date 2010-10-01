@@ -904,7 +904,7 @@ void ARMAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     // Non-Darwin binutils don't yet support the "trap" mnemonic.
     // FIXME: Remove this special case when they do.
     if (!Subtarget->isTargetDarwin()) {
-      //.long 0xe7ffdefe ${:comment} trap
+      //.long 0xe7ffdefe @ trap
       uint32_t Val = 0xe7ffdefeUL;
       OutStreamer.AddComment("trap");
       OutStreamer.EmitIntValue(Val, 4);
@@ -916,7 +916,7 @@ void ARMAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     // Non-Darwin binutils don't yet support the "trap" mnemonic.
     // FIXME: Remove this special case when they do.
     if (!Subtarget->isTargetDarwin()) {
-      //.short 57086 ${:comment} trap
+      //.short 57086 @ trap
       uint16_t Val = 0xdefe;
       OutStreamer.AddComment("trap");
       OutStreamer.EmitIntValue(Val, 2);
