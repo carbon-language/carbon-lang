@@ -433,6 +433,7 @@ CFG* CFGBuilder::buildCFG(const Decl *D, Stmt* Statement, ASTContext* C,
     if (LI == LabelMap.end()) continue;
 
     JumpTarget JT = LI->second;
+    prependAutomaticObjDtorsWithTerminator(B, I->ScopePos, JT.ScopePos);
     AddSuccessor(B, JT.Block);
   }
 
@@ -865,6 +866,7 @@ CFGBlock *CFGBuilder::VisitBreakStmt(BreakStmt *B) {
   // If there is no target for the break, then we are looking at an incomplete
   // AST.  This means that the CFG cannot be constructed.
   if (BreakJumpTarget.Block) {
+    addAutomaticObjDtors(ScopePos, BreakJumpTarget.ScopePos, B);
     AddSuccessor(Block, BreakJumpTarget.Block);
   } else
     badCFG = true;
@@ -978,6 +980,7 @@ CFGBlock *CFGBuilder::VisitChooseExpr(ChooseExpr *C,
 
 
 CFGBlock* CFGBuilder::VisitCompoundStmt(CompoundStmt* C) {
+  addLocalScopeAndDtors(C);
   CFGBlock* LastBlock = Block;
 
   for (CompoundStmt::reverse_body_iterator I=C->body_rbegin(), E=C->body_rend();
@@ -1117,6 +1120,10 @@ CFGBlock *CFGBuilder::VisitDeclSubExpr(Decl* D) {
        VA = FindVA(VA->getElementType().getTypePtr()))
     Block = addStmt(VA->getSizeExpr());
 
+  // Remove variable from local scope.
+  if (ScopePos && VD == *ScopePos)
+    ++ScopePos;
+
   return Block;
 }
 
@@ -1220,6 +1227,7 @@ CFGBlock* CFGBuilder::VisitReturnStmt(ReturnStmt* R) {
   Block = createBlock(false);
 
   // The Exit block is the only successor.
+  addAutomaticObjDtors(ScopePos, LocalScope::const_iterator(), R);
   AddSuccessor(Block, &cfg->getExit());
 
   // Add the return statement to the block.  This may create new blocks if R
@@ -1270,6 +1278,7 @@ CFGBlock* CFGBuilder::VisitGotoStmt(GotoStmt* G) {
     BackpatchBlocks.push_back(JumpSource(Block, ScopePos));
   else {
     JumpTarget JT = I->second;
+    addAutomaticObjDtors(ScopePos, JT.ScopePos, G);
     AddSuccessor(Block, JT.Block);
   }
 
@@ -1809,6 +1818,7 @@ CFGBlock* CFGBuilder::VisitContinueStmt(ContinueStmt* C) {
   // If there is no target for the continue, then we are looking at an
   // incomplete AST.  This means the CFG cannot be constructed.
   if (ContinueJumpTarget.Block) {
+    addAutomaticObjDtors(ScopePos, ContinueJumpTarget.ScopePos, C);
     AddSuccessor(Block, ContinueJumpTarget.Block);
   } else
     badCFG = true;
