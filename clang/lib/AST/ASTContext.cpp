@@ -5185,13 +5185,17 @@ void ExternalASTSource::PrintStats() { }
 /// AllowTypeModifiers is false then modifier like * are not parsed, just basic
 /// types.  This allows "v2i*" to be parsed as a pointer to a v2i instead of
 /// a vector of "i*".
+///
+/// RequiresICE is filled in on return to indicate whether the value is required
+/// to be an Integer Constant Expression.
 static QualType DecodeTypeFromStr(const char *&Str, ASTContext &Context,
                                   ASTContext::GetBuiltinTypeError &Error,
+                                  bool &RequiresICE,
                                   bool AllowTypeModifiers) {
   // Modifiers.
   int HowLong = 0;
   bool Signed = false, Unsigned = false;
-  bool RequiresIntegerConstant = false;
+  RequiresICE = false;
   
   // Read the prefixed modifiers first.
   bool Done = false;
@@ -5199,7 +5203,7 @@ static QualType DecodeTypeFromStr(const char *&Str, ASTContext &Context,
     switch (*Str++) {
     default: Done = true; --Str; break;
     case 'I':
-      RequiresIntegerConstant = true;
+      RequiresICE = true;
       break;
     case 'S':
       assert(!Unsigned && "Can't use both 'S' and 'U' modifiers!");
@@ -5293,20 +5297,20 @@ static QualType DecodeTypeFromStr(const char *&Str, ASTContext &Context,
     // it to be a __va_list_tag*.
     Type = Context.getBuiltinVaListType();
     assert(!Type.isNull() && "builtin va list type not initialized!");
-    if (Type->isArrayType()) {
+    if (Type->isArrayType())
       Type = Context.getArrayDecayedType(Type);
-    } else {
+    else
       Type = Context.getLValueReferenceType(Type);
-    }
     break;
   case 'V': {
     char *End;
     unsigned NumElements = strtoul(Str, &End, 10);
     assert(End != Str && "Missing vector size");
-
     Str = End;
 
-    QualType ElementType = DecodeTypeFromStr(Str, Context, Error, false);
+    QualType ElementType = DecodeTypeFromStr(Str, Context, Error, 
+                                             RequiresICE, false);
+    assert(!RequiresICE && "Can't require vector ICE");
     
     // TODO: No way to make AltiVec vectors in builtins yet.
     Type = Context.getVectorType(ElementType, NumElements,
@@ -5314,7 +5318,9 @@ static QualType DecodeTypeFromStr(const char *&Str, ASTContext &Context,
     break;
   }
   case 'X': {
-    QualType ElementType = DecodeTypeFromStr(Str, Context, Error, false);
+    QualType ElementType = DecodeTypeFromStr(Str, Context, Error, RequiresICE,
+                                             false);
+    assert(!RequiresICE && "Can't require complex ICE");
     Type = Context.getComplexType(ElementType);
     break;
   }      
@@ -5369,7 +5375,7 @@ static QualType DecodeTypeFromStr(const char *&Str, ASTContext &Context,
     }
   }
   
-  assert((!RequiresIntegerConstant || Type->isIntegralOrEnumerationType()) &&
+  assert((!RequiresICE || Type->isIntegralOrEnumerationType()) &&
          "Integer constant 'I' type must be an integer"); 
 
   return Type;
@@ -5377,20 +5383,31 @@ static QualType DecodeTypeFromStr(const char *&Str, ASTContext &Context,
 
 /// GetBuiltinType - Return the type for the specified builtin.
 QualType ASTContext::GetBuiltinType(unsigned Id,
-                                    GetBuiltinTypeError &Error) {
+                                    GetBuiltinTypeError &Error,
+                                    unsigned *IntegerConstantArgs) {
   const char *TypeStr = BuiltinInfo.GetTypeString(Id);
 
   llvm::SmallVector<QualType, 8> ArgTypes;
 
+  bool RequiresICE = false;
   Error = GE_None;
-  QualType ResType = DecodeTypeFromStr(TypeStr, *this, Error, true);
+  QualType ResType = DecodeTypeFromStr(TypeStr, *this, Error,
+                                       RequiresICE, true);
   if (Error != GE_None)
     return QualType();
+  
+  assert(!RequiresICE && "Result of intrinsic cannot be required to be an ICE");
+  
   while (TypeStr[0] && TypeStr[0] != '.') {
-    QualType Ty = DecodeTypeFromStr(TypeStr, *this, Error, true);
+    QualType Ty = DecodeTypeFromStr(TypeStr, *this, Error, RequiresICE, true);
     if (Error != GE_None)
       return QualType();
 
+    // If this argument is required to be an IntegerConstantExpression and the
+    // caller cares, fill in the bitmask we return.
+    if (RequiresICE && IntegerConstantArgs)
+      *IntegerConstantArgs |= 1 << ArgTypes.size();
+    
     // Do array -> pointer decay.  The builtin should use the decayed type.
     if (Ty->isArrayType())
       Ty = getArrayDecayedType(Ty);

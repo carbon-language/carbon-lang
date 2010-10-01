@@ -905,8 +905,12 @@ public:
     GE_Missing_setjmp     //< Missing a type from <setjmp.h>
   };
 
-  /// GetBuiltinType - Return the type for the specified builtin.
-  QualType GetBuiltinType(unsigned ID, GetBuiltinTypeError &Error);
+  /// GetBuiltinType - Return the type for the specified builtin.  If 
+  /// IntegerConstantArgs is non-null, it is filled in with a bitmask of
+  /// arguments to the builtin that are required to be integer constant
+  /// expressions.
+  QualType GetBuiltinType(unsigned ID, GetBuiltinTypeError &Error,
+                          unsigned *IntegerConstantArgs = 0);
 
 private:
   CanQualType getFromTargetType(unsigned Type) const;
