@@ -564,9 +564,10 @@ LocalScope* CFGBuilder::addLocalScopeForVarDecl(VarDecl* VD,
   }
 
   // Check if type is a C++ class with non-trivial destructor.
-  const RecordType* RT = QT.getTypePtr()->getAs<RecordType>();
-  if (!RT || cast<CXXRecordDecl>(RT->getDecl())->hasTrivialDestructor())
-    return Scope;
+  if (const RecordType* RT = QT.getTypePtr()->getAs<RecordType>())
+    if (const CXXRecordDecl* CD = dyn_cast<CXXRecordDecl>(RT->getDecl()))
+      if (CD->hasTrivialDestructor())
+        return Scope;
 
   // Add the variable to scope
   Scope = createOrReuseLocalScope(Scope);
