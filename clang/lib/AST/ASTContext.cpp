@@ -1584,11 +1584,11 @@ QualType ASTContext::getIncompleteArrayType(QualType EltTy,
 /// getVectorType - Return the unique reference to a vector type of
 /// the specified element type and size. VectorType must be a built-in type.
 QualType ASTContext::getVectorType(QualType vecType, unsigned NumElts,
-    VectorType::AltiVecSpecific AltiVecSpec) {
-  BuiltinType *baseType;
+                                   VectorType::AltiVecSpecific AltiVecSpec) {
+  BuiltinType *BaseType;
 
-  baseType = dyn_cast<BuiltinType>(getCanonicalType(vecType).getTypePtr());
-  assert(baseType != 0 && "getVectorType(): Expecting a built-in type");
+  BaseType = dyn_cast<BuiltinType>(getCanonicalType(vecType).getTypePtr());
+  assert(BaseType != 0 && "getVectorType(): Expecting a built-in type");
 
   // Check if we've already instantiated a vector of this type.
   llvm::FoldingSetNodeID ID;
@@ -5181,16 +5181,19 @@ void ExternalASTSource::PrintStats() { }
 //===----------------------------------------------------------------------===//
 
 /// DecodeTypeFromStr - This decodes one type descriptor from Str, advancing the
-/// pointer over the consumed characters.  This returns the resultant type.
+/// pointer over the consumed characters.  This returns the resultant type.  If
+/// AllowTypeModifiers is false then modifier like * are not parsed, just basic
+/// types.  This allows "v2i*" to be parsed as a pointer to a v2i instead of
+/// a vector of "i*".
 static QualType DecodeTypeFromStr(const char *&Str, ASTContext &Context,
                                   ASTContext::GetBuiltinTypeError &Error,
-                                  bool AllowTypeModifiers = true) {
+                                  bool AllowTypeModifiers) {
   // Modifiers.
   int HowLong = 0;
   bool Signed = false, Unsigned = false;
   bool RequiresIntegerConstant = false;
   
-  // Read the modifiers first.
+  // Read the prefixed modifiers first.
   bool Done = false;
   while (!Done) {
     switch (*Str++) {
@@ -5304,7 +5307,8 @@ static QualType DecodeTypeFromStr(const char *&Str, ASTContext &Context,
     Str = End;
 
     QualType ElementType = DecodeTypeFromStr(Str, Context, Error, false);
-    // FIXME: Don't know what to do about AltiVec.
+    
+    // TODO: No way to make AltiVec vectors in builtins yet.
     Type = Context.getVectorType(ElementType, NumElements,
                                  VectorType::NotAltiVec);
     break;
@@ -5334,37 +5338,34 @@ static QualType DecodeTypeFromStr(const char *&Str, ASTContext &Context,
     break;
   }
 
-  if (!AllowTypeModifiers)
-    return Type;
-
-  Done = false;
+  // If there are modifiers and if we're allowed to parse them, go for it.
+  Done = !AllowTypeModifiers;
   while (!Done) {
     switch (char c = *Str++) {
-      default: Done = true; --Str; break;
-      case '*':
-      case '&':
-        {
-          // Both pointers and references can have their pointee types
-          // qualified with an address space.
-          char *End;
-          unsigned AddrSpace = strtoul(Str, &End, 10);
-          if (End != Str && AddrSpace != 0) {
-            Type = Context.getAddrSpaceQualType(Type, AddrSpace);
-            Str = End;
-          }
-        }
-        if (c == '*')
-          Type = Context.getPointerType(Type);
-        else
-          Type = Context.getLValueReferenceType(Type);
-        break;
-      // FIXME: There's no way to have a built-in with an rvalue ref arg.
-      case 'C':
-        Type = Type.withConst();
-        break;
-      case 'D':
-        Type = Context.getVolatileType(Type);
-        break;
+    default: Done = true; --Str; break;
+    case '*':
+    case '&': {
+      // Both pointers and references can have their pointee types
+      // qualified with an address space.
+      char *End;
+      unsigned AddrSpace = strtoul(Str, &End, 10);
+      if (End != Str && AddrSpace != 0) {
+        Type = Context.getAddrSpaceQualType(Type, AddrSpace);
+        Str = End;
+      }
+      if (c == '*')
+        Type = Context.getPointerType(Type);
+      else
+        Type = Context.getLValueReferenceType(Type);
+      break;
+    }
+    // FIXME: There's no way to have a built-in with an rvalue ref arg.
+    case 'C':
+      Type = Type.withConst();
+      break;
+    case 'D':
+      Type = Context.getVolatileType(Type);
+      break;
     }
   }
   
@@ -5375,18 +5376,18 @@ static QualType DecodeTypeFromStr(const char *&Str, ASTContext &Context,
 }
 
 /// GetBuiltinType - Return the type for the specified builtin.
-QualType ASTContext::GetBuiltinType(unsigned id,
+QualType ASTContext::GetBuiltinType(unsigned Id,
                                     GetBuiltinTypeError &Error) {
-  const char *TypeStr = BuiltinInfo.GetTypeString(id);
+  const char *TypeStr = BuiltinInfo.GetTypeString(Id);
 
   llvm::SmallVector<QualType, 8> ArgTypes;
 
   Error = GE_None;
-  QualType ResType = DecodeTypeFromStr(TypeStr, *this, Error);
+  QualType ResType = DecodeTypeFromStr(TypeStr, *this, Error, true);
   if (Error != GE_None)
     return QualType();
   while (TypeStr[0] && TypeStr[0] != '.') {
-    QualType Ty = DecodeTypeFromStr(TypeStr, *this, Error);
+    QualType Ty = DecodeTypeFromStr(TypeStr, *this, Error, true);
     if (Error != GE_None)
       return QualType();
 
