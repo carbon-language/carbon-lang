@@ -321,8 +321,7 @@ bool SimpleRegisterCoalescing::RemoveCopyByCommutingDef(const CoalescerPair &CP,
   if (!li_->hasInterval(CP.getDstReg()))
     return false;
 
-  SlotIndex CopyIdx =
-    li_->getInstructionIndex(CopyMI).getDefIndex();
+  SlotIndex CopyIdx = li_->getInstructionIndex(CopyMI).getDefIndex();
 
   LiveInterval &IntA =
     li_->getInterval(CP.isFlipped() ? CP.getDstReg() : CP.getSrcReg());
@@ -331,22 +330,16 @@ bool SimpleRegisterCoalescing::RemoveCopyByCommutingDef(const CoalescerPair &CP,
 
   // BValNo is a value number in B that is defined by a copy from A. 'B3' in
   // the example above.
-  LiveInterval::iterator BLR = IntB.FindLiveRangeContaining(CopyIdx);
-  if (BLR == IntB.end()) return false;
-  VNInfo *BValNo = BLR->valno;
+  VNInfo *BValNo = IntB.getVNInfoAt(CopyIdx);
+  if (!BValNo || !BValNo->isDefByCopy())
+    return false;
 
-  // Get the location that B is defined at.  Two options: either this value has
-  // an unknown definition point or it is defined at CopyIdx.  If unknown, we
-  // can't process it.
-  if (!BValNo->isDefByCopy()) return false;
   assert(BValNo->def == CopyIdx && "Copy doesn't define the value?");
 
   // AValNo is the value number in A that defines the copy, A3 in the example.
-  LiveInterval::iterator ALR =
-    IntA.FindLiveRangeContaining(CopyIdx.getUseIndex()); // 
+  VNInfo *AValNo = IntA.getVNInfoAt(CopyIdx.getUseIndex());
+  assert(AValNo && "COPY source not live");
 
-  assert(ALR != IntA.end() && "Live range not found!");
-  VNInfo *AValNo = ALR->valno;
   // If other defs can reach uses of this def, then it's not safe to perform
   // the optimization.
   if (AValNo->isPHIDef() || AValNo->isUnused() || AValNo->hasPHIKill())
@@ -407,7 +400,7 @@ bool SimpleRegisterCoalescing::RemoveCopyByCommutingDef(const CoalescerPair &CP,
   }
 
   DEBUG(dbgs() << "\tRemoveCopyByCommutingDef: " << AValNo->def << '\t'
-               << *DefMI << "\t\tALR: " << *ALR << ", BLR: " << *BLR << '\n');
+               << *DefMI);
 
   // At this point we have decided that it is legal to do this
   // transformation.  Start by commuting the instruction.
