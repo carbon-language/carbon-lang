@@ -39,10 +39,10 @@ public:
                            MachineBasicBlock::iterator MBBI) const;
 
   bool isProfitableToIfCvt(MachineBasicBlock &MBB, unsigned NumInstrs,
-                           float Prediction) const;
+                           float Prediction, float Confidence) const;
   bool isProfitableToIfCvt(MachineBasicBlock &TMBB, unsigned NumTInstrs,
                            MachineBasicBlock &FMBB, unsigned NumFInstrs,
-                           float Prediction) const;
+                           float Prediction, float Confidence) const;
 
   void copyPhysReg(MachineBasicBlock &MBB,
                    MachineBasicBlock::iterator I, DebugLoc DL,

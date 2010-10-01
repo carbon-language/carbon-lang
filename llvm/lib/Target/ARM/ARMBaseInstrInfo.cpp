@@ -1201,7 +1201,8 @@ bool ARMBaseInstrInfo::isSchedulingBoundary(const MachineInstr *MI,
 
 bool ARMBaseInstrInfo::isProfitableToIfCvt(MachineBasicBlock &MBB,
                                            unsigned NumInstrs,
-                                           float Probability) const {
+                                           float Probability,
+                                           float Confidence) const {
   if (!NumInstrs)
     return false;
   
@@ -1218,7 +1219,7 @@ bool ARMBaseInstrInfo::isProfitableToIfCvt(MachineBasicBlock &MBB,
   // Attempt to estimate the relative costs of predication versus branching.
   float UnpredCost = Probability * NumInstrs;
   UnpredCost += 1.0; // The branch itself
-  UnpredCost += 0.1 * Subtarget.getMispredictionPenalty();
+  UnpredCost += (1.0 - Confidence) * Subtarget.getMispredictionPenalty();
   
   float PredCost = NumInstrs;
   
@@ -1229,7 +1230,7 @@ bool ARMBaseInstrInfo::isProfitableToIfCvt(MachineBasicBlock &MBB,
 bool ARMBaseInstrInfo::
 isProfitableToIfCvt(MachineBasicBlock &TMBB, unsigned NumT,
                     MachineBasicBlock &FMBB, unsigned NumF,
-                    float Probability) const {
+                    float Probability, float Confidence) const {
   // Use old-style if-conversion heuristics
   if (OldARMIfCvt) {
     return NumT && NumF && NumT <= 2 && NumF <= 2;
@@ -1241,7 +1242,7 @@ isProfitableToIfCvt(MachineBasicBlock &TMBB, unsigned NumT,
   // Attempt to estimate the relative costs of predication versus branching.
   float UnpredCost = Probability * NumT + (1.0 - Probability) * NumF;
   UnpredCost += 1.0; // The branch itself
-  UnpredCost += 0.1 * Subtarget.getMispredictionPenalty();
+  UnpredCost += (1.0 - Confidence) * Subtarget.getMispredictionPenalty();
   
   float PredCost = NumT + NumF;
   

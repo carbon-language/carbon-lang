@@ -44,19 +44,22 @@ unsigned Thumb2InstrInfo::getUnindexedOpcode(unsigned Opc) const {
 
 bool Thumb2InstrInfo::isProfitableToIfCvt(MachineBasicBlock &MBB,
                                           unsigned NumInstrs,
-                                          float Prediction) const {
+                                          float Prediction,
+                                          float Confidence) const {
   if (!OldT2IfCvt)
-    return ARMBaseInstrInfo::isProfitableToIfCvt(MBB, NumInstrs, Prediction);
+    return ARMBaseInstrInfo::isProfitableToIfCvt(MBB, NumInstrs,
+                                                 Prediction, Confidence);
   return NumInstrs && NumInstrs <= 3;
 }
   
 bool Thumb2InstrInfo::
 isProfitableToIfCvt(MachineBasicBlock &TMBB, unsigned NumT,
                     MachineBasicBlock &FMBB, unsigned NumF,
-                    float Prediction) const {
+                    float Prediction, float Confidence) const {
   if (!OldT2IfCvt)
     return ARMBaseInstrInfo::isProfitableToIfCvt(TMBB, NumT,
-                                                 FMBB, NumF, Prediction);
+                                                 FMBB, NumF,
+                                                 Prediction, Confidence);
     
   // FIXME: Catch optimization such as:
   //        r0 = movne

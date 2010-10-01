@@ -305,10 +305,11 @@ public:
 
   /// isProfitableToIfCvt - Return true if it's profitable to first "NumInstrs"
   /// of the specified basic block, where the probability of the instructions
-  /// being executed is given by Probability.
+  /// being executed is given by Probability, and Confidence is a measure
+  /// of our confidence that it will be properly predicted.
   virtual
   bool isProfitableToIfCvt(MachineBasicBlock &MBB, unsigned NumInstrs,
-                           float Probability) const {
+                           float Probability, float Confidence) const {
     return false;
   }
   
@@ -316,21 +317,23 @@ public:
   /// checks for the case where two basic blocks from true and false path
   /// of a if-then-else (diamond) are predicated on mutally exclusive
   /// predicates, where the probability of the true path being taken is given
-  /// by Probability.
+  /// by Probability, and Confidence is a measure of our confidence that it
+  /// will be properly predicted.
   virtual bool
   isProfitableToIfCvt(MachineBasicBlock &TMBB, unsigned NumTInstrs,
                       MachineBasicBlock &FMBB, unsigned NumFInstrs,
-                      float Probability) const {
+                      float Probability, float Confidence) const {
     return false;
   }
 
   /// isProfitableToDupForIfCvt - Return true if it's profitable for
   /// if-converter to duplicate a specific number of instructions in the
   /// specified MBB to enable if-conversion, where the probability of the 
-  /// instructions being executed is given by Probability.
+  /// instructions being executed is given by Probability, and Confidence is
+  /// a measure of our confidence that it will be properly predicted.
   virtual bool
   isProfitableToDupForIfCvt(MachineBasicBlock &MBB, unsigned NumInstrs,
-                            float Probability) const {
+                            float Probability, float Confidence) const {
     return false;
   }
   

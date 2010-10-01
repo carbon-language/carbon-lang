@@ -312,15 +312,17 @@ public:
                                     const MachineFunction &MF) const;
 
   virtual bool isProfitableToIfCvt(MachineBasicBlock &MBB,
-                                   unsigned NumInstrs, float Prob) const;
+                                   unsigned NumInstrs,
+                                   float Prob, float Confidence) const;
 
   virtual bool isProfitableToIfCvt(MachineBasicBlock &TMBB,unsigned NumT,
                                    MachineBasicBlock &FMBB,unsigned NumF,
-                                   float Probability) const;
+                                   float Probability, float Confidence) const;
 
   virtual bool isProfitableToDupForIfCvt(MachineBasicBlock &MBB,
                                          unsigned NumInstrs,
-                                         float Probability) const {
+                                         float Probability,
+                                         float Confidence) const {
     return NumInstrs && NumInstrs == 1;
   }
 
