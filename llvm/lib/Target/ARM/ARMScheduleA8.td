@@ -531,7 +531,7 @@ def CortexA8Itineraries : ProcessorItineraries<
   //
   // Vector narrow move
   InstrItinData<IIC_VMOVN   , [InstrStage<1, [A8_Pipe0, A8_Pipe1]>,
-                               InstrStage<1, [A8_NPipe]>], [3, 1]>,
+                               InstrStage<1, [A8_NPipe]>], [2, 1]>,
   //
   // Double-register Permute
   InstrItinData<IIC_VPERMD,   [InstrStage<1, [A8_Pipe0, A8_Pipe1]>,

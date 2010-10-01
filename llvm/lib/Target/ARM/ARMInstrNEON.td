@@ -3177,7 +3177,7 @@ def  VSHLLi32 : N2VLShMax<1, 1, 0b111010, 0b0011, 0, 0, 0, "vshll", "i32",
                           v2i64, v2i32, NEONvshlli>;
 
 //   VSHRN    : Vector Shift Right and Narrow
-defm VSHRN    : N2VNSh_HSD<0,1,0b1000,0,0,1, IIC_VMOVN, "vshrn", "i",
+defm VSHRN    : N2VNSh_HSD<0,1,0b1000,0,0,1, IIC_VSHLiD, "vshrn", "i",
                            NEONvshrn>;
 
 //   VRSHL    : Vector Rounding Shift
