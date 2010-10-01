@@ -1907,6 +1907,18 @@ CFGBlock* CFGBuilder::VisitSwitchStmt(SwitchStmt* Terminator) {
   // block.
   CFGBlock* SwitchSuccessor = NULL;
 
+  // Save local scope position because in case of condition variable ScopePos
+  // won't be restored when traversing AST.
+  SaveAndRestore<LocalScope::const_iterator> save_scope_pos(ScopePos);
+
+  // Create local scope for possible condition variable.
+  // Store scope position. Add implicit destructor.
+  if (VarDecl* VD = Terminator->getConditionVariable()) {
+    LocalScope::const_iterator SwitchBeginScopePos = ScopePos;
+    addLocalScopeForVarDecl(VD);
+    addAutomaticObjDtors(ScopePos, SwitchBeginScopePos, Terminator);
+  }
+
   if (Block) {
     if (badCFG)
       return 0;
@@ -1936,6 +1948,12 @@ CFGBlock* CFGBuilder::VisitSwitchStmt(SwitchStmt* Terminator) {
   // control-flow from the switch goes to case/default statements.
   assert(Terminator->getBody() && "switch must contain a non-NULL body");
   Block = NULL;
+
+  // If body is not a compound statement create implicit scope
+  // and add destructors.
+  if (!isa<CompoundStmt>(Terminator->getBody()))
+    addLocalScopeAndDtors(Terminator->getBody());
+
   addStmt(Terminator->getBody());
   if (Block) {
     if (badCFG)

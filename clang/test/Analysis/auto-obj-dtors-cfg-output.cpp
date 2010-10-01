@@ -100,6 +100,27 @@ void test_do_jumps() {
   A d;
 }
 
+void test_switch_implicit_scope() {
+  A a;
+  switch (A b = a)
+    A c;
+}
+
+void test_switch_jumps() {
+  A a;
+  switch (A b = a) {
+  case 0: {
+    A c;
+    if (UV) break;
+    if (UV) return;
+    A f;
+  }
+  case 1:
+    break;
+  }
+  A g;
+}
+
 // CHECK:  [ B2 (ENTRY) ]
 // CHECK:     Predecessors (0):
 // CHECK:     Successors (1): B1
@@ -488,4 +509,94 @@ void test_do_jumps() {
 // CHECK:     Successors (1): B9
 // CHECK:  [ B0 (EXIT) ]
 // CHECK:     Predecessors (2): B1 B4
+// CHECK:     Successors (0):
+// CHECK:  [ B4 (ENTRY) ]
+// CHECK:     Predecessors (0):
+// CHECK:     Successors (1): B2
+// CHECK:  [ B1 ]
+// CHECK:       1: [B2.3].~A() (Implicit destructor)
+// CHECK:       2: [B2.1].~A() (Implicit destructor)
+// CHECK:     Predecessors (2): B3 B2
+// CHECK:     Successors (1): B0
+// CHECK:  [ B2 ]
+// CHECK:       1: A a;
+// CHECK:       2: a
+// CHECK:       3: switch ([B2.4])
+// CHECK: [B3.1]      4: b.operator int()
+// CHECK:       T: switch [B2.4]
+// CHECK:     Predecessors (1): B4
+// CHECK:     Successors (1): B1
+// CHECK:  [ B3 ]
+// CHECK:       1: A c;
+// CHECK:       2: [B3.1].~A() (Implicit destructor)
+// CHECK:     Predecessors (0):
+// CHECK:     Successors (1): B1
+// CHECK:  [ B0 (EXIT) ]
+// CHECK:     Predecessors (1): B1
+// CHECK:     Successors (0):
+// CHECK:  [ B9 (ENTRY) ]
+// CHECK:     Predecessors (0):
+// CHECK:     Successors (1): B2
+// CHECK:  [ B1 ]
+// CHECK:       1: [B2.3].~A() (Implicit destructor)
+// CHECK:       2: A g;
+// CHECK:       3: [B1.2].~A() (Implicit destructor)
+// CHECK:       4: [B2.1].~A() (Implicit destructor)
+// CHECK:     Predecessors (3): B3 B7 B2
+// CHECK:     Successors (1): B0
+// CHECK:  [ B2 ]
+// CHECK:       1: A a;
+// CHECK:       2: a
+// CHECK:       3: switch ([B2.4]) {
+// CHECK:   case 0:
+// CHECK:     {
+// CHECK: [B8.1]        if ([B8.2])
+// CHECK:             break;
+// CHECK:         if ([B6.1])
+// CHECK: [B5.1][B4.1]    }
+// CHECK:   case 1:
+// CHECK:     break;
+// CHECK: }
+// CHECK:       4: b.operator int()
+// CHECK:       T: switch [B2.4]
+// CHECK:     Predecessors (1): B9
+// CHECK:     Successors (3): B3 B8
+// CHECK:      B1
+// CHECK:  [ B3 ]
+// CHECK:     case 1:
+// CHECK:       T: break;
+// CHECK:     Predecessors (2): B2 B4
+// CHECK:     Successors (1): B1
+// CHECK:  [ B4 ]
+// CHECK:       1: A f;
+// CHECK:       2: [B4.1].~A() (Implicit destructor)
+// CHECK:       3: [B8.1].~A() (Implicit destructor)
+// CHECK:     Predecessors (1): B6
+// CHECK:     Successors (1): B3
+// CHECK:  [ B5 ]
+// CHECK:       1: return;
+// CHECK:       2: [B8.1].~A() (Implicit destructor)
+// CHECK:       3: [B2.3].~A() (Implicit destructor)
+// CHECK:       4: [B2.1].~A() (Implicit destructor)
+// CHECK:     Predecessors (1): B6
+// CHECK:     Successors (1): B0
+// CHECK:  [ B6 ]
+// CHECK:       1: UV
+// CHECK:       T: if [B6.1]
+// CHECK:     Predecessors (1): B8
+// CHECK:     Successors (2): B5 B4
+// CHECK:  [ B7 ]
+// CHECK:       1: [B8.1].~A() (Implicit destructor)
+// CHECK:       T: break;
+// CHECK:     Predecessors (1): B8
+// CHECK:     Successors (1): B1
+// CHECK:  [ B8 ]
+// CHECK:     case 0:
+// CHECK:       1: A c;
+// CHECK:       2: UV
+// CHECK:       T: if [B8.2]
+// CHECK:     Predecessors (1): B2
+// CHECK:     Successors (2): B7 B6
+// CHECK:  [ B0 (EXIT) ]
+// CHECK:     Predecessors (2): B1 B5
 // CHECK:     Successors (0):
