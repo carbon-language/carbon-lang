@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -o /dev/null -verify %s
+// RUN: %clang_cc1 -verify %s
 
 enum E {
     one,
