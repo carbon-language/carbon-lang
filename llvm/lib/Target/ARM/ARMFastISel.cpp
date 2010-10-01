@@ -1162,17 +1162,43 @@ bool ARMFastISel::FinishCall(EVT RetVT, SmallVectorImpl<unsigned> &UsedRegs,
     CCInfo.AnalyzeCallResult(RetVT, CCAssignFnForCall(CC, true));
 
     // Copy all of the result registers out of their specified physreg.
-    assert(RVLocs.size() == 1 && "Can't handle multi-value calls!");
-    EVT CopyVT = RVLocs[0].getValVT();
-    TargetRegisterClass* DstRC = TLI.getRegClassFor(CopyVT);
+    if (RVLocs.size() == 2 && RetVT.getSimpleVT().SimpleTy == MVT::f64) {
+      // For this move we copy into two registers and then move into the
+      // double fp reg we want.
+      // TODO: Are the copies necessary?
+      TargetRegisterClass *CopyRC = TLI.getRegClassFor(MVT::i32);
+      unsigned Copy1 = createResultReg(CopyRC);
+      BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(TargetOpcode::COPY),
+              Copy1).addReg(RVLocs[0].getLocReg());
+      UsedRegs.push_back(RVLocs[0].getLocReg());
+      
+      unsigned Copy2 = createResultReg(CopyRC);
+      BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(TargetOpcode::COPY),
+              Copy2).addReg(RVLocs[1].getLocReg());
+      UsedRegs.push_back(RVLocs[1].getLocReg());
+      
+      EVT DestVT = RVLocs[0].getValVT();
+      TargetRegisterClass* DstRC = TLI.getRegClassFor(DestVT);
+      unsigned ResultReg = createResultReg(DstRC);
+      AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
+                              TII.get(ARM::VMOVDRR), ResultReg)
+                      .addReg(Copy1).addReg(Copy2));
+                              
+      // Finally update the result.        
+      UpdateValueMap(I, ResultReg);
+    } else {
+      assert(RVLocs.size() == 1 && "Can't handle non-double multi-reg retvals!");
+      EVT CopyVT = RVLocs[0].getValVT();
+      TargetRegisterClass* DstRC = TLI.getRegClassFor(CopyVT);
 
-    unsigned ResultReg = createResultReg(DstRC);
-    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(TargetOpcode::COPY),
-            ResultReg).addReg(RVLocs[0].getLocReg());
-    UsedRegs.push_back(RVLocs[0].getLocReg());
+      unsigned ResultReg = createResultReg(DstRC);
+      BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(TargetOpcode::COPY),
+              ResultReg).addReg(RVLocs[0].getLocReg());
+      UsedRegs.push_back(RVLocs[0].getLocReg());
 
-    // Finally update the result.        
-    UpdateValueMap(I, ResultReg);
+      // Finally update the result.        
+      UpdateValueMap(I, ResultReg);
+    }
   }
 
   return true;                           
