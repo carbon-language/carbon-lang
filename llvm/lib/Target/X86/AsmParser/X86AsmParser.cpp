@@ -1126,7 +1126,6 @@ MatchAndEmitInstruction(SMLoc IDLoc,
     Inst.setOpcode(X86::WAIT);
     Out.EmitInstruction(Inst);
 
-    delete Operands[0];
     const char *Repl =
       StringSwitch<const char*>(Op->getToken())
         .Case("finit", "fninit")
@@ -1136,6 +1135,7 @@ MatchAndEmitInstruction(SMLoc IDLoc,
         .Case("fstsw", "fnstsw")
         .Default(0);
     assert(Repl && "Unknown wait-prefixed instruction");
+    delete Operands[0];
     Operands[0] = X86Operand::CreateToken(Repl, IDLoc);
   }
   
