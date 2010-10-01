@@ -1313,7 +1313,22 @@ CFGBlock* CFGBuilder::VisitGotoStmt(GotoStmt* G) {
 CFGBlock* CFGBuilder::VisitForStmt(ForStmt* F) {
   CFGBlock* LoopSuccessor = NULL;
 
+  // Save local scope position because in case of condition variable ScopePos
+  // won't be restored when traversing AST.
+  SaveAndRestore<LocalScope::const_iterator> save_scope_pos(ScopePos);
+
+  // Create local scope for init statement and possible condition variable.
+  // Add destructor for init statement and condition variable.
+  // Store scope position for continue statement.
+  if (Stmt* Init = F->getInit())
+    addLocalScopeForStmt(Init);
   LocalScope::const_iterator LoopBeginScopePos = ScopePos;
+
+  if (VarDecl* VD = F->getConditionVariable())
+    addLocalScopeForVarDecl(VD);
+  LocalScope::const_iterator ContinueScopePos = ScopePos;
+
+  addAutomaticObjDtors(ScopePos, save_scope_pos.get(), F);
 
   // "for" is a control-flow statement.  Thus we stop processing the current
   // block.
@@ -1327,7 +1342,7 @@ CFGBlock* CFGBuilder::VisitForStmt(ForStmt* F) {
   // Save the current value for the break targets.
   // All breaks should go to the code following the loop.
   SaveAndRestore<JumpTarget> save_break(BreakJumpTarget);
-  BreakJumpTarget = JumpTarget(LoopSuccessor, LoopBeginScopePos);
+  BreakJumpTarget = JumpTarget(LoopSuccessor, ScopePos);
 
   // Because of short-circuit evaluation, the condition of the loop can span
   // multiple basic blocks.  Thus we need the "Entry" and "Exit" blocks that
@@ -1383,6 +1398,9 @@ CFGBlock* CFGBuilder::VisitForStmt(ForStmt* F) {
 
     // Create a new block to contain the (bottom) of the loop body.
     Block = NULL;
+    
+    // Loop body should end with destructor of Condition variable (if any).
+    addAutomaticObjDtors(ScopePos, LoopBeginScopePos, F);
 
     if (Stmt* I = F->getInc()) {
       // Generate increment code in its own basic block.  This is the target of
@@ -1392,7 +1410,7 @@ CFGBlock* CFGBuilder::VisitForStmt(ForStmt* F) {
       // No increment code.  Create a special, empty, block that is used as the
       // target block for "looping back" to the start of the loop.
       assert(Succ == EntryConditionBlock);
-      Succ = createBlock();
+      Succ = Block ? Block : createBlock();
     }
 
     // Finish up the increment (or empty) block if it hasn't been already.
@@ -1403,11 +1421,16 @@ CFGBlock* CFGBuilder::VisitForStmt(ForStmt* F) {
       Block = 0;
     }
 
-    ContinueJumpTarget = JumpTarget(Succ, LoopBeginScopePos);
+    ContinueJumpTarget = JumpTarget(Succ, ContinueScopePos);
 
     // The starting block for the loop increment is the block that should
     // represent the 'loop target' for looping back to the start of the loop.
     ContinueJumpTarget.Block->setLoopTarget(F);
+
+    // If body is not a compound statement create implicit scope
+    // and add destructors.
+    if (!isa<CompoundStmt>(F->getBody()))
+      addLocalScopeAndDtors(F->getBody());
 
     // Now populate the body block, and in the process create new blocks as we
     // walk the body of the loop.
