@@ -2122,8 +2122,14 @@ ASTReader::ASTReadResult ASTReader::ReadAST(const std::string &FileName) {
 }
 
 ASTReader::ASTReadResult ASTReader::ReadASTCore(llvm::StringRef FileName) {
+  PerFileData *Prev = Chain.empty() ? 0 : Chain.back();
   Chain.push_back(new PerFileData());
   PerFileData &F = *Chain.back();
+  if (Prev)
+    Prev->NextInSource = &F;
+  else
+    FirstInSource = &F;
+  F.Loaders.push_back(Prev);
 
   // Set the AST file name.
   F.FileName = FileName;
@@ -4199,7 +4205,7 @@ ASTReader::PerFileData::PerFileData()
     MacroDefinitionOffsets(0), LocalNumSelectors(0), SelectorOffsets(0),
     SelectorLookupTableData(0), SelectorLookupTable(0), LocalNumDecls(0),
     DeclOffsets(0), LocalNumTypes(0), TypeOffsets(0), StatCache(0),
-    NumPreallocatedPreprocessingEntities(0)
+    NumPreallocatedPreprocessingEntities(0), NextInSource(0)
 {}
 
 ASTReader::PerFileData::~PerFileData() {

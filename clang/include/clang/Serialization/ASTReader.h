@@ -193,7 +193,7 @@ private:
   /// \brief The AST consumer.
   ASTConsumer *Consumer;
 
-  /// \brief Information that is needed for every file in the chain.
+  /// \brief Information that is needed for every module.
   struct PerFileData {
     PerFileData();
     ~PerFileData();
@@ -318,11 +318,24 @@ private:
     ///
     /// The dynamic type of this stat cache is always ASTStatCache
     void *StatCache;
-      
+
     /// \brief The number of preallocated preprocessing entities in the
     /// preprocessing record.
     unsigned NumPreallocatedPreprocessingEntities;
+
+    /// \brief The next module in source order.
+    PerFileData *NextInSource;
+
+    /// \brief All the modules that loaded this one. Can contain NULL for
+    /// directly loaded modules.
+    llvm::SmallVector<PerFileData *, 1> Loaders;
   };
+
+  /// \brief All loaded modules, indexed by name.
+  llvm::StringMap<PerFileData*> Modules;
+
+  /// \brief The first module in source order.
+  PerFileData *FirstInSource;
 
   /// \brief The chain of AST files. The first entry is the one named by the
   /// user, the last one is the one that doesn't depend on anything further.
