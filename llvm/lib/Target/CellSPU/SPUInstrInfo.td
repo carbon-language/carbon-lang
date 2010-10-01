@@ -4355,7 +4355,7 @@ def : Pat<(i16 (anyext R8C:$rSrc)),
 
 // anyext 8->32: Extend 8->32 bits, irrespective of sign, preserves high bits
 def : Pat<(i32 (anyext R8C:$rSrc)),
-          (ORIi8i32 R8C:$rSrc, 0)>;
+          (COPY_TO_REGCLASS R8C:$rSrc, R32C)>;
 
 // sext 16->64: Sign extend halfword to double word
 def : Pat<(sext_inreg R64C:$rSrc, i16),
@@ -4379,7 +4379,7 @@ def : Pat<(i32 (zext (and R16C:$rSrc, 0xfff))),
 
 // anyext 16->32: Extend 16->32 bits, irrespective of sign
 def : Pat<(i32 (anyext R16C:$rSrc)),
-          (ORIi16i32 R16C:$rSrc, 0)>;
+          (COPY_TO_REGCLASS R16C:$rSrc, R32C)>;
 
 //===----------------------------------------------------------------------===//
 // Truncates:

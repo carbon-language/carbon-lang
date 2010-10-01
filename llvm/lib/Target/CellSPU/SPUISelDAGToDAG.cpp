@@ -111,55 +111,6 @@ namespace {
     return false;
   }
 
-  //===------------------------------------------------------------------===//
-  //! EVT to "useful stuff" mapping structure:
-
-  struct valtype_map_s {
-    EVT VT;
-    unsigned ldresult_ins;      /// LDRESULT instruction (0 = undefined)
-    bool ldresult_imm;          /// LDRESULT instruction requires immediate?
-    unsigned lrinst;            /// LR instruction
-  };
-
-  const valtype_map_s valtype_map[] = {
-    { MVT::i8,    SPU::ORBIr8,  true,  SPU::LRr8 },
-    { MVT::i16,   SPU::ORHIr16, true,  SPU::LRr16 },
-    { MVT::i32,   SPU::ORIr32,  true,  SPU::LRr32 },
-    { MVT::i64,   SPU::ORr64,   false, SPU::LRr64 },
-    { MVT::f32,   SPU::ORf32,   false, SPU::LRf32 },
-    { MVT::f64,   SPU::ORf64,   false, SPU::LRf64 },
-    // vector types... (sigh!)
-    { MVT::v16i8, 0,            false, SPU::LRv16i8 },
-    { MVT::v8i16, 0,            false, SPU::LRv8i16 },
-    { MVT::v4i32, 0,            false, SPU::LRv4i32 },
-    { MVT::v2i64, 0,            false, SPU::LRv2i64 },
-    { MVT::v4f32, 0,            false, SPU::LRv4f32 },
-    { MVT::v2f64, 0,            false, SPU::LRv2f64 }
-  };
-
-  const size_t n_valtype_map = sizeof(valtype_map) / sizeof(valtype_map[0]);
-
-  const valtype_map_s *getValueTypeMapEntry(EVT VT)
-  {
-    const valtype_map_s *retval = 0;
-    for (size_t i = 0; i < n_valtype_map; ++i) {
-      if (valtype_map[i].VT == VT) {
-        retval = valtype_map + i;
-        break;
-      }
-    }
-
-
-#ifndef NDEBUG
-    if (retval == 0) {
-      report_fatal_error("SPUISelDAGToDAG.cpp: getValueTypeMapEntry returns"
-                         "NULL for " + Twine(VT.getEVTString()));
-    }
-#endif
-
-    return retval;
-  }
-
   //! Generate the carry-generate shuffle mask.
   SDValue getCarryGenerateShufMask(SelectionDAG &DAG, DebugLoc dl) {
     SmallVector<SDValue, 16 > ShufBytes;
@@ -882,23 +833,12 @@ SPUDAGToDAGISel::Select(SDNode *N) {
     SDValue Arg = N->getOperand(0);
     SDValue Chain = N->getOperand(1);
     SDNode *Result;
-    const valtype_map_s *vtm = getValueTypeMapEntry(VT);
-
-    if (vtm->ldresult_ins == 0) {
-      report_fatal_error("LDRESULT for unsupported type: " +
-                         Twine(VT.getEVTString()));
-    }
-
-    Opc = vtm->ldresult_ins;
-    if (vtm->ldresult_imm) {
-      SDValue Zero = CurDAG->getTargetConstant(0, VT);
-
-      Result = CurDAG->getMachineNode(Opc, dl, VT, MVT::Other, Arg, Zero, Chain);
-    } else {
-      Result = CurDAG->getMachineNode(Opc, dl, VT, MVT::Other, Arg, Arg, Chain);
-    }
-
+   
+    Result = CurDAG->getMachineNode(TargetOpcode::COPY_TO_REGCLASS, dl, VT,
+                                    MVT::Other, Arg,
+                                    getRC( VT.getSimpleVT()), Chain);
     return Result;
+     
   } else if (Opc == SPUISD::IndirectAddr) {
     // Look at the operands: SelectCode() will catch the cases that aren't
     // specifically handled here.
