@@ -65,6 +65,41 @@ void test_if_jumps() {
   A e;
 }
 
+void test_while_implicit_scope() {
+  A a;
+  while (A b = a)
+    A c;
+}
+
+void test_while_jumps() {
+  A a;
+  while (A b = a) {
+    A c;
+    if (UV) break;
+    if (UV) continue;
+    if (UV) return;
+    A d;
+  }
+  A e;
+}
+
+void test_do_implicit_scope() {
+  do A a;
+  while (UV);
+}
+
+void test_do_jumps() {
+  A a;
+  do {
+    A b;
+    if (UV) break;
+    if (UV) continue;
+    if (UV) return;
+    A c;
+  } while (UV);
+  A d;
+}
+
 // CHECK:  [ B2 (ENTRY) ]
 // CHECK:     Predecessors (0):
 // CHECK:     Successors (1): B1
@@ -264,4 +299,193 @@ void test_if_jumps() {
 // CHECK:     Successors (2): B7 B4
 // CHECK:  [ B0 (EXIT) ]
 // CHECK:     Predecessors (3): B1 B3 B6
+// CHECK:     Successors (0):
+// CHECK:  [ B6 (ENTRY) ]
+// CHECK:     Predecessors (0):
+// CHECK:     Successors (1): B5
+// CHECK:  [ B1 ]
+// CHECK:       1: [B2.2].~A() (Implicit destructor)
+// CHECK:       2: [B5.1].~A() (Implicit destructor)
+// CHECK:     Predecessors (1): B2
+// CHECK:     Successors (1): B0
+// CHECK:  [ B2 ]
+// CHECK:       1: a
+// CHECK:       2: while ([B2.4])
+// CHECK: [B4.1]      3: b.operator int()
+// CHECK:       4: [B2.3]
+// CHECK:       T: while [B2.4]
+// CHECK:     Predecessors (2): B3 B5
+// CHECK:     Successors (2): B4 B1
+// CHECK:  [ B3 ]
+// CHECK:     Predecessors (1): B4
+// CHECK:     Successors (1): B2
+// CHECK:  [ B4 ]
+// CHECK:       1: A c;
+// CHECK:       2: [B4.1].~A() (Implicit destructor)
+// CHECK:       3: [B2.2].~A() (Implicit destructor)
+// CHECK:     Predecessors (1): B2
+// CHECK:     Successors (1): B3
+// CHECK:  [ B5 ]
+// CHECK:       1: A a;
+// CHECK:     Predecessors (1): B6
+// CHECK:     Successors (1): B2
+// CHECK:  [ B0 (EXIT) ]
+// CHECK:     Predecessors (1): B1
+// CHECK:     Successors (0):
+// CHECK:  [ B12 (ENTRY) ]
+// CHECK:     Predecessors (0):
+// CHECK:     Successors (1): B11
+// CHECK:  [ B1 ]
+// CHECK:       1: [B2.2].~A() (Implicit destructor)
+// CHECK:       2: A e;
+// CHECK:       3: [B1.2].~A() (Implicit destructor)
+// CHECK:       4: [B11.1].~A() (Implicit destructor)
+// CHECK:     Predecessors (2): B9 B2
+// CHECK:     Successors (1): B0
+// CHECK:  [ B2 ]
+// CHECK:       1: a
+// CHECK:       2: while ([B2.4])
+// CHECK:     {
+// CHECK: [B10.1]        if ([B10.2])
+// CHECK:             break;
+// CHECK:         if ([B8.1])
+// CHECK:             continue;
+// CHECK:         if ([B6.1])
+// CHECK: [B5.1][B4.1]    }
+// CHECK:       3: b.operator int()
+// CHECK:       4: [B2.3]
+// CHECK:       T: while [B2.4]
+// CHECK:     Predecessors (2): B3 B11
+// CHECK:     Successors (2): B10 B1
+// CHECK:  [ B3 ]
+// CHECK:     Predecessors (2): B4 B7
+// CHECK:     Successors (1): B2
+// CHECK:  [ B4 ]
+// CHECK:       1: A d;
+// CHECK:       2: [B4.1].~A() (Implicit destructor)
+// CHECK:       3: [B10.1].~A() (Implicit destructor)
+// CHECK:       4: [B2.2].~A() (Implicit destructor)
+// CHECK:     Predecessors (1): B6
+// CHECK:     Successors (1): B3
+// CHECK:  [ B5 ]
+// CHECK:       1: return;
+// CHECK:       2: [B10.1].~A() (Implicit destructor)
+// CHECK:       3: [B2.2].~A() (Implicit destructor)
+// CHECK:       4: [B11.1].~A() (Implicit destructor)
+// CHECK:     Predecessors (1): B6
+// CHECK:     Successors (1): B0
+// CHECK:  [ B6 ]
+// CHECK:       1: UV
+// CHECK:       T: if [B6.1]
+// CHECK:     Predecessors (1): B8
+// CHECK:     Successors (2): B5 B4
+// CHECK:  [ B7 ]
+// CHECK:       1: [B10.1].~A() (Implicit destructor)
+// CHECK:       2: [B2.2].~A() (Implicit destructor)
+// CHECK:       T: continue;
+// CHECK:     Predecessors (1): B8
+// CHECK:     Successors (1): B3
+// CHECK:  [ B8 ]
+// CHECK:       1: UV
+// CHECK:       T: if [B8.1]
+// CHECK:     Predecessors (1): B10
+// CHECK:     Successors (2): B7 B6
+// CHECK:  [ B9 ]
+// CHECK:       1: [B10.1].~A() (Implicit destructor)
+// CHECK:       T: break;
+// CHECK:     Predecessors (1): B10
+// CHECK:     Successors (1): B1
+// CHECK:  [ B10 ]
+// CHECK:       1: A c;
+// CHECK:       2: UV
+// CHECK:       T: if [B10.2]
+// CHECK:     Predecessors (1): B2
+// CHECK:     Successors (2): B9 B8
+// CHECK:  [ B11 ]
+// CHECK:       1: A a;
+// CHECK:     Predecessors (1): B12
+// CHECK:     Successors (1): B2
+// CHECK:  [ B0 (EXIT) ]
+// CHECK:     Predecessors (2): B1 B5
+// CHECK:     Successors (0):
+// CHECK:  [ B4 (ENTRY) ]
+// CHECK:     Predecessors (0):
+// CHECK:     Successors (1): B2
+// CHECK:  [ B1 ]
+// CHECK:       1: UV
+// CHECK:       T: do ... while [B1.1]
+// CHECK:     Predecessors (1): B2
+// CHECK:     Successors (2): B3 B0
+// CHECK:  [ B2 ]
+// CHECK:       1: A a;
+// CHECK:       2: [B2.1].~A() (Implicit destructor)
+// CHECK:     Predecessors (2): B3 B4
+// CHECK:     Successors (1): B1
+// CHECK:  [ B3 ]
+// CHECK:     Predecessors (1): B1
+// CHECK:     Successors (1): B2
+// CHECK:  [ B0 (EXIT) ]
+// CHECK:     Predecessors (1): B1
+// CHECK:     Successors (0):
+// CHECK:  [ B12 (ENTRY) ]
+// CHECK:     Predecessors (0):
+// CHECK:     Successors (1): B11
+// CHECK:  [ B1 ]
+// CHECK:       1: A d;
+// CHECK:       2: [B1.1].~A() (Implicit destructor)
+// CHECK:       3: [B11.1].~A() (Implicit destructor)
+// CHECK:     Predecessors (2): B8 B2
+// CHECK:     Successors (1): B0
+// CHECK:  [ B2 ]
+// CHECK:       1: UV
+// CHECK:       T: do ... while [B2.1]
+// CHECK:     Predecessors (2): B3 B6
+// CHECK:     Successors (2): B10 B1
+// CHECK:  [ B3 ]
+// CHECK:       1: A c;
+// CHECK:       2: [B3.1].~A() (Implicit destructor)
+// CHECK:       3: [B9.1].~A() (Implicit destructor)
+// CHECK:     Predecessors (1): B5
+// CHECK:     Successors (1): B2
+// CHECK:  [ B4 ]
+// CHECK:       1: return;
+// CHECK:       2: [B9.1].~A() (Implicit destructor)
+// CHECK:       3: [B11.1].~A() (Implicit destructor)
+// CHECK:     Predecessors (1): B5
+// CHECK:     Successors (1): B0
+// CHECK:  [ B5 ]
+// CHECK:       1: UV
+// CHECK:       T: if [B5.1]
+// CHECK:     Predecessors (1): B7
+// CHECK:     Successors (2): B4 B3
+// CHECK:  [ B6 ]
+// CHECK:       1: [B9.1].~A() (Implicit destructor)
+// CHECK:       T: continue;
+// CHECK:     Predecessors (1): B7
+// CHECK:     Successors (1): B2
+// CHECK:  [ B7 ]
+// CHECK:       1: UV
+// CHECK:       T: if [B7.1]
+// CHECK:     Predecessors (1): B9
+// CHECK:     Successors (2): B6 B5
+// CHECK:  [ B8 ]
+// CHECK:       1: [B9.1].~A() (Implicit destructor)
+// CHECK:       T: break;
+// CHECK:     Predecessors (1): B9
+// CHECK:     Successors (1): B1
+// CHECK:  [ B9 ]
+// CHECK:       1: A b;
+// CHECK:       2: UV
+// CHECK:       T: if [B9.2]
+// CHECK:     Predecessors (2): B10 B11
+// CHECK:     Successors (2): B8 B7
+// CHECK:  [ B10 ]
+// CHECK:     Predecessors (1): B2
+// CHECK:     Successors (1): B9
+// CHECK:  [ B11 ]
+// CHECK:       1: A a;
+// CHECK:     Predecessors (1): B12
+// CHECK:     Successors (1): B9
+// CHECK:  [ B0 (EXIT) ]
+// CHECK:     Predecessors (2): B1 B4
 // CHECK:     Successors (0):

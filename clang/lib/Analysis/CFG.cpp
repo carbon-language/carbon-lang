@@ -1584,7 +1584,17 @@ CFGBlock* CFGBuilder::VisitObjCAtTryStmt(ObjCAtTryStmt* S) {
 CFGBlock* CFGBuilder::VisitWhileStmt(WhileStmt* W) {
   CFGBlock* LoopSuccessor = NULL;
 
+  // Save local scope position because in case of condition variable ScopePos
+  // won't be restored when traversing AST.
+  SaveAndRestore<LocalScope::const_iterator> save_scope_pos(ScopePos);
+
+  // Create local scope for possible condition variable.
+  // Store scope position for continue statement.
   LocalScope::const_iterator LoopBeginScopePos = ScopePos;
+  if (VarDecl* VD = W->getConditionVariable()) {
+    addLocalScopeForVarDecl(VD);
+    addAutomaticObjDtors(ScopePos, LoopBeginScopePos, W);
+  }
 
   // "while" is a control-flow statement.  Thus we stop processing the current
   // block.
@@ -1654,10 +1664,18 @@ CFGBlock* CFGBuilder::VisitWhileStmt(WhileStmt* W) {
     ContinueJumpTarget = JumpTarget(Succ, LoopBeginScopePos);
 
     // All breaks should go to the code following the loop.
-    BreakJumpTarget = JumpTarget(LoopSuccessor, LoopBeginScopePos);
+    BreakJumpTarget = JumpTarget(LoopSuccessor, ScopePos);
 
     // NULL out Block to force lazy instantiation of blocks for the body.
     Block = NULL;
+
+    // Loop body should end with destructor of Condition variable (if any).
+    addAutomaticObjDtors(ScopePos, LoopBeginScopePos, W);
+
+    // If body is not a compound statement create implicit scope
+    // and add destructors.
+    if (!isa<CompoundStmt>(W->getBody()))
+      addLocalScopeAndDtors(W->getBody());
 
     // Create the body.  The returned block is the entry to the loop body.
     CFGBlock* BodyBlock = addStmt(W->getBody());
@@ -1788,6 +1806,11 @@ CFGBlock *CFGBuilder::VisitDoStmt(DoStmt* D) {
 
     // NULL out Block to force lazy instantiation of blocks for the body.
     Block = NULL;
+
+    // If body is not a compound statement create implicit scope
+    // and add destructors.
+    if (!isa<CompoundStmt>(D->getBody()))
+      addLocalScopeAndDtors(D->getBody());
 
     // Create the body.  The returned block is the entry to the loop body.
     BodyBlock = addStmt(D->getBody());
