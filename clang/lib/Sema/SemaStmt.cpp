@@ -459,6 +459,14 @@ Sema::ActOnStartOfSwitchStmt(SourceLocation SwitchLoc, Expr *Cond,
   return Owned(SS);
 }
 
+static void AdjustAPSInt(llvm::APSInt &Val, unsigned BitWidth, bool IsSigned) {
+  if (Val.getBitWidth() < BitWidth)
+    Val.extend(BitWidth);
+  else if (Val.getBitWidth() > BitWidth)
+    Val.trunc(BitWidth);
+  Val.setIsSigned(IsSigned);
+}
+
 StmtResult
 Sema::ActOnFinishSwitchStmt(SourceLocation SwitchLoc, Stmt *Switch,
                             Stmt *BodyStmt) {
@@ -560,7 +568,7 @@ Sema::ActOnFinishSwitchStmt(SourceLocation SwitchLoc, Stmt *Switch,
 
       // Convert the value to the same width/sign as the condition.
       ConvertIntegerToTypeWarnOnOverflow(LoVal, CondWidth, CondIsSigned,
-                                         CS->getLHS()->getLocStart(),
+                                         Lo->getLocStart(),
                                          diag::warn_case_value_overflow);
 
       // If the LHS is not the same type as the condition, insert an implicit
@@ -639,7 +647,7 @@ Sema::ActOnFinishSwitchStmt(SourceLocation SwitchLoc, Stmt *Switch,
 
         // Convert the value to the same width/sign as the condition.
         ConvertIntegerToTypeWarnOnOverflow(HiVal, CondWidth, CondIsSigned,
-                                           CR->getRHS()->getLocStart(),
+                                           Hi->getLocStart(),
                                            diag::warn_case_value_overflow);
 
         // If the LHS is not the same type as the condition, insert an implicit
@@ -651,7 +659,7 @@ Sema::ActOnFinishSwitchStmt(SourceLocation SwitchLoc, Stmt *Switch,
         if (LoVal > HiVal) {
           Diag(CR->getLHS()->getLocStart(), diag::warn_case_empty_range)
             << SourceRange(CR->getLHS()->getLocStart(),
-                           CR->getRHS()->getLocEnd());
+                           Hi->getLocEnd());
           CaseRanges.erase(CaseRanges.begin()+i);
           --i, --e;
           continue;
@@ -740,14 +748,10 @@ Sema::ActOnFinishSwitchStmt(SourceLocation SwitchLoc, Stmt *Switch,
       // Gather all enum values, set their type and sort them,
       // allowing easier comparison with CaseVals.
       for (EnumDecl::enumerator_iterator EDI = ED->enumerator_begin();
-             EDI != ED->enumerator_end(); EDI++) {
-        llvm::APSInt Val = (*EDI)->getInitVal();
-        if(Val.getBitWidth() < CondWidth)
-          Val.extend(CondWidth);
-        else if (Val.getBitWidth() > CondWidth)
-          Val.trunc(CondWidth);
-        Val.setIsSigned(CondIsSigned);
-        EnumVals.push_back(std::make_pair(Val, (*EDI)));
+           EDI != ED->enumerator_end(); ++EDI) {
+        llvm::APSInt Val = EDI->getInitVal();
+        AdjustAPSInt(Val, CondWidth, CondIsSigned);
+        EnumVals.push_back(std::make_pair(Val, *EDI));
       }
       std::stable_sort(EnumVals.begin(), EnumVals.end(), CmpEnumVals);
       EnumValsTy::iterator EIend =
@@ -779,6 +783,7 @@ Sema::ActOnFinishSwitchStmt(SourceLocation SwitchLoc, Stmt *Switch,
           }
 
           llvm::APSInt Hi = RI->second->getRHS()->EvaluateAsInt(Context);
+          AdjustAPSInt(Hi, CondWidth, CondIsSigned);
           while (EI != EIend && EI->first < Hi)
             EI++;
           if (EI == EIend || EI->first != Hi)
@@ -806,6 +811,7 @@ Sema::ActOnFinishSwitchStmt(SourceLocation SwitchLoc, Stmt *Switch,
         // Drop unneeded case ranges
         for (; RI != CaseRanges.end(); RI++) {
           llvm::APSInt Hi = RI->second->getRHS()->EvaluateAsInt(Context);
+          AdjustAPSInt(Hi, CondWidth, CondIsSigned);
           if (EI->first <= Hi)
             break;
         }
