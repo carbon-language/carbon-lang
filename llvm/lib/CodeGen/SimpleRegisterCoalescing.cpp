@@ -406,7 +406,8 @@ bool SimpleRegisterCoalescing::RemoveCopyByCommutingDef(const CoalescerPair &CP,
       return false;
   }
 
-  DEBUG(dbgs() << "\tRemoveCopyByCommutingDef: " << *DefMI);
+  DEBUG(dbgs() << "\tRemoveCopyByCommutingDef: " << AValNo->def << '\t'
+               << *DefMI << "\t\tALR: " << *ALR << ", BLR: " << *BLR << '\n');
 
   // At this point we have decided that it is legal to do this
   // transformation.  Start by commuting the instruction.
@@ -479,6 +480,7 @@ bool SimpleRegisterCoalescing::RemoveCopyByCommutingDef(const CoalescerPair &CP,
     const LiveRange *DLR = IntB.getLiveRangeContaining(DefIdx);
     if (!DLR)
       continue;
+    DEBUG(dbgs() << "\t\tnoop: " << DefIdx << '\t' << *UseMI);
     BHasPHIKill |= DLR->valno->hasPHIKill();
     assert(DLR->valno->def == DefIdx);
     BDeadValNos.push_back(DLR->valno);
@@ -488,10 +490,6 @@ bool SimpleRegisterCoalescing::RemoveCopyByCommutingDef(const CoalescerPair &CP,
 
   // We need to insert a new liverange: [ALR.start, LastUse). It may be we can
   // simply extend BLR if CopyMI doesn't end the range.
-  DEBUG({
-      dbgs() << "Extending: ";
-      IntB.print(dbgs(), tri_);
-    });
 
   // Remove val#'s defined by copies that will be coalesced away.
   for (unsigned i = 0, e = BDeadValNos.size(); i != e; ++i) {
@@ -507,6 +505,8 @@ bool SimpleRegisterCoalescing::RemoveCopyByCommutingDef(const CoalescerPair &CP,
     }
     IntB.removeValNo(BDeadValNos[i]);
   }
+  DEBUG(dbgs() << "\t\ttrimmed:  " << IntB << '\n');
+
 
   // Extend BValNo by merging in IntA live ranges of AValNo. Val# definition
   // is updated.
@@ -524,22 +524,10 @@ bool SimpleRegisterCoalescing::RemoveCopyByCommutingDef(const CoalescerPair &CP,
     IntB.addRange(LiveRange(AI->start, End, ValNo));
   }
   ValNo->setHasPHIKill(BHasPHIKill);
-
-  DEBUG({
-      dbgs() << "   result = ";
-      IntB.print(dbgs(), tri_);
-      dbgs() << "\nShortening: ";
-      IntA.print(dbgs(), tri_);
-    });
+  DEBUG(dbgs() << "\t\textended: " << IntB << '\n');
 
   IntA.removeValNo(AValNo);
-
-  DEBUG({
-      dbgs() << "   result = ";
-      IntA.print(dbgs(), tri_);
-      dbgs() << '\n';
-    });
-
+  DEBUG(dbgs() << "\t\ttrimmed:  " << IntA << '\n');
   ++numCommutes;
   return true;
 }
