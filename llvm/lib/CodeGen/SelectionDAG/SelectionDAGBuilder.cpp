@@ -4137,7 +4137,7 @@ SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I, unsigned Intrinsic) {
         return 0;
       DAG.AddDbgValue(SDV, N.getNode(), isParameter);
     } else {
-      // If Address is an argument then try to emits its dbg value using
+      // If Address is an argument then try to emit its dbg value using
       // virtual register info from the FuncInfo.ValueMap. 
       if (!EmitFuncArgumentDbgValue(Address, Variable, 0, N)) {
         // If variable is pinned by a alloca in dominating bb then
