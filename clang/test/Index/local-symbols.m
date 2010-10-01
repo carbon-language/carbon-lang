@@ -32,7 +32,7 @@
 // CHECK: local-symbols.m:9:1: ObjCInstanceMethodDecl=bar:9:1 Extent=[9:1 - 9:12]
 // CHECK: local-symbols.m:9:4: TypeRef=id:0:0 Extent=[9:4 - 9:6]
 // CHECK: local-symbols.m:12:1: ObjCImplementationDecl=Foo:12:1 (Definition) Extent=[12:1 - 16:2]
-// CHECK: local-symbols.m:13:1: ObjCInstanceMethodDecl=bar:13:1 (Definition) Extent=[13:1 - 15:2]
+// CHECK: local-symbols.m:13:1: ObjCInstanceMethodDecl=bar:13:1 (Definition) [Overrides @9:1] Extent=[13:1 - 15:2]
 // CHECK: local-symbols.m:13:4: TypeRef=id:0:0 Extent=[13:4 - 13:6]
 // CHECK: local-symbols.m:14:10: UnexposedExpr= Extent=[14:10 - 14:11]
 // CHECK: local-symbols.m:14:10: UnexposedExpr= Extent=[14:10 - 14:11]

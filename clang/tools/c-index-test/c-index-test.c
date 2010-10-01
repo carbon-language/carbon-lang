@@ -167,7 +167,9 @@ static void PrintCursor(CXCursor Cursor) {
     CXCursor Referenced;
     unsigned line, column;
     CXCursor SpecializationOf;
-    
+    CXCursor *overridden;
+    unsigned num_overridden;
+
     ks = clang_getCursorKindSpelling(Cursor.kind);
     string = clang_getCursorSpelling(Cursor);
     printf("%s=%s", clang_getCString(ks),
@@ -250,6 +252,21 @@ static void PrintCursor(CXCursor Cursor) {
       printf(" [Specialization of %s:%d:%d]", 
              clang_getCString(Name), line, column);
       clang_disposeString(Name);
+    }
+
+    clang_getOverriddenCursors(Cursor, &overridden, &num_overridden);
+    if (num_overridden) {      
+      unsigned I;
+      printf(" [Overrides ");
+      for (I = 0; I != num_overridden; ++I) {
+        CXSourceLocation Loc = clang_getCursorLocation(overridden[I]);
+        clang_getInstantiationLocation(Loc, 0, &line, &column, 0);
+        if (I)
+          printf(", ");
+        printf("@%d:%d", line, column);
+      }
+      printf("]");
+      clang_disposeOverriddenCursors(overridden);
     }
   }
 }

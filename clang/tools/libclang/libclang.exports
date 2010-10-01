@@ -21,6 +21,7 @@ clang_defaultSaveOptions
 clang_disposeCodeCompleteResults
 clang_disposeDiagnostic
 clang_disposeIndex
+clang_disposeOverriddenCursors
 clang_disposeString
 clang_disposeTokens
 clang_disposeTranslationUnit
@@ -77,6 +78,7 @@ clang_getNumCompletionChunks
 clang_getNumDiagnostics
 clang_getNumOverloadedDecls
 clang_getOverloadedDecl
+clang_getOverriddenCursors
 clang_getPointeeType
 clang_getRange
 clang_getRangeEnd

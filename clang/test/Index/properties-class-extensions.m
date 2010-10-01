@@ -80,7 +80,7 @@
 // CHECK: properties-class-extensions.m:30:12: ObjCClassRef=Rdar8467189_Foo:28:12 Extent=[30:12 - 30:27]
 // CHECK: properties-class-extensions.m:31:40: ObjCPropertyDecl=Rdar8467189_Bar:31:40 Extent=[31:40 - 31:55]
 // CHECK: properties-class-extensions.m:31:23: ObjCClassRef=Rdar8467189_Bar:24:8 Extent=[31:23 - 31:38]
-// CHECK: properties-class-extensions.m:31:40: ObjCInstanceMethodDecl=Rdar8467189_Bar:31:40 Extent=[31:40 - 31:55]
+// CHECK: properties-class-extensions.m:31:40: ObjCInstanceMethodDecl=Rdar8467189_Bar:31:40 [Overrides @26:39] Extent=[31:40 - 31:55]
 // CHECK: properties-class-extensions.m:31:40: ObjCInstanceMethodDecl=setRdar8467189_Bar::31:40 Extent=[31:40 - 31:55]
 // CHECK: properties-class-extensions.m:31:40: ParmDecl=Rdar8467189_Bar:31:40 (Definition) Extent=[31:40 - 31:55]
 // CHECK: properties-class-extensions.m:35:12: ObjCInterfaceDecl=Qux:35:12 Extent=[35:1 - 36:5]
