@@ -3955,6 +3955,9 @@ SelectionDAGBuilder::EmitFuncArgumentDbgValue(const Value *V, MDNode *Variable,
     const TargetRegisterInfo *TRI = DAG.getTarget().getRegisterInfo();
     Reg = TRI->getFrameRegister(MF);
     Offset = FuncInfo.getByValArgumentFrameIndex(Arg);
+    // If byval argument ofset is not recorded then ignore this.
+    if (!Offset)
+      Reg = 0;
   }
 
   if (N.getNode() && N.getOpcode() == ISD::CopyFromReg) {
