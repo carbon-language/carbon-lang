@@ -1768,7 +1768,8 @@ ASTReader::ReadASTBlock(PerFileData &F) {
         reinterpret_cast<const DeclID *>(BlobStart),
         BlobLen / sizeof(DeclID)
       };
-      DeclContextOffsets[Context->getTranslationUnitDecl()].push_back(Info);
+      DeclContextOffsets[Context ? Context->getTranslationUnitDecl() : 0]
+        .push_back(Info);
       break;
     }
 
@@ -1778,7 +1779,7 @@ ASTReader::ReadASTBlock(PerFileData &F) {
                         (const unsigned char *)BlobStart + Record[1],
                         (const unsigned char *)BlobStart,
                         ASTDeclContextNameLookupTrait(*this));
-      if (ID == 1) { // Is it the TU?
+      if (ID == 1 && Context) { // Is it the TU?
         DeclContextInfo Info = {
           Table, /* No lexical inforamtion */ 0, 0
         };
@@ -2228,6 +2229,17 @@ void ASTReader::InitializeContext(ASTContext &Ctx) {
   PP->getIdentifierTable().setExternalIdentifierLookup(this);
   PP->getHeaderSearchInfo().SetExternalLookup(this);
   PP->setExternalSource(this);
+
+  // If we have an update block for the TU waiting, we have to add it before
+  // deserializing the decl.
+  DeclContextOffsetsMap::iterator DCU = DeclContextOffsets.find(0);
+  if (DCU != DeclContextOffsets.end()) {
+    // Insertion could invalidate map, so grab vector.
+    DeclContextInfos T;
+    T.swap(DCU->second);
+    DeclContextOffsets.erase(DCU);
+    DeclContextOffsets[Ctx.getTranslationUnitDecl()].swap(T);
+  }
 
   // Load the translation unit declaration
   GetTranslationUnitDecl();
