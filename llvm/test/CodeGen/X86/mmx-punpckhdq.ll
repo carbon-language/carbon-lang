@@ -1,5 +1,5 @@
-; RUN: llc < %s -march=x86 -mattr=+mmx,+sse2 | FileCheck %s
-; RUN: llc < %s -march=x86 -mattr=+mmx,+sse2 | FileCheck %s
+; RUN: llc < %s -march=x86 -mattr=+mmx,+sse2 -mtriple=x86_64-apple-darwin10 | FileCheck %s
+; RUN: llc < %s -march=x86 -mattr=+mmx,+sse2 -mtriple=x86_64-apple-darwin10 | FileCheck %s
 ; There are no MMX operations in bork; promoted to XMM.
 
 define void @bork(<1 x i64>* %x) {
