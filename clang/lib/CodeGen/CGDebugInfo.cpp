@@ -738,7 +738,15 @@ CGDebugInfo::CreateCXXMemberFunction(const CXXMethodDecl *Method,
     Flags |= llvm::DIDescriptor::FlagPrivate;
   else if (Access == clang::AS_protected)
     Flags |= llvm::DIDescriptor::FlagProtected;
-
+  if (const CXXConstructorDecl *CXXC = dyn_cast<CXXConstructorDecl>(Method)) {
+    if (CXXC->isExplicit())
+      Flags |= llvm::DIDescriptor::FlagExplicit;
+  } else if (const CXXConversionDecl *CXXC = 
+             dyn_cast<CXXConversionDecl>(Method)) {
+    if (CXXC->isExplicit())
+      Flags |= llvm::DIDescriptor::FlagExplicit;
+  }
+    
   llvm::DISubprogram SP =
     DebugFactory.CreateSubprogram(RecordTy , MethodName, MethodName, 
                                   MethodLinkageName,
