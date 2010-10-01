@@ -539,9 +539,9 @@ DW_ATE_unsigned_char = 8
   metadata, ;; Name (may be "" for anonymous types)
   metadata, ;; Reference to file where defined (may be NULL)
   i32,      ;; Line number where defined (may be 0)
-  i32,      ;; Size in bits
-  i32,      ;; Alignment in bits
-  i32,      ;; Offset in bits
+  i64,      ;; Size in bits
+  i64,      ;; Alignment in bits
+  i64,      ;; Offset in bits
   metadata  ;; Reference to type derived from
 }
 </pre>
