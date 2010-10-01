@@ -40,8 +40,8 @@ class FoundationDisassembleTestCase(TestBase):
             match = re.search(" Code         .+0000 (.+)$", line)
             if match:
                 func = match.group(1)
-                print "line:", line
-                print "func:", func
+                #print "line:", line
+                #print "func:", func
                 self.runCmd('disassemble -n "%s"' % func)
         
 
