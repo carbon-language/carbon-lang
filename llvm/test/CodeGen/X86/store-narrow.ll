@@ -152,3 +152,17 @@ define void @test9() nounwind {
   store i32 %or, i32* @g_16
   ret void
 }
+
+; rdar://8494845 + PR8244
+; X64: test10:
+; X64-NEXT: movsbl	(%rdi), %eax
+; X64-NEXT: shrl	$8, %eax
+; X64-NEXT: ret
+define i8 @test10(i8* %P) nounwind ssp {
+entry:
+  %tmp = load i8* %P, align 1
+  %conv = sext i8 %tmp to i32
+  %shr3 = lshr i32 %conv, 8
+  %conv2 = trunc i32 %shr3 to i8
+  ret i8 %conv2
+}

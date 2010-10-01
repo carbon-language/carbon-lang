@@ -4087,6 +4087,15 @@ SDValue DAGCombiner::ReduceLoadWidth(SDNode *N) {
         if ((N0.getValueType().getSizeInBits() & (EVTBits-1)) != 0)
           return SDValue();
       }
+      
+      // If the shift amount is larger than the input type then we're not
+      // accessing any of the loaded bytes.  If the load was a zextload/extload
+      // then the result of the shift+trunc is zero/undef (handled elsewhere).
+      // If the load was a sextload then the result is a splat of the sign bit
+      // of the extended byte.  This is not worth optimizing for.
+      if (ShAmt >= VT.getSizeInBits())
+        return SDValue();
+      
     }
   }
 
