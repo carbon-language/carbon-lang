@@ -1045,15 +1045,14 @@ ClangASTContext::AddMethodToCXXRecordType
     
     DeclarationName decl_name (&identifier_table->get(name));
 
-    ;
     const bool is_implicitly_declared = false;
     
-    clang::Type *method_type(method_qual_type.getTypePtr());
+    clang::FunctionType *function_Type = dyn_cast<FunctionType>(method_qual_type.getTypePtr());
     
-    if (method_type == NULL)
+    if (function_Type == NULL)
         return NULL;
 
-    FunctionProtoType *method_function_prototype (dyn_cast<FunctionProtoType>(method_type));
+    FunctionProtoType *method_function_prototype (dyn_cast<FunctionProtoType>(function_Type));
     
     if (!method_function_prototype)
         return NULL;
@@ -1064,7 +1063,7 @@ ClangASTContext::AddMethodToCXXRecordType
     {
         cxx_method_decl = CXXDestructorDecl::Create (*ast_context,
                                                      cxx_record_decl,
-                                                     DeclarationNameInfo (ast_context->DeclarationNames.getCXXDestructorName (ast_context->getCanonicalType (method_qual_type)), SourceLocation()),
+                                                     DeclarationNameInfo (ast_context->DeclarationNames.getCXXDestructorName (ast_context->getCanonicalType (record_qual_type)), SourceLocation()),
                                                      method_qual_type,
                                                      is_inline,
                                                      is_implicitly_declared);
@@ -1073,7 +1072,7 @@ ClangASTContext::AddMethodToCXXRecordType
     {
         cxx_method_decl = CXXConstructorDecl::Create (*ast_context,
                                                       cxx_record_decl,
-                                                      DeclarationNameInfo (ast_context->DeclarationNames.getCXXConstructorName (ast_context->getCanonicalType (method_qual_type)), SourceLocation()),
+                                                      DeclarationNameInfo (ast_context->DeclarationNames.getCXXConstructorName (ast_context->getCanonicalType (record_qual_type)), SourceLocation()),
                                                       method_qual_type,
                                                       NULL, // TypeSourceInfo *
                                                       is_explicit, 
@@ -1102,7 +1101,7 @@ ClangASTContext::AddMethodToCXXRecordType
                 // Conversion operators don't take params...
                 cxx_method_decl = CXXConversionDecl::Create (*ast_context,
                                                              cxx_record_decl,
-                                                             DeclarationNameInfo (ast_context->DeclarationNames.getCXXConversionFunctionName (ast_context->getCanonicalType (method_qual_type)), SourceLocation()),
+                                                             DeclarationNameInfo (ast_context->DeclarationNames.getCXXConversionFunctionName (ast_context->getCanonicalType (function_Type->getResultType())), SourceLocation()),
                                                              method_qual_type,
                                                              NULL, // TypeSourceInfo *
                                                              is_inline,
