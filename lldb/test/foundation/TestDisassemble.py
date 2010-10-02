@@ -34,10 +34,19 @@ class FoundationDisassembleTestCase(TestBase):
         self.assertTrue(match, "Foundation.framework path located")
         self.runCmd("image dump symtab %s" % foundation_framework)
         raw_output = self.res.GetOutput()
-        # Now, grab every 'Code' symbol and feed it into the 'disassemble -n func' command.
+        # Now, grab every 'Code' symbol and feed it into the command:
+        # 'disassemble -n func'.
+        #
+        # The symbol name is on the last column and trails the flag column which
+        # looks like '0xhhhhhhhh', i.e., 8 hexadecimal digits.
+        codeRE = re.compile(r"""
+                             \ Code\ {9}    # ' Code' followed by 9 SPCs,
+                             .*             # the wildcard chars,
+                             0x[0-9a-f]{8}  # the flag column, and
+                             \ (.+)$        # finally the function symbol.
+                             """, re.VERBOSE)
         for line in raw_output.split(os.linesep):
-            # The symbol name is on the last column and trails the flag column which ends with '0000'.
-            match = re.search(" Code         .+0000 (.+)$", line)
+            match = codeRE.search(line)
             if match:
                 func = match.group(1)
                 #print "line:", line
