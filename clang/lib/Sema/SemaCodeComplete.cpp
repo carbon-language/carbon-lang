@@ -1910,6 +1910,8 @@ static std::string FormatFunctionParameter(ASTContext &Context,
   if (Block->getNumArgs() == 0) {
     if (Block->getTypePtr()->isVariadic())
       Result += "(...)";
+    else
+      Result += "(void)";
   } else {
     Result += "(";
     for (unsigned I = 0, N = Block->getNumArgs(); I != N; ++I) {
@@ -1923,6 +1925,9 @@ static std::string FormatFunctionParameter(ASTContext &Context,
     Result += ")";
   }
   
+  if (Param->getIdentifier())
+    Result += Param->getIdentifier()->getName();
+
   return Result;
 }
 
