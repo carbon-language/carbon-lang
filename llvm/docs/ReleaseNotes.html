@@ -125,6 +125,34 @@ Almost dead code.
   AVX support in the MC assembler.  Full compiler support not done yet.
   Atomics now get legalized when not natively supported (jim g)
   ARM: General performance work and tuning.
+  Bottom up fast isel.  Simple Load reuse.  No more machinedce.  Load folding at -O0?
+  New linker_private_weak and linker_private_weak_def_auto linkage types
+  compiler_rt softfloat support.
+  X86 ABI:  <2 x float> in IR no longer maps onto MMX, it turns into <4 x float>
+  IR ABI: <3 x float> is passed as <4 x float> instead of 3 floats.
+  renamed "Release" -> "Release+Asserts"; "Release-Asserts" -> "Release etc.
+  New COPY instruction. copyRegToReg -> copyPhysReg, isMoveInstr is gone.
+  JumpThreading much more aggressive about implied value relations.
+  New RegionInfo pass  "opt -regions analyze" or "opt -view-regions".
+  mc assembler supports macros.
+  RenderMachineFunction: -rendermf
+  SplitKit?
+  Evan: Teach bottom up pre-ra scheduler to track register pressure. Work in progress.
+  Evan: Add an ILP scheduler.  On x86_64, this is a win for all tests in CFP2000. It also sped up 256.bzip2 by 16%.
+  RegisterPass<> -> INTIALIZE_PASS()
+  llvm-diff?
+  Preliminary work on TBAA but not usable in 2.8.
+  Atomic lowering patch: -loweratomic (see Passes.html#loweratomic)
+  compiler_rt now includes extensive a fairly testsuite for blocks language feature and the blocks runtime.
+  New OptimizeExts+OptimizeCmps -> PeepholeOptimizer pass
+  Triples are now stored in normalized form.  Triple::normalize.
+  New LocalStackSlotAllocation.cpp pass (jimg)
+  New llvm.x86.int intrinsic (for int $42 and int3)
+  New CorrelatedValuePropagation pass, not on by default in 2.8 yet.
+  Verbose assembly decodes X86 shuffle instructions, e.g.:
+  	insertps	$113, %xmm3, %xmm0     ## xmm0 = zero,xmm0[1,2],xmm3[1]
+	unpcklps	%xmm1, %xmm0    ## xmm0 = xmm0[0],xmm1[0],xmm0[1],xmm1[1]
+	pshufd	$1, %xmm1, %xmm1        ## xmm1 = xmm1[1,0,0,0]
  -->
  
 
