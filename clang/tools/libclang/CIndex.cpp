@@ -2969,8 +2969,16 @@ CXSourceLocation clang_getCursorLocation(CXCursor C) {
     }
 
     case CXCursor_CXXBaseSpecifier: {
-      // FIXME: Figure out what location to return for a CXXBaseSpecifier.
-      return clang_getNullLocation();
+      CXXBaseSpecifier *BaseSpec = getCursorCXXBaseSpecifier(C);
+      if (!BaseSpec)
+        return clang_getNullLocation();
+      
+      if (TypeSourceInfo *TSInfo = BaseSpec->getTypeSourceInfo())
+        return cxloc::translateSourceLocation(getCursorContext(C),
+                                            TSInfo->getTypeLoc().getBeginLoc());
+      
+      return cxloc::translateSourceLocation(getCursorContext(C),
+                                        BaseSpec->getSourceRange().getBegin());
     }
 
     case CXCursor_LabelRef: {
@@ -3049,8 +3057,7 @@ static SourceRange getRawCursorExtent(CXCursor C) {
       return getCursorMemberRef(C).second;
 
     case CXCursor_CXXBaseSpecifier:
-      // FIXME: Figure out what source range to use for a CXBaseSpecifier.
-      return SourceRange();
+      return getCursorCXXBaseSpecifier(C)->getSourceRange();
 
     case CXCursor_LabelRef:
       return getCursorLabelRef(C).second;
