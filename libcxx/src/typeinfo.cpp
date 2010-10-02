@@ -7,7 +7,9 @@
 //
 //===----------------------------------------------------------------------===//
 #include <stdlib.h>
+#if __APPLE__
 #include <cxxabi.h>
+#endif
 
 #include "typeinfo"
 
