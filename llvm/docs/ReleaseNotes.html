@@ -453,6 +453,7 @@ organization changes have happened:
 
 <ul>
 <li>llvm-diff</li>
+<li>Direct .o file writing support for darwin/x86[64].</li>
 </ul>
 
 </div>
@@ -474,56 +475,6 @@ expose new optimization opportunities:</p>
   New linker_private_weak and linker_private_weak_def_auto linkage types
   Triples are now stored in normalized form.  Triple::normalize.
 
-
-<li>LLVM 2.8 changes the internal order of operands in <a
-  href="http://llvm.org/doxygen/classllvm_1_1InvokeInst.html"><tt>InvokeInst</tt></a>
-  and <a href="http://llvm.org/doxygen/classllvm_1_1CallInst.html"><tt>CallInst</tt></a>.
-  To be portable across releases, resort to <tt>CallSite</tt> and the
-  high-level accessors, such as <tt>getCalledValue</tt> and <tt>setUnwindDest</tt>.
-</li>
-<li>
-  You can no longer pass use_iterators directly to cast<> (and similar), because
-  these routines tend to perform costly dereference operations more than once. You
-  have to dereference the iterators yourself and pass them in.
-</li>
-<li>
-  llvm.memcpy.*, llvm.memset.*, llvm.memmove.* (and possibly other?) intrinsics
-  take an extra parameter now (i1 isVolatile), totaling 5 parameters.
-  If you were creating these intrinsic calls and prototypes yourself (as opposed
-  to using Intrinsic::getDeclaration), you can use UpgradeIntrinsicFunction/UpgradeIntrinsicCall
-  to be portable accross releases.
-  Note that you cannot use Intrinsic::getDeclaration() in a backwards compatible
-  way (needs 2/3 types now, in 2.7 it needed just 1).
-</li>
-<li>
-  SetCurrentDebugLocation takes a DebugLoc now instead of a MDNode.
-  Change your code to use
-  SetCurrentDebugLocation(DebugLoc::getFromDILocation(...)).
-</li>
-<li>
-  VISIBILITY_HIDDEN is gone.
-</li>
-<li>
-  The <tt>RegisterPass</tt> and <tt>RegisterAnalysisGroup</tt> templates are
-  considered deprecated, but continue to function in LLVM 2.8.  Clients are  
-  strongly advised to use the upcoming <tt>INITIALIZE_PASS()</tt> and
-  <tt>INITIALIZE_AG_PASS()</tt> macros instead.
-<li>
-  SMDiagnostic takes different parameters now. //FIXME: how to upgrade?
-</li>
-<li>
-  The constructor for the Triple class no longer tries to understand odd triple
-  specifications.  Frontends should ensure that they only pass valid triples to
-  LLVM.  The Triple::normalize utility method has been added to help front-ends
-  deal with funky triples.
-<li>
-  Some APIs got renamed:
-  <ul>
-      <li>llvm_report_error -&gt; report_fatal_error</li>
-      <li>llvm_install_error_handler -&gt; install_fatal_error_handler</li>
-      <li>llvm::DwarfExceptionHandling -&gt; llvm::JITExceptionHandling</li>
-  </ul>
-</li>
 </ul>
 
 </div>
@@ -718,50 +669,54 @@ it run faster:</p>
   ARM: Half float support through intrinsics LangRef.html#int_fp16
 <li>ARMGlobalMerge: <!-- Anton --> </li>
 
-<li>
-  All of the NEON load and store intrinsics (llvm.arm.neon.vld* and
-  llvm.arm.neon.vst*) take an extra parameter to specify the alignment in bytes
-  of the memory being accessed.
+<li>The ARM NEON intrinsics have been substantially reworked to reduce
+    redundancy and improve code generation.  Some of the major changes are:
+  <ol>
+  <li>
+    All of the NEON load and store intrinsics (llvm.arm.neon.vld* and
+    llvm.arm.neon.vst*) take an extra parameter to specify the alignment in bytes
+    of the memory being accessed.
+  </li>
+  <li>
+    The llvm.arm.neon.vaba intrinsic (vector absolute difference and
+    accumulate) has been removed.  This operation is now represented using
+    the llvm.arm.neon.vabd intrinsic (vector absolute difference) followed by a
+    vector add.
+  </li>
+  <li>
+    The llvm.arm.neon.vabdl and llvm.arm.neon.vabal intrinsics (lengthening
+    vector absolute difference with and without accumlation) have been removed.
+    They are represented using the llvm.arm.neon.vabd intrinsic (vector absolute
+    difference) followed by a vector zero-extend operation, and for vabal,
+    a vector add.
+  </li>
+  <li>
+    The llvm.arm.neon.vmovn intrinsic has been removed.  Calls of this intrinsic
+    are now replaced by vector truncate operations.
+  </li>
+  <li>
+    The llvm.arm.neon.vmovls and llvm.arm.neon.vmovlu intrinsics have been
+    removed.  They are now represented as vector sign-extend (vmovls) and
+    zero-extend (vmovlu) operations.
+  </li>
+  <li>
+    The llvm.arm.neon.vaddl*, llvm.arm.neon.vaddw*, llvm.arm.neon.vsubl*, and
+    llvm.arm.neon.vsubw* intrinsics (lengthening vector add and subtract) have
+    been removed.  They are replaced by vector add and vector subtract operations
+    where one (vaddw, vsubw) or both (vaddl, vsubl) of the operands are either
+    sign-extended or zero-extended.
+  </li>
+  <li>
+    The llvm.arm.neon.vmulls, llvm.arm.neon.vmullu, llvm.arm.neon.vmlal*, and
+    llvm.arm.neon.vmlsl* intrinsics (lengthening vector multiply with and without
+    accumulation and subtraction) have been removed.  These operations are now
+    represented as vector multiplications where the operands are either
+    sign-extended or zero-extended, followed by a vector add for vmlal or a
+    vector subtract for vmlsl.  Note that the polynomial vector multiply
+    intrinsic, llvm.arm.neon.vmullp, remains unchanged.
+  </li>
+  </ol>
 </li>
-<li>
-  The llvm.arm.neon.vaba intrinsic (vector absolute difference and
-  accumulate) has been removed.  This operation is now represented using
-  the llvm.arm.neon.vabd intrinsic (vector absolute difference) followed by a
-  vector add.
-</li>
-<li>
-  The llvm.arm.neon.vabdl and llvm.arm.neon.vabal intrinsics (lengthening
-  vector absolute difference with and without accumlation) have been removed.
-  They are represented using the llvm.arm.neon.vabd intrinsic (vector absolute
-  difference) followed by a vector zero-extend operation, and for vabal,
-  a vector add.
-</li>
-<li>
-  The llvm.arm.neon.vmovn intrinsic has been removed.  Calls of this intrinsic
-  are now replaced by vector truncate operations.
-</li>
-<li>
-  The llvm.arm.neon.vmovls and llvm.arm.neon.vmovlu intrinsics have been
-  removed.  They are now represented as vector sign-extend (vmovls) and
-  zero-extend (vmovlu) operations.
-</li>
-<li>
-  The llvm.arm.neon.vaddl*, llvm.arm.neon.vaddw*, llvm.arm.neon.vsubl*, and
-  llvm.arm.neon.vsubw* intrinsics (lengthening vector add and subtract) have
-  been removed.  They are replaced by vector add and vector subtract operations
-  where one (vaddw, vsubw) or both (vaddl, vsubl) of the operands are either
-  sign-extended or zero-extended.
-</li>
-<li>
-  The llvm.arm.neon.vmulls, llvm.arm.neon.vmullu, llvm.arm.neon.vmlal*, and
-  llvm.arm.neon.vmlsl* intrinsics (lengthening vector multiply with and without
-  accumulation and subtraction) have been removed.  These operations are now
-  represented as vector multiplications where the operands are either
-  sign-extended or zero-extended, followed by a vector add for vmlal or a
-  vector subtract for vmlsl.  Note that the polynomial vector multiply
-  intrinsic, llvm.arm.neon.vmullp, remains unchanged.
-</li>
-
 </ul>
 </div>
 
@@ -811,7 +766,6 @@ from the previous release.</p>
 
 
   renamed "Release" -> "Release+Asserts"; "Release-Asserts" -> "Release etc.
-  RegisterPass<> -> INTIALIZE_PASS()
 
 
 <ul>
@@ -826,6 +780,61 @@ from the previous release.</p>
 <p>In addition, many APIs have changed in this release.  Some of the major LLVM
 API changes are:</p>
 <ul>
+
+  RegisterPass<> -> INTIALIZE_PASS()
+
+
+
+<li>LLVM 2.8 changes the internal order of operands in <a
+  href="http://llvm.org/doxygen/classllvm_1_1InvokeInst.html"><tt>InvokeInst</tt></a>
+  and <a href="http://llvm.org/doxygen/classllvm_1_1CallInst.html"><tt>CallInst</tt></a>.
+  To be portable across releases, resort to <tt>CallSite</tt> and the
+  high-level accessors, such as <tt>getCalledValue</tt> and <tt>setUnwindDest</tt>.
+</li>
+<li>
+  You can no longer pass use_iterators directly to cast<> (and similar), because
+  these routines tend to perform costly dereference operations more than once. You
+  have to dereference the iterators yourself and pass them in.
+</li>
+<li>
+  llvm.memcpy.*, llvm.memset.*, llvm.memmove.* (and possibly other?) intrinsics
+  take an extra parameter now (i1 isVolatile), totaling 5 parameters.
+  If you were creating these intrinsic calls and prototypes yourself (as opposed
+  to using Intrinsic::getDeclaration), you can use UpgradeIntrinsicFunction/UpgradeIntrinsicCall
+  to be portable accross releases.
+  Note that you cannot use Intrinsic::getDeclaration() in a backwards compatible
+  way (needs 2/3 types now, in 2.7 it needed just 1).
+</li>
+<li>
+  SetCurrentDebugLocation takes a DebugLoc now instead of a MDNode.
+  Change your code to use
+  SetCurrentDebugLocation(DebugLoc::getFromDILocation(...)).
+</li>
+<li>
+  VISIBILITY_HIDDEN is gone.
+</li>
+<li>
+  The <tt>RegisterPass</tt> and <tt>RegisterAnalysisGroup</tt> templates are
+  considered deprecated, but continue to function in LLVM 2.8.  Clients are  
+  strongly advised to use the upcoming <tt>INITIALIZE_PASS()</tt> and
+  <tt>INITIALIZE_AG_PASS()</tt> macros instead.
+<li>
+  SMDiagnostic takes different parameters now. //FIXME: how to upgrade?
+</li>
+<li>
+  The constructor for the Triple class no longer tries to understand odd triple
+  specifications.  Frontends should ensure that they only pass valid triples to
+  LLVM.  The Triple::normalize utility method has been added to help front-ends
+  deal with funky triples.
+<li>
+  Some APIs got renamed:
+  <ul>
+      <li>llvm_report_error -&gt; report_fatal_error</li>
+      <li>llvm_install_error_handler -&gt; install_fatal_error_handler</li>
+      <li>llvm::DwarfExceptionHandling -&gt; llvm::JITExceptionHandling</li>
+  </ul>
+</li>
+
 </ul>
 
 </div>
