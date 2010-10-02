@@ -2042,9 +2042,17 @@ static void clang_parseTranslationUnit_Impl(void *UserData) {
     // (often very broken) source code, where spell-checking can have a
     // significant negative impact on performance (particularly when 
     // precompiled headers are involved), we disable it by default.
-    // Note that we place this argument early in the list, so that it can be
-    // overridden by the caller with "-fspell-checking".
-    Args.push_back("-fno-spell-checking");
+    // Only do this if we haven't found a spell-checking-related argument.
+    bool FoundSpellCheckingArgument = false;
+    for (int I = 0; I != num_command_line_args; ++I) {
+      if (strcmp(command_line_args[I], "-fno-spell-checking") == 0 ||
+          strcmp(command_line_args[I], "-fspell-checking") == 0) {
+        FoundSpellCheckingArgument = true;
+        break;
+      }
+    }
+    if (!FoundSpellCheckingArgument)
+      Args.push_back("-fno-spell-checking");
     
     Args.insert(Args.end(), command_line_args,
                 command_line_args + num_command_line_args);
