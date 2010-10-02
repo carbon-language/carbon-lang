@@ -130,21 +130,25 @@ void CriticalAntiDepBreaker::Observe(MachineInstr *MI, unsigned Count,
     return;
   assert(Count < InsertPosIndex && "Instruction index out of expected range!");
 
-  // Any register which was defined within the previous scheduling region
-  // may have been rescheduled and its lifetime may overlap with registers
-  // in ways not reflected in our current liveness state. For each such
-  // register, adjust the liveness state to be conservatively correct.
-  for (unsigned Reg = 0; Reg != TRI->getNumRegs(); ++Reg)
-    if (DefIndices[Reg] < InsertPosIndex && DefIndices[Reg] >= Count) {
-      assert(KillIndices[Reg] == ~0u && "Clobbered register is live!");
-
-      // Mark this register to be non-renamable.
+  for (unsigned Reg = 0; Reg != TRI->getNumRegs(); ++Reg) {
+    if (KillIndices[Reg] != ~0u) {
+      // If Reg is currently live, then mark that it can't be renamed as
+      // we don't know the extent of its live-range anymore (now that it
+      // has been scheduled).
+      Classes[Reg] = reinterpret_cast<TargetRegisterClass *>(-1);
+      KillIndices[Reg] = Count;
+    } else if (DefIndices[Reg] < InsertPosIndex && DefIndices[Reg] >= Count) {
+      // Any register which was defined within the previous scheduling region
+      // may have been rescheduled and its lifetime may overlap with registers
+      // in ways not reflected in our current liveness state. For each such
+      // register, adjust the liveness state to be conservatively correct.
       Classes[Reg] = reinterpret_cast<TargetRegisterClass *>(-1);
 
       // Move the def index to the end of the previous region, to reflect
       // that the def could theoretically have been scheduled at the end.
       DefIndices[Reg] = InsertPosIndex;
     }
+  }
 
   PrescanInstruction(MI);
   ScanInstruction(MI, Count);
@@ -580,7 +584,7 @@ BreakAntiDependencies(const std::vector<SUnit>& SUnits,
         }
 
         // We just went back in time and modified history; the
-        // liveness information for the anti-depenence reg is now
+        // liveness information for the anti-dependence reg is now
         // inconsistent. Set the state as if it were dead.
         Classes[NewReg] = Classes[AntiDepReg];
         DefIndices[NewReg] = DefIndices[AntiDepReg];
