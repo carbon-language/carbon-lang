@@ -6,13 +6,9 @@ import AbstractBase
 import unittest2
 import lldb
 
-@unittest2.skip("crash currently: rdar://problem/8502549")
 class IntegerTypesTestCase(AbstractBase.GenericTester):
 
     mydir = "types"
-
-    # rdar://problem/8493023
-    # test/types failures for Test*TypesExpr.py: element offset computed wrong and sign error?
 
     def test_char_type_with_dsym(self):
         """Test that char-type variable expressions are evaluated correctly."""
@@ -42,7 +38,6 @@ class IntegerTypesTestCase(AbstractBase.GenericTester):
         self.setTearDownCleanup(dictionary=d)
         self.unsigned_char_type_expr()
 
-    @unittest2.expectedFailure
     def test_short_type_with_dsym(self):
         """Test that short-type variable expressions are evaluated correctly."""
         d = {'CXX_SOURCES': 'short.cpp'}
@@ -50,7 +45,6 @@ class IntegerTypesTestCase(AbstractBase.GenericTester):
         self.setTearDownCleanup(dictionary=d)
         self.short_type_expr()
 
-    @unittest2.expectedFailure
     def test_short_type_with_dwarf(self):
         """Test that short-type variable expressions are evaluated correctly."""
         d = {'CXX_SOURCES': 'short.cpp'}

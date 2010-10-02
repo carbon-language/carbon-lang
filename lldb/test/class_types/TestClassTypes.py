@@ -34,14 +34,12 @@ class ClassTypesTestCase(TestBase):
         self.buildDwarf()
         self.breakpoint_creation_by_filespec_python()
 
-    @unittest2.skip("crash currently: rdar://problem/8502549")
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     def test_with_dsym_and_expr_parser(self):
         """Test 'frame variable this' and 'expr this' when stopped inside a constructor."""
         self.buildDsym()
         self.class_types_expr_parser()
 
-    @unittest2.skip("crash currently: rdar://problem/8502549")
     def test_with_dwarf_and_expr_parser(self):
         """Test 'frame variable this' and 'expr this' when stopped inside a constructor."""
         self.buildDwarf()

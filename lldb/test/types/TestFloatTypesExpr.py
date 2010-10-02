@@ -6,7 +6,6 @@ import AbstractBase
 import unittest2
 import lldb
 
-@unittest2.skip("crash currently: rdar://problem/8502549")
 class FloatTypesTestCase(AbstractBase.GenericTester):
 
     mydir = "types"
