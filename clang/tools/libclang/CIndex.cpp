@@ -33,6 +33,7 @@
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/CrashRecoveryContext.h"
 #include "llvm/Support/MemoryBuffer.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/Timer.h"
 #include "llvm/System/Mutex.h"
 #include "llvm/System/Program.h"
@@ -2705,6 +2706,90 @@ CXString clang_getCursorSpelling(CXCursor C) {
   return createCXString("");
 }
 
+CXString clang_getCursorDisplayName(CXCursor C) {
+  if (!clang_isDeclaration(C.kind))
+    return clang_getCursorSpelling(C);
+  
+  Decl *D = getCursorDecl(C);
+  if (!D)
+    return createCXString("");
+
+  PrintingPolicy &Policy = getCursorContext(C).PrintingPolicy;
+  if (FunctionTemplateDecl *FunTmpl = dyn_cast<FunctionTemplateDecl>(D))
+    D = FunTmpl->getTemplatedDecl();
+  
+  if (FunctionDecl *Function = dyn_cast<FunctionDecl>(D)) {
+    llvm::SmallString<64> Str;
+    llvm::raw_svector_ostream OS(Str);
+    OS << Function->getNameAsString();
+    if (Function->getPrimaryTemplate())
+      OS << "<>";
+    OS << "(";
+    for (unsigned I = 0, N = Function->getNumParams(); I != N; ++I) {
+      if (I)
+        OS << ", ";
+      OS << Function->getParamDecl(I)->getType().getAsString(Policy);
+    }
+    
+    if (Function->isVariadic()) {
+      if (Function->getNumParams())
+        OS << ", ";
+      OS << "...";
+    }
+    OS << ")";
+    return createCXString(OS.str());
+  }
+  
+  if (ClassTemplateDecl *ClassTemplate = dyn_cast<ClassTemplateDecl>(D)) {
+    llvm::SmallString<64> Str;
+    llvm::raw_svector_ostream OS(Str);
+    OS << ClassTemplate->getNameAsString();
+    OS << "<";
+    TemplateParameterList *Params = ClassTemplate->getTemplateParameters();
+    for (unsigned I = 0, N = Params->size(); I != N; ++I) {
+      if (I)
+        OS << ", ";
+      
+      NamedDecl *Param = Params->getParam(I);
+      if (Param->getIdentifier()) {
+        OS << Param->getIdentifier()->getName();
+        continue;
+      }
+      
+      // There is no parameter name, which makes this tricky. Try to come up
+      // with something useful that isn't too long.
+      if (TemplateTypeParmDecl *TTP = dyn_cast<TemplateTypeParmDecl>(Param))
+        OS << (TTP->wasDeclaredWithTypename()? "typename" : "class");
+      else if (NonTypeTemplateParmDecl *NTTP
+                                    = dyn_cast<NonTypeTemplateParmDecl>(Param))
+        OS << NTTP->getType().getAsString(Policy);
+      else
+        OS << "template<...> class";
+    }
+    
+    OS << ">";
+    return createCXString(OS.str());
+  }
+  
+  if (ClassTemplateSpecializationDecl *ClassSpec
+                              = dyn_cast<ClassTemplateSpecializationDecl>(D)) {
+    // If the type was explicitly written, use that.
+    if (TypeSourceInfo *TSInfo = ClassSpec->getTypeAsWritten())
+      return createCXString(TSInfo->getType().getAsString(Policy));
+    
+    llvm::SmallString<64> Str;
+    llvm::raw_svector_ostream OS(Str);
+    OS << ClassSpec->getNameAsString();
+    OS << TemplateSpecializationType::PrintTemplateArgumentList(
+                            ClassSpec->getTemplateArgs().getFlatArgumentList(),
+                                      ClassSpec->getTemplateArgs().flat_size(),
+                                                                Policy);
+    return createCXString(OS.str());
+  }
+  
+  return clang_getCursorSpelling(C);
+}
+  
 CXString clang_getCursorKindSpelling(enum CXCursorKind Kind) {
   switch (Kind) {
   case CXCursor_FunctionDecl:

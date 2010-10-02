@@ -1884,6 +1884,15 @@ CINDEX_LINKAGE CXString clang_constructUSR_ObjCProperty(const char *property,
  */
 CINDEX_LINKAGE CXString clang_getCursorSpelling(CXCursor);
 
+/**
+ * \brief Retrieve the display name for the entity referenced by this cursor.
+ *
+ * The display name contains extra information that helps identify the cursor,
+ * such as the parameters of a function or template or the arguments of a 
+ * class template specialization.
+ */
+CINDEX_LINKAGE CXString clang_getCursorDisplayName(CXCursor);
+  
 /** \brief For a cursor that is a reference, retrieve a cursor representing the
  * entity that it references.
  *

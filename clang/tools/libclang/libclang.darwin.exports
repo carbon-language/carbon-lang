@@ -42,6 +42,7 @@ _clang_getCompletionPriority
 _clang_getCursor
 _clang_getCursorAvailability
 _clang_getCursorDefinition
+_clang_getCursorDisplayName
 _clang_getCursorExtent
 _clang_getCursorKind
 _clang_getCursorKindSpelling

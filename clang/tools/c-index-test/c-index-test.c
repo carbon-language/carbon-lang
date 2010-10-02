@@ -156,6 +156,8 @@ int parse_remapped_files(int argc, const char **argv, int start_arg,
 /* Pretty-printing.                                                           */
 /******************************************************************************/
 
+int want_display_name = 0;
+
 static void PrintCursor(CXCursor Cursor) {
   if (clang_isInvalid(Cursor.kind)) {
     CXString ks = clang_getCursorKindSpelling(Cursor.kind);
@@ -171,7 +173,8 @@ static void PrintCursor(CXCursor Cursor) {
     unsigned num_overridden;
 
     ks = clang_getCursorKindSpelling(Cursor.kind);
-    string = clang_getCursorSpelling(Cursor);
+    string = want_display_name? clang_getCursorDisplayName(Cursor) 
+                              : clang_getCursorSpelling(Cursor);
     printf("%s=%s", clang_getCString(ks),
                     clang_getCString(string));
     clang_disposeString(ks);
@@ -604,6 +607,11 @@ static int perform_test_load(CXIndex Idx, CXTranslationUnit TU,
 
     /* Perform some simple filtering. */
     if (!strcmp(filter, "all") || !strcmp(filter, "local")) ck = NULL;
+    else if (!strcmp(filter, "all-display") || 
+             !strcmp(filter, "local-display")) {
+      ck = NULL;
+      want_display_name = 1;
+    }
     else if (!strcmp(filter, "none")) K = (enum CXCursorKind) ~0;
     else if (!strcmp(filter, "category")) K = CXCursor_ObjCCategoryDecl;
     else if (!strcmp(filter, "interface")) K = CXCursor_ObjCInterfaceDecl;
@@ -661,7 +669,8 @@ int perform_test_load_source(int argc, const char **argv,
   int result;
   
   Idx = clang_createIndex(/* excludeDeclsFromPCH */
-                          !strcmp(filter, "local") ? 1 : 0,
+                          (!strcmp(filter, "local") || 
+                           !strcmp(filter, "local-display"))? 1 : 0,
                           /* displayDiagnosics=*/1);
 
   if (UseExternalASTs && strlen(UseExternalASTs))
