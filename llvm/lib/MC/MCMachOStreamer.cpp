@@ -441,15 +441,7 @@ void MCMachOStreamer::EmitInstruction(const MCInst &Inst) {
 
 void MCMachOStreamer::Finish() {
   // Dump out the dwarf file & directory tables and line tables.
-  if (getContext().hasDwarfFiles() &&
-      // TODO: This not enabled for 64-bit Mach-O targets.  As there are needed
-      // changes in the handling of 64-bit relocation entries for dwarf Mach-O
-      // sections that need to made.  Currently it gets
-      //   LLVM ERROR: unsupported local relocations in difference
-      // due dealing with "a-b" expressions made up for dwarf line entries
-      // because the line section has no non-local symbols thus it can't find
-      // an atom symbol for the base.
-      getAssembler().getBackend().getPointerSize() != 8) {
+  if (getContext().hasDwarfFiles()) {
     const MCSection *DwarfLineSection = getContext().getMachOSection("__DWARF",
                                          "__debug_line",
                                          MCSectionMachO::S_ATTR_DEBUG,

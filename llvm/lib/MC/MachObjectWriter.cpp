@@ -616,22 +616,32 @@ public:
       if (IsPCRel)
         report_fatal_error("unsupported pc-relative relocation of difference");
 
-      // We don't currently support any situation where one or both of the
-      // symbols would require a local relocation. This is almost certainly
-      // unused and may not be possible to encode correctly.
-      if (!A_Base || !B_Base)
-        report_fatal_error("unsupported local relocations in difference");
+      // The support for the situation where one or both of the symbols would
+      // require a local relocation is handled just like if the symbols were
+      // external.  This is certainly used in the case of debug sections where
+      // the section has only temporary symbols and thus the symbols don't have
+      // base symbols.  This is encoded using the section ordinal and
+      // non-extern relocation entries.
 
       // Darwin 'as' doesn't emit correct relocations for this (it ends up with
-      // a single SIGNED relocation); reject it for now.
-      if (A_Base == B_Base)
+      // a single SIGNED relocation); reject it for now.  Except the case where
+      // both symbols don't have a base, equal but both NULL.
+      if (A_Base == B_Base && A_Base)
         report_fatal_error("unsupported relocation with identical base");
 
-      Value += Layout.getSymbolAddress(&A_SD) - Layout.getSymbolAddress(A_Base);
-      Value -= Layout.getSymbolAddress(&B_SD) - Layout.getSymbolAddress(B_Base);
+      Value += Layout.getSymbolAddress(&A_SD) - 
+               (A_Base == NULL ? 0 : Layout.getSymbolAddress(A_Base));
+      Value -= Layout.getSymbolAddress(&B_SD) -
+               (B_Base == NULL ? 0 : Layout.getSymbolAddress(B_Base));
 
-      Index = A_Base->getIndex();
-      IsExtern = 1;
+      if (A_Base) {
+        Index = A_Base->getIndex();
+        IsExtern = 1;
+      }
+      else {
+        Index = A_SD.getFragment()->getParent()->getOrdinal() + 1;
+        IsExtern = 0;
+      }
       Type = RIT_X86_64_Unsigned;
 
       MachRelocationEntry MRE;
@@ -643,8 +653,14 @@ public:
                    (Type      << 28));
       Relocations[Fragment->getParent()].push_back(MRE);
 
-      Index = B_Base->getIndex();
-      IsExtern = 1;
+      if (B_Base) {
+        Index = B_Base->getIndex();
+        IsExtern = 1;
+      }
+      else {
+        Index = B_SD.getFragment()->getParent()->getOrdinal() + 1;
+        IsExtern = 0;
+      }
       Type = RIT_X86_64_Subtractor;
     } else {
       const MCSymbol *Symbol = &Target.getSymA()->getSymbol();
