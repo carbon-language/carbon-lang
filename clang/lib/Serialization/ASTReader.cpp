@@ -1493,19 +1493,29 @@ void ASTReader::ReadMacroRecord(llvm::BitstreamCursor &Stream, uint64_t Offset){
       if (PPRec.getPreprocessedEntity(Record[0]))
         return;
         
-      if (Record[1] >= MacroDefinitionsLoaded.size()) {
+      if (Record[1] > MacroDefinitionsLoaded.size()) {
         Error("out-of-bounds macro definition record");
         return;
       }
 
-      MacroDefinition *MD
-        = new (PPRec) MacroDefinition(DecodeIdentifierInfo(Record[4]),
+      // Decode the identifier info and then check again; if the macro is
+      // still defined and associated with the identifier, 
+      IdentifierInfo *II = DecodeIdentifierInfo(Record[4]);
+      if (!MacroDefinitionsLoaded[Record[1] - 1]) {
+        MacroDefinition *MD
+          = new (PPRec) MacroDefinition(II,
                                 SourceLocation::getFromRawEncoding(Record[5]),
                               SourceRange(
                                 SourceLocation::getFromRawEncoding(Record[2]),
                                 SourceLocation::getFromRawEncoding(Record[3])));
-      PPRec.SetPreallocatedEntity(Record[0], MD);
-      MacroDefinitionsLoaded[Record[1]] = MD;
+        
+        PPRec.SetPreallocatedEntity(Record[0], MD);
+        MacroDefinitionsLoaded[Record[1] - 1] = MD;
+        
+        if (DeserializationListener)
+          DeserializationListener->MacroDefinitionRead(Record[1], MD);
+      }
+      
       return;
     }
     }
@@ -1582,23 +1592,23 @@ void ASTReader::ReadDefinedMacros() {
 }
 
 MacroDefinition *ASTReader::getMacroDefinition(MacroID ID) {
-  if (ID == 0 || ID >= MacroDefinitionsLoaded.size())
+  if (ID == 0 || ID > MacroDefinitionsLoaded.size())
     return 0;
 
-  if (!MacroDefinitionsLoaded[ID]) {
-    unsigned Index = ID;
+  if (!MacroDefinitionsLoaded[ID - 1]) {
+    unsigned Index = ID - 1;
     for (unsigned I = 0, N = Chain.size(); I != N; ++I) {
       PerFileData &F = *Chain[N - I - 1];
       if (Index < F.LocalNumMacroDefinitions) {
-        ReadMacroRecord(F.Stream, F.MacroDefinitionOffsets[Index]);
+        ReadMacroRecord(F.Stream, F.MacroDefinitionOffsets[Index]);        
         break;
       }
       Index -= F.LocalNumMacroDefinitions;
     }
-    assert(MacroDefinitionsLoaded[ID] && "Broken chain");
+    assert(MacroDefinitionsLoaded[ID - 1] && "Broken chain");
   }
 
-  return MacroDefinitionsLoaded[ID];
+  return MacroDefinitionsLoaded[ID - 1];
 }
 
 /// \brief If we are loading a relocatable PCH file, and the filename is

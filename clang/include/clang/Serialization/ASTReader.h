@@ -829,6 +829,11 @@ public:
     return static_cast<unsigned>(SelectorsLoaded.size());
   }
 
+  /// \brief Returns the number of macro definitions found in the chain.
+  unsigned getTotalNumMacroDefinitions() const {
+    return static_cast<unsigned>(MacroDefinitionsLoaded.size());
+  }
+      
   /// \brief Reads a TemplateArgumentLocInfo appropriate for the
   /// given TemplateArgument kind.
   TemplateArgumentLocInfo

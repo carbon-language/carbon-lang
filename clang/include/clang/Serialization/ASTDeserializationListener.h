@@ -22,7 +22,8 @@ namespace clang {
 class Decl;
 class ASTReader;
 class QualType;
-
+class MacroDefinition;
+  
 class ASTDeserializationListener {
 protected:
   virtual ~ASTDeserializationListener() {}
@@ -42,6 +43,9 @@ public:
   virtual void DeclRead(serialization::DeclID ID, const Decl *D) = 0;
   /// \brief A selector was read from the AST file.
   virtual void SelectorRead(serialization::SelectorID iD, Selector Sel) = 0;
+  /// \brief A macro definition was read from the AST file.
+  virtual void MacroDefinitionRead(serialization::MacroID, 
+                                   MacroDefinition *MD) = 0;
 };
 
 }

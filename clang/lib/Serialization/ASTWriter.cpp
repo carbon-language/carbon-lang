@@ -1360,11 +1360,17 @@ void ASTWriter::WritePreprocessor(const Preprocessor &PP) {
       if (MacroDefinition *MD = dyn_cast<MacroDefinition>(*E)) {
         // Record this macro definition's location.
         MacroID ID = getMacroDefinitionID(MD);
-        if (ID != MacroDefinitionOffsets.size()) {
-          if (ID > MacroDefinitionOffsets.size())
-            MacroDefinitionOffsets.resize(ID + 1);
+        
+        // Don't write the macro definition if it is from another AST file.
+        if (ID < FirstMacroID)
+          continue;
+        
+        unsigned Position = ID - FirstMacroID;
+        if (Position != MacroDefinitionOffsets.size()) {
+          if (Position > MacroDefinitionOffsets.size())
+            MacroDefinitionOffsets.resize(Position + 1);
           
-          MacroDefinitionOffsets[ID] = Stream.GetCurrentBitNo();            
+          MacroDefinitionOffsets[Position] = Stream.GetCurrentBitNo();            
         } else
           MacroDefinitionOffsets.push_back(Stream.GetCurrentBitNo());
         
@@ -2206,7 +2212,8 @@ ASTWriter::ASTWriter(llvm::BitstreamWriter &Stream)
   : Stream(Stream), Chain(0), FirstDeclID(1), NextDeclID(FirstDeclID),
     FirstTypeID(NUM_PREDEF_TYPE_IDS), NextTypeID(FirstTypeID),
     FirstIdentID(1), NextIdentID(FirstIdentID), FirstSelectorID(1),
-    NextSelectorID(FirstSelectorID), CollectedStmts(&StmtsToEmit),
+    NextSelectorID(FirstSelectorID), FirstMacroID(1), NextMacroID(FirstMacroID),
+    CollectedStmts(&StmtsToEmit),
     NumStatements(0), NumMacros(0), NumLexicalDeclContexts(0),
     NumVisibleDeclContexts(0) {
 }
@@ -2439,10 +2446,12 @@ void ASTWriter::WriteASTChain(Sema &SemaRef, MemorizeStatCalls *StatCalls,
   FirstTypeID += Chain->getTotalNumTypes();
   FirstIdentID += Chain->getTotalNumIdentifiers();
   FirstSelectorID += Chain->getTotalNumSelectors();
+  FirstMacroID += Chain->getTotalNumMacroDefinitions();
   NextDeclID = FirstDeclID;
   NextTypeID = FirstTypeID;
   NextIdentID = FirstIdentID;
   NextSelectorID = FirstSelectorID;
+  NextMacroID = FirstMacroID;
 
   ASTContext &Context = SemaRef.Context;
   Preprocessor &PP = SemaRef.PP;
@@ -2733,7 +2742,7 @@ MacroID ASTWriter::getMacroDefinitionID(MacroDefinition *MD) {
 
   MacroID &ID = MacroDefinitions[MD];
   if (ID == 0)
-    ID = MacroDefinitions.size();
+    ID = NextMacroID++;
   return ID;
 }
 
@@ -3106,6 +3115,7 @@ void ASTWriter::SetReader(ASTReader *Reader) {
          FirstTypeID == NextTypeID &&
          FirstIdentID == NextIdentID &&
          FirstSelectorID == NextSelectorID &&
+         FirstMacroID == NextMacroID &&
          "Setting chain after writing has started.");
   Chain = Reader;
 }
@@ -3124,4 +3134,9 @@ void ASTWriter::DeclRead(DeclID ID, const Decl *D) {
 
 void ASTWriter::SelectorRead(SelectorID ID, Selector S) {
   SelectorIDs[S] = ID;
+}
+
+void ASTWriter::MacroDefinitionRead(serialization::MacroID ID, 
+                                    MacroDefinition *MD) {
+  MacroDefinitions[MD] = ID;
 }

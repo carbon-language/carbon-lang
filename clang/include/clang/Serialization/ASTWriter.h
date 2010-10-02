@@ -163,7 +163,7 @@ private:
   /// \brief Offset of each selector within the method pool/selector
   /// table, indexed by the Selector ID (-1).
   std::vector<uint32_t> SelectorOffsets;
-
+  
   /// \brief Offsets of each of the macro identifiers into the
   /// bitstream.
   ///
@@ -172,6 +172,12 @@ private:
   /// defined.
   llvm::DenseMap<const IdentifierInfo *, uint64_t> MacroOffsets;
 
+  /// \brief The first ID number we can use for our own macro definitions.
+  serialization::MacroID FirstMacroID;
+  
+  /// \brief The decl ID that will be assigned to the next new macro definition.
+  serialization::MacroID NextMacroID;
+  
   /// \brief Mapping from macro definitions (as they occur in the preprocessing
   /// record) to the macro IDs.
   llvm::DenseMap<const MacroDefinition *, serialization::MacroID>
@@ -481,7 +487,8 @@ public:
   void IdentifierRead(serialization::IdentID ID, IdentifierInfo *II);
   void TypeRead(serialization::TypeIdx Idx, QualType T);
   void DeclRead(serialization::DeclID ID, const Decl *D);
-  void SelectorRead(serialization::SelectorID iD, Selector Sel);
+  void SelectorRead(serialization::SelectorID ID, Selector Sel);
+  void MacroDefinitionRead(serialization::MacroID ID, MacroDefinition *MD);
 };
 
 /// \brief AST and semantic-analysis consumer that generates a
