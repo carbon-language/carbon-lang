@@ -340,6 +340,22 @@ defm MMX_PACKUSWB : MMXI_binop_rm_int<0x67, "packuswb", int_x86_mmx_packuswb>;
 // -- Shuffle Instructions
 defm MMX_PSHUFB : SS3I_binop_rm_int_mm<0x00, "pshufb", int_x86_ssse3_pshuf_b>;
 
+def MMX_PSHUFWri : MMXIi8<0x70, MRMSrcReg,
+                          (outs VR64:$dst), (ins VR64:$src1, i32i8imm:$src2),
+                          "pshufw\t{$src2, $src1, $dst|$dst, $src1, $src2}",
+                          [(set VR64:$dst,
+                             (int_x86_ssse3_pshuf_w VR64:$src1, imm:$src2))]>;
+def MMX_PSHUFWmi : MMXIi8<0x70, MRMSrcMem,
+                          (outs VR64:$dst), (ins i64mem:$src1, i32i8imm:$src2),
+                          "pshufw\t{$src2, $src1, $dst|$dst, $src1, $src2}",
+                          [(set VR64:$dst,
+                             (int_x86_ssse3_pshuf_w (load_mmx addr:$src1),
+                                                    imm:$src2))]>;
+
+
+
+
+
 // -- Conversion Instructions
 defm MMX_CVTPS2PI : sse12_cvt_pint<0x2D, VR128, VR64, int_x86_sse_cvtps2pi,
                       f64mem, load, "cvtps2pi\t{$src, $dst|$dst, $src}",

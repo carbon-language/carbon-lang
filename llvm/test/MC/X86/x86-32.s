@@ -583,3 +583,5 @@ ljmp	$0x7ace,$0x7ace
 // CHECK:	decl	%eax # encoding: [0x48]
 	decl %eax
 
+// CHECK: pshufw $14, %mm4, %mm0 # encoding: [0x0f,0x70,0xc4,0x0e]
+pshufw $14, %mm4, %mm0
