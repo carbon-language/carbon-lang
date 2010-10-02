@@ -62,7 +62,7 @@ case $TRIPLE in
     SOEXT=so
     LDSHARED_FLAGS="-o libc++.so.1.0 \
         -shared -nodefaultlibs -Wl,-soname,libc++.so.1 \
-        -lstdc++ -lc"
+        -lpthread -lrt -lc"
     ;;
 esac
 
