@@ -67,7 +67,6 @@ current one.  To see the release notes for a specific release, please see the
 Almost dead code.
   include/llvm/Analysis/LiveValues.h => Dan
   lib/Transforms/IPO/MergeFunctions.cpp => consider for 2.8.
-  llvm/Analysis/PointerTracking.h => Edwin wants this, consider for 2.8.
   GEPSplitterPass
 -->
  
@@ -81,79 +80,6 @@ Almost dead code.
  -->
  
  <!-- Announcement, lldb, libc++ -->
- 
- <!-- to write:
-  MachineCSE tuned and on by default.
-  llvm.dbg.value: variable debug info for optimized code
-  MC Assembler backend is now real, does relaxation and is bitwise identical
-    with darwin assembler in huge majority of all cases.
-  new GHC calling convention
-  New half float intrinsics LangRef.html#int_fp16
-  Rewrote tblgen's type inference for backends to be more consistent and
-     diagnose more target bugs.  This also allows limited support for writing
-     patterns for instructions that return multiple results, e.g. a virtual
-     register and a flag result.  Stuff that used 'parallel' before should use
-     this.
-  New ARM/Thumb disassembler support in MC.
-  New SSEDomainFix pass: 
-    On Nehalem and newer CPUs there is a 2 cycle latency penalty on using a
-    register in a different domain than where it was defined. Some instructions
-    have equvivalents for different domains, like por/orps/orpd.  The
-    SSEDomainFix pass tries to minimize the number of domain crossings by
-    changing between equvivalent opcodes where possible.
-  Support for the Intel AES instructions in the assembler.
-  memcpy, memmove, and memset now take address space qualified pointers + volatile.
-  per-instruction debug info metadata is much faster and uses less space (new DebugLoc class).
-  -ffunction-sections and -fdata-sections are supported on ELF targets.
-  Now iterate function passes when a cgsccpassmanager detects a devirtualization
-  -momit-leaf-frame-pointer now supported.
-  New -regalloc=fast,  =local got removed
-  New -regalloc=default option that chooses a register allocator based on the -O optimization level.
-  New "trap values" concept: http://llvm.org/docs/LangRef.html#trapvalues
-  Improved trip count analysis for <= and >= loops, and uses sign overflow info.
-  REMOVED: SCCVN pass.
-  X86 backend attempts to promote 16-bit integer operations to 32-bits to avoid
-     0x66 prefixes, which are slow on some microarchitectures and bloat the code
-     on others.
-  X87 fp stackifier is global!
-  LTO debug info support?
-  NEON: Better performance for QQQQ (4-consecutive Q register) instructions.  New reg sequence abstraction?
-  New support for X86 "thiscall" calling convention (x86_thiscallcc in IR).
-  ARM: Better scheduling (list-hybrid, hybrid?)
-  New SubRegIndex tblgen class for targets -> jakob
-  ARM: Tail call support.
-  AVX support in the MC assembler.  Full compiler support not done yet.
-  Atomics now get legalized when not natively supported (jim g)
-  ARM: General performance work and tuning.
-  Bottom up fast isel.  Simple Load reuse.  No more machinedce.  Load folding at -O0?
-  New linker_private_weak and linker_private_weak_def_auto linkage types
-  compiler_rt softfloat support.
-  X86 ABI:  <2 x float> in IR no longer maps onto MMX, it turns into <4 x float>
-  IR ABI: <3 x float> is passed as <4 x float> instead of 3 floats.
-  renamed "Release" -> "Release+Asserts"; "Release-Asserts" -> "Release etc.
-  New COPY instruction. copyRegToReg -> copyPhysReg, isMoveInstr is gone.
-  JumpThreading much more aggressive about implied value relations.
-  New RegionInfo pass  "opt -regions analyze" or "opt -view-regions".
-  mc assembler supports macros.
-  RenderMachineFunction: -rendermf
-  SplitKit?
-  Evan: Teach bottom up pre-ra scheduler to track register pressure. Work in progress.
-  Evan: Add an ILP scheduler.  On x86_64, this is a win for all tests in CFP2000. It also sped up 256.bzip2 by 16%.
-  RegisterPass<> -> INTIALIZE_PASS()
-  llvm-diff?
-  Preliminary work on TBAA but not usable in 2.8.
-  Atomic lowering patch: -loweratomic (see Passes.html#loweratomic)
-  compiler_rt now includes extensive a fairly testsuite for blocks language feature and the blocks runtime.
-  New OptimizeExts+OptimizeCmps -> PeepholeOptimizer pass
-  Triples are now stored in normalized form.  Triple::normalize.
-  New LocalStackSlotAllocation.cpp pass (jimg)
-  New llvm.x86.int intrinsic (for int $42 and int3)
-  New CorrelatedValuePropagation pass, not on by default in 2.8 yet.
-  Verbose assembly decodes X86 shuffle instructions, e.g.:
-  	insertps	$113, %xmm3, %xmm0     ## xmm0 = zero,xmm0[1,2],xmm3[1]
-	unpcklps	%xmm1, %xmm0    ## xmm0 = xmm0[0],xmm1[0],xmm0[1],xmm1[1]
-	pshufd	$1, %xmm1, %xmm1        ## xmm1 = xmm1[1,0,0,0]
- -->
  
 
 <!-- *********************************************************************** -->
@@ -253,10 +179,10 @@ libgcc routines).</p>
 
 <p>
 All of the code in the compiler-rt project is available under the standard LLVM
-License, a "BSD-style" license.  New in LLVM 2.8: 
-
-Soft float support
-</p>
+License, a "BSD-style" license.  New in LLVM 2.8, compiler_rt now supports 
+soft floating point (for targets that don't have a real floating point unit),
+and includes an extensive testsuite for the "blocks" language feature and the
+blocks runtime included in compiler_rt.</p>
 
 </div>
 
@@ -526,10 +452,6 @@ organization changes have happened:
 <p>LLVM 2.8 includes several major new capabilities:</p>
 
 <ul>
-<li>atomic lowering pass.</li>
-<li>RegionInfo pass: opt -regions analyze" or "opt -view-regions". 
-<!-- Tobias Grosser --></li>
-<li>ARMGlobalMerge: <!-- Anton --> </li>
 <li>llvm-diff</li>
 </ul>
 
@@ -545,6 +467,13 @@ organization changes have happened:
 expose new optimization opportunities:</p>
 
 <ul>
+
+  memcpy, memmove, and memset now take address space qualified pointers + volatile.
+  per-instruction debug info metadata is much faster and uses less space (new DebugLoc class).
+  New "trap values" concept: http://llvm.org/docs/LangRef.html#trapvalues
+  New linker_private_weak and linker_private_weak_def_auto linkage types
+  Triples are now stored in normalized form.  Triple::normalize.
+
 
 <li>LLVM 2.8 changes the internal order of operands in <a
   href="http://llvm.org/doxygen/classllvm_1_1InvokeInst.html"><tt>InvokeInst</tt></a>
@@ -612,6 +541,14 @@ release includes a few major enhancements and additions to the optimizers:</p>
 <ul>
 
 <li></li>
+  Preliminary work on TBAA but not usable in 2.8.
+  New CorrelatedValuePropagation pass, not on by default in 2.8 yet.
+  JumpThreading much more aggressive about implied value relations.
+  New RegionInfo pass  "opt -regions analyze" or "opt -view-regions".
+  Improved trip count analysis for <= and >= loops, and uses sign overflow info.
+  llvm.dbg.value: variable debug info for optimized code
+  Now iterate function passes when a cgsccpassmanager detects a devirtualization
+  Atomic lowering patch: -loweratomic (see Passes.html#loweratomic)
 
 </ul>
 
@@ -639,22 +576,38 @@ release includes a few major enhancements and additions to the optimizers:</p>
 
 <div class="doc_text">
 <p>
-FIXME: Rewrite.
-
-The LLVM Machine Code (aka MC) sub-project of LLVM was created to solve a number
+The LLVM Machine Code (aka MC) subsystem was created to solve a number
 of problems in the realm of assembly, disassembly, object file format handling,
 and a number of other related areas that CPU instruction-set level tools work
-in. It is a sub-project of LLVM which provides it with a number of advantages
-over other compilers that do not have tightly integrated assembly-level tools.
-For a gentle introduction, please see the <a
+in.</p>
+
+<p>The MC subproject has made great leaps in LLVM 2.8.  For example, support for
+   directly writing .o files from LLC (and clang) now works reliably for
+   darwin/x86[-64] (including inline assembly support) and the integrated
+   assembler is turned on by default in Clang for these targets.  This provides
+   improved compile times among other things.</p>
+
+<ul>
+<li>The entire compiler has converted over to using the MCStreamer assembler API
+    instead of writing out a .s file textually.</li>
+<li>The "assembler parser" is far more mature than in 2.7, supporting a full
+    complement of directives, now supports assembler macros, etc.</li>
+<li>The "assembler backend" has been completed, including support for relaxation
+    relocation processing and all the other things that an assembler does.</li>
+<li>The MachO file format support is now fully functional and works.</li>
+<li>The MC disassembler now fully supports ARM and Thumb.  ARM assembler support
+    is still in early development though.</li>
+<li>The X86 MC assembler now supports the X86 AES and AVX instruction set.</li>
+<li>Work on ELF and COFF support is well underway, but isn't useful yet in LLVM
+    2.8.  Please contact the llvmdev mailing list if you're interested in
+    this.</li>
+</ul>
+
+<p>For more information, please see the <a
 href="http://blog.llvm.org/2010/04/intro-to-llvm-mc-project.html">Intro to the
 LLVM MC Project Blog Post</a>.
 </p>
 
-<p>2.8 status here.  Basic correctness, some obscure missing instructions on
-   mainline, on by default in clang.
-   Entire compiler backend converted to use mcstreamer.
-   </p>
 </div>	
 
 
@@ -671,7 +624,36 @@ infrastructure, which allows us to implement more aggressive algorithms and make
 it run faster:</p>
 
 <ul>
-<li>MachO writer works.</li>
+<li></li>
+
+  MachineCSE tuned and on by default.
+
+  Rewrote tblgen's type inference for backends to be more consistent and
+     diagnose more target bugs.  This also allows limited support for writing
+     patterns for instructions that return multiple results, e.g. a virtual
+     register and a flag result.  Stuff that used 'parallel' before should use
+     this.
+
+  New -regalloc=fast,  =local got removed
+  New -regalloc=default option that chooses a register allocator based on the -O optimization level.
+  New SubRegIndex tblgen class for targets -> jakob
+
+  Bottom up fast isel.  Simple Load reuse.  No more machinedce.
+  IR ABI: <3 x float> is passed as <4 x float> instead of 3 floats.
+
+  New COPY instruction. copyRegToReg -> copyPhysReg, isMoveInstr is gone.
+  RenderMachineFunction: -rendermf
+  SplitKit?
+  Evan: Teach bottom up pre-ra scheduler to track register pressure. Work in progress.
+  Evan: Add an ILP scheduler.  On x86_64, this is a win for all tests in CFP2000. It also sped up 256.bzip2 by 16%.
+
+  New OptimizeExts+OptimizeCmps -> PeepholeOptimizer pass
+  New LocalStackSlotAllocation.cpp pass (jimg)
+  Atomics now get legalized when not natively supported (jim g)
+
+  -ffunction-sections and -fdata-sections are supported on ELF targets.
+  -momit-leaf-frame-pointer now supported.
+
 </ul>
 </div>
 
@@ -689,6 +671,30 @@ it run faster:</p>
     in registers across basic blocks, dramatically improving performance of code
     that uses long double, and when targetting CPUs that don't support SSE.</li>
 
+  New SSEDomainFix pass: 
+    On Nehalem and newer CPUs there is a 2 cycle latency penalty on using a
+    register in a different domain than where it was defined. Some instructions
+    have equvivalents for different domains, like por/orps/orpd.  The
+    SSEDomainFix pass tries to minimize the number of domain crossings by
+    changing between equvivalent opcodes where possible.
+
+  X86 backend attempts to promote 16-bit integer operations to 32-bits to avoid
+     0x66 prefixes, which are slow on some microarchitectures and bloat the code
+     on others.
+
+  New support for X86 "thiscall" calling convention (x86_thiscallcc in IR) for windows.
+
+  New llvm.x86.int intrinsic (for int $42 and int3)
+
+  Verbose assembly decodes X86 shuffle instructions, e.g.:
+  	insertps	$113, %xmm3, %xmm0     ## xmm0 = zero,xmm0[1,2],xmm3[1]
+	unpcklps	%xmm1, %xmm0    ## xmm0 = xmm0[0],xmm1[0],xmm0[1],xmm1[1]
+	pshufd	$1, %xmm1, %xmm1        ## xmm1 = xmm1[1,0,0,0]
+        
+  X86 ABI:  <2 x float> in IR no longer maps onto MMX, it turns into <4 x float>
+
+  new GHC calling convention
+
 </ul>
 
 </div>
@@ -703,6 +709,14 @@ it run faster:</p>
 </p>
 
 <ul>
+
+  NEON: Better performance for QQQQ (4-consecutive Q register) instructions.  New reg sequence abstraction?
+  ARM: Better scheduling (list-hybrid, hybrid?)
+  ARM: Tail call support.
+  ARM: General performance work and tuning.
+
+  ARM: Half float support through intrinsics LangRef.html#int_fp16
+<li>ARMGlobalMerge: <!-- Anton --> </li>
 
 <li>
   All of the NEON load and store intrinsics (llvm.arm.neon.vld* and
@@ -795,17 +809,22 @@ it run faster:</p>
 on LLVM 2.7, this section lists some "gotchas" that you may run into upgrading
 from the previous release.</p>
 
+
+  renamed "Release" -> "Release+Asserts"; "Release-Asserts" -> "Release etc.
+  RegisterPass<> -> INTIALIZE_PASS()
+
+
 <ul>
 <li>.ll file doesn't produce #uses comments anymore, to get them, run a .bc file
    through "llvm-dis --show-annotations".</li>
 <li>MSIL Backend removed.</li>
 <li>ABCD and SSI passes removed.</li>
 <li>'Union' LLVM IR feature removed.</li>
+<li>SCCVN pass removed.</li>
 </ul>
 
 <p>In addition, many APIs have changed in this release.  Some of the major LLVM
 API changes are:</p>
-
 <ul>
 </ul>
 
@@ -844,8 +863,8 @@ href="http://lists.cs.uiuc.edu/mailman/listinfo/llvmdev">LLVMdev list</a>.</p>
 <ul>
 <li>The Alpha, SPU, MIPS, PIC16, Blackfin, MSP430, SystemZ and MicroBlaze
     backends are experimental.</li>
-<li><tt>llc</tt> "<tt>-filetype=asm</tt>" (the default) is the only
-    supported value for this option.  XXX Update me</li>
+<li><tt>llc</tt> "<tt>-filetype=obj</tt>" is experimental on all targets
+    other than darwin-i386 and darwin-x86_64.</li>
 </ul>
 
 </div>
