@@ -18,6 +18,7 @@
 #include "clang/AST/Type.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/DeclObjC.h"
+#include "clang/AST/DeclTemplate.h"
 #include "clang/Frontend/ASTUnit.h"
 
 using namespace clang;
@@ -106,6 +107,8 @@ static inline ASTUnit* GetASTU(CXType CT) {
 extern "C" {
 
 CXType clang_getCursorType(CXCursor C) {
+  using namespace cxcursor;
+  
   ASTUnit *AU = cxcursor::getCursorASTUnit(C);
 
   if (clang_isExpression(C.kind)) {
@@ -126,6 +129,40 @@ CXType clang_getCursorType(CXCursor C) {
       return MakeCXType(PD->getType(), AU);
     if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D))
       return MakeCXType(FD->getType(), AU);
+    return MakeCXType(QualType(), AU);
+  }
+  
+  if (clang_isReference(C.kind)) {
+    switch (C.kind) {
+    case CXCursor_ObjCSuperClassRef:
+      return MakeCXType(
+                QualType(getCursorObjCSuperClassRef(C).first->getTypeForDecl(), 
+                         0), 
+                        AU);
+      
+    case CXCursor_ObjCClassRef:
+      return MakeCXType(
+                      QualType(getCursorObjCClassRef(C).first->getTypeForDecl(), 
+                               0), 
+                        AU);
+      
+    case CXCursor_TypeRef:
+      return MakeCXType(QualType(getCursorTypeRef(C).first->getTypeForDecl(), 
+                                 0), 
+                        AU);
+      
+    case CXCursor_CXXBaseSpecifier:
+      return cxtype::MakeCXType(getCursorCXXBaseSpecifier(C)->getType(), AU);
+      
+    case CXCursor_ObjCProtocolRef:        
+    case CXCursor_TemplateRef:
+    case CXCursor_NamespaceRef:
+    case CXCursor_MemberRef:
+    case CXCursor_OverloadedDeclRef:      
+    default:
+      break;
+    }
+    
     return MakeCXType(QualType(), AU);
   }
 
@@ -185,22 +222,41 @@ CXCursor clang_getTypeDeclaration(CXType CT) {
 
   Decl *D = 0;
 
+try_again:
   switch (TP->getTypeClass()) {
-    case Type::Typedef:
-      D = cast<TypedefType>(TP)->getDecl();
-      break;
-    case Type::ObjCObject:
-      D = cast<ObjCObjectType>(TP)->getInterface();
-      break;
-    case Type::ObjCInterface:
-      D = cast<ObjCInterfaceType>(TP)->getDecl();
-      break;
-    case Type::Record:
-    case Type::Enum:
-      D = cast<TagType>(TP)->getDecl();
-      break;
-    default:
-      break;
+  case Type::Typedef:
+    D = cast<TypedefType>(TP)->getDecl();
+    break;
+  case Type::ObjCObject:
+    D = cast<ObjCObjectType>(TP)->getInterface();
+    break;
+  case Type::ObjCInterface:
+    D = cast<ObjCInterfaceType>(TP)->getDecl();
+    break;
+  case Type::Record:
+  case Type::Enum:
+    D = cast<TagType>(TP)->getDecl();
+    break;
+  case Type::TemplateSpecialization:
+    if (const RecordType *Record = TP->getAs<RecordType>())
+      D = Record->getDecl();
+    else
+      D = cast<TemplateSpecializationType>(TP)->getTemplateName()
+                                                         .getAsTemplateDecl();
+    break;
+      
+  case Type::InjectedClassName:
+    D = cast<InjectedClassNameType>(TP)->getDecl();
+    break;
+
+  // FIXME: Template type parameters!      
+
+  case Type::Elaborated:
+    TP = cast<ElaboratedType>(TP)->getNamedType().getTypePtr();
+    goto try_again;
+    
+  default:
+    break;
   }
 
   if (!D)

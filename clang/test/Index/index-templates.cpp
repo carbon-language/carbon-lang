@@ -95,6 +95,11 @@ struct map;
 
 void f(map<Z4, Pair<int, Z4> >);
 
+template class Pair<int, int>;
+
+template<typename T, typename U>
+struct SuperPair : Pair<int, int>, Pair<T, U> { };
+
 // RUN: c-index-test -test-load-source all %s | FileCheck -check-prefix=CHECK-LOAD %s
 // CHECK-LOAD: index-templates.cpp:4:6: FunctionTemplate=f:4:6 Extent=[3:1 - 4:22]
 // CHECK-LOAD: index-templates.cpp:3:19: TemplateTypeParameter=T:3:19 (Definition) Extent=[3:19 - 3:20]
@@ -168,6 +173,12 @@ void f(map<Z4, Pair<int, Z4> >);
 // CHECK-LOAD: index-templates.cpp:85:20: DeclRefExpr=t:82:18 Extent=[85:20 - 85:21]
 // CHECK-LOAD: index-templates.cpp:85:23: TypeRef=second_type:83:13 Extent=[85:23 - 85:34]
 // CHECK-LOAD: index-templates.cpp:85:35: DeclRefExpr=u:82:23 Extent=[85:35 - 85:36]
+// CHECK-LOAD: index-templates.cpp:101:8: ClassTemplate=SuperPair:101:8 (Definition) Extent=[100:1 - 101:50]
+// CHECK-LOAD: index-templates.cpp:100:19: TemplateTypeParameter=T:100:19 (Definition) Extent=[100:19 - 100:20]
+// CHECK-LOAD: index-templates.cpp:100:31: TemplateTypeParameter=U:100:31 (Definition) Extent=[100:31 - 100:32]
+// CHECK-LOAD: index-templates.cpp:101:20: C++ base class specifier=Pair<int, int>:98:16 [access=public isVirtual=false] Extent=[101:20 - 101:34]
+// CHECK-LOAD: index-templates.cpp:101:36: C++ base class specifier=Pair<T, U>:76:8 [access=public isVirtual=false] Extent=[101:36 - 101:46]
+
 
 // RUN: c-index-test -test-load-source-usrs all %s | FileCheck -check-prefix=CHECK-USRS %s
 // CHECK-USRS: index-templates.cpp c:@FT@>3#T#Nt0.0#t>2#T#Nt1.0f#>t0.22S0_# Extent=[3:1 - 4:22]
@@ -193,4 +204,4 @@ void f(map<Z4, Pair<int, Z4> >);
 // CHECK-USRS: index-templates.cpp c:index-templates.cpp@464 Extent=[27:31 - 27:32]
 // CHECK-USRS-NOT: type
 // CHECK-USRS: index-templates.cpp c:@S@Z3 Extent=[33:1 - 33:14]
-// CHECK-USES: index-templates.cpp c:@F@f#$@S@map>#$@S@Z4#$@S@Pair>#I#S1_#$@S@compare>#$@S@Pair>#S1_#S2_#$@C@allocator>#S4_#
+// CHECK-USRS: index-templates.cpp c:@F@f#$@S@map>#$@S@Z4#$@S@Pair>#I#S1_#$@S@compare>#$@S@Pair>#S1_#S2_#$@C@allocator>#S4_#
