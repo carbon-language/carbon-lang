@@ -449,8 +449,49 @@ unsigned ARMFastISel::ARMMaterializeInt(const Constant *C, EVT VT) {
 }
 
 unsigned ARMFastISel::ARMMaterializeGV(const GlobalValue *GV, EVT VT) {
-  // Disable currently...
-  return 0;
+  // For now 32-bit only.
+  if (VT.getSimpleVT().SimpleTy != MVT::i32) return 0;
+  
+  Reloc::Model RelocM = TM.getRelocationModel();
+  
+  // TODO: No external globals for now.
+  if (Subtarget->GVIsIndirectSymbol(GV, RelocM)) return 0;
+  
+  // TODO: Need more magic for ARM PIC.
+  if (!isThumb && (RelocM == Reloc::PIC_)) return 0;
+  
+  // MachineConstantPool wants an explicit alignment.
+  unsigned Align = TD.getPrefTypeAlignment(GV->getType());
+  if (Align == 0) {
+    // TODO: Figure out if this is correct.
+    Align = TD.getTypeAllocSize(GV->getType());
+  }
+  
+  // Grab index.
+  unsigned PCAdj = (RelocM != Reloc::PIC_) ? 0 : (Subtarget->isThumb() ? 4 : 8);
+  unsigned Id = AFI->createConstPoolEntryUId();
+  ARMConstantPoolValue *CPV = new ARMConstantPoolValue(GV, Id,
+                                                       ARMCP::CPValue, PCAdj);
+  unsigned Idx = MCP.getConstantPoolIndex(CPV, Align);
+  
+  // Load value.
+  MachineInstrBuilder MIB;
+  unsigned DestReg = createResultReg(TLI.getRegClassFor(VT));
+  if (isThumb) {
+    unsigned Opc = (RelocM != Reloc::PIC_) ? ARM::t2LDRpci : ARM::t2LDRpci_pic;
+    MIB = BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(Opc), DestReg)
+          .addConstantPoolIndex(Idx);
+    if (RelocM == Reloc::PIC_)
+      MIB.addImm(Id);
+  } else {
+    // The extra reg and immediate are for addrmode2.
+    MIB = BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(ARM::LDRcp),
+                  DestReg)
+          .addConstantPoolIndex(Idx)
+          .addReg(0).addImm(0);
+  }
+  AddOptionalDefs(MIB);
+  return DestReg;
 }
 
 unsigned ARMFastISel::TargetMaterializeConstant(const Constant *C) {
