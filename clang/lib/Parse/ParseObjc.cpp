@@ -504,13 +504,17 @@ void Parser::ParseObjCPropertyAttribute(ObjCDeclSpec &DS, Decl *ClassDecl,
     else if (II->isStr("nonatomic"))
       DS.setPropertyAttributes(ObjCDeclSpec::DQ_PR_nonatomic);
     else if (II->isStr("getter") || II->isStr("setter")) {
+      bool IsSetter = II->getNameStart()[0] == 's';
+
       // getter/setter require extra treatment.
-      if (ExpectAndConsume(tok::equal, diag::err_objc_expected_equal, "",
-                           tok::r_paren))
+      unsigned DiagID = IsSetter ? diag::err_objc_expected_equal_for_setter :
+        diag::err_objc_expected_equal_for_getter;
+
+      if (ExpectAndConsume(tok::equal, DiagID, "", tok::r_paren))
         return;
 
       if (Tok.is(tok::code_completion)) {
-        if (II->getNameStart()[0] == 's')
+        if (IsSetter)
           Actions.CodeCompleteObjCPropertySetter(getCurScope(), ClassDecl,
                                                  Methods, NumMethods);
         else
@@ -519,16 +523,20 @@ void Parser::ParseObjCPropertyAttribute(ObjCDeclSpec &DS, Decl *ClassDecl,
         ConsumeCodeCompletionToken();
       }
 
-      if (Tok.isNot(tok::identifier)) {
-        Diag(Tok, diag::err_expected_ident);
+      
+      SourceLocation SelLoc;
+      IdentifierInfo *SelIdent = ParseObjCSelectorPiece(SelLoc);
+
+      if (!SelIdent) {
+        Diag(Tok, diag::err_objc_expected_selector_for_getter_setter)
+          << IsSetter;
         SkipUntil(tok::r_paren);
         return;
       }
 
-      if (II->getNameStart()[0] == 's') {
+      if (IsSetter) {
         DS.setPropertyAttributes(ObjCDeclSpec::DQ_PR_setter);
-        DS.setSetterName(Tok.getIdentifierInfo());
-        ConsumeToken();  // consume method name
+        DS.setSetterName(SelIdent);
 
         if (ExpectAndConsume(tok::colon, 
                              diag::err_expected_colon_after_setter_name, "",
@@ -536,8 +544,7 @@ void Parser::ParseObjCPropertyAttribute(ObjCDeclSpec &DS, Decl *ClassDecl,
           return;
       } else {
         DS.setPropertyAttributes(ObjCDeclSpec::DQ_PR_getter);
-        DS.setGetterName(Tok.getIdentifierInfo());
-        ConsumeToken();  // consume method name
+        DS.setGetterName(SelIdent);
       }
     } else {
       Diag(AttrName, diag::err_objc_expected_property_attr) << II;

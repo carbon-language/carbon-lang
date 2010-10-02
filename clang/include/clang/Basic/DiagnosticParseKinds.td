@@ -218,8 +218,12 @@ def err_illegal_super_cast : Error<
 def err_objc_illegal_visibility_spec : Error<
   "illegal visibility specification">;
 def err_objc_illegal_interface_qual : Error<"illegal interface qualifier">;
-def err_objc_expected_equal : Error<
-  "setter/getter expects '=' followed by name">;
+def err_objc_expected_equal_for_getter : Error<
+  "expected '=' for Objective-C getter">;
+def err_objc_expected_equal_for_setter : Error<
+  "expected '=' for Objective-C setter">;
+def err_objc_expected_selector_for_getter_setter : Error<
+  "expected selector for Objective-C %select{setter|getter}0">;
 def err_objc_property_requires_field_name : Error<
   "property requires fields to be named">;
 def err_objc_property_bitfield : Error<"property name cannot be a bitfield">;

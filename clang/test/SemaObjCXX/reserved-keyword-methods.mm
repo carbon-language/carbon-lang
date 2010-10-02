@@ -34,8 +34,9 @@ macro(wchar_t)
 
 
 #define DECLARE_METHOD(name) - (void)name;
-
+#define DECLARE_PROPERTY_WITH_GETTER(name) @property (getter=name) int prop_##name;
 @interface A 
-FOR_EACH_KEYWORD(DECLARE_METHOD)
+//FOR_EACH_KEYWORD(DECLARE_METHOD)
+FOR_EACH_KEYWORD(DECLARE_PROPERTY_WITH_GETTER)
 @end
 
