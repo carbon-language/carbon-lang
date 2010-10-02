@@ -943,11 +943,30 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
   if (IntrinsicID != Intrinsic::not_intrinsic) {
     SmallVector<Value*, 16> Args;
 
+    // Find out if any arguments are required to be integer constant
+    // expressions.
+    unsigned ICEArguments = 0;
+    ASTContext::GetBuiltinTypeError Error;
+    getContext().GetBuiltinType(BuiltinID, Error, &ICEArguments);
+    assert(Error == ASTContext::GE_None && "Should not codegen an error");
+
     Function *F = CGM.getIntrinsic(IntrinsicID);
     const llvm::FunctionType *FTy = F->getFunctionType();
 
     for (unsigned i = 0, e = E->getNumArgs(); i != e; ++i) {
-      Value *ArgValue = EmitScalarExpr(E->getArg(i));
+      Value *ArgValue;
+      // If this is a normal argument, just emit it as a scalar.
+      if ((ICEArguments & (1 << i)) == 0) {
+        ArgValue = EmitScalarExpr(E->getArg(i));
+      } else {
+        // If this is required to be a constant, constant fold it so that we 
+        // know that the generated intrinsic gets a ConstantInt.
+        llvm::APSInt Result;
+        bool IsConst = E->getArg(i)->isIntegerConstantExpr(Result,getContext());
+        assert(IsConst && "Constant arg isn't actually constant?");
+        (void)IsConst;
+        ArgValue = llvm::ConstantInt::get(VMContext, Result);
+      }
 
       // If the intrinsic arg type is different from the builtin arg type
       // we need to do a bit cast.
@@ -1874,8 +1893,26 @@ Value *CodeGenFunction::EmitX86BuiltinExpr(unsigned BuiltinID,
 
   llvm::SmallVector<Value*, 4> Ops;
 
-  for (unsigned i = 0, e = E->getNumArgs(); i != e; i++)
-    Ops.push_back(EmitScalarExpr(E->getArg(i)));
+  // Find out if any arguments are required to be integer constant expressions.
+  unsigned ICEArguments = 0;
+  ASTContext::GetBuiltinTypeError Error;
+  getContext().GetBuiltinType(BuiltinID, Error, &ICEArguments);
+  assert(Error == ASTContext::GE_None && "Should not codegen an error");
+
+  for (unsigned i = 0, e = E->getNumArgs(); i != e; i++) {
+    // If this is a normal argument, just emit it as a scalar.
+    if ((ICEArguments & (1 << i)) == 0) {
+      Ops.push_back(EmitScalarExpr(E->getArg(i)));
+      continue;
+    }
+
+    // If this is required to be a constant, constant fold it so that we know
+    // that the generated intrinsic gets a ConstantInt.
+    llvm::APSInt Result;
+    bool IsConst = E->getArg(i)->isIntegerConstantExpr(Result, getContext());
+    assert(IsConst && "Constant arg isn't actually constant?"); (void)IsConst;
+    Ops.push_back(llvm::ConstantInt::get(VMContext, Result));
+  }
 
   switch (BuiltinID) {
   default: return 0;
