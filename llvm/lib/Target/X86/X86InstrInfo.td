@@ -4994,3 +4994,5 @@ include "X86InstrSSE.td"
 //===----------------------------------------------------------------------===//
 
 include "X86InstrMMX.td"
+include "X86Instr3DNow.td"
+

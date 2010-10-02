@@ -1,4 +1,4 @@
-//====- X86InstrMMX.td - Describe the X86 Instruction Set --*- tablegen -*-===//
+//====- X86InstrMMX.td - Describe the MMX Instruction Set --*- tablegen -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
