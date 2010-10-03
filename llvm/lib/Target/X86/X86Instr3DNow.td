@@ -16,9 +16,14 @@
 
 class I3DNow<bits<8> o, Format F, dag outs, dag ins, string asm, 
              list<dag> pattern>
-      : I<o, F, outs, ins, asm, pattern>, TB, Requires<[Has3DNow]>,
-        Has3DNow0F0FOpcode {
-  // FIXME: The disassembler doesn't support 3DNow! yet.
+      : I<o, F, outs, ins, asm, pattern>, TB, Requires<[Has3DNow]> {
+}
+
+class I3DNow_binop<bits<8> o, Format F, dag ins, string Mnemonic>
+      : I<o, F, (outs VR64:$dst), ins,
+          !strconcat(Mnemonic, "\t{$src2, $dst|$dst, $src2}"), []>,
+          TB, Requires<[Has3DNow]>, Has3DNow0F0FOpcode {
+  // FIXME: The disassembler doesn't support Has3DNow0F0FOpcode yet.
   let isAsmParserOnly = 1;
 }
 
@@ -26,13 +31,9 @@ class I3DNow<bits<8> o, Format F, dag outs, dag ins, string asm,
 let Constraints = "$src1 = $dst" in {
   // MMXI_binop_rm_int - Simple MMX binary operator based on intrinsic.
   // When this is cleaned up, remove the FIXME from X86RecognizableInstr.cpp.
-  multiclass I3DNow_binop_rm<bits<8> opc, string Mnemonic> {
-    def rr : I3DNow<opc, MRMSrcReg, (outs VR64:$dst),
-                    (ins VR64:$src1, VR64:$src2),
-                    !strconcat(Mnemonic, "\t{$src2, $dst|$dst, $src2}"), []>;
-    def rm : I3DNow<opc, MRMSrcMem, (outs VR64:$dst),
-                    (ins VR64:$src1, i64mem:$src2),
-                    !strconcat(Mnemonic, "\t{$src2, $dst|$dst, $src2}"), []>;
+  multiclass I3DNow_binop_rm<bits<8> opc, string Mn> {
+    def rr : I3DNow_binop<opc, MRMSrcReg, (ins VR64:$src1, VR64:$src2), Mn>;
+    def rm : I3DNow_binop<opc, MRMSrcMem, (ins VR64:$src1, i64mem:$src2), Mn>;
   }
 }
 
@@ -57,6 +58,16 @@ defm PI2FD    : I3DNow_binop_rm<0x0D, "pi2fd">;
 defm PMULHRW  : I3DNow_binop_rm<0xB7, "pmulhrw">;
 
 
+def FEMMS : I3DNow<0x0E, RawFrm, (outs), (ins), "femms", [(int_x86_mmx_femms)]>;
+
+def PREFETCH  : I3DNow<0x0D, MRM0m, (outs), (ins i32mem:$addr),
+                       "prefetch $addr", []>;
+                       
+// FIXME: Diassembler gets a bogus decode conflict.
+let isAsmParserOnly = 1 in {
+def PREFETCHW : I3DNow<0x0D, MRM1m, (outs), (ins i16mem:$addr),
+                       "prefetchw $addr", []>;
+}
 
 
 // TODO: Add support for the "3DNowA" instructions.
