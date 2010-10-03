@@ -16,286 +16,326 @@
 // Reference Manual".
 //
 // Functional units
-def A9_Pipe0   : FuncUnit; // pipeline 0
-def A9_Pipe1   : FuncUnit; // pipeline 1
+def A9_Issue0  : FuncUnit; // Issue 0
+def A9_Issue1  : FuncUnit; // Issue 1
+def A9_Branch  : FuncUnit; // Branch
+def A9_ALU0    : FuncUnit; // ALU / MUL pipeline 0
+def A9_ALU1    : FuncUnit; // ALU pipeline 1
 def A9_AGU     : FuncUnit; // Address generation unit for ld / st
-def A9_NPipe   : FuncUnit; // NEON ALU/MUL pipeline
+def A9_NPipe   : FuncUnit; // NEON pipeline
+def A9_MUX0    : FuncUnit; // AGU + NEON/FPU multiplexer
 def A9_DRegsVFP: FuncUnit; // FP register set, VFP side
 def A9_DRegsN  : FuncUnit; // FP register set, NEON side
-def A9_MUX0    : FuncUnit; // AGU + NEON/FPU multiplexer
 
 // Bypasses
 def A9_LdBypass : Bypass;
 
-// Dual issue pipeline represented by A9_Pipe0 | A9_Pipe1
-//
 def CortexA9Itineraries : ProcessorItineraries<
-  [A9_Pipe0, A9_Pipe1, A9_AGU, A9_NPipe, A9_DRegsVFP, A9_DRegsN, A9_MUX0],
+  [A9_Issue0, A9_Issue1, A9_Branch, A9_ALU0, A9_ALU1, A9_AGU, A9_NPipe, A9_MUX0,
+   A9_DRegsVFP, A9_DRegsN],
   [A9_LdBypass], [
   // Two fully-pipelined integer ALU pipelines
 
   //
   // Move instructions, unconditional
-  InstrItinData<IIC_iMOVi   , [InstrStage<1, [A9_Pipe0, A9_Pipe1]>], [1]>,
-  InstrItinData<IIC_iMOVr   , [InstrStage<1, [A9_Pipe0, A9_Pipe1]>], [1, 1]>,
-  InstrItinData<IIC_iMOVsi  , [InstrStage<1, [A9_Pipe0, A9_Pipe1]>], [1, 1]>,
-  InstrItinData<IIC_iMOVsr  , [InstrStage<2, [A9_Pipe0, A9_Pipe1]>], [2, 1, 1]>,
-  InstrItinData<IIC_iMOVix2 , [InstrStage<1, [A9_Pipe0, A9_Pipe1]>,
-                               InstrStage<1, [A9_Pipe0, A9_Pipe1]>], [2]>,
+  InstrItinData<IIC_iMOVi   , [InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
+                               InstrStage<1, [A9_ALU0, A9_ALU1]>], [1]>,
+  InstrItinData<IIC_iMOVr   , [InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
+                               InstrStage<1, [A9_ALU0, A9_ALU1]>], [1, 1]>,
+  InstrItinData<IIC_iMOVsi  , [InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
+                               InstrStage<1, [A9_ALU0, A9_ALU1]>], [1, 1]>,
+  InstrItinData<IIC_iMOVsr  , [InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
+                               InstrStage<2, [A9_ALU0, A9_ALU1]>], [2, 1, 1]>,
+  InstrItinData<IIC_iMOVix2 , [InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
+                               InstrStage<1, [A9_ALU0, A9_ALU1]>,
+                               InstrStage<1, [A9_ALU0, A9_ALU1]>], [2]>,
   //
   // MVN instructions
-  InstrItinData<IIC_iMVNi   , [InstrStage<1, [A9_Pipe0, A9_Pipe1]>],
+  InstrItinData<IIC_iMVNi   , [InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
+                               InstrStage<1, [A9_ALU0, A9_ALU1]>],
                               [1]>,
-  InstrItinData<IIC_iMVNr   , [InstrStage<1, [A9_Pipe0, A9_Pipe1]>],
+  InstrItinData<IIC_iMVNr   , [InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
+                               InstrStage<1, [A9_ALU0, A9_ALU1]>],
                               [1, 1], [NoBypass, A9_LdBypass]>,
-  InstrItinData<IIC_iMVNsi  , [InstrStage<2, [A9_Pipe0, A9_Pipe1]>],
+  InstrItinData<IIC_iMVNsi  , [InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
+                               InstrStage<2, [A9_ALU0, A9_ALU1]>],
                               [2, 1]>,
-  InstrItinData<IIC_iMVNsr  , [InstrStage<3, [A9_Pipe0, A9_Pipe1]>],
+  InstrItinData<IIC_iMVNsr  , [InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
+                               InstrStage<3, [A9_ALU0, A9_ALU1]>],
                               [3, 1, 1]>,
   //
   // No operand cycles
-  InstrItinData<IIC_iALUx   , [InstrStage<1, [A9_Pipe0, A9_Pipe1]>]>,
+  InstrItinData<IIC_iALUx   , [InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
+                               InstrStage<1, [A9_ALU0, A9_ALU1]>]>,
   //
   // Binary Instructions that produce a result
-  InstrItinData<IIC_iALUi , [InstrStage<1, [A9_Pipe0, A9_Pipe1]>],
+  InstrItinData<IIC_iALUi , [InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
+                             InstrStage<1, [A9_ALU0, A9_ALU1]>],
                             [1, 1], [NoBypass, A9_LdBypass]>,
-  InstrItinData<IIC_iALUr , [InstrStage<1, [A9_Pipe0, A9_Pipe1]>],
+  InstrItinData<IIC_iALUr , [InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
+                             InstrStage<1, [A9_ALU0, A9_ALU1]>],
                             [1, 1, 1], [NoBypass, A9_LdBypass, A9_LdBypass]>,
-  InstrItinData<IIC_iALUsi, [InstrStage<2, [A9_Pipe0, A9_Pipe1]>],
+  InstrItinData<IIC_iALUsi, [InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
+                             InstrStage<2, [A9_ALU0, A9_ALU1]>],
                             [2, 1, 1], [NoBypass, A9_LdBypass, NoBypass]>,
-  InstrItinData<IIC_iALUsir,[InstrStage<2, [A9_Pipe0, A9_Pipe1]>],
+  InstrItinData<IIC_iALUsir,[InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
+                             InstrStage<2, [A9_ALU0, A9_ALU1]>],
                             [2, 1, 1], [NoBypass, NoBypass, A9_LdBypass]>,
-  InstrItinData<IIC_iALUsr,[InstrStage<3, [A9_Pipe0, A9_Pipe1]>],
+  InstrItinData<IIC_iALUsr, [InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
+                             InstrStage<3, [A9_ALU0, A9_ALU1]>],
                             [3, 1, 1, 1],
                             [NoBypass, A9_LdBypass, NoBypass, NoBypass]>,
   //
   // Bitwise Instructions that produce a result
-  InstrItinData<IIC_iBITi , [InstrStage<1, [A9_Pipe0, A9_Pipe1]>], [1, 1]>,
-  InstrItinData<IIC_iBITr , [InstrStage<1, [A9_Pipe0, A9_Pipe1]>], [1, 1, 1]>,
-  InstrItinData<IIC_iBITsi, [InstrStage<2, [A9_Pipe0, A9_Pipe1]>], [2, 1, 1]>,
-  InstrItinData<IIC_iBITsr,[InstrStage<3, [A9_Pipe0, A9_Pipe1]>], [3, 1, 1, 1]>,
+  InstrItinData<IIC_iBITi , [InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
+                             InstrStage<1, [A9_ALU0, A9_ALU1]>], [1, 1]>,
+  InstrItinData<IIC_iBITr , [InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
+                             InstrStage<1, [A9_ALU0, A9_ALU1]>], [1, 1, 1]>,
+  InstrItinData<IIC_iBITsi, [InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
+                             InstrStage<2, [A9_ALU0, A9_ALU1]>], [2, 1, 1]>,
+  InstrItinData<IIC_iBITsr, [InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
+                             InstrStage<3, [A9_ALU0, A9_ALU1]>], [3, 1, 1, 1]>,
   //
   // Unary Instructions that produce a result
 
   // CLZ, RBIT, etc.
-  InstrItinData<IIC_iUNAr   , [InstrStage<1, [A9_Pipe0, A9_Pipe1]>], [1, 1]>,
+  InstrItinData<IIC_iUNAr , [InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
+                             InstrStage<1, [A9_ALU0, A9_ALU1]>], [1, 1]>,
 
   // BFC, BFI, UBFX, SBFX
-  InstrItinData<IIC_iUNAsi  , [InstrStage<2, [A9_Pipe0, A9_Pipe1]>], [2, 1]>,
+  InstrItinData<IIC_iUNAsi, [InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
+                             InstrStage<2, [A9_ALU0, A9_ALU1]>], [2, 1]>,
 
   //
   // Zero and sign extension instructions
-  InstrItinData<IIC_iEXTr , [InstrStage<1, [A9_Pipe0, A9_Pipe1]>], [2, 1]>,
-  InstrItinData<IIC_iEXTAr, [InstrStage<2, [A9_Pipe0, A9_Pipe1]>], [3, 1, 1]>,
-  InstrItinData<IIC_iEXTAsr,[InstrStage<3, [A9_Pipe0, A9_Pipe1]>],[3, 1, 1, 1]>,
+  InstrItinData<IIC_iEXTr , [InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
+                             InstrStage<1, [A9_ALU0, A9_ALU1]>], [2, 1]>,
+  InstrItinData<IIC_iEXTAr, [InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
+                             InstrStage<2, [A9_ALU0, A9_ALU1]>], [3, 1, 1]>,
+  InstrItinData<IIC_iEXTAsr,[InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
+                             InstrStage<3, [A9_ALU0, A9_ALU1]>], [3, 1, 1, 1]>,
   //
   // Compare instructions
-  InstrItinData<IIC_iCMPi   , [InstrStage<1, [A9_Pipe0, A9_Pipe1]>],
-                              [1], [A9_LdBypass]>,
-  InstrItinData<IIC_iCMPr   , [InstrStage<1, [A9_Pipe0, A9_Pipe1]>],
-                              [1, 1], [A9_LdBypass, A9_LdBypass]>,
-  InstrItinData<IIC_iCMPsi  , [InstrStage<2, [A9_Pipe0, A9_Pipe1]>],
-                              [1, 1], [A9_LdBypass, NoBypass]>,
-  InstrItinData<IIC_iCMPsr  , [InstrStage<3, [A9_Pipe0, A9_Pipe1]>],
+  InstrItinData<IIC_iCMPi   , [InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
+                               InstrStage<1, [A9_ALU0, A9_ALU1]>],
+                               [1], [A9_LdBypass]>,
+  InstrItinData<IIC_iCMPr   , [InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
+                               InstrStage<1, [A9_ALU0, A9_ALU1]>],
+                               [1, 1], [A9_LdBypass, A9_LdBypass]>,
+  InstrItinData<IIC_iCMPsi  , [InstrStage<2, [A9_ALU0, A9_ALU1]>],
+                                [1, 1], [A9_LdBypass, NoBypass]>,
+  InstrItinData<IIC_iCMPsr  , [InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
+                               InstrStage<3, [A9_ALU0, A9_ALU1]>],
                               [1, 1, 1], [A9_LdBypass, NoBypass, NoBypass]>,
   //
   // Test instructions
-  InstrItinData<IIC_iTSTi   , [InstrStage<1, [A9_Pipe0, A9_Pipe1]>], [1]>,
-  InstrItinData<IIC_iTSTr   , [InstrStage<1, [A9_Pipe0, A9_Pipe1]>], [1, 1]>,
-  InstrItinData<IIC_iTSTsi  , [InstrStage<2, [A9_Pipe0, A9_Pipe1]>], [1, 1]>,
-  InstrItinData<IIC_iTSTsr  , [InstrStage<3, [A9_Pipe0, A9_Pipe1]>], [1, 1, 1]>,
+  InstrItinData<IIC_iTSTi   , [InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
+                               InstrStage<1, [A9_ALU0, A9_ALU1]>], [1]>,
+  InstrItinData<IIC_iTSTr   , [InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
+                               InstrStage<1, [A9_ALU0, A9_ALU1]>], [1, 1]>,
+  InstrItinData<IIC_iTSTsi  , [InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
+                               InstrStage<2, [A9_ALU0, A9_ALU1]>], [1, 1]>,
+  InstrItinData<IIC_iTSTsr  , [InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
+                               InstrStage<3, [A9_ALU0, A9_ALU1]>], [1, 1, 1]>,
   //
   // Move instructions, conditional
   // FIXME: Correctly model the extra input dep on the destination.
-  InstrItinData<IIC_iCMOVi  , [InstrStage<1, [A9_Pipe0, A9_Pipe1]>], [1]>,
-  InstrItinData<IIC_iCMOVr  , [InstrStage<1, [A9_Pipe0, A9_Pipe1]>], [1, 1]>,
-  InstrItinData<IIC_iCMOVsi , [InstrStage<1, [A9_Pipe0, A9_Pipe1]>], [1, 1]>,
-  InstrItinData<IIC_iCMOVsr , [InstrStage<2, [A9_Pipe0, A9_Pipe1]>], [2, 1, 1]>,
+  InstrItinData<IIC_iCMOVi  , [InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
+                               InstrStage<1, [A9_ALU0, A9_ALU1]>], [1]>,
+  InstrItinData<IIC_iCMOVr  , [InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
+                               InstrStage<1, [A9_ALU0, A9_ALU1]>], [1, 1]>,
+  InstrItinData<IIC_iCMOVsi , [InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
+                               InstrStage<1, [A9_ALU0, A9_ALU1]>], [1, 1]>,
+  InstrItinData<IIC_iCMOVsr , [InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
+                               InstrStage<2, [A9_ALU0, A9_ALU1]>], [2, 1, 1]>,
 
   // Integer multiply pipeline
   //
-  InstrItinData<IIC_iMUL16   , [InstrStage<1, [A9_Pipe1], 0>,
-                                InstrStage<2, [A9_Pipe0]>], [3, 1, 1]>,
-  InstrItinData<IIC_iMAC16   , [InstrStage<1, [A9_Pipe1], 0>,
-                                InstrStage<2, [A9_Pipe0]>], [3, 1, 1, 1]>,
-  InstrItinData<IIC_iMUL32   , [InstrStage<1, [A9_Pipe1], 0>,
-                                InstrStage<2, [A9_Pipe0]>], [4, 1, 1]>,
-  InstrItinData<IIC_iMAC32   , [InstrStage<1, [A9_Pipe1], 0>,
-                                InstrStage<2, [A9_Pipe0]>], [4, 1, 1, 1]>,
-  InstrItinData<IIC_iMUL64   , [InstrStage<1, [A9_Pipe1], 0>,
-                                InstrStage<3, [A9_Pipe0]>], [4, 5, 1, 1]>,
-  InstrItinData<IIC_iMAC64   , [InstrStage<1, [A9_Pipe1], 0>,
-                                InstrStage<3, [A9_Pipe0]>], [4, 5, 1, 1]>,
+  InstrItinData<IIC_iMUL16  , [InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
+                               InstrStage<2, [A9_ALU0]>], [3, 1, 1]>,
+  InstrItinData<IIC_iMAC16  , [InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
+                               InstrStage<2, [A9_ALU0]>],
+                              [3, 1, 1, 1]>,
+  InstrItinData<IIC_iMUL32  , [InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
+                               InstrStage<2, [A9_ALU0]>], [4, 1, 1]>,
+  InstrItinData<IIC_iMAC32  , [InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
+                               InstrStage<2, [A9_ALU0]>],
+                              [4, 1, 1, 1]>,
+  InstrItinData<IIC_iMUL64  , [InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
+                               InstrStage<3, [A9_ALU0]>], [4, 5, 1, 1]>,
+  InstrItinData<IIC_iMAC64  , [InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
+                               InstrStage<3, [A9_ALU0]>],
+                              [4, 5, 1, 1]>,
   // Integer load pipeline
   // FIXME: The timings are some rough approximations
   //
   // Immediate offset
-  InstrItinData<IIC_iLoad_i   , [InstrStage<1, [A9_Pipe1]>,
+  InstrItinData<IIC_iLoad_i   , [InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
                                  InstrStage<1, [A9_MUX0], 0>,
                                  InstrStage<1, [A9_AGU]>],
                                 [3, 1], [A9_LdBypass]>,
-  InstrItinData<IIC_iLoad_bh_i, [InstrStage<1, [A9_Pipe1]>,
+  InstrItinData<IIC_iLoad_bh_i, [InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
                                  InstrStage<1, [A9_MUX0], 0>,
                                  InstrStage<2, [A9_AGU]>],
                                 [4, 1], [A9_LdBypass]>,
   // FIXME: If address is 64-bit aligned, AGU cycles is 1.
-  InstrItinData<IIC_iLoad_d_i , [InstrStage<1, [A9_Pipe1]>,
+  InstrItinData<IIC_iLoad_d_i , [InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
                                  InstrStage<1, [A9_MUX0], 0>,
                                  InstrStage<2, [A9_AGU]>],
                                 [3, 3, 1], [A9_LdBypass]>,
   //
   // Register offset
-  InstrItinData<IIC_iLoad_r   , [InstrStage<1, [A9_Pipe1]>,
+  InstrItinData<IIC_iLoad_r   , [InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
                                  InstrStage<1, [A9_MUX0], 0>,
                                  InstrStage<1, [A9_AGU]>],
                                 [3, 1, 1], [A9_LdBypass]>,
-  InstrItinData<IIC_iLoad_bh_r, [InstrStage<1, [A9_Pipe1]>,
+  InstrItinData<IIC_iLoad_bh_r, [InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
                                  InstrStage<1, [A9_MUX0], 0>,
                                  InstrStage<2, [A9_AGU]>],
                                 [4, 1, 1], [A9_LdBypass]>,
-  InstrItinData<IIC_iLoad_d_r , [InstrStage<1, [A9_Pipe1]>,
+  InstrItinData<IIC_iLoad_d_r , [InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
                                  InstrStage<1, [A9_MUX0], 0>,
                                  InstrStage<2, [A9_AGU]>],
                                 [3, 3, 1, 1], [A9_LdBypass]>,
   //
   // Scaled register offset
-  InstrItinData<IIC_iLoad_si  , [InstrStage<1, [A9_Pipe1]>,
+  InstrItinData<IIC_iLoad_si  , [InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
                                  InstrStage<1, [A9_MUX0], 0>,
                                  InstrStage<1, [A9_AGU]>],
                                 [4, 1, 1], [A9_LdBypass]>,
-  InstrItinData<IIC_iLoad_bh_si,[InstrStage<1, [A9_Pipe1]>,
+  InstrItinData<IIC_iLoad_bh_si,[InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
                                  InstrStage<1, [A9_MUX0], 0>,
                                  InstrStage<2, [A9_AGU]>],
                                 [5, 1, 1], [A9_LdBypass]>,
   //
   // Immediate offset with update
-  InstrItinData<IIC_iLoad_iu  , [InstrStage<1, [A9_Pipe1]>,
+  InstrItinData<IIC_iLoad_iu  , [InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
                                  InstrStage<1, [A9_MUX0], 0>,
                                  InstrStage<1, [A9_AGU]>],
                                 [3, 2, 1], [A9_LdBypass]>,
-  InstrItinData<IIC_iLoad_bh_iu,[InstrStage<1, [A9_Pipe1]>,
+  InstrItinData<IIC_iLoad_bh_iu,[InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
                                  InstrStage<1, [A9_MUX0], 0>,
                                  InstrStage<2, [A9_AGU]>],
                                 [4, 3, 1], [A9_LdBypass]>,
   //
   // Register offset with update
-  InstrItinData<IIC_iLoad_ru  , [InstrStage<1, [A9_Pipe1]>,
+  InstrItinData<IIC_iLoad_ru  , [InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
                                  InstrStage<1, [A9_MUX0], 0>,
                                  InstrStage<1, [A9_AGU]>],
                                 [3, 2, 1, 1], [A9_LdBypass]>,
-  InstrItinData<IIC_iLoad_bh_ru,[InstrStage<1, [A9_Pipe1]>,
+  InstrItinData<IIC_iLoad_bh_ru,[InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
                                  InstrStage<1, [A9_MUX0], 0>,
                                  InstrStage<2, [A9_AGU]>],
                                 [4, 3, 1, 1], [A9_LdBypass]>,
-  InstrItinData<IIC_iLoad_d_ru, [InstrStage<1, [A9_Pipe1]>,
+  InstrItinData<IIC_iLoad_d_ru, [InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
                                  InstrStage<1, [A9_MUX0], 0>,
                                  InstrStage<2, [A9_AGU]>],
                                 [3, 3, 1, 1], [A9_LdBypass]>,
   //
   // Scaled register offset with update
-  InstrItinData<IIC_iLoad_siu , [InstrStage<1, [A9_Pipe1]>,
+  InstrItinData<IIC_iLoad_siu , [InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
                                  InstrStage<1, [A9_MUX0], 0>,
                                  InstrStage<1, [A9_AGU]>],
                                 [4, 3, 1, 1], [A9_LdBypass]>,
-  InstrItinData<IIC_iLoad_bh_siu,[InstrStage<1, [A9_Pipe1]>,
+  InstrItinData<IIC_iLoad_bh_siu,[InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
                                   InstrStage<1, [A9_MUX0], 0>,
                                   InstrStage<2, [A9_AGU]>],
                                  [5, 4, 1, 1], [A9_LdBypass]>,
   //
   // Load multiple
-  InstrItinData<IIC_iLoadm   , [InstrStage<1, [A9_Pipe1]>,
+  InstrItinData<IIC_iLoadm   , [InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
                                 InstrStage<1, [A9_MUX0], 0>,
                                 InstrStage<2, [A9_AGU]>],
                                [3], [A9_LdBypass]>,
 
   //
   // Load multiple plus branch
-  InstrItinData<IIC_iLoadmBr , [InstrStage<1, [A9_Pipe1]>,
+  InstrItinData<IIC_iLoadmBr , [InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
                                 InstrStage<1, [A9_MUX0], 0>,
                                 InstrStage<1, [A9_AGU]>,
-                                InstrStage<1, [A9_Pipe0, A9_Pipe1]>]>,
+                                InstrStage<1, [A9_Branch]>]>,
 
   //
   // iLoadi + iALUr for t2LDRpci_pic.
-  InstrItinData<IIC_iLoadiALU, [InstrStage<1, [A9_Pipe1]>,
+  InstrItinData<IIC_iLoadiALU, [InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
                                 InstrStage<1, [A9_MUX0], 0>,
                                 InstrStage<1, [A9_AGU]>,
-                                InstrStage<1, [A9_Pipe0, A9_Pipe1]>],
+                                InstrStage<1, [A9_ALU0, A9_ALU1]>],
                                [2, 1]>,
 
   // Integer store pipeline
   ///
   // Immediate offset
-  InstrItinData<IIC_iStore_i  , [InstrStage<1, [A9_Pipe1]>,
+  InstrItinData<IIC_iStore_i  , [InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
                                  InstrStage<1, [A9_MUX0], 0>,
                                  InstrStage<1, [A9_AGU]>], [1, 1]>,
-  InstrItinData<IIC_iStore_bh_i,[InstrStage<1, [A9_Pipe1]>,
+  InstrItinData<IIC_iStore_bh_i,[InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
                                  InstrStage<1, [A9_MUX0], 0>,
                                  InstrStage<2, [A9_AGU]>], [1, 1]>,
   // FIXME: If address is 64-bit aligned, AGU cycles is 1.
-  InstrItinData<IIC_iStore_d_i, [InstrStage<1, [A9_Pipe1]>,
+  InstrItinData<IIC_iStore_d_i, [InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
                                  InstrStage<1, [A9_MUX0], 0>,
                                  InstrStage<2, [A9_AGU]>], [1, 1]>,
   //
   // Register offset
-  InstrItinData<IIC_iStore_r  , [InstrStage<1, [A9_Pipe1]>,
+  InstrItinData<IIC_iStore_r  , [InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
                                  InstrStage<1, [A9_MUX0], 0>,
                                  InstrStage<1, [A9_AGU]>], [1, 1, 1]>,
-  InstrItinData<IIC_iStore_bh_r,[InstrStage<1, [A9_Pipe1]>,
+  InstrItinData<IIC_iStore_bh_r,[InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
                                  InstrStage<1, [A9_MUX0], 0>,
                                  InstrStage<2, [A9_AGU]>], [1, 1, 1]>,
-  InstrItinData<IIC_iStore_d_r, [InstrStage<1, [A9_Pipe1]>,
+  InstrItinData<IIC_iStore_d_r, [InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
                                  InstrStage<1, [A9_MUX0], 0>,
                                  InstrStage<2, [A9_AGU]>], [1, 1, 1]>,
   //
   // Scaled register offset
-  InstrItinData<IIC_iStore_si , [InstrStage<1, [A9_Pipe1]>,
-                                 InstrStage<1, [A9_MUX0], 0>,
-                                 InstrStage<1, [A9_AGU]>], [1, 1, 1]>,
-  InstrItinData<IIC_iStore_bh_si,[InstrStage<1, [A9_Pipe1]>,
+  InstrItinData<IIC_iStore_si ,  [InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
+                                  InstrStage<1, [A9_MUX0], 0>,
+                                  InstrStage<1, [A9_AGU]>], [1, 1, 1]>,
+  InstrItinData<IIC_iStore_bh_si,[InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
                                   InstrStage<1, [A9_MUX0], 0>,
                                   InstrStage<2, [A9_AGU]>], [1, 1, 1]>,
   //
   // Immediate offset with update
-  InstrItinData<IIC_iStore_iu , [InstrStage<1, [A9_Pipe1]>,
-                                 InstrStage<1, [A9_MUX0], 0>,
-                                 InstrStage<1, [A9_AGU]>], [2, 1, 1]>,
-  InstrItinData<IIC_iStore_bh_iu,[InstrStage<1, [A9_Pipe1]>,
+  InstrItinData<IIC_iStore_iu ,  [InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
+                                  InstrStage<1, [A9_MUX0], 0>,
+                                  InstrStage<1, [A9_AGU]>], [2, 1, 1]>,
+  InstrItinData<IIC_iStore_bh_iu,[InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
                                   InstrStage<1, [A9_MUX0], 0>,
                                   InstrStage<2, [A9_AGU]>], [3, 1, 1]>,
   //
   // Register offset with update
-  InstrItinData<IIC_iStore_ru , [InstrStage<1, [A9_Pipe1]>,
-                                 InstrStage<1, [A9_MUX0], 0>,
-                                 InstrStage<1, [A9_AGU]>],
-                                [2, 1, 1, 1]>,
-  InstrItinData<IIC_iStore_bh_ru,[InstrStage<1, [A9_Pipe1]>,
+  InstrItinData<IIC_iStore_ru ,  [InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
+                                  InstrStage<1, [A9_MUX0], 0>,
+                                  InstrStage<1, [A9_AGU]>],
+                                 [2, 1, 1, 1]>,
+  InstrItinData<IIC_iStore_bh_ru,[InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
                                   InstrStage<1, [A9_MUX0], 0>,
                                   InstrStage<2, [A9_AGU]>],
                                  [3, 1, 1, 1]>,
-  InstrItinData<IIC_iStore_d_ru,[InstrStage<1, [A9_Pipe1]>,
-                                 InstrStage<1, [A9_MUX0], 0>,
-                                 InstrStage<2, [A9_AGU]>],
-                                [3, 1, 1, 1]>,
+  InstrItinData<IIC_iStore_d_ru, [InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
+                                  InstrStage<1, [A9_MUX0], 0>,
+                                  InstrStage<2, [A9_AGU]>],
+                                 [3, 1, 1, 1]>,
   //
   // Scaled register offset with update
-  InstrItinData<IIC_iStore_siu, [InstrStage<1, [A9_Pipe1]>,
-                                 InstrStage<1, [A9_MUX0], 0>,
-                                 InstrStage<1, [A9_AGU]>],
-                                [2, 1, 1, 1]>,
-  InstrItinData<IIC_iStore_bh_siu,[InstrStage<1, [A9_Pipe1]>,
-                                   InstrStage<1, [A9_MUX0], 0>,
-                                   InstrStage<2, [A9_AGU]>],
-                                  [3, 1, 1, 1]>,
+  InstrItinData<IIC_iStore_siu,    [InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
+                                    InstrStage<1, [A9_MUX0], 0>,
+                                    InstrStage<1, [A9_AGU]>],
+                                   [2, 1, 1, 1]>,
+  InstrItinData<IIC_iStore_bh_siu, [InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
+                                    InstrStage<1, [A9_MUX0], 0>,
+                                    InstrStage<2, [A9_AGU]>],
+                                   [3, 1, 1, 1]>,
   //
   // Store multiple
-  InstrItinData<IIC_iStorem  , [InstrStage<1, [A9_Pipe1]>,
+  InstrItinData<IIC_iStorem  , [InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
                                 InstrStage<1, [A9_MUX0], 0>,
                                 InstrStage<1, [A9_AGU]>]>,
   // Branch
   //
   // no delay slots, so the latency of a branch is unimportant
-  InstrItinData<IIC_Br       , [InstrStage<1, [A9_Pipe0, A9_Pipe1]>]>,
+  InstrItinData<IIC_Br       , [InstrStage<1, [A9_Branch]>]>,
 
   // VFP and NEON shares the same register file. This means that every VFP
   // instruction should wait for full completion of the consecutive NEON
@@ -317,7 +357,7 @@ def CortexA9Itineraries : ProcessorItineraries<
   // FP Special Register to Integer Register File Move
   InstrItinData<IIC_fpSTAT , [InstrStage<1, [A9_DRegsVFP], 0, Required>,
                               InstrStage<2, [A9_DRegsN],   0, Reserved>,
-                              InstrStage<1, [A9_Pipe1]>,
+                              InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
                               InstrStage<1, [A9_MUX0], 0>,
                               InstrStage<1, [A9_NPipe]>]>,
   //
@@ -325,7 +365,7 @@ def CortexA9Itineraries : ProcessorItineraries<
   InstrItinData<IIC_fpUNA32 , [InstrStage<1, [A9_DRegsVFP], 0, Required>,
                                // Extra latency cycles since wbck is 2 cycles
                                InstrStage<3, [A9_DRegsN],   0, Reserved>,
-                               InstrStage<1, [A9_Pipe1]>,
+                               InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
                                InstrStage<1, [A9_MUX0], 0>,
                                InstrStage<1, [A9_NPipe]>],
                               [1, 1]>,
@@ -334,7 +374,7 @@ def CortexA9Itineraries : ProcessorItineraries<
   InstrItinData<IIC_fpUNA64 , [InstrStage<1, [A9_DRegsVFP], 0, Required>,
                                // Extra latency cycles since wbck is 2 cycles
                                InstrStage<3, [A9_DRegsN],   0, Reserved>,
-                               InstrStage<1, [A9_Pipe1]>,
+                               InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
                                InstrStage<1, [A9_MUX0], 0>,
                                InstrStage<1, [A9_NPipe]>],
                               [1, 1]>,
@@ -344,7 +384,7 @@ def CortexA9Itineraries : ProcessorItineraries<
   InstrItinData<IIC_fpCMP32 , [InstrStage<1, [A9_DRegsVFP], 0, Required>,
                                // Extra latency cycles since wbck is 4 cycles
                                InstrStage<5, [A9_DRegsN],   0, Reserved>,
-                               InstrStage<1, [A9_Pipe1]>,
+                               InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
                                InstrStage<1, [A9_MUX0], 0>,
                                InstrStage<1, [A9_NPipe]>],
                               [1, 1]>,
@@ -353,7 +393,7 @@ def CortexA9Itineraries : ProcessorItineraries<
   InstrItinData<IIC_fpCMP64 , [InstrStage<1, [A9_DRegsVFP], 0, Required>,
                                // Extra latency cycles since wbck is 4 cycles
                                InstrStage<5, [A9_DRegsN],   0, Reserved>,
-                               InstrStage<1, [A9_Pipe1]>,
+                               InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
                                InstrStage<1, [A9_MUX0], 0>,
                                InstrStage<1, [A9_NPipe]>],
                               [1, 1]>,
@@ -361,7 +401,7 @@ def CortexA9Itineraries : ProcessorItineraries<
   // Single to Double FP Convert
   InstrItinData<IIC_fpCVTSD , [InstrStage<1, [A9_DRegsVFP], 0, Required>,
                                InstrStage<5, [A9_DRegsN],   0, Reserved>,
-                               InstrStage<1, [A9_Pipe1]>,
+                               InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
                                InstrStage<1, [A9_MUX0], 0>,
                                InstrStage<1, [A9_NPipe]>],
                               [4, 1]>,
@@ -369,7 +409,7 @@ def CortexA9Itineraries : ProcessorItineraries<
   // Double to Single FP Convert
   InstrItinData<IIC_fpCVTDS , [InstrStage<1, [A9_DRegsVFP], 0, Required>,
                                InstrStage<5, [A9_DRegsN],   0, Reserved>,
-                               InstrStage<1, [A9_Pipe1]>,
+                               InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
                                InstrStage<1, [A9_MUX0], 0>,
                                InstrStage<1, [A9_NPipe]>],
                               [4, 1]>,
@@ -378,7 +418,7 @@ def CortexA9Itineraries : ProcessorItineraries<
   // Single to Half FP Convert
   InstrItinData<IIC_fpCVTSH , [InstrStage<1, [A9_DRegsVFP], 0, Required>,
                                InstrStage<5, [A9_DRegsN],   0, Reserved>,
-                               InstrStage<1, [A9_Pipe1]>,
+                               InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
                                InstrStage<1, [A9_MUX0], 0>,
                                InstrStage<1, [A9_NPipe]>],
                               [4, 1]>,
@@ -386,7 +426,7 @@ def CortexA9Itineraries : ProcessorItineraries<
   // Half to Single FP Convert
   InstrItinData<IIC_fpCVTHS , [InstrStage<1, [A9_DRegsVFP], 0, Required>,
                                InstrStage<3, [A9_DRegsN],   0, Reserved>,
-                               InstrStage<1, [A9_Pipe1]>,
+                               InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
                                InstrStage<1, [A9_MUX0], 0>,
                                InstrStage<1, [A9_NPipe]>],
                               [2, 1]>,
@@ -395,7 +435,7 @@ def CortexA9Itineraries : ProcessorItineraries<
   // Single-Precision FP to Integer Convert
   InstrItinData<IIC_fpCVTSI , [InstrStage<1, [A9_DRegsVFP], 0, Required>,
                                InstrStage<5, [A9_DRegsN],   0, Reserved>,
-                               InstrStage<1, [A9_Pipe1]>,
+                               InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
                                InstrStage<1, [A9_MUX0], 0>,
                                InstrStage<1, [A9_NPipe]>],
                               [4, 1]>,
@@ -403,7 +443,7 @@ def CortexA9Itineraries : ProcessorItineraries<
   // Double-Precision FP to Integer Convert
   InstrItinData<IIC_fpCVTDI , [InstrStage<1, [A9_DRegsVFP], 0, Required>,
                                InstrStage<5, [A9_DRegsN],   0, Reserved>,
-                               InstrStage<1, [A9_Pipe1]>,
+                               InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
                                InstrStage<1, [A9_MUX0], 0>,
                                InstrStage<1, [A9_NPipe]>],
                               [4, 1]>,
@@ -411,7 +451,7 @@ def CortexA9Itineraries : ProcessorItineraries<
   // Integer to Single-Precision FP Convert
   InstrItinData<IIC_fpCVTIS , [InstrStage<1, [A9_DRegsVFP], 0, Required>,
                                InstrStage<5, [A9_DRegsN],   0, Reserved>,
-                               InstrStage<1, [A9_Pipe1]>,
+                               InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
                                InstrStage<1, [A9_MUX0], 0>,
                                InstrStage<1, [A9_NPipe]>],
                               [4, 1]>,
@@ -419,7 +459,7 @@ def CortexA9Itineraries : ProcessorItineraries<
   // Integer to Double-Precision FP Convert
   InstrItinData<IIC_fpCVTID , [InstrStage<1, [A9_DRegsVFP], 0, Required>,
                                InstrStage<5, [A9_DRegsN],   0, Reserved>,
-                               InstrStage<1, [A9_Pipe1]>,
+                               InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
                                InstrStage<1, [A9_MUX0], 0>,
                                InstrStage<1, [A9_NPipe]>],
                               [4, 1]>,
@@ -427,7 +467,7 @@ def CortexA9Itineraries : ProcessorItineraries<
   // Single-precision FP ALU
   InstrItinData<IIC_fpALU32 , [InstrStage<1, [A9_DRegsVFP], 0, Required>,
                                InstrStage<5, [A9_DRegsN],   0, Reserved>,
-                               InstrStage<1, [A9_Pipe1]>,
+                               InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
                                InstrStage<1, [A9_MUX0], 0>,
                                InstrStage<1, [A9_NPipe]>],
                               [4, 1, 1]>,
@@ -435,7 +475,7 @@ def CortexA9Itineraries : ProcessorItineraries<
   // Double-precision FP ALU
   InstrItinData<IIC_fpALU64 , [InstrStage<1, [A9_DRegsVFP], 0, Required>,
                                InstrStage<5, [A9_DRegsN],   0, Reserved>,
-                               InstrStage<1, [A9_Pipe1]>,
+                               InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
                                InstrStage<1, [A9_MUX0], 0>,
                                InstrStage<1, [A9_NPipe]>],
                               [4, 1, 1]>,
@@ -443,7 +483,7 @@ def CortexA9Itineraries : ProcessorItineraries<
   // Single-precision FP Multiply
   InstrItinData<IIC_fpMUL32 , [InstrStage<1, [A9_DRegsVFP], 0, Required>,
                                InstrStage<6, [A9_DRegsN],   0, Reserved>,
-                               InstrStage<1, [A9_Pipe1]>,
+                               InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
                                InstrStage<1, [A9_MUX0], 0>,
                                InstrStage<1, [A9_NPipe]>],
                               [5, 1, 1]>,
@@ -451,7 +491,7 @@ def CortexA9Itineraries : ProcessorItineraries<
   // Double-precision FP Multiply
   InstrItinData<IIC_fpMUL64 , [InstrStage<1, [A9_DRegsVFP], 0, Required>,
                                InstrStage<7, [A9_DRegsN],   0, Reserved>,
-                               InstrStage<1, [A9_Pipe1]>,
+                               InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
                                InstrStage<1, [A9_MUX0], 0>,
                                InstrStage<2, [A9_NPipe]>],
                               [6, 1, 1]>,
@@ -459,7 +499,7 @@ def CortexA9Itineraries : ProcessorItineraries<
   // Single-precision FP MAC
   InstrItinData<IIC_fpMAC32 , [InstrStage<1, [A9_DRegsVFP], 0, Required>,
                                InstrStage<9, [A9_DRegsN],   0, Reserved>,
-                               InstrStage<1, [A9_Pipe1]>,
+                               InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
                                InstrStage<1, [A9_MUX0], 0>,
                                InstrStage<1, [A9_NPipe]>],
                               [8, 0, 1, 1]>,
@@ -467,7 +507,7 @@ def CortexA9Itineraries : ProcessorItineraries<
   // Double-precision FP MAC
   InstrItinData<IIC_fpMAC64 , [InstrStage<1,  [A9_DRegsVFP], 0, Required>,
                                InstrStage<10, [A9_DRegsN],  0, Reserved>,
-                               InstrStage<1,  [A9_Pipe1]>,
+                               InstrStage<1,  [A9_Issue0, A9_Issue1], 0>,
                                InstrStage<1,  [A9_MUX0], 0>,
                                InstrStage<2,  [A9_NPipe]>],
                               [9, 0, 1, 1]>,
@@ -475,7 +515,7 @@ def CortexA9Itineraries : ProcessorItineraries<
   // Single-precision FP DIV
   InstrItinData<IIC_fpDIV32 , [InstrStage<1,  [A9_DRegsVFP], 0, Required>,
                                InstrStage<16, [A9_DRegsN],  0, Reserved>,
-                               InstrStage<1,  [A9_Pipe1]>,
+                               InstrStage<1,  [A9_Issue0, A9_Issue1], 0>,
                                InstrStage<1,  [A9_MUX0], 0>,
                                InstrStage<10, [A9_NPipe]>],
                               [15, 1, 1]>,
@@ -483,7 +523,7 @@ def CortexA9Itineraries : ProcessorItineraries<
   // Double-precision FP DIV
   InstrItinData<IIC_fpDIV64 , [InstrStage<1,  [A9_DRegsVFP], 0, Required>,
                                InstrStage<26, [A9_DRegsN],  0, Reserved>,
-                               InstrStage<1,  [A9_Pipe1]>,
+                               InstrStage<1,  [A9_Issue0, A9_Issue1], 0>,
                                InstrStage<1,  [A9_MUX0], 0>,
                                InstrStage<20, [A9_NPipe]>],
                               [25, 1, 1]>,
@@ -491,7 +531,7 @@ def CortexA9Itineraries : ProcessorItineraries<
   // Single-precision FP SQRT
   InstrItinData<IIC_fpSQRT32, [InstrStage<1,  [A9_DRegsVFP], 0, Required>,
                                InstrStage<18, [A9_DRegsN],   0, Reserved>,
-                               InstrStage<1,  [A9_Pipe1]>,
+                               InstrStage<1,  [A9_Issue0, A9_Issue1], 0>,
                                InstrStage<1,  [A9_MUX0], 0>,
                                InstrStage<13, [A9_NPipe]>],
                               [17, 1]>,
@@ -499,7 +539,7 @@ def CortexA9Itineraries : ProcessorItineraries<
   // Double-precision FP SQRT
   InstrItinData<IIC_fpSQRT64, [InstrStage<1,  [A9_DRegsVFP], 0, Required>,
                                InstrStage<33, [A9_DRegsN],   0, Reserved>,
-                               InstrStage<1,  [A9_Pipe1]>,
+                               InstrStage<1,  [A9_Issue0, A9_Issue1], 0>,
                                InstrStage<1,  [A9_MUX0], 0>,
                                InstrStage<28, [A9_NPipe]>],
                               [32, 1]>,
@@ -509,7 +549,7 @@ def CortexA9Itineraries : ProcessorItineraries<
   InstrItinData<IIC_fpMOVIS,  [InstrStage<1, [A9_DRegsVFP], 0, Required>,
                                // Extra 1 latency cycle since wbck is 2 cycles
                                InstrStage<3, [A9_DRegsN],   0, Reserved>,
-                               InstrStage<1, [A9_Pipe1]>,
+                               InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
                                InstrStage<1, [A9_MUX0], 0>,
                                InstrStage<1, [A9_NPipe]>],
                               [1, 1]>,
@@ -518,7 +558,7 @@ def CortexA9Itineraries : ProcessorItineraries<
   InstrItinData<IIC_fpMOVID,  [InstrStage<1, [A9_DRegsVFP], 0, Required>,
                                // Extra 1 latency cycle since wbck is 2 cycles
                                InstrStage<3, [A9_DRegsN],   0, Reserved>,
-                               InstrStage<1, [A9_Pipe1]>,
+                               InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
                                InstrStage<1, [A9_MUX0], 0>,
                                InstrStage<1, [A9_NPipe]>],
                               [1, 1, 1]>,
@@ -526,7 +566,7 @@ def CortexA9Itineraries : ProcessorItineraries<
   // Single-precision to Integer Move
   InstrItinData<IIC_fpMOVSI,  [InstrStage<1, [A9_DRegsVFP], 0, Required>,
                                InstrStage<2, [A9_DRegsN],   0, Reserved>,
-                               InstrStage<1, [A9_Pipe1]>,
+                               InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
                                InstrStage<1, [A9_MUX0], 0>,
                                InstrStage<1, [A9_NPipe]>],
                               [1, 1]>,
@@ -534,7 +574,7 @@ def CortexA9Itineraries : ProcessorItineraries<
   // Double-precision to Integer Move
   InstrItinData<IIC_fpMOVDI,  [InstrStage<1, [A9_DRegsVFP], 0, Required>,
                                InstrStage<2, [A9_DRegsN],   0, Reserved>,
-                               InstrStage<1, [A9_Pipe1]>,
+                               InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
                                InstrStage<1, [A9_MUX0], 0>,
                                InstrStage<1, [A9_NPipe]>],
                               [1, 1, 1]>,
@@ -542,7 +582,7 @@ def CortexA9Itineraries : ProcessorItineraries<
   // Single-precision FP Load
   InstrItinData<IIC_fpLoad32, [InstrStage<1, [A9_DRegsVFP], 0, Required>,
                                InstrStage<2, [A9_DRegsN],   0, Reserved>,
-                               InstrStage<1, [A9_Pipe1], 0>,
+                               InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
                                InstrStage<1, [A9_MUX0], 0>,
                                InstrStage<1, [A9_NPipe]>],
                               [1, 1]>,
@@ -551,7 +591,7 @@ def CortexA9Itineraries : ProcessorItineraries<
   // FIXME: Result latency is 1 if address is 64-bit aligned.
   InstrItinData<IIC_fpLoad64, [InstrStage<1, [A9_DRegsVFP], 0, Required>,
                                InstrStage<2, [A9_DRegsN],   0, Reserved>,
-                               InstrStage<1, [A9_Pipe1], 0>,
+                               InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
                                InstrStage<1, [A9_MUX0], 0>,
                                InstrStage<1, [A9_NPipe]>],
                               [2, 1]>,
@@ -559,14 +599,14 @@ def CortexA9Itineraries : ProcessorItineraries<
   // FP Load Multiple
   InstrItinData<IIC_fpLoadm,  [InstrStage<1, [A9_DRegsVFP], 0, Required>,
                                InstrStage<2, [A9_DRegsN],   0, Reserved>,
-                               InstrStage<1, [A9_Pipe1], 0>,
+                               InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
                                InstrStage<1, [A9_MUX0], 0>,
                                InstrStage<1, [A9_NPipe]>]>,
   //
   // Single-precision FP Store
   InstrItinData<IIC_fpStore32,[InstrStage<1, [A9_DRegsVFP], 0, Required>,
                                InstrStage<2, [A9_DRegsN],   0, Reserved>,
-                               InstrStage<1, [A9_Pipe1], 0>,
+                               InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
                                InstrStage<1, [A9_MUX0], 0>,
                                InstrStage<1, [A9_NPipe]>],
                               [1, 1]>,
@@ -574,7 +614,7 @@ def CortexA9Itineraries : ProcessorItineraries<
   // Double-precision FP Store
   InstrItinData<IIC_fpStore64,[InstrStage<1, [A9_DRegsVFP], 0, Required>,
                                InstrStage<2, [A9_DRegsN],   0, Reserved>,
-                               InstrStage<1, [A9_Pipe1], 0>,
+                               InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
                                InstrStage<1, [A9_MUX0], 0>,
                                InstrStage<1, [A9_NPipe]>],
                               [1, 1]>,
@@ -582,7 +622,7 @@ def CortexA9Itineraries : ProcessorItineraries<
   // FP Store Multiple
   InstrItinData<IIC_fpStorem, [InstrStage<1, [A9_DRegsVFP], 0, Required>,
                                InstrStage<2, [A9_DRegsN],   0, Reserved>,
-                               InstrStage<1, [A9_Pipe1], 0>,
+                               InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
                                InstrStage<1, [A9_MUX0], 0>,
                                InstrStage<1, [A9_NPipe]>]>,
   // NEON
@@ -591,7 +631,7 @@ def CortexA9Itineraries : ProcessorItineraries<
   // FIXME: We don't model this instruction properly
   InstrItinData<IIC_VLD1,     [InstrStage<1, [A9_DRegsN],   0, Required>,
                                InstrStage<7, [A9_DRegsVFP], 0, Reserved>,
-                               InstrStage<1, [A9_Pipe1], 0>,
+                               InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
                                InstrStage<1, [A9_MUX0], 0>,
                                InstrStage<1, [A9_NPipe]>]>,
   //
@@ -600,7 +640,7 @@ def CortexA9Itineraries : ProcessorItineraries<
   InstrItinData<IIC_VLD2,     [InstrStage<1, [A9_DRegsN],   0, Required>,
                                // Extra latency cycles since wbck is 6 cycles
                                InstrStage<7, [A9_DRegsVFP], 0, Reserved>,
-                               InstrStage<1, [A9_Pipe1], 0>,
+                               InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
                                InstrStage<1, [A9_MUX0], 0>,
                                InstrStage<1, [A9_NPipe]>],
                               [2, 2, 1]>,
@@ -610,7 +650,7 @@ def CortexA9Itineraries : ProcessorItineraries<
   InstrItinData<IIC_VLD3,     [InstrStage<1, [A9_DRegsN],   0, Required>,
                                // Extra latency cycles since wbck is 6 cycles
                                InstrStage<7, [A9_DRegsVFP], 0, Reserved>,
-                               InstrStage<1, [A9_Pipe1], 0>,
+                               InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
                                InstrStage<1, [A9_MUX0], 0>,
                                InstrStage<1, [A9_NPipe]>],
                               [2, 2, 2, 1]>,
@@ -620,7 +660,7 @@ def CortexA9Itineraries : ProcessorItineraries<
   InstrItinData<IIC_VLD4,     [InstrStage<1, [A9_DRegsN],   0, Required>,
                                // Extra latency cycles since wbck is 6 cycles
                                InstrStage<7, [A9_DRegsVFP], 0, Reserved>,
-                               InstrStage<1, [A9_Pipe1], 0>,
+                               InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
                                InstrStage<1, [A9_MUX0], 0>,
                                InstrStage<1, [A9_NPipe]>],
                               [2, 2, 2, 2, 1]>,
@@ -630,7 +670,7 @@ def CortexA9Itineraries : ProcessorItineraries<
   InstrItinData<IIC_VST,      [InstrStage<1, [A9_DRegsN],   0, Required>,
                                // Extra latency cycles since wbck is 6 cycles
                                InstrStage<7, [A9_DRegsVFP], 0, Reserved>,
-                               InstrStage<1, [A9_Pipe1], 0>,
+                               InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
                                InstrStage<1, [A9_MUX0], 0>,
                                InstrStage<1, [A9_NPipe]>]>,
   //
@@ -638,7 +678,7 @@ def CortexA9Itineraries : ProcessorItineraries<
   InstrItinData<IIC_VUNAiD,   [InstrStage<1, [A9_DRegsN],   0, Required>,
                                // Extra latency cycles since wbck is 6 cycles
                                InstrStage<7, [A9_DRegsVFP], 0, Reserved>,
-                               InstrStage<1, [A9_Pipe1]>,
+                               InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
                                InstrStage<1, [A9_MUX0], 0>,
                                InstrStage<1, [A9_NPipe]>],
                               [4, 2]>,
@@ -647,7 +687,7 @@ def CortexA9Itineraries : ProcessorItineraries<
   InstrItinData<IIC_VUNAiQ,   [InstrStage<1, [A9_DRegsN],   0, Required>,
                                // Extra latency cycles since wbck is 6 cycles
                                InstrStage<7, [A9_DRegsVFP], 0, Reserved>,
-                               InstrStage<1, [A9_Pipe1]>,
+                               InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
                                InstrStage<1, [A9_MUX0], 0>,
                                InstrStage<1, [A9_NPipe]>],
                               [4, 2]>,
@@ -656,7 +696,7 @@ def CortexA9Itineraries : ProcessorItineraries<
   InstrItinData<IIC_VQUNAiD,  [InstrStage<1, [A9_DRegsN],   0, Required>,
                                // Extra latency cycles since wbck is 6 cycles
                                InstrStage<7, [A9_DRegsVFP], 0, Reserved>,
-                               InstrStage<1, [A9_Pipe1]>,
+                               InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
                                InstrStage<1, [A9_MUX0], 0>,
                                InstrStage<1, [A9_NPipe]>],
                               [4, 1]>,
@@ -665,7 +705,7 @@ def CortexA9Itineraries : ProcessorItineraries<
   InstrItinData<IIC_VQUNAiQ,  [InstrStage<1, [A9_DRegsN],   0, Required>,
                                // Extra latency cycles since wbck is 6 cycles
                                InstrStage<7, [A9_DRegsVFP], 0, Reserved>,
-                               InstrStage<1, [A9_Pipe1]>,
+                               InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
                                InstrStage<1, [A9_MUX0], 0>,
                                InstrStage<1, [A9_NPipe]>],
                               [4, 1]>,
@@ -674,7 +714,7 @@ def CortexA9Itineraries : ProcessorItineraries<
   InstrItinData<IIC_VBINiD,   [InstrStage<1, [A9_DRegsN],   0, Required>,
                                // Extra latency cycles since wbck is 6 cycles
                                InstrStage<7, [A9_DRegsVFP], 0, Reserved>,
-                               InstrStage<1, [A9_Pipe1]>,
+                               InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
                                InstrStage<1, [A9_MUX0], 0>,
                                InstrStage<1, [A9_NPipe]>],
                               [3, 2, 2]>,
@@ -683,7 +723,7 @@ def CortexA9Itineraries : ProcessorItineraries<
   InstrItinData<IIC_VBINiQ,   [InstrStage<1, [A9_DRegsN],   0, Required>,
                                // Extra latency cycles since wbck is 6 cycles
                                InstrStage<7, [A9_DRegsVFP], 0, Reserved>,
-                               InstrStage<1, [A9_Pipe1]>,
+                               InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
                                InstrStage<1, [A9_MUX0], 0>,
                                InstrStage<1, [A9_NPipe]>],
                               [3, 2, 2]>,
@@ -692,7 +732,7 @@ def CortexA9Itineraries : ProcessorItineraries<
   InstrItinData<IIC_VSUBiD,   [InstrStage<1, [A9_DRegsN],   0, Required>,
                                // Extra latency cycles since wbck is 6 cycles
                                InstrStage<7, [A9_DRegsVFP], 0, Reserved>,
-                               InstrStage<1, [A9_Pipe1]>,
+                               InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
                                InstrStage<1, [A9_MUX0], 0>,
                                InstrStage<1, [A9_NPipe]>],
                               [3, 2, 1]>,
@@ -701,7 +741,7 @@ def CortexA9Itineraries : ProcessorItineraries<
   InstrItinData<IIC_VSUBiQ,   [InstrStage<1, [A9_DRegsN],   0, Required>,
                                // Extra latency cycles since wbck is 6 cycles
                                InstrStage<7, [A9_DRegsVFP], 0, Reserved>,
-                               InstrStage<1, [A9_Pipe1]>,
+                               InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
                                InstrStage<1, [A9_MUX0], 0>,
                                InstrStage<1, [A9_NPipe]>],
                               [3, 2, 1]>,
@@ -710,7 +750,7 @@ def CortexA9Itineraries : ProcessorItineraries<
   InstrItinData<IIC_VSHLiD,   [InstrStage<1, [A9_DRegsN],   0, Required>,
                                // Extra latency cycles since wbck is 6 cycles
                                InstrStage<7, [A9_DRegsVFP], 0, Reserved>,
-                               InstrStage<1, [A9_Pipe1]>,
+                               InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
                                InstrStage<1, [A9_MUX0], 0>,
                                InstrStage<1, [A9_NPipe]>],
                               [3, 1, 1]>,
@@ -719,7 +759,7 @@ def CortexA9Itineraries : ProcessorItineraries<
   InstrItinData<IIC_VSHLiQ,   [InstrStage<1, [A9_DRegsN],   0, Required>,
                                // Extra latency cycles since wbck is 6 cycles
                                InstrStage<7, [A9_DRegsVFP], 0, Reserved>,
-                               InstrStage<1, [A9_Pipe1]>,
+                               InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
                                InstrStage<1, [A9_MUX0], 0>,
                                InstrStage<1, [A9_NPipe]>],
                               [3, 1, 1]>,
@@ -728,7 +768,7 @@ def CortexA9Itineraries : ProcessorItineraries<
   InstrItinData<IIC_VSHLi4D,  [InstrStage<1, [A9_DRegsN],   0, Required>,
                                // Extra latency cycles since wbck is 6 cycles
                                InstrStage<7, [A9_DRegsVFP], 0, Reserved>,
-                               InstrStage<1, [A9_Pipe1]>,
+                               InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
                                InstrStage<1, [A9_MUX0], 0>,
                                InstrStage<1, [A9_NPipe]>],
                               [4, 1, 1]>,
@@ -737,7 +777,7 @@ def CortexA9Itineraries : ProcessorItineraries<
   InstrItinData<IIC_VSHLi4Q,  [InstrStage<1, [A9_DRegsN],   0, Required>,
                                // Extra latency cycles since wbck is 6 cycles
                                InstrStage<7, [A9_DRegsVFP], 0, Reserved>,
-                               InstrStage<1, [A9_Pipe1]>,
+                               InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
                                InstrStage<1, [A9_MUX0], 0>,
                                InstrStage<1, [A9_NPipe]>],
                               [4, 1, 1]>,
@@ -746,7 +786,7 @@ def CortexA9Itineraries : ProcessorItineraries<
   InstrItinData<IIC_VBINi4D,  [InstrStage<1, [A9_DRegsN],   0, Required>,
                                // Extra latency cycles since wbck is 6 cycles
                                InstrStage<7, [A9_DRegsVFP], 0, Reserved>,
-                               InstrStage<1, [A9_Pipe1]>,
+                               InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
                                InstrStage<1, [A9_MUX0], 0>,
                                InstrStage<1, [A9_NPipe]>],
                               [4, 2, 2]>,
@@ -755,7 +795,7 @@ def CortexA9Itineraries : ProcessorItineraries<
   InstrItinData<IIC_VBINi4Q,  [InstrStage<1, [A9_DRegsN],   0, Required>,
                                // Extra latency cycles since wbck is 6 cycles
                                InstrStage<7, [A9_DRegsVFP], 0, Reserved>,
-                               InstrStage<1, [A9_Pipe1]>,
+                               InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
                                InstrStage<1, [A9_MUX0], 0>,
                                InstrStage<1, [A9_NPipe]>],
                               [4, 2, 2]>,
@@ -764,7 +804,7 @@ def CortexA9Itineraries : ProcessorItineraries<
   InstrItinData<IIC_VSUBiD,   [InstrStage<1, [A9_DRegsN],   0, Required>,
                                // Extra latency cycles since wbck is 6 cycles
                                InstrStage<7, [A9_DRegsVFP], 0, Reserved>,
-                               InstrStage<1, [A9_Pipe1]>,
+                               InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
                                InstrStage<1, [A9_MUX0], 0>,
                                InstrStage<1, [A9_NPipe]>],
                               [4, 2, 1]>,
@@ -773,7 +813,7 @@ def CortexA9Itineraries : ProcessorItineraries<
   InstrItinData<IIC_VSUBiQ,   [InstrStage<1, [A9_DRegsN],   0, Required>,
                                // Extra latency cycles since wbck is 6 cycles
                                InstrStage<7, [A9_DRegsVFP], 0, Reserved>,
-                               InstrStage<1, [A9_Pipe1]>,
+                               InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
                                InstrStage<1, [A9_MUX0], 0>,
                                InstrStage<1, [A9_NPipe]>],
                               [4, 2, 1]>,
@@ -783,7 +823,7 @@ def CortexA9Itineraries : ProcessorItineraries<
   InstrItinData<IIC_VCNTiD,   [InstrStage<1, [A9_DRegsN],   0, Required>,
                                // Extra latency cycles since wbck is 6 cycles
                                InstrStage<7, [A9_DRegsVFP], 0, Reserved>,
-                               InstrStage<1, [A9_Pipe1]>,
+                               InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
                                InstrStage<1, [A9_MUX0], 0>,
                                InstrStage<1, [A9_NPipe]>],
                               [3, 2, 2]>,
@@ -794,7 +834,7 @@ def CortexA9Itineraries : ProcessorItineraries<
   InstrItinData<IIC_VCNTiQ,   [InstrStage<1, [A9_DRegsN],   0, Required>,
                                // Extra latency cycles since wbck is 7 cycles
                                InstrStage<8, [A9_DRegsVFP], 0, Reserved>,
-                               InstrStage<1, [A9_Pipe1]>,
+                               InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
                                InstrStage<1, [A9_MUX0], 0>,
                                InstrStage<2, [A9_NPipe]>],
                               [4, 2, 2]>,
@@ -803,7 +843,7 @@ def CortexA9Itineraries : ProcessorItineraries<
   InstrItinData<IIC_VABAD,    [InstrStage<1, [A9_DRegsN],   0, Required>,
                                // Extra latency cycles since wbck is 6 cycles
                                InstrStage<7, [A9_DRegsVFP], 0, Reserved>,
-                               InstrStage<1, [A9_Pipe1]>,
+                               InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
                                InstrStage<1, [A9_MUX0], 0>,
                                InstrStage<1, [A9_NPipe]>],
                               [6, 3, 2, 1]>,
@@ -812,7 +852,7 @@ def CortexA9Itineraries : ProcessorItineraries<
   InstrItinData<IIC_VABAQ,    [InstrStage<1, [A9_DRegsN],   0, Required>,
                                // Extra latency cycles since wbck is 6 cycles
                                InstrStage<7, [A9_DRegsVFP], 0, Reserved>,
-                               InstrStage<1, [A9_Pipe1]>,
+                               InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
                                InstrStage<1, [A9_MUX0], 0>,
                                InstrStage<2, [A9_NPipe]>],
                               [6, 3, 2, 1]>,
@@ -821,7 +861,7 @@ def CortexA9Itineraries : ProcessorItineraries<
   InstrItinData<IIC_VPALiD,   [InstrStage<1, [A9_DRegsN],   0, Required>,
                                // Extra latency cycles since wbck is 6 cycles
                                InstrStage<7, [A9_DRegsVFP], 0, Reserved>,
-                               InstrStage<1, [A9_Pipe1]>,
+                               InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
                                InstrStage<1, [A9_MUX0], 0>,
                                InstrStage<1, [A9_NPipe]>],
                               [6, 3, 1]>,
@@ -830,7 +870,7 @@ def CortexA9Itineraries : ProcessorItineraries<
   InstrItinData<IIC_VPALiQ,   [InstrStage<1, [A9_DRegsN],   0, Required>,
                                // Extra latency cycles since wbck is 6 cycles
                                InstrStage<7, [A9_DRegsVFP], 0, Reserved>,
-                               InstrStage<1, [A9_Pipe1]>,
+                               InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
                                InstrStage<1, [A9_MUX0], 0>,
                                InstrStage<2, [A9_NPipe]>],
                               [6, 3, 1]>,
@@ -840,7 +880,7 @@ def CortexA9Itineraries : ProcessorItineraries<
   InstrItinData<IIC_VMULi16D, [InstrStage<1, [A9_DRegsN],   0, Required>,
                                // Extra latency cycles since wbck is 6 cycles
                                InstrStage<7, [A9_DRegsVFP], 0, Reserved>,
-                               InstrStage<1, [A9_Pipe1]>,
+                               InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
                                InstrStage<1, [A9_MUX0], 0>,
                                InstrStage<1, [A9_NPipe]>],
                               [6, 2, 2]>,
@@ -849,7 +889,7 @@ def CortexA9Itineraries : ProcessorItineraries<
   InstrItinData<IIC_VMULi16Q, [InstrStage<1, [A9_DRegsN],   0, Required>,
                                // Extra latency cycles since wbck is 7 cycles
                                InstrStage<8, [A9_DRegsVFP], 0, Reserved>,
-                               InstrStage<1, [A9_Pipe1]>,
+                               InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
                                InstrStage<1, [A9_MUX0], 0>,
                                InstrStage<2, [A9_NPipe]>],
                               [7, 2, 2]>,
@@ -859,7 +899,7 @@ def CortexA9Itineraries : ProcessorItineraries<
   InstrItinData<IIC_VMULi32D, [InstrStage<1, [A9_DRegsN],   0, Required>,
                                // Extra latency cycles since wbck is 7 cycles
                                InstrStage<8, [A9_DRegsVFP], 0, Reserved>,
-                               InstrStage<1, [A9_Pipe1]>,
+                               InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
                                InstrStage<1, [A9_MUX0], 0>,
                                InstrStage<2, [A9_NPipe]>],
                               [7, 2, 1]>,
@@ -868,7 +908,7 @@ def CortexA9Itineraries : ProcessorItineraries<
   InstrItinData<IIC_VMULi32Q, [InstrStage<1, [A9_DRegsN],   0, Required>,
                                // Extra latency cycles since wbck is 9 cycles
                                InstrStage<10, [A9_DRegsVFP], 0, Reserved>,
-                               InstrStage<1, [A9_Pipe1]>,
+                               InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
                                InstrStage<1, [A9_MUX0], 0>,
                                InstrStage<4, [A9_NPipe]>],
                               [9, 2, 1]>,
@@ -877,7 +917,7 @@ def CortexA9Itineraries : ProcessorItineraries<
   InstrItinData<IIC_VMACi16D, [InstrStage<1, [A9_DRegsN],   0, Required>,
                                // Extra latency cycles since wbck is 6 cycles
                                InstrStage<7, [A9_DRegsVFP], 0, Reserved>,
-                               InstrStage<1, [A9_Pipe1]>,
+                               InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
                                InstrStage<1, [A9_MUX0], 0>,
                                InstrStage<1, [A9_NPipe]>],
                               [6, 3, 2, 2]>,
@@ -886,7 +926,7 @@ def CortexA9Itineraries : ProcessorItineraries<
   InstrItinData<IIC_VMACi32D, [InstrStage<1, [A9_DRegsN],   0, Required>,
                                // Extra latency cycles since wbck is 7 cycles
                                InstrStage<8, [A9_DRegsVFP], 0, Reserved>,
-                               InstrStage<1, [A9_Pipe1]>,
+                               InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
                                InstrStage<1, [A9_MUX0], 0>,
                                InstrStage<2, [A9_NPipe]>],
                               [7, 3, 2, 1]>,
@@ -895,7 +935,7 @@ def CortexA9Itineraries : ProcessorItineraries<
   InstrItinData<IIC_VMACi16Q, [InstrStage<1, [A9_DRegsN],   0, Required>,
                                // Extra latency cycles since wbck is 7 cycles
                                InstrStage<8, [A9_DRegsVFP], 0, Reserved>,
-                               InstrStage<1, [A9_Pipe1]>,
+                               InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
                                InstrStage<1, [A9_MUX0], 0>,
                                InstrStage<2, [A9_NPipe]>],
                               [7, 3, 2, 2]>,
@@ -904,7 +944,7 @@ def CortexA9Itineraries : ProcessorItineraries<
   InstrItinData<IIC_VMACi32Q, [InstrStage<1, [A9_DRegsN],   0, Required>,
                                // Extra latency cycles since wbck is 9 cycles
                                InstrStage<10, [A9_DRegsVFP], 0, Reserved>,
-                               InstrStage<1, [A9_Pipe1]>,
+                               InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
                                InstrStage<1, [A9_MUX0], 0>,
                                InstrStage<4, [A9_NPipe]>],
                               [9, 3, 2, 1]>,
@@ -913,7 +953,7 @@ def CortexA9Itineraries : ProcessorItineraries<
   // Move
   InstrItinData<IIC_VMOV,     [InstrStage<1, [A9_DRegsN],   0, Required>,
                                InstrStage<1, [A9_DRegsVFP], 0, Reserved>,
-                               InstrStage<1, [A9_Pipe1]>,
+                               InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
                                InstrStage<1, [A9_MUX0], 0>,
                                InstrStage<1, [A9_NPipe]>],
                               [1,1]>,
@@ -922,7 +962,7 @@ def CortexA9Itineraries : ProcessorItineraries<
   InstrItinData<IIC_VMOVImm,  [InstrStage<1, [A9_DRegsN],   0, Required>,
                                // Extra latency cycles since wbck is 6 cycles
                                InstrStage<7, [A9_DRegsVFP], 0, Reserved>,
-                               InstrStage<1, [A9_Pipe1]>,
+                               InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
                                InstrStage<1, [A9_MUX0], 0>,
                                InstrStage<1, [A9_NPipe]>],
                               [3]>,
@@ -931,7 +971,7 @@ def CortexA9Itineraries : ProcessorItineraries<
   InstrItinData<IIC_VMOVD,    [InstrStage<1, [A9_DRegsN],   0, Required>,
   // FIXME: all latencies are arbitrary, no information is available
                                InstrStage<3, [A9_DRegsVFP], 0, Reserved>,
-                               InstrStage<1, [A9_Pipe1]>,
+                               InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
                                InstrStage<1, [A9_MUX0], 0>,
                                InstrStage<1, [A9_NPipe]>],
                               [2, 1]>,
@@ -940,7 +980,7 @@ def CortexA9Itineraries : ProcessorItineraries<
   InstrItinData<IIC_VMOVQ,    [InstrStage<1, [A9_DRegsN],   0, Required>,
   // FIXME: all latencies are arbitrary, no information is available
                                InstrStage<3, [A9_DRegsVFP], 0, Reserved>,
-                               InstrStage<1, [A9_Pipe1]>,
+                               InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
                                InstrStage<1, [A9_MUX0], 0>,
                                InstrStage<1, [A9_NPipe]>],
                               [2, 1]>,
@@ -949,7 +989,7 @@ def CortexA9Itineraries : ProcessorItineraries<
   InstrItinData<IIC_VMOVIS ,  [InstrStage<1, [A9_DRegsN],   0, Required>,
   // FIXME: all latencies are arbitrary, no information is available
                                InstrStage<3, [A9_DRegsVFP], 0, Reserved>,
-                               InstrStage<1, [A9_Pipe1]>,
+                               InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
                                InstrStage<1, [A9_MUX0], 0>,
                                InstrStage<1, [A9_NPipe]>],
                               [2, 1]>,
@@ -958,7 +998,7 @@ def CortexA9Itineraries : ProcessorItineraries<
   InstrItinData<IIC_VMOVID ,  [InstrStage<1, [A9_DRegsN],   0, Required>,
   // FIXME: all latencies are arbitrary, no information is available
                                InstrStage<3, [A9_DRegsVFP], 0, Reserved>,
-                               InstrStage<1, [A9_Pipe1]>,
+                               InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
                                InstrStage<1, [A9_MUX0], 0>,
                                InstrStage<1, [A9_NPipe]>],
                               [2, 1, 1]>,
@@ -967,7 +1007,7 @@ def CortexA9Itineraries : ProcessorItineraries<
   InstrItinData<IIC_VMOVSI ,  [InstrStage<1, [A9_DRegsN],   0, Required>,
   // FIXME: all latencies are arbitrary, no information is available
                                InstrStage<3, [A9_DRegsVFP], 0, Reserved>,
-                               InstrStage<1, [A9_Pipe1]>,
+                               InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
                                InstrStage<1, [A9_MUX0], 0>,
                                InstrStage<1, [A9_NPipe]>],
                               [2, 1]>,
@@ -976,7 +1016,7 @@ def CortexA9Itineraries : ProcessorItineraries<
   InstrItinData<IIC_VMOVDI ,  [InstrStage<1, [A9_DRegsN],   0, Required>,
   // FIXME: all latencies are arbitrary, no information is available
                                InstrStage<3, [A9_DRegsVFP], 0, Reserved>,
-                               InstrStage<1, [A9_Pipe1]>,
+                               InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
                                InstrStage<1, [A9_MUX0], 0>,
                                InstrStage<1, [A9_NPipe]>],
                               [2, 2, 1]>,
@@ -985,7 +1025,7 @@ def CortexA9Itineraries : ProcessorItineraries<
   InstrItinData<IIC_VMOVISL , [InstrStage<1, [A9_DRegsN],   0, Required>,
   // FIXME: all latencies are arbitrary, no information is available
                                InstrStage<4, [A9_DRegsVFP], 0, Reserved>,
-                               InstrStage<1, [A9_Pipe1]>,
+                               InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
                                InstrStage<1, [A9_MUX0], 0>,
                                InstrStage<2, [A9_NPipe]>],
                               [3, 1, 1]>,
@@ -995,7 +1035,7 @@ def CortexA9Itineraries : ProcessorItineraries<
   InstrItinData<IIC_VMOVN,    [InstrStage<1, [A9_DRegsN],   0, Required>,
                                // Extra latency cycles since wbck is 6 cycles
                                InstrStage<7, [A9_DRegsVFP], 0, Reserved>,
-                               InstrStage<1, [A9_Pipe1]>,
+                               InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
                                InstrStage<1, [A9_MUX0], 0>,
                                InstrStage<1, [A9_NPipe]>],
                               [3, 1]>,
@@ -1004,7 +1044,7 @@ def CortexA9Itineraries : ProcessorItineraries<
   InstrItinData<IIC_VUNAD,    [InstrStage<1, [A9_DRegsN],   0, Required>,
                                // Extra latency cycles since wbck is 6 cycles
                                InstrStage<7, [A9_DRegsVFP], 0, Reserved>,
-                               InstrStage<1, [A9_Pipe1]>,
+                               InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
                                InstrStage<1, [A9_MUX0], 0>,
                                InstrStage<1, [A9_NPipe]>],
                               [5, 2]>,
@@ -1015,7 +1055,7 @@ def CortexA9Itineraries : ProcessorItineraries<
   InstrItinData<IIC_VUNAQ,    [InstrStage<1, [A9_DRegsN],   0, Required>,
                                // Extra latency cycles since wbck is 7 cycles
                                InstrStage<8, [A9_DRegsVFP], 0, Reserved>,
-                               InstrStage<1, [A9_Pipe1]>,
+                               InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
                                InstrStage<1, [A9_MUX0], 0>,
                                InstrStage<2, [A9_NPipe]>],
                               [6, 2]>,
@@ -1026,7 +1066,7 @@ def CortexA9Itineraries : ProcessorItineraries<
   InstrItinData<IIC_VBIND,    [InstrStage<1, [A9_DRegsN],   0, Required>,
                                // Extra latency cycles since wbck is 7 cycles
                                InstrStage<7, [A9_DRegsVFP], 0, Reserved>,
-                               InstrStage<1, [A9_Pipe1]>,
+                               InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
                                InstrStage<1, [A9_MUX0], 0>,
                                InstrStage<1, [A9_NPipe]>],
                               [5, 2, 2]>,
@@ -1039,7 +1079,7 @@ def CortexA9Itineraries : ProcessorItineraries<
   InstrItinData<IIC_VBINQ,    [InstrStage<1, [A9_DRegsN],   0, Required>,
                                // Extra latency cycles since wbck is 8 cycles
                                InstrStage<8, [A9_DRegsVFP], 0, Reserved>,
-                               InstrStage<1, [A9_Pipe1]>,
+                               InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
                                InstrStage<1, [A9_MUX0], 0>,
                                InstrStage<2, [A9_NPipe]>],
                               [6, 2, 2]>,
@@ -1048,7 +1088,7 @@ def CortexA9Itineraries : ProcessorItineraries<
   InstrItinData<IIC_VMACD,    [InstrStage<1, [A9_DRegsN],   0, Required>,
                                // Extra latency cycles since wbck is 7 cycles
                                InstrStage<8, [A9_DRegsVFP], 0, Reserved>,
-                               InstrStage<1, [A9_Pipe1]>,
+                               InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
                                InstrStage<1, [A9_MUX0], 0>,
                                InstrStage<2, [A9_NPipe]>],
                               [6, 3, 2, 1]>,
@@ -1059,7 +1099,7 @@ def CortexA9Itineraries : ProcessorItineraries<
   InstrItinData<IIC_VMACQ,    [InstrStage<1, [A9_DRegsN],   0, Required>,
                                // Extra latency cycles since wbck is 9 cycles
                                InstrStage<10, [A9_DRegsVFP], 0, Reserved>,
-                               InstrStage<1, [A9_Pipe1]>,
+                               InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
                                InstrStage<1, [A9_MUX0], 0>,
                                InstrStage<4, [A9_NPipe]>],
                               [8, 4, 2, 1]>,
@@ -1068,7 +1108,7 @@ def CortexA9Itineraries : ProcessorItineraries<
   InstrItinData<IIC_VRECSD,   [InstrStage<1, [A9_DRegsN],   0, Required>,
                                // Extra latency cycles since wbck is 7 cycles
                                InstrStage<8, [A9_DRegsVFP], 0, Reserved>,
-                               InstrStage<1, [A9_Pipe1]>,
+                               InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
                                InstrStage<1, [A9_MUX0], 0>,
                                InstrStage<2, [A9_NPipe]>],
                               [6, 2, 2]>,
@@ -1077,7 +1117,7 @@ def CortexA9Itineraries : ProcessorItineraries<
   InstrItinData<IIC_VRECSQ,   [InstrStage<1, [A9_DRegsN],   0, Required>,
                                // Extra latency cycles since wbck is 9 cycles
                                InstrStage<10, [A9_DRegsVFP], 0, Reserved>,
-                               InstrStage<1, [A9_Pipe1]>,
+                               InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
                                InstrStage<1, [A9_MUX0], 0>,
                                InstrStage<4, [A9_NPipe]>],
                               [8, 2, 2]>,
@@ -1086,7 +1126,7 @@ def CortexA9Itineraries : ProcessorItineraries<
   InstrItinData<IIC_VPERMD,   [InstrStage<1, [A9_DRegsN],   0, Required>,
                                // Extra latency cycles since wbck is 6 cycles
                                InstrStage<7, [A9_DRegsVFP], 0, Reserved>,
-                               InstrStage<1, [A9_Pipe1]>,
+                               InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
                                InstrStage<1, [A9_MUX0], 0>,
                                InstrStage<1, [A9_NPipe]>],
                               [2, 2, 1, 1]>,
@@ -1097,7 +1137,7 @@ def CortexA9Itineraries : ProcessorItineraries<
   InstrItinData<IIC_VPERMQ,   [InstrStage<1, [A9_DRegsN],   0, Required>,
                                // Extra latency cycles since wbck is 7 cycles
                                InstrStage<8, [A9_DRegsVFP], 0, Reserved>,
-                               InstrStage<1, [A9_Pipe1]>,
+                               InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
                                InstrStage<1, [A9_MUX0], 0>,
                                InstrStage<2, [A9_NPipe]>],
                               [3, 3, 1, 1]>,
@@ -1108,7 +1148,7 @@ def CortexA9Itineraries : ProcessorItineraries<
   InstrItinData<IIC_VPERMQ3,  [InstrStage<1, [A9_DRegsN],   0, Required>,
                                // Extra latency cycles since wbck is 8 cycles
                                InstrStage<9, [A9_DRegsVFP], 0, Reserved>,
-                               InstrStage<1, [A9_Pipe1]>,
+                               InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
                                InstrStage<1, [A9_MUX0], 0>,
                                InstrStage<3, [A9_NPipe]>],
                               [4, 4, 1, 1]>,
@@ -1118,7 +1158,7 @@ def CortexA9Itineraries : ProcessorItineraries<
   InstrItinData<IIC_VEXTD,    [InstrStage<1, [A9_DRegsN],   0, Required>,
                                // Extra latency cycles since wbck is 7 cycles
                                InstrStage<7, [A9_DRegsVFP], 0, Reserved>,
-                               InstrStage<1, [A9_Pipe1]>,
+                               InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
                                InstrStage<1, [A9_MUX0], 0>,
                                InstrStage<1, [A9_NPipe]>],
                               [2, 1, 1]>,
@@ -1127,7 +1167,7 @@ def CortexA9Itineraries : ProcessorItineraries<
   InstrItinData<IIC_VEXTQ,    [InstrStage<1, [A9_DRegsN],   0, Required>,
                                // Extra latency cycles since wbck is 9 cycles
                                InstrStage<8, [A9_DRegsVFP], 0, Reserved>,
-                               InstrStage<1, [A9_Pipe1]>,
+                               InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
                                InstrStage<1, [A9_MUX0], 0>,
                                InstrStage<2, [A9_NPipe]>],
                               [3, 1, 1]>,
@@ -1136,28 +1176,28 @@ def CortexA9Itineraries : ProcessorItineraries<
   InstrItinData<IIC_VTB1,     [InstrStage<1, [A9_DRegsN],   0, Required>,
                                // Extra latency cycles since wbck is 7 cycles
                                InstrStage<8, [A9_DRegsVFP], 0, Reserved>,
-                               InstrStage<1, [A9_Pipe1]>,
+                               InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
                                InstrStage<1, [A9_MUX0], 0>,
                                InstrStage<2, [A9_NPipe]>],
                               [3, 2, 1]>,
   InstrItinData<IIC_VTB2,     [InstrStage<2, [A9_DRegsN],   0, Required>,
                                // Extra latency cycles since wbck is 7 cycles
                                InstrStage<8, [A9_DRegsVFP], 0, Reserved>,
-                               InstrStage<1, [A9_Pipe1]>,
+                               InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
                                InstrStage<1, [A9_MUX0], 0>,
                                InstrStage<2, [A9_NPipe]>],
                               [3, 2, 2, 1]>,
   InstrItinData<IIC_VTB3,     [InstrStage<2, [A9_DRegsN],   0, Required>,
                                // Extra latency cycles since wbck is 8 cycles
                                InstrStage<9, [A9_DRegsVFP], 0, Reserved>,
-                               InstrStage<1, [A9_Pipe1]>,
+                               InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
                                InstrStage<1, [A9_MUX0], 0>,
                                InstrStage<3, [A9_NPipe]>],
                               [4, 2, 2, 3, 1]>,
   InstrItinData<IIC_VTB4,     [InstrStage<1, [A9_DRegsN],   0, Required>,
                                // Extra latency cycles since wbck is 8 cycles
                                InstrStage<9, [A9_DRegsVFP], 0, Reserved>,
-                               InstrStage<1, [A9_Pipe1]>,
+                               InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
                                InstrStage<1, [A9_MUX0], 0>,
                                InstrStage<3, [A9_NPipe]>],
                               [4, 2, 2, 3, 3, 1]>,
@@ -1166,28 +1206,28 @@ def CortexA9Itineraries : ProcessorItineraries<
   InstrItinData<IIC_VTBX1,    [InstrStage<1, [A9_DRegsN],   0, Required>,
                                // Extra latency cycles since wbck is 7 cycles
                                InstrStage<8, [A9_DRegsVFP], 0, Reserved>,
-                               InstrStage<1, [A9_Pipe1]>,
+                               InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
                                InstrStage<1, [A9_MUX0], 0>,
                                InstrStage<2, [A9_NPipe]>],
                               [3, 1, 2, 1]>,
   InstrItinData<IIC_VTBX2,    [InstrStage<1, [A9_DRegsN],   0, Required>,
                                // Extra latency cycles since wbck is 7 cycles
                                InstrStage<8, [A9_DRegsVFP], 0, Reserved>,
-                               InstrStage<1, [A9_Pipe1]>,
+                               InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
                                InstrStage<1, [A9_MUX0], 0>,
                                InstrStage<2, [A9_NPipe]>],
                               [3, 1, 2, 2, 1]>,
   InstrItinData<IIC_VTBX3,    [InstrStage<1, [A9_DRegsN],   0, Required>,
                                // Extra latency cycles since wbck is 8 cycles
                                InstrStage<9, [A9_DRegsVFP], 0, Reserved>,
-                               InstrStage<1, [A9_Pipe1]>,
+                               InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
                                InstrStage<1, [A9_MUX0], 0>,
                                InstrStage<3, [A9_NPipe]>],
                               [4, 1, 2, 2, 3, 1]>,
   InstrItinData<IIC_VTBX4,    [InstrStage<1, [A9_DRegsN],   0, Required>,
                                // Extra latency cycles since wbck is 8 cycles
                                InstrStage<9, [A9_DRegsVFP], 0, Reserved>,
-                               InstrStage<1, [A9_Pipe1]>,
+                               InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
                                InstrStage<1, [A9_MUX0], 0>,
                                InstrStage<2, [A9_NPipe]>],
                               [4, 1, 2, 2, 3, 3, 1]>
