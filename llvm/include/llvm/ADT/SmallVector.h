@@ -59,17 +59,11 @@ protected:
   // something else.  An array of char would work great, but might not be
   // aligned sufficiently.  Instead, we either use GCC extensions, or some
   // number of union instances for the space, which guarantee maximal alignment.
-  struct U {
-#ifdef __GNUC__
-    char X __attribute__((aligned(8)));
-#else
-    union {
-      double D;
-      long double LD;
-      long long L;
-      void *P;
-    } X;
-#endif
+  union U {
+    double D;
+    long double LD;
+    long long L;
+    void *P;
   } FirstEl;
   // Space after 'FirstEl' is clobbered, do not add any instance vars after it.
 

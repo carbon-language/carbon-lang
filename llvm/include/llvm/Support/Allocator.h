@@ -221,16 +221,12 @@ public:
 inline void *operator new(size_t Size, llvm::BumpPtrAllocator &Allocator) {
   struct S {
     char c;
-#ifdef __GNUC__
-    char x __attribute__((aligned));
-#else
     union {
       double D;
       long double LD;
       long long L;
       void *P;
     } x;
-#endif
   };
   return Allocator.Allocate(Size, std::min((size_t)llvm::NextPowerOf2(Size),
                                            offsetof(S, x)));
