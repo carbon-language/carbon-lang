@@ -57,8 +57,8 @@ protected:
   // Allocate raw space for N elements of type T.  If T has a ctor or dtor, we
   // don't want it to be automatically run, so we need to represent the space as
   // something else.  An array of char would work great, but might not be
-  // aligned sufficiently.  Instead, we either use GCC extensions, or some
-  // number of union instances for the space, which guarantee maximal alignment.
+  // aligned sufficiently.  Instead we use some number of union instances for
+  // the space, which guarantee maximal alignment.
   union U {
     double D;
     long double LD;
