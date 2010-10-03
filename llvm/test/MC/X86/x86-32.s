@@ -585,3 +585,8 @@ ljmp	$0x7ace,$0x7ace
 
 // CHECK: pshufw $14, %mm4, %mm0 # encoding: [0x0f,0x70,0xc4,0x0e]
 pshufw $14, %mm4, %mm0
+
+// CHECK: pshufw $90, %mm4, %mm0 # encoding: [0x0f,0x70,0xc4,0x5a]
+// PR8288
+pshufw $90, %mm4, %mm0
+
