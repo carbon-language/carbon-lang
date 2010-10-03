@@ -36,9 +36,27 @@ let Constraints = "$src1 = $dst" in {
   }
 }
 
-defm PAVGUSB : I3DNow_binop_rm<0xBF, "pavgusb">;
+defm PAVGUSB  : I3DNow_binop_rm<0xBF, "pavgusb">;
+defm PF2ID    : I3DNow_binop_rm<0x1D, "pf2id">;
+defm PFACC    : I3DNow_binop_rm<0xAE, "pfacc">;
+defm PFADD    : I3DNow_binop_rm<0x9E, "pfadd">;
+defm PFCMPEQ  : I3DNow_binop_rm<0xB0, "pfcmpeq">;
+defm PFCMPGE  : I3DNow_binop_rm<0x90, "pfcmpge">;
+defm PFCMPGT  : I3DNow_binop_rm<0xA0, "pfcmpgt">;
+defm PFMAX    : I3DNow_binop_rm<0xA4, "pfmax">;
+defm PFMIN    : I3DNow_binop_rm<0x94, "pfmin">;
+defm PFMUL    : I3DNow_binop_rm<0xB4, "pfmul">;
+defm PFRCP    : I3DNow_binop_rm<0x96, "pfrcp">;
+defm PFRCPIT1 : I3DNow_binop_rm<0xA6, "pfrcpit1">;
+defm PFRCPIT2 : I3DNow_binop_rm<0xB6, "pfrcpit2">;
+defm PFRSQIT1 : I3DNow_binop_rm<0xA7, "pfrsqit1">;
+defm PFRSQRT  : I3DNow_binop_rm<0x97, "pfrsqrt">;
+defm PFSUB    : I3DNow_binop_rm<0x9A, "pfsub">;
+defm PFSUBR   : I3DNow_binop_rm<0xAA, "pfsubr">;
+defm PI2FD    : I3DNow_binop_rm<0x0D, "pi2fd">;
+defm PMULHRW  : I3DNow_binop_rm<0xB7, "pmulhrw">;
 
 
 
 
-// TODO: Add support for the rest of the 3DNow! and "3DNowA" instructions.
+// TODO: Add support for the "3DNowA" instructions.
