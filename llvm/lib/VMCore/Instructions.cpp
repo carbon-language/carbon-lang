@@ -2459,10 +2459,9 @@ CastInst::getCastOpcode(
       assert(!"Casting pointer to other than pointer or int");
     }
   } else if (DestTy->isX86_MMXTy()) {
-    if (const VectorType *SrcPTy = dyn_cast<VectorType>(SrcTy)) {
-      assert(SrcPTy->getBitWidth()==64 &&
+    if (isa<VectorType>(SrcTy)) {
+      assert(cast<VectorType>(SrcTy)->getBitWidth() == 64 &&
              "Casting vector of wrong width to X86_MMX");
-      SrcPTy = NULL;      // inhibit compiler warning
       return BitCast;                               // 64-bit vector to MMX
     } else {
       assert(!"Illegal cast to X86_MMX");
