@@ -535,6 +535,13 @@ void ELFObjectWriterImpl::RecordRelocation(const MCAssembler &Asm,
     MCSymbolData &SD = Asm.getSymbolData(*Symbol);
     MCFragment *F = SD.getFragment();
 
+    if (const MCSymbolRefExpr *RefB = Target.getSymB()) {
+      const MCSymbol &SymbolB = RefB->getSymbol();
+      MCSymbolData &SDB = Asm.getSymbolData(SymbolB);
+      IsPCRel = true;
+      Value += Fixup.getOffset() - Layout.getSymbolAddress(&SDB);
+    }
+
     // Check that this case has already been fully resolved before we get
     // here.
     if (Symbol->isDefined() && !SD.isExternal() &&
