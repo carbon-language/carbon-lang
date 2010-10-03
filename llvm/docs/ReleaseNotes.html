@@ -3,6 +3,7 @@
 <html>
 <head>
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <meta encoding="utf8">
   <link rel="stylesheet" href="llvm.css" type="text/css">
   <title>LLVM 2.8 Release Notes</title>
 </head>
@@ -152,12 +153,11 @@ production-quality compiler for C, Objective-C, C++ and Objective-C++ on x86
 <div class="doc_text">
 <p>
 The <a href="http://vmkit.llvm.org/">VMKit project</a> is an implementation of
-a JVM and a CLI Virtual Machine (Microsoft .NET is an
-implementation of the CLI) using LLVM for static and just-in-time
-compilation.</p>
-
-<p>With the release of LLVM 2.8, ...</p>
-
+a Java Virtual Machine (Java VM or JVM) that uses LLVM for static and
+just-in-time compilation.  As of LLVM 2.8, VMKit now supports copying garbage
+collectors, and can be configured to use MMTk's copy mark-sweep garbage
+collector.  In LLVM 2.8, the VMKit .NET VM is no longer being maintained.
+</p>
 </div>
 
 
@@ -408,6 +408,107 @@ compiler backend or a VM in Python.</p>
 
 </div>
 
+
+<!--=========================================================================-->
+<div class="doc_subsection">
+<a name="FAUST">FAUST Real-Time Audio Signal Processing Language</a>
+</div>
+
+<div class="doc_text">
+<p>
+<a href="http://faust.grame.fr">FAUST</a> is a compiled language for real-time
+audio signal processing. The name FAUST stands for Functional AUdio STream. Its
+programming model combines two approaches: functional programming and block
+diagram composition. In addition with the C, C++, JAVA output formats, the
+Faust compiler can now generate LLVM bitcode, and works with LLVM 2.7 and
+2.8.</p>
+
+</div>
+
+<!--=========================================================================-->
+<div class="doc_subsection">
+<a name="jade">Jade Just-in-time Adaptive Decoder Engine</a>
+</div>
+
+<div class="doc_text">
+<p><a 
+href="http://sourceforge.net/apps/trac/orcc/wiki/JadeDocumentation">Jade</a>
+(Just-in-time Adaptive Decoder Engine) is a generic video decoder engine using
+LLVM for just-in-time compilation of video decoder configurations. Those
+configurations are designed by MPEG Reconfigurable Video Coding (RVC) committee.
+MPEG RVC standard is built on a stream-based dataflow representation of
+decoders. It is composed of a standard library of coding tools written in
+RVC-CAL language and a dataflow configuration &emdash; block diagram &emdash;
+of a decoder.</p>
+
+<p>Jade project is hosted as part of the <a href="http://orcc.sf.net">Open 
+RVC-CAL Compiler</a> and requires it to translate the RVC-CAL standard library
+of video coding tools into an LLVM assembly code.</p>
+
+</div>
+
+<!--=========================================================================-->
+<div class="doc_subsection">
+<a name="neko_llvm_jit">LLVM JIT for Neko VM</a>
+</div>
+
+<div class="doc_text">
+<p><a href="http://github.com/vava/neko_llvm_jit">Neko LLVM JIT</a>
+replaces the standard Neko JIT with an LLVM-based implementation.  While not
+fully complete, it is already providing a 1.5x speedup on 64-bit systems.
+Neko LLVM JIT requires LLVM 2.8 or later.</p>
+
+</div>
+
+<!--=========================================================================-->
+<div class="doc_subsection">
+<a name="crack">Crack Scripting Language</a>
+</div>
+
+<div class="doc_text">
+<p>
+<a href="http://code.google.com/p/crack-language/">Crack</a> aims to provide
+the ease of development of a scripting language with the performance of a
+compiled language. The language derives concepts from C++, Java and Python,
+incorporating object-oriented programming, operator overloading and strong
+typing.  Crack 0.2 works with LLVM 2.7, and the forthcoming Crack 0.2.1 release
+builds on LLVM 2.8.</p>
+
+</div>
+
+<!--=========================================================================-->
+<div class="doc_subsection">
+<a name="DresdenTM">Dresden TM Compiler (DTMC)</a>
+</div>
+
+<div class="doc_text">
+<p>
+<a href="http://tm.inf.tu-dresden.de">DTMC</a> provides support for 
+Transactional Memory, which is an easy-to-use and efficient way to synchronize 
+accesses to shared memory. Transactions can contain normal C/C++ code (e.g., 
+__transaction { list.remove(x); x.refCount--; }) and will be executed 
+virtually atomically and isolated from other transactions.</p>
+
+</div>
+
+<!--=========================================================================-->
+<div class="doc_subsection">
+<a name="Kai">Kai Interpreter</a>
+</div>
+
+<div class="doc_text">
+<p>
+<a href="http://www.oriontransfer.co.nz/research/kai">Kai</a> (Japanese 会 for
+meeting/gathering) is an experimental interpreter that provides a highly
+extensible runtime environment and explicit control over the compilation
+process. Programs are defined using nested symbolic expressions, which are all
+parsed into first-class values with minimal intrinsic semantics. Kai can
+generate optimised code at run-time (using LLVM) in order to exploit the nature
+of the underlying hardware and to integrate with external software libraries.
+It is a unique exploration into world of dynamic code compilation, and the
+interaction between high level and low level semantics.</p>
+
+</div>
 
 
 <!-- *********************************************************************** -->
