@@ -91,17 +91,20 @@ ARMBaseTargetMachine::ARMBaseTargetMachine(const Target &T,
     Subtarget(TT, FS, isThumb),
     FrameInfo(Subtarget),
     JITInfo(),
-    InstrItins(Subtarget.getInstrItineraryData()),
-    DataLayout(Subtarget.getDataLayout()),
-    ELFWriterInfo(*this)
+    InstrItins(Subtarget.getInstrItineraryData())
 {
   DefRelocModel = getRelocationModel();
 }
 
 ARMTargetMachine::ARMTargetMachine(const Target &T, const std::string &TT,
                                    const std::string &FS)
-  : ARMBaseTargetMachine(T, TT, FS, false),
-    InstrInfo(Subtarget),
+  : ARMBaseTargetMachine(T, TT, FS, false), InstrInfo(Subtarget),
+    DataLayout(Subtarget.isAPCS_ABI() ?
+               std::string("e-p:32:32-f64:32:64-i64:32:64-"
+                           "v128:32:128-v64:32:64-n32") :
+               std::string("e-p:32:32-f64:64:64-i64:64:64-"
+                           "v128:64:128-v64:64:64-n32")),
+    ELFWriterInfo(*this),
     TLInfo(*this),
     TSInfo(*this) {
   if (!Subtarget.hasARMOps())
@@ -115,6 +118,14 @@ ThumbTargetMachine::ThumbTargetMachine(const Target &T, const std::string &TT,
     InstrInfo(Subtarget.hasThumb2()
               ? ((ARMBaseInstrInfo*)new Thumb2InstrInfo(Subtarget))
               : ((ARMBaseInstrInfo*)new Thumb1InstrInfo(Subtarget))),
+    DataLayout(Subtarget.isAPCS_ABI() ?
+               std::string("e-p:32:32-f64:32:64-i64:32:64-"
+                           "i16:16:32-i8:8:32-i1:8:32-"
+                           "v128:32:128-v64:32:64-a:0:32-n32") :
+               std::string("e-p:32:32-f64:64:64-i64:64:64-"
+                           "i16:16:32-i8:8:32-i1:8:32-"
+                           "v128:64:128-v64:64:64-a:0:32-n32")),
+    ELFWriterInfo(*this),
     TLInfo(*this),
     TSInfo(*this) {
 }

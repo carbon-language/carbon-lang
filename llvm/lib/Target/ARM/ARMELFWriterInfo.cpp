@@ -25,7 +25,8 @@ using namespace llvm;
 //===----------------------------------------------------------------------===//
 
 ARMELFWriterInfo::ARMELFWriterInfo(TargetMachine &TM)
-  : TargetELFWriterInfo(TM) {
+  : TargetELFWriterInfo(TM.getTargetData()->getPointerSizeInBits() == 64,
+                        TM.getTargetData()->isLittleEndian()) {
   // silently OK construction
 }
 

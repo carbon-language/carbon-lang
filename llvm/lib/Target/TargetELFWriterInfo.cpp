@@ -17,9 +17,8 @@
 #include "llvm/Target/TargetMachine.h"
 using namespace llvm;
 
-TargetELFWriterInfo::TargetELFWriterInfo(TargetMachine &tm) : TM(tm) {
-  is64Bit = TM.getTargetData()->getPointerSizeInBits() == 64;
-  isLittleEndian = TM.getTargetData()->isLittleEndian();
+TargetELFWriterInfo::TargetELFWriterInfo(bool is64Bit_, bool isLittleEndian_) :
+  is64Bit(is64Bit_), isLittleEndian(isLittleEndian_) {
 }
 
 TargetELFWriterInfo::~TargetELFWriterInfo() {}

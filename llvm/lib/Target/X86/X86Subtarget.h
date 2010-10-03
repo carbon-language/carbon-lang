@@ -190,20 +190,6 @@ public:
     return !Is64Bit && (isTargetMingw() || isTargetWindows());
   }
 
-  std::string getDataLayout() const {
-    const char *p;
-    if (is64Bit())
-      p = "e-p:64:64-s:64-f64:64:64-i64:64:64-f80:128:128-n8:16:32:64";
-    else if (isTargetDarwin())
-      p = "e-p:32:32-f64:32:64-i64:32:64-f80:128:128-n8:16:32";
-    else if (isTargetCygMing() || isTargetWindows())
-      p = "e-p:32:32-f64:64:64-i64:64:64-f80:32:32-n8:16:32";
-    else
-      p = "e-p:32:32-f64:32:64-i64:32:64-f80:32:32-n8:16:32";
-
-    return std::string(p);
-  }
-
   bool isPICStyleSet() const { return PICStyle != PICStyles::None; }
   bool isPICStyleGOT() const { return PICStyle == PICStyles::GOT; }
   bool isPICStyleRIPRel() const { return PICStyle == PICStyles::RIPRel; }

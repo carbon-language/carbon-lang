@@ -31,12 +31,7 @@ class formatted_raw_ostream;
 
 class X86TargetMachine : public LLVMTargetMachine {
   X86Subtarget      Subtarget;
-  const TargetData  DataLayout; // Calculates type size & alignment
   TargetFrameInfo   FrameInfo;
-  X86InstrInfo      InstrInfo;
-  X86JITInfo        JITInfo;
-  X86TargetLowering TLInfo;
-  X86SelectionDAGInfo TSInfo;
   X86ELFWriterInfo  ELFWriterInfo;
   Reloc::Model      DefRelocModel; // Reloc model before it's overridden.
 
@@ -49,20 +44,23 @@ public:
   X86TargetMachine(const Target &T, const std::string &TT, 
                    const std::string &FS, bool is64Bit);
 
-  virtual const X86InstrInfo     *getInstrInfo() const { return &InstrInfo; }
+  virtual const X86InstrInfo     *getInstrInfo() const {
+    llvm_unreachable("getInstrInfo not implemented");
+  }
   virtual const TargetFrameInfo  *getFrameInfo() const { return &FrameInfo; }
-  virtual       X86JITInfo       *getJITInfo()         { return &JITInfo; }
+  virtual       X86JITInfo       *getJITInfo()         {
+    llvm_unreachable("getJITInfo not implemented");
+  }
   virtual const X86Subtarget     *getSubtargetImpl() const{ return &Subtarget; }
-  virtual const X86TargetLowering *getTargetLowering() const { 
-    return &TLInfo;
+  virtual const X86TargetLowering *getTargetLowering() const {
+    llvm_unreachable("getTargetLowering not implemented");
   }
   virtual const X86SelectionDAGInfo *getSelectionDAGInfo() const { 
-    return &TSInfo;
+    llvm_unreachable("getSelectionDAGInfo not implemented");
   }
   virtual const X86RegisterInfo  *getRegisterInfo() const {
-    return &InstrInfo.getRegisterInfo();
+    return &getInstrInfo()->getRegisterInfo();
   }
-  virtual const TargetData       *getTargetData() const { return &DataLayout; }
   virtual const X86ELFWriterInfo *getELFWriterInfo() const {
     return Subtarget.isTargetELF() ? &ELFWriterInfo : 0;
   }
@@ -79,17 +77,53 @@ public:
 /// X86_32TargetMachine - X86 32-bit target machine.
 ///
 class X86_32TargetMachine : public X86TargetMachine {
+  const TargetData  DataLayout; // Calculates type size & alignment
+  X86InstrInfo      InstrInfo;
+  X86SelectionDAGInfo TSInfo;
+  X86TargetLowering TLInfo;
+  X86JITInfo        JITInfo;
 public:
   X86_32TargetMachine(const Target &T, const std::string &M,
                       const std::string &FS);
+  virtual const TargetData *getTargetData() const { return &DataLayout; }
+  virtual const X86TargetLowering *getTargetLowering() const {
+    return &TLInfo;
+  }
+  virtual const X86SelectionDAGInfo *getSelectionDAGInfo() const { 
+    return &TSInfo;
+  }
+  virtual const X86InstrInfo     *getInstrInfo() const {
+    return &InstrInfo;
+  }
+  virtual       X86JITInfo       *getJITInfo()         {
+    return &JITInfo;
+  }
 };
 
 /// X86_64TargetMachine - X86 64-bit target machine.
 ///
 class X86_64TargetMachine : public X86TargetMachine {
+  const TargetData  DataLayout; // Calculates type size & alignment
+  X86InstrInfo      InstrInfo;
+  X86SelectionDAGInfo TSInfo;
+  X86TargetLowering TLInfo;
+  X86JITInfo        JITInfo;
 public:
   X86_64TargetMachine(const Target &T, const std::string &TT,
                       const std::string &FS);
+  virtual const TargetData *getTargetData() const { return &DataLayout; }
+  virtual const X86TargetLowering *getTargetLowering() const {
+    return &TLInfo;
+  }
+  virtual const X86SelectionDAGInfo *getSelectionDAGInfo() const { 
+    return &TSInfo;
+  }
+  virtual const X86InstrInfo     *getInstrInfo() const {
+    return &InstrInfo;
+  }
+  virtual       X86JITInfo       *getJITInfo()         {
+    return &JITInfo;
+  }
 };
 
 } // End llvm namespace

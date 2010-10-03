@@ -24,8 +24,8 @@ using namespace llvm;
 //  Implementation of the X86ELFWriterInfo class
 //===----------------------------------------------------------------------===//
 
-X86ELFWriterInfo::X86ELFWriterInfo(TargetMachine &TM)
-  : TargetELFWriterInfo(TM) {
+X86ELFWriterInfo::X86ELFWriterInfo(bool is64Bit_, bool isLittleEndian_)
+  : TargetELFWriterInfo(is64Bit_, isLittleEndian_) {
     EMachine = is64Bit ? EM_X86_64 : EM_386;
   }
 
