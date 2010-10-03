@@ -349,6 +349,8 @@ def NoCMov       : Predicate<"!Subtarget->hasCMov()">;
 // no AVX version of the desired intructions is present, this is better for
 // incremental dev (without fallbacks it's easier to spot what's missing)
 def HasMMX       : Predicate<"Subtarget->hasMMX() && !Subtarget->hasAVX()">;
+def Has3DNow     : Predicate<"Subtarget->has3DNow()">;
+def Has3DNowA    : Predicate<"Subtarget->has3DNowA()">;
 def HasSSE1      : Predicate<"Subtarget->hasSSE1() && !Subtarget->hasAVX()">;
 def HasSSE2      : Predicate<"Subtarget->hasSSE2() && !Subtarget->hasAVX()">;
 def HasSSE3      : Predicate<"Subtarget->hasSSE3() && !Subtarget->hasAVX()">;

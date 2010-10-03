@@ -822,6 +822,7 @@ EncodeInstruction(const MCInst &MI, raw_ostream &OS,
   if ((TSFlags >> 32) & X86II::VEX_4V)
     HasVEX_4V = true;
 
+  
   // Determine where the memory operand starts, if present.
   int MemoryOperand = X86II::getMemoryOperandNo(TSFlags);
   if (MemoryOperand != -1) MemoryOperand += CurOp;
@@ -831,7 +832,12 @@ EncodeInstruction(const MCInst &MI, raw_ostream &OS,
   else
     EmitVEXOpcodePrefix(TSFlags, CurByte, MemoryOperand, MI, Desc, OS);
 
+  
   unsigned char BaseOpcode = X86II::getBaseOpcodeFor(TSFlags);
+  
+  if ((TSFlags >> 32) & X86II::Has3DNow0F0FOpcode)
+    BaseOpcode = 0x0F;   // Weird 3DNow! encoding.
+  
   unsigned SrcRegNum = 0;
   switch (TSFlags & X86II::FormMask) {
   case X86II::MRMInitReg:
@@ -998,6 +1004,9 @@ EncodeInstruction(const MCInst &MI, raw_ostream &OS,
     }
   }
 
+  if ((TSFlags >> 32) & X86II::Has3DNow0F0FOpcode)
+    EmitByte(X86II::getBaseOpcodeFor(TSFlags), CurByte, OS);
+  
 
 #ifndef NDEBUG
   // FIXME: Verify.
