@@ -171,13 +171,13 @@ let isCall = 1, isCodeGenOnly = 1 in
       Uses = [RSP] in {
     def WINCALL64pcrel32 : Ii32PCRel<0xE8, RawFrm,
                              (outs), (ins i64i32imm_pcrel:$dst, variable_ops),
-                             "call\t$dst", []>,
+                             "call{q}\t$dst", []>,
                            Requires<[IsWin64]>;
     def WINCALL64r       : I<0xFF, MRM2r, (outs), (ins GR64:$dst, variable_ops),
-                             "call\t{*}$dst",
+                             "call{q}\t{*}$dst",
                              [(X86call GR64:$dst)]>, Requires<[IsWin64]>;
-    def WINCALL64m       : I<0xFF, MRM2m, (outs), 
-                             (ins i64mem:$dst, variable_ops), "call\t{*}$dst",
+    def WINCALL64m       : I<0xFF, MRM2m, (outs), (ins i64mem:$dst,variable_ops),
+                             "call{q}\t{*}$dst",
                              [(X86call (loadi64 addr:$dst))]>, 
                            Requires<[IsWin64]>;
   }

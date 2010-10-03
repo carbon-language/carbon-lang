@@ -1,4 +1,5 @@
 ; RUN: llc < %s -mtriple=i686-pc-win32 | FileCheck %s -check-prefix=WIN_X32
+; RUN: llc < %s -mtriple=x86_64-pc-win32 | FileCheck %s -check-prefix=WIN_X64
 ; RUN: llc < %s -mtriple=i686-pc-mingw32 | FileCheck %s -check-prefix=MINGW_X32
 ; RUN: llc < %s -mtriple=x86_64-pc-mingw32 | FileCheck %s -check-prefix=MINGW_X64
 ; RUN: llc < %s -mtriple=i386-pc-linux | FileCheck %s -check-prefix=LINUX
@@ -13,7 +14,7 @@
 define i32 @main4k() nounwind {
 entry:
 ; WIN_X32:    calll __chkstk
-; WIN_X64:    call __chkstk
+; WIN_X64:    callq __chkstk
 ; MINGW_X32:  calll __alloca
 ; MINGW_X64:  callq _alloca
 ; LINUX-NOT:  call __chkstk
@@ -30,7 +31,7 @@ entry:
 ; WIN_X32:       ret
 
 ; WIN_X64:       # BB#0:
-; WIN_X64-NOT:   call __chkstk
+; WIN_X64-NOT:   callq __chkstk
 ; WIN_X64:       ret
 
 ; MINGW_X64:     # BB#0:

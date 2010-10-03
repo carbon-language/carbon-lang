@@ -871,6 +871,19 @@ void X86RegisterInfo::emitCalleeSavedFrameMoves(MachineFunction &MF,
   }
 }
 
+static bool isEAXLiveIn(MachineFunction &MF) {
+  for (MachineRegisterInfo::livein_iterator II = MF.getRegInfo().livein_begin(),
+       EE = MF.getRegInfo().livein_end(); II != EE; ++II) {
+    unsigned Reg = II->first;
+
+    if (Reg == X86::EAX || Reg == X86::AX ||
+        Reg == X86::AH || Reg == X86::AL)
+      return true;
+  }
+
+  return false;
+}
+
 /// emitPrologue - Push callee-saved registers onto the stack, which
 /// automatically adjust the stack pointer. Adjust the stack pointer to allocate
 /// space for local variables. Also emit labels used by the exception handler to
@@ -915,12 +928,12 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
       !needsStackRealignment(MF) &&
       !MFI->hasVarSizedObjects() &&                // No dynamic alloca.
       !MFI->adjustsStack() &&                      // No calls.
-      !Subtarget->isTargetWin64()) {               // Win64 has no Red Zone
+      !IsWin64) {                                  // Win64 has no Red Zone
     uint64_t MinSize = X86FI->getCalleeSavedFrameSize();
     if (HasFP) MinSize += SlotSize;
     StackSize = std::max(MinSize, StackSize > 128 ? StackSize - 128 : 0);
     MFI->setStackSize(StackSize);
-  } else if (Subtarget->isTargetWin64()) {
+  } else if (IsWin64) {
     // We need to always allocate 32 bytes as register spill area.
     // FIXME: We might reuse these 32 bytes for leaf functions.
     StackSize += 32;
@@ -1061,28 +1074,29 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
 
   DL = MBB.findDebugLoc(MBBI);
 
+  // If there is an SUB32ri of ESP immediately before this instruction, merge
+  // the two. This can be the case when tail call elimination is enabled and
+  // the callee has more arguments then the caller.
+  NumBytes -= mergeSPUpdates(MBB, MBBI, StackPtr, true);
+
+  // If there is an ADD32ri or SUB32ri of ESP immediately after this
+  // instruction, merge the two instructions.
+  mergeSPUpdatesDown(MBB, MBBI, StackPtr, &NumBytes);
+
   // Adjust stack pointer: ESP -= numbytes.
 
   // Windows and cygwin/mingw require a prologue helper routine when allocating
   // more than 4K bytes on the stack.  Windows uses __chkstk and cygwin/mingw
-  // uses __alloca.  __alloca and the 32-bit version of __chkstk will probe
-  // the stack and adjust the stack pointer in one go.  The 64-bit version
-  // of __chkstk is only responsible for probing the stack.  The 64-bit
-  // prologue is responsible for adjusting the stack pointer.  Touching the
-  // stack at 4K increments is necessary to ensure that the guard pages used
-  // by the OS virtual memory manager are allocated in correct sequence.
+  // uses __alloca.  __alloca and the 32-bit version of __chkstk will probe the
+  // stack and adjust the stack pointer in one go.  The 64-bit version of
+  // __chkstk is only responsible for probing the stack.  The 64-bit prologue is
+  // responsible for adjusting the stack pointer.  Touching the stack at 4K
+  // increments is necessary to ensure that the guard pages used by the OS
+  // virtual memory manager are allocated in correct sequence.
   if (NumBytes >= 4096 &&
      (Subtarget->isTargetCygMing() || Subtarget->isTargetWin32())) {
-    // Check, whether EAX is livein for this function.
-    bool isEAXAlive = false;
-    for (MachineRegisterInfo::livein_iterator
-           II = MF.getRegInfo().livein_begin(),
-           EE = MF.getRegInfo().livein_end(); (II != EE) && !isEAXAlive; ++II) {
-      unsigned Reg = II->first;
-      isEAXAlive = (Reg == X86::EAX || Reg == X86::AX ||
-                    Reg == X86::AH || Reg == X86::AL);
-    }
-
+    // Check whether EAX is livein for this function.
+    bool isEAXAlive = isEAXLiveIn(MF);
 
     const char *StackProbeSymbol =
       Subtarget->isTargetWindows() ? "_chkstk" : "_alloca";
@@ -1114,19 +1128,21 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
                                       StackPtr, false, NumBytes - 4);
       MBB.insert(MBBI, MI);
     }
-  } else if (NumBytes) {
-    // If there is an SUB32ri of ESP immediately before this instruction, merge
-    // the two. This can be the case when tail call elimination is enabled and
-    // the callee has more arguments then the caller.
-    NumBytes -= mergeSPUpdates(MBB, MBBI, StackPtr, true);
+  } else if (NumBytes >= 4096 && Subtarget->isTargetWin64()) {
+    // Sanity check that EAX is not livein for this function.  It should
+    // should not be, so throw an assert.
+    assert(!isEAXLiveIn(MF) && "EAX is livein in the Win64 case!");
 
-    // If there is an ADD32ri or SUB32ri of ESP immediately after this
-    // instruction, merge the two instructions.
-    mergeSPUpdatesDown(MBB, MBBI, StackPtr, &NumBytes);
-
-    if (NumBytes)
-      emitSPUpdate(MBB, MBBI, StackPtr, -(int64_t)NumBytes, Is64Bit, TII);
-  }
+    // Handle the 64-bit Windows ABI case where we need to call __chkstk.
+    // Function prologue is responsible for adjusting the stack pointer.
+    BuildMI(MBB, MBBI, DL, TII.get(X86::MOV32ri), X86::EAX)
+      .addImm(NumBytes);
+    BuildMI(MBB, MBBI, DL, TII.get(X86::WINCALL64pcrel32))
+      .addExternalSymbol("__chkstk")
+      .addReg(StackPtr, RegState::Define | RegState::Implicit);
+    emitSPUpdate(MBB, MBBI, StackPtr, -(int64_t)NumBytes, Is64Bit, TII);
+  } else if (NumBytes)
+    emitSPUpdate(MBB, MBBI, StackPtr, -(int64_t)NumBytes, Is64Bit, TII);
 
   if ((NumBytes || PushedRegs) && needsFrameMoves) {
     // Mark end of stack pointer adjustment.
