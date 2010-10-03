@@ -873,7 +873,7 @@ __invoke(_R _T::* __f, _T1& __t1)
 
 template <class _F>
 inline _LIBCPP_INLINE_VISIBILITY
-typename result_of<_F()>::type
+decltype(declval<_F>()())
 __invoke(_F __f)
 {
     return __f();
@@ -881,7 +881,7 @@ __invoke(_F __f)
 
 template <class _F, class _A0>
 inline _LIBCPP_INLINE_VISIBILITY
-typename result_of<_F(_A0)>::type
+decltype(declval<_F>()(declval<_A0&>()))
 __invoke(_F __f, _A0& __a0)
 {
     return __f(__a0);
@@ -889,7 +889,7 @@ __invoke(_F __f, _A0& __a0)
 
 template <class _F, class _A0, class _A1>
 inline _LIBCPP_INLINE_VISIBILITY
-typename result_of<_F(_A0, _A1)>::type
+decltype(declval<_F>()(declval<_A0&>(), declval<_A1&>()))
 __invoke(_F __f, _A0& __a0, _A1& __a1)
 {
     return __f(__a0, __a1);
@@ -897,7 +897,7 @@ __invoke(_F __f, _A0& __a0, _A1& __a1)
 
 template <class _F, class _A0, class _A1, class _A2>
 inline _LIBCPP_INLINE_VISIBILITY
-typename result_of<_F(_A0, _A1, _A2)>::type
+decltype(declval<_F>()(declval<_A0&>(), declval<_A1&>(), declval<_A2&>()))
 __invoke(_F __f, _A0& __a0, _A1& __a1, _A2& __a2)
 {
     return __f(__a0, __a1, __a2);
