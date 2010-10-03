@@ -1654,8 +1654,8 @@ X86TargetLowering::LowerFormalArguments(SDValue Chain,
   // If the function takes variable number of arguments, make a frame index for
   // the start of the first vararg value... for expansion of llvm.va_start.
   if (isVarArg) {
-    if (Is64Bit || (CallConv != CallingConv::X86_FastCall &&
-                    CallConv != CallingConv::X86_ThisCall)) {
+    if (!IsWin64 && (Is64Bit || (CallConv != CallingConv::X86_FastCall &&
+                    CallConv != CallingConv::X86_ThisCall))) {
       FuncInfo->setVarArgsFrameIndex(MFI->CreateFixedObject(1, StackSize,true));
     }
     if (Is64Bit) {
@@ -1665,9 +1665,6 @@ X86TargetLowering::LowerFormalArguments(SDValue Chain,
       static const unsigned GPR64ArgRegsWin64[] = {
         X86::RCX, X86::RDX, X86::R8,  X86::R9
       };
-      static const unsigned XMMArgRegsWin64[] = {
-        X86::XMM0, X86::XMM1, X86::XMM2, X86::XMM3
-      };
       static const unsigned GPR64ArgRegs64Bit[] = {
         X86::RDI, X86::RSI, X86::RDX, X86::RCX, X86::R8, X86::R9
       };
@@ -1675,21 +1672,23 @@ X86TargetLowering::LowerFormalArguments(SDValue Chain,
         X86::XMM0, X86::XMM1, X86::XMM2, X86::XMM3,
         X86::XMM4, X86::XMM5, X86::XMM6, X86::XMM7
       };
-      const unsigned *GPR64ArgRegs, *XMMArgRegs;
+      const unsigned *GPR64ArgRegs;
+      unsigned NumXMMRegs = 0;
 
       if (IsWin64) {
-        TotalNumIntRegs = 4; TotalNumXMMRegs = 4;
+        // The XMM registers which might contain var arg parameters are shadowed
+        // in their paired GPR.  So we only need to save the GPR to their home
+        // slots.
+        TotalNumIntRegs = 4;
         GPR64ArgRegs = GPR64ArgRegsWin64;
-        XMMArgRegs = XMMArgRegsWin64;
       } else {
         TotalNumIntRegs = 6; TotalNumXMMRegs = 8;
         GPR64ArgRegs = GPR64ArgRegs64Bit;
-        XMMArgRegs = XMMArgRegs64Bit;
+
+        NumXMMRegs = CCInfo.getFirstUnallocated(XMMArgRegs64Bit, TotalNumXMMRegs);
       }
       unsigned NumIntRegs = CCInfo.getFirstUnallocated(GPR64ArgRegs,
                                                        TotalNumIntRegs);
-      unsigned NumXMMRegs = CCInfo.getFirstUnallocated(XMMArgRegs,
-                                                       TotalNumXMMRegs);
 
       bool NoImplicitFloatOps = Fn->hasFnAttr(Attribute::NoImplicitFloat);
       assert(!(NumXMMRegs && !Subtarget->hasSSE1()) &&
@@ -1701,14 +1700,20 @@ X86TargetLowering::LowerFormalArguments(SDValue Chain,
         // on the stack.
         TotalNumXMMRegs = 0;
 
-      // For X86-64, if there are vararg parameters that are passed via
-      // registers, then we must store them to their spots on the stack so they
-      // may be loaded by deferencing the result of va_next.
-      FuncInfo->setVarArgsGPOffset(NumIntRegs * 8);
-      FuncInfo->setVarArgsFPOffset(TotalNumIntRegs * 8 + NumXMMRegs * 16);
-      FuncInfo->setRegSaveFrameIndex(
-        MFI->CreateStackObject(TotalNumIntRegs * 8 + TotalNumXMMRegs * 16, 16,
+      if (IsWin64) {
+        FuncInfo->setRegSaveFrameIndex(
+          MFI->CreateFixedObject(1, NumIntRegs * 8, false));
+        FuncInfo->setVarArgsFrameIndex(FuncInfo->getRegSaveFrameIndex());
+      } else {
+        // For X86-64, if there are vararg parameters that are passed via
+        // registers, then we must store them to their spots on the stack so they
+        // may be loaded by deferencing the result of va_next.
+        FuncInfo->setVarArgsGPOffset(NumIntRegs * 8);
+        FuncInfo->setVarArgsFPOffset(TotalNumIntRegs * 8 + NumXMMRegs * 16);
+        FuncInfo->setRegSaveFrameIndex(
+          MFI->CreateStackObject(TotalNumIntRegs * 8 + TotalNumXMMRegs * 16, 16,
                                false));
+      }
 
       // Store the integer parameter registers.
       SmallVector<SDValue, 8> MemOps;
@@ -1745,7 +1750,7 @@ X86TargetLowering::LowerFormalArguments(SDValue Chain,
                                FuncInfo->getVarArgsFPOffset()));
 
         for (; NumXMMRegs != TotalNumXMMRegs; ++NumXMMRegs) {
-          unsigned VReg = MF.addLiveIn(XMMArgRegs[NumXMMRegs],
+          unsigned VReg = MF.addLiveIn(XMMArgRegs64Bit[NumXMMRegs],
                                        X86::VR128RegisterClass);
           SDValue Val = DAG.getCopyFromReg(Chain, dl, VReg, MVT::v4f32);
           SaveXMMOps.push_back(Val);
@@ -7484,7 +7489,7 @@ SDValue X86TargetLowering::LowerVASTART(SDValue Op, SelectionDAG &DAG) const {
   const Value *SV = cast<SrcValueSDNode>(Op.getOperand(2))->getValue();
   DebugLoc DL = Op.getDebugLoc();
 
-  if (!Subtarget->is64Bit()) {
+  if (!Subtarget->is64Bit() || Subtarget->isTargetWin64()) {
     // vastart just stores the address of the VarArgsFrameIndex slot into the
     // memory location argument.
     SDValue FR = DAG.getFrameIndex(FuncInfo->getVarArgsFrameIndex(),
