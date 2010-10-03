@@ -147,47 +147,6 @@ production-quality compiler for C, Objective-C, C++ and Objective-C++ on x86
 
 <!--=========================================================================-->
 <div class="doc_subsection">
-<a name="vmkit">VMKit: JVM/CLI Virtual Machine Implementation</a>
-</div>
-
-<div class="doc_text">
-<p>
-The <a href="http://vmkit.llvm.org/">VMKit project</a> is an implementation of
-a Java Virtual Machine (Java VM or JVM) that uses LLVM for static and
-just-in-time compilation.  As of LLVM 2.8, VMKit now supports copying garbage
-collectors, and can be configured to use MMTk's copy mark-sweep garbage
-collector.  In LLVM 2.8, the VMKit .NET VM is no longer being maintained.
-</p>
-</div>
-
-
-<!--=========================================================================-->
-<div class="doc_subsection">
-<a name="compiler-rt">compiler-rt: Compiler Runtime Library</a>
-</div>
-
-<div class="doc_text">
-<p>
-The new LLVM <a href="http://compiler-rt.llvm.org/">compiler-rt project</a>
-is a simple library that provides an implementation of the low-level
-target-specific hooks required by code generation and other runtime components.
-For example, when compiling for a 32-bit target, converting a double to a 64-bit
-unsigned integer is compiled into a runtime call to the "__fixunsdfdi"
-function. The compiler-rt library provides highly optimized implementations of
-this and other low-level routines (some are 3x faster than the equivalent
-libgcc routines).</p>
-
-<p>
-All of the code in the compiler-rt project is available under the standard LLVM
-License, a "BSD-style" license.  New in LLVM 2.8, compiler_rt now supports 
-soft floating point (for targets that don't have a real floating point unit),
-and includes an extensive testsuite for the "blocks" language feature and the
-blocks runtime included in compiler_rt.</p>
-
-</div>
-
-<!--=========================================================================-->
-<div class="doc_subsection">
 <a name="dragonegg">DragonEgg: llvm-gcc ported to gcc-4.5</a>
 </div>
 
@@ -225,6 +184,45 @@ optimizers, rather than just a handful.</li>
 
 </div>
 
+<!--=========================================================================-->
+<div class="doc_subsection">
+<a name="vmkit">VMKit: JVM/CLI Virtual Machine Implementation</a>
+</div>
+
+<div class="doc_text">
+<p>
+The <a href="http://vmkit.llvm.org/">VMKit project</a> is an implementation of
+a Java Virtual Machine (Java VM or JVM) that uses LLVM for static and
+just-in-time compilation.  As of LLVM 2.8, VMKit now supports copying garbage
+collectors, and can be configured to use MMTk's copy mark-sweep garbage
+collector.  In LLVM 2.8, the VMKit .NET VM is no longer being maintained.
+</p>
+</div>
+
+<!--=========================================================================-->
+<div class="doc_subsection">
+<a name="compiler-rt">compiler-rt: Compiler Runtime Library</a>
+</div>
+
+<div class="doc_text">
+<p>
+The new LLVM <a href="http://compiler-rt.llvm.org/">compiler-rt project</a>
+is a simple library that provides an implementation of the low-level
+target-specific hooks required by code generation and other runtime components.
+For example, when compiling for a 32-bit target, converting a double to a 64-bit
+unsigned integer is compiled into a runtime call to the "__fixunsdfdi"
+function. The compiler-rt library provides highly optimized implementations of
+this and other low-level routines (some are 3x faster than the equivalent
+libgcc routines).</p>
+
+<p>
+All of the code in the compiler-rt project is available under the standard LLVM
+License, a "BSD-style" license.  New in LLVM 2.8, compiler_rt now supports 
+soft floating point (for targets that don't have a real floating point unit),
+and includes an extensive testsuite for the "blocks" language feature and the
+blocks runtime included in compiler_rt.</p>
+
+</div>
 
 <!--=========================================================================-->
 <div class="doc_subsection">
@@ -233,13 +231,17 @@ optimizers, rather than just a handful.</li>
 
 <div class="doc_text">
 <p>
-<a href="http://lldb.llvm.org/">LLDB</a> is</p>
+<a href="http://lldb.llvm.org/">LLDB</a> is a brand new member of the LLVM
+umbrella of projects. LLDB is a next generation, high-performance debugger. It
+is built as a set of reusable components which highly leverage existing
+libraries in the larger LLVM Project, such as the Clang expression parser, the
+LLVM disassembler and the LLVM JIT.</p>
 
 <p>
-</p>
-
-<p>
-2.8 status here.
+LLDB is in early development and not included as part of the LLVM 2.8 release,
+but is mature enough to support basic debugging scenarios on Mac OS X in C,
+Objective-C and C++.  We'd really like help extending and expanding LLDB to 
+support new platforms, new languages, new architectures, and new features.
 </p>
 
 </div>
@@ -251,13 +253,15 @@ optimizers, rather than just a handful.</li>
 
 <div class="doc_text">
 <p>
-<a href="http://libc++.llvm.org/">libc++</a> is</p>
+<a href="http://libc++.llvm.org/">libc++</a> is another new member of the LLVM
+family.  It is an implementation of the C++ standard library, written from the
+ground up to specifically target the forthcoming C++'0X standard and focus on
+delivering great performance.</p>
 
 <p>
-</p>
-
-<p>
-2.8 status here.
+As of the LLVM 2.8 release, libc++ is virtually feature complete, but would
+benefit from more testing and better integration with Clang++.  It is also
+looking forward to the C++ committee finalizing the C++'0x standard.
 </p>
 
 </div>
@@ -509,6 +513,23 @@ It is a unique exploration into world of dynamic code compilation, and the
 interaction between high level and low level semantics.</p>
 
 </div>
+
+<!--=========================================================================-->
+<div class="doc_subsection">
+<a name="OSL">OSL: Open Shading Language</a>
+</div>
+
+<div class="doc_text">
+<p>
+<a href="http://code.google.com/p/openshadinglanguage/">OSL</a> is a shading
+language designed for use in physically based renderers and in particular
+production rendering. By using LLVM instead of the interpreter, it was able to
+meet its performance goals (&gt;= C-code) while retaining the benefits of
+runtime specialization and a portable high-level language.
+</p>
+
+</div>
+
 
 
 <!-- *********************************************************************** -->
