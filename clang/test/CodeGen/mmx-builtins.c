@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 %s -O3 -triple=i686-apple-darwin -target-feature +ssse3 -S -o - | FileCheck %s
+// RUN: %clang_cc1 %s -O3 -triple=x86_64-apple-darwin -target-feature +ssse3 -S -o - | FileCheck %s
 
 #include <tmmintrin.h>
 
