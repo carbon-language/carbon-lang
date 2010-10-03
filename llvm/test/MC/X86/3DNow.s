@@ -74,3 +74,19 @@ femms
 // CHECK: prefetchw (%rax)  # encoding: [0x0f,0x0d,0x08]
 prefetch (%rax)
 prefetchw (%rax)
+
+
+// CHECK: pf2iw %mm2, %mm1  # encoding: [0x0f,0x0f,0xca,0x1c]
+pf2iw %mm2, %mm1
+
+// CHECK: pi2fw %mm2, %mm1  # encoding: [0x0f,0x0f,0xca,0x0c]
+pi2fw %mm2, %mm1
+
+// CHECK: pfnacc %mm2, %mm1  # encoding: [0x0f,0x0f,0xca,0x8a]
+pfnacc %mm2, %mm1
+
+// CHECK: pfpnacc %mm2, %mm1  # encoding: [0x0f,0x0f,0xca,0x8e]
+pfpnacc %mm2, %mm1
+
+// CHECK: pswapd %mm2, %mm1  # encoding: [0x0f,0x0f,0xca,0xbb]
+pswapd %mm2, %mm1

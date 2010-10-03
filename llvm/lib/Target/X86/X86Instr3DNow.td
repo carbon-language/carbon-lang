@@ -69,5 +69,9 @@ def PREFETCHW : I3DNow<0x0D, MRM1m, (outs), (ins i16mem:$addr),
                        "prefetchw $addr", []>;
 }
 
-
-// TODO: Add support for the "3DNowA" instructions.
+// "3DNowA" instructions
+defm PF2IW    : I3DNow_binop_rm<0x1C, "pf2iw">;
+defm PI2FW    : I3DNow_binop_rm<0x0C, "pi2fw">;
+defm PFNACC   : I3DNow_binop_rm<0x8A, "pfnacc">;
+defm PFPNACC  : I3DNow_binop_rm<0x8E, "pfpnacc">;
+defm PSWAPD   : I3DNow_binop_rm<0xBB, "pswapd">;
