@@ -11,6 +11,8 @@ class LoadUnloadTestCase(TestBase):
 
     mydir = "load_unload"
 
+    # rdar://problem/8508987
+    @unittest2.expectedFailure
     def test_load_unload(self):
         """Test breakpoint by name works correctly with dlopen'ing."""
 
@@ -30,25 +32,23 @@ class LoadUnloadTestCase(TestBase):
         self.expect("thread list", STOPPED_DUE_TO_BREAKPOINT,
             substrs = ['state is Stopped',
                        'a_function',
-                       'a.c:14',
                        'stop reason = breakpoint'])
 
         # The breakpoint should have a hit count of 1.
         self.expect("breakpoint list", BREAKPOINT_HIT_ONCE,
             substrs = [' resolved, hit count = 1'])
 
-#         # Issue the 'contnue' command.  We should stop agaian at a_function.
-#         # The stop reason of the thread should be breakpoint and at a_function.
-#         self.runCmd("continue")
-#         self.expect("thread list", STOPPED_DUE_TO_BREAKPOINT,
-#             substrs = ['state is Stopped',
-#                        'a_function',
-#                        'a.c:14',
-#                        'stop reason = breakpoint'])
-#
-#         # The breakpoint should have a hit count of 2.
-#         self.expect("breakpoint list", BREAKPOINT_HIT_ONCE,
-#             substrs = [' resolved, hit count = 2'])
+        # Issue the 'contnue' command.  We should stop agaian at a_function.
+        # The stop reason of the thread should be breakpoint and at a_function.
+        self.runCmd("continue")
+        self.expect("thread list", STOPPED_DUE_TO_BREAKPOINT,
+            substrs = ['state is Stopped',
+                       'a_function',
+                       'stop reason = breakpoint'])
+
+        # The breakpoint should have a hit count of 2.
+        self.expect("breakpoint list", BREAKPOINT_HIT_ONCE,
+            substrs = [' resolved, hit count = 2'])
 
 
 if __name__ == '__main__':
