@@ -214,6 +214,37 @@
                    </code></p>
 
 
+                   <p>When making thread formats, you will need surround any
+                       of the information that comes from a stack frame with scopes (<b>{</b> <i>frame-content</i> <b>}</b>)
+                       as the thread format doesn't always want to show frame information.
+                       When displaying the backtrace for a thread, we don't need to duplicate
+                       the information for frame zero in the thread information:
+
+                   <p><code><b>(lldb)</b> thread backtrace 
+                   <br>thread #1: tid = 0x2e03, stop reason = breakpoint 1.1 2.1
+                   <br>&nbsp;&nbsp;frame #0: 0x0000000100000e85 a.out`main + 4 at test.c:19
+                   <br>&nbsp;&nbsp;frame #1: 0x0000000100000e40 a.out`start + 52
+                   </code>
+                   </p>
+                       
+                   <p>The frame related variables are:
+                      <ul>
+                      <li><code><b>${file.*}</b></code></li>
+                      <li><code><b>${frame.*}</b></code></li>
+                      <li><code><b>${function.*}</b></code></li>
+                      <li><code><b>${line.*}</b></code></li>
+                      <li><code><b>${module.*}</b></code></li>
+                      </ul>
+                    </p>
+                     
+                    <p>Looking at the default format for the thread, and underlining
+                        the frame information:
+                    <p><code>'thread #${thread.index}: tid = ${thread.id}<u><b>{</b>, ${frame.pc}<b>}{</b> ${module.file.basename}`${function.name}{${function.pc-offset}}<b>}</b></u>{, stop reason = ${thread.stop-reason}}{, name = ${thread.name}}{, queue = ${thread.queue}}\n'
+                    </code></p>
+                    <p>We can see that all frame information is contained in scopes so 
+                        that when the thread information is displayed in a context where
+                        we only want to show thread information, we can do so.
+                        
 				</div>
 				<div class="postfooter"></div>
 		    </div>
