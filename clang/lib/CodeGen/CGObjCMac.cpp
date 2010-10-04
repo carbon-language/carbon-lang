@@ -2973,6 +2973,10 @@ void CGObjCMac::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
   llvm::Value *CallTryExitVar = CGF.CreateTempAlloca(CGF.Builder.getInt1Ty(),
                                                      "_call_try_exit");
 
+  // A slot containing the exception to rethrow.  Only needed when we
+  // have both a @catch and a @finally.
+  llvm::Value *PropagatingExnVar = 0;
+
   // Push a normal cleanup to leave the try scope.
   CGF.EHStack.pushCleanup<PerformFragileFinally>(NormalCleanup, &S,
                                                  SyncArgSlot,
@@ -3044,6 +3048,12 @@ void CGObjCMac::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
     llvm::BasicBlock *CatchBlock = 0;
     llvm::BasicBlock *CatchHandler = 0;
     if (HasFinally) {
+      // Save the currently-propagating exception before
+      // objc_exception_try_enter clears the exception slot.
+      PropagatingExnVar = CGF.CreateTempAlloca(Caught->getType(),
+                                               "propagating_exception");
+      CGF.Builder.CreateStore(Caught, PropagatingExnVar);
+
       // Enter a new exception try block (in case a @catch block
       // throws an exception).
       CGF.Builder.CreateCall(ObjCTypes.getExceptionTryEnterFn(), ExceptionData)
@@ -3178,6 +3188,15 @@ void CGObjCMac::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
       // the try's write hazard and here.
       //Hazards.emitWriteHazard();
 
+      // Extract the new exception and save it to the
+      // propagating-exception slot.
+      assert(PropagatingExnVar);
+      llvm::CallInst *NewCaught =
+        CGF.Builder.CreateCall(ObjCTypes.getExceptionExtractFn(),
+                               ExceptionData, "caught");
+      NewCaught->setDoesNotThrow();
+      CGF.Builder.CreateStore(NewCaught, PropagatingExnVar);
+
       // Don't pop the catch handler; the throw already did.
       CGF.Builder.CreateStore(CGF.Builder.getFalse(), CallTryExitVar);
       CGF.EmitBranchThroughCleanup(FinallyRethrow);
@@ -3198,13 +3217,21 @@ void CGObjCMac::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
   CGBuilderTy::InsertPoint SavedIP = CGF.Builder.saveAndClearIP();
   CGF.EmitBlock(FinallyRethrow.getBlock(), true);
   if (CGF.HaveInsertPoint()) {
-    // Just look in the buffer for the exception to throw.
-    llvm::CallInst *Caught =
-      CGF.Builder.CreateCall(ObjCTypes.getExceptionExtractFn(),
-                             ExceptionData);
-    Caught->setDoesNotThrow();
+    // If we have a propagating-exception variable, check it.
+    llvm::Value *PropagatingExn;
+    if (PropagatingExnVar) {
+      PropagatingExn = CGF.Builder.CreateLoad(PropagatingExnVar);
 
-    CGF.Builder.CreateCall(ObjCTypes.getExceptionThrowFn(), Caught)
+    // Otherwise, just look in the buffer for the exception to throw.
+    } else {
+      llvm::CallInst *Caught =
+        CGF.Builder.CreateCall(ObjCTypes.getExceptionExtractFn(),
+                               ExceptionData);
+      Caught->setDoesNotThrow();
+      PropagatingExn = Caught;
+    }
+
+    CGF.Builder.CreateCall(ObjCTypes.getExceptionThrowFn(), PropagatingExn)
       ->setDoesNotThrow();
     CGF.Builder.CreateUnreachable();
   }

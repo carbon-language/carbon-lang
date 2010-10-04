@@ -133,3 +133,59 @@ void f3() {
   // CHECK-NEXT: ret void
   f3_helper(4, &x);
 }
+
+// rdar://problem/8440970
+void f4() {
+  extern void f4_help(int);
+
+  // CHECK: define void @f4()
+  // CHECK:      [[EXNDATA:%.*]] = alloca [[EXNDATA_T:%.*]], align
+  // CHECK:      call void @objc_exception_try_enter([[EXNDATA_T]]* [[EXNDATA]])
+  // CHECK:      call i32 @_setjmp
+  @try {
+  // CHECK:      call void @f4_help(i32 0)
+    f4_help(0);
+
+  // The finally cleanup has two threaded entrypoints after optimization:
+
+  // finally.no-call-exit:  Predecessor is when the catch throws.
+  // CHECK:      call i8* @objc_exception_extract([[EXNDATA_T]]* [[EXNDATA]])
+  // CHECK-NEXT: call void @f4_help(i32 2)
+  // CHECK-NEXT: br label
+  //   -> rethrow
+
+  // finally.call-exit:  Predecessors are the @try and @catch fallthroughs
+  // as well as the no-match case in the catch mechanism.  The i1 is whether
+  // to rethrow and should be true only in the last case.
+  // CHECK:      phi i1
+  // CHECK-NEXT: phi i8*
+  // CHECK-NEXT: call void @objc_exception_try_exit([[EXNDATA_T]]* [[EXNDATA]])
+  // CHECK-NEXT: call void @f4_help(i32 2)
+  // CHECK-NEXT: br i1
+  //   -> ret, rethrow
+
+  // ret:
+  // CHECK:      ret void
+
+  // Catch mechanism:
+  // CHECK:      call i8* @objc_exception_extract([[EXNDATA_T]]* [[EXNDATA]])
+  // CHECK-NEXT: call void @objc_exception_try_enter([[EXNDATA_T]]* [[EXNDATA]])
+  // CHECK:      call i32 @_setjmp
+  //   -> next, finally.no-call-exit
+  // CHECK:      call i32 @objc_exception_match
+  //   -> finally.call-exit, match
+  } @catch (NSArray *a) {
+  // match:
+  // CHECK:      call void @f4_help(i32 1)
+  // CHECK-NEXT: br label
+  //   -> finally.call-exit
+    f4_help(1);
+  } @finally {
+    f4_help(2);
+  }
+
+  // rethrow:
+  // CHECK:      phi i8*
+  // CHECK-NEXT: call void @objc_exception_throw(i8*
+  // CHECK-NEXT: unreachable
+}
