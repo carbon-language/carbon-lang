@@ -1603,6 +1603,7 @@ Debugger::SettingsController::global_settings_table[] =
 #define DEFAULT_THREAD_FORMAT "thread #${thread.index}: tid = ${thread.id}"\
     "{, ${frame.pc}}"\
     MODULE_WITH_FUNC\
+    FILE_AND_LINE\
     "{, stop reason = ${thread.stop-reason}}"\
     "{, name = ${thread.name}}"\
     "{, queue = ${thread.queue}}"\
