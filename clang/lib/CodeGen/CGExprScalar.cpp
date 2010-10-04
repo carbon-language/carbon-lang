@@ -733,6 +733,7 @@ Value *ScalarExprEmitter::VisitMemberExpr(MemberExpr *E) {
       if (FieldDecl *M = cast<FieldDecl>(E->getMemberDecl()))
         DI->getOrCreateRecordType(PTy->getPointeeType(), 
                                   M->getParent()->getLocation());
+  }
   return EmitLoadOfLValue(E);
 }
 
