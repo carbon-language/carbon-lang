@@ -157,7 +157,16 @@ public:
 
     void
     SetPrompt (const char *);
-
+    
+    bool Confirm (const char *message, bool default_answer);
+    
+    static size_t
+    GetConfirmationInputReaderCallback (void *baton,
+                                        InputReader &reader,
+                                        lldb::InputReaderAction action,
+                                        const char *bytes,
+                                        size_t bytes_len);
+    
     void
     LoadCommandDictionary ();
 

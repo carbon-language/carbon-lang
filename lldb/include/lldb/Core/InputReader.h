@@ -15,6 +15,7 @@
 #include "lldb/lldb-include.h"
 #include "lldb/lldb-enumerations.h"
 #include "lldb/Core/Debugger.h"
+#include "lldb/Host/Predicate.h"
 
 
 namespace lldb_private {
@@ -88,6 +89,11 @@ public:
 
     void
     RefreshPrompt();
+    
+    // If you want to read from an input reader synchronously, then just initialize the
+    // reader and then call WaitOnReaderIsDone, which will return when the reader is popped.
+    void
+    WaitOnReaderIsDone ();
 
 protected:
     friend class Debugger;
@@ -104,6 +110,7 @@ protected:
     bool m_done;
     bool m_echo;
     bool m_active;
+    Predicate<bool> m_reader_done;
 
 private:
     DISALLOW_COPY_AND_ASSIGN (InputReader);

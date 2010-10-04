@@ -38,6 +38,7 @@
 
 #include "lldb/Interpreter/Args.h"
 #include "lldb/Core/Debugger.h"
+#include "lldb/Core/InputReader.h"
 #include "lldb/Core/Stream.h"
 #include "lldb/Core/Timer.h"
 #include "lldb/Target/Process.h"
@@ -777,6 +778,98 @@ CommandInterpreter::SetPrompt (const char *new_prompt)
 {
     m_debugger.SetPrompt (new_prompt);
 }
+
+size_t
+CommandInterpreter::GetConfirmationInputReaderCallback (void *baton,
+                                    InputReader &reader,
+                                    lldb::InputReaderAction action,
+                                    const char *bytes,
+                                    size_t bytes_len)
+{
+    FILE *out_fh = reader.GetDebugger().GetOutputFileHandle();
+    bool *response_ptr = (bool *) baton;
+    
+    switch (action)
+    {
+    case eInputReaderActivate:
+        if (out_fh)
+        {
+            if (reader.GetPrompt())
+                ::fprintf (out_fh, "%s", reader.GetPrompt());
+        }
+        break;
+
+    case eInputReaderDeactivate:
+        break;
+
+    case eInputReaderReactivate:
+        if (out_fh && reader.GetPrompt())
+            ::fprintf (out_fh, "%s", reader.GetPrompt());
+        break;
+
+    case eInputReaderGotToken:
+        if (bytes_len == 0)
+        {
+            reader.SetIsDone(true);
+        }
+        else if (bytes[0] == 'y')
+        {
+            *response_ptr = true;
+            reader.SetIsDone(true);
+        }
+        else if (bytes[0] == 'n')
+        {
+            *response_ptr = false;
+            reader.SetIsDone(true);
+        }
+        else
+        {
+            if (out_fh && !reader.IsDone() && reader.GetPrompt())
+            {
+                ::fprintf (out_fh, "Please answer \"y\" or \"n\"\n");
+                ::fprintf (out_fh, "%s", reader.GetPrompt());
+            }
+        }
+        break;
+        
+    case eInputReaderDone:
+        break;
+    }
+
+    return bytes_len;
+
+}
+
+bool 
+CommandInterpreter::Confirm (const char *message, bool default_answer)
+{
+    // The default interpretation just pushes a new input reader and lets it get the answer:
+    InputReaderSP reader_sp (new InputReader(GetDebugger()));
+    bool response = default_answer;
+    if (reader_sp)
+    {
+        std::string prompt(message);
+        prompt.append(": [");
+        if (default_answer)
+            prompt.append ("Y/n] ");
+        else
+            prompt.append ("y/N] ");
+            
+        Error err (reader_sp->Initialize (CommandInterpreter::GetConfirmationInputReaderCallback,
+                                          &response,                    // baton
+                                          eInputReaderGranularityLine,  // token size, to pass to callback function
+                                          NULL,                         // end token
+                                          prompt.c_str(),               // prompt
+                                          true));                       // echo input
+        if (err.Success())
+        {
+            GetDebugger().PushInputReader (reader_sp);
+        }
+        reader_sp->WaitOnReaderIsDone();
+    }
+    return response;        
+}
+    
 
 void
 CommandInterpreter::CrossRegisterCommand (const char * dest_cmd, const char * object_type)

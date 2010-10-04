@@ -23,7 +23,8 @@ InputReader::InputReader (Debugger &debugger) :
     m_granularity (eInputReaderGranularityInvalid),
     m_done (true),
     m_echo (true),
-    m_active (false)
+    m_active (false), 
+    m_reader_done (false)
 {
 }
 
@@ -315,6 +316,7 @@ InputReader::Notify (InputReaderAction notification)
     case eInputReaderActivate:
     case eInputReaderReactivate:
         m_active = true;
+        m_reader_done.SetValue(false, eBroadcastAlways);
         break;
 
     case eInputReaderDeactivate:
@@ -327,4 +329,12 @@ InputReader::Notify (InputReaderAction notification)
     }
     if (m_callback)
         m_callback (m_callback_baton, *this, notification, NULL, 0);
+    if (notification == eInputReaderDone)
+        m_reader_done.SetValue(true, eBroadcastAlways);
+}
+
+void 
+InputReader::WaitOnReaderIsDone ()
+{
+    m_reader_done.WaitForValueEqualTo (true);
 }
