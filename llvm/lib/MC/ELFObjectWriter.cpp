@@ -539,7 +539,14 @@ void ELFObjectWriterImpl::RecordRelocation(const MCAssembler &Asm,
       const MCSymbol &SymbolB = RefB->getSymbol();
       MCSymbolData &SDB = Asm.getSymbolData(SymbolB);
       IsPCRel = true;
-      Value += Layout.getFragmentOffset(Fragment) + Fixup.getOffset() - Layout.getSymbolAddress(&SDB);
+      MCSectionData *Sec = Fragment->getParent();
+
+      // Offset of the symbol in the section
+      int64_t a = Layout.getSymbolAddress(&SDB) - Layout.getSectionAddress(Sec);
+
+      // Ofeset of the relocation in the section
+      int64_t b = Layout.getFragmentOffset(Fragment) + Fixup.getOffset();
+      Value += b - a;
     }
 
     // Check that this case has already been fully resolved before we get

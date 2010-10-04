@@ -19,6 +19,9 @@
 // CHECK-NEXT:    ),
 // CHECK-NEXT:   ])
 
+.zero 4
+.data
+
 .zero 1
 .align 4
 foo:
