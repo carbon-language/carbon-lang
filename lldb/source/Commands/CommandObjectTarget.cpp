@@ -38,8 +38,28 @@ public:
         CommandObject (interpreter,
                        "target image-search-paths add",
                        "Add new image search paths substitution pairs to the current target.",
-                       "target image-search-paths add <path-prefix> <new-path-prefix> [<path-prefix> <new-path-prefix>] ...")
+                       NULL)
     {
+        CommandArgumentEntry arg;
+        CommandArgumentData old_prefix_arg;
+        CommandArgumentData new_prefix_arg;
+        
+        // Define the first variant of this arg pair.
+        old_prefix_arg.arg_type = eArgTypeOldPathPrefix;
+        old_prefix_arg.arg_repetition = eArgRepeatPairPlus;
+        
+        // Define the first variant of this arg pair.
+        new_prefix_arg.arg_type = eArgTypeNewPathPrefix;
+        new_prefix_arg.arg_repetition = eArgRepeatPairPlus;
+        
+        // There are two required arguments that must always occur together, i.e. an argument "pair".  Because they
+        // must always occur together, they are treated as two variants of one argument rather than two independent
+        // arguments.  Push them both into the first argument position for m_arguments...
+
+        arg.push_back (old_prefix_arg);
+        arg.push_back (new_prefix_arg);
+
+        m_arguments.push_back (arg);
     }
 
     ~CommandObjectTargetImageSearchPathsAdd ()
@@ -136,8 +156,39 @@ public:
         CommandObject (interpreter,
                        "target image-search-paths insert",
                        "Insert a new image search path substitution pair into the current target at the specified index.",
-                       "target image-search-paths insert <index> <path-prefix> <new-path-prefix> [<path-prefix> <new-path-prefix>] ...")
+                       NULL)
     {
+        CommandArgumentEntry arg1;
+        CommandArgumentEntry arg2;
+        CommandArgumentData index_arg;
+        CommandArgumentData old_prefix_arg;
+        CommandArgumentData new_prefix_arg;
+        
+        // Define the first and only variant of this arg.
+        index_arg.arg_type = eArgTypeIndex;
+        index_arg.arg_repetition = eArgRepeatPlain;
+
+        // Put the one and only variant into the first arg for m_arguments:
+        arg1.push_back (index_arg);
+
+        // Define the first variant of this arg pair.
+        old_prefix_arg.arg_type = eArgTypeOldPathPrefix;
+        old_prefix_arg.arg_repetition = eArgRepeatPairPlus;
+        
+        // Define the first variant of this arg pair.
+        new_prefix_arg.arg_type = eArgTypeNewPathPrefix;
+        new_prefix_arg.arg_repetition = eArgRepeatPairPlus;
+        
+        // There are two required arguments that must always occur together, i.e. an argument "pair".  Because they
+        // must always occur together, they are treated as two variants of one argument rather than two independent
+        // arguments.  Push them both into the same argument position for m_arguments...
+
+        arg2.push_back (old_prefix_arg);
+        arg2.push_back (new_prefix_arg);
+
+        // Add arguments to m_arguments.
+        m_arguments.push_back (arg1);
+        m_arguments.push_back (arg2);
     }
 
     ~CommandObjectTargetImageSearchPathsInsert ()
@@ -260,8 +311,20 @@ public:
     CommandObject (interpreter,
                    "target image-search-paths query",
                    "Transform a path using the first applicable image search path.",
-                   "target image-search-paths query <path>")
+                   NULL)
     {
+        CommandArgumentEntry arg;
+        CommandArgumentData path_arg;
+        
+        // Define the first (and only) variant of this arg.
+        path_arg.arg_type = eArgTypePath;
+        path_arg.arg_repetition = eArgRepeatPlain;
+        
+        // There is only one variant this argument could be; put it into the argument entry.
+        arg.push_back (path_arg);
+        
+        // Push the data for the first argument into the m_arguments vector.
+        m_arguments.push_back (arg);
     }
 
     ~CommandObjectTargetImageSearchPathsQuery ()

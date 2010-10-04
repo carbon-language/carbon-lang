@@ -482,6 +482,18 @@ public:
                                       const char *syntax) :
         CommandObject (interpreter, name, help, syntax)
     {
+        CommandArgumentEntry arg;
+        CommandArgumentData file_arg;
+
+        // Define the first (and only) variant of this arg.
+        file_arg.arg_type = eArgTypeFilename;
+        file_arg.arg_repetition = eArgRepeatStar;
+        
+        // There is only one variant this argument could be; put it into the argument entry.
+        arg.push_back (file_arg);
+        
+        // Push the data for the first argument into the m_arguments vector.
+        m_arguments.push_back (arg);
     }
 
     virtual
@@ -525,6 +537,18 @@ public:
                                           const char *syntax) :
         CommandObject (interpreter, name, help, syntax)
     {
+        CommandArgumentEntry arg;
+        CommandArgumentData source_file_arg;
+        
+        // Define the first (and only) variant of this arg.
+        source_file_arg.arg_type = eArgTypeSourceFile;
+        source_file_arg.arg_repetition = eArgRepeatPlus;
+        
+        // There is only one variant this argument could be; put it into the argument entry.
+        arg.push_back (source_file_arg);
+        
+        // Push the data for the first argument into the m_arguments vector.
+        m_arguments.push_back (arg);
     }
 
     virtual
@@ -566,7 +590,7 @@ public:
         CommandObjectImageDumpModuleList (interpreter,
                                           "image dump symtab",
                                           "Dump the symbol table from one or more executable images.",
-                                          "image dump symtab [<file1> ...]")
+                                           NULL)
     {
     }
 
@@ -674,7 +698,8 @@ public:
         CommandObjectImageDumpModuleList (interpreter,
                                           "image dump sections",
                                           "Dump the sections from one or more executable images.",
-                                          "image dump sections [<file1> ...]")
+                                          //"image dump sections [<file1> ...]")
+                                          NULL)
     {
     }
 
@@ -781,7 +806,8 @@ public:
         CommandObjectImageDumpModuleList (interpreter,
                                           "image dump symfile",
                                           "Dump the debug symbol file for one or more executable images.",
-                                          "image dump symfile [<file1> ...]")
+                                          //"image dump symfile [<file1> ...]")
+                                          NULL)
     {
     }
 
@@ -888,7 +914,7 @@ public:
         CommandObjectImageDumpSourceFileList (interpreter,
                                               "image dump line-table",
                                               "Dump the debug symbol file for one or more executable images.",
-                                              "image dump line-table <source-file1> [<source-file2> ...]")
+                                              NULL)
     {
     }
 
@@ -1326,8 +1352,20 @@ public:
         CommandObject (interpreter,
                        "image lookup",
                        "Look up information within executable and dependent shared library images.",
-                       "image lookup [<cmd-options>] [<file1>...]")
+                       NULL)
     {
+        CommandArgumentEntry arg;
+        CommandArgumentData file_arg;
+        
+        // Define the first (and only) variant of this arg.
+        file_arg.arg_type = eArgTypeFilename;
+        file_arg.arg_repetition = eArgRepeatStar;
+        
+        // There is only one variant this argument could be; put it into the argument entry.
+        arg.push_back (file_arg);
+        
+        // Push the data for the first argument into the m_arguments vector.
+        m_arguments.push_back (arg);
     }
 
     virtual

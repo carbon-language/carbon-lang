@@ -105,8 +105,20 @@ public:
         CommandObject (interpreter,
                        "process launch",
                        "Launch the executable in the debugger.",
-                       "process launch [<cmd-options>] [<arguments-for-running-the-program>]")
+                       NULL)
     {
+        CommandArgumentEntry arg;
+        CommandArgumentData run_args_arg;
+        
+        // Define the first (and only) variant of this arg.
+        run_args_arg.arg_type = eArgTypeRunArgs;
+        run_args_arg.arg_repetition = eArgRepeatOptional;
+        
+        // There is only one variant this argument could be; put it into the argument entry.
+        arg.push_back (run_args_arg);
+        
+        // Push the data for the first argument into the m_arguments vector.
+        m_arguments.push_back (arg);
     }
 
 
@@ -797,8 +809,20 @@ public:
         CommandObject (interpreter,
                        "process signal",
                        "Send a UNIX signal to the current process being debugged.",
-                       "process signal <unix-signal-number>")
+                       NULL)
     {
+        CommandArgumentEntry arg;
+        CommandArgumentData signal_arg;
+        
+        // Define the first (and only) variant of this arg.
+        signal_arg.arg_type = eArgTypeUnixSignalNumber;
+        signal_arg.arg_repetition = eArgRepeatPlain;
+        
+        // There is only one variant this argument could be; put it into the argument entry.
+        arg.push_back (signal_arg);
+        
+        // Push the data for the first argument into the m_arguments vector.
+        m_arguments.push_back (arg);
     }
 
     ~CommandObjectProcessSignal ()

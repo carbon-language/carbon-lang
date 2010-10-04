@@ -180,9 +180,31 @@ public:
         CommandObject (interpreter,
                        "memory read",
                        "Read from the memory of the process being debugged.",
-                       "memory read [<cmd-options>] <start-addr> [<end-addr>]",
+                       NULL,
                        eFlagProcessMustBeLaunched)
     {
+        CommandArgumentEntry arg1;
+        CommandArgumentEntry arg2;
+        CommandArgumentData start_addr_arg;
+        CommandArgumentData end_addr_arg;
+        
+        // Define the first (and only) variant of this arg.
+        start_addr_arg.arg_type = eArgTypeStartAddress;
+        start_addr_arg.arg_repetition = eArgRepeatPlain;
+        
+        // There is only one variant this argument could be; put it into the argument entry.
+        arg1.push_back (start_addr_arg);
+        
+        // Define the first (and only) variant of this arg.
+        end_addr_arg.arg_type = eArgTypeEndAddress;
+        end_addr_arg.arg_repetition = eArgRepeatOptional;
+        
+        // There is only one variant this argument could be; put it into the argument entry.
+        arg2.push_back (end_addr_arg);
+        
+        // Push the data for the first argument into the m_arguments vector.
+        m_arguments.push_back (arg1);
+        m_arguments.push_back (arg2);
     }
 
     virtual
@@ -398,9 +420,32 @@ public:
         CommandObject (interpreter,
                        "memory write",
                        "Write to the memory of the process being debugged.",
-                       "memory write [<cmd-options>] <addr> [value1 value2 ...]",
+                       //"memory write [<cmd-options>] <addr> [value1 value2 ...]",
+                       NULL,
                        eFlagProcessMustBeLaunched)
     {
+        CommandArgumentEntry arg1;
+        CommandArgumentEntry arg2;
+        CommandArgumentData addr_arg;
+        CommandArgumentData value_arg;
+        
+        // Define the first (and only) variant of this arg.
+        addr_arg.arg_type = eArgTypeAddress;
+        addr_arg.arg_repetition = eArgRepeatPlain;
+        
+        // There is only one variant this argument could be; put it into the argument entry.
+        arg1.push_back (addr_arg);
+        
+        // Define the first (and only) variant of this arg.
+        value_arg.arg_type = eArgTypeValue;
+        value_arg.arg_repetition = eArgRepeatPlus;
+        
+        // There is only one variant this argument could be; put it into the argument entry.
+        arg2.push_back (value_arg);
+        
+        // Push the data for the first argument into the m_arguments vector.
+        m_arguments.push_back (arg1);
+        m_arguments.push_back (arg2);
     }
 
     virtual

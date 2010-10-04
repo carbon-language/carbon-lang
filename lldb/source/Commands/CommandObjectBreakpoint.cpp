@@ -692,7 +692,7 @@ CommandObjectBreakpointList::CommandObjectBreakpointList (CommandInterpreter &in
 
     // Define the first (and only) variant of this arg.
     bp_id_arg.arg_type = eArgTypeBreakpointID;
-    bp_id_arg.arg_repetition = eArgRepeatStar;
+    bp_id_arg.arg_repetition = eArgRepeatOptional;
 
     // There is only one variant this argument could be; put it into the argument entry.
     arg.push_back (bp_id_arg);
@@ -795,11 +795,11 @@ CommandObjectBreakpointEnable::CommandObjectBreakpointEnable (CommandInterpreter
 
     // Create the first variant for the first (and only) argument for this command.
     bp_id_arg.arg_type = eArgTypeBreakpointID;
-    bp_id_arg.arg_repetition = eArgRepeatStar;
+    bp_id_arg.arg_repetition = eArgRepeatOptional;
 
     // Create the second variant for the first (and only) argument for this command.
     bp_id_range_arg.arg_type = eArgTypeBreakpointIDRange;
-    bp_id_range_arg.arg_repetition = eArgRepeatStar;
+    bp_id_range_arg.arg_repetition = eArgRepeatOptional;
 
     // The first (and only) argument for this command could be either a bp_id or a bp_id_range.
     // Push both variants into the entry for the first argument for this command.
@@ -911,11 +911,11 @@ CommandObjectBreakpointDisable::CommandObjectBreakpointDisable (CommandInterpret
 
     // Create the first variant for the first (and only) argument for this command.
     bp_id_arg.arg_type = eArgTypeBreakpointID;
-    bp_id_arg.arg_repetition = eArgRepeatStar;
+    bp_id_arg.arg_repetition = eArgRepeatOptional;
 
     // Create the second variant for the first (and only) argument for this command.
     bp_id_range_arg.arg_type = eArgTypeBreakpointIDRange;
-    bp_id_range_arg.arg_repetition = eArgRepeatStar;
+    bp_id_range_arg.arg_repetition = eArgRepeatOptional;
 
     // The first (and only) argument for this command could be either a bp_id or a bp_id_range.
     // Push both variants into the entry for the first argument for this command.
@@ -1025,11 +1025,11 @@ CommandObjectBreakpointDelete::CommandObjectBreakpointDelete(CommandInterpreter 
 
     // Create the first variant for the first (and only) argument for this command.
     bp_id_arg.arg_type = eArgTypeBreakpointID;
-    bp_id_arg.arg_repetition = eArgRepeatStar;
+    bp_id_arg.arg_repetition = eArgRepeatOptional;
 
     // Create the second variant for the first (and only) argument for this command.
     bp_id_range_arg.arg_type = eArgTypeBreakpointIDRange;
-    bp_id_range_arg.arg_repetition = eArgRepeatStar;
+    bp_id_range_arg.arg_repetition = eArgRepeatOptional;
 
     // The first (and only) argument for this command could be either a bp_id or a bp_id_range.
     // Push both variants into the entry for the first argument for this command.
@@ -1265,11 +1265,11 @@ CommandObjectBreakpointModify::CommandObjectBreakpointModify (CommandInterpreter
 
     // Create the first variant for the first (and only) argument for this command.
     bp_id_arg.arg_type = eArgTypeBreakpointID;
-    bp_id_arg.arg_repetition = eArgRepeatPlus;
+    bp_id_arg.arg_repetition = eArgRepeatPlain;
 
     // Create the second variant for the first (and only) argument for this command.
     bp_id_range_arg.arg_type = eArgTypeBreakpointIDRange;
-    bp_id_range_arg.arg_repetition = eArgRepeatPlus;
+    bp_id_range_arg.arg_repetition = eArgRepeatPlain;
 
     // The first (and only) argument for this command could be either a bp_id or a bp_id_range.
     // Push both variants into the entry for the first argument for this command.

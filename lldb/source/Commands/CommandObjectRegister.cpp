@@ -34,10 +34,23 @@ public:
     CommandObjectRegisterRead (CommandInterpreter &interpreter) :
         CommandObject (interpreter, 
                        "register read",
-                       "Dump the contents of one or more register values from the current frame.",
-                       "register read [<reg-name1> [<reg-name2> [...]]]",
+                       "Dump the contents of one or more register values from the current frame.  If no register is specified, dumps them all.",
+                       //"register read [<reg-name1> [<reg-name2> [...]]]",
+                       NULL,
                        eFlagProcessMustBeLaunched | eFlagProcessMustBePaused)
     {
+        CommandArgumentEntry arg;
+        CommandArgumentData register_arg;
+        
+        // Define the first (and only) variant of this arg.
+        register_arg.arg_type = eArgTypeRegisterName;
+        register_arg.arg_repetition = eArgRepeatStar;
+        
+        // There is only one variant this argument could be; put it into the argument entry.
+        arg.push_back (register_arg);
+        
+        // Push the data for the first argument into the m_arguments vector.
+        m_arguments.push_back (arg);
     }
 
     virtual
@@ -143,9 +156,32 @@ public:
         CommandObject (interpreter,
                        "register write",
                        "Modify a single register value.",
-                       "register write <reg-name> <value>",
+                       //"register write <reg-name> <value>",
+                       NULL,
                        eFlagProcessMustBeLaunched | eFlagProcessMustBePaused)
     {
+        CommandArgumentEntry arg1;
+        CommandArgumentEntry arg2;
+        CommandArgumentData register_arg;
+        CommandArgumentData value_arg;
+        
+        // Define the first (and only) variant of this arg.
+        register_arg.arg_type = eArgTypeRegisterName;
+        register_arg.arg_repetition = eArgRepeatPlain;
+        
+        // There is only one variant this argument could be; put it into the argument entry.
+        arg1.push_back (register_arg);
+        
+        // Define the first (and only) variant of this arg.
+        value_arg.arg_type = eArgTypeValue;
+        value_arg.arg_repetition = eArgRepeatPlain;
+        
+        // There is only one variant this argument could be; put it into the argument entry.
+        arg2.push_back (value_arg);
+        
+        // Push the data for the first argument into the m_arguments vector.
+        m_arguments.push_back (arg1);
+        m_arguments.push_back (arg2);
     }
 
     virtual

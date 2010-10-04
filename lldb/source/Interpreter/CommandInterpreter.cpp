@@ -166,7 +166,7 @@ CommandInterpreter::LoadCommandDictionary ()
     break_regex_cmd_ap(new CommandObjectRegexCommand (*this,
                                                       "regexp-break",
                                                       "Set a breakpoint using a regular expression to specify the location.",
-                                                      "regexp-break [<file>:<line>]\nregexp-break [<address>]\nregexp-break <...>", 2));
+                                                      "regexp-break [<filename>:<linenum>]\nregexp-break [<address>]\nregexp-break <...>", 2));
     if (break_regex_cmd_ap.get())
     {
         if (break_regex_cmd_ap->AddRegexCommand("^(.*[^[:space:]])[[:space:]]*:[[:space:]]*([[:digit:]]+)[[:space:]]*$", "breakpoint set --file '%1' --line %2") &&

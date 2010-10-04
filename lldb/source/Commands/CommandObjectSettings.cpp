@@ -65,9 +65,31 @@ CommandObjectSettingsSet::CommandObjectSettingsSet (CommandInterpreter &interpre
     CommandObject (interpreter,
                    "settings set",
                    "Set or change the value of a single debugger setting variable.",
-                   "settings set [<cmd-options>] <setting-variable-name> <value>"),
+                   NULL),
     m_options ()
 {
+    CommandArgumentEntry arg1;
+    CommandArgumentEntry arg2;
+    CommandArgumentData var_name_arg;
+    CommandArgumentData value_arg;
+
+    // Define the first (and only) variant of this arg.
+    var_name_arg.arg_type = eArgTypeSettingVariableName;
+    var_name_arg.arg_repetition = eArgRepeatPlain;
+
+    // There is only one variant this argument could be; put it into the argument entry.
+    arg1.push_back (var_name_arg);
+
+    // Define the first (and only) variant of this arg.
+    value_arg.arg_type = eArgTypeValue;
+    value_arg.arg_repetition = eArgRepeatPlain;
+
+    // There is only one variant this argument could be; put it into the argument entry.
+    arg2.push_back (value_arg);
+
+    // Push the data for the first argument into the m_arguments vector.
+    m_arguments.push_back (arg1);
+    m_arguments.push_back (arg2);
 }
 
 CommandObjectSettingsSet::~CommandObjectSettingsSet()
@@ -263,8 +285,20 @@ CommandObjectSettingsShow::CommandObjectSettingsShow (CommandInterpreter &interp
     CommandObject (interpreter,
                    "settings show",
                    "Show the specified internal debugger setting variable and its value, or show all the currently set variables and their values, if nothing is specified.",
-                   "settings show [<setting-variable-name>]")
+                   NULL)
 {
+    CommandArgumentEntry arg1;
+    CommandArgumentData var_name_arg;
+
+    // Define the first (and only) variant of this arg.
+    var_name_arg.arg_type = eArgTypeSettingVariableName;
+    var_name_arg.arg_repetition = eArgRepeatOptional;
+
+    // There is only one variant this argument could be; put it into the argument entry.
+    arg1.push_back (var_name_arg);
+
+    // Push the data for the first argument into the m_arguments vector.
+    m_arguments.push_back (arg1);
 }
 
 CommandObjectSettingsShow::~CommandObjectSettingsShow()
@@ -374,8 +408,25 @@ CommandObjectSettingsList::CommandObjectSettingsList (CommandInterpreter &interp
     CommandObject (interpreter, 
                    "settings list",
                    "List and describe all the internal debugger settings variables that are available to the user to 'set' or 'show', or describe a particular variable or set of variables (by specifying the variable name or a common prefix).",
-                   "settings list [<setting-name> | <setting-name-prefix>]")
+                   NULL)
 {
+    CommandArgumentEntry arg;
+    CommandArgumentData var_name_arg;
+    CommandArgumentData prefix_name_arg;
+
+    // Define the first variant of this arg.
+    var_name_arg.arg_type = eArgTypeSettingVariableName;
+    var_name_arg.arg_repetition = eArgRepeatOptional;
+
+    // Define the second variant of this arg.
+    prefix_name_arg.arg_type = eArgTypeSettingPrefix;
+    prefix_name_arg.arg_repetition = eArgRepeatOptional;
+
+    arg.push_back (var_name_arg);
+    arg.push_back (prefix_name_arg);
+
+    // Push the data for the first argument into the m_arguments vector.
+    m_arguments.push_back (arg);
 }
 
 CommandObjectSettingsList::~CommandObjectSettingsList()
@@ -462,8 +513,36 @@ CommandObjectSettingsRemove::CommandObjectSettingsRemove (CommandInterpreter &in
     CommandObject (interpreter, 
                    "settings remove",
                    "Remove the specified element from an internal debugger settings array or dictionary variable.",
-                   "settings remove <setting-variable-name> [<index>|\"key\"]")
+                   NULL)
 {
+    CommandArgumentEntry arg1;
+    CommandArgumentEntry arg2;
+    CommandArgumentData var_name_arg;
+    CommandArgumentData index_arg;
+    CommandArgumentData key_arg;
+
+    // Define the first (and only) variant of this arg.
+    var_name_arg.arg_type = eArgTypeSettingVariableName;
+    var_name_arg.arg_repetition = eArgRepeatPlain;
+
+    // There is only one variant this argument could be; put it into the argument entry.
+    arg1.push_back (var_name_arg);
+
+    // Define the first variant of this arg.
+    index_arg.arg_type = eArgTypeSettingIndex;
+    index_arg.arg_repetition = eArgRepeatPlain;
+
+    // Define the second variant of this arg.
+    key_arg.arg_type = eArgTypeSettingKey;
+    key_arg.arg_repetition = eArgRepeatPlain;
+
+    // Push both variants into this arg
+    arg2.push_back (index_arg);
+    arg2.push_back (key_arg);
+
+    // Push the data for the first argument into the m_arguments vector.
+    m_arguments.push_back (arg1);
+    m_arguments.push_back (arg2);
 }
 
 CommandObjectSettingsRemove::~CommandObjectSettingsRemove ()
@@ -560,8 +639,46 @@ CommandObjectSettingsReplace::CommandObjectSettingsReplace (CommandInterpreter &
     CommandObject (interpreter,
                    "settings replace",
                    "Replace the specified element from an internal debugger settings array or dictionary variable with the specified new value.",
-                   "settings replace <setting-variable-name> [<index>|\"<key>\"] <new-value>")
+                   NULL)
 {
+    CommandArgumentEntry arg1;
+    CommandArgumentEntry arg2;
+    CommandArgumentEntry arg3;
+    CommandArgumentData var_name_arg;
+    CommandArgumentData index_arg;
+    CommandArgumentData key_arg;
+    CommandArgumentData value_arg;
+
+    // Define the first (and only) variant of this arg.
+    var_name_arg.arg_type = eArgTypeSettingVariableName;
+    var_name_arg.arg_repetition = eArgRepeatPlain;
+
+    // There is only one variant this argument could be; put it into the argument entry.
+    arg1.push_back (var_name_arg);
+
+    // Define the first (variant of this arg.
+    index_arg.arg_type = eArgTypeSettingIndex;
+    index_arg.arg_repetition = eArgRepeatPlain;
+
+    // Define the second (variant of this arg.
+    key_arg.arg_type = eArgTypeSettingKey;
+    key_arg.arg_repetition = eArgRepeatPlain;
+
+    // Put both variants into this arg
+    arg2.push_back (index_arg);
+    arg2.push_back (key_arg);
+
+    // Define the first (and only) variant of this arg.
+    value_arg.arg_type = eArgTypeValue;
+    value_arg.arg_repetition = eArgRepeatPlain;
+
+    // There is only one variant this argument could be; put it into the argument entry.
+    arg3.push_back (value_arg);
+
+    // Push the data for the first argument into the m_arguments vector.
+    m_arguments.push_back (arg1);
+    m_arguments.push_back (arg2);
+    m_arguments.push_back (arg3);
 }
 
 CommandObjectSettingsReplace::~CommandObjectSettingsReplace ()
@@ -673,8 +790,40 @@ CommandObjectSettingsInsertBefore::CommandObjectSettingsInsertBefore (CommandInt
     CommandObject (interpreter,
                    "settings insert-before",
                    "Insert value(s) into an internal debugger settings array variable, immediately before the specified element.",
-                   "settings insert-before <setting-variable-name> [<index>] <new-value>")
+                   NULL)
 {
+    CommandArgumentEntry arg1;
+    CommandArgumentEntry arg2;
+    CommandArgumentEntry arg3;
+    CommandArgumentData var_name_arg;
+    CommandArgumentData index_arg;
+    CommandArgumentData value_arg;
+
+    // Define the first (and only) variant of this arg.
+    var_name_arg.arg_type = eArgTypeSettingVariableName;
+    var_name_arg.arg_repetition = eArgRepeatPlain;
+
+    // There is only one variant this argument could be; put it into the argument entry.
+    arg1.push_back (var_name_arg);
+
+    // Define the first (variant of this arg.
+    index_arg.arg_type = eArgTypeSettingIndex;
+    index_arg.arg_repetition = eArgRepeatPlain;
+
+    // There is only one variant this argument could be; put it into the argument entry.
+    arg2.push_back (index_arg);
+
+    // Define the first (and only) variant of this arg.
+    value_arg.arg_type = eArgTypeValue;
+    value_arg.arg_repetition = eArgRepeatPlain;
+
+    // There is only one variant this argument could be; put it into the argument entry.
+    arg3.push_back (value_arg);
+
+    // Push the data for the first argument into the m_arguments vector.
+    m_arguments.push_back (arg1);
+    m_arguments.push_back (arg2);
+    m_arguments.push_back (arg3);
 }
 
 CommandObjectSettingsInsertBefore::~CommandObjectSettingsInsertBefore ()
@@ -788,8 +937,40 @@ CommandObjectSettingsInsertAfter::CommandObjectSettingsInsertAfter (CommandInter
     CommandObject (interpreter,
                    "settings insert-after",
                    "Insert value(s) into an internal debugger settings array variable, immediately after the specified element.",
-                   "settings insert-after <setting-variable-name> [<index>] <new-value>")
+                   NULL)
 {
+    CommandArgumentEntry arg1;
+    CommandArgumentEntry arg2;
+    CommandArgumentEntry arg3;
+    CommandArgumentData var_name_arg;
+    CommandArgumentData index_arg;
+    CommandArgumentData value_arg;
+
+    // Define the first (and only) variant of this arg.
+    var_name_arg.arg_type = eArgTypeSettingVariableName;
+    var_name_arg.arg_repetition = eArgRepeatPlain;
+
+    // There is only one variant this argument could be; put it into the argument entry.
+    arg1.push_back (var_name_arg);
+
+    // Define the first (variant of this arg.
+    index_arg.arg_type = eArgTypeSettingIndex;
+    index_arg.arg_repetition = eArgRepeatPlain;
+
+    // There is only one variant this argument could be; put it into the argument entry.
+    arg2.push_back (index_arg);
+
+    // Define the first (and only) variant of this arg.
+    value_arg.arg_type = eArgTypeValue;
+    value_arg.arg_repetition = eArgRepeatPlain;
+
+    // There is only one variant this argument could be; put it into the argument entry.
+    arg3.push_back (value_arg);
+
+    // Push the data for the first argument into the m_arguments vector.
+    m_arguments.push_back (arg1);
+    m_arguments.push_back (arg2);
+    m_arguments.push_back (arg3);
 }
 
 CommandObjectSettingsInsertAfter::~CommandObjectSettingsInsertAfter ()
@@ -903,8 +1084,30 @@ CommandObjectSettingsAppend::CommandObjectSettingsAppend (CommandInterpreter &in
     CommandObject (interpreter,
                    "settings append",
                    "Append a new value to the end of an internal debugger settings array, dictionary or string variable.",
-                   "settings append <setting-variable-name> <new-value>")
+                   NULL)
 {
+    CommandArgumentEntry arg1;
+    CommandArgumentEntry arg2;
+    CommandArgumentData var_name_arg;
+    CommandArgumentData value_arg;
+
+    // Define the first (and only) variant of this arg.
+    var_name_arg.arg_type = eArgTypeSettingVariableName;
+    var_name_arg.arg_repetition = eArgRepeatPlain;
+
+    // There is only one variant this argument could be; put it into the argument entry.
+    arg1.push_back (var_name_arg);
+
+    // Define the first (and only) variant of this arg.
+    value_arg.arg_type = eArgTypeValue;
+    value_arg.arg_repetition = eArgRepeatPlain;
+
+    // There is only one variant this argument could be; put it into the argument entry.
+    arg2.push_back (value_arg);
+
+    // Push the data for the first argument into the m_arguments vector.
+    m_arguments.push_back (arg1);
+    m_arguments.push_back (arg2);
 }
 
 CommandObjectSettingsAppend::~CommandObjectSettingsAppend ()
@@ -1005,8 +1208,20 @@ CommandObjectSettingsClear::CommandObjectSettingsClear (CommandInterpreter &inte
     CommandObject (interpreter, 
                    "settings clear",
                    "Erase all the contents of an internal debugger settings variables; this is only valid for variables with clearable types, i.e. strings, arrays or dictionaries.",
-                   "settings clear")
+                   NULL)
 {
+    CommandArgumentEntry arg;
+    CommandArgumentData var_name_arg;
+
+    // Define the first (and only) variant of this arg.
+    var_name_arg.arg_type = eArgTypeSettingVariableName;
+    var_name_arg.arg_repetition = eArgRepeatPlain;
+
+    // There is only one variant this argument could be; put it into the argument entry.
+    arg.push_back (var_name_arg);
+
+    // Push the data for the first argument into the m_arguments vector.
+    m_arguments.push_back (arg);
 }
 
 CommandObjectSettingsClear::~CommandObjectSettingsClear ()

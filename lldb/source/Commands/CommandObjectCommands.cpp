@@ -35,8 +35,20 @@ public:
         CommandObject (interpreter,
                        "commands source",
                        "Read in debugger commands from the file <filename> and execute them.",
-                       "command source <filename>")
+                       NULL)
     {
+        CommandArgumentEntry arg;
+        CommandArgumentData file_arg;
+        
+        // Define the first (and only) variant of this arg.
+        file_arg.arg_type = eArgTypeFilename;
+        file_arg.arg_repetition = eArgRepeatPlain;
+        
+        // There is only one variant this argument could be; put it into the argument entry.
+        arg.push_back (file_arg);
+        
+        // Push the data for the first argument into the m_arguments vector.
+        m_arguments.push_back (arg);
     }
 
     ~CommandObjectCommandsSource ()
@@ -139,7 +151,7 @@ public:
         CommandObject (interpreter, 
                        "commands alias",
                        "Allow users to define their own debugger command abbreviations.",
-                       "commands alias <new_command> <old_command> [<options-for-aliased-command>]")
+                       NULL)
     {
         SetHelpLong(
     "'alias' allows the user to create a short-cut or abbreviation for long \n\
@@ -189,6 +201,38 @@ public:
     \n    commands alias bl3  breakpoint set -f %1 -l 3  // Always sets a breakpoint on line \n\
                                                    // 3 of whatever file is indicated. \n");
 
+        CommandArgumentEntry arg1;
+        CommandArgumentEntry arg2;
+        CommandArgumentEntry arg3;
+        CommandArgumentData alias_arg;
+        CommandArgumentData cmd_arg;
+        CommandArgumentData options_arg;
+        
+        // Define the first (and only) variant of this arg.
+        alias_arg.arg_type = eArgTypeAliasName;
+        alias_arg.arg_repetition = eArgRepeatPlain;
+        
+        // There is only one variant this argument could be; put it into the argument entry.
+        arg1.push_back (alias_arg);
+        
+        // Define the first (and only) variant of this arg.
+        cmd_arg.arg_type = eArgTypeCommandName;
+        cmd_arg.arg_repetition = eArgRepeatPlain;
+        
+        // There is only one variant this argument could be; put it into the argument entry.
+        arg2.push_back (cmd_arg);
+        
+        // Define the first (and only) variant of this arg.
+        options_arg.arg_type = eArgTypeAliasOptions;
+        options_arg.arg_repetition = eArgRepeatOptional;
+        
+        // There is only one variant this argument could be; put it into the argument entry.
+        arg3.push_back (options_arg);
+        
+        // Push the data for the first argument into the m_arguments vector.
+        m_arguments.push_back (arg1);
+        m_arguments.push_back (arg2);
+        m_arguments.push_back (arg3);
     }
 
     ~CommandObjectCommandsAlias ()
@@ -352,8 +396,20 @@ public:
         CommandObject (interpreter,
                        "commands unalias",
                        "Allow the user to remove/delete a user-defined command abbreviation.",
-                       "unalias <alias-name-to-be-removed>")
+                       NULL)
     {
+        CommandArgumentEntry arg;
+        CommandArgumentData alias_arg;
+        
+        // Define the first (and only) variant of this arg.
+        alias_arg.arg_type = eArgTypeAliasName;
+        alias_arg.arg_repetition = eArgRepeatPlain;
+        
+        // There is only one variant this argument could be; put it into the argument entry.
+        arg.push_back (alias_arg);
+        
+        // Push the data for the first argument into the m_arguments vector.
+        m_arguments.push_back (arg);
     }
 
     ~CommandObjectCommandsUnalias()

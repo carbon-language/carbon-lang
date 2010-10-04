@@ -125,8 +125,8 @@ CommandObjectDisassemble::CommandOptions::g_option_table[] =
 { LLDB_OPT_SET_ALL, false, "mixed",    'm', no_argument,       NULL, 0, eArgTypeNone,             "Enable mixed source and assembly display."},
 { LLDB_OPT_SET_ALL, false, "raw",      'r', no_argument,       NULL, 0, eArgTypeNone,             "Print raw disassembly with no symbol information."},
 
-{ LLDB_OPT_SET_1, true, "start-address",  's', required_argument, NULL, 0, eArgTypeAddress,      "Address to start disassembling."},
-{ LLDB_OPT_SET_1, false, "end-address",  'e', required_argument, NULL, 0, eArgTypeAddress,      "Address to start disassembling."},
+{ LLDB_OPT_SET_1, true, "start-address",  's', required_argument, NULL, 0, eArgTypeStartAddress,      "Address at which to start disassembling."},
+{ LLDB_OPT_SET_1, false, "end-address",  'e', required_argument, NULL, 0, eArgTypeEndAddress,      "Address at which to end disassembling."},
 
 { LLDB_OPT_SET_2, true, "name",     'n', required_argument, NULL, CommandCompletions::eSymbolCompletion, eArgTypeFunctionName,             "Disassemble entire contents of the given function name."},
 

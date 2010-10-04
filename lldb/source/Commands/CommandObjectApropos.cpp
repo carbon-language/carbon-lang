@@ -30,8 +30,20 @@ CommandObjectApropos::CommandObjectApropos (CommandInterpreter &interpreter) :
     CommandObject (interpreter,
                    "apropos",
                    "Find a list of debugger commands related to a particular word/subject.",
-                   "apropos <search-word>")
+                   NULL)
 {
+    CommandArgumentEntry arg;
+    CommandArgumentData search_word_arg;
+
+    // Define the first (and only) variant of this arg.
+    search_word_arg.arg_type = eArgTypeSearchWord;
+    search_word_arg.arg_repetition = eArgRepeatPlain;
+
+    // There is only one variant this argument could be; put it into the argument entry.
+    arg.push_back (search_word_arg);
+
+    // Push the data for the first argument into the m_arguments vector.
+    m_arguments.push_back (arg);
 }
 
 CommandObjectApropos::~CommandObjectApropos()

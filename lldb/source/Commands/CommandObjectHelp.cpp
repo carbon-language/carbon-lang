@@ -31,6 +31,18 @@ CommandObjectHelp::CommandObjectHelp (CommandInterpreter &interpreter) :
                    "Show a list of all debugger commands, or give details about specific commands.",
                    "help [<cmd-name>]")
 {
+    CommandArgumentEntry arg;
+    CommandArgumentData command_arg;
+
+    // Define the first (and only) variant of this arg.
+    command_arg.arg_type = eArgTypeCommandName;
+    command_arg.arg_repetition = eArgRepeatStar;
+
+    // There is only one variant this argument could be; put it into the argument entry.
+    arg.push_back (command_arg);
+
+    // Push the data for the first argument into the m_arguments vector.
+    m_arguments.push_back (arg);
 }
 
 CommandObjectHelp::~CommandObjectHelp()

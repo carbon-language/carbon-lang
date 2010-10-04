@@ -129,7 +129,7 @@ CommandObjectBreakpointCommandAdd::CommandObjectBreakpointCommandAdd (CommandInt
     CommandObject (interpreter,
                    "add",
                    "Add a set of commands to a breakpoint, to be executed whenever the breakpoint is hit.",
-                   "breakpoint command add <cmd-options> <breakpoint-id>")
+                   NULL)
 {
     SetHelpLong (
 "\nGeneral information about entering breakpoint commands \n\
@@ -236,6 +236,20 @@ Special information about debugger command breakpoint commands \n\
 You may enter any debugger command, exactly as you would at the \n\
 debugger prompt.  You may enter as many debugger commands as you like, \n\
 but do NOT enter more than one command per line. \n" );
+
+
+    CommandArgumentEntry arg;
+    CommandArgumentData bp_id_arg;
+
+    // Define the first (and only) variant of this arg.
+    bp_id_arg.arg_type = eArgTypeBreakpointID;
+    bp_id_arg.arg_repetition = eArgRepeatPlain;
+
+    // There is only one variant this argument could be; put it into the argument entry.
+    arg.push_back (bp_id_arg);
+
+    // Push the data for the first argument into the m_arguments vector.
+    m_arguments.push_back (arg);
 }
 
 CommandObjectBreakpointCommandAdd::~CommandObjectBreakpointCommandAdd ()
@@ -463,8 +477,20 @@ CommandObjectBreakpointCommandRemove::CommandObjectBreakpointCommandRemove (Comm
     CommandObject (interpreter, 
                    "remove",
                    "Remove the set of commands from a breakpoint.",
-                   "breakpoint command remove <breakpoint-id>")
+                   NULL)
 {
+    CommandArgumentEntry arg;
+    CommandArgumentData bp_id_arg;
+
+    // Define the first (and only) variant of this arg.
+    bp_id_arg.arg_type = eArgTypeBreakpointID;
+    bp_id_arg.arg_repetition = eArgRepeatPlain;
+
+    // There is only one variant this argument could be; put it into the argument entry.
+    arg.push_back (bp_id_arg);
+
+    // Push the data for the first argument into the m_arguments vector.
+    m_arguments.push_back (arg);
 }
 
 CommandObjectBreakpointCommandRemove::~CommandObjectBreakpointCommandRemove ()
@@ -549,8 +575,20 @@ CommandObjectBreakpointCommandList::CommandObjectBreakpointCommandList (CommandI
     CommandObject (interpreter,
                    "list",
                    "List the script or set of commands to be executed when the breakpoint is hit.",
-                   "breakpoint command list <breakpoint-id>")
+                    NULL)
 {
+    CommandArgumentEntry arg;
+    CommandArgumentData bp_id_arg;
+
+    // Define the first (and only) variant of this arg.
+    bp_id_arg.arg_type = eArgTypeBreakpointID;
+    bp_id_arg.arg_repetition = eArgRepeatPlain;
+
+    // There is only one variant this argument could be; put it into the argument entry.
+    arg.push_back (bp_id_arg);
+
+    // Push the data for the first argument into the m_arguments vector.
+    m_arguments.push_back (arg);
 }
 
 CommandObjectBreakpointCommandList::~CommandObjectBreakpointCommandList ()

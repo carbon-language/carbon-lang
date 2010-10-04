@@ -106,7 +106,7 @@ CommandObjectExpression::CommandObjectExpression (CommandInterpreter &interprete
     CommandObject (interpreter,
                    "expression",
                    "Evaluate a C/ObjC/C++ expression in the current program context, using variables currently in scope.",
-                   "expression [<cmd-options>] <expr>"),
+                   NULL),
     m_expr_line_count (0),
     m_expr_lines ()
 {
@@ -116,6 +116,19 @@ CommandObjectExpression::CommandObjectExpression (CommandInterpreter &interprete
    expr my_struct->a = my_array[3] \n\
    expr -f bin -- (index * 8) + 5 \n\
    expr char c[] = \"foo\"; c[0]\n");
+
+    CommandArgumentEntry arg;
+    CommandArgumentData expression_arg;
+
+    // Define the first (and only) variant of this arg.
+    expression_arg.arg_type = eArgTypeExpression;
+    expression_arg.arg_repetition = eArgRepeatPlain;
+
+    // There is only one variant this argument could be; put it into the argument entry.
+    arg.push_back (expression_arg);
+
+    // Push the data for the first argument into the m_arguments vector.
+    m_arguments.push_back (arg);
 }
 
 CommandObjectExpression::~CommandObjectExpression ()

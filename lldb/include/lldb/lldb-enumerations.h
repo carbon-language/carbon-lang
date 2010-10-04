@@ -511,38 +511,42 @@ typedef enum VarSetOperationType
 typedef enum CommandArgumentType
 {
     eArgTypeAddress = 0,
+    eArgTypeAliasName,
+    eArgTypeAliasOptions,
     eArgTypeArchitecture,
     eArgTypeBoolean,
     eArgTypeBreakpointID,
     eArgTypeBreakpointIDRange,
     eArgTypeByteSize,
-    eArgTypeChannel,
+    eArgTypeCommandName,
     eArgTypeCount,
+    eArgTypeEndAddress,
     eArgTypeExpression,
     eArgTypeExprFormat,
     eArgTypeFilename,
     eArgTypeFormat,
-    eArgTypeFrameNum,
+    eArgTypeFrameIndex,
     eArgTypeFullName,
     eArgTypeFunctionName,
     eArgTypeIndex,
     eArgTypeLineNum,
+    eArgTypeLogChannel,
     eArgTypeMethod,
     eArgTypeName,
+    eArgTypeNewPathPrefix,
     eArgTypeNumLines,
     eArgTypeNumberPerLine,
     eArgTypeOffset,
+    eArgTypeOldPathPrefix,
     eArgTypeOneLiner,
-    eArgTypeOther,
     eArgTypePath, 
-    eArgTypePathPrefix,
-    eArgTypePathPrefixPair,
     eArgTypePid,
     eArgTypePlugin,
     eArgTypeProcessName,
     eArgTypeQueueName,
     eArgTypeRegisterName,
     eArgTypeRegularExpression,
+    eArgTypeRunArgs,
     eArgTypeRunMode,
     eArgTypeScriptLang,
     eArgTypeSearchWord,
@@ -558,7 +562,6 @@ typedef enum CommandArgumentType
     eArgTypeThreadID,
     eArgTypeThreadIndex,
     eArgTypeThreadName,
-    eArgTypeUUID,
     eArgTypeUnixSignalNumber,
     eArgTypeVarName,
     eArgTypeValue,
@@ -569,10 +572,17 @@ typedef enum CommandArgumentType
 
 typedef enum ArgumentRepetitionType
 {
-    eArgRepeatPlain,    // Exactly one occurrence
-    eArgRepeatOptional, // At most one occurrence, but it's optional
-    eArgRepeatPlus,     // One or more occurrences
-    eArgRepeatStar      // Zero or more occurrences
+    eArgRepeatPlain,     // Exactly one occurrence
+    eArgRepeatOptional,  // At most one occurrence, but it's optional
+    eArgRepeatPlus,      // One or more occurrences
+    eArgRepeatStar,      // Zero or more occurrences
+    eArgRepeatRange,      // Repetition of same argument, from 1 to n
+    eArgRepeatPairPlain, // A pair of arguments that must always go together ([arg-type arg-value]), occurs exactly once
+    eArgRepeatPairOptional, // A pair that occurs at most once (optional)
+    eArgRepeatPairPlus,  // One or more occurrences of a pair
+    eArgRepeatPairStar,  // Zero or more occurrences of a pair
+    eArgRepeatPairRange,  // A pair that repeats from 1 to n
+    eArgRepeatPairRangeOptional,  // A pair that repeats from 1 to n, but is optional
 } ArgumentRepetitionType;
 
 

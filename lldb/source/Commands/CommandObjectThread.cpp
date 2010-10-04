@@ -322,10 +322,22 @@ public:
         CommandObject (interpreter,
                        "thread backtrace",
                        "Show the stack for one or more threads.  If no threads are specified, show the currently selected thread.  Use the thread-index \"all\" to see all threads.",
-                       "thread backtrace [<thread-index>] ...",
+                       NULL,
                        eFlagProcessMustBeLaunched | eFlagProcessMustBePaused),
         m_options()
     {
+        CommandArgumentEntry arg;
+        CommandArgumentData thread_idx_arg;
+        
+        // Define the first (and only) variant of this arg.
+        thread_idx_arg.arg_type = eArgTypeThreadIndex;
+        thread_idx_arg.arg_repetition = eArgRepeatStar;
+        
+        // There is only one variant this argument could be; put it into the argument entry.
+        arg.push_back (thread_idx_arg);
+        
+        // Push the data for the first argument into the m_arguments vector.
+        m_arguments.push_back (arg);
     }
 
     ~CommandObjectThreadBacktrace()
@@ -456,7 +468,7 @@ lldb::OptionDefinition
 CommandObjectThreadBacktrace::CommandOptions::g_option_table[] =
 {
 { LLDB_OPT_SET_1, false, "count", 'c', required_argument, NULL, 0, eArgTypeCount, "How many frames to display (-1 for all)"},
-{ LLDB_OPT_SET_1, false, "start", 's', required_argument, NULL, 0, eArgTypeFrameNum, "Frame in which to start the backtrace"},
+{ LLDB_OPT_SET_1, false, "start", 's', required_argument, NULL, 0, eArgTypeFrameIndex, "Frame in which to start the backtrace"},
 { 0, false, NULL, 0, 0, NULL, 0, eArgTypeNone, NULL }
 };
 
@@ -562,6 +574,18 @@ public:
         m_step_scope (step_scope),
         m_options ()
     {
+        CommandArgumentEntry arg;
+        CommandArgumentData thread_id_arg;
+        
+        // Define the first (and only) variant of this arg.
+        thread_id_arg.arg_type = eArgTypeThreadID;
+        thread_id_arg.arg_repetition = eArgRepeatOptional;
+        
+        // There is only one variant this argument could be; put it into the argument entry.
+        arg.push_back (thread_id_arg);
+        
+        // Push the data for the first argument into the m_arguments vector.
+        m_arguments.push_back (arg);
     }
 
     virtual
@@ -779,9 +803,21 @@ public:
         CommandObject (interpreter, 
                        "thread continue",
                        "Continue execution of one or more threads in an active process.",
-                       "thread continue <thread-index> [<thread-index> ...]",
+                       NULL,
                        eFlagProcessMustBeLaunched | eFlagProcessMustBePaused)
     {
+        CommandArgumentEntry arg;
+        CommandArgumentData thread_idx_arg;
+        
+        // Define the first (and only) variant of this arg.
+        thread_idx_arg.arg_type = eArgTypeThreadIndex;
+        thread_idx_arg.arg_repetition = eArgRepeatPlus;
+        
+        // There is only one variant this argument could be; put it into the argument entry.
+        arg.push_back (thread_idx_arg);
+        
+        // Push the data for the first argument into the m_arguments vector.
+        m_arguments.push_back (arg);
     }
 
 
@@ -1023,10 +1059,22 @@ public:
         CommandObject (interpreter, 
                        "thread until",
                        "Run the current or specified thread until it reaches a given line number or leaves the current function.",
-                       "thread until [<cmd-options>] <line-number>",
+                       NULL,
                        eFlagProcessMustBeLaunched | eFlagProcessMustBePaused),
         m_options ()
     {
+        CommandArgumentEntry arg;
+        CommandArgumentData line_num_arg;
+        
+        // Define the first (and only) variant of this arg.
+        line_num_arg.arg_type = eArgTypeLineNum;
+        line_num_arg.arg_repetition = eArgRepeatPlain;
+        
+        // There is only one variant this argument could be; put it into the argument entry.
+        arg.push_back (line_num_arg);
+        
+        // Push the data for the first argument into the m_arguments vector.
+        m_arguments.push_back (arg);
     }
 
 
@@ -1203,7 +1251,7 @@ protected:
 lldb::OptionDefinition
 CommandObjectThreadUntil::CommandOptions::g_option_table[] =
 {
-{ LLDB_OPT_SET_1, false, "frame",   'f', required_argument, NULL,               0, eArgTypeFrameNum,   "Frame index for until operation - defaults to 0"},
+{ LLDB_OPT_SET_1, false, "frame",   'f', required_argument, NULL,               0, eArgTypeFrameIndex,   "Frame index for until operation - defaults to 0"},
 { LLDB_OPT_SET_1, false, "thread",  't', required_argument, NULL,               0, eArgTypeThreadIndex,  "Thread index for the thread for until operation"},
 { LLDB_OPT_SET_1, false, "run-mode",'m', required_argument, g_duo_running_mode, 0, eArgTypeRunMode,"Determine how to run other threads while stepping this one"},
 { 0, false, NULL, 0, 0, NULL, 0, eArgTypeNone, NULL }
@@ -1222,9 +1270,21 @@ public:
         CommandObject (interpreter,
                        "thread select",
                        "Select a thread as the currently active thread.",
-                       "thread select <thread-index>",
+                       NULL,
                        eFlagProcessMustBeLaunched | eFlagProcessMustBePaused)
     {
+        CommandArgumentEntry arg;
+        CommandArgumentData thread_idx_arg;
+        
+        // Define the first (and only) variant of this arg.
+        thread_idx_arg.arg_type = eArgTypeThreadIndex;
+        thread_idx_arg.arg_repetition = eArgRepeatPlain;
+        
+        // There is only one variant this argument could be; put it into the argument entry.
+        arg.push_back (thread_idx_arg);
+        
+        // Push the data for the first argument into the m_arguments vector.
+        m_arguments.push_back (arg);
     }
 
 
@@ -1377,7 +1437,7 @@ CommandObjectMultiwordThread::CommandObjectMultiwordThread (CommandInterpreter &
                                                     interpreter,
                                                     "thread step-in",
                                                     "Source level single step in specified thread (current thread, if none specified).",
-                                                    "thread step-in [<thread-id>]",
+                                                    NULL,
                                                     eFlagProcessMustBeLaunched | eFlagProcessMustBePaused,
                                                     eStepTypeInto,
                                                     eStepScopeSource)));
@@ -1386,7 +1446,7 @@ CommandObjectMultiwordThread::CommandObjectMultiwordThread (CommandInterpreter &
                                                     interpreter,
                                                     "thread step-out",
                                                     "Finish executing the current fucntion and return to its call site in specified thread (current thread, if none specified).",
-                                                    "thread step-out [<thread-id>]",
+                                                    NULL,
                                                     eFlagProcessMustBeLaunched | eFlagProcessMustBePaused,
                                                     eStepTypeOut,
                                                     eStepScopeSource)));
@@ -1395,7 +1455,7 @@ CommandObjectMultiwordThread::CommandObjectMultiwordThread (CommandInterpreter &
                                                     interpreter,
                                                     "thread step-over",
                                                     "Source level single step in specified thread (current thread, if none specified), stepping over calls.",
-                                                    "thread step-over [<thread-id>]",
+                                                    NULL,
                                                     eFlagProcessMustBeLaunched | eFlagProcessMustBePaused,
                                                     eStepTypeOver,
                                                     eStepScopeSource)));
@@ -1404,7 +1464,7 @@ CommandObjectMultiwordThread::CommandObjectMultiwordThread (CommandInterpreter &
                                                     interpreter,
                                                     "thread step-inst",
                                                     "Single step one instruction in specified thread (current thread, if none specified).",
-                                                    "thread step-inst [<thread-id>]",
+                                                    NULL,
                                                     eFlagProcessMustBeLaunched | eFlagProcessMustBePaused,
                                                     eStepTypeTrace,
                                                     eStepScopeInstruction)));
@@ -1413,7 +1473,7 @@ CommandObjectMultiwordThread::CommandObjectMultiwordThread (CommandInterpreter &
                                                     interpreter,
                                                     "thread step-inst-over",
                                                     "Single step one instruction in specified thread (current thread, if none specified), stepping over calls.",
-                                                    "thread step-inst-over [<thread-id>]",
+                                                    NULL,
                                                     eFlagProcessMustBeLaunched | eFlagProcessMustBePaused,
                                                     eStepTypeTraceOver,
                                                     eStepScopeInstruction)));

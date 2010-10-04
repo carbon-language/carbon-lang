@@ -33,6 +33,18 @@ CommandObjectSyntax::CommandObjectSyntax (CommandInterpreter &interpreter) :
                    "Shows the correct syntax for a given debugger command.",
                    "syntax <command>")
 {
+    CommandArgumentEntry arg;
+    CommandArgumentData command_arg;
+
+    // Define the first (and only) variant of this arg.
+    command_arg.arg_type = eArgTypeCommandName;
+    command_arg.arg_repetition = eArgRepeatPlain;
+
+    // There is only one variant this argument could be; put it into the argument entry.
+    arg.push_back (command_arg);
+
+    // Push the data for the first argument into the m_arguments vector.
+    m_arguments.push_back (arg);
 }
 
 CommandObjectSyntax::~CommandObjectSyntax()

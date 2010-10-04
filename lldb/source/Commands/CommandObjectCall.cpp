@@ -110,9 +110,42 @@ CommandObjectCall::CommandObjectCall () :
     CommandObject (
             "call",
             "Call a function.",
-            "call <return_type> <function-name> [[<arg1-type> <arg1-value>] ... <argn-type> <argn-value>] [<cmd-options>]",
+            //"call <return_type> <function-name> [[<arg1-type> <arg1-value>] ... <argn-type> <argn-value>] [<cmd-options>]",
+            NULL,
             eFlagProcessMustBeLaunched | eFlagProcessMustBePaused)
 {
+    CommandArgumentEntry arg1;
+    CommandArgumentEntry arg2;
+    CommandArgumentEntry arg3;
+    CommandArgumentData return_type_arg;
+    CommandArgumentData function_name_arg;
+    CommandArgumentData arg_type_arg;
+    CommandArgumentData arg_value_arg;
+
+    // Define the first (and only) variant of this arg.
+    return_type_arg.arg_type = eArgTypeType;
+    return_type_arg.arg_repetition = eArgRepeatPlain;
+
+    arg1.push_back (return_type_arg);
+
+    function_name_arg.arg_type = eArgTypeFunctionName;
+    function_name_arg.arg_repetition = eArgTypePlain;
+
+    arg2.push_back (function_name_arg);
+
+    arg_type_arg.arg_type = eArgTypeArgType;
+    arg_type_arg.arg_repetition = eArgRepeatPairRangeOptional;
+
+    arg_value_arg.arg_type = eArgTypeValue;
+    arg_value_arg.arg_repetition = eArgRepeatPairRangeOptional;
+
+    arg3.push_back (arg_type_arg);
+    arg3.push_back (arg_value_arg);
+
+    // Push the data for the first argument into the m_arguments vector.
+    m_arguments.push_back (arg1);
+    m_arguments.push_back (arg2);
+    m_arguments.push_back (arg3);
 }
 
 CommandObjectCall::~CommandObjectCall ()

@@ -134,6 +134,9 @@ public:
     void
     GetFormattedCommandArguments (Stream &str);
     
+    bool
+    IsPairType (lldb::ArgumentRepetitionType arg_repeat_type);
+    
     enum 
     {
         eFlagProcessMustBeLaunched = (1 << 0),

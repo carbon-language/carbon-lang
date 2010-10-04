@@ -98,9 +98,21 @@ public:
         CommandObject (interpreter,
                        "frame select",
                        "Select a frame by index from within the current thread and make it the current frame.",
-                       "frame select <frame-index>",
+                       NULL,
                        eFlagProcessMustBeLaunched | eFlagProcessMustBePaused)
     {
+        CommandArgumentEntry arg;
+        CommandArgumentData index_arg;
+
+        // Define the first (and only) variant of this arg.
+        index_arg.arg_type = eArgTypeFrameIndex;
+        index_arg.arg_repetition = eArgRepeatPlain;
+
+        // There is only one variant this argument could be; put it into the argument entry.
+        arg.push_back (index_arg);
+
+        // Push the data for the first argument into the m_arguments vector.
+        m_arguments.push_back (arg);
     }
 
     ~CommandObjectFrameSelect ()
@@ -296,8 +308,20 @@ public:
                        "argument, local, file static and file global variables."
                        "Children of aggregate variables can be specified such as "
                        "'var->child.x'.",
-                       "frame variable [<cmd-options>] [<var-name1> [<var-name2>...]]")
+                       NULL)
     {
+        CommandArgumentEntry arg;
+        CommandArgumentData var_name_arg;
+        
+        // Define the first (and only) variant of this arg.
+        var_name_arg.arg_type = eArgTypeVarName;
+        var_name_arg.arg_repetition = eArgRepeatStar;
+        
+        // There is only one variant this argument could be; put it into the argument entry.
+        arg.push_back (var_name_arg);
+        
+        // Push the data for the first argument into the m_arguments vector.
+        m_arguments.push_back (arg);
     }
 
     virtual

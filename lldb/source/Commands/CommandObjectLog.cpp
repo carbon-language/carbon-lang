@@ -62,8 +62,20 @@ public:
         CommandObject (interpreter,
                        "log enable",
                        "Enable logging for a single log channel.",
-                       "log enable [<cmd-options>] <channel>")
+                        NULL)
     {
+        CommandArgumentEntry arg;
+        CommandArgumentData channel_arg;
+        
+        // Define the first (and only) variant of this arg.
+        channel_arg.arg_type = eArgTypeLogChannel;
+        channel_arg.arg_repetition = eArgRepeatPlain;
+        
+        // There is only one variant this argument could be; put it into the argument entry.
+        arg.push_back (channel_arg);
+        
+        // Push the data for the first argument into the m_arguments vector.
+        m_arguments.push_back (arg);
     }
 
     virtual
@@ -238,8 +250,20 @@ public:
         CommandObject (interpreter,
                        "log disable",
                        "Disable one or more log channels.",
-                       "log disable <channel> [<channel> ...]")
+                       NULL)
     {
+        CommandArgumentEntry arg;
+        CommandArgumentData channel_arg;
+        
+        // Define the first (and only) variant of this arg.
+        channel_arg.arg_type = eArgTypeLogChannel;
+        channel_arg.arg_repetition = eArgRepeatPlus;
+        
+        // There is only one variant this argument could be; put it into the argument entry.
+        arg.push_back (channel_arg);
+        
+        // Push the data for the first argument into the m_arguments vector.
+        m_arguments.push_back (arg);
     }
 
     virtual
@@ -298,9 +322,21 @@ public:
     CommandObjectLogList(CommandInterpreter &interpreter) :
         CommandObject (interpreter, 
                        "log list",
-                       "List the log categories for one or more log channels.",
-                       "log list <channel> [<channel> ...]")
+                       "List the log categories for one or more log channels.  If none specified, lists them all.",
+                       NULL)
     {
+        CommandArgumentEntry arg;
+        CommandArgumentData channel_arg;
+        
+        // Define the first (and only) variant of this arg.
+        channel_arg.arg_type = eArgTypeLogChannel;
+        channel_arg.arg_repetition = eArgRepeatStar;
+        
+        // There is only one variant this argument could be; put it into the argument entry.
+        arg.push_back (channel_arg);
+        
+        // Push the data for the first argument into the m_arguments vector.
+        m_arguments.push_back (arg);
     }
 
     virtual

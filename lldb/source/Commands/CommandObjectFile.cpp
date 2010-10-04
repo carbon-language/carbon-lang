@@ -89,8 +89,20 @@ CommandObjectFile::CommandObjectFile(CommandInterpreter &interpreter) :
     CommandObject (interpreter,
                    "file",
                    "Set the file to be used as the main executable by the debugger.",
-                   "file [<cmd-options>] <filename>")
+                   NULL)
 {
+    CommandArgumentEntry arg;
+    CommandArgumentData file_arg;
+
+    // Define the first (and only) variant of this arg.
+    file_arg.arg_type = eArgTypeFilename;
+    file_arg.arg_repetition = eArgRepeatPlain;
+
+    // There is only one variant this argument could be; put it into the argument entry.
+    arg.push_back (file_arg);
+
+    // Push the data for the first argument into the m_arguments vector.
+    m_arguments.push_back (arg);
 }
 
 CommandObjectFile::~CommandObjectFile ()
