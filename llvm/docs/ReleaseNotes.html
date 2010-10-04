@@ -549,23 +549,6 @@ in this section.
 
 <!--=========================================================================-->
 <div class="doc_subsection">
-<a name="orgchanges">LLVM Community Changes</a>
-</div>
-
-<div class="doc_text">
-
-<p>In addition to changes to the code, between LLVM 2.7 and 2.8, a number of
-organization changes have happened:
-</p>
-
-<ul>
-<li>libc++ and lldb are new</li>
-<li>Debugging optimized code support.</li>
-</ul>
-</div>
-
-<!--=========================================================================-->
-<div class="doc_subsection">
 <a name="majorfeatures">Major New Features</a>
 </div>
 
@@ -574,8 +557,17 @@ organization changes have happened:
 <p>LLVM 2.8 includes several major new capabilities:</p>
 
 <ul>
-<li>llvm-diff</li>
-<li>Direct .o file writing support for darwin/x86[64].</li>
+<li>As mentioned above, <a href="#libc++">libc++</a> and <a 
+   href="#lldb">LLDB</a> are major new additions to the LLVM collective.</li>
+<li>LLVM 2.8 now has pretty decent support for debugging optimized code.  You
+    should be able to reliably get debug info for function arguments, assuming
+    that the value is actually available where you have stopped.</li>
+</ul>
+<li>A new 'llvm-diff' tool is available that does a semantic diff of .ll
+    files.</li>
+<li>The <a href="#mc">MC subproject</a> has made major progress in this release.
+    Direct .o file writing support for darwin/x86[-64] is now reliable and
+    support for other targets and object file formats are in progress.</li>
 </ul>
 
 </div>
@@ -590,13 +582,19 @@ organization changes have happened:
 expose new optimization opportunities:</p>
 
 <ul>
-
-  memcpy, memmove, and memset now take address space qualified pointers + volatile.
-  per-instruction debug info metadata is much faster and uses less space (new DebugLoc class).
-  New "trap values" concept: http://llvm.org/docs/LangRef.html#trapvalues
-  New linker_private_weak and linker_private_weak_def_auto linkage types
-  Triples are now stored in normalized form.  Triple::normalize.
-
+<li>The <a href="LangRef.html#int_libc">memcpy, memmove, and memset</a>
+  intrinsics now take address space qualified pointers and a bit to indicate
+  whether the transfer is "<a href="LangRef.html#volatile">volatile</a>" or not.
+</li>
+<li>Per-instruction debug info metadata is much faster and uses less memory by
+    using the new DebugLoc class.</li>
+<li>LLVM IR now has a more formalized concept of "<a
+    href="LangRef.html#trapvalues">trap values</a>", which allow the optimizer
+    to optimize more aggressively in the presence of undefined behavior, while
+    still producing predictable results.</li>
+<li>LLVM IR now supports two new <a href="LangRef.html#linkage">linkage
+    types</a> (linker_private_weak and linker_private_weak_def_auto) which map
+    onto some obscure MachO concepts.</li>
 </ul>
 
 </div>
@@ -612,18 +610,38 @@ expose new optimization opportunities:</p>
 release includes a few major enhancements and additions to the optimizers:</p>
 
 <ul>
+<li>As mentioned above, the optimizer now has support for updating debug
+   information as it goes.  A key aspect of this is the new <a
+   href="SourceLevelDebugging.html#format_common_value">llvm.dbg.value</a>
+   intrinsic.  This intrinsic represents debug info for variables that are
+   promoted to SSA values (typically by mem2reg or the -scalarrepl passes).</li>
 
-<li></li>
+<li>The JumpThreading pass is now much more aggressive about implied value
+    relations, allowing it to thread conditions like "a == 4" when a is known to
+    be 13 in one of the predecessors of a block.  It does this in conjunction
+    with the new LazyValueInfo analysis pass.</li>
+<li>The new RegionInfo analysis pass identifies single-entry single-exit regions
+    in the CFG.  You can play with it with the "opt -regions analyze" or
+    "opt -view-regions" commands.</li>
+<li>The loop optimizer has significantly improve strength reduction and analysis
+  capabilities.  Notably it is able to build on the trap value and signed
+  integer overflow information to optimize &lt;= and &gt;= loops.</li>
+<li>The CallGraphSCCPassManager now has some basic support for iterating within
+    an SCC when a optimizer devirtualizes a function call.  This allows inlining
+    through indirect call sites that are devirtualized by store-load forwarding
+    and other optimizations.</li>
+<li>The new <A href="Passes.html#loweratomic">-loweratomic</a> pass is available
+    to lower atomic instructions into their non-atomic form.  This can be useful
+    to optimize generic code that expects to run in a single-threaded
+    environment.</li>
+</ul>
+
+<!--
+<p>In addition to these features that are done in 2.8, there is preliminary
+   support in the release for Type Based Alias Analysis 
   Preliminary work on TBAA but not usable in 2.8.
   New CorrelatedValuePropagation pass, not on by default in 2.8 yet.
-  JumpThreading much more aggressive about implied value relations.
-  New RegionInfo pass  "opt -regions analyze" or "opt -view-regions".
-  Improved trip count analysis for <= and >= loops, and uses sign overflow info.
-  llvm.dbg.value: variable debug info for optimized code
-  Now iterate function passes when a cgsccpassmanager detects a devirtualization
-  Atomic lowering patch: -loweratomic (see Passes.html#loweratomic)
-
-</ul>
+-->
 
 </div>
 
@@ -903,6 +921,9 @@ from the previous release.</p>
 <li>If you're used to reading .ll files, you'll probably notice that .ll file
     dumps don't produce #uses comments anymore.  To get them, run a .bc file
     through "llvm-dis --show-annotations".</li>
+<li>Target triples are now stored in a normalized form, and all inputs from
+    humans are expected to be normalized by Triple::normalize before being
+    stored in a module triple or passed to another library.</li>
 </ul>
 
 
