@@ -450,7 +450,7 @@ LLVM for just-in-time compilation of video decoder configurations. Those
 configurations are designed by MPEG Reconfigurable Video Coding (RVC) committee.
 MPEG RVC standard is built on a stream-based dataflow representation of
 decoders. It is composed of a standard library of coding tools written in
-RVC-CAL language and a dataflow configuration &emdash; block diagram &emdash;
+RVC-CAL language and a dataflow configuration &#8212; block diagram &#8212;
 of a decoder.</p>
 
 <p>Jade project is hosted as part of the <a href="http://orcc.sf.net">Open 
@@ -631,7 +631,7 @@ release includes a few major enhancements and additions to the optimizers:</p>
 <li>The new RegionInfo analysis pass identifies single-entry single-exit regions
     in the CFG.  You can play with it with the "opt -regions analyze" or
     "opt -view-regions" commands.</li>
-<li>The loop optimizer has significantly improve strength reduction and analysis
+<li>The loop optimizer has significantly improved strength reduction and analysis
   capabilities.  Notably it is able to build on the trap value and signed
   integer overflow information to optimize &lt;= and &gt;= loops.</li>
 <li>The CallGraphSCCPassManager now has some basic support for iterating within
@@ -733,7 +733,7 @@ it run faster:</p>
     extends, and optimizes away compare instructions when the condition result
     is available from a previous instruction.</li>
 <li>Atomic operations now get legalized into simpler atomic operations if not
-    natively supported, easy the implementation burden on targets.</li>
+    natively supported, easing the implementation burden on targets.</li>
 <li>The bottom-up pre-allocation scheduler is now register pressure aware,
     allowing it to avoid overscheduling in high pressure situations while still
     aggressively scheduling when registers are available.</li>
@@ -782,7 +782,7 @@ it run faster:</p>
     using a register in a different domain than where it was defined. This pass
     optimizes away these stalls.</li>
 
-<li>The X86 backend now promote 16-bit integer operations to 32-bits when
+<li>The X86 backend now promotes 16-bit integer operations to 32-bits when
     possible. This avoids 0x66 prefixes, which are slow on some
     microarchitectures and bloat the code on all of them.</li>
 
@@ -794,7 +794,7 @@ it run faster:</p>
     the X86 "int $42" and "int3" instructions.</li>
 
 <li>At the IR level, the &lt;2 x float&gt; datatype is now promoted and passed
-    around as a &lt;4 x float&gt; instead of being passed and returns as an MMX
+    around as a &lt;4 x float&gt; instead of being passed and returned as an MMX
     vector.  If you have a frontend that uses this, please pass and return a
     &lt;2 x i32&gt; instead (using bitcasts).</li>
 
@@ -829,7 +829,7 @@ it run faster:</p>
 <li><a href="LangRef.html#int_fp16">Half float</a> instructions are now
     supported.</li>
 <li>NEON support has been improved to model instructions which operate onto 
-    multiple consequtive registers more aggressively.  This avoids lots of
+    multiple consecutive registers more aggressively.  This avoids lots of
     extraneous register copies.</li>
 <li>The ARM backend now uses a new "ARMGlobalMerge" pass, which merges several
     global variables into one, saving extra address computation (all the global
@@ -905,7 +905,7 @@ from the previous release.</p>
 
 <ul>
 <li>The build configuration machinery changed the output directory names.  It
-    wasn't clear to many people that "Release-Asserts" build was a release build
+    wasn't clear to many people that a "Release-Asserts" build was a release build
     without asserts.  To make this more clear, "Release" does not include
     assertions and "Release+Asserts" does (likewise, "Debug" and
     "Debug+Asserts").</li>
