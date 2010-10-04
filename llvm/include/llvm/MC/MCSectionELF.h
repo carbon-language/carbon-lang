@@ -178,7 +178,8 @@ public:
   
   void PrintSwitchToSection(const MCAsmInfo &MAI,
                             raw_ostream &OS) const;
-  
+  virtual bool UseCodeAlign() const;
+
   /// isBaseAddressKnownZero - We know that non-allocatable sections (like
   /// debug info) have a base of zero.
   virtual bool isBaseAddressKnownZero() const {

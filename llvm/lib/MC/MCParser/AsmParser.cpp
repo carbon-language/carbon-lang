@@ -1654,12 +1654,7 @@ bool AsmParser::ParseDirectiveAlign(bool IsPow2, unsigned ValueSize) {
 
   // Check whether we should use optimal code alignment for this .align
   // directive.
-  //
-  // FIXME: This should be using a target hook.
-  bool UseCodeAlign = false;
-  if (const MCSectionMachO *S = dyn_cast<MCSectionMachO>(
-        getStreamer().getCurrentSection()))
-    UseCodeAlign = S->hasAttribute(MCSectionMachO::S_ATTR_PURE_INSTRUCTIONS);
+  bool UseCodeAlign = getStreamer().getCurrentSection()->UseCodeAlign();
   if ((!HasFillExpr || Lexer.getMAI().getTextAlignFillValue() == FillExpr) &&
       ValueSize == 1 && UseCodeAlign) {
     getStreamer().EmitCodeAlignment(Alignment, MaxBytesToFill);

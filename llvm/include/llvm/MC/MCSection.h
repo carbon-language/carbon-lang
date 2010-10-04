@@ -61,6 +61,10 @@ namespace llvm {
       return false;
     }
 
+    // UseCodeAlign - Return true if a .align directive should use
+    // "optimized nops" to fill instead of 0s.
+    virtual bool UseCodeAlign() const = 0;
+
     static bool classof(const MCSection *) { return true; }
   };
 

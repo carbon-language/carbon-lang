@@ -148,6 +148,10 @@ void MCSectionMachO::PrintSwitchToSection(const MCAsmInfo &MAI,
   OS << '\n';
 }
 
+bool MCSectionMachO::UseCodeAlign() const {
+  return hasAttribute(MCSectionMachO::S_ATTR_PURE_INSTRUCTIONS);
+}
+
 /// StripSpaces - This removes leading and trailing spaces from the StringRef.
 static void StripSpaces(StringRef &Str) {
   while (!Str.empty() && isspace(Str[0]))
@@ -283,4 +287,3 @@ std::string MCSectionMachO::ParseSectionSpecifier(StringRef Spec,        // In.
   
   return "";
 }
-

@@ -102,3 +102,7 @@ void PIC16Section::PrintSwitchToSection(const MCAsmInfo &MAI,
 
   OS << '\n';
 }
+
+bool PIC16Section::UseCodeAlign() const {
+  return isCODE_Type();
+}

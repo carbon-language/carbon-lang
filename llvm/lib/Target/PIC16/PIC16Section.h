@@ -88,6 +88,8 @@ namespace llvm {
     virtual void PrintSwitchToSection(const MCAsmInfo &MAI,
                                       raw_ostream &OS) const;
 
+    virtual bool UseCodeAlign() const;
+
     static bool classof(const MCSection *S) {
       return S->getVariant() == SV_PIC16;
     }
