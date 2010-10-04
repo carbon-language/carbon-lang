@@ -730,7 +730,7 @@ Value *ScalarExprEmitter::VisitMemberExpr(MemberExpr *E) {
   if (DI && CGF.CGM.getCodeGenOpts().LimitDebugInfo) {
     QualType PQTy = E->getBase()->IgnoreParenImpCasts()->getType();
     if (const PointerType * PTy = dyn_cast<PointerType>(PQTy))
-      if (FieldDecl *M = cast<FieldDecl>(E->getMemberDecl()))
+      if (FieldDecl *M = dyn_cast<FieldDecl>(E->getMemberDecl()))
         DI->getOrCreateRecordType(PTy->getPointeeType(), 
                                   M->getParent()->getLocation());
   }
