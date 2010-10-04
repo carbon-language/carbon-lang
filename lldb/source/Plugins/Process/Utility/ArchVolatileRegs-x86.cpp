@@ -8,7 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "ArchVolatileRegs-x86.h"
-
+#include "llvm/Support/MachO.h"
 #include "lldb/lldb-private.h"
 #include "lldb/Utility/ArchVolatileRegs.h"
 #include "lldb/Core/ArchSpec.h"
@@ -35,7 +35,7 @@ lldb_private::ArchVolatileRegs *
 ArchVolatileRegs_x86::CreateInstance (const lldb_private::ArchSpec &arch)
 {
    uint32_t cpu = arch.GetCPUType ();
-   if (cpu != CPU_TYPE_X86_64 && cpu != CPU_TYPE_I386)
+   if (cpu != llvm::MachO::CPUTypeX86_64 && cpu != llvm::MachO::CPUTypeI386)
        return NULL;
 
    return new ArchVolatileRegs_x86 (cpu);
@@ -78,7 +78,7 @@ ArchVolatileRegs_x86::initialize_regset(Thread& thread)
     
     const char **names;
     int namecount;
-    if (m_cpu == CPU_TYPE_X86_64)
+    if (m_cpu == llvm::MachO::CPUTypeX86_64)
     {
         names = x86_64_regnames;
         namecount = sizeof (x86_64_regnames) / sizeof (char *);

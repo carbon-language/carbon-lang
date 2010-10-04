@@ -8,7 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "ArchDefaultUnwindPlan-x86.h"
-
+#include "llvm/Support/MachO.h"
 #include "lldb/lldb-private.h"
 #include "lldb/Utility/ArchDefaultUnwindPlan.h"
 #include "lldb/Core/ArchSpec.h"
@@ -21,11 +21,11 @@ using namespace lldb_private;
 lldb_private::UnwindPlan*
 ArchDefaultUnwindPlan_x86::GetArchDefaultUnwindPlan (Thread& thread, Address current_pc)
 {
-    if (m_cpu == CPU_TYPE_X86_64)
+    if (m_cpu == llvm::MachO::CPUTypeX86_64)
     {
         return &m_64bit_default;
     }
-    if (m_cpu == CPU_TYPE_I386)
+    if (m_cpu == llvm::MachO::CPUTypeI386)
     {
         return &m_32bit_default;
     }
@@ -36,7 +36,7 @@ lldb_private::ArchDefaultUnwindPlan *
 ArchDefaultUnwindPlan_x86::CreateInstance (const lldb_private::ArchSpec &arch)
 {
    uint32_t cpu = arch.GetCPUType ();
-   if (cpu != CPU_TYPE_X86_64 && cpu != CPU_TYPE_I386)
+   if (cpu != llvm::MachO::CPUTypeX86_64 && cpu != llvm::MachO::CPUTypeI386)
        return NULL;
 
    return new ArchDefaultUnwindPlan_x86 (cpu);
