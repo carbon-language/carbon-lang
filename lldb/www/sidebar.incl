@@ -13,9 +13,10 @@
     <div class="urbangreymenu">
       <h1 class="headerbar">Use and Extension</h1>
       <ul>
-        <li><a href="faq.html">FAQ</a></li>
-        <li><a href="docs.html">Documentation</a></li>
         <li><a href="architecture.html">Architecture</a></li>
+        <li><a href="docs.html">Documentation</a></li>
+        <li><a href="faq.html">FAQ</a></li>
+        <li><a href="formats.html">Frame and Thread Formatting</a></li>
       </ul>
     </div>
   </div>
