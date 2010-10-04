@@ -51,7 +51,6 @@ class FunctionTypesTestCase(TestBase):
         # Check that we do indeed stop on the string_not_empty function.
         self.expect("process status", STOPPED_DUE_TO_BREAKPOINT,
             substrs = ['a.out`string_not_empty',
-                       'main.c:12',
                        'stop reason = breakpoint'])
 
 
