@@ -284,6 +284,43 @@ looking forward to the C++ committee finalizing the C++'0x standard.
 </div>
 
 
+
+<!--=========================================================================-->
+<div class="doc_subsection">
+<a name="klee">KLEE: A Symbolic Execution Virtual Machine</a>
+</div>
+
+<div class="doc_text">
+<p>
+<a href="http://klee.llvm.org/">KLEE</a> is a symbolic execution framework for
+programs in LLVM bitcode form. KLEE tries to symbolically evaluate "all" paths
+through the application and records state transitions that lead to fault
+states. This allows it to construct testcases that lead to faults and can even
+be used to verify some algorithms.
+</p>
+
+<p>Although KLEE does not have any major new features as of 2.8, we have made
+various minor improvements, particular to ease development:</p>
+<ul>
+  <li>Added support for LLVM 2.8. KLEE currently maintains compatibility with
+    LLVM 2.6, 2.7, and 2.8.</li>
+  <li>Added a buildbot for 2.6, 2.7, and trunk. A 2.8 buildbot will be coming
+    soon following release.</li>
+  <li>Fixed many C++ code issues to allow building with Clang++. Mostly
+    complete, except for the version of MiniSAT which is inside the KLEE STP
+    version.</li>
+  <li>Improved support for building with separate source and build
+    directories.</li>
+  <li>Added support for "long double" on x86.</li>
+  <li>Initial work on KLEE support for using 'lit' test runner instead of
+    DejaGNU.</li>
+  <li>Added <tt>configure</tt> support for using an external version of
+    STP.</li>
+</ul>
+
+</div>
+
+
 <!-- *********************************************************************** -->
 <div class="doc_section">
   <a name="externalproj">External Open Source Projects Using LLVM 2.8</a>
