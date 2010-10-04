@@ -1,5 +1,5 @@
 """
-Test the lldb disassemble command.
+Test the lldb disassemble command on foundation framework.
 """
 
 import os, time

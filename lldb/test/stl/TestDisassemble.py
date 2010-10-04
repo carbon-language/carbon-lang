@@ -1,5 +1,5 @@
 """
-Test the lldb disassemble command.
+Test the lldb disassemble command on lib stdc++.
 """
 
 import os, time
@@ -7,11 +7,12 @@ import unittest2
 import lldb
 from lldbtest import *
 
-@unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
 class StdCXXDisassembleTestCase(TestBase):
 
     mydir = "stl"
 
+    # rdar://problem/8504895
+    # Crash while doing 'disassemble -n "-[NSNumber descriptionWithLocale:]"
     @unittest2.skipIf(TestBase.skipLongRunningTest(), "Skip this long running test")
     def test_stdcxx_disasm(self):
         """Do 'disassemble' on each and every 'Code' symbol entry from the std c++ lib."""
@@ -34,6 +35,15 @@ class StdCXXDisassembleTestCase(TestBase):
             substrs = ["a.out",
                        "state: Stopped"])
 
+        # Disassemble the functions on the call stack.
+        self.runCmd("thread backtrace")
+        thread = process.GetThreadAtIndex(0)
+        depth = thread.GetNumFrames()
+        for i in range(depth - 1):
+            frame = thread.GetFrameAtIndex(i)
+            function = frame.GetFunction()
+            self.runCmd("disassemble -n '%s'" % function.GetName())
+
         # Iterate through the available modules, looking for stdc++ library...
         for i in range(target.GetNumModules()):
             module = target.GetModuleAtIndex(i)
@@ -47,6 +57,40 @@ class StdCXXDisassembleTestCase(TestBase):
 
         self.expect(fs.GetFilename(), "Libraray StdC++ is located", exe=False,
             substrs = ["libstdc++"])
+
+        self.runCmd("image dump symtab %s" % repr(fs))
+        raw_output = self.res.GetOutput()
+        # Now, look for every 'Code' symbol and feed its load address into the
+        # command: 'disassemble -s load_address -e end_address', where the
+        # end_address is taken from the next consecutive 'Code' symbol entry's
+        # load address.
+        #
+        # The load address column comes after the file address column, with both
+        # looks like '0xhhhhhhhh', i.e., 8 hexadecimal digits.
+        codeRE = re.compile(r"""
+                             \ Code\ {9}      # ' Code' followed by 9 SPCs,
+                             0x[0-9a-f]{16}   # the file address column, and
+                             \                # a SPC, and
+                             (0x[0-9a-f]{16}) # the load address column, and
+                             .*               # the rest.
+                             """, re.VERBOSE)
+        # Maintain a start address variable; if we arrive at a consecutive Code
+        # entry, then the load address of the that entry is fed as the end
+        # address to the 'disassemble -s SA -e LA' command.
+        SA = None
+        for line in raw_output.split(os.linesep):
+            match = codeRE.search(line)
+            if match:
+                LA = match.group(1)
+                print "line:", line
+                print "load address:", LA
+                print "SA:", SA
+                if SA and LA:
+                    self.runCmd("disassemble -s %s -e %s" % (SA, LA))
+                SA = LA
+            else:
+                # This entry is not a Code entry.  Reset SA = None.
+                SA = None
 
 
 if __name__ == '__main__':
