@@ -1419,6 +1419,11 @@ void ASTWriter::WriteType(QualType T) {
   if (Idx.getIndex() == 0) // we haven't seen this type before.
     Idx = TypeIdx(NextTypeID++);
 
+  // If this type comes from a previously-loaded PCH/AST file, don't try to
+  // write the type again.
+  if (Idx.getIndex() < FirstTypeID)
+    return;
+
   // Record the offset for this type.
   unsigned Index = Idx.getIndex() - FirstTypeID;
   if (TypeOffsets.size() == Index)
