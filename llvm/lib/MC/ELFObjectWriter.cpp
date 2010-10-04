@@ -576,6 +576,8 @@ void ELFObjectWriterImpl::RecordRelocation(const MCAssembler &Asm,
   FixedValue = Value;
 
   // determine the type of the relocation
+
+  MCSymbolRefExpr::VariantKind Modifier = Target.getSymA()->getKind();
   unsigned Type;
   if (Is64Bit) {
     if (IsPCRel) {
@@ -587,7 +589,16 @@ void ELFObjectWriterImpl::RecordRelocation(const MCAssembler &Asm,
       case X86::reloc_signed_4byte:
       case X86::reloc_pcrel_4byte:
         assert(isInt<32>(Target.getConstant()));
-        Type = ELF::R_X86_64_32S;
+        switch (Modifier) {
+        case MCSymbolRefExpr::VK_None:
+          Type = ELF::R_X86_64_32S;
+          break;
+        case MCSymbolRefExpr::VK_GOT:
+          Type = ELF::R_X86_64_GOT32;
+          break;
+        default:
+          llvm_unreachable("Unimplemented");
+        }
         break;
       case FK_Data_4:
         Type = ELF::R_X86_64_32;
