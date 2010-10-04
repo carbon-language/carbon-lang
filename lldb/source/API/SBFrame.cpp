@@ -99,6 +99,13 @@ SBFrame::GetFunction () const
     return sb_function;
 }
 
+SBSymbol
+SBFrame::GetSymbol () const
+{
+    SBSymbol sb_symbol(m_opaque_sp->GetSymbolContext (eSymbolContextSymbol).symbol);
+    return sb_symbol;
+}
+
 SBBlock
 SBFrame::GetBlock () const
 {

@@ -57,6 +57,9 @@ public:
     lldb::SBFunction
     GetFunction () const;
 
+    lldb::SBSymbol
+    GetSymbol () const;
+
     // Gets the deepest block that contains the frame PC
     lldb::SBBlock
     GetBlock () const;
