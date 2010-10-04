@@ -44,6 +44,7 @@ public:
     GetDescription (lldb::SBStream &description);
 
 private:
+    friend class SBFrame;
     friend class SBSymbolContext;
 
     SBSymbol (lldb_private::Symbol *lldb_object_ptr);
