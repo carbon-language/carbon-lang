@@ -19,7 +19,8 @@
 // CHECK-NEXT:    ),
 // CHECK-NEXT:   ])
 
-.zero 4
+.zero 1
+.align 4
 foo:
 .zero 8
 .long baz - foo
