@@ -4,6 +4,7 @@
 ; RUN: grep {llvm\\.x86\\.mmx} %t | not grep {\\\<2 x i32\\\>}
 ; RUN: grep {llvm\\.x86\\.mmx} %t | not grep {\\\<4 x i16\\\>}
 ; RUN: grep {llvm\\.x86\\.mmx} %t | not grep {\\\<8 x i8\\\>}
+; RUN: grep {llvm\\.x86\\.sse\\.pshuf\\.w} %t | not grep i32
 
 ; Addition
 declare <8 x i8>  @llvm.x86.mmx.padd.b(<8 x i8>,  <8 x i8>)  nounwind readnone
@@ -207,6 +208,7 @@ declare void      @llvm.x86.mmx.movnt.dq(i32*, <1 x i64>) nounwind readnone
 declare <1 x i64> @llvm.x86.mmx.palignr.b(<1 x i64>, <1 x i64>,  i8) nounwind readnone 
 declare i32       @llvm.x86.mmx.pextr.w(<1 x i64>, i32) nounwind readnone 
 declare <1 x i64> @llvm.x86.mmx.pinsr.w(<1 x i64>, i32, i32) nounwind readnone 
+declare <4 x i16> @llvm.x86.ssse3.pshuf.w(<4 x i16>, i32) nounwind readnone 
 define void @misc(<8 x i8> %A, <8 x i8> %B, <4 x i16> %C, <4 x i16> %D,
                   <2 x i32> %E, <2 x i32> %F, <1 x i64> %G, <1 x i64> %H,
                   i32* %I, i8 %J, i16 %K, i32 %L) {
@@ -216,5 +218,6 @@ define void @misc(<8 x i8> %A, <8 x i8> %B, <4 x i16> %C, <4 x i16> %D,
   %r2 = call <1 x i64> @llvm.x86.mmx.palignr.b(<1 x i64> %G, <1 x i64> %H, i8 %J)
   %r3 = call i32       @llvm.x86.mmx.pextr.w(<1 x i64> %G, i32 37)
   %r4 = call <1 x i64> @llvm.x86.mmx.pinsr.w(<1 x i64> %G, i32 37, i32 927)
+  %r5 = call <4 x i16> @llvm.x86.ssse3.pshuf.w(<4 x i16> %C, i32 37)
   ret void
 }

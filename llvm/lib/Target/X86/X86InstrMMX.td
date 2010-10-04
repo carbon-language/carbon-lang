@@ -342,13 +342,13 @@ def MMX_PSHUFWri : MMXIi8<0x70, MRMSrcReg,
                           (outs VR64:$dst), (ins VR64:$src1, i8imm:$src2),
                           "pshufw\t{$src2, $src1, $dst|$dst, $src1, $src2}",
                           [(set VR64:$dst,
-                             (int_x86_ssse3_pshuf_w VR64:$src1, imm:$src2))]>;
+                             (int_x86_sse_pshuf_w VR64:$src1, imm:$src2))]>;
 def MMX_PSHUFWmi : MMXIi8<0x70, MRMSrcMem,
                           (outs VR64:$dst), (ins i64mem:$src1, i8imm:$src2),
                           "pshufw\t{$src2, $src1, $dst|$dst, $src1, $src2}",
                           [(set VR64:$dst,
-                             (int_x86_ssse3_pshuf_w (load_mmx addr:$src1),
-                                                    imm:$src2))]>;
+                             (int_x86_sse_pshuf_w (load_mmx addr:$src1),
+                                                   imm:$src2))]>;
 
 
 

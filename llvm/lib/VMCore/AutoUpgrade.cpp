@@ -528,6 +528,16 @@ static bool UpgradeIntrinsicFunction1(Function *F, Function *&NewFn) {
       // or 0.
       NewFn = 0;
       return true;           
+    } else if (Name.compare(5, 17, "x86.ssse3.pshuf.w", 17) == 0) {
+      // This is an SSE/MMX instruction.
+      const Type *X86_MMXTy = VectorType::getX86_MMXTy(FTy->getContext());
+      NewFn =
+        cast<Function>(M->getOrInsertFunction("llvm.x86.sse.pshuf.w",
+                                              X86_MMXTy,
+                                              X86_MMXTy,
+                                              Type::getInt8Ty(F->getContext()),
+                                              (Type*)0));
+      return true;
     }
 
     break;
@@ -631,22 +641,23 @@ static void ConstructNewCallInst(Function *NewFn, CallInst *OldCI,
   NewCI->setTailCall(OldCI->isTailCall());
   NewCI->setCallingConv(OldCI->getCallingConv());
 
-  // Handle any uses of the old CallInst.
+  // Handle any uses of the old CallInst. If the type has changed, add a cast.
   if (!OldCI->use_empty()) {
-    // If the type has changed, add a cast.
-    Instruction *I = OldCI;
     if (OldCI->getType() != NewCI->getType()) {
       Function *OldFn = OldCI->getCalledFunction();
       CastInst *RetCast =
         CastInst::Create(CastInst::getCastOpcode(NewCI, true,
                                                  OldFn->getReturnType(), true),
                          NewCI, OldFn->getReturnType(), NewCI->getName(),OldCI);
-      I = RetCast;
+
+      // Replace all uses of the old call with the new cast which has the
+      // correct type.
+      OldCI->replaceAllUsesWith(RetCast);
+    } else {
+      OldCI->replaceAllUsesWith(NewCI);
     }
-    // Replace all uses of the old call with the new cast which has the 
-    // correct type.
-    OldCI->replaceAllUsesWith(I);
   }
+
   // Clean up the old call now that it has been completely upgraded.
   OldCI->eraseFromParent();
 }
@@ -1150,6 +1161,25 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
     ConstructNewCallInst(NewFn, CI, Operands, 3);
     break;
   }
+  case Intrinsic::x86_sse_pshuf_w: {
+    IRBuilder<> Builder(C);
+    Builder.SetInsertPoint(CI->getParent(), CI);
+
+    // Cast the operand to the X86 MMX type.
+    Value *Operands[2];
+    Operands[0] =
+      Builder.CreateBitCast(CI->getArgOperand(0), 
+                            NewFn->getFunctionType()->getParamType(0),
+                            "upgraded.");
+    Operands[1] =
+      Builder.CreateTrunc(CI->getArgOperand(1),
+                          Type::getInt8Ty(C),
+                          "upgraded.");
+
+    ConstructNewCallInst(NewFn, CI, Operands, 2);
+    break;
+  }
+
 #if 0
   case Intrinsic::x86_mmx_cvtsi32_si64: {
     // The return type needs to be changed.
