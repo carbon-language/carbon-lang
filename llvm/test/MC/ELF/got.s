@@ -2,13 +2,20 @@
 
 // Test that this produces a R_X86_64_GOT32.
 
-	movl	foo@GOT, %eax
+        movl	foo@GOT, %eax
+        movl	foo@GOTPCREL(%rip), %eax
 
 // CHECK:      ('_relocations', [
 // CHECK-NEXT:   # Relocation 0
 // CHECK-NEXT:    (('r_offset',
 // CHECK-NEXT:     ('r_sym',
 // CHECK-NEXT:     ('r_type', 3)
+// CHECK-NEXT:     ('r_addend',
+// CHECK-NEXT:    ),
+// CHECK-NEXT:   # Relocation 1
+// CHECK-NEXT:    (('r_offset',
+// CHECK-NEXT:     ('r_sym',
+// CHECK-NEXT:     ('r_type', 9)
 // CHECK-NEXT:     ('r_addend',
 // CHECK-NEXT:    ),
 // CHECK-NEXT:   ])

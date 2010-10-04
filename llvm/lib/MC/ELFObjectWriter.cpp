@@ -588,6 +588,9 @@ void ELFObjectWriterImpl::RecordRelocation(const MCAssembler &Asm,
       case MCSymbolRefExpr::VK_PLT:
         Type = ELF::R_X86_64_PLT32;
         break;
+      case llvm::MCSymbolRefExpr::VK_GOTPCREL:
+        Type = ELF::R_X86_64_GOTPCREL;
+        break;
       default:
         llvm_unreachable("Unimplemented");
       }
