@@ -843,7 +843,10 @@ CommandInterpreter::GetConfirmationInputReaderCallback (void *baton,
 bool 
 CommandInterpreter::Confirm (const char *message, bool default_answer)
 {
-    // The default interpretation just pushes a new input reader and lets it get the answer:
+    // Check AutoConfirm first:
+    if (m_debugger.GetAutoConfirm())
+        return default_answer;
+        
     InputReaderSP reader_sp (new InputReader(GetDebugger()));
     bool response = default_answer;
     if (reader_sp)

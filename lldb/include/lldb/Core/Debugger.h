@@ -153,6 +153,19 @@ public:
         m_use_external_editor = use_external_editor_p;
         return old_value;
     }
+    
+    bool 
+    GetAutoConfirm () const
+    {
+        return m_auto_confirm_on;
+    }
+    
+    void
+    SetAutoConfirm (bool auto_confirm_on) 
+    {
+        m_auto_confirm_on = auto_confirm_on;
+    }
+        
 
 protected:
 
@@ -186,6 +199,9 @@ protected:
   
     static const ConstString &
     UseExternalEditorVarName ();
+    
+    static const ConstString &
+    AutoConfirmName ();
 
 private:
 
@@ -195,6 +211,7 @@ private:
     std::string m_thread_format;
     lldb::ScriptLanguage m_script_lang;
     bool m_use_external_editor;
+    bool m_auto_confirm_on;
 };
 
 

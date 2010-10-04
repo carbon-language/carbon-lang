@@ -1298,7 +1298,8 @@ DebuggerInstanceSettings::DebuggerInstanceSettings
     m_frame_format (),
     m_thread_format (),    
     m_script_lang (),
-    m_use_external_editor (false)
+    m_use_external_editor (false),
+    m_auto_confirm_on (false)
 {
     // CopyInstanceSettings is a pure virtual function in InstanceSettings; it therefore cannot be called
     // until the vtables for DebuggerInstanceSettings are properly set up, i.e. AFTER all the initializers.
@@ -1324,7 +1325,8 @@ DebuggerInstanceSettings::DebuggerInstanceSettings (const DebuggerInstanceSettin
     m_frame_format (rhs.m_frame_format),
     m_thread_format (rhs.m_thread_format),
     m_script_lang (rhs.m_script_lang),
-    m_use_external_editor (rhs.m_use_external_editor)
+    m_use_external_editor (rhs.m_use_external_editor),
+    m_auto_confirm_on(rhs.m_auto_confirm_on)
 {
     const lldb::InstanceSettingsSP &pending_settings = m_owner.FindPendingSettings (m_instance_name);
     CopyInstanceSettings (pending_settings, false);
@@ -1346,6 +1348,7 @@ DebuggerInstanceSettings::operator= (const DebuggerInstanceSettings &rhs)
         m_thread_format = rhs.m_thread_format;
         m_script_lang = rhs.m_script_lang;
         m_use_external_editor = rhs.m_use_external_editor;
+        m_auto_confirm_on = rhs.m_auto_confirm_on;
     }
 
     return *this;
@@ -1434,6 +1437,10 @@ DebuggerInstanceSettings::UpdateInstanceSettingsVariable (const ConstString &var
     {
         UserSettingsController::UpdateBooleanVariable (op, m_use_external_editor, value, err);
     }
+    else if (var_name == AutoConfirmName ())
+    {
+        UserSettingsController::UpdateBooleanVariable (op, m_auto_confirm_on, value, err);
+    }
 }
 
 bool
@@ -1468,6 +1475,13 @@ DebuggerInstanceSettings::GetInstanceSettingsValue (const SettingEntry &entry,
     else if (var_name == UseExternalEditorVarName())
     {
         if (m_use_external_editor)
+            value.AppendString ("true");
+        else
+            value.AppendString ("false");
+    }
+    else if (var_name == AutoConfirmName())
+    {
+        if (m_auto_confirm_on)
             value.AppendString ("true");
         else
             value.AppendString ("false");
@@ -1509,6 +1523,7 @@ DebuggerInstanceSettings::CopyInstanceSettings (const lldb::InstanceSettingsSP &
     m_term_width = new_debugger_settings->m_term_width;
     m_script_lang = new_debugger_settings->m_script_lang;
     m_use_external_editor = new_debugger_settings->m_use_external_editor;
+    m_auto_confirm_on = new_debugger_settings->m_auto_confirm_on;
 }
 
 
@@ -1610,6 +1625,14 @@ DebuggerInstanceSettings::UseExternalEditorVarName ()
     return use_external_editor_var_name;
 }
 
+const ConstString &
+DebuggerInstanceSettings::AutoConfirmName ()
+{
+    static ConstString use_external_editor_var_name ("auto-confirm");
+
+    return use_external_editor_var_name;
+}
+
 //--------------------------------------------------
 // SettingsController Variable Tables
 //--------------------------------------------------
@@ -1646,11 +1669,12 @@ Debugger::SettingsController::instance_settings_table[] =
 {
 //  NAME                    Setting variable type   Default                 Enum  Init'd Hidden Help
 //  ======================= ======================= ======================  ====  ====== ====== ======================
-{   "term-width",           eSetVarTypeInt,         "80"    ,               NULL, false, false, "The maximum number of columns to use for displaying text." },
-{   "script-lang",          eSetVarTypeString,      "python",               NULL, false, false, "The script language to be used for evaluating user-written scripts." },
-{   "prompt",               eSetVarTypeString,      "(lldb)",               NULL, false, false, "The debugger command line prompt displayed for the user." },
 {   "frame-format",         eSetVarTypeString,      DEFAULT_FRAME_FORMAT,   NULL, false, false, "The default frame format string to use when displaying thread information." },
+{   "prompt",               eSetVarTypeString,      "(lldb)",               NULL, false, false, "The debugger command line prompt displayed for the user." },
+{   "script-lang",          eSetVarTypeString,      "python",               NULL, false, false, "The script language to be used for evaluating user-written scripts." },
+{   "term-width",           eSetVarTypeInt,         "80"    ,               NULL, false, false, "The maximum number of columns to use for displaying text." },
 {   "thread-format",        eSetVarTypeString,      DEFAULT_THREAD_FORMAT,  NULL, false, false, "The default thread format string to use when displaying thread information." },
 {   "use-external-editor",  eSetVarTypeBool,        "false",                NULL, false, false, "Whether to use an external editor or not." },
+{   "auto-confirm",         eSetVarTypeBool,        "false",                NULL, false, false, "If true all confirmation prompts will receive their default reply." },
 {   NULL,                   eSetVarTypeNone,        NULL,                   NULL, false, false, NULL }
 };
