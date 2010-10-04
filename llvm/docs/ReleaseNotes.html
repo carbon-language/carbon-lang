@@ -742,8 +742,9 @@ it run faster:</p>
 <li>A new (experimental) "-rendermf" pass is available which renders a
     MachineFunction into HTML, showing live ranges and other useful
     details.</li>
-
-<!--New SubRegIndex tblgen class for targets -> jakob -->
+<li>The new SubRegIndex tablegen class allows subregisters to be indexed
+    symbolically instead of numerically.  If your target uses subregisters you
+    will need to adapt to use SubRegIndex when you upgrade to 2.8.</li>
 <!-- SplitKit -->
 
 <li>The -fast-isel instruction selection path (used at -O0 on X86) was rewritten
@@ -760,7 +761,7 @@ it run faster:</p>
 </div>
 
 <div class="doc_text">
-<p>New features of the X86 target include:
+<p>New features and major changes in the X86 target include:
 </p>
 
 <ul>
@@ -768,30 +769,38 @@ it run faster:</p>
     in registers across basic blocks, dramatically improving performance of code
     that uses long double, and when targetting CPUs that don't support SSE.</li>
 
-  New SSEDomainFix pass: 
-    On Nehalem and newer CPUs there is a 2 cycle latency penalty on using a
-    register in a different domain than where it was defined. Some instructions
-    have equvivalents for different domains, like por/orps/orpd.  The
-    SSEDomainFix pass tries to minimize the number of domain crossings by
-    changing between equvivalent opcodes where possible.
+<li>The X86 backend now uses a SSEDomainFix pass to optimize SSE operations.  On
+    Nehalem ("Core i7") and newer CPUs there is a 2 cycle latency penalty on
+    using a register in a different domain than where it was defined. This pass
+    optimizes away these stalls.</li>
 
-  X86 backend attempts to promote 16-bit integer operations to 32-bits to avoid
-     0x66 prefixes, which are slow on some microarchitectures and bloat the code
-     on others.
+<li>The X86 backend now promote 16-bit integer operations to 32-bits when
+    possible. This avoids 0x66 prefixes, which are slow on some
+    microarchitectures and bloat the code on all of them.</li>
 
-  New support for X86 "thiscall" calling convention (x86_thiscallcc in IR) for windows.
+<li>The X86 backend now supports the Microsoft "thiscall" calling convention,
+    and a <a href="LangRef.html#callingconv">calling convention</a> to support
+    <a href="#GHC">ghc</a>.</li>
 
-  New llvm.x86.int intrinsic (for int $42 and int3)
+<li>The X86 backend supports a new "llvm.x86.int" intrinsic, which maps onto
+    the X86 "int $42" and "int3" instructions.</li>
 
-  Verbose assembly decodes X86 shuffle instructions, e.g.:
-  	insertps	$113, %xmm3, %xmm0     ## xmm0 = zero,xmm0[1,2],xmm3[1]
-	unpcklps	%xmm1, %xmm0    ## xmm0 = xmm0[0],xmm1[0],xmm0[1],xmm1[1]
-	pshufd	$1, %xmm1, %xmm1        ## xmm1 = xmm1[1,0,0,0]
+<li>At the IR level, the &lt;2 x float&gt; datatype is now promoted and passed
+    around as a &lt;4 x float&gt; instead of being passed and returns as an MMX
+    vector.  If you have a frontend that uses this, please pass and return a
+    &lt;2 x i32&gt; instead (using bitcasts).</li>
+
+<li>When printing .s files in verbose assembly mode (the default for clang -S),
+    the X86 backend now decodes X86 shuffle instructions and prints human
+    readable comments after the most inscrutible of them, e.g.:
+    
+<pre>
+  insertps $113, %xmm3, %xmm0 <i># xmm0 = zero,xmm0[1,2],xmm3[1]</i>
+  unpcklps %xmm1, %xmm0       <i># xmm0 = xmm0[0],xmm1[0],xmm0[1],xmm1[1]</i>
+  pshufd   $1, %xmm1, %xmm1   <i># xmm1 = xmm1[1,0,0,0]</i>
+</pre>
+</li>
         
-  X86 ABI:  <2 x float> in IR no longer maps onto MMX, it turns into <4 x float>
-
-  new GHC calling convention
-
 </ul>
 
 </div>
@@ -806,14 +815,21 @@ it run faster:</p>
 </p>
 
 <ul>
+<li>The ARM backend now optimizes tail calls into jumps.</li>
+<li>Scheduling is improved through the new list-hybrid scheduler as well
+    as through better modeling of structural hazards.</li>
+<li><a href="LangRef.html#int_fp16">Half float</a> instructions are now
+    supported.</li>
+<li>NEON support has been improved to model instructions which operate onto 
+    multiple consequtive registers more aggressively.  This avoids lots of
+    extraneous register copies.</li>
+<li>The ARM backend now uses a new "ARMGlobalMerge" pass, which merges several
+    global variables into one, saving extra address computation (all the global
+    variables can be accessed via same base address) and potentially reducing
+    register pressure.</li>
 
-  NEON: Better performance for QQQQ (4-consecutive Q register) instructions.  New reg sequence abstraction?
-  ARM: Better scheduling (list-hybrid, hybrid?)
-  ARM: Tail call support.
-  ARM: General performance work and tuning.
-
-  ARM: Half float support through intrinsics LangRef.html#int_fp16
-<li>ARMGlobalMerge: <!-- Anton --> </li>
+<li>The ARM has received many minor improvements and tweaks which lead to
+substantially better performance in a wide range of different scenarios.</li>
 
 <li>The ARM NEON intrinsics have been substantially reworked to reduce
     redundancy and improve code generation.  Some of the major changes are:
@@ -863,21 +879,8 @@ it run faster:</p>
   </li>
   </ol>
 </li>
+
 </ul>
-</div>
-
-<!--=========================================================================-->
-<div class="doc_subsection">
-<a name="otherimprovements">Other Improvements and New Features</a>
-</div>
-
-<div class="doc_text">
-<p>Other miscellaneous features include:</p>
-
-<ul>
-<li></li>
-</ul>
-
 </div>
 
 
