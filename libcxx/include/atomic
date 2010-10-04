@@ -2411,87 +2411,10 @@ void atomic_signal_fence(memory_order);
 */
 
 #include <__config>
+#include <__mutex_base>
+#include <cstring>
 
 #pragma GCC system_header
-
-// Begin "Intrinsics"
-
-inline _LIBCPP_INLINE_VISIBILITY
-bool
-__exchange_relaxed(volatile bool* __b)
-{
-    return __sync_lock_test_and_set(__b, true);
-}
-
-inline _LIBCPP_INLINE_VISIBILITY
-bool
-__exchange_consume(volatile bool* __b)
-{
-    return __sync_lock_test_and_set(__b, true);
-}
-
-inline _LIBCPP_INLINE_VISIBILITY
-bool
-__exchange_acquire(volatile bool* __b)
-{
-    return __sync_lock_test_and_set(__b, true);
-}
-
-inline _LIBCPP_INLINE_VISIBILITY
-bool
-__exchange_release(volatile bool* __b)
-{
-    __sync_synchronize();
-    return __sync_lock_test_and_set(__b, true);
-}
-
-inline _LIBCPP_INLINE_VISIBILITY
-bool
-__exchange_acq_rel(volatile bool* __b)
-{
-    __sync_synchronize();
-    return __sync_lock_test_and_set(__b, true);
-}
-
-inline _LIBCPP_INLINE_VISIBILITY
-bool
-__exchange_seq_cst(volatile bool* __b)
-{
-    __sync_synchronize();
-    return __sync_lock_test_and_set(__b, true);
-}
-
-inline _LIBCPP_INLINE_VISIBILITY
-void
-__atomic_store_relaxed(volatile bool* __b, bool __x)
-{
-    __sync_lock_test_and_set(__b, __x);
-}
-
-inline _LIBCPP_INLINE_VISIBILITY
-void
-__atomic_store_consume(volatile bool* __b, bool __x)
-{
-    __sync_lock_test_and_set(__b, __x);
-}
-
-inline _LIBCPP_INLINE_VISIBILITY
-void
-__atomic_store_release(volatile bool* __b, bool __x)
-{
-    __sync_synchronize();
-    __sync_lock_test_and_set(__b, __x);
-}
-
-inline _LIBCPP_INLINE_VISIBILITY
-void
-__atomic_store_seq_cst(volatile bool* __b, bool __x)
-{
-    __sync_synchronize();
-    __sync_lock_test_and_set(__b, __x);
-}
-
-// End "Intrinsics"
 
 _LIBCPP_BEGIN_NAMESPACE_STD
 
@@ -2507,6 +2430,658 @@ _Tp
 kill_dependency(_Tp __y)
 {
     return __y;
+}
+
+_LIBCPP_VISIBLE
+mutex& __not_atomic_mut();
+
+// load
+
+template <class _Tp>
+_Tp
+__load_seq_cst(const volatile _Tp* __obj)
+{
+    unique_lock<mutex> _(__not_atomic_mut());
+    return *__obj;
+}
+
+// load bool
+
+inline _LIBCPP_INLINE_VISIBILITY
+bool
+__choose_load_seq_cst(const volatile bool* __obj)
+{
+#if __has_feature(__atomic_load_seq_cst_b)
+    return __atomic_load_seq_cst(__obj);
+#else
+    return __load_seq_cst(__obj);
+#endif
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+bool
+__choose_load_acquire(const volatile bool* __obj)
+{
+#if __has_feature(__atomic_load_acquire_b)
+    return __atomic_load_acquire(__obj);
+#else
+    return __choose_load_seq_cst(__obj);
+#endif
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+bool
+__choose_load_consume(const volatile bool* __obj)
+{
+#if __has_feature(__atomic_load_consume_b)
+    return __atomic_load_consume(__obj);
+#else
+    return __choose_load_acquire(__obj);
+#endif
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+bool
+__choose_load_relaxed(const volatile bool* __obj)
+{
+#if __has_feature(__atomic_load_relaxed_b)
+    return __atomic_load_relaxed(__obj);
+#else
+    return __choose_load_consume(__obj);
+#endif
+}
+
+// store
+
+template <class _Tp>
+void
+__store_seq_cst(volatile _Tp* __obj, _Tp __desr)
+{
+    unique_lock<mutex> _(__not_atomic_mut());
+    *__obj = __desr;
+}
+
+// store bool
+
+inline _LIBCPP_INLINE_VISIBILITY
+void
+__choose_store_seq_cst(volatile bool* __obj, bool __desr)
+{
+#if __has_feature(__atomic_store_seq_cst_b)
+    __atomic_store_seq_cst(__obj, __desr);
+#else
+    __store_seq_cst(__obj, __desr);
+#endif
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+void
+__choose_store_release(volatile bool* __obj, bool __desr)
+{
+#if __has_feature(__atomic_store_release_b)
+    __atomic_store_release(__obj, __desr);
+#else
+    __choose_store_seq_cst(__obj, __desr);
+#endif
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+void
+__choose_store_relaxed(volatile bool* __obj, bool __desr)
+{
+#if __has_feature(__atomic_store_relaxed_b)
+    __atomic_store_relaxed(__obj, __desr);
+#else
+    __choose_store_release(__obj, __desr);
+#endif
+}
+
+// exchange
+
+template <class _Tp>
+_Tp
+__exchange_seq_cst(volatile _Tp* __obj, _Tp __desr)
+{
+    unique_lock<mutex> _(__not_atomic_mut());
+    _Tp __r = *__obj;
+    *__obj = __desr;
+    return __r;
+}
+
+// exchange bool
+
+inline _LIBCPP_INLINE_VISIBILITY
+bool
+__choose_exchange_seq_cst(volatile bool* __obj, bool __desr)
+{
+#if __has_feature(__atomic_exchange_seq_cst_b)
+    return __atomic_exchange_seq_cst(__obj, __desr);
+#else
+    return __exchange_seq_cst(__obj, __desr);
+#endif
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+bool
+__choose_exchange_acq_rel(volatile bool* __obj, bool __desr)
+{
+#if __has_feature(__atomic_exchange_acq_rel_b)
+    return __atomic_exchange_acq_rel(__obj, __desr);
+#else
+    return __choose_exchange_seq_cst(__obj, __desr);
+#endif
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+bool
+__choose_exchange_release(volatile bool* __obj, bool __desr)
+{
+#if __has_feature(__atomic_exchange_release_b)
+    return __atomic_exchange_release(__obj, __desr);
+#else
+    return __choose_exchange_acq_rel(__obj, __desr);
+#endif
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+bool
+__choose_exchange_acquire(volatile bool* __obj, bool __desr)
+{
+#if __has_feature(__atomic_exchange_acquire_b)
+    return __atomic_exchange_acquire(__obj, __desr);
+#else
+    return __choose_exchange_release(__obj, __desr);
+#endif
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+bool
+__choose_exchange_consume(volatile bool* __obj, bool __desr)
+{
+#if __has_feature(__atomic_exchange_consume_b)
+    return __atomic_exchange_consume(__obj, __desr);
+#else
+    return __choose_exchange_acquire(__obj, __desr);
+#endif
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+bool
+__choose_exchange_relaxed(volatile bool* __obj, bool __desr)
+{
+#if __has_feature(__atomic_exchange_relaxed_b)
+    return __atomic_exchange_relaxed(__obj, __desr);
+#else
+    return __choose_exchange_consume(__obj, __desr);
+#endif
+}
+
+// compare_exchange_strong
+
+template <class _Tp>
+bool
+__compare_exchange_strong_seq_cst_seq_cst(volatile _Tp* __obj, _Tp* __exp,
+                                                                     _Tp __desr)
+{
+    unique_lock<mutex> _(__not_atomic_mut());
+    if (_STD::memcmp(const_cast<_Tp*>(__obj), __exp, sizeof(_Tp)) == 0)
+    {
+        _STD::memcpy(const_cast<_Tp*>(__obj), &__desr, sizeof(_Tp));
+        return true;
+    }
+    _STD::memcpy(__exp, const_cast<_Tp*>(__obj), sizeof(_Tp));
+    return false;
+}
+
+// compare_exchange_strong bool
+
+inline _LIBCPP_INLINE_VISIBILITY
+bool
+__choose_compare_exchange_strong_seq_cst_seq_cst(volatile bool* __obj,
+                                                       bool* __exp, bool __desr)
+{
+#if __has_feature(__atomic_compare_exchange_strong_seq_cst_seq_cst_b)
+    return __atomic_compare_exchange_strong_seq_cst_seq_cst(__obj, __exp,
+                                                                        __desr);
+#else
+    return __compare_exchange_strong_seq_cst_seq_cst(__obj, __exp, __desr);
+#endif
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+bool
+__choose_compare_exchange_strong_seq_cst_acquire(volatile bool* __obj,
+                                                       bool* __exp, bool __desr)
+{
+#if __has_feature(__atomic_compare_exchange_strong_seq_cst_acquire_b)
+    return __atomic_compare_exchange_strong_seq_cst_acquire(__obj, __exp,
+                                                                        __desr);
+#else
+    return __choose_compare_exchange_strong_seq_cst_seq_cst(__obj, __exp,
+                                                                        __desr);
+#endif
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+bool
+__choose_compare_exchange_strong_seq_cst_consume(volatile bool* __obj,
+                                                       bool* __exp, bool __desr)
+{
+#if __has_feature(__atomic_compare_exchange_strong_seq_cst_consume_b)
+    return __atomic_compare_exchange_strong_seq_cst_consume(__obj, __exp,
+                                                                        __desr);
+#else
+    return __choose_compare_exchange_strong_seq_cst_acquire(__obj, __exp,
+                                                                        __desr);
+#endif
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+bool
+__choose_compare_exchange_strong_seq_cst_relaxed(volatile bool* __obj,
+                                                       bool* __exp, bool __desr)
+{
+#if __has_feature(__atomic_compare_exchange_strong_seq_cst_relaxed_b)
+    return __atomic_compare_exchange_strong_seq_cst_relaxed(__obj, __exp,
+                                                                        __desr);
+#else
+    return __choose_compare_exchange_strong_seq_cst_consume(__obj, __exp,
+                                                                        __desr);
+#endif
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+bool
+__choose_compare_exchange_strong_acq_rel_acquire(volatile bool* __obj,
+                                                       bool* __exp, bool __desr)
+{
+#if __has_feature(__atomic_compare_exchange_strong_acq_rel_acquire_b)
+    return __atomic_compare_exchange_strong_acq_rel_acquire(__obj, __exp,
+                                                                        __desr);
+#else
+    return __choose_compare_exchange_strong_seq_cst_acquire(__obj, __exp,
+                                                                        __desr);
+#endif
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+bool
+__choose_compare_exchange_strong_acq_rel_consume(volatile bool* __obj,
+                                                       bool* __exp, bool __desr)
+{
+#if __has_feature(__atomic_compare_exchange_strong_acq_rel_consume_b)
+    return __atomic_compare_exchange_strong_acq_rel_consume(__obj, __exp,
+                                                                        __desr);
+#else
+    return __choose_compare_exchange_strong_acq_rel_acquire(__obj, __exp,
+                                                                        __desr);
+#endif
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+bool
+__choose_compare_exchange_strong_acq_rel_relaxed(volatile bool* __obj,
+                                                       bool* __exp, bool __desr)
+{
+#if __has_feature(__atomic_compare_exchange_strong_acq_rel_relaxed_b)
+    return __atomic_compare_exchange_strong_acq_rel_relaxed(__obj, __exp,
+                                                                        __desr);
+#else
+    return __choose_compare_exchange_strong_acq_rel_consume(__obj, __exp,
+                                                                        __desr);
+#endif
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+bool
+__choose_compare_exchange_strong_release_acquire(volatile bool* __obj,
+                                                       bool* __exp, bool __desr)
+{
+#if __has_feature(__atomic_compare_exchange_strong_release_acquire_b)
+    return __atomic_compare_exchange_strong_release_acquire(__obj, __exp,
+                                                                        __desr);
+#else
+    return __choose_compare_exchange_strong_acq_rel_acquire(__obj, __exp,
+                                                                        __desr);
+#endif
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+bool
+__choose_compare_exchange_strong_release_consume(volatile bool* __obj,
+                                                       bool* __exp, bool __desr)
+{
+#if __has_feature(__atomic_compare_exchange_strong_release_consume_b)
+    return __atomic_compare_exchange_strong_release_consume(__obj, __exp,
+                                                                        __desr);
+#else
+    return __choose_compare_exchange_strong_release_acquire(__obj, __exp,
+                                                                        __desr);
+#endif
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+bool
+__choose_compare_exchange_strong_release_relaxed(volatile bool* __obj,
+                                                       bool* __exp, bool __desr)
+{
+#if __has_feature(__atomic_compare_exchange_strong_release_relaxed_b)
+    return __atomic_compare_exchange_strong_release_relaxed(__obj, __exp,
+                                                                        __desr);
+#else
+    return __choose_compare_exchange_strong_release_consume(__obj, __exp,
+                                                                        __desr);
+#endif
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+bool
+__choose_compare_exchange_strong_acquire_acquire(volatile bool* __obj,
+                                                       bool* __exp, bool __desr)
+{
+#if __has_feature(__atomic_compare_exchange_strong_acquire_acquire_b)
+    return __atomic_compare_exchange_strong_acquire_acquire(__obj, __exp,
+                                                                        __desr);
+#else
+    return __choose_compare_exchange_strong_release_acquire(__obj, __exp,
+                                                                        __desr);
+#endif
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+bool
+__choose_compare_exchange_strong_acquire_consume(volatile bool* __obj,
+                                                       bool* __exp, bool __desr)
+{
+#if __has_feature(__atomic_compare_exchange_strong_acquire_consume_b)
+    return __atomic_compare_exchange_strong_acquire_consume(__obj, __exp,
+                                                                        __desr);
+#else
+    return __choose_compare_exchange_strong_acquire_acquire(__obj, __exp,
+                                                                        __desr);
+#endif
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+bool
+__choose_compare_exchange_strong_acquire_relaxed(volatile bool* __obj,
+                                                       bool* __exp, bool __desr)
+{
+#if __has_feature(__atomic_compare_exchange_strong_acquire_relaxed_b)
+    return __atomic_compare_exchange_strong_acquire_relaxed(__obj, __exp,
+                                                                        __desr);
+#else
+    return __choose_compare_exchange_strong_acquire_consume(__obj, __exp,
+                                                                        __desr);
+#endif
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+bool
+__choose_compare_exchange_strong_consume_consume(volatile bool* __obj,
+                                                       bool* __exp, bool __desr)
+{
+#if __has_feature(__atomic_compare_exchange_strong_consume_consume_b)
+    return __atomic_compare_exchange_strong_consume_consume(__obj, __exp,
+                                                                        __desr);
+#else
+    return __choose_compare_exchange_strong_acquire_consume(__obj, __exp,
+                                                                        __desr);
+#endif
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+bool
+__choose_compare_exchange_strong_consume_relaxed(volatile bool* __obj,
+                                                       bool* __exp, bool __desr)
+{
+#if __has_feature(__atomic_compare_exchange_strong_consume_relaxed_b)
+    return __atomic_compare_exchange_strong_consume_relaxed(__obj, __exp,
+                                                                        __desr);
+#else
+    return __choose_compare_exchange_strong_consume_consume(__obj, __exp,
+                                                                        __desr);
+#endif
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+bool
+__choose_compare_exchange_strong_relaxed_relaxed(volatile bool* __obj,
+                                                       bool* __exp, bool __desr)
+{
+#if __has_feature(__atomic_compare_exchange_strong_relaxed_relaxed_b)
+    return __atomic_compare_exchange_strong_relaxed_relaxed(__obj, __exp,
+                                                                        __desr);
+#else
+    return __choose_compare_exchange_strong_consume_relaxed(__obj, __exp,
+                                                                        __desr);
+#endif
+}
+
+// compare_exchange_weak bool
+
+inline _LIBCPP_INLINE_VISIBILITY
+bool
+__choose_compare_exchange_weak_seq_cst_seq_cst(volatile bool* __obj,
+                                                       bool* __exp, bool __desr)
+{
+#if __has_feature(__atomic_compare_exchange_weak_seq_cst_seq_cst_b)
+    return __atomic_compare_exchange_weak_seq_cst_seq_cst(__obj, __exp,
+                                                                        __desr);
+#else
+    return __choose_compare_exchange_strong_seq_cst_seq_cst(__obj, __exp,
+                                                                        __desr);
+#endif
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+bool
+__choose_compare_exchange_weak_seq_cst_acquire(volatile bool* __obj,
+                                                       bool* __exp, bool __desr)
+{
+#if __has_feature(__atomic_compare_exchange_weak_seq_cst_acquire_b)
+    return __atomic_compare_exchange_weak_seq_cst_acquire(__obj, __exp,
+                                                                        __desr);
+#else
+    return __choose_compare_exchange_strong_seq_cst_acquire(__obj, __exp,
+                                                                        __desr);
+#endif
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+bool
+__choose_compare_exchange_weak_seq_cst_consume(volatile bool* __obj,
+                                                       bool* __exp, bool __desr)
+{
+#if __has_feature(__atomic_compare_exchange_weak_seq_cst_consume_b)
+    return __atomic_compare_exchange_weak_seq_cst_consume(__obj, __exp,
+                                                                        __desr);
+#else
+    return __choose_compare_exchange_strong_seq_cst_consume(__obj, __exp,
+                                                                        __desr);
+#endif
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+bool
+__choose_compare_exchange_weak_seq_cst_relaxed(volatile bool* __obj,
+                                                       bool* __exp, bool __desr)
+{
+#if __has_feature(__atomic_compare_exchange_weak_seq_cst_relaxed_b)
+    return __atomic_compare_exchange_weak_seq_cst_relaxed(__obj, __exp,
+                                                                        __desr);
+#else
+    return __choose_compare_exchange_strong_seq_cst_relaxed(__obj, __exp,
+                                                                        __desr);
+#endif
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+bool
+__choose_compare_exchange_weak_acq_rel_acquire(volatile bool* __obj,
+                                                       bool* __exp, bool __desr)
+{
+#if __has_feature(__atomic_compare_exchange_weak_acq_rel_acquire_b)
+    return __atomic_compare_exchange_weak_acq_rel_acquire(__obj, __exp,
+                                                                        __desr);
+#else
+    return __choose_compare_exchange_strong_acq_rel_acquire(__obj, __exp,
+                                                                        __desr);
+#endif
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+bool
+__choose_compare_exchange_weak_acq_rel_consume(volatile bool* __obj,
+                                                       bool* __exp, bool __desr)
+{
+#if __has_feature(__atomic_compare_exchange_weak_acq_rel_consume_b)
+    return __atomic_compare_exchange_weak_acq_rel_consume(__obj, __exp,
+                                                                        __desr);
+#else
+    return __choose_compare_exchange_strong_acq_rel_consume(__obj, __exp,
+                                                                        __desr);
+#endif
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+bool
+__choose_compare_exchange_weak_acq_rel_relaxed(volatile bool* __obj,
+                                                       bool* __exp, bool __desr)
+{
+#if __has_feature(__atomic_compare_exchange_weak_acq_rel_relaxed_b)
+    return __atomic_compare_exchange_weak_acq_rel_relaxed(__obj, __exp,
+                                                                        __desr);
+#else
+    return __choose_compare_exchange_strong_acq_rel_relaxed(__obj, __exp,
+                                                                        __desr);
+#endif
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+bool
+__choose_compare_exchange_weak_release_acquire(volatile bool* __obj,
+                                                       bool* __exp, bool __desr)
+{
+#if __has_feature(__atomic_compare_exchange_weak_release_acquire_b)
+    return __atomic_compare_exchange_weak_release_acquire(__obj, __exp,
+                                                                        __desr);
+#else
+    return __choose_compare_exchange_strong_release_acquire(__obj, __exp,
+                                                                        __desr);
+#endif
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+bool
+__choose_compare_exchange_weak_release_consume(volatile bool* __obj,
+                                                       bool* __exp, bool __desr)
+{
+#if __has_feature(__atomic_compare_exchange_weak_release_consume_b)
+    return __atomic_compare_exchange_weak_release_consume(__obj, __exp,
+                                                                        __desr);
+#else
+    return __choose_compare_exchange_strong_release_consume(__obj, __exp,
+                                                                        __desr);
+#endif
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+bool
+__choose_compare_exchange_weak_release_relaxed(volatile bool* __obj,
+                                                       bool* __exp, bool __desr)
+{
+#if __has_feature(__atomic_compare_exchange_weak_release_relaxed_b)
+    return __atomic_compare_exchange_weak_release_relaxed(__obj, __exp,
+                                                                        __desr);
+#else
+    return __choose_compare_exchange_strong_release_relaxed(__obj, __exp,
+                                                                        __desr);
+#endif
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+bool
+__choose_compare_exchange_weak_acquire_acquire(volatile bool* __obj,
+                                                       bool* __exp, bool __desr)
+{
+#if __has_feature(__atomic_compare_exchange_weak_acquire_acquire_b)
+    return __atomic_compare_exchange_weak_acquire_acquire(__obj, __exp,
+                                                                        __desr);
+#else
+    return __choose_compare_exchange_strong_acquire_acquire(__obj, __exp,
+                                                                        __desr);
+#endif
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+bool
+__choose_compare_exchange_weak_acquire_consume(volatile bool* __obj,
+                                                       bool* __exp, bool __desr)
+{
+#if __has_feature(__atomic_compare_exchange_weak_acquire_consume_b)
+    return __atomic_compare_exchange_weak_acquire_consume(__obj, __exp,
+                                                                        __desr);
+#else
+    return __choose_compare_exchange_strong_acquire_consume(__obj, __exp,
+                                                                        __desr);
+#endif
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+bool
+__choose_compare_exchange_weak_acquire_relaxed(volatile bool* __obj,
+                                                       bool* __exp, bool __desr)
+{
+#if __has_feature(__atomic_compare_exchange_weak_acquire_relaxed_b)
+    return __atomic_compare_exchange_weak_acquire_relaxed(__obj, __exp,
+                                                                        __desr);
+#else
+    return __choose_compare_exchange_strong_acquire_relaxed(__obj, __exp,
+                                                                        __desr);
+#endif
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+bool
+__choose_compare_exchange_weak_consume_consume(volatile bool* __obj,
+                                                       bool* __exp, bool __desr)
+{
+#if __has_feature(__atomic_compare_exchange_weak_consume_consume_b)
+    return __atomic_compare_exchange_weak_consume_consume(__obj, __exp,
+                                                                        __desr);
+#else
+    return __choose_compare_exchange_strong_consume_consume(__obj, __exp,
+                                                                        __desr);
+#endif
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+bool
+__choose_compare_exchange_weak_consume_relaxed(volatile bool* __obj,
+                                                       bool* __exp, bool __desr)
+{
+#if __has_feature(__atomic_compare_exchange_weak_consume_relaxed_b)
+    return __atomic_compare_exchange_weak_consume_relaxed(__obj, __exp,
+                                                                        __desr);
+#else
+    return __choose_compare_exchange_strong_consume_relaxed(__obj, __exp,
+                                                                        __desr);
+#endif
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+bool
+__choose_compare_exchange_weak_relaxed_relaxed(volatile bool* __obj,
+                                                       bool* __exp, bool __desr)
+{
+#if __has_feature(__atomic_compare_exchange_weak_relaxed_relaxed_b)
+    return __atomic_compare_exchange_weak_relaxed_relaxed(__obj, __exp,
+                                                                        __desr);
+#else
+    return __choose_compare_exchange_strong_relaxed_relaxed(__obj, __exp,
+                                                                        __desr);
+#endif
 }
 
 // flag type and operations
@@ -2576,7 +3151,7 @@ inline _LIBCPP_INLINE_VISIBILITY
 bool
 atomic_flag_test_and_set(volatile atomic_flag* __f)
 {
-    return __exchange_seq_cst(&__f->__flg_);
+    return __choose_exchange_seq_cst(&__f->__flg_, true);
 }
 
 inline _LIBCPP_INLINE_VISIBILITY
@@ -2593,17 +3168,17 @@ atomic_flag_test_and_set_explicit(volatile atomic_flag* __f, memory_order __o)
     switch (__o)
     {
     case memory_order_relaxed:
-        return __exchange_relaxed(&__f->__flg_);
+        return __choose_exchange_relaxed(&__f->__flg_, true);
     case memory_order_consume:
-        return __exchange_consume(&__f->__flg_);
+        return __choose_exchange_consume(&__f->__flg_, true);
     case memory_order_acquire:
-        return __exchange_acquire(&__f->__flg_);
+        return __choose_exchange_acquire(&__f->__flg_, true);
     case memory_order_release:
-        return __exchange_release(&__f->__flg_);
+        return __choose_exchange_release(&__f->__flg_, true);
     case memory_order_acq_rel:
-        return __exchange_acq_rel(&__f->__flg_);
+        return __choose_exchange_acq_rel(&__f->__flg_, true);
     case memory_order_seq_cst:
-        return __exchange_seq_cst(&__f->__flg_);
+        return __choose_exchange_seq_cst(&__f->__flg_, true);
     }
 }
 
@@ -2611,14 +3186,15 @@ inline _LIBCPP_INLINE_VISIBILITY
 bool
 atomic_flag_test_and_set_explicit(atomic_flag* __f, memory_order __o)
 {
-    return atomic_flag_test_and_set_explicit(const_cast<volatile atomic_flag*>(__f), __o);
+    return atomic_flag_test_and_set_explicit(const_cast<volatile atomic_flag*>
+                                                                    (__f), __o);
 }
 
 inline _LIBCPP_INLINE_VISIBILITY
 void
 atomic_flag_clear(volatile atomic_flag* __f)
 {
-    return __atomic_store_seq_cst(&__f->__flg_, false);
+    return __choose_store_seq_cst(&__f->__flg_, false);
 }
 
 inline _LIBCPP_INLINE_VISIBILITY
@@ -2635,16 +3211,13 @@ atomic_flag_clear_explicit(volatile atomic_flag* __f, memory_order __o)
     switch (__o)
     {
     case memory_order_relaxed:
-        __atomic_store_relaxed(&__f->__flg_, false);
-        break;
-    case memory_order_consume:
-        __atomic_store_consume(&__f->__flg_, false);
+        __choose_store_relaxed(&__f->__flg_, false);
         break;
     case memory_order_release:
-        __atomic_store_release(&__f->__flg_, false);
+        __choose_store_release(&__f->__flg_, false);
         break;
     case memory_order_seq_cst:
-        __atomic_store_seq_cst(&__f->__flg_, false);
+        __choose_store_seq_cst(&__f->__flg_, false);
         break;
     }
 }
@@ -2657,6 +3230,529 @@ atomic_flag_clear_explicit(atomic_flag* __f, memory_order __o)
 }
 
 #define ATOMIC_FLAG_INIT {false}
+#define ATOMIC_VAR_INIT(__v) {__v}
+
+inline _LIBCPP_INLINE_VISIBILITY
+memory_order
+__translate_memory_order(memory_order __o)
+{
+    switch (__o)
+    {
+    case memory_order_acq_rel:
+        return memory_order_acquire;
+    case memory_order_release:
+        return memory_order_relaxed;
+    }
+    return __o;
+}
+
+// atomic_bool
+
+struct atomic_bool;
+
+bool atomic_is_lock_free(const volatile atomic_bool*);
+bool atomic_is_lock_free(const atomic_bool*);
+void atomic_init(volatile atomic_bool*, bool);
+void atomic_init(atomic_bool*, bool);
+void atomic_store(volatile atomic_bool*, bool);
+void atomic_store(atomic_bool*, bool);
+void atomic_store_explicit(volatile atomic_bool*, bool, memory_order);
+void atomic_store_explicit(atomic_bool*, bool, memory_order);
+bool atomic_load(const volatile atomic_bool*);
+bool atomic_load(const atomic_bool*);
+bool atomic_load_explicit(const volatile atomic_bool*, memory_order);
+bool atomic_load_explicit(const atomic_bool*, memory_order);
+bool atomic_exchange(volatile atomic_bool*, bool);
+bool atomic_exchange(atomic_bool*, bool);
+bool atomic_exchange_explicit(volatile atomic_bool*, bool, memory_order);
+bool atomic_exchange_explicit(atomic_bool*, bool, memory_order);
+bool atomic_compare_exchange_weak(volatile atomic_bool*, bool*, bool);
+bool atomic_compare_exchange_weak(atomic_bool*, bool*, bool);
+bool atomic_compare_exchange_strong(volatile atomic_bool*, bool*, bool);
+bool atomic_compare_exchange_strong(atomic_bool*, bool*, bool);
+bool atomic_compare_exchange_weak_explicit(volatile atomic_bool*, bool*, bool,
+                                           memory_order, memory_order);
+bool atomic_compare_exchange_weak_explicit(atomic_bool*, bool*, bool,
+                                           memory_order, memory_order);
+bool atomic_compare_exchange_strong_explicit(volatile atomic_bool*, bool*, bool,
+                                             memory_order, memory_order);
+bool atomic_compare_exchange_strong_explicit(atomic_bool*, bool*, bool,
+                                             memory_order, memory_order);
+
+typedef struct atomic_bool
+{
+    bool __v_;
+
+    _LIBCPP_INLINE_VISIBILITY
+    bool is_lock_free() const volatile
+        {return atomic_is_lock_free(this);}
+    _LIBCPP_INLINE_VISIBILITY
+    bool is_lock_free() const
+        {return atomic_is_lock_free(this);}
+    _LIBCPP_INLINE_VISIBILITY
+    void store(bool __v) volatile
+        {atomic_store(this, __v);}
+    _LIBCPP_INLINE_VISIBILITY
+    void store(bool __v, memory_order __o) volatile
+        {atomic_store_explicit(this, __v, __o);}
+    _LIBCPP_INLINE_VISIBILITY
+    void store(bool __v)
+        {atomic_store(this, __v);}
+    _LIBCPP_INLINE_VISIBILITY
+    void store(bool __v, memory_order __o)
+        {atomic_store_explicit(this, __v, __o);}
+    _LIBCPP_INLINE_VISIBILITY
+    bool load() const volatile
+        {return atomic_load(this);}
+    _LIBCPP_INLINE_VISIBILITY
+    bool load(memory_order __o) const volatile
+        {return atomic_load_explicit(this, __o);}
+    _LIBCPP_INLINE_VISIBILITY
+    bool load() const
+        {return atomic_load(this);}
+    _LIBCPP_INLINE_VISIBILITY
+    bool load(memory_order __o) const
+        {return atomic_load_explicit(this, __o);}
+    _LIBCPP_INLINE_VISIBILITY
+    operator bool() const volatile
+        {return load();}
+    _LIBCPP_INLINE_VISIBILITY
+    operator bool() const
+        {return load();}
+    _LIBCPP_INLINE_VISIBILITY
+    bool exchange(bool __v) volatile
+        {return atomic_exchange(this, __v);}
+    _LIBCPP_INLINE_VISIBILITY
+    bool exchange(bool __v, memory_order __o) volatile
+        {return atomic_exchange_explicit(this, __v, __o);}
+    _LIBCPP_INLINE_VISIBILITY
+    bool exchange(bool __v)
+        {return atomic_exchange(this, __v);}
+    _LIBCPP_INLINE_VISIBILITY
+    bool exchange(bool __v, memory_order __o)
+        {return atomic_exchange_explicit(this, __v, __o);}
+    _LIBCPP_INLINE_VISIBILITY
+    bool compare_exchange_weak(bool& __v, bool __e, memory_order __s,
+                               memory_order __f) volatile
+        {return atomic_compare_exchange_weak_explicit(this, &__v, __e, __s,
+                                                                          __f);}
+    _LIBCPP_INLINE_VISIBILITY
+    bool compare_exchange_weak(bool& __v, bool __e, memory_order __s) volatile
+        {return atomic_compare_exchange_weak_explicit(this, &__v, __e, __s,
+                                                                          __s);}
+    _LIBCPP_INLINE_VISIBILITY
+    bool compare_exchange_weak(bool& __v, bool __e) volatile
+        {return atomic_compare_exchange_weak(this, &__v, __e);}
+    _LIBCPP_INLINE_VISIBILITY
+    bool compare_exchange_weak(bool& __v, bool __e, memory_order __s,
+                               memory_order __f)
+        {return atomic_compare_exchange_weak_explicit(this, &__v, __e, __s,
+                                                                          __f);}
+    _LIBCPP_INLINE_VISIBILITY
+    bool compare_exchange_weak(bool& __v, bool __e, memory_order __s)
+        {return atomic_compare_exchange_weak_explicit(this, &__v, __e, __s,
+                                                                          __s);}
+    _LIBCPP_INLINE_VISIBILITY
+    bool compare_exchange_weak(bool& __v, bool __e)
+        {return atomic_compare_exchange_weak(this, &__v, __e);}
+    _LIBCPP_INLINE_VISIBILITY
+    bool compare_exchange_strong(bool& __v, bool __e, memory_order __s,
+                                 memory_order __f) volatile
+        {return atomic_compare_exchange_strong_explicit(this, &__v, __e, __s,
+                                                                          __f);}
+    _LIBCPP_INLINE_VISIBILITY
+    bool compare_exchange_strong(bool& __v, bool __e, memory_order __s) volatile
+        {return atomic_compare_exchange_strong_explicit(this, &__v, __e, __s,
+                                                                          __s);}
+    _LIBCPP_INLINE_VISIBILITY
+    bool compare_exchange_strong(bool& __v, bool __e) volatile
+        {return atomic_compare_exchange_strong(this, &__v, __e);}
+    _LIBCPP_INLINE_VISIBILITY
+    bool compare_exchange_strong(bool& __v, bool __e, memory_order __s,
+                                 memory_order __f)
+        {return atomic_compare_exchange_strong_explicit(this, &__v, __e, __s,
+                                                                          __f);}
+    _LIBCPP_INLINE_VISIBILITY
+    bool compare_exchange_strong(bool& __v, bool __e, memory_order __s)
+        {return atomic_compare_exchange_strong_explicit(this, &__v, __e, __s,
+                                                                          __s);}
+    _LIBCPP_INLINE_VISIBILITY
+    bool compare_exchange_strong(bool& __v, bool __e)
+        {return atomic_compare_exchange_strong(this, &__v, __e);}
+#ifndef _LIBCPP_HAS_NO_DEFAULTED_FUNCTIONS
+    atomic_bool() = default;
+#else
+    _LIBCPP_INLINE_VISIBILITY
+    atomic_bool() {}
+#endif
+    _LIBCPP_INLINE_VISIBILITY
+    /*constexpr*/ atomic_bool(bool __v)
+        : __v_(__v) {}
+#ifndef _LIBCPP_HAS_NO_DELETED_FUNCTIONS
+    atomic_bool(const atomic_bool&) = delete;
+    atomic_bool& operator=(const atomic_bool&) = delete;
+    atomic_bool& operator=(const atomic_bool&) volatile = delete;
+#else
+private:
+    atomic_bool(const atomic_bool&);
+    atomic_bool& operator=(const atomic_bool&);
+    atomic_bool& operator=(const atomic_bool&) volatile;
+public:
+#endif
+    _LIBCPP_INLINE_VISIBILITY
+    bool operator=(bool __v) volatile
+        {store(__v); return __v;}
+} atomic_bool;
+
+inline _LIBCPP_INLINE_VISIBILITY
+bool atomic_is_lock_free(const volatile atomic_bool*)
+{
+#if __has_feature(__atomic_store_seq_cst_b) && \
+    __has_feature(__atomic_load_seq_cst_b) && \
+    __has_feature(__atomic_exchange_seq_cst_b) && \
+    __has_feature(__atomic_compare_strong_weak_seq_cst_seq_cst_b)
+    return true;
+#else
+    return false;
+#endif
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+bool atomic_is_lock_free(const atomic_bool* __obj)
+{
+    return atomic_is_lock_free(const_cast<const volatile atomic_bool*>(__obj));
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+void atomic_init(volatile atomic_bool* __obj, bool __desr)
+{
+    __obj->__v_ = __desr;
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+void atomic_init(atomic_bool* __obj, bool __desr)
+{
+    __obj->__v_ = __desr;
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+void atomic_store(volatile atomic_bool* __obj, bool __desr)
+{
+    __choose_store_seq_cst(&__obj->__v_, __desr);
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+void atomic_store(atomic_bool* __obj, bool __desr)
+{
+    atomic_store(const_cast<volatile atomic_bool*>(__obj), __desr);
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+void atomic_store_explicit(volatile atomic_bool* __obj, bool __desr,
+                           memory_order __o)
+{
+    switch (__o)
+    {
+    case memory_order_relaxed:
+        __choose_store_relaxed(&__obj->__v_, __desr);
+        break;
+    case memory_order_release:
+        __choose_store_release(&__obj->__v_, __desr);
+        break;
+    case memory_order_seq_cst:
+        __choose_store_seq_cst(&__obj->__v_, __desr);
+        break;
+    }
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+void atomic_store_explicit(atomic_bool* __obj, bool __desr, memory_order __o)
+{
+    atomic_store_explicit(const_cast<volatile atomic_bool*>(__obj), __desr,
+                                                                           __o);
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+bool atomic_load(const volatile atomic_bool* __obj)
+{
+    return __choose_load_seq_cst(&__obj->__v_);
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+bool atomic_load(const atomic_bool* __obj)
+{
+    return atomic_load(const_cast<const volatile atomic_bool*>(__obj));
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+bool atomic_load_explicit(const volatile atomic_bool* __obj, memory_order __o)
+{
+    switch (__o)
+    {
+    case memory_order_relaxed:
+        return __choose_load_relaxed(&__obj->__v_);
+    case memory_order_consume:
+        return __choose_load_consume(&__obj->__v_);
+    case memory_order_acquire:
+        return __choose_load_acquire(&__obj->__v_);
+    case memory_order_seq_cst:
+        return __choose_load_seq_cst(&__obj->__v_);
+    }
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+bool atomic_load_explicit(const atomic_bool* __obj, memory_order __o)
+{
+    return atomic_load_explicit(const_cast<const volatile atomic_bool*>
+                                                                  (__obj), __o);
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+bool atomic_exchange(volatile atomic_bool* __obj, bool __desr)
+{
+    return __choose_exchange_seq_cst(&__obj->__v_, __desr);
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+bool atomic_exchange(atomic_bool* __obj, bool __desr)
+{
+    return atomic_exchange(const_cast<volatile atomic_bool*>(__obj), __desr);
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+bool atomic_exchange_explicit(volatile atomic_bool* __obj, bool __desr,
+                              memory_order __o)
+{
+    switch (__o)
+    {
+    case memory_order_relaxed:
+        return __choose_exchange_relaxed(&__obj->__v_, __desr);
+    case memory_order_consume:
+        return __choose_exchange_consume(&__obj->__v_, __desr);
+    case memory_order_acquire:
+        return __choose_exchange_acquire(&__obj->__v_, __desr);
+    case memory_order_release:
+        return __choose_exchange_release(&__obj->__v_, __desr);
+    case memory_order_acq_rel:
+        return __choose_exchange_acq_rel(&__obj->__v_, __desr);
+    case memory_order_seq_cst:
+        return __choose_exchange_seq_cst(&__obj->__v_, __desr);
+    }
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+bool atomic_exchange_explicit(atomic_bool* __obj, bool __desr, memory_order __o)
+{
+    return atomic_exchange_explicit(const_cast<volatile atomic_bool*>
+                                                          (__obj), __desr, __o);
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+bool atomic_compare_exchange_weak(volatile atomic_bool* __obj, bool* __exp,
+                                  bool __desr)
+{
+    return __choose_compare_exchange_weak_seq_cst_seq_cst(&__obj->__v_, __exp,
+                                                                        __desr);
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+bool atomic_compare_exchange_weak(atomic_bool* __obj, bool* __exp, bool __desr)
+{
+    return atomic_compare_exchange_weak(const_cast<volatile atomic_bool*>
+                                                        (__obj), __exp, __desr);
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+bool atomic_compare_exchange_weak_explicit(volatile atomic_bool* __obj,
+                                           bool* __exp, bool __desr,
+                                           memory_order __s, memory_order __f)
+{
+    __f = __translate_memory_order(__f);
+    switch (__s)
+    {
+    case memory_order_relaxed:
+        return __choose_compare_exchange_weak_relaxed_relaxed(&__obj->__v_,
+                                                              __exp, __desr);
+    case memory_order_consume:
+        switch (__f)
+        {
+        case memory_order_relaxed:
+            return __choose_compare_exchange_weak_consume_relaxed(
+                                                   &__obj->__v_, __exp, __desr);
+        case memory_order_consume:
+            return __choose_compare_exchange_weak_consume_consume(
+                                                   &__obj->__v_, __exp, __desr);
+        }
+    case memory_order_acquire:
+        switch (__f)
+        {
+        case memory_order_relaxed:
+            return __choose_compare_exchange_weak_acquire_relaxed(
+                                                   &__obj->__v_, __exp, __desr);
+        case memory_order_consume:
+            return __choose_compare_exchange_weak_acquire_consume(
+                                                   &__obj->__v_, __exp, __desr);
+        case memory_order_acquire:
+            return __choose_compare_exchange_weak_acquire_acquire(
+                                                   &__obj->__v_, __exp, __desr);
+        }
+    case memory_order_release:
+        switch (__f)
+        {
+        case memory_order_relaxed:
+            return __choose_compare_exchange_weak_release_relaxed(
+                                                   &__obj->__v_, __exp, __desr);
+        case memory_order_consume:
+            return __choose_compare_exchange_weak_release_consume(
+                                                   &__obj->__v_, __exp, __desr);
+        case memory_order_acquire:
+            return __choose_compare_exchange_weak_release_acquire(
+                                                   &__obj->__v_, __exp, __desr);
+        }
+    case memory_order_acq_rel:
+        switch (__f)
+        {
+        case memory_order_relaxed:
+            return __choose_compare_exchange_weak_acq_rel_relaxed(
+                                                   &__obj->__v_, __exp, __desr);
+        case memory_order_consume:
+            return __choose_compare_exchange_weak_acq_rel_consume(
+                                                   &__obj->__v_, __exp, __desr);
+        case memory_order_acquire:
+            return __choose_compare_exchange_weak_acq_rel_acquire(
+                                                   &__obj->__v_, __exp, __desr);
+        }
+    case memory_order_seq_cst:
+        switch (__f)
+        {
+        case memory_order_relaxed:
+            return __choose_compare_exchange_weak_seq_cst_relaxed(
+                                                   &__obj->__v_, __exp, __desr);
+        case memory_order_consume:
+            return __choose_compare_exchange_weak_seq_cst_consume(
+                                                   &__obj->__v_, __exp, __desr);
+        case memory_order_acquire:
+            return __choose_compare_exchange_weak_seq_cst_acquire(
+                                                   &__obj->__v_, __exp, __desr);
+        case memory_order_seq_cst:
+            return __choose_compare_exchange_weak_seq_cst_seq_cst(
+                                                   &__obj->__v_, __exp, __desr);
+        }
+    }
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+bool atomic_compare_exchange_weak_explicit(atomic_bool* __obj, bool* __exp,
+                                           bool __desr,
+                                           memory_order __s, memory_order __f)
+{
+    return atomic_compare_exchange_weak_explicit(
+             const_cast<volatile atomic_bool*>(__obj), __exp, __desr, __s, __f);
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+bool atomic_compare_exchange_strong(volatile atomic_bool* __obj, bool* __exp,
+                                    bool __desr)
+{
+    return __choose_compare_exchange_strong_seq_cst_seq_cst(&__obj->__v_, __exp,
+                                                                        __desr);
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+bool atomic_compare_exchange_strong(atomic_bool* __obj, bool* __exp,
+                                    bool __desr)
+{
+    return atomic_compare_exchange_strong(const_cast<volatile atomic_bool*>
+                                                        (__obj), __exp, __desr);
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+bool atomic_compare_exchange_strong_explicit(volatile atomic_bool* __obj,
+                                             bool* __exp, bool __desr,
+                                             memory_order __s, memory_order __f)
+{
+    __f = __translate_memory_order(__f);
+    switch (__s)
+    {
+    case memory_order_relaxed:
+        return __choose_compare_exchange_strong_relaxed_relaxed(&__obj->__v_,
+                                                              __exp, __desr);
+    case memory_order_consume:
+        switch (__f)
+        {
+        case memory_order_relaxed:
+            return __choose_compare_exchange_strong_consume_relaxed(
+                                                   &__obj->__v_, __exp, __desr);
+        case memory_order_consume:
+            return __choose_compare_exchange_strong_consume_consume(
+                                                   &__obj->__v_, __exp, __desr);
+        }
+    case memory_order_acquire:
+        switch (__f)
+        {
+        case memory_order_relaxed:
+            return __choose_compare_exchange_strong_acquire_relaxed(
+                                                   &__obj->__v_, __exp, __desr);
+        case memory_order_consume:
+            return __choose_compare_exchange_strong_acquire_consume(
+                                                   &__obj->__v_, __exp, __desr);
+        case memory_order_acquire:
+            return __choose_compare_exchange_strong_acquire_acquire(
+                                                   &__obj->__v_, __exp, __desr);
+        }
+    case memory_order_release:
+        switch (__f)
+        {
+        case memory_order_relaxed:
+            return __choose_compare_exchange_strong_release_relaxed(
+                                                   &__obj->__v_, __exp, __desr);
+        case memory_order_consume:
+            return __choose_compare_exchange_strong_release_consume(
+                                                   &__obj->__v_, __exp, __desr);
+        case memory_order_acquire:
+            return __choose_compare_exchange_strong_release_acquire(
+                                                   &__obj->__v_, __exp, __desr);
+        }
+    case memory_order_acq_rel:
+        switch (__f)
+        {
+        case memory_order_relaxed:
+            return __choose_compare_exchange_strong_acq_rel_relaxed(
+                                                   &__obj->__v_, __exp, __desr);
+        case memory_order_consume:
+            return __choose_compare_exchange_strong_acq_rel_consume(
+                                                   &__obj->__v_, __exp, __desr);
+        case memory_order_acquire:
+            return __choose_compare_exchange_strong_acq_rel_acquire(
+                                                   &__obj->__v_, __exp, __desr);
+        }
+    case memory_order_seq_cst:
+        switch (__f)
+        {
+        case memory_order_relaxed:
+            return __choose_compare_exchange_strong_seq_cst_relaxed(
+                                                   &__obj->__v_, __exp, __desr);
+        case memory_order_consume:
+            return __choose_compare_exchange_strong_seq_cst_consume(
+                                                   &__obj->__v_, __exp, __desr);
+        case memory_order_acquire:
+            return __choose_compare_exchange_strong_seq_cst_acquire(
+                                                   &__obj->__v_, __exp, __desr);
+        case memory_order_seq_cst:
+            return __choose_compare_exchange_strong_seq_cst_seq_cst(
+                                                   &__obj->__v_, __exp, __desr);
+        }
+    }
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+bool atomic_compare_exchange_strong_explicit(atomic_bool* __obj, bool* __exp,
+                                             bool __desr,
+                                             memory_order __s, memory_order __f)
+{
+    return atomic_compare_exchange_strong_explicit(
+             const_cast<volatile atomic_bool*>(__obj), __exp, __desr, __s, __f);
+}
 
 _LIBCPP_END_NAMESPACE_STD
 
