@@ -645,21 +645,6 @@ release includes a few major enhancements and additions to the optimizers:</p>
 
 </div>
 
-
-<!--=========================================================================-->
-<div class="doc_subsection">
-<a name="executionengine">Interpreter and JIT Improvements</a>
-</div>
-
-<div class="doc_text">
-
-<ul>
-<li></li>
-
-</ul>
-
-</div>
-
 <!--=========================================================================-->
 <div class="doc_subsection">
 <a name="mc">MC Level Improvements</a>
@@ -689,9 +674,9 @@ in.</p>
 <li>The MC disassembler now fully supports ARM and Thumb.  ARM assembler support
     is still in early development though.</li>
 <li>The X86 MC assembler now supports the X86 AES and AVX instruction set.</li>
-<li>Work on ELF and COFF support is well underway, but isn't useful yet in LLVM
-    2.8.  Please contact the llvmdev mailing list if you're interested in
-    this.</li>
+<li>Work on ELF and COFF object files and ARM target support is well underway,
+    but isn't useful yet in LLVM 2.8.  Please contact the llvmdev mailing list
+    if you're interested in this.</li>
 </ul>
 
 <p>For more information, please see the <a
@@ -700,7 +685,6 @@ LLVM MC Project Blog Post</a>.
 </p>
 
 </div>	
-
 
 
 <!--=========================================================================-->
@@ -715,35 +699,57 @@ infrastructure, which allows us to implement more aggressive algorithms and make
 it run faster:</p>
 
 <ul>
-<li></li>
+<li>The clang/gcc -momit-leaf-frame-pointer argument is now supported.</li>
+<li>The clang/gcc -ffunction-sections and -fdata-sections arguments are now
+    supported on ELF targets (like GCC).</li>
+<li>The MachineCSE pass is now tuned and on by default.  It eliminates common
+    subexpressions that are exposed when lowering to machine instructions.</li>
+<li>The "local" register allocator was replaced by a new "fast" register
+    allocator.  This new allocator (which is often used at -O0) is substantially
+    faster and produces better code than the old local register allocator.</li>
+<li>A new LLC "-regalloc=default" option is available, which automatically
+    chooses a register allocator based on the -O optimization level.</li>
+<li>The common code generator code was modified to promote illegal argument and
+    return value vectors to wider ones when possible instead of scalarizing
+    them.  For example, &lt;3 x float&gt; will now pass in one SSE register
+    instead of 3 on X86.  This generates substantially better code since the
+    rest of the code generator was already expecting this.</li>
+<li>The code generator uses a new "COPY" machine instruction.  This speeds up
+    the code generator and eliminates the need for targets to implement the 
+    isMoveInstr hook.  Also, the copyRegToReg hook was renamed to copyPhysReg
+    and simplified.</li>
+<li>The code generator now has a "LocalStackSlotPass", which optimizes stack
+    slot access for targets (like ARM) that have limited stack displacement
+    addressing.</li>
+<li>A new "PeepholeOptimizer" is available, which eliminates sign and zero
+    extends, and optimizes away compare instructions when the condition result
+    is available from a previous instruction.</li>
+<li>Atomic operations now get legalized into simpler atomic operations if not
+    natively supported, easy the implementation burden on targets.</li>
+<li>The bottom-up pre-allocation scheduler is now register pressure aware,
+    allowing it to avoid overscheduling in high pressure situations while still
+    aggressively scheduling when registers are available.</li>
+<li>A new instruction-level-parallelism pre-allocation scheduler is available,
+    which is also register pressure aware.  This scheduler has shown substantial
+    wins on X86-64 and is on by default.</li>
+<li>The tblgen type inference algorithm was rewritten to be more consistent and
+     diagnose more target bugs.  If you have an out-of-tree backend, you may
+     find that it finds bugs in your target description.  This support also
+     allows limited support for writing patterns for instructions that return
+     multiple results (e.g. a virtual register and a flag result).  The 
+     'parallel' modifier in tblgen was removed, you should use the new support
+     for multiple results instead.</li>
+<li>A new (experimental) "-rendermf" pass is available which renders a
+    MachineFunction into HTML, showing live ranges and other useful
+    details.</li>
 
-  MachineCSE tuned and on by default.
+<!--New SubRegIndex tblgen class for targets -> jakob -->
+<!-- SplitKit -->
 
-  Rewrote tblgen's type inference for backends to be more consistent and
-     diagnose more target bugs.  This also allows limited support for writing
-     patterns for instructions that return multiple results, e.g. a virtual
-     register and a flag result.  Stuff that used 'parallel' before should use
-     this.
-
-  New -regalloc=fast,  =local got removed
-  New -regalloc=default option that chooses a register allocator based on the -O optimization level.
-  New SubRegIndex tblgen class for targets -> jakob
-
-  Bottom up fast isel.  Simple Load reuse.  No more machinedce.
-  IR ABI: <3 x float> is passed as <4 x float> instead of 3 floats.
-
-  New COPY instruction. copyRegToReg -> copyPhysReg, isMoveInstr is gone.
-  RenderMachineFunction: -rendermf
-  SplitKit?
-  Evan: Teach bottom up pre-ra scheduler to track register pressure. Work in progress.
-  Evan: Add an ILP scheduler.  On x86_64, this is a win for all tests in CFP2000. It also sped up 256.bzip2 by 16%.
-
-  New OptimizeExts+OptimizeCmps -> PeepholeOptimizer pass
-  New LocalStackSlotAllocation.cpp pass (jimg)
-  Atomics now get legalized when not natively supported (jim g)
-
-  -ffunction-sections and -fdata-sections are supported on ELF targets.
-  -momit-leaf-frame-pointer now supported.
+<li>The -fast-isel instruction selection path (used at -O0 on X86) was rewritten
+    to work bottom-up on basic blocks instead of top down.  This makes it
+    slightly faster (because the MachineDCE pass is not needed any longer) and
+    allows it to generate better code in some cases.</li>
 
 </ul>
 </div>
@@ -858,24 +864,6 @@ it run faster:</p>
   </ol>
 </li>
 </ul>
-</div>
-
-<!--=========================================================================-->
-<div class="doc_subsection">
-<a name="newapis">New Useful APIs</a>
-</div>
-
-<div class="doc_text">
-
-<p>This release includes a number of new APIs that are used internally, which
-   may also be useful for external clients.
-</p>
-
-<ul>
-<li></li>
-</ul>
-
-
 </div>
 
 <!--=========================================================================-->
