@@ -57,21 +57,21 @@ static void SetBinding(MCSymbolData &SD, unsigned Binding) {
   SD.setFlags(OtherFlags | (Binding << ELF_STB_Shift));
 }
 
+static bool isFixupKindX86PCRel(unsigned Kind) {
+  switch (Kind) {
+  default:
+    return false;
+  case X86::reloc_pcrel_1byte:
+  case X86::reloc_pcrel_4byte:
+  case X86::reloc_riprel_4byte:
+  case X86::reloc_riprel_4byte_movq_load:
+    return true;
+  }
+}
+
 namespace {
 
   class ELFObjectWriterImpl {
-    static bool isFixupKindX86PCRel(unsigned Kind) {
-      switch (Kind) {
-      default:
-        return false;
-      case X86::reloc_pcrel_1byte:
-      case X86::reloc_pcrel_4byte:
-      case X86::reloc_riprel_4byte:
-      case X86::reloc_riprel_4byte_movq_load:
-        return true;
-      }
-    }
-
     /*static bool isFixupKindX86RIPRel(unsigned Kind) {
       return Kind == X86::reloc_riprel_4byte ||
         Kind == X86::reloc_riprel_4byte_movq_load;
