@@ -734,12 +734,11 @@ it run faster:</p>
     is available from a previous instruction.</li>
 <li>Atomic operations now get legalized into simpler atomic operations if not
     natively supported, easing the implementation burden on targets.</li>
-<li>The bottom-up pre-allocation scheduler is now register pressure aware,
-    allowing it to avoid overscheduling in high pressure situations while still
-    aggressively scheduling when registers are available.</li>
-<li>A new instruction-level-parallelism pre-allocation scheduler is available,
-    which is also register pressure aware.  This scheduler has shown substantial
-    wins on X86-64 and is on by default.</li>
+<li>We have added two new bottom-up pre-allocation register pressure aware schedulers:
+<ol>
+<li>The hybrid scheduler schedules aggressively to minimize schedule length when registers are available and avoid overscheduling in high pressure situations.</li>
+<li>The instruction-level-parallelism scheduler schedules for maximum ILP when registers are available and avoid overscheduling in high pressure situations.</li>
+</ol></li>
 <li>The tblgen type inference algorithm was rewritten to be more consistent and
      diagnose more target bugs.  If you have an out-of-tree backend, you may
      find that it finds bugs in your target description.  This support also
