@@ -60,7 +60,7 @@ AppleThreadPlanStepThroughObjCTrampoline::DidPush ()
 {
     StreamString errors;
     ExecutionContext exc_context;
-    m_thread.Calculate(exc_context);
+    m_thread.CalculateExecutionContext(exc_context);
     m_func_sp.reset(m_impl_function->GetThreadPlanToCallFunction (exc_context, m_args_addr, errors, m_stop_others));
     m_func_sp->SetPrivate(true);
     m_thread.QueueThreadPlan (m_func_sp, false);
@@ -109,7 +109,7 @@ AppleThreadPlanStepThroughObjCTrampoline::ShouldStop (Event *event_ptr)
         {
             Value target_addr_value;
             ExecutionContext exc_context;
-            m_thread.Calculate(exc_context);
+            m_thread.CalculateExecutionContext(exc_context);
             m_impl_function->FetchFunctionResults (exc_context, m_args_addr, target_addr_value);
             m_impl_function->DeallocateFunctionResults(exc_context, m_args_addr);
             lldb::addr_t target_addr = target_addr_value.GetScalar().ULongLong();

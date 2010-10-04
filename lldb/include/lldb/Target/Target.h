@@ -402,6 +402,11 @@ public:
         return m_section_load_list;
     }
 
+
+    static Target *
+    GetTargetFromContexts (const ExecutionContext *exe_ctx_ptr, 
+                           const SymbolContext *sc_ptr);
+
     //------------------------------------------------------------------
     // lldb::ExecutionContextScope pure virtual functions
     //------------------------------------------------------------------
@@ -418,7 +423,7 @@ public:
     CalculateStackFrame ();
 
     virtual void
-    Calculate (ExecutionContext &exe_ctx);
+    CalculateExecutionContext (ExecutionContext &exe_ctx);
 
     PathMappingList &
     GetImageSearchPathList ();

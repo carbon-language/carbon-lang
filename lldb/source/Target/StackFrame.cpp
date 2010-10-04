@@ -14,6 +14,7 @@
 // Other libraries and framework includes
 // Project includes
 #include "lldb/Core/Module.h"
+#include "lldb/Core/Debugger.h"
 #include "lldb/Core/Disassembler.h"
 #include "lldb/Core/Value.h"
 #include "lldb/Core/ValueObjectVariable.h"
@@ -248,7 +249,7 @@ StackFrame::Disassemble ()
     if (m_disassembly.GetSize() == 0)
     {
         ExecutionContext exe_ctx;
-        Calculate(exe_ctx);
+        CalculateExecutionContext(exe_ctx);
         Target &target = m_thread.GetProcess().GetTarget();
         Disassembler::Disassemble (target.GetDebugger(),
                                    target.GetArchitecture(),
@@ -615,10 +616,33 @@ StackFrame::CalculateStackFrame ()
 
 
 void
-StackFrame::Calculate (ExecutionContext &exe_ctx)
+StackFrame::CalculateExecutionContext (ExecutionContext &exe_ctx)
 {
-    m_thread.Calculate (exe_ctx);
+    m_thread.CalculateExecutionContext (exe_ctx);
     exe_ctx.frame = this;
+}
+
+void
+StackFrame::DumpUsingSettingsFormat (Stream *strm)
+{
+    if (strm == NULL)
+        return;
+
+    GetSymbolContext(eSymbolContextEverything);
+    ExecutionContext exe_ctx;
+    CalculateExecutionContext(exe_ctx);
+    const char *end = NULL;
+    StreamString s;
+    const char *frame_format = m_thread.GetProcess().GetTarget().GetDebugger().GetFrameFormat();
+    if (frame_format && Debugger::FormatPrompt (frame_format, &m_sc, &exe_ctx, NULL, s, &end))
+    {
+        strm->Write(s.GetData(), s.GetSize());
+    }
+    else
+    {
+        Dump (strm, true, false);
+        strm->EOL();
+    }
 }
 
 void

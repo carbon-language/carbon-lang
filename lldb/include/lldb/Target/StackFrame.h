@@ -103,6 +103,9 @@ public:
     Disassemble ();
 
     void
+    DumpUsingSettingsFormat (Stream *strm);
+    
+    void
     Dump (Stream *strm, bool show_frame_index, bool show_fullpaths);
     
     bool
@@ -142,7 +145,7 @@ public:
     CalculateStackFrame ();
 
     virtual void
-    Calculate (ExecutionContext &exe_ctx);
+    CalculateExecutionContext (ExecutionContext &exe_ctx);
     
     lldb::StackFrameSP
     GetSP ();

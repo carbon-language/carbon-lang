@@ -66,7 +66,7 @@ AppleObjCRuntimeV2::GetObjectDescription (Stream &str, Value &value, ExecutionCo
         return false;
         
     ExecutionContext exe_ctx;
-    exe_scope->Calculate(exe_ctx);
+    exe_scope->CalculateExecutionContext(exe_ctx);
     
     if (!exe_ctx.process)
         return false;

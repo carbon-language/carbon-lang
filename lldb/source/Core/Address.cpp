@@ -140,7 +140,7 @@ ReadAddress (ExecutionContextScope *exe_scope, const Address &address, uint32_t 
     if (success)
     {
         ExecutionContext exe_ctx;
-        exe_scope->Calculate(exe_ctx);
+        exe_scope->CalculateExecutionContext(exe_ctx);
         // If we have any sections that are loaded, try and resolve using the
         // section load list
         if (exe_ctx.target && !exe_ctx.target->GetSectionLoadList().IsEmpty())

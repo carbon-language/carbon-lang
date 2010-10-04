@@ -9,6 +9,7 @@
 
 #include "lldb/lldb-private-log.h"
 #include "lldb/Breakpoint/BreakpointLocation.h"
+#include "lldb/Core/Debugger.h"
 #include "lldb/Core/Log.h"
 #include "lldb/Core/Stream.h"
 #include "lldb/Core/StreamString.h"
@@ -810,9 +811,9 @@ Thread::CalculateStackFrame ()
 }
 
 void
-Thread::Calculate (ExecutionContext &exe_ctx)
+Thread::CalculateExecutionContext (ExecutionContext &exe_ctx)
 {
-    m_process.Calculate (exe_ctx);
+    m_process.CalculateExecutionContext (exe_ctx);
     exe_ctx.thread = this;
     exe_ctx.frame = NULL;
 }
@@ -872,52 +873,31 @@ Thread::SetSelectedFrameByIndex (uint32_t idx)
 }
 
 void
-Thread::DumpInfo
-(
-    Stream &strm,
-    bool show_stop_reason,
-    bool show_name,
-    bool show_queue,
-    uint32_t idx
-)
+Thread::DumpUsingSettingsFormat (Stream &strm, uint32_t frame_idx)
 {
-    strm.Printf("thread #%u: tid = 0x%4.4x", GetIndexID(), GetID());
+    ExecutionContext exe_ctx;
+    SymbolContext frame_sc;
+    CalculateExecutionContext (exe_ctx);
 
-    if (idx != LLDB_INVALID_INDEX32)
+    if (frame_idx != LLDB_INVALID_INDEX32)
     {
-        StackFrameSP frame_sp(GetStackFrameAtIndex (idx));
+        StackFrameSP frame_sp(GetStackFrameAtIndex (frame_idx));
         if (frame_sp)
         {
-            strm.PutCString(", ");
-            frame_sp->Dump (&strm, false, false);
+            exe_ctx.frame = frame_sp.get();
+            frame_sc = exe_ctx.frame->GetSymbolContext(eSymbolContextEverything);
         }
     }
 
-    if (show_stop_reason)
-    {
-        StopInfo *stop_info = GetStopInfo();
-        
-        if (stop_info)
-        {
-            const char *stop_description = stop_info->GetDescription();
-            if (stop_description)
-                strm.Printf (", stop reason = %s", stop_description);
-        }
-    }
-
-    if (show_name)
-    {
-        const char *name = GetName();
-        if (name && name[0])
-            strm.Printf(", name = %s", name);
-    }
-
-    if (show_queue)
-    {
-        const char *queue = GetQueueName();
-        if (queue && queue[0])
-            strm.Printf(", queue = %s", queue);
-    }
+    const char *thread_format = GetProcess().GetTarget().GetDebugger().GetThreadFormat();
+    assert (thread_format);
+    const char *end = NULL;
+    Debugger::FormatPrompt (thread_format, 
+                            exe_ctx.frame ? &frame_sc : NULL,
+                            &exe_ctx, 
+                            NULL,
+                            strm, 
+                            &end);
 }
 
 lldb::ThreadSP

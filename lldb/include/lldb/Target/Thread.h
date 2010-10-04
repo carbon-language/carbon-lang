@@ -287,11 +287,7 @@ public:
     ClearStackFrames ();
 
     void
-    DumpInfo (Stream &strm,
-              bool show_stop_reason,
-              bool show_name,
-              bool show_queue,
-              uint32_t frame_idx);// = UINT32_MAX);
+    DumpUsingSettingsFormat (Stream &strm, uint32_t frame_idx);
 
     //------------------------------------------------------------------
     // Thread Plan Providers:
@@ -613,7 +609,7 @@ public:
     CalculateStackFrame ();
 
     virtual void
-    Calculate (ExecutionContext &exe_ctx);
+    CalculateExecutionContext (ExecutionContext &exe_ctx);
     
     lldb::StackFrameSP
     GetStackFrameSPForStackFramePtr (StackFrame *stack_frame_ptr);

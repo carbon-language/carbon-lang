@@ -93,7 +93,41 @@ public:
             m_prompt.assign ("(lldb) ");
         BroadcastPromptChange (m_instance_name, m_prompt.c_str());
     }
-        
+
+    const char *
+    GetFrameFormat() const
+    {
+        return m_frame_format.c_str();
+    }
+
+    bool
+    SetFrameFormat(const char *frame_format)
+    {
+        if (frame_format && frame_format[0])
+        {
+            m_frame_format.assign (frame_format);
+            return true;
+        }
+        return false;
+    }
+
+    const char *
+    GetThreadFormat() const
+    {
+        return m_thread_format.c_str();
+    }
+
+    bool
+    SetThreadFormat(const char *thread_format)
+    {
+        if (thread_format && thread_format[0])
+        {
+            m_thread_format.assign (thread_format);
+            return true;
+        }
+        return false;
+    }
+
     lldb::ScriptLanguage 
     GetScriptLanguage() const
     {
@@ -139,6 +173,12 @@ protected:
     PromptVarName ();
 
     static const ConstString &
+    GetFrameFormatName ();
+
+    static const ConstString &
+    GetThreadFormatName ();
+
+    static const ConstString &
     ScriptLangVarName ();
   
     static const ConstString &
@@ -151,6 +191,8 @@ private:
 
     uint32_t m_term_width;
     std::string m_prompt;
+    std::string m_frame_format;
+    std::string m_thread_format;
     lldb::ScriptLanguage m_script_lang;
     bool m_use_external_editor;
 };

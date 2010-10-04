@@ -431,9 +431,9 @@ SBTarget::Disassemble (lldb::addr_t start_addr, lldb::addr_t end_addr, const cha
         ExecutionContext exe_ctx;
 
         if (process)
-            process->Calculate(exe_ctx);
+            process->CalculateExecutionContext(exe_ctx);
         else 
-            m_opaque_sp->Calculate(exe_ctx);
+            m_opaque_sp->CalculateExecutionContext(exe_ctx);
 
         if (end_addr == LLDB_INVALID_ADDRESS || end_addr < start_addr)
             range.SetByteSize( DEFAULT_DISASM_BYTE_SIZE);
@@ -484,9 +484,9 @@ SBTarget::Disassemble (const char *function_name, const char *module_name)
             process = NULL;
         
         if (process)
-            process->Calculate(exe_ctx);
+            process->CalculateExecutionContext(exe_ctx);
         else 
-            m_opaque_sp->Calculate(exe_ctx);
+            m_opaque_sp->CalculateExecutionContext(exe_ctx);
 
 
         StreamFile out_stream (out);

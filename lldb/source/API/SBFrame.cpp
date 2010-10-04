@@ -395,7 +395,7 @@ SBFrame::GetDescription (SBStream &description)
     if (m_opaque_sp)
     {
         description.ref();
-        m_opaque_sp->Dump (description.get(), true, false);
+        m_opaque_sp->DumpUsingSettingsFormat (description.get());
     }
     else
         description.Printf ("No value");

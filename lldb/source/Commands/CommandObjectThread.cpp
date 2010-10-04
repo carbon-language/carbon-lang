@@ -80,13 +80,7 @@ lldb_private::DisplayThreadInfo
         }
         else
         {
-            thread->DumpInfo (strm,
-                              true, // Dump the stop reason?
-                              true, // Dump the thread name?
-                              true, // Dump the queue name?
-                              0);   // Display context info for stack frame zero
-
-            strm.EOL();
+            thread->DumpUsingSettingsFormat (strm, 0);
         }
 
         return true;
@@ -164,12 +158,7 @@ lldb_private::DisplayFramesForExecutionContext
     if (num_frames == 0)
         return 0;
     
-    thread->DumpInfo (strm,
-                      true,     // Dump the stop reason?
-                      true,     // Dump the thread name?
-                      true,     // Dump the queue name?
-                      num_frames > 1 ? UINT32_MAX : first_frame);  // Dump info for the first stack frame if we are showing only on frame
-    strm.EOL();
+    thread->DumpUsingSettingsFormat (strm, num_frames > 1 ? UINT32_MAX : first_frame);
     strm.IndentMore();
 
     StackFrameSP frame_sp;
@@ -224,8 +213,7 @@ lldb_private::DisplayFrameForExecutionContext
         if (show_frame_info)
         {
             strm.Indent();
-            frame->Dump (&strm, true, false);
-            strm.EOL();
+            frame->DumpUsingSettingsFormat (&strm);
         }
 
         SymbolContext sc (frame->GetSymbolContext(eSymbolContextCompUnit | eSymbolContextLineEntry));

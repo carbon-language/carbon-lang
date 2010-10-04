@@ -63,7 +63,7 @@ public:
     ///     in.
     //------------------------------------------------------------------
     virtual void
-    Calculate (ExecutionContext &exe_ctx) = 0;
+    CalculateExecutionContext (ExecutionContext &exe_ctx) = 0;
 };
 
 } // namespace lldb_private

@@ -1589,7 +1589,7 @@ public:
     CalculateStackFrame ();
 
     virtual void
-    Calculate (ExecutionContext &exe_ctx);
+    CalculateExecutionContext (ExecutionContext &exe_ctx);
     
     lldb::ProcessSP
     GetSP ();

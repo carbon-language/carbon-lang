@@ -419,7 +419,7 @@ SBThread::GetDescription (SBStream &description)
 {
     if (m_opaque_sp)
     {
-        m_opaque_sp->DumpInfo (description.ref(), true, true, true, LLDB_INVALID_INDEX32);
+        m_opaque_sp->DumpUsingSettingsFormat (description.ref(), LLDB_INVALID_INDEX32);
         description.Printf (" %d frames, (instance name: %s)", GetNumFrames(), 
                             m_opaque_sp->GetInstanceName().AsCString());
     }

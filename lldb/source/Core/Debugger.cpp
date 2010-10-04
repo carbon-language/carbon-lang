@@ -622,7 +622,7 @@ TestPromptFormats (StackFrame *frame)
 
     SymbolContext sc (frame->GetSymbolContext(eSymbolContextEverything));
     ExecutionContext exe_ctx;
-    frame->Calculate(exe_ctx);
+    frame->CalculateExecutionContext(exe_ctx);
     const char *end = NULL;
     if (Debugger::FormatPrompt (prompt_format, &sc, &exe_ctx, &sc.line_entry.range.GetBaseAddress(), s, &end))
     {
@@ -814,12 +814,9 @@ Debugger::FormatPrompt
                             }
                             else if (::strncmp (var_name_begin, "target.", strlen("target.")) == 0)
                             {
-                                if (sc->target_sp || (exe_ctx && exe_ctx->process))
+                                Target *target = Target::GetTargetFromContexts (exe_ctx, sc);
+                                if (target)
                                 {
-                                    Target *target = sc->target_sp.get();
-                                    if (target == NULL)
-                                        target = &exe_ctx->process->GetTarget();
-                                    assert (target);
                                     var_name_begin += ::strlen ("target.");
                                     if (::strncmp (var_name_begin, "arch}", strlen("arch}")) == 0)
                                     {
@@ -838,10 +835,9 @@ Debugger::FormatPrompt
                         case 'm':
                             if (::strncmp (var_name_begin, "module.", strlen("module.")) == 0)
                             {
-                                Module *module = sc->module_sp.get();
-                                
-                                if (module)
+                                if (sc && sc->module_sp.get())
                                 {
+                                    Module *module = sc->module_sp.get();
                                     var_name_begin += ::strlen ("module.");
                                     
                                     if (::strncmp (var_name_begin, "file.", strlen("file.")) == 0)
@@ -1078,47 +1074,62 @@ Debugger::FormatPrompt
                             // If format addr is valid, then we need to print an address
                             if (format_addr.IsValid())
                             {
+                                var_success = false;
+
                                 if (calculate_format_addr_function_offset)
                                 {
                                     Address func_addr;
-                                    if (sc->function)
-                                        func_addr = sc->function->GetAddressRange().GetBaseAddress();
-                                    else if (sc->symbol && sc->symbol->GetAddressRangePtr())
-                                        func_addr = sc->symbol->GetAddressRangePtr()->GetBaseAddress();
-                                    else
-                                        var_success = false;
                                     
-                                    if (var_success)
+                                    if (sc)
+                                    {
+                                        if (sc->function)
+                                            func_addr = sc->function->GetAddressRange().GetBaseAddress();
+                                        else if (sc->symbol && sc->symbol->GetAddressRangePtr())
+                                            func_addr = sc->symbol->GetAddressRangePtr()->GetBaseAddress();
+                                    }
+                                    
+                                    if (func_addr.IsValid())
                                     {
                                         if (func_addr.GetSection() == format_addr.GetSection())
                                         {
                                             addr_t func_file_addr = func_addr.GetFileAddress();
                                             addr_t addr_file_addr = format_addr.GetFileAddress();
                                             if (addr_file_addr > func_file_addr)
-                                            {
                                                 s.Printf(" + %llu", addr_file_addr - func_file_addr);
-                                            }
                                             else if (addr_file_addr < func_file_addr)
-                                            {
                                                 s.Printf(" - %llu", func_file_addr - addr_file_addr);
-                                            }
+                                            var_success = true;
                                         }
                                         else
-                                            var_success = false;
+                                        {
+                                            Target *target = Target::GetTargetFromContexts (exe_ctx, sc);
+                                            if (target)
+                                            {
+                                                addr_t func_load_addr = func_addr.GetLoadAddress (target);
+                                                addr_t addr_load_addr = format_addr.GetLoadAddress (target);
+                                                if (addr_load_addr > func_load_addr)
+                                                    s.Printf(" + %llu", addr_load_addr - func_load_addr);
+                                                else if (addr_load_addr < func_load_addr)
+                                                    s.Printf(" - %llu", func_load_addr - addr_load_addr);
+                                                var_success = true;
+                                            }
+                                        }
                                     }
                                 }
                                 else
                                 {
+                                    Target *target = Target::GetTargetFromContexts (exe_ctx, sc);
                                     addr_t vaddr = LLDB_INVALID_ADDRESS;
-                                    if (exe_ctx && exe_ctx->process && !exe_ctx->process->GetTarget().GetSectionLoadList().IsEmpty())
-                                        vaddr = format_addr.GetLoadAddress (&exe_ctx->process->GetTarget());
+                                    if (exe_ctx && !target->GetSectionLoadList().IsEmpty())
+                                        vaddr = format_addr.GetLoadAddress (target);
                                     if (vaddr == LLDB_INVALID_ADDRESS)
                                         vaddr = format_addr.GetFileAddress ();
 
                                     if (vaddr != LLDB_INVALID_ADDRESS)
+                                    {
                                         s.Printf("0x%16.16llx", vaddr);
-                                    else
-                                        var_success = false;
+                                        var_success = true;
+                                    }
                                 }
                             }
                         }
@@ -1154,47 +1165,57 @@ Debugger::FormatPrompt
             case '0':
                 // 1 to 3 octal chars
                 {
-                    unsigned long octal_value = 0;
-                    ++p;
-                    int i=0;
-                    for (; i<3; ++i)
+                    // Make a string that can hold onto the initial zero char,
+                    // up to 3 octal digits, and a terminating NULL.
+                    char oct_str[5] = { 0, 0, 0, 0, 0 };
+
+                    int i;
+                    for (i=0; (p[i] >= '0' && p[i] <= '7') && i<4; ++i)
+                        oct_str[i] = p[i];
+
+                    // We don't want to consume the last octal character since
+                    // the main for loop will do this for us, so we advance p by
+                    // one less than i (even if i is zero)
+                    p += i - 1;
+                    unsigned long octal_value = ::strtoul (oct_str, NULL, 8);
+                    if (octal_value <= UINT8_MAX)
                     {
-                        if (*p >= '0' && *p <= '7')
-                            octal_value = octal_value << 3 + (((uint8_t)*p) - '0');
-                        else
-                            break;
+                        char octal_char = octal_value;
+                        s.Write (&octal_char, 1);
                     }
-                    if (i>0)
-                        s.PutChar (octal_value);
-                    else
-                        s.PutCString ("\\0");
                 }
                 break;
 
             case 'x':
                 // hex number in the format 
+                if (isxdigit(p[1]))
                 {
-                    ++p;
+                    ++p;    // Skip the 'x'
 
-                    if (isxdigit(*p))
+                    // Make a string that can hold onto two hex chars plus a
+                    // NULL terminator
+                    char hex_str[3] = { 0,0,0 };
+                    hex_str[0] = *p;
+                    if (isxdigit(p[1]))
                     {
-                        char hex_str[3] = { 0,0,0 };
-                        hex_str[0] = *p;
-                        ++p;
-                        if (isxdigit(*p))
-                            hex_str[1] = *p;
-                        unsigned long hex_value = strtoul (hex_str, NULL, 16);                    
+                        ++p; // Skip the first of the two hex chars
+                        hex_str[1] = *p;
+                    }
+
+                    unsigned long hex_value = strtoul (hex_str, NULL, 16);                    
+                    if (hex_value <= UINT8_MAX)
                         s.PutChar (hex_value);
-                    }
-                    else
-                    {
-                        s.PutCString ("\\x");
-                    }
+                }
+                else
+                {
+                    s.PutChar('x');
                 }
                 break;
                 
             default:
-                s << '\\' << *p;
+                // Just desensitize any other character by just printing what
+                // came after the '\'
+                s << *p;
                 break;
             
             }
@@ -1247,6 +1268,8 @@ DebuggerInstanceSettings::DebuggerInstanceSettings
     InstanceSettings (owner, (name == NULL ? InstanceSettings::InvalidName().AsCString() : name), live_instance),
     m_term_width (80),
     m_prompt (),
+    m_frame_format (),
+    m_thread_format (),    
     m_script_lang (),
     m_use_external_editor (false)
 {
@@ -1265,13 +1288,14 @@ DebuggerInstanceSettings::DebuggerInstanceSettings
     {
         const lldb::InstanceSettingsSP &pending_settings = m_owner.FindPendingSettings (m_instance_name);
         CopyInstanceSettings (pending_settings, false);
-      //m_owner.RemovePendingSettings (m_instance_name);
     }
 }
 
 DebuggerInstanceSettings::DebuggerInstanceSettings (const DebuggerInstanceSettings &rhs) :
     InstanceSettings (*(Debugger::GetSettingsController().get()), CreateInstanceName ().AsCString()),
     m_prompt (rhs.m_prompt),
+    m_frame_format (rhs.m_frame_format),
+    m_thread_format (rhs.m_thread_format),
     m_script_lang (rhs.m_script_lang),
     m_use_external_editor (rhs.m_use_external_editor)
 {
@@ -1291,6 +1315,8 @@ DebuggerInstanceSettings::operator= (const DebuggerInstanceSettings &rhs)
     {
         m_term_width = rhs.m_term_width;
         m_prompt = rhs.m_prompt;
+        m_frame_format = rhs.m_frame_format;
+        m_thread_format = rhs.m_thread_format;
         m_script_lang = rhs.m_script_lang;
         m_use_external_editor = rhs.m_use_external_editor;
     }
@@ -1338,7 +1364,15 @@ DebuggerInstanceSettings::UpdateInstanceSettingsVariable (const ConstString &var
                                                           Error &err,
                                                           bool pending)
 {
-    if (var_name == PromptVarName())
+
+    if (var_name == TermWidthVarName())
+    {
+        if (ValidTermWidthValue (value, err))
+        {
+            m_term_width = ::strtoul (value, NULL, 0);
+        }
+    }
+    else if (var_name == PromptVarName())
     {
         UserSettingsController::UpdateStringVariable (op, m_prompt, value, err);
         if (!pending)
@@ -1355,18 +1389,19 @@ DebuggerInstanceSettings::UpdateInstanceSettingsVariable (const ConstString &var
             BroadcastPromptChange (new_name, m_prompt.c_str());
         }
     }
+    else if (var_name == GetFrameFormatName())
+    {
+        UserSettingsController::UpdateStringVariable (op, m_frame_format, value, err);
+    }
+    else if (var_name == GetThreadFormatName())
+    {
+        UserSettingsController::UpdateStringVariable (op, m_thread_format, value, err);
+    }
     else if (var_name == ScriptLangVarName())
     {
         bool success;
         m_script_lang = Args::StringToScriptLanguage (value, eScriptLanguageDefault,
                                                       &success);
-    }
-    else if (var_name == TermWidthVarName())
-    {
-        if (ValidTermWidthValue (value, err))
-        {
-            m_term_width = ::strtoul (value, NULL, 0);
-        }
     }
     else if (var_name == UseExternalEditorVarName ())
     {
@@ -1382,7 +1417,7 @@ DebuggerInstanceSettings::GetInstanceSettingsValue (const SettingEntry &entry,
 {
     if (var_name == PromptVarName())
     {
-        value.AppendString (m_prompt.c_str());
+        value.AppendString (m_prompt.c_str(), m_prompt.size());
         
     }
     else if (var_name == ScriptLangVarName())
@@ -1394,6 +1429,14 @@ DebuggerInstanceSettings::GetInstanceSettingsValue (const SettingEntry &entry,
         StreamString width_str;
         width_str.Printf ("%d", m_term_width);
         value.AppendString (width_str.GetData());
+    }
+    else if (var_name == GetFrameFormatName ())
+    {
+        value.AppendString(m_frame_format.c_str(), m_frame_format.size());
+    }
+    else if (var_name == GetThreadFormatName ())
+    {
+        value.AppendString(m_thread_format.c_str(), m_thread_format.size());
     }
     else if (var_name == UseExternalEditorVarName())
     {
@@ -1434,7 +1477,8 @@ DebuggerInstanceSettings::CopyInstanceSettings (const lldb::InstanceSettingsSP &
 
         BroadcastPromptChange (new_name, m_prompt.c_str());
     }
-  
+    m_frame_format = new_debugger_settings->m_frame_format;
+    m_thread_format = new_debugger_settings->m_thread_format;
     m_term_width = new_debugger_settings->m_term_width;
     m_script_lang = new_debugger_settings->m_script_lang;
     m_use_external_editor = new_debugger_settings->m_use_external_editor;
@@ -1500,6 +1544,22 @@ DebuggerInstanceSettings::PromptVarName ()
 }
 
 const ConstString &
+DebuggerInstanceSettings::GetFrameFormatName ()
+{
+    static ConstString prompt_var_name ("frame-format");
+
+    return prompt_var_name;
+}
+
+const ConstString &
+DebuggerInstanceSettings::GetThreadFormatName ()
+{
+    static ConstString prompt_var_name ("thread-format");
+
+    return prompt_var_name;
+}
+
+const ConstString &
 DebuggerInstanceSettings::ScriptLangVarName ()
 {
     static ConstString script_lang_var_name ("script-lang");
@@ -1537,15 +1597,32 @@ Debugger::SettingsController::global_settings_table[] =
     {  NULL, eSetVarTypeNone, NULL, NULL, 0, 0, NULL }
 };
 
+#define MODULE_WITH_FUNC "{ ${module.file.basename}`${function.name}{${function.pc-offset}}}"
+#define FILE_AND_LINE "{ at ${line.file.basename}:${line.number}}"
 
+#define DEFAULT_THREAD_FORMAT "thread #${thread.index}: tid = ${thread.id}"\
+    "{, ${frame.pc}}"\
+    MODULE_WITH_FUNC\
+    "{, stop reason = ${thread.stop-reason}}"\
+    "{, name = ${thread.name}}"\
+    "{, queue = ${thread.queue}}"\
+    "\\n"
+
+#define DEFAULT_FRAME_FORMAT "frame #${frame.index}: ${frame.pc}"\
+    MODULE_WITH_FUNC\
+    FILE_AND_LINE\
+    "\\n"
 
 SettingEntry
 Debugger::SettingsController::instance_settings_table[] =
 {
-  //{ "var-name",     var-type ,        "default", enum-table, init'd, hidden, "help-text"},
-    { "term-width" , eSetVarTypeInt, "80"    , NULL,       false , false , "The maximum number of columns to use for displaying text." },
-    { "script-lang" , eSetVarTypeString, "python", NULL,       false,  false,  "The script language to be used for evaluating user-written scripts." },
-    { "prompt"      , eSetVarTypeString, "(lldb)", NULL,       false,  false,  "The debugger command line prompt displayed for the user." },
-    { "use-external-editor", eSetVarTypeBool, "false", NULL,   false,  false,  "Whether to use an external editor or not." },
-    {  NULL, eSetVarTypeNone, NULL, NULL, 0, 0, NULL }
+//  NAME                    Setting variable type   Default                 Enum  Init'd Hidden Help
+//  ======================= ======================= ======================  ====  ====== ====== ======================
+{   "term-width",           eSetVarTypeInt,         "80"    ,               NULL, false, false, "The maximum number of columns to use for displaying text." },
+{   "script-lang",          eSetVarTypeString,      "python",               NULL, false, false, "The script language to be used for evaluating user-written scripts." },
+{   "prompt",               eSetVarTypeString,      "(lldb)",               NULL, false, false, "The debugger command line prompt displayed for the user." },
+{   "frame-format",         eSetVarTypeString,      DEFAULT_FRAME_FORMAT,   NULL, false, false, "The default frame format string to use when displaying thread information." },
+{   "thread-format",        eSetVarTypeString,      DEFAULT_THREAD_FORMAT,  NULL, false, false, "The default thread format string to use when displaying thread information." },
+{   "use-external-editor",  eSetVarTypeBool,        "false",                NULL, false, false, "Whether to use an external editor or not." },
+{   NULL,                   eSetVarTypeNone,        NULL,                   NULL, false, false, NULL }
 };

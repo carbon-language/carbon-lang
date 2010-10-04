@@ -59,7 +59,7 @@ ExecutionContext::ExecutionContext(Process* p, Thread *t, StackFrame *f) :
 ExecutionContext::ExecutionContext (ExecutionContextScope *exe_scope_ptr)
 {
     if (exe_scope_ptr)
-        exe_scope_ptr->Calculate (*this);
+        exe_scope_ptr->CalculateExecutionContext (*this);
     else
     {
         target  = NULL;
@@ -71,7 +71,7 @@ ExecutionContext::ExecutionContext (ExecutionContextScope *exe_scope_ptr)
 
 ExecutionContext::ExecutionContext (ExecutionContextScope &exe_scope_ref)
 {
-    exe_scope_ref.Calculate (*this);
+    exe_scope_ref.CalculateExecutionContext (*this);
 }
 
 void

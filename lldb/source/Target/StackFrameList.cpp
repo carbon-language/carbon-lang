@@ -260,7 +260,7 @@ StackFrameList::Dump (Stream *s)
         if (frame)
         {
             frame->GetStackID().Dump (s);
-            frame->Dump(s, true, false);
+            frame->DumpUsingSettingsFormat (s);
         }
         else
             s->Printf("frame #%u", std::distance (begin, pos));

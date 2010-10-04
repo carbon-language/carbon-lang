@@ -70,14 +70,10 @@ public:
                 // char '#'
                 while (pos != commands.end())
                 {
-                    bool remove_string = false;
                     size_t non_space = pos->find_first_not_of (k_space_characters);
-                    if (non_space == std::string::npos)
-                        remove_string = true; // Empty line
-                    else if ((*pos)[non_space] == '#')
-                        remove_string = true; // Comment line that starts with '#'
-
-                    if (remove_string)
+                    // Check for empty line or comment line (lines whose first
+                    // non-space character is a '#')
+                    if (non_space == std::string::npos || (*pos)[non_space] == '#')
                         pos = commands.erase(pos);
                     else
                         ++pos;

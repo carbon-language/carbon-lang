@@ -708,7 +708,7 @@ Target::CalculateStackFrame ()
 }
 
 void
-Target::Calculate (ExecutionContext &exe_ctx)
+Target::CalculateExecutionContext (ExecutionContext &exe_ctx)
 {
     exe_ctx.target = this;
     exe_ctx.process = NULL; // Do NOT fill in process...
@@ -793,6 +793,25 @@ Target::SetDefaultArchitecture (ArchSpec new_arch)
         Target::GetSettingsController ()->SetVariable ("target.default-arch", new_arch.AsCString(),
                                                        lldb::eVarSetOperationAssign, false, "[]");
 }
+
+Target *
+Target::GetTargetFromContexts (const ExecutionContext *exe_ctx_ptr, const SymbolContext *sc_ptr)
+{
+    // The target can either exist in the "process" of ExecutionContext, or in 
+    // the "target_sp" member of SymbolContext. This accessor helper function
+    // will get the target from one of these locations.
+
+    Target *target = NULL;
+    if (sc_ptr != NULL)
+        target = sc_ptr->target_sp.get();
+    if (target == NULL)
+    {
+        if (exe_ctx_ptr != NULL && exe_ctx_ptr->process != NULL)
+            target = &exe_ctx_ptr->process->GetTarget();
+    }
+    return target;
+}
+
 
 void
 Target::UpdateInstanceName ()

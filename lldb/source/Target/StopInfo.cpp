@@ -276,9 +276,9 @@ public:
             StreamString strm;
             const char *signal_name = m_thread.GetProcess().GetUnixSignals().GetSignalAsCString (m_value);
             if (signal_name)
-                strm.Printf("signal = %s", signal_name);
+                strm.Printf("signal %s", signal_name);
             else
-                strm.Printf("signal = %lli", m_value);
+                strm.Printf("signal %lli", m_value);
             m_description.swap (strm.GetString());
         }
         return m_description.c_str();

@@ -226,12 +226,12 @@ RegisterContext::CalculateStackFrame ()
 }
 
 void
-RegisterContext::Calculate (ExecutionContext &exe_ctx)
+RegisterContext::CalculateExecutionContext (ExecutionContext &exe_ctx)
 {
     if (m_frame)
-        m_frame->Calculate (exe_ctx);
+        m_frame->CalculateExecutionContext (exe_ctx);
     else
-        m_thread.Calculate (exe_ctx);
+        m_thread.CalculateExecutionContext (exe_ctx);
 }
 
 

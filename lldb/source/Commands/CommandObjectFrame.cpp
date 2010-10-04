@@ -71,7 +71,7 @@ public:
         ExecutionContext exe_ctx(m_interpreter.GetDebugger().GetExecutionContext());
         if (exe_ctx.frame)
         {
-            exe_ctx.frame->Dump (&result.GetOutputStream(), true, false);
+            exe_ctx.frame->DumpUsingSettingsFormat (&result.GetOutputStream());
             result.GetOutputStream().EOL();
             result.SetStatus (eReturnStatusSuccessFinishResult);
         }

@@ -192,7 +192,7 @@ AppleObjCTrampolineHandler::GetStepThroughDispatchPlan (Thread &thread, bool sto
         // making the object value a load address value and resolving it will get
         // the pointer sized data pointed to by that value...
         ExecutionContext exec_ctx;
-        thread.Calculate (exec_ctx);
+        thread.CalculateExecutionContext (exec_ctx);
 
         isa_value.SetValueType(Value::eValueTypeLoadAddress);
         isa_value.ResolveValue(&exec_ctx, clang_ast_context->getASTContext());

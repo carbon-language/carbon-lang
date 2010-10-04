@@ -1818,7 +1818,7 @@ Process::CalculateStackFrame ()
 }
 
 void
-Process::Calculate (ExecutionContext &exe_ctx)
+Process::CalculateExecutionContext (ExecutionContext &exe_ctx)
 {
     exe_ctx.target = &m_target;
     exe_ctx.process = this;
