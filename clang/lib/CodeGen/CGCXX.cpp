@@ -1,4 +1,4 @@
-//===--- CGDecl.cpp - Emit LLVM Code for declarations ---------------------===//
+//===--- CGCXX.cpp - Emit LLVM Code for declarations ----------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
