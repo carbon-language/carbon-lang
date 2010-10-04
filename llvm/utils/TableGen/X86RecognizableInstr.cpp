@@ -51,10 +51,11 @@ namespace X86Local {
     MRM0m = 24, MRM1m = 25, MRM2m = 26, MRM3m = 27,
     MRM4m = 28, MRM5m = 29, MRM6m = 30, MRM7m = 31,
     MRMInitReg  = 32,
-    
 #define MAP(from, to) MRM_##from = to,
     MRM_MAPPING
 #undef MAP
+    RawFrmImm8  = 43,
+    RawFrmImm16 = 44,
     lastMRM
   };
   
@@ -586,6 +587,20 @@ void RecognizableInstr::emitInstructionSpecifier(DisassemblerTables &tables) {
            "Unexpected number of operands for MRMnMFrm");
     HANDLE_OPERAND(memory)
     HANDLE_OPTIONAL(relocation)
+    break;
+  case X86Local::RawFrmImm8:
+    // operand 1 is a 16-bit immediate
+    // operand 2 is an 8-bit immediate
+    assert(numPhysicalOperands == 2 &&
+           "Unexpected number of operands for X86Local::RawFrmImm8");
+    HANDLE_OPERAND(immediate)
+    HANDLE_OPERAND(immediate)
+    break;
+  case X86Local::RawFrmImm16:
+    // operand 1 is a 16-bit immediate
+    // operand 2 is a 16-bit immediate
+    HANDLE_OPERAND(immediate)
+    HANDLE_OPERAND(immediate)
     break;
   case X86Local::MRMInitReg:
     // Ignored.
