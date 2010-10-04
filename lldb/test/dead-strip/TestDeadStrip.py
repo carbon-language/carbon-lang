@@ -44,7 +44,6 @@ class DeadStripTestCase(TestBase):
         # The stop reason of the thread should be breakpoint (breakpoint #1).
         self.expect("thread list", STOPPED_DUE_TO_BREAKPOINT,
             substrs = ['state is Stopped',
-                       'main.c:20',
                        'a.out`f1',
                        'stop reason = breakpoint'])
 
@@ -57,7 +56,6 @@ class DeadStripTestCase(TestBase):
         # The stop reason of the thread should be breakpoint (breakpoint #3).
         self.expect("thread list", STOPPED_DUE_TO_BREAKPOINT,
             substrs = ['state is Stopped',
-                       'main.c:40',
                        'a.out`f3',
                        'stop reason = breakpoint'])
 
