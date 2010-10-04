@@ -956,6 +956,20 @@ Debugger::FormatPrompt
                                         if (cstr)
                                         {
                                             s.PutCString(cstr);
+                                            
+                                            if (sc->block)
+                                            {
+                                                Block *inline_block = sc->block->GetContainingInlinedBlock ();
+                                                if (inline_block)
+                                                {
+                                                    const InlineFunctionInfo *inline_info = sc->block->GetInlinedFunctionInfo();
+                                                    if (inline_info)
+                                                    {
+                                                        s.PutCString(" [inlined] ");
+                                                        inline_info->GetName().Dump(&s);
+                                                    }
+                                                }
+                                            }
                                             var_success = true;
                                         }
                                     }
@@ -1083,7 +1097,20 @@ Debugger::FormatPrompt
                                     if (sc)
                                     {
                                         if (sc->function)
+                                        {
                                             func_addr = sc->function->GetAddressRange().GetBaseAddress();
+                                            if (sc->block)
+                                            {
+                                                // Check to make sure we aren't in an inline
+                                                // function. If we are, use the inline block
+                                                // range that contains "format_addr" since
+                                                // blocks can be discontiguous.
+                                                Block *inline_block = sc->block->GetContainingInlinedBlock ();
+                                                AddressRange inline_range;
+                                                if (inline_block && inline_block->GetRangeContainingAddress (format_addr, inline_range))
+                                                    func_addr = inline_range.GetBaseAddress();
+                                            }
+                                        }
                                         else if (sc->symbol && sc->symbol->GetAddressRangePtr())
                                             func_addr = sc->symbol->GetAddressRangePtr()->GetBaseAddress();
                                     }
