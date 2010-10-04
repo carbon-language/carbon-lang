@@ -76,7 +76,7 @@ void MCLineEntry::Make(MCObjectStreamer *MCOS, const MCSection *Section) {
   MCLineEntry LineEntry(LineSym, DwarfLoc);
 
   // clear DwarfLocSeen saying the current .loc info is now used.
-  MCOS->getContext().clearDwarfLocSeen();
+  MCOS->getContext().ClearDwarfLocSeen();
 
   // Get the MCLineSection for this section, if one does not exist for this
   // section create it.

@@ -2031,7 +2031,7 @@ bool GenericAsmParser::ParseDirectiveLoc(StringRef, SMLoc DirectiveLoc) {
   int64_t FileNumber = getTok().getIntVal();
   if (FileNumber < 1)
     return TokError("file number less than one in '.loc' directive");
-  if (!getContext().ValidateDwarfFileNumber(FileNumber))
+  if (!getContext().isValidDwarfFileNumber(FileNumber))
     return TokError("unassigned file number in '.loc' directive");
   Lex();
 
