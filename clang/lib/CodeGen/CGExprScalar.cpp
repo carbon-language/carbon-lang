@@ -11,10 +11,12 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "clang/Frontend/CodeGenOptions.h"
 #include "CodeGenFunction.h"
 #include "CGCXXABI.h"
 #include "CGObjCRuntime.h"
 #include "CodeGenModule.h"
+#include "CGDebugInfo.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/RecordLayout.h"
@@ -721,6 +723,16 @@ Value *ScalarExprEmitter::VisitMemberExpr(MemberExpr *E) {
       EmitLValue(E->getBase());
     return llvm::ConstantInt::get(VMContext, Result.Val.getInt());
   }
+
+  // Emit debug info for aggregate now, if it was delayed to reduce 
+  // debug info size.
+  CGDebugInfo *DI = CGF.getDebugInfo();
+  if (DI && CGF.CGM.getCodeGenOpts().LimitDebugInfo) {
+    QualType PQTy = E->getBase()->IgnoreParenImpCasts()->getType();
+    if (const PointerType * PTy = dyn_cast<PointerType>(PQTy))
+      if (FieldDecl *M = cast<FieldDecl>(E->getMemberDecl()))
+        DI->getOrCreateRecordType(PTy->getPointeeType(), 
+                                  M->getParent()->getLocation());
   return EmitLoadOfLValue(E);
 }
 
