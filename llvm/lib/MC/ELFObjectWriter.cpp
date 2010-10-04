@@ -581,7 +581,16 @@ void ELFObjectWriterImpl::RecordRelocation(const MCAssembler &Asm,
   unsigned Type;
   if (Is64Bit) {
     if (IsPCRel) {
-      Type = ELF::R_X86_64_PC32;
+      switch (Modifier) {
+      case MCSymbolRefExpr::VK_None:
+        Type = ELF::R_X86_64_PC32;
+        break;
+      case MCSymbolRefExpr::VK_PLT:
+        Type = ELF::R_X86_64_PLT32;
+        break;
+      default:
+        llvm_unreachable("Unimplemented");
+      }
     } else {
       switch ((unsigned)Fixup.getKind()) {
       default: llvm_unreachable("invalid fixup kind!");
