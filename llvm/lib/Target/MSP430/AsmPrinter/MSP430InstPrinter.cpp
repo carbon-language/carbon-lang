@@ -13,7 +13,6 @@
 
 #define DEBUG_TYPE "asm-printer"
 #include "MSP430.h"
-#include "MSP430InstrInfo.h"
 #include "MSP430InstPrinter.h"
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCAsmInfo.h"
