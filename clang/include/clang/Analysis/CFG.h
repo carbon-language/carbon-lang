@@ -432,7 +432,11 @@ public:
   void appendStmt(Stmt* Statement, BumpVectorContext &C, bool asLValue) {
     Elements.push_back(CFGStmt(Statement, asLValue), C);
   }
-  
+
+  void appendInitializer(CXXBaseOrMemberInitializer *I, BumpVectorContext& C) {
+    Elements.push_back(CFGInitializer(I), C);
+  }
+
   // Destructors must be inserted in reversed order. So insertion is in two
   // steps. First we prepare space for some number of elements, then we insert
   // the elements beginning at the last position in prepared space.

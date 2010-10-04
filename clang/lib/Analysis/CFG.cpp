@@ -304,7 +304,7 @@ private:
   CFGBlock *addStmt(Stmt *S) {
     return Visit(S, AddStmtChoice::AlwaysAdd);
   }
-
+  CFGBlock *addInitializer(CXXBaseOrMemberInitializer *I);
   void addAutomaticObjDtors(LocalScope::const_iterator B,
                             LocalScope::const_iterator E, Stmt* S);
 
@@ -321,6 +321,9 @@ private:
   void AppendStmt(CFGBlock *B, Stmt *S,
                   AddStmtChoice asc = AddStmtChoice::AlwaysAdd) {
     B->appendStmt(S, cfg->getBumpVectorContext(), asc.asLValue());
+  }
+  void appendInitializer(CFGBlock *B, CXXBaseOrMemberInitializer *I) {
+    B->appendInitializer(I, cfg->getBumpVectorContext());
   }
 
   void insertAutomaticObjDtors(CFGBlock* Blk, CFGBlock::iterator I,
@@ -410,13 +413,18 @@ CFG* CFGBuilder::buildCFG(const Decl *D, Stmt* Statement, ASTContext* C,
   if (badCFG)
     return NULL;
 
+  // For C++ constructor add initializers to CFG.
+  if (const CXXConstructorDecl *CD = dyn_cast_or_null<CXXConstructorDecl>(D)) {
+    for (CXXConstructorDecl::init_const_reverse_iterator I = CD->init_rbegin(),
+        E = CD->init_rend(); I != E; ++I) {
+      B = addInitializer(*I);
+      if (badCFG)
+        return NULL;
+    }
+  }
+
   if (B)
     Succ = B;
-
-  if (const CXXConstructorDecl *CD = dyn_cast_or_null<CXXConstructorDecl>(D)) {
-    // FIXME: Add code for base initializers and member initializers.
-    (void)CD;
-  }
 
   // Backpatch the gotos whose label -> block mappings we didn't know when we
   // encountered them.
@@ -464,6 +472,26 @@ CFGBlock* CFGBuilder::createBlock(bool add_successor) {
   if (add_successor && Succ)
     AddSuccessor(B, Succ);
   return B;
+}
+
+/// addInitializer - Add C++ base or member initializer element to CFG.
+CFGBlock *CFGBuilder::addInitializer(CXXBaseOrMemberInitializer *I) {
+  if (!BuildOpts.AddInitializers)
+    return Block;
+
+  autoCreateBlock();
+  appendInitializer(Block, I);
+
+  if (Expr *Init = I->getInit()) {
+    AddStmtChoice::Kind K = AddStmtChoice::NotAlwaysAdd;
+    if (FieldDecl *FD = I->getMember())
+      if (FD->getType()->isReferenceType())
+        K = AddStmtChoice::AsLValueNotAlwaysAdd;
+
+    return Visit(Init, AddStmtChoice(K));
+  }
+  
+  return Block;
 }
 
 /// addAutomaticObjDtors - Add to current block automatic objects destructors
