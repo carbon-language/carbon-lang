@@ -249,4 +249,8 @@ template <unsigned> struct __static_assert_check {};
 #define constexpr const
 #endif
 
+#ifndef __has_feature(__x)
+#define __has_feature(__x) 0
+#endif
+
 #endif  // _LIBCPP_CONFIG
