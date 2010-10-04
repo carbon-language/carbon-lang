@@ -321,8 +321,8 @@ recompilation of larger parts of the compiler chain.</p>
 language and compiler written on top of LLVM, intended for producing
 single-address-space managed code operating systems that
 run faster than the equivalent multiple-address-space C systems.
-More in-depth blurb is available on <a 
-href="http://www.quokforge.org/projects/horizon/wiki/Wiki">the wiki</a>.</p>
+More in-depth blurb is available on the <a 
+href="http://www.quokforge.org/projects/horizon/wiki/Wiki">wiki</a>.</p>
 
 </div>
 
@@ -339,8 +339,8 @@ gateways.  Since version 0.96 it has <a
 href="http://vrt-sourcefire.blogspot.com/2010/09/introduction-to-clamavs-low-level.html">bytecode
 signatures</a> that allow writing detections for complex malware. It
 uses LLVM's JIT to speed up the execution of bytecode on
-X86,X86-64,PPC32/64, falling back to its own interpreter otherwise.
-The git version was updated to work with LLVM 2.8
+X86, X86-64, PPC32/64, falling back to its own interpreter otherwise.
+The git version was updated to work with LLVM 2.8.
 </p>
 
 <p>The <a
@@ -498,7 +498,7 @@ builds on LLVM 2.8.</p>
 <a href="http://tm.inf.tu-dresden.de">DTMC</a> provides support for 
 Transactional Memory, which is an easy-to-use and efficient way to synchronize 
 accesses to shared memory. Transactions can contain normal C/C++ code (e.g., 
-__transaction { list.remove(x); x.refCount--; }) and will be executed 
+<code>__transaction { list.remove(x); x.refCount--; }</code>) and will be executed 
 virtually atomically and isolated from other transactions.</p>
 
 </div>
@@ -774,7 +774,7 @@ it run faster:</p>
 <ul>
 <li>The X86 backend now supports holding X87 floating point stack values
     in registers across basic blocks, dramatically improving performance of code
-    that uses long double, and when targetting CPUs that don't support SSE.</li>
+    that uses long double, and when targeting CPUs that don't support SSE.</li>
 
 <li>The X86 backend now uses a SSEDomainFix pass to optimize SSE operations.  On
     Nehalem ("Core i7") and newer CPUs there is a 2 cycle latency penalty on
@@ -799,7 +799,7 @@ it run faster:</p>
 
 <li>When printing .s files in verbose assembly mode (the default for clang -S),
     the X86 backend now decodes X86 shuffle instructions and prints human
-    readable comments after the most inscrutible of them, e.g.:
+    readable comments after the most inscrutable of them, e.g.:
     
 <pre>
   insertps $113, %xmm3, %xmm0 <i># xmm0 = zero,xmm0[1,2],xmm3[1]</i>
@@ -854,7 +854,7 @@ substantially better performance in a wide range of different scenarios.</li>
   </li>
   <li>
     The llvm.arm.neon.vabdl and llvm.arm.neon.vabal intrinsics (lengthening
-    vector absolute difference with and without accumlation) have been removed.
+    vector absolute difference with and without accumulation) have been removed.
     They are represented using the llvm.arm.neon.vabd intrinsic (vector absolute
     difference) followed by a vector zero-extend operation, and for vabal,
     a vector add.
@@ -947,7 +947,7 @@ API changes are:</p>
   operands are now address-space qualified.
   If you were creating these intrinsic calls and prototypes yourself (as opposed
   to using Intrinsic::getDeclaration), you can use
-  UpgradeIntrinsicFunction/UpgradeIntrinsicCall to be portable accross releases.
+  UpgradeIntrinsicFunction/UpgradeIntrinsicCall to be portable across releases.
 </li>
 <li>
   SetCurrentDebugLocation takes a DebugLoc now instead of a MDNode.
