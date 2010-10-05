@@ -170,6 +170,13 @@ class ASTReader
     public ExternalSLocEntrySource {
 public:
   enum ASTReadResult { Success, Failure, IgnorePCH };
+  /// \brief Types of AST files.
+  enum ASTFileType {
+    Module,   ///< File is a module proper.
+    PCH,      ///< File is a PCH file treated as such.
+    Preamble, ///< File is a PCH file treated as the preamble.
+    MainFile  ///< File is a PCH file treated as the actual main file.
+  };
   friend class PCHValidator;
   friend class ASTDeclReader;
   friend class ASTStmtReader;
@@ -201,10 +208,13 @@ private:
 
   /// \brief Information that is needed for every module.
   struct PerFileData {
-    PerFileData();
+    PerFileData(ASTFileType Ty);
     ~PerFileData();
 
     // === General information ===
+
+    /// \brief The type of this AST file.
+    ASTFileType Type;
 
     /// \brief The file name of the AST file.
     std::string FileName;
@@ -695,7 +705,7 @@ private:
 
   void MaybeAddSystemRootToFilename(std::string &Filename);
 
-  ASTReadResult ReadASTCore(llvm::StringRef FileName);
+  ASTReadResult ReadASTCore(llvm::StringRef FileName, ASTFileType Type);
   ASTReadResult ReadASTBlock(PerFileData &F);
   bool CheckPredefinesBuffers();
   bool ParseLineTable(PerFileData &F, llvm::SmallVectorImpl<uint64_t> &Record);
@@ -776,7 +786,7 @@ public:
 
   /// \brief Load the precompiled header designated by the given file
   /// name.
-  ASTReadResult ReadAST(const std::string &FileName);
+  ASTReadResult ReadAST(const std::string &FileName, ASTFileType Type);
 
   /// \brief Set the AST callbacks listener.
   void setListener(ASTReaderListener *listener) {

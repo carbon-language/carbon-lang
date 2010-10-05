@@ -534,7 +534,7 @@ public:
   createPCHExternalASTSource(llvm::StringRef Path, const std::string &Sysroot,
                              bool DisablePCHValidation,
                              Preprocessor &PP, ASTContext &Context,
-                             void *DeserializationListener);
+                             void *DeserializationListener, bool Preamble);
 
   /// Create a code completion consumer using the invocation; note that this
   /// will cause the source manager to truncate the input source file at the

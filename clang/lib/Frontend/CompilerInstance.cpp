@@ -251,10 +251,12 @@ void CompilerInstance::createPCHExternalASTSource(llvm::StringRef Path,
                                                   bool DisablePCHValidation,
                                                  void *DeserializationListener){
   llvm::OwningPtr<ExternalASTSource> Source;
+  bool Preamble = getPreprocessorOpts().PrecompiledPreambleBytes.first != 0;
   Source.reset(createPCHExternalASTSource(Path, getHeaderSearchOpts().Sysroot,
                                           DisablePCHValidation,
                                           getPreprocessor(), getASTContext(),
-                                          DeserializationListener));
+                                          DeserializationListener,
+                                          Preamble));
   getASTContext().setExternalSource(Source);
 }
 
@@ -264,7 +266,8 @@ CompilerInstance::createPCHExternalASTSource(llvm::StringRef Path,
                                              bool DisablePCHValidation,
                                              Preprocessor &PP,
                                              ASTContext &Context,
-                                             void *DeserializationListener) {
+                                             void *DeserializationListener,
+                                             bool Preamble) {
   llvm::OwningPtr<ASTReader> Reader;
   Reader.reset(new ASTReader(PP, &Context,
                              Sysroot.empty() ? 0 : Sysroot.c_str(),
@@ -272,7 +275,8 @@ CompilerInstance::createPCHExternalASTSource(llvm::StringRef Path,
 
   Reader->setDeserializationListener(
             static_cast<ASTDeserializationListener *>(DeserializationListener));
-  switch (Reader->ReadAST(Path)) {
+  switch (Reader->ReadAST(Path,
+                          Preamble ? ASTReader::Preamble : ASTReader::PCH)) {
   case ASTReader::Success:
     // Set the predefines buffer as suggested by the PCH reader. Typically, the
     // predefines buffer will be empty.

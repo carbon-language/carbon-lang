@@ -1746,8 +1746,8 @@ ASTReader::ReadASTBlock(PerFileData &F) {
         return IgnorePCH;
       }
 
-      // Load the chained file.
-      switch(ReadASTCore(llvm::StringRef(BlobStart, BlobLen))) {
+      // Load the chained file, which is always a PCH file.
+      switch(ReadASTCore(llvm::StringRef(BlobStart, BlobLen), PCH)) {
       case Failure: return Failure;
         // If we have to ignore the dependency, we'll have to ignore this too.
       case IgnorePCH: return IgnorePCH;
@@ -2025,8 +2025,9 @@ ASTReader::ReadASTBlock(PerFileData &F) {
   return Failure;
 }
 
-ASTReader::ASTReadResult ASTReader::ReadAST(const std::string &FileName) {
-  switch(ReadASTCore(FileName)) {
+ASTReader::ASTReadResult ASTReader::ReadAST(const std::string &FileName,
+                                            ASTFileType Type) {
+  switch(ReadASTCore(FileName, Type)) {
   case Failure: return Failure;
   case IgnorePCH: return IgnorePCH;
   case Success: break;
@@ -2124,9 +2125,10 @@ ASTReader::ASTReadResult ASTReader::ReadAST(const std::string &FileName) {
   return Success;
 }
 
-ASTReader::ASTReadResult ASTReader::ReadASTCore(llvm::StringRef FileName) {
+ASTReader::ASTReadResult ASTReader::ReadASTCore(llvm::StringRef FileName,
+                                                ASTFileType Type) {
   PerFileData *Prev = Chain.empty() ? 0 : Chain.back();
-  Chain.push_back(new PerFileData());
+  Chain.push_back(new PerFileData(Type));
   PerFileData &F = *Chain.back();
   if (Prev)
     Prev->NextInSource = &F;
@@ -4215,8 +4217,8 @@ ASTReader::~ASTReader() {
   }
 }
 
-ASTReader::PerFileData::PerFileData()
-  : SizeInBits(0), LocalNumSLocEntries(0), SLocOffsets(0), LocalSLocSize(0),
+ASTReader::PerFileData::PerFileData(ASTFileType Ty)
+  : Type(Ty), SizeInBits(0), LocalNumSLocEntries(0), SLocOffsets(0), LocalSLocSize(0),
     LocalNumIdentifiers(0), IdentifierOffsets(0), IdentifierTableData(0),
     IdentifierLookupTable(0), LocalNumMacroDefinitions(0),
     MacroDefinitionOffsets(0), LocalNumSelectors(0), SelectorOffsets(0),

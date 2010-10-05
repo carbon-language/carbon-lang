@@ -479,7 +479,7 @@ ASTUnit *ASTUnit::LoadFromASTFile(const std::string &Filename,
   Reader->setListener(new ASTInfoCollector(LangInfo, HeaderInfo, TargetTriple,
                                            Predefines, Counter));
 
-  switch (Reader->ReadAST(Filename)) {
+  switch (Reader->ReadAST(Filename, ASTReader::MainFile)) {
   case ASTReader::Success:
     break;
 
@@ -1305,10 +1305,7 @@ unsigned ASTUnit::getMaxPCHLevel() const {
   if (!getOnlyLocalDecls())
     return Decl::MaxPCHLevel;
 
-  unsigned Result = 0;
-  if (isMainFileAST() || SavedMainFileBuffer)
-    ++Result;
-  return Result;
+  return 0;
 }
 
 ASTUnit *ASTUnit::LoadFromCompilerInvocation(CompilerInvocation *CI,
