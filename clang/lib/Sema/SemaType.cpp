@@ -2211,7 +2211,13 @@ QualType Sema::BuildTypeofExprType(Expr *E) {
       return QualType();
     }
   }
-  
+  if (!E->isTypeDependent()) {
+    QualType T = E->getType();
+    if (const RecordType *EltTy = T->getAs<RecordType>())
+      DiagnoseUseOfDecl(EltTy->getDecl(), E->getExprLoc());
+    else if (const EnumType *Enum = T->getAs<EnumType>())
+      DiagnoseUseOfDecl(Enum->getDecl(), E->getExprLoc());
+  }
   return Context.getTypeOfExprType(E);
 }
 
