@@ -33,7 +33,7 @@ namespace ARMII {
     //===------------------------------------------------------------------===//
     // This four-bit field describes the addressing mode used.
 
-    AddrModeMask  = 0xf,
+    AddrModeMask  = 0x1f,
     AddrModeNone    = 0,
     AddrMode1       = 1,
     AddrMode2       = 2,
@@ -52,7 +52,7 @@ namespace ARMII {
     AddrModeT2_i8s4 = 15, // i8 * 4
 
     // Size* - Flags to keep track of the size of an instruction.
-    SizeShift     = 4,
+    SizeShift     = 5,
     SizeMask      = 7 << SizeShift,
     SizeSpecial   = 1,   // 0 byte pseudo or special case.
     Size8Bytes    = 2,
@@ -61,7 +61,7 @@ namespace ARMII {
 
     // IndexMode - Unindex, pre-indexed, or post-indexed are valid for load
     // and store ops only.  Generic "updating" flag is used for ld/st multiple.
-    IndexModeShift = 7,
+    IndexModeShift = 8,
     IndexModeMask  = 3 << IndexModeShift,
     IndexModePre   = 1,
     IndexModePost  = 2,
@@ -70,7 +70,7 @@ namespace ARMII {
     //===------------------------------------------------------------------===//
     // Instruction encoding formats.
     //
-    FormShift     = 9,
+    FormShift     = 10,
     FormMask      = 0x3f << FormShift,
 
     // Pseudo instructions
@@ -143,15 +143,15 @@ namespace ARMII {
 
     // UnaryDP - Indicates this is a unary data processing instruction, i.e.
     // it doesn't have a Rn operand.
-    UnaryDP       = 1 << 15,
+    UnaryDP       = 1 << 16,
 
     // Xform16Bit - Indicates this Thumb2 instruction may be transformed into
     // a 16-bit Thumb instruction if certain conditions are met.
-    Xform16Bit    = 1 << 16,
+    Xform16Bit    = 1 << 17,
 
     //===------------------------------------------------------------------===//
     // Code domain.
-    DomainShift   = 17,
+    DomainShift   = 18,
     DomainMask    = 3 << DomainShift,
     DomainGeneral = 0 << DomainShift,
     DomainVFP     = 1 << DomainShift,

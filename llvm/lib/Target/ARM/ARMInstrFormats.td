@@ -85,8 +85,8 @@ class Xform16Bit { bit canXformTo16Bit = 1; }
 //
 
 // Addressing mode.
-class AddrMode<bits<4> val> {
-  bits<4> Value = val;
+class AddrMode<bits<5> val> {
+  bits<5> Value = val;
 }
 def AddrModeNone    : AddrMode<0>;
 def AddrMode1       : AddrMode<1>;
@@ -199,13 +199,13 @@ class InstTemplate<AddrMode am, SizeFlagVal sz, IndexMode im,
   bit canXformTo16Bit = 0;
 
   // The layout of TSFlags should be kept in sync with ARMBaseInstrInfo.h.
-  let TSFlags{3-0}   = AM.Value;
-  let TSFlags{6-4}   = SZ.Value;
-  let TSFlags{8-7}   = IndexModeBits;
-  let TSFlags{14-9}  = Form;
-  let TSFlags{15}    = isUnaryDataProc;
-  let TSFlags{16}    = canXformTo16Bit;
-  let TSFlags{18-17} = D.Value;
+  let TSFlags{4-0}   = AM.Value;
+  let TSFlags{7-5}   = SZ.Value;
+  let TSFlags{9-8}   = IndexModeBits;
+  let TSFlags{15-10} = Form;
+  let TSFlags{16}    = isUnaryDataProc;
+  let TSFlags{17}    = canXformTo16Bit;
+  let TSFlags{19-18} = D.Value;
 
   let Constraints = cstr;
   let Itinerary = itin;
