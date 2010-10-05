@@ -599,6 +599,10 @@ def POP16rmm: I<0x8F, MRM0m, (outs i16mem:$dst), (ins), "pop{w}\t$dst", []>,
   OpSize;
 def POP32rmr: I<0x8F, MRM0r, (outs GR32:$reg), (ins), "pop{l}\t$reg", []>;
 def POP32rmm: I<0x8F, MRM0m, (outs i32mem:$dst), (ins), "pop{l}\t$dst", []>;
+
+def POPF16   : I<0x9D, RawFrm, (outs), (ins), "popf{w}", []>, OpSize;
+def POPF32   : I<0x9D, RawFrm, (outs), (ins), "popf{l|d}", []>,
+               Requires<[In32BitMode]>;
 }
 
 let mayStore = 1 in {
@@ -611,28 +615,53 @@ def PUSH16rmm: I<0xFF, MRM6m, (outs), (ins i16mem:$src), "push{w}\t$src",[]>,
   OpSize;
 def PUSH32rmr: I<0xFF, MRM6r, (outs), (ins GR32:$reg), "push{l}\t$reg",[]>;
 def PUSH32rmm: I<0xFF, MRM6m, (outs), (ins i32mem:$src), "push{l}\t$src",[]>;
-}
-}
 
-let Defs = [ESP], Uses = [ESP], neverHasSideEffects = 1, mayStore = 1 in {
 def PUSHi8   : Ii8<0x6a, RawFrm, (outs), (ins i32i8imm:$imm), 
                       "push{l}\t$imm", []>;
 def PUSHi16  : Ii16<0x68, RawFrm, (outs), (ins i16imm:$imm), 
                       "push{w}\t$imm", []>, OpSize;
 def PUSHi32  : Ii32<0x68, RawFrm, (outs), (ins i32imm:$imm), 
                       "push{l}\t$imm", []>;
-}
-
-let Defs = [ESP, EFLAGS], Uses = [ESP], mayLoad = 1, neverHasSideEffects=1 in {
-def POPF16   : I<0x9D, RawFrm, (outs), (ins), "popf{w}", []>, OpSize;
-def POPF32   : I<0x9D, RawFrm, (outs), (ins), "popf{l|d}", []>,
-               Requires<[In32BitMode]>;
-}
-let Defs = [ESP], Uses = [ESP, EFLAGS], mayStore = 1, neverHasSideEffects=1 in {
+                      
 def PUSHF16  : I<0x9C, RawFrm, (outs), (ins), "pushf{w}", []>, OpSize;
 def PUSHF32  : I<0x9C, RawFrm, (outs), (ins), "pushf{l|d}", []>,
                Requires<[In32BitMode]>;
+
 }
+}
+
+let Defs = [RSP], Uses = [RSP], neverHasSideEffects=1 in {
+let mayLoad = 1 in {
+def POP64r   : I<0x58, AddRegFrm,
+                 (outs GR64:$reg), (ins), "pop{q}\t$reg", []>;
+def POP64rmr: I<0x8F, MRM0r, (outs GR64:$reg), (ins), "pop{q}\t$reg", []>;
+def POP64rmm: I<0x8F, MRM0m, (outs i64mem:$dst), (ins), "pop{q}\t$dst", []>;
+}
+let mayStore = 1 in {
+def PUSH64r  : I<0x50, AddRegFrm,
+                 (outs), (ins GR64:$reg), "push{q}\t$reg", []>;
+def PUSH64rmr: I<0xFF, MRM6r, (outs), (ins GR64:$reg), "push{q}\t$reg", []>;
+def PUSH64rmm: I<0xFF, MRM6m, (outs), (ins i64mem:$src), "push{q}\t$src", []>;
+}
+}
+
+let Defs = [RSP], Uses = [RSP], neverHasSideEffects = 1, mayStore = 1 in {
+def PUSH64i8   : Ii8<0x6a, RawFrm, (outs), (ins i8imm:$imm), 
+                     "push{q}\t$imm", []>;
+def PUSH64i16  : Ii16<0x68, RawFrm, (outs), (ins i16imm:$imm), 
+                      "push{q}\t$imm", []>;
+def PUSH64i32  : Ii32<0x68, RawFrm, (outs), (ins i64i32imm:$imm),
+                      "push{q}\t$imm", []>;
+}
+
+let Defs = [RSP, EFLAGS], Uses = [RSP], mayLoad = 1, neverHasSideEffects=1 in
+def POPF64   : I<0x9D, RawFrm, (outs), (ins), "popfq", []>,
+               Requires<[In64BitMode]>;
+let Defs = [RSP], Uses = [RSP, EFLAGS], mayStore = 1, neverHasSideEffects=1 in
+def PUSHF64    : I<0x9C, RawFrm, (outs), (ins), "pushfq", []>,
+                 Requires<[In64BitMode]>;
+
+
 
 let Defs = [EDI, ESI, EBP, EBX, EDX, ECX, EAX, ESP], Uses = [ESP],
     mayLoad=1, neverHasSideEffects=1 in {
@@ -645,11 +674,16 @@ def PUSHA32  : I<0x60, RawFrm, (outs), (ins), "pusha{l}", []>,
                Requires<[In32BitMode]>;
 }
 
-let Uses = [EFLAGS], Constraints = "$src = $dst" in     // GR32 = bswap GR32
+let Constraints = "$src = $dst" in     // GR32 = bswap GR32
   def BSWAP32r : I<0xC8, AddRegFrm,
                    (outs GR32:$dst), (ins GR32:$src),
                    "bswap{l}\t$dst", 
                    [(set GR32:$dst, (bswap GR32:$src))]>, TB;
+                   
+let Constraints = "$src = $dst" in
+def BSWAP64r : RI<0xC8, AddRegFrm, (outs GR64:$dst), (ins GR64:$src),
+                  "bswap{q}\t$dst", 
+                  [(set GR64:$dst, (bswap GR64:$src))]>, TB;
 
 
 // Bit scan instructions.
@@ -667,6 +701,12 @@ def BSF32rr  : I<0xBC, MRMSrcReg, (outs GR32:$dst), (ins GR32:$src),
 def BSF32rm  : I<0xBC, MRMSrcMem, (outs GR32:$dst), (ins i32mem:$src),
                  "bsf{l}\t{$src, $dst|$dst, $src}",
                  [(set GR32:$dst, EFLAGS, (X86bsf (loadi32 addr:$src)))]>, TB;
+def BSF64rr  : RI<0xBC, MRMSrcReg, (outs GR64:$dst), (ins GR64:$src),
+                  "bsf{q}\t{$src, $dst|$dst, $src}",
+                  [(set GR64:$dst, EFLAGS, (X86bsf GR64:$src))]>, TB;
+def BSF64rm  : RI<0xBC, MRMSrcMem, (outs GR64:$dst), (ins i64mem:$src),
+                  "bsf{q}\t{$src, $dst|$dst, $src}",
+                  [(set GR64:$dst, EFLAGS, (X86bsf (loadi64 addr:$src)))]>, TB;
 
 def BSR16rr  : I<0xBD, MRMSrcReg, (outs GR16:$dst), (ins GR16:$src),
                  "bsr{w}\t{$src, $dst|$dst, $src}",
@@ -681,6 +721,12 @@ def BSR32rr  : I<0xBD, MRMSrcReg, (outs GR32:$dst), (ins GR32:$src),
 def BSR32rm  : I<0xBD, MRMSrcMem, (outs GR32:$dst), (ins i32mem:$src),
                  "bsr{l}\t{$src, $dst|$dst, $src}",
                  [(set GR32:$dst, EFLAGS, (X86bsr (loadi32 addr:$src)))]>, TB;
+def BSR64rr  : RI<0xBD, MRMSrcReg, (outs GR64:$dst), (ins GR64:$src),
+                  "bsr{q}\t{$src, $dst|$dst, $src}",
+                  [(set GR64:$dst, EFLAGS, (X86bsr GR64:$src))]>, TB;
+def BSR64rm  : RI<0xBD, MRMSrcMem, (outs GR64:$dst), (ins i64mem:$src),
+                  "bsr{q}\t{$src, $dst|$dst, $src}",
+                  [(set GR64:$dst, EFLAGS, (X86bsr (loadi64 addr:$src)))]>, TB;
 } // Defs = [EFLAGS]
 
 let neverHasSideEffects = 1 in
@@ -692,6 +738,17 @@ def LEA32r   : I<0x8D, MRMSrcMem,
                  (outs GR32:$dst), (ins i32mem:$src),
                  "lea{l}\t{$src|$dst}, {$dst|$src}",
                  [(set GR32:$dst, lea32addr:$src)]>, Requires<[In32BitMode]>;
+
+def LEA64_32r : I<0x8D, MRMSrcMem,
+                  (outs GR32:$dst), (ins lea64_32mem:$src),
+                  "lea{l}\t{$src|$dst}, {$dst|$src}",
+                  [(set GR32:$dst, lea32addr:$src)]>, Requires<[In64BitMode]>;
+
+let isReMaterializable = 1 in
+def LEA64r   : RI<0x8D, MRMSrcMem, (outs GR64:$dst), (ins i64mem:$src),
+                  "lea{q}\t{$src|$dst}, {$dst|$src}",
+                  [(set GR64:$dst, lea64addr:$src)]>;
+
 
 
 // These uses the DF flag in the EFLAGS register to inc or dec EDI and ESI
