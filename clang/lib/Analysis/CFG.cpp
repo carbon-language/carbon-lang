@@ -642,14 +642,14 @@ LocalScope* CFGBuilder::addLocalScopeForVarDecl(VarDecl* VD,
   }
 
   // Check if type is a C++ class with non-trivial destructor.
-  if (const RecordType* RT = QT.getTypePtr()->getAs<RecordType>())
-    if (const CXXRecordDecl* CD = dyn_cast<CXXRecordDecl>(RT->getDecl()))
-      if (!CD->hasTrivialDestructor()) {
-        // Add the variable to scope
-        Scope = createOrReuseLocalScope(Scope);
-        Scope->addVar(VD);
-        ScopePos = Scope->begin();
-      }
+
+  if (const CXXRecordDecl* CD = QT->getAsCXXRecordDecl())
+    if (!CD->hasTrivialDestructor()) {
+      // Add the variable to scope
+      Scope = createOrReuseLocalScope(Scope);
+      Scope->addVar(VD);
+      ScopePos = Scope->begin();
+    }
   return Scope;
 }
 
@@ -2715,13 +2715,13 @@ static void print_elem(llvm::raw_ostream &OS, StmtPrinterHelper* Helper,
   } else if (CFGBaseDtor BE = E.getAs<CFGBaseDtor>()) {
     const CXXBaseSpecifier *BS = BE.getBaseSpecifier();
     OS << "~" << BS->getType()->getAsCXXRecordDecl()->getName() << "()";
-    OS << " (Base destructor)\n";
+    OS << " (Base object destructor)\n";
 
   } else if (CFGMemberDtor ME = E.getAs<CFGMemberDtor>()) {
     FieldDecl *FD = ME.getFieldDecl();
     OS << "this->" << FD->getName();
     OS << ".~" << FD->getType()->getAsCXXRecordDecl()->getName() << "()";
-    OS << " (Member destructor)\n";
+    OS << " (Member object destructor)\n";
   }
  }
 
