@@ -1538,9 +1538,9 @@ static bool HasNoSignedComparisonUses(SDNode *N) {
       case X86::CMOVB16rr: case X86::CMOVB16rm:
       case X86::CMOVB32rr: case X86::CMOVB32rm:
       case X86::CMOVB64rr: case X86::CMOVB64rm:
-      case X86::CMOVBErr16: case X86::CMOVBErm16:
-      case X86::CMOVBErr32: case X86::CMOVBErm32:
-      case X86::CMOVBErr64: case X86::CMOVBErm64:
+      case X86::CMOVBE16rr: case X86::CMOVBE16rm:
+      case X86::CMOVBE32rr: case X86::CMOVBE32rm:
+      case X86::CMOVBE64rr: case X86::CMOVBE64rm:
       case X86::CMOVE16rr: case X86::CMOVE16rm:
       case X86::CMOVE32rr: case X86::CMOVE32rm:
       case X86::CMOVE64rr: case X86::CMOVE64rm:

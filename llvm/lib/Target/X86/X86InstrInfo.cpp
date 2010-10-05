@@ -482,9 +482,9 @@ X86InstrInfo::X86InstrInfo(X86TargetMachine &tm)
     { X86::CMOVB16rr,       X86::CMOVB16rm, 0 },
     { X86::CMOVB32rr,       X86::CMOVB32rm, 0 },
     { X86::CMOVB64rr,       X86::CMOVB64rm, 0 },
-    { X86::CMOVBErr16,      X86::CMOVBErm16, 0 },
-    { X86::CMOVBErr32,      X86::CMOVBErm32, 0 },
-    { X86::CMOVBErr64,      X86::CMOVBErm64, 0 },
+    { X86::CMOVBE16rr,      X86::CMOVBE16rm, 0 },
+    { X86::CMOVBE32rr,      X86::CMOVBE32rm, 0 },
+    { X86::CMOVBE64rr,      X86::CMOVBE64rm, 0 },
     { X86::CMOVE16rr,       X86::CMOVE16rm, 0 },
     { X86::CMOVE32rr,       X86::CMOVE32rm, 0 },
     { X86::CMOVE64rr,       X86::CMOVE64rm, 0 },
@@ -1445,9 +1445,9 @@ X86InstrInfo::commuteInstruction(MachineInstr *MI, bool NewMI) const {
   case X86::CMOVNE16rr:
   case X86::CMOVNE32rr:
   case X86::CMOVNE64rr:
-  case X86::CMOVBErr16:
-  case X86::CMOVBErr32:
-  case X86::CMOVBErr64:
+  case X86::CMOVBE16rr:
+  case X86::CMOVBE32rr:
+  case X86::CMOVBE64rr:
   case X86::CMOVA16rr:
   case X86::CMOVA32rr:
   case X86::CMOVA64rr:
@@ -1496,12 +1496,12 @@ X86InstrInfo::commuteInstruction(MachineInstr *MI, bool NewMI) const {
     case X86::CMOVNE16rr: Opc = X86::CMOVE16rr; break;
     case X86::CMOVNE32rr: Opc = X86::CMOVE32rr; break;
     case X86::CMOVNE64rr: Opc = X86::CMOVE64rr; break;
-    case X86::CMOVBErr16: Opc = X86::CMOVA16rr; break;
-    case X86::CMOVBErr32: Opc = X86::CMOVA32rr; break;
-    case X86::CMOVBErr64: Opc = X86::CMOVA64rr; break;
-    case X86::CMOVA16rr:  Opc = X86::CMOVBErr16; break;
-    case X86::CMOVA32rr:  Opc = X86::CMOVBErr32; break;
-    case X86::CMOVA64rr:  Opc = X86::CMOVBErr64; break;
+    case X86::CMOVBE16rr: Opc = X86::CMOVA16rr; break;
+    case X86::CMOVBE32rr: Opc = X86::CMOVA32rr; break;
+    case X86::CMOVBE64rr: Opc = X86::CMOVA64rr; break;
+    case X86::CMOVA16rr:  Opc = X86::CMOVBE16rr; break;
+    case X86::CMOVA32rr:  Opc = X86::CMOVBE32rr; break;
+    case X86::CMOVA64rr:  Opc = X86::CMOVBE64rr; break;
     case X86::CMOVL16rr:  Opc = X86::CMOVGE16rr; break;
     case X86::CMOVL32rr:  Opc = X86::CMOVGE32rr; break;
     case X86::CMOVL64rr:  Opc = X86::CMOVGE64rr; break;
