@@ -251,12 +251,6 @@ const MachineLoop *SplitAnalysis::getBestSplitLoop() {
     const MachineLoop *Loop = I->first;
     getLoopBlocks(Loop, Blocks);
 
-    // FIXME: We need an SSA updater to properly handle multiple exit blocks.
-    if (Blocks.Exits.size() > 1) {
-      DEBUG(dbgs() << "  multiple exits from " << *Loop);
-      continue;
-    }
-
     LoopPtrSet *LPS = 0;
     switch(analyzeLoopPeripheralUse(Blocks)) {
     case OutsideLoop:
