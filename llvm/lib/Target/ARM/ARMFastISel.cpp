@@ -979,8 +979,8 @@ bool ARMFastISel::SelectFPTrunc(const Instruction *I) {
   if (!Subtarget->hasVFP2()) return false;
 
   Value *V = I->getOperand(0);
-  if (!I->getType()->isFloatTy() ||
-      !V->getType()->isDoubleTy()) return false;
+  if (!(I->getType()->isFloatTy() &&
+        V->getType()->isDoubleTy())) return false;
 
   unsigned Op = getRegForValue(V);
   if (Op == 0) return false;
@@ -1007,7 +1007,7 @@ bool ARMFastISel::SelectSIToFP(const Instruction *I) {
   
   // The conversion routine works on fp-reg to fp-reg and the operand above
   // was an integer, move it to the fp registers if possible.
-  unsigned FP = ARMMoveToFPReg(DstVT, Op);
+  unsigned FP = ARMMoveToFPReg(MVT::f32, Op);
   if (FP == 0) return false;
   
   unsigned Opc;
@@ -1040,9 +1040,9 @@ bool ARMFastISel::SelectFPToSI(const Instruction *I) {
   if (OpTy->isFloatTy()) Opc = ARM::VTOSIZS;
   else if (OpTy->isDoubleTy()) Opc = ARM::VTOSIZD;
   else return 0;
-  EVT OpVT = TLI.getValueType(OpTy, true);
   
-  unsigned ResultReg = createResultReg(TLI.getRegClassFor(OpVT));
+  // f64->s32 or f32->s32 both need an intermediate f32 reg.
+  unsigned ResultReg = createResultReg(TLI.getRegClassFor(MVT::f32));
   AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(Opc),
                           ResultReg)
                   .addReg(Op));
