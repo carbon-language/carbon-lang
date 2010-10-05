@@ -294,20 +294,23 @@ static bool isObjectStart(tgtok::TokKind K) {
          K == tgtok::Defm || K == tgtok::Let || K == tgtok::MultiClass;
 }
 
+static std::string GetNewAnonymousName() {
+  static unsigned AnonCounter = 0;
+  return "anonymous."+utostr(AnonCounter++);
+}
+
 /// ParseObjectName - If an object name is specified, return it.  Otherwise,
 /// return an anonymous name.
 ///   ObjectName ::= ID
 ///   ObjectName ::= /*empty*/
 ///
 std::string TGParser::ParseObjectName() {
-  if (Lex.getCode() == tgtok::Id) {
-    std::string Ret = Lex.getCurStrVal();
-    Lex.Lex();
-    return Ret;
-  }
-
-  static unsigned AnonCounter = 0;
-  return "anonymous."+utostr(AnonCounter++);
+  if (Lex.getCode() != tgtok::Id)
+    return GetNewAnonymousName();
+  
+  std::string Ret = Lex.getCurStrVal();
+  Lex.Lex();
+  return Ret;
 }
 
 
@@ -1899,12 +1902,15 @@ bool TGParser::ParseMultiClass() {
 ///
 bool TGParser::ParseDefm(MultiClass *CurMultiClass) {
   assert(Lex.getCode() == tgtok::Defm && "Unexpected token!");
-  if (Lex.Lex() != tgtok::Id)  // eat the defm.
-    return TokError("expected identifier after defm");
 
+  std::string DefmPrefix;
+  if (Lex.Lex() == tgtok::Id) {  // eat the defm.
+    DefmPrefix = Lex.getCurStrVal();
+    Lex.Lex();  // Eat the defm prefix.
+  }
+  
   SMLoc DefmPrefixLoc = Lex.getLoc();
-  std::string DefmPrefix = Lex.getCurStrVal();
-  if (Lex.Lex() != tgtok::colon)
+  if (Lex.getCode() != tgtok::colon)
     return TokError("expected ':' after defm identifier");
 
   // Keep track of the new generated record definitions.
@@ -1939,14 +1945,21 @@ bool TGParser::ParseDefm(MultiClass *CurMultiClass) {
     for (unsigned i = 0, e = MC->DefPrototypes.size(); i != e; ++i) {
       Record *DefProto = MC->DefPrototypes[i];
 
-      // Add in the defm name
+      // Add in the defm name.  If the defm prefix is empty, give each
+      // instantiated def a unique name.  Otherwise, if "#NAME#" exists in the
+      // name, substitute the prefix for #NAME#.  Otherwise, use the defm name
+      // as a prefix.
       std::string DefName = DefProto->getName();
-      std::string::size_type idx = DefName.find("#NAME#");
-      if (idx != std::string::npos) {
-        DefName.replace(idx, 6, DefmPrefix);
+      if (DefmPrefix.empty()) {
+        DefName = GetNewAnonymousName();
       } else {
-        // Add the suffix to the defm name to get the new name.
-        DefName = DefmPrefix + DefName;
+        std::string::size_type idx = DefName.find("#NAME#");
+        if (idx != std::string::npos) {
+          DefName.replace(idx, 6, DefmPrefix);
+        } else {
+          // Add the suffix to the defm name to get the new name.
+          DefName = DefmPrefix + DefName;
+        }
       }
 
       Record *CurRec = new Record(DefName, DefmPrefixLoc);
