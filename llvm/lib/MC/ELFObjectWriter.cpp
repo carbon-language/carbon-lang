@@ -807,9 +807,20 @@ void ELFObjectWriterImpl::ComputeSymbolTable(MCAssembler &Asm) {
     MSD.SymbolData = it;
     MSD.StringIndex = Entry;
 
+    // FIXME: There is duplicated code with the local case.
     if (it->isCommon()) {
       MSD.SectionIndex = ELF::SHN_COMMON;
       ExternalSymbolData.push_back(MSD);
+    } else if (Symbol.isVariable()) {
+      const MCExpr *Value = Symbol.getVariableValue();
+      assert (Value->getKind() == MCExpr::SymbolRef && "Unimplemented");
+      const MCSymbolRefExpr *Ref = static_cast<const MCSymbolRefExpr*>(Value);
+      const MCSymbol &RefSymbol = Ref->getSymbol();
+      if (RefSymbol.isDefined()) {
+        MSD.SectionIndex = SectionIndexMap.lookup(&RefSymbol.getSection());
+        assert(MSD.SectionIndex && "Invalid section index!");
+        ExternalSymbolData.push_back(MSD);
+      }
     } else if (Symbol.isUndefined()) {
       MSD.SectionIndex = ELF::SHN_UNDEF;
       // FIXME: Undefined symbols are global, but this is the first place we
