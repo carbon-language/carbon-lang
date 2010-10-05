@@ -14,17 +14,15 @@
 //===----------------------------------------------------------------------===//
 
 let Defs = [RAX, RDX] in
-def RDTSC : I<0x31, RawFrm, (outs), (ins), "rdtsc", [(X86rdtsc)]>,
-            TB;
+  def RDTSC : I<0x31, RawFrm, (outs), (ins), "rdtsc", [(X86rdtsc)]>, TB;
 
 let Defs = [RAX, RCX, RDX] in
-def RDTSCP : I<0x01, MRM_F9, (outs), (ins), "rdtscp", []>, TB;
+  def RDTSCP : I<0x01, MRM_F9, (outs), (ins), "rdtscp", []>, TB;
 
 // CPU flow control instructions
 
-let isTerminator = 1, isBarrier = 1, hasCtrlDep = 1 in {
-def TRAP    : I<0x0B, RawFrm, (outs), (ins), "ud2", [(trap)]>, TB;
-}
+let isTerminator = 1, isBarrier = 1, hasCtrlDep = 1 in
+  def TRAP    : I<0x0B, RawFrm, (outs), (ins), "ud2", [(trap)]>, TB;
 
 def HLT : I<0xF4, RawFrm, (outs), (ins), "hlt", []>;
 def RSM : I<0xAA, RawFrm, (outs), (ins), "rsm", []>, TB;
@@ -37,20 +35,17 @@ def INT3 : I<0xcc, RawFrm, (outs), (ins), "int3",
 def INT : Ii8<0xcd, RawFrm, (outs), (ins i8imm:$trap), "int\t$trap",
               [(int_x86_int imm:$trap)]>;
 
-def SYSCALL  : I<0x05, RawFrm,
-                 (outs), (ins), "syscall", []>, TB;
-def SYSRETL  : I<0x07, RawFrm,
-                 (outs), (ins), "sysretl", []>, TB;
-def SYSRETQ : RI<0x07, RawFrm,
-                 (outs), (ins), "sysretq", []>, TB, Requires<[In64BitMode]>;
+def SYSCALL  : I<0x05, RawFrm, (outs), (ins), "syscall", []>, TB;
+def SYSRETL  : I<0x07, RawFrm, (outs), (ins), "sysretl", []>, TB;
+def SYSRETQ  :RI<0x07, RawFrm, (outs), (ins), "sysretq", []>, TB,
+               Requires<[In64BitMode]>;
 
-def SYSENTER : I<0x34, RawFrm,
-                 (outs), (ins), "sysenter", []>, TB;
-def SYSEXIT  : I<0x35, RawFrm,
-                 (outs), (ins), "sysexit", []>, TB, Requires<[In32BitMode]>;
-
-def SYSEXIT64 : RI<0x35, RawFrm,
-                   (outs), (ins), "sysexit", []>, TB, Requires<[In64BitMode]>;
+def SYSENTER : I<0x34, RawFrm, (outs), (ins), "sysenter", []>, TB;
+                 
+def SYSEXIT   : I<0x35, RawFrm, (outs), (ins), "sysexit", []>, TB,
+                Requires<[In32BitMode]>;
+def SYSEXIT64 :RI<0x35, RawFrm, (outs), (ins), "sysexit", []>, TB,
+                Requires<[In64BitMode]>;
 
 def IRET16 : I<0xcf, RawFrm, (outs), (ins), "iretw", []>, OpSize;
 def IRET32 : I<0xcf, RawFrm, (outs), (ins), "iret{l|d}", []>;
@@ -101,26 +96,83 @@ let Uses = [EAX] in
 def OUT32ir : Ii8<0xE7, RawFrm, (outs), (ins i8imm:$port),
                    "out{l}\t{%eax, $port|$port, %EAX}", []>;
 
-def IN8  : I<0x6C, RawFrm, (outs), (ins),
-             "ins{b}", []>;
-def IN16 : I<0x6D, RawFrm, (outs), (ins),
-             "ins{w}", []>,  OpSize;
-def IN32 : I<0x6D, RawFrm, (outs), (ins),
-             "ins{l}", []>;
+def IN8  : I<0x6C, RawFrm, (outs), (ins), "ins{b}", []>;
+def IN16 : I<0x6D, RawFrm, (outs), (ins), "ins{w}", []>,  OpSize;
+def IN32 : I<0x6D, RawFrm, (outs), (ins), "ins{l}", []>;
+
+//===----------------------------------------------------------------------===//
+// Moves to and from debug registers
+
+def MOV32rd : I<0x21, MRMDestReg, (outs GR32:$dst), (ins DEBUG_REG:$src),
+                "mov{l}\t{$src, $dst|$dst, $src}", []>, TB;
+def MOV64rd : I<0x21, MRMDestReg, (outs GR64:$dst), (ins DEBUG_REG:$src),
+                "mov{q}\t{$src, $dst|$dst, $src}", []>, TB;
+                
+def MOV32dr : I<0x23, MRMSrcReg, (outs DEBUG_REG:$dst), (ins GR32:$src),
+                "mov{l}\t{$src, $dst|$dst, $src}", []>, TB;
+def MOV64dr : I<0x23, MRMSrcReg, (outs DEBUG_REG:$dst), (ins GR64:$src),
+                "mov{q}\t{$src, $dst|$dst, $src}", []>, TB;
+
+//===----------------------------------------------------------------------===//
+// Moves to and from control registers
+
+def MOV32rc : I<0x20, MRMDestReg, (outs GR32:$dst), (ins CONTROL_REG:$src),
+                "mov{l}\t{$src, $dst|$dst, $src}", []>, TB;
+def MOV64rc : I<0x20, MRMDestReg, (outs GR64:$dst), (ins CONTROL_REG:$src),
+                "mov{q}\t{$src, $dst|$dst, $src}", []>, TB;
+                
+def MOV32cr : I<0x22, MRMSrcReg, (outs CONTROL_REG:$dst), (ins GR32:$src),
+                "mov{l}\t{$src, $dst|$dst, $src}", []>, TB;
+def MOV64cr : I<0x22, MRMSrcReg, (outs CONTROL_REG:$dst), (ins GR64:$src),
+                "mov{q}\t{$src, $dst|$dst, $src}", []>, TB;
 
 //===----------------------------------------------------------------------===//
 // Segment override instruction prefixes
 
-def CS_PREFIX : I<0x2E, RawFrm, (outs),  (ins), "cs", []>;
-def SS_PREFIX : I<0x36, RawFrm, (outs),  (ins), "ss", []>;
-def DS_PREFIX : I<0x3E, RawFrm, (outs),  (ins), "ds", []>;
-def ES_PREFIX : I<0x26, RawFrm, (outs),  (ins), "es", []>;
-def FS_PREFIX : I<0x64, RawFrm, (outs),  (ins), "fs", []>;
-def GS_PREFIX : I<0x65, RawFrm, (outs),  (ins), "gs", []>;
+def CS_PREFIX : I<0x2E, RawFrm, (outs), (ins), "cs", []>;
+def SS_PREFIX : I<0x36, RawFrm, (outs), (ins), "ss", []>;
+def DS_PREFIX : I<0x3E, RawFrm, (outs), (ins), "ds", []>;
+def ES_PREFIX : I<0x26, RawFrm, (outs), (ins), "es", []>;
+def FS_PREFIX : I<0x64, RawFrm, (outs), (ins), "fs", []>;
+def GS_PREFIX : I<0x65, RawFrm, (outs), (ins), "gs", []>;
 
 
 //===----------------------------------------------------------------------===//
+// Moves to and from segment registers.
+//
+
+def MOV16rs : I<0x8C, MRMDestReg, (outs GR16:$dst), (ins SEGMENT_REG:$src),
+                "mov{w}\t{$src, $dst|$dst, $src}", []>, OpSize;
+def MOV32rs : I<0x8C, MRMDestReg, (outs GR32:$dst), (ins SEGMENT_REG:$src),
+                "mov{l}\t{$src, $dst|$dst, $src}", []>;
+def MOV64rs : RI<0x8C, MRMDestReg, (outs GR64:$dst), (ins SEGMENT_REG:$src),
+                 "mov{q}\t{$src, $dst|$dst, $src}", []>;
+
+def MOV16ms : I<0x8C, MRMDestMem, (outs i16mem:$dst), (ins SEGMENT_REG:$src),
+                "mov{w}\t{$src, $dst|$dst, $src}", []>, OpSize;
+def MOV32ms : I<0x8C, MRMDestMem, (outs i32mem:$dst), (ins SEGMENT_REG:$src),
+                "mov{l}\t{$src, $dst|$dst, $src}", []>;
+def MOV64ms : RI<0x8C, MRMDestMem, (outs i64mem:$dst), (ins SEGMENT_REG:$src),
+                 "mov{q}\t{$src, $dst|$dst, $src}", []>;
+
+def MOV16sr : I<0x8E, MRMSrcReg, (outs SEGMENT_REG:$dst), (ins GR16:$src),
+                "mov{w}\t{$src, $dst|$dst, $src}", []>, OpSize;
+def MOV32sr : I<0x8E, MRMSrcReg, (outs SEGMENT_REG:$dst), (ins GR32:$src),
+                "mov{l}\t{$src, $dst|$dst, $src}", []>;
+def MOV64sr : RI<0x8E, MRMSrcReg, (outs SEGMENT_REG:$dst), (ins GR64:$src),
+                 "mov{q}\t{$src, $dst|$dst, $src}", []>;
+
+def MOV16sm : I<0x8E, MRMSrcMem, (outs SEGMENT_REG:$dst), (ins i16mem:$src),
+                "mov{w}\t{$src, $dst|$dst, $src}", []>, OpSize;
+def MOV32sm : I<0x8E, MRMSrcMem, (outs SEGMENT_REG:$dst), (ins i32mem:$src),
+                "mov{l}\t{$src, $dst|$dst, $src}", []>;
+def MOV64sm : RI<0x8E, MRMSrcMem, (outs SEGMENT_REG:$dst), (ins i64mem:$src),
+                 "mov{q}\t{$src, $dst|$dst, $src}", []>;
+
+//===----------------------------------------------------------------------===//
 // Segmentation support instructions.
+
+def SWAPGS : I<0x01, MRM_F8, (outs), (ins), "swapgs", []>, TB;
 
 def LAR16rm : I<0x02, MRMSrcMem, (outs GR16:$dst), (ins i16mem:$src), 
                 "lar{w}\t{$src, $dst|$dst, $src}", []>, TB, OpSize;
@@ -132,6 +184,11 @@ def LAR32rm : I<0x02, MRMSrcMem, (outs GR32:$dst), (ins i16mem:$src),
                 "lar{l}\t{$src, $dst|$dst, $src}", []>, TB;
 def LAR32rr : I<0x02, MRMSrcReg, (outs GR32:$dst), (ins GR32:$src),
                 "lar{l}\t{$src, $dst|$dst, $src}", []>, TB;
+// i16mem operand in LAR64rm and GR32 operand in LAR32rr is not a typo.
+def LAR64rm : RI<0x02, MRMSrcMem, (outs GR64:$dst), (ins i16mem:$src), 
+                 "lar{q}\t{$src, $dst|$dst, $src}", []>, TB;
+def LAR64rr : RI<0x02, MRMSrcReg, (outs GR64:$dst), (ins GR32:$src),
+                 "lar{q}\t{$src, $dst|$dst, $src}", []>, TB;
 
 def LSL16rm : I<0x03, MRMSrcMem, (outs GR16:$dst), (ins i16mem:$src),
                 "lsl{w}\t{$src, $dst|$dst, $src}", []>, TB, OpSize; 
@@ -141,7 +198,11 @@ def LSL32rm : I<0x03, MRMSrcMem, (outs GR32:$dst), (ins i32mem:$src),
                 "lsl{l}\t{$src, $dst|$dst, $src}", []>, TB; 
 def LSL32rr : I<0x03, MRMSrcReg, (outs GR32:$dst), (ins GR32:$src),
                 "lsl{l}\t{$src, $dst|$dst, $src}", []>, TB;
-                
+def LSL64rm : RI<0x03, MRMSrcMem, (outs GR64:$dst), (ins i64mem:$src),
+                 "lsl{q}\t{$src, $dst|$dst, $src}", []>, TB; 
+def LSL64rr : RI<0x03, MRMSrcReg, (outs GR64:$dst), (ins GR64:$src),
+                 "lsl{q}\t{$src, $dst|$dst, $src}", []>, TB;
+
 def INVLPG : I<0x01, MRM7m, (outs), (ins i8mem:$addr), "invlpg\t$addr", []>, TB;
 
 def STRr : I<0x00, MRM1r, (outs GR16:$dst), (ins),
@@ -189,24 +250,28 @@ def POPSS16 : I<0x17, RawFrm, (outs), (ins),
                 "pop{w}\t%ss", []>, OpSize, Requires<[In32BitMode]>;
 def POPSS32 : I<0x17, RawFrm, (outs), (ins),
                 "pop{l}\t%ss", []>        , Requires<[In32BitMode]>;
+                
 def POPDS16 : I<0x1F, RawFrm, (outs), (ins),
                 "pop{w}\t%ds", []>, OpSize, Requires<[In32BitMode]>;
 def POPDS32 : I<0x1F, RawFrm, (outs), (ins),
                 "pop{l}\t%ds", []>        , Requires<[In32BitMode]>;
+                
 def POPES16 : I<0x07, RawFrm, (outs), (ins),
                 "pop{w}\t%es", []>, OpSize, Requires<[In32BitMode]>;
 def POPES32 : I<0x07, RawFrm, (outs), (ins),
                 "pop{l}\t%es", []>        , Requires<[In32BitMode]>;
+                
 def POPFS16 : I<0xa1, RawFrm, (outs), (ins),
                 "pop{w}\t%fs", []>, OpSize, TB;
 def POPFS32 : I<0xa1, RawFrm, (outs), (ins),
                 "pop{l}\t%fs", []>, TB    , Requires<[In32BitMode]>;
+def POPFS64 : I<0xa1, RawFrm, (outs), (ins),
+                "pop{q}\t%fs", []>, TB;
+                
 def POPGS16 : I<0xa9, RawFrm, (outs), (ins),
                 "pop{w}\t%gs", []>, OpSize, TB;
 def POPGS32 : I<0xa9, RawFrm, (outs), (ins),
                 "pop{l}\t%gs", []>, TB    , Requires<[In32BitMode]>;
-def POPFS64 : I<0xa1, RawFrm, (outs), (ins),
-                "pop{q}\t%fs", []>, TB;
 def POPGS64 : I<0xa9, RawFrm, (outs), (ins),
                 "pop{q}\t%gs", []>, TB;
                  
@@ -215,26 +280,31 @@ def LDS16rm : I<0xc5, MRMSrcMem, (outs GR16:$dst), (ins opaque32mem:$src),
                 "lds{w}\t{$src, $dst|$dst, $src}", []>, OpSize;
 def LDS32rm : I<0xc5, MRMSrcMem, (outs GR32:$dst), (ins opaque48mem:$src),
                 "lds{l}\t{$src, $dst|$dst, $src}", []>;
+                
 def LSS16rm : I<0xb2, MRMSrcMem, (outs GR16:$dst), (ins opaque32mem:$src),
                 "lss{w}\t{$src, $dst|$dst, $src}", []>, TB, OpSize;
 def LSS32rm : I<0xb2, MRMSrcMem, (outs GR32:$dst), (ins opaque48mem:$src),
                 "lss{l}\t{$src, $dst|$dst, $src}", []>, TB;
+def LSS64rm : RI<0xb2, MRMSrcMem, (outs GR64:$dst), (ins opaque80mem:$src),
+                 "lss{q}\t{$src, $dst|$dst, $src}", []>, TB;
+                
 def LES16rm : I<0xc4, MRMSrcMem, (outs GR16:$dst), (ins opaque32mem:$src),
                 "les{w}\t{$src, $dst|$dst, $src}", []>, OpSize;
 def LES32rm : I<0xc4, MRMSrcMem, (outs GR32:$dst), (ins opaque48mem:$src),
                 "les{l}\t{$src, $dst|$dst, $src}", []>;
+                
 def LFS16rm : I<0xb4, MRMSrcMem, (outs GR16:$dst), (ins opaque32mem:$src),
                 "lfs{w}\t{$src, $dst|$dst, $src}", []>, TB, OpSize;
 def LFS32rm : I<0xb4, MRMSrcMem, (outs GR32:$dst), (ins opaque48mem:$src),
                 "lfs{l}\t{$src, $dst|$dst, $src}", []>, TB;
+def LFS64rm : RI<0xb4, MRMSrcMem, (outs GR64:$dst), (ins opaque80mem:$src),
+                 "lfs{q}\t{$src, $dst|$dst, $src}", []>, TB;
+                
 def LGS16rm : I<0xb5, MRMSrcMem, (outs GR16:$dst), (ins opaque32mem:$src),
                 "lgs{w}\t{$src, $dst|$dst, $src}", []>, TB, OpSize;
 def LGS32rm : I<0xb5, MRMSrcMem, (outs GR32:$dst), (ins opaque48mem:$src),
                 "lgs{l}\t{$src, $dst|$dst, $src}", []>, TB;
-def LSS64rm : RI<0xb2, MRMSrcMem, (outs GR64:$dst), (ins opaque80mem:$src),
-                 "lss{q}\t{$src, $dst|$dst, $src}", []>, TB;
-def LFS64rm : RI<0xb4, MRMSrcMem, (outs GR64:$dst), (ins opaque80mem:$src),
-                 "lfs{q}\t{$src, $dst|$dst, $src}", []>, TB;
+                
 def LGS64rm : RI<0xb5, MRMSrcMem, (outs GR64:$dst), (ins opaque80mem:$src),
                  "lgs{q}\t{$src, $dst|$dst, $src}", []>, TB;
 
@@ -280,7 +350,6 @@ def SMSW16r : I<0x01, MRM4r, (outs GR16:$dst), (ins),
                 "smsw{w}\t$dst", []>, OpSize, TB;
 def SMSW32r : I<0x01, MRM4r, (outs GR32:$dst), (ins), 
                 "smsw{l}\t$dst", []>, TB;
-                
 // no m form encodable; use SMSW16m
 def SMSW64r : RI<0x01, MRM4r, (outs GR64:$dst), (ins), 
                  "smsw{q}\t$dst", []>, TB;

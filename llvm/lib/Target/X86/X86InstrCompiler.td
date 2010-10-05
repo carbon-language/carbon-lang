@@ -1,0 +1,961 @@
+//===- X86InstrCompiler.td - Compiler Pseudos and Patterns -*- tablegen -*-===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file is distributed under the University of Illinois Open Source
+// License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
+//
+// This file describes the various pseudo instructions used by the compiler,
+// as well as Pat patterns used during instruction selection.
+//
+//===----------------------------------------------------------------------===//
+
+
+//===----------------------------------------------------------------------===//
+// EH Pseudo Instructions
+//
+let isTerminator = 1, isReturn = 1, isBarrier = 1,
+    hasCtrlDep = 1, isCodeGenOnly = 1 in {
+def EH_RETURN   : I<0xC3, RawFrm, (outs), (ins GR32:$addr),
+                    "ret\t#eh_return, addr: $addr",
+                    [(X86ehret GR32:$addr)]>;
+
+}
+
+let isTerminator = 1, isReturn = 1, isBarrier = 1,
+    hasCtrlDep = 1, isCodeGenOnly = 1 in {
+def EH_RETURN64   : I<0xC3, RawFrm, (outs), (ins GR64:$addr),
+                     "ret\t#eh_return, addr: $addr",
+                     [(X86ehret GR64:$addr)]>;
+
+}
+
+
+//===----------------------------------------------------------------------===//
+// Non-Instruction Patterns
+//===----------------------------------------------------------------------===//
+
+// ConstantPool GlobalAddress, ExternalSymbol, and JumpTable
+def : Pat<(i32 (X86Wrapper tconstpool  :$dst)), (MOV32ri tconstpool  :$dst)>;
+def : Pat<(i32 (X86Wrapper tjumptable  :$dst)), (MOV32ri tjumptable  :$dst)>;
+def : Pat<(i32 (X86Wrapper tglobaltlsaddr:$dst)),(MOV32ri tglobaltlsaddr:$dst)>;
+def : Pat<(i32 (X86Wrapper tglobaladdr :$dst)), (MOV32ri tglobaladdr :$dst)>;
+def : Pat<(i32 (X86Wrapper texternalsym:$dst)), (MOV32ri texternalsym:$dst)>;
+def : Pat<(i32 (X86Wrapper tblockaddress:$dst)), (MOV32ri tblockaddress:$dst)>;
+
+def : Pat<(add GR32:$src1, (X86Wrapper tconstpool:$src2)),
+          (ADD32ri GR32:$src1, tconstpool:$src2)>;
+def : Pat<(add GR32:$src1, (X86Wrapper tjumptable:$src2)),
+          (ADD32ri GR32:$src1, tjumptable:$src2)>;
+def : Pat<(add GR32:$src1, (X86Wrapper tglobaladdr :$src2)),
+          (ADD32ri GR32:$src1, tglobaladdr:$src2)>;
+def : Pat<(add GR32:$src1, (X86Wrapper texternalsym:$src2)),
+          (ADD32ri GR32:$src1, texternalsym:$src2)>;
+def : Pat<(add GR32:$src1, (X86Wrapper tblockaddress:$src2)),
+          (ADD32ri GR32:$src1, tblockaddress:$src2)>;
+
+def : Pat<(store (i32 (X86Wrapper tglobaladdr:$src)), addr:$dst),
+          (MOV32mi addr:$dst, tglobaladdr:$src)>;
+def : Pat<(store (i32 (X86Wrapper texternalsym:$src)), addr:$dst),
+          (MOV32mi addr:$dst, texternalsym:$src)>;
+def : Pat<(store (i32 (X86Wrapper tblockaddress:$src)), addr:$dst),
+          (MOV32mi addr:$dst, tblockaddress:$src)>;
+
+
+
+// ConstantPool GlobalAddress, ExternalSymbol, and JumpTable when not in small
+// code model mode, should use 'movabs'.  FIXME: This is really a hack, the
+//  'movabs' predicate should handle this sort of thing.
+def : Pat<(i64 (X86Wrapper tconstpool  :$dst)),
+          (MOV64ri tconstpool  :$dst)>, Requires<[FarData]>;
+def : Pat<(i64 (X86Wrapper tjumptable  :$dst)),
+          (MOV64ri tjumptable  :$dst)>, Requires<[FarData]>;
+def : Pat<(i64 (X86Wrapper tglobaladdr :$dst)),
+          (MOV64ri tglobaladdr :$dst)>, Requires<[FarData]>;
+def : Pat<(i64 (X86Wrapper texternalsym:$dst)),
+          (MOV64ri texternalsym:$dst)>, Requires<[FarData]>;
+def : Pat<(i64 (X86Wrapper tblockaddress:$dst)),
+          (MOV64ri tblockaddress:$dst)>, Requires<[FarData]>;
+
+// In static codegen with small code model, we can get the address of a label
+// into a register with 'movl'.  FIXME: This is a hack, the 'imm' predicate of
+// the MOV64ri64i32 should accept these.
+def : Pat<(i64 (X86Wrapper tconstpool  :$dst)),
+          (MOV64ri64i32 tconstpool  :$dst)>, Requires<[SmallCode]>;
+def : Pat<(i64 (X86Wrapper tjumptable  :$dst)),
+          (MOV64ri64i32 tjumptable  :$dst)>, Requires<[SmallCode]>;
+def : Pat<(i64 (X86Wrapper tglobaladdr :$dst)),
+          (MOV64ri64i32 tglobaladdr :$dst)>, Requires<[SmallCode]>;
+def : Pat<(i64 (X86Wrapper texternalsym:$dst)),
+          (MOV64ri64i32 texternalsym:$dst)>, Requires<[SmallCode]>;
+def : Pat<(i64 (X86Wrapper tblockaddress:$dst)),
+          (MOV64ri64i32 tblockaddress:$dst)>, Requires<[SmallCode]>;
+
+// In kernel code model, we can get the address of a label
+// into a register with 'movq'.  FIXME: This is a hack, the 'imm' predicate of
+// the MOV64ri32 should accept these.
+def : Pat<(i64 (X86Wrapper tconstpool  :$dst)),
+          (MOV64ri32 tconstpool  :$dst)>, Requires<[KernelCode]>;
+def : Pat<(i64 (X86Wrapper tjumptable  :$dst)),
+          (MOV64ri32 tjumptable  :$dst)>, Requires<[KernelCode]>;
+def : Pat<(i64 (X86Wrapper tglobaladdr :$dst)),
+          (MOV64ri32 tglobaladdr :$dst)>, Requires<[KernelCode]>;
+def : Pat<(i64 (X86Wrapper texternalsym:$dst)),
+          (MOV64ri32 texternalsym:$dst)>, Requires<[KernelCode]>;
+def : Pat<(i64 (X86Wrapper tblockaddress:$dst)),
+          (MOV64ri32 tblockaddress:$dst)>, Requires<[KernelCode]>;
+
+// If we have small model and -static mode, it is safe to store global addresses
+// directly as immediates.  FIXME: This is really a hack, the 'imm' predicate
+// for MOV64mi32 should handle this sort of thing.
+def : Pat<(store (i64 (X86Wrapper tconstpool:$src)), addr:$dst),
+          (MOV64mi32 addr:$dst, tconstpool:$src)>,
+          Requires<[NearData, IsStatic]>;
+def : Pat<(store (i64 (X86Wrapper tjumptable:$src)), addr:$dst),
+          (MOV64mi32 addr:$dst, tjumptable:$src)>,
+          Requires<[NearData, IsStatic]>;
+def : Pat<(store (i64 (X86Wrapper tglobaladdr:$src)), addr:$dst),
+          (MOV64mi32 addr:$dst, tglobaladdr:$src)>,
+          Requires<[NearData, IsStatic]>;
+def : Pat<(store (i64 (X86Wrapper texternalsym:$src)), addr:$dst),
+          (MOV64mi32 addr:$dst, texternalsym:$src)>,
+          Requires<[NearData, IsStatic]>;
+def : Pat<(store (i64 (X86Wrapper tblockaddress:$src)), addr:$dst),
+          (MOV64mi32 addr:$dst, tblockaddress:$src)>,
+          Requires<[NearData, IsStatic]>;
+
+
+
+// Calls
+
+// tls has some funny stuff here...
+// This corresponds to movabs $foo@tpoff, %rax
+def : Pat<(i64 (X86Wrapper tglobaltlsaddr :$dst)),
+          (MOV64ri tglobaltlsaddr :$dst)>;
+// This corresponds to add $foo@tpoff, %rax
+def : Pat<(add GR64:$src1, (X86Wrapper tglobaltlsaddr :$dst)),
+          (ADD64ri32 GR64:$src1, tglobaltlsaddr :$dst)>;
+// This corresponds to mov foo@tpoff(%rbx), %eax
+def : Pat<(load (i64 (X86Wrapper tglobaltlsaddr :$dst))),
+          (MOV64rm tglobaltlsaddr :$dst)>;
+
+
+// Direct PC relative function call for small code model. 32-bit displacement
+// sign extended to 64-bit.
+def : Pat<(X86call (i64 tglobaladdr:$dst)),
+          (CALL64pcrel32 tglobaladdr:$dst)>, Requires<[NotWin64]>;
+def : Pat<(X86call (i64 texternalsym:$dst)),
+          (CALL64pcrel32 texternalsym:$dst)>, Requires<[NotWin64]>;
+
+def : Pat<(X86call (i64 tglobaladdr:$dst)),
+          (WINCALL64pcrel32 tglobaladdr:$dst)>, Requires<[IsWin64]>;
+def : Pat<(X86call (i64 texternalsym:$dst)),
+          (WINCALL64pcrel32 texternalsym:$dst)>, Requires<[IsWin64]>;
+
+// tailcall stuff
+def : Pat<(X86tcret GR32_TC:$dst, imm:$off),
+          (TCRETURNri GR32_TC:$dst, imm:$off)>,
+	  Requires<[In32BitMode]>;
+
+// FIXME: This is disabled for 32-bit PIC mode because the global base
+// register which is part of the address mode may be assigned a 
+// callee-saved register.
+def : Pat<(X86tcret (load addr:$dst), imm:$off),
+          (TCRETURNmi addr:$dst, imm:$off)>,
+	  Requires<[In32BitMode, IsNotPIC]>;
+
+def : Pat<(X86tcret (i32 tglobaladdr:$dst), imm:$off),
+          (TCRETURNdi texternalsym:$dst, imm:$off)>,
+	  Requires<[In32BitMode]>;
+
+def : Pat<(X86tcret (i32 texternalsym:$dst), imm:$off),
+          (TCRETURNdi texternalsym:$dst, imm:$off)>,
+	  Requires<[In32BitMode]>;
+
+def : Pat<(X86tcret GR64_TC:$dst, imm:$off),
+          (TCRETURNri64 GR64_TC:$dst, imm:$off)>,
+	  Requires<[In64BitMode]>;
+
+def : Pat<(X86tcret (load addr:$dst), imm:$off),
+          (TCRETURNmi64 addr:$dst, imm:$off)>,
+	  Requires<[In64BitMode]>;
+
+def : Pat<(X86tcret (i64 tglobaladdr:$dst), imm:$off),
+          (TCRETURNdi64 tglobaladdr:$dst, imm:$off)>,
+	  Requires<[In64BitMode]>;
+
+def : Pat<(X86tcret (i64 texternalsym:$dst), imm:$off),
+          (TCRETURNdi64 texternalsym:$dst, imm:$off)>,
+	  Requires<[In64BitMode]>;
+
+// Normal calls, with various flavors of addresses.
+def : Pat<(X86call (i32 tglobaladdr:$dst)),
+          (CALLpcrel32 tglobaladdr:$dst)>;
+def : Pat<(X86call (i32 texternalsym:$dst)),
+          (CALLpcrel32 texternalsym:$dst)>;
+def : Pat<(X86call (i32 imm:$dst)),
+          (CALLpcrel32 imm:$dst)>, Requires<[CallImmAddr]>;
+
+// X86 specific add which produces a flag.
+def : Pat<(addc GR32:$src1, GR32:$src2),
+          (ADD32rr GR32:$src1, GR32:$src2)>;
+def : Pat<(addc GR32:$src1, (load addr:$src2)),
+          (ADD32rm GR32:$src1, addr:$src2)>;
+def : Pat<(addc GR32:$src1, imm:$src2),
+          (ADD32ri GR32:$src1, imm:$src2)>;
+def : Pat<(addc GR32:$src1, i32immSExt8:$src2),
+          (ADD32ri8 GR32:$src1, i32immSExt8:$src2)>;
+
+def : Pat<(addc GR64:$src1, GR64:$src2),
+          (ADD64rr GR64:$src1, GR64:$src2)>;
+def : Pat<(addc GR64:$src1, (load addr:$src2)),
+          (ADD64rm GR64:$src1, addr:$src2)>;
+def : Pat<(addc GR64:$src1, i64immSExt8:$src2),
+          (ADD64ri8 GR64:$src1, i64immSExt8:$src2)>;
+def : Pat<(addc GR64:$src1, i64immSExt32:$src2),
+          (ADD64ri32 GR64:$src1, imm:$src2)>;
+
+def : Pat<(subc GR32:$src1, GR32:$src2),
+          (SUB32rr GR32:$src1, GR32:$src2)>;
+def : Pat<(subc GR32:$src1, (load addr:$src2)),
+          (SUB32rm GR32:$src1, addr:$src2)>;
+def : Pat<(subc GR32:$src1, imm:$src2),
+          (SUB32ri GR32:$src1, imm:$src2)>;
+def : Pat<(subc GR32:$src1, i32immSExt8:$src2),
+          (SUB32ri8 GR32:$src1, i32immSExt8:$src2)>;
+
+def : Pat<(subc GR64:$src1, GR64:$src2),
+          (SUB64rr GR64:$src1, GR64:$src2)>;
+def : Pat<(subc GR64:$src1, (load addr:$src2)),
+          (SUB64rm GR64:$src1, addr:$src2)>;
+def : Pat<(subc GR64:$src1, i64immSExt8:$src2),
+          (SUB64ri8 GR64:$src1, i64immSExt8:$src2)>;
+def : Pat<(subc GR64:$src1, imm:$src2),
+          (SUB64ri32 GR64:$src1, i64immSExt32:$src2)>;
+
+// Comparisons.
+
+// TEST R,R is smaller than CMP R,0
+def : Pat<(X86cmp GR8:$src1, 0),
+          (TEST8rr GR8:$src1, GR8:$src1)>;
+def : Pat<(X86cmp GR16:$src1, 0),
+          (TEST16rr GR16:$src1, GR16:$src1)>;
+def : Pat<(X86cmp GR32:$src1, 0),
+          (TEST32rr GR32:$src1, GR32:$src1)>;
+def : Pat<(X86cmp GR64:$src1, 0),
+          (TEST64rr GR64:$src1, GR64:$src1)>;
+
+// Conditional moves with folded loads with operands swapped and conditions
+// inverted.
+def : Pat<(X86cmov (loadi16 addr:$src1), GR16:$src2, X86_COND_B, EFLAGS),
+          (CMOVAE16rm GR16:$src2, addr:$src1)>;
+def : Pat<(X86cmov (loadi32 addr:$src1), GR32:$src2, X86_COND_B, EFLAGS),
+          (CMOVAE32rm GR32:$src2, addr:$src1)>;
+def : Pat<(X86cmov (loadi16 addr:$src1), GR16:$src2, X86_COND_AE, EFLAGS),
+          (CMOVB16rm GR16:$src2, addr:$src1)>;
+def : Pat<(X86cmov (loadi32 addr:$src1), GR32:$src2, X86_COND_AE, EFLAGS),
+          (CMOVB32rm GR32:$src2, addr:$src1)>;
+def : Pat<(X86cmov (loadi16 addr:$src1), GR16:$src2, X86_COND_E, EFLAGS),
+          (CMOVNE16rm GR16:$src2, addr:$src1)>;
+def : Pat<(X86cmov (loadi32 addr:$src1), GR32:$src2, X86_COND_E, EFLAGS),
+          (CMOVNE32rm GR32:$src2, addr:$src1)>;
+def : Pat<(X86cmov (loadi16 addr:$src1), GR16:$src2, X86_COND_NE, EFLAGS),
+          (CMOVE16rm GR16:$src2, addr:$src1)>;
+def : Pat<(X86cmov (loadi32 addr:$src1), GR32:$src2, X86_COND_NE, EFLAGS),
+          (CMOVE32rm GR32:$src2, addr:$src1)>;
+def : Pat<(X86cmov (loadi16 addr:$src1), GR16:$src2, X86_COND_BE, EFLAGS),
+          (CMOVA16rm GR16:$src2, addr:$src1)>;
+def : Pat<(X86cmov (loadi32 addr:$src1), GR32:$src2, X86_COND_BE, EFLAGS),
+          (CMOVA32rm GR32:$src2, addr:$src1)>;
+def : Pat<(X86cmov (loadi16 addr:$src1), GR16:$src2, X86_COND_A, EFLAGS),
+          (CMOVBE16rm GR16:$src2, addr:$src1)>;
+def : Pat<(X86cmov (loadi32 addr:$src1), GR32:$src2, X86_COND_A, EFLAGS),
+          (CMOVBE32rm GR32:$src2, addr:$src1)>;
+def : Pat<(X86cmov (loadi16 addr:$src1), GR16:$src2, X86_COND_L, EFLAGS),
+          (CMOVGE16rm GR16:$src2, addr:$src1)>;
+def : Pat<(X86cmov (loadi32 addr:$src1), GR32:$src2, X86_COND_L, EFLAGS),
+          (CMOVGE32rm GR32:$src2, addr:$src1)>;
+def : Pat<(X86cmov (loadi16 addr:$src1), GR16:$src2, X86_COND_GE, EFLAGS),
+          (CMOVL16rm GR16:$src2, addr:$src1)>;
+def : Pat<(X86cmov (loadi32 addr:$src1), GR32:$src2, X86_COND_GE, EFLAGS),
+          (CMOVL32rm GR32:$src2, addr:$src1)>;
+def : Pat<(X86cmov (loadi16 addr:$src1), GR16:$src2, X86_COND_LE, EFLAGS),
+          (CMOVG16rm GR16:$src2, addr:$src1)>;
+def : Pat<(X86cmov (loadi32 addr:$src1), GR32:$src2, X86_COND_LE, EFLAGS),
+          (CMOVG32rm GR32:$src2, addr:$src1)>;
+def : Pat<(X86cmov (loadi16 addr:$src1), GR16:$src2, X86_COND_G, EFLAGS),
+          (CMOVLE16rm GR16:$src2, addr:$src1)>;
+def : Pat<(X86cmov (loadi32 addr:$src1), GR32:$src2, X86_COND_G, EFLAGS),
+          (CMOVLE32rm GR32:$src2, addr:$src1)>;
+def : Pat<(X86cmov (loadi16 addr:$src1), GR16:$src2, X86_COND_P, EFLAGS),
+          (CMOVNP16rm GR16:$src2, addr:$src1)>;
+def : Pat<(X86cmov (loadi32 addr:$src1), GR32:$src2, X86_COND_P, EFLAGS),
+          (CMOVNP32rm GR32:$src2, addr:$src1)>;
+def : Pat<(X86cmov (loadi16 addr:$src1), GR16:$src2, X86_COND_NP, EFLAGS),
+          (CMOVP16rm GR16:$src2, addr:$src1)>;
+def : Pat<(X86cmov (loadi32 addr:$src1), GR32:$src2, X86_COND_NP, EFLAGS),
+          (CMOVP32rm GR32:$src2, addr:$src1)>;
+def : Pat<(X86cmov (loadi16 addr:$src1), GR16:$src2, X86_COND_S, EFLAGS),
+          (CMOVNS16rm GR16:$src2, addr:$src1)>;
+def : Pat<(X86cmov (loadi32 addr:$src1), GR32:$src2, X86_COND_S, EFLAGS),
+          (CMOVNS32rm GR32:$src2, addr:$src1)>;
+def : Pat<(X86cmov (loadi16 addr:$src1), GR16:$src2, X86_COND_NS, EFLAGS),
+          (CMOVS16rm GR16:$src2, addr:$src1)>;
+def : Pat<(X86cmov (loadi32 addr:$src1), GR32:$src2, X86_COND_NS, EFLAGS),
+          (CMOVS32rm GR32:$src2, addr:$src1)>;
+def : Pat<(X86cmov (loadi16 addr:$src1), GR16:$src2, X86_COND_O, EFLAGS),
+          (CMOVNO16rm GR16:$src2, addr:$src1)>;
+def : Pat<(X86cmov (loadi32 addr:$src1), GR32:$src2, X86_COND_O, EFLAGS),
+          (CMOVNO32rm GR32:$src2, addr:$src1)>;
+def : Pat<(X86cmov (loadi16 addr:$src1), GR16:$src2, X86_COND_NO, EFLAGS),
+          (CMOVO16rm GR16:$src2, addr:$src1)>;
+def : Pat<(X86cmov (loadi32 addr:$src1), GR32:$src2, X86_COND_NO, EFLAGS),
+          (CMOVO32rm GR32:$src2, addr:$src1)>;
+
+def : Pat<(X86cmov (loadi64 addr:$src1), GR64:$src2, X86_COND_B, EFLAGS),
+          (CMOVAE64rm GR64:$src2, addr:$src1)>;
+def : Pat<(X86cmov (loadi64 addr:$src1), GR64:$src2, X86_COND_AE, EFLAGS),
+          (CMOVB64rm GR64:$src2, addr:$src1)>;
+def : Pat<(X86cmov (loadi64 addr:$src1), GR64:$src2, X86_COND_E, EFLAGS),
+          (CMOVNE64rm GR64:$src2, addr:$src1)>;
+def : Pat<(X86cmov (loadi64 addr:$src1), GR64:$src2, X86_COND_NE, EFLAGS),
+          (CMOVE64rm GR64:$src2, addr:$src1)>;
+def : Pat<(X86cmov (loadi64 addr:$src1), GR64:$src2, X86_COND_BE, EFLAGS),
+          (CMOVA64rm GR64:$src2, addr:$src1)>;
+def : Pat<(X86cmov (loadi64 addr:$src1), GR64:$src2, X86_COND_A, EFLAGS),
+          (CMOVBE64rm GR64:$src2, addr:$src1)>;
+def : Pat<(X86cmov (loadi64 addr:$src1), GR64:$src2, X86_COND_L, EFLAGS),
+          (CMOVGE64rm GR64:$src2, addr:$src1)>;
+def : Pat<(X86cmov (loadi64 addr:$src1), GR64:$src2, X86_COND_GE, EFLAGS),
+          (CMOVL64rm GR64:$src2, addr:$src1)>;
+def : Pat<(X86cmov (loadi64 addr:$src1), GR64:$src2, X86_COND_LE, EFLAGS),
+          (CMOVG64rm GR64:$src2, addr:$src1)>;
+def : Pat<(X86cmov (loadi64 addr:$src1), GR64:$src2, X86_COND_G, EFLAGS),
+          (CMOVLE64rm GR64:$src2, addr:$src1)>;
+def : Pat<(X86cmov (loadi64 addr:$src1), GR64:$src2, X86_COND_P, EFLAGS),
+          (CMOVNP64rm GR64:$src2, addr:$src1)>;
+def : Pat<(X86cmov (loadi64 addr:$src1), GR64:$src2, X86_COND_NP, EFLAGS),
+          (CMOVP64rm GR64:$src2, addr:$src1)>;
+def : Pat<(X86cmov (loadi64 addr:$src1), GR64:$src2, X86_COND_S, EFLAGS),
+          (CMOVNS64rm GR64:$src2, addr:$src1)>;
+def : Pat<(X86cmov (loadi64 addr:$src1), GR64:$src2, X86_COND_NS, EFLAGS),
+          (CMOVS64rm GR64:$src2, addr:$src1)>;
+def : Pat<(X86cmov (loadi64 addr:$src1), GR64:$src2, X86_COND_O, EFLAGS),
+          (CMOVNO64rm GR64:$src2, addr:$src1)>;
+def : Pat<(X86cmov (loadi64 addr:$src1), GR64:$src2, X86_COND_NO, EFLAGS),
+          (CMOVO64rm GR64:$src2, addr:$src1)>;
+
+
+// zextload bool -> zextload byte
+def : Pat<(zextloadi8i1  addr:$src), (MOV8rm     addr:$src)>;
+def : Pat<(zextloadi16i1 addr:$src), (MOVZX16rm8 addr:$src)>;
+def : Pat<(zextloadi32i1 addr:$src), (MOVZX32rm8 addr:$src)>;
+def : Pat<(zextloadi64i1 addr:$src), (MOVZX64rm8 addr:$src)>;
+
+// extload bool -> extload byte
+// When extloading from 16-bit and smaller memory locations into 64-bit 
+// registers, use zero-extending loads so that the entire 64-bit register is 
+// defined, avoiding partial-register updates.
+
+def : Pat<(extloadi8i1 addr:$src),   (MOV8rm      addr:$src)>;
+def : Pat<(extloadi16i1 addr:$src),  (MOVZX16rm8  addr:$src)>;
+def : Pat<(extloadi32i1 addr:$src),  (MOVZX32rm8  addr:$src)>;
+def : Pat<(extloadi16i8 addr:$src),  (MOVZX16rm8  addr:$src)>;
+def : Pat<(extloadi32i8 addr:$src),  (MOVZX32rm8  addr:$src)>;
+def : Pat<(extloadi32i16 addr:$src), (MOVZX32rm16 addr:$src)>;
+
+def : Pat<(extloadi64i1 addr:$src),  (MOVZX64rm8  addr:$src)>;
+def : Pat<(extloadi64i8 addr:$src),  (MOVZX64rm8  addr:$src)>;
+def : Pat<(extloadi64i16 addr:$src), (MOVZX64rm16 addr:$src)>;
+// For other extloads, use subregs, since the high contents of the register are
+// defined after an extload.
+def : Pat<(extloadi64i32 addr:$src),
+          (SUBREG_TO_REG (i64 0), (MOV32rm addr:$src),
+                         sub_32bit)>;
+
+// anyext. Define these to do an explicit zero-extend to
+// avoid partial-register updates.
+def : Pat<(i16 (anyext GR8 :$src)), (MOVZX16rr8  GR8 :$src)>;
+def : Pat<(i32 (anyext GR8 :$src)), (MOVZX32rr8  GR8 :$src)>;
+
+// Except for i16 -> i32 since isel expect i16 ops to be promoted to i32.
+def : Pat<(i32 (anyext GR16:$src)),
+          (INSERT_SUBREG (i32 (IMPLICIT_DEF)), GR16:$src, sub_16bit)>;
+
+def : Pat<(i64 (anyext GR8 :$src)), (MOVZX64rr8  GR8  :$src)>;
+def : Pat<(i64 (anyext GR16:$src)), (MOVZX64rr16 GR16 :$src)>;
+def : Pat<(i64 (anyext GR32:$src)),
+          (SUBREG_TO_REG (i64 0), GR32:$src, sub_32bit)>;
+
+//===----------------------------------------------------------------------===//
+// Some peepholes
+//===----------------------------------------------------------------------===//
+
+// Odd encoding trick: -128 fits into an 8-bit immediate field while
+// +128 doesn't, so in this special case use a sub instead of an add.
+def : Pat<(add GR16:$src1, 128),
+          (SUB16ri8 GR16:$src1, -128)>;
+def : Pat<(store (add (loadi16 addr:$dst), 128), addr:$dst),
+          (SUB16mi8 addr:$dst, -128)>;
+
+def : Pat<(add GR32:$src1, 128),
+          (SUB32ri8 GR32:$src1, -128)>;
+def : Pat<(store (add (loadi32 addr:$dst), 128), addr:$dst),
+          (SUB32mi8 addr:$dst, -128)>;
+
+def : Pat<(add GR64:$src1, 128),
+          (SUB64ri8 GR64:$src1, -128)>;
+def : Pat<(store (add (loadi64 addr:$dst), 128), addr:$dst),
+          (SUB64mi8 addr:$dst, -128)>;
+
+// The same trick applies for 32-bit immediate fields in 64-bit
+// instructions.
+def : Pat<(add GR64:$src1, 0x0000000080000000),
+          (SUB64ri32 GR64:$src1, 0xffffffff80000000)>;
+def : Pat<(store (add (loadi64 addr:$dst), 0x00000000800000000), addr:$dst),
+          (SUB64mi32 addr:$dst, 0xffffffff80000000)>;
+
+// Use a 32-bit and with implicit zero-extension instead of a 64-bit and if it
+// has an immediate with at least 32 bits of leading zeros, to avoid needing to
+// materialize that immediate in a register first.
+def : Pat<(and GR64:$src, i64immZExt32:$imm),
+          (SUBREG_TO_REG
+            (i64 0),
+            (AND32ri
+              (EXTRACT_SUBREG GR64:$src, sub_32bit),
+              (i32 (GetLo32XForm imm:$imm))),
+            sub_32bit)>;
+
+
+// r & (2^16-1) ==> movz
+def : Pat<(and GR32:$src1, 0xffff),
+          (MOVZX32rr16 (EXTRACT_SUBREG GR32:$src1, sub_16bit))>;
+// r & (2^8-1) ==> movz
+def : Pat<(and GR32:$src1, 0xff),
+          (MOVZX32rr8 (EXTRACT_SUBREG (i32 (COPY_TO_REGCLASS GR32:$src1, 
+                                                             GR32_ABCD)),
+                                      sub_8bit))>,
+      Requires<[In32BitMode]>;
+// r & (2^8-1) ==> movz
+def : Pat<(and GR16:$src1, 0xff),
+          (MOVZX16rr8 (EXTRACT_SUBREG (i16 (COPY_TO_REGCLASS GR16:$src1, 
+                                                             GR16_ABCD)),
+                                      sub_8bit))>,
+      Requires<[In32BitMode]>;
+
+// r & (2^32-1) ==> movz
+def : Pat<(and GR64:$src, 0x00000000FFFFFFFF),
+          (MOVZX64rr32 (EXTRACT_SUBREG GR64:$src, sub_32bit))>;
+// r & (2^16-1) ==> movz
+def : Pat<(and GR64:$src, 0xffff),
+          (MOVZX64rr16 (i16 (EXTRACT_SUBREG GR64:$src, sub_16bit)))>;
+// r & (2^8-1) ==> movz
+def : Pat<(and GR64:$src, 0xff),
+          (MOVZX64rr8 (i8 (EXTRACT_SUBREG GR64:$src, sub_8bit)))>;
+// r & (2^8-1) ==> movz
+def : Pat<(and GR32:$src1, 0xff),
+           (MOVZX32rr8 (EXTRACT_SUBREG GR32:$src1, sub_8bit))>,
+      Requires<[In64BitMode]>;
+// r & (2^8-1) ==> movz
+def : Pat<(and GR16:$src1, 0xff),
+           (MOVZX16rr8 (i8 (EXTRACT_SUBREG GR16:$src1, sub_8bit)))>,
+      Requires<[In64BitMode]>;
+
+
+// sext_inreg patterns
+def : Pat<(sext_inreg GR32:$src, i16),
+          (MOVSX32rr16 (EXTRACT_SUBREG GR32:$src, sub_16bit))>;
+def : Pat<(sext_inreg GR32:$src, i8),
+          (MOVSX32rr8 (EXTRACT_SUBREG (i32 (COPY_TO_REGCLASS GR32:$src, 
+                                                             GR32_ABCD)),
+                                      sub_8bit))>,
+      Requires<[In32BitMode]>;
+def : Pat<(sext_inreg GR16:$src, i8),
+          (MOVSX16rr8 (EXTRACT_SUBREG (i16 (COPY_TO_REGCLASS GR16:$src, 
+                                                             GR16_ABCD)),
+                                      sub_8bit))>,
+      Requires<[In32BitMode]>;
+
+def : Pat<(sext_inreg GR64:$src, i32),
+          (MOVSX64rr32 (EXTRACT_SUBREG GR64:$src, sub_32bit))>;
+def : Pat<(sext_inreg GR64:$src, i16),
+          (MOVSX64rr16 (EXTRACT_SUBREG GR64:$src, sub_16bit))>;
+def : Pat<(sext_inreg GR64:$src, i8),
+          (MOVSX64rr8 (EXTRACT_SUBREG GR64:$src, sub_8bit))>;
+def : Pat<(sext_inreg GR32:$src, i8),
+          (MOVSX32rr8 (EXTRACT_SUBREG GR32:$src, sub_8bit))>,
+      Requires<[In64BitMode]>;
+def : Pat<(sext_inreg GR16:$src, i8),
+          (MOVSX16rr8 (i8 (EXTRACT_SUBREG GR16:$src, sub_8bit)))>,
+      Requires<[In64BitMode]>;
+
+
+// trunc patterns
+def : Pat<(i16 (trunc GR32:$src)),
+          (EXTRACT_SUBREG GR32:$src, sub_16bit)>;
+def : Pat<(i8 (trunc GR32:$src)),
+          (EXTRACT_SUBREG (i32 (COPY_TO_REGCLASS GR32:$src, GR32_ABCD)),
+                          sub_8bit)>,
+      Requires<[In32BitMode]>;
+def : Pat<(i8 (trunc GR16:$src)),
+          (EXTRACT_SUBREG (i16 (COPY_TO_REGCLASS GR16:$src, GR16_ABCD)),
+                          sub_8bit)>,
+      Requires<[In32BitMode]>;
+def : Pat<(i32 (trunc GR64:$src)),
+          (EXTRACT_SUBREG GR64:$src, sub_32bit)>;
+def : Pat<(i16 (trunc GR64:$src)),
+          (EXTRACT_SUBREG GR64:$src, sub_16bit)>;
+def : Pat<(i8 (trunc GR64:$src)),
+          (EXTRACT_SUBREG GR64:$src, sub_8bit)>;
+def : Pat<(i8 (trunc GR32:$src)),
+          (EXTRACT_SUBREG GR32:$src, sub_8bit)>,
+      Requires<[In64BitMode]>;
+def : Pat<(i8 (trunc GR16:$src)),
+          (EXTRACT_SUBREG GR16:$src, sub_8bit)>,
+      Requires<[In64BitMode]>;
+
+// h-register tricks
+def : Pat<(i8 (trunc (srl_su GR16:$src, (i8 8)))),
+          (EXTRACT_SUBREG (i16 (COPY_TO_REGCLASS GR16:$src, GR16_ABCD)),
+                          sub_8bit_hi)>,
+      Requires<[In32BitMode]>;
+def : Pat<(i8 (trunc (srl_su GR32:$src, (i8 8)))),
+          (EXTRACT_SUBREG (i32 (COPY_TO_REGCLASS GR32:$src, GR32_ABCD)),
+                          sub_8bit_hi)>,
+      Requires<[In32BitMode]>;
+def : Pat<(srl GR16:$src, (i8 8)),
+          (EXTRACT_SUBREG
+            (MOVZX32rr8
+              (EXTRACT_SUBREG (i16 (COPY_TO_REGCLASS GR16:$src, GR16_ABCD)),
+                              sub_8bit_hi)),
+            sub_16bit)>,
+      Requires<[In32BitMode]>;
+def : Pat<(i32 (zext (srl_su GR16:$src, (i8 8)))),
+          (MOVZX32rr8 (EXTRACT_SUBREG (i16 (COPY_TO_REGCLASS GR16:$src, 
+                                                             GR16_ABCD)),
+                                      sub_8bit_hi))>,
+      Requires<[In32BitMode]>;
+def : Pat<(i32 (anyext (srl_su GR16:$src, (i8 8)))),
+          (MOVZX32rr8 (EXTRACT_SUBREG (i16 (COPY_TO_REGCLASS GR16:$src, 
+                                                             GR16_ABCD)),
+                                      sub_8bit_hi))>,
+      Requires<[In32BitMode]>;
+def : Pat<(and (srl_su GR32:$src, (i8 8)), (i32 255)),
+          (MOVZX32rr8 (EXTRACT_SUBREG (i32 (COPY_TO_REGCLASS GR32:$src, 
+                                                             GR32_ABCD)),
+                                      sub_8bit_hi))>,
+      Requires<[In32BitMode]>;
+def : Pat<(srl (and_su GR32:$src, 0xff00), (i8 8)),
+          (MOVZX32rr8 (EXTRACT_SUBREG (i32 (COPY_TO_REGCLASS GR32:$src, 
+                                                             GR32_ABCD)),
+                                      sub_8bit_hi))>,
+      Requires<[In32BitMode]>;
+      
+// h-register tricks.
+// For now, be conservative on x86-64 and use an h-register extract only if the
+// value is immediately zero-extended or stored, which are somewhat common
+// cases. This uses a bunch of code to prevent a register requiring a REX prefix
+// from being allocated in the same instruction as the h register, as there's
+// currently no way to describe this requirement to the register allocator.
+
+// h-register extract and zero-extend.
+def : Pat<(and (srl_su GR64:$src, (i8 8)), (i64 255)),
+          (SUBREG_TO_REG
+            (i64 0),
+            (MOVZX32_NOREXrr8
+              (EXTRACT_SUBREG (i64 (COPY_TO_REGCLASS GR64:$src, GR64_ABCD)),
+                              sub_8bit_hi)),
+            sub_32bit)>;
+def : Pat<(and (srl_su GR32:$src, (i8 8)), (i32 255)),
+          (MOVZX32_NOREXrr8
+            (EXTRACT_SUBREG (i32 (COPY_TO_REGCLASS GR32:$src, GR32_ABCD)),
+                            sub_8bit_hi))>,
+      Requires<[In64BitMode]>;
+def : Pat<(srl (and_su GR32:$src, 0xff00), (i8 8)),
+          (MOVZX32_NOREXrr8 (EXTRACT_SUBREG (i32 (COPY_TO_REGCLASS GR32:$src, 
+                                                                   GR32_ABCD)),
+                                             sub_8bit_hi))>,
+      Requires<[In64BitMode]>;
+def : Pat<(srl GR16:$src, (i8 8)),
+          (EXTRACT_SUBREG
+            (MOVZX32_NOREXrr8
+              (EXTRACT_SUBREG (i16 (COPY_TO_REGCLASS GR16:$src, GR16_ABCD)),
+                              sub_8bit_hi)),
+            sub_16bit)>,
+      Requires<[In64BitMode]>;
+def : Pat<(i32 (zext (srl_su GR16:$src, (i8 8)))),
+          (MOVZX32_NOREXrr8
+            (EXTRACT_SUBREG (i16 (COPY_TO_REGCLASS GR16:$src, GR16_ABCD)),
+                            sub_8bit_hi))>,
+      Requires<[In64BitMode]>;
+def : Pat<(i32 (anyext (srl_su GR16:$src, (i8 8)))),
+          (MOVZX32_NOREXrr8
+            (EXTRACT_SUBREG (i16 (COPY_TO_REGCLASS GR16:$src, GR16_ABCD)),
+                            sub_8bit_hi))>,
+      Requires<[In64BitMode]>;
+def : Pat<(i64 (zext (srl_su GR16:$src, (i8 8)))),
+          (SUBREG_TO_REG
+            (i64 0),
+            (MOVZX32_NOREXrr8
+              (EXTRACT_SUBREG (i16 (COPY_TO_REGCLASS GR16:$src, GR16_ABCD)),
+                              sub_8bit_hi)),
+            sub_32bit)>;
+def : Pat<(i64 (anyext (srl_su GR16:$src, (i8 8)))),
+          (SUBREG_TO_REG
+            (i64 0),
+            (MOVZX32_NOREXrr8
+              (EXTRACT_SUBREG (i16 (COPY_TO_REGCLASS GR16:$src, GR16_ABCD)),
+                              sub_8bit_hi)),
+            sub_32bit)>;
+
+// h-register extract and store.
+def : Pat<(store (i8 (trunc_su (srl_su GR64:$src, (i8 8)))), addr:$dst),
+          (MOV8mr_NOREX
+            addr:$dst,
+            (EXTRACT_SUBREG (i64 (COPY_TO_REGCLASS GR64:$src, GR64_ABCD)),
+                            sub_8bit_hi))>;
+def : Pat<(store (i8 (trunc_su (srl_su GR32:$src, (i8 8)))), addr:$dst),
+          (MOV8mr_NOREX
+            addr:$dst,
+            (EXTRACT_SUBREG (i32 (COPY_TO_REGCLASS GR32:$src, GR32_ABCD)),
+                            sub_8bit_hi))>,
+      Requires<[In64BitMode]>;
+def : Pat<(store (i8 (trunc_su (srl_su GR16:$src, (i8 8)))), addr:$dst),
+          (MOV8mr_NOREX
+            addr:$dst,
+            (EXTRACT_SUBREG (i16 (COPY_TO_REGCLASS GR16:$src, GR16_ABCD)),
+                            sub_8bit_hi))>,
+      Requires<[In64BitMode]>;
+      
+      
+// (shl x, 1) ==> (add x, x)
+def : Pat<(shl GR8 :$src1, (i8 1)), (ADD8rr  GR8 :$src1, GR8 :$src1)>;
+def : Pat<(shl GR16:$src1, (i8 1)), (ADD16rr GR16:$src1, GR16:$src1)>;
+def : Pat<(shl GR32:$src1, (i8 1)), (ADD32rr GR32:$src1, GR32:$src1)>;
+def : Pat<(shl GR64:$src1, (i8 1)), (ADD64rr GR64:$src1, GR64:$src1)>;
+
+// (shl x (and y, 31)) ==> (shl x, y)
+def : Pat<(shl GR8:$src1, (and CL, 31)),
+          (SHL8rCL GR8:$src1)>;
+def : Pat<(shl GR16:$src1, (and CL, 31)),
+          (SHL16rCL GR16:$src1)>;
+def : Pat<(shl GR32:$src1, (and CL, 31)),
+          (SHL32rCL GR32:$src1)>;
+def : Pat<(store (shl (loadi8 addr:$dst), (and CL, 31)), addr:$dst),
+          (SHL8mCL addr:$dst)>;
+def : Pat<(store (shl (loadi16 addr:$dst), (and CL, 31)), addr:$dst),
+          (SHL16mCL addr:$dst)>;
+def : Pat<(store (shl (loadi32 addr:$dst), (and CL, 31)), addr:$dst),
+          (SHL32mCL addr:$dst)>;
+
+def : Pat<(srl GR8:$src1, (and CL, 31)),
+          (SHR8rCL GR8:$src1)>;
+def : Pat<(srl GR16:$src1, (and CL, 31)),
+          (SHR16rCL GR16:$src1)>;
+def : Pat<(srl GR32:$src1, (and CL, 31)),
+          (SHR32rCL GR32:$src1)>;
+def : Pat<(store (srl (loadi8 addr:$dst), (and CL, 31)), addr:$dst),
+          (SHR8mCL addr:$dst)>;
+def : Pat<(store (srl (loadi16 addr:$dst), (and CL, 31)), addr:$dst),
+          (SHR16mCL addr:$dst)>;
+def : Pat<(store (srl (loadi32 addr:$dst), (and CL, 31)), addr:$dst),
+          (SHR32mCL addr:$dst)>;
+
+def : Pat<(sra GR8:$src1, (and CL, 31)),
+          (SAR8rCL GR8:$src1)>;
+def : Pat<(sra GR16:$src1, (and CL, 31)),
+          (SAR16rCL GR16:$src1)>;
+def : Pat<(sra GR32:$src1, (and CL, 31)),
+          (SAR32rCL GR32:$src1)>;
+def : Pat<(store (sra (loadi8 addr:$dst), (and CL, 31)), addr:$dst),
+          (SAR8mCL addr:$dst)>;
+def : Pat<(store (sra (loadi16 addr:$dst), (and CL, 31)), addr:$dst),
+          (SAR16mCL addr:$dst)>;
+def : Pat<(store (sra (loadi32 addr:$dst), (and CL, 31)), addr:$dst),
+          (SAR32mCL addr:$dst)>;
+
+// (shl x (and y, 63)) ==> (shl x, y)
+def : Pat<(shl GR64:$src1, (and CL, 63)),
+          (SHL64rCL GR64:$src1)>;
+def : Pat<(store (shl (loadi64 addr:$dst), (and CL, 63)), addr:$dst),
+          (SHL64mCL addr:$dst)>;
+
+def : Pat<(srl GR64:$src1, (and CL, 63)),
+          (SHR64rCL GR64:$src1)>;
+def : Pat<(store (srl (loadi64 addr:$dst), (and CL, 63)), addr:$dst),
+          (SHR64mCL addr:$dst)>;
+
+def : Pat<(sra GR64:$src1, (and CL, 63)),
+          (SAR64rCL GR64:$src1)>;
+def : Pat<(store (sra (loadi64 addr:$dst), (and CL, 63)), addr:$dst),
+          (SAR64mCL addr:$dst)>;
+
+
+// (anyext (setcc_carry)) -> (setcc_carry)
+def : Pat<(i16 (anyext (i8 (X86setcc_c X86_COND_B, EFLAGS)))),
+          (SETB_C16r)>;
+def : Pat<(i32 (anyext (i8 (X86setcc_c X86_COND_B, EFLAGS)))),
+          (SETB_C32r)>;
+def : Pat<(i32 (anyext (i16 (X86setcc_c X86_COND_B, EFLAGS)))),
+          (SETB_C32r)>;
+
+// (or x1, x2) -> (add x1, x2) if two operands are known not to share bits.
+let AddedComplexity = 5 in { // Try this before the selecting to OR
+def : Pat<(or_is_add GR16:$src1, imm:$src2),
+          (ADD16ri GR16:$src1, imm:$src2)>;
+def : Pat<(or_is_add GR32:$src1, imm:$src2),
+          (ADD32ri GR32:$src1, imm:$src2)>;
+def : Pat<(or_is_add GR16:$src1, i16immSExt8:$src2),
+          (ADD16ri8 GR16:$src1, i16immSExt8:$src2)>;
+def : Pat<(or_is_add GR32:$src1, i32immSExt8:$src2),
+          (ADD32ri8 GR32:$src1, i32immSExt8:$src2)>;
+def : Pat<(or_is_add GR16:$src1, GR16:$src2),
+          (ADD16rr GR16:$src1, GR16:$src2)>;
+def : Pat<(or_is_add GR32:$src1, GR32:$src2),
+          (ADD32rr GR32:$src1, GR32:$src2)>;
+def : Pat<(or_is_add GR64:$src1, i64immSExt8:$src2),
+          (ADD64ri8 GR64:$src1, i64immSExt8:$src2)>;
+def : Pat<(or_is_add GR64:$src1, i64immSExt32:$src2),
+          (ADD64ri32 GR64:$src1, i64immSExt32:$src2)>;
+def : Pat<(or_is_add GR64:$src1, GR64:$src2),
+          (ADD64rr GR64:$src1, GR64:$src2)>;
+} // AddedComplexity
+
+//===----------------------------------------------------------------------===//
+// EFLAGS-defining Patterns
+//===----------------------------------------------------------------------===//
+
+// add reg, reg
+def : Pat<(add GR8 :$src1, GR8 :$src2), (ADD8rr  GR8 :$src1, GR8 :$src2)>;
+def : Pat<(add GR16:$src1, GR16:$src2), (ADD16rr GR16:$src1, GR16:$src2)>;
+def : Pat<(add GR32:$src1, GR32:$src2), (ADD32rr GR32:$src1, GR32:$src2)>;
+
+// add reg, mem
+def : Pat<(add GR8:$src1, (loadi8 addr:$src2)),
+          (ADD8rm GR8:$src1, addr:$src2)>;
+def : Pat<(add GR16:$src1, (loadi16 addr:$src2)),
+          (ADD16rm GR16:$src1, addr:$src2)>;
+def : Pat<(add GR32:$src1, (loadi32 addr:$src2)),
+          (ADD32rm GR32:$src1, addr:$src2)>;
+
+// add reg, imm
+def : Pat<(add GR8 :$src1, imm:$src2), (ADD8ri  GR8:$src1 , imm:$src2)>;
+def : Pat<(add GR16:$src1, imm:$src2), (ADD16ri GR16:$src1, imm:$src2)>;
+def : Pat<(add GR32:$src1, imm:$src2), (ADD32ri GR32:$src1, imm:$src2)>;
+def : Pat<(add GR16:$src1, i16immSExt8:$src2),
+          (ADD16ri8 GR16:$src1, i16immSExt8:$src2)>;
+def : Pat<(add GR32:$src1, i32immSExt8:$src2),
+          (ADD32ri8 GR32:$src1, i32immSExt8:$src2)>;
+
+// sub reg, reg
+def : Pat<(sub GR8 :$src1, GR8 :$src2), (SUB8rr  GR8 :$src1, GR8 :$src2)>;
+def : Pat<(sub GR16:$src1, GR16:$src2), (SUB16rr GR16:$src1, GR16:$src2)>;
+def : Pat<(sub GR32:$src1, GR32:$src2), (SUB32rr GR32:$src1, GR32:$src2)>;
+
+// sub reg, mem
+def : Pat<(sub GR8:$src1, (loadi8 addr:$src2)),
+          (SUB8rm GR8:$src1, addr:$src2)>;
+def : Pat<(sub GR16:$src1, (loadi16 addr:$src2)),
+          (SUB16rm GR16:$src1, addr:$src2)>;
+def : Pat<(sub GR32:$src1, (loadi32 addr:$src2)),
+          (SUB32rm GR32:$src1, addr:$src2)>;
+
+// sub reg, imm
+def : Pat<(sub GR8:$src1, imm:$src2),
+          (SUB8ri GR8:$src1, imm:$src2)>;
+def : Pat<(sub GR16:$src1, imm:$src2),
+          (SUB16ri GR16:$src1, imm:$src2)>;
+def : Pat<(sub GR32:$src1, imm:$src2),
+          (SUB32ri GR32:$src1, imm:$src2)>;
+def : Pat<(sub GR16:$src1, i16immSExt8:$src2),
+          (SUB16ri8 GR16:$src1, i16immSExt8:$src2)>;
+def : Pat<(sub GR32:$src1, i32immSExt8:$src2),
+          (SUB32ri8 GR32:$src1, i32immSExt8:$src2)>;
+
+// mul reg, reg
+def : Pat<(mul GR16:$src1, GR16:$src2),
+          (IMUL16rr GR16:$src1, GR16:$src2)>;
+def : Pat<(mul GR32:$src1, GR32:$src2),
+          (IMUL32rr GR32:$src1, GR32:$src2)>;
+
+// mul reg, mem
+def : Pat<(mul GR16:$src1, (loadi16 addr:$src2)),
+          (IMUL16rm GR16:$src1, addr:$src2)>;
+def : Pat<(mul GR32:$src1, (loadi32 addr:$src2)),
+          (IMUL32rm GR32:$src1, addr:$src2)>;
+
+// mul reg, imm
+def : Pat<(mul GR16:$src1, imm:$src2),
+          (IMUL16rri GR16:$src1, imm:$src2)>;
+def : Pat<(mul GR32:$src1, imm:$src2),
+          (IMUL32rri GR32:$src1, imm:$src2)>;
+def : Pat<(mul GR16:$src1, i16immSExt8:$src2),
+          (IMUL16rri8 GR16:$src1, i16immSExt8:$src2)>;
+def : Pat<(mul GR32:$src1, i32immSExt8:$src2),
+          (IMUL32rri8 GR32:$src1, i32immSExt8:$src2)>;
+
+// reg = mul mem, imm
+def : Pat<(mul (loadi16 addr:$src1), imm:$src2),
+          (IMUL16rmi addr:$src1, imm:$src2)>;
+def : Pat<(mul (loadi32 addr:$src1), imm:$src2),
+          (IMUL32rmi addr:$src1, imm:$src2)>;
+def : Pat<(mul (loadi16 addr:$src1), i16immSExt8:$src2),
+          (IMUL16rmi8 addr:$src1, i16immSExt8:$src2)>;
+def : Pat<(mul (loadi32 addr:$src1), i32immSExt8:$src2),
+          (IMUL32rmi8 addr:$src1, i32immSExt8:$src2)>;
+
+// Optimize multiply by 2 with EFLAGS result.
+let AddedComplexity = 2 in {
+def : Pat<(X86smul_flag GR16:$src1, 2), (ADD16rr GR16:$src1, GR16:$src1)>;
+def : Pat<(X86smul_flag GR32:$src1, 2), (ADD32rr GR32:$src1, GR32:$src1)>;
+}
+
+// Patterns for nodes that do not produce flags, for instructions that do.
+
+// addition
+def : Pat<(add GR64:$src1, GR64:$src2),
+          (ADD64rr GR64:$src1, GR64:$src2)>;
+def : Pat<(add GR64:$src1, i64immSExt8:$src2),
+          (ADD64ri8 GR64:$src1, i64immSExt8:$src2)>;
+def : Pat<(add GR64:$src1, i64immSExt32:$src2),
+          (ADD64ri32 GR64:$src1, i64immSExt32:$src2)>;
+def : Pat<(add GR64:$src1, (loadi64 addr:$src2)),
+          (ADD64rm GR64:$src1, addr:$src2)>;
+
+// subtraction
+def : Pat<(sub GR64:$src1, GR64:$src2),
+          (SUB64rr GR64:$src1, GR64:$src2)>;
+def : Pat<(sub GR64:$src1, (loadi64 addr:$src2)),
+          (SUB64rm GR64:$src1, addr:$src2)>;
+def : Pat<(sub GR64:$src1, i64immSExt8:$src2),
+          (SUB64ri8 GR64:$src1, i64immSExt8:$src2)>;
+def : Pat<(sub GR64:$src1, i64immSExt32:$src2),
+          (SUB64ri32 GR64:$src1, i64immSExt32:$src2)>;
+
+// Multiply
+def : Pat<(mul GR64:$src1, GR64:$src2),
+          (IMUL64rr GR64:$src1, GR64:$src2)>;
+def : Pat<(mul GR64:$src1, (loadi64 addr:$src2)),
+          (IMUL64rm GR64:$src1, addr:$src2)>;
+def : Pat<(mul GR64:$src1, i64immSExt8:$src2),
+          (IMUL64rri8 GR64:$src1, i64immSExt8:$src2)>;
+def : Pat<(mul GR64:$src1, i64immSExt32:$src2),
+          (IMUL64rri32 GR64:$src1, i64immSExt32:$src2)>;
+def : Pat<(mul (loadi64 addr:$src1), i64immSExt8:$src2),
+          (IMUL64rmi8 addr:$src1, i64immSExt8:$src2)>;
+def : Pat<(mul (loadi64 addr:$src1), i64immSExt32:$src2),
+          (IMUL64rmi32 addr:$src1, i64immSExt32:$src2)>;
+
+// Increment reg.
+def : Pat<(add GR8 :$src, 1), (INC8r     GR8 :$src)>;
+def : Pat<(add GR16:$src, 1), (INC16r    GR16:$src)>, Requires<[In32BitMode]>;
+def : Pat<(add GR16:$src, 1), (INC64_16r GR16:$src)>, Requires<[In64BitMode]>;
+def : Pat<(add GR32:$src, 1), (INC32r    GR32:$src)>, Requires<[In32BitMode]>;
+def : Pat<(add GR32:$src, 1), (INC64_32r GR32:$src)>, Requires<[In64BitMode]>;
+def : Pat<(add GR64:$src, 1), (INC64r    GR64:$src)>;
+
+// Decrement reg.
+def : Pat<(add GR8 :$src, -1), (DEC8r     GR8 :$src)>;
+def : Pat<(add GR16:$src, -1), (DEC16r    GR16:$src)>, Requires<[In32BitMode]>;
+def : Pat<(add GR16:$src, -1), (DEC64_16r GR16:$src)>, Requires<[In64BitMode]>;
+def : Pat<(add GR32:$src, -1), (DEC32r    GR32:$src)>, Requires<[In32BitMode]>;
+def : Pat<(add GR32:$src, -1), (DEC64_32r GR32:$src)>, Requires<[In64BitMode]>;
+def : Pat<(add GR64:$src, -1), (DEC64r    GR64:$src)>;
+
+// or reg/reg.
+def : Pat<(or GR8 :$src1, GR8 :$src2), (OR8rr  GR8 :$src1, GR8 :$src2)>;
+def : Pat<(or GR16:$src1, GR16:$src2), (OR16rr GR16:$src1, GR16:$src2)>;
+def : Pat<(or GR32:$src1, GR32:$src2), (OR32rr GR32:$src1, GR32:$src2)>;
+def : Pat<(or GR64:$src1, GR64:$src2), (OR64rr GR64:$src1, GR64:$src2)>;
+
+// or reg/mem
+def : Pat<(or GR8:$src1, (loadi8 addr:$src2)),
+          (OR8rm GR8:$src1, addr:$src2)>;
+def : Pat<(or GR16:$src1, (loadi16 addr:$src2)),
+          (OR16rm GR16:$src1, addr:$src2)>;
+def : Pat<(or GR32:$src1, (loadi32 addr:$src2)),
+          (OR32rm GR32:$src1, addr:$src2)>;
+def : Pat<(or GR64:$src1, (loadi64 addr:$src2)),
+          (OR64rm GR64:$src1, addr:$src2)>;
+
+// or reg/imm
+def : Pat<(or GR8:$src1 , imm:$src2), (OR8ri  GR8 :$src1, imm:$src2)>;
+def : Pat<(or GR16:$src1, imm:$src2), (OR16ri GR16:$src1, imm:$src2)>;
+def : Pat<(or GR32:$src1, imm:$src2), (OR32ri GR32:$src1, imm:$src2)>;
+def : Pat<(or GR16:$src1, i16immSExt8:$src2),
+          (OR16ri8 GR16:$src1, i16immSExt8:$src2)>;
+def : Pat<(or GR32:$src1, i32immSExt8:$src2),
+          (OR32ri8 GR32:$src1, i32immSExt8:$src2)>;
+def : Pat<(or GR64:$src1, i64immSExt8:$src2),
+          (OR64ri8 GR64:$src1, i64immSExt8:$src2)>;
+def : Pat<(or GR64:$src1, i64immSExt32:$src2),
+          (OR64ri32 GR64:$src1, i64immSExt32:$src2)>;
+
+// xor reg/reg
+def : Pat<(xor GR8 :$src1, GR8 :$src2), (XOR8rr  GR8 :$src1, GR8 :$src2)>;
+def : Pat<(xor GR16:$src1, GR16:$src2), (XOR16rr GR16:$src1, GR16:$src2)>;
+def : Pat<(xor GR32:$src1, GR32:$src2), (XOR32rr GR32:$src1, GR32:$src2)>;
+def : Pat<(xor GR64:$src1, GR64:$src2), (XOR64rr GR64:$src1, GR64:$src2)>;
+
+// xor reg/mem
+def : Pat<(xor GR8:$src1, (loadi8 addr:$src2)),
+          (XOR8rm GR8:$src1, addr:$src2)>;
+def : Pat<(xor GR16:$src1, (loadi16 addr:$src2)),
+          (XOR16rm GR16:$src1, addr:$src2)>;
+def : Pat<(xor GR32:$src1, (loadi32 addr:$src2)),
+          (XOR32rm GR32:$src1, addr:$src2)>;
+def : Pat<(xor GR64:$src1, (loadi64 addr:$src2)),
+          (XOR64rm GR64:$src1, addr:$src2)>;
+
+// xor reg/imm
+def : Pat<(xor GR8:$src1, imm:$src2),
+          (XOR8ri GR8:$src1, imm:$src2)>;
+def : Pat<(xor GR16:$src1, imm:$src2),
+          (XOR16ri GR16:$src1, imm:$src2)>;
+def : Pat<(xor GR32:$src1, imm:$src2),
+          (XOR32ri GR32:$src1, imm:$src2)>;
+def : Pat<(xor GR16:$src1, i16immSExt8:$src2),
+          (XOR16ri8 GR16:$src1, i16immSExt8:$src2)>;
+def : Pat<(xor GR32:$src1, i32immSExt8:$src2),
+          (XOR32ri8 GR32:$src1, i32immSExt8:$src2)>;
+def : Pat<(xor GR64:$src1, i64immSExt8:$src2),
+          (XOR64ri8 GR64:$src1, i64immSExt8:$src2)>;
+def : Pat<(xor GR64:$src1, i64immSExt32:$src2),
+          (XOR64ri32 GR64:$src1, i64immSExt32:$src2)>;
+
+// and reg/reg
+def : Pat<(and GR8 :$src1, GR8 :$src2), (AND8rr  GR8 :$src1, GR8 :$src2)>;
+def : Pat<(and GR16:$src1, GR16:$src2), (AND16rr GR16:$src1, GR16:$src2)>;
+def : Pat<(and GR32:$src1, GR32:$src2), (AND32rr GR32:$src1, GR32:$src2)>;
+def : Pat<(and GR64:$src1, GR64:$src2), (AND64rr GR64:$src1, GR64:$src2)>;
+
+// and reg/mem
+def : Pat<(and GR8:$src1, (loadi8 addr:$src2)),
+          (AND8rm GR8:$src1, addr:$src2)>;
+def : Pat<(and GR16:$src1, (loadi16 addr:$src2)),
+          (AND16rm GR16:$src1, addr:$src2)>;
+def : Pat<(and GR32:$src1, (loadi32 addr:$src2)),
+          (AND32rm GR32:$src1, addr:$src2)>;
+def : Pat<(and GR64:$src1, (loadi64 addr:$src2)),
+          (AND64rm GR64:$src1, addr:$src2)>;
+
+// and reg/imm
+def : Pat<(and GR8:$src1, imm:$src2),
+          (AND8ri GR8:$src1, imm:$src2)>;
+def : Pat<(and GR16:$src1, imm:$src2),
+          (AND16ri GR16:$src1, imm:$src2)>;
+def : Pat<(and GR32:$src1, imm:$src2),
+          (AND32ri GR32:$src1, imm:$src2)>;
+def : Pat<(and GR16:$src1, i16immSExt8:$src2),
+          (AND16ri8 GR16:$src1, i16immSExt8:$src2)>;
+def : Pat<(and GR32:$src1, i32immSExt8:$src2),
+          (AND32ri8 GR32:$src1, i32immSExt8:$src2)>;
+def : Pat<(and GR64:$src1, i64immSExt8:$src2),
+          (AND64ri8 GR64:$src1, i64immSExt8:$src2)>;
+def : Pat<(and GR64:$src1, i64immSExt32:$src2),
+          (AND64ri32 GR64:$src1, i64immSExt32:$src2)>;
+          
+
+          
