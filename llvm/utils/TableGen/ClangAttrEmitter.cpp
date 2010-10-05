@@ -44,7 +44,7 @@ std::string ReadPCHRecord(StringRef type) {
   return StringSwitch<std::string>(type)
     .EndsWith("Decl *", "cast_or_null<" + std::string(type, 0, type.size()-1) +
               ">(GetDecl(Record[Idx++]))")
-    .Case("QualType", "ReadTypeRecord(Idx++)")
+    .Case("QualType", "GetType(Record[Idx++])")
     .Default("Record[Idx++]");
 }
 
