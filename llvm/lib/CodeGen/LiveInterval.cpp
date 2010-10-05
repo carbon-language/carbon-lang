@@ -683,6 +683,8 @@ void LiveInterval::print(raw_ostream &OS, const TargetRegisterInfo *TRI) const {
         OS << "x";
       } else {
         OS << vni->def;
+        if (vni->isPHIDef())
+          OS << "-phidef";
         if (vni->hasPHIKill())
           OS << "-phikill";
         if (vni->hasRedefByEC())
