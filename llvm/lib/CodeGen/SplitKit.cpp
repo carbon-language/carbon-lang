@@ -550,7 +550,7 @@ void LiveIntervalMap::addSimpleRange(SlotIndex Start, SlotIndex End,
 
   // ParentVNI is a complex value. We must map per MBB.
   MachineFunction::iterator MBB = lis_.getMBBFromIndex(Start);
-  MachineFunction::iterator MBBE = lis_.getMBBFromIndex(End);
+  MachineFunction::iterator MBBE = lis_.getMBBFromIndex(End.getPrevSlot());
 
   if (MBB == MBBE) {
     li_->addRange(LiveRange(Start, End, VNI));
