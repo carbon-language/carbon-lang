@@ -504,48 +504,6 @@ def or_is_add : PatFrag<(ops node:$lhs, node:$rhs), (or node:$lhs, node:$rhs),[{
 // Instruction list.
 //
 
-// ADJCALLSTACKDOWN/UP implicitly use/def ESP because they may be expanded into
-// a stack adjustment and the codegen must know that they may modify the stack
-// pointer before prolog-epilog rewriting occurs.
-// Pessimistically assume ADJCALLSTACKDOWN / ADJCALLSTACKUP will become
-// sub / add which can clobber EFLAGS.
-let Defs = [ESP, EFLAGS], Uses = [ESP] in {
-def ADJCALLSTACKDOWN32 : I<0, Pseudo, (outs), (ins i32imm:$amt),
-                           "#ADJCALLSTACKDOWN",
-                           [(X86callseq_start timm:$amt)]>,
-                          Requires<[In32BitMode]>;
-def ADJCALLSTACKUP32   : I<0, Pseudo, (outs), (ins i32imm:$amt1, i32imm:$amt2),
-                           "#ADJCALLSTACKUP",
-                           [(X86callseq_end timm:$amt1, timm:$amt2)]>,
-                          Requires<[In32BitMode]>;
-}
-
-// x86-64 va_start lowering magic.
-let usesCustomInserter = 1 in {
-def VASTART_SAVE_XMM_REGS : I<0, Pseudo,
-                              (outs),
-                              (ins GR8:$al,
-                                   i64imm:$regsavefi, i64imm:$offset,
-                                   variable_ops),
-                              "#VASTART_SAVE_XMM_REGS $al, $regsavefi, $offset",
-                              [(X86vastart_save_xmm_regs GR8:$al,
-                                                         imm:$regsavefi,
-                                                         imm:$offset)]>;
-
-// Dynamic stack allocation yields _alloca call for Cygwin/Mingw targets.  Calls
-// to _alloca is needed to probe the stack when allocating more than 4k bytes in
-// one go. Touching the stack at 4K increments is necessary to ensure that the
-// guard pages used by the OS virtual memory manager are allocated in correct
-// sequence.
-// The main point of having separate instruction are extra unmodelled effects
-// (compared to ordinary calls) like stack pointer change.
-
-let Defs = [EAX, ESP, EFLAGS], Uses = [ESP] in
-  def MINGW_ALLOCA : I<0, Pseudo, (outs), (ins),
-                       "# dynamic stack allocation",
-                       [(X86MingwAlloca)]>;
-}
-
 // Nop
 let neverHasSideEffects = 1 in {
   def NOOP : I<0x90, RawFrm, (outs), (ins), "nop", []>;
@@ -554,13 +512,6 @@ let neverHasSideEffects = 1 in {
   def NOOPL : I<0x1f, MRM0m, (outs), (ins i32mem:$zero),
                 "nop{l}\t$zero", []>, TB;
 }
-
-// PIC base construction.  This expands to code that looks like this:
-//     call  $next_inst
-//     popl %destreg"
-let neverHasSideEffects = 1, isNotDuplicable = 1, Uses = [ESP] in
-  def MOVPC32r : Ii32<0xE8, Pseudo, (outs GR32:$reg), (ins i32imm:$label),
-                      "", []>;
 
 
 // Constructing a stack frame.
@@ -3538,63 +3489,7 @@ let neverHasSideEffects = 1 in {
               "{cltd|cdq}", []>; // EDX:EAX = signext(EAX)
 }
 
-//===----------------------------------------------------------------------===//
-// Alias Instructions
-//===----------------------------------------------------------------------===//
 
-// Alias instructions that map movr0 to xor.
-// FIXME: remove when we can teach regalloc that xor reg, reg is ok.
-// FIXME: Set encoding to pseudo.
-let Defs = [EFLAGS], isReMaterializable = 1, isAsCheapAsAMove = 1,
-    isCodeGenOnly = 1 in {
-def MOV8r0   : I<0x30, MRMInitReg, (outs GR8 :$dst), (ins), "",
-                 [(set GR8:$dst, 0)]>;
-
-// We want to rewrite MOV16r0 in terms of MOV32r0, because it's a smaller
-// encoding and avoids a partial-register update sometimes, but doing so
-// at isel time interferes with rematerialization in the current register
-// allocator. For now, this is rewritten when the instruction is lowered
-// to an MCInst.
-def MOV16r0   : I<0x31, MRMInitReg, (outs GR16:$dst), (ins),
-                 "",
-                 [(set GR16:$dst, 0)]>, OpSize;
-                 
-// FIXME: Set encoding to pseudo.
-def MOV32r0  : I<0x31, MRMInitReg, (outs GR32:$dst), (ins), "",
-                 [(set GR32:$dst, 0)]>;
-}
-
-//===----------------------------------------------------------------------===//
-// Thread Local Storage Instructions
-//
-
-// ELF TLS Support
-// All calls clobber the non-callee saved registers. ESP is marked as
-// a use to prevent stack-pointer assignments that appear immediately
-// before calls from potentially appearing dead.
-let Defs = [EAX, ECX, EDX, FP0, FP1, FP2, FP3, FP4, FP5, FP6, ST0,
-            MM0, MM1, MM2, MM3, MM4, MM5, MM6, MM7,
-            XMM0, XMM1, XMM2, XMM3, XMM4, XMM5, XMM6, XMM7,
-            XMM8, XMM9, XMM10, XMM11, XMM12, XMM13, XMM14, XMM15, EFLAGS],
-    Uses = [ESP] in
-def TLS_addr32 : I<0, Pseudo, (outs), (ins i32mem:$sym),
-                  "leal\t$sym, %eax; "
-                  "call\t___tls_get_addr@PLT",
-                  [(X86tlsaddr tls32addr:$sym)]>,
-                  Requires<[In32BitMode]>;
-
-// Darwin TLS Support
-// For i386, the address of the thunk is passed on the stack, on return the 
-// address of the variable is in %eax.  %ecx is trashed during the function 
-// call.  All other registers are preserved.
-let Defs = [EAX, ECX],
-    Uses = [ESP],
-    usesCustomInserter = 1 in
-def TLSCall_32 : I<0, Pseudo, (outs), (ins i32mem:$sym),
-                "# TLSCall_32",
-                [(X86TLSCall addr:$sym)]>,
-                Requires<[In32BitMode]>;
-                
 
 //===----------------------------------------------------------------------===//
 // Atomic support

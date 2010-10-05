@@ -100,23 +100,6 @@ def extloadi64i32  : PatFrag<(ops node:$ptr), (i64 (extloadi32 node:$ptr))>;
 // Instruction list...
 //
 
-// ADJCALLSTACKDOWN/UP implicitly use/def RSP because they may be expanded into
-// a stack adjustment and the codegen must know that they may modify the stack
-// pointer before prolog-epilog rewriting occurs.
-// Pessimistically assume ADJCALLSTACKDOWN / ADJCALLSTACKUP will become
-// sub / add which can clobber EFLAGS.
-let Defs = [RSP, EFLAGS], Uses = [RSP] in {
-def ADJCALLSTACKDOWN64 : I<0, Pseudo, (outs), (ins i32imm:$amt),
-                           "#ADJCALLSTACKDOWN",
-                           [(X86callseq_start timm:$amt)]>,
-                          Requires<[In64BitMode]>;
-def ADJCALLSTACKUP64   : I<0, Pseudo, (outs), (ins i32imm:$amt1, i32imm:$amt2),
-                           "#ADJCALLSTACKUP",
-                           [(X86callseq_end timm:$amt1, timm:$amt2)]>,
-                          Requires<[In64BitMode]>;
-}
-
-
 
 //===----------------------------------------------------------------------===//
 //  Miscellaneous Instructions...
@@ -1434,40 +1417,6 @@ def MOV64r0   : I<0x31, MRMInitReg, (outs GR64:$dst), (ins), "",
 let AddedComplexity = 1, isReMaterializable = 1, isAsCheapAsAMove = 1 in
 def MOV64ri64i32 : Ii32<0xB8, AddRegFrm, (outs GR64:$dst), (ins i64i32imm:$src),
                         "", [(set GR64:$dst, i64immZExt32:$src)]>;
-
-//===----------------------------------------------------------------------===//
-// Thread Local Storage Instructions
-//===----------------------------------------------------------------------===//
-
-// ELF TLS Support
-// All calls clobber the non-callee saved registers. RSP is marked as
-// a use to prevent stack-pointer assignments that appear immediately
-// before calls from potentially appearing dead.
-let Defs = [RAX, RCX, RDX, RSI, RDI, R8, R9, R10, R11,
-            FP0, FP1, FP2, FP3, FP4, FP5, FP6, ST0, ST1,
-            MM0, MM1, MM2, MM3, MM4, MM5, MM6, MM7,
-            XMM0, XMM1, XMM2, XMM3, XMM4, XMM5, XMM6, XMM7,
-            XMM8, XMM9, XMM10, XMM11, XMM12, XMM13, XMM14, XMM15, EFLAGS],
-    Uses = [RSP] in
-def TLS_addr64 : I<0, Pseudo, (outs), (ins i64mem:$sym),
-                   ".byte\t0x66; "
-                   "leaq\t$sym(%rip), %rdi; "
-                   ".word\t0x6666; "
-                   "rex64; "
-                   "call\t__tls_get_addr@PLT",
-                  [(X86tlsaddr tls64addr:$sym)]>,
-                  Requires<[In64BitMode]>;
-
-// Darwin TLS Support
-// For x86_64, the address of the thunk is passed in %rdi, on return 
-// the address of the variable is in %rax.  All other registers are preserved.
-let Defs = [RAX],
-    Uses = [RDI],
-    usesCustomInserter = 1 in
-def TLSCall_64 : I<0, Pseudo, (outs), (ins i64mem:$sym),
-                  "# TLSCall_64",
-                  [(X86TLSCall addr:$sym)]>,
-                  Requires<[In64BitMode]>;
 
 //===----------------------------------------------------------------------===//
 // Atomic Instructions
