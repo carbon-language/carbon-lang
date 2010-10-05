@@ -38,3 +38,7 @@ using namespace N2::Inner;
 extern "C" {
   void ext();
 }
+
+inline namespace N4 { 
+  struct MemberOfN4;
+}

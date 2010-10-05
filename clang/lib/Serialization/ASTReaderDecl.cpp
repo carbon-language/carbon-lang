@@ -658,6 +658,7 @@ void ASTDeclReader::VisitLinkageSpecDecl(LinkageSpecDecl *D) {
 
 void ASTDeclReader::VisitNamespaceDecl(NamespaceDecl *D) {
   VisitNamedDecl(D);
+  D->IsInline = Record[Idx++];
   D->setLBracLoc(ReadSourceLocation(Record, Idx));
   D->setRBracLoc(ReadSourceLocation(Record, Idx));
   D->setNextNamespace(

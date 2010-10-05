@@ -40,3 +40,6 @@ void (*pused)() = used_func;
 using N1::used_cls;
 used_cls s1;
 used_cls* ps1 = &s1;
+
+inline namespace N4 { }
+struct MemberOfN4 *mn4;

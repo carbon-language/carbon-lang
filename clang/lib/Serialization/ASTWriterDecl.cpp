@@ -610,6 +610,7 @@ void ASTDeclWriter::VisitLinkageSpecDecl(LinkageSpecDecl *D) {
 
 void ASTDeclWriter::VisitNamespaceDecl(NamespaceDecl *D) {
   VisitNamedDecl(D);
+  Record.push_back(D->isInline());
   Writer.AddSourceLocation(D->getLBracLoc(), Record);
   Writer.AddSourceLocation(D->getRBracLoc(), Record);
   Writer.AddDeclRef(D->getNextNamespace(), Record);
