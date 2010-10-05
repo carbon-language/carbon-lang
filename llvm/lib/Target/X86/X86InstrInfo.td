@@ -641,31 +641,14 @@ def LEA32r   : I<0x8D, MRMSrcMem,
                  "lea{l}\t{$src|$dst}, {$dst|$src}",
                  [(set GR32:$dst, lea32addr:$src)]>, Requires<[In32BitMode]>;
 
-let Defs = [ECX,EDI,ESI], Uses = [ECX,EDI,ESI], isCodeGenOnly = 1 in {
-def REP_MOVSB : I<0xA4, RawFrm, (outs), (ins), "{rep;movsb|rep movsb}",
-                  [(X86rep_movs i8)]>, REP;
-def REP_MOVSW : I<0xA5, RawFrm, (outs), (ins), "{rep;movsw|rep movsw}",
-                  [(X86rep_movs i16)]>, REP, OpSize;
-def REP_MOVSD : I<0xA5, RawFrm, (outs), (ins), "{rep;movsl|rep movsd}",
-                  [(X86rep_movs i32)]>, REP;
-}
 
 // These uses the DF flag in the EFLAGS register to inc or dec EDI and ESI
 let Defs = [EDI,ESI], Uses = [EDI,ESI,EFLAGS] in {
 def MOVSB : I<0xA4, RawFrm, (outs), (ins), "{movsb}", []>;
 def MOVSW : I<0xA5, RawFrm, (outs), (ins), "{movsw}", []>, OpSize;
 def MOVSD : I<0xA5, RawFrm, (outs), (ins), "{movsl|movsd}", []>;
+def MOVSQ : RI<0xA5, RawFrm, (outs), (ins), "movsq", []>;
 }
-
-let Defs = [ECX,EDI], Uses = [AL,ECX,EDI], isCodeGenOnly = 1 in
-def REP_STOSB : I<0xAA, RawFrm, (outs), (ins), "{rep;stosb|rep stosb}",
-                  [(X86rep_stos i8)]>, REP;
-let Defs = [ECX,EDI], Uses = [AX,ECX,EDI], isCodeGenOnly = 1 in
-def REP_STOSW : I<0xAB, RawFrm, (outs), (ins), "{rep;stosw|rep stosw}",
-                  [(X86rep_stos i16)]>, REP, OpSize;
-let Defs = [ECX,EDI], Uses = [EAX,ECX,EDI], isCodeGenOnly = 1 in
-def REP_STOSD : I<0xAB, RawFrm, (outs), (ins), "{rep;stosl|rep stosd}",
-                  [(X86rep_stos i32)]>, REP;
 
 // These uses the DF flag in the EFLAGS register to inc or dec EDI and ESI
 let Defs = [EDI], Uses = [AL,EDI,EFLAGS] in
@@ -674,14 +657,18 @@ let Defs = [EDI], Uses = [AX,EDI,EFLAGS] in
 def STOSW : I<0xAB, RawFrm, (outs), (ins), "{stosw}", []>, OpSize;
 let Defs = [EDI], Uses = [EAX,EDI,EFLAGS] in
 def STOSD : I<0xAB, RawFrm, (outs), (ins), "{stosl|stosd}", []>;
+let Defs = [RCX,RDI], Uses = [RAX,RCX,RDI,EFLAGS] in
+def STOSQ : RI<0xAB, RawFrm, (outs), (ins), "stosq", []>;
 
 def SCAS8 : I<0xAE, RawFrm, (outs), (ins), "scas{b}", []>;
 def SCAS16 : I<0xAF, RawFrm, (outs), (ins), "scas{w}", []>, OpSize;
 def SCAS32 : I<0xAF, RawFrm, (outs), (ins), "scas{l}", []>;
+def SCAS64 : RI<0xAF, RawFrm, (outs), (ins), "scasq", []>;
 
 def CMPS8 : I<0xA6, RawFrm, (outs), (ins), "cmps{b}", []>;
 def CMPS16 : I<0xA7, RawFrm, (outs), (ins), "cmps{w}", []>, OpSize;
 def CMPS32 : I<0xA7, RawFrm, (outs), (ins), "cmps{l}", []>;
+def CMPS64 : RI<0xA7, RawFrm, (outs), (ins), "cmpsq", []>;
 
 
 //===----------------------------------------------------------------------===//
