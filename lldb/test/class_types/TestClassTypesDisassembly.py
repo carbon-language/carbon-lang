@@ -40,7 +40,7 @@ class IterateFrameAndDisassembleTestCase(TestBase):
 
         # Break on the ctor function of class C.
         self.expect("breakpoint set -f main.cpp -l 93", BREAKPOINT_CREATED,
-            startstr = "Breakpoint created: 1: file ='main.cpp', line = 93, locations = 1")
+            startstr = "Breakpoint created: 1: file ='main.cpp', line = 93")
 
         self.runCmd("run", RUN_SUCCEEDED)
 

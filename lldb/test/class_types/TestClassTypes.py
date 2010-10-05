@@ -52,7 +52,7 @@ class ClassTypesTestCase(TestBase):
 
         # Break on the ctor function of class C.
         self.expect("breakpoint set -f main.cpp -l 93", BREAKPOINT_CREATED,
-            startstr = "Breakpoint created: 1: file ='main.cpp', line = 93, locations = 1")
+            startstr = "Breakpoint created: 1: file ='main.cpp', line = 93")
 
         self.runCmd("run", RUN_SUCCEEDED)
 
@@ -67,7 +67,8 @@ class ClassTypesTestCase(TestBase):
 
         # We should be stopped on the ctor function of class C.
         self.expect("frame variable this", VARIABLES_DISPLAYED_CORRECTLY,
-            substrs = ['C *const) this = '])
+            substrs = ['C *',
+                       ' this = '])
 
     def breakpoint_creation_by_filespec_python(self):
         """Use Python APIs to create a breakpoint by (filespec, line)."""
@@ -106,6 +107,9 @@ class ClassTypesTestCase(TestBase):
         exe = os.path.join(os.getcwd(), "a.out")
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 
+        # rdar://problem/8516141
+        # Is this a case of clang (116.1) generating bad debug info?
+        #
         # Break on the ctor function of class C.
         self.expect("breakpoint set -M C", BREAKPOINT_CREATED,
             startstr = "Breakpoint created: 1: name = 'C', locations = 1")
