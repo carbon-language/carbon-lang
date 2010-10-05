@@ -40,7 +40,7 @@ typedef NSUInteger XDSourceLanguage;
 @end  @class XDSCOperation;
 @interface XDSCClassFormatter : NSObject {
 }
-+ (NSUInteger) compartmentsForClassifier: (id <XDUMLClassifier>) classifier withSpecification: (XDSCDisplaySpecification *) displaySpec; 
++ (NSUInteger) compartmentsForClassifier: (id <XDUMLClassifier>) classifier withSpecification: (XDSCDisplaySpecification *) displaySpec;  // expected-note {{previous definition is here}}
 @end  
 @class NSString;
 @implementation XDSCClassFormatter       
@@ -49,7 +49,7 @@ typedef NSUInteger XDSourceLanguage;
 {
   return 0;
 }
-+ (NSUInteger) compartmentsForClassifier: (id <XDSCClassifier>) classifier withSpecification: (XDSCDisplaySpecification *) displaySpec {
++ (NSUInteger) compartmentsForClassifier: (id <XDSCClassifier>) classifier withSpecification: (XDSCDisplaySpecification *) displaySpec { // expected-warning {{conflicting parameter types in implementation of 'compartmentsForClassifier:withSpecification:'}}
   return 0;
 }
 @end 

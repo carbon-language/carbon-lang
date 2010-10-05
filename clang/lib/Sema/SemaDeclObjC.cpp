@@ -751,10 +751,8 @@ void Sema::WarnUndefinedMethod(SourceLocation ImpLoc, ObjCMethodDecl *method,
 
 void Sema::WarnConflictingTypedMethods(ObjCMethodDecl *ImpMethodDecl,
                                        ObjCMethodDecl *IntfMethodDecl) {
-  if (!Context.typesAreCompatible(IntfMethodDecl->getResultType(),
-                                  ImpMethodDecl->getResultType()) &&
-      !Context.QualifiedIdConformsQualifiedId(IntfMethodDecl->getResultType(),
-                                              ImpMethodDecl->getResultType())) {
+  if (!Context.hasSameType(IntfMethodDecl->getResultType(),
+                           ImpMethodDecl->getResultType())) {
     Diag(ImpMethodDecl->getLocation(), diag::warn_conflicting_ret_types)
       << ImpMethodDecl->getDeclName() << IntfMethodDecl->getResultType()
       << ImpMethodDecl->getResultType();
@@ -766,8 +764,7 @@ void Sema::WarnConflictingTypedMethods(ObjCMethodDecl *ImpMethodDecl,
        IM != EM; ++IM, ++IF) {
     QualType ParmDeclTy = (*IF)->getType().getUnqualifiedType();
     QualType ParmImpTy = (*IM)->getType().getUnqualifiedType();
-    if (Context.typesAreCompatible(ParmDeclTy, ParmImpTy) ||
-        Context.QualifiedIdConformsQualifiedId(ParmDeclTy, ParmImpTy))
+    if (Context.hasSameType(ParmDeclTy, ParmImpTy))
       continue;
 
     Diag((*IM)->getLocation(), diag::warn_conflicting_param_types)
