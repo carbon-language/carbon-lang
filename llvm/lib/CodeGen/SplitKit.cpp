@@ -77,34 +77,6 @@ void SplitAnalysis::analyzeUses() {
                << usingLoops_.size()  << " loops.\n");
 }
 
-/// removeUse - Update statistics by noting that MI no longer uses curli.
-void SplitAnalysis::removeUse(const MachineInstr *MI) {
-  if (!usingInstrs_.erase(MI))
-    return;
-
-  // Decrement MBB count.
-  const MachineBasicBlock *MBB = MI->getParent();
-  BlockCountMap::iterator bi = usingBlocks_.find(MBB);
-  assert(bi != usingBlocks_.end() && "MBB missing");
-  assert(bi->second && "0 count in map");
-  if (--bi->second)
-    return;
-  // No more uses in MBB.
-  usingBlocks_.erase(bi);
-
-  // Decrement loop count.
-  MachineLoop *Loop = loops_.getLoopFor(MBB);
-  if (!Loop)
-    return;
-  LoopCountMap::iterator li = usingLoops_.find(Loop);
-  assert(li != usingLoops_.end() && "Loop missing");
-  assert(li->second && "0 count in map");
-  if (--li->second)
-    return;
-  // No more blocks in Loop.
-  usingLoops_.erase(li);
-}
-
 // Get three sets of basic blocks surrounding a loop: Blocks inside the loop,
 // predecessor blocks, and exit blocks.
 void SplitAnalysis::getLoopBlocks(const MachineLoop *Loop, LoopBlocks &Blocks) {
@@ -865,7 +837,6 @@ void SplitEditor::rewrite() {
       }
     }
     MO.setReg(LI->reg);
-    sa_.removeUse(MI);
     DEBUG(dbgs() << "  rewrite " << Idx << '\t' << *MI);
   }
 

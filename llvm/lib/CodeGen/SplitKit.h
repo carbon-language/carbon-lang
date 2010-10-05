@@ -68,9 +68,6 @@ public:
   /// split.
   void analyze(const LiveInterval *li);
 
-  /// removeUse - Update statistics by noting that mi no longer uses curli.
-  void removeUse(const MachineInstr *mi);
-
   const LiveInterval *getCurLI() { return curli_; }
 
   /// clear - clear all data structures so SplitAnalysis is ready to analyze a
