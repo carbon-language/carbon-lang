@@ -674,17 +674,16 @@ def PUSHA32  : I<0x60, RawFrm, (outs), (ins), "pusha{l}", []>,
                Requires<[In32BitMode]>;
 }
 
-let Constraints = "$src = $dst" in     // GR32 = bswap GR32
-  def BSWAP32r : I<0xC8, AddRegFrm,
-                   (outs GR32:$dst), (ins GR32:$src),
-                   "bswap{l}\t$dst", 
-                   [(set GR32:$dst, (bswap GR32:$src))]>, TB;
+let Constraints = "$src = $dst" in {    // GR32 = bswap GR32
+def BSWAP32r : I<0xC8, AddRegFrm,
+                 (outs GR32:$dst), (ins GR32:$src),
+                 "bswap{l}\t$dst", 
+                 [(set GR32:$dst, (bswap GR32:$src))]>, TB;
                    
-let Constraints = "$src = $dst" in
 def BSWAP64r : RI<0xC8, AddRegFrm, (outs GR64:$dst), (ins GR64:$src),
                   "bswap{q}\t$dst", 
                   [(set GR64:$dst, (bswap GR64:$src))]>, TB;
-
+} // Constraints = "$src = $dst"
 
 // Bit scan instructions.
 let Defs = [EFLAGS] in {
@@ -2872,85 +2871,6 @@ def BTS32mi8 : Ii8<0xBA, MRM5m, (outs), (ins i32mem:$src1, i32i8imm:$src2),
                     "bts{l}\t{$src2, $src1|$src1, $src2}", []>, TB;
 } // Defs = [EFLAGS]
 
-// Sign/Zero extenders
-// Use movsbl intead of movsbw; we don't care about the high 16 bits
-// of the register here. This has a smaller encoding and avoids a
-// partial-register update.  Actual movsbw included for the disassembler.
-def MOVSX16rr8W : I<0xBE, MRMSrcReg, (outs GR16:$dst), (ins GR8:$src),
-                    "movs{bw|x}\t{$src, $dst|$dst, $src}", []>, TB, OpSize;
-def MOVSX16rm8W : I<0xBE, MRMSrcMem, (outs GR16:$dst), (ins i8mem:$src),
-                    "movs{bw|x}\t{$src, $dst|$dst, $src}", []>, TB, OpSize;
-def MOVSX16rr8 : I<0xBE, MRMSrcReg, (outs GR16:$dst), (ins GR8 :$src),
-                   "", [(set GR16:$dst, (sext GR8:$src))]>, TB;
-def MOVSX16rm8 : I<0xBE, MRMSrcMem, (outs GR16:$dst), (ins i8mem :$src),
-                   "", [(set GR16:$dst, (sextloadi16i8 addr:$src))]>, TB;
-def MOVSX32rr8 : I<0xBE, MRMSrcReg, (outs GR32:$dst), (ins GR8 :$src),
-                   "movs{bl|x}\t{$src, $dst|$dst, $src}",
-                   [(set GR32:$dst, (sext GR8:$src))]>, TB;
-def MOVSX32rm8 : I<0xBE, MRMSrcMem, (outs GR32:$dst), (ins i8mem :$src),
-                   "movs{bl|x}\t{$src, $dst|$dst, $src}",
-                   [(set GR32:$dst, (sextloadi32i8 addr:$src))]>, TB;
-def MOVSX32rr16: I<0xBF, MRMSrcReg, (outs GR32:$dst), (ins GR16:$src),
-                   "movs{wl|x}\t{$src, $dst|$dst, $src}",
-                   [(set GR32:$dst, (sext GR16:$src))]>, TB;
-def MOVSX32rm16: I<0xBF, MRMSrcMem, (outs GR32:$dst), (ins i16mem:$src),
-                   "movs{wl|x}\t{$src, $dst|$dst, $src}",
-                   [(set GR32:$dst, (sextloadi32i16 addr:$src))]>, TB;
-
-// Use movzbl intead of movzbw; we don't care about the high 16 bits
-// of the register here. This has a smaller encoding and avoids a
-// partial-register update.  Actual movzbw included for the disassembler.
-def MOVZX16rr8W : I<0xB6, MRMSrcReg, (outs GR16:$dst), (ins GR8:$src),
-                    "movz{bw|x}\t{$src, $dst|$dst, $src}", []>, TB, OpSize;
-def MOVZX16rm8W : I<0xB6, MRMSrcMem, (outs GR16:$dst), (ins i8mem:$src),
-                    "movz{bw|x}\t{$src, $dst|$dst, $src}", []>, TB, OpSize;  
-def MOVZX16rr8 : I<0xB6, MRMSrcReg, (outs GR16:$dst), (ins GR8 :$src),
-                   "", [(set GR16:$dst, (zext GR8:$src))]>, TB;
-def MOVZX16rm8 : I<0xB6, MRMSrcMem, (outs GR16:$dst), (ins i8mem :$src),
-                   "", [(set GR16:$dst, (zextloadi16i8 addr:$src))]>, TB;
-def MOVZX32rr8 : I<0xB6, MRMSrcReg, (outs GR32:$dst), (ins GR8 :$src),
-                   "movz{bl|x}\t{$src, $dst|$dst, $src}",
-                   [(set GR32:$dst, (zext GR8:$src))]>, TB;
-def MOVZX32rm8 : I<0xB6, MRMSrcMem, (outs GR32:$dst), (ins i8mem :$src),
-                   "movz{bl|x}\t{$src, $dst|$dst, $src}",
-                   [(set GR32:$dst, (zextloadi32i8 addr:$src))]>, TB;
-def MOVZX32rr16: I<0xB7, MRMSrcReg, (outs GR32:$dst), (ins GR16:$src),
-                   "movz{wl|x}\t{$src, $dst|$dst, $src}",
-                   [(set GR32:$dst, (zext GR16:$src))]>, TB;
-def MOVZX32rm16: I<0xB7, MRMSrcMem, (outs GR32:$dst), (ins i16mem:$src),
-                   "movz{wl|x}\t{$src, $dst|$dst, $src}",
-                   [(set GR32:$dst, (zextloadi32i16 addr:$src))]>, TB;
-
-// These are the same as the regular MOVZX32rr8 and MOVZX32rm8
-// except that they use GR32_NOREX for the output operand register class
-// instead of GR32. This allows them to operate on h registers on x86-64.
-def MOVZX32_NOREXrr8 : I<0xB6, MRMSrcReg,
-                         (outs GR32_NOREX:$dst), (ins GR8:$src),
-                         "movz{bl|x}\t{$src, $dst|$dst, $src}  # NOREX",
-                         []>, TB;
-let mayLoad = 1 in
-def MOVZX32_NOREXrm8 : I<0xB6, MRMSrcMem,
-                         (outs GR32_NOREX:$dst), (ins i8mem:$src),
-                         "movz{bl|x}\t{$src, $dst|$dst, $src}  # NOREX",
-                         []>, TB;
-
-let neverHasSideEffects = 1 in {
-  let Defs = [AX], Uses = [AL] in
-  def CBW : I<0x98, RawFrm, (outs), (ins),
-              "{cbtw|cbw}", []>, OpSize;   // AX = signext(AL)
-  let Defs = [EAX], Uses = [AX] in
-  def CWDE : I<0x98, RawFrm, (outs), (ins),
-              "{cwtl|cwde}", []>;   // EAX = signext(AX)
-
-  let Defs = [AX,DX], Uses = [AX] in
-  def CWD : I<0x99, RawFrm, (outs), (ins),
-              "{cwtd|cwd}", []>, OpSize; // DX:AX = signext(AX)
-  let Defs = [EAX,EDX], Uses = [EAX] in
-  def CDQ : I<0x99, RawFrm, (outs), (ins),
-              "{cltd|cdq}", []>; // EDX:EAX = signext(EAX)
-}
-
-
 
 //===----------------------------------------------------------------------===//
 // Atomic support
@@ -3094,11 +3014,10 @@ def XLAT : I<0xD7, RawFrm, (outs), (ins), "xlatb", []>;
 
 // Floating Point Stack Support
 include "X86InstrFPStack.td"
-
-// X86-64 Support
 include "X86Instr64bit.td"
 
 include "X86InstrCMovSetCC.td"
+include "X86InstrExtension.td"
 include "X86InstrControl.td"
 
 // SIMD support (SSE, MMX and AVX)
