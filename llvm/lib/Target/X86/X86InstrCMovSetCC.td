@@ -50,7 +50,9 @@ multiclass CMOV<bits<8> opc, string Mnemonic, PatLeaf CondNode> {
   } // Uses = [EFLAGS], Predicates = [HasCMov], Constraints = "$src1 = $dst"
 } // end multiclass
 
-//defm CMOVBE : CMOV<0x46, "cmovbe", X86_COND_BE>;
+
+// Conditional Moves.
+defm CMOVBE : CMOV<0x46, "cmovbe", X86_COND_BE>;
 
 
 let Constraints = "$src1 = $dst" in {
@@ -107,18 +109,6 @@ def CMOVNE32rr: I<0x45, MRMSrcReg,       // if !=, GR32 = GR32
                   "cmovne{l}\t{$src2, $dst|$dst, $src2}",
                   [(set GR32:$dst, (X86cmov GR32:$src1, GR32:$src2,
                                    X86_COND_NE, EFLAGS))]>,
-                   TB;
-def CMOVBE16rr: I<0x46, MRMSrcReg,       // if <=u, GR16 = GR16
-                  (outs GR16:$dst), (ins GR16:$src1, GR16:$src2),
-                  "cmovbe{w}\t{$src2, $dst|$dst, $src2}",
-                  [(set GR16:$dst, (X86cmov GR16:$src1, GR16:$src2,
-                                   X86_COND_BE, EFLAGS))]>,
-                   TB, OpSize;
-def CMOVBE32rr: I<0x46, MRMSrcReg,       // if <=u, GR32 = GR32
-                  (outs GR32:$dst), (ins GR32:$src1, GR32:$src2),
-                  "cmovbe{l}\t{$src2, $dst|$dst, $src2}",
-                  [(set GR32:$dst, (X86cmov GR32:$src1, GR32:$src2,
-                                   X86_COND_BE, EFLAGS))]>,
                    TB;
 def CMOVA16rr : I<0x47, MRMSrcReg,       // if >u, GR16 = GR16
                   (outs GR16:$dst), (ins GR16:$src1, GR16:$src2),
@@ -301,18 +291,6 @@ def CMOVNE32rm: I<0x45, MRMSrcMem,       // if !=, GR32 = [mem32]
                   "cmovne{l}\t{$src2, $dst|$dst, $src2}",
                   [(set GR32:$dst, (X86cmov GR32:$src1, (loadi32 addr:$src2),
                                    X86_COND_NE, EFLAGS))]>,
-                   TB;
-def CMOVBE16rm: I<0x46, MRMSrcMem,       // if <=u, GR16 = [mem16]
-                  (outs GR16:$dst), (ins GR16:$src1, i16mem:$src2),
-                  "cmovbe{w}\t{$src2, $dst|$dst, $src2}",
-                  [(set GR16:$dst, (X86cmov GR16:$src1, (loadi16 addr:$src2),
-                                   X86_COND_BE, EFLAGS))]>,
-                   TB, OpSize;
-def CMOVBE32rm: I<0x46, MRMSrcMem,       // if <=u, GR32 = [mem32]
-                  (outs GR32:$dst), (ins GR32:$src1, i32mem:$src2),
-                  "cmovbe{l}\t{$src2, $dst|$dst, $src2}",
-                  [(set GR32:$dst, (X86cmov GR32:$src1, (loadi32 addr:$src2),
-                                   X86_COND_BE, EFLAGS))]>,
                    TB;
 def CMOVA16rm : I<0x47, MRMSrcMem,       // if >u, GR16 = [mem16]
                   (outs GR16:$dst), (ins GR16:$src1, i16mem:$src2),
@@ -523,11 +501,6 @@ def CMOVNE64rr: RI<0x45, MRMSrcReg,       // if !=, GR64 = GR64
                    "cmovne{q}\t{$src2, $dst|$dst, $src2}",
                    [(set GR64:$dst, (X86cmov GR64:$src1, GR64:$src2,
                                     X86_COND_NE, EFLAGS))]>, TB;
-def CMOVBE64rr: RI<0x46, MRMSrcReg,       // if <=u, GR64 = GR64
-                   (outs GR64:$dst), (ins GR64:$src1, GR64:$src2),
-                   "cmovbe{q}\t{$src2, $dst|$dst, $src2}",
-                   [(set GR64:$dst, (X86cmov GR64:$src1, GR64:$src2,
-                                    X86_COND_BE, EFLAGS))]>, TB;
 def CMOVA64rr : RI<0x47, MRMSrcReg,       // if >u, GR64 = GR64
                    (outs GR64:$dst), (ins GR64:$src1, GR64:$src2),
                    "cmova{q}\t{$src2, $dst|$dst, $src2}",
@@ -605,11 +578,6 @@ def CMOVNE64rm: RI<0x45, MRMSrcMem,       // if !=, GR64 = [mem64]
                    "cmovne{q}\t{$src2, $dst|$dst, $src2}",
                    [(set GR64:$dst, (X86cmov GR64:$src1, (loadi64 addr:$src2),
                                     X86_COND_NE, EFLAGS))]>, TB;
-def CMOVBE64rm: RI<0x46, MRMSrcMem,       // if <=u, GR64 = [mem64]
-                   (outs GR64:$dst), (ins GR64:$src1, i64mem:$src2),
-                   "cmovbe{q}\t{$src2, $dst|$dst, $src2}",
-                   [(set GR64:$dst, (X86cmov GR64:$src1, (loadi64 addr:$src2),
-                                    X86_COND_BE, EFLAGS))]>, TB;
 def CMOVA64rm : RI<0x47, MRMSrcMem,       // if >u, GR64 = [mem64]
                    (outs GR64:$dst), (ins GR64:$src1, i64mem:$src2),
                    "cmova{q}\t{$src2, $dst|$dst, $src2}",

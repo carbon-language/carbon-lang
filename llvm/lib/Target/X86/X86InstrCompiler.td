@@ -871,9 +871,9 @@ def : Pat<(X86cmov (loadi16 addr:$src1), GR16:$src2, X86_COND_BE, EFLAGS),
 def : Pat<(X86cmov (loadi32 addr:$src1), GR32:$src2, X86_COND_BE, EFLAGS),
           (CMOVA32rm GR32:$src2, addr:$src1)>;
 def : Pat<(X86cmov (loadi16 addr:$src1), GR16:$src2, X86_COND_A, EFLAGS),
-          (CMOVBE16rm GR16:$src2, addr:$src1)>;
+          (CMOVBErm16 GR16:$src2, addr:$src1)>;
 def : Pat<(X86cmov (loadi32 addr:$src1), GR32:$src2, X86_COND_A, EFLAGS),
-          (CMOVBE32rm GR32:$src2, addr:$src1)>;
+          (CMOVBErm32 GR32:$src2, addr:$src1)>;
 def : Pat<(X86cmov (loadi16 addr:$src1), GR16:$src2, X86_COND_L, EFLAGS),
           (CMOVGE16rm GR16:$src2, addr:$src1)>;
 def : Pat<(X86cmov (loadi32 addr:$src1), GR32:$src2, X86_COND_L, EFLAGS),
@@ -926,7 +926,7 @@ def : Pat<(X86cmov (loadi64 addr:$src1), GR64:$src2, X86_COND_NE, EFLAGS),
 def : Pat<(X86cmov (loadi64 addr:$src1), GR64:$src2, X86_COND_BE, EFLAGS),
           (CMOVA64rm GR64:$src2, addr:$src1)>;
 def : Pat<(X86cmov (loadi64 addr:$src1), GR64:$src2, X86_COND_A, EFLAGS),
-          (CMOVBE64rm GR64:$src2, addr:$src1)>;
+          (CMOVBErm64 GR64:$src2, addr:$src1)>;
 def : Pat<(X86cmov (loadi64 addr:$src1), GR64:$src2, X86_COND_L, EFLAGS),
           (CMOVGE64rm GR64:$src2, addr:$src1)>;
 def : Pat<(X86cmov (loadi64 addr:$src1), GR64:$src2, X86_COND_GE, EFLAGS),
