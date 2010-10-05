@@ -1028,14 +1028,14 @@ entry:
   ret i64 %5
 }
 
-declare x86_mmx @llvm.x86.ssse3.pshuf.w(x86_mmx, i8) nounwind readnone
+declare x86_mmx @llvm.x86.sse.pshuf.w(x86_mmx, i8) nounwind readnone
 
 define i64 @test21(<1 x i64> %a) nounwind readnone optsize ssp {
 ; CHECK: pshufw
 entry:
   %0 = bitcast <1 x i64> %a to <4 x i16>
   %1 = bitcast <4 x i16> %0 to x86_mmx
-  %2 = tail call x86_mmx @llvm.x86.ssse3.pshuf.w(x86_mmx %1, i8 3) nounwind readnone
+  %2 = tail call x86_mmx @llvm.x86.sse.pshuf.w(x86_mmx %1, i8 3) nounwind readnone
   %3 = bitcast x86_mmx %2 to <4 x i16>
   %4 = bitcast <4 x i16> %3 to <1 x i64>
   %5 = extractelement <1 x i64> %4, i32 0
