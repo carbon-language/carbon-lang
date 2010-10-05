@@ -68,7 +68,8 @@ void SplitAnalysis::analyzeUses() {
     MachineBasicBlock *MBB = MI->getParent();
     if (usingBlocks_[MBB]++)
       continue;
-    if (MachineLoop *Loop = loops_.getLoopFor(MBB))
+    for (MachineLoop *Loop = loops_.getLoopFor(MBB); Loop;
+         Loop = Loop->getParentLoop())
       usingLoops_[Loop]++;
   }
   DEBUG(dbgs() << "  counted "
