@@ -269,10 +269,10 @@ namespace {
       OS << "    bool is" << getLowerName() << "Expr = Record[Idx++];\n";
       OS << "    void *" << getLowerName() << "Ptr;\n";
       OS << "    if (is" << getLowerName() << "Expr)\n";
-      OS << "      " << getLowerName() << "Ptr = ReadExpr(DeclsCursor);\n";
+      OS << "      " << getLowerName() << "Ptr = ReadExpr(F);\n";
       OS << "    else\n";
       OS << "      " << getLowerName()
-         << "Ptr = GetTypeSourceInfo(DeclsCursor, Record, Idx);\n";
+         << "Ptr = GetTypeSourceInfo(F, Record, Idx);\n";
     }
     void writePCHWrite(raw_ostream &OS) const {
       OS << "    Record.push_back(SA->is" << getUpperName() << "Expr());\n";
