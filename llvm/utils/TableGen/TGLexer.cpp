@@ -96,7 +96,7 @@ tgtok::TokKind TGLexer::LexToken() {
 
   switch (CurChar) {
   default:
-    // Handle letters: [a-zA-Z_]
+    // Handle letters: [a-zA-Z_#]
     if (isalpha(CurChar) || CurChar == '_' || CurChar == '#')
       return LexIdentifier();
       
@@ -215,23 +215,13 @@ tgtok::TokKind TGLexer::LexVarName() {
 
 
 tgtok::TokKind TGLexer::LexIdentifier() {
-  // The first letter is [a-zA-Z_].
+  // The first letter is [a-zA-Z_#].
   const char *IdentStart = TokStart;
   
-  // Match the rest of the identifier regex: [0-9a-zA-Z_]*
-  while (isalpha(*CurPtr) || isdigit(*CurPtr) || *CurPtr == '_'
-         || *CurPtr == '#') {
-    // If this contains a '#', make sure it's value
-    if (*CurPtr == '#') {
-      if (strncmp(CurPtr, "#NAME#", 6) != 0) {
-        return tgtok::Error;
-      }
-      CurPtr += 6;
-    }
-    else {
-      ++CurPtr;
-    }
-  }
+  // Match the rest of the identifier regex: [0-9a-zA-Z_#]*
+  while (isalpha(*CurPtr) || isdigit(*CurPtr) || *CurPtr == '_' ||
+         *CurPtr == '#')
+    ++CurPtr;
   
   
   // Check to see if this identifier is a keyword.
