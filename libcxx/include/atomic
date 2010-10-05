@@ -12376,6 +12376,10 @@ __choose_compare_exchange_weak_relaxed_relaxed(void* volatile* __obj,
 
 // flag type and operations
 
+#if !__has_feature(__atomic_flag)
+    typedef bool __atomic_flag__;
+#endif
+
 struct atomic_flag;
 
 bool atomic_flag_test_and_set(volatile atomic_flag*);
@@ -12389,7 +12393,7 @@ void atomic_flag_clear_explicit(atomic_flag*, memory_order);
 
 typedef struct _LIBCPP_VISIBLE atomic_flag
 {
-    bool __flg_;
+    __atomic_flag__ __flg_;
 
     _LIBCPP_INLINE_VISIBILITY
     bool test_and_set() volatile
@@ -12441,7 +12445,8 @@ inline _LIBCPP_INLINE_VISIBILITY
 bool
 atomic_flag_test_and_set(volatile atomic_flag* __f)
 {
-    return __choose_exchange_seq_cst(&__f->__flg_, true);
+    return __choose_exchange_seq_cst(&__f->__flg_, __atomic_flag__(true))
+            == __atomic_flag__(true);
 }
 
 inline _LIBCPP_INLINE_VISIBILITY
@@ -12458,17 +12463,23 @@ atomic_flag_test_and_set_explicit(volatile atomic_flag* __f, memory_order __o)
     switch (__o)
     {
     case memory_order_relaxed:
-        return __choose_exchange_relaxed(&__f->__flg_, true);
+        return __choose_exchange_relaxed(&__f->__flg_, __atomic_flag__(true))
+            == __atomic_flag__(true);
     case memory_order_consume:
-        return __choose_exchange_consume(&__f->__flg_, true);
+        return __choose_exchange_consume(&__f->__flg_, __atomic_flag__(true))
+            == __atomic_flag__(true);
     case memory_order_acquire:
-        return __choose_exchange_acquire(&__f->__flg_, true);
+        return __choose_exchange_acquire(&__f->__flg_, __atomic_flag__(true))
+            == __atomic_flag__(true);
     case memory_order_release:
-        return __choose_exchange_release(&__f->__flg_, true);
+        return __choose_exchange_release(&__f->__flg_, __atomic_flag__(true))
+            == __atomic_flag__(true);
     case memory_order_acq_rel:
-        return __choose_exchange_acq_rel(&__f->__flg_, true);
+        return __choose_exchange_acq_rel(&__f->__flg_, __atomic_flag__(true))
+            == __atomic_flag__(true);
     case memory_order_seq_cst:
-        return __choose_exchange_seq_cst(&__f->__flg_, true);
+        return __choose_exchange_seq_cst(&__f->__flg_, __atomic_flag__(true))
+            == __atomic_flag__(true);
     }
 }
 
@@ -12484,7 +12495,7 @@ inline _LIBCPP_INLINE_VISIBILITY
 void
 atomic_flag_clear(volatile atomic_flag* __f)
 {
-    return __choose_store_seq_cst(&__f->__flg_, false);
+    __choose_store_seq_cst(&__f->__flg_, __atomic_flag__(false));
 }
 
 inline _LIBCPP_INLINE_VISIBILITY
@@ -12501,13 +12512,13 @@ atomic_flag_clear_explicit(volatile atomic_flag* __f, memory_order __o)
     switch (__o)
     {
     case memory_order_relaxed:
-        __choose_store_relaxed(&__f->__flg_, false);
+        __choose_store_relaxed(&__f->__flg_, __atomic_flag__(false));
         break;
     case memory_order_release:
-        __choose_store_release(&__f->__flg_, false);
+        __choose_store_release(&__f->__flg_, __atomic_flag__(false));
         break;
     case memory_order_seq_cst:
-        __choose_store_seq_cst(&__f->__flg_, false);
+        __choose_store_seq_cst(&__f->__flg_, __atomic_flag__(false));
         break;
     }
 }
