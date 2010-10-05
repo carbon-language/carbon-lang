@@ -1,4 +1,4 @@
-// RUN: %clang-cc1 %s -fexceptions
+// RUN: %clang-cc1 %s -fexceptions -emit-llvm
 
 // Reduced from a crash on boost::interprocess's node_allocator_test.cpp.
 namespace test0 {
