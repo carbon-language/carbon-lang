@@ -1498,12 +1498,19 @@ bool AsmParser::ParseDirectiveZero() {
   if (ParseAbsoluteExpression(NumBytes))
     return true;
 
+  int64_t Val = 0;
+  if (getLexer().is(AsmToken::Comma)) {
+    Lex();
+    if (ParseAbsoluteExpression(Val))
+      return true;
+  }
+
   if (getLexer().isNot(AsmToken::EndOfStatement))
     return TokError("unexpected token in '.zero' directive");
 
   Lex();
 
-  getStreamer().EmitFill(NumBytes, 0, DEFAULT_ADDRSPACE);
+  getStreamer().EmitFill(NumBytes, Val, DEFAULT_ADDRSPACE);
 
   return false;
 }
