@@ -3495,94 +3495,45 @@ let neverHasSideEffects = 1 in {
 // Atomic support
 //
 
-// Memory barriers
-
-// TODO: Get this to fold the constant into the instruction.           
-def OR32mrLocked  : I<0x09, MRMDestMem, (outs), (ins i32mem:$dst, GR32:$zero),
-                      "lock\n\t"
-                      "or{l}\t{$zero, $dst|$dst, $zero}",
-                      []>, Requires<[In32BitMode]>, LOCK;
-
-let hasSideEffects = 1 in {
-def Int_MemBarrier : I<0, Pseudo, (outs), (ins),
-                     "#MEMBARRIER",
-                     [(X86MemBarrier)]>, Requires<[HasSSE2]>;
-}
 
 // Atomic swap. These are just normal xchg instructions. But since a memory
 // operand is referenced, the atomicity is ensured.
 let Constraints = "$val = $dst" in {
-def XCHG32rm : I<0x87, MRMSrcMem, (outs GR32:$dst), 
-                 (ins GR32:$val, i32mem:$ptr),
-               "xchg{l}\t{$val, $ptr|$ptr, $val}", 
-               [(set GR32:$dst, (atomic_swap_32 addr:$ptr, GR32:$val))]>;
+def XCHG8rm  : I<0x86, MRMSrcMem, (outs GR8:$dst), (ins GR8:$val, i8mem:$ptr),
+               "xchg{b}\t{$val, $ptr|$ptr, $val}", 
+               [(set GR8:$dst, (atomic_swap_8 addr:$ptr, GR8:$val))]>;
 def XCHG16rm : I<0x87, MRMSrcMem, (outs GR16:$dst), 
                  (ins GR16:$val, i16mem:$ptr),
                "xchg{w}\t{$val, $ptr|$ptr, $val}", 
                [(set GR16:$dst, (atomic_swap_16 addr:$ptr, GR16:$val))]>, 
                 OpSize;
-def XCHG8rm  : I<0x86, MRMSrcMem, (outs GR8:$dst), (ins GR8:$val, i8mem:$ptr),
-               "xchg{b}\t{$val, $ptr|$ptr, $val}", 
-               [(set GR8:$dst, (atomic_swap_8 addr:$ptr, GR8:$val))]>;
+def XCHG32rm : I<0x87, MRMSrcMem, (outs GR32:$dst), 
+                 (ins GR32:$val, i32mem:$ptr),
+               "xchg{l}\t{$val, $ptr|$ptr, $val}", 
+               [(set GR32:$dst, (atomic_swap_32 addr:$ptr, GR32:$val))]>;
+def XCHG64rm : RI<0x87, MRMSrcMem, (outs GR64:$dst), 
+                  (ins GR64:$val,i64mem:$ptr),
+                  "xchg{q}\t{$val, $ptr|$ptr, $val}", 
+                  [(set GR64:$dst, (atomic_swap_64 addr:$ptr, GR64:$val))]>;
 
-def XCHG32rr : I<0x87, MRMSrcReg, (outs GR32:$dst), (ins GR32:$val, GR32:$src),
-                 "xchg{l}\t{$val, $src|$src, $val}", []>;
-def XCHG16rr : I<0x87, MRMSrcReg, (outs GR16:$dst), (ins GR16:$val, GR16:$src),
-                 "xchg{w}\t{$val, $src|$src, $val}", []>, OpSize;
 def XCHG8rr : I<0x86, MRMSrcReg, (outs GR8:$dst), (ins GR8:$val, GR8:$src),
                 "xchg{b}\t{$val, $src|$src, $val}", []>;
+def XCHG16rr : I<0x87, MRMSrcReg, (outs GR16:$dst), (ins GR16:$val, GR16:$src),
+                 "xchg{w}\t{$val, $src|$src, $val}", []>, OpSize;
+def XCHG32rr : I<0x87, MRMSrcReg, (outs GR32:$dst), (ins GR32:$val, GR32:$src),
+                 "xchg{l}\t{$val, $src|$src, $val}", []>;
+def XCHG64rr : RI<0x87, MRMSrcReg, (outs GR64:$dst), (ins GR64:$val,GR64:$src),
+                  "xchg{q}\t{$val, $src|$src, $val}", []>;
 }
 
 def XCHG16ar : I<0x90, AddRegFrm, (outs), (ins GR16:$src),
                   "xchg{w}\t{$src, %ax|%ax, $src}", []>, OpSize;
 def XCHG32ar : I<0x90, AddRegFrm, (outs), (ins GR32:$src),
                   "xchg{l}\t{$src, %eax|%eax, $src}", []>;
+def XCHG64ar : RI<0x90, AddRegFrm, (outs), (ins GR64:$src),
+                  "xchg{q}\t{$src, %rax|%rax, $src}", []>;
 
-// Atomic compare and swap.
-let Defs = [EAX, EFLAGS], Uses = [EAX] in {
-def LCMPXCHG32 : I<0xB1, MRMDestMem, (outs), (ins i32mem:$ptr, GR32:$swap),
-               "lock\n\t"
-               "cmpxchg{l}\t{$swap, $ptr|$ptr, $swap}",
-               [(X86cas addr:$ptr, GR32:$swap, 4)]>, TB, LOCK;
-}
-let Defs = [EAX, EDX, EFLAGS], Uses = [EAX, EBX, ECX, EDX] in {
-def LCMPXCHG8B : I<0xC7, MRM1m, (outs), (ins i64mem:$ptr),
-               "lock\n\t"
-               "cmpxchg8b\t$ptr",
-               [(X86cas8 addr:$ptr)]>, TB, LOCK;
-}
 
-let Defs = [AX, EFLAGS], Uses = [AX] in {
-def LCMPXCHG16 : I<0xB1, MRMDestMem, (outs), (ins i16mem:$ptr, GR16:$swap),
-               "lock\n\t"
-               "cmpxchg{w}\t{$swap, $ptr|$ptr, $swap}",
-               [(X86cas addr:$ptr, GR16:$swap, 2)]>, TB, OpSize, LOCK;
-}
-let Defs = [AL, EFLAGS], Uses = [AL] in {
-def LCMPXCHG8 : I<0xB0, MRMDestMem, (outs), (ins i8mem:$ptr, GR8:$swap),
-               "lock\n\t"
-               "cmpxchg{b}\t{$swap, $ptr|$ptr, $swap}",
-               [(X86cas addr:$ptr, GR8:$swap, 1)]>, TB, LOCK;
-}
-
-// Atomic exchange and add
-let Constraints = "$val = $dst", Defs = [EFLAGS] in {
-def LXADD32 : I<0xC1, MRMSrcMem, (outs GR32:$dst), (ins GR32:$val, i32mem:$ptr),
-               "lock\n\t"
-               "xadd{l}\t{$val, $ptr|$ptr, $val}",
-               [(set GR32:$dst, (atomic_load_add_32 addr:$ptr, GR32:$val))]>,
-                TB, LOCK;
-def LXADD16 : I<0xC1, MRMSrcMem, (outs GR16:$dst), (ins GR16:$val, i16mem:$ptr),
-               "lock\n\t"
-               "xadd{w}\t{$val, $ptr|$ptr, $val}",
-               [(set GR16:$dst, (atomic_load_add_16 addr:$ptr, GR16:$val))]>,
-                TB, OpSize, LOCK;
-def LXADD8  : I<0xC0, MRMSrcMem, (outs GR8:$dst), (ins GR8:$val, i8mem:$ptr),
-               "lock\n\t"
-               "xadd{b}\t{$val, $ptr|$ptr, $val}",
-               [(set GR8:$dst, (atomic_load_add_8 addr:$ptr, GR8:$val))]>,
-                TB, LOCK;
-}
 
 def XADD8rr : I<0xC0, MRMDestReg, (outs GR8:$dst), (ins GR8:$src),
                 "xadd{b}\t{$src, $dst|$dst, $src}", []>, TB;
@@ -3590,6 +3541,8 @@ def XADD16rr : I<0xC1, MRMDestReg, (outs GR16:$dst), (ins GR16:$src),
                  "xadd{w}\t{$src, $dst|$dst, $src}", []>, TB, OpSize;
 def XADD32rr  : I<0xC1, MRMDestReg, (outs GR32:$dst), (ins GR32:$src),
                  "xadd{l}\t{$src, $dst|$dst, $src}", []>, TB;
+def XADD64rr  : RI<0xC1, MRMDestReg, (outs GR64:$dst), (ins GR64:$src),
+                   "xadd{q}\t{$src, $dst|$dst, $src}", []>, TB;
 
 let mayLoad = 1, mayStore = 1 in {
 def XADD8rm   : I<0xC0, MRMDestMem, (outs), (ins i8mem:$dst, GR8:$src),
@@ -3598,6 +3551,9 @@ def XADD16rm  : I<0xC1, MRMDestMem, (outs), (ins i16mem:$dst, GR16:$src),
                  "xadd{w}\t{$src, $dst|$dst, $src}", []>, TB, OpSize;
 def XADD32rm  : I<0xC1, MRMDestMem, (outs), (ins i32mem:$dst, GR32:$src),
                  "xadd{l}\t{$src, $dst|$dst, $src}", []>, TB;
+def XADD64rm  : RI<0xC1, MRMDestMem, (outs), (ins i64mem:$dst, GR64:$src),
+                   "xadd{q}\t{$src, $dst|$dst, $src}", []>, TB;
+
 }
 
 def CMPXCHG8rr : I<0xB0, MRMDestReg, (outs GR8:$dst), (ins GR8:$src),
@@ -3606,6 +3562,8 @@ def CMPXCHG16rr : I<0xB1, MRMDestReg, (outs GR16:$dst), (ins GR16:$src),
                     "cmpxchg{w}\t{$src, $dst|$dst, $src}", []>, TB, OpSize;
 def CMPXCHG32rr  : I<0xB1, MRMDestReg, (outs GR32:$dst), (ins GR32:$src),
                      "cmpxchg{l}\t{$src, $dst|$dst, $src}", []>, TB;
+def CMPXCHG64rr  : RI<0xB1, MRMDestReg, (outs GR64:$dst), (ins GR64:$src),
+                      "cmpxchg{q}\t{$src, $dst|$dst, $src}", []>, TB;
 
 let mayLoad = 1, mayStore = 1 in {
 def CMPXCHG8rm   : I<0xB0, MRMDestMem, (outs), (ins i8mem:$dst, GR8:$src),
@@ -3614,180 +3572,19 @@ def CMPXCHG16rm  : I<0xB1, MRMDestMem, (outs), (ins i16mem:$dst, GR16:$src),
                      "cmpxchg{w}\t{$src, $dst|$dst, $src}", []>, TB, OpSize;
 def CMPXCHG32rm  : I<0xB1, MRMDestMem, (outs), (ins i32mem:$dst, GR32:$src),
                      "cmpxchg{l}\t{$src, $dst|$dst, $src}", []>, TB;
+def CMPXCHG64rm  : RI<0xB1, MRMDestMem, (outs), (ins i64mem:$dst, GR64:$src),
+                      "cmpxchg{q}\t{$src, $dst|$dst, $src}", []>, TB;
 }
 
 let Defs = [EAX, EDX, EFLAGS], Uses = [EAX, EBX, ECX, EDX] in
 def CMPXCHG8B : I<0xC7, MRM1m, (outs), (ins i64mem:$dst),
                   "cmpxchg8b\t$dst", []>, TB;
 
-// Optimized codegen when the non-memory output is not used.
-// FIXME: Use normal add / sub instructions and add lock prefix dynamically.
-let Defs = [EFLAGS], mayLoad = 1, mayStore = 1 in {
-def LOCK_ADD8mr  : I<0x00, MRMDestMem, (outs), (ins i8mem:$dst, GR8:$src2),
-                    "lock\n\t"
-                    "add{b}\t{$src2, $dst|$dst, $src2}", []>, LOCK;
-def LOCK_ADD16mr  : I<0x01, MRMDestMem, (outs), (ins i16mem:$dst, GR16:$src2),
-                    "lock\n\t"
-                    "add{w}\t{$src2, $dst|$dst, $src2}", []>, OpSize, LOCK;
-def LOCK_ADD32mr  : I<0x01, MRMDestMem, (outs), (ins i32mem:$dst, GR32:$src2),
-                    "lock\n\t"
-                    "add{l}\t{$src2, $dst|$dst, $src2}", []>, LOCK;
-def LOCK_ADD8mi   : Ii8<0x80, MRM0m, (outs), (ins i8mem :$dst, i8imm :$src2),
-                    "lock\n\t"
-                    "add{b}\t{$src2, $dst|$dst, $src2}", []>, LOCK;
-def LOCK_ADD16mi  : Ii16<0x81, MRM0m, (outs), (ins i16mem:$dst, i16imm:$src2),
-                    "lock\n\t"
-                     "add{w}\t{$src2, $dst|$dst, $src2}", []>, LOCK;
-def LOCK_ADD32mi  : Ii32<0x81, MRM0m, (outs), (ins i32mem:$dst, i32imm:$src2),
-                    "lock\n\t"
-                    "add{l}\t{$src2, $dst|$dst, $src2}", []>, LOCK;
-def LOCK_ADD16mi8 : Ii8<0x83, MRM0m, (outs), (ins i16mem:$dst, i16i8imm :$src2),
-                    "lock\n\t"
-                    "add{w}\t{$src2, $dst|$dst, $src2}", []>, OpSize, LOCK;
-def LOCK_ADD32mi8 : Ii8<0x83, MRM0m, (outs), (ins i32mem:$dst, i32i8imm :$src2),
-                    "lock\n\t"
-                    "add{l}\t{$src2, $dst|$dst, $src2}", []>, LOCK;
+let Defs = [RAX, RDX, EFLAGS], Uses = [RAX, RBX, RCX, RDX] in
+def CMPXCHG16B : RI<0xC7, MRM1m, (outs), (ins i128mem:$dst),
+                    "cmpxchg16b\t$dst", []>, TB;
 
-def LOCK_INC8m  : I<0xFE, MRM0m, (outs), (ins i8mem :$dst),
-                    "lock\n\t"
-                    "inc{b}\t$dst", []>, LOCK;
-def LOCK_INC16m : I<0xFF, MRM0m, (outs), (ins i16mem:$dst),
-                    "lock\n\t"
-                    "inc{w}\t$dst", []>, OpSize, LOCK;
-def LOCK_INC32m : I<0xFF, MRM0m, (outs), (ins i32mem:$dst),
-                    "lock\n\t"
-                    "inc{l}\t$dst", []>, LOCK;
 
-def LOCK_SUB8mr   : I<0x28, MRMDestMem, (outs), (ins i8mem :$dst, GR8 :$src2),
-                    "lock\n\t"
-                    "sub{b}\t{$src2, $dst|$dst, $src2}", []>, LOCK;
-def LOCK_SUB16mr  : I<0x29, MRMDestMem, (outs), (ins i16mem:$dst, GR16:$src2),
-                    "lock\n\t"
-                    "sub{w}\t{$src2, $dst|$dst, $src2}", []>, OpSize, LOCK;
-def LOCK_SUB32mr  : I<0x29, MRMDestMem, (outs), (ins i32mem:$dst, GR32:$src2), 
-                    "lock\n\t"
-                    "sub{l}\t{$src2, $dst|$dst, $src2}", []>, LOCK;
-def LOCK_SUB8mi   : Ii8<0x80, MRM5m, (outs), (ins i8mem :$dst, i8imm:$src2), 
-                    "lock\n\t"
-                    "sub{b}\t{$src2, $dst|$dst, $src2}", []>, LOCK;
-def LOCK_SUB16mi  : Ii16<0x81, MRM5m, (outs), (ins i16mem:$dst, i16imm:$src2), 
-                    "lock\n\t"
-                    "sub{w}\t{$src2, $dst|$dst, $src2}", []>, OpSize, LOCK;
-def LOCK_SUB32mi  : Ii32<0x81, MRM5m, (outs), (ins i32mem:$dst, i32imm:$src2), 
-                    "lock\n\t"
-                     "sub{l}\t{$src2, $dst|$dst, $src2}", []>, LOCK;
-def LOCK_SUB16mi8 : Ii8<0x83, MRM5m, (outs), (ins i16mem:$dst, i16i8imm :$src2),
-                    "lock\n\t"
-                     "sub{w}\t{$src2, $dst|$dst, $src2}", []>, OpSize, LOCK;
-def LOCK_SUB32mi8 : Ii8<0x83, MRM5m, (outs), (ins i32mem:$dst, i32i8imm :$src2),
-                    "lock\n\t"
-                     "sub{l}\t{$src2, $dst|$dst, $src2}", []>, LOCK;
-
-def LOCK_DEC8m  : I<0xFE, MRM1m, (outs), (ins i8mem :$dst),
-                    "lock\n\t"
-                    "dec{b}\t$dst", []>, LOCK;
-def LOCK_DEC16m : I<0xFF, MRM1m, (outs), (ins i16mem:$dst),
-                    "lock\n\t"
-                    "dec{w}\t$dst", []>, OpSize, LOCK;
-def LOCK_DEC32m : I<0xFF, MRM1m, (outs), (ins i32mem:$dst),
-                    "lock\n\t"
-                    "dec{l}\t$dst", []>, LOCK;
-}
-
-// Atomic exchange, and, or, xor
-let Constraints = "$val = $dst", Defs = [EFLAGS],
-                  usesCustomInserter = 1 in {
-def ATOMAND32 : I<0, Pseudo, (outs GR32:$dst),(ins i32mem:$ptr, GR32:$val),
-               "#ATOMAND32 PSEUDO!", 
-               [(set GR32:$dst, (atomic_load_and_32 addr:$ptr, GR32:$val))]>;
-def ATOMOR32 : I<0, Pseudo, (outs GR32:$dst),(ins i32mem:$ptr, GR32:$val),
-               "#ATOMOR32 PSEUDO!", 
-               [(set GR32:$dst, (atomic_load_or_32 addr:$ptr, GR32:$val))]>;
-def ATOMXOR32 : I<0, Pseudo,(outs GR32:$dst),(ins i32mem:$ptr, GR32:$val),
-               "#ATOMXOR32 PSEUDO!", 
-               [(set GR32:$dst, (atomic_load_xor_32 addr:$ptr, GR32:$val))]>;
-def ATOMNAND32 : I<0, Pseudo,(outs GR32:$dst),(ins i32mem:$ptr, GR32:$val),
-               "#ATOMNAND32 PSEUDO!", 
-               [(set GR32:$dst, (atomic_load_nand_32 addr:$ptr, GR32:$val))]>;
-def ATOMMIN32: I<0, Pseudo, (outs GR32:$dst), (ins i32mem:$ptr, GR32:$val),
-               "#ATOMMIN32 PSEUDO!", 
-               [(set GR32:$dst, (atomic_load_min_32 addr:$ptr, GR32:$val))]>;
-def ATOMMAX32: I<0, Pseudo, (outs GR32:$dst),(ins i32mem:$ptr, GR32:$val),
-               "#ATOMMAX32 PSEUDO!", 
-               [(set GR32:$dst, (atomic_load_max_32 addr:$ptr, GR32:$val))]>;
-def ATOMUMIN32: I<0, Pseudo, (outs GR32:$dst),(ins i32mem:$ptr, GR32:$val),
-               "#ATOMUMIN32 PSEUDO!", 
-               [(set GR32:$dst, (atomic_load_umin_32 addr:$ptr, GR32:$val))]>;
-def ATOMUMAX32: I<0, Pseudo, (outs GR32:$dst),(ins i32mem:$ptr, GR32:$val),
-               "#ATOMUMAX32 PSEUDO!", 
-               [(set GR32:$dst, (atomic_load_umax_32 addr:$ptr, GR32:$val))]>;
-
-def ATOMAND16 : I<0, Pseudo, (outs GR16:$dst),(ins i16mem:$ptr, GR16:$val),
-               "#ATOMAND16 PSEUDO!", 
-               [(set GR16:$dst, (atomic_load_and_16 addr:$ptr, GR16:$val))]>;
-def ATOMOR16 : I<0, Pseudo, (outs GR16:$dst),(ins i16mem:$ptr, GR16:$val),
-               "#ATOMOR16 PSEUDO!", 
-               [(set GR16:$dst, (atomic_load_or_16 addr:$ptr, GR16:$val))]>;
-def ATOMXOR16 : I<0, Pseudo,(outs GR16:$dst),(ins i16mem:$ptr, GR16:$val),
-               "#ATOMXOR16 PSEUDO!", 
-               [(set GR16:$dst, (atomic_load_xor_16 addr:$ptr, GR16:$val))]>;
-def ATOMNAND16 : I<0, Pseudo,(outs GR16:$dst),(ins i16mem:$ptr, GR16:$val),
-               "#ATOMNAND16 PSEUDO!", 
-               [(set GR16:$dst, (atomic_load_nand_16 addr:$ptr, GR16:$val))]>;
-def ATOMMIN16: I<0, Pseudo, (outs GR16:$dst), (ins i16mem:$ptr, GR16:$val),
-               "#ATOMMIN16 PSEUDO!", 
-               [(set GR16:$dst, (atomic_load_min_16 addr:$ptr, GR16:$val))]>;
-def ATOMMAX16: I<0, Pseudo, (outs GR16:$dst),(ins i16mem:$ptr, GR16:$val),
-               "#ATOMMAX16 PSEUDO!", 
-               [(set GR16:$dst, (atomic_load_max_16 addr:$ptr, GR16:$val))]>;
-def ATOMUMIN16: I<0, Pseudo, (outs GR16:$dst),(ins i16mem:$ptr, GR16:$val),
-               "#ATOMUMIN16 PSEUDO!", 
-               [(set GR16:$dst, (atomic_load_umin_16 addr:$ptr, GR16:$val))]>;
-def ATOMUMAX16: I<0, Pseudo, (outs GR16:$dst),(ins i16mem:$ptr, GR16:$val),
-               "#ATOMUMAX16 PSEUDO!", 
-               [(set GR16:$dst, (atomic_load_umax_16 addr:$ptr, GR16:$val))]>;
-
-def ATOMAND8 : I<0, Pseudo, (outs GR8:$dst),(ins i8mem:$ptr, GR8:$val),
-               "#ATOMAND8 PSEUDO!", 
-               [(set GR8:$dst, (atomic_load_and_8 addr:$ptr, GR8:$val))]>;
-def ATOMOR8 : I<0, Pseudo, (outs GR8:$dst),(ins i8mem:$ptr, GR8:$val),
-               "#ATOMOR8 PSEUDO!", 
-               [(set GR8:$dst, (atomic_load_or_8 addr:$ptr, GR8:$val))]>;
-def ATOMXOR8 : I<0, Pseudo,(outs GR8:$dst),(ins i8mem:$ptr, GR8:$val),
-               "#ATOMXOR8 PSEUDO!", 
-               [(set GR8:$dst, (atomic_load_xor_8 addr:$ptr, GR8:$val))]>;
-def ATOMNAND8 : I<0, Pseudo,(outs GR8:$dst),(ins i8mem:$ptr, GR8:$val),
-               "#ATOMNAND8 PSEUDO!", 
-               [(set GR8:$dst, (atomic_load_nand_8 addr:$ptr, GR8:$val))]>;
-}
-
-let Constraints = "$val1 = $dst1, $val2 = $dst2", 
-                  Defs = [EFLAGS, EAX, EBX, ECX, EDX],
-                  Uses = [EAX, EBX, ECX, EDX],
-                  mayLoad = 1, mayStore = 1,
-                  usesCustomInserter = 1 in {
-def ATOMAND6432 : I<0, Pseudo, (outs GR32:$dst1, GR32:$dst2),
-                               (ins i64mem:$ptr, GR32:$val1, GR32:$val2),
-               "#ATOMAND6432 PSEUDO!", []>;
-def ATOMOR6432 : I<0, Pseudo, (outs GR32:$dst1, GR32:$dst2),
-                               (ins i64mem:$ptr, GR32:$val1, GR32:$val2),
-               "#ATOMOR6432 PSEUDO!", []>;
-def ATOMXOR6432 : I<0, Pseudo, (outs GR32:$dst1, GR32:$dst2),
-                               (ins i64mem:$ptr, GR32:$val1, GR32:$val2),
-               "#ATOMXOR6432 PSEUDO!", []>;
-def ATOMNAND6432 : I<0, Pseudo, (outs GR32:$dst1, GR32:$dst2),
-                               (ins i64mem:$ptr, GR32:$val1, GR32:$val2),
-               "#ATOMNAND6432 PSEUDO!", []>;
-def ATOMADD6432 : I<0, Pseudo, (outs GR32:$dst1, GR32:$dst2),
-                               (ins i64mem:$ptr, GR32:$val1, GR32:$val2),
-               "#ATOMADD6432 PSEUDO!", []>;
-def ATOMSUB6432 : I<0, Pseudo, (outs GR32:$dst1, GR32:$dst2),
-                               (ins i64mem:$ptr, GR32:$val1, GR32:$val2),
-               "#ATOMSUB6432 PSEUDO!", []>;
-def ATOMSWAP6432 : I<0, Pseudo, (outs GR32:$dst1, GR32:$dst2),
-                               (ins i64mem:$ptr, GR32:$val1, GR32:$val2),
-               "#ATOMSWAP6432 PSEUDO!", []>;
-}
 
 // Lock instruction prefix
 def LOCK_PREFIX : I<0xF0, RawFrm, (outs),  (ins), "lock", []>;
@@ -3807,6 +3604,7 @@ def REPNE_PREFIX : I<0xF2, RawFrm, (outs),  (ins), "repne", []>;
 def LODSB : I<0xAC, RawFrm, (outs), (ins), "lodsb", []>;
 def LODSW : I<0xAD, RawFrm, (outs), (ins), "lodsw", []>, OpSize;
 def LODSD : I<0xAD, RawFrm, (outs), (ins), "lods{l|d}", []>;
+def LODSQ : RI<0xAD, RawFrm, (outs), (ins), "lodsq", []>;
 
 def OUTSB : I<0x6E, RawFrm, (outs), (ins), "outsb", []>;
 def OUTSW : I<0x6F, RawFrm, (outs), (ins), "outsw", []>, OpSize;

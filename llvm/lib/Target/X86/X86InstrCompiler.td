@@ -127,6 +127,27 @@ def MOV32r0  : I<0x31, MRMInitReg, (outs GR32:$dst), (ins), "",
                  [(set GR32:$dst, 0)]>;
 }
 
+// We want to rewrite MOV64r0 in terms of MOV32r0, because it's sometimes a
+// smaller encoding, but doing so at isel time interferes with rematerialization
+// in the current register allocator. For now, this is rewritten when the
+// instruction is lowered to an MCInst.
+// FIXME: AddedComplexity gives this a higher priority than MOV64ri32. Remove
+// when we have a better way to specify isel priority.
+let Defs = [EFLAGS],
+    AddedComplexity = 1, isReMaterializable = 1, isAsCheapAsAMove = 1 in
+def MOV64r0   : I<0x31, MRMInitReg, (outs GR64:$dst), (ins), "",
+                 [(set GR64:$dst, 0)]>;
+
+// Materialize i64 constant where top 32-bits are zero. This could theoretically
+// use MOV32ri with a SUBREG_TO_REG to represent the zero-extension, however
+// that would make it more difficult to rematerialize.
+let AddedComplexity = 1, isReMaterializable = 1, isAsCheapAsAMove = 1 in
+def MOV64ri64i32 : Ii32<0xB8, AddRegFrm, (outs GR64:$dst), (ins i64i32imm:$src),
+                        "", [(set GR64:$dst, i64immZExt32:$src)]>;
+
+             
+
+
 //===----------------------------------------------------------------------===//
 // Thread Local Storage Instructions
 //
@@ -187,7 +208,330 @@ def TLSCall_64 : I<0, Pseudo, (outs), (ins i64mem:$sym),
                   Requires<[In64BitMode]>;
 
 //===----------------------------------------------------------------------===//
-// Non-Instruction Patterns
+// Atomic Instruction Pseudo Instructions
+//===----------------------------------------------------------------------===//
+
+// Atomic exchange, and, or, xor
+let Constraints = "$val = $dst", Defs = [EFLAGS],
+                  usesCustomInserter = 1 in {
+                  
+def ATOMAND8 : I<0, Pseudo, (outs GR8:$dst),(ins i8mem:$ptr, GR8:$val),
+               "#ATOMAND8 PSEUDO!", 
+               [(set GR8:$dst, (atomic_load_and_8 addr:$ptr, GR8:$val))]>;
+def ATOMOR8 : I<0, Pseudo, (outs GR8:$dst),(ins i8mem:$ptr, GR8:$val),
+               "#ATOMOR8 PSEUDO!", 
+               [(set GR8:$dst, (atomic_load_or_8 addr:$ptr, GR8:$val))]>;
+def ATOMXOR8 : I<0, Pseudo,(outs GR8:$dst),(ins i8mem:$ptr, GR8:$val),
+               "#ATOMXOR8 PSEUDO!", 
+               [(set GR8:$dst, (atomic_load_xor_8 addr:$ptr, GR8:$val))]>;
+def ATOMNAND8 : I<0, Pseudo,(outs GR8:$dst),(ins i8mem:$ptr, GR8:$val),
+               "#ATOMNAND8 PSEUDO!", 
+               [(set GR8:$dst, (atomic_load_nand_8 addr:$ptr, GR8:$val))]>;
+
+def ATOMAND16 : I<0, Pseudo, (outs GR16:$dst),(ins i16mem:$ptr, GR16:$val),
+               "#ATOMAND16 PSEUDO!", 
+               [(set GR16:$dst, (atomic_load_and_16 addr:$ptr, GR16:$val))]>;
+def ATOMOR16 : I<0, Pseudo, (outs GR16:$dst),(ins i16mem:$ptr, GR16:$val),
+               "#ATOMOR16 PSEUDO!", 
+               [(set GR16:$dst, (atomic_load_or_16 addr:$ptr, GR16:$val))]>;
+def ATOMXOR16 : I<0, Pseudo,(outs GR16:$dst),(ins i16mem:$ptr, GR16:$val),
+               "#ATOMXOR16 PSEUDO!", 
+               [(set GR16:$dst, (atomic_load_xor_16 addr:$ptr, GR16:$val))]>;
+def ATOMNAND16 : I<0, Pseudo,(outs GR16:$dst),(ins i16mem:$ptr, GR16:$val),
+               "#ATOMNAND16 PSEUDO!", 
+               [(set GR16:$dst, (atomic_load_nand_16 addr:$ptr, GR16:$val))]>;
+def ATOMMIN16: I<0, Pseudo, (outs GR16:$dst), (ins i16mem:$ptr, GR16:$val),
+               "#ATOMMIN16 PSEUDO!", 
+               [(set GR16:$dst, (atomic_load_min_16 addr:$ptr, GR16:$val))]>;
+def ATOMMAX16: I<0, Pseudo, (outs GR16:$dst),(ins i16mem:$ptr, GR16:$val),
+               "#ATOMMAX16 PSEUDO!", 
+               [(set GR16:$dst, (atomic_load_max_16 addr:$ptr, GR16:$val))]>;
+def ATOMUMIN16: I<0, Pseudo, (outs GR16:$dst),(ins i16mem:$ptr, GR16:$val),
+               "#ATOMUMIN16 PSEUDO!", 
+               [(set GR16:$dst, (atomic_load_umin_16 addr:$ptr, GR16:$val))]>;
+def ATOMUMAX16: I<0, Pseudo, (outs GR16:$dst),(ins i16mem:$ptr, GR16:$val),
+               "#ATOMUMAX16 PSEUDO!", 
+               [(set GR16:$dst, (atomic_load_umax_16 addr:$ptr, GR16:$val))]>;
+
+
+def ATOMAND32 : I<0, Pseudo, (outs GR32:$dst),(ins i32mem:$ptr, GR32:$val),
+               "#ATOMAND32 PSEUDO!", 
+               [(set GR32:$dst, (atomic_load_and_32 addr:$ptr, GR32:$val))]>;
+def ATOMOR32 : I<0, Pseudo, (outs GR32:$dst),(ins i32mem:$ptr, GR32:$val),
+               "#ATOMOR32 PSEUDO!", 
+               [(set GR32:$dst, (atomic_load_or_32 addr:$ptr, GR32:$val))]>;
+def ATOMXOR32 : I<0, Pseudo,(outs GR32:$dst),(ins i32mem:$ptr, GR32:$val),
+               "#ATOMXOR32 PSEUDO!", 
+               [(set GR32:$dst, (atomic_load_xor_32 addr:$ptr, GR32:$val))]>;
+def ATOMNAND32 : I<0, Pseudo,(outs GR32:$dst),(ins i32mem:$ptr, GR32:$val),
+               "#ATOMNAND32 PSEUDO!", 
+               [(set GR32:$dst, (atomic_load_nand_32 addr:$ptr, GR32:$val))]>;
+def ATOMMIN32: I<0, Pseudo, (outs GR32:$dst), (ins i32mem:$ptr, GR32:$val),
+               "#ATOMMIN32 PSEUDO!", 
+               [(set GR32:$dst, (atomic_load_min_32 addr:$ptr, GR32:$val))]>;
+def ATOMMAX32: I<0, Pseudo, (outs GR32:$dst),(ins i32mem:$ptr, GR32:$val),
+               "#ATOMMAX32 PSEUDO!", 
+               [(set GR32:$dst, (atomic_load_max_32 addr:$ptr, GR32:$val))]>;
+def ATOMUMIN32: I<0, Pseudo, (outs GR32:$dst),(ins i32mem:$ptr, GR32:$val),
+               "#ATOMUMIN32 PSEUDO!", 
+               [(set GR32:$dst, (atomic_load_umin_32 addr:$ptr, GR32:$val))]>;
+def ATOMUMAX32: I<0, Pseudo, (outs GR32:$dst),(ins i32mem:$ptr, GR32:$val),
+               "#ATOMUMAX32 PSEUDO!", 
+               [(set GR32:$dst, (atomic_load_umax_32 addr:$ptr, GR32:$val))]>;
+
+
+                  
+def ATOMAND64 : I<0, Pseudo, (outs GR64:$dst),(ins i64mem:$ptr, GR64:$val),
+               "#ATOMAND64 PSEUDO!", 
+               [(set GR64:$dst, (atomic_load_and_64 addr:$ptr, GR64:$val))]>;
+def ATOMOR64 : I<0, Pseudo, (outs GR64:$dst),(ins i64mem:$ptr, GR64:$val),
+               "#ATOMOR64 PSEUDO!", 
+               [(set GR64:$dst, (atomic_load_or_64 addr:$ptr, GR64:$val))]>;
+def ATOMXOR64 : I<0, Pseudo,(outs GR64:$dst),(ins i64mem:$ptr, GR64:$val),
+               "#ATOMXOR64 PSEUDO!", 
+               [(set GR64:$dst, (atomic_load_xor_64 addr:$ptr, GR64:$val))]>;
+def ATOMNAND64 : I<0, Pseudo,(outs GR64:$dst),(ins i64mem:$ptr, GR64:$val),
+               "#ATOMNAND64 PSEUDO!", 
+               [(set GR64:$dst, (atomic_load_nand_64 addr:$ptr, GR64:$val))]>;
+def ATOMMIN64: I<0, Pseudo, (outs GR64:$dst), (ins i64mem:$ptr, GR64:$val),
+               "#ATOMMIN64 PSEUDO!", 
+               [(set GR64:$dst, (atomic_load_min_64 addr:$ptr, GR64:$val))]>;
+def ATOMMAX64: I<0, Pseudo, (outs GR64:$dst),(ins i64mem:$ptr, GR64:$val),
+               "#ATOMMAX64 PSEUDO!", 
+               [(set GR64:$dst, (atomic_load_max_64 addr:$ptr, GR64:$val))]>;
+def ATOMUMIN64: I<0, Pseudo, (outs GR64:$dst),(ins i64mem:$ptr, GR64:$val),
+               "#ATOMUMIN64 PSEUDO!", 
+               [(set GR64:$dst, (atomic_load_umin_64 addr:$ptr, GR64:$val))]>;
+def ATOMUMAX64: I<0, Pseudo, (outs GR64:$dst),(ins i64mem:$ptr, GR64:$val),
+               "#ATOMUMAX64 PSEUDO!", 
+               [(set GR64:$dst, (atomic_load_umax_64 addr:$ptr, GR64:$val))]>;
+}
+
+let Constraints = "$val1 = $dst1, $val2 = $dst2", 
+                  Defs = [EFLAGS, EAX, EBX, ECX, EDX],
+                  Uses = [EAX, EBX, ECX, EDX],
+                  mayLoad = 1, mayStore = 1,
+                  usesCustomInserter = 1 in {
+def ATOMAND6432 : I<0, Pseudo, (outs GR32:$dst1, GR32:$dst2),
+                               (ins i64mem:$ptr, GR32:$val1, GR32:$val2),
+               "#ATOMAND6432 PSEUDO!", []>;
+def ATOMOR6432 : I<0, Pseudo, (outs GR32:$dst1, GR32:$dst2),
+                               (ins i64mem:$ptr, GR32:$val1, GR32:$val2),
+               "#ATOMOR6432 PSEUDO!", []>;
+def ATOMXOR6432 : I<0, Pseudo, (outs GR32:$dst1, GR32:$dst2),
+                               (ins i64mem:$ptr, GR32:$val1, GR32:$val2),
+               "#ATOMXOR6432 PSEUDO!", []>;
+def ATOMNAND6432 : I<0, Pseudo, (outs GR32:$dst1, GR32:$dst2),
+                               (ins i64mem:$ptr, GR32:$val1, GR32:$val2),
+               "#ATOMNAND6432 PSEUDO!", []>;
+def ATOMADD6432 : I<0, Pseudo, (outs GR32:$dst1, GR32:$dst2),
+                               (ins i64mem:$ptr, GR32:$val1, GR32:$val2),
+               "#ATOMADD6432 PSEUDO!", []>;
+def ATOMSUB6432 : I<0, Pseudo, (outs GR32:$dst1, GR32:$dst2),
+                               (ins i64mem:$ptr, GR32:$val1, GR32:$val2),
+               "#ATOMSUB6432 PSEUDO!", []>;
+def ATOMSWAP6432 : I<0, Pseudo, (outs GR32:$dst1, GR32:$dst2),
+                               (ins i64mem:$ptr, GR32:$val1, GR32:$val2),
+               "#ATOMSWAP6432 PSEUDO!", []>;
+}
+
+//===----------------------------------------------------------------------===//
+// Normal-Instructions-With-Lock-Prefix Pseudo Instructions
+//===----------------------------------------------------------------------===//
+
+// FIXME: Use normal instructions and add lock prefix dynamically.
+
+// Memory barriers
+
+// TODO: Get this to fold the constant into the instruction.           
+def OR32mrLocked  : I<0x09, MRMDestMem, (outs), (ins i32mem:$dst, GR32:$zero),
+                      "lock\n\t"
+                      "or{l}\t{$zero, $dst|$dst, $zero}",
+                      []>, Requires<[In32BitMode]>, LOCK;
+
+let hasSideEffects = 1 in
+def Int_MemBarrier : I<0, Pseudo, (outs), (ins),
+                     "#MEMBARRIER",
+                     [(X86MemBarrier)]>, Requires<[HasSSE2]>;
+
+// TODO: Get this to fold the constant into the instruction.           
+let hasSideEffects = 1, Defs = [ESP] in
+def Int_MemBarrierNoSSE64  : RI<0x09, MRM1r, (outs), (ins GR64:$zero),
+                           "lock\n\t"
+                           "or{q}\t{$zero, (%rsp)|(%rsp), $zero}",
+                           [(X86MemBarrierNoSSE GR64:$zero)]>,
+                           Requires<[In64BitMode]>, LOCK;
+
+
+// Optimized codegen when the non-memory output is not used.
+let Defs = [EFLAGS], mayLoad = 1, mayStore = 1 in {
+def LOCK_ADD8mr  : I<0x00, MRMDestMem, (outs), (ins i8mem:$dst, GR8:$src2),
+                    "lock\n\t"
+                    "add{b}\t{$src2, $dst|$dst, $src2}", []>, LOCK;
+def LOCK_ADD16mr  : I<0x01, MRMDestMem, (outs), (ins i16mem:$dst, GR16:$src2),
+                    "lock\n\t"
+                    "add{w}\t{$src2, $dst|$dst, $src2}", []>, OpSize, LOCK;
+def LOCK_ADD32mr  : I<0x01, MRMDestMem, (outs), (ins i32mem:$dst, GR32:$src2),
+                    "lock\n\t"
+                    "add{l}\t{$src2, $dst|$dst, $src2}", []>, LOCK;
+def LOCK_ADD64mr : RI<0x01, MRMDestMem, (outs), (ins i64mem:$dst, GR64:$src2),
+                      "lock\n\t"
+                      "add{q}\t{$src2, $dst|$dst, $src2}", []>, LOCK;
+                      
+def LOCK_ADD8mi   : Ii8<0x80, MRM0m, (outs), (ins i8mem :$dst, i8imm :$src2),
+                    "lock\n\t"
+                    "add{b}\t{$src2, $dst|$dst, $src2}", []>, LOCK;
+def LOCK_ADD16mi  : Ii16<0x81, MRM0m, (outs), (ins i16mem:$dst, i16imm:$src2),
+                    "lock\n\t"
+                     "add{w}\t{$src2, $dst|$dst, $src2}", []>, LOCK;
+def LOCK_ADD32mi  : Ii32<0x81, MRM0m, (outs), (ins i32mem:$dst, i32imm:$src2),
+                    "lock\n\t"
+                    "add{l}\t{$src2, $dst|$dst, $src2}", []>, LOCK;
+def LOCK_ADD64mi32 : RIi32<0x81, MRM0m, (outs),
+                                        (ins i64mem:$dst, i64i32imm :$src2),
+                      "lock\n\t"
+                      "add{q}\t{$src2, $dst|$dst, $src2}", []>, LOCK;
+
+def LOCK_ADD16mi8 : Ii8<0x83, MRM0m, (outs), (ins i16mem:$dst, i16i8imm :$src2),
+                    "lock\n\t"
+                    "add{w}\t{$src2, $dst|$dst, $src2}", []>, OpSize, LOCK;
+def LOCK_ADD32mi8 : Ii8<0x83, MRM0m, (outs), (ins i32mem:$dst, i32i8imm :$src2),
+                    "lock\n\t"
+                    "add{l}\t{$src2, $dst|$dst, $src2}", []>, LOCK;
+def LOCK_ADD64mi8 : RIi8<0x83, MRM0m, (outs),
+                                      (ins i64mem:$dst, i64i8imm :$src2),
+                    "lock\n\t"
+                    "add{q}\t{$src2, $dst|$dst, $src2}", []>, LOCK;
+
+def LOCK_SUB8mr   : I<0x28, MRMDestMem, (outs), (ins i8mem :$dst, GR8 :$src2),
+                    "lock\n\t"
+                    "sub{b}\t{$src2, $dst|$dst, $src2}", []>, LOCK;
+def LOCK_SUB16mr  : I<0x29, MRMDestMem, (outs), (ins i16mem:$dst, GR16:$src2),
+                    "lock\n\t"
+                    "sub{w}\t{$src2, $dst|$dst, $src2}", []>, OpSize, LOCK;
+def LOCK_SUB32mr  : I<0x29, MRMDestMem, (outs), (ins i32mem:$dst, GR32:$src2), 
+                    "lock\n\t"
+                    "sub{l}\t{$src2, $dst|$dst, $src2}", []>, LOCK;
+def LOCK_SUB64mr : RI<0x29, MRMDestMem, (outs), (ins i64mem:$dst, GR64:$src2), 
+                      "lock\n\t"
+                      "sub{q}\t{$src2, $dst|$dst, $src2}", []>, LOCK;
+
+
+def LOCK_SUB8mi   : Ii8<0x80, MRM5m, (outs), (ins i8mem :$dst, i8imm:$src2), 
+                    "lock\n\t"
+                    "sub{b}\t{$src2, $dst|$dst, $src2}", []>, LOCK;
+def LOCK_SUB16mi  : Ii16<0x81, MRM5m, (outs), (ins i16mem:$dst, i16imm:$src2), 
+                    "lock\n\t"
+                    "sub{w}\t{$src2, $dst|$dst, $src2}", []>, OpSize, LOCK;
+def LOCK_SUB32mi  : Ii32<0x81, MRM5m, (outs), (ins i32mem:$dst, i32imm:$src2), 
+                    "lock\n\t"
+                     "sub{l}\t{$src2, $dst|$dst, $src2}", []>, LOCK;
+def LOCK_SUB64mi32 : RIi32<0x81, MRM5m, (outs),
+                                        (ins i64mem:$dst, i64i32imm:$src2),
+                      "lock\n\t"
+                      "sub{q}\t{$src2, $dst|$dst, $src2}", []>, LOCK;
+
+
+def LOCK_SUB16mi8 : Ii8<0x83, MRM5m, (outs), (ins i16mem:$dst, i16i8imm :$src2),
+                    "lock\n\t"
+                     "sub{w}\t{$src2, $dst|$dst, $src2}", []>, OpSize, LOCK;
+def LOCK_SUB32mi8 : Ii8<0x83, MRM5m, (outs), (ins i32mem:$dst, i32i8imm :$src2),
+                    "lock\n\t"
+                     "sub{l}\t{$src2, $dst|$dst, $src2}", []>, LOCK;
+def LOCK_SUB64mi8 : RIi8<0x83, MRM5m, (outs),
+                                      (ins i64mem:$dst, i64i8imm :$src2), 
+                      "lock\n\t"
+                      "sub{q}\t{$src2, $dst|$dst, $src2}", []>, LOCK;
+
+def LOCK_INC8m  : I<0xFE, MRM0m, (outs), (ins i8mem :$dst),
+                    "lock\n\t"
+                    "inc{b}\t$dst", []>, LOCK;
+def LOCK_INC16m : I<0xFF, MRM0m, (outs), (ins i16mem:$dst),
+                    "lock\n\t"
+                    "inc{w}\t$dst", []>, OpSize, LOCK;
+def LOCK_INC32m : I<0xFF, MRM0m, (outs), (ins i32mem:$dst),
+                    "lock\n\t"
+                    "inc{l}\t$dst", []>, LOCK;
+def LOCK_INC64m : RI<0xFF, MRM0m, (outs), (ins i64mem:$dst),
+                     "lock\n\t"
+                     "inc{q}\t$dst", []>, LOCK;
+
+def LOCK_DEC8m  : I<0xFE, MRM1m, (outs), (ins i8mem :$dst),
+                    "lock\n\t"
+                    "dec{b}\t$dst", []>, LOCK;
+def LOCK_DEC16m : I<0xFF, MRM1m, (outs), (ins i16mem:$dst),
+                    "lock\n\t"
+                    "dec{w}\t$dst", []>, OpSize, LOCK;
+def LOCK_DEC32m : I<0xFF, MRM1m, (outs), (ins i32mem:$dst),
+                    "lock\n\t"
+                    "dec{l}\t$dst", []>, LOCK;
+def LOCK_DEC64m : RI<0xFF, MRM1m, (outs), (ins i64mem:$dst),
+                      "lock\n\t"
+                      "dec{q}\t$dst", []>, LOCK;
+}
+
+// Atomic compare and swap.
+let Defs = [EAX, EDX, EFLAGS], Uses = [EAX, EBX, ECX, EDX] in {
+def LCMPXCHG8B : I<0xC7, MRM1m, (outs), (ins i64mem:$ptr),
+               "lock\n\t"
+               "cmpxchg8b\t$ptr",
+               [(X86cas8 addr:$ptr)]>, TB, LOCK;
+}
+let Defs = [AL, EFLAGS], Uses = [AL] in {
+def LCMPXCHG8 : I<0xB0, MRMDestMem, (outs), (ins i8mem:$ptr, GR8:$swap),
+               "lock\n\t"
+               "cmpxchg{b}\t{$swap, $ptr|$ptr, $swap}",
+               [(X86cas addr:$ptr, GR8:$swap, 1)]>, TB, LOCK;
+}
+
+let Defs = [AX, EFLAGS], Uses = [AX] in {
+def LCMPXCHG16 : I<0xB1, MRMDestMem, (outs), (ins i16mem:$ptr, GR16:$swap),
+               "lock\n\t"
+               "cmpxchg{w}\t{$swap, $ptr|$ptr, $swap}",
+               [(X86cas addr:$ptr, GR16:$swap, 2)]>, TB, OpSize, LOCK;
+}
+
+let Defs = [EAX, EFLAGS], Uses = [EAX] in {
+def LCMPXCHG32 : I<0xB1, MRMDestMem, (outs), (ins i32mem:$ptr, GR32:$swap),
+               "lock\n\t"
+               "cmpxchg{l}\t{$swap, $ptr|$ptr, $swap}",
+               [(X86cas addr:$ptr, GR32:$swap, 4)]>, TB, LOCK;
+}
+
+let Defs = [RAX, EFLAGS], Uses = [RAX] in {
+def LCMPXCHG64 : RI<0xB1, MRMDestMem, (outs), (ins i64mem:$ptr, GR64:$swap),
+               "lock\n\t"
+               "cmpxchgq\t$swap,$ptr",
+               [(X86cas addr:$ptr, GR64:$swap, 8)]>, TB, LOCK;
+}
+
+// Atomic exchange and add
+let Constraints = "$val = $dst", Defs = [EFLAGS] in {
+def LXADD8  : I<0xC0, MRMSrcMem, (outs GR8:$dst), (ins GR8:$val, i8mem:$ptr),
+               "lock\n\t"
+               "xadd{b}\t{$val, $ptr|$ptr, $val}",
+               [(set GR8:$dst, (atomic_load_add_8 addr:$ptr, GR8:$val))]>,
+                TB, LOCK;
+def LXADD16 : I<0xC1, MRMSrcMem, (outs GR16:$dst), (ins GR16:$val, i16mem:$ptr),
+               "lock\n\t"
+               "xadd{w}\t{$val, $ptr|$ptr, $val}",
+               [(set GR16:$dst, (atomic_load_add_16 addr:$ptr, GR16:$val))]>,
+                TB, OpSize, LOCK;
+def LXADD32 : I<0xC1, MRMSrcMem, (outs GR32:$dst), (ins GR32:$val, i32mem:$ptr),
+               "lock\n\t"
+               "xadd{l}\t{$val, $ptr|$ptr, $val}",
+               [(set GR32:$dst, (atomic_load_add_32 addr:$ptr, GR32:$val))]>,
+                TB, LOCK;
+def LXADD64 : RI<0xC1, MRMSrcMem, (outs GR64:$dst), (ins GR64:$val,i64mem:$ptr),
+               "lock\n\t"
+               "xadd\t$val, $ptr",
+               [(set GR64:$dst, (atomic_load_add_64 addr:$ptr, GR64:$val))]>,
+                TB, LOCK;
+}
+
+
+//===----------------------------------------------------------------------===//
+// DAG Pattern Matching Rules
 //===----------------------------------------------------------------------===//
 
 // ConstantPool GlobalAddress, ExternalSymbol, and JumpTable
@@ -1109,6 +1453,4 @@ def : Pat<(and GR64:$src1, i64immSExt8:$src2),
           (AND64ri8 GR64:$src1, i64immSExt8:$src2)>;
 def : Pat<(and GR64:$src1, i64immSExt32:$src2),
           (AND64ri32 GR64:$src1, i64immSExt32:$src2)>;
-          
 
-          

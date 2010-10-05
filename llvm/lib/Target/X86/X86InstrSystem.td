@@ -331,6 +331,14 @@ def SLDT16m : I<0x00, MRM0m, (outs i16mem:$dst), (ins),
                 "sldt{w}\t$dst", []>, TB;
 def SLDT32r : I<0x00, MRM0r, (outs GR32:$dst), (ins),
                 "sldt{l}\t$dst", []>, TB;
+                
+// LLDT is not interpreted specially in 64-bit mode because there is no sign
+//   extension.
+def SLDT64r : RI<0x00, MRM0r, (outs GR64:$dst), (ins),
+                 "sldt{q}\t$dst", []>, TB;
+def SLDT64m : RI<0x00, MRM0m, (outs i16mem:$dst), (ins),
+                 "sldt{q}\t$dst", []>, TB;
+
 def LGDTm : I<0x01, MRM2m, (outs), (ins opaque48mem:$src),
               "lgdt\t$src", []>, TB;
 def LIDTm : I<0x01, MRM3m, (outs), (ins opaque48mem:$src),
