@@ -796,16 +796,25 @@ unsigned SourceManager::getColumnNumber(FileID FID, unsigned FilePos,
   return FilePos-LineStart+1;
 }
 
+// isInvalid - Return the result of calling loc.isInvalid(), and
+// if Invalid is not null, set its value to same.
+static bool isInvalid(SourceLocation Loc, bool *Invalid) {
+  bool MyInvalid = Loc.isInvalid();
+  if (Invalid)
+    *Invalid = MyInvalid;
+  return MyInvalid;
+}
+
 unsigned SourceManager::getSpellingColumnNumber(SourceLocation Loc,
                                                 bool *Invalid) const {
-  if (Loc.isInvalid()) return 0;
+  if (isInvalid(Loc, Invalid)) return 0;
   std::pair<FileID, unsigned> LocInfo = getDecomposedSpellingLoc(Loc);
   return getColumnNumber(LocInfo.first, LocInfo.second, Invalid);
 }
 
 unsigned SourceManager::getInstantiationColumnNumber(SourceLocation Loc,
                                                      bool *Invalid) const {
-  if (Loc.isInvalid()) return 0;
+  if (isInvalid(Loc, Invalid)) return 0;
   std::pair<FileID, unsigned> LocInfo = getDecomposedInstantiationLoc(Loc);
   return getColumnNumber(LocInfo.first, LocInfo.second, Invalid);
 }
@@ -974,13 +983,13 @@ unsigned SourceManager::getLineNumber(FileID FID, unsigned FilePos,
 
 unsigned SourceManager::getInstantiationLineNumber(SourceLocation Loc, 
                                                    bool *Invalid) const {
-  if (Loc.isInvalid()) return 0;
+  if (isInvalid(Loc, Invalid)) return 0;
   std::pair<FileID, unsigned> LocInfo = getDecomposedInstantiationLoc(Loc);
   return getLineNumber(LocInfo.first, LocInfo.second);
 }
 unsigned SourceManager::getSpellingLineNumber(SourceLocation Loc, 
                                               bool *Invalid) const {
-  if (Loc.isInvalid()) return 0;
+  if (isInvalid(Loc, Invalid)) return 0;
   std::pair<FileID, unsigned> LocInfo = getDecomposedSpellingLoc(Loc);
   return getLineNumber(LocInfo.first, LocInfo.second);
 }
@@ -1021,7 +1030,7 @@ SourceManager::getFileCharacteristic(SourceLocation Loc) const {
 /// for normal clients.
 const char *SourceManager::getBufferName(SourceLocation Loc, 
                                          bool *Invalid) const {
-  if (Loc.isInvalid()) return "<invalid loc>";
+  if (isInvalid(Loc, Invalid)) return "<invalid loc>";
 
   return getBuffer(getFileID(Loc), Invalid)->getBufferIdentifier();
 }
