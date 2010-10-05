@@ -44,13 +44,13 @@ declare i32 @printf(i8* nocapture, ...) nounwind
 ; CHECK:           VirtualAddress           = 0x{{[0-9A-F]+}}
 ; CHECK:           SymbolTableIndex         = 2
 ; CHECK:           Type                     = IMAGE_REL_I386_DIR32 (6)
-; CHECK:           SymbolName               =
+; CHECK:           SymbolName               = .data
 ; CHECK:         }
 ; CHECK:         1 = {
 ; CHECK:           VirtualAddress           = 0x{{[0-9A-F]+}}
 ; CHECK:           SymbolTableIndex         = 5
 ; CHECK:           Type                     = IMAGE_REL_I386_REL32 (20)
-; CHECK:           SymbolName               = _main
+; CHECK:           SymbolName               = _printf
 ; CHECK:         }
 ; CHECK:       ]
 ; CHECK:     }
@@ -87,7 +87,7 @@ declare i32 @printf(i8* nocapture, ...) nounwind
 ; CHECK:         15 00 00 00 02 00 00 00 - 00 00 00 00 01 00 00 00 |................|
 ; CHECK:         00 00                                             |..|
 ; CHECK:     }
-; CHECK:     1 = {
+; CHECK:     2 = {
 ; CHECK:       Name                     = .data
 ; CHECK:       Value                    = 0
 ; CHECK:       SectionNumber            = 2
@@ -99,7 +99,7 @@ declare i32 @printf(i8* nocapture, ...) nounwind
 ; CHECK:         0C 00 00 00 00 00 00 00 - 00 00 00 00 02 00 00 00 |................|
 ; CHECK:         00 00                                             |..|
 ; CHECK:     }
-; CHECK:     2 = {
+; CHECK:     4 = {
 ; CHECK:       Name                     = _main
 ; CHECK:       Value                    = 0
 ; CHECK:       SectionNumber            = 1
@@ -109,7 +109,7 @@ declare i32 @printf(i8* nocapture, ...) nounwind
 ; CHECK:       NumberOfAuxSymbols       = 0
 ; CHECK:       AuxillaryData            =
 ; CHECK:     }
-; CHECK:     3 = {
+; CHECK:     5 = {
 ; CHECK:       Name                     = _printf
 ; CHECK:       Value                    = 0
 ; CHECK:       SectionNumber            = 0

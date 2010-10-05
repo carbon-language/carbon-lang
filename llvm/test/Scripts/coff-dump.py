@@ -160,10 +160,10 @@ file = ('struct', [
           0x0010: 'IMAGE_REL_AMD64_SSPAN32',
         },
       }))),
-      ('SymbolName',       ('ptr', '+ PointerToSymbolTable * - SymbolTableIndex 1 18', ('scalar',  '<8s', symname)))
+      ('SymbolName',       ('ptr', '+ PointerToSymbolTable * SymbolTableIndex 18', ('scalar',  '<8s', symname)))
     ])))),
   ]))),
-  ('Symbols', ('ptr', 'PointerToSymbolTable', ('byte-array', '* NumberOfSymbols 18',  ('struct', [
+  ('Symbols', ('ptr', 'PointerToSymbolTable', ('byte-array', '18', '* NumberOfSymbols 18',  ('struct', [
     ('Name',                ('scalar',  '<8s', symname)),
     ('Value',               ('scalar',  '<L',  '%d'   )),
     ('SectionNumber',       ('scalar',  '<H',  '%d'   )),
@@ -487,24 +487,28 @@ def handle_array(entry):
   return newItems
 
 def handle_byte_array(entry):
-  length = entry[1]
-  element = entry[2]
+  ent_size = entry[1]
+  length = entry[2]
+  element = entry[3]
 
   newItems = []
 
   write("[\n")
   indent()
 
+  item_size = read_value(ent_size)
   value = read_value(length)
   end_of_array = Input.tell() + value
 
+  prev_loc = Input.tell()
   index = 0
   while Input.tell() < end_of_array:
-    write("%d = "%index)
+    write("%d = " % index)
     value = handle_element(element)
     write("\n")
     newItems.append(value)
-    index += 1
+    index += (Input.tell() - prev_loc) / item_size
+    prev_loc = Input.tell()
 
   dedent()
   write("]")
