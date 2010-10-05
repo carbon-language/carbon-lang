@@ -586,6 +586,44 @@ def LXADD64 : RI<0xC1, MRMSrcMem, (outs GR64:$dst), (ins GR64:$val,i64mem:$ptr),
                 TB, LOCK;
 }
 
+//===----------------------------------------------------------------------===//
+// Conditional Move Pseudo Instructions.
+//===----------------------------------------------------------------------===//
+
+
+// CMOV* - Used to implement the SSE SELECT DAG operation.  Expanded after
+// instruction selection into a branch sequence.
+let Uses = [EFLAGS], usesCustomInserter = 1 in {
+  def CMOV_FR32 : I<0, Pseudo,
+                    (outs FR32:$dst), (ins FR32:$t, FR32:$f, i8imm:$cond),
+                    "#CMOV_FR32 PSEUDO!",
+                    [(set FR32:$dst, (X86cmov FR32:$t, FR32:$f, imm:$cond,
+                                                  EFLAGS))]>;
+  def CMOV_FR64 : I<0, Pseudo,
+                    (outs FR64:$dst), (ins FR64:$t, FR64:$f, i8imm:$cond),
+                    "#CMOV_FR64 PSEUDO!",
+                    [(set FR64:$dst, (X86cmov FR64:$t, FR64:$f, imm:$cond,
+                                                  EFLAGS))]>;
+  def CMOV_V4F32 : I<0, Pseudo,
+                    (outs VR128:$dst), (ins VR128:$t, VR128:$f, i8imm:$cond),
+                    "#CMOV_V4F32 PSEUDO!",
+                    [(set VR128:$dst,
+                      (v4f32 (X86cmov VR128:$t, VR128:$f, imm:$cond,
+                                          EFLAGS)))]>;
+  def CMOV_V2F64 : I<0, Pseudo,
+                    (outs VR128:$dst), (ins VR128:$t, VR128:$f, i8imm:$cond),
+                    "#CMOV_V2F64 PSEUDO!",
+                    [(set VR128:$dst,
+                      (v2f64 (X86cmov VR128:$t, VR128:$f, imm:$cond,
+                                          EFLAGS)))]>;
+  def CMOV_V2I64 : I<0, Pseudo,
+                    (outs VR128:$dst), (ins VR128:$t, VR128:$f, i8imm:$cond),
+                    "#CMOV_V2I64 PSEUDO!",
+                    [(set VR128:$dst,
+                      (v2i64 (X86cmov VR128:$t, VR128:$f, imm:$cond,
+                                          EFLAGS)))]>;
+}
+
 
 //===----------------------------------------------------------------------===//
 // DAG Pattern Matching Rules

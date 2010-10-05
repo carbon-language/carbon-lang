@@ -18,15 +18,6 @@
 //  Miscellaneous Instructions...
 //
 
-def POPCNT64rr : RI<0xB8, MRMSrcReg, (outs GR64:$dst), (ins GR64:$src),
-                    "popcnt{q}\t{$src, $dst|$dst, $src}", []>, XS;
-let mayLoad = 1 in
-def POPCNT64rm : RI<0xB8, MRMSrcMem, (outs GR64:$dst), (ins i64mem:$src),
-                    "popcnt{q}\t{$src, $dst|$dst, $src}", []>, XS;
-
-let Defs = [RBP,RSP], Uses = [RBP,RSP], mayLoad = 1, neverHasSideEffects = 1 in
-def LEAVE64  : I<0xC9, RawFrm,
-                 (outs), (ins), "leave", []>, Requires<[In64BitMode]>;
 let Defs = [RSP], Uses = [RSP], neverHasSideEffects=1 in {
 let mayLoad = 1 in {
 def POP64r   : I<0x58, AddRegFrm,

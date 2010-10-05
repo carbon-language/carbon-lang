@@ -580,19 +580,13 @@ let Defs = [EBP, ESP], Uses = [EBP, ESP], mayLoad = 1, neverHasSideEffects=1 in
 def LEAVE    : I<0xC9, RawFrm,
                  (outs), (ins), "leave", []>, Requires<[In32BitMode]>;
 
+let Defs = [RBP,RSP], Uses = [RBP,RSP], mayLoad = 1, neverHasSideEffects = 1 in
+def LEAVE64  : I<0xC9, RawFrm,
+                 (outs), (ins), "leave", []>, Requires<[In64BitMode]>;
+
 //===----------------------------------------------------------------------===//
-//  Miscellaneous Instructions...
+//  Miscellaneous Instructions.
 //
-def POPCNT16rr : I<0xB8, MRMSrcReg, (outs GR16:$dst), (ins GR16:$src),
-                   "popcnt{w}\t{$src, $dst|$dst, $src}", []>, OpSize, XS;
-let mayLoad = 1 in
-def POPCNT16rm : I<0xB8, MRMSrcMem, (outs GR16:$dst), (ins i16mem:$src),
-                   "popcnt{w}\t{$src, $dst|$dst, $src}", []>, OpSize, XS;
-def POPCNT32rr : I<0xB8, MRMSrcReg, (outs GR32:$dst), (ins GR32:$src),
-                   "popcnt{l}\t{$src, $dst|$dst, $src}", []>, XS;
-let mayLoad = 1 in
-def POPCNT32rm : I<0xB8, MRMSrcMem, (outs GR32:$dst), (ins i32mem:$src),
-                   "popcnt{l}\t{$src, $dst|$dst, $src}", []>, XS;
 
 let Defs = [ESP], Uses = [ESP], neverHasSideEffects=1 in {
 let mayLoad = 1 in {

@@ -15,43 +15,6 @@
 
 
 //===----------------------------------------------------------------------===//
-// SSE scalar FP Instructions
-//===----------------------------------------------------------------------===//
-
-// CMOV* - Used to implement the SSE SELECT DAG operation.  Expanded after
-// instruction selection into a branch sequence.
-let Uses = [EFLAGS], usesCustomInserter = 1 in {
-  def CMOV_FR32 : I<0, Pseudo,
-                    (outs FR32:$dst), (ins FR32:$t, FR32:$f, i8imm:$cond),
-                    "#CMOV_FR32 PSEUDO!",
-                    [(set FR32:$dst, (X86cmov FR32:$t, FR32:$f, imm:$cond,
-                                                  EFLAGS))]>;
-  def CMOV_FR64 : I<0, Pseudo,
-                    (outs FR64:$dst), (ins FR64:$t, FR64:$f, i8imm:$cond),
-                    "#CMOV_FR64 PSEUDO!",
-                    [(set FR64:$dst, (X86cmov FR64:$t, FR64:$f, imm:$cond,
-                                                  EFLAGS))]>;
-  def CMOV_V4F32 : I<0, Pseudo,
-                    (outs VR128:$dst), (ins VR128:$t, VR128:$f, i8imm:$cond),
-                    "#CMOV_V4F32 PSEUDO!",
-                    [(set VR128:$dst,
-                      (v4f32 (X86cmov VR128:$t, VR128:$f, imm:$cond,
-                                          EFLAGS)))]>;
-  def CMOV_V2F64 : I<0, Pseudo,
-                    (outs VR128:$dst), (ins VR128:$t, VR128:$f, i8imm:$cond),
-                    "#CMOV_V2F64 PSEUDO!",
-                    [(set VR128:$dst,
-                      (v2f64 (X86cmov VR128:$t, VR128:$f, imm:$cond,
-                                          EFLAGS)))]>;
-  def CMOV_V2I64 : I<0, Pseudo,
-                    (outs VR128:$dst), (ins VR128:$t, VR128:$f, i8imm:$cond),
-                    "#CMOV_V2I64 PSEUDO!",
-                    [(set VR128:$dst,
-                      (v2i64 (X86cmov VR128:$t, VR128:$f, imm:$cond,
-                                          EFLAGS)))]>;
-}
-
-//===----------------------------------------------------------------------===//
 // SSE 1 & 2 Instructions Classes
 //===----------------------------------------------------------------------===//
 
@@ -4605,6 +4568,26 @@ defm VTESTPDY : avx_bittest<0x0F, "vtestpd", VR256, f256mem, memopv4f64, v4f64>;
 //===----------------------------------------------------------------------===//
 // SSE4.1 - Misc Instructions
 //===----------------------------------------------------------------------===//
+
+def POPCNT16rr : I<0xB8, MRMSrcReg, (outs GR16:$dst), (ins GR16:$src),
+                   "popcnt{w}\t{$src, $dst|$dst, $src}", []>, OpSize, XS;
+let mayLoad = 1 in
+def POPCNT16rm : I<0xB8, MRMSrcMem, (outs GR16:$dst), (ins i16mem:$src),
+                   "popcnt{w}\t{$src, $dst|$dst, $src}", []>, OpSize, XS;
+
+def POPCNT32rr : I<0xB8, MRMSrcReg, (outs GR32:$dst), (ins GR32:$src),
+                   "popcnt{l}\t{$src, $dst|$dst, $src}", []>, XS;
+let mayLoad = 1 in
+def POPCNT32rm : I<0xB8, MRMSrcMem, (outs GR32:$dst), (ins i32mem:$src),
+                   "popcnt{l}\t{$src, $dst|$dst, $src}", []>, XS;
+
+def POPCNT64rr : RI<0xB8, MRMSrcReg, (outs GR64:$dst), (ins GR64:$src),
+                    "popcnt{q}\t{$src, $dst|$dst, $src}", []>, XS;
+let mayLoad = 1 in
+def POPCNT64rm : RI<0xB8, MRMSrcMem, (outs GR64:$dst), (ins i64mem:$src),
+                    "popcnt{q}\t{$src, $dst|$dst, $src}", []>, XS;
+
+
 
 // SS41I_unop_rm_int_v16 - SSE 4.1 unary operator whose type is v8i16.
 multiclass SS41I_unop_rm_int_v16<bits<8> opc, string OpcodeStr,
