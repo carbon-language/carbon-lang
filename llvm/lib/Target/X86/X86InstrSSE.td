@@ -46,16 +46,14 @@ multiclass sse12_fp_scalar_int<bits<8> opc, string OpcodeStr, RegisterClass RC,
            !strconcat(asm, "\t{$src2, $dst|$dst, $src2}"),
            !strconcat(asm, "\t{$src2, $src1, $dst|$dst, $src1, $src2}")),
        [(set RC:$dst, (!nameconcat<Intrinsic>("int_x86_sse",
-                       !strconcat(SSEVer, !strconcat("_",
-                       !strconcat(OpcodeStr, FPSizeStr))))
+                       !strconcat(SSEVer, "_", OpcodeStr, FPSizeStr))
              RC:$src1, RC:$src2))]>;
   def rm_Int : SI<opc, MRMSrcMem, (outs RC:$dst), (ins RC:$src1, memopr:$src2),
        !if(Is2Addr,
            !strconcat(asm, "\t{$src2, $dst|$dst, $src2}"),
            !strconcat(asm, "\t{$src2, $src1, $dst|$dst, $src1, $src2}")),
        [(set RC:$dst, (!nameconcat<Intrinsic>("int_x86_sse",
-                       !strconcat(SSEVer, !strconcat("_",
-                       !strconcat(OpcodeStr, FPSizeStr))))
+                       !strconcat(SSEVer, "_", OpcodeStr, FPSizeStr))
              RC:$src1, mem_cpat:$src2))]>;
 }
 
@@ -106,16 +104,14 @@ multiclass sse12_fp_packed_int<bits<8> opc, string OpcodeStr, RegisterClass RC,
            !strconcat(asm, "\t{$src2, $dst|$dst, $src2}"),
            !strconcat(asm, "\t{$src2, $src1, $dst|$dst, $src1, $src2}")),
            [(set RC:$dst, (!nameconcat<Intrinsic>("int_x86_",
-                           !strconcat(SSEVer, !strconcat("_",
-                           !strconcat(OpcodeStr, FPSizeStr))))
+                           !strconcat(SSEVer, "_", OpcodeStr, FPSizeStr))
                  RC:$src1, RC:$src2))], d>;
   def rm_Int : PI<opc, MRMSrcMem, (outs RC:$dst), (ins RC:$src1,x86memop:$src2),
        !if(Is2Addr,
            !strconcat(asm, "\t{$src2, $dst|$dst, $src2}"),
            !strconcat(asm, "\t{$src2, $src1, $dst|$dst, $src1, $src2}")),
        [(set RC:$dst, (!nameconcat<Intrinsic>("int_x86_",
-                       !strconcat(SSEVer, !strconcat("_",
-                       !strconcat(OpcodeStr, FPSizeStr))))
+                       !strconcat(SSEVer, "_", OpcodeStr, FPSizeStr))
              RC:$src1, (mem_frag addr:$src2)))], d>;
 }
 
@@ -366,7 +362,7 @@ multiclass sse12_mov_hilo_packed<bits<8>opc, RegisterClass RC,
                                  string asm_opr> {
   def PSrm : PI<opc, MRMSrcMem,
          (outs VR128:$dst), (ins VR128:$src1, f64mem:$src2),
-         !strconcat(!strconcat(base_opc,"s"), asm_opr),
+         !strconcat(base_opc, "s", asm_opr),
      [(set RC:$dst,
        (mov_frag RC:$src1,
               (bc_v4f32 (v2f64 (scalar_to_vector (loadf64 addr:$src2))))))],
@@ -374,7 +370,7 @@ multiclass sse12_mov_hilo_packed<bits<8>opc, RegisterClass RC,
 
   def PDrm : PI<opc, MRMSrcMem,
          (outs RC:$dst), (ins RC:$src1, f64mem:$src2),
-         !strconcat(!strconcat(base_opc,"d"), asm_opr),
+         !strconcat(base_opc, "d", asm_opr),
      [(set RC:$dst, (v2f64 (mov_frag RC:$src1,
                               (scalar_to_vector (loadf64 addr:$src2)))))],
               SSEPackedDouble>, TB, OpSize;

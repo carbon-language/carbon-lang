@@ -215,11 +215,11 @@ def _Fp80m64: FpI_<(outs RFP80:$dst),
                   [(set RFP80:$dst, 
                     (OpNode RFP80:$src1, (f80 (extloadf64 addr:$src2))))]>;
 def _F32m  : FPI<0xD8, fp, (outs), (ins f32mem:$src), 
-                 !strconcat("f", !strconcat(asmstring, "{s}\t$src"))> { 
+                 !strconcat("f", asmstring, "{s}\t$src")> { 
   let mayLoad = 1; 
 }
 def _F64m  : FPI<0xDC, fp, (outs), (ins f64mem:$src), 
-                 !strconcat("f", !strconcat(asmstring, "{l}\t$src"))> { 
+                 !strconcat("f", asmstring, "{l}\t$src")> { 
   let mayLoad = 1; 
 }
 // ST(0) = ST(0) + [memint]
@@ -248,11 +248,11 @@ def _FpI32m80 : FpI_<(outs RFP80:$dst), (ins RFP80:$src1, i32mem:$src2),
                     [(set RFP80:$dst, (OpNode RFP80:$src1,
                                        (X86fild addr:$src2, i32)))]>;
 def _FI16m  : FPI<0xDE, fp, (outs), (ins i16mem:$src), 
-                  !strconcat("fi", !strconcat(asmstring, "{s}\t$src"))> { 
+                  !strconcat("fi", asmstring, "{s}\t$src")> { 
   let mayLoad = 1; 
 }
 def _FI32m  : FPI<0xDA, fp, (outs), (ins i32mem:$src), 
-                  !strconcat("fi", !strconcat(asmstring, "{l}\t$src"))> { 
+                  !strconcat("fi", asmstring, "{l}\t$src")> { 
   let mayLoad = 1; 
 }
 }

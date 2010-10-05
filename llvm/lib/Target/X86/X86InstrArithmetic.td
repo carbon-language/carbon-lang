@@ -499,8 +499,8 @@ let CodeSize = 2 in {
 class BinOpRR<bits<8> opcode, Format format, string mnemonic,
               X86RegisterClass regclass, SDNode opnode>
   : I<opcode, format, (outs regclass:$dst), (ins regclass:$src1,regclass:$src2),
-      !strconcat(mnemonic, !strconcat("{", !strconcat(regclass.InstrSuffix,
-                 "}\t{$src2, $dst|$dst, $src2}"))),
+      !strconcat(mnemonic, "{", regclass.InstrSuffix,
+                 "}\t{$src2, $dst|$dst, $src2}"),
       [(set regclass:$dst, EFLAGS, (opnode regclass:$src1, regclass:$src2))]>;
 
 // Logical operators.

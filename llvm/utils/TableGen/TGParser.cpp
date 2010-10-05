@@ -16,6 +16,7 @@
 #include "llvm/ADT/StringExtras.h"
 #include <algorithm>
 #include <sstream>
+#include "llvm/ADT/SmallVector.h"
 using namespace llvm;
 
 //===----------------------------------------------------------------------===//
@@ -798,53 +799,46 @@ Init *TGParser::ParseOperation(Record *CurRec) {
   case tgtok::XEq:
   case tgtok::XStrConcat:
   case tgtok::XNameConcat: {  // Value ::= !binop '(' Value ',' Value ')'
+    tgtok::TokKind OpTok = Lex.getCode();
+    SMLoc OpLoc = Lex.getLoc();
+    Lex.Lex();  // eat the operation
+
     BinOpInit::BinaryOp Code;
     RecTy *Type = 0;
 
-
-    switch (Lex.getCode()) {
+    switch (OpTok) {
     default: assert(0 && "Unhandled code!");
     case tgtok::XConcat:
-      Lex.Lex();  // eat the operation
       Code = BinOpInit::CONCAT;
       Type = new DagRecTy();
       break;
     case tgtok::XSRA:
-      Lex.Lex();  // eat the operation
       Code = BinOpInit::SRA;
       Type = new IntRecTy();
       break;
     case tgtok::XSRL:
-      Lex.Lex();  // eat the operation
       Code = BinOpInit::SRL;
       Type = new IntRecTy();
       break;
     case tgtok::XSHL:
-      Lex.Lex();  // eat the operation
       Code = BinOpInit::SHL;
       Type = new IntRecTy();
       break;
     case tgtok::XEq:  
-      Lex.Lex();  // eat the operation
       Code = BinOpInit::EQ;
       Type = new IntRecTy();
       break;
     case tgtok::XStrConcat:
-      Lex.Lex();  // eat the operation
       Code = BinOpInit::STRCONCAT;
       Type = new StringRecTy();
       break;
     case tgtok::XNameConcat:
-      Lex.Lex();  // eat the operation
       Code = BinOpInit::NAMECONCAT;
-
       Type = ParseOperatorType();
-
       if (Type == 0) {
         TokError("did not get type for binary operator");
         return 0;
       }
-
       break;
     }
     if (Lex.getCode() != tgtok::l_paren) {
@@ -853,24 +847,41 @@ Init *TGParser::ParseOperation(Record *CurRec) {
     }
     Lex.Lex();  // eat the '('
 
-    Init *LHS = ParseValue(CurRec);
-    if (LHS == 0) return 0;
+    SmallVector<Init*, 2> InitList;
+    
+    InitList.push_back(ParseValue(CurRec));
+    if (InitList.back() == 0) return 0;
 
-    if (Lex.getCode() != tgtok::comma) {
-      TokError("expected ',' in binary operator");
-      return 0;
+    while (Lex.getCode() == tgtok::comma) {
+      Lex.Lex();  // eat the ','
+
+      InitList.push_back(ParseValue(CurRec));
+      if (InitList.back() == 0) return 0;
     }
-    Lex.Lex();  // eat the ','
-
-    Init *RHS = ParseValue(CurRec);
-    if (RHS == 0) return 0;
 
     if (Lex.getCode() != tgtok::r_paren) {
-      TokError("expected ')' in binary operator");
+      TokError("expected ')' in operator");
       return 0;
     }
     Lex.Lex();  // eat the ')'
-    return (new BinOpInit(Code, LHS, RHS, Type))->Fold(CurRec, CurMultiClass);
+
+    // We allow multiple operands to associative operators like !strconcat as
+    // shorthand for nesting them.
+    if (Code == BinOpInit::STRCONCAT) {
+      while (InitList.size() > 2) {
+        Init *RHS = InitList.pop_back_val();
+        RHS = (new BinOpInit(Code, InitList.back(), RHS, Type))
+                      ->Fold(CurRec, CurMultiClass);
+        InitList.back() = RHS;
+      }
+    }
+    
+    if (InitList.size() == 2)
+      return (new BinOpInit(Code, InitList[0], InitList[1], Type))
+        ->Fold(CurRec, CurMultiClass);
+    
+    Error(OpLoc, "expected two operands to operator");
+    return 0;
   }
 
   case tgtok::XIf:
