@@ -126,6 +126,8 @@ RUN_SUCCEEDED = "Process is launched successfully"
 
 RUN_COMPLETED = "Process exited successfully"
 
+BACKTRACE_DISPLAYED_CORRECTLY = "Backtrace displayed correctly"
+
 BREAKPOINT_CREATED = "Breakpoint created successfully"
 
 BREAKPOINT_PENDING_CREATED = "Pending breakpoint created successfully"
@@ -259,6 +261,12 @@ def system(*popenargs, **kwargs):
             cmd = popenargs[0]
         raise CalledProcessError(retcode, cmd)
     return output
+
+def pointer_size():
+    """Return the pointer size of the host system."""
+    import ctypes
+    a_pointer = ctypes.c_void_p(0xffff)
+    return 8 * ctypes.sizeof(a_pointer)
 
 
 class TestBase(unittest2.TestCase):
