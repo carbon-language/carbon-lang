@@ -1354,7 +1354,7 @@ bool ARMFastISel::SelectCall(const Instruction *I) {
   CallingConv::ID CC = CS.getCallingConv();
   // TODO: Avoid some calling conventions?
   if (CC != CallingConv::C) {
-    errs() << "Can't handle calling convention: " << CC << "\n";
+    // errs() << "Can't handle calling convention: " << CC << "\n";
     return false;
   }
   
