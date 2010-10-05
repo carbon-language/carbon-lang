@@ -261,6 +261,16 @@ let Namespace = "X86" in {
 // implicitly defined to be the register allocation order.
 //
 
+class X86RegisterClass<string namespace, list<ValueType> regTypes,
+                       int alignment, string instrsuffix,
+                       list<Register> regList>
+  : RegisterClass<namespace, regTypes, alignment, regList> {
+  // This is the suffix used on instructions with this class of register.  For
+  // example, GR8 -> "b", GR16 -> "w", GR32 -> "l", GR64 -> "q".
+  string InstrSuffix = instrsuffix;
+}
+
+
 // List call-clobbered registers before callee-save registers. RBX, RBP, (and 
 // R12, R13, R14, and R15 for X86-64) are callee-save registers.
 // In 64-mode, there are 12 additional i8 registers, SIL, DIL, BPL, SPL, and
@@ -272,9 +282,9 @@ let Namespace = "X86" in {
 // instruction requiring a REX prefix, while SIL, DIL, BPL, R8D, etc.
 // require a REX prefix. For example, "addb %ah, %dil" and "movzbl %ah, %r8d"
 // cannot be encoded.
-def GR8 : RegisterClass<"X86", [i8],  8,
-                        [AL, CL, DL, AH, CH, DH, BL, BH, SIL, DIL, BPL, SPL,
-                         R8B, R9B, R10B, R11B, R14B, R15B, R12B, R13B]> {
+def GR8 : X86RegisterClass<"X86", [i8],  8, "b",
+                           [AL, CL, DL, AH, CH, DH, BL, BH, SIL, DIL, BPL, SPL,
+                            R8B, R9B, R10B, R11B, R14B, R15B, R12B, R13B]> {
   let MethodProtos = [{
     iterator allocation_order_begin(const MachineFunction &MF) const;
     iterator allocation_order_end(const MachineFunction &MF) const;
@@ -316,9 +326,9 @@ def GR8 : RegisterClass<"X86", [i8],  8,
   }];
 }
 
-def GR16 : RegisterClass<"X86", [i16], 16,
-                         [AX, CX, DX, SI, DI, BX, BP, SP,
-                          R8W, R9W, R10W, R11W, R14W, R15W, R12W, R13W]> {
+def GR16 : X86RegisterClass<"X86", [i16], 16, "w",
+                            [AX, CX, DX, SI, DI, BX, BP, SP,
+                             R8W, R9W, R10W, R11W, R14W, R15W, R12W, R13W]> {
   let SubRegClasses = [(GR8 sub_8bit, sub_8bit_hi)];
   let MethodProtos = [{
     iterator allocation_order_begin(const MachineFunction &MF) const;
@@ -368,9 +378,9 @@ def GR16 : RegisterClass<"X86", [i16], 16,
   }];
 }
 
-def GR32 : RegisterClass<"X86", [i32], 32,
-                         [EAX, ECX, EDX, ESI, EDI, EBX, EBP, ESP,
-                          R8D, R9D, R10D, R11D, R14D, R15D, R12D, R13D]> {
+def GR32 : X86RegisterClass<"X86", [i32], 32, "l",
+                            [EAX, ECX, EDX, ESI, EDI, EBX, EBP, ESP,
+                             R8D, R9D, R10D, R11D, R14D, R15D, R12D, R13D]> {
   let SubRegClasses = [(GR8 sub_8bit, sub_8bit_hi), (GR16 sub_16bit)];
   let MethodProtos = [{
     iterator allocation_order_begin(const MachineFunction &MF) const;
@@ -423,9 +433,9 @@ def GR32 : RegisterClass<"X86", [i32], 32,
 // GR64 - 64-bit GPRs. This oddly includes RIP, which isn't accurate, since
 // RIP isn't really a register and it can't be used anywhere except in an
 // address, but it doesn't cause trouble.
-def GR64 : RegisterClass<"X86", [i64], 64,
-                         [RAX, RCX, RDX, RSI, RDI, R8, R9, R10, R11,
-                          RBX, R14, R15, R12, R13, RBP, RSP, RIP]> {
+def GR64 : X86RegisterClass<"X86", [i64], 64, "q",
+                            [RAX, RCX, RDX, RSI, RDI, R8, R9, R10, R11,
+                             RBX, R14, R15, R12, R13, RBP, RSP, RIP]> {
   let SubRegClasses = [(GR8 sub_8bit, sub_8bit_hi),
                        (GR16 sub_16bit),
                        (GR32 sub_32bit)];

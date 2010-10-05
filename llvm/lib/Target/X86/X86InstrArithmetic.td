@@ -497,9 +497,10 @@ let CodeSize = 2 in {
 
 
 class BinOpRR<bits<8> opcode, Format format, string mnemonic,
-              RegisterClass regclass, SDNode opnode>
+              X86RegisterClass regclass, SDNode opnode>
   : I<opcode, format, (outs regclass:$dst), (ins regclass:$src1,regclass:$src2),
-      !strconcat(mnemonic, "\t{$src2, $dst|$dst, $src2}"),
+      !strconcat(mnemonic, !strconcat("{", !strconcat(regclass.InstrSuffix,
+                 "}\t{$src2, $dst|$dst, $src2}"))),
       [(set regclass:$dst, EFLAGS, (opnode regclass:$src1, regclass:$src2))]>;
 
 // Logical operators.
@@ -507,10 +508,10 @@ let Defs = [EFLAGS] in {
 let Constraints = "$src1 = $dst" in {
 
 let isCommutable = 1 in {   // X = AND Y, Z   --> X = AND Z, Y
-def AND8rr  : BinOpRR<0x20, MRMDestReg, "and{b}", GR8 , X86and_flag>;
-def AND16rr : BinOpRR<0x21, MRMDestReg, "and{w}", GR16, X86and_flag>, OpSize;
-def AND32rr : BinOpRR<0x21, MRMDestReg, "and{l}", GR32, X86and_flag>;
-def AND64rr : BinOpRR<0x21, MRMDestReg, "and{q}", GR64, X86and_flag>, REX_W;
+def AND8rr  : BinOpRR<0x20, MRMDestReg, "and", GR8 , X86and_flag>;
+def AND16rr : BinOpRR<0x21, MRMDestReg, "and", GR16, X86and_flag>, OpSize;
+def AND32rr : BinOpRR<0x21, MRMDestReg, "and", GR32, X86and_flag>;
+def AND64rr : BinOpRR<0x21, MRMDestReg, "and", GR64, X86and_flag>, REX_W;
 } // isCommutable
 
 
