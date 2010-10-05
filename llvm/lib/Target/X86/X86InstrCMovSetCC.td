@@ -628,24 +628,7 @@ def CMOVNO64rm : RI<0x41, MRMSrcMem,       // if !overflow, GR64 = [mem64]
                                      X86_COND_NO, EFLAGS))]>, TB;
 } // Constraints = "$src1 = $dst"
 
-
-
 let Uses = [EFLAGS] in {
-// Use sbb to materialize carry bit.
-let Defs = [EFLAGS], isCodeGenOnly = 1 in {
-// FIXME: These are pseudo ops that should be replaced with Pat<> patterns.
-// However, Pat<> can't replicate the destination reg into the inputs of the
-// result.
-// FIXME: Change these to have encoding Pseudo when X86MCCodeEmitter replaces
-// X86CodeEmitter.
-def SETB_C8r : I<0x18, MRMInitReg, (outs GR8:$dst), (ins), "",
-                 [(set GR8:$dst, (X86setcc_c X86_COND_B, EFLAGS))]>;
-def SETB_C16r : I<0x19, MRMInitReg, (outs GR16:$dst), (ins), "",
-                 [(set GR16:$dst, (X86setcc_c X86_COND_B, EFLAGS))]>,
-                OpSize;
-def SETB_C32r : I<0x19, MRMInitReg, (outs GR32:$dst), (ins), "",
-                 [(set GR32:$dst, (X86setcc_c X86_COND_B, EFLAGS))]>;
-} // isCodeGenOnly
 
 def SETEr    : I<0x94, MRM0r, 
                  (outs GR8   :$dst), (ins),
