@@ -273,6 +273,67 @@ def TLSCall_64 : I<0, Pseudo, (outs), (ins i64mem:$sym),
                   [(X86TLSCall addr:$sym)]>,
                   Requires<[In64BitMode]>;
 
+
+//===----------------------------------------------------------------------===//
+// Conditional Move Pseudo Instructions
+
+let Constraints = "$src1 = $dst" in {
+
+// Conditional moves
+let Uses = [EFLAGS] in {
+
+// X86 doesn't have 8-bit conditional moves. Use a customInserter to
+// emit control flow. An alternative to this is to mark i8 SELECT as Promote,
+// however that requires promoting the operands, and can induce additional
+// i8 register pressure. Note that CMOV_GR8 is conservatively considered to
+// clobber EFLAGS, because if one of the operands is zero, the expansion
+// could involve an xor.
+let usesCustomInserter = 1, Constraints = "", Defs = [EFLAGS] in {
+def CMOV_GR8 : I<0, Pseudo,
+                 (outs GR8:$dst), (ins GR8:$src1, GR8:$src2, i8imm:$cond),
+                 "#CMOV_GR8 PSEUDO!",
+                 [(set GR8:$dst, (X86cmov GR8:$src1, GR8:$src2,
+                                          imm:$cond, EFLAGS))]>;
+
+let Predicates = [NoCMov] in {
+def CMOV_GR32 : I<0, Pseudo,
+                    (outs GR32:$dst), (ins GR32:$src1, GR32:$src2, i8imm:$cond),
+                    "#CMOV_GR32* PSEUDO!",
+                    [(set GR32:$dst,
+                      (X86cmov GR32:$src1, GR32:$src2, imm:$cond, EFLAGS))]>;
+def CMOV_GR16 : I<0, Pseudo,
+                    (outs GR16:$dst), (ins GR16:$src1, GR16:$src2, i8imm:$cond),
+                    "#CMOV_GR16* PSEUDO!",
+                    [(set GR16:$dst,
+                      (X86cmov GR16:$src1, GR16:$src2, imm:$cond, EFLAGS))]>;
+def CMOV_RFP32 : I<0, Pseudo,
+                    (outs RFP32:$dst),
+                    (ins RFP32:$src1, RFP32:$src2, i8imm:$cond),
+                    "#CMOV_RFP32 PSEUDO!",
+                    [(set RFP32:$dst,
+                      (X86cmov RFP32:$src1, RFP32:$src2, imm:$cond,
+                                                  EFLAGS))]>;
+def CMOV_RFP64 : I<0, Pseudo,
+                    (outs RFP64:$dst),
+                    (ins RFP64:$src1, RFP64:$src2, i8imm:$cond),
+                    "#CMOV_RFP64 PSEUDO!",
+                    [(set RFP64:$dst,
+                      (X86cmov RFP64:$src1, RFP64:$src2, imm:$cond,
+                                                  EFLAGS))]>;
+def CMOV_RFP80 : I<0, Pseudo,
+                    (outs RFP80:$dst),
+                    (ins RFP80:$src1, RFP80:$src2, i8imm:$cond),
+                    "#CMOV_RFP80 PSEUDO!",
+                    [(set RFP80:$dst,
+                      (X86cmov RFP80:$src1, RFP80:$src2, imm:$cond,
+                                                  EFLAGS))]>;
+} // Predicates = [NoCMov]
+} // UsesCustomInserter = 1, Constraints = "", Defs = [EFLAGS] 
+} // Uses = [EFLAGS]
+
+} // Constraints = "$src1 = $dst" in
+
+
 //===----------------------------------------------------------------------===//
 // Atomic Instruction Pseudo Instructions
 //===----------------------------------------------------------------------===//
