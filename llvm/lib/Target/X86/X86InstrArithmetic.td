@@ -1675,3 +1675,145 @@ def TEST64i32 : RIi32<0xa9, RawFrm, (outs), (ins i64i32imm:$src),
 
 } // Defs = [EFLAGS]
 
+
+//===----------------------------------------------------------------------===//
+// Integer comparisons
+
+let Defs = [EFLAGS] in {
+
+def CMP8rr  : I<0x38, MRMDestReg,
+                (outs), (ins GR8 :$src1, GR8 :$src2),
+                "cmp{b}\t{$src2, $src1|$src1, $src2}",
+                [(set EFLAGS, (X86cmp GR8:$src1, GR8:$src2))]>;
+def CMP16rr : I<0x39, MRMDestReg,
+                (outs), (ins GR16:$src1, GR16:$src2),
+                "cmp{w}\t{$src2, $src1|$src1, $src2}",
+                [(set EFLAGS, (X86cmp GR16:$src1, GR16:$src2))]>, OpSize;
+def CMP32rr : I<0x39, MRMDestReg,
+                (outs), (ins GR32:$src1, GR32:$src2),
+                "cmp{l}\t{$src2, $src1|$src1, $src2}",
+                [(set EFLAGS, (X86cmp GR32:$src1, GR32:$src2))]>;
+def CMP64rr : RI<0x39, MRMDestReg, (outs), (ins GR64:$src1, GR64:$src2),
+                 "cmp{q}\t{$src2, $src1|$src1, $src2}",
+                 [(set EFLAGS, (X86cmp GR64:$src1, GR64:$src2))]>;
+
+def CMP8mr  : I<0x38, MRMDestMem,
+                (outs), (ins i8mem :$src1, GR8 :$src2),
+                "cmp{b}\t{$src2, $src1|$src1, $src2}",
+                [(set EFLAGS, (X86cmp (loadi8 addr:$src1), GR8:$src2))]>;
+def CMP16mr : I<0x39, MRMDestMem,
+                (outs), (ins i16mem:$src1, GR16:$src2),
+                "cmp{w}\t{$src2, $src1|$src1, $src2}",
+                [(set EFLAGS, (X86cmp (loadi16 addr:$src1), GR16:$src2))]>,
+                 OpSize;
+def CMP32mr : I<0x39, MRMDestMem,
+                (outs), (ins i32mem:$src1, GR32:$src2),
+                "cmp{l}\t{$src2, $src1|$src1, $src2}",
+                [(set EFLAGS, (X86cmp (loadi32 addr:$src1), GR32:$src2))]>;
+def CMP64mr : RI<0x39, MRMDestMem, (outs), (ins i64mem:$src1, GR64:$src2),
+                 "cmp{q}\t{$src2, $src1|$src1, $src2}",
+                 [(set EFLAGS, (X86cmp (loadi64 addr:$src1), GR64:$src2))]>;
+                 
+def CMP8rm  : I<0x3A, MRMSrcMem,
+                (outs), (ins GR8 :$src1, i8mem :$src2),
+                "cmp{b}\t{$src2, $src1|$src1, $src2}",
+                [(set EFLAGS, (X86cmp GR8:$src1, (loadi8 addr:$src2)))]>;
+def CMP16rm : I<0x3B, MRMSrcMem,
+                (outs), (ins GR16:$src1, i16mem:$src2),
+                "cmp{w}\t{$src2, $src1|$src1, $src2}",
+                [(set EFLAGS, (X86cmp GR16:$src1, (loadi16 addr:$src2)))]>,
+                 OpSize;
+def CMP32rm : I<0x3B, MRMSrcMem,
+                (outs), (ins GR32:$src1, i32mem:$src2),
+                "cmp{l}\t{$src2, $src1|$src1, $src2}",
+                [(set EFLAGS, (X86cmp GR32:$src1, (loadi32 addr:$src2)))]>;
+def CMP64rm : RI<0x3B, MRMSrcMem, (outs), (ins GR64:$src1, i64mem:$src2),
+                 "cmp{q}\t{$src2, $src1|$src1, $src2}",
+                 [(set EFLAGS, (X86cmp GR64:$src1, (loadi64 addr:$src2)))]>;
+
+// These are alternate spellings for use by the disassembler, we mark them as
+// code gen only to ensure they aren't matched by the assembler.
+let isCodeGenOnly = 1 in {
+  def CMP8rr_alt : I<0x3A, MRMSrcReg, (outs), (ins GR8:$src1, GR8:$src2),
+                    "cmp{b}\t{$src2, $src1|$src1, $src2}", []>;
+  def CMP16rr_alt : I<0x3B, MRMSrcReg, (outs), (ins GR16:$src1, GR16:$src2),
+                     "cmp{w}\t{$src2, $src1|$src1, $src2}", []>, OpSize;
+  def CMP32rr_alt : I<0x3B, MRMSrcReg, (outs), (ins GR32:$src1, GR32:$src2),
+                     "cmp{l}\t{$src2, $src1|$src1, $src2}", []>;
+  def CMP64rr_alt : RI<0x3B, MRMSrcReg, (outs), (ins GR64:$src1, GR64:$src2),
+                      "cmp{q}\t{$src2, $src1|$src1, $src2}", []>;
+}
+
+def CMP8ri  : Ii8<0x80, MRM7r,
+                  (outs), (ins GR8:$src1, i8imm:$src2),
+                  "cmp{b}\t{$src2, $src1|$src1, $src2}",
+                  [(set EFLAGS, (X86cmp GR8:$src1, imm:$src2))]>;
+def CMP16ri : Ii16<0x81, MRM7r,
+                   (outs), (ins GR16:$src1, i16imm:$src2),
+                   "cmp{w}\t{$src2, $src1|$src1, $src2}",
+                   [(set EFLAGS, (X86cmp GR16:$src1, imm:$src2))]>, OpSize;
+def CMP32ri : Ii32<0x81, MRM7r,
+                   (outs), (ins GR32:$src1, i32imm:$src2),
+                   "cmp{l}\t{$src2, $src1|$src1, $src2}",
+                   [(set EFLAGS, (X86cmp GR32:$src1, imm:$src2))]>;
+def CMP64ri32 : RIi32<0x81, MRM7r, (outs), (ins GR64:$src1, i64i32imm:$src2),
+                      "cmp{q}\t{$src2, $src1|$src1, $src2}",
+                      [(set EFLAGS, (X86cmp GR64:$src1, i64immSExt32:$src2))]>;
+
+def CMP8mi  : Ii8 <0x80, MRM7m,
+                   (outs), (ins i8mem :$src1, i8imm :$src2),
+                   "cmp{b}\t{$src2, $src1|$src1, $src2}",
+                   [(set EFLAGS, (X86cmp (loadi8 addr:$src1), imm:$src2))]>;
+def CMP16mi : Ii16<0x81, MRM7m,
+                   (outs), (ins i16mem:$src1, i16imm:$src2),
+                   "cmp{w}\t{$src2, $src1|$src1, $src2}",
+                   [(set EFLAGS, (X86cmp (loadi16 addr:$src1), imm:$src2))]>,
+                   OpSize;
+def CMP32mi : Ii32<0x81, MRM7m,
+                   (outs), (ins i32mem:$src1, i32imm:$src2),
+                   "cmp{l}\t{$src2, $src1|$src1, $src2}",
+                   [(set EFLAGS, (X86cmp (loadi32 addr:$src1), imm:$src2))]>;
+def CMP64mi32 : RIi32<0x81, MRM7m, (outs),
+                                       (ins i64mem:$src1, i64i32imm:$src2),
+                      "cmp{q}\t{$src2, $src1|$src1, $src2}",
+                      [(set EFLAGS, (X86cmp (loadi64 addr:$src1),
+                                            i64immSExt32:$src2))]>;
+
+def CMP16ri8 : Ii8<0x83, MRM7r,
+                   (outs), (ins GR16:$src1, i16i8imm:$src2),
+                   "cmp{w}\t{$src2, $src1|$src1, $src2}",
+                   [(set EFLAGS, (X86cmp GR16:$src1, i16immSExt8:$src2))]>,
+                    OpSize;
+def CMP32ri8 : Ii8<0x83, MRM7r,
+                   (outs), (ins GR32:$src1, i32i8imm:$src2),
+                   "cmp{l}\t{$src2, $src1|$src1, $src2}",
+                   [(set EFLAGS, (X86cmp GR32:$src1, i32immSExt8:$src2))]>;
+def CMP64ri8 : RIi8<0x83, MRM7r, (outs), (ins GR64:$src1, i64i8imm:$src2),
+                    "cmp{q}\t{$src2, $src1|$src1, $src2}",
+                    [(set EFLAGS, (X86cmp GR64:$src1, i64immSExt8:$src2))]>;
+
+def CMP16mi8 : Ii8<0x83, MRM7m,
+                   (outs), (ins i16mem:$src1, i16i8imm:$src2),
+                   "cmp{w}\t{$src2, $src1|$src1, $src2}",
+                   [(set EFLAGS, (X86cmp (loadi16 addr:$src1),
+                                         i16immSExt8:$src2))]>, OpSize;
+def CMP32mi8 : Ii8<0x83, MRM7m,
+                   (outs), (ins i32mem:$src1, i32i8imm:$src2),
+                   "cmp{l}\t{$src2, $src1|$src1, $src2}",
+                   [(set EFLAGS, (X86cmp (loadi32 addr:$src1),
+                                         i32immSExt8:$src2))]>;
+def CMP64mi8 : RIi8<0x83, MRM7m, (outs), (ins i64mem:$src1, i64i8imm:$src2),
+                    "cmp{q}\t{$src2, $src1|$src1, $src2}",
+                    [(set EFLAGS, (X86cmp (loadi64 addr:$src1),
+                                          i64immSExt8:$src2))]>;
+
+def CMP8i8 : Ii8<0x3C, RawFrm, (outs), (ins i8imm:$src),
+                 "cmp{b}\t{$src, %al|%al, $src}", []>;
+def CMP16i16 : Ii16<0x3D, RawFrm, (outs), (ins i16imm:$src),
+                    "cmp{w}\t{$src, %ax|%ax, $src}", []>, OpSize;
+def CMP32i32 : Ii32<0x3D, RawFrm, (outs), (ins i32imm:$src),
+                    "cmp{l}\t{$src, %eax|%eax, $src}", []>;
+def CMP64i32 : RIi32<0x3D, RawFrm, (outs), (ins i64i32imm:$src),
+                     "cmp{q}\t{$src, %rax|%rax, $src}", []>;
+
+} // Defs = [EFLAGS]

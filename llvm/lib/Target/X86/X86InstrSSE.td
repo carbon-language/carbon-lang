@@ -2925,6 +2925,13 @@ def MOVDI2PDIrm : PDI<0x6E, MRMSrcMem, (outs VR128:$dst), (ins i32mem:$src),
                       "movd\t{$src, $dst|$dst, $src}",
                       [(set VR128:$dst,
                         (v4i32 (scalar_to_vector (loadi32 addr:$src))))]>;
+def MOV64toPQIrr : RPDI<0x6E, MRMSrcReg, (outs VR128:$dst), (ins GR64:$src),
+                        "mov{d|q}\t{$src, $dst|$dst, $src}",
+                        [(set VR128:$dst,
+                          (v2i64 (scalar_to_vector GR64:$src)))]>;
+def MOV64toSDrr : RPDI<0x6E, MRMSrcReg, (outs FR64:$dst), (ins GR64:$src),
+                       "mov{d|q}\t{$src, $dst|$dst, $src}",
+                       [(set FR64:$dst, (bitconvert GR64:$src))]>;
 
 
 // Move Int Doubleword to Single Scalar
@@ -2966,6 +2973,21 @@ def MOVPDI2DImr  : PDI<0x7E, MRMDestMem, (outs), (ins i32mem:$dst, VR128:$src),
                        "movd\t{$src, $dst|$dst, $src}",
                        [(store (i32 (vector_extract (v4i32 VR128:$src),
                                      (iPTR 0))), addr:$dst)]>;
+
+def MOVPQIto64rr  : RPDI<0x7E, MRMDestReg, (outs GR64:$dst), (ins VR128:$src),
+                         "mov{d|q}\t{$src, $dst|$dst, $src}",
+                         [(set GR64:$dst, (vector_extract (v2i64 VR128:$src),
+                                           (iPTR 0)))]>;
+def MOV64toSDrm : S3SI<0x7E, MRMSrcMem, (outs FR64:$dst), (ins i64mem:$src),
+                       "movq\t{$src, $dst|$dst, $src}",
+                       [(set FR64:$dst, (bitconvert (loadi64 addr:$src)))]>;
+
+def MOVSDto64rr  : RPDI<0x7E, MRMDestReg, (outs GR64:$dst), (ins FR64:$src),
+                        "mov{d|q}\t{$src, $dst|$dst, $src}",
+                        [(set GR64:$dst, (bitconvert FR64:$src))]>;
+def MOVSDto64mr  : RPDI<0x7E, MRMDestMem, (outs), (ins i64mem:$dst, FR64:$src),
+                        "movq\t{$src, $dst|$dst, $src}",
+                        [(store (i64 (bitconvert FR64:$src)), addr:$dst)]>;
 
 // Move Scalar Single to Double Int
 let isAsmParserOnly = 1 in {
