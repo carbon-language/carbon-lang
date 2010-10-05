@@ -798,6 +798,7 @@ SplitEditor::addTruncSimpleRange(SlotIndex Start, SlotIndex End, VNInfo *VNI) {
 /// instructions using curli to use the new intervals.
 void SplitEditor::rewrite() {
   assert(!openli_.getLI() && "Previous LI not closed before rewrite");
+  assert(dupli_.getLI() && "No dupli for rewrite. Noop spilt?");
 
   // First we need to fill in the live ranges in dupli.
   // If values were redefined, we need a full recoloring with SSA update.
@@ -863,23 +864,19 @@ void SplitEditor::rewrite() {
         break;
       }
     }
-    if (LI) {
-      MO.setReg(LI->reg);
-      sa_.removeUse(MI);
-      DEBUG(dbgs() << "  rewrite " << Idx << '\t' << *MI);
-    }
+    MO.setReg(LI->reg);
+    sa_.removeUse(MI);
+    DEBUG(dbgs() << "  rewrite " << Idx << '\t' << *MI);
   }
 
   // dupli_ goes in last, after rewriting.
-  if (dupli_.getLI()) {
-    if (dupli_.getLI()->empty()) {
-      DEBUG(dbgs() << "  dupli became empty?\n");
-      lis_.removeInterval(dupli_.getLI()->reg);
-      dupli_.reset(0);
-    } else {
-      dupli_.getLI()->RenumberValues(lis_);
-      intervals_.push_back(dupli_.getLI());
-    }
+  if (dupli_.getLI()->empty()) {
+    DEBUG(dbgs() << "  dupli became empty?\n");
+    lis_.removeInterval(dupli_.getLI()->reg);
+    dupli_.reset(0);
+  } else {
+    dupli_.getLI()->RenumberValues(lis_);
+    intervals_.push_back(dupli_.getLI());
   }
 
   // Calculate spill weight and allocation hints for new intervals.
