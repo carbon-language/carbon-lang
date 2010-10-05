@@ -2126,12 +2126,35 @@ SDValue SelectionDAGLegalize::ExpandLegalINT_TO_FP(bool isSigned,
     return DAG.getNode(ISD::FADD, dl, MVT::f64, LoFlt, HiSub);
   }
 
-  // Implementation of unsigned i64 to f32.  This implementation has the
-  // advantage of performing rounding correctly.
+  // Implementation of unsigned i64 to f32.
   // TODO: Generalize this for use with other types.
   if (Op0.getValueType() == MVT::i64 && DestVT == MVT::f32) {
+    // For unsigned conversions, convert them to signed conversions using the
+    // algorithm from the x86_64 __floatundidf in compiler_rt.
+    if (!isSigned) {
+      SDValue Fast = DAG.getNode(ISD::SINT_TO_FP, dl, MVT::f32, Op0);
+          
+      SDValue ShiftConst = DAG.getConstant(1, TLI.getShiftAmountTy());
+      SDValue Shr = DAG.getNode(ISD::SRL, dl, MVT::i64, Op0, ShiftConst);
+      SDValue AndConst = DAG.getConstant(1, MVT::i64);
+      SDValue And = DAG.getNode(ISD::AND, dl, MVT::i64, Op0, AndConst);
+      SDValue Or = DAG.getNode(ISD::OR, dl, MVT::i64, And, Shr);
+      
+      SDValue SignCvt = DAG.getNode(ISD::SINT_TO_FP, dl, MVT::f32, Or);
+      SDValue Slow = DAG.getNode(ISD::FADD, dl, MVT::f32, SignCvt, SignCvt);
+    
+      // TODO: This really should be implemented using a branch rather than a
+      // select.  We happen to get lucky and machinesink does the right 
+      // thing most of the time.  This would be a good candidate for a 
+      //pseudo-op, or, even better, for whole-function isel.
+      SDValue SignBitTest = DAG.getSetCC(dl, TLI.getSetCCResultType(MVT::i64),  
+        Op0, DAG.getConstant(0, MVT::i64), ISD::SETLT);
+      return DAG.getNode(ISD::SELECT, dl, MVT::f32, SignBitTest, Slow, Fast);
+    }
+    
+    // Otherwise, implement the fully general conversion.
     EVT SHVT = TLI.getShiftAmountTy();
-
+    
     SDValue And = DAG.getNode(ISD::AND, dl, MVT::i64, Op0,
          DAG.getConstant(UINT64_C(0xfffffffffffff800), MVT::i64));
     SDValue Or = DAG.getNode(ISD::OR, dl, MVT::i64, And,
@@ -2143,9 +2166,9 @@ SDValue SelectionDAGLegalize::ExpandLegalINT_TO_FP(bool isSigned,
     SDValue Sel = DAG.getNode(ISD::SELECT, dl, MVT::i64, Ne, Or, Op0);
     SDValue Ge = DAG.getSetCC(dl, TLI.getSetCCResultType(MVT::i64),
                    Op0, DAG.getConstant(UINT64_C(0x0020000000000000), MVT::i64),
-                    ISD::SETUGE);
+                   ISD::SETUGE);
     SDValue Sel2 = DAG.getNode(ISD::SELECT, dl, MVT::i64, Ge, Sel, Op0);
-
+    
     SDValue Sh = DAG.getNode(ISD::SRL, dl, MVT::i64, Sel2,
                              DAG.getConstant(32, SHVT));
     SDValue Trunc = DAG.getNode(ISD::TRUNCATE, dl, MVT::i32, Sh);
@@ -2158,7 +2181,6 @@ SDValue SelectionDAGLegalize::ExpandLegalINT_TO_FP(bool isSigned,
     SDValue Fadd = DAG.getNode(ISD::FADD, dl, MVT::f64, Fmul, Fcvt2);
     return DAG.getNode(ISD::FP_ROUND, dl, MVT::f32, Fadd,
                        DAG.getIntPtrConstant(0));
-
   }
 
   SDValue Tmp1 = DAG.getNode(ISD::SINT_TO_FP, dl, DestVT, Op0);
