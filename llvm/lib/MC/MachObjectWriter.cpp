@@ -1360,7 +1360,7 @@ bool MachObjectWriter::IsFixupFullyResolved(const MCAssembler &Asm,
                                                               IsPCRel, DF);
 }
 
-void MachObjectWriter::WriteObject(const MCAssembler &Asm,
+void MachObjectWriter::WriteObject(MCAssembler &Asm,
                                    const MCAsmLayout &Layout) {
   ((MachObjectWriterImpl*) Impl)->WriteObject(Asm, Layout);
 }

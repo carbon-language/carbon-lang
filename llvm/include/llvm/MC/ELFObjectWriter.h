@@ -44,7 +44,7 @@ public:
                                     bool IsPCRel,
                                     const MCFragment *DF) const;
 
-  virtual void WriteObject(const MCAssembler &Asm, const MCAsmLayout &Layout);
+  virtual void WriteObject(MCAssembler &Asm, const MCAsmLayout &Layout);
 };
 
 } // End llvm namespace

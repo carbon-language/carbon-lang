@@ -90,7 +90,7 @@ public:
   /// This routine is called by the assembler after layout and relaxation is
   /// complete, fixups have been evaluated and applied, and relocations
   /// generated.
-  virtual void WriteObject(const MCAssembler &Asm,
+  virtual void WriteObject(MCAssembler &Asm,
                            const MCAsmLayout &Layout) = 0;
 
   /// @}

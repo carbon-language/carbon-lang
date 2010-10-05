@@ -186,7 +186,7 @@ public:
                                     bool IsPCRel,
                                     const MCFragment *DF) const;
 
-  void WriteObject(const MCAssembler &Asm, const MCAsmLayout &Layout);
+  void WriteObject(MCAssembler &Asm, const MCAsmLayout &Layout);
 };
 }
 
@@ -703,7 +703,7 @@ bool WinCOFFObjectWriter::IsFixupFullyResolved(const MCAssembler &Asm,
   return false;
 }
 
-void WinCOFFObjectWriter::WriteObject(const MCAssembler &Asm,
+void WinCOFFObjectWriter::WriteObject(MCAssembler &Asm,
                                       const MCAsmLayout &Layout) {
   // Assign symbol and section indexes and offsets.
   Header.NumberOfSections = 0;

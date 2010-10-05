@@ -156,33 +156,12 @@ void MCELFStreamer::InitSections() {
   SetSectionText();
 }
 
-static bool isSymbolLinkerVisible(const MCAssembler &Asm,
-                                  const MCSymbolData &Data) {
-  const MCSymbol &Symbol = Data.getSymbol();
-  // Absolute temporary labels are never visible.
-  if (!Symbol.isInSection())
-    return false;
-
-  if (Asm.getBackend().doesSectionRequireSymbols(Symbol.getSection()))
-    return true;
-
-  if (!Data.isExternal())
-    return false;
-
-  return Asm.isSymbolLinkerVisible(Symbol);
-}
-
 void MCELFStreamer::EmitLabel(MCSymbol *Symbol) {
   assert(Symbol->isUndefined() && "Cannot define a symbol twice!");
 
   Symbol->setSection(*CurSection);
 
   MCSymbolData &SD = getAssembler().getOrCreateSymbolData(*Symbol);
-
-  // We have to create a new fragment if this is an atom defining symbol,
-  // fragments cannot span atoms.
-  if (isSymbolLinkerVisible(getAssembler(), SD))
-    new MCDataFragment(getCurrentSectionData());
 
   // FIXME: This is wasteful, we don't necessarily need to create a data
   // fragment. Instead, we should mark the symbol as pointing into the data
@@ -518,36 +497,6 @@ void MCELFStreamer::Finish() {
     // Update the maximum alignment of the section if necessary.
     if (ByteAlignment > SectData.getAlignment())
       SectData.setAlignment(ByteAlignment);
-  }
-
-  // FIXME: We create more atoms than it is necessary. Some relocations to
-  // merge sections can be implemented with section address + offset,
-  // figure out which ones and why.
-
-  // First, scan the symbol table to build a lookup table from fragments to
-  // defining symbols.
-  DenseMap<const MCFragment*, MCSymbolData*> DefiningSymbolMap;
-  for (MCAssembler::symbol_iterator it = getAssembler().symbol_begin(),
-         ie = getAssembler().symbol_end(); it != ie; ++it) {
-    if (isSymbolLinkerVisible(getAssembler(), *it) &&
-        it->getFragment()) {
-      // An atom defining symbol should never be internal to a fragment.
-      assert(it->getOffset() == 0 && "Invalid offset in atom defining symbol!");
-      DefiningSymbolMap[it->getFragment()] = it;
-    }
-  }
-
-  // Set the fragment atom associations by tracking the last seen atom defining
-  // symbol.
-  for (MCAssembler::iterator it = getAssembler().begin(),
-         ie = getAssembler().end(); it != ie; ++it) {
-    MCSymbolData *CurrentAtom = 0;
-    for (MCSectionData::iterator it2 = it->begin(),
-           ie2 = it->end(); it2 != ie2; ++it2) {
-      if (MCSymbolData *SD = DefiningSymbolMap.lookup(it2))
-        CurrentAtom = SD;
-      it2->setAtom(CurrentAtom);
-    }
   }
 
   this->MCObjectStreamer::Finish();
