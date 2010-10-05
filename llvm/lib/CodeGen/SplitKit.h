@@ -312,26 +312,20 @@ public:
 
   /// rewrite - after all the new live ranges have been created, rewrite
   /// instructions using curli to use the new intervals.
-  /// Return true if curli has been completely replaced, false if curli is still
-  /// intact, and needs to be spilled or split further.
-  bool rewrite();
+  void rewrite();
 
   // ===--- High level methods ---===
 
   /// splitAroundLoop - Split curli into a separate live interval inside
-  /// the loop. Return true if curli has been completely replaced, false if
-  /// curli is still intact, and needs to be spilled or split further.
-  bool splitAroundLoop(const MachineLoop*);
+  /// the loop.
+  void splitAroundLoop(const MachineLoop*);
 
   /// splitSingleBlocks - Split curli into a separate live interval inside each
-  /// basic block in Blocks. Return true if curli has been completely replaced,
-  /// false if curli is still intact, and needs to be spilled or split further.
-  bool splitSingleBlocks(const SplitAnalysis::BlockPtrSet &Blocks);
+  /// basic block in Blocks.
+  void splitSingleBlocks(const SplitAnalysis::BlockPtrSet &Blocks);
 
-  /// splitInsideBlock - Split curli into multiple intervals inside MBB. Return
-  /// true if curli has been completely replaced, false if curli is still
-  /// intact, and needs to be spilled or split further.
-  bool splitInsideBlock(const MachineBasicBlock *);
+  /// splitInsideBlock - Split curli into multiple intervals inside MBB.
+  void splitInsideBlock(const MachineBasicBlock *);
 };
 
 }

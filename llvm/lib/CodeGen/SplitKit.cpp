@@ -802,7 +802,7 @@ SplitEditor::addTruncSimpleRange(SlotIndex Start, SlotIndex End, VNInfo *VNI) {
 
 /// rewrite - after all the new live ranges have been created, rewrite
 /// instructions using curli to use the new intervals.
-bool SplitEditor::rewrite() {
+void SplitEditor::rewrite() {
   assert(!openli_.getLI() && "Previous LI not closed before rewrite");
 
   // First we need to fill in the live ranges in dupli.
@@ -897,7 +897,6 @@ bool SplitEditor::rewrite() {
     DEBUG(dbgs() << "  new interval " << mri_.getRegClass(li.reg)->getName()
                  << ":" << li << '\n');
   }
-  return dupli_.getLI();
 }
 
 
@@ -905,7 +904,7 @@ bool SplitEditor::rewrite() {
 //                               Loop Splitting
 //===----------------------------------------------------------------------===//
 
-bool SplitEditor::splitAroundLoop(const MachineLoop *Loop) {
+void SplitEditor::splitAroundLoop(const MachineLoop *Loop) {
   SplitAnalysis::LoopBlocks Blocks;
   sa_.getLoopBlocks(Loop, Blocks);
 
@@ -938,7 +937,7 @@ bool SplitEditor::splitAroundLoop(const MachineLoop *Loop) {
 
   // Done.
   closeIntv();
-  return rewrite();
+  rewrite();
 }
 
 
@@ -947,9 +946,8 @@ bool SplitEditor::splitAroundLoop(const MachineLoop *Loop) {
 //===----------------------------------------------------------------------===//
 
 /// splitSingleBlocks - Split curli into a separate live interval inside each
-/// basic block in Blocks. Return true if curli has been completely replaced,
-/// false if curli is still intact, and needs to be spilled or split further.
-bool SplitEditor::splitSingleBlocks(const SplitAnalysis::BlockPtrSet &Blocks) {
+/// basic block in Blocks.
+void SplitEditor::splitSingleBlocks(const SplitAnalysis::BlockPtrSet &Blocks) {
   DEBUG(dbgs() << "  splitSingleBlocks for " << Blocks.size() << " blocks.\n");
   // Determine the first and last instruction using curli in each block.
   typedef std::pair<SlotIndex,SlotIndex> IndexPair;
@@ -983,7 +981,7 @@ bool SplitEditor::splitSingleBlocks(const SplitAnalysis::BlockPtrSet &Blocks) {
     leaveIntvAfter(IP.second);
     closeIntv();
   }
-  return rewrite();
+  rewrite();
 }
 
 
@@ -1006,10 +1004,8 @@ const MachineBasicBlock *SplitAnalysis::getBlockForInsideSplit() {
   return usingBlocks_.begin()->first;
 }
 
-/// splitInsideBlock - Split curli into multiple intervals inside MBB. Return
-/// true if curli has been completely replaced, false if curli is still
-/// intact, and needs to be spilled or split further.
-bool SplitEditor::splitInsideBlock(const MachineBasicBlock *MBB) {
+/// splitInsideBlock - Split curli into multiple intervals inside MBB.
+void SplitEditor::splitInsideBlock(const MachineBasicBlock *MBB) {
   SmallVector<SlotIndex, 32> Uses;
   Uses.reserve(sa_.usingInstrs_.size());
   for (SplitAnalysis::InstrPtrSet::const_iterator I = sa_.usingInstrs_.begin(),
@@ -1058,5 +1054,5 @@ bool SplitEditor::splitInsideBlock(const MachineBasicBlock *MBB) {
     closeIntv();
   }
 
-  return rewrite();
+  rewrite();
 }

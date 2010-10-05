@@ -107,30 +107,28 @@ Spiller *createInlineSpiller(MachineFunctionPass &pass,
 bool InlineSpiller::split() {
   splitAnalysis_.analyze(li_);
 
+  // Try splitting around loops.
   if (const MachineLoop *loop = splitAnalysis_.getBestSplitLoop()) {
-    // We can split, but li_ may be left intact with fewer uses.
-    if (SplitEditor(splitAnalysis_, lis_, vrm_, *newIntervals_)
-          .splitAroundLoop(loop))
-      return true;
+    SplitEditor(splitAnalysis_, lis_, vrm_, *newIntervals_)
+      .splitAroundLoop(loop);
+    return true;
   }
 
   // Try splitting into single block intervals.
   SplitAnalysis::BlockPtrSet blocks;
   if (splitAnalysis_.getMultiUseBlocks(blocks)) {
-    if (SplitEditor(splitAnalysis_, lis_, vrm_, *newIntervals_)
-          .splitSingleBlocks(blocks))
-      return true;
+    SplitEditor(splitAnalysis_, lis_, vrm_, *newIntervals_)
+      .splitSingleBlocks(blocks);
+    return true;
   }
 
   // Try splitting inside a basic block.
   if (const MachineBasicBlock *MBB = splitAnalysis_.getBlockForInsideSplit()) {
-    if (SplitEditor(splitAnalysis_, lis_, vrm_, *newIntervals_)
-          .splitInsideBlock(MBB))
-      return true;
+    SplitEditor(splitAnalysis_, lis_, vrm_, *newIntervals_)
+      .splitInsideBlock(MBB);
+    return true;
   }
 
-  // We may have been able to split out some uses, but the original interval is
-  // intact, and it should still be spilled.
   return false;
 }
 
