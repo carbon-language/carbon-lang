@@ -560,7 +560,12 @@ def handle_element(entry):
 
   return handlers[entry[0]](entry)
 
-Input = open (sys.argv[1], "rb")
+if len(sys.argv) <= 1 or sys.argv[1] == '-':
+  import StringIO
+  Input = StringIO.StringIO(sys.stdin.read())
+else:
+  Input = open (sys.argv[1], "rb")
+
 try:
   handle_element(file)
 finally:
