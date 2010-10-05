@@ -736,7 +736,7 @@ void ELFObjectWriterImpl::ComputeSymbolTable(MCAssembler &Asm) {
 
   // Build section lookup table.
   NumRegularSections = Asm.size();
-  DenseMap<const MCSection*, uint8_t> SectionIndexMap;
+  DenseMap<const MCSection*, uint32_t> SectionIndexMap;
   unsigned Index = 1;
   for (MCAssembler::iterator it = Asm.begin(),
          ie = Asm.end(); it != ie; ++it, ++Index)
