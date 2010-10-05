@@ -1,6 +1,5 @@
-// RUN: llvm-mc -filetype=obj -triple i686-pc-win32 %s -o %t
-// RUN: coff-dump.py %abs_tmp | FileCheck %s
-        
+// RUN: llvm-mc -filetype=obj -triple i686-pc-win32 %s -o - | coff-dump.py | FileCheck %s
+
 // Test that we get optimal nops in text
     .text
 f0:

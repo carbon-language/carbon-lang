@@ -1,8 +1,7 @@
 ; This test checks that the COFF object emitter works for the most basic
 ; programs.
 
-; RUN: llc -filetype=obj -mtriple i686-pc-win32 %s -o %t
-; RUN: coff-dump.py %abs_tmp | FileCheck %s
+; RUN: llc -filetype=obj -mtriple i686-pc-win32 %s -o - | coff-dump.py | FileCheck %s
 ; RUN: llc -filetype=obj -mtriple x86_64-pc-win32 %s -o %t
 
 @.str = private constant [12 x i8] c"Hello World\00" ; <[12 x i8]*> [#uses=1]

@@ -1,8 +1,7 @@
 ; The purpose of this test is to see if the COFF object writer is emitting the
 ; proper relocations for multiple pieces of data in a single data fragment.
 
-; RUN: llc -filetype=obj -mtriple i686-pc-win32 %s -o %t
-; RUN: coff-dump.py %abs_tmp | FileCheck %s
+; RUN: llc -filetype=obj -mtriple i686-pc-win32 %s -o - | coff-dump.py | FileCheck %s
 ; RUN: llc -filetype=obj -mtriple x86_64-pc-win32 %s -o %t
 
 @.str = private constant [7 x i8] c"Hello \00"    ; <[7 x i8]*> [#uses=1]
