@@ -84,8 +84,9 @@
 // unimplemented errors, just use it in GCC 4.0 and later.
 #if __GNUC__ > 3
 #define ALWAYS_INLINE __attribute__((always_inline))
+#elif defined(_MSC_VER)
+#define ALWAYS_INLINE __forceinline
 #else
-// TODO: No idea how to do this with MSVC.
 #define ALWAYS_INLINE
 #endif
 
