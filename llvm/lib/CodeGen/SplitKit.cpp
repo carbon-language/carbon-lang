@@ -424,10 +424,14 @@ VNInfo *LiveIntervalMap::mapValue(const VNInfo *ParentVNI, SlotIndex Idx,
   // This may change during the DFS as we create new phi-defs.
   typedef DenseMap<MachineBasicBlock*, VNInfo*> MBBValueMap;
   MBBValueMap DomValue;
+  typedef SplitAnalysis::BlockPtrSet BlockPtrSet;
+  BlockPtrSet Visited;
 
-  for (idf_iterator<MachineBasicBlock*>
-         IDFI = idf_begin(IdxMBB),
-         IDFE = idf_end(IdxMBB); IDFI != IDFE;) {
+  // Iterate over IdxMBB predecessors in a depth-first order.
+  // Skip begin() since that is always IdxMBB.
+  for (idf_ext_iterator<MachineBasicBlock*, BlockPtrSet>
+         IDFI = llvm::next(idf_ext_begin(IdxMBB, Visited)),
+         IDFE = idf_ext_end(IdxMBB, Visited); IDFI != IDFE;) {
     MachineBasicBlock *MBB = *IDFI;
     SlotIndex End = lis_.getMBBEndIdx(MBB).getPrevSlot();
 
@@ -444,7 +448,10 @@ VNInfo *LiveIntervalMap::mapValue(const VNInfo *ParentVNI, SlotIndex Idx,
       continue;
     }
 
-    // Yes, VNI dominates MBB. Track the path back to IdxMBB, creating phi-defs
+    // Yes, VNI dominates MBB. Make sure we visit MBB again from other paths.
+    Visited.erase(MBB);
+
+    // Track the path back to IdxMBB, creating phi-defs
     // as needed along the way.
     for (unsigned PI = IDFI.getPathLength()-1; PI != 0; --PI) {
       // Start from MBB's immediate successor. End at IdxMBB.
