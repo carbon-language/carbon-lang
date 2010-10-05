@@ -33,8 +33,8 @@ ClangPersistentVariables::GetNextResultName (std::string &name)
 }
 
 bool
-ClangPersistentVariables::CreatePersistentVariable(const char   *name,
-                                                   TypeFromUser  user_type)
+ClangPersistentVariables::CreatePersistentVariable(const char *name,
+                                                   TypeFromUser user_type)
 {
     if (GetVariable(name))
             return false;
@@ -43,10 +43,11 @@ ClangPersistentVariables::CreatePersistentVariable(const char   *name,
 
     pvar.m_name = name;
     pvar.m_user_type = user_type;
-
-    pvar.EnableDataVars();
-    
-    pvar.m_data_vars->m_data = new DataBufferHeap(pvar.Size(), 0);
+    // TODO: Sean, why do we need to call this?, we can just make it below
+    // and we aren't checking the result or anything... Is this cruft left
+    // over from an old code re-org?
+    //pvar.EnableDataVars();
+    pvar.m_data_sp.reset(new DataBufferHeap(pvar.Size(), 0));
     
     return true;
 }

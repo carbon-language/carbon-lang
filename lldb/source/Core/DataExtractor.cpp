@@ -93,7 +93,7 @@ DataExtractor::DataExtractor (const void* data, uint32_t length, ByteOrder endia
 // as long as any DataExtractor objects exist that have a reference to
 // this data.
 //----------------------------------------------------------------------
-DataExtractor::DataExtractor (DataBufferSP& data_sp, ByteOrder endian, uint8_t addr_size) :
+DataExtractor::DataExtractor (const DataBufferSP& data_sp, ByteOrder endian, uint8_t addr_size) :
     m_start     (NULL),
     m_end       (NULL),
     m_byte_order(endian),
@@ -370,7 +370,7 @@ DataExtractor::SetData (const DataExtractor& data, uint32_t data_offset, uint32_
 // settings will remain unchanged from their current settings.
 //----------------------------------------------------------------------
 uint32_t
-DataExtractor::SetData (DataBufferSP& data_sp, uint32_t data_offset, uint32_t data_length)
+DataExtractor::SetData (const DataBufferSP& data_sp, uint32_t data_offset, uint32_t data_length)
 {
     m_start = m_end = NULL;
 

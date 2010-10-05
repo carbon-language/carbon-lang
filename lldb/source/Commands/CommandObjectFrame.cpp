@@ -336,125 +336,6 @@ public:
         return &m_options;
     }
 
-    void
-    DumpValueObject (CommandReturnObject &result,
-                     ExecutionContextScope *exe_scope,
-                     ValueObject *valobj,
-                     const char *root_valobj_name,
-                     uint32_t ptr_depth,
-                     uint32_t curr_depth,
-                     uint32_t max_depth,
-                     bool use_objc,
-                     bool scope_already_checked)
-    {
-        if (valobj)
-        {
-            Stream &s = result.GetOutputStream();
-
-            //const char *loc_cstr = valobj->GetLocationAsCString();
-            if (m_options.show_location)
-            {
-                s.Printf("%s: ", valobj->GetLocationAsCString(exe_scope));
-            }
-            if (m_options.debug)
-                s.Printf ("%p ValueObject{%u} ", valobj, valobj->GetID());
-
-            s.Indent();
-
-            if (m_options.show_types)
-                s.Printf("(%s) ", valobj->GetTypeName().AsCString());
-
-            const char *name_cstr = root_valobj_name ? root_valobj_name : valobj->GetName().AsCString("");
-            s.Printf ("%s = ", name_cstr);
-
-            if (!scope_already_checked && !valobj->IsInScope(exe_scope->CalculateStackFrame()))
-            {
-                s.PutCString("error: out of scope");
-                return;
-            }
-            
-            const char *val_cstr = valobj->GetValueAsCString(exe_scope);
-            const char *err_cstr = valobj->GetError().AsCString();
-
-            if (err_cstr)
-            {
-                s.Printf ("error: %s", err_cstr);
-            }
-            else
-            {
-                const char *sum_cstr = valobj->GetSummaryAsCString(exe_scope);
-
-                const bool is_aggregate = ClangASTContext::IsAggregateType (valobj->GetClangType());
-
-                if (val_cstr)
-                    s.PutCString(val_cstr);
-
-                if (sum_cstr)
-                    s.Printf(" %s", sum_cstr);
-                
-                if (use_objc)
-                {
-                    const char *object_desc = valobj->GetObjectDescription(exe_scope);
-                    if (object_desc)
-                        s.Printf("\n%s\n", object_desc);
-                    else
-                        s.Printf ("No description available.\n");
-                    return;
-                }
-
-
-                if (curr_depth < max_depth)
-                {
-                    if (is_aggregate)
-                        s.PutChar('{');
-
-                    bool is_ptr_or_ref = ClangASTContext::IsPointerOrReferenceType (valobj->GetClangType());
-                    
-                    if (is_ptr_or_ref && ptr_depth == 0)
-                        return;
-
-                    const uint32_t num_children = valobj->GetNumChildren();
-                    if (num_children)
-                    {
-                        s.IndentMore();
-                        for (uint32_t idx=0; idx<num_children; ++idx)
-                        {
-                            ValueObjectSP child_sp(valobj->GetChildAtIndex(idx, true));
-                            if (child_sp.get())
-                            {
-                                s.EOL();
-                                DumpValueObject (result,
-                                                 exe_scope,
-                                                 child_sp.get(),
-                                                 NULL,
-                                                 is_ptr_or_ref ? ptr_depth - 1 : ptr_depth,
-                                                 curr_depth + 1,
-                                                 max_depth,
-                                                 false,
-                                                 true);
-                                if (idx + 1 < num_children)
-                                    s.PutChar(',');
-                            }
-                        }
-                        s.IndentLess();
-                    }
-                    if (is_aggregate)
-                    {
-                        s.EOL();
-                        s.Indent("}");
-                    }
-                }
-                else
-                {
-                    if (is_aggregate)
-                    {
-                        s.PutCString("{...}");
-                    }
-                }
-
-            }
-        }
-    }
 
     virtual bool
     Execute
@@ -517,16 +398,17 @@ public:
                                             s.PutCString (": ");
                                         }
 
-                                        DumpValueObject (result, 
-                                                         exe_ctx.frame, 
-                                                         valobj_sp.get(), 
-                                                         name_cstr, 
-                                                         m_options.ptr_depth, 
-                                                         0, 
-                                                         m_options.max_depth, 
-                                                         m_options.use_objc, 
-                                                         false);
-                                        
+                                        ValueObject::DumpValueObject (result.GetOutputStream(), 
+                                                                      exe_ctx.frame, 
+                                                                      valobj_sp.get(), 
+                                                                      name_cstr, 
+                                                                      m_options.ptr_depth, 
+                                                                      0, 
+                                                                      m_options.max_depth, 
+                                                                      m_options.show_types,
+                                                                      m_options.show_location,
+                                                                      m_options.use_objc, 
+                                                                      false);                                        
                                         s.EOL();
                                     }
                                 }
@@ -683,15 +565,18 @@ public:
                                     s.PutCString (": ");
                                 }
 
-                                DumpValueObject (result, 
-                                                 exe_ctx.frame, 
-                                                 valobj_sp.get(), 
-                                                 name_cstr, 
-                                                 ptr_depth, 
-                                                 0, 
-                                                 m_options.max_depth, 
-                                                 m_options.use_objc,
-                                                 false);
+
+                                ValueObject::DumpValueObject (result.GetOutputStream(), 
+                                                              exe_ctx.frame, 
+                                                              valobj_sp.get(), 
+                                                              name_cstr, 
+                                                              ptr_depth, 
+                                                              0, 
+                                                              m_options.max_depth, 
+                                                              m_options.show_types,
+                                                              m_options.show_location,
+                                                              m_options.use_objc, 
+                                                              false);                                        
 
                                 s.EOL();
                             }
@@ -762,16 +647,18 @@ public:
                                             var_sp->GetDeclaration ().DumpStopContext (&s, false);
                                             s.PutCString (": ");
                                         }
-                                        DumpValueObject (result, 
-                                                         exe_ctx.frame, 
-                                                         valobj_sp.get(), 
-                                                         name_cstr, 
-                                                         m_options.ptr_depth, 
-                                                         0, 
-                                                         m_options.max_depth, 
-                                                         m_options.use_objc,
-                                                         true);
-
+                                        ValueObject::DumpValueObject (result.GetOutputStream(), 
+                                                                      exe_ctx.frame, 
+                                                                      valobj_sp.get(), 
+                                                                      name_cstr, 
+                                                                      m_options.ptr_depth, 
+                                                                      0, 
+                                                                      m_options.max_depth, 
+                                                                      m_options.show_types,
+                                                                      m_options.show_location,
+                                                                      m_options.use_objc, 
+                                                                      false);                                        
+                                        
                                         s.EOL();
                                     }
                                 }

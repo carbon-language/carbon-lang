@@ -82,6 +82,9 @@ struct ClangExpressionVariable
     bool
     PointValueAtData(Value &value, ExecutionContext *exe_ctx);
     
+    lldb::ValueObjectSP
+    GetExpressionResult (ExecutionContext *exe_ctx);
+
     //----------------------------------------------------------------------
     /// The following values should stay valid for the life of the variable
     //----------------------------------------------------------------------
@@ -98,6 +101,15 @@ struct ClangExpressionVariable
     /// The following values should not live beyond parsing
     //----------------------------------------------------------------------
     struct ParserVars {
+
+        ParserVars() :
+            m_parser_type(),
+            m_named_decl (NULL),
+            m_llvm_value (NULL),
+            m_lldb_value (NULL)
+        {
+        }
+
         TypeFromParser          m_parser_type;  ///< The type of the variable according to the parser
         const clang::NamedDecl *m_named_decl;   ///< The Decl corresponding to this variable
         llvm::Value            *m_llvm_value;   ///< The IR value corresponding to this variable; usually a GlobalValue
@@ -127,6 +139,13 @@ struct ClangExpressionVariable
     /// The following values are valid if the variable is used by JIT code
     //----------------------------------------------------------------------
     struct JITVars {
+        JITVars () :
+            m_alignment (0),
+            m_size (0),
+            m_offset (0)
+        {
+        }
+
         off_t   m_alignment;    ///< The required alignment of the variable, in bytes
         size_t  m_size;         ///< The space required for the variable, in bytes
         off_t   m_offset;       ///< The offset of the variable in the struct, in bytes
@@ -151,24 +170,15 @@ struct ClangExpressionVariable
         m_jit_vars.reset();
     }
     
-    //----------------------------------------------------------------------
-    /// The following values are valid if the value contains its own data
-    //----------------------------------------------------------------------
-    struct DataVars {
-        lldb_private::DataBufferHeap   *m_data; ///< The heap area allocated to contain this variable's data.  Responsibility for deleting this falls to whoever uses the variable last
-    };
-    std::auto_ptr<DataVars> m_data_vars;
+    lldb::DataBufferSP m_data_sp;
     
     //----------------------------------------------------------------------
     /// Make this variable usable for storing its data internally by
     /// allocating data-specific variables
     //----------------------------------------------------------------------
-    void EnableDataVars()
-    {
-        if (!m_jit_vars.get())
-            m_data_vars.reset(new struct DataVars);
-    }
-    
+    void 
+    EnableDataVars();
+
     //----------------------------------------------------------------------
     /// Deallocate data-specific variables
     //----------------------------------------------------------------------
@@ -180,40 +190,7 @@ struct ClangExpressionVariable
     size_t Size ()
     {
         return (m_user_type.GetClangTypeBitWidth () + 7) / 8;
-    }
-    
-    //----------------------------------------------------------------------
-    /// Pretty-print the variable, assuming it contains its own data
-    ///
-    /// @param[in] output_stream
-    ///     The stream to pretty-print on.
-    ///
-    /// @param[in] exe_ctx
-    ///     The execution context to use when resolving the contents of the
-    ///     variable.
-    ///
-    /// @param[in] format
-    ///     The format to print the variable in
-    ///
-    /// @param[in] show_types
-    ///     If true, print the type of the variable
-    ///
-    /// @param[in] show_summary
-    ///     If true, print a summary of the variable's type
-    ///
-    /// @param[in] verbose
-    ///     If true, be verbose in printing the value of the variable
-    ///
-    /// @return
-    ///     An Error describing the result of the operation.  If Error::Success()
-    ///     returns true, the pretty printing completed successfully.
-    //----------------------------------------------------------------------
-    Error Print(Stream &output_stream,
-                ExecutionContext &exe_ctx,
-                lldb::Format format,
-                bool show_types,
-                bool show_summary,
-                bool verbose);
+    }    
 };
 
 //----------------------------------------------------------------------

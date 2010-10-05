@@ -575,10 +575,10 @@ ClangExpressionDeclMap::DoMaterializeOnePersistentVariable(bool dematerialize,
     
     size_t pvar_size = pvar->Size();
     
-    if (!pvar->m_data_vars.get())
+    if (!pvar->m_data_sp.get())
         return false;
     
-    uint8_t *pvar_data = pvar->m_data_vars->m_data->GetBytes();               
+    uint8_t *pvar_data = pvar->m_data_sp->GetBytes();               
     Error error;
     
     if (dematerialize)

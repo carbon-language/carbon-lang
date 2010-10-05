@@ -311,7 +311,8 @@ typedef enum ValueType
     eValueTypeVariableArgument  = 3,    // function argument variables
     eValueTypeVariableLocal     = 4,    // function local variables
     eValueTypeRegister          = 5,    // stack frame register value
-    eValueTypeRegisterSet       = 6     // A collection of stack frame register values
+    eValueTypeRegisterSet       = 6,    // A collection of stack frame register values
+    eValueTypeConstResult       = 7,    // function local variables
 } ValueType;
 
 //----------------------------------------------------------------------

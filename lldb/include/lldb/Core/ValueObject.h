@@ -188,6 +188,19 @@ public:
     bool
     SetDynamicValue ();
 
+    static void
+    DumpValueObject (Stream &s,
+                     ExecutionContextScope *exe_scope,
+                     ValueObject *valobj,
+                     const char *root_valobj_name,
+                     uint32_t ptr_depth,
+                     uint32_t curr_depth,
+                     uint32_t max_depth,
+                     bool show_types,
+                     bool show_location,
+                     bool use_objc,
+                     bool scope_already_checked);
+
 protected:
     //------------------------------------------------------------------
     // Classes that inherit from ValueObject can see and modify these

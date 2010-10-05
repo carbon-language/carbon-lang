@@ -409,3 +409,13 @@ SBFrame::GetDescription (SBStream &description)
 
     return true;
 }
+
+lldb::SBValue
+SBFrame::EvaluateExpression (const char *expr)
+{
+    lldb::SBValue expr_result_value;
+    if (m_opaque_sp)
+    {
+    }
+    return expr_result_value;
+}

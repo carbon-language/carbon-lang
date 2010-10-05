@@ -206,8 +206,14 @@ CommandObjectExpression::MultiLineExpressionCallback
 }
 
 bool
-CommandObjectExpression::EvaluateExpression (const char *expr, bool bare, Stream &output_stream, Stream &error_stream,
-                                             CommandReturnObject *result)
+CommandObjectExpression::EvaluateExpression 
+(
+    const char *expr, 
+    bool bare, 
+    Stream &output_stream, 
+    Stream &error_stream,
+    CommandReturnObject *result
+)
 {
     if (!m_exe_ctx.process)
     {
@@ -248,41 +254,31 @@ CommandObjectExpression::EvaluateExpression (const char *expr, bool bare, Stream
         
     if (expr_result)
     {
-        StreamString ss;
-        
-        if (m_options.print_object)
+        // TODO: seems weird to get a pointer to a result object back from
+        // a function. Do we own it? Feels like we do, but from looking at the
+        // code we don't. Might be best to make this a reference and state
+        // explicitly that we don't own it when we get a reference back from
+        // the execute?
+        lldb::ValueObjectSP valobj_sp (expr_result->GetExpressionResult (&m_exe_ctx));
+        if (valobj_sp)
         {
-            Value result_value;
-            if (expr_result->PointValueAtData(result_value, &m_exe_ctx))
-            {                
-                bool obj_result;
-                ObjCLanguageRuntime *runtime = m_exe_ctx.process->GetObjCLanguageRuntime();
-                obj_result = runtime->GetObjectDescription (ss, result_value, m_exe_ctx.GetBestExecutionContextScope());
-                if (!obj_result)
-                {
-                    error_stream.Printf ("Could not get object description: %s.\n", ss.GetData());
-                    return false;
-                }
-                // Sometimes the description doesn't have a newline on the end.  For now, I'll just add one here, if
-                ss.Printf("\n");
-            }
+            ValueObject::DumpValueObject (output_stream,
+                                          m_exe_ctx.GetBestExecutionContextScope(),
+                                          valobj_sp.get(),          // Variable object to dump
+                                          expr_result->m_name.c_str(),// Root object name
+                                          0,                        // Pointer depth to traverse (zero means stop at pointers)
+                                          0,                        // Current depth, this is the top most, so zero...
+                                          UINT32_MAX,               // Max depth to go when dumping concrete types, dump everything...
+                                          m_options.show_types,     // Show types when dumping?
+                                          false,                    // Show locations of variables, no since this is a host address which we don't care to see
+                                          m_options.print_object,   // Print the objective C object?
+                                          true);                    // Scope is already checked. Const results are always in scope.
+            output_stream.EOL();
         }
         else
         {
-            Error rc = expr_result->Print (ss, 
-                                           m_exe_ctx, 
-                                           m_options.format,
-                                           m_options.show_types,
-                                           m_options.show_summary,
-                                           m_options.debug);
-            
-            if (rc.Fail()) {
-                error_stream.Printf ("Couldn't print result : %s\n", rc.AsCString());
-                return false;
-            }
+            error_stream.PutCString ("Couldn't extract expression result");
         }
-
-        output_stream.PutCString(ss.GetString().c_str());
         if (result)
             result->SetStatus (eReturnStatusSuccessFinishResult);
     }

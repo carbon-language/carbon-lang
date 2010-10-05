@@ -99,7 +99,7 @@ public:
     /// @param[in] addr_size
     ///     A new address byte size value.
     //------------------------------------------------------------------
-    DataExtractor (lldb::DataBufferSP& data_sp, lldb::ByteOrder byte_order, uint8_t addr_size);
+    DataExtractor (const lldb::DataBufferSP& data_sp, lldb::ByteOrder byte_order, uint8_t addr_size);
 
     //------------------------------------------------------------------
     /// Construct with a subset of \a data.
@@ -1068,7 +1068,7 @@ public:
     ///     The number of bytes that this object now contains.
     //------------------------------------------------------------------
     uint32_t
-    SetData (lldb::DataBufferSP& data_sp, uint32_t offset = 0, uint32_t length = UINT32_MAX);
+    SetData (const lldb::DataBufferSP& data_sp, uint32_t offset = 0, uint32_t length = UINT32_MAX);
 
     //------------------------------------------------------------------
     /// Set the byte_order value.

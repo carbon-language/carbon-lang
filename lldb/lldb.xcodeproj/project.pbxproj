@@ -21,6 +21,8 @@
 		261B5A5411C3F2AD00AABD0A /* SharingPtr.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 261B5A5211C3F2AD00AABD0A /* SharingPtr.cpp */; };
 		261B5A5511C3F2AD00AABD0A /* SharingPtr.h in Headers */ = {isa = PBXBuildFile; fileRef = 261B5A5311C3F2AD00AABD0A /* SharingPtr.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		262CFC7711A4510000946C6C /* debugserver in Resources */ = {isa = PBXBuildFile; fileRef = 26CE05A0115C31E50022F371 /* debugserver */; };
+		26424E3D125986CB0016D82C /* ValueObjectConstResult.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26424E3C125986CB0016D82C /* ValueObjectConstResult.cpp */; };
+		26424E3F125986D30016D82C /* ValueObjectConstResult.h in Headers */ = {isa = PBXBuildFile; fileRef = 26424E3E125986D30016D82C /* ValueObjectConstResult.h */; };
 		264723A611FA076E00DE380C /* CleanUp.h in Headers */ = {isa = PBXBuildFile; fileRef = 264723A511FA076E00DE380C /* CleanUp.h */; };
 		265ABF6310F42EE900531910 /* DebugSymbols.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 265ABF6210F42EE900531910 /* DebugSymbols.framework */; };
 		2668020E115FD12C008E1FE4 /* lldb-defines.h in Headers */ = {isa = PBXBuildFile; fileRef = 26BC7C2510F1B3BC00F91463 /* lldb-defines.h */; settings = {ATTRIBUTES = (Public, ); }; };
@@ -559,6 +561,8 @@
 		263664921140A4930075843B /* Debugger.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Debugger.cpp; path = source/Core/Debugger.cpp; sourceTree = "<group>"; };
 		263664941140A4C10075843B /* Debugger.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Debugger.h; path = include/lldb/Core/Debugger.h; sourceTree = "<group>"; };
 		263FEDA5112CC1DA00E4C208 /* ThreadSafeSTLMap.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ThreadSafeSTLMap.h; path = include/lldb/Core/ThreadSafeSTLMap.h; sourceTree = "<group>"; };
+		26424E3C125986CB0016D82C /* ValueObjectConstResult.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ValueObjectConstResult.cpp; path = source/Core/ValueObjectConstResult.cpp; sourceTree = "<group>"; };
+		26424E3E125986D30016D82C /* ValueObjectConstResult.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ValueObjectConstResult.h; path = include/lldb/Core/ValueObjectConstResult.h; sourceTree = "<group>"; };
 		264334381110F63100CDB6C6 /* ValueObjectRegister.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ValueObjectRegister.cpp; path = source/Core/ValueObjectRegister.cpp; sourceTree = "<group>"; };
 		2643343A1110F63C00CDB6C6 /* ValueObjectRegister.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ValueObjectRegister.h; path = include/lldb/Core/ValueObjectRegister.h; sourceTree = "<group>"; };
 		264723A511FA076E00DE380C /* CleanUp.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CleanUp.h; path = include/lldb/Utility/CleanUp.h; sourceTree = "<group>"; };
@@ -1745,6 +1749,8 @@
 				26BC7E9A10F1B85900F91463 /* ValueObject.cpp */,
 				26BC7D8310F1B77400F91463 /* ValueObjectChild.h */,
 				26BC7E9B10F1B85900F91463 /* ValueObjectChild.cpp */,
+				26424E3E125986D30016D82C /* ValueObjectConstResult.h */,
+				26424E3C125986CB0016D82C /* ValueObjectConstResult.cpp */,
 				26BC7D8410F1B77400F91463 /* ValueObjectList.h */,
 				26BC7E9C10F1B85900F91463 /* ValueObjectList.cpp */,
 				2643343A1110F63C00CDB6C6 /* ValueObjectRegister.h */,
@@ -2377,6 +2383,7 @@
 				4C139EA6124A8B03000BFF8D /* AppleObjCRuntimeV2.h in Headers */,
 				4C0A91D912511CB900CA6636 /* AppleObjCTrampolineHandler.h in Headers */,
 				4C0A91DB12511CB900CA6636 /* AppleThreadPlanStepThroughObjCTrampoline.h in Headers */,
+				26424E3F125986D30016D82C /* ValueObjectConstResult.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -2848,6 +2855,7 @@
 				4C139EA5124A8B03000BFF8D /* AppleObjCRuntimeV2.cpp in Sources */,
 				4C0A91D812511CB900CA6636 /* AppleObjCTrampolineHandler.cpp in Sources */,
 				4C0A91DA12511CB900CA6636 /* AppleThreadPlanStepThroughObjCTrampoline.cpp in Sources */,
+				26424E3D125986CB0016D82C /* ValueObjectConstResult.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

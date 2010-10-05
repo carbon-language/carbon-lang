@@ -64,6 +64,9 @@ public:
     lldb::SBBlock
     GetBlock () const;
 
+    lldb::SBValue
+    EvaluateExpression (const char *expr);
+
     // Gets the lexical block that defines the stack frame. Another way to think
     // of this is it will return the block that contains all of the variables
     // for a stack frame. Inlined functions are represented as SBBlock objects
