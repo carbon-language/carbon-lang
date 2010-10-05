@@ -629,6 +629,21 @@ IRForTarget::MaybeHandleVariable(Module &M,
 }
 
 bool
+IRForTarget::MaybeHandleCallArguments(Module &M,
+                                      CallInst *C)
+{
+    // lldb_private::Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS);
+    
+    for (unsigned op_index = 0, num_ops = C->getNumArgOperands();
+         op_index < num_ops;
+         ++op_index)
+        if (!MaybeHandleVariable(M, C->getArgOperand(op_index), true)) // conservatively believe that this is a store
+            return false;
+    
+    return true;
+}
+
+bool
 IRForTarget::MaybeHandleCall(Module &M,
                              CallInst *C)
 {
@@ -772,8 +787,13 @@ IRForTarget::resolveExternals(Module &M, BasicBlock &BB)
         }
         
         if (CallInst *call = dyn_cast<CallInst>(&inst))
+        {
+            if (!MaybeHandleCallArguments(M, call))
+                return false;
+            
             if (!MaybeHandleCall(M, call))
                 return false;
+        }
     }
     
     return true;

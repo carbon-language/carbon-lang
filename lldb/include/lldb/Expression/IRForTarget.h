@@ -220,6 +220,21 @@ private:
                              bool Store);
     
     //------------------------------------------------------------------
+    /// Handle all the arguments to a function call
+    ///
+    /// @param[in] M
+    ///     The module currently being processed.
+    ///
+    /// @param[in] C
+    ///     The call instruction.
+    ///
+    /// @return
+    ///     True on success; false otherwise
+    //------------------------------------------------------------------
+    bool MaybeHandleCallArguments(llvm::Module &M,
+                                  llvm::CallInst *C);
+    
+    //------------------------------------------------------------------
     /// Handle a single external function call
     ///
     /// @param[in] M
