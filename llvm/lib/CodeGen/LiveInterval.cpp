@@ -40,6 +40,7 @@ struct CompEnd {
 }
 
 LiveInterval::iterator LiveInterval::find(SlotIndex Pos) {
+  assert(Pos.isValid() && "Cannot search for an invalid index");
   return std::upper_bound(begin(), end(), LiveRange(SlotIndex(), Pos, 0),
                           CompEnd());
 }
