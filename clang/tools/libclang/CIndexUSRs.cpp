@@ -699,7 +699,8 @@ void USRGenerator::VisitTemplateArgument(const TemplateArgument &Arg) {
     break;
 
   case TemplateArgument::Declaration:
-    Visit(Arg.getAsDecl());
+    if (Decl *D = Arg.getAsDecl())
+      Visit(D);
     break;
       
   case TemplateArgument::Template:

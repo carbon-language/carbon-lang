@@ -3115,6 +3115,9 @@ QualType ASTReader::GetType(TypeID ID) {
   assert(Index < TypesLoaded.size() && "Type index out-of-range");
   if (TypesLoaded[Index].isNull()) {
     TypesLoaded[Index] = ReadTypeRecord(Index);
+    if (TypesLoaded[Index].isNull())
+      return QualType();
+
     TypesLoaded[Index]->setFromAST();
     TypeIdxs[TypesLoaded[Index]] = TypeIdx::fromTypeID(ID);
     if (DeserializationListener)

@@ -1419,10 +1419,7 @@ void ASTWriter::WriteType(QualType T) {
   if (Idx.getIndex() == 0) // we haven't seen this type before.
     Idx = TypeIdx(NextTypeID++);
 
-  // If this type comes from a previously-loaded PCH/AST file, don't try to
-  // write the type again.
-  if (Idx.getIndex() < FirstTypeID)
-    return;
+  assert(Idx.getIndex() >= FirstTypeID && "Re-writing a type from a prior AST");
 
   // Record the offset for this type.
   unsigned Index = Idx.getIndex() - FirstTypeID;
@@ -2872,7 +2869,7 @@ DeclID ASTWriter::GetDeclRef(const Decl *D) {
   if (D == 0) {
     return 0;
   }
-
+  assert(!(reinterpret_cast<uintptr_t>(D) & 0x01) && "Invalid decl pointer");
   DeclID &ID = DeclIDs[D];
   if (ID == 0) {
     // We haven't seen this declaration before. Give it a new ID and
@@ -3130,7 +3127,14 @@ void ASTWriter::IdentifierRead(IdentID ID, IdentifierInfo *II) {
 }
 
 void ASTWriter::TypeRead(TypeIdx Idx, QualType T) {
-  TypeIdxs[T] = Idx;
+  // Always take the highest-numbered type index. This copes with an interesting
+  // case for chained AST writing where we schedule writing the type and then,
+  // later, deserialize the type from another AST. In this case, we want to 
+  // keep the higher-numbered entry so that we can properly write it out to
+  // the AST file.
+  TypeIdx &StoredIdx = TypeIdxs[T];
+  if (Idx.getIndex() >= StoredIdx.getIndex())
+    StoredIdx = Idx;
 }
 
 void ASTWriter::DeclRead(DeclID ID, const Decl *D) {
