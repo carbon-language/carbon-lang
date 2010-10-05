@@ -377,11 +377,17 @@ for the detailed definitions of each of these orderings).
 <p>
 On some platforms, the compiler vendor can offer some or even all of the above
 intrinsics at one or more weaker levels of memory synchronization.  This might
-lead for example to not issuing an <tt>mfense</tt> instruction on the x86.  If
-the compiler does not offer any given operation, at any given memory ordering
+lead for example to not issuing an <tt>mfense</tt> instruction on the x86.
+</p>
+
+<p>
+If the compiler does not offer any given operation, at any given memory ordering
 level, the library will automatically attempt to call the next highest memory
 ordering operation.  This continues up to <tt>seq_cst</tt>, and if that doesn't
-exist, then the library takes over and does the job with a <tt>mutex</tt>.
+exist, then the library takes over and does the job with a <tt>mutex</tt>.  This
+is a compile-time search &amp; selection operation.  At run time, the
+application will only see the few inlined assembly instructions for the selected
+intrinsic.
 </p>
 
 <p>
