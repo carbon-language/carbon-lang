@@ -161,11 +161,6 @@ class LiveIntervalMap {
   // values not present (unknown/unmapped).
   ValueMap valueMap_;
 
-  // extendTo - Find the last li_ value defined in MBB at or before Idx. The
-  // parentli is assumed to be live at Idx. Extend the live range to include
-  // Idx. Return the found VNInfo, or NULL.
-  VNInfo *extendTo(MachineBasicBlock *MBB, SlotIndex Idx);
-
 public:
   LiveIntervalMap(LiveIntervals &lis,
                   const LiveInterval &parentli)
@@ -193,6 +188,11 @@ public:
   /// If simple is not NULL, *simple will indicate if ParentVNI is a simply
   /// mapped value.
   VNInfo *mapValue(const VNInfo *ParentVNI, SlotIndex Idx, bool *simple = 0);
+
+  // extendTo - Find the last li_ value defined in MBB at or before Idx. The
+  // parentli is assumed to be live at Idx. Extend the live range to include
+  // Idx. Return the found VNInfo, or NULL.
+  VNInfo *extendTo(MachineBasicBlock *MBB, SlotIndex Idx);
 
   /// isMapped - Return true is ParentVNI is a known mapped value. It may be a
   /// simple 1-1 mapping or a complex mapping to later defs.

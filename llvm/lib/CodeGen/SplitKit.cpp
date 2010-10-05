@@ -521,7 +521,7 @@ VNInfo *LiveIntervalMap::extendTo(MachineBasicBlock *MBB, SlotIndex Idx) {
   if (I == li_->begin())
     return 0;
   --I;
-  if (I->start < lis_.getMBBStartIdx(MBB))
+  if (I->end <= lis_.getMBBStartIdx(MBB))
     return 0;
   if (I->end <= Idx)
     I->end = Idx.getNextSlot();
@@ -703,23 +703,20 @@ void SplitEditor::leaveIntvAfter(SlotIndex Idx) {
   assert(openli_.getLI() && "openIntv not called before leaveIntvAfter");
 
   // The interval must be live beyond the instruction at Idx.
-  SlotIndex EndIdx = Idx.getNextIndex().getBaseIndex();
-  VNInfo *ParentVNI = curli_->getVNInfoAt(EndIdx);
+  VNInfo *ParentVNI = curli_->getVNInfoAt(Idx.getBoundaryIndex());
   if (!ParentVNI) {
     DEBUG(dbgs() << "    leaveIntvAfter " << Idx << ": not live\n");
     return;
   }
 
-  MachineInstr *MI = lis_.getInstructionFromIndex(Idx);
-  assert(MI && "leaveIntvAfter called with invalid index");
-
-  VNInfo *VNI = dupli_.defByCopyFrom(openli_.getLI()->reg, ParentVNI,
-                                     *MI->getParent(), MI);
+  MachineBasicBlock::iterator MII = lis_.getInstructionFromIndex(Idx);
+  MachineBasicBlock *MBB = MII->getParent();
+  VNInfo *VNI = dupli_.defByCopyFrom(openli_.getLI()->reg, ParentVNI, *MBB,
+                                     llvm::next(MII));
 
   // Finally we must make sure that openli is properly extended from Idx to the
   // new copy.
-  openli_.mapValue(ParentVNI, VNI->def.getUseIndex());
-
+  openli_.addSimpleRange(Idx.getBoundaryIndex(), VNI->def, ParentVNI);
   DEBUG(dbgs() << "    leaveIntvAfter " << Idx << ": " << *openli_.getLI()
                << '\n');
 }
@@ -744,8 +741,7 @@ void SplitEditor::leaveIntvAtTop(MachineBasicBlock &MBB) {
 
   // Finally we must make sure that openli is properly extended from Start to
   // the new copy.
-  openli_.mapValue(ParentVNI, VNI->def.getUseIndex());
-
+  openli_.addSimpleRange(Start, VNI->def, ParentVNI);
   DEBUG(dbgs() << "    leaveIntvAtTop at " << Start << ": " << *openli_.getLI()
                << '\n');
 }
