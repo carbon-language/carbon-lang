@@ -343,7 +343,7 @@ def NEG64m : RI<0xF7, MRM3m, (outs), (ins i64mem:$dst), "neg{q}\t$dst",
 } // Defs = [EFLAGS]
 
 
-// FIXME: NOT sets EFLAGS!
+// Note: NOT does not set EFLAGS!
 
 let Constraints = "$src1 = $dst" in {
 // Match xor -1 to not. Favors these over a move imm + xor to save code size.

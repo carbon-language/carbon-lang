@@ -762,15 +762,6 @@ def CMPS64 : RI<0xA7, RawFrm, (outs), (ins), "cmpsq", []>;
 //  Move Instructions.
 //
 
-// The assembler accepts movq of a 64-bit immediate as an alternate spelling of
-// movabsq.
-let isAsmParserOnly = 1 in {
-// FIXME: Alias??
-def MOV64ri_alt : RIi64<0xB8, AddRegFrm, (outs GR64:$dst), (ins i64imm:$src),
-                    "mov{q}\t{$src, $dst|$dst, $src}", []>;
-}
-
-
 let neverHasSideEffects = 1 in {
 def MOV8rr  : I<0x88, MRMDestReg, (outs GR8 :$dst), (ins GR8 :$src),
                 "mov{b}\t{$src, $dst|$dst, $src}", []>;

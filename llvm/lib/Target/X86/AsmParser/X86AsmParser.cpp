@@ -834,6 +834,15 @@ ParseInstruction(StringRef Name, SMLoc NameLoc,
   if (getLexer().is(AsmToken::EndOfStatement))
     Parser.Lex(); // Consume the EndOfStatement
 
+  // Hack to allow 'movq <largeimm>, <reg>' as an alias for movabsq.
+  if ((Name == "movq" || Name == "mov") && Operands.size() == 3 &&
+      static_cast<X86Operand*>(Operands[2])->isReg() &&
+      static_cast<X86Operand*>(Operands[1])->isImm() &&
+      !static_cast<X86Operand*>(Operands[1])->isImmSExti64i32()) {
+    delete Operands[0];
+    Operands[0] = X86Operand::CreateToken("movabsq", NameLoc);
+  }
+  
   // FIXME: Hack to handle recognize s{hr,ar,hl} $1, <op>.  Canonicalize to
   // "shift <op>".
   if ((Name.startswith("shr") || Name.startswith("sar") ||
@@ -1138,7 +1147,6 @@ MatchAndEmitInstruction(SMLoc IDLoc,
     delete Operands[0];
     Operands[0] = X86Operand::CreateToken(Repl, IDLoc);
   }
-  
   
   bool WasOriginallyInvalidOperand = false;
   unsigned OrigErrorInfo;
