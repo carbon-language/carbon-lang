@@ -771,17 +771,6 @@ Scope *Sema::getNonFieldDeclScope(Scope *S) {
   return S;
 }
 
-void Sema::InitBuiltinVaListType() {
-  if (!Context.getBuiltinVaListType().isNull())
-    return;
-
-  IdentifierInfo *VaIdent = &Context.Idents.get("__builtin_va_list");
-  NamedDecl *VaDecl = LookupSingleName(TUScope, VaIdent, SourceLocation(),
-                                       LookupOrdinaryName, ForRedeclaration);
-  TypedefDecl *VaTypedef = cast<TypedefDecl>(VaDecl);
-  Context.setBuiltinVaListType(Context.getTypedefType(VaTypedef));
-}
-
 /// LazilyCreateBuiltin - The specified Builtin-ID was first used at
 /// file scope.  lazily create a decl for it. ForRedeclaration is true
 /// if we're creating this built-in in anticipation of redeclaring the
@@ -790,9 +779,6 @@ NamedDecl *Sema::LazilyCreateBuiltin(IdentifierInfo *II, unsigned bid,
                                      Scope *S, bool ForRedeclaration,
                                      SourceLocation Loc) {
   Builtin::ID BID = (Builtin::ID)bid;
-
-  if (Context.BuiltinInfo.hasVAListUse(BID))
-    InitBuiltinVaListType();
 
   ASTContext::GetBuiltinTypeError Error;
   QualType R = Context.GetBuiltinType(BID, Error);
@@ -2627,6 +2613,8 @@ Sema::ActOnTypedefDeclarator(Scope* S, Declarator& D, DeclContext* DC,
         Context.setjmp_bufDecl(NewTD);
       else if (II->isStr("sigjmp_buf"))
         Context.setsigjmp_bufDecl(NewTD);
+      else if (II->isStr("__builtin_va_list"))
+        Context.setBuiltinVaListType(Context.getTypedefType(NewTD));
     }
 
   return NewTD;

@@ -124,12 +124,6 @@ public:
   /// argument and whether this function as a va_list argument.
   bool isScanfLike(unsigned ID, unsigned &FormatIdx, bool &HasVAListArg);
 
-  /// hasVAListUse - Return true of the specified builtin uses __builtin_va_list
-  /// as an operand or return type.
-  bool hasVAListUse(unsigned ID) const {
-    return strpbrk(GetRecord(ID).Type, "Aa") != 0;
-  }
-
   /// isConstWithoutErrno - Return true if this function has no side
   /// effects and doesn't read memory, except for possibly errno. Such
   /// functions can be const when the MathErrno lang option is

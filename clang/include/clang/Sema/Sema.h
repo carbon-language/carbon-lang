@@ -4253,8 +4253,6 @@ public:
   /// in the global scope.
   bool CheckObjCDeclScope(Decl *D);
 
-  void InitBuiltinVaListType();
-
   /// VerifyIntegerConstantExpression - verifies that an expression is an ICE,
   /// and reports the appropriate diagnostics. Returns false on success.
   /// Can optionally return the value of the expression.
