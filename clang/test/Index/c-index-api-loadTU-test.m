@@ -28,7 +28,7 @@
 
 @protocol SubP <Proto>
 - spMethod;
-@end
+@endxb
 
 @interface Baz : Bar <SubP>
 {
