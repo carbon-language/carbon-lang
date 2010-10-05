@@ -257,6 +257,14 @@ def i32mem_TC : Operand<i32> {
   let ParserMatchClass = X86MemAsmOperand;
 }
 
+// Special i64mem for addresses of load folding tail calls. These are not
+// allowed to use callee-saved registers since they must be scheduled
+// after callee-saved register are popped.
+def i64mem_TC : Operand<i64> {
+  let PrintMethod = "printi64mem";
+  let MIOperandInfo = (ops GR64_TC, i8imm, GR64_TC, i32imm, i8imm);
+  let ParserMatchClass = X86MemAsmOperand;
+}
 
 let ParserMatchClass = X86AbsMemAsmOperand,
     PrintMethod = "print_pcrel_imm" in {
@@ -328,6 +336,31 @@ def i32i8imm  : Operand<i32> {
   let ParserMatchClass = ImmSExti32i8AsmOperand;
 }
 
+// 64-bits but only 32 bits are significant.
+def i64i32imm  : Operand<i64> {
+  let ParserMatchClass = ImmSExti64i32AsmOperand;
+}
+
+// 64-bits but only 32 bits are significant, and those bits are treated as being
+// pc relative.
+def i64i32imm_pcrel : Operand<i64> {
+  let PrintMethod = "print_pcrel_imm";
+  let ParserMatchClass = X86AbsMemAsmOperand;
+}
+
+// 64-bits but only 8 bits are significant.
+def i64i8imm   : Operand<i64> {
+  let ParserMatchClass = ImmSExti64i8AsmOperand;
+}
+
+def lea64_32mem : Operand<i32> {
+  let PrintMethod = "printi32mem";
+  let AsmOperandLowerMethod = "lower_lea64_32mem";
+  let MIOperandInfo = (ops GR32, i8imm, GR32_NOSP, i32imm, i8imm);
+  let ParserMatchClass = X86MemAsmOperand;
+}
+
+
 //===----------------------------------------------------------------------===//
 // X86 Complex Pattern Definitions.
 //
@@ -338,6 +371,13 @@ def lea32addr : ComplexPattern<i32, 5, "SelectLEAAddr",
                                [add, sub, mul, X86mul_imm, shl, or, frameindex],
                                []>;
 def tls32addr : ComplexPattern<i32, 5, "SelectTLSADDRAddr",
+                               [tglobaltlsaddr], []>;
+
+def lea64addr : ComplexPattern<i64, 5, "SelectLEAAddr",
+                        [add, sub, mul, X86mul_imm, shl, or, frameindex,
+                         X86WrapperRIP], []>;
+
+def tls64addr : ComplexPattern<i64, 5, "SelectTLSADDRAddr",
                                [tglobaltlsaddr], []>;
 
 //===----------------------------------------------------------------------===//
@@ -416,6 +456,13 @@ def immSext8 : PatLeaf<(imm), [{ return immSext8(N); }]>;
 
 def i16immSExt8  : PatLeaf<(i16 immSext8)>;
 def i32immSExt8  : PatLeaf<(i32 immSext8)>;
+def i64immSExt8  : PatLeaf<(i64 immSext8)>;
+def i64immSExt32  : PatLeaf<(i64 imm), [{ return i64immSExt32(N); }]>;
+def i64immZExt32  : PatLeaf<(i64 imm), [{
+  // i64immZExt32 predicate - True if the 64-bit immediate fits in a 32-bit
+  // unsignedsign extended field.
+  return (uint64_t)N->getZExtValue() == (uint32_t)N->getZExtValue();
+}]>;
 
 // Helper fragments for loads.
 // It's always safe to treat a anyext i16 load as a i32 load if the i16 is
@@ -457,6 +504,9 @@ def loadf80 : PatFrag<(ops node:$ptr), (f80 (load node:$ptr))>;
 def sextloadi16i8  : PatFrag<(ops node:$ptr), (i16 (sextloadi8 node:$ptr))>;
 def sextloadi32i8  : PatFrag<(ops node:$ptr), (i32 (sextloadi8 node:$ptr))>;
 def sextloadi32i16 : PatFrag<(ops node:$ptr), (i32 (sextloadi16 node:$ptr))>;
+def sextloadi64i8  : PatFrag<(ops node:$ptr), (i64 (sextloadi8 node:$ptr))>;
+def sextloadi64i16 : PatFrag<(ops node:$ptr), (i64 (sextloadi16 node:$ptr))>;
+def sextloadi64i32 : PatFrag<(ops node:$ptr), (i64 (sextloadi32 node:$ptr))>;
 
 def zextloadi8i1   : PatFrag<(ops node:$ptr), (i8  (zextloadi1 node:$ptr))>;
 def zextloadi16i1  : PatFrag<(ops node:$ptr), (i16 (zextloadi1 node:$ptr))>;
@@ -464,6 +514,10 @@ def zextloadi32i1  : PatFrag<(ops node:$ptr), (i32 (zextloadi1 node:$ptr))>;
 def zextloadi16i8  : PatFrag<(ops node:$ptr), (i16 (zextloadi8 node:$ptr))>;
 def zextloadi32i8  : PatFrag<(ops node:$ptr), (i32 (zextloadi8 node:$ptr))>;
 def zextloadi32i16 : PatFrag<(ops node:$ptr), (i32 (zextloadi16 node:$ptr))>;
+def zextloadi64i1  : PatFrag<(ops node:$ptr), (i64 (zextloadi1 node:$ptr))>;
+def zextloadi64i8  : PatFrag<(ops node:$ptr), (i64 (zextloadi8 node:$ptr))>;
+def zextloadi64i16 : PatFrag<(ops node:$ptr), (i64 (zextloadi16 node:$ptr))>;
+def zextloadi64i32 : PatFrag<(ops node:$ptr), (i64 (zextloadi32 node:$ptr))>;
 
 def extloadi8i1    : PatFrag<(ops node:$ptr), (i8  (extloadi1 node:$ptr))>;
 def extloadi16i1   : PatFrag<(ops node:$ptr), (i16 (extloadi1 node:$ptr))>;
@@ -471,6 +525,10 @@ def extloadi32i1   : PatFrag<(ops node:$ptr), (i32 (extloadi1 node:$ptr))>;
 def extloadi16i8   : PatFrag<(ops node:$ptr), (i16 (extloadi8 node:$ptr))>;
 def extloadi32i8   : PatFrag<(ops node:$ptr), (i32 (extloadi8 node:$ptr))>;
 def extloadi32i16  : PatFrag<(ops node:$ptr), (i32 (extloadi16 node:$ptr))>;
+def extloadi64i1   : PatFrag<(ops node:$ptr), (i64 (extloadi1 node:$ptr))>;
+def extloadi64i8   : PatFrag<(ops node:$ptr), (i64 (extloadi8 node:$ptr))>;
+def extloadi64i16  : PatFrag<(ops node:$ptr), (i64 (extloadi16 node:$ptr))>;
+def extloadi64i32  : PatFrag<(ops node:$ptr), (i64 (extloadi32 node:$ptr))>;
 
 
 // An 'and' node with a single use.

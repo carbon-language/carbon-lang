@@ -12,6 +12,18 @@
 //
 //===----------------------------------------------------------------------===//
 
+//===----------------------------------------------------------------------===//
+// Pattern Matching Support
+
+def GetLo32XForm : SDNodeXForm<imm, [{
+  // Transformation function: get the low 32 bits.
+  return getI32Imm((unsigned)N->getZExtValue());
+}]>;
+
+
+//===----------------------------------------------------------------------===//
+// Random Pseudo Instructions.
+
 // PIC base construction.  This expands to code that looks like this:
 //     call  $next_inst
 //     popl %destreg"
