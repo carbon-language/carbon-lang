@@ -32,6 +32,7 @@
 #include "lldb/Symbol/VariableList.h"
 #include "lldb/Target/ExecutionContext.h"
 #include "lldb/Target/Process.h"
+#include "lldb/Target/RegisterContext.h"
 #include "lldb/Target/StackFrame.h"
 #include "lldb/Target/Target.h"
 
@@ -612,7 +613,7 @@ ClangExpressionDeclMap::DoMaterializeOneVariable(bool dematerialize,
 {
     Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS);
     
-    if (!exe_ctx.frame)
+    if (!exe_ctx.frame || !exe_ctx.process)
         return false;
     
     Variable *var = FindVariableInScope(*exe_ctx.frame, name, &type);
@@ -635,54 +636,216 @@ ClangExpressionDeclMap::DoMaterializeOneVariable(bool dematerialize,
         err.SetErrorStringWithFormat("Couldn't get value for %s", name);
         return false;
     }
+
+    // The size of the type contained in addr
     
-    if (location_value->GetValueType() == Value::eValueTypeLoadAddress)
+    size_t addr_bit_size = ClangASTType::GetClangTypeBitWidth(type.GetASTContext(), type.GetOpaqueQualType());
+    size_t addr_byte_size = addr_bit_size % 8 ? ((addr_bit_size + 8) / 8) : (addr_bit_size / 8);
+    
+    Value::ValueType value_type = location_value->GetValueType();
+    
+    switch (value_type)
     {
-        lldb::addr_t value_addr = location_value->GetScalar().ULongLong();
-        
-        size_t bit_size = ClangASTType::GetClangTypeBitWidth(type.GetASTContext(), type.GetOpaqueQualType());
-        size_t byte_size = bit_size % 8 ? ((bit_size + 8) / 8) : (bit_size / 8);
-        
-        DataBufferHeap data;
-        data.SetByteSize(byte_size);
-        
-        lldb::addr_t src_addr;
-        lldb::addr_t dest_addr;
-        
-        if (dematerialize)
+    default:
         {
-            src_addr = addr;
-            dest_addr = value_addr;
-        }
-        else
-        {
-            src_addr = value_addr;
-            dest_addr = addr;
-        }
-        
-        Error error;
-        if (exe_ctx.process->ReadMemory (src_addr, data.GetBytes(), byte_size, error) != byte_size)
-        {
-            err.SetErrorStringWithFormat ("Couldn't read a composite type from the target: %s", error.AsCString());
+            StreamString ss;
+            
+            location_value->Dump(&ss);
+            
+            err.SetErrorStringWithFormat("%s has a value of unhandled type: %s", name, ss.GetString().c_str());
             return false;
         }
-        
-        if (exe_ctx.process->WriteMemory (dest_addr, data.GetBytes(), byte_size, error) != byte_size)
+        break;
+    case Value::eValueTypeLoadAddress:
         {
-            err.SetErrorStringWithFormat ("Couldn't write a composite type to the target: %s", error.AsCString());
-            return false;
+            lldb::addr_t value_addr = location_value->GetScalar().ULongLong();
+            
+            DataBufferHeap data;
+            data.SetByteSize(addr_byte_size);
+            
+            lldb::addr_t src_addr;
+            lldb::addr_t dest_addr;
+            
+            if (dematerialize)
+            {
+                src_addr = addr;
+                dest_addr = value_addr;
+            }
+            else
+            {
+                src_addr = value_addr;
+                dest_addr = addr;
+            }
+            
+            Error error;
+            if (exe_ctx.process->ReadMemory (src_addr, data.GetBytes(), addr_byte_size, error) != addr_byte_size)
+            {
+                err.SetErrorStringWithFormat ("Couldn't read %s from the target: %s", name, error.AsCString());
+                return false;
+            }
+            
+            if (exe_ctx.process->WriteMemory (dest_addr, data.GetBytes(), addr_byte_size, error) != addr_byte_size)
+            {
+                err.SetErrorStringWithFormat ("Couldn't write %s to the target: %s", name, error.AsCString());
+                return false;
+            }
+            
+            if (log)
+                log->Printf("Copied from 0x%llx to 0x%llx", (uint64_t)src_addr, (uint64_t)addr);
         }
-        
-        if (log)
-            log->Printf("Copied from 0x%llx to 0x%llx", (uint64_t)src_addr, (uint64_t)addr);
-    }
-    else
-    {
-        StreamString ss;
-        
-        location_value->Dump(&ss);
-        
-        err.SetErrorStringWithFormat("%s has a value of unhandled type: %s", name, ss.GetString().c_str());   
+        break;
+    case Value::eValueTypeScalar:
+        {
+            if (location_value->GetContextType() != Value::eContextTypeDCRegisterInfo)
+            {
+                StreamString ss;
+                
+                location_value->Dump(&ss);
+                
+                err.SetErrorStringWithFormat("%s is a scalar of unhandled type: %s", name, ss.GetString().c_str());
+                return false;
+            }
+            
+            lldb::RegisterInfo *register_info = location_value->GetRegisterInfo();
+            
+            if (!register_info)
+            {
+                err.SetErrorStringWithFormat("Couldn't get the register information for %s", name);
+                return false;
+            }
+                        
+            RegisterContext *register_context = exe_ctx.GetRegisterContext();
+            
+            if (!register_context)
+            {
+                err.SetErrorStringWithFormat("Couldn't read register context to read %s from %s", name, register_info->name);
+                return false;
+            }
+            
+            uint32_t register_number = register_info->kinds[lldb::eRegisterKindLLDB];
+            uint32_t register_byte_size = register_info->byte_size;
+            
+            if (dematerialize)
+            {
+                // Moving from addr into a register
+                //
+                // Case 1: addr_byte_size and register_byte_size are the same
+                //
+                //   |AABBCCDD| Address contents
+                //   |AABBCCDD| Register contents
+                //
+                // Case 2: addr_byte_size is bigger than register_byte_size
+                //
+                //   Error!  (The register should always be big enough to hold the data)
+                //
+                // Case 3: register_byte_size is bigger than addr_byte_size
+                //
+                //   |AABB| Address contents
+                //   |AABB0000| Register contents [on little-endian hardware]
+                //   |0000AABB| Register contents [on big-endian hardware]
+                
+                if (addr_byte_size > register_byte_size)
+                {
+                    err.SetErrorStringWithFormat("%s is too big to store in %s", name, register_info->name);
+                    return false;
+                }
+            
+                uint32_t register_offset;
+                
+                switch (exe_ctx.process->GetByteOrder())
+                {
+                default:
+                    err.SetErrorStringWithFormat("%s is stored with an unhandled byte order", name);
+                    return false;
+                case lldb::eByteOrderLittle:
+                    register_offset = 0;
+                    break;
+                case lldb::eByteOrderBig:
+                    register_offset = register_byte_size - addr_byte_size;
+                    break;
+                }
+                
+                DataBufferHeap register_data (register_byte_size, 0);
+                
+                Error error;
+                if (exe_ctx.process->ReadMemory (addr, register_data.GetBytes() + register_offset, addr_byte_size, error) != addr_byte_size)
+                {
+                    err.SetErrorStringWithFormat ("Couldn't read %s from the target: %s", name, error.AsCString());
+                    return false;
+                }
+                
+                DataExtractor register_extractor (register_data.GetBytes(), register_byte_size, exe_ctx.process->GetByteOrder(), exe_ctx.process->GetAddressByteSize());
+                
+                if (!register_context->WriteRegisterBytes(register_number, register_extractor, 0))
+                {
+                    err.SetErrorStringWithFormat("Couldn't read %s from %s", name, register_info->name);
+                    return false;
+                }
+            }
+            else
+            {
+                // Moving from a register into addr
+                //
+                // Case 1: addr_byte_size and register_byte_size are the same
+                //
+                //   |AABBCCDD| Register contents
+                //   |AABBCCDD| Address contents
+                //
+                // Case 2: addr_byte_size is bigger than register_byte_size
+                //
+                //   Error!  (The register should always be big enough to hold the data)
+                //
+                // Case 3: register_byte_size is bigger than addr_byte_size
+                //
+                //   |AABBCCDD| Register contents
+                //   |AABB|     Address contents on little-endian hardware
+                //       |CCDD| Address contents on big-endian hardware
+                
+                if (addr_byte_size > register_byte_size)
+                {
+                    err.SetErrorStringWithFormat("%s is too big to store in %s", name, register_info->name);
+                    return false;
+                }
+                
+                uint32_t register_offset;
+                
+                switch (exe_ctx.process->GetByteOrder())
+                {
+                    default:
+                        err.SetErrorStringWithFormat("%s is stored with an unhandled byte order", name);
+                        return false;
+                    case lldb::eByteOrderLittle:
+                        register_offset = 0;
+                        break;
+                    case lldb::eByteOrderBig:
+                        register_offset = register_byte_size - addr_byte_size;
+                        break;
+                }
+                
+                DataExtractor register_extractor;
+                
+                if (!register_context->ReadRegisterBytes(register_number, register_extractor))
+                {
+                    err.SetErrorStringWithFormat("Couldn't read %s from %s", name, register_info->name);
+                    return false;
+                }
+                
+                const void *register_data = register_extractor.GetData(&register_offset, addr_byte_size);
+                
+                if (!register_data)
+                {
+                    err.SetErrorStringWithFormat("Read but couldn't extract data for %s from %s", name, register_info->name);
+                    return false;
+                }
+                
+                Error error;
+                if (exe_ctx.process->WriteMemory (addr, register_data, addr_byte_size, error) != addr_byte_size)
+                {
+                    err.SetErrorStringWithFormat ("Couldn't write %s to the target: %s", error.AsCString());
+                    return false;
+                }
+            }
+        }
     }
     
     return true;
