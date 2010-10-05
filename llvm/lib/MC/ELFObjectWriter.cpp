@@ -692,6 +692,29 @@ ELFObjectWriterImpl::getSymbolIndexInSymbolTable(const MCAssembler &Asm,
   return SD.getIndex() + NumRegularSections + /* empty symbol */ 1;
 }
 
+static bool isInSymtab(const MCAssembler &Asm, const MCSymbolData &Data,
+                       bool Used) {
+  const MCSymbol &Symbol = Data.getSymbol();
+  if (!Asm.isSymbolLinkerVisible(Symbol) && !Symbol.isUndefined())
+    return false;
+
+  if (!Used && Symbol.isTemporary())
+    return false;
+
+  return true;
+}
+
+static bool isLocal(const MCSymbolData &Data) {
+  if (Data.isExternal())
+    return false;
+
+  const MCSymbol &Symbol = Data.getSymbol();
+  if (Symbol.isUndefined() && !Symbol.isVariable())
+    return false;
+
+  return true;
+}
+
 void ELFObjectWriterImpl::ComputeSymbolTable(MCAssembler &Asm) {
   // FIXME: Is this the correct place to do this?
   if (NeedsGOT) {
@@ -718,14 +741,10 @@ void ELFObjectWriterImpl::ComputeSymbolTable(MCAssembler &Asm) {
          ie = Asm.symbol_end(); it != ie; ++it) {
     const MCSymbol &Symbol = it->getSymbol();
 
-    // Ignore non-linker visible symbols.
-    if (!Asm.isSymbolLinkerVisible(Symbol))
+    if (!isInSymtab(Asm, *it, UsedInReloc.count(&Symbol)))
       continue;
 
-    if (it->isExternal() || Symbol.isUndefined())
-      continue;
-
-    if (Symbol.isTemporary() && !UsedInReloc.count(&Symbol))
+    if (!isLocal(*it))
       continue;
 
     uint64_t &Entry = StringIndexMap[Symbol.getName()];
@@ -743,7 +762,14 @@ void ELFObjectWriterImpl::ComputeSymbolTable(MCAssembler &Asm) {
       MSD.SectionIndex = ELF::SHN_ABS;
       LocalSymbolData.push_back(MSD);
     } else {
-      MSD.SectionIndex = SectionIndexMap.lookup(&Symbol.getSection());
+      const MCSymbol *SymbolP = &Symbol;
+      if (Symbol.isVariable()) {
+        const MCExpr *Value = Symbol.getVariableValue();
+        assert (Value->getKind() == MCExpr::SymbolRef && "Unimplemented");
+        const MCSymbolRefExpr *Ref = static_cast<const MCSymbolRefExpr*>(Value);
+        SymbolP = &Ref->getSymbol();
+      }
+      MSD.SectionIndex = SectionIndexMap.lookup(&SymbolP->getSection());
       assert(MSD.SectionIndex && "Invalid section index!");
       LocalSymbolData.push_back(MSD);
     }
@@ -754,18 +780,10 @@ void ELFObjectWriterImpl::ComputeSymbolTable(MCAssembler &Asm) {
          ie = Asm.symbol_end(); it != ie; ++it) {
     const MCSymbol &Symbol = it->getSymbol();
 
-    // Ignore non-linker visible symbols.
-    if (!Asm.isSymbolLinkerVisible(Symbol) && !Symbol.isUndefined())
+    if (!isInSymtab(Asm, *it, UsedInReloc.count(&Symbol)))
       continue;
 
-    if (!it->isExternal() && !Symbol.isUndefined())
-      continue;
-
-    if (Symbol.isVariable())
-      continue;
-
-    if (Symbol.isUndefined() && !UsedInReloc.count(&Symbol)
-        && Symbol.isTemporary())
+    if (isLocal(*it))
       continue;
 
     uint64_t &Entry = StringIndexMap[Symbol.getName()];
