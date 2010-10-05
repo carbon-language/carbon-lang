@@ -62,6 +62,9 @@ let Defs = [EAX,EDX,EFLAGS], Uses = [EAX], neverHasSideEffects = 1 in
 def MUL32r : I<0xF7, MRM4r, (outs),  (ins GR32:$src),
                "mul{l}\t$src",
                []>; // EAX,EDX = EAX*GR32
+let Defs = [RAX,RDX,EFLAGS], Uses = [RAX], neverHasSideEffects = 1 in
+def MUL64r : RI<0xF7, MRM4r, (outs), (ins GR64:$src),
+                "mul{q}\t$src", []>;         // RAX,RDX = RAX*GR64
 
 let Defs = [AL,EFLAGS,AX], Uses = [AL] in
 def MUL8m  : I<0xF6, MRM4m, (outs), (ins i8mem :$src),
@@ -82,6 +85,9 @@ let Defs = [EAX,EDX,EFLAGS], Uses = [EAX] in
 def MUL32m : I<0xF7, MRM4m, (outs), (ins i32mem:$src),
               "mul{l}\t$src",
               []>;          // EAX,EDX = EAX*[mem32]
+let Defs = [RAX,RDX,EFLAGS], Uses = [RAX], neverHasSideEffects = 1 in
+def MUL64m : RI<0xF7, MRM4m, (outs), (ins i64mem:$src),
+                "mul{q}\t$src", []>;         // RAX,RDX = RAX*[mem64]
 }
 
 let neverHasSideEffects = 1 in {
@@ -94,6 +100,10 @@ def IMUL16r : I<0xF7, MRM5r, (outs),  (ins GR16:$src), "imul{w}\t$src", []>,
 let Defs = [EAX,EDX,EFLAGS], Uses = [EAX] in
 def IMUL32r : I<0xF7, MRM5r, (outs),  (ins GR32:$src), "imul{l}\t$src", []>;
               // EAX,EDX = EAX*GR32
+let Defs = [RAX,RDX,EFLAGS], Uses = [RAX], neverHasSideEffects = 1 in
+def IMUL64r : RI<0xF7, MRM5r, (outs), (ins GR64:$src), "imul{q}\t$src", []>;
+              // RAX,RDX = RAX*GR64
+
 let mayLoad = 1 in {
 let Defs = [AL,EFLAGS,AX], Uses = [AL] in
 def IMUL8m  : I<0xF6, MRM5m, (outs), (ins i8mem :$src),
@@ -104,8 +114,130 @@ def IMUL16m : I<0xF7, MRM5m, (outs), (ins i16mem:$src),
 let Defs = [EAX,EDX,EFLAGS], Uses = [EAX] in
 def IMUL32m : I<0xF7, MRM5m, (outs), (ins i32mem:$src),
                 "imul{l}\t$src", []>;  // EAX,EDX = EAX*[mem32]
+let Defs = [RAX,RDX,EFLAGS], Uses = [RAX], neverHasSideEffects = 1 in
+def IMUL64m : RI<0xF7, MRM5m, (outs), (ins i64mem:$src),
+                 "imul{q}\t$src", []>;         // RAX,RDX = RAX*[mem64]
 }
 } // neverHasSideEffects
+
+
+let Defs = [EFLAGS] in {
+let Constraints = "$src1 = $dst" in {
+
+let isCommutable = 1 in {  // X = IMUL Y, Z --> X = IMUL Z, Y
+// Register-Register Signed Integer Multiply
+def IMUL16rr : I<0xAF, MRMSrcReg, (outs GR16:$dst), (ins GR16:$src1,GR16:$src2),
+                 "imul{w}\t{$src2, $dst|$dst, $src2}",
+                 [(set GR16:$dst, EFLAGS,
+                       (X86smul_flag GR16:$src1, GR16:$src2))]>, TB, OpSize;
+def IMUL32rr : I<0xAF, MRMSrcReg, (outs GR32:$dst), (ins GR32:$src1,GR32:$src2),
+                 "imul{l}\t{$src2, $dst|$dst, $src2}",
+                 [(set GR32:$dst, EFLAGS,
+                       (X86smul_flag GR32:$src1, GR32:$src2))]>, TB;
+def IMUL64rr : RI<0xAF, MRMSrcReg, (outs GR64:$dst),
+                                   (ins GR64:$src1, GR64:$src2),
+                  "imul{q}\t{$src2, $dst|$dst, $src2}",
+                  [(set GR64:$dst, EFLAGS,
+                        (X86smul_flag GR64:$src1, GR64:$src2))]>, TB;
+}
+
+// Register-Memory Signed Integer Multiply
+def IMUL16rm : I<0xAF, MRMSrcMem, (outs GR16:$dst),
+                                  (ins GR16:$src1, i16mem:$src2),
+                 "imul{w}\t{$src2, $dst|$dst, $src2}",
+                 [(set GR16:$dst, EFLAGS,
+                       (X86smul_flag GR16:$src1, (load addr:$src2)))]>,
+               TB, OpSize;
+def IMUL32rm : I<0xAF, MRMSrcMem, (outs GR32:$dst), 
+                 (ins GR32:$src1, i32mem:$src2),
+                 "imul{l}\t{$src2, $dst|$dst, $src2}",
+                 [(set GR32:$dst, EFLAGS,
+                       (X86smul_flag GR32:$src1, (load addr:$src2)))]>, TB;
+def IMUL64rm : RI<0xAF, MRMSrcMem, (outs GR64:$dst),
+                                   (ins GR64:$src1, i64mem:$src2),
+                  "imul{q}\t{$src2, $dst|$dst, $src2}",
+                  [(set GR64:$dst, EFLAGS,
+                        (X86smul_flag GR64:$src1, (load addr:$src2)))]>, TB;
+} // Constraints = "$src1 = $dst"
+
+} // Defs = [EFLAGS]
+
+// Suprisingly enough, these are not two address instructions!
+let Defs = [EFLAGS] in {
+// Register-Integer Signed Integer Multiply
+def IMUL16rri  : Ii16<0x69, MRMSrcReg,                      // GR16 = GR16*I16
+                      (outs GR16:$dst), (ins GR16:$src1, i16imm:$src2),
+                      "imul{w}\t{$src2, $src1, $dst|$dst, $src1, $src2}",
+                      [(set GR16:$dst, EFLAGS, 
+                            (X86smul_flag GR16:$src1, imm:$src2))]>, OpSize;
+def IMUL16rri8 : Ii8<0x6B, MRMSrcReg,                       // GR16 = GR16*I8
+                     (outs GR16:$dst), (ins GR16:$src1, i16i8imm:$src2),
+                     "imul{w}\t{$src2, $src1, $dst|$dst, $src1, $src2}",
+                     [(set GR16:$dst, EFLAGS,
+                           (X86smul_flag GR16:$src1, i16immSExt8:$src2))]>,
+                 OpSize;
+def IMUL32rri  : Ii32<0x69, MRMSrcReg,                      // GR32 = GR32*I32
+                      (outs GR32:$dst), (ins GR32:$src1, i32imm:$src2),
+                      "imul{l}\t{$src2, $src1, $dst|$dst, $src1, $src2}",
+                      [(set GR32:$dst, EFLAGS,
+                            (X86smul_flag GR32:$src1, imm:$src2))]>;
+def IMUL32rri8 : Ii8<0x6B, MRMSrcReg,                       // GR32 = GR32*I8
+                     (outs GR32:$dst), (ins GR32:$src1, i32i8imm:$src2),
+                     "imul{l}\t{$src2, $src1, $dst|$dst, $src1, $src2}",
+                     [(set GR32:$dst, EFLAGS,
+                           (X86smul_flag GR32:$src1, i32immSExt8:$src2))]>;
+def IMUL64rri32 : RIi32<0x69, MRMSrcReg,                    // GR64 = GR64*I32
+                        (outs GR64:$dst), (ins GR64:$src1, i64i32imm:$src2),
+                        "imul{q}\t{$src2, $src1, $dst|$dst, $src1, $src2}",
+                       [(set GR64:$dst, EFLAGS,
+                             (X86smul_flag GR64:$src1, i64immSExt32:$src2))]>;
+def IMUL64rri8 : RIi8<0x6B, MRMSrcReg,                      // GR64 = GR64*I8
+                      (outs GR64:$dst), (ins GR64:$src1, i64i8imm:$src2),
+                      "imul{q}\t{$src2, $src1, $dst|$dst, $src1, $src2}",
+                      [(set GR64:$dst, EFLAGS,
+                            (X86smul_flag GR64:$src1, i64immSExt8:$src2))]>;
+
+
+// Memory-Integer Signed Integer Multiply
+def IMUL16rmi  : Ii16<0x69, MRMSrcMem,                     // GR16 = [mem16]*I16
+                      (outs GR16:$dst), (ins i16mem:$src1, i16imm:$src2),
+                      "imul{w}\t{$src2, $src1, $dst|$dst, $src1, $src2}",
+                      [(set GR16:$dst, EFLAGS,
+                            (X86smul_flag (load addr:$src1), imm:$src2))]>,
+                 OpSize;
+def IMUL16rmi8 : Ii8<0x6B, MRMSrcMem,                       // GR16 = [mem16]*I8
+                     (outs GR16:$dst), (ins i16mem:$src1, i16i8imm :$src2),
+                     "imul{w}\t{$src2, $src1, $dst|$dst, $src1, $src2}",
+                     [(set GR16:$dst, EFLAGS,
+                           (X86smul_flag (load addr:$src1),
+                                         i16immSExt8:$src2))]>, OpSize;
+def IMUL32rmi  : Ii32<0x69, MRMSrcMem,                     // GR32 = [mem32]*I32
+                      (outs GR32:$dst), (ins i32mem:$src1, i32imm:$src2),
+                      "imul{l}\t{$src2, $src1, $dst|$dst, $src1, $src2}",
+                      [(set GR32:$dst, EFLAGS,
+                            (X86smul_flag (load addr:$src1), imm:$src2))]>;
+def IMUL32rmi8 : Ii8<0x6B, MRMSrcMem,                       // GR32 = [mem32]*I8
+                     (outs GR32:$dst), (ins i32mem:$src1, i32i8imm: $src2),
+                     "imul{l}\t{$src2, $src1, $dst|$dst, $src1, $src2}",
+                     [(set GR32:$dst, EFLAGS,
+                           (X86smul_flag (load addr:$src1),
+                                         i32immSExt8:$src2))]>;
+def IMUL64rmi32 : RIi32<0x69, MRMSrcMem,                   // GR64 = [mem64]*I32
+                        (outs GR64:$dst), (ins i64mem:$src1, i64i32imm:$src2),
+                        "imul{q}\t{$src2, $src1, $dst|$dst, $src1, $src2}",
+                        [(set GR64:$dst, EFLAGS,
+                              (X86smul_flag (load addr:$src1),
+                                            i64immSExt32:$src2))]>;
+def IMUL64rmi8 : RIi8<0x6B, MRMSrcMem,                      // GR64 = [mem64]*I8
+                      (outs GR64:$dst), (ins i64mem:$src1, i64i8imm: $src2),
+                      "imul{q}\t{$src2, $src1, $dst|$dst, $src1, $src2}",
+                      [(set GR64:$dst, EFLAGS,
+                            (X86smul_flag (load addr:$src1),
+                                          i64immSExt8:$src2))]>;
+} // Defs = [EFLAGS]
+
+
+
 
 // unsigned division/remainder
 let Defs = [AL,EFLAGS,AX], Uses = [AX] in
@@ -117,6 +249,11 @@ def DIV16r : I<0xF7, MRM6r, (outs),  (ins GR16:$src),   // DX:AX/r16 = AX,DX
 let Defs = [EAX,EDX,EFLAGS], Uses = [EAX,EDX] in
 def DIV32r : I<0xF7, MRM6r, (outs),  (ins GR32:$src),   // EDX:EAX/r32 = EAX,EDX
                "div{l}\t$src", []>;
+// RDX:RAX/r64 = RAX,RDX
+let Defs = [RAX,RDX,EFLAGS], Uses = [RAX,RDX] in
+def DIV64r : RI<0xF7, MRM6r, (outs), (ins GR64:$src),
+                "div{q}\t$src", []>;
+
 let mayLoad = 1 in {
 let Defs = [AL,EFLAGS,AX], Uses = [AX] in
 def DIV8m  : I<0xF6, MRM6m, (outs), (ins i8mem:$src),   // AX/[mem8] = AL,AH
@@ -124,10 +261,13 @@ def DIV8m  : I<0xF6, MRM6m, (outs), (ins i8mem:$src),   // AX/[mem8] = AL,AH
 let Defs = [AX,DX,EFLAGS], Uses = [AX,DX] in
 def DIV16m : I<0xF7, MRM6m, (outs), (ins i16mem:$src),  // DX:AX/[mem16] = AX,DX
                "div{w}\t$src", []>, OpSize;
-let Defs = [EAX,EDX,EFLAGS], Uses = [EAX,EDX] in
-                                                    // EDX:EAX/[mem32] = EAX,EDX
+let Defs = [EAX,EDX,EFLAGS], Uses = [EAX,EDX] in    // EDX:EAX/[mem32] = EAX,EDX
 def DIV32m : I<0xF7, MRM6m, (outs), (ins i32mem:$src),
                "div{l}\t$src", []>;
+// RDX:RAX/[mem64] = RAX,RDX
+let Defs = [RAX,RDX,EFLAGS], Uses = [RAX,RDX] in
+def DIV64m : RI<0xF7, MRM6m, (outs), (ins i64mem:$src),
+                "div{q}\t$src", []>;
 }
 
 // Signed division/remainder.
@@ -140,6 +280,11 @@ def IDIV16r: I<0xF7, MRM7r, (outs),  (ins GR16:$src),   // DX:AX/r16 = AX,DX
 let Defs = [EAX,EDX,EFLAGS], Uses = [EAX,EDX] in
 def IDIV32r: I<0xF7, MRM7r, (outs),  (ins GR32:$src),   // EDX:EAX/r32 = EAX,EDX
                "idiv{l}\t$src", []>;
+// RDX:RAX/r64 = RAX,RDX
+let Defs = [RAX,RDX,EFLAGS], Uses = [RAX,RDX] in
+def IDIV64r: RI<0xF7, MRM7r, (outs), (ins GR64:$src),
+                "idiv{q}\t$src", []>;
+               
 let mayLoad = 1, mayLoad = 1 in {
 let Defs = [AL,EFLAGS,AX], Uses = [AX] in
 def IDIV8m : I<0xF6, MRM7m, (outs), (ins i8mem:$src),   // AX/[mem8] = AL,AH
@@ -147,10 +292,12 @@ def IDIV8m : I<0xF6, MRM7m, (outs), (ins i8mem:$src),   // AX/[mem8] = AL,AH
 let Defs = [AX,DX,EFLAGS], Uses = [AX,DX] in
 def IDIV16m: I<0xF7, MRM7m, (outs), (ins i16mem:$src),  // DX:AX/[mem16] = AX,DX
                "idiv{w}\t$src", []>, OpSize;
-let Defs = [EAX,EDX,EFLAGS], Uses = [EAX,EDX] in
+let Defs = [EAX,EDX,EFLAGS], Uses = [EAX,EDX] in    // EDX:EAX/[mem32] = EAX,EDX
 def IDIV32m: I<0xF7, MRM7m, (outs), (ins i32mem:$src), 
-                                                    // EDX:EAX/[mem32] = EAX,EDX
                "idiv{l}\t$src", []>;
+let Defs = [RAX,RDX,EFLAGS], Uses = [RAX,RDX] in // RDX:RAX/[mem64] = RAX,RDX
+def IDIV64m: RI<0xF7, MRM7m, (outs), (ins i64mem:$src),
+                "idiv{q}\t$src", []>;
 }
 
 //===----------------------------------------------------------------------===//
@@ -173,6 +320,9 @@ def NEG32r : I<0xF7, MRM3r, (outs GR32:$dst), (ins GR32:$src1),
                "neg{l}\t$dst",
                [(set GR32:$dst, (ineg GR32:$src1)),
                 (implicit EFLAGS)]>;
+def NEG64r : RI<0xF7, MRM3r, (outs GR64:$dst), (ins GR64:$src1), "neg{q}\t$dst",
+                [(set GR64:$dst, (ineg GR64:$src1)),
+                 (implicit EFLAGS)]>;
 } // Constraints = "$src1 = $dst"
 
 def NEG8m  : I<0xF6, MRM3m, (outs), (ins i8mem :$dst),
@@ -187,6 +337,9 @@ def NEG32m : I<0xF7, MRM3m, (outs), (ins i32mem:$dst),
                "neg{l}\t$dst",
                [(store (ineg (loadi32 addr:$dst)), addr:$dst),
                 (implicit EFLAGS)]>;
+def NEG64m : RI<0xF7, MRM3m, (outs), (ins i64mem:$dst), "neg{q}\t$dst",
+                [(store (ineg (loadi64 addr:$dst)), addr:$dst),
+                 (implicit EFLAGS)]>;
 } // Defs = [EFLAGS]
 
 
@@ -204,6 +357,8 @@ def NOT16r : I<0xF7, MRM2r, (outs GR16:$dst), (ins GR16:$src1),
 def NOT32r : I<0xF7, MRM2r, (outs GR32:$dst), (ins GR32:$src1),
                "not{l}\t$dst",
                [(set GR32:$dst, (not GR32:$src1))]>;
+def NOT64r : RI<0xF7, MRM2r, (outs GR64:$dst), (ins GR64:$src1), "not{q}\t$dst",
+                [(set GR64:$dst, (not GR64:$src1))]>;
 }
 } // Constraints = "$src1 = $dst"
 
@@ -216,6 +371,8 @@ def NOT16m : I<0xF7, MRM2m, (outs), (ins i16mem:$dst),
 def NOT32m : I<0xF7, MRM2m, (outs), (ins i32mem:$dst),
                "not{l}\t$dst",
                [(store (not (loadi32 addr:$dst)), addr:$dst)]>;
+def NOT64m : RI<0xF7, MRM2m, (outs), (ins i64mem:$dst), "not{q}\t$dst",
+                [(store (not (loadi64 addr:$dst)), addr:$dst)]>;
 } // CodeSize
 
 // TODO: inc/dec is slow for P4, but fast for Pentium-M.
@@ -235,6 +392,8 @@ def INC32r : I<0x40, AddRegFrm, (outs GR32:$dst), (ins GR32:$src1),
                "inc{l}\t$dst",
                [(set GR32:$dst, EFLAGS, (X86inc_flag GR32:$src1))]>,
              Requires<[In32BitMode]>;
+def INC64r : RI<0xFF, MRM0r, (outs GR64:$dst), (ins GR64:$src1), "inc{q}\t$dst",
+                [(set GR64:$dst, EFLAGS, (X86inc_flag GR64:$src1))]>;
 }
 } // Constraints = "$src1 = $dst"
 
@@ -250,6 +409,9 @@ let CodeSize = 2 in {
                [(store (add (loadi32 addr:$dst), 1), addr:$dst),
                 (implicit EFLAGS)]>,
                Requires<[In32BitMode]>;
+  def INC64m : RI<0xFF, MRM0m, (outs), (ins i64mem:$dst), "inc{q}\t$dst",
+                  [(store (add (loadi64 addr:$dst), 1), addr:$dst),
+                   (implicit EFLAGS)]>;
 } // CodeSize = 2
 
 let Constraints = "$src1 = $dst" in {
@@ -266,6 +428,8 @@ def DEC32r : I<0x48, AddRegFrm, (outs GR32:$dst), (ins GR32:$src1),
                "dec{l}\t$dst",
                [(set GR32:$dst, EFLAGS, (X86dec_flag GR32:$src1))]>,
              Requires<[In32BitMode]>;
+def DEC64r : RI<0xFF, MRM1r, (outs GR64:$dst), (ins GR64:$src1), "dec{q}\t$dst",
+                [(set GR64:$dst, EFLAGS, (X86dec_flag GR64:$src1))]>;
 } // CodeSize = 2
 } // Constraints = "$src1 = $dst"
 
@@ -282,6 +446,9 @@ let CodeSize = 2 in {
                [(store (add (loadi32 addr:$dst), -1), addr:$dst),
                 (implicit EFLAGS)]>,
                Requires<[In32BitMode]>;
+  def DEC64m : RI<0xFF, MRM1m, (outs), (ins i64mem:$dst), "dec{q}\t$dst",
+                  [(store (add (loadi64 addr:$dst), -1), addr:$dst),
+                   (implicit EFLAGS)]>;
 } // CodeSize = 2
 } // Defs = [EFLAGS]
 
@@ -979,6 +1146,11 @@ def SUB32rr : I<0x29, MRMDestReg, (outs GR32:$dst), (ins GR32:$src1,GR32:$src2),
                 "sub{l}\t{$src2, $dst|$dst, $src2}",
                 [(set GR32:$dst, EFLAGS,
                       (X86sub_flag GR32:$src1, GR32:$src2))]>;
+def SUB64rr  : RI<0x29, MRMDestReg, (outs GR64:$dst), 
+                  (ins GR64:$src1, GR64:$src2),
+                  "sub{q}\t{$src2, $dst|$dst, $src2}",
+                  [(set GR64:$dst, EFLAGS,
+                        (X86sub_flag GR64:$src1, GR64:$src2))]>;
 
 let isCodeGenOnly = 1 in {
 def SUB8rr_REV : I<0x2A, MRMSrcReg, (outs GR8:$dst), (ins GR8:$src1, GR8:$src2),
@@ -989,6 +1161,9 @@ def SUB16rr_REV : I<0x2B, MRMSrcReg, (outs GR16:$dst),
 def SUB32rr_REV : I<0x2B, MRMSrcReg, (outs GR32:$dst), 
                     (ins GR32:$src1, GR32:$src2),
                     "sub{l}\t{$src2, $dst|$dst, $src2}", []>;
+def SUB64rr_REV : RI<0x2B, MRMSrcReg, (outs GR64:$dst), 
+                     (ins GR64:$src1, GR64:$src2),
+                     "sub{q}\t{$src2, $dst|$dst, $src2}", []>;
 }
 
 // Register-Memory Subtraction
@@ -1007,6 +1182,11 @@ def SUB32rm : I<0x2B, MRMSrcMem, (outs GR32:$dst),
                 "sub{l}\t{$src2, $dst|$dst, $src2}",
                 [(set GR32:$dst, EFLAGS,
                       (X86sub_flag GR32:$src1, (load addr:$src2)))]>;
+def SUB64rm  : RI<0x2B, MRMSrcMem, (outs GR64:$dst), 
+                  (ins GR64:$src1, i64mem:$src2),
+                  "sub{q}\t{$src2, $dst|$dst, $src2}",
+                  [(set GR64:$dst, EFLAGS, 
+                        (X86sub_flag GR64:$src1, (load addr:$src2)))]>;
 
 // Register-Integer Subtraction
 def SUB8ri   : Ii8 <0x80, MRM5r, (outs GR8:$dst),
@@ -1024,6 +1204,11 @@ def SUB32ri  : Ii32<0x81, MRM5r, (outs GR32:$dst),
                     "sub{l}\t{$src2, $dst|$dst, $src2}",
                     [(set GR32:$dst, EFLAGS,
                           (X86sub_flag GR32:$src1, imm:$src2))]>;
+def SUB64ri32 : RIi32<0x81, MRM5r, (outs GR64:$dst),
+                                   (ins GR64:$src1, i64i32imm:$src2),
+                      "sub{q}\t{$src2, $dst|$dst, $src2}",
+                      [(set GR64:$dst, EFLAGS,
+                            (X86sub_flag GR64:$src1, i64immSExt32:$src2))]>;
 def SUB16ri8 : Ii8<0x83, MRM5r, (outs GR16:$dst),
                                 (ins GR16:$src1, i16i8imm:$src2),
                    "sub{w}\t{$src2, $dst|$dst, $src2}",
@@ -1034,6 +1219,11 @@ def SUB32ri8 : Ii8<0x83, MRM5r, (outs GR32:$dst),
                    "sub{l}\t{$src2, $dst|$dst, $src2}",
                    [(set GR32:$dst, EFLAGS,
                          (X86sub_flag GR32:$src1, i32immSExt8:$src2))]>;
+def SUB64ri8 : RIi8<0x83, MRM5r, (outs GR64:$dst),
+                                 (ins GR64:$src1, i64i8imm:$src2),
+                    "sub{q}\t{$src2, $dst|$dst, $src2}",
+                    [(set GR64:$dst, EFLAGS,
+                          (X86sub_flag GR64:$src1, i64immSExt8:$src2))]>;
 } // Constraints = "$src1 = $dst"
 
 // Memory-Register Subtraction
@@ -1049,6 +1239,10 @@ def SUB32mr  : I<0x29, MRMDestMem, (outs), (ins i32mem:$dst, GR32:$src2),
                  "sub{l}\t{$src2, $dst|$dst, $src2}",
                  [(store (sub (load addr:$dst), GR32:$src2), addr:$dst),
                   (implicit EFLAGS)]>;
+def SUB64mr  : RI<0x29, MRMDestMem, (outs), (ins i64mem:$dst, GR64:$src2), 
+                  "sub{q}\t{$src2, $dst|$dst, $src2}",
+                  [(store (sub (load addr:$dst), GR64:$src2), addr:$dst),
+                   (implicit EFLAGS)]>;
 
 // Memory-Integer Subtraction
 def SUB8mi   : Ii8<0x80, MRM5m, (outs), (ins i8mem :$dst, i8imm:$src2), 
@@ -1063,6 +1257,11 @@ def SUB32mi  : Ii32<0x81, MRM5m, (outs), (ins i32mem:$dst, i32imm:$src2),
                     "sub{l}\t{$src2, $dst|$dst, $src2}",
                     [(store (sub (loadi32 addr:$dst), imm:$src2),addr:$dst),
                      (implicit EFLAGS)]>;
+def SUB64mi32 : RIi32<0x81, MRM5m, (outs), (ins i64mem:$dst, i64i32imm:$src2),
+                      "sub{q}\t{$src2, $dst|$dst, $src2}",
+                      [(store (sub (load addr:$dst), i64immSExt32:$src2),
+                              addr:$dst),
+                       (implicit EFLAGS)]>;
 def SUB16mi8 : Ii8<0x83, MRM5m, (outs), (ins i16mem:$dst, i16i8imm :$src2), 
                    "sub{w}\t{$src2, $dst|$dst, $src2}",
                    [(store (sub (load addr:$dst), i16immSExt8:$src2),
@@ -1073,13 +1272,20 @@ def SUB32mi8 : Ii8<0x83, MRM5m, (outs), (ins i32mem:$dst, i32i8imm :$src2),
                    [(store (sub (load addr:$dst), i32immSExt8:$src2),
                            addr:$dst),
                     (implicit EFLAGS)]>;
-                    
+def SUB64mi8 : RIi8<0x83, MRM5m, (outs), (ins i64mem:$dst, i64i8imm :$src2), 
+                    "sub{q}\t{$src2, $dst|$dst, $src2}",
+                    [(store (sub (load addr:$dst), i64immSExt8:$src2),
+                            addr:$dst),
+                     (implicit EFLAGS)]>;
+
 def SUB8i8 : Ii8<0x2C, RawFrm, (outs), (ins i8imm:$src),
                  "sub{b}\t{$src, %al|%al, $src}", []>;
 def SUB16i16 : Ii16<0x2D, RawFrm, (outs), (ins i16imm:$src),
                     "sub{w}\t{$src, %ax|%ax, $src}", []>, OpSize;
 def SUB32i32 : Ii32<0x2D, RawFrm, (outs), (ins i32imm:$src),
                     "sub{l}\t{$src, %eax|%eax, $src}", []>;
+def SUB64i32 : RIi32<0x2D, RawFrm, (outs), (ins i64i32imm:$src),
+                     "sub{q}\t{$src, %rax|%rax, $src}", []>;
 
 let Uses = [EFLAGS] in {
 let Constraints = "$src1 = $dst" in {
@@ -1095,6 +1301,10 @@ def SBB32rr    : I<0x19, MRMDestReg, (outs GR32:$dst),
                                       (ins GR32:$src1, GR32:$src2),
                   "sbb{l}\t{$src2, $dst|$dst, $src2}",
                  [(set GR32:$dst, (sube GR32:$src1, GR32:$src2))]>;
+def SBB64rr    : RI<0x19, MRMDestReg, (outs GR64:$dst), 
+                    (ins GR64:$src1, GR64:$src2),
+                    "sbb{q}\t{$src2, $dst|$dst, $src2}",
+                    [(set GR64:$dst, (sube GR64:$src1, GR64:$src2))]>;
 } // Constraints = "$src1 = $dst"
 
 
@@ -1108,6 +1318,10 @@ def SBB16mr  : I<0x19, MRMDestMem, (outs), (ins i16mem:$dst, GR16:$src2),
 def SBB32mr  : I<0x19, MRMDestMem, (outs), (ins i32mem:$dst, GR32:$src2), 
                  "sbb{l}\t{$src2, $dst|$dst, $src2}",
                  [(store (sube (load addr:$dst), GR32:$src2), addr:$dst)]>;
+def SBB64mr  : RI<0x19, MRMDestMem, (outs), (ins i64mem:$dst, GR64:$src2), 
+                  "sbb{q}\t{$src2, $dst|$dst, $src2}",
+                  [(store (sube (load addr:$dst), GR64:$src2), addr:$dst)]>;
+
 def SBB8mi  : Ii8<0x80, MRM3m, (outs), (ins i8mem:$dst, i8imm:$src2), 
                   "sbb{b}\t{$src2, $dst|$dst, $src2}",
                  [(store (sube (loadi8 addr:$dst), imm:$src2), addr:$dst)]>;
@@ -1125,13 +1339,21 @@ def SBB32mi  : Ii32<0x81, MRM3m, (outs), (ins i32mem:$dst, i32imm:$src2),
 def SBB32mi8 : Ii8<0x83, MRM3m, (outs), (ins i32mem:$dst, i32i8imm :$src2), 
                    "sbb{l}\t{$src2, $dst|$dst, $src2}",
              [(store (sube (load addr:$dst), i32immSExt8:$src2), addr:$dst)]>;
-             
+def SBB64mi32 : RIi32<0x81, MRM3m, (outs), (ins i64mem:$dst, i64i32imm:$src2), 
+                      "sbb{q}\t{$src2, $dst|$dst, $src2}",
+              [(store (sube (load addr:$dst), i64immSExt32:$src2), addr:$dst)]>;
+def SBB64mi8 : RIi8<0x83, MRM3m, (outs), (ins i64mem:$dst, i64i8imm :$src2), 
+                    "sbb{q}\t{$src2, $dst|$dst, $src2}",
+               [(store (sube (load addr:$dst), i64immSExt8:$src2), addr:$dst)]>;
+
 def SBB8i8 : Ii8<0x1C, RawFrm, (outs), (ins i8imm:$src),
                  "sbb{b}\t{$src, %al|%al, $src}", []>;
 def SBB16i16 : Ii16<0x1D, RawFrm, (outs), (ins i16imm:$src),
                     "sbb{w}\t{$src, %ax|%ax, $src}", []>, OpSize;
 def SBB32i32 : Ii32<0x1D, RawFrm, (outs), (ins i32imm:$src),
                     "sbb{l}\t{$src, %eax|%eax, $src}", []>;
+def SBB64i32 : RIi32<0x1D, RawFrm, (outs), (ins i64i32imm:$src),
+                     "sbb{q}\t{$src, %rax|%rax, $src}", []>;
 
 let Constraints = "$src1 = $dst" in {
 
@@ -1144,6 +1366,9 @@ def SBB16rr_REV : I<0x1B, MRMSrcReg, (outs GR16:$dst),
 def SBB32rr_REV : I<0x1B, MRMSrcReg, (outs GR32:$dst), 
                     (ins GR32:$src1, GR32:$src2),
                     "sbb{l}\t{$src2, $dst|$dst, $src2}", []>;
+def SBB64rr_REV : RI<0x1B, MRMSrcReg, (outs GR64:$dst), 
+                     (ins GR64:$src1, GR64:$src2),
+                     "sbb{q}\t{$src2, $dst|$dst, $src2}", []>;
 }
 
 def SBB8rm   : I<0x1A, MRMSrcMem, (outs GR8:$dst), (ins GR8:$src1, i8mem:$src2),
@@ -1158,6 +1383,10 @@ def SBB32rm  : I<0x1B, MRMSrcMem, (outs GR32:$dst),
                                   (ins GR32:$src1, i32mem:$src2),
                     "sbb{l}\t{$src2, $dst|$dst, $src2}",
                     [(set GR32:$dst, (sube GR32:$src1, (load addr:$src2)))]>;
+def SBB64rm  : RI<0x1B, MRMSrcMem, (outs GR64:$dst), 
+                  (ins GR64:$src1, i64mem:$src2),
+                  "sbb{q}\t{$src2, $dst|$dst, $src2}",
+                  [(set GR64:$dst, (sube GR64:$src1, (load addr:$src2)))]>;
 def SBB8ri   : Ii8<0x80, MRM3r, (outs GR8:$dst), (ins GR8:$src1, i8imm:$src2),
                     "sbb{b}\t{$src2, $dst|$dst, $src2}",
                     [(set GR8:$dst, (sube GR8:$src1, imm:$src2))]>;
@@ -1178,91 +1407,17 @@ def SBB32ri8 : Ii8<0x83, MRM3r, (outs GR32:$dst),
                                 (ins GR32:$src1, i32i8imm:$src2),
                    "sbb{l}\t{$src2, $dst|$dst, $src2}",
                    [(set GR32:$dst, (sube GR32:$src1, i32immSExt8:$src2))]>;
-} // Constraints = "$src1 = $dst"
+def SBB64ri32 : RIi32<0x81, MRM3r, (outs GR64:$dst), 
+                      (ins GR64:$src1, i64i32imm:$src2),
+                      "sbb{q}\t{$src2, $dst|$dst, $src2}",
+                      [(set GR64:$dst, (sube GR64:$src1, i64immSExt32:$src2))]>;
+def SBB64ri8 : RIi8<0x83, MRM3r, (outs GR64:$dst), 
+                    (ins GR64:$src1, i64i8imm:$src2),
+                    "sbb{q}\t{$src2, $dst|$dst, $src2}",
+                    [(set GR64:$dst, (sube GR64:$src1, i64immSExt8:$src2))]>;
 
+} // Constraints = "$src1 = $dst"
 } // Uses = [EFLAGS]
-} // Defs = [EFLAGS]
-
-let Defs = [EFLAGS] in {
-let Constraints = "$src1 = $dst" in {
-
-let isCommutable = 1 in {  // X = IMUL Y, Z --> X = IMUL Z, Y
-// Register-Register Signed Integer Multiply
-def IMUL16rr : I<0xAF, MRMSrcReg, (outs GR16:$dst), (ins GR16:$src1,GR16:$src2),
-                 "imul{w}\t{$src2, $dst|$dst, $src2}",
-                 [(set GR16:$dst, EFLAGS,
-                       (X86smul_flag GR16:$src1, GR16:$src2))]>, TB, OpSize;
-def IMUL32rr : I<0xAF, MRMSrcReg, (outs GR32:$dst), (ins GR32:$src1,GR32:$src2),
-                 "imul{l}\t{$src2, $dst|$dst, $src2}",
-                 [(set GR32:$dst, EFLAGS,
-                       (X86smul_flag GR32:$src1, GR32:$src2))]>, TB;
-}
-
-// Register-Memory Signed Integer Multiply
-def IMUL16rm : I<0xAF, MRMSrcMem, (outs GR16:$dst),
-                                  (ins GR16:$src1, i16mem:$src2),
-                 "imul{w}\t{$src2, $dst|$dst, $src2}",
-                 [(set GR16:$dst, EFLAGS,
-                       (X86smul_flag GR16:$src1, (load addr:$src2)))]>,
-               TB, OpSize;
-def IMUL32rm : I<0xAF, MRMSrcMem, (outs GR32:$dst), 
-                 (ins GR32:$src1, i32mem:$src2),
-                 "imul{l}\t{$src2, $dst|$dst, $src2}",
-                 [(set GR32:$dst, EFLAGS,
-                       (X86smul_flag GR32:$src1, (load addr:$src2)))]>, TB;
-} // Constraints = "$src1 = $dst"
-
-} // Defs = [EFLAGS]
-
-// Suprisingly enough, these are not two address instructions!
-let Defs = [EFLAGS] in {
-// Register-Integer Signed Integer Multiply
-def IMUL16rri  : Ii16<0x69, MRMSrcReg,                      // GR16 = GR16*I16
-                      (outs GR16:$dst), (ins GR16:$src1, i16imm:$src2),
-                      "imul{w}\t{$src2, $src1, $dst|$dst, $src1, $src2}",
-                      [(set GR16:$dst, EFLAGS, 
-                            (X86smul_flag GR16:$src1, imm:$src2))]>, OpSize;
-def IMUL32rri  : Ii32<0x69, MRMSrcReg,                      // GR32 = GR32*I32
-                      (outs GR32:$dst), (ins GR32:$src1, i32imm:$src2),
-                      "imul{l}\t{$src2, $src1, $dst|$dst, $src1, $src2}",
-                      [(set GR32:$dst, EFLAGS,
-                            (X86smul_flag GR32:$src1, imm:$src2))]>;
-def IMUL16rri8 : Ii8<0x6B, MRMSrcReg,                       // GR16 = GR16*I8
-                     (outs GR16:$dst), (ins GR16:$src1, i16i8imm:$src2),
-                     "imul{w}\t{$src2, $src1, $dst|$dst, $src1, $src2}",
-                     [(set GR16:$dst, EFLAGS,
-                           (X86smul_flag GR16:$src1, i16immSExt8:$src2))]>,
-                 OpSize;
-def IMUL32rri8 : Ii8<0x6B, MRMSrcReg,                       // GR32 = GR32*I8
-                     (outs GR32:$dst), (ins GR32:$src1, i32i8imm:$src2),
-                     "imul{l}\t{$src2, $src1, $dst|$dst, $src1, $src2}",
-                     [(set GR32:$dst, EFLAGS,
-                           (X86smul_flag GR32:$src1, i32immSExt8:$src2))]>;
-
-// Memory-Integer Signed Integer Multiply
-def IMUL16rmi  : Ii16<0x69, MRMSrcMem,                     // GR16 = [mem16]*I16
-                      (outs GR16:$dst), (ins i16mem:$src1, i16imm:$src2),
-                      "imul{w}\t{$src2, $src1, $dst|$dst, $src1, $src2}",
-                      [(set GR16:$dst, EFLAGS,
-                            (X86smul_flag (load addr:$src1), imm:$src2))]>,
-                 OpSize;
-def IMUL32rmi  : Ii32<0x69, MRMSrcMem,                     // GR32 = [mem32]*I32
-                      (outs GR32:$dst), (ins i32mem:$src1, i32imm:$src2),
-                      "imul{l}\t{$src2, $src1, $dst|$dst, $src1, $src2}",
-                      [(set GR32:$dst, EFLAGS,
-                            (X86smul_flag (load addr:$src1), imm:$src2))]>;
-def IMUL16rmi8 : Ii8<0x6B, MRMSrcMem,                       // GR16 = [mem16]*I8
-                     (outs GR16:$dst), (ins i16mem:$src1, i16i8imm :$src2),
-                     "imul{w}\t{$src2, $src1, $dst|$dst, $src1, $src2}",
-                     [(set GR16:$dst, EFLAGS,
-                           (X86smul_flag (load addr:$src1),
-                                         i16immSExt8:$src2))]>, OpSize;
-def IMUL32rmi8 : Ii8<0x6B, MRMSrcMem,                       // GR32 = [mem32]*I8
-                     (outs GR32:$dst), (ins i32mem:$src1, i32i8imm: $src2),
-                     "imul{l}\t{$src2, $src1, $dst|$dst, $src1, $src2}",
-                     [(set GR32:$dst, EFLAGS,
-                           (X86smul_flag (load addr:$src1),
-                                         i32immSExt8:$src2))]>;
 } // Defs = [EFLAGS]
 
 //===----------------------------------------------------------------------===//
