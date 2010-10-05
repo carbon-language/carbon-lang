@@ -145,6 +145,20 @@ let AddedComplexity = 1, isReMaterializable = 1, isAsCheapAsAMove = 1 in
 def MOV64ri64i32 : Ii32<0xB8, AddRegFrm, (outs GR64:$dst), (ins i64i32imm:$src),
                         "", [(set GR64:$dst, i64immZExt32:$src)]>;
 
+
+// Use sbb to materialize carry flag into a GPR.
+// FIXME: This are pseudo ops that should be replaced with Pat<> patterns.
+// However, Pat<> can't replicate the destination reg into the inputs of the
+// result.
+// FIXME: Change this to have encoding Pseudo when X86MCCodeEmitter replaces
+// X86CodeEmitter.
+let Defs = [EFLAGS], Uses = [EFLAGS], isCodeGenOnly = 1 in
+def SETB_C64r : RI<0x19, MRMInitReg, (outs GR64:$dst), (ins), "",
+                 [(set GR64:$dst, (X86setcc_c X86_COND_B, EFLAGS))]>;
+
+def : Pat<(i64 (anyext (i8 (X86setcc_c X86_COND_B, EFLAGS)))),
+          (SETB_C64r)>;
+
              
 //===----------------------------------------------------------------------===//
 // String Pseudo Instructions
