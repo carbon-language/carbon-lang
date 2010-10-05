@@ -657,7 +657,7 @@ void WinCOFFObjectWriter::RecordRelocation(const MCAssembler &Asm,
   Reloc.Data.SymbolTableIndex = 0;
   Reloc.Data.VirtualAddress = Layout.getFragmentOffset(Fragment);
 
-  // turn relocations for temporary symbols into section relocations
+  // Turn relocations for temporary symbols into section relocations.
   if (coff_symbol->MCData->getSymbol().isTemporary()) {
     Reloc.Symb = coff_symbol->Section->Symbol;
     FixedValue += Layout.getFragmentOffset(coff_symbol->MCData->Fragment)
