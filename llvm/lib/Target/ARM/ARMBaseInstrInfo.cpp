@@ -1470,7 +1470,8 @@ static bool isSuitableForMask(MachineInstr *&MI, unsigned SrcReg,
     case ARM::COPY: {
       // Walk down one instruction which is potentially an 'and'.
       const MachineInstr &Copy = *MI;
-      MachineBasicBlock::iterator AND(next(MachineBasicBlock::iterator(MI)));
+      MachineBasicBlock::iterator AND(
+        llvm::next(MachineBasicBlock::iterator(MI)));
       if (AND == MI->getParent()->end()) return false;
       MI = AND;
       return isSuitableForMask(MI, Copy.getOperand(0).getReg(),
