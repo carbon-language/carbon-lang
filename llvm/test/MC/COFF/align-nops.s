@@ -27,7 +27,7 @@ f0:
 //CHECK-NEXT:    NumberOfLineNumbers
 //CHECK-NEXT:    Charateristics           = 0x400001
 //CHECK-NEXT:        IMAGE_SCN_ALIGN_8BYTES
-//CHECK-NEXT:      SectionData              = 
+//CHECK-NEXT:      SectionData              =
 //CHECK-NEXT:        00 00 00 00 0F 1F 40 00 - 00 00 00 00 0F 1F 40 00
 
 //CHECK:         Name                     = .data
@@ -41,5 +41,5 @@ f0:
 //CHECK-NEXT:      NumberOfLineNumbers
 //CHECK-NEXT:      Charateristics           = 0x400001
 //CHECK-NEXT:        IMAGE_SCN_ALIGN_8BYTES
-//CHECK-NEXT:      SectionData              = 
+//CHECK-NEXT:      SectionData              =
 //CHECK-NEXT:        00 00 00 00 90 90 90 90 - 00 00 00 00 00 00 00 00
