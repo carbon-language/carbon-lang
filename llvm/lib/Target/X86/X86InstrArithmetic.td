@@ -495,29 +495,22 @@ let CodeSize = 2 in {
 } // CodeSize = 2
 } // Defs = [EFLAGS]
 
+
+class BinOpRR<bits<8> opcode, Format format, string mnemonic,
+              RegisterClass regclass, SDNode opnode>
+  : I<opcode, format, (outs regclass:$dst), (ins regclass:$src1,regclass:$src2),
+      !strconcat(mnemonic, "\t{$src2, $dst|$dst, $src2}"),
+      [(set regclass:$dst, EFLAGS, (opnode regclass:$src1, regclass:$src2))]>;
+
 // Logical operators.
 let Defs = [EFLAGS] in {
 let Constraints = "$src1 = $dst" in {
+
 let isCommutable = 1 in {   // X = AND Y, Z   --> X = AND Z, Y
-def AND8rr  : I<0x20, MRMDestReg,
-               (outs GR8 :$dst), (ins GR8 :$src1, GR8 :$src2),
-               "and{b}\t{$src2, $dst|$dst, $src2}",
-               [(set GR8:$dst, EFLAGS, (X86and_flag GR8:$src1, GR8:$src2))]>;
-def AND16rr : I<0x21, MRMDestReg,
-                (outs GR16:$dst), (ins GR16:$src1, GR16:$src2),
-                "and{w}\t{$src2, $dst|$dst, $src2}",
-                [(set GR16:$dst, EFLAGS, (X86and_flag GR16:$src1,
-                                                      GR16:$src2))]>, OpSize;
-def AND32rr : I<0x21, MRMDestReg, 
-                (outs GR32:$dst), (ins GR32:$src1, GR32:$src2),
-                "and{l}\t{$src2, $dst|$dst, $src2}",
-                [(set GR32:$dst, EFLAGS, (X86and_flag GR32:$src1,
-                                                      GR32:$src2))]>;
-def AND64rr  : RI<0x21, MRMDestReg, 
-                  (outs GR64:$dst), (ins GR64:$src1, GR64:$src2),
-                  "and{q}\t{$src2, $dst|$dst, $src2}",
-                  [(set GR64:$dst, EFLAGS,
-                        (X86and_flag GR64:$src1, GR64:$src2))]>;
+def AND8rr  : BinOpRR<0x20, MRMDestReg, "and{b}", GR8 , X86and_flag>;
+def AND16rr : BinOpRR<0x21, MRMDestReg, "and{w}", GR16, X86and_flag>, OpSize;
+def AND32rr : BinOpRR<0x21, MRMDestReg, "and{l}", GR32, X86and_flag>;
+def AND64rr : BinOpRR<0x21, MRMDestReg, "and{q}", GR64, X86and_flag>, REX_W;
 } // isCommutable
 
 
