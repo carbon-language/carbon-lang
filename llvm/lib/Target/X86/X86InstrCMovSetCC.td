@@ -628,179 +628,33 @@ def CMOVNO64rm : RI<0x41, MRMSrcMem,       // if !overflow, GR64 = [mem64]
                                      X86_COND_NO, EFLAGS))]>, TB;
 } // Constraints = "$src1 = $dst"
 
-let Uses = [EFLAGS] in {
 
-def SETEr    : I<0x94, MRM0r, 
-                 (outs GR8   :$dst), (ins),
-                 "sete\t$dst",
-                 [(set GR8:$dst, (X86setcc X86_COND_E, EFLAGS))]>,
-               TB;                        // GR8 = ==
-def SETEm    : I<0x94, MRM0m, 
-                 (outs), (ins i8mem:$dst),
-                 "sete\t$dst",
-                 [(store (X86setcc X86_COND_E, EFLAGS), addr:$dst)]>,
-               TB;                        // [mem8] = ==
+// SetCC instructions.
+multiclass SETCC<bits<8> opc, string Mnemonic, PatLeaf OpNode> {
+  let Uses = [EFLAGS] in {
+    def r    : I<opc, MRM0r,  (outs GR8:$dst), (ins),
+                     !strconcat(Mnemonic, "\t$dst"),
+                     [(set GR8:$dst, (X86setcc OpNode, EFLAGS))]>, TB;
+    def m    : I<opc, MRM0m,  (outs), (ins i8mem:$dst),
+                     !strconcat(Mnemonic, "\t$dst"),
+                     [(store (X86setcc OpNode, EFLAGS), addr:$dst)]>, TB;
+  } // Uses = [EFLAGS]
+}
 
-def SETNEr   : I<0x95, MRM0r, 
-                 (outs GR8   :$dst), (ins),
-                 "setne\t$dst",
-                 [(set GR8:$dst, (X86setcc X86_COND_NE, EFLAGS))]>,
-               TB;                        // GR8 = !=
-def SETNEm   : I<0x95, MRM0m, 
-                 (outs), (ins i8mem:$dst),
-                 "setne\t$dst",
-                 [(store (X86setcc X86_COND_NE, EFLAGS), addr:$dst)]>,
-               TB;                        // [mem8] = !=
-
-def SETLr    : I<0x9C, MRM0r, 
-                 (outs GR8   :$dst), (ins),
-                 "setl\t$dst",
-                 [(set GR8:$dst, (X86setcc X86_COND_L, EFLAGS))]>,
-               TB;                        // GR8 = <  signed
-def SETLm    : I<0x9C, MRM0m, 
-                 (outs), (ins i8mem:$dst),
-                 "setl\t$dst",
-                 [(store (X86setcc X86_COND_L, EFLAGS), addr:$dst)]>,
-               TB;                        // [mem8] = <  signed
-
-def SETGEr   : I<0x9D, MRM0r, 
-                 (outs GR8   :$dst), (ins),
-                 "setge\t$dst",
-                 [(set GR8:$dst, (X86setcc X86_COND_GE, EFLAGS))]>,
-               TB;                        // GR8 = >= signed
-def SETGEm   : I<0x9D, MRM0m, 
-                 (outs), (ins i8mem:$dst),
-                 "setge\t$dst",
-                 [(store (X86setcc X86_COND_GE, EFLAGS), addr:$dst)]>,
-               TB;                        // [mem8] = >= signed
-
-def SETLEr   : I<0x9E, MRM0r, 
-                 (outs GR8   :$dst), (ins),
-                 "setle\t$dst",
-                 [(set GR8:$dst, (X86setcc X86_COND_LE, EFLAGS))]>,
-               TB;                        // GR8 = <= signed
-def SETLEm   : I<0x9E, MRM0m, 
-                 (outs), (ins i8mem:$dst),
-                 "setle\t$dst",
-                 [(store (X86setcc X86_COND_LE, EFLAGS), addr:$dst)]>,
-               TB;                        // [mem8] = <= signed
-
-def SETGr    : I<0x9F, MRM0r, 
-                 (outs GR8   :$dst), (ins),
-                 "setg\t$dst",
-                 [(set GR8:$dst, (X86setcc X86_COND_G, EFLAGS))]>,
-               TB;                        // GR8 = >  signed
-def SETGm    : I<0x9F, MRM0m, 
-                 (outs), (ins i8mem:$dst),
-                 "setg\t$dst",
-                 [(store (X86setcc X86_COND_G, EFLAGS), addr:$dst)]>,
-               TB;                        // [mem8] = >  signed
-
-def SETBr    : I<0x92, MRM0r,
-                 (outs GR8   :$dst), (ins),
-                 "setb\t$dst",
-                 [(set GR8:$dst, (X86setcc X86_COND_B, EFLAGS))]>,
-               TB;                        // GR8 = <  unsign
-def SETBm    : I<0x92, MRM0m,
-                 (outs), (ins i8mem:$dst),
-                 "setb\t$dst",
-                 [(store (X86setcc X86_COND_B, EFLAGS), addr:$dst)]>,
-               TB;                        // [mem8] = <  unsign
-
-def SETAEr   : I<0x93, MRM0r, 
-                 (outs GR8   :$dst), (ins),
-                 "setae\t$dst",
-                 [(set GR8:$dst, (X86setcc X86_COND_AE, EFLAGS))]>,
-               TB;                        // GR8 = >= unsign
-def SETAEm   : I<0x93, MRM0m, 
-                 (outs), (ins i8mem:$dst),
-                 "setae\t$dst",
-                 [(store (X86setcc X86_COND_AE, EFLAGS), addr:$dst)]>,
-               TB;                        // [mem8] = >= unsign
-
-def SETBEr   : I<0x96, MRM0r, 
-                 (outs GR8   :$dst), (ins),
-                 "setbe\t$dst",
-                 [(set GR8:$dst, (X86setcc X86_COND_BE, EFLAGS))]>,
-               TB;                        // GR8 = <= unsign
-def SETBEm   : I<0x96, MRM0m, 
-                 (outs), (ins i8mem:$dst),
-                 "setbe\t$dst",
-                 [(store (X86setcc X86_COND_BE, EFLAGS), addr:$dst)]>,
-               TB;                        // [mem8] = <= unsign
-
-def SETAr    : I<0x97, MRM0r, 
-                 (outs GR8   :$dst), (ins),
-                 "seta\t$dst",
-                 [(set GR8:$dst, (X86setcc X86_COND_A, EFLAGS))]>,
-               TB;                        // GR8 = >  signed
-def SETAm    : I<0x97, MRM0m, 
-                 (outs), (ins i8mem:$dst),
-                 "seta\t$dst",
-                 [(store (X86setcc X86_COND_A, EFLAGS), addr:$dst)]>,
-               TB;                        // [mem8] = >  signed
-
-def SETSr    : I<0x98, MRM0r, 
-                 (outs GR8   :$dst), (ins),
-                 "sets\t$dst",
-                 [(set GR8:$dst, (X86setcc X86_COND_S, EFLAGS))]>,
-               TB;                        // GR8 = <sign bit>
-def SETSm    : I<0x98, MRM0m, 
-                 (outs), (ins i8mem:$dst),
-                 "sets\t$dst",
-                 [(store (X86setcc X86_COND_S, EFLAGS), addr:$dst)]>,
-               TB;                        // [mem8] = <sign bit>
-def SETNSr   : I<0x99, MRM0r, 
-                 (outs GR8   :$dst), (ins),
-                 "setns\t$dst",
-                 [(set GR8:$dst, (X86setcc X86_COND_NS, EFLAGS))]>,
-               TB;                        // GR8 = !<sign bit>
-def SETNSm   : I<0x99, MRM0m, 
-                 (outs), (ins i8mem:$dst),
-                 "setns\t$dst",
-                 [(store (X86setcc X86_COND_NS, EFLAGS), addr:$dst)]>,
-               TB;                        // [mem8] = !<sign bit>
-
-def SETPr    : I<0x9A, MRM0r, 
-                 (outs GR8   :$dst), (ins),
-                 "setp\t$dst",
-                 [(set GR8:$dst, (X86setcc X86_COND_P, EFLAGS))]>,
-               TB;                        // GR8 = parity
-def SETPm    : I<0x9A, MRM0m, 
-                 (outs), (ins i8mem:$dst),
-                 "setp\t$dst",
-                 [(store (X86setcc X86_COND_P, EFLAGS), addr:$dst)]>,
-               TB;                        // [mem8] = parity
-def SETNPr   : I<0x9B, MRM0r, 
-                 (outs GR8   :$dst), (ins),
-                 "setnp\t$dst",
-                 [(set GR8:$dst, (X86setcc X86_COND_NP, EFLAGS))]>,
-               TB;                        // GR8 = not parity
-def SETNPm   : I<0x9B, MRM0m, 
-                 (outs), (ins i8mem:$dst),
-                 "setnp\t$dst",
-                 [(store (X86setcc X86_COND_NP, EFLAGS), addr:$dst)]>,
-               TB;                        // [mem8] = not parity
-
-def SETOr    : I<0x90, MRM0r, 
-                 (outs GR8   :$dst), (ins),
-                 "seto\t$dst",
-                 [(set GR8:$dst, (X86setcc X86_COND_O, EFLAGS))]>,
-               TB;                        // GR8 = overflow
-def SETOm    : I<0x90, MRM0m, 
-                 (outs), (ins i8mem:$dst),
-                 "seto\t$dst",
-                 [(store (X86setcc X86_COND_O, EFLAGS), addr:$dst)]>,
-               TB;                        // [mem8] = overflow
-def SETNOr   : I<0x91, MRM0r, 
-                 (outs GR8   :$dst), (ins),
-                 "setno\t$dst",
-                 [(set GR8:$dst, (X86setcc X86_COND_NO, EFLAGS))]>,
-               TB;                        // GR8 = not overflow
-def SETNOm   : I<0x91, MRM0m, 
-                 (outs), (ins i8mem:$dst),
-                 "setno\t$dst",
-                 [(store (X86setcc X86_COND_NO, EFLAGS), addr:$dst)]>,
-               TB;                        // [mem8] = not overflow
-} // Uses = [EFLAGS]
+defm SETO  : SETCC<0x90, "seto",  X86_COND_O>;   // is overflow bit set
+defm SETNO : SETCC<0x91, "setno", X86_COND_NO>;  // is overflow bit not set
+defm SETB  : SETCC<0x92, "setb",  X86_COND_B>;   // unsigned less than
+defm SETAE : SETCC<0x93, "setae", X86_COND_AE>;  // unsigned greater or equal
+defm SETE  : SETCC<0x94, "sete",  X86_COND_E>;   // equal to
+defm SETNE : SETCC<0x95, "setne", X86_COND_NE>;  // not equal to
+defm SETBE : SETCC<0x96, "setbe", X86_COND_BE>;  // unsigned less than or equal
+defm SETA  : SETCC<0x97, "seta",  X86_COND_A>;   // unsigned greater than
+defm SETS  : SETCC<0x98, "sets",  X86_COND_S>;   // is signed bit set
+defm SETNS : SETCC<0x99, "setns", X86_COND_NS>;  // is not signed
+defm SETP  : SETCC<0x9A, "setp",  X86_COND_P>;   // is parity bit set
+defm SETNP : SETCC<0x9B, "setnp", X86_COND_NP>;  // is parity bit not set
+defm SETL  : SETCC<0x9C, "setl",  X86_COND_L>;   // signed less than
+defm SETGE : SETCC<0x9D, "setge", X86_COND_GE>;  // signed greater or equal
+defm SETLE : SETCC<0x9E, "setle", X86_COND_LE>;  // signed less than or equal
+defm SETG  : SETCC<0x9F, "setg",  X86_COND_G>;   // signed greater than
 
