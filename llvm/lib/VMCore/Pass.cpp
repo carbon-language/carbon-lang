@@ -213,7 +213,6 @@ RegisterAGBase::RegisterAGBase(const char *Name, const void *InterfaceID,
                                                          *this, isDefault);
 }
 
-
 //===----------------------------------------------------------------------===//
 // PassRegistrationListener implementation
 //
