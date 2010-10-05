@@ -18,7 +18,7 @@ BUILT_SOURCES = MSP430GenRegisterInfo.h.inc MSP430GenRegisterNames.inc \
 		MSP430GenDAGISel.inc MSP430GenCallingConv.inc \
 		MSP430GenSubtarget.inc
 
-DIRS = AsmPrinter TargetInfo
+DIRS = InstPrinter TargetInfo
 
 include $(LEVEL)/Makefile.common
 
