@@ -35,22 +35,22 @@ using namespace llvm;
 ///////////////////////////////////////////////////////////
 
 namespace {
-  
+
   class EnumEmitter {
   private:
     std::string Name;
     std::vector<std::string> Entries;
   public:
-    EnumEmitter(const char *N) : Name(N) { 
+    EnumEmitter(const char *N) : Name(N) {
     }
-    int addEntry(const char *e) { 
+    int addEntry(const char *e) {
       Entries.push_back(std::string(e));
-      return Entries.size() - 1; 
+      return Entries.size() - 1;
     }
     void emit(raw_ostream &o, unsigned int &i) {
       o.indent(i) << "enum " << Name.c_str() << " {" << "\n";
       i += 2;
-      
+
       unsigned int index = 0;
       unsigned int numEntries = Entries.size();
       for (index = 0; index < numEntries; ++index) {
@@ -59,15 +59,15 @@ namespace {
           o << ",";
         o << "\n";
       }
-      
+
       i -= 2;
       o.indent(i) << "};" << "\n";
     }
-    
+
     void emitAsFlags(raw_ostream &o, unsigned int &i) {
       o.indent(i) << "enum " << Name.c_str() << " {" << "\n";
       i += 2;
-      
+
       unsigned int index = 0;
       unsigned int numEntries = Entries.size();
       unsigned int flag = 1;
@@ -78,7 +78,7 @@ namespace {
         o << "\n";
         flag <<= 1;
       }
-      
+
       i -= 2;
       o.indent(i) << "};" << "\n";
     }
@@ -89,7 +89,7 @@ namespace {
     virtual ~ConstantEmitter() { }
     virtual void emit(raw_ostream &o, unsigned int &i) = 0;
   };
-  
+
   class LiteralConstantEmitter : public ConstantEmitter {
   private:
     bool IsNumber;
@@ -98,7 +98,7 @@ namespace {
       const char* String;
     };
   public:
-    LiteralConstantEmitter(int number = 0) : 
+    LiteralConstantEmitter(int number = 0) :
       IsNumber(true),
       Number(number) {
     }
@@ -117,7 +117,7 @@ namespace {
         o << String;
     }
   };
-  
+
   class CompoundConstantEmitter : public ConstantEmitter {
   private:
     unsigned int Padding;
@@ -127,7 +127,7 @@ namespace {
     }
     CompoundConstantEmitter &addEntry(ConstantEmitter *e) {
       Entries.push_back(e);
-      
+
       return *this;
     }
     ~CompoundConstantEmitter() {
@@ -140,12 +140,12 @@ namespace {
     void emit(raw_ostream &o, unsigned int &i) {
       o << "{" << "\n";
       i += 2;
-  
+
       unsigned int index;
       unsigned int numEntries = Entries.size();
-      
+
       unsigned int numToPrint;
-      
+
       if (Padding) {
         if (numEntries > Padding) {
           fprintf(stderr, "%u entries but %u padding\n", numEntries, Padding);
@@ -155,24 +155,24 @@ namespace {
       } else {
         numToPrint = numEntries;
       }
-          
+
       for (index = 0; index < numToPrint; ++index) {
         o.indent(i);
         if (index < numEntries)
           Entries[index]->emit(o, i);
         else
           o << "-1";
-        
+
         if (index < (numToPrint - 1))
           o << ",";
         o << "\n";
       }
-      
+
       i -= 2;
       o.indent(i) << "}";
     }
   };
-  
+
   class FlagsConstantEmitter : public ConstantEmitter {
   private:
     std::vector<std::string> Flags;
@@ -188,7 +188,7 @@ namespace {
       unsigned int numFlags = Flags.size();
       if (numFlags == 0)
         o << "0";
-      
+
       for (index = 0; index < numFlags; ++index) {
         o << Flags[index].c_str();
         if (index < (numFlags - 1))
@@ -218,15 +218,15 @@ void populateOperandOrder(CompoundConstantEmitter *operandOrder,
                           const CodeGenInstruction &inst,
                           unsigned syntax) {
   unsigned int numArgs = 0;
-  
+
   AsmWriterInst awInst(inst, syntax, -1, -1);
-  
+
   std::vector<AsmWriterOperand>::iterator operandIterator;
-  
+
   for (operandIterator = awInst.Operands.begin();
        operandIterator != awInst.Operands.end();
        ++operandIterator) {
-    if (operandIterator->OperandType == 
+    if (operandIterator->OperandType ==
         AsmWriterOperand::isMachineInstrOperand) {
       operandOrder->addEntry(
         new LiteralConstantEmitter(operandIterator->CGIOpNo));
@@ -274,7 +274,7 @@ static int X86TypeFromOpName(LiteralConstantEmitter *type,
   REG("SEGMENT_REG");
   REG("DEBUG_REG");
   REG("CONTROL_REG");
-  
+
   IMM("i8imm");
   IMM("i16imm");
   IMM("i16i8imm");
@@ -284,7 +284,7 @@ static int X86TypeFromOpName(LiteralConstantEmitter *type,
   IMM("i64i8imm");
   IMM("i64i32imm");
   IMM("SSECC");
-  
+
   // all R, I, R, I, R
   MEM("i8mem");
   MEM("i8mem_NOREX");
@@ -306,12 +306,12 @@ static int X86TypeFromOpName(LiteralConstantEmitter *type,
   MEM("f128mem");
   MEM("f256mem");
   MEM("opaque512mem");
-  
+
   // all R, I, R, I
   LEA("lea32mem");
   LEA("lea64_32mem");
   LEA("lea64mem");
-  
+
   // all I
   PCR("i16imm_pcrel");
   PCR("i32imm_pcrel");
@@ -322,7 +322,7 @@ static int X86TypeFromOpName(LiteralConstantEmitter *type,
   PCR("offset32");
   PCR("offset64");
   PCR("brtarget");
-  
+
   return 1;
 }
 
@@ -344,15 +344,15 @@ static void X86PopulateOperands(
   const CodeGenInstruction &inst) {
   if (!inst.TheDef->isSubClassOf("X86Inst"))
     return;
-  
+
   unsigned int index;
   unsigned int numOperands = inst.OperandList.size();
-  
+
   for (index = 0; index < numOperands; ++index) {
-    const CodeGenInstruction::OperandInfo &operandInfo = 
+    const CodeGenInstruction::OperandInfo &operandInfo =
       inst.OperandList[index];
     Record &rec = *operandInfo.Rec;
-    
+
     if (X86TypeFromOpName(operandTypes[index], rec.getName())) {
       errs() << "Operand type: " << rec.getName().c_str() << "\n";
       errs() << "Operand name: " << operandInfo.Name.c_str() << "\n";
@@ -375,9 +375,9 @@ static inline void decorate1(
   const char *opName,
   const char *opFlag) {
   unsigned opIndex;
-  
+
   opIndex = inst.getOperandNamed(std::string(opName));
-  
+
   operandFlags[opIndex]->addEntry(opFlag);
 }
 
@@ -414,7 +414,7 @@ static inline void decorate1(
 }
 
 /// X86ExtractSemantics - Performs various checks on the name of an X86
-///   instruction to determine what sort of an instruction it is and then adds 
+///   instruction to determine what sort of an instruction it is and then adds
 ///   the appropriate flags to the instruction and its operands
 ///
 /// @arg instType     - A reference to the type for the instruction as a whole
@@ -425,7 +425,7 @@ static void X86ExtractSemantics(
   FlagsConstantEmitter *(&operandFlags)[EDIS_MAX_OPERANDS],
   const CodeGenInstruction &inst) {
   const std::string &name = inst.TheDef->getName();
-    
+
   if (name.find("MOV") != name.npos) {
     if (name.find("MOV_V") != name.npos) {
       // ignore (this is a pseudoinstruction)
@@ -450,7 +450,7 @@ static void X86ExtractSemantics(
       MOV("src", "dst");
     }
   }
-  
+
   if (name.find("JMP") != name.npos ||
       name.find("J") == 0) {
     if (name.find("FAR") != name.npos && name.find("i") != name.npos) {
@@ -459,7 +459,7 @@ static void X86ExtractSemantics(
       BRANCH("dst");
     }
   }
-  
+
   if (name.find("PUSH") != name.npos) {
     if (name.find("CS") != name.npos ||
         name.find("DS") != name.npos ||
@@ -481,7 +481,7 @@ static void X86ExtractSemantics(
       PUSH("reg");
     }
   }
-  
+
   if (name.find("POP") != name.npos) {
     if (name.find("POPCNT") != name.npos) {
       // ignore (not a real pop)
@@ -503,7 +503,7 @@ static void X86ExtractSemantics(
       POP("reg");
     }
   }
-  
+
   if (name.find("CALL") != name.npos) {
     if (name.find("ADJ") != name.npos) {
       // ignore (not a call)
@@ -517,7 +517,7 @@ static void X86ExtractSemantics(
       CALL("dst");
     }
   }
-  
+
   if (name.find("RET") != name.npos) {
     RETURN();
   }
@@ -561,7 +561,7 @@ static int ARMFlagFromOpName(LiteralConstantEmitter *type,
   REG("QPR");
   REG("QQPR");
   REG("QQQQPR");
-  
+
   IMM("i32imm");
   IMM("bf_inv_mask_imm");
   IMM("jtblock_operand");
@@ -580,7 +580,7 @@ static int ARMFlagFromOpName(LiteralConstantEmitter *type,
   IMM("t_imm_s4");
   IMM("pclabel");
   IMM("shift_imm");
-  
+
   MISC("brtarget", "kOperandTypeARMBranchTarget");                // ?
   MISC("so_reg", "kOperandTypeARMSoReg");                         // R, R, I
   MISC("t2_so_reg", "kOperandTypeThumb2SoReg");                   // R, I
@@ -605,7 +605,7 @@ static int ARMFlagFromOpName(LiteralConstantEmitter *type,
   MISC("t2addrmode_imm12", "kOperandTypeThumb2AddrModeImm12");    // R, I
   MISC("t2addrmode_so_reg", "kOperandTypeThumb2AddrModeSoReg");   // R, R, I
   MISC("t2addrmode_imm8s4", "kOperandTypeThumb2AddrModeImm8s4");  // R, I
-  MISC("t2am_imm8s4_offset", "kOperandTypeThumb2AddrModeImm8s4Offset");  
+  MISC("t2am_imm8s4_offset", "kOperandTypeThumb2AddrModeImm8s4Offset");
                                                                   // R, I
   MISC("tb_addrmode", "kOperandTypeARMTBAddrMode");               // I
   MISC("t_addrmode_s1", "kOperandTypeThumbAddrModeS1");           // R, I, R
@@ -613,7 +613,7 @@ static int ARMFlagFromOpName(LiteralConstantEmitter *type,
   MISC("t_addrmode_s4", "kOperandTypeThumbAddrModeS4");           // R, I, R
   MISC("t_addrmode_rr", "kOperandTypeThumbAddrModeRR");           // R, R
   MISC("t_addrmode_sp", "kOperandTypeThumbAddrModeSP");           // R, I
-  
+
   return 1;
 }
 
@@ -639,21 +639,21 @@ static void ARMPopulateOperands(
   if (!inst.TheDef->isSubClassOf("InstARM") &&
       !inst.TheDef->isSubClassOf("InstThumb"))
     return;
-  
+
   unsigned int index;
   unsigned int numOperands = inst.OperandList.size();
-  
+
   if (numOperands > EDIS_MAX_OPERANDS) {
-    errs() << "numOperands == " << numOperands << " > " << 
+    errs() << "numOperands == " << numOperands << " > " <<
       EDIS_MAX_OPERANDS << '\n';
     llvm_unreachable("Too many operands");
   }
-  
+
   for (index = 0; index < numOperands; ++index) {
-    const CodeGenInstruction::OperandInfo &operandInfo = 
+    const CodeGenInstruction::OperandInfo &operandInfo =
     inst.OperandList[index];
     Record &rec = *operandInfo.Rec;
-    
+
     if (ARMFlagFromOpName(operandTypes[index], rec.getName())) {
       errs() << "Operand type: " << rec.getName() << '\n';
       errs() << "Operand name: " << operandInfo.Name << '\n';
@@ -669,7 +669,7 @@ static void ARMPopulateOperands(
 }
 
 /// ARMExtractSemantics - Performs various checks on the name of an ARM
-///   instruction to determine what sort of an instruction it is and then adds 
+///   instruction to determine what sort of an instruction it is and then adds
 ///   the appropriate flags to the instruction and its operands
 ///
 /// @arg instType     - A reference to the type for the instruction as a whole
@@ -682,7 +682,7 @@ static void ARMExtractSemantics(
   FlagsConstantEmitter *(&operandFlags)[EDIS_MAX_OPERANDS],
   const CodeGenInstruction &inst) {
   const std::string &name = inst.TheDef->getName();
-  
+
   if (name == "tBcc"   ||
       name == "tB"     ||
       name == "t2Bcc"  ||
@@ -691,7 +691,7 @@ static void ARMExtractSemantics(
       name == "tCBNZ") {
     BRANCH("target");
   }
-  
+
   if (name == "tBLr9"      ||
       name == "BLr9_pred"  ||
       name == "tBLXi_r9"   ||
@@ -700,7 +700,7 @@ static void ARMExtractSemantics(
       name == "t2BXJ"      ||
       name == "BXJ") {
     BRANCH("func");
-    
+
     unsigned opIndex;
     opIndex = inst.getOperandNamed("func");
     if (operandTypes[opIndex]->is("kOperandTypeImmediate"))
@@ -710,7 +710,7 @@ static void ARMExtractSemantics(
 
 #undef BRANCH
 
-/// populateInstInfo - Fills an array of InstInfos with information about each 
+/// populateInstInfo - Fills an array of InstInfos with information about each
 ///   instruction in a target
 ///
 /// @arg infoArray  - The array of InstInfo objects to populate
@@ -719,45 +719,45 @@ static void populateInstInfo(CompoundConstantEmitter &infoArray,
                              CodeGenTarget &target) {
   const std::vector<const CodeGenInstruction*> &numberedInstructions =
     target.getInstructionsByEnumValue();
-  
+
   unsigned int index;
   unsigned int numInstructions = numberedInstructions.size();
-  
+
   for (index = 0; index < numInstructions; ++index) {
     const CodeGenInstruction& inst = *numberedInstructions[index];
-    
+
     CompoundConstantEmitter *infoStruct = new CompoundConstantEmitter;
     infoArray.addEntry(infoStruct);
-    
+
     LiteralConstantEmitter *instType = new LiteralConstantEmitter;
     infoStruct->addEntry(instType);
-    
-    LiteralConstantEmitter *numOperandsEmitter = 
+
+    LiteralConstantEmitter *numOperandsEmitter =
       new LiteralConstantEmitter(inst.OperandList.size());
     infoStruct->addEntry(numOperandsEmitter);
-    
+
     CompoundConstantEmitter *operandTypeArray = new CompoundConstantEmitter;
     infoStruct->addEntry(operandTypeArray);
-    
+
     LiteralConstantEmitter *operandTypes[EDIS_MAX_OPERANDS];
-                         
+
     CompoundConstantEmitter *operandFlagArray = new CompoundConstantEmitter;
     infoStruct->addEntry(operandFlagArray);
-        
+
     FlagsConstantEmitter *operandFlags[EDIS_MAX_OPERANDS];
-    
-    for (unsigned operandIndex = 0; 
-         operandIndex < EDIS_MAX_OPERANDS; 
+
+    for (unsigned operandIndex = 0;
+         operandIndex < EDIS_MAX_OPERANDS;
          ++operandIndex) {
       operandTypes[operandIndex] = new LiteralConstantEmitter;
       operandTypeArray->addEntry(operandTypes[operandIndex]);
-      
+
       operandFlags[operandIndex] = new FlagsConstantEmitter;
       operandFlagArray->addEntry(operandFlags[operandIndex]);
     }
- 
+
     unsigned numSyntaxes = 0;
-    
+
     if (target.getName() == "X86") {
       X86PopulateOperands(operandTypes, inst);
       X86ExtractSemantics(*instType, operandFlags, inst);
@@ -768,24 +768,24 @@ static void populateInstInfo(CompoundConstantEmitter &infoArray,
       ARMExtractSemantics(*instType, operandTypes, operandFlags, inst);
       numSyntaxes = 1;
     }
-    
-    CompoundConstantEmitter *operandOrderArray = new CompoundConstantEmitter;    
-    
+
+    CompoundConstantEmitter *operandOrderArray = new CompoundConstantEmitter;
+
     infoStruct->addEntry(operandOrderArray);
-    
-    for (unsigned syntaxIndex = 0; 
-         syntaxIndex < EDIS_MAX_SYNTAXES; 
+
+    for (unsigned syntaxIndex = 0;
+         syntaxIndex < EDIS_MAX_SYNTAXES;
          ++syntaxIndex) {
-      CompoundConstantEmitter *operandOrder = 
+      CompoundConstantEmitter *operandOrder =
         new CompoundConstantEmitter(EDIS_MAX_OPERANDS);
-      
+
       operandOrderArray->addEntry(operandOrder);
-      
+
       if (syntaxIndex < numSyntaxes) {
         populateOperandOrder(operandOrder, inst, syntaxIndex);
       }
     }
-    
+
     infoStruct = NULL;
   }
 }
@@ -829,16 +829,16 @@ static void emitCommonEnums(raw_ostream &o, unsigned int &i) {
   operandTypes.addEntry("kOperandTypeThumb2AddrModeImm8s4");
   operandTypes.addEntry("kOperandTypeThumb2AddrModeImm8s4Offset");
   operandTypes.emit(o, i);
-  
+
   o << "\n";
-  
+
   EnumEmitter operandFlags("OperandFlags");
   operandFlags.addEntry("kOperandFlagSource");
   operandFlags.addEntry("kOperandFlagTarget");
   operandFlags.emitAsFlags(o, i);
-  
+
   o << "\n";
-  
+
   EnumEmitter instructionTypes("InstructionTypes");
   instructionTypes.addEntry("kInstructionTypeNone");
   instructionTypes.addEntry("kInstructionTypeMove");
@@ -848,25 +848,25 @@ static void emitCommonEnums(raw_ostream &o, unsigned int &i) {
   instructionTypes.addEntry("kInstructionTypeCall");
   instructionTypes.addEntry("kInstructionTypeReturn");
   instructionTypes.emit(o, i);
-  
+
   o << "\n";
 }
 
 void EDEmitter::run(raw_ostream &o) {
   unsigned int i = 0;
-  
+
   CompoundConstantEmitter infoArray;
   CodeGenTarget target;
-  
+
   populateInstInfo(infoArray, target);
-  
+
   emitCommonEnums(o, i);
-  
+
   o << "namespace {\n";
-  
+
   o << "llvm::EDInstInfo instInfo" << target.getName().c_str() << "[] = ";
   infoArray.emit(o, i);
   o << ";" << "\n";
-  
+
   o << "}\n";
 }
