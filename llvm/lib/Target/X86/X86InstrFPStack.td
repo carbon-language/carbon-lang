@@ -607,8 +607,8 @@ let mayLoad = 1 in
 def FLDCW16m  : I<0xD9, MRM5m,                   // X87 control world = [mem16]
                   (outs), (ins i16mem:$dst), "fldcw\t$dst", []>;
 
-// Register free
-
+// FPU control instructions
+def FNINIT : I<0xE3, RawFrm, (outs), (ins), "fninit", []>, DB;
 def FFREE : FPI<0xC0, AddRegFrm, (outs), (ins RST:$reg),
                 "ffree\t$reg">, DD;
 
@@ -616,7 +616,8 @@ def FFREE : FPI<0xC0, AddRegFrm, (outs), (ins RST:$reg),
 
 def FNCLEX : I<0xE2, RawFrm, (outs), (ins), "fnclex", []>, DB;
 
-// Operandless floating-point instructions for the disassembler
+// Operandless floating-point instructions for the disassembler.
+def WAIT : I<0x9B, RawFrm, (outs), (ins), "wait", []>;
 
 def FNOP : I<0xD0, RawFrm, (outs), (ins), "fnop", []>, D9;
 def FXAM : I<0xE5, RawFrm, (outs), (ins), "fxam", []>, D9;

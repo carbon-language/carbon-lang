@@ -116,13 +116,6 @@ def ADJCALLSTACKUP64   : I<0, Pseudo, (outs), (ins i32imm:$amt1, i32imm:$amt2),
                           Requires<[In64BitMode]>;
 }
 
-// Interrupt Instructions
-def IRET64 : RI<0xcf, RawFrm, (outs), (ins), "iretq", []>,
-             Requires<[In64BitMode]>;
-
-def SYSRETQ : RI<0x07, RawFrm,
-                 (outs), (ins), "sysretq", []>, TB, Requires<[In64BitMode]>;
-
 
 //===----------------------------------------------------------------------===//
 //  Call Instructions...
@@ -330,9 +323,6 @@ def SCAS64 : RI<0xAF, RawFrm, (outs), (ins), "scasq", []>;
 
 def CMPS64 : RI<0xA7, RawFrm, (outs), (ins), "cmpsq", []>;
 
-// Fast system-call instructions
-def SYSEXIT64 : RI<0x35, RawFrm,
-                   (outs), (ins), "sysexit", []>, TB, Requires<[In64BitMode]>;
 
 //===----------------------------------------------------------------------===//
 //  Move Instructions...
@@ -1742,28 +1732,6 @@ def LSL64rr : RI<0x03, MRMSrcReg, (outs GR64:$dst), (ins GR64:$src),
 
 def SWAPGS : I<0x01, MRM_F8, (outs), (ins), "swapgs", []>, TB;
 
-def PUSHFS64 : I<0xa0, RawFrm, (outs), (ins),
-                 "push{q}\t%fs", []>, TB;
-def PUSHGS64 : I<0xa8, RawFrm, (outs), (ins),
-                 "push{q}\t%gs", []>, TB;
-
-def POPFS64 : I<0xa1, RawFrm, (outs), (ins),
-                "pop{q}\t%fs", []>, TB;
-def POPGS64 : I<0xa9, RawFrm, (outs), (ins),
-                "pop{q}\t%gs", []>, TB;
-                 
-def LSS64rm : RI<0xb2, MRMSrcMem, (outs GR64:$dst), (ins opaque80mem:$src),
-                 "lss{q}\t{$src, $dst|$dst, $src}", []>, TB;
-def LFS64rm : RI<0xb4, MRMSrcMem, (outs GR64:$dst), (ins opaque80mem:$src),
-                 "lfs{q}\t{$src, $dst|$dst, $src}", []>, TB;
-def LGS64rm : RI<0xb5, MRMSrcMem, (outs GR64:$dst), (ins opaque80mem:$src),
-                 "lgs{q}\t{$src, $dst|$dst, $src}", []>, TB;
-
-// Specialized register support
-
-// no m form encodable; use SMSW16m
-def SMSW64r : RI<0x01, MRM4r, (outs GR64:$dst), (ins), 
-                 "smsw{q}\t$dst", []>, TB;
 
 // String manipulation instructions
 
