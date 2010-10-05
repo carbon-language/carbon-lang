@@ -70,6 +70,17 @@ static bool isFixupKindX86PCRel(unsigned Kind) {
   }
 }
 
+static bool RelocNeedsGOT(unsigned Type) {
+  switch (Type) {
+  default:
+    return false;
+  case ELF::R_X86_64_GOT32:
+  case ELF::R_X86_64_PLT32:
+  case ELF::R_X86_64_GOTPCREL:
+    return true;
+  }
+}
+
 namespace {
 
   class ELFObjectWriterImpl {
@@ -133,6 +144,8 @@ namespace {
 
     int NumRegularSections;
 
+    bool NeedsGOT;
+
     ELFObjectWriter *Writer;
 
     raw_ostream &OS;
@@ -153,7 +166,7 @@ namespace {
   public:
     ELFObjectWriterImpl(ELFObjectWriter *_Writer, bool _Is64Bit,
                         bool _HasRelAddend, Triple::OSType _OSType)
-      : Writer(_Writer), OS(Writer->getStream()),
+      : NeedsGOT(false), Writer(_Writer), OS(Writer->getStream()),
         Is64Bit(_Is64Bit), HasRelocationAddend(_HasRelAddend),
         OSType(_OSType) {
     }
@@ -647,6 +660,9 @@ void ELFObjectWriterImpl::RecordRelocation(const MCAssembler &Asm,
     }
   }
 
+  if (RelocNeedsGOT(Type))
+    NeedsGOT = true;
+
   ELFRelocationEntry ERE;
 
   ERE.Index = Index;
@@ -677,6 +693,14 @@ ELFObjectWriterImpl::getSymbolIndexInSymbolTable(const MCAssembler &Asm,
 }
 
 void ELFObjectWriterImpl::ComputeSymbolTable(MCAssembler &Asm) {
+  // FIXME: Is this the correct place to do this?
+  if (NeedsGOT) {
+    llvm::StringRef Name = "_GLOBAL_OFFSET_TABLE_";
+    MCSymbol *Sym = Asm.getContext().GetOrCreateSymbol(Name);
+    MCSymbolData &Data = Asm.getOrCreateSymbolData(*Sym);
+    Data.setExternal(true);
+  }
+
   // Build section lookup table.
   NumRegularSections = Asm.size();
   DenseMap<const MCSection*, uint8_t> SectionIndexMap;
