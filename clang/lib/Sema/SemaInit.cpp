@@ -2325,10 +2325,12 @@ static OverloadingResult TryRefInitWithConversionFunction(Sema &S,
         if (ConstructorTmpl)
           S.AddTemplateOverloadCandidate(ConstructorTmpl, FoundDecl,
                                          /*ExplicitArgs*/ 0,
-                                         &Initializer, 1, CandidateSet);
+                                         &Initializer, 1, CandidateSet,
+                                         /*SuppressUserConversions=*/true);
         else
           S.AddOverloadCandidate(Constructor, FoundDecl,
-                                 &Initializer, 1, CandidateSet);
+                                 &Initializer, 1, CandidateSet,
+                                 /*SuppressUserConversions=*/true);
       }
     }    
   }
