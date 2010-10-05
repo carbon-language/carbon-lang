@@ -79,6 +79,11 @@ ValueObject::GetUpdateID() const
 bool
 ValueObject::UpdateValueIfNeeded (ExecutionContextScope *exe_scope)
 {
+    // If this is a constant value, then our success is predicated on whether
+    // we have an error or not
+    if (GetIsConstant())
+        return m_error.Success();
+
     if (exe_scope)
     {
         Process *process = exe_scope->CalculateProcess();

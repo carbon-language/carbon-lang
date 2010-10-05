@@ -201,6 +201,18 @@ public:
                      bool use_objc,
                      bool scope_already_checked);
 
+    bool
+    GetIsConstant () const
+    {
+        return m_update_id == LLDB_INVALID_UID;
+    }
+    
+    void
+    SetIsConstant ()
+    {
+        m_update_id = LLDB_INVALID_UID;
+    }
+
 protected:
     //------------------------------------------------------------------
     // Classes that inherit from ValueObject can see and modify these

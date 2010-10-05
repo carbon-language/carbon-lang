@@ -32,6 +32,9 @@ public:
                             uint8_t addr_size);
 
 
+    // When an expression fails to evaluate, we return an error
+    ValueObjectConstResult (const Error& error);
+
     virtual ~ValueObjectConstResult();
 
     virtual size_t

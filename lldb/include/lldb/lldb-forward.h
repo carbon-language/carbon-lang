@@ -43,6 +43,7 @@ class   CPPLanguageRuntime;
 class   ClangASTContext;
 class   ClangExpression;
 class   ClangExpressionDeclMap;
+class   ClangExpressionVariable;
 class   ClangExpressionVariableList;
 class   ClangExpressionVariableStore;
 class   CommandInterpreter;

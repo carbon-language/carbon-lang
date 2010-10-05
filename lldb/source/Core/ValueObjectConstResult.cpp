@@ -46,6 +46,16 @@ ValueObjectConstResult::ValueObjectConstResult
     m_value.SetValueType(Value::eValueTypeHostAddress);
     m_value.SetContext(Value::eContextTypeOpaqueClangQualType, clang_type);
     m_name = name;
+    SetIsConstant ();
+}
+
+ValueObjectConstResult::ValueObjectConstResult (const Error& error) :
+    ValueObject (),
+    m_clang_ast (NULL),
+    m_type_name ()
+{
+    m_error = error;
+    SetIsConstant ();
 }
 
 ValueObjectConstResult::~ValueObjectConstResult()

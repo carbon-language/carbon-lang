@@ -172,10 +172,8 @@ public:
     }
 
 
-    static Error
-    Evaluate (ExecutionContext &exe_ctx, 
-              const char *expr_cstr, 
-              lldb::ValueObjectSP &result_valobj_sp);
+    static lldb::ValueObjectSP
+    Evaluate (ExecutionContext &exe_ctx, const char *expr_cstr);
 
 private:
     //------------------------------------------------------------------

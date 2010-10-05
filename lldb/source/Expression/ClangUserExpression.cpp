@@ -21,6 +21,7 @@
 #include "lldb/Core/ConstString.h"
 #include "lldb/Core/Log.h"
 #include "lldb/Core/StreamString.h"
+#include "lldb/Core/ValueObjectConstResult.h"
 #include "lldb/Expression/ClangExpressionDeclMap.h"
 #include "lldb/Expression/ClangExpressionParser.h"
 #include "lldb/Expression/ClangFunction.h"
@@ -338,12 +339,11 @@ ClangUserExpression::DwarfOpcodeStream ()
 }
 
 
-Error
-ClangUserExpression::Evaluate (ExecutionContext &exe_ctx, const char *expr_cstr, lldb::ValueObjectSP &result_valobj_sp)
+lldb::ValueObjectSP
+ClangUserExpression::Evaluate (ExecutionContext &exe_ctx, const char *expr_cstr)
 {
     Error error;
-    result_valobj_sp.reset();
-
+    lldb::ValueObjectSP result_valobj_sp;
     ClangUserExpression user_expression (expr_cstr);
     
     StreamString error_stream;
@@ -385,6 +385,9 @@ ClangUserExpression::Evaluate (ExecutionContext &exe_ctx, const char *expr_cstr,
             }
         }
     }
-    return error;
+    if (result_valobj_sp.get() == NULL)
+        result_valobj_sp.reset (new ValueObjectConstResult (error));
+
+    return result_valobj_sp;
 
 }

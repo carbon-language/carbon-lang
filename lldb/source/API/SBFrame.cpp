@@ -20,6 +20,7 @@
 #include "lldb/Core/StreamFile.h"
 #include "lldb/Core/ValueObjectRegister.h"
 #include "lldb/Core/ValueObjectVariable.h"
+#include "lldb/Expression/ClangUserExpression.h"
 #include "lldb/Symbol/Block.h"
 #include "lldb/Symbol/SymbolContext.h"
 #include "lldb/Symbol/VariableList.h"
@@ -416,6 +417,9 @@ SBFrame::EvaluateExpression (const char *expr)
     lldb::SBValue expr_result_value;
     if (m_opaque_sp)
     {
+        ExecutionContext exe_ctx;
+        m_opaque_sp->CalculateExecutionContext (exe_ctx);
+        *expr_result_value = ClangUserExpression::Evaluate (exe_ctx, expr);
     }
     return expr_result_value;
 }

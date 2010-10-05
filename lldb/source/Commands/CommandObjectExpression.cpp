@@ -233,13 +233,10 @@ CommandObjectExpression::EvaluateExpression
         m_exe_ctx.process->SetDynamicCheckers(dynamic_checkers);
     }
     
-    lldb::ValueObjectSP result_valobj_sp;
-    
-    Error expr_error (ClangUserExpression::Evaluate (m_exe_ctx, expr, result_valobj_sp));
-    
-    if (expr_error.Success())
+    lldb::ValueObjectSP result_valobj_sp (ClangUserExpression::Evaluate (m_exe_ctx, expr));
+    assert (result_valobj_sp.get());
+    if (result_valobj_sp->GetError().Success())
     {
-        assert (result_valobj_sp.get() != NULL);
         ValueObject::DumpValueObject (output_stream,
                                       m_exe_ctx.GetBestExecutionContextScope(),
                                       result_valobj_sp.get(),   // Variable object to dump
@@ -257,9 +254,9 @@ CommandObjectExpression::EvaluateExpression
     }
     else
     {
-        error_stream.PutCString(expr_error.AsCString());
+        error_stream.PutCString(result_valobj_sp->GetError().AsCString());
         if (result)
-            result->SetStatus (eReturnStatusSuccessFinishNoResult);
+            result->SetStatus (eReturnStatusFailed);
     }
         
     return true;
