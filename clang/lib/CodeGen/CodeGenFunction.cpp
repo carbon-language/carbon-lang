@@ -1340,11 +1340,9 @@ static void ResolveAllBranchFixups(CodeGenFunction &CGF,
   llvm::SmallPtrSet<llvm::BasicBlock*, 4> CasesAdded;
 
   for (unsigned I = 0, E = CGF.EHStack.getNumBranchFixups(); I != E; ++I) {
-    // Skip this fixup if its destination isn't set or if we've
-    // already treated it.
+    // Skip this fixup if its destination isn't set.
     BranchFixup &Fixup = CGF.EHStack.getBranchFixup(I);
     if (Fixup.Destination == 0) continue;
-    if (!CasesAdded.insert(Fixup.Destination)) continue;
 
     // If there isn't an OptimisticBranchBlock, then InitialBranch is
     // still pointing directly to its destination; forward it to the
@@ -1360,6 +1358,9 @@ static void ResolveAllBranchFixups(CodeGenFunction &CGF,
                           Fixup.InitialBranch);
       Fixup.InitialBranch->setSuccessor(0, CleanupEntry);
     }
+
+    // Don't add this case to the switch statement twice.
+    if (!CasesAdded.insert(Fixup.Destination)) continue;
 
     Switch->addCase(CGF.Builder.getInt32(Fixup.DestinationIndex),
                     Fixup.Destination);
