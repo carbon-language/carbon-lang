@@ -445,12 +445,22 @@ void ELFObjectWriterImpl::WriteSymbol(MCDataFragment *F, ELFSymbolData &MSD,
       const MCBinaryExpr *BE = static_cast<const MCBinaryExpr *>(ESize);
 
       if (BE->EvaluateAsRelocatable(Res, &Layout)) {
-        MCSymbolData &A =
-          Layout.getAssembler().getSymbolData(Res.getSymA()->getSymbol());
-        MCSymbolData &B =
-          Layout.getAssembler().getSymbolData(Res.getSymB()->getSymbol());
+        uint64_t AddressA = 0;
+        uint64_t AddressB = 0;
+        const MCSymbol &SymA = Res.getSymA()->getSymbol();
+        const MCSymbol &SymB = Res.getSymB()->getSymbol();
 
-        Size = Layout.getSymbolAddress(&A) - Layout.getSymbolAddress(&B);
+        if (SymA.isDefined()) {
+          MCSymbolData &A = Layout.getAssembler().getSymbolData(SymA);
+          AddressA = Layout.getSymbolAddress(&A);
+        }
+
+        if (SymB.isDefined()) {
+          MCSymbolData &B = Layout.getAssembler().getSymbolData(SymB);
+          AddressB = Layout.getSymbolAddress(&B);
+        }
+
+        Size = AddressA - AddressB;
       }
     } else if (ESize->getKind() == MCExpr::Constant) {
       Size = static_cast<const MCConstantExpr *>(ESize)->getValue();
