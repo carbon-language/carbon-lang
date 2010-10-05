@@ -529,7 +529,8 @@ void ELFObjectWriterImpl::WriteSymbolTable(MCDataFragment *F,
 }
 
 static bool ShouldRelocOnSymbol(const MCSymbolData &SD,
-                                const MCValue &Target) {
+                                const MCValue &Target,
+                                const MCFragment &F) {
   const MCSymbol &Symbol = SD.getSymbol();
   if (Symbol.isUndefined())
     return true;
@@ -541,6 +542,14 @@ static bool ShouldRelocOnSymbol(const MCSymbolData &SD,
     return Target.getConstant() != 0;
 
   if (SD.isExternal())
+    return true;
+
+  const llvm::MCSymbolRefExpr& Ref = *Target.getSymA();
+  const MCSectionELF &Sec2 =
+    static_cast<const MCSectionELF&>(F.getParent()->getSection());
+
+  if (Ref.getKind() == MCSymbolRefExpr::VK_PLT &&
+      &Sec2 != &Section)
     return true;
 
   return false;
@@ -587,7 +596,7 @@ void ELFObjectWriterImpl::RecordRelocation(const MCAssembler &Asm,
       return;
     }
 
-    bool RelocOnSymbol = ShouldRelocOnSymbol(SD, Target);
+    bool RelocOnSymbol = ShouldRelocOnSymbol(SD, Target, *Fragment);
     if (!RelocOnSymbol) {
       Index = F->getParent()->getOrdinal();
 

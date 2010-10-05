@@ -10,9 +10,13 @@
         movsd   .Lfoo(%rip), %xmm1
         movl	$.Lfoo, %edi
         movl	$.Lfoo+2, %edi
+        jmp	foo@PLT
 
         .section        .sec1,"aM",@progbits,16
 .Lfoo:
+
+        .section	bar,"ax",@progbits
+foo:
 
 // Section 4 is "sec1"
 // CHECK: # Section 4
@@ -22,8 +26,12 @@
 // CHECK:      # Symbol 1
 // CHECK-NEXT: (('st_name', 1) # '.Lfoo'
 
-// Symbol number 5 is section 4
-// CHECK:        # Symbol 5
+// Symbol number 2 is foo
+// CHECK:      # Symbol 2
+// CHECK-NEXT: (('st_name', 7) # 'foo'
+
+// Symbol number 6 is section 4
+// CHECK:        # Symbol 6
 // CHECK-NEXT:    (('st_name', 0) # ''
 // CHECK-NEXT:     ('st_bind', 0)
 // CHECK-NEXT:     ('st_type', 3)
@@ -39,10 +47,10 @@
 // CHECK-NEXT:    ('r_addend',
 // CHECK-NEXT:   ),
 
-// Relocation 1 refers to symbol 5
+// Relocation 1 refers to symbol 6
 // CHECK-NEXT:  # Relocation 1
 // CHECK-NEXT: (('r_offset',
-// CHECK-NEXT:  ('r_sym', 5)
+// CHECK-NEXT:  ('r_sym', 6)
 // CHECK-NEXT:  ('r_type', 10)
 // CHECK-NEXT:  ('r_addend',
 // CHECK-NEXT: ),
@@ -52,6 +60,14 @@
 // CHECK-NEXT:   (('r_offset',
 // CHECK-NEXT:    ('r_sym', 1)
 // CHECK-NEXT:    ('r_type', 10
+// CHECK-NEXT:    ('r_addend',
+// CHECK-NEXT:   ),
+
+// Relocation 3 refers to symbol 2
+// CHECK-NEXT:   # Relocation 3
+// CHECK-NEXT:   (('r_offset',
+// CHECK-NEXT:    ('r_sym', 2)
+// CHECK-NEXT:    ('r_type', 4
 // CHECK-NEXT:    ('r_addend',
 // CHECK-NEXT:   ),
 // CHECK-NEXT:  ])
