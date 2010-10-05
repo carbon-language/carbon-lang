@@ -846,10 +846,20 @@ void CodeGenFunction::PopCleanupBlock(bool FallthroughIsBranchThrough) {
   llvm::BasicBlock *FallthroughSource = Builder.GetInsertBlock();
   bool HasFallthrough = (FallthroughSource != 0 && IsActive);
 
-  // As a kindof crazy internal case, branch-through fall-throughs
-  // leave the insertion point set to the end of the last cleanup.
+  // Branch-through fall-throughs leave the insertion point set to the
+  // end of the last cleanup, which points to the current scope.  The
+  // rest of IR gen doesn't need to worry about this; it only happens
+  // during the execution of PopCleanupBlocks().
   bool HasPrebranchedFallthrough =
     (FallthroughSource && FallthroughSource->getTerminator());
+
+  // If this is a normal cleanup, then having a prebranched
+  // fallthrough implies that the fallthrough source unconditionally
+  // jumps here.
+  assert(!Scope.isNormalCleanup() || !HasPrebranchedFallthrough ||
+         (Scope.getNormalBlock() &&
+          FallthroughSource->getTerminator()->getSuccessor(0)
+            == Scope.getNormalBlock()));
 
   bool RequiresNormalCleanup = false;
   if (Scope.isNormalCleanup() &&
@@ -857,15 +867,10 @@ void CodeGenFunction::PopCleanupBlock(bool FallthroughIsBranchThrough) {
     RequiresNormalCleanup = true;
   }
 
-  assert(!HasPrebranchedFallthrough || RequiresNormalCleanup || !IsActive);
-  assert(!HasPrebranchedFallthrough ||
-         (Scope.isNormalCleanup() && Scope.getNormalBlock() &&
-          FallthroughSource->getTerminator()->getSuccessor(0)
-            == Scope.getNormalBlock()));
-
   // Even if we don't need the normal cleanup, we might still have
   // prebranched fallthrough to worry about.
-  if (!RequiresNormalCleanup && HasPrebranchedFallthrough) {
+  if (Scope.isNormalCleanup() && !RequiresNormalCleanup &&
+      HasPrebranchedFallthrough) {
     assert(!IsActive);
 
     llvm::BasicBlock *NormalEntry = Scope.getNormalBlock();
