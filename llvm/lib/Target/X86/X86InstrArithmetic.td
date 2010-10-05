@@ -687,18 +687,29 @@ def ADD32rr  : I<0x01, MRMDestReg, (outs GR32:$dst),
                  "add{l}\t{$src2, $dst|$dst, $src2}",
                  [(set GR32:$dst, EFLAGS, (X86add_flag GR32:$src1,
                                                        GR32:$src2))]>;
+def ADD64rr    : RI<0x01, MRMDestReg, (outs GR64:$dst), 
+                    (ins GR64:$src1, GR64:$src2),
+                    "add{q}\t{$src2, $dst|$dst, $src2}",
+                    [(set GR64:$dst, EFLAGS,
+                          (X86add_flag GR64:$src1, GR64:$src2))]>;
 } // end isConvertibleToThreeAddress
 } // end isCommutable
 
 // These are alternate spellings for use by the disassembler, we mark them as
 // code gen only to ensure they aren't matched by the assembler.
 let isCodeGenOnly = 1 in {
-  def ADD8rr_alt: I<0x02, MRMSrcReg, (outs GR8:$dst), (ins GR8:$src1, GR8:$src2),
+  def ADD8rr_alt: I<0x02, MRMSrcReg,
+                    (outs GR8:$dst), (ins GR8:$src1, GR8:$src2),
                    "add{b}\t{$src2, $dst|$dst, $src2}", []>;
-  def ADD16rr_alt: I<0x03, MRMSrcReg,(outs GR16:$dst),(ins GR16:$src1, GR16:$src2),
+  def ADD16rr_alt: I<0x03, MRMSrcReg,
+                    (outs GR16:$dst), (ins GR16:$src1, GR16:$src2),
                     "add{w}\t{$src2, $dst|$dst, $src2}", []>, OpSize;
-  def ADD32rr_alt: I<0x03, MRMSrcReg,(outs GR32:$dst),(ins GR32:$src1, GR32:$src2),
+  def ADD32rr_alt: I<0x03, MRMSrcReg,
+                     (outs GR32:$dst), (ins GR32:$src1, GR32:$src2),
                     "add{l}\t{$src2, $dst|$dst, $src2}", []>;
+  def ADD64rr_alt : RI<0x03, MRMSrcReg,
+                       (outs GR64:$dst), (ins GR64:$src1, GR64:$src2),
+                       "add{l}\t{$src2, $dst|$dst, $src2}", []>;
 }
 
 // Register-Memory Addition
@@ -717,7 +728,12 @@ def ADD32rm  : I<0x03, MRMSrcMem, (outs GR32:$dst),
                  "add{l}\t{$src2, $dst|$dst, $src2}",
                  [(set GR32:$dst, EFLAGS, (X86add_flag GR32:$src1,
                                                        (load addr:$src2)))]>;
-                  
+def ADD64rm     : RI<0x03, MRMSrcMem, (outs GR64:$dst), 
+                     (ins GR64:$src1, i64mem:$src2),
+                     "add{q}\t{$src2, $dst|$dst, $src2}",
+                     [(set GR64:$dst, EFLAGS,
+                           (X86add_flag GR64:$src1, (load addr:$src2)))]>;
+
 // Register-Integer Addition
 def ADD8ri    : Ii8<0x80, MRM0r, (outs GR8:$dst), (ins GR8:$src1, i8imm:$src2),
                     "add{b}\t{$src2, $dst|$dst, $src2}",
@@ -746,6 +762,16 @@ def ADD32ri8 : Ii8<0x83, MRM0r, (outs GR32:$dst),
                    "add{l}\t{$src2, $dst|$dst, $src2}",
                    [(set GR32:$dst, EFLAGS,
                          (X86add_flag GR32:$src1, i32immSExt8:$src2))]>;
+def ADD64ri8  : RIi8<0x83, MRM0r, (outs GR64:$dst), 
+                     (ins GR64:$src1, i64i8imm:$src2),
+                     "add{q}\t{$src2, $dst|$dst, $src2}",
+                     [(set GR64:$dst, EFLAGS,
+                           (X86add_flag GR64:$src1, i64immSExt8:$src2))]>;
+def ADD64ri32 : RIi32<0x81, MRM0r, (outs GR64:$dst), 
+                      (ins GR64:$src1, i64i32imm:$src2),
+                      "add{q}\t{$src2, $dst|$dst, $src2}",
+                      [(set GR64:$dst, EFLAGS,
+                            (X86add_flag GR64:$src1, i64immSExt32:$src2))]>;
 }
 } // Constraints = "$src1 = $dst"
 
@@ -762,6 +788,10 @@ def ADD32mr  : I<0x01, MRMDestMem, (outs), (ins i32mem:$dst, GR32:$src2),
                  "add{l}\t{$src2, $dst|$dst, $src2}",
                  [(store (add (load addr:$dst), GR32:$src2), addr:$dst),
                   (implicit EFLAGS)]>;
+def ADD64mr  : RI<0x01, MRMDestMem, (outs), (ins i64mem:$dst, GR64:$src2),
+                  "add{q}\t{$src2, $dst|$dst, $src2}",
+                  [(store (add (load addr:$dst), GR64:$src2), addr:$dst),
+                   (implicit EFLAGS)]>;
 def ADD8mi   : Ii8<0x80, MRM0m, (outs), (ins i8mem :$dst, i8imm :$src2),
                    "add{b}\t{$src2, $dst|$dst, $src2}",
                  [(store (add (loadi8 addr:$dst), imm:$src2), addr:$dst),
@@ -774,6 +804,10 @@ def ADD32mi  : Ii32<0x81, MRM0m, (outs), (ins i32mem:$dst, i32imm:$src2),
                     "add{l}\t{$src2, $dst|$dst, $src2}",
                     [(store (add (loadi32 addr:$dst), imm:$src2), addr:$dst),
                      (implicit EFLAGS)]>;
+def ADD64mi32 : RIi32<0x81, MRM0m, (outs), (ins i64mem:$dst, i64i32imm :$src2),
+                      "add{q}\t{$src2, $dst|$dst, $src2}",
+               [(store (add (load addr:$dst), i64immSExt32:$src2), addr:$dst),
+                (implicit EFLAGS)]>;
 def ADD16mi8 : Ii8<0x83, MRM0m, (outs), (ins i16mem:$dst, i16i8imm :$src2),
                    "add{w}\t{$src2, $dst|$dst, $src2}",
                    [(store (add (load addr:$dst), i16immSExt8:$src2),
@@ -784,6 +818,10 @@ def ADD32mi8 : Ii8<0x83, MRM0m, (outs), (ins i32mem:$dst, i32i8imm :$src2),
                 [(store (add (load addr:$dst), i32immSExt8:$src2),
                              addr:$dst),
                  (implicit EFLAGS)]>;
+def ADD64mi8 : RIi8<0x83, MRM0m, (outs), (ins i64mem:$dst, i64i8imm :$src2),
+                    "add{q}\t{$src2, $dst|$dst, $src2}",
+                [(store (add (load addr:$dst), i64immSExt8:$src2), addr:$dst),
+                 (implicit EFLAGS)]>;
 
 // addition to rAX
 def ADD8i8 : Ii8<0x04, RawFrm, (outs), (ins i8imm:$src),
@@ -792,6 +830,8 @@ def ADD16i16 : Ii16<0x05, RawFrm, (outs), (ins i16imm:$src),
                     "add{w}\t{$src, %ax|%ax, $src}", []>, OpSize;
 def ADD32i32 : Ii32<0x05, RawFrm, (outs), (ins i32imm:$src),
                     "add{l}\t{$src, %eax|%eax, $src}", []>;
+def ADD64i32 : RIi32<0x05, RawFrm, (outs), (ins i64i32imm:$src),
+                     "add{q}\t{$src, %rax|%rax, $src}", []>;
 
 let Uses = [EFLAGS] in {
 let Constraints = "$src1 = $dst" in {
@@ -807,6 +847,10 @@ def ADC32rr  : I<0x11, MRMDestReg, (outs GR32:$dst),
                                    (ins GR32:$src1, GR32:$src2),
                  "adc{l}\t{$src2, $dst|$dst, $src2}",
                  [(set GR32:$dst, (adde GR32:$src1, GR32:$src2))]>;
+def ADC64rr  : RI<0x11, MRMDestReg, (outs GR64:$dst), 
+                  (ins GR64:$src1, GR64:$src2),
+                  "adc{q}\t{$src2, $dst|$dst, $src2}",
+                  [(set GR64:$dst, (adde GR64:$src1, GR64:$src2))]>;
 }
 
 let isCodeGenOnly = 1 in {
@@ -818,10 +862,13 @@ def ADC16rr_REV : I<0x13, MRMSrcReg, (outs GR16:$dst),
 def ADC32rr_REV : I<0x13, MRMSrcReg, (outs GR32:$dst), 
                     (ins GR32:$src1, GR32:$src2),
                     "adc{l}\t{$src2, $dst|$dst, $src2}", []>;
+def ADC64rr_REV : RI<0x13, MRMSrcReg , (outs GR32:$dst), 
+                     (ins GR64:$src1, GR64:$src2),
+                    "adc{q}\t{$src2, $dst|$dst, $src2}", []>;
 }
 
-def ADC8rm   : I<0x12, MRMSrcMem , (outs GR8:$dst), 
-                                   (ins GR8:$src1, i8mem:$src2),
+def ADC8rm   : I<0x12, MRMSrcMem ,
+                 (outs GR8:$dst), (ins GR8:$src1, i8mem:$src2),
                  "adc{b}\t{$src2, $dst|$dst, $src2}",
                  [(set GR8:$dst, (adde GR8:$src1, (load addr:$src2)))]>;
 def ADC16rm  : I<0x13, MRMSrcMem , (outs GR16:$dst),
@@ -829,15 +876,19 @@ def ADC16rm  : I<0x13, MRMSrcMem , (outs GR16:$dst),
                  "adc{w}\t{$src2, $dst|$dst, $src2}",
                  [(set GR16:$dst, (adde GR16:$src1, (load addr:$src2)))]>,
                  OpSize;
-def ADC32rm  : I<0x13, MRMSrcMem , (outs GR32:$dst),
-                                   (ins GR32:$src1, i32mem:$src2),
+def ADC32rm  : I<0x13, MRMSrcMem ,
+                 (outs GR32:$dst), (ins GR32:$src1, i32mem:$src2),
                  "adc{l}\t{$src2, $dst|$dst, $src2}",
                  [(set GR32:$dst, (adde GR32:$src1, (load addr:$src2)))]>;
+def ADC64rm  : RI<0x13, MRMSrcMem , (outs GR64:$dst), 
+                  (ins GR64:$src1, i64mem:$src2),
+                  "adc{q}\t{$src2, $dst|$dst, $src2}",
+                  [(set GR64:$dst, (adde GR64:$src1, (load addr:$src2)))]>;
 def ADC8ri   : Ii8<0x80, MRM2r, (outs GR8:$dst), (ins GR8:$src1, i8imm:$src2),
                     "adc{b}\t{$src2, $dst|$dst, $src2}",
                  [(set GR8:$dst, (adde GR8:$src1, imm:$src2))]>;
-def ADC16ri  : Ii16<0x81, MRM2r, (outs GR16:$dst),
-                                 (ins GR16:$src1, i16imm:$src2),
+def ADC16ri  : Ii16<0x81, MRM2r,
+                    (outs GR16:$dst), (ins GR16:$src1, i16imm:$src2),
                     "adc{w}\t{$src2, $dst|$dst, $src2}",
                  [(set GR16:$dst, (adde GR16:$src1, imm:$src2))]>, OpSize;
 def ADC16ri8 : Ii8<0x83, MRM2r, (outs GR16:$dst),
@@ -853,6 +904,14 @@ def ADC32ri8 : Ii8<0x83, MRM2r, (outs GR32:$dst),
                                 (ins GR32:$src1, i32i8imm:$src2),
                    "adc{l}\t{$src2, $dst|$dst, $src2}",
                  [(set GR32:$dst, (adde GR32:$src1, i32immSExt8:$src2))]>;
+def ADC64ri32 : RIi32<0x81, MRM2r, (outs GR64:$dst), 
+                      (ins GR64:$src1, i64i32imm:$src2),
+                      "adc{q}\t{$src2, $dst|$dst, $src2}",
+                      [(set GR64:$dst, (adde GR64:$src1, i64immSExt32:$src2))]>;
+def ADC64ri8 : RIi8<0x83, MRM2r, (outs GR64:$dst), 
+                    (ins GR64:$src1, i64i8imm:$src2),
+                    "adc{q}\t{$src2, $dst|$dst, $src2}",
+                    [(set GR64:$dst, (adde GR64:$src1, i64immSExt8:$src2))]>;
 } // Constraints = "$src1 = $dst"
 
 def ADC8mr   : I<0x10, MRMDestMem, (outs), (ins i8mem:$dst, GR8:$src2),
@@ -865,6 +924,9 @@ def ADC16mr  : I<0x11, MRMDestMem, (outs), (ins i16mem:$dst, GR16:$src2),
 def ADC32mr  : I<0x11, MRMDestMem, (outs), (ins i32mem:$dst, GR32:$src2),
                  "adc{l}\t{$src2, $dst|$dst, $src2}",
                  [(store (adde (load addr:$dst), GR32:$src2), addr:$dst)]>;
+def ADC64mr  : RI<0x11, MRMDestMem, (outs), (ins i64mem:$dst, GR64:$src2),
+                  "adc{q}\t{$src2, $dst|$dst, $src2}",
+                  [(store (adde (load addr:$dst), GR64:$src2), addr:$dst)]>;
 def ADC8mi   : Ii8<0x80, MRM2m, (outs), (ins i8mem:$dst, i8imm:$src2),
                     "adc{b}\t{$src2, $dst|$dst, $src2}",
                 [(store (adde (loadi8 addr:$dst), imm:$src2), addr:$dst)]>;
@@ -883,12 +945,23 @@ def ADC32mi8 : Ii8<0x83, MRM2m, (outs), (ins i32mem:$dst, i32i8imm :$src2),
                    "adc{l}\t{$src2, $dst|$dst, $src2}",
              [(store (adde (load addr:$dst), i32immSExt8:$src2), addr:$dst)]>;
 
+def ADC64mi32 : RIi32<0x81, MRM2m, (outs), (ins i64mem:$dst, i64i32imm:$src2),
+                      "adc{q}\t{$src2, $dst|$dst, $src2}",
+                 [(store (adde (load addr:$dst), i64immSExt32:$src2), 
+                  addr:$dst)]>;
+def ADC64mi8 : RIi8<0x83, MRM2m, (outs), (ins i64mem:$dst, i64i8imm :$src2),
+                    "adc{q}\t{$src2, $dst|$dst, $src2}",
+                 [(store (adde (load addr:$dst), i64immSExt8:$src2), 
+                  addr:$dst)]>;
+
 def ADC8i8 : Ii8<0x14, RawFrm, (outs), (ins i8imm:$src),
                  "adc{b}\t{$src, %al|%al, $src}", []>;
 def ADC16i16 : Ii16<0x15, RawFrm, (outs), (ins i16imm:$src),
                     "adc{w}\t{$src, %ax|%ax, $src}", []>, OpSize;
 def ADC32i32 : Ii32<0x15, RawFrm, (outs), (ins i32imm:$src),
                     "adc{l}\t{$src, %eax|%eax, $src}", []>;
+def ADC64i32 : RIi32<0x15, RawFrm, (outs), (ins i64i32imm:$src),
+                     "adc{q}\t{$src, %rax|%rax, $src}", []>;
 } // Uses = [EFLAGS]
 
 let Constraints = "$src1 = $dst" in {
