@@ -336,3 +336,55 @@ ClangUserExpression::DwarfOpcodeStream ()
     
     return *m_dwarf_opcodes.get();
 }
+
+
+Error
+ClangUserExpression::Evaluate (ExecutionContext &exe_ctx, const char *expr_cstr, lldb::ValueObjectSP &result_valobj_sp)
+{
+    Error error;
+    result_valobj_sp.reset();
+
+    ClangUserExpression user_expression (expr_cstr);
+    
+    StreamString error_stream;
+    
+    if (!user_expression.Parse (error_stream, exe_ctx))
+    {
+        if (error_stream.GetString().empty())
+            error.SetErrorString ("expression failed to parse, unknown error");
+        else
+            error.SetErrorString (error_stream.GetString().c_str());
+    }
+    else
+    {
+        ClangExpressionVariable *expr_result = NULL;
+
+        error_stream.GetString().clear();
+
+        if (!user_expression.Execute (error_stream, exe_ctx, expr_result))
+        {
+            if (error_stream.GetString().empty())
+                error.SetErrorString ("expression failed to execute, unknown error");
+            else
+                error.SetErrorString (error_stream.GetString().c_str());
+        }
+        else 
+        {
+            // TODO: seems weird to get a pointer to a result object back from
+            // a function. Do we own it? Feels like we do, but from looking at the
+            // code we don't. Might be best to make this a reference and state
+            // explicitly that we don't own it when we get a reference back from
+            // the execute?
+            if (expr_result)
+            {
+                result_valobj_sp = expr_result->GetExpressionResult (&exe_ctx);
+            }
+            else
+            {
+                error.SetErrorString ("NULL expression result");
+            }
+        }
+    }
+    return error;
+
+}

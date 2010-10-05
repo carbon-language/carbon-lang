@@ -87,7 +87,6 @@ protected:
 
     bool
     EvaluateExpression (const char *expr,
-                        bool bare,
                         Stream &output_stream,
                         Stream &error_stream,
                         CommandReturnObject *result = NULL);

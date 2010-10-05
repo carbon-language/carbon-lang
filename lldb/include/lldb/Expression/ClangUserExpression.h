@@ -171,6 +171,12 @@ public:
         return true;
     }
 
+
+    static Error
+    Evaluate (ExecutionContext &exe_ctx, 
+              const char *expr_cstr, 
+              lldb::ValueObjectSP &result_valobj_sp);
+
 private:
     //------------------------------------------------------------------
     /// Populate m_cplusplus and m_objetivec based on the environment.

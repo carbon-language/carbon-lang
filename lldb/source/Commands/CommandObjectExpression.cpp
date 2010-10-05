@@ -193,9 +193,7 @@ CommandObjectExpression::MultiLineExpressionCallback
         
     case eInputReaderDone:
         {
-            bool bare = false;
             cmd_object_expr->EvaluateExpression (cmd_object_expr->m_expr_lines.c_str(), 
-                                                 bare, 
                                                  reader.GetDebugger().GetOutputStream(), 
                                                  reader.GetDebugger().GetErrorStream());
         }
@@ -209,7 +207,6 @@ bool
 CommandObjectExpression::EvaluateExpression 
 (
     const char *expr, 
-    bool bare, 
     Stream &output_stream, 
     Stream &error_stream,
     CommandReturnObject *result
@@ -236,54 +233,31 @@ CommandObjectExpression::EvaluateExpression
         m_exe_ctx.process->SetDynamicCheckers(dynamic_checkers);
     }
     
-    ClangUserExpression user_expression (expr);
+    lldb::ValueObjectSP result_valobj_sp;
     
-    if (!user_expression.Parse (error_stream, m_exe_ctx))
-    {
-        error_stream.Printf ("Couldn't parse the expresssion\n");
-        return false;
-    }
+    Error expr_error (ClangUserExpression::Evaluate (m_exe_ctx, expr, result_valobj_sp));
     
-    ClangExpressionVariable *expr_result = NULL;
-    
-    if (!user_expression.Execute (error_stream, m_exe_ctx, expr_result))
+    if (expr_error.Success())
     {
-        error_stream.Printf ("Couldn't execute the expresssion\n");
-        return false;
-    }
-        
-    if (expr_result)
-    {
-        // TODO: seems weird to get a pointer to a result object back from
-        // a function. Do we own it? Feels like we do, but from looking at the
-        // code we don't. Might be best to make this a reference and state
-        // explicitly that we don't own it when we get a reference back from
-        // the execute?
-        lldb::ValueObjectSP valobj_sp (expr_result->GetExpressionResult (&m_exe_ctx));
-        if (valobj_sp)
-        {
-            ValueObject::DumpValueObject (output_stream,
-                                          m_exe_ctx.GetBestExecutionContextScope(),
-                                          valobj_sp.get(),          // Variable object to dump
-                                          expr_result->m_name.c_str(),// Root object name
-                                          0,                        // Pointer depth to traverse (zero means stop at pointers)
-                                          0,                        // Current depth, this is the top most, so zero...
-                                          UINT32_MAX,               // Max depth to go when dumping concrete types, dump everything...
-                                          m_options.show_types,     // Show types when dumping?
-                                          false,                    // Show locations of variables, no since this is a host address which we don't care to see
-                                          m_options.print_object,   // Print the objective C object?
-                                          true);                    // Scope is already checked. Const results are always in scope.
-            output_stream.EOL();
-        }
-        else
-        {
-            error_stream.PutCString ("Couldn't extract expression result");
-        }
+        assert (result_valobj_sp.get() != NULL);
+        ValueObject::DumpValueObject (output_stream,
+                                      m_exe_ctx.GetBestExecutionContextScope(),
+                                      result_valobj_sp.get(),   // Variable object to dump
+                                      result_valobj_sp->GetName().AsCString(),// Root object name
+                                      0,                        // Pointer depth to traverse (zero means stop at pointers)
+                                      0,                        // Current depth, this is the top most, so zero...
+                                      UINT32_MAX,               // Max depth to go when dumping concrete types, dump everything...
+                                      m_options.show_types,     // Show types when dumping?
+                                      false,                    // Show locations of variables, no since this is a host address which we don't care to see
+                                      m_options.print_object,   // Print the objective C object?
+                                      true);                    // Scope is already checked. Const results are always in scope.
+        output_stream.EOL();
         if (result)
             result->SetStatus (eReturnStatusSuccessFinishResult);
     }
     else
     {
+        error_stream.PutCString(expr_error.AsCString());
         if (result)
             result->SetStatus (eReturnStatusSuccessFinishNoResult);
     }
@@ -370,7 +344,7 @@ CommandObjectExpression::ExecuteRawCommandString
     if (expr == NULL)
         expr = command;
     
-    if (EvaluateExpression (expr, false, result.GetOutputStream(), result.GetErrorStream(), &result))
+    if (EvaluateExpression (expr, result.GetOutputStream(), result.GetErrorStream(), &result))
         return true;
 
     result.SetStatus (eReturnStatusFailed);
