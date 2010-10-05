@@ -5278,6 +5278,11 @@ TreeTransform<Derived>::TransformCXXNewExpr(CXXNewExpr *E) {
   bool ArgumentChanged = false;
   ASTOwningVector<Expr*> PlacementArgs(SemaRef);
   for (unsigned I = 0, N = E->getNumPlacementArgs(); I != N; ++I) {
+    if (getDerived().DropCallArgument(E->getPlacementArg(I))) {
+      ArgumentChanged = true;
+      break;
+    }
+
     ExprResult Arg = getDerived().TransformExpr(E->getPlacementArg(I));
     if (Arg.isInvalid())
       return ExprError();
@@ -5289,8 +5294,10 @@ TreeTransform<Derived>::TransformCXXNewExpr(CXXNewExpr *E) {
   // transform the constructor arguments (if any).
   ASTOwningVector<Expr*> ConstructorArgs(SemaRef);
   for (unsigned I = 0, N = E->getNumConstructorArgs(); I != N; ++I) {
-    if (getDerived().DropCallArgument(E->getConstructorArg(I)))
+    if (getDerived().DropCallArgument(E->getConstructorArg(I))) {
+      ArgumentChanged = true;
       break;
+    }
     
     ExprResult Arg = getDerived().TransformExpr(E->getConstructorArg(I));
     if (Arg.isInvalid())
