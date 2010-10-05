@@ -12,7 +12,46 @@
 //
 //===----------------------------------------------------------------------===//
 
-// FIXME: Someone please sprinkle some defm's in here!
+
+// SetCC instructions.
+multiclass CMOV<bits<8> opc, string Mnemonic, PatLeaf CondNode> {
+  let Uses = [EFLAGS], Predicates = [HasCMov], Constraints = "$src1 = $dst",
+      isCommutable = 1 in {
+    def rr16 : I<opc, MRMSrcReg, (outs GR16:$dst), (ins GR16:$src1, GR16:$src2),
+                 !strconcat(Mnemonic, "{w}\t{$src2, $dst|$dst, $src2}"),
+                 [(set GR16:$dst,
+                       (X86cmov GR16:$src1, GR16:$src2, CondNode, EFLAGS))]>,
+               TB, OpSize;
+    def rr32 : I<opc, MRMSrcReg, (outs GR32:$dst), (ins GR32:$src1, GR32:$src2),
+                 !strconcat(Mnemonic, "{l}\t{$src2, $dst|$dst, $src2}"),
+                 [(set GR32:$dst,
+                       (X86cmov GR32:$src1, GR32:$src2, CondNode, EFLAGS))]>,
+               TB;
+    def rr64 :RI<opc, MRMSrcReg, (outs GR64:$dst), (ins GR64:$src1, GR64:$src2),
+                 !strconcat(Mnemonic, "{q}\t{$src2, $dst|$dst, $src2}"),
+                 [(set GR64:$dst,
+                       (X86cmov GR64:$src1, GR64:$src2, CondNode, EFLAGS))]>,
+              TB;
+  }
+
+  let Uses = [EFLAGS], Predicates = [HasCMov], Constraints = "$src1 = $dst"in {
+  def rm16 : I<opc, MRMSrcMem, (outs GR16:$dst), (ins GR16:$src1, i16mem:$src2),
+               !strconcat(Mnemonic, "{w}\t{$src2, $dst|$dst, $src2}"),
+               [(set GR16:$dst, (X86cmov GR16:$src1, (loadi16 addr:$src2),
+                                         CondNode, EFLAGS))]>, TB, OpSize;
+  def rm32 : I<opc, MRMSrcMem, (outs GR32:$dst), (ins GR32:$src1, i32mem:$src2),
+               !strconcat(Mnemonic, "{l}\t{$src2, $dst|$dst, $src2}"),
+               [(set GR32:$dst, (X86cmov GR32:$src1, (loadi32 addr:$src2),
+                                         CondNode, EFLAGS))]>, TB;
+  def rm64 :RI<opc, MRMSrcMem, (outs GR64:$dst), (ins GR64:$src1, i64mem:$src2),
+               !strconcat(Mnemonic, "{q}\t{$src2, $dst|$dst, $src2}"),
+               [(set GR64:$dst, (X86cmov GR64:$src1, (loadi64 addr:$src2),
+                                         CondNode, EFLAGS))]>, TB;
+  } // Uses = [EFLAGS], Predicates = [HasCMov], Constraints = "$src1 = $dst"
+} // end multiclass
+
+//defm CMOVBE : CMOV<0x46, "cmovbe", X86_COND_BE>;
+
 
 let Constraints = "$src1 = $dst" in {
 
