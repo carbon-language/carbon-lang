@@ -31,8 +31,10 @@ namespace clang {
   class Decl;
   class Stmt;
   class Expr;
+  class FieldDecl;
   class VarDecl;
   class CXXBaseOrMemberInitializer;
+  class CXXBaseSpecifier;
   class CFG;
   class PrinterHelper;
   class LangOptions;
@@ -139,7 +141,7 @@ public:
   }
 };
 
-/// CFGAutomaticObjDtor - Represents C++ object destructor implicit generated
+/// CFGAutomaticObjDtor - Represents C++ object destructor implicitly generated
 /// for automatic object or temporary bound to const reference at the point
 /// of leaving its local scope.
 class CFGAutomaticObjDtor: public CFGImplicitDtor {
@@ -162,19 +164,38 @@ public:
   }
 };
 
+/// CFGBaseDtor - Represents C++ object destructor implicitly generated for
+/// base object in destructor.
 class CFGBaseDtor : public CFGImplicitDtor {
 public:
+  CFGBaseDtor() {}
+  CFGBaseDtor(const CXXBaseSpecifier *BS)
+      : CFGImplicitDtor(BaseDtor, const_cast<CXXBaseSpecifier*>(BS), NULL) {}
+
+  const CXXBaseSpecifier *getBaseSpecifier() const {
+    return static_cast<const CXXBaseSpecifier*>(Data1.getPointer());
+  }
+
   static bool classof(const CFGElement *E) {
     return E->getKind() == Dtor && E->getDtorKind() == BaseDtor;
   }
 };
 
+/// CFGMemberDtor - Represents C++ object destructor implicitly generated for
+/// member object in destructor.
 class CFGMemberDtor : public CFGImplicitDtor {
 public:
+  CFGMemberDtor() {}
+  CFGMemberDtor(FieldDecl *FD)
+      : CFGImplicitDtor(MemberDtor, FD, NULL) {}
+
+  FieldDecl *getFieldDecl() const {
+    return static_cast<FieldDecl*>(Data1.getPointer());
+  }
+
   static bool classof(const CFGElement *E) {
     return E->getKind() == Dtor && E->getDtorKind() == MemberDtor;
   }
-
 };
 
 class CFGTemporaryDtor : public CFGImplicitDtor {
@@ -435,6 +456,14 @@ public:
 
   void appendInitializer(CXXBaseOrMemberInitializer *I, BumpVectorContext& C) {
     Elements.push_back(CFGInitializer(I), C);
+  }
+
+  void appendBaseDtor(const CXXBaseSpecifier *BS, BumpVectorContext &C) {
+    Elements.push_back(CFGBaseDtor(BS), C);
+  }
+
+  void appendMemberDtor(FieldDecl *FD, BumpVectorContext &C) {
+    Elements.push_back(CFGMemberDtor(FD), C);
   }
 
   // Destructors must be inserted in reversed order. So insertion is in two

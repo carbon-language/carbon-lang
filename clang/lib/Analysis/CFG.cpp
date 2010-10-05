@@ -307,6 +307,7 @@ private:
   CFGBlock *addInitializer(CXXBaseOrMemberInitializer *I);
   void addAutomaticObjDtors(LocalScope::const_iterator B,
                             LocalScope::const_iterator E, Stmt* S);
+  void addImplicitDtorsForDestructor(const CXXDestructorDecl *DD);
 
   // Local scopes creation.
   LocalScope* createOrReuseLocalScope(LocalScope* Scope);
@@ -324,6 +325,12 @@ private:
   }
   void appendInitializer(CFGBlock *B, CXXBaseOrMemberInitializer *I) {
     B->appendInitializer(I, cfg->getBumpVectorContext());
+  }
+  void appendBaseDtor(CFGBlock *B, const CXXBaseSpecifier *BS) {
+    B->appendBaseDtor(BS, cfg->getBumpVectorContext());
+  }
+  void appendMemberDtor(CFGBlock *B, FieldDecl *FD) {
+    B->appendMemberDtor(FD, cfg->getBumpVectorContext());
   }
 
   void insertAutomaticObjDtors(CFGBlock* Blk, CFGBlock::iterator I,
@@ -406,6 +413,10 @@ CFG* CFGBuilder::buildCFG(const Decl *D, Stmt* Statement, ASTContext* C,
   Succ = createBlock();
   assert(Succ == &cfg->getExit());
   Block = NULL;  // the EXIT block is empty.  Create all other blocks lazily.
+
+  if (BuildOpts.AddImplicitDtors)
+    if (const CXXDestructorDecl *DD = dyn_cast_or_null<CXXDestructorDecl>(D))
+      addImplicitDtorsForDestructor(DD);
 
   // Visit the statements and create the CFG.
   CFGBlock *B = addStmt(Statement);
@@ -507,6 +518,46 @@ void CFGBuilder::addAutomaticObjDtors(LocalScope::const_iterator B,
 
   autoCreateBlock();
   appendAutomaticObjDtors(Block, B, E, S);
+}
+
+/// addImplicitDtorsForDestructor - Add implicit destructors generated for
+/// base and member objects in destructor.
+void CFGBuilder::addImplicitDtorsForDestructor(const CXXDestructorDecl *DD) {
+  assert (BuildOpts.AddImplicitDtors
+      && "Can be called only when dtors should be added");
+  const CXXRecordDecl *RD = DD->getParent();
+
+  // At the end destroy virtual base objects.
+  for (CXXRecordDecl::base_class_const_iterator VI = RD->vbases_begin(),
+      VE = RD->vbases_end(); VI != VE; ++VI) {
+    const CXXRecordDecl *CD = VI->getType()->getAsCXXRecordDecl();
+    if (!CD->hasTrivialDestructor()) {
+      autoCreateBlock();
+      appendBaseDtor(Block, VI);
+    }
+  }
+
+  // Before virtual bases destroy direct base objects.
+  for (CXXRecordDecl::base_class_const_iterator BI = RD->bases_begin(),
+      BE = RD->bases_end(); BI != BE; ++BI) {
+    if (!BI->isVirtual()) {
+      const CXXRecordDecl *CD = BI->getType()->getAsCXXRecordDecl();
+      if (!CD->hasTrivialDestructor()) {
+        autoCreateBlock();
+        appendBaseDtor(Block, BI);
+      }
+    }
+  }
+
+  // First destroy member objects.
+  for (CXXRecordDecl::field_iterator FI = RD->field_begin(),
+      FE = RD->field_end(); FI != FE; ++FI) {
+    if (const CXXRecordDecl *CD = FI->getType()->getAsCXXRecordDecl())
+      if (!CD->hasTrivialDestructor()) {
+        autoCreateBlock();
+        appendMemberDtor(Block, *FI);
+      }
+  }
 }
 
 /// createOrReuseLocalScope - If Scope is NULL create new LocalScope. Either
@@ -2660,6 +2711,17 @@ static void print_elem(llvm::raw_ostream &OS, StmtPrinterHelper* Helper,
 
     OS << ".~" << T->getAsCXXRecordDecl()->getName().str() << "()";
     OS << " (Implicit destructor)\n";
+
+  } else if (CFGBaseDtor BE = E.getAs<CFGBaseDtor>()) {
+    const CXXBaseSpecifier *BS = BE.getBaseSpecifier();
+    OS << "~" << BS->getType()->getAsCXXRecordDecl()->getName() << "()";
+    OS << " (Base destructor)\n";
+
+  } else if (CFGMemberDtor ME = E.getAs<CFGMemberDtor>()) {
+    FieldDecl *FD = ME.getFieldDecl();
+    OS << "this->" << FD->getName();
+    OS << ".~" << FD->getType()->getAsCXXRecordDecl()->getName() << "()";
+    OS << " (Member destructor)\n";
   }
  }
 
