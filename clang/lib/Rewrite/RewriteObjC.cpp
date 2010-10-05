@@ -4381,6 +4381,12 @@ void RewriteObjC::SynthesizeBlockLiterals(SourceLocation FunLocStart,
         BlockByRefDeclsPtrSet.insert(VD);
         BlockByRefDecls.push_back(VD);
       }
+      // imported objects in the inner blocks not used in the outer
+      // blocks must be copied/disposed in the outer block as well.
+      if (Exp->isByRef() ||
+          VD->getType()->isObjCObjectPointerType() || 
+          VD->getType()->isBlockPointerType())
+        ImportedBlockDecls.insert(VD);
     }
 
     std::string ImplTag = "__" + FunName.str() + "_block_impl_" + utostr(i);
