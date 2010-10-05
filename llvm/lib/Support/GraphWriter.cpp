@@ -63,11 +63,13 @@ void llvm::DisplayGraph(const sys::Path &Filename, bool wait,
   args.push_back(0);
   
   errs() << "Running 'Graphviz' program... ";
-  if (sys::Program::ExecuteAndWait(Graphviz, &args[0],0,0,0,0,&ErrMsg))
+  if (sys::Program::ExecuteAndWait(Graphviz, &args[0],0,0,0,0,&ErrMsg)) {
     errs() << "Error viewing graph " << Filename.str() << ": " << ErrMsg
            << "\n";
-  else
-    Filename.eraseFromDisk();
+    return;
+  }
+  Filename.eraseFromDisk();
+  errs() << " done. \n";
 
 #elif HAVE_XDOT_PY
   std::vector<const char*> args;
@@ -87,11 +89,13 @@ void llvm::DisplayGraph(const sys::Path &Filename, bool wait,
 
   errs() << "Running 'xdot.py' program... ";
   if (sys::Program::ExecuteAndWait(sys::Path(LLVM_PATH_XDOT_PY),
-                                   &args[0],0,0,0,0,&ErrMsg))
+                                   &args[0],0,0,0,0,&ErrMsg)) {
     errs() << "Error viewing graph " << Filename.str() << ": " << ErrMsg
            << "\n";
-  else
-    Filename.eraseFromDisk();
+    return;
+  }
+  Filename.eraseFromDisk();
+  errs() << " done. \n";
 
 #elif (HAVE_GV && (HAVE_DOT || HAVE_FDP || HAVE_NEATO || \
                    HAVE_TWOPI || HAVE_CIRCO))
