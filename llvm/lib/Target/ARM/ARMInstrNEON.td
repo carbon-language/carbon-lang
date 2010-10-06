@@ -3609,14 +3609,9 @@ def : Pat<(v4f32 (NEONvduplane (v4f32 QPR:$src), imm:$lane)),
                                    (DSubReg_i32_reg imm:$lane))),
                            (SubReg_i32_lane imm:$lane)))>;
 
-def  VDUPfdf  : N2V<0b11, 0b11, {?,1}, {0,0}, 0b11000, 0, 0,
-                    (outs DPR:$dst), (ins SPR:$src),
-                    IIC_VMOVD, "vdup", "32", "$dst, ${src:lane}", "",
+def  VDUPfdf : PseudoNeonI<(outs DPR:$dst), (ins SPR:$src), IIC_VMOVD, "",
                     [(set DPR:$dst, (v2f32 (NEONvdup (f32 SPR:$src))))]>;
-
-def  VDUPfqf  : N2V<0b11, 0b11, {?,1}, {0,0}, 0b11000, 1, 0,
-                    (outs QPR:$dst), (ins SPR:$src),
-                    IIC_VMOVQ, "vdup", "32", "$dst, ${src:lane}", "",
+def  VDUPfqf : PseudoNeonI<(outs QPR:$dst), (ins SPR:$src), IIC_VMOVD, "",
                     [(set QPR:$dst, (v4f32 (NEONvdup (f32 SPR:$src))))]>;
 
 //   VMOVN    : Vector Narrowing Move
