@@ -427,7 +427,6 @@ tgtok::TokKind TGLexer::LexExclaim() {
   if (Len == 3  && !memcmp(Start, "shl", 3)) return tgtok::XSHL;
   if (Len == 2  && !memcmp(Start, "eq", 2)) return tgtok::XEq;
   if (Len == 9  && !memcmp(Start, "strconcat", 9))   return tgtok::XStrConcat;
-  if (Len == 10 && !memcmp(Start, "nameconcat", 10)) return tgtok::XNameConcat;
   if (Len == 5 && !memcmp(Start, "subst", 5)) return tgtok::XSubst;
   if (Len == 7 && !memcmp(Start, "foreach", 7)) return tgtok::XForEach;
   if (Len == 4 && !memcmp(Start, "cast", 4)) return tgtok::XCast;

@@ -797,8 +797,7 @@ Init *TGParser::ParseOperation(Record *CurRec) {
   case tgtok::XSRL:
   case tgtok::XSHL:
   case tgtok::XEq:
-  case tgtok::XStrConcat:
-  case tgtok::XNameConcat: {  // Value ::= !binop '(' Value ',' Value ')'
+  case tgtok::XStrConcat: {  // Value ::= !binop '(' Value ',' Value ')'
     tgtok::TokKind OpTok = Lex.getCode();
     SMLoc OpLoc = Lex.getLoc();
     Lex.Lex();  // eat the operation
@@ -808,39 +807,17 @@ Init *TGParser::ParseOperation(Record *CurRec) {
 
     switch (OpTok) {
     default: assert(0 && "Unhandled code!");
-    case tgtok::XConcat:
-      Code = BinOpInit::CONCAT;
-      Type = new DagRecTy();
-      break;
-    case tgtok::XSRA:
-      Code = BinOpInit::SRA;
-      Type = new IntRecTy();
-      break;
-    case tgtok::XSRL:
-      Code = BinOpInit::SRL;
-      Type = new IntRecTy();
-      break;
-    case tgtok::XSHL:
-      Code = BinOpInit::SHL;
-      Type = new IntRecTy();
-      break;
-    case tgtok::XEq:  
-      Code = BinOpInit::EQ;
-      Type = new IntRecTy();
-      break;
+    case tgtok::XConcat: Code = BinOpInit::CONCAT; Type = new DagRecTy(); break;
+    case tgtok::XSRA:    Code = BinOpInit::SRA;    Type = new IntRecTy(); break;
+    case tgtok::XSRL:    Code = BinOpInit::SRL;    Type = new IntRecTy(); break;
+    case tgtok::XSHL:    Code = BinOpInit::SHL;    Type = new IntRecTy(); break;
+    case tgtok::XEq:     Code = BinOpInit::EQ;     Type = new IntRecTy(); break;
     case tgtok::XStrConcat:
       Code = BinOpInit::STRCONCAT;
       Type = new StringRecTy();
       break;
-    case tgtok::XNameConcat:
-      Code = BinOpInit::NAMECONCAT;
-      Type = ParseOperatorType();
-      if (Type == 0) {
-        TokError("did not get type for binary operator");
-        return 0;
-      }
-      break;
     }
+    
     if (Lex.getCode() != tgtok::l_paren) {
       TokError("expected '(' after binary operator");
       return 0;
@@ -1226,9 +1203,7 @@ Init *TGParser::ParseSimpleValue(Record *CurRec, RecTy *ItemType) {
   }
   case tgtok::l_paren: {         // Value ::= '(' IDValue DagArgList ')'
     Lex.Lex();   // eat the '('
-    if (Lex.getCode() != tgtok::Id
-        && Lex.getCode() != tgtok::XCast
-        && Lex.getCode() != tgtok::XNameConcat) {
+    if (Lex.getCode() != tgtok::Id && Lex.getCode() != tgtok::XCast) {
       TokError("expected identifier in dag init");
       return 0;
     }
@@ -1278,8 +1253,7 @@ Init *TGParser::ParseSimpleValue(Record *CurRec, RecTy *ItemType) {
   case tgtok::XSRL:
   case tgtok::XSHL:
   case tgtok::XEq:
-  case tgtok::XStrConcat:
-  case tgtok::XNameConcat:  // Value ::= !binop '(' Value ',' Value ')'
+  case tgtok::XStrConcat:   // Value ::= !binop '(' Value ',' Value ')'
   case tgtok::XIf:
   case tgtok::XForEach:
   case tgtok::XSubst: {  // Value ::= !ternop '(' Value ',' Value ',' Value ')'

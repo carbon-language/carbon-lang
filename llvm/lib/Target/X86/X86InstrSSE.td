@@ -45,15 +45,15 @@ multiclass sse12_fp_scalar_int<bits<8> opc, string OpcodeStr, RegisterClass RC,
        !if(Is2Addr,
            !strconcat(asm, "\t{$src2, $dst|$dst, $src2}"),
            !strconcat(asm, "\t{$src2, $src1, $dst|$dst, $src1, $src2}")),
-       [(set RC:$dst, (!nameconcat<Intrinsic>("int_x86_sse",
-                       !strconcat(SSEVer, "_", OpcodeStr, FPSizeStr))
+       [(set RC:$dst, (!cast<Intrinsic>(
+                 !strconcat("int_x86_sse", SSEVer, "_", OpcodeStr, FPSizeStr))
              RC:$src1, RC:$src2))]>;
   def rm_Int : SI<opc, MRMSrcMem, (outs RC:$dst), (ins RC:$src1, memopr:$src2),
        !if(Is2Addr,
            !strconcat(asm, "\t{$src2, $dst|$dst, $src2}"),
            !strconcat(asm, "\t{$src2, $src1, $dst|$dst, $src1, $src2}")),
-       [(set RC:$dst, (!nameconcat<Intrinsic>("int_x86_sse",
-                       !strconcat(SSEVer, "_", OpcodeStr, FPSizeStr))
+       [(set RC:$dst, (!cast<Intrinsic>(!strconcat("int_x86_sse",
+                                          SSEVer, "_", OpcodeStr, FPSizeStr))
              RC:$src1, mem_cpat:$src2))]>;
 }
 
@@ -103,15 +103,15 @@ multiclass sse12_fp_packed_int<bits<8> opc, string OpcodeStr, RegisterClass RC,
        !if(Is2Addr,
            !strconcat(asm, "\t{$src2, $dst|$dst, $src2}"),
            !strconcat(asm, "\t{$src2, $src1, $dst|$dst, $src1, $src2}")),
-           [(set RC:$dst, (!nameconcat<Intrinsic>("int_x86_",
-                           !strconcat(SSEVer, "_", OpcodeStr, FPSizeStr))
+           [(set RC:$dst, (!cast<Intrinsic>(
+                     !strconcat("int_x86_", SSEVer, "_", OpcodeStr, FPSizeStr))
                  RC:$src1, RC:$src2))], d>;
   def rm_Int : PI<opc, MRMSrcMem, (outs RC:$dst), (ins RC:$src1,x86memop:$src2),
        !if(Is2Addr,
            !strconcat(asm, "\t{$src2, $dst|$dst, $src2}"),
            !strconcat(asm, "\t{$src2, $src1, $dst|$dst, $src1, $src2}")),
-       [(set RC:$dst, (!nameconcat<Intrinsic>("int_x86_",
-                       !strconcat(SSEVer, "_", OpcodeStr, FPSizeStr))
+       [(set RC:$dst, (!cast<Intrinsic>(
+                     !strconcat("int_x86_", SSEVer, "_", OpcodeStr, FPSizeStr))
              RC:$src1, (mem_frag addr:$src2)))], d>;
 }
 

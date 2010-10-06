@@ -405,8 +405,6 @@ which case the user must specify it explicitly.</dd>
 the symbol table.  If the type of 'a' does not match <em>type</em>, TableGen
 aborts with an error. !cast&lt;string&gt; is a special case in that the argument must
 be an object defined by a 'def' construct.</dd>
-<dt><tt>!nameconcat&lt;type&gt;(a, b)</tt></dt>
-  <dd>Shorthand for !cast&lt;type&gt;(!strconcat(a, b))</dd>
 <dt><tt>!subst(a, b, c)</tt></dt>
   <dd>If 'a' and 'b' are of string type or are symbol references, substitute 
 'b' for 'a' in 'c.'  This operation is analogous to $(subst) in GNU make.</dd>
