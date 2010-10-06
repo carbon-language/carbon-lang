@@ -527,9 +527,6 @@ void ScheduleDAGInstrs::ComputeOperandLatency(SUnit *Def, SUnit *Use,
   MachineInstr *DefMI = Def->getInstr();
   int DefIdx = DefMI->findRegisterDefOperandIdx(Reg);
   if (DefIdx != -1) {
-    const TargetInstrDesc &DefTID = DefMI->getDesc();
-    unsigned DefClass = DefTID.getSchedClass();
-
     MachineInstr *UseMI = Use->getInstr();
     // For all uses of the register, calculate the maxmimum latency
     int Latency = -1;
