@@ -42,6 +42,13 @@ class ArrayTypesTestCase(TestBase):
 
         self.runCmd("run", RUN_SUCCEEDED)
 
+        # The test suite sometimes shows that the process has exited without stopping.
+        #
+        # CC=clang ./dotest.py -v -t array_types
+        # ...
+        # Process 76604 exited with status = 0 (0x00000000)
+        self.runCmd("process status")
+
         # The stop reason of the thread should be breakpoint.
         self.expect("thread list", STOPPED_DUE_TO_BREAKPOINT,
             substrs = ['state is Stopped',
@@ -93,9 +100,8 @@ class ArrayTypesTestCase(TestBase):
         self.expect(bp, msg="Breakpoint is not resolved as yet", exe=False, matching=False,
             substrs = ["resolved = 1"])
 
-        self.runCmd("run", RUN_SUCCEEDED, setCookie=False)
-        # This does not work, and results in the process stopped at dyld_start?
-        #process = target.LaunchProcess([''], [''], os.ctermid(), False)
+        # Now launch the process, and do not stop at entry point.
+        self.process = target.LaunchProcess([''], [''], os.ctermid(), 0, False)
 
         self.process = target.GetProcess()
         self.assertTrue(self.process.IsValid(), PROCESS_IS_VALID)
