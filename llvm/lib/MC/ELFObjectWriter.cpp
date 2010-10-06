@@ -512,8 +512,9 @@ void ELFObjectWriterImpl::WriteSymbolTable(MCDataFragment *F,
   for (unsigned i = 0, e = ExternalSymbolData.size(); i != e; ++i) {
     ELFSymbolData &MSD = ExternalSymbolData[i];
     MCSymbolData &Data = *MSD.SymbolData;
-    assert((Data.getFlags() & ELF_STB_Global) &&
-           "External symbol requires STB_GLOBAL flag");
+    assert(((Data.getFlags() & ELF_STB_Global) ||
+            (Data.getFlags() & ELF_STB_Weak)) &&
+           "External symbol requires STB_GLOBAL or STB_WEAK flag");
     WriteSymbol(F, MSD, Layout);
     if (GetBinding(Data) == ELF::STB_LOCAL)
       LastLocalSymbolIndex++;

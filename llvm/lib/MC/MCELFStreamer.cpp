@@ -272,6 +272,7 @@ void MCELFStreamer::EmitSymbolAttribute(MCSymbol *Symbol,
   case MCSA_WeakReference:
   case MCSA_Weak:
     SetBinding(SD, ELF::STB_WEAK);
+    SD.setExternal(true);
     BindingExplicitlySet.insert(Symbol);
     break;
 
