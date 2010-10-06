@@ -1931,8 +1931,7 @@ void CGDebugInfo::EmitGlobalVariable(llvm::GlobalVariable *Var,
 
 /// EmitGlobalVariable - Emit global variable's debug info.
 void CGDebugInfo::EmitGlobalVariable(const ValueDecl *VD, 
-                                     llvm::ConstantInt *Init,
-                                     CGBuilderTy &Builder) {
+                                     llvm::ConstantInt *Init) {
   // Create the descriptor for the variable.
   llvm::DIFile Unit = getOrCreateFile(VD->getLocation());
   llvm::StringRef Name = VD->getName();
