@@ -13,8 +13,8 @@ define i32 @f1(i32 %a, i64 %b) {
 ; test that allocating the double to r2/r3 makes r1 unavailable on gnueabi.
 define i32 @f2() nounwind optsize {
 ; ELF: f2:
-; ELF: mov  r0, #128
-; ELF: str  r0, [sp]
+; ELF: mov  [[REGISTER:(r[0-9]+)]], #128
+; ELF: str  [[REGISTER]], [sp]
 ; DARWIN: f2:
 ; DARWIN: mov	r3, #128
 entry:

@@ -954,7 +954,7 @@ let isReturn = 1, isTerminator = 1, isBarrier = 1, mayLoad = 1,
     hasExtraDefRegAllocReq = 1 in
   def LDM_RET : AXI4ld<(outs GPR:$wb), (ins addrmode4:$addr, pred:$p,
                                         reglist:$dsts, variable_ops),
-                       IndexModeUpd, LdStMulFrm, IIC_iLoadmBr,
+                       IndexModeUpd, LdStMulFrm, IIC_iLoad_mBr,
                        "ldm${addr:submode}${p}\t$addr!, $dsts",
                        "$addr.addr = $wb", []>;
 
@@ -1463,12 +1463,12 @@ def STRHT: AI3sthpo<(outs GPR:$base_wb),
 let mayLoad = 1, neverHasSideEffects = 1, hasExtraDefRegAllocReq = 1 in {
 def LDM : AXI4ld<(outs), (ins addrmode4:$addr, pred:$p,
                           reglist:$dsts, variable_ops),
-                 IndexModeNone, LdStMulFrm, IIC_iLoadm,
+                 IndexModeNone, LdStMulFrm, IIC_iLoad_m,
                  "ldm${addr:submode}${p}\t$addr, $dsts", "", []>;
 
 def LDM_UPD : AXI4ld<(outs GPR:$wb), (ins addrmode4:$addr, pred:$p,
                                       reglist:$dsts, variable_ops),
-                     IndexModeUpd, LdStMulFrm, IIC_iLoadm,
+                     IndexModeUpd, LdStMulFrm, IIC_iLoad_mu,
                      "ldm${addr:submode}${p}\t$addr!, $dsts",
                      "$addr.addr = $wb", []>;
 } // mayLoad, neverHasSideEffects, hasExtraDefRegAllocReq
@@ -1476,12 +1476,12 @@ def LDM_UPD : AXI4ld<(outs GPR:$wb), (ins addrmode4:$addr, pred:$p,
 let mayStore = 1, neverHasSideEffects = 1, hasExtraSrcRegAllocReq = 1 in {
 def STM : AXI4st<(outs), (ins addrmode4:$addr, pred:$p,
                           reglist:$srcs, variable_ops),
-                 IndexModeNone, LdStMulFrm, IIC_iStorem,
+                 IndexModeNone, LdStMulFrm, IIC_iStore_m,
                  "stm${addr:submode}${p}\t$addr, $srcs", "", []>;
 
 def STM_UPD : AXI4st<(outs GPR:$wb), (ins addrmode4:$addr, pred:$p,
                                       reglist:$srcs, variable_ops),
-                     IndexModeUpd, LdStMulFrm, IIC_iStorem,
+                     IndexModeUpd, LdStMulFrm, IIC_iStore_mu,
                      "stm${addr:submode}${p}\t$addr!, $srcs",
                      "$addr.addr = $wb", []>;
 } // mayStore, neverHasSideEffects, hasExtraSrcRegAllocReq

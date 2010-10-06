@@ -1243,7 +1243,7 @@ defm t2PLI  : T2Ipl<1, 0, "pli">;
 
 let mayLoad = 1, neverHasSideEffects = 1, hasExtraDefRegAllocReq = 1 in {
 def t2LDM : T2XI<(outs), (ins addrmode4:$addr, pred:$p,
-                          reglist:$dsts, variable_ops), IIC_iLoadm,
+                          reglist:$dsts, variable_ops), IIC_iLoad_m,
                  "ldm${addr:submode}${p}${addr:wide}\t$addr, $dsts", []> {
   let Inst{31-27} = 0b11101;
   let Inst{26-25} = 0b00;
@@ -1254,7 +1254,8 @@ def t2LDM : T2XI<(outs), (ins addrmode4:$addr, pred:$p,
 }
 
 def t2LDM_UPD : T2XIt<(outs GPR:$wb), (ins addrmode4:$addr, pred:$p,
-                                       reglist:$dsts, variable_ops), IIC_iLoadm,
+                                       reglist:$dsts, variable_ops),
+                      IIC_iLoad_mu,
                       "ldm${addr:submode}${p}${addr:wide}\t$addr!, $dsts",
                       "$addr.addr = $wb", []> {
   let Inst{31-27} = 0b11101;
@@ -1268,7 +1269,7 @@ def t2LDM_UPD : T2XIt<(outs GPR:$wb), (ins addrmode4:$addr, pred:$p,
 
 let mayStore = 1, neverHasSideEffects = 1, hasExtraSrcRegAllocReq = 1 in {
 def t2STM : T2XI<(outs), (ins addrmode4:$addr, pred:$p,
-                          reglist:$srcs, variable_ops), IIC_iStorem,
+                          reglist:$srcs, variable_ops), IIC_iStore_m,
                  "stm${addr:submode}${p}${addr:wide}\t$addr, $srcs", []> {
   let Inst{31-27} = 0b11101;
   let Inst{26-25} = 0b00;
@@ -1280,7 +1281,7 @@ def t2STM : T2XI<(outs), (ins addrmode4:$addr, pred:$p,
 
 def t2STM_UPD : T2XIt<(outs GPR:$wb), (ins addrmode4:$addr, pred:$p,
                                        reglist:$srcs, variable_ops),
-                      IIC_iStorem,
+                      IIC_iStore_m,
                       "stm${addr:submode}${p}${addr:wide}\t$addr!, $srcs",
                       "$addr.addr = $wb", []> {
   let Inst{31-27} = 0b11101;
@@ -2473,7 +2474,7 @@ let isReturn = 1, isTerminator = 1, isBarrier = 1, mayLoad = 1,
     hasExtraDefRegAllocReq = 1 in
   def t2LDM_RET : T2XIt<(outs GPR:$wb), (ins addrmode4:$addr, pred:$p,
                                          reglist:$dsts, variable_ops),
-                        IIC_iLoadmBr,
+                        IIC_iLoad_mBr,
                         "ldm${addr:submode}${p}${addr:wide}\t$addr!, $dsts",
                         "$addr.addr = $wb", []> {
   let Inst{31-27} = 0b11101;

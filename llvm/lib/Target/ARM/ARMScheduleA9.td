@@ -242,18 +242,42 @@ def CortexA9Itineraries : ProcessorItineraries<
                                   InstrStage<2, [A9_AGU]>],
                                  [5, 4, 1, 1], [A9_LdBypass]>,
   //
-  // Load multiple
-  InstrItinData<IIC_iLoadm   , [InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
+  // Load multiple, def is the 5th operand.
+  InstrItinData<IIC_iLoad_m  , [InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
                                 InstrStage<1, [A9_MUX0], 0>,
                                 InstrStage<2, [A9_AGU]>],
-                               [3], [A9_LdBypass]>,
-
+                               [1, 1, 1, 1, 3],
+                         [NoBypass, NoBypass, NoBypass, NoBypass, A9_LdBypass]>,
+  //
+  // Load multiple + update, defs are the 1st and 5th operands.
+  InstrItinData<IIC_iLoad_mu , [InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
+                                InstrStage<1, [A9_MUX0], 0>,
+                                InstrStage<2, [A9_AGU]>],
+                               [2, 1, 1, 1, 3],
+                         [NoBypass, NoBypass, NoBypass, NoBypass, A9_LdBypass]>,
   //
   // Load multiple plus branch
-  InstrItinData<IIC_iLoadmBr , [InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
+  InstrItinData<IIC_iLoad_mBr, [InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
                                 InstrStage<1, [A9_MUX0], 0>,
                                 InstrStage<1, [A9_AGU]>,
-                                InstrStage<1, [A9_Branch]>]>,
+                                InstrStage<1, [A9_Branch]>],
+                               [1, 2, 1, 1, 3],
+                         [NoBypass, NoBypass, NoBypass, NoBypass, A9_LdBypass]>,
+  //
+  // Pop, def is the 3rd operand.
+  InstrItinData<IIC_iPop  ,    [InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
+                                InstrStage<1, [A9_MUX0], 0>,
+                                InstrStage<2, [A9_AGU]>],
+                               [1, 1, 3],
+                               [NoBypass, NoBypass, A9_LdBypass]>,
+  //
+  // Pop + branch, def is the 3rd operand.
+  InstrItinData<IIC_iPop_Br,   [InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
+                                InstrStage<1, [A9_MUX0], 0>,
+                                InstrStage<2, [A9_AGU]>,
+                                InstrStage<1, [A9_Branch]>],
+                               [1, 1, 3],
+                               [NoBypass, NoBypass, A9_LdBypass]>,
 
   //
   // iLoadi + iALUr for t2LDRpci_pic.
@@ -329,13 +353,21 @@ def CortexA9Itineraries : ProcessorItineraries<
                                    [3, 1, 1, 1]>,
   //
   // Store multiple
-  InstrItinData<IIC_iStorem  , [InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
+  InstrItinData<IIC_iStore_m , [InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
                                 InstrStage<1, [A9_MUX0], 0>,
                                 InstrStage<1, [A9_AGU]>]>,
+  //
+  // Store multiple + update
+  InstrItinData<IIC_iStore_mu, [InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
+                                InstrStage<1, [A9_MUX0], 0>,
+                                InstrStage<1, [A9_AGU]>], [2]>,
+
   // Branch
   //
   // no delay slots, so the latency of a branch is unimportant
-  InstrItinData<IIC_Br       , [InstrStage<1, [A9_Branch]>]>,
+  InstrItinData<IIC_Br       , [InstrStage<1, [A9_Issue0], 0>,
+                                InstrStage<1, [A9_Issue1], 0>,
+                                InstrStage<1, [A9_Branch]>]>,
 
   // VFP and NEON shares the same register file. This means that every VFP
   // instruction should wait for full completion of the consecutive NEON

@@ -280,7 +280,7 @@ let isBranch = 1, isTerminator = 1, isBarrier = 1, isIndirectBranch = 1 in {
 let isReturn = 1, isTerminator = 1, isBarrier = 1, mayLoad = 1,
     hasExtraDefRegAllocReq = 1 in
 def tPOP_RET : T1I<(outs), (ins pred:$p, reglist:$dsts, variable_ops),
-                   IIC_iLoadmBr,
+                   IIC_iPop_Br,
                    "pop${p}\t$dsts", []>,
                T1Misc<{1,1,0,?,?,?,?}>;
 
@@ -535,13 +535,13 @@ def tSpill : T1pIs<(outs), (ins tGPR:$src, t_addrmode_sp:$addr), IIC_iStore_i,
 let mayLoad = 1, neverHasSideEffects = 1, hasExtraDefRegAllocReq = 1 in {
 def tLDM : T1I<(outs),
                (ins addrmode4:$addr, pred:$p, reglist:$dsts, variable_ops),
-               IIC_iLoadm,
+               IIC_iLoad_m,
                "ldm${addr:submode}${p}\t$addr, $dsts", []>,
            T1Encoding<{1,1,0,0,1,?}>; // A6.2 & A8.6.53
 
 def tLDM_UPD : T1It<(outs tGPR:$wb),
                     (ins addrmode4:$addr, pred:$p, reglist:$dsts, variable_ops),
-                    IIC_iLoadm,
+                    IIC_iLoad_m,
                     "ldm${addr:submode}${p}\t$addr!, $dsts",
                     "$addr.addr = $wb", []>,
                T1Encoding<{1,1,0,0,1,?}>; // A6.2 & A8.6.53
@@ -550,18 +550,20 @@ def tLDM_UPD : T1It<(outs tGPR:$wb),
 let mayStore = 1, neverHasSideEffects = 1, hasExtraSrcRegAllocReq = 1 in
 def tSTM_UPD : T1It<(outs tGPR:$wb),
                     (ins addrmode4:$addr, pred:$p, reglist:$srcs, variable_ops),
-                    IIC_iStorem,
+                    IIC_iStore_mu,
                     "stm${addr:submode}${p}\t$addr!, $srcs",
                     "$addr.addr = $wb", []>,
            T1Encoding<{1,1,0,0,0,?}>; // A6.2 & A8.6.189
 
 let mayLoad = 1, Uses = [SP], Defs = [SP], hasExtraDefRegAllocReq = 1 in
-def tPOP : T1I<(outs), (ins pred:$p, reglist:$dsts, variable_ops), IIC_iLoadmBr,
+def tPOP : T1I<(outs), (ins pred:$p, reglist:$dsts, variable_ops),
+               IIC_iPop,
                "pop${p}\t$dsts", []>,
            T1Misc<{1,1,0,?,?,?,?}>;
 
 let mayStore = 1, Uses = [SP], Defs = [SP], hasExtraSrcRegAllocReq = 1 in
-def tPUSH : T1I<(outs), (ins pred:$p, reglist:$srcs, variable_ops), IIC_iStorem,
+def tPUSH : T1I<(outs), (ins pred:$p, reglist:$srcs, variable_ops),
+                IIC_iStore_m,
                 "push${p}\t$srcs", []>,
             T1Misc<{0,1,0,?,?,?,?}>;
 

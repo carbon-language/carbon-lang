@@ -67,8 +67,11 @@ def IIC_iLoad_bh_siu : InstrItinClass;
 def IIC_iLoad_d_i  : InstrItinClass;
 def IIC_iLoad_d_r  : InstrItinClass;
 def IIC_iLoad_d_ru : InstrItinClass;
-def IIC_iLoadm     : InstrItinClass<0>;  // micro-coded
-def IIC_iLoadmBr   : InstrItinClass<0>;  // micro-coded
+def IIC_iLoad_m    : InstrItinClass<0>;  // micro-coded
+def IIC_iLoad_mu   : InstrItinClass<0>;  // micro-coded
+def IIC_iLoad_mBr  : InstrItinClass<0>;  // micro-coded
+def IIC_iPop       : InstrItinClass<0>;  // micro-coded
+def IIC_iPop_Br    : InstrItinClass<0>;  // micro-coded
 def IIC_iLoadiALU  : InstrItinClass;
 def IIC_iStore_i   : InstrItinClass;
 def IIC_iStore_r   : InstrItinClass;
@@ -85,7 +88,8 @@ def IIC_iStore_bh_siu : InstrItinClass;
 def IIC_iStore_d_i   : InstrItinClass;
 def IIC_iStore_d_r   : InstrItinClass;
 def IIC_iStore_d_ru  : InstrItinClass;
-def IIC_iStorem    : InstrItinClass<0>;  // micro-coded
+def IIC_iStore_m   : InstrItinClass<0>;  // micro-coded
+def IIC_iStore_mu  : InstrItinClass<0>;  // micro-coded
 def IIC_Br         : InstrItinClass;
 def IIC_fpSTAT     : InstrItinClass;
 def IIC_fpUNA32    : InstrItinClass;

@@ -527,10 +527,10 @@ void ScheduleDAGInstrs::ComputeOperandLatency(SUnit *Def, SUnit *Use,
   MachineInstr *DefMI = Def->getInstr();
   int DefIdx = DefMI->findRegisterDefOperandIdx(Reg);
   if (DefIdx != -1) {
-    unsigned DefClass = DefMI->getDesc().getSchedClass();
-    MachineInstr *UseMI = Use->getInstr();
-    unsigned UseClass = UseMI->getDesc().getSchedClass();
+    const TargetInstrDesc &DefTID = DefMI->getDesc();
+    unsigned DefClass = DefTID.getSchedClass();
 
+    MachineInstr *UseMI = Use->getInstr();
     // For all uses of the register, calculate the maxmimum latency
     int Latency = -1;
     for (unsigned i = 0, e = UseMI->getNumOperands(); i != e; ++i) {
@@ -541,8 +541,7 @@ void ScheduleDAGInstrs::ComputeOperandLatency(SUnit *Def, SUnit *Use,
       if (MOReg != Reg)
         continue;
 
-      int UseCycle = InstrItins->getOperandLatency(DefClass, DefIdx,
-                                                   UseClass, i);
+      int UseCycle = TII->getOperandLatency(InstrItins, DefMI, DefIdx, UseMI, i);
       Latency = std::max(Latency, UseCycle);
 
       // If we found a latency, then replace the existing dependence latency.

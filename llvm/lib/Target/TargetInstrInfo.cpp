@@ -12,9 +12,10 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Target/TargetInstrInfo.h"
-#include "llvm/MC/MCAsmInfo.h"
 #include "llvm/Target/TargetInstrItineraries.h"
 #include "llvm/Target/TargetRegisterInfo.h"
+#include "llvm/CodeGen/SelectionDAGNodes.h"
+#include "llvm/MC/MCAsmInfo.h"
 #include "llvm/Support/ErrorHandling.h"
 using namespace llvm;
 
@@ -63,6 +64,36 @@ TargetInstrInfo::getNumMicroOps(const MachineInstr *MI,
   // override this function to return the right number.
   return 1;
 }
+
+int
+TargetInstrInfo::getOperandLatency(const InstrItineraryData *ItinData,
+                             const MachineInstr *DefMI, unsigned DefIdx,
+                             const MachineInstr *UseMI, unsigned UseIdx) const {
+  if (!ItinData || ItinData->isEmpty())
+    return -1;
+
+  unsigned DefClass = DefMI->getDesc().getSchedClass();
+  unsigned UseClass = UseMI->getDesc().getSchedClass();
+  return ItinData->getOperandLatency(DefClass, DefIdx, UseClass, UseIdx);
+}
+
+int
+TargetInstrInfo::getOperandLatency(const InstrItineraryData *ItinData,
+                                   SDNode *DefNode, unsigned DefIdx,
+                                   SDNode *UseNode, unsigned UseIdx) const {
+  if (!ItinData || ItinData->isEmpty())
+    return -1;
+
+  if (!DefNode->isMachineOpcode())
+    return -1;
+
+  unsigned DefClass = get(DefNode->getMachineOpcode()).getSchedClass();
+  if (!UseNode->isMachineOpcode())
+    return ItinData->getOperandCycle(DefClass, DefIdx);
+  unsigned UseClass = get(UseNode->getMachineOpcode()).getSchedClass();
+  return ItinData->getOperandLatency(DefClass, DefIdx, UseClass, UseIdx);
+}
+
 
 /// insertNoop - Insert a noop into the instruction stream at the specified
 /// point.

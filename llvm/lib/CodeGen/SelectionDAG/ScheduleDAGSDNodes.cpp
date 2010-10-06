@@ -450,29 +450,11 @@ void ScheduleDAGSDNodes::ComputeOperandLatency(SDNode *Def, SDNode *Use,
   if (ForceUnitLatencies())
     return;
 
-  if (!InstrItins || InstrItins->isEmpty())
-    return;
-  
   if (dep.getKind() != SDep::Data)
     return;
 
   unsigned DefIdx = Use->getOperand(OpIdx).getResNo();
-  if (!Def->isMachineOpcode())
-    return;
-
-  const TargetInstrDesc &II = TII->get(Def->getMachineOpcode());
-  if (DefIdx >= II.getNumDefs())
-    return;
-
-  int Latency = 0;
-  if (!Use->isMachineOpcode()) {
-    Latency = InstrItins->getOperandCycle(II.getSchedClass(), DefIdx);
-  } else {
-    unsigned DefClass = II.getSchedClass();
-    unsigned UseClass = TII->get(Use->getMachineOpcode()).getSchedClass();
-    Latency = InstrItins->getOperandLatency(DefClass, DefIdx, UseClass, OpIdx);
-  }
-
+  int Latency = TII->getOperandLatency(InstrItins, Def, DefIdx, Use, OpIdx);
   if (Latency >= 0)
     dep.setLatency(Latency);
 }

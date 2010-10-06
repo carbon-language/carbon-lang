@@ -340,6 +340,21 @@ public:
 
   virtual unsigned getNumMicroOps(const MachineInstr *MI,
                                   const InstrItineraryData *ItinData) const;
+
+  virtual
+  int getOperandLatency(const InstrItineraryData *ItinData,
+                        const MachineInstr *DefMI, unsigned DefIdx,
+                        const MachineInstr *UseMI, unsigned UseIdx) const;
+  virtual
+  int getOperandLatency(const InstrItineraryData *ItinData,
+                        SDNode *DefNode, unsigned DefIdx,
+                        SDNode *UseNode, unsigned UseIdx) const;
+private:
+  int getOperandLatency(const InstrItineraryData *ItinData,
+                        const TargetInstrDesc &DefTID,
+                        unsigned DefIdx, unsigned DefAlign,
+                        const TargetInstrDesc &UseTID,
+                        unsigned UseIdx, unsigned UseAlign) const;
 };
 
 static inline

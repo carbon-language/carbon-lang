@@ -608,6 +608,22 @@ public:
   /// instruction will be decoded to on the target cpu.
   virtual unsigned getNumMicroOps(const MachineInstr *MI,
                                   const InstrItineraryData *ItinData) const;
+
+  /// getOperandLatency - Compute and return the use operand latency of a given
+  /// itinerary class and operand index if the value is produced by an
+  /// instruction of the specified itinerary class and def operand index.
+  /// In most cases, the static scheduling itinerary was enough to determine the
+  /// operand latency. But it may not be possible for instructions with variable
+  /// number of defs / uses.
+  virtual
+  int getOperandLatency(const InstrItineraryData *ItinData,
+                        const MachineInstr *DefMI, unsigned DefIdx,
+                        const MachineInstr *UseMI, unsigned UseIdx) const;
+
+  virtual
+  int getOperandLatency(const InstrItineraryData *ItinData,
+                        SDNode *DefNode, unsigned DefIdx,
+                        SDNode *UseNode, unsigned UseIdx) const;
 };
 
 /// TargetInstrInfoImpl - This is the default implementation of
