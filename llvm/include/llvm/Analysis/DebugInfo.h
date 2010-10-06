@@ -119,6 +119,7 @@ namespace llvm {
     bool isEnumerator() const;
     bool isType() const;
     bool isGlobal() const;
+    bool isUnspecifiedParameter() const;
   };
 
   /// DISubrange - This is used to represent ranges, for array bounds.
@@ -625,6 +626,10 @@ namespace llvm {
     /// GetOrCreateSubrange - Create a descriptor for a value range.  This
     /// implicitly uniques the values returned.
     DISubrange GetOrCreateSubrange(int64_t Lo, int64_t Hi);
+
+    /// CreateUnspecifiedParameter - Create unspeicified type descriptor
+    /// for a subroutine type.
+    DIDescriptor CreateUnspecifiedParameter();
 
     /// CreateCompileUnit - Create a new descriptor for the specified compile
     /// unit.

@@ -1042,16 +1042,25 @@ void DwarfDebug::constructTypeDIE(DIE &Buffer, DICompositeType CTy) {
     DIDescriptor RTy = Elements.getElement(0);
     addType(&Buffer, DIType(RTy));
 
-    // Add prototype flag.
-    addUInt(&Buffer, dwarf::DW_AT_prototyped, dwarf::DW_FORM_flag, 1);
-
+    bool isPrototyped = true;
     // Add arguments.
     for (unsigned i = 1, N = Elements.getNumElements(); i < N; ++i) {
-      DIE *Arg = new DIE(dwarf::DW_TAG_formal_parameter);
       DIDescriptor Ty = Elements.getElement(i);
-      addType(Arg, DIType(Ty));
-      Buffer.addChild(Arg);
+      if (Ty.isUnspecifiedParameter()) {
+        DIE *Arg = new DIE(dwarf::DW_TAG_unspecified_parameters);
+        Buffer.addChild(Arg);
+        isPrototyped = false;
+      } else {
+        DIE *Arg = new DIE(dwarf::DW_TAG_formal_parameter);
+        addType(Arg, DIType(Ty));
+        Buffer.addChild(Arg);
+      }
     }
+    // Add prototype flag.
+    if (isPrototyped)
+      addUInt(&Buffer, dwarf::DW_AT_prototyped, dwarf::DW_FORM_flag, 1);
+
+
   }
     break;
   case dwarf::DW_TAG_structure_type:

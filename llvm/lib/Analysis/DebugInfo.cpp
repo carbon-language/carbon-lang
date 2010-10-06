@@ -199,6 +199,12 @@ bool DIDescriptor::isGlobal() const {
   return isGlobalVariable();
 }
 
+/// isUnspecifiedParmeter - Return true if the specified tab is
+/// DW_TAG_unspecified_parameters.
+bool DIDescriptor::isUnspecifiedParameter() const {
+  return DbgNode && getTag() == dwarf::DW_TAG_unspecified_parameters;
+}
+
 /// isScope - Return true if the specified tag is one of the scope
 /// related tag.
 bool DIDescriptor::isScope() const {
@@ -724,7 +730,14 @@ DISubrange DIFactory::GetOrCreateSubrange(int64_t Lo, int64_t Hi) {
   return DISubrange(MDNode::get(VMContext, &Elts[0], 3));
 }
 
-
+/// CreateUnspecifiedParameter - Create unspeicified type descriptor
+/// for the subroutine type.
+DIDescriptor DIFactory::CreateUnspecifiedParameter() {
+  Value *Elts[] = {
+    GetTagConstant(dwarf::DW_TAG_unspecified_parameters)
+  };
+  return DIDescriptor(MDNode::get(VMContext, &Elts[0], 1));
+}
 
 /// CreateCompileUnit - Create a new descriptor for the specified compile
 /// unit.  Note that this does not unique compile units within the module.
