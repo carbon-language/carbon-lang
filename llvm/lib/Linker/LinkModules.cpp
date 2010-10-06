@@ -19,18 +19,16 @@
 #include "llvm/Linker.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
+#include "llvm/Instructions.h"
 #include "llvm/LLVMContext.h"
 #include "llvm/Module.h"
 #include "llvm/TypeSymbolTable.h"
 #include "llvm/ValueSymbolTable.h"
-#include "llvm/Instructions.h"
-#include "llvm/Assembly/Writer.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/System/Path.h"
 #include "llvm/Transforms/Utils/ValueMapper.h"
-#include "llvm/ADT/DenseMap.h"
 using namespace llvm;
 
 // Error - Simple wrapper function to conditionally assign to E and return true.
@@ -456,6 +454,23 @@ static void LinkNamedMDNodes(Module *Dest, Module *Src,
   }
 }
 
+// RequiresMerge - Return true if the source global variable needs to be merged
+// with the destination global variable. I.e., there shouldn't be a new global
+// variable created in the destination Module, rather the initializers should be
+// merged in an intelligent fashion.
+static bool RequiresMerge(const GlobalVariable *SGV, const GlobalVariable *DGV){
+  const StringRef SrcSec(SGV->getSection());
+  const StringRef DstSec(DGV->getSection());
+
+  // The Objective-C __image_info section should be unique.
+  if (SrcSec == DstSec &&
+      (SrcSec.find("__objc_imageinfo") != StringRef::npos ||
+       SrcSec.find("__image_info") != StringRef::npos))
+    return true;
+
+  return false;
+}
+
 // LinkGlobals - Loop through the global variables in the src module and merge
 // them into the dest module.
 static bool LinkGlobals(Module *Dest, const Module *Src,
@@ -470,10 +485,24 @@ static bool LinkGlobals(Module *Dest, const Module *Src,
     const GlobalVariable *SGV = I;
     GlobalValue *DGV = 0;
 
-    // Check to see if may have to link the global with the global, alias or
+    GlobalValue *SymTabGV =
+      cast_or_null<GlobalValue>(DestSymTab.lookup(SGV->getName()));
+
+    // Check to see if the symbol exists in the destination module and needs to
+    // be merged instead of replaced.
+    if (SymTabGV) {
+      const GlobalVariable *GV = dyn_cast<GlobalVariable>(SymTabGV);
+      if (GV && RequiresMerge(SGV, GV)) {
+        // Make sure to remember this mapping.
+        ValueMap[SGV] = SymTabGV;
+        continue;
+      }
+    }
+
+    // Check to see if we may have to link the global with a global, alias, or
     // function.
     if (SGV->hasName() && !SGV->hasLocalLinkage())
-      DGV = cast_or_null<GlobalValue>(DestSymTab.lookup(SGV->getName()));
+      DGV = SymTabGV;
 
     // If we found a global with the same name in the dest module, but it has
     // internal linkage, we are really not doing any linkage here.
@@ -819,10 +848,10 @@ static bool LinkGlobalInits(Module *Dest, const Module *Src,
       // Grab destination global variable or alias.
       GlobalValue *DGV = cast<GlobalValue>(ValueMap[SGV]->stripPointerCasts());
 
-      // If dest if global variable, check that initializers match.
+      // If dest is a global variable, check that initializers match.
       if (GlobalVariable *DGVar = dyn_cast<GlobalVariable>(DGV)) {
         if (DGVar->hasInitializer()) {
-          if (SGV->hasExternalLinkage()) {
+          if (SGV->hasExternalLinkage() || RequiresMerge(SGV, DGVar)) {
             if (DGVar->getInitializer() != SInit)
               return Error(Err, "Global Variable Collision on '" +
                            SGV->getName() +
