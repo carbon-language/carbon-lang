@@ -36,7 +36,7 @@
 using namespace llvm;
 
 // Register the AliasAnalysis interface, providing a nice name to refer to.
-static RegisterAnalysisGroup<AliasAnalysis> Z("Alias Analysis");
+INITIALIZE_ANALYSIS_GROUP(AliasAnalysis, "Alias Analysis");
 char AliasAnalysis::ID = 0;
 
 //===----------------------------------------------------------------------===//

@@ -25,7 +25,7 @@
 using namespace llvm;
 
 // Register the ProfileInfo interface, providing a nice name to refer to.
-static RegisterAnalysisGroup<ProfileInfo> Z("Profile Information");
+INITIALIZE_ANALYSIS_GROUP(ProfileInfo, "Profile Information");
 
 namespace llvm {
 
