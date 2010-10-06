@@ -570,11 +570,11 @@ llvm::DIType CGDebugInfo::CreateType(const FunctionType *Ty,
 
   // Set up remainder of arguments if there is a prototype.
   // FIXME: IF NOT, HOW IS THIS REPRESENTED?  llvm-gcc doesn't represent '...'!
-  if (const FunctionProtoType *FTP = dyn_cast<FunctionProtoType>(Ty)) {
+  if (isa<FunctionNoProtoType>(Ty))
+    EltTys.push_back(DebugFactory.CreateUnspecifiedParameter());
+  else if (const FunctionProtoType *FTP = dyn_cast<FunctionProtoType>(Ty)) {
     for (unsigned i = 0, e = FTP->getNumArgs(); i != e; ++i)
       EltTys.push_back(getOrCreateType(FTP->getArgType(i), Unit));
-  } else {
-    // FIXME: Handle () case in C.  llvm-gcc doesn't do it either.
   }
 
   llvm::DIArray EltTypeArray =
