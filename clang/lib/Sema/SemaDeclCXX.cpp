@@ -1168,6 +1168,7 @@ static bool InitExprContainsUninitializedFields(const Stmt *S,
       // The member expression points to a static data member.
       assert(VD->isStaticDataMember() && 
              "Member points to non-static data member!");
+      (void)VD;
       return false;
     }
     
