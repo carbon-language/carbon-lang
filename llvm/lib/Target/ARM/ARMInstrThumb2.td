@@ -2710,9 +2710,9 @@ def : T2Pat<(add rGPR:$LHS, t2_so_neg_imm2part:$RHS),
 // This is a single pseudo instruction to make it re-materializable.
 // FIXME: Remove this when we can do generalized remat.
 let isReMaterializable = 1 in
-def t2MOVi32imm : T2Ix2<(outs rGPR:$dst), (ins i32imm:$src), IIC_iMOVix2,
-                   "movw", "\t$dst, ${src:lo16}\n\tmovt${p}\t$dst, ${src:hi16}",
-                     [(set rGPR:$dst, (i32 imm:$src))]>;
+def t2MOVi32imm : PseudoInst<(outs rGPR:$dst), (ins i32imm:$src), IIC_iMOVix2,
+                            "", [(set rGPR:$dst, (i32 imm:$src))]>,
+                            Requires<[IsThumb, HasV6T2]>;
 
 // ConstantPool, GlobalAddress, and JumpTable
 def : T2Pat<(ARMWrapper  tglobaladdr :$dst), (t2LEApcrel tglobaladdr :$dst)>,

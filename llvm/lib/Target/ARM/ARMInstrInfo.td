@@ -2743,10 +2743,9 @@ def : ARMPat<(add GPR:$LHS, so_neg_imm2part:$RHS),
 // as a single unit instead of having to handle reg inputs.
 // FIXME: Remove this when we can do generalized remat.
 let isReMaterializable = 1 in
-def MOVi32imm : AI1x2<(outs GPR:$dst), (ins i32imm:$src), Pseudo, IIC_iMOVix2,
-                   "movw", "\t$dst, ${src:lo16}\n\tmovt${p}\t$dst, ${src:hi16}",
-                     [(set GPR:$dst, (i32 imm:$src))]>,
-               Requires<[IsARM, HasV6T2]>;
+def MOVi32imm : PseudoInst<(outs GPR:$dst), (ins i32imm:$src), IIC_iMOVix2, "",
+                           [(set GPR:$dst, (i32 imm:$src))]>,
+                           Requires<[IsARM, HasV6T2]>;
 
 // ConstantPool, GlobalAddress, and JumpTable
 def : ARMPat<(ARMWrapper  tglobaladdr :$dst), (LEApcrel tglobaladdr :$dst)>,
