@@ -24,6 +24,9 @@
 #include <limits>
 using namespace llvm;
 
+template<>
+char llvm::ProfileInfoT<Function,BasicBlock>::ID = 0;
+
 // Register the ProfileInfo interface, providing a nice name to refer to.
 INITIALIZE_ANALYSIS_GROUP(ProfileInfo, "Profile Information");
 
@@ -42,9 +45,6 @@ template <>
 ProfileInfoT<Function, BasicBlock>::~ProfileInfoT() {
   if (MachineProfile) delete MachineProfile;
 }
-
-template<>
-char ProfileInfoT<Function,BasicBlock>::ID = 0;
 
 template<>
 char ProfileInfoT<MachineFunction, MachineBasicBlock>::ID = 0;
