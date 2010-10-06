@@ -128,10 +128,10 @@ private:
 };
 
 #define INITIALIZE_PASS(passName, arg, name, cfg, analysis) \
-  void initialize##passName##Pass() { \
+  void initialize##passName##Pass(PassRegistry &Registry) { \
     PassInfo *PI = new PassInfo(name, arg, & passName ::ID, \
       PassInfo::NormalCtor_t(callDefaultCtor< passName >), cfg, analysis); \
-    PassRegistry::getPassRegistry()->registerPass(*PI); \
+    Registry.registerPass(*PI); \
   } \
   static RegisterPass<passName> passName ## _info(arg, name, cfg, analysis)
     
@@ -211,14 +211,13 @@ struct RegisterAnalysisGroup : public RegisterAGBase {
 };
 
 #define INITIALIZE_AG_PASS(passName, agName, arg, name, cfg, analysis, def) \
-  void initialize##passName##Pass() { \
+  void initialize##passName##Pass(PassRegistry &Registry) { \
     PassInfo *PI = new PassInfo(name, arg, & passName ::ID, \
       PassInfo::NormalCtor_t(callDefaultCtor< passName >), cfg, analysis); \
-    PassRegistry::getPassRegistry()->registerPass(*PI); \
+    Registry.registerPass(*PI); \
     \
     PassInfo *AI = new PassInfo(name, & agName :: ID); \
-    PassRegistry::getPassRegistry()->registerAnalysisGroup( \
-      & agName ::ID, & passName ::ID, *AI, def); \
+    Registry.registerAnalysisGroup(& agName ::ID, & passName ::ID, *AI, def); \
   } \
   static RegisterPass<passName> passName ## _info(arg, name, cfg, analysis); \
   static RegisterAnalysisGroup<agName, def> passName ## _ag(passName ## _info)
