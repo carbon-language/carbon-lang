@@ -53,6 +53,17 @@ SBValue::IsValid () const
     return  (m_opaque_sp.get() != NULL);
 }
 
+SBError
+SBValue::GetError()
+{
+    SBError sb_error;
+    
+    if (m_opaque_sp.get())
+        sb_error.SetError(m_opaque_sp->GetError());
+    
+    return sb_error;
+}
+
 const char *
 SBValue::GetName()
 {

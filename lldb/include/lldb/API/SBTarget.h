@@ -55,12 +55,31 @@ public:
     lldb::SBProcess
     GetProcess ();
 
+    // DEPRECATED in favor of the function below that contains an SBError as the
+    // last parameter.
     lldb::SBProcess
     LaunchProcess (char const **argv,
                    char const **envp,
                    const char *tty,
                    uint32_t launch_flags,   // See lldb::LaunchFlags
                    bool stop_at_entry);
+
+    lldb::SBProcess
+    LaunchProcess (char const **argv,
+                   char const **envp,
+                   const char *tty,
+                   uint32_t launch_flags,   // See lldb::LaunchFlags
+                   bool stop_at_entry,
+                   SBError& error);
+
+    lldb::SBProcess
+    AttachToProcess (lldb::pid_t pid, // The process ID to attach to
+                     SBError& error); // An error explaining what went wrong if attach fails
+
+    lldb::SBProcess
+    AttachToProcess (const char *name,  // basename of process to attach to
+                     bool wait_for,     // if true wait for a new instance of "name" to be launched
+                     SBError& error);   // An error explaining what went wrong if attach fails
 
     lldb::SBFileSpec
     GetExecutable ();

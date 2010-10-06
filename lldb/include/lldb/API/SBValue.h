@@ -25,6 +25,9 @@ public:
 
     bool
     IsValid() const;
+    
+    SBError
+    GetError();
 
     const char *
     GetName();

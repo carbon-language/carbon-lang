@@ -75,6 +75,8 @@ protected:
     friend class SBHostOS;
     friend class SBInputReader;
     friend class SBProcess;
+    friend class SBTarget;
+    friend class SBValue;
 
 #ifndef SWIG
 

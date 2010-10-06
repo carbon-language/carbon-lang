@@ -129,6 +129,22 @@ SBTarget::LaunchProcess
     bool stop_at_entry
 )
 {
+    SBError sb_error;    
+    return LaunchProcess (argv, envp, tty, launch_flags, stop_at_entry, sb_error);
+}
+
+
+SBProcess
+SBTarget::LaunchProcess
+(
+    char const **argv,
+    char const **envp,
+    const char *tty,
+    uint32_t launch_flags,
+    bool stop_at_entry,
+    SBError &error
+)
+{
     SBProcess sb_process;
     if (m_opaque_sp)
     {
@@ -146,7 +162,7 @@ SBTarget::LaunchProcess
 
         if (sb_process.IsValid())
         {
-            Error error (sb_process->Launch (argv, envp, launch_flags, tty, tty, tty));
+            error.SetError (sb_process->Launch (argv, envp, launch_flags, tty, tty, tty));
             if (error.Success())
             {
                 // We we are stopping at the entry point, we can return now!
@@ -158,7 +174,7 @@ SBTarget::LaunchProcess
                 if (state == eStateStopped)
                 {
                     // resume the process to skip the entry point
-                    error = sb_process->Resume();
+                    error.SetError (sb_process->Resume());
                     if (error.Success())
                     {
                         // If we are doing synchronous mode, then wait for the
@@ -169,8 +185,96 @@ SBTarget::LaunchProcess
                 }
             }
         }
+        else
+        {
+            error.SetErrorString ("unable to create lldb_private::Process");
+        }
+    }
+    else
+    {
+        error.SetErrorString ("SBTarget is invalid");
     }
     return sb_process;
+}
+
+
+lldb::SBProcess
+SBTarget::AttachToProcess 
+(
+    lldb::pid_t pid,// The process ID to attach to
+    SBError& error  // An error explaining what went wrong if attach fails
+)
+{
+    SBProcess sb_process;
+    if (m_opaque_sp)
+    {
+        // DEPRECATED, this will change when CreateProcess is removed...
+        if (m_opaque_sp->GetProcessSP())
+        {
+            sb_process.SetProcess(m_opaque_sp->GetProcessSP());
+        }
+        else
+        {
+            // When launching, we always want to create a new process When
+            // SBTarget::CreateProcess is removed, this will always happen.
+            sb_process.SetProcess (m_opaque_sp->CreateProcess (m_opaque_sp->GetDebugger().GetListener()));
+        }
+
+        if (sb_process.IsValid())
+        {
+            error.SetError (sb_process->Attach (pid));
+        }
+        else
+        {
+            error.SetErrorString ("unable to create lldb_private::Process");
+        }
+    }
+    else
+    {
+        error.SetErrorString ("SBTarget is invalid");
+    }
+    return sb_process;
+
+}
+
+lldb::SBProcess
+SBTarget::AttachToProcess 
+(
+    const char *name,   // basename of process to attach to
+    bool wait_for,      // if true wait for a new instance of "name" to be launched
+    SBError& error      // An error explaining what went wrong if attach fails
+)
+{
+    SBProcess sb_process;
+    if (m_opaque_sp)
+    {
+        // DEPRECATED, this will change when CreateProcess is removed...
+        if (m_opaque_sp->GetProcessSP())
+        {
+            sb_process.SetProcess(m_opaque_sp->GetProcessSP());
+        }
+        else
+        {
+            // When launching, we always want to create a new process When
+            // SBTarget::CreateProcess is removed, this will always happen.
+            sb_process.SetProcess (m_opaque_sp->CreateProcess (m_opaque_sp->GetDebugger().GetListener()));
+        }
+
+        if (sb_process.IsValid())
+        {
+            error.SetError (sb_process->Attach (name, wait_for));
+        }
+        else
+        {
+            error.SetErrorString ("unable to create lldb_private::Process");
+        }
+    }
+    else
+    {
+        error.SetErrorString ("SBTarget is invalid");
+    }
+    return sb_process;
+
 }
 
 SBFileSpec
