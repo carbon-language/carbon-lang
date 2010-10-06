@@ -59,7 +59,7 @@ bool Sema::DiagnoseUseOfDecl(NamedDecl *D, SourceLocation Loc) {
   // See if the decl is deprecated.
   if (const DeprecatedAttr *DA = D->getAttr<DeprecatedAttr>()) {
     const char *Message = 
-      DA->getMessage().empty() ? "" : DA->getMessage().data();
+      DA->getMessage().empty() ? 0 : DA->getMessage().data();
     EmitDeprecationWarning(D, Message, Loc);
   }
 

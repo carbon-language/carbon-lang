@@ -2552,7 +2552,7 @@ void Sema::HandleDelayedDeprecationCheck(DelayedDiagnostic &DD,
     return;
 
   DD.Triggered = true;
-  if (strlen(DD.DeprecationData.Message))
+  if (DD.DeprecationData.Message)
     Diag(DD.Loc, diag::warn_deprecated_message)
       << DD.DeprecationData.Decl->getDeclName() 
       << DD.DeprecationData.Message;
@@ -2573,7 +2573,7 @@ void Sema::EmitDeprecationWarning(NamedDecl *D, const char * Message,
   // Otherwise, don't warn if our current context is deprecated.
   if (isDeclDeprecated(cast<Decl>(CurContext)))
     return;
-  if (strlen(Message))
+  if (Message)
     Diag(Loc, diag::warn_deprecated_message) << D->getDeclName() 
                                              << Message;
   else
