@@ -24,29 +24,6 @@ using namespace llvm;
 
 #include "ARMGenAsmWriter.inc"
 
-static unsigned getDPRSuperRegForSPR(unsigned Reg) {
-  switch (Reg) {
-  default:
-    assert(0 && "Unexpected register enum");
-  case ARM::S0:  case ARM::S1:  return ARM::D0;
-  case ARM::S2:  case ARM::S3:  return ARM::D1;
-  case ARM::S4:  case ARM::S5:  return ARM::D2;
-  case ARM::S6:  case ARM::S7:  return ARM::D3;
-  case ARM::S8:  case ARM::S9:  return ARM::D4;
-  case ARM::S10: case ARM::S11: return ARM::D5;
-  case ARM::S12: case ARM::S13: return ARM::D6;
-  case ARM::S14: case ARM::S15: return ARM::D7;
-  case ARM::S16: case ARM::S17: return ARM::D8;
-  case ARM::S18: case ARM::S19: return ARM::D9;
-  case ARM::S20: case ARM::S21: return ARM::D10;
-  case ARM::S22: case ARM::S23: return ARM::D11;
-  case ARM::S24: case ARM::S25: return ARM::D12;
-  case ARM::S26: case ARM::S27: return ARM::D13;
-  case ARM::S28: case ARM::S29: return ARM::D14;
-  case ARM::S30: case ARM::S31: return ARM::D15;
-  }
-}
-
 void ARMInstPrinter::printInst(const MCInst *MI, raw_ostream &O) {
   // Check for MOVs and print canonical forms, instead.
   if (MI->getOpcode() == ARM::MOVs) {
@@ -137,13 +114,7 @@ void ARMInstPrinter::printOperand(const MCInst *MI, unsigned OpNo,
   const MCOperand &Op = MI->getOperand(OpNo);
   if (Op.isReg()) {
     unsigned Reg = Op.getReg();
-    if (Modifier && strcmp(Modifier, "lane") == 0) {
-      unsigned RegNum = getARMRegisterNumbering(Reg);
-      unsigned DReg = getDPRSuperRegForSPR(Reg);
-      O << getRegisterName(DReg) << '[' << (RegNum & 1) << ']';
-    } else {
-      O << getRegisterName(Reg);
-    }
+    O << getRegisterName(Reg);
   } else if (Op.isImm()) {
     assert((Modifier && !strcmp(Modifier, "call")) ||
            ((Modifier == 0 || Modifier[0] == 0) && "No modifiers supported"));
