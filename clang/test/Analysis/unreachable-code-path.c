@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -analyze -analyzer-experimental-checks -analyzer-check-objc-mem -analyzer-check-dead-stores -verify -analyzer-opt-analyze-nested-blocks %s
+// RUN: %clang_cc1 -analyze -analyzer-experimental-checks -analyzer-check-objc-mem -analyzer-check-dead-stores -verify -analyzer-opt-analyze-nested-blocks -Wno-unused-value %s
 
 extern void foo(int a);
 
@@ -93,12 +93,32 @@ void test9(unsigned a) {
   switch (a) {
     if (a) // expected-warning{{never executed}}
       foo(a + 5); // no-warning
-    else // no-warning
-      foo(a); // no-warning
+    else          // no-warning
+      foo(a);     // no-warning
     case 1:
     case 2:
       break;
     default:
       break;
   }
+}
+
+// Tests from flow-sensitive version
+void test10() {
+  goto c;
+  d:
+  goto e; // expected-warning {{never executed}}
+  c: ;
+  int i;
+  return;
+  goto b; // expected-warning {{never executed}}
+  goto a; // expected-warning {{never executed}}
+  b:
+  i = 1; // expected-warning {{Value stored to 'i' is never read}}
+  a:
+  i = 2; // expected-warning {{Value stored to 'i' is never read}}
+  goto f;
+  e:
+  goto d;
+  f: ;
 }

@@ -91,7 +91,7 @@ void UnreachableCodeChecker::VisitEndAnalysis(ExplodedGraph &G,
   ASTContext &Ctx = B.getContext();
 
   // Find CFGBlocks that were not covered by any node
-  for (CFG::const_iterator I = C->begin(); I != C->end(); ++I) {
+  for (CFG::const_iterator I = C->begin(), E = C->end(); I != E; ++I) {
     const CFGBlock *CB = *I;
     // Check if the block is unreachable
     if (reachable.count(CB->getBlockID()))
@@ -102,7 +102,8 @@ void UnreachableCodeChecker::VisitEndAnalysis(ExplodedGraph &G,
       continue;
 
     // Find the entry points for this block
-    FindUnreachableEntryPoints(CB);
+    if (!visited.count(CB->getBlockID()))
+      FindUnreachableEntryPoints(CB);
 
     // This block may have been pruned; check if we still want to report it
     if (reachable.count(CB->getBlockID()))
@@ -149,27 +150,18 @@ void UnreachableCodeChecker::VisitEndAnalysis(ExplodedGraph &G,
 
 // Recursively finds the entry point(s) for this dead CFGBlock.
 void UnreachableCodeChecker::FindUnreachableEntryPoints(const CFGBlock *CB) {
-  bool allPredecessorsReachable = true;
-
   visited.insert(CB->getBlockID());
 
-  for (CFGBlock::const_pred_iterator I = CB->pred_begin(); I != CB->pred_end();
-      ++I) {
-    // Recurse over all unreachable blocks
+  for (CFGBlock::const_pred_iterator I = CB->pred_begin(), E = CB->pred_end();
+      I != E; ++I) {
     if (!reachable.count((*I)->getBlockID())) {
-      // At least one predeccessor was unreachable
-      allPredecessorsReachable = false;
-
-      // Only visit the block once
+      // If we find an unreachable predecessor, mark this block as reachable so
+      // we don't report this block
+      reachable.insert(CB->getBlockID());
       if (!visited.count((*I)->getBlockID()))
+        // If we haven't previously visited the unreachable predecessor, recurse
         FindUnreachableEntryPoints(*I);
     }
-  }
-
-  // If at least one predecessor is unreachable, mark this block as reachable
-  // so we don't report this block.
-  if (!allPredecessorsReachable) {
-    reachable.insert(CB->getBlockID());
   }
 }
 
