@@ -17,17 +17,17 @@
 #include "llvm/MC/MCSection.h"
 
 namespace llvm {
-  
+
 /// MCSectionELF - This represents a section on linux, lots of unix variants
 /// and some bare metal systems.
 class MCSectionELF : public MCSection {
   /// SectionName - This is the name of the section.  The referenced memory is
   /// owned by TargetLoweringObjectFileELF's ELFUniqueMap.
   StringRef SectionName;
-  
+
   /// Type - This is the sh_type field of a section, drawn from the enums below.
   unsigned Type;
-  
+
   /// Flags - This is the sh_flags field of a section, drawn from the enums.
   /// below.
   unsigned Flags;
@@ -40,7 +40,7 @@ class MCSectionELF : public MCSection {
   /// makes sense for sections that contain fixed-sized entries. If a
   /// section does not contain fixed-sized entries 'EntrySize' will be 0.
   unsigned EntrySize;
-  
+
 private:
   friend class MCContext;
   MCSectionELF(StringRef Section, unsigned type, unsigned flags,
@@ -58,10 +58,10 @@ public:
   bool ShouldPrintSectionType(unsigned Ty) const;
 
   /// HasCommonSymbols - True if this section holds common symbols, this is
-  /// indicated on the ELF object file by a symbol with SHN_COMMON section 
+  /// indicated on the ELF object file by a symbol with SHN_COMMON section
   /// header index.
   bool HasCommonSymbols() const;
-  
+
   /// These are the section type and flags fields.  An ELF section can have
   /// only one Type, but can have more than one of the flags specified.
   ///
@@ -84,7 +84,7 @@ public:
 
     // The section holds a symbol hash table.
     SHT_HASH             = 0x05U,
-    
+
     // Information for dynamic linking.
     SHT_DYNAMIC          = 0x06U,
 
@@ -97,7 +97,7 @@ public:
     // The section holds relocation entries without explicit addends.
     SHT_REL              = 0x09U,
 
-    // This section type is reserved but has unspecified semantics. 
+    // This section type is reserved but has unspecified semantics.
     SHT_SHLIB            = 0x0AU,
 
     // This section holds a symbol table.
@@ -122,7 +122,7 @@ public:
     SHT_SYMTAB_SHNDX     = 0x12U,
 
     LAST_KNOWN_SECTION_TYPE = SHT_SYMTAB_SHNDX
-  }; 
+  };
 
   /// Valid section flags.
   enum {
@@ -157,14 +157,14 @@ public:
     // This section holds Thread-Local Storage.
     SHF_TLS              = 0x400U,
 
-    
+
     // Start of target-specific flags.
 
     /// XCORE_SHF_CP_SECTION - All sections with the "c" flag are grouped
     /// together by the linker to form the constant pool and the cp register is
     /// set to the start of the constant pool by the boot code.
     XCORE_SHF_CP_SECTION = 0x800U,
-    
+
     /// XCORE_SHF_DP_SECTION - All sections with the "d" flag are grouped
     /// together by the linker to form the data section and the dp register is
     /// set to the start of the section by the boot code.
@@ -175,7 +175,7 @@ public:
   unsigned getType() const { return Type; }
   unsigned getFlags() const { return Flags; }
   unsigned getEntrySize() const { return EntrySize; }
-  
+
   void PrintSwitchToSection(const MCAsmInfo &MAI,
                             raw_ostream &OS) const;
   virtual bool UseCodeAlign() const;

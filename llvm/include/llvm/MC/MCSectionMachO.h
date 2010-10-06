@@ -17,36 +17,36 @@
 #include "llvm/MC/MCSection.h"
 
 namespace llvm {
-  
+
 /// MCSectionMachO - This represents a section on a Mach-O system (used by
 /// Mac OS X).  On a Mac system, these are also described in
 /// /usr/include/mach-o/loader.h.
 class MCSectionMachO : public MCSection {
   char SegmentName[16];  // Not necessarily null terminated!
   char SectionName[16];  // Not necessarily null terminated!
-  
+
   /// TypeAndAttributes - This is the SECTION_TYPE and SECTION_ATTRIBUTES
   /// field of a section, drawn from the enums below.
   unsigned TypeAndAttributes;
-  
+
   /// Reserved2 - The 'reserved2' field of a section, used to represent the
   /// size of stubs, for example.
   unsigned Reserved2;
-  
+
   MCSectionMachO(StringRef Segment, StringRef Section,
-                 unsigned TAA, unsigned reserved2, SectionKind K);  
+                 unsigned TAA, unsigned reserved2, SectionKind K);
   friend class MCContext;
 public:
-  
+
   /// These are the section type and attributes fields.  A MachO section can
   /// have only one Type, but can have any of the attributes specified.
   enum {
     // TypeAndAttributes bitmasks.
     SECTION_TYPE       = 0x000000FFU,
     SECTION_ATTRIBUTES = 0xFFFFFF00U,
-    
+
     // Valid section types.
-    
+
     /// S_REGULAR - Regular section.
     S_REGULAR                    = 0x00U,
     /// S_ZEROFILL - Zero fill on demand section.
@@ -101,10 +101,10 @@ public:
     S_THREAD_LOCAL_INIT_FUNCTION_POINTERS = 0x15U,
 
     LAST_KNOWN_SECTION_TYPE = S_THREAD_LOCAL_INIT_FUNCTION_POINTERS,
-    
+
 
     // Valid section attributes.
-    
+
     /// S_ATTR_PURE_INSTRUCTIONS - Section contains only true machine
     /// instructions.
     S_ATTR_PURE_INSTRUCTIONS   = 1U << 31,

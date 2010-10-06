@@ -19,12 +19,12 @@
 #include "llvm/Support/COFF.h"
 
 namespace llvm {
-  
+
 /// MCSectionCOFF - This represents a section on Windows
   class MCSectionCOFF : public MCSection {
     // The memory for this string is stored in the same MCContext as *this.
     StringRef SectionName;
-    
+
     /// Characteristics - This is the Characteristics field of a section,
     //  drawn from the enums below.
     unsigned Characteristics;
@@ -52,7 +52,7 @@ namespace llvm {
     StringRef getSectionName() const { return SectionName; }
     unsigned getCharacteristics() const { return Characteristics; }
     int getSelection () const { return Selection; }
-    
+
     virtual void PrintSwitchToSection(const MCAsmInfo &MAI,
                                       raw_ostream &OS) const;
     virtual bool UseCodeAlign() const;
