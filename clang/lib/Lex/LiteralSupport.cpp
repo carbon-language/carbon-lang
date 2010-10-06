@@ -172,8 +172,8 @@ static void ProcessUCNEscape(const char *&ThisTokBuf, const char *ThisTokEnd,
                              SourceLocation Loc, Preprocessor &PP,
                              bool wide,
                              bool Complain) {
-  // FIXME: Add a warning - UCN's are only valid in C++ & C99.
-  // FIXME: Handle wide strings.
+  if (!PP.getLangOptions().CPlusPlus && !PP.getLangOptions().C99)
+    PP.Diag(Loc, diag::warn_ucn_not_valid_in_c89);
 
   // Save the beginning of the string (for error diagnostics).
   const char *ThisTokBegin = ThisTokBuf;
@@ -218,13 +218,34 @@ static void ProcessUCNEscape(const char *&ThisTokBuf, const char *ThisTokEnd,
   }
   if (wide) {
     (void)UcnLenSave;
-    assert(UcnLenSave == 4 && 
-           "ProcessUCNEscape - only ucn length of 4 supported");
-    // little endian assumed.
-    *ResultBuf++ = (UcnVal & 0x000000FF);
-    *ResultBuf++ = (UcnVal & 0x0000FF00) >> 8;
-    *ResultBuf++ = (UcnVal & 0x00FF0000) >> 16;
-    *ResultBuf++ = (UcnVal & 0xFF000000) >> 24;
+    assert((UcnLenSave == 4 || UcnLenSave == 8) && 
+           "ProcessUCNEscape - only ucn length of 4 or 8 supported");
+
+    if (!PP.getLangOptions().ShortWChar) {
+      // Note: our internal rep of wide char tokens is always little-endian.
+      *ResultBuf++ = (UcnVal & 0x000000FF);
+      *ResultBuf++ = (UcnVal & 0x0000FF00) >> 8;
+      *ResultBuf++ = (UcnVal & 0x00FF0000) >> 16;
+      *ResultBuf++ = (UcnVal & 0xFF000000) >> 24;
+      return;
+    }
+
+    // Convert to UTF16.
+    if (UcnVal < (UTF32)0xFFFF) {
+      *ResultBuf++ = (UcnVal & 0x000000FF);
+      *ResultBuf++ = (UcnVal & 0x0000FF00) >> 8;
+      return;
+    }
+    PP.Diag(Loc, diag::warn_ucn_escape_too_large);
+
+    typedef uint16_t UTF16;
+    UcnVal -= 0x10000;
+    UTF16 surrogate1 = 0xD800 + (UcnVal >> 10);
+    UTF16 surrogate2 = 0xDC00 + (UcnVal & 0x3FF);
+    *ResultBuf++ = (surrogate1 & 0x000000FF);
+    *ResultBuf++ = (surrogate1 & 0x0000FF00) >> 8;
+    *ResultBuf++ = (surrogate2 & 0x000000FF);
+    *ResultBuf++ = (surrogate2 & 0x0000FF00) >> 8;
     return;
   }
   // Now that we've parsed/checked the UCN, we convert from UTF32->UTF8.

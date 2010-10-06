@@ -98,6 +98,10 @@ def warn_hex_escape_too_large : ExtWarn<"hex escape sequence out of range">;
 def ext_string_too_long : Extension<"string literal of length %0 exceeds "
   "maximum length %1 that %select{C90|ISO C99|C++}2 compilers are required to "
   "support">, InGroup<OverlengthStrings>;
+def warn_ucn_escape_too_large : ExtWarn<
+  "character unicode escape sequence too long for its type">;
+def warn_ucn_not_valid_in_c89 : ExtWarn<
+  "unicode escape sequences are only valid in C99 or C++">;
   
 //===----------------------------------------------------------------------===//
 // PTH Diagnostics
