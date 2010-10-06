@@ -1989,11 +1989,9 @@ public:
   /// Provide fast operand accessors
   DECLARE_TRANSPARENT_OPERAND_ACCESSORS(Value);
 
-  /// Convenience accessor
-  Value *getReturnValue(unsigned n = 0) const {
-    return n < getNumOperands()
-      ? getOperand(n)
-      : 0;
+  /// Convenience accessor. Returns null if there is no return value.
+  Value *getReturnValue() const {
+    return getNumOperands() != 0 ? getOperand(0) : 0;
   }
 
   unsigned getNumSuccessors() const { return 0; }
