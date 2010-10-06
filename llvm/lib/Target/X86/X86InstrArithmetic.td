@@ -495,24 +495,57 @@ let CodeSize = 2 in {
 } // CodeSize = 2
 } // Defs = [EFLAGS]
 
+/// X86TypeInfo - This is a bunch of information that describes relevant X86
+/// information about value types.  For example, it can tell you what the
+/// register class and preferred load to use.
+class X86TypeInfo<ValueType vt, string instrsuffix, RegisterClass regclass,
+                  PatFrag loadnode, X86MemOperand memoperand> {
+  /// VT - This is the value type itself.
+  ValueType VT = vt;
+  
+  /// InstrSuffix - This is the suffix used on instructions with this type.  For
+  /// example, i8 -> "b", i16 -> "w", i32 -> "l", i64 -> "q".
+  string InstrSuffix = instrsuffix;
+  
+  /// RegClass - This is the register class associated with this type.  For
+  /// example, i8 -> GR8, i16 -> GR16, i32 -> GR32, i64 -> GR64.
+  RegisterClass RegClass = regclass;
+  
+  /// LoadNode - This is the load node associated with this type.  For
+  /// example, i8 -> loadi8, i16 -> loadi16, i32 -> loadi32, i64 -> loadi64.
+  PatFrag LoadNode = loadnode;
+  
+  /// MemOperand - This is the memory operand associated with this type.  For
+  /// example, i8 -> i8mem, i16 -> i16mem, i32 -> i32mem, i64 -> i64mem.
+  X86MemOperand MemOperand = memoperand;
+}
 
-class BinOpRR<bits<8> opcode, Format format, string mnemonic,
-              X86RegisterClass regclass, SDNode opnode>
-  : I<opcode, format, (outs regclass:$dst), (ins regclass:$src1,regclass:$src2),
-      !strconcat(mnemonic, "{", regclass.InstrSuffix,
+def Xi8  : X86TypeInfo<i8 , "b", GR8 , loadi8 , i8mem>;
+def Xi16 : X86TypeInfo<i16, "w", GR16, loadi16, i16mem>;
+def Xi32 : X86TypeInfo<i32, "l", GR32, loadi32, i32mem>;
+def Xi64 : X86TypeInfo<i64, "q", GR64, loadi64, i64mem>;
+
+
+class BinOpRR<bits<8> opcode, string mnemonic, X86TypeInfo typeinfo,
+              SDNode opnode, Format format>
+  : I<opcode, format,
+      (outs typeinfo.RegClass:$dst),
+      (ins typeinfo.RegClass:$src1, typeinfo.RegClass:$src2),
+      !strconcat(mnemonic, "{", typeinfo.InstrSuffix,
                  "}\t{$src2, $dst|$dst, $src2}"),
-      [(set regclass:$dst, EFLAGS, (opnode regclass:$src1, regclass:$src2))]>;
+      [(set typeinfo.RegClass:$dst, EFLAGS,
+            (opnode typeinfo.RegClass:$src1, typeinfo.RegClass:$src2))]>;
 
 
-class BinOpRM<bits<8> opcode, string mnemonic,
-              X86RegisterClass regclass, SDNode opnode, PatFrag loadnode,
-              X86MemOperand operand>
+class BinOpRM<bits<8> opcode, string mnemonic, X86TypeInfo typeinfo,
+              SDNode opnode, PatFrag loadnode>
   : I<opcode, MRMSrcMem,
-      (outs regclass:$dst), (ins regclass:$src1, operand:$src2),
-      !strconcat(mnemonic, "{", regclass.InstrSuffix,
+      (outs typeinfo.RegClass:$dst),
+      (ins typeinfo.RegClass:$src1, typeinfo.MemOperand:$src2),
+      !strconcat(mnemonic, "{", typeinfo.InstrSuffix,
                  "}\t{$src2, $dst|$dst, $src2}"),
-      [(set regclass:$dst, EFLAGS, (opnode regclass:$src1,
-                                           (loadnode addr:$src2)))]>;
+      [(set typeinfo.RegClass:$dst, EFLAGS,
+            (opnode typeinfo.RegClass:$src1, (loadnode addr:$src2)))]>;
 
 
 // Logical operators.
@@ -520,10 +553,10 @@ let Defs = [EFLAGS] in {
 let Constraints = "$src1 = $dst" in {
 
 let isCommutable = 1 in {   // X = AND Y, Z   --> X = AND Z, Y
-def AND8rr  : BinOpRR<0x20, MRMDestReg, "and", GR8 , X86and_flag>;
-def AND16rr : BinOpRR<0x21, MRMDestReg, "and", GR16, X86and_flag>, OpSize;
-def AND32rr : BinOpRR<0x21, MRMDestReg, "and", GR32, X86and_flag>;
-def AND64rr : BinOpRR<0x21, MRMDestReg, "and", GR64, X86and_flag>, REX_W;
+def AND8rr  : BinOpRR<0x20, "and", Xi8 , X86and_flag, MRMDestReg>;
+def AND16rr : BinOpRR<0x21, "and", Xi16, X86and_flag, MRMDestReg>, OpSize;
+def AND32rr : BinOpRR<0x21, "and", Xi32, X86and_flag, MRMDestReg>;
+def AND64rr : BinOpRR<0x21, "and", Xi64, X86and_flag, MRMDestReg>, REX_W;
 } // isCommutable
 
 
@@ -543,10 +576,10 @@ def AND64rr_REV : RI<0x23, MRMSrcReg, (outs GR64:$dst),
                      "and{q}\t{$src2, $dst|$dst, $src2}", []>;
 }
 
-def AND8rm   : BinOpRM<0x22, "and", GR8 , X86and_flag, loadi8 , i8mem>;
-def AND16rm  : BinOpRM<0x23, "and", GR16, X86and_flag, loadi16, i16mem>, OpSize;
-def AND32rm  : BinOpRM<0x23, "and", GR32, X86and_flag, loadi32, i32mem>;
-def AND64rm  : BinOpRM<0x23, "and", GR64, X86and_flag, loadi64, i64mem>, REX_W;
+def AND8rm   : BinOpRM<0x22, "and", Xi8 , X86and_flag, loadi8 >;
+def AND16rm  : BinOpRM<0x23, "and", Xi16, X86and_flag, loadi16>, OpSize;
+def AND32rm  : BinOpRM<0x23, "and", Xi32, X86and_flag, loadi32>;
+def AND64rm  : BinOpRM<0x23, "and", Xi64, X86and_flag, loadi64>, REX_W;
 
 def AND8ri   : Ii8<0x80, MRM4r, 
                    (outs GR8 :$dst), (ins GR8 :$src1, i8imm :$src2),
