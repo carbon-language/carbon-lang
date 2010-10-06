@@ -137,7 +137,7 @@ class ClassTypesTestCase(TestBase):
         #
         # Verify that expr this->m_c_int behaves correctly.
         self.expect("expr this->m_c_int", VARIABLES_DISPLAYED_CORRECTLY,
-            substrs = ['(int) 66'])
+            patterns = ['\(int\) \$[0-9]+ = 66'])
 
 
 if __name__ == '__main__':
