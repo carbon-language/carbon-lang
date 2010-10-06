@@ -103,8 +103,8 @@ class ArrayTypesTestCase(TestBase):
         # Sanity check the print representation of process.
         proc = repr(self.process)
         self.expect(proc, msg="Process looks good", exe=False,
-            patterns = ["executable.+array_types.a\.out",
-                        "instance name:.+state: Stopped"])
+            substrs = ["state: Stopped",
+                       "executable: a.out"])
 
         # The stop reason of the thread should be breakpoint.
         thread = self.process.GetThreadAtIndex(0)
@@ -116,8 +116,7 @@ class ArrayTypesTestCase(TestBase):
         self.expect(thr, "Thread looks good with stop reason = breakpoint", exe=False,
             substrs = ["thread #%d: tid = 0x%4.4x" % (thread.GetIndexID(), thread.GetThreadID()),
                        "stop reason = breakpoint",
-                       "queue = %s" % thread.GetQueueName() if thread.GetQueueName() else "",
-                       "%d frames" % thread.GetNumFrames()])
+                       "queue = %s" % thread.GetQueueName() if thread.GetQueueName() else ""])
 
         # The breakpoint should have a hit count of 1.
         self.assertTrue(breakpoint.GetHitCount() == 1, BREAKPOINT_HIT_ONCE)
