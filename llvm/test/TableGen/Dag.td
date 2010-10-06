@@ -1,5 +1,8 @@
 // RUN: tblgen %s | FileCheck %s
 // XFAIL: vg_leak
+
+//===----------------------------------------------------------------------===//
+// Substitution of an int.
 def X1;
 
 class C1<int N> {
@@ -12,6 +15,8 @@ def VAL1 : C1<13>;
 // CHECK-NEXT: dag d = (X1 13)
 
 
+//===----------------------------------------------------------------------===//
+// Substitution of a DAG.
 def X2;
 
 class yclass;
