@@ -2213,10 +2213,9 @@ QualType Sema::BuildTypeofExprType(Expr *E) {
   }
   if (!E->isTypeDependent()) {
     QualType T = E->getType();
-    if (const RecordType *EltTy = T->getAs<RecordType>())
-      DiagnoseUseOfDecl(EltTy->getDecl(), E->getExprLoc());
-    else if (const EnumType *Enum = T->getAs<EnumType>())
-      DiagnoseUseOfDecl(Enum->getDecl(), E->getExprLoc());
+    // FIXME. Issue warning for types built from deprecated types as well.
+    if (const TagType *TT = T->getAs<TagType>())
+      DiagnoseUseOfDecl(TT->getDecl(), E->getExprLoc());
   }
   return Context.getTypeOfExprType(E);
 }
