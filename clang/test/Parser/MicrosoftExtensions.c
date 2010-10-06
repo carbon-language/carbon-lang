@@ -21,6 +21,7 @@ void __forceinline InterlockedBitTestAndSet (long *Base, long Bit)
     setc al
   };
 }
+_inline int foo99() { return 99; }
 
 void *_alloca(int);
 
