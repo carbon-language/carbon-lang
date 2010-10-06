@@ -121,7 +121,7 @@ public:
 
   union {
     /// Deprecation.
-    struct { NamedDecl *Decl; } DeprecationData;
+    struct { NamedDecl *Decl; const char* Message; } DeprecationData;
 
     /// Access control.
     char AccessData[sizeof(AccessedEntity)];
@@ -135,12 +135,14 @@ public:
   }
 
   static DelayedDiagnostic makeDeprecation(SourceLocation Loc,
-                                           NamedDecl *D) {
+                                           NamedDecl *D,
+                                           const char *Msg) {
     DelayedDiagnostic DD;
     DD.Kind = Deprecation;
     DD.Triggered = false;
     DD.Loc = Loc;
     DD.DeprecationData.Decl = D;
+    DD.DeprecationData.Message = Msg;
     return DD;
   }
 

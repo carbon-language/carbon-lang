@@ -57,8 +57,10 @@ using namespace sema;
 ///
 bool Sema::DiagnoseUseOfDecl(NamedDecl *D, SourceLocation Loc) {
   // See if the decl is deprecated.
-  if (D->getAttr<DeprecatedAttr>()) {
-    EmitDeprecationWarning(D, Loc);
+  if (const DeprecatedAttr *DA = D->getAttr<DeprecatedAttr>()) {
+    const char *Message = 
+      DA->getMessage().empty() ? "" : DA->getMessage().data();
+    EmitDeprecationWarning(D, Message, Loc);
   }
 
   // See if the decl is unavailable

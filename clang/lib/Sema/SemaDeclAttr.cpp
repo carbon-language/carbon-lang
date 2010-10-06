@@ -903,12 +903,28 @@ static void HandleDestructorAttr(Decl *d, const AttributeList &Attr, Sema &S) {
 
 static void HandleDeprecatedAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   // check the attribute arguments.
-  if (Attr.getNumArgs() != 0) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 0;
+  int noArgs = Attr.getNumArgs();
+  if (noArgs > 1) {
+    S.Diag(Attr.getLoc(), 
+           diag::err_attribute_wrong_number_arguments) << "0 or 1";
     return;
   }
+  // Handle the case where deprecated attribute has a text message.
+  StringLiteral *SE;
+  if (noArgs == 1) {
+    Expr *ArgExpr = static_cast<Expr *>(Attr.getArg(0));
+    SE = dyn_cast<StringLiteral>(ArgExpr);
+    if (!SE) {
+      S.Diag(ArgExpr->getLocStart(), 
+             diag::err_attribute_not_string) << "deprecated";
+      return;
+    }
+  }
+  else
+    SE = StringLiteral::CreateEmpty(S.Context, 1);
 
-  d->addAttr(::new (S.Context) DeprecatedAttr(Attr.getLoc(), S.Context));
+  d->addAttr(::new (S.Context) DeprecatedAttr(Attr.getLoc(), S.Context,
+                                              SE->getString()));
 }
 
 static void HandleUnavailableAttr(Decl *d, const AttributeList &Attr, Sema &S) {
@@ -2536,20 +2552,30 @@ void Sema::HandleDelayedDeprecationCheck(DelayedDiagnostic &DD,
     return;
 
   DD.Triggered = true;
-  Diag(DD.Loc, diag::warn_deprecated)
-    << DD.DeprecationData.Decl->getDeclName();
+  if (strlen(DD.DeprecationData.Message))
+    Diag(DD.Loc, diag::warn_deprecated_message)
+      << DD.DeprecationData.Decl->getDeclName() 
+      << DD.DeprecationData.Message;
+  else
+    Diag(DD.Loc, diag::warn_deprecated)
+      << DD.DeprecationData.Decl->getDeclName();
 }
 
-void Sema::EmitDeprecationWarning(NamedDecl *D, SourceLocation Loc) {
+void Sema::EmitDeprecationWarning(NamedDecl *D, const char * Message,
+                                  SourceLocation Loc) {
   // Delay if we're currently parsing a declaration.
   if (ParsingDeclDepth) {
-    DelayedDiagnostics.push_back(DelayedDiagnostic::makeDeprecation(Loc, D));
+    DelayedDiagnostics.push_back(DelayedDiagnostic::makeDeprecation(Loc, D, 
+                                                                    Message));
     return;
   }
 
   // Otherwise, don't warn if our current context is deprecated.
   if (isDeclDeprecated(cast<Decl>(CurContext)))
     return;
-
-  Diag(Loc, diag::warn_deprecated) << D->getDeclName();
+  if (strlen(Message))
+    Diag(Loc, diag::warn_deprecated_message) << D->getDeclName() 
+                                             << Message;
+  else
+    Diag(Loc, diag::warn_deprecated) << D->getDeclName();
 }

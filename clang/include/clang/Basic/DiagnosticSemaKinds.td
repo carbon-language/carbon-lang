@@ -1745,6 +1745,8 @@ def note_dependent_var_use : Note<"must qualify identifier to find this "
 def err_undeclared_use : Error<"use of undeclared %0">;
 def warn_deprecated : Warning<"%0 is deprecated">,
     InGroup<DeprecatedDeclarations>;
+def warn_deprecated_message : Warning<"%0 is deprecated: %1">,
+    InGroup<DeprecatedDeclarations>;
 def err_unavailable : Error<"%0 is unavailable">;
 def note_unavailable_here : Note<
   "function has been explicitly marked %select{unavailable|deleted}0 here">;

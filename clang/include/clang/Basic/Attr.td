@@ -172,6 +172,7 @@ def Constructor : Attr {
 
 def Deprecated : Attr {
   let Spellings = ["deprecated"];
+  let Args = [StringArgument<"Message">];
 }
 
 def Destructor : Attr {
