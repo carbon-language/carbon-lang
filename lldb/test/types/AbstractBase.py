@@ -138,10 +138,10 @@ class GenericTester(TestBase):
             #
             # Example:
             #     runCmd: expr a
-            #     output: $0 = (double) 1100.12
+            #     output: (double) $0 = 1100.12
             #
             try:
-                dt = re.match("^\$[0-9]+ = \((.*)\)", output).group(1)
+                dt = re.match("^\((.*)\) \$[0-9]+ = ", output).group(1)
             except:
                 self.fail(self.DATA_TYPE_GROKKED)
 
