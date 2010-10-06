@@ -339,6 +339,10 @@ static QualType ConvertDeclSpecToType(Sema &TheSema,
     // FIXME: Preserve type source info.
     Result = TheSema.GetTypeFromParser(DS.getRepAsType());
     assert(!Result.isNull() && "Didn't get a type for typeof?");
+    if (!Result->isDependentType())
+      if (const TagType *TT = Result->getAs<TagType>())
+        TheSema.DiagnoseUseOfDecl(TT->getDecl(), 
+                                  DS.getTypeSpecTypeLoc());
     // TypeQuals handled by caller.
     Result = Context.getTypeOfType(Result);
     break;
@@ -2213,7 +2217,6 @@ QualType Sema::BuildTypeofExprType(Expr *E) {
   }
   if (!E->isTypeDependent()) {
     QualType T = E->getType();
-    // FIXME. Issue warning for types built from deprecated types as well.
     if (const TagType *TT = T->getAs<TagType>())
       DiagnoseUseOfDecl(TT->getDecl(), E->getExprLoc());
   }
