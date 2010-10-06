@@ -30,7 +30,7 @@ using namespace llvm;
 /// of insertvalue or extractvalue indices that identify a member, return
 /// the linearized index of the start of the member.
 ///
-unsigned llvm::ComputeLinearIndex(const TargetLowering &TLI, const Type *Ty,
+unsigned llvm::ComputeLinearIndex(const Type *Ty,
                                   const unsigned *Indices,
                                   const unsigned *IndicesEnd,
                                   unsigned CurIndex) {
@@ -45,8 +45,8 @@ unsigned llvm::ComputeLinearIndex(const TargetLowering &TLI, const Type *Ty,
                                       EE = STy->element_end();
         EI != EE; ++EI) {
       if (Indices && *Indices == unsigned(EI - EB))
-        return ComputeLinearIndex(TLI, *EI, Indices+1, IndicesEnd, CurIndex);
-      CurIndex = ComputeLinearIndex(TLI, *EI, 0, 0, CurIndex);
+        return ComputeLinearIndex(*EI, Indices+1, IndicesEnd, CurIndex);
+      CurIndex = ComputeLinearIndex(*EI, 0, 0, CurIndex);
     }
     return CurIndex;
   }
@@ -55,8 +55,8 @@ unsigned llvm::ComputeLinearIndex(const TargetLowering &TLI, const Type *Ty,
     const Type *EltTy = ATy->getElementType();
     for (unsigned i = 0, e = ATy->getNumElements(); i != e; ++i) {
       if (Indices && *Indices == i)
-        return ComputeLinearIndex(TLI, EltTy, Indices+1, IndicesEnd, CurIndex);
-      CurIndex = ComputeLinearIndex(TLI, EltTy, 0, 0, CurIndex);
+        return ComputeLinearIndex(EltTy, Indices+1, IndicesEnd, CurIndex);
+      CurIndex = ComputeLinearIndex(EltTy, 0, 0, CurIndex);
     }
     return CurIndex;
   }

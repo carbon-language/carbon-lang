@@ -30,7 +30,7 @@ class GlobalVariable;
 /// of insertvalue or extractvalue indices that identify a member, return
 /// the linearized index of the start of the member.
 ///
-unsigned ComputeLinearIndex(const TargetLowering &TLI, const Type *Ty,
+unsigned ComputeLinearIndex(const Type *Ty,
                             const unsigned *Indices,
                             const unsigned *IndicesEnd,
                             unsigned CurIndex = 0);
