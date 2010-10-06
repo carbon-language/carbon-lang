@@ -1779,7 +1779,7 @@ $(INCTMPFiles) : $(TBLGEN) $(TDFiles)
 
 $(ObjDir)/%.inc.tmp: %.td $(ObjDir)/.dir
 	$(Echo) "Building LLVMC compilation graph description with tblgen"
-	$(Verb) $(TableGen) -gen-llvmc -o $(call SYSPATH, $@) $<
+	$(Verb) $(TableGen) -gen-llvmc -llvmc-temp-hack -o $(call SYSPATH, $@) $<
 
 clean-local::
 	-$(Verb) $(RM) -f $(INCFiles)

@@ -33,3 +33,39 @@ def VAL2 : C2<Y2>;
 // CHECK-NEXT: dag d = (X2 Y2)
 // CHECK-NEXT: dag e = (Y2 X2)
 
+
+//===----------------------------------------------------------------------===//
+// Complex dag operator (F.TheOp).
+
+class operator;
+def somedef1 : operator;
+def somedef2 : operator;
+
+class foo<operator a> {
+ operator TheOp = a;
+}
+
+class bar<foo F, operator a> {
+  dag Dag1 = (somedef1 1);
+  dag Dag2 = (a 2);
+  dag Dag3 = (F.TheOp 2);
+}
+
+def foo1 : foo<somedef1>;
+def foo2 : foo<somedef2>;
+
+def VAL3 : bar<foo1, somedef1>;
+
+// CHECK:     def VAL3 {	// bar
+// CHECK-NEXT:  dag Dag1 = (somedef1 1);
+// CHECK-NEXT:  dag Dag2 = (somedef1 2);
+// CHECK-NEXT:  dag Dag3 = (somedef1 2);
+// CHECK-NEXT: }
+
+
+def VAL4 : bar<foo2, somedef2>;
+// CHECK:      def VAL4 {
+// CHECK-NEXT:  dag Dag1 = (somedef1 1);
+// CHECK-NEXT:  dag Dag2 = (somedef2 2);
+// CHECK-NEXT:  dag Dag3 = (somedef2 2);
+// CHECK-NEXT: }
