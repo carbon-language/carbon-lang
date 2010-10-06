@@ -1128,7 +1128,7 @@ void ELFObjectWriterImpl::WriteObject(MCAssembler &Asm,
   // ... then all of the sections ...
   DenseMap<const MCSection*, uint64_t> SectionOffsetMap;
 
-  DenseMap<const MCSection*, uint8_t> SectionIndexMap;
+  DenseMap<const MCSection*, uint32_t> SectionIndexMap;
 
   unsigned Index = 1;
   for (MCAssembler::const_iterator it = Asm.begin(),
