@@ -106,17 +106,6 @@ SBTarget::GetDebugger () const
 }
 
 SBProcess
-SBTarget::CreateProcess ()
-{
-    SBProcess sb_process;
-
-    if (m_opaque_sp)
-        sb_process.SetProcess (m_opaque_sp->CreateProcess (m_opaque_sp->GetDebugger().GetListener()));
-
-    return sb_process;
-}
-
-SBProcess
 SBTarget::LaunchProcess
 (
     char const **argv,
@@ -126,23 +115,39 @@ SBTarget::LaunchProcess
     bool stop_at_entry
 )
 {
-    SBProcess process(GetProcess ());
-    if (!process.IsValid())
-        process = CreateProcess();
-    if (process.IsValid())
+    SBProcess sb_process;
+    if (m_opaque_sp)
     {
-        Error error (process->Launch (argv, envp, launch_flags, tty, tty, tty));
-        if (error.Success())
+        // When launching, we always want to create a new process
+        sb_process.SetProcess (m_opaque_sp->CreateProcess (m_opaque_sp->GetDebugger().GetListener()));
+
+        if (sb_process.IsValid())
         {
-            if (!stop_at_entry)
+            Error error (sb_process->Launch (argv, envp, launch_flags, tty, tty, tty));
+            if (error.Success())
             {
-                StateType state = process->WaitForProcessToStop (NULL);
+                // We we are stopping at the entry point, we can return now!
+                if (stop_at_entry)
+                    return sb_process;
+
+                // Make sure we are stopped at the entry
+                StateType state = sb_process->WaitForProcessToStop (NULL);
                 if (state == eStateStopped)
-                    process->Resume();
+                {
+                    // resume the process to skip the entry point
+                    error = sb_process->Resume();
+                    if (error.Success())
+                    {
+                        // If we are doing synchronous mode, then wait for the
+                        // process to stop yet again!
+                        if (m_opaque_sp->GetDebugger().GetAsyncExecution () == false)
+                            sb_process->WaitForProcessToStop (NULL);
+                    }
+                }
             }
         }
     }
-    return process;
+    return sb_process;
 }
 
 SBFileSpec
@@ -401,9 +406,9 @@ SBTarget::Disassemble (lldb::addr_t start_addr, lldb::addr_t end_addr, const cha
         // Make sure the process object is alive if we have one (it might be
         // created but we might not be launched yet).
         
-        Process *process = m_opaque_sp->GetProcessSP().get();
-        if (process && !process->IsAlive())
-            process = NULL;
+        Process *sb_process = m_opaque_sp->GetProcessSP().get();
+        if (sb_process && !sb_process->IsAlive())
+            sb_process = NULL;
         
         // If we are given a module, then "start_addr" is a file address in
         // that module.
@@ -430,8 +435,8 @@ SBTarget::Disassemble (lldb::addr_t start_addr, lldb::addr_t end_addr, const cha
 
         ExecutionContext exe_ctx;
 
-        if (process)
-            process->CalculateExecutionContext(exe_ctx);
+        if (sb_process)
+            sb_process->CalculateExecutionContext(exe_ctx);
         else 
             m_opaque_sp->CalculateExecutionContext(exe_ctx);
 
@@ -479,12 +484,12 @@ SBTarget::Disassemble (const char *function_name, const char *module_name)
         
         // Make sure the process object is alive if we have one (it might be
         // created but we might not be launched yet).
-        Process *process = m_opaque_sp->GetProcessSP().get();
-        if (process && !process->IsAlive())
-            process = NULL;
+        Process *sb_process = m_opaque_sp->GetProcessSP().get();
+        if (sb_process && !sb_process->IsAlive())
+            sb_process = NULL;
         
-        if (process)
-            process->CalculateExecutionContext(exe_ctx);
+        if (sb_process)
+            sb_process->CalculateExecutionContext(exe_ctx);
         else 
             m_opaque_sp->CalculateExecutionContext(exe_ctx);
 

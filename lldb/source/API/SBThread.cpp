@@ -233,25 +233,32 @@ SBThread::StepOver (lldb::RunMode stop_other_threads)
             {
                 SymbolContext sc(frame_sp->GetSymbolContext(eSymbolContextEverything));
                 m_opaque_sp->QueueThreadPlanForStepRange (abort_other_plans, 
-                                                               eStepTypeOver,
-                                                               sc.line_entry.range, 
-                                                               sc,
-                                                               stop_other_threads,
-                                                               false);
+                                                          eStepTypeOver,
+                                                          sc.line_entry.range, 
+                                                          sc,
+                                                          stop_other_threads,
+                                                          false);
                 
             }
             else
             {
                 m_opaque_sp->QueueThreadPlanForStepSingleInstruction (true, 
-                                                                           abort_other_plans, 
-                                                                           stop_other_threads);
+                                                                      abort_other_plans, 
+                                                                      stop_other_threads);
             }
         }
 
         Process &process = m_opaque_sp->GetProcess();
         // Why do we need to set the current thread by ID here???
         process.GetThreadList().SetSelectedThreadByID (m_opaque_sp->GetID());
-        process.Resume();
+        Error error (process.Resume());
+        if (error.Success())
+        {
+            // If we are doing synchronous mode, then wait for the
+            // process to stop yet again!
+            if (process.GetTarget().GetDebugger().GetAsyncExecution () == false)
+                process.WaitForProcessToStop (NULL);
+        }
     }
 }
 
@@ -269,24 +276,30 @@ SBThread::StepInto (lldb::RunMode stop_other_threads)
             bool avoid_code_without_debug_info = true;
             SymbolContext sc(frame_sp->GetSymbolContext(eSymbolContextEverything));
             m_opaque_sp->QueueThreadPlanForStepRange (abort_other_plans, 
-                                                           eStepTypeInto, 
-                                                           sc.line_entry.range, 
-                                                           sc, 
-                                                           stop_other_threads,
-                                                           avoid_code_without_debug_info);
+                                                      eStepTypeInto, 
+                                                      sc.line_entry.range, 
+                                                      sc, 
+                                                      stop_other_threads,
+                                                      avoid_code_without_debug_info);
         }
         else
         {
             m_opaque_sp->QueueThreadPlanForStepSingleInstruction (false, 
-                                                                       abort_other_plans, 
-                                                                       stop_other_threads);
+                                                                  abort_other_plans, 
+                                                                  stop_other_threads);
         }
 
         Process &process = m_opaque_sp->GetProcess();
         // Why do we need to set the current thread by ID here???
         process.GetThreadList().SetSelectedThreadByID (m_opaque_sp->GetID());
-        process.Resume();
-
+        Error error (process.Resume());
+        if (error.Success())
+        {
+            // If we are doing synchronous mode, then wait for the
+            // process to stop yet again!
+            if (process.GetTarget().GetDebugger().GetAsyncExecution () == false)
+                process.WaitForProcessToStop (NULL);
+        }
     }
 }
 
@@ -302,7 +315,14 @@ SBThread::StepOut ()
 
         Process &process = m_opaque_sp->GetProcess();
         process.GetThreadList().SetSelectedThreadByID (m_opaque_sp->GetID());
-        process.Resume();
+        Error error (process.Resume());
+        if (error.Success())
+        {
+            // If we are doing synchronous mode, then wait for the
+            // process to stop yet again!
+            if (process.GetTarget().GetDebugger().GetAsyncExecution () == false)
+                process.WaitForProcessToStop (NULL);
+        }
     }
 }
 
@@ -314,7 +334,14 @@ SBThread::StepInstruction (bool step_over)
         m_opaque_sp->QueueThreadPlanForStepSingleInstruction (step_over, true, true);
         Process &process = m_opaque_sp->GetProcess();
         process.GetThreadList().SetSelectedThreadByID (m_opaque_sp->GetID());
-        process.Resume();
+        Error error (process.Resume());
+        if (error.Success())
+        {
+            // If we are doing synchronous mode, then wait for the
+            // process to stop yet again!
+            if (process.GetTarget().GetDebugger().GetAsyncExecution () == false)
+                process.WaitForProcessToStop (NULL);
+        }
     }
 }
 
@@ -331,7 +358,14 @@ SBThread::RunToAddress (lldb::addr_t addr)
         m_opaque_sp->QueueThreadPlanForRunToAddress (abort_other_plans, target_addr, stop_other_threads);
         Process &process = m_opaque_sp->GetProcess();
         process.GetThreadList().SetSelectedThreadByID (m_opaque_sp->GetID());
-        process.Resume();
+        Error error (process.Resume());
+        if (error.Success())
+        {
+            // If we are doing synchronous mode, then wait for the
+            // process to stop yet again!
+            if (process.GetTarget().GetDebugger().GetAsyncExecution () == false)
+                process.WaitForProcessToStop (NULL);
+        }
     }
 
 }

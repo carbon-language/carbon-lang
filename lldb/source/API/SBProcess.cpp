@@ -15,6 +15,7 @@
 #include "lldb/Interpreter/Args.h"
 #include "lldb/Core/DataBufferHeap.h"
 #include "lldb/Core/DataExtractor.h"
+#include "lldb/Core/Debugger.h"
 #include "lldb/Core/State.h"
 #include "lldb/Core/Stream.h"
 #include "lldb/Core/StreamFile.h"
@@ -287,7 +288,15 @@ SBProcess::Continue ()
 {
     SBError sb_error;
     if (IsValid())
-        sb_error.SetError(m_opaque_sp->Resume());
+    {
+        Error error (m_opaque_sp->Resume());
+        if (error.Success())
+        {
+            if (m_opaque_sp->GetTarget().GetDebugger().GetAsyncExecution () == false)
+                m_opaque_sp->WaitForProcessToStop (NULL);
+        }
+        sb_error.SetError(error);
+    }
     else
         sb_error.SetErrorString ("SBProcess is invalid");
 

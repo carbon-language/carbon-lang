@@ -53,9 +53,6 @@ public:
     GetProcess ();
 
     lldb::SBProcess
-    CreateProcess ();
-
-    lldb::SBProcess
     LaunchProcess (char const **argv,
                    char const **envp,
                    const char *tty,
