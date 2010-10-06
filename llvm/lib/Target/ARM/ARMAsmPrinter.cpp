@@ -107,6 +107,12 @@ namespace {
     void EmitStartOfAsmFile(Module &M);
     void EmitEndOfAsmFile(Module &M);
 
+  private:
+    // Helpers for EmitStartOfAsmFile() and EmitEndOfAsmFile()
+    void emitAttributes();
+    void emitAttribute(ARMBuildAttrs::AttrType attr, int v);    
+
+  public:
     void PrintDebugValueComment(const MachineInstr *MI, raw_ostream &OS);
 
     MachineLocation getDebugValueLocation(const MachineInstr *MI) const {
@@ -407,45 +413,8 @@ void ARMAsmPrinter::EmitStartOfAsmFile(Module &M) {
 
   // Emit ARM Build Attributes
   if (Subtarget->isTargetELF()) {
-    // CPU Type
-    std::string CPUString = Subtarget->getCPUString();
-    if (CPUString != "generic")
-      OutStreamer.EmitRawText("\t.cpu " + Twine(CPUString));
 
-    // FIXME: Emit FPU type
-    if (Subtarget->hasVFP2())
-      OutStreamer.EmitRawText("\t.eabi_attribute " +
-                              Twine(ARMBuildAttrs::VFP_arch) + ", 2");
-
-    // Signal various FP modes.
-    if (!UnsafeFPMath) {
-      OutStreamer.EmitRawText("\t.eabi_attribute " +
-                              Twine(ARMBuildAttrs::ABI_FP_denormal) + ", 1");
-      OutStreamer.EmitRawText("\t.eabi_attribute " +
-                              Twine(ARMBuildAttrs::ABI_FP_exceptions) + ", 1");
-    }
-
-    if (NoInfsFPMath && NoNaNsFPMath)
-      OutStreamer.EmitRawText("\t.eabi_attribute " +
-                              Twine(ARMBuildAttrs::ABI_FP_number_model)+ ", 1");
-    else
-      OutStreamer.EmitRawText("\t.eabi_attribute " +
-                              Twine(ARMBuildAttrs::ABI_FP_number_model)+ ", 3");
-
-    // 8-bytes alignment stuff.
-    OutStreamer.EmitRawText("\t.eabi_attribute " +
-                            Twine(ARMBuildAttrs::ABI_align8_needed) + ", 1");
-    OutStreamer.EmitRawText("\t.eabi_attribute " +
-                            Twine(ARMBuildAttrs::ABI_align8_preserved) + ", 1");
-
-    // Hard float.  Use both S and D registers and conform to AAPCS-VFP.
-    if (Subtarget->isAAPCS_ABI() && FloatABIType == FloatABI::Hard) {
-      OutStreamer.EmitRawText("\t.eabi_attribute " +
-                              Twine(ARMBuildAttrs::ABI_HardFP_use) + ", 3");
-      OutStreamer.EmitRawText("\t.eabi_attribute " +
-                              Twine(ARMBuildAttrs::ABI_VFP_args) + ", 1");
-    }
-    // FIXME: Should we signal R9 usage?
+    emitAttributes();
   }
 }
 
@@ -515,6 +484,58 @@ void ARMAsmPrinter::EmitEndOfAsmFile(Module &M) {
     // linker can safely perform dead code stripping.  Since LLVM never
     // generates code that does this, it is always safe to set.
     OutStreamer.EmitAssemblerFlag(MCAF_SubsectionsViaSymbols);
+  }
+}
+
+//===----------------------------------------------------------------------===//
+// Helper routines for EmitStartOfAsmFile() and EmitEndOfAsmFile()
+// FIXME:
+// The following seem like one-off assembler flags, but they actually need
+// to appear in the .ARM.attributes section in ELF. 
+// Instead of subclassing the MCELFStreamer, we do the work here.
+
+void ARMAsmPrinter::emitAttributes() {
+  // FIXME: Add in ELF specific section handling here.
+  
+  // FIXME: unify this: .cpu and CPUString with enum attributes
+  std::string CPUString = Subtarget->getCPUString();
+  if (CPUString != "generic")
+    OutStreamer.EmitRawText("\t.cpu " + Twine(CPUString));
+
+  // FIXME: Emit FPU type
+  if (Subtarget->hasVFP2())
+    emitAttribute(ARMBuildAttrs::VFP_arch, 2);
+
+  // Signal various FP modes.
+  if (!UnsafeFPMath) {
+    emitAttribute(ARMBuildAttrs::ABI_FP_denormal, 1);
+    emitAttribute(ARMBuildAttrs::ABI_FP_exceptions, 1);
+  }
+
+  if (NoInfsFPMath && NoNaNsFPMath)
+    emitAttribute(ARMBuildAttrs::ABI_FP_number_model, 1);
+  else
+    emitAttribute(ARMBuildAttrs::ABI_FP_number_model, 3);
+
+  // 8-bytes alignment stuff.
+  emitAttribute(ARMBuildAttrs::ABI_align8_needed, 1);
+  emitAttribute(ARMBuildAttrs::ABI_align8_preserved, 1);
+
+  // Hard float.  Use both S and D registers and conform to AAPCS-VFP.
+  if (Subtarget->isAAPCS_ABI() && FloatABIType == FloatABI::Hard) {
+    emitAttribute(ARMBuildAttrs::ABI_HardFP_use, 3);
+    emitAttribute(ARMBuildAttrs::ABI_VFP_args, 1);
+  }
+  // FIXME: Should we signal R9 usage?
+}
+
+void ARMAsmPrinter::emitAttribute(ARMBuildAttrs::AttrType attr, int v) {
+  if (OutStreamer.hasRawTextSupport()) {
+    OutStreamer.EmitRawText("\t.eabi_attribute " + 
+                            Twine(attr) + ", " + Twine(v));
+    
+  } else {
+    assert(0 && "ELF .ARM.attributes unimplemented");
   }
 }
 
