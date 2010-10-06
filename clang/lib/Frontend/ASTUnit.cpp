@@ -798,6 +798,7 @@ error:
     PreprocessorOpts.DisablePCHValidation = true;
     PreprocessorOpts.ImplicitPCHInclude = PriorImplicitPCHInclude;
     delete OverrideMainBuffer;
+    SavedMainFileBuffer = 0;
   }
   
   Clang.takeSourceManager();
