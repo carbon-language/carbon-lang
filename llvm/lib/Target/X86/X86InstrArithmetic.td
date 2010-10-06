@@ -538,14 +538,14 @@ class BinOpRR<bits<8> opcode, string mnemonic, X86TypeInfo typeinfo,
 
 
 class BinOpRM<bits<8> opcode, string mnemonic, X86TypeInfo typeinfo,
-              SDNode opnode, PatFrag loadnode>
+              SDNode opnode>
   : I<opcode, MRMSrcMem,
       (outs typeinfo.RegClass:$dst),
       (ins typeinfo.RegClass:$src1, typeinfo.MemOperand:$src2),
       !strconcat(mnemonic, "{", typeinfo.InstrSuffix,
                  "}\t{$src2, $dst|$dst, $src2}"),
       [(set typeinfo.RegClass:$dst, EFLAGS,
-            (opnode typeinfo.RegClass:$src1, (loadnode addr:$src2)))]>;
+            (opnode typeinfo.RegClass:$src1, (typeinfo.LoadNode addr:$src2)))]>;
 
 
 // Logical operators.
@@ -576,10 +576,10 @@ def AND64rr_REV : RI<0x23, MRMSrcReg, (outs GR64:$dst),
                      "and{q}\t{$src2, $dst|$dst, $src2}", []>;
 }
 
-def AND8rm   : BinOpRM<0x22, "and", Xi8 , X86and_flag, loadi8 >;
-def AND16rm  : BinOpRM<0x23, "and", Xi16, X86and_flag, loadi16>, OpSize;
-def AND32rm  : BinOpRM<0x23, "and", Xi32, X86and_flag, loadi32>;
-def AND64rm  : BinOpRM<0x23, "and", Xi64, X86and_flag, loadi64>, REX_W;
+def AND8rm   : BinOpRM<0x22, "and", Xi8 , X86and_flag>;
+def AND16rm  : BinOpRM<0x23, "and", Xi16, X86and_flag>, OpSize;
+def AND32rm  : BinOpRM<0x23, "and", Xi32, X86and_flag>;
+def AND64rm  : BinOpRM<0x23, "and", Xi64, X86and_flag>, REX_W;
 
 def AND8ri   : Ii8<0x80, MRM4r, 
                    (outs GR8 :$dst), (ins GR8 :$src1, i8imm :$src2),
