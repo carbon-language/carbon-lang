@@ -213,6 +213,18 @@ public:
         m_update_id = LLDB_INVALID_UID;
     }
 
+    lldb::Format
+    GetFormat () const
+    {
+        return m_format;
+    }
+    
+    void
+    SetFormat (lldb::Format format)
+    {
+        m_format = format;
+    }
+
 protected:
     //------------------------------------------------------------------
     // Classes that inherit from ValueObject can see and modify these
@@ -236,6 +248,7 @@ protected:
     std::vector<lldb::ValueObjectSP> m_children;
     std::map<ConstString, lldb::ValueObjectSP> m_synthetic_children;
     lldb::ValueObjectSP m_dynamic_value_sp;
+    lldb::Format        m_format;
     bool                m_value_is_valid:1,
                         m_value_did_change:1,
                         m_children_count_valid:1,

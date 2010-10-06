@@ -56,6 +56,8 @@ ValueObject::ValueObject () :
     m_object_desc_str (),
     m_children (),
     m_synthetic_children (),
+    m_dynamic_value_sp (),
+    m_format (eFormatDefault),
     m_value_is_valid (false),
     m_value_did_change (false),
     m_children_count_valid (false),
@@ -584,16 +586,18 @@ ValueObject::GetValueAsCString (ExecutionContextScope *exe_scope)
                         if (clang_type)
                         {
                             StreamString sstr;
-                            lldb::Format format = ClangASTType::GetFormat(clang_type);
-                            if (ClangASTType::DumpTypeValue(GetClangAST(),            // The clang AST
-                                                                clang_type,               // The clang type to display
-                                                                &sstr,
-                                                                format,                   // Format to display this type with
-                                                                m_data,                   // Data to extract from
-                                                                0,                        // Byte offset into "m_data"
-                                                                GetByteSize(),            // Byte size of item in "m_data"
-                                                                GetBitfieldBitSize(),     // Bitfield bit size
-                                                                GetBitfieldBitOffset()))  // Bitfield bit offset
+                            if (m_format == eFormatDefault)
+                                m_format = ClangASTType::GetFormat(clang_type);
+
+                            if (ClangASTType::DumpTypeValue (GetClangAST(),            // The clang AST
+                                                             clang_type,               // The clang type to display
+                                                             &sstr,
+                                                             m_format,                 // Format to display this type with
+                                                             m_data,                   // Data to extract from
+                                                             0,                        // Byte offset into "m_data"
+                                                             GetByteSize(),            // Byte size of item in "m_data"
+                                                             GetBitfieldBitSize(),     // Bitfield bit size
+                                                             GetBitfieldBitOffset()))  // Bitfield bit offset
                                 m_value_str.swap(sstr.GetString());
                             else
                                 m_value_str.clear();

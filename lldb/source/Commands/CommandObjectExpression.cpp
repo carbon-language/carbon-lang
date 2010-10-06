@@ -237,6 +237,9 @@ CommandObjectExpression::EvaluateExpression
     assert (result_valobj_sp.get());
     if (result_valobj_sp->GetError().Success())
     {
+        if (m_options.format != eFormatDefault)
+            result_valobj_sp->SetFormat (m_options.format);
+
         ValueObject::DumpValueObject (output_stream,
                                       m_exe_ctx.GetBestExecutionContextScope(),
                                       result_valobj_sp.get(),   // Variable object to dump
