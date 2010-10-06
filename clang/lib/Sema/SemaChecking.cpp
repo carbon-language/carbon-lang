@@ -2451,23 +2451,39 @@ static bool IsZero(Sema &S, Expr *E) {
   return E->isIntegerConstantExpr(Value, S.Context) && Value == 0;
 }
 
+static bool HasEnumType(Expr *E) {
+  // Strip off implicit integral promotions.
+  while (ImplicitCastExpr *ICE = dyn_cast<ImplicitCastExpr>(E)) {
+    switch (ICE->getCastKind()) {
+    case CK_IntegralCast:
+    case CK_NoOp:
+      E = ICE->getSubExpr();
+      continue;
+    default:
+      break;
+    }
+  }
+
+  return E->getType()->isEnumeralType();
+}
+
 void CheckTrivialUnsignedComparison(Sema &S, BinaryOperator *E) {
   BinaryOperatorKind op = E->getOpcode();
   if (op == BO_LT && IsZero(S, E->getRHS())) {
     S.Diag(E->getOperatorLoc(), diag::warn_lunsigned_always_true_comparison)
-      << "< 0" << "false"
+      << "< 0" << "false" << HasEnumType(E->getLHS())
       << E->getLHS()->getSourceRange() << E->getRHS()->getSourceRange();
   } else if (op == BO_GE && IsZero(S, E->getRHS())) {
     S.Diag(E->getOperatorLoc(), diag::warn_lunsigned_always_true_comparison)
-      << ">= 0" << "true"
+      << ">= 0" << "true" << HasEnumType(E->getLHS())
       << E->getLHS()->getSourceRange() << E->getRHS()->getSourceRange();
   } else if (op == BO_GT && IsZero(S, E->getLHS())) {
     S.Diag(E->getOperatorLoc(), diag::warn_runsigned_always_true_comparison)
-      << "0 >" << "false" 
+      << "0 >" << "false" << HasEnumType(E->getRHS())
       << E->getLHS()->getSourceRange() << E->getRHS()->getSourceRange();
   } else if (op == BO_LE && IsZero(S, E->getLHS())) {
     S.Diag(E->getOperatorLoc(), diag::warn_runsigned_always_true_comparison)
-      << "0 <=" << "true" 
+      << "0 <=" << "true" << HasEnumType(E->getRHS())
       << E->getLHS()->getSourceRange() << E->getRHS()->getSourceRange();
   }
 }

@@ -305,3 +305,10 @@ int rdar8414119_bar(unsigned x) {
 #undef ZERO
 #undef CHECK
 
+int rdar8511238() {
+  enum A { A_foo, A_bar };
+  enum A a;
+  if (a < 0) // expected-warning {{comparison of unsigned enum expression < 0 is always false}}
+    return 0;
+  return 20;
+}

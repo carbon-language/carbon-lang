@@ -2251,10 +2251,10 @@ def warn_mixed_sign_conditional : Warning<
   "operands of ? are integers of different signs: %0 and %1">,
   InGroup<SignCompare>, DefaultIgnore;
 def warn_lunsigned_always_true_comparison : Warning<
-  "comparison of unsigned expression %0 is always %1">,
+  "comparison of unsigned%select{| enum}2 expression %0 is always %1">,
   InGroup<TautologicalCompare>;
 def warn_runsigned_always_true_comparison : Warning<
-  "comparison of %0 unsigned expression is always %1">,
+  "comparison of %0 unsigned%select{| enum}2 expression is always %1">,
   InGroup<TautologicalCompare>;
 
 def err_invalid_this_use : Error<
