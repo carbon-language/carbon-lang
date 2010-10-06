@@ -1671,18 +1671,17 @@ bool ARMDecoderEmitter::ARMDEBackend::populateInstruction(
     // VREV64qf is equivalent to VREV64q32.
     if (Name == "VREV64df" || Name == "VREV64qf") return false;
 
-    // VDUPLNfd is equivalent to VDUPLN32d; VDUPfdf is specialized VDUPLN32d.
-    // VDUPLNfq is equivalent to VDUPLN32q; VDUPfqf is specialized VDUPLN32q.
+    // VDUPLNfd is equivalent to VDUPLN32d.
+    // VDUPLNfq is equivalent to VDUPLN32q.
     // VLD1df is equivalent to VLD1d32.
     // VLD1qf is equivalent to VLD1q32.
     // VLD2d64 is equivalent to VLD1q64.
     // VST1df is equivalent to VST1d32.
     // VST1qf is equivalent to VST1q32.
     // VST2d64 is equivalent to VST1q64.
-    if (Name == "VDUPLNfd" || Name == "VDUPfdf" ||
-        Name == "VDUPLNfq" || Name == "VDUPfqf" ||
-        Name == "VLD1df" || Name == "VLD1qf" || Name == "VLD2d64" ||
-        Name == "VST1df" || Name == "VST1qf" || Name == "VST2d64")
+    if (Name == "VDUPLNfd" || Name == "VDUPLNfq" ||
+        Name == "VLD1df"   || Name == "VLD1qf"   || Name == "VLD2d64" ||
+        Name == "VST1df"   || Name == "VST1qf"   || Name == "VST2d64")
       return false;
   } else if (TN == TARGET_THUMB) {
     if (!thumbInstruction(Form))
