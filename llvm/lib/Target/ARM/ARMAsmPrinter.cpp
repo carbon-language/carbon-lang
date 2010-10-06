@@ -110,7 +110,7 @@ namespace {
   private:
     // Helpers for EmitStartOfAsmFile() and EmitEndOfAsmFile()
     void emitAttributes();
-    void emitAttribute(ARMBuildAttrs::AttrType attr, int v);    
+    void emitAttribute(ARMBuildAttrs::AttrType attr, int v);
 
   public:
     void PrintDebugValueComment(const MachineInstr *MI, raw_ostream &OS);
@@ -491,12 +491,12 @@ void ARMAsmPrinter::EmitEndOfAsmFile(Module &M) {
 // Helper routines for EmitStartOfAsmFile() and EmitEndOfAsmFile()
 // FIXME:
 // The following seem like one-off assembler flags, but they actually need
-// to appear in the .ARM.attributes section in ELF. 
+// to appear in the .ARM.attributes section in ELF.
 // Instead of subclassing the MCELFStreamer, we do the work here.
 
 void ARMAsmPrinter::emitAttributes() {
   // FIXME: Add in ELF specific section handling here.
-  
+
   // FIXME: unify this: .cpu and CPUString with enum attributes
   std::string CPUString = Subtarget->getCPUString();
   if (CPUString != "generic")
@@ -531,9 +531,9 @@ void ARMAsmPrinter::emitAttributes() {
 
 void ARMAsmPrinter::emitAttribute(ARMBuildAttrs::AttrType attr, int v) {
   if (OutStreamer.hasRawTextSupport()) {
-    OutStreamer.EmitRawText("\t.eabi_attribute " + 
+    OutStreamer.EmitRawText("\t.eabi_attribute " +
                             Twine(attr) + ", " + Twine(v));
-    
+
   } else {
     assert(0 && "ELF .ARM.attributes unimplemented");
   }
