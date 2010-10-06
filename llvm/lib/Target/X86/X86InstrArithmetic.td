@@ -501,6 +501,7 @@ let CodeSize = 2 in {
 /// register class and preferred load to use.
 class X86TypeInfo<ValueType vt, string instrsuffix, RegisterClass regclass,
                   PatFrag loadnode, X86MemOperand memoperand,
+                  ImmType immkind, Operand immoperand,
                   bit hasOddOpcode, bit hasOpSizePrefix, bit hasREX_WPrefix> {
   /// VT - This is the value type itself.
   ValueType VT = vt;
@@ -521,6 +522,18 @@ class X86TypeInfo<ValueType vt, string instrsuffix, RegisterClass regclass,
   /// example, i8 -> i8mem, i16 -> i16mem, i32 -> i32mem, i64 -> i64mem.
   X86MemOperand MemOperand = memoperand;
   
+  /// ImmEncoding - This is the encoding of an immediate of this type.  For
+  /// example, i8 -> Imm8, i16 -> Imm16, i32 -> Imm32.  Note that i64 -> Imm32
+  /// since the immediate fields of i64 instructions is a 32-bit sign extended
+  /// value.
+  ImmType ImmEncoding = immkind;
+  
+  /// ImmOperand - This is the operand kind of an immediate of this type.  For
+  /// example, i8 -> i8imm, i16 -> i16imm, i32 -> i32imm.  Note that i64 ->
+  /// i64i32imm since the immediate fields of i64 instructions is a 32-bit sign
+  /// extended value.
+  Operand ImmOperand = immoperand;
+  
   /// HasOddOpcode - This bit is true if the instruction should have an odd (as
   /// opposed to even) opcode.  Operations on i8 are usually even, operations on
   /// other datatypes are odd.
@@ -535,10 +548,14 @@ class X86TypeInfo<ValueType vt, string instrsuffix, RegisterClass regclass,
   bit HasREX_WPrefix = hasREX_WPrefix;
 }
 
-def Xi8  : X86TypeInfo<i8 , "b", GR8 , loadi8 , i8mem , 0, 0, 0>;
-def Xi16 : X86TypeInfo<i16, "w", GR16, loadi16, i16mem, 1, 1, 0>;
-def Xi32 : X86TypeInfo<i32, "l", GR32, loadi32, i32mem, 1, 0, 0>;
-def Xi64 : X86TypeInfo<i64, "q", GR64, loadi64, i64mem, 1, 0, 1>;
+def Xi8  : X86TypeInfo<i8 , "b", GR8 , loadi8 , i8mem , Imm8 , i8imm ,
+                       0, 0, 0>;
+def Xi16 : X86TypeInfo<i16, "w", GR16, loadi16, i16mem, Imm16, i16imm,
+                       1, 1, 0>;
+def Xi32 : X86TypeInfo<i32, "l", GR32, loadi32, i32mem, Imm32, i32imm,
+                       1, 0, 0>;
+def Xi64 : X86TypeInfo<i64, "q", GR64, loadi64, i64mem, Imm32, i64i32imm,
+                       1, 0, 1>;
 
 /// ITy - This instruction base class takes the type info for the instruction.
 /// Using this, it:
@@ -548,7 +565,7 @@ def Xi64 : X86TypeInfo<i64, "q", GR64, loadi64, i64mem, 1, 0, 1>;
 /// 3. Infers whether the instruction should have a 0x40 REX_W prefix.
 /// 4. Infers whether the low bit of the opcode should be 0 (for i8 operations)
 ///    or 1 (for i16,i32,i64 operations).
-class ITy<bits<8> opcode, Format f,  X86TypeInfo typeinfo, dag outs, dag ins, 
+class ITy<bits<8> opcode, Format f, X86TypeInfo typeinfo, dag outs, dag ins, 
           string mnemonic, string args, list<dag> pattern>
   : I<{opcode{7}, opcode{6}, opcode{5}, opcode{4},
        opcode{3}, opcode{2}, opcode{1}, typeinfo.HasOddOpcode },
@@ -588,6 +605,16 @@ class BinOpRM<bits<8> opcode, string mnemonic, X86TypeInfo typeinfo,
         [(set typeinfo.RegClass:$dst, EFLAGS,
             (opnode typeinfo.RegClass:$src1, (typeinfo.LoadNode addr:$src2)))]>;
 
+class BinOpRI<bits<8> opcode, string mnemonic, X86TypeInfo typeinfo,
+              SDNode opnode, Format f>
+  : ITy<opcode, f, typeinfo,
+        (outs typeinfo.RegClass:$dst),
+        (ins typeinfo.RegClass:$src1, typeinfo.ImmOperand:$src2),
+        mnemonic, "{$src2, $dst|$dst, $src2}",
+        [(set typeinfo.RegClass:$dst, EFLAGS,
+            (opnode typeinfo.RegClass:$src1, imm:$src2))]> {
+  let ImmT = typeinfo.ImmEncoding;
+}
 
 
 
@@ -616,21 +643,10 @@ def AND16rm  : BinOpRM<0x22, "and", Xi16, X86and_flag>;
 def AND32rm  : BinOpRM<0x22, "and", Xi32, X86and_flag>;
 def AND64rm  : BinOpRM<0x22, "and", Xi64, X86and_flag>;
 
-def AND8ri   : Ii8<0x80, MRM4r, 
-                   (outs GR8 :$dst), (ins GR8 :$src1, i8imm :$src2),
-                   "and{b}\t{$src2, $dst|$dst, $src2}",
-                   [(set GR8:$dst, EFLAGS, (X86and_flag GR8:$src1,
-                                                        imm:$src2))]>;
-def AND16ri  : Ii16<0x81, MRM4r, 
-                    (outs GR16:$dst), (ins GR16:$src1, i16imm:$src2),
-                    "and{w}\t{$src2, $dst|$dst, $src2}",
-                    [(set GR16:$dst, EFLAGS, (X86and_flag GR16:$src1,
-                                                          imm:$src2))]>, OpSize;
-def AND32ri  : Ii32<0x81, MRM4r, 
-                    (outs GR32:$dst), (ins GR32:$src1, i32imm:$src2),
-                    "and{l}\t{$src2, $dst|$dst, $src2}",
-                    [(set GR32:$dst, EFLAGS, (X86and_flag GR32:$src1,
-                                                          imm:$src2))]>;
+def AND8ri   : BinOpRI<0x80, "and", Xi8 , X86and_flag, MRM4r>;
+def AND16ri  : BinOpRI<0x80, "and", Xi16, X86and_flag, MRM4r>;
+def AND32ri  : BinOpRI<0x80, "and", Xi32, X86and_flag, MRM4r>;
+
 def AND64ri32  : RIi32<0x81, MRM4r, 
                        (outs GR64:$dst), (ins GR64:$src1, i64i32imm:$src2),
                        "and{q}\t{$src2, $dst|$dst, $src2}",
