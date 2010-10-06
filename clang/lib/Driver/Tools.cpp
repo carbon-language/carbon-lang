@@ -704,14 +704,15 @@ static bool needsExceptions(const ArgList &Args,  types::ID InputType,
     return true;
 
   // As do Objective-C non-fragile ABI inputs and all Objective-C inputs on
-  // x86_64 after SnowLeopard.
+  // x86_64 and ARM after SnowLeopard.
   if (types::isObjC(InputType)) {
     if (Args.hasArg(options::OPT_fobjc_nonfragile_abi))
       return true;
     if (Triple.getOS() != llvm::Triple::Darwin)
       return false;
     return (Triple.getDarwinMajorNumber() >= 9 &&
-            Triple.getArch() == llvm::Triple::x86_64);
+            (Triple.getArch() == llvm::Triple::x86_64 ||
+             Triple.getArch() == llvm::Triple::arm));
   }
 
   return false;
