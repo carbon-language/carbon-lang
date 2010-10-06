@@ -46,12 +46,14 @@ def err_vla_decl_has_static_storage : Error<
   "variable length array declaration can not have 'static' storage duration">;
 def err_vla_decl_has_extern_linkage : Error<
   "variable length array declaration can not have 'extern' linkage">;
-  
+
 // C99 variably modified types
 def err_variably_modified_template_arg : Error<
   "variably modified type %0 cannot be used as a template argument">;
 def err_variably_modified_nontype_template_param : Error<
   "non-type template parameter of variably modified type %0">;
+def err_variably_modified_new_type : Error<
+  "'new' cannot allocate object of variably modified type %0">;
 
 // C99 Designated Initializers
 def err_array_designator_negative : Error<

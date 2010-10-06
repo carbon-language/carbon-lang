@@ -114,3 +114,10 @@ namespace rdar8021385 {
   };
   B<A> a;
 }
+
+namespace PR8209 {
+  void f(int n) {
+    typedef int vla_type[n]; // expected-warning{{variable length arrays are a C99 feature, accepted as an extension}}
+    (void)new vla_type; // expected-error{{variably}}
+  }
+}

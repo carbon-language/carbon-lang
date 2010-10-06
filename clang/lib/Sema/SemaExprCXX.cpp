@@ -711,8 +711,6 @@ Sema::BuildCXXNew(SourceLocation StartLoc, bool UseGlobal,
                   MultiExprArg ConstructorArgs,
                   SourceLocation ConstructorRParen) {
   SourceRange TypeRange = AllocTypeInfo->getTypeLoc().getSourceRange();
-  if (CheckAllocatedType(AllocType, TypeRange.getBegin(), TypeRange))
-    return ExprError();
 
   // Per C++0x [expr.new]p5, the type being constructed may be a
   // typedef of an array type.
@@ -725,6 +723,9 @@ Sema::BuildCXXNew(SourceLocation StartLoc, bool UseGlobal,
       AllocType = Array->getElementType();
     }
   }
+
+  if (CheckAllocatedType(AllocType, TypeRange.getBegin(), TypeRange))
+    return ExprError();
 
   QualType ResultType = Context.getPointerType(AllocType);
 
@@ -930,7 +931,10 @@ bool Sema::CheckAllocatedType(QualType AllocType, SourceLocation Loc,
   else if (RequireNonAbstractType(Loc, AllocType,
                                   diag::err_allocation_of_abstract_type))
     return true;
-
+  else if (AllocType->isVariablyModifiedType())
+    return Diag(Loc, diag::err_variably_modified_new_type)
+             << AllocType;
+  
   return false;
 }
 
