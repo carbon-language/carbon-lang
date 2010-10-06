@@ -884,6 +884,11 @@ void MachineVerifier::verifyLiveIntervals() {
   for (LiveIntervals::const_iterator LVI = LiveInts->begin(),
        LVE = LiveInts->end(); LVI != LVE; ++LVI) {
     const LiveInterval &LI = *LVI->second;
+
+    // Spilling and splitting may leave unused registers around. Skip them.
+    if (MRI->use_empty(LI.reg))
+      continue;
+
     assert(LVI->first == LI.reg && "Invalid reg to interval mapping");
 
     for (LiveInterval::const_vni_iterator I = LI.vni_begin(), E = LI.vni_end();
