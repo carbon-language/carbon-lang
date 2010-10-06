@@ -39,8 +39,8 @@ namespace llvm {
   /// of 'buffer'. On error, this returns "", and fills in *ErrMsg
   /// if ErrMsg is non-null.
   std::string getBitcodeTargetTriple(MemoryBuffer *Buffer,
-				     LLVMContext& Context,
-				     std::string *ErrMsg = 0);
+                                     LLVMContext& Context,
+                                     std::string *ErrMsg = 0);
 
   /// ParseBitcodeFile - Read the specified bitcode file, returning the module.
   /// If an error occurs, this returns null and fills in *ErrMsg if it is
