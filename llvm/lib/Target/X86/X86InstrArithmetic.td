@@ -562,14 +562,22 @@ class ITy<bits<8> opcode, Format f,  X86TypeInfo typeinfo, dag outs, dag ins,
 
 
 class BinOpRR<bits<8> opcode, string mnemonic, X86TypeInfo typeinfo,
-              SDNode opnode, Format format>
-  : ITy<opcode, format, typeinfo,
+              SDNode opnode>
+  : ITy<opcode, MRMDestReg, typeinfo,
         (outs typeinfo.RegClass:$dst),
         (ins typeinfo.RegClass:$src1, typeinfo.RegClass:$src2),
         mnemonic, "{$src2, $dst|$dst, $src2}",
         [(set typeinfo.RegClass:$dst, EFLAGS,
               (opnode typeinfo.RegClass:$src1, typeinfo.RegClass:$src2))]>;
 
+class BinOpRR_Rev<bits<8> opcode, string mnemonic, X86TypeInfo typeinfo>
+  : ITy<opcode, MRMSrcReg, typeinfo,
+        (outs typeinfo.RegClass:$dst),
+        (ins typeinfo.RegClass:$src1, typeinfo.RegClass:$src2),
+        mnemonic, "{$src2, $dst|$dst, $src2}", []> {
+  // The disassembler should know about this, but not the asmparser.
+  let isCodeGenOnly = 1;
+}
 
 class BinOpRM<bits<8> opcode, string mnemonic, X86TypeInfo typeinfo,
               SDNode opnode>
@@ -581,33 +589,27 @@ class BinOpRM<bits<8> opcode, string mnemonic, X86TypeInfo typeinfo,
             (opnode typeinfo.RegClass:$src1, (typeinfo.LoadNode addr:$src2)))]>;
 
 
+
+
 // Logical operators.
 let Defs = [EFLAGS] in {
 let Constraints = "$src1 = $dst" in {
 
 let isCommutable = 1 in {   // X = AND Y, Z   --> X = AND Z, Y
-def AND8rr  : BinOpRR<0x20, "and", Xi8 , X86and_flag, MRMDestReg>;
-def AND16rr : BinOpRR<0x20, "and", Xi16, X86and_flag, MRMDestReg>;
-def AND32rr : BinOpRR<0x20, "and", Xi32, X86and_flag, MRMDestReg>;
-def AND64rr : BinOpRR<0x20, "and", Xi64, X86and_flag, MRMDestReg>;
+def AND8rr  : BinOpRR<0x20, "and", Xi8 , X86and_flag>;
+def AND16rr : BinOpRR<0x20, "and", Xi16, X86and_flag>;
+def AND32rr : BinOpRR<0x20, "and", Xi32, X86and_flag>;
+def AND64rr : BinOpRR<0x20, "and", Xi64, X86and_flag>;
 } // isCommutable
 
 
 // AND instructions with the destination register in REG and the source register
 //   in R/M.  Included for the disassembler.
-let isCodeGenOnly = 1 in {
-def AND8rr_REV : I<0x22, MRMSrcReg, (outs GR8:$dst), (ins GR8:$src1, GR8:$src2),
-                  "and{b}\t{$src2, $dst|$dst, $src2}", []>;
-def AND16rr_REV : I<0x23, MRMSrcReg, (outs GR16:$dst), 
-                    (ins GR16:$src1, GR16:$src2),
-                   "and{w}\t{$src2, $dst|$dst, $src2}", []>, OpSize;
-def AND32rr_REV : I<0x23, MRMSrcReg, (outs GR32:$dst), 
-                    (ins GR32:$src1, GR32:$src2),
-                   "and{l}\t{$src2, $dst|$dst, $src2}", []>;
-def AND64rr_REV : RI<0x23, MRMSrcReg, (outs GR64:$dst), 
-                     (ins GR64:$src1, GR64:$src2),
-                     "and{q}\t{$src2, $dst|$dst, $src2}", []>;
-}
+
+def AND8rr_REV  : BinOpRR_Rev<0x22, "and", Xi8>;
+def AND16rr_REV : BinOpRR_Rev<0x22, "and", Xi16>;
+def AND32rr_REV : BinOpRR_Rev<0x22, "and", Xi32>;
+def AND64rr_REV : BinOpRR_Rev<0x22, "and", Xi64>;
 
 def AND8rm   : BinOpRM<0x22, "and", Xi8 , X86and_flag>;
 def AND16rm  : BinOpRM<0x22, "and", Xi16, X86and_flag>;
