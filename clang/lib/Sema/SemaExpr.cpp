@@ -64,8 +64,12 @@ bool Sema::DiagnoseUseOfDecl(NamedDecl *D, SourceLocation Loc) {
   }
 
   // See if the decl is unavailable
-  if (D->getAttr<UnavailableAttr>()) {
-    Diag(Loc, diag::err_unavailable) << D->getDeclName();
+  if (const UnavailableAttr *UA = D->getAttr<UnavailableAttr>()) {
+    if (UA->getMessage().empty())
+      Diag(Loc, diag::err_unavailable) << D->getDeclName();
+    else
+      Diag(Loc, diag::err_unavailable_message) 
+        << D->getDeclName() << UA->getMessage().data();
     Diag(D->getLocation(), diag::note_unavailable_here) << 0;
   }
 

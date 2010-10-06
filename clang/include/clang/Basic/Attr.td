@@ -374,6 +374,7 @@ def TransparentUnion : Attr {
 
 def Unavailable : Attr {
   let Spellings = ["unavailable"];
+  let Args = [StringArgument<"Message">];
 }
 
 def Unused : Attr {

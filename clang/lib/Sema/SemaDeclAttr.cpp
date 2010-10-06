@@ -929,12 +929,26 @@ static void HandleDeprecatedAttr(Decl *d, const AttributeList &Attr, Sema &S) {
 
 static void HandleUnavailableAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   // check the attribute arguments.
-  if (Attr.getNumArgs() != 0) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 0;
+  int noArgs = Attr.getNumArgs();
+  if (noArgs > 1) {
+    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << "0 or 1";
     return;
   }
-
-  d->addAttr(::new (S.Context) UnavailableAttr(Attr.getLoc(), S.Context));
+  // Handle the case where unavailable attribute has a text message.
+  StringLiteral *SE;
+  if (noArgs == 1) {
+    Expr *ArgExpr = static_cast<Expr *>(Attr.getArg(0));
+    SE = dyn_cast<StringLiteral>(ArgExpr);
+    if (!SE) {
+      S.Diag(ArgExpr->getLocStart(), 
+             diag::err_attribute_not_string) << "unavailable";
+      return;
+    }
+  }
+  else
+    SE = StringLiteral::CreateEmpty(S.Context, 1);
+  d->addAttr(::new (S.Context) UnavailableAttr(Attr.getLoc(), S.Context,
+                                               SE->getString()));
 }
 
 static void HandleVisibilityAttr(Decl *d, const AttributeList &Attr, Sema &S) {

@@ -23,6 +23,7 @@ td {
 <li><a href="#has_include">Include File Checking Macros</a></li>
 <li><a href="#builtinmacros">Builtin Macros</a></li>
 <li><a href="#vectors">Vectors and Extended Vectors</a></li>
+<li><a href="#deprecated">Deprecated and Unavailable attribute with Message</a></li>
 <li><a href="#checking_language_features">Checks for Standard Language Features</a></li>
   <ul>
   <li><a href="#cxx_exceptions">C++ exceptions</a></li>
@@ -265,6 +266,14 @@ float4 foo(float2 a, float2 b) {
 <p>Query for this feature with __has_feature(attribute_ext_vector_type).</p>
 
 <p>See also <a href="#__builtin_shufflevector">__builtin_shufflevector</a>.</p>
+
+<!-- ======================================================================= -->
+<h2 id="deprecated">Deprecated and Unavailable attribute with Message</h2>
+<!-- ======================================================================= -->
+
+<p> Optional string message can be added to Deprecated and Available attributes. </p>
+
+<p> Message will be added to deprecated warning or unavailable error if present. </p>
 
 <!-- ======================================================================= -->
 <h2 id="checking_language_features">Checks for Standard Language Features</h2>
