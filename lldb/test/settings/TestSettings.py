@@ -45,7 +45,7 @@ class SettingsCommandTestCase(TestBase):
 
         # The overall display should also reflect the new setting.
         self.expect("settings show",
-            startstr = "term-width (int) = '70'")
+            substrs = "term-width (int) = '70'")
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     def test_with_dsym(self):
