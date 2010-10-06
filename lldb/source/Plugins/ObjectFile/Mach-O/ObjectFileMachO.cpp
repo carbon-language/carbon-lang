@@ -277,8 +277,10 @@ ObjectFileMachO::ParseSections ()
                     struct section_64 sect64;
                     ::bzero (&sect64, sizeof(sect64));
                     // Push a section into our mach sections for the section at
-                    // index zero (NListSectionNoSection)
-                    m_mach_sections.push_back(sect64);
+                    // index zero (NListSectionNoSection) if we don't have any 
+                    // mach sections yet...
+                    if (m_mach_sections.empty())
+                        m_mach_sections.push_back(sect64);
                     uint32_t segment_sect_idx;
                     const lldb::user_id_t first_segment_sectID = sectID + 1;
 
@@ -1254,6 +1256,8 @@ ObjectFileMachO::ParseSymtab (bool minimize)
                                     if (indirect_symbol_index_data.ValidOffsetForDataOfSize(symbol_stub_offset, 4))
                                     {
                                         const uint32_t stub_sym_id = indirect_symbol_index_data.GetU32 (&symbol_stub_offset);
+                                        if (stub_sym_id & (IndirectSymbolAbsolute | IndirectSymbolLocal))
+                                            continue;
 
                                         NListIndexToSymbolIndexMap::const_iterator index_pos = m_nlist_idx_to_sym_idx.find (stub_sym_id);
                                         Symbol *stub_symbol = NULL;
