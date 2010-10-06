@@ -58,6 +58,14 @@ static void SetBinding(MCSymbolData &SD, unsigned Binding) {
   SD.setFlags(OtherFlags | (Binding << ELF_STB_Shift));
 }
 
+static unsigned GetVisibility(MCSymbolData &SD) {
+  unsigned Visibility =
+    (SD.getFlags() & (0xf << ELF_STV_Shift)) >> ELF_STV_Shift;
+  assert(Visibility == ELF::STV_DEFAULT || Visibility == ELF::STV_INTERNAL ||
+         Visibility == ELF::STV_HIDDEN || Visibility == ELF::STV_PROTECTED);
+  return Visibility;
+}
+
 static bool isFixupKindX86PCRel(unsigned Kind) {
   switch (Kind) {
   default:
@@ -429,9 +437,23 @@ static uint64_t SymbolValue(MCSymbolData &Data, const MCAsmLayout &Layout) {
 
 void ELFObjectWriterImpl::WriteSymbol(MCDataFragment *F, ELFSymbolData &MSD,
                                       const MCAsmLayout &Layout) {
-  MCSymbolData &Data = *MSD.SymbolData;
-  uint8_t Info = (Data.getFlags() & 0xff);
-  uint8_t Other = ((Data.getFlags() & 0xf00) >> ELF_STV_Shift);
+  MCSymbolData &OrigData = *MSD.SymbolData;
+  MCSymbolData *AliasData = NULL;
+  if (OrigData.Symbol->isVariable()) {
+    const MCExpr *Value = OrigData.getSymbol().getVariableValue();
+    assert (Value->getKind() == MCExpr::SymbolRef && "Unimplemented");
+    const MCSymbolRefExpr *Ref = static_cast<const MCSymbolRefExpr*>(Value);
+    AliasData = &Layout.getAssembler().getSymbolData(Ref->getSymbol());
+  }
+  MCSymbolData &Data = AliasData ? *AliasData : OrigData;
+
+  uint8_t Binding = GetBinding(OrigData);
+  uint8_t Visibility = GetVisibility(OrigData);
+  uint8_t Type = GetType(Data);
+
+  uint8_t Info = (Binding << ELF_STB_Shift) | (Type << ELF_STT_Shift);
+  uint8_t Other = Visibility;
+
   uint64_t Value = SymbolValue(Data, Layout);
   uint64_t Size = 0;
   const MCExpr *ESize;
