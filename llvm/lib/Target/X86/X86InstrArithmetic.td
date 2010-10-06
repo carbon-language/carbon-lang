@@ -501,7 +501,7 @@ let CodeSize = 2 in {
 /// register class and preferred load to use.
 class X86TypeInfo<ValueType vt, string instrsuffix, RegisterClass regclass,
                   PatFrag loadnode, X86MemOperand memoperand,
-                  bit hasOpSizePrefix, bit hasREX_WPrefix> {
+                  bit hasOddOpcode, bit hasOpSizePrefix, bit hasREX_WPrefix> {
   /// VT - This is the value type itself.
   ValueType VT = vt;
   
@@ -521,6 +521,11 @@ class X86TypeInfo<ValueType vt, string instrsuffix, RegisterClass regclass,
   /// example, i8 -> i8mem, i16 -> i16mem, i32 -> i32mem, i64 -> i64mem.
   X86MemOperand MemOperand = memoperand;
   
+  /// HasOddOpcode - This bit is true if the instruction should have an odd (as
+  /// opposed to even) opcode.  Operations on i8 are usually even, operations on
+  /// other datatypes are odd.
+  bit HasOddOpcode = hasOddOpcode;
+  
   /// HasOpSizePrefix - This bit is set to true if the instruction should have
   /// the 0x66 operand size prefix.  This is set for i16 types.
   bit HasOpSizePrefix = hasOpSizePrefix;
@@ -530,10 +535,10 @@ class X86TypeInfo<ValueType vt, string instrsuffix, RegisterClass regclass,
   bit HasREX_WPrefix = hasREX_WPrefix;
 }
 
-def Xi8  : X86TypeInfo<i8 , "b", GR8 , loadi8 , i8mem , 0, 0>;
-def Xi16 : X86TypeInfo<i16, "w", GR16, loadi16, i16mem, 1, 0>;
-def Xi32 : X86TypeInfo<i32, "l", GR32, loadi32, i32mem, 0, 0>;
-def Xi64 : X86TypeInfo<i64, "q", GR64, loadi64, i64mem, 0, 1>;
+def Xi8  : X86TypeInfo<i8 , "b", GR8 , loadi8 , i8mem , 0, 0, 0>;
+def Xi16 : X86TypeInfo<i16, "w", GR16, loadi16, i16mem, 1, 1, 0>;
+def Xi32 : X86TypeInfo<i32, "l", GR32, loadi32, i32mem, 1, 0, 0>;
+def Xi64 : X86TypeInfo<i64, "q", GR64, loadi64, i64mem, 1, 0, 1>;
 
 /// ITy - This instruction base class takes the type info for the instruction.
 /// Using this, it:
@@ -541,9 +546,13 @@ def Xi64 : X86TypeInfo<i64, "q", GR64, loadi64, i64mem, 0, 1>;
 ///    suffix letter, a tab, and the arguments.
 /// 2. Infers whether the instruction should have a 0x66 prefix byte.
 /// 3. Infers whether the instruction should have a 0x40 REX_W prefix.
+/// 4. Infers whether the low bit of the opcode should be 0 (for i8 operations)
+///    or 1 (for i16,i32,i64 operations).
 class ITy<bits<8> opcode, Format f,  X86TypeInfo typeinfo, dag outs, dag ins, 
           string mnemonic, string args, list<dag> pattern>
-  : I<opcode, f, outs, ins, 
+  : I<{opcode{7}, opcode{6}, opcode{5}, opcode{4},
+       opcode{3}, opcode{2}, opcode{1}, typeinfo.HasOddOpcode },
+      f, outs, ins, 
       !strconcat(mnemonic, "{", typeinfo.InstrSuffix, "}\t", args), pattern> {
 
   // Infer instruction prefixes from type info.
@@ -578,9 +587,9 @@ let Constraints = "$src1 = $dst" in {
 
 let isCommutable = 1 in {   // X = AND Y, Z   --> X = AND Z, Y
 def AND8rr  : BinOpRR<0x20, "and", Xi8 , X86and_flag, MRMDestReg>;
-def AND16rr : BinOpRR<0x21, "and", Xi16, X86and_flag, MRMDestReg>;
-def AND32rr : BinOpRR<0x21, "and", Xi32, X86and_flag, MRMDestReg>;
-def AND64rr : BinOpRR<0x21, "and", Xi64, X86and_flag, MRMDestReg>;
+def AND16rr : BinOpRR<0x20, "and", Xi16, X86and_flag, MRMDestReg>;
+def AND32rr : BinOpRR<0x20, "and", Xi32, X86and_flag, MRMDestReg>;
+def AND64rr : BinOpRR<0x20, "and", Xi64, X86and_flag, MRMDestReg>;
 } // isCommutable
 
 
@@ -601,9 +610,9 @@ def AND64rr_REV : RI<0x23, MRMSrcReg, (outs GR64:$dst),
 }
 
 def AND8rm   : BinOpRM<0x22, "and", Xi8 , X86and_flag>;
-def AND16rm  : BinOpRM<0x23, "and", Xi16, X86and_flag>;
-def AND32rm  : BinOpRM<0x23, "and", Xi32, X86and_flag>;
-def AND64rm  : BinOpRM<0x23, "and", Xi64, X86and_flag>;
+def AND16rm  : BinOpRM<0x22, "and", Xi16, X86and_flag>;
+def AND32rm  : BinOpRM<0x22, "and", Xi32, X86and_flag>;
+def AND64rm  : BinOpRM<0x22, "and", Xi64, X86and_flag>;
 
 def AND8ri   : Ii8<0x80, MRM4r, 
                    (outs GR8 :$dst), (ins GR8 :$src1, i8imm :$src2),
