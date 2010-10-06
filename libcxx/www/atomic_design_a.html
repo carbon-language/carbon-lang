@@ -1,0 +1,126 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"
+          "http://www.w3.org/TR/html4/strict.dtd">
+<!-- Material used from: HTML 4.01 specs: http://www.w3.org/TR/html401/ -->
+<html>
+<head>
+  <META http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+  <title>&lt;atomic&gt; design</title>
+  <link type="text/css" rel="stylesheet" href="menu.css">
+  <link type="text/css" rel="stylesheet" href="content.css">
+</head>
+
+<body>
+<div id="menu">
+  <div>
+    <a href="http://llvm.org/">LLVM Home</a>
+  </div>
+
+  <div class="submenu">
+    <label>libc++ Info</label>
+    <a href="/index.html">About</a>
+  </div>
+
+  <div class="submenu">
+    <label>Quick Links</label>
+    <a href="http://lists.cs.uiuc.edu/mailman/listinfo/cfe-dev">cfe-dev</a>
+    <a href="http://lists.cs.uiuc.edu/mailman/listinfo/cfe-commits">cfe-commits</a>
+    <a href="http://llvm.org/bugs/">Bug Reports</a>
+    <a href="http://llvm.org/svn/llvm-project/libcxx/trunk/">Browse SVN</a>
+    <a href="http://llvm.org/viewvc/llvm-project/libcxx/trunk/">Browse ViewVC</a>
+  </div>
+</div>
+
+<div id="content">
+  <!--*********************************************************************-->
+  <h1>&lt;atomic&gt; design</h1>
+  <!--*********************************************************************-->
+
+<p>
+This is more of a synopsis than a true description.  The compiler supplies all
+of the intrinsics as described below.  This list of intrinsics roughly parallels
+the requirements of the C and C++ atomics proposals.  The C and C++ library
+imlpementations simply drop through to these intrinsics.  Anything the platform
+does not support in hardware, the compiler arranges for a (compiler-rt) library
+call to be made which will do the job with a mutex, and in this case ignoring
+the memory ordering parameter.
+</p>
+
+<blockquote><pre>
+<font color="#C80000">// type can be any pod</font>
+<font color="#C80000">// Behavior is defined for mem_ord = 0, 1, 2, 5</font>
+type __atomic_load(const volatile type* atomic_obj, int mem_ord);
+
+<font color="#C80000">// type can be any pod</font>
+<font color="#C80000">// Behavior is defined for mem_ord = 0, 3, 5</font>
+type __atomic_store(volatile type* atomic_obj, type desired, int mem_ord);
+
+<font color="#C80000">// type can be any pod</font>
+<font color="#C80000">// Behavior is defined for mem_ord = [0 ... 5]</font>
+type __atomic_exchange(volatile type* atomic_obj, type desired, int mem_ord);
+
+<font color="#C80000">// type can be any pod</font>
+<font color="#C80000">// Behavior is defined for mem_success = [0 ... 5],</font>
+<font color="#C80000">//   mem_falure &lt;= mem_success &amp;&amp; mem_failure != [3, 4]</font>
+bool __atomic_compare_exchange_strong(volatile type* atomic_obj,
+                                      type* expected, type desired,
+                                      int mem_success, int mem_failure);
+
+<font color="#C80000">// type can be any pod</font>
+<font color="#C80000">// Behavior is defined for mem_success = [0 ... 5],</font>
+<font color="#C80000">//   mem_falure &lt;= mem_success &amp;&amp; mem_failure != [3, 4]</font>
+bool __atomic_compare_exchange_weak(volatile type* atomic_obj,
+                                    type* expected, type desired,
+                                    int mem_success, int mem_failure);
+
+<font color="#C80000">// type is one of: char, signed char, unsigned char, short, unsigned short, int,</font>
+<font color="#C80000">//      unsigned int, long, unsigned long, long long, unsigned long long,</font>
+<font color="#C80000">//      char16_t, char32_t, wchar_t</font>
+<font color="#C80000">// Behavior is defined for mem_ord = [0 ... 5]</font>
+type __atomic_fetch_add(volatile type* atomic_obj, type operand, int mem_ord);
+
+<font color="#C80000">// type is one of: char, signed char, unsigned char, short, unsigned short, int,</font>
+<font color="#C80000">//      unsigned int, long, unsigned long, long long, unsigned long long,</font>
+<font color="#C80000">//      char16_t, char32_t, wchar_t</font>
+<font color="#C80000">// Behavior is defined for mem_ord = [0 ... 5]</font>
+type __atomic_fetch_sub(volatile type* atomic_obj, type operand, int mem_ord);
+
+<font color="#C80000">// type is one of: char, signed char, unsigned char, short, unsigned short, int,</font>
+<font color="#C80000">//      unsigned int, long, unsigned long, long long, unsigned long long,</font>
+<font color="#C80000">//      char16_t, char32_t, wchar_t</font>
+<font color="#C80000">// Behavior is defined for mem_ord = [0 ... 5]</font>
+type __atomic_fetch_and(volatile type* atomic_obj, type operand, int mem_ord);
+
+<font color="#C80000">// type is one of: char, signed char, unsigned char, short, unsigned short, int,</font>
+<font color="#C80000">//      unsigned int, long, unsigned long, long long, unsigned long long,</font>
+<font color="#C80000">//      char16_t, char32_t, wchar_t</font>
+<font color="#C80000">// Behavior is defined for mem_ord = [0 ... 5]</font>
+type __atomic_fetch_or(volatile type* atomic_obj, type operand, int mem_ord);
+
+<font color="#C80000">// type is one of: char, signed char, unsigned char, short, unsigned short, int,</font>
+<font color="#C80000">//      unsigned int, long, unsigned long, long long, unsigned long long,</font>
+<font color="#C80000">//      char16_t, char32_t, wchar_t</font>
+<font color="#C80000">// Behavior is defined for mem_ord = [0 ... 5]</font>
+type __atomic_fetch_xor(volatile type* atomic_obj, type operand, int mem_ord);
+
+<font color="#C80000">// Behavior is defined for mem_ord = [0 ... 5]</font>
+void* __atomic_fetch_add(void* volatile* atomic_obj, ptrdiff_t operand, int mem_ord);
+void* __atomic_fetch_sub(void* volatile* atomic_obj, ptrdiff_t operand, int mem_ord);
+
+<font color="#C80000">// Behavior is defined for mem_ord = [0 ... 5]</font>
+void __atomic_thread_fence(int mem_ord);
+void __atomic_signal_fence(int mem_ord);
+</pre></blockquote>
+
+<p>
+If desired the intrinsics taking a single <tt>mem_ord</tt> parameter can default
+this argument to 5.
+</p>
+
+<p>
+If desired the intrinsics taking two ordering parameters can default
+<tt>mem_success</tt> to 5, and <tt>mem_failure</tt> to <tt>mem_success</tt>.
+</p>
+
+</div>
+</body>
+</html>
