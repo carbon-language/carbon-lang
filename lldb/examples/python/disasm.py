@@ -32,11 +32,11 @@ target = debugger.CreateTargetWithFileAndArch (sys.argv[1], "x86_64")
 
 if target.IsValid():
     # If the target is valid set a breakpoint at main
-    main_bp = target.BreakpointCreateByName ("main", "a.out");
+    main_bp = target.BreakpointCreateByName ("main", sys.argv[1]);
     
     # Launch the process. Since we specified synchronous mode, we won't return
     # from this function until we hit the breakpoint at main
-    process = target.LaunchProcess (sys.argv[2:], [''], "dev/stdout", 0, False)
+    process = target.LaunchProcess (sys.argv[2:], [''], "/dev/stdout", 0, False)
     
     # Make sure the launch went ok
     if process.IsValid():
