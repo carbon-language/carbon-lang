@@ -539,11 +539,11 @@ static bool ShouldRelocOnSymbol(const MCSymbolData &SD,
   const MCSectionELF &Section =
     static_cast<const MCSectionELF&>(Symbol.getSection());
 
-  if (Section.getFlags() & MCSectionELF::SHF_MERGE)
-    return Target.getConstant() != 0;
-
   if (SD.isExternal())
     return true;
+
+  if (Section.getFlags() & MCSectionELF::SHF_MERGE)
+    return Target.getConstant() != 0;
 
   MCSymbolRefExpr::VariantKind Kind = Target.getSymA()->getKind();
   const MCSectionELF &Sec2 =

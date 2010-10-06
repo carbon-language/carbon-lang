@@ -12,9 +12,12 @@
         movl	$.Lfoo+2, %edi
         jmp	foo@PLT
         movq 	foo@GOTPCREL, %rax
+        movq    zed, %rax
 
         .section        .sec1,"aM",@progbits,16
 .Lfoo:
+zed:
+        .global zed
 
         .section	bar,"ax",@progbits
 foo:
@@ -38,6 +41,10 @@ foo:
 // CHECK-NEXT:     ('st_type', 3)
 // CHECK-NEXT:     ('st_other', 0)
 // CHECK-NEXT:     ('st_shndx', 4)
+
+// Symbol number 8 is zed
+// CHECK:        # Symbol 8
+// CHECK-NEXT:    (('st_name', 11) # 'zed'
 
 // Relocation 0 refers to symbol 1
 // CHECK:       ('_relocations', [
@@ -78,5 +85,13 @@ foo:
 // CHECK-NEXT:    ('r_sym', 2)
 // CHECK-NEXT:    ('r_type', 9
 // CHECK-NEXT:    ('r_addend',
+// CHECK-NEXT:   ),
+
+// Relocation 5 refers to symbol 8
+// CHECK-NEXT:   # Relocation 5
+// CHECK-NEXT:   (('r_offset', 35)
+// CHECK-NEXT:    ('r_sym', 8)
+// CHECK-NEXT:    ('r_type', 11)
+// CHECK-NEXT:    ('r_addend', 0)
 // CHECK-NEXT:   ),
 // CHECK-NEXT:  ])
