@@ -1255,14 +1255,18 @@ llvm::DIType CGDebugInfo::CreateType(const ArrayType *Ty,
   // obvious/recursive way?
   llvm::SmallVector<llvm::DIDescriptor, 8> Subscripts;
   QualType EltTy(Ty, 0);
-  while ((Ty = dyn_cast<ArrayType>(EltTy))) {
-    uint64_t Upper = 0;
-    if (const ConstantArrayType *CAT = dyn_cast<ConstantArrayType>(Ty))
-      if (CAT->getSize().getZExtValue())
-        Upper = CAT->getSize().getZExtValue() - 1;
-    // FIXME: Verify this is right for VLAs.
-    Subscripts.push_back(DebugFactory.GetOrCreateSubrange(0, Upper));
+  if (Ty->isIncompleteArrayType())
     EltTy = Ty->getElementType();
+  else {
+    while ((Ty = dyn_cast<ArrayType>(EltTy))) {
+      uint64_t Upper = 0;
+      if (const ConstantArrayType *CAT = dyn_cast<ConstantArrayType>(Ty))
+        if (CAT->getSize().getZExtValue())
+          Upper = CAT->getSize().getZExtValue() - 1;
+      // FIXME: Verify this is right for VLAs.
+      Subscripts.push_back(DebugFactory.GetOrCreateSubrange(0, Upper));
+      EltTy = Ty->getElementType();
+    }
   }
 
   llvm::DIArray SubscriptArray =
