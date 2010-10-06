@@ -148,7 +148,9 @@ public:
 protected:
     friend class SBAddress;
     friend class SBDebugger;
+    friend class SBFunction;
     friend class SBProcess;
+    friend class SBSymbol;
 
     //------------------------------------------------------------------
     // Constructors are private, use static Target::Create function to

@@ -135,6 +135,32 @@ Disassembler::Disassemble
     return false;
 }
 
+
+lldb::DisassemblerSP
+Disassembler::DisassembleRange
+(
+    const ArchSpec &arch,
+    const ExecutionContext &exe_ctx,
+    const AddressRange &range
+)
+{
+    lldb::DisassemblerSP disasm_sp;
+    if (range.GetByteSize() > 0 && range.GetBaseAddress().IsValid())
+    {
+        disasm_sp.reset (Disassembler::FindPlugin(arch));
+
+        if (disasm_sp)
+        {
+            DataExtractor data;
+            size_t bytes_disassembled = disasm_sp->ParseInstructions (&exe_ctx, range, data);
+            if (bytes_disassembled == 0)
+                disasm_sp.reset();
+        }
+    }
+    return disasm_sp;
+}
+
+
 bool
 Disassembler::Disassemble
 (
@@ -149,9 +175,9 @@ Disassembler::Disassemble
 {
     if (disasm_range.GetByteSize())
     {
-        Disassembler *disassembler = Disassembler::FindPlugin(arch);
+        std::auto_ptr<Disassembler> disasm_ap (Disassembler::FindPlugin(arch));
 
-        if (disassembler)
+        if (disasm_ap.get())
         {
             AddressRange range(disasm_range);
             
@@ -175,7 +201,7 @@ Disassembler::Disassemble
             }
 
             DataExtractor data;
-            size_t bytes_disassembled = disassembler->ParseInstructions (&exe_ctx, range, data);
+            size_t bytes_disassembled = disasm_ap->ParseInstructions (&exe_ctx, range, data);
             if (bytes_disassembled == 0)
             {
                 return false;
@@ -183,7 +209,7 @@ Disassembler::Disassemble
             else
             {
                 // We got some things disassembled...
-                size_t num_instructions = disassembler->GetInstructionList().GetSize();
+                size_t num_instructions = disasm_ap->GetInstructionList().GetSize();
                 uint32_t offset = 0;
                 SymbolContext sc;
                 SymbolContext prev_sc;
@@ -201,7 +227,7 @@ Disassembler::Disassemble
 
                 for (size_t i=0; i<num_instructions; ++i)
                 {
-                    Disassembler::Instruction *inst = disassembler->GetInstructionList().GetInstructionAtIndex (i);
+                    Instruction *inst = disasm_ap->GetInstructionList().GetInstructionAtIndex (i).get();
                     if (inst)
                     {
                         addr_t file_addr = addr.GetFileAddress();
@@ -270,7 +296,7 @@ Disassembler::Disassemble
                             strm.IndentMore ();
                         strm.Indent();
                         size_t inst_byte_size = inst->GetByteSize();
-                        inst->Dump(&strm, &addr, show_bytes ? &data : NULL, offset, exe_ctx, show_bytes);
+                        inst->Dump(&strm, true, show_bytes ? &data : NULL, offset, &exe_ctx, show_bytes);
                         strm.EOL();
                         offset += inst_byte_size;
                         
@@ -330,55 +356,49 @@ Disassembler::Disassemble
     return Disassemble(debugger, arch, exe_ctx, range, num_mixed_context_lines, show_bytes, strm);
 }
 
-Disassembler::Instruction::Instruction()
+Instruction::Instruction(const Address &addr) :
+    m_addr (addr)
 {
 }
 
-Disassembler::Instruction::~Instruction()
+Instruction::~Instruction()
 {
 }
 
 
-Disassembler::InstructionList::InstructionList() :
+InstructionList::InstructionList() :
     m_instructions()
 {
 }
 
-Disassembler::InstructionList::~InstructionList()
+InstructionList::~InstructionList()
 {
 }
 
 size_t
-Disassembler::InstructionList::GetSize() const
+InstructionList::GetSize() const
 {
     return m_instructions.size();
 }
 
 
-Disassembler::Instruction *
-Disassembler::InstructionList::GetInstructionAtIndex (uint32_t idx)
+InstructionSP
+InstructionList::GetInstructionAtIndex (uint32_t idx) const
 {
+    InstructionSP inst_sp;
     if (idx < m_instructions.size())
-        return m_instructions[idx].get();
-    return NULL;
-}
-
-const Disassembler::Instruction *
-Disassembler::InstructionList::GetInstructionAtIndex (uint32_t idx) const
-{
-    if (idx < m_instructions.size())
-        return m_instructions[idx].get();
-    return NULL;
+        inst_sp = m_instructions[idx];
+    return inst_sp;
 }
 
 void
-Disassembler::InstructionList::Clear()
+InstructionList::Clear()
 {
   m_instructions.clear();
 }
 
 void
-Disassembler::InstructionList::AppendInstruction (Instruction::shared_ptr &inst_sp)
+InstructionList::Append (lldb::InstructionSP &inst_sp)
 {
     if (inst_sp)
         m_instructions.push_back(inst_sp);
@@ -394,7 +414,6 @@ Disassembler::ParseInstructions
 )
 {
     Target *target = exe_ctx->target;
-
     const addr_t byte_size = range.GetByteSize();
     if (target == NULL || byte_size == 0 || !range.GetBaseAddress().IsValid())
         return 0;
@@ -421,7 +440,7 @@ Disassembler::ParseInstructions
             data.SetByteOrder(target->GetArchitecture().GetDefaultEndian());
             data.SetAddressByteSize(target->GetArchitecture().GetAddressByteSize());
         }
-        return DecodeInstructions (data, 0, UINT32_MAX);
+        return DecodeInstructions (range.GetBaseAddress(), data, 0, UINT32_MAX);
     }
 
     return 0;
@@ -445,13 +464,13 @@ Disassembler::~Disassembler()
 {
 }
 
-Disassembler::InstructionList &
+InstructionList &
 Disassembler::GetInstructionList ()
 {
     return m_instruction_list;
 }
 
-const Disassembler::InstructionList &
+const InstructionList &
 Disassembler::GetInstructionList () const
 {
     return m_instruction_list;

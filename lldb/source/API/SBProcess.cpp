@@ -474,11 +474,17 @@ SBProcess::GetDescription (SBStream &description)
     {
         char path[PATH_MAX];
         GetTarget().GetExecutable().GetPath (path, sizeof(path));
-        description.Printf ("Process {pid: %d, executable %s\n", (int) GetProcessID(), path);
-        description.Printf ("         instance name: %s, state: %s, thread cnt: %d}", 
-                            m_opaque_sp->GetInstanceName().AsCString(), 
+        Module *exe_module = m_opaque_sp->GetTarget().GetExecutableModule ().get();
+        const char *exe_name = NULL;
+        if (exe_module)
+            exe_name = exe_module->GetFileSpec().GetFilename().AsCString();
+
+        description.Printf ("Process {pid: %d, state: %s, threads: %d%s%s}", 
+                            m_opaque_sp->GetID(),
                             SBDebugger::StateAsCString (GetState()), 
-                            GetNumThreads());
+                            GetNumThreads(),
+                            exe_name ? ", executable: " : "",
+                            exe_name ? exe_name : "");
     }
     else
         description.Printf ("No value");

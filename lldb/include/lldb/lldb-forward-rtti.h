@@ -34,12 +34,14 @@ namespace lldb {
     typedef SharedPtr<lldb_private::CompileUnit>::Type CompUnitSP;
     typedef SharedPtr<lldb_private::DataBuffer>::Type DataBufferSP;
     typedef SharedPtr<lldb_private::Debugger>::Type DebuggerSP;
+    typedef SharedPtr<lldb_private::Disassembler>::Type DisassemblerSP;
     typedef SharedPtr<lldb_private::DynamicLoader>::Type DynamicLoaderSP;
     typedef SharedPtr<lldb_private::Event>::Type EventSP;
     typedef SharedPtr<lldb_private::Function>::Type FunctionSP;
     typedef SharedPtr<lldb_private::InlineFunctionInfo>::Type InlineFunctionInfoSP;
     typedef SharedPtr<lldb_private::InputReader>::Type InputReaderSP;
     typedef SharedPtr<lldb_private::InstanceSettings>::Type InstanceSettingsSP;
+    typedef SharedPtr<lldb_private::Instruction>::Type InstructionSP;
     typedef SharedPtr<lldb_private::LanguageRuntime>::Type LanguageRuntimeSP;
     typedef SharedPtr<lldb_private::LineTable>::Type LineTableSP;
     typedef SharedPtr<lldb_private::Listener>::Type ListenerSP;

@@ -11,6 +11,7 @@
 #define LLDB_SBFunction_h_
 
 #include "lldb/API/SBDefines.h"
+#include "lldb/API/SBInstructionList.h"
 
 namespace lldb {
 
@@ -30,6 +31,9 @@ public:
 
     const char *
     GetMangledName () const;
+
+    lldb::SBInstructionList
+    GetInstructions (lldb::SBTarget target);
 
 #ifndef SWIG
     bool

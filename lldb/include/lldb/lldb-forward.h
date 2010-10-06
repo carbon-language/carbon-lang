@@ -78,6 +78,7 @@ class   FunctionInfo;
 class   InlineFunctionInfo;
 class   InputReader;
 class   InstanceSettings;
+class   Instruction;
 class   LanguageRuntime;
 class   LineTable;
 class   Listener;

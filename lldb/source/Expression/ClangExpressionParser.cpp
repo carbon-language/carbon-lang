@@ -668,9 +668,9 @@ ClangExpressionParser::DisassembleFunction (Stream &stream, ExecutionContext &ex
                             DataExtractor::TypeUInt8);
     }
     
-    disassembler->DecodeInstructions(extractor, 0, UINT32_MAX);
+    disassembler->DecodeInstructions (Address (NULL, func_remote_addr), extractor, 0, UINT32_MAX);
     
-    Disassembler::InstructionList &instruction_list = disassembler->GetInstructionList();
+    InstructionList &instruction_list = disassembler->GetInstructionList();
     
     uint32_t bytes_offset = 0;
     
@@ -678,13 +678,12 @@ ClangExpressionParser::DisassembleFunction (Stream &stream, ExecutionContext &ex
          instruction_index < num_instructions; 
          ++instruction_index)
     {
-        Disassembler::Instruction *instruction = instruction_list.GetInstructionAtIndex(instruction_index);
-        Address addr(NULL, func_remote_addr + bytes_offset);
+        Instruction *instruction = instruction_list.GetInstructionAtIndex(instruction_index).get();
         instruction->Dump (&stream,
-                           &addr,
+                           true,
                            &extractor, 
                            bytes_offset, 
-                           exe_ctx, 
+                           &exe_ctx, 
                            true);
         stream.PutChar('\n');
         bytes_offset += instruction->GetByteSize();

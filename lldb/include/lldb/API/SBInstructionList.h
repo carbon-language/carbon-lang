@@ -36,17 +36,21 @@ public:
     void
     AppendInstruction (lldb::SBInstruction inst);
 
-
     void
     Print (FILE *out);
 
-private:
+    bool
+    GetDescription (lldb::SBStream &description);
 
-    // If we have an instruction list, it will need to be backed by an
-    // lldb_private class that contains the list, we can't inherit from
-    // std::vector here...
-    //std::vector <SBInstruction> m_insn_list;
+protected:
+    friend class SBFunction;
+    friend class SBSymbol;
+    
+    void
+    SetDisassembler (const lldb::DisassemblerSP &opaque_sp);
 
+private:    
+    lldb::DisassemblerSP m_opaque_sp;
 };
 
 

@@ -76,6 +76,20 @@
                 return PyString_FromString (description.GetData());
         }
 }
+%extend lldb::SBInstruction {
+        PyObject *lldb::SBInstruction::__repr__ (){
+                lldb::SBStream description;
+                $self->GetDescription (description);
+                return PyString_FromString (description.GetData());
+        }
+}
+%extend lldb::SBInstructionList {
+        PyObject *lldb::SBInstructionList::__repr__ (){
+                lldb::SBStream description;
+                $self->GetDescription (description);
+                return PyString_FromString (description.GetData());
+        }
+}
 %extend lldb::SBLineEntry {
         PyObject *lldb::SBLineEntry::__repr__ (){
                 lldb::SBStream description;

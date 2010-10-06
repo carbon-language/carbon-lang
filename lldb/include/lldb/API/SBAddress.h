@@ -51,6 +51,7 @@ protected:
 
     friend class SBFrame;
     friend class SBLineEntry;
+    friend class SBInstruction;
     friend class SBModule;
     friend class SBSymbolContext;
     friend class SBThread;

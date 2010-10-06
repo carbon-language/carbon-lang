@@ -9,10 +9,14 @@
 
 #include "lldb/API/SBSymbol.h"
 #include "lldb/API/SBStream.h"
+#include "lldb/Core/Disassembler.h"
+#include "lldb/Core/Module.h"
 #include "lldb/Symbol/Symbol.h"
+#include "lldb/Target/ExecutionContext.h"
+#include "lldb/Target/Target.h"
 
 using namespace lldb;
-
+using namespace lldb_private;
 
 SBSymbol::SBSymbol () :
     m_opaque_ptr (NULL)
@@ -78,3 +82,30 @@ SBSymbol::GetDescription (SBStream &description)
     
     return true;
 }
+
+
+
+SBInstructionList
+SBSymbol::GetInstructions (SBTarget target)
+{
+    SBInstructionList sb_instructions;
+    if (m_opaque_ptr)
+    {
+        ExecutionContext exe_ctx;
+        if (target.IsValid())
+            target->CalculateExecutionContext (exe_ctx);
+        const AddressRange *symbol_range = m_opaque_ptr->GetAddressRangePtr();
+        if (symbol_range)
+        {
+            Module *module = symbol_range->GetBaseAddress().GetModule();
+            if (module)
+            {
+                sb_instructions.SetDisassembler (Disassembler::DisassembleRange (module->GetArchitecture (),
+                                                                                 exe_ctx,
+                                                                                 *symbol_range));
+            }
+        }
+    }
+    return sb_instructions;
+}
+

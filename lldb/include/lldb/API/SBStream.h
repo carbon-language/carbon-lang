@@ -63,6 +63,8 @@ protected:
     friend class SBEvent;
     friend class SBFrame;
     friend class SBFunction;
+    friend class SBInstruction;
+    friend class SBInstructionList;
     friend class SBModule;
     friend class SBSymbol;
     friend class SBSymbolContext;

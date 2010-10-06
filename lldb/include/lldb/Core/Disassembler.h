@@ -17,78 +17,94 @@
 // Other libraries and framework includes
 // Project includes
 #include "lldb/lldb-private.h"
+#include "lldb/Core/Address.h"
 #include "lldb/Core/ArchSpec.h"
 #include "lldb/Core/PluginInterface.h"
 
 namespace lldb_private {
 
-class ExecutionContext;
-
-class Disassembler :
-    public PluginInterface
+class Instruction
 {
 public:
-    class Instruction
+    Instruction (const Address &addr);
+
+    virtual
+   ~Instruction();
+
+    const Address &
+    GetAddress () const
     {
-    public:
-        typedef lldb::SharedPtr<Instruction>::Type shared_ptr;
+        return m_addr;
+    }
 
-        Instruction();
-
-        virtual
-       ~Instruction();
-
-        virtual size_t
-        GetByteSize() const = 0;
-
-        virtual void
-        Dump (Stream *s,
-              Address *address,
-              const DataExtractor *bytes, 
-              uint32_t bytes_offset, 
-              const ExecutionContext &exe_ctx, 
-              bool raw) = 0;
-        
-        virtual bool
-        DoesBranch () const = 0;
-
-        virtual size_t
-        Extract (const DataExtractor& data, uint32_t data_offset) = 0;
-    };
-
-
-    class InstructionList
+    void
+    SetAddress (const Address &addr)
     {
-    public:
-        InstructionList();
-        ~InstructionList();
+        m_addr = addr;
+    }
 
-        size_t
-        GetSize() const;
+    virtual size_t
+    GetByteSize() const = 0;
 
-        Instruction *
-        GetInstructionAtIndex (uint32_t idx);
+    
+    virtual void
+    Dump (Stream *s,
+          bool show_address,
+          const DataExtractor *bytes, 
+          uint32_t bytes_offset, 
+          const ExecutionContext *exe_ctx, 
+          bool raw) = 0;
+    
+    virtual bool
+    DoesBranch () const = 0;
 
-        const Instruction *
-        GetInstructionAtIndex (uint32_t idx) const;
+    virtual size_t
+    Extract (const DataExtractor& data, uint32_t data_offset) = 0;
+
+protected:
+    Address m_addr;  // The section offset address of this instruction
+};
+
+
+class InstructionList
+{
+public:
+    InstructionList();
+    ~InstructionList();
+
+    size_t
+    GetSize() const;
+
+    lldb::InstructionSP
+    GetInstructionAtIndex (uint32_t idx) const;
 
     void
     Clear();
 
     void
-    AppendInstruction (Instruction::shared_ptr &inst_sp);
+    Append (lldb::InstructionSP &inst_sp);
 
-    private:
-        typedef std::vector<Instruction::shared_ptr> collection;
-        typedef collection::iterator iterator;
-        typedef collection::const_iterator const_iterator;
+private:
+    typedef std::vector<lldb::InstructionSP> collection;
+    typedef collection::iterator iterator;
+    typedef collection::const_iterator const_iterator;
 
-        collection m_instructions;
-    };
+    collection m_instructions;
+};
+
+class Disassembler :
+    public PluginInterface
+{
+public:
 
 
     static Disassembler*
     FindPlugin (const ArchSpec &arch);
+
+    static lldb::DisassemblerSP
+    DisassembleRange (const ArchSpec &arch,
+                      const ExecutionContext &exe_ctx,
+                      const AddressRange &disasm_range);
 
     static bool
     Disassemble (Debugger &debugger,
@@ -140,7 +156,8 @@ public:
                        DataExtractor& data);
 
     virtual size_t
-    DecodeInstructions (const DataExtractor& data,
+    DecodeInstructions (const Address &base_addr,
+                        const DataExtractor& data,
                         uint32_t data_offset,
                         uint32_t num_instructions) = 0;
     

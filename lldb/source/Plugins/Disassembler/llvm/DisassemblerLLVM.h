@@ -19,20 +19,20 @@
 class DisassemblerLLVM : public lldb_private::Disassembler
 {
 public:
-    class Instruction : public lldb_private::Disassembler::Instruction
+    class InstructionLLVM : public lldb_private::Instruction
     {
     public:
-        Instruction(EDDisassemblerRef disassembler);
+        InstructionLLVM(EDDisassemblerRef disassembler, const lldb_private::Address &addr);
 
         virtual
-        ~Instruction();
+        ~InstructionLLVM();
 
         void
         Dump (lldb_private::Stream *s,
-              lldb_private::Address *instr_addr_ptr,
+              bool show_address,
               const lldb_private::DataExtractor *bytes,
               uint32_t bytes_offset,
-              const lldb_private::ExecutionContext& exe_ctx,
+              const lldb_private::ExecutionContext* exe_ctx,
               bool raw);
 
         bool
@@ -75,7 +75,8 @@ public:
     ~DisassemblerLLVM();
 
     size_t
-    DecodeInstructions (const lldb_private::DataExtractor& data,
+    DecodeInstructions (const lldb_private::Address &base_addr,
+                        const lldb_private::DataExtractor& data,
                         uint32_t data_offset,
                         uint32_t num_instructions);
     

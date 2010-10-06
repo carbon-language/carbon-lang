@@ -17,43 +17,45 @@
 // There's a lot to be fixed here, but need to wait for underlying insn implementation
 // to be revised & settle down first.
 
-//class lldb_private::Disassembler::Instruction;
-
 namespace lldb {
 
 class SBInstruction
 {
 public:
 
-    //SBInstruction (lldb_private::Disassembler::Instruction *lldb_insn);
-
     SBInstruction ();
 
     ~SBInstruction ();
 
-    //bool
-    //IsValid();
+    bool
+    IsValid();
 
-    //size_t
-    //GetByteSize ();
+    SBAddress
+    GetAddress();
 
-    //void
-    //SetByteSize (size_t byte_size);
+    size_t
+    GetByteSize ();
 
-    //bool
-    //DoesBranch ();
+    bool
+    DoesBranch ();
 
     void
     Print (FILE *out);
 
-    //bool
-    //GetDescription (lldb::SBStream &description);
+    bool
+    GetDescription (lldb::SBStream &description);
+
+protected:
+    friend class SBInstructionList;
+
+    SBInstruction (const lldb::InstructionSP &inst_sp);
+
+    void
+    SetOpaque (const lldb::InstructionSP &inst_sp);
 
 private:
 
-    //lldb_private::Disassembler::Instruction::SharedPtr  m_opaque_sp;
-
-
+    lldb::InstructionSP  m_opaque_sp;
 };
 
 

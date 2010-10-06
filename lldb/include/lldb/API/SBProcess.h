@@ -161,6 +161,7 @@ protected:
     friend class SBBreakpointLocation;
     friend class SBCommandInterpreter;
     friend class SBDebugger;
+    friend class SBFunction;
     friend class SBTarget;
     friend class SBThread;
     friend class SBValue;

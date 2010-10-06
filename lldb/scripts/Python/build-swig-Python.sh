@@ -44,6 +44,8 @@ HEADER_FILES="${SRC_ROOT}/include/lldb/lldb-types.h"\
 " ${SRC_ROOT}/include/lldb/API/SBFileSpec.h"\
 " ${SRC_ROOT}/include/lldb/API/SBFrame.h"\
 " ${SRC_ROOT}/include/lldb/API/SBFunction.h"\
+" ${SRC_ROOT}/include/lldb/API/SBInstruction.h"\
+" ${SRC_ROOT}/include/lldb/API/SBInstructionList.h"\
 " ${SRC_ROOT}/include/lldb/API/SBLineEntry.h"\
 " ${SRC_ROOT}/include/lldb/API/SBListener.h"\
 " ${SRC_ROOT}/include/lldb/API/SBModule.h"\
