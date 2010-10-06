@@ -292,14 +292,14 @@ let isCall = 1,
   // Also used for Thumb2
   def tBL  : TIx2<0b11110, 0b11, 1,
                   (outs), (ins i32imm:$func, variable_ops), IIC_Br,
-                  "bl\t${func:call}",
+                  "bl\t$func",
                   [(ARMtcall tglobaladdr:$func)]>,
              Requires<[IsThumb, IsNotDarwin]>;
 
   // ARMv5T and above, also used for Thumb2
   def tBLXi : TIx2<0b11110, 0b11, 0,
                    (outs), (ins i32imm:$func, variable_ops), IIC_Br,
-                   "blx\t${func:call}",
+                   "blx\t$func",
                    [(ARMcall tglobaladdr:$func)]>,
               Requires<[IsThumb, HasV5T, IsNotDarwin]>;
 
@@ -327,14 +327,14 @@ let isCall = 1,
   // Also used for Thumb2
   def tBLr9 : TIx2<0b11110, 0b11, 1,
                    (outs), (ins i32imm:$func, variable_ops), IIC_Br,
-                   "bl\t${func:call}",
+                   "bl\t$func",
                    [(ARMtcall tglobaladdr:$func)]>,
               Requires<[IsThumb, IsDarwin]>;
 
   // ARMv5T and above, also used for Thumb2
   def tBLXi_r9 : TIx2<0b11110, 0b11, 0,
                       (outs), (ins i32imm:$func, variable_ops), IIC_Br,
-                      "blx\t${func:call}",
+                      "blx\t$func",
                       [(ARMcall tglobaladdr:$func)]>,
                  Requires<[IsThumb, HasV5T, IsDarwin]>;
 

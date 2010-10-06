@@ -256,9 +256,7 @@ void ARMAsmPrinter::printOperand(const MachineInstr *MI, int OpNum,
     O << *MO.getMBB()->getSymbol();
     return;
   case MachineOperand::MO_GlobalAddress: {
-    bool isCallOp = Modifier && !strcmp(Modifier, "call");
     const GlobalValue *GV = MO.getGlobal();
-
     if ((Modifier && strcmp(Modifier, "lo16") == 0) ||
         (TF & ARMII::MO_LO16))
       O << ":lower16:";
@@ -268,18 +266,13 @@ void ARMAsmPrinter::printOperand(const MachineInstr *MI, int OpNum,
     O << *Mang->getSymbol(GV);
 
     printOffset(MO.getOffset(), O);
-
-    if (isCallOp && Subtarget->isTargetELF() &&
-        TM.getRelocationModel() == Reloc::PIC_)
+    if (TF == ARMII::MO_PLT)
       O << "(PLT)";
     break;
   }
   case MachineOperand::MO_ExternalSymbol: {
-    bool isCallOp = Modifier && !strcmp(Modifier, "call");
     O << *GetExternalSymbolSymbol(MO.getSymbolName());
-
-    if (isCallOp && Subtarget->isTargetELF() &&
-        TM.getRelocationModel() == Reloc::PIC_)
+    if (TF == ARMII::MO_PLT)
       O << "(PLT)";
     break;
   }
