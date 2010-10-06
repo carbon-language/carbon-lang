@@ -18,7 +18,6 @@ class HelloWorldTestCase(TestBase):
         self.buildDsym()
         self.hello_world_python(useLaunchAPI = False)
 
-    @unittest2.expectedFailure
     def test_with_dwarf_and_process_launch_api(self):
         """Create target, breakpoint, launch a process, and then kill it.
 
@@ -53,9 +52,11 @@ class HelloWorldTestCase(TestBase):
 
         if useLaunchAPI:
             process = target.LaunchProcess([''], [''], os.ctermid(), 0, False)
+            # The following isn't needed anymore, rdar://8364687 is fixed.
+            #
             # Apply some dances after LaunchProcess() in order to break at "main".
             # It only works sometimes.
-            self.breakAfterLaunch(process, "main")
+            #self.breakAfterLaunch(process, "main")
         else:
             # On the other hand, the following line of code are more reliable.
             self.runCmd("run", setCookie=False)
