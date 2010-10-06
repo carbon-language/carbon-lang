@@ -54,6 +54,12 @@ config = {}
 # Delay startup in order for the debugger to attach.
 delay = False
 
+# The filter (testcase.testmethod) used to admit tests into our test suite.
+filterspec = None
+
+# If '-g' is specified, the filterspec must be consulted for each test module, default to False.
+fs4all = False
+
 # Ignore the build search path relative to this script to locate the lldb.py module.
 ignore = False
 
@@ -81,6 +87,12 @@ where options:
 -c   : read a config file specified after this option
        (see also lldb-trunk/example/test/usage-config)
 -d   : delay startup for 10 seconds (in order for the debugger to attach)
+-f   : specify a filter to admit tests into the test suite
+       e.g., -f 'ClassTypesTestCase.test_with_dwarf_and_python_api'
+-g   : if specified, only the modules with the corect filter will be run
+       it has no effect if no '-f' option is present
+       '-f filterspec -g' can be used with '-p filename-regexp' to select only
+       the testfile.testclass.testmethod to run
 -i   : ignore (don't bailout) if 'lldb.py' module cannot be located in the build
        tree relative to this script; use PYTHONPATH to locate the module
 -l   : don't skip long running test
@@ -117,6 +129,8 @@ def parseOptionsAndInitTestdirs():
 
     global configFile
     global delay
+    global filterspec
+    global fs4all
     global ignore
     global skipLongRunningTest
     global regexp
@@ -147,6 +161,16 @@ def parseOptionsAndInitTestdirs():
             index += 1
         elif sys.argv[index].startswith('-d'):
             delay = True
+            index += 1
+        elif sys.argv[index].startswith('-f'):
+            # Increment by 1 to fetch the filter spec.
+            index += 1
+            if index >= len(sys.argv) or sys.argv[index].startswith('-'):
+                usage()
+            filterspec = sys.argv[index]
+            index += 1
+        elif sys.argv[index].startswith('-g'):
+            fs4all = True
             index += 1
         elif sys.argv[index].startswith('-i'):
             ignore = True
@@ -267,6 +291,8 @@ def visit(prefix, dir, names):
 
     global suite
     global regexp
+    global filterspec
+    global fs4all
 
     for name in names:
         if os.path.isdir(os.path.join(dir, name)):
@@ -287,7 +313,35 @@ def visit(prefix, dir, names):
             if not sys.path.count(dir):
                 sys.path.append(dir)
             base = os.path.splitext(name)[0]
-            suite.addTests(unittest2.defaultTestLoader.loadTestsFromName(base))
+
+            # Thoroughly check the filterspec against the base module and admit
+            # the (base, filterspec) combination only when it makes sense.
+            if filterspec:
+                # Optimistically set the flag to True.
+                filtered = True
+                module = __import__(base)
+                parts = filterspec.split('.')
+                obj = module
+                for part in parts:
+                    try:
+                        parent, obj = obj, getattr(obj, part)
+                    except AttributeError:
+                        # The filterspec has failed.
+                        filtered = False
+                        break
+                # Forgo this module if the (base, filterspec) combo is invalid
+                # and the '-g' option is present.
+                if fs4all and not filtered:
+                    continue
+                
+            if filterspec and filtered:
+                suite.addTests(
+                    unittest2.defaultTestLoader.loadTestsFromName(filterspec, module))
+            else:
+                # A simple case of just the module name.  Also the failover case
+                # from the filterspec branch when the (base, filterspec) combo
+                # doesn't make sense.
+                suite.addTests(unittest2.defaultTestLoader.loadTestsFromName(base))
 
 
 def lldbLoggings():
