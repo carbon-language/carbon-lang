@@ -64,15 +64,10 @@ bool LTOModule::isBitcodeFileForTarget(const char *path,
 
 // Takes ownership of buffer.
 bool LTOModule::isTargetMatch(MemoryBuffer *buffer, const char *triplePrefix) {
-  OwningPtr<Module> m(getLazyBitcodeModule(buffer, getGlobalContext()));
-  // On success, m owns buffer and both are deleted at end of this method.
-  if (!m) {
-    delete buffer;
-    return false;
-  }
-  std::string actualTarget = m->getTargetTriple();
-  return (strncmp(actualTarget.c_str(), triplePrefix,
-                  strlen(triplePrefix)) == 0);
+  std::string Triple = getBitcodeTargetTriple(buffer, getGlobalContext());
+  delete buffer;
+  return (strncmp(Triple.c_str(), triplePrefix, 
+ 		  strlen(triplePrefix)) == 0);
 }
 
 

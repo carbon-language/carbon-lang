@@ -33,6 +33,15 @@ namespace llvm {
                                LLVMContext& Context,
                                std::string *ErrMsg = 0);
 
+  /// getBitcodeTargetTriple - Read the header of the specified bitcode
+  /// buffer and extract just the triple information. If successful,
+  /// this returns a string and *does not* take ownership
+  /// of 'buffer'. On error, this returns "", and fills in *ErrMsg
+  /// if ErrMsg is non-null.
+  std::string getBitcodeTargetTriple(MemoryBuffer *Buffer,
+				     LLVMContext& Context,
+				     std::string *ErrMsg = 0);
+
   /// ParseBitcodeFile - Read the specified bitcode file, returning the module.
   /// If an error occurs, this returns null and fills in *ErrMsg if it is
   /// non-null.  This method *never* takes ownership of Buffer.

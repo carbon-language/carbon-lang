@@ -1600,6 +1600,112 @@ bool BitcodeReader::ParseBitcodeInto(Module *M) {
   return false;
 }
 
+bool BitcodeReader::ParseModuleTriple(std::string &Triple) {
+  if (Stream.EnterSubBlock(bitc::MODULE_BLOCK_ID))
+    return Error("Malformed block record");
+
+  SmallVector<uint64_t, 64> Record;
+
+  // Read all the records for this module.
+  while (!Stream.AtEndOfStream()) {
+    unsigned Code = Stream.ReadCode();
+    if (Code == bitc::END_BLOCK) {
+      if (Stream.ReadBlockEnd())
+        return Error("Error at end of module block");
+
+      return false;
+    }
+
+    if (Code == bitc::ENTER_SUBBLOCK) {
+      switch (Stream.ReadSubBlockID()) {
+      default:  // Skip unknown content.
+        if (Stream.SkipBlock())
+          return Error("Malformed block record");
+        break;
+      }
+      continue;
+    }
+
+    if (Code == bitc::DEFINE_ABBREV) {
+      Stream.ReadAbbrevRecord();
+      continue;
+    }
+
+    // Read a record.
+    switch (Stream.ReadRecord(Code, Record)) {
+    default: break;  // Default behavior, ignore unknown content.
+    case bitc::MODULE_CODE_VERSION:  // VERSION: [version#]
+      if (Record.size() < 1)
+        return Error("Malformed MODULE_CODE_VERSION");
+      // Only version #0 is supported so far.
+      if (Record[0] != 0)
+        return Error("Unknown bitstream version!");
+      break;
+    case bitc::MODULE_CODE_TRIPLE: {  // TRIPLE: [strchr x N]
+      std::string S;
+      if (ConvertToString(Record, 0, S))
+        return Error("Invalid MODULE_CODE_TRIPLE record");
+      Triple = S;
+      break;
+    }
+    }
+    Record.clear();
+  }
+
+  return Error("Premature end of bitstream");
+}
+
+bool BitcodeReader::ParseTriple(std::string &Triple) {
+  if (Buffer->getBufferSize() & 3)
+    return Error("Bitcode stream should be a multiple of 4 bytes in length");
+
+  unsigned char *BufPtr = (unsigned char *)Buffer->getBufferStart();
+  unsigned char *BufEnd = BufPtr+Buffer->getBufferSize();
+
+  // If we have a wrapper header, parse it and ignore the non-bc file contents.
+  // The magic number is 0x0B17C0DE stored in little endian.
+  if (isBitcodeWrapper(BufPtr, BufEnd))
+    if (SkipBitcodeWrapperHeader(BufPtr, BufEnd))
+      return Error("Invalid bitcode wrapper header");
+
+  StreamFile.init(BufPtr, BufEnd);
+  Stream.init(StreamFile);
+
+  // Sniff for the signature.
+  if (Stream.Read(8) != 'B' ||
+      Stream.Read(8) != 'C' ||
+      Stream.Read(4) != 0x0 ||
+      Stream.Read(4) != 0xC ||
+      Stream.Read(4) != 0xE ||
+      Stream.Read(4) != 0xD)
+    return Error("Invalid bitcode signature");
+
+  // We expect a number of well-defined blocks, though we don't necessarily
+  // need to understand them all.
+  while (!Stream.AtEndOfStream()) {
+    unsigned Code = Stream.ReadCode();
+
+    if (Code != bitc::ENTER_SUBBLOCK)
+      return Error("Invalid record at top-level");
+
+    unsigned BlockID = Stream.ReadSubBlockID();
+
+    // We only know the MODULE subblock ID.
+    switch (BlockID) {
+    case bitc::MODULE_BLOCK_ID:
+      if (ParseModuleTriple(Triple))
+        return true;
+      break;
+    default:
+      if (Stream.SkipBlock())
+        return Error("Malformed block record");
+      break;
+    }
+  }
+
+  return false;
+}
+
 /// ParseMetadataAttachment - Parse metadata attachments.
 bool BitcodeReader::ParseMetadataAttachment() {
   if (Stream.EnterSubBlock(bitc::METADATA_ATTACHMENT_ID))
@@ -2537,7 +2643,24 @@ Module *llvm::ParseBitcodeFile(MemoryBuffer *Buffer, LLVMContext& Context,
   // Read in the entire module, and destroy the BitcodeReader.
   if (M->MaterializeAllPermanently(ErrMsg)) {
     delete M;
-    return NULL;
+    return 0;
   }
+
   return M;
+}
+
+std::string llvm::getBitcodeTargetTriple(MemoryBuffer *Buffer,
+                                         LLVMContext& Context,
+                                         std::string *ErrMsg) {
+  BitcodeReader *R = new BitcodeReader(Buffer, Context);
+  // Don't let the BitcodeReader dtor delete 'Buffer'.
+  R->setBufferOwned(false);
+
+  std::string Triple("");
+  if (R->ParseTriple(Triple))
+    if (ErrMsg)
+      *ErrMsg = R->getErrorString();
+
+  delete R;
+  return Triple;
 }
