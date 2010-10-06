@@ -384,7 +384,7 @@ public:
 
   /// isReachableFromEntry - Return true if A is dominated by the entry
   /// block of the function containing it.
-  bool isReachableFromEntry(NodeT* A) {
+  bool isReachableFromEntry(const NodeT* A) {
     assert(!this->isPostDominator() &&
            "This is not implemented for post dominators");
     return dominates(&A->getParent()->front(), A);
@@ -838,7 +838,7 @@ public:
     DT->splitBlock(NewBB);
   }
 
-  bool isReachableFromEntry(BasicBlock* A) {
+  bool isReachableFromEntry(const BasicBlock* A) {
     return DT->isReachableFromEntry(A);
   }
 
