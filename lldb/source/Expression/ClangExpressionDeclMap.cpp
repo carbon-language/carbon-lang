@@ -945,8 +945,9 @@ ClangExpressionDeclMap::GetDecls(NameSearchContext &context,
     
     m_sym_ctx->FindFunctionsByName(name_cs, false, sym_ctxs);
     
-    bool found_generic = false;
     bool found_specific = false;
+    Symbol *generic_symbol = NULL;
+    Symbol *non_extern_symbol = NULL;
     
     for (uint32_t index = 0, num_indices = sym_ctxs.GetSize();
          index < num_indices;
@@ -954,7 +955,7 @@ ClangExpressionDeclMap::GetDecls(NameSearchContext &context,
     {
         SymbolContext sym_ctx;
         sym_ctxs.GetContextAtIndex(index, sym_ctx);
-        
+
         if (sym_ctx.function)
         {
             // TODO only do this if it's a C function; C++ functions may be
@@ -963,14 +964,21 @@ ClangExpressionDeclMap::GetDecls(NameSearchContext &context,
                 AddOneFunction(context, sym_ctx.function, NULL);
             found_specific = true;
         }
-        else if(sym_ctx.symbol)
+        else if (sym_ctx.symbol)
         {
-            if (!found_generic && !found_specific)
-            {
-                AddOneFunction(context, NULL, sym_ctx.symbol);
-                found_generic = true;
-            }
+            if (sym_ctx.symbol->IsExternal())
+                generic_symbol = sym_ctx.symbol;
+            else
+                non_extern_symbol = sym_ctx.symbol;
         }
+    }
+    
+    if (!found_specific)
+    {
+        if (generic_symbol)
+            AddOneFunction(context, NULL, generic_symbol);
+        else if (non_extern_symbol)
+            AddOneFunction(context, NULL, non_extern_symbol);
     }
     
     Variable *var = FindVariableInScope(*m_exe_ctx->frame, name);
