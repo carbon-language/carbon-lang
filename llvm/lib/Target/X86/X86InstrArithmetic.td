@@ -503,6 +503,18 @@ class BinOpRR<bits<8> opcode, Format format, string mnemonic,
                  "}\t{$src2, $dst|$dst, $src2}"),
       [(set regclass:$dst, EFLAGS, (opnode regclass:$src1, regclass:$src2))]>;
 
+
+class BinOpRM<bits<8> opcode, string mnemonic,
+              X86RegisterClass regclass, SDNode opnode, PatFrag loadnode,
+              X86MemOperand operand>
+  : I<opcode, MRMSrcMem,
+      (outs regclass:$dst), (ins regclass:$src1, operand:$src2),
+      !strconcat(mnemonic, "{", regclass.InstrSuffix,
+                 "}\t{$src2, $dst|$dst, $src2}"),
+      [(set regclass:$dst, EFLAGS, (opnode regclass:$src1,
+                                           (loadnode addr:$src2)))]>;
+
+
 // Logical operators.
 let Defs = [EFLAGS] in {
 let Constraints = "$src1 = $dst" in {
@@ -531,27 +543,10 @@ def AND64rr_REV : RI<0x23, MRMSrcReg, (outs GR64:$dst),
                      "and{q}\t{$src2, $dst|$dst, $src2}", []>;
 }
 
-def AND8rm   : I<0x22, MRMSrcMem, 
-                 (outs GR8 :$dst), (ins GR8 :$src1, i8mem :$src2),
-                 "and{b}\t{$src2, $dst|$dst, $src2}",
-                [(set GR8:$dst, EFLAGS, (X86and_flag GR8:$src1,
-                                                     (loadi8 addr:$src2)))]>;
-def AND16rm  : I<0x23, MRMSrcMem, 
-                 (outs GR16:$dst), (ins GR16:$src1, i16mem:$src2),
-                 "and{w}\t{$src2, $dst|$dst, $src2}",
-                [(set GR16:$dst, EFLAGS, (X86and_flag GR16:$src1,
-                                                      (loadi16 addr:$src2)))]>,
-               OpSize;
-def AND32rm  : I<0x23, MRMSrcMem,
-                 (outs GR32:$dst), (ins GR32:$src1, i32mem:$src2),
-                 "and{l}\t{$src2, $dst|$dst, $src2}",
-                [(set GR32:$dst, EFLAGS, (X86and_flag GR32:$src1,
-                                                      (loadi32 addr:$src2)))]>;
-def AND64rm  : RI<0x23, MRMSrcMem,
-                  (outs GR64:$dst), (ins GR64:$src1, i64mem:$src2),
-                  "and{q}\t{$src2, $dst|$dst, $src2}",
-                  [(set GR64:$dst, EFLAGS,
-                        (X86and_flag GR64:$src1, (load addr:$src2)))]>;
+def AND8rm   : BinOpRM<0x22, "and", GR8 , X86and_flag, loadi8 , i8mem>;
+def AND16rm  : BinOpRM<0x23, "and", GR16, X86and_flag, loadi16, i16mem>, OpSize;
+def AND32rm  : BinOpRM<0x23, "and", GR32, X86and_flag, loadi32, i32mem>;
+def AND64rm  : BinOpRM<0x23, "and", GR64, X86and_flag, loadi64, i64mem>, REX_W;
 
 def AND8ri   : Ii8<0x80, MRM4r, 
                    (outs GR8 :$dst), (ins GR8 :$src1, i8imm :$src2),
