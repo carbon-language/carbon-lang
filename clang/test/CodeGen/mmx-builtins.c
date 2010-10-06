@@ -4,7 +4,6 @@
 // on win32 since we don't generally know how to find errno.h.
 #define __MM_MALLOC_H
 
-// PR6658
 #include <tmmintrin.h>
 
 __m64 test1(__m64 a, __m64 b) {
