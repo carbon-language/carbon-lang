@@ -11,6 +11,7 @@
         movl	$.Lfoo, %edi
         movl	$.Lfoo+2, %edi
         jmp	foo@PLT
+        movq 	foo@GOTPCREL, %rax
 
         .section        .sec1,"aM",@progbits,16
 .Lfoo:
@@ -68,6 +69,14 @@ foo:
 // CHECK-NEXT:   (('r_offset',
 // CHECK-NEXT:    ('r_sym', 2)
 // CHECK-NEXT:    ('r_type', 4
+// CHECK-NEXT:    ('r_addend',
+// CHECK-NEXT:   ),
+
+// Relocation 4 refers to symbol 2
+// CHECK-NEXT:   # Relocation 4
+// CHECK-NEXT:   (('r_offset',
+// CHECK-NEXT:    ('r_sym', 2)
+// CHECK-NEXT:    ('r_type', 9
 // CHECK-NEXT:    ('r_addend',
 // CHECK-NEXT:   ),
 // CHECK-NEXT:  ])

@@ -544,12 +544,12 @@ static bool ShouldRelocOnSymbol(const MCSymbolData &SD,
   if (SD.isExternal())
     return true;
 
-  const llvm::MCSymbolRefExpr& Ref = *Target.getSymA();
+  MCSymbolRefExpr::VariantKind Kind = Target.getSymA()->getKind();
   const MCSectionELF &Sec2 =
     static_cast<const MCSectionELF&>(F.getParent()->getSection());
 
-  if (Ref.getKind() == MCSymbolRefExpr::VK_PLT &&
-      &Sec2 != &Section)
+  if (&Sec2 != &Section &&
+      (Kind == MCSymbolRefExpr::VK_PLT || Kind == MCSymbolRefExpr::VK_GOTPCREL))
     return true;
 
   return false;
@@ -647,6 +647,9 @@ void ELFObjectWriterImpl::RecordRelocation(const MCAssembler &Asm,
           break;
         case MCSymbolRefExpr::VK_GOT:
           Type = ELF::R_X86_64_GOT32;
+          break;
+        case llvm::MCSymbolRefExpr::VK_GOTPCREL:
+          Type = ELF::R_X86_64_GOTPCREL;
           break;
         default:
           llvm_unreachable("Unimplemented");
