@@ -50,6 +50,9 @@ public:
     IsValid() const;
 
     lldb::SBProcess
+    CreateProcess (); // DEPRECATED
+
+    lldb::SBProcess
     GetProcess ();
 
     lldb::SBProcess

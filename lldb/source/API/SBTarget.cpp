@@ -105,6 +105,20 @@ SBTarget::GetDebugger () const
     return debugger;
 }
 
+
+// DEPRECATED
+SBProcess
+SBTarget::CreateProcess ()
+{
+    SBProcess sb_process;
+
+    if (m_opaque_sp)
+        sb_process.SetProcess (m_opaque_sp->CreateProcess (m_opaque_sp->GetDebugger().GetListener()));
+
+    return sb_process;
+}
+
+
 SBProcess
 SBTarget::LaunchProcess
 (
@@ -118,8 +132,17 @@ SBTarget::LaunchProcess
     SBProcess sb_process;
     if (m_opaque_sp)
     {
-        // When launching, we always want to create a new process
-        sb_process.SetProcess (m_opaque_sp->CreateProcess (m_opaque_sp->GetDebugger().GetListener()));
+        // DEPRECATED, this will change when CreateProcess is removed...
+        if (m_opaque_sp->GetProcessSP())
+        {
+            sb_process.SetProcess(m_opaque_sp->GetProcessSP());
+        }
+        else
+        {
+            // When launching, we always want to create a new process When
+            // SBTarget::CreateProcess is removed, this will always happen.
+            sb_process.SetProcess (m_opaque_sp->CreateProcess (m_opaque_sp->GetDebugger().GetListener()));
+        }
 
         if (sb_process.IsValid())
         {
