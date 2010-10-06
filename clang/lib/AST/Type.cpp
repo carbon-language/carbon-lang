@@ -470,12 +470,6 @@ bool Type::isIntegralOrEnumerationType() const {
   return false;  
 }
 
-bool Type::isEnumeralType() const {
-  if (const TagType *TT = dyn_cast<TagType>(CanonicalType))
-    return TT->getDecl()->isEnum();
-  return false;
-}
-
 bool Type::isBooleanType() const {
   if (const BuiltinType *BT = dyn_cast<BuiltinType>(CanonicalType))
     return BT->getKind() == BuiltinType::Bool;
