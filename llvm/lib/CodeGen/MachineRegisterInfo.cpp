@@ -60,6 +60,20 @@ MachineRegisterInfo::setRegClass(unsigned Reg, const TargetRegisterClass *RC) {
   RegClass2VRegMap[RC->getID()].push_back(VR);
 }
 
+const TargetRegisterClass *
+MachineRegisterInfo::constrainRegClass(unsigned Reg,
+                                       const TargetRegisterClass *RC) {
+  const TargetRegisterClass *OldRC = getRegClass(Reg);
+  if (OldRC == RC)
+    return RC;
+  const TargetRegisterClass *NewRC = getCommonSubClass(OldRC, RC);
+  if (!NewRC)
+    return 0;
+  if (NewRC != OldRC)
+    setRegClass(Reg, NewRC);
+  return NewRC;
+}
+
 /// createVirtualRegister - Create and return a new virtual register in the
 /// function with the specified register class.
 ///

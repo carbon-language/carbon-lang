@@ -203,6 +203,14 @@ public:
   ///
   void setRegClass(unsigned Reg, const TargetRegisterClass *RC);
 
+  /// constrainRegClass - Constrain the register class of the specified virtual
+  /// register to be a common subclass of RC and the current register class.
+  /// Return the new register class, or NULL if no such class exists.
+  /// This should only be used when the constraint is known to be trivial, like
+  /// GR32 -> GR32_NOSP. Beware of increasing register pressure.
+  const TargetRegisterClass *constrainRegClass(unsigned Reg,
+                                               const TargetRegisterClass *RC);
+
   /// createVirtualRegister - Create and return a new virtual register in the
   /// function with the specified register class.
   ///

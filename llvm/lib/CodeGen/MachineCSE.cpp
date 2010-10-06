@@ -120,17 +120,12 @@ bool MachineCSE::PerformTrivialCoalescing(MachineInstr *MI,
       continue;
     if (DefMI->getOperand(0).getSubReg() || DefMI->getOperand(1).getSubReg())
       continue;
-    const TargetRegisterClass *SRC   = MRI->getRegClass(SrcReg);
-    const TargetRegisterClass *RC    = MRI->getRegClass(Reg);
-    const TargetRegisterClass *NewRC = getCommonSubClass(RC, SRC);
-    if (!NewRC)
+    if (!MRI->constrainRegClass(SrcReg, MRI->getRegClass(Reg)))
       continue;
     DEBUG(dbgs() << "Coalescing: " << *DefMI);
-    DEBUG(dbgs() << "*** to: " << *MI);
+    DEBUG(dbgs() << "***     to: " << *MI);
     MO.setReg(SrcReg);
     MRI->clearKillFlags(SrcReg);
-    if (NewRC != SRC)
-      MRI->setRegClass(SrcReg, NewRC);
     DefMI->eraseFromParent();
     ++NumCoalesces;
     Changed = true;
