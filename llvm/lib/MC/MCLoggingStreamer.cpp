@@ -56,6 +56,7 @@ public:
 
   virtual void InitSections() {
     LogCall("InitSections");
+    return Child->InitSections();
   }
 
   virtual void EmitLabel(MCSymbol *Symbol) {
