@@ -1163,6 +1163,19 @@ static bool InitExprContainsUninitializedFields(const Stmt *S,
   }
   if (const MemberExpr *ME = dyn_cast<MemberExpr>(S)) {
     const NamedDecl *RhsField = ME->getMemberDecl();
+
+    if (const VarDecl *VD = dyn_cast<VarDecl>(RhsField)) {
+      // The member expression points to a static data member.
+      assert(VD->isStaticDataMember() && 
+             "Member points to non-static data member!");
+      return false;
+    }
+    
+    if (isa<EnumConstantDecl>(RhsField)) {
+      // The member expression points to an enum.
+      return false;
+    }
+
     if (RhsField == LhsField) {
       // Initializing a field with itself. Throw a warning.
       // But wait; there are exceptions!

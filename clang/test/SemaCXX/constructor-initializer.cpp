@@ -239,3 +239,32 @@ namespace test3 {
     }
   };
 }
+
+// PR8075
+namespace PR8075 {
+
+struct S1 {
+  enum { FOO = 42 };
+  static const int bar = 42;
+  static int baz();
+  S1(int);
+};
+
+const int S1::bar;
+
+struct S2 {
+  S1 s1;
+  S2() : s1(s1.FOO) {}
+};
+
+struct S3 {
+  S1 s1;
+  S3() : s1(s1.bar) {}
+};
+
+struct S4 {
+  S1 s1;
+  S4() : s1(s1.baz()) {}
+};
+
+}
