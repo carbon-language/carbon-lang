@@ -495,11 +495,13 @@ let CodeSize = 2 in {
 } // CodeSize = 2
 } // Defs = [EFLAGS]
 
+
 /// X86TypeInfo - This is a bunch of information that describes relevant X86
 /// information about value types.  For example, it can tell you what the
 /// register class and preferred load to use.
 class X86TypeInfo<ValueType vt, string instrsuffix, RegisterClass regclass,
-                  PatFrag loadnode, X86MemOperand memoperand> {
+                  PatFrag loadnode, X86MemOperand memoperand,
+                  bit hasOpSizePrefix, bit hasREX_WPrefix> {
   /// VT - This is the value type itself.
   ValueType VT = vt;
   
@@ -518,33 +520,55 @@ class X86TypeInfo<ValueType vt, string instrsuffix, RegisterClass regclass,
   /// MemOperand - This is the memory operand associated with this type.  For
   /// example, i8 -> i8mem, i16 -> i16mem, i32 -> i32mem, i64 -> i64mem.
   X86MemOperand MemOperand = memoperand;
+  
+  /// HasOpSizePrefix - This bit is set to true if the instruction should have
+  /// the 0x66 operand size prefix.  This is set for i16 types.
+  bit HasOpSizePrefix = hasOpSizePrefix;
+  
+  /// HasREX_WPrefix - This bit is set to true if the instruction should have
+  /// the 0x40 REX prefix.  This is set for i64 types.
+  bit HasREX_WPrefix = hasREX_WPrefix;
 }
 
-def Xi8  : X86TypeInfo<i8 , "b", GR8 , loadi8 , i8mem>;
-def Xi16 : X86TypeInfo<i16, "w", GR16, loadi16, i16mem>;
-def Xi32 : X86TypeInfo<i32, "l", GR32, loadi32, i32mem>;
-def Xi64 : X86TypeInfo<i64, "q", GR64, loadi64, i64mem>;
+def Xi8  : X86TypeInfo<i8 , "b", GR8 , loadi8 , i8mem , 0, 0>;
+def Xi16 : X86TypeInfo<i16, "w", GR16, loadi16, i16mem, 1, 0>;
+def Xi32 : X86TypeInfo<i32, "l", GR32, loadi32, i32mem, 0, 0>;
+def Xi64 : X86TypeInfo<i64, "q", GR64, loadi64, i64mem, 0, 1>;
+
+/// ITy - This instruction base class takes the type info for the instruction.
+/// Using this, it:
+/// 1. Concatenates together the instruction mnemonic with the appropriate
+///    suffix letter, a tab, and the arguments.
+/// 2. Infers whether the instruction should have a 0x66 prefix byte.
+/// 3. Infers whether the instruction should have a 0x40 REX_W prefix.
+class ITy<bits<8> opcode, Format f,  X86TypeInfo typeinfo, dag outs, dag ins, 
+          string mnemonic, string args, list<dag> pattern>
+  : I<opcode, f, outs, ins, 
+      !strconcat(mnemonic, "{", typeinfo.InstrSuffix, "}\t", args), pattern> {
+
+  // Infer instruction prefixes from type info.
+  let hasOpSizePrefix = typeinfo.HasOpSizePrefix;
+  let hasREX_WPrefix  = typeinfo.HasREX_WPrefix;
+}
 
 
 class BinOpRR<bits<8> opcode, string mnemonic, X86TypeInfo typeinfo,
               SDNode opnode, Format format>
-  : I<opcode, format,
-      (outs typeinfo.RegClass:$dst),
-      (ins typeinfo.RegClass:$src1, typeinfo.RegClass:$src2),
-      !strconcat(mnemonic, "{", typeinfo.InstrSuffix,
-                 "}\t{$src2, $dst|$dst, $src2}"),
-      [(set typeinfo.RegClass:$dst, EFLAGS,
-            (opnode typeinfo.RegClass:$src1, typeinfo.RegClass:$src2))]>;
+  : ITy<opcode, format, typeinfo,
+        (outs typeinfo.RegClass:$dst),
+        (ins typeinfo.RegClass:$src1, typeinfo.RegClass:$src2),
+        mnemonic, "{$src2, $dst|$dst, $src2}",
+        [(set typeinfo.RegClass:$dst, EFLAGS,
+              (opnode typeinfo.RegClass:$src1, typeinfo.RegClass:$src2))]>;
 
 
 class BinOpRM<bits<8> opcode, string mnemonic, X86TypeInfo typeinfo,
               SDNode opnode>
-  : I<opcode, MRMSrcMem,
-      (outs typeinfo.RegClass:$dst),
-      (ins typeinfo.RegClass:$src1, typeinfo.MemOperand:$src2),
-      !strconcat(mnemonic, "{", typeinfo.InstrSuffix,
-                 "}\t{$src2, $dst|$dst, $src2}"),
-      [(set typeinfo.RegClass:$dst, EFLAGS,
+  : ITy<opcode, MRMSrcMem, typeinfo,
+        (outs typeinfo.RegClass:$dst),
+        (ins typeinfo.RegClass:$src1, typeinfo.MemOperand:$src2),
+        mnemonic, "{$src2, $dst|$dst, $src2}",
+        [(set typeinfo.RegClass:$dst, EFLAGS,
             (opnode typeinfo.RegClass:$src1, (typeinfo.LoadNode addr:$src2)))]>;
 
 
@@ -554,9 +578,9 @@ let Constraints = "$src1 = $dst" in {
 
 let isCommutable = 1 in {   // X = AND Y, Z   --> X = AND Z, Y
 def AND8rr  : BinOpRR<0x20, "and", Xi8 , X86and_flag, MRMDestReg>;
-def AND16rr : BinOpRR<0x21, "and", Xi16, X86and_flag, MRMDestReg>, OpSize;
+def AND16rr : BinOpRR<0x21, "and", Xi16, X86and_flag, MRMDestReg>;
 def AND32rr : BinOpRR<0x21, "and", Xi32, X86and_flag, MRMDestReg>;
-def AND64rr : BinOpRR<0x21, "and", Xi64, X86and_flag, MRMDestReg>, REX_W;
+def AND64rr : BinOpRR<0x21, "and", Xi64, X86and_flag, MRMDestReg>;
 } // isCommutable
 
 
@@ -577,9 +601,9 @@ def AND64rr_REV : RI<0x23, MRMSrcReg, (outs GR64:$dst),
 }
 
 def AND8rm   : BinOpRM<0x22, "and", Xi8 , X86and_flag>;
-def AND16rm  : BinOpRM<0x23, "and", Xi16, X86and_flag>, OpSize;
+def AND16rm  : BinOpRM<0x23, "and", Xi16, X86and_flag>;
 def AND32rm  : BinOpRM<0x23, "and", Xi32, X86and_flag>;
-def AND64rm  : BinOpRM<0x23, "and", Xi64, X86and_flag>, REX_W;
+def AND64rm  : BinOpRM<0x23, "and", Xi64, X86and_flag>;
 
 def AND8ri   : Ii8<0x80, MRM4r, 
                    (outs GR8 :$dst), (ins GR8 :$src1, i8imm :$src2),
