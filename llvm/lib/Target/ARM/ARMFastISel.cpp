@@ -1181,7 +1181,7 @@ bool ARMFastISel::ProcessCallArgs(SmallVectorImpl<Value*> &Args,
     switch (VA.getLocInfo()) {
       case CCValAssign::Full: break;
       default:
-      assert(false && "Handle arg promotion.");
+      // TODO: Handle arg promotion.
       return false;
     }
 
