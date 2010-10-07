@@ -55,7 +55,8 @@ namespace llvm {
       FlagBlockByrefStruct = 1 << 4,
       FlagVirtual          = 1 << 5,
       FlagArtificial       = 1 << 6,
-      FlagExplicit         = 1 << 7
+      FlagExplicit         = 1 << 7,
+      FlagPrototyped       = 1 << 8
     };
   protected:
     const MDNode *DbgNode;
@@ -421,6 +422,12 @@ namespace llvm {
       if (getVersion() <= llvm::LLVMDebugVersion8)
         return false;
       return (getUnsignedField(14) & FlagExplicit) != 0;
+    }
+    /// isPrototyped - Return true if this subprogram is prototyped.
+    bool isPrototyped() const    { 
+      if (getVersion() <= llvm::LLVMDebugVersion8)
+        return false;
+      return (getUnsignedField(14) & FlagPrototyped) != 0;
     }
 
     unsigned isOptimized() const;

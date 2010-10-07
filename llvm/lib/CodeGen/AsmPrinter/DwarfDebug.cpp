@@ -1059,8 +1059,6 @@ void DwarfDebug::constructTypeDIE(DIE &Buffer, DICompositeType CTy) {
     // Add prototype flag.
     if (isPrototyped)
       addUInt(&Buffer, dwarf::DW_AT_prototyped, dwarf::DW_FORM_flag, 1);
-
-
   }
     break;
   case dwarf::DW_TAG_structure_type:
@@ -1318,10 +1316,7 @@ DIE *DwarfDebug::createSubprogramDIE(DISubprogram SP) {
 
   addSourceLine(SPDie, SP);
 
-  // Add prototyped tag, if C or ObjC.
-  unsigned Lang = SP.getCompileUnit().getLanguage();
-  if (Lang == dwarf::DW_LANG_C99 || Lang == dwarf::DW_LANG_C89 ||
-      Lang == dwarf::DW_LANG_ObjC)
+  if (SP.isPrototyped()) 
     addUInt(SPDie, dwarf::DW_AT_prototyped, dwarf::DW_FORM_flag, 1);
 
   // Add Return Type.
