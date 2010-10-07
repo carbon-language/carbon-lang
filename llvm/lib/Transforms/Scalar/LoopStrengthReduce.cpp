@@ -3035,6 +3035,14 @@ void LSRInstance::NarrowSearchSpaceByCollapsingUnrolledCode() {
                 if (Fixup.LUIdx == LUIdx) {
                   Fixup.LUIdx = LUThatHas - &Uses.front();
                   Fixup.Offset += F.AM.BaseOffs;
+                  // Add the new offset to LUThatHas' offset list.
+                  if (LUThatHas->Offsets.back() != Fixup.Offset) {
+                    LUThatHas->Offsets.push_back(Fixup.Offset);
+                    if (Fixup.Offset > LUThatHas->MaxOffset)
+                      LUThatHas->MaxOffset = Fixup.Offset;
+                    if (Fixup.Offset < LUThatHas->MinOffset)
+                      LUThatHas->MinOffset = Fixup.Offset;
+                  }
                   DEBUG(dbgs() << "New fixup has offset "
                                << Fixup.Offset << '\n');
                 }
