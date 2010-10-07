@@ -1,5 +1,5 @@
 """
-LLDB modules which contains miscellaneous utilities.
+This LLDB module contains miscellaneous utilities.
 """
 
 import lldb
@@ -14,6 +14,26 @@ def GetFunctionNames(thread):
         return thread.GetFrameAtIndex(i).GetFunction().GetName()
 
     return map(GetFuncName, range(thread.GetNumFrames()))
+
+
+def GetSymbolNames(thread):
+    """
+    Returns a sequence of symbols for this thread.
+    """
+    def GetSymbol(i):
+        return thread.GetFrameAtIndex(i).GetSymbol().GetName()
+
+    return map(GetSymbol, range(thread.GetNumFrames()))
+
+
+def GetPCAddresses(thread):
+    """
+    Returns a sequence of pc addresses for this thread.
+    """
+    def GetPCAddress(i):
+        return thread.GetFrameAtIndex(i).GetPCAddress()
+
+    return map(GetPCAddress, range(thread.GetNumFrames()))
 
 
 def GetFilenames(thread):
@@ -59,23 +79,47 @@ def GetStackFrames(thread):
 def PrintStackTrace(thread, string_buffer = False):
     """Prints a simple stack trace of this thread."""
 
+    output = StringIO.StringIO() if string_buffer else sys.stdout
+    target = thread.GetProcess().GetTarget()
+
     depth = thread.GetNumFrames()
 
     mods = GetModuleNames(thread)
     funcs = GetFunctionNames(thread)
+    symbols = GetSymbolNames(thread)
     files = GetFilenames(thread)
     lines = GetLineNumbers(thread)
-
-    output = StringIO.StringIO() if string_buffer else sys.stdout
+    addrs = GetPCAddresses(thread)
 
     print >> output, "Stack trace for thread id={0:#x} name={1} queue={2}:".format(
         thread.GetThreadID(), thread.GetName(), thread.GetQueueName())
 
-    for i in range(depth - 1):
-        print >> output, "  frame #{num}: {mod}`{func} at {file}:{line}".format(
-            num=i, mod=mods[i], func=funcs[i], file=files[i], line=lines[i])
+    for i in range(depth):
+        frame = thread.GetFrameAtIndex(i)
+        function = frame.GetFunction()
 
-    print >> output, "  frame #{num}: {mod}`start".format(num=depth-1, mod=mods[depth-1])
+        load_addr = addrs[i].GetLoadAddress(target)
+        if not function.IsValid():
+            file_addr = addrs[i].GetFileAddress()
+            print >> output, "  frame #{num}: {addr:#016x} {mod}`{symbol} + ????".format(
+                num=i, addr=load_addr, mod=mods[i], symbol=symbols[i])
+        else:
+            print >> output, "  frame #{num}: {addr:#016x} {mod}`{func} at {file}:{line}".format(
+                num=i, addr=load_addr, mod=mods[i], func=funcs[i], file=files[i], line=lines[i])
+
+    if string_buffer:
+        return output.getvalue()
+
+
+def PrintStackTraces(process, string_buffer = False):
+    """Prints the stack traces of all the threads."""
+
+    output = StringIO.StringIO() if string_buffer else sys.stdout
+
+    print >> output, "Stack traces for " + repr(process)
+
+    for i in range(process.GetNumThreads()):
+        print >> output, PrintStackTrace(process.GetThreadAtIndex(i), string_buffer=True)
 
     if string_buffer:
         return output.getvalue()

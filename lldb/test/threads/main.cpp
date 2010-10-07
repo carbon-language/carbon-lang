@@ -65,6 +65,7 @@ thread_func (void *arg)
         long usec = ::random() % 3000000;
         printf ("%s (thread = %u) doing a usleep (%li)...\n", __FUNCTION__, thread_index, usec);
         ::usleep (usec);
+        printf ("%s (thread = %u) after usleep ...\n", __FUNCTION__, thread_index);
     }
     printf ("%s (thread index = %u) exiting...\n", __FUNCTION__, thread_index);
 
