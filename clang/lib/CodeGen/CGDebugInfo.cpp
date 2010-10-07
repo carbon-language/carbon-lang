@@ -746,6 +746,8 @@ CGDebugInfo::CreateCXXMemberFunction(const CXXMethodDecl *Method,
     if (CXXC->isExplicit())
       Flags |= llvm::DIDescriptor::FlagExplicit;
   }
+  if (Method->hasPrototype())
+    Flags |= llvm::DIDescriptor::FlagPrototyped;
     
   llvm::DISubprogram SP =
     DebugFactory.CreateSubprogram(RecordTy , MethodName, MethodName, 
@@ -1526,6 +1528,7 @@ void CGDebugInfo::EmitFunctionStart(GlobalDecl GD, QualType FnType,
   FnBeginRegionCount.push_back(RegionStack.size());
 
   const Decl *D = GD.getDecl();
+  unsigned Flags = 0;
   if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
     // If there is a DISubprogram for  this function available then use it.
     llvm::DenseMap<const FunctionDecl *, llvm::WeakVH>::iterator
@@ -1542,13 +1545,17 @@ void CGDebugInfo::EmitFunctionStart(GlobalDecl GD, QualType FnType,
     Name = getFunctionName(FD);
     // Use mangled name as linkage name for c/c++ functions.
     LinkageName = CGM.getMangledName(GD);
+    if (FD->hasPrototype())
+      Flags |= llvm::DIDescriptor::FlagPrototyped;
   } else if (const ObjCMethodDecl *OMD = dyn_cast<ObjCMethodDecl>(D)) {
     Name = getObjCMethodName(OMD);
     LinkageName = Name;
+    Flags |= llvm::DIDescriptor::FlagPrototyped;
   } else {
     // Use llvm function name as linkage name.
     Name = Fn->getName();
     LinkageName = Name;
+    Flags |= llvm::DIDescriptor::FlagPrototyped;
   }
   if (!Name.empty() && Name[0] == '\01')
     Name = Name.substr(1);
@@ -1558,7 +1565,6 @@ void CGDebugInfo::EmitFunctionStart(GlobalDecl GD, QualType FnType,
   // statement representing function body.
   llvm::DIFile Unit = getOrCreateFile(CurLoc);
   unsigned LineNo = getLineNumber(CurLoc);
-  unsigned Flags = 0;
   if (D->isImplicit())
     Flags |= llvm::DIDescriptor::FlagArtificial;
   llvm::DISubprogram SP =
