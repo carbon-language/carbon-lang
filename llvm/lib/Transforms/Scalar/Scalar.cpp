@@ -40,7 +40,6 @@ void llvm::initializeScalarOpts(PassRegistry &Registry) {
   initializeJumpThreadingPass(Registry);
   initializeLICMPass(Registry);
   initializeLoopDeletionPass(Registry);
-  initializeLoopIndexSplitPass(Registry);
   initializeLoopRotatePass(Registry);
   initializeLoopStrengthReducePass(Registry);
   initializeLoopUnrollPass(Registry);
@@ -98,10 +97,6 @@ void LLVMAddLICMPass(LLVMPassManagerRef PM) {
 
 void LLVMAddLoopDeletionPass(LLVMPassManagerRef PM) {
   unwrap(PM)->add(createLoopDeletionPass());
-}
-
-void LLVMAddLoopIndexSplitPass(LLVMPassManagerRef PM) {
-  unwrap(PM)->add(createLoopIndexSplitPass());
 }
 
 void LLVMAddLoopRotatePass(LLVMPassManagerRef PM) {
