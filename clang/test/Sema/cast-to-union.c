@@ -1,11 +1,12 @@
 // RUN: %clang_cc1 -fsyntax-only -verify -pedantic %s
 
-union u { int i; };
+union u { int i; unsigned : 3; };
 void f(union u);
 
 void test(int x) {
   f((union u)x); // expected-warning {{C99 forbids casts to union type}}
   f((union u)&x); // expected-error {{cast to union type from type 'int *' not present in union}}
+  f((union u)2U); // expected-error {{cast to union type from type 'unsigned int' not present in union}}
 }
 
 union u w = (union u)2; // expected-warning {{C99 forbids casts to union type}}

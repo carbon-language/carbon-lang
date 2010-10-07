@@ -3986,7 +3986,8 @@ bool Sema::CheckCastTypes(SourceRange TyR, QualType castType, Expr *&castExpr,
       for (Field = RD->field_begin(), FieldEnd = RD->field_end();
            Field != FieldEnd; ++Field) {
         if (Context.hasSameUnqualifiedType(Field->getType(),
-                                           castExpr->getType())) {
+                                           castExpr->getType()) &&
+            !Field->isUnnamedBitfield()) {
           Diag(TyR.getBegin(), diag::ext_typecheck_cast_to_union)
             << castExpr->getSourceRange();
           break;
