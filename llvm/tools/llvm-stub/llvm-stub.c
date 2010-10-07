@@ -64,7 +64,7 @@ int main(int argc, char** argv) {
   memcpy((char **)Args+2, argv+1, sizeof(char*)*argc);
 
   /* Run the JIT. */
-  execvp(Interp, (char **)Args);
+  execvp(Interp, Args);
   /* if _execv returns, the JIT could not be started. */
   fprintf(stderr, "Could not execute the LLVM JIT.  Either add 'lli' to your"
           " path, or set the\ninterpreter you want to use in the LLVMINTERP "
