@@ -736,30 +736,40 @@ void SplitEditor::closeIntv() {
 
 void
 SplitEditor::addTruncSimpleRange(SlotIndex Start, SlotIndex End, VNInfo *VNI) {
-  SlotIndex sidx = Start;
+  // Build vector of iterator pairs from the intervals.
+  typedef std::pair<LiveInterval::const_iterator,
+                    LiveInterval::const_iterator> IIPair;
+  SmallVector<IIPair, 8> Iters;
+  for (int i = firstInterval, e = intervals_.size(); i != e; ++i) {
+    LiveInterval::const_iterator I = intervals_[i]->find(Start);
+    LiveInterval::const_iterator E = intervals_[i]->end();
+    if (I != E)
+      Iters.push_back(std::make_pair(I, E));
+  }
 
+  SlotIndex sidx = Start;
   // Break [Start;End) into segments that don't overlap any intervals.
   for (;;) {
     SlotIndex next = sidx, eidx = End;
     // Find overlapping intervals.
-    for (int i = firstInterval, e = intervals_.size(); i != e && sidx < eidx;
-         ++i) {
-      LiveInterval::const_iterator I = intervals_[i]->find(sidx);
-      LiveInterval::const_iterator E = intervals_[i]->end();
-      if (I == E)
-        continue;
+    for (unsigned i = 0; i != Iters.size() && sidx < eidx; ++i) {
+      LiveInterval::const_iterator I = Iters[i].first;
       // Interval I is overlapping [sidx;eidx). Trim sidx.
       if (I->start <= sidx) {
         sidx = I->end;
-        if (++I == E)
+        // Move to the next run, remove iters when all are consumed.
+        I = ++Iters[i].first;
+        if (I == Iters[i].second) {
+          Iters.erase(Iters.begin() + i);
+          --i;
           continue;
+        }
       }
       // Trim eidx too if needed.
       if (I->start >= eidx)
         continue;
       eidx = I->start;
-      if (I->end > next)
-        next = I->end;
+      next = I->end;
     }
     // Now, [sidx;eidx) doesn't overlap anything in intervals_.
     if (sidx < eidx)
