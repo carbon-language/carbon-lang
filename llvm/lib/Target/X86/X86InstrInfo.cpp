@@ -55,7 +55,6 @@ ReMatPICStubLoad("remat-pic-stub-load",
 X86InstrInfo::X86InstrInfo(X86TargetMachine &tm)
   : TargetInstrInfoImpl(X86Insts, array_lengthof(X86Insts)),
     TM(tm), RI(tm, *this) {
-  SmallVector<unsigned,16> AmbEntries;
   static const unsigned OpTbl2Addr[][2] = {
     { X86::ADC32ri,     X86::ADC32mi },
     { X86::ADC32ri8,    X86::ADC32mi8 },
@@ -225,7 +224,7 @@ X86InstrInfo::X86InstrInfo(X86TargetMachine &tm)
     if (!MemOp2RegOpTable.insert(std::make_pair((unsigned*)MemOp,
                                                 std::make_pair(RegOp,
                                                               AuxInfo))).second)
-      AmbEntries.push_back(MemOp);
+      assert(false && "Duplicated entries in unfolding maps?");
   }
 
   // If the third value is 1, then it's folding either a load or a store.
@@ -324,7 +323,7 @@ X86InstrInfo::X86InstrInfo(X86TargetMachine &tm)
     if (RegOp != X86::FsMOVAPDrr && RegOp != X86::FsMOVAPSrr)
       if (!MemOp2RegOpTable.insert(std::make_pair((unsigned*)MemOp,
                                      std::make_pair(RegOp, AuxInfo))).second)
-        AmbEntries.push_back(MemOp);
+        assert(false && "Duplicated entries in unfolding maps?");
   }
 
   static const unsigned OpTbl1[][3] = {
@@ -449,7 +448,7 @@ X86InstrInfo::X86InstrInfo(X86TargetMachine &tm)
     if (RegOp != X86::FsMOVAPDrr && RegOp != X86::FsMOVAPSrr)
       if (!MemOp2RegOpTable.insert(std::make_pair((unsigned*)MemOp,
                                      std::make_pair(RegOp, AuxInfo))).second)
-        AmbEntries.push_back(MemOp);
+        assert(false && "Duplicated entries in unfolding maps?");
   }
 
   static const unsigned OpTbl2[][3] = {
@@ -661,11 +660,8 @@ X86InstrInfo::X86InstrInfo(X86TargetMachine &tm)
     unsigned AuxInfo = 2 | (1 << 4);
     if (!MemOp2RegOpTable.insert(std::make_pair((unsigned*)MemOp,
                                    std::make_pair(RegOp, AuxInfo))).second)
-      AmbEntries.push_back(MemOp);
+      assert(false && "Duplicated entries in unfolding maps?");
   }
-
-  // Remove ambiguous entries.
-  assert(AmbEntries.empty() && "Duplicated entries in unfolding maps?");
 }
 
 bool
