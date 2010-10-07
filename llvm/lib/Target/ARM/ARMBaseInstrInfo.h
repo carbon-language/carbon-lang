@@ -350,6 +350,22 @@ public:
                         SDNode *DefNode, unsigned DefIdx,
                         SDNode *UseNode, unsigned UseIdx) const;
 private:
+  int getVLDMDefCycle(const InstrItineraryData *ItinData,
+                      const TargetInstrDesc &DefTID,
+                      unsigned DefClass,
+                      unsigned DefIdx, unsigned DefAlign) const;
+  int getLDMDefCycle(const InstrItineraryData *ItinData,
+                     const TargetInstrDesc &DefTID,
+                     unsigned DefClass,
+                     unsigned DefIdx, unsigned DefAlign) const;
+  int getVSTMUseCycle(const InstrItineraryData *ItinData,
+                      const TargetInstrDesc &UseTID,
+                      unsigned UseClass,
+                      unsigned UseIdx, unsigned UseAlign) const;
+  int getSTMUseCycle(const InstrItineraryData *ItinData,
+                     const TargetInstrDesc &UseTID,
+                     unsigned UseClass,
+                     unsigned UseIdx, unsigned UseAlign) const;
   int getOperandLatency(const InstrItineraryData *ItinData,
                         const TargetInstrDesc &DefTID,
                         unsigned DefIdx, unsigned DefAlign,

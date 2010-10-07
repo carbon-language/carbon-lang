@@ -1647,6 +1647,145 @@ ARMBaseInstrInfo::getNumMicroOps(const MachineInstr *MI,
 }
 
 int
+ARMBaseInstrInfo::getVLDMDefCycle(const InstrItineraryData *ItinData,
+                                  const TargetInstrDesc &DefTID,
+                                  unsigned DefClass,
+                                  unsigned DefIdx, unsigned DefAlign) const {
+  int RegNo = (int)(DefIdx+1) - DefTID.getNumOperands() + 1;
+  if (RegNo <= 0)
+    // Def is the address writeback.
+    return ItinData->getOperandCycle(DefClass, DefIdx);
+
+  int DefCycle;
+  if (Subtarget.isCortexA8()) {
+    // (regno / 2) + (regno % 2) + 1
+    DefCycle = RegNo / 2 + 1;
+    if (RegNo % 2)
+      ++DefCycle;
+  } else if (Subtarget.isCortexA9()) {
+    DefCycle = RegNo;
+    bool isSLoad = false;
+    switch (DefTID.getOpcode()) {
+    default: break;
+    case ARM::VLDMS:
+    case ARM::VLDMS_UPD:
+      isSLoad = true;
+      break;
+    }
+    // If there are odd number of 'S' registers or if it's not 64-bit aligned,
+    // then it takes an extra cycle.
+    if ((isSLoad && (RegNo % 2)) || DefAlign < 8)
+      ++DefCycle;
+  } else {
+    // Assume the worst.
+    DefCycle = RegNo + 2;
+  }
+
+  return DefCycle;
+}
+
+int
+ARMBaseInstrInfo::getLDMDefCycle(const InstrItineraryData *ItinData,
+                                 const TargetInstrDesc &DefTID,
+                                 unsigned DefClass,
+                                 unsigned DefIdx, unsigned DefAlign) const {
+  int RegNo = (int)(DefIdx+1) - DefTID.getNumOperands() + 1;
+  if (RegNo <= 0)
+    // Def is the address writeback.
+    return ItinData->getOperandCycle(DefClass, DefIdx);
+
+  int DefCycle;
+  if (Subtarget.isCortexA8()) {
+    // 4 registers would be issued: 1, 2, 1.
+    // 5 registers would be issued: 1, 2, 2.
+    DefCycle = RegNo / 2;
+    if (DefCycle < 1)
+      DefCycle = 1;
+    // Result latency is issue cycle + 2: E2.
+    DefCycle += 2;
+  } else if (Subtarget.isCortexA9()) {
+    DefCycle = (RegNo / 2);
+    // If there are odd number of registers or if it's not 64-bit aligned,
+    // then it takes an extra AGU (Address Generation Unit) cycle.
+    if ((RegNo % 2) || DefAlign < 8)
+      ++DefCycle;
+    // Result latency is AGU cycles + 2.
+    DefCycle += 2;
+  } else {
+    // Assume the worst.
+    DefCycle = RegNo + 2;
+  }
+
+  return DefCycle;
+}
+
+int
+ARMBaseInstrInfo::getVSTMUseCycle(const InstrItineraryData *ItinData,
+                                  const TargetInstrDesc &UseTID,
+                                  unsigned UseClass,
+                                  unsigned UseIdx, unsigned UseAlign) const {
+  int RegNo = (int)(UseIdx+1) - UseTID.getNumOperands() + 1;
+  if (RegNo <= 0)
+    return ItinData->getOperandCycle(UseClass, UseIdx);
+
+  int UseCycle;
+  if (Subtarget.isCortexA8()) {
+    // (regno / 2) + (regno % 2) + 1
+    UseCycle = RegNo / 2 + 1;
+    if (RegNo % 2)
+      ++UseCycle;
+  } else if (Subtarget.isCortexA9()) {
+    UseCycle = RegNo;
+    bool isSStore = false;
+    switch (UseTID.getOpcode()) {
+    default: break;
+    case ARM::VSTMS:
+    case ARM::VSTMS_UPD:
+      isSStore = true;
+      break;
+    }
+    // If there are odd number of 'S' registers or if it's not 64-bit aligned,
+    // then it takes an extra cycle.
+    if ((isSStore && (RegNo % 2)) || UseAlign < 8)
+      ++UseCycle;
+  } else {
+    // Assume the worst.
+    UseCycle = RegNo + 2;
+  }
+
+  return UseCycle;
+}
+
+int
+ARMBaseInstrInfo::getSTMUseCycle(const InstrItineraryData *ItinData,
+                                 const TargetInstrDesc &UseTID,
+                                 unsigned UseClass,
+                                 unsigned UseIdx, unsigned UseAlign) const {
+  int RegNo = (int)(UseIdx+1) - UseTID.getNumOperands() + 1;
+  if (RegNo <= 0)
+    return ItinData->getOperandCycle(UseClass, UseIdx);
+
+  int UseCycle;
+  if (Subtarget.isCortexA8()) {
+    UseCycle = RegNo / 2;
+    if (UseCycle < 2)
+      UseCycle = 2;
+    // Read in E3.
+    UseCycle += 2;
+  } else if (Subtarget.isCortexA9()) {
+    UseCycle = (RegNo / 2);
+    // If there are odd number of registers or if it's not 64-bit aligned,
+    // then it takes an extra AGU (Address Generation Unit) cycle.
+    if ((RegNo % 2) || UseAlign < 8)
+      ++UseCycle;
+  } else {
+    // Assume the worst.
+    UseCycle = 1;
+  }
+  return UseCycle;
+}
+
+int
 ARMBaseInstrInfo::getOperandLatency(const InstrItineraryData *ItinData,
                                     const TargetInstrDesc &DefTID,
                                     unsigned DefIdx, unsigned DefAlign,
@@ -1671,35 +1810,7 @@ ARMBaseInstrInfo::getOperandLatency(const InstrItineraryData *ItinData,
   case ARM::VLDMS:
   case ARM::VLDMD_UPD:
   case ARM::VLDMS_UPD:  {
-    int RegNo = (int)(DefIdx+1) - DefTID.getNumOperands() + 1;
-    if (RegNo <= 0) {
-      // Def is the address writeback.
-      DefCycle = ItinData->getOperandCycle(DefClass, DefIdx);
-      break;
-    }
-    if (Subtarget.isCortexA8()) {
-      // (regno / 2) + (regno % 2) + 1
-      DefCycle = RegNo / 2 + 1;
-      if (RegNo % 2)
-        ++DefCycle;
-    } else if (Subtarget.isCortexA9()) {
-      DefCycle = RegNo;
-      bool isSLoad = false;
-      switch (UseTID.getOpcode()) {
-      default: break;
-      case ARM::VLDMS:
-      case ARM::VLDMS_UPD:
-        isSLoad = true;
-        break;
-      }
-      // If there are odd number of 'S' registers or if it's not 64-bit aligned,
-      // then it takes an extra cycle.
-      if ((isSLoad && (RegNo % 2)) || DefAlign < 8)
-        ++DefCycle;
-    } else {
-      // Assume the worst.
-      DefCycle = RegNo + 2;
-    }
+    DefCycle = getVLDMDefCycle(ItinData, DefTID, DefClass, DefIdx, DefAlign);
     break;
   }
   case ARM::LDM_RET:
@@ -1712,32 +1823,8 @@ ARMBaseInstrInfo::getOperandLatency(const InstrItineraryData *ItinData,
   case ARM::t2LDM:
   case ARM::t2LDM_UPD: {
     LdmBypass = 1;
-    int RegNo = (int)(DefIdx+1) - DefTID.getNumOperands() + 1;
-    if (RegNo <= 0) {
-      // Def is the address writeback.
-      DefCycle = ItinData->getOperandCycle(DefClass, DefIdx);
-      break;
-    }
-    if (Subtarget.isCortexA8()) {
-      // 4 registers would be issued: 1, 2, 1.
-      // 5 registers would be issued: 1, 2, 2.
-      DefCycle = RegNo / 2;
-      if (DefCycle < 1)
-        DefCycle = 1;
-      // Result latency is issue cycle + 2: E2.
-      DefCycle += 2;
-    } else if (Subtarget.isCortexA9()) {
-      DefCycle = (RegNo / 2);
-      // If there are odd number of registers or if it's not 64-bit aligned,
-      // then it takes an extra AGU (Address Generation Unit) cycle.
-      if ((RegNo % 2) || DefAlign < 8)
-        ++DefCycle;
-      // Result latency is AGU cycles + 2.
-      DefCycle += 2;
-    } else {
-      // Assume the worst.
-      DefCycle = RegNo + 2;
-    }
+    DefCycle = getLDMDefCycle(ItinData, DefTID, DefClass, DefIdx, DefAlign);
+    break;
   }
   }
 
@@ -1754,34 +1841,7 @@ ARMBaseInstrInfo::getOperandLatency(const InstrItineraryData *ItinData,
   case ARM::VSTMS:
   case ARM::VSTMD_UPD:
   case ARM::VSTMS_UPD: {
-    int RegNo = (int)(UseIdx+1) - UseTID.getNumOperands() + 1;
-    if (RegNo <= 0) {
-      UseCycle = ItinData->getOperandCycle(UseClass, UseIdx);
-      break;
-    }
-    if (Subtarget.isCortexA8()) {
-      // (regno / 2) + (regno % 2) + 1
-      UseCycle = RegNo / 2 + 1;
-      if (RegNo % 2)
-        ++UseCycle;
-    } else if (Subtarget.isCortexA9()) {
-      UseCycle = RegNo;
-      bool isSStore = false;
-      switch (UseTID.getOpcode()) {
-      default: break;
-      case ARM::VSTMS:
-      case ARM::VSTMS_UPD:
-        isSStore = true;
-        break;
-      }
-      // If there are odd number of 'S' registers or if it's not 64-bit aligned,
-      // then it takes an extra cycle.
-      if ((isSStore && (RegNo % 2)) || UseAlign < 8)
-        ++UseCycle;
-    } else {
-      // Assume the worst.
-      UseCycle = RegNo + 2;
-    }
+    UseCycle = getVSTMUseCycle(ItinData, UseTID, UseClass, UseIdx, UseAlign);
     break;
   }
   case ARM::STM:
@@ -1791,27 +1851,7 @@ ARMBaseInstrInfo::getOperandLatency(const InstrItineraryData *ItinData,
   case ARM::tPOP:
   case ARM::t2STM:
   case ARM::t2STM_UPD: {
-    int RegNo = (int)(UseIdx+1) - UseTID.getNumOperands() + 1;
-    if (RegNo <= 0) {
-      UseCycle = ItinData->getOperandCycle(UseClass, UseIdx);
-      break;
-    }
-    if (Subtarget.isCortexA8()) {
-      UseCycle = RegNo / 2;
-      if (UseCycle < 2)
-        UseCycle = 2;
-      // Read in E3.
-      UseCycle += 2;
-    } else if (Subtarget.isCortexA9()) {
-      UseCycle = (RegNo / 2);
-      // If there are odd number of registers or if it's not 64-bit aligned,
-      // then it takes an extra AGU (Address Generation Unit) cycle.
-      if ((RegNo % 2) || UseAlign < 8)
-        ++UseCycle;
-    } else {
-      // Assume the worst.
-      UseCycle = 1;
-    }
+    UseCycle = getSTMUseCycle(ItinData, UseTID, UseClass, UseIdx, UseAlign);
     break;
   }
   }
