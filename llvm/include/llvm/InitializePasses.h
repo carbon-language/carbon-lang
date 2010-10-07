@@ -30,6 +30,12 @@ void initializeScalarOpts(PassRegistry&);
 /// initializeIPO - Initialize all passes linked into the IPO library.
 void initializeIPO(PassRegistry&);
 
+/// initializeAnalysis - Initialize all passes linked into the Analysis library.
+void initializeAnalysis(PassRegistry&);
+
+/// initializeIPA - Initialize all passes linked into the IPA library.
+void initializeIPA(PassRegistry&);
+
 void initializeAAEvalPass(PassRegistry&);
 void initializeADCEPass(PassRegistry&);
 void initializeAliasAnalysisAnalysisGroup(PassRegistry&);

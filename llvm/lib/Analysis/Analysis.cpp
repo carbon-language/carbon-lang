@@ -8,10 +8,66 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm-c/Analysis.h"
+#include "llvm/InitializePasses.h"
 #include "llvm/Analysis/Verifier.h"
 #include <cstring>
 
 using namespace llvm;
+
+/// initializeAnalysis - Initialize all passes linked into the Analysis library.
+void llvm::initializeAnalysis(PassRegistry &Registry) {
+  initializeAliasAnalysisAnalysisGroup(Registry);
+  initializeAliasAnalysisCounterPass(Registry);
+  initializeAAEvalPass(Registry);
+  initializeAliasDebuggerPass(Registry);
+  initializeAliasSetPrinterPass(Registry);
+  initializeNoAAPass(Registry);
+  initializeBasicAliasAnalysisPass(Registry);
+  initializeCFGViewerPass(Registry);
+  initializeCFGPrinterPass(Registry);
+  initializeCFGOnlyViewerPass(Registry);
+  initializeCFGOnlyPrinterPass(Registry);
+  initializePrintDbgInfoPass(Registry);
+  initializeDomViewerPass(Registry);
+  initializeDomPrinterPass(Registry);
+  initializeDomOnlyViewerPass(Registry);
+  initializePostDomViewerPass(Registry);
+  initializeDomOnlyPrinterPass(Registry);
+  initializePostDomPrinterPass(Registry);
+  initializePostDomOnlyViewerPass(Registry);
+  initializePostDomOnlyPrinterPass(Registry);
+  initializeIVUsersPass(Registry);
+  initializeInstCountPass(Registry);
+  initializeIntervalPartitionPass(Registry);
+  initializeLazyValueInfoPass(Registry);
+  initializeLibCallAliasAnalysisPass(Registry);
+  initializeLintPass(Registry);
+  initializeLiveValuesPass(Registry);
+  initializeLoopDependenceAnalysisPass(Registry);
+  initializeLoopInfoPass(Registry);
+  initializeMemDepPrinterPass(Registry);
+  initializeMemoryDependenceAnalysisPass(Registry);
+  initializeModuleDebugInfoPrinterPass(Registry);
+  initializePostDominatorTreePass(Registry);
+  initializePostDominanceFrontierPass(Registry);
+  initializeProfileEstimatorPassPass(Registry);
+  initializeNoProfileInfoPass(Registry);
+  initializeProfileInfoAnalysisGroup(Registry);
+  initializeLoaderPassPass(Registry);
+  initializeProfileVerifierPassPass(Registry);
+  initializeRegionInfoPass(Registry);
+  initializeRegionViewerPass(Registry);
+  initializeRegionPrinterPass(Registry);
+  initializeRegionOnlyViewerPass(Registry);
+  initializeRegionOnlyPrinterPass(Registry);
+  initializeScalarEvolutionPass(Registry);
+  initializeScalarEvolutionAliasAnalysisPass(Registry);
+  initializeTypeBasedAliasAnalysisPass(Registry);
+}
+
+void LLVMInitializeAnalysis(LLVMPassRegistryRef R) {
+  initializeAnalysis(*unwrap(R));
+}
 
 LLVMBool LLVMVerifyModule(LLVMModuleRef M, LLVMVerifierFailureAction Action,
                           char **OutMessages) {
