@@ -3289,11 +3289,14 @@ Sema::LookupMemberExpr(LookupResult &R, Expr *&BaseExpr,
         // Check the use of this method.
         if (DiagnoseUseOfDecl(OMD, MemberLoc))
           return ExprError();
-
+        // It is important that start and end position is the first character
+        // and last character position of the property-dot syntax expression.
+        SourceLocation MemberEndLoc = PP.getLocForEndOfToken(MemberLoc, 1);
         return Owned(ObjCMessageExpr::Create(Context,
                                              OMD->getSendResultType(),
-                                             OpLoc, BaseExpr, Sel,
-                                             OMD, NULL, 0, MemberLoc));
+                                             BaseExpr->getExprLoc(), 
+                                             BaseExpr, Sel,
+                                             OMD, NULL, 0, MemberEndLoc));
       }
     }
 
