@@ -728,6 +728,9 @@ void Cost::RateRegister(const SCEV *Reg,
         (isa<SCEVUnknown>(cast<SCEVAddRecExpr>(Reg)->getStart()) ||
          isa<SCEVConstant>(cast<SCEVAddRecExpr>(Reg)->getStart()))))
     ++SetupCost;
+
+    NumIVMuls += isa<SCEVMulExpr>(Reg) &&
+                 Reg->hasComputableLoopEvolution(L);
 }
 
 /// RatePrimaryRegister - Record this register in the set. If we haven't seen it
@@ -762,9 +765,6 @@ void Cost::RateFormula(const Formula &F,
       return;
     }
     RatePrimaryRegister(BaseReg, Regs, L, SE, DT);
-
-    NumIVMuls += isa<SCEVMulExpr>(BaseReg) &&
-                 BaseReg->hasComputableLoopEvolution(L);
   }
 
   if (F.BaseRegs.size() > 1)
