@@ -240,7 +240,7 @@ typedef bit_value_t insn_t[BIT_WIDTH];
 /// the Filter/FilterChooser combo does not know how to distinguish among the
 /// Opcodes assigned.
 ///
-/// An example of a conflcit is 
+/// An example of a conflict is 
 ///
 /// Conflict:
 ///                     111101000.00........00010000....
