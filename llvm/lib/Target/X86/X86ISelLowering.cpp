@@ -5083,6 +5083,7 @@ static bool MayFoldVectorLoad(SDValue V) {
 // uses while it only has one, use this version, and let isel match
 // another instruction if the load really happens to have more than
 // one use. Remove this version after this bug get fixed.
+// rdar://8434668, PR8156
 static bool RelaxedMayFoldVectorLoad(SDValue V) {
   if (V.hasOneUse() && V.getOpcode() == ISD::BIT_CONVERT)
     V = V.getOperand(0);
@@ -5167,6 +5168,17 @@ bool CanXFormVExtractWithShuffleIntoLoad(SDValue V, SelectionDAG &DAG,
   }
 
   return true;
+}
+
+static
+SDValue getMOVDDup(SDValue &Op, DebugLoc &dl, SDValue V1, SelectionDAG &DAG) {
+  EVT VT = Op.getValueType();
+
+  // Canonizalize to v2f64.
+  V1 = DAG.getNode(ISD::BIT_CONVERT, dl, MVT::v2f64, V1);
+  return DAG.getNode(ISD::BIT_CONVERT, dl, VT,
+                     getTargetShuffleNode(X86ISD::MOVDDUP, dl, MVT::v2f64,
+                                          V1, DAG));
 }
 
 static
@@ -5309,7 +5321,7 @@ SDValue NormalizeVectorShuffle(SDValue Op, SelectionDAG &DAG,
     if (VT.getVectorNumElements() <= 4)
       return SDValue();
 
-    // Canonize all of the remaining to v4f32.
+    // Canonicalize all of the remaining to v4f32.
     return PromoteSplat(SVOp, DAG);
   }
 
@@ -5394,7 +5406,7 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const {
 
   if (X86::isMOVDDUPMask(SVOp) && HasSSE3 && V2IsUndef &&
       RelaxedMayFoldVectorLoad(V1))
-    return getTargetShuffleNode(X86ISD::MOVDDUP, dl, VT, V1, DAG);
+    return getMOVDDup(Op, dl, V1, DAG);
 
   if (X86::isMOVHLPS_v_undef_Mask(SVOp))
     return getMOVHighToLow(Op, dl, DAG);

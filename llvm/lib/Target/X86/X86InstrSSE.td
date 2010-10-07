@@ -5537,19 +5537,14 @@ def : Pat<(X86Movddup (memopv2f64 addr:$src)),
 def : Pat<(X86Movddup (memopv2f64 addr:$src)),
           (MOVDDUPrm addr:$src)>;
 
-def : Pat<(X86Movddup (bc_v4f32 (memopv2f64 addr:$src))),
+def : Pat<(X86Movddup (bc_v2f64 (memopv4f32 addr:$src))),
           (VMOVDDUPrm addr:$src)>, Requires<[HasAVX]>;
-def : Pat<(X86Movddup (bc_v4f32 (memopv2f64 addr:$src))),
+def : Pat<(X86Movddup (bc_v2f64 (memopv4f32 addr:$src))),
           (MOVDDUPrm addr:$src)>;
 
-def : Pat<(X86Movddup (memopv2i64 addr:$src)),
+def : Pat<(X86Movddup (bc_v2f64 (memopv2i64 addr:$src))),
           (VMOVDDUPrm addr:$src)>, Requires<[HasAVX]>;
-def : Pat<(X86Movddup (memopv2i64 addr:$src)),
-          (MOVDDUPrm addr:$src)>;
-
-def : Pat<(X86Movddup (bc_v4i32 (memopv2i64 addr:$src))),
-          (VMOVDDUPrm addr:$src)>, Requires<[HasAVX]>;
-def : Pat<(X86Movddup (bc_v4i32 (memopv2i64 addr:$src))),
+def : Pat<(X86Movddup (bc_v2f64 (memopv2i64 addr:$src))),
           (MOVDDUPrm addr:$src)>;
 
 def : Pat<(X86Movddup (v2f64 (scalar_to_vector (loadf64 addr:$src)))),
@@ -5563,6 +5558,7 @@ def : Pat<(X86Movddup (bc_v2f64
 def : Pat<(X86Movddup (bc_v2f64
                            (v2i64 (scalar_to_vector (loadi64 addr:$src))))),
           (MOVDDUPrm addr:$src)>;
+
 
 // Shuffle with UNPCKLPS
 def : Pat<(v4f32 (X86Unpcklps VR128:$src1, (memopv4f32 addr:$src2))),
@@ -5675,14 +5671,11 @@ def : Pat<(v4i32 (X86Movlhps VR128:$src1, VR128:$src2)),
           (MOVLHPSrr VR128:$src1, VR128:$src2)>;
 def : Pat<(v2i64 (X86Movlhps VR128:$src1, VR128:$src2)),
           (MOVLHPSrr (v2i64 VR128:$src1), VR128:$src2)>;
-// FIXME: Instead of X86Movddup, there should be a X86Movlhps here, the problem
+
+// FIXME: Instead of X86Movddup, there should be a X86Unpcklpd here, the problem
 // is during lowering, where it's not possible to recognize the load fold cause
 // it has two uses through a bitcast. One use disappears at isel time and the
 // fold opportunity reappears.
-def : Pat<(v2i64 (X86Movddup VR128:$src)),
-          (MOVLHPSrr VR128:$src, VR128:$src)>;
-def : Pat<(v4f32 (X86Movddup VR128:$src)),
-          (MOVLHPSrr VR128:$src, VR128:$src)>;
 def : Pat<(v2f64 (X86Movddup VR128:$src)),
           (UNPCKLPDrr VR128:$src, VR128:$src)>;
 
@@ -5690,6 +5683,7 @@ def : Pat<(v2f64 (X86Movddup VR128:$src)),
 def : Pat<(v2f64 (X86Movlhpd VR128:$src1,
                     (scalar_to_vector (loadf64 addr:$src2)))),
           (MOVHPDrm VR128:$src1, addr:$src2)>;
+
 // FIXME: Instead of X86Unpcklpd, there should be a X86Movlhpd here, the problem
 // is during lowering, where it's not possible to recognize the load fold cause
 // it has two uses through a bitcast. One use disappears at isel time and the

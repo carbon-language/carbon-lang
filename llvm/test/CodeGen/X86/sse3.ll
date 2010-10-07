@@ -169,7 +169,7 @@ define internal void @t10() nounwind {
         ret void
 ; X64: 	t10:
 ; X64: 		pextrw	$4, %xmm0, %eax
-; X64: 		movlhps	%xmm1, %xmm1
+; X64: 		unpcklpd %xmm1, %xmm1
 ; X64: 		pshuflw	$8, %xmm1, %xmm1
 ; X64: 		pinsrw	$2, %eax, %xmm1
 ; X64: 		pextrw	$6, %xmm0, %eax
@@ -259,4 +259,19 @@ entry:
 ; X64: 		pinsrw	$0, %edx, %xmm1
 ; X64: 		pinsrw	$1, %eax, %xmm0
 ; X64: 		ret
+}
+
+; rdar://8520311
+define <4 x i32> @t17() nounwind {
+entry:
+; X64: t17:
+; X64:          movddup (%rax), %xmm0
+  %tmp1 = load <4 x float>* undef, align 16
+  %tmp2 = shufflevector <4 x float> %tmp1, <4 x float> undef, <4 x i32> <i32 4, i32 1, i32 2, i32 3>
+  %tmp3 = load <4 x float>* undef, align 16
+  %tmp4 = shufflevector <4 x float> %tmp2, <4 x float> undef, <4 x i32> <i32 undef, i32 undef, i32 0, i32 1>
+  %tmp5 = bitcast <4 x float> %tmp3 to <4 x i32>
+  %tmp6 = shufflevector <4 x i32> %tmp5, <4 x i32> undef, <4 x i32> <i32 undef, i32 undef, i32 0, i32 1>
+  %tmp7 = and <4 x i32> %tmp6, <i32 undef, i32 undef, i32 -1, i32 0>
+  ret <4 x i32> %tmp7
 }
