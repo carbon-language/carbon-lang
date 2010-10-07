@@ -371,7 +371,7 @@ namespace {
 }
 
 INITIALIZE_PASS(RALinScan, "linearscan-regalloc",
-                "Linear Scan Register Allocator", false, false);
+                "Linear Scan Register Allocator", false, false)
 
 void RALinScan::ComputeRelatedRegClasses() {
   // First pass, add all reg classes to the union, and determine at least one

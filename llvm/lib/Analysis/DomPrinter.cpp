@@ -112,22 +112,22 @@ struct PostDomOnlyViewer
 
 char DomViewer::ID = 0;
 INITIALIZE_PASS(DomViewer, "view-dom",
-                "View dominance tree of function", false, false);
+                "View dominance tree of function", false, false)
 
 char DomOnlyViewer::ID = 0;
 INITIALIZE_PASS(DomOnlyViewer, "view-dom-only",
                 "View dominance tree of function (with no function bodies)",
-                false, false);
+                false, false)
 
 char PostDomViewer::ID = 0;
 INITIALIZE_PASS(PostDomViewer, "view-postdom",
-                "View postdominance tree of function", false, false);
+                "View postdominance tree of function", false, false)
 
 char PostDomOnlyViewer::ID = 0;
 INITIALIZE_PASS(PostDomOnlyViewer, "view-postdom-only",
                 "View postdominance tree of function "
                 "(with no function bodies)",
-                false, false);
+                false, false)
 
 namespace {
 struct DomPrinter
@@ -162,24 +162,24 @@ struct PostDomOnlyPrinter
 char DomPrinter::ID = 0;
 INITIALIZE_PASS(DomPrinter, "dot-dom",
                 "Print dominance tree of function to 'dot' file",
-                false, false);
+                false, false)
 
 char DomOnlyPrinter::ID = 0;
 INITIALIZE_PASS(DomOnlyPrinter, "dot-dom-only",
                 "Print dominance tree of function to 'dot' file "
                 "(with no function bodies)",
-                false, false);
+                false, false)
 
 char PostDomPrinter::ID = 0;
 INITIALIZE_PASS(PostDomPrinter, "dot-postdom",
                 "Print postdominance tree of function to 'dot' file",
-                false, false);
+                false, false)
 
 char PostDomOnlyPrinter::ID = 0;
 INITIALIZE_PASS(PostDomOnlyPrinter, "dot-postdom-only",
                 "Print postdominance tree of function to 'dot' file "
                 "(with no function bodies)",
-                false, false);
+                false, false)
 
 // Create methods available outside of this file, to use them
 // "include/llvm/LinkAllPasses.h". Otherwise the pass would be deleted by

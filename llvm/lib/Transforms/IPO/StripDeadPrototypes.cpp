@@ -37,7 +37,7 @@ public:
 
 char StripDeadPrototypesPass::ID = 0;
 INITIALIZE_PASS(StripDeadPrototypesPass, "strip-dead-prototypes",
-                "Strip Unused Function Prototypes", false, false);
+                "Strip Unused Function Prototypes", false, false)
 
 bool StripDeadPrototypesPass::runOnModule(Module &M) {
   bool MadeChange = false;

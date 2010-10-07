@@ -32,7 +32,7 @@ using namespace llvm;
 
 char LazyValueInfo::ID = 0;
 INITIALIZE_PASS(LazyValueInfo, "lazy-value-info",
-                "Lazy Value Information Analysis", false, true);
+                "Lazy Value Information Analysis", false, true)
 
 namespace llvm {
   FunctionPass *createLazyValueInfoPass() { return new LazyValueInfo(); }

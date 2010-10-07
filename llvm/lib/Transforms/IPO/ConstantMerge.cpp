@@ -44,7 +44,7 @@ namespace {
 
 char ConstantMerge::ID = 0;
 INITIALIZE_PASS(ConstantMerge, "constmerge",
-                "Merge Duplicate Global Constants", false, false);
+                "Merge Duplicate Global Constants", false, false)
 
 ModulePass *llvm::createConstantMergePass() { return new ConstantMerge(); }
 

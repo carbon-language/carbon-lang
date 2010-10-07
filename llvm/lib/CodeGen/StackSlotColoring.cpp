@@ -146,7 +146,7 @@ namespace {
 char StackSlotColoring::ID = 0;
 
 INITIALIZE_PASS(StackSlotColoring, "stack-slot-coloring",
-                "Stack Slot Coloring", false, false);
+                "Stack Slot Coloring", false, false)
 
 FunctionPass *llvm::createStackSlotColoringPass(bool RegColor) {
   return new StackSlotColoring(RegColor);

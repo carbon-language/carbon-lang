@@ -21,7 +21,7 @@ using namespace llvm;
 // Register this pass...
 char LibCallAliasAnalysis::ID = 0;
 INITIALIZE_AG_PASS(LibCallAliasAnalysis, AliasAnalysis, "libcall-aa",
-                   "LibCall Alias Analysis", false, true, false);
+                   "LibCall Alias Analysis", false, true, false)
 
 FunctionPass *llvm::createLibCallAliasAnalysisPass(LibCallInfo *LCI) {
   return new LibCallAliasAnalysis(LCI);

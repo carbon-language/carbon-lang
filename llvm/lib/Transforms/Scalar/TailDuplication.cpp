@@ -59,7 +59,7 @@ namespace {
 }
 
 char TailDup::ID = 0;
-INITIALIZE_PASS(TailDup, "tailduplicate", "Tail Duplication", false, false);
+INITIALIZE_PASS(TailDup, "tailduplicate", "Tail Duplication", false, false)
 
 // Public interface to the Tail Duplication pass
 FunctionPass *llvm::createTailDuplicationPass() { return new TailDup(); }

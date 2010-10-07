@@ -62,7 +62,7 @@ namespace {
 
 char SRETPromotion::ID = 0;
 INITIALIZE_PASS(SRETPromotion, "sretpromotion",
-                "Promote sret arguments to multiple ret values", false, false);
+                "Promote sret arguments to multiple ret values", false, false)
 
 Pass *llvm::createStructRetPromotionPass() {
   return new SRETPromotion();

@@ -70,7 +70,7 @@ void LLVMInitializeInstCombine(LLVMPassRegistryRef R) {
 
 char InstCombiner::ID = 0;
 INITIALIZE_PASS(InstCombiner, "instcombine",
-                "Combine redundant instructions", false, false);
+                "Combine redundant instructions", false, false)
 
 void InstCombiner::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addPreservedID(LCSSAID);

@@ -92,7 +92,7 @@ namespace {
 
 char MachineCSE::ID = 0;
 INITIALIZE_PASS(MachineCSE, "machine-cse",
-                "Machine Common Subexpression Elimination", false, false);
+                "Machine Common Subexpression Elimination", false, false)
 
 FunctionPass *llvm::createMachineCSEPass() { return new MachineCSE(); }
 

@@ -62,7 +62,7 @@ namespace {
 
 char AlwaysInliner::ID = 0;
 INITIALIZE_PASS(AlwaysInliner, "always-inline",
-                "Inliner for always_inline functions", false, false);
+                "Inliner for always_inline functions", false, false)
 
 Pass *llvm::createAlwaysInlinerPass() { return new AlwaysInliner(); }
 

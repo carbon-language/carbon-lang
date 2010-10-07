@@ -72,7 +72,7 @@ namespace {
 
 char StackProtector::ID = 0;
 INITIALIZE_PASS(StackProtector, "stack-protector",
-                "Insert stack protectors", false, false);
+                "Insert stack protectors", false, false)
 
 FunctionPass *llvm::createStackProtectorPass(const TargetLowering *tli) {
   return new StackProtector(tli);

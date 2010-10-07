@@ -41,7 +41,7 @@ namespace {
 
 char PartialInliner::ID = 0;
 INITIALIZE_PASS(PartialInliner, "partial-inliner",
-                "Partial Inliner", false, false);
+                "Partial Inliner", false, false)
 
 ModulePass* llvm::createPartialInliningPass() { return new PartialInliner(); }
 

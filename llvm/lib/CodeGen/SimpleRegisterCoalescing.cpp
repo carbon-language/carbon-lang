@@ -66,7 +66,7 @@ DisablePhysicalJoin("disable-physical-join",
 
 INITIALIZE_AG_PASS(SimpleRegisterCoalescing, RegisterCoalescer,
                 "simple-register-coalescing", "Simple Register Coalescing", 
-                false, false, true);
+                false, false, true)
 
 char &llvm::SimpleRegisterCoalescingID = SimpleRegisterCoalescing::ID;
 

@@ -75,7 +75,7 @@ namespace {
 
 char BlockPlacement::ID = 0;
 INITIALIZE_PASS(BlockPlacement, "block-placement",
-                "Profile Guided Basic Block Placement", false, false);
+                "Profile Guided Basic Block Placement", false, false)
 
 FunctionPass *llvm::createBlockPlacementPass() { return new BlockPlacement(); }
 

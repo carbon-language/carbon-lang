@@ -80,7 +80,7 @@ namespace {
 
 char LoaderPass::ID = 0;
 INITIALIZE_AG_PASS(LoaderPass, ProfileInfo, "profile-loader",
-              "Load profile information from llvmprof.out", false, true, false);
+              "Load profile information from llvmprof.out", false, true, false)
 
 char &llvm::ProfileLoaderPassID = LoaderPass::ID;
 

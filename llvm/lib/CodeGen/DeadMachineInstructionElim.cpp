@@ -45,7 +45,7 @@ namespace {
 char DeadMachineInstructionElim::ID = 0;
 
 INITIALIZE_PASS(DeadMachineInstructionElim, "dead-mi-elimination",
-                "Remove dead machine instructions", false, false);
+                "Remove dead machine instructions", false, false)
 
 FunctionPass *llvm::createDeadMachineInstructionElimPass() {
   return new DeadMachineInstructionElim();

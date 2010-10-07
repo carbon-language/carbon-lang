@@ -28,7 +28,7 @@
 using namespace llvm;
 
 char IVUsers::ID = 0;
-INITIALIZE_PASS(IVUsers, "iv-users", "Induction Variable Users", false, true);
+INITIALIZE_PASS(IVUsers, "iv-users", "Induction Variable Users", false, true)
 
 Pass *llvm::createIVUsersPass() {
   return new IVUsers();

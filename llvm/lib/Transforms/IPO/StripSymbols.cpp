@@ -90,7 +90,7 @@ namespace {
 
 char StripSymbols::ID = 0;
 INITIALIZE_PASS(StripSymbols, "strip",
-                "Strip all symbols from a module", false, false);
+                "Strip all symbols from a module", false, false)
 
 ModulePass *llvm::createStripSymbolsPass(bool OnlyDebugInfo) {
   return new StripSymbols(OnlyDebugInfo);
@@ -99,7 +99,7 @@ ModulePass *llvm::createStripSymbolsPass(bool OnlyDebugInfo) {
 char StripNonDebugSymbols::ID = 0;
 INITIALIZE_PASS(StripNonDebugSymbols, "strip-nondebug",
                 "Strip all symbols, except dbg symbols, from a module",
-                false, false);
+                false, false)
 
 ModulePass *llvm::createStripNonDebugSymbolsPass() {
   return new StripNonDebugSymbols();
@@ -107,7 +107,7 @@ ModulePass *llvm::createStripNonDebugSymbolsPass() {
 
 char StripDebugDeclare::ID = 0;
 INITIALIZE_PASS(StripDebugDeclare, "strip-debug-declare",
-                "Strip all llvm.dbg.declare intrinsics", false, false);
+                "Strip all llvm.dbg.declare intrinsics", false, false)
 
 ModulePass *llvm::createStripDebugDeclarePass() {
   return new StripDebugDeclare();
@@ -115,7 +115,7 @@ ModulePass *llvm::createStripDebugDeclarePass() {
 
 char StripDeadDebugInfo::ID = 0;
 INITIALIZE_PASS(StripDeadDebugInfo, "strip-dead-debug-info",
-                "Strip debug info for unused symbols", false, false);
+                "Strip debug info for unused symbols", false, false)
 
 ModulePass *llvm::createStripDeadDebugInfoPass() {
   return new StripDeadDebugInfo();

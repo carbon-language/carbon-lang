@@ -200,7 +200,7 @@ namespace {
 }
 
 char LICM::ID = 0;
-INITIALIZE_PASS(LICM, "licm", "Loop Invariant Code Motion", false, false);
+INITIALIZE_PASS(LICM, "licm", "Loop Invariant Code Motion", false, false)
 
 Pass *llvm::createLICMPass() { return new LICM(); }
 

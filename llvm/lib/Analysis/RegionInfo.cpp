@@ -735,7 +735,7 @@ RegionInfo::getCommonRegion(SmallVectorImpl<BasicBlock*> &BBs) const {
 
 char RegionInfo::ID = 0;
 INITIALIZE_PASS(RegionInfo, "regions",
-                "Detect single entry single exit regions", true, true);
+                "Detect single entry single exit regions", true, true)
 
 // Create methods available outside of this file, to use them
 // "include/llvm/LinkAllPasses.h". Otherwise the pass would be deleted by

@@ -178,7 +178,7 @@ namespace {
 char GlobalsModRef::ID = 0;
 INITIALIZE_AG_PASS(GlobalsModRef, AliasAnalysis,
                 "globalsmodref-aa", "Simple mod/ref analysis for globals",    
-                false, true, false);
+                false, true, false)
 
 Pass *llvm::createGlobalsModRefPass() { return new GlobalsModRef(); }
 

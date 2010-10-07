@@ -134,7 +134,7 @@ private:
       PassInfo::NormalCtor_t(callDefaultCtor< passName >), cfg, analysis); \
     Registry.registerPass(*PI); \
   } \
-  static RegisterPass<passName> passName ## _info(arg, name, cfg, analysis)
+  static RegisterPass<passName> passName ## _info(arg, name, cfg, analysis);
     
 
 template<typename PassName>
@@ -216,7 +216,7 @@ struct RegisterAnalysisGroup : public RegisterAGBase {
     PassInfo *AI = new PassInfo(name, & agName :: ID); \
     Registry.registerAnalysisGroup(& agName ::ID, 0, *AI, false); \
   } \
-  static RegisterAnalysisGroup<agName> agName##_info (name)
+  static RegisterAnalysisGroup<agName> agName##_info (name);
 
 #define INITIALIZE_AG_PASS(passName, agName, arg, name, cfg, analysis, def) \
   void llvm::initialize##passName##Pass(PassRegistry &Registry) { \
@@ -228,7 +228,7 @@ struct RegisterAnalysisGroup : public RegisterAGBase {
     Registry.registerAnalysisGroup(& agName ::ID, & passName ::ID, *AI, def); \
   } \
   static RegisterPass<passName> passName ## _info(arg, name, cfg, analysis); \
-  static RegisterAnalysisGroup<agName, def> passName ## _ag(passName ## _info)
+  static RegisterAnalysisGroup<agName, def> passName ## _ag(passName ## _info);
 
 //===---------------------------------------------------------------------------
 /// PassRegistrationListener class - This class is meant to be derived from by

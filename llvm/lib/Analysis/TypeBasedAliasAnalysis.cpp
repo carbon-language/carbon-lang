@@ -104,7 +104,7 @@ namespace {
 // Register this pass...
 char TypeBasedAliasAnalysis::ID = 0;
 INITIALIZE_AG_PASS(TypeBasedAliasAnalysis, AliasAnalysis, "tbaa",
-                   "Type-Based Alias Analysis", false, true, false);
+                   "Type-Based Alias Analysis", false, true, false)
 
 ImmutablePass *llvm::createTypeBasedAliasAnalysisPass() {
   return new TypeBasedAliasAnalysis();

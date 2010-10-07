@@ -31,7 +31,7 @@ TEMPLATE_INSTANTIATION(MLIB);
 
 char MachineLoopInfo::ID = 0;
 INITIALIZE_PASS(MachineLoopInfo, "machine-loops",
-                "Machine Natural Loop Construction", true, true);
+                "Machine Natural Loop Construction", true, true)
 
 char &llvm::MachineLoopInfoID = MachineLoopInfo::ID;
 

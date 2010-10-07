@@ -48,7 +48,7 @@ char MemoryDependenceAnalysis::ID = 0;
   
 // Register this pass...
 INITIALIZE_PASS(MemoryDependenceAnalysis, "memdep",
-                "Memory Dependence Analysis", false, true);
+                "Memory Dependence Analysis", false, true)
 
 MemoryDependenceAnalysis::MemoryDependenceAnalysis()
 : FunctionPass(ID), PredCache(0) {

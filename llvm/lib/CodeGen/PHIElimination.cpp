@@ -39,7 +39,7 @@ STATISTIC(NumReused, "Number of reused lowered phis");
 
 char PHIElimination::ID = 0;
 INITIALIZE_PASS(PHIElimination, "phi-node-elimination",
-                "Eliminate PHI nodes for register allocation", false, false);
+                "Eliminate PHI nodes for register allocation", false, false)
 
 char &llvm::PHIEliminationID = PHIElimination::ID;
 

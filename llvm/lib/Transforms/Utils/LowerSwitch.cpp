@@ -80,7 +80,7 @@ namespace {
 
 char LowerSwitch::ID = 0;
 INITIALIZE_PASS(LowerSwitch, "lowerswitch",
-                "Lower SwitchInst's to branches", false, false);
+                "Lower SwitchInst's to branches", false, false)
 
 // Publically exposed interface to pass...
 char &llvm::LowerSwitchID = LowerSwitch::ID;

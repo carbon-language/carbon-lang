@@ -160,7 +160,7 @@ namespace {
 
 char TwoAddressInstructionPass::ID = 0;
 INITIALIZE_PASS(TwoAddressInstructionPass, "twoaddressinstruction",
-                "Two-Address instruction pass", false, false);
+                "Two-Address instruction pass", false, false)
 
 char &llvm::TwoAddressInstructionPassID = TwoAddressInstructionPass::ID;
 

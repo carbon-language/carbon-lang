@@ -24,7 +24,7 @@
 using namespace llvm;
 
 // Register the RegisterCoalescer interface, providing a nice name to refer to.
-INITIALIZE_ANALYSIS_GROUP(RegisterCoalescer, "Register Coalescer");
+INITIALIZE_ANALYSIS_GROUP(RegisterCoalescer, "Register Coalescer")
 char RegisterCoalescer::ID = 0;
 
 // RegisterCoalescer destructor: DO NOT move this to the header file

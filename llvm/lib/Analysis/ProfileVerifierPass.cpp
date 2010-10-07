@@ -367,7 +367,7 @@ namespace llvm {
 }
 
 INITIALIZE_PASS(ProfileVerifierPass, "profile-verifier",
-                "Verify profiling information", false, true);
+                "Verify profiling information", false, true)
 
 namespace llvm {
   FunctionPass *createProfileVerifierPass() {

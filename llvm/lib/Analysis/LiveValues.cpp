@@ -23,7 +23,7 @@ namespace llvm {
 
 char LiveValues::ID = 0;
 INITIALIZE_PASS(LiveValues, "live-values",
-                "Value Liveness Analysis", false, true);
+                "Value Liveness Analysis", false, true)
 
 LiveValues::LiveValues() : FunctionPass(ID) {}
 

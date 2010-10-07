@@ -95,7 +95,7 @@ namespace {
 
 char MachineSinking::ID = 0;
 INITIALIZE_PASS(MachineSinking, "machine-sink",
-                "Machine code sinking", false, false);
+                "Machine code sinking", false, false)
 
 FunctionPass *llvm::createMachineSinkingPass() { return new MachineSinking(); }
 

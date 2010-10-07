@@ -608,4 +608,4 @@ namespace {
 
 char AliasSetPrinter::ID = 0;
 INITIALIZE_PASS(AliasSetPrinter, "print-alias-sets",
-                "Alias Set Printer", false, true);
+                "Alias Set Printer", false, true)

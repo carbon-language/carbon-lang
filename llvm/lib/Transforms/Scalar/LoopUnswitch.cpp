@@ -158,7 +158,7 @@ namespace {
   };
 }
 char LoopUnswitch::ID = 0;
-INITIALIZE_PASS(LoopUnswitch, "loop-unswitch", "Unswitch loops", false, false);
+INITIALIZE_PASS(LoopUnswitch, "loop-unswitch", "Unswitch loops", false, false)
 
 Pass *llvm::createLoopUnswitchPass(bool Os) { 
   return new LoopUnswitch(Os); 

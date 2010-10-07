@@ -212,7 +212,7 @@ namespace {
 
 char MachineVerifierPass::ID = 0;
 INITIALIZE_PASS(MachineVerifierPass, "machineverifier",
-                "Verify generated machine code", false, false);
+                "Verify generated machine code", false, false)
 
 FunctionPass *llvm::createMachineVerifierPass() {
   return new MachineVerifierPass();

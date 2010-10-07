@@ -32,7 +32,7 @@ using namespace llvm;
 char RenderMachineFunction::ID = 0;
 INITIALIZE_PASS(RenderMachineFunction, "rendermf",
                 "Render machine functions (and related info) to HTML pages",
-                false, false);
+                false, false)
 
 static cl::opt<std::string>
 outputFileSuffix("rmf-file-suffix",

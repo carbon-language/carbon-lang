@@ -70,7 +70,7 @@ namespace {
 
 char FunctionAttrs::ID = 0;
 INITIALIZE_PASS(FunctionAttrs, "functionattrs",
-                "Deduce function attributes", false, false);
+                "Deduce function attributes", false, false)
 
 Pass *llvm::createFunctionAttrsPass() { return new FunctionAttrs(); }
 

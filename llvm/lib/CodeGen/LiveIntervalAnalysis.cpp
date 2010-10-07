@@ -56,7 +56,7 @@ STATISTIC(numSplits    , "Number of intervals split");
 
 char LiveIntervals::ID = 0;
 INITIALIZE_PASS(LiveIntervals, "liveintervals",
-                "Live Interval Analysis", false, false);
+                "Live Interval Analysis", false, false)
 
 void LiveIntervals::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.setPreservesCFG();

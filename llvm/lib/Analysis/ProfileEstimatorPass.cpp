@@ -73,7 +73,7 @@ namespace {
 
 char ProfileEstimatorPass::ID = 0;
 INITIALIZE_AG_PASS(ProfileEstimatorPass, ProfileInfo, "profile-estimator",
-                "Estimate profiling information", false, true, false);
+                "Estimate profiling information", false, true, false)
 
 namespace llvm {
   char &ProfileEstimatorPassID = ProfileEstimatorPass::ID;

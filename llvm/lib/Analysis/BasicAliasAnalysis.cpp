@@ -190,7 +190,7 @@ namespace {
 char NoAA::ID = 0;
 INITIALIZE_AG_PASS(NoAA, AliasAnalysis, "no-aa",
                    "No Alias Analysis (always returns 'may' alias)",
-                   true, true, false);
+                   true, true, false)
 
 ImmutablePass *llvm::createNoAAPass() { return new NoAA(); }
 
@@ -561,7 +561,7 @@ namespace {
 char BasicAliasAnalysis::ID = 0;
 INITIALIZE_AG_PASS(BasicAliasAnalysis, AliasAnalysis, "basicaa",
                    "Basic Alias Analysis (default AA impl)",
-                   false, true, true);
+                   false, true, true)
 
 ImmutablePass *llvm::createBasicAliasAnalysisPass() {
   return new BasicAliasAnalysis();

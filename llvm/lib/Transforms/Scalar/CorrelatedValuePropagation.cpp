@@ -51,7 +51,7 @@ namespace {
 
 char CorrelatedValuePropagation::ID = 0;
 INITIALIZE_PASS(CorrelatedValuePropagation, "correlated-propagation",
-                "Value Propagation", false, false);
+                "Value Propagation", false, false)
 
 // Public interface to the Value Propagation pass
 Pass *llvm::createCorrelatedValuePropagationPass() {

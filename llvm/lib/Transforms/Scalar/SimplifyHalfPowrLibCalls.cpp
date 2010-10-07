@@ -47,7 +47,7 @@ namespace {
 } // end anonymous namespace.
 
 INITIALIZE_PASS(SimplifyHalfPowrLibCalls, "simplify-libcalls-halfpowr",
-                "Simplify half_powr library calls", false, false);
+                "Simplify half_powr library calls", false, false)
 
 // Public interface to the Simplify HalfPowr LibCalls pass.
 FunctionPass *llvm::createSimplifyHalfPowrLibCallsPass() {

@@ -41,7 +41,7 @@ namespace {
 
 char SlotIndexes::ID = 0;
 INITIALIZE_PASS(SlotIndexes, "slotindexes",
-                "Slot index numbering", false, false);
+                "Slot index numbering", false, false)
 
 IndexListEntry* IndexListEntry::getEmptyKeyEntry() {
   return &*IndexListEntryEmptyKey;

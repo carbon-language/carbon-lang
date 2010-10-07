@@ -178,7 +178,7 @@ private:
 }  // end anonymous namespace
 
 char MergeFunctions::ID = 0;
-INITIALIZE_PASS(MergeFunctions, "mergefunc", "Merge Functions", false, false);
+INITIALIZE_PASS(MergeFunctions, "mergefunc", "Merge Functions", false, false)
 
 ModulePass *llvm::createMergeFunctionsPass() {
   return new MergeFunctions();

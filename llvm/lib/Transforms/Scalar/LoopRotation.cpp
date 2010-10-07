@@ -79,7 +79,7 @@ namespace {
 }
   
 char LoopRotate::ID = 0;
-INITIALIZE_PASS(LoopRotate, "loop-rotate", "Rotate Loops", false, false);
+INITIALIZE_PASS(LoopRotate, "loop-rotate", "Rotate Loops", false, false)
 
 Pass *llvm::createLoopRotatePass() { return new LoopRotate(); }
 

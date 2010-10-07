@@ -1392,7 +1392,7 @@ namespace {
 } // end anonymous namespace.
 
 INITIALIZE_PASS(SimplifyLibCalls, "simplify-libcalls",
-                "Simplify well-known library calls", false, false);
+                "Simplify well-known library calls", false, false)
 
 // Public interface to the Simplify LibCalls pass.
 FunctionPass *llvm::createSimplifyLibCallsPass() {

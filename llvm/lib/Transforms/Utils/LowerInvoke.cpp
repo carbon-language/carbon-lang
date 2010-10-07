@@ -102,7 +102,7 @@ namespace {
 char LowerInvoke::ID = 0;
 INITIALIZE_PASS(LowerInvoke, "lowerinvoke",
                 "Lower invoke and unwind, for unwindless code generators",
-                false, false);
+                false, false)
 
 char &llvm::LowerInvokePassID = LowerInvoke::ID;
 

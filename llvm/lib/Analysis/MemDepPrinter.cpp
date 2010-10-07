@@ -50,7 +50,8 @@ namespace {
 }
 
 char MemDepPrinter::ID = 0;
-INITIALIZE_PASS(MemDepPrinter, "print-memdeps", "Print MemDeps of function", false, true);
+INITIALIZE_PASS(MemDepPrinter, "print-memdeps", "Print MemDeps of function", 
+                false, true)
 
 FunctionPass *llvm::createMemDepPrinter() {
   return new MemDepPrinter();

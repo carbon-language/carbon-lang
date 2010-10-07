@@ -55,7 +55,7 @@ namespace {
 
 char OptimizePHIs::ID = 0;
 INITIALIZE_PASS(OptimizePHIs, "opt-phis",
-                "Optimize machine instruction PHIs", false, false);
+                "Optimize machine instruction PHIs", false, false)
 
 FunctionPass *llvm::createOptimizePHIsPass() { return new OptimizePHIs(); }
 

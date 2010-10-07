@@ -60,7 +60,7 @@ namespace {
   
 char RegToMem::ID = 0;
 INITIALIZE_PASS(RegToMem, "reg2mem", "Demote all values to stack slots",
-                false, false);
+                false, false)
 
 
 bool RegToMem::runOnFunction(Function &F) {

@@ -118,7 +118,7 @@ namespace {
 
 char IndVarSimplify::ID = 0;
 INITIALIZE_PASS(IndVarSimplify, "indvars",
-                "Canonicalize Induction Variables", false, false);
+                "Canonicalize Induction Variables", false, false)
 
 Pass *llvm::createIndVarSimplifyPass() {
   return new IndVarSimplify();

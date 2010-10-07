@@ -51,7 +51,7 @@ namespace {
 }
 
 INITIALIZE_PASS(PrintDbgInfo, "print-dbginfo",
-                "Print debug info in human readable form", false, false);
+                "Print debug info in human readable form", false, false)
 
 FunctionPass *llvm::createDbgInfoPrinterPass() { return new PrintDbgInfo(); }
 

@@ -132,6 +132,6 @@ namespace {
 char LowerAtomic::ID = 0;
 INITIALIZE_PASS(LowerAtomic, "loweratomic",
                 "Lower atomic intrinsics to non-atomic form",
-                false, false);
+                false, false)
 
 Pass *llvm::createLowerAtomicPass() { return new LowerAtomic(); }

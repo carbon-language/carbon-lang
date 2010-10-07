@@ -190,7 +190,7 @@ namespace {
 
 char MachineLICM::ID = 0;
 INITIALIZE_PASS(MachineLICM, "machinelicm",
-                "Machine Loop Invariant Code Motion", false, false);
+                "Machine Loop Invariant Code Motion", false, false)
 
 FunctionPass *llvm::createMachineLICMPass(bool PreRegAlloc) {
   return new MachineLICM(PreRegAlloc);

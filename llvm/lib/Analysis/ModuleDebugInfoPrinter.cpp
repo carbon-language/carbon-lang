@@ -43,7 +43,7 @@ namespace {
 
 char ModuleDebugInfoPrinter::ID = 0;
 INITIALIZE_PASS(ModuleDebugInfoPrinter, "module-debuginfo",
-                "Decodes module-level debug info", false, true);
+                "Decodes module-level debug info", false, true)
 
 ModulePass *llvm::createModuleDebugInfoPrinterPass() {
   return new ModuleDebugInfoPrinter();

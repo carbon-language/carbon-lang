@@ -33,7 +33,7 @@ namespace {
 
 char GEPSplitter::ID = 0;
 INITIALIZE_PASS(GEPSplitter, "split-geps",
-                "split complex GEPs into simple GEPs", false, false);
+                "split complex GEPs into simple GEPs", false, false)
 
 FunctionPass *llvm::createGEPSplitterPass() {
   return new GEPSplitter();

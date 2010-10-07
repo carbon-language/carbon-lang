@@ -205,7 +205,7 @@ char PreAllocSplitting::ID = 0;
 
 INITIALIZE_PASS(PreAllocSplitting, "pre-alloc-splitting",
                 "Pre-Register Allocation Live Interval Splitting",
-                false, false);
+                false, false)
 
 char &llvm::PreAllocSplittingID = PreAllocSplitting::ID;
 

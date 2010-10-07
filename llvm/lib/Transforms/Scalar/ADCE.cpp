@@ -45,7 +45,7 @@ namespace {
 }
 
 char ADCE::ID = 0;
-INITIALIZE_PASS(ADCE, "adce", "Aggressive Dead Code Elimination", false, false);
+INITIALIZE_PASS(ADCE, "adce", "Aggressive Dead Code Elimination", false, false)
 
 bool ADCE::runOnFunction(Function& F) {
   SmallPtrSet<Instruction*, 128> alive;

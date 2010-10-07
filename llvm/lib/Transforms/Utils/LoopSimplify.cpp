@@ -108,7 +108,7 @@ namespace {
 
 char LoopSimplify::ID = 0;
 INITIALIZE_PASS(LoopSimplify, "loopsimplify",
-                "Canonicalize natural loops", true, false);
+                "Canonicalize natural loops", true, false)
 
 // Publically exposed interface to pass...
 char &llvm::LoopSimplifyID = LoopSimplify::ID;

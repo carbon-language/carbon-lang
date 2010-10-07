@@ -88,7 +88,7 @@ namespace {
 
 char TailCallElim::ID = 0;
 INITIALIZE_PASS(TailCallElim, "tailcallelim",
-                "Tail Call Elimination", false, false);
+                "Tail Call Elimination", false, false)
 
 // Public interface to the TailCallElimination pass
 FunctionPass *llvm::createTailCallEliminationPass() {
