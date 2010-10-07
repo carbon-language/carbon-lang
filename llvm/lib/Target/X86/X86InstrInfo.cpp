@@ -55,6 +55,11 @@ ReMatPICStubLoad("remat-pic-stub-load",
 X86InstrInfo::X86InstrInfo(X86TargetMachine &tm)
   : TargetInstrInfoImpl(X86Insts, array_lengthof(X86Insts)),
     TM(tm), RI(tm, *this) {
+  enum {
+    TB_NOT_REVERSABLE = 1U << 31,
+    TB_FLAGS = TB_NOT_REVERSABLE
+  };
+      
   static const unsigned OpTbl2Addr[][2] = {
     { X86::ADC32ri,     X86::ADC32mi },
     { X86::ADC32ri8,    X86::ADC32mi8 },
@@ -65,12 +70,15 @@ X86InstrInfo::X86InstrInfo(X86TargetMachine &tm)
     { X86::ADD16ri,     X86::ADD16mi },
     { X86::ADD16ri8,    X86::ADD16mi8 },
     { X86::ADD16rr,     X86::ADD16mr },
+    { X86::ADD16rr_DB,  X86::ADD16mr | TB_NOT_REVERSABLE },
     { X86::ADD32ri,     X86::ADD32mi },
     { X86::ADD32ri8,    X86::ADD32mi8 },
     { X86::ADD32rr,     X86::ADD32mr },
+    { X86::ADD32rr_DB,  X86::ADD32mr | TB_NOT_REVERSABLE },
     { X86::ADD64ri32,   X86::ADD64mi32 },
     { X86::ADD64ri8,    X86::ADD64mi8 },
     { X86::ADD64rr,     X86::ADD64mr },
+    { X86::ADD64rr_DB,  X86::ADD64mr | TB_NOT_REVERSABLE },
     { X86::ADD8ri,      X86::ADD8mi },
     { X86::ADD8rr,      X86::ADD8mr },
     { X86::AND16ri,     X86::AND16mi },
@@ -215,16 +223,21 @@ X86InstrInfo::X86InstrInfo(X86TargetMachine &tm)
 
   for (unsigned i = 0, e = array_lengthof(OpTbl2Addr); i != e; ++i) {
     unsigned RegOp = OpTbl2Addr[i][0];
-    unsigned MemOp = OpTbl2Addr[i][1];
-    if (!RegOp2MemOpTable2Addr.insert(std::make_pair(RegOp,
-                                               std::make_pair(MemOp,0))).second)
-      assert(false && "Duplicated entries?");
+    unsigned MemOp = OpTbl2Addr[i][1] & ~TB_FLAGS;
+    assert(!RegOp2MemOpTable2Addr.count(RegOp) && "Duplicated entries?");
+    RegOp2MemOpTable2Addr[RegOp] = std::make_pair(MemOp, 0U);
+    
+    // If this is not a reversable operation (because there is a many->one)
+    // mapping, don't insert the reverse of the operation into MemOp2RegOpTable.
+    if (OpTbl2Addr[i][1] & TB_NOT_REVERSABLE)
+      continue;
+                          
     // Index 0, folded load and store, no alignment requirement.
     unsigned AuxInfo = 0 | (1 << 4) | (1 << 5);
-    if (!MemOp2RegOpTable.insert(std::make_pair(MemOp,
-                                                std::make_pair(RegOp,
-                                                              AuxInfo))).second)
-      assert(false && "Duplicated entries in unfolding maps?");
+    
+    assert(!MemOp2RegOpTable.count(MemOp) && 
+            "Duplicated entries in unfolding maps?");
+    MemOp2RegOpTable[MemOp] = std::make_pair(RegOp, AuxInfo);
   }
 
   // If the third value is 1, then it's folding either a load or a store.
@@ -455,8 +468,11 @@ X86InstrInfo::X86InstrInfo(X86TargetMachine &tm)
     { X86::ADC32rr,         X86::ADC32rm, 0 },
     { X86::ADC64rr,         X86::ADC64rm, 0 },
     { X86::ADD16rr,         X86::ADD16rm, 0 },
+    { X86::ADD16rr_DB,      X86::ADD16rm | TB_NOT_REVERSABLE, 0 },
     { X86::ADD32rr,         X86::ADD32rm, 0 },
+    { X86::ADD32rr_DB,      X86::ADD32rm | TB_NOT_REVERSABLE, 0 },
     { X86::ADD64rr,         X86::ADD64rm, 0 },
+    { X86::ADD64rr_DB,      X86::ADD64rm | TB_NOT_REVERSABLE, 0 },
     { X86::ADD8rr,          X86::ADD8rm, 0 },
     { X86::ADDPDrr,         X86::ADDPDrm, 16 },
     { X86::ADDPSrr,         X86::ADDPSrm, 16 },
@@ -651,16 +667,23 @@ X86InstrInfo::X86InstrInfo(X86TargetMachine &tm)
 
   for (unsigned i = 0, e = array_lengthof(OpTbl2); i != e; ++i) {
     unsigned RegOp = OpTbl2[i][0];
-    unsigned MemOp = OpTbl2[i][1];
+    unsigned MemOp = OpTbl2[i][1] & ~TB_FLAGS;
     unsigned Align = OpTbl2[i][2];
-    if (!RegOp2MemOpTable2.insert(std::make_pair(RegOp,
-                                           std::make_pair(MemOp,Align))).second)
-      assert(false && "Duplicated entries?");
+    
+    assert(!RegOp2MemOpTable2.count(RegOp) && "Duplicate entry!");
+    RegOp2MemOpTable2[RegOp] = std::make_pair(MemOp, Align);
+    
+    
+    // If this is not a reversable operation (because there is a many->one)
+    // mapping, don't insert the reverse of the operation into MemOp2RegOpTable.
+    if (OpTbl2[i][1] & TB_NOT_REVERSABLE)
+      continue;
+    
     // Index 2, folded load
     unsigned AuxInfo = 2 | (1 << 4);
-    if (!MemOp2RegOpTable.insert(std::make_pair(MemOp,
-                                   std::make_pair(RegOp, AuxInfo))).second)
-      assert(false && "Duplicated entries in unfolding maps?");
+    assert(!MemOp2RegOpTable.count(MemOp) &&
+           "Duplicated entries in unfolding maps?");
+    MemOp2RegOpTable[MemOp] = std::make_pair(RegOp, AuxInfo);
   }
 }
 
@@ -1135,7 +1158,8 @@ X86InstrInfo::convertToThreeAddressWithLEA(unsigned MIOpc,
   case X86::ADD16ri8:
     addRegOffset(MIB, leaInReg, true, MI->getOperand(2).getImm());    
     break;
-  case X86::ADD16rr: {
+  case X86::ADD16rr:
+  case X86::ADD16rr_DB: {
     unsigned Src2 = MI->getOperand(2).getReg();
     bool isKill2 = MI->getOperand(2).isKill();
     unsigned leaInReg2 = 0;
@@ -1348,18 +1372,27 @@ X86InstrInfo::convertToThreeAddress(MachineFunction::iterator &MFI,
                            Src, isKill, -1);
       break;
     case X86::ADD64rr:
-    case X86::ADD32rr: {
+    case X86::ADD64rr_DB:
+    case X86::ADD32rr:
+    case X86::ADD32rr_DB: {
       assert(MI->getNumOperands() >= 3 && "Unknown add instruction!");
-      unsigned Opc = MIOpc == X86::ADD64rr ? X86::LEA64r
-        : (is64Bit ? X86::LEA64_32r : X86::LEA32r);
+      unsigned Opc;
+      TargetRegisterClass *RC;
+      if (MIOpc == X86::ADD64rr || MIOpc == X86::ADD64rr_DB) {
+        Opc = X86::LEA64r;
+        RC = X86::GR64_NOSPRegisterClass;
+      } else {
+        Opc = is64Bit ? X86::LEA64_32r : X86::LEA32r;
+        RC = X86::GR32_NOSPRegisterClass;
+      }
+
+      
       unsigned Src2 = MI->getOperand(2).getReg();
       bool isKill2 = MI->getOperand(2).isKill();
 
       // LEA can't handle RSP.
       if (TargetRegisterInfo::isVirtualRegister(Src2) &&
-          !MF.getRegInfo().constrainRegClass(Src2,
-                           MIOpc == X86::ADD64rr ? X86::GR64_NOSPRegisterClass :
-                                                   X86::GR32_NOSPRegisterClass))
+          !MF.getRegInfo().constrainRegClass(Src2, RC))
         return 0;
 
       NewMI = addRegReg(BuildMI(MF, MI->getDebugLoc(), get(Opc))
@@ -1370,7 +1403,8 @@ X86InstrInfo::convertToThreeAddress(MachineFunction::iterator &MFI,
         LV->replaceKillInstruction(Src2, MI, NewMI);
       break;
     }
-    case X86::ADD16rr: {
+    case X86::ADD16rr:
+    case X86::ADD16rr_DB: {
       if (DisableLEA16)
         return is64Bit ? convertToThreeAddressWithLEA(MIOpc, MFI, MBBI, LV) : 0;
       assert(MI->getNumOperands() >= 3 && "Unknown add instruction!");
@@ -2598,13 +2632,8 @@ bool X86InstrInfo::canFoldMemoryOperand(const MachineInstr *MI,
     OpcodeTablePtr = &RegOp2MemOpTable2;
   }
   
-  if (OpcodeTablePtr) {
-    // Find the Opcode to fuse
-    DenseMap<unsigned, std::pair<unsigned,unsigned> >::const_iterator I =
-      OpcodeTablePtr->find(Opc);
-    if (I != OpcodeTablePtr->end())
-      return true;
-  }
+  if (OpcodeTablePtr && OpcodeTablePtr->count(Opc))
+    return true;
   return TargetInstrInfoImpl::canFoldMemoryOperand(MI, Ops);
 }
 
