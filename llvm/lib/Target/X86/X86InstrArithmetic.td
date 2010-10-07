@@ -598,9 +598,21 @@ class ITy<bits<8> opcode, Format f, X86TypeInfo typeinfo, dag outs, dag ins,
   let hasREX_WPrefix  = typeinfo.HasREX_WPrefix;
 }
 
-// BinOpRR - Instructions like "add reg, reg, reg".
-class BinOpRR<bits<8> opcode, string mnemonic, X86TypeInfo typeinfo,
-              SDNode opnode>
+// BinOpRR_R - Instructions like "add reg, reg, reg", where the pattern has
+// just a regclass (no eflags) as a result.
+class BinOpRR_R<bits<8> opcode, string mnemonic, X86TypeInfo typeinfo,
+                SDNode opnode>
+  : ITy<opcode, MRMDestReg, typeinfo,
+        (outs typeinfo.RegClass:$dst),
+        (ins typeinfo.RegClass:$src1, typeinfo.RegClass:$src2),
+        mnemonic, "{$src2, $dst|$dst, $src2}",
+        [(set typeinfo.RegClass:$dst,
+              (opnode typeinfo.RegClass:$src1, typeinfo.RegClass:$src2))]>;
+
+// BinOpRR_RF - Instructions like "add reg, reg, reg", where the pattern has
+// both a regclass and EFLAGS as a result.
+class BinOpRR_RF<bits<8> opcode, string mnemonic, X86TypeInfo typeinfo,
+                 SDNode opnode>
   : ITy<opcode, MRMDestReg, typeinfo,
         (outs typeinfo.RegClass:$dst),
         (ins typeinfo.RegClass:$src1, typeinfo.RegClass:$src2),
@@ -618,8 +630,18 @@ class BinOpRR_Rev<bits<8> opcode, string mnemonic, X86TypeInfo typeinfo>
   let isCodeGenOnly = 1;
 }
 
-// BinOpRM - Instructions like "add reg, reg, [mem]".
-class BinOpRM<bits<8> opcode, string mnemonic, X86TypeInfo typeinfo,
+// BinOpRM_R - Instructions like "add reg, reg, [mem]".
+class BinOpRM_R<bits<8> opcode, string mnemonic, X86TypeInfo typeinfo,
+              SDNode opnode>
+  : ITy<opcode, MRMSrcMem, typeinfo,
+        (outs typeinfo.RegClass:$dst),
+        (ins typeinfo.RegClass:$src1, typeinfo.MemOperand:$src2),
+        mnemonic, "{$src2, $dst|$dst, $src2}",
+        [(set typeinfo.RegClass:$dst,
+            (opnode typeinfo.RegClass:$src1, (typeinfo.LoadNode addr:$src2)))]>;
+
+// BinOpRM_RF - Instructions like "add reg, reg, [mem]".
+class BinOpRM_RF<bits<8> opcode, string mnemonic, X86TypeInfo typeinfo,
               SDNode opnode>
   : ITy<opcode, MRMSrcMem, typeinfo,
         (outs typeinfo.RegClass:$dst),
@@ -628,9 +650,21 @@ class BinOpRM<bits<8> opcode, string mnemonic, X86TypeInfo typeinfo,
         [(set typeinfo.RegClass:$dst, EFLAGS,
             (opnode typeinfo.RegClass:$src1, (typeinfo.LoadNode addr:$src2)))]>;
 
-// BinOpRI - Instructions like "add reg, reg, imm".
-class BinOpRI<bits<8> opcode, string mnemonic, X86TypeInfo typeinfo,
-              SDNode opnode, Format f>
+// BinOpRI_R - Instructions like "add reg, reg, imm".
+class BinOpRI_R<bits<8> opcode, string mnemonic, X86TypeInfo typeinfo,
+                SDNode opnode, Format f>
+  : ITy<opcode, f, typeinfo,
+        (outs typeinfo.RegClass:$dst),
+        (ins typeinfo.RegClass:$src1, typeinfo.ImmOperand:$src2),
+        mnemonic, "{$src2, $dst|$dst, $src2}",
+        [(set typeinfo.RegClass:$dst,
+            (opnode typeinfo.RegClass:$src1, typeinfo.ImmOperator:$src2))]> {
+  let ImmT = typeinfo.ImmEncoding;
+}
+
+// BinOpRI_RF - Instructions like "add reg, reg, imm".
+class BinOpRI_RF<bits<8> opcode, string mnemonic, X86TypeInfo typeinfo,
+                 SDNode opnode, Format f>
   : ITy<opcode, f, typeinfo,
         (outs typeinfo.RegClass:$dst),
         (ins typeinfo.RegClass:$src1, typeinfo.ImmOperand:$src2),
@@ -640,10 +674,21 @@ class BinOpRI<bits<8> opcode, string mnemonic, X86TypeInfo typeinfo,
   let ImmT = typeinfo.ImmEncoding;
 }
 
+// BinOpRI8_R - Instructions like "add reg, reg, imm8".
+class BinOpRI8_R<bits<8> opcode, string mnemonic, X86TypeInfo typeinfo,
+                  SDNode opnode, Format f>
+  : ITy<opcode, f, typeinfo,
+        (outs typeinfo.RegClass:$dst),
+        (ins typeinfo.RegClass:$src1, typeinfo.Imm8Operand:$src2),
+        mnemonic, "{$src2, $dst|$dst, $src2}",
+        [(set typeinfo.RegClass:$dst,
+            (opnode typeinfo.RegClass:$src1, typeinfo.Imm8Operator:$src2))]> {
+  let ImmT = Imm8; // Always 8-bit immediate.
+}
 
-// BinOpRI8 - Instructions like "add reg, reg, imm8".
-class BinOpRI8<bits<8> opcode, string mnemonic, X86TypeInfo typeinfo,
-               SDNode opnode, Format f>
+// BinOpRI8_RF - Instructions like "add reg, reg, imm8".
+class BinOpRI8_RF<bits<8> opcode, string mnemonic, X86TypeInfo typeinfo,
+                  SDNode opnode, Format f>
   : ITy<opcode, f, typeinfo,
         (outs typeinfo.RegClass:$dst),
         (ins typeinfo.RegClass:$src1, typeinfo.Imm8Operand:$src2),
@@ -698,25 +743,23 @@ class BinOpAI<bits<8> opcode, string mnemonic, X86TypeInfo typeinfo,
   let Defs = [areg];
 }
 
-class Or2<bits<8> Val> {
-  bits<8> V = {Val{7}, Val{6}, Val{5}, Val{4}, Val{3}, Val{2}, 1, Val{0} };
-}
-class Or4<bits<8> Val> {
-  bits<8> V = {Val{7}, Val{6}, Val{5}, Val{4}, Val{3}, 1, Val{1}, Val{0} };
-}
-
-multiclass ArithBinOpEFLAGS<bits<8> BaseOpc, bits<8> BaseOpc2, bits<8> BaseOpc4,
-                            string mnemonic, Format RegMRM, Format MemMRM,
-                            SDNode opnodeflag, SDNode opnode,
-                            bit CommutableRR, bit ConvertibleToThreeAddress> {
+/// ArithBinOp_RF - This is an arithmetic binary operator where the pattern is
+/// defined with "(set GPR:$dst, EFLAGS, (...".
+///
+/// It would be nice to get rid of the second and third argument here, but
+/// tblgen can't handle dependent type references aggressively enough: PR8330
+multiclass ArithBinOp_RF<bits<8> BaseOpc, bits<8> BaseOpc2, bits<8> BaseOpc4,
+                         string mnemonic, Format RegMRM, Format MemMRM,
+                         SDNode opnodeflag, SDNode opnode,
+                         bit CommutableRR, bit ConvertibleToThreeAddress> {
   let Defs = [EFLAGS] in {
     let Constraints = "$src1 = $dst" in {
       let isCommutable = CommutableRR,
           isConvertibleToThreeAddress = ConvertibleToThreeAddress in {
-        def #NAME#8rr  : BinOpRR<BaseOpc, mnemonic, Xi8 , opnodeflag>;
-        def #NAME#16rr : BinOpRR<BaseOpc, mnemonic, Xi16, opnodeflag>;
-        def #NAME#32rr : BinOpRR<BaseOpc, mnemonic, Xi32, opnodeflag>;
-        def #NAME#64rr : BinOpRR<BaseOpc, mnemonic, Xi64, opnodeflag>;
+        def #NAME#8rr  : BinOpRR_RF<BaseOpc, mnemonic, Xi8 , opnodeflag>;
+        def #NAME#16rr : BinOpRR_RF<BaseOpc, mnemonic, Xi16, opnodeflag>;
+        def #NAME#32rr : BinOpRR_RF<BaseOpc, mnemonic, Xi32, opnodeflag>;
+        def #NAME#64rr : BinOpRR_RF<BaseOpc, mnemonic, Xi64, opnodeflag>;
       } // isCommutable
 
       def #NAME#8rr_REV  : BinOpRR_Rev<BaseOpc2, mnemonic, Xi8>;
@@ -724,20 +767,20 @@ multiclass ArithBinOpEFLAGS<bits<8> BaseOpc, bits<8> BaseOpc2, bits<8> BaseOpc4,
       def #NAME#32rr_REV : BinOpRR_Rev<BaseOpc2, mnemonic, Xi32>;
       def #NAME#64rr_REV : BinOpRR_Rev<BaseOpc2, mnemonic, Xi64>;
 
-      def #NAME#8rm   : BinOpRM<BaseOpc2, mnemonic, Xi8 , opnodeflag>;
-      def #NAME#16rm  : BinOpRM<BaseOpc2, mnemonic, Xi16, opnodeflag>;
-      def #NAME#32rm  : BinOpRM<BaseOpc2, mnemonic, Xi32, opnodeflag>;
-      def #NAME#64rm  : BinOpRM<BaseOpc2, mnemonic, Xi64, opnodeflag>;
+      def #NAME#8rm   : BinOpRM_RF<BaseOpc2, mnemonic, Xi8 , opnodeflag>;
+      def #NAME#16rm  : BinOpRM_RF<BaseOpc2, mnemonic, Xi16, opnodeflag>;
+      def #NAME#32rm  : BinOpRM_RF<BaseOpc2, mnemonic, Xi32, opnodeflag>;
+      def #NAME#64rm  : BinOpRM_RF<BaseOpc2, mnemonic, Xi64, opnodeflag>;
 
       let isConvertibleToThreeAddress = ConvertibleToThreeAddress in {
-        def #NAME#8ri   : BinOpRI<0x80, mnemonic, Xi8 , opnodeflag, RegMRM>;
-        def #NAME#16ri  : BinOpRI<0x80, mnemonic, Xi16, opnodeflag, RegMRM>;
-        def #NAME#32ri  : BinOpRI<0x80, mnemonic, Xi32, opnodeflag, RegMRM>;
-        def #NAME#64ri32: BinOpRI<0x80, mnemonic, Xi64, opnodeflag, RegMRM>;
+        def #NAME#8ri   : BinOpRI_RF<0x80, mnemonic, Xi8 , opnodeflag, RegMRM>;
+        def #NAME#16ri  : BinOpRI_RF<0x80, mnemonic, Xi16, opnodeflag, RegMRM>;
+        def #NAME#32ri  : BinOpRI_RF<0x80, mnemonic, Xi32, opnodeflag, RegMRM>;
+        def #NAME#64ri32: BinOpRI_RF<0x80, mnemonic, Xi64, opnodeflag, RegMRM>;
 
-        def #NAME#16ri8 : BinOpRI8<0x82, mnemonic, Xi16, opnodeflag, RegMRM>;
-        def #NAME#32ri8 : BinOpRI8<0x82, mnemonic, Xi32, opnodeflag, RegMRM>;
-        def #NAME#64ri8 : BinOpRI8<0x82, mnemonic, Xi64, opnodeflag, RegMRM>;
+        def #NAME#16ri8 : BinOpRI8_RF<0x82, mnemonic, Xi16, opnodeflag, RegMRM>;
+        def #NAME#32ri8 : BinOpRI8_RF<0x82, mnemonic, Xi32, opnodeflag, RegMRM>;
+        def #NAME#64ri8 : BinOpRI8_RF<0x82, mnemonic, Xi64, opnodeflag, RegMRM>;
       }
     } // Constraints = "$src1 = $dst"
 
@@ -762,288 +805,85 @@ multiclass ArithBinOpEFLAGS<bits<8> BaseOpc, bits<8> BaseOpc2, bits<8> BaseOpc4,
   }                          
 }
 
-defm AND : ArithBinOpEFLAGS<0x20, 0x22, 0x24, "and", MRM4r, MRM4m,
-                            X86and_flag, and, 1, 0>;
-defm OR : ArithBinOpEFLAGS<0x08, 0x0A, 0x0C, "or", MRM1r, MRM1m,
-                            X86or_flag, or, 1, 0>;
-defm XOR : ArithBinOpEFLAGS<0x30, 0x32, 0x34, "xor", MRM6r, MRM6m,
-                            X86xor_flag, xor, 1, 0>;
+/// ArithBinOp_R - This is an arithmetic binary operator where the pattern is
+/// defined with "(set GPR:$dst, (...".  It would be really nice to find a way
+/// to factor this with the other ArithBinOp_*.
+///
+multiclass ArithBinOp_R<bits<8> BaseOpc, bits<8> BaseOpc2, bits<8> BaseOpc4,
+                        string mnemonic, Format RegMRM, Format MemMRM,
+                        SDNode opnode,
+                        bit CommutableRR, bit ConvertibleToThreeAddress> {
+  let Defs = [EFLAGS] in {
+    let Constraints = "$src1 = $dst" in {
+      let isCommutable = CommutableRR,
+          isConvertibleToThreeAddress = ConvertibleToThreeAddress in {
+        def #NAME#8rr  : BinOpRR_R<BaseOpc, mnemonic, Xi8 , opnode>;
+        def #NAME#16rr : BinOpRR_R<BaseOpc, mnemonic, Xi16, opnode>;
+        def #NAME#32rr : BinOpRR_R<BaseOpc, mnemonic, Xi32, opnode>;
+        def #NAME#64rr : BinOpRR_R<BaseOpc, mnemonic, Xi64, opnode>;
+      } // isCommutable
 
-defm ADD : ArithBinOpEFLAGS<0x00, 0x02, 0x04, "add", MRM0r, MRM0m,
-                            X86add_flag, add, 1, 1>;
+      def #NAME#8rr_REV  : BinOpRR_Rev<BaseOpc2, mnemonic, Xi8>;
+      def #NAME#16rr_REV : BinOpRR_Rev<BaseOpc2, mnemonic, Xi16>;
+      def #NAME#32rr_REV : BinOpRR_Rev<BaseOpc2, mnemonic, Xi32>;
+      def #NAME#64rr_REV : BinOpRR_Rev<BaseOpc2, mnemonic, Xi64>;
+
+      def #NAME#8rm   : BinOpRM_R<BaseOpc2, mnemonic, Xi8 , opnode>;
+      def #NAME#16rm  : BinOpRM_R<BaseOpc2, mnemonic, Xi16, opnode>;
+      def #NAME#32rm  : BinOpRM_R<BaseOpc2, mnemonic, Xi32, opnode>;
+      def #NAME#64rm  : BinOpRM_R<BaseOpc2, mnemonic, Xi64, opnode>;
+
+      let isConvertibleToThreeAddress = ConvertibleToThreeAddress in {
+        def #NAME#8ri   : BinOpRI_R<0x80, mnemonic, Xi8 , opnode, RegMRM>;
+        def #NAME#16ri  : BinOpRI_R<0x80, mnemonic, Xi16, opnode, RegMRM>;
+        def #NAME#32ri  : BinOpRI_R<0x80, mnemonic, Xi32, opnode, RegMRM>;
+        def #NAME#64ri32: BinOpRI_R<0x80, mnemonic, Xi64, opnode, RegMRM>;
+
+        def #NAME#16ri8 : BinOpRI8_R<0x82, mnemonic, Xi16, opnode, RegMRM>;
+        def #NAME#32ri8 : BinOpRI8_R<0x82, mnemonic, Xi32, opnode, RegMRM>;
+        def #NAME#64ri8 : BinOpRI8_R<0x82, mnemonic, Xi64, opnode, RegMRM>;
+      }
+    } // Constraints = "$src1 = $dst"
+
+    def #NAME#8mr    : BinOpMR<BaseOpc, mnemonic, Xi8 , opnode>;
+    def #NAME#16mr   : BinOpMR<BaseOpc, mnemonic, Xi16, opnode>;
+    def #NAME#32mr   : BinOpMR<BaseOpc, mnemonic, Xi32, opnode>;
+    def #NAME#64mr   : BinOpMR<BaseOpc, mnemonic, Xi64, opnode>;
+
+    def #NAME#8mi    : BinOpMI<0x80, mnemonic, Xi8 , opnode, MemMRM>;
+    def #NAME#16mi   : BinOpMI<0x80, mnemonic, Xi16, opnode, MemMRM>;
+    def #NAME#32mi   : BinOpMI<0x80, mnemonic, Xi32, opnode, MemMRM>;
+    def #NAME#64mi32 : BinOpMI<0x80, mnemonic, Xi64, opnode, MemMRM>;
+
+    def #NAME#16mi8  : BinOpMI8<0x82, mnemonic, Xi16, opnode, MemMRM>;
+    def #NAME#32mi8  : BinOpMI8<0x82, mnemonic, Xi32, opnode, MemMRM>;
+    def #NAME#64mi8  : BinOpMI8<0x82, mnemonic, Xi64, opnode, MemMRM>;
+                       
+    def #NAME#8i8   : BinOpAI<BaseOpc4, mnemonic, Xi8 , AL>;
+    def #NAME#16i16 : BinOpAI<BaseOpc4, mnemonic, Xi16, AX>;
+    def #NAME#32i32 : BinOpAI<BaseOpc4, mnemonic, Xi32, EAX>;
+    def #NAME#64i32 : BinOpAI<BaseOpc4, mnemonic, Xi64, RAX>;
+  }                          
+}
+
+
+defm AND : ArithBinOp_RF<0x20, 0x22, 0x24, "and", MRM4r, MRM4m,
+                         X86and_flag, and, 1, 0>;
+defm OR  : ArithBinOp_RF<0x08, 0x0A, 0x0C, "or", MRM1r, MRM1m,
+                         X86or_flag, or, 1, 0>;
+defm XOR : ArithBinOp_RF<0x30, 0x32, 0x34, "xor", MRM6r, MRM6m,
+                         X86xor_flag, xor, 1, 0>;
+defm ADD : ArithBinOp_RF<0x00, 0x02, 0x04, "add", MRM0r, MRM0m,
+                         X86add_flag, add, 1, 1>;
+defm SUB : ArithBinOp_RF<0x28, 0x2A, 0x2C, "sub", MRM5r, MRM5m,
+                         X86sub_flag, sub, 0, 0>;
 
 // Arithmetic.
-let Defs = [EFLAGS] in {
-
 let Uses = [EFLAGS] in {
-let Constraints = "$src1 = $dst" in {
-let isCommutable = 1 in {  // X = ADC Y, Z --> X = ADC Z, Y
-def ADC8rr   : I<0x10, MRMDestReg, (outs GR8:$dst), (ins GR8:$src1, GR8:$src2),
-                 "adc{b}\t{$src2, $dst|$dst, $src2}",
-                 [(set GR8:$dst, (adde GR8:$src1, GR8:$src2))]>;
-def ADC16rr  : I<0x11, MRMDestReg, (outs GR16:$dst),
-                                   (ins GR16:$src1, GR16:$src2),
-                 "adc{w}\t{$src2, $dst|$dst, $src2}",
-                 [(set GR16:$dst, (adde GR16:$src1, GR16:$src2))]>, OpSize;
-def ADC32rr  : I<0x11, MRMDestReg, (outs GR32:$dst),
-                                   (ins GR32:$src1, GR32:$src2),
-                 "adc{l}\t{$src2, $dst|$dst, $src2}",
-                 [(set GR32:$dst, (adde GR32:$src1, GR32:$src2))]>;
-def ADC64rr  : RI<0x11, MRMDestReg, (outs GR64:$dst), 
-                  (ins GR64:$src1, GR64:$src2),
-                  "adc{q}\t{$src2, $dst|$dst, $src2}",
-                  [(set GR64:$dst, (adde GR64:$src1, GR64:$src2))]>;
+  // FIXME: Delete ArithBinOp_R if these switch off adde/sube.
+  defm ADC : ArithBinOp_R<0x10, 0x12, 0x14, "adc", MRM2r, MRM2m, adde, 1, 0>;
+  defm SBB : ArithBinOp_R<0x18, 0x1A, 0x1C, "sbb", MRM3r, MRM3m, sube, 0, 0>;
 }
-
-let isCodeGenOnly = 1 in {
-def ADC8rr_REV : I<0x12, MRMSrcReg, (outs GR8:$dst), (ins GR8:$src1, GR8:$src2),
-                 "adc{b}\t{$src2, $dst|$dst, $src2}", []>;
-def ADC16rr_REV : I<0x13, MRMSrcReg, (outs GR16:$dst), 
-                    (ins GR16:$src1, GR16:$src2),
-                    "adc{w}\t{$src2, $dst|$dst, $src2}", []>, OpSize;
-def ADC32rr_REV : I<0x13, MRMSrcReg, (outs GR32:$dst), 
-                    (ins GR32:$src1, GR32:$src2),
-                    "adc{l}\t{$src2, $dst|$dst, $src2}", []>;
-def ADC64rr_REV : RI<0x13, MRMSrcReg , (outs GR32:$dst), 
-                     (ins GR64:$src1, GR64:$src2),
-                    "adc{q}\t{$src2, $dst|$dst, $src2}", []>;
-}
-
-def ADC8rm   : I<0x12, MRMSrcMem ,
-                 (outs GR8:$dst), (ins GR8:$src1, i8mem:$src2),
-                 "adc{b}\t{$src2, $dst|$dst, $src2}",
-                 [(set GR8:$dst, (adde GR8:$src1, (load addr:$src2)))]>;
-def ADC16rm  : I<0x13, MRMSrcMem , (outs GR16:$dst),
-                                   (ins GR16:$src1, i16mem:$src2),
-                 "adc{w}\t{$src2, $dst|$dst, $src2}",
-                 [(set GR16:$dst, (adde GR16:$src1, (load addr:$src2)))]>,
-                 OpSize;
-def ADC32rm  : I<0x13, MRMSrcMem ,
-                 (outs GR32:$dst), (ins GR32:$src1, i32mem:$src2),
-                 "adc{l}\t{$src2, $dst|$dst, $src2}",
-                 [(set GR32:$dst, (adde GR32:$src1, (load addr:$src2)))]>;
-def ADC64rm  : RI<0x13, MRMSrcMem , (outs GR64:$dst), 
-                  (ins GR64:$src1, i64mem:$src2),
-                  "adc{q}\t{$src2, $dst|$dst, $src2}",
-                  [(set GR64:$dst, (adde GR64:$src1, (load addr:$src2)))]>;
-def ADC8ri   : Ii8<0x80, MRM2r, (outs GR8:$dst), (ins GR8:$src1, i8imm:$src2),
-                    "adc{b}\t{$src2, $dst|$dst, $src2}",
-                 [(set GR8:$dst, (adde GR8:$src1, imm:$src2))]>;
-def ADC16ri  : Ii16<0x81, MRM2r,
-                    (outs GR16:$dst), (ins GR16:$src1, i16imm:$src2),
-                    "adc{w}\t{$src2, $dst|$dst, $src2}",
-                 [(set GR16:$dst, (adde GR16:$src1, imm:$src2))]>, OpSize;
-def ADC16ri8 : Ii8<0x83, MRM2r, (outs GR16:$dst),
-                                (ins GR16:$src1, i16i8imm:$src2),
-                   "adc{w}\t{$src2, $dst|$dst, $src2}",
-                 [(set GR16:$dst, (adde GR16:$src1, i16immSExt8:$src2))]>,
-                 OpSize;
-def ADC32ri  : Ii32<0x81, MRM2r, (outs GR32:$dst),
-                                 (ins GR32:$src1, i32imm:$src2),
-                    "adc{l}\t{$src2, $dst|$dst, $src2}",
-                 [(set GR32:$dst, (adde GR32:$src1, imm:$src2))]>;
-def ADC32ri8 : Ii8<0x83, MRM2r, (outs GR32:$dst),
-                                (ins GR32:$src1, i32i8imm:$src2),
-                   "adc{l}\t{$src2, $dst|$dst, $src2}",
-                 [(set GR32:$dst, (adde GR32:$src1, i32immSExt8:$src2))]>;
-def ADC64ri32 : RIi32<0x81, MRM2r, (outs GR64:$dst), 
-                      (ins GR64:$src1, i64i32imm:$src2),
-                      "adc{q}\t{$src2, $dst|$dst, $src2}",
-                      [(set GR64:$dst, (adde GR64:$src1, i64immSExt32:$src2))]>;
-def ADC64ri8 : RIi8<0x83, MRM2r, (outs GR64:$dst), 
-                    (ins GR64:$src1, i64i8imm:$src2),
-                    "adc{q}\t{$src2, $dst|$dst, $src2}",
-                    [(set GR64:$dst, (adde GR64:$src1, i64immSExt8:$src2))]>;
-} // Constraints = "$src1 = $dst"
-
-def ADC8mr   : I<0x10, MRMDestMem, (outs), (ins i8mem:$dst, GR8:$src2),
-                 "adc{b}\t{$src2, $dst|$dst, $src2}",
-                 [(store (adde (load addr:$dst), GR8:$src2), addr:$dst)]>;
-def ADC16mr  : I<0x11, MRMDestMem, (outs), (ins i16mem:$dst, GR16:$src2),
-                 "adc{w}\t{$src2, $dst|$dst, $src2}",
-                 [(store (adde (load addr:$dst), GR16:$src2), addr:$dst)]>,
-                 OpSize;
-def ADC32mr  : I<0x11, MRMDestMem, (outs), (ins i32mem:$dst, GR32:$src2),
-                 "adc{l}\t{$src2, $dst|$dst, $src2}",
-                 [(store (adde (load addr:$dst), GR32:$src2), addr:$dst)]>;
-def ADC64mr  : RI<0x11, MRMDestMem, (outs), (ins i64mem:$dst, GR64:$src2),
-                  "adc{q}\t{$src2, $dst|$dst, $src2}",
-                  [(store (adde (load addr:$dst), GR64:$src2), addr:$dst)]>;
-def ADC8mi   : Ii8<0x80, MRM2m, (outs), (ins i8mem:$dst, i8imm:$src2),
-                    "adc{b}\t{$src2, $dst|$dst, $src2}",
-                [(store (adde (loadi8 addr:$dst), imm:$src2), addr:$dst)]>;
-def ADC16mi  : Ii16<0x81, MRM2m, (outs), (ins i16mem:$dst, i16imm:$src2),
-                    "adc{w}\t{$src2, $dst|$dst, $src2}",
-                [(store (adde (loadi16 addr:$dst), imm:$src2), addr:$dst)]>,
-                OpSize;
-def ADC16mi8 : Ii8<0x83, MRM2m, (outs), (ins i16mem:$dst, i16i8imm :$src2),
-                   "adc{w}\t{$src2, $dst|$dst, $src2}",
-             [(store (adde (load addr:$dst), i16immSExt8:$src2), addr:$dst)]>,
-             OpSize;
-def ADC32mi  : Ii32<0x81, MRM2m, (outs), (ins i32mem:$dst, i32imm:$src2),
-                    "adc{l}\t{$src2, $dst|$dst, $src2}",
-                [(store (adde (loadi32 addr:$dst), imm:$src2), addr:$dst)]>;
-def ADC32mi8 : Ii8<0x83, MRM2m, (outs), (ins i32mem:$dst, i32i8imm :$src2),
-                   "adc{l}\t{$src2, $dst|$dst, $src2}",
-             [(store (adde (load addr:$dst), i32immSExt8:$src2), addr:$dst)]>;
-
-def ADC64mi32 : RIi32<0x81, MRM2m, (outs), (ins i64mem:$dst, i64i32imm:$src2),
-                      "adc{q}\t{$src2, $dst|$dst, $src2}",
-                 [(store (adde (load addr:$dst), i64immSExt32:$src2), 
-                  addr:$dst)]>;
-def ADC64mi8 : RIi8<0x83, MRM2m, (outs), (ins i64mem:$dst, i64i8imm :$src2),
-                    "adc{q}\t{$src2, $dst|$dst, $src2}",
-                 [(store (adde (load addr:$dst), i64immSExt8:$src2), 
-                  addr:$dst)]>;
-
-def ADC8i8 : Ii8<0x14, RawFrm, (outs), (ins i8imm:$src),
-                 "adc{b}\t{$src, %al|%al, $src}", []>;
-def ADC16i16 : Ii16<0x15, RawFrm, (outs), (ins i16imm:$src),
-                    "adc{w}\t{$src, %ax|%ax, $src}", []>, OpSize;
-def ADC32i32 : Ii32<0x15, RawFrm, (outs), (ins i32imm:$src),
-                    "adc{l}\t{$src, %eax|%eax, $src}", []>;
-def ADC64i32 : RIi32<0x15, RawFrm, (outs), (ins i64i32imm:$src),
-                     "adc{q}\t{$src, %rax|%rax, $src}", []>;
-} // Uses = [EFLAGS]
-
-
-
-defm SUB : ArithBinOpEFLAGS<0x28, 0x2A, 0x2C, "sub", MRM5r, MRM5m,
-                            X86sub_flag, sub, 0, 0>;
-
-
-let Uses = [EFLAGS] in {
-let Constraints = "$src1 = $dst" in {
-def SBB8rr     : I<0x18, MRMDestReg, (outs GR8:$dst),
-                                     (ins GR8:$src1, GR8:$src2),
-                  "sbb{b}\t{$src2, $dst|$dst, $src2}",
-                 [(set GR8:$dst, (sube GR8:$src1, GR8:$src2))]>;
-def SBB16rr    : I<0x19, MRMDestReg, (outs GR16:$dst),
-                                     (ins GR16:$src1, GR16:$src2),
-                  "sbb{w}\t{$src2, $dst|$dst, $src2}",
-                 [(set GR16:$dst, (sube GR16:$src1, GR16:$src2))]>, OpSize;
-def SBB32rr    : I<0x19, MRMDestReg, (outs GR32:$dst),
-                                      (ins GR32:$src1, GR32:$src2),
-                  "sbb{l}\t{$src2, $dst|$dst, $src2}",
-                 [(set GR32:$dst, (sube GR32:$src1, GR32:$src2))]>;
-def SBB64rr    : RI<0x19, MRMDestReg, (outs GR64:$dst), 
-                    (ins GR64:$src1, GR64:$src2),
-                    "sbb{q}\t{$src2, $dst|$dst, $src2}",
-                    [(set GR64:$dst, (sube GR64:$src1, GR64:$src2))]>;
-} // Constraints = "$src1 = $dst"
-
-
-def SBB8mr   : I<0x18, MRMDestMem, (outs), (ins i8mem:$dst, GR8:$src2), 
-                 "sbb{b}\t{$src2, $dst|$dst, $src2}",
-                 [(store (sube (load addr:$dst), GR8:$src2), addr:$dst)]>;
-def SBB16mr  : I<0x19, MRMDestMem, (outs), (ins i16mem:$dst, GR16:$src2), 
-                 "sbb{w}\t{$src2, $dst|$dst, $src2}",
-                 [(store (sube (load addr:$dst), GR16:$src2), addr:$dst)]>,
-                 OpSize;
-def SBB32mr  : I<0x19, MRMDestMem, (outs), (ins i32mem:$dst, GR32:$src2), 
-                 "sbb{l}\t{$src2, $dst|$dst, $src2}",
-                 [(store (sube (load addr:$dst), GR32:$src2), addr:$dst)]>;
-def SBB64mr  : RI<0x19, MRMDestMem, (outs), (ins i64mem:$dst, GR64:$src2), 
-                  "sbb{q}\t{$src2, $dst|$dst, $src2}",
-                  [(store (sube (load addr:$dst), GR64:$src2), addr:$dst)]>;
-
-def SBB8mi  : Ii8<0x80, MRM3m, (outs), (ins i8mem:$dst, i8imm:$src2), 
-                  "sbb{b}\t{$src2, $dst|$dst, $src2}",
-                 [(store (sube (loadi8 addr:$dst), imm:$src2), addr:$dst)]>;
-def SBB16mi  : Ii16<0x81, MRM3m, (outs), (ins i16mem:$dst, i16imm:$src2), 
-                    "sbb{w}\t{$src2, $dst|$dst, $src2}",
-                [(store (sube (loadi16 addr:$dst), imm:$src2), addr:$dst)]>,
-                OpSize;
-def SBB16mi8 : Ii8<0x83, MRM3m, (outs), (ins i16mem:$dst, i16i8imm :$src2), 
-                   "sbb{w}\t{$src2, $dst|$dst, $src2}",
-             [(store (sube (load addr:$dst), i16immSExt8:$src2), addr:$dst)]>,
-             OpSize;
-def SBB32mi  : Ii32<0x81, MRM3m, (outs), (ins i32mem:$dst, i32imm:$src2), 
-                    "sbb{l}\t{$src2, $dst|$dst, $src2}",
-                [(store (sube (loadi32 addr:$dst), imm:$src2), addr:$dst)]>;
-def SBB32mi8 : Ii8<0x83, MRM3m, (outs), (ins i32mem:$dst, i32i8imm :$src2), 
-                   "sbb{l}\t{$src2, $dst|$dst, $src2}",
-             [(store (sube (load addr:$dst), i32immSExt8:$src2), addr:$dst)]>;
-def SBB64mi32 : RIi32<0x81, MRM3m, (outs), (ins i64mem:$dst, i64i32imm:$src2), 
-                      "sbb{q}\t{$src2, $dst|$dst, $src2}",
-              [(store (sube (load addr:$dst), i64immSExt32:$src2), addr:$dst)]>;
-def SBB64mi8 : RIi8<0x83, MRM3m, (outs), (ins i64mem:$dst, i64i8imm :$src2), 
-                    "sbb{q}\t{$src2, $dst|$dst, $src2}",
-               [(store (sube (load addr:$dst), i64immSExt8:$src2), addr:$dst)]>;
-
-def SBB8i8 : Ii8<0x1C, RawFrm, (outs), (ins i8imm:$src),
-                 "sbb{b}\t{$src, %al|%al, $src}", []>;
-def SBB16i16 : Ii16<0x1D, RawFrm, (outs), (ins i16imm:$src),
-                    "sbb{w}\t{$src, %ax|%ax, $src}", []>, OpSize;
-def SBB32i32 : Ii32<0x1D, RawFrm, (outs), (ins i32imm:$src),
-                    "sbb{l}\t{$src, %eax|%eax, $src}", []>;
-def SBB64i32 : RIi32<0x1D, RawFrm, (outs), (ins i64i32imm:$src),
-                     "sbb{q}\t{$src, %rax|%rax, $src}", []>;
-
-let Constraints = "$src1 = $dst" in {
-
-let isCodeGenOnly = 1 in {
-def SBB8rr_REV : I<0x1A, MRMSrcReg, (outs GR8:$dst), (ins GR8:$src1, GR8:$src2),
-                   "sbb{b}\t{$src2, $dst|$dst, $src2}", []>;
-def SBB16rr_REV : I<0x1B, MRMSrcReg, (outs GR16:$dst), 
-                    (ins GR16:$src1, GR16:$src2),
-                    "sbb{w}\t{$src2, $dst|$dst, $src2}", []>, OpSize;
-def SBB32rr_REV : I<0x1B, MRMSrcReg, (outs GR32:$dst), 
-                    (ins GR32:$src1, GR32:$src2),
-                    "sbb{l}\t{$src2, $dst|$dst, $src2}", []>;
-def SBB64rr_REV : RI<0x1B, MRMSrcReg, (outs GR64:$dst), 
-                     (ins GR64:$src1, GR64:$src2),
-                     "sbb{q}\t{$src2, $dst|$dst, $src2}", []>;
-}
-
-def SBB8rm   : I<0x1A, MRMSrcMem, (outs GR8:$dst), (ins GR8:$src1, i8mem:$src2),
-                    "sbb{b}\t{$src2, $dst|$dst, $src2}",
-                    [(set GR8:$dst, (sube GR8:$src1, (load addr:$src2)))]>;
-def SBB16rm  : I<0x1B, MRMSrcMem, (outs GR16:$dst),
-                                  (ins GR16:$src1, i16mem:$src2),
-                    "sbb{w}\t{$src2, $dst|$dst, $src2}",
-                    [(set GR16:$dst, (sube GR16:$src1, (load addr:$src2)))]>,
-                    OpSize;
-def SBB32rm  : I<0x1B, MRMSrcMem, (outs GR32:$dst),
-                                  (ins GR32:$src1, i32mem:$src2),
-                    "sbb{l}\t{$src2, $dst|$dst, $src2}",
-                    [(set GR32:$dst, (sube GR32:$src1, (load addr:$src2)))]>;
-def SBB64rm  : RI<0x1B, MRMSrcMem, (outs GR64:$dst), 
-                  (ins GR64:$src1, i64mem:$src2),
-                  "sbb{q}\t{$src2, $dst|$dst, $src2}",
-                  [(set GR64:$dst, (sube GR64:$src1, (load addr:$src2)))]>;
-def SBB8ri   : Ii8<0x80, MRM3r, (outs GR8:$dst), (ins GR8:$src1, i8imm:$src2),
-                    "sbb{b}\t{$src2, $dst|$dst, $src2}",
-                    [(set GR8:$dst, (sube GR8:$src1, imm:$src2))]>;
-def SBB16ri  : Ii16<0x81, MRM3r, (outs GR16:$dst),
-                                 (ins GR16:$src1, i16imm:$src2),
-                    "sbb{w}\t{$src2, $dst|$dst, $src2}",
-                    [(set GR16:$dst, (sube GR16:$src1, imm:$src2))]>, OpSize;
-def SBB16ri8 : Ii8<0x83, MRM3r, (outs GR16:$dst),
-                                (ins GR16:$src1, i16i8imm:$src2),
-                   "sbb{w}\t{$src2, $dst|$dst, $src2}",
-                   [(set GR16:$dst, (sube GR16:$src1, i16immSExt8:$src2))]>,
-                   OpSize;
-def SBB32ri  : Ii32<0x81, MRM3r, (outs GR32:$dst), 
-                                 (ins GR32:$src1, i32imm:$src2),
-                    "sbb{l}\t{$src2, $dst|$dst, $src2}",
-                    [(set GR32:$dst, (sube GR32:$src1, imm:$src2))]>;
-def SBB32ri8 : Ii8<0x83, MRM3r, (outs GR32:$dst),
-                                (ins GR32:$src1, i32i8imm:$src2),
-                   "sbb{l}\t{$src2, $dst|$dst, $src2}",
-                   [(set GR32:$dst, (sube GR32:$src1, i32immSExt8:$src2))]>;
-def SBB64ri32 : RIi32<0x81, MRM3r, (outs GR64:$dst), 
-                      (ins GR64:$src1, i64i32imm:$src2),
-                      "sbb{q}\t{$src2, $dst|$dst, $src2}",
-                      [(set GR64:$dst, (sube GR64:$src1, i64immSExt32:$src2))]>;
-def SBB64ri8 : RIi8<0x83, MRM3r, (outs GR64:$dst), 
-                    (ins GR64:$src1, i64i8imm:$src2),
-                    "sbb{q}\t{$src2, $dst|$dst, $src2}",
-                    [(set GR64:$dst, (sube GR64:$src1, i64immSExt8:$src2))]>;
-
-} // Constraints = "$src1 = $dst"
-} // Uses = [EFLAGS]
-} // Defs = [EFLAGS]
 
 //===----------------------------------------------------------------------===//
 // Test instructions are just like AND, except they don't generate a result.
