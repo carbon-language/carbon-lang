@@ -113,7 +113,7 @@ class RegUseTracker {
 public:
   void CountRegister(const SCEV *Reg, size_t LUIdx);
   void DropRegister(const SCEV *Reg, size_t LUIdx);
-  void DropUse(size_t LUIdx);
+  void SwapAndDropUse(size_t LUIdx, size_t LastLUIdx);
 
   bool isRegUsedByUsesOtherThan(const SCEV *Reg, size_t LUIdx) const;
 
@@ -152,11 +152,19 @@ RegUseTracker::DropRegister(const SCEV *Reg, size_t LUIdx) {
 }
 
 void
-RegUseTracker::DropUse(size_t LUIdx) {
-  // Remove the use index from every register's use list.
+RegUseTracker::SwapAndDropUse(size_t LUIdx, size_t LastLUIdx) {
+  assert(LUIdx <= LastLUIdx);
+
+  // Update RegUses. The data structure is not optimized for this purpose;
+  // we must iterate through it and update each of the bit vectors.
   for (RegUsesTy::iterator I = RegUsesMap.begin(), E = RegUsesMap.end();
-       I != E; ++I)
-    I->second.UsedByIndices.reset(LUIdx);
+       I != E; ++I) {
+    SmallBitVector &UsedByIndices = I->second.UsedByIndices;
+    if (LUIdx < UsedByIndices.size())
+      UsedByIndices[LUIdx] =
+        LastLUIdx < UsedByIndices.size() ? UsedByIndices[LastLUIdx] : 0;
+    UsedByIndices.resize(std::min(UsedByIndices.size(), LastLUIdx));
+  }
 }
 
 bool
@@ -1339,7 +1347,7 @@ class LSRInstance {
                                     LSRUse::KindType Kind,
                                     const Type *AccessTy);
 
-  void DeleteUse(LSRUse &LU);
+  void DeleteUse(LSRUse &LU, size_t LUIdx);
 
   LSRUse *FindUseWithSimilarFormula(const Formula &F, const LSRUse &OrigLU);
 
@@ -1923,10 +1931,13 @@ LSRInstance::getUse(const SCEV *&Expr,
 }
 
 /// DeleteUse - Delete the given use from the Uses list.
-void LSRInstance::DeleteUse(LSRUse &LU) {
+void LSRInstance::DeleteUse(LSRUse &LU, size_t LUIdx) {
   if (&LU != &Uses.back())
     std::swap(LU, Uses.back());
   Uses.pop_back();
+
+  // Update RegUses.
+  RegUses.SwapAndDropUse(LUIdx, Uses.size());
 }
 
 /// FindUseWithFormula - Look for a use distinct from OrigLU which is has
@@ -3032,7 +3043,7 @@ void LSRInstance::NarrowSearchSpaceByCollapsingUnrolledCode() {
               }
 
               // Delete the old use.
-              DeleteUse(LU);
+              DeleteUse(LU, LUIdx);
               --LUIdx;
               --NumUses;
               break;
