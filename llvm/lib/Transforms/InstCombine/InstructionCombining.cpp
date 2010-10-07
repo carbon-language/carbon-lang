@@ -48,6 +48,7 @@
 #include "llvm/Support/PatternMatch.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/Statistic.h"
+#include "llvm-c/Initialization.h"
 #include <algorithm>
 #include <climits>
 using namespace llvm;
@@ -58,6 +59,14 @@ STATISTIC(NumConstProp, "Number of constant folds");
 STATISTIC(NumDeadInst , "Number of dead inst eliminated");
 STATISTIC(NumSunkInst , "Number of instructions sunk");
 
+// Initialization Routines
+void llvm::initializeInstCombine(PassRegistry &Registry) {
+  initializeInstCombinerPass(Registry);
+}
+
+void LLVMInitializeInstCombine(LLVMPassRegistryRef R) {
+  initializeInstCombine(*unwrap(R));
+}
 
 char InstCombiner::ID = 0;
 INITIALIZE_PASS(InstCombiner, "instcombine",

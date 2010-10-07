@@ -31,6 +31,10 @@ void initializeTransformUtils(PassRegistry&);
 /// ScalarOpts library.
 void initializeScalarOpts(PassRegistry&);
 
+/// initializeInstCombine - Initialize all passes linked into the 
+/// ScalarOpts library.
+void initializeInstCombine(PassRegistry&);
+
 /// initializeIPO - Initialize all passes linked into the IPO library.
 void initializeIPO(PassRegistry&);
 
