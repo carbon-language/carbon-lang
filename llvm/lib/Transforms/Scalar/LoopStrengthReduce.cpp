@@ -2822,7 +2822,7 @@ LSRInstance::GenerateAllReuseFormulae() {
         print_uses(dbgs()));
 }
 
-/// If their are multiple formulae with the same set of registers used
+/// If there are multiple formulae with the same set of registers used
 /// by other uses, pick the best one and delete the others.
 void LSRInstance::FilterOutUndesirableDedicatedRegisters() {
 #ifndef NDEBUG
