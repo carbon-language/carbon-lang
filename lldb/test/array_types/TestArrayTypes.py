@@ -109,8 +109,8 @@ class ArrayTypesTestCase(TestBase):
         # Sanity check the print representation of process.
         proc = repr(self.process)
         self.expect(proc, msg="Process looks good", exe=False,
-            substrs = ["state: Stopped",
-                       "executable: a.out"])
+            substrs = ["state = Stopped",
+                       "executable = a.out"])
 
         # The stop reason of the thread should be breakpoint.
         thread = self.process.GetThreadAtIndex(0)
@@ -120,9 +120,7 @@ class ArrayTypesTestCase(TestBase):
         # Sanity check the print representation of thread.
         thr = repr(thread)
         self.expect(thr, "Thread looks good with stop reason = breakpoint", exe=False,
-            substrs = ["thread #%d: tid = 0x%4.4x" % (thread.GetIndexID(), thread.GetThreadID()),
-                       "stop reason = breakpoint",
-                       "queue = %s" % thread.GetQueueName() if thread.GetQueueName() else ""])
+            substrs = ["tid = 0x%4.4x" % thread.GetThreadID()])
 
         # The breakpoint should have a hit count of 1.
         self.assertTrue(breakpoint.GetHitCount() == 1, BREAKPOINT_HIT_ONCE)
@@ -132,15 +130,15 @@ class ArrayTypesTestCase(TestBase):
         self.expect(bp, "Breakpoint looks good and is resolved", exe=False,
             substrs = ["file ='main.c'",
                        "line = 42",
-                       "locations = 1",
-                       "resolved = 1"])
+                       "locations = 1"])
 
         # Sanity check the print representation of frame.
         frame = thread.GetFrameAtIndex(0)
         frm = repr(frame)
-        self.expect(frm, "Thread looks good with correct frame function", exe=False,
-            substrs = ["frame #%d" % frame.GetFrameID(),
-                       "a.out`%s" % frame.GetFunction().GetName()])
+        self.expect(frm,
+                    "Frame looks good with correct index %d" % frame.GetFrameID(),
+                    exe=False,
+            substrs = ["idx = %d" % frame.GetFrameID()])
 
         # Lookup the "strings" string array variable and sanity check its print
         # representation.
