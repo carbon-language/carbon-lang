@@ -1683,7 +1683,7 @@ public:
         {
             // compiler bug workaround
             return __apply_functor(__f_, __bound_args_, __indices(),
-                                  tuple<_Args&&...>(__args...));
+                                  tuple<_Args&&...>(_STD::forward<_Args>(__args)...));
         }
 
     template <class ..._Args>
@@ -1692,7 +1692,7 @@ public:
         operator()(_Args&& ...__args) const
         {
             return __apply_functor(__f_, __bound_args_, __indices(),
-                                   tuple<_Args&&...>(__args...));
+                                   tuple<_Args&&...>(_STD::forward<_Args>(__args)...));
         }
 };
 
