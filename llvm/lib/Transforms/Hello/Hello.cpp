@@ -37,7 +37,7 @@ namespace {
 }
 
 char Hello::ID = 0;
-INITIALIZE_PASS(Hello, "hello", "Hello World Pass", false, false);
+static RegisterPass<Hello> X("hello", "Hello World Pass");
 
 namespace {
   // Hello2 - The second implementation with getAnalysisUsage implemented.
@@ -60,6 +60,5 @@ namespace {
 }
 
 char Hello2::ID = 0;
-INITIALIZE_PASS(Hello2, "hello2",
-                "Hello World Pass (with getAnalysisUsage implemented)",
-                false, false);
+static RegisterPass<Hello2>
+Y("hello2", "Hello World Pass (with getAnalysisUsage implemented)");
