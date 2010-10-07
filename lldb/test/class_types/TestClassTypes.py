@@ -3,6 +3,7 @@
 import os, time
 import unittest2
 import lldb
+import lldbutil
 from lldbtest import *
 
 class ClassTypesTestCase(TestBase):
@@ -56,6 +57,13 @@ class ClassTypesTestCase(TestBase):
 
         self.runCmd("run", RUN_SUCCEEDED)
 
+        # The test suite sometimes shows that the process has exited without stopping.
+        #
+        # CC=clang ./dotest.py -v -t class_types
+        # ...
+        # Process 76604 exited with status = 0 (0x00000000)
+        self.runCmd("process status")
+
         # The stop reason of the thread should be breakpoint.
         self.expect("thread list", STOPPED_DUE_TO_BREAKPOINT,
             substrs = ['state is Stopped',
@@ -92,15 +100,43 @@ class ClassTypesTestCase(TestBase):
         self.assertTrue(breakpoint.IsValid(), VALID_BREAKPOINT)
 
         # Verify the breakpoint just created.
-        self.expect("breakpoint list", BREAKPOINT_CREATED,
-            substrs = ['main.cpp:93'])
+        self.expect(repr(breakpoint), BREAKPOINT_CREATED, exe=False,
+            substrs = ['main.cpp',
+                       '93'])
 
-        self.runCmd("run", RUN_SUCCEEDED)
+        # Now launch the process, and do not stop at entry point.
+        rc = lldb.SBError()
+        self.process = target.LaunchProcess([''], [''], os.ctermid(), 0, False, rc)
+        #self.breakAfterLaunch(self.process, "C::C(int, int, int)")
 
-        self.runCmd("thread backtrace")
+        if not rc.Success() or not self.process.IsValid():
+            self.fail("SBTarget.LaunchProcess() failed")
+
+        if self.process.GetState() != StateTypeEnum("Stopped"):
+            self.fail("Process should be in the 'Stopped' state, "
+                      "instead the actual state is: '%s'" %
+                      StateTypeString(self.process.GetState()))
+
+        # The stop reason of the thread should be breakpoint.
+        thread = self.process.GetThreadAtIndex(0)
+
+        self.expect(StopReasonString(thread.GetStopReason()),
+                    STOPPED_DUE_TO_BREAKPOINT, exe=False,
+            startstr = "Breakpoint")
+
+        # The filename of frame #0 should be 'main.cpp' and the line number
+        # should be 93.
+        self.expect("%s:%d" % (lldbutil.GetFilenames(thread)[0],
+                               lldbutil.GetLineNumbers(thread)[0]),
+                    "Break correctly at main.cpp:93", exe=False,
+            startstr = "main.cpp:")
+            ### clang compiled code reported main.cpp:94?
+            ### startstr = "main.cpp:93")
 
         # We should be stopped on the breakpoint with a hit count of 1.
-        self.assertTrue(breakpoint.GetHitCount() == 1)
+        self.assertTrue(breakpoint.GetHitCount() == 1, BREAKPOINT_HIT_ONCE)
+
+        self.process.Continue()
 
     def class_types_expr_parser(self):
         """Test 'frame variable this' and 'expr this' when stopped inside a constructor."""

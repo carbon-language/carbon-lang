@@ -167,6 +167,64 @@ def CMD_MSG(str, exe):
 #
 # Returns the enum from the input string.
 #
+def StateTypeEnum(string):
+    if string == "Invalid":
+        return 0
+    elif string == "Unloaded":
+        return 1
+    elif string == "Attaching":
+        return 2
+    elif string == "Launching":
+        return 3
+    elif string == "Stopped":
+        return 4
+    elif string == "Running":
+        return 5
+    elif string == "Stepping":
+        return 6
+    elif string == "Crashed":
+        return 7
+    elif string == "Detached":
+        return 8
+    elif string == "Exited":
+        return 9
+    elif string == "Suspended":
+        return 10
+    else:
+        raise Exception("Unknown stateType string")
+
+#
+# Returns the stateType string given an enum.
+#
+def StateTypeString(enum):
+    if enum == 0:
+        return "Invalid"
+    elif enum == 1:
+        return "Unloaded"
+    elif enum == 2:
+        return "Attaching"
+    elif enum == 3:
+        return "Launching"
+    elif enum == 4:
+        return "Stopped"
+    elif enum == 5:
+        return "Running"
+    elif enum == 6:
+        return "Stepping"
+    elif enum == 7:
+        return "Crashed"
+    elif enum == 8:
+        return "Detached"
+    elif enum == 9:
+        return "Exited"
+    elif enum == 10:
+        return "Suspended"
+    else:
+        raise Exception("Unknown stopReason enum")
+
+#
+# Returns the enum from the input string.
+#
 def StopReasonEnum(string):
     if string == "Invalid":
         return 0
@@ -354,6 +412,10 @@ class TestBase(unittest2.TestCase):
         #import traceback
         #traceback.print_stack()
 
+        if ("LLDB_WAIT_BETWEEN_TEST_CASES" in os.environ and
+            os.environ["LLDB_WAIT_BETWEEN_TEST_CASES"] == 'YES'):
+            time.sleep(0.5)
+
         if "LLDB_MAX_LAUNCH_COUNT" in os.environ:
             self.maxLaunchCount = int(os.environ["LLDB_MAX_LAUNCH_COUNT"])
 
@@ -401,8 +463,9 @@ class TestBase(unittest2.TestCase):
         if self.runStarted:
             self.runCmd("process kill", PROCESS_KILLED, check=False)
         elif self.process and self.process.IsValid():
-            rc = self.process.Kill()
+            rc = self.invoke(self.process, "Kill")
             self.assertTrue(rc.Success(), PROCESS_KILLED)
+            del self.process
 
         del self.dbg
 

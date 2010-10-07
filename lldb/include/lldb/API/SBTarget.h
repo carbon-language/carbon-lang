@@ -57,12 +57,12 @@ public:
 
     // DEPRECATED in favor of the function below that contains an SBError as the
     // last parameter.
-    lldb::SBProcess
-    LaunchProcess (char const **argv,
-                   char const **envp,
-                   const char *tty,
-                   uint32_t launch_flags,   // See lldb::LaunchFlags
-                   bool stop_at_entry);
+//     lldb::SBProcess
+//     LaunchProcess (char const **argv,
+//                    char const **envp,
+//                    const char *tty,
+//                    uint32_t launch_flags,   // See lldb::LaunchFlags
+//                    bool stop_at_entry);
 
     lldb::SBProcess
     LaunchProcess (char const **argv,

@@ -99,6 +99,7 @@ where options:
 -p   : specify a regexp filename pattern for inclusion in the test suite
 -t   : trace lldb command execution and result
 -v   : do verbose mode of unittest framework
+-w   : insert some wait time (currently 0.5 sec) between consecutive test cases
 
 and:
 args : specify a list of directory names to search for python Test*.py scripts
@@ -190,6 +191,9 @@ def parseOptionsAndInitTestdirs():
             index += 1
         elif sys.argv[index].startswith('-v'):
             verbose = 2
+            index += 1
+        elif sys.argv[index].startswith('-w'):
+            os.environ["LLDB_WAIT_BETWEEN_TEST_CASES"] = 'YES'
             index += 1
         else:
             print "Unknown option: ", sys.argv[index]

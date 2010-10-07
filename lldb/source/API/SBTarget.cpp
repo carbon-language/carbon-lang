@@ -119,19 +119,19 @@ SBTarget::CreateProcess ()
 }
 
 
-SBProcess
-SBTarget::LaunchProcess
-(
-    char const **argv,
-    char const **envp,
-    const char *tty,
-    uint32_t launch_flags,
-    bool stop_at_entry
-)
-{
-    SBError sb_error;    
-    return LaunchProcess (argv, envp, tty, launch_flags, stop_at_entry, sb_error);
-}
+// SBProcess
+// SBTarget::LaunchProcess
+// (
+//     char const **argv,
+//     char const **envp,
+//     const char *tty,
+//     uint32_t launch_flags,
+//     bool stop_at_entry
+// )
+// {
+//     SBError sb_error;    
+//     return LaunchProcess (argv, envp, tty, launch_flags, stop_at_entry, sb_error);
+// }
 
 
 SBProcess
