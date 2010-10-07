@@ -7,18 +7,28 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file implements the C bindings for libLLVMTarget.a, which implements
-// target information.
+// This file implements the core infrastructure (including C bindings) for 
+// libLLVMTarget.a, which implements target information.
 //
 //===----------------------------------------------------------------------===//
 
 #include "llvm-c/Target.h"
+#include "llvm-c/Initialization.h"
+#include "llvm/InitializePasses.h"
 #include "llvm/PassManager.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/LLVMContext.h"
 #include <cstring>
 
 using namespace llvm;
+
+void llvm::initializeTarget(PassRegistry &Registry) {
+  initializeTargetDataPass(Registry);
+}
+
+void LLVMInitializeTarget(LLVMPassRegistryRef R) {
+  initializeTarget(*unwrap(R));
+}
 
 LLVMTargetDataRef LLVMCreateTargetData(const char *StringRep) {
   return wrap(new TargetData(StringRep));

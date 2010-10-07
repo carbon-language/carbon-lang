@@ -28,6 +28,7 @@ void LLVMInitializeIPO(LLVMPassRegistryRef R);
 void LLVMInitializeAnalysis(LLVMPassRegistryRef R);
 void LLVMInitializeIPA(LLVMPassRegistryRef R);
 void LLVMInitializeCodeGen(LLVMPassRegistryRef R);
+void LLVMInitializeTarget(LLVMPassRegistryRef R);
 
 #ifdef __cplusplus
 }
