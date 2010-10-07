@@ -39,6 +39,7 @@
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/StandardPasses.h"
 #include "llvm/Support/SystemUtils.h"
+#include "llvm/Support/ToolOutputFile.h"
 #include "llvm/System/Host.h"
 #include "llvm/System/Program.h"
 #include "llvm/System/Signals.h"
