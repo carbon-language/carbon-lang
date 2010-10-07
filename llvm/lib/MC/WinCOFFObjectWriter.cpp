@@ -639,6 +639,11 @@ void WinCOFFObjectWriter::RecordRelocation(const MCAssembler &Asm,
   COFFSymbol *coff_symbol = SymbolMap[&A_SD];
 
   if (Target.getSymB()) {
+    if (&Target.getSymA()->getSymbol().getSection()
+     != &Target.getSymB()->getSymbol().getSection()) {
+      llvm_unreachable("Symbol relative relocations are only allowed between "
+                       "symbols in the same section");
+    }
     const MCSymbol *B = &Target.getSymB()->getSymbol();
     MCSymbolData &B_SD = Asm.getSymbolData(*B);
 
@@ -701,7 +706,30 @@ bool WinCOFFObjectWriter::IsFixupFullyResolved(const MCAssembler &Asm,
                                                const MCValue Target,
                                                bool IsPCRel,
                                                const MCFragment *DF) const {
-  return false;
+  // If this is a PCrel relocation, find the section this fixup value is
+  // relative to.
+  const MCSection *BaseSection = 0;
+  if (IsPCRel) {
+    BaseSection = &DF->getParent()->getSection();
+    assert(BaseSection);
+  }
+
+  const MCSection *SectionA = 0;
+  const MCSymbol *SymbolA = 0;
+  if (const MCSymbolRefExpr *A = Target.getSymA()) {
+    SymbolA = &A->getSymbol();
+    SectionA = &SymbolA->getSection();
+  }
+
+  const MCSection *SectionB = 0;
+  if (const MCSymbolRefExpr *B = Target.getSymB()) {
+    SectionB = &B->getSymbol().getSection();
+  }
+
+  if (!BaseSection)
+    return SectionA == SectionB;
+
+  return !SectionB && BaseSection == SectionA;
 }
 
 void WinCOFFObjectWriter::WriteObject(MCAssembler &Asm,
