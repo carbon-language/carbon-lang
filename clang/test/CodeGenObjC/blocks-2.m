@@ -20,7 +20,7 @@ void test1() {
 
   // CHECK:      [[N:%.*]] = alloca [[N_T:%.*]], align 8
   // CHECK:      [[T0:%.*]] = getelementptr inbounds [[N_T]]* [[N]], i32 0, i32 4
-  // CHECK-NEXT: store double 1.000000e+01, double* [[T0]], align 8
+  // CHECK-NEXT: store double 1.000000e+{{0?}}01, double* [[T0]], align 8
   __block double n = 10;
 
   // CHECK:      invoke void @{{.*}}test1_help
