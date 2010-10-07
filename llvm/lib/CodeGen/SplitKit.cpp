@@ -886,6 +886,22 @@ void SplitEditor::splitAroundLoop(const MachineLoop *Loop) {
   SplitAnalysis::LoopBlocks Blocks;
   sa_.getLoopBlocks(Loop, Blocks);
 
+  DEBUG({
+    dbgs() << "  splitAroundLoop";
+    for (SplitAnalysis::BlockPtrSet::iterator I = Blocks.Loop.begin(),
+         E = Blocks.Loop.end(); I != E; ++I)
+      dbgs() << " BB#" << (*I)->getNumber();
+    dbgs() << ", preds:";
+    for (SplitAnalysis::BlockPtrSet::iterator I = Blocks.Preds.begin(),
+         E = Blocks.Preds.end(); I != E; ++I)
+      dbgs() << " BB#" << (*I)->getNumber();
+    dbgs() << ", exits:";
+    for (SplitAnalysis::BlockPtrSet::iterator I = Blocks.Exits.begin(),
+         E = Blocks.Exits.end(); I != E; ++I)
+      dbgs() << " BB#" << (*I)->getNumber();
+    dbgs() << '\n';
+  });
+
   // Break critical edges as needed.
   SplitAnalysis::BlockPtrSet CriticalExits;
   sa_.getCriticalExits(Blocks, CriticalExits);
