@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file implements the C bindings for libLLVMCore.a, which implements
-// the LLVM intermediate representation.
+// This file implements the common infrastructure (including the C bindings)
+// for libLLVMCore.a, which implements the LLVM intermediate representation.
 //
 //===----------------------------------------------------------------------===//
 
@@ -34,6 +34,18 @@
 
 using namespace llvm;
 
+void llvm::initializeCore(PassRegistry &Registry) {
+  initializeDominatorTreePass(Registry);
+  initializeDominanceFrontierPass(Registry);
+  initializePrintModulePassPass(Registry);
+  initializePrintFunctionPassPass(Registry);
+  initializeVerifierPass(Registry);
+  initializePreVerifierPass(Registry);
+}
+
+void LLVMInitializeCore(LLVMPassRegistryRef R) {
+  initializeCore(*unwrap(R));
+}
 
 /*===-- Error handling ----------------------------------------------------===*/
 

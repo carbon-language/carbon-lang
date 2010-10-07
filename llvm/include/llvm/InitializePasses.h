@@ -19,6 +19,10 @@ namespace llvm {
 
 class PassRegistry;
 
+/// initializeCore - Initialize all passes linked into the 
+/// TransformUtils library.
+void initializeCore(PassRegistry&);
+
 /// initializeTransformUtils - Initialize all passes linked into the 
 /// TransformUtils library.
 void initializeTransformUtils(PassRegistry&);
