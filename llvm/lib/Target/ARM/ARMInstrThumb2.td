@@ -2227,6 +2227,17 @@ def t2MOVCCi : T2I<(outs rGPR:$dst), (ins rGPR:$false, t2_so_imm:$true),
   let Inst{15} = 0;
 }
 
+def t2MOVCCi16 : T2I<(outs rGPR:$dst), (ins rGPR:$false, i32imm:$src),
+                      IIC_iMOVi,
+                      "movw", "\t$dst, $src", []>,
+                      RegConstraint<"$false = $dst"> {
+  let Inst{31-27} = 0b11110;
+  let Inst{25} = 1;
+  let Inst{24-21} = 0b0010;
+  let Inst{20} = 0; // The S bit.
+  let Inst{15} = 0;
+}
+
 class T2I_movcc_sh<bits<2> opcod, dag oops, dag iops, InstrItinClass itin,
                    string opc, string asm, list<dag> pattern>
   : T2I<oops, iops, itin, opc, asm, pattern> {

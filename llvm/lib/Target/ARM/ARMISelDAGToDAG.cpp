@@ -190,7 +190,7 @@ private:
   SDNode *SelectARMCMOVShiftOp(SDNode *N, SDValue FalseVal, SDValue TrueVal,
                                ARMCC::CondCodes CCVal, SDValue CCR,
                                SDValue InFlag);
-  SDNode *SelectT2CMOVSoImmOp(SDNode *N, SDValue FalseVal, SDValue TrueVal,
+  SDNode *SelectT2CMOVImmOp(SDNode *N, SDValue FalseVal, SDValue TrueVal,
                               ARMCC::CondCodes CCVal, SDValue CCR,
                               SDValue InFlag);
   SDNode *SelectARMCMOVImmOp(SDNode *N, SDValue FalseVal, SDValue TrueVal,
@@ -1504,18 +1504,20 @@ SelectARMCMOVShiftOp(SDNode *N, SDValue FalseVal, SDValue TrueVal,
 }
 
 SDNode *ARMDAGToDAGISel::
-SelectT2CMOVSoImmOp(SDNode *N, SDValue FalseVal, SDValue TrueVal,
+SelectT2CMOVImmOp(SDNode *N, SDValue FalseVal, SDValue TrueVal,
                     ARMCC::CondCodes CCVal, SDValue CCR, SDValue InFlag) {
   ConstantSDNode *T = dyn_cast<ConstantSDNode>(TrueVal);
   if (!T)
     return 0;
 
-  if (Pred_t2_so_imm(TrueVal.getNode())) {
+  unsigned TrueImm = T->getZExtValue();
+  bool isSoImm = Pred_t2_so_imm(TrueVal.getNode());
+  if (isSoImm || TrueImm <= 0xffff) {
     SDValue True = CurDAG->getTargetConstant(T->getZExtValue(), MVT::i32);
     SDValue CC = CurDAG->getTargetConstant(CCVal, MVT::i32);
     SDValue Ops[] = { FalseVal, True, CC, CCR, InFlag };
-    return CurDAG->SelectNodeTo(N,
-                                ARM::t2MOVCCi, MVT::i32, Ops, 5);
+    return CurDAG->SelectNodeTo(N, (isSoImm ? ARM::t2MOVCCi : ARM::t2MOVCCi16),
+                                MVT::i32, Ops, 5);
   }
   return 0;
 }
@@ -1583,10 +1585,10 @@ SDNode *ARMDAGToDAGISel::SelectCMOVOp(SDNode *N) {
     //           (so_imm:i32 (imm:i32):$true), (imm:i32):$cc)
     // Pattern complexity = 10  cost = 1  size = 0
     if (Subtarget->isThumb()) {
-      SDNode *Res = SelectT2CMOVSoImmOp(N, FalseVal, TrueVal,
+      SDNode *Res = SelectT2CMOVImmOp(N, FalseVal, TrueVal,
                                         CCVal, CCR, InFlag);
       if (!Res)
-        Res = SelectT2CMOVSoImmOp(N, TrueVal, FalseVal,
+        Res = SelectT2CMOVImmOp(N, TrueVal, FalseVal,
                                ARMCC::getOppositeCondition(CCVal), CCR, InFlag);
       if (Res)
         return Res;
