@@ -686,6 +686,17 @@ class BinOpMI8<bits<8> opcode, string mnemonic, X86TypeInfo typeinfo,
   let ImmT = Imm8; // Always 8-bit immediate.
 }
 
+// BinOpAI - Instructions like "add %eax, %eax, imm".
+class BinOpAI<bits<8> opcode, string mnemonic, X86TypeInfo typeinfo,
+              Register areg>
+  : ITy<opcode, RawFrm, typeinfo,
+        (outs), (ins typeinfo.ImmOperand:$src),
+        mnemonic, !strconcat("{$src, %", areg.AsmName, "|%",
+                               areg.AsmName, ", $src}"), []> {
+  let ImmT = typeinfo.ImmEncoding;
+  let Uses = [areg];
+  let Defs = [areg];
+}
 
 // Logical operators.
 let Defs = [EFLAGS] in {
@@ -737,17 +748,12 @@ def AND64mi32 : BinOpMI<0x80, "and", Xi64, and, MRM4m>;
 def AND16mi8  : BinOpMI8<0x82, "and", Xi16, and, MRM4m>;
 def AND32mi8  : BinOpMI8<0x82, "and", Xi32, and, MRM4m>;
 def AND64mi8  : BinOpMI8<0x82, "and", Xi64, and, MRM4m>;
-
                    
-// FIXME: Implicitly modifies AL.
-def AND8i8 : Ii8<0x24, RawFrm, (outs), (ins i8imm:$src),
-                 "and{b}\t{$src, %al|%al, $src}", []>;
-def AND16i16 : Ii16<0x25, RawFrm, (outs), (ins i16imm:$src),
-                    "and{w}\t{$src, %ax|%ax, $src}", []>, OpSize;
-def AND32i32 : Ii32<0x25, RawFrm, (outs), (ins i32imm:$src),
-                    "and{l}\t{$src, %eax|%eax, $src}", []>;
-def AND64i32 : RIi32<0x25, RawFrm, (outs), (ins i64i32imm:$src),
-                     "and{q}\t{$src, %rax|%rax, $src}", []>;
+def AND8i8   : BinOpAI<0x24, "and", Xi8 , AL>;
+def AND16i16 : BinOpAI<0x24, "and", Xi16, AX>;
+def AND32i32 : BinOpAI<0x24, "and", Xi32, EAX>;
+def AND64i32 : BinOpAI<0x24, "and", Xi64, RAX>;
+
 
 let Constraints = "$src1 = $dst" in {
 
