@@ -27,6 +27,7 @@ void LLVMInitializeTransformUtils(LLVMPassRegistryRef R);
 void LLVMInitializeScalarOpts(LLVMPassRegistryRef R);
 void LLVMInitializeInstCombine(LLVMPassRegistryRef R);
 void LLVMInitializeIPO(LLVMPassRegistryRef R);
+void LLVMInitializeInstrumentation(LLVMPassRegistryRef R);
 void LLVMInitializeAnalysis(LLVMPassRegistryRef R);
 void LLVMInitializeIPA(LLVMPassRegistryRef R);
 void LLVMInitializeCodeGen(LLVMPassRegistryRef R);

@@ -38,6 +38,10 @@ void initializeInstCombine(PassRegistry&);
 /// initializeIPO - Initialize all passes linked into the IPO library.
 void initializeIPO(PassRegistry&);
 
+/// initializeInstrumentation - Initialize all passes linked into the
+/// Instrumentation library.
+void initializeInstrumentation(PassRegistry&);
+
 /// initializeAnalysis - Initialize all passes linked into the Analysis library.
 void initializeAnalysis(PassRegistry&);
 
