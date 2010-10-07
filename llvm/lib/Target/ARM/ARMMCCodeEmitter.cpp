@@ -13,12 +13,15 @@
 
 #define DEBUG_TYPE "arm-emitter"
 #include "ARM.h"
-#include "ARMBaseInfo.h"
+#include "ARMInstrInfo.h"
 #include "llvm/MC/MCCodeEmitter.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCInst.h"
+#include "llvm/ADT/Statistic.h"
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
+
+STATISTIC(MCNumEmitted, "Number of MC instructions emitted");
 
 namespace {
 class ARMMCCodeEmitter : public MCCodeEmitter {
@@ -31,7 +34,6 @@ class ARMMCCodeEmitter : public MCCodeEmitter {
 public:
   ARMMCCodeEmitter(TargetMachine &tm, MCContext &ctx)
     : TM(tm), TII(*TM.getInstrInfo()), Ctx(ctx) {
-    assert(0 && "ARMMCCodeEmitter::ARMMCCodeEmitter() not yet implemented.");
   }
 
   ~ARMMCCodeEmitter() {}
@@ -107,7 +109,21 @@ EmitImmediate(const MCOperand &DispOp, unsigned Size, MCFixupKind FixupKind,
 void ARMMCCodeEmitter::
 EncodeInstruction(const MCInst &MI, raw_ostream &OS,
                   SmallVectorImpl<MCFixup> &Fixups) const {
-  assert(0 && "ARMMCCodeEmitter::EncodeInstruction() not yet implemented.");
+  unsigned Opcode = MI.getOpcode();
+  const TargetInstrDesc &Desc = TII.get(Opcode);
+  uint64_t TSFlags = Desc.TSFlags;
+
+  // Pseudo instructions don't get encoded.
+  if ((TSFlags & ARMII::FormMask) == ARMII::Pseudo)
+    return;
+
+  ++MCNumEmitted;  // Keep track of the # of mi's emitted
+  switch (TSFlags & ARMII::FormMask) {
+  default: {
+    llvm_unreachable("Unhandled instruction encoding format!");
+    break;
+  }
+  }
 }
 
 // FIXME: These #defines shouldn't be necessary. Instead, tblgen should
