@@ -13,6 +13,7 @@
 
 #include "clang/Basic/Version.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/Config/config.h"
 #include <cstring>
 #include <cstdlib>
 
@@ -69,6 +70,12 @@ std::string getClangFullVersion() {
 #endif
   OS << "clang version " CLANG_VERSION_STRING " ("
      << getClangFullRepositoryVersion() << ')';
+
+  // If vendor supplied, include the base LLVM version as well.
+#ifdef CLANG_VENDOR
+  OS << " (based on LLVM " << PACKAGE_VERSION << ")";
+#endif
+
   return OS.str();
 }
 
