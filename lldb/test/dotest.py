@@ -143,7 +143,7 @@ def parseOptionsAndInitTestdirs():
 
     # Process possible trace and/or verbose flag, among other things.
     index = 1
-    for i in range(1, len(sys.argv)):
+    while index < len(sys.argv):
         if not sys.argv[index].startswith('-'):
             # End of option processing.
             break
