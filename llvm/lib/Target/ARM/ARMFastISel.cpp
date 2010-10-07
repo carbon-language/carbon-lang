@@ -652,33 +652,40 @@ bool ARMFastISel::ARMEmitLoad(EVT VT, unsigned &ResultReg,
 
   assert(VT.isSimple() && "Non-simple types are invalid here!");
   unsigned Opc;
+  TargetRegisterClass *RC;
   bool isFloat = false;
   switch (VT.getSimpleVT().SimpleTy) {
     default:
       // This is mostly going to be Neon/vector support.
       return false;
+    // Using thumb1 instructions for now, use the appropriate RC.
     case MVT::i16:
       Opc = isThumb ? ARM::tLDRH : ARM::LDRH;
+      RC = isThumb ? ARM::tGPRRegisterClass : ARM::GPRRegisterClass;
       VT = MVT::i32;
       break;
     case MVT::i8:
       Opc = isThumb ? ARM::tLDRB : ARM::LDRB;
+      RC = isThumb ? ARM::tGPRRegisterClass : ARM::GPRRegisterClass;
       VT = MVT::i32;
       break;
     case MVT::i32:
       Opc = isThumb ? ARM::tLDR : ARM::LDR;
+      RC = isThumb ? ARM::tGPRRegisterClass : ARM::GPRRegisterClass;
       break;
     case MVT::f32:
       Opc = ARM::VLDRS;
+      RC = TLI.getRegClassFor(VT);
       isFloat = true;
       break;
     case MVT::f64:
       Opc = ARM::VLDRD;
+      RC = TLI.getRegClassFor(VT);
       isFloat = true;
       break;
   }
 
-  ResultReg = createResultReg(TLI.getRegClassFor(VT));
+  ResultReg = createResultReg(RC);
 
   // TODO: Fix the Addressing modes so that these can share some code.
   // Since this is a Thumb1 load this will work in Thumb1 or 2 mode.
