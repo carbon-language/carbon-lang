@@ -642,7 +642,7 @@ class BinOpRM_R<bits<8> opcode, string mnemonic, X86TypeInfo typeinfo,
 
 // BinOpRM_RF - Instructions like "add reg, reg, [mem]".
 class BinOpRM_RF<bits<8> opcode, string mnemonic, X86TypeInfo typeinfo,
-              SDNode opnode>
+                 SDNode opnode>
   : ITy<opcode, MRMSrcMem, typeinfo,
         (outs typeinfo.RegClass:$dst),
         (ins typeinfo.RegClass:$src1, typeinfo.MemOperand:$src2),
@@ -708,9 +708,9 @@ class BinOpMR<bits<8> opcode, string mnemonic, X86TypeInfo typeinfo,
                   (implicit EFLAGS)]>;
 
 // BinOpMI - Instructions like "add [mem], imm".
-class BinOpMI<bits<8> opcode, string mnemonic, X86TypeInfo typeinfo,
+class BinOpMI<string mnemonic, X86TypeInfo typeinfo,
               SDNode opnode, Format f>
-  : ITy<opcode, f, typeinfo,
+  : ITy<0x80, f, typeinfo,
         (outs), (ins typeinfo.MemOperand:$dst, typeinfo.ImmOperand:$src),
         mnemonic, "{$src, $dst|$dst, $src}",
         [(store (opnode (typeinfo.VT (load addr:$dst)),
@@ -720,9 +720,9 @@ class BinOpMI<bits<8> opcode, string mnemonic, X86TypeInfo typeinfo,
 }
 
 // BinOpMI8 - Instructions like "add [mem], imm8".
-class BinOpMI8<bits<8> opcode, string mnemonic, X86TypeInfo typeinfo,
+class BinOpMI8<string mnemonic, X86TypeInfo typeinfo,
                SDNode opnode, Format f>
-  : ITy<opcode, f, typeinfo,
+  : ITy<0x82, f, typeinfo,
         (outs), (ins typeinfo.MemOperand:$dst, typeinfo.Imm8Operand:$src),
         mnemonic, "{$src, $dst|$dst, $src}",
         [(store (opnode (load addr:$dst),
@@ -789,14 +789,14 @@ multiclass ArithBinOp_RF<bits<8> BaseOpc, bits<8> BaseOpc2, bits<8> BaseOpc4,
     def #NAME#32mr   : BinOpMR<BaseOpc, mnemonic, Xi32, opnode>;
     def #NAME#64mr   : BinOpMR<BaseOpc, mnemonic, Xi64, opnode>;
 
-    def #NAME#8mi    : BinOpMI<0x80, mnemonic, Xi8 , opnode, MemMRM>;
-    def #NAME#16mi   : BinOpMI<0x80, mnemonic, Xi16, opnode, MemMRM>;
-    def #NAME#32mi   : BinOpMI<0x80, mnemonic, Xi32, opnode, MemMRM>;
-    def #NAME#64mi32 : BinOpMI<0x80, mnemonic, Xi64, opnode, MemMRM>;
+    def #NAME#8mi    : BinOpMI<mnemonic, Xi8 , opnode, MemMRM>;
+    def #NAME#16mi   : BinOpMI<mnemonic, Xi16, opnode, MemMRM>;
+    def #NAME#32mi   : BinOpMI<mnemonic, Xi32, opnode, MemMRM>;
+    def #NAME#64mi32 : BinOpMI<mnemonic, Xi64, opnode, MemMRM>;
 
-    def #NAME#16mi8  : BinOpMI8<0x82, mnemonic, Xi16, opnode, MemMRM>;
-    def #NAME#32mi8  : BinOpMI8<0x82, mnemonic, Xi32, opnode, MemMRM>;
-    def #NAME#64mi8  : BinOpMI8<0x82, mnemonic, Xi64, opnode, MemMRM>;
+    def #NAME#16mi8  : BinOpMI8<mnemonic, Xi16, opnode, MemMRM>;
+    def #NAME#32mi8  : BinOpMI8<mnemonic, Xi32, opnode, MemMRM>;
+    def #NAME#64mi8  : BinOpMI8<mnemonic, Xi64, opnode, MemMRM>;
                        
     def #NAME#8i8   : BinOpAI<BaseOpc4, mnemonic, Xi8 , AL>;
     def #NAME#16i16 : BinOpAI<BaseOpc4, mnemonic, Xi16, AX>;
@@ -850,14 +850,14 @@ multiclass ArithBinOp_R<bits<8> BaseOpc, bits<8> BaseOpc2, bits<8> BaseOpc4,
     def #NAME#32mr   : BinOpMR<BaseOpc, mnemonic, Xi32, opnode>;
     def #NAME#64mr   : BinOpMR<BaseOpc, mnemonic, Xi64, opnode>;
 
-    def #NAME#8mi    : BinOpMI<0x80, mnemonic, Xi8 , opnode, MemMRM>;
-    def #NAME#16mi   : BinOpMI<0x80, mnemonic, Xi16, opnode, MemMRM>;
-    def #NAME#32mi   : BinOpMI<0x80, mnemonic, Xi32, opnode, MemMRM>;
-    def #NAME#64mi32 : BinOpMI<0x80, mnemonic, Xi64, opnode, MemMRM>;
+    def #NAME#8mi    : BinOpMI<mnemonic, Xi8 , opnode, MemMRM>;
+    def #NAME#16mi   : BinOpMI<mnemonic, Xi16, opnode, MemMRM>;
+    def #NAME#32mi   : BinOpMI<mnemonic, Xi32, opnode, MemMRM>;
+    def #NAME#64mi32 : BinOpMI<mnemonic, Xi64, opnode, MemMRM>;
 
-    def #NAME#16mi8  : BinOpMI8<0x82, mnemonic, Xi16, opnode, MemMRM>;
-    def #NAME#32mi8  : BinOpMI8<0x82, mnemonic, Xi32, opnode, MemMRM>;
-    def #NAME#64mi8  : BinOpMI8<0x82, mnemonic, Xi64, opnode, MemMRM>;
+    def #NAME#16mi8  : BinOpMI8<mnemonic, Xi16, opnode, MemMRM>;
+    def #NAME#32mi8  : BinOpMI8<mnemonic, Xi32, opnode, MemMRM>;
+    def #NAME#64mi8  : BinOpMI8<mnemonic, Xi64, opnode, MemMRM>;
                        
     def #NAME#8i8   : BinOpAI<BaseOpc4, mnemonic, Xi8 , AL>;
     def #NAME#16i16 : BinOpAI<BaseOpc4, mnemonic, Xi16, AX>;
