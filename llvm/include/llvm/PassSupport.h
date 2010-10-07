@@ -23,6 +23,7 @@
 
 #include "Pass.h"
 #include "llvm/PassRegistry.h"
+#include "llvm/InitializePasses.h"
 #include <vector>
 
 namespace llvm {
@@ -128,7 +129,7 @@ private:
 };
 
 #define INITIALIZE_PASS(passName, arg, name, cfg, analysis) \
-  void initialize##passName##Pass(PassRegistry &Registry) { \
+  void llvm::initialize##passName##Pass(PassRegistry &Registry) { \
     PassInfo *PI = new PassInfo(name, arg, & passName ::ID, \
       PassInfo::NormalCtor_t(callDefaultCtor< passName >), cfg, analysis); \
     Registry.registerPass(*PI); \
@@ -211,14 +212,14 @@ struct RegisterAnalysisGroup : public RegisterAGBase {
 };
 
 #define INITIALIZE_ANALYSIS_GROUP(agName, name) \
-  void initialize##agName##AnalysisGroup(PassRegistry &Registry) { \
+  void llvm::initialize##agName##AnalysisGroup(PassRegistry &Registry) { \
     PassInfo *AI = new PassInfo(name, & agName :: ID); \
     Registry.registerAnalysisGroup(& agName ::ID, 0, *AI, false); \
   } \
   static RegisterAnalysisGroup<agName> agName##_info (name)
 
 #define INITIALIZE_AG_PASS(passName, agName, arg, name, cfg, analysis, def) \
-  void initialize##passName##Pass(PassRegistry &Registry) { \
+  void llvm::initialize##passName##Pass(PassRegistry &Registry) { \
     PassInfo *PI = new PassInfo(name, arg, & passName ::ID, \
       PassInfo::NormalCtor_t(callDefaultCtor< passName >), cfg, analysis); \
     Registry.registerPass(*PI); \

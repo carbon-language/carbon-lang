@@ -48,11 +48,10 @@ namespace {
   };
   
   char InstNamer::ID = 0;
-  INITIALIZE_PASS(InstNamer, "instnamer", 
-                  "Assign names to anonymous instructions", false, false);
 }
 
-
+INITIALIZE_PASS(InstNamer, "instnamer", 
+                "Assign names to anonymous instructions", false, false);
 char &llvm::InstructionNamerID = InstNamer::ID;
 //===----------------------------------------------------------------------===//
 //

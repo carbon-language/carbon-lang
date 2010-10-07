@@ -123,21 +123,14 @@ struct RegionViewer
   static char ID;
   RegionViewer() : DOTGraphTraitsViewer<RegionInfo, false>("reg", ID){}
 };
-
 char RegionViewer::ID = 0;
-INITIALIZE_PASS(RegionViewer, "view-regions", "View regions of function",
-                true, true);
 
 struct RegionOnlyViewer
   : public DOTGraphTraitsViewer<RegionInfo, true> {
   static char ID;
   RegionOnlyViewer() : DOTGraphTraitsViewer<RegionInfo, true>("regonly", ID){}
 };
-
 char RegionOnlyViewer::ID = 0;
-INITIALIZE_PASS(RegionOnlyViewer, "view-regions-only",
-                "View regions of function (with no function bodies)",
-                true, true);
 
 struct RegionPrinter
   : public DOTGraphTraitsPrinter<RegionInfo, false> {
@@ -145,11 +138,18 @@ struct RegionPrinter
   RegionPrinter() :
     DOTGraphTraitsPrinter<RegionInfo, false>("reg", ID) {}
 };
+char RegionPrinter::ID = 0;
 } //end anonymous namespace
 
-char RegionPrinter::ID = 0;
 INITIALIZE_PASS(RegionPrinter, "dot-regions",
                 "Print regions of function to 'dot' file", true, true);
+
+INITIALIZE_PASS(RegionViewer, "view-regions", "View regions of function",
+                true, true);
+                
+INITIALIZE_PASS(RegionOnlyViewer, "view-regions-only",
+                "View regions of function (with no function bodies)",
+                true, true);
 
 namespace {
 
