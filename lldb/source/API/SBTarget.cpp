@@ -164,14 +164,14 @@ SBTarget::Launch
             error.SetError (sb_process->Launch (argv, envp, launch_flags, tty, tty, tty));
             if (error.Success())
             {
+                // We we are stopping at the entry point, we can return now!
+                if (stop_at_entry)
+                    return sb_process;
+                
                 // Make sure we are stopped at the entry
                 StateType state = sb_process->WaitForProcessToStop (NULL);
                 if (state == eStateStopped)
                 {
-                    // We we are stopping at the entry point, we can return now!
-                    if (stop_at_entry)
-                        return sb_process;
-
                     // resume the process to skip the entry point
                     error.SetError (sb_process->Resume());
                     if (error.Success())
