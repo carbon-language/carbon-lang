@@ -600,25 +600,32 @@ class ITy<bits<8> opcode, Format f, X86TypeInfo typeinfo, dag outs, dag ins,
 
 // BinOpRR - Instructions like "add reg, reg, reg".
 class BinOpRR<bits<8> opcode, string mnemonic, X86TypeInfo typeinfo,
-              list<dag> pattern>
-  : ITy<opcode, MRMDestReg, typeinfo,
-        (outs typeinfo.RegClass:$dst),
+              dag outlist, list<dag> pattern>
+  : ITy<opcode, MRMDestReg, typeinfo, outlist,
         (ins typeinfo.RegClass:$src1, typeinfo.RegClass:$src2),
-        mnemonic, "{$src2, $dst|$dst, $src2}", pattern>;
+        mnemonic, "{$src2, $src1|$src1, $src2}", pattern>;
 
 // BinOpRR_R - Instructions like "add reg, reg, reg", where the pattern has
 // just a regclass (no eflags) as a result.
 class BinOpRR_R<bits<8> opcode, string mnemonic, X86TypeInfo typeinfo,
                 SDNode opnode>
-  : BinOpRR<opcode, mnemonic, typeinfo,
+  : BinOpRR<opcode, mnemonic, typeinfo, (outs typeinfo.RegClass:$dst),
             [(set typeinfo.RegClass:$dst,
+                  (opnode typeinfo.RegClass:$src1, typeinfo.RegClass:$src2))]>;
+
+// BinOpRR_F - Instructions like "cmp reg, Reg", where the pattern has
+// just a EFLAGS as a result.
+class BinOpRR_F<bits<8> opcode, string mnemonic, X86TypeInfo typeinfo,
+                SDNode opnode>
+  : BinOpRR<opcode, mnemonic, typeinfo, (outs),
+            [(set EFLAGS,
                   (opnode typeinfo.RegClass:$src1, typeinfo.RegClass:$src2))]>;
 
 // BinOpRR_RF - Instructions like "add reg, reg, reg", where the pattern has
 // both a regclass and EFLAGS as a result.
 class BinOpRR_RF<bits<8> opcode, string mnemonic, X86TypeInfo typeinfo,
                  SDNode opnode>
-  : BinOpRR<opcode, mnemonic, typeinfo,
+  : BinOpRR<opcode, mnemonic, typeinfo, (outs typeinfo.RegClass:$dst),
             [(set typeinfo.RegClass:$dst, EFLAGS,
                   (opnode typeinfo.RegClass:$src1, typeinfo.RegClass:$src2))]>;
 
@@ -634,106 +641,159 @@ class BinOpRR_Rev<bits<8> opcode, string mnemonic, X86TypeInfo typeinfo>
 
 // BinOpRM - Instructions like "add reg, reg, [mem]".
 class BinOpRM<bits<8> opcode, string mnemonic, X86TypeInfo typeinfo,
-              list<dag> pattern>
-  : ITy<opcode, MRMSrcMem, typeinfo,
-        (outs typeinfo.RegClass:$dst),
+              dag outlist, list<dag> pattern>
+  : ITy<opcode, MRMSrcMem, typeinfo, outlist,
         (ins typeinfo.RegClass:$src1, typeinfo.MemOperand:$src2),
-        mnemonic, "{$src2, $dst|$dst, $src2}", pattern>;
+        mnemonic, "{$src2, $src1|$src1, $src2}", pattern>;
 
 // BinOpRM_R - Instructions like "add reg, reg, [mem]".
 class BinOpRM_R<bits<8> opcode, string mnemonic, X86TypeInfo typeinfo,
               SDNode opnode>
-  : BinOpRM<opcode, mnemonic, typeinfo,
+  : BinOpRM<opcode, mnemonic, typeinfo, (outs typeinfo.RegClass:$dst),
             [(set typeinfo.RegClass:$dst,
+            (opnode typeinfo.RegClass:$src1, (typeinfo.LoadNode addr:$src2)))]>;
+
+// BinOpRM_F - Instructions like "cmp reg, [mem]".
+class BinOpRM_F<bits<8> opcode, string mnemonic, X86TypeInfo typeinfo,
+              SDNode opnode>
+  : BinOpRM<opcode, mnemonic, typeinfo, (outs),
+            [(set EFLAGS,
             (opnode typeinfo.RegClass:$src1, (typeinfo.LoadNode addr:$src2)))]>;
 
 // BinOpRM_RF - Instructions like "add reg, reg, [mem]".
 class BinOpRM_RF<bits<8> opcode, string mnemonic, X86TypeInfo typeinfo,
                  SDNode opnode>
-  : BinOpRM<opcode, mnemonic, typeinfo,
+  : BinOpRM<opcode, mnemonic, typeinfo, (outs typeinfo.RegClass:$dst),
             [(set typeinfo.RegClass:$dst, EFLAGS,
             (opnode typeinfo.RegClass:$src1, (typeinfo.LoadNode addr:$src2)))]>;
 
 // BinOpRI - Instructions like "add reg, reg, imm".
 class BinOpRI<bits<8> opcode, string mnemonic, X86TypeInfo typeinfo,
-              Format f, list<dag> pattern>
-  : ITy<opcode, f, typeinfo,
-        (outs typeinfo.RegClass:$dst),
+              Format f, dag outlist, list<dag> pattern>
+  : ITy<opcode, f, typeinfo, outlist,
         (ins typeinfo.RegClass:$src1, typeinfo.ImmOperand:$src2),
-        mnemonic, "{$src2, $dst|$dst, $src2}", pattern> {
+        mnemonic, "{$src2, $src1|$src1, $src2}", pattern> {
   let ImmT = typeinfo.ImmEncoding;
 }
 
 // BinOpRI_R - Instructions like "add reg, reg, imm".
 class BinOpRI_R<bits<8> opcode, string mnemonic, X86TypeInfo typeinfo,
                 SDNode opnode, Format f>
-  : BinOpRI<opcode, mnemonic, typeinfo, f, 
+  : BinOpRI<opcode, mnemonic, typeinfo, f, (outs typeinfo.RegClass:$dst),
             [(set typeinfo.RegClass:$dst,
+                (opnode typeinfo.RegClass:$src1, typeinfo.ImmOperator:$src2))]>;
+
+// BinOpRI_F - Instructions like "cmp reg, imm".
+class BinOpRI_F<bits<8> opcode, string mnemonic, X86TypeInfo typeinfo,
+                SDNode opnode, Format f>
+  : BinOpRI<opcode, mnemonic, typeinfo, f, (outs),
+            [(set EFLAGS,
                 (opnode typeinfo.RegClass:$src1, typeinfo.ImmOperator:$src2))]>;
 
 // BinOpRI_RF - Instructions like "add reg, reg, imm".
 class BinOpRI_RF<bits<8> opcode, string mnemonic, X86TypeInfo typeinfo,
                  SDNode opnode, Format f>
-  : BinOpRI<opcode, mnemonic, typeinfo, f, 
-            [(set typeinfo.RegClass:$dst, EFLAGS,
+  : BinOpRI<opcode, mnemonic, typeinfo, f, (outs typeinfo.RegClass:$dst),
+            [(set typeinfo.RegClass:$dst, EFLAGS, 
                 (opnode typeinfo.RegClass:$src1, typeinfo.ImmOperator:$src2))]>;
 
 // BinOpRI8 - Instructions like "add reg, reg, imm8".
 class BinOpRI8<bits<8> opcode, string mnemonic, X86TypeInfo typeinfo,
-               Format f, list<dag> pattern>
-  : ITy<opcode, f, typeinfo,
-        (outs typeinfo.RegClass:$dst),
+               Format f, dag outlist, list<dag> pattern>
+  : ITy<opcode, f, typeinfo, outlist,
         (ins typeinfo.RegClass:$src1, typeinfo.Imm8Operand:$src2),
-        mnemonic, "{$src2, $dst|$dst, $src2}", pattern> {
+        mnemonic, "{$src2, $src1|$src1, $src2}", pattern> {
   let ImmT = Imm8; // Always 8-bit immediate.
 }
 
 // BinOpRI8_R - Instructions like "add reg, reg, imm8".
 class BinOpRI8_R<bits<8> opcode, string mnemonic, X86TypeInfo typeinfo,
                   SDNode opnode, Format f>
-  : BinOpRI8<opcode, mnemonic, typeinfo, f,
+  : BinOpRI8<opcode, mnemonic, typeinfo, f, (outs typeinfo.RegClass:$dst),
              [(set typeinfo.RegClass:$dst,
+               (opnode typeinfo.RegClass:$src1, typeinfo.Imm8Operator:$src2))]>;
+               
+// BinOpRI8_F - Instructions like "cmp reg, imm8".
+class BinOpRI8_F<bits<8> opcode, string mnemonic, X86TypeInfo typeinfo,
+                  SDNode opnode, Format f>
+  : BinOpRI8<opcode, mnemonic, typeinfo, f, (outs),
+             [(set EFLAGS,
                (opnode typeinfo.RegClass:$src1, typeinfo.Imm8Operator:$src2))]>;
 
 // BinOpRI8_RF - Instructions like "add reg, reg, imm8".
 class BinOpRI8_RF<bits<8> opcode, string mnemonic, X86TypeInfo typeinfo,
                   SDNode opnode, Format f>
-  : BinOpRI8<opcode, mnemonic, typeinfo, f,
+  : BinOpRI8<opcode, mnemonic, typeinfo, f, (outs typeinfo.RegClass:$dst),
              [(set typeinfo.RegClass:$dst, EFLAGS,
                (opnode typeinfo.RegClass:$src1, typeinfo.Imm8Operator:$src2))]>;
 
 // BinOpMR - Instructions like "add [mem], reg".
 class BinOpMR<bits<8> opcode, string mnemonic, X86TypeInfo typeinfo,
-              SDNode opnode>
+              list<dag> pattern>
   : ITy<opcode, MRMDestMem, typeinfo,
         (outs), (ins typeinfo.MemOperand:$dst, typeinfo.RegClass:$src),
-        mnemonic, "{$src, $dst|$dst, $src}",
-        [(store (opnode (load addr:$dst), typeinfo.RegClass:$src), addr:$dst),
-                  (implicit EFLAGS)]>;
+        mnemonic, "{$src, $dst|$dst, $src}", pattern>;
+
+// BinOpMR_RMW - Instructions like "add [mem], reg".
+class BinOpMR_RMW<bits<8> opcode, string mnemonic, X86TypeInfo typeinfo,
+                  SDNode opnode>
+  : BinOpMR<opcode, mnemonic, typeinfo,
+          [(store (opnode (load addr:$dst), typeinfo.RegClass:$src), addr:$dst),
+           (implicit EFLAGS)]>;
+
+// BinOpMR_F - Instructions like "cmp [mem], reg".
+class BinOpMR_F<bits<8> opcode, string mnemonic, X86TypeInfo typeinfo,
+                  SDNode opnode>
+  : BinOpMR<opcode, mnemonic, typeinfo,
+            [(set EFLAGS, (opnode (load addr:$dst), typeinfo.RegClass:$src))]>;
 
 // BinOpMI - Instructions like "add [mem], imm".
 class BinOpMI<string mnemonic, X86TypeInfo typeinfo,
-              SDNode opnode, Format f>
+              Format f, list<dag> pattern>
   : ITy<0x80, f, typeinfo,
         (outs), (ins typeinfo.MemOperand:$dst, typeinfo.ImmOperand:$src),
-        mnemonic, "{$src, $dst|$dst, $src}",
-        [(store (opnode (typeinfo.VT (load addr:$dst)),
-                        typeinfo.ImmOperator:$src), addr:$dst),
-         (implicit EFLAGS)]> {
+        mnemonic, "{$src, $dst|$dst, $src}", pattern> {
   let ImmT = typeinfo.ImmEncoding;
 }
 
+// BinOpMI_RMW - Instructions like "add [mem], imm".
+class BinOpMI_RMW<string mnemonic, X86TypeInfo typeinfo,
+                  SDNode opnode, Format f>
+  : BinOpMI<mnemonic, typeinfo, f, 
+            [(store (opnode (typeinfo.VT (load addr:$dst)),
+                            typeinfo.ImmOperator:$src), addr:$dst),
+             (implicit EFLAGS)]>;
+
+// BinOpMI_F - Instructions like "cmp [mem], imm".
+class BinOpMI_F<string mnemonic, X86TypeInfo typeinfo,
+                SDNode opnode, Format f>
+  : BinOpMI<mnemonic, typeinfo, f, 
+            [(set EFLAGS, (opnode (typeinfo.VT (load addr:$dst)),
+                                               typeinfo.ImmOperator:$src))]>;
+
 // BinOpMI8 - Instructions like "add [mem], imm8".
 class BinOpMI8<string mnemonic, X86TypeInfo typeinfo,
-               SDNode opnode, Format f>
+               Format f, list<dag> pattern>
   : ITy<0x82, f, typeinfo,
         (outs), (ins typeinfo.MemOperand:$dst, typeinfo.Imm8Operand:$src),
-        mnemonic, "{$src, $dst|$dst, $src}",
-        [(store (opnode (load addr:$dst),
-                        typeinfo.Imm8Operator:$src), addr:$dst),
-         (implicit EFLAGS)]> {
+        mnemonic, "{$src, $dst|$dst, $src}", pattern> {
   let ImmT = Imm8; // Always 8-bit immediate.
 }
+
+// BinOpMI8_RMW - Instructions like "add [mem], imm8".
+class BinOpMI8_RMW<string mnemonic, X86TypeInfo typeinfo,
+                   SDNode opnode, Format f>
+  : BinOpMI8<mnemonic, typeinfo, f,
+             [(store (opnode (load addr:$dst),
+                             typeinfo.Imm8Operator:$src), addr:$dst),
+              (implicit EFLAGS)]>;
+
+// BinOpMI8_F - Instructions like "cmp [mem], imm8".
+class BinOpMI8_F<string mnemonic, X86TypeInfo typeinfo,
+                 SDNode opnode, Format f>
+  : BinOpMI8<mnemonic, typeinfo, f,
+             [(set EFLAGS, (opnode (load addr:$dst),
+                                   typeinfo.Imm8Operator:$src))]>;
 
 // BinOpAI - Instructions like "add %eax, %eax, imm".
 class BinOpAI<bits<8> opcode, string mnemonic, X86TypeInfo typeinfo,
@@ -788,19 +848,19 @@ multiclass ArithBinOp_RF<bits<8> BaseOpc, bits<8> BaseOpc2, bits<8> BaseOpc4,
       }
     } // Constraints = "$src1 = $dst"
 
-    def #NAME#8mr    : BinOpMR<BaseOpc, mnemonic, Xi8 , opnode>;
-    def #NAME#16mr   : BinOpMR<BaseOpc, mnemonic, Xi16, opnode>;
-    def #NAME#32mr   : BinOpMR<BaseOpc, mnemonic, Xi32, opnode>;
-    def #NAME#64mr   : BinOpMR<BaseOpc, mnemonic, Xi64, opnode>;
+    def #NAME#8mr    : BinOpMR_RMW<BaseOpc, mnemonic, Xi8 , opnode>;
+    def #NAME#16mr   : BinOpMR_RMW<BaseOpc, mnemonic, Xi16, opnode>;
+    def #NAME#32mr   : BinOpMR_RMW<BaseOpc, mnemonic, Xi32, opnode>;
+    def #NAME#64mr   : BinOpMR_RMW<BaseOpc, mnemonic, Xi64, opnode>;
 
-    def #NAME#8mi    : BinOpMI<mnemonic, Xi8 , opnode, MemMRM>;
-    def #NAME#16mi   : BinOpMI<mnemonic, Xi16, opnode, MemMRM>;
-    def #NAME#32mi   : BinOpMI<mnemonic, Xi32, opnode, MemMRM>;
-    def #NAME#64mi32 : BinOpMI<mnemonic, Xi64, opnode, MemMRM>;
+    def #NAME#8mi    : BinOpMI_RMW<mnemonic, Xi8 , opnode, MemMRM>;
+    def #NAME#16mi   : BinOpMI_RMW<mnemonic, Xi16, opnode, MemMRM>;
+    def #NAME#32mi   : BinOpMI_RMW<mnemonic, Xi32, opnode, MemMRM>;
+    def #NAME#64mi32 : BinOpMI_RMW<mnemonic, Xi64, opnode, MemMRM>;
 
-    def #NAME#16mi8  : BinOpMI8<mnemonic, Xi16, opnode, MemMRM>;
-    def #NAME#32mi8  : BinOpMI8<mnemonic, Xi32, opnode, MemMRM>;
-    def #NAME#64mi8  : BinOpMI8<mnemonic, Xi64, opnode, MemMRM>;
+    def #NAME#16mi8  : BinOpMI8_RMW<mnemonic, Xi16, opnode, MemMRM>;
+    def #NAME#32mi8  : BinOpMI8_RMW<mnemonic, Xi32, opnode, MemMRM>;
+    def #NAME#64mi8  : BinOpMI8_RMW<mnemonic, Xi64, opnode, MemMRM>;
                        
     def #NAME#8i8   : BinOpAI<BaseOpc4, mnemonic, Xi8 , AL>;
     def #NAME#16i16 : BinOpAI<BaseOpc4, mnemonic, Xi16, AX>;
@@ -849,19 +909,78 @@ multiclass ArithBinOp_R<bits<8> BaseOpc, bits<8> BaseOpc2, bits<8> BaseOpc4,
       }
     } // Constraints = "$src1 = $dst"
 
-    def #NAME#8mr    : BinOpMR<BaseOpc, mnemonic, Xi8 , opnode>;
-    def #NAME#16mr   : BinOpMR<BaseOpc, mnemonic, Xi16, opnode>;
-    def #NAME#32mr   : BinOpMR<BaseOpc, mnemonic, Xi32, opnode>;
-    def #NAME#64mr   : BinOpMR<BaseOpc, mnemonic, Xi64, opnode>;
+    def #NAME#8mr    : BinOpMR_RMW<BaseOpc, mnemonic, Xi8 , opnode>;
+    def #NAME#16mr   : BinOpMR_RMW<BaseOpc, mnemonic, Xi16, opnode>;
+    def #NAME#32mr   : BinOpMR_RMW<BaseOpc, mnemonic, Xi32, opnode>;
+    def #NAME#64mr   : BinOpMR_RMW<BaseOpc, mnemonic, Xi64, opnode>;
 
-    def #NAME#8mi    : BinOpMI<mnemonic, Xi8 , opnode, MemMRM>;
-    def #NAME#16mi   : BinOpMI<mnemonic, Xi16, opnode, MemMRM>;
-    def #NAME#32mi   : BinOpMI<mnemonic, Xi32, opnode, MemMRM>;
-    def #NAME#64mi32 : BinOpMI<mnemonic, Xi64, opnode, MemMRM>;
+    def #NAME#8mi    : BinOpMI_RMW<mnemonic, Xi8 , opnode, MemMRM>;
+    def #NAME#16mi   : BinOpMI_RMW<mnemonic, Xi16, opnode, MemMRM>;
+    def #NAME#32mi   : BinOpMI_RMW<mnemonic, Xi32, opnode, MemMRM>;
+    def #NAME#64mi32 : BinOpMI_RMW<mnemonic, Xi64, opnode, MemMRM>;
 
-    def #NAME#16mi8  : BinOpMI8<mnemonic, Xi16, opnode, MemMRM>;
-    def #NAME#32mi8  : BinOpMI8<mnemonic, Xi32, opnode, MemMRM>;
-    def #NAME#64mi8  : BinOpMI8<mnemonic, Xi64, opnode, MemMRM>;
+    def #NAME#16mi8  : BinOpMI8_RMW<mnemonic, Xi16, opnode, MemMRM>;
+    def #NAME#32mi8  : BinOpMI8_RMW<mnemonic, Xi32, opnode, MemMRM>;
+    def #NAME#64mi8  : BinOpMI8_RMW<mnemonic, Xi64, opnode, MemMRM>;
+                       
+    def #NAME#8i8   : BinOpAI<BaseOpc4, mnemonic, Xi8 , AL>;
+    def #NAME#16i16 : BinOpAI<BaseOpc4, mnemonic, Xi16, AX>;
+    def #NAME#32i32 : BinOpAI<BaseOpc4, mnemonic, Xi32, EAX>;
+    def #NAME#64i32 : BinOpAI<BaseOpc4, mnemonic, Xi64, RAX>;
+  }                          
+}
+
+/// ArithBinOp_F - This is an arithmetic binary operator where the pattern is
+/// defined with "(set EFLAGS, (...".  It would be really nice to find a way
+/// to factor this with the other ArithBinOp_*.
+///
+multiclass ArithBinOp_F<bits<8> BaseOpc, bits<8> BaseOpc2, bits<8> BaseOpc4,
+                        string mnemonic, Format RegMRM, Format MemMRM,
+                        SDNode opnode,
+                        bit CommutableRR, bit ConvertibleToThreeAddress> {
+  let Defs = [EFLAGS] in {
+    let isCommutable = CommutableRR,
+        isConvertibleToThreeAddress = ConvertibleToThreeAddress in {
+      def #NAME#8rr  : BinOpRR_F<BaseOpc, mnemonic, Xi8 , opnode>;
+      def #NAME#16rr : BinOpRR_F<BaseOpc, mnemonic, Xi16, opnode>;
+      def #NAME#32rr : BinOpRR_F<BaseOpc, mnemonic, Xi32, opnode>;
+      def #NAME#64rr : BinOpRR_F<BaseOpc, mnemonic, Xi64, opnode>;
+    } // isCommutable
+
+    def #NAME#8rr_REV  : BinOpRR_Rev<BaseOpc2, mnemonic, Xi8>;
+    def #NAME#16rr_REV : BinOpRR_Rev<BaseOpc2, mnemonic, Xi16>;
+    def #NAME#32rr_REV : BinOpRR_Rev<BaseOpc2, mnemonic, Xi32>;
+    def #NAME#64rr_REV : BinOpRR_Rev<BaseOpc2, mnemonic, Xi64>;
+
+    def #NAME#8rm   : BinOpRM_F<BaseOpc2, mnemonic, Xi8 , opnode>;
+    def #NAME#16rm  : BinOpRM_F<BaseOpc2, mnemonic, Xi16, opnode>;
+    def #NAME#32rm  : BinOpRM_F<BaseOpc2, mnemonic, Xi32, opnode>;
+    def #NAME#64rm  : BinOpRM_F<BaseOpc2, mnemonic, Xi64, opnode>;
+
+    let isConvertibleToThreeAddress = ConvertibleToThreeAddress in {
+      def #NAME#8ri   : BinOpRI_F<0x80, mnemonic, Xi8 , opnode, RegMRM>;
+      def #NAME#16ri  : BinOpRI_F<0x80, mnemonic, Xi16, opnode, RegMRM>;
+      def #NAME#32ri  : BinOpRI_F<0x80, mnemonic, Xi32, opnode, RegMRM>;
+      def #NAME#64ri32: BinOpRI_F<0x80, mnemonic, Xi64, opnode, RegMRM>;
+
+      def #NAME#16ri8 : BinOpRI8_F<0x82, mnemonic, Xi16, opnode, RegMRM>;
+      def #NAME#32ri8 : BinOpRI8_F<0x82, mnemonic, Xi32, opnode, RegMRM>;
+      def #NAME#64ri8 : BinOpRI8_F<0x82, mnemonic, Xi64, opnode, RegMRM>;
+    }
+
+    def #NAME#8mr    : BinOpMR_F<BaseOpc, mnemonic, Xi8 , opnode>;
+    def #NAME#16mr   : BinOpMR_F<BaseOpc, mnemonic, Xi16, opnode>;
+    def #NAME#32mr   : BinOpMR_F<BaseOpc, mnemonic, Xi32, opnode>;
+    def #NAME#64mr   : BinOpMR_F<BaseOpc, mnemonic, Xi64, opnode>;
+
+    def #NAME#8mi    : BinOpMI_F<mnemonic, Xi8 , opnode, MemMRM>;
+    def #NAME#16mi   : BinOpMI_F<mnemonic, Xi16, opnode, MemMRM>;
+    def #NAME#32mi   : BinOpMI_F<mnemonic, Xi32, opnode, MemMRM>;
+    def #NAME#64mi32 : BinOpMI_F<mnemonic, Xi64, opnode, MemMRM>;
+
+    def #NAME#16mi8  : BinOpMI8_F<mnemonic, Xi16, opnode, MemMRM>;
+    def #NAME#32mi8  : BinOpMI8_F<mnemonic, Xi32, opnode, MemMRM>;
+    def #NAME#64mi8  : BinOpMI8_F<mnemonic, Xi64, opnode, MemMRM>;
                        
     def #NAME#8i8   : BinOpAI<BaseOpc4, mnemonic, Xi8 , AL>;
     def #NAME#16i16 : BinOpAI<BaseOpc4, mnemonic, Xi16, AX>;
@@ -983,141 +1102,4 @@ def TEST64i32 : RIi32<0xa9, RawFrm, (outs), (ins i64i32imm:$src),
 //===----------------------------------------------------------------------===//
 // Integer comparisons
 
-let Defs = [EFLAGS] in {
-
-def CMP8rr  : I<0x38, MRMDestReg,
-                (outs), (ins GR8 :$src1, GR8 :$src2),
-                "cmp{b}\t{$src2, $src1|$src1, $src2}",
-                [(set EFLAGS, (X86cmp GR8:$src1, GR8:$src2))]>;
-def CMP16rr : I<0x39, MRMDestReg,
-                (outs), (ins GR16:$src1, GR16:$src2),
-                "cmp{w}\t{$src2, $src1|$src1, $src2}",
-                [(set EFLAGS, (X86cmp GR16:$src1, GR16:$src2))]>, OpSize;
-def CMP32rr : I<0x39, MRMDestReg,
-                (outs), (ins GR32:$src1, GR32:$src2),
-                "cmp{l}\t{$src2, $src1|$src1, $src2}",
-                [(set EFLAGS, (X86cmp GR32:$src1, GR32:$src2))]>;
-def CMP64rr : RI<0x39, MRMDestReg, (outs), (ins GR64:$src1, GR64:$src2),
-                 "cmp{q}\t{$src2, $src1|$src1, $src2}",
-                 [(set EFLAGS, (X86cmp GR64:$src1, GR64:$src2))]>;
-
-def CMP8mr  : I<0x38, MRMDestMem,
-                (outs), (ins i8mem :$src1, GR8 :$src2),
-                "cmp{b}\t{$src2, $src1|$src1, $src2}",
-                [(set EFLAGS, (X86cmp (loadi8 addr:$src1), GR8:$src2))]>;
-def CMP16mr : I<0x39, MRMDestMem,
-                (outs), (ins i16mem:$src1, GR16:$src2),
-                "cmp{w}\t{$src2, $src1|$src1, $src2}",
-                [(set EFLAGS, (X86cmp (loadi16 addr:$src1), GR16:$src2))]>,
-                 OpSize;
-def CMP32mr : I<0x39, MRMDestMem,
-                (outs), (ins i32mem:$src1, GR32:$src2),
-                "cmp{l}\t{$src2, $src1|$src1, $src2}",
-                [(set EFLAGS, (X86cmp (loadi32 addr:$src1), GR32:$src2))]>;
-def CMP64mr : RI<0x39, MRMDestMem, (outs), (ins i64mem:$src1, GR64:$src2),
-                 "cmp{q}\t{$src2, $src1|$src1, $src2}",
-                 [(set EFLAGS, (X86cmp (loadi64 addr:$src1), GR64:$src2))]>;
-                 
-def CMP8rm  : I<0x3A, MRMSrcMem,
-                (outs), (ins GR8 :$src1, i8mem :$src2),
-                "cmp{b}\t{$src2, $src1|$src1, $src2}",
-                [(set EFLAGS, (X86cmp GR8:$src1, (loadi8 addr:$src2)))]>;
-def CMP16rm : I<0x3B, MRMSrcMem,
-                (outs), (ins GR16:$src1, i16mem:$src2),
-                "cmp{w}\t{$src2, $src1|$src1, $src2}",
-                [(set EFLAGS, (X86cmp GR16:$src1, (loadi16 addr:$src2)))]>,
-                 OpSize;
-def CMP32rm : I<0x3B, MRMSrcMem,
-                (outs), (ins GR32:$src1, i32mem:$src2),
-                "cmp{l}\t{$src2, $src1|$src1, $src2}",
-                [(set EFLAGS, (X86cmp GR32:$src1, (loadi32 addr:$src2)))]>;
-def CMP64rm : RI<0x3B, MRMSrcMem, (outs), (ins GR64:$src1, i64mem:$src2),
-                 "cmp{q}\t{$src2, $src1|$src1, $src2}",
-                 [(set EFLAGS, (X86cmp GR64:$src1, (loadi64 addr:$src2)))]>;
-
-// These are alternate spellings for use by the disassembler, we mark them as
-// code gen only to ensure they aren't matched by the assembler.
-let isCodeGenOnly = 1 in {
-  def CMP8rr_alt : I<0x3A, MRMSrcReg, (outs), (ins GR8:$src1, GR8:$src2),
-                    "cmp{b}\t{$src2, $src1|$src1, $src2}", []>;
-  def CMP16rr_alt : I<0x3B, MRMSrcReg, (outs), (ins GR16:$src1, GR16:$src2),
-                     "cmp{w}\t{$src2, $src1|$src1, $src2}", []>, OpSize;
-  def CMP32rr_alt : I<0x3B, MRMSrcReg, (outs), (ins GR32:$src1, GR32:$src2),
-                     "cmp{l}\t{$src2, $src1|$src1, $src2}", []>;
-  def CMP64rr_alt : RI<0x3B, MRMSrcReg, (outs), (ins GR64:$src1, GR64:$src2),
-                      "cmp{q}\t{$src2, $src1|$src1, $src2}", []>;
-}
-
-def CMP8ri  : Ii8<0x80, MRM7r,
-                  (outs), (ins GR8:$src1, i8imm:$src2),
-                  "cmp{b}\t{$src2, $src1|$src1, $src2}",
-                  [(set EFLAGS, (X86cmp GR8:$src1, imm:$src2))]>;
-def CMP16ri : Ii16<0x81, MRM7r,
-                   (outs), (ins GR16:$src1, i16imm:$src2),
-                   "cmp{w}\t{$src2, $src1|$src1, $src2}",
-                   [(set EFLAGS, (X86cmp GR16:$src1, imm:$src2))]>, OpSize;
-def CMP32ri : Ii32<0x81, MRM7r,
-                   (outs), (ins GR32:$src1, i32imm:$src2),
-                   "cmp{l}\t{$src2, $src1|$src1, $src2}",
-                   [(set EFLAGS, (X86cmp GR32:$src1, imm:$src2))]>;
-def CMP64ri32 : RIi32<0x81, MRM7r, (outs), (ins GR64:$src1, i64i32imm:$src2),
-                      "cmp{q}\t{$src2, $src1|$src1, $src2}",
-                      [(set EFLAGS, (X86cmp GR64:$src1, i64immSExt32:$src2))]>;
-
-def CMP8mi  : Ii8 <0x80, MRM7m,
-                   (outs), (ins i8mem :$src1, i8imm :$src2),
-                   "cmp{b}\t{$src2, $src1|$src1, $src2}",
-                   [(set EFLAGS, (X86cmp (loadi8 addr:$src1), imm:$src2))]>;
-def CMP16mi : Ii16<0x81, MRM7m,
-                   (outs), (ins i16mem:$src1, i16imm:$src2),
-                   "cmp{w}\t{$src2, $src1|$src1, $src2}",
-                   [(set EFLAGS, (X86cmp (loadi16 addr:$src1), imm:$src2))]>,
-                   OpSize;
-def CMP32mi : Ii32<0x81, MRM7m,
-                   (outs), (ins i32mem:$src1, i32imm:$src2),
-                   "cmp{l}\t{$src2, $src1|$src1, $src2}",
-                   [(set EFLAGS, (X86cmp (loadi32 addr:$src1), imm:$src2))]>;
-def CMP64mi32 : RIi32<0x81, MRM7m, (outs),
-                                       (ins i64mem:$src1, i64i32imm:$src2),
-                      "cmp{q}\t{$src2, $src1|$src1, $src2}",
-                      [(set EFLAGS, (X86cmp (loadi64 addr:$src1),
-                                            i64immSExt32:$src2))]>;
-
-def CMP16ri8 : Ii8<0x83, MRM7r,
-                   (outs), (ins GR16:$src1, i16i8imm:$src2),
-                   "cmp{w}\t{$src2, $src1|$src1, $src2}",
-                   [(set EFLAGS, (X86cmp GR16:$src1, i16immSExt8:$src2))]>,
-                    OpSize;
-def CMP32ri8 : Ii8<0x83, MRM7r,
-                   (outs), (ins GR32:$src1, i32i8imm:$src2),
-                   "cmp{l}\t{$src2, $src1|$src1, $src2}",
-                   [(set EFLAGS, (X86cmp GR32:$src1, i32immSExt8:$src2))]>;
-def CMP64ri8 : RIi8<0x83, MRM7r, (outs), (ins GR64:$src1, i64i8imm:$src2),
-                    "cmp{q}\t{$src2, $src1|$src1, $src2}",
-                    [(set EFLAGS, (X86cmp GR64:$src1, i64immSExt8:$src2))]>;
-
-def CMP16mi8 : Ii8<0x83, MRM7m,
-                   (outs), (ins i16mem:$src1, i16i8imm:$src2),
-                   "cmp{w}\t{$src2, $src1|$src1, $src2}",
-                   [(set EFLAGS, (X86cmp (loadi16 addr:$src1),
-                                         i16immSExt8:$src2))]>, OpSize;
-def CMP32mi8 : Ii8<0x83, MRM7m,
-                   (outs), (ins i32mem:$src1, i32i8imm:$src2),
-                   "cmp{l}\t{$src2, $src1|$src1, $src2}",
-                   [(set EFLAGS, (X86cmp (loadi32 addr:$src1),
-                                         i32immSExt8:$src2))]>;
-def CMP64mi8 : RIi8<0x83, MRM7m, (outs), (ins i64mem:$src1, i64i8imm:$src2),
-                    "cmp{q}\t{$src2, $src1|$src1, $src2}",
-                    [(set EFLAGS, (X86cmp (loadi64 addr:$src1),
-                                          i64immSExt8:$src2))]>;
-
-def CMP8i8 : Ii8<0x3C, RawFrm, (outs), (ins i8imm:$src),
-                 "cmp{b}\t{$src, %al|%al, $src}", []>;
-def CMP16i16 : Ii16<0x3D, RawFrm, (outs), (ins i16imm:$src),
-                    "cmp{w}\t{$src, %ax|%ax, $src}", []>, OpSize;
-def CMP32i32 : Ii32<0x3D, RawFrm, (outs), (ins i32imm:$src),
-                    "cmp{l}\t{$src, %eax|%eax, $src}", []>;
-def CMP64i32 : RIi32<0x3D, RawFrm, (outs), (ins i64i32imm:$src),
-                     "cmp{q}\t{$src, %rax|%rax, $src}", []>;
-
-} // Defs = [EFLAGS]
+defm CMP : ArithBinOp_F<0x38, 0x3A, 0x3C, "cmp", MRM7r, MRM7m, X86cmp, 0, 0>;
