@@ -598,27 +598,29 @@ class ITy<bits<8> opcode, Format f, X86TypeInfo typeinfo, dag outs, dag ins,
   let hasREX_WPrefix  = typeinfo.HasREX_WPrefix;
 }
 
+// BinOpRR - Instructions like "add reg, reg, reg".
+class BinOpRR<bits<8> opcode, string mnemonic, X86TypeInfo typeinfo,
+              list<dag> pattern>
+  : ITy<opcode, MRMDestReg, typeinfo,
+        (outs typeinfo.RegClass:$dst),
+        (ins typeinfo.RegClass:$src1, typeinfo.RegClass:$src2),
+        mnemonic, "{$src2, $dst|$dst, $src2}", pattern>;
+
 // BinOpRR_R - Instructions like "add reg, reg, reg", where the pattern has
 // just a regclass (no eflags) as a result.
 class BinOpRR_R<bits<8> opcode, string mnemonic, X86TypeInfo typeinfo,
                 SDNode opnode>
-  : ITy<opcode, MRMDestReg, typeinfo,
-        (outs typeinfo.RegClass:$dst),
-        (ins typeinfo.RegClass:$src1, typeinfo.RegClass:$src2),
-        mnemonic, "{$src2, $dst|$dst, $src2}",
-        [(set typeinfo.RegClass:$dst,
-              (opnode typeinfo.RegClass:$src1, typeinfo.RegClass:$src2))]>;
+  : BinOpRR<opcode, mnemonic, typeinfo,
+            [(set typeinfo.RegClass:$dst,
+                  (opnode typeinfo.RegClass:$src1, typeinfo.RegClass:$src2))]>;
 
 // BinOpRR_RF - Instructions like "add reg, reg, reg", where the pattern has
 // both a regclass and EFLAGS as a result.
 class BinOpRR_RF<bits<8> opcode, string mnemonic, X86TypeInfo typeinfo,
                  SDNode opnode>
-  : ITy<opcode, MRMDestReg, typeinfo,
-        (outs typeinfo.RegClass:$dst),
-        (ins typeinfo.RegClass:$src1, typeinfo.RegClass:$src2),
-        mnemonic, "{$src2, $dst|$dst, $src2}",
-        [(set typeinfo.RegClass:$dst, EFLAGS,
-              (opnode typeinfo.RegClass:$src1, typeinfo.RegClass:$src2))]>;
+  : BinOpRR<opcode, mnemonic, typeinfo,
+            [(set typeinfo.RegClass:$dst, EFLAGS,
+                  (opnode typeinfo.RegClass:$src1, typeinfo.RegClass:$src2))]>;
 
 // BinOpRR_Rev - Instructions like "add reg, reg, reg" (reversed encoding).
 class BinOpRR_Rev<bits<8> opcode, string mnemonic, X86TypeInfo typeinfo>
@@ -630,73 +632,75 @@ class BinOpRR_Rev<bits<8> opcode, string mnemonic, X86TypeInfo typeinfo>
   let isCodeGenOnly = 1;
 }
 
-// BinOpRM_R - Instructions like "add reg, reg, [mem]".
-class BinOpRM_R<bits<8> opcode, string mnemonic, X86TypeInfo typeinfo,
-              SDNode opnode>
+// BinOpRM - Instructions like "add reg, reg, [mem]".
+class BinOpRM<bits<8> opcode, string mnemonic, X86TypeInfo typeinfo,
+              list<dag> pattern>
   : ITy<opcode, MRMSrcMem, typeinfo,
         (outs typeinfo.RegClass:$dst),
         (ins typeinfo.RegClass:$src1, typeinfo.MemOperand:$src2),
-        mnemonic, "{$src2, $dst|$dst, $src2}",
-        [(set typeinfo.RegClass:$dst,
+        mnemonic, "{$src2, $dst|$dst, $src2}", pattern>;
+
+// BinOpRM_R - Instructions like "add reg, reg, [mem]".
+class BinOpRM_R<bits<8> opcode, string mnemonic, X86TypeInfo typeinfo,
+              SDNode opnode>
+  : BinOpRM<opcode, mnemonic, typeinfo,
+            [(set typeinfo.RegClass:$dst,
             (opnode typeinfo.RegClass:$src1, (typeinfo.LoadNode addr:$src2)))]>;
 
 // BinOpRM_RF - Instructions like "add reg, reg, [mem]".
 class BinOpRM_RF<bits<8> opcode, string mnemonic, X86TypeInfo typeinfo,
                  SDNode opnode>
-  : ITy<opcode, MRMSrcMem, typeinfo,
-        (outs typeinfo.RegClass:$dst),
-        (ins typeinfo.RegClass:$src1, typeinfo.MemOperand:$src2),
-        mnemonic, "{$src2, $dst|$dst, $src2}",
-        [(set typeinfo.RegClass:$dst, EFLAGS,
+  : BinOpRM<opcode, mnemonic, typeinfo,
+            [(set typeinfo.RegClass:$dst, EFLAGS,
             (opnode typeinfo.RegClass:$src1, (typeinfo.LoadNode addr:$src2)))]>;
+
+// BinOpRI - Instructions like "add reg, reg, imm".
+class BinOpRI<bits<8> opcode, string mnemonic, X86TypeInfo typeinfo,
+              Format f, list<dag> pattern>
+  : ITy<opcode, f, typeinfo,
+        (outs typeinfo.RegClass:$dst),
+        (ins typeinfo.RegClass:$src1, typeinfo.ImmOperand:$src2),
+        mnemonic, "{$src2, $dst|$dst, $src2}", pattern> {
+  let ImmT = typeinfo.ImmEncoding;
+}
 
 // BinOpRI_R - Instructions like "add reg, reg, imm".
 class BinOpRI_R<bits<8> opcode, string mnemonic, X86TypeInfo typeinfo,
                 SDNode opnode, Format f>
-  : ITy<opcode, f, typeinfo,
-        (outs typeinfo.RegClass:$dst),
-        (ins typeinfo.RegClass:$src1, typeinfo.ImmOperand:$src2),
-        mnemonic, "{$src2, $dst|$dst, $src2}",
-        [(set typeinfo.RegClass:$dst,
-            (opnode typeinfo.RegClass:$src1, typeinfo.ImmOperator:$src2))]> {
-  let ImmT = typeinfo.ImmEncoding;
-}
+  : BinOpRI<opcode, mnemonic, typeinfo, f, 
+            [(set typeinfo.RegClass:$dst,
+                (opnode typeinfo.RegClass:$src1, typeinfo.ImmOperator:$src2))]>;
 
 // BinOpRI_RF - Instructions like "add reg, reg, imm".
 class BinOpRI_RF<bits<8> opcode, string mnemonic, X86TypeInfo typeinfo,
                  SDNode opnode, Format f>
+  : BinOpRI<opcode, mnemonic, typeinfo, f, 
+            [(set typeinfo.RegClass:$dst, EFLAGS,
+                (opnode typeinfo.RegClass:$src1, typeinfo.ImmOperator:$src2))]>;
+
+// BinOpRI8 - Instructions like "add reg, reg, imm8".
+class BinOpRI8<bits<8> opcode, string mnemonic, X86TypeInfo typeinfo,
+               Format f, list<dag> pattern>
   : ITy<opcode, f, typeinfo,
         (outs typeinfo.RegClass:$dst),
-        (ins typeinfo.RegClass:$src1, typeinfo.ImmOperand:$src2),
-        mnemonic, "{$src2, $dst|$dst, $src2}",
-        [(set typeinfo.RegClass:$dst, EFLAGS,
-            (opnode typeinfo.RegClass:$src1, typeinfo.ImmOperator:$src2))]> {
-  let ImmT = typeinfo.ImmEncoding;
+        (ins typeinfo.RegClass:$src1, typeinfo.Imm8Operand:$src2),
+        mnemonic, "{$src2, $dst|$dst, $src2}", pattern> {
+  let ImmT = Imm8; // Always 8-bit immediate.
 }
 
 // BinOpRI8_R - Instructions like "add reg, reg, imm8".
 class BinOpRI8_R<bits<8> opcode, string mnemonic, X86TypeInfo typeinfo,
                   SDNode opnode, Format f>
-  : ITy<opcode, f, typeinfo,
-        (outs typeinfo.RegClass:$dst),
-        (ins typeinfo.RegClass:$src1, typeinfo.Imm8Operand:$src2),
-        mnemonic, "{$src2, $dst|$dst, $src2}",
-        [(set typeinfo.RegClass:$dst,
-            (opnode typeinfo.RegClass:$src1, typeinfo.Imm8Operator:$src2))]> {
-  let ImmT = Imm8; // Always 8-bit immediate.
-}
+  : BinOpRI8<opcode, mnemonic, typeinfo, f,
+             [(set typeinfo.RegClass:$dst,
+               (opnode typeinfo.RegClass:$src1, typeinfo.Imm8Operator:$src2))]>;
 
 // BinOpRI8_RF - Instructions like "add reg, reg, imm8".
 class BinOpRI8_RF<bits<8> opcode, string mnemonic, X86TypeInfo typeinfo,
                   SDNode opnode, Format f>
-  : ITy<opcode, f, typeinfo,
-        (outs typeinfo.RegClass:$dst),
-        (ins typeinfo.RegClass:$src1, typeinfo.Imm8Operand:$src2),
-        mnemonic, "{$src2, $dst|$dst, $src2}",
-        [(set typeinfo.RegClass:$dst, EFLAGS,
-            (opnode typeinfo.RegClass:$src1, typeinfo.Imm8Operator:$src2))]> {
-  let ImmT = Imm8; // Always 8-bit immediate.
-}
+  : BinOpRI8<opcode, mnemonic, typeinfo, f,
+             [(set typeinfo.RegClass:$dst, EFLAGS,
+               (opnode typeinfo.RegClass:$src1, typeinfo.Imm8Operator:$src2))]>;
 
 // BinOpMR - Instructions like "add [mem], reg".
 class BinOpMR<bits<8> opcode, string mnemonic, X86TypeInfo typeinfo,
