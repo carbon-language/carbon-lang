@@ -2220,6 +2220,11 @@ void LLVMDisposeMemoryBuffer(LLVMMemoryBufferRef MemBuf) {
   delete unwrap(MemBuf);
 }
 
+/*===-- Pass Registry -----------------------------------------------------===*/
+
+LLVMPassRegistryRef LLVMGetGlobalPassRegistry(void) {
+  return wrap(PassRegistry::getPassRegistry());
+}
 
 /*===-- Pass Manager ------------------------------------------------------===*/
 

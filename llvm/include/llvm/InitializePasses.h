@@ -19,6 +19,14 @@ namespace llvm {
 
 class PassRegistry;
 
+/// initializeTransformUtilsPasses - Initialize all passes linked into the 
+/// TransformUtils library.
+void initializeTransformUtils(PassRegistry&);
+
+/// initializeScalarOptsPasses - Initialize all passes linked into the 
+/// ScalarOpts library.
+void initializeScalarOpts(PassRegistry&);
+
 void initializeAAEvalPass(PassRegistry&);
 void initializeADCEPass(PassRegistry&);
 void initializeAliasAnalysisAnalysisGroup(PassRegistry&);
