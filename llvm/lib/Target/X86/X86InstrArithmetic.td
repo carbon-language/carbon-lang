@@ -598,7 +598,7 @@ class ITy<bits<8> opcode, Format f, X86TypeInfo typeinfo, dag outs, dag ins,
   let hasREX_WPrefix  = typeinfo.HasREX_WPrefix;
 }
 
-
+// BinOpRR - Instructions like "add reg, reg, reg".
 class BinOpRR<bits<8> opcode, string mnemonic, X86TypeInfo typeinfo,
               SDNode opnode>
   : ITy<opcode, MRMDestReg, typeinfo,
@@ -608,6 +608,7 @@ class BinOpRR<bits<8> opcode, string mnemonic, X86TypeInfo typeinfo,
         [(set typeinfo.RegClass:$dst, EFLAGS,
               (opnode typeinfo.RegClass:$src1, typeinfo.RegClass:$src2))]>;
 
+// BinOpRR_Rev - Instructions like "add reg, reg, reg" (reversed encoding).
 class BinOpRR_Rev<bits<8> opcode, string mnemonic, X86TypeInfo typeinfo>
   : ITy<opcode, MRMSrcReg, typeinfo,
         (outs typeinfo.RegClass:$dst),
@@ -617,6 +618,7 @@ class BinOpRR_Rev<bits<8> opcode, string mnemonic, X86TypeInfo typeinfo>
   let isCodeGenOnly = 1;
 }
 
+// BinOpRM - Instructions like "add reg, reg, [mem]".
 class BinOpRM<bits<8> opcode, string mnemonic, X86TypeInfo typeinfo,
               SDNode opnode>
   : ITy<opcode, MRMSrcMem, typeinfo,
@@ -648,6 +650,39 @@ class BinOpRI8<bits<8> opcode, string mnemonic, X86TypeInfo typeinfo,
         mnemonic, "{$src2, $dst|$dst, $src2}",
         [(set typeinfo.RegClass:$dst, EFLAGS,
             (opnode typeinfo.RegClass:$src1, typeinfo.Imm8Operator:$src2))]> {
+  let ImmT = Imm8; // Always 8-bit immediate.
+}
+
+// BinOpMR - Instructions like "add [mem], reg".
+class BinOpMR<bits<8> opcode, string mnemonic, X86TypeInfo typeinfo,
+              SDNode opnode>
+  : ITy<opcode, MRMDestMem, typeinfo,
+        (outs), (ins typeinfo.MemOperand:$dst, typeinfo.RegClass:$src),
+        mnemonic, "{$src, $dst|$dst, $src}",
+        [(store (opnode (load addr:$dst), typeinfo.RegClass:$src), addr:$dst),
+                  (implicit EFLAGS)]>;
+
+// BinOpMI - Instructions like "add [mem], imm".
+class BinOpMI<bits<8> opcode, string mnemonic, X86TypeInfo typeinfo,
+              SDNode opnode, Format f>
+  : ITy<opcode, f, typeinfo,
+        (outs), (ins typeinfo.MemOperand:$dst, typeinfo.ImmOperand:$src),
+        mnemonic, "{$src, $dst|$dst, $src}",
+        [(store (opnode (typeinfo.LoadNode addr:$dst),
+                        typeinfo.ImmOperator:$src), addr:$dst),
+         (implicit EFLAGS)]> {
+  let ImmT = typeinfo.ImmEncoding;
+}
+
+// BinOpMI8 - Instructions like "add [mem], imm8".
+class BinOpMI8<bits<8> opcode, string mnemonic, X86TypeInfo typeinfo,
+               SDNode opnode, Format f>
+  : ITy<opcode, f, typeinfo,
+        (outs), (ins typeinfo.MemOperand:$dst, typeinfo.Imm8Operand:$src),
+        mnemonic, "{$src, $dst|$dst, $src}",
+        [(store (opnode (load addr:$dst),
+                        typeinfo.Imm8Operator:$src), addr:$dst),
+         (implicit EFLAGS)]> {
   let ImmT = Imm8; // Always 8-bit immediate.
 }
 
@@ -687,68 +722,24 @@ def AND32ri8 : BinOpRI8<0x82, "and", Xi32, X86and_flag, MRM4r>;
 def AND64ri8 : BinOpRI8<0x82, "and", Xi64, X86and_flag, MRM4r>;
 } // Constraints = "$src1 = $dst"
 
-def AND8mr   : I<0x20, MRMDestMem,
-                 (outs), (ins i8mem :$dst, GR8 :$src),
-                 "and{b}\t{$src, $dst|$dst, $src}",
-                 [(store (and (load addr:$dst), GR8:$src), addr:$dst),
-                  (implicit EFLAGS)]>;
-def AND16mr  : I<0x21, MRMDestMem,
-                 (outs), (ins i16mem:$dst, GR16:$src),
-                 "and{w}\t{$src, $dst|$dst, $src}",
-                 [(store (and (load addr:$dst), GR16:$src), addr:$dst),
-                  (implicit EFLAGS)]>,
-                 OpSize;
-def AND32mr  : I<0x21, MRMDestMem,
-                 (outs), (ins i32mem:$dst, GR32:$src),
-                 "and{l}\t{$src, $dst|$dst, $src}",
-                 [(store (and (load addr:$dst), GR32:$src), addr:$dst),
-                  (implicit EFLAGS)]>;
-def AND64mr  : RI<0x21, MRMDestMem,
-                  (outs), (ins i64mem:$dst, GR64:$src),
-                  "and{q}\t{$src, $dst|$dst, $src}",
-                  [(store (and (load addr:$dst), GR64:$src), addr:$dst),
-                   (implicit EFLAGS)]>;
 
-def AND8mi   : Ii8<0x80, MRM4m,
-                   (outs), (ins i8mem :$dst, i8imm :$src),
-                   "and{b}\t{$src, $dst|$dst, $src}",
-                    [(store (and (loadi8 addr:$dst), imm:$src), addr:$dst),
-                     (implicit EFLAGS)]>;
-def AND16mi  : Ii16<0x81, MRM4m,
-                    (outs), (ins i16mem:$dst, i16imm:$src),
-                    "and{w}\t{$src, $dst|$dst, $src}",
-                    [(store (and (loadi16 addr:$dst), imm:$src), addr:$dst),
-                     (implicit EFLAGS)]>,
-                    OpSize;
-def AND32mi  : Ii32<0x81, MRM4m,
-                    (outs), (ins i32mem:$dst, i32imm:$src),
-                    "and{l}\t{$src, $dst|$dst, $src}",
-                    [(store (and (loadi32 addr:$dst), imm:$src), addr:$dst),
-                     (implicit EFLAGS)]>;
-def AND64mi32  : RIi32<0x81, MRM4m,
-                       (outs), (ins i64mem:$dst, i64i32imm:$src),
-                       "and{q}\t{$src, $dst|$dst, $src}",
-             [(store (and (loadi64 addr:$dst), i64immSExt32:$src), addr:$dst),
-              (implicit EFLAGS)]>;
+def AND8mr    : BinOpMR<0x20, "and", Xi8 , and>;
+def AND16mr   : BinOpMR<0x20, "and", Xi16, and>;
+def AND32mr   : BinOpMR<0x20, "and", Xi32, and>;
+def AND64mr   : BinOpMR<0x20, "and", Xi64, and>;
 
-def AND16mi8 : Ii8<0x83, MRM4m,
-                   (outs), (ins i16mem:$dst, i16i8imm :$src),
-                   "and{w}\t{$src, $dst|$dst, $src}",
-              [(store (and (load addr:$dst), i16immSExt8:$src), addr:$dst),
-               (implicit EFLAGS)]>,
-                   OpSize;
-def AND32mi8 : Ii8<0x83, MRM4m,
-                   (outs), (ins i32mem:$dst, i32i8imm :$src),
-                   "and{l}\t{$src, $dst|$dst, $src}",
-              [(store (and (load addr:$dst), i32immSExt8:$src), addr:$dst),
-               (implicit EFLAGS)]>;
-def AND64mi8 : RIi8<0x83, MRM4m,
-                    (outs), (ins i64mem:$dst, i64i8imm :$src),
-                    "and{q}\t{$src, $dst|$dst, $src}",
-                 [(store (and (load addr:$dst), i64immSExt8:$src), addr:$dst),
-                  (implicit EFLAGS)]>;
 
-// FIXME: Implicitly modifiers AL.
+def AND8mi    : BinOpMI<0x80, "and", Xi8 , and, MRM4m>;
+def AND16mi   : BinOpMI<0x80, "and", Xi16, and, MRM4m>;
+def AND32mi   : BinOpMI<0x80, "and", Xi32, and, MRM4m>;
+def AND64mi32 : BinOpMI<0x80, "and", Xi64, and, MRM4m>;
+
+def AND16mi8  : BinOpMI8<0x82, "and", Xi16, and, MRM4m>;
+def AND32mi8  : BinOpMI8<0x82, "and", Xi32, and, MRM4m>;
+def AND64mi8  : BinOpMI8<0x82, "and", Xi64, and, MRM4m>;
+
+                   
+// FIXME: Implicitly modifies AL.
 def AND8i8 : Ii8<0x24, RawFrm, (outs), (ins i8imm:$src),
                  "and{b}\t{$src, %al|%al, $src}", []>;
 def AND16i16 : Ii16<0x25, RawFrm, (outs), (ins i16imm:$src),
