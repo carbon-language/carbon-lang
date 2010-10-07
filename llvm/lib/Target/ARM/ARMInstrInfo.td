@@ -2416,6 +2416,9 @@ def BCCZi64 : PseudoInst<(outs),
 // Conditional moves
 // FIXME: should be able to write a pattern for ARMcmov, but can't use
 // a two-value operand where a dag node expects two operands. :(
+// FIXME: These should all be pseudo-instructions that get expanded to
+//        the normal MOV instructions. That would fix the dependency on
+//        special casing them in tblgen.
 let neverHasSideEffects = 1 in {
 def MOVCCr : AI1<0b1101, (outs GPR:$dst), (ins GPR:$false, GPR:$true), DPFrm,
                 IIC_iCMOVr, "mov", "\t$dst, $true",
@@ -2431,6 +2434,16 @@ def MOVCCs : AI1<0b1101, (outs GPR:$dst),
    [/*(set GPR:$dst, (ARMcmov GPR:$false, so_reg:$true, imm:$cc, CCR:$ccr))*/]>,
                 RegConstraint<"$false = $dst">, UnaryDP {
   let Inst{25} = 0;
+}
+
+def MOVCCi16 : AI1<0b1000, (outs GPR:$dst), (ins GPR:$false, i32imm:$src),
+                 DPFrm, IIC_iMOVi,
+                 "movw", "\t$dst, $src",
+                 []>,
+                 RegConstraint<"$false = $dst">, Requires<[IsARM, HasV6T2]>,
+                 UnaryDP {
+  let Inst{20} = 0;
+  let Inst{25} = 1;
 }
 
 def MOVCCi : AI1<0b1101, (outs GPR:$dst),

@@ -193,7 +193,7 @@ private:
   SDNode *SelectT2CMOVSoImmOp(SDNode *N, SDValue FalseVal, SDValue TrueVal,
                               ARMCC::CondCodes CCVal, SDValue CCR,
                               SDValue InFlag);
-  SDNode *SelectARMCMOVSoImmOp(SDNode *N, SDValue FalseVal, SDValue TrueVal,
+  SDNode *SelectARMCMOVImmOp(SDNode *N, SDValue FalseVal, SDValue TrueVal,
                                ARMCC::CondCodes CCVal, SDValue CCR,
                                SDValue InFlag);
 
@@ -1521,18 +1521,20 @@ SelectT2CMOVSoImmOp(SDNode *N, SDValue FalseVal, SDValue TrueVal,
 }
 
 SDNode *ARMDAGToDAGISel::
-SelectARMCMOVSoImmOp(SDNode *N, SDValue FalseVal, SDValue TrueVal,
+SelectARMCMOVImmOp(SDNode *N, SDValue FalseVal, SDValue TrueVal,
                      ARMCC::CondCodes CCVal, SDValue CCR, SDValue InFlag) {
   ConstantSDNode *T = dyn_cast<ConstantSDNode>(TrueVal);
   if (!T)
     return 0;
 
-  if (Pred_so_imm(TrueVal.getNode())) {
-    SDValue True = CurDAG->getTargetConstant(T->getZExtValue(), MVT::i32);
+  unsigned TrueImm = T->getZExtValue();
+  bool isSoImm = Pred_so_imm(TrueVal.getNode());
+  if (isSoImm || (Subtarget->hasV6T2Ops() && TrueImm <= 0xffff)) {
+    SDValue True = CurDAG->getTargetConstant(TrueImm, MVT::i32);
     SDValue CC = CurDAG->getTargetConstant(CCVal, MVT::i32);
     SDValue Ops[] = { FalseVal, True, CC, CCR, InFlag };
-    return CurDAG->SelectNodeTo(N,
-                                ARM::MOVCCi, MVT::i32, Ops, 5);
+    return CurDAG->SelectNodeTo(N, (isSoImm ? ARM::MOVCCi : ARM::MOVCCi16),
+                                MVT::i32, Ops, 5);
   }
   return 0;
 }
@@ -1589,10 +1591,10 @@ SDNode *ARMDAGToDAGISel::SelectCMOVOp(SDNode *N) {
       if (Res)
         return Res;
     } else {
-      SDNode *Res = SelectARMCMOVSoImmOp(N, FalseVal, TrueVal,
+      SDNode *Res = SelectARMCMOVImmOp(N, FalseVal, TrueVal,
                                          CCVal, CCR, InFlag);
       if (!Res)
-        Res = SelectARMCMOVSoImmOp(N, TrueVal, FalseVal,
+        Res = SelectARMCMOVImmOp(N, TrueVal, FalseVal,
                                ARMCC::getOppositeCondition(CCVal), CCR, InFlag);
       if (Res)
         return Res;

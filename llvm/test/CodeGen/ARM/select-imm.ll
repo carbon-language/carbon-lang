@@ -25,8 +25,8 @@ entry:
 ; ARM: movle r0, #123
 
 ; T2: t2:
-; T2: movw r0, #357
-; T2: movle r0, #123
+; T2: mov r0, #123
+; T2: movwgt r0, #357
 
   %0 = icmp sgt i32 %c, 1
   %1 = select i1 %0, i32 357, i32 123
