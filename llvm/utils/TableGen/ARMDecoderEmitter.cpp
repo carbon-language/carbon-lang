@@ -1610,13 +1610,13 @@ bool ARMDecoderEmitter::ARMDEBackend::populateInstruction(
     // better off using the generic RSCri and RSCrs instructions.
     if (Name == "RSCSri" || Name == "RSCSrs") return false;
 
-    // MOVCCr, MOVCCs, MOVCCi, MOVCCi16, t2MOVCCi16, FCYPScc, FCYPDcc,
-    // FNEGScc, and FNEGDcc are used in the compiler to implement CMOVs.
+    // MOVCCr, MOVCCs, MOVCCi, MOVCCi16, FCYPScc, FCYPDcc, FNEGScc, and
+    // FNEGDcc are used in the compiler to implement conditional moves.
     // We can ignore them in favor of their more generic versions of
     // instructions. See also SDNode *ARMDAGToDAGISel::Select(SDValue Op).
-    if (Name == "MOVCCr"   || Name == "MOVCCs"     || Name == "MOVCCi"  ||
-        Name == "MOVCCi16" || Name == "t2MOVCCi16" || Name == "FCPYScc" ||
-        Name == "FCPYDcc"  || Name == "FNEGScc"    || Name == "FNEGDcc")
+    if (Name == "MOVCCr"   || Name == "MOVCCs"  || Name == "MOVCCi" ||
+        Name == "MOVCCi16" || Name == "FCPYScc" || Name == "FCPYDcc" ||
+        Name == "FNEGScc"  || Name == "FNEGDcc")
       return false;
 
     // Ditto for VMOVDcc, VMOVScc, VNEGDcc, and VNEGScc.
@@ -1734,6 +1734,7 @@ bool ARMDecoderEmitter::ARMDEBackend::populateInstruction(
     //   tLDRcp conflicts with tLDRspi
     //   tRestore conflicts with tLDRspi
     //   t2LEApcrelJT conflicts with t2LEApcrel
+    //   t2MOVCCi16 conflicts with tMOVi16
     if (Name == "tBfar" ||
         /* Name == "tCMNz" || */ Name == "tCMPzi8" || Name == "tCMPzr" ||
         Name == "tCMPzhir" || /* Name == "t2CMNzrr" || Name == "t2CMNzrs" ||
@@ -1741,7 +1742,7 @@ bool ARMDecoderEmitter::ARMDEBackend::populateInstruction(
         Name == "t2CMPzri" || Name == "tPOP_RET" || Name == "t2LDM_RET" ||
         Name == "tMOVCCi" || Name == "tMOVCCr" || Name == "tBR_JTr" ||
         Name == "tSpill" || Name == "tLDRcp" || Name == "tRestore" ||
-        Name == "t2LEApcrelJT")
+        Name == "t2LEApcrelJT" || Name == "t2MOVCCi16")
       return false;
   }
 
