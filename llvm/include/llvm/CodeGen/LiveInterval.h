@@ -544,6 +544,45 @@ namespace llvm {
     LI.print(OS);
     return OS;
   }
-}
 
+  /// ConnectedVNInfoEqClasses - Helper class that can divide VNInfos in a
+  /// LiveInterval into equivalence clases of connected components. A
+  /// LiveInterval that has multiple connected components can be broken into
+  /// multiple LiveIntervals.
+  ///
+  /// Given a LiveInterval that may have multiple connected components, run:
+  ///
+  ///   unsigned numComps = ConEQ.Classify(LI);
+  ///   if (numComps > 1) {
+  ///     // allocate numComps-1 new LiveIntervals into LIS[1..]
+  ///     ConEQ.Distribute(LIS);
+  /// }
+
+  class ConnectedVNInfoEqClasses {
+    LiveIntervals &lis_;
+
+    // Map each value number to its equivalence class.
+    // The invariant is that EqClass[x] <= x.
+    // Two values are connected iff EqClass[x] == EqClass[b].
+    SmallVector<unsigned, 8> eqClass_;
+
+    // Note that values a and b are connected.
+    void Connect(unsigned a, unsigned b);
+
+    unsigned Renumber();
+
+  public:
+    explicit ConnectedVNInfoEqClasses(LiveIntervals &lis) : lis_(lis) {}
+
+    /// Classify - Classify the values in LI into connected components.
+    /// Return the number of connected components.
+    unsigned Classify(const LiveInterval *LI);
+
+    // Distribute values in LIV[0] into a separate LiveInterval for each connected
+    // component. LIV must have a LiveInterval for each connected component.
+    // The LiveIntervals in Liv[1..] must be empty.
+    void Distribute(LiveInterval *LIV[]);
+  };
+
+}
 #endif

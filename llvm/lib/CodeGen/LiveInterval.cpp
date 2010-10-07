@@ -702,3 +702,113 @@ void LiveInterval::dump() const {
 void LiveRange::print(raw_ostream &os) const {
   os << *this;
 }
+
+/// ConnectedVNInfoEqClasses - Helper class that can divide VNInfos in a
+/// LiveInterval into equivalence clases of connected components. A
+/// LiveInterval that has multiple connected components can be broken into
+/// multiple LiveIntervals.
+
+void ConnectedVNInfoEqClasses::Connect(unsigned a, unsigned b) {
+  // Add new eq classes as needed.
+  for (unsigned i = eqClass_.size(), m = std::max(a, b); i <= m; ++i)
+    eqClass_.push_back(i);
+
+  unsigned eqa = eqClass_[a];
+  unsigned eqb = eqClass_[b];
+  if (eqa == eqb)
+    return;
+  if (eqa > eqb)
+    std::swap(eqa, eqb);
+  // Now, eqa < eqb. Switch all eqb members over to eqa.
+  for (unsigned i = eqb, e = eqClass_.size(); i != e; ++i)
+    if (eqClass_[i] == eqb)
+      eqClass_[i] = eqa;
+}
+
+unsigned ConnectedVNInfoEqClasses::Renumber() {
+  // No values at all.
+  if (eqClass_.empty())
+    return 0;
+
+  // Common case: A single connected component.
+  if (eqClass_.back() == 0)
+    return 1;
+
+  // Renumber classes. We use the fact that eqClass_[i] == i for class leaders.
+  unsigned count = 0;
+  for (unsigned i = 0, e = eqClass_.size(); i != e; ++i) {
+    unsigned q = eqClass_[i];
+    if (q == i)
+      eqClass_[i] = count++;
+    else
+      eqClass_[i] = eqClass_[q];
+  }
+
+  return count;
+}
+
+unsigned ConnectedVNInfoEqClasses::Classify(const LiveInterval *LI) {
+  // Determine connections.
+  eqClass_.clear();
+  for (LiveInterval::const_vni_iterator I = LI->vni_begin(), E = LI->vni_end();
+       I != E; ++I) {
+    const VNInfo *VNI = *I;
+    if (VNI->id == eqClass_.size())
+      eqClass_.push_back(VNI->id);
+    assert(!VNI->isUnused() && "Cannot handle unused values");
+    if (VNI->isPHIDef()) {
+      const MachineBasicBlock *MBB = lis_.getMBBFromIndex(VNI->def);
+      assert(MBB && "Phi-def has no defining MBB");
+      // Connect to values live out of predecessors.
+      for (MachineBasicBlock::const_pred_iterator PI = MBB->pred_begin(),
+           PE = MBB->pred_end(); PI != PE; ++PI)
+        if (const VNInfo *PVNI =
+              LI->getVNInfoAt(lis_.getMBBEndIdx(*PI).getPrevSlot()))
+          Connect(VNI->id, PVNI->id);
+    } else {
+      // Normal value defined by an instruction. Check for two-addr redef.
+      // FIXME: This could be coincidental. Should we really check for a tied
+      // operand constraint?
+      if (const VNInfo *UVNI = LI->getVNInfoAt(VNI->def.getUseIndex()))
+        Connect(VNI->id, UVNI->id);
+    }
+  }
+  return Renumber();
+}
+
+void ConnectedVNInfoEqClasses::Distribute(LiveInterval *LIV[]) {
+  assert(LIV[0] && "LIV[0] must be set");
+  LiveInterval &LI = *LIV[0];
+  // Check that they likely ran Classify() on LIV[0] first.
+  assert(eqClass_.size() == LI.getNumValNums() && "Bad classification data");
+
+  // First move runs to new intervals.
+  LiveInterval::iterator J = LI.begin(), E = LI.end();
+  while (J != E && eqClass_[J->valno->id] == 0)
+    ++J;
+  for (LiveInterval::iterator I = J; I != E; ++I) {
+    if (unsigned eq = eqClass_[I->valno->id]) {
+      assert(LIV[eq]->empty() || LIV[eq]->expiredAt(I->start) &&
+             "New intervals should be empty");
+      LIV[eq]->ranges.push_back(*I);
+    } else
+      *J++ = *I;
+  }
+  LI.ranges.erase(J, E);
+
+  // Transfer VNInfos to their new owners and renumber them.
+  unsigned j = 0, e = LI.getNumValNums();
+  while (j != e && eqClass_[j] == 0)
+    ++j;
+  for (unsigned i = j; i != e; ++i) {
+    VNInfo *VNI = LI.getValNumInfo(i);
+    if (unsigned eq = eqClass_[i]) {
+      VNI->id = LIV[eq]->getNumValNums();
+      LIV[eq]->valnos.push_back(VNI);
+    } else {
+      VNI->id = j;
+      LI.valnos[j++] = VNI;
+    }
+  }
+  LI.valnos.resize(j);
+}

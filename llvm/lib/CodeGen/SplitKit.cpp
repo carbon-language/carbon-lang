@@ -828,7 +828,29 @@ void SplitEditor::rewrite() {
     }
   }
 
+  // Get rid of unused values and set phi-kill flags.
+  dupli_.getLI()->RenumberValues(lis_);
 
+  // Now check if dupli was separated into multiple connected components.
+  ConnectedVNInfoEqClasses ConEQ(lis_);
+  if (unsigned NumComp = ConEQ.Classify(dupli_.getLI())) {
+    DEBUG(dbgs() << "  Remainder has " << NumComp << " connected components: "
+                 << *dupli_.getLI() << '\n');
+    unsigned firstComp = intervals_.size();
+    intervals_.push_back(dupli_.getLI());
+    // Did the remainder break up? Create intervals for all the components.
+    if (NumComp > 1) {
+      for (unsigned i = 1; i != NumComp; ++i)
+        intervals_.push_back(createInterval());
+      ConEQ.Distribute(&intervals_[firstComp]);
+    }
+  } else {
+    DEBUG(dbgs() << "  dupli became empty?\n");
+    lis_.removeInterval(dupli_.getLI()->reg);
+    dupli_.reset(0);
+  }
+
+  // Rewrite instructions.
   const LiveInterval *curli = sa_.getCurLI();
   for (MachineRegisterInfo::reg_iterator RI = mri_.reg_begin(curli->reg),
        RE = mri_.reg_end(); RI != RE;) {
@@ -843,7 +865,7 @@ void SplitEditor::rewrite() {
     }
     SlotIndex Idx = lis_.getInstructionIndex(MI);
     Idx = MO.isUse() ? Idx.getUseIndex() : Idx.getDefIndex();
-    LiveInterval *LI = dupli_.getLI();
+    LiveInterval *LI = 0;
     for (unsigned i = firstInterval, e = intervals_.size(); i != e; ++i) {
       LiveInterval *testli = intervals_[i];
       if (testli->liveAt(Idx)) {
@@ -851,19 +873,10 @@ void SplitEditor::rewrite() {
         break;
       }
     }
+    assert(LI && "No register was live at use");
     MO.setReg(LI->reg);
     DEBUG(dbgs() << "  rewrite BB#" << MI->getParent()->getNumber() << '\t'
                  << Idx << '\t' << *MI);
-  }
-
-  // dupli_ goes in last, after rewriting.
-  if (dupli_.getLI()->empty()) {
-    DEBUG(dbgs() << "  dupli became empty?\n");
-    lis_.removeInterval(dupli_.getLI()->reg);
-    dupli_.reset(0);
-  } else {
-    dupli_.getLI()->RenumberValues(lis_);
-    intervals_.push_back(dupli_.getLI());
   }
 
   // Calculate spill weight and allocation hints for new intervals.
