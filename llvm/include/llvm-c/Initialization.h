@@ -24,6 +24,7 @@ extern "C" {
 
 void LLVMInitializeTransformUtils(LLVMPassRegistryRef R);
 void LLVMInitializeScalarOpts(LLVMPassRegistryRef R);
+void LLVMInitializeIPO(LLVMPassRegistryRef R);
 
 #ifdef __cplusplus
 }

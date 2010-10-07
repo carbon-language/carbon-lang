@@ -7,16 +7,51 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file implements the C bindings for libLLVMIPO.a, which implements
-// several transformations over the LLVM intermediate representation.
+// This file implements the common infrastructure (including C bindings) for 
+// libLLVMIPO.a, which implements several transformations over the LLVM 
+// intermediate representation.
 //
 //===----------------------------------------------------------------------===//
 
 #include "llvm-c/Transforms/IPO.h"
+#include "llvm/InitializePasses.h"
 #include "llvm/PassManager.h"
 #include "llvm/Transforms/IPO.h"
 
 using namespace llvm;
+
+void llvm::initializeIPO(PassRegistry &Registry) {
+  initializeArgPromotionPass(Registry);
+  initializeConstantMergePass(Registry);
+  initializeDAEPass(Registry);
+  initializeDAHPass(Registry);
+  initializeDTEPass(Registry);
+  initializeFunctionAttrsPass(Registry);
+  initializeGlobalDCEPass(Registry);
+  initializeGlobalOptPass(Registry);
+  initializeIPCPPass(Registry);
+  initializeAlwaysInlinerPass(Registry);
+  initializeSimpleInlinerPass(Registry);
+  initializeInternalizePassPass(Registry);
+  initializeLoopExtractorPass(Registry);
+  initializeBlockExtractorPassPass(Registry);
+  initializeSingleLoopExtractorPass(Registry);
+  initializeLowerSetJmpPass(Registry);
+  initializeMergeFunctionsPass(Registry);
+  initializePartialInlinerPass(Registry);
+  initializePartSpecPass(Registry);
+  initializePruneEHPass(Registry);
+  initializeStripDeadPrototypesPassPass(Registry);
+  initializeStripSymbolsPass(Registry);
+  initializeStripDebugDeclarePass(Registry);
+  initializeStripDeadDebugInfoPass(Registry);
+  initializeStripNonDebugSymbolsPass(Registry);
+  initializeSRETPromotionPass(Registry);
+}
+
+void LLVMInitializeIPO(LLVMPassRegistryRef R) {
+  initializeIPO(*unwrap(R));
+}
 
 void LLVMAddArgumentPromotionPass(LLVMPassManagerRef PM) {
   unwrap(PM)->add(createArgumentPromotionPass());
