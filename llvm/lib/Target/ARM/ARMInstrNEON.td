@@ -132,13 +132,13 @@ def nModImm : Operand<i32> {
 // Use VLDM to load a Q register as a D register pair.
 // This is a pseudo instruction that is expanded to VLDMD after reg alloc.
 def VLDMQ
-  : PseudoVFPLdStM<(outs QPR:$dst), (ins addrmode4:$addr), IIC_fpLoadm, "",
+  : PseudoVFPLdStM<(outs QPR:$dst), (ins addrmode4:$addr), IIC_fpLoad_m, "",
                    [(set QPR:$dst, (v2f64 (load addrmode4:$addr)))]>;
 
 // Use VSTM to store a Q register as a D register pair.
 // This is a pseudo instruction that is expanded to VSTMD after reg alloc.
 def VSTMQ
-  : PseudoVFPLdStM<(outs), (ins QPR:$src, addrmode4:$addr), IIC_fpStorem, "",
+  : PseudoVFPLdStM<(outs), (ins QPR:$src, addrmode4:$addr), IIC_fpStore_m, "",
                    [(store (v2f64 QPR:$src), addrmode4:$addr)]>;
 
 let mayLoad = 1, neverHasSideEffects = 1, hasExtraDefRegAllocReq = 1 in {

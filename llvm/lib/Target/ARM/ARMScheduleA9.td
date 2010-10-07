@@ -629,11 +629,18 @@ def CortexA9Itineraries : ProcessorItineraries<
                               [2, 1]>,
   //
   // FP Load Multiple
-  InstrItinData<IIC_fpLoadm,  [InstrStage<1, [A9_DRegsVFP], 0, Required>,
+  InstrItinData<IIC_fpLoad_m, [InstrStage<1, [A9_DRegsVFP], 0, Required>,
                                InstrStage<2, [A9_DRegsN],   0, Reserved>,
                                InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
                                InstrStage<1, [A9_MUX0], 0>,
-                               InstrStage<1, [A9_NPipe]>]>,
+                               InstrStage<1, [A9_NPipe]>], [1, 1, 1, 1]>,
+  //
+  // FP Load Multiple + update
+  InstrItinData<IIC_fpLoad_mu,[InstrStage<1, [A9_DRegsVFP], 0, Required>,
+                               InstrStage<2, [A9_DRegsN],   0, Reserved>,
+                               InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
+                               InstrStage<1, [A9_MUX0], 0>,
+                               InstrStage<1, [A9_NPipe]>], [2, 1, 1, 1]>,
   //
   // Single-precision FP Store
   InstrItinData<IIC_fpStore32,[InstrStage<1, [A9_DRegsVFP], 0, Required>,
@@ -652,11 +659,18 @@ def CortexA9Itineraries : ProcessorItineraries<
                               [1, 1]>,
   //
   // FP Store Multiple
-  InstrItinData<IIC_fpStorem, [InstrStage<1, [A9_DRegsVFP], 0, Required>,
+  InstrItinData<IIC_fpStore_m,[InstrStage<1, [A9_DRegsVFP], 0, Required>,
                                InstrStage<2, [A9_DRegsN],   0, Reserved>,
                                InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
                                InstrStage<1, [A9_MUX0], 0>,
-                               InstrStage<1, [A9_NPipe]>]>,
+                               InstrStage<1, [A9_NPipe]>], [1, 1, 1, 1]>,
+  //
+  // FP Store Multiple + update
+  InstrItinData<IIC_fpStore_mu,[InstrStage<1, [A9_DRegsVFP], 0, Required>,
+                                InstrStage<2, [A9_DRegsN],   0, Reserved>,
+                                InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
+                                InstrStage<1, [A9_MUX0], 0>,
+                                InstrStage<1, [A9_NPipe]>], [2, 1, 1, 1]>,
   // NEON
   // Issue through integer pipeline, and execute in NEON unit.
   // VLD1

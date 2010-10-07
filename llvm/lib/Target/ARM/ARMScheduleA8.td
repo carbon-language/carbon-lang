@@ -414,54 +414,58 @@ def CortexA8Itineraries : ProcessorItineraries<
   InstrItinData<IIC_fpLoad32, [InstrStage<1, [A8_Issue], 0>,
                                InstrStage<1, [A8_Pipe0, A8_Pipe1]>,
                                InstrStage<1, [A8_LdSt0], 0>,
-                               InstrStage<1, [A8_NLSPipe]>],
+                               InstrStage<2, [A8_NLSPipe]>],
                               [2, 1]>,
   //
   // Double-precision FP Load
   // use A8_Issue to enforce the 1 load/store per cycle limit
   InstrItinData<IIC_fpLoad64, [InstrStage<2, [A8_Issue], 0>,
-                               InstrStage<1, [A8_Pipe0], 0>,
-                               InstrStage<1, [A8_Pipe1]>,
                                InstrStage<1, [A8_Pipe0, A8_Pipe1]>,
                                InstrStage<1, [A8_LdSt0], 0>,
-                               InstrStage<1, [A8_NLSPipe]>],
+                               InstrStage<2, [A8_NLSPipe]>],
                               [2, 1]>,
   //
   // FP Load Multiple
   // use A8_Issue to enforce the 1 load/store per cycle limit
-  InstrItinData<IIC_fpLoadm,  [InstrStage<3, [A8_Issue], 0>,
-                               InstrStage<2, [A8_Pipe0], 0>,
-                               InstrStage<2, [A8_Pipe1]>,
+  InstrItinData<IIC_fpLoad_m, [InstrStage<3, [A8_Issue], 0>,
                                InstrStage<1, [A8_Pipe0, A8_Pipe1]>,
                                InstrStage<1, [A8_LdSt0], 0>,
-                               InstrStage<1, [A8_NLSPipe]>]>,
+                               InstrStage<1, [A8_NLSPipe]>], [1, 1, 1, 2]>,
+  //
+  // FP Load Multiple + update
+  InstrItinData<IIC_fpLoad_mu,[InstrStage<3, [A8_Issue], 0>,
+                               InstrStage<1, [A8_Pipe0, A8_Pipe1]>,
+                               InstrStage<1, [A8_LdSt0], 0>,
+                               InstrStage<1, [A8_NLSPipe]>], [2, 1, 1, 1, 2]>,
   //
   // Single-precision FP Store
   // use A8_Issue to enforce the 1 load/store per cycle limit
   InstrItinData<IIC_fpStore32,[InstrStage<1, [A8_Issue], 0>,
                                InstrStage<1, [A8_Pipe0, A8_Pipe1]>,
                                InstrStage<1, [A8_LdSt0], 0>,
-                               InstrStage<1, [A8_NLSPipe]>],
+                               InstrStage<2, [A8_NLSPipe]>],
                               [1, 1]>,
   //
   // Double-precision FP Store
   // use A8_Issue to enforce the 1 load/store per cycle limit
   InstrItinData<IIC_fpStore64,[InstrStage<2, [A8_Issue], 0>,
-                               InstrStage<1, [A8_Pipe0], 0>,
-                               InstrStage<1, [A8_Pipe1]>,
                                InstrStage<1, [A8_Pipe0, A8_Pipe1]>,
                                InstrStage<1, [A8_LdSt0], 0>,
-                               InstrStage<1, [A8_NLSPipe]>],
+                               InstrStage<2, [A8_NLSPipe]>],
                               [1, 1]>,
   //
   // FP Store Multiple
   // use A8_Issue to enforce the 1 load/store per cycle limit
-  InstrItinData<IIC_fpStorem, [InstrStage<3, [A8_Issue], 0>,
-                               InstrStage<2, [A8_Pipe0], 0>,
-                               InstrStage<2, [A8_Pipe1]>,
+  InstrItinData<IIC_fpStore_m,[InstrStage<3, [A8_Issue], 0>,
                                InstrStage<1, [A8_Pipe0, A8_Pipe1]>,
                                InstrStage<1, [A8_LdSt0], 0>,
-                               InstrStage<1, [A8_NLSPipe]>]>,
+                               InstrStage<1, [A8_NLSPipe]>], [1, 1, 1, 1]>,
+  //
+  // FP Store Multiple + update
+  InstrItinData<IIC_fpStore_mu,[InstrStage<3, [A8_Issue], 0>,
+                                InstrStage<1, [A8_Pipe0, A8_Pipe1]>,
+                                InstrStage<1, [A8_LdSt0], 0>,
+                                InstrStage<1, [A8_NLSPipe]>], [2, 1, 1, 1, 1]>,
 
   // NEON
   // Issue through integer pipeline, and execute in NEON unit.

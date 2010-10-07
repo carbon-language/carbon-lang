@@ -120,10 +120,12 @@ def IIC_fpSQRT32   : InstrItinClass;
 def IIC_fpSQRT64   : InstrItinClass;
 def IIC_fpLoad32   : InstrItinClass;
 def IIC_fpLoad64   : InstrItinClass;
-def IIC_fpLoadm    : InstrItinClass<0>;  // micro-coded
+def IIC_fpLoad_m   : InstrItinClass<0>;  // micro-coded
+def IIC_fpLoad_mu  : InstrItinClass<0>;  // micro-coded
 def IIC_fpStore32  : InstrItinClass;
 def IIC_fpStore64  : InstrItinClass;
-def IIC_fpStorem   : InstrItinClass<0>;  // micro-coded
+def IIC_fpStore_m  : InstrItinClass<0>;  // micro-coded
+def IIC_fpStore_mu : InstrItinClass<0>;  // micro-coded
 def IIC_VLD1       : InstrItinClass;
 def IIC_VLD2       : InstrItinClass;
 def IIC_VLD3       : InstrItinClass;

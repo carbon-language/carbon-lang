@@ -1667,6 +1667,41 @@ ARMBaseInstrInfo::getOperandLatency(const InstrItineraryData *ItinData,
   default:
     DefCycle = ItinData->getOperandCycle(DefClass, DefIdx);
     break;
+  case ARM::VLDMD:
+  case ARM::VLDMS:
+  case ARM::VLDMD_UPD:
+  case ARM::VLDMS_UPD:  {
+    int RegNo = (int)(DefIdx+1) - DefTID.getNumOperands() + 1;
+    if (RegNo <= 0) {
+      // Def is the address writeback.
+      DefCycle = ItinData->getOperandCycle(DefClass, DefIdx);
+      break;
+    }
+    if (Subtarget.isCortexA8()) {
+      // (regno / 2) + (regno % 2) + 1
+      DefCycle = RegNo / 2 + 1;
+      if (RegNo % 2)
+        ++DefCycle;
+    } else if (Subtarget.isCortexA9()) {
+      DefCycle = RegNo;
+      bool isSLoad = false;
+      switch (UseTID.getOpcode()) {
+      default: break;
+      case ARM::VLDMS:
+      case ARM::VLDMS_UPD:
+        isSLoad = true;
+        break;
+      }
+      // If there are odd number of 'S' registers or if it's not 64-bit aligned,
+      // then it takes an extra cycle.
+      if ((isSLoad && (RegNo % 2)) || DefAlign < 8)
+        ++DefCycle;
+    } else {
+      // Assume the worst.
+      DefCycle = RegNo + 2;
+    }
+    break;
+  }
   case ARM::LDM_RET:
   case ARM::LDM:
   case ARM::LDM_UPD:
@@ -1677,7 +1712,12 @@ ARMBaseInstrInfo::getOperandLatency(const InstrItineraryData *ItinData,
   case ARM::t2LDM:
   case ARM::t2LDM_UPD: {
     LdmBypass = 1;
-    unsigned RegNo = (DefIdx+1) - DefTID.getNumOperands() + 1;
+    int RegNo = (int)(DefIdx+1) - DefTID.getNumOperands() + 1;
+    if (RegNo <= 0) {
+      // Def is the address writeback.
+      DefCycle = ItinData->getOperandCycle(DefClass, DefIdx);
+      break;
+    }
     if (Subtarget.isCortexA8()) {
       // 4 registers would be issued: 1, 2, 1.
       // 5 registers would be issued: 1, 2, 2.
@@ -1710,6 +1750,40 @@ ARMBaseInstrInfo::getOperandLatency(const InstrItineraryData *ItinData,
   default:
     UseCycle = ItinData->getOperandCycle(UseClass, UseIdx);
     break;
+  case ARM::VSTMD:
+  case ARM::VSTMS:
+  case ARM::VSTMD_UPD:
+  case ARM::VSTMS_UPD: {
+    int RegNo = (int)(UseIdx+1) - UseTID.getNumOperands() + 1;
+    if (RegNo <= 0) {
+      UseCycle = ItinData->getOperandCycle(UseClass, UseIdx);
+      break;
+    }
+    if (Subtarget.isCortexA8()) {
+      // (regno / 2) + (regno % 2) + 1
+      UseCycle = RegNo / 2 + 1;
+      if (RegNo % 2)
+        ++UseCycle;
+    } else if (Subtarget.isCortexA9()) {
+      UseCycle = RegNo;
+      bool isSStore = false;
+      switch (UseTID.getOpcode()) {
+      default: break;
+      case ARM::VSTMS:
+      case ARM::VSTMS_UPD:
+        isSStore = true;
+        break;
+      }
+      // If there are odd number of 'S' registers or if it's not 64-bit aligned,
+      // then it takes an extra cycle.
+      if ((isSStore && (RegNo % 2)) || UseAlign < 8)
+        ++UseCycle;
+    } else {
+      // Assume the worst.
+      UseCycle = RegNo + 2;
+    }
+    break;
+  }
   case ARM::STM:
   case ARM::STM_UPD:
   case ARM::tSTM_UPD:
@@ -1717,14 +1791,16 @@ ARMBaseInstrInfo::getOperandLatency(const InstrItineraryData *ItinData,
   case ARM::tPOP:
   case ARM::t2STM:
   case ARM::t2STM_UPD: {
-    unsigned RegNo = UseIdx - UseTID.getNumOperands() + 1;
+    int RegNo = (int)(UseIdx+1) - UseTID.getNumOperands() + 1;
+    if (RegNo <= 0) {
+      UseCycle = ItinData->getOperandCycle(UseClass, UseIdx);
+      break;
+    }
     if (Subtarget.isCortexA8()) {
-      // 4 registers would be issued: 1, 2, 1.
-      // 5 registers would be issued: 1, 2, 2.
       UseCycle = RegNo / 2;
       if (UseCycle < 2)
         UseCycle = 2;
-      // Result latency is issue cycle + 2: E2.
+      // Read in E3.
       UseCycle += 2;
     } else if (Subtarget.isCortexA9()) {
       UseCycle = (RegNo / 2);
@@ -1732,12 +1808,11 @@ ARMBaseInstrInfo::getOperandLatency(const InstrItineraryData *ItinData,
       // then it takes an extra AGU (Address Generation Unit) cycle.
       if ((RegNo % 2) || UseAlign < 8)
         ++UseCycle;
-      // Result latency is AGU cycles + 2.
-      UseCycle += 2;
     } else {
       // Assume the worst.
-      UseCycle = RegNo + 2;
+      UseCycle = 1;
     }
+    break;
   }
   }
 
