@@ -630,34 +630,39 @@ void SplitEditor::openIntv() {
 /// not live before Idx, a COPY is not inserted.
 void SplitEditor::enterIntvBefore(SlotIndex Idx) {
   assert(openli_.getLI() && "openIntv not called before enterIntvBefore");
+  DEBUG(dbgs() << "    enterIntvBefore " << Idx);
   VNInfo *ParentVNI = curli_->getVNInfoAt(Idx.getUseIndex());
   if (!ParentVNI) {
-    DEBUG(dbgs() << "    enterIntvBefore " << Idx << ": not live\n");
+    DEBUG(dbgs() << ": not live\n");
     return;
   }
+  DEBUG(dbgs() << ": valno " << ParentVNI->id);
   truncatedValues.insert(ParentVNI);
   MachineInstr *MI = lis_.getInstructionFromIndex(Idx);
   assert(MI && "enterIntvBefore called with invalid index");
-  openli_.defByCopyFrom(curli_->reg, ParentVNI, *MI->getParent(), MI);
-  DEBUG(dbgs() << "    enterIntvBefore " << Idx << ": " << *openli_.getLI()
-               << '\n');
+  VNInfo *VNI = openli_.defByCopyFrom(curli_->reg, ParentVNI,
+                                      *MI->getParent(), MI);
+  openli_.getLI()->addRange(LiveRange(VNI->def, Idx.getDefIndex(), VNI));
+  DEBUG(dbgs() << ": " << *openli_.getLI() << '\n');
 }
 
 /// enterIntvAtEnd - Enter openli at the end of MBB.
 void SplitEditor::enterIntvAtEnd(MachineBasicBlock &MBB) {
   assert(openli_.getLI() && "openIntv not called before enterIntvAtEnd");
   SlotIndex End = lis_.getMBBEndIdx(&MBB);
+  DEBUG(dbgs() << "    enterIntvAtEnd BB#" << MBB.getNumber() << ", " << End);
   VNInfo *ParentVNI = curli_->getVNInfoAt(End.getPrevSlot());
   if (!ParentVNI) {
-    DEBUG(dbgs() << "    enterIntvAtEnd " << End << ": not live\n");
+    DEBUG(dbgs() << ": not live\n");
     return;
   }
+  DEBUG(dbgs() << ": valno " << ParentVNI->id);
   truncatedValues.insert(ParentVNI);
   VNInfo *VNI = openli_.defByCopyFrom(curli_->reg, ParentVNI,
                                       MBB, MBB.getFirstTerminator());
   // Make sure openli is live out of MBB.
   openli_.getLI()->addRange(LiveRange(VNI->def, End, VNI));
-  DEBUG(dbgs() << "    enterIntvAtEnd: " << *openli_.getLI() << '\n');
+  DEBUG(dbgs() << ": " << *openli_.getLI() << '\n');
 }
 
 /// useIntv - indicate that all instructions in MBB should use openli.
@@ -675,13 +680,15 @@ void SplitEditor::useIntv(SlotIndex Start, SlotIndex End) {
 /// leaveIntvAfter - Leave openli after the instruction at Idx.
 void SplitEditor::leaveIntvAfter(SlotIndex Idx) {
   assert(openli_.getLI() && "openIntv not called before leaveIntvAfter");
+  DEBUG(dbgs() << "    leaveIntvAfter " << Idx);
 
   // The interval must be live beyond the instruction at Idx.
   VNInfo *ParentVNI = curli_->getVNInfoAt(Idx.getBoundaryIndex());
   if (!ParentVNI) {
-    DEBUG(dbgs() << "    leaveIntvAfter " << Idx << ": not live\n");
+    DEBUG(dbgs() << ": not live\n");
     return;
   }
+  DEBUG(dbgs() << ": valno " << ParentVNI->id);
 
   MachineBasicBlock::iterator MII = lis_.getInstructionFromIndex(Idx);
   MachineBasicBlock *MBB = MII->getParent();
@@ -691,21 +698,19 @@ void SplitEditor::leaveIntvAfter(SlotIndex Idx) {
   // Finally we must make sure that openli is properly extended from Idx to the
   // new copy.
   openli_.addSimpleRange(Idx.getBoundaryIndex(), VNI->def, ParentVNI);
-  DEBUG(dbgs() << "    leaveIntvAfter " << Idx << ": " << *openli_.getLI()
-               << '\n');
+  DEBUG(dbgs() << ": " << *openli_.getLI() << '\n');
 }
 
 /// leaveIntvAtTop - Leave the interval at the top of MBB.
 /// Currently, only one value can leave the interval.
 void SplitEditor::leaveIntvAtTop(MachineBasicBlock &MBB) {
   assert(openli_.getLI() && "openIntv not called before leaveIntvAtTop");
-
   SlotIndex Start = lis_.getMBBStartIdx(&MBB);
-  VNInfo *ParentVNI = curli_->getVNInfoAt(Start);
+  DEBUG(dbgs() << "    leaveIntvAtTop BB#" << MBB.getNumber() << ", " << Start);
 
-  // Is curli even live-in to MBB?
+  VNInfo *ParentVNI = curli_->getVNInfoAt(Start);
   if (!ParentVNI) {
-    DEBUG(dbgs() << "    leaveIntvAtTop at " << Start << ": not live\n");
+    DEBUG(dbgs() << ": not live\n");
     return;
   }
 
@@ -716,8 +721,7 @@ void SplitEditor::leaveIntvAtTop(MachineBasicBlock &MBB) {
   // Finally we must make sure that openli is properly extended from Start to
   // the new copy.
   openli_.addSimpleRange(Start, VNI->def, ParentVNI);
-  DEBUG(dbgs() << "    leaveIntvAtTop at " << Start << ": " << *openli_.getLI()
-               << '\n');
+  DEBUG(dbgs() << ": " << *openli_.getLI() << '\n');
 }
 
 /// closeIntv - Indicate that we are done editing the currently open
