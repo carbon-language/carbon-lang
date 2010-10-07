@@ -13,7 +13,7 @@
 
 #define DEBUG_TYPE "arm-emitter"
 #include "ARM.h"
-#include "ARMInstrInfo.h"
+#include "ARMBaseInfo.h"
 #include "llvm/MC/MCCodeEmitter.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCInst.h"
@@ -75,10 +75,6 @@ public:
 
   void EncodeInstruction(const MCInst &MI, raw_ostream &OS,
                          SmallVectorImpl<MCFixup> &Fixups) const;
-
-  void EmitOpcodePrefix(uint64_t TSFlags, unsigned &CurByte, int MemOperand,
-                        const MCInst &MI, const TargetInstrDesc &Desc,
-                        raw_ostream &OS) const;
 };
 
 } // end anonymous namespace
@@ -95,17 +91,6 @@ EmitImmediate(const MCOperand &DispOp, unsigned Size, MCFixupKind FixupKind,
               unsigned &CurByte, raw_ostream &OS,
               SmallVectorImpl<MCFixup> &Fixups, int ImmOffset) const {
   assert(0 && "ARMMCCodeEmitter::EmitImmediate() not yet implemented.");
-}
-
-/// EmitOpcodePrefix - Emit all instruction prefixes prior to the opcode.
-///
-/// MemOperand is the operand # of the start of a memory operand if present.  If
-/// Not present, it is -1.
-void ARMMCCodeEmitter::EmitOpcodePrefix(uint64_t TSFlags, unsigned &CurByte,
-                                        int MemOperand, const MCInst &MI,
-                                        const TargetInstrDesc &Desc,
-                                        raw_ostream &OS) const {
-  assert(0 && "ARMMCCodeEmitter::EmitOpcodePrefix() not yet implemented.");
 }
 
 void ARMMCCodeEmitter::
