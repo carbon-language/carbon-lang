@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -emit-llvm %s -o - | FileCheck %s
+// RUN: %clang_cc1 -triple i386-unknown-unknown -emit-llvm %s -o - | FileCheck %s
 
 int main() {
   // CHECK: internal constant [10 x i8] c"abc\00\00\00\00\00\00\00", align 1
