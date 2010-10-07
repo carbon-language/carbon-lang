@@ -228,10 +228,15 @@ def SDNPWantRoot    : SDNodeProperty;   // ComplexPattern gets the root of match
 def SDNPWantParent  : SDNodeProperty;   // ComplexPattern gets the parent
 
 //===----------------------------------------------------------------------===//
+// Selection DAG Pattern Operations
+class SDPatternOperator;
+
+//===----------------------------------------------------------------------===//
 // Selection DAG Node definitions.
 //
 class SDNode<string opcode, SDTypeProfile typeprof,
-             list<SDNodeProperty> props = [], string sdclass = "SDNode"> {
+             list<SDNodeProperty> props = [], string sdclass = "SDNode"> 
+             : SDPatternOperator {
   string Opcode  = opcode;
   string SDClass = sdclass;
   list<SDNodeProperty> Properties = props;
@@ -474,7 +479,7 @@ def NOOP_SDNodeXForm : SDNodeXForm<imm, [{}]>;
 /// DAG, frame a single node to multiply nested other fragments.
 ///
 class PatFrag<dag ops, dag frag, code pred = [{}],
-              SDNodeXForm xform = NOOP_SDNodeXForm> {
+              SDNodeXForm xform = NOOP_SDNodeXForm> : SDPatternOperator {
   dag Operands = ops;
   dag Fragment = frag;
   code Predicate = pred;
