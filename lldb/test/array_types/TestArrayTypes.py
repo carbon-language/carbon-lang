@@ -114,7 +114,7 @@ class ArrayTypesTestCase(TestBase):
 
         # The stop reason of the thread should be breakpoint.
         thread = self.process.GetThreadAtIndex(0)
-        self.assertTrue(thread.GetStopReason() == StopReasonEnum("Breakpoint"),
+        self.assertTrue(thread.GetStopReason() == lldb.eStopReasonBreakpoint,
                         STOPPED_DUE_TO_BREAKPOINT)
 
         # Sanity check the print representation of thread.

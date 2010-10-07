@@ -112,7 +112,7 @@ class ClassTypesTestCase(TestBase):
         if not rc.Success() or not self.process.IsValid():
             self.fail("SBTarget.LaunchProcess() failed")
 
-        if self.process.GetState() != StateTypeEnum("Stopped"):
+        if self.process.GetState() != lldb.eStateStopped:
             self.fail("Process should be in the 'Stopped' state, "
                       "instead the actual state is: '%s'" %
                       StateTypeString(self.process.GetState()))
@@ -120,9 +120,8 @@ class ClassTypesTestCase(TestBase):
         # The stop reason of the thread should be breakpoint.
         thread = self.process.GetThreadAtIndex(0)
 
-        self.expect(StopReasonString(thread.GetStopReason()),
-                    STOPPED_DUE_TO_BREAKPOINT, exe=False,
-            startstr = "Breakpoint")
+        self.assertTrue(thread.GetStopReason() == lldb.eStopReasonBreakpoint,
+                        STOPPED_DUE_TO_BREAKPOINT)
 
         # The filename of frame #0 should be 'main.cpp' and the line number
         # should be 93.

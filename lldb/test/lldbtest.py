@@ -165,105 +165,53 @@ def CMD_MSG(str, exe):
         return "'%s' compares successfully" % str
 
 #
-# Returns the enum from the input string.
-#
-def StateTypeEnum(string):
-    if string == "Invalid":
-        return 0
-    elif string == "Unloaded":
-        return 1
-    elif string == "Attaching":
-        return 2
-    elif string == "Launching":
-        return 3
-    elif string == "Stopped":
-        return 4
-    elif string == "Running":
-        return 5
-    elif string == "Stepping":
-        return 6
-    elif string == "Crashed":
-        return 7
-    elif string == "Detached":
-        return 8
-    elif string == "Exited":
-        return 9
-    elif string == "Suspended":
-        return 10
-    else:
-        raise Exception("Unknown stateType string")
-
-#
 # Returns the stateType string given an enum.
 #
 def StateTypeString(enum):
-    if enum == 0:
+    if enum == lldb.eStateInvalid:
         return "Invalid"
-    elif enum == 1:
+    elif enum == lldb.eStateUnloaded:
         return "Unloaded"
-    elif enum == 2:
+    elif enum == lldb.eStateAttaching:
         return "Attaching"
-    elif enum == 3:
+    elif enum == lldb.eStateLaunching:
         return "Launching"
-    elif enum == 4:
+    elif enum == lldb.eStateStopped:
         return "Stopped"
-    elif enum == 5:
+    elif enum == lldb.eStateRunning:
         return "Running"
-    elif enum == 6:
+    elif enum == lldb.eStateStepping:
         return "Stepping"
-    elif enum == 7:
+    elif enum == lldb.eStateCrashed:
         return "Crashed"
-    elif enum == 8:
+    elif enum == lldb.eStateDetached:
         return "Detached"
-    elif enum == 9:
+    elif enum == lldb.eStateExited:
         return "Exited"
-    elif enum == 10:
+    elif enum == lldb.eStateSuspended:
         return "Suspended"
     else:
         raise Exception("Unknown stopReason enum")
 
 #
-# Returns the enum from the input string.
-#
-def StopReasonEnum(string):
-    if string == "Invalid":
-        return 0
-    elif string == "None":
-        return 1
-    elif string == "Trace":
-        return 2
-    elif string == "Breakpoint":
-        return 3
-    elif string == "Watchpoint":
-        return 4
-    elif string == "Signal":
-        return 5
-    elif string == "Exception":
-        return 6
-    elif string == "PlanComplete":
-        return 7
-    else:
-        raise Exception("Unknown stopReason string")
-
-#
 # Returns the stopReason string given an enum.
 #
 def StopReasonString(enum):
-    if enum == 0:
+    if enum == lldb.eStopReasonInvalid:
         return "Invalid"
-    elif enum == 1:
+    elif enum == lldb.eStopReasonNone:
         return "None"
-    elif enum == 2:
+    elif enum == lldb.eStopReasonTrace:
         return "Trace"
-    elif enum == 3:
+    elif enum == lldb.eStopReasonBreakpoint:
         return "Breakpoint"
-    elif enum == 4:
+    elif enum == lldb.eStopReasonWatchpoint:
         return "Watchpoint"
-    elif enum == 5:
+    elif enum == lldb.eStopReasonSignal:
         return "Signal"
-    elif enum == 6:
+    elif enum == lldb.eStopReasonException:
         return "Exception"
-    elif enum == 7:
+    elif enum == lldb.eStopReasonPlanComplete:
         return "PlanComplete"
     else:
         raise Exception("Unknown stopReason enum")
