@@ -373,15 +373,23 @@ GDBRemoteRegisterContext::ReadAllRegisterValues (lldb::DataBufferSP &data_sp)
 {
     GDBRemoteCommunication &gdb_comm = GetGDBProcess().GetGDBRemote();
     StringExtractorGDBRemote response;
-    if (gdb_comm.SendPacketAndWaitForResponse("g", response, 1, false))
+    
+    Mutex::Locker locker;
+    if (gdb_comm.GetSequenceMutex (locker))
     {
-        if (response.IsErrorPacket())
-            return false;
-            
-        response.GetStringRef().insert(0, 1, 'G');
-        data_sp.reset (new DataBufferHeap(response.GetStringRef().c_str(), 
-                                          response.GetStringRef().size()));
-        return true;
+        if (GetGDBProcess().SetCurrentGDBRemoteThread(m_thread.GetID()))
+        {
+            if (gdb_comm.SendPacketAndWaitForResponse("g", response, 1, false))
+            {
+                if (response.IsErrorPacket())
+                    return false;
+                    
+                response.GetStringRef().insert(0, 1, 'G');
+                data_sp.reset (new DataBufferHeap(response.GetStringRef().c_str(), 
+                                                  response.GetStringRef().size()));
+                return true;
+            }
+        }
     }
     return false;
 }
@@ -391,14 +399,21 @@ GDBRemoteRegisterContext::WriteAllRegisterValues (const lldb::DataBufferSP &data
 {
     GDBRemoteCommunication &gdb_comm = GetGDBProcess().GetGDBRemote();
     StringExtractorGDBRemote response;
-    if (gdb_comm.SendPacketAndWaitForResponse((const char *)data_sp->GetBytes(), 
-                                              data_sp->GetByteSize(), 
-                                              response, 
-                                              1, 
-                                              false))
+    Mutex::Locker locker;
+    if (gdb_comm.GetSequenceMutex (locker))
     {
-        if (response.IsOKPacket())
-            return true;
+        if (GetGDBProcess().SetCurrentGDBRemoteThread(m_thread.GetID()))
+        {
+            if (gdb_comm.SendPacketAndWaitForResponse((const char *)data_sp->GetBytes(), 
+                                                      data_sp->GetByteSize(), 
+                                                      response, 
+                                                      1, 
+                                                      false))
+            {
+                if (response.IsOKPacket())
+                    return true;
+            }
+        }
     }
     return false;
 }
