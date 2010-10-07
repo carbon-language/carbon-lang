@@ -698,62 +698,75 @@ class BinOpAI<bits<8> opcode, string mnemonic, X86TypeInfo typeinfo,
   let Defs = [areg];
 }
 
+class Or2<bits<8> Val> {
+  bits<8> V = {Val{7}, Val{6}, Val{5}, Val{4}, Val{3}, Val{2}, 1, Val{0} };
+}
+class Or4<bits<8> Val> {
+  bits<8> V = {Val{7}, Val{6}, Val{5}, Val{4}, Val{3}, 1, Val{1}, Val{0} };
+}
+
+multiclass ArithBinOpEFLAGS<bits<8> BaseOpc, bits<8> BaseOpc2, bits<8> BaseOpc4,
+                            string mnemonic, Format RegMRM, Format MemMRM,
+                            SDNode opnodeflag, SDNode opnode,
+                            bit CommutableRR> {
+  let Defs = [EFLAGS] in {
+    let Constraints = "$src1 = $dst" in {
+      let isCommutable = CommutableRR in {
+        def #NAME#8rr  : BinOpRR<BaseOpc, mnemonic, Xi8 , opnodeflag>;
+        def #NAME#16rr : BinOpRR<BaseOpc, mnemonic, Xi16, opnodeflag>;
+        def #NAME#32rr : BinOpRR<BaseOpc, mnemonic, Xi32, opnodeflag>;
+        def #NAME#64rr : BinOpRR<BaseOpc, mnemonic, Xi64, opnodeflag>;
+      } // isCommutable
+
+      def #NAME#8rr_REV  : BinOpRR_Rev<BaseOpc2, mnemonic, Xi8>;
+      def #NAME#16rr_REV : BinOpRR_Rev<BaseOpc2, mnemonic, Xi16>;
+      def #NAME#32rr_REV : BinOpRR_Rev<BaseOpc2, mnemonic, Xi32>;
+      def #NAME#64rr_REV : BinOpRR_Rev<BaseOpc2, mnemonic, Xi64>;
+
+      def #NAME#8rm   : BinOpRM<BaseOpc2, mnemonic, Xi8 , opnodeflag>;
+      def #NAME#16rm  : BinOpRM<BaseOpc2, mnemonic, Xi16, opnodeflag>;
+      def #NAME#32rm  : BinOpRM<BaseOpc2, mnemonic, Xi32, opnodeflag>;
+      def #NAME#64rm  : BinOpRM<BaseOpc2, mnemonic, Xi64, opnodeflag>;
+
+      def #NAME#8ri   : BinOpRI<0x80, mnemonic, Xi8 , opnodeflag, RegMRM>;
+      def #NAME#16ri  : BinOpRI<0x80, mnemonic, Xi16, opnodeflag, RegMRM>;
+      def #NAME#32ri  : BinOpRI<0x80, mnemonic, Xi32, opnodeflag, RegMRM>;
+      def #NAME#64ri32: BinOpRI<0x80, mnemonic, Xi64, opnodeflag, RegMRM>;
+
+      def #NAME#16ri8 : BinOpRI8<0x82, mnemonic, Xi16, opnodeflag, RegMRM>;
+      def #NAME#32ri8 : BinOpRI8<0x82, mnemonic, Xi32, opnodeflag, RegMRM>;
+      def #NAME#64ri8 : BinOpRI8<0x82, mnemonic, Xi64, opnodeflag, RegMRM>;
+    } // Constraints = "$src1 = $dst"
+
+    def #NAME#8mr    : BinOpMR<BaseOpc, mnemonic, Xi8 , and>;
+    def #NAME#16mr   : BinOpMR<BaseOpc, mnemonic, Xi16, and>;
+    def #NAME#32mr   : BinOpMR<BaseOpc, mnemonic, Xi32, and>;
+    def #NAME#64mr   : BinOpMR<BaseOpc, mnemonic, Xi64, and>;
+
+    def #NAME#8mi    : BinOpMI<0x80, mnemonic, Xi8 , and, MemMRM>;
+    def #NAME#16mi   : BinOpMI<0x80, mnemonic, Xi16, and, MemMRM>;
+    def #NAME#32mi   : BinOpMI<0x80, mnemonic, Xi32, and, MemMRM>;
+    def #NAME#64mi32 : BinOpMI<0x80, mnemonic, Xi64, and, MemMRM>;
+
+    def #NAME#16mi8  : BinOpMI8<0x82, mnemonic, Xi16, and, MemMRM>;
+    def #NAME#32mi8  : BinOpMI8<0x82, mnemonic, Xi32, and, MemMRM>;
+    def #NAME#64mi8  : BinOpMI8<0x82, mnemonic, Xi64, and, MemMRM>;
+                       
+    def #NAME#8i8   : BinOpAI<BaseOpc4, mnemonic, Xi8 , AL>;
+    def #NAME#16i16 : BinOpAI<BaseOpc4, mnemonic, Xi16, AX>;
+    def #NAME#32i32 : BinOpAI<BaseOpc4, mnemonic, Xi32, EAX>;
+    def #NAME#64i32 : BinOpAI<BaseOpc4, mnemonic, Xi64, RAX>;
+  }                          
+}
+
+defm AND : ArithBinOpEFLAGS<0x20, 0x22, 0x24, "and", MRM4r, MRM4m,
+                            X86and_flag, and, 1>;
+
+
+
+
 // Logical operators.
 let Defs = [EFLAGS] in {
-let Constraints = "$src1 = $dst" in {
-
-let isCommutable = 1 in {   // X = AND Y, Z   --> X = AND Z, Y
-def AND8rr  : BinOpRR<0x20, "and", Xi8 , X86and_flag>;
-def AND16rr : BinOpRR<0x20, "and", Xi16, X86and_flag>;
-def AND32rr : BinOpRR<0x20, "and", Xi32, X86and_flag>;
-def AND64rr : BinOpRR<0x20, "and", Xi64, X86and_flag>;
-} // isCommutable
-
-
-// AND instructions with the destination register in REG and the source register
-//   in R/M.  Included for the disassembler.
-
-def AND8rr_REV  : BinOpRR_Rev<0x22, "and", Xi8>;
-def AND16rr_REV : BinOpRR_Rev<0x22, "and", Xi16>;
-def AND32rr_REV : BinOpRR_Rev<0x22, "and", Xi32>;
-def AND64rr_REV : BinOpRR_Rev<0x22, "and", Xi64>;
-
-def AND8rm   : BinOpRM<0x22, "and", Xi8 , X86and_flag>;
-def AND16rm  : BinOpRM<0x22, "and", Xi16, X86and_flag>;
-def AND32rm  : BinOpRM<0x22, "and", Xi32, X86and_flag>;
-def AND64rm  : BinOpRM<0x22, "and", Xi64, X86and_flag>;
-
-def AND8ri   : BinOpRI<0x80, "and", Xi8 , X86and_flag, MRM4r>;
-def AND16ri  : BinOpRI<0x80, "and", Xi16, X86and_flag, MRM4r>;
-def AND32ri  : BinOpRI<0x80, "and", Xi32, X86and_flag, MRM4r>;
-def AND64ri32: BinOpRI<0x80, "and", Xi64, X86and_flag, MRM4r>;
-
-def AND16ri8 : BinOpRI8<0x82, "and", Xi16, X86and_flag, MRM4r>;
-def AND32ri8 : BinOpRI8<0x82, "and", Xi32, X86and_flag, MRM4r>;
-def AND64ri8 : BinOpRI8<0x82, "and", Xi64, X86and_flag, MRM4r>;
-} // Constraints = "$src1 = $dst"
-
-
-def AND8mr    : BinOpMR<0x20, "and", Xi8 , and>;
-def AND16mr   : BinOpMR<0x20, "and", Xi16, and>;
-def AND32mr   : BinOpMR<0x20, "and", Xi32, and>;
-def AND64mr   : BinOpMR<0x20, "and", Xi64, and>;
-
-
-def AND8mi    : BinOpMI<0x80, "and", Xi8 , and, MRM4m>;
-def AND16mi   : BinOpMI<0x80, "and", Xi16, and, MRM4m>;
-def AND32mi   : BinOpMI<0x80, "and", Xi32, and, MRM4m>;
-def AND64mi32 : BinOpMI<0x80, "and", Xi64, and, MRM4m>;
-
-def AND16mi8  : BinOpMI8<0x82, "and", Xi16, and, MRM4m>;
-def AND32mi8  : BinOpMI8<0x82, "and", Xi32, and, MRM4m>;
-def AND64mi8  : BinOpMI8<0x82, "and", Xi64, and, MRM4m>;
-                   
-def AND8i8   : BinOpAI<0x24, "and", Xi8 , AL>;
-def AND16i16 : BinOpAI<0x24, "and", Xi16, AX>;
-def AND32i32 : BinOpAI<0x24, "and", Xi32, EAX>;
-def AND64i32 : BinOpAI<0x24, "and", Xi64, RAX>;
-
 
 let Constraints = "$src1 = $dst" in {
 
