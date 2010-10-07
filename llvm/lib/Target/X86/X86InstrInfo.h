@@ -613,14 +613,14 @@ class X86InstrInfo : public TargetInstrInfoImpl {
   /// RegOp2MemOpTable2Addr, RegOp2MemOpTable0, RegOp2MemOpTable1,
   /// RegOp2MemOpTable2 - Load / store folding opcode maps.
   ///
-  DenseMap<unsigned*, std::pair<unsigned,unsigned> > RegOp2MemOpTable2Addr;
-  DenseMap<unsigned*, std::pair<unsigned,unsigned> > RegOp2MemOpTable0;
-  DenseMap<unsigned*, std::pair<unsigned,unsigned> > RegOp2MemOpTable1;
-  DenseMap<unsigned*, std::pair<unsigned,unsigned> > RegOp2MemOpTable2;
+  DenseMap<unsigned, std::pair<unsigned,unsigned> > RegOp2MemOpTable2Addr;
+  DenseMap<unsigned, std::pair<unsigned,unsigned> > RegOp2MemOpTable0;
+  DenseMap<unsigned, std::pair<unsigned,unsigned> > RegOp2MemOpTable1;
+  DenseMap<unsigned, std::pair<unsigned,unsigned> > RegOp2MemOpTable2;
   
   /// MemOp2RegOpTable - Load / store unfolding opcode map.
   ///
-  DenseMap<unsigned*, std::pair<unsigned, unsigned> > MemOp2RegOpTable;
+  DenseMap<unsigned, std::pair<unsigned, unsigned> > MemOp2RegOpTable;
 
 public:
   explicit X86InstrInfo(X86TargetMachine &tm);

@@ -216,12 +216,12 @@ X86InstrInfo::X86InstrInfo(X86TargetMachine &tm)
   for (unsigned i = 0, e = array_lengthof(OpTbl2Addr); i != e; ++i) {
     unsigned RegOp = OpTbl2Addr[i][0];
     unsigned MemOp = OpTbl2Addr[i][1];
-    if (!RegOp2MemOpTable2Addr.insert(std::make_pair((unsigned*)RegOp,
+    if (!RegOp2MemOpTable2Addr.insert(std::make_pair(RegOp,
                                                std::make_pair(MemOp,0))).second)
       assert(false && "Duplicated entries?");
     // Index 0, folded load and store, no alignment requirement.
     unsigned AuxInfo = 0 | (1 << 4) | (1 << 5);
-    if (!MemOp2RegOpTable.insert(std::make_pair((unsigned*)MemOp,
+    if (!MemOp2RegOpTable.insert(std::make_pair(MemOp,
                                                 std::make_pair(RegOp,
                                                               AuxInfo))).second)
       assert(false && "Duplicated entries in unfolding maps?");
@@ -314,14 +314,14 @@ X86InstrInfo::X86InstrInfo(X86TargetMachine &tm)
     unsigned RegOp = OpTbl0[i][0];
     unsigned MemOp = OpTbl0[i][1];
     unsigned Align = OpTbl0[i][3];
-    if (!RegOp2MemOpTable0.insert(std::make_pair((unsigned*)RegOp,
+    if (!RegOp2MemOpTable0.insert(std::make_pair(RegOp,
                                            std::make_pair(MemOp,Align))).second)
       assert(false && "Duplicated entries?");
     unsigned FoldedLoad = OpTbl0[i][2];
     // Index 0, folded load or store.
     unsigned AuxInfo = 0 | (FoldedLoad << 4) | ((FoldedLoad^1) << 5);
     if (RegOp != X86::FsMOVAPDrr && RegOp != X86::FsMOVAPSrr)
-      if (!MemOp2RegOpTable.insert(std::make_pair((unsigned*)MemOp,
+      if (!MemOp2RegOpTable.insert(std::make_pair(MemOp,
                                      std::make_pair(RegOp, AuxInfo))).second)
         assert(false && "Duplicated entries in unfolding maps?");
   }
@@ -440,13 +440,13 @@ X86InstrInfo::X86InstrInfo(X86TargetMachine &tm)
     unsigned RegOp = OpTbl1[i][0];
     unsigned MemOp = OpTbl1[i][1];
     unsigned Align = OpTbl1[i][2];
-    if (!RegOp2MemOpTable1.insert(std::make_pair((unsigned*)RegOp,
+    if (!RegOp2MemOpTable1.insert(std::make_pair(RegOp,
                                            std::make_pair(MemOp,Align))).second)
       assert(false && "Duplicated entries?");
     // Index 1, folded load
     unsigned AuxInfo = 1 | (1 << 4);
     if (RegOp != X86::FsMOVAPDrr && RegOp != X86::FsMOVAPSrr)
-      if (!MemOp2RegOpTable.insert(std::make_pair((unsigned*)MemOp,
+      if (!MemOp2RegOpTable.insert(std::make_pair(MemOp,
                                      std::make_pair(RegOp, AuxInfo))).second)
         assert(false && "Duplicated entries in unfolding maps?");
   }
@@ -653,12 +653,12 @@ X86InstrInfo::X86InstrInfo(X86TargetMachine &tm)
     unsigned RegOp = OpTbl2[i][0];
     unsigned MemOp = OpTbl2[i][1];
     unsigned Align = OpTbl2[i][2];
-    if (!RegOp2MemOpTable2.insert(std::make_pair((unsigned*)RegOp,
+    if (!RegOp2MemOpTable2.insert(std::make_pair(RegOp,
                                            std::make_pair(MemOp,Align))).second)
       assert(false && "Duplicated entries?");
     // Index 2, folded load
     unsigned AuxInfo = 2 | (1 << 4);
-    if (!MemOp2RegOpTable.insert(std::make_pair((unsigned*)MemOp,
+    if (!MemOp2RegOpTable.insert(std::make_pair(MemOp,
                                    std::make_pair(RegOp, AuxInfo))).second)
       assert(false && "Duplicated entries in unfolding maps?");
   }
@@ -2267,7 +2267,7 @@ X86InstrInfo::foldMemoryOperandImpl(MachineFunction &MF,
                                     MachineInstr *MI, unsigned i,
                                     const SmallVectorImpl<MachineOperand> &MOs,
                                     unsigned Size, unsigned Align) const {
-  const DenseMap<unsigned*, std::pair<unsigned,unsigned> > *OpcodeTablePtr=NULL;
+  const DenseMap<unsigned, std::pair<unsigned,unsigned> > *OpcodeTablePtr = 0;
   bool isTwoAddrFold = false;
   unsigned NumOps = MI->getDesc().getNumOperands();
   bool isTwoAddr = NumOps > 1 &&
@@ -2305,8 +2305,8 @@ X86InstrInfo::foldMemoryOperandImpl(MachineFunction &MF,
   // If table selected...
   if (OpcodeTablePtr) {
     // Find the Opcode to fuse
-    DenseMap<unsigned*, std::pair<unsigned,unsigned> >::const_iterator I =
-      OpcodeTablePtr->find((unsigned*)MI->getOpcode());
+    DenseMap<unsigned, std::pair<unsigned,unsigned> >::const_iterator I =
+      OpcodeTablePtr->find(MI->getOpcode());
     if (I != OpcodeTablePtr->end()) {
       unsigned Opcode = I->second.first;
       unsigned MinAlign = I->second.second;
@@ -2580,7 +2580,7 @@ bool X86InstrInfo::canFoldMemoryOperand(const MachineInstr *MI,
   // Folding a memory location into the two-address part of a two-address
   // instruction is different than folding it other places.  It requires
   // replacing the *two* registers with the memory location.
-  const DenseMap<unsigned*, std::pair<unsigned,unsigned> > *OpcodeTablePtr=NULL;
+  const DenseMap<unsigned, std::pair<unsigned,unsigned> > *OpcodeTablePtr = 0;
   if (isTwoAddr && NumOps >= 2 && OpNum < 2) { 
     OpcodeTablePtr = &RegOp2MemOpTable2Addr;
   } else if (OpNum == 0) { // If operand 0
@@ -2588,8 +2588,7 @@ bool X86InstrInfo::canFoldMemoryOperand(const MachineInstr *MI,
     case X86::MOV8r0:
     case X86::MOV16r0:
     case X86::MOV32r0:
-    case X86::MOV64r0:
-      return true;
+    case X86::MOV64r0: return true;
     default: break;
     }
     OpcodeTablePtr = &RegOp2MemOpTable0;
@@ -2601,8 +2600,8 @@ bool X86InstrInfo::canFoldMemoryOperand(const MachineInstr *MI,
   
   if (OpcodeTablePtr) {
     // Find the Opcode to fuse
-    DenseMap<unsigned*, std::pair<unsigned,unsigned> >::const_iterator I =
-      OpcodeTablePtr->find((unsigned*)Opc);
+    DenseMap<unsigned, std::pair<unsigned,unsigned> >::const_iterator I =
+      OpcodeTablePtr->find(Opc);
     if (I != OpcodeTablePtr->end())
       return true;
   }
@@ -2612,8 +2611,8 @@ bool X86InstrInfo::canFoldMemoryOperand(const MachineInstr *MI,
 bool X86InstrInfo::unfoldMemoryOperand(MachineFunction &MF, MachineInstr *MI,
                                 unsigned Reg, bool UnfoldLoad, bool UnfoldStore,
                                 SmallVectorImpl<MachineInstr*> &NewMIs) const {
-  DenseMap<unsigned*, std::pair<unsigned,unsigned> >::const_iterator I =
-    MemOp2RegOpTable.find((unsigned*)MI->getOpcode());
+  DenseMap<unsigned, std::pair<unsigned,unsigned> >::const_iterator I =
+    MemOp2RegOpTable.find(MI->getOpcode());
   if (I == MemOp2RegOpTable.end())
     return false;
   unsigned Opc = I->second.first;
@@ -2741,8 +2740,8 @@ X86InstrInfo::unfoldMemoryOperand(SelectionDAG &DAG, SDNode *N,
   if (!N->isMachineOpcode())
     return false;
 
-  DenseMap<unsigned*, std::pair<unsigned,unsigned> >::const_iterator I =
-    MemOp2RegOpTable.find((unsigned*)N->getMachineOpcode());
+  DenseMap<unsigned, std::pair<unsigned,unsigned> >::const_iterator I =
+    MemOp2RegOpTable.find(N->getMachineOpcode());
   if (I == MemOp2RegOpTable.end())
     return false;
   unsigned Opc = I->second.first;
@@ -2842,8 +2841,8 @@ X86InstrInfo::unfoldMemoryOperand(SelectionDAG &DAG, SDNode *N,
 unsigned X86InstrInfo::getOpcodeAfterMemoryUnfold(unsigned Opc,
                                       bool UnfoldLoad, bool UnfoldStore,
                                       unsigned *LoadRegIndex) const {
-  DenseMap<unsigned*, std::pair<unsigned,unsigned> >::const_iterator I =
-    MemOp2RegOpTable.find((unsigned*)Opc);
+  DenseMap<unsigned, std::pair<unsigned,unsigned> >::const_iterator I =
+    MemOp2RegOpTable.find(Opc);
   if (I == MemOp2RegOpTable.end())
     return 0;
   bool FoldedLoad = I->second.second & (1 << 4);
