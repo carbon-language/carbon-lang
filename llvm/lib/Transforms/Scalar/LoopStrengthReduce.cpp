@@ -2903,7 +2903,7 @@ static const size_t ComplexityLimit = UINT16_MAX;
 /// this many solutions because it prune the search space, but the pruning
 /// isn't always sufficient.
 size_t LSRInstance::EstimateSearchSpaceComplexity() const {
-  uint32_t Power = 1;
+  size_t Power = 1;
   for (SmallVectorImpl<LSRUse>::const_iterator I = Uses.begin(),
        E = Uses.end(); I != E; ++I) {
     size_t FSize = I->Formulae.size();
