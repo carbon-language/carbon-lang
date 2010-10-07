@@ -1263,32 +1263,6 @@ struct UseMapDenseMapInfo {
   }
 };
 
-/// FormulaSorter - This class implements an ordering for formulae which sorts
-/// the by their standalone cost.
-class FormulaSorter {
-  /// These two sets are kept empty, so that we compute standalone costs.
-  DenseSet<const SCEV *> VisitedRegs;
-  SmallPtrSet<const SCEV *, 16> Regs;
-  Loop *L;
-  LSRUse *LU;
-  ScalarEvolution &SE;
-  DominatorTree &DT;
-
-public:
-  FormulaSorter(Loop *l, LSRUse &lu, ScalarEvolution &se, DominatorTree &dt)
-    : L(l), LU(&lu), SE(se), DT(dt) {}
-
-  bool operator()(const Formula &A, const Formula &B) {
-    Cost CostA;
-    CostA.RateFormula(A, Regs, VisitedRegs, L, LU->Offsets, SE, DT);
-    Regs.clear();
-    Cost CostB;
-    CostB.RateFormula(B, Regs, VisitedRegs, L, LU->Offsets, SE, DT);
-    Regs.clear();
-    return CostA < CostB;
-  }
-};
-
 /// LSRInstance - This class holds state for the main loop strength reduction
 /// logic.
 class LSRInstance {
@@ -2825,6 +2799,8 @@ LSRInstance::GenerateAllReuseFormulae() {
 /// If there are multiple formulae with the same set of registers used
 /// by other uses, pick the best one and delete the others.
 void LSRInstance::FilterOutUndesirableDedicatedRegisters() {
+  DenseSet<const SCEV *> VisitedRegs;
+  SmallPtrSet<const SCEV *, 16> Regs;
 #ifndef NDEBUG
   bool ChangedFormulae = false;
 #endif
@@ -2837,7 +2813,6 @@ void LSRInstance::FilterOutUndesirableDedicatedRegisters() {
 
   for (size_t LUIdx = 0, NumUses = Uses.size(); LUIdx != NumUses; ++LUIdx) {
     LSRUse &LU = Uses[LUIdx];
-    FormulaSorter Sorter(L, LU, SE, DT);
     DEBUG(dbgs() << "Filtering for use "; LU.print(dbgs()); dbgs() << '\n');
 
     bool Any = false;
@@ -2863,7 +2838,14 @@ void LSRInstance::FilterOutUndesirableDedicatedRegisters() {
         BestFormulae.insert(std::make_pair(Key, FIdx));
       if (!P.second) {
         Formula &Best = LU.Formulae[P.first->second];
-        if (Sorter.operator()(F, Best))
+
+        Cost CostF;
+        CostF.RateFormula(F, Regs, VisitedRegs, L, LU.Offsets, SE, DT);
+        Regs.clear();
+        Cost CostBest;
+        CostBest.RateFormula(Best, Regs, VisitedRegs, L, LU.Offsets, SE, DT);
+        Regs.clear();
+        if (CostF < CostBest)
           std::swap(F, Best);
         DEBUG(dbgs() << "  Filtering out formula "; F.print(dbgs());
               dbgs() << "\n"
