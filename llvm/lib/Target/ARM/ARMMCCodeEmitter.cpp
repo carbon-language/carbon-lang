@@ -36,6 +36,17 @@ public:
 
   ~ARMMCCodeEmitter() {}
 
+  // getBinaryCodeForInstr - TableGen'erated function for getting the
+  // binary encoding for an instruction.
+  unsigned getBinaryCodeForInstr(const MCInst &MI);
+
+  /// getMachineOpValue - Return binary encoding of operand. If the machine
+  /// operand requires relocation, record the relocation and return zero.
+  unsigned getMachineOpValue(const MCInst &MI,const MCOperand &MO);
+  unsigned getMachineOpValue(const MCInst &MI, unsigned OpIdx) {
+    return getMachineOpValue(MI, MI.getOperand(OpIdx));
+  }
+
   unsigned getNumFixupKinds() const {
     assert(0 && "ARMMCCodeEmitter::getNumFixupKinds() not yet implemented.");
     return 0;
@@ -98,3 +109,12 @@ EncodeInstruction(const MCInst &MI, raw_ostream &OS,
                   SmallVectorImpl<MCFixup> &Fixups) const {
   assert(0 && "ARMMCCodeEmitter::EncodeInstruction() not yet implemented.");
 }
+
+// FIXME: These #defines shouldn't be necessary. Instead, tblgen should
+// be able to generate code emitter helpers for either variant, like it
+// does for the AsmWriter.
+#define ARMCodeEmitter ARMMCCodeEmitter
+#define MachineInstr MCInst
+#include "ARMGenCodeEmitter.inc"
+#undef ARMCodeEmitter
+#undef MachineInstr
