@@ -14,6 +14,7 @@
 #include "lldb/Core/Module.h"
 #include "lldb/Symbol/CompileUnit.h"
 #include "lldb/Symbol/Function.h"
+#include "lldb/Symbol/Type.h"
 #include "lldb/Target/ExecutionContext.h"
 #include "lldb/Target/Target.h"
 
@@ -70,17 +71,20 @@ SBFunction::operator != (const SBFunction &rhs) const
 }
 
 bool
-SBFunction::GetDescription (SBStream &description)
+SBFunction::GetDescription (SBStream &s)
 {
     if (m_opaque_ptr)
     {
-        description.ref();
-        m_opaque_ptr->Dump (description.get(), false);
+        s.Printf ("SBFunction: id = 0x%8.8x, name = %s", 
+                            m_opaque_ptr->GetID(),
+                            m_opaque_ptr->GetName().AsCString());
+        Type *func_type = m_opaque_ptr->GetType();
+        if (func_type)
+            s.Printf(", type = %s", func_type->GetName().AsCString());
+        return true;
     }
-    else
-        description.Printf ("No value");
-
-    return true;
+    s.Printf ("No value");
+    return false;
 }
 
 SBInstructionList

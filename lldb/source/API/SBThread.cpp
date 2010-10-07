@@ -452,7 +452,10 @@ bool
 SBThread::GetDescription (SBStream &description)
 {
     if (m_opaque_sp)
-        m_opaque_sp->DumpUsingSettingsFormat (description.ref(), 0);
+    {
+        StreamString strm;
+        description.Printf("SBThread: tid = 0x%4.4x", m_opaque_sp->GetID());
+    }
     else
         description.Printf ("No value");
     

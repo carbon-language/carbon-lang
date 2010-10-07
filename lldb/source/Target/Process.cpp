@@ -198,9 +198,14 @@ Process::WaitForState
 {
     EventSP event_sp;
     uint32_t i;
-    StateType state = eStateUnloaded;
+    StateType state = GetState();
     while (state != eStateInvalid)
     {
+        // If we are exited or detached, we won't ever get back to any
+        // other valid state...
+        if (state == eStateDetached || state == eStateExited)
+            return state;
+
         state = WaitForStateChangedEvents (timeout, event_sp);
 
         for (i=0; i<num_match_states; ++i)
@@ -1006,6 +1011,7 @@ Process::Launch
             error = WillLaunch (exe_module);
             if (error.Success())
             {
+                SetPublicState (eStateLaunching);
                 // The args coming in should not contain the application name, the
                 // lldb_private::Process class will add this in case the executable
                 // gets resolved to a different file than was given on the command
@@ -1147,6 +1153,8 @@ Process::Attach (lldb::pid_t attach_pid)
     Error error (WillAttachToProcessWithID(attach_pid));
     if (error.Success())
     {
+        SetPublicState (eStateAttaching);
+
         error = DoAttachToProcessWithID (attach_pid);
         if (error.Success())
         {
@@ -1190,6 +1198,7 @@ Process::Attach (const char *process_name, bool wait_for_launch)
     Error error (WillAttachToProcessWithName(process_name, wait_for_launch));
     if (error.Success())
     {
+        SetPublicState (eStateAttaching);
         StartPrivateStateThread();
         error = DoAttachToProcessWithName (process_name, wait_for_launch);
         if (error.Fail())

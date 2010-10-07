@@ -652,7 +652,6 @@ ProcessGDBRemote::DoAttachToProcessWithID (lldb::pid_t attach_pid)
     
     if (attach_pid != LLDB_INVALID_PROCESS_ID)
     {
-        SetPrivateState (eStateAttaching);
         char host_port[128];
         snprintf (host_port, sizeof(host_port), "localhost:%u", get_random_port ());
         error = StartDebugserverProcess (host_port,                 // debugserver_url
@@ -753,8 +752,6 @@ ProcessGDBRemote::DoAttachToProcessWithName (const char *process_name, bool wait
     //Log *log = ProcessGDBRemoteLog::GetLogIfAllCategoriesSet (GDBR_LOG_PROCESS);
     if (process_name && process_name[0])
     {
-
-        SetPrivateState (eStateAttaching);
         char host_port[128];
         ArchSpec arch_spec = GetTarget().GetArchitecture();
         snprintf (host_port, sizeof(host_port), "localhost:%u", get_random_port ());

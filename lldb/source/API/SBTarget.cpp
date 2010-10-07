@@ -119,23 +119,22 @@ SBTarget::CreateProcess ()
 }
 
 
-// SBProcess
-// SBTarget::LaunchProcess
-// (
-//     char const **argv,
-//     char const **envp,
-//     const char *tty,
-//     uint32_t launch_flags,
-//     bool stop_at_entry
-// )
-// {
-//     SBError sb_error;    
-//     return LaunchProcess (argv, envp, tty, launch_flags, stop_at_entry, sb_error);
-// }
-
-
 SBProcess
 SBTarget::LaunchProcess
+(
+    char const **argv,
+    char const **envp,
+    const char *tty,
+    uint32_t launch_flags,
+    bool stop_at_entry
+)
+{
+    SBError sb_error;    
+    return Launch (argv, envp, tty, launch_flags, stop_at_entry, sb_error);
+}
+
+SBProcess
+SBTarget::Launch
 (
     char const **argv,
     char const **envp,
@@ -165,14 +164,14 @@ SBTarget::LaunchProcess
             error.SetError (sb_process->Launch (argv, envp, launch_flags, tty, tty, tty));
             if (error.Success())
             {
-                // We we are stopping at the entry point, we can return now!
-                if (stop_at_entry)
-                    return sb_process;
-
                 // Make sure we are stopped at the entry
                 StateType state = sb_process->WaitForProcessToStop (NULL);
                 if (state == eStateStopped)
                 {
+                    // We we are stopping at the entry point, we can return now!
+                    if (stop_at_entry)
+                        return sb_process;
+
                     // resume the process to skip the entry point
                     error.SetError (sb_process->Resume());
                     if (error.Success())
@@ -199,7 +198,7 @@ SBTarget::LaunchProcess
 
 
 lldb::SBProcess
-SBTarget::AttachToProcess 
+SBTarget::AttachToProcessWithID 
 (
     lldb::pid_t pid,// The process ID to attach to
     SBError& error  // An error explaining what went wrong if attach fails
@@ -238,7 +237,7 @@ SBTarget::AttachToProcess
 }
 
 lldb::SBProcess
-SBTarget::AttachToProcess 
+SBTarget::AttachToProcessWithName 
 (
     const char *name,   // basename of process to attach to
     bool wait_for,      // if true wait for a new instance of "name" to be launched

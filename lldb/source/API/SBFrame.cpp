@@ -402,8 +402,7 @@ SBFrame::GetDescription (SBStream &description)
 {
     if (m_opaque_sp)
     {
-        description.ref();
-        m_opaque_sp->DumpUsingSettingsFormat (description.get());
+        description.Printf("SBFrame: idx = %u", m_opaque_sp->GetFrameIndex());
     }
     else
         description.Printf ("No value");

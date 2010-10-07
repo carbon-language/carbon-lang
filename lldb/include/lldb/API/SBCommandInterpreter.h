@@ -72,7 +72,7 @@ public:
                       const char *last_char,
                       int match_start_point,
                       int max_return_elements,
-                      SBStringList &matches);
+                      lldb::SBStringList &matches);
 
 protected:
 

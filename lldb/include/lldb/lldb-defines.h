@@ -23,12 +23,12 @@
 //----------------------------------------------------------------------
 // lldb defines
 //----------------------------------------------------------------------
-#define LLDB_GENERIC_ERROR              ((uint32_t)UINT32_MAX)
+#define LLDB_GENERIC_ERROR              UINT32_MAX
 
 //----------------------------------------------------------------------
 // Breakpoints
 //----------------------------------------------------------------------
-#define LLDB_INVALID_BREAK_ID           ((lldb::break_id_t)0)
+#define LLDB_INVALID_BREAK_ID           0
 #define LLDB_DEFAULT_BREAK_SIZE         0
 #define LLDB_BREAK_ID_IS_VALID(bid)     ((bid) != (LLDB_INVALID_BREAK_ID))
 #define LLDB_BREAK_ID_IS_INTERNAL(bid)  ((bid) < 0)
@@ -36,7 +36,7 @@
 //----------------------------------------------------------------------
 // Watchpoints
 //----------------------------------------------------------------------
-#define LLDB_INVALID_WATCH_ID           ((lldb::user_id_t)0)
+#define LLDB_INVALID_WATCH_ID           0
 #define LLDB_WATCH_ID_IS_VALID(uid)     ((uid) != (LLDB_INVALID_WATCH_ID))
 #define LLDB_WATCH_TYPE_READ            (1u << 0)
 #define LLDB_WATCH_TYPE_WRITE           (1u << 1)
@@ -53,14 +53,14 @@
 //----------------------------------------------------------------------
 /// Invalid value definitions
 //----------------------------------------------------------------------
-#define LLDB_INVALID_ADDRESS            (~((lldb::addr_t)0))
-#define LLDB_INVALID_INDEX32            ((uint32_t)UINT32_MAX)
-#define LLDB_INVALID_REGNUM             ((uint32_t)UINT32_MAX)
-#define LLDB_INVALID_UID                ((lldb::user_id_t)UINT32_MAX)
-#define LLDB_INVALID_PROCESS_ID         ((lldb::pid_t)0)
-#define LLDB_INVALID_THREAD_ID          ((lldb::tid_t)0)
-#define LLDB_INVALID_FRAME_ID           ((uint32_t) UINT32_MAX)
-#define LLDB_INVALID_SIGNAL_NUMBER      ((int32_t) INT32_MAX)
+#define LLDB_INVALID_ADDRESS            UINT64_MAX
+#define LLDB_INVALID_INDEX32            UINT32_MAX
+#define LLDB_INVALID_REGNUM             UINT32_MAX
+#define LLDB_INVALID_UID                UINT32_MAX
+#define LLDB_INVALID_PROCESS_ID         0
+#define LLDB_INVALID_THREAD_ID          0
+#define LLDB_INVALID_FRAME_ID           UINT32_MAX
+#define LLDB_INVALID_SIGNAL_NUMBER      INT32_MAX
 
 //----------------------------------------------------------------------
 /// CPU Type defintions

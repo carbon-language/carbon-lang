@@ -360,7 +360,6 @@ ProcessMacOSX::DoAttachToProcessWithID (lldb::pid_t attach_pid)
     Log *log = ProcessMacOSXLog::GetLogIfAllCategoriesSet (PD_LOG_PROCESS);
     if (attach_pid != LLDB_INVALID_PROCESS_ID)
     {
-        SetPrivateState (eStateAttaching);
         SetID(attach_pid);
         // Let ourselves know we are going to be using SBS if the correct flag bit is set...
 #if defined (__arm__)
@@ -1642,8 +1641,6 @@ ProcessMacOSX::LaunchForDebug
 
             if (launch_type == eLaunchPosixSpawn)
             {
-
-                //SetState (eStateAttaching);
                 errno = 0;
                 if (::ptrace (PT_ATTACHEXC, pid, 0, 0) == 0)
                     launch_err.Clear();
@@ -1967,7 +1964,6 @@ ProcessMacOSX::SBLaunchForDebug
 //            m_args.push_back(arg);
         Task().StartExceptionThread();
         StartSTDIOThread();
-        SetState (eStateAttaching);
         int err = ptrace (PT_ATTACHEXC, m_pid, 0, 0);
         if (err == 0)
         {

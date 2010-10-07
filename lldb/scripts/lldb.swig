@@ -13,17 +13,6 @@
 
 %module lldb
 
-%typemap(in) lldb::ReturnStatus {
-  $1 = (int) $input;
-}
-
-%typemap(freearg) lldb::ReturnStatus {
-}
-
-%typemap(out) lldb::ReturnStatus {
-  $result = SWIG_From_unsigned_SS_int(static_cast< unsigned int >($1));
-}
-
 /* Typemap definitions, to allow SWIG to properly handle 'char**' data types. */
 
 %typemap(in) char ** {
@@ -70,7 +59,7 @@
 /* The liblldb header files to be included. */
 
 %{
-#include "lldb/lldb-types.h"
+#include "lldb/lldb-include.h"
 #include "lldb/API/SBAddress.h"
 #include "lldb/API/SBBlock.h"
 #include "lldb/API/SBBreakpoint.h"
@@ -78,6 +67,7 @@
 #include "lldb/API/SBBroadcaster.h"
 #include "lldb/API/SBCommandInterpreter.h"
 #include "lldb/API/SBCommandReturnObject.h"
+#include "lldb/API/SBCommunication.h"
 #include "lldb/API/SBCompileUnit.h"
 #include "lldb/API/SBDebugger.h"
 #include "lldb/API/SBError.h"
@@ -85,6 +75,8 @@
 #include "lldb/API/SBFileSpec.h"
 #include "lldb/API/SBFrame.h"
 #include "lldb/API/SBFunction.h"
+#include "lldb/API/SBHostOS.h"
+#include "lldb/API/SBInputReader.h"
 #include "lldb/API/SBInstruction.h"
 #include "lldb/API/SBInstructionList.h"
 #include "lldb/API/SBLineEntry.h"
@@ -96,6 +88,7 @@
 #include "lldb/API/SBStringList.h"
 #include "lldb/API/SBSymbol.h"
 #include "lldb/API/SBSymbolContext.h"
+#include "lldb/API/SBSymbolContextList.h"
 #include "lldb/API/SBTarget.h"
 #include "lldb/API/SBThread.h"
 #include "lldb/API/SBType.h"
@@ -109,35 +102,15 @@
 #include "lldb/Target/StackFrame.h"
 #include "lldb/Target/Target.h"
 #include "lldb/Target/Thread.h"
-#include "lldb/lldb-forward-rtti.h"
-using namespace lldb_private;
 %}
 
 /* Various liblldb typedefs that SWIG needs to know about.  */
-
-%{
-typedef unsigned int uint32_t;
-typedef int int32_t;
-typedef uint32_t tid_t;
-typedef uint64_t addr_t;
-typedef int32_t break_id_t;
-typedef lldb::SBStringList SBStringList;
-typedef lldb::RegisterKind RegisterKind;
-const RegisterKind kNumRegisterKinds = lldb::kNumRegisterKinds ;
-%}
-
-typedef unsigned int uint32_t;
-typedef int int32_t;
-typedef uint32_t tid_t;
-typedef uint64_t addr_t;
-typedef int32_t break_id_t;
-typedef lldb::SBStringList SBStringList;
-typedef lldb::RegisterKind RegisterKind;
-const RegisterKind kNumRegisterKinds = lldb::kNumRegisterKinds ;
-typedef int StateType;
-typedef int StopReason;
-
-
+%include <stdint.h>
+%include "lldb/lldb-defines.h"
+%include "lldb/lldb-enumerations.h"
+%include "lldb/lldb-forward.h"
+%include "lldb/lldb-forward-rtti.h"
+%include "lldb/lldb-types.h"
 %include "lldb/API/SBAddress.h"
 %include "lldb/API/SBBlock.h"
 %include "lldb/API/SBBreakpoint.h"
@@ -145,6 +118,7 @@ typedef int StopReason;
 %include "lldb/API/SBBroadcaster.h"
 %include "lldb/API/SBCommandInterpreter.h"
 %include "lldb/API/SBCommandReturnObject.h"
+%include "lldb/API/SBCommunication.h"
 %include "lldb/API/SBCompileUnit.h"
 %include "lldb/API/SBDebugger.h"
 %include "lldb/API/SBError.h"
@@ -152,6 +126,8 @@ typedef int StopReason;
 %include "lldb/API/SBFileSpec.h"
 %include "lldb/API/SBFrame.h"
 %include "lldb/API/SBFunction.h"
+%include "lldb/API/SBHostOS.h"
+%include "lldb/API/SBInputReader.h"
 %include "lldb/API/SBInstruction.h"
 %include "lldb/API/SBInstructionList.h"
 %include "lldb/API/SBLineEntry.h"
@@ -163,12 +139,12 @@ typedef int StopReason;
 %include "lldb/API/SBStringList.h"
 %include "lldb/API/SBSymbol.h"
 %include "lldb/API/SBSymbolContext.h"
+%include "lldb/API/SBSymbolContextList.h"
 %include "lldb/API/SBTarget.h"
 %include "lldb/API/SBThread.h"
 %include "lldb/API/SBType.h"
 %include "lldb/API/SBValue.h"
 %include "lldb/API/SBValueList.h"
-%include "lldb/lldb-types.h"
 
 %include "./Python/python-extensions.swig"
 
@@ -177,21 +153,24 @@ typedef int StopReason;
 
 
 bool
-ScriptInterpreterPython::BreakpointCallbackFunction (void *baton,
-                                                     StoppointCallbackContext *context,
-                                                     lldb::user_id_t break_id,
-                                                     lldb::user_id_t break_loc_id)
+lldb_private::ScriptInterpreterPython::BreakpointCallbackFunction 
+(
+    void *baton,
+    lldb_private::StoppointCallbackContext *context,
+    lldb::user_id_t break_id,
+    lldb::user_id_t break_loc_id
+)
 {
     bool ret_value = true;
     
-    BreakpointOptions::CommandData *bp_option_data = (BreakpointOptions::CommandData *) baton;
+    lldb_private::BreakpointOptions::CommandData *bp_option_data = (lldb_private::BreakpointOptions::CommandData *) baton;
     const char *python_function_name = bp_option_data->script_source.GetStringAtIndex (0);
     
     if (python_function_name != NULL 
         && python_function_name[0] != '\0')
     {
-        Thread *thread = context->exe_ctx.thread;
-        Target *target = context->exe_ctx.target;
+        lldb_private::Thread *thread = context->exe_ctx.thread;
+        lldb_private::Target *target = context->exe_ctx.target;
         const lldb::StackFrameSP stop_frame_sp = thread->GetStackFrameSPForStackFramePtr (context->exe_ctx.frame);
         lldb::BreakpointSP breakpoint_sp = target->GetBreakpointByID (break_id);
         const lldb::BreakpointLocationSP bp_loc_sp = breakpoint_sp->FindLocationByID (break_loc_id);

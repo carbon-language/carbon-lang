@@ -323,28 +323,19 @@ SBBreakpoint::GetNumLocations() const
 }
 
 bool
-SBBreakpoint::GetDescription (const char *description_level, SBStream &description)
+SBBreakpoint::GetDescription (SBStream &s)
 {
     if (m_opaque_sp)
     {
-        DescriptionLevel level;
-        if (strcmp (description_level, "brief") == 0)
-            level = eDescriptionLevelBrief;
-        else if (strcmp (description_level, "full") == 0)
-            level = eDescriptionLevelFull;
-        else if (strcmp (description_level, "verbose") == 0)
-            level = eDescriptionLevelVerbose;
-        else
-            level = eDescriptionLevelBrief;
-
-        description.ref();
-        m_opaque_sp->GetDescription (description.get(), level);
-        description.get()->EOL();
+        s.Printf("SBBreakpoint: id = %i, ", m_opaque_sp->GetID());
+        m_opaque_sp->GetResolverDescription (s.get());
+        m_opaque_sp->GetFilterDescription (s.get());
+        const size_t num_locations = m_opaque_sp->GetNumLocations ();
+        s.Printf(", locations = %zu", num_locations);
+        return true;
     }
-    else
-        description.Printf ("No value");
-
-    return true;
+    s.Printf ("No value");
+    return false;
 }
 
 bool

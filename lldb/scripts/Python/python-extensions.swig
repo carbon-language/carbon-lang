@@ -16,7 +16,7 @@
 %extend lldb::SBBreakpoint {
         PyObject *lldb::SBBreakpoint::__repr__ (){
                 lldb::SBStream description;
-                $self->GetDescription ("full", description);
+                $self->GetDescription (description);
                 return PyString_FromString (description.GetData());
         }
 }

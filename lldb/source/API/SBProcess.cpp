@@ -488,11 +488,11 @@ SBProcess::GetDescription (SBStream &description)
         if (exe_module)
             exe_name = exe_module->GetFileSpec().GetFilename().AsCString();
 
-        description.Printf ("Process {pid: %d, state: %s, threads: %d%s%s}", 
+        description.Printf ("SBProcess: pid = %d, state = %s, threads = %d%s%s", 
                             m_opaque_sp->GetID(),
                             SBDebugger::StateAsCString (GetState()), 
                             GetNumThreads(),
-                            exe_name ? ", executable: " : "",
+                            exe_name ? ", executable = " : "",
                             exe_name ? exe_name : "");
     }
     else

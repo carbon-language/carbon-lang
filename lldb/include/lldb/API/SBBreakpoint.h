@@ -105,7 +105,7 @@ public:
     GetNumLocations() const;
 
     bool
-    GetDescription (const char *description_level, lldb::SBStream &description);
+    GetDescription (lldb::SBStream &description);
 
     static lldb::BreakpointEventType
     GetBreakpointEventTypeFromEvent (const lldb::SBEvent& event);

@@ -133,13 +133,9 @@ public:
     }
 
     bool
-    Execute (Args& launch_args,
-             CommandReturnObject &result)
+    Execute (Args& launch_args, CommandReturnObject &result)
     {
         Target *target = m_interpreter.GetDebugger().GetSelectedTarget().get();
-        bool synchronous_execution = m_interpreter.GetSynchronous ();
-    //    bool launched = false;
-    //    bool stopped_after_launch = false;
 
         if (target == NULL)
         {
@@ -235,22 +231,29 @@ public:
         if (error.Success())
         {
             result.AppendMessageWithFormat ("Launching '%s'  (%s)\n", filename, archname);
-            result.SetStatus (eReturnStatusSuccessContinuingNoResult);
+            result.SetDidChangeProcessState (true);
             if (m_options.stop_at_entry == false)
             {
+                result.SetStatus (eReturnStatusSuccessContinuingNoResult);
                 StateType state = process->WaitForProcessToStop (NULL);
 
                 if (state == eStateStopped)
                 {
-                    // Call continue_command.
-                    CommandReturnObject continue_result;
-                    m_interpreter.HandleCommand("process continue", false, continue_result);
-                }
-
-                if (synchronous_execution)
-                {
-                    result.SetDidChangeProcessState (true);
-                    result.SetStatus (eReturnStatusSuccessFinishNoResult);
+                    error = process->Resume();
+                    if (error.Success())
+                    {
+                        bool synchronous_execution = m_interpreter.GetSynchronous ();
+                        if (synchronous_execution)
+                        {
+                            state = process->WaitForProcessToStop (NULL);
+                            result.SetDidChangeProcessState (true);
+                            result.SetStatus (eReturnStatusSuccessFinishResult);
+                        }
+                        else
+                        {
+                            result.SetStatus (eReturnStatusSuccessContinuingNoResult);
+                        }
+                    }
                 }
             }
         }

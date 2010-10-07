@@ -29,7 +29,7 @@ else
 fi
 
 
-HEADER_FILES="${SRC_ROOT}/include/lldb/lldb-types.h"\
+HEADER_FILES="${SRC_ROOT}/include/lldb/lldb-include.h"\
 " ${SRC_ROOT}/include/lldb/API/SBAddress.h"\
 " ${SRC_ROOT}/include/lldb/API/SBBlock.h"\
 " ${SRC_ROOT}/include/lldb/API/SBBreakpoint.h"\
@@ -37,6 +37,7 @@ HEADER_FILES="${SRC_ROOT}/include/lldb/lldb-types.h"\
 " ${SRC_ROOT}/include/lldb/API/SBBroadcaster.h"\
 " ${SRC_ROOT}/include/lldb/API/SBCommandInterpreter.h"\
 " ${SRC_ROOT}/include/lldb/API/SBCommandReturnObject.h"\
+" ${SRC_ROOT}/include/lldb/API/SBCommunication.h"\
 " ${SRC_ROOT}/include/lldb/API/SBCompileUnit.h"\
 " ${SRC_ROOT}/include/lldb/API/SBDebugger.h"\
 " ${SRC_ROOT}/include/lldb/API/SBError.h"\
@@ -44,6 +45,8 @@ HEADER_FILES="${SRC_ROOT}/include/lldb/lldb-types.h"\
 " ${SRC_ROOT}/include/lldb/API/SBFileSpec.h"\
 " ${SRC_ROOT}/include/lldb/API/SBFrame.h"\
 " ${SRC_ROOT}/include/lldb/API/SBFunction.h"\
+" ${SRC_ROOT}/include/lldb/API/SBHostOS.h"\
+" ${SRC_ROOT}/include/lldb/API/SBInputReader.h"\
 " ${SRC_ROOT}/include/lldb/API/SBInstruction.h"\
 " ${SRC_ROOT}/include/lldb/API/SBInstructionList.h"\
 " ${SRC_ROOT}/include/lldb/API/SBLineEntry.h"\
@@ -55,6 +58,7 @@ HEADER_FILES="${SRC_ROOT}/include/lldb/lldb-types.h"\
 " ${SRC_ROOT}/include/lldb/API/SBStringList.h"\
 " ${SRC_ROOT}/include/lldb/API/SBSymbol.h"\
 " ${SRC_ROOT}/include/lldb/API/SBSymbolContext.h"\
+" ${SRC_ROOT}/include/lldb/API/SBSymbolContextList.h"\
 " ${SRC_ROOT}/include/lldb/API/SBTarget.h"\
 " ${SRC_ROOT}/include/lldb/API/SBThread.h"\
 " ${SRC_ROOT}/include/lldb/API/SBType.h"\
@@ -143,7 +147,7 @@ fi
 
 # Build the SWIG C++ wrapper file for Python.
 
-swig -c++ -shadow -python -I"${SRC_ROOT}/include" -I./. -outdir "${CONFIG_BUILD_DIR}" -o "${swig_output_file}" "${swig_input_file}"
+swig -c++ -shadow -python -I"/usr/include" -I"${SRC_ROOT}/include" -I./. -outdir "${CONFIG_BUILD_DIR}" -o "${swig_output_file}" "${swig_input_file}"
 
 # Append global variable to lldb Python module.
 
