@@ -3,6 +3,8 @@ LLDB modules which contains miscellaneous utilities.
 """
 
 import lldb
+import sys
+import StringIO
 
 def GetFunctionNames(thread):
     """
@@ -54,8 +56,9 @@ def GetStackFrames(thread):
     return map(GetStackFrame, range(thread.GetNumFrames()))
 
 
-def PrintStackTrace(thread):
+def PrintStackTrace(thread, string_buffer = False):
     """Prints a simple stack trace of this thread."""
+
     depth = thread.GetNumFrames()
 
     mods = GetModuleNames(thread)
@@ -63,11 +66,16 @@ def PrintStackTrace(thread):
     files = GetFilenames(thread)
     lines = GetLineNumbers(thread)
 
-    print "Stack trace for thread id={0:#x} name={1} queue={2}:".format(
+    output = StringIO.StringIO() if string_buffer else sys.stdout
+
+    print >> output, "Stack trace for thread id={0:#x} name={1} queue={2}:".format(
         thread.GetThreadID(), thread.GetName(), thread.GetQueueName())
 
     for i in range(depth - 1):
-        print "  frame #{num}: {mod}`{func} at {file}:{line}".format(
+        print >> output, "  frame #{num}: {mod}`{func} at {file}:{line}".format(
             num=i, mod=mods[i], func=funcs[i], file=files[i], line=lines[i])
 
-    print "  frame #{num}: {mod}`start".format(num=depth-1, mod=mods[depth-1])
+    print >> output, "  frame #{num}: {mod}`start".format(num=depth-1, mod=mods[depth-1])
+
+    if string_buffer:
+        return output.getvalue()
