@@ -34,7 +34,6 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/MC/MCAsmInfo.h"
-
 #include <limits>
 
 using namespace llvm;
@@ -327,16 +326,15 @@ X86InstrInfo::X86InstrInfo(X86TargetMachine &tm)
     unsigned RegOp = OpTbl0[i][0];
     unsigned MemOp = OpTbl0[i][1];
     unsigned Align = OpTbl0[i][3];
-    if (!RegOp2MemOpTable0.insert(std::make_pair(RegOp,
-                                           std::make_pair(MemOp,Align))).second)
-      assert(false && "Duplicated entries?");
+    assert(!RegOp2MemOpTable0.count(RegOp) && "Duplicated entries?");
+    RegOp2MemOpTable0[RegOp] = std::make_pair(MemOp,Align);
     unsigned FoldedLoad = OpTbl0[i][2];
     // Index 0, folded load or store.
     unsigned AuxInfo = 0 | (FoldedLoad << 4) | ((FoldedLoad^1) << 5);
-    if (RegOp != X86::FsMOVAPDrr && RegOp != X86::FsMOVAPSrr)
-      if (!MemOp2RegOpTable.insert(std::make_pair(MemOp,
-                                     std::make_pair(RegOp, AuxInfo))).second)
-        assert(false && "Duplicated entries in unfolding maps?");
+    if (RegOp != X86::FsMOVAPDrr && RegOp != X86::FsMOVAPSrr) {
+      assert(!MemOp2RegOpTable.count(MemOp) && "Duplicated entries?");
+      MemOp2RegOpTable[MemOp] = std::make_pair(RegOp, AuxInfo);
+    }
   }
 
   static const unsigned OpTbl1[][3] = {
@@ -453,15 +451,15 @@ X86InstrInfo::X86InstrInfo(X86TargetMachine &tm)
     unsigned RegOp = OpTbl1[i][0];
     unsigned MemOp = OpTbl1[i][1];
     unsigned Align = OpTbl1[i][2];
-    if (!RegOp2MemOpTable1.insert(std::make_pair(RegOp,
-                                           std::make_pair(MemOp,Align))).second)
-      assert(false && "Duplicated entries?");
+    assert(!RegOp2MemOpTable1.count(RegOp) && "Duplicate entries");
+    RegOp2MemOpTable1[RegOp] = std::make_pair(MemOp,Align);
+    
     // Index 1, folded load
     unsigned AuxInfo = 1 | (1 << 4);
-    if (RegOp != X86::FsMOVAPDrr && RegOp != X86::FsMOVAPSrr)
-      if (!MemOp2RegOpTable.insert(std::make_pair(MemOp,
-                                     std::make_pair(RegOp, AuxInfo))).second)
-        assert(false && "Duplicated entries in unfolding maps?");
+    if (RegOp != X86::FsMOVAPDrr && RegOp != X86::FsMOVAPSrr) {
+      assert(!MemOp2RegOpTable.count(MemOp) && "Duplicate entries");
+      MemOp2RegOpTable[MemOp] = std::make_pair(RegOp, AuxInfo);
+    }
   }
 
   static const unsigned OpTbl2[][3] = {
