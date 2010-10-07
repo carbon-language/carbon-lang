@@ -46,29 +46,32 @@ the memory ordering parameter.
 </p>
 
 <blockquote><pre>
-<font color="#C80000">// type can be any pod</font>
+<font color="#C80000">// In every intrinsic signature below, type* atomic_obj may be a pointer to a</font>
+<font color="#C80000">//    volatile-qualifed type.</font>
+
+<font color="#C80000">// type must be trivially copyable</font>
 <font color="#C80000">// Behavior is defined for mem_ord = 0, 1, 2, 5</font>
-type __atomic_load(const volatile type* atomic_obj, int mem_ord);
+type __atomic_load(const type* atomic_obj, int mem_ord);
 
-<font color="#C80000">// type can be any pod</font>
+<font color="#C80000">// type must be trivially copyable</font>
 <font color="#C80000">// Behavior is defined for mem_ord = 0, 3, 5</font>
-type __atomic_store(volatile type* atomic_obj, type desired, int mem_ord);
+type __atomic_store(type* atomic_obj, type desired, int mem_ord);
 
-<font color="#C80000">// type can be any pod</font>
+<font color="#C80000">// type must be trivially copyable</font>
 <font color="#C80000">// Behavior is defined for mem_ord = [0 ... 5]</font>
-type __atomic_exchange(volatile type* atomic_obj, type desired, int mem_ord);
+type __atomic_exchange(type* atomic_obj, type desired, int mem_ord);
 
-<font color="#C80000">// type can be any pod</font>
+<font color="#C80000">// type must be trivially copyable</font>
 <font color="#C80000">// Behavior is defined for mem_success = [0 ... 5],</font>
-<font color="#C80000">//   mem_falure &lt;= mem_success &amp;&amp; mem_failure != [3, 4]</font>
-bool __atomic_compare_exchange_strong(volatile type* atomic_obj,
+<font color="#C80000">//   mem_falure &lt;= mem_success</font>
+bool __atomic_compare_exchange_strong(type* atomic_obj,
                                       type* expected, type desired,
                                       int mem_success, int mem_failure);
 
-<font color="#C80000">// type can be any pod</font>
+<font color="#C80000">// type must be trivially copyable</font>
 <font color="#C80000">// Behavior is defined for mem_success = [0 ... 5],</font>
-<font color="#C80000">//   mem_falure &lt;= mem_success &amp;&amp; mem_failure != [3, 4]</font>
-bool __atomic_compare_exchange_weak(volatile type* atomic_obj,
+<font color="#C80000">//   mem_falure &lt;= mem_success</font>
+bool __atomic_compare_exchange_weak(type* atomic_obj,
                                     type* expected, type desired,
                                     int mem_success, int mem_failure);
 
@@ -76,35 +79,35 @@ bool __atomic_compare_exchange_weak(volatile type* atomic_obj,
 <font color="#C80000">//      unsigned int, long, unsigned long, long long, unsigned long long,</font>
 <font color="#C80000">//      char16_t, char32_t, wchar_t</font>
 <font color="#C80000">// Behavior is defined for mem_ord = [0 ... 5]</font>
-type __atomic_fetch_add(volatile type* atomic_obj, type operand, int mem_ord);
+type __atomic_fetch_add(type* atomic_obj, type operand, int mem_ord);
 
 <font color="#C80000">// type is one of: char, signed char, unsigned char, short, unsigned short, int,</font>
 <font color="#C80000">//      unsigned int, long, unsigned long, long long, unsigned long long,</font>
 <font color="#C80000">//      char16_t, char32_t, wchar_t</font>
 <font color="#C80000">// Behavior is defined for mem_ord = [0 ... 5]</font>
-type __atomic_fetch_sub(volatile type* atomic_obj, type operand, int mem_ord);
+type __atomic_fetch_sub(type* atomic_obj, type operand, int mem_ord);
 
 <font color="#C80000">// type is one of: char, signed char, unsigned char, short, unsigned short, int,</font>
 <font color="#C80000">//      unsigned int, long, unsigned long, long long, unsigned long long,</font>
 <font color="#C80000">//      char16_t, char32_t, wchar_t</font>
 <font color="#C80000">// Behavior is defined for mem_ord = [0 ... 5]</font>
-type __atomic_fetch_and(volatile type* atomic_obj, type operand, int mem_ord);
+type __atomic_fetch_and(type* atomic_obj, type operand, int mem_ord);
 
 <font color="#C80000">// type is one of: char, signed char, unsigned char, short, unsigned short, int,</font>
 <font color="#C80000">//      unsigned int, long, unsigned long, long long, unsigned long long,</font>
 <font color="#C80000">//      char16_t, char32_t, wchar_t</font>
 <font color="#C80000">// Behavior is defined for mem_ord = [0 ... 5]</font>
-type __atomic_fetch_or(volatile type* atomic_obj, type operand, int mem_ord);
+type __atomic_fetch_or(type* atomic_obj, type operand, int mem_ord);
 
 <font color="#C80000">// type is one of: char, signed char, unsigned char, short, unsigned short, int,</font>
 <font color="#C80000">//      unsigned int, long, unsigned long, long long, unsigned long long,</font>
 <font color="#C80000">//      char16_t, char32_t, wchar_t</font>
 <font color="#C80000">// Behavior is defined for mem_ord = [0 ... 5]</font>
-type __atomic_fetch_xor(volatile type* atomic_obj, type operand, int mem_ord);
+type __atomic_fetch_xor(type* atomic_obj, type operand, int mem_ord);
 
 <font color="#C80000">// Behavior is defined for mem_ord = [0 ... 5]</font>
-void* __atomic_fetch_add(void* volatile* atomic_obj, ptrdiff_t operand, int mem_ord);
-void* __atomic_fetch_sub(void* volatile* atomic_obj, ptrdiff_t operand, int mem_ord);
+void* __atomic_fetch_add(void** atomic_obj, ptrdiff_t operand, int mem_ord);
+void* __atomic_fetch_sub(void** atomic_obj, ptrdiff_t operand, int mem_ord);
 
 <font color="#C80000">// Behavior is defined for mem_ord = [0 ... 5]</font>
 void __atomic_thread_fence(int mem_ord);
