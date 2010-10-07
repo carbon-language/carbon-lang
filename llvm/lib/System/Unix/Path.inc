@@ -439,7 +439,7 @@ Path::isDirectory() const {
   struct stat buf;
   if (0 != stat(path.c_str(), &buf))
     return false;
-  return buf.st_mode & S_IFDIR ? true : false;
+  return ((buf.st_mode & S_IFMT) == S_IFDIR) ? true : false;
 }
 
 bool
