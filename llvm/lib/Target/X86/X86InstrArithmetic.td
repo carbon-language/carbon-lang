@@ -600,8 +600,8 @@ class ITy<bits<8> opcode, Format f, X86TypeInfo typeinfo, dag outs, dag ins,
 
 // BinOpRR - Instructions like "add reg, reg, reg".
 class BinOpRR<bits<8> opcode, string mnemonic, X86TypeInfo typeinfo,
-              dag outlist, list<dag> pattern>
-  : ITy<opcode, MRMDestReg, typeinfo, outlist,
+              dag outlist, list<dag> pattern, Format f = MRMDestReg>
+  : ITy<opcode, f, typeinfo, outlist,
         (ins typeinfo.RegClass:$src1, typeinfo.RegClass:$src2),
         mnemonic, "{$src2, $src1|$src1, $src2}", pattern>;
 
@@ -616,10 +616,11 @@ class BinOpRR_R<bits<8> opcode, string mnemonic, X86TypeInfo typeinfo,
 // BinOpRR_F - Instructions like "cmp reg, Reg", where the pattern has
 // just a EFLAGS as a result.
 class BinOpRR_F<bits<8> opcode, string mnemonic, X86TypeInfo typeinfo,
-                SDNode opnode>
+                SDPatternOperator opnode, Format f = MRMDestReg>
   : BinOpRR<opcode, mnemonic, typeinfo, (outs),
             [(set EFLAGS,
-                  (opnode typeinfo.RegClass:$src1, typeinfo.RegClass:$src2))]>;
+                  (opnode typeinfo.RegClass:$src1, typeinfo.RegClass:$src2))],
+            f>;
 
 // BinOpRR_RF - Instructions like "add reg, reg, reg", where the pattern has
 // both a regclass and EFLAGS as a result.
@@ -655,7 +656,7 @@ class BinOpRM_R<bits<8> opcode, string mnemonic, X86TypeInfo typeinfo,
 
 // BinOpRM_F - Instructions like "cmp reg, [mem]".
 class BinOpRM_F<bits<8> opcode, string mnemonic, X86TypeInfo typeinfo,
-              SDNode opnode>
+              SDPatternOperator opnode>
   : BinOpRM<opcode, mnemonic, typeinfo, (outs),
             [(set EFLAGS,
             (opnode typeinfo.RegClass:$src1, (typeinfo.LoadNode addr:$src2)))]>;
@@ -685,7 +686,7 @@ class BinOpRI_R<bits<8> opcode, string mnemonic, X86TypeInfo typeinfo,
 
 // BinOpRI_F - Instructions like "cmp reg, imm".
 class BinOpRI_F<bits<8> opcode, string mnemonic, X86TypeInfo typeinfo,
-                SDNode opnode, Format f>
+                SDPatternOperator opnode, Format f>
   : BinOpRI<opcode, mnemonic, typeinfo, f, (outs),
             [(set EFLAGS,
                 (opnode typeinfo.RegClass:$src1, typeinfo.ImmOperator:$src2))]>;
@@ -749,8 +750,8 @@ class BinOpMR_F<bits<8> opcode, string mnemonic, X86TypeInfo typeinfo,
 
 // BinOpMI - Instructions like "add [mem], imm".
 class BinOpMI<string mnemonic, X86TypeInfo typeinfo,
-              Format f, list<dag> pattern>
-  : ITy<0x80, f, typeinfo,
+              Format f, list<dag> pattern, bits<8> opcode = 0x80>
+  : ITy<opcode, f, typeinfo,
         (outs), (ins typeinfo.MemOperand:$dst, typeinfo.ImmOperand:$src),
         mnemonic, "{$src, $dst|$dst, $src}", pattern> {
   let ImmT = typeinfo.ImmEncoding;
@@ -766,10 +767,11 @@ class BinOpMI_RMW<string mnemonic, X86TypeInfo typeinfo,
 
 // BinOpMI_F - Instructions like "cmp [mem], imm".
 class BinOpMI_F<string mnemonic, X86TypeInfo typeinfo,
-                SDNode opnode, Format f>
+                SDPatternOperator opnode, Format f, bits<8> opcode = 0x80>
   : BinOpMI<mnemonic, typeinfo, f, 
             [(set EFLAGS, (opnode (typeinfo.VT (load addr:$dst)),
-                                               typeinfo.ImmOperator:$src))]>;
+                                               typeinfo.ImmOperator:$src))],
+            opcode>;
 
 // BinOpMI8 - Instructions like "add [mem], imm8".
 class BinOpMI8<string mnemonic, X86TypeInfo typeinfo,
@@ -1008,98 +1010,45 @@ let Uses = [EFLAGS] in {
   defm SBB : ArithBinOp_R<0x18, 0x1A, 0x1C, "sbb", MRM3r, MRM3m, sube, 0, 0>;
 }
 
-//===----------------------------------------------------------------------===//
-// Test instructions are just like AND, except they don't generate a result.
-//
-let Defs = [EFLAGS] in {
-let isCommutable = 1 in {   // TEST X, Y   --> TEST Y, X
-def TEST8rr  : I<0x84, MRMSrcReg, (outs),  (ins GR8:$src1, GR8:$src2),
-                     "test{b}\t{$src2, $src1|$src1, $src2}",
-                     [(set EFLAGS, (X86cmp (and_su GR8:$src1, GR8:$src2), 0))]>;
-def TEST16rr : I<0x85, MRMSrcReg, (outs),  (ins GR16:$src1, GR16:$src2),
-                     "test{w}\t{$src2, $src1|$src1, $src2}",
-                     [(set EFLAGS, (X86cmp (and_su GR16:$src1, GR16:$src2),
-                      0))]>,
-                 OpSize;
-def TEST32rr : I<0x85, MRMSrcReg, (outs),  (ins GR32:$src1, GR32:$src2),
-                     "test{l}\t{$src2, $src1|$src1, $src2}",
-                     [(set EFLAGS, (X86cmp (and_su GR32:$src1, GR32:$src2),
-                      0))]>;
-def TEST64rr : RI<0x85, MRMSrcReg, (outs), (ins GR64:$src1, GR64:$src2),
-                  "test{q}\t{$src2, $src1|$src1, $src2}",
-                  [(set EFLAGS, (X86cmp (and GR64:$src1, GR64:$src2), 0))]>;
-}
 
-def TEST8rm  : I<0x84, MRMSrcMem, (outs),  (ins GR8 :$src1, i8mem :$src2),
-                     "test{b}\t{$src2, $src1|$src1, $src2}",
-                     [(set EFLAGS, (X86cmp (and GR8:$src1, (loadi8 addr:$src2)),
-                       0))]>;
-def TEST16rm : I<0x85, MRMSrcMem, (outs),  (ins GR16:$src1, i16mem:$src2),
-                     "test{w}\t{$src2, $src1|$src1, $src2}",
-                     [(set EFLAGS, (X86cmp (and GR16:$src1,
-                                         (loadi16 addr:$src2)), 0))]>, OpSize;
-def TEST32rm : I<0x85, MRMSrcMem, (outs),  (ins GR32:$src1, i32mem:$src2),
-                     "test{l}\t{$src2, $src1|$src1, $src2}",
-                     [(set EFLAGS, (X86cmp (and GR32:$src1,
-                                                (loadi32 addr:$src2)), 0))]>;
-def TEST64rm : RI<0x85, MRMSrcMem, (outs), (ins GR64:$src1, i64mem:$src2),
-                  "test{q}\t{$src2, $src1|$src1, $src2}",
-                  [(set EFLAGS, (X86cmp (and GR64:$src1, (loadi64 addr:$src2)),
-                    0))]>;
-
-def TEST8ri  : Ii8 <0xF6, MRM0r,                     // flags = GR8  & imm8
-                    (outs),  (ins GR8:$src1, i8imm:$src2),
-                    "test{b}\t{$src2, $src1|$src1, $src2}",
-                    [(set EFLAGS, (X86cmp (and_su GR8:$src1, imm:$src2), 0))]>;
-def TEST16ri : Ii16<0xF7, MRM0r,                     // flags = GR16 & imm16
-                    (outs),  (ins GR16:$src1, i16imm:$src2),
-                    "test{w}\t{$src2, $src1|$src1, $src2}",
-                    [(set EFLAGS, (X86cmp (and_su GR16:$src1, imm:$src2), 0))]>,
-                    OpSize;
-def TEST32ri : Ii32<0xF7, MRM0r,                     // flags = GR32 & imm32
-                    (outs),  (ins GR32:$src1, i32imm:$src2),
-                    "test{l}\t{$src2, $src1|$src1, $src2}",
-                    [(set EFLAGS, (X86cmp (and_su GR32:$src1, imm:$src2), 0))]>;
-def TEST64ri32 : RIi32<0xF7, MRM0r, (outs),
-                                        (ins GR64:$src1, i64i32imm:$src2),
-                       "test{q}\t{$src2, $src1|$src1, $src2}",
-                     [(set EFLAGS, (X86cmp (and GR64:$src1, i64immSExt32:$src2),
-                      0))]>;
-
-def TEST8mi  : Ii8 <0xF6, MRM0m,                   // flags = [mem8]  & imm8
-                    (outs), (ins i8mem:$src1, i8imm:$src2),
-                    "test{b}\t{$src2, $src1|$src1, $src2}",
-                    [(set EFLAGS, (X86cmp (and (loadi8 addr:$src1), imm:$src2),
-                     0))]>;
-def TEST16mi : Ii16<0xF7, MRM0m,                   // flags = [mem16] & imm16
-                    (outs), (ins i16mem:$src1, i16imm:$src2),
-                    "test{w}\t{$src2, $src1|$src1, $src2}",
-                    [(set EFLAGS, (X86cmp (and (loadi16 addr:$src1), imm:$src2),
-                     0))]>, OpSize;
-def TEST32mi : Ii32<0xF7, MRM0m,                   // flags = [mem32] & imm32
-                    (outs), (ins i32mem:$src1, i32imm:$src2),
-                    "test{l}\t{$src2, $src1|$src1, $src2}",
-                    [(set EFLAGS, (X86cmp (and (loadi32 addr:$src1), imm:$src2),
-                     0))]>;
-def TEST64mi32 : RIi32<0xF7, MRM0m, (outs),
-                                        (ins i64mem:$src1, i64i32imm:$src2),
-                       "test{q}\t{$src2, $src1|$src1, $src2}",
-                [(set EFLAGS, (X86cmp (and (loadi64 addr:$src1),
-                                           i64immSExt32:$src2), 0))]>;
-
-def TEST8i8  : Ii8<0xA8, RawFrm, (outs), (ins i8imm:$src),
-                   "test{b}\t{$src, %al|%al, $src}", []>;
-def TEST16i16 : Ii16<0xA9, RawFrm, (outs), (ins i16imm:$src),
-                     "test{w}\t{$src, %ax|%ax, $src}", []>, OpSize;
-def TEST32i32 : Ii32<0xA9, RawFrm, (outs), (ins i32imm:$src),
-                     "test{l}\t{$src, %eax|%eax, $src}", []>;
-def TEST64i32 : RIi32<0xa9, RawFrm, (outs), (ins i64i32imm:$src),
-                      "test{q}\t{$src, %rax|%rax, $src}", []>;
-
-} // Defs = [EFLAGS]
-
-
-//===----------------------------------------------------------------------===//
-// Integer comparisons
 
 defm CMP : ArithBinOp_F<0x38, 0x3A, 0x3C, "cmp", MRM7r, MRM7m, X86cmp, 0, 0>;
+
+
+//===----------------------------------------------------------------------===//
+// Semantically, test instructions are similar like AND, except they don't
+// generate a result.  From an encoding perspective, they are very different:
+// they don't have all the usual imm8 and REV forms, and are encoded into a
+// different space.
+def X86testpat : PatFrag<(ops node:$lhs, node:$rhs),
+                         (X86cmp (and_su node:$lhs, node:$rhs), 0)>;
+
+let Defs = [EFLAGS] in {
+  let isCommutable = 1 in {
+    def TEST8rr  : BinOpRR_F<0x84, "test", Xi8 , X86testpat, MRMSrcReg>;
+    def TEST16rr : BinOpRR_F<0x84, "test", Xi16, X86testpat, MRMSrcReg>;
+    def TEST32rr : BinOpRR_F<0x84, "test", Xi32, X86testpat, MRMSrcReg>;
+    def TEST64rr : BinOpRR_F<0x84, "test", Xi64, X86testpat, MRMSrcReg>;
+  } // isCommutable
+
+  def TEST8rm    : BinOpRM_F<0x84, "test", Xi8 , X86testpat>;
+  def TEST16rm   : BinOpRM_F<0x84, "test", Xi16, X86testpat>;
+  def TEST32rm   : BinOpRM_F<0x84, "test", Xi32, X86testpat>;
+  def TEST64rm   : BinOpRM_F<0x84, "test", Xi64, X86testpat>;
+
+  def TEST8ri    : BinOpRI_F<0xF6, "test", Xi8 , X86testpat, MRM0r>;
+  def TEST16ri   : BinOpRI_F<0xF6, "test", Xi16, X86testpat, MRM0r>;
+  def TEST32ri   : BinOpRI_F<0xF6, "test", Xi32, X86testpat, MRM0r>;
+  def TEST64ri32 : BinOpRI_F<0xF6, "test", Xi64, X86testpat, MRM0r>;
+
+  def TEST8mi    : BinOpMI_F<"test", Xi8 , X86testpat, MRM0m, 0xF6>;
+  def TEST16mi   : BinOpMI_F<"test", Xi16, X86testpat, MRM0m, 0xF6>;
+  def TEST32mi   : BinOpMI_F<"test", Xi32, X86testpat, MRM0m, 0xF6>;
+  def TEST64mi32 : BinOpMI_F<"test", Xi64, X86testpat, MRM0m, 0xF6>;
+                     
+  def TEST8i8    : BinOpAI<0xA8, "test", Xi8 , AL>;
+  def TEST16i16  : BinOpAI<0xA8, "test", Xi16, AX>;
+  def TEST32i32  : BinOpAI<0xA8, "test", Xi32, EAX>;
+  def TEST64i32  : BinOpAI<0xA8, "test", Xi64, RAX>;
+}                          
+
