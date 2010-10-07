@@ -281,7 +281,7 @@ ClangUserExpression::Execute (Stream &error_stream,
                                         struct_address, 
                                         true,
                                         true, 
-                                        10000, 
+                                        10000000, 
                                         error_stream,
                                         (m_needs_object_ptr ? &object_ptr : NULL));
         
