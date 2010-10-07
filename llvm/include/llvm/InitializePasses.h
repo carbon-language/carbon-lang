@@ -36,6 +36,9 @@ void initializeAnalysis(PassRegistry&);
 /// initializeIPA - Initialize all passes linked into the IPA library.
 void initializeIPA(PassRegistry&);
 
+/// initializeCodeGen - Initialize all passes linked into the CodeGen library.
+void initializeCodeGen(PassRegistry&);
+
 void initializeAAEvalPass(PassRegistry&);
 void initializeADCEPass(PassRegistry&);
 void initializeAliasAnalysisAnalysisGroup(PassRegistry&);

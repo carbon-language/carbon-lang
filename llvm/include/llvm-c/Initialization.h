@@ -27,6 +27,7 @@ void LLVMInitializeScalarOpts(LLVMPassRegistryRef R);
 void LLVMInitializeIPO(LLVMPassRegistryRef R);
 void LLVMInitializeAnalysis(LLVMPassRegistryRef R);
 void LLVMInitializeIPA(LLVMPassRegistryRef R);
+void LLVMInitializeCodeGen(LLVMPassRegistryRef R);
 
 #ifdef __cplusplus
 }
