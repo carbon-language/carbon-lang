@@ -942,7 +942,7 @@ bool ARMFastISel::SelectCmp(const Instruction *I) {
 
   // Now set a register based on the comparison. Explicitly set the predicates
   // here.
-  unsigned MovCCOpc = isThumb ? ARM::tMOVCCi : ARM::MOVCCi;
+  unsigned MovCCOpc = isThumb ? ARM::t2MOVCCi : ARM::MOVCCi;
   unsigned DestReg = createResultReg(ARM::GPRRegisterClass);
   Constant *Zero 
     = ConstantInt::get(Type::getInt32Ty(*Context), 0);
