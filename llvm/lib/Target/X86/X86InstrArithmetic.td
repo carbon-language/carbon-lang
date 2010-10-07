@@ -502,6 +502,7 @@ let CodeSize = 2 in {
 class X86TypeInfo<ValueType vt, string instrsuffix, RegisterClass regclass,
                   PatFrag loadnode, X86MemOperand memoperand,
                   ImmType immkind, Operand immoperand,
+                  SDPatternOperator immoperator,
                   bit hasOddOpcode, bit hasOpSizePrefix, bit hasREX_WPrefix> {
   /// VT - This is the value type itself.
   ValueType VT = vt;
@@ -534,6 +535,10 @@ class X86TypeInfo<ValueType vt, string instrsuffix, RegisterClass regclass,
   /// extended value.
   Operand ImmOperand = immoperand;
   
+  /// ImmOperator - This is the operator that should be used to match an
+  /// immediate of this kind in a pattern (e.g. imm, or i64immSExt32).
+  SDPatternOperator ImmOperator = immoperator;
+  
   /// HasOddOpcode - This bit is true if the instruction should have an odd (as
   /// opposed to even) opcode.  Operations on i8 are usually even, operations on
   /// other datatypes are odd.
@@ -549,13 +554,13 @@ class X86TypeInfo<ValueType vt, string instrsuffix, RegisterClass regclass,
 }
 
 def Xi8  : X86TypeInfo<i8 , "b", GR8 , loadi8 , i8mem , Imm8 , i8imm ,
-                       0, 0, 0>;
+                       imm, 0, 0, 0>;
 def Xi16 : X86TypeInfo<i16, "w", GR16, loadi16, i16mem, Imm16, i16imm,
-                       1, 1, 0>;
+                       imm, 1, 1, 0>;
 def Xi32 : X86TypeInfo<i32, "l", GR32, loadi32, i32mem, Imm32, i32imm,
-                       1, 0, 0>;
+                       imm, 1, 0, 0>;
 def Xi64 : X86TypeInfo<i64, "q", GR64, loadi64, i64mem, Imm32, i64i32imm,
-                       1, 0, 1>;
+                       i64immSExt32, 1, 0, 1>;
 
 /// ITy - This instruction base class takes the type info for the instruction.
 /// Using this, it:
@@ -612,7 +617,7 @@ class BinOpRI<bits<8> opcode, string mnemonic, X86TypeInfo typeinfo,
         (ins typeinfo.RegClass:$src1, typeinfo.ImmOperand:$src2),
         mnemonic, "{$src2, $dst|$dst, $src2}",
         [(set typeinfo.RegClass:$dst, EFLAGS,
-            (opnode typeinfo.RegClass:$src1, imm:$src2))]> {
+            (opnode typeinfo.RegClass:$src1, typeinfo.ImmOperator:$src2))]> {
   let ImmT = typeinfo.ImmEncoding;
 }
 
@@ -646,12 +651,7 @@ def AND64rm  : BinOpRM<0x22, "and", Xi64, X86and_flag>;
 def AND8ri   : BinOpRI<0x80, "and", Xi8 , X86and_flag, MRM4r>;
 def AND16ri  : BinOpRI<0x80, "and", Xi16, X86and_flag, MRM4r>;
 def AND32ri  : BinOpRI<0x80, "and", Xi32, X86and_flag, MRM4r>;
-
-def AND64ri32  : RIi32<0x81, MRM4r, 
-                       (outs GR64:$dst), (ins GR64:$src1, i64i32imm:$src2),
-                       "and{q}\t{$src2, $dst|$dst, $src2}",
-                       [(set GR64:$dst, EFLAGS,
-                             (X86and_flag GR64:$src1, i64immSExt32:$src2))]>;
+def AND64ri32: BinOpRI<0x80, "and", Xi64, X86and_flag, MRM4r>;
 
 def AND16ri8 : Ii8<0x83, MRM4r, 
                    (outs GR16:$dst), (ins GR16:$src1, i16i8imm:$src2),
