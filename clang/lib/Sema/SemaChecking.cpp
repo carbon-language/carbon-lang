@@ -2454,14 +2454,10 @@ static bool IsZero(Sema &S, Expr *E) {
 static bool HasEnumType(Expr *E) {
   // Strip off implicit integral promotions.
   while (ImplicitCastExpr *ICE = dyn_cast<ImplicitCastExpr>(E)) {
-    switch (ICE->getCastKind()) {
-    case CK_IntegralCast:
-    case CK_NoOp:
-      E = ICE->getSubExpr();
-      continue;
-    default:
+    if (ICE->getCastKind() != CK_IntegralCast &&
+        ICE->getCastKind() != CK_NoOp)
       break;
-    }
+    E = ICE->getSubExpr();
   }
 
   return E->getType()->isEnumeralType();
