@@ -165,6 +165,8 @@ if( NOT WIN32 )
   check_cxx_compiler_flag("-fPIC" SUPPORTS_FPIC_FLAG)
 endif()
 
+check_cxx_compiler_flag("-Wno-variadic-macros" SUPPORTS_NO_VARIADIC_MACROS_FLAG)
+
 include(GetTargetTriple)
 get_target_triple(LLVM_HOSTTRIPLE)
 

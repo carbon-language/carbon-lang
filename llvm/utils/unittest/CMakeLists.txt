@@ -20,6 +20,10 @@ if(WIN32)
   add_definitions(-DGTEST_OS_WINDOWS=1)
 endif()
 
+if(SUPPORTS_NO_VARIADIC_MACROS_FLAG)
+  add_definitions("-Wno-variadic-macros")
+endif()
+
 add_llvm_library(gtest
   googletest/gtest.cc
   googletest/gtest-death-test.cc
