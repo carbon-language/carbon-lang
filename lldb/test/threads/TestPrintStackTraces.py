@@ -37,7 +37,7 @@ class ThreadsStackTracesTestCase(TestBase):
         if self.process.GetState() != lldb.eStateStopped:
             self.fail("Process should be in the 'Stopped' state, "
                       "instead the actual state is: '%s'" %
-                      StateTypeString(self.process.GetState()))
+                      lldbutil.StateTypeString(self.process.GetState()))
 
         import lldbutil
         lldbutil.PrintStackTraces(self.process)

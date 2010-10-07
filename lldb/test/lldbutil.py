@@ -6,6 +6,67 @@ import lldb
 import sys
 import StringIO
 
+########################################################
+#                                                      #
+# Convert some enum value to its string's counterpart. #
+#                                                      #
+########################################################
+
+def StateTypeString(enum):
+    """Returns the stateType string given an enum."""
+    if enum == lldb.eStateInvalid:
+        return "Invalid"
+    elif enum == lldb.eStateUnloaded:
+        return "Unloaded"
+    elif enum == lldb.eStateAttaching:
+        return "Attaching"
+    elif enum == lldb.eStateLaunching:
+        return "Launching"
+    elif enum == lldb.eStateStopped:
+        return "Stopped"
+    elif enum == lldb.eStateRunning:
+        return "Running"
+    elif enum == lldb.eStateStepping:
+        return "Stepping"
+    elif enum == lldb.eStateCrashed:
+        return "Crashed"
+    elif enum == lldb.eStateDetached:
+        return "Detached"
+    elif enum == lldb.eStateExited:
+        return "Exited"
+    elif enum == lldb.eStateSuspended:
+        return "Suspended"
+    else:
+        raise Exception("Unknown stopReason enum")
+
+def StopReasonString(enum):
+    """Returns the stopReason string given an enum."""
+    if enum == lldb.eStopReasonInvalid:
+        return "Invalid"
+    elif enum == lldb.eStopReasonNone:
+        return "None"
+    elif enum == lldb.eStopReasonTrace:
+        return "Trace"
+    elif enum == lldb.eStopReasonBreakpoint:
+        return "Breakpoint"
+    elif enum == lldb.eStopReasonWatchpoint:
+        return "Watchpoint"
+    elif enum == lldb.eStopReasonSignal:
+        return "Signal"
+    elif enum == lldb.eStopReasonException:
+        return "Exception"
+    elif enum == lldb.eStopReasonPlanComplete:
+        return "PlanComplete"
+    else:
+        raise Exception("Unknown stopReason enum")
+
+
+#######################################################
+#                                                     #
+# Utility functions related to Threads and Processes. #
+#                                                     #
+#######################################################
+
 def GetFunctionNames(thread):
     """
     Returns a sequence of function names from the stack frames of this thread.

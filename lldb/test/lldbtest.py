@@ -165,58 +165,6 @@ def CMD_MSG(str, exe):
         return "'%s' compares successfully" % str
 
 #
-# Returns the stateType string given an enum.
-#
-def StateTypeString(enum):
-    if enum == lldb.eStateInvalid:
-        return "Invalid"
-    elif enum == lldb.eStateUnloaded:
-        return "Unloaded"
-    elif enum == lldb.eStateAttaching:
-        return "Attaching"
-    elif enum == lldb.eStateLaunching:
-        return "Launching"
-    elif enum == lldb.eStateStopped:
-        return "Stopped"
-    elif enum == lldb.eStateRunning:
-        return "Running"
-    elif enum == lldb.eStateStepping:
-        return "Stepping"
-    elif enum == lldb.eStateCrashed:
-        return "Crashed"
-    elif enum == lldb.eStateDetached:
-        return "Detached"
-    elif enum == lldb.eStateExited:
-        return "Exited"
-    elif enum == lldb.eStateSuspended:
-        return "Suspended"
-    else:
-        raise Exception("Unknown stopReason enum")
-
-#
-# Returns the stopReason string given an enum.
-#
-def StopReasonString(enum):
-    if enum == lldb.eStopReasonInvalid:
-        return "Invalid"
-    elif enum == lldb.eStopReasonNone:
-        return "None"
-    elif enum == lldb.eStopReasonTrace:
-        return "Trace"
-    elif enum == lldb.eStopReasonBreakpoint:
-        return "Breakpoint"
-    elif enum == lldb.eStopReasonWatchpoint:
-        return "Watchpoint"
-    elif enum == lldb.eStopReasonSignal:
-        return "Signal"
-    elif enum == lldb.eStopReasonException:
-        return "Exception"
-    elif enum == lldb.eStopReasonPlanComplete:
-        return "PlanComplete"
-    else:
-        raise Exception("Unknown stopReason enum")
-
-#
 # Returns an env variable array from the os.environ map object.
 #
 def EnvArray():
