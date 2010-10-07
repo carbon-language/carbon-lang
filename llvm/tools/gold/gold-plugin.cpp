@@ -17,7 +17,7 @@
 
 #include "llvm-c/lto.h"
 
-#include "llvm/Support/raw_ostream.h"
+#include "llvm/Support/ToolOutputFile.h"
 #include "llvm/System/Errno.h"
 #include "llvm/System/Path.h"
 #include "llvm/System/Program.h"
