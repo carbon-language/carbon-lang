@@ -50,14 +50,15 @@ class ConditionalBreakTestCase(TestBase):
             substrs = ['state is Stopped', 'stop reason = breakpoint'])
 
         # Suppose we are only interested in the call scenario where c()'s
-        # immediate caller is a() and we want to find out the value passed
-        # from a().
-        for j in range(3):
+        # immediate caller is a() and we want to find out the value passed from
+        # a().
+        #
+        # The 10 in range(10) is just an arbitrary number, which means we would
+        # like to try for at most 10 times.
+        for j in range(10):
             target = self.dbg.GetSelectedTarget()
             process = target.GetProcess()
             thread = process.GetThreadAtIndex(0)
-            import lldbutil
-            #lldbutil.PrintStackTrace(thread)
             
             if thread.GetNumFrames() >= 2:
                 frame0 = thread.GetFrameAtIndex(0)
