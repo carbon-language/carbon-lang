@@ -1964,8 +1964,8 @@ void ReportFailureInUnknownLocation(TestPartResult::Type result_type,
 
 }  // namespace internal
 
-#if GTEST_OS_WINDOWS
-// We are on Windows.
+#if GTEST_HAS_SEH
+// We are on Windows with SEH.
 
 // Adds an "exception thrown" fatal failure to the current test.
 static void AddExceptionThrownFailure(DWORD exception_code,
@@ -1978,7 +1978,7 @@ static void AddExceptionThrownFailure(DWORD exception_code,
                                            message.GetString());
 }
 
-#endif  // GTEST_OS_WINDOWS
+#endif  // GTEST_HAS_SEH
 
 // Google Test requires all tests in the same test case to use the same test
 // fixture class.  This function checks if the current test has the
