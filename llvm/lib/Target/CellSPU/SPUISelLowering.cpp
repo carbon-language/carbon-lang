@@ -3088,3 +3088,29 @@ SPUTargetLowering::isOffsetFoldingLegal(const GlobalAddressSDNode *GA) const {
   // The SPU target isn't yet aware of offsets.
   return false;
 }
+
+// can we compare to Imm without writing it into a register?
+bool SPUTargetLowering::isLegalICmpImmediate(int64_t Imm) const {
+  //ceqi, cgti, etc. all take s10 operand
+  return isInt<10>(Imm);
+}
+
+bool 
+SPUTargetLowering::isLegalAddressingMode(const AddrMode &AM, 
+                                         const Type * ) const{
+
+  // A-form: 18bit absolute address. 
+  if (AM.BaseGV && !AM.HasBaseReg && AM.Scale == 0 && AM.BaseOffs == 0)
+    return true;
+ 
+  // D-form: reg + 14bit offset
+  if (AM.BaseGV ==0 && AM.HasBaseReg && AM.Scale == 0 && isInt<14>(AM.BaseOffs))
+    return true;
+
+  // X-form: reg+reg
+  if (AM.BaseGV == 0 && AM.HasBaseReg && AM.Scale == 1 && AM.BaseOffs ==0)
+    return true;
+
+  return false;
+}
+

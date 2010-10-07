@@ -170,6 +170,11 @@ namespace llvm {
                   const SmallVectorImpl<ISD::OutputArg> &Outs,
                   const SmallVectorImpl<SDValue> &OutVals,
                   DebugLoc dl, SelectionDAG &DAG) const;
+
+    virtual bool isLegalICmpImmediate(int64_t Imm) const;
+
+    virtual bool isLegalAddressingMode(const AddrMode &AM, 
+                                       const Type *Ty) const;
   };
 }
 
