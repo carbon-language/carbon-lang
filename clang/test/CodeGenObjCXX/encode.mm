@@ -50,3 +50,15 @@ class Int3 { int x, y, z; };
 - (void) foo: (int (Int3::*)) member {
 }
 @end
+
+// rdar: // 8519948
+typedef float HGVec4f __attribute__ ((vector_size(16)));
+
+@interface RedBalloonHGXFormWrapper {
+  HGVec4f m_Transform[4];
+}
+@end
+
+@implementation RedBalloonHGXFormWrapper
+@end
+

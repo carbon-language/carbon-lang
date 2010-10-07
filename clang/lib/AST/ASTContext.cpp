@@ -3894,7 +3894,7 @@ void ASTContext::getObjCEncodingForTypeImpl(QualType T, std::string& S,
     S += RDecl->isUnion() ? ')' : '}';
     return;
   }
-
+  
   if (T->isEnumeralType()) {
     if (FD && FD->isBitField())
       EncodeBitField(this, S, T, FD);
@@ -3997,7 +3997,14 @@ void ASTContext::getObjCEncodingForTypeImpl(QualType T, std::string& S,
   // TODO: maybe there should be a mangling for these
   if (T->getAs<MemberPointerType>())
     return;
-
+  
+  if (T->isVectorType()) {
+    // This matches gcc's encoding, even though technically it is
+    // insufficient.
+    // FIXME. We should do a better job than gcc.
+    return;
+  }
+  
   assert(0 && "@encode for type not implemented!");
 }
 
