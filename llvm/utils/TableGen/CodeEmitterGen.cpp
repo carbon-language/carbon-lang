@@ -42,7 +42,7 @@ void CodeEmitterGen::reverseBits(std::vector<Record*> &Insts) {
       unsigned middle = (numBits + 1) / 2;
       NewBI->setBit(middle, BI->getBit(middle));
     }
-    
+
     // Update the bits in reversed order so that emitInstrOpBits will get the
     // correct endianness.
     R->getValue("Inst")->setValue(NewBI);
@@ -56,26 +56,26 @@ int CodeEmitterGen::getVariableBit(const std::string &VarName,
             BitsInit *BI, int bit) {
   if (VarBitInit *VBI = dynamic_cast<VarBitInit*>(BI->getBit(bit))) {
     TypedInit *TI = VBI->getVariable();
-    
+
     if (VarInit *VI = dynamic_cast<VarInit*>(TI)) {
       if (VI->getName() == VarName) return VBI->getBitNum();
     }
   }
-  
+
   return -1;
-} 
+}
 
 
 void CodeEmitterGen::run(raw_ostream &o) {
   CodeGenTarget Target;
   std::vector<Record*> Insts = Records.getAllDerivedDefinitions("Instruction");
-  
+
   // For little-endian instruction bit encodings, reverse the bit order
   if (Target.isLittleEndianEncoding()) reverseBits(Insts);
 
   EmitSourceFileHeader("Machine Code Emitter", o);
   std::string Namespace = Insts[0]->getValueAsString("Namespace") + "::";
-  
+
   const std::vector<const CodeGenInstruction*> &NumberedInstructions =
     Target.getInstructionsByEnumValue();
 
@@ -91,12 +91,12 @@ void CodeEmitterGen::run(raw_ostream &o) {
        IN != EN; ++IN) {
     const CodeGenInstruction *CGI = *IN;
     Record *R = CGI->TheDef;
-    
+
     if (R->getValueAsString("Namespace") == "TargetOpcode") {
       o << "    0U,\n";
       continue;
     }
-    
+
     BitsInit *BI = R->getValueAsBitsInit("Inst");
 
     // Start by filling in fixed values...
@@ -109,10 +109,10 @@ void CodeEmitterGen::run(raw_ostream &o) {
     o << "    " << Value << "U," << '\t' << "// " << R->getName() << "\n";
   }
   o << "    0U\n  };\n";
-  
+
   // Map to accumulate all the cases.
   std::map<std::string, std::vector<std::string> > CaseMap;
-  
+
   // Construct all cases statement for each opcode
   for (std::vector<Record*>::iterator IC = Insts.begin(), EC = Insts.end();
         IC != EC; ++IC) {
@@ -125,7 +125,7 @@ void CodeEmitterGen::run(raw_ostream &o) {
     BitsInit *BI = R->getValueAsBitsInit("Inst");
     const std::vector<RecordVal> &Vals = R->getValues();
     CodeGenInstruction &CGI = Target.getInstruction(R);
-    
+
     // Loop over all of the fields in the instruction, determining which are the
     // operands to the instruction.
     unsigned op = 0;
@@ -135,17 +135,17 @@ void CodeEmitterGen::run(raw_ostream &o) {
         // instead of doing it bit-by-bit, saving a lot in runtime cost.
         const std::string &VarName = Vals[i].getName();
         bool gotOp = false;
-        
+
         for (int bit = BI->getNumBits()-1; bit >= 0; ) {
           int varBit = getVariableBit(VarName, BI, bit);
-          
+
           if (varBit == -1) {
             --bit;
           } else {
             int beginInstBit = bit;
             int beginVarBit = varBit;
             int N = 1;
-            
+
             for (--bit; bit >= 0;) {
               varBit = getVariableBit(VarName, BI, bit);
               if (varBit == -1 || varBit != (beginVarBit - N)) break;
@@ -158,18 +158,18 @@ void CodeEmitterGen::run(raw_ostream &o) {
               /// emitter, skip it.
               while (CGI.isFlatOperandNotEmitted(op))
                 ++op;
-              
+
               Case += "      // op: " + VarName + "\n"
                    +  "      op = getMachineOpValue(MI, MI.getOperand("
                    +  utostr(op++) + "));\n";
               gotOp = true;
             }
-            
+
             unsigned opMask = ~0U >> (32-N);
             int opShift = beginVarBit - N + 1;
             opMask <<= opShift;
             opShift = beginInstBit - beginVarBit;
-            
+
             if (opShift > 0) {
               Case += "      Value |= (op & " + utostr(opMask) + "U) << "
                    +  itostr(opShift) + ";\n";
