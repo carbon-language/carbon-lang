@@ -457,7 +457,6 @@
 				);
 				COPY_PHASE_STRIP = NO;
 				CURRENT_PROJECT_VERSION = 113;
-				FRAMEWORK_SEARCH_PATHS = $SDKROOT/System/Library/PrivateFrameworks;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				STRIP_INSTALLED_PRODUCT = NO;
@@ -477,7 +476,6 @@
 				);
 				CURRENT_PROJECT_VERSION = 113;
 				DEAD_CODE_STRIPPING = YES;
-				FRAMEWORK_SEARCH_PATHS = $SDKROOT/System/Library/PrivateFrameworks;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				STRIPFLAGS = "-x";
@@ -498,7 +496,6 @@
 				);
 				CURRENT_PROJECT_VERSION = 113;
 				DEAD_CODE_STRIPPING = YES;
-				FRAMEWORK_SEARCH_PATHS = $SDKROOT/System/Library/PrivateFrameworks;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				STRIPFLAGS = "-x";
@@ -512,7 +509,6 @@
 		262419A21198A93E00067686 /* BuildAndIntegration */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ALWAYS_SEARCH_USER_PATHS = NO;
 				"CODE_SIGN_ENTITLEMENTS[sdk=iphoneos*]" = "source/debugserver-entitlements.plist";
 				COPY_PHASE_STRIP = YES;
 				CURRENT_PROJECT_VERSION = 113;
@@ -553,7 +549,6 @@
 		26CE0596115C31C30022F371 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ALWAYS_SEARCH_USER_PATHS = NO;
 				"CODE_SIGN_ENTITLEMENTS[sdk=iphoneos*]" = "source/debugserver-entitlements.plist";
 				"CODE_SIGN_IDENTITY[sdk=macosx*]" = lldb_codesign;
 				COPY_PHASE_STRIP = YES;
@@ -595,7 +590,6 @@
 		26CE0597115C31C30022F371 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ALWAYS_SEARCH_USER_PATHS = NO;
 				"CODE_SIGN_ENTITLEMENTS[sdk=iphoneos*]" = "source/debugserver-entitlements.plist";
 				"CODE_SIGN_IDENTITY[sdk=macosx*]" = lldb_codesign;
 				COPY_PHASE_STRIP = YES;
