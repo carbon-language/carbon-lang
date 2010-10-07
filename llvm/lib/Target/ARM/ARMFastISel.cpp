@@ -629,6 +629,9 @@ bool ARMFastISel::ARMComputeRegOffset(const Value *Obj, unsigned &Reg,
 bool ARMFastISel::ARMLoadAlloca(const Instruction *I, EVT VT) {
   Value *Op0 = I->getOperand(0);
 
+  // Promote load/store types.
+  if (VT == MVT::i8 || VT == MVT::i16) VT = MVT::i32;
+
   // Verify it's an alloca.
   if (const AllocaInst *AI = dyn_cast<AllocaInst>(Op0)) {
     DenseMap<const AllocaInst*, int>::iterator SI =
@@ -734,6 +737,9 @@ bool ARMFastISel::SelectLoad(const Instruction *I) {
 
 bool ARMFastISel::ARMStoreAlloca(const Instruction *I, unsigned SrcReg, EVT VT){
   Value *Op1 = I->getOperand(1);
+
+  // Promote load/store types.
+  if (VT == MVT::i8 || VT == MVT::i16) VT = MVT::i32;
 
   // Verify it's an alloca.
   if (const AllocaInst *AI = dyn_cast<AllocaInst>(Op1)) {
