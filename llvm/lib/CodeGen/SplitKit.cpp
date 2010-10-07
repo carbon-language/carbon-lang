@@ -852,7 +852,8 @@ void SplitEditor::rewrite() {
       }
     }
     MO.setReg(LI->reg);
-    DEBUG(dbgs() << "  rewrite " << Idx << '\t' << *MI);
+    DEBUG(dbgs() << "  rewrite BB#" << MI->getParent()->getNumber() << '\t'
+                 << Idx << '\t' << *MI);
   }
 
   // dupli_ goes in last, after rewriting.
