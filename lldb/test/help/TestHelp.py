@@ -1,5 +1,5 @@
 """
-Test lldb help command.
+Test some lldb help commands.
 
 See also CommandInterpreter::OutputFormattedHelpText().
 """
@@ -23,6 +23,12 @@ class HelpCommandTestCase(TestBase):
         self.runCmd("settings set term-width 0")
         self.expect("help",
             startstr = 'The following is a list of built-in, permanent debugger commands')
+
+    def test_help_image_dump_symtab_should_not_crash(self):
+        """Command 'help image dump symtab' should not crash lldb."""
+        self.expect("help image dump symtab",
+            substrs = ['image dump symtab',
+                       'sort-order'])
 
 
 if __name__ == '__main__':

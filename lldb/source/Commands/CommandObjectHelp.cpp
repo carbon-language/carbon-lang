@@ -121,6 +121,8 @@ CommandObjectHelp::Execute (Args& command, CommandReturnObject &result)
                     if ((long_help != NULL)
                         && (strlen (long_help) > 0))
                         output_strm.Printf ("\n%s", long_help);
+                    // Mark this help command with a success status.
+                    result.SetStatus (eReturnStatusSuccessFinishNoResult);
                 }
                 else if (sub_cmd_obj->IsMultiwordObject())
                 {
@@ -149,6 +151,8 @@ CommandObjectHelp::Execute (Args& command, CommandReturnObject &result)
                     else
                         m_interpreter.OutputFormattedHelpText (output_strm, "", "", sub_cmd_obj->GetHelp(), 1);
                     output_strm.Printf ("\nSyntax: %s\n", sub_cmd_obj->GetSyntax());
+                    // Mark this help command with a success status.
+                    result.SetStatus (eReturnStatusSuccessFinishNoResult);
                 }
             }
         }

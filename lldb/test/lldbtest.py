@@ -392,6 +392,7 @@ class TestBase(unittest2.TestCase):
                 if self.res.Succeeded():
                     print >> sys.stderr, "output:", self.res.GetOutput()
                 else:
+                    print >> sys.stderr, "runCmd failed!"
                     print >> sys.stderr, self.res.GetError()
 
             if running:
