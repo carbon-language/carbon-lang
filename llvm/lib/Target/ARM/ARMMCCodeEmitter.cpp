@@ -106,6 +106,25 @@ EmitImmediate(const MCOperand &DispOp, unsigned Size, MCFixupKind FixupKind,
   assert(0 && "ARMMCCodeEmitter::EmitImmediate() not yet implemented.");
 }
 
+/// getMachineOpValue - Return binary encoding of operand. If the machine
+/// operand requires relocation, record the relocation and return zero.
+unsigned ARMMCCodeEmitter::getMachineOpValue(const MCInst &MI,
+                                             const MCOperand &MO) const {
+  if (MO.isReg())
+    // FIXME: Should shifted register stuff be handled as part of this? Maybe.
+    return getARMRegisterNumbering(MO.getReg());
+  else if (MO.isImm())
+    // FIXME: This is insufficient. Shifted immediates and all that... (blech).
+    return static_cast<unsigned>(MO.getImm());
+  else {
+#ifndef NDEBUG
+    errs() << MO;
+#endif
+    llvm_unreachable(0);
+  }
+  return 0;
+}
+
 void ARMMCCodeEmitter::
 EncodeInstruction(const MCInst &MI, raw_ostream &OS,
                   SmallVectorImpl<MCFixup> &Fixups) const {
