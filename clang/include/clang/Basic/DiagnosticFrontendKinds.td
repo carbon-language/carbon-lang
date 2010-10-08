@@ -243,6 +243,9 @@ def warn_pch_char_signed : Error<
 def warn_pch_short_wchar : Error<
     "-fshort-wchar was %select{disabled|enabled}0 in the PCH file but "
     "is currently %select{disabled|enabled}1">;
+def warn_pch_short_enums : Error<
+    "-fshort-enums was %select{disabled|enabled}0 in the PCH file but "
+    "is currently %select{disabled|enabled}1">;
 
 def err_not_a_pch_file : Error<
     "'%0' does not appear to be a precompiled header file">, DefaultFatal;

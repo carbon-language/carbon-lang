@@ -1002,8 +1002,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   if (!Args.hasArg(options::OPT_fallow_unsupported)) {
     Arg *Unsupported;
     if ((Unsupported = Args.getLastArg(options::OPT_MG)) ||
-        (Unsupported = Args.getLastArg(options::OPT_iframework)) ||
-        (Unsupported = Args.getLastArg(options::OPT_fshort_enums)))
+        (Unsupported = Args.getLastArg(options::OPT_iframework)))
       D.Diag(clang::diag::err_drv_clang_unsupported)
         << Unsupported->getOption().getName();
 
@@ -1257,6 +1256,12 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   if (KernelOrKext ||
       !Args.hasFlag(options::OPT_frtti, options::OPT_fno_rtti))
     CmdArgs.push_back("-fno-rtti");
+
+  // -fshort-enums=0 is default.
+  // FIXME: Are there targers where -fshort-enums is on by default ?
+  if (Args.hasFlag(options::OPT_fshort_enums,
+                   options::OPT_fno_short_enums, false))
+    CmdArgs.push_back("-fshort-enums");
 
   // -fsigned-char is default.
   if (!Args.hasFlag(options::OPT_fsigned_char, options::OPT_funsigned_char,

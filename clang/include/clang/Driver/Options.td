@@ -333,6 +333,7 @@ def fno_objc_legacy_dispatch : Flag<"-fno-objc-legacy-dispatch">, Group<f_Group>
 def fno_omit_frame_pointer : Flag<"-fno-omit-frame-pointer">, Group<f_Group>;
 def fno_pascal_strings : Flag<"-fno-pascal-strings">, Group<f_Group>;
 def fno_rtti : Flag<"-fno-rtti">, Group<f_Group>;
+def fno_short_enums : Flag<"-fno-short-enums">, Group<f_Group>;
 def fno_show_column : Flag<"-fno-show-column">, Group<f_Group>;
 def fno_show_source_location : Flag<"-fno-show-source-location">, Group<f_Group>;
 def fno_spell_checking : Flag<"-fno-spell-checking">, Group<f_Group>;
@@ -376,7 +377,7 @@ def framework : Separate<"-framework">, Flags<[LinkerInput]>;
 def frandom_seed_EQ : Joined<"-frandom-seed=">, Group<clang_ignored_f_Group>;
 def frtti : Flag<"-frtti">, Group<f_Group>;
 def fsched_interblock : Flag<"-fsched-interblock">, Group<clang_ignored_f_Group>;
-def fshort_enums : Flag<"-fshort-enums">, Group<clang_ignored_f_Group>;
+def fshort_enums : Flag<"-fshort-enums">, Group<f_Group>;
 def freorder_blocks : Flag<"-freorder-blocks">, Group<clang_ignored_f_Group>;
 def fshort_wchar : Flag<"-fshort-wchar">, Group<f_Group>;
 def fshow_overloads_EQ : Joined<"-fshow-overloads=">, Group<f_Group>;

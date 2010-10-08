@@ -7083,6 +7083,10 @@ void Sema::ActOnEnumBody(SourceLocation EnumLoc, SourceLocation LBraceLoc,
   QualType BestPromotionType;
 
   bool Packed = Enum->getAttr<PackedAttr>() ? true : false;
+  // -fshort-enums is the equivalent to specifying the packed attribute on all
+  // enum definitions.
+  if (LangOpts.ShortEnums)
+    Packed = true;
 
   if (NumNegativeBits) {
     // If there is a negative value, figure out the smallest integer type (of

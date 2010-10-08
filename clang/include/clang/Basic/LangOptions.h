@@ -89,6 +89,9 @@ public:
   unsigned CharIsSigned      : 1; // Whether char is a signed or unsigned type
   unsigned ShortWChar        : 1; // Force wchar_t to be unsigned short int.
 
+  unsigned ShortEnums        : 1; // The enum type will be equivalent to the
+                                  // smallest integer type with enough room.
+
   unsigned OpenCL            : 1; // OpenCL C99 language extensions.
   
   unsigned AssumeSaneOperatorNew : 1; // Whether to add __attribute__((malloc))
@@ -182,6 +185,7 @@ public:
 
     CharIsSigned = 1;
     ShortWChar = 0;
+    ShortEnums = 0;
     CatchUndefined = 0;
     DumpRecordLayouts = 0;
     DumpVTableLayouts = 0;
