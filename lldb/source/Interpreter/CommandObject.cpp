@@ -508,7 +508,12 @@ CommandObject::GetArgumentName (CommandArgumentType arg_type)
     if (entry->arg_type != arg_type)
         entry = CommandObject::FindArgumentDataByType (arg_type);
 
-    return entry->arg_name;
+    if (entry)
+        return entry->arg_name;
+
+    StreamString str;
+    str << "Arg name for type (" << arg_type << ") not in arg table!";
+    return str.GetData();
 }
 
 bool
