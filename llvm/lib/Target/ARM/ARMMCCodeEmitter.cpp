@@ -112,6 +112,8 @@ EncodeInstruction(const MCInst &MI, raw_ostream &OS,
   unsigned Opcode = MI.getOpcode();
   const TargetInstrDesc &Desc = TII.get(Opcode);
   uint64_t TSFlags = Desc.TSFlags;
+  // Keep track of the current byte being emitted.
+  unsigned CurByte = 0;
 
   // Pseudo instructions don't get encoded.
   if ((TSFlags & ARMII::FormMask) == ARMII::Pseudo)
@@ -119,6 +121,12 @@ EncodeInstruction(const MCInst &MI, raw_ostream &OS,
 
   ++MCNumEmitted;  // Keep track of the # of mi's emitted
   switch (TSFlags & ARMII::FormMask) {
+  case ARMII::BrMiscFrm:
+  case ARMII::MiscFrm: {
+    unsigned Value = getBinaryCodeForInstr(MI);
+    EmitConstant(Value, 4, CurByte, OS);
+    break;
+  }
   default: {
     llvm_unreachable("Unhandled instruction encoding format!");
     break;
