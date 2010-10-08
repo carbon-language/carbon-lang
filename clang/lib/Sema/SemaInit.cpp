@@ -1167,6 +1167,22 @@ void InitListChecker::CheckStructUnionTypes(const InitializedEntity &Entity,
                           StructuredList, StructuredIndex);
 }
 
+/// \brief Similar to Sema::BuildAnonymousStructUnionMemberPath() but builds a
+/// relative path and has strict checks.
+static void BuildRelativeAnonymousStructUnionMemberPath(FieldDecl *Field,
+                                    llvm::SmallVectorImpl<FieldDecl *> &Path,
+                                    DeclContext *BaseDC) {
+  Path.push_back(Field);
+  for (DeclContext *Ctx = Field->getDeclContext();
+       !Ctx->Equals(BaseDC);
+       Ctx = Ctx->getParent()) {
+    ValueDecl *AnonObject =
+      cast<RecordDecl>(Ctx)->getAnonymousStructOrUnionObject();
+    FieldDecl *AnonField = cast<FieldDecl>(AnonObject);
+    Path.push_back(AnonField);
+  }
+}
+
 /// \brief Expand a field designator that refers to a member of an
 /// anonymous struct or union into a series of field designators that
 /// refers to the field within the appropriate subobject.
@@ -1178,13 +1194,14 @@ static void ExpandAnonymousFieldDesignator(Sema &SemaRef,
                                            unsigned DesigIdx,
                                            FieldDecl *Field,
                                         RecordDecl::field_iterator &FieldIter,
-                                           unsigned &FieldIndex) {
+                                           unsigned &FieldIndex,
+                                           DeclContext *BaseDC) {
   typedef DesignatedInitExpr::Designator Designator;
 
   // Build the path from the current object to the member of the
   // anonymous struct/union (backwards).
   llvm::SmallVector<FieldDecl *, 4> Path;
-  SemaRef.BuildAnonymousStructUnionMemberPath(Field, Path);
+  BuildRelativeAnonymousStructUnionMemberPath(Field, Path, BaseDC);
 
   // Build the replacement designators.
   llvm::SmallVector<Designator, 4> Replacements;
@@ -1343,7 +1360,9 @@ InitListChecker::CheckDesignatedInitializer(const InitializedEntity &Entity,
       if (Field->isUnnamedBitfield())
         continue;
 
-      if (KnownField == *Field || Field->getIdentifier() == FieldName)
+      if (KnownField && KnownField == *Field)
+        break;
+      if (FieldName && FieldName == Field->getIdentifier())
         break;
 
       ++FieldIndex;
@@ -1400,10 +1419,10 @@ InitListChecker::CheckDesignatedInitializer(const InitializedEntity &Entity,
           cast<RecordDecl>((ReplacementField)->getDeclContext())
                                                  ->isAnonymousStructOrUnion()) {
         // Handle an field designator that refers to a member of an
-        // anonymous struct or union.
+        // anonymous struct or union. This is a C1X feature.
         ExpandAnonymousFieldDesignator(SemaRef, DIE, DesigIdx,
                                        ReplacementField,
-                                       Field, FieldIndex);
+                                       Field, FieldIndex, RT->getDecl());
         D = DIE->getDesignator(DesigIdx);
       } else if (!KnownField) {
         // The replacement field comes from typo correction; find it
@@ -1421,12 +1440,6 @@ InitListChecker::CheckDesignatedInitializer(const InitializedEntity &Entity,
           ++FieldIndex;
         }
       }
-    } else if (!KnownField &&
-               cast<RecordDecl>((*Field)->getDeclContext())
-                 ->isAnonymousStructOrUnion()) {
-      ExpandAnonymousFieldDesignator(SemaRef, DIE, DesigIdx, *Field,
-                                     Field, FieldIndex);
-      D = DIE->getDesignator(DesigIdx);
     }
 
     // All of the fields of a union are located at the same place in

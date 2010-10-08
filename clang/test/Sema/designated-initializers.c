@@ -249,3 +249,31 @@ struct expr expr0 = {
     }
   }
 };
+
+// PR6955
+
+struct ds {
+  struct {
+    struct {
+      unsigned int a;
+    };
+    unsigned int b;
+    struct {
+      unsigned int c;
+    };
+  };
+};
+
+// C1X lookup-based anonymous member init cases
+struct ds ds0 = {
+  { {
+      .a = 1 // expected-note{{previous initialization is here}}
+    } },
+  .a = 2, // expected-warning{{initializer overrides prior initialization of this subobject}}
+  .b = 3
+};
+struct ds ds1 = { .c = 0 };
+struct ds ds2 = { { {
+    .a = 0,
+    .b = 1 // expected-error{{field designator 'b' does not refer to any field}}
+} } };

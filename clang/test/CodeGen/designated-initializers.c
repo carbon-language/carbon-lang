@@ -19,6 +19,39 @@ int b[2] = {
   [1] = 22
 };
 
+// PR6955
+
+struct ds {
+  struct {
+    struct {
+      short a;
+    };
+    short b;
+    struct {
+      short c;
+    };
+  };
+};
+
+// Traditional C anonymous member init
+struct ds ds0 = { { { .a = 0 } } };
+// C1X lookup-based anonymous member init cases
+struct ds ds1 = { { .a = 1 } };
+struct ds ds2 = { { .b = 1 } };
+struct ds ds3 = { .a = 0 };
+// CHECK: @ds4 = global %3 { %4 { %struct.anon zeroinitializer, i16 0, %struct.anon { i16 1 } } }
+struct ds ds4 = { .c = 1 };
+struct ds ds5 = { { { .a = 0 } }, .b = 1 };
+struct ds ds6 = { { .a = 0, .b = 1 } };
+// CHECK: @ds7 = global %3 { %4 { %struct.anon { i16 2 }, i16 3, %struct.anon zeroinitializer } }
+struct ds ds7 = {
+  { {
+      .a = 1
+    } },
+  .a = 2,
+  .b = 3
+};
+
 void test1(int argc, char **argv)
 {
   // CHECK: internal global %struct.foo { i8* null, i32 1024 }
