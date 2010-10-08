@@ -446,6 +446,7 @@ Sema::ActOnStartOfSwitchStmt(SourceLocation SwitchLoc, Expr *Cond,
   Cond = CondResult.take();
   
   if (!CondVar) {
+    CheckImplicitConversions(Cond, SwitchLoc);
     CondResult = MaybeCreateCXXExprWithTemporaries(Cond);
     if (CondResult.isInvalid())
       return StmtError();
@@ -889,6 +890,7 @@ Sema::ActOnDoStmt(SourceLocation DoLoc, Stmt *Body,
   if (CheckBooleanCondition(Cond, DoLoc))
     return StmtError();
 
+  CheckImplicitConversions(Cond, DoLoc);
   ExprResult CondResult = MaybeCreateCXXExprWithTemporaries(Cond);
   if (CondResult.isInvalid())
     return StmtError();
@@ -1173,8 +1175,10 @@ Sema::ActOnBlockReturnStmt(SourceLocation ReturnLoc, Expr *RetValExp) {
         return StmtError();
       }
       
-      if (RetValExp)
+      if (RetValExp) {
+        CheckImplicitConversions(RetValExp, ReturnLoc);
         RetValExp = MaybeCreateCXXExprWithTemporaries(RetValExp);
+      }
 
       RetValExp = Res.takeAs<Expr>();
       if (RetValExp) 
@@ -1227,6 +1231,7 @@ Sema::ActOnReturnStmt(SourceLocation ReturnLoc, Expr *RetValExp) {
           << RetValExp->getSourceRange();
       }
 
+      CheckImplicitConversions(RetValExp, ReturnLoc);
       RetValExp = MaybeCreateCXXExprWithTemporaries(RetValExp);
     }
     
@@ -1269,8 +1274,10 @@ Sema::ActOnReturnStmt(SourceLocation ReturnLoc, Expr *RetValExp) {
         CheckReturnStackAddr(RetValExp, FnRetType, ReturnLoc);
     }
     
-    if (RetValExp)
+    if (RetValExp) {
+      CheckImplicitConversions(RetValExp, ReturnLoc);
       RetValExp = MaybeCreateCXXExprWithTemporaries(RetValExp);
+    }
     Result = new (Context) ReturnStmt(ReturnLoc, RetValExp, NRVOCandidate);
   }
   

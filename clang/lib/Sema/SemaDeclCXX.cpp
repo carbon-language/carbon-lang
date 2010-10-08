@@ -136,6 +136,7 @@ Sema::SetParamDefaultArgument(ParmVarDecl *Param, Expr *Arg,
     return true;
   Arg = Result.takeAs<Expr>();
 
+  CheckImplicitConversions(Arg, EqualLoc);
   Arg = MaybeCreateCXXExprWithTemporaries(Arg);
 
   // Okay: add the default argument to the parameter
@@ -1276,6 +1277,8 @@ Sema::BuildMemberInitializer(FieldDecl *Member, Expr **Args,
                     MultiExprArg(*this, Args, NumArgs), 0);
   if (MemberInit.isInvalid())
     return true;
+
+  CheckImplicitConversions(MemberInit.get(), LParenLoc);
   
   // C++0x [class.base.init]p7:
   //   The initialization of each base and member constitutes a 
@@ -1407,6 +1410,8 @@ Sema::BuildBaseInitializer(QualType BaseType, TypeSourceInfo *BaseTInfo,
                     MultiExprArg(*this, Args, NumArgs), 0);
   if (BaseInit.isInvalid())
     return true;
+
+  CheckImplicitConversions(BaseInit.get(), LParenLoc);
   
   // C++0x [class.base.init]p7:
   //   The initialization of each base and member constitutes a 
@@ -5356,6 +5361,7 @@ bool Sema::InitializeVarWithConstructor(VarDecl *VD,
     return true;
 
   Expr *Temp = TempResult.takeAs<Expr>();
+  CheckImplicitConversions(Temp, VD->getLocation());
   MarkDeclarationReferenced(VD->getLocation(), Constructor);
   Temp = MaybeCreateCXXExprWithTemporaries(Temp);
   VD->setInit(Temp);
@@ -5489,6 +5495,8 @@ void Sema::AddCXXDirectInitializerToDecl(Decl *RealDecl,
     VDecl->setInvalidDecl();
     return;
   }
+
+  CheckImplicitConversions(Result.get(), LParenLoc);
   
   Result = MaybeCreateCXXExprWithTemporaries(Result.get());
   VDecl->setInit(Result.takeAs<Expr>());
@@ -6834,7 +6842,7 @@ void Sema::SetIvarInitializers(ObjCImplementationDecl *ObjCImplementation) {
       // is required (e.g., because it would call a trivial default constructor)
       if (!MemberInit.get() || MemberInit.isInvalid())
         continue;
-      
+
       Member =
         new (Context) CXXBaseOrMemberInitializer(Context,
                                                  Field, SourceLocation(),

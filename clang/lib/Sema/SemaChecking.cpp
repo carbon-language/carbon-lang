@@ -2434,7 +2434,7 @@ bool IsSameFloatAfterCast(const APValue &value,
           IsSameFloatAfterCast(value.getComplexFloatImag(), Src, Tgt));
 }
 
-void AnalyzeImplicitConversions(Sema &S, Expr *E);
+void AnalyzeImplicitConversions(Sema &S, Expr *E, SourceLocation CC);
 
 static bool IsZero(Sema &S, Expr *E) {
   // Suppress cases where we are comparing against an enum constant.
@@ -2487,8 +2487,8 @@ void CheckTrivialUnsignedComparison(Sema &S, BinaryOperator *E) {
 /// Analyze the operands of the given comparison.  Implements the
 /// fallback case from AnalyzeComparison.
 void AnalyzeImpConvsInComparison(Sema &S, BinaryOperator *E) {
-  AnalyzeImplicitConversions(S, E->getLHS());
-  AnalyzeImplicitConversions(S, E->getRHS());
+  AnalyzeImplicitConversions(S, E->getLHS(), E->getOperatorLoc());
+  AnalyzeImplicitConversions(S, E->getRHS(), E->getOperatorLoc());
 }
 
 /// \brief Implements -Wsign-compare.
@@ -2533,8 +2533,8 @@ void AnalyzeComparison(Sema &S, BinaryOperator *E) {
 
   // Go ahead and analyze implicit conversions in the operands.  Note
   // that we skip the implicit conversions on both sides.
-  AnalyzeImplicitConversions(S, lex);
-  AnalyzeImplicitConversions(S, rex);
+  AnalyzeImplicitConversions(S, lex, E->getOperatorLoc());
+  AnalyzeImplicitConversions(S, rex, E->getOperatorLoc());
 
   // If the signed range is non-negative, -Wsign-compare won't fire,
   // but we should still check for comparisons which are always true
@@ -2564,18 +2564,27 @@ void AnalyzeComparison(Sema &S, BinaryOperator *E) {
 }
 
 /// Diagnose an implicit cast;  purely a helper for CheckImplicitConversion.
-void DiagnoseImpCast(Sema &S, Expr *E, QualType T, unsigned diag) {
-  S.Diag(E->getExprLoc(), diag) << E->getType() << T << E->getSourceRange();
+void DiagnoseImpCast(Sema &S, Expr *E, QualType T, SourceLocation CContext,
+                     unsigned diag) {
+  S.Diag(E->getExprLoc(), diag)
+    << E->getType() << T << E->getSourceRange() << SourceRange(CContext);
 }
 
 void CheckImplicitConversion(Sema &S, Expr *E, QualType T,
-                             bool *ICContext = 0) {
+                             SourceLocation CC, bool *ICContext = 0) {
   if (E->isTypeDependent() || E->isValueDependent()) return;
 
   const Type *Source = S.Context.getCanonicalType(E->getType()).getTypePtr();
   const Type *Target = S.Context.getCanonicalType(T).getTypePtr();
   if (Source == Target) return;
   if (Target->isDependentType()) return;
+
+  // If the conversion context location is invalid or instantiated
+  // from a system macro, don't complain.
+  if (CC.isInvalid() ||
+      (CC.isMacroID() && S.Context.getSourceManager().isInSystemHeader(
+                           S.Context.getSourceManager().getSpellingLoc(CC))))
+    return;
 
   // Never diagnose implicit casts to bool.
   if (Target->isSpecificBuiltinType(BuiltinType::Bool))
@@ -2584,7 +2593,7 @@ void CheckImplicitConversion(Sema &S, Expr *E, QualType T,
   // Strip vector types.
   if (isa<VectorType>(Source)) {
     if (!isa<VectorType>(Target))
-      return DiagnoseImpCast(S, E, T, diag::warn_impcast_vector_scalar);
+      return DiagnoseImpCast(S, E, T, CC, diag::warn_impcast_vector_scalar);
 
     Source = cast<VectorType>(Source)->getElementType().getTypePtr();
     Target = cast<VectorType>(Target)->getElementType().getTypePtr();
@@ -2593,7 +2602,7 @@ void CheckImplicitConversion(Sema &S, Expr *E, QualType T,
   // Strip complex types.
   if (isa<ComplexType>(Source)) {
     if (!isa<ComplexType>(Target))
-      return DiagnoseImpCast(S, E, T, diag::warn_impcast_complex_scalar);
+      return DiagnoseImpCast(S, E, T, CC, diag::warn_impcast_complex_scalar);
 
     Source = cast<ComplexType>(Source)->getElementType().getTypePtr();
     Target = cast<ComplexType>(Target)->getElementType().getTypePtr();
@@ -2621,7 +2630,7 @@ void CheckImplicitConversion(Sema &S, Expr *E, QualType T,
             return;
         }
 
-        DiagnoseImpCast(S, E, T, diag::warn_impcast_float_precision);
+        DiagnoseImpCast(S, E, T, CC, diag::warn_impcast_float_precision);
       }
       return;
     }
@@ -2629,7 +2638,7 @@ void CheckImplicitConversion(Sema &S, Expr *E, QualType T,
     // If the target is integral, always warn.
     if ((TargetBT && TargetBT->isInteger()))
       // TODO: don't warn for integer values?
-      DiagnoseImpCast(S, E, T, diag::warn_impcast_float_integer);
+      DiagnoseImpCast(S, E, T, CC, diag::warn_impcast_float_integer);
 
     return;
   }
@@ -2644,8 +2653,8 @@ void CheckImplicitConversion(Sema &S, Expr *E, QualType T,
     // People want to build with -Wshorten-64-to-32 and not -Wconversion
     // and by god we'll let them.
     if (SourceRange.Width == 64 && TargetRange.Width == 32)
-      return DiagnoseImpCast(S, E, T, diag::warn_impcast_integer_64_32);
-    return DiagnoseImpCast(S, E, T, diag::warn_impcast_integer_precision);
+      return DiagnoseImpCast(S, E, T, CC, diag::warn_impcast_integer_64_32);
+    return DiagnoseImpCast(S, E, T, CC, diag::warn_impcast_integer_precision);
   }
 
   if ((TargetRange.NonNegative && !SourceRange.NonNegative) ||
@@ -2663,7 +2672,7 @@ void CheckImplicitConversion(Sema &S, Expr *E, QualType T,
       *ICContext = true;
     }
 
-    return DiagnoseImpCast(S, E, T, DiagID);
+    return DiagnoseImpCast(S, E, T, CC, DiagID);
   }
 
   return;
@@ -2672,24 +2681,26 @@ void CheckImplicitConversion(Sema &S, Expr *E, QualType T,
 void CheckConditionalOperator(Sema &S, ConditionalOperator *E, QualType T);
 
 void CheckConditionalOperand(Sema &S, Expr *E, QualType T,
-                             bool &ICContext) {
+                             SourceLocation CC, bool &ICContext) {
   E = E->IgnoreParenImpCasts();
 
   if (isa<ConditionalOperator>(E))
     return CheckConditionalOperator(S, cast<ConditionalOperator>(E), T);
 
-  AnalyzeImplicitConversions(S, E);
+  AnalyzeImplicitConversions(S, E, CC);
   if (E->getType() != T)
-    return CheckImplicitConversion(S, E, T, &ICContext);
+    return CheckImplicitConversion(S, E, T, CC, &ICContext);
   return;
 }
 
 void CheckConditionalOperator(Sema &S, ConditionalOperator *E, QualType T) {
-  AnalyzeImplicitConversions(S, E->getCond());
+  SourceLocation CC = E->getQuestionLoc();
+
+  AnalyzeImplicitConversions(S, E->getCond(), CC);
 
   bool Suspicious = false;
-  CheckConditionalOperand(S, E->getTrueExpr(), T, Suspicious);
-  CheckConditionalOperand(S, E->getFalseExpr(), T, Suspicious);
+  CheckConditionalOperand(S, E->getTrueExpr(), T, CC, Suspicious);
+  CheckConditionalOperand(S, E->getFalseExpr(), T, CC, Suspicious);
 
   // If -Wconversion would have warned about either of the candidates
   // for a signedness conversion to the context type...
@@ -2708,10 +2719,10 @@ void CheckConditionalOperator(Sema &S, ConditionalOperator *E, QualType T) {
   if (E->getType() != T) {
     Suspicious = false;
     CheckImplicitConversion(S, E->getTrueExpr()->IgnoreParenImpCasts(),
-                            E->getType(), &Suspicious);
+                            E->getType(), CC, &Suspicious);
     if (!Suspicious)
       CheckImplicitConversion(S, E->getFalseExpr()->IgnoreParenImpCasts(),
-                              E->getType(), &Suspicious);
+                              E->getType(), CC, &Suspicious);
     if (!Suspicious)
       return;
   }
@@ -2727,7 +2738,7 @@ void CheckConditionalOperator(Sema &S, ConditionalOperator *E, QualType T) {
 /// AnalyzeImplicitConversions - Find and report any interesting
 /// implicit conversions in the given expression.  There are a couple
 /// of competing diagnostics here, -Wconversion and -Wsign-compare.
-void AnalyzeImplicitConversions(Sema &S, Expr *OrigE) {
+void AnalyzeImplicitConversions(Sema &S, Expr *OrigE, SourceLocation CC) {
   QualType T = OrigE->getType();
   Expr *E = OrigE->IgnoreParenImpCasts();
 
@@ -2743,14 +2754,14 @@ void AnalyzeImplicitConversions(Sema &S, Expr *OrigE) {
   // The non-canonical typecheck is just an optimization;
   // CheckImplicitConversion will filter out dead implicit conversions.
   if (E->getType() != T)
-    CheckImplicitConversion(S, E, T);
+    CheckImplicitConversion(S, E, T, CC);
 
   // Now continue drilling into this expression.
 
   // Skip past explicit casts.
   if (isa<ExplicitCastExpr>(E)) {
     E = cast<ExplicitCastExpr>(E)->getSubExpr()->IgnoreParenImpCasts();
-    return AnalyzeImplicitConversions(S, E);
+    return AnalyzeImplicitConversions(S, E, CC);
   }
 
   // Do a somewhat different check with comparison operators.
@@ -2767,9 +2778,10 @@ void AnalyzeImplicitConversions(Sema &S, Expr *OrigE) {
   if (isa<SizeOfAlignOfExpr>(E)) return;
 
   // Now just recurse over the expression's children.
+  CC = E->getExprLoc();
   for (Stmt::child_iterator I = E->child_begin(), IE = E->child_end();
          I != IE; ++I)
-    AnalyzeImplicitConversions(S, cast<Expr>(*I));
+    AnalyzeImplicitConversions(S, cast<Expr>(*I), CC);
 }
 
 } // end anonymous namespace
@@ -2777,7 +2789,11 @@ void AnalyzeImplicitConversions(Sema &S, Expr *OrigE) {
 /// Diagnoses "dangerous" implicit conversions within the given
 /// expression (which is a full expression).  Implements -Wconversion
 /// and -Wsign-compare.
-void Sema::CheckImplicitConversions(Expr *E) {
+///
+/// \param CC the "context" location of the implicit conversion, i.e.
+///   the most location of the syntactic entity requiring the implicit
+///   conversion
+void Sema::CheckImplicitConversions(Expr *E, SourceLocation CC) {
   // Don't diagnose in unevaluated contexts.
   if (ExprEvalContexts.back().Context == Sema::Unevaluated)
     return;
@@ -2786,7 +2802,8 @@ void Sema::CheckImplicitConversions(Expr *E) {
   if (E->isTypeDependent() || E->isValueDependent())
     return;
 
-  AnalyzeImplicitConversions(*this, E);
+  // This is not the right CC for (e.g.) a variable initialization.
+  AnalyzeImplicitConversions(*this, E, CC);
 }
 
 /// CheckParmsForFunctionDef - Check that the parameters of the given

@@ -4326,6 +4326,9 @@ void Sema::AddInitializerToDecl(Decl *RealDecl, Expr *Init, bool DirectInit) {
     Init->setType(DclT);
   }
 
+  // Check any implicit conversions within the expression.
+  CheckImplicitConversions(Init, VDecl->getLocation());
+
   Init = MaybeCreateCXXExprWithTemporaries(Init);
   // Attach the initializer to the decl.
   VDecl->setInit(Init);

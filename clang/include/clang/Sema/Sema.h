@@ -4472,7 +4472,7 @@ private:
   void CheckReturnStackAddr(Expr *RetValExp, QualType lhsType,
                             SourceLocation ReturnLoc);
   void CheckFloatComparison(SourceLocation loc, Expr* lex, Expr* rex);
-  void CheckImplicitConversions(Expr *E);
+  void CheckImplicitConversions(Expr *E, SourceLocation CC = SourceLocation());
 
   /// \brief The parser's current scope.
   ///

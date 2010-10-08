@@ -297,3 +297,16 @@ void test_7904686(void) {
   unsigned u2 = -1; // expected-warning {{implicit conversion changes signedness}}  
   u2 = -1; // expected-warning {{implicit conversion changes signedness}}  
 }
+
+// <rdar://problem/8232669>: don't warn about conversions required by
+// contexts in system headers
+void test_8232669(void) {
+  unsigned bitset[20];
+  SETBIT(bitset, 0);
+
+  unsigned y = 50;
+  SETBIT(bitset, y);
+
+#define USER_SETBIT(set,bit) do { int i = bit; set[i/(8*sizeof(set[0]))] |= (1 << (i%(8*sizeof(set)))); } while(0)
+  USER_SETBIT(bitset, 0); // expected-warning 2 {{implicit conversion changes signedness}}
+}
