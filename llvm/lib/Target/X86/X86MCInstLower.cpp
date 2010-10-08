@@ -437,15 +437,9 @@ ReSimplify:
   // These are pseudo-ops for OR to help with the OR->ADD transformation.  We do
   // this with an ugly goto in case the resultant OR uses EAX and needs the
   // short form.
-  case X86::ADD16rr_DB:   OutMI.setOpcode(X86::OR16rr); goto ReSimplify;
-  case X86::ADD32rr_DB:   OutMI.setOpcode(X86::OR32rr); goto ReSimplify;
-  case X86::ADD64rr_DB:   OutMI.setOpcode(X86::OR64rr); goto ReSimplify;
-  case X86::ADD16ri_DB:   OutMI.setOpcode(X86::OR16ri); goto ReSimplify;
-  case X86::ADD32ri_DB:   OutMI.setOpcode(X86::OR32ri); goto ReSimplify;
-  case X86::ADD64ri32_DB: OutMI.setOpcode(X86::OR64ri32); goto ReSimplify;
-  case X86::ADD16ri8_DB:  OutMI.setOpcode(X86::OR16ri8); goto ReSimplify;
-  case X86::ADD32ri8_DB:  OutMI.setOpcode(X86::OR32ri8); goto ReSimplify;
-  case X86::ADD64ri8_DB:  OutMI.setOpcode(X86::OR64ri8); goto ReSimplify;
+  case X86::ADD16rr_DB: OutMI.setOpcode(X86::OR16rr); goto ReSimplify;
+  case X86::ADD32rr_DB: OutMI.setOpcode(X86::OR32rr); goto ReSimplify;
+  case X86::ADD64rr_DB: OutMI.setOpcode(X86::OR64rr); goto ReSimplify;
       
   // The assembler backend wants to see branches in their small form and relax
   // them to their large form.  The JIT can only handle the large form because

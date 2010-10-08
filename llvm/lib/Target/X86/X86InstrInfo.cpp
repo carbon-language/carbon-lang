@@ -68,20 +68,14 @@ X86InstrInfo::X86InstrInfo(X86TargetMachine &tm)
     { X86::ADC64rr,     X86::ADC64mr },
     { X86::ADD16ri,     X86::ADD16mi },
     { X86::ADD16ri8,    X86::ADD16mi8 },
-    { X86::ADD16ri_DB,  X86::ADD16mi  | TB_NOT_REVERSABLE },
-    { X86::ADD16ri8_DB, X86::ADD16mi8 | TB_NOT_REVERSABLE },
     { X86::ADD16rr,     X86::ADD16mr },
     { X86::ADD16rr_DB,  X86::ADD16mr | TB_NOT_REVERSABLE },
     { X86::ADD32ri,     X86::ADD32mi },
     { X86::ADD32ri8,    X86::ADD32mi8 },
-    { X86::ADD32ri_DB,  X86::ADD32mi | TB_NOT_REVERSABLE },
-    { X86::ADD32ri8_DB, X86::ADD32mi8 | TB_NOT_REVERSABLE },
     { X86::ADD32rr,     X86::ADD32mr },
     { X86::ADD32rr_DB,  X86::ADD32mr | TB_NOT_REVERSABLE },
     { X86::ADD64ri32,   X86::ADD64mi32 },
     { X86::ADD64ri8,    X86::ADD64mi8 },
-    { X86::ADD64ri32_DB,X86::ADD64mi32 | TB_NOT_REVERSABLE },
-    { X86::ADD64ri8_DB, X86::ADD64mi8 | TB_NOT_REVERSABLE },
     { X86::ADD64rr,     X86::ADD64mr },
     { X86::ADD64rr_DB,  X86::ADD64mr | TB_NOT_REVERSABLE },
     { X86::ADD8ri,      X86::ADD8mi },
@@ -1166,8 +1160,6 @@ X86InstrInfo::convertToThreeAddressWithLEA(unsigned MIOpc,
     break;
   case X86::ADD16ri:
   case X86::ADD16ri8:
-  case X86::ADD16ri_DB:
-  case X86::ADD16ri8_DB:
     addRegOffset(MIB, leaInReg, true, MI->getOperand(2).getImm());    
     break;
   case X86::ADD16rr:
@@ -1432,8 +1424,6 @@ X86InstrInfo::convertToThreeAddress(MachineFunction::iterator &MFI,
     }
     case X86::ADD64ri32:
     case X86::ADD64ri8:
-    case X86::ADD64ri32_DB:
-    case X86::ADD64ri8_DB:
       assert(MI->getNumOperands() >= 3 && "Unknown add instruction!");
       NewMI = addRegOffset(BuildMI(MF, MI->getDebugLoc(), get(X86::LEA64r))
                               .addReg(Dest, RegState::Define |
@@ -1441,9 +1431,7 @@ X86InstrInfo::convertToThreeAddress(MachineFunction::iterator &MFI,
                               Src, isKill, MI->getOperand(2).getImm());
       break;
     case X86::ADD32ri:
-    case X86::ADD32ri8:
-    case X86::ADD32ri_DB:
-    case X86::ADD32ri8_DB: {
+    case X86::ADD32ri8: {
       assert(MI->getNumOperands() >= 3 && "Unknown add instruction!");
       unsigned Opc = is64Bit ? X86::LEA64_32r : X86::LEA32r;
       NewMI = addRegOffset(BuildMI(MF, MI->getDebugLoc(), get(Opc))
@@ -1454,8 +1442,6 @@ X86InstrInfo::convertToThreeAddress(MachineFunction::iterator &MFI,
     }
     case X86::ADD16ri:
     case X86::ADD16ri8:
-    case X86::ADD16ri_DB:
-    case X86::ADD16ri8_DB:
       if (DisableLEA16)
         return is64Bit ? convertToThreeAddressWithLEA(MIOpc, MFI, MBBI, LV) : 0;
       assert(MI->getNumOperands() >= 3 && "Unknown add instruction!");
