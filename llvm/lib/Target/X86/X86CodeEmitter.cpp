@@ -600,6 +600,20 @@ template<class CodeEmitter>
 void Emitter<CodeEmitter>::emitInstruction(MachineInstr &MI,
                                            const TargetInstrDesc *Desc) {
   DEBUG(dbgs() << MI);
+  
+  // If this is a pseudo instruction, lower it.
+  switch (Desc->getOpcode()) {
+  case X86::ADD16rr_DB:   Desc = &II->get(X86::OR16rr); MI.setDesc(*Desc);break;
+  case X86::ADD32rr_DB:   Desc = &II->get(X86::OR32rr); MI.setDesc(*Desc);break;
+  case X86::ADD64rr_DB:   Desc = &II->get(X86::OR64rr); MI.setDesc(*Desc);break;
+  case X86::ADD16ri_DB:   Desc = &II->get(X86::OR16ri); MI.setDesc(*Desc);break;
+  case X86::ADD32ri_DB:   Desc = &II->get(X86::OR32ri); MI.setDesc(*Desc);break;
+  case X86::ADD64ri32_DB:Desc = &II->get(X86::OR64ri32);MI.setDesc(*Desc);break;
+  case X86::ADD16ri8_DB:  Desc = &II->get(X86::OR16ri8);MI.setDesc(*Desc);break;
+  case X86::ADD32ri8_DB:  Desc = &II->get(X86::OR32ri8);MI.setDesc(*Desc);break;
+  case X86::ADD64ri8_DB:  Desc = &II->get(X86::OR64ri8);MI.setDesc(*Desc);break;
+  }
+  
 
   MCE.processDebugLoc(MI.getDebugLoc(), true);
 
