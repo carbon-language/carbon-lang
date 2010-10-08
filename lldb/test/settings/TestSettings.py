@@ -13,8 +13,8 @@ class SettingsCommandTestCase(TestBase):
 
     @classmethod
     def classCleanup(cls):
-        system(["/bin/sh", "-c", "rm output.txt"])
-        #system(["/bin/sh", "-c", "rm stdout.txt"])
+        system(["/bin/sh", "-c", "rm -f output.txt"])
+        system(["/bin/sh", "-c", "rm -f stdout.txt"])
 
     def test_set_prompt(self):
         """Test that 'set prompt' actually changes the prompt."""
@@ -45,7 +45,7 @@ class SettingsCommandTestCase(TestBase):
 
         # The overall display should also reflect the new setting.
         self.expect("settings show",
-            substrs = "term-width (int) = '70'")
+            substrs = ["term-width (int) = '70'"])
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     def test_with_dsym(self):
