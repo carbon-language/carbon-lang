@@ -72,10 +72,11 @@ class SettingsCommandTestCase(TestBase):
         # Read the output file produced by running the program.
         output = open('output.txt', 'r').read()
 
-        self.assertTrue(output.startswith("argv[1] matches") and
-                        output.find("argv[2] matches") > 0 and
-                        output.find("argv[3] matches") > 0 and
-                        output.find("Environment variable 'MY_ENV_VAR' successfully passed.") > 0)
+        self.expect(output, exe=False,
+            substrs = ["argv[1] matches",
+                       "argv[2] matches",
+                       "argv[3] matches",
+                       "Environment variable 'MY_ENV_VAR' successfully passed."])
 
     @unittest2.expectedFailure
     # rdar://problem/8435794
@@ -95,10 +96,11 @@ class SettingsCommandTestCase(TestBase):
         self.runCmd("run", RUN_SUCCEEDED)
 
         # Read the output file produced by running the program.
-        output = open('stdout.txt', 'r').read()
+        with open('stdout.txt', 'r') as f:
+            output = f.read()
 
-        self.assertTrue(
-            output.startswith("This message should go to standard out."))
+        self.expect(output, exe=False,
+            startstr = "This message should go to standard out.")
 
 
 if __name__ == '__main__':
