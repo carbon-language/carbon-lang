@@ -1102,6 +1102,7 @@
 				9012911C1048068D0083456D /* ASTUnit.cpp */,
 				1A2A54A50FD1DD1C00F4CE45 /* ASTConsumers.cpp */,
 				1A2A54A70FD1DD1C00F4CE45 /* CacheTokens.cpp */,
+				DE4DC7A20EA1C33E00069E5A /* TokenRewriter.cpp */,
 				1ACB57DB1105820D0047B991 /* CompilerInstance.cpp */,
 				1ACB57DC1105820D0047B991 /* CompilerInvocation.cpp */,
 				1ACB57DD1105820D0047B991 /* DeclXML.cpp */,
@@ -2006,7 +2007,6 @@
 				72D16C1E0D9975C400E6DA4A /* HTMLRewrite.cpp */,
 				DEF7D9F80C9C8B1D0001F598 /* Rewriter.cpp */,
 				DECAB0CF0DB3C84200E13CCB /* RewriteRope.cpp */,
-				DE4DC7A20EA1C33E00069E5A /* TokenRewriter.cpp */,
 			);
 			name = Rewrite;
 			sourceTree = "<group>";

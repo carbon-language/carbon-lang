@@ -5363,6 +5363,15 @@ Stmt *RewriteObjC::RewriteFunctionBodyOrGlobalInitializer(Stmt *S) {
         newStmt = RewriteFunctionBodyOrGlobalInitializer(S);
       if (newStmt)
         *CI = newStmt;
+      // If dealing with an assignment with LHS being a property reference
+      // expression, the entire assignment tree is rewritten into a property
+      // setter messaging. This involvs the RHS too. Do not attempt to rewrite
+      // RHS again.
+      if (ObjCPropertyRefExpr *PRE = dyn_cast<ObjCPropertyRefExpr>(S))
+        if (PropSetters[PRE]) {
+          ++CI;
+          continue;
+        }
     }
 
   if (BlockExpr *BE = dyn_cast<BlockExpr>(S)) {
