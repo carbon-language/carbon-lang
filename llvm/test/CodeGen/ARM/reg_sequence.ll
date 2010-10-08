@@ -122,9 +122,9 @@ return1:
 return2:
 ; CHECK:        %return2
 ; CHECK:        vadd.i32
-; CHECK:        vmov q1, q3
+; CHECK:        vmov q9, q11
 ; CHECK-NOT:    vmov
-; CHECK:        vst2.32 {d0, d1, d2, d3}
+; CHECK:        vst2.32 {d16, d17, d18, d19}
   %tmp100 = extractvalue %struct.__neon_int32x4x2_t %tmp2, 0 ; <<4 x i32>> [#uses=1]
   %tmp101 = extractvalue %struct.__neon_int32x4x2_t %tmp5, 1 ; <<4 x i32>> [#uses=1]
   %tmp102 = add <4 x i32> %tmp100, %tmp101              ; <<4 x i32>> [#uses=1]
@@ -136,9 +136,9 @@ return2:
 define <8 x i16> @t5(i16* %A, <8 x i16>* %B) nounwind {
 ; CHECK:        t5:
 ; CHECK:        vldmia
-; CHECK:        vmov q1, q0
+; CHECK:        vmov q9, q8
 ; CHECK-NOT:    vmov
-; CHECK:        vld2.16 {d0[1], d2[1]}, [r0]
+; CHECK:        vld2.16 {d16[1], d18[1]}, [r0]
 ; CHECK-NOT:    vmov
 ; CHECK:        vadd.i16
   %tmp0 = bitcast i16* %A to i8*                  ; <i8*> [#uses=1]
@@ -153,8 +153,8 @@ define <8 x i16> @t5(i16* %A, <8 x i16>* %B) nounwind {
 define <8 x i8> @t6(i8* %A, <8 x i8>* %B) nounwind {
 ; CHECK:        t6:
 ; CHECK:        vldr.64
-; CHECK:        vmov d1, d0
-; CHECK-NEXT:   vld2.8 {d0[1], d1[1]}
+; CHECK:        vmov d17, d16
+; CHECK-NEXT:   vld2.8 {d16[1], d17[1]}
   %tmp1 = load <8 x i8>* %B                       ; <<8 x i8>> [#uses=2]
   %tmp2 = call %struct.__neon_int8x8x2_t @llvm.arm.neon.vld2lane.v8i8(i8* %A, <8 x i8> %tmp1, <8 x i8> %tmp1, i32 1, i32 1) ; <%struct.__neon_int8x8x2_t> [#uses=2]
   %tmp3 = extractvalue %struct.__neon_int8x8x2_t %tmp2, 0 ; <<8 x i8>> [#uses=1]
@@ -168,10 +168,10 @@ entry:
 ; CHECK:        t7:
 ; CHECK:        vld2.32
 ; CHECK:        vst2.32
-; CHECK:        vld1.32 {d0, d1},
-; CHECK:        vmov q1, q0
+; CHECK:        vld1.32 {d16, d17},
+; CHECK:        vmov q9, q8
 ; CHECK-NOT:    vmov
-; CHECK:        vuzp.32 q0, q1
+; CHECK:        vuzp.32 q8, q9
 ; CHECK:        vst1.32
   %0 = bitcast i32* %iptr to i8*                  ; <i8*> [#uses=2]
   %1 = tail call %struct.__neon_int32x4x2_t @llvm.arm.neon.vld2.v4i32(i8* %0, i32 1) ; <%struct.__neon_int32x4x2_t> [#uses=2]
@@ -188,7 +188,7 @@ entry:
 ; PR7156
 define arm_aapcs_vfpcc i32 @t8() nounwind {
 ; CHECK: t8:
-; CHECK: vrsqrte.f32 q0, q0
+; CHECK: vrsqrte.f32 q8, q8
 bb.nph55.bb.nph55.split_crit_edge:
   br label %bb3
 
@@ -238,10 +238,10 @@ bb14:                                             ; preds = %bb6
 define arm_aapcs_vfpcc float @t9(%0* nocapture, %3* nocapture) nounwind {
 ; CHECK:        t9:
 ; CHECK:        vldr.64
-; CHECK-NOT:    vmov d{{.*}}, d0
-; CHECK:        vmov.i32 d1
-; CHECK-NEXT:   vstmia r0, {d0, d1}
-; CHECK-NEXT:   vstmia r0, {d0, d1}
+; CHECK-NOT:    vmov d{{.*}}, d16
+; CHECK:        vmov.i32 d17
+; CHECK-NEXT:   vstmia r0, {d16, d17}
+; CHECK-NEXT:   vstmia r0, {d16, d17}
   %3 = bitcast double 0.000000e+00 to <2 x float> ; <<2 x float>> [#uses=2]
   %4 = shufflevector <2 x float> %3, <2 x float> undef, <4 x i32> <i32 0, i32 1, i32 2, i32 3> ; <<4 x float>> [#uses=1]
   store <4 x float> %4, <4 x float>* undef, align 16
@@ -269,9 +269,9 @@ define arm_aapcs_vfpcc float @t9(%0* nocapture, %3* nocapture) nounwind {
 define arm_aapcs_vfpcc i32 @t10() nounwind {
 entry:
 ; CHECK: t10:
-; CHECK: vmov.i32 q1, #0x3F000000
-; CHECK: vmov d0, d1
-; CHECK: vmla.f32 q0, q0, d0[0]
+; CHECK: vmov.i32 q9, #0x3F000000
+; CHECK: vmov d0, d17
+; CHECK: vmla.f32 q8, q8, d0[0]
   %0 = shufflevector <4 x float> zeroinitializer, <4 x float> undef, <4 x i32> zeroinitializer ; <<4 x float>> [#uses=1]
   %1 = insertelement <4 x float> %0, float undef, i32 1 ; <<4 x float>> [#uses=1]
   %2 = insertelement <4 x float> %1, float undef, i32 2 ; <<4 x float>> [#uses=1]

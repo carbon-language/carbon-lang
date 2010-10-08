@@ -387,16 +387,18 @@ def DPR : RegisterClass<"ARM", [f64, v8i8, v4i16, v2i32, v1i64, v2f32], 64,
       ARM::D4,  ARM::D5,  ARM::D6,  ARM::D7,
       ARM::D8,  ARM::D9,  ARM::D10, ARM::D11,
       ARM::D12, ARM::D13, ARM::D14, ARM::D15 };
-    // VFP3
+    // VFP3: D8-D15 are callee saved and should be allocated last.
+    // Save other low registers for use as DPR_VFP2 and DPR_8 classes.
     static const unsigned ARM_DPR_VFP3[] = {
-      ARM::D0,  ARM::D1,  ARM::D2,  ARM::D3,
-      ARM::D4,  ARM::D5,  ARM::D6,  ARM::D7,
-      ARM::D8,  ARM::D9,  ARM::D10, ARM::D11,
-      ARM::D12, ARM::D13, ARM::D14, ARM::D15,
       ARM::D16, ARM::D17, ARM::D18, ARM::D19,
       ARM::D20, ARM::D21, ARM::D22, ARM::D23,
       ARM::D24, ARM::D25, ARM::D26, ARM::D27,
-      ARM::D28, ARM::D29, ARM::D30, ARM::D31 };
+      ARM::D28, ARM::D29, ARM::D30, ARM::D31,
+      ARM::D0,  ARM::D1,  ARM::D2,  ARM::D3,
+      ARM::D4,  ARM::D5,  ARM::D6,  ARM::D7,
+      ARM::D8,  ARM::D9,  ARM::D10, ARM::D11,
+      ARM::D12, ARM::D13, ARM::D14, ARM::D15 };
+
     DPRClass::iterator
     DPRClass::allocation_order_begin(const MachineFunction &MF) const {
       const TargetMachine &TM = MF.getTarget();
@@ -438,6 +440,29 @@ def QPR : RegisterClass<"ARM", [v16i8, v8i16, v4i32, v2i64, v4f32, v2f64], 128,
                         [Q0,  Q1,  Q2,  Q3,  Q4,  Q5,  Q6,  Q7,
                          Q8,  Q9,  Q10, Q11, Q12, Q13, Q14, Q15]> {
   let SubRegClasses = [(DPR dsub_0, dsub_1)];
+  let MethodProtos = [{
+    iterator allocation_order_begin(const MachineFunction &MF) const;
+    iterator allocation_order_end(const MachineFunction &MF) const;
+  }];
+  let MethodBodies = [{
+    // Q4-Q7 are callee saved and should be allocated last.
+    // Save other low registers for use as QPR_VFP2 and QPR_8 classes.
+    static const unsigned ARM_QPR[] = {
+      ARM::Q8,  ARM::Q9,  ARM::Q10, ARM::Q11,
+      ARM::Q12, ARM::Q13, ARM::Q14, ARM::Q15,
+      ARM::Q0,  ARM::Q1,  ARM::Q2,  ARM::Q3,
+      ARM::Q4,  ARM::Q5,  ARM::Q6,  ARM::Q7 };
+
+    QPRClass::iterator
+    QPRClass::allocation_order_begin(const MachineFunction &MF) const {
+      return ARM_QPR;
+    }
+
+    QPRClass::iterator
+    QPRClass::allocation_order_end(const MachineFunction &MF) const {
+      return ARM_QPR + (sizeof(ARM_QPR)/sizeof(unsigned));
+    }
+  }];
 }
 
 // Subset of QPR that have 32-bit SPR subregs.
@@ -463,6 +488,27 @@ def QQPR : RegisterClass<"ARM", [v4i64],
                          [QQ0, QQ1, QQ2, QQ3, QQ4, QQ5, QQ6, QQ7]> {
   let SubRegClasses = [(DPR dsub_0, dsub_1, dsub_2, dsub_3),
                        (QPR qsub_0, qsub_1)];
+  let MethodProtos = [{
+    iterator allocation_order_begin(const MachineFunction &MF) const;
+    iterator allocation_order_end(const MachineFunction &MF) const;
+  }];
+  let MethodBodies = [{
+    // QQ2-QQ3 are callee saved and should be allocated last.
+    // Save other low registers for use as QPR_VFP2 and QPR_8 classes.
+    static const unsigned ARM_QQPR[] = {
+      ARM::QQ4, ARM::QQ5, ARM::QQ6, ARM::QQ7,
+      ARM::QQ0, ARM::QQ1, ARM::QQ2, ARM::QQ3 };
+
+    QQPRClass::iterator
+    QQPRClass::allocation_order_begin(const MachineFunction &MF) const {
+      return ARM_QQPR;
+    }
+
+    QQPRClass::iterator
+    QQPRClass::allocation_order_end(const MachineFunction &MF) const {
+      return ARM_QQPR + (sizeof(ARM_QQPR)/sizeof(unsigned));
+    }
+  }];
 }
 
 // Subset of QQPR that have 32-bit SPR subregs.
@@ -483,6 +529,26 @@ def QQQQPR : RegisterClass<"ARM", [v8i64],
   let SubRegClasses = [(DPR dsub_0, dsub_1, dsub_2, dsub_3,
                             dsub_4, dsub_5, dsub_6, dsub_7),
                        (QPR qsub_0, qsub_1, qsub_2, qsub_3)];
+  let MethodProtos = [{
+    iterator allocation_order_begin(const MachineFunction &MF) const;
+    iterator allocation_order_end(const MachineFunction &MF) const;
+  }];
+  let MethodBodies = [{
+    // QQQQ1 is callee saved and should be allocated last.
+    // Save QQQQ0 for use as QPR_VFP2 and QPR_8 classes.
+    static const unsigned ARM_QQQQPR[] = {
+      ARM::QQQQ2, ARM::QQQQ3, ARM::QQQQ0, ARM::QQQQ1 };
+
+    QQQQPRClass::iterator
+    QQQQPRClass::allocation_order_begin(const MachineFunction &MF) const {
+      return ARM_QQQQPR;
+    }
+
+    QQQQPRClass::iterator
+    QQQQPRClass::allocation_order_end(const MachineFunction &MF) const {
+      return ARM_QQQQPR + (sizeof(ARM_QQQQPR)/sizeof(unsigned));
+    }
+  }];
 }
 
 // Condition code registers.

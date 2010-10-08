@@ -56,7 +56,7 @@ define void @t2(i8* %ptr1, i8* %ptr2) nounwind {
 entry:
 ; CHECK: t2:
 ; CHECK: adr r{{.}}, #LCPI1_0
-; CHECK: vldmia r3, {d0, d1}
+; CHECK: vldmia r3, {d16, d17}
   br i1 undef, label %bb1, label %bb2
 
 bb1:

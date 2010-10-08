@@ -19,6 +19,6 @@ entry:
   %0 = fmul double %a, %b
 ; CORTEXM3: blx ___muldf3
 ; CORTEXM4: blx ___muldf3
-; CORTEXA8: vmul.f64  d0, d1, d0
+; CORTEXA8: vmul.f64  d16, d17, d16
   ret double %0
 }

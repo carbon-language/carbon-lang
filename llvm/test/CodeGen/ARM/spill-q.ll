@@ -20,6 +20,26 @@ entry:
   %1 = call <4 x float> @llvm.arm.neon.vld1.v4f32(i8* undef, i32 1) nounwind ; <<4 x float>> [#uses=1]
   store float 0.000000e+00, float* undef, align 4
   %2 = call <4 x float> @llvm.arm.neon.vld1.v4f32(i8* undef, i32 1) nounwind ; <<4 x float>> [#uses=1]
+  %ld3 = call <4 x float> @llvm.arm.neon.vld1.v4f32(i8* undef, i32 1) nounwind
+  store float 0.000000e+00, float* undef, align 4
+  %ld4 = call <4 x float> @llvm.arm.neon.vld1.v4f32(i8* undef, i32 1) nounwind
+  store float 0.000000e+00, float* undef, align 4
+  %ld5 = call <4 x float> @llvm.arm.neon.vld1.v4f32(i8* undef, i32 1) nounwind
+  store float 0.000000e+00, float* undef, align 4
+  %ld6 = call <4 x float> @llvm.arm.neon.vld1.v4f32(i8* undef, i32 1) nounwind
+  store float 0.000000e+00, float* undef, align 4
+  %ld7 = call <4 x float> @llvm.arm.neon.vld1.v4f32(i8* undef, i32 1) nounwind
+  store float 0.000000e+00, float* undef, align 4
+  %ld8 = call <4 x float> @llvm.arm.neon.vld1.v4f32(i8* undef, i32 1) nounwind
+  store float 0.000000e+00, float* undef, align 4
+  %ld9 = call <4 x float> @llvm.arm.neon.vld1.v4f32(i8* undef, i32 1) nounwind
+  store float 0.000000e+00, float* undef, align 4
+  %ld10 = call <4 x float> @llvm.arm.neon.vld1.v4f32(i8* undef, i32 1) nounwind
+  store float 0.000000e+00, float* undef, align 4
+  %ld11 = call <4 x float> @llvm.arm.neon.vld1.v4f32(i8* undef, i32 1) nounwind
+  store float 0.000000e+00, float* undef, align 4
+  %ld12 = call <4 x float> @llvm.arm.neon.vld1.v4f32(i8* undef, i32 1) nounwind
+  store float 0.000000e+00, float* undef, align 4
   %val173 = load <4 x float>* undef               ; <<4 x float>> [#uses=1]
   br label %bb4
 
@@ -44,7 +64,16 @@ bb4:                                              ; preds = %bb193, %entry
   %18 = fmul <4 x float> %17, %val173             ; <<4 x float>> [#uses=1]
   %19 = shufflevector <4 x float> %18, <4 x float> undef, <2 x i32> <i32 2, i32 3> ; <<2 x float>> [#uses=1]
   %20 = shufflevector <2 x float> %19, <2 x float> undef, <4 x i32> zeroinitializer ; <<4 x float>> [#uses=1]
-  %21 = fadd <4 x float> zeroinitializer, %20     ; <<4 x float>> [#uses=2]
+  %tmp1 = fadd <4 x float> %20, %ld3
+  %tmp2 = fadd <4 x float> %tmp1, %ld4
+  %tmp3 = fadd <4 x float> %tmp2, %ld5
+  %tmp4 = fadd <4 x float> %tmp3, %ld6
+  %tmp5 = fadd <4 x float> %tmp4, %ld7
+  %tmp6 = fadd <4 x float> %tmp5, %ld8
+  %tmp7 = fadd <4 x float> %tmp6, %ld9
+  %tmp8 = fadd <4 x float> %tmp7, %ld10
+  %tmp9 = fadd <4 x float> %tmp8, %ld11
+  %21 = fadd <4 x float> %tmp9, %ld12
   %22 = fcmp ogt <4 x float> %besterror.0.2264, %21 ; <<4 x i1>> [#uses=0]
   %tmp = extractelement <4 x i1> %22, i32 0
   br i1 %tmp, label %bb193, label %bb186

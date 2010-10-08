@@ -14,7 +14,7 @@
 define <8 x i8> @vld4i8(i8* %A) nounwind {
 ;CHECK: vld4i8:
 ;Check the alignment value.  Max for this instruction is 256 bits:
-;CHECK: vld4.8 {d0, d1, d2, d3}, [r0, :64]
+;CHECK: vld4.8 {d16, d17, d18, d19}, [r0, :64]
 	%tmp1 = call %struct.__neon_int8x8x4_t @llvm.arm.neon.vld4.v8i8(i8* %A, i32 8)
         %tmp2 = extractvalue %struct.__neon_int8x8x4_t %tmp1, 0
         %tmp3 = extractvalue %struct.__neon_int8x8x4_t %tmp1, 2
@@ -25,7 +25,7 @@ define <8 x i8> @vld4i8(i8* %A) nounwind {
 define <4 x i16> @vld4i16(i16* %A) nounwind {
 ;CHECK: vld4i16:
 ;Check the alignment value.  Max for this instruction is 256 bits:
-;CHECK: vld4.16 {d0, d1, d2, d3}, [r0, :128]
+;CHECK: vld4.16 {d16, d17, d18, d19}, [r0, :128]
 	%tmp0 = bitcast i16* %A to i8*
 	%tmp1 = call %struct.__neon_int16x4x4_t @llvm.arm.neon.vld4.v4i16(i8* %tmp0, i32 16)
         %tmp2 = extractvalue %struct.__neon_int16x4x4_t %tmp1, 0
@@ -37,7 +37,7 @@ define <4 x i16> @vld4i16(i16* %A) nounwind {
 define <2 x i32> @vld4i32(i32* %A) nounwind {
 ;CHECK: vld4i32:
 ;Check the alignment value.  Max for this instruction is 256 bits:
-;CHECK: vld4.32 {d0, d1, d2, d3}, [r0, :256]
+;CHECK: vld4.32 {d16, d17, d18, d19}, [r0, :256]
 	%tmp0 = bitcast i32* %A to i8*
 	%tmp1 = call %struct.__neon_int32x2x4_t @llvm.arm.neon.vld4.v2i32(i8* %tmp0, i32 32)
         %tmp2 = extractvalue %struct.__neon_int32x2x4_t %tmp1, 0
@@ -60,7 +60,7 @@ define <2 x float> @vld4f(float* %A) nounwind {
 define <1 x i64> @vld4i64(i64* %A) nounwind {
 ;CHECK: vld4i64:
 ;Check the alignment value.  Max for this instruction is 256 bits:
-;CHECK: vld1.64 {d0, d1, d2, d3}, [r0, :256]
+;CHECK: vld1.64 {d16, d17, d18, d19}, [r0, :256]
 	%tmp0 = bitcast i64* %A to i8*
 	%tmp1 = call %struct.__neon_int64x1x4_t @llvm.arm.neon.vld4.v1i64(i8* %tmp0, i32 64)
         %tmp2 = extractvalue %struct.__neon_int64x1x4_t %tmp1, 0
@@ -72,8 +72,8 @@ define <1 x i64> @vld4i64(i64* %A) nounwind {
 define <16 x i8> @vld4Qi8(i8* %A) nounwind {
 ;CHECK: vld4Qi8:
 ;Check the alignment value.  Max for this instruction is 256 bits:
-;CHECK: vld4.8 {d0, d2, d4, d6}, [r0, :256]!
-;CHECK: vld4.8 {d1, d3, d5, d7}, [r0, :256]
+;CHECK: vld4.8 {d16, d18, d20, d22}, [r0, :256]!
+;CHECK: vld4.8 {d17, d19, d21, d23}, [r0, :256]
 	%tmp1 = call %struct.__neon_int8x16x4_t @llvm.arm.neon.vld4.v16i8(i8* %A, i32 64)
         %tmp2 = extractvalue %struct.__neon_int8x16x4_t %tmp1, 0
         %tmp3 = extractvalue %struct.__neon_int8x16x4_t %tmp1, 2
@@ -84,8 +84,8 @@ define <16 x i8> @vld4Qi8(i8* %A) nounwind {
 define <8 x i16> @vld4Qi16(i16* %A) nounwind {
 ;CHECK: vld4Qi16:
 ;Check for no alignment specifier.
-;CHECK: vld4.16 {d0, d2, d4, d6}, [r0]!
-;CHECK: vld4.16 {d1, d3, d5, d7}, [r0]
+;CHECK: vld4.16 {d16, d18, d20, d22}, [r0]!
+;CHECK: vld4.16 {d17, d19, d21, d23}, [r0]
 	%tmp0 = bitcast i16* %A to i8*
 	%tmp1 = call %struct.__neon_int16x8x4_t @llvm.arm.neon.vld4.v8i16(i8* %tmp0, i32 1)
         %tmp2 = extractvalue %struct.__neon_int16x8x4_t %tmp1, 0

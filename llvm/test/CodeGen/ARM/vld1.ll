@@ -3,7 +3,7 @@
 define <8 x i8> @vld1i8(i8* %A) nounwind {
 ;CHECK: vld1i8:
 ;Check the alignment value.  Max for this instruction is 64 bits:
-;CHECK: vld1.8 {d0}, [r0, :64]
+;CHECK: vld1.8 {d16}, [r0, :64]
 	%tmp1 = call <8 x i8> @llvm.arm.neon.vld1.v8i8(i8* %A, i32 16)
 	ret <8 x i8> %tmp1
 }
@@ -43,7 +43,7 @@ define <1 x i64> @vld1i64(i64* %A) nounwind {
 define <16 x i8> @vld1Qi8(i8* %A) nounwind {
 ;CHECK: vld1Qi8:
 ;Check the alignment value.  Max for this instruction is 128 bits:
-;CHECK: vld1.8 {d0, d1}, [r0, :64]
+;CHECK: vld1.8 {d16, d17}, [r0, :64]
 	%tmp1 = call <16 x i8> @llvm.arm.neon.vld1.v16i8(i8* %A, i32 8)
 	ret <16 x i8> %tmp1
 }
@@ -51,7 +51,7 @@ define <16 x i8> @vld1Qi8(i8* %A) nounwind {
 define <8 x i16> @vld1Qi16(i16* %A) nounwind {
 ;CHECK: vld1Qi16:
 ;Check the alignment value.  Max for this instruction is 128 bits:
-;CHECK: vld1.16 {d0, d1}, [r0, :128]
+;CHECK: vld1.16 {d16, d17}, [r0, :128]
 	%tmp0 = bitcast i16* %A to i8*
 	%tmp1 = call <8 x i16> @llvm.arm.neon.vld1.v8i16(i8* %tmp0, i32 32)
 	ret <8 x i16> %tmp1

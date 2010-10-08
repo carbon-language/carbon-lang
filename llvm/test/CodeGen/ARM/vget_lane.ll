@@ -96,7 +96,7 @@ define i32 @vgetQ_lanei32(<4 x i32>* %A) nounwind {
 
 define arm_aapcs_vfpcc void @test_vget_laneu16() nounwind {
 entry:
-; CHECK: vmov.u16 r0, d0[1]
+; CHECK: vmov.u16 r0, d{{.*}}[1]
   %arg0_uint16x4_t = alloca <4 x i16>             ; <<4 x i16>*> [#uses=1]
   %out_uint16_t = alloca i16                      ; <i16*> [#uses=1]
   %"alloca point" = bitcast i32 0 to i32          ; <i32> [#uses=0]
@@ -111,7 +111,7 @@ return:                                           ; preds = %entry
 
 define arm_aapcs_vfpcc void @test_vget_laneu8() nounwind {
 entry:
-; CHECK: vmov.u8 r0, d0[1]
+; CHECK: vmov.u8 r0, d{{.*}}[1]
   %arg0_uint8x8_t = alloca <8 x i8>               ; <<8 x i8>*> [#uses=1]
   %out_uint8_t = alloca i8                        ; <i8*> [#uses=1]
   %"alloca point" = bitcast i32 0 to i32          ; <i32> [#uses=0]
@@ -126,7 +126,7 @@ return:                                           ; preds = %entry
 
 define arm_aapcs_vfpcc void @test_vgetQ_laneu16() nounwind {
 entry:
-; CHECK: vmov.u16 r0, d0[1]
+; CHECK: vmov.u16 r0, d{{.*}}[1]
   %arg0_uint16x8_t = alloca <8 x i16>             ; <<8 x i16>*> [#uses=1]
   %out_uint16_t = alloca i16                      ; <i16*> [#uses=1]
   %"alloca point" = bitcast i32 0 to i32          ; <i32> [#uses=0]
@@ -141,7 +141,7 @@ return:                                           ; preds = %entry
 
 define arm_aapcs_vfpcc void @test_vgetQ_laneu8() nounwind {
 entry:
-; CHECK: vmov.u8 r0, d0[1]
+; CHECK: vmov.u8 r0, d{{.*}}[1]
   %arg0_uint8x16_t = alloca <16 x i8>             ; <<16 x i8>*> [#uses=1]
   %out_uint8_t = alloca i8                        ; <i8*> [#uses=1]
   %"alloca point" = bitcast i32 0 to i32          ; <i32> [#uses=0]

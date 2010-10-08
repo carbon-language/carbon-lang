@@ -11,7 +11,7 @@ entry:
 define double @t2(double %x) nounwind readnone optsize {
 entry:
 ; CHECK: t2:
-; CHECK: vmov.f64 d1, #3.000000e+00
+; CHECK: vmov.f64 d{{.*}}, #3.000000e+00
   %0 = fadd double %x, 3.000000e+00
   ret double %0
 }
@@ -19,7 +19,7 @@ entry:
 define double @t3(double %x) nounwind readnone optsize {
 entry:
 ; CHECK: t3:
-; CHECK: vmov.f64 d1, #-1.300000e+01
+; CHECK: vmov.f64 d{{.*}}, #-1.300000e+01
   %0 = fmul double %x, -1.300000e+01
   ret double %0
 }

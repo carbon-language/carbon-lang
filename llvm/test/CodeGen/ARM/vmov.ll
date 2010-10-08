@@ -2,169 +2,169 @@
 
 define <8 x i8> @v_movi8() nounwind {
 ;CHECK: v_movi8:
-;CHECK: vmov.i8 d0, #0x8
+;CHECK: vmov.i8 d{{.*}}, #0x8
 	ret <8 x i8> < i8 8, i8 8, i8 8, i8 8, i8 8, i8 8, i8 8, i8 8 >
 }
 
 define <4 x i16> @v_movi16a() nounwind {
 ;CHECK: v_movi16a:
-;CHECK: vmov.i16 d0, #0x10
+;CHECK: vmov.i16 d{{.*}}, #0x10
 	ret <4 x i16> < i16 16, i16 16, i16 16, i16 16 >
 }
 
 define <4 x i16> @v_movi16b() nounwind {
 ;CHECK: v_movi16b:
-;CHECK: vmov.i16 d0, #0x1000
+;CHECK: vmov.i16 d{{.*}}, #0x1000
 	ret <4 x i16> < i16 4096, i16 4096, i16 4096, i16 4096 >
 }
 
 define <4 x i16> @v_mvni16a() nounwind {
 ;CHECK: v_mvni16a:
-;CHECK: vmvn.i16 d0, #0x10
+;CHECK: vmvn.i16 d{{.*}}, #0x10
 	ret <4 x i16> < i16 65519, i16 65519, i16 65519, i16 65519 >
 }
 
 define <4 x i16> @v_mvni16b() nounwind {
 ;CHECK: v_mvni16b:
-;CHECK: vmvn.i16 d0, #0x1000
+;CHECK: vmvn.i16 d{{.*}}, #0x1000
 	ret <4 x i16> < i16 61439, i16 61439, i16 61439, i16 61439 >
 }
 
 define <2 x i32> @v_movi32a() nounwind {
 ;CHECK: v_movi32a:
-;CHECK: vmov.i32 d0, #0x20
+;CHECK: vmov.i32 d{{.*}}, #0x20
 	ret <2 x i32> < i32 32, i32 32 >
 }
 
 define <2 x i32> @v_movi32b() nounwind {
 ;CHECK: v_movi32b:
-;CHECK: vmov.i32 d0, #0x2000
+;CHECK: vmov.i32 d{{.*}}, #0x2000
 	ret <2 x i32> < i32 8192, i32 8192 >
 }
 
 define <2 x i32> @v_movi32c() nounwind {
 ;CHECK: v_movi32c:
-;CHECK: vmov.i32 d0, #0x200000
+;CHECK: vmov.i32 d{{.*}}, #0x200000
 	ret <2 x i32> < i32 2097152, i32 2097152 >
 }
 
 define <2 x i32> @v_movi32d() nounwind {
 ;CHECK: v_movi32d:
-;CHECK: vmov.i32 d0, #0x20000000
+;CHECK: vmov.i32 d{{.*}}, #0x20000000
 	ret <2 x i32> < i32 536870912, i32 536870912 >
 }
 
 define <2 x i32> @v_movi32e() nounwind {
 ;CHECK: v_movi32e:
-;CHECK: vmov.i32 d0, #0x20FF
+;CHECK: vmov.i32 d{{.*}}, #0x20FF
 	ret <2 x i32> < i32 8447, i32 8447 >
 }
 
 define <2 x i32> @v_movi32f() nounwind {
 ;CHECK: v_movi32f:
-;CHECK: vmov.i32 d0, #0x20FFFF
+;CHECK: vmov.i32 d{{.*}}, #0x20FFFF
 	ret <2 x i32> < i32 2162687, i32 2162687 >
 }
 
 define <2 x i32> @v_mvni32a() nounwind {
 ;CHECK: v_mvni32a:
-;CHECK: vmvn.i32 d0, #0x20
+;CHECK: vmvn.i32 d{{.*}}, #0x20
 	ret <2 x i32> < i32 4294967263, i32 4294967263 >
 }
 
 define <2 x i32> @v_mvni32b() nounwind {
 ;CHECK: v_mvni32b:
-;CHECK: vmvn.i32 d0, #0x2000
+;CHECK: vmvn.i32 d{{.*}}, #0x2000
 	ret <2 x i32> < i32 4294959103, i32 4294959103 >
 }
 
 define <2 x i32> @v_mvni32c() nounwind {
 ;CHECK: v_mvni32c:
-;CHECK: vmvn.i32 d0, #0x200000
+;CHECK: vmvn.i32 d{{.*}}, #0x200000
 	ret <2 x i32> < i32 4292870143, i32 4292870143 >
 }
 
 define <2 x i32> @v_mvni32d() nounwind {
 ;CHECK: v_mvni32d:
-;CHECK: vmvn.i32 d0, #0x20000000
+;CHECK: vmvn.i32 d{{.*}}, #0x20000000
 	ret <2 x i32> < i32 3758096383, i32 3758096383 >
 }
 
 define <2 x i32> @v_mvni32e() nounwind {
 ;CHECK: v_mvni32e:
-;CHECK: vmvn.i32 d0, #0x20FF
+;CHECK: vmvn.i32 d{{.*}}, #0x20FF
 	ret <2 x i32> < i32 4294958848, i32 4294958848 >
 }
 
 define <2 x i32> @v_mvni32f() nounwind {
 ;CHECK: v_mvni32f:
-;CHECK: vmvn.i32 d0, #0x20FFFF
+;CHECK: vmvn.i32 d{{.*}}, #0x20FFFF
 	ret <2 x i32> < i32 4292804608, i32 4292804608 >
 }
 
 define <1 x i64> @v_movi64() nounwind {
 ;CHECK: v_movi64:
-;CHECK: vmov.i64 d0, #0xFF0000FF0000FFFF
+;CHECK: vmov.i64 d{{.*}}, #0xFF0000FF0000FFFF
 	ret <1 x i64> < i64 18374687574888349695 >
 }
 
 define <16 x i8> @v_movQi8() nounwind {
 ;CHECK: v_movQi8:
-;CHECK: vmov.i8 q0, #0x8
+;CHECK: vmov.i8 q{{.*}}, #0x8
 	ret <16 x i8> < i8 8, i8 8, i8 8, i8 8, i8 8, i8 8, i8 8, i8 8, i8 8, i8 8, i8 8, i8 8, i8 8, i8 8, i8 8, i8 8 >
 }
 
 define <8 x i16> @v_movQi16a() nounwind {
 ;CHECK: v_movQi16a:
-;CHECK: vmov.i16 q0, #0x10
+;CHECK: vmov.i16 q{{.*}}, #0x10
 	ret <8 x i16> < i16 16, i16 16, i16 16, i16 16, i16 16, i16 16, i16 16, i16 16 >
 }
 
 define <8 x i16> @v_movQi16b() nounwind {
 ;CHECK: v_movQi16b:
-;CHECK: vmov.i16 q0, #0x1000
+;CHECK: vmov.i16 q{{.*}}, #0x1000
 	ret <8 x i16> < i16 4096, i16 4096, i16 4096, i16 4096, i16 4096, i16 4096, i16 4096, i16 4096 >
 }
 
 define <4 x i32> @v_movQi32a() nounwind {
 ;CHECK: v_movQi32a:
-;CHECK: vmov.i32 q0, #0x20
+;CHECK: vmov.i32 q{{.*}}, #0x20
 	ret <4 x i32> < i32 32, i32 32, i32 32, i32 32 >
 }
 
 define <4 x i32> @v_movQi32b() nounwind {
 ;CHECK: v_movQi32b:
-;CHECK: vmov.i32 q0, #0x2000
+;CHECK: vmov.i32 q{{.*}}, #0x2000
 	ret <4 x i32> < i32 8192, i32 8192, i32 8192, i32 8192 >
 }
 
 define <4 x i32> @v_movQi32c() nounwind {
 ;CHECK: v_movQi32c:
-;CHECK: vmov.i32 q0, #0x200000
+;CHECK: vmov.i32 q{{.*}}, #0x200000
 	ret <4 x i32> < i32 2097152, i32 2097152, i32 2097152, i32 2097152 >
 }
 
 define <4 x i32> @v_movQi32d() nounwind {
 ;CHECK: v_movQi32d:
-;CHECK: vmov.i32 q0, #0x20000000
+;CHECK: vmov.i32 q{{.*}}, #0x20000000
 	ret <4 x i32> < i32 536870912, i32 536870912, i32 536870912, i32 536870912 >
 }
 
 define <4 x i32> @v_movQi32e() nounwind {
 ;CHECK: v_movQi32e:
-;CHECK: vmov.i32 q0, #0x20FF
+;CHECK: vmov.i32 q{{.*}}, #0x20FF
 	ret <4 x i32> < i32 8447, i32 8447, i32 8447, i32 8447 >
 }
 
 define <4 x i32> @v_movQi32f() nounwind {
 ;CHECK: v_movQi32f:
-;CHECK: vmov.i32 q0, #0x20FFFF
+;CHECK: vmov.i32 q{{.*}}, #0x20FFFF
 	ret <4 x i32> < i32 2162687, i32 2162687, i32 2162687, i32 2162687 >
 }
 
 define <2 x i64> @v_movQi64() nounwind {
 ;CHECK: v_movQi64:
-;CHECK: vmov.i64 q0, #0xFF0000FF0000FFFF
+;CHECK: vmov.i64 q{{.*}}, #0xFF0000FF0000FFFF
 	ret <2 x i64> < i64 18374687574888349695, i64 18374687574888349695 >
 }
 
@@ -173,7 +173,7 @@ define <2 x i64> @v_movQi64() nounwind {
 define void @vdupn128(%struct.int8x8_t* noalias nocapture sret %agg.result) nounwind {
 entry:
 ;CHECK: vdupn128:
-;CHECK: vmov.i8 d0, #0x80
+;CHECK: vmov.i8 d{{.*}}, #0x80
   %0 = getelementptr inbounds %struct.int8x8_t* %agg.result, i32 0, i32 0 ; <<8 x i8>*> [#uses=1]
   store <8 x i8> <i8 -128, i8 -128, i8 -128, i8 -128, i8 -128, i8 -128, i8 -128, i8 -128>, <8 x i8>* %0, align 8
   ret void
@@ -182,7 +182,7 @@ entry:
 define void @vdupnneg75(%struct.int8x8_t* noalias nocapture sret %agg.result) nounwind {
 entry:
 ;CHECK: vdupnneg75:
-;CHECK: vmov.i8 d0, #0xB5
+;CHECK: vmov.i8 d{{.*}}, #0xB5
   %0 = getelementptr inbounds %struct.int8x8_t* %agg.result, i32 0, i32 0 ; <<8 x i8>*> [#uses=1]
   store <8 x i8> <i8 -75, i8 -75, i8 -75, i8 -75, i8 -75, i8 -75, i8 -75, i8 -75>, <8 x i8>* %0, align 8
   ret void

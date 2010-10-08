@@ -7,7 +7,7 @@ define void @t() nounwind {
 entry:
 ; CHECK: vmov.I64 q15, #0
 ; CHECK: vmov.32 d30[0], r0
-; CHECK: vmov q0, q15
+; CHECK: vmov q8, q15
   %tmp = alloca %struct.int32x4_t, align 16
   call void asm sideeffect "vmov.I64 q15, #0\0Avmov.32 d30[0], $1\0Avmov ${0:q}, q15\0A", "=*w,r,~{d31},~{d30}"(%struct.int32x4_t* %tmp, i32 8192) nounwind
   ret void
@@ -18,7 +18,7 @@ entry:
 
 define void @t2() nounwind {
 entry:
-; CHECK: vmov d30, d0
+; CHECK: vmov d30, d16
 ; CHECK: vmov.32 r0, d30[0]
   %asmtmp2 = tail call i32 asm sideeffect "vmov d30, $1\0Avmov.32 $0, d30[0]\0A", "=r,w,~{d30}"(<2 x i32> undef) nounwind
   ret void
