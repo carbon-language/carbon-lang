@@ -661,20 +661,19 @@ bool ARMFastISel::ARMEmitLoad(EVT VT, unsigned &ResultReg,
     default:
       // This is mostly going to be Neon/vector support.
       return false;
-    // Using thumb1 instructions for now, use the appropriate RC.
     case MVT::i16:
-      Opc = isThumb ? ARM::tLDRH : ARM::LDRH;
-      RC = isThumb ? ARM::tGPRRegisterClass : ARM::GPRRegisterClass;
+      Opc = isThumb ? ARM::t2LDRHi8 : ARM::LDRH;
+      RC = ARM::GPRRegisterClass;
       VT = MVT::i32;
       break;
     case MVT::i8:
-      Opc = isThumb ? ARM::tLDRB : ARM::LDRB;
-      RC = isThumb ? ARM::tGPRRegisterClass : ARM::GPRRegisterClass;
+      Opc = isThumb ? ARM::t2LDRBi8 : ARM::LDRB;
+      RC = ARM::GPRRegisterClass;
       VT = MVT::i32;
       break;
     case MVT::i32:
-      Opc = isThumb ? ARM::tLDR : ARM::LDR;
-      RC = isThumb ? ARM::tGPRRegisterClass : ARM::GPRRegisterClass;
+      Opc = isThumb ? ARM::t2LDRi8 : ARM::LDR;
+      RC = ARM::GPRRegisterClass;
       break;
     case MVT::f32:
       Opc = ARM::VLDRS;
@@ -690,18 +689,16 @@ bool ARMFastISel::ARMEmitLoad(EVT VT, unsigned &ResultReg,
 
   ResultReg = createResultReg(RC);
 
-  // TODO: Fix the Addressing modes so that these can share some code.
-  // Since this is a Thumb1 load this will work in Thumb1 or 2 mode.
-  // The thumb addressing mode has operands swapped from the arm addressing
-  // mode, the floating point one only has two operands.
-  if (isFloat)
+  // For now with the additions above the offset should be zero - thus we
+  // can always fit into an i8.
+  assert(Offset == 0 && "Offset not zero!");
+  
+  // The thumb and floating point instructions both take 2 operands, ARM takes
+  // another register.
+  if (isFloat || isThumb)
     AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
                             TII.get(Opc), ResultReg)
                     .addReg(Reg).addImm(Offset));
-  else if (isThumb)
-    AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
-                            TII.get(Opc), ResultReg)
-                    .addReg(Reg).addImm(Offset).addReg(0));
   else
     AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
                             TII.get(Opc), ResultReg)
