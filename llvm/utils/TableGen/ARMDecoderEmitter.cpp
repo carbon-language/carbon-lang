@@ -801,7 +801,7 @@ void FilterChooser::emitTop(raw_ostream &o, unsigned &Indentation) {
 
   o << '\n';
 
-  o.indent(Indentation) << "static uint16_t decodeInstruction(field_t insn) {\n";
+  o.indent(Indentation) <<"static uint16_t decodeInstruction(field_t insn) {\n";
 
   ++Indentation; ++Indentation;
   // Emits code to decode the instructions.

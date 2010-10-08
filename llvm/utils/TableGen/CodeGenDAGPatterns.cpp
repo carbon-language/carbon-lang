@@ -479,8 +479,8 @@ void DumpDepVars(MultipleUseVarSet &DepVars) {
     DEBUG(errs() << "<empty set>");
   } else {
     DEBUG(errs() << "[ ");
-    for (MultipleUseVarSet::const_iterator i = DepVars.begin(), e = DepVars.end();
-         i != e; ++i) {
+    for (MultipleUseVarSet::const_iterator i = DepVars.begin(),
+         e = DepVars.end(); i != e; ++i) {
       DEBUG(errs() << (*i) << " ");
     }
     DEBUG(errs() << "]");
@@ -2973,7 +2973,8 @@ void CodeGenDAGPatterns::GenerateVariants() {
     DEBUG(errs() << "Dependent/multiply used variables: ");
     DEBUG(DumpDepVars(DepVars));
     DEBUG(errs() << "\n");
-    GenerateVariantsOf(PatternsToMatch[i].getSrcPattern(), Variants, *this, DepVars);
+    GenerateVariantsOf(PatternsToMatch[i].getSrcPattern(), Variants, *this,
+                       DepVars);
 
     assert(!Variants.empty() && "Must create at least original variant!");
     Variants.erase(Variants.begin());  // Remove the original pattern.
@@ -3000,7 +3001,8 @@ void CodeGenDAGPatterns::GenerateVariants() {
             PatternsToMatch[p].getPredicates())
           continue;
         // Check to see if this variant already exists.
-        if (Variant->isIsomorphicTo(PatternsToMatch[p].getSrcPattern(), DepVars)) {
+        if (Variant->isIsomorphicTo(PatternsToMatch[p].getSrcPattern(),
+                                    DepVars)) {
           DEBUG(errs() << "  *** ALREADY EXISTS, ignoring variant.\n");
           AlreadyExists = true;
           break;

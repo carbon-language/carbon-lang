@@ -19,8 +19,8 @@
 
 using namespace llvm;
 
-static const std::vector<StringRef> getValueAsListOfStrings(Record &R,
-                                                            StringRef FieldName) {
+static const std::vector<StringRef>
+getValueAsListOfStrings(Record &R, StringRef FieldName) {
   ListInit *List = R.getValueAsListInit(FieldName);
   assert (List && "Got a null ListInit");
 
@@ -171,7 +171,8 @@ namespace {
       OS << "char *" << getLowerName() << ";";
     }
     void writePCHReadDecls(raw_ostream &OS) const {
-      OS << "    std::string " << getLowerName() << "= ReadString(Record, Idx);\n";
+      OS << "    std::string " << getLowerName()
+         << "= ReadString(Record, Idx);\n";
     }
     void writePCHReadArgs(raw_ostream &OS) const {
       OS << getLowerName();
