@@ -507,6 +507,8 @@ void DwarfDebug::addSourceLine(DIE *Die, DIVariable V) {
     return;
 
   unsigned Line = V.getLineNumber();
+  if (Line == 0)
+    return;
   unsigned FileID = GetOrCreateSourceID(V.getContext().getDirectory(),
                                         V.getContext().getFilename());
   assert(FileID && "Invalid file id");
@@ -522,6 +524,8 @@ void DwarfDebug::addSourceLine(DIE *Die, DIGlobalVariable G) {
     return;
 
   unsigned Line = G.getLineNumber();
+  if (Line == 0)
+    return;
   unsigned FileID = GetOrCreateSourceID(G.getContext().getDirectory(),
                                         G.getContext().getFilename());
   assert(FileID && "Invalid file id");
@@ -557,7 +561,7 @@ void DwarfDebug::addSourceLine(DIE *Die, DIType Ty) {
     return;
 
   unsigned Line = Ty.getLineNumber();
-  if (!Ty.getContext().Verify())
+  if (Line == 0 || !Ty.getContext().Verify())
     return;
   unsigned FileID = GetOrCreateSourceID(Ty.getContext().getDirectory(),
                                         Ty.getContext().getFilename());
@@ -574,6 +578,8 @@ void DwarfDebug::addSourceLine(DIE *Die, DINameSpace NS) {
     return;
 
   unsigned Line = NS.getLineNumber();
+  if (Line == 0)
+    return;
   StringRef FN = NS.getFilename();
   StringRef Dir = NS.getDirectory();
 
