@@ -734,6 +734,36 @@ void SplitEditor::closeIntv() {
   openli_.reset(0);
 }
 
+/// rewrite - Rewrite all uses of reg to use the new registers.
+void SplitEditor::rewrite(unsigned reg) {
+  for (MachineRegisterInfo::reg_iterator RI = mri_.reg_begin(reg),
+       RE = mri_.reg_end(); RI != RE;) {
+    MachineOperand &MO = RI.getOperand();
+    MachineInstr *MI = MO.getParent();
+    ++RI;
+    if (MI->isDebugValue()) {
+      DEBUG(dbgs() << "Zapping " << *MI);
+      // FIXME: We can do much better with debug values.
+      MO.setReg(0);
+      continue;
+    }
+    SlotIndex Idx = lis_.getInstructionIndex(MI);
+    Idx = MO.isUse() ? Idx.getUseIndex() : Idx.getDefIndex();
+    LiveInterval *LI = 0;
+    for (unsigned i = firstInterval, e = intervals_.size(); i != e; ++i) {
+      LiveInterval *testli = intervals_[i];
+      if (testli->liveAt(Idx)) {
+        LI = testli;
+        break;
+      }
+    }
+    assert(LI && "No register was live at use");
+    MO.setReg(LI->reg);
+    DEBUG(dbgs() << "  rewrite BB#" << MI->getParent()->getNumber() << '\t'
+                 << Idx << '\t' << *MI);
+  }
+}
+
 void
 SplitEditor::addTruncSimpleRange(SlotIndex Start, SlotIndex End, VNInfo *VNI) {
   // Build vector of iterator pairs from the intervals.
@@ -781,12 +811,7 @@ SplitEditor::addTruncSimpleRange(SlotIndex Start, SlotIndex End, VNInfo *VNI) {
   }
 }
 
-/// rewrite - after all the new live ranges have been created, rewrite
-/// instructions using curli to use the new intervals.
-void SplitEditor::rewrite() {
-  assert(!openli_.getLI() && "Previous LI not closed before rewrite");
-  assert(dupli_.getLI() && "No dupli for rewrite. Noop spilt?");
-
+void SplitEditor::computeRemainder() {
   // First we need to fill in the live ranges in dupli.
   // If values were redefined, we need a full recoloring with SSA update.
   // If values were truncated, we only need to truncate the ranges.
@@ -827,6 +852,14 @@ void SplitEditor::rewrite() {
       dupli_.addSimpleRange(LR.start, LR.end, LR.valno);
     }
   }
+}
+
+void SplitEditor::finish() {
+  assert(!openli_.getLI() && "Previous LI not closed before rewrite");
+  assert(dupli_.getLI() && "No dupli for rewrite. Noop spilt?");
+
+  // Complete dupli liveness.
+  computeRemainder();
 
   // Get rid of unused values and set phi-kill flags.
   dupli_.getLI()->RenumberValues(lis_);
@@ -843,6 +876,8 @@ void SplitEditor::rewrite() {
       for (unsigned i = 1; i != NumComp; ++i)
         intervals_.push_back(createInterval());
       ConEQ.Distribute(&intervals_[firstComp]);
+      // Rewrite uses to the new regs.
+      rewrite(dupli_.getLI()->reg);
     }
   } else {
     DEBUG(dbgs() << "  dupli became empty?\n");
@@ -851,33 +886,7 @@ void SplitEditor::rewrite() {
   }
 
   // Rewrite instructions.
-  const LiveInterval *curli = sa_.getCurLI();
-  for (MachineRegisterInfo::reg_iterator RI = mri_.reg_begin(curli->reg),
-       RE = mri_.reg_end(); RI != RE;) {
-    MachineOperand &MO = RI.getOperand();
-    MachineInstr *MI = MO.getParent();
-    ++RI;
-    if (MI->isDebugValue()) {
-      DEBUG(dbgs() << "Zapping " << *MI);
-      // FIXME: We can do much better with debug values.
-      MO.setReg(0);
-      continue;
-    }
-    SlotIndex Idx = lis_.getInstructionIndex(MI);
-    Idx = MO.isUse() ? Idx.getUseIndex() : Idx.getDefIndex();
-    LiveInterval *LI = 0;
-    for (unsigned i = firstInterval, e = intervals_.size(); i != e; ++i) {
-      LiveInterval *testli = intervals_[i];
-      if (testli->liveAt(Idx)) {
-        LI = testli;
-        break;
-      }
-    }
-    assert(LI && "No register was live at use");
-    MO.setReg(LI->reg);
-    DEBUG(dbgs() << "  rewrite BB#" << MI->getParent()->getNumber() << '\t'
-                 << Idx << '\t' << *MI);
-  }
+  rewrite(curli_->reg);
 
   // Calculate spill weight and allocation hints for new intervals.
   VirtRegAuxInfo vrai(vrm_.getMachineFunction(), lis_, sa_.loops_);
@@ -944,7 +953,7 @@ void SplitEditor::splitAroundLoop(const MachineLoop *Loop) {
 
   // Done.
   closeIntv();
-  rewrite();
+  finish();
 }
 
 
@@ -988,7 +997,7 @@ void SplitEditor::splitSingleBlocks(const SplitAnalysis::BlockPtrSet &Blocks) {
     leaveIntvAfter(IP.second);
     closeIntv();
   }
-  rewrite();
+  finish();
 }
 
 
@@ -1061,5 +1070,5 @@ void SplitEditor::splitInsideBlock(const MachineBasicBlock *MBB) {
     closeIntv();
   }
 
-  rewrite();
+  finish();
 }

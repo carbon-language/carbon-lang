@@ -229,7 +229,7 @@ public:
 /// - Mark the ranges where the new interval is used with useIntv* 
 /// - Mark the places where the interval is exited with exitIntv*.
 /// - Finish the current interval with closeIntv and repeat from 2.
-/// - Rewrite instructions with rewrite().
+/// - Rewrite instructions with finish().
 ///
 class SplitEditor {
   SplitAnalysis &sa_;
@@ -271,6 +271,13 @@ class SplitEditor {
   /// truncating any overlap with intervals_.
   void addTruncSimpleRange(SlotIndex Start, SlotIndex End, VNInfo *VNI);
 
+  /// computeRemainder - Compute the dupli liveness as the complement of all the
+  /// new intervals.
+  void computeRemainder();
+
+  /// rewrite - Rewrite all uses of reg to use the new registers.
+  void rewrite(unsigned reg);
+
 public:
   /// Create a new SplitEditor for editing the LiveInterval analyzed by SA.
   /// Newly created intervals will be appended to newIntervals.
@@ -307,9 +314,9 @@ public:
   /// LiveInterval, and ranges can be trimmed.
   void closeIntv();
 
-  /// rewrite - after all the new live ranges have been created, rewrite
-  /// instructions using curli to use the new intervals.
-  void rewrite();
+  /// finish - after all the new live ranges have been created, compute the
+  /// remaining live range, and rewrite instructions to use the new registers.
+  void finish();
 
   // ===--- High level methods ---===
 
