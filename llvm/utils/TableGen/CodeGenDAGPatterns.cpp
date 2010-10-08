@@ -473,6 +473,7 @@ void FindDepVars(TreePatternNode *N, MultipleUseVarSet &DepVars) {
 }
 
 //! Dump the dependent variable set:
+#ifndef NDEBUG
 void DumpDepVars(MultipleUseVarSet &DepVars) {
   if (DepVars.empty()) {
     DEBUG(errs() << "<empty set>");
@@ -485,6 +486,8 @@ void DumpDepVars(MultipleUseVarSet &DepVars) {
     DEBUG(errs() << "]");
   }
 }
+#endif
+
 }
 
 //===----------------------------------------------------------------------===//
