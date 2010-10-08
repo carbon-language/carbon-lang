@@ -13,7 +13,7 @@ class BreakpointCommandTestCase(TestBase):
 
     @classmethod
     def classCleanup(cls):
-        system(["/bin/sh", "-c", "rm output.txt"])
+        system(["/bin/sh", "-c", "rm -f output.txt"])
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     def test_with_dsym(self):
