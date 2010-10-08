@@ -636,6 +636,10 @@ bool MachineLICM::IsProfitableToHoist(MachineInstr &MI) {
 }
 
 MachineInstr *MachineLICM::ExtractHoistableLoad(MachineInstr *MI) {
+  // Don't unfold simple loads.
+  if (MI->getDesc().canFoldAsLoad())
+    return 0;
+
   // If not, we may be able to unfold a load and hoist that.
   // First test whether the instruction is loading from an amenable
   // memory location.
