@@ -65,10 +65,11 @@ class BreakpointCommandTestCase(TestBase):
         # Check that the file 'output.txt' exists and contains the string "lldb".
 
         # Read the output file produced by running the program.
-        output = open('output.txt', 'r').read()
+        with open('output.txt', 'r') as f:
+            output = f.read()
 
-        self.assertTrue(output.startswith("lldb"),
-                        "File 'output.txt' and the content matches")
+        self.expect(output, "File 'output.txt' and the content matches", exe=False,
+            startstr = "lldb")
 
         # Finish the program.
         self.runCmd("process continue")

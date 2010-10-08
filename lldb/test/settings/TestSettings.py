@@ -70,7 +70,8 @@ class SettingsCommandTestCase(TestBase):
         self.runCmd("run", RUN_SUCCEEDED)
 
         # Read the output file produced by running the program.
-        output = open('output.txt', 'r').read()
+        with open('output.txt', 'r') as f:
+            output = f.read()
 
         self.expect(output, exe=False,
             substrs = ["argv[1] matches",
