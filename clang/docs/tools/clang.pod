@@ -80,7 +80,7 @@ stages.  In addition to compilation of code, Clang also supports other tools:
 B<Clang Static Analyzer>
 
 The Clang Static Analyzer is a tool that scans source code to try to find bugs
-though code analysis.  This tool uses many parts of Clang and is built into the
+through code analysis.  This tool uses many parts of Clang and is built into the
 same driver.
 
 
