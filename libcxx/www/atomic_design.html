@@ -53,6 +53,40 @@ should be identical (and conforming) for all three designs.
 </li>
 </ol>
 
+<p>
+With any design, the (back end) compiler writer should note:
+</p>
+
+<blockquote>
+<p>
+The decision to implement lock-free operations on any given type (or not) is an
+ABI-binding decision.  One can not change from treating a type as not lock free,
+to lock free (or vice-versa) without breaking your ABI.
+</p>
+
+<p>
+Example:
+</p>
+
+<blockquote><pre>
+TU1.cc
+-----------
+extern atomic&lt;long long&gt; A;
+int foo() { return A.compare_exchange_strong(w, x); }
+
+TU2.cc
+-----------
+extern atomic&lt;long long&gt; A;
+void bar() { return A.compare_exchange_strong(y, z); }
+</pre></blockquote>
+</blockquote>
+
+<p>
+If only <em>one</em> of these calls to <tt>compare_exchange_strong</tt> is
+implemented with mutex-locked code, then that mutex-locked code will not be
+executed mutually exclusively of the one implemented in a lock-free manner.
+</p>
+
 </div>
 </body>
 </html>

@@ -44,18 +44,21 @@ option in the spirit of completeness.
 </p>
 
 <blockquote><pre>
-<font color="#C80000">// type can be any pod</font>
+<font color="#C80000">// type must be trivially copyable</font>
+bool __atomic_is_lock_free(const type* atomic_obj);
+
+<font color="#C80000">// type must be trivially copyable</font>
 type __atomic_load_relaxed(const volatile type* atomic_obj);
 type __atomic_load_consume(const volatile type* atomic_obj);
 type __atomic_load_acquire(const volatile type* atomic_obj);
 type __atomic_load_seq_cst(const volatile type* atomic_obj);
 
-<font color="#C80000">// type can be any pod</font>
+<font color="#C80000">// type must be trivially copyable</font>
 type __atomic_store_relaxed(volatile type* atomic_obj, type desired);
 type __atomic_store_release(volatile type* atomic_obj, type desired);
 type __atomic_store_seq_cst(volatile type* atomic_obj, type desired);
 
-<font color="#C80000">// type can be any pod</font>
+<font color="#C80000">// type must be trivially copyable</font>
 type __atomic_exchange_relaxed(volatile type* atomic_obj, type desired);
 type __atomic_exchange_consume(volatile type* atomic_obj, type desired);
 type __atomic_exchange_acquire(volatile type* atomic_obj, type desired);
@@ -63,7 +66,7 @@ type __atomic_exchange_release(volatile type* atomic_obj, type desired);
 type __atomic_exchange_acq_rel(volatile type* atomic_obj, type desired);
 type __atomic_exchange_seq_cst(volatile type* atomic_obj, type desired);
 
-<font color="#C80000">// type can be any pod</font>
+<font color="#C80000">// type must be trivially copyable</font>
 bool __atomic_compare_exchange_strong_relaxed_relaxed(volatile type* atomic_obj,
                                                       type* expected,
                                                       type desired);
@@ -113,7 +116,7 @@ bool __atomic_compare_exchange_strong_seq_cst_seq_cst(volatile type* atomic_obj,
                                                       type* expected,
                                                       type desired);
 
-<font color="#C80000">// type can be any pod</font>
+<font color="#C80000">// type must be trivially copyable</font>
 bool __atomic_compare_exchange_weak_relaxed_relaxed(volatile type* atomic_obj,
                                                     type* expected,
                                                     type desired);

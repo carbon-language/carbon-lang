@@ -50,6 +50,9 @@ the memory ordering parameter.
 <font color="#C80000">//    volatile-qualifed type.</font>
 
 <font color="#C80000">// type must be trivially copyable</font>
+bool __atomic_is_lock_free(const type* atomic_obj);
+
+<font color="#C80000">// type must be trivially copyable</font>
 <font color="#C80000">// Behavior is defined for mem_ord = 0, 1, 2, 5</font>
 type __atomic_load(const type* atomic_obj, int mem_ord);
 
