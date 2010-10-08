@@ -156,3 +156,42 @@ lldb_private::GetVoteAsCString (lldb::Vote vote)
     return "invalid";
 }
 
+
+const char *
+lldb_private::GetSectionTypeAsCString (lldb::SectionType sect_type)
+{
+    switch (sect_type)
+    {
+    case eSectionTypeInvalid: return "invalid";
+    case eSectionTypeCode: return "code";
+    case eSectionTypeContainer: return "container";
+    case eSectionTypeData: return "data";
+    case eSectionTypeDataCString: return "data-cstr";
+    case eSectionTypeDataCStringPointers: return "data-cstr-ptr";
+    case eSectionTypeDataSymbolAddress: return "data-symbol-addr";
+    case eSectionTypeData4: return "data-4-byte";
+    case eSectionTypeData8: return "data-8-byte";
+    case eSectionTypeData16: return "data-16-byte";
+    case eSectionTypeDataPointers: return "data-ptrs";
+    case eSectionTypeDebug: return "debug";
+    case eSectionTypeZeroFill: return "zero-fill";
+    case eSectionTypeDataObjCMessageRefs: return "objc-message-refs";
+    case eSectionTypeDataObjCCFStrings: return "objc-cfstrings";
+    case eSectionTypeDWARFDebugAbbrev: return "dwarf-abbrev";
+    case eSectionTypeDWARFDebugAranges: return "dwarf-aranges";
+    case eSectionTypeDWARFDebugFrame: return "dwarf-frame";
+    case eSectionTypeDWARFDebugInfo: return "dwarf-info";
+    case eSectionTypeDWARFDebugLine: return "dwarf-line";
+    case eSectionTypeDWARFDebugLoc: return "dwarf-loc";
+    case eSectionTypeDWARFDebugMacInfo: return "dwarf-macinfo";
+    case eSectionTypeDWARFDebugPubNames: return "dwarf-pubnames";
+    case eSectionTypeDWARFDebugPubTypes: return "dwarf-pubtypes";
+    case eSectionTypeDWARFDebugRanges: return "dwarf-ranges";
+    case eSectionTypeDWARFDebugStr: return "dwarf-str";
+    case eSectionTypeEHFrame: return "eh-frame";
+    case eSectionTypeOther: return "regular";
+    }
+    return "unknown";
+
+}
+

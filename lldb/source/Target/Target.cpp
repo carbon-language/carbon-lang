@@ -66,7 +66,7 @@ Target::~Target()
 void
 Target::Dump (Stream *s)
 {
-    s->Printf("%.*p: ", (int)sizeof(void*) * 2, this);
+//    s->Printf("%.*p: ", (int)sizeof(void*) * 2, this);
     s->Indent();
     s->PutCString("Target\n");
     s->IndentMore();

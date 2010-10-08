@@ -466,6 +466,34 @@ Address::Dump (Stream *s, ExecutionContextScope *exe_scope, DumpStyle style, Dum
                 SectionType sect_type = section->GetType();
                 switch (sect_type)
                 {
+                case eSectionTypeData:
+                    if (module)
+                    {
+                        ObjectFile *objfile = module->GetObjectFile();
+                        if (objfile)
+                        {
+                            Symtab *symtab = objfile->GetSymtab();
+                            if (symtab)
+                            {
+                                const addr_t file_Addr = GetFileAddress();
+                                Symbol *symbol = symtab->FindSymbolContainingFileAddress (file_Addr);
+                                if (symbol)
+                                {
+                                    const char *symbol_name = symbol->GetName().AsCString();
+                                    if (symbol_name)
+                                    {
+                                        s->PutCString(symbol_name);
+                                        addr_t delta = file_Addr - symbol->GetAddressRangePtr()->GetBaseAddress().GetFileAddress();
+                                        if (delta)
+                                            s->Printf(" + %llu", delta);
+                                        showed_info = true;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    break;
+
                 case eSectionTypeDataCString:
                     // Read the C string from memory and display it
                     showed_info = true;

@@ -180,7 +180,14 @@ DumpModuleSections (CommandInterpreter &interpreter, Stream &strm, Module *modul
         {
             SectionList *section_list = objfile->GetSectionList();
             if (section_list)
+            {
+                strm.PutCString ("Sections for '");
+                strm << module->GetFileSpec();
+                strm.Printf ("' (%s):\n", module->GetArchitecture().AsCString());
+                strm.IndentMore();
                 section_list->Dump(&strm, interpreter.GetDebugger().GetExecutionContext().target, true);
+                strm.IndentLess();
+            }
         }
     }
 }

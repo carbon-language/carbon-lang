@@ -394,9 +394,10 @@ ObjectFileMachO::ParseSections ()
                         static ConstString g_sect_name_dwarf_debug_ranges ("__debug_ranges");
                         static ConstString g_sect_name_dwarf_debug_str ("__debug_str");
                         static ConstString g_sect_name_eh_frame ("__eh_frame");
+                        static ConstString g_sect_name_DATA ("__DATA");
+                        static ConstString g_sect_name_TEXT ("__TEXT");
 
                         SectionType sect_type = eSectionTypeOther;
-
 
                         if (section_name == g_sect_name_dwarf_debug_abbrev)
                             sect_type = eSectionTypeDWARFDebugAbbrev;
@@ -442,7 +443,14 @@ ObjectFileMachO::ParseSections ()
                             switch (mach_sect_type)
                             {
                             // TODO: categorize sections by other flags for regular sections
-                            case SectionTypeRegular:                    sect_type = eSectionTypeOther; break;
+                            case SectionTypeRegular:
+                                if (segment_sp->GetName() == g_sect_name_TEXT)
+                                    sect_type = eSectionTypeCode; 
+                                else if (segment_sp->GetName() == g_sect_name_DATA)
+                                    sect_type = eSectionTypeData; 
+                                else
+                                    sect_type = eSectionTypeOther; 
+                                break;
                             case SectionTypeZeroFill:                   sect_type = eSectionTypeZeroFill; break;
                             case SectionTypeCStringLiterals:            sect_type = eSectionTypeDataCString;    break; // section with only literal C strings
                             case SectionType4ByteLiterals:              sect_type = eSectionTypeData4;    break; // section with only 4 byte literals

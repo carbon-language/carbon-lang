@@ -222,11 +222,11 @@ Section::Compare (const Section& a, const Section& b)
 
 
 void
-Section::Dump(Stream *s, Target *target) const
+Section::Dump (Stream *s, Target *target) const
 {
-    s->Printf("%.*p: ", (int)sizeof(void*) * 2, this);
+//    s->Printf("%.*p: ", (int)sizeof(void*) * 2, this);
     s->Indent();
-    s->Printf("0x%8.8x ", GetID());
+    s->Printf("0x%8.8x %-14s ", GetID(), GetSectionTypeAsCString (m_type));
     bool resolved = true;
     addr_t addr = LLDB_INVALID_ADDRESS;
 
@@ -672,16 +672,16 @@ SectionList::Dump (Stream *s, Target *target, bool show_header) const
 {
     if (show_header && !m_sections.empty())
     {
-        s->Printf("%.*p: ", (int)sizeof(void*) * 2, this);
+//        s->Printf("%.*p: ", (int)sizeof(void*) * 2, this);
+//        s->Indent();
+//        s->PutCString(  "SectionList\n");
+//        s->IndentMore();
+//        s->Printf("%*s", 2*(sizeof(void *) + 2), "");
         s->Indent();
-        s->PutCString(  "SectionList\n");
-        s->IndentMore();
-        s->Printf("%*s", 2*(sizeof(void *) + 2), "");
+        s->Printf("SectID     Type           %s Address                             File Off.  File Size  Flags      Section Name\n", (target && target->GetSectionLoadList().IsEmpty() == false) ? "Load" : "File");
+//        s->Printf("%*s", 2*(sizeof(void *) + 2), "");
         s->Indent();
-        s->Printf("SectID     %s Address                             File Off.  File Size  Flags      Section Name\n", (target && target->GetSectionLoadList().IsEmpty() == false) ? "Load" : "File");
-        s->Printf("%*s", 2*(sizeof(void *) + 2), "");
-        s->Indent();
-        s->PutCString("---------- ---------------------------------------  ---------- ---------- ---------- ----------------------------\n");
+        s->PutCString("---------- -------------- ---------------------------------------  ---------- ---------- ---------- ----------------------------\n");
     }
 
 

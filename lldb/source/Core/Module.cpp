@@ -372,7 +372,7 @@ void
 Module::Dump(Stream *s)
 {
     Mutex::Locker locker (m_mutex);
-    s->Printf("%.*p: ", (int)sizeof(void*) * 2, this);
+    //s->Printf("%.*p: ", (int)sizeof(void*) * 2, this);
     s->Indent();
     s->Printf("Module %s/%s%s%s%s\n",
               m_file.GetDirectory().AsCString(),

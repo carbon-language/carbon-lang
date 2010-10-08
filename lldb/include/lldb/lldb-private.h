@@ -67,6 +67,9 @@ GetVersion ();
 const char *
 GetVoteAsCString (lldb::Vote vote);
 
+const char *
+GetSectionTypeAsCString (lldb::SectionType sect_type);
+
 } // namespace lldb_private
 
 

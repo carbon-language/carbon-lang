@@ -65,7 +65,7 @@ void
 Symtab::Dump(Stream *s, Target *target) const
 {
     const_iterator pos;
-    s->Printf("%.*p: ", (int)sizeof(void*) * 2, this);
+//    s->Printf("%.*p: ", (int)sizeof(void*) * 2, this);
     s->Indent();
     const FileSpec &file_spec = m_objfile->GetFileSpec();
     const char * object_name = NULL;
@@ -705,7 +705,24 @@ Symtab::FindSymbolContainingFileAddress (addr_t file_addr, const uint32_t* index
 
     if (info.match_symbol)
     {
-        if (info.match_offset < CalculateSymbolSize(info.match_symbol))
+        if (info.match_offset == 0)
+        {
+            // We found an exact match!
+            return info.match_symbol;
+        }
+
+        const size_t symbol_byte_size = CalculateSymbolSize(info.match_symbol);
+        
+        if (symbol_byte_size == 0)
+        {
+            // We weren't able to find the size of the symbol so lets just go 
+            // with that match we found in our search...
+            return info.match_symbol;
+        }
+
+        // We were able to figure out a symbol size so lets make sure our 
+        // offset puts "file_addr" in the symbol's address range.
+        if (info.match_offset < symbol_byte_size)
             return info.match_symbol;
     }
     return NULL;
