@@ -5,7 +5,7 @@ Test conditionally break on a function and inspect its variables.
 import os, time
 import re
 import unittest2
-import lldb
+import lldb, lldbutil
 from lldbtest import *
 
 class ConditionalBreakTestCase(TestBase):
@@ -37,17 +37,22 @@ class ConditionalBreakTestCase(TestBase):
     def do_conditional_break(self):
         """Exercise some thread and frame APIs to break if c() is called by a()."""
         exe = os.path.join(os.getcwd(), "a.out")
-        self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 
-        # Break on c().
-        self.expect("breakpoint set -n c", BREAKPOINT_CREATED,
-            startstr = "Breakpoint created: 1: name = 'c', locations = 1")
+        target = self.dbg.CreateTarget(exe)
+        self.assertTrue(target.IsValid(), VALID_TARGET)
 
-        self.runCmd("run", RUN_SUCCEEDED)
+        breakpoint = target.BreakpointCreateByName("c", exe)
+        self.assertTrue(breakpoint.IsValid(), VALID_BREAKPOINT)
+
+        # Now launch the process, and do not stop at entry point.
+        rc = lldb.SBError()
+        self.process = target.Launch([''], [''], os.ctermid(), 0, False, rc)
+
+        self.assertTrue(rc.Success() and self.process.IsValid(), PROCESS_IS_VALID)
 
         # The stop reason of the thread should be breakpoint.
-        self.expect("thread list", STOPPED_DUE_TO_BREAKPOINT,
-            substrs = ['state is Stopped', 'stop reason = breakpoint'])
+        self.assertTrue(self.process.GetState() == lldb.eStateStopped,
+                        STOPPED_DUE_TO_BREAKPOINT)
 
         # Suppose we are only interested in the call scenario where c()'s
         # immediate caller is a() and we want to find out the value passed from
@@ -56,15 +61,14 @@ class ConditionalBreakTestCase(TestBase):
         # The 10 in range(10) is just an arbitrary number, which means we would
         # like to try for at most 10 times.
         for j in range(10):
-            target = self.dbg.GetSelectedTarget()
-            process = target.GetProcess()
-            thread = process.GetThreadAtIndex(0)
+            thread = self.process.GetThreadAtIndex(0)
             
             if thread.GetNumFrames() >= 2:
                 frame0 = thread.GetFrameAtIndex(0)
                 name0 = frame0.GetFunction().GetName()
                 frame1 = thread.GetFrameAtIndex(1)
                 name1 = frame1.GetFunction().GetName()
+                #lldbutil.PrintStackTrace(thread)
                 self.assertTrue(name0 == "c", "Break on function c()")
                 if (name1 == "a"):
                     line = frame1.GetLineEntry().GetLine()
@@ -72,15 +76,14 @@ class ConditionalBreakTestCase(TestBase):
                     # In reality, similar logic can be used to find out the call
                     # site.
                     self.assertTrue(line == 27, "Immediate caller a() at main.c:27")
-                    self.expect("thread backtrace", "Call site at a()",
-                        substrs = ["main.c:27"])
-                    self.expect("frame variable", "Passed in arg (int) val of 3",
-                        startstr = "(int) val = 3")
+
+                    # And the local variable 'val' should have a value of (int) 3.
+                    val = frame1.LookupVar("val")
+                    self.assertTrue(val.GetTypeName() == "int", "'val' has int type")
+                    self.assertTrue(val.GetValue(frame1) == "3", "'val' has a value of 3")
                     break
 
-            # This doesn't work?
-            #process.Continue()
-            self.runCmd("process continue")
+            self.process.Continue()
 
     def simulate_conditional_break_by_user(self):
         """Simulate a user using lldb commands to break on c() if called from a()."""
