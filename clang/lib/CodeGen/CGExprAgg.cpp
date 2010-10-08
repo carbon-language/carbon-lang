@@ -562,16 +562,6 @@ void AggExprEmitter::VisitInitListExpr(InitListExpr *E) {
   unsigned NumInitElements = E->getNumInits();
   RecordDecl *SD = E->getType()->getAs<RecordType>()->getDecl();
   
-  // If we're initializing the whole aggregate, just do it in place.
-  // FIXME: This is a hack around an AST bug (PR6537).
-  if (NumInitElements == 1 && E->getType() == E->getInit(0)->getType()) {
-    EmitInitializationToLValue(E->getInit(0),
-                               CGF.MakeAddrLValue(DestPtr, E->getType()),
-                               E->getType());
-    return;
-  }
-  
-  
   if (E->getType()->isUnionType()) {
     // Only initialize one field of a union. The field itself is
     // specified by the initializer list.
