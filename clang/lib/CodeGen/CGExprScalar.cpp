@@ -165,7 +165,11 @@ public:
       assert(!Result.HasSideEffects && "Constant declref with side-effect?!");
       llvm::ConstantInt *CI 
         = llvm::ConstantInt::get(VMContext, Result.Val.getInt());
-      CGF.EmitDeclRefExprDbgValue(E, CI);
+      if (VarDecl *VD = dyn_cast<VarDecl>((E->getDecl()))) {
+        if (!VD->isFileVarDecl()) {
+          CGF.EmitDeclRefExprDbgValue(E, CI);
+        }
+      }
       return CI;
     }
     return EmitLoadOfLValue(E);
