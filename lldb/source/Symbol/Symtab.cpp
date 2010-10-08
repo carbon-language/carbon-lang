@@ -21,10 +21,13 @@ using namespace lldb_private;
 
 
 Symtab::Symtab(ObjectFile *objfile) :
-    m_objfile(objfile),
-    m_symbols(),
-    m_addr_indexes(),
-    m_name_to_index()
+    m_objfile (objfile),
+    m_symbols (),
+    m_addr_indexes (),
+    m_name_to_index (),
+    m_mutex (Mutex::eMutexTypeRecursive),
+    m_addr_indexes_computed (false),
+    m_name_indexes_computed (false)
 {
 }
 
@@ -35,12 +38,16 @@ Symtab::~Symtab()
 void
 Symtab::Reserve(uint32_t count)
 {
+    // Clients should grab the mutex from this symbol table and lock it manually
+    // when calling this function to avoid performance issues.
     m_symbols.reserve (count);
 }
 
 Symbol *
 Symtab::Resize(uint32_t count)
 {
+    // Clients should grab the mutex from this symbol table and lock it manually
+    // when calling this function to avoid performance issues.
     m_symbols.resize (count);
     return &m_symbols[0];
 }
@@ -48,23 +55,29 @@ Symtab::Resize(uint32_t count)
 uint32_t
 Symtab::AddSymbol(const Symbol& symbol)
 {
+    // Clients should grab the mutex from this symbol table and lock it manually
+    // when calling this function to avoid performance issues.
     uint32_t symbol_idx = m_symbols.size();
     m_name_to_index.Clear();
     m_addr_indexes.clear();
     m_symbols.push_back(symbol);
+    m_addr_indexes_computed = false;
+    m_name_indexes_computed = false;
     return symbol_idx;
 }
 
 size_t
 Symtab::GetNumSymbols() const
 {
+    Mutex::Locker locker (m_mutex);
     return m_symbols.size();
 }
 
 void
-Symtab::Dump(Stream *s, Target *target) const
+Symtab::Dump (Stream *s, Target *target, lldb::SortOrder sort_order)
 {
-    const_iterator pos;
+    Mutex::Locker locker (m_mutex);
+
 //    s->Printf("%.*p: ", (int)sizeof(void*) * 2, this);
     s->Indent();
     const FileSpec &file_spec = m_objfile->GetFileSpec();
@@ -73,7 +86,7 @@ Symtab::Dump(Stream *s, Target *target) const
         object_name = m_objfile->GetModule()->GetObjectName().GetCString();
 
     if (file_spec)
-        s->Printf("Symtab, file = %s/%s%s%s%s, num_symbols = %u:\n",
+        s->Printf("Symtab, file = %s/%s%s%s%s, num_symbols = %u",
         file_spec.GetDirectory().AsCString(),
         file_spec.GetFilename().AsCString(),
         object_name ? "(" : "",
@@ -81,28 +94,79 @@ Symtab::Dump(Stream *s, Target *target) const
         object_name ? ")" : "",
         m_symbols.size());
     else
-        s->Printf("Symtab, num_symbols = %u:\n", m_symbols.size());
-    s->IndentMore();
+        s->Printf("Symtab, num_symbols = %u", m_symbols.size());
 
     if (!m_symbols.empty())
     {
-        const_iterator begin = m_symbols.begin();
-        const_iterator end = m_symbols.end();
-        DumpSymbolHeader (s);
-        for (pos = m_symbols.begin(); pos != end; ++pos)
+        switch (sort_order)
         {
-            s->Indent();
-            pos->Dump(s, target, std::distance(begin, pos));
+        case eSortOrderNone:
+            {
+                s->PutCString (":\n");
+                DumpSymbolHeader (s);
+                const_iterator begin = m_symbols.begin();
+                const_iterator end = m_symbols.end();
+                for (const_iterator pos = m_symbols.begin(); pos != end; ++pos)
+                {
+                    s->Indent();
+                    pos->Dump(s, target, std::distance(begin, pos));
+                }
+            }
+            break;
+
+        case eSortOrderByName:
+            {
+                // Although we maintain a lookup by exact name map, the table
+                // isn't sorted by name. So we must make the ordered symbol list
+                // up ourselves.
+                s->PutCString (" (sorted by name):\n");
+                DumpSymbolHeader (s);
+                typedef std::multimap<const char*, const Symbol *, CStringCompareFunctionObject> CStringToSymbol;
+                CStringToSymbol name_map;
+                for (const_iterator pos = m_symbols.begin(), end = m_symbols.end(); pos != end; ++pos)
+                {
+                    const char *name = pos->GetMangled().GetName(Mangled::ePreferDemangled).AsCString();
+                    if (name && name[0])
+                        name_map.insert (std::make_pair(name, &(*pos)));
+                }
+                
+                for (CStringToSymbol::const_iterator pos = name_map.begin(), end = name_map.end(); pos != end; ++pos)
+                {
+                    s->Indent();
+                    pos->second->Dump (s, target, pos->second - &m_symbols[0]);
+                }
+            }
+            break;
+            
+        case eSortOrderByAddress:
+            s->PutCString (" (sorted by address):\n");
+            DumpSymbolHeader (s);
+            if (!m_addr_indexes_computed)
+                InitAddressIndexes();
+            const size_t num_symbols = GetNumSymbols();
+            std::vector<uint32_t>::const_iterator pos;
+            std::vector<uint32_t>::const_iterator end = m_addr_indexes.end();
+            for (pos = m_addr_indexes.begin(); pos != end; ++pos)
+            {
+                uint32_t idx = *pos;
+                if (idx < num_symbols)
+                {
+                    s->Indent();
+                    m_symbols[idx].Dump(s, target, idx);
+                }
+            }
+            break;
         }
     }
-    s->IndentLess ();
 }
 
 void
 Symtab::Dump(Stream *s, Target *target, std::vector<uint32_t>& indexes) const
 {
+    Mutex::Locker locker (m_mutex);
+
     const size_t num_symbols = GetNumSymbols();
-    s->Printf("%.*p: ", (int)sizeof(void*) * 2, this);
+    //s->Printf("%.*p: ", (int)sizeof(void*) * 2, this);
     s->Indent();
     s->Printf("Symtab %u symbol indexes (%u symbols total):\n", indexes.size(), m_symbols.size());
     s->IndentMore();
@@ -152,6 +216,8 @@ CompareSymbolID (const void *key, const void *p)
 Symbol *
 Symtab::FindSymbolByID (lldb::user_id_t symbol_uid) const
 {
+    Mutex::Locker locker (m_mutex);
+
     Symbol *symbol = (Symbol*)::bsearch (&symbol_uid, 
                                          &m_symbols[0], 
                                          m_symbols.size(), 
@@ -164,6 +230,8 @@ Symtab::FindSymbolByID (lldb::user_id_t symbol_uid) const
 Symbol *
 Symtab::SymbolAtIndex(uint32_t idx)
 {
+    // Clients should grab the mutex from this symbol table and lock it manually
+    // when calling this function to avoid performance issues.
     if (idx < m_symbols.size())
         return &m_symbols[idx];
     return NULL;
@@ -173,6 +241,8 @@ Symtab::SymbolAtIndex(uint32_t idx)
 const Symbol *
 Symtab::SymbolAtIndex(uint32_t idx) const
 {
+    // Clients should grab the mutex from this symbol table and lock it manually
+    // when calling this function to avoid performance issues.
     if (idx < m_symbols.size())
         return &m_symbols[idx];
     return NULL;
@@ -184,42 +254,70 @@ Symtab::SymbolAtIndex(uint32_t idx) const
 void
 Symtab::InitNameIndexes()
 {
-    Timer scoped_timer (__PRETTY_FUNCTION__, "%s", __PRETTY_FUNCTION__);
-    // Create the name index vector to be able to quickly search by name
-    const size_t count = m_symbols.size();
-    assert(m_objfile != NULL);
-    assert(m_objfile->GetModule() != NULL);
-    m_name_to_index.Reserve (count);
-
-    UniqueCStringMap<uint32_t>::Entry entry;
-
-    for (entry.value = 0; entry.value < count; ++entry.value)
+    // Protected function, no need to lock mutex...
+    if (!m_name_indexes_computed)
     {
-        const Symbol *symbol = &m_symbols[entry.value];
+        m_name_indexes_computed = true;
+        Timer scoped_timer (__PRETTY_FUNCTION__, "%s", __PRETTY_FUNCTION__);
+        // Create the name index vector to be able to quickly search by name
+        const size_t count = m_symbols.size();
+        assert(m_objfile != NULL);
+        assert(m_objfile->GetModule() != NULL);
 
-        // Don't let trampolines get into the lookup by name map
-        // If we ever need the trampoline symbols to be searchable by name
-        // we can remove this and then possibly add a new bool to any of the
-        // Symtab functions that lookup symbols by name to indicate if they
-        // want trampolines.
-        if (symbol->IsTrampoline())
-            continue;
+#if 1
+        m_name_to_index.Reserve (count);
+#else
+        // TODO: benchmark this to see if we save any memory. Otherwise we
+        // will always keep the memory reserved in the vector unless we pull
+        // some STL swap magic and then recopy...
+        uint32_t actual_count = 0;
+        for (const_iterator pos = m_symbols.begin(), end = m_symbols.end();
+             pos != end; 
+             ++pos)
+        {
+            const Mangled &mangled = pos->GetMangled();
+            if (mangled.GetMangledName())
+                ++actual_count;
+            
+            if (mangled.GetDemangledName())
+                ++actual_count;
+        }
 
-        const Mangled &mangled = symbol->GetMangled();
-        entry.cstring = mangled.GetMangledName().GetCString();
-        if (entry.cstring && entry.cstring[0])
-            m_name_to_index.Append (entry);
+        m_name_to_index.Reserve (actual_count);
+#endif
 
-        entry.cstring = mangled.GetDemangledName().GetCString();
-        if (entry.cstring && entry.cstring[0])
-            m_name_to_index.Append (entry);
+        UniqueCStringMap<uint32_t>::Entry entry;
+
+        for (entry.value = 0; entry.value < count; ++entry.value)
+        {
+            const Symbol *symbol = &m_symbols[entry.value];
+
+            // Don't let trampolines get into the lookup by name map
+            // If we ever need the trampoline symbols to be searchable by name
+            // we can remove this and then possibly add a new bool to any of the
+            // Symtab functions that lookup symbols by name to indicate if they
+            // want trampolines.
+            if (symbol->IsTrampoline())
+                continue;
+
+            const Mangled &mangled = symbol->GetMangled();
+            entry.cstring = mangled.GetMangledName().GetCString();
+            if (entry.cstring && entry.cstring[0])
+                m_name_to_index.Append (entry);
+
+            entry.cstring = mangled.GetDemangledName().GetCString();
+            if (entry.cstring && entry.cstring[0])
+                m_name_to_index.Append (entry);
+        }
+        m_name_to_index.Sort();
     }
-    m_name_to_index.Sort();
 }
 
 uint32_t
 Symtab::AppendSymbolIndexesWithType (SymbolType symbol_type, std::vector<uint32_t>& indexes, uint32_t start_idx, uint32_t end_index) const
 {
+    Mutex::Locker locker (m_mutex);
+
     uint32_t prev_size = indexes.size();
 
     const uint32_t count = std::min<uint32_t> (m_symbols.size(), end_index);
@@ -236,6 +334,8 @@ Symtab::AppendSymbolIndexesWithType (SymbolType symbol_type, std::vector<uint32_
 uint32_t
 Symtab::AppendSymbolIndexesWithType (SymbolType symbol_type, Debug symbol_debug_type, Visibility symbol_visibility, std::vector<uint32_t>& indexes, uint32_t start_idx, uint32_t end_index) const
 {
+    Mutex::Locker locker (m_mutex);
+
     uint32_t prev_size = indexes.size();
 
     const uint32_t count = std::min<uint32_t> (m_symbols.size(), end_index);
@@ -303,6 +403,8 @@ namespace {
 void
 Symtab::SortSymbolIndexesByValue (std::vector<uint32_t>& indexes, bool remove_duplicates) const
 {
+    Mutex::Locker locker (m_mutex);
+
     Timer scoped_timer (__PRETTY_FUNCTION__,__PRETTY_FUNCTION__);
     // No need to sort if we have zero or one items...
     if (indexes.size() <= 1)
@@ -322,15 +424,18 @@ Symtab::SortSymbolIndexesByValue (std::vector<uint32_t>& indexes, bool remove_du
 uint32_t
 Symtab::AppendSymbolIndexesWithName (const ConstString& symbol_name, std::vector<uint32_t>& indexes)
 {
+    Mutex::Locker locker (m_mutex);
+
     Timer scoped_timer (__PRETTY_FUNCTION__, "%s", __PRETTY_FUNCTION__);
     if (symbol_name)
     {
         const size_t old_size = indexes.size();
-        if (m_name_to_index.IsEmpty())
+        if (!m_name_indexes_computed)
             InitNameIndexes();
 
         const char *symbol_cstr = symbol_name.GetCString();
         const UniqueCStringMap<uint32_t>::Entry *entry_ptr;
+
         for (entry_ptr = m_name_to_index.FindFirstValueForName (symbol_cstr);
              entry_ptr!= NULL;
              entry_ptr = m_name_to_index.FindNextValueForName (symbol_cstr, entry_ptr))
@@ -345,11 +450,13 @@ Symtab::AppendSymbolIndexesWithName (const ConstString& symbol_name, std::vector
 uint32_t
 Symtab::AppendSymbolIndexesWithName (const ConstString& symbol_name, Debug symbol_debug_type, Visibility symbol_visibility, std::vector<uint32_t>& indexes)
 {
+    Mutex::Locker locker (m_mutex);
+
     Timer scoped_timer (__PRETTY_FUNCTION__, "%s", __PRETTY_FUNCTION__);
     if (symbol_name)
     {
         const size_t old_size = indexes.size();
-        if (m_name_to_index.IsEmpty())
+        if (!m_name_indexes_computed)
             InitNameIndexes();
 
         const char *symbol_cstr = symbol_name.GetCString();
@@ -369,6 +476,8 @@ Symtab::AppendSymbolIndexesWithName (const ConstString& symbol_name, Debug symbo
 uint32_t
 Symtab::AppendSymbolIndexesWithNameAndType (const ConstString& symbol_name, SymbolType symbol_type, std::vector<uint32_t>& indexes)
 {
+    Mutex::Locker locker (m_mutex);
+
     if (AppendSymbolIndexesWithName(symbol_name, indexes) > 0)
     {
         std::vector<uint32_t>::iterator pos = indexes.begin();
@@ -386,6 +495,8 @@ Symtab::AppendSymbolIndexesWithNameAndType (const ConstString& symbol_name, Symb
 uint32_t
 Symtab::AppendSymbolIndexesWithNameAndType (const ConstString& symbol_name, SymbolType symbol_type, Debug symbol_debug_type, Visibility symbol_visibility, std::vector<uint32_t>& indexes)
 {
+    Mutex::Locker locker (m_mutex);
+
     if (AppendSymbolIndexesWithName(symbol_name, symbol_debug_type, symbol_visibility, indexes) > 0)
     {
         std::vector<uint32_t>::iterator pos = indexes.begin();
@@ -404,6 +515,8 @@ Symtab::AppendSymbolIndexesWithNameAndType (const ConstString& symbol_name, Symb
 uint32_t
 Symtab::AppendSymbolIndexesMatchingRegExAndType (const RegularExpression &regexp, SymbolType symbol_type, std::vector<uint32_t>& indexes)
 {
+    Mutex::Locker locker (m_mutex);
+
     uint32_t prev_size = indexes.size();
     uint32_t sym_end = m_symbols.size();
 
@@ -426,6 +539,8 @@ Symtab::AppendSymbolIndexesMatchingRegExAndType (const RegularExpression &regexp
 uint32_t
 Symtab::AppendSymbolIndexesMatchingRegExAndType (const RegularExpression &regexp, SymbolType symbol_type, Debug symbol_debug_type, Visibility symbol_visibility, std::vector<uint32_t>& indexes)
 {
+    Mutex::Locker locker (m_mutex);
+
     uint32_t prev_size = indexes.size();
     uint32_t sym_end = m_symbols.size();
 
@@ -451,6 +566,8 @@ Symtab::AppendSymbolIndexesMatchingRegExAndType (const RegularExpression &regexp
 Symbol *
 Symtab::FindSymbolWithType (SymbolType symbol_type, Debug symbol_debug_type, Visibility symbol_visibility, uint32_t& start_idx)
 {
+    Mutex::Locker locker (m_mutex);
+
     const size_t count = m_symbols.size();
     for (uint32_t idx = start_idx; idx < count; ++idx)
     {
@@ -469,10 +586,12 @@ Symtab::FindSymbolWithType (SymbolType symbol_type, Debug symbol_debug_type, Vis
 size_t
 Symtab::FindAllSymbolsWithNameAndType (const ConstString &name, SymbolType symbol_type, std::vector<uint32_t>& symbol_indexes)
 {
+    Mutex::Locker locker (m_mutex);
+
     Timer scoped_timer (__PRETTY_FUNCTION__, "%s", __PRETTY_FUNCTION__);
     // Initialize all of the lookup by name indexes before converting NAME
     // to a uniqued string NAME_STR below.
-    if (m_name_to_index.IsEmpty())
+    if (!m_name_indexes_computed)
         InitNameIndexes();
 
     if (name)
@@ -487,10 +606,12 @@ Symtab::FindAllSymbolsWithNameAndType (const ConstString &name, SymbolType symbo
 size_t
 Symtab::FindAllSymbolsWithNameAndType (const ConstString &name, SymbolType symbol_type, Debug symbol_debug_type, Visibility symbol_visibility, std::vector<uint32_t>& symbol_indexes)
 {
+    Mutex::Locker locker (m_mutex);
+
     Timer scoped_timer (__PRETTY_FUNCTION__, "%s", __PRETTY_FUNCTION__);
     // Initialize all of the lookup by name indexes before converting NAME
     // to a uniqued string NAME_STR below.
-    if (m_name_to_index.IsEmpty())
+    if (!m_name_indexes_computed)
         InitNameIndexes();
 
     if (name)
@@ -505,6 +626,8 @@ Symtab::FindAllSymbolsWithNameAndType (const ConstString &name, SymbolType symbo
 size_t
 Symtab::FindAllSymbolsMatchingRexExAndType (const RegularExpression &regex, SymbolType symbol_type, Debug symbol_debug_type, Visibility symbol_visibility, std::vector<uint32_t>& symbol_indexes)
 {
+    Mutex::Locker locker (m_mutex);
+
     AppendSymbolIndexesMatchingRegExAndType(regex, symbol_type, symbol_debug_type, symbol_visibility, symbol_indexes);
     return symbol_indexes.size();
 }
@@ -512,8 +635,10 @@ Symtab::FindAllSymbolsMatchingRexExAndType (const RegularExpression &regex, Symb
 Symbol *
 Symtab::FindFirstSymbolWithNameAndType (const ConstString &name, SymbolType symbol_type, Debug symbol_debug_type, Visibility symbol_visibility)
 {
+    Mutex::Locker locker (m_mutex);
+
     Timer scoped_timer (__PRETTY_FUNCTION__, "%s", __PRETTY_FUNCTION__);
-    if (m_name_to_index.IsEmpty())
+    if (!m_name_indexes_computed)
         InitNameIndexes();
 
     if (name)
@@ -614,19 +739,36 @@ FindIndexPtrForSymbolContainingAddress(Symtab* symtab, addr_t file_addr, const u
 void
 Symtab::InitAddressIndexes()
 {
-    if (m_addr_indexes.empty())
+    // Protected function, no need to lock mutex...
+    if (!m_addr_indexes_computed && !m_symbols.empty())
     {
+        m_addr_indexes_computed = true;
+#if 0
+        // The old was to add only code, trampoline or data symbols...
         AppendSymbolIndexesWithType (eSymbolTypeCode, m_addr_indexes);
         AppendSymbolIndexesWithType (eSymbolTypeTrampoline, m_addr_indexes);
         AppendSymbolIndexesWithType (eSymbolTypeData, m_addr_indexes);
-        SortSymbolIndexesByValue(m_addr_indexes, true);
-        m_addr_indexes.push_back(UINT32_MAX);   // Terminator for bsearch since we might need to look at the next symbol
+#else
+        // The new way adds all symbols with valid addresses that are section
+        // offset.
+        const_iterator begin = m_symbols.begin();
+        const_iterator end = m_symbols.end();
+        for (const_iterator pos = m_symbols.begin(); pos != end; ++pos)
+        {
+            if (pos->GetAddressRangePtr())
+                m_addr_indexes.push_back (std::distance(begin, pos));
+        }
+#endif
+        SortSymbolIndexesByValue (m_addr_indexes, false);
+        m_addr_indexes.push_back (UINT32_MAX);   // Terminator for bsearch since we might need to look at the next symbol
     }
 }
 
 size_t
 Symtab::CalculateSymbolSize (Symbol *symbol)
 {
+    Mutex::Locker locker (m_mutex);
+
     if (m_symbols.empty())
         return 0;
 
@@ -647,7 +789,7 @@ Symtab::CalculateSymbolSize (Symbol *symbol)
     // it and the next address based symbol
     if (symbol->GetAddressRangePtr())
     {
-        if (m_addr_indexes.empty())
+        if (!m_addr_indexes_computed)
             InitAddressIndexes();
         const size_t num_addr_indexes = m_addr_indexes.size();
         SymbolSearchInfo info = FindIndexPtrForSymbolContainingAddress(this, symbol->GetAddressRangePtr()->GetBaseAddress().GetFileAddress(), &m_addr_indexes.front(), num_addr_indexes);
@@ -684,7 +826,9 @@ Symtab::CalculateSymbolSize (Symbol *symbol)
 Symbol *
 Symtab::FindSymbolWithFileAddress (addr_t file_addr)
 {
-    if (m_addr_indexes.empty())
+    Mutex::Locker locker (m_mutex);
+
+    if (!m_addr_indexes_computed)
         InitAddressIndexes();
 
     SymbolSearchInfo info = { this, file_addr, NULL, NULL, 0 };
@@ -699,6 +843,8 @@ Symtab::FindSymbolWithFileAddress (addr_t file_addr)
 Symbol *
 Symtab::FindSymbolContainingFileAddress (addr_t file_addr, const uint32_t* indexes, uint32_t num_indexes)
 {
+    Mutex::Locker locker (m_mutex);
+
     SymbolSearchInfo info = { this, file_addr, NULL, NULL, 0 };
 
     bsearch(&info, indexes, num_indexes, sizeof(uint32_t), (comparison_function)SymbolWithClosestFileAddress);
@@ -731,7 +877,9 @@ Symtab::FindSymbolContainingFileAddress (addr_t file_addr, const uint32_t* index
 Symbol *
 Symtab::FindSymbolContainingFileAddress (addr_t file_addr)
 {
-    if (m_addr_indexes.empty())
+    Mutex::Locker locker (m_mutex);
+
+    if (!m_addr_indexes_computed)
         InitAddressIndexes();
 
     return FindSymbolContainingFileAddress (file_addr, &m_addr_indexes[0], m_addr_indexes.size());

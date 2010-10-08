@@ -558,6 +558,7 @@ typedef enum CommandArgumentType
     eArgTypeSettingVariableName,
     eArgTypeShlibName,
     eArgTypeSourceFile,
+    eArgTypeSortOrder,
     eArgTypeStartAddress,
     eArgTypeSymbol,
     eArgTypeThreadID,
@@ -573,19 +574,25 @@ typedef enum CommandArgumentType
 
 typedef enum ArgumentRepetitionType
 {
-    eArgRepeatPlain,     // Exactly one occurrence
-    eArgRepeatOptional,  // At most one occurrence, but it's optional
-    eArgRepeatPlus,      // One or more occurrences
-    eArgRepeatStar,      // Zero or more occurrences
-    eArgRepeatRange,      // Repetition of same argument, from 1 to n
-    eArgRepeatPairPlain, // A pair of arguments that must always go together ([arg-type arg-value]), occurs exactly once
-    eArgRepeatPairOptional, // A pair that occurs at most once (optional)
-    eArgRepeatPairPlus,  // One or more occurrences of a pair
-    eArgRepeatPairStar,  // Zero or more occurrences of a pair
-    eArgRepeatPairRange,  // A pair that repeats from 1 to n
-    eArgRepeatPairRangeOptional,  // A pair that repeats from 1 to n, but is optional
+    eArgRepeatPlain,            // Exactly one occurrence
+    eArgRepeatOptional,         // At most one occurrence, but it's optional
+    eArgRepeatPlus,             // One or more occurrences
+    eArgRepeatStar,             // Zero or more occurrences
+    eArgRepeatRange,            // Repetition of same argument, from 1 to n
+    eArgRepeatPairPlain,        // A pair of arguments that must always go together ([arg-type arg-value]), occurs exactly once
+    eArgRepeatPairOptional,     // A pair that occurs at most once (optional)
+    eArgRepeatPairPlus,         // One or more occurrences of a pair
+    eArgRepeatPairStar,         // Zero or more occurrences of a pair
+    eArgRepeatPairRange,        // A pair that repeats from 1 to n
+    eArgRepeatPairRangeOptional // A pair that repeats from 1 to n, but is optional
 } ArgumentRepetitionType;
 
+typedef enum SortOrder
+{
+    eSortOrderNone,
+    eSortOrderByAddress,
+    eSortOrderByName,
+} SortOrder;
 
 } // namespace lldb
 

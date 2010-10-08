@@ -156,7 +156,7 @@ DumpBasename (Stream &strm, const FileSpec *file_spec_ptr, uint32_t width)
 
 
 static void
-DumpModuleSymtab (CommandInterpreter &interpreter, Stream &strm, Module *module)
+DumpModuleSymtab (CommandInterpreter &interpreter, Stream &strm, Module *module, lldb::SortOrder sort_order)
 {
     if (module)
     {
@@ -165,7 +165,7 @@ DumpModuleSymtab (CommandInterpreter &interpreter, Stream &strm, Module *module)
         {
             Symtab *symtab = objfile->GetSymtab();
             if (symtab)
-                symtab->Dump(&strm, interpreter.GetDebugger().GetExecutionContext().target);
+                symtab->Dump(&strm, interpreter.GetDebugger().GetExecutionContext().target, sort_order);
         }
     }
 }
@@ -634,8 +634,13 @@ public:
                     result.GetOutputStream().Printf("Dumping symbol table for %u modules.\n", num_modules);
                     for (uint32_t image_idx = 0;  image_idx<num_modules; ++image_idx)
                     {
+                        if (num_dumped > 0)
+                        {
+                            result.GetOutputStream().EOL();
+                            result.GetOutputStream().EOL();
+                        }
                         num_dumped++;
-                        DumpModuleSymtab (m_interpreter, result.GetOutputStream(), target->GetImages().GetModulePointerAtIndex(image_idx));
+                        DumpModuleSymtab (m_interpreter, result.GetOutputStream(), target->GetImages().GetModulePointerAtIndex(image_idx), m_options.m_sort_order);
                     }
                 }
                 else
@@ -672,8 +677,13 @@ public:
                             Module *image_module = matching_modules.GetModulePointerAtIndex(i);
                             if (image_module)
                             {
+                                if (num_dumped > 0)
+                                {
+                                    result.GetOutputStream().EOL();
+                                    result.GetOutputStream().EOL();
+                                }
                                 num_dumped++;
-                                DumpModuleSymtab (m_interpreter, result.GetOutputStream(), image_module);
+                                DumpModuleSymtab (m_interpreter, result.GetOutputStream(), image_module, m_options.m_sort_order);
                             }
                         }
                     }
@@ -692,8 +702,99 @@ public:
         }
         return result.Succeeded();
     }
+    
+    virtual Options *
+    GetOptions ()
+    {
+        return &m_options;
+    }
+    
+    class CommandOptions : public Options
+    {
+    public:
 
+        CommandOptions () :
+            Options(),
+            m_sort_order (eSortOrderNone)
+        {
+        }
+
+        virtual
+        ~CommandOptions ()
+        {
+        }
+
+        virtual Error
+        SetOptionValue (int option_idx, const char *option_arg)
+        {
+            Error error;
+            char short_option = (char) m_getopt_table[option_idx].val;
+
+            switch (short_option)
+            {
+            case 's':
+                {
+                    bool found_one = false;
+                    m_sort_order = (lldb::SortOrder) Args::StringToOptionEnum (option_arg, 
+                                                                               g_option_table[option_idx].enum_values, 
+                                                                               eSortOrderNone,
+                                                                               &found_one);
+                    if (!found_one)
+                        error.SetErrorStringWithFormat("Invalid enumeration value '%s' for option '%c'.\n", 
+                                                       option_arg, 
+                                                       short_option);
+                }
+                break;
+
+            default:
+                error.SetErrorStringWithFormat("Invalid short option character '%c'.\n", short_option);
+                break;
+
+            }
+            return error;
+        }
+
+        void
+        ResetOptionValues ()
+        {
+            Options::ResetOptionValues();
+            m_sort_order = eSortOrderNone;
+        }
+
+        const lldb::OptionDefinition*
+        GetDefinitions ()
+        {
+            return g_option_table;
+        }
+
+        // Options table: Required for subclasses of Options.
+        static lldb::OptionDefinition g_option_table[];
+
+        SortOrder m_sort_order;
+    };
+
+protected:
+
+    CommandOptions m_options;
 };
+
+lldb::OptionEnumValueElement
+g_sort_option_enumeration[4] =
+{
+    { eSortOrderNone,       "none",     "No sorting, use the original symbol table order."},
+    { eSortOrderByAddress,  "address",  "Sort output by symbol address."},
+    { eSortOrderByName,     "name",     "Sort output by symbol name."},
+    { 0,                    NULL,       NULL }
+};
+
+
+lldb::OptionDefinition
+CommandObjectImageDumpSymtab::CommandOptions::g_option_table[] =
+{
+{ LLDB_OPT_SET_1, false, "sort", 's', required_argument, g_sort_option_enumeration, 0, eArgTypeSortOrder, "Supply a sort order when dumping the symbol table."},
+{ 0, false, NULL, 0, 0, NULL, 0, eArgTypeNone, NULL }
+};
+
 
 //----------------------------------------------------------------------
 // Image section dumping command
@@ -1380,8 +1481,7 @@ public:
     {
     }
 
-    virtual
-    Options *
+    virtual Options *
     GetOptions ()
     {
         return &m_options;

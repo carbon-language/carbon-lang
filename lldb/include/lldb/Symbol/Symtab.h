@@ -15,6 +15,7 @@
 
 #include "lldb/lldb-private.h"
 #include "lldb/Core/UniqueCStringMap.h"
+#include "lldb/Host/Mutex.h"
 #include "lldb/Symbol/Symbol.h"
 
 namespace lldb_private {
@@ -41,9 +42,13 @@ public:
             Symbol *    Resize (uint32_t count);
             uint32_t    AddSymbol(const Symbol& symbol);
             size_t      GetNumSymbols() const;
-            void        Dump(Stream *s, Target *target) const;
+            void        Dump(Stream *s, Target *target, lldb::SortOrder sort_type);
             void        Dump(Stream *s, Target *target, std::vector<uint32_t>& indexes) const;
             uint32_t    GetIndexForSymbol (const Symbol *symbol) const;
+            Mutex &     GetMutex ()
+                        {
+                            return m_mutex;
+                        }
             Symbol *    FindSymbolByID (lldb::user_id_t uid) const;
             Symbol *    SymbolAtIndex (uint32_t idx);
     const   Symbol *    SymbolAtIndex (uint32_t idx) const;
@@ -84,7 +89,9 @@ protected:
     collection          m_symbols;
     std::vector<uint32_t> m_addr_indexes;
     UniqueCStringMap<uint32_t> m_name_to_index;
-
+    mutable Mutex       m_mutex; // Provide thread safety for this symbol table
+    bool                m_addr_indexes_computed:1,
+                        m_name_indexes_computed:1;
 private:
 
     bool

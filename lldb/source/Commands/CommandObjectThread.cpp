@@ -506,7 +506,7 @@ public:
 
             switch (short_option)
             {
-                case 'a':
+            case 'a':
                 {
                     bool success;
                     m_avoid_no_debug =  Args::StringToBoolean (option_arg, true, &success);
@@ -514,7 +514,8 @@ public:
                         error.SetErrorStringWithFormat("Invalid boolean value for option '%c'.\n", short_option);
                 }
                 break;
-                case 'm':
+            
+            case 'm':
                 {
                     bool found_one = false;
                     OptionEnumValueElement *enum_values = g_option_table[option_idx].enum_values; 
@@ -523,15 +524,17 @@ public:
                         error.SetErrorStringWithFormat("Invalid enumeration value for option '%c'.\n", short_option);
                 }
                 break;
-                case 'r':
+            
+            case 'r':
                 {
                     m_avoid_regexp.clear();
                     m_avoid_regexp.assign(option_arg);
                 }
                 break;
-                default:
-                    error.SetErrorStringWithFormat("Invalid short option character '%c'.\n", short_option);
-                    break;
+
+            default:
+                error.SetErrorStringWithFormat("Invalid short option character '%c'.\n", short_option);
+                break;
 
             }
             return error;

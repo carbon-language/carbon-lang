@@ -647,6 +647,8 @@ ObjectFileELF::GetSymtab()
     Symtab *symbol_table = new Symtab(this);
     m_symtab_ap.reset(symbol_table);
 
+    Mutex::Locker locker (symbol_table->GetMutex ());
+    
     if (!(ParseSectionHeaders() && GetSectionHeaderStringTable()))
         return symbol_table;
 
@@ -658,7 +660,7 @@ ObjectFileELF::GetSymtab()
         {
             const ELFSectionHeader &symtab_section = *I;
             user_id_t section_id = SectionIndex(I);
-            ParseSymbolTable(symbol_table, symtab_section, section_id);
+            ParseSymbolTable (symbol_table, symtab_section, section_id);
         }
     }
 
@@ -685,7 +687,7 @@ ObjectFileELF::Dump(Stream *s)
         section_list->Dump(s, NULL, true);
     Symtab *symtab = GetSymtab();
     if (symtab)
-        symtab->Dump(s, NULL);
+        symtab->Dump(s, NULL, lldb::eSortOrderNone);
     s->EOL();
     DumpDependentModules(s);
     s->EOL();

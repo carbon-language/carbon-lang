@@ -206,6 +206,7 @@ ObjectFileMachO::GetSymtab()
     if (m_symtab_ap.get() == NULL)
     {
         m_symtab_ap.reset(new Symtab(this));
+        Mutex::Locker locker (m_symtab_ap->GetMutex());
         ParseSymtab (true);
     }
     return m_symtab_ap.get();
@@ -1348,7 +1349,7 @@ ObjectFileMachO::Dump (Stream *s)
         m_sections_ap->Dump(s, NULL, true);
 
     if (m_symtab_ap.get())
-        m_symtab_ap->Dump(s, NULL);
+        m_symtab_ap->Dump(s, NULL, eSortOrderNone);
 }
 
 
