@@ -1,4 +1,4 @@
-; RUN: llc < %s -mtriple=x86_64-apple-darwin10 | FileCheck %s
+; RUN: llc < %s -mtriple=x86_64-apple-darwin10 -show-mc-encoding | FileCheck %s
 
 define i32 @test1(i32 %X, i32* %y) nounwind {
 	%tmp = load i32* %y		; <i32> [#uses=1]
@@ -73,3 +73,20 @@ define i32 @test5(double %A) nounwind  {
 }
 
 declare i32 @foo(...)
+
+define i32 @test6() nounwind align 2 {
+  %A = alloca {i64, i64}, align 8
+  %B = getelementptr inbounds {i64, i64}* %A, i64 0, i32 1
+  %C = load i64* %B
+  %D = icmp eq i64 %C, 0
+  br i1 %D, label %T, label %F
+T:
+  ret i32 1
+  
+F:
+  ret i32 0
+; CHECK: test6:
+; CHECK: cmpq	$0, -8(%rsp)
+; CHECK: encoding: [0x48,0x83,0x7c,0x24,0xf8,0x00]
+}
+
