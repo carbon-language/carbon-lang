@@ -527,6 +527,17 @@ void ScheduleDAGInstrs::ComputeOperandLatency(SUnit *Def, SUnit *Use,
   MachineInstr *DefMI = Def->getInstr();
   int DefIdx = DefMI->findRegisterDefOperandIdx(Reg);
   if (DefIdx != -1) {
+    const MachineOperand &MO = DefMI->getOperand(DefIdx);
+    if (MO.isReg() && MO.isImplicit() &&
+        DefIdx >= DefMI->getDesc().getNumOperands()) {
+      // This is an implicit def, getOperandLatency() won't return the correct
+      // latency. e.g.
+      //   %D6<def>, %D7<def> = VLD1q16 %R2<kill>, 0, ..., %Q3<imp-def>
+      //   %Q1<def> = VMULv8i16 %Q1<kill>, %Q3<kill>, ...
+      // What we want is to compute latency between def of %D6/%D7 and use of
+      // %Q3 instead.
+      DefIdx = DefMI->findRegisterDefOperandIdx(Reg, false, true, TRI);
+    }
     MachineInstr *UseMI = Use->getInstr();
     // For all uses of the register, calculate the maxmimum latency
     int Latency = -1;
