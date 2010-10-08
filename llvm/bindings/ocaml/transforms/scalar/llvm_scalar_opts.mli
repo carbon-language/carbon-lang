@@ -66,11 +66,6 @@ external add_loop_rotation : [<Llvm.PassManager.any] Llvm.PassManager.t
                              -> unit
                            = "llvm_add_loop_rotation"
 
-(** See the [llvm::createLoopIndexSplitPass] function. *)
-external add_loop_index_split : [<Llvm.PassManager.any] Llvm.PassManager.t
-                                -> unit
-                              = "llvm_add_loop_index_split"
-
 (** See the [llvm::createPromoteMemoryToRegisterPass] function. *)
 external
 add_memory_to_register_promotion : [<Llvm.PassManager.any] Llvm.PassManager.t

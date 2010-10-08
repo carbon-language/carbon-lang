@@ -39,9 +39,6 @@ external add_loop_unroll : [<Llvm.PassManager.any] Llvm.PassManager.t
 external add_loop_rotation : [<Llvm.PassManager.any] Llvm.PassManager.t
                              -> unit
                            = "llvm_add_loop_rotation"
-external add_loop_index_split : [<Llvm.PassManager.any] Llvm.PassManager.t
-                                -> unit
-                              = "llvm_add_loop_index_split"
 external
 add_memory_to_register_promotion : [<Llvm.PassManager.any] Llvm.PassManager.t
                                    -> unit
