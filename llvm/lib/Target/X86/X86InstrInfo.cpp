@@ -263,8 +263,8 @@ X86InstrInfo::X86InstrInfo(X86TargetMachine &tm)
     { X86::DIV64r,      X86::DIV64m, 1, 0 },
     { X86::DIV8r,       X86::DIV8m, 1, 0 },
     { X86::EXTRACTPSrr, X86::EXTRACTPSmr, 0, 16 },
-    { X86::FsMOVAPDrr,  X86::MOVSDmr | TB_NOT_REVERSABLE , 0, 0 },
-    { X86::FsMOVAPSrr,  X86::MOVSSmr | TB_NOT_REVERSABLE , 0, 0 },
+    { X86::FsMOVAPDrr,  X86::MOVSDmr, 0, 0 },
+    { X86::FsMOVAPSrr,  X86::MOVSSmr, 0, 0 },
     { X86::IDIV16r,     X86::IDIV16m, 1, 0 },
     { X86::IDIV32r,     X86::IDIV32m, 1, 0 },
     { X86::IDIV64r,     X86::IDIV64m, 1, 0 },
@@ -323,22 +323,18 @@ X86InstrInfo::X86InstrInfo(X86TargetMachine &tm)
   };
 
   for (unsigned i = 0, e = array_lengthof(OpTbl0); i != e; ++i) {
-    unsigned RegOp      = OpTbl0[i][0];
-    unsigned MemOp      = OpTbl0[i][1] & ~TB_FLAGS;
-    unsigned FoldedLoad = OpTbl0[i][2];
-    unsigned Align      = OpTbl0[i][3];
+    unsigned RegOp = OpTbl0[i][0];
+    unsigned MemOp = OpTbl0[i][1];
+    unsigned Align = OpTbl0[i][3];
     assert(!RegOp2MemOpTable0.count(RegOp) && "Duplicated entries?");
-    RegOp2MemOpTable0[RegOp] = std::make_pair(MemOp, Align);
-    
-    // If this is not a reversable operation (because there is a many->one)
-    // mapping, don't insert the reverse of the operation into MemOp2RegOpTable.
-    if (OpTbl0[i][1] & TB_NOT_REVERSABLE)
-      continue;
-    
+    RegOp2MemOpTable0[RegOp] = std::make_pair(MemOp,Align);
+    unsigned FoldedLoad = OpTbl0[i][2];
     // Index 0, folded load or store.
     unsigned AuxInfo = 0 | (FoldedLoad << 4) | ((FoldedLoad^1) << 5);
-    assert(!MemOp2RegOpTable.count(MemOp) && "Duplicated entries?");
-    MemOp2RegOpTable[MemOp] = std::make_pair(RegOp, AuxInfo);
+    if (RegOp != X86::FsMOVAPDrr && RegOp != X86::FsMOVAPSrr) {
+      assert(!MemOp2RegOpTable.count(MemOp) && "Duplicated entries?");
+      MemOp2RegOpTable[MemOp] = std::make_pair(RegOp, AuxInfo);
+    }
   }
 
   static const unsigned OpTbl1[][3] = {
@@ -356,8 +352,8 @@ X86InstrInfo::X86InstrInfo(X86TargetMachine &tm)
     { X86::CVTTSD2SIrr,     X86::CVTTSD2SIrm, 0 },
     { X86::CVTTSS2SI64rr,   X86::CVTTSS2SI64rm, 0 },
     { X86::CVTTSS2SIrr,     X86::CVTTSS2SIrm, 0 },
-    { X86::FsMOVAPDrr,      X86::MOVSDrm | TB_NOT_REVERSABLE , 0 },
-    { X86::FsMOVAPSrr,      X86::MOVSSrm | TB_NOT_REVERSABLE , 0 },
+    { X86::FsMOVAPDrr,      X86::MOVSDrm, 0 },
+    { X86::FsMOVAPSrr,      X86::MOVSSrm, 0 },
     { X86::IMUL16rri,       X86::IMUL16rmi, 0 },
     { X86::IMUL16rri8,      X86::IMUL16rmi8, 0 },
     { X86::IMUL32rri,       X86::IMUL32rmi, 0 },
@@ -453,20 +449,17 @@ X86InstrInfo::X86InstrInfo(X86TargetMachine &tm)
 
   for (unsigned i = 0, e = array_lengthof(OpTbl1); i != e; ++i) {
     unsigned RegOp = OpTbl1[i][0];
-    unsigned MemOp = OpTbl1[i][1] & ~TB_FLAGS;
+    unsigned MemOp = OpTbl1[i][1];
     unsigned Align = OpTbl1[i][2];
     assert(!RegOp2MemOpTable1.count(RegOp) && "Duplicate entries");
-    RegOp2MemOpTable1[RegOp] = std::make_pair(MemOp, Align);
-    
-    // If this is not a reversable operation (because there is a many->one)
-    // mapping, don't insert the reverse of the operation into MemOp2RegOpTable.
-    if (OpTbl1[i][1] & TB_NOT_REVERSABLE)
-      continue;
+    RegOp2MemOpTable1[RegOp] = std::make_pair(MemOp,Align);
     
     // Index 1, folded load
     unsigned AuxInfo = 1 | (1 << 4);
-    assert(!MemOp2RegOpTable.count(MemOp) && "Duplicate entries");
-    MemOp2RegOpTable[MemOp] = std::make_pair(RegOp, AuxInfo);
+    if (RegOp != X86::FsMOVAPDrr && RegOp != X86::FsMOVAPSrr) {
+      assert(!MemOp2RegOpTable.count(MemOp) && "Duplicate entries");
+      MemOp2RegOpTable[MemOp] = std::make_pair(RegOp, AuxInfo);
+    }
   }
 
   static const unsigned OpTbl2[][3] = {
@@ -677,6 +670,7 @@ X86InstrInfo::X86InstrInfo(X86TargetMachine &tm)
     
     assert(!RegOp2MemOpTable2.count(RegOp) && "Duplicate entry!");
     RegOp2MemOpTable2[RegOp] = std::make_pair(MemOp, Align);
+    
     
     // If this is not a reversable operation (because there is a many->one)
     // mapping, don't insert the reverse of the operation into MemOp2RegOpTable.
