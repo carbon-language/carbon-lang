@@ -166,10 +166,10 @@ public:
       llvm::ConstantInt *CI 
         = llvm::ConstantInt::get(VMContext, Result.Val.getInt());
       if (VarDecl *VD = dyn_cast<VarDecl>((E->getDecl()))) {
-        if (!VD->isFileVarDecl()) {
+        if (!CGF.getContext().DeclMustBeEmitted(VD))
           CGF.EmitDeclRefExprDbgValue(E, CI);
-        }
-      }
+      } else if (isa<EnumConstantDecl>(E->getDecl()))
+        CGF.EmitDeclRefExprDbgValue(E, CI);        
       return CI;
     }
     return EmitLoadOfLValue(E);
