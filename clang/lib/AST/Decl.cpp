@@ -1615,14 +1615,16 @@ void TagDecl::setQualifierInfo(NestedNameSpecifier *Qualifier,
 
 EnumDecl *EnumDecl::Create(ASTContext &C, DeclContext *DC, SourceLocation L,
                            IdentifierInfo *Id, SourceLocation TKL,
-                           EnumDecl *PrevDecl) {
-  EnumDecl *Enum = new (C) EnumDecl(DC, L, Id, PrevDecl, TKL);
+                           EnumDecl *PrevDecl, bool IsScoped, bool IsFixed) {
+  EnumDecl *Enum = new (C) EnumDecl(DC, L, Id, PrevDecl, TKL,
+                                    IsScoped, IsFixed);
   C.getTypeDeclType(Enum, PrevDecl);
   return Enum;
 }
 
 EnumDecl *EnumDecl::Create(ASTContext &C, EmptyShell Empty) {
-  return new (C) EnumDecl(0, SourceLocation(), 0, 0, SourceLocation());
+  return new (C) EnumDecl(0, SourceLocation(), 0, 0, SourceLocation(),
+                          false, false);
 }
 
 void EnumDecl::completeDefinition(QualType NewType,
@@ -1630,7 +1632,8 @@ void EnumDecl::completeDefinition(QualType NewType,
                                   unsigned NumPositiveBits,
                                   unsigned NumNegativeBits) {
   assert(!isDefinition() && "Cannot redefine enums!");
-  IntegerType = NewType;
+  if (!IntegerType)
+    IntegerType = NewType.getTypePtr();
   PromotionType = NewPromotionType;
   setNumPositiveBits(NumPositiveBits);
   setNumNegativeBits(NumNegativeBits);

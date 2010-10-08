@@ -1825,6 +1825,14 @@ protected:
   unsigned NumPositiveBits : 8;
   unsigned NumNegativeBits : 8;
 
+  /// IsScoped - True if this is tag declaration is a scoped enumeration. Only
+  /// possible in C++0x mode.
+  bool IsScoped : 1;
+
+  /// IsFixed - True if this is an enumeration with fixed underlying type. Only
+  /// possible in C++0x mode.
+  bool IsFixed : 1;
+
 private:
   SourceLocation TagKeywordLoc;
   SourceLocation RBraceLoc;
@@ -2008,7 +2016,19 @@ class EnumDecl : public TagDecl {
   /// IntegerType - This represent the integer type that the enum corresponds
   /// to for code generation purposes.  Note that the enumerator constants may
   /// have a different type than this does.
-  QualType IntegerType;
+  ///
+  /// If the underlying integer type was explicitly stated in the source
+  /// code, this is a TypeSourceInfo* for that type. Otherwise this type
+  /// was automatically deduced somehow, and this is a Type*.
+  ///
+  /// Normally if IsFixed(), this would contain a TypeSourceInfo*, but in
+  /// some cases it won't.
+  ///
+  /// The underlying type of an enumeration never has any qualifiers, so
+  /// we can get away with just storing a raw Type*, and thus save an
+  /// extra pointer when TypeSourceInfo is needed.
+
+  llvm::PointerUnion<const Type*, TypeSourceInfo*> IntegerType;
 
   /// PromotionType - The integer type that values of this type should
   /// promote to.  In C, enumerators are generally of an integer type
@@ -2029,11 +2049,14 @@ class EnumDecl : public TagDecl {
   };
 
   EnumDecl(DeclContext *DC, SourceLocation L,
-           IdentifierInfo *Id, EnumDecl *PrevDecl, SourceLocation TKL)
+           IdentifierInfo *Id, EnumDecl *PrevDecl, SourceLocation TKL,
+           bool Scoped, bool Fixed)
     : TagDecl(Enum, TTK_Enum, DC, L, Id, PrevDecl, TKL), InstantiatedFrom(0) {
-      IntegerType = QualType();
+      IntegerType = (const Type*)0;
       NumNegativeBits = 0;
       NumPositiveBits = 0;
+      IsScoped = Scoped;
+      IsFixed = Fixed;
     }
 public:
   EnumDecl *getCanonicalDecl() {
@@ -2052,7 +2075,8 @@ public:
 
   static EnumDecl *Create(ASTContext &C, DeclContext *DC,
                           SourceLocation L, IdentifierInfo *Id,
-                          SourceLocation TKL, EnumDecl *PrevDecl);
+                          SourceLocation TKL, EnumDecl *PrevDecl,
+                          bool IsScoped, bool IsFixed);
   static EnumDecl *Create(ASTContext &C, EmptyShell Empty);
 
   /// completeDefinition - When created, the EnumDecl corresponds to a
@@ -2092,10 +2116,25 @@ public:
 
   /// getIntegerType - Return the integer type this enum decl corresponds to.
   /// This returns a null qualtype for an enum forward definition.
-  QualType getIntegerType() const { return IntegerType; }
+  QualType getIntegerType() const {
+    if (!IntegerType)
+      return QualType();
+    if (const Type* T = IntegerType.dyn_cast<const Type*>())
+      return QualType(T, 0);
+    return IntegerType.get<TypeSourceInfo*>()->getType();
+  }
 
   /// \brief Set the underlying integer type.
-  void setIntegerType(QualType T) { IntegerType = T; }
+  void setIntegerType(QualType T) { IntegerType = T.getTypePtr(); }
+
+  /// \brief Set the underlying integer type source info.
+  void setIntegerTypeSourceInfo(TypeSourceInfo* TInfo) { IntegerType = TInfo; }
+
+  /// \brief Return the type source info for the underlying integer type,
+  /// if no type source info exists, return 0.
+  TypeSourceInfo* getIntegerTypeSourceInfo() const {
+    return IntegerType.dyn_cast<TypeSourceInfo*>();
+  }
 
   /// \brief Returns the width in bits requred to store all the
   /// non-negative enumerators of this enum.
@@ -2123,6 +2162,22 @@ public:
     NumNegativeBits = Num;
   }
 
+  /// \brief Returns true if this is a C++0x scoped enumeration.
+  bool isScoped() const {
+    return IsScoped;
+  }
+
+  /// \brief Returns true if this is a C++0x enumeration with fixed underlying
+  /// type.
+  bool isFixed() const {
+    return IsFixed;
+  }
+
+  /// \brief Returns true if this can be considered a complete type.
+  bool isComplete() const {
+    return isDefinition() || isFixed();
+  }
+
   /// \brief Returns the enumeration (declared within the template)
   /// from which this enumeration type was instantiated, or NULL if
   /// this enumeration was not instantiated from any template.
@@ -2135,6 +2190,8 @@ public:
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
   static bool classof(const EnumDecl *D) { return true; }
   static bool classofKind(Kind K) { return K == Enum; }
+
+  friend class ASTDeclReader;
 };
 
 

@@ -5420,6 +5420,12 @@ QualType Sema::CheckSubtractionOperands(Expr *&lex, Expr *&rex,
   return InvalidOperands(Loc, lex, rex);
 }
 
+static bool isScopedEnumerationType(QualType T) {
+  if (const EnumType *ET = dyn_cast<EnumType>(T))
+    return ET->getDecl()->isScoped();
+  return false;
+}
+
 // C99 6.5.7
 QualType Sema::CheckShiftOperands(Expr *&lex, Expr *&rex, SourceLocation Loc,
                                   bool isCompAssign) {
@@ -5427,6 +5433,13 @@ QualType Sema::CheckShiftOperands(Expr *&lex, Expr *&rex, SourceLocation Loc,
   if (!lex->getType()->hasIntegerRepresentation() || 
       !rex->getType()->hasIntegerRepresentation())
     return InvalidOperands(Loc, lex, rex);
+
+  // C++0x: Don't allow scoped enums. FIXME: Use something better than
+  // hasIntegerRepresentation() above instead of this.
+  if (isScopedEnumerationType(lex->getType()) ||
+      isScopedEnumerationType(rex->getType())) {
+    return InvalidOperands(Loc, lex, rex);
+  }
 
   // Vector shifts promote their scalar inputs to vector type.
   if (lex->getType()->isVectorType() || rex->getType()->isVectorType())
@@ -5914,7 +5927,8 @@ inline QualType Sema::CheckBitwiseOperands(
 
   QualType compType = UsualArithmeticConversions(lex, rex, isCompAssign);
 
-  if (lex->getType()->isIntegerType() && rex->getType()->isIntegerType())
+  if (lex->getType()->isIntegralOrUnscopedEnumerationType() &&
+      rex->getType()->isIntegralOrUnscopedEnumerationType())
     return compType;
   return InvalidOperands(Loc, lex, rex);
 }

@@ -517,6 +517,7 @@ static bool HasFeature(const Preprocessor &PP, const IdentifierInfo *II) {
            .Case("cxx_deleted_functions", true) // Accepted as an extension.
            .Case("cxx_exceptions", LangOpts.Exceptions)
            .Case("cxx_rtti", LangOpts.RTTI)
+           .Case("cxx_strong_enums", LangOpts.CPlusPlus0x)
            .Case("cxx_static_assert", LangOpts.CPlusPlus0x)
            .Case("cxx_trailing_return", LangOpts.CPlusPlus0x)
            .Case("objc_nonfragile_abi", LangOpts.ObjCNonFragileABI)

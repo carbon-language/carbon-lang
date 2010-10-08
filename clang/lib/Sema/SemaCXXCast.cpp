@@ -557,6 +557,15 @@ static TryCastResult TryStaticCast(Sema &Self, Expr *&SrcExpr,
 
   QualType SrcType = Self.Context.getCanonicalType(SrcExpr->getType());
 
+  // C++0x 5.2.9p9: A value of a scoped enumeration type can be explicitly
+  // converted to an integral type.
+  if (Self.getLangOptions().CPlusPlus0x && SrcType->isEnumeralType()) {
+    if (DestType->isIntegralType(Self.Context)) {
+      Kind = CK_IntegralCast;
+      return TC_Success;
+    }
+  }
+
   // Reverse integral promotion/conversion. All such conversions are themselves
   // again integral promotions or conversions and are thus already handled by
   // p2 (TryDirectInitialization above).

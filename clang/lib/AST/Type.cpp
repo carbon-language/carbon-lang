@@ -409,11 +409,10 @@ bool Type::isIntegerType() const {
   if (const BuiltinType *BT = dyn_cast<BuiltinType>(CanonicalType))
     return BT->getKind() >= BuiltinType::Bool &&
            BT->getKind() <= BuiltinType::Int128;
-  if (const TagType *TT = dyn_cast<TagType>(CanonicalType))
+  if (const EnumType *ET = dyn_cast<EnumType>(CanonicalType))
     // Incomplete enum types are not treated as integer types.
     // FIXME: In C++, enum types are never integer types.
-    if (TT->getDecl()->isEnum() && TT->getDecl()->isDefinition())
-      return true;
+    return ET->getDecl()->isComplete();
   return false;
 }
 
@@ -449,9 +448,8 @@ bool Type::isIntegralType(ASTContext &Ctx) const {
     BT->getKind() <= BuiltinType::Int128;
   
   if (!Ctx.getLangOptions().CPlusPlus)
-    if (const TagType *TT = dyn_cast<TagType>(CanonicalType))
-      if (TT->getDecl()->isEnum() && TT->getDecl()->isDefinition())
-        return true;  // Complete enum types are integral in C.
+    if (const EnumType *ET = dyn_cast<EnumType>(CanonicalType))
+      return ET->getDecl()->isComplete(); // Complete enum types are integral in C.
   
   return false;
 }
@@ -463,12 +461,27 @@ bool Type::isIntegralOrEnumerationType() const {
 
   // Check for a complete enum type; incomplete enum types are not properly an
   // enumeration type in the sense required here.
-  if (const TagType *TT = dyn_cast<TagType>(CanonicalType))
-    if (TT->getDecl()->isEnum() && TT->getDecl()->isDefinition())
-      return true;
+  if (const EnumType *ET = dyn_cast<EnumType>(CanonicalType))
+    return ET->getDecl()->isComplete();
 
   return false;  
 }
+
+bool Type::isIntegralOrUnscopedEnumerationType() const {
+  if (const BuiltinType *BT = dyn_cast<BuiltinType>(CanonicalType))
+    return BT->getKind() >= BuiltinType::Bool &&
+           BT->getKind() <= BuiltinType::Int128;
+
+  // Check for a complete enum type; incomplete enum types are not properly an
+  // enumeration type in the sense required here.
+  // C++0x: However, if the underlying type of the enum is fixed, it is
+  // considered complete.
+  if (const EnumType *ET = dyn_cast<EnumType>(CanonicalType))
+    return ET->getDecl()->isComplete() && !ET->getDecl()->isScoped();
+
+  return false;
+}
+
 
 bool Type::isBooleanType() const {
   if (const BuiltinType *BT = dyn_cast<BuiltinType>(CanonicalType))
@@ -573,8 +586,8 @@ bool Type::isRealType() const {
   if (const BuiltinType *BT = dyn_cast<BuiltinType>(CanonicalType))
     return BT->getKind() >= BuiltinType::Bool &&
            BT->getKind() <= BuiltinType::LongDouble;
-  if (const TagType *TT = dyn_cast<TagType>(CanonicalType))
-    return TT->getDecl()->isEnum() && TT->getDecl()->isDefinition();
+  if (const EnumType *ET = dyn_cast<EnumType>(CanonicalType))
+      return ET->getDecl()->isComplete() && !ET->getDecl()->isScoped();
   return false;
 }
 
@@ -585,20 +598,21 @@ bool Type::isArithmeticType() const {
   if (const EnumType *ET = dyn_cast<EnumType>(CanonicalType))
     // GCC allows forward declaration of enum types (forbid by C99 6.7.2.3p2).
     // If a body isn't seen by the time we get here, return false.
-    return ET->getDecl()->isDefinition();
+    //
+    // C++0x: Enumerations are not arithmetic types. For now, just return
+    // false for scoped enumerations since that will disable any
+    // unwanted implicit conversions.
+    return !ET->getDecl()->isScoped() && ET->getDecl()->isComplete();
   return isa<ComplexType>(CanonicalType);
 }
 
 bool Type::isScalarType() const {
   if (const BuiltinType *BT = dyn_cast<BuiltinType>(CanonicalType))
     return BT->getKind() != BuiltinType::Void;
-  if (const TagType *TT = dyn_cast<TagType>(CanonicalType)) {
+  if (const EnumType *ET = dyn_cast<EnumType>(CanonicalType))
     // Enums are scalar types, but only if they are defined.  Incomplete enums
     // are not treated as scalar types.
-    if (TT->getDecl()->isEnum() && TT->getDecl()->isDefinition())
-      return true;
-    return false;
-  }
+    return ET->getDecl()->isComplete();
   return isa<PointerType>(CanonicalType) ||
          isa<BlockPointerType>(CanonicalType) ||
          isa<MemberPointerType>(CanonicalType) ||
@@ -646,8 +660,12 @@ bool Type::isIncompleteType() const {
     // Void is the only incomplete builtin type.  Per C99 6.2.5p19, it can never
     // be completed.
     return isVoidType();
-  case Record:
   case Enum:
+    // An enumeration with fixed underlying type is complete (C++0x 7.2p3).
+    if (cast<EnumType>(CanonicalType)->getDecl()->isFixed())
+        return false;
+    // Fall through.
+  case Record:
     // A tagged type (struct/union/enum/class) is incomplete if the decl is a
     // forward declaration, but not a full definition (C99 6.2.5p22).
     return !cast<TagType>(CanonicalType)->getDecl()->isDefinition();
@@ -763,7 +781,8 @@ bool Type::isPromotableIntegerType() const {
   // Enumerated types are promotable to their compatible integer types
   // (C99 6.3.1.1) a.k.a. its underlying type (C++ [conv.prom]p2).
   if (const EnumType *ET = getAs<EnumType>()){
-    if (this->isDependentType() || ET->getDecl()->getPromotionType().isNull())
+    if (this->isDependentType() || ET->getDecl()->getPromotionType().isNull()
+        || ET->getDecl()->isScoped())
       return false;
     
     const BuiltinType *BT

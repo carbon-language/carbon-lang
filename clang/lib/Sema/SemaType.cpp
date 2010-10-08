@@ -677,7 +677,7 @@ QualType Sema::BuildArrayType(QualType T, ArrayType::ArraySizeModifier ASM,
 
   // C99 6.7.5.2p1: The size expression shall have integer type.
   if (ArraySize && !ArraySize->isTypeDependent() &&
-      !ArraySize->getType()->isIntegerType()) {
+      !ArraySize->getType()->isIntegralOrUnscopedEnumerationType()) {
     Diag(ArraySize->getLocStart(), diag::err_array_size_non_int)
       << ArraySize->getType() << ArraySize->getSourceRange();
     return QualType();

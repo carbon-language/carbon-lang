@@ -826,6 +826,20 @@ def err_final_function_overridden : Error<
   "declaration of %0 overrides a 'final' function">;
 def err_final_base : Error<
   "derivation from 'final' %0">;
+
+// C++0x scoped enumerations
+def err_enum_invalid_underlying : Error<
+  "non-integral type %0 is an invalid underlying type">;
+def err_enumerator_too_large : Error<
+  "enumerator value is not representable in the underlying type %0">;
+def err_enumerator_wrapped : Error<
+  "enumerator value %0 is not representable in the underlying type %1">;
+def err_enum_redeclare_type_mismatch : Error<
+  "enumeration redeclared with different underlying type">;
+def err_enum_redeclare_fixed_mismatch : Error<
+  "enumeration previously declared with %select{non|}0fixed underlying type">;
+def err_enum_redeclare_scoped_mismatch : Error<
+  "enumeration previously declared as %select{un|}0scoped">;
   
 // Objective-C++
 def err_objc_decls_may_only_appear_in_global_scope : Error<

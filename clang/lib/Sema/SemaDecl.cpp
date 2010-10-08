@@ -5341,7 +5341,8 @@ Decl *Sema::ActOnTag(Scope *S, unsigned TagSpec, TagUseKind TUK,
                      IdentifierInfo *Name, SourceLocation NameLoc,
                      AttributeList *Attr, AccessSpecifier AS,
                      MultiTemplateParamsArg TemplateParameterLists,
-                     bool &OwnedDecl, bool &IsDependent) {
+                     bool &OwnedDecl, bool &IsDependent, bool ScopedEnum,
+                     TypeResult UnderlyingType) {
   // If this is not a definition, it must have a name.
   assert((Name != 0 || TUK == TUK_Definition) &&
          "Nameless record must be a definition!");
@@ -5382,6 +5383,34 @@ Decl *Sema::ActOnTag(Scope *S, unsigned TagSpec, TagUseKind TUK,
         Diag(TemplateParams->getTemplateLoc(), diag::err_template_tag_noparams)
           << TypeWithKeyword::getTagTypeKindName(Kind) << Name;
         isExplicitSpecialization = true;
+      }
+    }
+  }
+
+  // Figure out the underlying type if this a enum declaration. We need to do
+  // this early, because it's needed to detect if this is an incompatible
+  // redeclaration.
+  llvm::PointerUnion<const Type*, TypeSourceInfo*> EnumUnderlying;
+
+  if (Kind == TTK_Enum) {
+    if (UnderlyingType.isInvalid() || (!UnderlyingType.get() && ScopedEnum))
+      // No underlying type explicitly specified, or we failed to parse the
+      // type, default to int.
+      EnumUnderlying = Context.IntTy.getTypePtr();
+    else if (UnderlyingType.get()) {
+      // C++0x 7.2p2: The type-specifier-seq of an enum-base shall name an
+      // integral type; any cv-qualification is ignored.
+      TypeSourceInfo *TI = 0;
+      QualType T = GetTypeFromParser(UnderlyingType.get(), &TI);
+      EnumUnderlying = TI;
+
+      SourceLocation UnderlyingLoc = TI->getTypeLoc().getBeginLoc();
+
+      if (!T->isDependentType() && !T->isIntegralType(Context)) {
+        Diag(UnderlyingLoc, diag::err_enum_invalid_underlying)
+          << T;
+        // Recover by falling back to int.
+        EnumUnderlying = Context.IntTy.getTypePtr();
       }
     }
   }
@@ -5622,6 +5651,38 @@ Decl *Sema::ActOnTag(Scope *S, unsigned TagSpec, TagUseKind TUK,
           }
         }
 
+        if (Kind == TTK_Enum && PrevTagDecl->getTagKind() == TTK_Enum) {
+          const EnumDecl *PrevEnum = cast<EnumDecl>(PrevTagDecl);
+
+          // All conflicts with previous declarations are recovered by
+          // returning the previous declaration.
+          if (ScopedEnum != PrevEnum->isScoped()) {
+            Diag(KWLoc, diag::err_enum_redeclare_scoped_mismatch)
+              << PrevEnum->isScoped();
+            Diag(PrevTagDecl->getLocation(), diag::note_previous_use);
+            return PrevTagDecl;
+          }
+          else if (EnumUnderlying && PrevEnum->isFixed()) {
+            QualType T;
+            if (TypeSourceInfo *TI = EnumUnderlying.dyn_cast<TypeSourceInfo*>())
+                T = TI->getType();
+            else
+                T = QualType(EnumUnderlying.get<const Type*>(), 0);
+
+            if (!Context.hasSameUnqualifiedType(T, PrevEnum->getIntegerType())) {
+              Diag(KWLoc, diag::err_enum_redeclare_type_mismatch);
+              Diag(PrevTagDecl->getLocation(), diag::note_previous_use);
+              return PrevTagDecl;
+            }
+          }
+          else if (!EnumUnderlying.isNull() != PrevEnum->isFixed()) {
+            Diag(KWLoc, diag::err_enum_redeclare_fixed_mismatch)
+              << PrevEnum->isFixed();
+            Diag(PrevTagDecl->getLocation(), diag::note_previous_use);
+            return PrevTagDecl;
+          }
+        }
+
         if (!Invalid) {
           // If this is a use, just return the declaration we found.
 
@@ -5757,15 +5818,21 @@ CreateNewDecl:
   // PrevDecl.
   TagDecl *New;
 
+  bool IsForwardReference = false;
   if (Kind == TTK_Enum) {
     // FIXME: Tag decls should be chained to any simultaneous vardecls, e.g.:
     // enum X { A, B, C } D;    D should chain to X.
     New = EnumDecl::Create(Context, SearchDC, Loc, Name, KWLoc,
-                           cast_or_null<EnumDecl>(PrevDecl));
+                           cast_or_null<EnumDecl>(PrevDecl), ScopedEnum,
+                           !EnumUnderlying.isNull());
     // If this is an undefined enum, warn.
     if (TUK != TUK_Definition && !Invalid) {
       TagDecl *Def;
-      if (PrevDecl && (Def = cast<EnumDecl>(PrevDecl)->getDefinition())) {
+      if (getLangOptions().CPlusPlus0x && cast<EnumDecl>(New)->isFixed()) {
+        // C++0x: 7.2p2: opaque-enum-declaration.
+        // Conflicts are diagnosed above. Do nothing.
+      }
+      else if (PrevDecl && (Def = cast<EnumDecl>(PrevDecl)->getDefinition())) {
         Diag(Loc, diag::ext_forward_ref_enum_def)
           << New;
         Diag(Def->getLocation(), diag::note_previous_definition);
@@ -5776,8 +5843,24 @@ CreateNewDecl:
         else if (getLangOptions().CPlusPlus)
           DiagID = diag::err_forward_ref_enum;
         Diag(Loc, DiagID);
+        
+        // If this is a forward-declared reference to an enumeration, make a 
+        // note of it; we won't actually be introducing the declaration into
+        // the declaration context.
+        if (TUK == TUK_Reference)
+          IsForwardReference = true;
       }
     }
+
+    if (EnumUnderlying) {
+      EnumDecl *ED = cast<EnumDecl>(New);
+      if (TypeSourceInfo *TI = EnumUnderlying.dyn_cast<TypeSourceInfo*>())
+        ED->setIntegerTypeSourceInfo(TI);
+      else
+        ED->setIntegerType(QualType(EnumUnderlying.get<const Type*>(), 0));
+      ED->setPromotionType(ED->getIntegerType());
+    }
+
   } else {
     // struct/union/class
 
@@ -5869,7 +5952,10 @@ CreateNewDecl:
         PushOnScopeChains(New, EnclosingScope, /* AddToContext = */ false);
   } else if (Name) {
     S = getNonFieldDeclScope(S);
-    PushOnScopeChains(New, S);
+    PushOnScopeChains(New, S, !IsForwardReference);
+    if (IsForwardReference)
+      SearchDC->makeDeclVisibleInContext(New, /* Recoverable = */ false);
+
   } else {
     CurContext->addDecl(New);
   }
@@ -6804,9 +6890,11 @@ static bool isRepresentableIntegerValue(ASTContext &Context,
   assert(T->isIntegralType(Context) && "Integral type required!");
   unsigned BitWidth = Context.getIntWidth(T);
   
-  if (Value.isUnsigned() || Value.isNonNegative())
-    return Value.getActiveBits() < BitWidth;
-  
+  if (Value.isUnsigned() || Value.isNonNegative()) {
+    if (T->isSignedIntegerType()) 
+      --BitWidth;
+    return Value.getActiveBits() <= BitWidth;
+  }  
   return Value.getMinSignedBits() <= BitWidth;
 }
 
@@ -6870,12 +6958,26 @@ EnumConstantDecl *Sema::CheckEnumConstant(EnumDecl *Enum,
           }
         }
         
-        // C++0x [dcl.enum]p5:
-        //   If the underlying type is not fixed, the type of each enumerator
-        //   is the type of its initializing value:
-        //     - If an initializer is specified for an enumerator, the 
-        //       initializing value has the same type as the expression.
-        EltTy = Val->getType();
+        if (Enum->isFixed()) {
+          EltTy = Enum->getIntegerType();
+
+          // C++0x [dcl.enum]p5:
+          //   ... if the initializing value of an enumerator cannot be
+          //   represented by the underlying type, the program is ill-formed.
+          if (!isRepresentableIntegerValue(Context, EnumVal, EltTy))
+            Diag(IdLoc, diag::err_enumerator_too_large)
+              << EltTy;
+          else
+            ImpCastExprToType(Val, EltTy, CK_IntegralCast);
+        }
+        else {
+          // C++0x [dcl.enum]p5:
+          //   If the underlying type is not fixed, the type of each enumerator
+          //   is the type of its initializing value:
+          //     - If an initializer is specified for an enumerator, the 
+          //       initializing value has the same type as the expression.
+          EltTy = Val->getType();
+        }
       }
     }
   }
@@ -6892,7 +6994,12 @@ EnumConstantDecl *Sema::CheckEnumConstant(EnumDecl *Enum,
       //
       // GCC uses 'int' for its unspecified integral type, as does 
       // C99 6.7.2.2p3.
-      EltTy = Context.IntTy;
+      if (Enum->isFixed()) {
+        EltTy = Enum->getIntegerType();
+      }
+      else {
+        EltTy = Context.IntTy;
+      }
     } else {
       // Assign the last value + 1.
       EnumVal = LastEnumConst->getInitVal();
@@ -6912,13 +7019,20 @@ EnumConstantDecl *Sema::CheckEnumConstant(EnumDecl *Enum,
         //       sufficient to contain the incremented value. If no such type
         //       exists, the program is ill-formed.
         QualType T = getNextLargerIntegralType(Context, EltTy);
-        if (T.isNull()) {
+        if (T.isNull() || Enum->isFixed()) {
           // There is no integral type larger enough to represent this 
           // value. Complain, then allow the value to wrap around.
           EnumVal = LastEnumConst->getInitVal();
           EnumVal.zext(EnumVal.getBitWidth() * 2);
-          Diag(IdLoc, diag::warn_enumerator_too_large)
-            << EnumVal.toString(10);
+          ++EnumVal;
+          if (Enum->isFixed())
+            // When the underlying type is fixed, this is ill-formed.
+            Diag(IdLoc, diag::err_enumerator_wrapped)
+              << EnumVal.toString(10)
+              << EltTy;
+          else
+            Diag(IdLoc, diag::warn_enumerator_too_large)
+              << EnumVal.toString(10);
         } else {
           EltTy = T;
         }
@@ -7091,7 +7205,12 @@ void Sema::ActOnEnumBody(SourceLocation EnumLoc, SourceLocation LBraceLoc,
   if (LangOpts.ShortEnums)
     Packed = true;
 
-  if (NumNegativeBits) {
+  if (Enum->isFixed()) {
+    BestType = BestPromotionType = Enum->getIntegerType();
+    // We don't set BestWidth, because BestType is going to be the
+    // type of the enumerators.
+  }
+  else if (NumNegativeBits) {
     // If there is a negative value, figure out the smallest integer type (of
     // int/long/longlong) that fits.
     // If it's packed, check also if it fits a char or a short.

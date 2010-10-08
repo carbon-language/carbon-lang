@@ -594,7 +594,29 @@ Decl *TemplateDeclInstantiator::VisitEnumDecl(EnumDecl *D) {
   EnumDecl *Enum = EnumDecl::Create(SemaRef.Context, Owner,
                                     D->getLocation(), D->getIdentifier(),
                                     D->getTagKeywordLoc(),
-                                    /*PrevDecl=*/0);
+                                    /*PrevDecl=*/0,
+                                    D->isScoped(), D->isFixed());
+  if (D->isFixed()) {
+    if (TypeSourceInfo* TI = D->getIntegerTypeSourceInfo()) {
+      // If we have type source information for the underlying type, it means it
+      // has been explicitly set by the user. Perform substitution on it before
+      // moving on.
+      SourceLocation UnderlyingLoc = TI->getTypeLoc().getBeginLoc();
+      Enum->setIntegerTypeSourceInfo(SemaRef.SubstType(TI,
+                                                       TemplateArgs,
+                                                       UnderlyingLoc,
+                                                       DeclarationName()));
+      
+      if (!Enum->getIntegerTypeSourceInfo())
+        Enum->setIntegerType(SemaRef.Context.IntTy);
+    }
+    else {
+      assert(!D->getIntegerType()->isDependentType()
+             && "Dependent type without type source info");
+      Enum->setIntegerType(D->getIntegerType());
+    }
+  }
+
   Enum->setInstantiationOfMemberEnum(D);
   Enum->setAccess(D->getAccess());
   if (SubstQualifier(D, Enum)) return 0;

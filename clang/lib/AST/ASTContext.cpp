@@ -5154,10 +5154,10 @@ QualType ASTContext::mergeObjCGCQualifiers(QualType LHS, QualType RHS) {
 //===----------------------------------------------------------------------===//
 
 unsigned ASTContext::getIntWidth(QualType T) {
-  if (T->isBooleanType())
-    return 1;
   if (EnumType *ET = dyn_cast<EnumType>(T))
     T = ET->getDecl()->getIntegerType();
+  if (T->isBooleanType())
+    return 1;
   // For builtin types, just use the standard type sizing method
   return (unsigned)getTypeSize(T);
 }

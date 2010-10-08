@@ -424,9 +424,13 @@ const llvm::Type *CodeGenTypes::ConvertTagDeclType(const TagDecl *TD) {
   if (TDTI != TagDeclTypes.end())
     return TDTI->second;
 
+  const EnumDecl *ED = dyn_cast<EnumDecl>(TD);
+
   // If this is still a forward declaration, just define an opaque
   // type to use for this tagged decl.
-  if (!TD->isDefinition()) {
+  // C++0x: If this is a enumeration type with fixed underlying type,
+  // consider it complete.
+  if (!TD->isDefinition() && !(ED && ED->isFixed())) {
     llvm::Type *ResultType = llvm::OpaqueType::get(getLLVMContext());
     TagDeclTypes.insert(std::make_pair(Key, ResultType));
     return ResultType;
@@ -434,8 +438,8 @@ const llvm::Type *CodeGenTypes::ConvertTagDeclType(const TagDecl *TD) {
 
   // Okay, this is a definition of a type.  Compile the implementation now.
 
-  if (TD->isEnum())  // Don't bother storing enums in TagDeclTypes.
-    return ConvertTypeRecursive(cast<EnumDecl>(TD)->getIntegerType());
+  if (ED)  // Don't bother storing enums in TagDeclTypes.
+    return ConvertTypeRecursive(ED->getIntegerType());
 
   // This decl could well be recursive.  In this case, insert an opaque
   // definition of this type, which the recursive uses will get.  We will then

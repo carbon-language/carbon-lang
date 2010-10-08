@@ -785,7 +785,8 @@ public:
                  IdentifierInfo *Name, SourceLocation NameLoc,
                  AttributeList *Attr, AccessSpecifier AS,
                  MultiTemplateParamsArg TemplateParameterLists,
-                 bool &OwnedDecl, bool &IsDependent);
+                 bool &OwnedDecl, bool &IsDependent, bool ScopedEnum,
+                 TypeResult UnderlyingType);
 
   TypeResult ActOnDependentTag(Scope *S,
                                unsigned TagSpec,

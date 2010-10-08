@@ -879,6 +879,9 @@ public:
   
   /// \brief Determine whether this type is an integral or enumeration type.
   bool isIntegralOrEnumerationType() const;
+  /// \brief Determine whether this type is an integral or unscoped enumeration
+  /// type.
+  bool isIntegralOrUnscopedEnumerationType() const;
                                    
   /// Floating point categories.
   bool isRealFloatingType() const; // C99 6.2.5p10 (float, double, long double)

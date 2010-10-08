@@ -599,11 +599,17 @@ llvm::Value *CodeGenFunction::EmitLoadOfScalar(llvm::Value *Addr, bool Volatile,
   return V;
 }
 
+static bool isBooleanUnderlyingType(QualType Ty) {
+  if (const EnumType *ET = dyn_cast<EnumType>(Ty))
+    return ET->getDecl()->getIntegerType()->isBooleanType();
+  return false;
+}
+
 void CodeGenFunction::EmitStoreOfScalar(llvm::Value *Value, llvm::Value *Addr,
                                         bool Volatile, unsigned Alignment,
                                         QualType Ty) {
 
-  if (Ty->isBooleanType()) {
+  if (Ty->isBooleanType() || isBooleanUnderlyingType(Ty)) {
     // Bool can have different representation in memory than in registers.
     const llvm::PointerType *DstPtr = cast<llvm::PointerType>(Addr->getType());
     Value = Builder.CreateIntCast(Value, DstPtr->getElementType(), false);

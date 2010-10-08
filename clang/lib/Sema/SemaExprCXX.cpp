@@ -751,7 +751,7 @@ Sema::BuildCXXNew(SourceLocation StartLoc, bool UseGlobal,
     
     ArraySize = ConvertedSize.take();
     SizeType = ArraySize->getType();
-    if (!SizeType->isIntegralOrEnumerationType())
+    if (!SizeType->isIntegralOrUnscopedEnumerationType())
       return ExprError();
     
     // Let's see if this is a constant < 0. If so, we reject it out of hand.

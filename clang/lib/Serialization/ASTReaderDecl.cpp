@@ -209,10 +209,15 @@ void ASTDeclReader::VisitTagDecl(TagDecl *TD) {
 
 void ASTDeclReader::VisitEnumDecl(EnumDecl *ED) {
   VisitTagDecl(ED);
-  ED->setIntegerType(Reader.GetType(Record[Idx++]));
+  if (TypeSourceInfo *TI = Reader.GetTypeSourceInfo(F, Record, Idx))
+    ED->setIntegerTypeSourceInfo(TI);
+  else
+    ED->setIntegerType(Reader.GetType(Record[Idx++]));
   ED->setPromotionType(Reader.GetType(Record[Idx++]));
   ED->setNumPositiveBits(Record[Idx++]);
   ED->setNumNegativeBits(Record[Idx++]);
+  ED->IsScoped = Record[Idx++];
+  ED->IsFixed = Record[Idx++];
   ED->setInstantiationOfMemberEnum(
                          cast_or_null<EnumDecl>(Reader.GetDecl(Record[Idx++])));
 }

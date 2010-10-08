@@ -1061,7 +1061,7 @@ static bool IsStandardConversion(Sema &S, Expr* From, QualType ToType,
     // Complex promotion (Clang extension)
     SCS.Second = ICK_Complex_Promotion;
     FromType = ToType.getUnqualifiedType();
-  } else if (FromType->isIntegralOrEnumerationType() &&
+  } else if (FromType->isIntegralOrUnscopedEnumerationType() &&
              ToType->isIntegralType(S.Context)) {
     // Integral conversions (C++ 4.7).
     SCS.Second = ICK_Integral_Conversion;
@@ -1081,7 +1081,7 @@ static bool IsStandardConversion(Sema &S, Expr* From, QualType ToType,
     FromType = ToType.getUnqualifiedType();
   } else if ((FromType->isRealFloatingType() && 
               ToType->isIntegralType(S.Context) && !ToType->isBooleanType()) ||
-             (FromType->isIntegralOrEnumerationType() &&
+             (FromType->isIntegralOrUnscopedEnumerationType() &&
               ToType->isRealFloatingType())) {
     // Floating-integral conversions (C++ 4.9).
     SCS.Second = ICK_Floating_Integral;
@@ -1097,7 +1097,6 @@ static bool IsStandardConversion(Sema &S, Expr* From, QualType ToType,
     SCS.Second = ICK_Pointer_Member;
   } else if (ToType->isBooleanType() &&
              (FromType->isArithmeticType() ||
-              FromType->isEnumeralType() ||
               FromType->isAnyPointerType() ||
               FromType->isBlockPointerType() ||
               FromType->isMemberPointerType() ||
@@ -1194,11 +1193,17 @@ bool Sema::IsIntegralPromotion(Expr *From, QualType FromType, QualType ToType) {
   // unsigned int, long, or unsigned long (C++ 4.5p2).
 
   // We pre-calculate the promotion type for enum types.
-  if (const EnumType *FromEnumType = FromType->getAs<EnumType>())
+  if (const EnumType *FromEnumType = FromType->getAs<EnumType>()) {
+    // C++0x 7.2p9: Note that this implicit enum to int conversion is not
+    // provided for a scoped enumeration.
+    if (FromEnumType->getDecl()->isScoped())
+      return false;
+
     if (ToType->isIntegerType() && 
         !RequireCompleteType(From->getLocStart(), FromType, PDiag()))
       return Context.hasSameUnqualifiedType(ToType,
                                 FromEnumType->getDecl()->getPromotionType());
+  }
 
   if (FromType->isWideCharType() && ToType->isIntegerType()) {
     // Determine whether the type we're converting from is signed or

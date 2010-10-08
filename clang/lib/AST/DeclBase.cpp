@@ -516,7 +516,7 @@ bool DeclContext::isDependentContext() const {
 
 bool DeclContext::isTransparentContext() const {
   if (DeclKind == Decl::Enum)
-    return true; // FIXME: Check for C++0x scoped enums
+    return !cast<EnumDecl>(this)->isScoped();
   else if (DeclKind == Decl::LinkageSpec)
     return true;
   else if (DeclKind >= Decl::firstRecord && DeclKind <= Decl::lastRecord)

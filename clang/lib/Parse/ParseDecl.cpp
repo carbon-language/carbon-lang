@@ -1958,6 +1958,21 @@ void Parser::ParseStructUnionBody(SourceLocation RecordLoc,
 ///         'enum' identifier
 /// [GNU]   'enum' attributes[opt] identifier
 ///
+/// [C++0x] enum-head '{' enumerator-list[opt] '}'
+/// [C++0x] enum-head '{' enumerator-list ','  '}'
+///
+///       enum-head: [C++0x]
+///         enum-key attributes[opt] identifier[opt] enum-base[opt]
+///         enum-key attributes[opt] nested-name-specifier identifier enum-base[opt]
+///
+///       enum-key: [C++0x]
+///         'enum'
+///         'enum' 'class'
+///         'enum' 'struct'
+///
+///       enum-base: [C++0x]
+///         ':' type-specifier-seq
+///
 /// [C++] elaborated-type-specifier:
 /// [C++]   'enum' '::'[opt] nested-name-specifier[opt] identifier
 ///
@@ -1992,6 +2007,14 @@ void Parser::ParseEnumSpecifier(SourceLocation StartLoc, DeclSpec &DS,
     }
   }
 
+  bool IsScopedEnum = false;
+
+  if (getLang().CPlusPlus0x && (Tok.is(tok::kw_class)
+                                || Tok.is(tok::kw_struct))) {
+    ConsumeToken();
+    IsScopedEnum = true;
+  }
+
   // Must have either 'enum name' or 'enum {...}'.
   if (Tok.isNot(tok::identifier) && Tok.isNot(tok::l_brace)) {
     Diag(Tok, diag::err_expected_ident_lbrace);
@@ -2007,6 +2030,21 @@ void Parser::ParseEnumSpecifier(SourceLocation StartLoc, DeclSpec &DS,
   if (Tok.is(tok::identifier)) {
     Name = Tok.getIdentifierInfo();
     NameLoc = ConsumeToken();
+  }
+
+  if (!Name && IsScopedEnum) {
+    // C++0x 7.2p2: The optional identifier shall not be omitted in the
+    // declaration of a scoped enumeration.
+    Diag(Tok, diag::err_scoped_enum_missing_identifier);
+    IsScopedEnum = false;
+  }
+
+  TypeResult BaseType;
+
+  if (getLang().CPlusPlus0x && Tok.is(tok::colon)) {
+    ConsumeToken();
+    SourceRange Range;
+    BaseType = ParseTypeName(&Range);
   }
 
   // There are three options here.  If we have 'enum foo;', then this is a
@@ -2045,7 +2083,9 @@ void Parser::ParseEnumSpecifier(SourceLocation StartLoc, DeclSpec &DS,
                                    StartLoc, SS, Name, NameLoc, Attr.get(),
                                    AS,
                                    MultiTemplateParamsArg(Actions),
-                                   Owned, IsDependent);
+                                   Owned, IsDependent, IsScopedEnum,
+                                   BaseType);
+
   if (IsDependent) {
     // This enum has a dependent nested-name-specifier. Handle it as a 
     // dependent tag.

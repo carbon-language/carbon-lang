@@ -1622,7 +1622,7 @@ Decl *ASTNodeImporter::VisitEnumDecl(EnumDecl *D) {
   EnumDecl *D2 = EnumDecl::Create(Importer.getToContext(), DC, Loc,
                                       Name.getAsIdentifierInfo(),
                                       Importer.Import(D->getTagKeywordLoc()),
-                                      0);
+                                      0, D->isScoped(), D->isFixed());
   // Import the qualifier, if any.
   if (D->getQualifier()) {
     NestedNameSpecifier *NNS = Importer.Import(D->getQualifier());

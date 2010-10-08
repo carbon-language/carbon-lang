@@ -176,10 +176,14 @@ void ASTDeclWriter::VisitTagDecl(TagDecl *D) {
 
 void ASTDeclWriter::VisitEnumDecl(EnumDecl *D) {
   VisitTagDecl(D);
-  Writer.AddTypeRef(D->getIntegerType(), Record);
+  Writer.AddTypeSourceInfo(D->getIntegerTypeSourceInfo(), Record);
+  if (!D->getIntegerTypeSourceInfo())
+    Writer.AddTypeRef(D->getIntegerType(), Record);
   Writer.AddTypeRef(D->getPromotionType(), Record);
   Record.push_back(D->getNumPositiveBits());
   Record.push_back(D->getNumNegativeBits());
+  Record.push_back(D->isScoped());
+  Record.push_back(D->isFixed());
   Writer.AddDeclRef(D->getInstantiatedFromMemberEnum(), Record);
   Code = serialization::DECL_ENUM;
 }

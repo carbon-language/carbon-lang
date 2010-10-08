@@ -955,7 +955,8 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
                                        MultiTemplateParamsArg(Actions,
                                     TemplateParams? &(*TemplateParams)[0] : 0,
                                     TemplateParams? TemplateParams->size() : 0),
-                                       Owned, IsDependent);
+                                       Owned, IsDependent, false,
+                                       clang::TypeResult());
 
     // If ActOnTag said the type was dependent, try again with the
     // less common call.
