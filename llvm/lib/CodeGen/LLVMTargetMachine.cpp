@@ -160,6 +160,7 @@ bool LLVMTargetMachine::addPassesToEmitFile(PassManagerBase &PM,
     AsmStreamer.reset(getTarget().createObjectStreamer(TargetTriple, *Context,
                                                        *TAB, Out, MCE,
                                                        hasMCRelaxAll()));
+    AsmStreamer.get()->InitSections();
     break;
   }
   case CGFT_Null:

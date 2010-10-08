@@ -20,7 +20,7 @@ declare void @foo(i64* nocapture) nounwind
 
 ;;;;;
 
-; 64: (('sh_name', 7) # '.rodata.str1.1'
+; 64: (('sh_name', 18) # '.rodata.str1.1'
 ; 64-NEXT:   ('sh_type', 1)
 ; 64-NEXT:   ('sh_flags', 50)
 ; 64-NEXT:   ('sh_addr',
@@ -31,7 +31,7 @@ declare void @foo(i64* nocapture) nounwind
 ; 64-NEXT:   ('sh_addralign', 1)
 ; 64-NEXT:   ('sh_entsize', 1)
 
-; 64: (('sh_name', 22) # '.rodata.cst8'
+; 64: (('sh_name', 33) # '.rodata.cst8'
 ; 64-NEXT:   ('sh_type', 1)
 ; 64-NEXT:   ('sh_flags', 18)
 ; 64-NEXT:   ('sh_addr',
