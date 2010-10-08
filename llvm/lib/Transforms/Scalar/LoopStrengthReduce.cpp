@@ -2992,24 +2992,6 @@ void LSRInstance::NarrowSearchSpaceByCollapsingUnrolledCode() {
 
               LUThatHas->AllFixupsOutsideLoop &= LU.AllFixupsOutsideLoop;
 
-              // Delete formulae from the new use which are no longer legal.
-              bool Any = false;
-              for (size_t i = 0, e = LUThatHas->Formulae.size(); i != e; ++i) {
-                Formula &F = LUThatHas->Formulae[i];
-                if (!isLegalUse(F.AM,
-                                LUThatHas->MinOffset, LUThatHas->MaxOffset,
-                                LUThatHas->Kind, LUThatHas->AccessTy, TLI)) {
-                  DEBUG(dbgs() << "  Deleting "; F.print(dbgs());
-                        dbgs() << '\n');
-                  LUThatHas->DeleteFormula(F);
-                  --i;
-                  --e;
-                  Any = true;
-                }
-              }
-              if (Any)
-                LUThatHas->RecomputeRegs(LUThatHas - &Uses.front(), RegUses);
-
               // Update the relocs to reference the new use.
               for (SmallVectorImpl<LSRFixup>::iterator I = Fixups.begin(),
                    E = Fixups.end(); I != E; ++I) {
@@ -3031,6 +3013,24 @@ void LSRInstance::NarrowSearchSpaceByCollapsingUnrolledCode() {
                 if (Fixup.LUIdx == NumUses-1)
                   Fixup.LUIdx = LUIdx;
               }
+
+              // Delete formulae from the new use which are no longer legal.
+              bool Any = false;
+              for (size_t i = 0, e = LUThatHas->Formulae.size(); i != e; ++i) {
+                Formula &F = LUThatHas->Formulae[i];
+                if (!isLegalUse(F.AM,
+                                LUThatHas->MinOffset, LUThatHas->MaxOffset,
+                                LUThatHas->Kind, LUThatHas->AccessTy, TLI)) {
+                  DEBUG(dbgs() << "  Deleting "; F.print(dbgs());
+                        dbgs() << '\n');
+                  LUThatHas->DeleteFormula(F);
+                  --i;
+                  --e;
+                  Any = true;
+                }
+              }
+              if (Any)
+                LUThatHas->RecomputeRegs(LUThatHas - &Uses.front(), RegUses);
 
               // Delete the old use.
               DeleteUse(LU, LUIdx);
