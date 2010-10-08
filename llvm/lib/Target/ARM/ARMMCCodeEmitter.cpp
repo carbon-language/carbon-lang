@@ -44,8 +44,8 @@ public:
 
   /// getMachineOpValue - Return binary encoding of operand. If the machine
   /// operand requires relocation, record the relocation and return zero.
-  unsigned getMachineOpValue(const MCInst &MI,const MCOperand &MO);
-  unsigned getMachineOpValue(const MCInst &MI, unsigned OpIdx) {
+  unsigned getMachineOpValue(const MCInst &MI,const MCOperand &MO) const;
+  unsigned getMachineOpValue(const MCInst &MI, unsigned OpIdx) const {
     return getMachineOpValue(MI, MI.getOperand(OpIdx));
   }
 
@@ -120,15 +120,11 @@ EncodeInstruction(const MCInst &MI, raw_ostream &OS,
     return;
 
   ++MCNumEmitted;  // Keep track of the # of mi's emitted
-  switch (TSFlags & ARMII::FormMask) {
-  case ARMII::BrMiscFrm:
-  case ARMII::MiscFrm: {
+  switch (Opcode) {
+  //FIXME: Any non-pseudos that need special handling, if there are any...
+  default: {
     unsigned Value = getBinaryCodeForInstr(MI);
     EmitConstant(Value, 4, CurByte, OS);
-    break;
-  }
-  default: {
-    llvm_unreachable("Unhandled instruction encoding format!");
     break;
   }
   }

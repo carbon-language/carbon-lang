@@ -1,4 +1,4 @@
-//===-- ARM/ARMCodeEmitter.cpp - Convert ARM code to machine code ---------===//
+const //===-- ARM/ARMCodeEmitter.cpp - Convert ARM code to machine code ---------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -150,8 +150,9 @@ namespace {
 
     /// getMachineOpValue - Return binary encoding of operand. If the machine
     /// operand requires relocation, record the relocation and return zero.
-    unsigned getMachineOpValue(const MachineInstr &MI,const MachineOperand &MO);
-    unsigned getMachineOpValue(const MachineInstr &MI, unsigned OpIdx) {
+    unsigned getMachineOpValue(const MachineInstr &MI,
+                               const MachineOperand &MO) const;
+    unsigned getMachineOpValue(const MachineInstr &MI, unsigned OpIdx) const {
       return getMachineOpValue(MI, MI.getOperand(OpIdx));
     }
 
@@ -169,12 +170,12 @@ namespace {
     /// fixed up by the relocation stage.
     void emitGlobalAddress(const GlobalValue *GV, unsigned Reloc,
                            bool MayNeedFarStub,  bool Indirect,
-                           intptr_t ACPV = 0);
-    void emitExternalSymbolAddress(const char *ES, unsigned Reloc);
-    void emitConstPoolAddress(unsigned CPI, unsigned Reloc);
-    void emitJumpTableAddress(unsigned JTIndex, unsigned Reloc);
+                           intptr_t ACPV = 0) const;
+    void emitExternalSymbolAddress(const char *ES, unsigned Reloc) const;
+    void emitConstPoolAddress(unsigned CPI, unsigned Reloc) const;
+    void emitJumpTableAddress(unsigned JTIndex, unsigned Reloc) const;
     void emitMachineBasicBlock(MachineBasicBlock *BB, unsigned Reloc,
-                               intptr_t JTBase = 0);
+                               intptr_t JTBase = 0) const;
   };
 }
 
@@ -262,7 +263,7 @@ unsigned ARMCodeEmitter::getMovi32Value(const MachineInstr &MI,
 /// getMachineOpValue - Return binary encoding of operand. If the machine
 /// operand requires relocation, record the relocation and return zero.
 unsigned ARMCodeEmitter::getMachineOpValue(const MachineInstr &MI,
-                                           const MachineOperand &MO) {
+                                           const MachineOperand &MO) const {
   if (MO.isReg())
     return getARMRegisterNumbering(MO.getReg());
   else if (MO.isImm())
@@ -294,7 +295,7 @@ unsigned ARMCodeEmitter::getMachineOpValue(const MachineInstr &MI,
 ///
 void ARMCodeEmitter::emitGlobalAddress(const GlobalValue *GV, unsigned Reloc,
                                        bool MayNeedFarStub, bool Indirect,
-                                       intptr_t ACPV) {
+                                       intptr_t ACPV) const {
   MachineRelocation MR = Indirect
     ? MachineRelocation::getIndirectSymbol(MCE.getCurrentPCOffset(), Reloc,
                                            const_cast<GlobalValue *>(GV),
@@ -308,7 +309,8 @@ void ARMCodeEmitter::emitGlobalAddress(const GlobalValue *GV, unsigned Reloc,
 /// emitExternalSymbolAddress - Arrange for the address of an external symbol to
 /// be emitted to the current location in the function, and allow it to be PC
 /// relative.
-void ARMCodeEmitter::emitExternalSymbolAddress(const char *ES, unsigned Reloc) {
+void ARMCodeEmitter::
+emitExternalSymbolAddress(const char *ES, unsigned Reloc) const {
   MCE.addRelocation(MachineRelocation::getExtSym(MCE.getCurrentPCOffset(),
                                                  Reloc, ES));
 }
@@ -316,7 +318,7 @@ void ARMCodeEmitter::emitExternalSymbolAddress(const char *ES, unsigned Reloc) {
 /// emitConstPoolAddress - Arrange for the address of an constant pool
 /// to be emitted to the current location in the function, and allow it to be PC
 /// relative.
-void ARMCodeEmitter::emitConstPoolAddress(unsigned CPI, unsigned Reloc) {
+void ARMCodeEmitter::emitConstPoolAddress(unsigned CPI, unsigned Reloc) const {
   // Tell JIT emitter we'll resolve the address.
   MCE.addRelocation(MachineRelocation::getConstPool(MCE.getCurrentPCOffset(),
                                                     Reloc, CPI, 0, true));
@@ -325,14 +327,16 @@ void ARMCodeEmitter::emitConstPoolAddress(unsigned CPI, unsigned Reloc) {
 /// emitJumpTableAddress - Arrange for the address of a jump table to
 /// be emitted to the current location in the function, and allow it to be PC
 /// relative.
-void ARMCodeEmitter::emitJumpTableAddress(unsigned JTIndex, unsigned Reloc) {
+void ARMCodeEmitter::
+emitJumpTableAddress(unsigned JTIndex, unsigned Reloc) const {
   MCE.addRelocation(MachineRelocation::getJumpTable(MCE.getCurrentPCOffset(),
                                                     Reloc, JTIndex, 0, true));
 }
 
 /// emitMachineBasicBlock - Emit the specified address basic block.
 void ARMCodeEmitter::emitMachineBasicBlock(MachineBasicBlock *BB,
-                                           unsigned Reloc, intptr_t JTBase) {
+                                           unsigned Reloc,
+                                           intptr_t JTBase) const {
   MCE.addRelocation(MachineRelocation::getBB(MCE.getCurrentPCOffset(),
                                              Reloc, BB, JTBase));
 }
