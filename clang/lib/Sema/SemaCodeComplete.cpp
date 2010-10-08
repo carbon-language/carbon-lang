@@ -1559,6 +1559,7 @@ static void AddOrdinaryNameResults(Sema::ParserCompletionContext CCC,
       Pattern->AddPlaceholderChunk("inc-expression");
       Pattern->AddChunk(CodeCompletionString::CK_RightParen);
       Pattern->AddChunk(CodeCompletionString::CK_LeftBrace);
+      Pattern->AddChunk(CodeCompletionString::CK_VerticalSpace);
       Pattern->AddPlaceholderChunk("statements");
       Pattern->AddChunk(CodeCompletionString::CK_VerticalSpace);
       Pattern->AddChunk(CodeCompletionString::CK_RightBrace);

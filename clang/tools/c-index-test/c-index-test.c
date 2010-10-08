@@ -939,6 +939,11 @@ void print_completion_string(CXCompletionString completion_string, FILE *file) {
                               file);
       fprintf(file, "}");
       continue;
+    } 
+
+    if (Kind == CXCompletionChunk_VerticalSpace) {
+      fprintf(file, "{VerticalSpace  }");
+      continue;
     }
 
     text = clang_getCompletionChunkText(completion_string, I);

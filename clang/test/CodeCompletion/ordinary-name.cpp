@@ -20,7 +20,7 @@ void foo() {
   // CHECK-CC1-NEXT: COMPLETION: false
   // CHECK-CC1-NEXT: COMPLETION: float
   // CHECK-CC1-NEXT: COMPLETION: foo : [#void#]foo()
-  // CHECK-CC1-NEXT: COMPLETION: Pattern : for(<#init-statement#>;<#condition#>;<#inc-expression#>){<#statements#>
+  // CHECK-CC1-NEXT: COMPLETION: Pattern : for(<#init-statement#>;<#condition#>;<#inc-expression#>){
   // CHECK-CC1: COMPLETION: Pattern : goto <#label#>
   // CHECK-CC1-NEXT: COMPLETION: Pattern : if(<#condition#>){<#statements#>
   // CHECK-CC1: COMPLETION: int

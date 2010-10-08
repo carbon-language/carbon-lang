@@ -146,11 +146,8 @@ CXString clang_getCompletionChunkText(CXCompletionString completion_string,
   case CodeCompletionString::CK_SemiColon:
   case CodeCompletionString::CK_Equal:
   case CodeCompletionString::CK_HorizontalSpace:
-    return createCXString((*CCStr)[chunk_number].Text, false);
-
   case CodeCompletionString::CK_VerticalSpace:
-    // FIXME: Temporary hack until we figure out how to handle vertical space.
-    return createCXString(" ");
+    return createCXString((*CCStr)[chunk_number].Text, false);
       
   case CodeCompletionString::CK_Optional:
     // Note: treated as an empty text block.
