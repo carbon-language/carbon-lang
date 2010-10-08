@@ -347,6 +347,7 @@ void X86MCInstLower::Lower(const MachineInstr *MI, MCInst &OutMI) const {
   }
   
   // Handle a few special cases to eliminate operand modifiers.
+ReSimplify:
   switch (OutMI.getOpcode()) {
   case X86::LEA64_32r: // Handle 'subreg rewriting' for the lea64_32mem operand.
     lower_lea64_32mem(&OutMI, 1);
@@ -433,6 +434,13 @@ void X86MCInstLower::Lower(const MachineInstr *MI, MCInst &OutMI) const {
     break;
   }
 
+  // These are pseudo-ops for OR to help with the OR->ADD transformation.  We do
+  // this with an ugly goto in case the resultant OR uses EAX and needs the
+  // short form.
+  case X86::ADD16rr_DB: OutMI.setOpcode(X86::OR16rr); goto ReSimplify;
+  case X86::ADD32rr_DB: OutMI.setOpcode(X86::OR32rr); goto ReSimplify;
+  case X86::ADD64rr_DB: OutMI.setOpcode(X86::OR64rr); goto ReSimplify;
+      
   // The assembler backend wants to see branches in their small form and relax
   // them to their large form.  The JIT can only handle the large form because
   // it does not do relaxation.  For now, translate the large form to the

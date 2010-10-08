@@ -998,6 +998,63 @@ def : Pat<(i64 (zext def32:$src)),
           (SUBREG_TO_REG (i64 0), GR32:$src, sub_32bit)>;
 
 //===----------------------------------------------------------------------===//
+// Pattern match OR as ADD
+//===----------------------------------------------------------------------===//
+
+// If safe, we prefer to pattern match OR as ADD at isel time. ADD can be
+// 3-addressified into an LEA instruction to avoid copies.  However, we also
+// want to finally emit these instructions as an or at the end of the code
+// generator to make the generated code easier to read.  To do this, we select
+// into "disjoint bits" pseudo ops.
+
+// Treat an 'or' node is as an 'add' if the or'ed bits are known to be zero.
+def or_is_add : PatFrag<(ops node:$lhs, node:$rhs), (or node:$lhs, node:$rhs),[{
+  if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(N->getOperand(1)))
+    return CurDAG->MaskedValueIsZero(N->getOperand(0), CN->getAPIntValue());
+
+  unsigned BitWidth = N->getValueType(0).getScalarType().getSizeInBits();
+  APInt Mask = APInt::getAllOnesValue(BitWidth);
+  APInt KnownZero0, KnownOne0;
+  CurDAG->ComputeMaskedBits(N->getOperand(0), Mask, KnownZero0, KnownOne0, 0);
+  APInt KnownZero1, KnownOne1;
+  CurDAG->ComputeMaskedBits(N->getOperand(1), Mask, KnownZero1, KnownOne1, 0);
+  return (~KnownZero0 & ~KnownZero1) == 0;
+}]>;
+
+
+// (or x1, x2) -> (add x1, x2) if two operands are known not to share bits.
+let AddedComplexity = 5 in { // Try this before the selecting to OR
+
+let isCommutable = 1, isConvertibleToThreeAddress = 1,
+    Constraints = "$src1 = $dst", Defs = [EFLAGS] in {
+def ADD16rr_DB  : I<0, Pseudo, (outs GR16:$dst), (ins GR16:$src1, GR16:$src2),
+                    "", // orw/addw REG, REG
+                    [(set GR16:$dst, (or_is_add GR16:$src1, GR16:$src2))]>;
+def ADD32rr_DB  : I<0, Pseudo, (outs GR32:$dst), (ins GR32:$src1, GR32:$src2),
+                    "", // orl/addl REG, REG
+                    [(set GR32:$dst, (or_is_add GR32:$src1, GR32:$src2))]>;
+def ADD64rr_DB  : I<0, Pseudo, (outs GR64:$dst), (ins GR64:$src1, GR64:$src2),
+                    "", // orq/addq REG, REG
+                    [(set GR64:$dst, (or_is_add GR64:$src1, GR64:$src2))]>;
+}
+
+def : Pat<(or_is_add GR16:$src1, imm:$src2),
+          (ADD16ri GR16:$src1, imm:$src2)>;
+def : Pat<(or_is_add GR32:$src1, imm:$src2),
+          (ADD32ri GR32:$src1, imm:$src2)>;
+def : Pat<(or_is_add GR64:$src1, i64immSExt32:$src2),
+          (ADD64ri32 GR64:$src1, i64immSExt32:$src2)>;
+          
+def : Pat<(or_is_add GR16:$src1, i16immSExt8:$src2),
+          (ADD16ri8 GR16:$src1, i16immSExt8:$src2)>;
+def : Pat<(or_is_add GR32:$src1, i32immSExt8:$src2),
+          (ADD32ri8 GR32:$src1, i32immSExt8:$src2)>;
+def : Pat<(or_is_add GR64:$src1, i64immSExt8:$src2),
+          (ADD64ri8 GR64:$src1, i64immSExt8:$src2)>;
+} // AddedComplexity
+
+
+//===----------------------------------------------------------------------===//
 // Some peepholes
 //===----------------------------------------------------------------------===//
 
@@ -1309,27 +1366,8 @@ def : Pat<(i32 (anyext (i8 (X86setcc_c X86_COND_B, EFLAGS)))),
 def : Pat<(i32 (anyext (i16 (X86setcc_c X86_COND_B, EFLAGS)))),
           (SETB_C32r)>;
 
-// (or x1, x2) -> (add x1, x2) if two operands are known not to share bits.
-let AddedComplexity = 5 in { // Try this before the selecting to OR
-def : Pat<(or_is_add GR16:$src1, imm:$src2),
-          (ADD16ri GR16:$src1, imm:$src2)>;
-def : Pat<(or_is_add GR32:$src1, imm:$src2),
-          (ADD32ri GR32:$src1, imm:$src2)>;
-def : Pat<(or_is_add GR16:$src1, i16immSExt8:$src2),
-          (ADD16ri8 GR16:$src1, i16immSExt8:$src2)>;
-def : Pat<(or_is_add GR32:$src1, i32immSExt8:$src2),
-          (ADD32ri8 GR32:$src1, i32immSExt8:$src2)>;
-def : Pat<(or_is_add GR16:$src1, GR16:$src2),
-          (ADD16rr GR16:$src1, GR16:$src2)>;
-def : Pat<(or_is_add GR32:$src1, GR32:$src2),
-          (ADD32rr GR32:$src1, GR32:$src2)>;
-def : Pat<(or_is_add GR64:$src1, i64immSExt8:$src2),
-          (ADD64ri8 GR64:$src1, i64immSExt8:$src2)>;
-def : Pat<(or_is_add GR64:$src1, i64immSExt32:$src2),
-          (ADD64ri32 GR64:$src1, i64immSExt32:$src2)>;
-def : Pat<(or_is_add GR64:$src1, GR64:$src2),
-          (ADD64rr GR64:$src1, GR64:$src2)>;
-} // AddedComplexity
+
+
 
 //===----------------------------------------------------------------------===//
 // EFLAGS-defining Patterns
