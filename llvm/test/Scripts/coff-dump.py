@@ -365,10 +365,10 @@ def read_value(expr):
 
     raise RuntimeError("unexpected token %s" % repr(token))
 
-  value = eval ()
+  value = eval()
 
   try:
-    input.next ()
+    input.next()
   except StopIteration:
     return value
   raise RuntimeError("unexpected input at end of expression")
