@@ -112,6 +112,8 @@ def err_expected_fn_body : Error<
 def err_expected_method_body : Error<"expected method body">;
 def err_invalid_token_after_toplevel_declarator : Error<
   "expected ';' after top level declarator">;
+def err_invalid_equalequal_after_declarator : Error<
+  "invalid '==' at end of declaration; did you mean '='?">;
 def err_expected_statement : Error<"expected statement">;
 def err_expected_lparen_after : Error<"expected '(' after '%0'">;
 def err_expected_lparen_after_id : Error<"expected '(' after %0">;

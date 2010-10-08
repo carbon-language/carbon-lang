@@ -1156,6 +1156,20 @@ bool Parser::TryAnnotateCXXScopeToken(bool EnteringContext) {
   return false;
 }
 
+bool Parser::isTokenEqualOrMistypedEqualEqual(unsigned DiagID) {
+  if (Tok.is(tok::equalequal)) {
+    // We have '==' in a context that we would expect a '='.
+    // The user probably made a typo, intending to type '='. Emit diagnostic,
+    // fixit hint to turn '==' -> '=' and continue as if the user typed '='.
+    Diag(Tok, DiagID)
+      << FixItHint::CreateReplacement(SourceRange(Tok.getLocation()),
+                                      getTokenSimpleSpelling(tok::equal));
+    return true;
+  }
+
+  return Tok.is(tok::equal);
+}
+
 void Parser::CodeCompletionRecovery() {
   for (Scope *S = getCurScope(); S; S = S->getParent()) {
     if (S->getFlags() & Scope::FnScope) {

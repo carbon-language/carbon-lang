@@ -594,7 +594,8 @@ Decl *Parser::ParseDeclarationAfterDeclarator(Declarator &D,
   }
 
   // Parse declarator '=' initializer.
-  if (Tok.is(tok::equal)) {
+  if (isTokenEqualOrMistypedEqualEqual(
+                               diag::err_invalid_equalequal_after_declarator)) {
     ConsumeToken();
     if (Tok.is(tok::kw_delete)) {
       SourceLocation DelLoc = ConsumeToken();

@@ -821,9 +821,10 @@ bool Parser::ParseCXXCondition(ExprResult &ExprOut,
                                                                 DeclaratorInfo);
   DeclOut = Dcl.get();
   ExprOut = ExprError();
-  
+
   // '=' assignment-expression
-  if (Tok.is(tok::equal)) {
+  if (isTokenEqualOrMistypedEqualEqual(
+                               diag::err_invalid_equalequal_after_declarator)) {
     SourceLocation EqualLoc = ConsumeToken();
     ExprResult AssignExpr(ParseAssignmentExpression());
     if (!AssignExpr.isInvalid()) 

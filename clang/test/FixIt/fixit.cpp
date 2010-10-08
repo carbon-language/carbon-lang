@@ -71,3 +71,15 @@ class C {
   int C::foo();
 };
 
+namespace rdar8488464 {
+int x == 0; // expected-error {{invalid '==' at end of declaration; did you mean '='?}}
+
+void f() {
+    int x == 0; // expected-error {{invalid '==' at end of declaration; did you mean '='?}}
+    (void)x;
+    if (int x == 0) { // expected-error {{invalid '==' at end of declaration; did you mean '='?}}
+      (void)x;
+    }
+}
+}
+

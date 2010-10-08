@@ -236,6 +236,11 @@ private:
            Tok.getKind() == tok::wide_string_literal;
   }
 
+  /// \brief Returns true if the current token is a '=' or '==' and
+  /// false otherwise. If it's '==', we assume that it's a typo and we emit
+  /// DiagID and a fixit hint to turn '==' -> '='.
+  bool isTokenEqualOrMistypedEqualEqual(unsigned DiagID);
+
   /// ConsumeToken - Consume the current 'peek token' and lex the next one.
   /// This does not work with all kinds of tokens: strings and specific other
   /// tokens must be consumed with custom methods below.  This returns the
