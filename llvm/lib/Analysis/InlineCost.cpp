@@ -142,6 +142,55 @@ void CodeMetrics::analyzeBasicBlock(const BasicBlock *BB) {
   NumBBInsts[BB] = NumInsts - NumInstsBeforeThisBB;
 }
 
+// CountBonusForConstant - Figure out an approximation for how much per-call
+// performance boost we can expect if the specified value is constant.
+unsigned CodeMetrics::CountBonusForConstant(Value *V) {
+  unsigned Bonus = 0;
+  for (Value::use_iterator UI = V->use_begin(), E = V->use_end(); UI != E;++UI){
+    User *U = *UI;
+    if (CallInst *CI = dyn_cast<CallInst>(U)) {
+      // Turning an indirect call into a direct call is a BIG win
+      if (CI->getCalledValue() == V)
+        Bonus += InlineConstants::IndirectCallBonus;
+    }
+    else if (InvokeInst *II = dyn_cast<InvokeInst>(U)) {
+      // Turning an indirect call into a direct call is a BIG win
+      if (II->getCalledValue() == V)
+        Bonus += InlineConstants::IndirectCallBonus;
+    }
+    // FIXME: Eliminating conditional branches and switches should
+    // also yield a per-call performance boost.
+    else {
+      // Figure out the bonuses that wll accrue due to simple constant
+      // propagation.
+      Instruction &Inst = cast<Instruction>(*U);
+
+      // We can't constant propagate instructions which have effects or
+      // read memory.
+      //
+      // FIXME: It would be nice to capture the fact that a load from a
+      // pointer-to-constant-global is actually a *really* good thing to zap.
+      // Unfortunately, we don't know the pointer that may get propagated here,
+      // so we can't make this decision.
+      if (Inst.mayReadFromMemory() || Inst.mayHaveSideEffects() ||
+          isa<AllocaInst>(Inst))
+        continue;
+
+      bool AllOperandsConstant = true;
+      for (unsigned i = 0, e = Inst.getNumOperands(); i != e; ++i)
+        if (!isa<Constant>(Inst.getOperand(i)) && Inst.getOperand(i) != V) {
+          AllOperandsConstant = false;
+          break;
+        }
+
+      if (AllOperandsConstant)
+        Bonus += CountBonusForConstant(&Inst);
+    }
+  }
+  return Bonus;
+}
+
+
 // CountCodeReductionForConstant - Figure out an approximation for how many
 // instructions will be constant folded if the specified value is constant.
 //
@@ -158,14 +207,6 @@ unsigned CodeMetrics::CountCodeReductionForConstant(Value *V) {
         Instrs += NumBBInsts[TI.getSuccessor(I)];
       // We don't know which blocks will be eliminated, so use the average size.
       Reduction += InlineConstants::InstrCost*Instrs*(NumSucc-1)/NumSucc;
-    } else if (CallInst *CI = dyn_cast<CallInst>(U)) {
-      // Turning an indirect call into a direct call is a BIG win
-      if (CI->getCalledValue() == V)
-        Reduction += InlineConstants::IndirectCallBonus;
-    } else if (InvokeInst *II = dyn_cast<InvokeInst>(U)) {
-      // Turning an indirect call into a direct call is a BIG win
-      if (II->getCalledValue() == V)
-        Reduction += InlineConstants::IndirectCallBonus;
     } else {
       // Figure out if this instruction will be removed due to simple constant
       // propagation.
@@ -259,7 +300,8 @@ void InlineCostAnalyzer::FunctionInfo::analyzeFunction(Function *F) {
   ArgumentWeights.reserve(F->arg_size());
   for (Function::arg_iterator I = F->arg_begin(), E = F->arg_end(); I != E; ++I)
     ArgumentWeights.push_back(ArgInfo(Metrics.CountCodeReductionForConstant(I),
-                                      Metrics.CountCodeReductionForAlloca(I)));
+                                      Metrics.CountCodeReductionForAlloca(I),
+                                      Metrics.CountBonusForConstant(I)));
 }
 
 /// NeverInline - returns true if the function should never be inlined into
@@ -383,7 +425,8 @@ InlineCost InlineCostAnalyzer::getInlineCost(CallSite CS,
       // away with this information.
     } else if (isa<Constant>(I)) {
       if (ArgNo < CalleeFI->ArgumentWeights.size())
-        InlineCost -= CalleeFI->ArgumentWeights[ArgNo].ConstantWeight;
+        InlineCost -= (CalleeFI->ArgumentWeights[ArgNo].ConstantWeight +
+                       CalleeFI->ArgumentWeights[ArgNo].ConstantBonus);
     }
   }
   

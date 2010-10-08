@@ -96,9 +96,11 @@ namespace llvm {
     public:
       unsigned ConstantWeight;
       unsigned AllocaWeight;
+      unsigned ConstantBonus;
 
-      ArgInfo(unsigned CWeight, unsigned AWeight)
-        : ConstantWeight(CWeight), AllocaWeight(AWeight) {}
+      ArgInfo(unsigned CWeight, unsigned AWeight, unsigned CBonus)
+        : ConstantWeight(CWeight), AllocaWeight(AWeight), ConstantBonus(CBonus)
+          {}
     };
 
     struct FunctionInfo {

@@ -77,7 +77,12 @@ namespace llvm {
     /// many instructions will be constant folded if the specified value is
     /// constant.
     unsigned CountCodeReductionForConstant(Value *V);
-    
+   
+    /// CountBonusForConstant - Figure out an approximation for how much
+    /// per-call performance boost we can expect if the specified value is
+    /// constant.
+    unsigned CountBonusForConstant(Value *V);
+
     /// CountCodeReductionForAlloca - Figure out an approximation of how much
     /// smaller the function will be if it is inlined into a context where an
     /// argument becomes an alloca.
