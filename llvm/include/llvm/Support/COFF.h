@@ -139,7 +139,7 @@ namespace COFF {
     IMAGE_SYM_DTYPE_ARRAY    = 3, ///< An array of base type.
 
     /// Type is formed as (base + (derived << SCT_COMPLEX_TYPE_SHIFT))
-    SCT_COMPLEX_TYPE_SHIFT   = 8
+    SCT_COMPLEX_TYPE_SHIFT   = 4
   };
 
   struct section {

@@ -167,7 +167,8 @@ file = ('struct', [
     ('Name',                ('scalar',  '<8s', symname)),
     ('Value',               ('scalar',  '<L',  '%d'   )),
     ('SectionNumber',       ('scalar',  '<H',  '%d'   )),
-    ('SimpleType',          ('enum',    '<B',  '%d', {
+    ('_Type',               ('scalar',  '<H',  None   )),
+    ('SimpleType',          ('enum',    '& _Type 15',  '%d', {
       0: 'IMAGE_SYM_TYPE_NULL',
       1: 'IMAGE_SYM_TYPE_VOID',
       2: 'IMAGE_SYM_TYPE_CHAR',
@@ -184,8 +185,8 @@ file = ('struct', [
       13: 'IMAGE_SYM_TYPE_WORD',
       14: 'IMAGE_SYM_TYPE_UINT',
       15: 'IMAGE_SYM_TYPE_DWORD',
-    })),
-    ('ComplexType',         ('enum',    '<B',  '%d', {
+    })),                                # (Type & 0xF0) >> 4
+    ('ComplexType',         ('enum',    '>> & _Type 240 4',  '%d', {
       0: 'IMAGE_SYM_DTYPE_NULL',
       1: 'IMAGE_SYM_DTYPE_POINTER',
       2: 'IMAGE_SYM_DTYPE_FUNCTION',
@@ -317,7 +318,7 @@ def print_binary_data(size):
     write("%s|%s|\n" % (bytes, text))
   return value
 
-idlit = re.compile("[a-zA-Z][a-zA-Z0-9_-]*")
+idlit = re.compile("[a-zA-Z_][a-zA-Z0-9_-]*")
 numlit = re.compile("[0-9]+")
 
 def read_value(expr):
@@ -335,11 +336,6 @@ def read_value(expr):
     if expr == 'false':
       return False
 
-    if len(token) > 1 and token[0] in ('=', '@', '<', '!', '>'):
-      val = read(expr)
-      assert(len(val) == 1)
-      return val[0]
-
     if token == '+':
       return eval() + eval()
     if token == '-':
@@ -348,6 +344,19 @@ def read_value(expr):
       return eval() * eval()
     if token == '/':
       return eval() / eval()
+    if token == '&':
+      return eval() & eval()
+    if token == '|':
+      return eval() | eval()
+    if token == '>>':
+      return eval() >> eval()
+    if token == '<<':
+      return eval() << eval()
+
+    if len(token) > 1 and token[0] in ('=', '@', '<', '!', '>'):
+      val = read(expr)
+      assert(len(val) == 1)
+      return val[0]
 
     if idlit.match(token):
       return Fields[token]
@@ -373,6 +382,8 @@ def write_value(format,value):
   elif format_type is types.TupleType:
     Fields['this'] = value
     handle_element(format)
+  elif format_type is types.NoneType:
+    pass
   else:
     raise RuntimeError("unexpected type: %s" % repr(format_type))
 
@@ -448,11 +459,13 @@ def handle_struct(entry):
     name = member[0]
     type = member[1]
 
-    write("%s = "%name.ljust(24))
+    if name[0] != "_":
+      write("%s = " % name.ljust(24))
 
     value = handle_element(type)
 
-    write("\n")
+    if name[0] != "_":
+      write("\n")
 
     Fields[name] = value
     newFields[name] = value
