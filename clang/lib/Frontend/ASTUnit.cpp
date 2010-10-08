@@ -787,7 +787,7 @@ bool ASTUnit::Parse(llvm::MemoryBuffer *OverrideMainBuffer) {
   // results yet, do so now.
   if (ShouldCacheCodeCompletionResults && CachedCompletionResults.empty())
     CacheCodeCompletionResults();
-  
+
   return false;
   
 error:
@@ -878,12 +878,6 @@ ASTUnit::ComputePreamble(CompilerInvocation &Invocation,
             return std::make_pair((llvm::MemoryBuffer*)0, 
                                   std::make_pair(0, true));
           CreatedBuffer = true;
-          
-          // Remove this remapping. We've captured the buffer already.
-          M = PreprocessorOpts.eraseRemappedFile(M);
-          E = PreprocessorOpts.remapped_file_end();
-          if (M == E)
-            break;
         }
       }
     }
@@ -905,12 +899,6 @@ ASTUnit::ComputePreamble(CompilerInvocation &Invocation,
           }
           
           Buffer = const_cast<llvm::MemoryBuffer *>(M->second);
-
-          // Remove this remapping. We've captured the buffer already.
-          M = PreprocessorOpts.eraseRemappedFile(M);
-          E = PreprocessorOpts.remapped_file_buffer_end();
-          if (M == E)
-            break;
         }
       }
     }
@@ -1090,7 +1078,7 @@ llvm::MemoryBuffer *ASTUnit::getMainBufferWithPrecompiledPreamble(
     // return now.
     if (!AllowRebuild)
       return 0;
-    
+
     // We can't reuse the previously-computed preamble. Build a new one.
     Preamble.clear();
     llvm::sys::Path(PreambleFile).eraseFromDisk();
@@ -1162,6 +1150,8 @@ llvm::MemoryBuffer *ASTUnit::getMainBufferWithPrecompiledPreamble(
   FrontendOpts.ChainedPCH = true;
   // FIXME: Generate the precompiled header into memory?
   FrontendOpts.OutputFile = PreamblePCHPath;
+  PreprocessorOpts.PrecompiledPreambleBytes.first = 0;
+  PreprocessorOpts.PrecompiledPreambleBytes.second = false;
   
   // Create the compiler instance to use for building the precompiled preamble.
   CompilerInstance Clang;
@@ -1204,6 +1194,7 @@ llvm::MemoryBuffer *ASTUnit::getMainBufferWithPrecompiledPreamble(
          "IR inputs not support here!");
   
   // Clear out old caches and data.
+  getDiagnostics().Reset();
   StoredDiagnostics.clear();
   TopLevelDecls.clear();
   TopLevelDeclsInPreamble.clear();
