@@ -12,7 +12,6 @@ add_llvm_library(LLVMScalarOpts
   JumpThreading.cpp
   LICM.cpp
   LoopDeletion.cpp
-  LoopIndexSplit.cpp
   LoopRotation.cpp
   LoopStrengthReduce.cpp
   LoopUnrollPass.cpp
