@@ -40,7 +40,7 @@ public:
 
   // getBinaryCodeForInstr - TableGen'erated function for getting the
   // binary encoding for an instruction.
-  unsigned getBinaryCodeForInstr(const MCInst &MI);
+  unsigned getBinaryCodeForInstr(const MCInst &MI) const;
 
   /// getMachineOpValue - Return binary encoding of operand. If the machine
   /// operand requires relocation, record the relocation and return zero.

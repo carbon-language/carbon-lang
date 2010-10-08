@@ -51,12 +51,12 @@ namespace {
     /// CodeEmitterGenerator using TableGen, produces the binary encoding for
     /// machine instructions.
 
-    unsigned getBinaryCodeForInstr(const MachineInstr &MI);
+    unsigned getBinaryCodeForInstr(const MachineInstr &MI) const;
 
     /// getMachineOpValue - evaluates the MachineOperand of a given MachineInstr
 
     unsigned getMachineOpValue(const MachineInstr &MI,
-                               const MachineOperand &MO);
+                               const MachineOperand &MO) const;
 
     const char *getPassName() const { return "PowerPC Machine Code Emitter"; }
 
@@ -125,7 +125,7 @@ void PPCCodeEmitter::emitBasicBlock(MachineBasicBlock &MBB) {
 }
 
 unsigned PPCCodeEmitter::getMachineOpValue(const MachineInstr &MI,
-                                           const MachineOperand &MO) {
+                                           const MachineOperand &MO) const {
 
   unsigned rv = 0; // Return value; defaults to 0 for unhandled cases
                    // or things that get fixed up later by the JIT.

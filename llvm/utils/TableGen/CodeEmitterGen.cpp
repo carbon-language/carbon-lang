@@ -81,7 +81,7 @@ void CodeEmitterGen::run(raw_ostream &o) {
 
   // Emit function declaration
   o << "unsigned " << Target.getName() << "CodeEmitter::"
-    << "getBinaryCodeForInstr(const MachineInstr &MI) {\n";
+    << "getBinaryCodeForInstr(const MachineInstr &MI) const {\n";
 
   // Emit instruction base values
   o << "  static const unsigned InstBits[] = {\n";
