@@ -762,9 +762,9 @@ bool ARMFastISel::ARMEmitStore(EVT VT, unsigned SrcReg,
   switch (VT.getSimpleVT().SimpleTy) {
     default: return false;
     case MVT::i1:
-    case MVT::i8: StrOpc = isThumb ? ARM::tSTRB : ARM::STRB; break;
-    case MVT::i16: StrOpc = isThumb ? ARM::tSTRH : ARM::STRH; break;
-    case MVT::i32: StrOpc = isThumb ? ARM::tSTR : ARM::STR; break;
+    case MVT::i8: StrOpc = isThumb ? ARM::t2STRBi8 : ARM::STRB; break;
+    case MVT::i16: StrOpc = isThumb ? ARM::t2STRHi8 : ARM::STRH; break;
+    case MVT::i32: StrOpc = isThumb ? ARM::t2STRi8 : ARM::STR; break;
     case MVT::f32:
       if (!Subtarget->hasVFP2()) return false;
       StrOpc = ARM::VSTRS;
@@ -779,15 +779,10 @@ bool ARMFastISel::ARMEmitStore(EVT VT, unsigned SrcReg,
 
   // The thumb addressing mode has operands swapped from the arm addressing
   // mode, the floating point one only has two operands.
-  if (isFloat)
+  if (isFloat || isThumb)
     AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
                             TII.get(StrOpc))
                     .addReg(SrcReg).addReg(DstReg).addImm(Offset));
-  else if (isThumb)
-    AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
-                            TII.get(StrOpc))
-                    .addReg(SrcReg).addReg(DstReg).addImm(Offset).addReg(0));
-
   else
     AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
                             TII.get(StrOpc))
