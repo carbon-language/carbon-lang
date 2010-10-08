@@ -1008,7 +1008,7 @@ SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
     Characteristics |= COFF::IMAGE_SCN_LNK_COMDAT;
 
     return getContext().getCOFFSection(Name.str(), Characteristics,
-                          COFF::IMAGE_COMDAT_SELECT_EXACT_MATCH, Kind);
+                          COFF::IMAGE_COMDAT_SELECT_ANY, Kind);
   }
 
   if (Kind.isText())
