@@ -32,6 +32,7 @@
 #include "clang/Lex/Preprocessor.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/CrashRecoveryContext.h"
+#include "llvm/Support/PrettyStackTrace.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/Timer.h"
@@ -1919,6 +1920,10 @@ static bool EnabledMultithreading;
 extern "C" {
 CXIndex clang_createIndex(int excludeDeclarationsFromPCH,
                           int displayDiagnostics) {
+  // Disable pretty stack trace functionality, which will otherwise be a very
+  // poor citizen of the world and set up all sorts of signal handlers.
+  llvm::DisablePrettyStackTrace = true;
+
   // We use crash recovery to make some of our APIs more reliable, implicitly
   // enable it.
   llvm::CrashRecoveryContext::Enable();
