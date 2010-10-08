@@ -924,7 +924,16 @@ void Sema::MatchAllMethodDeclarations(const llvm::DenseSet<Selector> &InsMap,
       WarnConflictingTypedMethods(ImpMethodDecl, IntfMethodDecl);
     }
   }
+  
   if (ObjCInterfaceDecl *I = dyn_cast<ObjCInterfaceDecl> (CDecl)) {
+    // Also methods in class extensions need be looked at next.
+    for (const ObjCCategoryDecl *ClsExtDecl = I->getFirstClassExtension(); 
+         ClsExtDecl; ClsExtDecl = ClsExtDecl->getNextClassExtension())
+      MatchAllMethodDeclarations(InsMap, ClsMap, InsMapSeen, ClsMapSeen,
+                                 IMPDecl,
+                                 const_cast<ObjCCategoryDecl *>(ClsExtDecl), 
+                                 IncompleteImpl, false);
+    
     // Check for any implementation of a methods declared in protocol.
     for (ObjCInterfaceDecl::all_protocol_iterator
           PI = I->all_referenced_protocol_begin(),
