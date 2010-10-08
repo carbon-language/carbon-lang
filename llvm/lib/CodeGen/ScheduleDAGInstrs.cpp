@@ -529,7 +529,7 @@ void ScheduleDAGInstrs::ComputeOperandLatency(SUnit *Def, SUnit *Use,
   if (DefIdx != -1) {
     const MachineOperand &MO = DefMI->getOperand(DefIdx);
     if (MO.isReg() && MO.isImplicit() &&
-        DefIdx >= DefMI->getDesc().getNumOperands()) {
+        DefIdx >= (int)DefMI->getDesc().getNumOperands()) {
       // This is an implicit def, getOperandLatency() won't return the correct
       // latency. e.g.
       //   %D6<def>, %D7<def> = VLD1q16 %R2<kill>, 0, ..., %Q3<imp-def>
