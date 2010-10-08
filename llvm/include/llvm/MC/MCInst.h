@@ -155,6 +155,11 @@ public:
                    StringRef Separator = " ") const;
 };
 
+inline raw_ostream& operator<<(raw_ostream &OS, const MCOperand &MO) {
+  MO.print(OS, 0);
+  return OS;
+}
+
 inline raw_ostream& operator<<(raw_ostream &OS, const MCInst &MI) {
   MI.print(OS, 0);
   return OS;
