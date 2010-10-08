@@ -68,8 +68,7 @@ namespace {
       return "X86 Machine Code Emitter";
     }
 
-    void emitInstruction(const MachineInstr &MI,
-                         const TargetInstrDesc *Desc);
+    void emitInstruction(MachineInstr &MI, const TargetInstrDesc *Desc);
     
     void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.setPreservesAll();
@@ -131,7 +130,7 @@ bool Emitter<CodeEmitter>::runOnMachineFunction(MachineFunction &MF) {
     for (MachineFunction::iterator MBB = MF.begin(), E = MF.end(); 
          MBB != E; ++MBB) {
       MCE.StartMachineBasicBlock(MBB);
-      for (MachineBasicBlock::const_iterator I = MBB->begin(), E = MBB->end();
+      for (MachineBasicBlock::iterator I = MBB->begin(), E = MBB->end();
            I != E; ++I) {
         const TargetInstrDesc &Desc = I->getDesc();
         emitInstruction(*I, &Desc);
@@ -598,7 +597,7 @@ void Emitter<CodeEmitter>::emitMemModRMByte(const MachineInstr &MI,
 }
 
 template<class CodeEmitter>
-void Emitter<CodeEmitter>::emitInstruction(const MachineInstr &MI,
+void Emitter<CodeEmitter>::emitInstruction(MachineInstr &MI,
                                            const TargetInstrDesc *Desc) {
   DEBUG(dbgs() << MI);
 
