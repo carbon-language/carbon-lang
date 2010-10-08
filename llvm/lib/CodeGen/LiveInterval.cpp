@@ -709,47 +709,39 @@ void LiveRange::print(raw_ostream &os) const {
 /// multiple LiveIntervals.
 
 void ConnectedVNInfoEqClasses::Connect(unsigned a, unsigned b) {
-  // Add new eq classes as needed.
-  for (unsigned i = eqClass_.size(), m = std::max(a, b); i <= m; ++i)
-    eqClass_.push_back(i);
-
   unsigned eqa = eqClass_[a];
   unsigned eqb = eqClass_[b];
   if (eqa == eqb)
     return;
+  // Make sure a and b are in the same class while maintaining eqClass_[i] <= i.
   if (eqa > eqb)
-    std::swap(eqa, eqb);
-  // Now, eqa < eqb. Switch all eqb members over to eqa.
-  for (unsigned i = eqb, e = eqClass_.size(); i != e; ++i)
-    if (eqClass_[i] == eqb)
-      eqClass_[i] = eqa;
+    eqClass_[a] = eqb;
+  else
+    eqClass_[b] = eqa;
 }
 
 unsigned ConnectedVNInfoEqClasses::Renumber() {
-  // No values at all.
-  if (eqClass_.empty())
-    return 0;
-
-  // Common case: A single connected component.
-  if (eqClass_.back() == 0)
-    return 1;
-
-  // Renumber classes. We use the fact that eqClass_[i] == i for class leaders.
+  // Assign final class numbers.
+  // We use the fact that eqClass_[i] == i for class leaders.
+  // For others, eqClass_[i] points to an earlier value in the same class.
   unsigned count = 0;
   for (unsigned i = 0, e = eqClass_.size(); i != e; ++i) {
     unsigned q = eqClass_[i];
-    if (q == i)
-      eqClass_[i] = count++;
-    else
-      eqClass_[i] = eqClass_[q];
+    assert(q <= i && "Invariant broken");
+    eqClass_[i] = q == i ? count++ : eqClass_[q];
   }
 
   return count;
 }
 
 unsigned ConnectedVNInfoEqClasses::Classify(const LiveInterval *LI) {
-  // Determine connections.
+  // Create initial equivalence classes.
   eqClass_.clear();
+  eqClass_.reserve(LI->getNumValNums());
+  for (unsigned i = 0, e = LI->getNumValNums(); i != e; ++i)
+    eqClass_.push_back(i);
+
+  // Determine connections.
   for (LiveInterval::const_vni_iterator I = LI->vni_begin(), E = LI->vni_end();
        I != E; ++I) {
     const VNInfo *VNI = *I;
