@@ -121,7 +121,8 @@ X86TargetMachine::X86TargetMachine(const Target &T, const std::string &TT,
     Subtarget(TT, FS, is64Bit),
     FrameInfo(TargetFrameInfo::StackGrowsDown,
               Subtarget.getStackAlignment(),
-              Subtarget.is64Bit() ? -8 : -4),
+              (Subtarget.isTargetWin64() ? -40 :
+               (Subtarget.is64Bit() ? -8 : -4))),
     ELFWriterInfo(is64Bit, true) {
   DefRelocModel = getRelocationModel();
 
