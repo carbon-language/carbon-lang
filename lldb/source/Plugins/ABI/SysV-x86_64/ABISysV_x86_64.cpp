@@ -12,6 +12,7 @@
 #include "lldb/Core/ConstString.h"
 #include "lldb/Core/DataExtractor.h"
 #include "lldb/Core/Error.h"
+#include "lldb/Core/Log.h"
 #include "lldb/Core/Module.h"
 #include "lldb/Core/PluginManager.h"
 #include "lldb/Core/Value.h"
@@ -60,6 +61,17 @@ ABISysV_x86_64::PrepareTrivialCall (Thread &thread,
                                     lldb::addr_t arg,
                                     lldb::addr_t *this_arg) const
 {
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS);
+    
+    if (log)
+        log->Printf("ABISysV_x86_64::PrepareTrivialCall\n(\n  thread = %p\n  sp = 0x%llx\n  functionAddress = 0x%llx\n  returnAddress = 0x%llx\n  arg = 0x%llx\n  this_arg = %p(0x%llx)\n)",
+                    (void*)&thread,
+                    (uint64_t)sp,
+                    (uint64_t)functionAddress,
+                    (uint64_t)returnAddress,
+                    (void*)arg,
+                    this_arg ? (uint64_t)*this_arg : (uint64_t)0);
+    
     RegisterContext *reg_ctx = thread.GetRegisterContext();
     if (!reg_ctx)
         return false;
@@ -78,21 +90,39 @@ ABISysV_x86_64::PrepareTrivialCall (Thread &thread,
     
     if (this_arg)
     {
+        if (log)
+            log->PutCString("The trivial call has a this pointer");
+        
         uint32_t rsiID = reg_ctx->GetRegisterInfoByName("rsi", 0)->kinds[eRegisterKindLLDB];
+        
+        if (log)
+            log->Printf("About to write 'this' (0x%llx) into RDI", (uint64_t)*this_arg);
         
         if (!reg_ctx->WriteRegisterFromUnsigned(rdiID, *this_arg))
             return false;
+        
+        if (log)
+            log->Printf("About to write the argument (0x%llx) into RSI", (uint64_t)arg);
         
         if (!reg_ctx->WriteRegisterFromUnsigned(rsiID, arg))
             return false;
     }
     else
     {
+        if (log)
+            log->PutCString("The trivial call does not have a this pointer");
+        
+        if (log)
+            log->Printf("About to write the argument (0x%llx) into RDI", (uint64_t)arg);
+        
         if (!reg_ctx->WriteRegisterFromUnsigned(rdiID, arg))
             return false;
     }
 
     // First, align the SP
+    
+    if (log)
+        log->Printf("16-byte aligning SP: 0x%llx to 0x%llx", (uint64_t)sp, (uint64_t)(sp & ~0xfull));
 
     sp &= ~(0xfull); // 16-byte alignment
 
@@ -101,11 +131,18 @@ ABISysV_x86_64::PrepareTrivialCall (Thread &thread,
     sp -= 8;
     uint64_t returnAddressU64 = returnAddress;
     Error error;
+    
+    if (log)
+        log->Printf("Pushing the return address onto the stack: new SP 0x%llx, return address 0x%llx", (uint64_t)sp, (uint64_t)returnAddressU64);
+    
     if (thread.GetProcess().WriteMemory (sp, &returnAddressU64, sizeof(returnAddressU64), error) != sizeof(returnAddressU64))
         return false;
 
     // %rsp is set to the actual stack value.
 
+    if (log)
+        log->Printf("Writing SP (0x%llx) down", (uint64_t)sp);
+    
     if (!reg_ctx->WriteRegisterFromUnsigned(rspID, sp))
         return false;
 
@@ -117,6 +154,9 @@ ABISysV_x86_64::PrepareTrivialCall (Thread &thread,
 #endif
 
     // %rip is set to the address of the called function.
+    
+    if (log)
+        log->Printf("Writing new IP (0x%llx) down", (uint64_t)functionAddress);
 
     if (!reg_ctx->WriteRegisterFromUnsigned(ripID, functionAddress))
         return false;

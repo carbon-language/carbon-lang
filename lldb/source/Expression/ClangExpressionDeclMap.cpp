@@ -74,6 +74,12 @@ ClangExpressionDeclMap::~ClangExpressionDeclMap()
         pvar.DisableParserVars();
     }
     
+    if (m_materialized_location)
+    {
+        m_exe_ctx->process->DeallocateMemory(m_materialized_location);
+        m_materialized_location = 0;
+    }
+    
     if (m_sym_ctx)
         delete m_sym_ctx;
 }
@@ -494,6 +500,9 @@ ClangExpressionDeclMap::DoMaterialize (bool dematerialize,
             exe_ctx->process->DeallocateMemory(m_materialized_location);
             m_materialized_location = 0;
         }
+        
+        if (log)
+            log->PutCString("Allocating memory for materialized argument struct");
         
         lldb::addr_t mem = exe_ctx->process->AllocateMemory(m_struct_alignment + m_struct_size, 
                                                             lldb::ePermissionsReadable | lldb::ePermissionsWritable,
