@@ -1701,8 +1701,12 @@ X86TargetLowering::LowerFormalArguments(SDValue Chain,
         TotalNumXMMRegs = 0;
 
       if (IsWin64) {
+        const TargetFrameInfo &TFI = *getTargetMachine().getFrameInfo();
+        // Get to the caller-allocated home save location.  Add 8 to account
+        // for the return address.
+        int HomeOffset = TFI.getOffsetOfLocalArea() + 8;
         FuncInfo->setRegSaveFrameIndex(
-          MFI->CreateFixedObject(1, NumIntRegs * 8, false));
+          MFI->CreateFixedObject(1, NumIntRegs * 8 + HomeOffset, false));
         FuncInfo->setVarArgsFrameIndex(FuncInfo->getRegSaveFrameIndex());
       } else {
         // For X86-64, if there are vararg parameters that are passed via
