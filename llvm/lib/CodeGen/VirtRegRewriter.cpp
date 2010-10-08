@@ -1110,6 +1110,12 @@ private:
 
   bool InsertSpills(MachineInstr *MI);
 
+  void ProcessUses(MachineInstr &MI, AvailableSpills &Spills,
+                   std::vector<MachineInstr*> &MaybeDeadStores,
+                   BitVector &RegKills,
+                   ReuseInfo &ReusedOperands,
+                   std::vector<MachineOperand*> &KillOps);
+
   void RewriteMBB(LiveIntervals *LIs,
                   AvailableSpills &Spills, BitVector &RegKills,
                   std::vector<MachineOperand*> &KillOps);
@@ -1828,7 +1834,7 @@ bool LocalRewriter::InsertRestores(MachineInstr *MI,
   return true;
 }
 
-/// InsertEmergencySpills - Insert spills after MI if requested by VRM. Return
+/// InsertSpills - Insert spills after MI if requested by VRM. Return
 /// true if spills were inserted.
 bool LocalRewriter::InsertSpills(MachineInstr *MI) {
   if (!VRM->isSpillPt(MI))
@@ -1856,6 +1862,334 @@ bool LocalRewriter::InsertSpills(MachineInstr *MI) {
 }
 
 
+/// ProcessUses - Process all of MI's spilled operands and all available
+/// operands.
+void LocalRewriter::ProcessUses(MachineInstr &MI, AvailableSpills &Spills,
+                                std::vector<MachineInstr*> &MaybeDeadStores,
+                                BitVector &RegKills,
+                                ReuseInfo &ReusedOperands,
+                                std::vector<MachineOperand*> &KillOps) {
+  // Clear kill info.
+  SmallSet<unsigned, 2> KilledMIRegs;
+  SmallVector<unsigned, 4> VirtUseOps;
+  for (unsigned i = 0, e = MI.getNumOperands(); i != e; ++i) {
+    MachineOperand &MO = MI.getOperand(i);
+    if (!MO.isReg() || MO.getReg() == 0)
+      continue;   // Ignore non-register operands.
+
+    unsigned VirtReg = MO.getReg();
+    if (TargetRegisterInfo::isPhysicalRegister(VirtReg)) {
+      // Ignore physregs for spilling, but remember that it is used by this
+      // function.
+      MRI->setPhysRegUsed(VirtReg);
+      continue;
+    }
+
+    // We want to process implicit virtual register uses first.
+    if (MO.isImplicit())
+      // If the virtual register is implicitly defined, emit a implicit_def
+      // before so scavenger knows it's "defined".
+      // FIXME: This is a horrible hack done the by register allocator to
+      // remat a definition with virtual register operand.
+      VirtUseOps.insert(VirtUseOps.begin(), i);
+    else
+      VirtUseOps.push_back(i);
+  }
+
+  // Process all of the spilled uses and all non spilled reg references.
+  SmallVector<int, 2> PotentialDeadStoreSlots;
+  KilledMIRegs.clear();
+  for (unsigned j = 0, e = VirtUseOps.size(); j != e; ++j) {
+    unsigned i = VirtUseOps[j];
+    unsigned VirtReg = MI.getOperand(i).getReg();
+    assert(TargetRegisterInfo::isVirtualRegister(VirtReg) &&
+           "Not a virtual register?");
+
+    unsigned SubIdx = MI.getOperand(i).getSubReg();
+    if (VRM->isAssignedReg(VirtReg)) {
+      // This virtual register was assigned a physreg!
+      unsigned Phys = VRM->getPhys(VirtReg);
+      MRI->setPhysRegUsed(Phys);
+      if (MI.getOperand(i).isDef())
+        ReusedOperands.markClobbered(Phys);
+      substitutePhysReg(MI.getOperand(i), Phys, *TRI);
+      if (VRM->isImplicitlyDefined(VirtReg))
+        // FIXME: Is this needed?
+        BuildMI(*MBB, &MI, MI.getDebugLoc(),
+                TII->get(TargetOpcode::IMPLICIT_DEF), Phys);
+      continue;
+    }
+
+    // This virtual register is now known to be a spilled value.
+    if (!MI.getOperand(i).isUse())
+      continue;  // Handle defs in the loop below (handle use&def here though)
+
+    bool AvoidReload = MI.getOperand(i).isUndef();
+    // Check if it is defined by an implicit def. It should not be spilled.
+    // Note, this is for correctness reason. e.g.
+    // 8   %reg1024<def> = IMPLICIT_DEF
+    // 12  %reg1024<def> = INSERT_SUBREG %reg1024<kill>, %reg1025, 2
+    // The live range [12, 14) are not part of the r1024 live interval since
+    // it's defined by an implicit def. It will not conflicts with live
+    // interval of r1025. Now suppose both registers are spilled, you can
+    // easily see a situation where both registers are reloaded before
+    // the INSERT_SUBREG and both target registers that would overlap.
+    bool DoReMat = VRM->isReMaterialized(VirtReg);
+    int SSorRMId = DoReMat
+      ? VRM->getReMatId(VirtReg) : VRM->getStackSlot(VirtReg);
+    int ReuseSlot = SSorRMId;
+
+    // Check to see if this stack slot is available.
+    unsigned PhysReg = Spills.getSpillSlotOrReMatPhysReg(SSorRMId);
+
+    // If this is a sub-register use, make sure the reuse register is in the
+    // right register class. For example, for x86 not all of the 32-bit
+    // registers have accessible sub-registers.
+    // Similarly so for EXTRACT_SUBREG. Consider this:
+    // EDI = op
+    // MOV32_mr fi#1, EDI
+    // ...
+    //       = EXTRACT_SUBREG fi#1
+    // fi#1 is available in EDI, but it cannot be reused because it's not in
+    // the right register file.
+    if (PhysReg && !AvoidReload && SubIdx) {
+      const TargetRegisterClass* RC = MRI->getRegClass(VirtReg);
+      if (!RC->contains(PhysReg))
+        PhysReg = 0;
+    }
+
+    if (PhysReg && !AvoidReload) {
+      // This spilled operand might be part of a two-address operand.  If this
+      // is the case, then changing it will necessarily require changing the
+      // def part of the instruction as well.  However, in some cases, we
+      // aren't allowed to modify the reused register.  If none of these cases
+      // apply, reuse it.
+      bool CanReuse = true;
+      bool isTied = MI.isRegTiedToDefOperand(i);
+      if (isTied) {
+        // Okay, we have a two address operand.  We can reuse this physreg as
+        // long as we are allowed to clobber the value and there isn't an
+        // earlier def that has already clobbered the physreg.
+        CanReuse = !ReusedOperands.isClobbered(PhysReg) &&
+          Spills.canClobberPhysReg(PhysReg);
+      }
+      // If this is an asm, and a PhysReg alias is used elsewhere as an
+      // earlyclobber operand, we can't also use it as an input.
+      if (MI.isInlineAsm()) {
+        for (unsigned k = 0, e = MI.getNumOperands(); k != e; ++k) {
+          MachineOperand &MOk = MI.getOperand(k);
+          if (MOk.isReg() && MOk.isEarlyClobber() &&
+              TRI->regsOverlap(MOk.getReg(), PhysReg)) {
+            CanReuse = false;
+            DEBUG(dbgs() << "Not reusing physreg " << TRI->getName(PhysReg)
+                         << " for vreg" << VirtReg << ": " << MOk << '\n');
+            break;
+          }
+        }
+      }
+
+      if (CanReuse) {
+        // If this stack slot value is already available, reuse it!
+        if (ReuseSlot > VirtRegMap::MAX_STACK_SLOT)
+          DEBUG(dbgs() << "Reusing RM#"
+                << ReuseSlot-VirtRegMap::MAX_STACK_SLOT-1);
+        else
+          DEBUG(dbgs() << "Reusing SS#" << ReuseSlot);
+        DEBUG(dbgs() << " from physreg "
+              << TRI->getName(PhysReg) << " for vreg"
+              << VirtReg <<" instead of reloading into physreg "
+              << TRI->getName(VRM->getPhys(VirtReg)) << '\n');
+        unsigned RReg = SubIdx ? TRI->getSubReg(PhysReg, SubIdx) : PhysReg;
+        MI.getOperand(i).setReg(RReg);
+        MI.getOperand(i).setSubReg(0);
+
+        // The only technical detail we have is that we don't know that
+        // PhysReg won't be clobbered by a reloaded stack slot that occurs
+        // later in the instruction.  In particular, consider 'op V1, V2'.
+        // If V1 is available in physreg R0, we would choose to reuse it
+        // here, instead of reloading it into the register the allocator
+        // indicated (say R1).  However, V2 might have to be reloaded
+        // later, and it might indicate that it needs to live in R0.  When
+        // this occurs, we need to have information available that
+        // indicates it is safe to use R1 for the reload instead of R0.
+        //
+        // To further complicate matters, we might conflict with an alias,
+        // or R0 and R1 might not be compatible with each other.  In this
+        // case, we actually insert a reload for V1 in R1, ensuring that
+        // we can get at R0 or its alias.
+        ReusedOperands.addReuse(i, ReuseSlot, PhysReg,
+                                VRM->getPhys(VirtReg), VirtReg);
+        if (isTied)
+          // Only mark it clobbered if this is a use&def operand.
+          ReusedOperands.markClobbered(PhysReg);
+        ++NumReused;
+
+        if (MI.getOperand(i).isKill() &&
+            ReuseSlot <= VirtRegMap::MAX_STACK_SLOT) {
+
+          // The store of this spilled value is potentially dead, but we
+          // won't know for certain until we've confirmed that the re-use
+          // above is valid, which means waiting until the other operands
+          // are processed. For now we just track the spill slot, we'll
+          // remove it after the other operands are processed if valid.
+
+          PotentialDeadStoreSlots.push_back(ReuseSlot);
+        }
+
+        // Mark is isKill if it's there no other uses of the same virtual
+        // register and it's not a two-address operand. IsKill will be
+        // unset if reg is reused.
+        if (!isTied && KilledMIRegs.count(VirtReg) == 0) {
+          MI.getOperand(i).setIsKill();
+          KilledMIRegs.insert(VirtReg);
+        }
+
+        continue;
+      }  // CanReuse
+
+      // Otherwise we have a situation where we have a two-address instruction
+      // whose mod/ref operand needs to be reloaded.  This reload is already
+      // available in some register "PhysReg", but if we used PhysReg as the
+      // operand to our 2-addr instruction, the instruction would modify
+      // PhysReg.  This isn't cool if something later uses PhysReg and expects
+      // to get its initial value.
+      //
+      // To avoid this problem, and to avoid doing a load right after a store,
+      // we emit a copy from PhysReg into the designated register for this
+      // operand.
+      //
+      // This case also applies to an earlyclobber'd PhysReg.
+      unsigned DesignatedReg = VRM->getPhys(VirtReg);
+      assert(DesignatedReg && "Must map virtreg to physreg!");
+
+      // Note that, if we reused a register for a previous operand, the
+      // register we want to reload into might not actually be
+      // available.  If this occurs, use the register indicated by the
+      // reuser.
+      if (ReusedOperands.hasReuses())
+        DesignatedReg = ReusedOperands.
+          GetRegForReload(VirtReg, DesignatedReg, &MI, Spills,
+                          MaybeDeadStores, RegKills, KillOps, *VRM);
+
+      // If the mapped designated register is actually the physreg we have
+      // incoming, we don't need to inserted a dead copy.
+      if (DesignatedReg == PhysReg) {
+        // If this stack slot value is already available, reuse it!
+        if (ReuseSlot > VirtRegMap::MAX_STACK_SLOT)
+          DEBUG(dbgs() << "Reusing RM#"
+                << ReuseSlot-VirtRegMap::MAX_STACK_SLOT-1);
+        else
+          DEBUG(dbgs() << "Reusing SS#" << ReuseSlot);
+        DEBUG(dbgs() << " from physreg " << TRI->getName(PhysReg)
+              << " for vreg" << VirtReg
+              << " instead of reloading into same physreg.\n");
+        unsigned RReg = SubIdx ? TRI->getSubReg(PhysReg, SubIdx) : PhysReg;
+        MI.getOperand(i).setReg(RReg);
+        MI.getOperand(i).setSubReg(0);
+        ReusedOperands.markClobbered(RReg);
+        ++NumReused;
+        continue;
+      }
+
+      MRI->setPhysRegUsed(DesignatedReg);
+      ReusedOperands.markClobbered(DesignatedReg);
+
+      // Back-schedule reloads and remats.
+      MachineBasicBlock::iterator InsertLoc =
+        ComputeReloadLoc(&MI, MBB->begin(), PhysReg, TRI, DoReMat,
+                         SSorRMId, TII, *MBB->getParent());
+      MachineInstr *CopyMI = BuildMI(*MBB, InsertLoc, MI.getDebugLoc(),
+                                     TII->get(TargetOpcode::COPY),
+                                     DesignatedReg).addReg(PhysReg);
+      CopyMI->setAsmPrinterFlag(MachineInstr::ReloadReuse);
+      UpdateKills(*CopyMI, TRI, RegKills, KillOps);
+
+      // This invalidates DesignatedReg.
+      Spills.ClobberPhysReg(DesignatedReg);
+
+      Spills.addAvailable(ReuseSlot, DesignatedReg);
+      unsigned RReg =
+        SubIdx ? TRI->getSubReg(DesignatedReg, SubIdx) : DesignatedReg;
+      MI.getOperand(i).setReg(RReg);
+      MI.getOperand(i).setSubReg(0);
+      DEBUG(dbgs() << '\t' << *prior(InsertLoc));
+      ++NumReused;
+      continue;
+    } // if (PhysReg)
+
+      // Otherwise, reload it and remember that we have it.
+    PhysReg = VRM->getPhys(VirtReg);
+    assert(PhysReg && "Must map virtreg to physreg!");
+
+    // Note that, if we reused a register for a previous operand, the
+    // register we want to reload into might not actually be
+    // available.  If this occurs, use the register indicated by the
+    // reuser.
+    if (ReusedOperands.hasReuses())
+      PhysReg = ReusedOperands.GetRegForReload(VirtReg, PhysReg, &MI,
+                  Spills, MaybeDeadStores, RegKills, KillOps, *VRM);
+
+    MRI->setPhysRegUsed(PhysReg);
+    ReusedOperands.markClobbered(PhysReg);
+    if (AvoidReload)
+      ++NumAvoided;
+    else {
+      // Back-schedule reloads and remats.
+      MachineBasicBlock::iterator InsertLoc =
+        ComputeReloadLoc(MI, MBB->begin(), PhysReg, TRI, DoReMat,
+                         SSorRMId, TII, *MBB->getParent());
+
+      if (DoReMat) {
+        ReMaterialize(*MBB, InsertLoc, PhysReg, VirtReg, TII, TRI, *VRM);
+      } else {
+        const TargetRegisterClass* RC = MRI->getRegClass(VirtReg);
+        TII->loadRegFromStackSlot(*MBB, InsertLoc, PhysReg, SSorRMId, RC,TRI);
+        MachineInstr *LoadMI = prior(InsertLoc);
+        VRM->addSpillSlotUse(SSorRMId, LoadMI);
+        ++NumLoads;
+        DistanceMap.insert(std::make_pair(LoadMI, DistanceMap.size()));
+      }
+      // This invalidates PhysReg.
+      Spills.ClobberPhysReg(PhysReg);
+
+      // Any stores to this stack slot are not dead anymore.
+      if (!DoReMat)
+        MaybeDeadStores[SSorRMId] = NULL;
+      Spills.addAvailable(SSorRMId, PhysReg);
+      // Assumes this is the last use. IsKill will be unset if reg is reused
+      // unless it's a two-address operand.
+      if (!MI.isRegTiedToDefOperand(i) &&
+          KilledMIRegs.count(VirtReg) == 0) {
+        MI.getOperand(i).setIsKill();
+        KilledMIRegs.insert(VirtReg);
+      }
+
+      UpdateKills(*prior(InsertLoc), TRI, RegKills, KillOps);
+      DEBUG(dbgs() << '\t' << *prior(InsertLoc));
+    }
+    unsigned RReg = SubIdx ? TRI->getSubReg(PhysReg, SubIdx) : PhysReg;
+    MI.getOperand(i).setReg(RReg);
+    MI.getOperand(i).setSubReg(0);
+  }
+
+  // Ok - now we can remove stores that have been confirmed dead.
+  for (unsigned j = 0, e = PotentialDeadStoreSlots.size(); j != e; ++j) {
+    // This was the last use and the spilled value is still available
+    // for reuse. That means the spill was unnecessary!
+    int PDSSlot = PotentialDeadStoreSlots[j];
+    MachineInstr* DeadStore = MaybeDeadStores[PDSSlot];
+    if (DeadStore) {
+      DEBUG(dbgs() << "Removed dead store:\t" << *DeadStore);
+      InvalidateKills(*DeadStore, TRI, RegKills, KillOps);
+      VRM->RemoveMachineInstrFromMaps(DeadStore);
+      MBB->erase(DeadStore);
+      MaybeDeadStores[PDSSlot] = NULL;
+      ++NumDSE;
+    }
+  }
+
+}
+
 /// rewriteMBB - Keep track of which spills are available even after the
 /// register allocator is done with them.  If possible, avoid reloading vregs.
 void
@@ -1879,9 +2213,6 @@ LocalRewriter::RewriteMBB(LiveIntervals *LIs,
 
   // ReMatDefs - These are rematerializable def MIs which are not deleted.
   SmallSet<MachineInstr*, 4> ReMatDefs;
-
-  // Clear kill info.
-  SmallSet<unsigned, 2> KilledMIRegs;
 
   // Keep track of the registers we have already spilled in case there are
   // multiple defs of the same register in MI.
@@ -1918,323 +2249,8 @@ LocalRewriter::RewriteMBB(LiveIntervals *LIs,
     /// ReusedOperands - Keep track of operand reuse in case we need to undo
     /// reuse.
     ReuseInfo ReusedOperands(MI, TRI);
-    SmallVector<unsigned, 4> VirtUseOps;
-    for (unsigned i = 0, e = MI.getNumOperands(); i != e; ++i) {
-      MachineOperand &MO = MI.getOperand(i);
-      if (!MO.isReg() || MO.getReg() == 0)
-        continue;   // Ignore non-register operands.
 
-      unsigned VirtReg = MO.getReg();
-      if (TargetRegisterInfo::isPhysicalRegister(VirtReg)) {
-        // Ignore physregs for spilling, but remember that it is used by this
-        // function.
-        MRI->setPhysRegUsed(VirtReg);
-        continue;
-      }
-
-      // We want to process implicit virtual register uses first.
-      if (MO.isImplicit())
-        // If the virtual register is implicitly defined, emit a implicit_def
-        // before so scavenger knows it's "defined".
-        // FIXME: This is a horrible hack done the by register allocator to
-        // remat a definition with virtual register operand.
-        VirtUseOps.insert(VirtUseOps.begin(), i);
-      else
-        VirtUseOps.push_back(i);
-    }
-
-    // Process all of the spilled uses and all non spilled reg references.
-    SmallVector<int, 2> PotentialDeadStoreSlots;
-    KilledMIRegs.clear();
-    for (unsigned j = 0, e = VirtUseOps.size(); j != e; ++j) {
-      unsigned i = VirtUseOps[j];
-      unsigned VirtReg = MI.getOperand(i).getReg();
-      assert(TargetRegisterInfo::isVirtualRegister(VirtReg) &&
-             "Not a virtual register?");
-
-      unsigned SubIdx = MI.getOperand(i).getSubReg();
-      if (VRM->isAssignedReg(VirtReg)) {
-        // This virtual register was assigned a physreg!
-        unsigned Phys = VRM->getPhys(VirtReg);
-        MRI->setPhysRegUsed(Phys);
-        if (MI.getOperand(i).isDef())
-          ReusedOperands.markClobbered(Phys);
-        substitutePhysReg(MI.getOperand(i), Phys, *TRI);
-        if (VRM->isImplicitlyDefined(VirtReg))
-          // FIXME: Is this needed?
-          BuildMI(*MBB, &MI, MI.getDebugLoc(),
-                  TII->get(TargetOpcode::IMPLICIT_DEF), Phys);
-        continue;
-      }
-
-      // This virtual register is now known to be a spilled value.
-      if (!MI.getOperand(i).isUse())
-        continue;  // Handle defs in the loop below (handle use&def here though)
-
-      bool AvoidReload = MI.getOperand(i).isUndef();
-      // Check if it is defined by an implicit def. It should not be spilled.
-      // Note, this is for correctness reason. e.g.
-      // 8   %reg1024<def> = IMPLICIT_DEF
-      // 12  %reg1024<def> = INSERT_SUBREG %reg1024<kill>, %reg1025, 2
-      // The live range [12, 14) are not part of the r1024 live interval since
-      // it's defined by an implicit def. It will not conflicts with live
-      // interval of r1025. Now suppose both registers are spilled, you can
-      // easily see a situation where both registers are reloaded before
-      // the INSERT_SUBREG and both target registers that would overlap.
-      bool DoReMat = VRM->isReMaterialized(VirtReg);
-      int SSorRMId = DoReMat
-        ? VRM->getReMatId(VirtReg) : VRM->getStackSlot(VirtReg);
-      int ReuseSlot = SSorRMId;
-
-      // Check to see if this stack slot is available.
-      unsigned PhysReg = Spills.getSpillSlotOrReMatPhysReg(SSorRMId);
-
-      // If this is a sub-register use, make sure the reuse register is in the
-      // right register class. For example, for x86 not all of the 32-bit
-      // registers have accessible sub-registers.
-      // Similarly so for EXTRACT_SUBREG. Consider this:
-      // EDI = op
-      // MOV32_mr fi#1, EDI
-      // ...
-      //       = EXTRACT_SUBREG fi#1
-      // fi#1 is available in EDI, but it cannot be reused because it's not in
-      // the right register file.
-      if (PhysReg && !AvoidReload && SubIdx) {
-        const TargetRegisterClass* RC = MRI->getRegClass(VirtReg);
-        if (!RC->contains(PhysReg))
-          PhysReg = 0;
-      }
-
-      if (PhysReg && !AvoidReload) {
-        // This spilled operand might be part of a two-address operand.  If this
-        // is the case, then changing it will necessarily require changing the
-        // def part of the instruction as well.  However, in some cases, we
-        // aren't allowed to modify the reused register.  If none of these cases
-        // apply, reuse it.
-        bool CanReuse = true;
-        bool isTied = MI.isRegTiedToDefOperand(i);
-        if (isTied) {
-          // Okay, we have a two address operand.  We can reuse this physreg as
-          // long as we are allowed to clobber the value and there isn't an
-          // earlier def that has already clobbered the physreg.
-          CanReuse = !ReusedOperands.isClobbered(PhysReg) &&
-            Spills.canClobberPhysReg(PhysReg);
-        }
-        // If this is an asm, and a PhysReg alias is used elsewhere as an
-        // earlyclobber operand, we can't also use it as an input.
-        if (MI.isInlineAsm()) {
-          for (unsigned k = 0, e = MI.getNumOperands(); k != e; ++k) {
-            MachineOperand &MOk = MI.getOperand(k);
-            if (MOk.isReg() && MOk.isEarlyClobber() &&
-                TRI->regsOverlap(MOk.getReg(), PhysReg)) {
-              CanReuse = false;
-              DEBUG(dbgs() << "Not reusing physreg " << TRI->getName(PhysReg)
-                           << " for vreg" << VirtReg << ": " << MOk << '\n');
-              break;
-            }
-          }
-        }
-
-        if (CanReuse) {
-          // If this stack slot value is already available, reuse it!
-          if (ReuseSlot > VirtRegMap::MAX_STACK_SLOT)
-            DEBUG(dbgs() << "Reusing RM#"
-                  << ReuseSlot-VirtRegMap::MAX_STACK_SLOT-1);
-          else
-            DEBUG(dbgs() << "Reusing SS#" << ReuseSlot);
-          DEBUG(dbgs() << " from physreg "
-                << TRI->getName(PhysReg) << " for vreg"
-                << VirtReg <<" instead of reloading into physreg "
-                << TRI->getName(VRM->getPhys(VirtReg)) << '\n');
-          unsigned RReg = SubIdx ? TRI->getSubReg(PhysReg, SubIdx) : PhysReg;
-          MI.getOperand(i).setReg(RReg);
-          MI.getOperand(i).setSubReg(0);
-
-          // The only technical detail we have is that we don't know that
-          // PhysReg won't be clobbered by a reloaded stack slot that occurs
-          // later in the instruction.  In particular, consider 'op V1, V2'.
-          // If V1 is available in physreg R0, we would choose to reuse it
-          // here, instead of reloading it into the register the allocator
-          // indicated (say R1).  However, V2 might have to be reloaded
-          // later, and it might indicate that it needs to live in R0.  When
-          // this occurs, we need to have information available that
-          // indicates it is safe to use R1 for the reload instead of R0.
-          //
-          // To further complicate matters, we might conflict with an alias,
-          // or R0 and R1 might not be compatible with each other.  In this
-          // case, we actually insert a reload for V1 in R1, ensuring that
-          // we can get at R0 or its alias.
-          ReusedOperands.addReuse(i, ReuseSlot, PhysReg,
-                                  VRM->getPhys(VirtReg), VirtReg);
-          if (isTied)
-            // Only mark it clobbered if this is a use&def operand.
-            ReusedOperands.markClobbered(PhysReg);
-          ++NumReused;
-
-          if (MI.getOperand(i).isKill() &&
-              ReuseSlot <= VirtRegMap::MAX_STACK_SLOT) {
-
-            // The store of this spilled value is potentially dead, but we
-            // won't know for certain until we've confirmed that the re-use
-            // above is valid, which means waiting until the other operands
-            // are processed. For now we just track the spill slot, we'll
-            // remove it after the other operands are processed if valid.
-
-            PotentialDeadStoreSlots.push_back(ReuseSlot);
-          }
-
-          // Mark is isKill if it's there no other uses of the same virtual
-          // register and it's not a two-address operand. IsKill will be
-          // unset if reg is reused.
-          if (!isTied && KilledMIRegs.count(VirtReg) == 0) {
-            MI.getOperand(i).setIsKill();
-            KilledMIRegs.insert(VirtReg);
-          }
-
-          continue;
-        }  // CanReuse
-
-        // Otherwise we have a situation where we have a two-address instruction
-        // whose mod/ref operand needs to be reloaded.  This reload is already
-        // available in some register "PhysReg", but if we used PhysReg as the
-        // operand to our 2-addr instruction, the instruction would modify
-        // PhysReg.  This isn't cool if something later uses PhysReg and expects
-        // to get its initial value.
-        //
-        // To avoid this problem, and to avoid doing a load right after a store,
-        // we emit a copy from PhysReg into the designated register for this
-        // operand.
-        //
-        // This case also applies to an earlyclobber'd PhysReg.
-        unsigned DesignatedReg = VRM->getPhys(VirtReg);
-        assert(DesignatedReg && "Must map virtreg to physreg!");
-
-        // Note that, if we reused a register for a previous operand, the
-        // register we want to reload into might not actually be
-        // available.  If this occurs, use the register indicated by the
-        // reuser.
-        if (ReusedOperands.hasReuses())
-          DesignatedReg = ReusedOperands.
-            GetRegForReload(VirtReg, DesignatedReg, &MI, Spills,
-                            MaybeDeadStores, RegKills, KillOps, *VRM);
-
-        // If the mapped designated register is actually the physreg we have
-        // incoming, we don't need to inserted a dead copy.
-        if (DesignatedReg == PhysReg) {
-          // If this stack slot value is already available, reuse it!
-          if (ReuseSlot > VirtRegMap::MAX_STACK_SLOT)
-            DEBUG(dbgs() << "Reusing RM#"
-                  << ReuseSlot-VirtRegMap::MAX_STACK_SLOT-1);
-          else
-            DEBUG(dbgs() << "Reusing SS#" << ReuseSlot);
-          DEBUG(dbgs() << " from physreg " << TRI->getName(PhysReg)
-                << " for vreg" << VirtReg
-                << " instead of reloading into same physreg.\n");
-          unsigned RReg = SubIdx ? TRI->getSubReg(PhysReg, SubIdx) : PhysReg;
-          MI.getOperand(i).setReg(RReg);
-          MI.getOperand(i).setSubReg(0);
-          ReusedOperands.markClobbered(RReg);
-          ++NumReused;
-          continue;
-        }
-
-        MRI->setPhysRegUsed(DesignatedReg);
-        ReusedOperands.markClobbered(DesignatedReg);
-
-        // Back-schedule reloads and remats.
-        MachineBasicBlock::iterator InsertLoc =
-          ComputeReloadLoc(&MI, MBB->begin(), PhysReg, TRI, DoReMat,
-                           SSorRMId, TII, MF);
-        MachineInstr *CopyMI = BuildMI(*MBB, InsertLoc, MI.getDebugLoc(),
-                                       TII->get(TargetOpcode::COPY),
-                                       DesignatedReg).addReg(PhysReg);
-        CopyMI->setAsmPrinterFlag(MachineInstr::ReloadReuse);
-        UpdateKills(*CopyMI, TRI, RegKills, KillOps);
-
-        // This invalidates DesignatedReg.
-        Spills.ClobberPhysReg(DesignatedReg);
-
-        Spills.addAvailable(ReuseSlot, DesignatedReg);
-        unsigned RReg =
-          SubIdx ? TRI->getSubReg(DesignatedReg, SubIdx) : DesignatedReg;
-        MI.getOperand(i).setReg(RReg);
-        MI.getOperand(i).setSubReg(0);
-        DEBUG(dbgs() << '\t' << *prior(MII));
-        ++NumReused;
-        continue;
-      } // if (PhysReg)
-
-        // Otherwise, reload it and remember that we have it.
-      PhysReg = VRM->getPhys(VirtReg);
-      assert(PhysReg && "Must map virtreg to physreg!");
-
-      // Note that, if we reused a register for a previous operand, the
-      // register we want to reload into might not actually be
-      // available.  If this occurs, use the register indicated by the
-      // reuser.
-      if (ReusedOperands.hasReuses())
-        PhysReg = ReusedOperands.GetRegForReload(VirtReg, PhysReg, &MI,
-                    Spills, MaybeDeadStores, RegKills, KillOps, *VRM);
-
-      MRI->setPhysRegUsed(PhysReg);
-      ReusedOperands.markClobbered(PhysReg);
-      if (AvoidReload)
-        ++NumAvoided;
-      else {
-        // Back-schedule reloads and remats.
-        MachineBasicBlock::iterator InsertLoc =
-          ComputeReloadLoc(MII, MBB->begin(), PhysReg, TRI, DoReMat,
-                           SSorRMId, TII, MF);
-
-        if (DoReMat) {
-          ReMaterialize(*MBB, InsertLoc, PhysReg, VirtReg, TII, TRI, *VRM);
-        } else {
-          const TargetRegisterClass* RC = MRI->getRegClass(VirtReg);
-          TII->loadRegFromStackSlot(*MBB, InsertLoc, PhysReg, SSorRMId, RC,TRI);
-          MachineInstr *LoadMI = prior(InsertLoc);
-          VRM->addSpillSlotUse(SSorRMId, LoadMI);
-          ++NumLoads;
-          DistanceMap.insert(std::make_pair(LoadMI, DistanceMap.size()));
-        }
-        // This invalidates PhysReg.
-        Spills.ClobberPhysReg(PhysReg);
-
-        // Any stores to this stack slot are not dead anymore.
-        if (!DoReMat)
-          MaybeDeadStores[SSorRMId] = NULL;
-        Spills.addAvailable(SSorRMId, PhysReg);
-        // Assumes this is the last use. IsKill will be unset if reg is reused
-        // unless it's a two-address operand.
-        if (!MI.isRegTiedToDefOperand(i) &&
-            KilledMIRegs.count(VirtReg) == 0) {
-          MI.getOperand(i).setIsKill();
-          KilledMIRegs.insert(VirtReg);
-        }
-
-        UpdateKills(*prior(InsertLoc), TRI, RegKills, KillOps);
-        DEBUG(dbgs() << '\t' << *prior(InsertLoc));
-      }
-      unsigned RReg = SubIdx ? TRI->getSubReg(PhysReg, SubIdx) : PhysReg;
-      MI.getOperand(i).setReg(RReg);
-      MI.getOperand(i).setSubReg(0);
-    }
-
-    // Ok - now we can remove stores that have been confirmed dead.
-    for (unsigned j = 0, e = PotentialDeadStoreSlots.size(); j != e; ++j) {
-      // This was the last use and the spilled value is still available
-      // for reuse. That means the spill was unnecessary!
-      int PDSSlot = PotentialDeadStoreSlots[j];
-      MachineInstr* DeadStore = MaybeDeadStores[PDSSlot];
-      if (DeadStore) {
-        DEBUG(dbgs() << "Removed dead store:\t" << *DeadStore);
-        InvalidateKills(*DeadStore, TRI, RegKills, KillOps);
-        VRM->RemoveMachineInstrFromMaps(DeadStore);
-        MBB->erase(DeadStore);
-        MaybeDeadStores[PDSSlot] = NULL;
-        ++NumDSE;
-      }
-    }
-
+    ProcessUses(MI, Spills, MaybeDeadStores, RegKills, ReusedOperands, KillOps);
 
     DEBUG(dbgs() << '\t' << MI);
 
