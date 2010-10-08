@@ -532,9 +532,27 @@ const llvm::fltSemantics &ASTContext::getFloatTypeSemantics(QualType T) const {
 CharUnits ASTContext::getDeclAlign(const Decl *D, bool RefAsPointee) {
   unsigned Align = Target.getCharWidth();
 
-  Align = std::max(Align, D->getMaxAlignment());
+  bool UseAlignAttrOnly = false;
+  if (unsigned AlignFromAttr = D->getMaxAlignment()) {
+    Align = AlignFromAttr;
 
-  if (const ValueDecl *VD = dyn_cast<ValueDecl>(D)) {
+    // __attribute__((aligned)) can increase or decrease alignment
+    // *except* on a struct or struct member, where it only increases
+    // alignment unless 'packed' is also specified.
+    //
+    // It is an error for [[align]] to decrease alignment, so we can
+    // ignore that possibility;  Sema should diagnose it.
+    if (isa<FieldDecl>(D)) {
+      UseAlignAttrOnly = D->hasAttr<PackedAttr>() ||
+        cast<FieldDecl>(D)->getParent()->hasAttr<PackedAttr>();
+    } else {
+      UseAlignAttrOnly = true;
+    }
+  }
+
+  if (UseAlignAttrOnly) {
+    // ignore type of value
+  } else if (const ValueDecl *VD = dyn_cast<ValueDecl>(D)) {
     QualType T = VD->getType();
     if (const ReferenceType* RT = T->getAs<ReferenceType>()) {
       if (RefAsPointee)
