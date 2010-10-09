@@ -780,7 +780,7 @@ void ConnectedVNInfoEqClasses::Distribute(LiveInterval *LIV[]) {
     ++J;
   for (LiveInterval::iterator I = J; I != E; ++I) {
     if (unsigned eq = eqClass_[I->valno->id]) {
-      assert(LIV[eq]->empty() || LIV[eq]->expiredAt(I->start) &&
+      assert((LIV[eq]->empty() || LIV[eq]->expiredAt(I->start)) &&
              "New intervals should be empty");
       LIV[eq]->ranges.push_back(*I);
     } else
