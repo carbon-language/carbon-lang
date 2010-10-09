@@ -1650,7 +1650,7 @@ public:
 
   ParsingDeclStackState PushParsingDeclaration();
   void PopParsingDeclaration(ParsingDeclStackState S, Decl *D);
-  void EmitDeprecationWarning(NamedDecl *D, const char *Message,
+  void EmitDeprecationWarning(NamedDecl *D, llvm::StringRef Message,
                               SourceLocation Loc);
 
   void HandleDelayedDeprecationCheck(sema::DelayedDiagnostic &DD, Decl *Ctx);

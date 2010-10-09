@@ -2566,16 +2566,16 @@ void Sema::HandleDelayedDeprecationCheck(DelayedDiagnostic &DD,
     return;
 
   DD.Triggered = true;
-  if (DD.DeprecationData.Message)
+  if (!DD.getDeprecationMessage().empty())
     Diag(DD.Loc, diag::warn_deprecated_message)
-      << DD.DeprecationData.Decl->getDeclName() 
-      << DD.DeprecationData.Message;
+      << DD.getDeprecationDecl()->getDeclName()
+      << DD.getDeprecationMessage();
   else
     Diag(DD.Loc, diag::warn_deprecated)
-      << DD.DeprecationData.Decl->getDeclName();
+      << DD.getDeprecationDecl()->getDeclName();
 }
 
-void Sema::EmitDeprecationWarning(NamedDecl *D, const char * Message,
+void Sema::EmitDeprecationWarning(NamedDecl *D, llvm::StringRef Message,
                                   SourceLocation Loc) {
   // Delay if we're currently parsing a declaration.
   if (ParsingDeclDepth) {
@@ -2587,7 +2587,7 @@ void Sema::EmitDeprecationWarning(NamedDecl *D, const char * Message,
   // Otherwise, don't warn if our current context is deprecated.
   if (isDeclDeprecated(cast<Decl>(CurContext)))
     return;
-  if (Message)
+  if (!Message.empty())
     Diag(Loc, diag::warn_deprecated_message) << D->getDeclName() 
                                              << Message;
   else

@@ -57,11 +57,8 @@ using namespace sema;
 ///
 bool Sema::DiagnoseUseOfDecl(NamedDecl *D, SourceLocation Loc) {
   // See if the decl is deprecated.
-  if (const DeprecatedAttr *DA = D->getAttr<DeprecatedAttr>()) {
-    const char *Message = 
-      DA->getMessage().empty() ? 0 : DA->getMessage().data();
-    EmitDeprecationWarning(D, Message, Loc);
-  }
+  if (const DeprecatedAttr *DA = D->getAttr<DeprecatedAttr>())
+    EmitDeprecationWarning(D, DA->getMessage(), Loc);
 
   // See if the decl is unavailable
   if (const UnavailableAttr *UA = D->getAttr<UnavailableAttr>()) {
@@ -69,7 +66,7 @@ bool Sema::DiagnoseUseOfDecl(NamedDecl *D, SourceLocation Loc) {
       Diag(Loc, diag::err_unavailable) << D->getDeclName();
     else
       Diag(Loc, diag::err_unavailable_message) 
-        << D->getDeclName() << UA->getMessage().data();
+        << D->getDeclName() << UA->getMessage();
     Diag(D->getLocation(), diag::note_unavailable_here) << 0;
   }
 

@@ -119,14 +119,6 @@ public:
 
   SourceLocation Loc;
 
-  union {
-    /// Deprecation.
-    struct { NamedDecl *Decl; const char* Message; } DeprecationData;
-
-    /// Access control.
-    char AccessData[sizeof(AccessedEntity)];
-  };
-
   void destroy() {
     switch (Kind) {
     case Access: getAccessData().~AccessedEntity(); break;
@@ -135,14 +127,15 @@ public:
   }
 
   static DelayedDiagnostic makeDeprecation(SourceLocation Loc,
-                                           NamedDecl *D,
-                                           const char *Msg) {
+                                           const NamedDecl *D,
+                                           llvm::StringRef Msg) {
     DelayedDiagnostic DD;
     DD.Kind = Deprecation;
     DD.Triggered = false;
     DD.Loc = Loc;
     DD.DeprecationData.Decl = D;
-    DD.DeprecationData.Message = Msg;
+    DD.DeprecationData.Message = Msg.data();
+    DD.DeprecationData.MessageLen = Msg.size();
     return DD;
   }
 
@@ -157,11 +150,37 @@ public:
   }
 
   AccessedEntity &getAccessData() {
+    assert(Kind == Access && "Not an access diagnostic.");
     return *reinterpret_cast<AccessedEntity*>(AccessData);
   }
   const AccessedEntity &getAccessData() const {
+    assert(Kind == Access && "Not an access diagnostic.");
     return *reinterpret_cast<const AccessedEntity*>(AccessData);
   }
+
+  const NamedDecl *getDeprecationDecl() const {
+    assert(Kind == Deprecation && "Not a deprecation diagnostic.");
+    return DeprecationData.Decl;
+  }
+
+  llvm::StringRef getDeprecationMessage() const {
+    assert(Kind == Deprecation && "Not a deprecation diagnostic.");
+    return llvm::StringRef(DeprecationData.Message,
+                           DeprecationData.MessageLen);
+  }
+
+private:
+  union {
+    /// Deprecation.
+    struct {
+      const NamedDecl *Decl;
+      const char *Message;
+      size_t MessageLen;
+    } DeprecationData;
+
+    /// Access control.
+    char AccessData[sizeof(AccessedEntity)];
+  };
 };
 
 }
