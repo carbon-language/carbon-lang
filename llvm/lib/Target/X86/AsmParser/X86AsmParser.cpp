@@ -36,7 +36,7 @@ class X86ATTAsmParser : public TargetAsmParser {
 
 protected:
   unsigned Is64Bit : 1;
-  
+
 private:
   MCAsmParser &getParser() const { return Parser; }
 
@@ -57,16 +57,16 @@ private:
 
   /// @name Auto-generated Matcher Functions
   /// {
-  
+
 #define GET_ASSEMBLER_HEADER
 #include "X86GenAsmMatcher.inc"
-  
+
   /// }
 
 public:
   X86ATTAsmParser(const Target &T, MCAsmParser &_Parser, TargetMachine &TM)
     : TargetAsmParser(T), Parser(_Parser), TM(TM) {
-      
+
     // Initialize the set of available features.
     setAvailableFeatures(ComputeAvailableFeatures(
                            &TM.getSubtarget<X86Subtarget>()));
@@ -377,7 +377,7 @@ bool X86ATTAsmParser::ParseRegister(unsigned &RegNo,
   // If the match failed, try the register name as lowercase.
   if (RegNo == 0)
     RegNo = MatchRegisterName(LowercaseString(Tok.getString()));
-  
+
   // FIXME: This should be done using Requires<In32BitMode> and
   // Requires<In64BitMode> so "eiz" usage in 64-bit instructions
   // can be also checked.
@@ -779,19 +779,19 @@ ParseInstruction(StringRef Name, SMLoc NameLoc,
       PatchedName = "vpclmulqdq";
     }
   }
-  
+
   Operands.push_back(X86Operand::CreateToken(PatchedName, NameLoc));
 
   if (ExtraImmOp)
     Operands.push_back(X86Operand::CreateImm(ExtraImmOp, NameLoc, NameLoc));
-  
-  
+
+
   // Determine whether this is an instruction prefix.
   bool isPrefix =
-    PatchedName == "lock" || PatchedName == "rep" || 
+    PatchedName == "lock" || PatchedName == "rep" ||
     PatchedName == "repne";
-  
-  
+
+
   // This does the actual operand parsing.  Don't parse any more if we have a
   // prefix juxtaposed with an operation like "lock incl 4(%rax)", because we
   // just want to parse the "lock" as the first instruction and the "incl" as
@@ -824,13 +824,13 @@ ParseInstruction(StringRef Name, SMLoc NameLoc,
         return true;
       }
     }
-    
+
     if (getLexer().isNot(AsmToken::EndOfStatement)) {
       Parser.EatToEndOfStatement();
       return TokError("unexpected token in argument list");
     }
   }
-  
+
   if (getLexer().is(AsmToken::EndOfStatement))
     Parser.Lex(); // Consume the EndOfStatement
 
@@ -842,7 +842,7 @@ ParseInstruction(StringRef Name, SMLoc NameLoc,
     delete Operands[0];
     Operands[0] = X86Operand::CreateToken("movabsq", NameLoc);
   }
-  
+
   // FIXME: Hack to handle recognize s{hr,ar,hl} $1, <op>.  Canonicalize to
   // "shift <op>".
   if ((Name.startswith("shr") || Name.startswith("sar") ||
@@ -855,7 +855,7 @@ ParseInstruction(StringRef Name, SMLoc NameLoc,
       Operands.erase(Operands.begin() + 1);
     }
   }
-  
+
   // FIXME: Hack to handle recognize "rc[lr] <op>" -> "rcl $1, <op>".
   if ((Name.startswith("rcl") || Name.startswith("rcr")) &&
       Operands.size() == 2) {
@@ -863,7 +863,7 @@ ParseInstruction(StringRef Name, SMLoc NameLoc,
     Operands.push_back(X86Operand::CreateImm(One, NameLoc, NameLoc));
     std::swap(Operands[1], Operands[2]);
   }
-  
+
   // FIXME: Hack to handle recognize "sh[lr]d op,op" -> "shld $1, op,op".
   if ((Name.startswith("shld") || Name.startswith("shrd")) &&
       Operands.size() == 3) {
@@ -871,7 +871,7 @@ ParseInstruction(StringRef Name, SMLoc NameLoc,
     Operands.insert(Operands.begin()+1,
                     X86Operand::CreateImm(One, NameLoc, NameLoc));
   }
-  
+
 
   // FIXME: Hack to handle recognize "in[bwl] <op>".  Canonicalize it to
   // "inb <op>, %al".
@@ -887,7 +887,7 @@ ParseInstruction(StringRef Name, SMLoc NameLoc,
     SMLoc Loc = Operands.back()->getEndLoc();
     Operands.push_back(X86Operand::CreateReg(Reg, Loc, Loc));
   }
-  
+
   // FIXME: Hack to handle recognize "out[bwl] <op>".  Canonicalize it to
   // "outb %al, <op>".
   if ((Name == "outb" || Name == "outw" || Name == "outl") &&
@@ -903,7 +903,7 @@ ParseInstruction(StringRef Name, SMLoc NameLoc,
     Operands.push_back(X86Operand::CreateReg(Reg, Loc, Loc));
     std::swap(Operands[1], Operands[2]);
   }
-  
+
   // FIXME: Hack to handle "out[bwl]? %al, (%dx)" -> "outb %al, %dx".
   if ((Name == "outb" || Name == "outw" || Name == "outl" || Name == "out") &&
       Operands.size() == 3) {
@@ -917,7 +917,7 @@ ParseInstruction(StringRef Name, SMLoc NameLoc,
       delete &Op;
     }
   }
-  
+
   // FIXME: Hack to handle "f{mul*,add*,sub*,div*} $op, st(0)" the same as
   // "f{mul*,add*,sub*,div*} $op"
   if ((Name.startswith("fmul") || Name.startswith("fadd") ||
@@ -928,7 +928,7 @@ ParseInstruction(StringRef Name, SMLoc NameLoc,
     delete Operands[2];
     Operands.erase(Operands.begin() + 2);
   }
-  
+
   // FIXME: Hack to handle "f{mulp,addp} st(0), $op" the same as
   // "f{mulp,addp} $op", since they commute.  We also allow fdivrp/fsubrp even
   // though they don't commute, solely because gas does support this.
@@ -939,7 +939,7 @@ ParseInstruction(StringRef Name, SMLoc NameLoc,
     delete Operands[1];
     Operands.erase(Operands.begin() + 1);
   }
-  
+
   // FIXME: Hack to handle "imul <imm>, B" which is an alias for "imul <imm>, B,
   // B".
   if (Name.startswith("imul") && Operands.size() == 3 &&
@@ -949,7 +949,7 @@ ParseInstruction(StringRef Name, SMLoc NameLoc,
     Operands.push_back(X86Operand::CreateReg(Op->getReg(), Op->getStartLoc(),
                                              Op->getEndLoc()));
   }
-  
+
   // 'sldt <mem>' can be encoded with either sldtw or sldtq with the same
   // effect (both store to a 16-bit mem).  Force to sldtw to avoid ambiguity
   // errors, since its encoding is the most compact.
@@ -958,7 +958,7 @@ ParseInstruction(StringRef Name, SMLoc NameLoc,
     delete Operands[0];
     Operands[0] = X86Operand::CreateToken("sldtw", NameLoc);
   }
-  
+
   // The assembler accepts "xchgX <reg>, <mem>" and "xchgX <mem>, <reg>" as
   // synonyms.  Our tables only have the "<reg>, <mem>" form, so if we see the
   // other operand order, swap them.
@@ -980,17 +980,17 @@ ParseInstruction(StringRef Name, SMLoc NameLoc,
         static_cast<X86Operand*>(Operands[2])->isMem()) {
       std::swap(Operands[1], Operands[2]);
     }
-  
+
   // The assembler accepts these instructions with no operand as a synonym for
   // an instruction acting on st(1).  e.g. "fxch" -> "fxch %st(1)".
   if ((Name == "fxch" || Name == "fucom" || Name == "fucomp" ||
-       Name == "faddp" || Name == "fsubp" || Name == "fsubrp" || 
+       Name == "faddp" || Name == "fsubp" || Name == "fsubrp" ||
        Name == "fmulp" || Name == "fdivp" || Name == "fdivrp") &&
       Operands.size() == 1) {
     Operands.push_back(X86Operand::CreateReg(MatchRegisterName("st(1)"),
                                              NameLoc, NameLoc));
   }
-  
+
   // The assembler accepts these instructions with two few operands as a synonym
   // for taking %st(1),%st(0) or X, %st(0).
   if ((Name == "fcomi" || Name == "fucomi") && Operands.size() < 3) {
@@ -1000,7 +1000,7 @@ ParseInstruction(StringRef Name, SMLoc NameLoc,
     Operands.push_back(X86Operand::CreateReg(MatchRegisterName("st(0)"),
                                              NameLoc, NameLoc));
   }
-  
+
   // The assembler accepts various amounts of brokenness for fnstsw.
   if (Name == "fnstsw") {
     if (Operands.size() == 2 &&
@@ -1019,7 +1019,7 @@ ParseInstruction(StringRef Name, SMLoc NameLoc,
       Operands.push_back(X86Operand::CreateReg(MatchRegisterName("ax"),
                                                NameLoc, NameLoc));
   }
-  
+
   // jmp $42,$5 -> ljmp, similarly for call.
   if ((Name.startswith("call") || Name.startswith("jmp")) &&
       Operands.size() == 3 &&
@@ -1041,14 +1041,14 @@ ParseInstruction(StringRef Name, SMLoc NameLoc,
       Name = NewOpName;
     }
   }
-  
+
   // lcall  and ljmp  -> lcalll and ljmpl
   if ((Name == "lcall" || Name == "ljmp") && Operands.size() == 3) {
     delete Operands[0];
     Operands[0] = X86Operand::CreateToken(Name == "lcall" ? "lcalll" : "ljmpl",
                                           NameLoc);
   }
-  
+
   // call foo is not ambiguous with callw.
   if (Name == "call" && Operands.size() == 2) {
     const char *NewName = Is64Bit ? "callq" : "calll";
@@ -1056,13 +1056,13 @@ ParseInstruction(StringRef Name, SMLoc NameLoc,
     Operands[0] = X86Operand::CreateToken(NewName, NameLoc);
     Name = NewName;
   }
-  
+
   // movsd -> movsl (when no operands are specified).
   if (Name == "movsd" && Operands.size() == 1) {
     delete Operands[0];
     Operands[0] = X86Operand::CreateToken("movsl", NameLoc);
   }
-  
+
   // fstp <mem> -> fstps <mem>.  Without this, we'll default to fstpl due to
   // suffix searching.
   if (Name == "fstp" && Operands.size() == 2 &&
@@ -1070,8 +1070,8 @@ ParseInstruction(StringRef Name, SMLoc NameLoc,
     delete Operands[0];
     Operands[0] = X86Operand::CreateToken("fstps", NameLoc);
   }
-  
-  
+
+
   // "clr <reg>" -> "xor <reg>, <reg>".
   if ((Name == "clrb" || Name == "clrw" || Name == "clrl" || Name == "clrq" ||
        Name == "clr") && Operands.size() == 2 &&
@@ -1081,7 +1081,7 @@ ParseInstruction(StringRef Name, SMLoc NameLoc,
     delete Operands[0];
     Operands[0] = X86Operand::CreateToken("xor", NameLoc);
   }
-  
+
   return false;
 }
 
@@ -1147,11 +1147,11 @@ MatchAndEmitInstruction(SMLoc IDLoc,
     delete Operands[0];
     Operands[0] = X86Operand::CreateToken(Repl, IDLoc);
   }
-  
+
   bool WasOriginallyInvalidOperand = false;
   unsigned OrigErrorInfo;
   MCInst Inst;
-  
+
   // First, try a direct match.
   switch (MatchInstructionImpl(Operands, Inst, OrigErrorInfo)) {
   case Match_Success:
@@ -1171,7 +1171,7 @@ MatchAndEmitInstruction(SMLoc IDLoc,
   // valid prefixes, and we could just infer the right unambiguous
   // type. However, that requires substantially more matcher support than the
   // following hack.
-  
+
   // Change the operand to point to a temporary token.
   StringRef Base = Op->getToken();
   SmallString<16> Tmp;
@@ -1234,15 +1234,15 @@ MatchAndEmitInstruction(SMLoc IDLoc,
     Error(IDLoc, OS.str());
     return true;
   }
-  
+
   // Okay, we know that none of the variants matched successfully.
-  
+
   // If all of the instructions reported an invalid mnemonic, then the original
   // mnemonic was invalid.
   if ((MatchB == Match_MnemonicFail) && (MatchW == Match_MnemonicFail) &&
       (MatchL == Match_MnemonicFail) && (MatchQ == Match_MnemonicFail)) {
     if (!WasOriginallyInvalidOperand) {
-      Error(IDLoc, "invalid instruction mnemonic '" + Base + "'"); 
+      Error(IDLoc, "invalid instruction mnemonic '" + Base + "'");
       return true;
     }
 
@@ -1251,14 +1251,14 @@ MatchAndEmitInstruction(SMLoc IDLoc,
     if (OrigErrorInfo != ~0U) {
       if (OrigErrorInfo >= Operands.size())
         return Error(IDLoc, "too few operands for instruction");
-      
+
       ErrorLoc = ((X86Operand*)Operands[OrigErrorInfo])->getStartLoc();
       if (ErrorLoc == SMLoc()) ErrorLoc = IDLoc;
     }
 
     return Error(ErrorLoc, "invalid operand for instruction");
   }
-  
+
   // If one instruction matched with a missing feature, report this as a
   // missing feature.
   if ((MatchB == Match_MissingFeature) + (MatchW == Match_MissingFeature) +
@@ -1266,7 +1266,7 @@ MatchAndEmitInstruction(SMLoc IDLoc,
     Error(IDLoc, "instruction requires a CPU feature not currently enabled");
     return true;
   }
-  
+
   // If one instruction matched with an invalid operand, report this as an
   // operand failure.
   if ((MatchB == Match_InvalidOperand) + (MatchW == Match_InvalidOperand) +
@@ -1274,7 +1274,7 @@ MatchAndEmitInstruction(SMLoc IDLoc,
     Error(IDLoc, "invalid operand for instruction");
     return true;
   }
-  
+
   // If all of these were an outright failure, report it in a useless way.
   // FIXME: We should give nicer diagnostics about the exact failure.
   Error(IDLoc, "unknown use of instruction mnemonic without a size suffix");

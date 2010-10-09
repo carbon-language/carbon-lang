@@ -176,7 +176,7 @@ private:
   /// ParseIdentifier - Parse an identifier or string (as a quoted identifier)
   /// and set \arg Res to the identifier contents.
   bool ParseIdentifier(StringRef &Res);
-  
+
   // Directive Parsing.
   bool ParseDirectiveAscii(bool ZeroTerminated); // ".ascii", ".asciiz"
   bool ParseDirectiveValue(unsigned Size); // ".byte", ".long", ...
@@ -333,11 +333,11 @@ bool AsmParser::EnterIncludeFile(const std::string &Filename) {
   int NewBuf = SrcMgr.AddIncludeFile(Filename, Lexer.getLoc());
   if (NewBuf == -1)
     return true;
-  
+
   CurBuffer = NewBuf;
-  
+
   Lexer.setBuffer(SrcMgr.getMemoryBuffer(CurBuffer));
-  
+
   return false;
 }
 
@@ -348,7 +348,7 @@ void AsmParser::JumpToLoc(SMLoc Loc) {
 
 const AsmToken &AsmParser::Lex() {
   const AsmToken *tok = &Lexer.Lex();
-  
+
   if (tok->is(AsmToken::Eof)) {
     // If this is the end of an included file, pop the parent file off the
     // include stack.
@@ -358,10 +358,10 @@ const AsmToken &AsmParser::Lex() {
       tok = &Lexer.Lex();
     }
   }
-    
+
   if (tok->is(AsmToken::Error))
     Error(Lexer.getErrLoc(), Lexer.getErr());
-  
+
   return *tok;
 }
 
@@ -379,7 +379,7 @@ bool AsmParser::Run(bool NoInitialTextSection, bool NoFinalize) {
   // While we have input, parse each statement.
   while (Lexer.isNot(AsmToken::Eof)) {
     if (!ParseStatement()) continue;
-  
+
     // We had an error, validate that one was emitted and recover by skipping to
     // the next line.
     assert(HadError && "Parse statement returned an error, but none emitted!");
@@ -397,10 +397,10 @@ bool AsmParser::Run(bool NoInitialTextSection, bool NoFinalize) {
     if (!MCDwarfFiles[i])
       TokError("unassigned file number: " + Twine(i) + " for .file directives");
   }
-  
+
   // Finalize the output stream if there are no errors and if the client wants
   // us to.
-  if (!HadError && !NoFinalize)  
+  if (!HadError && !NoFinalize)
     Out.Finish();
 
   return HadError;
@@ -421,7 +421,7 @@ void AsmParser::EatToEndOfStatement() {
   while (Lexer.isNot(AsmToken::EndOfStatement) &&
          Lexer.isNot(AsmToken::Eof))
     Lex();
-  
+
   // Eat EOL.
   if (Lexer.is(AsmToken::EndOfStatement))
     Lex();
@@ -540,7 +540,7 @@ bool AsmParser::ParsePrimaryExpr(const MCExpr *&Res, SMLoc &EndLoc) {
     Lex(); // Eat identifier.
     return false;
   }
-      
+
   case AsmToken::LParen:
     Lex(); // Eat the '('.
     return ParseParenExpr(Res, EndLoc);
@@ -620,7 +620,7 @@ AsmParser::ApplyModifierToExpr(const MCExpr *E,
 }
 
 /// ParseExpression - Parse an expression and return it.
-/// 
+///
 ///  expr ::= expr +,- expr          -> lowest.
 ///  expr ::= expr |,^,&,! expr      -> middle.
 ///  expr ::= expr *,/,%,<<,>> expr  -> highest.
@@ -652,7 +652,7 @@ bool AsmParser::ParseExpression(const MCExpr *&Res, SMLoc &EndLoc) {
                       "' (no symbols present)");
       return true;
     }
-     
+
     Res = ModifiedRes;
     Lex();
   }
@@ -673,7 +673,7 @@ bool AsmParser::ParseParenExpression(const MCExpr *&Res, SMLoc &EndLoc) {
 
 bool AsmParser::ParseAbsoluteExpression(int64_t &Res) {
   const MCExpr *Expr;
-  
+
   SMLoc StartLoc = Lexer.getLoc();
   if (ParseExpression(Expr))
     return true;
@@ -684,7 +684,7 @@ bool AsmParser::ParseAbsoluteExpression(int64_t &Res) {
   return false;
 }
 
-static unsigned getBinOpPrecedence(AsmToken::TokenKind K, 
+static unsigned getBinOpPrecedence(AsmToken::TokenKind K,
                                    MCBinaryExpr::Opcode &Kind) {
   switch (K) {
   default:
@@ -698,7 +698,7 @@ static unsigned getBinOpPrecedence(AsmToken::TokenKind K,
     Kind = MCBinaryExpr::LOr;
     return 1;
 
-    
+
     // Low Precedence: |, &, ^
     //
     // FIXME: gas seems to support '!' as an infix operator?
@@ -711,7 +711,7 @@ static unsigned getBinOpPrecedence(AsmToken::TokenKind K,
   case AsmToken::Amp:
     Kind = MCBinaryExpr::And;
     return 2;
-      
+
     // Intermediate Precedence: +, -, ==, !=, <>, <, <=, >, >=
   case AsmToken::Plus:
     Kind = MCBinaryExpr::Add;
@@ -766,18 +766,18 @@ bool AsmParser::ParseBinOpRHS(unsigned Precedence, const MCExpr *&Res,
   while (1) {
     MCBinaryExpr::Opcode Kind = MCBinaryExpr::Add;
     unsigned TokPrec = getBinOpPrecedence(Lexer.getKind(), Kind);
-    
+
     // If the next token is lower precedence than we are allowed to eat, return
     // successfully with what we ate already.
     if (TokPrec < Precedence)
       return false;
-    
+
     Lex();
-    
+
     // Eat the next primary expression.
     const MCExpr *RHS;
     if (ParsePrimaryExpr(RHS, EndLoc)) return true;
-    
+
     // If BinOp binds less tightly with RHS than the operator after RHS, let
     // the pending operator take RHS as its LHS.
     MCBinaryExpr::Opcode Dummy;
@@ -791,9 +791,9 @@ bool AsmParser::ParseBinOpRHS(unsigned Precedence, const MCExpr *&Res,
   }
 }
 
-  
-  
-  
+
+
+
 /// ParseStatement:
 ///   ::= EndOfStatement
 ///   ::= Label* Directive ...Operands... EndOfStatement
@@ -844,13 +844,13 @@ bool AsmParser::ParseStatement() {
     return ParseDirectiveElse(IDLoc);
   if (IDVal == ".endif")
     return ParseDirectiveEndIf(IDLoc);
-    
+
   // If we are in a ".if 0" block, ignore this statement.
   if (TheCondState.Ignore) {
     EatToEndOfStatement();
     return false;
   }
-  
+
   // FIXME: Recurse on local labels?
 
   // See what kind of statement we have.
@@ -873,10 +873,10 @@ bool AsmParser::ParseStatement() {
       Sym = Ctx.CreateDirectionalLocalSymbol(LocalLabelVal);
     if (!Sym->isUndefined() || Sym->isVariable())
       return Error(IDLoc, "invalid symbol redefinition");
-    
+
     // Emit the label.
     Out.EmitLabel(Sym);
-   
+
     // Consume any end of statement token, if present, to avoid spurious
     // AddBlankLine calls().
     if (Lexer.is(AsmToken::EndOfStatement)) {
@@ -903,7 +903,7 @@ bool AsmParser::ParseStatement() {
     if (const Macro *M = MacroMap.lookup(IDVal))
       return HandleMacroEntry(IDVal, IDLoc, M);
 
-  // Otherwise, we have a normal instruction or directive.  
+  // Otherwise, we have a normal instruction or directive.
   if (IDVal[0] == '.') {
     // Assembler features
     if (IDVal == ".set")
@@ -1023,7 +1023,7 @@ bool AsmParser::ParseStatement() {
   SmallString<128> Opcode;
   for (unsigned i = 0, e = IDVal.size(); i != e; ++i)
     Opcode.push_back(tolower(IDVal[i]));
-  
+
   SmallVector<MCParsedAsmOperand*, 8> ParsedOperands;
   bool HadError = getTargetParser().ParseInstruction(Opcode.str(), IDLoc,
                                                      ParsedOperands);
@@ -1190,7 +1190,7 @@ bool AsmParser::ParseAssignment(StringRef Name) {
   const MCExpr *Value;
   if (ParseExpression(Value))
     return true;
-  
+
   if (Lexer.isNot(AsmToken::EndOfStatement))
     return TokError("unexpected token in assignment");
 
@@ -1273,7 +1273,7 @@ bool AsmParser::ParseDirectiveSet() {
 
   if (ParseIdentifier(Name))
     return TokError("expected identifier after '.set' directive");
-  
+
   if (getLexer().isNot(AsmToken::Comma))
     return TokError("unexpected token in '.set'");
   Lex();
@@ -1392,7 +1392,7 @@ bool AsmParser::ParseDirectiveValue(unsigned Size) {
 
       if (getLexer().is(AsmToken::EndOfStatement))
         break;
-      
+
       // FIXME: Improve diagnostic.
       if (getLexer().isNot(AsmToken::Comma))
         return TokError("unexpected token in directive");
@@ -1420,7 +1420,7 @@ bool AsmParser::ParseDirectiveRealValue(const fltSemantics &Semantics) {
       } else if (getLexer().is(AsmToken::Plus))
         Lex();
 
-      if (getLexer().isNot(AsmToken::Integer) && 
+      if (getLexer().isNot(AsmToken::Integer) &&
           getLexer().isNot(AsmToken::Real))
         return TokError("unexpected token in directive");
 
@@ -1443,7 +1443,7 @@ bool AsmParser::ParseDirectiveRealValue(const fltSemantics &Semantics) {
 
       if (getLexer().is(AsmToken::EndOfStatement))
         break;
-      
+
       if (getLexer().isNot(AsmToken::Comma))
         return TokError("unexpected token in directive");
       Lex();
@@ -1468,7 +1468,7 @@ bool AsmParser::ParseDirectiveSpace() {
     if (getLexer().isNot(AsmToken::Comma))
       return TokError("unexpected token in '.space' directive");
     Lex();
-    
+
     if (ParseAbsoluteExpression(FillExpr))
       return true;
 
@@ -1525,7 +1525,7 @@ bool AsmParser::ParseDirectiveFill() {
   if (getLexer().isNot(AsmToken::Comma))
     return TokError("unexpected token in '.fill' directive");
   Lex();
-  
+
   int64_t FillSize;
   if (ParseAbsoluteExpression(FillSize))
     return true;
@@ -1533,14 +1533,14 @@ bool AsmParser::ParseDirectiveFill() {
   if (getLexer().isNot(AsmToken::Comma))
     return TokError("unexpected token in '.fill' directive");
   Lex();
-  
+
   int64_t FillExpr;
   if (ParseAbsoluteExpression(FillExpr))
     return true;
 
   if (getLexer().isNot(AsmToken::EndOfStatement))
     return TokError("unexpected token in '.fill' directive");
-  
+
   Lex();
 
   if (FillSize != 1 && FillSize != 2 && FillSize != 4 && FillSize != 8)
@@ -1567,7 +1567,7 @@ bool AsmParser::ParseDirectiveOrg() {
     if (getLexer().isNot(AsmToken::Comma))
       return TokError("unexpected token in '.org' directive");
     Lex();
-    
+
     if (ParseAbsoluteExpression(FillExpr))
       return true;
 
@@ -1620,7 +1620,7 @@ bool AsmParser::ParseDirectiveAlign(bool IsPow2, unsigned ValueSize) {
       MaxBytesLoc = getLexer().getLoc();
       if (ParseAbsoluteExpression(MaxBytesToFill))
         return true;
-      
+
       if (getLexer().isNot(AsmToken::EndOfStatement))
         return TokError("unexpected token in directive");
     }
@@ -1681,7 +1681,7 @@ bool AsmParser::ParseDirectiveSymbolAttribute(MCSymbolAttr Attr) {
 
       if (ParseIdentifier(Name))
         return TokError("expected identifier in directive");
-      
+
       MCSymbol *Sym = getContext().GetOrCreateSymbol(Name);
 
       getStreamer().EmitSymbolAttribute(Sym, Attr);
@@ -1708,7 +1708,7 @@ bool AsmParser::ParseDirectiveComm(bool IsLocal) {
   StringRef Name;
   if (ParseIdentifier(Name))
     return TokError("expected identifier in directive");
-  
+
   // Handle the identifier as the key symbol.
   MCSymbol *Sym = getContext().GetOrCreateSymbol(Name);
 
@@ -1728,7 +1728,7 @@ bool AsmParser::ParseDirectiveComm(bool IsLocal) {
     Pow2AlignmentLoc = getLexer().getLoc();
     if (ParseAbsoluteExpression(Pow2Alignment))
       return true;
-    
+
     // If this target takes alignments in bytes (not log) validate and convert.
     if (Lexer.getMAI().getAlignmentIsInBytes()) {
       if (!isPowerOf2_64(Pow2Alignment))
@@ -1736,10 +1736,10 @@ bool AsmParser::ParseDirectiveComm(bool IsLocal) {
       Pow2Alignment = Log2_64(Pow2Alignment);
     }
   }
-  
+
   if (getLexer().isNot(AsmToken::EndOfStatement))
     return TokError("unexpected token in '.comm' or '.lcomm' directive");
-  
+
   Lex();
 
   // NOTE: a size of zero for a .comm should create a undefined symbol
@@ -1798,17 +1798,17 @@ bool AsmParser::ParseDirectiveAbort() {
 bool AsmParser::ParseDirectiveInclude() {
   if (getLexer().isNot(AsmToken::String))
     return TokError("expected string in '.include' directive");
-  
+
   std::string Filename = getTok().getString();
   SMLoc IncludeLoc = getLexer().getLoc();
   Lex();
 
   if (getLexer().isNot(AsmToken::EndOfStatement))
     return TokError("unexpected token in '.include' directive");
-  
+
   // Strip the quotes.
   Filename = Filename.substr(1, Filename.size()-2);
-  
+
   // Attempt to switch the lexer to the included file before consuming the end
   // of statement to avoid losing it when we switch.
   if (EnterIncludeFile(Filename)) {
@@ -1834,7 +1834,7 @@ bool AsmParser::ParseDirectiveIf(SMLoc DirectiveLoc) {
 
     if (getLexer().isNot(AsmToken::EndOfStatement))
       return TokError("unexpected token in '.if' directive");
-    
+
     Lex();
 
     TheCondState.CondMet = ExprValue;
@@ -1867,7 +1867,7 @@ bool AsmParser::ParseDirectiveElseIf(SMLoc DirectiveLoc) {
 
     if (getLexer().isNot(AsmToken::EndOfStatement))
       return TokError("unexpected token in '.elseif' directive");
-    
+
     Lex();
     TheCondState.CondMet = ExprValue;
     TheCondState.Ignore = !TheCondState.CondMet;
@@ -1881,7 +1881,7 @@ bool AsmParser::ParseDirectiveElseIf(SMLoc DirectiveLoc) {
 bool AsmParser::ParseDirectiveElse(SMLoc DirectiveLoc) {
   if (getLexer().isNot(AsmToken::EndOfStatement))
     return TokError("unexpected token in '.else' directive");
-  
+
   Lex();
 
   if (TheCondState.TheCond != AsmCond::IfCond &&
@@ -1905,7 +1905,7 @@ bool AsmParser::ParseDirectiveElse(SMLoc DirectiveLoc) {
 bool AsmParser::ParseDirectiveEndIf(SMLoc DirectiveLoc) {
   if (getLexer().isNot(AsmToken::EndOfStatement))
     return TokError("unexpected token in '.endif' directive");
-  
+
   Lex();
 
   if ((TheCondState.TheCond == AsmCond::NoCond) ||
@@ -1947,8 +1947,8 @@ bool GenericAsmParser::ParseDirectiveFile(StringRef, SMLoc DirectiveLoc) {
   if (FileNumber == -1)
     getStreamer().EmitFileDirective(Filename);
   else {
-     if (getContext().GetDwarfFile(Filename, FileNumber) == 0)
-	Error(FileNumberLoc, "file number already allocated");
+    if (getContext().GetDwarfFile(Filename, FileNumber) == 0)
+      Error(FileNumberLoc, "file number already allocated");
     getStreamer().EmitDwarfFileDirective(FileNumber, Filename);
   }
 
@@ -2042,7 +2042,7 @@ bool GenericAsmParser::ParseDirectiveLoc(StringRef, SMLoc DirectiveLoc) {
             Flags |= DWARF2_FLAG_IS_STMT;
           else
             return Error(Loc, "is_stmt value not 0 or 1");
-	}
+        }
         else {
           return Error(Loc, "is_stmt value not the constant value of 0 or 1");
         }
@@ -2058,7 +2058,7 @@ bool GenericAsmParser::ParseDirectiveLoc(StringRef, SMLoc DirectiveLoc) {
           if (Value < 0)
             return Error(Loc, "isa number less than zero");
           Isa = Value;
-	}
+        }
         else {
           return Error(Loc, "isa number not a constant value");
         }
