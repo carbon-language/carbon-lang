@@ -3675,7 +3675,7 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
   }
 
   if (D.getCXXScopeSpec().isSet() && !NewFD->isInvalidDecl()) {
-    if (!CurContext->isRecord()) {
+    if (isFriend || !CurContext->isRecord()) {
       // Fake up an access specifier if it's supposed to be a class member.
       if (!Redeclaration && isa<CXXRecordDecl>(NewFD->getDeclContext()))
         NewFD->setAccess(AS_public);
@@ -3722,7 +3722,7 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
             Diag((*Func)->getLocation(), diag::note_member_def_close_match);
         }
       }
-    } else if (!isFriend) { 
+    } else {
       // The user provided a superfluous scope specifier inside a class definition:
       //
       // class X {

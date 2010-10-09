@@ -62,3 +62,12 @@ namespace test4 {
  
   class T4B {};
 }
+
+namespace rdar8529993 {
+struct A { ~A(); }; // expected-note {{nearly matches}}
+
+struct B : A
+{
+  template<int> friend A::~A(); // expected-error {{does not match}}
+};
+}
