@@ -6,6 +6,30 @@ import lldb
 import sys
 import StringIO
 
+class Iterator(object):
+    """
+    A generator adaptor for lldb aggregate data structures.
+
+    API clients pass in the aggregate object, and the names of the methods to
+    get the size of the object and its individual element.
+
+    Example usage:
+
+    def disassemble_instructions (insts):
+        from lldbutil import Iterator
+        for i in Iterator(insts, 'GetSize', 'GetInstructionAtIndex'):
+            print i
+    """
+    def __init__(self, obj, getsize, getelem):
+        self.obj = obj
+        self.getsize = getattr(obj, getsize)
+        self.getelem = getattr(obj, getelem)
+
+    def __iter__(self):
+        for i in range(self.getsize()):
+            yield self.getelem(i)
+
+
 ########################################################
 #                                                      #
 # Convert some enum value to its string's counterpart. #
