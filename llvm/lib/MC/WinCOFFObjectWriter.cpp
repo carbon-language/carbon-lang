@@ -801,7 +801,7 @@ void WinCOFFObjectWriter::WriteObject(MCAssembler &Asm,
     if (Sec->Number == -1)
       continue;
 
-    Sec->Header.SizeOfRawData = Layout.getSectionFileSize(i);
+    Sec->Header.SizeOfRawData = Layout.getSectionAddressSize(i);
 
     if (IsPhysicalSection(Sec)) {
       Sec->Header.PointerToRawData = offset;
