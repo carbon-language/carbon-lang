@@ -1888,9 +1888,35 @@ Value *CodeGenFunction::EmitARMBuiltinExpr(unsigned BuiltinID,
   }
 }
 
+llvm::Value *CodeGenFunction::
+BuildVector(const llvm::SmallVectorImpl<llvm::Value*> &Ops) {
+  assert((Ops.size() & (Ops.size() - 1)) == 0 &&
+         "Not a power-of-two sized vector!");
+  bool AllConstants = true;
+  for (unsigned i = 0, e = Ops.size(); i != e && AllConstants; ++i)
+    AllConstants &= isa<Constant>(Ops[i]);
+
+  // If this is a constant vector, create a ConstantVector.
+  if (AllConstants) {
+    std::vector<llvm::Constant*> CstOps;
+    for (unsigned i = 0, e = Ops.size(); i != e; ++i)
+      CstOps.push_back(cast<Constant>(Ops[i]));
+    return llvm::ConstantVector::get(CstOps);
+  }
+
+  // Otherwise, insertelement the values to build the vector.
+  Value *Result =
+    llvm::UndefValue::get(llvm::VectorType::get(Ops[0]->getType(), Ops.size()));
+
+  for (unsigned i = 0, e = Ops.size(); i != e; ++i)
+    Result = Builder.CreateInsertElement(Result, Ops[i],
+               llvm::ConstantInt::get(llvm::Type::getInt32Ty(VMContext), i));
+
+  return Result;
+}
+
 Value *CodeGenFunction::EmitX86BuiltinExpr(unsigned BuiltinID,
                                            const CallExpr *E) {
-
   llvm::SmallVector<Value*, 4> Ops;
 
   // Find out if any arguments are required to be integer constant expressions.
@@ -1971,6 +1997,11 @@ Value *CodeGenFunction::EmitX86BuiltinExpr(unsigned BuiltinID,
     llvm::Function *F = CGM.getIntrinsic(ID);
     return Builder.CreateCall(F, &Ops[0], &Ops[0] + Ops.size(), name);
   }
+  case X86::BI__builtin_ia32_vec_init_v8qi:
+  case X86::BI__builtin_ia32_vec_init_v4hi:
+  case X86::BI__builtin_ia32_vec_init_v2si:
+    return Builder.CreateBitCast(BuildVector(Ops),
+                                 llvm::Type::getX86_MMXTy(VMContext));
   case X86::BI__builtin_ia32_pslldi:
   case X86::BI__builtin_ia32_psllqi:
   case X86::BI__builtin_ia32_psllwi:
