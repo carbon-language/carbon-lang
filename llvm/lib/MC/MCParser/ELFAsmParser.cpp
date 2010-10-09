@@ -8,13 +8,13 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/MC/MCParser/MCAsmParserExtension.h"
+#include "llvm/ADT/StringSwitch.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCParser/MCAsmLexer.h"
 #include "llvm/MC/MCSectionELF.h"
 #include "llvm/MC/MCStreamer.h"
-#include "llvm/ADT/Twine.h"
 using namespace llvm;
 
 namespace {
@@ -49,6 +49,7 @@ public:
     AddDirectiveHandler<&ELFAsmParser::ParseDirectiveSection>(".section");
     AddDirectiveHandler<&ELFAsmParser::ParseDirectiveSize>(".size");
     AddDirectiveHandler<&ELFAsmParser::ParseDirectivePrevious>(".previous");
+    AddDirectiveHandler<&ELFAsmParser::ParseDirectiveType>(".type");
   }
 
   // FIXME: Part of this logic is duplicated in the MCELFStreamer. What is
@@ -112,6 +113,7 @@ public:
   bool ParseDirectiveSection(StringRef, SMLoc);
   bool ParseDirectiveSize(StringRef, SMLoc);
   bool ParseDirectivePrevious(StringRef, SMLoc);
+  bool ParseDirectiveType(StringRef, SMLoc);
 
 private:
   bool ParseSectionName(StringRef &SectionName);
@@ -293,6 +295,52 @@ bool ELFAsmParser::ParseDirectivePrevious(StringRef DirName, SMLoc) {
   const MCSection *PreviousSection = getStreamer().getPreviousSection();
   if (PreviousSection != NULL)
     getStreamer().SwitchSection(PreviousSection);
+
+  return false;
+}
+
+/// ParseDirectiveELFType
+///  ::= .type identifier , @attribute
+bool ELFAsmParser::ParseDirectiveType(StringRef, SMLoc) {
+  StringRef Name;
+  if (getParser().ParseIdentifier(Name))
+    return TokError("expected identifier in directive");
+
+  // Handle the identifier as the key symbol.
+  MCSymbol *Sym = getContext().GetOrCreateSymbol(Name);
+
+  if (getLexer().isNot(AsmToken::Comma))
+    return TokError("unexpected token in '.type' directive");
+  Lex();
+
+  if (getLexer().isNot(AsmToken::At))
+    return TokError("expected '@' before type");
+  Lex();
+
+  StringRef Type;
+  SMLoc TypeLoc;
+
+  TypeLoc = getLexer().getLoc();
+  if (getParser().ParseIdentifier(Type))
+    return TokError("expected symbol type in directive");
+
+  MCSymbolAttr Attr = StringSwitch<MCSymbolAttr>(Type)
+    .Case("function", MCSA_ELF_TypeFunction)
+    .Case("object", MCSA_ELF_TypeObject)
+    .Case("tls_object", MCSA_ELF_TypeTLS)
+    .Case("common", MCSA_ELF_TypeCommon)
+    .Case("notype", MCSA_ELF_TypeNoType)
+    .Default(MCSA_Invalid);
+
+  if (Attr == MCSA_Invalid)
+    return Error(TypeLoc, "unsupported attribute in '.type' directive");
+
+  if (getLexer().isNot(AsmToken::EndOfStatement))
+    return TokError("unexpected token in '.type' directive");
+
+  Lex();
+
+  getStreamer().EmitSymbolAttribute(Sym, Attr);
 
   return false;
 }

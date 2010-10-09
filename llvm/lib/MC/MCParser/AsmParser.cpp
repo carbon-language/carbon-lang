@@ -983,8 +983,6 @@ bool AsmParser::ParseStatement() {
       return ParseDirectiveSymbolAttribute(MCSA_Protected);
     if (IDVal == ".reference")
       return ParseDirectiveSymbolAttribute(MCSA_Reference);
-    if (IDVal == ".type")
-      return ParseDirectiveELFType();
     if (IDVal == ".weak")
       return ParseDirectiveSymbolAttribute(MCSA_Weak);
     if (IDVal == ".weak_definition")
@@ -1698,52 +1696,6 @@ bool AsmParser::ParseDirectiveSymbolAttribute(MCSymbolAttr Attr) {
   }
 
   Lex();
-  return false;
-}
-
-/// ParseDirectiveELFType
-///  ::= .type identifier , @attribute
-bool AsmParser::ParseDirectiveELFType() {
-  StringRef Name;
-  if (ParseIdentifier(Name))
-    return TokError("expected identifier in directive");
-
-  // Handle the identifier as the key symbol.
-  MCSymbol *Sym = getContext().GetOrCreateSymbol(Name);
-
-  if (getLexer().isNot(AsmToken::Comma))
-    return TokError("unexpected token in '.type' directive");
-  Lex();
-
-  if (getLexer().isNot(AsmToken::At))
-    return TokError("expected '@' before type");
-  Lex();
-
-  StringRef Type;
-  SMLoc TypeLoc;
-
-  TypeLoc = getLexer().getLoc();
-  if (ParseIdentifier(Type))
-    return TokError("expected symbol type in directive");
-
-  MCSymbolAttr Attr = StringSwitch<MCSymbolAttr>(Type)
-    .Case("function", MCSA_ELF_TypeFunction)
-    .Case("object", MCSA_ELF_TypeObject)
-    .Case("tls_object", MCSA_ELF_TypeTLS)
-    .Case("common", MCSA_ELF_TypeCommon)
-    .Case("notype", MCSA_ELF_TypeNoType)
-    .Default(MCSA_Invalid);
-
-  if (Attr == MCSA_Invalid)
-    return Error(TypeLoc, "unsupported attribute in '.type' directive");
-
-  if (getLexer().isNot(AsmToken::EndOfStatement))
-    return TokError("unexpected token in '.type' directive");
-
-  Lex();
-
-  getStreamer().EmitSymbolAttribute(Sym, Attr);
-
   return false;
 }
 
