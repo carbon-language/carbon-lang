@@ -633,7 +633,7 @@ CommandObject::g_arguments_data[] =
 {
     { eArgTypeAddress, "address", CommandCompletions::eNoCompletion, NULL, "A valid address in the target program's execution space." },
     { eArgTypeAliasName, "alias-name", CommandCompletions::eNoCompletion, NULL, "The name of an abbreviation (alias) for a debugger command." },
-   { eArgTypeAliasOptions, "options-for-aliased-command", CommandCompletions::eNoCompletion, NULL, "Command options to be used as part of an alias (abbreviation) definition.  (See 'help commands alias' for more information.)" },
+    { eArgTypeAliasOptions, "options-for-aliased-command", CommandCompletions::eNoCompletion, NULL, "Command options to be used as part of an alias (abbreviation) definition.  (See 'help commands alias' for more information.)" },
     { eArgTypeArchitecture, "arch", CommandCompletions::eNoCompletion, NULL, "The architecture name, e.g. i386 or x86_64." },
     { eArgTypeBoolean, "boolean", CommandCompletions::eNoCompletion, NULL, "A Boolean value: 'true' or 'false'" },
     { eArgTypeBreakpointID, "breakpt-id", CommandCompletions::eNoCompletion, BreakpointIDHelpTextCallback, NULL },
@@ -678,7 +678,7 @@ CommandObject::g_arguments_data[] =
     { eArgTypeSettingVariableName, "setting-variable-name", CommandCompletions::eNoCompletion, NULL, "The name of a settable internal debugger variable.  Type 'settings list' to see a complete list of such variables." },
     { eArgTypeShlibName, "shlib-name", CommandCompletions::eNoCompletion, NULL, "The name of a shared library." },
     { eArgTypeSourceFile, "source-file", CommandCompletions::eNoCompletion, NULL, "The name of a source file.." },
-    { eArgTypeSortOrder, "sort-order", CommandCompletions::eNoCompletion, NULL, "The sort order when dumping the symbol table." },
+    { eArgTypeSortOrder, "sort-order", CommandCompletions::eNoCompletion, NULL, "Specify a sort order when dumping lists." },
     { eArgTypeStartAddress, "start-address", CommandCompletions::eNoCompletion, NULL, "Help text goes here." },
     { eArgTypeSymbol, "symbol", CommandCompletions::eNoCompletion, NULL, "Any symbol name (function name, variable, argument, etc.)" },
     { eArgTypeThreadID, "thread-id", CommandCompletions::eNoCompletion, NULL, "Thread ID number." },

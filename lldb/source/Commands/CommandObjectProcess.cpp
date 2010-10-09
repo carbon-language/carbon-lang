@@ -846,8 +846,15 @@ public:
 
         if (command.GetArgumentCount() == 1)
         {
-            int signo = Args::StringToSInt32(command.GetArgumentAtIndex(0), -1, 0);
-            if (signo == -1)
+            int signo = LLDB_INVALID_SIGNAL_NUMBER;
+            
+            const char *signal_name = command.GetArgumentAtIndex(0);
+            if (::isxdigit (signal_name[0]))
+                signo = Args::StringToSInt32(signal_name, LLDB_INVALID_SIGNAL_NUMBER, 0);
+            else
+                signo = process->GetUnixSignals().GetSignalNumberFromName (signal_name);
+            
+            if (signo == LLDB_INVALID_SIGNAL_NUMBER)
             {
                 result.AppendErrorWithFormat ("Invalid signal argument '%s'.\n", command.GetArgumentAtIndex(0));
                 result.SetStatus (eReturnStatusFailed);

@@ -78,8 +78,12 @@ ThreadGDBRemote::GetQueueName ()
 bool
 ThreadGDBRemote::WillResume (StateType resume_state)
 {
-    // TODO: cache for next time in case we can match things up??
     ClearStackFrames();
+    // Call the Thread::WillResume first. If we stop at a signal, the stop info
+    // class for signal will set the resume signal that we need below. The signal
+    // stuff obeys the Process::UnixSignal defaults. 
+    Thread::WillResume(resume_state);
+
     int signo = GetResumeSignal();
 
     switch (resume_state)
@@ -106,7 +110,6 @@ ThreadGDBRemote::WillResume (StateType resume_state)
     default:
         break;
     }
-    Thread::WillResume(resume_state);
     return true;
 }
 
