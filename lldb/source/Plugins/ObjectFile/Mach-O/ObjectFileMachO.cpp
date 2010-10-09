@@ -1403,6 +1403,7 @@ ObjectFileMachO::GetDependentModules (FileSpecList& files)
         case LoadCommandDylibReexport:
         case LoadCommandDynamicLinkerLoad:
         case LoadCommandFixedVMShlibLoad:
+        case LoadCommandDylibLoadUpward;
             {
                 uint32_t name_offset = cmd_offset + m_data.GetU32(&offset);
                 const char *path = m_data.PeekCStr(name_offset);
