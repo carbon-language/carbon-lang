@@ -30,4 +30,5 @@ void test2() {
 
 void test3() {
   (void)L"\u1234";  // expected-error {{unicode escape sequences are only valid in C99 or C++}}
+  (void)L'\u1234';  // expected-error {{unicode escape sequences are only valid in C99 or C++}}
 }
