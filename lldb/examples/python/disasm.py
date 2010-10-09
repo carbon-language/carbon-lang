@@ -14,7 +14,7 @@ import sys
 import time
 
 def disassemble_instructions (insts):
-    for i in range(0, insts.GetSize()):
+    for i in range(insts.GetSize()):
         print insts.GetInstructionAtIndex(i)
 
 # Initialize LLDB so we can use it
