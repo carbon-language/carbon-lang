@@ -89,16 +89,11 @@ def CortexA8Itineraries : ProcessorItineraries<
   // so we use 6 for those cases
   //
   InstrItinData<IIC_iMUL16   , [InstrStage<1, [A8_Pipe0]>], [5, 1, 1]>,
-  InstrItinData<IIC_iMAC16   , [InstrStage<1, [A8_Pipe1], 0>,
-                                InstrStage<2, [A8_Pipe0]>], [6, 1, 1, 4]>,
-  InstrItinData<IIC_iMUL32   , [InstrStage<1, [A8_Pipe1], 0>,
-                                InstrStage<2, [A8_Pipe0]>], [6, 1, 1]>,
-  InstrItinData<IIC_iMAC32   , [InstrStage<1, [A8_Pipe1], 0>,
-                                InstrStage<2, [A8_Pipe0]>], [6, 1, 1, 4]>,
-  InstrItinData<IIC_iMUL64   , [InstrStage<2, [A8_Pipe1], 0>,
-                                InstrStage<3, [A8_Pipe0]>], [6, 6, 1, 1]>,
-  InstrItinData<IIC_iMAC64   , [InstrStage<2, [A8_Pipe1], 0>,
-                                InstrStage<3, [A8_Pipe0]>], [6, 6, 1, 1]>,
+  InstrItinData<IIC_iMAC16   , [InstrStage<2, [A8_Pipe0]>], [6, 1, 1, 4]>,
+  InstrItinData<IIC_iMUL32   , [InstrStage<2, [A8_Pipe0]>], [6, 1, 1]>,
+  InstrItinData<IIC_iMAC32   , [InstrStage<2, [A8_Pipe0]>], [6, 1, 1, 4]>,
+  InstrItinData<IIC_iMUL64   , [InstrStage<3, [A8_Pipe0]>], [6, 6, 1, 1]>,
+  InstrItinData<IIC_iMAC64   , [InstrStage<3, [A8_Pipe0]>], [6, 6, 1, 1]>,
 
   // Integer load pipeline
   //
