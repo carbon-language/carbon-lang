@@ -288,7 +288,7 @@ BUILTIN(__builtin_bswap32, "UiUi", "nc")
 BUILTIN(__builtin_bswap64, "ULLiULLi", "nc")
 
 // Random GCC builtins
-BUILTIN(__builtin_constant_p, "Us.", "nc")
+BUILTIN(__builtin_constant_p, "is.", "nc")
 BUILTIN(__builtin_classify_type, "i.", "nc")
 BUILTIN(__builtin___CFStringMakeConstantString, "FC*cC*", "nc")
 BUILTIN(__builtin___NSStringMakeConstantString, "FC*cC*", "nc")
