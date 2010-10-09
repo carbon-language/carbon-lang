@@ -548,7 +548,7 @@ class VLD4LN<bits<4> op11_8, bits<4> op7_4, string Dt>
   : NLdSt<1, 0b10, op11_8, op7_4,
           (outs DPR:$dst1, DPR:$dst2, DPR:$dst3, DPR:$dst4),
           (ins addrmode6:$addr, DPR:$src1, DPR:$src2, DPR:$src3, DPR:$src4,
-          nohash_imm:$lane), IIC_VLD4, "vld4", Dt,
+          nohash_imm:$lane), IIC_VLD4ln, "vld4", Dt,
           "\\{$dst1[$lane], $dst2[$lane], $dst3[$lane], $dst4[$lane]\\}, $addr",
           "$src1 = $dst1, $src2 = $dst2, $src3 = $dst3, $src4 = $dst4", []>;
 
@@ -556,16 +556,16 @@ def VLD4LNd8  : VLD4LN<0b0011, {?,?,?,?}, "8">;
 def VLD4LNd16 : VLD4LN<0b0111, {?,?,0,?}, "16">;
 def VLD4LNd32 : VLD4LN<0b1011, {?,0,?,?}, "32">;
 
-def VLD4LNd8Pseudo  : VLDQQLNPseudo<IIC_VLD4>;
-def VLD4LNd16Pseudo : VLDQQLNPseudo<IIC_VLD4>;
-def VLD4LNd32Pseudo : VLDQQLNPseudo<IIC_VLD4>;
+def VLD4LNd8Pseudo  : VLDQQLNPseudo<IIC_VLD4ln>;
+def VLD4LNd16Pseudo : VLDQQLNPseudo<IIC_VLD4ln>;
+def VLD4LNd32Pseudo : VLDQQLNPseudo<IIC_VLD4ln>;
 
 // ...with double-spaced registers:
 def VLD4LNq16 : VLD4LN<0b0111, {?,?,1,?}, "16">;
 def VLD4LNq32 : VLD4LN<0b1011, {?,1,?,?}, "32">;
 
-def VLD4LNq16Pseudo : VLDQQQQLNPseudo<IIC_VLD4>;
-def VLD4LNq32Pseudo : VLDQQQQLNPseudo<IIC_VLD4>;
+def VLD4LNq16Pseudo : VLDQQQQLNPseudo<IIC_VLD4ln>;
+def VLD4LNq32Pseudo : VLDQQQQLNPseudo<IIC_VLD4ln>;
 
 // ...with address register writeback:
 class VLD4LNWB<bits<4> op11_8, bits<4> op7_4, string Dt>
@@ -573,7 +573,7 @@ class VLD4LNWB<bits<4> op11_8, bits<4> op7_4, string Dt>
           (outs DPR:$dst1, DPR:$dst2, DPR:$dst3, DPR:$dst4, GPR:$wb),
           (ins addrmode6:$addr, am6offset:$offset,
            DPR:$src1, DPR:$src2, DPR:$src3, DPR:$src4, nohash_imm:$lane),
-          IIC_VLD4, "vld4", Dt,
+          IIC_VLD4ln, "vld4", Dt,
 "\\{$dst1[$lane], $dst2[$lane], $dst3[$lane], $dst4[$lane]\\}, $addr$offset",
 "$src1 = $dst1, $src2 = $dst2, $src3 = $dst3, $src4 = $dst4, $addr.addr = $wb",
           []>;
@@ -582,15 +582,15 @@ def VLD4LNd8_UPD  : VLD4LNWB<0b0011, {?,?,?,?}, "8">;
 def VLD4LNd16_UPD : VLD4LNWB<0b0111, {?,?,0,?}, "16">;
 def VLD4LNd32_UPD : VLD4LNWB<0b1011, {?,0,?,?}, "32">;
 
-def VLD4LNd8Pseudo_UPD  : VLDQQLNWBPseudo<IIC_VLD4>;
-def VLD4LNd16Pseudo_UPD : VLDQQLNWBPseudo<IIC_VLD4>;
-def VLD4LNd32Pseudo_UPD : VLDQQLNWBPseudo<IIC_VLD4>;
+def VLD4LNd8Pseudo_UPD  : VLDQQLNWBPseudo<IIC_VLD4lnu>;
+def VLD4LNd16Pseudo_UPD : VLDQQLNWBPseudo<IIC_VLD4lnu>;
+def VLD4LNd32Pseudo_UPD : VLDQQLNWBPseudo<IIC_VLD4lnu>;
 
 def VLD4LNq16_UPD : VLD4LNWB<0b0111, {?,?,1,?}, "16">;
 def VLD4LNq32_UPD : VLD4LNWB<0b1011, {?,1,?,?}, "32">;
 
-def VLD4LNq16Pseudo_UPD : VLDQQQQLNWBPseudo<IIC_VLD4>;
-def VLD4LNq32Pseudo_UPD : VLDQQQQLNWBPseudo<IIC_VLD4>;
+def VLD4LNq16Pseudo_UPD : VLDQQQQLNWBPseudo<IIC_VLD4lnu>;
+def VLD4LNq32Pseudo_UPD : VLDQQQQLNWBPseudo<IIC_VLD4lnu>;
 
 //   VLD1DUP  : Vector Load (single element to all lanes)
 //   VLD2DUP  : Vector Load (single 2-element structure to all lanes)

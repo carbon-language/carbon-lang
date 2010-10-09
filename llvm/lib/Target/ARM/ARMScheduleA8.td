@@ -390,7 +390,7 @@ def CortexA8Itineraries : ProcessorItineraries<
   //
   // VLD1
   InstrItinData<IIC_VLD1,     [InstrStage<1, [A8_Pipe0, A8_Pipe1]>,
-                               InstrStage<1, [A8_NLSPipe]>,
+                               InstrStage<1, [A8_NLSPipe], 1>,
                                InstrStage<1, [A8_LSPipe]>]>,
   // VLD1x2
   InstrItinData<IIC_VLD1x2,   [InstrStage<1, [A8_Pipe0, A8_Pipe1]>,
@@ -496,8 +496,27 @@ def CortexA8Itineraries : ProcessorItineraries<
   //
   // VLD4
   InstrItinData<IIC_VLD4,     [InstrStage<1, [A8_Pipe0, A8_Pipe1]>,
-                               InstrStage<1, [A8_NLSPipe]>,
-                               InstrStage<1, [A8_LSPipe]>], [2, 2, 2, 2, 1]>,
+                               InstrStage<4, [A8_NLSPipe], 1>,
+                               InstrStage<4, [A8_LSPipe]>],
+                              [3, 3, 4, 4, 1]>,
+  //
+  // VLD4ln
+  InstrItinData<IIC_VLD4ln,   [InstrStage<1, [A8_Pipe0, A8_Pipe1]>,
+                               InstrStage<5, [A8_NLSPipe], 1>,
+                               InstrStage<5, [A8_LSPipe]>],
+                              [4, 4, 5, 5, 1, 1, 1, 1, 2, 2]>,
+  //
+  // VLD4u
+  InstrItinData<IIC_VLD4u,    [InstrStage<1, [A8_Pipe0, A8_Pipe1]>,
+                               InstrStage<4, [A8_NLSPipe], 1>,
+                               InstrStage<4, [A8_LSPipe]>],
+                              [3, 3, 4, 4, 2, 1]>,
+  //
+  // VLD4lnu
+  InstrItinData<IIC_VLD4lnu,  [InstrStage<1, [A8_Pipe0, A8_Pipe1]>,
+                               InstrStage<5, [A8_NLSPipe], 1>,
+                               InstrStage<5, [A8_LSPipe]>],
+                              [4, 4, 5, 5, 2, 1, 1, 1, 1, 1, 2, 2]>,
   //
   // VST
   // FIXME: We don't model this instruction properly

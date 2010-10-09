@@ -854,14 +854,36 @@ def CortexA9Itineraries : ProcessorItineraries<
                               [5, 5, 6, 2, 1, 1, 1, 1, 1, 2]>,
   //
   // VLD4
-  // FIXME: We don't model this instruction properly
   InstrItinData<IIC_VLD4,     [InstrStage<1, [A9_DRegsN],   0, Required>,
-                               // Extra latency cycles since wbck is 6 cycles
-                               InstrStage<7, [A9_DRegsVFP], 0, Reserved>,
+                               InstrStage<10, [A9_DRegsVFP], 0, Reserved>,
                                InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
                                InstrStage<1, [A9_MUX0], 0>,
-                               InstrStage<1, [A9_NPipe]>],
-                              [2, 2, 2, 2, 1]>,
+                               InstrStage<4, [A9_NPipe]>],
+                              [4, 4, 5, 5, 1]>,
+  //
+  // VLD4ln
+  InstrItinData<IIC_VLD4ln,   [InstrStage<1, [A9_DRegsN],   0, Required>,
+                               InstrStage<11, [A9_DRegsVFP], 0, Reserved>,
+                               InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
+                               InstrStage<1, [A9_MUX0], 0>,
+                               InstrStage<5, [A9_NPipe]>],
+                              [5, 5, 6, 6, 1, 1, 1, 1, 2, 2]>,
+  //
+  // VLD4u
+  InstrItinData<IIC_VLD4u,    [InstrStage<1, [A9_DRegsN],   0, Required>,
+                               InstrStage<10, [A9_DRegsVFP], 0, Reserved>,
+                               InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
+                               InstrStage<1, [A9_MUX0], 0>,
+                               InstrStage<4, [A9_NPipe]>],
+                              [4, 4, 5, 5, 2, 1]>,
+  //
+  // VLD4lnu
+  InstrItinData<IIC_VLD4lnu,  [InstrStage<1, [A9_DRegsN],   0, Required>,
+                               InstrStage<11, [A9_DRegsVFP], 0, Reserved>,
+                               InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
+                               InstrStage<1, [A9_MUX0], 0>,
+                               InstrStage<5, [A9_NPipe]>],
+                              [5, 5, 6, 6, 2, 1, 1, 1, 1, 1, 2, 2]>,
   //
   // VST
   // FIXME: We don't model this instruction properly
