@@ -17,7 +17,7 @@
       <item> global </item>
       <item> constant </item>
       <item> gc </item>
-      <item> module asm </item>
+      <item> module </item>
       <item> asm </item>
       <item> target </item>
       <item> datalayout </item>
