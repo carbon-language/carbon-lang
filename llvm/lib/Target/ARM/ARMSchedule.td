@@ -127,7 +127,19 @@ def IIC_fpStore64  : InstrItinClass;
 def IIC_fpStore_m  : InstrItinClass<0>;  // micro-coded
 def IIC_fpStore_mu : InstrItinClass<0>;  // micro-coded
 def IIC_VLD1       : InstrItinClass;
+def IIC_VLD1x2     : InstrItinClass;
+def IIC_VLD1x3     : InstrItinClass;
+def IIC_VLD1x4     : InstrItinClass;
+def IIC_VLD1u      : InstrItinClass;
+def IIC_VLD1x2u    : InstrItinClass;
+def IIC_VLD1x3u    : InstrItinClass;
+def IIC_VLD1x4u    : InstrItinClass;
 def IIC_VLD2       : InstrItinClass;
+def IIC_VLD2x2     : InstrItinClass;
+def IIC_VLD2u      : InstrItinClass;
+def IIC_VLD2x2u    : InstrItinClass;
+def IIC_VLD2ln     : InstrItinClass;
+def IIC_VLD2lnu    : InstrItinClass;
 def IIC_VLD3       : InstrItinClass;
 def IIC_VLD4       : InstrItinClass;
 def IIC_VST        : InstrItinClass;

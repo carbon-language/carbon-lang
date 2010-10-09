@@ -46,8 +46,8 @@ entry:
 ; CHECK:        t2:
 ; CHECK:        vld1.16
 ; CHECK-NOT:    vmov
-; CHECK:        vld1.16
 ; CHECK:        vmul.i16
+; CHECK:        vld1.16
 ; CHECK:        vmul.i16
 ; CHECK-NOT:    vmov
 ; CHECK:        vst1.16
