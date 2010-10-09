@@ -1528,6 +1528,10 @@ OptimizeCompareInstr(MachineInstr *CmpInstr, unsigned SrcReg, int CmpMask,
   // want to change.
   MachineBasicBlock::const_iterator I = CmpInstr, E = MI,
     B = MI->getParent()->begin();
+
+  // Early exit if CmpInstr is at the beginning of the BB.
+  if (I == B) return false;
+
   --I;
   for (; I != E; --I) {
     const MachineInstr &Instr = *I;
