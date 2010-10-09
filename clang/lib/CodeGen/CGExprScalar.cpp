@@ -161,18 +161,29 @@ public:
   // l-values.
   Value *VisitDeclRefExpr(DeclRefExpr *E) {
     Expr::EvalResult Result;
-    if (E->Evaluate(Result, CGF.getContext()) && Result.Val.isInt()) {
-      assert(!Result.HasSideEffects && "Constant declref with side-effect?!");
-      llvm::ConstantInt *CI 
-        = llvm::ConstantInt::get(VMContext, Result.Val.getInt());
-      if (VarDecl *VD = dyn_cast<VarDecl>((E->getDecl()))) {
-        if (!CGF.getContext().DeclMustBeEmitted(VD))
-          CGF.EmitDeclRefExprDbgValue(E, CI);
-      } else if (isa<EnumConstantDecl>(E->getDecl()))
-        CGF.EmitDeclRefExprDbgValue(E, CI);        
-      return CI;
+    if (!E->Evaluate(Result, CGF.getContext()))
+      return EmitLoadOfLValue(E);
+
+    assert(!Result.HasSideEffects && "Constant declref with side-effect?!");
+
+    llvm::Constant *C;
+    if (Result.Val.isInt()) {
+      C = llvm::ConstantInt::get(VMContext, Result.Val.getInt());
+    } else if (Result.Val.isFloat()) {
+      C = llvm::ConstantFP::get(VMContext, Result.Val.getFloat());
+    } else {
+      return EmitLoadOfLValue(E);
     }
-    return EmitLoadOfLValue(E);
+
+    // Make sure we emit a debug reference to the global variable.
+    if (VarDecl *VD = dyn_cast<VarDecl>(E->getDecl())) {
+      if (!CGF.getContext().DeclMustBeEmitted(VD))
+        CGF.EmitDeclRefExprDbgValue(E, C);
+    } else if (isa<EnumConstantDecl>(E->getDecl())) {
+      CGF.EmitDeclRefExprDbgValue(E, C);
+    }
+
+    return C;
   }
   Value *VisitObjCSelectorExpr(ObjCSelectorExpr *E) {
     return CGF.EmitObjCSelectorExpr(E);

@@ -1780,6 +1780,8 @@ public:
   bool VisitUnaryReal(const UnaryOperator *E);
   bool VisitUnaryImag(const UnaryOperator *E);
 
+  bool VisitDeclRefExpr(const DeclRefExpr *E);
+
   // FIXME: Missing: array subscript of vector, member of vector,
   //                 ImplicitValueInitExpr
 };
@@ -1865,6 +1867,45 @@ bool FloatExprEvaluator::VisitCallExpr(const CallExpr *E) {
     return true;
   }
   }
+}
+
+bool FloatExprEvaluator::VisitDeclRefExpr(const DeclRefExpr *E) {
+  const Decl *D = E->getDecl();
+  if (!isa<VarDecl>(D) || isa<ParmVarDecl>(D)) return false;
+  const VarDecl *VD = cast<VarDecl>(D);
+
+  // Require the qualifiers to be const and not volatile.
+  CanQualType T = Info.Ctx.getCanonicalType(E->getType());
+  if (!T.isConstQualified() || T.isVolatileQualified())
+    return false;
+
+  const Expr *Init = VD->getAnyInitializer();
+  if (!Init) return false;
+
+  if (APValue *V = VD->getEvaluatedValue()) {
+    if (V->isFloat()) {
+      Result = V->getFloat();
+      return true;
+    }
+    return false;
+  }
+
+  if (VD->isEvaluatingValue())
+    return false;
+
+  VD->setEvaluatingValue();
+
+  Expr::EvalResult InitResult;
+  if (Init->Evaluate(InitResult, Info.Ctx) && !InitResult.HasSideEffects &&
+      InitResult.Val.isFloat()) {
+    // Cache the evaluated value in the variable declaration.
+    Result = InitResult.Val.getFloat();
+    VD->setEvaluatedValue(InitResult.Val);
+    return true;
+  }
+
+  VD->setEvaluatedValue(APValue());
+  return false;
 }
 
 bool FloatExprEvaluator::VisitUnaryReal(const UnaryOperator *E) {

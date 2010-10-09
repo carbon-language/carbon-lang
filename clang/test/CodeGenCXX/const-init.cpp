@@ -24,3 +24,15 @@ public:
 // CHECK: @_ZN6PR55812g0E = global %1 { i32 1 }
 C g0 = { C::e1 };
 }
+
+namespace test2 {
+  struct A {
+    static const double d = 1.0;
+    static const float f = d / 2;
+  };
+
+  // CHECK: @_ZN5test22t0E = global double 1.000000e+00, align 8
+  // CHECK: @_ZN5test22t1E = global [2 x double] [double 1.000000e+00, double 5.000000e-01], align 16
+  double t0 = A::d;
+  double t1[] = { A::d, A::f };
+}

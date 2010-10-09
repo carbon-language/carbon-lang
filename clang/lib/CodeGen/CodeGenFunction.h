@@ -1443,7 +1443,7 @@ public:
   LValue EmitStmtExprLValue(const StmtExpr *E);
   LValue EmitPointerToDataMemberBinaryExpr(const BinaryOperator *E);
   LValue EmitObjCSelectorLValue(const ObjCSelectorExpr *E);
-  void   EmitDeclRefExprDbgValue(const DeclRefExpr *E, llvm::ConstantInt *Init);
+  void   EmitDeclRefExprDbgValue(const DeclRefExpr *E, llvm::Constant *Init);
   //===--------------------------------------------------------------------===//
   //                         Scalar Expression Emission
   //===--------------------------------------------------------------------===//

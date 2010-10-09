@@ -186,7 +186,7 @@ public:
   void EmitGlobalVariable(llvm::GlobalVariable *GV, ObjCInterfaceDecl *Decl);
 
   /// EmitGlobalVariable - Emit global variable's debug info.
-  void EmitGlobalVariable(const ValueDecl *VD, llvm::ConstantInt *Init);
+  void EmitGlobalVariable(const ValueDecl *VD, llvm::Constant *Init);
 
   /// getOrCreateRecordType - Emit record type's standalone debug info. 
   llvm::DIType getOrCreateRecordType(QualType Ty, SourceLocation L);
