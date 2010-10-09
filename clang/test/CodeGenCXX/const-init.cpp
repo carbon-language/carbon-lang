@@ -31,8 +31,8 @@ namespace test2 {
     static const float f = d / 2;
   };
 
-  // CHECK: @_ZN5test22t0E = global double 1.000000e+00, align 8
-  // CHECK: @_ZN5test22t1E = global [2 x double] [double 1.000000e+00, double 5.000000e-01], align 16
+  // CHECK: @_ZN5test22t0E = global double {{1\.0+e\+0+}}, align 8
+  // CHECK: @_ZN5test22t1E = global [2 x double] [double {{1\.0+e\+0+}}, double {{5\.0+e-0*}}1], align 16
   double t0 = A::d;
   double t1[] = { A::d, A::f };
 }
