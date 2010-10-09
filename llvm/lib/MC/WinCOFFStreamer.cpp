@@ -157,6 +157,9 @@ void WinCOFFStreamer::EmitAssemblerFlag(MCAssemblerFlag Flag) {
 }
 
 void WinCOFFStreamer::EmitAssignment(MCSymbol *Symbol, const MCExpr *Value) {
+  assert((Symbol->isInSection()
+         ? Symbol->getSection().getVariant() == MCSection::SV_COFF
+         : true) && "Got non COFF section in the COFF backend!");
   // FIXME: This is all very ugly and depressing. What needs to happen here
   // depends on quite a few things that are all part of relaxation, which we
   // don't really even do.
@@ -197,6 +200,10 @@ void WinCOFFStreamer::EmitAssignment(MCSymbol *Symbol, const MCExpr *Value) {
 
 void WinCOFFStreamer::EmitSymbolAttribute(MCSymbol *Symbol,
                                           MCSymbolAttr Attribute) {
+  assert(Symbol && "Symbol must be non-null!");
+  assert((Symbol->isInSection()
+         ? Symbol->getSection().getVariant() == MCSection::SV_COFF
+         : true) && "Got non COFF section in the COFF backend!");
   switch (Attribute) {
   case MCSA_WeakReference:
     getAssembler().getOrCreateSymbolData(*Symbol).modifyFlags(
@@ -219,6 +226,9 @@ void WinCOFFStreamer::EmitSymbolDesc(MCSymbol *Symbol, unsigned DescValue) {
 }
 
 void WinCOFFStreamer::BeginCOFFSymbolDef(MCSymbol const *Symbol) {
+  assert((Symbol->isInSection()
+         ? Symbol->getSection().getVariant() == MCSection::SV_COFF
+         : true) && "Got non COFF section in the COFF backend!");
   assert(CurSymbol == NULL && "EndCOFFSymbolDef must be called between calls "
                               "to BeginCOFFSymbolDef!");
   CurSymbol = Symbol;
@@ -255,10 +265,16 @@ void WinCOFFStreamer::EmitELFSize(MCSymbol *Symbol, const MCExpr *Value) {
 
 void WinCOFFStreamer::EmitCommonSymbol(MCSymbol *Symbol, uint64_t Size,
                                        unsigned ByteAlignment) {
+  assert((Symbol->isInSection()
+         ? Symbol->getSection().getVariant() == MCSection::SV_COFF
+         : true) && "Got non COFF section in the COFF backend!");
   AddCommonSymbol(Symbol, Size, ByteAlignment, true);
 }
 
 void WinCOFFStreamer::EmitLocalCommonSymbol(MCSymbol *Symbol, uint64_t Size) {
+  assert((Symbol->isInSection()
+         ? Symbol->getSection().getVariant() == MCSection::SV_COFF
+         : true) && "Got non COFF section in the COFF backend!");
   AddCommonSymbol(Symbol, Size, 1, false);
 }
 
