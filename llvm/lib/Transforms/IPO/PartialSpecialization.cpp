@@ -25,6 +25,7 @@
 #include "llvm/Module.h"
 #include "llvm/Pass.h"
 #include "llvm/ADT/Statistic.h"
+#include "llvm/Analysis/InlineCost.h"
 #include "llvm/Transforms/Utils/Cloning.h"
 #include "llvm/Support/CallSite.h"
 #include "llvm/ADT/DenseSet.h"
@@ -37,17 +38,12 @@ STATISTIC(numReplaced, "Number of callers replaced by specialization");
 // Maximum number of arguments markable interested
 static const int MaxInterests = 6;
 
-// Call must be used at least occasionally
-static const int CallsMin = 5;
-
-// Must have 10% of calls having the same constant to specialize on
-static const double ConstValPercent = .1;
-
 namespace {
   typedef SmallVector<int, MaxInterests> InterestingArgVector;
   class PartSpec : public ModulePass {
     void scanForInterest(Function&, InterestingArgVector&);
     int scanDistribution(Function&, int, std::map<Constant*, int>&);
+    InlineCostAnalyzer CA;
   public :
     static char ID; // Pass identification, replacement for typeid
     PartSpec() : ModulePass(ID) {}
@@ -78,6 +74,10 @@ SpecializeFunction(Function* F,
                                /*ModuleLevelChanges=*/false);
   NF->setLinkage(GlobalValue::InternalLinkage);
   F->getParent()->getFunctionList().push_back(NF);
+
+  // FIXME: Specialized versions getting the same constants should also get
+  // the same name.  That way, specializations for public functions can be
+  // marked linkonce_odr and reused across modules.
 
   for (Value::use_iterator ii = F->use_begin(), ee = F->use_end(); 
        ii != ee; ) {
@@ -144,22 +144,37 @@ bool PartSpec::runOnModule(Module &M) {
     bool breakOuter = false;
     for (unsigned int x = 0; !breakOuter && x < interestingArgs.size(); ++x) {
       std::map<Constant*, int> distribution;
-      int total = scanDistribution(F, interestingArgs[x], distribution);
-      if (total > CallsMin) 
-        for (std::map<Constant*, int>::iterator ii = distribution.begin(),
-               ee = distribution.end(); ii != ee; ++ii)
-          if (total > ii->second && ii->first &&
-               ii->second > total * ConstValPercent) {
-            ValueMap<const Value*, Value*> m;
-            Function::arg_iterator arg = F.arg_begin();
-            for (int y = 0; y < interestingArgs[x]; ++y)
-              ++arg;
-            m[&*arg] = ii->first;
-            SpecializeFunction(&F, m);
-            ++numSpecialized;
-            breakOuter = true;
-            Changed = true;
-          }
+      scanDistribution(F, interestingArgs[x], distribution);
+      for (std::map<Constant*, int>::iterator ii = distribution.begin(),
+             ee = distribution.end(); ii != ee; ++ii) {
+        // The distribution map might have an entry for NULL (i.e., one or more
+        // callsites were passing a non-constant there).  We allow that to 
+        // happen so that we can see whether any callsites pass a non-constant; 
+        // if none do and the function is internal, we might have an opportunity
+        // to kill the original function.
+        if (!ii->first) continue;
+        int bonus = ii->second;
+        SmallVector<unsigned, 1> argnos;
+        argnos.push_back(interestingArgs[x]);
+        InlineCost cost = CA.getSpecializationCost(&F, argnos);
+        // FIXME: If this is the last constant entry, and no non-constant
+        // entries exist, and the target function is internal, the cost should
+        // be reduced by the original size of the target function, almost
+        // certainly making it negative and causing a specialization that will
+        // leave the original function dead and removable.
+        if (cost.isAlways() || 
+           (cost.isVariable() && cost.getValue() < bonus)) {
+          ValueMap<const Value*, Value*> m;
+          Function::arg_iterator arg = F.arg_begin();
+          for (int y = 0; y < interestingArgs[x]; ++y)
+            ++arg;
+          m[&*arg] = ii->first;
+          SpecializeFunction(&F, m);
+          ++numSpecialized;
+          breakOuter = true;
+          Changed = true;
+        }
+      }
     }
   }
   return Changed;
@@ -170,28 +185,20 @@ bool PartSpec::runOnModule(Module &M) {
 void PartSpec::scanForInterest(Function& F, InterestingArgVector& args) {
   for(Function::arg_iterator ii = F.arg_begin(), ee = F.arg_end();
       ii != ee; ++ii) {
-    for(Value::use_iterator ui = ii->use_begin(), ue = ii->use_end();
-        ui != ue; ++ui) {
-
-      bool interesting = false;
-      User *U = *ui;
-      if (isa<CmpInst>(U)) interesting = true;
-      else if (isa<CallInst>(U))
-        interesting = ui->getOperand(0) == ii;
-      else if (isa<InvokeInst>(U))
-        interesting = ui->getOperand(0) == ii;
-      else if (isa<SwitchInst>(U)) interesting = true;
-      else if (isa<BranchInst>(U)) interesting = true;
-
-      if (interesting) {
-        args.push_back(std::distance(F.arg_begin(), ii));
-        break;
-      }
+    int argno = std::distance(F.arg_begin(), ii);
+    SmallVector<unsigned, 1> argnos;
+    argnos.push_back(argno);
+    int bonus = CA.getSpecializationBonus(&F, argnos);
+    if (bonus > 0) {
+      args.push_back(argno);
     }
   }
 }
 
 /// scanDistribution - Construct a histogram of constants for arg of F at arg.
+/// For each distinct constant, we'll compute the total of the specialization
+/// bonus across all callsites passing that constant; if that total exceeds
+/// the specialization cost, we will create the specialization.
 int PartSpec::scanDistribution(Function& F, int arg, 
                                std::map<Constant*, int>& dist) {
   bool hasIndirect = false;
@@ -201,7 +208,10 @@ int PartSpec::scanDistribution(Function& F, int arg,
     User *U = *ii;
     CallSite CS(U);
     if (CS && CS.getCalledFunction() == &F) {
-      ++dist[dyn_cast<Constant>(CS.getArgument(arg))];
+      SmallVector<unsigned, 1> argnos;
+      argnos.push_back(arg);
+      dist[dyn_cast<Constant>(CS.getArgument(arg))] += 
+           CA.getSpecializationBonus(&F, argnos);
       ++total;
     } else
       hasIndirect = true;
