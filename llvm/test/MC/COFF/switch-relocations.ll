@@ -3,6 +3,9 @@
 
 ; This test case was reduced from Lua/lapi.c.
 
+; This test has yet to be converted to assembly becase llvm-mc cannot read
+; x86-64 COFF code yet.
+
 ; RUN: llc -filetype=obj -mtriple i686-pc-win32 %s -o %t
 ; RUN: llc -filetype=obj -mtriple x86_64-pc-win32 %s -o %t
 

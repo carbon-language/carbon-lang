@@ -269,6 +269,7 @@ namespace llvm {
 
 extern MCAsmParserExtension *createDarwinAsmParser();
 extern MCAsmParserExtension *createELFAsmParser();
+extern MCAsmParserExtension *createCOFFAsmParser();
 
 }
 
@@ -288,7 +289,10 @@ AsmParser::AsmParser(const Target &T, SourceMgr &_SM, MCContext &_Ctx,
   //
   // FIXME: This is a hack, we need to (majorly) cleanup how these objects are
   // created.
-  if (_MAI.hasSubsectionsViaSymbols()) {
+  if (_MAI.hasMicrosoftFastStdCallMangling()) {
+    PlatformParser = createCOFFAsmParser();
+    PlatformParser->Initialize(*this);
+  } else if (_MAI.hasSubsectionsViaSymbols()) {
     PlatformParser = createDarwinAsmParser();
     PlatformParser->Initialize(*this);
   } else {
