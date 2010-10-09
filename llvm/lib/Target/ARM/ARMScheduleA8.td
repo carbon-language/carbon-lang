@@ -441,39 +441,58 @@ def CortexA8Itineraries : ProcessorItineraries<
                               [2, 2, 1]>,
   //
   // VLD2x2
-  InstrItinData<IIC_VLD2,     [InstrStage<1, [A8_Pipe0, A8_Pipe1]>,
+  InstrItinData<IIC_VLD2x2,   [InstrStage<1, [A8_Pipe0, A8_Pipe1]>,
                                InstrStage<3, [A8_NLSPipe], 1>,
                                InstrStage<3, [A8_LSPipe]>],
                               [2, 2, 3, 3, 1]>,
   //
   // VLD2ln
-  InstrItinData<IIC_VLD2,     [InstrStage<1, [A8_Pipe0, A8_Pipe1]>,
+  InstrItinData<IIC_VLD2ln,   [InstrStage<1, [A8_Pipe0, A8_Pipe1]>,
                                InstrStage<3, [A8_NLSPipe], 1>,
                                InstrStage<3, [A8_LSPipe]>],
                               [3, 3, 1, 1, 1, 1]>,
   //
   // VLD2u
-  InstrItinData<IIC_VLD2,     [InstrStage<1, [A8_Pipe0, A8_Pipe1]>,
+  InstrItinData<IIC_VLD2u,    [InstrStage<1, [A8_Pipe0, A8_Pipe1]>,
                                InstrStage<1, [A8_NLSPipe], 1>,
                                InstrStage<1, [A8_LSPipe]>],
                               [2, 2, 2, 1, 1, 1]>,
   //
   // VLD2x2u
-  InstrItinData<IIC_VLD2,     [InstrStage<1, [A8_Pipe0, A8_Pipe1]>,
+  InstrItinData<IIC_VLD2x2u,  [InstrStage<1, [A8_Pipe0, A8_Pipe1]>,
                                InstrStage<3, [A8_NLSPipe], 1>,
                                InstrStage<3, [A8_LSPipe]>],
                               [2, 2, 3, 3, 2, 1]>,
   //
   // VLD2lnu
-  InstrItinData<IIC_VLD2,     [InstrStage<1, [A8_Pipe0, A8_Pipe1]>,
+  InstrItinData<IIC_VLD2lnu,  [InstrStage<1, [A8_Pipe0, A8_Pipe1]>,
                                InstrStage<3, [A8_NLSPipe], 1>,
                                InstrStage<3, [A8_LSPipe]>],
                               [3, 3, 2, 1, 1, 1, 1, 1]>,
   //
   // VLD3
   InstrItinData<IIC_VLD3,     [InstrStage<1, [A8_Pipe0, A8_Pipe1]>,
-                               InstrStage<1, [A8_NLSPipe]>,
-                               InstrStage<1, [A8_LSPipe]>], [2, 2, 2, 1]>,
+                               InstrStage<4, [A8_NLSPipe], 1>,
+                               InstrStage<4, [A8_LSPipe]>],
+                              [3, 3, 4, 1]>,
+  //
+  // VLD3ln
+  InstrItinData<IIC_VLD3ln,   [InstrStage<1, [A8_Pipe0, A8_Pipe1]>,
+                               InstrStage<5, [A8_NLSPipe], 1>,
+                               InstrStage<5, [A8_LSPipe]>],
+                              [4, 4, 5, 1, 1, 1, 1, 2]>,
+  //
+  // VLD3u
+  InstrItinData<IIC_VLD3u,    [InstrStage<1, [A8_Pipe0, A8_Pipe1]>,
+                               InstrStage<4, [A8_NLSPipe], 1>,
+                               InstrStage<4, [A8_LSPipe]>],
+                              [3, 3, 4, 2, 1]>,
+  //
+  // VLD3lnu
+  InstrItinData<IIC_VLD3lnu,  [InstrStage<1, [A8_Pipe0, A8_Pipe1]>,
+                               InstrStage<5, [A8_NLSPipe], 1>,
+                               InstrStage<5, [A8_LSPipe]>],
+                              [4, 4, 5, 2, 1, 1, 1, 1, 1, 2]>,
   //
   // VLD4
   InstrItinData<IIC_VLD4,     [InstrStage<1, [A8_Pipe0, A8_Pipe1]>,
