@@ -74,9 +74,9 @@ L_.str:                                 # @.str
 // CHECK:       PointerToLineNumbers     = 0x0
 // CHECK:       NumberOfRelocations      = 0
 // CHECK:       NumberOfLineNumbers      = 0
-// CHECK:       Charateristics           = 0xC0100040
+// CHECK:       Charateristics           = 0xC0300040
 // CHECK:         IMAGE_SCN_CNT_INITIALIZED_DATA
-// CHECK:         IMAGE_SCN_ALIGN_1BYTES
+// CHECK:         IMAGE_SCN_ALIGN_4BYTES
 // CHECK:         IMAGE_SCN_MEM_READ
 // CHECK:         IMAGE_SCN_MEM_WRITE
 // CHECK:       SectionData              =
@@ -94,7 +94,7 @@ L_.str:                                 # @.str
 // CHECK:       StorageClass             = IMAGE_SYM_CLASS_STATIC (3)
 // CHECK:       NumberOfAuxSymbols       = 1
 // CHECK:       AuxillaryData            =
-// CHECK:         15 00 00 00 02 00 00 00 - 00 00 00 00 01 00 00 00 |................|
+// CHECK:         18 00 00 00 02 00 00 00 - 00 00 00 00 01 00 00 00 |................|
 // CHECK:         00 00                                             |..|
 // CHECK:     }
 // CHECK:     2 = {

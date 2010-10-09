@@ -79,6 +79,41 @@ public:
   virtual void EmitDwarfFileDirective(unsigned FileNo,StringRef Filename);
   virtual void EmitInstruction(const MCInst &Instruction);
   virtual void Finish();
+
+private:
+  void SetSection(StringRef Section,
+                  unsigned Characteristics,
+                  SectionKind Kind) {
+    SwitchSection(getContext().getCOFFSection(Section, Characteristics, Kind));
+  }
+
+  void SetSectionText() {
+    SetSection(".text",
+               COFF::IMAGE_SCN_CNT_CODE
+             | COFF::IMAGE_SCN_MEM_EXECUTE
+             | COFF::IMAGE_SCN_MEM_READ,
+               SectionKind::getText());
+    EmitCodeAlignment(4, 0);
+  }
+
+  void SetSectionData() {
+    SetSection(".data",
+               COFF::IMAGE_SCN_CNT_INITIALIZED_DATA
+             | COFF::IMAGE_SCN_MEM_READ
+             | COFF::IMAGE_SCN_MEM_WRITE,
+               SectionKind::getDataRel());
+    EmitCodeAlignment(4, 0);
+  }
+
+  void SetSectionBSS() {
+    SetSection(".bss",
+               COFF::IMAGE_SCN_CNT_UNINITIALIZED_DATA
+             | COFF::IMAGE_SCN_MEM_READ
+             | COFF::IMAGE_SCN_MEM_WRITE,
+               SectionKind::getBSS());
+    EmitCodeAlignment(4, 0);
+  }
+
 };
 } // end anonymous namespace.
 
@@ -128,6 +163,10 @@ void WinCOFFStreamer::AddCommonSymbol(MCSymbol *Symbol, uint64_t Size,
 // MCStreamer interface
 
 void WinCOFFStreamer::InitSections() {
+  SetSectionText();
+  SetSectionData();
+  SetSectionBSS();
+  SetSectionText();
 }
 
 void WinCOFFStreamer::EmitLabel(MCSymbol *Symbol) {
