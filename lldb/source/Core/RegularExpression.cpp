@@ -153,3 +153,18 @@ RegularExpression::Free()
         m_comp_err = 1;
     }
 }
+
+size_t
+RegularExpression::GetErrorAsCString (char *err_str, size_t err_str_max_len) const
+{
+    if (m_comp_err == 0)
+    {
+        if (err_str && err_str_max_len) 
+            *err_str = '\0';
+        return 0;
+    }
+    
+    return ::regerror (m_comp_err, &m_preg, err_str, err_str_max_len);
+}
+
+

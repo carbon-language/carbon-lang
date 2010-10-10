@@ -115,6 +115,9 @@ public:
     bool
     Execute (const char* string, size_t match_count = 0, int execute_flags = 0) const;
 
+    size_t
+    GetErrorAsCString (char *err_str, size_t err_str_max_len) const;
+
     bool
     GetMatchAtIndex (const char* s, uint32_t idx, std::string& match_str) const;
     //------------------------------------------------------------------

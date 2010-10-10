@@ -29,8 +29,11 @@ public:
     void
     AddVariable (const lldb::VariableSP &var_sp);
 
+    bool
+    AddVariableIfUnique (const lldb::VariableSP &var_sp);
+
     void
-    AddVariables(VariableList *variable_list);
+    AddVariables (VariableList *variable_list);
 
     void
     Clear();
@@ -43,6 +46,19 @@ public:
 
     lldb::VariableSP
     FindVariable (const ConstString& name);
+
+    uint32_t
+    FindVariableIndex (const lldb::VariableSP &var_sp);
+
+    // Returns the actual number of unique variables that were added to the
+    // list. "total_matches" will get updated with the actualy number of
+    // matches that were found regardless of whether they were unique or not
+    // to allow for error conditions when nothing is found, versus conditions
+    // where any varaibles that match "regex" were already in "var_list".
+    size_t
+    AppendVariablesIfUnique (const RegularExpression& regex, 
+                             VariableList &var_list, 
+                             size_t& total_matches);
 
     uint32_t
     FindIndexForVariable (Variable* variable);

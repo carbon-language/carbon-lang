@@ -309,7 +309,6 @@ public:
             switch (short_option)
             {
             case 'o':   use_objc     = true;  break;
-            case 'n':   name = option_arg;    break;
             case 'r':   use_regex    = true;  break;
             case 'a':   show_args    = false; break;
             case 'l':   show_locals  = false; break;
@@ -352,7 +351,6 @@ public:
         {
             Options::ResetOptionValues();
 
-            name.clear();
             use_objc      = false;
             use_regex     = false;
             show_args     = true;
@@ -378,7 +376,6 @@ public:
         // Options table: Required for subclasses of Options.
 
         static lldb::OptionDefinition g_option_table[];
-        std::string name;
         bool use_objc:1,
              use_regex:1,
              show_args:1,
@@ -520,168 +517,230 @@ public:
             {
                 if (command.GetArgumentCount() > 0)
                 {
+                    VariableList regex_var_list;
+
                     // If we have any args to the variable command, we will make
                     // variable objects from them...
                     for (idx = 0; (name_cstr = command.GetArgumentAtIndex(idx)) != NULL; ++idx)
                     {
                         uint32_t ptr_depth = m_options.ptr_depth;
-                        // If first character is a '*', then show pointer contents
-                        if (name_cstr[0] == '*')
+                        
+                        if (m_options.use_regex)
                         {
-                            ++ptr_depth;
-                            name_cstr++; // Skip the '*'
-                        }
-
-                        std::string var_path (name_cstr);
-                        size_t separator_idx = var_path.find_first_of(".-[");
-
-                        ConstString name_const_string;
-                        if (separator_idx == std::string::npos)
-                            name_const_string.SetCString (var_path.c_str());
-                        else
-                            name_const_string.SetCStringWithLength (var_path.c_str(), separator_idx);
-
-                        var_sp = variable_list->FindVariable(name_const_string);
-                        if (var_sp)
-                        {
-                            valobj_sp = exe_ctx.frame->GetValueObjectForFrameVariable (var_sp);
-
-                            var_path.erase (0, name_const_string.GetLength ());
-                            // We are dumping at least one child
-                            while (separator_idx != std::string::npos)
+                            const uint32_t regex_start_index = regex_var_list.GetSize();
+                            RegularExpression regex (name_cstr);
+                            if (regex.Compile(name_cstr))
                             {
-                                // Calculate the next separator index ahead of time
-                                ValueObjectSP child_valobj_sp;
-                                const char separator_type = var_path[0];
-                                switch (separator_type)
+                                size_t num_matches = 0;
+                                const size_t num_new_regex_vars = variable_list->AppendVariablesIfUnique(regex, regex_var_list, num_matches);
+                                if (num_new_regex_vars > 0)
                                 {
-
-                                case '-':
-                                    if (var_path.size() >= 2 && var_path[1] != '>')
+                                    for (uint32_t regex_idx = regex_start_index, end_index = regex_var_list.GetSize(); 
+                                         regex_idx < end_index;
+                                         ++regex_idx)
                                     {
-                                        result.GetErrorStream().Printf ("error: invalid character in variable path starting at '%s'\n",
-                                                                        var_path.c_str());
-                                        var_path.clear();
-                                        valobj_sp.reset();
-                                        break;
-                                    }
-                                    var_path.erase (0, 1); // Remove the '-'
-                                    // Fall through
-                                case '.':
-                                    {
-                                        var_path.erase (0, 1); // Remove the '.' or '>'
-                                        separator_idx = var_path.find_first_of(".-[");
-                                        ConstString child_name;
-                                        if (separator_idx == std::string::npos)
-                                            child_name.SetCString (var_path.c_str());
-                                        else
-                                            child_name.SetCStringWithLength(var_path.c_str(), separator_idx);
-
-                                        child_valobj_sp = valobj_sp->GetChildMemberWithName (child_name, true);
-                                        if (!child_valobj_sp)
+                                        var_sp = regex_var_list.GetVariableAtIndex (regex_idx);
+                                        if (var_sp)
                                         {
-                                            result.GetErrorStream().Printf ("error: can't find child of '%s' named '%s'\n",
-                                                                            valobj_sp->GetName().AsCString(),
-                                                                            child_name.GetCString());
+                                            valobj_sp = exe_ctx.frame->GetValueObjectForFrameVariable (var_sp);
+                                            if (valobj_sp)
+                                            {
+                                                if (m_options.show_decl && var_sp->GetDeclaration ().GetFile())
+                                                {
+                                                    var_sp->GetDeclaration ().DumpStopContext (&s, false);
+                                                    s.PutCString (": ");
+                                                }
+                                                
+                                                ValueObject::DumpValueObject (result.GetOutputStream(), 
+                                                                              exe_ctx.frame, 
+                                                                              valobj_sp.get(), 
+                                                                              var_sp->GetName().AsCString(), 
+                                                                              m_options.ptr_depth, 
+                                                                              0, 
+                                                                              m_options.max_depth, 
+                                                                              m_options.show_types,
+                                                                              m_options.show_location,
+                                                                              m_options.use_objc, 
+                                                                              false);                                        
+                                                s.EOL();
+                                            }
+                                        }
+                                    }
+                                }
+                                else if (num_matches == 0)
+                                {
+                                    result.GetErrorStream().Printf ("error: no variables matched the regular expression '%s'.\n", name_cstr);
+                                }
+                            }
+                            else
+                            {
+                                char regex_error[1024];
+                                if (regex.GetErrorAsCString(regex_error, sizeof(regex_error)))
+                                    result.GetErrorStream().Printf ("error: %s\n", regex_error);
+                                else
+                                    result.GetErrorStream().Printf ("error: unkown regex error when compiling '%s'\n", name_cstr);
+                            }
+                        }
+                        else
+                        {
+                            // If first character is a '*', then show pointer contents
+                            if (name_cstr[0] == '*')
+                            {
+                                ++ptr_depth;
+                                name_cstr++; // Skip the '*'
+                            }
+
+                            std::string var_path (name_cstr);
+                            size_t separator_idx = var_path.find_first_of(".-[");
+
+                            ConstString name_const_string;
+                            if (separator_idx == std::string::npos)
+                                name_const_string.SetCString (var_path.c_str());
+                            else
+                                name_const_string.SetCStringWithLength (var_path.c_str(), separator_idx);
+
+                            var_sp = variable_list->FindVariable(name_const_string);
+                            if (var_sp)
+                            {
+                                valobj_sp = exe_ctx.frame->GetValueObjectForFrameVariable (var_sp);
+
+                                var_path.erase (0, name_const_string.GetLength ());
+                                // We are dumping at least one child
+                                while (separator_idx != std::string::npos)
+                                {
+                                    // Calculate the next separator index ahead of time
+                                    ValueObjectSP child_valobj_sp;
+                                    const char separator_type = var_path[0];
+                                    switch (separator_type)
+                                    {
+
+                                    case '-':
+                                        if (var_path.size() >= 2 && var_path[1] != '>')
+                                        {
+                                            result.GetErrorStream().Printf ("error: invalid character in variable path starting at '%s'\n",
+                                                                            var_path.c_str());
                                             var_path.clear();
                                             valobj_sp.reset();
                                             break;
                                         }
-                                        // Remove the child name from the path
-                                        var_path.erase(0, child_name.GetLength());
-                                    }
-                                    break;
-
-                                case '[':
-                                    // Array member access, or treating pointer as an array
-                                    if (var_path.size() > 2) // Need at least two brackets and a number
-                                    {
-                                        char *end = NULL;
-                                        int32_t child_index = ::strtol (&var_path[1], &end, 0);
-                                        if (end && *end == ']')
+                                        var_path.erase (0, 1); // Remove the '-'
+                                        // Fall through
+                                    case '.':
                                         {
-
-                                            if (valobj_sp->IsPointerType ())
-                                            {
-                                                child_valobj_sp = valobj_sp->GetSyntheticArrayMemberFromPointer (child_index, true);
-                                            }
+                                            var_path.erase (0, 1); // Remove the '.' or '>'
+                                            separator_idx = var_path.find_first_of(".-[");
+                                            ConstString child_name;
+                                            if (separator_idx == std::string::npos)
+                                                child_name.SetCString (var_path.c_str());
                                             else
-                                            {
-                                                child_valobj_sp = valobj_sp->GetChildAtIndex (child_index, true);
-                                            }
+                                                child_name.SetCStringWithLength(var_path.c_str(), separator_idx);
 
+                                            child_valobj_sp = valobj_sp->GetChildMemberWithName (child_name, true);
                                             if (!child_valobj_sp)
                                             {
-                                                result.GetErrorStream().Printf ("error: invalid array index %u in '%s'\n",
-                                                                                child_index,
-                                                                                valobj_sp->GetName().AsCString());
+                                                result.GetErrorStream().Printf ("error: can't find child of '%s' named '%s'\n",
+                                                                                valobj_sp->GetName().AsCString(),
+                                                                                child_name.GetCString());
                                                 var_path.clear();
                                                 valobj_sp.reset();
                                                 break;
                                             }
-
-                                            // Erase the array member specification '[%i]' where %i is the array index
-                                            var_path.erase(0, (end - var_path.c_str()) + 1);
-                                            separator_idx = var_path.find_first_of(".-[");
-
-                                            // Break out early from the switch since we were able to find the child member
-                                            break;
+                                            // Remove the child name from the path
+                                            var_path.erase(0, child_name.GetLength());
                                         }
-                                    }
-                                    result.GetErrorStream().Printf ("error: invalid array member specification for '%s' starting at '%s'\n",
-                                                                    valobj_sp->GetName().AsCString(),
-                                                                    var_path.c_str());
-                                    var_path.clear();
-                                    valobj_sp.reset();
-                                    break;
+                                        break;
 
-                                    break;
+                                    case '[':
+                                        // Array member access, or treating pointer as an array
+                                        if (var_path.size() > 2) // Need at least two brackets and a number
+                                        {
+                                            char *end = NULL;
+                                            int32_t child_index = ::strtol (&var_path[1], &end, 0);
+                                            if (end && *end == ']')
+                                            {
 
-                                default:
-                                    result.GetErrorStream().Printf ("error: invalid character in variable path starting at '%s'\n",
+                                                if (valobj_sp->IsPointerType ())
+                                                {
+                                                    child_valobj_sp = valobj_sp->GetSyntheticArrayMemberFromPointer (child_index, true);
+                                                }
+                                                else
+                                                {
+                                                    child_valobj_sp = valobj_sp->GetChildAtIndex (child_index, true);
+                                                }
+
+                                                if (!child_valobj_sp)
+                                                {
+                                                    result.GetErrorStream().Printf ("error: invalid array index %u in '%s'\n",
+                                                                                    child_index,
+                                                                                    valobj_sp->GetName().AsCString());
+                                                    var_path.clear();
+                                                    valobj_sp.reset();
+                                                    break;
+                                                }
+
+                                                // Erase the array member specification '[%i]' where %i is the array index
+                                                var_path.erase(0, (end - var_path.c_str()) + 1);
+                                                separator_idx = var_path.find_first_of(".-[");
+
+                                                // Break out early from the switch since we were able to find the child member
+                                                break;
+                                            }
+                                        }
+                                        result.GetErrorStream().Printf ("error: invalid array member specification for '%s' starting at '%s'\n",
+                                                                        valobj_sp->GetName().AsCString(),
                                                                         var_path.c_str());
-                                    var_path.clear();
-                                    valobj_sp.reset();
-                                    separator_idx = std::string::npos;
-                                    break;
+                                        var_path.clear();
+                                        valobj_sp.reset();
+                                        break;
+
+                                        break;
+
+                                    default:
+                                        result.GetErrorStream().Printf ("error: invalid character in variable path starting at '%s'\n",
+                                                                            var_path.c_str());
+                                        var_path.clear();
+                                        valobj_sp.reset();
+                                        separator_idx = std::string::npos;
+                                        break;
+                                    }
+
+                                    if (child_valobj_sp)
+                                        valobj_sp = child_valobj_sp;
+
+                                    if (var_path.empty())
+                                        break;
+
                                 }
 
-                                if (child_valobj_sp)
-                                    valobj_sp = child_valobj_sp;
-
-                                if (var_path.empty())
-                                    break;
-
-                            }
-
-                            if (valobj_sp)
-                            {
-                                if (m_options.show_decl && var_sp->GetDeclaration ().GetFile())
+                                if (valobj_sp)
                                 {
-                                    var_sp->GetDeclaration ().DumpStopContext (&s, false);
-                                    s.PutCString (": ");
+                                    if (m_options.show_decl && var_sp->GetDeclaration ().GetFile())
+                                    {
+                                        var_sp->GetDeclaration ().DumpStopContext (&s, false);
+                                        s.PutCString (": ");
+                                    }
+
+
+                                    ValueObject::DumpValueObject (result.GetOutputStream(), 
+                                                                  exe_ctx.frame, 
+                                                                  valobj_sp.get(), 
+                                                                  name_cstr, 
+                                                                  ptr_depth, 
+                                                                  0, 
+                                                                  m_options.max_depth, 
+                                                                  m_options.show_types,
+                                                                  m_options.show_location,
+                                                                  m_options.use_objc, 
+                                                                  false);                                        
+
+                                    s.EOL();
                                 }
-
-
-                                ValueObject::DumpValueObject (result.GetOutputStream(), 
-                                                              exe_ctx.frame, 
-                                                              valobj_sp.get(), 
-                                                              name_cstr, 
-                                                              ptr_depth, 
-                                                              0, 
-                                                              m_options.max_depth, 
-                                                              m_options.show_types,
-                                                              m_options.show_location,
-                                                              m_options.use_objc, 
-                                                              false);                                        
-
-                                s.EOL();
                             }
-                        }
-                        else
-                        {
-                            result.GetErrorStream().Printf ("error: unable to find any variables named '%s'\n", name_cstr);
-                            var_path.clear();
+                            else
+                            {
+                                result.GetErrorStream().Printf ("error: unable to find any variables named '%s'\n", name_cstr);
+                                var_path.clear();
+                            }
                         }
                     }
                 }
@@ -782,7 +841,6 @@ CommandObjectFrameVariable::CommandOptions::g_option_table[] =
 { LLDB_OPT_SET_1, false, "find-global",'G', required_argument, NULL, 0, eArgTypeVarName, "Find a global variable by name (which might not be in the current stack frame source file)."},
 { LLDB_OPT_SET_1, false, "location",   'L', no_argument,       NULL, 0, eArgTypeNone,    "Show variable location information."},
 { LLDB_OPT_SET_1, false, "show-declaration", 'c', no_argument, NULL, 0, eArgTypeNone,    "Show variable declaration information (source file and line where the variable was declared)."},
-{ LLDB_OPT_SET_1, false, "name",       'n', required_argument, NULL, 0, eArgTypeVarName, "Lookup a variable by name or regex (--regex) for the current execution context."},
 { LLDB_OPT_SET_1, false, "no-args",    'a', no_argument,       NULL, 0, eArgTypeNone,    "Omit function arguments."},
 { LLDB_OPT_SET_1, false, "no-locals",  'l', no_argument,       NULL, 0, eArgTypeNone,    "Omit local variables."},
 { LLDB_OPT_SET_1, false, "no-types",   't', no_argument,       NULL, 0, eArgTypeNone,    "Omit variable type names."},
@@ -790,7 +848,7 @@ CommandObjectFrameVariable::CommandOptions::g_option_table[] =
 { LLDB_OPT_SET_1, false, "scope",      's', no_argument,       NULL, 0, eArgTypeNone,    "Show variable scope (argument, local, global, static)."},
 { LLDB_OPT_SET_1, false, "objc",       'o', no_argument,       NULL, 0, eArgTypeNone,    "When looking up a variable by name (--name), print as an Objective-C object."},
 { LLDB_OPT_SET_1, false, "ptr-depth",  'p', required_argument, NULL, 0, eArgTypeCount,   "The number of pointers to be traversed when dumping values (default is zero)."},
-{ LLDB_OPT_SET_1, false, "regex",      'r', no_argument,       NULL, 0, eArgTypeCount,    "The <name> argument for name lookups are regular expressions."},
+{ LLDB_OPT_SET_1, false, "regex",      'r', no_argument,       NULL, 0, eArgTypeRegularExpression,    "The <variable-name> argument for name lookups are regular expressions."},
 { 0, false, NULL, 0, 0, NULL, NULL, eArgTypeNone, NULL }
 };
 #pragma mark CommandObjectMultiwordFrame

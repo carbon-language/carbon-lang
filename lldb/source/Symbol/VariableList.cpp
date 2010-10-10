@@ -8,6 +8,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "lldb/Symbol/VariableList.h"
+
+#include "lldb/Core/RegularExpression.h"
 #include "lldb/Symbol/Block.h"
 #include "lldb/Symbol/Function.h"
 #include "lldb/Symbol/CompileUnit.h"
@@ -30,13 +32,22 @@ VariableList::~VariableList()
 {
 }
 
-
 void
-VariableList::AddVariable(const VariableSP &variable_sp)
+VariableList::AddVariable(const VariableSP &var_sp)
 {
-    m_variables.push_back(variable_sp);
+    m_variables.push_back(var_sp);
 }
 
+bool
+VariableList::AddVariableIfUnique (const lldb::VariableSP &var_sp)
+{
+    if (FindVariableIndex (var_sp) == UINT32_MAX)
+    {
+        m_variables.push_back(var_sp);
+        return true;
+    }
+    return false;
+}
 
 void
 VariableList::AddVariables(VariableList *variable_list)
@@ -46,25 +57,32 @@ VariableList::AddVariables(VariableList *variable_list)
                 back_inserter(m_variables));        // destination
 }
 
-
 void
 VariableList::Clear()
 {
     m_variables.clear();
 }
 
-
-
 VariableSP
 VariableList::GetVariableAtIndex(uint32_t idx)
 {
-    VariableSP variable_sp;
+    VariableSP var_sp;
     if (idx < m_variables.size())
-        variable_sp = m_variables[idx];
-    return variable_sp;
+        var_sp = m_variables[idx];
+    return var_sp;
 }
 
-
+uint32_t
+VariableList::FindVariableIndex (const VariableSP &var_sp)
+{
+    iterator pos, end = m_variables.end();
+    for (pos = m_variables.begin(); pos != end; ++pos)
+    {
+        if (pos->get() == var_sp.get())
+            return std::distance (m_variables.begin(), pos);
+    }
+    return UINT32_MAX;
+}
 
 VariableSP
 VariableList::FindVariable(const ConstString& name)
@@ -80,6 +98,25 @@ VariableList::FindVariable(const ConstString& name)
         }
     }
     return var_sp;
+}
+
+size_t
+VariableList::AppendVariablesIfUnique (const RegularExpression& regex, VariableList &var_list, size_t& total_matches)
+{
+    const size_t initial_size = var_list.GetSize();
+    iterator pos, end = m_variables.end();
+    for (pos = m_variables.begin(); pos != end; ++pos)
+    {
+        if (regex.Execute ((*pos)->GetName().AsCString()))
+        {
+            // Note the total matches found
+            total_matches++;
+            // Only add this variable if it isn't already in the "var_list"
+            var_list.AddVariableIfUnique (*pos);
+        }
+    }
+    // Return the number of new unique variables added to "var_list"
+    return var_list.GetSize() - initial_size;
 }
 
 uint32_t
@@ -112,7 +149,6 @@ VariableList::GetSize() const
 {
     return m_variables.size();
 }
-
 
 void
 VariableList::Dump(Stream *s, bool show_context) const
