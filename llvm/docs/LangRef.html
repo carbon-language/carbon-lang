@@ -1910,8 +1910,9 @@ Classifications</a> </div>
   &lt; &lt;# elements&gt; x &lt;elementtype&gt; &gt;
 </pre>
 
-<p>The number of elements is a constant integer value; elementtype may be any
-   integer or floating point type.</p>
+<p>The number of elements is a constant integer value larger than 0; elementtype
+   may be any integer or floating point type.  Vectors of size zero are not
+   allowed, and pointers are not allowed as the element type.</p>
 
 <h5>Examples:</h5>
 <table class="layout">
