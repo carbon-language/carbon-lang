@@ -73,6 +73,10 @@ PPCTargetLowering::PPCTargetLowering(PPCTargetMachine &TM)
   setUseUnderscoreSetJmp(true);
   setUseUnderscoreLongJmp(true);
 
+  // On PPC32/64, arguments smaller than 4/8 bytes are extended, so all
+  // arguments are at least 4/8 bytes aligned.
+  setMinStackArgumentAlignment(TM.getSubtarget<PPCSubtarget>().isPPC64() ? 8:4);
+    
   // Set up the register classes.
   addRegisterClass(MVT::i32, PPC::GPRCRegisterClass);
   addRegisterClass(MVT::f32, PPC::F4RCRegisterClass);
