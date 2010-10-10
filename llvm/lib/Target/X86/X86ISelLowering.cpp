@@ -96,7 +96,7 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
   setSchedulingPreference(Sched::RegPressure);
   setStackPointerRegisterToSaveRestore(X86StackPtr);
 
-  if (Subtarget->isTargetWindows() && !Subtarget->isTargetCygwin()) {
+  if (Subtarget->isTargetWindows() && !Subtarget->isTargetCygMing()) {
     // Setup Windows compiler runtime calls.
     setLibcallName(RTLIB::SDIV_I64, "_alldiv");
     setLibcallCallingConv(RTLIB::SDIV_I64, CallingConv::X86_StdCall);
