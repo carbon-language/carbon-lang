@@ -46,3 +46,15 @@ void f6() {
   int x;
   long ids[] = { (long) &x };  
 }
+
+
+
+
+// CHECK: @test7 = global{{.*}}{ i32 0, [4 x i8] c"bar\00" }
+// PR8217
+struct a7 {
+  int  b;
+  char v[];
+};
+
+struct a7 test7 = { .b = 0, .v = "bar" };

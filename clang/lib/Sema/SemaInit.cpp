@@ -1474,7 +1474,8 @@ InitListChecker::CheckDesignatedInitializer(const InitializedEntity &Entity,
         Invalid = true;
       }
 
-      if (!hadError && !isa<InitListExpr>(DIE->getInit())) {
+      if (!hadError && !isa<InitListExpr>(DIE->getInit()) &&
+          !isa<StringLiteral>(DIE->getInit())) {
         // The initializer is not an initializer list.
         SemaRef.Diag(DIE->getInit()->getSourceRange().getBegin(),
                       diag::err_flexible_array_init_needs_braces)
