@@ -261,6 +261,7 @@ void f0() {
   tmp_V8c = __builtin_ia32_packsswb(tmp_V4s, tmp_V4s);
   tmp_V4s = __builtin_ia32_packssdw(tmp_V2i, tmp_V2i);
   tmp_V8c = __builtin_ia32_packuswb(tmp_V4s, tmp_V4s);
+  tmp_i = __builtin_ia32_vec_ext_v2si(tmp_V2i, 0);
 
   (void) __builtin_ia32_ldmxcsr(tmp_Ui);
   tmp_Ui = __builtin_ia32_stmxcsr();

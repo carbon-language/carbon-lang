@@ -2002,6 +2002,9 @@ Value *CodeGenFunction::EmitX86BuiltinExpr(unsigned BuiltinID,
   case X86::BI__builtin_ia32_vec_init_v2si:
     return Builder.CreateBitCast(BuildVector(Ops),
                                  llvm::Type::getX86_MMXTy(VMContext));
+  case X86::BI__builtin_ia32_vec_ext_v2si:
+    return Builder.CreateExtractElement(Ops[0],
+                                  llvm::ConstantInt::get(Ops[1]->getType(), 0));
   case X86::BI__builtin_ia32_pslldi:
   case X86::BI__builtin_ia32_psllqi:
   case X86::BI__builtin_ia32_psllwi:
