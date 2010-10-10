@@ -64,7 +64,7 @@ public:
 
   bool WriteNopData(uint64_t Count, MCObjectWriter *OW) const;
 };
-} // end anonymous namespace 
+} // end anonymous namespace
 
 static unsigned getRelaxedOpcode(unsigned Op) {
   switch (Op) {
@@ -345,7 +345,7 @@ public:
   }
 };
 
-} // end anonymous namespace 
+} // end anonymous namespace
 
 TargetAsmBackend *llvm::createX86_32AsmBackend(const Target &T,
                                                const std::string &TT) {
