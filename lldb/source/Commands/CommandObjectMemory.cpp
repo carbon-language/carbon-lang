@@ -142,6 +142,18 @@ public:
                     error.SetErrorStringWithFormat("Invalid value for --size option '%s'. Must be positive integer value.\n", option_arg);
                 break;
 
+            case 'o':
+                m_outfile_filespec.SetFile (option_arg);
+                break;
+
+            case 'b':
+                m_output_as_binary = true;
+                break;
+
+            case 'a':
+                m_append_to_outfile = true;
+                break;
+            
             default:
                 error.SetErrorStringWithFormat("Unrecognized short option '%c'.\n", short_option);
                 break;
@@ -157,6 +169,9 @@ public:
             m_byte_size = 0;
             m_count = 0;
             m_num_per_line = 0;
+            m_outfile_filespec.Clear();
+            m_append_to_outfile = false;
+            m_output_as_binary = false;
         }
 
         const lldb::OptionDefinition*
@@ -174,6 +189,9 @@ public:
         uint32_t m_byte_size;
         uint32_t m_count;
         uint32_t m_num_per_line;
+        FileSpec m_outfile_filespec;
+        bool m_append_to_outfile;
+        bool m_output_as_binary;
     };
 
     CommandObjectMemoryRead (CommandInterpreter &interpreter) :
@@ -318,17 +336,67 @@ public:
         result.SetStatus(eReturnStatusSuccessFinishResult);
         DataExtractor data(data_sp, process->GetByteOrder(), process->GetAddressByteSize());
 
-        Stream &output_stream = result.GetOutputStream();
-        data.Dump(&output_stream,
-                  0,
-                  m_options.m_format,
-                  item_byte_size,
-                  item_count,
-                  num_per_line,
-                  addr,
-                  0,
-                  0);
-        output_stream.EOL();
+        StreamFile outfile_stream;
+        Stream *output_stream = NULL;
+
+        if (m_options.m_outfile_filespec)
+        {
+            char path[PATH_MAX];
+            m_options.m_outfile_filespec.GetPath (path, sizeof(path));
+            char mode[16] = { 'w', '\0' };
+            if (m_options.m_append_to_outfile)
+                mode[0] = 'a';
+                
+            if (outfile_stream.Open (path, mode))
+            {
+                if (m_options.m_output_as_binary)
+                {
+                    int bytes_written = outfile_stream.Write (data_sp->GetBytes(), bytes_read);
+                    if (bytes_written > 0)
+                    {
+                        result.GetOutputStream().Printf ("%i bytes %s to '%s'\n", 
+                                                         bytes_written, 
+                                                         m_options.m_append_to_outfile ? "appended" : "written", 
+                                                         path);
+                        return true;
+                    }
+                    else 
+                    {
+                        result.AppendErrorWithFormat("Failed to write %zu bytes to '%s'.\n", bytes_read, path);
+                        result.SetStatus(eReturnStatusFailed);
+                        return false;
+                    }
+                }
+                else
+                {
+                    // We are going to write ASCII to the file just point the
+                    // output_stream to our outfile_stream...
+                    output_stream = &outfile_stream;
+                }
+            }
+            else 
+            {
+                result.AppendErrorWithFormat("Failed to open file '%s' with a mode of '%s'.\n", path, mode);
+                result.SetStatus(eReturnStatusFailed);
+                return false;
+            }
+        }
+        else 
+        {
+            output_stream = &result.GetOutputStream();
+        }
+
+        assert (output_stream);
+        data.Dump (output_stream,
+                   0,
+                   m_options.m_format,
+                   item_byte_size,
+                   item_count,
+                   num_per_line,
+                   addr,
+                   0,
+                   0);
+        output_stream->EOL();
         return true;
     }
 
@@ -336,16 +404,24 @@ protected:
     CommandOptions m_options;
 };
 
+#define SET1 LLDB_OPT_SET_1
+#define SET2 LLDB_OPT_SET_2
+
 lldb::OptionDefinition
 CommandObjectMemoryRead::CommandOptions::g_option_table[] =
 {
-    { LLDB_OPT_SET_1, false, "format",       'f', required_argument, NULL, 0, eArgTypeFormat,   "The format that will be used to display the memory. Defaults to bytes with ASCII (--format=Y)."},
-    { LLDB_OPT_SET_1, false, "size",         's', required_argument, NULL, 0, eArgTypeByteSize,"The size in bytes to use when displaying with the selected format."},
-    { LLDB_OPT_SET_1, false, "num-per-line", 'l', required_argument, NULL, 0, eArgTypeNumberPerLine,        "The number of items per line to display."},
-    { LLDB_OPT_SET_1, false, "count",        'c', required_argument, NULL, 0, eArgTypeCount,        "The number of total items to display."},
-    { 0, false, NULL, 0, 0, NULL, 0, eArgTypeNone, NULL }
+{ SET1       , false, "format",       'f', required_argument, NULL, 0, eArgTypeFormat,       "The format that will be used to display the memory. Defaults to bytes with ASCII (--format=Y)."},
+{ SET1       , false, "size",         's', required_argument, NULL, 0, eArgTypeByteSize,     "The size in bytes to use when displaying with the selected format."},
+{ SET1       , false, "num-per-line", 'l', required_argument, NULL, 0, eArgTypeNumberPerLine,"The number of items per line to display."},
+{ SET1       , false, "count",        'c', required_argument, NULL, 0, eArgTypeCount,        "The number of total items to display."},
+{ SET1 | SET2, false, "outfile",      'o', required_argument, NULL, 0, eArgTypeFilename,     "Dump memory read results into a file."},
+{ SET1 | SET2, false, "append",       'a', no_argument,       NULL, 0, eArgTypeNone,         "Append memory read results to 'outfile'."},
+{        SET2, false, "binary",       'b', no_argument,       NULL, 0, eArgTypeNone,         "If true, memory will be saved as binary. If false, the memory is saved save as an ASCII dump that uses the format, size, count and number per line settings."},
+{ 0, false, NULL, 0, 0, NULL, 0, eArgTypeNone, NULL }
 };
 
+#undef SET1
+#undef SET2
 
 //----------------------------------------------------------------------
 // Write memory to the inferior process
@@ -385,6 +461,25 @@ public:
                     error.SetErrorStringWithFormat("Invalid value for --size option '%s'.  Must be positive integer value.\n", option_arg);
                 break;
 
+            case 'i':
+                m_infile.SetFile (option_arg);
+                if (!m_infile.Exists())
+                {
+                    m_infile.Clear();
+                    error.SetErrorStringWithFormat("Input file does not exist: '%s'\n", option_arg);
+                }
+                break;
+            
+            case 'o':
+                {
+                    bool success;
+                    m_infile_offset = Args::StringToUInt64(option_arg, 0, 0, &success);
+                    if (!success)
+                    {
+                        error.SetErrorStringWithFormat("Invalid offset string '%s'\n", option_arg);
+                    }
+                }
+                break;
 
             default:
                 error.SetErrorStringWithFormat("Unrecognized short option '%c'\n", short_option);
@@ -399,6 +494,8 @@ public:
             Options::ResetOptionValues();
             m_format = eFormatBytes;
             m_byte_size = 1;
+            m_infile.Clear();
+            m_infile_offset = 0;
         }
 
         const lldb::OptionDefinition*
@@ -414,6 +511,8 @@ public:
         // Instance variables to hold the values for command options.
         lldb::Format m_format;
         uint32_t m_byte_size;
+        FileSpec m_infile;
+        off_t m_infile_offset;
     };
 
     CommandObjectMemoryWrite (CommandInterpreter &interpreter) :
@@ -500,9 +599,18 @@ public:
 
         const size_t argc = command.GetArgumentCount();
 
-        if (argc < 2)
+        if (m_options.m_infile)
         {
-            result.AppendErrorWithFormat ("%s takes an address and at least one value.\n", m_cmd_name.c_str());
+            if (argc < 1)
+            {
+                result.AppendErrorWithFormat ("%s takes a destination address when writing file contents.\n", m_cmd_name.c_str());
+                result.SetStatus(eReturnStatusFailed);
+                return false;
+            }       
+        }
+        else if (argc < 2)
+        {
+            result.AppendErrorWithFormat ("%s takes a destination address and at least one value.\n", m_cmd_name.c_str());
             result.SetStatus(eReturnStatusFailed);
             return false;
         }
@@ -512,14 +620,6 @@ public:
                              process->GetByteOrder());
 
         size_t item_byte_size = m_options.m_byte_size;
-        
-        if (m_options.m_byte_size == 0)
-        {
-            if (m_options.m_format == eFormatPointer)
-                item_byte_size = buffer.GetAddressByteSize();
-            else
-                item_byte_size = 1;
-        }
 
         lldb::addr_t addr = Args::StringToUInt64(command.GetArgumentAtIndex(0), LLDB_INVALID_ADDRESS, 0);
 
@@ -529,6 +629,55 @@ public:
             result.SetStatus(eReturnStatusFailed);
             return false;
         }
+        
+        if (m_options.m_infile)
+        {
+            size_t length = SIZE_MAX;
+            if (m_options.m_byte_size > 0)
+                length = m_options.m_byte_size;
+            lldb::DataBufferSP data_sp (m_options.m_infile.ReadFileContents (m_options.m_infile_offset, length));
+            if (data_sp)
+            {
+                length = data_sp->GetByteSize();
+                if (length > 0)
+                {
+                    Error error;
+                    size_t bytes_written = process->WriteMemory (addr, data_sp->GetBytes(), length, error);
+                    
+                    if (bytes_written == length)
+                    {
+                        // All bytes written
+                        result.GetOutputStream().Printf("%zu bytes were written to 0x%llx\n", bytes_written, addr);
+                        result.SetStatus(eReturnStatusSuccessFinishResult);
+                    }
+                    else if (bytes_written > 0)
+                    {
+                        // Some byte written
+                        result.GetOutputStream().Printf("%zu bytes of %zu requested were written to 0x%llx\n", bytes_written, length, addr);
+                        result.SetStatus(eReturnStatusSuccessFinishResult);
+                    }
+                    else 
+                    {
+                        result.AppendErrorWithFormat ("Memory write to 0x%llx failed: %s.\n", addr, error.AsCString());
+                        result.SetStatus(eReturnStatusFailed);
+                    }
+                }
+            }
+            else
+            {
+                result.AppendErrorWithFormat ("Unable to read contents of file.\n");
+                result.SetStatus(eReturnStatusFailed);
+            }
+            return result.Succeeded();
+        }
+        else if (m_options.m_byte_size == 0)
+        {
+            if (m_options.m_format == eFormatPointer)
+                item_byte_size = buffer.GetAddressByteSize();
+            else
+                item_byte_size = 1;
+        }
+
         command.Shift(); // shift off the address argument
         uint64_t uval64;
         int64_t sval64;
@@ -708,14 +857,21 @@ protected:
     CommandOptions m_options;
 };
 
+#define SET1 LLDB_OPT_SET_1
+#define SET2 LLDB_OPT_SET_2
+
 lldb::OptionDefinition
 CommandObjectMemoryWrite::CommandOptions::g_option_table[] =
 {
-    { LLDB_OPT_SET_1, false, "format", 'f', required_argument, NULL, 0, eArgTypeFormat,   "The format value types that will be decoded and written to memory."},
-    { LLDB_OPT_SET_1, false, "size",   's', required_argument, NULL, 0, eArgTypeByteSize,"The size in bytes of the values to write to memory."},
-    { 0, false, NULL, 0, 0, NULL, 0, eArgTypeNone, NULL }
+{ SET1       , false, "format", 'f', required_argument, NULL, 0, eArgTypeFormat,   "The format value types that will be decoded and written to memory."},
+{ SET1 | SET2, false, "size",   's', required_argument, NULL, 0, eArgTypeByteSize, "The size in bytes of the values to write to memory."},
+{        SET2, true,  "infile", 'i', required_argument, NULL, 0, eArgTypeFilename, "Write memory using the contents of a file."},
+{        SET2, false, "offset", 'o', required_argument, NULL, 0, eArgTypeOffset,   "Start writng bytes from an offset within the input file."},
+{ 0          , false, NULL    ,  0 , 0                , NULL, 0, eArgTypeNone,     NULL }
 };
 
+#undef SET1
+#undef SET2
 
 //-------------------------------------------------------------------------
 // CommandObjectMemory
