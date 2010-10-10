@@ -6,28 +6,25 @@ import lldb
 import sys
 import StringIO
 
-class Iterator(object):
+def lldb_iter(obj, getsize, getelem):
     """
     A generator adaptor for lldb aggregate data structures.
 
-    API clients pass in the aggregate object, and the names of the methods to
-    get the size of the object and its individual element.
+    API clients pass in the aggregate object, the name of the method to get the
+    size of the object, and the name of the method to get the element given an
+    index.
 
     Example usage:
 
     def disassemble_instructions (insts):
-        from lldbutil import Iterator
-        for i in Iterator(insts, 'GetSize', 'GetInstructionAtIndex'):
+        from lldbutil import lldb_iter
+        for i in lldb_iter(insts, 'GetSize', 'GetInstructionAtIndex'):
             print i
     """
-    def __init__(self, obj, getsize, getelem):
-        self.obj = obj
-        self.getsize = getattr(obj, getsize)
-        self.getelem = getattr(obj, getelem)
-
-    def __iter__(self):
-        for i in range(self.getsize()):
-            yield self.getelem(i)
+    size = getattr(obj, getsize)
+    elem = getattr(obj, getelem)
+    for i in range(size()):
+        yield elem(i)
 
 
 ########################################################
