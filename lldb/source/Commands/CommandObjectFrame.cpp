@@ -94,6 +94,62 @@ class CommandObjectFrameSelect : public CommandObject
 {
 public:
 
+   class CommandOptions : public Options
+    {
+    public:
+
+        CommandOptions () :
+            Options()
+        {
+            ResetOptionValues ();
+        }
+
+        virtual
+        ~CommandOptions ()
+        {
+        }
+
+        virtual Error
+        SetOptionValue (int option_idx, const char *option_arg)
+        {
+            Error error;
+            bool success = false;
+            char short_option = (char) m_getopt_table[option_idx].val;
+            switch (short_option)
+            {
+            case 'r':   
+                relative_frame_offset = Args::StringToSInt32 (option_arg, INT32_MIN, 0, &success);
+                if (!success)
+                    error.SetErrorStringWithFormat ("invalid frame offset argument '%s'.\n", option_arg);
+                break;
+
+            default:
+                ("Invalid short option character '%c'.\n", short_option);
+                break;
+            }
+
+            return error;
+        }
+
+        void
+        ResetOptionValues ()
+        {
+            Options::ResetOptionValues();
+            relative_frame_offset = INT32_MIN;
+        }
+
+        const lldb::OptionDefinition*
+        GetDefinitions ()
+        {
+            return g_option_table;
+        }
+
+        // Options table: Required for subclasses of Options.
+
+        static lldb::OptionDefinition g_option_table[];
+        int32_t relative_frame_offset;
+    };
+    
     CommandObjectFrameSelect (CommandInterpreter &interpreter) :
         CommandObject (interpreter,
                        "frame select",
@@ -106,7 +162,7 @@ public:
 
         // Define the first (and only) variant of this arg.
         index_arg.arg_type = eArgTypeFrameIndex;
-        index_arg.arg_repetition = eArgRepeatPlain;
+        index_arg.arg_repetition = eArgRepeatOptional;
 
         // There is only one variant this argument could be; put it into the argument entry.
         arg.push_back (index_arg);
@@ -119,6 +175,14 @@ public:
     {
     }
 
+    virtual
+    Options *
+    GetOptions ()
+    {
+        return &m_options;
+    }
+
+
     bool
     Execute (Args& command,
              CommandReturnObject &result)
@@ -126,50 +190,73 @@ public:
         ExecutionContext exe_ctx (m_interpreter.GetDebugger().GetExecutionContext());
         if (exe_ctx.thread)
         {
-            if (command.GetArgumentCount() == 1)
+            const uint32_t num_frames = exe_ctx.thread->GetStackFrameCount();
+            uint32_t frame_idx = UINT32_MAX;
+            if (m_options.relative_frame_offset != INT32_MIN)
             {
-                const char *frame_idx_cstr = command.GetArgumentAtIndex(0);
-
-                const uint32_t num_frames = exe_ctx.thread->GetStackFrameCount();
-                const uint32_t frame_idx = Args::StringToUInt32 (frame_idx_cstr, UINT32_MAX, 0);
-                if (frame_idx < num_frames)
+                // The one and only argument is a signed relative frame index
+                frame_idx = exe_ctx.thread->GetSelectedFrameIndex ();
+                if (frame_idx == UINT32_MAX)
+                    frame_idx = 0;
+                
+                if (m_options.relative_frame_offset < 0)
                 {
-                    exe_ctx.thread->SetSelectedFrameByIndex (frame_idx);
-                    exe_ctx.frame = exe_ctx.thread->GetSelectedFrame ().get();
+                    if (frame_idx >= -m_options.relative_frame_offset)
+                        frame_idx += m_options.relative_frame_offset;
+                    else
+                        frame_idx = 0;
+                }
+                else if (m_options.relative_frame_offset > 0)
+                {
+                    if (num_frames - frame_idx > m_options.relative_frame_offset)
+                        frame_idx += m_options.relative_frame_offset;
+                    else
+                        frame_idx = num_frames - 1;
+                }
+            }
+            else 
+            {
+                if (command.GetArgumentCount() == 1)
+                {
+                    const char *frame_idx_cstr = command.GetArgumentAtIndex(0);
+                    frame_idx = Args::StringToUInt32 (frame_idx_cstr, UINT32_MAX, 0);
+                }
+                else
+                {
+                    result.AppendError ("invalid arguments.\n");
+                    m_options.GenerateOptionUsage (m_interpreter, result.GetErrorStream(), this);
+                }
+            }
+                
+            if (frame_idx < num_frames)
+            {
+                exe_ctx.thread->SetSelectedFrameByIndex (frame_idx);
+                exe_ctx.frame = exe_ctx.thread->GetSelectedFrame ().get();
 
-                    if (exe_ctx.frame)
+                if (exe_ctx.frame)
+                {
+                    bool already_shown = false;
+                    SymbolContext frame_sc(exe_ctx.frame->GetSymbolContext(eSymbolContextLineEntry));
+                    if (m_interpreter.GetDebugger().GetUseExternalEditor() && frame_sc.line_entry.file && frame_sc.line_entry.line != 0)
                     {
-                        bool already_shown = false;
-                        SymbolContext frame_sc(exe_ctx.frame->GetSymbolContext(eSymbolContextLineEntry));
-                        if (m_interpreter.GetDebugger().GetUseExternalEditor() && frame_sc.line_entry.file && frame_sc.line_entry.line != 0)
-                        {
-                            already_shown = Host::OpenFileInExternalEditor (frame_sc.line_entry.file, frame_sc.line_entry.line);
-                        }
+                        already_shown = Host::OpenFileInExternalEditor (frame_sc.line_entry.file, frame_sc.line_entry.line);
+                    }
 
-                        if (DisplayFrameForExecutionContext (exe_ctx.thread,
-                                                             exe_ctx.frame,
-                                                             m_interpreter,
-                                                             result.GetOutputStream(),
-                                                             true,
-                                                             !already_shown,
-                                                             3,
-                                                             3))
-                        {
-                            result.SetStatus (eReturnStatusSuccessFinishResult);
-                            return result.Succeeded();
-                        }
+                    if (DisplayFrameForExecutionContext (exe_ctx.thread,
+                                                         exe_ctx.frame,
+                                                         m_interpreter,
+                                                         result.GetOutputStream(),
+                                                         true,
+                                                         !already_shown,
+                                                         3,
+                                                         3))
+                    {
+                        result.SetStatus (eReturnStatusSuccessFinishResult);
+                        return result.Succeeded();
                     }
                 }
-                if (frame_idx == UINT32_MAX)
-                    result.AppendErrorWithFormat ("Invalid frame index: %s.\n", frame_idx_cstr);
-                else
-                    result.AppendErrorWithFormat ("Frame index (%u) out of range.\n", frame_idx);
             }
-            else
-            {
-                result.AppendError ("invalid arguments");
-                result.AppendErrorWithFormat ("Usage: %s\n", m_cmd_syntax.c_str());
-            }
+            result.AppendErrorWithFormat ("Frame index (%u) out of range.\n", frame_idx);
         }
         else
         {
@@ -178,6 +265,16 @@ public:
         result.SetStatus (eReturnStatusFailed);
         return false;
     }
+protected:
+
+    CommandOptions m_options;
+};
+
+lldb::OptionDefinition
+CommandObjectFrameSelect::CommandOptions::g_option_table[] =
+{
+{ LLDB_OPT_SET_1, false, "relative", 'r', required_argument, NULL, 0, eArgTypeOffset, "A relative frame index offset from the current frame index."},
+{ 0, false, NULL, 0, 0, NULL, NULL, eArgTypeNone, NULL }
 };
 
 #pragma mark CommandObjectFrameVariable

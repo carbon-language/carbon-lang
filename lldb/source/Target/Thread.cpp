@@ -854,6 +854,13 @@ Thread::GetStackFrameAtIndex (uint32_t idx)
     return GetStackFrameList().GetFrameAtIndex(idx);
 }
 
+uint32_t
+Thread::GetSelectedFrameIndex ()
+{
+    return GetStackFrameList().GetSelectedFrameIndex();
+}
+
+
 lldb::StackFrameSP
 Thread::GetSelectedFrame ()
 {

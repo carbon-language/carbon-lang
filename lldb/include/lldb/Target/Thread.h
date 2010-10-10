@@ -262,6 +262,9 @@ public:
     virtual lldb::StackFrameSP
     GetStackFrameAtIndex (uint32_t idx);
 
+    uint32_t
+    GetSelectedFrameIndex ();
+
     lldb::StackFrameSP
     GetSelectedFrame ();
 
