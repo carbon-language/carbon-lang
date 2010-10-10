@@ -2876,12 +2876,12 @@ public:
 
   unsigned getNumInits() const { return InitExprs.size(); }
 
-  const Expr* getInit(unsigned Init) const {
+  const Expr *getInit(unsigned Init) const {
     assert(Init < getNumInits() && "Initializer access out of range!");
     return cast_or_null<Expr>(InitExprs[Init]);
   }
 
-  Expr* getInit(unsigned Init) {
+  Expr *getInit(unsigned Init) {
     assert(Init < getNumInits() && "Initializer access out of range!");
     return cast_or_null<Expr>(InitExprs[Init]);
   }

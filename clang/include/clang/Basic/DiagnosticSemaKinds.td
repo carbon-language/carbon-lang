@@ -2152,6 +2152,8 @@ def err_member_def_does_not_match : Error<
   "out-of-line definition of %0 does not match any declaration in %1">;
 def err_nonstatic_member_out_of_line : Error<
   "non-static data member defined out-of-line">;
+def err_nonstatic_flexible_variable : Error<
+  "non-static initialization of a variable with flexible array member">;
 def err_qualified_typedef_declarator : Error<
   "typedef declarator cannot be qualified">;
 def err_qualified_param_declarator : Error<

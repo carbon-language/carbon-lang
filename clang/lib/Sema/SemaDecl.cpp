@@ -1591,7 +1591,6 @@ void Sema::MergeVarDecl(VarDecl *New, LookupResult &Previous) {
 /// no declarator (e.g. "struct foo;") is parsed.
 Decl *Sema::ParsedFreeStandingDeclSpec(Scope *S, AccessSpecifier AS,
                                             DeclSpec &DS) {
-  // FIXME: Error on auto/register at file scope
   // FIXME: Error on inline/virtual/explicit
   // FIXME: Warn on useless __thread
   // FIXME: Warn on useless const/volatile
@@ -2686,7 +2685,7 @@ static void SetNestedNameSpecifier(DeclaratorDecl *DD, Declarator &D) {
 }
 
 NamedDecl*
-Sema::ActOnVariableDeclarator(Scope* S, Declarator& D, DeclContext* DC,
+Sema::ActOnVariableDeclarator(Scope *S, Declarator &D, DeclContext *DC,
                               QualType R, TypeSourceInfo *TInfo,
                               LookupResult &Previous,
                               MultiTemplateParamsArg TemplateParamLists,
@@ -2821,7 +2820,7 @@ Sema::ActOnVariableDeclarator(Scope* S, Declarator& D, DeclContext* DC,
   ProcessDeclAttributes(S, NewVD, D);
 
   // Handle GNU asm-label extension (encoded as an attribute).
-  if (Expr *E = (Expr*) D.getAsmLabel()) {
+  if (Expr *E = (Expr*)D.getAsmLabel()) {
     // The parser guarantees this is a string.
     StringLiteral *SE = cast<StringLiteral>(E);
     NewVD->addAttr(::new (Context) AsmLabelAttr(SE->getStrTokenLoc(0), 
@@ -2991,7 +2990,7 @@ void Sema::CheckVariableDeclaration(VarDecl *NewVD,
   // This includes arrays of objects with address space qualifiers, but not
   // automatic variables that point to other address spaces.
   // ISO/IEC TR 18037 S5.1.2
-  if (NewVD->hasLocalStorage() && (T.getAddressSpace() != 0)) {
+  if (NewVD->hasLocalStorage() && T.getAddressSpace() != 0) {
     Diag(NewVD->getLocation(), diag::err_as_qualified_auto_decl);
     return NewVD->setInvalidDecl();
   }
@@ -2999,7 +2998,7 @@ void Sema::CheckVariableDeclaration(VarDecl *NewVD,
   if (NewVD->hasLocalStorage() && T.isObjCGCWeak()
       && !NewVD->hasAttr<BlocksAttr>())
     Diag(NewVD->getLocation(), diag::warn_attribute_weak_on_local);
-
+  
   bool isVM = T->isVariablyModifiedType();
   if (isVM || NewVD->hasAttr<CleanupAttr>() ||
       NewVD->hasAttr<BlocksAttr>())
@@ -4326,6 +4325,17 @@ void Sema::AddInitializerToDecl(Decl *RealDecl, Expr *Init, bool DirectInit) {
     Init->setType(DclT);
   }
 
+  
+  // If this variable is a local declaration with record type, make sure it
+  // doesn't have a flexible member initialization.  We only support this as a
+  // global/static definition.
+  if (VDecl->hasLocalStorage())
+    if (const RecordType *RT = VDecl->getType()->getAs<RecordType>())
+      if (RT->getDecl()->hasFlexibleArrayMember() && isa<InitListExpr>(Init)) {
+        Diag(VDecl->getLocation(), diag::err_nonstatic_flexible_variable);
+        VDecl->setInvalidDecl();
+      }
+  
   // Check any implicit conversions within the expression.
   CheckImplicitConversions(Init, VDecl->getLocation());
 
