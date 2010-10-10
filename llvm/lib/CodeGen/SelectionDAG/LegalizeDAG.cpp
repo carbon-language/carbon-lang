@@ -2699,7 +2699,7 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node,
                                            TLI.getPointerTy()));
 
       VAList = DAG.getNode(ISD::AND, dl, TLI.getPointerTy(), VAList,
-                           DAG.getConstant(-Align,
+                           DAG.getConstant(-(int64_t)Align,
                                            TLI.getPointerTy()));
     }
 
