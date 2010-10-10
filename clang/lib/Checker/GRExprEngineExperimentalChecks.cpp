@@ -22,6 +22,7 @@ void clang::RegisterExperimentalChecks(GRExprEngine &Eng) {
   // These are checks that never belong as internal checks
   // within GRExprEngine.
   RegisterCStringChecker(Eng);
+  RegisterChrootChecker(Eng);
   RegisterMallocChecker(Eng);
   RegisterPthreadLockChecker(Eng);
   RegisterStreamChecker(Eng);
