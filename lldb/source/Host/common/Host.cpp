@@ -640,15 +640,16 @@ Host::ListProcessesMatchingName (const char *name, StringList &matches, std::vec
 #if defined (__APPLE__)
     int num_pids;
     int size_of_pids;
-    int *pid_list;
+    std::vector<int> pid_list;
     
     size_of_pids = proc_listpids(PROC_ALL_PIDS, 0, NULL, 0);
     if (size_of_pids == -1)
         return 0;
         
     num_pids = size_of_pids/sizeof(int);
-    pid_list = (int *) malloc(size_of_pids);
-    size_of_pids = proc_listpids(PROC_ALL_PIDS, 0, pid_list, size_of_pids);
+    
+    pid_list.resize (size_of_pids);
+    size_of_pids = proc_listpids(PROC_ALL_PIDS, 0, &pid_list[0], size_of_pids);
     if (size_of_pids == -1)
         return 0;
         
