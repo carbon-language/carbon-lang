@@ -127,6 +127,7 @@ class ARMFastISel : public FastISel {
     virtual bool SelectSIToFP(const Instruction *I);
     virtual bool SelectFPToSI(const Instruction *I);
     virtual bool SelectSDiv(const Instruction *I);
+    virtual bool SelectSRem(const Instruction *I);
     virtual bool SelectCall(const Instruction *I);
     virtual bool SelectSelect(const Instruction *I);
 
@@ -1120,6 +1121,28 @@ bool ARMFastISel::SelectSDiv(const Instruction *I) {
   return ARMEmitLibcall(I, LC);
 }
 
+bool ARMFastISel::SelectSRem(const Instruction *I) {
+  EVT VT;
+  const Type *Ty = I->getType();
+  if (!isTypeLegal(Ty, VT))
+    return false;
+
+  RTLIB::Libcall LC = RTLIB::UNKNOWN_LIBCALL;
+  if (VT == MVT::i8)
+    LC = RTLIB::SREM_I8;
+  else if (VT == MVT::i16)
+    LC = RTLIB::SREM_I16;
+  else if (VT == MVT::i32)
+    LC = RTLIB::SREM_I32;
+  else if (VT == MVT::i64)
+    LC = RTLIB::SREM_I64;
+  else if (VT == MVT::i128)
+    LC = RTLIB::SREM_I128;
+  assert(LC != RTLIB::UNKNOWN_LIBCALL && "Unsupported SDIV!");
+    
+  return ARMEmitLibcall(I, LC);
+}
+
 bool ARMFastISel::SelectBinaryOp(const Instruction *I, unsigned ISDOpcode) {
   EVT VT  = TLI.getValueType(I->getType(), true);
 
@@ -1519,6 +1542,8 @@ bool ARMFastISel::TargetSelectInstruction(const Instruction *I) {
       return SelectBinaryOp(I, ISD::FMUL);
     case Instruction::SDiv:
       return SelectSDiv(I);
+    case Instruction::SRem:
+      return SelectSRem(I);
     case Instruction::Call:
       return SelectCall(I);
     case Instruction::Select:
