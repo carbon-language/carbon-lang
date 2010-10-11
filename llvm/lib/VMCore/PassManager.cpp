@@ -612,41 +612,40 @@ void PMTopLevelManager::schedulePass(Pass *P) {
 /// then return NULL.
 Pass *PMTopLevelManager::findAnalysisPass(AnalysisID AID) {
 
-  Pass *P = NULL;
   // Check pass managers
   for (SmallVector<PMDataManager *, 8>::iterator I = PassManagers.begin(),
-         E = PassManagers.end(); P == NULL && I != E; ++I) {
-    PMDataManager *PMD = *I;
-    P = PMD->findAnalysisPass(AID, false);
-  }
+         E = PassManagers.end(); I != E; ++I)
+    if (Pass *P = (*I)->findAnalysisPass(AID, false))
+      return P;
 
   // Check other pass managers
   for (SmallVector<PMDataManager *, 8>::iterator
          I = IndirectPassManagers.begin(),
-         E = IndirectPassManagers.end(); P == NULL && I != E; ++I)
-    P = (*I)->findAnalysisPass(AID, false);
+         E = IndirectPassManagers.end(); I != E; ++I)
+    if (Pass *P = (*I)->findAnalysisPass(AID, false))
+      return P;
 
-  for (SmallVector<ImmutablePass *, 8>::iterator I = ImmutablePasses.begin(),
-         E = ImmutablePasses.end(); P == NULL && I != E; ++I) {
+  // Check the immutable passes. Iterate in reverse order so that we find
+  // the most recently registered passes first.
+  for (SmallVector<ImmutablePass *, 8>::reverse_iterator I =
+       ImmutablePasses.rbegin(), E = ImmutablePasses.rend(); I != E; ++I) {
     AnalysisID PI = (*I)->getPassID();
     if (PI == AID)
-      P = *I;
+      return *I;
 
     // If Pass not found then check the interfaces implemented by Immutable Pass
-    if (!P) {
-      const PassInfo *PassInf =
-        PassRegistry::getPassRegistry()->getPassInfo(PI);
-      const std::vector<const PassInfo*> &ImmPI =
-        PassInf->getInterfacesImplemented();
-      for (std::vector<const PassInfo*>::const_iterator II = ImmPI.begin(),
-           EE = ImmPI.end(); II != EE; ++II) {
-        if ((*II)->getTypeInfo() == AID)
-          P = *I;
-      }
+    const PassInfo *PassInf =
+      PassRegistry::getPassRegistry()->getPassInfo(PI);
+    const std::vector<const PassInfo*> &ImmPI =
+      PassInf->getInterfacesImplemented();
+    for (std::vector<const PassInfo*>::const_iterator II = ImmPI.begin(),
+         EE = ImmPI.end(); II != EE; ++II) {
+      if ((*II)->getTypeInfo() == AID)
+        return *I;
     }
   }
 
-  return P;
+  return 0;
 }
 
 // Print passes managed by this top level manager.
