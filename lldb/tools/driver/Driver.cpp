@@ -651,6 +651,7 @@ Driver::ParseArgs (int argc, const char *argv[], FILE *out_fh, bool &exit)
     if (error.Fail() || m_option_data.m_print_help)
     {
         ShowUsage (out_fh, g_options, m_option_data);
+        exit = true;
     }
     else if (m_option_data.m_print_version)
     {
