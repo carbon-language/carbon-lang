@@ -85,7 +85,7 @@ public:
       OGV->replaceAllUsesWith(NewPtr);
       OGV->eraseFromParent();
     }
-    if (Hidden)
+    if (Hidden && Linkage != llvm::GlobalValue::InternalLinkage)
       GV->setVisibility(llvm::GlobalVariable::HiddenVisibility);
     return llvm::ConstantExpr::getBitCast(GV, Int8PtrTy);
   }

@@ -1,11 +1,12 @@
 // RUN: %clang_cc1 %s -I%S -triple=x86_64-apple-darwin10 -fhidden-weak-vtables -emit-llvm -o - | sort | FileCheck %s
+// RUN: %clang_cc1 %s -I%S -triple=x86_64-apple-darwin10 -fvisibility hidden -fhidden-weak-vtables -emit-llvm -o - | FileCheck -check-prefix=CHECK-WITH-HIDDEN %s
 
 // FIXME: Fails on Win32, dunno why.
 // XFAIL: win32
 
 #include <typeinfo>
 
-
+// CHECK-WITH-HIDDEN: _ZTSFN12_GLOBAL__N_11DEvE = internal constant
 
 // CHECK: _ZTIN12_GLOBAL__N_11DE to
 
