@@ -1,10 +1,7 @@
 // RUN: %clang_cc1 -triple=i686-apple-darwin9 -emit-llvm -o %t %s
-// RUN: grep -e "\^{Innermost=CC}" %t | count 1
-// RUN: grep -e "{Derived=#ib32b8b3b8sb16b8b8b2b8ccb6}" %t | count 1
-// RUN: grep -e "{B1=#@c}" %t | count 1
-// RUN: grep -e "v12@0:4\[3\[4@]]8" %t | count 1
-// RUN: grep -e "r\^{S=i}" %t | count 1
-// RUN: grep -e "\^{Object=#}" %t | count 1
+// RUN: FileCheck < %t %s
+//
+// CHECK: @"\01L_OBJC_METH_VAR_TYPE_34" = internal global [16 x i8] c"v12@0:4[3[4@]]8\00"
 
 @class Int1;
 
@@ -95,3 +92,20 @@ int main()
         const char *ee = @encode(MyObj *const);
 }
 
+// CHECK: @g0 = constant [15 x i8] c"{Innermost=CC}\00"
+const char g0[] = @encode(struct Innermost);
+
+// CHECK: @g1 = constant [38 x i8] c"{Derived=#ib32b8b3b8sb16b8b8b2b8ccb6}\00"
+const char g1[] = @encode(Derived);
+
+// CHECK: @g2 = constant [9 x i8] c"{B1=#@c}\00"
+const char g2[] = @encode(B1);
+
+// CHECK: @g3 = constant [8 x i8] c"r^{S=i}\00"
+const char g3[] = @encode(const struct S *);
+
+// CHECK: @g4 = constant [6 x i8] c"{S=i}\00"
+const char g4[] = @encode(const struct S);
+
+// CHECK: @g5 = constant [12 x i8] c"^{Object=#}\00"
+const char g5[] = @encode(MyObj * const);
