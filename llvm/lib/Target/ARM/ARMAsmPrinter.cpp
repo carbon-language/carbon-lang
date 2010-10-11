@@ -21,6 +21,7 @@
 #include "ARMMachineFunctionInfo.h"
 #include "ARMMCInstLower.h"
 #include "ARMTargetMachine.h"
+#include "ARMTargetObjectFile.h"
 #include "llvm/Analysis/DebugInfo.h"
 #include "llvm/Constants.h"
 #include "llvm/Module.h"
@@ -30,7 +31,6 @@
 #include "llvm/CodeGen/MachineModuleInfoImpls.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineJumpTableInfo.h"
-#include "llvm/CodeGen/TargetLoweringObjectFileImpl.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCExpr.h"
@@ -110,7 +110,11 @@ namespace {
   private:
     // Helpers for EmitStartOfAsmFile() and EmitEndOfAsmFile()
     void emitAttributes();
+    void emitTextAttribute(ARMBuildAttrs::SpecialAttr attr, StringRef v);
     void emitAttribute(ARMBuildAttrs::AttrType attr, int v);
+
+    // Helper for ELF .o only
+    void emitARMAttributeSection();
 
   public:
     void PrintDebugValueComment(const MachineInstr *MI, raw_ostream &OS);
@@ -495,12 +499,11 @@ void ARMAsmPrinter::EmitEndOfAsmFile(Module &M) {
 // Instead of subclassing the MCELFStreamer, we do the work here.
 
 void ARMAsmPrinter::emitAttributes() {
-  // FIXME: Add in ELF specific section handling here.
 
-  // FIXME: unify this: .cpu and CPUString with enum attributes
+  emitARMAttributeSection();
+
   std::string CPUString = Subtarget->getCPUString();
-  if (CPUString != "generic")
-    OutStreamer.EmitRawText("\t.cpu " + Twine(CPUString));
+  emitTextAttribute(ARMBuildAttrs::SEL_CPU, CPUString);
 
   // FIXME: Emit FPU type
   if (Subtarget->hasVFP2())
@@ -529,6 +532,26 @@ void ARMAsmPrinter::emitAttributes() {
   // FIXME: Should we signal R9 usage?
 }
 
+void ARMAsmPrinter::emitARMAttributeSection() {
+  // <format-version>
+  // [ <section-length> "vendor-name"
+  // [ <file-tag> <size> <attribute>*
+  //   | <section-tag> <size> <section-number>* 0 <attribute>*
+  //   | <symbol-tag> <size> <symbol-number>* 0 <attribute>*
+  //   ]+
+  // ]*
+
+  if (OutStreamer.hasRawTextSupport())
+    return;
+
+  const ARMElfTargetObjectFile &TLOFELF =
+    static_cast<const ARMElfTargetObjectFile &>
+    (getObjFileLowering());
+
+  OutStreamer.SwitchSection(TLOFELF.getAttributesSection());
+  // Fixme: Still more to do here.
+}
+
 void ARMAsmPrinter::emitAttribute(ARMBuildAttrs::AttrType attr, int v) {
   if (OutStreamer.hasRawTextSupport()) {
     OutStreamer.EmitRawText("\t.eabi_attribute " +
@@ -536,6 +559,21 @@ void ARMAsmPrinter::emitAttribute(ARMBuildAttrs::AttrType attr, int v) {
 
   } else {
     assert(0 && "ELF .ARM.attributes unimplemented");
+  }
+}
+
+void ARMAsmPrinter::emitTextAttribute(ARMBuildAttrs::SpecialAttr attr,
+                                      StringRef val) {
+  switch (attr) {
+  default: assert(0 && "Unimplemented ARMBuildAttrs::SpecialAttr"); break;
+  case ARMBuildAttrs::SEL_CPU:
+    if (OutStreamer.hasRawTextSupport()) {
+      if (val != "generic") {
+        OutStreamer.EmitRawText("\t.cpu " + val);
+      }
+    } else {
+      // FIXME: ELF
+    }
   }
 }
 

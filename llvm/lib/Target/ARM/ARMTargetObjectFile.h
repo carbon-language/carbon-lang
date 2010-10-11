@@ -18,10 +18,19 @@ class MCContext;
 class TargetMachine;
 
 class ARMElfTargetObjectFile : public TargetLoweringObjectFileELF {
+protected:
+  const MCSection *AttributesSection;
 public:
-  ARMElfTargetObjectFile() : TargetLoweringObjectFileELF() {}
+  ARMElfTargetObjectFile() :
+    TargetLoweringObjectFileELF(),
+    AttributesSection(NULL)
+  {}
 
   virtual void Initialize(MCContext &Ctx, const TargetMachine &TM);
+
+  virtual const MCSection *getAttributesSection() const {
+    return AttributesSection;
+  }
 };
 
 } // end namespace llvm

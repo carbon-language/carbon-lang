@@ -36,4 +36,10 @@ void ARMElfTargetObjectFile::Initialize(MCContext &Ctx,
                                  MCSectionELF::SHF_ALLOC,
                                  SectionKind::getDataRel());
   }
+  
+  AttributesSection =
+    getContext().getELFSection(".ARM.attributes",
+                               MCSectionELF::SHT_ARM_ATTRIBUTES,
+                               0,
+                               SectionKind::getMetadata());
 }

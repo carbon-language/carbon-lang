@@ -121,7 +121,18 @@ public:
     // referenced symbol table contain the escape value SHN_XINDEX
     SHT_SYMTAB_SHNDX     = 0x12U,
 
-    LAST_KNOWN_SECTION_TYPE = SHT_SYMTAB_SHNDX
+    // Start of target-specific flags.
+
+    // Exception Index table
+    SHT_ARM_EXIDX           = 0x70000001U,
+    // BPABI DLL dynamic linking pre-emption map
+    SHT_ARM_PREEMPTMAP      = 0x70000002U,
+    //  Object file compatibility attributes
+    SHT_ARM_ATTRIBUTES      = 0x70000003U,
+    SHT_ARM_DEBUGOVERLAY    = 0x70000004U,
+    SHT_ARM_OVERLAYSECTION  = 0x70000005U,
+
+    LAST_KNOWN_SECTION_TYPE = SHT_ARM_OVERLAYSECTION
   };
 
   /// Valid section flags.

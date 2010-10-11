@@ -16,7 +16,14 @@
 #define __TARGET_ARMBUILDATTRS_H__
 
 namespace ARMBuildAttrs {
+  enum SpecialAttr {
+    // This is for the .cpu asm attr. It translates into one or more
+    // AttrType (below) entries in the .ARM.attributes section in the ELF.
+    SEL_CPU 
+  };
+
   enum AttrType {
+    // Rest correspond to ELF/.ARM.attributes
     File                      = 1,
     Section                   = 2,
     Symbol                    = 3,
@@ -58,6 +65,11 @@ namespace ARMBuildAttrs {
     conformance               = 67,
     Virtualization_use        = 68,
     MPextension_use           = 70
+  };
+
+  // Magic numbers for .ARM.attributes
+  enum AttrMagic {
+    Format_Version  = 0x41
   };
 }
 
