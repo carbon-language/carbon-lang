@@ -3701,7 +3701,7 @@ static char ObjCEncodingForPrimitiveKind(const ASTContext *C, QualType T) {
     case BuiltinType::Int128:     return 't';
     case BuiltinType::Float:      return 'f';
     case BuiltinType::Double:     return 'd';
-    case BuiltinType::LongDouble: return 'd';
+    case BuiltinType::LongDouble: return 'D';
     }
 }
 

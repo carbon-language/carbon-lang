@@ -138,3 +138,9 @@ const char g6[] = @encode(Base1X);
 
 // CHECK: @g7 = constant [27 x i8] c"{Derived1X=b2b3b4b5b5b4b3}\00"
 const char g7[] = @encode(Derived1X);
+
+// CHECK: @g8 = constant [7 x i8] c"{s8=D}\00"
+struct s8 {
+  long double x;
+};
+const char g8[] = @encode(struct s8);
