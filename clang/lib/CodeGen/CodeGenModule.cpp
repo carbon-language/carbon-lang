@@ -974,7 +974,9 @@ CodeGenModule::GetOrCreateLLVMGlobal(llvm::StringRef MangledName,
     if (D->getStorageClass() == SC_PrivateExtern)
       GV->setVisibility(llvm::GlobalValue::HiddenVisibility);
 
-    if (D->hasAttr<WeakAttr>() ||
+    if (D->hasAttr<DLLImportAttr>())
+      GV->setLinkage(llvm::GlobalValue::DLLImportLinkage);
+    else if (D->hasAttr<WeakAttr>() ||
         D->hasAttr<WeakImportAttr>())
       GV->setLinkage(llvm::GlobalValue::ExternalWeakLinkage);
 
