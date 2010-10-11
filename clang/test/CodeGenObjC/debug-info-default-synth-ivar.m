@@ -1,4 +1,5 @@
-// RUN: %clang -fobjc-abi-version=3 -fverbose-asm -g -S %s -o - | grep DW_AT_name | count 42
+// RUN: %clang_cc1 -triple x86_64-apple-darwin10 -fobjc-nonfragile-abi2 -emit-llvm -g %s -o %t 
+// RUN: grep DW_TAG_member %t | count 5
 // rdar://8493239
 
 @class NSString;
