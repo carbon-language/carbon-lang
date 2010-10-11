@@ -52,9 +52,6 @@ void LLVMAddLICMPass(LLVMPassManagerRef PM);
 /** See llvm::createLoopDeletionPass function. */
 void LLVMAddLoopDeletionPass(LLVMPassManagerRef PM);
 
-/** See llvm::createLoopIndexSplitPass function. */
-void LLVMAddLoopIndexSplitPass(LLVMPassManagerRef PM);
-
 /** See llvm::createLoopRotatePass function. */
 void LLVMAddLoopRotatePass(LLVMPassManagerRef PM);
 
