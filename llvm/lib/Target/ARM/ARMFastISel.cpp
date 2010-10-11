@@ -48,7 +48,7 @@ using namespace llvm;
 static cl::opt<bool>
 EnableARMFastISel("arm-fast-isel",
                   cl::desc("Turn on experimental ARM fast-isel support"),
-                  cl::init(false), cl::Hidden);
+                  cl::init(true), cl::Hidden);
 
 namespace {
 
