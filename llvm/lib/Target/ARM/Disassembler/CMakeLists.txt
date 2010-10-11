@@ -4,5 +4,11 @@ add_llvm_library(LLVMARMDisassembler
   ARMDisassembler.cpp
   ARMDisassemblerCore.cpp
   )
-
+# workaround for hanging compilation on MSVC9 and 10
+if( MSVC_VERSION EQUAL 1500 OR MSVC_VERSION EQUAL 1600 )
+set_property(
+  SOURCE ARMDisassembler.cpp
+  PROPERTY COMPILE_FLAGS "/Od"
+  )
+endif()
 add_dependencies(LLVMARMDisassembler ARMCodeGenTable_gen)
