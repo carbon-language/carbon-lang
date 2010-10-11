@@ -825,6 +825,16 @@ ClangASTType::IsDefined (clang_type_t clang_type)
             return tag_decl->getDefinition() != NULL;
         return false;
     }
+    else
+    {
+        clang::ObjCObjectType *objc_class_type = dyn_cast<clang::ObjCObjectType>(qual_type);
+        if (objc_class_type)
+        {
+            clang::ObjCInterfaceDecl *class_interface_decl = objc_class_type->getInterface();
+            if (class_interface_decl->isForwardDecl())
+                return false;
+        }
+    }
     return true;
 }
 

@@ -784,7 +784,7 @@ ClangASTContext::CreateRecordType (const char *name, int kind, DeclContext *decl
 
     if (language == eLanguageTypeObjC)
     {
-        bool isForwardDecl = false;
+        bool isForwardDecl = true;
         bool isInternal = false;
         return CreateObjCClass (name, decl_ctx, isForwardDecl, isInternal);
     }

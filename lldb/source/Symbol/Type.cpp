@@ -529,15 +529,14 @@ lldb_private::Type::ResolveClangType (bool forward_decl_is_ok)
             // definition.
             m_symbol_file->ResolveClangOpaqueTypeDefinition (m_clang_qual_type);
         }
-        else
-        {
-            // If we have an encoding type, then we need to make sure it is 
-            // resolved appropriately
-            Type *encoding_type = GetEncodingType ();
-            if (encoding_type != NULL)
-                encoding_type->ResolveClangType (forward_decl_is_ok);
-        }
     }
+    
+    // If we have an encoding type, then we need to make sure it is 
+    // resolved appropriately
+    Type *encoding_type = GetEncodingType ();
+    if (encoding_type != NULL)
+        encoding_type->ResolveClangType (forward_decl_is_ok);
+
 //    if (g_depth > 0)
 //        --g_depth;
     return m_clang_qual_type != NULL;
