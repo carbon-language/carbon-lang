@@ -87,7 +87,8 @@ where options:
 -c   : read a config file specified after this option
        (see also lldb-trunk/example/test/usage-config)
 -d   : delay startup for 10 seconds (in order for the debugger to attach)
--f   : specify a filter to admit tests into the test suite
+-f   : specify a filter, which consists of the test class name, a dot, followed by
+       the test method, to admit tests into the test suite
        e.g., -f 'ClassTypesTestCase.test_with_dwarf_and_python_api'
 -g   : if specified, only the modules with the corect filter will be run
        it has no effect if no '-f' option is present
