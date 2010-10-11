@@ -109,7 +109,7 @@ void BinaryDiagnosticSerializer::HandleDiagnostic(Diagnostic::Level DiagLevel,
 }
 
 static void SetUpBuildDumpLog(const DiagnosticOptions &DiagOpts,
-                              unsigned argc, char **argv,
+                              unsigned argc, const char* const *argv,
                               Diagnostic &Diags) {
   std::string ErrorInfo;
   llvm::OwningPtr<llvm::raw_ostream> OS(
@@ -131,13 +131,13 @@ static void SetUpBuildDumpLog(const DiagnosticOptions &DiagOpts,
   Diags.setClient(new ChainedDiagnosticClient(Diags.takeClient(), Logger));
 }
 
-void CompilerInstance::createDiagnostics(int Argc, char **Argv) {
+void CompilerInstance::createDiagnostics(int Argc, const char* const *Argv) {
   Diagnostics = createDiagnostics(getDiagnosticOpts(), Argc, Argv);
 }
 
 llvm::IntrusiveRefCntPtr<Diagnostic> 
 CompilerInstance::createDiagnostics(const DiagnosticOptions &Opts,
-                                    int Argc, char **Argv) {
+                                    int Argc, const char* const *Argv) {
   llvm::IntrusiveRefCntPtr<Diagnostic> Diags(new Diagnostic());
 
   // Create the diagnostic client for reporting errors or for

@@ -474,7 +474,7 @@ public:
   /// and replace any existing one with it.
   ///
   /// Note that this routine also replaces the diagnostic client.
-  void createDiagnostics(int Argc, char **Argv);
+  void createDiagnostics(int Argc, const char* const *Argv);
 
   /// Create a Diagnostic object with a the TextDiagnosticPrinter.
   ///
@@ -492,7 +492,8 @@ public:
   ///
   /// \return The new object on success, or null on failure.
   static llvm::IntrusiveRefCntPtr<Diagnostic> 
-  createDiagnostics(const DiagnosticOptions &Opts, int Argc, char **Argv);
+  createDiagnostics(const DiagnosticOptions &Opts, int Argc,
+                    const char* const *Argv);
 
   /// Create the file manager and replace any existing one with it.
   void createFileManager();
