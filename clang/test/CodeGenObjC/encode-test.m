@@ -109,3 +109,32 @@ const char g4[] = @encode(const struct S);
 
 // CHECK: @g5 = constant [12 x i8] c"^{Object=#}\00"
 const char g5[] = @encode(MyObj * const);
+
+////
+
+enum Enum1X { one, two, three, four };
+
+@interface Base1X {
+  unsigned a: 2;
+  int b: 3;
+  enum Enum1X c: 4;
+  unsigned d: 5;
+} 
+@end
+
+@interface Derived1X: Base1X {
+  signed e: 5;
+  int f: 4;
+  enum Enum1X g: 3;
+} 
+@end
+
+@implementation Base1X @end
+
+@implementation Derived1X @end
+
+// CHECK: @g6 = constant [18 x i8] c"{Base1X=b2b3b4b5}\00"
+const char g6[] = @encode(Base1X);
+
+// CHECK: @g7 = constant [27 x i8] c"{Derived1X=b2b3b4b5b5b4b3}\00"
+const char g7[] = @encode(Derived1X);
