@@ -1138,7 +1138,7 @@ bool ARMFastISel::SelectSRem(const Instruction *I) {
     LC = RTLIB::SREM_I64;
   else if (VT == MVT::i128)
     LC = RTLIB::SREM_I128;
-  assert(LC != RTLIB::UNKNOWN_LIBCALL && "Unsupported SDIV!");
+  assert(LC != RTLIB::UNKNOWN_LIBCALL && "Unsupported SREM!");
     
   return ARMEmitLibcall(I, LC);
 }
