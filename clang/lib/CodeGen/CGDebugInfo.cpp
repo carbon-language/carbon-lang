@@ -1125,7 +1125,7 @@ llvm::DIType CGDebugInfo::CreateType(const ObjCInterfaceType *Ty,
 
   unsigned FieldNo = 0;
   for (ObjCIvarDecl *Field = ID->all_declared_ivar_begin(); Field;
-       Field = Field->getNextIvar()) {
+       Field = Field->getNextIvar(), ++FieldNo) {
     llvm::DIType FieldTy = getOrCreateType(Field->getType(), Unit);
 
     llvm::StringRef FieldName = Field->getName();
