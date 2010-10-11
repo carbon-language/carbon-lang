@@ -23,7 +23,6 @@
 //
 // TODO: getModRefBehavior. The AliasAnalysis infrastructure will need to
 //       be extended.
-// TODO: AA chaining
 // TODO: struct fields
 //
 //===----------------------------------------------------------------------===//
@@ -84,6 +83,10 @@ namespace {
     static char ID; // Class identification, replacement for typeinfo
     TypeBasedAliasAnalysis() : ImmutablePass(ID) {}
 
+    virtual void initializePass() {
+      InitializeAliasAnalysis(this);
+    }
+
     /// getAdjustedAnalysisPointer - This method is used when a pass implements
     /// an analysis interface through multiple inheritance.  If needed, it
     /// should override this to adjust the this pointer as needed for the
@@ -122,9 +125,9 @@ TypeBasedAliasAnalysis::alias(const Location &LocA,
   // Get the attached MDNodes. If either value lacks a tbaa MDNode, we must
   // be conservative.
   const MDNode *AM = LocA.TBAATag;
-  if (!AM) return MayAlias;
+  if (!AM) return AliasAnalysis::alias(LocA, LocB);
   const MDNode *BM = LocB.TBAATag;
-  if (!BM) return MayAlias;
+  if (!BM) return AliasAnalysis::alias(LocA, LocB);
 
   // Keep track of the root node for A and B.
   TBAANode RootA, RootB;
@@ -133,7 +136,7 @@ TypeBasedAliasAnalysis::alias(const Location &LocA,
   for (TBAANode T(AM); ; ) {
     if (T.getNode() == BM)
       // B is an ancestor of A.
-      return MayAlias;
+      return AliasAnalysis::alias(LocA, LocB);
 
     RootA = T;
     T = T.getParent();
@@ -145,7 +148,7 @@ TypeBasedAliasAnalysis::alias(const Location &LocA,
   for (TBAANode T(BM); ; ) {
     if (T.getNode() == AM)
       // A is an ancestor of B.
-      return MayAlias;
+      return AliasAnalysis::alias(LocA, LocB);
 
     RootB = T;
     T = T.getParent();
@@ -161,7 +164,7 @@ TypeBasedAliasAnalysis::alias(const Location &LocA,
 
   // If they have different roots, they're part of different potentially
   // unrelated type systems, so we must be conservative.
-  return MayAlias;
+  return AliasAnalysis::alias(LocA, LocB);
 }
 
 bool TypeBasedAliasAnalysis::pointsToConstantMemory(const Location &Loc) {
