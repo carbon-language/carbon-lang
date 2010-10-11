@@ -23,51 +23,51 @@
 namespace llvm {
   class CodeGenInstruction;
   class Record;
-  
+
   struct AsmWriterOperand {
     enum OpType {
       // Output this text surrounded by quotes to the asm.
-      isLiteralTextOperand, 
+      isLiteralTextOperand,
       // This is the name of a routine to call to print the operand.
       isMachineInstrOperand,
       // Output this text verbatim to the asm writer.  It is code that
       // will output some text to the asm.
       isLiteralStatementOperand
     } OperandType;
-    
+
     /// Str - For isLiteralTextOperand, this IS the literal text.  For
     /// isMachineInstrOperand, this is the PrinterMethodName for the operand..
-    /// For isLiteralStatementOperand, this is the code to insert verbatim 
+    /// For isLiteralStatementOperand, this is the code to insert verbatim
     /// into the asm writer.
     std::string Str;
-    
+
     /// CGIOpNo - For isMachineInstrOperand, this is the index of the operand in
     /// the CodeGenInstruction.
     unsigned CGIOpNo;
-    
+
     /// MiOpNo - For isMachineInstrOperand, this is the operand number of the
     /// machine instruction.
     unsigned MIOpNo;
-    
+
     /// MiModifier - For isMachineInstrOperand, this is the modifier string for
     /// an operand, specified with syntax like ${opname:modifier}.
     std::string MiModifier;
-    
+
     // To make VS STL happy
     AsmWriterOperand(OpType op = isLiteralTextOperand):OperandType(op) {}
-    
+
     AsmWriterOperand(const std::string &LitStr,
                      OpType op = isLiteralTextOperand)
     : OperandType(op), Str(LitStr) {}
-    
+
     AsmWriterOperand(const std::string &Printer,
                      unsigned _CGIOpNo,
                      unsigned _MIOpNo,
                      const std::string &Modifier,
-                     OpType op = isMachineInstrOperand) 
+                     OpType op = isMachineInstrOperand)
     : OperandType(op), Str(Printer), CGIOpNo(_CGIOpNo), MIOpNo(_MIOpNo),
     MiModifier(Modifier) {}
-    
+
     bool operator!=(const AsmWriterOperand &Other) const {
       if (OperandType != Other.OperandType || Str != Other.Str) return true;
       if (OperandType == isMachineInstrOperand)
@@ -77,26 +77,26 @@ namespace llvm {
     bool operator==(const AsmWriterOperand &Other) const {
       return !operator!=(Other);
     }
-    
+
     /// getCode - Return the code that prints this operand.
     std::string getCode() const;
   };
-  
+
   class AsmWriterInst {
   public:
     std::vector<AsmWriterOperand> Operands;
     const CodeGenInstruction *CGI;
-    
-    AsmWriterInst(const CodeGenInstruction &CGI, 
+
+    AsmWriterInst(const CodeGenInstruction &CGI,
                   unsigned Variant,
                   int FirstOperandColumn,
                   int OperandSpacing);
-    
+
     /// MatchesAllButOneOp - If this instruction is exactly identical to the
     /// specified instruction except for one differing operand, return the
     /// differing operand number.  Otherwise return ~0.
     unsigned MatchesAllButOneOp(const AsmWriterInst &Other) const;
-    
+
   private:
     void AddLiteralString(const std::string &Str) {
       // If the last operand was already a literal text string, append this to
