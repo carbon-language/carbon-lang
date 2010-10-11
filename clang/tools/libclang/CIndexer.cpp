@@ -39,59 +39,39 @@
 
 using namespace clang;
 
-const llvm::sys::Path& CIndexer::getClangPath() {
+std::string CIndexer::getClangResourcesPath() {
   // Did we already compute the path?
-  if (!ClangPath.empty())
-    return ClangPath;
-
-  // Find the location where this library lives (libCIndex.dylib).
+  if (!ResourcesPath.empty())
+    return ResourcesPath.str();
+  
+  // Find the location where this library lives (libclang.dylib).
 #ifdef LLVM_ON_WIN32
   MEMORY_BASIC_INFORMATION mbi;
   char path[MAX_PATH];
   VirtualQuery((void *)(uintptr_t)clang_createTranslationUnit, &mbi,
                sizeof(mbi));
   GetModuleFileNameA((HINSTANCE)mbi.AllocationBase, path, MAX_PATH);
-
-  llvm::sys::Path CIndexPath(path);
-
-  CIndexPath.eraseComponent();
-  CIndexPath.appendComponent("clang");
-  CIndexPath.appendSuffix("exe");
-  CIndexPath.makeAbsolute();
+  
+  llvm::sys::Path LibClangPath(path);
+  LibClangPath.eraseComponent();
 #else
   // This silly cast below avoids a C++ warning.
   Dl_info info;
   if (dladdr((void *)(uintptr_t)clang_createTranslationUnit, &info) == 0)
     assert(0 && "Call to dladdr() failed");
-
-  llvm::sys::Path CIndexPath(info.dli_fname);
-
+  
+  llvm::sys::Path LibClangPath(info.dli_fname);
+  
   // We now have the CIndex directory, locate clang relative to it.
-  CIndexPath.eraseComponent();
-  CIndexPath.appendComponent("..");
-  CIndexPath.appendComponent("bin");
-  CIndexPath.appendComponent("clang");
+  LibClangPath.eraseComponent();
 #endif
+  
+  LibClangPath.appendComponent("clang");
+  LibClangPath.appendComponent(CLANG_VERSION_STRING);
 
   // Cache our result.
-  ClangPath = CIndexPath;
-  return ClangPath;
-}
-
-std::string CIndexer::getClangResourcesPath() {
-  llvm::sys::Path P = getClangPath();
-
-  if (!P.empty()) {
-    P.eraseComponent();  // Remove /clang from foo/bin/clang
-    P.eraseComponent();  // Remove /bin   from foo/bin
-
-    // Get foo/lib/clang/<version>/include
-    P.appendComponent("lib");
-    P.appendComponent("clang");
-    P.appendComponent(CLANG_VERSION_STRING);
-  }
-
-  return P.str();
+  ResourcesPath = LibClangPath;
+  return LibClangPath.str();
 }
 
 static llvm::sys::Path GetTemporaryPath() {

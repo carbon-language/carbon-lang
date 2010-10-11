@@ -31,7 +31,7 @@ class CIndexer {
   bool OnlyLocalDecls;
   bool DisplayDiagnostics;
 
-  llvm::sys::Path ClangPath;
+  llvm::sys::Path ResourcesPath;
   
 public:
  CIndexer() : OnlyLocalDecls(false), DisplayDiagnostics(false) { }
@@ -47,9 +47,6 @@ public:
     DisplayDiagnostics = Display;
   }
 
-  /// \brief Get the path of the clang binary.
-  const llvm::sys::Path& getClangPath();
-  
   /// \brief Get the path of the clang resource files.
   std::string getClangResourcesPath();
 };
