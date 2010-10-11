@@ -217,6 +217,23 @@ Process::WaitForState
     return state;
 }
 
+bool
+Process::HijackProcessEvents (Listener *listener)
+{
+    if (listener != NULL)
+    {
+        return HijackBroadcaster(listener, eBroadcastBitStateChanged);
+    }
+    else
+        return false;
+}
+
+void
+Process::RestoreProcessEvents ()
+{
+    RestoreBroadcaster();
+}
+
 StateType
 Process::WaitForStateChangedEvents (const TimeValue *timeout, EventSP &event_sp)
 {

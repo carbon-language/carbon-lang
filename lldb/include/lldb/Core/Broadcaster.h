@@ -165,9 +165,40 @@ public:
     //------------------------------------------------------------------
     bool
     RemoveListener (Listener* listener, uint32_t event_mask = UINT32_MAX);
-
-
+    
 protected:
+
+    
+    //------------------------------------------------------------------
+    /// Provides a simple mechanism to temporarily redirect events from 
+    /// broadcaster.  When you call this function passing in a listener and
+    /// event type mask, all events from the broadcaster matching the mask
+    /// will now go to the hijacking listener.
+    /// Only one hijack can occur at a time.  If we need more than this we
+    /// will have to implement a Listener stack.
+    ///
+    /// @param[in] listener
+    ///     A Listener object.  You do not need to call StartListeningForEvents
+    ///     for this broadcaster (that would fail anyway since the event bits
+    ///     would most likely be taken by the listener(s) you are usurping.
+    ///
+    /// @param[in] event_mask
+    ///     The event bits \a listener wishes to hijack.
+    ///
+    /// @return
+    ///     \b True if the event mask could be hijacked, \b false otherwise.
+    ///
+    /// @see uint32_t Broadcaster::AddListener (Listener*, uint32_t)
+    //------------------------------------------------------------------
+    bool
+    HijackBroadcaster (Listener *listener, uint32_t event_mask = UINT32_MAX);
+    
+    //------------------------------------------------------------------
+    /// Restore the state of the Broadcaster from a previous hijack attempt.
+    ///
+    //------------------------------------------------------------------
+    void
+    RestoreBroadcaster ();
 
     void
     PrivateBroadcastEvent (lldb::EventSP &event_sp, bool unique);
@@ -181,7 +212,9 @@ protected:
     const ConstString m_broadcaster_name;   ///< The name of this broadcaster object.
     collection m_broadcaster_listeners;     ///< A list of Listener / event_mask pairs that are listening to this broadcaster.
     Mutex m_broadcaster_listeners_mutex;    ///< A mutex that protects \a m_broadcaster_listeners.
-
+    Listener *m_hijacking_listener;         // A simple mechanism to intercept events in lieu of a real Listener collection stack.
+    uint32_t m_hijack_mask;
+    
 private:
     //------------------------------------------------------------------
     // For Broadcaster only

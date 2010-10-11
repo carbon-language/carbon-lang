@@ -513,6 +513,9 @@ ClangFunction::ExecuteFunction (
         timeout_ptr = &real_timeout;
     }
     
+    Listener listener("ClangFunction temporary listener");
+    exe_ctx.process->HijackProcessEvents(&listener);
+    
     Error resume_error = exe_ctx.process->Resume ();
     if (!resume_error.Success())
     {
@@ -525,11 +528,11 @@ ClangFunction::ExecuteFunction (
     while (1)
     {
         lldb::EventSP event_sp;
-        
+        lldb::StateType stop_state = lldb::eStateInvalid;
         // Now wait for the process to stop again:
-        lldb::StateType stop_state =  exe_ctx.process->WaitForStateChangedEvents (timeout_ptr, event_sp);
+        bool got_event = listener.WaitForEvent (timeout_ptr, event_sp);
         
-        if (stop_state == lldb::eStateInvalid && timeout_ptr != NULL)
+        if (!got_event)
         {
             // Right now this is the only way to tell we've timed out...
             // We should interrupt the process here...
@@ -544,7 +547,9 @@ ClangFunction::ExecuteFunction (
             {
                 timeout_ptr = NULL;
                 
-                stop_state = exe_ctx.process->WaitForStateChangedEvents (timeout_ptr, event_sp);
+                got_event = listener.WaitForEvent (timeout_ptr, event_sp);
+                stop_state = Process::ProcessEventData::GetStateFromEvent(event_sp.get());
+
                 if (stop_state == lldb::eStateInvalid)
                 {
                     errors.Printf ("Got an invalid stop state after halt.");
@@ -572,9 +577,15 @@ ClangFunction::ExecuteFunction (
                     continue;
                 }
                 else
+                {
+                    exe_ctx.process->RestoreProcessEvents ();
                     return eExecutionInterrupted;
+                }
             }
         }
+        
+        stop_state = Process::ProcessEventData::GetStateFromEvent(event_sp.get());
+        
         if (stop_state == lldb::eStateRunning || stop_state == lldb::eStateStepping)
             continue;
         
@@ -664,6 +675,9 @@ ClangFunction::ExecuteFunction (
         }
     }
     
+    if (exe_ctx.process)
+        exe_ctx.process->RestoreProcessEvents ();
+            
     // Thread we ran the function in may have gone away because we ran the target
     // Check that it's still there.
     exe_ctx.thread = exe_ctx.process->GetThreadList().FindThreadByIndexID(tid, true).get();

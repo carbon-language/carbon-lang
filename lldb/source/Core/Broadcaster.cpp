@@ -24,7 +24,9 @@ using namespace lldb_private;
 Broadcaster::Broadcaster (const char *name) :
     m_broadcaster_name (name),
     m_broadcaster_listeners (),
-    m_broadcaster_listeners_mutex (Mutex::eMutexTypeRecursive)
+    m_broadcaster_listeners_mutex (Mutex::eMutexTypeRecursive),
+    m_hijacking_listener(NULL),
+    m_hijack_mask(UINT32_MAX)
 {
     Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_OBJECT);
     if (log)
@@ -116,6 +118,10 @@ bool
 Broadcaster::EventTypeHasListeners (uint32_t event_type)
 {
     Mutex::Locker locker (m_broadcaster_listeners_mutex);
+    
+    if (m_hijacking_listener != NULL && event_type & m_hijack_mask)
+        return true;
+        
     if (m_broadcaster_listeners.empty())
         return false;
 
@@ -185,20 +191,29 @@ Broadcaster::PrivateBroadcastEvent (EventSP &event_sp, bool unique)
                      unique);
     }
 
-    Mutex::Locker event_types_locker(m_broadcaster_listeners_mutex);
-    collection::iterator pos, end = m_broadcaster_listeners.end();
-
-
-    // Iterate through all listener/mask pairs
-    for (pos = m_broadcaster_listeners.begin(); pos != end; ++pos)
+    if (m_hijacking_listener != NULL && m_hijack_mask & event_type)
     {
-        // If the listener's mask matches any bits that we just set, then
-        // put the new event on its event queue.
-        if (event_type & pos->second)
+        if (unique && m_hijacking_listener->PeekAtNextEventForBroadcasterWithType (this, event_type))
+            return;
+        m_hijacking_listener->AddEvent (event_sp);
+    }
+    else
+    {
+        Mutex::Locker event_types_locker(m_broadcaster_listeners_mutex);
+        collection::iterator pos, end = m_broadcaster_listeners.end();
+
+
+        // Iterate through all listener/mask pairs
+        for (pos = m_broadcaster_listeners.begin(); pos != end; ++pos)
         {
-            if (unique && pos->first->PeekAtNextEventForBroadcasterWithType (this, event_type))
-                continue;
-            pos->first->AddEvent (event_sp);
+            // If the listener's mask matches any bits that we just set, then
+            // put the new event on its event queue.
+            if (event_type & pos->second)
+            {
+                if (unique && pos->first->PeekAtNextEventForBroadcasterWithType (this, event_type))
+                    continue;
+                pos->first->AddEvent (event_sp);
+            }
         }
     }
 }
@@ -215,5 +230,26 @@ Broadcaster::BroadcastEventIfUnique (uint32_t event_type, EventData *event_data)
 {
     EventSP event_sp (new Event (event_type, event_data));
     PrivateBroadcastEvent (event_sp, true);
+}
+
+bool
+Broadcaster::HijackBroadcaster (Listener *listener, uint32_t event_mask)
+{
+    Mutex::Locker event_types_locker(m_broadcaster_listeners_mutex);
+
+    if (m_hijacking_listener != NULL)
+        return false;
+    
+    m_hijacking_listener = listener;
+    m_hijack_mask = event_mask;
+    return true;
+}
+
+void
+Broadcaster::RestoreBroadcaster ()
+{
+    Mutex::Locker event_types_locker(m_broadcaster_listeners_mutex);
+
+    m_hijacking_listener = NULL;
 }
 

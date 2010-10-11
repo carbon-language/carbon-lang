@@ -1512,7 +1512,33 @@ public:
     
     Event *
     PeekAtStateChangedEvents ();
+    
 
+    //------------------------------------------------------------------
+    /// If you need to ensure that you and only you will hear about some public
+    /// event, then make a new listener, set to listen to process events, and
+    /// then call this with that listener.  Then you will have to wait on that
+    /// listener explicitly for events (rather than using the GetNextEvent & WaitFor*
+    /// calls above.  Be sure to call RestoreProcessEvents when you are done.
+    ///
+    /// @param[in] listener
+    ///     This is the new listener to whom all process events will be delivered.
+    ///
+    /// @return
+    ///     Returns \b true if the new listener could be installed,
+    ///     \b false otherwise.
+    //------------------------------------------------------------------
+    bool
+    HijackProcessEvents (Listener *listener);
+    
+    //------------------------------------------------------------------
+    /// Restores the process event broadcasting to its normal state.
+    ///
+    //------------------------------------------------------------------
+    void
+    RestoreProcessEvents ();
+
+protected:
     //------------------------------------------------------------------
     /// This is the part of the event handling that for a process event.
     /// It decides what to do with the event and returns true if the
@@ -1530,6 +1556,7 @@ public:
     bool
     ShouldBroadcastEvent (Event *event_ptr);
 
+public:
     //------------------------------------------------------------------
     /// Gets the byte order for this process.
     ///
