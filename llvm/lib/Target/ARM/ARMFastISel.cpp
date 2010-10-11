@@ -1229,8 +1229,9 @@ bool ARMFastISel::ProcessCallArgs(SmallVectorImpl<Value*> &Args,
 
   // Issue CALLSEQ_START
   unsigned AdjStackDown = TM.getRegisterInfo()->getCallFrameSetupOpcode();
-  BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(AdjStackDown))
-          .addImm(NumBytes);
+  AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
+                          TII.get(AdjStackDown))
+                  .addImm(NumBytes));
 
   // Process the args.
   for (unsigned i = 0, e = ArgLocs.size(); i != e; ++i) {
@@ -1247,7 +1248,8 @@ bool ARMFastISel::ProcessCallArgs(SmallVectorImpl<Value*> &Args,
     }
 
     // Now copy/store arg to correct locations.
-    if (VA.isRegLoc()) {
+    // TODO: We need custom lowering for f64 args.
+    if (VA.isRegLoc() && !VA.needsCustom()) {
       BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(TargetOpcode::COPY),
               VA.getLocReg())
       .addReg(Arg);
@@ -1266,8 +1268,9 @@ bool ARMFastISel::FinishCall(EVT RetVT, SmallVectorImpl<unsigned> &UsedRegs,
                              unsigned &NumBytes) {
   // Issue CALLSEQ_END
   unsigned AdjStackUp = TM.getRegisterInfo()->getCallFrameDestroyOpcode();
-  BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(AdjStackUp))
-          .addImm(NumBytes).addImm(0);
+  AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
+                          TII.get(AdjStackUp))
+                  .addImm(NumBytes).addImm(0));
 
   // Now the return value.
   if (RetVT.getSimpleVT().SimpleTy != MVT::isVoid) {
