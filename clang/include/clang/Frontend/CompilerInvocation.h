@@ -83,8 +83,10 @@ public:
   /// \param ArgBegin - The first element in the argument vector.
   /// \param ArgEnd - The last element in the argument vector.
   /// \param Diags - The diagnostic engine to use for errors.
-  static void CreateFromArgs(CompilerInvocation &Res, const char **ArgBegin,
-                             const char **ArgEnd, Diagnostic &Diags);
+  static void CreateFromArgs(CompilerInvocation &Res,
+                             const char* const *ArgBegin,
+                             const char* const *ArgEnd,
+                             Diagnostic &Diags);
 
   /// GetBuiltinIncludePath - Get the directory where the compiler headers
   /// reside, relative to the compiler binary (found by the passed in

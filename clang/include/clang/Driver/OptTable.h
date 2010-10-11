@@ -170,8 +170,8 @@ namespace options {
     /// \param MissingArgCount - On error, the number of missing options.
     /// \return - An InputArgList; on error this will contain all the options
     /// which could be parsed.
-    InputArgList *ParseArgs(const char **ArgBegin,
-                            const char **ArgEnd,
+    InputArgList *ParseArgs(const char* const *ArgBegin,
+                            const char* const *ArgEnd,
                             unsigned &MissingArgIndex,
                             unsigned &MissingArgCount) const;
 

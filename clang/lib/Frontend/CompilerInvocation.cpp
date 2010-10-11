@@ -1508,8 +1508,8 @@ static void ParseTargetArgs(TargetOptions &Opts, ArgList &Args) {
 //
 
 void CompilerInvocation::CreateFromArgs(CompilerInvocation &Res,
-                                        const char **ArgBegin,
-                                        const char **ArgEnd,
+                                        const char* const *ArgBegin,
+                                        const char* const *ArgEnd,
                                         Diagnostic &Diags) {
   // Parse the arguments.
   llvm::OwningPtr<OptTable> Opts(createCC1OptTable());

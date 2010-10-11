@@ -288,7 +288,7 @@ namespace driver {
     unsigned NumInputArgStrings;
 
   public:
-    InputArgList(const char **ArgBegin, const char **ArgEnd);
+    InputArgList(const char* const *ArgBegin, const char* const *ArgEnd);
     ~InputArgList();
 
     virtual const char *getArgString(unsigned Index) const {

@@ -214,7 +214,8 @@ const char *ArgList::GetOrMakeJoinedArgString(unsigned Index,
 
 //
 
-InputArgList::InputArgList(const char **ArgBegin, const char **ArgEnd)
+InputArgList::InputArgList(const char* const *ArgBegin,
+                           const char* const *ArgEnd)
   : NumInputArgStrings(ArgEnd - ArgBegin) {
   ArgStrings.append(ArgBegin, ArgEnd);
 }
