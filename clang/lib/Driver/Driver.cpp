@@ -37,6 +37,13 @@
 
 #include <map>
 
+#ifdef __CYGWIN__
+#include <cygwin/version.h>
+#if defined(CYGWIN_VERSION_DLL_MAJOR) && CYGWIN_VERSION_DLL_MAJOR<1007
+#define IS_CYGWIN15 1
+#endif
+#endif
+
 using namespace clang::driver;
 using namespace clang;
 
@@ -225,8 +232,13 @@ Compilation *Driver::BuildCompilation(int argc, const char **argv) {
   CCCPrintActions = Args->hasArg(options::OPT_ccc_print_phases);
   CCCPrintBindings = Args->hasArg(options::OPT_ccc_print_bindings);
   CCCIsCXX = Args->hasArg(options::OPT_ccc_cxx) || CCCIsCXX;
-  if (CCCIsCXX)
+  if (CCCIsCXX) {
+#ifdef IS_CYGWIN15
+    CCCGenericGCCName = "g++-4";
+#else
     CCCGenericGCCName = "g++";
+#endif
+  }
   CCCEcho = Args->hasArg(options::OPT_ccc_echo);
   if (const Arg *A = Args->getLastArg(options::OPT_ccc_gcc_name))
     CCCGenericGCCName = A->getValue(*Args);
