@@ -76,6 +76,7 @@ add_llvm_unittest(Support
   Support/raw_ostream_test.cpp
   Support/RegexTest.cpp
   Support/System.cpp
+  Support/SwapByteOrderTest.cpp
   Support/TypeBuilderTest.cpp
   Support/ValueHandleTest.cpp
   )
