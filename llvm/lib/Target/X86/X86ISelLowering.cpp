@@ -8697,7 +8697,9 @@ void X86TargetLowering::ReplaceNodeResults(SDNode *N,
                       N->getOperand(1),
                       swapInH.getValue(1) };
     SDVTList Tys = DAG.getVTList(MVT::Other, MVT::Flag);
-    SDValue Result = DAG.getNode(X86ISD::LCMPXCHG8_DAG, dl, Tys, Ops, 3);
+    MachineMemOperand *MMO = cast<AtomicSDNode>(N)->getMemOperand();
+    SDValue Result = DAG.getMemIntrinsicNode(X86ISD::LCMPXCHG8_DAG, dl, Tys,
+                                             Ops, 3, T, MMO);
     SDValue cpOutL = DAG.getCopyFromReg(Result.getValue(0), dl, X86::EAX,
                                         MVT::i32, Result.getValue(1));
     SDValue cpOutH = DAG.getCopyFromReg(cpOutL.getValue(1), dl, X86::EDX,
