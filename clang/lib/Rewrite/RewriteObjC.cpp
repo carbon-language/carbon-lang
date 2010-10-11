@@ -5356,12 +5356,9 @@ void RewriteObjC::CollectPropertySetters(Stmt *S) {
 
   if (BinaryOperator *BinOp = dyn_cast<BinaryOperator>(S)) {
     if (BinOp->isAssignmentOp()) {
-      if (ObjCPropertyRefExpr *PRE = 
-            dyn_cast<ObjCPropertyRefExpr>(BinOp->getLHS()))
-        PropSetters[PRE] = BinOp;
-      else if (ObjCImplicitSetterGetterRefExpr *ISE = 
-                dyn_cast<ObjCImplicitSetterGetterRefExpr>(BinOp->getLHS()))
-        PropSetters[ISE] = BinOp;
+        if (isa<ObjCPropertyRefExpr>(BinOp->getLHS()) || 
+            isa<ObjCImplicitSetterGetterRefExpr>(BinOp->getLHS()))
+          PropSetters[BinOp->getLHS()] = BinOp;
     }
   }
 }
@@ -5402,18 +5399,15 @@ Stmt *RewriteObjC::RewriteFunctionBodyOrGlobalInitializer(Stmt *S) {
       // expression, the entire assignment tree is rewritten into a property
       // setter messaging. This involvs the RHS too. Do not attempt to rewrite
       // RHS again.
-      if (ObjCPropertyRefExpr *PRE = dyn_cast<ObjCPropertyRefExpr>(S))
-        if (PropSetters[PRE]) {
-          ++CI;
-          continue;
+      if (Expr *Exp = dyn_cast<Expr>(S))
+        if (isa<ObjCPropertyRefExpr>(Exp) || 
+            isa<ObjCImplicitSetterGetterRefExpr>(Exp)) {
+          if (PropSetters[Exp]) {
+            ++CI;
+            continue;
+          }
         }
-      if (ObjCImplicitSetterGetterRefExpr *ISE = 
-            dyn_cast<ObjCImplicitSetterGetterRefExpr>(S))
-        if (PropSetters[ISE]) {
-          ++CI;
-          continue;
-        }
-    }
+      }
 
   if (BlockExpr *BE = dyn_cast<BlockExpr>(S)) {
     llvm::SmallVector<BlockDeclRefExpr *, 8> InnerBlockDeclRefs;
