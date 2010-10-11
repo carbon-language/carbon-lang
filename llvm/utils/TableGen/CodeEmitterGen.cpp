@@ -162,6 +162,8 @@ void CodeEmitterGen::run(raw_ostream &o) {
               if (CGI.hasOperandNamed(VarName, OpIdx)) {
                 assert (!CGI.isFlatOperandNotEmitted(OpIdx) &&
                         "Explicitly used operand also marked as not emitted!");
+                // Get the machine operand number for the indicated operand.
+                OpIdx = CGI.OperandList[OpIdx].MIOperandNo;
               } else {
                 /// If this operand is not supposed to be emitted by the
                 /// generated emitter, skip it.
