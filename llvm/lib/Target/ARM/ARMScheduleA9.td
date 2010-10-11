@@ -885,14 +885,138 @@ def CortexA9Itineraries : ProcessorItineraries<
                                InstrStage<5, [A9_NPipe]>],
                               [5, 5, 6, 6, 2, 1, 1, 1, 1, 1, 2, 2]>,
   //
-  // VST
-  // FIXME: We don't model this instruction properly
-  InstrItinData<IIC_VST,      [InstrStage<1, [A9_DRegsN],   0, Required>,
-                               // Extra latency cycles since wbck is 6 cycles
-                               InstrStage<7, [A9_DRegsVFP], 0, Reserved>,
-                               InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
+  // VST1
+  InstrItinData<IIC_VST1,     [InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
                                InstrStage<1, [A9_MUX0], 0>,
-                               InstrStage<1, [A9_NPipe]>]>,
+                               InstrStage<2, [A9_NPipe]>],
+                              [1, 1, 1]>,
+  //
+  // VST1x2
+  InstrItinData<IIC_VST1x2,   [InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
+                               InstrStage<1, [A9_MUX0], 0>,
+                               InstrStage<2, [A9_NPipe]>],
+                              [1, 1, 1, 1]>,
+  //
+  // VST1x3
+  InstrItinData<IIC_VST1x3,   [InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
+                               InstrStage<1, [A9_MUX0], 0>,
+                               InstrStage<3, [A9_NPipe]>],
+                              [1, 1, 1, 1, 2]>,
+  //
+  // VST1x4
+  InstrItinData<IIC_VST1x4,   [InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
+                               InstrStage<1, [A9_MUX0], 0>,
+                               InstrStage<3, [A9_NPipe]>],
+                              [1, 1, 1, 1, 2, 2]>,
+  //
+  // VST1u
+  InstrItinData<IIC_VST1u,    [InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
+                               InstrStage<1, [A9_MUX0], 0>,
+                               InstrStage<2, [A9_NPipe]>],
+                              [2, 1, 1, 1, 1]>,
+  //
+  // VST1x2u
+  InstrItinData<IIC_VST1x2u,  [InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
+                               InstrStage<1, [A9_MUX0], 0>,
+                               InstrStage<2, [A9_NPipe]>],
+                              [2, 1, 1, 1, 1, 1]>,
+  //
+  // VST1x3u
+  InstrItinData<IIC_VST1x3u,  [InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
+                               InstrStage<1, [A9_MUX0], 0>,
+                               InstrStage<3, [A9_NPipe]>],
+                              [2, 1, 1, 1, 1, 1, 2]>,
+  //
+  // VST1x4u
+  InstrItinData<IIC_VST1x4u,  [InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
+                               InstrStage<1, [A9_MUX0], 0>,
+                               InstrStage<3, [A9_NPipe]>],
+                              [2, 1, 1, 1, 1, 1, 2, 2]>,
+  //
+  // VST2
+  InstrItinData<IIC_VST2,     [InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
+                               InstrStage<1, [A9_MUX0], 0>,
+                               InstrStage<2, [A9_NPipe]>],
+                              [1, 1, 1, 1]>,
+  //
+  // VST2x2
+  InstrItinData<IIC_VST2x2,   [InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
+                               InstrStage<1, [A9_MUX0], 0>,
+                               InstrStage<3, [A9_NPipe]>],
+                              [1, 1, 1, 1, 2, 2]>,
+  //
+  // VST2u
+  InstrItinData<IIC_VST2u,    [InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
+                               InstrStage<1, [A9_MUX0], 0>,
+                               InstrStage<2, [A9_NPipe]>],
+                              [2, 1, 1, 1, 1, 1]>,
+  //
+  // VST2x2u
+  InstrItinData<IIC_VST2x2u,  [InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
+                               InstrStage<1, [A9_MUX0], 0>,
+                               InstrStage<3, [A9_NPipe]>],
+                              [2, 1, 1, 1, 1, 1, 2, 2]>,
+  //
+  // VST2ln
+  InstrItinData<IIC_VST2ln,   [InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
+                               InstrStage<1, [A9_MUX0], 0>,
+                               InstrStage<2, [A9_NPipe]>],
+                              [1, 1, 1, 1]>,
+  //
+  // VST2lnu
+  InstrItinData<IIC_VST2lnu,  [InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
+                               InstrStage<1, [A9_MUX0], 0>,
+                               InstrStage<3, [A9_NPipe]>],
+                              [2, 1, 1, 1, 1, 1]>,
+  //
+  // VST3
+  InstrItinData<IIC_VST3,     [InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
+                               InstrStage<1, [A9_MUX0], 0>,
+                               InstrStage<3, [A9_NPipe]>],
+                              [1, 1, 1, 1, 2]>,
+  //
+  // VST3u
+  InstrItinData<IIC_VST3u,    [InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
+                               InstrStage<1, [A9_MUX0], 0>,
+                               InstrStage<3, [A9_NPipe]>],
+                              [2, 1, 1, 1, 1, 1, 2]>,
+  //
+  // VST3ln
+  InstrItinData<IIC_VST3ln,   [InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
+                               InstrStage<1, [A9_MUX0], 0>,
+                               InstrStage<3, [A9_NPipe]>],
+                              [1, 1, 1, 1, 2]>,
+  //
+  // VST3lnu
+  InstrItinData<IIC_VST3lnu,  [InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
+                               InstrStage<1, [A9_MUX0], 0>,
+                               InstrStage<3, [A9_NPipe]>],
+                              [2, 1, 1, 1, 1, 1, 2]>,
+  //
+  // VST4
+  InstrItinData<IIC_VST4,     [InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
+                               InstrStage<1, [A9_MUX0], 0>,
+                               InstrStage<3, [A9_NPipe]>],
+                              [1, 1, 1, 1, 2, 2]>,
+  //
+  // VST4u
+  InstrItinData<IIC_VST4u,    [InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
+                               InstrStage<1, [A9_MUX0], 0>,
+                               InstrStage<3, [A9_NPipe]>],
+                              [2, 1, 1, 1, 1, 1, 2, 2]>,
+  //
+  // VST4ln
+  InstrItinData<IIC_VST4ln,   [InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
+                               InstrStage<1, [A9_MUX0], 0>,
+                               InstrStage<3, [A9_NPipe]>],
+                              [1, 1, 1, 1, 2, 2]>,
+  //
+  // VST4lnu
+  InstrItinData<IIC_VST4lnu,  [InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
+                               InstrStage<1, [A9_MUX0], 0>,
+                               InstrStage<3, [A9_NPipe]>],
+                              [2, 1, 1, 1, 1, 1, 2, 2]>,
+
   //
   // Double-register Integer Unary
   InstrItinData<IIC_VUNAiD,   [InstrStage<1, [A9_DRegsN],   0, Required>,

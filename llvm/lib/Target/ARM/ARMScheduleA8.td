@@ -390,8 +390,9 @@ def CortexA8Itineraries : ProcessorItineraries<
   //
   // VLD1
   InstrItinData<IIC_VLD1,     [InstrStage<1, [A8_Pipe0, A8_Pipe1]>,
-                               InstrStage<1, [A8_NLSPipe], 1>,
-                               InstrStage<1, [A8_LSPipe]>]>,
+                               InstrStage<2, [A8_NLSPipe], 1>,
+                               InstrStage<2, [A8_LSPipe]>],
+                              [2, 1]>,
   // VLD1x2
   InstrItinData<IIC_VLD1x2,   [InstrStage<1, [A8_Pipe0, A8_Pipe1]>,
                                InstrStage<2, [A8_NLSPipe], 1>,
@@ -412,8 +413,8 @@ def CortexA8Itineraries : ProcessorItineraries<
   //
   // VLD1u
   InstrItinData<IIC_VLD1u,    [InstrStage<1, [A8_Pipe0, A8_Pipe1]>,
-                               InstrStage<1, [A8_NLSPipe], 1>,
-                               InstrStage<1, [A8_LSPipe]>],
+                               InstrStage<2, [A8_NLSPipe], 1>,
+                               InstrStage<2, [A8_LSPipe]>],
                               [2, 2, 1]>,
   //
   // VLD1x2u
@@ -436,8 +437,8 @@ def CortexA8Itineraries : ProcessorItineraries<
   //
   // VLD2
   InstrItinData<IIC_VLD2,     [InstrStage<1, [A8_Pipe0, A8_Pipe1]>,
-                               InstrStage<1, [A8_NLSPipe], 1>,
-                               InstrStage<1, [A8_LSPipe]>],
+                               InstrStage<2, [A8_NLSPipe], 1>,
+                               InstrStage<2, [A8_LSPipe]>],
                               [2, 2, 1]>,
   //
   // VLD2x2
@@ -454,8 +455,8 @@ def CortexA8Itineraries : ProcessorItineraries<
   //
   // VLD2u
   InstrItinData<IIC_VLD2u,    [InstrStage<1, [A8_Pipe0, A8_Pipe1]>,
-                               InstrStage<1, [A8_NLSPipe], 1>,
-                               InstrStage<1, [A8_LSPipe]>],
+                               InstrStage<2, [A8_NLSPipe], 1>,
+                               InstrStage<2, [A8_LSPipe]>],
                               [2, 2, 2, 1, 1, 1]>,
   //
   // VLD2x2u
@@ -518,11 +519,137 @@ def CortexA8Itineraries : ProcessorItineraries<
                                InstrStage<5, [A8_LSPipe]>],
                               [4, 4, 5, 5, 2, 1, 1, 1, 1, 1, 2, 2]>,
   //
-  // VST
-  // FIXME: We don't model this instruction properly
-  InstrItinData<IIC_VST,      [InstrStage<1, [A8_Pipe0, A8_Pipe1]>,
-                               InstrStage<1, [A8_NLSPipe]>,
-                               InstrStage<1, [A8_LSPipe]>]>,
+  // VST1
+  InstrItinData<IIC_VST1,     [InstrStage<1, [A8_Pipe0, A8_Pipe1]>,
+                               InstrStage<2, [A8_NLSPipe], 1>,
+                               InstrStage<2, [A8_LSPipe]>],
+                              [1, 1, 1]>,
+  //
+  // VST1x2
+  InstrItinData<IIC_VST1x2,   [InstrStage<1, [A8_Pipe0, A8_Pipe1]>,
+                               InstrStage<2, [A8_NLSPipe], 1>,
+                               InstrStage<2, [A8_LSPipe]>],
+                              [1, 1, 1, 1]>,
+  //
+  // VST1x3
+  InstrItinData<IIC_VST1x3,   [InstrStage<1, [A8_Pipe0, A8_Pipe1]>,
+                               InstrStage<3, [A8_NLSPipe], 1>,
+                               InstrStage<3, [A8_LSPipe]>],
+                              [1, 1, 1, 1, 2]>,
+  //
+  // VST1x4
+  InstrItinData<IIC_VST1x4,   [InstrStage<1, [A8_Pipe0, A8_Pipe1]>,
+                               InstrStage<3, [A8_NLSPipe], 1>,
+                               InstrStage<3, [A8_LSPipe]>],
+                              [1, 1, 1, 1, 2, 2]>,
+  //
+  // VST1u
+  InstrItinData<IIC_VST1u,    [InstrStage<1, [A8_Pipe0, A8_Pipe1]>,
+                               InstrStage<2, [A8_NLSPipe], 1>,
+                               InstrStage<2, [A8_LSPipe]>],
+                              [2, 1, 1, 1, 1]>,
+  //
+  // VST1x2u
+  InstrItinData<IIC_VST1x2u,  [InstrStage<1, [A8_Pipe0, A8_Pipe1]>,
+                               InstrStage<2, [A8_NLSPipe], 1>,
+                               InstrStage<2, [A8_LSPipe]>],
+                              [2, 1, 1, 1, 1, 1]>,
+  //
+  // VST1x3u
+  InstrItinData<IIC_VST1x3u,  [InstrStage<1, [A8_Pipe0, A8_Pipe1]>,
+                               InstrStage<3, [A8_NLSPipe], 1>,
+                               InstrStage<3, [A8_LSPipe]>],
+                              [2, 1, 1, 1, 1, 1, 2]>,
+  //
+  // VST1x4u
+  InstrItinData<IIC_VST1x4u,  [InstrStage<1, [A8_Pipe0, A8_Pipe1]>,
+                               InstrStage<3, [A8_NLSPipe], 1>,
+                               InstrStage<3, [A8_LSPipe]>],
+                              [2, 1, 1, 1, 1, 1, 2, 2]>,
+  //
+  // VST2
+  InstrItinData<IIC_VST2,     [InstrStage<1, [A8_Pipe0, A8_Pipe1]>,
+                               InstrStage<2, [A8_NLSPipe], 1>,
+                               InstrStage<2, [A8_LSPipe]>],
+                              [1, 1, 1, 1]>,
+  //
+  // VST2x2
+  InstrItinData<IIC_VST2x2,   [InstrStage<1, [A8_Pipe0, A8_Pipe1]>,
+                               InstrStage<4, [A8_NLSPipe], 1>,
+                               InstrStage<4, [A8_LSPipe]>],
+                              [1, 1, 1, 1, 2, 2]>,
+  //
+  // VST2u
+  InstrItinData<IIC_VST2u,    [InstrStage<1, [A8_Pipe0, A8_Pipe1]>,
+                               InstrStage<2, [A8_NLSPipe], 1>,
+                               InstrStage<2, [A8_LSPipe]>],
+                              [2, 1, 1, 1, 1, 1]>,
+  //
+  // VST2x2u
+  InstrItinData<IIC_VST2x2u,  [InstrStage<1, [A8_Pipe0, A8_Pipe1]>,
+                               InstrStage<4, [A8_NLSPipe], 1>,
+                               InstrStage<4, [A8_LSPipe]>],
+                              [2, 1, 1, 1, 1, 1, 2, 2]>,
+  //
+  // VST2ln
+  InstrItinData<IIC_VST2ln,   [InstrStage<1, [A8_Pipe0, A8_Pipe1]>,
+                               InstrStage<2, [A8_NLSPipe], 1>,
+                               InstrStage<2, [A8_LSPipe]>],
+                              [1, 1, 1, 1]>,
+  //
+  // VST2lnu
+  InstrItinData<IIC_VST2lnu,  [InstrStage<1, [A8_Pipe0, A8_Pipe1]>,
+                               InstrStage<2, [A8_NLSPipe], 1>,
+                               InstrStage<2, [A8_LSPipe]>],
+                              [2, 1, 1, 1, 1, 1]>,
+  //
+  // VST3
+  InstrItinData<IIC_VST3,     [InstrStage<1, [A8_Pipe0, A8_Pipe1]>,
+                               InstrStage<3, [A8_NLSPipe], 1>,
+                               InstrStage<3, [A8_LSPipe]>],
+                              [1, 1, 1, 1, 2]>,
+  //
+  // VST3u
+  InstrItinData<IIC_VST3u,    [InstrStage<1, [A8_Pipe0, A8_Pipe1]>,
+                               InstrStage<3, [A8_NLSPipe], 1>,
+                               InstrStage<3, [A8_LSPipe]>],
+                              [2, 1, 1, 1, 1, 1, 2]>,
+  //
+  // VST3ln
+  InstrItinData<IIC_VST3ln,   [InstrStage<1, [A8_Pipe0, A8_Pipe1]>,
+                               InstrStage<3, [A8_NLSPipe], 1>,
+                               InstrStage<3, [A8_LSPipe]>],
+                              [1, 1, 1, 1, 2]>,
+  //
+  // VST3lnu
+  InstrItinData<IIC_VST3lnu,  [InstrStage<1, [A8_Pipe0, A8_Pipe1]>,
+                               InstrStage<3, [A8_NLSPipe], 1>,
+                               InstrStage<3, [A8_LSPipe]>],
+                              [2, 1, 1, 1, 1, 1, 2]>,
+  //
+  // VST4
+  InstrItinData<IIC_VST4,     [InstrStage<1, [A8_Pipe0, A8_Pipe1]>,
+                               InstrStage<4, [A8_NLSPipe], 1>,
+                               InstrStage<4, [A8_LSPipe]>],
+                              [1, 1, 1, 1, 2, 2]>,
+  //
+  // VST4u
+  InstrItinData<IIC_VST4u,    [InstrStage<1, [A8_Pipe0, A8_Pipe1]>,
+                               InstrStage<4, [A8_NLSPipe], 1>,
+                               InstrStage<4, [A8_LSPipe]>],
+                              [2, 1, 1, 1, 1, 1, 2, 2]>,
+  //
+  // VST4ln
+  InstrItinData<IIC_VST4ln,   [InstrStage<1, [A8_Pipe0, A8_Pipe1]>,
+                               InstrStage<4, [A8_NLSPipe], 1>,
+                               InstrStage<4, [A8_LSPipe]>],
+                              [1, 1, 1, 1, 2, 2]>,
+  //
+  // VST4lnu
+  InstrItinData<IIC_VST4lnu,  [InstrStage<1, [A8_Pipe0, A8_Pipe1]>,
+                               InstrStage<4, [A8_NLSPipe], 1>,
+                               InstrStage<4, [A8_LSPipe]>],
+                              [2, 1, 1, 1, 1, 1, 2, 2]>,
   //
   // Double-register FP Unary
   InstrItinData<IIC_VUNAD,    [InstrStage<1, [A8_Pipe0, A8_Pipe1]>,
