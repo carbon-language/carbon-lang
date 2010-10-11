@@ -241,6 +241,8 @@ class I<dag oops, dag iops, AddrMode am, SizeFlagVal sz,
         string opc, string asm, string cstr,
         list<dag> pattern>
   : InstARM<am, sz, im, f, GenericDomain, cstr, itin> {
+  bits<4> p;
+  let Inst{31-28} = p;
   let OutOperandList = oops;
   let InOperandList = !con(iops, (ins pred:$p));
   let AsmString = !strconcat(opc, "${p}", asm);
@@ -270,6 +272,11 @@ class sI<dag oops, dag iops, AddrMode am, SizeFlagVal sz,
          string opc, string asm, string cstr,
          list<dag> pattern>
   : InstARM<am, sz, im, f, GenericDomain, cstr, itin> {
+  bits<4> p; // Predicate operand
+  let Inst{31-28} = p;
+  // FIXME: The 's' operand needs to be handled, but the current generic
+  //        get-value handlers don't know how to deal with it.
+
   let OutOperandList = oops;
   let InOperandList = !con(iops, (ins pred:$p, cc_out:$s));
   let AsmString = !strconcat(opc, "${p}${s}", asm);

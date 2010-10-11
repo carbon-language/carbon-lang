@@ -478,20 +478,18 @@ multiclass AsI1_bin_irs<bits<4> opcod, string opc,
     let Inst{25} = 1;
   }
   }
-  def rr : AsI1<opcod, (outs GPR:$dst), (ins GPR:$a, GPR:$b), DPFrm,
-               iir, opc, "\t$dst, $a, $b",
-               [(set GPR:$dst, (opnode GPR:$a, GPR:$b))]> {
+  def rr : AsI1<opcod, (outs GPR:$Rd), (ins GPR:$Rn, GPR:$Rm), DPFrm,
+               iir, opc, "\t$Rd, $Rn, $Rm",
+               [(set GPR:$Rd, (opnode GPR:$Rn, GPR:$Rm))]> {
     bits<4> Rd;
     bits<4> Rn;
     bits<4> Rm;
-    bits<4> Cond;
     let Inst{11-4} = 0b00000000;
     let Inst{25} = 0;
     let isCommutable = Commutable;
     let Inst{3-0} = Rm;
     let Inst{15-12} = Rd;
     let Inst{19-16} = Rn;
-    let Inst{31-28} = Cond;
   }
   def rs : AsI1<opcod, (outs GPR:$dst), (ins GPR:$a, so_reg:$b), DPSoRegFrm,
                iis, opc, "\t$dst, $a, $b",
@@ -915,24 +913,20 @@ let isReturn = 1, isTerminator = 1, isBarrier = 1 in {
   def BX_RET : AI<(outs), (ins), BrMiscFrm, IIC_Br,
                   "bx", "\tlr", [(ARMretflag)]>,
                Requires<[IsARM, HasV4T]> {
-    bits<4> Cond;
     let Inst{3-0}   = 0b1110;
     let Inst{7-4}   = 0b0001;
     let Inst{19-8}  = 0b111111111111;
     let Inst{27-20} = 0b00010010;
-    let Inst{31-28} = Cond;
   }
 
   // ARMV4 only
   def MOVPCLR : AI<(outs), (ins), BrMiscFrm, IIC_Br, 
                   "mov", "\tpc, lr", [(ARMretflag)]>,
                Requires<[IsARM, NoV4T]> {
-    bits<4> Cond;
     let Inst{11-0}  = 0b000000001110;
     let Inst{15-12} = 0b1111;
     let Inst{19-16} = 0b0000;
     let Inst{27-20} = 0b00011010;
-    let Inst{31-28} = Cond;
   }
 }
 
@@ -942,27 +936,25 @@ let isBranch = 1, isTerminator = 1, isBarrier = 1, isIndirectBranch = 1 in {
   def BRIND : AXI<(outs), (ins GPR:$dst), BrMiscFrm, IIC_Br, "bx\t$dst",
                   [(brind GPR:$dst)]>,
               Requires<[IsARM, HasV4T]> {
-    bits<4> Rm;
-
+    bits<4> dst;
     let Inst{7-4}   = 0b0001;
     let Inst{19-8}  = 0b111111111111;
     let Inst{27-20} = 0b00010010;
     let Inst{31-28} = 0b1110;
-    let Inst{3-0}   = Rm;
+    let Inst{3-0}   = dst;
   }
 
   // ARMV4 only
   def MOVPCRX : AXI<(outs), (ins GPR:$dst), BrMiscFrm, IIC_Br, "mov\tpc, $dst",
                   [(brind GPR:$dst)]>,
               Requires<[IsARM, NoV4T]> {
-    bits<4> Rm;
-
+    bits<4> dst;
     let Inst{11-4}  = 0b00000000;
     let Inst{15-12} = 0b1111;
     let Inst{19-16} = 0b0000;
     let Inst{27-20} = 0b00011010;
     let Inst{31-28} = 0b1110;
-    let Inst{3-0}   = Rm;
+    let Inst{3-0}   = dst;
   }
 }
 
@@ -999,11 +991,11 @@ let isCall = 1,
                 IIC_Br, "blx\t$func",
                 [(ARMcall GPR:$func)]>,
             Requires<[IsARM, HasV5T, IsNotDarwin]> {
-    bits<4> Rm;
+    bits<4> func;
     let Inst{7-4}   = 0b0011;
     let Inst{19-8}  = 0b111111111111;
     let Inst{27-20} = 0b00010010;
-    let Inst{3-0}   = Rm;
+    let Inst{3-0}   = func;
   }
 
   // ARMv4T
@@ -1513,26 +1505,26 @@ def STM_UPD : AXI4st<(outs GPR:$wb), (ins addrmode4:$addr, pred:$p,
 let neverHasSideEffects = 1 in
 def MOVr : AsI1<0b1101, (outs GPR:$dst), (ins GPR:$src), DPFrm, IIC_iMOVr,
                 "mov", "\t$dst, $src", []>, UnaryDP {
-  bits<4> Rd;
-  bits<4> Rm;
+  bits<4> dst;
+  bits<4> src;
 
   let Inst{11-4} = 0b00000000;
   let Inst{25} = 0;
-  let Inst{3-0} = Rm;
-  let Inst{15-12} = Rd;
+  let Inst{3-0} = src;
+  let Inst{15-12} = dst;
 }
 
 // A version for the smaller set of tail call registers.
 let neverHasSideEffects = 1 in
 def MOVr_TC : AsI1<0b1101, (outs tcGPR:$dst), (ins tcGPR:$src), DPFrm, 
                 IIC_iMOVr, "mov", "\t$dst, $src", []>, UnaryDP {
-  bits<4> Rd;
-  bits<4> Rm;
+  bits<4> dst;
+  bits<4> src;
 
   let Inst{11-4} = 0b00000000;
   let Inst{25} = 0;
-  let Inst{3-0} = Rm;
-  let Inst{15-12} = Rd;
+  let Inst{3-0} = src;
+  let Inst{15-12} = dst;
 }
 
 def MOVs : AsI1<0b1101, (outs GPR:$dst), (ins so_reg:$src),
