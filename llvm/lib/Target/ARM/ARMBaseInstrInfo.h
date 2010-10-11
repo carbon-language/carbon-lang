@@ -160,6 +160,11 @@ namespace ARMII {
     //===------------------------------------------------------------------===//
     // Field shifts - such shifts are used to set field while generating
     // machine instructions.
+    //
+    // FIXME: This list will need adjusting/fixing as the MC code emitter
+    // takes shape and the ARMCodeEmitter.cpp bits go away.
+    ShiftTypeShift = 4,
+
     M_BitShift     = 5,
     ShiftImmShift  = 5,
     ShiftShift     = 7,

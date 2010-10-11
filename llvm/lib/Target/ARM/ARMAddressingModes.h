@@ -50,6 +50,16 @@ namespace ARM_AM {
     }
   }
 
+  static inline unsigned getShiftOpcEncoding(ShiftOpc Op) {
+    switch (Op) {
+    default: assert(0 && "Unknown shift opc!");
+    case ARM_AM::asr: return 2;
+    case ARM_AM::lsl: return 0;
+    case ARM_AM::lsr: return 1;
+    case ARM_AM::ror: return 3;
+    }
+  }
+
   static inline ShiftOpc getShiftOpcForNode(SDValue N) {
     switch (N.getOpcode()) {
     default:          return ARM_AM::no_shift;

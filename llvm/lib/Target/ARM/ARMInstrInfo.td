@@ -494,7 +494,13 @@ multiclass AsI1_bin_irs<bits<4> opcod, string opc,
   def rs : AsI1<opcod, (outs GPR:$dst), (ins GPR:$a, so_reg:$b), DPSoRegFrm,
                iis, opc, "\t$dst, $a, $b",
                [(set GPR:$dst, (opnode GPR:$a, so_reg:$b))]> {
+    bits<4> Rd;
+    bits<4> Rn;
+    bits<4> Rm;
     let Inst{25} = 0;
+    let Inst{3-0} = Rm;
+    let Inst{15-12} = Rd;
+    let Inst{19-16} = Rn;
   }
 }
 

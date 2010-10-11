@@ -13,6 +13,7 @@
 
 #define DEBUG_TYPE "arm-emitter"
 #include "ARM.h"
+#include "ARMAddressingModes.h"
 #include "ARMInstrInfo.h"
 #include "llvm/MC/MCCodeEmitter.h"
 #include "llvm/MC/MCExpr.h"
@@ -139,8 +140,27 @@ EncodeInstruction(const MCInst &MI, raw_ostream &OS,
     return;
 
   ++MCNumEmitted;  // Keep track of the # of mi's emitted
+  // FIXME: TableGen doesn't deal well with operands that expand to multiple
+  // machine instruction operands, so for now we'll fix those up here.
   switch (Opcode) {
-  //FIXME: Any non-pseudos that need special handling, if there are any...
+  case ARM::ADDrs:
+  case ARM::ANDrs:
+  case ARM::BICrs:
+  case ARM::EORrs:
+  case ARM::ORRrs:
+  case ARM::SUBrs: {
+    // The so_reg operand needs the shift ammount encoded.
+    unsigned Value = getBinaryCodeForInstr(MI);
+    unsigned ShVal = MI.getOperand(4).getImm();
+    unsigned ShType = ARM_AM::getShiftOpcEncoding(ARM_AM::getSORegShOp(ShVal));
+    unsigned ShAmt = ARM_AM::getSORegOffset(ShVal);
+
+    Value |= ShType << ARMII::ShiftTypeShift;
+    Value |= ShAmt << ARMII::ShiftShift;
+
+    EmitConstant(Value, 4, CurByte, OS);
+    break;
+  }
   default: {
     unsigned Value = getBinaryCodeForInstr(MI);
     EmitConstant(Value, 4, CurByte, OS);
