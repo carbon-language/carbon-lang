@@ -1894,6 +1894,20 @@ void LocalRewriter::ProcessUses(MachineInstr &MI, AvailableSpills &Spills,
       VirtUseOps.insert(VirtUseOps.begin(), i);
     else
       VirtUseOps.push_back(i);
+
+    // A partial def causes problems because the same operand both reads and
+    // writes the register. This rewriter is designed to rewrite uses and defs
+    // separately, so a partial def would already have been rewritten to a
+    // physreg by the time we get to processing defs.
+    // Add an implicit use operand to model the partial def.
+    if (MO.isDef() && MO.getSubReg() && MI.readsVirtualRegister(VirtReg) &&
+        MI.findRegisterUseOperandIdx(VirtReg) == -1) {
+      VirtUseOps.insert(VirtUseOps.begin(), MI.getNumOperands());
+      MI.addOperand(MachineOperand::CreateReg(VirtReg,
+                                              false,  // isDef
+                                              true)); // isImplicit
+      DEBUG(dbgs() << "Partial redef: " << MI);
+    }
   }
 
   // Process all of the spilled uses and all non spilled reg references.
