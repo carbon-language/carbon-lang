@@ -191,8 +191,6 @@ void InitHeaderSearch::AddGnuCPlusPlusIncludePaths(llvm::StringRef Base,
 void InitHeaderSearch::AddMinGWCPlusPlusIncludePaths(llvm::StringRef Base,
                                                      llvm::StringRef Arch,
                                                      llvm::StringRef Version) {
-  AddPath(Base + "/" + Arch + "/" + Version + "/include",
-          System, true, false, false);
   AddPath(Base + "/" + Arch + "/" + Version + "/include/c++",
           System, true, false, false);
   AddPath(Base + "/" + Arch + "/" + Version + "/include/c++/" + Arch,
@@ -521,6 +519,9 @@ void InitHeaderSearch::AddDefaultCIncludePaths(const llvm::Triple &triple,
     AddPath("/boot/develop/headers/posix", System, true, false, false);
     AddPath("/boot/develop/headers",  System, true, false, false);
     break;
+  case llvm::Triple::Cygwin:
+    AddPath("/usr/include/w32api", System, true, false, false);
+    break;
   case llvm::Triple::MinGW64:
   case llvm::Triple::MinGW32:
     AddPath("c:/mingw/include", System, true, false, false);
@@ -551,12 +552,12 @@ AddDefaultCPlusPlusIncludePaths(const llvm::Triple &triple) {
   // FIXME: temporary hack: hard-coded paths.
   switch (os) {
   case llvm::Triple::Cygwin:
-    AddPath("/lib/gcc/i686-pc-cygwin/3.4.4/include",
-        System, true, false, false);
-    AddPath("/lib/gcc/i686-pc-cygwin/3.4.4/include/c++",
-        System, true, false, false);
-    AddPath("/lib/gcc/i686-pc-cygwin/3.4.4/include/c++/i686-pc-cygwin",
-        System, true, false, false);
+    // Cygwin-1.7
+    AddMinGWCPlusPlusIncludePaths("/usr/lib/gcc", "i686-pc-cygwin", "4.3.4");
+    // g++-4 / Cygwin-1.5
+    AddMinGWCPlusPlusIncludePaths("/usr/lib/gcc", "i686-pc-cygwin", "4.3.2");
+    // FIXME: Do we support g++-3.4.4?
+    AddMinGWCPlusPlusIncludePaths("/usr/lib/gcc", "i686-pc-cygwin", "3.4.4");
     break;
   case llvm::Triple::MinGW64:
     // Try gcc 4.5.0
