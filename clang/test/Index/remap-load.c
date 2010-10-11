@@ -1,6 +1,4 @@
 // RUN: c-index-test -test-load-source all -remap-file="%s;%S/Inputs/remap-load-to.c" %s | FileCheck -check-prefix=CHECK %s
-// RUN: env CINDEXTEST_USE_EXTERNAL_AST_GENERATION=1 c-index-test -test-load-source all -remap-file="%s;%S/Inputs/remap-load-to.c" %s | FileCheck -check-prefix=CHECK %s
-// XFAIL: win32
 
 // CHECK: remap-load.c:1:5: FunctionDecl=foo:1:5 (Definition) Extent=[1:5 - 3:2]
 // CHECK: remap-load.c:1:13: ParmDecl=parm1:1:13 (Definition) Extent=[1:9 - 1:18]

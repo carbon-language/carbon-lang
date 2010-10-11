@@ -1950,13 +1950,6 @@ void clang_disposeIndex(CXIndex CIdx) {
     delete static_cast<CIndexer *>(CIdx);
 }
 
-void clang_setUseExternalASTGeneration(CXIndex CIdx, int value) {
-  if (CIdx) {
-    CIndexer *CXXIdx = static_cast<CIndexer *>(CIdx);
-    CXXIdx->setUseExternalASTGeneration(value);
-  }
-}
-
 CXTranslationUnit clang_createTranslationUnit(CXIndex CIdx,
                                               const char *ast_filename) {
   if (!CIdx)
@@ -2035,233 +2028,79 @@ static void clang_parseTranslationUnit_Impl(void *UserData) {
                                            Buffer));
   }
 
-  if (!CXXIdx->getUseExternalASTGeneration()) {
-    llvm::SmallVector<const char *, 16> Args;
-
-    // The 'source_filename' argument is optional.  If the caller does not
-    // specify it then it is assumed that the source file is specified
-    // in the actual argument list.
-    if (source_filename)
-      Args.push_back(source_filename);
-    
-    // Since the Clang C library is primarily used by batch tools dealing with
-    // (often very broken) source code, where spell-checking can have a
-    // significant negative impact on performance (particularly when 
-    // precompiled headers are involved), we disable it by default.
-    // Only do this if we haven't found a spell-checking-related argument.
-    bool FoundSpellCheckingArgument = false;
-    for (int I = 0; I != num_command_line_args; ++I) {
-      if (strcmp(command_line_args[I], "-fno-spell-checking") == 0 ||
-          strcmp(command_line_args[I], "-fspell-checking") == 0) {
-        FoundSpellCheckingArgument = true;
-        break;
-      }
-    }
-    if (!FoundSpellCheckingArgument)
-      Args.push_back("-fno-spell-checking");
-    
-    Args.insert(Args.end(), command_line_args,
-                command_line_args + num_command_line_args);
-
-    // Do we need the detailed preprocessing record?
-    if (options & CXTranslationUnit_DetailedPreprocessingRecord) {
-      Args.push_back("-Xclang");
-      Args.push_back("-detailed-preprocessing-record");
-    }
-    
-    unsigned NumErrors = Diags->getNumErrors();
-
-#ifdef USE_CRASHTRACER
-    ArgsCrashTracerInfo ACTI(Args);
-#endif
-
-    llvm::OwningPtr<ASTUnit> Unit(
-      ASTUnit::LoadFromCommandLine(Args.data(), Args.data() + Args.size(),
-                                   Diags,
-                                   CXXIdx->getClangResourcesPath(),
-                                   CXXIdx->getOnlyLocalDecls(),
-                                   RemappedFiles.data(),
-                                   RemappedFiles.size(),
-                                   /*CaptureDiagnostics=*/true,
-                                   PrecompilePreamble,
-                                   CompleteTranslationUnit,
-                                   CacheCodeCompetionResults));
-
-    if (NumErrors != Diags->getNumErrors()) {
-      // Make sure to check that 'Unit' is non-NULL.
-      if (CXXIdx->getDisplayDiagnostics() && Unit.get()) {
-        for (ASTUnit::stored_diag_iterator D = Unit->stored_diag_begin(), 
-                                        DEnd = Unit->stored_diag_end();
-             D != DEnd; ++D) {
-          CXStoredDiagnostic Diag(*D, Unit->getASTContext().getLangOptions());
-          CXString Msg = clang_formatDiagnostic(&Diag,
-                                      clang_defaultDiagnosticDisplayOptions());
-          fprintf(stderr, "%s\n", clang_getCString(Msg));
-          clang_disposeString(Msg);
-        }
-#ifdef LLVM_ON_WIN32
-        // On Windows, force a flush, since there may be multiple copies of
-        // stderr and stdout in the file system, all with different buffers
-        // but writing to the same device.
-        fflush(stderr);
-#endif
-      }
-    }
-
-    PTUI->result = Unit.take();
-    return;
-  }
-
-  // Build up the arguments for invoking 'clang'.
-  std::vector<const char *> argv;
-
-  // First add the complete path to the 'clang' executable.
-  llvm::sys::Path ClangPath = static_cast<CIndexer *>(CIdx)->getClangPath();
-  argv.push_back(ClangPath.c_str());
-
-  // Add the '-emit-ast' option as our execution mode for 'clang'.
-  argv.push_back("-emit-ast");
+  llvm::SmallVector<const char *, 16> Args;
 
   // The 'source_filename' argument is optional.  If the caller does not
   // specify it then it is assumed that the source file is specified
   // in the actual argument list.
   if (source_filename)
-    argv.push_back(source_filename);
-
-  // Generate a temporary name for the AST file.
-  argv.push_back("-o");
-  char astTmpFile[L_tmpnam];
-  argv.push_back(tmpnam(astTmpFile));
+    Args.push_back(source_filename);
   
   // Since the Clang C library is primarily used by batch tools dealing with
   // (often very broken) source code, where spell-checking can have a
   // significant negative impact on performance (particularly when 
   // precompiled headers are involved), we disable it by default.
-  // Note that we place this argument early in the list, so that it can be
-  // overridden by the caller with "-fspell-checking".
-  argv.push_back("-fno-spell-checking");
-
-  // Remap any unsaved files to temporary files.
-  std::vector<llvm::sys::Path> TemporaryFiles;
-  std::vector<std::string> RemapArgs;
-  if (RemapFiles(num_unsaved_files, unsaved_files, RemapArgs, TemporaryFiles))
-    return;
-
-  // The pointers into the elements of RemapArgs are stable because we
-  // won't be adding anything to RemapArgs after this point.
-  for (unsigned i = 0, e = RemapArgs.size(); i != e; ++i)
-    argv.push_back(RemapArgs[i].c_str());
-
-  // Process the compiler options, stripping off '-o', '-c', '-fsyntax-only'.
-  for (int i = 0; i < num_command_line_args; ++i)
-    if (const char *arg = command_line_args[i]) {
-      if (strcmp(arg, "-o") == 0) {
-        ++i; // Also skip the matching argument.
-        continue;
-      }
-      if (strcmp(arg, "-emit-ast") == 0 ||
-          strcmp(arg, "-c") == 0 ||
-          strcmp(arg, "-fsyntax-only") == 0) {
-        continue;
-      }
-
-      // Keep the argument.
-      argv.push_back(arg);
+  // Only do this if we haven't found a spell-checking-related argument.
+  bool FoundSpellCheckingArgument = false;
+  for (int I = 0; I != num_command_line_args; ++I) {
+    if (strcmp(command_line_args[I], "-fno-spell-checking") == 0 ||
+        strcmp(command_line_args[I], "-fspell-checking") == 0) {
+      FoundSpellCheckingArgument = true;
+      break;
     }
-
-  // Generate a temporary name for the diagnostics file.
-  char tmpFileResults[L_tmpnam];
-  char *tmpResultsFileName = tmpnam(tmpFileResults);
-  llvm::sys::Path DiagnosticsFile(tmpResultsFileName);
-  TemporaryFiles.push_back(DiagnosticsFile);
-  argv.push_back("-fdiagnostics-binary");
+  }
+  if (!FoundSpellCheckingArgument)
+    Args.push_back("-fno-spell-checking");
+  
+  Args.insert(Args.end(), command_line_args,
+              command_line_args + num_command_line_args);
 
   // Do we need the detailed preprocessing record?
   if (options & CXTranslationUnit_DetailedPreprocessingRecord) {
-    argv.push_back("-Xclang");
-    argv.push_back("-detailed-preprocessing-record");
+    Args.push_back("-Xclang");
+    Args.push_back("-detailed-preprocessing-record");
   }
   
-  // Add the null terminator.
-  argv.push_back(NULL);
+  unsigned NumErrors = Diags->getNumErrors();
 
-  // Invoke 'clang'.
-  llvm::sys::Path DevNull; // leave empty, causes redirection to /dev/null
-                           // on Unix or NUL (Windows).
-  std::string ErrMsg;
-  const llvm::sys::Path *Redirects[] = { &DevNull, &DevNull, &DiagnosticsFile,
-                                         NULL };
-  llvm::sys::Program::ExecuteAndWait(ClangPath, &argv[0], /* env */ NULL,
-      /* redirects */ &Redirects[0],
-      /* secondsToWait */ 0, /* memoryLimits */ 0, &ErrMsg);
+#ifdef USE_CRASHTRACER
+  ArgsCrashTracerInfo ACTI(Args);
+#endif
 
-  if (!ErrMsg.empty()) {
-    std::string AllArgs;
-    for (std::vector<const char*>::iterator I = argv.begin(), E = argv.end();
-         I != E; ++I) {
-      AllArgs += ' ';
-      if (*I)
-        AllArgs += *I;
-    }
+  llvm::OwningPtr<ASTUnit> Unit(
+    ASTUnit::LoadFromCommandLine(Args.data(), Args.data() + Args.size(),
+                                 Diags,
+                                 CXXIdx->getClangResourcesPath(),
+                                 CXXIdx->getOnlyLocalDecls(),
+                                 RemappedFiles.data(),
+                                 RemappedFiles.size(),
+                                 /*CaptureDiagnostics=*/true,
+                                 PrecompilePreamble,
+                                 CompleteTranslationUnit,
+                                 CacheCodeCompetionResults));
 
-    Diags->Report(diag::err_fe_invoking) << AllArgs << ErrMsg;
-  }
-
-  ASTUnit *ATU = ASTUnit::LoadFromASTFile(astTmpFile, Diags,
-                                          CXXIdx->getOnlyLocalDecls(),
-                                          RemappedFiles.data(),
-                                          RemappedFiles.size(),
-                                          /*CaptureDiagnostics=*/true);
-  if (ATU) {
-    LoadSerializedDiagnostics(DiagnosticsFile, 
-                              num_unsaved_files, unsaved_files,
-                              ATU->getFileManager(),
-                              ATU->getSourceManager(),
-                              ATU->getStoredDiagnostics());
-  } else if (CXXIdx->getDisplayDiagnostics()) {
-    // We failed to load the ASTUnit, but we can still deserialize the
-    // diagnostics and emit them.
-    FileManager FileMgr;
-    Diagnostic Diag;
-    SourceManager SourceMgr(Diag);
-    // FIXME: Faked LangOpts!
-    LangOptions LangOpts;
-    llvm::SmallVector<StoredDiagnostic, 4> Diags;
-    LoadSerializedDiagnostics(DiagnosticsFile, 
-                              num_unsaved_files, unsaved_files,
-                              FileMgr, SourceMgr, Diags);
-    for (llvm::SmallVector<StoredDiagnostic, 4>::iterator D = Diags.begin(), 
-                                                       DEnd = Diags.end();
-         D != DEnd; ++D) {
-      CXStoredDiagnostic Diag(*D, LangOpts);
-      CXString Msg = clang_formatDiagnostic(&Diag,
-                                      clang_defaultDiagnosticDisplayOptions());
-      fprintf(stderr, "%s\n", clang_getCString(Msg));
-      clang_disposeString(Msg);
-    }
-    
+  if (NumErrors != Diags->getNumErrors()) {
+    // Make sure to check that 'Unit' is non-NULL.
+    if (CXXIdx->getDisplayDiagnostics() && Unit.get()) {
+      for (ASTUnit::stored_diag_iterator D = Unit->stored_diag_begin(), 
+                                      DEnd = Unit->stored_diag_end();
+           D != DEnd; ++D) {
+        CXStoredDiagnostic Diag(*D, Unit->getASTContext().getLangOptions());
+        CXString Msg = clang_formatDiagnostic(&Diag,
+                                    clang_defaultDiagnosticDisplayOptions());
+        fprintf(stderr, "%s\n", clang_getCString(Msg));
+        clang_disposeString(Msg);
+      }
 #ifdef LLVM_ON_WIN32
-    // On Windows, force a flush, since there may be multiple copies of
-    // stderr and stdout in the file system, all with different buffers
-    // but writing to the same device.
-    fflush(stderr);
-#endif    
+      // On Windows, force a flush, since there may be multiple copies of
+      // stderr and stdout in the file system, all with different buffers
+      // but writing to the same device.
+      fflush(stderr);
+#endif
+    }
   }
 
-  if (ATU) {
-    // Make the translation unit responsible for destroying all temporary files.
-    for (unsigned i = 0, e = TemporaryFiles.size(); i != e; ++i)
-      ATU->addTemporaryFile(TemporaryFiles[i]);
-    ATU->addTemporaryFile(llvm::sys::Path(ATU->getASTFileName()));
-  } else {
-    // Destroy all of the temporary files now; they can't be referenced any
-    // longer.
-    llvm::sys::Path(astTmpFile).eraseFromDisk();
-    for (unsigned i = 0, e = TemporaryFiles.size(); i != e; ++i)
-      TemporaryFiles[i].eraseFromDisk();
-  }
-  
-  PTUI->result = ATU;
+  PTUI->result = Unit.take();
 }
 CXTranslationUnit clang_parseTranslationUnit(CXIndex CIdx,
                                              const char *source_filename,

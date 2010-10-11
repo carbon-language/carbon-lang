@@ -202,18 +202,6 @@ CINDEX_LINKAGE CXIndex clang_createIndex(int excludeDeclarationsFromPCH,
 CINDEX_LINKAGE void clang_disposeIndex(CXIndex index);
 
 /**
- * \brief Request that AST's be generated externally for API calls which parse
- * source code on the fly, e.g. \see createTranslationUnitFromSourceFile.
- *
- * Note: This is for debugging purposes only, and may be removed at a later
- * date.
- *
- * \param index - The index to update.
- * \param value - The new flag value.
- */
-CINDEX_LINKAGE void clang_setUseExternalASTGeneration(CXIndex index,
-                                                      int value);
-/**
  * \defgroup CINDEX_FILES File manipulation routines
  *
  * @{

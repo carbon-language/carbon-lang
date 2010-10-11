@@ -660,8 +660,6 @@ int perform_test_load_tu(const char *file, const char *filter,
 int perform_test_load_source(int argc, const char **argv,
                              const char *filter, CXCursorVisitor Visitor,
                              PostVisitTU PV) {
-  const char *UseExternalASTs =
-    getenv("CINDEXTEST_USE_EXTERNAL_AST_GENERATION");
   CXIndex Idx;
   CXTranslationUnit TU;
   struct CXUnsavedFile *unsaved_files = 0;
@@ -672,9 +670,6 @@ int perform_test_load_source(int argc, const char **argv,
                           (!strcmp(filter, "local") || 
                            !strcmp(filter, "local-display"))? 1 : 0,
                           /* displayDiagnosics=*/1);
-
-  if (UseExternalASTs && strlen(UseExternalASTs))
-    clang_setUseExternalASTGeneration(Idx, 1);
 
   if (parse_remapped_files(argc, argv, 0, &unsaved_files, &num_unsaved_files)) {
     clang_disposeIndex(Idx);
@@ -702,8 +697,6 @@ int perform_test_load_source(int argc, const char **argv,
 int perform_test_reparse_source(int argc, const char **argv, int trials,
                                 const char *filter, CXCursorVisitor Visitor,
                                 PostVisitTU PV) {
-  const char *UseExternalASTs =
-  getenv("CINDEXTEST_USE_EXTERNAL_AST_GENERATION");
   CXIndex Idx;
   CXTranslationUnit TU;
   struct CXUnsavedFile *unsaved_files = 0;
@@ -714,9 +707,6 @@ int perform_test_reparse_source(int argc, const char **argv, int trials,
   Idx = clang_createIndex(/* excludeDeclsFromPCH */
                           !strcmp(filter, "local") ? 1 : 0,
                           /* displayDiagnosics=*/1);
-  
-  if (UseExternalASTs && strlen(UseExternalASTs))
-    clang_setUseExternalASTGeneration(Idx, 1);
   
   if (parse_remapped_files(argc, argv, 0, &unsaved_files, &num_unsaved_files)) {
     clang_disposeIndex(Idx);

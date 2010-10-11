@@ -28,16 +28,13 @@ namespace cxstring {
 }
 
 class CIndexer {
-  bool UseExternalASTGeneration;
   bool OnlyLocalDecls;
   bool DisplayDiagnostics;
 
   llvm::sys::Path ClangPath;
   
 public:
- CIndexer() 
-   : UseExternalASTGeneration(false), OnlyLocalDecls(false),
-     DisplayDiagnostics(false) { }
+ CIndexer() : OnlyLocalDecls(false), DisplayDiagnostics(false) { }
   
   /// \brief Whether we only want to see "local" declarations (that did not
   /// come from a previous precompiled header). If false, we want to see all
@@ -50,11 +47,6 @@ public:
     DisplayDiagnostics = Display;
   }
 
-  bool getUseExternalASTGeneration() const { return UseExternalASTGeneration; }
-  void setUseExternalASTGeneration(bool Value) {
-    UseExternalASTGeneration = Value;
-  }
-  
   /// \brief Get the path of the clang binary.
   const llvm::sys::Path& getClangPath();
   
