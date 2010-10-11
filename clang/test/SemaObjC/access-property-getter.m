@@ -30,7 +30,7 @@
 @implementation XCWorkQueueCommandCacheFetchInvocation
 - (id)harvestPredictivelyProcessedOutputFiles
 {
-     _outputStream.release;
+     _outputStream.release;	// expected-warning {{property access result unused - getters should not be used for side effects}}
      return 0;
 }
 @end

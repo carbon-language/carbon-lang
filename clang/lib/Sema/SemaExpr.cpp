@@ -2531,38 +2531,39 @@ CheckExtVectorComponent(QualType baseType, SourceLocation OpLoc,
   return VT; // should never get here (a typedef type should always be found).
 }
 
-static Decl *FindGetterNameDeclFromProtocolList(const ObjCProtocolDecl*PDecl,
+static Decl *FindGetterSetterNameDeclFromProtocolList(const ObjCProtocolDecl*PDecl,
                                                 IdentifierInfo *Member,
                                                 const Selector &Sel,
                                                 ASTContext &Context) {
-
-  if (ObjCPropertyDecl *PD = PDecl->FindPropertyDeclaration(Member))
-    return PD;
+  if (Member)
+    if (ObjCPropertyDecl *PD = PDecl->FindPropertyDeclaration(Member))
+      return PD;
   if (ObjCMethodDecl *OMD = PDecl->getInstanceMethod(Sel))
     return OMD;
 
   for (ObjCProtocolDecl::protocol_iterator I = PDecl->protocol_begin(),
        E = PDecl->protocol_end(); I != E; ++I) {
-    if (Decl *D = FindGetterNameDeclFromProtocolList(*I, Member, Sel,
-                                                     Context))
+    if (Decl *D = FindGetterSetterNameDeclFromProtocolList(*I, Member, Sel,
+                                                           Context))
       return D;
   }
   return 0;
 }
 
-static Decl *FindGetterNameDecl(const ObjCObjectPointerType *QIdTy,
-                                IdentifierInfo *Member,
-                                const Selector &Sel,
-                                ASTContext &Context) {
+static Decl *FindGetterSetterNameDecl(const ObjCObjectPointerType *QIdTy,
+                                      IdentifierInfo *Member,
+                                      const Selector &Sel,
+                                      ASTContext &Context) {
   // Check protocols on qualified interfaces.
   Decl *GDecl = 0;
   for (ObjCObjectPointerType::qual_iterator I = QIdTy->qual_begin(),
        E = QIdTy->qual_end(); I != E; ++I) {
-    if (ObjCPropertyDecl *PD = (*I)->FindPropertyDeclaration(Member)) {
-      GDecl = PD;
-      break;
-    }
-    // Also must look for a getter name which uses property syntax.
+    if (Member)
+      if (ObjCPropertyDecl *PD = (*I)->FindPropertyDeclaration(Member)) {
+        GDecl = PD;
+        break;
+      }
+    // Also must look for a getter or setter name which uses property syntax.
     if (ObjCMethodDecl *OMD = (*I)->getInstanceMethod(Sel)) {
       GDecl = OMD;
       break;
@@ -2572,7 +2573,8 @@ static Decl *FindGetterNameDecl(const ObjCObjectPointerType *QIdTy,
     for (ObjCObjectPointerType::qual_iterator I = QIdTy->qual_begin(),
          E = QIdTy->qual_end(); I != E; ++I) {
       // Search in the protocol-qualifier list of current protocol.
-      GDecl = FindGetterNameDeclFromProtocolList(*I, Member, Sel, Context);
+      GDecl = FindGetterSetterNameDeclFromProtocolList(*I, Member, Sel, 
+                                                       Context);
       if (GDecl)
         return GDecl;
     }
@@ -3273,7 +3275,8 @@ Sema::LookupMemberExpr(LookupResult &R, Expr *&BaseExpr,
 
     // Check protocols on qualified interfaces.
     Selector Sel = PP.getSelectorTable().getNullarySelector(Member);
-    if (Decl *PMDecl = FindGetterNameDecl(QIdTy, Member, Sel, Context)) {
+    if (Decl *PMDecl = FindGetterSetterNameDecl(QIdTy, Member, Sel, 
+                                                Context)) {
       if (ObjCPropertyDecl *PD = dyn_cast<ObjCPropertyDecl>(PMDecl)) {
         // Check the use of this declaration
         if (DiagnoseUseOfDecl(PD, MemberLoc))
@@ -3286,14 +3289,18 @@ Sema::LookupMemberExpr(LookupResult &R, Expr *&BaseExpr,
         // Check the use of this method.
         if (DiagnoseUseOfDecl(OMD, MemberLoc))
           return ExprError();
-        // It is important that start and end position is the first character
-        // and last character position of the property-dot syntax expression.
-        SourceLocation MemberEndLoc = PP.getLocForEndOfToken(MemberLoc, 1);
-        return Owned(ObjCMessageExpr::Create(Context,
-                                             OMD->getSendResultType(),
-                                             BaseExpr->getExprLoc(), 
-                                             BaseExpr, Sel,
-                                             OMD, NULL, 0, MemberEndLoc));
+        Selector SetterSel =
+          SelectorTable::constructSetterName(PP.getIdentifierTable(),
+                                             PP.getSelectorTable(), Member);
+        ObjCMethodDecl *SMD = 0;
+        if (Decl *SDecl = FindGetterSetterNameDecl(QIdTy, /*Property id*/0, 
+                                                   SetterSel, Context))
+          SMD = dyn_cast<ObjCMethodDecl>(SDecl);
+        QualType PType = OMD->getSendResultType();
+        return Owned(new (Context) ObjCImplicitSetterGetterRefExpr(OMD, PType,
+                                                                   SMD, 
+                                                                   MemberLoc, 
+                                                                   BaseExpr));
       }
     }
 
