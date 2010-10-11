@@ -64,7 +64,6 @@ set(LLVM_ALL_TARGETS
   Mips
   MBlaze
   MSP430
-  PIC16
   PowerPC
   PTX
   Sparc
@@ -341,11 +340,6 @@ foreach(t ${LLVM_TARGETS_TO_BUILD})
   endif( EXISTS ${LLVM_MAIN_SRC_DIR}/lib/Target/${t}/Disassembler/CMakeLists.txt )
   set(CURRENT_LLVM_TARGET)
 endforeach(t)
-
-# PIC16 contains an odd library:
-if( LLVM_TARGETS_TO_BUILD MATCHES ".*PIC16.*" )
-  add_subdirectory(lib/Target/PIC16/PIC16Passes)
-endif()
 
 # Produce llvm/Config/AsmPrinters.def
 configure_file(

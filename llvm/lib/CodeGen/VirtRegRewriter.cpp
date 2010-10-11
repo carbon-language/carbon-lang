@@ -297,7 +297,7 @@ ComputeReloadLoc(MachineBasicBlock::iterator const InsertLoc,
   const TargetLowering *TL = MF.getTarget().getTargetLowering();
 
   if (!TL->isTypeLegal(TL->getPointerTy()))
-    // Believe it or not, this is true on PIC16.
+    // Believe it or not, this is true on 16-bit targets like PIC16.
     return InsertLoc;
 
   const TargetRegisterClass *ptrRegClass =

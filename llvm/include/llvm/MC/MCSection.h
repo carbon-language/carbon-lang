@@ -32,8 +32,7 @@ namespace llvm {
     enum SectionVariant {
       SV_COFF = 0,
       SV_ELF,
-      SV_MachO,
-      SV_PIC16
+      SV_MachO
     };
 
   private:

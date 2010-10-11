@@ -107,7 +107,6 @@ if ($PEROBJ) {
     $libpath =~ s/^TransformUtils/Transforms\/Utils/;
     $libpath =~ s/^ipa/Analysis\/IPA/;
     $libpath =~ s/^ipo/Transforms\/IPO/;
-    $libpath =~ s/^pic16passes/Target\/PIC16\/PIC16Passes/;
     $libpath = "lib/".$libpath."/";
     open DEFS, "$nmPath -sg $Directory/$lib|";
     while (<DEFS>) {
@@ -150,7 +149,6 @@ if ($PEROBJ) {
     $libpath =~ s/^TransformUtils/Transforms\/Utils/;
     $libpath =~ s/^ipa/Analysis\/IPA/;
     $libpath =~ s/^ipo/Transforms\/IPO/;
-    $libpath =~ s/^pic16passes/Target\/PIC16\/PIC16Passes/;
     $libpath = "lib/".$libpath."/";
     open UDEFS, "$nmPath -Aup $Directory/$lib|";
     while (<UDEFS>) {

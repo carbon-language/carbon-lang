@@ -9,6 +9,6 @@
 
 LEVEL=../../..
 
-PARALLEL_DIRS := Hello Simple mcc16 Skeleton
+PARALLEL_DIRS := Hello Simple Skeleton
 
 include $(LEVEL)/Makefile.common
