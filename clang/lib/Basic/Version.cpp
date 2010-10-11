@@ -28,6 +28,12 @@ std::string getClangRepositoryPath() {
   llvm::StringRef URL("");
 #endif
 
+  // If the SVN_REPOSITORY is empty, try to use the SVN keyword. This helps us
+  // pick up a tag in an SVN export, for example.
+  static llvm::StringRef SVNRepository("$URL$");
+  if (URL.empty())
+    URL = SVNRepository.split(':').second;
+
   // Strip off version from a build from an integration branch.
   URL = URL.slice(0, URL.find("/src/tools/clang"));
 
