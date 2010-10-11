@@ -1418,8 +1418,6 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
                     options::OPT_fno_diagnostics_fixit_info))
     CmdArgs.push_back("-fno-diagnostics-fixit-info");
 
-  Args.AddLastArg(CmdArgs, options::OPT_fdiagnostics_binary);
-
   // Enable -fdiagnostics-show-option by default.
   if (Args.hasFlag(options::OPT_fdiagnostics_show_option,
                    options::OPT_fno_diagnostics_show_option))

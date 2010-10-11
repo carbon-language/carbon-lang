@@ -930,8 +930,8 @@ public:
 };
 
 /**
- * \brief Represents a diagnostic in a form that can be serialized and
- * deserialized.
+ * \brief Represents a diagnostic in a form that can be retained until its 
+ * corresponding source manager is destroyed. 
  */
 class StoredDiagnostic {
   Diagnostic::Level Level;
@@ -964,19 +964,6 @@ public:
   fixit_iterator fixit_begin() const { return FixIts.begin(); }
   fixit_iterator fixit_end() const { return FixIts.end(); }
   unsigned fixit_size() const { return FixIts.size(); }
-
-  /// Serialize - Serialize the given diagnostic (with its diagnostic
-  /// level) to the given stream. Serialization is a lossy operation,
-  /// since the specific diagnostic ID and any macro-instantiation
-  /// information is lost.
-  void Serialize(llvm::raw_ostream &OS) const;
-
-  /// Deserialize - Deserialize the first diagnostic within the memory
-  /// [Memory, MemoryEnd), producing a new diagnostic builder describing the
-  /// deserialized diagnostic. If the memory does not contain a
-  /// diagnostic, returns a diagnostic builder with no diagnostic ID.
-  static StoredDiagnostic Deserialize(FileManager &FM, SourceManager &SM, 
-                                   const char *&Memory, const char *MemoryEnd);
 };
 
 /// DiagnosticClient - This is an abstract interface implemented by clients of

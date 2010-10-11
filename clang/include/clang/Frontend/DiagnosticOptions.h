@@ -41,9 +41,6 @@ public:
   unsigned VerifyDiagnostics: 1; /// Check that diagnostics match the expected
                                  /// diagnostics, indicated by markers in the
                                  /// input source file.
-  unsigned BinaryOutput : 1;     /// Emit diagnostics via the diagnostic 
-                                 /// binary serialization mechanism, to be
-                                 /// deserialized by, e.g., the CIndex library.
 
   unsigned ErrorLimit;           /// Limit # errors emitted.
   unsigned MacroBacktraceLimit;  /// Limit depth of macro instantiation 
@@ -86,7 +83,6 @@ public:
     ShowSourceRanges = 0;
     ShowParseableFixits = 0;
     VerifyDiagnostics = 0;
-    BinaryOutput = 0;
     ErrorLimit = 0;
     TemplateBacktraceLimit = DefaultTemplateBacktraceLimit;
     MacroBacktraceLimit = DefaultMacroBacktraceLimit;
