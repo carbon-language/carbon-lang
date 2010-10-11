@@ -1529,6 +1529,8 @@ void CGDebugInfo::EmitFunctionStart(GlobalDecl GD, QualType FnType,
 
   const Decl *D = GD.getDecl();
   unsigned Flags = 0;
+  llvm::DIFile Unit = getOrCreateFile(CurLoc);
+  llvm::DIDescriptor FDContext(Unit);
   if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
     // If there is a DISubprogram for  this function available then use it.
     llvm::DenseMap<const FunctionDecl *, llvm::WeakVH>::iterator
@@ -1547,6 +1549,9 @@ void CGDebugInfo::EmitFunctionStart(GlobalDecl GD, QualType FnType,
     LinkageName = CGM.getMangledName(GD);
     if (FD->hasPrototype())
       Flags |= llvm::DIDescriptor::FlagPrototyped;
+    if (const NamespaceDecl *NSDecl =
+        dyn_cast_or_null<NamespaceDecl>(FD->getDeclContext()))
+      FDContext = getOrCreateNameSpace(NSDecl, Unit);
   } else if (const ObjCMethodDecl *OMD = dyn_cast<ObjCMethodDecl>(D)) {
     Name = getObjCMethodName(OMD);
     LinkageName = Name;
@@ -1563,12 +1568,11 @@ void CGDebugInfo::EmitFunctionStart(GlobalDecl GD, QualType FnType,
   // It is expected that CurLoc is set before using EmitFunctionStart.
   // Usually, CurLoc points to the left bracket location of compound
   // statement representing function body.
-  llvm::DIFile Unit = getOrCreateFile(CurLoc);
   unsigned LineNo = getLineNumber(CurLoc);
   if (D->isImplicit())
     Flags |= llvm::DIDescriptor::FlagArtificial;
   llvm::DISubprogram SP =
-    DebugFactory.CreateSubprogram(Unit, Name, Name, LinkageName, Unit, LineNo,
+    DebugFactory.CreateSubprogram(FDContext, Name, Name, LinkageName, Unit, LineNo,
                                   getOrCreateType(FnType, Unit),
                                   Fn->hasInternalLinkage(), true/*definition*/,
                                   0, 0, llvm::DIType(),
