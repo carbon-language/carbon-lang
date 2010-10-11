@@ -590,8 +590,8 @@ bool ARMFastISel::ARMComputeRegOffset(const Value *Obj, unsigned &Reg,
     break;
     case Instruction::Alloca: {
       // Don't handle dynamic allocas.
-      if (FuncInfo.StaticAllocaMap.count(cast<AllocaInst>(Obj)))
-        assert(false && "Alloca should have been handled earlier!");
+      assert(!FuncInfo.StaticAllocaMap.count(cast<AllocaInst>(Obj)) &&
+             "Alloca should have been handled earlier!");
       return false;
     }
   }
