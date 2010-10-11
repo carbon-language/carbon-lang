@@ -128,7 +128,7 @@ void CodeEmitterGen::run(raw_ostream &o) {
 
     // Loop over all of the fields in the instruction, determining which are the
     // operands to the instruction.
-    unsigned op = 0;
+    unsigned NumberedOp = 0;
     for (unsigned i = 0, e = Vals.size(); i != e; ++i) {
       if (!Vals[i].getPrefix() && !Vals[i].getValue()->isComplete()) {
         // Is the operand continuous? If so, we can just mask and OR it in
@@ -154,14 +154,25 @@ void CodeEmitterGen::run(raw_ostream &o) {
             }
 
             if (!gotOp) {
-              /// If this operand is not supposed to be emitted by the generated
-              /// emitter, skip it.
-              while (CGI.isFlatOperandNotEmitted(op))
-                ++op;
+
+              // If the operand matches by name, reference according to that
+              // operand number. Non-matching operands are assumed to be in
+              // order.
+              unsigned OpIdx;
+              if (CGI.hasOperandNamed(VarName, OpIdx)) {
+                assert (!CGI.isFlatOperandNotEmitted(OpIdx) &&
+                        "Explicitly used operand also marked as not emitted!");
+              } else {
+                /// If this operand is not supposed to be emitted by the
+                /// generated emitter, skip it.
+                while (CGI.isFlatOperandNotEmitted(NumberedOp))
+                  ++NumberedOp;
+                OpIdx = NumberedOp++;
+              }
 
               Case += "      // op: " + VarName + "\n"
                    +  "      op = getMachineOpValue(MI, MI.getOperand("
-                   +  utostr(op++) + "));\n";
+                   +  utostr(OpIdx) + "));\n";
               gotOp = true;
             }
 

@@ -234,11 +234,24 @@ CodeGenInstruction::CodeGenInstruction(Record *R, const std::string &AsmStr)
 /// specified name, throw an exception.
 ///
 unsigned CodeGenInstruction::getOperandNamed(const std::string &Name) const {
-  assert(!Name.empty() && "Cannot search for operand with no name!");
-  for (unsigned i = 0, e = OperandList.size(); i != e; ++i)
-    if (OperandList[i].Name == Name) return i;
+  unsigned OpIdx;
+  if (hasOperandNamed(Name, OpIdx)) return OpIdx;
   throw "Instruction '" + TheDef->getName() +
         "' does not have an operand named '$" + Name + "'!";
+}
+
+/// hasOperandNamed - Query whether the instruction has an operand of the
+/// given name. If so, return true and set OpIdx to the index of the
+/// operand. Otherwise, return false.
+bool CodeGenInstruction::hasOperandNamed(const std::string &Name,
+                                         unsigned &OpIdx) const {
+  assert(!Name.empty() && "Cannot search for operand with no name!");
+  for (unsigned i = 0, e = OperandList.size(); i != e; ++i)
+    if (OperandList[i].Name == Name) {
+      OpIdx = i;
+      return true;
+    }
+  return false;
 }
 
 std::pair<unsigned,unsigned>
