@@ -1994,75 +1994,6 @@ public:
 } // end anonymous namespace.
 
 namespace {
-  class PIC16TargetInfo : public TargetInfo{
-  public:
-    PIC16TargetInfo(const std::string& triple) : TargetInfo(triple) {
-      TLSSupported = false;
-      IntWidth = 16;
-      LongWidth = LongLongWidth = 32;
-      PointerWidth = 16;
-      IntAlign = 8;
-      LongAlign = LongLongAlign = 8;
-      PointerAlign = 8;
-      SizeType = UnsignedInt;
-      IntMaxType = SignedLong;
-      UIntMaxType = UnsignedLong;
-      IntPtrType = SignedShort;
-      PtrDiffType = SignedInt;
-      SigAtomicType = SignedLong;
-      FloatWidth = 32;
-      FloatAlign = 32;
-      DoubleWidth = 32;
-      DoubleAlign = 32;
-      LongDoubleWidth = 32;
-      LongDoubleAlign = 32;
-      FloatFormat = &llvm::APFloat::IEEEsingle;
-      DoubleFormat = &llvm::APFloat::IEEEsingle;
-      LongDoubleFormat = &llvm::APFloat::IEEEsingle;
-      DescriptionString = "e-p:16:8:8-i8:8:8-i16:8:8-i32:8:8-f32:32:32-n8";
-
-    }
-    virtual uint64_t getPointerWidthV(unsigned AddrSpace) const { return 16; }
-    virtual uint64_t getPointerAlignV(unsigned AddrSpace) const { return 8; }
-    virtual void getTargetDefines(const LangOptions &Opts,
-                                MacroBuilder &Builder) const {
-      Builder.defineMacro("__pic16");
-      Builder.defineMacro("__PIC16");
-      Builder.defineMacro("rom", "__attribute__((address_space(1)))");
-      Builder.defineMacro("ram", "__attribute__((address_space(0)))");
-      Builder.defineMacro("__section(SectName)",
-             "__attribute__((section(SectName)))");
-      Builder.defineMacro("near",
-             "__attribute__((section(\"Address=NEAR\")))");
-      Builder.defineMacro("__address(Addr)",
-             "__attribute__((section(\"Address=\"#Addr)))");
-      Builder.defineMacro("__config(conf)", "asm(\"CONFIG \"#conf)");
-      Builder.defineMacro("__idlocs(value)", "asm(\"__IDLOCS \"#value)");
-      Builder.defineMacro("interrupt",
-             "__attribute__((section(\"interrupt=0x4\"))) \
-             __attribute__((used))");
-    }
-    virtual void getTargetBuiltins(const Builtin::Info *&Records,
-                                   unsigned &NumRecords) const {}
-    virtual const char *getVAListDeclaration() const {
-      return "typedef char* __builtin_va_list;";
-    }
-    virtual const char *getClobbers() const {
-      return "";
-    }
-    virtual void getGCCRegNames(const char * const *&Names,
-                                unsigned &NumNames) const {}
-    virtual bool validateAsmConstraint(const char *&Name,
-                                       TargetInfo::ConstraintInfo &info) const {
-      return true;
-    }
-    virtual void getGCCRegAliases(const GCCRegAlias *&Aliases,
-                                  unsigned &NumAliases) const {}
-    virtual bool useGlobalsForAutomaticVariables() const {return true;}
-  };
-}
-
-namespace {
   class MSP430TargetInfo : public TargetInfo {
     static const char * const GCCRegNames[];
   public:
@@ -2528,9 +2459,6 @@ static TargetInfo *AllocateTarget(const std::string &T) {
     if (os == llvm::Triple::Linux)
       return new LinuxTargetInfo<MipselTargetInfo>(T);
     return new MipselTargetInfo(T);
-
-  case llvm::Triple::pic16:
-    return new PIC16TargetInfo(T);
 
   case llvm::Triple::ppc:
     if (os == llvm::Triple::Darwin)

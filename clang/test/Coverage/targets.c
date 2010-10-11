@@ -6,7 +6,6 @@
 // RUN: %clang_cc1 -g -triple i686-unknown-dragonfly -emit-llvm -o %t %s
 // RUN: %clang_cc1 -g -triple i686-unknown-unknown -emit-llvm -o %t %s
 // RUN: %clang_cc1 -g -triple i686-unknown-win32 -emit-llvm -o %t %s
-// RUN: %clang_cc1 -g -triple pic16-unknown-unknown -emit-llvm -o %t %s
 // RUN: %clang_cc1 -g -triple powerpc-apple-darwin9 -emit-llvm -o %t %s
 // RUN: %clang_cc1 -g -triple powerpc-unknown-unknown -emit-llvm -o %t %s
 // RUN: %clang_cc1 -g -triple powerpc64-apple-darwin9 -emit-llvm -o %t %s

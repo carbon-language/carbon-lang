@@ -2047,76 +2047,6 @@ llvm::Value *WinX86_64ABIInfo::EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
   return AddrTyped;
 }
 
-//===----------------------------------------------------------------------===//
-// PIC16 ABI Implementation
-//===----------------------------------------------------------------------===//
-
-namespace {
-
-class PIC16ABIInfo : public ABIInfo {
-public:
-  PIC16ABIInfo(CodeGenTypes &CGT) : ABIInfo(CGT) {}
-
-  ABIArgInfo classifyReturnType(QualType RetTy) const;
-
-  ABIArgInfo classifyArgumentType(QualType RetTy) const;
-
-  virtual void computeInfo(CGFunctionInfo &FI) const {
-    FI.getReturnInfo() = classifyReturnType(FI.getReturnType());
-    for (CGFunctionInfo::arg_iterator it = FI.arg_begin(), ie = FI.arg_end();
-         it != ie; ++it)
-      it->info = classifyArgumentType(it->type);
-  }
-
-  virtual llvm::Value *EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
-                                 CodeGenFunction &CGF) const;
-};
-
-class PIC16TargetCodeGenInfo : public TargetCodeGenInfo {
-public:
-  PIC16TargetCodeGenInfo(CodeGenTypes &CGT)
-    : TargetCodeGenInfo(new PIC16ABIInfo(CGT)) {}
-};
-
-}
-
-ABIArgInfo PIC16ABIInfo::classifyReturnType(QualType RetTy) const {
-  if (RetTy->isVoidType()) {
-    return ABIArgInfo::getIgnore();
-  } else {
-    return ABIArgInfo::getDirect();
-  }
-}
-
-ABIArgInfo PIC16ABIInfo::classifyArgumentType(QualType Ty) const {
-  return ABIArgInfo::getDirect();
-}
-
-llvm::Value *PIC16ABIInfo::EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
-                                     CodeGenFunction &CGF) const {
-  const llvm::Type *BP = llvm::Type::getInt8PtrTy(CGF.getLLVMContext());
-  const llvm::Type *BPP = llvm::PointerType::getUnqual(BP);
-
-  CGBuilderTy &Builder = CGF.Builder;
-  llvm::Value *VAListAddrAsBPP = Builder.CreateBitCast(VAListAddr, BPP,
-                                                       "ap");
-  llvm::Value *Addr = Builder.CreateLoad(VAListAddrAsBPP, "ap.cur");
-  llvm::Type *PTy =
-    llvm::PointerType::getUnqual(CGF.ConvertType(Ty));
-  llvm::Value *AddrTyped = Builder.CreateBitCast(Addr, PTy);
-
-  uint64_t Offset = CGF.getContext().getTypeSize(Ty) / 8;
-
-  llvm::Value *NextAddr =
-    Builder.CreateGEP(Addr, llvm::ConstantInt::get(
-                          llvm::Type::getInt32Ty(CGF.getLLVMContext()), Offset),
-                      "ap.next");
-  Builder.CreateStore(NextAddr, VAListAddrAsBPP);
-
-  return AddrTyped;
-}
-
-
 // PowerPC-32
 
 namespace {
@@ -2694,9 +2624,6 @@ const TargetCodeGenInfo &CodeGenModule::getTargetCodeGenInfo() {
 
     return *(TheTargetCodeGenInfo =
              new ARMTargetCodeGenInfo(Types, ARMABIInfo::AAPCS));
-
-  case llvm::Triple::pic16:
-    return *(TheTargetCodeGenInfo = new PIC16TargetCodeGenInfo(Types));
 
   case llvm::Triple::ppc:
     return *(TheTargetCodeGenInfo = new PPC32TargetCodeGenInfo(Types));
