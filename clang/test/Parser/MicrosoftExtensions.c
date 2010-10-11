@@ -78,3 +78,11 @@ void uuidof_test2()
    // FIXME, this must not compile
   _uuidof(c);
 }
+
+
+void ms_intrinsics(int a)
+{
+  __noop();
+  __assume(a);
+
+}

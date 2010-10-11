@@ -498,7 +498,9 @@ BUILTIN(__builtin_abort, "v", "Fnr")
 BUILTIN(__builtin_index, "c*cC*i", "Fn")
 BUILTIN(__builtin_rindex, "c*cC*i", "Fn")
 
-
+// Microsoft builtins.
+BUILTIN(__assume, "vb", "n")
+BUILTIN(__noop, "v.", "n")
 
 // C99 library functions
 // C99 stdlib.h
