@@ -1,5 +1,5 @@
 ; RUN: llc < %s -march=x86 -mtriple=i386-apple-darwin | FileCheck %s
-; bug 8297
+; PR8297
 ;
 ; On i386, i64 cmpxchg is lowered during legalize types to extract the
 ; 64-bit result into a pair of fixed regs. So creation of the DAG node
