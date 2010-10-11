@@ -665,11 +665,24 @@ def CortexA8Itineraries : ProcessorItineraries<
   InstrItinData<IIC_VBIND,    [InstrStage<1, [A8_Pipe0, A8_Pipe1]>,
                                InstrStage<1, [A8_NPipe]>], [5, 2, 2]>,
   //
+  // VPADD, etc.
+  InstrItinData<IIC_VPBIND,   [InstrStage<1, [A8_Pipe0, A8_Pipe1]>,
+                               InstrStage<1, [A8_NPipe]>], [5, 2, 2]>,
+  //
+  // Double-register FP VMUL
+  InstrItinData<IIC_VFMULD,   [InstrStage<1, [A8_Pipe0, A8_Pipe1]>,
+                               InstrStage<1, [A8_NPipe]>], [5, 2, 1]>,
+
+  //
   // Quad-register FP Binary
   // Result written in N5, but that is relative to the last cycle of multicycle,
   // so we use 6 for those cases
   InstrItinData<IIC_VBINQ,    [InstrStage<1, [A8_Pipe0, A8_Pipe1]>,
                                InstrStage<2, [A8_NPipe]>], [6, 2, 2]>,
+  //
+  // Quad-register FP VMUL
+  InstrItinData<IIC_VFMULQ,   [InstrStage<1, [A8_Pipe0, A8_Pipe1]>,
+                               InstrStage<1, [A8_NPipe]>], [6, 2, 1]>,
   //
   // Move
   InstrItinData<IIC_VMOV,     [InstrStage<1, [A8_Pipe0, A8_Pipe1]>,
