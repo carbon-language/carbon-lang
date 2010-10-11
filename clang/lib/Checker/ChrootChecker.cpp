@@ -26,7 +26,7 @@ namespace {
 enum Kind { NO_CHROOT, ROOT_CHANGED, JAIL_ENTERED };
   
 bool isRootChanged(intptr_t k) { return k == ROOT_CHANGED; }
-bool isJailEntered(intptr_t k) { return k == JAIL_ENTERED; }
+//bool isJailEntered(intptr_t k) { return k == JAIL_ENTERED; }
 
 // This checker checks improper use of chroot.
 // The state transition:
