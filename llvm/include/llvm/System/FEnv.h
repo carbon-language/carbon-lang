@@ -21,6 +21,12 @@
 #include <fenv.h>
 #endif
 
+// FIXME: Clang's #include handling apparently doesn't work for libstdc++'s
+// fenv.h; see PR6907 for details.
+#if defined(__clang__) && defined(_GLIBCXX_FENV_H)
+#undef HAVE_FENV_H
+#endif
+
 namespace llvm {
 namespace sys {
 
