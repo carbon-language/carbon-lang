@@ -1105,7 +1105,9 @@ bool ARMFastISel::SelectSDiv(const Instruction *I) {
   
   // Otherwise emit a libcall.
   RTLIB::Libcall LC = RTLIB::UNKNOWN_LIBCALL;
-  if (VT == MVT::i16)
+  if (VT == MVT::i8)
+    LC = RTLIB::SDIV_I8;
+  else if (VT == MVT::i16)
     LC = RTLIB::SDIV_I16;
   else if (VT == MVT::i32)
     LC = RTLIB::SDIV_I32;
