@@ -353,8 +353,6 @@ static const char *getActionName(frontend::ActionKind Kind) {
 
 static void FrontendOptsToArgs(const FrontendOptions &Opts,
                                std::vector<std::string> &Res) {
-  if (!Opts.DebugCodeCompletionPrinter)
-    Res.push_back("-no-code-completion-debug-printer");
   if (Opts.DisableFree)
     Res.push_back("-disable-free");
   if (Opts.RelocatablePCH)
@@ -1067,8 +1065,6 @@ static InputKind ParseFrontendArgs(FrontendOptions &Opts, ArgList &Args,
       Diags.Report(diag::err_drv_invalid_value)
         << A->getAsString(Args) << A->getValue(Args);
   }
-  Opts.DebugCodeCompletionPrinter =
-    !Args.hasArg(OPT_no_code_completion_debug_printer);
   Opts.DisableFree = Args.hasArg(OPT_disable_free);
 
   Opts.OutputFile = Args.getLastArgValue(OPT_o);

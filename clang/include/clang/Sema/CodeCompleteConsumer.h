@@ -465,14 +465,6 @@ public:
   /// \param Result If non-NULL, points to an empty code-completion
   /// result that will be given a cloned copy of
   CodeCompletionString *Clone(CodeCompletionString *Result = 0) const;
-  
-  /// \brief Serialize this code-completion string to the given stream.
-  void Serialize(llvm::raw_ostream &OS) const;
-  
-  /// \brief Deserialize a code-completion string from the given string.
-  ///
-  /// \returns true if successful, false otherwise.
-  bool Deserialize(const char *&Str, const char *StrEnd);
 };
 
 /// \brief Captures a result of code completion.
@@ -797,32 +789,6 @@ public:
                                          unsigned NumCandidates);  
 };
   
-/// \brief A code-completion consumer that prints the results it receives
-/// in a format that is parsable by the CIndex library.
-class CIndexCodeCompleteConsumer : public CodeCompleteConsumer {
-  /// \brief The raw output stream.
-  llvm::raw_ostream &OS;
-  
-public:
-  /// \brief Create a new CIndex code-completion consumer that prints its
-  /// results to the given raw output stream in a format readable to the CIndex
-  /// library.
-  CIndexCodeCompleteConsumer(bool IncludeMacros, bool IncludeCodePatterns,
-                             bool IncludeGlobals, llvm::raw_ostream &OS)
-    : CodeCompleteConsumer(IncludeMacros, IncludeCodePatterns, IncludeGlobals,
-                           true), OS(OS) {}
-  
-  /// \brief Prints the finalized code-completion results.
-  virtual void ProcessCodeCompleteResults(Sema &S, 
-                                          CodeCompletionContext Context,
-                                          CodeCompletionResult *Results,
-                                          unsigned NumResults);
-  
-  virtual void ProcessOverloadCandidates(Sema &S, unsigned CurrentArg,
-                                         OverloadCandidate *Candidates,
-                                         unsigned NumCandidates);  
-};
-
 } // end namespace clang
 
 #endif // LLVM_CLANG_SEMA_CODECOMPLETECONSUMER_H

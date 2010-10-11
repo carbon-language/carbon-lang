@@ -267,8 +267,6 @@ def remap_file : Separate<"-remap-file">,
   HelpText<"Replace the contents of the <from> file with the contents of the <to> file">;
 def code_completion_at_EQ : Joined<"-code-completion-at=">,
   Alias<code_completion_at>;
-def no_code_completion_debug_printer : Flag<"-no-code-completion-debug-printer">,
-  HelpText<"Don't use the \"debug\" code-completion print">;
 def code_completion_macros : Flag<"-code-completion-macros">,
   HelpText<"Include macros in code-completion results">;
 def code_completion_patterns : Flag<"-code-completion-patterns">,

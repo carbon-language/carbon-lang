@@ -289,7 +289,6 @@ void CompilerInstance::createCodeCompletionConsumer() {
     CompletionConsumer.reset(
       createCodeCompletionConsumer(getPreprocessor(),
                                    Loc.FileName, Loc.Line, Loc.Column,
-                                   getFrontendOpts().DebugCodeCompletionPrinter,
                                    getFrontendOpts().ShowMacrosInCodeCompletion,
                              getFrontendOpts().ShowCodePatternsInCodeCompletion,
                            getFrontendOpts().ShowGlobalSymbolsInCodeCompletion,
@@ -318,7 +317,6 @@ CompilerInstance::createCodeCompletionConsumer(Preprocessor &PP,
                                                const std::string &Filename,
                                                unsigned Line,
                                                unsigned Column,
-                                               bool UseDebugPrinter,
                                                bool ShowMacros,
                                                bool ShowCodePatterns,
                                                bool ShowGlobals,
@@ -327,11 +325,7 @@ CompilerInstance::createCodeCompletionConsumer(Preprocessor &PP,
     return 0;
 
   // Set up the creation routine for code-completion.
-  if (UseDebugPrinter)
-    return new PrintingCodeCompleteConsumer(ShowMacros, ShowCodePatterns, 
-                                            ShowGlobals, OS);
-  else
-    return new CIndexCodeCompleteConsumer(ShowMacros, ShowCodePatterns, 
+  return new PrintingCodeCompleteConsumer(ShowMacros, ShowCodePatterns, 
                                           ShowGlobals, OS);
 }
 

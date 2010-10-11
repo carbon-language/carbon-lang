@@ -56,8 +56,6 @@ namespace frontend {
 /// FrontendOptions - Options for controlling the behavior of the frontend.
 class FrontendOptions {
 public:
-  unsigned DebugCodeCompletionPrinter : 1; ///< Use the debug printer for code
-                                           /// completion results.
   unsigned DisableFree : 1;                ///< Disable memory freeing on exit.
   unsigned RelocatablePCH : 1;             ///< When generating PCH files,
                                            /// instruct the AST writer to create
@@ -119,7 +117,6 @@ public:
 
 public:
   FrontendOptions() {
-    DebugCodeCompletionPrinter = 1;
     DisableFree = 0;
     ProgramAction = frontend::ParseSyntaxOnly;
     ActionName = "";

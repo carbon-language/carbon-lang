@@ -548,7 +548,7 @@ public:
   static CodeCompleteConsumer *
   createCodeCompletionConsumer(Preprocessor &PP, const std::string &Filename,
                                unsigned Line, unsigned Column,
-                               bool UseDebugPrinter, bool ShowMacros,
+                               bool ShowMacros,
                                bool ShowCodePatterns, bool ShowGlobals,
                                llvm::raw_ostream &OS);
 
