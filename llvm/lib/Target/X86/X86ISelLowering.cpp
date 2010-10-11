@@ -99,7 +99,11 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
   if (Subtarget->isTargetWindows() && !Subtarget->isTargetCygMing()) {
     // Setup Windows compiler runtime calls.
     setLibcallName(RTLIB::SDIV_I64, "_alldiv");
+    setLibcallName(RTLIB::UDIV_I64, "_aulldiv");
+    setLibcallName(RTLIB::FPTOUINT_F64_I64, "_ftol2");
     setLibcallCallingConv(RTLIB::SDIV_I64, CallingConv::X86_StdCall);
+    setLibcallCallingConv(RTLIB::UDIV_I64, CallingConv::X86_StdCall);
+    setLibcallCallingConv(RTLIB::FPTOUINT_F64_I64, CallingConv::X86_StdCall);
   }
 
   if (Subtarget->isTargetDarwin()) {
