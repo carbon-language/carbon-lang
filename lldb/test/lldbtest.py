@@ -104,10 +104,20 @@ import types
 import unittest2
 import lldb
 
+# See also dotest.parseOptionsAndInitTestdirs(), where the environment variables
+# LLDB_COMMAND_TRACE and LLDB_NO_CLEANUP are set from '-t' and '-r dir' options.
+
+# By default, traceAlways is False.
 if "LLDB_COMMAND_TRACE" in os.environ and os.environ["LLDB_COMMAND_TRACE"]=="YES":
     traceAlways = True
 else:
     traceAlways = False
+
+# By default, doCleanup is True.
+if "LLDB_DO_CLEANUP" in os.environ and os.environ["LLDB_DO_CLEANUP"]=="NO":
+    doCleanup = False
+else:
+    doCleanup = True
 
 
 #
@@ -284,20 +294,21 @@ class TestBase(unittest2.TestCase):
         Do class-wide cleanup.
         """
 
-        # First, let's do the platform-specific cleanup.
-        module = __import__(sys.platform)
-        if not module.cleanup():
-            raise Exception("Don't know how to do cleanup")
+        if doCleanup:
+            # First, let's do the platform-specific cleanup.
+            module = __import__(sys.platform)
+            if not module.cleanup():
+                raise Exception("Don't know how to do cleanup")
 
-        # Subclass might have specific cleanup function defined.
-        if getattr(cls, "classCleanup", None):
-            if traceAlways:
-                print >> sys.stderr, "Call class-specific cleanup function for class:", cls
-            try:
-                cls.classCleanup()
-            except:
-                exc_type, exc_value, exc_tb = sys.exc_info()
-                traceback.print_exception(exc_type, exc_value, exc_tb)
+            # Subclass might have specific cleanup function defined.
+            if getattr(cls, "classCleanup", None):
+                if traceAlways:
+                    print >> sys.stderr, "Call class-specific cleanup function for class:", cls
+                try:
+                    cls.classCleanup()
+                except:
+                    exc_type, exc_value, exc_tb = sys.exc_info()
+                    traceback.print_exception(exc_type, exc_value, exc_tb)
 
         # Restore old working directory.
         if traceAlways:
@@ -366,7 +377,7 @@ class TestBase(unittest2.TestCase):
         del self.dbg
 
         # Perform registered teardown cleanup.
-        if self.doTearDownCleanup:
+        if doCleanup and self.doTearDownCleanup:
             module = __import__(sys.platform)
             if not module.cleanup(dictionary=self.dict):
                 raise Exception("Don't know how to do cleanup")

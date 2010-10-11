@@ -63,11 +63,17 @@ fs4all = False
 # Ignore the build search path relative to this script to locate the lldb.py module.
 ignore = False
 
-# By default, we skip long running test case.  Use "-l" option to override.
+# By default, we skip long running test case.  Use '-l' option to override.
 skipLongRunningTest = True
 
 # The regular expression pattern to match against eligible filenames as our test cases.
 regexp = None
+
+# By default, tests are executed in place and cleanups are performed afterwards.
+# Use '-r dir' option to relocate the tests and their intermediate files to a
+# different directory and to forgo any cleanups.  The directory specified must
+# not exist yet.
+rdir = None
 
 # Default verbosity is 0.
 verbose = 0
@@ -98,6 +104,9 @@ where options:
        tree relative to this script; use PYTHONPATH to locate the module
 -l   : don't skip long running test
 -p   : specify a regexp filename pattern for inclusion in the test suite
+-r   : specify a dir to relocate the tests and their intermediate files to;
+       the directory must not exist before running this test driver;
+       no cleanup of intermediate test files is performed in this case
 -t   : trace lldb command execution and result
 -v   : do verbose mode of unittest framework
 -w   : insert some wait time (currently 0.5 sec) between consecutive test cases
@@ -136,6 +145,7 @@ def parseOptionsAndInitTestdirs():
     global ignore
     global skipLongRunningTest
     global regexp
+    global rdir
     global verbose
     global testdirs
 
@@ -187,6 +197,16 @@ def parseOptionsAndInitTestdirs():
                 usage()
             regexp = sys.argv[index]
             index += 1
+        elif sys.argv[index].startswith('-r'):
+            # Increment by 1 to fetch the relocated directory argument.
+            index += 1
+            if index >= len(sys.argv) or sys.argv[index].startswith('-'):
+                usage()
+            rdir = os.path.abspath(sys.argv[index])
+            if os.path.exists(rdir):
+                print "Relocated directory:", rdir, "must not exist!"
+                usage()
+            index += 1
         elif sys.argv[index].startswith('-t'):
             os.environ["LLDB_COMMAND_TRACE"] = "YES"
             index += 1
@@ -203,6 +223,39 @@ def parseOptionsAndInitTestdirs():
     # Gather all the dirs passed on the command line.
     if len(sys.argv) > index:
         testdirs = map(os.path.abspath, sys.argv[index:])
+
+    # If '-r dir' is specified, the tests should be run under the relocated
+    # directory.  Let's copy the testdirs over.
+    if rdir:
+        from shutil import copytree, ignore_patterns
+
+        tmpdirs = []
+        for srcdir in testdirs:
+            dstdir = os.path.join(rdir, os.path.basename(srcdir))
+            # Don't copy the *.pyc and .svn stuffs.
+            copytree(srcdir, dstdir, ignore=ignore_patterns('*.pyc', '.svn'))
+            tmpdirs.append(dstdir)
+
+        # This will be our modified testdirs.
+        testdirs = tmpdirs
+
+        # With '-r dir' specified, there's no cleanup of intermediate test files.
+        os.environ["LLDB_DO_CLEANUP"] = 'NO'
+
+        # If testdirs is ['test'], the make directory has already been copied
+        # recursively and is contained within the rdir/test dir.  For anything
+        # else, we would need to copy over the make directory and its contents,
+        # so that, os.listdir(rdir) looks like, for example:
+        #
+        #     array_types conditional_break make
+        #
+        # where the make directory contains the Makefile.rules file.
+        if len(testdirs) != 1 or os.path.basename(testdirs[0]) != 'test':
+            # Don't copy the .svn stuffs.
+            copytree('make', os.path.join(rdir, 'make'),
+                     ignore=ignore_patterns('.svn'))
+
+    #print "testdirs:", testdirs
 
     # Source the configFile if specified.
     # The side effect, if any, will be felt from this point on.  An example
@@ -227,13 +280,26 @@ def parseOptionsAndInitTestdirs():
 def setupSysPath():
     """Add LLDB.framework/Resources/Python to the search paths for modules."""
 
+    global rdir
+    global testdirs
+
     # Get the directory containing the current script.
     scriptPath = sys.path[0]
     if not scriptPath.endswith('test'):
         print "This script expects to reside in lldb's test directory."
         sys.exit(-1)
 
-    os.environ["LLDB_TEST"] = scriptPath
+    if rdir:
+        # Set up the LLDB_TEST environment variable appropriately, so that the
+        # individual tests can be located relatively.
+        #
+        # See also lldbtest.TestBase.setUpClass(cls).
+        if len(testdirs) == 1 and os.path.basename(testdirs[0]) == 'test':
+            os.environ["LLDB_TEST"] = os.path.join(rdir, 'test')
+        else:
+            os.environ["LLDB_TEST"] = rdir
+    else:
+        os.environ["LLDB_TEST"] = scriptPath
     pluginPath = os.path.join(scriptPath, 'plugins')
 
     # Append script dir and plugin dir to the sys.path.
@@ -316,7 +382,7 @@ def visit(prefix, dir, names):
 
             # We found a match for our test case.  Add it to the suite.
             if not sys.path.count(dir):
-                sys.path.append(dir)
+                sys.path.insert(0, dir)
             base = os.path.splitext(name)[0]
 
             # Thoroughly check the filterspec against the base module and admit

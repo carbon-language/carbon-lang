@@ -60,7 +60,7 @@ def getCmdLine(d):
 def buildDefault(architecture=None, compiler=None, dictionary=None):
     """Build the binaries the default way."""
     lldbtest.system(["/bin/sh", "-c",
-                     "make clean; make"
+                     "make clean" + getCmdLine(dictionary) + "; make"
                      + getArchSpec(architecture) + getCCSpec(compiler)
                      + getCmdLine(dictionary)])
 
@@ -70,7 +70,8 @@ def buildDefault(architecture=None, compiler=None, dictionary=None):
 def buildDsym(architecture=None, compiler=None, dictionary=None):
     """Build the binaries with dsym debug info."""
     lldbtest.system(["/bin/sh", "-c",
-                     "make clean; make MAKE_DSYM=YES"
+                     "make clean" + getCmdLine(dictionary)
+                     + "; make MAKE_DSYM=YES"
                      + getArchSpec(architecture) + getCCSpec(compiler)
                      + getCmdLine(dictionary)])
 
@@ -80,7 +81,8 @@ def buildDsym(architecture=None, compiler=None, dictionary=None):
 def buildDwarf(architecture=None, compiler=None, dictionary=None):
     """Build the binaries with dwarf debug info."""
     lldbtest.system(["/bin/sh", "-c",
-                     "make clean; make MAKE_DSYM=NO"
+                     "make clean" + getCmdLine(dictionary)
+                     + "; make MAKE_DSYM=NO"
                      + getArchSpec(architecture) + getCCSpec(compiler)
                      + getCmdLine(dictionary)])
 
