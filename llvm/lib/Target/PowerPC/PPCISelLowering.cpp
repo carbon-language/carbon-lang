@@ -1715,24 +1715,14 @@ PPCTargetLowering::LowerFormalArguments_SVR4(
     FuncInfo->setVarArgsFrameIndex(MFI->CreateStackObject(Depth, 8, false));
     SDValue FIN = DAG.getFrameIndex(FuncInfo->getVarArgsFrameIndex(), PtrVT);
 
-    // The fixed integer arguments of a variadic function are
-    // stored to the VarArgsFrameIndex on the stack.
-    unsigned GPRIndex = 0;
-    for (; GPRIndex != FuncInfo->getVarArgsNumGPR(); ++GPRIndex) {
-      SDValue Val = DAG.getRegister(GPArgRegs[GPRIndex], PtrVT);
-      SDValue Store = DAG.getStore(Chain, dl, Val, FIN, MachinePointerInfo(),
-                                   false, false, 0);
-      MemOps.push_back(Store);
-      // Increment the address by four for the next argument to store
-      SDValue PtrOff = DAG.getConstant(PtrVT.getSizeInBits()/8, PtrVT);
-      FIN = DAG.getNode(ISD::ADD, dl, PtrOff.getValueType(), FIN, PtrOff);
-    }
-
-    // If this function is vararg, store any remaining integer argument regs
-    // to their spots on the stack so that they may be loaded by deferencing the
-    // result of va_next.
-    for (; GPRIndex != NumGPArgRegs; ++GPRIndex) {
-      unsigned VReg = MF.addLiveIn(GPArgRegs[GPRIndex], &PPC::GPRCRegClass);
+    // The fixed integer arguments of a variadic function are stored to the
+    // VarArgsFrameIndex on the stack so that they may be loaded by deferencing
+    // the result of va_next.
+    for (unsigned GPRIndex = 0; GPRIndex != NumGPArgRegs; ++GPRIndex) {
+      // Get an existing live-in vreg, or add a new one.
+      unsigned VReg = MF.getRegInfo().getLiveInVirtReg(GPArgRegs[GPRIndex]);
+      if (!VReg)
+        VReg = MF.addLiveIn(GPArgRegs[GPRIndex], &PPC::GPRCRegClass);
 
       SDValue Val = DAG.getCopyFromReg(Chain, dl, VReg, PtrVT);
       SDValue Store = DAG.getStore(Val.getValue(1), dl, Val, FIN,
@@ -1745,23 +1735,13 @@ PPCTargetLowering::LowerFormalArguments_SVR4(
 
     // FIXME 32-bit SVR4: We only need to save FP argument registers if CR bit 6
     // is set.
-    
     // The double arguments are stored to the VarArgsFrameIndex
     // on the stack.
-    unsigned FPRIndex = 0;
-    for (FPRIndex = 0; FPRIndex != FuncInfo->getVarArgsNumFPR(); ++FPRIndex) {
-      SDValue Val = DAG.getRegister(FPArgRegs[FPRIndex], MVT::f64);
-      SDValue Store = DAG.getStore(Chain, dl, Val, FIN, MachinePointerInfo(),
-                                   false, false, 0);
-      MemOps.push_back(Store);
-      // Increment the address by eight for the next argument to store
-      SDValue PtrOff = DAG.getConstant(EVT(MVT::f64).getSizeInBits()/8,
-                                         PtrVT);
-      FIN = DAG.getNode(ISD::ADD, dl, PtrOff.getValueType(), FIN, PtrOff);
-    }
-
-    for (; FPRIndex != NumFPArgRegs; ++FPRIndex) {
-      unsigned VReg = MF.addLiveIn(FPArgRegs[FPRIndex], &PPC::F8RCRegClass);
+    for (unsigned FPRIndex = 0; FPRIndex != NumFPArgRegs; ++FPRIndex) {
+      // Get an existing live-in vreg, or add a new one.
+      unsigned VReg = MF.getRegInfo().getLiveInVirtReg(FPArgRegs[FPRIndex]);
+      if (!VReg)
+        VReg = MF.addLiveIn(FPArgRegs[FPRIndex], &PPC::F8RCRegClass);
 
       SDValue Val = DAG.getCopyFromReg(Chain, dl, VReg, MVT::f64);
       SDValue Store = DAG.getStore(Val.getValue(1), dl, Val, FIN,
