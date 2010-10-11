@@ -128,6 +128,7 @@ class ARMFastISel : public FastISel {
     virtual bool SelectFPToSI(const Instruction *I);
     virtual bool SelectSDiv(const Instruction *I);
     virtual bool SelectCall(const Instruction *I);
+    virtual bool SelectSelect(const Instruction *I);
 
     // Utility routines.
   private:
@@ -1063,6 +1064,34 @@ bool ARMFastISel::SelectFPToSI(const Instruction *I) {
   return true;
 }
 
+bool ARMFastISel::SelectSelect(const Instruction *I) {
+  EVT VT = TLI.getValueType(I->getType(), /*HandleUnknown=*/true);
+  if (VT == MVT::Other || !isTypeLegal(I->getType(), VT))
+    return false;
+
+  // Things need to be register sized for register moves.
+  if (VT.getSimpleVT().SimpleTy != MVT::i32) return false;
+  const TargetRegisterClass *RC = TLI.getRegClassFor(VT);
+
+  unsigned CondReg = getRegForValue(I->getOperand(0));
+  if (CondReg == 0) return false;
+  unsigned Op1Reg = getRegForValue(I->getOperand(1));
+  if (Op1Reg == 0) return false;
+  unsigned Op2Reg = getRegForValue(I->getOperand(2));
+  if (Op2Reg == 0) return false;
+
+  unsigned CmpOpc = isThumb ? ARM::t2TSTri : ARM::TSTri;
+  AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(CmpOpc))
+                  .addReg(CondReg).addImm(1));
+  unsigned ResultReg = createResultReg(RC);
+  unsigned MovCCOpc = isThumb ? ARM::t2MOVCCr : ARM::MOVCCr;
+  BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(MovCCOpc), ResultReg)
+    .addReg(Op1Reg).addReg(Op2Reg)
+    .addImm(ARMCC::EQ).addReg(ARM::CPSR);
+  UpdateValueMap(I, ResultReg);
+  return true;
+}
+
 bool ARMFastISel::SelectSDiv(const Instruction *I) {
   EVT VT;
   const Type *Ty = I->getType();
@@ -1490,6 +1519,8 @@ bool ARMFastISel::TargetSelectInstruction(const Instruction *I) {
       return SelectSDiv(I);
     case Instruction::Call:
       return SelectCall(I);
+    case Instruction::Select:
+      return SelectSelect(I);
     default: break;
   }
   return false;
