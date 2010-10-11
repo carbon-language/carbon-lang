@@ -104,8 +104,8 @@ TEST(SwapByteOrder, uint32_t) {
 }
 
 TEST(SwapByteOrder, uint64_t) {
-  EXPECT_EQ(uint64_t(0x1122334455667788),
-    sys::SwapByteOrder<uint64_t>(0x8877665544332211));
+  EXPECT_EQ(uint64_t(0x1122334455667788ULL),
+    sys::SwapByteOrder<uint64_t>(0x8877665544332211ULL));
 }
 
 TEST(SwapByteOrder, int8_t) {
@@ -121,8 +121,8 @@ TEST(SwapByteOrder, int32_t) {
 }
 
 TEST(SwapByteOrder, int64_t) {
-  EXPECT_EQ(int64_t(0x1122334455667788),
-    sys::SwapByteOrder<int64_t>(0x8877665544332211));
+  EXPECT_EQ(int64_t(0x1122334455667788LL),
+    sys::SwapByteOrder<int64_t>(0x8877665544332211LL));
 }
 
 }
