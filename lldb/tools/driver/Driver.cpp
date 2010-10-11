@@ -75,6 +75,9 @@ static lldb::OptionDefinition g_options[] =
     { LLDB_OPT_SET_ALL,  false,  "editor",           'e',  no_argument,  NULL,  NULL,  eArgTypeNone,
         "Tells the debugger to open source files using the host's \"external editor\" mechanism." },
 
+    { LLDB_OPT_SET_ALL,  false,  "no-lldbinit",           'n',  no_argument,  NULL,  NULL,  eArgTypeNone,
+        "Do not automatically parse any '.lldbinit' files." },
+
 //    { LLDB_OPT_SET_4,  true,  "crash-log",      'c',  required_argument,  NULL,  NULL,  eArgTypeFilename,
 //        "Load executable images from a crash log for symbolication." },
 
@@ -554,10 +557,15 @@ Driver::ParseArgs (int argc, const char *argv[], FILE *out_fh, bool &exit)
                     case 'c':
                         m_option_data.m_crash_log = optarg;
                         break;
+
                     case 'e':
                         m_option_data.m_use_external_editor = true;
                         break;
-                        
+
+                    case 'n':
+                        m_debugger.SkipLLDBInitFiles (true);
+                        break;
+
                     case 'f':
                         {
                             SBFileSpec file(optarg);

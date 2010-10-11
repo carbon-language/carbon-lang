@@ -42,6 +42,9 @@ public:
     SetAsync (bool b);
 
     void
+    SkipLLDBInitFiles (bool b);
+
+    void
     SetInputFileHandle (FILE *f, bool transfer_ownership);
 
     void

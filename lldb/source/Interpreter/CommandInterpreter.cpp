@@ -59,7 +59,8 @@ CommandInterpreter::CommandInterpreter
 ) :
     Broadcaster ("CommandInterpreter"),
     m_debugger (debugger),
-    m_synchronous_execution (synchronous_execution)
+    m_synchronous_execution (synchronous_execution),
+    m_skip_lldbinit_files (false)
 {
     const char *dbg_name = debugger.GetInstanceName().AsCString();
     std::string lang_name = ScriptInterpreter::LanguageToString (script_language);
@@ -1060,6 +1061,10 @@ CommandInterpreter::GetOptionArgumentPosition (const char *in_string)
 void
 CommandInterpreter::SourceInitFile (bool in_cwd, CommandReturnObject &result)
 {
+    // Don't parse any .lldbinit files if we were asked not to
+    if (m_skip_lldbinit_files)
+        return;
+
     const char *init_file_path = in_cwd ? "./.lldbinit" : "~/.lldbinit";
     FileSpec init_file (init_file_path);
     // If the file exists, tell HandleCommand to 'source' it; this will do the actual broadcasting

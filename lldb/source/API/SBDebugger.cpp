@@ -10,11 +10,6 @@
 #include "lldb/API/SBDebugger.h"
 
 #include "lldb/lldb-include.h"
-#include "lldb/Interpreter/Args.h"
-#include "lldb/Core/Debugger.h"
-#include "lldb/Core/State.h"
-#include "lldb/Target/Process.h"
-#include "lldb/Target/TargetList.h"
 
 #include "lldb/API/SBListener.h"
 #include "lldb/API/SBBroadcaster.h"
@@ -29,6 +24,12 @@
 #include "lldb/API/SBStringList.h"
 #include "lldb/API/SBTarget.h"
 #include "lldb/API/SBThread.h"
+#include "lldb/Core/Debugger.h"
+#include "lldb/Core/State.h"
+#include "lldb/Interpreter/Args.h"
+#include "lldb/Interpreter/CommandInterpreter.h"
+#include "lldb/Target/Process.h"
+#include "lldb/Target/TargetList.h"
 
 using namespace lldb;
 using namespace lldb_private;
@@ -80,6 +81,13 @@ SBDebugger::SetAsync (bool b)
 {
     if (m_opaque_sp)
         m_opaque_sp->SetAsyncExecution(b);
+}
+
+void
+SBDebugger::SkipLLDBInitFiles (bool b)
+{
+    if (m_opaque_sp)
+        m_opaque_sp->GetCommandInterpreter().SkipLLDBInitFiles (b);
 }
 
 // Shouldn't really be settable after initialization as this could cause lots of problems; don't want users

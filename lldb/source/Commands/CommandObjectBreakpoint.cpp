@@ -309,78 +309,79 @@ CommandObjectBreakpointSet::Execute
     switch (break_type)
     {
         case eSetTypeFileAndLine: // Breakpoint by source position
-        {
-            FileSpec file;
-            if (m_options.m_filename.empty())
             {
-                StackFrame *cur_frame = m_interpreter.GetDebugger().GetExecutionContext().frame;
-                if (cur_frame == NULL)
+                FileSpec file;
+                if (m_options.m_filename.empty())
                 {
-                    result.AppendError ("Attempting to set breakpoint by line number alone with no selected frame.");
-                    result.SetStatus (eReturnStatusFailed);
-                    break;
-                }
-                else if (!cur_frame->HasDebugInformation())
-                {
-                    result.AppendError ("Attempting to set breakpoint by line number alone but selected frame has no debug info.");
-                    result.SetStatus (eReturnStatusFailed);
-                    break;
-                }
-                else
-                {
-                    const SymbolContext &context = cur_frame->GetSymbolContext(true);
-                    if (context.line_entry.file)
+                    StackFrame *cur_frame = m_interpreter.GetDebugger().GetExecutionContext().frame;
+                    if (cur_frame == NULL)
                     {
-                        file = context.line_entry.file;
-                    }
-                    else if (context.comp_unit != NULL)
-                    {    file = context.comp_unit;
-                    }
-                    else
-                    {
-                        result.AppendError ("Attempting to set breakpoint by line number alone but can't find the file for the selected frame.");
+                        result.AppendError ("Attempting to set breakpoint by line number alone with no selected frame.");
                         result.SetStatus (eReturnStatusFailed);
                         break;
                     }
-                }
-            }
-            else
-            {
-                file.SetFile(m_options.m_filename.c_str());
-            }
-
-            if (use_module)
-            {
-                for (int i = 0; i < num_modules; ++i)
-                {
-                    module.SetFile(m_options.m_modules[i].c_str());
-                    bp = target->CreateBreakpoint (&module,
-                                                   file,
-                                                   m_options.m_line_num,
-                                                   m_options.m_ignore_inlines).get();
-                    if (bp)
+                    else if (!cur_frame->HasDebugInformation())
                     {
-                        StreamString &output_stream = result.GetOutputStream();
-                        output_stream.Printf ("Breakpoint created: ");
-                        bp->GetDescription(&output_stream, lldb::eDescriptionLevelBrief);
-                        output_stream.EOL();
-                        result.SetStatus (eReturnStatusSuccessFinishResult);
+                        result.AppendError ("Attempting to set breakpoint by line number alone but selected frame has no debug info.");
+                        result.SetStatus (eReturnStatusFailed);
+                        break;
                     }
                     else
                     {
-                        result.AppendErrorWithFormat("Breakpoint creation failed: No breakpoint created in module '%s'.\n",
-                                                    m_options.m_modules[i].c_str());
-                        result.SetStatus (eReturnStatusFailed);
+                        const SymbolContext &context = cur_frame->GetSymbolContext(true);
+                        if (context.line_entry.file)
+                        {
+                            file = context.line_entry.file;
+                        }
+                        else if (context.comp_unit != NULL)
+                        {    file = context.comp_unit;
+                        }
+                        else
+                        {
+                            result.AppendError ("Attempting to set breakpoint by line number alone but can't find the file for the selected frame.");
+                            result.SetStatus (eReturnStatusFailed);
+                            break;
+                        }
                     }
                 }
+                else
+                {
+                    file.SetFile(m_options.m_filename.c_str());
+                }
+
+                if (use_module)
+                {
+                    for (int i = 0; i < num_modules; ++i)
+                    {
+                        module.SetFile(m_options.m_modules[i].c_str());
+                        bp = target->CreateBreakpoint (&module,
+                                                       file,
+                                                       m_options.m_line_num,
+                                                       m_options.m_ignore_inlines).get();
+                        if (bp)
+                        {
+                            StreamString &output_stream = result.GetOutputStream();
+                            output_stream.Printf ("Breakpoint created: ");
+                            bp->GetDescription(&output_stream, lldb::eDescriptionLevelBrief);
+                            output_stream.EOL();
+                            result.SetStatus (eReturnStatusSuccessFinishResult);
+                        }
+                        else
+                        {
+                            result.AppendErrorWithFormat("Breakpoint creation failed: No breakpoint created in module '%s'.\n",
+                                                        m_options.m_modules[i].c_str());
+                            result.SetStatus (eReturnStatusFailed);
+                        }
+                    }
+                }
+                else
+                    bp = target->CreateBreakpoint (NULL,
+                                                   file,
+                                                   m_options.m_line_num,
+                                                   m_options.m_ignore_inlines).get();
             }
-            else
-                bp = target->CreateBreakpoint (NULL,
-                                               file,
-                                               m_options.m_line_num,
-                                               m_options.m_ignore_inlines).get();
-        }
-        break;
+            break;
+
         case eSetTypeAddress: // Breakpoint by address
             bp = target->CreateBreakpoint (m_options.m_load_addr, false).get();
             break;

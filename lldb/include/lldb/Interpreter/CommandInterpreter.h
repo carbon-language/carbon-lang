@@ -202,6 +202,12 @@ public:
     ScriptInterpreter *
     GetScriptInterpreter ();
 
+    void
+    SkipLLDBInitFiles (bool skip_lldbinit_files)
+    {
+        m_skip_lldbinit_files = skip_lldbinit_files;
+    }
+
     bool
     GetSynchronous ();
 
@@ -239,6 +245,7 @@ private:
 
     Debugger &m_debugger;   // The debugger session that this interpreter is associated with
     bool m_synchronous_execution;
+    bool m_skip_lldbinit_files;
     CommandObject::CommandMap m_command_dict; // Stores basic built-in commands (they cannot be deleted, removed or overwritten).
     CommandObject::CommandMap m_alias_dict;   // Stores user aliases/abbreviations for commands
     CommandObject::CommandMap m_user_dict;    // Stores user-defined commands
