@@ -93,8 +93,6 @@ def warn_drv_assuming_mfloat_abi_is : Warning<
   "unknown platform, assuming -mfloat-abi=%0">;
 def warn_ignoring_ftabstop_value : Warning<
   "ignoring invalid -ftabstop value '%0', using default value %1">;
-def warn_drv_missing_resource_library : Warning<
-  "missing resource library '%0', link may fail">;
 def warn_drv_conflicting_deployment_targets : Warning<
   "conflicting deployment targets, both MACOSX_DEPLOYMENT_TARGET '%0' and IPHONEOS_DEPLOYMENT_TARGET '%1' are present in environment">;
 def warn_drv_treating_input_as_cxx : Warning<

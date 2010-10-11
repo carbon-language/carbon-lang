@@ -526,10 +526,7 @@ void DarwinClang::AddLinkRuntimeLibArgs(const ArgList &Args,
 
     // For now, allow missing resource libraries to support developers who may
     // not have compiler-rt checked out or integrated into their build.
-    if (!P.exists())
-      getDriver().Diag(clang::diag::warn_drv_missing_resource_library)
-        << P.str();
-    else
+    if (P.exists())
       CmdArgs.push_back(Args.MakeArgString(P.str()));
   }
 }
@@ -667,10 +664,7 @@ void DarwinClang::AddCCKextLibArgs(const ArgList &Args,
   
   // For now, allow missing resource libraries to support developers who may
   // not have compiler-rt checked out or integrated into their build.
-  if (!P.exists())
-    getDriver().Diag(clang::diag::warn_drv_missing_resource_library)
-      << P.str();
-  else
+  if (P.exists())
     CmdArgs.push_back(Args.MakeArgString(P.str()));
 }
 
