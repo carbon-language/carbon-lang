@@ -559,29 +559,58 @@ CXCodeCompleteResults *clang_codeComplete(CXIndex CIdx,
 namespace {
   class CaptureCompletionResults : public CodeCompleteConsumer {
     AllocatedCXCodeCompleteResults &AllocatedResults;
-
+    llvm::SmallVector<CXCompletionResult, 16> StoredResults;
+    
   public:
     explicit CaptureCompletionResults(AllocatedCXCodeCompleteResults &Results)
       : CodeCompleteConsumer(true, false, true, false), 
         AllocatedResults(Results) { }
-
+    ~CaptureCompletionResults() { Finish(); }
+    
     virtual void ProcessCodeCompleteResults(Sema &S, 
                                             CodeCompletionContext Context,
                                             CodeCompletionResult *Results,
                                             unsigned NumResults) {
-      AllocatedResults.Results = new CXCompletionResult [NumResults];
-      AllocatedResults.NumResults = NumResults;
+      StoredResults.reserve(StoredResults.size() + NumResults);
       for (unsigned I = 0; I != NumResults; ++I) {
         CXStoredCodeCompletionString *StoredCompletion
           = new CXStoredCodeCompletionString(Results[I].Priority,
                                              Results[I].Availability);
         (void)Results[I].CreateCodeCompletionString(S, StoredCompletion);
-        AllocatedResults.Results[I].CursorKind = Results[I].CursorKind;
-        AllocatedResults.Results[I].CompletionString = StoredCompletion;
+        
+        CXCompletionResult R;
+        R.CursorKind = Results[I].CursorKind;
+        R.CompletionString = StoredCompletion;
+        StoredResults.push_back(R);
       }
     }
     
-    // FIXME: Add ProcessOverloadCandidates?
+    virtual void ProcessOverloadCandidates(Sema &S, unsigned CurrentArg,
+                                           OverloadCandidate *Candidates,
+                                           unsigned NumCandidates) {
+      StoredResults.reserve(StoredResults.size() + NumCandidates);
+      for (unsigned I = 0; I != NumCandidates; ++I) {
+        // FIXME: Set priority, availability appropriately.
+        CXStoredCodeCompletionString *StoredCompletion
+          = new CXStoredCodeCompletionString(1, CXAvailability_Available);
+        (void)Candidates[I].CreateSignatureString(CurrentArg, S, 
+                                                  StoredCompletion);
+        
+        CXCompletionResult R;
+        R.CursorKind = CXCursor_NotImplemented;
+        R.CompletionString = StoredCompletion;
+        StoredResults.push_back(R);
+      }
+    }
+    
+  private:
+    void Finish() {
+      AllocatedResults.Results = new CXCompletionResult [StoredResults.size()];
+      AllocatedResults.NumResults = StoredResults.size();
+      std::memcpy(AllocatedResults.Results, StoredResults.data(), 
+                  StoredResults.size() * sizeof(CXCompletionResult));
+      StoredResults.clear();
+    }
   };
 }
 

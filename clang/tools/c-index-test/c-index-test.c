@@ -817,7 +817,7 @@ static int perform_file_scan(const char *ast_file, const char *source_file,
 }
 
 /******************************************************************************/
-/* Logic for testing clang_codeComplete().                                    */
+/* Logic for testing clang code completion.                                   */
 /******************************************************************************/
 
 /* Parse file:line:column from the input string. Returns 0 on success, non-zero
@@ -1002,6 +1002,11 @@ int perform_code_completion(int argc, const char **argv, int timing_only) {
   int num_unsaved_files = 0;
   CXCodeCompleteResults *results = 0;
   CXTranslationUnit TU = 0;
+  unsigned I, Repeats = 1;
+  unsigned completionOptions = clang_defaultCodeCompleteOptions();
+  
+  if (getenv("CINDEXTEST_CODE_COMPLETE_PATTERNS"))
+    completionOptions |= CXCodeComplete_IncludeCodePatterns;
   
   if (timing_only)
     input += strlen("-code-completion-timing=");
@@ -1015,34 +1020,31 @@ int perform_code_completion(int argc, const char **argv, int timing_only) {
   if (parse_remapped_files(argc, argv, 2, &unsaved_files, &num_unsaved_files))
     return -1;
 
-  CIdx = clang_createIndex(0, 1);
-  if (getenv("CINDEXTEST_EDITING")) {
-    unsigned I, Repeats = 5;
-    TU = clang_parseTranslationUnit(CIdx, 0,
-                                    argv + num_unsaved_files + 2,
-                                    argc - num_unsaved_files - 2,
-                                    0, 0, getDefaultParsingOptions());
-    if (!TU) {
-      fprintf(stderr, "Unable to load translation unit!\n");
+  CIdx = clang_createIndex(0, 0);
+  
+  if (getenv("CINDEXTEST_EDITING"))
+    Repeats = 5;
+  
+  TU = clang_parseTranslationUnit(CIdx, 0,
+                                  argv + num_unsaved_files + 2,
+                                  argc - num_unsaved_files - 2,
+                                  0, 0, getDefaultParsingOptions());
+  if (!TU) {
+    fprintf(stderr, "Unable to load translation unit!\n");
+    return 1;
+  }
+  
+  for (I = 0; I != Repeats; ++I) {
+    results = clang_codeCompleteAt(TU, filename, line, column,
+                                   unsaved_files, num_unsaved_files,
+                                   completionOptions);
+    if (!results) {
+      fprintf(stderr, "Unable to perform code completion!\n");
       return 1;
     }
-    for (I = 0; I != Repeats; ++I) {
-      results = clang_codeCompleteAt(TU, filename, line, column,
-                                     unsaved_files, num_unsaved_files,
-                                     clang_defaultCodeCompleteOptions());
-      if (!results) {
-        fprintf(stderr, "Unable to perform code completion!\n");
-        return 1;
-      }
-      if (I != Repeats-1)
-        clang_disposeCodeCompleteResults(results);
-    }
-  } else
-    results = clang_codeComplete(CIdx,
-                                 argv[argc - 1], argc - num_unsaved_files - 3,
-                                 argv + num_unsaved_files + 2,
-                                 num_unsaved_files, unsaved_files,
-                                 filename, line, column);
+    if (I != Repeats-1)
+      clang_disposeCodeCompleteResults(results);
+  }
 
   if (results) {
     unsigned i, n = results->NumResults;

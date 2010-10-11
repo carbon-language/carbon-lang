@@ -25,6 +25,7 @@
 #include "clang/Frontend/FrontendActions.h"
 #include "clang/Frontend/FrontendDiagnostic.h"
 #include "clang/Frontend/FrontendOptions.h"
+#include "clang/Frontend/Utils.h"
 #include "clang/Serialization/ASTReader.h"
 #include "clang/Serialization/ASTWriter.h"
 #include "clang/Lex/HeaderSearch.h"
@@ -1058,7 +1059,11 @@ llvm::MemoryBuffer *ASTUnit::getMainBufferWithPrecompiledPreamble(
 
         // Set the state of the diagnostic object to mimic its state
         // after parsing the preamble.
+        // FIXME: This won't catch any #pragma push warning changes that
+        // have occurred in the preamble.
         getDiagnostics().Reset();
+        ProcessWarningOptions(getDiagnostics(), 
+                              PreambleInvocation.getDiagnosticOpts());
         getDiagnostics().setNumWarnings(NumWarningsInPreamble);
         if (StoredDiagnostics.size() > NumStoredDiagnosticsInPreamble)
           StoredDiagnostics.erase(
@@ -1195,6 +1200,7 @@ llvm::MemoryBuffer *ASTUnit::getMainBufferWithPrecompiledPreamble(
   
   // Clear out old caches and data.
   getDiagnostics().Reset();
+  ProcessWarningOptions(getDiagnostics(), Clang.getDiagnosticOpts());
   StoredDiagnostics.clear();
   TopLevelDecls.clear();
   TopLevelDeclsInPreamble.clear();
@@ -1463,8 +1469,10 @@ bool ASTUnit::Reparse(RemappedFile *RemappedFiles, unsigned NumRemappedFiles) {
     OverrideMainBuffer = getMainBufferWithPrecompiledPreamble(*Invocation);
     
   // Clear out the diagnostics state.
-  if (!OverrideMainBuffer)
+  if (!OverrideMainBuffer) {
     getDiagnostics().Reset();
+    ProcessWarningOptions(getDiagnostics(), Invocation->getDiagnosticOpts());
+  }
   
   // Parse the sources
   bool Result = Parse(OverrideMainBuffer);  
@@ -1757,6 +1765,7 @@ void ASTUnit::CodeComplete(llvm::StringRef File, unsigned Line, unsigned Column,
     
   // Set up diagnostics, capturing any diagnostics produced.
   Clang.setDiagnostics(&Diag);
+  ProcessWarningOptions(Diag, CCInvocation.getDiagnosticOpts());
   CaptureDroppedDiagnostics Capture(true, 
                                     Clang.getDiagnostics(),
                                     StoredDiagnostics);

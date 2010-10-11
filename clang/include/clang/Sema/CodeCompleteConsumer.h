@@ -722,7 +722,8 @@ public:
     /// \brief Create a new code-completion string that describes the function
     /// signature of this overload candidate.
     CodeCompletionString *CreateSignatureString(unsigned CurrentArg, 
-                                                Sema &S) const;    
+                                                Sema &S,
+                                        CodeCompletionString *Result = 0) const;    
   };
   
   CodeCompleteConsumer() : IncludeMacros(false), IncludeCodePatterns(false),

@@ -2366,10 +2366,12 @@ CodeCompletionResult::CreateCodeCompletionString(Sema &S,
 CodeCompletionString *
 CodeCompleteConsumer::OverloadCandidate::CreateSignatureString(
                                                           unsigned CurrentArg,
-                                                               Sema &S) const {
+                                                               Sema &S,
+                                           CodeCompletionString *Result) const {
   typedef CodeCompletionString::Chunk Chunk;
   
-  CodeCompletionString *Result = new CodeCompletionString;
+  if (!Result)
+    Result = new CodeCompletionString;
   FunctionDecl *FDecl = getFunction();
   AddResultTypeChunk(S.Context, FDecl, Result);
   const FunctionProtoType *Proto 
