@@ -406,6 +406,9 @@ bool Parser::ParseTopLevelDecl(DeclGroupPtrTy &Result) {
   CXX0XAttributeList Attr;
   if (getLang().CPlusPlus0x && isCXX0XAttributeSpecifier())
     Attr = ParseCXX0XAttributes();
+  if (getLang().Microsoft && Tok.is(tok::l_square))
+    ParseMicrosoftAttributes();
+  
   Result = ParseExternalDeclaration(Attr);
   return false;
 }

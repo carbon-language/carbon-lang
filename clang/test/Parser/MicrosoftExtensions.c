@@ -79,6 +79,14 @@ void uuidof_test2()
   _uuidof(c);
 }
 
+/* Microsoft attribute tests */
+[repeatable][source_annotation_attribute( Parameter|ReturnValue )]
+struct SA_Post{ SA_Post(); int attr; };
+
+[returnvalue:SA_Post( attr=1)] 
+int foo1([SA_Post(attr=1)] void *param);
+
+
 
 void ms_intrinsics(int a)
 {

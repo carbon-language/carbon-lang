@@ -121,6 +121,8 @@ Decl *Parser::ParseNamespace(unsigned Context,
     CXX0XAttributeList Attr;
     if (getLang().CPlusPlus0x && isCXX0XAttributeSpecifier())
       Attr = ParseCXX0XAttributes();
+    if (getLang().Microsoft && Tok.is(tok::l_square))
+      ParseMicrosoftAttributes();
     ParseExternalDeclaration(Attr);
   }
 
@@ -205,6 +207,8 @@ Decl *Parser::ParseLinkage(ParsingDeclSpec &DS,
   if (getLang().CPlusPlus0x && isCXX0XAttributeSpecifier()) {
     Attr = ParseCXX0XAttributes();
   }
+  if (getLang().Microsoft && Tok.is(tok::l_square))
+    ParseMicrosoftAttributes();
 
   if (Tok.isNot(tok::l_brace)) {
     DS.setExternInLinkageSpec(true);
@@ -224,6 +228,8 @@ Decl *Parser::ParseLinkage(ParsingDeclSpec &DS,
     CXX0XAttributeList Attr;
     if (getLang().CPlusPlus0x && isCXX0XAttributeSpecifier())
       Attr = ParseCXX0XAttributes();
+    if (getLang().Microsoft && Tok.is(tok::l_square))
+      ParseMicrosoftAttributes();
     ParseExternalDeclaration(Attr);
   }
 
@@ -1321,6 +1327,8 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
   // Optional C++0x attribute-specifier
   if (getLang().CPlusPlus0x && isCXX0XAttributeSpecifier())
     AttrList = ParseCXX0XAttributes();
+  if (getLang().Microsoft && Tok.is(tok::l_square))
+    ParseMicrosoftAttributes();
 
   if (Tok.is(tok::kw_using)) {
     // FIXME: Check for template aliases
@@ -2115,4 +2123,22 @@ ExprResult Parser::ParseCXX0XAlignArgument(SourceLocation Start) {
                                           Ty.getAsOpaquePtr(), TypeRange);
   } else
     return ParseConstantExpression();
+}
+
+/// ParseMicrosoftAttributes - Parse a Microsoft attribute [Attr]
+///
+/// [MS] ms-attribute:
+///             '[' token-seq ']'
+///
+/// [MS] ms-attribute-seq:
+///             ms-attribute[opt]
+///             ms-attribute ms-attribute-seq
+void Parser::ParseMicrosoftAttributes() {
+  assert(Tok.is(tok::l_square) && "Not a Microsoft attribute list");
+
+  while (Tok.is(tok::l_square)) {
+    ConsumeBracket();
+    SkipUntil(tok::r_square, true, true);
+    ExpectAndConsume(tok::r_square, diag::err_expected_rsquare);
+  }
 }

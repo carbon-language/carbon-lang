@@ -1399,6 +1399,7 @@ private:
   // EndLoc, if non-NULL, is filled with the location of the last token of
   // the attribute list.
   CXX0XAttributeList ParseCXX0XAttributes(SourceLocation *EndLoc = 0);
+  void ParseMicrosoftAttributes();
   AttributeList *ParseGNUAttributes(SourceLocation *EndLoc = 0);
   AttributeList *ParseMicrosoftDeclSpec(AttributeList* CurrAttr = 0);
   AttributeList *ParseMicrosoftTypeAttributes(AttributeList* CurrAttr = 0);

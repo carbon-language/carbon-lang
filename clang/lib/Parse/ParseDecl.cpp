@@ -3182,6 +3182,10 @@ void Parser::ParseFunctionDeclarator(SourceLocation LParenLoc, Declarator &D,
       EllipsisLoc = ConsumeToken();     // Consume the ellipsis.
       break;
     }
+	
+    // Skip any Microsoft attributes before a param.
+    if (getLang().Microsoft && Tok.is(tok::l_square))
+      ParseMicrosoftAttributes();
 
     SourceLocation DSStart = Tok.getLocation();
 
