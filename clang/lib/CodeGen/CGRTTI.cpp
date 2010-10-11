@@ -270,8 +270,9 @@ static bool IsStandardLibraryRTTIDescriptor(QualType Ty) {
 /// the given type exists somewhere else, and that we should not emit the type
 /// information in this translation unit.  Assumes that it is not a
 /// standard-library type.
-static bool ShouldUseExternalRTTIDescriptor(ASTContext &Context,
-                                            QualType Ty) {
+static bool ShouldUseExternalRTTIDescriptor(CodeGenModule &CGM, QualType Ty) {
+  ASTContext &Context = CGM.getContext();
+
   // If RTTI is disabled, don't consider key functions.
   if (!Context.getLangOptions().RTTI) return false;
 
@@ -283,13 +284,7 @@ static bool ShouldUseExternalRTTIDescriptor(ASTContext &Context,
     if (!RD->isDynamicClass())
       return false;
 
-    // Get the key function.
-    const CXXMethodDecl *KeyFunction = Context.getKeyFunction(RD);
-    if (KeyFunction && !KeyFunction->hasBody()) {
-      // The class has a key function, but it is not defined in this translation
-      // unit, so we should use the external descriptor for it.
-      return true;
-    }
+    return !CGM.getVTables().ShouldEmitVTableInThisTU(RD);
   }
   
   return false;
@@ -528,8 +523,7 @@ llvm::Constant *RTTIBuilder::BuildTypeInfo(QualType Ty, bool Force) {
 
   // Check if there is already an external RTTI descriptor for this type.
   bool IsStdLib = IsStandardLibraryRTTIDescriptor(Ty);
-  if (!Force &&
-      (IsStdLib || ShouldUseExternalRTTIDescriptor(CGM.getContext(), Ty)))
+  if (!Force && (IsStdLib || ShouldUseExternalRTTIDescriptor(CGM, Ty)))
     return GetAddrOfExternalRTTIDescriptor(Ty);
 
   // Emit the standard library with external linkage.

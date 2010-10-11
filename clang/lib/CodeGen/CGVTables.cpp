@@ -2336,6 +2336,27 @@ void CodeGenVTables::ComputeMethodVTableIndices(const CXXRecordDecl *RD) {
   NumVirtualFunctionPointers[RD] = CurrentIndex;
 }
 
+bool CodeGenVTables::ShouldEmitVTableInThisTU(const CXXRecordDecl *RD) {
+  assert(RD->isDynamicClass() && "Non dynamic classes have no VTable.");
+
+  TemplateSpecializationKind TSK = RD->getTemplateSpecializationKind();
+  if (TSK == TSK_ExplicitInstantiationDeclaration)
+    return false;
+
+  const CXXMethodDecl *KeyFunction = CGM.getContext().getKeyFunction(RD);
+  if (!KeyFunction)
+    return true;
+
+  // Itanium C++ ABI, 5.2.6 Instantiated Templates:
+  //    An instantiation of a class template requires:
+  //        - In the object where instantiated, the virtual table...
+  if (TSK == TSK_ImplicitInstantiation ||
+      TSK == TSK_ExplicitInstantiationDefinition)
+    return true;
+
+  return KeyFunction->hasBody();
+}
+
 uint64_t CodeGenVTables::getNumVirtualFunctionPointers(const CXXRecordDecl *RD) {
   llvm::DenseMap<const CXXRecordDecl *, uint64_t>::iterator I = 
     NumVirtualFunctionPointers.find(RD);
@@ -2703,9 +2724,7 @@ void CodeGenVTables::ComputeVTableRelatedInformation(const CXXRecordDecl *RD,
 
   // We may need to generate a definition for this vtable.
   if (RequireVTable && !Entry.getInt()) {
-    if (!isKeyFunctionInAnotherTU(CGM.getContext(), RD) &&
-        RD->getTemplateSpecializationKind()
-          != TSK_ExplicitInstantiationDeclaration)
+    if (ShouldEmitVTableInThisTU(RD))
       CGM.DeferredVTables.push_back(RD);
 
     Entry.setInt(true);

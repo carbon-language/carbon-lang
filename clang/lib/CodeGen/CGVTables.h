@@ -295,14 +295,9 @@ public:
   CodeGenVTables(CodeGenModule &CGM)
     : CGM(CGM) { }
 
-  // isKeyFunctionInAnotherTU - True if this record has a key function and it is
-  // in another translation unit.
-  static bool isKeyFunctionInAnotherTU(ASTContext &Context,
-				       const CXXRecordDecl *RD) {
-    assert (RD->isDynamicClass() && "Non dynamic classes have no key.");
-    const CXXMethodDecl *KeyFunction = Context.getKeyFunction(RD);
-    return KeyFunction && !KeyFunction->hasBody();
-  }
+  /// \brief True if the VTable of this record must be emitted in the
+  /// translation unit.
+  bool ShouldEmitVTableInThisTU(const CXXRecordDecl *RD);
 
   /// needsVTTParameter - Return whether the given global decl needs a VTT
   /// parameter, which it does if it's a base constructor or destructor with

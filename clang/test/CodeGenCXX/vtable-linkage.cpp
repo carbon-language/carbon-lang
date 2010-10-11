@@ -197,3 +197,18 @@ void G<int>::f1() {}
 template <typename T>
 void G<T>::f0() {}
 void G_f0()  { new G<int>(); }
+
+// RUN: FileCheck --check-prefix=CHECK-H %s < %t
+
+// H<int> has a key function without a body but it's a template instantiation
+// so its VTable must be emmitted.
+// CHECK-H: @_ZTV1HIiE = weak_odr constant
+template <typename T>
+class H {
+public:
+  virtual ~H();
+};
+
+void use_H() {
+  H<int> h;
+}
