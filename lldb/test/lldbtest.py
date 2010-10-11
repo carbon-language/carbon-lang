@@ -226,6 +226,15 @@ def system(*popenargs, **kwargs):
         raise CalledProcessError(retcode, cmd)
     return output
 
+def line_number(filename, string_to_match):
+    """Helper function to return the line number of the first matched string."""
+    with open(filename, 'r') as f:
+        for i, line in enumerate(f):
+            if line.find(string_to_match) != -1:
+                # Found our match.
+                return i
+    return -1        
+
 def pointer_size():
     """Return the pointer size of the host system."""
     import ctypes
