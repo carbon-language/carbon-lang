@@ -23,7 +23,7 @@ template<typename T> class SmallVectorImpl;
 /// MCFixupKindInfo - Target independent information on a fixup kind.
 struct MCFixupKindInfo {
   enum FixupKindFlags {
-    /// Is this fixup kind PCrelative. This is used by the assembler backend to
+    /// Is this fixup kind PCrelative? This is used by the assembler backend to
     /// evaluate fixup values in a target independent manner when possible.
     FKF_IsPCRel = (1 << 0)
   };
@@ -35,7 +35,7 @@ struct MCFixupKindInfo {
   /// The bit offset to write the relocation into.
   //
   // FIXME: These two fields are under-specified and not general enough, but it
-  // is covers many things, and is enough to let the AsmStreamer pretty-print
+  // covers many things. It's enough to let the AsmStreamer pretty-print
   // the encoding.
   unsigned TargetOffset;
 
