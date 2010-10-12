@@ -146,9 +146,20 @@ def VADDD  : ADbI<0b11100, 0b11, 0, 0, (outs DPR:$dst), (ins DPR:$a, DPR:$b),
                  IIC_fpALU64, "vadd", ".f64\t$dst, $a, $b",
                  [(set DPR:$dst, (fadd DPR:$a, (f64 DPR:$b)))]>;
 
-def VADDS  : ASbIn<0b11100, 0b11, 0, 0, (outs SPR:$dst), (ins SPR:$a, SPR:$b),
-                  IIC_fpALU32, "vadd", ".f32\t$dst, $a, $b",
-                  [(set SPR:$dst, (fadd SPR:$a, SPR:$b))]>;
+def VADDS  : ASbIn<0b11100, 0b11, 0, 0, (outs SPR:$Sd), (ins SPR:$Sn, SPR:$Sm),
+                  IIC_fpALU32, "vadd", ".f32\t$Sd, $Sn, $Sm",
+                  [(set SPR:$Sd, (fadd SPR:$Sn, SPR:$Sm))]> {
+  bits<5> Sd;
+  bits<5> Sn;
+  bits<5> Sm;
+
+  let Inst{3-0}   = Sm{4-1};
+  let Inst{5}     = Sm{0};
+  let Inst{19-16} = Sn{4-1};
+  let Inst{7}     = Sn{0};
+  let Inst{15-12} = Sd{4-1};
+  let Inst{22}    = Sd{0};
+}
 
 // These are encoded as unary instructions.
 let Defs = [FPSCR] in {

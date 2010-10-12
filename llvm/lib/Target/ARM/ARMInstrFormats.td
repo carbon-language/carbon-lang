@@ -1288,6 +1288,8 @@ class VFPI<dag oops, dag iops, AddrMode am, SizeFlagVal sz,
            IndexMode im, Format f, InstrItinClass itin,
            string opc, string asm, string cstr, list<dag> pattern>
   : InstARM<am, sz, im, f, VFPDomain, cstr, itin> {
+  bits<4> p;
+  let Inst{31-28} = p;
   let OutOperandList = oops;
   let InOperandList = !con(iops, (ins pred:$p));
   let AsmString = !strconcat(opc, "${p}", asm);
