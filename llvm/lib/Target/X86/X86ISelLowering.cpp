@@ -7602,10 +7602,10 @@ SDValue X86TargetLowering::LowerVAARG(SDValue Op, SelectionDAG &DAG) const {
 
   if (ArgMode == 2) {
     // Sanity Check: Make sure using fp_offset makes sense.
-    const Function *Fn = DAG.getMachineFunction().getFunction();
-    bool NoImplicitFloatOps = Fn->hasFnAttr(Attribute::NoImplicitFloat);
-    assert(!UseSoftFloat && !NoImplicitFloatOps && Subtarget->hasSSE1());
-    (void)NoImplicitFloatOps;
+    assert(!UseSoftFloat && 
+           !(DAG.getMachineFunction()
+                .getFunction()->hasFnAttr(Attribute::NoImplicitFloat)) &&
+           Subtarget->hasSSE1());
   }
 
   // Insert VAARG_64 node into the DAG
