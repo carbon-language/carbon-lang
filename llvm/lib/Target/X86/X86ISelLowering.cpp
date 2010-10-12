@@ -7605,6 +7605,7 @@ SDValue X86TargetLowering::LowerVAARG(SDValue Op, SelectionDAG &DAG) const {
     const Function *Fn = DAG.getMachineFunction().getFunction();
     bool NoImplicitFloatOps = Fn->hasFnAttr(Attribute::NoImplicitFloat);
     assert(!UseSoftFloat && !NoImplicitFloatOps && Subtarget->hasSSE1());
+    (void)NoImplicitFloatOps;
   }
 
   // Insert VAARG_64 node into the DAG
