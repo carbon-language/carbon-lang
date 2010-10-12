@@ -144,7 +144,6 @@ CGDebugInfo::getClassName(RecordDecl *RD) {
   char *StrPtr = DebugInfoNames.Allocate<char>(Buffer.length());
   memcpy(StrPtr, Buffer.data(), Buffer.length());
   return llvm::StringRef(StrPtr, Buffer.length());
-
 }
 
 /// getOrCreateFile - Get the file debug info descriptor for the input location.
@@ -1793,18 +1792,52 @@ void CGDebugInfo::EmitDeclare(const VarDecl *VD, unsigned Tag,
   unsigned Flags = 0;
   if (VD->isImplicit())
     Flags |= llvm::DIDescriptor::FlagArtificial;
-  // Create the descriptor for the variable.
-  llvm::DIVariable D =
-    DebugFactory.CreateVariable(Tag, llvm::DIDescriptor(RegionStack.back()),
-                                VD->getName(), Unit, Line, Ty, 
-                                CGM.getLangOptions().Optimize, Flags);
-
-  // Insert an llvm.dbg.declare into the current block.
-  llvm::Instruction *Call =
-    DebugFactory.InsertDeclare(Storage, D, Builder.GetInsertBlock());
-
   llvm::MDNode *Scope = RegionStack.back();
-  Call->setDebugLoc(llvm::DebugLoc::get(Line, Column, Scope));
+    
+  llvm::StringRef Name = VD->getName();
+  if (!Name.empty()) {
+    // Create the descriptor for the variable.
+    llvm::DIVariable D =
+      DebugFactory.CreateVariable(Tag, llvm::DIDescriptor(Scope),
+                                  Name, Unit, Line, Ty, 
+                                  CGM.getLangOptions().Optimize, Flags);
+    
+    // Insert an llvm.dbg.declare into the current block.
+    llvm::Instruction *Call =
+      DebugFactory.InsertDeclare(Storage, D, Builder.GetInsertBlock());
+    
+    Call->setDebugLoc(llvm::DebugLoc::get(Line, Column, Scope));
+  }
+  
+  // If VD is an anonymous union then Storage represents value for
+  // all union fields.
+  if (const RecordType *RT = dyn_cast<RecordType>(VD->getType()))
+    if (const RecordDecl *RD = dyn_cast<RecordDecl>(RT->getDecl()))
+      if (RD->isUnion()) {
+        for (RecordDecl::field_iterator I = RD->field_begin(),
+               E = RD->field_end();
+             I != E; ++I) {
+          FieldDecl *Field = *I;
+          llvm::DIType FieldTy = getOrCreateType(Field->getType(), Unit);
+          llvm::StringRef FieldName = Field->getName();
+          
+          // Ignore unnamed fields. Do not ignore unnamed records.
+          if (FieldName.empty() && !isa<RecordType>(Field->getType()))
+            continue;
+          
+          // Use VarDecl's Tag, Scope and Line number.
+          llvm::DIVariable D =
+            DebugFactory.CreateVariable(Tag, llvm::DIDescriptor(Scope),
+                                        FieldName, Unit, Line, FieldTy, 
+                                        CGM.getLangOptions().Optimize, Flags);
+          
+          // Insert an llvm.dbg.declare into the current block.
+          llvm::Instruction *Call =
+            DebugFactory.InsertDeclare(Storage, D, Builder.GetInsertBlock());
+          
+          Call->setDebugLoc(llvm::DebugLoc::get(Line, Column, Scope));
+        }
+      }
 }
 
 /// EmitDeclare - Emit local variable declaration debug info.
