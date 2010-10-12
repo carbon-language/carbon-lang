@@ -101,7 +101,7 @@ LLVMContextImpl::~LLVMContextImpl() {
     MDNodes.push_back(&*I);
   }
   MDNodes.append(NonUniquedMDNodes.begin(), NonUniquedMDNodes.end());
-  for (SmallVector<MDNode*, 8>::iterator I = MDNodes.begin(),
+  for (SmallVectorImpl<MDNode *>::iterator I = MDNodes.begin(),
          E = MDNodes.end(); I != E; ++I) {
     (*I)->destroy();
   }
