@@ -1062,6 +1062,9 @@ ParmVarDecl *Sema::SubstParmVarDecl(ParmVarDecl *OldParm,
   if (OldParm->hasUninstantiatedDefaultArg()) {
     Expr *Arg = OldParm->getUninstantiatedDefaultArg();
     NewParm->setUninstantiatedDefaultArg(Arg);
+  } else if (OldParm->hasUnparsedDefaultArg()) {
+    NewParm->setUnparsedDefaultArg();
+    UnparsedDefaultArgInstantiations[OldParm].push_back(NewParm);
   } else if (Expr *Arg = OldParm->getDefaultArg())
     NewParm->setUninstantiatedDefaultArg(Arg);
 

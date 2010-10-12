@@ -62,3 +62,30 @@ struct S5
   
   
 };
+
+namespace PR8245 {
+  class X {
+  public:
+    template<class C> 
+    class Inner {
+    public:
+      void foo(bool bar = true);
+      int bam;
+    };
+
+    Inner<int> _foo;    
+  };
+
+  void f() {
+    X::Inner<int> c2i;
+    X::Inner<float> c2f;
+    c2i.foo();
+    c2f.foo();
+  }
+
+  class Y {
+    class Inner {
+      void foo(int = sizeof(Y));
+    };
+  };
+}

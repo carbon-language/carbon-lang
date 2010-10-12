@@ -484,6 +484,22 @@ public:
   /// \brief The number of SFINAE diagnostics that have been trapped.
   unsigned NumSFINAEErrors;
 
+  typedef llvm::DenseMap<ParmVarDecl *, llvm::SmallVector<ParmVarDecl *, 1> >
+    UnparsedDefaultArgInstantiationsMap;
+  
+  /// \brief A mapping from parameters with unparsed default arguments to the
+  /// set of instantiations of each parameter.
+  ///
+  /// This mapping is a temporary data structure used when parsing
+  /// nested class templates or nested classes of class templates,
+  /// where we might end up instantiating an inner class before the
+  /// default arguments of its methods have been parsed. 
+  UnparsedDefaultArgInstantiationsMap UnparsedDefaultArgInstantiations;
+  
+  // Contains the locations of the beginning of unparsed default
+  // argument locations.
+  llvm::DenseMap<ParmVarDecl *,SourceLocation> UnparsedDefaultArgLocs;
+
   typedef std::pair<ObjCMethodList, ObjCMethodList> GlobalMethods;
   typedef llvm::DenseMap<Selector, GlobalMethods> GlobalMethodPool;
 
@@ -496,7 +512,6 @@ public:
   /// Method selectors used in a @selector expression. Used for implementation 
   /// of -Wselector.
   llvm::DenseMap<Selector, SourceLocation> ReferencedSelectors;
-
 
   GlobalMethodPool::iterator ReadMethodPool(Selector Sel);
 
@@ -722,11 +737,6 @@ public:
   void ActOnParamDefaultArgumentError(Decl *param);
   bool SetParamDefaultArgument(ParmVarDecl *Param, Expr *DefaultArg,
                                SourceLocation EqualLoc);
-
-
-  // Contains the locations of the beginning of unparsed default
-  // argument locations.
-  llvm::DenseMap<ParmVarDecl *,SourceLocation> UnparsedDefaultArgLocs;
 
   void AddInitializerToDecl(Decl *dcl, Expr *init);
   void AddInitializerToDecl(Decl *dcl, Expr *init, bool DirectInit);

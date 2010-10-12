@@ -142,6 +142,18 @@ Sema::SetParamDefaultArgument(ParmVarDecl *Param, Expr *Arg,
   // Okay: add the default argument to the parameter
   Param->setDefaultArg(Arg);
 
+  // We have already instantiated this parameter; provide each of the 
+  // instantiations with the uninstantiated default argument.
+  UnparsedDefaultArgInstantiationsMap::iterator InstPos
+    = UnparsedDefaultArgInstantiations.find(Param);
+  if (InstPos != UnparsedDefaultArgInstantiations.end()) {
+    for (unsigned I = 0, N = InstPos->second.size(); I != N; ++I)
+      InstPos->second[I]->setUninstantiatedDefaultArg(Arg);
+    
+    // We're done tracking this parameter's instantiations.
+    UnparsedDefaultArgInstantiations.erase(InstPos);
+  }
+  
   return false;
 }
 
