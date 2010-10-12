@@ -310,15 +310,15 @@ public:
 
                  if (args.GetArgumentCount () > 0)
                  {
-                     if ((!use_subcommand && (cmd_obj->WantsRawCommandString()))
-                         || (use_subcommand && (sub_cmd_obj->WantsRawCommandString())))
-                     {
-                         result.AppendErrorWithFormat ("'%s' cannot be aliased with any options or arguments.\n",
-                                                      (use_subcommand ? sub_cmd_obj->GetCommandName()
-                                                                      : cmd_obj->GetCommandName()));
-                         result.SetStatus (eReturnStatusFailed);
-                         return false;
-                     }
+                     //if ((!use_subcommand && (cmd_obj->WantsRawCommandString()))
+                     //    || (use_subcommand && (sub_cmd_obj->WantsRawCommandString())))
+                     //{
+                     //    result.AppendErrorWithFormat ("'%s' cannot be aliased with any options or arguments.\n",
+                     //                                 (use_subcommand ? sub_cmd_obj->GetCommandName()
+                     //                                                 : cmd_obj->GetCommandName()));
+                     //    result.SetStatus (eReturnStatusFailed);
+                     //    return false;
+                     //}
 
                      // options or arguments have been passed to the alias command, and must be 
                      // verified & processed here.
