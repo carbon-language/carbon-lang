@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include <string>
+#include <vector>
 
 #include <getopt.h>
 #include <stdlib.h>
@@ -947,13 +948,10 @@ CommandInterpreter::HasAliasOptions ()
 }
 
 void
-CommandInterpreter::BuildAliasCommandArgs
-(
-    CommandObject *alias_cmd_obj,
-    const char *alias_name,
-    Args &cmd_args,
-    CommandReturnObject &result
-)
+CommandInterpreter::BuildAliasCommandArgs (CommandObject *alias_cmd_obj,
+                                           const char *alias_name,
+                                           Args &cmd_args,
+                                           CommandReturnObject &result)
 {
     OptionArgVectorSP option_arg_vector_sp = GetAliasOptions (alias_name);
 
@@ -970,10 +968,9 @@ CommandInterpreter::BuildAliasCommandArgs
 
         OptionArgVector *option_arg_vector = option_arg_vector_sp.get();
         int old_size = cmd_args.GetArgumentCount();
-        int *used = (int *) malloc ((old_size + 1) * sizeof (int));
-
-        memset (used, 0, (old_size + 1) * sizeof (int));
-        used[0] = 1;
+        std::vector<bool> used (old_size + 1, false);
+        
+        used[0] = true;
 
         for (int i = 0; i < option_arg_vector->size(); ++i)
         {
@@ -1002,7 +999,7 @@ CommandInterpreter::BuildAliasCommandArgs
                     else
                     {
                         new_args.AppendArgument (cmd_args.GetArgumentAtIndex (index));
-                        used[index] = 1;
+                        used[index] = true;
                     }
                 }
             }

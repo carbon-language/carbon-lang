@@ -21,6 +21,7 @@ except IOError:
     print "Error:  Unable to open file for appending: " + output_name
 else:
     f_out.write ("debugger_unique_id = 0\n");
+    f_out.write ("lldb.SBDebugger.Initialize()\n");
     try:
         f_out.close()
     except IOError:

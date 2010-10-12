@@ -332,7 +332,8 @@ ShowUsage (FILE *out, lldb::OptionDefinition *option_table, Driver::OptionData d
 }
 
 void
-BuildGetOptTable (lldb::OptionDefinition *expanded_option_table, struct option **getopt_table, uint32_t num_options)
+BuildGetOptTable (lldb::OptionDefinition *expanded_option_table, std::vector<struct option> &getopt_table, 
+                  uint32_t num_options)
 {
     if (num_options == 0)
         return;
@@ -341,25 +342,27 @@ BuildGetOptTable (lldb::OptionDefinition *expanded_option_table, struct option *
     uint32_t j;
     std::bitset<256> option_seen;
 
+    getopt_table.resize (num_options + 1);
+
     for (i = 0, j = 0; i < num_options; ++i)
     {
         char short_opt = expanded_option_table[i].short_option;
         
         if (option_seen.test(short_opt) == false)
         {
-            (*getopt_table)[j].name    = expanded_option_table[i].long_option;
-            (*getopt_table)[j].has_arg = expanded_option_table[i].option_has_arg;
-            (*getopt_table)[j].flag    = NULL;
-            (*getopt_table)[j].val     = expanded_option_table[i].short_option;
+            getopt_table[j].name    = expanded_option_table[i].long_option;
+            getopt_table[j].has_arg = expanded_option_table[i].option_has_arg;
+            getopt_table[j].flag    = NULL;
+            getopt_table[j].val     = expanded_option_table[i].short_option;
             option_seen.set(short_opt);
             ++j;
         }
     }
 
-    (*getopt_table)[j].name    = NULL;
-    (*getopt_table)[j].has_arg = 0;
-    (*getopt_table)[j].flag    = NULL;
-    (*getopt_table)[j].val     = 0;
+    getopt_table[j].name    = NULL;
+    getopt_table[j].has_arg = 0;
+    getopt_table[j].flag    = NULL;
+    getopt_table[j].val     = 0;
 
 }
 
@@ -456,6 +459,7 @@ Driver::ParseArgs (int argc, const char *argv[], FILE *out_fh, bool &exit)
     SBError error;
     std::string option_string;
     struct option *long_options = NULL;
+    std::vector<struct option> long_options_vector;
     uint32_t num_options;
 
     for (num_options = 0; g_options[num_options].long_option != NULL; ++num_options)
@@ -468,9 +472,12 @@ Driver::ParseArgs (int argc, const char *argv[], FILE *out_fh, bool &exit)
         return error;
     }
 
-    long_options = (struct option *) malloc ((num_options + 1) * sizeof (struct option));
+    BuildGetOptTable (g_options, long_options_vector, num_options);
 
-    BuildGetOptTable (g_options, &long_options, num_options);
+    if (long_options_vector.empty())
+        long_options = NULL;
+    else
+        long_options = &long_options_vector.front();
 
     if (long_options == NULL)
     {
@@ -625,7 +632,9 @@ Driver::ParseArgs (int argc, const char *argv[], FILE *out_fh, bool &exit)
                 error.SetErrorStringWithFormat ("invalid option with value %i", val);
             }
             if (error.Fail())
+            {
                 return error;
+            }
         }
     }
     

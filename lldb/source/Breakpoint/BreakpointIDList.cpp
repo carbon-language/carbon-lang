@@ -181,7 +181,6 @@ BreakpointIDList::FindAndReplaceIDRanges (Args &old_args, Target *target, Comman
         if (BreakpointIDList::StringContainsIDRangeExpression (current_arg, &range_start_len, &range_end_pos))
         {
             is_range = true;
-            range_start = (char *) malloc (range_start_len + 1);
             range_start.assign (current_arg, range_start_len);
             range_end = current_arg + range_end_pos;
         }
