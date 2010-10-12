@@ -1415,8 +1415,8 @@ Optional Features:
   --enable-targets        Build specific host targets: all or
                           target1,target2,... Valid targets are: host, x86,
                           x86_64, sparc, powerpc, alpha, arm, mips, spu,
-                          pic16, xcore, msp430, systemz, blackfin, ptx, cbe,
-                          and cpp (default=all)
+                          xcore, msp430, systemz, blackfin, ptx, cbe, and cpp
+                          (default=all)
   --enable-cbe-printf-a   Enable C Backend output with hex floating point via
                           %a (default is YES)
   --enable-bindings       Build specific language bindings:
@@ -5049,7 +5049,6 @@ for target_to_build in $TARGETS_TO_BUILD; do
   if test -f ${srcdir}/lib/Target/${target_to_build}/InstPrinter/Makefile ; then
     LLVM_ENUM_ASM_PRINTERS="LLVM_ASM_PRINTER($target_to_build) $LLVM_ENUM_ASM_PRINTERS";
   fi
-
   if test -f ${srcdir}/lib/Target/${target_to_build}/AsmParser/Makefile ; then
     LLVM_ENUM_ASM_PARSERS="LLVM_ASM_PARSER($target_to_build) $LLVM_ENUM_ASM_PARSERS";
   fi
@@ -11451,7 +11450,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 11454 "configure"
+#line 11453 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H

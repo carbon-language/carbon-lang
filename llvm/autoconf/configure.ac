@@ -326,7 +326,6 @@ AC_CACHE_CHECK([target architecture],[llvm_cv_target_arch],
   alpha*-*)               llvm_cv_target_arch="Alpha" ;;
   arm*-*)                 llvm_cv_target_arch="ARM" ;;
   mips-*)                 llvm_cv_target_arch="Mips" ;;
-  pic16-*)                llvm_cv_target_arch="PIC16" ;;
   xcore-*)                llvm_cv_target_arch="XCore" ;;
   msp430-*)               llvm_cv_target_arch="MSP430" ;;
   s390x-*)                llvm_cv_target_arch="SystemZ" ;;
@@ -464,7 +463,6 @@ else
     Alpha)       AC_SUBST(TARGET_HAS_JIT,1) ;;
     ARM)         AC_SUBST(TARGET_HAS_JIT,1) ;;
     Mips)        AC_SUBST(TARGET_HAS_JIT,0) ;;
-    PIC16)       AC_SUBST(TARGET_HAS_JIT,0) ;;
     XCore)       AC_SUBST(TARGET_HAS_JIT,0) ;;
     MSP430)      AC_SUBST(TARGET_HAS_JIT,0) ;;
     SystemZ)     AC_SUBST(TARGET_HAS_JIT,0) ;;
@@ -544,14 +542,14 @@ dnl Allow specific targets to be specified for building (or not)
 TARGETS_TO_BUILD=""
 AC_ARG_ENABLE([targets],AS_HELP_STRING([--enable-targets],
     [Build specific host targets: all or target1,target2,... Valid targets are:
-     host, x86, x86_64, sparc, powerpc, alpha, arm, mips, spu, pic16,
+     host, x86, x86_64, sparc, powerpc, alpha, arm, mips, spu,
      xcore, msp430, systemz, blackfin, ptx, cbe, and cpp (default=all)]),,
     enableval=all)
 if test "$enableval" = host-only ; then
   enableval=host
 fi
 case "$enableval" in
-  all) TARGETS_TO_BUILD="X86 Sparc PowerPC Alpha ARM Mips CellSPU PIC16 XCore MSP430 SystemZ Blackfin CBackend CppBackend MBlaze PTX" ;;
+  all) TARGETS_TO_BUILD="X86 Sparc PowerPC Alpha ARM Mips CellSPU XCore MSP430 SystemZ Blackfin CBackend CppBackend MBlaze PTX" ;;
   *)for a_target in `echo $enableval|sed -e 's/,/ /g' ` ; do
       case "$a_target" in
         x86)      TARGETS_TO_BUILD="X86 $TARGETS_TO_BUILD" ;;
@@ -562,7 +560,6 @@ case "$enableval" in
         arm)      TARGETS_TO_BUILD="ARM $TARGETS_TO_BUILD" ;;
         mips)     TARGETS_TO_BUILD="Mips $TARGETS_TO_BUILD" ;;
         spu)      TARGETS_TO_BUILD="CellSPU $TARGETS_TO_BUILD" ;;
-        pic16)    TARGETS_TO_BUILD="PIC16 $TARGETS_TO_BUILD" ;;
         xcore)    TARGETS_TO_BUILD="XCore $TARGETS_TO_BUILD" ;;
         msp430)   TARGETS_TO_BUILD="MSP430 $TARGETS_TO_BUILD" ;;
         systemz)  TARGETS_TO_BUILD="SystemZ $TARGETS_TO_BUILD" ;;
@@ -581,7 +578,6 @@ case "$enableval" in
             Mips)        TARGETS_TO_BUILD="Mips $TARGETS_TO_BUILD" ;;
             MBlaze)      TARGETS_TO_BUILD="MBlaze $TARGETS_TO_BUILD" ;;
             CellSPU|SPU) TARGETS_TO_BUILD="CellSPU $TARGETS_TO_BUILD" ;;
-            PIC16)       TARGETS_TO_BUILD="PIC16 $TARGETS_TO_BUILD" ;;
             XCore)       TARGETS_TO_BUILD="XCore $TARGETS_TO_BUILD" ;;
             MSP430)      TARGETS_TO_BUILD="MSP430 $TARGETS_TO_BUILD" ;;
             s390x)       TARGETS_TO_BUILD="SystemZ $TARGETS_TO_BUILD" ;;
@@ -623,6 +619,10 @@ LLVM_ENUM_DISASSEMBLERS=""
 for target_to_build in $TARGETS_TO_BUILD; do
   LLVM_ENUM_TARGETS="LLVM_TARGET($target_to_build) $LLVM_ENUM_TARGETS"
   if test -f ${srcdir}/lib/Target/${target_to_build}/AsmPrinter/Makefile ; then
+    LLVM_ENUM_ASM_PRINTERS="LLVM_ASM_PRINTER($target_to_build) $LLVM_ENUM_ASM_PRINTERS";
+  fi
+  # MC-ized AsmPrinters live in TARGET/InstPrinter, not AsmPrinter
+  if test -f ${srcdir}/lib/Target/${target_to_build}/InstPrinter/Makefile ; then
     LLVM_ENUM_ASM_PRINTERS="LLVM_ASM_PRINTER($target_to_build) $LLVM_ENUM_ASM_PRINTERS";
   fi
   if test -f ${srcdir}/lib/Target/${target_to_build}/AsmParser/Makefile ; then
