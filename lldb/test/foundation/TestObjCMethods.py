@@ -24,6 +24,7 @@ class FoundationTestCase(TestBase):
         self.break_on_objc_methods()
 
     @unittest2.expectedFailure
+    # rdar://problem/8542091
     # rdar://problem/8492646
     def test_data_type_and_expr_with_dsym(self):
         """Lookup objective-c data types and evaluate expressions."""
@@ -31,6 +32,7 @@ class FoundationTestCase(TestBase):
         self.data_type_and_expr_objc()
 
     @unittest2.expectedFailure
+    # rdar://problem/8542091
     # rdar://problem/8492646
     def test_data_type_and_expr_with_dwarf(self):
         """Lookup objective-c data types and evaluate expressions."""
@@ -82,6 +84,11 @@ class FoundationTestCase(TestBase):
         self.expect("thread backtrace", "Stop at -[NSAutoreleasePool release]",
             substrs = ["Foundation`-[NSAutoreleasePool release]"])
 
+    def setUp(self):
+        super(FoundationTestCase, self).setUp()
+        # Find the line number to break inside main().
+        self.line = line_number('main.m', '// Set break point at this line.')
+
     def data_type_and_expr_objc(self):
         """Lookup objective-c data types and evaluate expressions."""
         exe = os.path.join(os.getcwd(), "a.out")
@@ -101,25 +108,18 @@ class FoundationTestCase(TestBase):
 
         self.expect("image lookup -t NSString", DATA_TYPES_DISPLAYED_CORRECTLY,
             substrs = ['name = "NSString"',
-                       'clang_type = "@interface NSString@end"'])
+                       'clang_type = "@interface NSString'])
 
         self.expect("image lookup -t MyString", DATA_TYPES_DISPLAYED_CORRECTLY,
             substrs = ['name = "MyString"',
-                       'clang_type = "@interface MyString'])
+                       'clang_type = "@interface MyString',
+                       'NSString * str;',
+                       'NSDate * date;'])
 
         self.expect("frame variable -s", VARIABLES_DISPLAYED_CORRECTLY,
             substrs = ["ARG: (MyString *) self"],
             patterns = ["ARG: \(.*\) _cmd",
                         "(struct objc_selector *)|(SEL)"])
-
-        # Test new feature with r115115:
-        # Add "-o" option to "expression" which prints the object description if available.
-        self.expect("expr -o -- self", "Object description displayed correctly",
-            startstr = "Hello from ",
-            substrs = ["a.out", "with timestamp: "])
-
-        self.expect("expr self->non_existent_member", COMMAND_FAILED_AS_EXPECTED, error=True,
-            startstr = "error: 'MyString' does not have a member named 'non_existent_member'")
 
         # rdar://problem/8492646
         # test/foundation fails after updating to tot r115023
@@ -132,18 +132,48 @@ class FoundationTestCase(TestBase):
         self.expect("frame variable self->date", VARIABLES_DISPLAYED_CORRECTLY,
             startstr = "(NSDate *) self->date")
 
-        # TODO: use expression parser.
-        # self.runCmd("expr self->str")
-        # self.runCmd("expr self->date")
+        # This should display the str and date member fields as well.
+        self.expect("frame variable *self", VARIABLES_DISPLAYED_CORRECTLY,
+            substrs = ["(MyString *) self",
+                       "(NSString *) str",
+                       "(NSDate *) date"])
+
+        # This should fail expectedly.
+        self.expect("expr self->non_existent_member", COMMAND_FAILED_AS_EXPECTED, error=True,
+            startstr = "error: 'MyString' does not have a member named 'non_existent_member'")
+
+        # This currently fails.
+        # rdar://problem/8492646
+        #
+        # Use expression parser.
+        #self.runCmd("expr self->str")
+        #self.runCmd("expr self->date")
 
         # (lldb) expr self->str
-        # error: 'MyString' does not have a member named 'str'
+        # error: instance variable 'str' is protected
         # error: 1 errors parsing expression
-        # Couldn't parse the expresssion
+        #
         # (lldb) expr self->date
-        # error: 'MyString' does not have a member named 'date'
+        # error: instance variable 'date' is protected
         # error: 1 errors parsing expression
-        # Couldn't parse the expresssion
+        #
+
+        self.runCmd("breakpoint delete")
+        self.expect("breakpoint set -f main.m -l %d" % self.line,
+                    BREAKPOINT_CREATED,
+            startstr = "Breakpoint created: 2: file ='main.m', line = %d, locations = 1" %
+                        self.line)
+        self.runCmd("process continue")
+
+        # This currently fails.
+        # rdar://problem/8542091
+        # test/foundation: expr -o -- my not working?
+        #
+        # Test new feature with r115115:
+        # Add "-o" option to "expression" which prints the object description if available.
+        self.expect("expr -o -- my", "Object description displayed correctly",
+            startstr = "Hello from ",
+            substrs = ["a.out", "with timestamp: "])
 
 
 if __name__ == '__main__':
