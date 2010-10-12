@@ -33,14 +33,21 @@ class IterateFrameAndDisassembleTestCase(TestBase):
         self.buildDwarf()
         self.disassemble_call_stack_api()
 
+    def setUp(self):
+        super(IterateFrameAndDisassembleTestCase, self).setUp()
+        # Find the line number to break for main.cpp.
+        self.line = line_number('main.cpp', '// Set break point at this line.')
+
     def breakOnCtor(self):
         """Setup/run the program so it stops on C's constructor."""
         exe = os.path.join(os.getcwd(), "a.out")
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 
         # Break on the ctor function of class C.
-        self.expect("breakpoint set -f main.cpp -l 93", BREAKPOINT_CREATED,
-            startstr = "Breakpoint created: 1: file ='main.cpp', line = 93")
+        self.expect("breakpoint set -f main.cpp -l %d" % self.line,
+                    BREAKPOINT_CREATED,
+            startstr = "Breakpoint created: 1: file ='main.cpp', line = %d" %
+                        self.line)
 
         self.runCmd("run", RUN_SUCCEEDED)
 

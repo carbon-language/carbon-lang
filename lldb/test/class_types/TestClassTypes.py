@@ -46,14 +46,21 @@ class ClassTypesTestCase(TestBase):
         self.buildDwarf()
         self.class_types_expr_parser()
 
+    def setUp(self):
+        super(ClassTypesTestCase, self).setUp()
+        # Find the line number to break for main.cpp.
+        self.line = line_number('main.cpp', '// Set break point at this line.')
+
     def class_types(self):
         """Test 'frame variable this' when stopped on a class constructor."""
         exe = os.path.join(os.getcwd(), "a.out")
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 
         # Break on the ctor function of class C.
-        self.expect("breakpoint set -f main.cpp -l 93", BREAKPOINT_CREATED,
-            startstr = "Breakpoint created: 1: file ='main.cpp', line = 93")
+        self.expect("breakpoint set -f main.cpp -l %d" % self.line,
+                    BREAKPOINT_CREATED,
+            startstr = "Breakpoint created: 1: file ='main.cpp', line = %d" %
+                        self.line)
 
         self.runCmd("run", RUN_SUCCEEDED)
 
@@ -96,13 +103,13 @@ class ClassTypesTestCase(TestBase):
 
         bpfilespec = lldb.SBFileSpec("main.cpp")
 
-        breakpoint = target.BreakpointCreateByLocation(bpfilespec, 93)
+        breakpoint = target.BreakpointCreateByLocation(bpfilespec, self.line)
         self.assertTrue(breakpoint.IsValid(), VALID_BREAKPOINT)
 
         # Verify the breakpoint just created.
         self.expect(repr(breakpoint), BREAKPOINT_CREATED, exe=False,
             substrs = ['main.cpp',
-                       '93'])
+                       str(self.line)])
 
         # Now launch the process, and do not stop at entry point.
         rc = lldb.SBError()
@@ -127,7 +134,7 @@ class ClassTypesTestCase(TestBase):
         # should be 93.
         self.expect("%s:%d" % (lldbutil.GetFilenames(thread)[0],
                                lldbutil.GetLineNumbers(thread)[0]),
-                    "Break correctly at main.cpp:93", exe=False,
+                    "Break correctly at main.cpp:%d" % self.line, exe=False,
             startstr = "main.cpp:")
             ### clang compiled code reported main.cpp:94?
             ### startstr = "main.cpp:93")
