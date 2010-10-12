@@ -9,6 +9,11 @@ class UniversalTestCase(TestBase):
 
     mydir = "macosx/universal"
 
+    def setUp(self):
+        super(UniversalTestCase, self).setUp()
+        # Find the line number to break inside main().
+        self.line = line_number('main.c', '// Set break point at this line.')
+
     @unittest2.skipUnless(sys.platform.startswith("darwin") and os.uname()[4]=='i386',
                           "requires Darwin & i386")
     def test_process_launch_for_universal(self):
@@ -26,8 +31,10 @@ class UniversalTestCase(TestBase):
             substrs = ["testit' (x86_64)."])
 
         # Break inside the main.
-        self.expect("breakpoint set -f main.c -l 5", BREAKPOINT_CREATED,
-            startstr = "Breakpoint created: 1: file ='main.c', line = 5, locations = 1")
+        self.expect("breakpoint set -f main.c -l %d" % self.line,
+                    BREAKPOINT_CREATED,
+            startstr = "Breakpoint created: 1: file ='main.c', line = %d, locations = 1" %
+                        self.line)
 
         # We should be able to launch the x86_64 executable.
         self.runCmd("run", RUN_SUCCEEDED)
@@ -47,8 +54,10 @@ class UniversalTestCase(TestBase):
             substrs = ["testit' (i386)."])
 
         # Break inside the main.
-        self.expect("breakpoint set -f main.c -l 5", BREAKPOINT_CREATED,
-            startstr = "Breakpoint created: 1: file ='main.c', line = 5, locations = 1")
+        self.expect("breakpoint set -f main.c -l %d" % self.line,
+                    BREAKPOINT_CREATED,
+            startstr = "Breakpoint created: 1: file ='main.c', line = %d, locations = 1" %
+                        self.line)
 
         # We should be able to launch the i386 executable as well.
         self.runCmd("run", RUN_SUCCEEDED)
