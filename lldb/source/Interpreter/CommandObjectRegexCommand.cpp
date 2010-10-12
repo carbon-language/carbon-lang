@@ -87,15 +87,14 @@ CommandObjectRegexCommand::ExecuteRawCommandString
                     }
                 }
                 // Interpret the new command and return this as the result!
-//                if (m_options.verbose)
-//                    result.GetOutputStream().Printf("%s\n", new_command.c_str());
+                result.GetOutputStream().Printf("%s\n", new_command.c_str());
                 return m_interpreter.HandleCommand(new_command.c_str(), true, result);
             }
         }
         result.SetStatus(eReturnStatusFailed);
-        result.AppendErrorWithFormat("Command contents '%s' failed to match any regular expression in the '%s' regex command.\n",
-                                    command,
-                                    m_cmd_name.c_str());
+        result.AppendErrorWithFormat ("Command contents '%s' failed to match any regular expression in the '%s' regex command.\n",
+                                      command,
+                                      m_cmd_name.c_str());
         return false;
     }
     result.AppendError("empty command passed to regular exression command");
