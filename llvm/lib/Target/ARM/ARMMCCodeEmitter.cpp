@@ -48,9 +48,6 @@ public:
   /// getMachineOpValue - Return binary encoding of operand. If the machine
   /// operand requires relocation, record the relocation and return zero.
   unsigned getMachineOpValue(const MCInst &MI,const MCOperand &MO) const;
-  unsigned getMachineOpValue(const MCInst &MI, unsigned OpIdx) const {
-    return getMachineOpValue(MI, MI.getOperand(OpIdx));
-  }
 
   unsigned getNumFixupKinds() const {
     assert(0 && "ARMMCCodeEmitter::getNumFixupKinds() not yet implemented.");
