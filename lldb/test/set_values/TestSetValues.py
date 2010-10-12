@@ -20,26 +20,45 @@ class SetValuesTestCase(TestBase):
         self.buildDwarf()
         self.set_values()
 
+    def setUp(self):
+        super(SetValuesTestCase, self).setUp()
+        # Find the line numbers to break inside main().
+        self.line1 = line_number('main.c', '// Set break point #1.')
+        self.line2 = line_number('main.c', '// Set break point #2.')
+        self.line3 = line_number('main.c', '// Set break point #3.')
+        self.line4 = line_number('main.c', '// Set break point #4.')
+        self.line5 = line_number('main.c', '// Set break point #5.')
+
     def set_values(self):
         """Test settings and readings of program variables."""
         exe = os.path.join(os.getcwd(), "a.out")
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 
         # Set breakpoints on several places to set program variables.
-        self.expect("breakpoint set -f main.c -l 15", BREAKPOINT_CREATED,
-            startstr = "Breakpoint created: 1: file ='main.c', line = 15, locations = 1")
+        self.expect("breakpoint set -f main.c -l %d" % self.line1,
+                    BREAKPOINT_CREATED,
+            startstr = "Breakpoint created: 1: file ='main.c', line = %d, locations = 1" %
+                        self.line1)
 
-        self.expect("breakpoint set -f main.c -l 36", BREAKPOINT_CREATED,
-            startstr = "Breakpoint created: 2: file ='main.c', line = 36, locations = 1")
+        self.expect("breakpoint set -f main.c -l %d" % self.line2,
+                    BREAKPOINT_CREATED,
+            startstr = "Breakpoint created: 2: file ='main.c', line = %d, locations = 1" %
+                        self.line2)
 
-        self.expect("breakpoint set -f main.c -l 57", BREAKPOINT_CREATED,
-            startstr = "Breakpoint created: 3: file ='main.c', line = 57, locations = 1")
+        self.expect("breakpoint set -f main.c -l %d" % self.line3,
+                    BREAKPOINT_CREATED,
+            startstr = "Breakpoint created: 3: file ='main.c', line = %d, locations = 1" %
+                        self.line3)
 
-        self.expect("breakpoint set -f main.c -l 78", BREAKPOINT_CREATED,
-            startstr = "Breakpoint created: 4: file ='main.c', line = 78, locations = 1")
+        self.expect("breakpoint set -f main.c -l %d" % self.line4,
+                    BREAKPOINT_CREATED,
+            startstr = "Breakpoint created: 4: file ='main.c', line = %d, locations = 1" %
+                        self.line4)
 
-        self.expect("breakpoint set -f main.c -l 85", BREAKPOINT_CREATED,
-            startstr = "Breakpoint created: 5: file ='main.c', line = 85, locations = 1")
+        self.expect("breakpoint set -f main.c -l %d" % self.line5,
+                    BREAKPOINT_CREATED,
+            startstr = "Breakpoint created: 5: file ='main.c', line = %d, locations = 1" %
+                        self.line5)
 
         self.runCmd("run", RUN_SUCCEEDED)
 
@@ -65,7 +84,7 @@ class SetValuesTestCase(TestBase):
         # main.c:36
         # Check that 'frame variable' displays the correct data type and value.
         self.expect("frame variable", VARIABLES_DISPLAYED_CORRECTLY,
-            startstr = "(short unsigned int) i = 33")
+            patterns = ["\((short unsigned int|unsigned short)\) i = 33"])
 
         # TODO:
         # Now set variable 'i' and check that it is correctly displayed.

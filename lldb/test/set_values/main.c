@@ -12,7 +12,7 @@ void set_char(void)
 {
     char i = 'a';
     printf("before (char) i = %c\n", i);
-    printf("after  (char) i = %c\n", i);    //// break $source:$line
+    printf("after  (char) i = %c\n", i);    // Set break point #1. //// break $source:$line
 }
 
 void set_uchar(void)
@@ -33,7 +33,7 @@ void set_ushort(void)
 {
     unsigned short i = 33;
     printf("before (unsigned short) i = %i\n", i);
-    printf("after  (unsigned short) i = %i\n", i);  //// break $source:$line
+    printf("after  (unsigned short) i = %i\n", i);  // Set break point #2. //// break $source:$line
 }
 
 void set_int(void)
@@ -54,7 +54,7 @@ void set_long(void)
 {
     long i = 33;
     printf("before (long) i = %li\n", i);
-    printf("after  (long) i = %li\n", i);   //// break $source:$line
+    printf("after  (long) i = %li\n", i);   // Set break point #3. //// break $source:$line
 }
 
 void set_ulong(void)
@@ -75,14 +75,14 @@ void set_double(void)
 {
     double i = 3.1415927;
     printf("before (double) i = %g\n", i);
-    printf("after  (double) i = %g\n", i);  //// break $source:$line
+    printf("after  (double) i = %g\n", i);  // Set break point #4. //// break $source:$line
 }
 
 void set_long_double(void)
 {
     long double i = 3.1415927;
     printf("before (long double) i = %Lg\n", i);
-    printf("after  (long double) i = %Lg\n", i);    //// break $source:$line
+    printf("after  (long double) i = %Lg\n", i);    // Set break point #5. //// break $source:$line
 }
 
 void set_point (void)
