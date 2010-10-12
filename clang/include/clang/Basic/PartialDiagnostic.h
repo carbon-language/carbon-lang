@@ -57,6 +57,10 @@ public:
     /// what sort of argument kind it is.
     intptr_t DiagArgumentsVal[MaxArguments];
   
+    /// \brief The values for the various substitution positions that have
+    /// string arguments.
+    std::string DiagArgumentsStr[MaxArguments];
+    
     /// DiagRanges - The list of ranges added to this diagnostic.  It currently
     /// only support 10 ranges, could easily be extended if needed.
     CharSourceRange DiagRanges[10];
@@ -186,6 +190,26 @@ public:
       *this->DiagStorage = *Other.DiagStorage;
   }
   
+  PartialDiagnostic(const DiagnosticInfo &Other, StorageAllocator &Allocator)
+    : DiagID(Other.getID()), DiagStorage(0), Allocator(&Allocator)
+  {
+    // Copy arguments.
+    for (unsigned I = 0, N = Other.getNumArgs(); I != N; ++I) {
+      if (Other.getArgKind(I) == Diagnostic::ak_std_string)
+        AddString(Other.getArgStdStr(I));
+      else
+        AddTaggedVal(Other.getRawArg(I), Other.getArgKind(I));
+    }
+    
+    // Copy source ranges.
+    for (unsigned I = 0, N = Other.getNumRanges(); I != N; ++I)
+      AddSourceRange(Other.getRange(I));
+    
+    // Copy fix-its.
+    for (unsigned I = 0, N = Other.getNumFixItHints(); I != N; ++I)
+      AddFixItHint(Other.getFixItHint(I));
+  }
+  
   PartialDiagnostic &operator=(const PartialDiagnostic &Other) {
     DiagID = Other.DiagID;
     if (Other.DiagStorage) {
@@ -216,13 +240,28 @@ public:
     DiagStorage->DiagArgumentsVal[DiagStorage->NumDiagArgs++] = V;
   }
 
+  void AddString(llvm::StringRef V) const {
+    if (!DiagStorage)
+      DiagStorage = getStorage();
+    
+    assert(DiagStorage->NumDiagArgs < Storage::MaxArguments &&
+           "Too many arguments to diagnostic!");
+    DiagStorage->DiagArgumentsKind[DiagStorage->NumDiagArgs]
+      = Diagnostic::ak_std_string;
+    DiagStorage->DiagArgumentsStr[DiagStorage->NumDiagArgs++] = V;
+  }
+
   void Emit(const DiagnosticBuilder &DB) const {
     if (!DiagStorage)
       return;
     
     // Add all arguments.
     for (unsigned i = 0, e = DiagStorage->NumDiagArgs; i != e; ++i) {
-      DB.AddTaggedVal(DiagStorage->DiagArgumentsVal[i],
+      if ((Diagnostic::ArgumentKind)DiagStorage->DiagArgumentsKind[i]
+            == Diagnostic::ak_std_string)
+        DB.AddString(DiagStorage->DiagArgumentsStr[i]);
+      else
+        DB.AddTaggedVal(DiagStorage->DiagArgumentsVal[i],
                    (Diagnostic::ArgumentKind)DiagStorage->DiagArgumentsKind[i]);
     }
     
@@ -230,7 +269,7 @@ public:
     for (unsigned i = 0, e = DiagStorage->NumDiagRanges; i != e; ++i)
       DB.AddSourceRange(DiagStorage->DiagRanges[i]);
     
-    // Add all code modification hints
+    // Add all fix-its.
     for (unsigned i = 0, e = DiagStorage->NumFixItHints; i != e; ++i)
       DB.AddFixItHint(DiagStorage->FixItHints[i]);
   }
@@ -263,6 +302,13 @@ public:
   }
 
   friend inline const PartialDiagnostic &operator<<(const PartialDiagnostic &PD,
+                                                    llvm::StringRef S) {
+    
+    PD.AddString(S);
+    return PD;
+  }
+  
+  friend inline const PartialDiagnostic &operator<<(const PartialDiagnostic &PD,
                                                     const SourceRange &R) {
     PD.AddSourceRange(CharSourceRange::getTokenRange(R));
     return PD;
@@ -288,6 +334,9 @@ inline const DiagnosticBuilder &operator<<(const DiagnosticBuilder &DB,
   return DB;
 }
   
+/// \brief A partial diagnostic along with the source location where this
+/// diagnostic occurs.
+typedef std::pair<SourceLocation, PartialDiagnostic> PartialDiagnosticAt;
 
 }  // end namespace clang
 #endif

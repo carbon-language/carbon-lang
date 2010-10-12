@@ -2363,6 +2363,9 @@ bool Sema::CheckTemplateArgument(TemplateTypeParmDecl *Param,
   //   template-argument for a template type-parameter.
   // C++0x allows these, and even in C++03 we allow them as an extension with
   // a warning.
+  //
+  // FIXME: We're not handling the "type compounded from any of these types"
+  // case.
   SourceRange SR = ArgInfo->getTypeLoc().getSourceRange();
   if (!LangOpts.CPlusPlus0x) {
     const TagType *Tag = 0;

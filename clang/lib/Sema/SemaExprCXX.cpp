@@ -1551,9 +1551,11 @@ Sema::ActOnCXXDelete(SourceLocation StartLoc, bool UseGlobal,
         return ExprError();
       
       if (!RD->hasTrivialDestructor())
-        if (const CXXDestructorDecl *Dtor = LookupDestructor(RD))
+        if (CXXDestructorDecl *Dtor = LookupDestructor(RD)) {
           MarkDeclarationReferenced(StartLoc,
                                     const_cast<CXXDestructorDecl*>(Dtor));
+          DiagnoseUseOfDecl(Dtor, StartLoc);
+        }
     }
     
     if (!OperatorDelete) {
@@ -1829,7 +1831,7 @@ Sema::PerformImplicitConversion(Expr *&From, QualType ToType,
 
     if (DiagnoseUseOfDecl(Fn, From->getSourceRange().getBegin()))
       return true;
-
+    
     From = FixOverloadedFunctionReference(From, Found, Fn);
     FromType = From->getType();
   }

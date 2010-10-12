@@ -5489,6 +5489,7 @@ OverloadCandidateSet::BestViableFunction(Sema &S, SourceLocation Loc,
   //   placement new (5.3.4), as well as non-default initialization (8.5).
   if (Best->Function)
     S.MarkDeclarationReferenced(Loc, Best->Function);
+  
   return OR_Success;
 }
 
@@ -6313,7 +6314,7 @@ Sema::ResolveAddressOfOverloadedFunction(Expr *From, QualType ToType,
   // whose type matches exactly.
   llvm::SmallVector<std::pair<DeclAccessPair, FunctionDecl*>, 4> Matches;
   llvm::SmallVector<FunctionDecl *, 4> NonMatches;
-
+  
   bool FoundNonTemplateFunction = false;
   for (UnresolvedSetIterator I = OvlExpr->decls_begin(),
          E = OvlExpr->decls_end(); I != E; ++I) {
@@ -6344,7 +6345,6 @@ Sema::ResolveAddressOfOverloadedFunction(Expr *From, QualType ToType,
       //   resulting template argument list is used to generate a single
       //   function template specialization, which is added to the set of
       //   overloaded functions considered.
-      // FIXME: We don't really want to build the specialization here, do we?
       FunctionDecl *Specialization = 0;
       TemplateDeductionInfo Info(Context, OvlExpr->getNameLoc());
       if (TemplateDeductionResult Result
@@ -6355,10 +6355,10 @@ Sema::ResolveAddressOfOverloadedFunction(Expr *From, QualType ToType,
       } else {
         // Template argument deduction ensures that we have an exact match.
         // This function template specicalization works.
+        Specialization = cast<FunctionDecl>(Specialization->getCanonicalDecl());
         assert(FunctionType
                  == Context.getCanonicalType(Specialization->getType()));
-        Matches.push_back(std::make_pair(I.getPair(),
-                    cast<FunctionDecl>(Specialization->getCanonicalDecl())));
+        Matches.push_back(std::make_pair(I.getPair(), Specialization));
       }
 
       continue;
@@ -6403,10 +6403,11 @@ Sema::ResolveAddressOfOverloadedFunction(Expr *From, QualType ToType,
     return 0;
   } else if (Matches.size() == 1) {
     FunctionDecl *Result = Matches[0].second;
-    FoundResult = Matches[0].first;
+    FoundResult = Matches[0].first;    
     MarkDeclarationReferenced(From->getLocStart(), Result);
-    if (Complain)
+    if (Complain) {
       CheckAddressOfMemberAccess(OvlExpr, Matches[0].first);
+    }
     return Result;
   }
 
@@ -6441,10 +6442,8 @@ Sema::ResolveAddressOfOverloadedFunction(Expr *From, QualType ToType,
     
     MarkDeclarationReferenced(From->getLocStart(), *Result);
     FoundResult = Matches[Result - MatchesCopy.begin()].first;
-    if (Complain) {
+    if (Complain)
       CheckUnresolvedAccess(*this, OvlExpr, FoundResult);
-      DiagnoseUseOfDecl(FoundResult, OvlExpr->getNameLoc());
-    }
     return cast<FunctionDecl>(*Result);
   }
 
@@ -6464,10 +6463,8 @@ Sema::ResolveAddressOfOverloadedFunction(Expr *From, QualType ToType,
   if (Matches.size() == 1) {
     MarkDeclarationReferenced(From->getLocStart(), Matches[0].second);
     FoundResult = Matches[0].first;
-    if (Complain) {
+    if (Complain)
       CheckUnresolvedAccess(*this, OvlExpr, Matches[0].first);
-      DiagnoseUseOfDecl(Matches[0].first, OvlExpr->getNameLoc());
-    }
     return cast<FunctionDecl>(Matches[0].second);
   }
 
@@ -6543,7 +6540,7 @@ FunctionDecl *Sema::ResolveSingleFunctionTemplateSpecialization(Expr *From) {
 
     Matched = Specialization;
   }
-
+  
   return Matched;
 }
     
@@ -6734,7 +6731,7 @@ Sema::BuildOverloadedCallExpr(Scope *S, Expr *Fn, UnresolvedLookupExpr *ULE,
   case OR_Success: {
     FunctionDecl *FDecl = Best->Function;
     CheckUnresolvedLookupAccess(ULE, Best->FoundDecl);
-    DiagnoseUseOfDecl(Best->FoundDecl, ULE->getNameLoc());
+    DiagnoseUseOfDecl(FDecl? FDecl : Best->FoundDecl, ULE->getNameLoc());
     Fn = FixOverloadedFunctionReference(Fn, Best->FoundDecl, FDecl);
     return BuildResolvedCallExpr(Fn, FDecl, LParenLoc, Args, NumArgs, RParenLoc);
   }

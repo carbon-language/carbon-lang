@@ -19,6 +19,7 @@
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/APFloat.h"
 #include "clang/Sema/CXXFieldCollector.h"
+#include "clang/Sema/TemplateDeduction.h"
 #include "clang/Sema/ExternalSemaSource.h"
 #include "clang/Sema/ObjCMethodList.h"
 #include "clang/Sema/PrettyDeclStackTrace.h"
@@ -433,6 +434,41 @@ NamedDecl *Sema::getCurFunctionOrMethodDecl() {
 }
 
 Sema::SemaDiagnosticBuilder::~SemaDiagnosticBuilder() {
+  if (!isActive())
+    return;
+  
+  if (TemplateDeductionInfo *Info = SemaRef.isSFINAEContext()) {
+    switch (Diagnostic::getDiagnosticSFINAEResponse(getDiagID())) {
+    case Diagnostic::SFINAE_Report:
+      // Fall through; we'll report the diagnostic below.
+      break;
+      
+    case Diagnostic::SFINAE_SubstitutionFailure:
+      // Count this failure so that we know that template argument deduction
+      // has failed.
+      ++SemaRef.NumSFINAEErrors;
+      SemaRef.Diags.setLastDiagnosticIgnored();
+      SemaRef.Diags.Clear();
+      Clear();
+      return;
+      
+    case Diagnostic::SFINAE_Suppress:
+      // Make a copy of this suppressed diagnostic and store it with the
+      // template-deduction information;
+      DiagnosticInfo DiagInfo(&SemaRef.Diags);
+      Info->addSuppressedDiagnostic(DiagInfo.getLocation(),
+                        PartialDiagnostic(DiagInfo,
+                                          SemaRef.Context.getDiagAllocator()));
+        
+      // Suppress this diagnostic.        
+      SemaRef.Diags.setLastDiagnosticIgnored();
+      SemaRef.Diags.Clear();
+      Clear();
+      return;
+    }
+  }
+  
+  // Emit the diagnostic.
   if (!this->Emit())
     return;
 
@@ -451,25 +487,6 @@ Sema::SemaDiagnosticBuilder::~SemaDiagnosticBuilder() {
 }
 
 Sema::SemaDiagnosticBuilder Sema::Diag(SourceLocation Loc, unsigned DiagID) {
-  if (isSFINAEContext()) {
-    switch (Diagnostic::getDiagnosticSFINAEResponse(DiagID)) {
-    case Diagnostic::SFINAE_Report:
-      // Fall through; we'll report the diagnostic below.
-      break;
-
-    case Diagnostic::SFINAE_SubstitutionFailure:
-      // Count this failure so that we know that template argument deduction
-      // has failed.
-      ++NumSFINAEErrors;
-      // Fall through
-        
-    case Diagnostic::SFINAE_Suppress:
-      // Suppress this diagnostic.
-      Diags.setLastDiagnosticIgnored();
-      return SemaDiagnosticBuilder(*this);
-    }
-  }
-  
   DiagnosticBuilder DB = Diags.Report(FullSourceLoc(Loc, SourceMgr), DiagID);
   return SemaDiagnosticBuilder(DB, *this, DiagID);
 }

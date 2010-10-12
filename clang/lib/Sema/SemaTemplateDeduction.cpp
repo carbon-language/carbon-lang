@@ -1127,7 +1127,7 @@ Sema::DeduceTemplateArguments(ClassTemplatePartialSpecializationDecl *Partial,
     return Result;
 
   InstantiatingTemplate Inst(*this, Partial->getLocation(), Partial,
-                             Deduced.data(), Deduced.size());
+                             Deduced.data(), Deduced.size(), Info);
   if (Inst)
     return TDK_InstantiationDepth;
 
@@ -1214,7 +1214,8 @@ Sema::SubstituteExplicitTemplateArguments(
   // and then substitute them into the function parameter types.
   InstantiatingTemplate Inst(*this, FunctionTemplate->getLocation(),
                              FunctionTemplate, Deduced.data(), Deduced.size(),
-           ActiveTemplateInstantiation::ExplicitTemplateArgumentSubstitution);
+           ActiveTemplateInstantiation::ExplicitTemplateArgumentSubstitution,
+                             Info);
   if (Inst)
     return TDK_InstantiationDepth;
 
@@ -1374,7 +1375,8 @@ Sema::FinishTemplateArgumentDeduction(FunctionTemplateDecl *FunctionTemplate,
   // actual function declaration.
   InstantiatingTemplate Inst(*this, FunctionTemplate->getLocation(),
                              FunctionTemplate, Deduced.data(), Deduced.size(),
-              ActiveTemplateInstantiation::DeducedTemplateArgumentSubstitution);
+              ActiveTemplateInstantiation::DeducedTemplateArgumentSubstitution,
+                             Info);
   if (Inst)
     return TDK_InstantiationDepth;
 
@@ -1429,7 +1431,7 @@ Sema::FinishTemplateArgumentDeduction(FunctionTemplateDecl *FunctionTemplate,
       TemplateArgumentLoc Arg = getTrivialTemplateArgumentLoc(*this,
                                                               Deduced[I],
                                                               NTTPType,
-                                                           SourceLocation());
+                                                            Info.getLocation());
 
       // Check the template argument, converting it as necessary.
       if (CheckTemplateArgument(Param, Arg,
@@ -1514,6 +1516,18 @@ Sema::FinishTemplateArgumentDeduction(FunctionTemplateDecl *FunctionTemplate,
     Specialization->setInvalidDecl(true);
     return TDK_SubstitutionFailure;
   }
+
+  // If we suppressed any diagnostics while performing template argument
+  // deduction, and if we haven't already instantiated this declaration,
+  // keep track of these diagnostics. They'll be emitted if this specialization
+  // is actually used.
+  if (Info.diag_begin() != Info.diag_end()) {
+    llvm::DenseMap<Decl *, llvm::SmallVector<PartialDiagnosticAt, 1> >::iterator
+      Pos = SuppressedDiagnostics.find(Specialization->getCanonicalDecl());
+    if (Pos == SuppressedDiagnostics.end())
+        SuppressedDiagnostics[Specialization->getCanonicalDecl()]
+          .append(Info.diag_begin(), Info.diag_end());
+  }                                                               
 
   return TDK_Success;
 }

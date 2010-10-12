@@ -3765,6 +3765,7 @@ InitializationSequence::Perform(Sema &S,
           S.CheckDestructorAccess(CurInitExpr->getLocStart(), Destructor, 
                                   S.PDiag(diag::err_access_dtor_temp) << T);
           S.MarkDeclarationReferenced(CurInitExpr->getLocStart(), Destructor);
+          S.DiagnoseUseOfDecl(Destructor, CurInitExpr->getLocStart());
         }
       }
       
@@ -3858,7 +3859,8 @@ InitializationSequence::Perform(Sema &S,
         unsigned NumExprs = ConstructorArgs.size();
         Expr **Exprs = (Expr **)ConstructorArgs.take();
         S.MarkDeclarationReferenced(Loc, Constructor);
-            
+        S.DiagnoseUseOfDecl(Constructor, Loc);
+    
         TypeSourceInfo *TSInfo = Entity.getTypeSourceInfo();
         if (!TSInfo)
           TSInfo = S.Context.getTrivialTypeSourceInfo(Entity.getType(), Loc);

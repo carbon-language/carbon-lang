@@ -585,7 +585,8 @@ private:
   // diagnostic is in flight at a time.
   friend class DiagnosticBuilder;
   friend class DiagnosticInfo;
-
+  friend class PartialDiagnostic;
+  
   /// CurDiagLoc - This is the location of the current diagnostic that is in
   /// flight.
   FullSourceLoc CurDiagLoc;
@@ -667,6 +668,8 @@ class DiagnosticBuilder {
   explicit DiagnosticBuilder(Diagnostic *diagObj)
     : DiagObj(diagObj), NumArgs(0), NumRanges(0), NumFixItHints(0) {}
 
+  friend class PartialDiagnostic;
+  
 public:
   /// Copy constructor.  When copied, this "takes" the diagnostic info from the
   /// input and neuters it.
@@ -703,6 +706,17 @@ public:
   /// isActive - Determine whether this diagnostic is still active.
   bool isActive() const { return DiagObj != 0; }
 
+  /// \brief Retrieve the active diagnostic ID.
+  ///
+  /// \pre \c isActive()
+  unsigned getDiagID() const {
+    assert(isActive() && "Diagnostic is inactive");
+    return DiagObj->CurDiagID;
+  }
+  
+  /// \brief Clear out the current diagnostic.
+  void Clear() { DiagObj = 0; }
+  
   /// Operator bool: conversion of DiagnosticBuilder to bool always returns
   /// true.  This allows is to be used in boolean error contexts like:
   /// return Diag(...);

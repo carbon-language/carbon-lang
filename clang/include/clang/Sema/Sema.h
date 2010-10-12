@@ -3266,6 +3266,10 @@ public:
     /// \brief The number of template arguments in TemplateArgs.
     unsigned NumTemplateArgs;
 
+    /// \brief The template deduction info object associated with the 
+    /// substitution or checking of explicit or deduced template arguments.
+    sema::TemplateDeductionInfo *DeductionInfo;
+
     /// \brief The source range that covers the construct that cause
     /// the instantiation, e.g., the template-id that causes a class
     /// template instantiation.
@@ -3273,7 +3277,7 @@ public:
 
     ActiveTemplateInstantiation()
       : Kind(TemplateInstantiation), Template(0), Entity(0), TemplateArgs(0),
-        NumTemplateArgs(0) {}
+        NumTemplateArgs(0), DeductionInfo(0) {}
 
     /// \brief Determines whether this template is an actual instantiation
     /// that should be counted toward the maximum instantiation depth.
@@ -3343,7 +3347,15 @@ public:
   /// The top of this stack is used by a fixit instantiating unresolved
   /// function calls to fix the AST to match the textual change it prints.
   llvm::SmallVector<CallExpr *, 8> CallsUndergoingInstantiation;
-
+  
+  /// \brief For each declaration that involved template argument deduction, the
+  /// set of diagnostics that were suppressed during that template argument
+  /// deduction.
+  ///
+  /// FIXME: Serialize this structure to the AST file.
+  llvm::DenseMap<Decl *, llvm::SmallVector<PartialDiagnosticAt, 1> >
+    SuppressedDiagnostics;
+  
   /// \brief A stack object to be created when performing template
   /// instantiation.
   ///
@@ -3377,6 +3389,7 @@ public:
                           const TemplateArgument *TemplateArgs,
                           unsigned NumTemplateArgs,
                           ActiveTemplateInstantiation::InstantiationKind Kind,
+                          sema::TemplateDeductionInfo &DeductionInfo,
                           SourceRange InstantiationRange = SourceRange());
 
     /// \brief Note that we are instantiating as part of template
@@ -3386,6 +3399,7 @@ public:
                           ClassTemplatePartialSpecializationDecl *PartialSpec,
                           const TemplateArgument *TemplateArgs,
                           unsigned NumTemplateArgs,
+                          sema::TemplateDeductionInfo &DeductionInfo,
                           SourceRange InstantiationRange = SourceRange());
 
     InstantiatingTemplate(Sema &SemaRef, SourceLocation PointOfInstantiation,
@@ -3432,7 +3446,6 @@ public:
   private:
     Sema &SemaRef;
     bool Invalid;
-
     bool CheckInstantiationDepth(SourceLocation PointOfInstantiation,
                                  SourceRange InstantiationRange);
 
@@ -3448,9 +3461,11 @@ public:
   /// template argument substitution failures are not considered
   /// errors.
   ///
-  /// When this routine returns true, the emission of most diagnostics
-  /// will be suppressed and there will be no local error recovery.
-  bool isSFINAEContext() const;
+  /// \returns The nearest template-deduction context object, if we are in a
+  /// SFINAE context, which can be used to capture diagnostics that will be
+  /// suppressed. Otherwise, returns NULL to indicate that we are not within a
+  /// SFINAE context.
+  sema::TemplateDeductionInfo *isSFINAEContext() const;
 
   /// \brief RAII class used to determine whether SFINAE has
   /// trapped any errors that occur during template argument

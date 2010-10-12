@@ -148,7 +148,6 @@ InstantiatingTemplate(Sema &SemaRef, SourceLocation PointOfInstantiation,
                       Decl *Entity,
                       SourceRange InstantiationRange)
   :  SemaRef(SemaRef) {
-
   Invalid = CheckInstantiationDepth(PointOfInstantiation,
                                     InstantiationRange);
   if (!Invalid) {
@@ -192,6 +191,7 @@ Sema::InstantiatingTemplate::InstantiatingTemplate(Sema &SemaRef,
                                         const TemplateArgument *TemplateArgs,
                                                    unsigned NumTemplateArgs,
                          ActiveTemplateInstantiation::InstantiationKind Kind,
+                                   sema::TemplateDeductionInfo &DeductionInfo,
                                               SourceRange InstantiationRange)
 : SemaRef(SemaRef) {
 
@@ -204,6 +204,7 @@ Sema::InstantiatingTemplate::InstantiatingTemplate(Sema &SemaRef,
     Inst.Entity = reinterpret_cast<uintptr_t>(FunctionTemplate);
     Inst.TemplateArgs = TemplateArgs;
     Inst.NumTemplateArgs = NumTemplateArgs;
+    Inst.DeductionInfo = &DeductionInfo;
     Inst.InstantiationRange = InstantiationRange;
     SemaRef.ActiveTemplateInstantiations.push_back(Inst);
     
@@ -217,6 +218,7 @@ Sema::InstantiatingTemplate::InstantiatingTemplate(Sema &SemaRef,
                           ClassTemplatePartialSpecializationDecl *PartialSpec,
                                          const TemplateArgument *TemplateArgs,
                                          unsigned NumTemplateArgs,
+                                    sema::TemplateDeductionInfo &DeductionInfo,
                                          SourceRange InstantiationRange)
   : SemaRef(SemaRef) {
 
@@ -228,6 +230,7 @@ Sema::InstantiatingTemplate::InstantiatingTemplate(Sema &SemaRef,
   Inst.Entity = reinterpret_cast<uintptr_t>(PartialSpec);
   Inst.TemplateArgs = TemplateArgs;
   Inst.NumTemplateArgs = NumTemplateArgs;
+  Inst.DeductionInfo = &DeductionInfo;
   Inst.InstantiationRange = InstantiationRange;
   SemaRef.ActiveTemplateInstantiations.push_back(Inst);
       
@@ -516,7 +519,7 @@ void Sema::PrintInstantiationStack() {
   }
 }
 
-bool Sema::isSFINAEContext() const {
+TemplateDeductionInfo *Sema::isSFINAEContext() const {
   using llvm::SmallVector;
   for (SmallVector<ActiveTemplateInstantiation, 16>::const_reverse_iterator
          Active = ActiveTemplateInstantiations.rbegin(),
@@ -528,7 +531,7 @@ bool Sema::isSFINAEContext() const {
     case ActiveTemplateInstantiation::TemplateInstantiation:
     case ActiveTemplateInstantiation::DefaultFunctionArgumentInstantiation:
       // This is a template instantiation, so there is no SFINAE.
-      return false;
+      return 0;
 
     case ActiveTemplateInstantiation::DefaultTemplateArgumentInstantiation:
     case ActiveTemplateInstantiation::PriorTemplateArgumentSubstitution:
@@ -542,11 +545,12 @@ bool Sema::isSFINAEContext() const {
     case ActiveTemplateInstantiation::DeducedTemplateArgumentSubstitution:
       // We're either substitution explicitly-specified template arguments
       // or deduced template arguments, so SFINAE applies.
-      return true;
+      assert(Active->DeductionInfo && "Missing deduction info pointer");
+      return Active->DeductionInfo;
     }
   }
 
-  return false;
+  return 0;
 }
 
 //===----------------------------------------------------------------------===/
@@ -1255,6 +1259,16 @@ Sema::InstantiateClass(SourceLocation PointOfInstantiation,
   return Invalid;
 }
 
+namespace {
+  /// \brief A partial specialization whose template arguments have matched
+  /// a given template-id.
+  struct PartialSpecMatchResult {
+    ClassTemplatePartialSpecializationDecl *Partial;
+    TemplateArgumentList *Args;
+    llvm::SmallVector<PartialDiagnosticAt, 1> Diagnostics;
+  };
+}
+
 bool
 Sema::InstantiateClassTemplateSpecialization(
                            SourceLocation PointOfInstantiation,
@@ -1304,8 +1318,7 @@ Sema::InstantiateClassTemplateSpecialization(
   //   matching the template arguments of the class template
   //   specialization with the template argument lists of the partial
   //   specializations.
-  typedef std::pair<ClassTemplatePartialSpecializationDecl *,
-                    TemplateArgumentList *> MatchResult;
+  typedef PartialSpecMatchResult MatchResult;
   llvm::SmallVector<MatchResult, 4> Matched;
   llvm::SmallVector<ClassTemplatePartialSpecializationDecl *, 4> PartialSpecs;
   Template->getPartialSpecializations(PartialSpecs);
@@ -1320,7 +1333,10 @@ Sema::InstantiateClassTemplateSpecialization(
       // diagnostics, later.
       (void)Result;
     } else {
-      Matched.push_back(std::make_pair(Partial, Info.take()));
+      Matched.push_back(PartialSpecMatchResult());
+      Matched.back().Partial = Partial;
+      Matched.back().Args = Info.take();
+      Matched.back().Diagnostics.append(Info.diag_begin(), Info.diag_end());
     }
   }
 
@@ -1341,9 +1357,9 @@ Sema::InstantiateClassTemplateSpecialization(
       for (llvm::SmallVector<MatchResult, 4>::iterator P = Best + 1,
                                                     PEnd = Matched.end();
            P != PEnd; ++P) {
-        if (getMoreSpecializedPartialSpecialization(P->first, Best->first,
+        if (getMoreSpecializedPartialSpecialization(P->Partial, Best->Partial,
                                                     PointOfInstantiation) 
-              == P->first)
+              == P->Partial)
           Best = P;
       }
       
@@ -1354,9 +1370,9 @@ Sema::InstantiateClassTemplateSpecialization(
                                                     PEnd = Matched.end();
            P != PEnd; ++P) {
         if (P != Best &&
-            getMoreSpecializedPartialSpecialization(P->first, Best->first,
+            getMoreSpecializedPartialSpecialization(P->Partial, Best->Partial,
                                                     PointOfInstantiation)
-              != Best->first) {
+              != Best->Partial) {
           Ambiguous = true;
           break;
         }
@@ -1372,16 +1388,17 @@ Sema::InstantiateClassTemplateSpecialization(
         for (llvm::SmallVector<MatchResult, 4>::iterator P = Matched.begin(),
                                                       PEnd = Matched.end();
              P != PEnd; ++P)
-          Diag(P->first->getLocation(), diag::note_partial_spec_match)
-            << getTemplateArgumentBindingsText(P->first->getTemplateParameters(),
-                                               *P->second);
+          Diag(P->Partial->getLocation(), diag::note_partial_spec_match)
+            << getTemplateArgumentBindingsText(
+                                            P->Partial->getTemplateParameters(),
+                                               *P->Args);
 
         return true;
       }
     }
     
     // Instantiate using the best class template partial specialization.
-    ClassTemplatePartialSpecializationDecl *OrigPartialSpec = Best->first;
+    ClassTemplatePartialSpecializationDecl *OrigPartialSpec = Best->Partial;
     while (OrigPartialSpec->getInstantiatedFromMember()) {
       // If we've found an explicit specialization of this class template,
       // stop here and use that as the pattern.
@@ -1392,7 +1409,11 @@ Sema::InstantiateClassTemplateSpecialization(
     }
     
     Pattern = OrigPartialSpec;
-    ClassTemplateSpec->setInstantiationOf(Best->first, Best->second);
+    ClassTemplateSpec->setInstantiationOf(Best->Partial, Best->Args);
+    
+    // Report any suppressed diagnostics.
+    for (unsigned I = 0, N = Best->Diagnostics.size(); I != N; ++I)
+      Diag(Best->Diagnostics[I].first, Best->Diagnostics[I].second);
   } else {
     //   -- If no matches are found, the instantiation is generated
     //      from the primary template.

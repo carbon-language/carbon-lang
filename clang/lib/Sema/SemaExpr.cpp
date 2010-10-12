@@ -56,6 +56,24 @@ using namespace sema;
 /// referenced), false otherwise.
 ///
 bool Sema::DiagnoseUseOfDecl(NamedDecl *D, SourceLocation Loc) {
+  if (getLangOptions().CPlusPlus && isa<FunctionDecl>(D)) {
+    // If there were any diagnostics suppressed by template argument deduction,
+    // emit them now.
+    llvm::DenseMap<Decl *, llvm::SmallVector<PartialDiagnosticAt, 1> >::iterator
+      Pos = SuppressedDiagnostics.find(D->getCanonicalDecl());
+    if (Pos != SuppressedDiagnostics.end()) {
+      llvm::SmallVectorImpl<PartialDiagnosticAt> &Suppressed = Pos->second;
+      for (unsigned I = 0, N = Suppressed.size(); I != N; ++I)
+        Diag(Suppressed[I].first, Suppressed[I].second);
+      
+      // Clear out the list of suppressed diagnostics, so that we don't emit
+      // them again for this specialization. However, we don't remove this
+      // entry from the table, because we want to avoid ever emitting these
+      // diagnostics again.
+      Suppressed.clear();
+    }
+  }
+
   // See if the decl is deprecated.
   if (const DeprecatedAttr *DA = D->getAttr<DeprecatedAttr>())
     EmitDeprecationWarning(D, DA->getMessage(), Loc);
