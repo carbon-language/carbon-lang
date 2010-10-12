@@ -198,6 +198,16 @@ Sema::CheckBuiltinFunctionCall(unsigned BuiltinID, CallExpr *TheCall) {
     if (SemaBuiltinLongjmp(TheCall))
       return ExprError();
     break;
+  case Builtin::BI__builtin_constant_p:
+    if (TheCall->getNumArgs() == 0)
+      return Diag(TheCall->getLocEnd(), diag::err_typecheck_call_too_few_args)
+        << 0 /*function call*/ << 1 << 0 << TheCall->getSourceRange();
+    if (TheCall->getNumArgs() > 1)
+      return Diag(TheCall->getArg(1)->getLocStart(),
+                  diag::err_typecheck_call_too_many_args)
+        << 0 /*function call*/ << 1 << TheCall->getNumArgs()
+        << TheCall->getArg(1)->getSourceRange();
+    break;
   case Builtin::BI__sync_fetch_and_add:
   case Builtin::BI__sync_fetch_and_sub:
   case Builtin::BI__sync_fetch_and_or:

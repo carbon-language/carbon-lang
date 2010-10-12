@@ -95,3 +95,10 @@ void test14() {
 void test15(const char *s) {
   __builtin_printf("string is %s\n", s);
 }
+
+// PR7885
+int test16() {
+  return __builtin_constant_p() + // expected-error{{too few arguments}}
+         __builtin_constant_p(1, 2); // expected-error {{too many arguments}}
+}
+  
