@@ -497,9 +497,9 @@ PMTopLevelManager::PMTopLevelManager(PMDataManager *PMDM) {
 }
 
 /// Set pass P as the last user of the given analysis passes.
-void PMTopLevelManager::setLastUser(SmallVector<Pass *, 12> &AnalysisPasses,
+void PMTopLevelManager::setLastUser(SmallVectorImpl<Pass *> &AnalysisPasses,
                                     Pass *P) {
-  for (SmallVector<Pass *, 12>::iterator I = AnalysisPasses.begin(),
+  for (SmallVectorImpl<Pass *>::iterator I = AnalysisPasses.begin(),
          E = AnalysisPasses.end(); I != E; ++I) {
     Pass *AP = *I;
     LastUser[AP] = P;
@@ -520,7 +520,7 @@ void PMTopLevelManager::setLastUser(SmallVector<Pass *, 12> &AnalysisPasses,
 }
 
 /// Collect passes whose last user is P
-void PMTopLevelManager::collectLastUses(SmallVector<Pass *, 12> &LastUses,
+void PMTopLevelManager::collectLastUses(SmallVectorImpl<Pass *> &LastUses,
                                         Pass *P) {
   DenseMap<Pass *, SmallPtrSet<Pass *, 8> >::iterator DMI =
     InversedLastUser.find(P);
@@ -613,7 +613,7 @@ void PMTopLevelManager::schedulePass(Pass *P) {
 Pass *PMTopLevelManager::findAnalysisPass(AnalysisID AID) {
 
   // Check pass managers
-  for (SmallVector<PMDataManager *, 8>::iterator I = PassManagers.begin(),
+  for (SmallVectorImpl<PMDataManager *>::iterator I = PassManagers.begin(),
          E = PassManagers.end(); I != E; ++I)
     if (Pass *P = (*I)->findAnalysisPass(AID, false))
       return P;
@@ -964,8 +964,8 @@ void PMDataManager::add(Pass *P, bool ProcessAnalysis) {
 /// Populate RP with analysis pass that are required by
 /// pass P and are available. Populate RP_NotAvail with analysis
 /// pass that are required by pass P but are not available.
-void PMDataManager::collectRequiredAnalysis(SmallVector<Pass *, 8>&RP,
-                                       SmallVector<AnalysisID, 8> &RP_NotAvail,
+void PMDataManager::collectRequiredAnalysis(SmallVectorImpl<Pass *> &RP,
+                                       SmallVectorImpl<AnalysisID> &RP_NotAvail,
                                             Pass *P) {
   AnalysisUsage *AnUsage = TPM->findAnalysisUsage(P);
   const AnalysisUsage::VectorType &RequiredSet = AnUsage->getRequiredSet();
@@ -1037,7 +1037,7 @@ void PMDataManager::dumpLastUses(Pass *P, unsigned Offset) const{
 
   TPM->collectLastUses(LUses, P);
 
-  for (SmallVector<Pass *, 12>::iterator I = LUses.begin(),
+  for (SmallVectorImpl<Pass *>::iterator I = LUses.begin(),
          E = LUses.end(); I != E; ++I) {
     llvm::dbgs() << "--" << std::string(Offset*2, ' ');
     (*I)->dumpPassStructure(0);
@@ -1045,7 +1045,7 @@ void PMDataManager::dumpLastUses(Pass *P, unsigned Offset) const{
 }
 
 void PMDataManager::dumpPassArguments() const {
-  for (SmallVector<Pass *, 8>::const_iterator I = PassVector.begin(),
+  for (SmallVectorImpl<Pass *>::const_iterator I = PassVector.begin(),
         E = PassVector.end(); I != E; ++I) {
     if (PMDataManager *PMD = (*I)->getAsPMDataManager())
       PMD->dumpPassArguments();
@@ -1162,7 +1162,7 @@ Pass *PMDataManager::getOnTheFlyPass(Pass *P, AnalysisID PI, Function &F) {
 
 // Destructor
 PMDataManager::~PMDataManager() {
-  for (SmallVector<Pass *, 8>::iterator I = PassVector.begin(),
+  for (SmallVectorImpl<Pass *>::iterator I = PassVector.begin(),
          E = PassVector.end(); I != E; ++I)
     delete *I;
 }
