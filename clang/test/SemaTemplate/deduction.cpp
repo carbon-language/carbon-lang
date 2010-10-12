@@ -134,3 +134,19 @@ namespace test2 {
     f(0, p);
   }
 }
+
+// rdar://problem/8537391
+namespace test3 {
+  struct Foo {
+    template <void F(char)> static inline void foo();
+  };
+
+  class Bar {
+    template<typename T> static inline void wobble(T ch);
+
+  public:
+    static void madness() {
+      Foo::foo<wobble<char> >();
+    }
+  };
+}

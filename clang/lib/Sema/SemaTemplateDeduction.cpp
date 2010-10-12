@@ -1218,8 +1218,6 @@ Sema::SubstituteExplicitTemplateArguments(
   if (Inst)
     return TDK_InstantiationDepth;
 
-  ContextRAII SavedContext(*this, FunctionTemplate->getTemplatedDecl());
-
   if (CheckTemplateArgumentList(FunctionTemplate,
                                 SourceLocation(),
                                 ExplicitTemplateArgs,
@@ -1237,6 +1235,12 @@ Sema::SubstituteExplicitTemplateArguments(
   TemplateArgumentList *ExplicitArgumentList
     = new (Context) TemplateArgumentList(Context, Builder, /*TakeArgs=*/true);
   Info.reset(ExplicitArgumentList);
+
+  // Template argument deduction and the final substitution should be
+  // done in the context of the templated declaration.  Explicit
+  // argument substitution, on the other hand, needs to happen in the
+  // calling context.
+  ContextRAII SavedContext(*this, FunctionTemplate->getTemplatedDecl());
 
   // Instantiate the types of each of the function parameters given the
   // explicitly-specified template arguments.
