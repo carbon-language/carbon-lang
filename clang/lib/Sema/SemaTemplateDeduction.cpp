@@ -1018,7 +1018,7 @@ FinishTemplateArgumentDeduction(Sema &S,
   for (unsigned I = 0, N = Deduced.size(); I != N; ++I) {
     if (Deduced[I].isNull()) {
       Decl *Param
-      = const_cast<NamedDecl *>(
+        = const_cast<NamedDecl *>(
                                 Partial->getTemplateParameters()->getParam(I));
       Info.Param = makeTemplateParameter(Param);
       return Sema::TDK_Incomplete;
@@ -1383,13 +1383,10 @@ Sema::FinishTemplateArgumentDeduction(FunctionTemplateDecl *FunctionTemplate,
   for (unsigned I = 0, N = Deduced.size(); I != N; ++I) {
     NamedDecl *Param = FunctionTemplate->getTemplateParameters()->getParam(I);
     if (!Deduced[I].isNull()) {
-      if (I < NumExplicitlySpecified || 
-          Deduced[I].getKind() == TemplateArgument::Type) {
+      if (I < NumExplicitlySpecified) {
         // We have already fully type-checked and converted this
-        // argument (because it was explicitly-specified) or no
-        // additional checking is necessary (because it's a template
-        // type parameter). Just record the presence of this
-        // parameter.
+        // argument, because it was explicitly-specified. Just record the 
+        // presence of this argument.
         Builder.Append(Deduced[I]);
         continue;
       }
