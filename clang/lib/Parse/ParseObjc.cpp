@@ -961,7 +961,7 @@ Decl *Parser::ParseObjCMethodDecl(SourceLocation mLoc,
 
   }
 
-  // FIXME: Add support for optional parmameter list...
+  // FIXME: Add support for optional parameter list...
   // If attributes exist after the method, parse them.
   if (getLang().ObjC2 && Tok.is(tok::kw___attribute))
     MethodAttrs.reset(addAttributeLists(MethodAttrs.take(),
