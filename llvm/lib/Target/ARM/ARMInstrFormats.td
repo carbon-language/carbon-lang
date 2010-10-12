@@ -1323,7 +1323,8 @@ class ADI5<bits<4> opcod1, bits<2> opcod2, dag oops, dag iops,
   // TODO: Mark the instructions with the appropriate subtarget info.
   let Inst{27-24} = opcod1;
   let Inst{21-20} = opcod2;
-  let Inst{11-8}  = 0b1011;
+  let Inst{11-9}  = 0b101;
+  let Inst{8}     = 1;          // Double precision
 
   // 64-bit loads & stores operate on both NEON and VFP pipelines.
   let D = VFPNeonDomain;
@@ -1337,7 +1338,8 @@ class ASI5<bits<4> opcod1, bits<2> opcod2, dag oops, dag iops,
   // TODO: Mark the instructions with the appropriate subtarget info.
   let Inst{27-24} = opcod1;
   let Inst{21-20} = opcod2;
-  let Inst{11-8}  = 0b1010;
+  let Inst{11-9}  = 0b101;
+  let Inst{8}     = 0;          // Single precision
 }
 
 // VFP Load / store multiple pseudo instructions.
@@ -1358,7 +1360,8 @@ class AXDI4<dag oops, dag iops, IndexMode im, InstrItinClass itin,
           VFPLdStMulFrm, itin, asm, cstr, pattern> {
   // TODO: Mark the instructions with the appropriate subtarget info.
   let Inst{27-25} = 0b110;
-  let Inst{11-8}  = 0b1011;
+  let Inst{11-9}  = 0b101;
+  let Inst{8}     = 1;          // Double precision
 
   // 64-bit loads & stores operate on both NEON and VFP pipelines.
   let D = VFPNeonDomain;
@@ -1370,7 +1373,8 @@ class AXSI4<dag oops, dag iops, IndexMode im, InstrItinClass itin,
           VFPLdStMulFrm, itin, asm, cstr, pattern> {
   // TODO: Mark the instructions with the appropriate subtarget info.
   let Inst{27-25} = 0b110;
-  let Inst{11-8}  = 0b1010;
+  let Inst{11-9}  = 0b101;
+  let Inst{8}     = 0;          // Single precision
 }
 
 // Double precision, unary
@@ -1381,7 +1385,8 @@ class ADuI<bits<5> opcod1, bits<2> opcod2, bits<4> opcod3, bits<2> opcod4,
   let Inst{27-23} = opcod1;
   let Inst{21-20} = opcod2;
   let Inst{19-16} = opcod3;
-  let Inst{11-8}  = 0b1011;
+  let Inst{11-9}  = 0b101;
+  let Inst{8}     = 1;          // Double precision
   let Inst{7-6}   = opcod4;
   let Inst{4}     = opcod5;
 }
@@ -1393,7 +1398,8 @@ class ADbI<bits<5> opcod1, bits<2> opcod2, bit op6, bit op4, dag oops,
   : VFPAI<oops, iops, VFPBinaryFrm, itin, opc, asm, pattern> {
   let Inst{27-23} = opcod1;
   let Inst{21-20} = opcod2;
-  let Inst{11-8}  = 0b1011;
+  let Inst{11-9}  = 0b101;
+  let Inst{8}     = 1;          // Double precision
   let Inst{6}     = op6;
   let Inst{4}     = op4;
 }
@@ -1405,7 +1411,8 @@ class ADbI_vmlX<bits<5> opcod1, bits<2> opcod2, bit op6, bit op4, dag oops,
   : VFPAI<oops, iops, VFPBinaryFrm, itin, opc, asm, pattern> {
   let Inst{27-23} = opcod1;
   let Inst{21-20} = opcod2;
-  let Inst{11-8}  = 0b1011;
+  let Inst{11-9}  = 0b101;
+  let Inst{8}     = 1;          // Double precision
   let Inst{6}     = op6;
   let Inst{4}     = op4;
   list<Predicate> Predicates = [HasVFP2, UseVMLx];
@@ -1419,7 +1426,8 @@ class ASuI<bits<5> opcod1, bits<2> opcod2, bits<4> opcod3, bits<2> opcod4,
   let Inst{27-23} = opcod1;
   let Inst{21-20} = opcod2;
   let Inst{19-16} = opcod3;
-  let Inst{11-8}  = 0b1010;
+  let Inst{11-9}  = 0b101;
+  let Inst{8}     = 0;          // Single precision
   let Inst{7-6}   = opcod4;
   let Inst{4}     = opcod5;
 }
@@ -1440,7 +1448,8 @@ class ASbI<bits<5> opcod1, bits<2> opcod2, bit op6, bit op4, dag oops, dag iops,
   : VFPAI<oops, iops, VFPBinaryFrm, itin, opc, asm, pattern> {
   let Inst{27-23} = opcod1;
   let Inst{21-20} = opcod2;
-  let Inst{11-8}  = 0b1010;
+  let Inst{11-9}  = 0b101;
+  let Inst{8}     = 0;          // Single precision
   let Inst{6}     = op6;
   let Inst{4}     = op4;
 }
