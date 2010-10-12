@@ -98,6 +98,8 @@ protected:
         kNumFlags
     };
 
+    friend class SymbolFileDWARF;
+
     //------------------------------------------------------------------
     // Class specific types
     //------------------------------------------------------------------
@@ -183,6 +185,10 @@ protected:
                                 const std::vector<uint32_t> &name_symbol_indexes,
                                 uint32_t max_matches,
                                 lldb_private::VariableList& variables);
+
+
+    void
+    SetCompileUnit (SymbolFileDWARF *oso_dwarf, const lldb::CompUnitSP &cu_sp);
 
     //------------------------------------------------------------------
     // Member Variables

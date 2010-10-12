@@ -227,10 +227,10 @@ SymbolFileDWARFDebugMap::GetSymbolFileByCompUnitInfo (CompileUnitInfo *comp_unit
 //          comp_unit_info->oso_dwarf_sp.reset (oso_dwarf);
             if (comp_unit_info->oso_symbol_vendor)
             {
-                // Set a bit that lets this DWARF file know that it is being
-                // used along with a debug map and that it will have the
-                // remapped sections that we do below.
-                ((SymbolFileDWARF *)comp_unit_info->oso_symbol_vendor->GetSymbolFile())->GetFlags().Set(SymbolFileDWARF::flagsDWARFIsOSOForDebugMap);
+                // Set a a pointer to this class to set our OSO DWARF file know
+                // that the DWARF is being used along with a debug map and that
+                // it will have the remapped sections that we do below.
+                ((SymbolFileDWARF *)comp_unit_info->oso_symbol_vendor->GetSymbolFile())->SetDebugMapSymfile(this);
                 comp_unit_info->debug_map_sections_sp.reset(new SectionList);
 
                 Symtab *exe_symtab = m_obj_file->GetSymtab();
@@ -506,6 +506,10 @@ SymbolFileDWARFDebugMap::ParseCompileUnitAtIndex(uint32_t cu_idx)
                                                                                             so_symbol->GetMangled().GetName().AsCString(),
                                                                                             cu_idx,
                                                                                             eLanguageTypeUnknown));
+
+                    // Let our symbol vendor know about this compile unit
+                    m_obj_file->GetModule()->GetSymbolVendor()->SetCompileUnitAtIndex (m_compile_unit_infos[cu_idx].oso_compile_unit_sp, 
+                                                                                       cu_idx);
                 }
             }
         }
@@ -965,4 +969,25 @@ SymbolFileDWARFDebugMap::EnablePluginLogging (Stream *strm, Args &command)
     return NULL;
 }
 
+
+void
+SymbolFileDWARFDebugMap::SetCompileUnit (SymbolFileDWARF *oso_dwarf, const CompUnitSP &cu_sp)
+{
+    const uint32_t cu_count = GetNumCompileUnits();
+    for (uint32_t i=0; i<cu_count; ++i)
+    {
+        if (m_compile_unit_infos[i].oso_symbol_vendor &&
+            m_compile_unit_infos[i].oso_symbol_vendor->GetSymbolFile() == oso_dwarf)
+        {
+            if (m_compile_unit_infos[i].oso_compile_unit_sp)
+            {
+                assert (m_compile_unit_infos[i].oso_compile_unit_sp.get() == cu_sp.get());
+            }
+            else
+            {
+                m_compile_unit_infos[i].oso_compile_unit_sp = cu_sp;
+            }
+        }
+    }
+}
 

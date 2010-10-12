@@ -568,6 +568,7 @@ DWARFCompileUnit::Index
     NameToDIE& full_name_to_function_die,
     NameToDIE& method_name_to_function_die,
     NameToDIE& selector_name_to_function_die,
+    NameToDIE& objc_class_selector_dies,
     NameToDIE& name_to_global_die,
     NameToDIE& name_to_type_die,
     const DWARFDebugRanges *debug_ranges,
@@ -786,6 +787,12 @@ DWARFCompileUnit::Index
                             const char *method_name = strchr (name, ' ');
                             if (method_name)
                             {
+                                ConstString class_name (name + 2, method_name - name - 2);
+                                
+                                // Keep a map of the objective C class name to all selector
+                                // DIEs
+                                objc_class_selector_dies.Insert(class_name, die_info);
+                                
                                 // Skip the space
                                 ++method_name;
                                 // Extract the objective C basename and add it to the

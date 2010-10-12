@@ -138,6 +138,7 @@ public:
            NameToDIE& full_name_to_function_die,
            NameToDIE& method_name_to_function_die,
            NameToDIE& selector_name_to_function_die,
+           NameToDIE& objc_class_selector_dies,
            NameToDIE& name_to_global_die,
            NameToDIE& name_to_type_die,
            const DWARFDebugRanges* debug_ranges,

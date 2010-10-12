@@ -96,8 +96,7 @@ SymbolVendor::AddSymbolFileRepresendation(ObjectFile *obj_file)
 }
 
 bool
-SymbolVendor::SetCompileUnitAtIndex
-(CompUnitSP& cu, uint32_t idx)
+SymbolVendor::SetCompileUnitAtIndex (CompUnitSP& cu, uint32_t idx)
 {
     Mutex::Locker locker(m_mutex);
     const uint32_t num_compile_units = GetNumCompileUnits();

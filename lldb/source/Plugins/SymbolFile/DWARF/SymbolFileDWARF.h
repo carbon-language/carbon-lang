@@ -49,6 +49,7 @@ class DWARFDebugPubnames;
 class DWARFDebugRanges;
 class DWARFDIECollection;
 class DWARFFormValue;
+class SymbolFileDWARFDebugMap;
 
 class SymbolFileDWARF : public lldb_private::SymbolFile
 {
@@ -196,9 +197,6 @@ protected:
         flagsGotDebugPubTypesData   = (1 << 8),
         flagsGotDebugRangesData     = (1 << 9),
         flagsGotDebugStrData        = (1 << 10),
-        // True if this is a .o file used when resolving a N_OSO entry with
-        // debug maps.
-        flagsDWARFIsOSOForDebugMap  = (1 << 16)
     };
 
     DISALLOW_COPY_AND_ASSIGN (SymbolFileDWARF);
@@ -288,6 +286,12 @@ protected:
 
     void                    Index();
 
+    void                    SetDebugMapSymfile (SymbolFileDWARFDebugMap *debug_map_symfile)
+                            {
+                                m_debug_map_symfile = debug_map_symfile;
+                            }
+
+    SymbolFileDWARFDebugMap*        m_debug_map_symfile;
     lldb_private::Flags             m_flags;
     lldb_private::DataExtractor     m_dwarf_data; 
     lldb_private::DataExtractor     m_data_debug_abbrev;
@@ -308,6 +312,7 @@ protected:
     NameToDIE                           m_function_fullname_index;  // All concrete functions
     NameToDIE                           m_function_method_index;    // All inlined functions
     NameToDIE                           m_function_selector_index;  // All method names for functions of classes
+    NameToDIE                           m_objc_class_selectors_index; // Given a class name, find all selectors for the class
     NameToDIE                           m_global_index;             // Global and static variables
     NameToDIE                           m_types_index;              // All type DIE offsets
     bool m_indexed;

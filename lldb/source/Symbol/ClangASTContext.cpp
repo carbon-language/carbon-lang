@@ -1559,12 +1559,22 @@ ClangASTContext::AddMethodToObjCObjectType
         return NULL;
     llvm::SmallVector<IdentifierInfo *, 12> selector_idents;
 
-    size_t len;
+    size_t len = 0;
     const char *start;
-    for (start = selector_start, len = ::strcspn(start, ":]");
+    //printf ("name = '%s'\n", name);
+
+    unsigned num_selectors_with_args = 0;
+    for (start = selector_start;
          start && *start != '\0' && *start != ']';
-         start += len + 1)
+         start += len)
     {
+        len = ::strcspn(start, ":]");
+        if (start[len] == ':')
+        {
+            ++num_selectors_with_args;
+            len += 1;
+        }
+        //printf ("@selector[%zu] = '%.*s'\n", selector_idents.size(), (int)len, start);
         selector_idents.push_back (&identifier_table->get (StringRef (start, len)));
     }
 
@@ -1572,7 +1582,7 @@ ClangASTContext::AddMethodToObjCObjectType
     if (selector_idents.size() == 0)
         return 0;
 
-    clang::Selector method_selector = ast_context->Selectors.getSelector (selector_idents.size(),
+    clang::Selector method_selector = ast_context->Selectors.getSelector (num_selectors_with_args ? selector_idents.size() : 0, 
                                                                           selector_idents.data());
     
     QualType method_qual_type (QualType::getFromOpaquePtr (method_opaque_type));

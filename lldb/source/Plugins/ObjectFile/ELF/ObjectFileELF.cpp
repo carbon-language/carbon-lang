@@ -225,13 +225,13 @@ ObjectFileELF::ParseDependentModules()
     // Locate the dynamic table.
     user_id_t dynsym_id = 0;
     user_id_t dynstr_id = 0;
-    for (SectionHeaderCollIter I = m_section_headers.begin();
-         I != m_section_headers.end(); ++I)
+    for (SectionHeaderCollIter sh_pos = m_section_headers.begin();
+         sh_pos != m_section_headers.end(); ++sh_pos)
     {
-        if (I->sh_type == SHT_DYNAMIC)
+        if (sh_pos->sh_type == SHT_DYNAMIC)
         {
-            dynsym_id = SectionIndex(I);
-            dynstr_id = I->sh_link + 1; // Section ID's are 1 based.
+            dynsym_id = SectionIndex(sh_pos);
+            dynstr_id = sh_pos->sh_link + 1; // Section ID's are 1 based.
             break;
         }
     }

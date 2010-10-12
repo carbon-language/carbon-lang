@@ -49,6 +49,7 @@
 #include "DWARFFormValue.h"
 #include "DWARFLocationList.h"
 #include "LogChannelDWARF.h"
+#include "SymbolFileDWARFDebugMap.h"
 
 #include <map>
 
@@ -141,8 +142,9 @@ GetParentSymbolContextDIE(const DWARFDebugInfoEntry *child_die)
 }
 
 
-SymbolFileDWARF::SymbolFileDWARF(ObjectFile* ofile) :
-    SymbolFile(ofile),
+SymbolFileDWARF::SymbolFileDWARF(ObjectFile* objfile) :
+    SymbolFile (objfile),
+    m_debug_map_symfile (NULL),
     m_flags(),
     m_data_debug_abbrev(),
     m_data_debug_frame(),
@@ -159,6 +161,7 @@ SymbolFileDWARF::SymbolFileDWARF(ObjectFile* ofile) :
     m_function_fullname_index(),
     m_function_method_index(),
     m_function_selector_index(),
+    m_objc_class_selectors_index(),
     m_global_index(),
     m_types_index(),
     m_indexed(false),
@@ -906,7 +909,7 @@ SymbolFileDWARF::ParseCompileUnitLineTable (const SymbolContext &sc)
             std::auto_ptr<LineTable> line_table_ap(new LineTable(sc.comp_unit));
             if (line_table_ap.get())
             {
-                ParseDWARFLineTableCallbackInfo info = { line_table_ap.get(), m_obj_file->GetSectionList(), 0, 0, m_flags.IsSet (flagsDWARFIsOSOForDebugMap), false};
+                ParseDWARFLineTableCallbackInfo info = { line_table_ap.get(), m_obj_file->GetSectionList(), 0, 0, m_debug_map_symfile != NULL, false};
                 uint32_t offset = cu_line_offset;
                 DWARFDebugLine::ParseStatementTable(get_debug_line_data(), &offset, ParseDWARFLineTableCallback, &info);
                 sc.comp_unit->SetLineTable(line_table_ap.release());
@@ -1257,7 +1260,9 @@ SymbolFileDWARF::ResolveClangOpaqueTypeDefinition (lldb::clang_type_t clang_type
     if (die == NULL)
         return NULL;
 
-    DWARFCompileUnit *cu = DebugInfo()->GetCompileUnitContainingDIE (die->GetOffset()).get();
+    DWARFDebugInfo* debug_info = DebugInfo();
+
+    DWARFCompileUnit *cu = debug_info->GetCompileUnitContainingDIE (die->GetOffset()).get();
     Type *type = m_die_to_type.lookup (die);
 
     const dw_tag_t tag = die->Tag();
@@ -1277,7 +1282,8 @@ SymbolFileDWARF::ResolveClangOpaqueTypeDefinition (lldb::clang_type_t clang_type
         if (die->HasChildren())
         {
             LanguageType class_language = eLanguageTypeUnknown;
-            if (ClangASTContext::IsObjCClassType (clang_type))
+            bool is_objc_class = ClangASTContext::IsObjCClassType (clang_type);
+            if (is_objc_class)
                 class_language = eLanguageTypeObjC;
 
             int tag_decl_kind = -1;
@@ -1323,6 +1329,34 @@ SymbolFileDWARF::ResolveClangOpaqueTypeDefinition (lldb::clang_type_t clang_type
                 for (size_t i=0; i<num_functions; ++i)
                 {
                     ResolveType(cu, member_function_dies.GetDIEPtrAtIndex(i));
+                }
+            }
+            
+            if (class_language == eLanguageTypeObjC)
+            {
+                std::string class_str (ClangASTContext::GetTypeName (clang_type));
+                if (!class_str.empty())
+                {
+                
+                    ConstString class_name (class_str.c_str());
+                    std::vector<NameToDIE::Info> method_die_infos;
+                    if (m_objc_class_selectors_index.Find (class_name, method_die_infos))
+                    {
+                        DWARFCompileUnit* method_cu = NULL;
+                        DWARFCompileUnit* prev_method_cu = NULL;
+                        const size_t num_objc_methods = method_die_infos.size();
+                        for (size_t i=0;i<num_objc_methods; ++i, prev_method_cu = method_cu)
+                        {
+                            method_cu = debug_info->GetCompileUnitAtIndex(method_die_infos[i].cu_idx);
+                            
+                            if (method_cu != prev_method_cu)
+                                method_cu->ExtractDIEsIfNeeded (false);
+
+                            DWARFDebugInfoEntry *method_die = method_cu->GetDIEAtIndexUnchecked(method_die_infos[i].die_idx);
+                            
+                            ResolveType (method_cu, method_die);
+                        }
+                    }
                 }
             }
             
@@ -1412,6 +1446,9 @@ SymbolFileDWARF::GetCompUnitForDWARFCompUnit (DWARFCompileUnit* cu, uint32_t cu_
                 DebugInfo()->GetCompileUnit(cu->GetOffset(), &cu_idx);
 
             m_obj_file->GetModule()->GetSymbolVendor()->SetCompileUnitAtIndex(dc_cu, cu_idx);
+            
+            if (m_debug_map_symfile)
+                m_debug_map_symfile->SetCompileUnit(this, dc_cu);
         }
     }
     return (CompileUnit*)cu->GetUserData();
@@ -1673,6 +1710,7 @@ SymbolFileDWARF::Index ()
                        m_function_fullname_index,
                        m_function_method_index,
                        m_function_selector_index,
+                       m_objc_class_selectors_index,
                        m_global_index, 
                        m_types_index,
                        DebugRanges(),
@@ -1686,13 +1724,14 @@ SymbolFileDWARF::Index ()
         
         m_aranges->Sort();
 
-#if 0        
+#if 0
         StreamFile s(stdout);
         s.Printf("DWARF index for '%s':", GetObjectFile()->GetFileSpec().GetFilename().AsCString());
         s.Printf("\nFunction basenames:\n");    m_function_basename_index.Dump (&s);
         s.Printf("\nFunction fullnames:\n");    m_function_fullname_index.Dump (&s);
         s.Printf("\nFunction methods:\n");      m_function_method_index.Dump (&s);
         s.Printf("\nFunction selectors:\n");    m_function_selector_index.Dump (&s);
+        s.Printf("\nObjective C class selectors:\n");    m_objc_class_selectors_index.Dump (&s);
         s.Printf("\nGlobals and statics:\n");   m_global_index.Dump (&s); 
         s.Printf("\nTypes:\n");                 m_types_index.Dump (&s);
 #endif
@@ -2975,9 +3014,10 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                                             for (uint32_t i=0; i<match_count; ++i)
                                             {
                                                 Type *type = types.GetTypeAtIndex (i).get();
-                                                if (ClangASTContext::IsObjCClassType (type->GetClangType()))
+                                                clang_type_t type_clang_forward_type = type->GetClangForwardType();
+                                                if (ClangASTContext::IsObjCClassType (type_clang_forward_type))
                                                 {
-                                                    class_opaque_type = type->GetClangType();
+                                                    class_opaque_type = type_clang_forward_type;
                                                     break;
                                                 }
                                             }
@@ -3216,6 +3256,10 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                 {
                     // We are ready to put this type into the uniqued list up at the module level
                     TypeSP uniqued_type_sp(m_obj_file->GetModule()->GetTypeList()->InsertUnique(type_sp));
+                    
+                    if (m_debug_map_symfile)
+                        m_debug_map_symfile->GetObjectFile()->GetModule()->GetTypeList()->InsertUnique (uniqued_type_sp);
+
                     type_sp = uniqued_type_sp;
                     m_die_to_type[die] = type_sp.get();
                 }
