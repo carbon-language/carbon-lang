@@ -70,6 +70,25 @@ entry:
   ret float %mul
 }
 
+define double @f9(double %a, double %b) nounwind readnone {
+entry:
+; CHECK: f9
+; CHECK: vnmul.f64 d16, d17, d16  @ encoding: [0xe0,0x0b,0x61,0xee]
+  %mul = fmul double %a, %b
+  %sub = fsub double -0.000000e+00, %mul
+  ret double %sub
+}
+
+define void @f10(float %a, float %b, float* %c) nounwind readnone {
+entry:
+; CHECK: f10
+; CHECK: vnmul.f32 s0, s1, s0  @ encoding: [0xc0,0x0a,0x20,0xee]
+  %mul = fmul float %a, %b
+  %sub = fsub float -0.000000e+00, %mul
+  store float %sub, float* %c, align 4
+  ret void
+}
+
 define i1 @f100(double %a, double %b) nounwind readnone {
 entry:
 ; CHECK: f100

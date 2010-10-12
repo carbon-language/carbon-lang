@@ -239,13 +239,15 @@ def VMULS  : ASbIn_Encode<0b11100, 0b10, 0, 0,
                           IIC_fpMUL32, "vmul", ".f32\t$Sd, $Sn, $Sm",
                           [(set SPR:$Sd, (fmul SPR:$Sn, SPR:$Sm))]>;
 
-def VNMULD  : ADbI<0b11100, 0b10, 1, 0, (outs DPR:$dst), (ins DPR:$a, DPR:$b),
-                  IIC_fpMUL64, "vnmul", ".f64\t$dst, $a, $b",
-                  [(set DPR:$dst, (fneg (fmul DPR:$a, (f64 DPR:$b))))]>;
+def VNMULD : ADbI_Encode<0b11100, 0b10, 1, 0,
+                         (outs DPR:$Dd), (ins DPR:$Dn, DPR:$Dm),
+                         IIC_fpMUL64, "vnmul", ".f64\t$Dd, $Dn, $Dm",
+                         [(set DPR:$Dd, (fneg (fmul DPR:$Dn, (f64 DPR:$Dm))))]>;
 
-def VNMULS  : ASbI<0b11100, 0b10, 1, 0, (outs SPR:$dst), (ins SPR:$a, SPR:$b),
-                  IIC_fpMUL32, "vnmul", ".f32\t$dst, $a, $b",
-                  [(set SPR:$dst, (fneg (fmul SPR:$a, SPR:$b)))]>;
+def VNMULS : ASbI_Encode<0b11100, 0b10, 1, 0,
+                         (outs SPR:$Sd), (ins SPR:$Sn, SPR:$Sm),
+                         IIC_fpMUL32, "vnmul", ".f32\t$Sd, $Sn, $Sm",
+                         [(set SPR:$Sd, (fneg (fmul SPR:$Sn, SPR:$Sm)))]>;
 
 // Match reassociated forms only if not sign dependent rounding.
 def : Pat<(fmul (fneg DPR:$a), (f64 DPR:$b)),
