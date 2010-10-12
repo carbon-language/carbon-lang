@@ -78,6 +78,17 @@ def VASTART_SAVE_XMM_REGS : I<0, Pseudo,
                                                          imm:$regsavefi,
                                                          imm:$offset)]>;
 
+// The VAARG_64 pseudo-instruction takes the address of the va_list,
+// and places the address of the next argument into a register.
+let Defs = [EFLAGS] in
+def VAARG_64 : I<0, Pseudo,
+                 (outs GR64:$dst),
+                 (ins i8mem:$ap, i32imm:$size, i8imm:$mode, i32imm:$align),
+                 "#VAARG_64 $dst, $ap, $size, $mode, $align",
+                 [(set GR64:$dst,
+                    (X86vaarg64 addr:$ap, imm:$size, imm:$mode, imm:$align)),
+                  (implicit EFLAGS)]>;
+
 // Dynamic stack allocation yields _alloca call for Cygwin/Mingw targets.  Calls
 // to _alloca is needed to probe the stack when allocating more than 4k bytes in
 // one go. Touching the stack at 4K increments is necessary to ensure that the

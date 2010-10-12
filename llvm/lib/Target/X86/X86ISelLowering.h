@@ -310,7 +310,11 @@ namespace llvm {
       /// slots. This corresponds to the X86::FST32m / X86::FST64m. It takes a
       /// chain operand, value to store, address, and a ValueType to store it
       /// as.
-      FST
+      FST,
+
+      /// VAARG_64 - This instruction grabs the address of the next argument
+      /// from a va_list. (reads and modifies the va_list in memory)
+      VAARG_64
       
       // WARNING: Do not add anything in the end unless you want the node to
       // have memop! In fact, starting from ATOMADD64_DAG all opcodes will be
@@ -852,6 +856,11 @@ namespace llvm {
     MachineBasicBlock *EmitAtomicMinMaxWithCustomInserter(MachineInstr *BInstr,
                                                           MachineBasicBlock *BB,
                                                         unsigned cmovOpc) const;
+
+    // Utility function to emit the low-level va_arg code for X86-64.
+    MachineBasicBlock *EmitVAARG64WithCustomInserter(
+                       MachineInstr *MI,
+                       MachineBasicBlock *MBB) const;
 
     /// Utility function to emit the xmm reg save portion of va_start.
     MachineBasicBlock *EmitVAStartSaveXMMRegsWithCustomInserter(
