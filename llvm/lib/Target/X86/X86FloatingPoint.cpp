@@ -167,7 +167,8 @@ namespace {
 
     /// getStackEntry - Return the X86::FP<n> register in register ST(i).
     unsigned getStackEntry(unsigned STi) const {
-      assert(STi < StackTop && "Access past stack top!");
+      if (STi >= StackTop)
+        report_fatal_error("Access past stack top!");
       return Stack[StackTop-1-STi];
     }
 
@@ -180,7 +181,8 @@ namespace {
     // pushReg - Push the specified FP<n> register onto the stack.
     void pushReg(unsigned Reg) {
       assert(Reg < 8 && "Register number out of range!");
-      assert(StackTop < 8 && "Stack overflow!");
+      if (StackTop >= 8)
+        report_fatal_error("Stack overflow!");
       Stack[StackTop] = Reg;
       RegMap[Reg] = StackTop++;
     }
@@ -197,7 +199,8 @@ namespace {
       std::swap(RegMap[RegNo], RegMap[RegOnTop]);
 
       // Swap stack slot contents.
-      assert(RegMap[RegOnTop] < StackTop);
+      if (RegMap[RegOnTop] >= StackTop)
+        report_fatal_error("Access past stack top!");
       std::swap(Stack[RegMap[RegOnTop]], Stack[StackTop-1]);
 
       // Emit an fxch to update the runtime processors version of the state.
@@ -824,7 +827,8 @@ void FPS::popStackAfter(MachineBasicBlock::iterator &I) {
   MachineInstr* MI = I;
   DebugLoc dl = MI->getDebugLoc();
   ASSERT_SORTED(PopTable);
-  assert(StackTop > 0 && "Cannot pop empty stack!");
+  if (StackTop == 0)
+    report_fatal_error("Cannot pop empty stack!");
   RegMap[Stack[--StackTop]] = ~0;     // Update state
 
   // Check to see if there is a popping version of this instruction...
@@ -1016,7 +1020,8 @@ void FPS::handleOneArgFP(MachineBasicBlock::iterator &I) {
       MI->getOpcode() == X86::ISTT_FP32m ||
       MI->getOpcode() == X86::ISTT_FP64m ||
       MI->getOpcode() == X86::ST_FP80m) {
-    assert(StackTop > 0 && "Stack empty??");
+    if (StackTop == 0)
+      report_fatal_error("Stack empty??");
     --StackTop;
   } else if (KillsSrc) { // Last use of operand?
     popStackAfter(I);
@@ -1047,7 +1052,8 @@ void FPS::handleOneArgFPRW(MachineBasicBlock::iterator &I) {
     // If this is the last use of the source register, just make sure it's on
     // the top of the stack.
     moveToTop(Reg, I);
-    assert(StackTop > 0 && "Stack cannot be empty!");
+    if (StackTop == 0)
+      report_fatal_error("Stack cannot be empty!");
     --StackTop;
     pushReg(getFPReg(MI->getOperand(0)));
   } else {
@@ -1341,7 +1347,8 @@ void FPS::handleSpecialFP(MachineBasicBlock::iterator &I) {
     std::swap(RegMap[RegNo], RegMap[RegOnTop]);
     
     // Swap stack slot contents.
-    assert(RegMap[RegOnTop] < StackTop);
+    if (RegMap[RegOnTop] >= StackTop)
+      report_fatal_error("Access past stack top!");
     std::swap(Stack[RegMap[RegOnTop]], Stack[StackTop-1]);
     break;
   }
