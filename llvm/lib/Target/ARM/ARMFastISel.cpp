@@ -137,8 +137,6 @@ class ARMFastISel : public FastISel {
     bool isLoadTypeLegal(const Type *Ty, EVT &VT);
     bool ARMEmitLoad(EVT VT, unsigned &ResultReg, unsigned Reg, int Offset);
     bool ARMEmitStore(EVT VT, unsigned SrcReg, unsigned Reg, int Offset);
-    bool ARMLoadAlloca(const Instruction *I, EVT VT);
-    bool ARMStoreAlloca(const Instruction *I, unsigned SrcReg, EVT VT);
     bool ARMComputeRegOffset(const Value *Obj, unsigned &Reg, int &Offset);
     unsigned ARMMaterializeFP(const ConstantFP *CFP, EVT VT);
     unsigned ARMMaterializeInt(const Constant *C, EVT VT);
@@ -605,6 +603,14 @@ bool ARMFastISel::ARMComputeRegOffset(const Value *Obj, unsigned &Reg,
       break;
     }
     case Instruction::Alloca: {
+      const AllocaInst *AI = cast<AllocaInst>(Obj);
+      DenseMap<const AllocaInst*, int>::iterator SI =
+        FuncInfo.StaticAllocaMap.find(AI);
+      if (SI != FuncInfo.StaticAllocaMap.end()) {
+        Reg = ARM::SP;
+        Offset = SI->second;
+        return true;
+      }
       // Don't handle dynamic allocas.
       assert(!FuncInfo.StaticAllocaMap.count(cast<AllocaInst>(Obj)) &&
              "Alloca should have been handled earlier!");
@@ -644,30 +650,6 @@ bool ARMFastISel::ARMComputeRegOffset(const Value *Obj, unsigned &Reg,
     }
   }
   return true;
-}
-
-bool ARMFastISel::ARMLoadAlloca(const Instruction *I, EVT VT) {
-  Value *Op0 = I->getOperand(0);
-
-  // Promote load/store types.
-  if (VT == MVT::i8 || VT == MVT::i16) VT = MVT::i32;
-
-  // Verify it's an alloca.
-  if (const AllocaInst *AI = dyn_cast<AllocaInst>(Op0)) {
-    DenseMap<const AllocaInst*, int>::iterator SI =
-      FuncInfo.StaticAllocaMap.find(AI);
-
-    if (SI != FuncInfo.StaticAllocaMap.end()) {
-      TargetRegisterClass* RC = TLI.getRegClassFor(VT);
-      unsigned ResultReg = createResultReg(RC);
-      TII.loadRegFromStackSlot(*FuncInfo.MBB, *FuncInfo.InsertPt,
-                               ResultReg, SI->second, RC,
-                               TM.getRegisterInfo());
-      UpdateValueMap(I, ResultReg);
-      return true;
-    }
-  }
-  return false;
 }
 
 bool ARMFastISel::ARMEmitLoad(EVT VT, unsigned &ResultReg,
@@ -711,11 +693,16 @@ bool ARMFastISel::ARMEmitLoad(EVT VT, unsigned &ResultReg,
 
   // For now with the additions above the offset should be zero - thus we
   // can always fit into an i8.
-  assert(Offset == 0 && "Offset not zero!");
+  assert((Reg == ARM::SP || Offset == 0) &&
+          "Offset not zero and not a stack load!");
 
+  if (Reg == ARM::SP)
+    TII.loadRegFromStackSlot(*FuncInfo.MBB, *FuncInfo.InsertPt,
+                             ResultReg, Offset, RC,
+                             TM.getRegisterInfo());
   // The thumb and floating point instructions both take 2 operands, ARM takes
   // another register.
-  if (isFloat || isThumb)
+  else if (isFloat || isThumb)
     AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
                             TII.get(Opc), ResultReg)
                     .addReg(Reg).addImm(Offset));
@@ -732,11 +719,6 @@ bool ARMFastISel::SelectLoad(const Instruction *I) {
   if (!isLoadTypeLegal(I->getType(), VT))
     return false;
 
-  // If we're an alloca we know we have a frame index and can emit the load
-  // directly in short order.
-  if (ARMLoadAlloca(I, VT))
-    return true;
-
   // Our register and offset with innocuous defaults.
   unsigned Reg = 0;
   int Offset = 0;
@@ -752,38 +734,23 @@ bool ARMFastISel::SelectLoad(const Instruction *I) {
   return true;
 }
 
-bool ARMFastISel::ARMStoreAlloca(const Instruction *I, unsigned SrcReg, EVT VT){
-  Value *Op1 = I->getOperand(1);
-
-  // Promote load/store types.
-  if (VT == MVT::i8 || VT == MVT::i16) VT = MVT::i32;
-
-  // Verify it's an alloca.
-  if (const AllocaInst *AI = dyn_cast<AllocaInst>(Op1)) {
-    DenseMap<const AllocaInst*, int>::iterator SI =
-      FuncInfo.StaticAllocaMap.find(AI);
-
-    if (SI != FuncInfo.StaticAllocaMap.end()) {
-      TargetRegisterClass* RC = TLI.getRegClassFor(VT);
-      assert(SrcReg != 0 && "Nothing to store!");
-      TII.storeRegToStackSlot(*FuncInfo.MBB, *FuncInfo.InsertPt,
-                              SrcReg, true /*isKill*/, SI->second, RC,
-                              TM.getRegisterInfo());
-      return true;
-    }
-  }
-  return false;
-}
-
 bool ARMFastISel::ARMEmitStore(EVT VT, unsigned SrcReg,
                                unsigned DstReg, int Offset) {
   unsigned StrOpc;
   bool isFloat = false;
+  // VT is set here only for use in the alloca stores below - those are promoted
+  // to reg size always.
   switch (VT.getSimpleVT().SimpleTy) {
     default: return false;
     case MVT::i1:
-    case MVT::i8: StrOpc = isThumb ? ARM::t2STRBi8 : ARM::STRB; break;
-    case MVT::i16: StrOpc = isThumb ? ARM::t2STRHi8 : ARM::STRH; break;
+    case MVT::i8: 
+      VT = MVT::i32;
+      StrOpc = isThumb ? ARM::t2STRBi8 : ARM::STRB;
+      break;
+    case MVT::i16:
+      VT = MVT::i32;
+      StrOpc = isThumb ? ARM::t2STRHi8 : ARM::STRH;
+      break;
     case MVT::i32: StrOpc = isThumb ? ARM::t2STRi8 : ARM::STR; break;
     case MVT::f32:
       if (!Subtarget->hasVFP2()) return false;
@@ -797,6 +764,10 @@ bool ARMFastISel::ARMEmitStore(EVT VT, unsigned SrcReg,
       break;
   }
 
+  if (SrcReg == ARM::SP)
+    TII.storeRegToStackSlot(*FuncInfo.MBB, *FuncInfo.InsertPt,
+                            SrcReg, true /*isKill*/, Offset,
+                            TLI.getRegClassFor(VT), TM.getRegisterInfo());
   // The thumb addressing mode has operands swapped from the arm addressing
   // mode, the floating point one only has two operands.
   if (isFloat || isThumb)
@@ -824,11 +795,6 @@ bool ARMFastISel::SelectStore(const Instruction *I) {
   SrcReg = getRegForValue(Op0);
   if (SrcReg == 0)
     return false;
-
-  // If we're an alloca we know we have a frame index and can emit the store
-  // quickly.
-  if (ARMStoreAlloca(I, SrcReg, VT))
-    return true;
 
   // Our register and offset with innocuous defaults.
   unsigned Reg = 0;
