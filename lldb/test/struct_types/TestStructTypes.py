@@ -24,21 +24,30 @@ class StructTypesTestCase(TestBase):
         self.buildDwarf()
         self.struct_types()
 
+    def setUp(self):
+        super(StructTypesTestCase, self).setUp()
+        # Find the line number to break for main.c.
+        self.line = line_number('main.c', '// Set break point at this line.')
+        self.first_executable_line = line_number('main.c',
+                                                 '// This is the first executable statement.')
+
     def struct_types(self):
         """Test that break on a struct declaration has no effect."""
         exe = os.path.join(os.getcwd(), "a.out")
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 
-        # Break on the ctor function of class C.
-        self.expect("breakpoint set -f main.c -l 14", BREAKPOINT_CREATED,
-            startstr = "Breakpoint created: 1: file ='main.c', line = 14, locations = 1")
+        # Break on the struct declration statement in main.c.
+        self.expect("breakpoint set -f main.c -l %d" % self.line,
+                    BREAKPOINT_CREATED,
+            startstr = "Breakpoint created: 1: file ='main.c', line = %d, locations = 1" %
+                        self.line)
 
         self.runCmd("run", RUN_SUCCEEDED)
 
         # We should be stopped on the first executable statement within the
         # function where the original breakpoint was attempted.
         self.expect("thread backtrace", STOPPED_DUE_TO_BREAKPOINT,
-            substrs = ['main.c:20',
+            substrs = ['main.c:%d' % self.first_executable_line,
                        'stop reason = breakpoint'])
 
         # The breakpoint should have a hit count of 1.
