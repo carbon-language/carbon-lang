@@ -2243,11 +2243,18 @@ ProcessGDBRemote::GetDispatchQueueNameForThread
         // to look it up
         if (m_dispatch_queue_offsets_addr == LLDB_INVALID_ADDRESS)
         {
+            static ConstString g_dispatch_queue_offsets_symbol_name ("dispatch_queue_offsets");
+            const Symbol *dispatch_queue_offsets_symbol = NULL;
             ModuleSP module_sp(GetTarget().GetImages().FindFirstModuleForFileSpec (FileSpec("libSystem.B.dylib")));
-            if (module_sp.get() == NULL)
-                return NULL;
-
-            const Symbol *dispatch_queue_offsets_symbol = module_sp->FindFirstSymbolWithNameAndType (ConstString("dispatch_queue_offsets"), eSymbolTypeData);
+            if (module_sp)
+                dispatch_queue_offsets_symbol = module_sp->FindFirstSymbolWithNameAndType (g_dispatch_queue_offsets_symbol_name, eSymbolTypeData);
+            
+            if (dispatch_queue_offsets_symbol == NULL)
+            {
+                module_sp = GetTarget().GetImages().FindFirstModuleForFileSpec (FileSpec("libdispatch.dylib"));
+                if (module_sp)
+                    dispatch_queue_offsets_symbol = module_sp->FindFirstSymbolWithNameAndType (g_dispatch_queue_offsets_symbol_name, eSymbolTypeData);
+            }
             if (dispatch_queue_offsets_symbol)
                 m_dispatch_queue_offsets_addr = dispatch_queue_offsets_symbol->GetValue().GetLoadAddress(&m_target);
 

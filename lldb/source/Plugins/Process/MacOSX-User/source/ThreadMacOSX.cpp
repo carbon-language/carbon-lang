@@ -107,13 +107,20 @@ ThreadMacOSX::GetDispatchQueueName()
             return NULL;
 
         uint8_t memory_buffer[8];
+        addr_t dispatch_queue_offsets_addr = LLDB_INVALID_ADDRESS;
         DataExtractor data(memory_buffer, sizeof(memory_buffer), m_process.GetByteOrder(), m_process.GetAddressByteSize());
+        static ConstString g_dispatch_queue_offsets_symbol_name ("dispatch_queue_offsets");
+        const Symbol *dispatch_queue_offsets_symbol = NULL;
         ModuleSP module_sp(m_process.GetTarget().GetImages().FindFirstModuleForFileSpec (FileSpec("libSystem.B.dylib")));
-        if (module_sp.get() == NULL)
-            return NULL;
-
-        lldb::addr_t dispatch_queue_offsets_addr = LLDB_INVALID_ADDRESS;
-        const Symbol *dispatch_queue_offsets_symbol = module_sp->FindFirstSymbolWithNameAndType (ConstString("dispatch_queue_offsets"), eSymbolTypeData);
+        if (module_sp)
+            dispatch_queue_offsets_symbol = module_sp->FindFirstSymbolWithNameAndType (g_dispatch_queue_offsets_symbol_name, eSymbolTypeData);
+        
+        if (dispatch_queue_offsets_symbol == NULL)
+        {
+            module_sp = m_process.GetTarget().GetImages().FindFirstModuleForFileSpec (FileSpec("libdispatch.dylib"));
+            if (module_sp)
+                dispatch_queue_offsets_symbol = module_sp->FindFirstSymbolWithNameAndType (g_dispatch_queue_offsets_symbol_name, eSymbolTypeData);
+        }
         if (dispatch_queue_offsets_symbol)
             dispatch_queue_offsets_addr = dispatch_queue_offsets_symbol->GetValue().GetLoadAddress(&m_process.GetTarget());
 
