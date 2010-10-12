@@ -251,8 +251,7 @@ void X86MCCodeEmitter::EmitMemModRMByte(const MCInst &MI, unsigned Op,
     // movq loads are handled with a special relocation form which allows the
     // linker to eliminate some loads for GOT references which end up in the
     // same linkage unit.
-    if (MI.getOpcode() == X86::MOV64rm ||
-        MI.getOpcode() == X86::MOV64rm_TC)
+    if (MI.getOpcode() == X86::MOV64rm)
       FixupKind = X86::reloc_riprel_4byte_movq_load;
 
     // rip-relative addressing is actually relative to the *next* instruction.

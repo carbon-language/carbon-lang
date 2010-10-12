@@ -285,7 +285,6 @@ X86InstrInfo::X86InstrInfo(X86TargetMachine &tm)
     { X86::MOV16rr,     X86::MOV16mr, 0, 0 },
     { X86::MOV32ri,     X86::MOV32mi, 0, 0 },
     { X86::MOV32rr,     X86::MOV32mr, 0, 0 },
-    { X86::MOV32rr_TC,  X86::MOV32mr_TC, 0, 0 },
     { X86::MOV64ri32,   X86::MOV64mi32, 0, 0 },
     { X86::MOV64rr,     X86::MOV64mr, 0, 0 },
     { X86::MOV8ri,      X86::MOV8mi, 0, 0 },
@@ -400,7 +399,6 @@ X86InstrInfo::X86InstrInfo(X86TargetMachine &tm)
     { X86::Int_UCOMISSrr,   X86::Int_UCOMISSrm, 0 },
     { X86::MOV16rr,         X86::MOV16rm, 0 },
     { X86::MOV32rr,         X86::MOV32rm, 0 },
-    { X86::MOV32rr_TC,      X86::MOV32rm_TC, 0 },
     { X86::MOV64rr,         X86::MOV64rm, 0 },
     { X86::MOV64toPQIrr,    X86::MOVQI2PQIrm, 0 },
     { X86::MOV64toSDrr,     X86::MOV64toSDrm, 0 },
@@ -774,9 +772,7 @@ static bool isFrameLoadOpcode(int Opcode) {
   case X86::MOV8rm:
   case X86::MOV16rm:
   case X86::MOV32rm:
-  case X86::MOV32rm_TC:
   case X86::MOV64rm:
-  case X86::MOV64rm_TC:
   case X86::LD_Fp64m:
   case X86::MOVSSrm:
   case X86::MOVSDrm:
@@ -797,9 +793,7 @@ static bool isFrameStoreOpcode(int Opcode) {
   case X86::MOV8mr:
   case X86::MOV16mr:
   case X86::MOV32mr:
-  case X86::MOV32mr_TC:
   case X86::MOV64mr:
-  case X86::MOV64mr_TC:
   case X86::ST_FpP64m:
   case X86::MOVSSmr:
   case X86::MOVSDmr:
@@ -2026,13 +2020,22 @@ static unsigned getLoadStoreRegOpcode(unsigned Reg,
   default:
     llvm_unreachable("Unknown regclass");
   case X86::GR64RegClassID:
+  case X86::GR64_ABCDRegClassID:
+  case X86::GR64_NOREXRegClassID:
+  case X86::GR64_NOREX_NOSPRegClassID:
   case X86::GR64_NOSPRegClassID:
+  case X86::GR64_TCRegClassID:
     return load ? X86::MOV64rm : X86::MOV64mr;
   case X86::GR32RegClassID:
-  case X86::GR32_NOSPRegClassID:
+  case X86::GR32_ABCDRegClassID:
   case X86::GR32_ADRegClassID:
+  case X86::GR32_NOREXRegClassID:
+  case X86::GR32_NOSPRegClassID:
+  case X86::GR32_TCRegClassID:
     return load ? X86::MOV32rm : X86::MOV32mr;
   case X86::GR16RegClassID:
+  case X86::GR16_ABCDRegClassID:
+  case X86::GR16_NOREXRegClassID:
     return load ? X86::MOV16rm : X86::MOV16mr;
   case X86::GR8RegClassID:
     // Copying to or from a physical H register on x86-64 requires a NOREX
@@ -2042,32 +2045,14 @@ static unsigned getLoadStoreRegOpcode(unsigned Reg,
       return load ? X86::MOV8rm_NOREX : X86::MOV8mr_NOREX;
     else
       return load ? X86::MOV8rm : X86::MOV8mr;
-  case X86::GR64_ABCDRegClassID:
-    return load ? X86::MOV64rm : X86::MOV64mr;
-  case X86::GR32_ABCDRegClassID:
-    return load ? X86::MOV32rm : X86::MOV32mr;
-  case X86::GR16_ABCDRegClassID:
-    return load ? X86::MOV16rm : X86::MOV16mr;
   case X86::GR8_ABCD_LRegClassID:
+  case X86::GR8_NOREXRegClassID:
     return load ? X86::MOV8rm :X86::MOV8mr;
   case X86::GR8_ABCD_HRegClassID:
     if (TM.getSubtarget<X86Subtarget>().is64Bit())
       return load ? X86::MOV8rm_NOREX : X86::MOV8mr_NOREX;
     else
       return load ? X86::MOV8rm : X86::MOV8mr;
-  case X86::GR64_NOREXRegClassID:
-  case X86::GR64_NOREX_NOSPRegClassID:
-    return load ? X86::MOV64rm : X86::MOV64mr;
-  case X86::GR32_NOREXRegClassID:
-    return load ? X86::MOV32rm : X86::MOV32mr;
-  case X86::GR16_NOREXRegClassID:
-    return load ? X86::MOV16rm : X86::MOV16mr;
-  case X86::GR8_NOREXRegClassID:
-    return load ? X86::MOV8rm : X86::MOV8mr;
-  case X86::GR64_TCRegClassID:
-    return load ? X86::MOV64rm_TC : X86::MOV64mr_TC;
-  case X86::GR32_TCRegClassID:
-    return load ? X86::MOV32rm_TC : X86::MOV32mr_TC;
   case X86::RFP80RegClassID:
     return load ? X86::LD_Fp80m : X86::ST_FpP80m;
   case X86::RFP64RegClassID:

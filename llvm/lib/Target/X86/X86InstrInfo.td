@@ -865,34 +865,6 @@ def MOV64mr : RI<0x89, MRMDestMem, (outs), (ins i64mem:$dst, GR64:$src),
                  "mov{q}\t{$src, $dst|$dst, $src}",
                  [(store GR64:$src, addr:$dst)]>;
 
-/// Versions of MOV32rr, MOV32rm, and MOV32mr for i32mem_TC and GR32_TC.
-let isCodeGenOnly = 1 in {
-let neverHasSideEffects = 1 in {
-def MOV32rr_TC : I<0x89, MRMDestReg, (outs GR32_TC:$dst), (ins GR32_TC:$src),
-                "mov{l}\t{$src, $dst|$dst, $src}", []>;
-def MOV64rr_TC : RI<0x89, MRMDestReg, (outs GR64_TC:$dst), (ins GR64_TC:$src),
-                "mov{q}\t{$src, $dst|$dst, $src}", []>;
-}
-
-let mayLoad = 1, canFoldAsLoad = 1, isReMaterializable = 1 in {
-def MOV32rm_TC : I<0x8B, MRMSrcMem, (outs GR32_TC:$dst), (ins i32mem_TC:$src),
-                "mov{l}\t{$src, $dst|$dst, $src}",
-                []>;
-def MOV64rm_TC : RI<0x8B, MRMSrcMem, (outs GR64_TC:$dst), (ins i64mem_TC:$src),
-                "mov{q}\t{$src, $dst|$dst, $src}",
-                []>;
-}
-
-let mayStore = 1 in {
-def MOV32mr_TC : I<0x89, MRMDestMem, (outs), (ins i32mem_TC:$dst, GR32_TC:$src),
-                "mov{l}\t{$src, $dst|$dst, $src}",
-                []>;
-def MOV64mr_TC : RI<0x89, MRMDestMem, (outs), (ins i64mem_TC:$dst, GR64_TC:$src),
-                "mov{q}\t{$src, $dst|$dst, $src}",
-                []>;
-}
-} // isCodeGenOnly
-
 // Versions of MOV8rr, MOV8mr, and MOV8rm that use i8mem_NOREX and GR8_NOREX so
 // that they can be used for copying and storing h registers, which can't be
 // encoded when a REX prefix is present.
