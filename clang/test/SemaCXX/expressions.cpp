@@ -15,9 +15,20 @@ void f0() {
   f0_1(&x);
 }
 
-template <class T> void bar(T &x) { T::fail(); }
-template <class T> void bar(volatile T &x) {}
-void f1() {
-  volatile int x;
-  bar(x = 5);
+namespace test1 {
+  template <class T> void bar(T &x) { T::fail(); }
+  template <class T> void bar(volatile T &x) {}
+
+  void test_ints() {
+    volatile int x;
+    bar(x = 5);
+    bar(x += 5);
+  }
+
+  enum E { E_zero };
+  void test_enums() {
+    volatile E x;
+    bar(x = E_zero);
+    bar(x += E_zero); // expected-error {{incompatible type}}
+  }
 }
