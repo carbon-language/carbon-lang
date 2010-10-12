@@ -22,14 +22,21 @@ class EnumTypesTestCase(TestBase):
         self.buildDwarf()
         self.image_lookup_for_enum_type()
 
+    def setUp(self):
+        super(EnumTypesTestCase, self).setUp()
+        # Find the line number to break inside main().
+        self.line = line_number('main.c', '// Set break point at this line.')
+
     def image_lookup_for_enum_type(self):
         """Test 'image lookup -t days' and check for correct display."""
         exe = os.path.join(os.getcwd(), "a.out")
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 
         # Break inside the main.
-        self.expect("breakpoint set -f main.c -l 26", BREAKPOINT_CREATED,
-            startstr = "Breakpoint created: 1: file ='main.c', line = 26, locations = 1")
+        self.expect("breakpoint set -f main.c -l %d" % self.line,
+                    BREAKPOINT_CREATED,
+            startstr = "Breakpoint created: 1: file ='main.c', line = %d, locations = 1" %
+                        self.line)
 
         self.runCmd("run", RUN_SUCCEEDED)
 

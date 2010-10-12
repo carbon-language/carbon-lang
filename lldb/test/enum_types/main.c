@@ -23,7 +23,7 @@ int main (int argc, char const *argv[])
     enum days day;
     for (day = Monday - 1; day <= kNumDays + 1; day++)
     {
-        printf("day as int is %i\n", (int)day);
+        printf("day as int is %i\n", (int)day); // Set break point at this line.
     }
     return 0;
 }
