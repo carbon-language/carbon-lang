@@ -346,8 +346,9 @@ public:
                      
                      argc = args.GetArgumentCount();
                      for (size_t i = 0; i < argc; ++i)
-                         option_arg_vector->push_back (OptionArgPair ("<argument>",
-                                                                      std::string (args.GetArgumentAtIndex (i))));
+                        if (strcmp (args.GetArgumentAtIndex (i), "") != 0)
+                             option_arg_vector->push_back (OptionArgPair ("<argument>",
+                                                                          std::string (args.GetArgumentAtIndex (i))));
                  }
 
                  // Create the alias.

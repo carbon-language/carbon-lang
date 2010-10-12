@@ -802,12 +802,9 @@ Args::LongestCommonPrefix (std::string &common_prefix)
 }
 
 void
-Args::ParseAliasOptions
-(
-    Options &options,
-    CommandReturnObject &result,
-    OptionArgVector *option_arg_vector
-)
+Args::ParseAliasOptions (Options &options,
+                         CommandReturnObject &result,
+                         OptionArgVector *option_arg_vector)
 {
     StreamString sstr;
     int i;
@@ -936,6 +933,31 @@ Args::ParseAliasOptions
             result.AppendErrorWithFormat ("Invalid option with value '%c'.\n", (char) val);
             result.SetStatus (eReturnStatusFailed);
         }
+
+        if (long_options_index >= 0)
+        {
+            // Find option in the argument list; also see if it was supposed to take an argument and if one was
+            // supplied.  Remove option (and argument, if given) from the argument list.
+            StreamString short_opt_str;
+            StreamString long_opt_str;
+            short_opt_str.Printf ("-%c", (char) long_options[long_options_index].val);
+            long_opt_str.Printf ("-%s", long_options[long_options_index].name);
+            bool found = false;
+            size_t end = GetArgumentCount();
+            for (size_t i = 0; i < end && !found; ++i)
+                if ((strcmp (GetArgumentAtIndex (i), short_opt_str.GetData()) == 0)
+                    || (strcmp (GetArgumentAtIndex (i), long_opt_str.GetData()) == 0))
+                {
+                    found = true;
+                    ReplaceArgumentAtIndex (i, "");
+                    if ((long_options[long_options_index].has_arg != no_argument)
+                        && (optarg != NULL)
+                        && (i+1 < end)
+                        && (strcmp (optarg, GetArgumentAtIndex(i+1)) == 0))
+                        ReplaceArgumentAtIndex (i+1, "");
+                }
+        }
+
         if (!result.Succeeded())
             break;
     }
