@@ -472,10 +472,14 @@ multiclass AsI1_bin_irs<bits<4> opcod, string opc,
   // The register-immediate version is re-materializable. This is useful
   // in particular for taking the address of a local.
   let isReMaterializable = 1 in {
-  def ri : AsI1<opcod, (outs GPR:$dst), (ins GPR:$a, so_imm:$b), DPFrm,
-               iii, opc, "\t$dst, $a, $b",
-               [(set GPR:$dst, (opnode GPR:$a, so_imm:$b))]> {
+  def ri : AsI1<opcod, (outs GPR:$Rd), (ins GPR:$Rn, so_imm:$imm), DPFrm,
+               iii, opc, "\t$Rd, $Rn, $imm",
+               [(set GPR:$Rd, (opnode GPR:$Rn, so_imm:$imm))]> {
+    bits<4> Rd;
+    bits<4> Rn;
     let Inst{25} = 1;
+    let Inst{15-12} = Rd;
+    let Inst{19-16} = Rn;
   }
   }
   def rr : AsI1<opcod, (outs GPR:$Rd), (ins GPR:$Rn, GPR:$Rm), DPFrm,

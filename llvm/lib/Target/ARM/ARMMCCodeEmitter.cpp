@@ -39,6 +39,8 @@ public:
 
   ~ARMMCCodeEmitter() {}
 
+  unsigned getMachineSoImmOpValue(unsigned SoImm) const;
+
   // getBinaryCodeForInstr - TableGen'erated function for getting the
   // binary encoding for an instruction.
   unsigned getBinaryCodeForInstr(const MCInst &MI) const;
@@ -59,12 +61,6 @@ public:
     static MCFixupKindInfo rtn;
     assert(0 && "ARMMCCodeEmitter::getFixupKindInfo() not yet implemented.");
     return rtn;
-  }
-
-  static unsigned GetARMRegNum(const MCOperand &MO) {
-    // FIXME: getARMRegisterNumbering() is sufficient?
-    assert(0 && "ARMMCCodeEmitter::GetARMRegNum() not yet implemented.");
-    return 0;
   }
 
   void EmitByte(unsigned char C, unsigned &CurByte, raw_ostream &OS) const {
@@ -93,6 +89,18 @@ public:
 
 } // end anonymous namespace
 
+unsigned ARMMCCodeEmitter::getMachineSoImmOpValue(unsigned SoImm) const {
+  int SoImmVal = ARM_AM::getSOImmVal(SoImm);
+  assert(SoImmVal != -1 && "Not a valid so_imm value!");
+
+  // Encode rotate_imm.
+  unsigned Binary = (ARM_AM::getSOImmValRot((unsigned)SoImmVal) >> 1)
+    << ARMII::SoRotImmShift;
+
+  // Encode immed_8.
+  Binary |= ARM_AM::getSOImmValImm((unsigned)SoImmVal);
+  return Binary;
+}
 
 MCCodeEmitter *llvm::createARMMCCodeEmitter(const Target &,
                                              TargetMachine &TM,
@@ -112,12 +120,10 @@ EmitImmediate(const MCOperand &DispOp, unsigned Size, MCFixupKind FixupKind,
 unsigned ARMMCCodeEmitter::getMachineOpValue(const MCInst &MI,
                                              const MCOperand &MO) const {
   if (MO.isReg())
-    // FIXME: Should shifted register stuff be handled as part of this? Maybe.
     return getARMRegisterNumbering(MO.getReg());
-  else if (MO.isImm())
-    // FIXME: This is insufficient. Shifted immediates and all that... (blech).
+  else if (MO.isImm()) {
     return static_cast<unsigned>(MO.getImm());
-  else {
+  } else {
 #ifndef NDEBUG
     errs() << MO;
 #endif
@@ -142,31 +148,42 @@ EncodeInstruction(const MCInst &MI, raw_ostream &OS,
   ++MCNumEmitted;  // Keep track of the # of mi's emitted
   // FIXME: TableGen doesn't deal well with operands that expand to multiple
   // machine instruction operands, so for now we'll fix those up here.
+  // Similarly, operands that are encoded as other than their literal
+  // values in the MI.
+  unsigned Value = getBinaryCodeForInstr(MI);
   switch (Opcode) {
+  default: break;
+  case ARM::ADDri:
+  case ARM::ANDri:
+  case ARM::BICri:
+  case ARM::EORri:
+  case ARM::ORRri:
+  case ARM::SUBri:
+    // The 's' bit.
+    if (MI.getOperand(5).getReg() == ARM::CPSR)
+      Value |= 1 << ARMII::S_BitShift;
+    // The shifted immediate value.
+    Value |= getMachineSoImmOpValue((unsigned)MI.getOperand(2).getImm());
+    break;
   case ARM::ADDrs:
   case ARM::ANDrs:
   case ARM::BICrs:
   case ARM::EORrs:
   case ARM::ORRrs:
   case ARM::SUBrs: {
+    // The 's' bit.
+    if (MI.getOperand(7).getReg() == ARM::CPSR)
+      Value |= 1 << ARMII::S_BitShift;
     // The so_reg operand needs the shift ammount encoded.
-    unsigned Value = getBinaryCodeForInstr(MI);
     unsigned ShVal = MI.getOperand(4).getImm();
     unsigned ShType = ARM_AM::getShiftOpcEncoding(ARM_AM::getSORegShOp(ShVal));
     unsigned ShAmt = ARM_AM::getSORegOffset(ShVal);
-
     Value |= ShType << ARMII::ShiftTypeShift;
     Value |= ShAmt << ARMII::ShiftShift;
-
-    EmitConstant(Value, 4, CurByte, OS);
-    break;
-  }
-  default: {
-    unsigned Value = getBinaryCodeForInstr(MI);
-    EmitConstant(Value, 4, CurByte, OS);
     break;
   }
   }
+  EmitConstant(Value, 4, CurByte, OS);
 }
 
 // FIXME: These #defines shouldn't be necessary. Instead, tblgen should

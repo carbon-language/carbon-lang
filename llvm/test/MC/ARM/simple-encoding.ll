@@ -35,4 +35,15 @@ entry:
   ret i32 %add
 }
 
+define i32 @f4(i32 %a, i32 %b) nounwind readnone ssp {
+entry:
+; CHECK: f4
+; CHECK: add r0, r0, #254, 28        @ encoding: [0xfe,0x0e,0x80,0xe2]
+; CHECK:                             @ 4064
+; CHECK: bx lr                        @ encoding: [0x1e,0xff,0x2f,0xe1]
+  %add = add nsw i32 %a, 4064
+  ret i32 %add
+}
+
+
 declare void @llvm.trap() nounwind
