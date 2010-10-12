@@ -380,7 +380,7 @@ def visit(prefix, dir, names):
                     #print "Filename: '%s' does not match pattern: '%s'" % (name, regexp)
                     continue
 
-            # We found a match for our test case.  Add it to the suite.
+            # We found a match for our test.  Add it to the suite.
 
             # Update the sys.path first.
             if not sys.path.count(dir):
@@ -407,6 +407,7 @@ def visit(prefix, dir, names):
                 if fs4all and not filtered:
                     continue
                 
+            # Add either the filtered test case or the entire test class.
             if filterspec and filtered:
                 suite.addTests(
                     unittest2.defaultTestLoader.loadTestsFromName(filterspec, module))
@@ -484,12 +485,6 @@ for testdir in testdirs:
 # Now that we have loaded all the test cases, run the whole test suite.
 #
 
-# First, write out the number of collected test cases.
-sys.stderr.write(separator + "\n")
-sys.stderr.write("Collected %d test%s\n\n"
-                 % (suite.countTestCases(),
-                    suite.countTestCases() != 1 and "s" or ""))
-
 # For the time being, let's bracket the test runner within the
 # lldb.SBDebugger.Initialize()/Terminate() pair.
 import lldb, atexit
@@ -523,6 +518,15 @@ if "compilers" in config:
     if type(compilers) is ListType and len(compilers) >= 1:
         iterCompilers = True
 
+# Make a shallow copy of sys.path, we need to manipulate the search paths later.
+# This is only necessary if we are relocated and with different configurations.
+if rdir and (iterArchs or iterCompilers):
+    old_sys_path = sys.path[:]
+    old_stderr = sys.stderr
+    old_stdout = sys.stdout
+    new_stderr = None
+    new_stdout = None
+
 for ia in range(len(archs) if iterArchs else 1):
     archConfig = ""
     if iterArchs:
@@ -535,9 +539,62 @@ for ia in range(len(archs) if iterArchs else 1):
         else:
             configString = archConfig
 
-        # Invoke the test runner.
         if iterArchs or iterCompilers:
+            # If we specified a relocated directory to run the test suite, do
+            # the extra housekeeping to copy the testdirs to a configStringified
+            # directory and to update sys.path before invoking the test runner.
+            # The purpose is to separate the configuration-specific directories
+            # from each other.
+            if rdir:
+                from string import maketrans
+                from shutil import copytree, ignore_patterns
+
+                # Translate ' ' to '-' for dir name.
+                tbl = maketrans(' ', '-')
+                configPostfix = configString.translate(tbl)
+                newrdir = "%s.%s" % (rdir, configPostfix)
+
+                # Copy the tree to a new directory with postfix name configPostfix.
+                copytree(rdir, newrdir, ignore=ignore_patterns('*.pyc', '*.o', '*.d'))
+
+                # Check whether we need to split stderr/stdout into configuration
+                # specific files.
+                if old_stderr.name != '<stderr>' and config.get('split_stderr'):
+                    if new_stderr:
+                        new_stderr.close()
+                    new_stderr = open("%s.%s" % (old_stderr.name, configPostfix), "w")
+                    sys.stderr = new_stderr
+                if old_stdout.name != '<stderr>' and config.get('split_stderr'):
+                    if new_stdout:
+                        new_stdout.close()
+                    new_stdout = open("%s.%s" % (old_stdout.name, configPostfix), "w")
+                    sys.stdout = new_stdout
+
+                # Update the LLDB_TEST environment variable to reflect new top
+                # level test directory.
+                #
+                # See also lldbtest.TestBase.setUpClass(cls).
+                if len(testdirs) == 1 and os.path.basename(testdirs[0]) == 'test':
+                    os.environ["LLDB_TEST"] = os.path.join(newrdir, 'test')
+                else:
+                    os.environ["LLDB_TEST"] = newrdir
+
+                # And update the Python search paths for modules.
+                sys.path = [x.replace(rdir, newrdir, 1) for x in old_sys_path]
+
+            # Output the configuration.
             sys.stderr.write("\nConfiguration: " + configString + "\n")
+
+        #print "sys.stderr name is", sys.stderr.name
+        #print "sys.stdout name is", sys.stdout.name
+
+        # First, write out the number of collected test cases.
+        sys.stderr.write(separator + "\n")
+        sys.stderr.write("Collected %d test%s\n\n"
+                         % (suite.countTestCases(),
+                            suite.countTestCases() != 1 and "s" or ""))
+
+        # Invoke the test runner.
         result = unittest2.TextTestRunner(stream=sys.stderr, verbosity=verbose).run(suite)
         
 
