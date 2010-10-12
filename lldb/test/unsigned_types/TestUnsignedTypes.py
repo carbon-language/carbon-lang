@@ -23,14 +23,21 @@ class UnsignedTypesTestCase(TestBase):
         self.buildDwarf()
         self.unsigned_types()
 
+    def setUp(self):
+        super(UnsignedTypesTestCase, self).setUp()
+        # Find the line number to break inside main().
+        self.line = line_number('main.cpp', '// Set break point at this line.')
+
     def unsigned_types(self):
         """Test that variables with unsigned types display correctly."""
         exe = os.path.join(os.getcwd(), "a.out")
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 
         # Break on line 19 in main() aftre the variables are assigned values.
-        self.expect("breakpoint set -f main.cpp -l 19", BREAKPOINT_CREATED,
-            startstr = "Breakpoint created: 1: file ='main.cpp', line = 19, locations = 1")
+        self.expect("breakpoint set -f main.cpp -l %d" % self.line,
+                    BREAKPOINT_CREATED,
+            startstr = "Breakpoint created: 1: file ='main.cpp', line = %d, locations = 1" %
+                        self.line)
 
         self.runCmd("run", RUN_SUCCEEDED)
 
@@ -45,8 +52,8 @@ class UnsignedTypesTestCase(TestBase):
         # Test that unsigned types display correctly.
         self.expect("frame variable -a", VARIABLES_DISPLAYED_CORRECTLY,
             startstr = "(unsigned char) the_unsigned_char = 'c'",
-            substrs = ["(short unsigned int) the_unsigned_short = 99",
-                       "(unsigned int) the_unsigned_int = 99",
+            patterns = ["\((short unsigned int|unsigned short)\) the_unsigned_short = 99"],
+            substrs = ["(unsigned int) the_unsigned_int = 99",
                        "(long unsigned int) the_unsigned_long = 99",
                        "(long long unsigned int) the_unsigned_long_long = 99",
                        "(uint32_t) the_uint32 = 99"])

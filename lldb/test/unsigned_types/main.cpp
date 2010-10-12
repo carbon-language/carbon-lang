@@ -16,7 +16,7 @@ int main (int argc, char const *argv[])
     unsigned long long the_unsigned_long_long = 'c';
     uint32_t the_uint32 = 'c';
 
-    return  the_unsigned_char - the_unsigned_short +
+    return  the_unsigned_char - the_unsigned_short + // Set break point at this line.
             the_unsigned_int - the_unsigned_long +
             the_unsigned_long_long - the_uint32;
 }
