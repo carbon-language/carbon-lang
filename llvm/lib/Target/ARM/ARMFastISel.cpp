@@ -764,7 +764,7 @@ bool ARMFastISel::ARMEmitStore(EVT VT, unsigned SrcReg,
       break;
   }
 
-  if (SrcReg == ARM::SP)
+  if (DstReg == ARM::SP)
     TII.storeRegToStackSlot(*FuncInfo.MBB, *FuncInfo.InsertPt,
                             SrcReg, true /*isKill*/, Offset,
                             TLI.getRegClassFor(VT), TM.getRegisterInfo());
