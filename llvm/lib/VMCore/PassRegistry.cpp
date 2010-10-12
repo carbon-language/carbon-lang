@@ -70,7 +70,7 @@ void *PassRegistry::getImpl() const {
 PassRegistry::~PassRegistry() {
   sys::SmartScopedLock<true> Guard(*Lock);
   PassRegistryImpl *Impl = static_cast<PassRegistryImpl*>(pImpl);
-  if (Impl) delete Impl;
+  delete Impl;
   pImpl = 0;
 }
 
