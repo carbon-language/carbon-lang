@@ -3099,7 +3099,22 @@ ClangASTContext::CompleteTagDeclarationDefinition (clang_type_t clang_type)
                 unsigned NumPositiveBits = 1;
                 unsigned NumNegativeBits = 0;
                 
-                enum_decl->completeDefinition(enum_decl->getIntegerType(), enum_decl->getIntegerType(), NumPositiveBits, NumNegativeBits);
+                ASTContext *ast_context = getASTContext();
+
+                QualType promotion_qual_type;
+                // If the enum integer type is less than an integer in bit width,
+                // then we must promote it to an integer size.
+                if (ast_context->getTypeSize(enum_decl->getIntegerType()) < ast_context->getTypeSize(ast_context->IntTy))
+                {
+                    if (enum_decl->getIntegerType()->isSignedIntegerType())
+                        promotion_qual_type = ast_context->IntTy;
+                    else
+                        promotion_qual_type = ast_context->UnsignedIntTy;
+                }
+                else
+                    promotion_qual_type = enum_decl->getIntegerType();
+
+                enum_decl->completeDefinition(enum_decl->getIntegerType(), promotion_qual_type, NumPositiveBits, NumNegativeBits);
                 return true;
             }
         }
@@ -3117,12 +3132,17 @@ ClangASTContext::CreateEnumerationType (const Declaration &decl, const char *nam
     // like maybe filling in the SourceLocation with it...
     ASTContext *ast_context = getASTContext();
     assert (ast_context != NULL);
-    EnumDecl *enum_decl = EnumDecl::Create(*ast_context,
-                                           ast_context->getTranslationUnitDecl(),
-                                           SourceLocation(),
-                                           name && name[0] ? &ast_context->Idents.get(name) : NULL,
-                                           SourceLocation(),
-                                           NULL);
+
+    // TODO: ask about these...
+//    const bool IsScoped = false;
+//    const bool IsFixed = false;
+
+    EnumDecl *enum_decl = EnumDecl::Create (*ast_context,
+                                            ast_context->getTranslationUnitDecl(),
+                                            SourceLocation(),
+                                            name && name[0] ? &ast_context->Idents.get(name) : NULL,
+                                            SourceLocation(),
+                                            NULL); //IsScoped, IsFixed);
     if (enum_decl)
     {
         // TODO: check if we should be setting the promotion type too?

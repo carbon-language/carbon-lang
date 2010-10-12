@@ -29,12 +29,54 @@ BreakpointResolverName::BreakpointResolverName
     Breakpoint::MatchType type
 ) :
     BreakpointResolver (bkpt),
-    m_func_name (func_name),
+    m_func_name (),
+    m_basename_filter (),
     m_func_name_type_mask (func_name_type_mask),
     m_class_name (),
     m_regex (),
     m_match_type (type)
 {
+    if (func_name_type_mask == eFunctionNameTypeAuto)
+    {
+        if ((::strchr (func_name, '(' ) != NULL) ||
+            (::strstr (func_name, "-[") == func_name) || 
+            (::strstr (func_name, "+[") == func_name))
+        {
+            // We have a name that contains an open parens, or starts with 
+            // "+[" or "-[", so this looks like a complete function prototype
+            m_func_name_type_mask = eFunctionNameTypeFull;
+        }
+        else
+        {
+            // We don't have a full function name, but we might have a partial
+            // function basename with namespaces or classes
+            if (::strstr (func_name, "::") != NULL)
+            {
+                // Keep the full name in "m_basename_filter"
+                m_basename_filter = func_name;
+                // Now set "m_func_name" to just the function basename
+                m_func_name.SetCString(m_basename_filter.c_str() + m_basename_filter.rfind("::") + 2);
+                // We have a name with a double colon which means we have a
+                // function name that is a C++ method or a function in a C++ 
+                // namespace
+                m_func_name_type_mask = eFunctionNameTypeBase | eFunctionNameTypeMethod;
+            }
+            else if (::strstr (func_name, ":") != NULL)
+            {
+                // Single colon => selector
+                m_func_name_type_mask = eFunctionNameTypeSelector;
+            }
+            else
+            {
+                // just a  basename by default
+                m_func_name_type_mask = eFunctionNameTypeBase;
+            }
+        }
+    }
+
+    if (!m_func_name)
+        m_func_name.SetCString(func_name);
+    
     if (m_match_type == Breakpoint::Regexp)
     {
         if (!m_regex.Compile (m_func_name.AsCString()))
@@ -135,6 +177,53 @@ BreakpointResolverName::SearchCallback
             if (log)
                 log->Warning ("glob is not supported yet.");
             break;
+    }
+    
+    if (!m_basename_filter.empty())
+    {
+        // Filter out any matches whose names don't contain the basename filter
+        const char *basename_filter = m_basename_filter.c_str();
+        if (func_list.GetSize())
+        {
+            bool remove = false;
+            for (i = 0; i < func_list.GetSize(); remove = false)
+            {
+                if (func_list.GetContextAtIndex(i, sc) == false)
+                    remove = true;
+                else if (sc.function == NULL)
+                    remove = true;
+                else if (::strstr (sc.function->GetName().AsCString(), basename_filter) == NULL)
+                    remove = true;
+
+                if (remove)
+                {
+                    func_list.RemoveContextAtIndex(i);
+                    continue;
+                }
+                i++;
+            }
+        }
+
+        if (sym_list.GetSize())
+        {
+            bool remove = false;
+            for (i = 0; i < sym_list.GetSize(); remove = false)
+            {
+                if (sym_list.GetContextAtIndex(i, sc) == false)
+                    remove = true;
+                else if (sc.symbol == NULL)
+                    remove = true;
+                else if (::strstr (sc.symbol->GetName().AsCString(), basename_filter) == NULL)
+                    remove = true;
+
+                if (remove)
+                {
+                    sym_list.RemoveContextAtIndex(i);
+                    continue;
+                }
+                i++;
+            }
+        }
     }
     
     // Remove any duplicates between the funcion list and the symbol list
@@ -242,8 +331,10 @@ BreakpointResolverName::GetDescription (Stream *s)
 {
     if (m_match_type == Breakpoint::Regexp)
         s->Printf("regex = '%s'", m_regex.GetText());
-    else
+    else if (m_basename_filter.empty())
         s->Printf("name = '%s'", m_func_name.AsCString());
+    else
+        s->Printf("name = '%s'", m_basename_filter.c_str());
 }
 
 void

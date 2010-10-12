@@ -104,7 +104,7 @@ CommandObjectBreakpointSet::CommandOptions::g_option_table[] =
         "Set the breakpoint by address, at the specified address."},
 
     { LLDB_OPT_SET_3, true, "name", 'n', required_argument, NULL, CommandCompletions::eSymbolCompletion, eArgTypeFunctionName,
-        "Set the breakpoint by function name - for C++ this means namespaces and arguments will be ignored." },
+        "Set the breakpoint by function name." },
 
     { LLDB_OPT_SET_4, true, "fullname", 'F', required_argument, NULL, CommandCompletions::eSymbolCompletion, eArgTypeFullName,
         "Set the breakpoint by fully qualified function names. For C++ this means namespaces and all arguemnts, and "
@@ -118,6 +118,9 @@ CommandObjectBreakpointSet::CommandOptions::g_option_table[] =
 
     { LLDB_OPT_SET_7, true, "func-regex", 'r', required_argument, NULL, 0, eArgTypeRegularExpression,
         "Set the breakpoint by function name, evaluating a regular-expression to find the function name(s)." },
+
+    { LLDB_OPT_SET_8, true, "basename", 'b', required_argument, NULL, CommandCompletions::eSymbolCompletion, eArgTypeFunctionName,
+        "Set the breakpoint by function basename (C++ namespaces and arguments will be ignored)." },
 
     { 0, false, NULL, 0, 0, NULL, 0, eArgTypeNone, NULL }
 };
@@ -157,9 +160,14 @@ CommandObjectBreakpointSet::CommandOptions::SetOptionValue (int option_idx, cons
             m_line_num = Args::StringToUInt32 (option_arg, 0);
             break;
 
-        case 'n':
+        case 'b':
             m_func_name = option_arg;
             m_func_name_type_mask |= eFunctionNameTypeBase;
+            break;
+
+        case 'n':
+            m_func_name = option_arg;
+            m_func_name_type_mask |= eFunctionNameTypeAuto;
             break;
 
         case 'F':
@@ -391,17 +399,8 @@ CommandObjectBreakpointSet::Execute
                 uint32_t name_type_mask = m_options.m_func_name_type_mask;
                 
                 if (name_type_mask == 0)
-                {
-                
-                    if (m_options.m_func_name.find('(') != std::string::npos ||
-                        m_options.m_func_name.find("-[") == 0 ||
-                        m_options.m_func_name.find("+[") == 0)
-                        name_type_mask |= eFunctionNameTypeFull;
-                    else
-                        name_type_mask |= eFunctionNameTypeBase;
-                }
-                    
-                
+                    name_type_mask = eFunctionNameTypeAuto;
+                                    
                 if (use_module)
                 {
                     for (int i = 0; i < num_modules; ++i)

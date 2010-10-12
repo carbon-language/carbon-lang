@@ -91,7 +91,7 @@ if (-l $llvm_dstroot)
 	# LLVM in the "lldb" root is a symlink which indicates we are using a 
 	# standard LLVM build directory where everything is built into the
 	# same folder
-	create_single_llvm_arhive_for_arch ($llvm_dstroot, 0);
+	create_single_llvm_arhive_for_arch ($llvm_dstroot, 1);
 	my $llvm_dstroot_archive = "$llvm_dstroot/$llvm_clang_basename";
 	push @llvm_clang_slices, $llvm_dstroot_archive;
 	create_dstroot_file ($llvm_clang_basename, $llvm_clang_dirname, \@llvm_clang_slices, $llvm_clang_basename);

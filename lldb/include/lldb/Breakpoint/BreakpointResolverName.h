@@ -63,6 +63,14 @@ public:
 
 protected:
     ConstString m_func_name;
+    // "m_basename_filter" is used to filter results after searching for
+    // "m_func_name" first. This is used when we are asked to set a breakpoint 
+    // at "foo::bar::baz" (C++ function in namespace or in a class). For 
+    // "foo::bar::baz" we will place "baz" into m_func_name and search for all
+    // matching basename and methods that match "baz", then we will filter the
+    // results by checking if the demangled name contains "m_basename_filter"
+    // which would be set to "foo::bar::baz".
+    std::string m_basename_filter;  
     uint32_t m_func_name_type_mask;  // See FunctionNameType
     ConstString m_class_name;  // FIXME: Not used yet.  The idea would be to stop on methods of this class.
     RegularExpression m_regex;
