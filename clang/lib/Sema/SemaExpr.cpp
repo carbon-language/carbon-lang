@@ -6164,13 +6164,18 @@ QualType Sema::CheckAssignmentOperands(Expr *LHS, Expr *&RHS,
 QualType Sema::CheckCommaOperands(Expr *LHS, Expr *&RHS, SourceLocation Loc) {
   DiagnoseUnusedExprResult(LHS);
 
-  // Comma performs lvalue conversion (C99 6.3.2.1), but not unary conversions.
-  // C++ does not perform this conversion (C++ [expr.comma]p1).
-  if (!getLangOptions().CPlusPlus)
-    DefaultFunctionArrayLvalueConversion(RHS);
+  // C's comma performs lvalue conversion (C99 6.3.2.1) on both its
+  // operands, but not unary promotions.
+  // C++'s comma does not do any conversions at all (C++ [expr.comma]p1).
+  if (!getLangOptions().CPlusPlus) {
+    DefaultFunctionArrayLvalueConversion(LHS);
+    if (!LHS->getType()->isVoidType())
+      RequireCompleteType(Loc, LHS->getType(), diag::err_incomplete_type);
 
-  // FIXME: Check that RHS type is complete in C mode (it's legal for it to be
-  // incomplete in C++).
+    DefaultFunctionArrayLvalueConversion(RHS);
+    if (!RHS->getType()->isVoidType())
+      RequireCompleteType(Loc, RHS->getType(), diag::err_incomplete_type);
+  }
 
   return RHS->getType();
 }

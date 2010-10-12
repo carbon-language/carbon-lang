@@ -150,3 +150,10 @@ int test20(int x) {
   // no warning, this is an idiom for "true" in old C style.
   return x && (signed char)1;
 }
+
+struct Test21; // expected-note 2 {{forward declaration}}
+void test21(volatile struct Test21 *ptr) {
+  void test21_help(void);
+  (test21_help(), *ptr); // expected-error {{incomplete type 'struct Test21' where a complete type is required}}
+  (*ptr, test21_help()); // expected-error {{incomplete type 'struct Test21' where a complete type is required}}
+}
