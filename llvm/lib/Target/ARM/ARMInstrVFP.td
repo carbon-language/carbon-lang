@@ -158,6 +158,24 @@ class ADbI_Encode<bits<5> opcod1, bits<2> opcod2, bit op6, bit op4, dag oops,
   let Inst{22}    = Dd{4};
 }
 
+class ASbI_Encode<bits<5> opcod1, bits<2> opcod2, bit op6, bit op4, dag oops,
+                  dag iops, InstrItinClass itin, string opc, string asm,
+                  list<dag> pattern>
+  : ASbI<opcod1, opcod2, op6, op4, oops, iops, itin, opc, asm, pattern> {
+  // Instruction operands.
+  bits<5> Sd;
+  bits<5> Sn;
+  bits<5> Sm;
+
+  // Encode instruction operands.
+  let Inst{3-0}   = Sm{4-1};
+  let Inst{5}     = Sm{0};
+  let Inst{19-16} = Sn{4-1};
+  let Inst{7}     = Sn{0};
+  let Inst{15-12} = Sd{4-1};
+  let Inst{22}    = Sd{0};
+}
+
 class ASbIn_Encode<bits<5> opcod1, bits<2> opcod2, bit op6, bit op4, dag oops,
                    dag iops, InstrItinClass itin, string opc, string asm,
                    list<dag> pattern>
@@ -201,21 +219,25 @@ def VSUBS  : ASbIn_Encode<0b11100, 0b11, 1, 0,
                           IIC_fpALU32, "vsub", ".f32\t$Sd, $Sn, $Sm",
                           [(set SPR:$Sd, (fsub SPR:$Sn, SPR:$Sm))]>;
 
-def VDIVD  : ADbI<0b11101, 0b00, 0, 0, (outs DPR:$dst), (ins DPR:$a, DPR:$b),
-                 IIC_fpDIV64, "vdiv", ".f64\t$dst, $a, $b",
-                 [(set DPR:$dst, (fdiv DPR:$a, (f64 DPR:$b)))]>;
+def VDIVD  : ADbI_Encode<0b11101, 0b00, 0, 0,
+                         (outs DPR:$Dd), (ins DPR:$Dn, DPR:$Dm),
+                         IIC_fpDIV64, "vdiv", ".f64\t$Dd, $Dn, $Dm",
+                         [(set DPR:$Dd, (fdiv DPR:$Dn, (f64 DPR:$Dm)))]>;
 
-def VDIVS  : ASbI<0b11101, 0b00, 0, 0, (outs SPR:$dst), (ins SPR:$a, SPR:$b),
-                 IIC_fpDIV32, "vdiv", ".f32\t$dst, $a, $b",
-                 [(set SPR:$dst, (fdiv SPR:$a, SPR:$b))]>;
+def VDIVS  : ASbI_Encode<0b11101, 0b00, 0, 0,
+                         (outs SPR:$Sd), (ins SPR:$Sn, SPR:$Sm),
+                         IIC_fpDIV32, "vdiv", ".f32\t$Sd, $Sn, $Sm",
+                         [(set SPR:$Sd, (fdiv SPR:$Sn, SPR:$Sm))]>;
 
-def VMULD  : ADbI<0b11100, 0b10, 0, 0, (outs DPR:$dst), (ins DPR:$a, DPR:$b),
-                 IIC_fpMUL64, "vmul", ".f64\t$dst, $a, $b",
-                 [(set DPR:$dst, (fmul DPR:$a, (f64 DPR:$b)))]>;
+def VMULD  : ADbI_Encode<0b11100, 0b10, 0, 0,
+                         (outs DPR:$Dd), (ins DPR:$Dn, DPR:$Dm),
+                         IIC_fpMUL64, "vmul", ".f64\t$Dd, $Dn, $Dm",
+                         [(set DPR:$Dd, (fmul DPR:$Dn, (f64 DPR:$Dm)))]>;
 
-def VMULS  : ASbIn<0b11100, 0b10, 0, 0, (outs SPR:$dst), (ins SPR:$a, SPR:$b),
-                  IIC_fpMUL32, "vmul", ".f32\t$dst, $a, $b",
-                  [(set SPR:$dst, (fmul SPR:$a, SPR:$b))]>;
+def VMULS  : ASbIn_Encode<0b11100, 0b10, 0, 0,
+                          (outs SPR:$Sd), (ins SPR:$Sn, SPR:$Sm),
+                          IIC_fpMUL32, "vmul", ".f32\t$Sd, $Sn, $Sm",
+                          [(set SPR:$Sd, (fmul SPR:$Sn, SPR:$Sm))]>;
 
 def VNMULD  : ADbI<0b11100, 0b10, 1, 0, (outs DPR:$dst), (ins DPR:$a, DPR:$b),
                   IIC_fpMUL64, "vnmul", ".f64\t$dst, $a, $b",

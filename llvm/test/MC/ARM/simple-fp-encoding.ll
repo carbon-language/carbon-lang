@@ -38,17 +38,49 @@ entry:
   ret float %sub
 }
 
-define i1 @f5(double %a, double %b) nounwind readnone {
+define double @f5(double %a, double %b) nounwind readnone {
 entry:
 ; CHECK: f5
+; CHECK: vdiv.f64 d16, d17, d16  @ encoding: [0xa0,0x0b,0xc1,0xee]
+  %div = fdiv double %a, %b
+  ret double %div
+}
+
+define float @f6(float %a, float %b) nounwind readnone {
+entry:
+; CHECK: f6
+; CHECK: vdiv.f32 s0, s1, s0  @ encoding: [0x80,0x0a,0x80,0xee]
+  %div = fdiv float %a, %b
+  ret float %div
+}
+
+define double @f7(double %a, double %b) nounwind readnone {
+entry:
+; CHECK: f7
+; CHECK: vmul.f64 d16, d17, d16  @ encoding: [0xa0,0x0b,0x61,0xee]
+  %mul = fmul double %a, %b
+  ret double %mul
+}
+
+define float @f8(float %a, float %b) nounwind readnone {
+entry:
+; CHECK: f8
+; CHECK: vmul.f32 s0, s1, s0  @ encoding: [0x80,0x0a,0x20,0xee]
+  %mul = fmul float %a, %b
+  ret float %mul
+}
+
+define i1 @f100(double %a, double %b) nounwind readnone {
+entry:
+; CHECK: f100
 ; CHECK: vcmpe.f64 d17, d16  @ encoding: [0xe0,0x1b,0xf4,0xee]
   %cmp = fcmp oeq double %a, %b
   ret i1 %cmp
 }
 
-define i1 @f6(float %a, float %b) nounwind readnone {
+define i1 @f101(float %a, float %b) nounwind readnone {
 entry:
-; CHECK: f6
+; CHECK: f101
 ; CHECK: vcmpe.f32 s1, s0  @ encoding: [0xc0,0x0a,0xf4,0xee]
   %cmp = fcmp oeq float %a, %b
   ret i1 %cmp
