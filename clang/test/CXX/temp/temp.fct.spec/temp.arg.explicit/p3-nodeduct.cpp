@@ -33,4 +33,4 @@ template <typename T> void g(T);
 template <typename T> void g(T, T);
 
 int typeof2[is_same<__typeof__(g<float>), void (int)>::value? 1 : -1]; // \
-     // expected-error{{cannot determine the type of an overloaded function}}
+     // expected-error{{cannot resolve overloaded function from context}}

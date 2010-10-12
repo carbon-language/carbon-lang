@@ -31,6 +31,6 @@ namespace PR8181
 {
   void f() { }
   void f(char) { }
-  bool b = !&f;  //expected-error {{value of type '<overloaded function type>' is not contextually convertible to 'bool'}}
+  bool b = !&f;  //expected-error {{cannot resolve overloaded function from context}}
 
 }

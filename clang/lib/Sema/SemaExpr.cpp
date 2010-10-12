@@ -2214,10 +2214,6 @@ Sema::CreateSizeOfAlignOfExpr(TypeSourceInfo *TInfo,
 ExprResult
 Sema::CreateSizeOfAlignOfExpr(Expr *E, SourceLocation OpLoc,
                               bool isSizeOf, SourceRange R) {
-  ExprResult PResult = CheckPlaceholderExpr(E, OpLoc);
-  if (PResult.isInvalid()) return ExprError();
-  E = PResult.take();
-
   // Verify that the operand is valid.
   bool isInvalid = false;
   if (E->isTypeDependent()) {
@@ -2227,6 +2223,10 @@ Sema::CreateSizeOfAlignOfExpr(Expr *E, SourceLocation OpLoc,
   } else if (E->getBitField()) {  // C99 6.5.3.4p1.
     Diag(OpLoc, diag::err_sizeof_alignof_bitfield) << 0;
     isInvalid = true;
+  } else if (E->getType()->isPlaceholderType()) {
+    ExprResult PE = CheckPlaceholderExpr(E, OpLoc);
+    if (PE.isInvalid()) return ExprError();
+    return CreateSizeOfAlignOfExpr(PE.take(), OpLoc, isSizeOf, R);
   } else {
     isInvalid = CheckSizeOfAlignOfOperand(E->getType(), OpLoc, R, true);
   }
@@ -2273,6 +2273,14 @@ QualType Sema::CheckRealImagOperand(Expr *&V, SourceLocation Loc, bool isReal) {
   // Otherwise they pass through real integer and floating point types here.
   if (V->getType()->isArithmeticType())
     return V->getType();
+
+  // Test for placeholders.
+  ExprResult PR = CheckPlaceholderExpr(V, Loc);
+  if (PR.isInvalid()) return QualType();
+  if (PR.take() != V) {
+    V = PR.take();
+    return CheckRealImagOperand(V, Loc, isReal);
+  }
 
   // Reject anything else.
   Diag(Loc, diag::err_realimag_invalid_type) << V->getType()
@@ -6223,6 +6231,10 @@ QualType Sema::CheckIncrementDecrementOperand(Expr *Op, SourceLocation OpLoc,
     // C99 does not support ++/-- on complex types, we allow as an extension.
     Diag(OpLoc, diag::ext_integer_increment_complex)
       << ResType << Op->getSourceRange();
+  } else if (ResType->isPlaceholderType()) {
+    ExprResult PR = CheckPlaceholderExpr(Op, OpLoc);
+    if (PR.isInvalid()) return QualType();
+    return CheckIncrementDecrementOperand(PR.take(), OpLoc, isInc, isPrefix);
   } else {
     Diag(OpLoc, diag::err_typecheck_illegal_increment_decrement)
       << ResType << int(isInc) << Op->getSourceRange();
@@ -6336,6 +6348,10 @@ QualType Sema::CheckAddressOfOperand(Expr *OrigOp, SourceLocation OpLoc) {
     return Context.DependentTy;
   if (OrigOp->getType() == Context.OverloadTy)
     return Context.OverloadTy;
+
+  ExprResult PR = CheckPlaceholderExpr(OrigOp, OpLoc);
+  if (PR.isInvalid()) return QualType();
+  OrigOp = PR.take();
 
   // Make sure to ignore parentheses in subsequent checks
   Expr *op = OrigOp->IgnoreParens();
@@ -6483,6 +6499,11 @@ QualType Sema::CheckIndirectionOperand(Expr *Op, SourceLocation OpLoc) {
   else if (const ObjCObjectPointerType *OPT =
              OpTy->getAs<ObjCObjectPointerType>())
     Result = OPT->getPointeeType();
+  else {
+    ExprResult PR = CheckPlaceholderExpr(Op, OpLoc);
+    if (PR.isInvalid()) return QualType();
+    if (PR.take() != Op) return CheckIndirectionOperand(PR.take(), OpLoc);
+  }
 
   if (Result.isNull()) {
     Diag(OpLoc, diag::err_typecheck_indirection_requires_pointer)
@@ -6809,8 +6830,8 @@ ExprResult Sema::BuildBinOp(Scope *S, SourceLocation OpLoc,
 }
 
 ExprResult Sema::CreateBuiltinUnaryOp(SourceLocation OpLoc,
-                                                    unsigned OpcIn,
-                                                    Expr *Input) {
+                                      unsigned OpcIn,
+                                      Expr *Input) {
   UnaryOperatorKind Opc = static_cast<UnaryOperatorKind>(OpcIn);
 
   QualType resultType;
@@ -6848,6 +6869,11 @@ ExprResult Sema::CreateBuiltinUnaryOp(SourceLocation OpLoc,
              Opc == UO_Plus &&
              resultType->isPointerType())
       break;
+    else if (resultType->isPlaceholderType()) {
+      ExprResult PR = CheckPlaceholderExpr(Input, OpLoc);
+      if (PR.isInvalid()) return ExprError();
+      return CreateBuiltinUnaryOp(OpLoc, OpcIn, PR.take());
+    }
 
     return ExprError(Diag(OpLoc, diag::err_typecheck_unary_expr)
       << resultType << Input->getSourceRange());
@@ -6861,9 +6887,16 @@ ExprResult Sema::CreateBuiltinUnaryOp(SourceLocation OpLoc,
       // C99 does not support '~' for complex conjugation.
       Diag(OpLoc, diag::ext_integer_complement_complex)
         << resultType << Input->getSourceRange();
-    else if (!resultType->hasIntegerRepresentation())
+    else if (resultType->hasIntegerRepresentation())
+      break;
+    else if (resultType->isPlaceholderType()) {
+      ExprResult PR = CheckPlaceholderExpr(Input, OpLoc);
+      if (PR.isInvalid()) return ExprError();
+      return CreateBuiltinUnaryOp(OpLoc, OpcIn, PR.take());
+    } else {
       return ExprError(Diag(OpLoc, diag::err_typecheck_unary_expr)
         << resultType << Input->getSourceRange());
+    }
     break;
   case UO_LNot: // logical negation
     // Unlike +/-/~, integer promotions aren't done here (C99 6.5.3.3p5).
@@ -6871,16 +6904,17 @@ ExprResult Sema::CreateBuiltinUnaryOp(SourceLocation OpLoc,
     resultType = Input->getType();
     if (resultType->isDependentType())
       break;
-    if (!resultType->isScalarType()) // C99 6.5.3.3p1
+    if (resultType->isScalarType()) { // C99 6.5.3.3p1
+      // ok, fallthrough
+    } else if (resultType->isPlaceholderType()) {
+      ExprResult PR = CheckPlaceholderExpr(Input, OpLoc);
+      if (PR.isInvalid()) return ExprError();
+      return CreateBuiltinUnaryOp(OpLoc, OpcIn, PR.take());
+    } else {
       return ExprError(Diag(OpLoc, diag::err_typecheck_unary_expr)
         << resultType << Input->getSourceRange());
+    }
     
-    // Do not accept &f if f is overloaded
-    // i.e. void f(int); void f(char); bool b = &f;
-    if (resultType == Context.OverloadTy && 
-        PerformContextuallyConvertToBool(Input)) 
-      return ExprError(); // Diagnostic is uttered above
-
     // LNot always has type int. C99 6.5.3.3p5.
     // In C++, it's bool. C++ 5.3.1p8
     resultType = getLangOptions().CPlusPlus ? Context.BoolTy : Context.IntTy;
@@ -6980,10 +7014,10 @@ Sema::ActOnStmtExpr(SourceLocation LPLoc, Stmt *SubStmt,
 }
 
 ExprResult Sema::BuildBuiltinOffsetOf(SourceLocation BuiltinLoc,
-                                                  TypeSourceInfo *TInfo,
-                                                  OffsetOfComponent *CompPtr,
-                                                  unsigned NumComponents,
-                                                  SourceLocation RParenLoc) {
+                                      TypeSourceInfo *TInfo,
+                                      OffsetOfComponent *CompPtr,
+                                      unsigned NumComponents,
+                                      SourceLocation RParenLoc) {
   QualType ArgTy = TInfo->getType();
   bool Dependent = ArgTy->isDependentType();
   SourceRange TypeRange = TInfo->getTypeLoc().getLocalSourceRange();
@@ -7136,13 +7170,13 @@ ExprResult Sema::BuildBuiltinOffsetOf(SourceLocation BuiltinLoc,
 }
 
 ExprResult Sema::ActOnBuiltinOffsetOf(Scope *S,
-                                                  SourceLocation BuiltinLoc,
-                                                  SourceLocation TypeLoc,
-                                                  ParsedType argty,
-                                                  OffsetOfComponent *CompPtr,
-                                                  unsigned NumComponents,
-                                                  SourceLocation RPLoc) {
-
+                                      SourceLocation BuiltinLoc,
+                                      SourceLocation TypeLoc,
+                                      ParsedType argty,
+                                      OffsetOfComponent *CompPtr,
+                                      unsigned NumComponents,
+                                      SourceLocation RPLoc) {
+  
   TypeSourceInfo *ArgTInfo;
   QualType ArgTy = GetTypeFromParser(argty, &ArgTInfo);
   if (ArgTy.isNull())
@@ -7157,8 +7191,8 @@ ExprResult Sema::ActOnBuiltinOffsetOf(Scope *S,
 
 
 ExprResult Sema::ActOnTypesCompatibleExpr(SourceLocation BuiltinLoc,
-                                                      ParsedType arg1,ParsedType arg2,
-                                                      SourceLocation RPLoc) {
+                                          ParsedType arg1, ParsedType arg2,
+                                          SourceLocation RPLoc) {
   TypeSourceInfo *argTInfo1;
   QualType argT1 = GetTypeFromParser(arg1, &argTInfo1);
   TypeSourceInfo *argTInfo2;
@@ -7186,9 +7220,9 @@ Sema::BuildTypesCompatibleExpr(SourceLocation BuiltinLoc,
 
 
 ExprResult Sema::ActOnChooseExpr(SourceLocation BuiltinLoc,
-                                             Expr *CondExpr,
-                                             Expr *LHSExpr, Expr *RHSExpr,
-                                             SourceLocation RPLoc) {
+                                 Expr *CondExpr,
+                                 Expr *LHSExpr, Expr *RHSExpr,
+                                 SourceLocation RPLoc) {
   assert((CondExpr && LHSExpr && RHSExpr) && "Missing type argument(s)");
 
   QualType resType;
@@ -8124,8 +8158,7 @@ ExprResult Sema::CheckPlaceholderExpr(Expr *E, SourceLocation Loc) {
       return Owned(E);
     }
 
-    Diag(Loc, diag::err_cannot_determine_declared_type_of_overloaded_function)
-      << E->getSourceRange();
+    Diag(Loc, diag::err_ovl_unresolvable) << E->getSourceRange();
     return ExprError();
   }
 

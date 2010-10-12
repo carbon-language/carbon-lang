@@ -1298,6 +1298,9 @@ def err_ovl_no_viable_subscript :
     Error<"no viable overloaded operator[] for type %0">;
 def err_ovl_no_oper :
     Error<"type %0 does not provide a %select{subscript|call}1 operator">;
+def err_ovl_unresolvable :
+    Error<"cannot resolve overloaded function from context">;
+  
 
 def err_ovl_no_viable_object_call : Error<
   "no matching function for call to object of type %0">;

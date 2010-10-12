@@ -608,7 +608,7 @@ bool Type::isArithmeticType() const {
 
 bool Type::isScalarType() const {
   if (const BuiltinType *BT = dyn_cast<BuiltinType>(CanonicalType))
-    return BT->getKind() != BuiltinType::Void;
+    return BT->getKind() != BuiltinType::Void && !BT->isPlaceholderType();
   if (const EnumType *ET = dyn_cast<EnumType>(CanonicalType))
     // Enums are scalar types, but only if they are defined.  Incomplete enums
     // are not treated as scalar types.
