@@ -2121,7 +2121,7 @@ ExprResult Sema::ActOnParenExpr(SourceLocation L,
 /// See C99 6.3.2.1p[2-4] for more details.
 bool Sema::CheckSizeOfAlignOfOperand(QualType exprType,
                                      SourceLocation OpLoc,
-                                     const SourceRange &ExprRange,
+                                     SourceRange ExprRange,
                                      bool isSizeof) {
   if (exprType->isDependentType())
     return false;
@@ -2160,17 +2160,11 @@ bool Sema::CheckSizeOfAlignOfOperand(QualType exprType,
     return true;
   }
 
-  if (Context.hasSameUnqualifiedType(exprType, Context.OverloadTy)) {
-    Diag(OpLoc, diag::err_sizeof_alignof_overloaded_function_type)
-      << !isSizeof << ExprRange;
-    return true;
-  }
-  
   return false;
 }
 
-bool Sema::CheckAlignOfExpr(Expr *E, SourceLocation OpLoc,
-                            const SourceRange &ExprRange) {
+static bool CheckAlignOfExpr(Sema &S, Expr *E, SourceLocation OpLoc,
+                             SourceRange ExprRange) {
   E = E->IgnoreParens();
 
   // alignof decl is always ok.
@@ -2182,7 +2176,7 @@ bool Sema::CheckAlignOfExpr(Expr *E, SourceLocation OpLoc,
     return false;
 
   if (E->getBitField()) {
-    Diag(OpLoc, diag::err_sizeof_alignof_bitfield) << 1 << ExprRange;
+   S. Diag(OpLoc, diag::err_sizeof_alignof_bitfield) << 1 << ExprRange;
     return true;
   }
 
@@ -2192,7 +2186,7 @@ bool Sema::CheckAlignOfExpr(Expr *E, SourceLocation OpLoc,
     if (isa<FieldDecl>(ME->getMemberDecl()))
       return false;
 
-  return CheckSizeOfAlignOfOperand(E->getType(), OpLoc, ExprRange, false);
+  return S.CheckSizeOfAlignOfOperand(E->getType(), OpLoc, ExprRange, false);
 }
 
 /// \brief Build a sizeof or alignof expression given a type operand.
@@ -2220,12 +2214,16 @@ Sema::CreateSizeOfAlignOfExpr(TypeSourceInfo *TInfo,
 ExprResult
 Sema::CreateSizeOfAlignOfExpr(Expr *E, SourceLocation OpLoc,
                               bool isSizeOf, SourceRange R) {
+  ExprResult PResult = CheckPlaceholderExpr(E, OpLoc);
+  if (PResult.isInvalid()) return ExprError();
+  E = PResult.take();
+
   // Verify that the operand is valid.
   bool isInvalid = false;
   if (E->isTypeDependent()) {
     // Delay type-checking for type-dependent expressions.
   } else if (!isSizeOf) {
-    isInvalid = CheckAlignOfExpr(E, OpLoc, R);
+    isInvalid = CheckAlignOfExpr(*this, E, OpLoc, R);
   } else if (E->getBitField()) {  // C99 6.5.3.4p1.
     Diag(OpLoc, diag::err_sizeof_alignof_bitfield) << 0;
     isInvalid = true;
@@ -8106,4 +8104,36 @@ ExprResult Sema::ActOnBooleanCondition(Scope *S, SourceLocation Loc,
     return ExprError();
   
   return Owned(Sub);
+}
+
+/// Check for operands with placeholder types and complain if found.
+/// Returns true if there was an error and no recovery was possible.
+ExprResult Sema::CheckPlaceholderExpr(Expr *E, SourceLocation Loc) {
+  const BuiltinType *BT = E->getType()->getAs<BuiltinType>();
+  if (!BT || !BT->isPlaceholderType()) return Owned(E);
+
+  // If this is overload, check for a single overload.
+  if (BT->getKind() == BuiltinType::Overload) {
+    if (FunctionDecl *Specialization
+          = ResolveSingleFunctionTemplateSpecialization(E)) {
+      // The access doesn't really matter in this case.
+      DeclAccessPair Found = DeclAccessPair::make(Specialization,
+                                                  Specialization->getAccess());
+      E = FixOverloadedFunctionReference(E, Found, Specialization);
+      if (!E) return ExprError();
+      return Owned(E);
+    }
+
+    Diag(Loc, diag::err_cannot_determine_declared_type_of_overloaded_function)
+      << E->getSourceRange();
+    return ExprError();
+  }
+
+  // Otherwise it's a use of undeduced auto.
+  assert(BT->getKind() == BuiltinType::UndeducedAuto);
+
+  DeclRefExpr *DRE = cast<DeclRefExpr>(E->IgnoreParens());
+  Diag(Loc, diag::err_auto_variable_cannot_appear_in_own_initializer)
+    << DRE->getDecl() << E->getSourceRange();
+  return ExprError();
 }

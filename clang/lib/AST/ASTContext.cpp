@@ -329,9 +329,6 @@ void ASTContext::InitBuiltinTypes() {
   else // C99
     Char32Ty = getFromTargetType(Target.getChar32Type());
 
-  // Placeholder type for functions.
-  InitBuiltinType(OverloadTy,          BuiltinType::Overload);
-
   // Placeholder type for type-dependent expressions whose type is
   // completely unknown. No code should ever check a type against
   // DependentTy and users should never see it; however, it is here to
@@ -339,9 +336,12 @@ void ASTContext::InitBuiltinTypes() {
   // expressions.
   InitBuiltinType(DependentTy,         BuiltinType::Dependent);
 
+  // Placeholder type for functions.
+  InitBuiltinType(OverloadTy,          BuiltinType::Overload);
+
   // Placeholder type for C++0x auto declarations whose real type has
   // not yet been deduced.
-  InitBuiltinType(UndeducedAutoTy, BuiltinType::UndeducedAuto);
+  InitBuiltinType(UndeducedAutoTy,     BuiltinType::UndeducedAuto);
 
   // C99 6.2.5p11.
   FloatComplexTy      = getComplexType(FloatTy);

@@ -350,7 +350,7 @@ static QualType ConvertDeclSpecToType(Sema &TheSema,
     Expr *E = DS.getRepAsExpr();
     assert(E && "Didn't get an expression for typeof?");
     // TypeQuals handled by caller.
-    Result = TheSema.BuildTypeofExprType(E);
+    Result = TheSema.BuildTypeofExprType(E, DS.getTypeSpecTypeLoc());
     if (Result.isNull()) {
       Result = Context.IntTy;
       TheDeclarator.setInvalidType(true);
@@ -361,7 +361,7 @@ static QualType ConvertDeclSpecToType(Sema &TheSema,
     Expr *E = DS.getRepAsExpr();
     assert(E && "Didn't get an expression for decltype?");
     // TypeQuals handled by caller.
-    Result = TheSema.BuildDecltypeType(E);
+    Result = TheSema.BuildDecltypeType(E, DS.getTypeSpecTypeLoc());
     if (Result.isNull()) {
       Result = Context.IntTy;
       TheDeclarator.setInvalidType(true);
@@ -2196,25 +2196,11 @@ QualType Sema::getElaboratedType(ElaboratedTypeKeyword Keyword,
   return Context.getElaboratedType(Keyword, NNS, T);
 }
 
-QualType Sema::BuildTypeofExprType(Expr *E) {
-  if (E->getType() == Context.OverloadTy) {
-    // C++ [temp.arg.explicit]p3 allows us to resolve a template-id to a 
-    // function template specialization wherever deduction cannot occur.
-    if (FunctionDecl *Specialization
-        = ResolveSingleFunctionTemplateSpecialization(E)) {
-      // The access doesn't really matter in this case.
-      DeclAccessPair Found = DeclAccessPair::make(Specialization,
-                                                  Specialization->getAccess());
-      E = FixOverloadedFunctionReference(E, Found, Specialization);
-      if (!E)
-        return QualType();      
-    } else {
-      Diag(E->getLocStart(),
-           diag::err_cannot_determine_declared_type_of_overloaded_function)
-        << false << E->getSourceRange();
-      return QualType();
-    }
-  }
+QualType Sema::BuildTypeofExprType(Expr *E, SourceLocation Loc) {
+  ExprResult ER = CheckPlaceholderExpr(E, Loc);
+  if (ER.isInvalid()) return QualType();
+  E = ER.take();
+
   if (!E->isTypeDependent()) {
     QualType T = E->getType();
     if (const TagType *TT = T->getAs<TagType>())
@@ -2223,25 +2209,10 @@ QualType Sema::BuildTypeofExprType(Expr *E) {
   return Context.getTypeOfExprType(E);
 }
 
-QualType Sema::BuildDecltypeType(Expr *E) {
-  if (E->getType() == Context.OverloadTy) {
-    // C++ [temp.arg.explicit]p3 allows us to resolve a template-id to a 
-    // function template specialization wherever deduction cannot occur.
-    if (FunctionDecl *Specialization
-          = ResolveSingleFunctionTemplateSpecialization(E)) {
-      // The access doesn't really matter in this case.
-      DeclAccessPair Found = DeclAccessPair::make(Specialization,
-                                                  Specialization->getAccess());
-      E = FixOverloadedFunctionReference(E, Found, Specialization);
-      if (!E)
-        return QualType();      
-    } else {
-      Diag(E->getLocStart(),
-           diag::err_cannot_determine_declared_type_of_overloaded_function)
-        << true << E->getSourceRange();
-      return QualType();
-    }
-  }
+QualType Sema::BuildDecltypeType(Expr *E, SourceLocation Loc) {
+  ExprResult ER = CheckPlaceholderExpr(E, Loc);
+  if (ER.isInvalid()) return QualType();
+  E = ER.take();
   
   return Context.getDecltypeType(E);
 }

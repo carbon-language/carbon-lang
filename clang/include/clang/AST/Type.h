@@ -867,6 +867,12 @@ public:
   /// isSpecificBuiltinType - Test for a particular builtin type.
   bool isSpecificBuiltinType(unsigned K) const;
 
+  /// isPlaceholderType - Test for a type which does not represent an
+  /// actual type-system type but is instead used as a placeholder for
+  /// various convenient purposes within Clang.  All such types are
+  /// BuiltinTypes.
+  bool isPlaceholderType() const;
+
   /// isIntegerType() does *not* include complex integers (a GCC extension).
   /// isComplexIntegerType() can be used to test for complex integers.
   bool isIntegerType() const;     // C99 6.2.5p17 (int, char, bool, enum)
@@ -1105,8 +1111,13 @@ public:
 
     NullPtr,  // This is the type of C++0x 'nullptr'.
 
+    /// This represents the type of an expression whose type is
+    /// totally unknown, e.g. 'T::foo'.  It is permitted for this to
+    /// appear in situations where the structure of the type is
+    /// theoretically deducible.
+    Dependent,
+
     Overload,  // This represents the type of an overloaded function declaration.
-    Dependent, // This represents the type of a type-dependent expression.
 
     UndeducedAuto, // In C++0x, this represents the type of an auto variable
                    // that has not been deduced yet.
@@ -1154,6 +1165,14 @@ public:
 
   bool isFloatingPoint() const {
     return TypeKind >= Float && TypeKind <= LongDouble;
+  }
+
+  /// Determines whether this type is a "forbidden" placeholder type,
+  /// i.e. a type which cannot appear in arbitrary positions in a
+  /// fully-formed expression.
+  bool isPlaceholderType() const {
+    return TypeKind == Overload ||
+           TypeKind == UndeducedAuto;
   }
 
   static bool classof(const Type *T) { return T->getTypeClass() == Builtin; }
@@ -3609,6 +3628,12 @@ inline bool Type::isSpecificBuiltinType(unsigned K) const {
   if (const BuiltinType *BT = getAs<BuiltinType>())
     if (BT->getKind() == (BuiltinType::Kind) K)
       return true;
+  return false;
+}
+
+inline bool Type::isPlaceholderType() const {
+  if (const BuiltinType *BT = getAs<BuiltinType>())
+    return BT->isPlaceholderType();
   return false;
 }
 

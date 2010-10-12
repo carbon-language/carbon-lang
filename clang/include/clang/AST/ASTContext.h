@@ -388,9 +388,8 @@ public:
   CanQualType FloatTy, DoubleTy, LongDoubleTy;
   CanQualType FloatComplexTy, DoubleComplexTy, LongDoubleComplexTy;
   CanQualType VoidPtrTy, NullPtrTy;
-  CanQualType OverloadTy;
+  CanQualType OverloadTy, UndeducedAutoTy;
   CanQualType DependentTy;
-  CanQualType UndeducedAutoTy;
   CanQualType ObjCBuiltinIdTy, ObjCBuiltinClassTy, ObjCBuiltinSelTy;
 
   ASTContext(const LangOptions& LOpts, SourceManager &SM, const TargetInfo &t,

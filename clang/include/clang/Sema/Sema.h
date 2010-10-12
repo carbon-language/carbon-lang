@@ -646,8 +646,8 @@ public:
   QualType getElaboratedType(ElaboratedTypeKeyword Keyword,
                              const CXXScopeSpec &SS, QualType T);
 
-  QualType BuildTypeofExprType(Expr *E);
-  QualType BuildDecltypeType(Expr *E);
+  QualType BuildTypeofExprType(Expr *E, SourceLocation Loc);
+  QualType BuildDecltypeType(Expr *E, SourceLocation Loc);
 
   //===--------------------------------------------------------------------===//
   // Symbol table / Decl tracking callbacks: SemaDecl.cpp.
@@ -1758,9 +1758,10 @@ public:
     ActOnSizeOfAlignOfExpr(SourceLocation OpLoc, bool isSizeof, bool isType,
                            void *TyOrEx, const SourceRange &ArgRange);
 
-  bool CheckAlignOfExpr(Expr *E, SourceLocation OpLoc, const SourceRange &R);
+  ExprResult CheckPlaceholderExpr(Expr *E, SourceLocation Loc);
+
   bool CheckSizeOfAlignOfOperand(QualType type, SourceLocation OpLoc,
-                                 const SourceRange &R, bool isSizeof);
+                                 SourceRange R, bool isSizeof);
 
   ExprResult ActOnPostfixUnaryOp(Scope *S, SourceLocation OpLoc,
                                  tok::TokenKind Kind, Expr *Input);

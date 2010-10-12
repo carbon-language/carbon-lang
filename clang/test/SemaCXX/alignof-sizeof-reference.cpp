@@ -11,5 +11,5 @@ void test() {
 void f(); 
 void f(int); 
 void g() { 
-  sizeof(&f); // expected-error{{invalid application of 'sizeof' to an overloaded function}}
+  sizeof(&f); // expected-error{{cannot determine the type of an overloaded function}}
 }

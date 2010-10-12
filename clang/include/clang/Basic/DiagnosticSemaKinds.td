@@ -800,8 +800,7 @@ def err_temp_copy_incomplete : Error<
 
 // C++0x decltype
 def err_cannot_determine_declared_type_of_overloaded_function : Error<
-    "cannot determine the %select{type|declared type}0 of an overloaded "
-    "function">;
+    "cannot determine the type of an overloaded function">;
     
 // C++0x auto
 def err_auto_variable_cannot_appear_in_own_initializer : Error<

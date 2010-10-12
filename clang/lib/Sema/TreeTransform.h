@@ -495,7 +495,7 @@ public:
   ///
   /// By default, performs semantic analysis when building the typeof type.
   /// Subclasses may override this routine to provide different behavior.
-  QualType RebuildTypeOfExprType(Expr *Underlying);
+  QualType RebuildTypeOfExprType(Expr *Underlying, SourceLocation Loc);
 
   /// \brief Build a new typeof(type) type.
   ///
@@ -506,7 +506,7 @@ public:
   ///
   /// By default, performs semantic analysis when building the decltype type.
   /// Subclasses may override this routine to provide different behavior.
-  QualType RebuildDecltypeType(Expr *Underlying);
+  QualType RebuildDecltypeType(Expr *Underlying, SourceLocation Loc);
 
   /// \brief Build a new template specialization type.
   ///
@@ -3065,7 +3065,7 @@ QualType TreeTransform<Derived>::TransformTypeOfExprType(TypeLocBuilder &TLB,
   QualType Result = TL.getType();
   if (getDerived().AlwaysRebuild() ||
       E.get() != TL.getUnderlyingExpr()) {
-    Result = getDerived().RebuildTypeOfExprType(E.get());
+    Result = getDerived().RebuildTypeOfExprType(E.get(), TL.getTypeofLoc());
     if (Result.isNull())
       return QualType();
   }
@@ -3120,7 +3120,7 @@ QualType TreeTransform<Derived>::TransformDecltypeType(TypeLocBuilder &TLB,
   QualType Result = TL.getType();
   if (getDerived().AlwaysRebuild() ||
       E.get() != T->getUnderlyingExpr()) {
-    Result = getDerived().RebuildDecltypeType(E.get());
+    Result = getDerived().RebuildDecltypeType(E.get(), TL.getNameLoc());
     if (Result.isNull())
       return QualType();
   }
@@ -6502,8 +6502,9 @@ QualType TreeTransform<Derived>::RebuildUnresolvedUsingType(Decl *D) {
 }
 
 template<typename Derived>
-QualType TreeTransform<Derived>::RebuildTypeOfExprType(Expr *E) {
-  return SemaRef.BuildTypeofExprType(E);
+QualType TreeTransform<Derived>::RebuildTypeOfExprType(Expr *E,
+                                                       SourceLocation Loc) {
+  return SemaRef.BuildTypeofExprType(E, Loc);
 }
 
 template<typename Derived>
@@ -6512,8 +6513,9 @@ QualType TreeTransform<Derived>::RebuildTypeOfType(QualType Underlying) {
 }
 
 template<typename Derived>
-QualType TreeTransform<Derived>::RebuildDecltypeType(Expr *E) {
-  return SemaRef.BuildDecltypeType(E);
+QualType TreeTransform<Derived>::RebuildDecltypeType(Expr *E,
+                                                     SourceLocation Loc) {
+  return SemaRef.BuildDecltypeType(E, Loc);
 }
 
 template<typename Derived>
