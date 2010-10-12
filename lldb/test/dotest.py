@@ -381,6 +381,8 @@ def visit(prefix, dir, names):
                     continue
 
             # We found a match for our test case.  Add it to the suite.
+
+            # Update the sys.path first.
             if not sys.path.count(dir):
                 sys.path.insert(0, dir)
             base = os.path.splitext(name)[0]
@@ -473,7 +475,7 @@ if not skipLongRunningTest:
     os.environ["LLDB_SKIP_LONG_RUNNING_TEST"] = "NO"
 
 #
-# Walk through the testdirs while collecting test cases.
+# Walk through the testdirs while collecting tests.
 #
 for testdir in testdirs:
     os.path.walk(testdir, visit, 'Test')
