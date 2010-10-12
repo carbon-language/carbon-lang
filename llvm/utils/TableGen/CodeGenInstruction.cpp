@@ -166,10 +166,14 @@ CodeGenInstruction::CodeGenInstruction(Record *R, const std::string &AsmStr)
 
     Record *Rec = Arg->getDef();
     std::string PrintMethod = "printOperand";
+    std::string EncoderMethod;
     unsigned NumOps = 1;
     DagInit *MIOpInfo = 0;
     if (Rec->isSubClassOf("Operand")) {
       PrintMethod = Rec->getValueAsString("PrintMethod");
+      // If there is an explicit encoder method, use it.
+      if (Rec->getValue("EncoderMethod"))
+        EncoderMethod = Rec->getValueAsString("EncoderMethod");
       MIOpInfo = Rec->getValueAsDag("MIOperandInfo");
 
       // Verify that MIOpInfo has an 'ops' root value.
@@ -204,7 +208,7 @@ CodeGenInstruction::CodeGenInstruction(Record *R, const std::string &AsmStr)
       throw "In instruction '" + R->getName() + "', operand #" + utostr(i) +
         " has the same name as a previous operand!";
 
-    OperandList.push_back(OperandInfo(Rec, ArgName, PrintMethod,
+    OperandList.push_back(OperandInfo(Rec, ArgName, PrintMethod, EncoderMethod,
                                       MIOperandNo, NumOps, MIOpInfo));
     MIOperandNo += NumOps;
   }

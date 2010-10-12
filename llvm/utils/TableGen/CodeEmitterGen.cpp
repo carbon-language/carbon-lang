@@ -154,7 +154,6 @@ void CodeEmitterGen::run(raw_ostream &o) {
             }
 
             if (!gotOp) {
-
               // If the operand matches by name, reference according to that
               // operand number. Non-matching operands are assumed to be in
               // order.
@@ -171,10 +170,26 @@ void CodeEmitterGen::run(raw_ostream &o) {
                   ++NumberedOp;
                 OpIdx = NumberedOp++;
               }
+              std::pair<unsigned, unsigned> SO = CGI.getSubOperandNumber(OpIdx);
+              std::string &EncoderMethodName =
+                CGI.OperandList[SO.first].EncoderMethodName;
 
-              Case += "      // op: " + VarName + "\n"
-                   +  "      op = getMachineOpValue(MI, MI.getOperand("
-                   +  utostr(OpIdx) + "));\n";
+              // If the source operand has a custom encoder, use it. This will
+              // get the encoding for all of the suboperands.
+              if (!EncoderMethodName.empty()) {
+                // A custom encoder has all of the information for the
+                // sub-operands, if there are more than one, so only
+                // query the encoder once per source operand.
+                if (SO.second == 0) {
+                  Case += "      // op: " + VarName + "\n"
+                       + "      op = " + EncoderMethodName + "(MI, "
+                       + utostr(OpIdx) + ");\n";
+                }
+              } else {
+                Case += "      // op: " + VarName + "\n"
+                     +  "      op = getMachineOpValue(MI, MI.getOperand("
+                     +  utostr(OpIdx) + "));\n";
+              }
               gotOp = true;
             }
 
