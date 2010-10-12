@@ -156,6 +156,17 @@ namespace {
       return getMachineOpValue(MI, MI.getOperand(OpIdx));
     }
 
+    // FIXME: The legacy JIT ARMCodeEmitter doesn't rely on the the
+    //  TableGen'erated getBinaryCodeForInstr() function to encode any
+    //  operand values, instead querying getMachineOpValue() directly for
+    //  each operand it needs to encode. Thus, any of the new encoder
+    //  helper functions can simply return 0 as the values the return
+    //  are already handled elsewhere. They are placeholders to allow this
+    //  encoder to continue to function until the MC encoder is sufficiently
+    //  far along that this one can be eliminated entirely.
+    unsigned getCCOutOpValue(const MachineInstr &MI, unsigned Op)
+      const { return 0; }
+
     /// getMovi32Value - Return binary encoding of operand for movw/movt. If the
     /// machine operand requires relocation, record the relocation and return
     /// zero.

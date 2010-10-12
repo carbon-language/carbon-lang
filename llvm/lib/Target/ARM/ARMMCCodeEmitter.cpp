@@ -49,6 +49,13 @@ public:
   /// operand requires relocation, record the relocation and return zero.
   unsigned getMachineOpValue(const MCInst &MI,const MCOperand &MO) const;
 
+  /// getCCOutOpValue - Return encoding of the 's' bit.
+  unsigned getCCOutOpValue(const MCInst &MI, unsigned Op) const {
+    // The operand is either reg0 or CPSR. The 's' bit is encoded as '0' or
+    // '1' respectively.
+    return MI.getOperand(Op).getReg() == ARM::CPSR;
+  }
+
   unsigned getNumFixupKinds() const {
     assert(0 && "ARMMCCodeEmitter::getNumFixupKinds() not yet implemented.");
     return 0;
@@ -151,9 +158,6 @@ EncodeInstruction(const MCInst &MI, raw_ostream &OS,
   switch (Opcode) {
   default: break;
   case ARM::MOVi:
-    // The 's' bit.
-    if (MI.getOperand(4).getReg() == ARM::CPSR)
-      Value |= 1 << ARMII::S_BitShift;
     // The shifted immediate value.
     Value |= getMachineSoImmOpValue((unsigned)MI.getOperand(1).getImm());
     break;
@@ -163,9 +167,6 @@ EncodeInstruction(const MCInst &MI, raw_ostream &OS,
   case ARM::EORri:
   case ARM::ORRri:
   case ARM::SUBri:
-    // The 's' bit.
-    if (MI.getOperand(5).getReg() == ARM::CPSR)
-      Value |= 1 << ARMII::S_BitShift;
     // The shifted immediate value.
     Value |= getMachineSoImmOpValue((unsigned)MI.getOperand(2).getImm());
     break;
@@ -175,9 +176,6 @@ EncodeInstruction(const MCInst &MI, raw_ostream &OS,
   case ARM::EORrs:
   case ARM::ORRrs:
   case ARM::SUBrs: {
-    // The 's' bit.
-    if (MI.getOperand(7).getReg() == ARM::CPSR)
-      Value |= 1 << ARMII::S_BitShift;
     // The so_reg operand needs the shift ammount encoded.
     unsigned ShVal = MI.getOperand(4).getImm();
     unsigned ShType = ARM_AM::getShiftOpcEncoding(ARM_AM::getSORegShOp(ShVal));

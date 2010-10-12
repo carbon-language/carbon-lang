@@ -153,11 +153,13 @@ def pred : PredicateOperand<OtherVT, (ops i32imm, CCR),
 
 // Conditional code result for instructions whose 's' bit is set, e.g. subs.
 def cc_out : OptionalDefOperand<OtherVT, (ops CCR), (ops (i32 zero_reg))> {
+  string EncoderMethod = "getCCOutOpValue";
   let PrintMethod = "printSBitModifierOperand";
 }
 
 // Same as cc_out except it defaults to setting CPSR.
 def s_cc_out : OptionalDefOperand<OtherVT, (ops CCR), (ops (i32 CPSR))> {
+  string EncoderMethod = "getCCOutOpValue";
   let PrintMethod = "printSBitModifierOperand";
 }
 
@@ -273,9 +275,9 @@ class sI<dag oops, dag iops, AddrMode am, SizeFlagVal sz,
          list<dag> pattern>
   : InstARM<am, sz, im, f, GenericDomain, cstr, itin> {
   bits<4> p; // Predicate operand
+  bits<1> s; // condition-code set flag ('1' if the insn should set the flags)
   let Inst{31-28} = p;
-  // FIXME: The 's' operand needs to be handled, but the current generic
-  //        get-value handlers don't know how to deal with it.
+  let Inst{20} = s;
 
   let OutOperandList = oops;
   let InOperandList = !con(iops, (ins pred:$p, cc_out:$s));
