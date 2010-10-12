@@ -6,7 +6,7 @@
 ;        assembly.
 
 
-define arm_aapcscc float @f1(float %a, float %b) nounwind {
+define float @f1(float %a, float %b) nounwind readnone {
 entry:
 ; CHECK: f1
 ; CHECK: vadd.f32 s0, s1, s0  @ encoding: [0x80,0x0a,0x30,0xee]
@@ -14,7 +14,7 @@ entry:
   ret float %add
 }
 
-define arm_aapcscc double @f2(double %a, double %b) nounwind {
+define double @f2(double %a, double %b) nounwind readnone {
 entry:
 ; CHECK: f2
 ; CHECK: vadd.f64 d16, d17, d16  @ encoding: [0xa0,0x0b,0x71,0xee]
