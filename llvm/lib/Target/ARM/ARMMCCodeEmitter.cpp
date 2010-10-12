@@ -55,6 +55,7 @@ public:
     // '1' respectively.
     return MI.getOperand(Op).getReg() == ARM::CPSR;
   }
+
   /// getSOImmOpValue - Return an encoded 12-bit shifted-immediate value.
   unsigned getSOImmOpValue(const MCInst &MI, unsigned Op) const {
     unsigned SoImm = MI.getOperand(Op).getImm();
@@ -69,6 +70,9 @@ public:
     Binary |= ARM_AM::getSOImmValImm((unsigned)SoImmVal);
     return Binary;
   }
+
+  /// getSORegOpValue - Return an encoded so_reg shifted register value.
+  unsigned getSORegOpValue(const MCInst &MI, unsigned Op) const;
 
   unsigned getNumFixupKinds() const {
     assert(0 && "ARMMCCodeEmitter::getNumFixupKinds() not yet implemented.");
@@ -137,6 +141,76 @@ unsigned ARMMCCodeEmitter::getMachineOpValue(const MCInst &MI,
   return 0;
 }
 
+
+unsigned ARMMCCodeEmitter::getSORegOpValue(const MCInst &MI,
+                                           unsigned OpIdx) const {
+  // Sub-operands are [reg, reg, imm]. The first register is Rm, the reg
+  // to be shifted. The second is either Rs, the amount to shift by, or
+  // reg0 in which case the imm contains the amount to shift by.
+  // {3-0} = Rm.
+  // {4} = 1 if reg shift, 0 if imm shift
+  // {6-5} = type
+  //    If reg shift:
+  //      {7} = 0
+  //      {11-8} = Rs
+  //    else (imm shift)
+  //      {11-7} = imm
+
+  const MCOperand &MO  = MI.getOperand(OpIdx);
+  const MCOperand &MO1 = MI.getOperand(OpIdx + 1);
+  const MCOperand &MO2 = MI.getOperand(OpIdx + 2);
+  ARM_AM::ShiftOpc SOpc = ARM_AM::getSORegShOp(MO2.getImm());
+
+  // Encode Rm.
+  unsigned Binary = getARMRegisterNumbering(MO.getReg());
+
+  // Encode the shift opcode.
+  unsigned SBits = 0;
+  unsigned Rs = MO1.getReg();
+  if (Rs) {
+    // Set shift operand (bit[7:4]).
+    // LSL - 0001
+    // LSR - 0011
+    // ASR - 0101
+    // ROR - 0111
+    // RRX - 0110 and bit[11:8] clear.
+    switch (SOpc) {
+    default: llvm_unreachable("Unknown shift opc!");
+    case ARM_AM::lsl: SBits = 0x1; break;
+    case ARM_AM::lsr: SBits = 0x3; break;
+    case ARM_AM::asr: SBits = 0x5; break;
+    case ARM_AM::ror: SBits = 0x7; break;
+    case ARM_AM::rrx: SBits = 0x6; break;
+    }
+  } else {
+    // Set shift operand (bit[6:4]).
+    // LSL - 000
+    // LSR - 010
+    // ASR - 100
+    // ROR - 110
+    switch (SOpc) {
+    default: llvm_unreachable("Unknown shift opc!");
+    case ARM_AM::lsl: SBits = 0x0; break;
+    case ARM_AM::lsr: SBits = 0x2; break;
+    case ARM_AM::asr: SBits = 0x4; break;
+    case ARM_AM::ror: SBits = 0x6; break;
+    }
+  }
+  Binary |= SBits << 4;
+  if (SOpc == ARM_AM::rrx)
+    return Binary;
+
+  // Encode the shift operation Rs or shift_imm (except rrx).
+  if (Rs) {
+    // Encode Rs bit[11:8].
+    assert(ARM_AM::getSORegOffset(MO2.getImm()) == 0);
+    return Binary | (getARMRegisterNumbering(Rs) << ARMII::RegRsShift);
+  }
+
+  // Encode shift_imm bit[11:7].
+  return Binary | ARM_AM::getSORegOffset(MO2.getImm()) << 7;
+}
+
 void ARMMCCodeEmitter::
 EncodeInstruction(const MCInst &MI, raw_ostream &OS,
                   SmallVectorImpl<MCFixup> &Fixups) const {
@@ -151,27 +225,9 @@ EncodeInstruction(const MCInst &MI, raw_ostream &OS,
     return;
 
   ++MCNumEmitted;  // Keep track of the # of mi's emitted
-  // FIXME: TableGen doesn't deal well with operands that expand to multiple
-  // machine instruction operands, so for now we'll fix those up here.
-  // Similarly, operands that are encoded as other than their literal
-  // values in the MI.
   unsigned Value = getBinaryCodeForInstr(MI);
   switch (Opcode) {
   default: break;
-  case ARM::ADDrs:
-  case ARM::ANDrs:
-  case ARM::BICrs:
-  case ARM::EORrs:
-  case ARM::ORRrs:
-  case ARM::SUBrs: {
-    // The so_reg operand needs the shift ammount encoded.
-    unsigned ShVal = MI.getOperand(4).getImm();
-    unsigned ShType = ARM_AM::getShiftOpcEncoding(ARM_AM::getSORegShOp(ShVal));
-    unsigned ShAmt = ARM_AM::getSORegOffset(ShVal);
-    Value |= ShType << ARMII::ShiftTypeShift;
-    Value |= ShAmt << ARMII::ShiftShift;
-    break;
-  }
   }
   EmitConstant(Value, 4, CurByte, OS);
 }

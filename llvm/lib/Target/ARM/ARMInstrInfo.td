@@ -313,6 +313,7 @@ def shift_imm : Operand<i32> {
 def so_reg : Operand<i32>,    // reg reg imm
              ComplexPattern<i32, 3, "SelectShifterOperandReg",
                             [shl,srl,sra,rotr]> {
+  string EncoderMethod = "getSORegOpValue";
   let PrintMethod = "printSORegOperand";
   let MIOperandInfo = (ops GPR, GPR, i32imm);
 }
@@ -498,14 +499,14 @@ multiclass AsI1_bin_irs<bits<4> opcod, string opc,
     let Inst{15-12} = Rd;
     let Inst{19-16} = Rn;
   }
-  def rs : AsI1<opcod, (outs GPR:$dst), (ins GPR:$a, so_reg:$b), DPSoRegFrm,
-               iis, opc, "\t$dst, $a, $b",
-               [(set GPR:$dst, (opnode GPR:$a, so_reg:$b))]> {
+  def rs : AsI1<opcod, (outs GPR:$Rd), (ins GPR:$Rn, so_reg:$shift), DPSoRegFrm,
+               iis, opc, "\t$Rd, $Rn, $shift",
+               [(set GPR:$Rd, (opnode GPR:$Rn, so_reg:$shift))]> {
     bits<4> Rd;
     bits<4> Rn;
-    bits<4> Rm;
+    bits<12> shift;
     let Inst{25} = 0;
-    let Inst{3-0} = Rm;
+    let Inst{11-0} = shift;
     let Inst{15-12} = Rd;
     let Inst{19-16} = Rn;
   }
