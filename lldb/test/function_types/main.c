@@ -18,5 +18,5 @@ int main (int argc, char const *argv[])
 {
     int (*callback)(const char *) = string_not_empty;
 
-    return callback(0);
+    return callback(0); // Set break point at this line.
 }

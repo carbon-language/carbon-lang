@@ -20,14 +20,21 @@ class FunctionTypesTestCase(TestBase):
         self.buildDwarf()
         self.function_types()
 
+    def setUp(self):
+        super(FunctionTypesTestCase, self).setUp()
+        # Find the line number to break inside main().
+        self.line = line_number('main.c', '// Set break point at this line.')
+
     def function_types(self):
         """Test 'callback' has function ptr type, then break on the function."""
         exe = os.path.join(os.getcwd(), "a.out")
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 
         # Break inside the main.
-        self.expect("breakpoint set -f main.c -l 21", BREAKPOINT_CREATED,
-            startstr = "Breakpoint created: 1: file ='main.c', line = 21, locations = 1")
+        self.expect("breakpoint set -f main.c -l %d" % self.line,
+                    BREAKPOINT_CREATED,
+            startstr = "Breakpoint created: 1: file ='main.c', line = %d, locations = 1" %
+                        self.line)
 
         self.runCmd("run", RUN_SUCCEEDED)
 
