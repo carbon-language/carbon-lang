@@ -564,7 +564,7 @@ for ia in range(len(archs) if iterArchs else 1):
                         new_stderr.close()
                     new_stderr = open("%s.%s" % (old_stderr.name, configPostfix), "w")
                     sys.stderr = new_stderr
-                if old_stdout.name != '<stderr>' and config.get('split_stderr'):
+                if old_stdout.name != '<stdout>' and config.get('split_stdout'):
                     if new_stdout:
                         new_stdout.close()
                     new_stdout = open("%s.%s" % (old_stdout.name, configPostfix), "w")
