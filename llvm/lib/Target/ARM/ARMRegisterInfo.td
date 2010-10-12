@@ -381,7 +381,7 @@ def DPR : RegisterClass<"ARM", [f64, v8i8, v4i16, v2i32, v1i64, v2f32], 64,
     iterator allocation_order_end(const MachineFunction &MF) const;
   }];
   let MethodBodies = [{
-    // VFP2
+    // VFP2 / VFPv3-D16
     static const unsigned ARM_DPR_VFP2[] = {
       ARM::D0,  ARM::D1,  ARM::D2,  ARM::D3,
       ARM::D4,  ARM::D5,  ARM::D6,  ARM::D7,
@@ -403,7 +403,7 @@ def DPR : RegisterClass<"ARM", [f64, v8i8, v4i16, v2i32, v1i64, v2f32], 64,
     DPRClass::allocation_order_begin(const MachineFunction &MF) const {
       const TargetMachine &TM = MF.getTarget();
       const ARMSubtarget &Subtarget = TM.getSubtarget<ARMSubtarget>();
-      if (Subtarget.hasVFP3())
+      if (Subtarget.hasVFP3() && !Subtarget.hasD16())
         return ARM_DPR_VFP3;
       return ARM_DPR_VFP2;
     }
@@ -412,7 +412,7 @@ def DPR : RegisterClass<"ARM", [f64, v8i8, v4i16, v2i32, v1i64, v2f32], 64,
     DPRClass::allocation_order_end(const MachineFunction &MF) const {
       const TargetMachine &TM = MF.getTarget();
       const ARMSubtarget &Subtarget = TM.getSubtarget<ARMSubtarget>();
-      if (Subtarget.hasVFP3())
+      if (Subtarget.hasVFP3() && !Subtarget.hasD16())
         return ARM_DPR_VFP3 + (sizeof(ARM_DPR_VFP3)/sizeof(unsigned));
       else
         return ARM_DPR_VFP2 + (sizeof(ARM_DPR_VFP2)/sizeof(unsigned));

@@ -33,6 +33,8 @@ def FeatureNoARM  : SubtargetFeature<"noarm", "NoARM", "true",
                                      "Does not support ARM mode execution">;
 def FeatureFP16   : SubtargetFeature<"fp16", "HasFP16", "true",
                                      "Enable half-precision floating point">;
+def FeatureD16    : SubtargetFeature<"d16", "HasD16", "true",
+                                     "Restrict VFP3 to 16 double registers">;
 def FeatureHWDiv  : SubtargetFeature<"hwdiv", "HasHardwareDivide", "true",
                                      "Enable divide instructions">;
 def FeatureT2XtPk : SubtargetFeature<"t2xtpk", "HasT2ExtractPack", "true",

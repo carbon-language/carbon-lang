@@ -46,6 +46,7 @@ ARMSubtarget::ARMSubtarget(const std::string &TT, const std::string &FS,
   , IsR9Reserved(ReserveR9)
   , UseMovt(UseMOVT)
   , HasFP16(false)
+  , HasD16(false)
   , HasHardwareDivide(false)
   , HasT2ExtractPack(false)
   , HasDataBarrier(false)

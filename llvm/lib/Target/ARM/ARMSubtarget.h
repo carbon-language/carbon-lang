@@ -87,6 +87,10 @@ protected:
   /// only so far)
   bool HasFP16;
 
+  /// HasD16 - True if subtarget is limited to 16 double precision
+  /// FP registers for VFPv3.
+  bool HasD16;
+
   /// HasHardwareDivide - True if subtarget supports [su]div
   bool HasHardwareDivide;
 
@@ -174,6 +178,7 @@ protected:
   bool prefers32BitThumb() const { return Pref32BitThumb; }
 
   bool hasFP16() const { return HasFP16; }
+  bool hasD16() const { return HasD16; }
 
   bool isTargetDarwin() const { return TargetType == isDarwin; }
   bool isTargetELF() const { return TargetType == isELF; }
