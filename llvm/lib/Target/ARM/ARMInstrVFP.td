@@ -138,77 +138,68 @@ def VSTMS_UPD : AXSI4<(outs GPR:$wb), (ins addrmode4:$addr, pred:$p,
 
 // FLDMX, FSTMX - mixing S/D registers for pre-armv6 cores
 
+
+// FIXME: Can these be placed into the base class?
+class ADbI_Encode<bits<5> opcod1, bits<2> opcod2, bit op6, bit op4, dag oops,
+                  dag iops, InstrItinClass itin, string opc, string asm,
+                  list<dag> pattern>
+  : ADbI<opcod1, opcod2, op6, op4, oops, iops, itin, opc, asm, pattern> {
+  // Instruction operands.
+  bits<5> Dd;
+  bits<5> Dn;
+  bits<5> Dm;
+
+  // Encode instruction operands.
+  let Inst{3-0}   = Dm{3-0};
+  let Inst{5}     = Dm{4};
+  let Inst{19-16} = Dn{3-0};
+  let Inst{7}     = Dn{4};
+  let Inst{15-12} = Dd{3-0};
+  let Inst{22}    = Dd{4};
+}
+
+class ASbIn_Encode<bits<5> opcod1, bits<2> opcod2, bit op6, bit op4, dag oops,
+                   dag iops, InstrItinClass itin, string opc, string asm,
+                   list<dag> pattern>
+  : ASbIn<opcod1, opcod2, op6, op4, oops, iops, itin, opc, asm, pattern> {
+  // Instruction operands.
+  bits<5> Sd;
+  bits<5> Sn;
+  bits<5> Sm;
+
+  // Encode instruction operands.
+  let Inst{3-0}   = Sm{4-1};
+  let Inst{5}     = Sm{0};
+  let Inst{19-16} = Sn{4-1};
+  let Inst{7}     = Sn{0};
+  let Inst{15-12} = Sd{4-1};
+  let Inst{22}    = Sd{0};
+}
+
+
 //===----------------------------------------------------------------------===//
 // FP Binary Operations.
 //
 
-def VADDD  : ADbI<0b11100, 0b11, 0, 0, (outs DPR:$Dd), (ins DPR:$Dn, DPR:$Dm),
-                 IIC_fpALU64, "vadd", ".f64\t$Dd, $Dn, $Dm",
-                 [(set DPR:$Dd, (fadd DPR:$Dn, (f64 DPR:$Dm)))]> {
-  // Instruction operands.
-  bits<5> Dd;
-  bits<5> Dn;
-  bits<5> Dm;
+def VADDD  : ADbI_Encode<0b11100, 0b11, 0, 0,
+                        (outs DPR:$Dd), (ins DPR:$Dn, DPR:$Dm),
+                        IIC_fpALU64, "vadd", ".f64\t$Dd, $Dn, $Dm",
+                        [(set DPR:$Dd, (fadd DPR:$Dn, (f64 DPR:$Dm)))]>;
 
-  // Encode instruction operands.
-  let Inst{3-0}   = Dm{3-0};
-  let Inst{5}     = Dm{4};
-  let Inst{19-16} = Dn{3-0};
-  let Inst{7}     = Dn{4};
-  let Inst{15-12} = Dd{3-0};
-  let Inst{22}    = Dd{4};
-}
+def VADDS  : ASbIn_Encode<0b11100, 0b11, 0, 0,
+                          (outs SPR:$Sd), (ins SPR:$Sn, SPR:$Sm),
+                          IIC_fpALU32, "vadd", ".f32\t$Sd, $Sn, $Sm",
+                          [(set SPR:$Sd, (fadd SPR:$Sn, SPR:$Sm))]>;
 
-def VADDS  : ASbIn<0b11100, 0b11, 0, 0, (outs SPR:$Sd), (ins SPR:$Sn, SPR:$Sm),
-                  IIC_fpALU32, "vadd", ".f32\t$Sd, $Sn, $Sm",
-                  [(set SPR:$Sd, (fadd SPR:$Sn, SPR:$Sm))]> {
-  // Instruction operands.
-  bits<5> Sd;
-  bits<5> Sn;
-  bits<5> Sm;
+def VSUBD  : ADbI_Encode<0b11100, 0b11, 1, 0,
+                         (outs DPR:$Dd), (ins DPR:$Dn, DPR:$Dm),
+                         IIC_fpALU64, "vsub", ".f64\t$Dd, $Dn, $Dm",
+                         [(set DPR:$Dd, (fsub DPR:$Dn, (f64 DPR:$Dm)))]>;
 
-  // Encode instruction operands.
-  let Inst{3-0}   = Sm{4-1};
-  let Inst{5}     = Sm{0};
-  let Inst{19-16} = Sn{4-1};
-  let Inst{7}     = Sn{0};
-  let Inst{15-12} = Sd{4-1};
-  let Inst{22}    = Sd{0};
-}
-
-def VSUBD  : ADbI<0b11100, 0b11, 1, 0, (outs DPR:$Dd), (ins DPR:$Dn, DPR:$Dm),
-                 IIC_fpALU64, "vsub", ".f64\t$Dd, $Dn, $Dm",
-                 [(set DPR:$Dd, (fsub DPR:$Dn, (f64 DPR:$Dm)))]> {
-  // Instruction operands.
-  bits<5> Dd;
-  bits<5> Dn;
-  bits<5> Dm;
-
-  // Encode instruction operands.
-  let Inst{3-0}   = Dm{3-0};
-  let Inst{5}     = Dm{4};
-  let Inst{19-16} = Dn{3-0};
-  let Inst{7}     = Dn{4};
-  let Inst{15-12} = Dd{3-0};
-  let Inst{22}    = Dd{4};
-}
-
-def VSUBS  : ASbIn<0b11100, 0b11, 1, 0, (outs SPR:$Sd), (ins SPR:$Sn, SPR:$Sm),
-                  IIC_fpALU32, "vsub", ".f32\t$Sd, $Sn, $Sm",
-                  [(set SPR:$Sd, (fsub SPR:$Sn, SPR:$Sm))]> {
-  // Instruction operands.
-  bits<5> Sd;
-  bits<5> Sn;
-  bits<5> Sm;
-
-  // Encode instruction operands.
-  let Inst{3-0}   = Sm{4-1};
-  let Inst{5}     = Sm{0};
-  let Inst{19-16} = Sn{4-1};
-  let Inst{7}     = Sn{0};
-  let Inst{15-12} = Sd{4-1};
-  let Inst{22}    = Sd{0};
-}
+def VSUBS  : ASbIn_Encode<0b11100, 0b11, 1, 0,
+                          (outs SPR:$Sd), (ins SPR:$Sn, SPR:$Sm),
+                          IIC_fpALU32, "vsub", ".f32\t$Sd, $Sn, $Sm",
+                          [(set SPR:$Sd, (fsub SPR:$Sn, SPR:$Sm))]>;
 
 def VDIVD  : ADbI<0b11101, 0b00, 0, 0, (outs DPR:$dst), (ins DPR:$a, DPR:$b),
                  IIC_fpDIV64, "vdiv", ".f64\t$dst, $a, $b",
