@@ -1513,40 +1513,43 @@ def STM_UPD : AXI4st<(outs GPR:$wb), (ins addrmode4:$addr, pred:$p,
 //
 
 let neverHasSideEffects = 1 in
-def MOVr : AsI1<0b1101, (outs GPR:$dst), (ins GPR:$src), DPFrm, IIC_iMOVr,
-                "mov", "\t$dst, $src", []>, UnaryDP {
-  bits<4> dst;
-  bits<4> src;
+def MOVr : AsI1<0b1101, (outs GPR:$Rd), (ins GPR:$Rm), DPFrm, IIC_iMOVr,
+                "mov", "\t$Rd, $Rm", []>, UnaryDP {
+  bits<4> Rd;
+  bits<4> Rm;
 
   let Inst{11-4} = 0b00000000;
   let Inst{25} = 0;
-  let Inst{3-0} = src;
-  let Inst{15-12} = dst;
+  let Inst{3-0} = Rm;
+  let Inst{15-12} = Rd;
 }
 
 // A version for the smaller set of tail call registers.
 let neverHasSideEffects = 1 in
-def MOVr_TC : AsI1<0b1101, (outs tcGPR:$dst), (ins tcGPR:$src), DPFrm, 
-                IIC_iMOVr, "mov", "\t$dst, $src", []>, UnaryDP {
-  bits<4> dst;
-  bits<4> src;
+def MOVr_TC : AsI1<0b1101, (outs tcGPR:$Rd), (ins tcGPR:$Rm), DPFrm, 
+                IIC_iMOVr, "mov", "\t$Rd, $Rm", []>, UnaryDP {
+  bits<4> Rd;
+  bits<4> Rm;
 
   let Inst{11-4} = 0b00000000;
   let Inst{25} = 0;
-  let Inst{3-0} = src;
-  let Inst{15-12} = dst;
+  let Inst{3-0} = Rm;
+  let Inst{15-12} = Rd;
 }
 
-def MOVs : AsI1<0b1101, (outs GPR:$dst), (ins so_reg:$src),
+def MOVs : AsI1<0b1101, (outs GPR:$Rd), (ins so_reg:$src),
                 DPSoRegFrm, IIC_iMOVsr,
-                "mov", "\t$dst, $src", [(set GPR:$dst, so_reg:$src)]>, UnaryDP {
+                "mov", "\t$Rd, $src", [(set GPR:$Rd, so_reg:$src)]>, UnaryDP {
   let Inst{25} = 0;
 }
 
 let isReMaterializable = 1, isAsCheapAsAMove = 1 in
 def MOVi : AsI1<0b1101, (outs GPR:$dst), (ins so_imm:$src), DPFrm, IIC_iMOVi,
                 "mov", "\t$dst, $src", [(set GPR:$dst, so_imm:$src)]>, UnaryDP {
+  bits<4> Rd;
   let Inst{25} = 1;
+  let Inst{15-12} = Rd;
+  let Inst{19-16} = 0b0000;
 }
 
 let isReMaterializable = 1, isAsCheapAsAMove = 1 in

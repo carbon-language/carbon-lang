@@ -150,6 +150,13 @@ EncodeInstruction(const MCInst &MI, raw_ostream &OS,
   unsigned Value = getBinaryCodeForInstr(MI);
   switch (Opcode) {
   default: break;
+  case ARM::MOVi:
+    // The 's' bit.
+    if (MI.getOperand(4).getReg() == ARM::CPSR)
+      Value |= 1 << ARMII::S_BitShift;
+    // The shifted immediate value.
+    Value |= getMachineSoImmOpValue((unsigned)MI.getOperand(1).getImm());
+    break;
   case ARM::ADDri:
   case ARM::ANDri:
   case ARM::BICri:
