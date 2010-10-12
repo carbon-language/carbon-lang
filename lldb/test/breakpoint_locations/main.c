@@ -16,7 +16,7 @@ func_inlined (void)
     printf ("Called func_inlined.\n");
     ++func_inline_call_count;
     printf ("Returning func_inlined call count: %d.\n", func_inline_call_count);
-    return func_inline_call_count;
+    return func_inline_call_count; // Set break point at this line.
 }
 
 extern int func_inlined (void);

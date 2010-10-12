@@ -22,18 +22,25 @@ class BreakpointLocationsTestCase(TestBase):
         self.buildDwarf()
         self.breakpoint_locations_test()
 
+    def setUp(self):
+        super(BreakpointLocationsTestCase, self).setUp()
+        # Find the line number to break inside main().
+        self.line = line_number('main.c', '// Set break point at this line.')
+
     def breakpoint_locations_test(self):
         """Test breakpoint enable/disable for a breakpoint ID with multiple locations."""
         exe = os.path.join(os.getcwd(), "a.out")
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 
         # This should create a breakpoint with 3 locations.
-        self.expect("breakpoint set -f main.c -l 19", BREAKPOINT_CREATED,
-            startstr = "Breakpoint created: 1: file ='main.c', line = 19, locations = 3")
+        self.expect("breakpoint set -f main.c -l %d" % self.line,
+                    BREAKPOINT_CREATED,
+            startstr = "Breakpoint created: 1: file ='main.c', line = %d, locations = 3" %
+                        self.line)
 
         # The breakpoint list should show 3 locations.
         self.expect("breakpoint list", "Breakpoint locations shown correctly",
-            substrs = ["1: file ='main.c', line = 19, locations = 3"],
+            substrs = ["1: file ='main.c', line = %d, locations = 3" % self.line],
             patterns = ["where = a.out`func_inlined .+unresolved, hit count = 0",
                         "where = a.out`main .+\[inlined\].+unresolved, hit count = 0"])
 
