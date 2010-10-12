@@ -7217,8 +7217,10 @@ void Sema::ActOnEnumBody(SourceLocation EnumLoc, SourceLocation LBraceLoc,
 
   if (Enum->isFixed()) {
     BestType = BestPromotionType = Enum->getIntegerType();
-    // We don't set BestWidth, because BestType is going to be the
-    // type of the enumerators.
+    // We don't need to set BestWidth, because BestType is going to be the type
+    // of the enumerators, but we do anyway because otherwise some compilers
+    // warn that it might be used uninitialized.
+    BestWidth = CharWidth;
   }
   else if (NumNegativeBits) {
     // If there is a negative value, figure out the smallest integer type (of
