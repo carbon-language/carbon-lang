@@ -55,6 +55,20 @@ public:
     // '1' respectively.
     return MI.getOperand(Op).getReg() == ARM::CPSR;
   }
+  /// getSOImmOpValue - Return an encoded 12-bit shifted-immediate value.
+  unsigned getSOImmOpValue(const MCInst &MI, unsigned Op) const {
+    unsigned SoImm = MI.getOperand(Op).getImm();
+    int SoImmVal = ARM_AM::getSOImmVal(SoImm);
+    assert(SoImmVal != -1 && "Not a valid so_imm value!");
+
+    // Encode rotate_imm.
+    unsigned Binary = (ARM_AM::getSOImmValRot((unsigned)SoImmVal) >> 1)
+      << ARMII::SoRotImmShift;
+
+    // Encode immed_8.
+    Binary |= ARM_AM::getSOImmValImm((unsigned)SoImmVal);
+    return Binary;
+  }
 
   unsigned getNumFixupKinds() const {
     assert(0 && "ARMMCCodeEmitter::getNumFixupKinds() not yet implemented.");
@@ -92,19 +106,6 @@ public:
 };
 
 } // end anonymous namespace
-
-unsigned ARMMCCodeEmitter::getMachineSoImmOpValue(unsigned SoImm) const {
-  int SoImmVal = ARM_AM::getSOImmVal(SoImm);
-  assert(SoImmVal != -1 && "Not a valid so_imm value!");
-
-  // Encode rotate_imm.
-  unsigned Binary = (ARM_AM::getSOImmValRot((unsigned)SoImmVal) >> 1)
-    << ARMII::SoRotImmShift;
-
-  // Encode immed_8.
-  Binary |= ARM_AM::getSOImmValImm((unsigned)SoImmVal);
-  return Binary;
-}
 
 MCCodeEmitter *llvm::createARMMCCodeEmitter(const Target &,
                                              TargetMachine &TM,
@@ -157,19 +158,6 @@ EncodeInstruction(const MCInst &MI, raw_ostream &OS,
   unsigned Value = getBinaryCodeForInstr(MI);
   switch (Opcode) {
   default: break;
-  case ARM::MOVi:
-    // The shifted immediate value.
-    Value |= getMachineSoImmOpValue((unsigned)MI.getOperand(1).getImm());
-    break;
-  case ARM::ADDri:
-  case ARM::ANDri:
-  case ARM::BICri:
-  case ARM::EORri:
-  case ARM::ORRri:
-  case ARM::SUBri:
-    // The shifted immediate value.
-    Value |= getMachineSoImmOpValue((unsigned)MI.getOperand(2).getImm());
-    break;
   case ARM::ADDrs:
   case ARM::ANDrs:
   case ARM::BICrs:

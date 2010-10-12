@@ -323,6 +323,7 @@ def so_reg : Operand<i32>,    // reg reg imm
 // into so_imm instructions: the 8-bit immediate is the least significant bits
 // [bits 0-7], the 4-bit shift amount is the next 4 bits [bits 8-11].
 def so_imm : Operand<i32>, PatLeaf<(imm), [{ return Pred_so_imm(N); }]> {
+  string EncoderMethod = "getSOImmOpValue";
   let PrintMethod = "printSOImmOperand";
 }
 
@@ -477,9 +478,11 @@ multiclass AsI1_bin_irs<bits<4> opcod, string opc,
                [(set GPR:$Rd, (opnode GPR:$Rn, so_imm:$imm))]> {
     bits<4> Rd;
     bits<4> Rn;
+    bits<12> imm;
     let Inst{25} = 1;
     let Inst{15-12} = Rd;
     let Inst{19-16} = Rn;
+    let Inst{11-0} = imm;
   }
   }
   def rr : AsI1<opcod, (outs GPR:$Rd), (ins GPR:$Rn, GPR:$Rm), DPFrm,
@@ -1544,12 +1547,14 @@ def MOVs : AsI1<0b1101, (outs GPR:$Rd), (ins so_reg:$src),
 }
 
 let isReMaterializable = 1, isAsCheapAsAMove = 1 in
-def MOVi : AsI1<0b1101, (outs GPR:$dst), (ins so_imm:$src), DPFrm, IIC_iMOVi,
-                "mov", "\t$dst, $src", [(set GPR:$dst, so_imm:$src)]>, UnaryDP {
+def MOVi : AsI1<0b1101, (outs GPR:$Rd), (ins so_imm:$imm), DPFrm, IIC_iMOVi,
+                "mov", "\t$Rd, $imm", [(set GPR:$Rd, so_imm:$imm)]>, UnaryDP {
   bits<4> Rd;
+  bits<12> imm;
   let Inst{25} = 1;
   let Inst{15-12} = Rd;
   let Inst{19-16} = 0b0000;
+  let Inst{11-0} = imm;
 }
 
 let isReMaterializable = 1, isAsCheapAsAMove = 1 in
