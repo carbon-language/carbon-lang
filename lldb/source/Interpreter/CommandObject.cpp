@@ -380,35 +380,6 @@ CommandObject::HandleCompletion
     }
 }
 
-// Case insensitive version of ::strstr()
-// Returns true if s2 is contained within s1.
-
-static bool
-contains_string (const char *s1, const char *s2)
-{
-  char *locase_s1 = (char *) malloc (strlen (s1) + 1);
-  char *locase_s2 = (char *) malloc (strlen (s2) + 1);
-  int i;
-  for (i = 0; s1 && s1[i] != '\0'; i++)
-    locase_s1[i] = ::tolower (s1[i]);
-  locase_s1[i] = '\0';
-  for (i = 0; s2 && s2[i] != '\0'; i++)
-    locase_s2[i] = ::tolower (s2[i]);
-  locase_s2[i] = '\0';
-
-  const char *result = ::strstr (locase_s1, locase_s2);
-  free (locase_s1);
-  free (locase_s2);
-  // 'result' points into freed memory - but we're not
-  // deref'ing it so hopefully current/future compilers
-  // won't complain..
-
-  if (result == NULL)
-      return false;
-  else
-      return true;
-}
-
 bool
 CommandObject::HelpTextContainsWord (const char *search_word)
 {
@@ -424,11 +395,11 @@ CommandObject::HelpTextContainsWord (const char *search_word)
     long_help = GetHelpLong();
     syntax_help = GetSyntax();
     
-    if (contains_string (short_help, search_word))
+    if (strcasestr (short_help, search_word))
         found_word = true;
-    else if (contains_string (long_help, search_word))
+    else if (strcasestr (long_help, search_word))
         found_word = true;
-    else if (contains_string (syntax_help, search_word))
+    else if (strcasestr (syntax_help, search_word))
         found_word = true;
 
     if (!found_word
@@ -439,7 +410,7 @@ CommandObject::HelpTextContainsWord (const char *search_word)
         if (usage_help.GetSize() > 0)
         {
             const char *usage_text = usage_help.GetData();
-            if (contains_string (usage_text, search_word))
+            if (strcasestr (usage_text, search_word))
               found_word = true;
         }
     }
