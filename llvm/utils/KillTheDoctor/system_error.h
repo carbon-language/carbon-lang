@@ -224,6 +224,11 @@ template <> struct hash<std::error_code>;
 #include <cerrno>
 #include <string>
 
+#ifdef LLVM_ON_WIN32
+  // VS 2008 needs this for some of the defines below.
+# include <WinSock2.h>
+#endif
+
 namespace llvm {
 
 template <class T, T v>
