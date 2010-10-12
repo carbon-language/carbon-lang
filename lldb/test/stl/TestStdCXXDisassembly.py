@@ -11,6 +11,11 @@ class StdCXXDisassembleTestCase(TestBase):
 
     mydir = "stl"
 
+    def setUp(self):
+        super(StdCXXDisassembleTestCase, self).setUp()
+        # Find the line number to break inside main().
+        self.line = line_number('main.cpp', '// Set break point at this line.')
+
     # rdar://problem/8504895
     # Crash while doing 'disassemble -n "-[NSNumber descriptionWithLocale:]"
     @unittest2.skipIf(TestBase.skipLongRunningTest(), "Skip this long running test")
@@ -20,9 +25,15 @@ class StdCXXDisassembleTestCase(TestBase):
         exe = os.path.join(os.getcwd(), "a.out")
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 
+        # rdar://problem/8543077
+        # test/stl: clang built binaries results in the breakpoint locations = 3,
+        # is this a problem with clang generated debug info?
+        #
         # Break on line 13 of main.cpp.
-        self.expect("breakpoint set -f main.cpp -l 13", BREAKPOINT_CREATED,
-            startstr = "Breakpoint created: 1: file ='main.cpp', line = 13, locations = 1")
+        self.expect("breakpoint set -f main.cpp -l %d" % self.line,
+                    BREAKPOINT_CREATED,
+            startstr = "Breakpoint created: 1: file ='main.cpp', line = %d" %
+                        self.line)
 
         self.runCmd("run", RUN_SUCCEEDED)
 
