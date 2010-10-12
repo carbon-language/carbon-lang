@@ -22,6 +22,11 @@ class STLTestCase(TestBase):
         self.buildDwarf()
         self.step_into_stl()
 
+    def setUp(self):
+        super(STLTestCase, self).setUp()
+        # Find the line number to break inside main().
+        self.line = line_number('main.cpp', '// Set break point at this line.')
+
     def step_into_stl(self):
         """Test that we can successfully step into an STL function."""
         exe = os.path.join(os.getcwd(), "a.out")
@@ -33,14 +38,16 @@ class STLTestCase(TestBase):
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 
         # Break on line 13 of main.cpp.
-        self.expect("breakpoint set -f main.cpp -l 13", BREAKPOINT_CREATED,
-            startstr = "Breakpoint created: 1: file ='main.cpp', line = 13, locations = 1")
+        self.expect("breakpoint set -f main.cpp -l %d" % self.line,
+                    BREAKPOINT_CREATED,
+            startstr = "Breakpoint created: 1: file ='main.cpp', line = %d" %
+                        self.line)
 
         self.runCmd("run", RUN_SUCCEEDED)
 
         # Stop at 'std::string hello_world ("Hello World!");'.
         self.expect("thread list", STOPPED_DUE_TO_BREAKPOINT,
-            substrs = ['main.cpp:13',
+            substrs = ['main.cpp:%d' % self.line,
                        'stop reason = breakpoint'])
 
         # The breakpoint should have a hit count of 1.
