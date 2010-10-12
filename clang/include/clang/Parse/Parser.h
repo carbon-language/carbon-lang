@@ -566,7 +566,44 @@ private:
   //===--------------------------------------------------------------------===//
   // Lexing and parsing of C++ inline methods.
 
-  struct LexedMethod {
+  struct ParsingClass;
+
+  /// [class.mem]p1: "... the class is regarded as complete within
+  /// - function bodies
+  /// - default arguments
+  /// - exception-specifications (TODO: C++0x)
+  /// - and brace-or-equal-initializers (TODO: C++0x)
+  /// for non-static data members (including such things in nested classes)."
+  /// LateParsedDeclarations build the tree of those elements so they can
+  /// be parsed after parsing the top-level class.
+  class LateParsedDeclaration {
+  public:
+    virtual ~LateParsedDeclaration();
+
+    virtual void ParseLexedMethodDeclarations();
+    virtual void ParseLexedMethodDefs();
+  };
+
+  /// Inner node of the LateParsedDeclaration tree that parses
+  /// all its members recursively.
+  class LateParsedClass : public LateParsedDeclaration {
+  public:
+    LateParsedClass(Parser *P, ParsingClass *C);
+    virtual ~LateParsedClass();
+
+    virtual void ParseLexedMethodDeclarations();
+    virtual void ParseLexedMethodDefs();
+
+  private:
+    Parser *Self;
+    ParsingClass *Class;
+  };
+
+  /// Contains the lexed tokens of a member function definition
+  /// which needs to be parsed at the end of the class declaration
+  /// after parsing all other member declarations.
+  struct LexedMethod : public LateParsedDeclaration {
+    Parser *Self;
     Decl *D;
     CachedTokens Toks;
 
@@ -575,7 +612,10 @@ private:
     /// othewise, it is a member function declaration.
     bool TemplateScope;
 
-    explicit LexedMethod(Decl *MD) : D(MD), TemplateScope(false) {}
+    explicit LexedMethod(Parser* P, Decl *MD)
+      : Self(P), D(MD), TemplateScope(false) {}
+
+    virtual void ParseLexedMethodDefs();
   };
 
   /// LateParsedDefaultArgument - Keeps track of a parameter that may
@@ -601,9 +641,13 @@ private:
   /// contains at least one entity whose parsing needs to be delayed
   /// until the class itself is completely-defined, such as a default
   /// argument (C++ [class.mem]p2).
-  struct LateParsedMethodDeclaration {
-    explicit LateParsedMethodDeclaration(Decl *M)
-      : Method(M), TemplateScope(false) { }
+  struct LateParsedMethodDeclaration : public LateParsedDeclaration {
+    explicit LateParsedMethodDeclaration(Parser *P, Decl *M)
+      : Self(P), Method(M), TemplateScope(false) { }
+
+    virtual void ParseLexedMethodDeclarations();
+
+    Parser* Self;
 
     /// Method - The method declaration.
     Decl *Method;
@@ -621,17 +665,12 @@ private:
     llvm::SmallVector<LateParsedDefaultArgument, 8> DefaultArgs;
   };
 
-  /// LateParsedMethodDecls - During parsing of a top (non-nested) C++
-  /// class, its method declarations that contain parts that won't be
+  /// LateParsedDeclarationsContainer - During parsing of a top (non-nested)
+  /// C++ class, its method declarations that contain parts that won't be
   /// parsed until after the definiton is completed (C++ [class.mem]p2),
-  /// the method declarations will be stored here with the tokens that
-  /// will be parsed to create those entities.
-  typedef std::list<LateParsedMethodDeclaration> LateParsedMethodDecls;
-
-  /// LexedMethodsForTopClass - During parsing of a top (non-nested) C++ class,
-  /// its inline method definitions and the inline method definitions of its
-  /// nested classes are lexed and stored here.
-  typedef std::list<LexedMethod> LexedMethodsForTopClass;
+  /// the method declarations and possibly attached inline definitions
+  /// will be stored here with the tokens that will be parsed to create those entities.
+  typedef llvm::SmallVector<LateParsedDeclaration*, 2> LateParsedDeclarationsContainer;
 
   /// \brief Representation of a class that has been parsed, including
   /// any member function declarations or definitions that need to be
@@ -653,16 +692,10 @@ private:
     /// \brief The class or class template whose definition we are parsing.
     Decl *TagOrTemplate;
 
-    /// MethodDecls - Method declarations that contain pieces whose
-    /// parsing will be delayed until the class is fully defined.
-    LateParsedMethodDecls MethodDecls;
-
-    /// MethodDefs - Methods whose definitions will be parsed once the
-    /// class has been fully defined.
-    LexedMethodsForTopClass MethodDefs;
-
-    /// \brief Nested classes inside this class.
-    llvm::SmallVector<ParsingClass*, 4> NestedClasses;
+    /// LateParsedDeclarations - Method declarations, inline definitions and
+    /// nested classes that contain pieces whose parsing will be delayed until
+    /// the top-level class is fully defined.
+    LateParsedDeclarationsContainer LateParsedDeclarations;
   };
 
   /// \brief The stack of classes that is currently being
@@ -868,7 +901,9 @@ private:
   Decl *ParseCXXInlineMethodDef(AccessSpecifier AS, Declarator &D,
                                      const ParsedTemplateInfo &TemplateInfo);
   void ParseLexedMethodDeclarations(ParsingClass &Class);
+  void ParseLexedMethodDeclaration(LateParsedMethodDeclaration &LM);
   void ParseLexedMethodDefs(ParsingClass &Class);
+  void ParseLexedMethodDef(LexedMethod &LM);
   bool ConsumeAndStoreUntil(tok::TokenKind T1,
                             CachedTokens &Toks,
                             bool StopAtSemi = true,

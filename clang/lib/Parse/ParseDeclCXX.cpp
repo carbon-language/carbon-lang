@@ -1203,9 +1203,8 @@ void Parser::HandleMemberFunctionDefaultArgs(Declarator& DeclaratorInfo,
       if (!LateMethod) {
         // Push this method onto the stack of late-parsed method
         // declarations.
-        getCurrentClass().MethodDecls.push_back(
-                                LateParsedMethodDeclaration(ThisDecl));
-        LateMethod = &getCurrentClass().MethodDecls.back();
+        LateMethod = new LateParsedMethodDeclaration(this, ThisDecl);
+        getCurrentClass().LateParsedDeclarations.push_back(LateMethod);
         LateMethod->TemplateScope = getCurScope()->isTemplateParamScope();
 
         // Add all of the parameters prior to this one (they don't
@@ -1911,8 +1910,8 @@ void Parser::PushParsingClass(Decl *ClassDecl, bool NonNestedClass) {
 /// \brief Deallocate the given parsed class and all of its nested
 /// classes.
 void Parser::DeallocateParsedClasses(Parser::ParsingClass *Class) {
-  for (unsigned I = 0, N = Class->NestedClasses.size(); I != N; ++I)
-    DeallocateParsedClasses(Class->NestedClasses[I]);
+  for (unsigned I = 0, N = Class->LateParsedDeclarations.size(); I != N; ++I)
+    delete Class->LateParsedDeclarations[I];
   delete Class;
 }
 
@@ -1938,13 +1937,12 @@ void Parser::PopParsingClass() {
   }
   assert(!ClassStack.empty() && "Missing top-level class?");
 
-  if (Victim->MethodDecls.empty() && Victim->MethodDefs.empty() &&
-      Victim->NestedClasses.empty()) {
+  if (Victim->LateParsedDeclarations.empty()) {
     // The victim is a nested class, but we will not need to perform
     // any processing after the definition of this class since it has
     // no members whose handling was delayed. Therefore, we can just
     // remove this nested class.
-    delete Victim;
+    DeallocateParsedClasses(Victim);
     return;
   }
 
@@ -1952,7 +1950,7 @@ void Parser::PopParsingClass() {
   // after the top-level class is completely defined. Therefore, add
   // it to the list of nested classes within its parent.
   assert(getCurScope()->isClassScope() && "Nested class outside of class scope?");
-  ClassStack.top()->NestedClasses.push_back(Victim);
+  ClassStack.top()->LateParsedDeclarations.push_back(new LateParsedClass(this, Victim));
   Victim->TemplateScope = getCurScope()->getParent()->isTemplateParamScope();
 }
 

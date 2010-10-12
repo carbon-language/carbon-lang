@@ -807,6 +807,7 @@ error:
     SavedMainFileBuffer = 0;
   }
   
+  StoredDiagnostics.clear();
   Clang.takeSourceManager();
   Clang.takeFileManager();
   Invocation.reset(Clang.takeInvocation());

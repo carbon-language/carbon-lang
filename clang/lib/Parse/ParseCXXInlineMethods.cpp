@@ -45,10 +45,10 @@ Decl *Parser::ParseCXXInlineMethodDef(AccessSpecifier AS, Declarator &D,
 
   // Consume the tokens and store them for later parsing.
 
-  getCurrentClass().MethodDefs.push_back(LexedMethod(FnD));
-  getCurrentClass().MethodDefs.back().TemplateScope
-    = getCurScope()->isTemplateParamScope();
-  CachedTokens &Toks = getCurrentClass().MethodDefs.back().Toks;
+  LexedMethod* LM = new LexedMethod(this, FnD);
+  getCurrentClass().LateParsedDeclarations.push_back(LM);
+  LM->TemplateScope = getCurScope()->isTemplateParamScope();
+  CachedTokens &Toks = LM->Toks;
 
   tok::TokenKind kind = Tok.getKind();
   // We may have a constructor initializer or function-try-block here.
@@ -62,7 +62,8 @@ Decl *Parser::ParseCXXInlineMethodDef(AccessSpecifier AS, Declarator &D,
         // don't try to parse this method later.
         Diag(Tok.getLocation(), diag::err_expected_lbrace);
         ConsumeAnyToken();
-        getCurrentClass().MethodDefs.pop_back();
+        delete getCurrentClass().LateParsedDeclarations.back();
+        getCurrentClass().LateParsedDeclarations.pop_back();
         return FnD;
       }
     }
@@ -86,13 +87,40 @@ Decl *Parser::ParseCXXInlineMethodDef(AccessSpecifier AS, Declarator &D,
   return FnD;
 }
 
+Parser::LateParsedDeclaration::~LateParsedDeclaration() {}
+void Parser::LateParsedDeclaration::ParseLexedMethodDeclarations() {}
+void Parser::LateParsedDeclaration::ParseLexedMethodDefs() {}
+
+Parser::LateParsedClass::LateParsedClass(Parser *P, ParsingClass *C)
+  : Self(P), Class(C) {}
+
+Parser::LateParsedClass::~LateParsedClass() {
+  Self->DeallocateParsedClasses(Class);
+}
+
+void Parser::LateParsedClass::ParseLexedMethodDeclarations() {
+  Self->ParseLexedMethodDeclarations(*Class);
+}
+
+void Parser::LateParsedClass::ParseLexedMethodDefs() {
+  Self->ParseLexedMethodDefs(*Class);
+}
+
+void Parser::LateParsedMethodDeclaration::ParseLexedMethodDeclarations() {
+  Self->ParseLexedMethodDeclaration(*this);
+}
+
+void Parser::LexedMethod::ParseLexedMethodDefs() {
+  Self->ParseLexedMethodDef(*this);
+}
+
 /// ParseLexedMethodDeclarations - We finished parsing the member
 /// specification of a top (non-nested) C++ class. Now go over the
 /// stack of method declarations with some parts for which parsing was
 /// delayed (such as default arguments) and parse them.
 void Parser::ParseLexedMethodDeclarations(ParsingClass &Class) {
   bool HasTemplateScope = !Class.TopLevelClass && Class.TemplateScope;
-  ParseScope TemplateScope(this, Scope::TemplateParamScope, HasTemplateScope);
+  ParseScope ClassTemplateScope(this, Scope::TemplateParamScope, HasTemplateScope);
   if (HasTemplateScope)
     Actions.ActOnReenterTemplateScope(getCurScope(), Class.TagOrTemplate);
 
@@ -104,80 +132,79 @@ void Parser::ParseLexedMethodDeclarations(ParsingClass &Class) {
   if (HasClassScope)
     Actions.ActOnStartDelayedMemberDeclarations(getCurScope(), Class.TagOrTemplate);
 
-  for (; !Class.MethodDecls.empty(); Class.MethodDecls.pop_front()) {
-    LateParsedMethodDeclaration &LM = Class.MethodDecls.front();
-
-    // If this is a member template, introduce the template parameter scope.
-    ParseScope TemplateScope(this, Scope::TemplateParamScope, LM.TemplateScope);
-    if (LM.TemplateScope)
-      Actions.ActOnReenterTemplateScope(getCurScope(), LM.Method);
-
-    // Start the delayed C++ method declaration
-    Actions.ActOnStartDelayedCXXMethodDeclaration(getCurScope(), LM.Method);
-
-    // Introduce the parameters into scope and parse their default
-    // arguments.
-    ParseScope PrototypeScope(this,
-                              Scope::FunctionPrototypeScope|Scope::DeclScope);
-    for (unsigned I = 0, N = LM.DefaultArgs.size(); I != N; ++I) {
-      // Introduce the parameter into scope.
-      Actions.ActOnDelayedCXXMethodParameter(getCurScope(), LM.DefaultArgs[I].Param);
-
-      if (CachedTokens *Toks = LM.DefaultArgs[I].Toks) {
-        // Save the current token position.
-        SourceLocation origLoc = Tok.getLocation();
-
-        // Parse the default argument from its saved token stream.
-        Toks->push_back(Tok); // So that the current token doesn't get lost
-        PP.EnterTokenStream(&Toks->front(), Toks->size(), true, false);
-
-        // Consume the previously-pushed token.
-        ConsumeAnyToken();
-
-        // Consume the '='.
-        assert(Tok.is(tok::equal) && "Default argument not starting with '='");
-        SourceLocation EqualLoc = ConsumeToken();
-
-        // The argument isn't actually potentially evaluated unless it is 
-        // used.
-        EnterExpressionEvaluationContext Eval(Actions,
-                                              Sema::PotentiallyEvaluatedIfUsed);
-        
-        ExprResult DefArgResult(ParseAssignmentExpression());
-        if (DefArgResult.isInvalid())
-          Actions.ActOnParamDefaultArgumentError(LM.DefaultArgs[I].Param);
-        else {
-          if (Tok.is(tok::cxx_defaultarg_end))
-            ConsumeToken();
-          else
-            Diag(Tok.getLocation(), diag::err_default_arg_unparsed);
-          Actions.ActOnParamDefaultArgument(LM.DefaultArgs[I].Param, EqualLoc,
-                                            DefArgResult.take());
-        }
-
-        assert(!PP.getSourceManager().isBeforeInTranslationUnit(origLoc,
-                                                           Tok.getLocation()) &&
-               "ParseAssignmentExpression went over the default arg tokens!");
-        // There could be leftover tokens (e.g. because of an error).
-        // Skip through until we reach the original token position.
-        while (Tok.getLocation() != origLoc && Tok.isNot(tok::eof))
-          ConsumeAnyToken();
-
-        delete Toks;
-        LM.DefaultArgs[I].Toks = 0;
-      }
-    }
-    PrototypeScope.Exit();
-
-    // Finish the delayed C++ method declaration.
-    Actions.ActOnFinishDelayedCXXMethodDeclaration(getCurScope(), LM.Method);
+  for (size_t i = 0; i < Class.LateParsedDeclarations.size(); ++i) {
+    Class.LateParsedDeclarations[i]->ParseLexedMethodDeclarations();
   }
-
-  for (unsigned I = 0, N = Class.NestedClasses.size(); I != N; ++I)
-    ParseLexedMethodDeclarations(*Class.NestedClasses[I]);
 
   if (HasClassScope)
     Actions.ActOnFinishDelayedMemberDeclarations(getCurScope(), Class.TagOrTemplate);
+}
+
+void Parser::ParseLexedMethodDeclaration(LateParsedMethodDeclaration &LM) {
+  // If this is a member template, introduce the template parameter scope.
+  ParseScope TemplateScope(this, Scope::TemplateParamScope, LM.TemplateScope);
+  if (LM.TemplateScope)
+    Actions.ActOnReenterTemplateScope(getCurScope(), LM.Method);
+
+  // Start the delayed C++ method declaration
+  Actions.ActOnStartDelayedCXXMethodDeclaration(getCurScope(), LM.Method);
+
+  // Introduce the parameters into scope and parse their default
+  // arguments.
+  ParseScope PrototypeScope(this,
+                            Scope::FunctionPrototypeScope|Scope::DeclScope);
+  for (unsigned I = 0, N = LM.DefaultArgs.size(); I != N; ++I) {
+    // Introduce the parameter into scope.
+    Actions.ActOnDelayedCXXMethodParameter(getCurScope(), LM.DefaultArgs[I].Param);
+
+    if (CachedTokens *Toks = LM.DefaultArgs[I].Toks) {
+      // Save the current token position.
+      SourceLocation origLoc = Tok.getLocation();
+
+      // Parse the default argument from its saved token stream.
+      Toks->push_back(Tok); // So that the current token doesn't get lost
+      PP.EnterTokenStream(&Toks->front(), Toks->size(), true, false);
+
+      // Consume the previously-pushed token.
+      ConsumeAnyToken();
+
+      // Consume the '='.
+      assert(Tok.is(tok::equal) && "Default argument not starting with '='");
+      SourceLocation EqualLoc = ConsumeToken();
+
+      // The argument isn't actually potentially evaluated unless it is
+      // used.
+      EnterExpressionEvaluationContext Eval(Actions,
+                                            Sema::PotentiallyEvaluatedIfUsed);
+
+      ExprResult DefArgResult(ParseAssignmentExpression());
+      if (DefArgResult.isInvalid())
+        Actions.ActOnParamDefaultArgumentError(LM.DefaultArgs[I].Param);
+      else {
+        if (Tok.is(tok::cxx_defaultarg_end))
+          ConsumeToken();
+        else
+          Diag(Tok.getLocation(), diag::err_default_arg_unparsed);
+        Actions.ActOnParamDefaultArgument(LM.DefaultArgs[I].Param, EqualLoc,
+                                          DefArgResult.take());
+      }
+
+      assert(!PP.getSourceManager().isBeforeInTranslationUnit(origLoc,
+                                                         Tok.getLocation()) &&
+             "ParseAssignmentExpression went over the default arg tokens!");
+      // There could be leftover tokens (e.g. because of an error).
+      // Skip through until we reach the original token position.
+      while (Tok.getLocation() != origLoc && Tok.isNot(tok::eof))
+        ConsumeAnyToken();
+
+      delete Toks;
+      LM.DefaultArgs[I].Toks = 0;
+    }
+  }
+  PrototypeScope.Exit();
+
+  // Finish the delayed C++ method declaration.
+  Actions.ActOnFinishDelayedCXXMethodDeclaration(getCurScope(), LM.Method);
 }
 
 /// ParseLexedMethodDefs - We finished parsing the member specification of a top
@@ -185,7 +212,7 @@ void Parser::ParseLexedMethodDeclarations(ParsingClass &Class) {
 /// collected during its parsing and parse them all.
 void Parser::ParseLexedMethodDefs(ParsingClass &Class) {
   bool HasTemplateScope = !Class.TopLevelClass && Class.TemplateScope;
-  ParseScope TemplateScope(this, Scope::TemplateParamScope, HasTemplateScope);
+  ParseScope ClassTemplateScope(this, Scope::TemplateParamScope, HasTemplateScope);
   if (HasTemplateScope)
     Actions.ActOnReenterTemplateScope(getCurScope(), Class.TagOrTemplate);
 
@@ -193,73 +220,72 @@ void Parser::ParseLexedMethodDefs(ParsingClass &Class) {
   ParseScope ClassScope(this, Scope::ClassScope|Scope::DeclScope,
                         HasClassScope);
 
-  for (; !Class.MethodDefs.empty(); Class.MethodDefs.pop_front()) {
-    LexedMethod &LM = Class.MethodDefs.front();
+  for (size_t i = 0; i < Class.LateParsedDeclarations.size(); ++i) {
+    Class.LateParsedDeclarations[i]->ParseLexedMethodDefs();
+  }
+}
 
-    // If this is a member template, introduce the template parameter scope.
-    ParseScope TemplateScope(this, Scope::TemplateParamScope, LM.TemplateScope);
-    if (LM.TemplateScope)
-      Actions.ActOnReenterTemplateScope(getCurScope(), LM.D);
+void Parser::ParseLexedMethodDef(LexedMethod &LM) {
+  // If this is a member template, introduce the template parameter scope.
+  ParseScope TemplateScope(this, Scope::TemplateParamScope, LM.TemplateScope);
+  if (LM.TemplateScope)
+    Actions.ActOnReenterTemplateScope(getCurScope(), LM.D);
 
-    // Save the current token position.
-    SourceLocation origLoc = Tok.getLocation();
+  // Save the current token position.
+  SourceLocation origLoc = Tok.getLocation();
 
-    assert(!LM.Toks.empty() && "Empty body!");
-    // Append the current token at the end of the new token stream so that it
-    // doesn't get lost.
-    LM.Toks.push_back(Tok);
-    PP.EnterTokenStream(LM.Toks.data(), LM.Toks.size(), true, false);
+  assert(!LM.Toks.empty() && "Empty body!");
+  // Append the current token at the end of the new token stream so that it
+  // doesn't get lost.
+  LM.Toks.push_back(Tok);
+  PP.EnterTokenStream(LM.Toks.data(), LM.Toks.size(), true, false);
 
-    // Consume the previously pushed token.
-    ConsumeAnyToken();
-    assert((Tok.is(tok::l_brace) || Tok.is(tok::colon) || Tok.is(tok::kw_try))
-           && "Inline method not starting with '{', ':' or 'try'");
+  // Consume the previously pushed token.
+  ConsumeAnyToken();
+  assert((Tok.is(tok::l_brace) || Tok.is(tok::colon) || Tok.is(tok::kw_try))
+         && "Inline method not starting with '{', ':' or 'try'");
 
-    // Parse the method body. Function body parsing code is similar enough
-    // to be re-used for method bodies as well.
-    ParseScope FnScope(this, Scope::FnScope|Scope::DeclScope);
-    Actions.ActOnStartOfFunctionDef(getCurScope(), LM.D);
+  // Parse the method body. Function body parsing code is similar enough
+  // to be re-used for method bodies as well.
+  ParseScope FnScope(this, Scope::FnScope|Scope::DeclScope);
+  Actions.ActOnStartOfFunctionDef(getCurScope(), LM.D);
 
-    if (Tok.is(tok::kw_try)) {
-      ParseFunctionTryBlock(LM.D);
-      assert(!PP.getSourceManager().isBeforeInTranslationUnit(origLoc,
-                                                           Tok.getLocation()) &&
-             "ParseFunctionTryBlock went over the cached tokens!");
-      // There could be leftover tokens (e.g. because of an error).
-      // Skip through until we reach the original token position.
+  if (Tok.is(tok::kw_try)) {
+    ParseFunctionTryBlock(LM.D);
+    assert(!PP.getSourceManager().isBeforeInTranslationUnit(origLoc,
+                                                         Tok.getLocation()) &&
+           "ParseFunctionTryBlock went over the cached tokens!");
+    // There could be leftover tokens (e.g. because of an error).
+    // Skip through until we reach the original token position.
+    while (Tok.getLocation() != origLoc && Tok.isNot(tok::eof))
+      ConsumeAnyToken();
+    return;
+  }
+  if (Tok.is(tok::colon)) {
+    ParseConstructorInitializer(LM.D);
+
+    // Error recovery.
+    if (!Tok.is(tok::l_brace)) {
+      Actions.ActOnFinishFunctionBody(LM.D, 0);
+      return;
+    }
+  } else
+    Actions.ActOnDefaultCtorInitializers(LM.D);
+
+  ParseFunctionStatementBody(LM.D);
+
+  if (Tok.getLocation() != origLoc) {
+    // Due to parsing error, we either went over the cached tokens or
+    // there are still cached tokens left. If it's the latter case skip the
+    // leftover tokens.
+    // Since this is an uncommon situation that should be avoided, use the
+    // expensive isBeforeInTranslationUnit call.
+    if (PP.getSourceManager().isBeforeInTranslationUnit(Tok.getLocation(),
+                                                        origLoc))
       while (Tok.getLocation() != origLoc && Tok.isNot(tok::eof))
         ConsumeAnyToken();
-      continue;
-    }
-    if (Tok.is(tok::colon)) {
-      ParseConstructorInitializer(LM.D);
 
-      // Error recovery.
-      if (!Tok.is(tok::l_brace)) {
-        Actions.ActOnFinishFunctionBody(LM.D, 0);
-        continue;
-      }
-    } else
-      Actions.ActOnDefaultCtorInitializers(LM.D);
-
-    ParseFunctionStatementBody(LM.D);
-
-    if (Tok.getLocation() != origLoc) {
-      // Due to parsing error, we either went over the cached tokens or
-      // there are still cached tokens left. If it's the latter case skip the
-      // leftover tokens.
-      // Since this is an uncommon situation that should be avoided, use the
-      // expensive isBeforeInTranslationUnit call.
-      if (PP.getSourceManager().isBeforeInTranslationUnit(Tok.getLocation(),
-                                                          origLoc))
-        while (Tok.getLocation() != origLoc && Tok.isNot(tok::eof))
-          ConsumeAnyToken();
-
-    }
   }
-
-  for (unsigned I = 0, N = Class.NestedClasses.size(); I != N; ++I)
-    ParseLexedMethodDefs(*Class.NestedClasses[I]);
 }
 
 /// ConsumeAndStoreUntil - Consume and store the token at the passed token

@@ -68,7 +68,10 @@ struct Y {
              Nested* self = this, // expected-error{{invalid use of 'this' outside of a nonstatic member function}}
              int m); // expected-error{{missing default argument on parameter 'm'}}
     static int c;
+    Nested(int i = 42);
   };
+
+  int mem7(Nested n = Nested());
 
   static int b; 
 }; 
