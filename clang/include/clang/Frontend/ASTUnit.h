@@ -115,6 +115,13 @@ private:
   /// translation unit.
   llvm::SmallVector<StoredDiagnostic, 4> StoredDiagnostics;
 
+  /// \brief The number of stored diagnostics that come from the driver
+  /// itself.
+  ///
+  /// Diagnostics that come from the driver are retained from one parse to
+  /// the next.
+  unsigned NumStoredDiagnosticsFromDriver;
+  
   /// \brief Temporary files that should be removed when the ASTUnit is 
   /// destroyed.
   llvm::SmallVector<llvm::sys::Path, 4> TemporaryFiles;
@@ -483,6 +490,19 @@ public:
                                   unsigned NumRemappedFiles = 0,
                                   bool CaptureDiagnostics = false);
 
+private:
+  /// \brief Helper function for \c LoadFromCompilerInvocation() and
+  /// \c LoadFromCommandLine(), which loads an AST from a compiler invocation.
+  ///
+  /// \param PrecompilePreamble Whether to precompile the preamble of this
+  /// translation unit, to improve the performance of reparsing.
+  ///
+  /// \returns \c true if a catastrophic failure occurred (which means that the
+  /// \c ASTUnit itself is invalid), or \c false otherwise.
+  bool LoadFromCompilerInvocation(bool PrecompilePreamble);
+  
+public:
+  
   /// LoadFromCompilerInvocation - Create an ASTUnit from a source file, via a
   /// CompilerInvocation object.
   ///

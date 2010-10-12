@@ -52,7 +52,8 @@ const unsigned DefaultPreambleRebuildInterval = 5;
 
 ASTUnit::ASTUnit(bool _MainFileIsAST)
   : CaptureDiagnostics(false), MainFileIsAST(_MainFileIsAST), 
-    CompleteTranslationUnit(true), ConcurrencyCheckValue(CheckUnlocked), 
+    CompleteTranslationUnit(true), NumStoredDiagnosticsFromDriver(0),
+    ConcurrencyCheckValue(CheckUnlocked), 
     PreambleRebuildCounter(0), SavedMainFileBuffer(0), PreambleBuffer(0),
     ShouldCacheCodeCompletionResults(false),
     NumTopLevelDeclsAtLastCompletionCache(0),
@@ -714,7 +715,9 @@ bool ASTUnit::Parse(llvm::MemoryBuffer *OverrideMainBuffer) {
   PreprocessedEntitiesByFile.clear();
 
   if (!OverrideMainBuffer) {
-    StoredDiagnostics.clear();
+    StoredDiagnostics.erase(
+                    StoredDiagnostics.begin() + NumStoredDiagnosticsFromDriver,
+                            StoredDiagnostics.end());
     TopLevelDeclsInPreamble.clear();
   }
 
@@ -737,19 +740,21 @@ bool ASTUnit::Parse(llvm::MemoryBuffer *OverrideMainBuffer) {
     PreprocessorOpts.ImplicitPCHInclude = PreambleFile;
     PreprocessorOpts.DisablePCHValidation = true;
     
-    // Keep track of the override buffer;
-    SavedMainFileBuffer = OverrideMainBuffer;
-
     // The stored diagnostic has the old source manager in it; update
     // the locations to refer into the new source manager. Since we've
     // been careful to make sure that the source manager's state
     // before and after are identical, so that we can reuse the source
     // location itself.
-    for (unsigned I = 0, N = StoredDiagnostics.size(); I != N; ++I) {
+    for (unsigned I = NumStoredDiagnosticsFromDriver, 
+                  N = StoredDiagnostics.size(); 
+         I < N; ++I) {
       FullSourceLoc Loc(StoredDiagnostics[I].getLocation(),
                         getSourceManager());
       StoredDiagnostics[I].setLocation(Loc);
     }
+
+    // Keep track of the override buffer;
+    SavedMainFileBuffer = OverrideMainBuffer;
   } else {
     PreprocessorOpts.PrecompiledPreambleBytes.first = 0;
     PreprocessorOpts.PrecompiledPreambleBytes.second = false;
@@ -1201,7 +1206,9 @@ llvm::MemoryBuffer *ASTUnit::getMainBufferWithPrecompiledPreamble(
   // Clear out old caches and data.
   getDiagnostics().Reset();
   ProcessWarningOptions(getDiagnostics(), Clang.getDiagnosticOpts());
-  StoredDiagnostics.clear();
+  StoredDiagnostics.erase(
+                    StoredDiagnostics.begin() + NumStoredDiagnosticsFromDriver,
+                          StoredDiagnostics.end());
   TopLevelDecls.clear();
   TopLevelDeclsInPreamble.clear();
   
@@ -1306,6 +1313,41 @@ unsigned ASTUnit::getMaxPCHLevel() const {
   return 0;
 }
 
+bool ASTUnit::LoadFromCompilerInvocation(bool PrecompilePreamble) {
+  if (!Invocation)
+    return true;
+  
+  // We'll manage file buffers ourselves.
+  Invocation->getPreprocessorOpts().RetainRemappedFileBuffers = true;
+  Invocation->getFrontendOpts().DisableFree = false;
+
+  if (getenv("LIBCLANG_TIMING"))
+    TimerGroup.reset(
+          new llvm::TimerGroup(Invocation->getFrontendOpts().Inputs[0].second));
+  
+  
+  llvm::MemoryBuffer *OverrideMainBuffer = 0;
+  // FIXME: When C++ PCH is ready, allow use of it for a precompiled preamble.
+  if (PrecompilePreamble && !Invocation->getLangOpts().CPlusPlus) {
+    PreambleRebuildCounter = 1;
+    OverrideMainBuffer
+      = getMainBufferWithPrecompiledPreamble(*Invocation);
+  }
+  
+  llvm::Timer *ParsingTimer = 0;
+  if (TimerGroup.get()) {
+    ParsingTimer = new llvm::Timer("Initial parse", *TimerGroup);
+    ParsingTimer->startTimer();
+    Timers.push_back(ParsingTimer);
+  }
+  
+  bool Failed = Parse(OverrideMainBuffer);
+  if (ParsingTimer)
+    ParsingTimer->stopTimer();
+
+  return Failed;
+}
+
 ASTUnit *ASTUnit::LoadFromCompilerInvocation(CompilerInvocation *CI,
                                    llvm::IntrusiveRefCntPtr<Diagnostic> Diags,
                                              bool OnlyLocalDecls,
@@ -1329,33 +1371,8 @@ ASTUnit *ASTUnit::LoadFromCompilerInvocation(CompilerInvocation *CI,
   AST->CompleteTranslationUnit = CompleteTranslationUnit;
   AST->ShouldCacheCodeCompletionResults = CacheCodeCompletionResults;
   AST->Invocation.reset(CI);
-  CI->getPreprocessorOpts().RetainRemappedFileBuffers = true;
   
-  if (getenv("LIBCLANG_TIMING"))
-    AST->TimerGroup.reset(
-                  new llvm::TimerGroup(CI->getFrontendOpts().Inputs[0].second));
-  
-  
-  llvm::MemoryBuffer *OverrideMainBuffer = 0;
-  // FIXME: When C++ PCH is ready, allow use of it for a precompiled preamble.
-  if (PrecompilePreamble && !CI->getLangOpts().CPlusPlus) {
-    AST->PreambleRebuildCounter = 1;
-    OverrideMainBuffer
-      = AST->getMainBufferWithPrecompiledPreamble(*AST->Invocation);
-  }
-  
-  llvm::Timer *ParsingTimer = 0;
-  if (AST->TimerGroup.get()) {
-    ParsingTimer = new llvm::Timer("Initial parse", *AST->TimerGroup);
-    ParsingTimer->startTimer();
-    AST->Timers.push_back(ParsingTimer);
-  }
-  
-  bool Failed = AST->Parse(OverrideMainBuffer);
-  if (ParsingTimer)
-    ParsingTimer->stopTimer();
-  
-  return Failed? 0 : AST.take();
+  return AST->LoadFromCompilerInvocation(PrecompilePreamble)? 0 : AST.take();
 }
 
 ASTUnit *ASTUnit::LoadFromCommandLine(const char **ArgBegin,
@@ -1387,41 +1404,50 @@ ASTUnit *ASTUnit::LoadFromCommandLine(const char **ArgBegin,
   // also want to force it to use clang.
   Args.push_back("-fsyntax-only");
 
-  // FIXME: We shouldn't have to pass in the path info.
-  driver::Driver TheDriver("clang", llvm::sys::getHostTriple(),
-                           "a.out", false, false, *Diags);
+  llvm::SmallVector<StoredDiagnostic, 4> StoredDiagnostics;
+  
+  llvm::OwningPtr<CompilerInvocation> CI;
+  {
+    CaptureDroppedDiagnostics Capture(CaptureDiagnostics, 
+                                      *Diags,
+                                      StoredDiagnostics);
 
-  // Don't check that inputs exist, they have been remapped.
-  TheDriver.setCheckInputsExist(false);
+    // FIXME: We shouldn't have to pass in the path info.
+    driver::Driver TheDriver("clang", llvm::sys::getHostTriple(),
+                             "a.out", false, false, *Diags);
 
-  llvm::OwningPtr<driver::Compilation> C(
-    TheDriver.BuildCompilation(Args.size(), Args.data()));
+    // Don't check that inputs exist, they have been remapped.
+    TheDriver.setCheckInputsExist(false);
 
-  // We expect to get back exactly one command job, if we didn't something
-  // failed.
-  const driver::JobList &Jobs = C->getJobs();
-  if (Jobs.size() != 1 || !isa<driver::Command>(Jobs.begin())) {
-    llvm::SmallString<256> Msg;
-    llvm::raw_svector_ostream OS(Msg);
-    C->PrintJob(OS, C->getJobs(), "; ", true);
-    Diags->Report(diag::err_fe_expected_compiler_job) << OS.str();
-    return 0;
+    llvm::OwningPtr<driver::Compilation> C(
+      TheDriver.BuildCompilation(Args.size(), Args.data()));
+
+    // We expect to get back exactly one command job, if we didn't something
+    // failed.
+    const driver::JobList &Jobs = C->getJobs();
+    if (Jobs.size() != 1 || !isa<driver::Command>(Jobs.begin())) {
+      llvm::SmallString<256> Msg;
+      llvm::raw_svector_ostream OS(Msg);
+      C->PrintJob(OS, C->getJobs(), "; ", true);
+      Diags->Report(diag::err_fe_expected_compiler_job) << OS.str();
+      return 0;
+    }
+
+    const driver::Command *Cmd = cast<driver::Command>(*Jobs.begin());
+    if (llvm::StringRef(Cmd->getCreator().getName()) != "clang") {
+      Diags->Report(diag::err_fe_expected_clang_command);
+      return 0;
+    }
+
+    const driver::ArgStringList &CCArgs = Cmd->getArguments();
+    CI.reset(new CompilerInvocation);
+    CompilerInvocation::CreateFromArgs(*CI,
+                                       const_cast<const char **>(CCArgs.data()),
+                                       const_cast<const char **>(CCArgs.data()) +
+                                       CCArgs.size(),
+                                       *Diags);
   }
-
-  const driver::Command *Cmd = cast<driver::Command>(*Jobs.begin());
-  if (llvm::StringRef(Cmd->getCreator().getName()) != "clang") {
-    Diags->Report(diag::err_fe_expected_clang_command);
-    return 0;
-  }
-
-  const driver::ArgStringList &CCArgs = Cmd->getArguments();
-  llvm::OwningPtr<CompilerInvocation> CI(new CompilerInvocation);
-  CompilerInvocation::CreateFromArgs(*CI,
-                                     const_cast<const char **>(CCArgs.data()),
-                                     const_cast<const char **>(CCArgs.data()) +
-                                     CCArgs.size(),
-                                     *Diags);
-
+  
   // Override any files that need remapping
   for (unsigned I = 0; I != NumRemappedFiles; ++I)
     CI->getPreprocessorOpts().addRemappedFile(RemappedFiles[I].first,
@@ -1430,11 +1456,19 @@ ASTUnit *ASTUnit::LoadFromCommandLine(const char **ArgBegin,
   // Override the resources path.
   CI->getHeaderSearchOpts().ResourceDir = ResourceFilesPath;
 
-  CI->getFrontendOpts().DisableFree = false;
-  return LoadFromCompilerInvocation(CI.take(), Diags, OnlyLocalDecls,
-                                    CaptureDiagnostics, PrecompilePreamble,
-                                    CompleteTranslationUnit,
-                                    CacheCodeCompletionResults);
+  // Create the AST unit.
+  llvm::OwningPtr<ASTUnit> AST;
+  AST.reset(new ASTUnit(false));
+  AST->Diagnostics = Diags;
+  AST->CaptureDiagnostics = CaptureDiagnostics;
+  AST->OnlyLocalDecls = OnlyLocalDecls;
+  AST->CompleteTranslationUnit = CompleteTranslationUnit;
+  AST->ShouldCacheCodeCompletionResults = CacheCodeCompletionResults;
+  AST->NumStoredDiagnosticsFromDriver = StoredDiagnostics.size();
+  AST->NumStoredDiagnosticsInPreamble = StoredDiagnostics.size();
+  AST->StoredDiagnostics.swap(StoredDiagnostics);
+  AST->Invocation.reset(CI.take());
+  return AST->LoadFromCompilerInvocation(PrecompilePreamble)? 0 : AST.take();
 }
 
 bool ASTUnit::Reparse(RemappedFile *RemappedFiles, unsigned NumRemappedFiles) {
@@ -1832,6 +1866,9 @@ void ASTUnit::CodeComplete(llvm::StringRef File, unsigned Line, unsigned Column,
 
   // If the main file has been overridden due to the use of a preamble,
   // make that override happen and introduce the preamble.
+  StoredDiagnostics.insert(StoredDiagnostics.end(),
+                           this->StoredDiagnostics.begin(),
+             this->StoredDiagnostics.begin() + NumStoredDiagnosticsFromDriver);
   if (OverrideMainBuffer) {
     PreprocessorOpts.addRemappedFile(OriginalSourceFile, OverrideMainBuffer);
     PreprocessorOpts.PrecompiledPreambleBytes.first = Preamble.size();
@@ -1843,12 +1880,14 @@ void ASTUnit::CodeComplete(llvm::StringRef File, unsigned Line, unsigned Column,
     // The stored diagnostics have the old source manager. Copy them
     // to our output set of stored diagnostics, updating the source
     // manager to the one we were given.
-    for (unsigned I = 0, N = this->StoredDiagnostics.size(); I != N; ++I) {
+    for (unsigned I = NumStoredDiagnosticsFromDriver, 
+                  N = this->StoredDiagnostics.size(); 
+         I < N; ++I) {
       StoredDiagnostics.push_back(this->StoredDiagnostics[I]);
       FullSourceLoc Loc(StoredDiagnostics[I].getLocation(), SourceMgr);
       StoredDiagnostics[I].setLocation(Loc);
     }
-    
+
     OwnedBuffers.push_back(OverrideMainBuffer);
   } else {
     PreprocessorOpts.PrecompiledPreambleBytes.first = 0;

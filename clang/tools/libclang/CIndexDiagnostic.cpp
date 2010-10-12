@@ -56,10 +56,6 @@ CXString clang_formatDiagnostic(CXDiagnostic Diagnostic, unsigned Options) {
 
   CXDiagnosticSeverity Severity = clang_getDiagnosticSeverity(Diagnostic);
 
-  // Ignore diagnostics that should be ignored.
-  if (Severity == CXDiagnostic_Ignored)
-    return createCXString("");
-
   llvm::SmallString<256> Str;
   llvm::raw_svector_ostream Out(Str);
   
@@ -101,9 +97,9 @@ CXString clang_formatDiagnostic(CXDiagnostic Diagnostic, unsigned Options) {
         if (PrintedRange)
           Out << ":";
       }
+      
+      Out << " ";
     }
-
-    Out << " ";
   }
 
   /* Print warning/error/etc. */
