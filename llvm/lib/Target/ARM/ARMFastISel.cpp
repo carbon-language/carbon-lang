@@ -588,6 +588,22 @@ bool ARMFastISel::ARMComputeRegOffset(const Value *Obj, unsigned &Reg,
   switch (Opcode) {
     default:
     break;
+    case Instruction::BitCast: {
+      // Look through bitcasts.
+      return ARMComputeRegOffset(U->getOperand(0), Reg, Offset);
+    }
+    case Instruction::IntToPtr: {
+      // Look past no-op inttoptrs.
+      if (TLI.getValueType(U->getOperand(0)->getType()) == TLI.getPointerTy())
+        return ARMComputeRegOffset(U->getOperand(0), Reg, Offset);
+      break;
+    }
+    case Instruction::PtrToInt: {
+      // Look past no-op ptrtoints.
+      if (TLI.getValueType(U->getType()) == TLI.getPointerTy())
+        return ARMComputeRegOffset(U->getOperand(0), Reg, Offset);
+      break;
+    }
     case Instruction::Alloca: {
       // Don't handle dynamic allocas.
       assert(!FuncInfo.StaticAllocaMap.count(cast<AllocaInst>(Obj)) &&
