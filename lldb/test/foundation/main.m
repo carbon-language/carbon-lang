@@ -38,7 +38,7 @@ int main (int argc, char const *argv[])
     MyString *my = [[MyString alloc] initWithNSString:str];
     NSLog(@"MyString instance: %@", [my description]);
 
-    id str_id = str;
+    id str_id = str; // Set break point at this line.
     SEL sel = @selector(length);
     BOOL responds = [str respondsToSelector:sel];
     printf("sizeof(id) = %zu\n", sizeof(id));
