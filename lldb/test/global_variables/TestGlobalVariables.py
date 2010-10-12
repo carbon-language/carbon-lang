@@ -20,14 +20,21 @@ class GlobalVariablesTestCase(TestBase):
         self.buildDwarf()
         self.global_variables()
 
+    def setUp(self):
+        super(GlobalVariablesTestCase, self).setUp()
+        # Find the line number to break inside main().
+        self.line = line_number('main.c', '// Set break point at this line.')
+
     def global_variables(self):
         """Test 'frame variable -s -a' which omits args and shows scopes."""
         exe = os.path.join(os.getcwd(), "a.out")
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 
         # Break inside the main.
-        self.expect("breakpoint set -f main.c -l 20", BREAKPOINT_CREATED,
-            startstr = "Breakpoint created: 1: file ='main.c', line = 20, locations = 1")
+        self.expect("breakpoint set -f main.c -l %d" % self.line,
+                    BREAKPOINT_CREATED,
+            startstr = "Breakpoint created: 1: file ='main.c', line = %d, locations = 1" %
+                        self.line)
 
         self.runCmd("run", RUN_SUCCEEDED)
 
