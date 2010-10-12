@@ -232,7 +232,7 @@ def line_number(filename, string_to_match):
         for i, line in enumerate(f):
             if line.find(string_to_match) != -1:
                 # Found our match.
-                return i
+                return i+1
     return -1        
 
 def pointer_size():

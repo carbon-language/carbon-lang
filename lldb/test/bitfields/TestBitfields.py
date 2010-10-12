@@ -31,14 +31,21 @@ class BitfieldsTestCase(TestBase):
         self.buildDwarf()
         self.bitfields_variable_python()
 
+    def setUp(self):
+        super(BitfieldsTestCase, self).setUp()
+        # Find the line number to break inside main().
+        self.line = line_number('main.c', '// Set break point at this line.')
+
     def bitfields_variable(self):
         """Test 'frame variable ...' on a variable with bitfields."""
         exe = os.path.join(os.getcwd(), "a.out")
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 
         # Break inside the main.
-        self.expect("breakpoint set -f main.c -l 42", BREAKPOINT_CREATED,
-            startstr = "Breakpoint created: 1: file ='main.c', line = 42, locations = 1")
+        self.expect("breakpoint set -f main.c -l %d" % self.line,
+                    BREAKPOINT_CREATED,
+            startstr = "Breakpoint created: 1: file ='main.c', line = %d, locations = 1" %
+                        self.line)
 
         self.runCmd("run", RUN_SUCCEEDED)
 
@@ -81,7 +88,7 @@ class BitfieldsTestCase(TestBase):
         target = self.dbg.CreateTarget(exe)
         self.assertTrue(target.IsValid(), VALID_TARGET)
 
-        breakpoint = target.BreakpointCreateByLocation("main.c", 42)
+        breakpoint = target.BreakpointCreateByLocation("main.c", self.line)
         self.assertTrue(breakpoint.IsValid(), VALID_BREAKPOINT)
 
         self.runCmd("run", RUN_SUCCEEDED, setCookie=False)

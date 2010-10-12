@@ -39,6 +39,6 @@ int main (int argc, char const *argv[])
         bits.b7 = i;        //// break $source:$line
     for (i=0; i<(1<<4); i++)
         bits.four = i;      //// break $source:$line
-    return 0;               //// continue
+    return 0;               //// Set break point at this line.
 
 }
