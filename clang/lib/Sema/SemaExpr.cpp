@@ -570,7 +570,7 @@ Sema::BuildAnonymousStructUnionMemberReference(SourceLocation Loc,
     // therefore, not part of another non-anonymous record).
     MarkDeclarationReferenced(Loc, BaseObject);
     BaseObjectExpr = new (Context) DeclRefExpr(BaseObject,BaseObject->getType(),
-                                               SourceLocation());
+                                               Loc);
     BaseQuals
       = Context.getCanonicalType(BaseObject->getType()).getQualifiers();
   } else if (BaseObjectExpr) {
