@@ -50,7 +50,12 @@ namespace {
 }
 
 char OptimalEdgeProfiler::ID = 0;
-INITIALIZE_PASS(OptimalEdgeProfiler, "insert-optimal-edge-profiling", 
+INITIALIZE_PASS_BEGIN(OptimalEdgeProfiler, "insert-optimal-edge-profiling", 
+                "Insert optimal instrumentation for edge profiling",
+                false, false)
+INITIALIZE_PASS_DEPENDENCY(ProfileEstimatorPass)
+INITIALIZE_AG_DEPENDENCY(ProfileInfo)
+INITIALIZE_PASS_END(OptimalEdgeProfiler, "insert-optimal-edge-profiling", 
                 "Insert optimal instrumentation for edge profiling",
                 false, false)
 

@@ -158,7 +158,14 @@ namespace {
   };
 }
 char LoopUnswitch::ID = 0;
-INITIALIZE_PASS(LoopUnswitch, "loop-unswitch", "Unswitch loops", false, false)
+INITIALIZE_PASS_BEGIN(LoopUnswitch, "loop-unswitch", "Unswitch loops",
+                      false, false)
+INITIALIZE_PASS_DEPENDENCY(LoopSimplify)
+INITIALIZE_PASS_DEPENDENCY(LoopInfo)
+INITIALIZE_PASS_DEPENDENCY(LCSSA)
+INITIALIZE_PASS_DEPENDENCY(DominatorTree)
+INITIALIZE_PASS_END(LoopUnswitch, "loop-unswitch", "Unswitch loops",
+                      false, false)
 
 Pass *llvm::createLoopUnswitchPass(bool Os) { 
   return new LoopUnswitch(Os); 

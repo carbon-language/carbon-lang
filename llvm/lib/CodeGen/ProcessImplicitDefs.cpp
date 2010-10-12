@@ -26,7 +26,10 @@
 using namespace llvm;
 
 char ProcessImplicitDefs::ID = 0;
-INITIALIZE_PASS(ProcessImplicitDefs, "processimpdefs",
+INITIALIZE_PASS_BEGIN(ProcessImplicitDefs, "processimpdefs",
+                "Process Implicit Definitions.", false, false)
+INITIALIZE_PASS_DEPENDENCY(LiveVariables)
+INITIALIZE_PASS_END(ProcessImplicitDefs, "processimpdefs",
                 "Process Implicit Definitions.", false, false)
 
 void ProcessImplicitDefs::getAnalysisUsage(AnalysisUsage &AU) const {

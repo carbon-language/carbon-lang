@@ -331,8 +331,13 @@ namespace {
 // createMemCpyOptPass - The public interface to this file...
 FunctionPass *llvm::createMemCpyOptPass() { return new MemCpyOpt(); }
 
-INITIALIZE_PASS(MemCpyOpt, "memcpyopt", "MemCpy Optimization", false, false)
-
+INITIALIZE_PASS_BEGIN(MemCpyOpt, "memcpyopt", "MemCpy Optimization",
+                      false, false)
+INITIALIZE_PASS_DEPENDENCY(DominatorTree)
+INITIALIZE_PASS_DEPENDENCY(MemoryDependenceAnalysis)
+INITIALIZE_AG_DEPENDENCY(AliasAnalysis)
+INITIALIZE_PASS_END(MemCpyOpt, "memcpyopt", "MemCpy Optimization",
+                    false, false)
 
 
 /// processStore - When GVN is scanning forward over instructions, we look for

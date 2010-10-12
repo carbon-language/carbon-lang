@@ -56,7 +56,11 @@ namespace {
 } // end anonymous namespace
   
 char Sinking::ID = 0;
-INITIALIZE_PASS(Sinking, "sink", "Code sinking", false, false)
+INITIALIZE_PASS_BEGIN(Sinking, "sink", "Code sinking", false, false)
+INITIALIZE_PASS_DEPENDENCY(LoopInfo)
+INITIALIZE_PASS_DEPENDENCY(DominatorTree)
+INITIALIZE_AG_DEPENDENCY(AliasAnalysis)
+INITIALIZE_PASS_END(Sinking, "sink", "Code sinking", false, false)
 
 FunctionPass *llvm::createSinkingPass() { return new Sinking(); }
 

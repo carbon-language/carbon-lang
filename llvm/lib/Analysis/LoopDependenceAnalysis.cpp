@@ -46,7 +46,11 @@ LoopPass *llvm::createLoopDependenceAnalysisPass() {
   return new LoopDependenceAnalysis();
 }
 
-INITIALIZE_PASS(LoopDependenceAnalysis, "lda",
+INITIALIZE_PASS_BEGIN(LoopDependenceAnalysis, "lda",
+                "Loop Dependence Analysis", false, true)
+INITIALIZE_PASS_DEPENDENCY(ScalarEvolution)
+INITIALIZE_AG_DEPENDENCY(AliasAnalysis)
+INITIALIZE_PASS_END(LoopDependenceAnalysis, "lda",
                 "Loop Dependence Analysis", false, true)
 char LoopDependenceAnalysis::ID = 0;
 

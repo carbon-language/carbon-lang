@@ -106,7 +106,10 @@ bool DominatorTree::dominates(const Instruction *A, const Instruction *B) const{
 //===----------------------------------------------------------------------===//
 
 char DominanceFrontier::ID = 0;
-INITIALIZE_PASS(DominanceFrontier, "domfrontier",
+INITIALIZE_PASS_BEGIN(DominanceFrontier, "domfrontier",
+                "Dominance Frontier Construction", true, true)
+INITIALIZE_PASS_DEPENDENCY(DominatorTree)
+INITIALIZE_PASS_END(DominanceFrontier, "domfrontier",
                 "Dominance Frontier Construction", true, true)
 
 void DominanceFrontier::verifyAnalysis() const {

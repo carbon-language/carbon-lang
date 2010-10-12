@@ -189,7 +189,12 @@ namespace {
 } // end anonymous namespace
 
 char MachineLICM::ID = 0;
-INITIALIZE_PASS(MachineLICM, "machinelicm",
+INITIALIZE_PASS_BEGIN(MachineLICM, "machinelicm",
+                "Machine Loop Invariant Code Motion", false, false)
+INITIALIZE_PASS_DEPENDENCY(MachineLoopInfo)
+INITIALIZE_PASS_DEPENDENCY(MachineDominatorTree)
+INITIALIZE_AG_DEPENDENCY(AliasAnalysis)
+INITIALIZE_PASS_END(MachineLICM, "machinelicm",
                 "Machine Loop Invariant Code Motion", false, false)
 
 FunctionPass *llvm::createMachineLICMPass(bool PreRegAlloc) {

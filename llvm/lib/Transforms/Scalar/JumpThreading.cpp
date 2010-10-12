@@ -121,7 +121,10 @@ namespace {
 }
 
 char JumpThreading::ID = 0;
-INITIALIZE_PASS(JumpThreading, "jump-threading",
+INITIALIZE_PASS_BEGIN(JumpThreading, "jump-threading",
+                "Jump Threading", false, false)
+INITIALIZE_PASS_DEPENDENCY(LazyValueInfo)
+INITIALIZE_PASS_END(JumpThreading, "jump-threading",
                 "Jump Threading", false, false)
 
 // Public interface to the Jump Threading pass

@@ -84,7 +84,10 @@ namespace {
 }
 
 char PeepholeOptimizer::ID = 0;
-INITIALIZE_PASS(PeepholeOptimizer, "peephole-opts",
+INITIALIZE_PASS_BEGIN(PeepholeOptimizer, "peephole-opts",
+                "Peephole Optimizations", false, false)
+INITIALIZE_PASS_DEPENDENCY(MachineDominatorTree)
+INITIALIZE_PASS_END(PeepholeOptimizer, "peephole-opts",
                 "Peephole Optimizations", false, false)
 
 FunctionPass *llvm::createPeepholeOptimizerPass() {

@@ -245,7 +245,9 @@ namespace {
   char IfConverter::ID = 0;
 }
 
-INITIALIZE_PASS(IfConverter, "if-converter", "If Converter", false, false)
+INITIALIZE_PASS_BEGIN(IfConverter, "if-converter", "If Converter", false, false)
+INITIALIZE_PASS_DEPENDENCY(MachineLoopInfo)
+INITIALIZE_PASS_END(IfConverter, "if-converter", "If Converter", false, false)
 
 FunctionPass *llvm::createIfConverterPass() { return new IfConverter(); }
 

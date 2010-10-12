@@ -130,12 +130,32 @@ private:
 
 #define INITIALIZE_PASS(passName, arg, name, cfg, analysis) \
   void llvm::initialize##passName##Pass(PassRegistry &Registry) { \
+    static bool initialized = false; \
+    if (initialized) return; \
+    initialized = true; \
     PassInfo *PI = new PassInfo(name, arg, & passName ::ID, \
       PassInfo::NormalCtor_t(callDefaultCtor< passName >), cfg, analysis); \
     Registry.registerPass(*PI); \
   } \
   static RegisterPass<passName> passName ## _info(arg, name, cfg, analysis);
-    
+
+#define INITIALIZE_PASS_BEGIN(passName, arg, name, cfg, analysis) \
+  void llvm::initialize##passName##Pass(PassRegistry &Registry) { \
+    static bool initialized = false; \
+    if (initialized) return; \
+    initialized = true;
+
+#define INITIALIZE_PASS_DEPENDENCY(depName) \
+    initialize##depName##Pass(Registry);
+#define INITIALIZE_AG_DEPENDENCY(depName) \
+    initialize##depName##AnalysisGroup(Registry);
+
+#define INITIALIZE_PASS_END(passName, arg, name, cfg, analysis) \
+    PassInfo *PI = new PassInfo(name, arg, & passName ::ID, \
+      PassInfo::NormalCtor_t(callDefaultCtor< passName >), cfg, analysis); \
+    Registry.registerPass(*PI); \
+  } \
+  static RegisterPass<passName> passName ## _info(arg, name, cfg, analysis);
 
 template<typename PassName>
 Pass *callDefaultCtor() { return new PassName(); }
@@ -220,6 +240,7 @@ struct RegisterAnalysisGroup : public RegisterAGBase {
 
 #define INITIALIZE_AG_PASS(passName, agName, arg, name, cfg, analysis, def) \
   void llvm::initialize##passName##Pass(PassRegistry &Registry) { \
+    initialize##agName##AnalysisGroup(Registry); \
     PassInfo *PI = new PassInfo(name, arg, & passName ::ID, \
       PassInfo::NormalCtor_t(callDefaultCtor< passName >), cfg, analysis); \
     Registry.registerPass(*PI); \
@@ -228,6 +249,21 @@ struct RegisterAnalysisGroup : public RegisterAGBase {
     Registry.registerAnalysisGroup(& agName ::ID, & passName ::ID, *AI, def); \
   } \
   static RegisterPass<passName> passName ## _info(arg, name, cfg, analysis); \
+  static RegisterAnalysisGroup<agName, def> passName ## _ag(passName ## _info);
+
+#define INITIALIZE_AG_PASS_BEGIN(passName, agName, arg, n, cfg, analysis, def) \
+  void llvm::initialize##passName##Pass(PassRegistry &Registry) { \
+    initialize##agName##AnalysisGroup(Registry);
+
+#define INITIALIZE_AG_PASS_END(passName, agName, arg, n, cfg, analysis, def) \
+    PassInfo *PI = new PassInfo(n, arg, & passName ::ID, \
+      PassInfo::NormalCtor_t(callDefaultCtor< passName >), cfg, analysis); \
+    Registry.registerPass(*PI); \
+    \
+    PassInfo *AI = new PassInfo(n, & agName :: ID); \
+    Registry.registerAnalysisGroup(& agName ::ID, & passName ::ID, *AI, def); \
+  } \
+  static RegisterPass<passName> passName ## _info(arg, n, cfg, analysis); \
   static RegisterAnalysisGroup<agName, def> passName ## _ag(passName ## _info);
 
 //===---------------------------------------------------------------------------

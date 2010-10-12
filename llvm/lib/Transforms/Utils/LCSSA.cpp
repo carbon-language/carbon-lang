@@ -90,7 +90,13 @@ namespace {
 }
   
 char LCSSA::ID = 0;
-INITIALIZE_PASS(LCSSA, "lcssa", "Loop-Closed SSA Form Pass", false, false)
+INITIALIZE_PASS_BEGIN(LCSSA, "lcssa", "Loop-Closed SSA Form Pass", false, false)
+INITIALIZE_PASS_DEPENDENCY(DominatorTree)
+INITIALIZE_PASS_DEPENDENCY(DominanceFrontier)
+INITIALIZE_PASS_DEPENDENCY(LoopInfo)
+INITIALIZE_PASS_DEPENDENCY(LoopSimplify)
+INITIALIZE_PASS_DEPENDENCY(ScalarEvolution)
+INITIALIZE_PASS_END(LCSSA, "lcssa", "Loop-Closed SSA Form Pass", false, false)
 
 Pass *llvm::createLCSSAPass() { return new LCSSA(); }
 char &llvm::LCSSAID = LCSSA::ID;

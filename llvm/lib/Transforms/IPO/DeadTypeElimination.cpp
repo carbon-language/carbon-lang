@@ -45,7 +45,10 @@ namespace {
 }
 
 char DTE::ID = 0;
-INITIALIZE_PASS(DTE, "deadtypeelim", "Dead Type Elimination", false, false)
+INITIALIZE_PASS_BEGIN(DTE, "deadtypeelim", "Dead Type Elimination",
+                      false, false)
+INITIALIZE_PASS_DEPENDENCY(FindUsedTypes)
+INITIALIZE_PASS_END(DTE, "deadtypeelim", "Dead Type Elimination", false, false)
 
 ModulePass *llvm::createDeadTypeEliminationPass() {
   return new DTE();

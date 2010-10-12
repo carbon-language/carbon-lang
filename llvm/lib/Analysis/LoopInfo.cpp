@@ -38,7 +38,9 @@ VerifyLoopInfoX("verify-loop-info", cl::location(VerifyLoopInfo),
                 cl::desc("Verify loop info (time consuming)"));
 
 char LoopInfo::ID = 0;
-INITIALIZE_PASS(LoopInfo, "loops", "Natural Loop Information", true, true)
+INITIALIZE_PASS_BEGIN(LoopInfo, "loops", "Natural Loop Information", true, true)
+INITIALIZE_PASS_DEPENDENCY(DominatorTree)
+INITIALIZE_PASS_END(LoopInfo, "loops", "Natural Loop Information", true, true)
 
 //===----------------------------------------------------------------------===//
 // Loop implementation

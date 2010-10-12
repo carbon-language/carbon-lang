@@ -734,7 +734,12 @@ RegionInfo::getCommonRegion(SmallVectorImpl<BasicBlock*> &BBs) const {
 }
 
 char RegionInfo::ID = 0;
-INITIALIZE_PASS(RegionInfo, "regions",
+INITIALIZE_PASS_BEGIN(RegionInfo, "regions",
+                "Detect single entry single exit regions", true, true)
+INITIALIZE_PASS_DEPENDENCY(DominatorTree)
+INITIALIZE_PASS_DEPENDENCY(PostDominatorTree)
+INITIALIZE_PASS_DEPENDENCY(DominanceFrontier)
+INITIALIZE_PASS_END(RegionInfo, "regions",
                 "Detect single entry single exit regions", true, true)
 
 // Create methods available outside of this file, to use them

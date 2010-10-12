@@ -607,5 +607,8 @@ namespace {
 }
 
 char AliasSetPrinter::ID = 0;
-INITIALIZE_PASS(AliasSetPrinter, "print-alias-sets",
+INITIALIZE_PASS_BEGIN(AliasSetPrinter, "print-alias-sets",
+                "Alias Set Printer", false, true)
+INITIALIZE_AG_DEPENDENCY(AliasAnalysis)
+INITIALIZE_PASS_END(AliasSetPrinter, "print-alias-sets",
                 "Alias Set Printer", false, true)

@@ -159,7 +159,10 @@ namespace {
 }
 
 char TwoAddressInstructionPass::ID = 0;
-INITIALIZE_PASS(TwoAddressInstructionPass, "twoaddressinstruction",
+INITIALIZE_PASS_BEGIN(TwoAddressInstructionPass, "twoaddressinstruction",
+                "Two-Address instruction pass", false, false)
+INITIALIZE_AG_DEPENDENCY(AliasAnalysis)
+INITIALIZE_PASS_END(TwoAddressInstructionPass, "twoaddressinstruction",
                 "Two-Address instruction pass", false, false)
 
 char &llvm::TwoAddressInstructionPassID = TwoAddressInstructionPass::ID;

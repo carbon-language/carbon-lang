@@ -107,7 +107,16 @@ namespace {
 }
 
 char LoopSimplify::ID = 0;
-INITIALIZE_PASS(LoopSimplify, "loopsimplify",
+INITIALIZE_PASS_BEGIN(LoopSimplify, "loopsimplify",
+                "Canonicalize natural loops", true, false)
+INITIALIZE_PASS_DEPENDENCY(DominatorTree)
+INITIALIZE_PASS_DEPENDENCY(LoopInfo)
+INITIALIZE_PASS_DEPENDENCY(ScalarEvolution)
+INITIALIZE_PASS_DEPENDENCY(BreakCriticalEdges)
+INITIALIZE_PASS_DEPENDENCY(DominanceFrontier)
+INITIALIZE_PASS_DEPENDENCY(LCSSA)
+INITIALIZE_AG_DEPENDENCY(AliasAnalysis)
+INITIALIZE_PASS_END(LoopSimplify, "loopsimplify",
                 "Canonicalize natural loops", true, false)
 
 // Publically exposed interface to pass...

@@ -366,7 +366,10 @@ namespace llvm {
   char ProfileVerifierPassT<FType, BType>::ID = 0;
 }
 
-INITIALIZE_PASS(ProfileVerifierPass, "profile-verifier",
+INITIALIZE_PASS_BEGIN(ProfileVerifierPass, "profile-verifier",
+                "Verify profiling information", false, true)
+INITIALIZE_AG_DEPENDENCY(ProfileInfo)
+INITIALIZE_PASS_END(ProfileVerifierPass, "profile-verifier",
                 "Verify profiling information", false, true)
 
 namespace llvm {

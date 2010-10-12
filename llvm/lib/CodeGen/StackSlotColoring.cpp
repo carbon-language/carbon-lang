@@ -145,7 +145,13 @@ namespace {
 
 char StackSlotColoring::ID = 0;
 
-INITIALIZE_PASS(StackSlotColoring, "stack-slot-coloring",
+INITIALIZE_PASS_BEGIN(StackSlotColoring, "stack-slot-coloring",
+                "Stack Slot Coloring", false, false)
+INITIALIZE_PASS_DEPENDENCY(SlotIndexes)
+INITIALIZE_PASS_DEPENDENCY(LiveStacks)
+INITIALIZE_PASS_DEPENDENCY(VirtRegMap)
+INITIALIZE_PASS_DEPENDENCY(MachineLoopInfo)
+INITIALIZE_PASS_END(StackSlotColoring, "stack-slot-coloring",
                 "Stack Slot Coloring", false, false)
 
 FunctionPass *llvm::createStackSlotColoringPass(bool RegColor) {

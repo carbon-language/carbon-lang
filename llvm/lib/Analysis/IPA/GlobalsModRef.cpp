@@ -176,7 +176,11 @@ namespace {
 }
 
 char GlobalsModRef::ID = 0;
-INITIALIZE_AG_PASS(GlobalsModRef, AliasAnalysis,
+INITIALIZE_AG_PASS_BEGIN(GlobalsModRef, AliasAnalysis,
+                "globalsmodref-aa", "Simple mod/ref analysis for globals",    
+                false, true, false)
+INITIALIZE_AG_DEPENDENCY(CallGraph)
+INITIALIZE_AG_PASS_END(GlobalsModRef, AliasAnalysis,
                 "globalsmodref-aa", "Simple mod/ref analysis for globals",    
                 false, true, false)
 

@@ -150,7 +150,12 @@ namespace {
 }
 
 char StrongPHIElimination::ID = 0;
-INITIALIZE_PASS(StrongPHIElimination, "strong-phi-node-elimination",
+INITIALIZE_PASS_BEGIN(StrongPHIElimination, "strong-phi-node-elimination",
+  "Eliminate PHI nodes for register allocation, intelligently", false, false)
+INITIALIZE_PASS_DEPENDENCY(MachineDominatorTree)
+INITIALIZE_PASS_DEPENDENCY(SlotIndexes)
+INITIALIZE_PASS_DEPENDENCY(LiveIntervals)
+INITIALIZE_PASS_END(StrongPHIElimination, "strong-phi-node-elimination",
   "Eliminate PHI nodes for register allocation, intelligently", false, false)
 
 char &llvm::StrongPHIEliminationID = StrongPHIElimination::ID;

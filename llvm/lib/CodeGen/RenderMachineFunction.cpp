@@ -30,7 +30,12 @@
 using namespace llvm;
 
 char RenderMachineFunction::ID = 0;
-INITIALIZE_PASS(RenderMachineFunction, "rendermf",
+INITIALIZE_PASS_BEGIN(RenderMachineFunction, "rendermf",
+                "Render machine functions (and related info) to HTML pages",
+                false, false)
+INITIALIZE_PASS_DEPENDENCY(SlotIndexes)
+INITIALIZE_PASS_DEPENDENCY(LiveIntervals)
+INITIALIZE_PASS_END(RenderMachineFunction, "rendermf",
                 "Render machine functions (and related info) to HTML pages",
                 false, false)
 

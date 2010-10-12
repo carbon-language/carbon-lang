@@ -55,7 +55,15 @@ namespace {
 }
   
 char LoopDeletion::ID = 0;
-INITIALIZE_PASS(LoopDeletion, "loop-deletion",
+INITIALIZE_PASS_BEGIN(LoopDeletion, "loop-deletion",
+                "Delete dead loops", false, false)
+INITIALIZE_PASS_DEPENDENCY(DominatorTree)
+INITIALIZE_PASS_DEPENDENCY(LoopInfo)
+INITIALIZE_PASS_DEPENDENCY(ScalarEvolution)
+INITIALIZE_PASS_DEPENDENCY(LoopSimplify)
+INITIALIZE_PASS_DEPENDENCY(LCSSA)
+INITIALIZE_PASS_DEPENDENCY(DominanceFrontier)
+INITIALIZE_PASS_END(LoopDeletion, "loop-deletion",
                 "Delete dead loops", false, false)
 
 Pass* llvm::createLoopDeletionPass() {

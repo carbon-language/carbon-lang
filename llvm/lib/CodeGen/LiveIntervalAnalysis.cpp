@@ -55,7 +55,16 @@ STATISTIC(numFolds     , "Number of loads/stores folded into instructions");
 STATISTIC(numSplits    , "Number of intervals split");
 
 char LiveIntervals::ID = 0;
-INITIALIZE_PASS(LiveIntervals, "liveintervals",
+INITIALIZE_PASS_BEGIN(LiveIntervals, "liveintervals",
+                "Live Interval Analysis", false, false)
+INITIALIZE_PASS_DEPENDENCY(LiveVariables)
+INITIALIZE_PASS_DEPENDENCY(MachineLoopInfo)
+INITIALIZE_PASS_DEPENDENCY(PHIElimination)
+INITIALIZE_PASS_DEPENDENCY(TwoAddressInstructionPass)
+INITIALIZE_PASS_DEPENDENCY(ProcessImplicitDefs)
+INITIALIZE_PASS_DEPENDENCY(SlotIndexes)
+INITIALIZE_AG_DEPENDENCY(AliasAnalysis)
+INITIALIZE_PASS_END(LiveIntervals, "liveintervals",
                 "Live Interval Analysis", false, false)
 
 void LiveIntervals::getAnalysisUsage(AnalysisUsage &AU) const {

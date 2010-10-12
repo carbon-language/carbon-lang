@@ -713,7 +713,11 @@ FunctionPass *llvm::createGVNPass(bool NoLoads) {
   return new GVN(NoLoads);
 }
 
-INITIALIZE_PASS(GVN, "gvn", "Global Value Numbering", false, false)
+INITIALIZE_PASS_BEGIN(GVN, "gvn", "Global Value Numbering", false, false)
+INITIALIZE_PASS_DEPENDENCY(MemoryDependenceAnalysis)
+INITIALIZE_PASS_DEPENDENCY(DominatorTree)
+INITIALIZE_AG_DEPENDENCY(AliasAnalysis)
+INITIALIZE_PASS_END(GVN, "gvn", "Global Value Numbering", false, false)
 
 void GVN::dump(DenseMap<uint32_t, Value*>& d) {
   errs() << "{\n";

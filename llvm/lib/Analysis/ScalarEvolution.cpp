@@ -103,7 +103,11 @@ MaxBruteForceIterations("scalar-evolution-max-iterations", cl::ReallyHidden,
                                  "derived loop"),
                         cl::init(100));
 
-INITIALIZE_PASS(ScalarEvolution, "scalar-evolution",
+INITIALIZE_PASS_BEGIN(ScalarEvolution, "scalar-evolution",
+                "Scalar Evolution Analysis", false, true)
+INITIALIZE_PASS_DEPENDENCY(LoopInfo)
+INITIALIZE_PASS_DEPENDENCY(DominatorTree)
+INITIALIZE_PASS_END(ScalarEvolution, "scalar-evolution",
                 "Scalar Evolution Analysis", false, true)
 char ScalarEvolution::ID = 0;
 

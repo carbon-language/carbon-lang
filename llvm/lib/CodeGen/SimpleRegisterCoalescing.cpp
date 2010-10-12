@@ -64,7 +64,17 @@ DisablePhysicalJoin("disable-physical-join",
                cl::desc("Avoid coalescing physical register copies"),
                cl::init(false), cl::Hidden);
 
-INITIALIZE_AG_PASS(SimpleRegisterCoalescing, RegisterCoalescer,
+INITIALIZE_AG_PASS_BEGIN(SimpleRegisterCoalescing, RegisterCoalescer,
+                "simple-register-coalescing", "Simple Register Coalescing", 
+                false, false, true)
+INITIALIZE_PASS_DEPENDENCY(LiveIntervals)
+INITIALIZE_PASS_DEPENDENCY(SlotIndexes)
+INITIALIZE_PASS_DEPENDENCY(MachineLoopInfo)
+INITIALIZE_PASS_DEPENDENCY(StrongPHIElimination)
+INITIALIZE_PASS_DEPENDENCY(PHIElimination)
+INITIALIZE_PASS_DEPENDENCY(TwoAddressInstructionPass)
+INITIALIZE_AG_DEPENDENCY(AliasAnalysis)
+INITIALIZE_AG_PASS_END(SimpleRegisterCoalescing, RegisterCoalescer,
                 "simple-register-coalescing", "Simple Register Coalescing", 
                 false, false, true)
 

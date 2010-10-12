@@ -59,9 +59,11 @@ namespace {
 }
   
 char RegToMem::ID = 0;
-INITIALIZE_PASS(RegToMem, "reg2mem", "Demote all values to stack slots",
+INITIALIZE_PASS_BEGIN(RegToMem, "reg2mem", "Demote all values to stack slots",
                 false, false)
-
+INITIALIZE_PASS_DEPENDENCY(BreakCriticalEdges)
+INITIALIZE_PASS_END(RegToMem, "reg2mem", "Demote all values to stack slots",
+                false, false)
 
 bool RegToMem::runOnFunction(Function &F) {
   if (F.isDeclaration()) 

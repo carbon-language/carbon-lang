@@ -72,7 +72,10 @@ namespace {
 }  // End of anonymous namespace
 
 char ProfileEstimatorPass::ID = 0;
-INITIALIZE_AG_PASS(ProfileEstimatorPass, ProfileInfo, "profile-estimator",
+INITIALIZE_AG_PASS_BEGIN(ProfileEstimatorPass, ProfileInfo, "profile-estimator",
+                "Estimate profiling information", false, true, false)
+INITIALIZE_PASS_DEPENDENCY(LoopInfo)
+INITIALIZE_AG_PASS_END(ProfileEstimatorPass, ProfileInfo, "profile-estimator",
                 "Estimate profiling information", false, true, false)
 
 namespace llvm {

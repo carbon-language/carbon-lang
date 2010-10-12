@@ -53,7 +53,10 @@ FunctionPass* llvm::createPostDomTree() {
 //  PostDominanceFrontier Implementation
 //===----------------------------------------------------------------------===//
 
-INITIALIZE_PASS(PostDominanceFrontier, "postdomfrontier",
+INITIALIZE_PASS_BEGIN(PostDominanceFrontier, "postdomfrontier",
+                "Post-Dominance Frontier Construction", true, true)
+INITIALIZE_PASS_DEPENDENCY(PostDominatorTree)
+INITIALIZE_PASS_END(PostDominanceFrontier, "postdomfrontier",
                 "Post-Dominance Frontier Construction", true, true)
 
 const DominanceFrontier::DomSetType &

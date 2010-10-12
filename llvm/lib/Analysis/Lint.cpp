@@ -145,7 +145,12 @@ namespace {
 }
 
 char Lint::ID = 0;
-INITIALIZE_PASS(Lint, "lint", "Statically lint-checks LLVM IR", false, true)
+INITIALIZE_PASS_BEGIN(Lint, "lint", "Statically lint-checks LLVM IR",
+                      false, true)
+INITIALIZE_PASS_DEPENDENCY(DominatorTree)
+INITIALIZE_AG_DEPENDENCY(AliasAnalysis)
+INITIALIZE_PASS_END(Lint, "lint", "Statically lint-checks LLVM IR",
+                    false, true)
 
 // Assert - We know that cond should be true, if not print an error message.
 #define Assert(C, M) \

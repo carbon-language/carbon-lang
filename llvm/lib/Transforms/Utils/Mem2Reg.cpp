@@ -49,7 +49,14 @@ namespace {
 }  // end of anonymous namespace
 
 char PromotePass::ID = 0;
-INITIALIZE_PASS(PromotePass, "mem2reg", "Promote Memory to Register",
+INITIALIZE_PASS_BEGIN(PromotePass, "mem2reg", "Promote Memory to Register",
+                false, false)
+INITIALIZE_PASS_DEPENDENCY(DominatorTree)
+INITIALIZE_PASS_DEPENDENCY(DominanceFrontier)
+INITIALIZE_PASS_DEPENDENCY(UnifyFunctionExitNodes)
+INITIALIZE_PASS_DEPENDENCY(LowerSwitch)
+INITIALIZE_PASS_DEPENDENCY(LowerInvoke)
+INITIALIZE_PASS_END(PromotePass, "mem2reg", "Promote Memory to Register",
                 false, false)
 
 bool PromotePass::runOnFunction(Function &F) {

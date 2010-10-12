@@ -200,7 +200,13 @@ namespace {
 }
 
 char LICM::ID = 0;
-INITIALIZE_PASS(LICM, "licm", "Loop Invariant Code Motion", false, false)
+INITIALIZE_PASS_BEGIN(LICM, "licm", "Loop Invariant Code Motion", false, false)
+INITIALIZE_PASS_DEPENDENCY(DominatorTree)
+INITIALIZE_PASS_DEPENDENCY(LoopInfo)
+INITIALIZE_PASS_DEPENDENCY(ScalarEvolution)
+INITIALIZE_PASS_DEPENDENCY(LoopSimplify)
+INITIALIZE_AG_DEPENDENCY(AliasAnalysis)
+INITIALIZE_PASS_END(LICM, "licm", "Loop Invariant Code Motion", false, false)
 
 Pass *llvm::createLICMPass() { return new LICM(); }
 

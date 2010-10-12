@@ -3791,8 +3791,16 @@ private:
 }
 
 char LoopStrengthReduce::ID = 0;
-INITIALIZE_PASS(LoopStrengthReduce, "loop-reduce",
+INITIALIZE_PASS_BEGIN(LoopStrengthReduce, "loop-reduce",
                 "Loop Strength Reduction", false, false)
+INITIALIZE_PASS_DEPENDENCY(LoopSimplify)
+INITIALIZE_PASS_DEPENDENCY(DominanceFrontier)
+INITIALIZE_PASS_DEPENDENCY(DominatorTree)
+INITIALIZE_PASS_DEPENDENCY(ScalarEvolution)
+INITIALIZE_PASS_DEPENDENCY(IVUsers)
+INITIALIZE_PASS_END(LoopStrengthReduce, "loop-reduce",
+                "Loop Strength Reduction", false, false)
+
 
 Pass *llvm::createLoopStrengthReducePass(const TargetLowering *TLI) {
   return new LoopStrengthReduce(TLI);

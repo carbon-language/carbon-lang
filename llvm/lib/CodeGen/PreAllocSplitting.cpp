@@ -203,7 +203,16 @@ namespace {
 
 char PreAllocSplitting::ID = 0;
 
-INITIALIZE_PASS(PreAllocSplitting, "pre-alloc-splitting",
+INITIALIZE_PASS_BEGIN(PreAllocSplitting, "pre-alloc-splitting",
+                "Pre-Register Allocation Live Interval Splitting",
+                false, false)
+INITIALIZE_PASS_DEPENDENCY(SlotIndexes)
+INITIALIZE_PASS_DEPENDENCY(LiveIntervals)
+INITIALIZE_PASS_DEPENDENCY(LiveStacks)
+INITIALIZE_PASS_DEPENDENCY(MachineDominatorTree)
+INITIALIZE_PASS_DEPENDENCY(MachineLoopInfo)
+INITIALIZE_PASS_DEPENDENCY(VirtRegMap)
+INITIALIZE_PASS_END(PreAllocSplitting, "pre-alloc-splitting",
                 "Pre-Register Allocation Live Interval Splitting",
                 false, false)
 

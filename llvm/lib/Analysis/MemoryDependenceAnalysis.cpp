@@ -47,8 +47,11 @@ STATISTIC(NumCacheCompleteNonLocalPtr,
 char MemoryDependenceAnalysis::ID = 0;
   
 // Register this pass...
-INITIALIZE_PASS(MemoryDependenceAnalysis, "memdep",
+INITIALIZE_PASS_BEGIN(MemoryDependenceAnalysis, "memdep",
                 "Memory Dependence Analysis", false, true)
+INITIALIZE_AG_DEPENDENCY(AliasAnalysis)
+INITIALIZE_PASS_END(MemoryDependenceAnalysis, "memdep",
+                      "Memory Dependence Analysis", false, true)
 
 MemoryDependenceAnalysis::MemoryDependenceAnalysis()
 : FunctionPass(ID), PredCache(0) {

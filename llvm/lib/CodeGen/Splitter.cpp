@@ -29,7 +29,13 @@
 using namespace llvm;
 
 char LoopSplitter::ID = 0;
-INITIALIZE_PASS(LoopSplitter, "loop-splitting",
+INITIALIZE_PASS_BEGIN(LoopSplitter, "loop-splitting",
+                "Split virtual regists across loop boundaries.", false, false)
+INITIALIZE_PASS_DEPENDENCY(MachineDominatorTree)
+INITIALIZE_PASS_DEPENDENCY(MachineLoopInfo)
+INITIALIZE_PASS_DEPENDENCY(SlotIndexes)
+INITIALIZE_PASS_DEPENDENCY(LiveIntervals)
+INITIALIZE_PASS_END(LoopSplitter, "loop-splitting",
                 "Split virtual regists across loop boundaries.", false, false)
 
 namespace llvm {
