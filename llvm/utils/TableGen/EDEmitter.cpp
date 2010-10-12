@@ -356,7 +356,7 @@ static void X86PopulateOperands(
     if (X86TypeFromOpName(operandTypes[index], rec.getName())) {
       errs() << "Operand type: " << rec.getName().c_str() << "\n";
       errs() << "Operand name: " << operandInfo.Name.c_str() << "\n";
-      errs() << "Instruction mame: " << inst.TheDef->getName().c_str() << "\n";
+      errs() << "Instruction name: " << inst.TheDef->getName().c_str() << "\n";
       llvm_unreachable("Unhandled type");
     }
   }
@@ -657,7 +657,7 @@ static void ARMPopulateOperands(
     if (ARMFlagFromOpName(operandTypes[index], rec.getName())) {
       errs() << "Operand type: " << rec.getName() << '\n';
       errs() << "Operand name: " << operandInfo.Name << '\n';
-      errs() << "Instruction mame: " << inst.TheDef->getName() << '\n';
+      errs() << "Instruction name: " << inst.TheDef->getName() << '\n';
       llvm_unreachable("Unhandled type");
     }
   }
