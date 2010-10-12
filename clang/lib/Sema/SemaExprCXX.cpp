@@ -509,6 +509,10 @@ bool Sema::CheckCXXThrowOperand(SourceLocation ThrowLoc, Expr *&E) {
   // exception handling will make use of the vtable.
   MarkVTableUsed(ThrowLoc, RD);
 
+  // If a pointer is thrown, the referenced object will not be destroyed.
+  if (isPointer)
+    return false;
+
   // If the class has a non-trivial destructor, we must be able to call it.
   if (RD->hasTrivialDestructor())
     return false;

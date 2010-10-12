@@ -450,3 +450,11 @@ namespace test18 {
     A<int> member;
   };
 }
+
+// PR8325
+namespace test19 {
+  class A { ~A(); };
+  // The destructor is not implicitly referenced here.  Contrast to test16, 
+  // testing PR7281, earlier in this file.
+  void b(A* x) { throw x; }
+}
