@@ -6156,7 +6156,8 @@ QualType Sema::CheckAssignmentOperands(Expr *LHS, Expr *&RHS,
   // is converted to the type of the assignment expression (above).
   // C++ 5.17p1: the type of the assignment expression is that of its left
   // operand.
-  return LHSType.getUnqualifiedType();
+  return (getLangOptions().CPlusPlus
+          ? LHSType : LHSType.getUnqualifiedType());
 }
 
 // C99 6.5.17
