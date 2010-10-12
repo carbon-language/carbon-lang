@@ -497,9 +497,10 @@ PMTopLevelManager::PMTopLevelManager(PMDataManager *PMDM) {
 }
 
 /// Set pass P as the last user of the given analysis passes.
-void PMTopLevelManager::setLastUser(SmallVectorImpl<Pass *> &AnalysisPasses,
-                                    Pass *P) {
-  for (SmallVectorImpl<Pass *>::iterator I = AnalysisPasses.begin(),
+void
+PMTopLevelManager::setLastUser(const SmallVectorImpl<Pass *> &AnalysisPasses,
+                               Pass *P) {
+  for (SmallVectorImpl<Pass *>::const_iterator I = AnalysisPasses.begin(),
          E = AnalysisPasses.end(); I != E; ++I) {
     Pass *AP = *I;
     LastUser[AP] = P;

@@ -184,7 +184,7 @@ public:
   void schedulePass(Pass *P);
 
   /// Set pass P as the last user of the given analysis passes.
-  void setLastUser(SmallVectorImpl<Pass *> &AnalysisPasses, Pass *P);
+  void setLastUser(const SmallVectorImpl<Pass *> &AnalysisPasses, Pass *P);
 
   /// Collect passes whose last user is P
   void collectLastUses(SmallVectorImpl<Pass *> &LastUses, Pass *P);
