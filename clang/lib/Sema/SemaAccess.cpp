@@ -516,6 +516,10 @@ static AccessResult MatchesFriend(Sema &S,
 static AccessResult MatchesFriend(Sema &S,
                                   const EffectiveContext &EC,
                                   FriendDecl *FriendD) {
+  // Whitelist accesses if there's an invalid friend declaration.
+  if (FriendD->isInvalidDecl())
+    return AR_accessible;
+
   if (TypeSourceInfo *T = FriendD->getFriendType())
     return MatchesFriend(S, EC, T->getType()->getCanonicalTypeUnqualified());
 

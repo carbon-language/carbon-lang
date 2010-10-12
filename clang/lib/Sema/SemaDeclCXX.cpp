@@ -6285,10 +6285,8 @@ Decl *Sema::ActOnFriendTypeDecl(Scope *S, const DeclSpec &DS,
   return D;
 }
 
-Decl *Sema::ActOnFriendFunctionDecl(Scope *S,
-                                         Declarator &D,
-                                         bool IsDefinition,
-                              MultiTemplateParamsArg TemplateParams) {
+Decl *Sema::ActOnFriendFunctionDecl(Scope *S, Declarator &D, bool IsDefinition,
+                                    MultiTemplateParamsArg TemplateParams) {
   const DeclSpec &DS = D.getDeclSpec();
 
   assert(DS.isFriendSpecified());
@@ -6331,7 +6329,7 @@ Decl *Sema::ActOnFriendFunctionDecl(Scope *S,
   //    declared as a friend, scopes outside the innermost enclosing
   //    namespace scope are not considered.
 
-  CXXScopeSpec &ScopeQual = D.getCXXScopeSpec();
+  CXXScopeSpec &SS = D.getCXXScopeSpec();
   DeclarationNameInfo NameInfo = GetNameForDeclarator(D);
   DeclarationName Name = NameInfo.getName();
   assert(Name);
@@ -6339,47 +6337,18 @@ Decl *Sema::ActOnFriendFunctionDecl(Scope *S,
   // The context we found the declaration in, or in which we should
   // create the declaration.
   DeclContext *DC;
-
-  // FIXME: handle local classes
-
-  // Recover from invalid scope qualifiers as if they just weren't there.
   LookupResult Previous(*this, NameInfo, LookupOrdinaryName,
                         ForRedeclaration);
-  if (!ScopeQual.isInvalid() && ScopeQual.isSet()) {
-    DC = computeDeclContext(ScopeQual);
 
-    // FIXME: handle dependent contexts
-    if (!DC) return 0;
-    if (RequireCompleteDeclContext(ScopeQual, DC)) return 0;
+  // FIXME: there are different rules in local classes
 
-    LookupQualifiedName(Previous, DC);
-
-    // Ignore things found implicitly in the wrong scope.
-    // TODO: better diagnostics for this case.  Suggesting the right
-    // qualified scope would be nice...
-    LookupResult::Filter F = Previous.makeFilter();
-    while (F.hasNext()) {
-      NamedDecl *D = F.next();
-      if (!DC->InEnclosingNamespaceSetOf(
-              D->getDeclContext()->getRedeclContext()))
-        F.erase();
-    }
-    F.done();
-
-    if (Previous.empty()) {
-      D.setInvalidType();
-      Diag(Loc, diag::err_qualified_friend_not_found) << Name << T;
-      return 0;
-    }
-
-    // C++ [class.friend]p1: A friend of a class is a function or
-    //   class that is not a member of the class . . .
-    if (DC->Equals(CurContext))
-      Diag(DS.getFriendSpecLoc(), diag::err_friend_is_member);
-
-  // Otherwise walk out to the nearest namespace scope looking for matches.
-  } else {
-    // TODO: handle local class contexts.
+  // There are four cases here.
+  //   - There's no scope specifier, in which case we just go to the
+  //     appropriate namespace and create a function or function template
+  //     there as appropriate.
+  // Recover from invalid scope qualifiers as if they just weren't there.
+  if (SS.isInvalid() || !SS.isSet()) {
+    // Walk out to the nearest namespace scope looking for matches.
 
     DC = CurContext;
     while (true) {
@@ -6411,6 +6380,49 @@ Decl *Sema::ActOnFriendFunctionDecl(Scope *S,
     if (!Previous.empty() && DC->Equals(CurContext)
         && !getLangOptions().CPlusPlus0x)
       Diag(DS.getFriendSpecLoc(), diag::err_friend_is_member);
+
+  //   - There's a non-dependent scope specifier, in which case we
+  //     compute it and do a previous lookup there for a function
+  //     or function template.
+  } else if (!SS.getScopeRep()->isDependent()) {
+    DC = computeDeclContext(SS);
+    if (!DC) return 0;
+
+    if (RequireCompleteDeclContext(SS, DC)) return 0;
+
+    LookupQualifiedName(Previous, DC);
+
+    // Ignore things found implicitly in the wrong scope.
+    // TODO: better diagnostics for this case.  Suggesting the right
+    // qualified scope would be nice...
+    LookupResult::Filter F = Previous.makeFilter();
+    while (F.hasNext()) {
+      NamedDecl *D = F.next();
+      if (!DC->InEnclosingNamespaceSetOf(
+              D->getDeclContext()->getRedeclContext()))
+        F.erase();
+    }
+    F.done();
+
+    if (Previous.empty()) {
+      D.setInvalidType();
+      Diag(Loc, diag::err_qualified_friend_not_found) << Name << T;
+      return 0;
+    }
+
+    // C++ [class.friend]p1: A friend of a class is a function or
+    //   class that is not a member of the class . . .
+    if (DC->Equals(CurContext))
+      Diag(DS.getFriendSpecLoc(), diag::err_friend_is_member);
+
+  //   - There's a scope specifier that does not match any template
+  //     parameter lists, in which case we use some arbitrary context,
+  //     create a method or method template, and wait for instantiation.
+  //   - There's a scope specifier that does match some template
+  //     parameter lists, which we don't handle right now.
+  } else {
+    DC = CurContext;
+    assert(isa<CXXRecordDecl>(DC) && "friend declaration not in class?");
   }
 
   if (DC->isFileContext()) {
@@ -6453,6 +6465,9 @@ Decl *Sema::ActOnFriendFunctionDecl(Scope *S,
                                        DS.getFriendSpecLoc());
   FrD->setAccess(AS_public);
   CurContext->addDecl(FrD);
+
+  if (ND->isInvalidDecl())
+    FrD->setInvalidDecl();
 
   return ND;
 }

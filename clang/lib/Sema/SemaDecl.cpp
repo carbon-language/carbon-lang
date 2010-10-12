@@ -3471,7 +3471,9 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
 
   if (isFriend) {
     // DC is the namespace in which the function is being declared.
-    assert((DC->isFileContext() || !Previous.empty()) &&
+    assert((DC->isFileContext() || !Previous.empty() ||
+            (D.getCXXScopeSpec().isSet() &&
+             D.getCXXScopeSpec().getScopeRep()->isDependent())) &&
            "previously-undeclared friend function being created "
            "in a non-namespace context");
 
