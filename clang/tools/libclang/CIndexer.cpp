@@ -107,7 +107,8 @@ bool clang::RemapFiles(unsigned num_unsaved_files,
       return true;
 
     std::string ErrorInfo;
-    llvm::raw_fd_ostream OS(SavedFile.c_str(), ErrorInfo);
+    llvm::raw_fd_ostream OS(SavedFile.c_str(), ErrorInfo,
+                            llvm::raw_fd_ostream::F_Binary);
     if (!ErrorInfo.empty())
       return true;
     

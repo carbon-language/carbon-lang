@@ -109,7 +109,7 @@ int parse_remapped_files(int argc, const char **argv, int start_arg,
     }
 
     /* Open the file that we're remapping to. */
-    to_file = fopen(semi + 1, "r");
+    to_file = fopen(semi + 1, "rb");
     if (!to_file) {
       fprintf(stderr, "error: cannot open file %s that we are remapping to\n",
               semi + 1);
