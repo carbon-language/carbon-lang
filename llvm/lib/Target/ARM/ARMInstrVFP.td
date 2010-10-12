@@ -142,9 +142,20 @@ def VSTMS_UPD : AXSI4<(outs GPR:$wb), (ins addrmode4:$addr, pred:$p,
 // FP Binary Operations.
 //
 
-def VADDD  : ADbI<0b11100, 0b11, 0, 0, (outs DPR:$dst), (ins DPR:$a, DPR:$b),
-                 IIC_fpALU64, "vadd", ".f64\t$dst, $a, $b",
-                 [(set DPR:$dst, (fadd DPR:$a, (f64 DPR:$b)))]>;
+def VADDD  : ADbI<0b11100, 0b11, 0, 0, (outs DPR:$Dd), (ins DPR:$Dn, DPR:$Dm),
+                 IIC_fpALU64, "vadd", ".f64\t$Dd, $Dn, $Dm",
+                 [(set DPR:$Dd, (fadd DPR:$Dn, (f64 DPR:$Dm)))]> {
+  bits<5> Dd;
+  bits<5> Dn;
+  bits<5> Dm;
+
+  let Inst{3-0}   = Dm{3-0};
+  let Inst{5}     = Dm{4};
+  let Inst{19-16} = Dn{3-0};
+  let Inst{7}     = Dn{4};
+  let Inst{15-12} = Dd{3-0};
+  let Inst{22}    = Dd{4};
+}
 
 def VADDS  : ASbIn<0b11100, 0b11, 0, 0, (outs SPR:$Sd), (ins SPR:$Sn, SPR:$Sm),
                   IIC_fpALU32, "vadd", ".f32\t$Sd, $Sn, $Sm",
