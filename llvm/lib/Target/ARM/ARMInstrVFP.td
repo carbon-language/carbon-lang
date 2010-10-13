@@ -158,6 +158,40 @@ class ADbI_Encode<bits<5> opcod1, bits<2> opcod2, bit op6, bit op4, dag oops,
   let Inst{22}    = Dd{4};
 }
 
+class ADuI_Encode<bits<5> opcod1, bits<2> opcod2, bits<4> opcod3,
+                  bits<2> opcod4, bit opcod5, dag oops, dag iops,
+                  InstrItinClass itin, string opc, string asm,
+                  list<dag> pattern>
+  : ADuI<opcod1, opcod2, opcod3, opcod4, opcod5, oops, iops, itin, opc,
+         asm, pattern> {
+  // Instruction operands.
+  bits<5> Dd;
+  bits<5> Dm;
+
+  // Encode instruction operands.
+  let Inst{3-0}   = Dm{3-0};
+  let Inst{5}     = Dm{4};
+  let Inst{15-12} = Dd{3-0};
+  let Inst{22}    = Dd{4};
+}
+
+class ASuI_Encode<bits<5> opcod1, bits<2> opcod2, bits<4> opcod3,
+                  bits<2> opcod4, bit opcod5, dag oops, dag iops,
+                  InstrItinClass itin, string opc, string asm,
+                  list<dag> pattern>
+  : ASuI<opcod1, opcod2, opcod3, opcod4, opcod5, oops, iops, itin, opc,
+         asm, pattern> {
+  // Instruction operands.
+  bits<5> Sd;
+  bits<5> Sm;
+
+  // Encode instruction operands.
+  let Inst{3-0}   = Sm{4-1};
+  let Inst{5}     = Sm{0};
+  let Inst{15-12} = Sd{4-1};
+  let Inst{22}    = Sd{0};
+}
+
 class ASbI_Encode<bits<5> opcod1, bits<2> opcod2, bit op6, bit op4, dag oops,
                   dag iops, InstrItinClass itin, string opc, string asm,
                   list<dag> pattern>
@@ -193,7 +227,6 @@ class ASbIn_Encode<bits<5> opcod1, bits<2> opcod2, bit op6, bit op4, dag oops,
   let Inst{15-12} = Sd{4-1};
   let Inst{22}    = Sd{0};
 }
-
 
 //===----------------------------------------------------------------------===//
 // FP Binary Operations.
@@ -255,36 +288,17 @@ def : Pat<(fmul (fneg DPR:$a), (f64 DPR:$b)),
 def : Pat<(fmul (fneg SPR:$a), SPR:$b),
           (VNMULS SPR:$a, SPR:$b)>, Requires<[NoHonorSignDependentRounding]>;
 
-
 // These are encoded as unary instructions.
 let Defs = [FPSCR] in {
-def VCMPED : ADuI<0b11101, 0b11, 0b0100, 0b11, 0, (outs),(ins DPR:$Dd, DPR:$Dm),
-                 IIC_fpCMP64, "vcmpe", ".f64\t$Dd, $Dm",
-                 [(arm_cmpfp DPR:$Dd, (f64 DPR:$Dm))]> {
-  // Instruction operands.
-  bits<5> Dd;
-  bits<5> Dm;
+def VCMPED : ADuI_Encode<0b11101, 0b11, 0b0100, 0b11, 0,
+                         (outs),(ins DPR:$Dd, DPR:$Dm),
+                         IIC_fpCMP64, "vcmpe", ".f64\t$Dd, $Dm",
+                         [(arm_cmpfp DPR:$Dd, (f64 DPR:$Dm))]>;
 
-  // Encode instruction operands.
-  let Inst{3-0}   = Dm{3-0};
-  let Inst{5}     = Dm{4};
-  let Inst{15-12} = Dd{3-0};
-  let Inst{22}    = Dd{4};
-}
-
-def VCMPES : ASuI<0b11101, 0b11, 0b0100, 0b11, 0, (outs),(ins SPR:$Sd, SPR:$Sm),
-                 IIC_fpCMP32, "vcmpe", ".f32\t$Sd, $Sm",
-                 [(arm_cmpfp SPR:$Sd, SPR:$Sm)]> {
-  // Instruction operands.
-  bits<5> Sd;
-  bits<5> Sm;
-
-  // Encode instruction operands.
-  let Inst{3-0}   = Sm{4-1};
-  let Inst{5}     = Sm{0};
-  let Inst{15-12} = Sd{4-1};
-  let Inst{22}    = Sd{0};
-}
+def VCMPES : ASuI_Encode<0b11101, 0b11, 0b0100, 0b11, 0,
+                         (outs),(ins SPR:$Sd, SPR:$Sm),
+                         IIC_fpCMP32, "vcmpe", ".f32\t$Sd, $Sm",
+                         [(arm_cmpfp SPR:$Sd, SPR:$Sm)]>;
 
 def VCMPD  : ADuI<0b11101, 0b11, 0b0100, 0b01, 0, (outs), (ins DPR:$a, DPR:$b),
                  IIC_fpCMP64, "vcmp", ".f64\t$a, $b",

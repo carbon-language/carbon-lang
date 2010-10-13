@@ -89,17 +89,17 @@ entry:
   ret void
 }
 
-define i1 @f100(double %a, double %b) nounwind readnone {
+define i1 @f11(double %a, double %b) nounwind readnone {
 entry:
-; CHECK: f100
+; CHECK: f11
 ; CHECK: vcmpe.f64 d17, d16  @ encoding: [0xe0,0x1b,0xf4,0xee]
   %cmp = fcmp oeq double %a, %b
   ret i1 %cmp
 }
 
-define i1 @f101(float %a, float %b) nounwind readnone {
+define i1 @f12(float %a, float %b) nounwind readnone {
 entry:
-; CHECK: f101
+; CHECK: f12
 ; CHECK: vcmpe.f32 s1, s0  @ encoding: [0xc0,0x0a,0xf4,0xee]
   %cmp = fcmp oeq float %a, %b
   ret i1 %cmp
