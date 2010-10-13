@@ -78,7 +78,7 @@ for FILE in ../src/*.cpp; do
 done
 
 
-$CXX *.o $RC_CFLAGS $LDSHARED_FLAGS 
+cc *.o $RC_CFLAGS $LDSHARED_FLAGS 
 
 #libtool -static -o libc++.a *.o
 
