@@ -2582,7 +2582,7 @@ bool Sema::CheckTemplateArgument(TemplateTypeParmDecl *Param,
   //
   // C++0x allows these, and even in C++03 we allow them as an extension with
   // a warning.
-  if (!LangOpts.CPlusPlus0x) {
+  if (!LangOpts.CPlusPlus0x && Arg->hasUnnamedOrLocalType()) {
     UnnamedLocalNoLinkageFinder Finder(*this, SR);
     (void)Finder.Visit(Context.getCanonicalType(Arg));
   }

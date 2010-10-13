@@ -1276,17 +1276,33 @@ Linkage Type::getLinkage() const {
     return CanonicalType->getLinkage();
   
   if (!LinkageKnown) {
-    CachedLinkage = getLinkageImpl();
+    std::pair<Linkage, bool> Result = getLinkageUnnamedLocalImpl();
+    CachedLinkage = Result.first;
+    CachedLocalOrUnnamed = Result.second;
     LinkageKnown = true;
   }
   
   return static_cast<clang::Linkage>(CachedLinkage);
 }
 
-Linkage Type::getLinkageImpl() const { 
+bool Type::hasUnnamedOrLocalType() const {
+  if (this != CanonicalType.getTypePtr())
+    return CanonicalType->hasUnnamedOrLocalType();
+  
+  if (!LinkageKnown) {
+    std::pair<Linkage, bool> Result = getLinkageUnnamedLocalImpl();
+    CachedLinkage = Result.first;
+    CachedLocalOrUnnamed = Result.second;
+    LinkageKnown = true;
+  }
+  
+  return CachedLocalOrUnnamed;
+}
+
+std::pair<Linkage, bool> Type::getLinkageUnnamedLocalImpl() const { 
   // C++ [basic.link]p8:
   //   Names not covered by these rules have no linkage.
-  return NoLinkage; 
+  return std::make_pair(NoLinkage, false);
 }
 
 void Type::ClearLinkageCache() {
@@ -1296,69 +1312,87 @@ void Type::ClearLinkageCache() {
     LinkageKnown = false;
 }
 
-Linkage BuiltinType::getLinkageImpl() const {
+std::pair<Linkage, bool> BuiltinType::getLinkageUnnamedLocalImpl() const {
   // C++ [basic.link]p8:
   //   A type is said to have linkage if and only if:
   //     - it is a fundamental type (3.9.1); or
-  return ExternalLinkage;
+  return std::make_pair(ExternalLinkage, false);
 }
 
-Linkage TagType::getLinkageImpl() const {
+std::pair<Linkage, bool> TagType::getLinkageUnnamedLocalImpl() const {
   // C++ [basic.link]p8:
   //     - it is a class or enumeration type that is named (or has a name for
   //       linkage purposes (7.1.3)) and the name has linkage; or
   //     -  it is a specialization of a class template (14); or
-  return getDecl()->getLinkage();
+  return std::make_pair(getDecl()->getLinkage(),
+                        getDecl()->getDeclContext()->isFunctionOrMethod() ||
+                        (!getDecl()->getIdentifier() &&
+                         !getDecl()->getTypedefForAnonDecl()));
 }
 
 // C++ [basic.link]p8:
 //   - it is a compound type (3.9.2) other than a class or enumeration, 
 //     compounded exclusively from types that have linkage; or
-Linkage ComplexType::getLinkageImpl() const {
-  return ElementType->getLinkage();
+std::pair<Linkage, bool> ComplexType::getLinkageUnnamedLocalImpl() const {
+  return std::make_pair(ElementType->getLinkage(), 
+                        ElementType->hasUnnamedOrLocalType());
 }
 
-Linkage PointerType::getLinkageImpl() const {
-  return PointeeType->getLinkage();
+std::pair<Linkage, bool> PointerType::getLinkageUnnamedLocalImpl() const {
+  return std::make_pair(PointeeType->getLinkage(), 
+                        PointeeType->hasUnnamedOrLocalType());
 }
 
-Linkage BlockPointerType::getLinkageImpl() const {
-  return PointeeType->getLinkage();
+std::pair<Linkage, bool> BlockPointerType::getLinkageUnnamedLocalImpl() const {
+  return std::make_pair(PointeeType->getLinkage(),
+                        PointeeType->hasUnnamedOrLocalType());
 }
 
-Linkage ReferenceType::getLinkageImpl() const {
-  return PointeeType->getLinkage();
+std::pair<Linkage, bool> ReferenceType::getLinkageUnnamedLocalImpl() const {
+  return std::make_pair(PointeeType->getLinkage(),
+                        PointeeType->hasUnnamedOrLocalType());
 }
 
-Linkage MemberPointerType::getLinkageImpl() const {
-  return minLinkage(Class->getLinkage(), PointeeType->getLinkage());
+std::pair<Linkage, bool> MemberPointerType::getLinkageUnnamedLocalImpl() const {
+  return std::make_pair(minLinkage(Class->getLinkage(),
+                                   PointeeType->getLinkage()),
+                        Class->hasUnnamedOrLocalType() ||
+                        PointeeType->hasUnnamedOrLocalType());
 }
 
-Linkage ArrayType::getLinkageImpl() const {
-  return ElementType->getLinkage();
+std::pair<Linkage, bool> ArrayType::getLinkageUnnamedLocalImpl() const {
+  return std::make_pair(ElementType->getLinkage(), 
+                        ElementType->hasUnnamedOrLocalType());
 }
 
-Linkage VectorType::getLinkageImpl() const {
-  return ElementType->getLinkage();
+std::pair<Linkage, bool> VectorType::getLinkageUnnamedLocalImpl() const {
+  return std::make_pair(ElementType->getLinkage(),
+                        ElementType->hasUnnamedOrLocalType());
 }
 
-Linkage FunctionNoProtoType::getLinkageImpl() const {
-  return getResultType()->getLinkage();
+std::pair<Linkage, bool> 
+FunctionNoProtoType::getLinkageUnnamedLocalImpl() const {
+  return std::make_pair(getResultType()->getLinkage(),
+                        getResultType()->hasUnnamedOrLocalType());
 }
 
-Linkage FunctionProtoType::getLinkageImpl() const {
+std::pair<Linkage, bool> FunctionProtoType::getLinkageUnnamedLocalImpl() const {
   Linkage L = getResultType()->getLinkage();
+  bool UnnamedOrLocal = getResultType()->hasUnnamedOrLocalType();
   for (arg_type_iterator A = arg_type_begin(), AEnd = arg_type_end();
-       A != AEnd; ++A)
+       A != AEnd; ++A) {
     L = minLinkage(L, (*A)->getLinkage());
-
-  return L;
+    UnnamedOrLocal = UnnamedOrLocal || (*A)->hasUnnamedOrLocalType();
+  }
+  
+  return std::make_pair(L, UnnamedOrLocal);
 }
 
-Linkage ObjCObjectType::getLinkageImpl() const {
-  return ExternalLinkage;
+std::pair<Linkage, bool> ObjCObjectType::getLinkageUnnamedLocalImpl() const {
+  return std::make_pair(ExternalLinkage, false);
 }
 
-Linkage ObjCObjectPointerType::getLinkageImpl() const {
-  return ExternalLinkage;
+std::pair<Linkage, bool> 
+ObjCObjectPointerType::getLinkageUnnamedLocalImpl() const {
+  return std::make_pair(ExternalLinkage, false);
 }

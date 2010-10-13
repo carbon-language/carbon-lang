@@ -796,12 +796,16 @@ private:
   /// \brief Whether this type is a variably-modified type (C99 6.7.5).
   bool VariablyModified : 1;
   
-  /// \brief Whether the linkage of this type is already known.
+  /// \brief Whether the linkage of this type along with the presence of any
+  /// local or unnamed types is already known.
   mutable bool LinkageKnown : 1;
   
   /// \brief Linkage of this type.
   mutable unsigned CachedLinkage : 2;
 
+  /// \brief Whether this type involves and local or unnamed types. 
+  mutable bool CachedLocalOrUnnamed : 1;
+  
   /// \brief FromAST - Whether this type comes from an AST file.
   mutable bool FromAST : 1;
 
@@ -813,7 +817,7 @@ private:
 protected:
   /// \brief Compute the linkage of this type along with the presence of
   /// any local or unnamed types.
-  virtual Linkage getLinkageImpl() const;
+  virtual std::pair<Linkage, bool> getLinkageUnnamedLocalImpl() const;
   
   enum { BitsRemainingInType = 19 };
 
@@ -958,6 +962,9 @@ public:
   
   /// \brief Whether this type is a variably-modified type (C99 6.7.5).
   bool isVariablyModifiedType() const { return VariablyModified; }
+  
+  /// \brief Whether this type is or contains a local or unnamed type.
+  bool hasUnnamedOrLocalType() const;
   
   bool isOverloadableType() const;
 
@@ -1146,7 +1153,7 @@ private:
   Kind TypeKind;
   
 protected:
-  virtual Linkage getLinkageImpl() const;
+  virtual std::pair<Linkage, bool> getLinkageUnnamedLocalImpl() const;
   
 public:
   BuiltinType(Kind K)
@@ -1201,7 +1208,7 @@ class ComplexType : public Type, public llvm::FoldingSetNode {
   friend class ASTContext;  // ASTContext creates these.
 
 protected:
-  virtual Linkage getLinkageImpl() const;
+  virtual std::pair<Linkage, bool> getLinkageUnnamedLocalImpl() const;
   
 public:
   QualType getElementType() const { return ElementType; }
@@ -1233,7 +1240,7 @@ class PointerType : public Type, public llvm::FoldingSetNode {
   friend class ASTContext;  // ASTContext creates these.
 
 protected:
-  virtual Linkage getLinkageImpl() const;
+  virtual std::pair<Linkage, bool> getLinkageUnnamedLocalImpl() const;
   
 public:
 
@@ -1267,7 +1274,7 @@ class BlockPointerType : public Type, public llvm::FoldingSetNode {
   friend class ASTContext;  // ASTContext creates these.
   
 protected:
-  virtual Linkage getLinkageImpl() const;
+  virtual std::pair<Linkage, bool> getLinkageUnnamedLocalImpl() const;
   
 public:
 
@@ -1321,7 +1328,7 @@ protected:
     InnerRef(Referencee->isReferenceType()) {
   }
   
-  virtual Linkage getLinkageImpl() const;
+  virtual std::pair<Linkage, bool> getLinkageUnnamedLocalImpl() const;
   
 public:
   bool isSpelledAsLValue() const { return SpelledAsLValue; }
@@ -1405,7 +1412,7 @@ class MemberPointerType : public Type, public llvm::FoldingSetNode {
   friend class ASTContext; // ASTContext creates these.
   
 protected:
-  virtual Linkage getLinkageImpl() const;
+  virtual std::pair<Linkage, bool> getLinkageUnnamedLocalImpl() const;
   
 public:
   QualType getPointeeType() const { return PointeeType; }
@@ -1479,7 +1486,7 @@ protected:
 
   friend class ASTContext;  // ASTContext creates these.
 
-  virtual Linkage getLinkageImpl() const;
+  virtual std::pair<Linkage, bool> getLinkageUnnamedLocalImpl() const;
   
 public:
   QualType getElementType() const { return ElementType; }
@@ -1782,7 +1789,7 @@ protected:
       NumElements(nElements), AltiVecSpec(altiVecSpec) {}
   friend class ASTContext;  // ASTContext creates these.
   
-  virtual Linkage getLinkageImpl() const;
+  virtual std::pair<Linkage, bool> getLinkageUnnamedLocalImpl() const;
   
 public:
 
@@ -2023,7 +2030,7 @@ class FunctionNoProtoType : public FunctionType, public llvm::FoldingSetNode {
   friend class ASTContext;  // ASTContext creates these.
   
 protected:
-  virtual Linkage getLinkageImpl() const;
+  virtual std::pair<Linkage, bool> getLinkageUnnamedLocalImpl() const;
   
 public:
   // No additional state past what FunctionType provides.
@@ -2081,7 +2088,7 @@ class FunctionProtoType : public FunctionType, public llvm::FoldingSetNode {
   friend class ASTContext;  // ASTContext creates these.
 
 protected:
-  virtual Linkage getLinkageImpl() const;
+  virtual std::pair<Linkage, bool> getLinkageUnnamedLocalImpl() const;
   
 public:
   unsigned getNumArgs() const { return NumArgs; }
@@ -2323,7 +2330,7 @@ class TagType : public Type {
 protected:
   TagType(TypeClass TC, const TagDecl *D, QualType can);
 
-  virtual Linkage getLinkageImpl() const;
+  virtual std::pair<Linkage, bool> getLinkageUnnamedLocalImpl() const;
   
 public:
   TagDecl *getDecl() const;
@@ -2991,7 +2998,7 @@ protected:
       BaseType(QualType(this_(), 0)) {}
 
 protected:
-  Linkage getLinkageImpl() const; // key function
+  std::pair<Linkage, bool> getLinkageUnnamedLocalImpl() const; // key function
   
 public:
   /// getBaseType - Gets the base type of this object type.  This is
@@ -3149,7 +3156,7 @@ class ObjCObjectPointerType : public Type, public llvm::FoldingSetNode {
   friend class ASTContext;  // ASTContext creates these.
 
 protected:
-  virtual Linkage getLinkageImpl() const;
+  virtual std::pair<Linkage, bool> getLinkageUnnamedLocalImpl() const;
   
 public:
   /// getPointeeType - Gets the type pointed to by this ObjC pointer.
