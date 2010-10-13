@@ -518,25 +518,43 @@ let Defs = [CPSR] in {
 multiclass AI1_bin_s_irs<bits<4> opcod, string opc,
                      InstrItinClass iii, InstrItinClass iir, InstrItinClass iis,
                          PatFrag opnode, bit Commutable = 0> {
-  def ri : AI1<opcod, (outs GPR:$dst), (ins GPR:$a, so_imm:$b), DPFrm,
-               iii, opc, "\t$dst, $a, $b",
-               [(set GPR:$dst, (opnode GPR:$a, so_imm:$b))]> {
-    let Inst{20} = 1;
+  def ri : AI1<opcod, (outs GPR:$Rd), (ins GPR:$Rn, so_imm:$imm), DPFrm,
+               iii, opc, "\t$Rd, $Rn, $imm",
+               [(set GPR:$Rd, (opnode GPR:$Rn, so_imm:$imm))]> {
+    bits<4> Rd;
+    bits<4> Rn;
+    bits<12> imm;
     let Inst{25} = 1;
+    let Inst{15-12} = Rd;
+    let Inst{19-16} = Rn;
+    let Inst{11-0} = imm;
+    let Inst{20} = 1;
   }
-  def rr : AI1<opcod, (outs GPR:$dst), (ins GPR:$a, GPR:$b), DPFrm,
-               iir, opc, "\t$dst, $a, $b",
-               [(set GPR:$dst, (opnode GPR:$a, GPR:$b))]> {
-    let isCommutable = Commutable;
+  def rr : AI1<opcod, (outs GPR:$Rd), (ins GPR:$Rn, GPR:$Rm), DPFrm,
+               iir, opc, "\t$Rd, $Rn, $Rm",
+               [(set GPR:$Rd, (opnode GPR:$Rn, GPR:$Rm))]> {
+    bits<4> Rd;
+    bits<4> Rn;
+    bits<4> Rm;
     let Inst{11-4} = 0b00000000;
-    let Inst{20} = 1;
     let Inst{25} = 0;
+    let isCommutable = Commutable;
+    let Inst{3-0} = Rm;
+    let Inst{15-12} = Rd;
+    let Inst{19-16} = Rn;
+    let Inst{20} = 1;
   }
-  def rs : AI1<opcod, (outs GPR:$dst), (ins GPR:$a, so_reg:$b), DPSoRegFrm,
-               iis, opc, "\t$dst, $a, $b",
-               [(set GPR:$dst, (opnode GPR:$a, so_reg:$b))]> {
-    let Inst{20} = 1;
+  def rs : AI1<opcod, (outs GPR:$Rd), (ins GPR:$Rn, so_reg:$shift), DPSoRegFrm,
+               iis, opc, "\t$Rd, $Rn, $shift",
+               [(set GPR:$Rd, (opnode GPR:$Rn, so_reg:$shift))]> {
+    bits<4> Rd;
+    bits<4> Rn;
+    bits<12> shift;
     let Inst{25} = 0;
+    let Inst{11-0} = shift;
+    let Inst{15-12} = Rd;
+    let Inst{19-16} = Rn;
+    let Inst{20} = 1;
   }
 }
 }
@@ -548,25 +566,44 @@ let isCompare = 1, Defs = [CPSR] in {
 multiclass AI1_cmp_irs<bits<4> opcod, string opc,
                      InstrItinClass iii, InstrItinClass iir, InstrItinClass iis,
                        PatFrag opnode, bit Commutable = 0> {
-  def ri : AI1<opcod, (outs), (ins GPR:$a, so_imm:$b), DPFrm, iii,
-               opc, "\t$a, $b",
-               [(opnode GPR:$a, so_imm:$b)]> {
-    let Inst{20} = 1;
+  def ri : AI1<opcod, (outs), (ins GPR:$Rn, so_imm:$imm), DPFrm, iii,
+               opc, "\t$Rn, $imm",
+               [(opnode GPR:$Rn, so_imm:$imm)]> {
+    bits<4> Rd;
+    bits<4> Rn;
+    bits<12> imm;
     let Inst{25} = 1;
-  }
-  def rr : AI1<opcod, (outs), (ins GPR:$a, GPR:$b), DPFrm, iir,
-               opc, "\t$a, $b",
-               [(opnode GPR:$a, GPR:$b)]> {
-    let Inst{11-4} = 0b00000000;
+    let Inst{15-12} = Rd;
+    let Inst{19-16} = Rn;
+    let Inst{11-0} = imm;
     let Inst{20} = 1;
+    let Inst{20} = 1;
+  }
+  def rr : AI1<opcod, (outs), (ins GPR:$Rn, GPR:$Rm), DPFrm, iir,
+               opc, "\t$Rn, $Rm",
+               [(opnode GPR:$Rn, GPR:$Rm)]> {
+    bits<4> Rd;
+    bits<4> Rn;
+    bits<4> Rm;
+    let Inst{11-4} = 0b00000000;
     let Inst{25} = 0;
     let isCommutable = Commutable;
-  }
-  def rs : AI1<opcod, (outs), (ins GPR:$a, so_reg:$b), DPSoRegFrm, iis,
-               opc, "\t$a, $b",
-               [(opnode GPR:$a, so_reg:$b)]> {
+    let Inst{3-0} = Rm;
+    let Inst{15-12} = Rd;
+    let Inst{19-16} = Rn;
     let Inst{20} = 1;
+  }
+  def rs : AI1<opcod, (outs), (ins GPR:$Rn, so_reg:$shift), DPSoRegFrm, iis,
+               opc, "\t$Rn, $shift",
+               [(opnode GPR:$Rn, so_reg:$shift)]> {
+    bits<4> Rd;
+    bits<4> Rn;
+    bits<12> shift;
     let Inst{25} = 0;
+    let Inst{11-0} = shift;
+    let Inst{15-12} = Rd;
+    let Inst{19-16} = Rn;
+    let Inst{20} = 1;
   }
 }
 }
@@ -2461,10 +2498,17 @@ def BCCZi64 : PseudoInst<(outs),
 //        the normal MOV instructions. That would fix the dependency on
 //        special casing them in tblgen.
 let neverHasSideEffects = 1 in {
-def MOVCCr : AI1<0b1101, (outs GPR:$dst), (ins GPR:$false, GPR:$true), DPFrm,
-                IIC_iCMOVr, "mov", "\t$dst, $true",
-      [/*(set GPR:$dst, (ARMcmov GPR:$false, GPR:$true, imm:$cc, CCR:$ccr))*/]>,
-                RegConstraint<"$false = $dst">, UnaryDP {
+def MOVCCr : AI1<0b1101, (outs GPR:$Rd), (ins GPR:$false, GPR:$Rm), DPFrm,
+                IIC_iCMOVr, "mov", "\t$Rd, $Rm",
+      [/*(set GPR:$Rd, (ARMcmov GPR:$false, GPR:$Rm, imm:$cc, CCR:$ccr))*/]>,
+                RegConstraint<"$false = $Rd">, UnaryDP {
+  bits<4> Rd;
+  bits<4> Rm;
+
+  let Inst{11-4} = 0b00000000;
+  let Inst{25} = 0;
+  let Inst{3-0} = Rm;
+  let Inst{15-12} = Rd;
   let Inst{11-4} = 0b00000000;
   let Inst{25} = 0;
 }

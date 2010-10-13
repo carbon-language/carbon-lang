@@ -45,5 +45,14 @@ entry:
   ret i32 %add
 }
 
-
+define i32 @f5(i32 %a, i32 %b, i32 %c) nounwind readnone ssp {
+entry:
+; CHECK: f5
+; CHECK: cmp r0, r1                   @ encoding: [0x01,0x00,0x50,0xe1]
+; CHECK: mov r0, r2                   @ encoding: [0x02,0x00,0xa0,0xe1]
+; CHECK: movgt r0, r1                 @ encoding: [0x01,0x00,0xa0,0xc1]
+  %cmp = icmp sgt i32 %a, %b
+  %retval.0 = select i1 %cmp, i32 %b, i32 %c
+  ret i32 %retval.0
+}
 declare void @llvm.trap() nounwind
