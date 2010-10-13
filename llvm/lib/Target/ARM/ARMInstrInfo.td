@@ -1076,6 +1076,7 @@ let isCall = 1,
                 [(ARMcall tglobaladdr:$func)]>,
             Requires<[IsARM, IsNotDarwin]> {
     let Inst{31-28} = 0b1110;
+    // FIXME: Encoding info for $func. Needs fixups bits.
   }
 
   def BL_pred : ABI<0b1011, (outs), (ins i32imm:$func, variable_ops),
@@ -1089,9 +1090,7 @@ let isCall = 1,
                 [(ARMcall GPR:$func)]>,
             Requires<[IsARM, HasV5T, IsNotDarwin]> {
     bits<4> func;
-    let Inst{7-4}   = 0b0011;
-    let Inst{19-8}  = 0b111111111111;
-    let Inst{27-20} = 0b00010010;
+    let Inst{27-4} = 0b000100101111111111110011;
     let Inst{3-0}   = func;
   }
 
@@ -1101,9 +1100,9 @@ let isCall = 1,
                   IIC_Br, "mov\tlr, pc\n\tbx\t$func",
                   [(ARMcall_nolink tGPR:$func)]>,
            Requires<[IsARM, HasV4T, IsNotDarwin]> {
-    let Inst{7-4}   = 0b0001;
-    let Inst{19-8}  = 0b111111111111;
-    let Inst{27-20} = 0b00010010;
+    bits<4> func;
+    let Inst{27-4} = 0b000100101111111111110001;
+    let Inst{3-0}   = func;
   }
 
   // ARMv4
@@ -1111,10 +1110,9 @@ let isCall = 1,
                  IIC_Br, "mov\tlr, pc\n\tmov\tpc, $func",
                  [(ARMcall_nolink tGPR:$func)]>,
            Requires<[IsARM, NoV4T, IsNotDarwin]> {
-    let Inst{11-4}  = 0b00000000;
-    let Inst{15-12} = 0b1111;
-    let Inst{19-16} = 0b0000;
-    let Inst{27-20} = 0b00011010;
+    bits<4> func;
+    let Inst{27-4} = 0b000110100000111100000000;
+    let Inst{3-0}   = func;
   }
 }
 
@@ -1128,6 +1126,7 @@ let isCall = 1,
                 IIC_Br, "bl\t$func",
                 [(ARMcall tglobaladdr:$func)]>, Requires<[IsARM, IsDarwin]> {
     let Inst{31-28} = 0b1110;
+    // FIXME: Encoding info for $func. Needs fixups bits.
   }
 
   def BLr9_pred : ABI<0b1011, (outs), (ins i32imm:$func, variable_ops),
@@ -1139,9 +1138,9 @@ let isCall = 1,
   def BLXr9 : AXI<(outs), (ins GPR:$func, variable_ops), BrMiscFrm,
                 IIC_Br, "blx\t$func",
                 [(ARMcall GPR:$func)]>, Requires<[IsARM, HasV5T, IsDarwin]> {
-    let Inst{7-4}   = 0b0011;
-    let Inst{19-8}  = 0b111111111111;
-    let Inst{27-20} = 0b00010010;
+    bits<4> func;
+    let Inst{27-4} = 0b000100101111111111110011;
+    let Inst{3-0}   = func;
   }
 
   // ARMv4T
@@ -1150,9 +1149,9 @@ let isCall = 1,
                   IIC_Br, "mov\tlr, pc\n\tbx\t$func",
                   [(ARMcall_nolink tGPR:$func)]>,
              Requires<[IsARM, HasV4T, IsDarwin]> {
-    let Inst{7-4}   = 0b0001;
-    let Inst{19-8}  = 0b111111111111;
-    let Inst{27-20} = 0b00010010;
+    bits<4> func;
+    let Inst{27-4} = 0b000100101111111111110001;
+    let Inst{3-0}   = func;
   }
 
   // ARMv4
@@ -1160,15 +1159,16 @@ let isCall = 1,
                  IIC_Br, "mov\tlr, pc\n\tmov\tpc, $func",
                  [(ARMcall_nolink tGPR:$func)]>,
            Requires<[IsARM, NoV4T, IsDarwin]> {
-    let Inst{11-4}  = 0b00000000;
-    let Inst{15-12} = 0b1111;
-    let Inst{19-16} = 0b0000;
-    let Inst{27-20} = 0b00011010;
+    bits<4> func;
+    let Inst{27-4} = 0b000110100000111100000000;
+    let Inst{3-0}   = func;
   }
 }
 
 // Tail calls.
 
+// FIXME: These should probably be xformed into the non-TC versions of the
+// instructions as part of MC lowering.
 let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1 in {
   // Darwin versions.
   let Defs = [R0, R1, R2, R3, R9, R12,
