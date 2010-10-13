@@ -58,6 +58,7 @@ class RegionNode {
   // DO NOT IMPLEMENT
   const RegionNode &operator=(const RegionNode &);
 
+protected:
   /// This is the entry basic block that starts this region node.  If this is a
   /// BasicBlock RegionNode, then entry is just the basic block, that this
   /// RegionNode represents.  Otherwise it is the entry of this (Sub)RegionNode.
@@ -70,7 +71,6 @@ class RegionNode {
   /// RegionNode.
   PointerIntPair<BasicBlock*, 1, bool> entry;
 
-protected:
   /// @brief The parent Region of this RegionNode.
   /// @see getParent()
   Region* parent;
@@ -386,7 +386,9 @@ public:
   /// @brief Add a new subregion to this Region.
   ///
   /// @param SubRegion The new subregion that will be added.
-  void addSubRegion(Region *SubRegion);
+  /// @param moveChildren Move the children of this region, that are also
+  ///                     contained in SubRegion into SubRegion.
+  void addSubRegion(Region *SubRegion, bool moveChildren = false);
 
   /// @brief Remove a subregion from this Region.
   ///

@@ -311,13 +311,38 @@ void Region::transferChildrenTo(Region *To) {
   children.clear();
 }
 
-void Region::addSubRegion(Region *SubRegion) {
+void Region::addSubRegion(Region *SubRegion, bool moveChildren) {
   assert(SubRegion->parent == 0 && "SubRegion already has a parent!");
+  assert(std::find(begin(), end(), SubRegion) == children.end()
+         && "Subregion already exists!");
+
   SubRegion->parent = this;
-  // Set up the region node.
-  assert(std::find(children.begin(), children.end(), SubRegion) == children.end()
-         && "Node already exist!");
   children.push_back(SubRegion);
+
+  if (!moveChildren)
+    return;
+
+  assert(SubRegion->children.size() == 0
+         && "SubRegions that contain children are not supported");
+
+  for (element_iterator I = element_begin(), E = element_end(); I != E; ++I)
+    if (!(*I)->isSubRegion()) {
+      BasicBlock *BB = (*I)->getNodeAs<BasicBlock>();
+
+      if (SubRegion->contains(BB))
+        RI->setRegionFor(BB, SubRegion);
+    }
+
+  std::vector<Region*> Keep;
+  for (iterator I = begin(), E = end(); I != E; ++I)
+    if (SubRegion->contains(*I) && *I != SubRegion) {
+      SubRegion->children.push_back(*I);
+      (*I)->parent = SubRegion;
+    } else
+      Keep.push_back(*I);
+
+  children.clear();
+  children.insert(children.begin(), Keep.begin(), Keep.end());
 }
 
 
