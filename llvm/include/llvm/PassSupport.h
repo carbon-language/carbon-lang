@@ -236,8 +236,9 @@ struct RegisterAnalysisGroup : public RegisterAGBase {
   }
 };
 
-#define INITIALIZE_ANALYSIS_GROUP(agName, name) \
+#define INITIALIZE_ANALYSIS_GROUP(agName, name, defaultPass) \
   static void* initialize##agName##AnalysisGroupOnce(PassRegistry &Registry) { \
+    initialize##defaultPass##Pass(Registry); \
     PassInfo *AI = new PassInfo(name, & agName :: ID); \
     Registry.registerAnalysisGroup(& agName ::ID, 0, *AI, false); \
     return AI; \
