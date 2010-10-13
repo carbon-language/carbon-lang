@@ -4449,16 +4449,11 @@ void Sema::CodeCompleteObjCSuperMessage(Scope *S, SourceLocation SuperLoc,
     if (CurMethod->isInstanceMethod()) {
       // We are inside an instance method, which means that the message
       // send [super ...] is actually calling an instance method on the
-      // current object. Build the super expression and handle this like
-      // an instance method.
-      QualType SuperTy = Context.getObjCInterfaceType(CDecl);
-      SuperTy = Context.getObjCObjectPointerType(SuperTy);
-      ExprResult Super
-        = Owned(new (Context) ObjCSuperExpr(SuperLoc, SuperTy));
-      return CodeCompleteObjCInstanceMessage(S, (Expr *)Super.get(),
+      // current object.
+      return CodeCompleteObjCInstanceMessage(S, 0,
                                              SelIdents, NumSelIdents,
                                              AtArgumentExpression,
-                                             /*IsSuper=*/true);
+                                             CDecl);
     }
 
     // Fall through to send to the superclass in CDecl.
@@ -4644,7 +4639,7 @@ void Sema::CodeCompleteObjCInstanceMessage(Scope *S, ExprTy *Receiver,
                                            IdentifierInfo **SelIdents,
                                            unsigned NumSelIdents,
                                            bool AtArgumentExpression,
-                                           bool IsSuper) {
+                                           ObjCInterfaceDecl *Super) {
   typedef CodeCompletionResult Result;
   
   Expr *RecExpr = static_cast<Expr *>(Receiver);
@@ -4653,7 +4648,10 @@ void Sema::CodeCompleteObjCInstanceMessage(Scope *S, ExprTy *Receiver,
   // C99 6.7.5.3p[7,8].
   if (RecExpr)
     DefaultFunctionArrayLvalueConversion(RecExpr);
-  QualType ReceiverType = RecExpr? RecExpr->getType() : Context.getObjCIdType();
+  QualType ReceiverType = RecExpr? RecExpr->getType() 
+                          : Super? Context.getObjCObjectPointerType(
+                                            Context.getObjCInterfaceType(Super))
+                                 : Context.getObjCIdType();
   
   // Build the set of methods we can see.
   ResultBuilder Results(*this, CodeCompletionContext::CCC_Other);
@@ -4661,7 +4659,7 @@ void Sema::CodeCompleteObjCInstanceMessage(Scope *S, ExprTy *Receiver,
 
   // If this is a send-to-super, try to add the special "super" send 
   // completion.
-  if (IsSuper) {
+  if (Super) {
     if (ObjCMethodDecl *SuperMethod
           = AddSuperSendCompletion(*this, false, SelIdents, NumSelIdents, 
                                    Results))

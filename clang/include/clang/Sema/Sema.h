@@ -4399,7 +4399,7 @@ public:
                                        IdentifierInfo **SelIdents,
                                        unsigned NumSelIdents,
                                        bool AtArgumentExpression,
-                                       bool IsSuper = false);
+                                       ObjCInterfaceDecl *Super = 0);
   void CodeCompleteObjCForCollection(Scope *S, 
                                      DeclGroupPtrTy IterationVar);
   void CodeCompleteObjCSelector(Scope *S,
