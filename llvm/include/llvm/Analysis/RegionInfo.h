@@ -292,6 +292,14 @@ public:
   /// @return The depth of the region.
   unsigned getDepth() const;
 
+  /// @brief Return a new (non canonical) region, that is obtained by joining
+  ///        this region with its predecessors.
+  ///
+  /// @return A region also starting at getEntry(), but reaching to the next
+  ///         basic block that forms with getEntry() a (non canonical) region.
+  ///         NULL if such a basic block does not exist.
+  Region *getExpandedRegion() const;
+
   /// @brief Is this a simple region?
   ///
   /// A region is simple if it has exactly one exit and one entry edge.

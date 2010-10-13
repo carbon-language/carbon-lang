@@ -373,6 +373,38 @@ unsigned Region::getDepth() const {
   return Depth;
 }
 
+Region *Region::getExpandedRegion() const {
+  unsigned NumSuccessors = exit->getTerminator()->getNumSuccessors();
+
+  if (NumSuccessors == 0)
+    return NULL;
+
+  for (pred_iterator PI = pred_begin(getExit()), PE = pred_end(getExit());
+       PI != PE; ++PI)
+    if (!DT->dominates(getEntry(), *PI))
+      return NULL;
+
+  Region *R = RI->getRegionFor(exit);
+
+  if (R->getEntry() != exit) {
+    if (exit->getTerminator()->getNumSuccessors() == 1)
+      return new Region(getEntry(), *succ_begin(exit), RI, DT);
+    else
+      return NULL;
+  }
+
+  while (R->getParent() && R->getParent()->getEntry() == exit)
+    R = R->getParent();
+
+  if (!DT->dominates(getEntry(), R->getExit()))
+    for (pred_iterator PI = pred_begin(getExit()), PE = pred_end(getExit());
+         PI != PE; ++PI)
+    if (!DT->dominates(R->getExit(), *PI))
+      return NULL;
+
+  return new Region(getEntry(), R->getExit(), RI, DT);
+}
+
 void Region::print(raw_ostream &OS, bool print_tree, unsigned level) const {
   if (print_tree)
     OS.indent(level*2) << "[" << level << "] " << getNameStr();
