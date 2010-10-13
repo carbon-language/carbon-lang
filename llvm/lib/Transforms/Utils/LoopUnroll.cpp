@@ -40,10 +40,10 @@ STATISTIC(NumUnrolled,    "Number of loops unrolled (completely or otherwise)");
 /// RemapInstruction - Convert the instruction operands from referencing the
 /// current values into those specified by VMap.
 static inline void RemapInstruction(Instruction *I,
-                                    ValueMap<const Value *, Value*> &VMap) {
+                                    ValueToValueMapTy &VMap) {
   for (unsigned op = 0, E = I->getNumOperands(); op != E; ++op) {
     Value *Op = I->getOperand(op);
-    ValueMap<const Value *, Value*>::iterator It = VMap.find(Op);
+    ValueToValueMapTy::iterator It = VMap.find(Op);
     if (It != VMap.end())
       I->setOperand(op, It->second);
   }
@@ -189,7 +189,6 @@ bool llvm::UnrollLoop(Loop *L, unsigned Count, LoopInfo* LI, LPPassManager* LPM)
 
   // For the first iteration of the loop, we should use the precloned values for
   // PHI nodes.  Insert associations now.
-  typedef ValueMap<const Value*, Value*> ValueToValueMapTy;
   ValueToValueMapTy LastValueMap;
   std::vector<PHINode*> OrigPHINode;
   for (BasicBlock::iterator I = Header->begin(); isa<PHINode>(I); ++I) {
@@ -274,7 +273,7 @@ bool llvm::UnrollLoop(Loop *L, unsigned Count, LoopInfo* LI, LPPassManager* LPM)
     for (unsigned i = 0; i < NewBlocks.size(); ++i)
       for (BasicBlock::iterator I = NewBlocks[i]->begin(),
            E = NewBlocks[i]->end(); I != E; ++I)
-        RemapInstruction(I, LastValueMap);
+        ::RemapInstruction(I, LastValueMap);
   }
   
   // The latch block exits the loop.  If there are any PHI nodes in the

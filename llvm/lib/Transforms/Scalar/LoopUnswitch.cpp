@@ -461,10 +461,10 @@ bool LoopUnswitch::UnswitchIfProfitable(Value *LoopCond, Constant *Val) {
 // current values into those specified by VMap.
 //
 static inline void RemapInstruction(Instruction *I,
-                                    ValueMap<const Value *, Value*> &VMap) {
+                                    ValueToValueMapTy &VMap) {
   for (unsigned op = 0, E = I->getNumOperands(); op != E; ++op) {
     Value *Op = I->getOperand(op);
-    ValueMap<const Value *, Value*>::iterator It = VMap.find(Op);
+    ValueToValueMapTy::iterator It = VMap.find(Op);
     if (It != VMap.end()) Op = It->second;
     I->setOperand(op, Op);
   }
@@ -472,7 +472,7 @@ static inline void RemapInstruction(Instruction *I,
 
 /// CloneLoop - Recursively clone the specified loop and all of its children,
 /// mapping the blocks with the specified map.
-static Loop *CloneLoop(Loop *L, Loop *PL, ValueMap<const Value*, Value*> &VM,
+static Loop *CloneLoop(Loop *L, Loop *PL, ValueToValueMapTy &VM,
                        LoopInfo *LI, LPPassManager *LPM) {
   Loop *New = new Loop();
   LPM->insertLoop(New, PL);
@@ -616,7 +616,7 @@ void LoopUnswitch::UnswitchNontrivialCondition(Value *LIC, Constant *Val,
   // the loop preheader and exit blocks), keeping track of the mapping between
   // the instructions and blocks.
   NewBlocks.reserve(LoopBlocks.size());
-  ValueMap<const Value*, Value*> VMap;
+  ValueToValueMapTy VMap;
   for (unsigned i = 0, e = LoopBlocks.size(); i != e; ++i) {
     BasicBlock *NewBB = CloneBasicBlock(LoopBlocks[i], VMap, ".us", F);
     NewBlocks.push_back(NewBB);
@@ -654,7 +654,7 @@ void LoopUnswitch::UnswitchNontrivialCondition(Value *LIC, Constant *Val,
     for (BasicBlock::iterator I = ExitSucc->begin(); isa<PHINode>(I); ++I) {
       PN = cast<PHINode>(I);
       Value *V = PN->getIncomingValueForBlock(ExitBlocks[i]);
-      ValueMap<const Value *, Value*>::iterator It = VMap.find(V);
+      ValueToValueMapTy::iterator It = VMap.find(V);
       if (It != VMap.end()) V = It->second;
       PN->addIncoming(V, NewExit);
     }

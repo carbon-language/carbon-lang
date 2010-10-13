@@ -170,7 +170,7 @@ static void HandleInlinedInvoke(InvokeInst *II, BasicBlock *FirstNewBlock,
 /// some edges of the callgraph may remain.
 static void UpdateCallGraphAfterInlining(CallSite CS,
                                          Function::iterator FirstNewBlock,
-                                         ValueMap<const Value*, Value*> &VMap,
+                                         ValueToValueMapTy &VMap,
                                          InlineFunctionInfo &IFI) {
   CallGraph &CG = *IFI.CG;
   const Function *Caller = CS.getInstruction()->getParent()->getParent();
@@ -193,7 +193,7 @@ static void UpdateCallGraphAfterInlining(CallSite CS,
   for (; I != E; ++I) {
     const Value *OrigCall = I->first;
 
-    ValueMap<const Value*, Value*>::iterator VMI = VMap.find(OrigCall);
+    ValueToValueMapTy::iterator VMI = VMap.find(OrigCall);
     // Only copy the edge if the call was inlined!
     if (VMI == VMap.end() || VMI->second == 0)
       continue;
@@ -287,7 +287,7 @@ bool llvm::InlineFunction(CallSite CS, InlineFunctionInfo &IFI) {
   Function::iterator FirstNewBlock;
 
   { // Scope to destroy VMap after cloning.
-    ValueMap<const Value*, Value*> VMap;
+    ValueToValueMapTy VMap;
 
     assert(CalledFunc->arg_size() == CS.arg_size() &&
            "No varargs calls can be inlined!");

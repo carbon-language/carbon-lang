@@ -60,10 +60,10 @@ INITIALIZE_PASS(PartSpec, "partialspecialization",
 // a call to the specialized function.  Returns the specialized function
 static Function* 
 SpecializeFunction(Function* F, 
-                   ValueMap<const Value*, Value*>& replacements) {
+                   ValueToValueMapTy& replacements) {
   // arg numbers of deleted arguments
   DenseMap<unsigned, const Argument*> deleted;
-  for (ValueMap<const Value*, Value*>::iterator 
+  for (ValueToValueMapTy::iterator 
          repb = replacements.begin(), repe = replacements.end();
        repb != repe; ++repb) {
     Argument const *arg = cast<const Argument>(repb->first);
@@ -164,7 +164,7 @@ bool PartSpec::runOnModule(Module &M) {
         // leave the original function dead and removable.
         if (cost.isAlways() || 
            (cost.isVariable() && cost.getValue() < bonus)) {
-          ValueMap<const Value*, Value*> m;
+          ValueToValueMapTy m;
           Function::arg_iterator arg = F.arg_begin();
           for (int y = 0; y < interestingArgs[x]; ++y)
             ++arg;

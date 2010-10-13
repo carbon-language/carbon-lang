@@ -261,7 +261,7 @@ bool ReduceMiscompilingFunctions::TestFuncs(const std::vector<Function*> &Funcs,
   //   a function, we want to continue with the original function. Otherwise
   //   we can conclude that a function triggers the bug when in fact one
   //   needs a larger set of original functions to do so.
-  ValueMap<const Value*, Value*> VMap;
+  ValueToValueMapTy VMap;
   Module *Clone = CloneModule(BD.getProgram(), VMap);
   Module *Orig = BD.swapProgramIn(Clone);
 
@@ -310,7 +310,7 @@ static bool ExtractLoops(BugDriver &BD,
   while (1) {
     if (BugpointIsInterrupted) return MadeChange;
     
-    ValueMap<const Value*, Value*> VMap;
+    ValueToValueMapTy VMap;
     Module *ToNotOptimize = CloneModule(BD.getProgram(), VMap);
     Module *ToOptimize = SplitFunctionsOutOfModule(ToNotOptimize,
                                                    MiscompiledFunctions,
@@ -476,7 +476,7 @@ bool ReduceMiscompiledBlocks::TestFuncs(const std::vector<BasicBlock*> &BBs,
   outs() << '\n';
 
   // Split the module into the two halves of the program we want.
-  ValueMap<const Value*, Value*> VMap;
+  ValueToValueMapTy VMap;
   Module *Clone = CloneModule(BD.getProgram(), VMap);
   Module *Orig = BD.swapProgramIn(Clone);
   std::vector<Function*> FuncsOnClone;
@@ -551,7 +551,7 @@ static bool ExtractBlocks(BugDriver &BD,
       return false;
   }
 
-  ValueMap<const Value*, Value*> VMap;
+  ValueToValueMapTy VMap;
   Module *ProgClone = CloneModule(BD.getProgram(), VMap);
   Module *ToExtract = SplitFunctionsOutOfModule(ProgClone,
                                                 MiscompiledFunctions,
@@ -738,7 +738,7 @@ void BugDriver::debugMiscompilation(std::string *Error) {
 
   // Output a bunch of bitcode files for the user...
   outs() << "Outputting reduced bitcode files which expose the problem:\n";
-  ValueMap<const Value*, Value*> VMap;
+  ValueToValueMapTy VMap;
   Module *ToNotOptimize = CloneModule(getProgram(), VMap);
   Module *ToOptimize = SplitFunctionsOutOfModule(ToNotOptimize,
                                                  MiscompiledFunctions,
@@ -1011,7 +1011,7 @@ bool BugDriver::debugCodeGenerator(std::string *Error) {
     return true;
 
   // Split the module into the two halves of the program we want.
-  ValueMap<const Value*, Value*> VMap;
+  ValueToValueMapTy VMap;
   Module *ToNotCodeGen = CloneModule(getProgram(), VMap);
   Module *ToCodeGen = SplitFunctionsOutOfModule(ToNotCodeGen, Funcs, VMap);
 

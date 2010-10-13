@@ -193,7 +193,7 @@ static Constant *GetTorInit(std::vector<std::pair<Function*, int> > &TorList) {
 /// static ctors/dtors, we need to add an llvm.global_[cd]tors global to M2, and
 /// prune appropriate entries out of M1s list.
 static void SplitStaticCtorDtor(const char *GlobalName, Module *M1, Module *M2,
-                                ValueMap<const Value*, Value*> &VMap) {
+                                ValueToValueMapTy &VMap) {
   GlobalVariable *GV = M1->getNamedGlobal(GlobalName);
   if (!GV || GV->isDeclaration() || GV->hasLocalLinkage() ||
       !GV->use_empty()) return;
@@ -256,7 +256,7 @@ static void SplitStaticCtorDtor(const char *GlobalName, Module *M1, Module *M2,
 Module *
 llvm::SplitFunctionsOutOfModule(Module *M,
                                 const std::vector<Function*> &F,
-                                ValueMap<const Value*, Value*> &VMap) {
+                                ValueToValueMapTy &VMap) {
   // Make sure functions & globals are all external so that linkage
   // between the two modules will work.
   for (Module::iterator I = M->begin(), E = M->end(); I != E; ++I)
@@ -268,7 +268,7 @@ llvm::SplitFunctionsOutOfModule(Module *M,
     I->setLinkage(GlobalValue::ExternalLinkage);
   }
 
-  ValueMap<const Value*, Value*> NewVMap;
+  ValueToValueMapTy NewVMap;
   Module *New = CloneModule(M, NewVMap);
 
   // Make sure global initializers exist only in the safe module (CBE->.so)

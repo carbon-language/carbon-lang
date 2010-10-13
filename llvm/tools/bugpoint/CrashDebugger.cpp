@@ -130,7 +130,7 @@ bool
 ReduceCrashingGlobalVariables::TestGlobalVariables(
                               std::vector<GlobalVariable*> &GVs) {
   // Clone the program to try hacking it apart...
-  ValueMap<const Value*, Value*> VMap;
+  ValueToValueMapTy VMap;
   Module *M = CloneModule(BD.getProgram(), VMap);
 
   // Convert list to set for fast lookup...
@@ -204,7 +204,7 @@ bool ReduceCrashingFunctions::TestFuncs(std::vector<Function*> &Funcs) {
     return false;
 
   // Clone the program to try hacking it apart...
-  ValueMap<const Value*, Value*> VMap;
+  ValueToValueMapTy VMap;
   Module *M = CloneModule(BD.getProgram(), VMap);
 
   // Convert list to set for fast lookup...
@@ -271,7 +271,7 @@ namespace {
 
 bool ReduceCrashingBlocks::TestBlocks(std::vector<const BasicBlock*> &BBs) {
   // Clone the program to try hacking it apart...
-  ValueMap<const Value*, Value*> VMap;
+  ValueToValueMapTy VMap;
   Module *M = CloneModule(BD.getProgram(), VMap);
 
   // Convert list to set for fast lookup...
@@ -381,7 +381,7 @@ namespace {
 bool ReduceCrashingInstructions::TestInsts(std::vector<const Instruction*>
                                            &Insts) {
   // Clone the program to try hacking it apart...
-  ValueMap<const Value*, Value*> VMap;
+  ValueToValueMapTy VMap;
   Module *M = CloneModule(BD.getProgram(), VMap);
 
   // Convert list to set for fast lookup...

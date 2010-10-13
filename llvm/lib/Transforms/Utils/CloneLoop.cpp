@@ -22,12 +22,12 @@ using namespace llvm;
 /// CloneDominatorInfo - Clone basicblock's dominator tree and, if available,
 /// dominance info. It is expected that basic block is already cloned.
 static void CloneDominatorInfo(BasicBlock *BB, 
-                               ValueMap<const Value *, Value *> &VMap,
+                               ValueToValueMapTy &VMap,
                                DominatorTree *DT,
                                DominanceFrontier *DF) {
 
   assert (DT && "DominatorTree is not available");
-  ValueMap<const Value *, Value*>::iterator BI = VMap.find(BB);
+  ValueToValueMapTy::iterator BI = VMap.find(BB);
   assert (BI != VMap.end() && "BasicBlock clone is missing");
   BasicBlock *NewBB = cast<BasicBlock>(BI->second);
 
@@ -42,7 +42,7 @@ static void CloneDominatorInfo(BasicBlock *BB,
 
   // NewBB's dominator is either BB's dominator or BB's dominator's clone.
   BasicBlock *NewBBDom = BBDom;
-  ValueMap<const Value *, Value*>::iterator BBDomI = VMap.find(BBDom);
+  ValueToValueMapTy::iterator BBDomI = VMap.find(BBDom);
   if (BBDomI != VMap.end()) {
     NewBBDom = cast<BasicBlock>(BBDomI->second);
     if (!DT->getNode(NewBBDom))
@@ -59,7 +59,7 @@ static void CloneDominatorInfo(BasicBlock *BB,
         for (DominanceFrontier::DomSetType::iterator I = S.begin(), E = S.end();
              I != E; ++I) {
           BasicBlock *DB = *I;
-          ValueMap<const Value*, Value*>::iterator IDM = VMap.find(DB);
+          ValueToValueMapTy::iterator IDM = VMap.find(DB);
           if (IDM != VMap.end())
             NewDFSet.insert(cast<BasicBlock>(IDM->second));
           else
@@ -73,7 +73,7 @@ static void CloneDominatorInfo(BasicBlock *BB,
 /// CloneLoop - Clone Loop. Clone dominator info. Populate VMap
 /// using old blocks to new blocks mapping.
 Loop *llvm::CloneLoop(Loop *OrigL, LPPassManager  *LPM, LoopInfo *LI,
-                      ValueMap<const Value *, Value *> &VMap, Pass *P) {
+                      ValueToValueMapTy &VMap, Pass *P) {
   
   DominatorTree *DT = NULL;
   DominanceFrontier *DF = NULL;
@@ -134,7 +134,7 @@ Loop *llvm::CloneLoop(Loop *OrigL, LPPassManager  *LPM, LoopInfo *LI,
       for (unsigned index = 0, num_ops = Insn->getNumOperands(); 
            index != num_ops; ++index) {
         Value *Op = Insn->getOperand(index);
-        ValueMap<const Value *, Value *>::iterator OpItr = VMap.find(Op);
+        ValueToValueMapTy::iterator OpItr = VMap.find(Op);
         if (OpItr != VMap.end())
           Insn->setOperand(index, OpItr->second);
       }

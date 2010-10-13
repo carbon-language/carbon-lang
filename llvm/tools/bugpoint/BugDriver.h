@@ -17,6 +17,7 @@
 #define BUGDRIVER_H
 
 #include "llvm/ADT/ValueMap.h"
+#include "llvm/Transforms/Utils/ValueMapper.h"
 #include <vector>
 #include <string>
 
@@ -322,7 +323,7 @@ void DeleteFunctionBody(Function *F);
 /// module, split the functions OUT of the specified module, and place them in
 /// the new module.
 Module *SplitFunctionsOutOfModule(Module *M, const std::vector<Function*> &F,
-                                  ValueMap<const Value*, Value*> &VMap);
+                                  ValueToValueMapTy &VMap);
 
 } // End llvm namespace
 
