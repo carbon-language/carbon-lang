@@ -257,6 +257,18 @@ public:
   /// @return The entry BasicBlock of the region.
   BasicBlock *getEntry() const { return RegionNode::getEntry(); }
 
+  /// @brief Replace the entry basic block of the region with the new basic
+  ///        block.
+  ///
+  /// @param BB  The new entry basic block of the region.
+  void replaceEntry(BasicBlock *BB);
+
+  /// @brief Replace the exit basic block of the region with the new basic
+  ///        block.
+  ///
+  /// @param BB  The new exit basic block of the region.
+  void replaceExit(BasicBlock *BB);
+
   /// @brief Get the exit BasicBlock of the Region.
   /// @return The exit BasicBlock of the Region, NULL if this is the TopLevel
   ///         Region.

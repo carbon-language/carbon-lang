@@ -72,6 +72,15 @@ Region::~Region() {
     delete *I;
 }
 
+void Region::replaceEntry(BasicBlock *BB) {
+  entry.setPointer(BB);
+}
+
+void Region::replaceExit(BasicBlock *BB) {
+  assert(exit && "No exit to replace!");
+  exit = BB;
+}
+
 bool Region::contains(const BasicBlock *B) const {
   BasicBlock *BB = const_cast<BasicBlock*>(B);
 
