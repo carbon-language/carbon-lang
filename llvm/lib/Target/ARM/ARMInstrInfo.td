@@ -1023,20 +1023,14 @@ let isReturn = 1, isTerminator = 1, isBarrier = 1 in {
   def BX_RET : AI<(outs), (ins), BrMiscFrm, IIC_Br,
                   "bx", "\tlr", [(ARMretflag)]>,
                Requires<[IsARM, HasV4T]> {
-    let Inst{3-0}   = 0b1110;
-    let Inst{7-4}   = 0b0001;
-    let Inst{19-8}  = 0b111111111111;
-    let Inst{27-20} = 0b00010010;
+    let Inst{27-0}  = 0b0001001011111111111100011110;
   }
 
   // ARMV4 only
   def MOVPCLR : AI<(outs), (ins), BrMiscFrm, IIC_Br, 
                   "mov", "\tpc, lr", [(ARMretflag)]>,
                Requires<[IsARM, NoV4T]> {
-    let Inst{11-0}  = 0b000000001110;
-    let Inst{15-12} = 0b1111;
-    let Inst{19-16} = 0b0000;
-    let Inst{27-20} = 0b00011010;
+    let Inst{27-0} = 0b0001101000001111000000001110;
   }
 }
 
@@ -1047,10 +1041,7 @@ let isBranch = 1, isTerminator = 1, isBarrier = 1, isIndirectBranch = 1 in {
                   [(brind GPR:$dst)]>,
               Requires<[IsARM, HasV4T]> {
     bits<4> dst;
-    let Inst{7-4}   = 0b0001;
-    let Inst{19-8}  = 0b111111111111;
-    let Inst{27-20} = 0b00010010;
-    let Inst{31-28} = 0b1110;
+    let Inst{31-4} = 0b1110000100101111111111110001;
     let Inst{3-0}   = dst;
   }
 
@@ -1059,11 +1050,7 @@ let isBranch = 1, isTerminator = 1, isBarrier = 1, isIndirectBranch = 1 in {
                   [(brind GPR:$dst)]>,
               Requires<[IsARM, NoV4T]> {
     bits<4> dst;
-    let Inst{11-4}  = 0b00000000;
-    let Inst{15-12} = 0b1111;
-    let Inst{19-16} = 0b0000;
-    let Inst{27-20} = 0b00011010;
-    let Inst{31-28} = 0b1110;
+    let Inst{31-4} = 0b1110000110100000111100000000;
     let Inst{3-0}   = dst;
   }
 }
