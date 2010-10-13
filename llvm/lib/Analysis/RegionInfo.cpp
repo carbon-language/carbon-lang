@@ -807,6 +807,19 @@ RegionInfo::getCommonRegion(SmallVectorImpl<BasicBlock*> &BBs) const {
   return ret;
 }
 
+void RegionInfo::splitBlock(BasicBlock* NewBB, BasicBlock *OldBB)
+{
+  Region *R = getRegionFor(OldBB);
+  setRegionFor(NewBB, R);
+
+  while (R->getEntry() == OldBB && R->getParent()) {
+    R->replaceEntry(NewBB);
+    R = R->getParent();
+  }
+
+  setRegionFor(OldBB, R);
+}
+
 char RegionInfo::ID = 0;
 INITIALIZE_PASS_BEGIN(RegionInfo, "regions",
                 "Detect single entry single exit regions", true, true)
