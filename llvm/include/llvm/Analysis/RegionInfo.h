@@ -565,6 +565,12 @@ public:
   /// region containing BB.
   Region *getRegionFor(BasicBlock *BB) const;
 
+  /// @brief  Set the smallest region that surrounds a basic block.
+  ///
+  /// @param BB The basic block surrounded by a region.
+  /// @param R The smallest region that surrounds BB.
+  void setRegionFor(BasicBlock *BB, Region *R);
+
   /// @brief A shortcut for getRegionFor().
   ///
   /// @param BB The basic block.

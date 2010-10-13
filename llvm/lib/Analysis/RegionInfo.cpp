@@ -659,10 +659,13 @@ Region *RegionInfo::getRegionFor(BasicBlock *BB) const {
   return I != BBtoRegion.end() ? I->second : 0;
 }
 
+void RegionInfo::setRegionFor(BasicBlock *BB, Region *R) {
+  BBtoRegion[BB] = R;
+}
+
 Region *RegionInfo::operator[](BasicBlock *BB) const {
   return getRegionFor(BB);
 }
-
 
 BasicBlock *RegionInfo::getMaxRegionExit(BasicBlock *BB) const {
   BasicBlock *Exit = NULL;
