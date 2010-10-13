@@ -519,7 +519,6 @@ static bool EvaluateDirectiveSubExpr(PPValue &LHS, unsigned MinPrec,
       RHS.Val.setIsUnsigned(Res.isUnsigned());
     }
 
-    // FIXME: All of these should detect and report overflow??
     bool Overflow = false;
     switch (Operator) {
     default: assert(0 && "Unknown operator token!");
@@ -534,9 +533,10 @@ static bool EvaluateDirectiveSubExpr(PPValue &LHS, unsigned MinPrec,
       break;
     case tok::slash:
       if (RHS.Val != 0) {
-        Res = LHS.Val / RHS.Val;
-        if (LHS.Val.isSigned())   // MININT/-1  -->  overflow.
-          Overflow = LHS.Val.isMinSignedValue() && RHS.Val.isAllOnesValue();
+        if (LHS.Val.isSigned())
+          Res = llvm::APSInt(LHS.Val.sdiv_ov(RHS.Val, Overflow), false);
+        else
+          Res = LHS.Val / RHS.Val;
       } else if (ValueLive) {
         PP.Diag(OpLoc, diag::err_pp_division_by_zero)
           << LHS.getRange() << RHS.getRange();
@@ -545,23 +545,22 @@ static bool EvaluateDirectiveSubExpr(PPValue &LHS, unsigned MinPrec,
       break;
 
     case tok::star:
-      Res = LHS.Val * RHS.Val;
-      if (Res.isSigned() && LHS.Val != 0 && RHS.Val != 0)
-        Overflow = Res/RHS.Val != LHS.Val || Res/LHS.Val != RHS.Val;
+      if (Res.isSigned())
+        Res = llvm::APSInt(LHS.Val.smul_ov(RHS.Val, Overflow), false);
+      else
+        Res = LHS.Val * RHS.Val;
       break;
     case tok::lessless: {
       // Determine whether overflow is about to happen.
       unsigned ShAmt = static_cast<unsigned>(RHS.Val.getLimitedValue());
-      if (ShAmt >= LHS.Val.getBitWidth())
-        Overflow = true, ShAmt = LHS.Val.getBitWidth()-1;
-      else if (LHS.isUnsigned())
-        Overflow = false;
-      else if (LHS.Val.isNonNegative()) // Don't allow sign change.
-        Overflow = ShAmt >= LHS.Val.countLeadingZeros();
-      else
-        Overflow = ShAmt >= LHS.Val.countLeadingOnes();
-
-      Res = LHS.Val << ShAmt;
+      if (LHS.isUnsigned()) {
+        Overflow = ShAmt >= LHS.Val.getBitWidth();
+        if (Overflow)
+          ShAmt = LHS.Val.getBitWidth()-1;
+        Res = LHS.Val << ShAmt;
+      } else {
+        Res = llvm::APSInt(LHS.Val.sshl_ov(ShAmt, Overflow), false);
+      }
       break;
     }
     case tok::greatergreater: {
@@ -573,20 +572,16 @@ static bool EvaluateDirectiveSubExpr(PPValue &LHS, unsigned MinPrec,
       break;
     }
     case tok::plus:
-      Res = LHS.Val + RHS.Val;
       if (LHS.isUnsigned())
-        Overflow = false;
-      else if (LHS.Val.isNonNegative() == RHS.Val.isNonNegative() &&
-               Res.isNonNegative() != LHS.Val.isNonNegative())
-        Overflow = true;  // Overflow for signed addition.
+        Res = LHS.Val + RHS.Val;
+      else
+        Res = llvm::APSInt(LHS.Val.sadd_ov(RHS.Val, Overflow), false);
       break;
     case tok::minus:
-      Res = LHS.Val - RHS.Val;
       if (LHS.isUnsigned())
-        Overflow = false;
-      else if (LHS.Val.isNonNegative() != RHS.Val.isNonNegative() &&
-               Res.isNonNegative() != LHS.Val.isNonNegative())
-        Overflow = true;  // Overflow for signed subtraction.
+        Res = LHS.Val - RHS.Val;
+      else
+        Res = llvm::APSInt(LHS.Val.ssub_ov(RHS.Val, Overflow), false);
       break;
     case tok::lessequal:
       Res = LHS.Val <= RHS.Val;
