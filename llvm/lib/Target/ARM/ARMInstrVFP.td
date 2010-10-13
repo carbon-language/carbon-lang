@@ -308,22 +308,25 @@ def : Pat<(fmul (fneg SPR:$a), SPR:$b),
 // These are encoded as unary instructions.
 let Defs = [FPSCR] in {
 def VCMPED : ADuI_Encode<0b11101, 0b11, 0b0100, 0b11, 0,
-                         (outs),(ins DPR:$Dd, DPR:$Dm),
+                         (outs), (ins DPR:$Dd, DPR:$Dm),
                          IIC_fpCMP64, "vcmpe", ".f64\t$Dd, $Dm",
                          [(arm_cmpfp DPR:$Dd, (f64 DPR:$Dm))]>;
 
 def VCMPES : ASuI_Encode<0b11101, 0b11, 0b0100, 0b11, 0,
-                         (outs),(ins SPR:$Sd, SPR:$Sm),
+                         (outs), (ins SPR:$Sd, SPR:$Sm),
                          IIC_fpCMP32, "vcmpe", ".f32\t$Sd, $Sm",
                          [(arm_cmpfp SPR:$Sd, SPR:$Sm)]>;
 
-def VCMPD  : ADuI<0b11101, 0b11, 0b0100, 0b01, 0, (outs), (ins DPR:$a, DPR:$b),
-                 IIC_fpCMP64, "vcmp", ".f64\t$a, $b",
-                 [/* For disassembly only; pattern left blank */]>;
+// FIXME: Verify encoding after integrated assembler is working.
+def VCMPD  : ADuI_Encode<0b11101, 0b11, 0b0100, 0b01, 0,
+                         (outs), (ins DPR:$Dd, DPR:$Dm),
+                         IIC_fpCMP64, "vcmp", ".f64\t$Dd, $Dm",
+                         [/* For disassembly only; pattern left blank */]>;
 
-def VCMPS  : ASuI<0b11101, 0b11, 0b0100, 0b01, 0, (outs), (ins SPR:$a, SPR:$b),
-                 IIC_fpCMP32, "vcmp", ".f32\t$a, $b",
-                 [/* For disassembly only; pattern left blank */]>;
+def VCMPS  : ASuI_Encode<0b11101, 0b11, 0b0100, 0b01, 0,
+                         (outs), (ins SPR:$Sd, SPR:$Sm),
+                         IIC_fpCMP32, "vcmp", ".f32\t$Sd, $Sm",
+                         [/* For disassembly only; pattern left blank */]>;
 }
 
 //===----------------------------------------------------------------------===//
@@ -357,13 +360,22 @@ def VCMPEZS : ASuI_Encode<0b11101, 0b11, 0b0101, 0b11, 0,
   let Inst{5}     = 0;
 }
 
-def VCMPZD  : ADuI<0b11101, 0b11, 0b0101, 0b01, 0, (outs), (ins DPR:$a),
-                  IIC_fpCMP64, "vcmp", ".f64\t$a, #0",
-                  [/* For disassembly only; pattern left blank */]>;
+// FIXME: Verify encoding after integrated assembler is working.
+def VCMPZD  : ADuI_Encode<0b11101, 0b11, 0b0101, 0b01, 0,
+                          (outs), (ins DPR:$Dd),
+                          IIC_fpCMP64, "vcmp", ".f64\t$Dd, #0",
+                          [/* For disassembly only; pattern left blank */]> {
+  let Inst{3-0}   = 0b0000;
+  let Inst{5}     = 0;
+}
 
-def VCMPZS  : ASuI<0b11101, 0b11, 0b0101, 0b01, 0, (outs), (ins SPR:$a),
-                  IIC_fpCMP32, "vcmp", ".f32\t$a, #0",
-                  [/* For disassembly only; pattern left blank */]>;
+def VCMPZS  : ASuI_Encode<0b11101, 0b11, 0b0101, 0b01, 0,
+                          (outs), (ins SPR:$Sd),
+                          IIC_fpCMP32, "vcmp", ".f32\t$Sd, #0",
+                          [/* For disassembly only; pattern left blank */]> {
+  let Inst{3-0}   = 0b0000;
+  let Inst{5}     = 0;
+}
 }
 
 def VCVTDS  : ASuI<0b11101, 0b11, 0b0111, 0b11, 0,
@@ -404,6 +416,7 @@ def VCVTSD  : VFPAI<(outs SPR:$Sd), (ins DPR:$Dm), VFPUnaryFrm,
 
 // Between half-precision and single-precision.  For disassembly only.
 
+// FIXME: Verify encoding after integrated assembler is working.
 def VCVTBSH: ASuI<0b11101, 0b11, 0b0010, 0b01, 0, (outs SPR:$dst), (ins SPR:$a),
                  /* FIXME */ IIC_fpCVTSH, "vcvtb", ".f32.f16\t$dst, $a",
                  [/* For disassembly only; pattern left blank */]>;
@@ -426,16 +439,6 @@ def VCVTTHS: ASuI<0b11101, 0b11, 0b0011, 0b11, 0, (outs SPR:$dst), (ins SPR:$a),
                  /* FIXME */ IIC_fpCVTHS, "vcvtt", ".f16.f32\t$dst, $a",
                  [/* For disassembly only; pattern left blank */]>;
 
-let neverHasSideEffects = 1 in {
-def VMOVD  : ADuI_Encode<0b11101, 0b11, 0b0000, 0b01, 0,
-                         (outs DPR:$Dd), (ins DPR:$Dm),
-                         IIC_fpUNA64, "vmov", ".f64\t$Dd, $Dm", []>;
-
-def VMOVS  : ASuI_Encode<0b11101, 0b11, 0b0000, 0b01, 0,
-                         (outs SPR:$Sd), (ins SPR:$Sm),
-                         IIC_fpUNA32, "vmov", ".f32\t$Sd, $Sm", []>;
-} // neverHasSideEffects
-
 def VNEGD  : ADuI_Encode<0b11101, 0b11, 0b0001, 0b01, 0,
                          (outs DPR:$Dd), (ins DPR:$Dm),
                          IIC_fpUNA64, "vneg", ".f64\t$Dd, $Dm",
@@ -455,6 +458,16 @@ def VSQRTS : ASuI_Encode<0b11101, 0b11, 0b0001, 0b11, 0,
                          (outs SPR:$Sd), (ins SPR:$Sm),
                          IIC_fpSQRT32, "vsqrt", ".f32\t$Sd, $Sm",
                          [(set SPR:$Sd, (fsqrt SPR:$Sm))]>;
+
+let neverHasSideEffects = 1 in {
+def VMOVD  : ADuI_Encode<0b11101, 0b11, 0b0000, 0b01, 0,
+                         (outs DPR:$Dd), (ins DPR:$Dm),
+                         IIC_fpUNA64, "vmov", ".f64\t$Dd, $Dm", []>;
+
+def VMOVS  : ASuI_Encode<0b11101, 0b11, 0b0000, 0b01, 0,
+                         (outs SPR:$Sd), (ins SPR:$Sm),
+                         IIC_fpUNA32, "vmov", ".f32\t$Sd, $Sm", []>;
+} // neverHasSideEffects
 
 //===----------------------------------------------------------------------===//
 // FP <-> GPR Copies.  Int <-> FP Conversions.
@@ -505,102 +518,168 @@ def VMOVSRR : AVConv5I<0b11000100, 0b1010,
 // FMRDH: SPR -> GPR
 // FMRDL: SPR -> GPR
 // FMRRS: SPR -> GPR
-// FMRX : SPR system reg -> GPR
-
+// FMRX:  SPR system reg -> GPR
 // FMSRR: GPR -> SPR
+// FMXR:  GPR -> VFP system reg
 
-// FMXR: GPR -> VFP system reg
 
+// Int -> FP:
 
-// Int to FP:
+class AVConv1IDs_Encode<bits<5> opcod1, bits<2> opcod2, bits<4> opcod3,
+                        bits<4> opcod4, dag oops, dag iops,
+                        InstrItinClass itin, string opc, string asm,
+                        list<dag> pattern>
+  : AVConv1I<opcod1, opcod2, opcod3, opcod4, oops, iops, itin, opc, asm,
+             pattern> {
+  // Instruction operands.
+  bits<5> Dd;
+  bits<5> Sm;
 
-def VSITOD : AVConv1I<0b11101, 0b11, 0b1000, 0b1011,
-                 (outs DPR:$dst), (ins SPR:$a),
-                 IIC_fpCVTID, "vcvt", ".f64.s32\t$dst, $a",
-                 [(set DPR:$dst, (f64 (arm_sitof SPR:$a)))]> {
+  // Encode instruction operands.
+  let Inst{3-0}   = Sm{4-1};
+  let Inst{5}     = Sm{0};
+  let Inst{15-12} = Dd{3-0};
+  let Inst{22}    = Dd{4};
+}
+
+class AVConv1InSs_Encode<bits<5> opcod1, bits<2> opcod2, bits<4> opcod3,
+                         bits<4> opcod4, dag oops, dag iops,InstrItinClass itin,
+                         string opc, string asm, list<dag> pattern>
+  : AVConv1In<opcod1, opcod2, opcod3, opcod4, oops, iops, itin, opc, asm,
+              pattern> {
+  // Instruction operands.
+  bits<5> Sd;
+  bits<5> Sm;
+
+  // Encode instruction operands.
+  let Inst{3-0}   = Sm{4-1};
+  let Inst{5}     = Sm{0};
+  let Inst{15-12} = Sd{4-1};
+  let Inst{22}    = Sd{0};
+}
+
+def VSITOD : AVConv1IDs_Encode<0b11101, 0b11, 0b1000, 0b1011,
+                               (outs DPR:$Dd), (ins SPR:$Sm),
+                               IIC_fpCVTID, "vcvt", ".f64.s32\t$Dd, $Sm",
+                               [(set DPR:$Dd, (f64 (arm_sitof SPR:$Sm)))]> {
   let Inst{7} = 1; // s32
 }
 
-def VSITOS : AVConv1In<0b11101, 0b11, 0b1000, 0b1010,
-                 (outs SPR:$dst),(ins SPR:$a),
-                 IIC_fpCVTIS, "vcvt", ".f32.s32\t$dst, $a",
-                 [(set SPR:$dst, (arm_sitof SPR:$a))]> {
+def VSITOS : AVConv1InSs_Encode<0b11101, 0b11, 0b1000, 0b1010,
+                                (outs SPR:$Sd),(ins SPR:$Sm),
+                                IIC_fpCVTIS, "vcvt", ".f32.s32\t$Sd, $Sm",
+                                [(set SPR:$Sd, (arm_sitof SPR:$Sm))]> {
   let Inst{7} = 1; // s32
 }
 
-def VUITOD : AVConv1I<0b11101, 0b11, 0b1000, 0b1011,
-                 (outs DPR:$dst), (ins SPR:$a),
-                 IIC_fpCVTID, "vcvt", ".f64.u32\t$dst, $a",
-                 [(set DPR:$dst, (f64 (arm_uitof SPR:$a)))]> {
+def VUITOD : AVConv1IDs_Encode<0b11101, 0b11, 0b1000, 0b1011,
+                               (outs DPR:$Dd), (ins SPR:$Sm),
+                               IIC_fpCVTID, "vcvt", ".f64.u32\t$Dd, $Sm",
+                               [(set DPR:$Dd, (f64 (arm_uitof SPR:$Sm)))]> {
   let Inst{7} = 0; // u32
 }
 
-def VUITOS : AVConv1In<0b11101, 0b11, 0b1000, 0b1010,
-                 (outs SPR:$dst), (ins SPR:$a),
-                 IIC_fpCVTIS, "vcvt", ".f32.u32\t$dst, $a",
-                 [(set SPR:$dst, (arm_uitof SPR:$a))]> {
+def VUITOS : AVConv1InSs_Encode<0b11101, 0b11, 0b1000, 0b1010,
+                                (outs SPR:$Sd), (ins SPR:$Sm),
+                                IIC_fpCVTIS, "vcvt", ".f32.u32\t$Sd, $Sm",
+                                [(set SPR:$Sd, (arm_uitof SPR:$Sm))]> {
   let Inst{7} = 0; // u32
 }
 
-// FP to Int:
+// FP -> Int:
+
+class AVConv1IsD_Encode<bits<5> opcod1, bits<2> opcod2, bits<4> opcod3,
+                        bits<4> opcod4, dag oops, dag iops,
+                        InstrItinClass itin, string opc, string asm,
+                        list<dag> pattern>
+  : AVConv1I<opcod1, opcod2, opcod3, opcod4, oops, iops, itin, opc, asm,
+             pattern> {
+  // Instruction operands.
+  bits<5> Sd;
+  bits<5> Dm;
+
+  // Encode instruction operands.
+  let Inst{3-0}   = Dm{3-0};
+  let Inst{5}     = Dm{4};
+  let Inst{15-12} = Sd{4-1};
+  let Inst{22}    = Sd{0};
+}
+
+class AVConv1InsS_Encode<bits<5> opcod1, bits<2> opcod2, bits<4> opcod3,
+                         bits<4> opcod4, dag oops, dag iops,
+                         InstrItinClass itin, string opc, string asm,
+                         list<dag> pattern>
+  : AVConv1In<opcod1, opcod2, opcod3, opcod4, oops, iops, itin, opc, asm,
+              pattern> {
+  // Instruction operands.
+  bits<5> Sd;
+  bits<5> Sm;
+
+  // Encode instruction operands.
+  let Inst{3-0}   = Sm{4-1};
+  let Inst{5}     = Sm{0};
+  let Inst{15-12} = Sd{4-1};
+  let Inst{22}    = Sd{0};
+}
+
 // Always set Z bit in the instruction, i.e. "round towards zero" variants.
-
-def VTOSIZD : AVConv1I<0b11101, 0b11, 0b1101, 0b1011,
-                       (outs SPR:$dst), (ins DPR:$a),
-                 IIC_fpCVTDI, "vcvt", ".s32.f64\t$dst, $a",
-                 [(set SPR:$dst, (arm_ftosi (f64 DPR:$a)))]> {
+def VTOSIZD : AVConv1IsD_Encode<0b11101, 0b11, 0b1101, 0b1011,
+                                (outs SPR:$Sd), (ins DPR:$Dm),
+                                IIC_fpCVTDI, "vcvt", ".s32.f64\t$Sd, $Dm",
+                                [(set SPR:$Sd, (arm_ftosi (f64 DPR:$Dm)))]> {
   let Inst{7} = 1; // Z bit
 }
 
-def VTOSIZS : AVConv1In<0b11101, 0b11, 0b1101, 0b1010,
-                        (outs SPR:$dst), (ins SPR:$a),
-                 IIC_fpCVTSI, "vcvt", ".s32.f32\t$dst, $a",
-                 [(set SPR:$dst, (arm_ftosi SPR:$a))]> {
+def VTOSIZS : AVConv1InsS_Encode<0b11101, 0b11, 0b1101, 0b1010,
+                                 (outs SPR:$Sd), (ins SPR:$Sm),
+                                 IIC_fpCVTSI, "vcvt", ".s32.f32\t$Sd, $Sm",
+                                 [(set SPR:$Sd, (arm_ftosi SPR:$Sm))]> {
   let Inst{7} = 1; // Z bit
 }
 
-def VTOUIZD : AVConv1I<0b11101, 0b11, 0b1100, 0b1011,
-                       (outs SPR:$dst), (ins DPR:$a),
-                 IIC_fpCVTDI, "vcvt", ".u32.f64\t$dst, $a",
-                 [(set SPR:$dst, (arm_ftoui (f64 DPR:$a)))]> {
+def VTOUIZD : AVConv1IsD_Encode<0b11101, 0b11, 0b1100, 0b1011,
+                               (outs SPR:$Sd), (ins DPR:$Dm),
+                               IIC_fpCVTDI, "vcvt", ".u32.f64\t$Sd, $Dm",
+                               [(set SPR:$Sd, (arm_ftoui (f64 DPR:$Dm)))]> {
   let Inst{7} = 1; // Z bit
 }
 
-def VTOUIZS : AVConv1In<0b11101, 0b11, 0b1100, 0b1010,
-                        (outs SPR:$dst), (ins SPR:$a),
-                 IIC_fpCVTSI, "vcvt", ".u32.f32\t$dst, $a",
-                 [(set SPR:$dst, (arm_ftoui SPR:$a))]> {
+def VTOUIZS : AVConv1InsS_Encode<0b11101, 0b11, 0b1100, 0b1010,
+                                 (outs SPR:$Sd), (ins SPR:$Sm),
+                                 IIC_fpCVTSI, "vcvt", ".u32.f32\t$Sd, $Sm",
+                                 [(set SPR:$Sd, (arm_ftoui SPR:$Sm))]> {
   let Inst{7} = 1; // Z bit
 }
 
 // And the Z bit '0' variants, i.e. use the rounding mode specified by FPSCR.
 // For disassembly only.
 let Uses = [FPSCR] in {
-def VTOSIRD : AVConv1I<0b11101, 0b11, 0b1101, 0b1011,
-                       (outs SPR:$dst), (ins DPR:$a),
-                 IIC_fpCVTDI, "vcvtr", ".s32.f64\t$dst, $a",
-                 [(set SPR:$dst, (int_arm_vcvtr (f64 DPR:$a)))]> {
+// FIXME: Verify encoding after integrated assembler is working.
+def VTOSIRD : AVConv1IsD_Encode<0b11101, 0b11, 0b1101, 0b1011,
+                                (outs SPR:$Sd), (ins DPR:$Dm),
+                                IIC_fpCVTDI, "vcvtr", ".s32.f64\t$Sd, $Dm",
+                                [(set SPR:$Sd, (int_arm_vcvtr (f64 DPR:$Dm)))]>{
   let Inst{7} = 0; // Z bit
 }
 
-def VTOSIRS : AVConv1In<0b11101, 0b11, 0b1101, 0b1010,
-                        (outs SPR:$dst), (ins SPR:$a),
-                 IIC_fpCVTSI, "vcvtr", ".s32.f32\t$dst, $a",
-                 [(set SPR:$dst, (int_arm_vcvtr SPR:$a))]> {
+def VTOSIRS : AVConv1InsS_Encode<0b11101, 0b11, 0b1101, 0b1010,
+                                 (outs SPR:$Sd), (ins SPR:$Sm),
+                                 IIC_fpCVTSI, "vcvtr", ".s32.f32\t$Sd, $Sm",
+                                 [(set SPR:$Sd, (int_arm_vcvtr SPR:$Sm))]> {
   let Inst{7} = 0; // Z bit
 }
 
-def VTOUIRD : AVConv1I<0b11101, 0b11, 0b1100, 0b1011,
-                       (outs SPR:$dst), (ins DPR:$a),
-                 IIC_fpCVTDI, "vcvtr", ".u32.f64\t$dst, $a",
-                 [(set SPR:$dst, (int_arm_vcvtru (f64 DPR:$a)))]> {
+def VTOUIRD : AVConv1IsD_Encode<0b11101, 0b11, 0b1100, 0b1011,
+                                (outs SPR:$Sd), (ins DPR:$Dm),
+                                IIC_fpCVTDI, "vcvtr", ".u32.f64\t$Sd, $Dm",
+                                [(set SPR:$Sd, (int_arm_vcvtru (f64 DPR:$Dm)))]> {
   let Inst{7} = 0; // Z bit
 }
 
-def VTOUIRS : AVConv1In<0b11101, 0b11, 0b1100, 0b1010,
-                        (outs SPR:$dst), (ins SPR:$a),
-                 IIC_fpCVTSI, "vcvtr", ".u32.f32\t$dst, $a",
-                 [(set SPR:$dst, (int_arm_vcvtru SPR:$a))]> {
+def VTOUIRS : AVConv1InsS_Encode<0b11101, 0b11, 0b1100, 0b1010,
+                                 (outs SPR:$Sd), (ins SPR:$Sm),
+                                 IIC_fpCVTSI, "vcvtr", ".u32.f32\t$Sd, $Sm",
+                                 [(set SPR:$Sd, (int_arm_vcvtru SPR:$Sm))]> {
   let Inst{7} = 0; // Z bit
 }
 }
