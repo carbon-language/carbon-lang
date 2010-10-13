@@ -620,8 +620,11 @@ bool ARMFastISel::ARMComputeRegOffset(const Value *Obj, unsigned &Reg,
 
   // FIXME: Handle global variables.
   if (const GlobalValue *GV = dyn_cast<GlobalValue>(Obj)) {
-    (void)GV;
-    return false;
+    unsigned Tmp = ARMMaterializeGV(GV, TLI.getValueType(Obj->getType()));
+    if (Tmp == 0) return false;
+    
+    Reg = Tmp;
+    return true;
   }
 
   // Try to get this in a register if nothing else has worked.
