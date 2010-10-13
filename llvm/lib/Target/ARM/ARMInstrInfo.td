@@ -813,6 +813,7 @@ def NOP : AI<(outs), (ins), MiscFrm, NoItinerary, "nop", "",
              [/* For disassembly only; pattern left blank */]>,
           Requires<[IsARM, HasV6T2]> {
   let Inst{27-16} = 0b001100100000;
+  let Inst{15-8} = 0b11110000;
   let Inst{7-0} = 0b00000000;
 }
 
@@ -820,6 +821,7 @@ def YIELD : AI<(outs), (ins), MiscFrm, NoItinerary, "yield", "",
              [/* For disassembly only; pattern left blank */]>,
           Requires<[IsARM, HasV6T2]> {
   let Inst{27-16} = 0b001100100000;
+  let Inst{15-8} = 0b11110000;
   let Inst{7-0} = 0b00000001;
 }
 
@@ -827,6 +829,7 @@ def WFE : AI<(outs), (ins), MiscFrm, NoItinerary, "wfe", "",
              [/* For disassembly only; pattern left blank */]>,
           Requires<[IsARM, HasV6T2]> {
   let Inst{27-16} = 0b001100100000;
+  let Inst{15-8} = 0b11110000;
   let Inst{7-0} = 0b00000010;
 }
 
@@ -834,6 +837,7 @@ def WFI : AI<(outs), (ins), MiscFrm, NoItinerary, "wfi", "",
              [/* For disassembly only; pattern left blank */]>,
           Requires<[IsARM, HasV6T2]> {
   let Inst{27-16} = 0b001100100000;
+  let Inst{15-8} = 0b11110000;
   let Inst{7-0} = 0b00000011;
 }
 
@@ -841,14 +845,22 @@ def SEL : AI<(outs GPR:$dst), (ins GPR:$a, GPR:$b), DPFrm, NoItinerary, "sel",
              "\t$dst, $a, $b",
              [/* For disassembly only; pattern left blank */]>,
           Requires<[IsARM, HasV6]> {
+  bits<4> Rd;
+  bits<4> Rn;
+  bits<4> Rm;
+  let Inst{3-0} = Rm;
+  let Inst{15-12} = Rd;
+  let Inst{19-16} = Rn;
   let Inst{27-20} = 0b01101000;
   let Inst{7-4} = 0b1011;
+  let Inst{11-8} = 0b1111;
 }
 
 def SEV : AI<(outs), (ins), MiscFrm, NoItinerary, "sev", "",
              [/* For disassembly only; pattern left blank */]>,
           Requires<[IsARM, HasV6T2]> {
   let Inst{27-16} = 0b001100100000;
+  let Inst{15-8} = 0b11110000;
   let Inst{7-0} = 0b00000100;
 }
 
@@ -857,6 +869,9 @@ def SEV : AI<(outs), (ins), MiscFrm, NoItinerary, "sev", "",
 def BKPT : AI<(outs), (ins i32imm:$val), MiscFrm, NoItinerary, "bkpt", "\t$val",
               [/* For disassembly only; pattern left blank */]>,
            Requires<[IsARM]> {
+  bits<16> val;
+  let Inst{3-0} = val{3-0};
+  let Inst{19-8} = val{15-4};
   let Inst{27-20} = 0b00010010;
   let Inst{7-4} = 0b0111;
 }
