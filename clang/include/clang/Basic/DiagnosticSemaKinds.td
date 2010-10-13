@@ -444,6 +444,8 @@ def err_introducing_special_friend : Error<
   "destructor|conversion operator}0 as a friend">;
 def err_tagless_friend_type_template : Error<
   "friend type templates must use an elaborated type">;
+def err_no_matching_local_friend : Error<
+  "no matching function found in local scope">;
 
 def err_abstract_type_in_decl : Error<
   "%select{return|parameter|variable|field}0 type %1 is an abstract class">;

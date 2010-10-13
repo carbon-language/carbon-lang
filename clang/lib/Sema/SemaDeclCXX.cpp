@@ -6344,12 +6344,26 @@ Decl *Sema::ActOnFriendFunctionDecl(Scope *S, Declarator &D, bool IsDefinition,
 
   // There are four cases here.
   //   - There's no scope specifier, in which case we just go to the
-  //     appropriate namespace and create a function or function template
+  //     appropriate scope and look for a function or function template
   //     there as appropriate.
   // Recover from invalid scope qualifiers as if they just weren't there.
   if (SS.isInvalid() || !SS.isSet()) {
-    // Walk out to the nearest namespace scope looking for matches.
+    // C++0x [namespace.memdef]p3:
+    //   If the name in a friend declaration is neither qualified nor
+    //   a template-id and the declaration is a function or an
+    //   elaborated-type-specifier, the lookup to determine whether
+    //   the entity has been previously declared shall not consider
+    //   any scopes outside the innermost enclosing namespace.
+    // C++0x [class.friend]p11:
+    //   If a friend declaration appears in a local class and the name
+    //   specified is an unqualified name, a prior declaration is
+    //   looked up without considering scopes that are outside the
+    //   innermost enclosing non-class scope. For a friend function
+    //   declaration, if there is no prior declaration, the program is
+    //   ill-formed.
+    bool isLocal = cast<CXXRecordDecl>(CurContext)->isLocalClass();
 
+    // Find the appropriate context according to the above.
     DC = CurContext;
     while (true) {
       // Skip class contexts.  If someone can cite chapter and verse
@@ -6365,9 +6379,9 @@ Decl *Sema::ActOnFriendFunctionDecl(Scope *S, Declarator &D, bool IsDefinition,
       LookupQualifiedName(Previous, DC);
 
       // TODO: decide what we think about using declarations.
-      if (!Previous.empty())
+      if (isLocal || !Previous.empty())
         break;
-      
+
       if (DC->isFileContext()) break;
       DC = DC->getParent();
     }
@@ -6380,6 +6394,8 @@ Decl *Sema::ActOnFriendFunctionDecl(Scope *S, Declarator &D, bool IsDefinition,
     if (!Previous.empty() && DC->Equals(CurContext)
         && !getLangOptions().CPlusPlus0x)
       Diag(DS.getFriendSpecLoc(), diag::err_friend_is_member);
+
+    S = getScopeForDeclContext(S, DC);
 
   //   - There's a non-dependent scope specifier, in which case we
   //     compute it and do a previous lookup there for a function
@@ -6425,7 +6441,7 @@ Decl *Sema::ActOnFriendFunctionDecl(Scope *S, Declarator &D, bool IsDefinition,
     assert(isa<CXXRecordDecl>(DC) && "friend declaration not in class?");
   }
 
-  if (DC->isFileContext()) {
+  if (!DC->isRecord()) {
     // This implies that it has to be an operator or function.
     if (D.getName().getKind() == UnqualifiedId::IK_ConstructorName ||
         D.getName().getKind() == UnqualifiedId::IK_DestructorName ||

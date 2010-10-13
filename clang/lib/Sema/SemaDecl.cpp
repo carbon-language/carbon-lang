@@ -3153,6 +3153,20 @@ void Sema::AddOverriddenMethods(CXXRecordDecl *DC, CXXMethodDecl *MD) {
   }
 }
 
+static void DiagnoseInvalidRedeclaration(Sema &S, FunctionDecl *NewFD) {
+  LookupResult Prev(S, NewFD->getDeclName(), NewFD->getLocation(),
+                    Sema::LookupOrdinaryName, Sema::ForRedeclaration);
+  S.LookupQualifiedName(Prev, NewFD->getDeclContext());
+  assert(!Prev.isAmbiguous() &&
+         "Cannot have an ambiguity in previous-declaration lookup");
+  for (LookupResult::iterator Func = Prev.begin(), FuncEnd = Prev.end();
+       Func != FuncEnd; ++Func) {
+    if (isa<FunctionDecl>(*Func) &&
+        isNearlyMatchingFunction(S.Context, cast<FunctionDecl>(*Func), NewFD))
+      S.Diag((*Func)->getLocation(), diag::note_member_def_close_match);
+  }
+}
+
 NamedDecl*
 Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
                               QualType R, TypeSourceInfo *TInfo,
@@ -3470,13 +3484,6 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
   FilterLookupForScope(*this, Previous, DC, S, NewFD->hasLinkage());
 
   if (isFriend) {
-    // DC is the namespace in which the function is being declared.
-    assert((DC->isFileContext() || !Previous.empty() ||
-            (D.getCXXScopeSpec().isSet() &&
-             D.getCXXScopeSpec().getScopeRep()->isDependent())) &&
-           "previously-undeclared friend function being created "
-           "in a non-namespace context");
-
     // For now, claim that the objects have no previous declaration.
     if (FunctionTemplate) {
       FunctionTemplate->setObjectOfFriendDecl(false);
@@ -3675,24 +3682,36 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
                                                 : TPC_FunctionTemplate);
   }
 
-  if (D.getCXXScopeSpec().isSet() && !NewFD->isInvalidDecl()) {
-    if (isFriend || !CurContext->isRecord()) {
-      // Fake up an access specifier if it's supposed to be a class member.
-      if (!Redeclaration && isa<CXXRecordDecl>(NewFD->getDeclContext()))
-        NewFD->setAccess(AS_public);
+  if (NewFD->isInvalidDecl()) {
+    // Ignore all the rest of this.
 
-      // An out-of-line member function declaration must also be a
-      // definition (C++ [dcl.meaning]p1).
-      // Note that this is not the case for explicit specializations of
-      // function templates or member functions of class templates, per
-      // C++ [temp.expl.spec]p2. We also allow these declarations as an extension
-      // for compatibility with old SWIG code which likes to generate them.
-      if (!IsFunctionDefinition && !isFriend &&
-          !isFunctionTemplateSpecialization && !isExplicitSpecialization) {
-        Diag(NewFD->getLocation(), diag::ext_out_of_line_declaration)
-          << D.getCXXScopeSpec().getRange();
-      }
-      if (!Redeclaration && !(isFriend && CurContext->isDependentContext())) {
+  } else if (CurContext->isRecord() && D.getCXXScopeSpec().isSet() &&
+             !isFriend) {
+    // The user provided a superfluous scope specifier inside a class
+    // definition:
+    //
+    // class X {
+    //   void X::f();
+    // };
+    Diag(NewFD->getLocation(), diag::warn_member_extra_qualification)
+      << Name << FixItHint::CreateRemoval(D.getCXXScopeSpec().getRange());
+
+  } else if (!Redeclaration) {
+    // Fake up an access specifier if it's supposed to be a class member.
+    if (isa<CXXRecordDecl>(NewFD->getDeclContext()))
+      NewFD->setAccess(AS_public);
+
+    // Qualified decls generally require a previous declaration.
+    if (D.getCXXScopeSpec().isSet()) {
+      // ...with the major exception of dependent friend declarations.
+      // In theory, this condition could be whether the qualifier
+      // is dependent;  in practice, the way we nest template parameters
+      // prevents this sort of matching from working, so we have to base it
+      // on the general dependence of the context.
+      if (isFriend && CurContext->isDependentContext()) {
+        // ignore these
+
+      } else {
         // The user tried to provide an out-of-line definition for a
         // function that is a member of a class or namespace, but there
         // was no such member function declared (C++ [class.mfct]p2,
@@ -3711,27 +3730,28 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
           << Name << DC << D.getCXXScopeSpec().getRange();
         NewFD->setInvalidDecl();
 
-        LookupResult Prev(*this, Name, D.getIdentifierLoc(), LookupOrdinaryName,
-                          ForRedeclaration);
-        LookupQualifiedName(Prev, DC);
-        assert(!Prev.isAmbiguous() &&
-               "Cannot have an ambiguity in previous-declaration lookup");
-        for (LookupResult::iterator Func = Prev.begin(), FuncEnd = Prev.end();
-             Func != FuncEnd; ++Func) {
-          if (isa<FunctionDecl>(*Func) &&
-              isNearlyMatchingFunction(Context, cast<FunctionDecl>(*Func), NewFD))
-            Diag((*Func)->getLocation(), diag::note_member_def_close_match);
-        }
+        DiagnoseInvalidRedeclaration(*this, NewFD);
       }
-    } else {
-      // The user provided a superfluous scope specifier inside a class definition:
-      //
-      // class X {
-      //   void X::f();
-      // };
-      Diag(NewFD->getLocation(), diag::warn_member_extra_qualification)
-        << Name << FixItHint::CreateRemoval(D.getCXXScopeSpec().getRange());
+
+    // Unqualified local friend declarations are required to resolve
+    // to something.
+    } else if (isFriend && cast<CXXRecordDecl>(CurContext)->isLocalClass()) {
+      Diag(D.getIdentifierLoc(), diag::err_no_matching_local_friend);
+      NewFD->setInvalidDecl();
+      DiagnoseInvalidRedeclaration(*this, NewFD);
     }
+
+  } else if (!IsFunctionDefinition && D.getCXXScopeSpec().isSet() &&
+             !isFriend && !isFunctionTemplateSpecialization &&
+             !isExplicitSpecialization) {
+    // An out-of-line member function declaration must also be a
+    // definition (C++ [dcl.meaning]p1).
+    // Note that this is not the case for explicit specializations of
+    // function templates or member functions of class templates, per
+    // C++ [temp.expl.spec]p2. We also allow these declarations as an extension
+    // for compatibility with old SWIG code which likes to generate them.
+    Diag(NewFD->getLocation(), diag::ext_out_of_line_declaration)
+      << D.getCXXScopeSpec().getRange();
   }
 
   // Handle attributes. We need to have merged decls when handling attributes
