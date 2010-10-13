@@ -1295,14 +1295,18 @@ def BXJ : ABI<0b0001, (outs), (ins GPR:$func), NoItinerary, "bxj", "\t$func",
 // Secure Monitor Call is a system instruction -- for disassembly only
 def SMC : ABI<0b0001, (outs), (ins i32imm:$opt), NoItinerary, "smc", "\t$opt",
               [/* For disassembly only; pattern left blank */]> {
-  let Inst{23-20} = 0b0110;
-  let Inst{7-4} = 0b0111;
+  bits<4> opt;
+  let Inst{23-4} = 0b01100000000000000111;
+  let Inst{3-0} = opt;
 }
 
 // Supervisor Call (Software Interrupt) -- for disassembly only
 let isCall = 1 in {
 def SVC : ABI<0b1111, (outs), (ins i32imm:$svc), IIC_Br, "svc", "\t$svc",
-              [/* For disassembly only; pattern left blank */]>;
+              [/* For disassembly only; pattern left blank */]> {
+  bits<24> svc;
+  let Inst{23-0} = svc;
+}
 }
 
 // Store Return State is a system instruction -- for disassembly only
