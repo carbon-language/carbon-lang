@@ -936,8 +936,9 @@ def SETEND : AXI<(outs),(ins setend_op:$end), MiscFrm, NoItinerary,
 def DBG : AI<(outs), (ins i32imm:$opt), MiscFrm, NoItinerary, "dbg", "\t$opt",
              [/* For disassembly only; pattern left blank */]>,
           Requires<[IsARM, HasV7]> {
-  let Inst{27-16} = 0b001100100000;
-  let Inst{7-4} = 0b1111;
+  bits<4> opt;
+  let Inst{27-4} = 0b001100100000111100001111;
+  let Inst{3-0} = opt;
 }
 
 // A5.4 Permanently UNDEFINED instructions.
@@ -996,6 +997,9 @@ def PICSTRB : AXI2stb<(outs), (ins GPR:$src, addrmodepc:$addr, pred:$p),
 
 // LEApcrel - Load a pc-relative address into a register without offending the
 // assembler.
+// FIXME: These are marked as pseudos, but they're really not(?). They're just
+// the ADR instruction. Is this the right way to handle that? They need
+// encoding information regardless.
 let neverHasSideEffects = 1 in {
 let isReMaterializable = 1 in
 def LEApcrel : AXI1<0x0, (outs GPR:$dst), (ins i32imm:$label, pred:$p),
