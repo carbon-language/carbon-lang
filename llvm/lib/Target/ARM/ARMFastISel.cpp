@@ -1292,7 +1292,7 @@ bool ARMFastISel::FinishCall(EVT RetVT, SmallVectorImpl<unsigned> &UsedRegs,
       // Finally update the result.
       UpdateValueMap(I, ResultReg);
     } else {
-      assert(RVLocs.size() == 1 && "Can't handle non-double multi-reg retvals!");
+      assert(RVLocs.size() == 1 &&"Can't handle non-double multi-reg retvals!");
       EVT CopyVT = RVLocs[0].getValVT();
       TargetRegisterClass* DstRC = TLI.getRegClassFor(CopyVT);
 

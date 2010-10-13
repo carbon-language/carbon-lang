@@ -1207,7 +1207,7 @@ multiclass T2Ipl<bit instr, bit write, string opc> {
     let Inst{15-12} = 0b1111;
   }
 
-  def r   : T2I<(outs), (ins GPR:$base, GPR:$a), IIC_iLoad_i, opc,
+  def r : T2I<(outs), (ins GPR:$base, GPR:$a), IIC_iLoad_i, opc,
                 "\t[$base, $a]", []> {
     let Inst{31-25} = 0b1111100;
     let Inst{24} = instr;
@@ -1220,7 +1220,7 @@ multiclass T2Ipl<bit instr, bit write, string opc> {
     let Inst{5-4} = 0b00; // no shift is applied
   }
 
-  def s   : T2I<(outs), (ins GPR:$base, GPR:$a, i32imm:$shamt), IIC_iLoad_i, opc,
+  def s : T2I<(outs), (ins GPR:$base, GPR:$a, i32imm:$shamt), IIC_iLoad_i, opc,
                 "\t[$base, $a, lsl $shamt]", []> {
     let Inst{31-25} = 0b1111100;
     let Inst{24} = instr;

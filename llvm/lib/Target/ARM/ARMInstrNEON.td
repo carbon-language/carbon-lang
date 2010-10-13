@@ -622,8 +622,8 @@ class VSTQQQQWBPseudo<InstrItinClass itin>
 
 //   VST1     : Vector Store (multiple single elements)
 class VST1D<bits<4> op7_4, string Dt>
-  : NLdSt<0,0b00,0b0111,op7_4, (outs), (ins addrmode6:$addr, DPR:$src), IIC_VST1,
-          "vst1", Dt, "\\{$src\\}, $addr", "", []>;
+  : NLdSt<0,0b00,0b0111,op7_4, (outs), (ins addrmode6:$addr, DPR:$src),
+          IIC_VST1, "vst1", Dt, "\\{$src\\}, $addr", "", []>;
 class VST1Q<bits<4> op7_4, string Dt>
   : NLdSt<0,0b00,0b1010,op7_4, (outs),
           (ins addrmode6:$addr, DPR:$src1, DPR:$src2), IIC_VST1x2,
