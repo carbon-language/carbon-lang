@@ -923,24 +923,14 @@ defm PLD  : APreLoad<1, 1, "pld">;
 defm PLDW : APreLoad<1, 0, "pldw">;
 defm PLI  : APreLoad<0, 1, "pli">;
 
-def SETENDBE : AXI<(outs),(ins), MiscFrm, NoItinerary, "setend\tbe",
-                   [/* For disassembly only; pattern left blank */]>,
+def SETEND : AXI<(outs),(ins setend_op:$end), MiscFrm, NoItinerary,
+                 "setend\t$end",
+                 [/* For disassembly only; pattern left blank */]>,
                Requires<[IsARM]> {
-  let Inst{31-28} = 0b1111;
-  let Inst{27-20} = 0b00010000;
-  let Inst{16} = 1;
-  let Inst{9} = 1;
-  let Inst{7-4} = 0b0000;
-}
-
-def SETENDLE : AXI<(outs),(ins), MiscFrm, NoItinerary, "setend\tle",
-                   [/* For disassembly only; pattern left blank */]>,
-               Requires<[IsARM]> {
-  let Inst{31-28} = 0b1111;
-  let Inst{27-20} = 0b00010000;
-  let Inst{16} = 1;
-  let Inst{9} = 0;
-  let Inst{7-4} = 0b0000;
+  bits<1> end;
+  let Inst{31-10} = 0b1111000100000001000000;
+  let Inst{9} = end;
+  let Inst{8-0} = 0;
 }
 
 def DBG : AI<(outs), (ins i32imm:$opt), MiscFrm, NoItinerary, "dbg", "\t$opt",

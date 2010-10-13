@@ -567,6 +567,7 @@ static int ARMFlagFromOpName(LiteralConstantEmitter *type,
   IMM("jtblock_operand");
   IMM("nohash_imm");
   IMM("cpinst_operand");
+  IMM("setend_op");
   IMM("cps_opt");
   IMM("vfp_f64imm");
   IMM("vfp_f32imm");

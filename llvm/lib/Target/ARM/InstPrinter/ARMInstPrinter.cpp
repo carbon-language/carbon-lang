@@ -400,6 +400,15 @@ void ARMInstPrinter::printRegisterList(const MCInst *MI, unsigned OpNum,
   O << "}";
 }
 
+void ARMInstPrinter::printSetendOperand(const MCInst *MI, unsigned OpNum,
+                                        raw_ostream &O) {
+  const MCOperand &Op = MI->getOperand(OpNum);
+  if (Op.getImm())
+    O << "be";
+  else
+    O << "le";
+}
+
 void ARMInstPrinter::printCPSOptionOperand(const MCInst *MI, unsigned OpNum,
                                            raw_ostream &O) {
   const MCOperand &Op = MI->getOperand(OpNum);

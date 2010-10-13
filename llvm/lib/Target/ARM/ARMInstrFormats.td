@@ -165,6 +165,9 @@ def s_cc_out : OptionalDefOperand<OtherVT, (ops CCR), (ops (i32 CPSR))> {
 
 // ARM special operands for disassembly only.
 //
+def setend_op : Operand<i32> {
+  let PrintMethod = "printSetendOperand";
+}
 
 def cps_opt : Operand<i32> {
   let PrintMethod = "printCPSOptionOperand";
