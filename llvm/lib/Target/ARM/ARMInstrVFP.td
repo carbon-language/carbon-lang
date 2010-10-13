@@ -175,23 +175,6 @@ class ADuI_Encode<bits<5> opcod1, bits<2> opcod2, bits<4> opcod3,
   let Inst{22}    = Dd{4};
 }
 
-class ASuI_Encode<bits<5> opcod1, bits<2> opcod2, bits<4> opcod3,
-                  bits<2> opcod4, bit opcod5, dag oops, dag iops,
-                  InstrItinClass itin, string opc, string asm,
-                  list<dag> pattern>
-  : ASuI<opcod1, opcod2, opcod3, opcod4, opcod5, oops, iops, itin, opc,
-         asm, pattern> {
-  // Instruction operands.
-  bits<5> Sd;
-  bits<5> Sm;
-
-  // Encode instruction operands.
-  let Inst{3-0}   = Sm{4-1};
-  let Inst{5}     = Sm{0};
-  let Inst{15-12} = Sd{4-1};
-  let Inst{22}    = Sd{0};
-}
-
 class ASbI_Encode<bits<5> opcod1, bits<2> opcod2, bit op6, bit op4, dag oops,
                   dag iops, InstrItinClass itin, string opc, string asm,
                   list<dag> pattern>
@@ -224,6 +207,40 @@ class ASbIn_Encode<bits<5> opcod1, bits<2> opcod2, bit op6, bit op4, dag oops,
   let Inst{5}     = Sm{0};
   let Inst{19-16} = Sn{4-1};
   let Inst{7}     = Sn{0};
+  let Inst{15-12} = Sd{4-1};
+  let Inst{22}    = Sd{0};
+}
+
+class ASuI_Encode<bits<5> opcod1, bits<2> opcod2, bits<4> opcod3,
+                  bits<2> opcod4, bit opcod5, dag oops, dag iops,
+                  InstrItinClass itin, string opc, string asm,
+                  list<dag> pattern>
+  : ASuI<opcod1, opcod2, opcod3, opcod4, opcod5, oops, iops, itin, opc,
+         asm, pattern> {
+  // Instruction operands.
+  bits<5> Sd;
+  bits<5> Sm;
+
+  // Encode instruction operands.
+  let Inst{3-0}   = Sm{4-1};
+  let Inst{5}     = Sm{0};
+  let Inst{15-12} = Sd{4-1};
+  let Inst{22}    = Sd{0};
+}
+
+class ASuIn_Encode<bits<5> opcod1, bits<2> opcod2, bits<4> opcod3,
+                   bits<2> opcod4, bit opcod5, dag oops, dag iops,
+                   InstrItinClass itin, string opc, string asm,
+                   list<dag> pattern>
+  : ASuIn<opcod1, opcod2, opcod3, opcod4, opcod5, oops, iops, itin, opc,
+          asm, pattern> {
+  // Instruction operands.
+  bits<5> Sd;
+  bits<5> Sm;
+
+  // Encode instruction operands.
+  let Inst{3-0}   = Sm{4-1};
+  let Inst{5}     = Sm{0};
   let Inst{15-12} = Sd{4-1};
   let Inst{22}    = Sd{0};
 }
@@ -313,26 +330,36 @@ def VCMPS  : ASuI<0b11101, 0b11, 0b0100, 0b01, 0, (outs), (ins SPR:$a, SPR:$b),
 // FP Unary Operations.
 //
 
-def VABSD  : ADuI<0b11101, 0b11, 0b0000, 0b11, 0, (outs DPR:$dst), (ins DPR:$a),
-                 IIC_fpUNA64, "vabs", ".f64\t$dst, $a",
-                 [(set DPR:$dst, (fabs (f64 DPR:$a)))]>;
+def VABSD  : ADuI_Encode<0b11101, 0b11, 0b0000, 0b11, 0,
+                         (outs DPR:$Dd), (ins DPR:$Dm),
+                         IIC_fpUNA64, "vabs", ".f64\t$Dd, $Dm",
+                         [(set DPR:$Dd, (fabs (f64 DPR:$Dm)))]>;
 
-def VABSS  : ASuIn<0b11101, 0b11, 0b0000, 0b11, 0,(outs SPR:$dst), (ins SPR:$a),
-                  IIC_fpUNA32, "vabs", ".f32\t$dst, $a",
-                  [(set SPR:$dst, (fabs SPR:$a))]>;
+def VABSS  : ASuIn_Encode<0b11101, 0b11, 0b0000, 0b11, 0,
+                          (outs SPR:$Sd), (ins SPR:$Sm),
+                          IIC_fpUNA32, "vabs", ".f32\t$Sd, $Sm",
+                          [(set SPR:$Sd, (fabs SPR:$Sm))]>;
 
 let Defs = [FPSCR] in {
-def VCMPEZD : ADuI<0b11101, 0b11, 0b0101, 0b11, 0, (outs), (ins DPR:$a),
-                  IIC_fpCMP64, "vcmpe", ".f64\t$a, #0",
-                  [(arm_cmpfp0 (f64 DPR:$a))]>;
+def VCMPEZD : ADuI_Encode<0b11101, 0b11, 0b0101, 0b11, 0,
+                          (outs), (ins DPR:$Dd),
+                          IIC_fpCMP64, "vcmpe", ".f64\t$Dd, #0",
+                          [(arm_cmpfp0 (f64 DPR:$Dd))]> {
+  let Inst{3-0}   = 0b0000;
+  let Inst{5}     = 0;
+}
+
+def VCMPEZS : ASuI_Encode<0b11101, 0b11, 0b0101, 0b11, 0,
+                         (outs), (ins SPR:$Sd),
+                         IIC_fpCMP32, "vcmpe", ".f32\t$Sd, #0",
+                         [(arm_cmpfp0 SPR:$Sd)]> {
+  let Inst{3-0}   = 0b0000;
+  let Inst{5}     = 0;
+}
 
 def VCMPZD  : ADuI<0b11101, 0b11, 0b0101, 0b01, 0, (outs), (ins DPR:$a),
                   IIC_fpCMP64, "vcmp", ".f64\t$a, #0",
                   [/* For disassembly only; pattern left blank */]>;
-
-def VCMPEZS : ASuI<0b11101, 0b11, 0b0101, 0b11, 0, (outs), (ins SPR:$a),
-                  IIC_fpCMP32, "vcmpe", ".f32\t$a, #0",
-                  [(arm_cmpfp0 SPR:$a)]>;
 
 def VCMPZS  : ASuI<0b11101, 0b11, 0b0101, 0b01, 0, (outs), (ins SPR:$a),
                   IIC_fpCMP32, "vcmp", ".f32\t$a, #0",

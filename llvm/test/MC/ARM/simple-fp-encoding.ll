@@ -104,3 +104,39 @@ entry:
   %cmp = fcmp oeq float %a, %b
   ret i1 %cmp
 }
+
+define i1 @f13(double %a) nounwind readnone {
+entry:
+; CHECK: f13
+; CHECK: vcmpe.f64 d16, #0  @ encoding: [0xc0,0x0b,0xf5,0xee]
+  %cmp = fcmp oeq double %a, 0.000000e+00
+  ret i1 %cmp
+}
+
+define i1 @f14(float %a) nounwind readnone {
+entry:
+; CHECK: f14
+; CHECK: vcmpe.f32 s0, #0  @ encoding: [0xc0,0x0a,0xb5,0xee]
+  %cmp = fcmp oeq float %a, 0.000000e+00
+  ret i1 %cmp
+}
+
+define double @f15(double %a) nounwind {
+entry:
+; CHECK: f15
+; CHECK: vabs.f64 d16, d16  @ encoding: [0xe0,0x0b,0xf0,0xee]
+  %call = tail call double @fabsl(double %a)
+  ret double %call
+}
+
+declare double @fabsl(double)
+
+define float @f16(float %a) nounwind {
+entry:
+; CHECK: f16
+; This call generates a "bfc" instruction instead of "vabs.f32".
+  %call = tail call float @fabsf(float %a)
+  ret float %call
+}
+
+declare float @fabsf(float)
