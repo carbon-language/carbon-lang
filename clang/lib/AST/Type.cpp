@@ -268,42 +268,6 @@ QualType Type::getPointeeType() const {
   return QualType();
 }
 
-/// isVariablyModifiedType (C99 6.7.5p3) - Return true for variable length
-/// array types and types that contain variable array types in their
-/// declarator
-bool Type::isVariablyModifiedType() const {
-  // FIXME: We should really keep a "variably modified" bit in Type, rather
-  // than walking the type hierarchy to recompute it.
-  
-  // A VLA is a variably modified type.
-  if (isVariableArrayType())
-    return true;
-
-  // An array can contain a variably modified type
-  if (const Type *T = getArrayElementTypeNoTypeQual())
-    return T->isVariablyModifiedType();
-
-  // A pointer can point to a variably modified type.
-  // Also, C++ references and member pointers can point to a variably modified
-  // type, where VLAs appear as an extension to C++, and should be treated
-  // correctly.
-  if (const PointerType *PT = getAs<PointerType>())
-    return PT->getPointeeType()->isVariablyModifiedType();
-  if (const ReferenceType *RT = getAs<ReferenceType>())
-    return RT->getPointeeType()->isVariablyModifiedType();
-  if (const MemberPointerType *PT = getAs<MemberPointerType>())
-    return PT->getPointeeType()->isVariablyModifiedType();
-
-  // A function can return a variably modified type
-  // This one isn't completely obvious, but it follows from the
-  // definition in C99 6.7.5p3. Because of this rule, it's
-  // illegal to declare a function returning a variably modified type.
-  if (const FunctionType *FT = getAs<FunctionType>())
-    return FT->getResultType()->isVariablyModifiedType();
-
-  return false;
-}
-
 const RecordType *Type::getAsStructureType() const {
   // If this is directly a structure type, return it.
   if (const RecordType *RT = dyn_cast<RecordType>(this)) {
@@ -346,7 +310,7 @@ const RecordType *Type::getAsUnionType() const {
 ObjCObjectType::ObjCObjectType(QualType Canonical, QualType Base,
                                ObjCProtocolDecl * const *Protocols,
                                unsigned NumProtocols)
-  : Type(ObjCObject, Canonical, false),
+  : Type(ObjCObject, Canonical, false, false),
     NumProtocols(NumProtocols),
     BaseType(Base) {
   assert(this->NumProtocols == NumProtocols &&
@@ -913,7 +877,8 @@ DependentTemplateSpecializationType::DependentTemplateSpecializationType(
                          NestedNameSpecifier *NNS, const IdentifierInfo *Name,
                          unsigned NumArgs, const TemplateArgument *Args,
                          QualType Canon)
-  : TypeWithKeyword(Keyword, DependentTemplateSpecialization, Canon, true),
+  : TypeWithKeyword(Keyword, DependentTemplateSpecialization, Canon, true,
+                    false),
     NNS(NNS), Name(Name), NumArgs(NumArgs) {
   assert(NNS && NNS->isDependent() &&
          "DependentTemplateSpecializatonType requires dependent qualifier");
@@ -1026,6 +991,35 @@ llvm::StringRef FunctionType::getNameForCallConv(CallingConv CC) {
   }
 }
 
+FunctionProtoType::FunctionProtoType(QualType Result, const QualType *ArgArray,
+                                     unsigned numArgs, bool isVariadic, 
+                                     unsigned typeQuals, bool hasExs,
+                                     bool hasAnyExs, const QualType *ExArray,
+                                     unsigned numExs, QualType Canonical,
+                                     const ExtInfo &Info)
+  : FunctionType(FunctionProto, Result, isVariadic, typeQuals, Canonical,
+                 Result->isDependentType(),
+                 Result->isVariablyModifiedType(),
+                 Info),
+    NumArgs(numArgs), NumExceptions(numExs), HasExceptionSpec(hasExs),
+    AnyExceptionSpec(hasAnyExs) 
+{
+  // Fill in the trailing argument array.
+  QualType *ArgInfo = reinterpret_cast<QualType*>(this+1);
+  for (unsigned i = 0; i != numArgs; ++i) {
+    if (ArgArray[i]->isDependentType())
+      setDependent();
+    
+    ArgInfo[i] = ArgArray[i];
+  }
+  
+  // Fill in the exception array.
+  QualType *Ex = ArgInfo + numArgs;
+  for (unsigned i = 0; i != numExs; ++i)
+    Ex[i] = ExArray[i];
+}
+
+
 void FunctionProtoType::Profile(llvm::FoldingSetNodeID &ID, QualType Result,
                                 arg_type_iterator ArgTys,
                                 unsigned NumArgs, bool isVariadic,
@@ -1087,7 +1081,8 @@ QualType TypedefType::desugar() const {
 }
 
 TypeOfExprType::TypeOfExprType(Expr *E, QualType can)
-  : Type(TypeOfExpr, can, E->isTypeDependent()), TOExpr(E) {
+  : Type(TypeOfExpr, can, E->isTypeDependent(), 
+         E->getType()->isVariablyModifiedType()), TOExpr(E) {
 }
 
 QualType TypeOfExprType::desugar() const {
@@ -1100,7 +1095,8 @@ void DependentTypeOfExprType::Profile(llvm::FoldingSetNodeID &ID,
 }
 
 DecltypeType::DecltypeType(Expr *E, QualType underlyingType, QualType can)
-  : Type(Decltype, can, E->isTypeDependent()), E(E),
+  : Type(Decltype, can, E->isTypeDependent(), 
+         E->getType()->isVariablyModifiedType()), E(E),
   UnderlyingType(underlyingType) {
 }
 
@@ -1113,7 +1109,7 @@ void DependentDecltypeType::Profile(llvm::FoldingSetNodeID &ID,
 }
 
 TagType::TagType(TypeClass TC, const TagDecl *D, QualType can)
-  : Type(TC, can, D->isDependentType()),
+  : Type(TC, can, D->isDependentType(), /*VariablyModified=*/false),
     decl(const_cast<TagDecl*>(D)) {}
 
 static TagDecl *getInterestingTagDecl(TagDecl *decl) {
@@ -1213,16 +1209,25 @@ TemplateSpecializationType(TemplateName T,
                            unsigned NumArgs, QualType Canon)
   : Type(TemplateSpecialization,
          Canon.isNull()? QualType(this, 0) : Canon,
-         T.isDependent() || anyDependentTemplateArguments(Args, NumArgs)),
-    Template(T), NumArgs(NumArgs) {
+         T.isDependent(), false),
+    Template(T), NumArgs(NumArgs) 
+{
   assert((!Canon.isNull() ||
           T.isDependent() || anyDependentTemplateArguments(Args, NumArgs)) &&
          "No canonical type for non-dependent class template specialization");
 
   TemplateArgument *TemplateArgs
     = reinterpret_cast<TemplateArgument *>(this + 1);
-  for (unsigned Arg = 0; Arg < NumArgs; ++Arg)
+  for (unsigned Arg = 0; Arg < NumArgs; ++Arg) {
+    // Update dependent and variably-modified bits.
+    if (isDependent(Args[Arg]))
+      setDependent();
+    if (Args[Arg].getKind() == TemplateArgument::Type &&
+        Args[Arg].getAsType()->isVariablyModifiedType())
+      setVariablyModified();
+    
     new (&TemplateArgs[Arg]) TemplateArgument(Args[Arg]);
+  }
 }
 
 void

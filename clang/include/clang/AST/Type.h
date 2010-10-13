@@ -793,6 +793,9 @@ private:
   /// subclasses can pack their bitfields into the same word.
   bool Dependent : 1;
   
+  /// \brief Whether this type is a variably-modified type (C99 6.7.5).
+  bool VariablyModified : 1;
+  
   /// \brief Whether the linkage of this type is already known.
   mutable bool LinkageKnown : 1;
   
@@ -808,20 +811,25 @@ private:
   }
 
 protected:
-  /// \brief Compute the linkage of this type.
+  /// \brief Compute the linkage of this type along with the presence of
+  /// any local or unnamed types.
   virtual Linkage getLinkageImpl() const;
   
   enum { BitsRemainingInType = 19 };
 
   // silence VC++ warning C4355: 'this' : used in base member initializer list
   Type *this_() { return this; }
-  Type(TypeClass tc, QualType Canonical, bool dependent)
+  Type(TypeClass tc, QualType Canonical, bool Dependent, bool VariablyModified)
     : CanonicalType(Canonical.isNull() ? QualType(this_(), 0) : Canonical),
-      TC(tc), Dependent(dependent), LinkageKnown(false), 
+      TC(tc), Dependent(Dependent), VariablyModified(VariablyModified),
+      LinkageKnown(false), 
       CachedLinkage(NoLinkage), FromAST(false) {}
   virtual ~Type();
   friend class ASTContext;
 
+  void setDependent(bool D = true) { Dependent = D; }
+  void setVariablyModified(bool VM = true) { VariablyModified = VM; }
+  
 public:
   TypeClass getTypeClass() const { return static_cast<TypeClass>(TC); }
 
@@ -853,10 +861,6 @@ public:
   /// isLiteralType - Return true if this is a literal type
   /// (C++0x [basic.types]p10)
   bool isLiteralType() const;
-
-  /// isVariablyModifiedType (C99 6.7.5.2p2) - Return true for variable array
-  /// types that have a non-constant expression. This does not include "[]".
-  bool isVariablyModifiedType() const;
 
   /// Helper methods to distinguish type categories. All type predicates
   /// operate on the canonical type, ignoring typedefs and qualifiers.
@@ -951,6 +955,10 @@ public:
   /// that its definition somehow depends on a template parameter
   /// (C++ [temp.dep.type]).
   bool isDependentType() const { return Dependent; }
+  
+  /// \brief Whether this type is a variably-modified type (C99 6.7.5).
+  bool isVariablyModifiedType() const { return VariablyModified; }
+  
   bool isOverloadableType() const;
 
   /// \brief Determine wither this type is a C++ elaborated-type-specifier.
@@ -1142,7 +1150,8 @@ protected:
   
 public:
   BuiltinType(Kind K)
-    : Type(Builtin, QualType(), /*Dependent=*/(K == Dependent)),
+    : Type(Builtin, QualType(), /*Dependent=*/(K == Dependent),
+           /*VariablyModified=*/false),
       TypeKind(K) {}
 
   Kind getKind() const { return TypeKind; }
@@ -1185,7 +1194,8 @@ public:
 class ComplexType : public Type, public llvm::FoldingSetNode {
   QualType ElementType;
   ComplexType(QualType Element, QualType CanonicalPtr) :
-    Type(Complex, CanonicalPtr, Element->isDependentType()),
+    Type(Complex, CanonicalPtr, Element->isDependentType(),
+         Element->isVariablyModifiedType()),
     ElementType(Element) {
   }
   friend class ASTContext;  // ASTContext creates these.
@@ -1216,7 +1226,9 @@ class PointerType : public Type, public llvm::FoldingSetNode {
   QualType PointeeType;
 
   PointerType(QualType Pointee, QualType CanonicalPtr) :
-    Type(Pointer, CanonicalPtr, Pointee->isDependentType()), PointeeType(Pointee) {
+    Type(Pointer, CanonicalPtr, Pointee->isDependentType(),
+         Pointee->isVariablyModifiedType()), 
+    PointeeType(Pointee) {
   }
   friend class ASTContext;  // ASTContext creates these.
 
@@ -1248,7 +1260,8 @@ public:
 class BlockPointerType : public Type, public llvm::FoldingSetNode {
   QualType PointeeType;  // Block is some kind of pointer type
   BlockPointerType(QualType Pointee, QualType CanonicalCls) :
-    Type(BlockPointer, CanonicalCls, Pointee->isDependentType()),
+    Type(BlockPointer, CanonicalCls, Pointee->isDependentType(),
+         Pointee->isVariablyModifiedType()),
     PointeeType(Pointee) {
   }
   friend class ASTContext;  // ASTContext creates these.
@@ -1302,7 +1315,8 @@ class ReferenceType : public Type, public llvm::FoldingSetNode {
 protected:
   ReferenceType(TypeClass tc, QualType Referencee, QualType CanonicalRef,
                 bool SpelledAsLValue) :
-    Type(tc, CanonicalRef, Referencee->isDependentType()),
+    Type(tc, CanonicalRef, Referencee->isDependentType(),
+         Referencee->isVariablyModifiedType()),
     PointeeType(Referencee), SpelledAsLValue(SpelledAsLValue),
     InnerRef(Referencee->isReferenceType()) {
   }
@@ -1384,7 +1398,8 @@ class MemberPointerType : public Type, public llvm::FoldingSetNode {
 
   MemberPointerType(QualType Pointee, const Type *Cls, QualType CanonicalPtr) :
     Type(MemberPointer, CanonicalPtr,
-         Cls->isDependentType() || Pointee->isDependentType()),
+         Cls->isDependentType() || Pointee->isDependentType(),
+         Pointee->isVariablyModifiedType()),
     PointeeType(Pointee), Class(Cls) {
   }
   friend class ASTContext; // ASTContext creates these.
@@ -1458,7 +1473,8 @@ protected:
   //       value-dependent,
   ArrayType(TypeClass tc, QualType et, QualType can,
             ArraySizeModifier sm, unsigned tq)
-    : Type(tc, can, et->isDependentType() || tc == DependentSizedArray),
+    : Type(tc, can, et->isDependentType() || tc == DependentSizedArray,
+           (tc == VariableArray || et->isVariablyModifiedType())),
       ElementType(et), SizeModifier(sm), IndexTypeQuals(tq) {}
 
   friend class ASTContext;  // ASTContext creates these.
@@ -1702,7 +1718,8 @@ class DependentSizedExtVectorType : public Type, public llvm::FoldingSetNode {
 
   DependentSizedExtVectorType(ASTContext &Context, QualType ElementType,
                               QualType can, Expr *SizeExpr, SourceLocation loc)
-    : Type (DependentSizedExtVector, can, true),
+    : Type(DependentSizedExtVector, can, /*Dependent=*/true,
+           ElementType->isVariablyModifiedType()),
       Context(Context), SizeExpr(SizeExpr), ElementType(ElementType),
       loc(loc) {}
   friend class ASTContext;
@@ -1753,11 +1770,15 @@ protected:
 
   VectorType(QualType vecType, unsigned nElements, QualType canonType,
       AltiVecSpecific altiVecSpec) :
-    Type(Vector, canonType, vecType->isDependentType()),
+    Type(Vector, canonType, vecType->isDependentType(),
+         vecType->isVariablyModifiedType()),
     ElementType(vecType), NumElements(nElements), AltiVecSpec(altiVecSpec) {}
+  
   VectorType(TypeClass tc, QualType vecType, unsigned nElements,
              QualType canonType, AltiVecSpecific altiVecSpec)
-    : Type(tc, canonType, vecType->isDependentType()), ElementType(vecType),
+    : Type(tc, canonType, vecType->isDependentType(),
+           vecType->isVariablyModifiedType()), 
+      ElementType(vecType),
       NumElements(nElements), AltiVecSpec(altiVecSpec) {}
   friend class ASTContext;  // ASTContext creates these.
   
@@ -1958,8 +1979,8 @@ class FunctionType : public Type {
 protected:
   FunctionType(TypeClass tc, QualType res, bool SubclassInfo,
                unsigned typeQuals, QualType Canonical, bool Dependent,
-               const ExtInfo &Info)
-    : Type(tc, Canonical, Dependent),
+               bool VariablyModified, const ExtInfo &Info)
+    : Type(tc, Canonical, Dependent, VariablyModified),
       SubClassData(SubclassInfo), TypeQuals(typeQuals),
       NoReturn(Info.getNoReturn()),
       RegParm(Info.getRegParm()), CallConv(Info.getCC()), ResultType(res) {}
@@ -1997,7 +2018,8 @@ class FunctionNoProtoType : public FunctionType, public llvm::FoldingSetNode {
   FunctionNoProtoType(QualType Result, QualType Canonical,
                       const ExtInfo &Info)
     : FunctionType(FunctionNoProto, Result, false, 0, Canonical,
-                   /*Dependent=*/false, Info) {}
+                   /*Dependent=*/false, Result->isVariablyModifiedType(), 
+                   Info) {}
   friend class ASTContext;  // ASTContext creates these.
   
 protected:
@@ -2032,36 +2054,11 @@ public:
 /// exception specification, but this specification is not part of the canonical
 /// type.
 class FunctionProtoType : public FunctionType, public llvm::FoldingSetNode {
-  /// hasAnyDependentType - Determine whether there are any dependent
-  /// types within the arguments passed in.
-  static bool hasAnyDependentType(const QualType *ArgArray, unsigned numArgs) {
-    for (unsigned Idx = 0; Idx < numArgs; ++Idx)
-      if (ArgArray[Idx]->isDependentType())
-    return true;
-
-    return false;
-  }
-
   FunctionProtoType(QualType Result, const QualType *ArgArray, unsigned numArgs,
                     bool isVariadic, unsigned typeQuals, bool hasExs,
                     bool hasAnyExs, const QualType *ExArray,
                     unsigned numExs, QualType Canonical,
-                    const ExtInfo &Info)
-    : FunctionType(FunctionProto, Result, isVariadic, typeQuals, Canonical,
-                   (Result->isDependentType() ||
-                    hasAnyDependentType(ArgArray, numArgs)),
-                   Info),
-      NumArgs(numArgs), NumExceptions(numExs), HasExceptionSpec(hasExs),
-      AnyExceptionSpec(hasAnyExs) {
-    // Fill in the trailing argument array.
-    QualType *ArgInfo = reinterpret_cast<QualType*>(this+1);
-    for (unsigned i = 0; i != numArgs; ++i)
-      ArgInfo[i] = ArgArray[i];
-    // Fill in the exception array.
-    QualType *Ex = ArgInfo + numArgs;
-    for (unsigned i = 0; i != numExs; ++i)
-      Ex[i] = ExArray[i];
-  }
+                    const ExtInfo &Info);
 
   /// NumArgs - The number of arguments this function has, not counting '...'.
   unsigned NumArgs : 20;
@@ -2149,7 +2146,7 @@ class UnresolvedUsingType : public Type {
   UnresolvedUsingTypenameDecl *Decl;
 
   UnresolvedUsingType(const UnresolvedUsingTypenameDecl *D)
-    : Type(UnresolvedUsing, QualType(), true),
+    : Type(UnresolvedUsing, QualType(), true, false),
       Decl(const_cast<UnresolvedUsingTypenameDecl*>(D)) {}
   friend class ASTContext; // ASTContext creates these.
 public:
@@ -2178,7 +2175,7 @@ class TypedefType : public Type {
   TypedefDecl *Decl;
 protected:
   TypedefType(TypeClass tc, const TypedefDecl *D, QualType can)
-    : Type(tc, can, can->isDependentType()),
+    : Type(tc, can, can->isDependentType(), can->isVariablyModifiedType()),
       Decl(const_cast<TypedefDecl*>(D)) {
     assert(!isa<TypedefType>(can) && "Invalid canonical type");
   }
@@ -2251,7 +2248,8 @@ public:
 class TypeOfType : public Type {
   QualType TOType;
   TypeOfType(QualType T, QualType can)
-    : Type(TypeOf, can, T->isDependentType()), TOType(T) {
+    : Type(TypeOf, can, T->isDependentType(), T->isVariablyModifiedType()), 
+      TOType(T) {
     assert(!isa<TypedefType>(can) && "Invalid canonical type");
   }
   friend class ASTContext;  // ASTContext creates these.
@@ -2406,11 +2404,13 @@ class TemplateTypeParmType : public Type, public llvm::FoldingSetNode {
 
   TemplateTypeParmType(unsigned D, unsigned I, bool PP, IdentifierInfo *N,
                        QualType Canon)
-    : Type(TemplateTypeParm, Canon, /*Dependent=*/true),
+    : Type(TemplateTypeParm, Canon, /*Dependent=*/true,
+           /*VariablyModified=*/false),
       Depth(D), Index(I), ParameterPack(PP), Name(N) { }
 
   TemplateTypeParmType(unsigned D, unsigned I, bool PP)
-    : Type(TemplateTypeParm, QualType(this, 0), /*Dependent=*/true),
+    : Type(TemplateTypeParm, QualType(this, 0), /*Dependent=*/true,
+           /*VariablyModified=*/false),
       Depth(D), Index(I), ParameterPack(PP), Name(0) { }
 
   friend class ASTContext;  // ASTContext creates these
@@ -2455,7 +2455,8 @@ class SubstTemplateTypeParmType : public Type, public llvm::FoldingSetNode {
   const TemplateTypeParmType *Replaced;
 
   SubstTemplateTypeParmType(const TemplateTypeParmType *Param, QualType Canon)
-    : Type(SubstTemplateTypeParm, Canon, Canon->isDependentType()),
+    : Type(SubstTemplateTypeParm, Canon, Canon->isDependentType(),
+           Canon->isVariablyModifiedType()),
       Replaced(Param) { }
 
   friend class ASTContext;
@@ -2629,7 +2630,8 @@ class InjectedClassNameType : public Type {
                           // currently suitable for AST reading, too much
                           // interdependencies.
   InjectedClassNameType(CXXRecordDecl *D, QualType TST)
-    : Type(InjectedClassName, QualType(), true),
+    : Type(InjectedClassName, QualType(), /*Dependent=*/true,
+           /*VariablyModified=*/false),
       Decl(D), InjectedType(TST) {
     assert(isa<TemplateSpecializationType>(TST));
     assert(!TST.hasQualifiers());
@@ -2693,8 +2695,9 @@ class TypeWithKeyword : public Type {
 
 protected:
   TypeWithKeyword(ElaboratedTypeKeyword Keyword, TypeClass tc,
-                  QualType Canonical, bool dependent)
-    : Type(tc, Canonical, dependent), Keyword(Keyword) {}
+                  QualType Canonical, bool Dependent, bool VariablyModified)
+    : Type(tc, Canonical, Dependent, VariablyModified), 
+      Keyword(Keyword) {}
 
 public:
   virtual ~TypeWithKeyword(); // pin vtable to Type.cpp
@@ -2752,7 +2755,8 @@ class ElaboratedType : public TypeWithKeyword, public llvm::FoldingSetNode {
   ElaboratedType(ElaboratedTypeKeyword Keyword, NestedNameSpecifier *NNS,
                  QualType NamedType, QualType CanonType)
     : TypeWithKeyword(Keyword, Elaborated, CanonType,
-                      NamedType->isDependentType()),
+                      NamedType->isDependentType(),
+                      NamedType->isVariablyModifiedType()),
       NNS(NNS), NamedType(NamedType) {
     assert(!(Keyword == ETK_None && NNS == 0) &&
            "ElaboratedType cannot have elaborated type keyword "
@@ -2812,7 +2816,8 @@ class DependentNameType : public TypeWithKeyword, public llvm::FoldingSetNode {
 
   DependentNameType(ElaboratedTypeKeyword Keyword, NestedNameSpecifier *NNS, 
                     const IdentifierInfo *Name, QualType CanonType)
-    : TypeWithKeyword(Keyword, DependentName, CanonType, true),
+    : TypeWithKeyword(Keyword, DependentName, CanonType, /*Dependent=*/true,
+                      /*VariablyModified=*/false),
       NNS(NNS), Name(Name) {
     assert(NNS->isDependent() &&
            "DependentNameType requires a dependent nested-name-specifier");
@@ -2981,7 +2986,7 @@ protected:
 
   enum Nonce_ObjCInterface { Nonce_ObjCInterface };
   ObjCObjectType(enum Nonce_ObjCInterface)
-    : Type(ObjCInterface, QualType(), false),
+    : Type(ObjCInterface, QualType(), false, false),
       NumProtocols(0),
       BaseType(QualType(this_(), 0)) {}
 
@@ -3139,7 +3144,7 @@ class ObjCObjectPointerType : public Type, public llvm::FoldingSetNode {
   QualType PointeeType;
 
   ObjCObjectPointerType(QualType Canonical, QualType Pointee)
-    : Type(ObjCObjectPointer, Canonical, false),
+    : Type(ObjCObjectPointer, Canonical, false, false),
       PointeeType(Pointee) {}
   friend class ASTContext;  // ASTContext creates these.
 
