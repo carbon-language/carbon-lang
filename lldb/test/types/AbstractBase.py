@@ -59,16 +59,16 @@ class GenericTester(TestBase):
         #print "golden list:", gl
 
         # Bring the program to the point where we can issue a series of
-        # 'frame variable' command.
+        # 'frame variable -t' command.
         self.runCmd("file a.out", CURRENT_EXECUTABLE_SET)
         self.runCmd("breakpoint set --name Puts")
         self.runCmd("run", RUN_SUCCEEDED)
         self.runCmd("thread step-out", STEP_OUT_SUCCEEDED)
 
-        #self.runCmd("frame variable")
+        #self.runCmd("frame variable -t")
 
         # Now iterate through the golden list, comparing against the output from
-        # 'frame variable var'.
+        # 'frame variable -t var'.
         for var, val in gl:
             self.runCmd("frame variable -t %s" % var)
             output = self.res.GetOutput()
@@ -119,13 +119,13 @@ class GenericTester(TestBase):
         #print "golden list:", gl
 
         # Bring the program to the point where we can issue a series of
-        # 'frame variable' command.
+        # 'expr' command.
         self.runCmd("file a.out", CURRENT_EXECUTABLE_SET)
         self.runCmd("breakpoint set --name Puts")
         self.runCmd("run", RUN_SUCCEEDED)
         self.runCmd("thread step-out", STEP_OUT_SUCCEEDED)
 
-        #self.runCmd("frame variable")
+        #self.runCmd("frame variable -t")
 
         # Now iterate through the golden list, comparing against the output from
         # 'expr var'.
