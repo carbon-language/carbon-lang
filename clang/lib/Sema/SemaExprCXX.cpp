@@ -2279,8 +2279,11 @@ QualType Sema::CheckPointerToMemberOperands(
 
   QualType Class(MemPtr->getClass(), 0);
 
-  if (RequireCompleteType(Loc, Class, diag::err_memptr_rhs_to_incomplete))
-    return QualType();
+  // Note: C++ [expr.mptr.oper]p2-3 says that the class type into which the
+  // member pointer points must be completely-defined. However, there is no
+  // reason for this semantic distinction, and the rule is not enforced by
+  // other compilers. Therefore, we do not check this property, as it is
+  // likely to be considered a defect.
 
   // C++ 5.5p2
   //   [...] to its first operand, which shall be of class T or of a class of
