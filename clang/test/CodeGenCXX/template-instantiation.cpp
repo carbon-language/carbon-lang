@@ -4,6 +4,9 @@
 // CHECK-NOT: _ZTVN5test315basic_fstreamXXIcEE
 // CHECK: @_ZTVN5test018stdio_sync_filebufIwEE = constant
 
+// CHECK-NOT: _ZTVN5test31SIiEE
+// CHECK-NOT: _ZTSN5test31SIiEE
+
 // CHECK: define linkonce_odr void @_ZN5test21CIiEC1Ev(
 // CHECK: define linkonce_odr void @_ZN5test21CIiE6foobarIdEEvT_(
 // CHECK: define available_externally void @_ZN5test21CIiE6zedbarEd(
@@ -74,4 +77,18 @@ namespace test3 {
   // This template instantiation should not cause us to produce a vtable.
   // (test at the top).
   template void basic_fstreamXX<char>::is_open() const;
+}
+
+namespace test3 {
+  template <typename T>
+  struct S  {
+      virtual void m();
+  };
+  
+  template<typename T>
+  void S<T>::m() { }
+
+  // Should not cause us to produce vtable because template instantiations
+  // don't have key functions.
+  template void S<int>::m();
 }

@@ -1562,6 +1562,13 @@ RecordLayoutBuilder::ComputeKeyFunction(const CXXRecordDecl *RD) {
   if (RD->isInAnonymousNamespace())
     return 0;
 
+  // Template instantiations don't have key functions,see Itanium C++ ABI 5.2.6.
+  // Same behavior as GCC.
+  TemplateSpecializationKind TSK = RD->getTemplateSpecializationKind();
+  if (TSK == TSK_ImplicitInstantiation ||
+      TSK == TSK_ExplicitInstantiationDefinition)
+    return 0;
+
   for (CXXRecordDecl::method_iterator I = RD->method_begin(),
          E = RD->method_end(); I != E; ++I) {
     const CXXMethodDecl *MD = *I;
