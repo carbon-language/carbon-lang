@@ -22,7 +22,7 @@ using namespace llvm;
 
 Value *llvm::MapValue(const Value *V, ValueToValueMapTy &VM,
                       bool ModuleLevelChanges) {
-  Value *&VMSlot = VM[V];
+  TrackingVH<Value> &VMSlot = VM[V];
   if (VMSlot) return VMSlot;      // Does it exist in the map yet?
   
   // NOTE: VMSlot can be invalidated by any reference to VM, which can grow the

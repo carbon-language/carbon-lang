@@ -20,7 +20,7 @@
 namespace llvm {
   class Value;
   class Instruction;
-  typedef ValueMap<const Value *, Value *> ValueToValueMapTy;
+  typedef ValueMap<const Value *, TrackingVH<Value> > ValueToValueMapTy;
 
   Value *MapValue(const Value *V, ValueToValueMapTy &VM,
                   bool ModuleLevelChanges);

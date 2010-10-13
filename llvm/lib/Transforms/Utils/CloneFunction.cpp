@@ -216,7 +216,7 @@ namespace {
 /// anything that it can reach.
 void PruningFunctionCloner::CloneBlock(const BasicBlock *BB,
                                        std::vector<const BasicBlock*> &ToClone){
-  Value *&BBEntry = VMap[BB];
+  TrackingVH<Value> &BBEntry = VMap[BB];
 
   // Have we already cloned this block?
   if (BBEntry) return;
@@ -262,8 +262,10 @@ void PruningFunctionCloner::CloneBlock(const BasicBlock *BB,
       // If the condition was a known constant in the callee...
       ConstantInt *Cond = dyn_cast<ConstantInt>(BI->getCondition());
       // Or is a known constant in the caller...
-      if (Cond == 0)  
-        Cond = dyn_cast_or_null<ConstantInt>(VMap[BI->getCondition()]);
+      if (Cond == 0) {
+        Value *V = VMap[BI->getCondition()];
+        Cond = dyn_cast_or_null<ConstantInt>(V);
+      }
 
       // Constant fold to uncond branch!
       if (Cond) {
@@ -276,8 +278,10 @@ void PruningFunctionCloner::CloneBlock(const BasicBlock *BB,
   } else if (const SwitchInst *SI = dyn_cast<SwitchInst>(OldTI)) {
     // If switching on a value known constant in the caller.
     ConstantInt *Cond = dyn_cast<ConstantInt>(SI->getCondition());
-    if (Cond == 0)  // Or known constant after constant prop in the callee...
-      Cond = dyn_cast_or_null<ConstantInt>(VMap[SI->getCondition()]);
+    if (Cond == 0) { // Or known constant after constant prop in the callee...
+      Value *V = VMap[SI->getCondition()];
+      Cond = dyn_cast_or_null<ConstantInt>(V);
+    }
     if (Cond) {     // Constant fold to uncond branch!
       BasicBlock *Dest = SI->getSuccessor(SI->findCaseValue(Cond));
       VMap[OldTI] = BranchInst::Create(Dest, NewBB);
@@ -394,7 +398,8 @@ void llvm::CloneAndPruneFunctionInto(Function *NewFunc, const Function *OldFunc,
   SmallVector<const PHINode*, 16> PHIToResolve;
   for (Function::const_iterator BI = OldFunc->begin(), BE = OldFunc->end();
        BI != BE; ++BI) {
-    BasicBlock *NewBB = cast_or_null<BasicBlock>(VMap[BI]);
+    Value *V = VMap[BI];
+    BasicBlock *NewBB = cast_or_null<BasicBlock>(V);
     if (NewBB == 0) continue;  // Dead block.
 
     // Add the new block to the new function.
@@ -474,8 +479,9 @@ void llvm::CloneAndPruneFunctionInto(Function *NewFunc, const Function *OldFunc,
       OPN = PHIToResolve[phino];
       PHINode *PN = cast<PHINode>(VMap[OPN]);
       for (unsigned pred = 0, e = NumPreds; pred != e; ++pred) {
+        Value *V = VMap[PN->getIncomingBlock(pred)];
         if (BasicBlock *MappedBlock = 
-            cast_or_null<BasicBlock>(VMap[PN->getIncomingBlock(pred)])) {
+            cast_or_null<BasicBlock>(V)) {
           Value *InVal = MapValue(PN->getIncomingValue(pred),
                                   VMap, ModuleLevelChanges);
           assert(InVal && "Unknown input value?");
