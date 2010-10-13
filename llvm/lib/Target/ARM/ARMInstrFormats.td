@@ -1152,7 +1152,7 @@ class Thumb2I<dag oops, dag iops, AddrMode am, SizeFlagVal sz,
 // Same as Thumb2I except it can optionally modify CPSR. Note it's modeled as an
 // input operand since by default it's a zero register. It will become an
 // implicit def once it's "flipped".
-// 
+//
 // FIXME: This uses unified syntax so {s} comes before {p}. We should make it
 // more consistent.
 class Thumb2sI<dag oops, dag iops, AddrMode am, SizeFlagVal sz,
