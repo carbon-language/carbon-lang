@@ -274,6 +274,7 @@ static bool ExecuteAssembler(AssemblerInvocation &Opts, Diagnostic &Diags) {
     TargetAsmBackend *TAB = TheTarget->createAsmBackend(Opts.Triple);
     Str.reset(TheTarget->createObjectStreamer(Opts.Triple, Ctx, *TAB, *Out,
                                               CE, Opts.RelaxAll));
+    Str.get()->InitSections();
   }
 
   OwningPtr<MCAsmParser> Parser(createMCAsmParser(*TheTarget, SrcMgr, Ctx,
