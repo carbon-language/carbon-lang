@@ -812,7 +812,7 @@ public:
   APInt ssub_ov(const APInt &RHS, bool &Overflow) const;
   APInt sdiv_ov(const APInt &RHS, bool &Overflow) const;
   APInt smul_ov(const APInt &RHS, bool &Overflow) const;
-  APInt sshl_ov(unsigned Amt, bool &Overflow);
+  APInt sshl_ov(unsigned Amt, bool &Overflow) const;
 
   /// @returns the bit value at bitPosition
   /// @brief Array-indexing support.
