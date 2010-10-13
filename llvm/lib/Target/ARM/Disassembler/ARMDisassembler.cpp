@@ -89,7 +89,8 @@ static unsigned decodeARMInstruction(uint32_t &insn) {
       return ARM::BFI;
   }
 
-  // Ditto for STRBT, which is a super-instruction for A8.6.199 Encoding A1 & A2.
+  // Ditto for STRBT, which is a super-instruction for A8.6.199 Encodings
+  // A1 & A2.
   // As a result, the decoder fails to deocode USAT properly.
   if (slice(insn, 27, 21) == 0x37 && slice(insn, 5, 4) == 1)
     return ARM::USAT;

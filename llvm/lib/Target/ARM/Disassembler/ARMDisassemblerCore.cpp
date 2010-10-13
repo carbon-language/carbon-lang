@@ -2743,8 +2743,8 @@ static bool DisassembleN3RegVecShFrm(MCInst &MI, unsigned Opcode,
   return DisassembleNVdVnVmOptImm(MI, Opcode, insn, NumOps, NumOpsAdded,
                                   N3V_VectorShift, B);
 }
-static bool DisassembleNVecExtractFrm(MCInst &MI, unsigned Opcode, uint32_t insn,
-    unsigned short NumOps, unsigned &NumOpsAdded, BO B) {
+static bool DisassembleNVecExtractFrm(MCInst &MI, unsigned Opcode,
+    uint32_t insn, unsigned short NumOps, unsigned &NumOpsAdded, BO B) {
 
   return DisassembleNVdVnVmOptImm(MI, Opcode, insn, NumOps, NumOpsAdded,
                                   N3V_VectorExtract, B);
