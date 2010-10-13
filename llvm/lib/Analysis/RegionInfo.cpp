@@ -140,8 +140,7 @@ bool Region::isSimple() const {
 
   BasicBlock *entry = getEntry(), *exit = getExit();
 
-  // TopLevelRegion
-  if (!exit)
+  if (isTopLevelRegion())
     return false;
 
   for (pred_iterator PI = pred_begin(entry), PE = pred_end(entry); PI != PE;
@@ -810,9 +809,10 @@ RegionInfo::getCommonRegion(SmallVectorImpl<BasicBlock*> &BBs) const {
 void RegionInfo::splitBlock(BasicBlock* NewBB, BasicBlock *OldBB)
 {
   Region *R = getRegionFor(OldBB);
+
   setRegionFor(NewBB, R);
 
-  while (R->getEntry() == OldBB && R->getParent()) {
+  while (R->getEntry() == OldBB && !R->isTopLevelRegion()) {
     R->replaceEntry(NewBB);
     R = R->getParent();
   }

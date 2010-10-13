@@ -292,6 +292,11 @@ public:
   /// @return The depth of the region.
   unsigned getDepth() const;
 
+  /// @brief Check if a Region is the TopLevel region.
+  ///
+  /// The toplevel region represents the whole function.
+  bool isTopLevelRegion() const { return exit == NULL; };
+
   /// @brief Return a new (non canonical) region, that is obtained by joining
   ///        this region with its predecessors.
   ///
