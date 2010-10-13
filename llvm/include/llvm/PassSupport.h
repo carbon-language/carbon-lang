@@ -251,7 +251,6 @@ struct RegisterAnalysisGroup : public RegisterAGBase {
 
 #define INITIALIZE_AG_PASS(passName, agName, arg, name, cfg, analysis, def) \
   static void* initialize##passName##PassOnce(PassRegistry &Registry) { \
-    initialize##agName##AnalysisGroup(Registry); \
     PassInfo *PI = new PassInfo(name, arg, & passName ::ID, \
       PassInfo::NormalCtor_t(callDefaultCtor< passName >), cfg, analysis); \
     Registry.registerPass(*PI); \
@@ -268,8 +267,7 @@ struct RegisterAnalysisGroup : public RegisterAGBase {
   static RegisterAnalysisGroup<agName, def> passName ## _ag(passName ## _info);
 
 #define INITIALIZE_AG_PASS_BEGIN(passName, agName, arg, n, cfg, analysis, def) \
-  static void* initialize##passName##PassOnce(PassRegistry &Registry) { \
-    initialize##agName##AnalysisGroup(Registry);
+  static void* initialize##passName##PassOnce(PassRegistry &Registry) {
 
 #define INITIALIZE_AG_PASS_END(passName, agName, arg, n, cfg, analysis, def) \
     PassInfo *PI = new PassInfo(n, arg, & passName ::ID, \
