@@ -2265,11 +2265,30 @@ Decl *Sema::HandleDeclarator(Scope *S, Declarator &D,
         RequireCompleteDeclContext(D.getCXXScopeSpec(), DC))
       return 0;
 
-    if (isa<CXXRecordDecl>(DC) && !cast<CXXRecordDecl>(DC)->hasDefinition()) {
-      Diag(D.getIdentifierLoc(),
-           diag::err_member_def_undefined_record)
-        << Name << DC << D.getCXXScopeSpec().getRange();
-      D.setInvalidType();
+    if (isa<CXXRecordDecl>(DC)) {
+      if (!cast<CXXRecordDecl>(DC)->hasDefinition()) {
+        Diag(D.getIdentifierLoc(),
+             diag::err_member_def_undefined_record)
+          << Name << DC << D.getCXXScopeSpec().getRange();
+        D.setInvalidType();
+      } else if (isa<CXXRecordDecl>(CurContext) && 
+                 !D.getDeclSpec().isFriendSpecified()) {
+        // The user provided a superfluous scope specifier inside a class
+        // definition:
+        //
+        // class X {
+        //   void X::f();
+        // };
+        if (CurContext->Equals(DC))
+          Diag(D.getIdentifierLoc(), diag::warn_member_extra_qualification)
+            << Name << FixItHint::CreateRemoval(D.getCXXScopeSpec().getRange());
+        else
+          Diag(D.getIdentifierLoc(), diag::err_member_qualification)
+            << Name << D.getCXXScopeSpec().getRange();
+        
+        // Pretend that this qualifier was not here.
+        D.getCXXScopeSpec().clear();
+      }
     }
 
     // Check whether we need to rebuild the type of the given
@@ -3684,18 +3703,6 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
 
   if (NewFD->isInvalidDecl()) {
     // Ignore all the rest of this.
-
-  } else if (CurContext->isRecord() && D.getCXXScopeSpec().isSet() &&
-             !isFriend) {
-    // The user provided a superfluous scope specifier inside a class
-    // definition:
-    //
-    // class X {
-    //   void X::f();
-    // };
-    Diag(NewFD->getLocation(), diag::warn_member_extra_qualification)
-      << Name << FixItHint::CreateRemoval(D.getCXXScopeSpec().getRange());
-
   } else if (!Redeclaration) {
     // Fake up an access specifier if it's supposed to be a class member.
     if (isa<CXXRecordDecl>(NewFD->getDeclContext()))

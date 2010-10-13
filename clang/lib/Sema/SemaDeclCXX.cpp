@@ -896,6 +896,27 @@ Sema::ActOnCXXMemberDeclarator(Scope *S, AccessSpecifier AS, Declarator &D,
 
   Decl *Member;
   if (isInstField) {
+    CXXScopeSpec &SS = D.getCXXScopeSpec();
+    
+    
+    if (SS.isSet() && !SS.isInvalid()) {
+      // The user provided a superfluous scope specifier inside a class
+      // definition:
+      //
+      // class X {
+      //   int X::member;
+      // };
+      DeclContext *DC = 0;
+      if ((DC = computeDeclContext(SS, false)) && DC->Equals(CurContext))
+        Diag(D.getIdentifierLoc(), diag::warn_member_extra_qualification)
+        << Name << FixItHint::CreateRemoval(SS.getRange());
+      else
+        Diag(D.getIdentifierLoc(), diag::err_member_qualification)
+          << Name << SS.getRange();
+       
+      SS.clear();
+    }
+    
     // FIXME: Check for template parameters!
     Member = HandleField(S, cast<CXXRecordDecl>(CurContext), Loc, D, BitWidth,
                          AS);

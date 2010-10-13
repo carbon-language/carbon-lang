@@ -2167,6 +2167,8 @@ def ext_out_of_line_declaration : ExtWarn<
   InGroup<OutOfLineDeclaration>, DefaultError;
 def warn_member_extra_qualification : Warning<
   "extra qualification on member %0">;
+def err_member_qualification : Error<
+  "non-friend class member %0 cannot have a qualified name">;  
 def note_member_def_close_match : Note<"member declaration nearly matches">;
 def err_typecheck_ivar_variable_size : Error<
   "instance variables must have a constant size">;
