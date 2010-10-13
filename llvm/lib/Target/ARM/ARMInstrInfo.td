@@ -569,11 +569,10 @@ multiclass AI1_cmp_irs<bits<4> opcod, string opc,
   def ri : AI1<opcod, (outs), (ins GPR:$Rn, so_imm:$imm), DPFrm, iii,
                opc, "\t$Rn, $imm",
                [(opnode GPR:$Rn, so_imm:$imm)]> {
-    bits<4> Rd;
     bits<4> Rn;
     bits<12> imm;
     let Inst{25} = 1;
-    let Inst{15-12} = Rd;
+    let Inst{15-12} = 0b0000;
     let Inst{19-16} = Rn;
     let Inst{11-0} = imm;
     let Inst{20} = 1;
@@ -582,26 +581,24 @@ multiclass AI1_cmp_irs<bits<4> opcod, string opc,
   def rr : AI1<opcod, (outs), (ins GPR:$Rn, GPR:$Rm), DPFrm, iir,
                opc, "\t$Rn, $Rm",
                [(opnode GPR:$Rn, GPR:$Rm)]> {
-    bits<4> Rd;
     bits<4> Rn;
     bits<4> Rm;
     let Inst{11-4} = 0b00000000;
     let Inst{25} = 0;
     let isCommutable = Commutable;
     let Inst{3-0} = Rm;
-    let Inst{15-12} = Rd;
+    let Inst{15-12} = 0b0000;
     let Inst{19-16} = Rn;
     let Inst{20} = 1;
   }
   def rs : AI1<opcod, (outs), (ins GPR:$Rn, so_reg:$shift), DPSoRegFrm, iis,
                opc, "\t$Rn, $shift",
                [(opnode GPR:$Rn, so_reg:$shift)]> {
-    bits<4> Rd;
     bits<4> Rn;
     bits<12> shift;
     let Inst{25} = 0;
     let Inst{11-0} = shift;
-    let Inst{15-12} = Rd;
+    let Inst{15-12} = 0b0000;
     let Inst{19-16} = Rn;
     let Inst{20} = 1;
   }
