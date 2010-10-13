@@ -48,7 +48,7 @@ class FunctionTypesTestCase(TestBase):
             substrs = [' resolved, hit count = 1'])
 
         # Check that the 'callback' variable display properly.
-        self.expect("frame variable callback", VARIABLES_DISPLAYED_CORRECTLY,
+        self.expect("frame variable -t callback", VARIABLES_DISPLAYED_CORRECTLY,
             startstr = '(int (*)(const char *)) callback =')
 
         # And that we can break on the callback function.

@@ -47,7 +47,7 @@ class BreakpointCommandTestCase(TestBase):
                         self.line)
 
         # Now add callbacks for the breakpoints just created.
-        self.runCmd("breakpoint command add -c -o 'frame variable -s' 1")
+        self.runCmd("breakpoint command add -c -o 'frame variable -t -s' 1")
         self.runCmd("breakpoint command add -p -o 'here = open(\"output.txt\", \"w\"); print >> here, \"lldb\"; here.close()' 2")
 
         # Check that the breakpoint commands are correctly set.
@@ -61,7 +61,7 @@ class BreakpointCommandTestCase(TestBase):
 
         self.expect("breakpoint command list 1", "Breakpoint 1 command ok",
             substrs = ["Breakpoint commands:",
-                          "frame variable -s"])
+                          "frame variable -t -s"])
         self.expect("breakpoint command list 2", "Breakpoint 2 command ok",
             substrs = ["Breakpoint commands:",
                           "here = open",

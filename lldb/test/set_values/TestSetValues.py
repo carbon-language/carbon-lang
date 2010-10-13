@@ -72,8 +72,8 @@ class SetValuesTestCase(TestBase):
             substrs = [' resolved, hit count = 1'])
 
         # main.c:15
-        # Check that 'frame variable' displays the correct data type and value.
-        self.expect("frame variable", VARIABLES_DISPLAYED_CORRECTLY,
+        # Check that 'frame variable -t' displays the correct data type and value.
+        self.expect("frame variable -t", VARIABLES_DISPLAYED_CORRECTLY,
             startstr = "(char) i = 'a'")
 
         # TODO:
@@ -82,8 +82,8 @@ class SetValuesTestCase(TestBase):
         self.runCmd("continue")
 
         # main.c:36
-        # Check that 'frame variable' displays the correct data type and value.
-        self.expect("frame variable", VARIABLES_DISPLAYED_CORRECTLY,
+        # Check that 'frame variable -t' displays the correct data type and value.
+        self.expect("frame variable -t", VARIABLES_DISPLAYED_CORRECTLY,
             patterns = ["\((short unsigned int|unsigned short)\) i = 33"])
 
         # TODO:
@@ -92,8 +92,8 @@ class SetValuesTestCase(TestBase):
         self.runCmd("continue")
 
         # main.c:57
-        # Check that 'frame variable' displays the correct data type and value.
-        self.expect("frame variable", VARIABLES_DISPLAYED_CORRECTLY,
+        # Check that 'frame variable -t' displays the correct data type and value.
+        self.expect("frame variable -t", VARIABLES_DISPLAYED_CORRECTLY,
             startstr = "(long int) i = 33")
 
         # TODO:
@@ -102,8 +102,8 @@ class SetValuesTestCase(TestBase):
         self.runCmd("continue")
 
         # main.c:78
-        # Check that 'frame variable' displays the correct data type and value.
-        self.expect("frame variable", VARIABLES_DISPLAYED_CORRECTLY,
+        # Check that 'frame variable -t' displays the correct data type and value.
+        self.expect("frame variable -t", VARIABLES_DISPLAYED_CORRECTLY,
             startstr = "(double) i = 3.14159")
 
         # TODO:
@@ -112,10 +112,10 @@ class SetValuesTestCase(TestBase):
         self.runCmd("continue")
 
         # main.c:85
-        # Check that 'frame variable' displays the correct data type and value.
+        # Check that 'frame variable -t' displays the correct data type and value.
         # rdar://problem/8422727
         # set_values test directory: 'frame variable' shows only (long double) i =
-        self.expect("frame variable", VARIABLES_DISPLAYED_CORRECTLY,
+        self.expect("frame variable -t", VARIABLES_DISPLAYED_CORRECTLY,
             startstr = "(long double) i = 3.14159")
 
         # TODO:

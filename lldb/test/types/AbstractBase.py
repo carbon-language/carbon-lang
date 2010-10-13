@@ -8,7 +8,7 @@ import lldb
 from lldbtest import *
 
 def Msg(var, val):
-    return "'frame variable %s' matches the output (from compiled code): %s" % (var, val)
+    return "'frame variable -t %s' matches the output (from compiled code): %s" % (var, val)
 
 class GenericTester(TestBase):
 
@@ -70,14 +70,14 @@ class GenericTester(TestBase):
         # Now iterate through the golden list, comparing against the output from
         # 'frame variable var'.
         for var, val in gl:
-            self.runCmd("frame variable %s" % var)
+            self.runCmd("frame variable -t %s" % var)
             output = self.res.GetOutput()
             
             # The input type is in a canonical form as a set named atoms.
             # The display type string must conatin each and every element.
             #
             # Example:
-            #     runCmd: frame variable a_array_bounded[0]
+            #     runCmd: frame variable -t a_array_bounded[0]
             #     output: (char) a_array_bounded[0] = 'a'
             #
             try:
@@ -128,7 +128,7 @@ class GenericTester(TestBase):
         #self.runCmd("frame variable")
 
         # Now iterate through the golden list, comparing against the output from
-        # 'frame variable var'.
+        # 'expr var'.
         for var, val in gl:
             self.runCmd("expr %s" % var)
             output = self.res.GetOutput()
