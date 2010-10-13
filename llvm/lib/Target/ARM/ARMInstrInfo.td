@@ -679,50 +679,87 @@ multiclass AI_exta_rrot_np<bits<8> opcod, string opc> {
 let Uses = [CPSR] in {
 multiclass AI1_adde_sube_irs<bits<4> opcod, string opc, PatFrag opnode,
                              bit Commutable = 0> {
-  def ri : AsI1<opcod, (outs GPR:$dst), (ins GPR:$a, so_imm:$b),
-                DPFrm, IIC_iALUi, opc, "\t$dst, $a, $b",
-               [(set GPR:$dst, (opnode GPR:$a, so_imm:$b))]>,
+  def ri : AsI1<opcod, (outs GPR:$Rd), (ins GPR:$Rn, so_imm:$imm),
+                DPFrm, IIC_iALUi, opc, "\t$Rd, $Rn, $imm",
+               [(set GPR:$Rd, (opnode GPR:$Rn, so_imm:$imm))]>,
                Requires<[IsARM]> {
+    bits<4> Rd;
+    bits<4> Rn;
+    bits<12> imm;
     let Inst{25} = 1;
+    let Inst{15-12} = Rd;
+    let Inst{19-16} = Rn;
+    let Inst{11-0} = imm;
   }
-  def rr : AsI1<opcod, (outs GPR:$dst), (ins GPR:$a, GPR:$b),
-                DPFrm, IIC_iALUr, opc, "\t$dst, $a, $b",
-               [(set GPR:$dst, (opnode GPR:$a, GPR:$b))]>,
+  def rr : AsI1<opcod, (outs GPR:$Rd), (ins GPR:$Rn, GPR:$Rm),
+                DPFrm, IIC_iALUr, opc, "\t$Rd, $Rn, $Rm",
+               [(set GPR:$Rd, (opnode GPR:$Rn, GPR:$Rm))]>,
                Requires<[IsARM]> {
-    let isCommutable = Commutable;
+    bits<4> Rd;
+    bits<4> Rn;
+    bits<4> Rm;
     let Inst{11-4} = 0b00000000;
     let Inst{25} = 0;
+    let isCommutable = Commutable;
+    let Inst{3-0} = Rm;
+    let Inst{15-12} = Rd;
+    let Inst{19-16} = Rn;
   }
-  def rs : AsI1<opcod, (outs GPR:$dst), (ins GPR:$a, so_reg:$b),
-                DPSoRegFrm, IIC_iALUsr, opc, "\t$dst, $a, $b",
-               [(set GPR:$dst, (opnode GPR:$a, so_reg:$b))]>,
+  def rs : AsI1<opcod, (outs GPR:$Rd), (ins GPR:$Rn, so_reg:$shift),
+                DPSoRegFrm, IIC_iALUsr, opc, "\t$Rd, $Rn, $shift",
+               [(set GPR:$Rd, (opnode GPR:$Rn, so_reg:$shift))]>,
                Requires<[IsARM]> {
+    bits<4> Rd;
+    bits<4> Rn;
+    bits<12> shift;
     let Inst{25} = 0;
+    let Inst{11-0} = shift;
+    let Inst{15-12} = Rd;
+    let Inst{19-16} = Rn;
   }
 }
 // Carry setting variants
 let Defs = [CPSR] in {
 multiclass AI1_adde_sube_s_irs<bits<4> opcod, string opc, PatFrag opnode,
                              bit Commutable = 0> {
-  def Sri : AXI1<opcod, (outs GPR:$dst), (ins GPR:$a, so_imm:$b),
-                DPFrm, IIC_iALUi, !strconcat(opc, "\t$dst, $a, $b"),
-               [(set GPR:$dst, (opnode GPR:$a, so_imm:$b))]>,
+  def Sri : AXI1<opcod, (outs GPR:$Rd), (ins GPR:$Rn, so_imm:$imm),
+                DPFrm, IIC_iALUi, !strconcat(opc, "\t$Rd, $Rn, $imm"),
+               [(set GPR:$Rd, (opnode GPR:$Rn, so_imm:$imm))]>,
                Requires<[IsARM]> {
+    bits<4> Rd;
+    bits<4> Rn;
+    bits<12> imm;
+    let Inst{15-12} = Rd;
+    let Inst{19-16} = Rn;
+    let Inst{11-0} = imm;
     let Inst{20} = 1;
     let Inst{25} = 1;
   }
-  def Srr : AXI1<opcod, (outs GPR:$dst), (ins GPR:$a, GPR:$b),
-                DPFrm, IIC_iALUr, !strconcat(opc, "\t$dst, $a, $b"),
-               [(set GPR:$dst, (opnode GPR:$a, GPR:$b))]>,
+  def Srr : AXI1<opcod, (outs GPR:$Rd), (ins GPR:$Rn, GPR:$Rm),
+                DPFrm, IIC_iALUr, !strconcat(opc, "\t$Rd, $Rn, $Rm"),
+               [(set GPR:$Rd, (opnode GPR:$Rn, GPR:$Rm))]>,
                Requires<[IsARM]> {
+    bits<4> Rd;
+    bits<4> Rn;
+    bits<4> Rm;
     let Inst{11-4} = 0b00000000;
+    let isCommutable = Commutable;
+    let Inst{3-0} = Rm;
+    let Inst{15-12} = Rd;
+    let Inst{19-16} = Rn;
     let Inst{20} = 1;
     let Inst{25} = 0;
   }
-  def Srs : AXI1<opcod, (outs GPR:$dst), (ins GPR:$a, so_reg:$b),
-                DPSoRegFrm, IIC_iALUsr, !strconcat(opc, "\t$dst, $a, $b"),
-               [(set GPR:$dst, (opnode GPR:$a, so_reg:$b))]>,
+  def Srs : AXI1<opcod, (outs GPR:$Rd), (ins GPR:$Rn, so_reg:$shift),
+                DPSoRegFrm, IIC_iALUsr, !strconcat(opc, "\t$Rd, $Rn, $shift"),
+               [(set GPR:$Rd, (opnode GPR:$Rn, so_reg:$shift))]>,
                Requires<[IsARM]> {
+    bits<4> Rd;
+    bits<4> Rn;
+    bits<12> shift;
+    let Inst{11-0} = shift;
+    let Inst{15-12} = Rd;
+    let Inst{19-16} = Rn;
     let Inst{20} = 1;
     let Inst{25} = 0;
   }

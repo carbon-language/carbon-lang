@@ -55,4 +55,13 @@ entry:
   %retval.0 = select i1 %cmp, i32 %b, i32 %c
   ret i32 %retval.0
 }
+
+define i64 @f6(i64 %a, i64 %b, i64 %c) nounwind readnone optsize ssp {
+entry:
+; CHECK: f6
+; CHECK: adds r0, r2, r0              @ encoding: [0x00,0x00,0x92,0xe0]
+; CHECK: adc r1, r3, r1               @ encoding: [0x01,0x10,0xa3,0xe0]
+  %add = add nsw i64 %b, %a
+  ret i64 %add
+}
 declare void @llvm.trap() nounwind
