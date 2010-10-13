@@ -6337,6 +6337,7 @@ Decl *Sema::ActOnFriendFunctionDecl(Scope *S, Declarator &D, bool IsDefinition,
   // The context we found the declaration in, or in which we should
   // create the declaration.
   DeclContext *DC;
+  Scope *DCScope = S;
   LookupResult Previous(*this, NameInfo, LookupOrdinaryName,
                         ForRedeclaration);
 
@@ -6395,7 +6396,7 @@ Decl *Sema::ActOnFriendFunctionDecl(Scope *S, Declarator &D, bool IsDefinition,
         && !getLangOptions().CPlusPlus0x)
       Diag(DS.getFriendSpecLoc(), diag::err_friend_is_member);
 
-    S = getScopeForDeclContext(S, DC);
+    DCScope = getScopeForDeclContext(S, DC);
 
   //   - There's a non-dependent scope specifier, in which case we
   //     compute it and do a previous lookup there for a function
@@ -6454,7 +6455,7 @@ Decl *Sema::ActOnFriendFunctionDecl(Scope *S, Declarator &D, bool IsDefinition,
   }
 
   bool Redeclaration = false;
-  NamedDecl *ND = ActOnFunctionDeclarator(S, D, DC, T, TInfo, Previous,
+  NamedDecl *ND = ActOnFunctionDeclarator(DCScope, D, DC, T, TInfo, Previous,
                                           move(TemplateParams),
                                           IsDefinition,
                                           Redeclaration);
