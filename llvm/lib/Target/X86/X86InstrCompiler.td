@@ -1052,33 +1052,37 @@ def ADD32rr_DB  : I<0, Pseudo, (outs GR32:$dst), (ins GR32:$src1, GR32:$src2),
 def ADD64rr_DB  : I<0, Pseudo, (outs GR64:$dst), (ins GR64:$src1, GR64:$src2),
                     "", // orq/addq REG, REG
                     [(set GR64:$dst, (or_is_add GR64:$src1, GR64:$src2))]>;
-                    
-                    
-def ADD16ri_DB  : I<0, Pseudo, (outs GR16:$dst), (ins GR16:$src1, i16imm:$src2),
-                    "", // orw/addw REG, imm
-                    [(set GR16:$dst, (or_is_add GR16:$src1, imm:$src2))]>;
-def ADD32ri_DB  : I<0, Pseudo, (outs GR32:$dst), (ins GR32:$src1, i32imm:$src2),
-                    "", // orl/addl REG, imm
-                    [(set GR32:$dst, (or_is_add GR32:$src1, imm:$src2))]>;
-def ADD64ri32_DB : I<0, Pseudo,
-                     (outs GR64:$dst), (ins GR64:$src1, i64i32imm:$src2),
-                      "", // orq/addq REG, imm
-                      [(set GR64:$dst, (or_is_add GR64:$src1,
-                                                  i64immSExt32:$src2))]>;
-                    
+
+// NOTE: These are order specific, we want the ri8 forms to be listed
+// first so that they are slightly preferred to the ri forms.
+
 def ADD16ri8_DB : I<0, Pseudo,
                     (outs GR16:$dst), (ins GR16:$src1, i16i8imm:$src2),
                     "", // orw/addw REG, imm8
                     [(set GR16:$dst,(or_is_add GR16:$src1,i16immSExt8:$src2))]>;
+def ADD16ri_DB  : I<0, Pseudo, (outs GR16:$dst), (ins GR16:$src1, i16imm:$src2),
+                    "", // orw/addw REG, imm
+                    [(set GR16:$dst, (or_is_add GR16:$src1, imm:$src2))]>;
+
 def ADD32ri8_DB : I<0, Pseudo,
                     (outs GR32:$dst), (ins GR32:$src1, i32i8imm:$src2),
                     "", // orl/addl REG, imm8
                     [(set GR32:$dst,(or_is_add GR32:$src1,i32immSExt8:$src2))]>;
+def ADD32ri_DB  : I<0, Pseudo, (outs GR32:$dst), (ins GR32:$src1, i32imm:$src2),
+                    "", // orl/addl REG, imm
+                    [(set GR32:$dst, (or_is_add GR32:$src1, imm:$src2))]>;
+
+
 def ADD64ri8_DB : I<0, Pseudo,
                     (outs GR64:$dst), (ins GR64:$src1, i64i8imm:$src2),
                     "", // orq/addq REG, imm8
                     [(set GR64:$dst, (or_is_add GR64:$src1,
                                                 i64immSExt8:$src2))]>;
+def ADD64ri32_DB : I<0, Pseudo,
+                     (outs GR64:$dst), (ins GR64:$src1, i64i32imm:$src2),
+                      "", // orq/addq REG, imm
+                      [(set GR64:$dst, (or_is_add GR64:$src1,
+                                                  i64immSExt32:$src2))]>;
 }
 } // AddedComplexity
 
