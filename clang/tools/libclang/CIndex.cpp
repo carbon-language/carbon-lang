@@ -3533,6 +3533,7 @@ void clang_tokenize(CXTranslationUnit TU, CXSourceRange Range,
   const char *EffectiveBufferEnd = Buffer.data() + EndLocInfo.second;
   llvm::SmallVector<CXToken, 32> CXTokens;
   Token Tok;
+  bool previousWasAt = false;
   do {
     // Lex the next token
     Lex.LexFromRawLexer(Tok);
@@ -3565,7 +3566,7 @@ void clang_tokenize(CXTranslationUnit TU, CXSourceRange Range,
       IdentifierInfo *II
         = CXXUnit->getPreprocessor().LookUpIdentifierInfo(Tok, StartPos);
 
-      if (II->getObjCKeywordID() != tok::objc_not_keyword) {
+      if ((II->getObjCKeywordID() != tok::objc_not_keyword) && previousWasAt) {
         CXTok.int_data[0] = CXToken_Keyword;
       }
       else {
@@ -3582,6 +3583,7 @@ void clang_tokenize(CXTranslationUnit TU, CXSourceRange Range,
       CXTok.ptr_data = 0;
     }
     CXTokens.push_back(CXTok);
+    previousWasAt = Tok.is(tok::at);
   } while (Lex.getBufferLocation() <= EffectiveBufferEnd);
 
   if (CXTokens.empty())
