@@ -712,7 +712,7 @@ public:
                                      MultiTemplateParamsArg TemplateParamLists,
                                      bool IsFunctionDefinition,
                                      bool &Redeclaration);
-  void AddOverriddenMethods(CXXRecordDecl *DC, CXXMethodDecl *MD);
+  bool AddOverriddenMethods(CXXRecordDecl *DC, CXXMethodDecl *MD);
   void CheckFunctionDeclaration(Scope *S,
                                 FunctionDecl *NewFD, LookupResult &Previous,
                                 bool IsExplicitSpecialization,

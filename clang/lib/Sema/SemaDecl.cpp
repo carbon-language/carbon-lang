@@ -3153,23 +3153,28 @@ static bool FindOverriddenMethod(const CXXBaseSpecifier *Specifier,
 
 /// AddOverriddenMethods - See if a method overrides any in the base classes,
 /// and if so, check that it's a valid override and remember it.
-void Sema::AddOverriddenMethods(CXXRecordDecl *DC, CXXMethodDecl *MD) {
+bool Sema::AddOverriddenMethods(CXXRecordDecl *DC, CXXMethodDecl *MD) {
   // Look for virtual methods in base classes that this method might override.
   CXXBasePaths Paths;
   FindOverriddenMethodData Data;
   Data.Method = MD;
   Data.S = this;
+  bool AddedAny = false;
   if (DC->lookupInBases(&FindOverriddenMethod, &Data, Paths)) {
     for (CXXBasePaths::decl_iterator I = Paths.found_decls_begin(),
          E = Paths.found_decls_end(); I != E; ++I) {
       if (CXXMethodDecl *OldMD = dyn_cast<CXXMethodDecl>(*I)) {
         if (!CheckOverridingFunctionReturnType(MD, OldMD) &&
             !CheckOverridingFunctionExceptionSpec(MD, OldMD) &&
-            !CheckOverridingFunctionAttributes(MD, OldMD))
+            !CheckOverridingFunctionAttributes(MD, OldMD)) {
           MD->addOverriddenMethod(OldMD->getCanonicalDecl());
+          AddedAny = true;
+        }
       }
     }
   }
+  
+  return AddedAny;
 }
 
 static void DiagnoseInvalidRedeclaration(Sema &S, FunctionDecl *NewFD) {
@@ -3964,8 +3969,6 @@ void Sema::CheckFunctionDeclaration(Scope *S, FunctionDecl *NewFD,
         DeclarationName Name
           = Context.DeclarationNames.getCXXDestructorName(
                                         Context.getCanonicalType(ClassType));
-//         NewFD->getDeclName().dump();
-//         Name.dump();
         if (NewFD->getDeclName() != Name) {
           Diag(NewFD->getLocation(), diag::err_destructor_name);
           return NewFD->setInvalidDecl();
@@ -3979,8 +3982,23 @@ void Sema::CheckFunctionDeclaration(Scope *S, FunctionDecl *NewFD,
     // Find any virtual functions that this function overrides.
     if (CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(NewFD)) {
       if (!Method->isFunctionTemplateSpecialization() && 
-          !Method->getDescribedFunctionTemplate())
-        AddOverriddenMethods(Method->getParent(), Method);
+          !Method->getDescribedFunctionTemplate()) {
+        if (AddOverriddenMethods(Method->getParent(), Method)) {
+          // If the function was marked as "static", we have a problem.
+          if (NewFD->getStorageClass() == SC_Static) {
+            Diag(NewFD->getLocation(), diag::err_static_overrides_virtual)
+              << NewFD->getDeclName();
+            for (CXXMethodDecl::method_iterator 
+                      Overridden = Method->begin_overridden_methods(),
+                   OverriddenEnd = Method->end_overridden_methods();
+                 Overridden != OverriddenEnd;
+                 ++Overridden) {
+              Diag((*Overridden)->getLocation(), 
+                   diag::note_overridden_virtual_function);
+            }
+          }
+        }        
+      }
     }
 
     // Extra checking for C++ overloaded operators (C++ [over.oper]).
