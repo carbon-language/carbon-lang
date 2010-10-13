@@ -313,7 +313,7 @@ public:
             case 'a':   show_args    = false; break;
             case 'l':   show_locals  = false; break;
             case 'g':   show_globals = true;  break;
-            case 't':   show_types   = false; break;
+            case 't':   show_types   = true;  break;
             case 'y':   show_summary = false; break;
             case 'L':   show_location= true;  break;
             case 'c':   show_decl    = true;  break;
@@ -356,7 +356,7 @@ public:
             show_args     = true;
             show_locals   = true;
             show_globals  = false;
-            show_types    = true;
+            show_types    = false;
             show_scope    = false;
             show_summary  = true;
             show_location = false;
@@ -843,7 +843,7 @@ CommandObjectFrameVariable::CommandOptions::g_option_table[] =
 { LLDB_OPT_SET_1, false, "show-declaration", 'c', no_argument, NULL, 0, eArgTypeNone,    "Show variable declaration information (source file and line where the variable was declared)."},
 { LLDB_OPT_SET_1, false, "no-args",    'a', no_argument,       NULL, 0, eArgTypeNone,    "Omit function arguments."},
 { LLDB_OPT_SET_1, false, "no-locals",  'l', no_argument,       NULL, 0, eArgTypeNone,    "Omit local variables."},
-{ LLDB_OPT_SET_1, false, "no-types",   't', no_argument,       NULL, 0, eArgTypeNone,    "Omit variable type names."},
+{ LLDB_OPT_SET_1, false, "show-types", 't', no_argument,       NULL, 0, eArgTypeNone,    "Show variable types when dumping values."},
 { LLDB_OPT_SET_1, false, "no-summary", 'y', no_argument,       NULL, 0, eArgTypeNone,    "Omit summary information."},
 { LLDB_OPT_SET_1, false, "scope",      's', no_argument,       NULL, 0, eArgTypeNone,    "Show variable scope (argument, local, global, static)."},
 { LLDB_OPT_SET_1, false, "objc",       'o', no_argument,       NULL, 0, eArgTypeNone,    "When looking up a variable by name (--name), print as an Objective-C object."},
