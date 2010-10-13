@@ -455,7 +455,9 @@ Sema::SemaDiagnosticBuilder::~SemaDiagnosticBuilder() {
     case Diagnostic::SFINAE_Suppress:
       // Make a copy of this suppressed diagnostic and store it with the
       // template-deduction information;
+      FlushCounts();
       DiagnosticInfo DiagInfo(&SemaRef.Diags);
+        
       Info->addSuppressedDiagnostic(DiagInfo.getLocation(),
                         PartialDiagnostic(DiagInfo,
                                           SemaRef.Context.getDiagAllocator()));

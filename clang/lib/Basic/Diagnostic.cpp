@@ -625,6 +625,12 @@ bool Diagnostic::ProcessDiag() {
   return true;
 }
 
+void DiagnosticBuilder::FlushCounts() {
+  DiagObj->NumDiagArgs = NumArgs;
+  DiagObj->NumDiagRanges = NumRanges;
+  DiagObj->NumFixItHints = NumFixItHints;
+}
+
 bool DiagnosticBuilder::Emit() {
   // If DiagObj is null, then its soul was stolen by the copy ctor
   // or the user called Emit().
@@ -632,9 +638,7 @@ bool DiagnosticBuilder::Emit() {
 
   // When emitting diagnostics, we set the final argument count into
   // the Diagnostic object.
-  DiagObj->NumDiagArgs = NumArgs;
-  DiagObj->NumDiagRanges = NumRanges;
-  DiagObj->NumFixItHints = NumFixItHints;
+  FlushCounts();
 
   // Process the diagnostic, sending the accumulated information to the
   // DiagnosticClient.

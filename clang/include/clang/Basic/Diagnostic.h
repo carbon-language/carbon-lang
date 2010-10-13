@@ -669,6 +669,9 @@ class DiagnosticBuilder {
     : DiagObj(diagObj), NumArgs(0), NumRanges(0), NumFixItHints(0) {}
 
   friend class PartialDiagnostic;
+
+protected:
+  void FlushCounts();
   
 public:
   /// Copy constructor.  When copied, this "takes" the diagnostic info from the
