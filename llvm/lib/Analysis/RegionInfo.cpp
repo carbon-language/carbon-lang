@@ -376,6 +376,11 @@ void Region::dump() const {
 }
 
 void Region::clearNodeCache() {
+  // Free the cached nodes.
+  for (BBNodeMapT::iterator I = BBNodeMap.begin(),
+       IE = BBNodeMap.end(); I != IE; ++IE)
+    delete I->second;
+
   BBNodeMap.clear();
   for (Region::iterator RI = begin(), RE = end(); RI != RE; ++RI)
     (*RI)->clearNodeCache();
