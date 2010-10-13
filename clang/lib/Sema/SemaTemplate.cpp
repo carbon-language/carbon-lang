@@ -2554,6 +2554,7 @@ bool UnnamedLocalNoLinkageFinder::VisitNestedNameSpecifier(
   case NestedNameSpecifier::TypeSpecWithTemplate:
     return Visit(QualType(NNS->getAsType(), 0));
   }
+  return false;
 }
 
 
