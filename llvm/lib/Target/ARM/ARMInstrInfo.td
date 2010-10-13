@@ -882,6 +882,7 @@ def BKPT : AI<(outs), (ins i32imm:$val), MiscFrm, NoItinerary, "bkpt", "\t$val",
 // opt{5} = changemode from Inst{17}
 // opt{8-6} = AIF from Inst{8-6}
 // opt{10-9} = imod from Inst{19-18} with 0b10 as enable and 0b11 as disable
+// FIXME: Integrated assembler will need these split out.
 def CPS : AXI<(outs), (ins cps_opt:$opt), MiscFrm, NoItinerary, "cps$opt",
               [/* For disassembly only; pattern left blank */]>,
           Requires<[IsARM]> {
