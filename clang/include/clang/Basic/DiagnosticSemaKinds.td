@@ -1430,10 +1430,10 @@ def err_template_arg_not_convertible : Error<
   "of type %1">;
 def warn_template_arg_negative : Warning<
   "non-type template argument with value '%0' converted to '%1' for unsigned "
-  "template parameter of type %2">;
+  "template parameter of type %2">, InGroup<Conversion>, DefaultIgnore;
 def warn_template_arg_too_large : Warning<
   "non-type template argument value '%0' truncated to '%1' for "
-  "template parameter of type %2">;
+  "template parameter of type %2">, InGroup<Conversion>, DefaultIgnore;
 def err_template_arg_no_ref_bind : Error<
   "non-type template parameter of reference type %0 cannot bind to template "
   "argument of type %1">;
