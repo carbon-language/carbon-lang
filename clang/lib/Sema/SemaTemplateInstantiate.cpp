@@ -1265,7 +1265,6 @@ namespace {
   struct PartialSpecMatchResult {
     ClassTemplatePartialSpecializationDecl *Partial;
     TemplateArgumentList *Args;
-    llvm::SmallVector<PartialDiagnosticAt, 1> Diagnostics;
   };
 }
 
@@ -1336,7 +1335,6 @@ Sema::InstantiateClassTemplateSpecialization(
       Matched.push_back(PartialSpecMatchResult());
       Matched.back().Partial = Partial;
       Matched.back().Args = Info.take();
-      Matched.back().Diagnostics.append(Info.diag_begin(), Info.diag_end());
     }
   }
 
@@ -1410,10 +1408,6 @@ Sema::InstantiateClassTemplateSpecialization(
     
     Pattern = OrigPartialSpec;
     ClassTemplateSpec->setInstantiationOf(Best->Partial, Best->Args);
-    
-    // Report any suppressed diagnostics.
-    for (unsigned I = 0, N = Best->Diagnostics.size(); I != N; ++I)
-      Diag(Best->Diagnostics[I].first, Best->Diagnostics[I].second);
   } else {
     //   -- If no matches are found, the instantiation is generated
     //      from the primary template.

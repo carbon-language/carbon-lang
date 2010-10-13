@@ -20,6 +20,7 @@
 #include "clang/AST/ExprCXX.h"
 #include "clang/AST/DeclFriend.h"
 #include "clang/AST/DeclTemplate.h"
+#include "clang/AST/TypeVisitor.h"
 #include "clang/Sema/DeclSpec.h"
 #include "clang/Sema/ParsedTemplate.h"
 #include "clang/Basic/LangOptions.h"
@@ -2347,6 +2348,215 @@ bool Sema::CheckTemplateArgumentList(TemplateDecl *Template,
   return Invalid;
 }
 
+namespace {
+  class UnnamedLocalNoLinkageFinder 
+    : public TypeVisitor<UnnamedLocalNoLinkageFinder, bool> 
+  {
+    Sema &S;
+    SourceRange SR;
+    
+    typedef TypeVisitor<UnnamedLocalNoLinkageFinder, bool> inherited;
+    
+  public:
+    UnnamedLocalNoLinkageFinder(Sema &S, SourceRange SR) : S(S), SR(SR) { }
+
+    bool Visit(QualType T) { 
+      return inherited::Visit(T.getTypePtr()); 
+    }
+    
+#define TYPE(Class, Parent) \
+    bool Visit##Class##Type(const Class##Type *);
+#define ABSTRACT_TYPE(Class, Parent) \
+    bool Visit##Class##Type(const Class##Type *) { return false; }
+#define NON_CANONICAL_TYPE(Class, Parent) \
+    bool Visit##Class##Type(const Class##Type *) { return false; }
+#include "clang/AST/TypeNodes.def"
+    
+    bool VisitTagDecl(const TagDecl *Tag);
+    bool VisitNestedNameSpecifier(NestedNameSpecifier *NNS);
+  };
+}
+
+bool UnnamedLocalNoLinkageFinder::VisitBuiltinType(const BuiltinType*) { 
+  return false;
+}
+
+bool UnnamedLocalNoLinkageFinder::VisitComplexType(const ComplexType* T) {
+  return Visit(T->getElementType());
+}
+
+bool UnnamedLocalNoLinkageFinder::VisitPointerType(const PointerType* T) { 
+  return Visit(T->getPointeeType());
+}
+
+bool UnnamedLocalNoLinkageFinder::VisitBlockPointerType(
+                                                    const BlockPointerType* T) { 
+  return Visit(T->getPointeeType());
+}
+
+bool UnnamedLocalNoLinkageFinder::VisitLValueReferenceType(
+                                                const LValueReferenceType* T) { 
+  return Visit(T->getPointeeType());
+}
+
+bool UnnamedLocalNoLinkageFinder::VisitRValueReferenceType(
+                                                const RValueReferenceType* T) { 
+  return Visit(T->getPointeeType());
+}
+
+bool UnnamedLocalNoLinkageFinder::VisitMemberPointerType(
+                                                  const MemberPointerType* T) { 
+  return Visit(T->getPointeeType()) || Visit(QualType(T->getClass(), 0));
+}
+
+bool UnnamedLocalNoLinkageFinder::VisitConstantArrayType(
+                                                  const ConstantArrayType* T) { 
+  return Visit(T->getElementType());
+}
+
+bool UnnamedLocalNoLinkageFinder::VisitIncompleteArrayType(
+                                                 const IncompleteArrayType* T) { 
+  return Visit(T->getElementType());
+}
+
+bool UnnamedLocalNoLinkageFinder::VisitVariableArrayType(
+                                                   const VariableArrayType* T) { 
+  return Visit(T->getElementType());
+}
+
+bool UnnamedLocalNoLinkageFinder::VisitDependentSizedArrayType(
+                                            const DependentSizedArrayType* T) { 
+  return Visit(T->getElementType());
+}
+
+bool UnnamedLocalNoLinkageFinder::VisitDependentSizedExtVectorType(
+                                         const DependentSizedExtVectorType* T) { 
+  return Visit(T->getElementType());
+}
+
+bool UnnamedLocalNoLinkageFinder::VisitVectorType(const VectorType* T) {
+  return Visit(T->getElementType());
+}
+
+bool UnnamedLocalNoLinkageFinder::VisitExtVectorType(const ExtVectorType* T) {
+  return Visit(T->getElementType());
+}
+
+bool UnnamedLocalNoLinkageFinder::VisitFunctionProtoType(
+                                                  const FunctionProtoType* T) {
+  for (FunctionProtoType::arg_type_iterator A = T->arg_type_begin(),
+                                         AEnd = T->arg_type_end(); 
+       A != AEnd; ++A) {
+    if (Visit(*A))
+      return true;
+  }
+  
+  return Visit(T->getResultType());
+}
+
+bool UnnamedLocalNoLinkageFinder::VisitFunctionNoProtoType(
+                                               const FunctionNoProtoType* T) {
+  return Visit(T->getResultType());
+}
+
+bool UnnamedLocalNoLinkageFinder::VisitUnresolvedUsingType(
+                                                  const UnresolvedUsingType*) {
+  return false;
+}
+
+bool UnnamedLocalNoLinkageFinder::VisitTypeOfExprType(const TypeOfExprType*) {
+  return false;
+}
+
+bool UnnamedLocalNoLinkageFinder::VisitTypeOfType(const TypeOfType* T) {
+  return Visit(T->getUnderlyingType());
+}
+
+bool UnnamedLocalNoLinkageFinder::VisitDecltypeType(const DecltypeType*) {
+  return false;
+}
+
+bool UnnamedLocalNoLinkageFinder::VisitRecordType(const RecordType* T) {
+  return VisitTagDecl(T->getDecl());
+}
+
+bool UnnamedLocalNoLinkageFinder::VisitEnumType(const EnumType* T) {
+  return VisitTagDecl(T->getDecl());
+}
+
+bool UnnamedLocalNoLinkageFinder::VisitTemplateTypeParmType(
+                                                 const TemplateTypeParmType*) {
+  return false;
+}
+
+bool UnnamedLocalNoLinkageFinder::VisitTemplateSpecializationType(
+                                            const TemplateSpecializationType*) {
+  return false;
+}
+
+bool UnnamedLocalNoLinkageFinder::VisitInjectedClassNameType(
+                                              const InjectedClassNameType* T) {
+  return VisitTagDecl(T->getDecl());
+}
+
+bool UnnamedLocalNoLinkageFinder::VisitDependentNameType(
+                                                   const DependentNameType* T) {
+  return VisitNestedNameSpecifier(T->getQualifier());
+}
+
+bool UnnamedLocalNoLinkageFinder::VisitDependentTemplateSpecializationType(
+                                 const DependentTemplateSpecializationType* T) {
+  return VisitNestedNameSpecifier(T->getQualifier());
+}
+
+bool UnnamedLocalNoLinkageFinder::VisitObjCObjectType(const ObjCObjectType *) {
+  return false;
+}
+
+bool UnnamedLocalNoLinkageFinder::VisitObjCInterfaceType(
+                                                   const ObjCInterfaceType *) {
+  return false;
+}
+
+bool UnnamedLocalNoLinkageFinder::VisitObjCObjectPointerType(
+                                                const ObjCObjectPointerType *) {
+  return false;
+}
+
+bool UnnamedLocalNoLinkageFinder::VisitTagDecl(const TagDecl *Tag) {
+  if (Tag->getDeclContext()->isFunctionOrMethod()) {
+    S.Diag(SR.getBegin(), diag::ext_template_arg_local_type)
+      << S.Context.getTypeDeclType(Tag) << SR;
+    return true;
+  } 
+  
+  if (!Tag->getDeclName() && !Tag->getTypedefForAnonDecl()) {
+    S.Diag(SR.getBegin(), diag::ext_template_arg_unnamed_type) << SR;
+    S.Diag(Tag->getLocation(), diag::note_template_unnamed_type_here);
+    return true;
+  }
+
+  return false;
+}
+
+bool UnnamedLocalNoLinkageFinder::VisitNestedNameSpecifier(
+                                                    NestedNameSpecifier *NNS) {
+  if (NNS->getPrefix() && VisitNestedNameSpecifier(NNS->getPrefix()))
+    return true;
+    
+  switch (NNS->getKind()) {
+  case NestedNameSpecifier::Identifier:
+  case NestedNameSpecifier::Namespace:
+  case NestedNameSpecifier::Global:
+    return false;
+      
+  case NestedNameSpecifier::TypeSpec:
+  case NestedNameSpecifier::TypeSpecWithTemplate:
+    return Visit(QualType(NNS->getAsType(), 0));
+  }
+}
+
+
 /// \brief Check a template argument against its corresponding
 /// template type parameter.
 ///
@@ -2356,39 +2566,24 @@ bool Sema::CheckTemplateArgument(TemplateTypeParmDecl *Param,
                                  TypeSourceInfo *ArgInfo) {
   assert(ArgInfo && "invalid TypeSourceInfo");
   QualType Arg = ArgInfo->getType();
-
-  // C++03 [temp.arg.type]p2:
-  //   A local type, a type with no linkage, an unnamed type or a type
-  //   compounded from any of these types shall not be used as a
-  //   template-argument for a template type-parameter.
-  // C++0x allows these, and even in C++03 we allow them as an extension with
-  // a warning.
-  //
-  // FIXME: We're not handling the "type compounded from any of these types"
-  // case.
   SourceRange SR = ArgInfo->getTypeLoc().getSourceRange();
-  if (!LangOpts.CPlusPlus0x) {
-    const TagType *Tag = 0;
-    if (const EnumType *EnumT = Arg->getAs<EnumType>())
-      Tag = EnumT;
-    else if (const RecordType *RecordT = Arg->getAs<RecordType>())
-      Tag = RecordT;
-    if (Tag && Tag->getDecl()->getDeclContext()->isFunctionOrMethod()) {
-      SourceRange SR = ArgInfo->getTypeLoc().getSourceRange();
-      Diag(SR.getBegin(), diag::ext_template_arg_local_type)
-        << QualType(Tag, 0) << SR;
-    } else if (Tag && !Tag->getDecl()->getDeclName() &&
-               !Tag->getDecl()->getTypedefForAnonDecl()) {
-      Diag(SR.getBegin(), diag::ext_template_arg_unnamed_type) << SR;
-      Diag(Tag->getDecl()->getLocation(),
-           diag::note_template_unnamed_type_here);
-    }
-  }
 
   if (Arg->isVariablyModifiedType()) {
     return Diag(SR.getBegin(), diag::err_variably_modified_template_arg) << Arg;
   } else if (Context.hasSameUnqualifiedType(Arg, Context.OverloadTy)) {
     return Diag(SR.getBegin(), diag::err_template_arg_overload_type) << SR;
+  }
+
+  // C++03 [temp.arg.type]p2:
+  //   A local type, a type with no linkage, an unnamed type or a type
+  //   compounded from any of these types shall not be used as a
+  //   template-argument for a template type-parameter.
+  //
+  // C++0x allows these, and even in C++03 we allow them as an extension with
+  // a warning.
+  if (!LangOpts.CPlusPlus0x) {
+    UnnamedLocalNoLinkageFinder Finder(*this, SR);
+    (void)Finder.Visit(Context.getCanonicalType(Arg));
   }
 
   return false;

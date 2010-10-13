@@ -25,7 +25,7 @@ namespace N0 {
   template <typename T, typename U> int f1(T, U);
   enum {e1}; // expected-note 2{{unnamed type used in template argument was declared here}}
   enum {e2}; // expected-note 2{{unnamed type used in template argument was declared here}}
-  enum {e3}; // FIXME: expected unnamed type used in template argument was declared here
+  enum {e3}; // expected-note{{unnamed type used in template argument was declared here}}
 
   template<typename T> struct X;
   template<typename T> struct X<T*> { };
@@ -37,6 +37,6 @@ namespace N0 {
     f1(e2); // expected-warning{{template argument uses unnamed type}}
     f1(e2);
 
-    X<__typeof__(e3)*> x; // FIXME: should warn about unnamed type
+    X<__typeof__(e3)*> x; // expected-warning{{template argument uses unnamed type}}
   }
 }
