@@ -134,7 +134,7 @@ declare double @fabsl(double)
 define float @f16(float %a) nounwind {
 entry:
 ; CHECK: f16
-; This call generates a "bfc" instruction instead of "vabs.f32".
+; FIXME: This call generates a "bfc" instruction instead of "vabs.f32".
   %call = tail call float @fabsf(float %a)
   ret float %call
 }
@@ -156,3 +156,39 @@ entry:
   %conv = fpext float %a to double
   ret double %conv
 }
+
+define double @f19(double %a) nounwind readnone {
+entry:
+; CHECK: f19
+; CHECK: vneg.f64 d16, d16  @ encoding: [0x60,0x0b,0xf1,0xee]
+  %sub = fsub double -0.000000e+00, %a
+  ret double %sub
+}
+
+define float @f20(float %a) nounwind readnone {
+entry:
+; CHECK: f20
+; FIXME: This produces an 'eor' instruction.
+  %sub = fsub float -0.000000e+00, %a
+  ret float %sub
+}
+
+define double @f21(double %a) nounwind readnone {
+entry:
+; CHECK: f21
+; CHECK: vsqrt.f64 d16, d16  @ encoding: [0xe0,0x0b,0xf1,0xee]
+  %call = tail call double @sqrtl(double %a) nounwind
+  ret double %call
+}
+
+declare double @sqrtl(double) readnone
+
+define float @f22(float %a) nounwind readnone {
+entry:
+; CHECK: f22
+; CHECK: vsqrt.f32 s0, s0  @ encoding: [0xc0,0x0a,0xb1,0xee]
+  %call = tail call float @sqrtf(float %a) nounwind
+  ret float %call
+}
+
+declare float @sqrtf(float) readnone

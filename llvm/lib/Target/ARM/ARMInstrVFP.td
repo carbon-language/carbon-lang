@@ -427,28 +427,34 @@ def VCVTTHS: ASuI<0b11101, 0b11, 0b0011, 0b11, 0, (outs SPR:$dst), (ins SPR:$a),
                  [/* For disassembly only; pattern left blank */]>;
 
 let neverHasSideEffects = 1 in {
-def VMOVD: ADuI<0b11101, 0b11, 0b0000, 0b01, 0, (outs DPR:$dst), (ins DPR:$a),
-                 IIC_fpUNA64, "vmov", ".f64\t$dst, $a", []>;
+def VMOVD  : ADuI_Encode<0b11101, 0b11, 0b0000, 0b01, 0,
+                         (outs DPR:$Dd), (ins DPR:$Dm),
+                         IIC_fpUNA64, "vmov", ".f64\t$Dd, $Dm", []>;
 
-def VMOVS: ASuI<0b11101, 0b11, 0b0000, 0b01, 0, (outs SPR:$dst), (ins SPR:$a),
-                 IIC_fpUNA32, "vmov", ".f32\t$dst, $a", []>;
+def VMOVS  : ASuI_Encode<0b11101, 0b11, 0b0000, 0b01, 0,
+                         (outs SPR:$Sd), (ins SPR:$Sm),
+                         IIC_fpUNA32, "vmov", ".f32\t$Sd, $Sm", []>;
 } // neverHasSideEffects
 
-def VNEGD  : ADuI<0b11101, 0b11, 0b0001, 0b01, 0, (outs DPR:$dst), (ins DPR:$a),
-                 IIC_fpUNA64, "vneg", ".f64\t$dst, $a",
-                 [(set DPR:$dst, (fneg (f64 DPR:$a)))]>;
+def VNEGD  : ADuI_Encode<0b11101, 0b11, 0b0001, 0b01, 0,
+                         (outs DPR:$Dd), (ins DPR:$Dm),
+                         IIC_fpUNA64, "vneg", ".f64\t$Dd, $Dm",
+                         [(set DPR:$Dd, (fneg (f64 DPR:$Dm)))]>;
 
-def VNEGS  : ASuIn<0b11101, 0b11, 0b0001, 0b01, 0,(outs SPR:$dst), (ins SPR:$a),
-                  IIC_fpUNA32, "vneg", ".f32\t$dst, $a",
-                  [(set SPR:$dst, (fneg SPR:$a))]>;
+def VNEGS  : ASuIn_Encode<0b11101, 0b11, 0b0001, 0b01, 0,
+                          (outs SPR:$Sd), (ins SPR:$Sm),
+                          IIC_fpUNA32, "vneg", ".f32\t$Sd, $Sm",
+                          [(set SPR:$Sd, (fneg SPR:$Sm))]>;
 
-def VSQRTD : ADuI<0b11101, 0b11, 0b0001, 0b11, 0, (outs DPR:$dst), (ins DPR:$a),
-                 IIC_fpSQRT64, "vsqrt", ".f64\t$dst, $a",
-                 [(set DPR:$dst, (fsqrt (f64 DPR:$a)))]>;
+def VSQRTD : ADuI_Encode<0b11101, 0b11, 0b0001, 0b11, 0,
+                         (outs DPR:$Dd), (ins DPR:$Dm),
+                         IIC_fpSQRT64, "vsqrt", ".f64\t$Dd, $Dm",
+                         [(set DPR:$Dd, (fsqrt (f64 DPR:$Dm)))]>;
 
-def VSQRTS : ASuI<0b11101, 0b11, 0b0001, 0b11, 0, (outs SPR:$dst), (ins SPR:$a),
-                 IIC_fpSQRT32, "vsqrt", ".f32\t$dst, $a",
-                 [(set SPR:$dst, (fsqrt SPR:$a))]>;
+def VSQRTS : ASuI_Encode<0b11101, 0b11, 0b0001, 0b11, 0,
+                         (outs SPR:$Sd), (ins SPR:$Sm),
+                         IIC_fpSQRT32, "vsqrt", ".f32\t$Sd, $Sm",
+                         [(set SPR:$Sd, (fsqrt SPR:$Sm))]>;
 
 //===----------------------------------------------------------------------===//
 // FP <-> GPR Copies.  Int <-> FP Conversions.
