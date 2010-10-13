@@ -20,6 +20,11 @@ def GetLo32XForm : SDNodeXForm<imm, [{
   return getI32Imm((unsigned)N->getZExtValue());
 }]>;
 
+def GetLo8XForm : SDNodeXForm<imm, [{
+  // Transformation function: get the low 8 bits.
+  return getI8Imm((uint8_t)N->getZExtValue());
+}]>;
+
 
 //===----------------------------------------------------------------------===//
 // Random Pseudo Instructions.
@@ -1106,9 +1111,19 @@ def : Pat<(add GR64:$src1, 0x0000000080000000),
 def : Pat<(store (add (loadi64 addr:$dst), 0x00000000800000000), addr:$dst),
           (SUB64mi32 addr:$dst, 0xffffffff80000000)>;
 
-// Use a 32-bit and with implicit zero-extension instead of a 64-bit and if it
-// has an immediate with at least 32 bits of leading zeros, to avoid needing to
-// materialize that immediate in a register first.
+// To avoid needing to materialize an immediate in a register, use a 32-bit and
+// with implicit zero-extension instead of a 64-bit and if the immediate has at
+// least 32 bits of leading zeros. If in addition the last 32 bits can be
+// represented with a sign extension of a 8 bit constant, use that.
+
+def : Pat<(and GR64:$src, i64immZExt32SExt8:$imm),
+          (SUBREG_TO_REG
+            (i64 0),
+            (AND32ri8
+              (EXTRACT_SUBREG GR64:$src, sub_32bit),
+              (i32 (GetLo8XForm imm:$imm))),
+            sub_32bit)>;
+
 def : Pat<(and GR64:$src, i64immZExt32:$imm),
           (SUBREG_TO_REG
             (i64 0),

@@ -473,6 +473,11 @@ def i64immZExt32  : PatLeaf<(i64 imm), [{
   return (uint64_t)N->getZExtValue() == (uint32_t)N->getZExtValue();
 }]>;
 
+def i64immZExt32SExt8 : PatLeaf<(i64 imm), [{
+    uint64_t v = N->getZExtValue();
+    return v == (uint32_t)v && (int32_t)v == (int8_t)v;
+}]>;
+
 // Helper fragments for loads.
 // It's always safe to treat a anyext i16 load as a i32 load if the i16 is
 // known to be 32-bit aligned or better. Ditto for i8 to i16.
