@@ -933,7 +933,13 @@ class AExtI<bits<8> opcod, dag oops, dag iops, InstrItinClass itin,
             string opc, string asm, list<dag> pattern>
   : I<oops, iops, AddrModeNone, Size4Bytes, IndexModeNone, ExtFrm, itin,
       opc, asm, "", pattern> {
+  // All AExtI instructions have Rd and Rm register operands.
+  bits<4> Rd;
+  bits<4> Rm;
+  let Inst{15-12} = Rd;
+  let Inst{3-0}   = Rm;
   let Inst{7-4}   = 0b0111;
+  let Inst{9-8}   = 0b00;
   let Inst{27-20} = opcod;
 }
 

@@ -170,6 +170,8 @@ namespace {
       const { return 0; }
     unsigned getSORegOpValue(const MachineInstr &MI, unsigned Op)
       const { return 0; }
+    unsigned getRotImmOpValue(const MachineInstr &MI, unsigned Op)
+      const { return 0; }
 
     /// getMovi32Value - Return binary encoding of operand for movw/movt. If the
     /// machine operand requires relocation, record the relocation and return

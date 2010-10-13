@@ -199,12 +199,6 @@ def so_imm_not_XFORM : SDNodeXForm<imm, [{
   return CurDAG->getTargetConstant(~(int)N->getZExtValue(), MVT::i32);
 }]>;
 
-// rot_imm predicate - True if the 32-bit immediate is equal to 8, 16, or 24.
-def rot_imm : PatLeaf<(i32 imm), [{
-  int32_t v = (int32_t)N->getZExtValue();
-  return v == 8 || v == 16 || v == 24;
-}]>;
-
 /// imm1_15 predicate - True if the 32-bit immediate is in the range [1,15].
 def imm1_15 : PatLeaf<(i32 imm), [{
   return (int32_t)N->getZExtValue() >= 1 && (int32_t)N->getZExtValue() < 16;
@@ -300,6 +294,13 @@ def jt2block_operand : Operand<i32> {
 // Local PC labels.
 def pclabel : Operand<i32> {
   let PrintMethod = "printPCLabel";
+}
+
+// rot_imm: An integer that encodes a rotate amount. Must be 8, 16, or 24.
+def rot_imm : Operand<i32>, PatLeaf<(i32 imm), [{
+  int32_t v = (int32_t)N->getZExtValue();
+  return v == 8 || v == 16 || v == 24; }]> {
+  string EncoderMethod = "getRotImmOpValue";
 }
 
 // shift_imm: An integer that encodes a shift amount and the type of shift
@@ -609,33 +610,37 @@ multiclass AI1_cmp_irs<bits<4> opcod, string opc,
 /// register and one whose operand is a register rotated by 8/16/24.
 /// FIXME: Remove the 'r' variant. Its rot_imm is zero.
 multiclass AI_ext_rrot<bits<8> opcod, string opc, PatFrag opnode> {
-  def r     : AExtI<opcod, (outs GPR:$dst), (ins GPR:$src),
-                 IIC_iEXTr, opc, "\t$dst, $src",
-                 [(set GPR:$dst, (opnode GPR:$src))]>,
+  def r     : AExtI<opcod, (outs GPR:$Rd), (ins GPR:$Rm),
+                 IIC_iEXTr, opc, "\t$Rd, $Rm",
+                 [(set GPR:$Rd, (opnode GPR:$Rm))]>,
               Requires<[IsARM, HasV6]> {
     let Inst{11-10} = 0b00;
     let Inst{19-16} = 0b1111;
   }
-  def r_rot : AExtI<opcod, (outs GPR:$dst), (ins GPR:$src, i32imm:$rot),
-                 IIC_iEXTr, opc, "\t$dst, $src, ror $rot",
-                 [(set GPR:$dst, (opnode (rotr GPR:$src, rot_imm:$rot)))]>,
+  def r_rot : AExtI<opcod, (outs GPR:$Rd), (ins GPR:$Rm, rot_imm:$rot),
+                 IIC_iEXTr, opc, "\t$Rd, $Rm, ror $rot",
+                 [(set GPR:$Rd, (opnode (rotr GPR:$Rm, rot_imm:$rot)))]>,
               Requires<[IsARM, HasV6]> {
+    bits<2> rot;
+    let Inst{11-10} = rot;
     let Inst{19-16} = 0b1111;
   }
 }
 
 multiclass AI_ext_rrot_np<bits<8> opcod, string opc> {
-  def r     : AExtI<opcod, (outs GPR:$dst), (ins GPR:$src),
-                 IIC_iEXTr, opc, "\t$dst, $src",
+  def r     : AExtI<opcod, (outs GPR:$Rd), (ins GPR:$Rm),
+                 IIC_iEXTr, opc, "\t$Rd, $Rm",
                  [/* For disassembly only; pattern left blank */]>,
               Requires<[IsARM, HasV6]> {
     let Inst{11-10} = 0b00;
     let Inst{19-16} = 0b1111;
   }
-  def r_rot : AExtI<opcod, (outs GPR:$dst), (ins GPR:$src, i32imm:$rot),
-                 IIC_iEXTr, opc, "\t$dst, $src, ror $rot",
+  def r_rot : AExtI<opcod, (outs GPR:$Rd), (ins GPR:$Rm, rot_imm:$rot),
+                 IIC_iEXTr, opc, "\t$Rd, $Rm, ror $rot",
                  [/* For disassembly only; pattern left blank */]>,
               Requires<[IsARM, HasV6]> {
+    bits<2> rot;
+    let Inst{11-10} = rot;
     let Inst{19-16} = 0b1111;
   }
 }
@@ -643,33 +648,43 @@ multiclass AI_ext_rrot_np<bits<8> opcod, string opc> {
 /// AI_exta_rrot - A binary operation with two forms: one whose operand is a
 /// register and one whose operand is a register rotated by 8/16/24.
 multiclass AI_exta_rrot<bits<8> opcod, string opc, PatFrag opnode> {
-  def rr     : AExtI<opcod, (outs GPR:$dst), (ins GPR:$LHS, GPR:$RHS),
-                  IIC_iEXTAr, opc, "\t$dst, $LHS, $RHS",
-                  [(set GPR:$dst, (opnode GPR:$LHS, GPR:$RHS))]>,
+  def rr     : AExtI<opcod, (outs GPR:$Rd), (ins GPR:$Rn, GPR:$Rm),
+                  IIC_iEXTAr, opc, "\t$Rd, $Rn, $Rm",
+                  [(set GPR:$Rd, (opnode GPR:$Rn, GPR:$Rm))]>,
                Requires<[IsARM, HasV6]> {
     let Inst{11-10} = 0b00;
   }
-  def rr_rot : AExtI<opcod, (outs GPR:$dst), (ins GPR:$LHS, GPR:$RHS,
-                                              i32imm:$rot),
-                  IIC_iEXTAr, opc, "\t$dst, $LHS, $RHS, ror $rot",
-                  [(set GPR:$dst, (opnode GPR:$LHS,
-                                          (rotr GPR:$RHS, rot_imm:$rot)))]>,
-                  Requires<[IsARM, HasV6]>;
+  def rr_rot : AExtI<opcod, (outs GPR:$Rd), (ins GPR:$Rn, GPR:$Rm,
+                                             rot_imm:$rot),
+                  IIC_iEXTAr, opc, "\t$Rd, $Rn, $Rm, ror $rot",
+                  [(set GPR:$Rd, (opnode GPR:$Rn,
+                                          (rotr GPR:$Rm, rot_imm:$rot)))]>,
+                  Requires<[IsARM, HasV6]> {
+    bits<4> Rn;
+    bits<2> rot;
+    let Inst{19-16} = Rn;
+    let Inst{11-10} = rot;
+  }
 }
 
 // For disassembly only.
 multiclass AI_exta_rrot_np<bits<8> opcod, string opc> {
-  def rr     : AExtI<opcod, (outs GPR:$dst), (ins GPR:$LHS, GPR:$RHS),
-                  IIC_iEXTAr, opc, "\t$dst, $LHS, $RHS",
+  def rr     : AExtI<opcod, (outs GPR:$Rd), (ins GPR:$Rn, GPR:$Rm),
+                  IIC_iEXTAr, opc, "\t$Rd, $Rn, $Rm",
                   [/* For disassembly only; pattern left blank */]>,
                Requires<[IsARM, HasV6]> {
     let Inst{11-10} = 0b00;
   }
-  def rr_rot : AExtI<opcod, (outs GPR:$dst), (ins GPR:$LHS, GPR:$RHS,
-                                              i32imm:$rot),
-                  IIC_iEXTAr, opc, "\t$dst, $LHS, $RHS, ror $rot",
+  def rr_rot : AExtI<opcod, (outs GPR:$Rd), (ins GPR:$Rn, GPR:$Rm,
+                                             rot_imm:$rot),
+                  IIC_iEXTAr, opc, "\t$Rd, $Rn, $Rm, ror $rot",
                   [/* For disassembly only; pattern left blank */]>,
-                  Requires<[IsARM, HasV6]>;
+                  Requires<[IsARM, HasV6]> {
+    bits<4> Rn;
+    bits<2> rot;
+    let Inst{19-16} = Rn;
+    let Inst{11-10} = rot;
+  }
 }
 
 /// AI1_adde_sube_irs - Define instructions and patterns for adde and sube.

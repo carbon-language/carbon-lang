@@ -64,4 +64,14 @@ entry:
   %add = add nsw i64 %b, %a
   ret i64 %add
 }
+
+define i32 @f7(i32 %a, i32 %b) nounwind readnone optsize ssp {
+entry:
+; CHECK: f7
+; CHECK: uxtab  r0, r0, r1            @ encoding: [0x71,0x00,0xe0,0xe6]
+  %and = and i32 %b, 255
+  %add = add i32 %and, %a
+  ret i32 %add
+}
+
 declare void @llvm.trap() nounwind
