@@ -366,14 +366,35 @@ def VCMPZS  : ASuI<0b11101, 0b11, 0b0101, 0b01, 0, (outs), (ins SPR:$a),
                   [/* For disassembly only; pattern left blank */]>;
 }
 
-def VCVTDS : ASuI<0b11101, 0b11, 0b0111, 0b11, 0, (outs DPR:$dst), (ins SPR:$a),
-                 IIC_fpCVTDS, "vcvt", ".f64.f32\t$dst, $a",
-                 [(set DPR:$dst, (fextend SPR:$a))]>;
+def VCVTDS  : ASuI<0b11101, 0b11, 0b0111, 0b11, 0,
+                   (outs DPR:$Dd), (ins SPR:$Sm),
+                   IIC_fpCVTDS, "vcvt", ".f64.f32\t$Dd, $Sm",
+                   [(set DPR:$Dd, (fextend SPR:$Sm))]> {
+  // Instruction operands.
+  bits<5> Dd;
+  bits<5> Sm;
+
+  // Encode instruction operands.
+  let Inst{3-0}   = Sm{4-1};
+  let Inst{5}     = Sm{0};
+  let Inst{15-12} = Dd{3-0};
+  let Inst{22}    = Dd{4};
+}
 
 // Special case encoding: bits 11-8 is 0b1011.
-def VCVTSD : VFPAI<(outs SPR:$dst), (ins DPR:$a), VFPUnaryFrm,
-                   IIC_fpCVTSD, "vcvt", ".f32.f64\t$dst, $a",
-                   [(set SPR:$dst, (fround DPR:$a))]> {
+def VCVTSD  : VFPAI<(outs SPR:$Sd), (ins DPR:$Dm), VFPUnaryFrm,
+                    IIC_fpCVTSD, "vcvt", ".f32.f64\t$Sd, $Dm",
+                    [(set SPR:$Sd, (fround DPR:$Dm))]> {
+  // Instruction operands.
+  bits<5> Sd;
+  bits<5> Dm;
+
+  // Encode instruction operands.
+  let Inst{3-0}   = Dm{3-0};
+  let Inst{5}     = Dm{4};
+  let Inst{15-12} = Sd{4-1};
+  let Inst{22}    = Sd{0};
+
   let Inst{27-23} = 0b11101;
   let Inst{21-16} = 0b110111;
   let Inst{11-8}  = 0b1011;

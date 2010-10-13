@@ -140,3 +140,19 @@ entry:
 }
 
 declare float @fabsf(float)
+
+define float @f17(double %a) nounwind readnone {
+entry:
+; CHECK: f17
+; CHECK: vcvt.f32.f64 s0, d16  @ encoding: [0xe0,0x0b,0xb7,0xee]
+  %conv = fptrunc double %a to float
+  ret float %conv
+}
+
+define double @f18(float %a) nounwind readnone {
+entry:
+; CHECK: f18
+; CHECK: vcvt.f64.f32 d16, s0  @ encoding: [0xc0,0x0a,0xf7,0xee]
+  %conv = fpext float %a to double
+  ret double %conv
+}
