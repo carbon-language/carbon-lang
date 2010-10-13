@@ -819,7 +819,7 @@ protected:
   /// any local or unnamed types.
   virtual std::pair<Linkage, bool> getLinkageUnnamedLocalImpl() const;
   
-  enum { BitsRemainingInType = 19 };
+  enum { BitsRemainingInType = 17 };
 
   // silence VC++ warning C4355: 'this' : used in base member initializer list
   Type *this_() { return this; }
