@@ -953,6 +953,11 @@ def TRAP : AXI<(outs), (ins), MiscFrm, NoItinerary,
 }
 
 // Address computation and loads and stores in PIC mode.
+// FIXME: These PIC insn patterns are pseudos, but derive from the normal insn
+//        classes (AXI1, et.al.) and so have encoding information and such,
+//        which is suboptimal. Once the rest of the code emitter (including
+//        JIT) is MC-ized we should look at refactoring these into true
+//        pseudos.
 let isNotDuplicable = 1 in {
 def PICADD : AXI1<0b0100, (outs GPR:$dst), (ins GPR:$a, pclabel:$cp, pred:$p),
                   Pseudo, IIC_iALUr, "",
