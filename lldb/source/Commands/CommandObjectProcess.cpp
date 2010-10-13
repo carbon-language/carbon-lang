@@ -1080,6 +1080,245 @@ public:
 };
 
 //-------------------------------------------------------------------------
+// CommandObjectProcessHandle
+//-------------------------------------------------------------------------
+
+class CommandObjectProcessHandle : public CommandObject
+{
+public:
+
+    class CommandOptions : public Options
+    {
+    public:
+        
+        CommandOptions () :
+            Options ()
+        {
+            ResetOptionValues ();
+        }
+
+        ~CommandOptions ()
+        {
+        }
+
+        Error
+        SetOptionValue (int option_idx, const char *option_arg)
+        {
+            Error error;
+            char short_option = (char) m_getopt_table[option_idx].val;
+            
+            switch (short_option)
+            {
+                case 's':
+                    stop = option_arg;
+                    break;
+                case 'n':
+                    notify = option_arg;
+                    break;
+                case 'p':
+                    pass = option_arg;
+                    break;
+                default:
+                    error.SetErrorStringWithFormat("Invalid short option character '%c'.\n", short_option);
+                    break;
+            }
+            return error;
+        }
+
+        void
+        ResetOptionValues ()
+        {
+            Options::ResetOptionValues();
+            stop.clear();
+            notify.clear();
+            pass.clear();
+        }
+
+        const lldb::OptionDefinition*
+        GetDefinitions ()
+        {
+            return g_option_table;
+        }
+
+        // Options table: Required for subclasses of Options.
+
+        static lldb::OptionDefinition g_option_table[];
+
+        // Instance variables to hold the values for command options.
+
+        std::string stop;
+        std::string notify;
+        std::string pass;
+    };
+
+
+    CommandObjectProcessHandle (CommandInterpreter &interpreter) :
+        CommandObject (interpreter,
+                       "process handle",
+                       "Update whether the process should or should not stop or notify or suppress various signals it receives from the OS.",
+                       NULL)
+    {
+        CommandArgumentEntry arg;
+        CommandArgumentData signal_name_arg;
+
+        signal_name_arg.arg_type = eArgTypeSignalName;
+        signal_name_arg.arg_repetition = eArgRepeatPlus;
+
+        arg.push_back (signal_name_arg);
+        
+        m_arguments.push_back (arg);
+    }
+
+    ~CommandObjectProcessHandle ()
+    {
+    }
+
+    Options *
+    GetOptions ()
+    {
+        return &m_options;
+    }
+
+    bool
+    VerifyCommandOptionValue (const std::string &option, int *real_value)
+    {
+        bool okay = true;
+
+        if (strcasecmp (option.c_str(), "false") == 0)
+            *real_value = 0;
+        else if (strcasecmp (option.c_str(), "true") == 0)
+            *real_value = 1;
+        else
+        {
+            // If the value isn't 'true' or 'false', it had better be 0 or 1.
+            *real_value = Args::StringToUInt32 (option.c_str(), 3);
+            if (*real_value != 0 && *real_value != 1)
+                okay = false;
+        }
+        
+        return okay;
+    }
+
+    bool
+    Execute (Args &signal_args, CommandReturnObject &result)
+    {
+        TargetSP target_sp = m_interpreter.GetDebugger().GetSelectedTarget();
+        
+        if (!target_sp)
+        {
+            result.AppendError ("No current target;"
+                                " cannot handle signals until you have a valid target and process.\n");
+            result.SetStatus (eReturnStatusFailed);
+            return false;
+        }
+        
+        ProcessSP process_sp = target_sp->GetProcessSP();
+
+        if (!process_sp)
+        {
+            result.AppendError ("No current process; cannot handle signals until you have a valid process.\n");
+            result.SetStatus (eReturnStatusFailed);
+            return false;
+        }
+
+        if (m_options.stop.empty()
+            && m_options.notify.empty()
+            && m_options.pass.empty())
+        {
+            result.AppendError ("No action specified (-s or -n or -q); no signal will be updated.\n");
+            result.SetStatus (eReturnStatusFailed);
+            return false;
+        }
+
+        size_t num_signals = signal_args.GetArgumentCount();
+        if (num_signals == 0)
+        {
+            result.AppendError ("No signal specified to be updated.\n");
+            result.SetStatus (eReturnStatusFailed);
+            return false;
+        }
+
+        int stop_action = -1;   // -1 means leave the current setting alone
+        int pass_action = -1;  // -1 means leave the current setting alone
+        int notify_action = -1; // -1 means leave the current setting alone
+
+        if (! m_options.stop.empty()
+            && ! VerifyCommandOptionValue (m_options.stop, &stop_action))
+        {
+            result.AppendError ("Invalid argument for command option --stop; must be true or false.\n");
+            result.SetStatus (eReturnStatusFailed);
+            return false;
+        }
+
+        if (! m_options.notify.empty()
+            && ! VerifyCommandOptionValue (m_options.notify, &notify_action))
+        {
+            result.AppendError ("Invalid argument for command option --notify; must be true or false.\n");
+            result.SetStatus (eReturnStatusFailed);
+            return false;
+        }
+
+        if (! m_options.pass.empty()
+            && ! VerifyCommandOptionValue (m_options.pass, &pass_action))
+        {
+            result.AppendError ("Invalid argument for command option --pass; must be true or false.\n");
+            result.SetStatus (eReturnStatusFailed);
+            return false;
+        }
+
+        size_t num_args = signal_args.GetArgumentCount();
+        UnixSignals &signals = process_sp->GetUnixSignals();
+        int num_signals_set = 0;
+
+        for (size_t i = 0; i < num_args; ++i)
+        {
+            int32_t signo = signals.GetSignalNumberFromName (signal_args.GetArgumentAtIndex (i));
+            if (signo != LLDB_INVALID_SIGNAL_NUMBER)
+            {
+                // Casting the actions as bools here should be okay, because VerifyCommandOptionValue guarantees that
+                // the value is either 0 or 1.
+                if (stop_action != -1)
+                    signals.SetShouldStop (signo, (bool) stop_action);
+                if (pass_action != -1)
+                {
+                    if (pass_action == 1) // pass it down, so 'suppress' is false
+                        signals.SetShouldSuppress (signo, false);
+                    else if (pass_action == 0) // do not pass it down, so 'suppress' is true
+                        signals.SetShouldSuppress (signo, true);
+                }
+                if (notify_action != -1)
+                    signals.SetShouldNotify (signo, (bool) notify_action);
+                ++num_signals_set;
+            }
+            else
+            {
+                result.AppendErrorWithFormat ("Invalid signal name '%s'\n", signal_args.GetArgumentAtIndex (i));
+            }
+        }
+
+        if (num_signals_set > 0)
+            result.SetStatus (eReturnStatusSuccessFinishNoResult);
+        else
+            result.SetStatus (eReturnStatusFailed);
+
+        return result.Succeeded();
+    }
+
+protected:
+
+    CommandOptions m_options;
+};
+
+lldb::OptionDefinition
+CommandObjectProcessHandle::CommandOptions::g_option_table[] =
+{
+{ LLDB_OPT_SET_1, false, "stop",   's', required_argument, NULL, 0, eArgTypeBoolean, "Whether or not the process should be stopped if the signal is received." },
+{ LLDB_OPT_SET_1, false, "notify", 'n', required_argument, NULL, 0, eArgTypeBoolean, "Whether or not the debugger should notify the user if the signal is received." },
+{ LLDB_OPT_SET_1, false, "pass",  'p', required_argument, NULL, 0, eArgTypeBoolean, "Whether or not the signal should be passed to the process." },
+{ 0, false, NULL, 0, 0, NULL, 0, eArgTypeNone, NULL }
+};
+
+//-------------------------------------------------------------------------
 // CommandObjectMultiwordProcess
 //-------------------------------------------------------------------------
 
@@ -1094,6 +1333,7 @@ CommandObjectMultiwordProcess::CommandObjectMultiwordProcess (CommandInterpreter
     LoadSubCommand ("continue",    CommandObjectSP (new CommandObjectProcessContinue (interpreter)));
     LoadSubCommand ("detach",      CommandObjectSP (new CommandObjectProcessDetach (interpreter)));
     LoadSubCommand ("signal",      CommandObjectSP (new CommandObjectProcessSignal (interpreter)));
+    LoadSubCommand ("handle",      CommandObjectSP (new CommandObjectProcessHandle (interpreter)));
     LoadSubCommand ("status",      CommandObjectSP (new CommandObjectProcessStatus (interpreter)));
     LoadSubCommand ("interrupt",   CommandObjectSP (new CommandObjectProcessInterrupt (interpreter)));
     LoadSubCommand ("kill",        CommandObjectSP (new CommandObjectProcessKill (interpreter)));

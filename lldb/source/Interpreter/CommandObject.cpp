@@ -647,6 +647,7 @@ CommandObject::g_arguments_data[] =
     { eArgTypeSettingKey, "setting-key", CommandCompletions::eNoCompletion, NULL, "A key into a settings variables that is a dictionary (try 'settings list' to see all the possible settings variables and their types)." },
     { eArgTypeSettingPrefix, "setting-prefix", CommandCompletions::eNoCompletion, NULL, "The name of a settable internal debugger variable up to a dot ('.'), e.g. 'target.process.'" },
     { eArgTypeSettingVariableName, "setting-variable-name", CommandCompletions::eNoCompletion, NULL, "The name of a settable internal debugger variable.  Type 'settings list' to see a complete list of such variables." },
+    { eArgTypeSignalName, "signal-name", CommandCompletions::eNoCompletion, NULL, "The name of a UNIX signal (e.g. SIGINT or SIGKILL) ." },
     { eArgTypeShlibName, "shlib-name", CommandCompletions::eNoCompletion, NULL, "The name of a shared library." },
     { eArgTypeSourceFile, "source-file", CommandCompletions::eNoCompletion, NULL, "The name of a source file.." },
     { eArgTypeSortOrder, "sort-order", CommandCompletions::eNoCompletion, NULL, "Specify a sort order when dumping lists." },

@@ -558,6 +558,7 @@ typedef enum CommandArgumentType
     eArgTypeSettingKey,
     eArgTypeSettingPrefix,
     eArgTypeSettingVariableName,
+    eArgTypeSignalName,
     eArgTypeShlibName,
     eArgTypeSourceFile,
     eArgTypeSortOrder,

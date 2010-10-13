@@ -1439,6 +1439,7 @@ Process::ShouldBroadcastEvent (Event *event_ptr)
                     {
                         case eVoteYes:
                             Process::ProcessEventData::SetRestartedInEvent (event_ptr, true);
+                            break;
                         case eVoteNoOpinion:
                         case eVoteNo:
                             return_value = false;
