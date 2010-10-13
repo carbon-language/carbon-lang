@@ -618,7 +618,8 @@ bool ARMFastISel::ARMComputeRegOffset(const Value *Obj, unsigned &Reg,
     }
   }
 
-  // FIXME: Handle global variables.
+  // Materialize the global variable's address into a reg which can
+  // then be used later to load the variable.
   if (const GlobalValue *GV = dyn_cast<GlobalValue>(Obj)) {
     unsigned Tmp = ARMMaterializeGV(GV, TLI.getValueType(Obj->getType()));
     if (Tmp == 0) return false;
