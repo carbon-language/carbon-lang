@@ -61,7 +61,10 @@ namespace {
 }
 
 char SRETPromotion::ID = 0;
-INITIALIZE_PASS(SRETPromotion, "sretpromotion",
+INITIALIZE_PASS_BEGIN(SRETPromotion, "sretpromotion",
+                "Promote sret arguments to multiple ret values", false, false)
+INITIALIZE_AG_DEPENDENCY(CallGraph)
+INITIALIZE_PASS_END(SRETPromotion, "sretpromotion",
                 "Promote sret arguments to multiple ret values", false, false)
 
 Pass *llvm::createStructRetPromotionPass() {

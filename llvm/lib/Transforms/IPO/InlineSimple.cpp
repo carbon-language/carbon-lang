@@ -56,7 +56,10 @@ namespace {
 }
 
 char SimpleInliner::ID = 0;
-INITIALIZE_PASS(SimpleInliner, "inline",
+INITIALIZE_PASS_BEGIN(SimpleInliner, "inline",
+                "Function Integration/Inlining", false, false)
+INITIALIZE_AG_DEPENDENCY(CallGraph)
+INITIALIZE_PASS_END(SimpleInliner, "inline",
                 "Function Integration/Inlining", false, false)
 
 Pass *llvm::createFunctionInliningPass() { return new SimpleInliner(); }
