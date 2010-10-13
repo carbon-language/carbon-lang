@@ -5938,6 +5938,7 @@ public:
         template<class _UnaryOperation>
             param_type(size_t __nw, result_type __xmin, result_type __xmax,
                        _UnaryOperation __fw);
+        param_type & operator=(const param_type& __rhs);
 
         _LIBCPP_INLINE_VISIBILITY
         vector<result_type> intervals() const {return __b_;}
@@ -6046,6 +6047,23 @@ public:
     operator>>(basic_istream<_CharT, _Traits>& __is,
                piecewise_constant_distribution<_RT>& __x);
 };
+
+template<class _RealType>
+typename piecewise_constant_distribution<_RealType>::param_type &
+piecewise_constant_distribution<_RealType>::param_type::operator=
+                                                       (const param_type& __rhs)
+{
+//  These can throw
+    __b_.reserve        (__rhs.__b_.size ());
+    __densities_.reserve(__rhs.__densities_.size());
+    __areas_.reserve    (__rhs.__areas_.size());
+
+//  These can not throw
+    __b_         = __rhs.__b_;
+    __densities_ = __rhs.__densities_;
+    __areas_     =  __rhs.__areas_;
+    return *this;
+}
 
 template<class _RealType>
 void
@@ -6239,7 +6257,8 @@ public:
         template<class _UnaryOperation>
             param_type(size_t __nw, result_type __xmin, result_type __xmax,
                        _UnaryOperation __fw);
-
+        param_type & operator=(const param_type& __rhs);
+        
         _LIBCPP_INLINE_VISIBILITY
         vector<result_type> intervals() const {return __b_;}
         _LIBCPP_INLINE_VISIBILITY
@@ -6347,6 +6366,24 @@ public:
     operator>>(basic_istream<_CharT, _Traits>& __is,
                piecewise_linear_distribution<_RT>& __x);
 };
+
+template<class _RealType>
+typename piecewise_linear_distribution<_RealType>::param_type &
+piecewise_linear_distribution<_RealType>::param_type::operator=
+                                                       (const param_type& __rhs)
+{
+//  These can throw
+    __b_.reserve        (__rhs.__b_.size ());
+    __densities_.reserve(__rhs.__densities_.size());
+    __areas_.reserve    (__rhs.__areas_.size());
+
+//  These can not throw
+    __b_         = __rhs.__b_;
+    __densities_ = __rhs.__densities_;
+    __areas_     =  __rhs.__areas_;
+    return *this;
+}
+
 
 template<class _RealType>
 void
