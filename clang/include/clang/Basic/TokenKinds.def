@@ -183,6 +183,7 @@ PUNCTUATOR(at,                  "@")
 //   KEYC99   - This is a keyword introduced to C in C99
 //   KEYCXX   - This is a C++ keyword, or a C++-specific keyword in the
 //              implementation namespace
+//   KEYNOCXX - This is a keyword in every non-C++ dialect.
 //   KEYCXX0X - This is a C++ keyword introduced to C++ in C++0x
 //   KEYGNU   - This is a keyword if GNU extensions are enabled
 //   KEYMS    - This is a keyword if Microsoft extensions are enabled
@@ -222,7 +223,7 @@ KEYWORD(unsigned                    , KEYALL)
 KEYWORD(void                        , KEYALL)
 KEYWORD(volatile                    , KEYALL)
 KEYWORD(while                       , KEYALL)
-KEYWORD(_Bool                       , KEYNOMS)
+KEYWORD(_Bool                       , KEYNOCXX)
 KEYWORD(_Complex                    , KEYALL)
 KEYWORD(_Imaginary                  , KEYALL)
 KEYWORD(__func__                    , KEYALL)
