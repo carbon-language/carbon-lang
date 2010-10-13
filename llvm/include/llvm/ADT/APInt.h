@@ -808,10 +808,10 @@ public:
   // Operations that return overflow indicators.
   
   // ssub_ov - Signed subtraction.  Unsigned subtraction never overflows.
-  APInt sadd_ov(const APInt &RHS, bool &Overflow);
-  APInt ssub_ov(const APInt &RHS, bool &Overflow);
-  APInt sdiv_ov(const APInt &RHS, bool &Overflow);
-  APInt smul_ov(const APInt &RHS, bool &Overflow);
+  APInt sadd_ov(const APInt &RHS, bool &Overflow) const;
+  APInt ssub_ov(const APInt &RHS, bool &Overflow) const;
+  APInt sdiv_ov(const APInt &RHS, bool &Overflow) const;
+  APInt smul_ov(const APInt &RHS, bool &Overflow) const;
   APInt sshl_ov(unsigned Amt, bool &Overflow);
 
   /// @returns the bit value at bitPosition

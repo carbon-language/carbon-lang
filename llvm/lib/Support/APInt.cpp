@@ -2046,27 +2046,27 @@ void APInt::udivrem(const APInt &LHS, const APInt &RHS,
   divide(LHS, lhsWords, RHS, rhsWords, &Quotient, &Remainder);
 }
 
-APInt APInt::sadd_ov(const APInt &RHS, bool &Overflow) {
+APInt APInt::sadd_ov(const APInt &RHS, bool &Overflow) const {
   APInt Res = *this+RHS;
   Overflow = isNonNegative() == RHS.isNonNegative() &&
              Res.isNonNegative() != isNonNegative();
   return Res;
 }
 
-APInt APInt::ssub_ov(const APInt &RHS, bool &Overflow) {
+APInt APInt::ssub_ov(const APInt &RHS, bool &Overflow) const {
   APInt Res = *this - RHS;
   Overflow = isNonNegative() != RHS.isNonNegative() &&
              Res.isNonNegative() != isNonNegative();
   return Res;
 }
 
-APInt APInt::sdiv_ov(const APInt &RHS, bool &Overflow) {
+APInt APInt::sdiv_ov(const APInt &RHS, bool &Overflow) const {
   // MININT/-1  -->  overflow.
   Overflow = isMinSignedValue() && RHS.isAllOnesValue();
   return sdiv(RHS);
 }
 
-APInt APInt::smul_ov(const APInt &RHS, bool &Overflow) {
+APInt APInt::smul_ov(const APInt &RHS, bool &Overflow) const {
   APInt Res = *this * RHS;
   
   if (*this != 0 && RHS != 0)
@@ -2076,7 +2076,7 @@ APInt APInt::smul_ov(const APInt &RHS, bool &Overflow) {
   return Res;
 }
 
-APInt APInt::sshl_ov(unsigned ShAmt, bool &Overflow) {
+APInt APInt::sshl_ov(unsigned ShAmt, bool &Overflow) const {
   Overflow = ShAmt >= getBitWidth();
   if (Overflow)
     ShAmt = getBitWidth()-1;
