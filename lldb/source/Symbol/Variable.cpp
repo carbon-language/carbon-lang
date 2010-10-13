@@ -67,7 +67,7 @@ Variable::Dump(Stream *s, bool show_context) const
 
     if (m_type != NULL)
     {
-        *s << ", type = " << (void*)m_type << " (";
+        *s << ", type = {" << m_type->GetID() << "} " << (void*)m_type << " (";
         m_type->DumpTypeName(s);
         s->PutChar(')');
     }

@@ -70,7 +70,13 @@ DeclContext::lookup_result ClangASTSource::FindExternalVisibleDeclsByName(const 
     
     NameSearchContext NSC(*this, Decls, Name, DC);
     
-    DeclMap.GetDecls(NSC, Name.getAsString().c_str());
+    std::string name (Name.getAsString());
+    // TODO: Figure out what to do here, after recent changes to the DWARF 
+    // parser where more types are now in type by name index, we were sometimes
+    // finding our own version of a builtin? Skip it for now until we figure out
+    // how to get around this properly.
+    if (name.compare("__va_list_tag") != 0)
+        DeclMap.GetDecls(NSC, name.c_str());
     return SetExternalVisibleDeclsForName(DC, Name, Decls);
 }
 
