@@ -741,11 +741,11 @@ public:
   /// RHS are treated as unsigned quantities for purposes of this division.
   /// @returns a new APInt value containing the division result
   /// @brief Unsigned division operation.
-  APInt udiv(const APInt& RHS) const;
+  APInt udiv(const APInt &RHS) const;
 
   /// Signed divide this APInt by APInt RHS.
   /// @brief Signed division function for APInt.
-  APInt sdiv(const APInt& RHS) const {
+  APInt sdiv(const APInt &RHS) const {
     if (isNegative())
       if (RHS.isNegative())
         return (-(*this)).udiv(-RHS);
@@ -763,11 +763,11 @@ public:
   /// which is *this.
   /// @returns a new APInt value containing the remainder result
   /// @brief Unsigned remainder operation.
-  APInt urem(const APInt& RHS) const;
+  APInt urem(const APInt &RHS) const;
 
   /// Signed remainder operation on APInt.
   /// @brief Function for signed remainder operation.
-  APInt srem(const APInt& RHS) const {
+  APInt srem(const APInt &RHS) const {
     if (isNegative())
       if (RHS.isNegative())
         return -((-(*this)).urem(-RHS));
@@ -788,8 +788,7 @@ public:
                       APInt &Quotient, APInt &Remainder);
 
   static void sdivrem(const APInt &LHS, const APInt &RHS,
-                      APInt &Quotient, APInt &Remainder)
-  {
+                      APInt &Quotient, APInt &Remainder) {
     if (LHS.isNegative()) {
       if (RHS.isNegative())
         APInt::udivrem(-LHS, -RHS, Quotient, Remainder);
@@ -804,6 +803,16 @@ public:
       APInt::udivrem(LHS, RHS, Quotient, Remainder);
     }
   }
+  
+  
+  // Operations that return overflow indicators.
+  
+  // ssub_ov - Signed subtraction.  Unsigned subtraction never overflows.
+  APInt sadd_ov(const APInt &RHS, bool &Overflow);
+  APInt ssub_ov(const APInt &RHS, bool &Overflow);
+  APInt sdiv_ov(const APInt &RHS, bool &Overflow);
+  APInt smul_ov(const APInt &RHS, bool &Overflow);
+  APInt sshl_ov(unsigned Amt, bool &Overflow);
 
   /// @returns the bit value at bitPosition
   /// @brief Array-indexing support.
@@ -988,6 +997,9 @@ public:
     return sge(APInt(getBitWidth(), RHS));
   }
 
+  
+  
+  
   /// This operation tests if there are any pairs of corresponding bits
   /// between this APInt and RHS that are both set.
   bool intersects(const APInt &RHS) const {
@@ -1029,7 +1041,7 @@ public:
   /// @name Bit Manipulation Operators
   /// @{
   /// @brief Set every bit to 1.
-  APInt& set() {
+  APInt &set() {
     if (isSingleWord()) {
       VAL = -1ULL;
       return clearUnusedBits();
@@ -1044,10 +1056,10 @@ public:
 
   /// Set the given bit to 1 whose position is given as "bitPosition".
   /// @brief Set a given bit to 1.
-  APInt& set(unsigned bitPosition);
+  APInt &set(unsigned bitPosition);
 
   /// @brief Set every bit to 0.
-  APInt& clear() {
+  APInt &clear() {
     if (isSingleWord())
       VAL = 0;
     else
@@ -1057,10 +1069,10 @@ public:
 
   /// Set the given bit to 0 whose position is given as "bitPosition".
   /// @brief Set a given bit to 0.
-  APInt& clear(unsigned bitPosition);
+  APInt &clear(unsigned bitPosition);
 
   /// @brief Toggle every bit to its opposite value.
-  APInt& flip() {
+  APInt &flip() {
     if (isSingleWord()) {
       VAL ^= -1ULL;
       return clearUnusedBits();
