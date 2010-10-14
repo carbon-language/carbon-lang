@@ -5479,6 +5479,12 @@ Stmt *RewriteObjC::RewriteFunctionBodyOrGlobalInitializer(Stmt *S) {
       //              ^(NSURL *errorURL, NSError *error) { return (BOOL)1; };
       SourceRange SrcRange = BinOp->getSourceRange();
       Stmt *newStmt = RewriteFunctionBodyOrGlobalInitializer(BinOp->getRHS());
+      // Need to rewrite the ivar access expression if need be.
+      if (isa<ObjCIvarRefExpr>(newStmt)) {
+        bool replaced = false;
+        newStmt = RewriteObjCNestedIvarRefExpr(newStmt, replaced);
+      }
+      
       DisableReplaceStmt = false;
       //
       // Unlike the main iterator, we explicily avoid changing 'BinOp'. If

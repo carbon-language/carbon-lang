@@ -26,3 +26,21 @@ void *sel_registerName(const char *);
 }
 @end
 
+//rdar: // 8541517
+@interface A { }
+@property (retain) NSString *scheme;
+@end
+
+@interface B : A {
+	NSString* _schemeName;
+}
+@end
+
+
+@implementation B
+-(void) test {
+ B *b;
+ b.scheme = _schemeName; // error because of this line
+}
+@end
+
