@@ -88,6 +88,17 @@ AssertEqual = \
   $(if $(call streq,$($(1)),$(2)),,\
        $(error Assertion failed: $(1): $(value $(1)) - $($(1)) != $(2)))
 
+# Function: CheckCommandLineOverrides list
+#
+# Check that all command line variables are in the given list. This routine is
+# useful for validating that users aren't trying to override something which
+# will not work.
+CheckCommandLineOverrides = \
+  $(foreach arg,$(MAKEOVERRIDES),\
+    $(call Set,varname,$(firstword $(subst =, ,$(arg)))) \
+    $(if $(call contains,$(1),$(varname)),,\
+      $(error "Invalid command line override: $(1) $(varname) (not supported)")))
+
 ###
 # Clean up make behavior
 
