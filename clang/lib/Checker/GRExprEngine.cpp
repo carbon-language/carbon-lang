@@ -2682,7 +2682,14 @@ void GRExprEngine::VisitDeclStmt(const DeclStmt *DS, ExplodedNode *Pred,
     if (getContext().getLangOptions().CPlusPlus && InitTy->isRecordType()) {
       // Delegate expressions of C++ record type evaluation to AggExprVisitor.
       VisitAggExpr(InitEx, GetState(Pred)->getLValue(VD,
-                                       Pred->getLocationContext()), Pred, Dst);
+                                       Pred->getLocationContext()), Pred, Tmp);
+
+      // FIXME: remove later when all paths through VisitAggExpr work properly
+      if (Tmp.empty())
+        Tmp.Add(Pred);
+      // Call checkers for initialized aggregates
+      CheckerVisit(DS, Dst, Tmp, PreVisitStmtCallback);
+
       return;
     } else if (VD->getType()->isReferenceType())
       VisitLValue(InitEx, Pred, Tmp);
