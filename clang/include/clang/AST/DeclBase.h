@@ -698,6 +698,7 @@ class DeclContext {
   /// dependent context).
   mutable StoredDeclsMap *LookupPtr;
 
+protected:
   /// FirstDecl - The first declaration stored within this declaration
   /// context.
   mutable Decl *FirstDecl;
@@ -710,7 +711,12 @@ class DeclContext {
 
   friend class ExternalASTSource;
 
-protected:
+  /// \brief Build up a chain of declarations.
+  ///
+  /// \returns the first/last pair of declarations.
+  static std::pair<Decl *, Decl *>
+  BuildDeclChain(const llvm::SmallVectorImpl<Decl*> &Decls);
+
    DeclContext(Decl::Kind K)
      : DeclKind(K), ExternalLexicalStorage(false),
        ExternalVisibleStorage(false), LookupPtr(0), FirstDecl(0),

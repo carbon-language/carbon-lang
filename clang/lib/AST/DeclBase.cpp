@@ -599,6 +599,24 @@ DeclContext *DeclContext::getNextContext() {
   }
 }
 
+std::pair<Decl *, Decl *>
+DeclContext::BuildDeclChain(const llvm::SmallVectorImpl<Decl*> &Decls) {
+  // Build up a chain of declarations via the Decl::NextDeclInContext field.
+  Decl *FirstNewDecl = 0;
+  Decl *PrevDecl = 0;
+  for (unsigned I = 0, N = Decls.size(); I != N; ++I) {
+    Decl *D = Decls[I];
+    if (PrevDecl)
+      PrevDecl->NextDeclInContext = D;
+    else
+      FirstNewDecl = D;
+
+    PrevDecl = D;
+  }
+
+  return std::make_pair(FirstNewDecl, PrevDecl);
+}
+
 /// \brief Load the declarations within this lexical storage from an
 /// external source.
 void
@@ -619,26 +637,22 @@ DeclContext::LoadLexicalDeclsFromExternalStorage() const {
   if (Decls.empty())
     return;
 
-  // Resolve all of the declaration IDs into declarations, building up
-  // a chain of declarations via the Decl::NextDeclInContext field.
-  Decl *FirstNewDecl = 0;
-  Decl *PrevDecl = 0;
-  for (unsigned I = 0, N = Decls.size(); I != N; ++I) {
-    Decl *D = Decls[I];
-    if (PrevDecl)
-      PrevDecl->NextDeclInContext = D;
-    else
-      FirstNewDecl = D;
-
-    PrevDecl = D;
-  }
+  // We may have already loaded just the fields of this record, in which case
+  // don't add the decls, just replace the FirstDecl/LastDecl chain.
+  if (const RecordDecl *RD = dyn_cast<RecordDecl>(this))
+    if (RD->LoadedFieldsFromExternalStorage) {
+      llvm::tie(FirstDecl, LastDecl) = BuildDeclChain(Decls);
+      return;
+    }
 
   // Splice the newly-read declarations into the beginning of the list
   // of declarations.
-  PrevDecl->NextDeclInContext = FirstDecl;
-  FirstDecl = FirstNewDecl;
+  Decl *ExternalFirst, *ExternalLast;
+  llvm::tie(ExternalFirst, ExternalLast) = BuildDeclChain(Decls);
+  ExternalLast->NextDeclInContext = FirstDecl;
+  FirstDecl = ExternalFirst;
   if (!LastDecl)
-    LastDecl = PrevDecl;
+    LastDecl = ExternalLast;
 }
 
 DeclContext::lookup_result

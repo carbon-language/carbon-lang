@@ -1651,6 +1651,7 @@ RecordDecl::RecordDecl(Kind DK, TagKind TK, DeclContext *DC, SourceLocation L,
   HasFlexibleArrayMember = false;
   AnonymousStructOrUnion = false;
   HasObjectMember = false;
+  LoadedFieldsFromExternalStorage = false;
   assert(classof(static_cast<Decl*>(this)) && "Invalid Kind!");
 }
 
@@ -1673,6 +1674,13 @@ bool RecordDecl::isInjectedClassName() const {
     cast<RecordDecl>(getDeclContext())->getDeclName() == getDeclName();
 }
 
+RecordDecl::field_iterator RecordDecl::field_begin() const {
+  if (hasExternalLexicalStorage() && !LoadedFieldsFromExternalStorage)
+    LoadFieldsFromExternalStorage();
+
+  return field_iterator(decl_iterator(FirstDecl));
+}
+
 /// completeDefinition - Notes that the definition of this type is now
 /// complete.
 void RecordDecl::completeDefinition() {
@@ -1689,6 +1697,31 @@ ValueDecl *RecordDecl::getAnonymousStructOrUnionObject() {
   assert(D->getType()->isRecordType());
   assert(D->getType()->getAs<RecordType>()->getDecl() == this);
   return D;
+}
+
+void RecordDecl::LoadFieldsFromExternalStorage() const {
+  ExternalASTSource *Source = getASTContext().getExternalSource();
+  assert(hasExternalLexicalStorage() && Source && "No external storage?");
+
+  // Notify that we have a RecordDecl doing some initialization.
+  ExternalASTSource::Deserializing TheFields(Source);
+
+  llvm::SmallVector<Decl*, 64> Decls;
+  if (Source->FindExternalLexicalDeclsBy<FieldDecl>(this, Decls))
+    return;
+
+#ifndef NDEBUG
+  // Check that all decls we got were FieldDecls.
+  for (unsigned i=0, e=Decls.size(); i != e; ++i)
+    assert(isa<FieldDecl>(Decls[i]));
+#endif
+
+  LoadedFieldsFromExternalStorage = true;
+
+  if (Decls.empty())
+    return;
+
+  llvm::tie(FirstDecl, LastDecl) = BuildDeclChain(Decls);
 }
 
 //===----------------------------------------------------------------------===//

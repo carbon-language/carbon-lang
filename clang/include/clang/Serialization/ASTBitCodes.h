@@ -54,6 +54,9 @@ namespace clang {
     /// reserved for the translation unit declaration.
     typedef uint32_t DeclID;
 
+    /// \brief a Decl::Kind/DeclID pair.
+    typedef std::pair<uint32_t, DeclID> KindDeclIDPair;
+
     /// \brief An ID number that refers to a type in an AST file.
     ///
     /// The ID of a type is partitioned into two parts: the lower

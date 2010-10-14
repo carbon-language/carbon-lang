@@ -2215,6 +2215,13 @@ class RecordDecl : public TagDecl {
   /// containing an object.
   bool HasObjectMember : 1;
 
+  /// \brief Whether the field declarations of this record have been loaded
+  /// from external storage. To avoid unnecessary deserialization of
+  /// methods/nested types we allow deserialization of just the fields
+  /// when needed.
+  mutable bool LoadedFieldsFromExternalStorage : 1;
+  friend void DeclContext::LoadLexicalDeclsFromExternalStorage() const;
+
 protected:
   RecordDecl(Kind DK, TagKind TK, DeclContext *DC,
              SourceLocation L, IdentifierInfo *Id,
@@ -2293,11 +2300,10 @@ public:
   // data members, functions, constructors, destructors, etc.
   typedef specific_decl_iterator<FieldDecl> field_iterator;
 
-  field_iterator field_begin() const {
-    return field_iterator(decls_begin());
-  }
+  field_iterator field_begin() const;
+
   field_iterator field_end() const {
-    return field_iterator(decls_end());
+    return field_iterator(decl_iterator());
   }
 
   // field_empty - Whether there are any fields (non-static data
@@ -2315,6 +2321,10 @@ public:
   static bool classofKind(Kind K) {
     return K >= firstRecord && K <= lastRecord;
   }
+
+private:
+  /// \brief Deserialize just the fields.
+  void LoadFieldsFromExternalStorage() const;
 };
 
 class FileScopeAsmDecl : public Decl {

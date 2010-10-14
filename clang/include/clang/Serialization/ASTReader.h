@@ -405,7 +405,7 @@ private:
   /// \brief Information about the contents of a DeclContext.
   struct DeclContextInfo {
     void *NameLookupTableData; // a ASTDeclContextNameLookupTable.
-    const serialization::DeclID *LexicalDecls;
+    const serialization::KindDeclIDPair *LexicalDecls;
     unsigned NumLexicalDecls;
   };
   // In a full chain, there could be multiple updates to every decl context,
@@ -928,6 +928,7 @@ public:
   /// \returns true if there was an error while reading the
   /// declarations for this declaration context.
   virtual bool FindExternalLexicalDecls(const DeclContext *DC,
+                                        bool (*isKindWeWant)(Decl::Kind),
                                         llvm::SmallVectorImpl<Decl*> &Decls);
 
   /// \brief Notify ASTReader that we started deserialization of

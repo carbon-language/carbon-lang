@@ -903,8 +903,8 @@ bool ASTReader::ReadDeclContextStorage(llvm::BitstreamCursor &Cursor,
       return true;
     }
 
-    Info.LexicalDecls = reinterpret_cast<const DeclID*>(Blob);
-    Info.NumLexicalDecls = BlobLen / sizeof(DeclID);
+    Info.LexicalDecls = reinterpret_cast<const KindDeclIDPair*>(Blob);
+    Info.NumLexicalDecls = BlobLen / sizeof(KindDeclIDPair);
   } else {
     Info.LexicalDecls = 0;
     Info.NumLexicalDecls = 0;
@@ -1778,8 +1778,8 @@ ASTReader::ReadASTBlock(PerFileData &F) {
     case TU_UPDATE_LEXICAL: {
       DeclContextInfo Info = {
         /* No visible information */ 0,
-        reinterpret_cast<const DeclID *>(BlobStart),
-        BlobLen / sizeof(DeclID)
+        reinterpret_cast<const KindDeclIDPair *>(BlobStart),
+        BlobLen / sizeof(KindDeclIDPair)
       };
       DeclContextOffsets[Context ? Context->getTranslationUnitDecl() : 0]
         .push_back(Info);
@@ -3242,6 +3242,7 @@ Stmt *ASTReader::GetExternalDeclStmt(uint64_t Offset) {
 }
 
 bool ASTReader::FindExternalLexicalDecls(const DeclContext *DC,
+                                         bool (*isKindWeWant)(Decl::Kind),
                                          llvm::SmallVectorImpl<Decl*> &Decls) {
   assert(DC->hasExternalLexicalStorage() &&
          "DeclContext has no lexical decls in storage");
@@ -3258,9 +3259,12 @@ bool ASTReader::FindExternalLexicalDecls(const DeclContext *DC,
       continue;
 
     // Load all of the declaration IDs
-    for (const DeclID *ID = I->LexicalDecls, *IDE = ID + I->NumLexicalDecls;
-         ID != IDE; ++ID) {
-      Decl *D = GetDecl(*ID);
+    for (const KindDeclIDPair *ID = I->LexicalDecls,
+                              *IDE = ID + I->NumLexicalDecls; ID != IDE; ++ID) {
+      if (isKindWeWant && !isKindWeWant((Decl::Kind)ID->first))
+        continue;
+
+      Decl *D = GetDecl(ID->second);
       assert(D && "Null decl in lexical decls");
       Decls.push_back(D);
     }

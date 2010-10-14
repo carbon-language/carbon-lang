@@ -1474,14 +1474,15 @@ uint64_t ASTWriter::WriteDeclContextLexicalBlock(ASTContext &Context,
   uint64_t Offset = Stream.GetCurrentBitNo();
   RecordData Record;
   Record.push_back(DECL_CONTEXT_LEXICAL);
-  llvm::SmallVector<DeclID, 64> Decls;
+  llvm::SmallVector<KindDeclIDPair, 64> Decls;
   for (DeclContext::decl_iterator D = DC->decls_begin(), DEnd = DC->decls_end();
          D != DEnd; ++D)
-    Decls.push_back(GetDeclRef(*D));
+    Decls.push_back(std::make_pair((*D)->getKind(), GetDeclRef(*D)));
 
   ++NumLexicalDeclContexts;
   Stream.EmitRecordWithBlob(DeclContextLexicalAbbrev, Record,
-     reinterpret_cast<char*>(Decls.data()), Decls.size() * sizeof(DeclID));
+                            reinterpret_cast<char*>(Decls.data()),
+                            Decls.size() * sizeof(KindDeclIDPair));
   return Offset;
 }
 
@@ -2471,12 +2472,12 @@ void ASTWriter::WriteASTChain(Sema &SemaRef, MemorizeStatCalls *StatCalls,
   // We don't start with the translation unit, but with its decls that
   // don't come from the chained PCH.
   const TranslationUnitDecl *TU = Context.getTranslationUnitDecl();
-  llvm::SmallVector<DeclID, 64> NewGlobalDecls;
+  llvm::SmallVector<KindDeclIDPair, 64> NewGlobalDecls;
   for (DeclContext::decl_iterator I = TU->noload_decls_begin(),
                                   E = TU->noload_decls_end();
        I != E; ++I) {
     if ((*I)->getPCHLevel() == 0)
-      NewGlobalDecls.push_back(GetDeclRef(*I));
+      NewGlobalDecls.push_back(std::make_pair((*I)->getKind(), GetDeclRef(*I)));
     else if ((*I)->isChangedSinceDeserialization())
       (void)GetDeclRef(*I); // Make sure it's written, but don't record it.
   }
@@ -2489,7 +2490,7 @@ void ASTWriter::WriteASTChain(Sema &SemaRef, MemorizeStatCalls *StatCalls,
   Record.push_back(TU_UPDATE_LEXICAL);
   Stream.EmitRecordWithBlob(TuUpdateLexicalAbbrev, Record,
                           reinterpret_cast<const char*>(NewGlobalDecls.data()),
-                          NewGlobalDecls.size() * sizeof(DeclID));
+                          NewGlobalDecls.size() * sizeof(KindDeclIDPair));
   // And in C++, a visible updates block for the TU.
   if (Context.getLangOptions().CPlusPlus) {
     Abv = new llvm::BitCodeAbbrev();

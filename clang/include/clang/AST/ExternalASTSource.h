@@ -14,6 +14,7 @@
 #ifndef LLVM_CLANG_AST_EXTERNAL_AST_SOURCE_H
 #define LLVM_CLANG_AST_EXTERNAL_AST_SOURCE_H
 
+#include "clang/AST/DeclBase.h"
 #include <cassert>
 #include <vector>
 
@@ -110,11 +111,31 @@ public:
   virtual void MaterializeVisibleDecls(const DeclContext *DC) = 0;
 
   /// \brief Finds all declarations lexically contained within the given
-  /// DeclContext.
+  /// DeclContext, after applying an optional filter predicate.
+  ///
+  /// \param isKindWeWant a predicate function that returns true if the passed
+  /// declaration kind is one we are looking for. If NULL, all declarations
+  /// are returned.
   ///
   /// \return true if an error occurred
   virtual bool FindExternalLexicalDecls(const DeclContext *DC,
-                                llvm::SmallVectorImpl<Decl*> &Result) = 0;
+                                        bool (*isKindWeWant)(Decl::Kind),
+                                      llvm::SmallVectorImpl<Decl*> &Result) = 0;
+
+  /// \brief Finds all declarations lexically contained within the given
+  /// DeclContext.
+  ///
+  /// \return true if an error occurred
+  bool FindExternalLexicalDecls(const DeclContext *DC,
+                                llvm::SmallVectorImpl<Decl*> &Result) {
+    return FindExternalLexicalDecls(DC, 0, Result);
+  }
+
+  template <typename DeclTy>
+  bool FindExternalLexicalDeclsBy(const DeclContext *DC,
+                                llvm::SmallVectorImpl<Decl*> &Result) {
+    return FindExternalLexicalDecls(DC, DeclTy::classofKind, Result);
+  }
 
   /// \brief Notify ExternalASTSource that we started deserialization of
   /// a decl or type so until FinishedDeserializing is called there may be
