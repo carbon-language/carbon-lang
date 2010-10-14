@@ -32,7 +32,13 @@ int param_i;
 unsigned int param_ui;
 float param_f;
 
+int res_sc;
+int res_uc;
+int res_s;
+int res_us;
 int res_i;
+int res_ui;
+int res_f;
 
 // CHECK: define void @test1
 void test1() {
@@ -1761,9 +1767,958 @@ void test6() {
   res_vf  = vec_vxor(vbi, vf);                  // CHECK: xor <4 x i32>
   res_vf  = vec_vxor(vf, vbi);                  // CHECK: xor <4 x i32>
 
+  /* ------------------------------ extensions -------------------------------------- */
+
+  /* vec_extract */
+  res_sc = vec_extract(vsc, param_i);           // CHECK: extractelement <16 x i8>
+  res_uc = vec_extract(vuc, param_i);           // CHECK: extractelement <16 x i8>
+  res_s  = vec_extract(vs, param_i);            // CHECK: extractelement <8 x i16>
+  res_us = vec_extract(vus, param_i);           // CHECK: extractelement <8 x i16>
+  res_i  = vec_extract(vi, param_i);            // CHECK: extractelement <4 x i32>
+  res_ui = vec_extract(vui, param_i);           // CHECK: extractelement <4 x i32>
+  res_f  = vec_extract(vf, param_i);            // CHECK: extractelement <4 x float>
+
+  /* vec_insert */
+  res_vsc = vec_insert(param_sc, vsc, param_i); // CHECK: insertelement <16 x i8>
+  res_vuc = vec_insert(param_uc, vuc, param_i); // CHECK: insertelement <16 x i8>
+  res_vs  = vec_insert(param_s, vs, param_i);   // CHECK: insertelement <8 x i16>
+  res_vus = vec_insert(param_us, vus, param_i); // CHECK: insertelement <8 x i16>
+  res_vi  = vec_insert(param_i, vi, param_i);   // CHECK: insertelement <4 x i32>
+  res_vui = vec_insert(param_ui, vui, param_i); // CHECK: insertelement <4 x i32>
+  res_vf  = vec_insert(param_f, vf, param_i);   // CHECK: insertelement <4 x float>
+
+  /* vec_lvlx */
+  res_vsc = vec_lvlx(0, &param_sc);             // CHECK: @llvm.ppc.altivec.lvx
+                                                // CHECK: store <16 x i8> zeroinitializer
+                                                // CHECK: @llvm.ppc.altivec.lvsl
+                                                // CHECK: @llvm.ppc.altivec.vperm
+
+  res_vsc = vec_lvlx(0, &vsc);                  // CHECK: @llvm.ppc.altivec.lvx
+                                                // CHECK: store <16 x i8> zeroinitializer
+                                                // CHECK: @llvm.ppc.altivec.lvsl
+                                                // CHECK: @llvm.ppc.altivec.vperm
+
+  res_vuc = vec_lvlx(0, &param_uc);             // CHECK: @llvm.ppc.altivec.lvx
+                                                // CHECK: store <16 x i8> zeroinitializer
+                                                // CHECK: @llvm.ppc.altivec.lvsl
+                                                // CHECK: @llvm.ppc.altivec.vperm
+
+  res_vuc = vec_lvlx(0, &vuc);                  // CHECK: @llvm.ppc.altivec.lvx
+                                                // CHECK: store <16 x i8> zeroinitializer
+                                                // CHECK: @llvm.ppc.altivec.lvsl
+                                                // CHECK: @llvm.ppc.altivec.vperm
+
+  res_vbc = vec_lvlx(0, &vbc);                  // CHECK: @llvm.ppc.altivec.lvx
+                                                // CHECK: store <16 x i8> zeroinitializer
+                                                // CHECK: @llvm.ppc.altivec.lvsl
+                                                // CHECK: @llvm.ppc.altivec.vperm
+
+  res_vs  = vec_lvlx(0, &param_s);              // CHECK: @llvm.ppc.altivec.lvx
+                                                // CHECK: store <8 x i16> zeroinitializer
+                                                // CHECK: @llvm.ppc.altivec.lvsl
+                                                // CHECK: @llvm.ppc.altivec.vperm
+
+  res_vs  = vec_lvlx(0, &vs);                   // CHECK: @llvm.ppc.altivec.lvx
+                                                // CHECK: store <8 x i16> zeroinitializer
+                                                // CHECK: @llvm.ppc.altivec.lvsl
+                                                // CHECK: @llvm.ppc.altivec.vperm
+
+  res_vus = vec_lvlx(0, &param_us);             // CHECK: @llvm.ppc.altivec.lvx
+                                                // CHECK: store <8 x i16> zeroinitializer
+                                                // CHECK: @llvm.ppc.altivec.lvsl
+                                                // CHECK: @llvm.ppc.altivec.vperm
+
+  res_vus = vec_lvlx(0, &vus);                  // CHECK: @llvm.ppc.altivec.lvx
+                                                // CHECK: store <8 x i16> zeroinitializer
+                                                // CHECK: @llvm.ppc.altivec.lvsl
+                                                // CHECK: @llvm.ppc.altivec.vperm
+
+  res_vbs = vec_lvlx(0, &vbs);                  // CHECK: @llvm.ppc.altivec.lvx
+                                                // CHECK: store <8 x i16> zeroinitializer
+                                                // CHECK: @llvm.ppc.altivec.lvsl
+                                                // CHECK: @llvm.ppc.altivec.vperm
+
+  res_vp  = vec_lvlx(0, &vp);                   // CHECK: @llvm.ppc.altivec.lvx
+                                                // CHECK: store <8 x i16> zeroinitializer
+                                                // CHECK: @llvm.ppc.altivec.lvsl
+                                                // CHECK: @llvm.ppc.altivec.vperm
+
+  res_vi  = vec_lvlx(0, &param_i);              // CHECK: @llvm.ppc.altivec.lvx
+                                                // CHECK: store <4 x i32> zeroinitializer
+                                                // CHECK: @llvm.ppc.altivec.lvsl
+                                                // CHECK: @llvm.ppc.altivec.vperm
+
+  res_vi  = vec_lvlx(0, &vi);                   // CHECK: @llvm.ppc.altivec.lvx
+                                                // CHECK: store <4 x i32> zeroinitializer
+                                                // CHECK: @llvm.ppc.altivec.lvsl
+                                                // CHECK: @llvm.ppc.altivec.vperm
+
+  res_vui = vec_lvlx(0, &param_ui);             // CHECK: @llvm.ppc.altivec.lvx
+                                                // CHECK: store <4 x i32> zeroinitializer
+                                                // CHECK: @llvm.ppc.altivec.lvsl
+                                                // CHECK: @llvm.ppc.altivec.vperm
+
+  res_vui = vec_lvlx(0, &vui);                  // CHECK: @llvm.ppc.altivec.lvx
+                                                // CHECK: store <4 x i32> zeroinitializer
+                                                // CHECK: @llvm.ppc.altivec.lvsl
+                                                // CHECK: @llvm.ppc.altivec.vperm
+
+  res_vbi = vec_lvlx(0, &vbi);                  // CHECK: @llvm.ppc.altivec.lvx
+                                                // CHECK: store <4 x i32> zeroinitializer
+                                                // CHECK: @llvm.ppc.altivec.lvsl
+                                                // CHECK: @llvm.ppc.altivec.vperm
+
+  res_vf  = vec_lvlx(0, &vf);                   // CHECK: @llvm.ppc.altivec.lvx
+                                                // CHECK: store <4 x float> zeroinitializer
+                                                // CHECK: @llvm.ppc.altivec.lvsl
+                                                // CHECK: @llvm.ppc.altivec.vperm
+
+  /* vec_lvlxl */
+  res_vsc = vec_lvlxl(0, &param_sc);            // CHECK: @llvm.ppc.altivec.lvxl
+                                                // CHECK: store <16 x i8> zeroinitializer
+                                                // CHECK: @llvm.ppc.altivec.lvsl
+                                                // CHECK: @llvm.ppc.altivec.vperm
+
+  res_vsc = vec_lvlxl(0, &vsc);                 // CHECK: @llvm.ppc.altivec.lvxl
+                                                // CHECK: store <16 x i8> zeroinitializer
+                                                // CHECK: @llvm.ppc.altivec.lvsl
+                                                // CHECK: @llvm.ppc.altivec.vperm
+
+  res_vuc = vec_lvlxl(0, &param_uc);            // CHECK: @llvm.ppc.altivec.lvxl
+                                                // CHECK: store <16 x i8> zeroinitializer
+                                                // CHECK: @llvm.ppc.altivec.lvsl
+                                                // CHECK: @llvm.ppc.altivec.vperm
+
+  res_vuc = vec_lvlxl(0, &vuc);                 // CHECK: @llvm.ppc.altivec.lvxl
+                                                // CHECK: store <16 x i8> zeroinitializer
+                                                // CHECK: @llvm.ppc.altivec.lvsl
+                                                // CHECK: @llvm.ppc.altivec.vperm
+
+  res_vbc = vec_lvlxl(0, &vbc);                 // CHECK: @llvm.ppc.altivec.lvxl
+                                                // CHECK: store <16 x i8> zeroinitializer
+                                                // CHECK: @llvm.ppc.altivec.lvsl
+                                                // CHECK: @llvm.ppc.altivec.vperm
+
+  res_vs  = vec_lvlxl(0, &param_s);             // CHECK: @llvm.ppc.altivec.lvxl
+                                                // CHECK: store <8 x i16> zeroinitializer
+                                                // CHECK: @llvm.ppc.altivec.lvsl
+                                                // CHECK: @llvm.ppc.altivec.vperm
+
+  res_vs  = vec_lvlxl(0, &vs);                  // CHECK: @llvm.ppc.altivec.lvxl
+                                                // CHECK: store <8 x i16> zeroinitializer
+                                                // CHECK: @llvm.ppc.altivec.lvsl
+                                                // CHECK: @llvm.ppc.altivec.vperm
+
+  res_vus = vec_lvlxl(0, &param_us);            // CHECK: @llvm.ppc.altivec.lvxl
+                                                // CHECK: store <8 x i16> zeroinitializer
+                                                // CHECK: @llvm.ppc.altivec.lvsl
+                                                // CHECK: @llvm.ppc.altivec.vperm
+
+  res_vus = vec_lvlxl(0, &vus);                 // CHECK: @llvm.ppc.altivec.lvxl
+                                                // CHECK: store <8 x i16> zeroinitializer
+                                                // CHECK: @llvm.ppc.altivec.lvsl
+                                                // CHECK: @llvm.ppc.altivec.vperm
+
+  res_vbs = vec_lvlxl(0, &vbs);                 // CHECK: @llvm.ppc.altivec.lvxl
+                                                // CHECK: store <8 x i16> zeroinitializer
+                                                // CHECK: @llvm.ppc.altivec.lvsl
+                                                // CHECK: @llvm.ppc.altivec.vperm
+
+  res_vp  = vec_lvlxl(0, &vp);                  // CHECK: @llvm.ppc.altivec.lvxl
+                                                // CHECK: store <8 x i16> zeroinitializer
+                                                // CHECK: @llvm.ppc.altivec.lvsl
+                                                // CHECK: @llvm.ppc.altivec.vperm
+
+  res_vi  = vec_lvlxl(0, &param_i);             // CHECK: @llvm.ppc.altivec.lvxl
+                                                // CHECK: store <4 x i32> zeroinitializer
+                                                // CHECK: @llvm.ppc.altivec.lvsl
+                                                // CHECK: @llvm.ppc.altivec.vperm
+
+  res_vi  = vec_lvlxl(0, &vi);                  // CHECK: @llvm.ppc.altivec.lvxl
+                                                // CHECK: store <4 x i32> zeroinitializer
+                                                // CHECK: @llvm.ppc.altivec.lvsl
+                                                // CHECK: @llvm.ppc.altivec.vperm
+
+  res_vui = vec_lvlxl(0, &param_ui);            // CHECK: @llvm.ppc.altivec.lvxl
+                                                // CHECK: store <4 x i32> zeroinitializer
+                                                // CHECK: @llvm.ppc.altivec.lvsl
+                                                // CHECK: @llvm.ppc.altivec.vperm
+
+  res_vui = vec_lvlxl(0, &vui);                 // CHECK: @llvm.ppc.altivec.lvxl
+                                                // CHECK: store <4 x i32> zeroinitializer
+                                                // CHECK: @llvm.ppc.altivec.lvsl
+                                                // CHECK: @llvm.ppc.altivec.vperm
+
+  res_vbi = vec_lvlxl(0, &vbi);                 // CHECK: @llvm.ppc.altivec.lvxl
+                                                // CHECK: store <4 x i32> zeroinitializer
+                                                // CHECK: @llvm.ppc.altivec.lvsl
+                                                // CHECK: @llvm.ppc.altivec.vperm
+
+  res_vf  = vec_lvlxl(0, &vf);                  // CHECK: @llvm.ppc.altivec.lvxl
+                                                // CHECK: store <4 x float> zeroinitializer
+                                                // CHECK: @llvm.ppc.altivec.lvsl
+                                                // CHECK: @llvm.ppc.altivec.vperm
+
+  /* vec_lvrx */
+  res_vsc = vec_lvrx(0, &param_sc);             // CHECK: store <16 x i8> zeroinitializer
+                                                // CHECK: @llvm.ppc.altivec.lvx
+                                                // CHECK: @llvm.ppc.altivec.lvsl
+                                                // CHECK: @llvm.ppc.altivec.vperm
+
+  res_vsc = vec_lvrx(0, &vsc);                  // CHECK: store <16 x i8> zeroinitializer
+                                                // CHECK: @llvm.ppc.altivec.lvx
+                                                // CHECK: @llvm.ppc.altivec.lvsl
+                                                // CHECK: @llvm.ppc.altivec.vperm
+
+  res_vuc = vec_lvrx(0, &param_uc);             // CHECK: store <16 x i8> zeroinitializer
+                                                // CHECK: @llvm.ppc.altivec.lvx
+                                                // CHECK: @llvm.ppc.altivec.lvsl
+                                                // CHECK: @llvm.ppc.altivec.vperm
+
+  res_vuc = vec_lvrx(0, &vuc);                  // CHECK: store <16 x i8> zeroinitializer
+                                                // CHECK: @llvm.ppc.altivec.lvx
+                                                // CHECK: @llvm.ppc.altivec.lvsl
+                                                // CHECK: @llvm.ppc.altivec.vperm
+
+  res_vbc = vec_lvrx(0, &vbc);                  // CHECK: store <16 x i8> zeroinitializer
+                                                // CHECK: @llvm.ppc.altivec.lvx
+                                                // CHECK: @llvm.ppc.altivec.lvsl
+                                                // CHECK: @llvm.ppc.altivec.vperm
+
+  res_vs  = vec_lvrx(0, &param_s);              // CHECK: store <8 x i16> zeroinitializer
+                                                // CHECK: @llvm.ppc.altivec.lvx
+                                                // CHECK: @llvm.ppc.altivec.lvsl
+                                                // CHECK: @llvm.ppc.altivec.vperm
+
+  res_vs  = vec_lvrx(0, &vs);                   // CHECK: store <8 x i16> zeroinitializer
+                                                // CHECK: @llvm.ppc.altivec.lvx
+                                                // CHECK: @llvm.ppc.altivec.lvsl
+                                                // CHECK: @llvm.ppc.altivec.vperm
+
+  res_vus = vec_lvrx(0, &param_us);             // CHECK: store <8 x i16> zeroinitializer
+                                                // CHECK: @llvm.ppc.altivec.lvx
+                                                // CHECK: @llvm.ppc.altivec.lvsl
+                                                // CHECK: @llvm.ppc.altivec.vperm
+
+  res_vus = vec_lvrx(0, &vus);                  // CHECK: store <8 x i16> zeroinitializer
+                                                // CHECK: @llvm.ppc.altivec.lvx
+                                                // CHECK: @llvm.ppc.altivec.lvsl
+                                                // CHECK: @llvm.ppc.altivec.vperm
+
+  res_vbs = vec_lvrx(0, &vbs);                  // CHECK: store <8 x i16> zeroinitializer
+                                                // CHECK: @llvm.ppc.altivec.lvx
+                                                // CHECK: @llvm.ppc.altivec.lvsl
+                                                // CHECK: @llvm.ppc.altivec.vperm
+
+  res_vp  = vec_lvrx(0, &vp);                   // CHECK: store <8 x i16> zeroinitializer
+                                                // CHECK: @llvm.ppc.altivec.lvx
+                                                // CHECK: @llvm.ppc.altivec.lvsl
+                                                // CHECK: @llvm.ppc.altivec.vperm
+
+  res_vi  = vec_lvrx(0, &param_i);              // CHECK: store <4 x i32> zeroinitializer
+                                                // CHECK: @llvm.ppc.altivec.lvx
+                                                // CHECK: @llvm.ppc.altivec.lvsl
+                                                // CHECK: @llvm.ppc.altivec.vperm
+
+  res_vi  = vec_lvrx(0, &vi);                   // CHECK: store <4 x i32> zeroinitializer
+                                                // CHECK: @llvm.ppc.altivec.lvx
+                                                // CHECK: @llvm.ppc.altivec.lvsl
+                                                // CHECK: @llvm.ppc.altivec.vperm
+
+  res_vui = vec_lvrx(0, &param_ui);             // CHECK: store <4 x i32> zeroinitializer
+                                                // CHECK: @llvm.ppc.altivec.lvx
+                                                // CHECK: @llvm.ppc.altivec.lvsl
+                                                // CHECK: @llvm.ppc.altivec.vperm
+
+  res_vui = vec_lvrx(0, &vui);                  // CHECK: store <4 x i32> zeroinitializer
+                                                // CHECK: @llvm.ppc.altivec.lvx
+                                                // CHECK: @llvm.ppc.altivec.lvsl
+                                                // CHECK: @llvm.ppc.altivec.vperm
+
+  res_vbi = vec_lvrx(0, &vbi);                  // CHECK: store <4 x i32> zeroinitializer
+                                                // CHECK: @llvm.ppc.altivec.lvx
+                                                // CHECK: @llvm.ppc.altivec.lvsl
+                                                // CHECK: @llvm.ppc.altivec.vperm
+
+  res_vf  = vec_lvrx(0, &vf);                   // CHECK: store <4 x float> zeroinitializer
+                                                // CHECK: @llvm.ppc.altivec.lvx
+                                                // CHECK: @llvm.ppc.altivec.lvsl
+                                                // CHECK: @llvm.ppc.altivec.vperm
+
+  /* vec_lvrxl */
+  res_vsc = vec_lvrxl(0, &param_sc);            // CHECK: store <16 x i8> zeroinitializer
+                                                // CHECK: @llvm.ppc.altivec.lvxl
+                                                // CHECK: @llvm.ppc.altivec.lvsl
+                                                // CHECK: @llvm.ppc.altivec.vperm
+
+  res_vsc = vec_lvrxl(0, &vsc);                 // CHECK: store <16 x i8> zeroinitializer
+                                                // CHECK: @llvm.ppc.altivec.lvxl
+                                                // CHECK: @llvm.ppc.altivec.lvsl
+                                                // CHECK: @llvm.ppc.altivec.vperm
+
+  res_vuc = vec_lvrxl(0, &param_uc);            // CHECK: store <16 x i8> zeroinitializer
+                                                // CHECK: @llvm.ppc.altivec.lvxl
+                                                // CHECK: @llvm.ppc.altivec.lvsl
+                                                // CHECK: @llvm.ppc.altivec.vperm
+
+  res_vuc = vec_lvrxl(0, &vuc);                 // CHECK: store <16 x i8> zeroinitializer
+                                                // CHECK: @llvm.ppc.altivec.lvxl
+                                                // CHECK: @llvm.ppc.altivec.lvsl
+                                                // CHECK: @llvm.ppc.altivec.vperm
+
+  res_vbc = vec_lvrxl(0, &vbc);                 // CHECK: store <16 x i8> zeroinitializer
+                                                // CHECK: @llvm.ppc.altivec.lvxl
+                                                // CHECK: @llvm.ppc.altivec.lvsl
+                                                // CHECK: @llvm.ppc.altivec.vperm
+
+  res_vs  = vec_lvrxl(0, &param_s);             // CHECK: store <8 x i16> zeroinitializer
+                                                // CHECK: @llvm.ppc.altivec.lvxl
+                                                // CHECK: @llvm.ppc.altivec.lvsl
+                                                // CHECK: @llvm.ppc.altivec.vperm
+
+  res_vs  = vec_lvrxl(0, &vs);                  // CHECK: store <8 x i16> zeroinitializer
+                                                // CHECK: @llvm.ppc.altivec.lvxl
+                                                // CHECK: @llvm.ppc.altivec.lvsl
+                                                // CHECK: @llvm.ppc.altivec.vperm
+
+  res_vus = vec_lvrxl(0, &param_us);            // CHECK: store <8 x i16> zeroinitializer
+                                                // CHECK: @llvm.ppc.altivec.lvxl
+                                                // CHECK: @llvm.ppc.altivec.lvsl
+                                                // CHECK: @llvm.ppc.altivec.vperm
+
+  res_vus = vec_lvrxl(0, &vus);                 // CHECK: store <8 x i16> zeroinitializer
+                                                // CHECK: @llvm.ppc.altivec.lvxl
+                                                // CHECK: @llvm.ppc.altivec.lvsl
+                                                // CHECK: @llvm.ppc.altivec.vperm
+
+  res_vbs = vec_lvrxl(0, &vbs);                 // CHECK: store <8 x i16> zeroinitializer
+                                                // CHECK: @llvm.ppc.altivec.lvxl
+                                                // CHECK: @llvm.ppc.altivec.lvsl
+                                                // CHECK: @llvm.ppc.altivec.vperm
+
+  res_vp  = vec_lvrxl(0, &vp);                  // CHECK: store <8 x i16> zeroinitializer
+                                                // CHECK: @llvm.ppc.altivec.lvxl
+                                                // CHECK: @llvm.ppc.altivec.lvsl
+                                                // CHECK: @llvm.ppc.altivec.vperm
+
+  res_vi  = vec_lvrxl(0, &param_i);             // CHECK: store <4 x i32> zeroinitializer
+                                                // CHECK: @llvm.ppc.altivec.lvxl
+                                                // CHECK: @llvm.ppc.altivec.lvsl
+                                                // CHECK: @llvm.ppc.altivec.vperm
+
+  res_vi  = vec_lvrxl(0, &vi);                  // CHECK: store <4 x i32> zeroinitializer
+                                                // CHECK: @llvm.ppc.altivec.lvxl
+                                                // CHECK: @llvm.ppc.altivec.lvsl
+                                                // CHECK: @llvm.ppc.altivec.vperm
+
+  res_vui = vec_lvrxl(0, &param_ui);            // CHECK: store <4 x i32> zeroinitializer
+                                                // CHECK: @llvm.ppc.altivec.lvxl
+                                                // CHECK: @llvm.ppc.altivec.lvsl
+                                                // CHECK: @llvm.ppc.altivec.vperm
+
+  res_vui = vec_lvrxl(0, &vui);                 // CHECK: store <4 x i32> zeroinitializer
+                                                // CHECK: @llvm.ppc.altivec.lvxl
+                                                // CHECK: @llvm.ppc.altivec.lvsl
+                                                // CHECK: @llvm.ppc.altivec.vperm
+
+  res_vbi = vec_lvrxl(0, &vbi);                 // CHECK: store <4 x i32> zeroinitializer
+                                                // CHECK: @llvm.ppc.altivec.lvxl
+                                                // CHECK: @llvm.ppc.altivec.lvsl
+                                                // CHECK: @llvm.ppc.altivec.vperm
+
+  res_vf  = vec_lvrxl(0, &vf);                  // CHECK: store <4 x float> zeroinitializer
+                                                // CHECK: @llvm.ppc.altivec.lvxl
+                                                // CHECK: @llvm.ppc.altivec.lvsl
+                                                // CHECK: @llvm.ppc.altivec.vperm
+
+  /* vec_stvlx */
+  vec_stvlx(vsc, 0, &param_sc);                 // CHECK: store <16 x i8> zeroinitializer
+                                                // CHECK: @llvm.ppc.altivec.lvx
+                                                // CHECK: @llvm.ppc.altivec.lvsl
+                                                // CHECK: @llvm.ppc.altivec.vperm
+                                                // CHECK: @llvm.ppc.altivec.lvsr
+                                                // CHECK: @llvm.ppc.altivec.vperm
+                                                // CHECK: @llvm.ppc.altivec.stvx
+
+  vec_stvlx(vsc, 0, &vsc);                      // CHECK: store <16 x i8> zeroinitializer
+                                                // CHECK: @llvm.ppc.altivec.lvx
+                                                // CHECK: @llvm.ppc.altivec.lvsl
+                                                // CHECK: @llvm.ppc.altivec.vperm
+                                                // CHECK: @llvm.ppc.altivec.lvsr
+                                                // CHECK: @llvm.ppc.altivec.vperm
+                                                // CHECK: @llvm.ppc.altivec.stvx
+
+  vec_stvlx(vuc, 0, &param_uc);                 // CHECK: store <16 x i8> zeroinitializer
+                                                // CHECK: @llvm.ppc.altivec.lvx
+                                                // CHECK: @llvm.ppc.altivec.lvsl
+                                                // CHECK: @llvm.ppc.altivec.vperm
+                                                // CHECK: @llvm.ppc.altivec.lvsr
+                                                // CHECK: @llvm.ppc.altivec.vperm
+                                                // CHECK: @llvm.ppc.altivec.stvx
+
+  vec_stvlx(vuc, 0, &vuc);                      // CHECK: store <16 x i8> zeroinitializer
+                                                // CHECK: @llvm.ppc.altivec.lvx
+                                                // CHECK: @llvm.ppc.altivec.lvsl
+                                                // CHECK: @llvm.ppc.altivec.vperm
+                                                // CHECK: @llvm.ppc.altivec.lvsr
+                                                // CHECK: @llvm.ppc.altivec.vperm
+                                                // CHECK: @llvm.ppc.altivec.stvx
+
+  vec_stvlx(vbc, 0, &vbc);                      // CHECK: store <16 x i8> zeroinitializer
+                                                // CHECK: @llvm.ppc.altivec.lvx
+                                                // CHECK: @llvm.ppc.altivec.lvsl
+                                                // CHECK: @llvm.ppc.altivec.vperm
+                                                // CHECK: @llvm.ppc.altivec.lvsr
+                                                // CHECK: @llvm.ppc.altivec.vperm
+                                                // CHECK: @llvm.ppc.altivec.stvx
+
+  vec_stvlx(vs, 0, &param_s);                   // CHECK: store <8 x i16> zeroinitializer
+                                                // CHECK: @llvm.ppc.altivec.lvx
+                                                // CHECK: @llvm.ppc.altivec.lvsl
+                                                // CHECK: @llvm.ppc.altivec.vperm
+                                                // CHECK: @llvm.ppc.altivec.lvsr
+                                                // CHECK: @llvm.ppc.altivec.vperm
+                                                // CHECK: @llvm.ppc.altivec.stvx
+
+  vec_stvlx(vs, 0, &vs);                        // CHECK: store <8 x i16> zeroinitializer
+                                                // CHECK: @llvm.ppc.altivec.lvx
+                                                // CHECK: @llvm.ppc.altivec.lvsl
+                                                // CHECK: @llvm.ppc.altivec.vperm
+                                                // CHECK: @llvm.ppc.altivec.lvsr
+                                                // CHECK: @llvm.ppc.altivec.vperm
+                                                // CHECK: @llvm.ppc.altivec.stvx
+
+  vec_stvlx(vus, 0, &param_us);                 // CHECK: store <8 x i16> zeroinitializer
+                                                // CHECK: @llvm.ppc.altivec.lvx
+                                                // CHECK: @llvm.ppc.altivec.lvsl
+                                                // CHECK: @llvm.ppc.altivec.vperm
+                                                // CHECK: @llvm.ppc.altivec.lvsr
+                                                // CHECK: @llvm.ppc.altivec.vperm
+                                                // CHECK: @llvm.ppc.altivec.stvx
+
+  vec_stvlx(vus, 0, &vus);                      // CHECK: store <8 x i16> zeroinitializer
+                                                // CHECK: @llvm.ppc.altivec.lvx
+                                                // CHECK: @llvm.ppc.altivec.lvsl
+                                                // CHECK: @llvm.ppc.altivec.vperm
+                                                // CHECK: @llvm.ppc.altivec.lvsr
+                                                // CHECK: @llvm.ppc.altivec.vperm
+                                                // CHECK: @llvm.ppc.altivec.stvx
+
+  vec_stvlx(vbs, 0, &vbs);                      // CHECK: store <8 x i16> zeroinitializer
+                                                // CHECK: @llvm.ppc.altivec.lvx
+                                                // CHECK: @llvm.ppc.altivec.lvsl
+                                                // CHECK: @llvm.ppc.altivec.vperm
+                                                // CHECK: @llvm.ppc.altivec.lvsr
+                                                // CHECK: @llvm.ppc.altivec.vperm
+                                                // CHECK: @llvm.ppc.altivec.stvx
+
+  vec_stvlx(vp, 0, &vp);                        // CHECK: store <8 x i16> zeroinitializer
+                                                // CHECK: @llvm.ppc.altivec.lvx
+                                                // CHECK: @llvm.ppc.altivec.lvsl
+                                                // CHECK: @llvm.ppc.altivec.vperm
+                                                // CHECK: @llvm.ppc.altivec.lvsr
+                                                // CHECK: @llvm.ppc.altivec.vperm
+                                                // CHECK: @llvm.ppc.altivec.stvx
+
+  vec_stvlx(vi, 0, &param_i);                   // CHECK: store <4 x i32> zeroinitializer
+                                                // CHECK: @llvm.ppc.altivec.lvx
+                                                // CHECK: @llvm.ppc.altivec.lvsl
+                                                // CHECK: @llvm.ppc.altivec.vperm
+                                                // CHECK: @llvm.ppc.altivec.lvsr
+                                                // CHECK: @llvm.ppc.altivec.vperm
+                                                // CHECK: @llvm.ppc.altivec.stvx
+
+  vec_stvlx(vi, 0, &vi);                        // CHECK: store <4 x i32> zeroinitializer
+                                                // CHECK: @llvm.ppc.altivec.lvx
+                                                // CHECK: @llvm.ppc.altivec.lvsl
+                                                // CHECK: @llvm.ppc.altivec.vperm
+                                                // CHECK: @llvm.ppc.altivec.lvsr
+                                                // CHECK: @llvm.ppc.altivec.vperm
+                                                // CHECK: @llvm.ppc.altivec.stvx
+
+  vec_stvlx(vui, 0, &param_ui);                 // CHECK: store <4 x i32> zeroinitializer
+                                                // CHECK: @llvm.ppc.altivec.lvx
+                                                // CHECK: @llvm.ppc.altivec.lvsl
+                                                // CHECK: @llvm.ppc.altivec.vperm
+                                                // CHECK: @llvm.ppc.altivec.lvsr
+                                                // CHECK: @llvm.ppc.altivec.vperm
+                                                // CHECK: @llvm.ppc.altivec.stvx
+
+  vec_stvlx(vui, 0, &vui);                      // CHECK: store <4 x i32> zeroinitializer
+                                                // CHECK: @llvm.ppc.altivec.lvx
+                                                // CHECK: @llvm.ppc.altivec.lvsl
+                                                // CHECK: @llvm.ppc.altivec.vperm
+                                                // CHECK: @llvm.ppc.altivec.lvsr
+                                                // CHECK: @llvm.ppc.altivec.vperm
+                                                // CHECK: @llvm.ppc.altivec.stvx
+
+  vec_stvlx(vbi, 0, &vbi);                      // CHECK: store <4 x i32> zeroinitializer
+                                                // CHECK: @llvm.ppc.altivec.lvx
+                                                // CHECK: @llvm.ppc.altivec.lvsl
+                                                // CHECK: @llvm.ppc.altivec.vperm
+                                                // CHECK: @llvm.ppc.altivec.lvsr
+                                                // CHECK: @llvm.ppc.altivec.vperm
+                                                // CHECK: @llvm.ppc.altivec.stvx
+
+  vec_stvlx(vf, 0, &vf);                        // CHECK: store <4 x float> zeroinitializer
+                                                // CHECK: @llvm.ppc.altivec.lvx
+                                                // CHECK: @llvm.ppc.altivec.lvsl
+                                                // CHECK: @llvm.ppc.altivec.vperm
+                                                // CHECK: @llvm.ppc.altivec.lvsr
+                                                // CHECK: @llvm.ppc.altivec.vperm
+                                                // CHECK: @llvm.ppc.altivec.stvx
+
+  /* vec_stvlxl */
+  vec_stvlxl(vsc, 0, &param_sc);                // CHECK: store <16 x i8> zeroinitializer
+                                                // CHECK: @llvm.ppc.altivec.lvx
+                                                // CHECK: @llvm.ppc.altivec.lvsl
+                                                // CHECK: @llvm.ppc.altivec.vperm
+                                                // CHECK: @llvm.ppc.altivec.lvsr
+                                                // CHECK: @llvm.ppc.altivec.vperm
+                                                // CHECK: @llvm.ppc.altivec.stvxl
+
+  vec_stvlxl(vsc, 0, &vsc);                     // CHECK: store <16 x i8> zeroinitializer
+                                                // CHECK: @llvm.ppc.altivec.lvx
+                                                // CHECK: @llvm.ppc.altivec.lvsl
+                                                // CHECK: @llvm.ppc.altivec.vperm
+                                                // CHECK: @llvm.ppc.altivec.lvsr
+                                                // CHECK: @llvm.ppc.altivec.vperm
+                                                // CHECK: @llvm.ppc.altivec.stvxl
+
+  vec_stvlxl(vuc, 0, &param_uc);                // CHECK: store <16 x i8> zeroinitializer
+                                                // CHECK: @llvm.ppc.altivec.lvx
+                                                // CHECK: @llvm.ppc.altivec.lvsl
+                                                // CHECK: @llvm.ppc.altivec.vperm
+                                                // CHECK: @llvm.ppc.altivec.lvsr
+                                                // CHECK: @llvm.ppc.altivec.vperm
+                                                // CHECK: @llvm.ppc.altivec.stvxl
+
+  vec_stvlxl(vuc, 0, &vuc);                     // CHECK: store <16 x i8> zeroinitializer
+                                                // CHECK: @llvm.ppc.altivec.lvx
+                                                // CHECK: @llvm.ppc.altivec.lvsl
+                                                // CHECK: @llvm.ppc.altivec.vperm
+                                                // CHECK: @llvm.ppc.altivec.lvsr
+                                                // CHECK: @llvm.ppc.altivec.vperm
+                                                // CHECK: @llvm.ppc.altivec.stvxl
+
+  vec_stvlxl(vbc, 0, &vbc);                     // CHECK: store <16 x i8> zeroinitializer
+                                                // CHECK: @llvm.ppc.altivec.lvx
+                                                // CHECK: @llvm.ppc.altivec.lvsl
+                                                // CHECK: @llvm.ppc.altivec.vperm
+                                                // CHECK: @llvm.ppc.altivec.lvsr
+                                                // CHECK: @llvm.ppc.altivec.vperm
+                                                // CHECK: @llvm.ppc.altivec.stvxl
+
+  vec_stvlxl(vs, 0, &param_s);                  // CHECK: store <8 x i16> zeroinitializer
+                                                // CHECK: @llvm.ppc.altivec.lvx
+                                                // CHECK: @llvm.ppc.altivec.lvsl
+                                                // CHECK: @llvm.ppc.altivec.vperm
+                                                // CHECK: @llvm.ppc.altivec.lvsr
+                                                // CHECK: @llvm.ppc.altivec.vperm
+                                                // CHECK: @llvm.ppc.altivec.stvxl
+
+  vec_stvlxl(vs, 0, &vs);                       // CHECK: store <8 x i16> zeroinitializer
+                                                // CHECK: @llvm.ppc.altivec.lvx
+                                                // CHECK: @llvm.ppc.altivec.lvsl
+                                                // CHECK: @llvm.ppc.altivec.vperm
+                                                // CHECK: @llvm.ppc.altivec.lvsr
+                                                // CHECK: @llvm.ppc.altivec.vperm
+                                                // CHECK: @llvm.ppc.altivec.stvxl
+
+  vec_stvlxl(vus, 0, &param_us);                // CHECK: store <8 x i16> zeroinitializer
+                                                // CHECK: @llvm.ppc.altivec.lvx
+                                                // CHECK: @llvm.ppc.altivec.lvsl
+                                                // CHECK: @llvm.ppc.altivec.vperm
+                                                // CHECK: @llvm.ppc.altivec.lvsr
+                                                // CHECK: @llvm.ppc.altivec.vperm
+                                                // CHECK: @llvm.ppc.altivec.stvxl
+
+  vec_stvlxl(vus, 0, &vus);                     // CHECK: store <8 x i16> zeroinitializer
+                                                // CHECK: @llvm.ppc.altivec.lvx
+                                                // CHECK: @llvm.ppc.altivec.lvsl
+                                                // CHECK: @llvm.ppc.altivec.vperm
+                                                // CHECK: @llvm.ppc.altivec.lvsr
+                                                // CHECK: @llvm.ppc.altivec.vperm
+                                                // CHECK: @llvm.ppc.altivec.stvxl
+
+  vec_stvlxl(vbs, 0, &vbs);                     // CHECK: store <8 x i16> zeroinitializer
+                                                // CHECK: @llvm.ppc.altivec.lvx
+                                                // CHECK: @llvm.ppc.altivec.lvsl
+                                                // CHECK: @llvm.ppc.altivec.vperm
+                                                // CHECK: @llvm.ppc.altivec.lvsr
+                                                // CHECK: @llvm.ppc.altivec.vperm
+                                                // CHECK: @llvm.ppc.altivec.stvxl
+
+  vec_stvlxl(vp, 0, &vp);                       // CHECK: store <8 x i16> zeroinitializer
+                                                // CHECK: @llvm.ppc.altivec.lvx
+                                                // CHECK: @llvm.ppc.altivec.lvsl
+                                                // CHECK: @llvm.ppc.altivec.vperm
+                                                // CHECK: @llvm.ppc.altivec.lvsr
+                                                // CHECK: @llvm.ppc.altivec.vperm
+                                                // CHECK: @llvm.ppc.altivec.stvxl
+
+  vec_stvlxl(vi, 0, &param_i);                  // CHECK: store <4 x i32> zeroinitializer
+                                                // CHECK: @llvm.ppc.altivec.lvx
+                                                // CHECK: @llvm.ppc.altivec.lvsl
+                                                // CHECK: @llvm.ppc.altivec.vperm
+                                                // CHECK: @llvm.ppc.altivec.lvsr
+                                                // CHECK: @llvm.ppc.altivec.vperm
+                                                // CHECK: @llvm.ppc.altivec.stvxl
+
+  vec_stvlxl(vi, 0, &vi);                       // CHECK: store <4 x i32> zeroinitializer
+                                                // CHECK: @llvm.ppc.altivec.lvx
+                                                // CHECK: @llvm.ppc.altivec.lvsl
+                                                // CHECK: @llvm.ppc.altivec.vperm
+                                                // CHECK: @llvm.ppc.altivec.lvsr
+                                                // CHECK: @llvm.ppc.altivec.vperm
+                                                // CHECK: @llvm.ppc.altivec.stvxl
+
+  vec_stvlxl(vui, 0, &param_ui);                // CHECK: store <4 x i32> zeroinitializer
+                                                // CHECK: @llvm.ppc.altivec.lvx
+                                                // CHECK: @llvm.ppc.altivec.lvsl
+                                                // CHECK: @llvm.ppc.altivec.vperm
+                                                // CHECK: @llvm.ppc.altivec.lvsr
+                                                // CHECK: @llvm.ppc.altivec.vperm
+                                                // CHECK: @llvm.ppc.altivec.stvxl
+
+  vec_stvlxl(vui, 0, &vui);                     // CHECK: store <4 x i32> zeroinitializer
+                                                // CHECK: @llvm.ppc.altivec.lvx
+                                                // CHECK: @llvm.ppc.altivec.lvsl
+                                                // CHECK: @llvm.ppc.altivec.vperm
+                                                // CHECK: @llvm.ppc.altivec.lvsr
+                                                // CHECK: @llvm.ppc.altivec.vperm
+                                                // CHECK: @llvm.ppc.altivec.stvxl
+
+  vec_stvlxl(vbi, 0, &vbi);                     // CHECK: store <4 x i32> zeroinitializer
+                                                // CHECK: @llvm.ppc.altivec.lvx
+                                                // CHECK: @llvm.ppc.altivec.lvsl
+                                                // CHECK: @llvm.ppc.altivec.vperm
+                                                // CHECK: @llvm.ppc.altivec.lvsr
+                                                // CHECK: @llvm.ppc.altivec.vperm
+                                                // CHECK: @llvm.ppc.altivec.stvxl
+
+  vec_stvlxl(vf, 0, &vf);                       // CHECK: store <4 x float> zeroinitializer
+                                                // CHECK: @llvm.ppc.altivec.lvx
+                                                // CHECK: @llvm.ppc.altivec.lvsl
+                                                // CHECK: @llvm.ppc.altivec.vperm
+                                                // CHECK: @llvm.ppc.altivec.lvsr
+                                                // CHECK: @llvm.ppc.altivec.vperm
+                                                // CHECK: @llvm.ppc.altivec.stvxl
+
+  /* vec_stvrx */
+  vec_stvrx(vsc, 0, &param_sc);                 // CHECK: @llvm.ppc.altivec.lvx
+                                                // CHECK: store <16 x i8> zeroinitializer
+                                                // CHECK: @llvm.ppc.altivec.lvsl
+                                                // CHECK: @llvm.ppc.altivec.vperm
+                                                // CHECK: @llvm.ppc.altivec.lvsr
+                                                // CHECK: @llvm.ppc.altivec.vperm
+                                                // CHECK: @llvm.ppc.altivec.stvx
+
+  vec_stvrx(vsc, 0, &vsc);                      // CHECK: @llvm.ppc.altivec.lvx
+                                                // CHECK: store <16 x i8> zeroinitializer
+                                                // CHECK: @llvm.ppc.altivec.lvsl
+                                                // CHECK: @llvm.ppc.altivec.vperm
+                                                // CHECK: @llvm.ppc.altivec.lvsr
+                                                // CHECK: @llvm.ppc.altivec.vperm
+                                                // CHECK: @llvm.ppc.altivec.stvx
+
+  vec_stvrx(vuc, 0, &param_uc);                 // CHECK: @llvm.ppc.altivec.lvx
+                                                // CHECK: store <16 x i8> zeroinitializer
+                                                // CHECK: @llvm.ppc.altivec.lvsl
+                                                // CHECK: @llvm.ppc.altivec.vperm
+                                                // CHECK: @llvm.ppc.altivec.lvsr
+                                                // CHECK: @llvm.ppc.altivec.vperm
+                                                // CHECK: @llvm.ppc.altivec.stvx
+
+  vec_stvrx(vuc, 0, &vuc);                      // CHECK: @llvm.ppc.altivec.lvx
+                                                // CHECK: store <16 x i8> zeroinitializer
+                                                // CHECK: @llvm.ppc.altivec.lvsl
+                                                // CHECK: @llvm.ppc.altivec.vperm
+                                                // CHECK: @llvm.ppc.altivec.lvsr
+                                                // CHECK: @llvm.ppc.altivec.vperm
+                                                // CHECK: @llvm.ppc.altivec.stvx
+
+  vec_stvrx(vbc, 0, &vbc);                      // CHECK: @llvm.ppc.altivec.lvx
+                                                // CHECK: store <16 x i8> zeroinitializer
+                                                // CHECK: @llvm.ppc.altivec.lvsl
+                                                // CHECK: @llvm.ppc.altivec.vperm
+                                                // CHECK: @llvm.ppc.altivec.lvsr
+                                                // CHECK: @llvm.ppc.altivec.vperm
+                                                // CHECK: @llvm.ppc.altivec.stvx
+
+  vec_stvrx(vs, 0, &param_s);                   // CHECK: @llvm.ppc.altivec.lvx
+                                                // CHECK: store <8 x i16> zeroinitializer
+                                                // CHECK: @llvm.ppc.altivec.lvsl
+                                                // CHECK: @llvm.ppc.altivec.vperm
+                                                // CHECK: @llvm.ppc.altivec.lvsr
+                                                // CHECK: @llvm.ppc.altivec.vperm
+                                                // CHECK: @llvm.ppc.altivec.stvx
+
+  vec_stvrx(vs, 0, &vs);                        // CHECK: @llvm.ppc.altivec.lvx
+                                                // CHECK: store <8 x i16> zeroinitializer
+                                                // CHECK: @llvm.ppc.altivec.lvsl
+                                                // CHECK: @llvm.ppc.altivec.vperm
+                                                // CHECK: @llvm.ppc.altivec.lvsr
+                                                // CHECK: @llvm.ppc.altivec.vperm
+                                                // CHECK: @llvm.ppc.altivec.stvx
+
+  vec_stvrx(vus, 0, &param_us);                 // CHECK: @llvm.ppc.altivec.lvx
+                                                // CHECK: store <8 x i16> zeroinitializer
+                                                // CHECK: @llvm.ppc.altivec.lvsl
+                                                // CHECK: @llvm.ppc.altivec.vperm
+                                                // CHECK: @llvm.ppc.altivec.lvsr
+                                                // CHECK: @llvm.ppc.altivec.vperm
+                                                // CHECK: @llvm.ppc.altivec.stvx
+
+  vec_stvrx(vus, 0, &vus);                      // CHECK: @llvm.ppc.altivec.lvx
+                                                // CHECK: store <8 x i16> zeroinitializer
+                                                // CHECK: @llvm.ppc.altivec.lvsl
+                                                // CHECK: @llvm.ppc.altivec.vperm
+                                                // CHECK: @llvm.ppc.altivec.lvsr
+                                                // CHECK: @llvm.ppc.altivec.vperm
+                                                // CHECK: @llvm.ppc.altivec.stvx
+
+  vec_stvrx(vbs, 0, &vbs);                      // CHECK: @llvm.ppc.altivec.lvx
+                                                // CHECK: store <8 x i16> zeroinitializer
+                                                // CHECK: @llvm.ppc.altivec.lvsl
+                                                // CHECK: @llvm.ppc.altivec.vperm
+                                                // CHECK: @llvm.ppc.altivec.lvsr
+                                                // CHECK: @llvm.ppc.altivec.vperm
+                                                // CHECK: @llvm.ppc.altivec.stvx
+
+  vec_stvrx(vp, 0, &vp);                        // CHECK: @llvm.ppc.altivec.lvx
+                                                // CHECK: store <8 x i16> zeroinitializer
+                                                // CHECK: @llvm.ppc.altivec.lvsl
+                                                // CHECK: @llvm.ppc.altivec.vperm
+                                                // CHECK: @llvm.ppc.altivec.lvsr
+                                                // CHECK: @llvm.ppc.altivec.vperm
+                                                // CHECK: @llvm.ppc.altivec.stvx
+
+  vec_stvrx(vi, 0, &param_i);                   // CHECK: @llvm.ppc.altivec.lvx
+                                                // CHECK: store <4 x i32> zeroinitializer
+                                                // CHECK: @llvm.ppc.altivec.lvsl
+                                                // CHECK: @llvm.ppc.altivec.vperm
+                                                // CHECK: @llvm.ppc.altivec.lvsr
+                                                // CHECK: @llvm.ppc.altivec.vperm
+                                                // CHECK: @llvm.ppc.altivec.stvx
+
+  vec_stvrx(vi, 0, &vi);                        // CHECK: @llvm.ppc.altivec.lvx
+                                                // CHECK: store <4 x i32> zeroinitializer
+                                                // CHECK: @llvm.ppc.altivec.lvsl
+                                                // CHECK: @llvm.ppc.altivec.vperm
+                                                // CHECK: @llvm.ppc.altivec.lvsr
+                                                // CHECK: @llvm.ppc.altivec.vperm
+                                                // CHECK: @llvm.ppc.altivec.stvx
+
+  vec_stvrx(vui, 0, &param_ui);                 // CHECK: @llvm.ppc.altivec.lvx
+                                                // CHECK: store <4 x i32> zeroinitializer
+                                                // CHECK: @llvm.ppc.altivec.lvsl
+                                                // CHECK: @llvm.ppc.altivec.vperm
+                                                // CHECK: @llvm.ppc.altivec.lvsr
+                                                // CHECK: @llvm.ppc.altivec.vperm
+                                                // CHECK: @llvm.ppc.altivec.stvx
+
+  vec_stvrx(vui, 0, &vui);                      // CHECK: @llvm.ppc.altivec.lvx
+                                                // CHECK: store <4 x i32> zeroinitializer
+                                                // CHECK: @llvm.ppc.altivec.lvsl
+                                                // CHECK: @llvm.ppc.altivec.vperm
+                                                // CHECK: @llvm.ppc.altivec.lvsr
+                                                // CHECK: @llvm.ppc.altivec.vperm
+                                                // CHECK: @llvm.ppc.altivec.stvx
+
+  vec_stvrx(vbi, 0, &vbi);                      // CHECK: @llvm.ppc.altivec.lvx
+                                                // CHECK: store <4 x i32> zeroinitializer
+                                                // CHECK: @llvm.ppc.altivec.lvsl
+                                                // CHECK: @llvm.ppc.altivec.vperm
+                                                // CHECK: @llvm.ppc.altivec.lvsr
+                                                // CHECK: @llvm.ppc.altivec.vperm
+                                                // CHECK: @llvm.ppc.altivec.stvx
+
+  vec_stvrx(vf, 0, &vf);                        // CHECK: @llvm.ppc.altivec.lvx
+                                                // CHECK: store <4 x float> zeroinitializer
+                                                // CHECK: @llvm.ppc.altivec.lvsl
+                                                // CHECK: @llvm.ppc.altivec.vperm
+                                                // CHECK: @llvm.ppc.altivec.lvsr
+                                                // CHECK: @llvm.ppc.altivec.vperm
+                                                // CHECK: @llvm.ppc.altivec.stvx
+
+  /* vec_stvrxl */
+  vec_stvrxl(vsc, 0, &param_sc);                // CHECK: @llvm.ppc.altivec.lvx
+                                                // CHECK: store <16 x i8> zeroinitializer
+                                                // CHECK: @llvm.ppc.altivec.lvsl
+                                                // CHECK: @llvm.ppc.altivec.vperm
+                                                // CHECK: @llvm.ppc.altivec.lvsr
+                                                // CHECK: @llvm.ppc.altivec.vperm
+                                                // CHECK: @llvm.ppc.altivec.stvxl
+
+  vec_stvrxl(vsc, 0, &vsc);                     // CHECK: @llvm.ppc.altivec.lvx
+                                                // CHECK: store <16 x i8> zeroinitializer
+                                                // CHECK: @llvm.ppc.altivec.lvsl
+                                                // CHECK: @llvm.ppc.altivec.vperm
+                                                // CHECK: @llvm.ppc.altivec.lvsr
+                                                // CHECK: @llvm.ppc.altivec.vperm
+                                                // CHECK: @llvm.ppc.altivec.stvxl
+
+  vec_stvrxl(vuc, 0, &param_uc);                // CHECK: @llvm.ppc.altivec.lvx
+                                                // CHECK: store <16 x i8> zeroinitializer
+                                                // CHECK: @llvm.ppc.altivec.lvsl
+                                                // CHECK: @llvm.ppc.altivec.vperm
+                                                // CHECK: @llvm.ppc.altivec.lvsr
+                                                // CHECK: @llvm.ppc.altivec.vperm
+                                                // CHECK: @llvm.ppc.altivec.stvxl
+
+  vec_stvrxl(vuc, 0, &vuc);                     // CHECK: @llvm.ppc.altivec.lvx
+                                                // CHECK: store <16 x i8> zeroinitializer
+                                                // CHECK: @llvm.ppc.altivec.lvsl
+                                                // CHECK: @llvm.ppc.altivec.vperm
+                                                // CHECK: @llvm.ppc.altivec.lvsr
+                                                // CHECK: @llvm.ppc.altivec.vperm
+                                                // CHECK: @llvm.ppc.altivec.stvxl
+
+  vec_stvrxl(vbc, 0, &vbc);                     // CHECK: @llvm.ppc.altivec.lvx
+                                                // CHECK: store <16 x i8> zeroinitializer
+                                                // CHECK: @llvm.ppc.altivec.lvsl
+                                                // CHECK: @llvm.ppc.altivec.vperm
+                                                // CHECK: @llvm.ppc.altivec.lvsr
+                                                // CHECK: @llvm.ppc.altivec.vperm
+                                                // CHECK: @llvm.ppc.altivec.stvxl
+
+  vec_stvrxl(vs, 0, &param_s);                  // CHECK: @llvm.ppc.altivec.lvx
+                                                // CHECK: store <8 x i16> zeroinitializer
+                                                // CHECK: @llvm.ppc.altivec.lvsl
+                                                // CHECK: @llvm.ppc.altivec.vperm
+                                                // CHECK: @llvm.ppc.altivec.lvsr
+                                                // CHECK: @llvm.ppc.altivec.vperm
+                                                // CHECK: @llvm.ppc.altivec.stvxl
+
+  vec_stvrxl(vs, 0, &vs);                       // CHECK: @llvm.ppc.altivec.lvx
+                                                // CHECK: store <8 x i16> zeroinitializer
+                                                // CHECK: @llvm.ppc.altivec.lvsl
+                                                // CHECK: @llvm.ppc.altivec.vperm
+                                                // CHECK: @llvm.ppc.altivec.lvsr
+                                                // CHECK: @llvm.ppc.altivec.vperm
+                                                // CHECK: @llvm.ppc.altivec.stvxl
+
+  vec_stvrxl(vus, 0, &param_us);                // CHECK: @llvm.ppc.altivec.lvx
+                                                // CHECK: store <8 x i16> zeroinitializer
+                                                // CHECK: @llvm.ppc.altivec.lvsl
+                                                // CHECK: @llvm.ppc.altivec.vperm
+                                                // CHECK: @llvm.ppc.altivec.lvsr
+                                                // CHECK: @llvm.ppc.altivec.vperm
+                                                // CHECK: @llvm.ppc.altivec.stvxl
+
+  vec_stvrxl(vus, 0, &vus);                     // CHECK: @llvm.ppc.altivec.lvx
+                                                // CHECK: store <8 x i16> zeroinitializer
+                                                // CHECK: @llvm.ppc.altivec.lvsl
+                                                // CHECK: @llvm.ppc.altivec.vperm
+                                                // CHECK: @llvm.ppc.altivec.lvsr
+                                                // CHECK: @llvm.ppc.altivec.vperm
+                                                // CHECK: @llvm.ppc.altivec.stvxl
+
+  vec_stvrxl(vbs, 0, &vbs);                     // CHECK: @llvm.ppc.altivec.lvx
+                                                // CHECK: store <8 x i16> zeroinitializer
+                                                // CHECK: @llvm.ppc.altivec.lvsl
+                                                // CHECK: @llvm.ppc.altivec.vperm
+                                                // CHECK: @llvm.ppc.altivec.lvsr
+                                                // CHECK: @llvm.ppc.altivec.vperm
+                                                // CHECK: @llvm.ppc.altivec.stvxl
+
+  vec_stvrxl(vp, 0, &vp);                       // CHECK: @llvm.ppc.altivec.lvx
+                                                // CHECK: store <8 x i16> zeroinitializer
+                                                // CHECK: @llvm.ppc.altivec.lvsl
+                                                // CHECK: @llvm.ppc.altivec.vperm
+                                                // CHECK: @llvm.ppc.altivec.lvsr
+                                                // CHECK: @llvm.ppc.altivec.vperm
+                                                // CHECK: @llvm.ppc.altivec.stvxl
+
+  vec_stvrxl(vi, 0, &param_i);                  // CHECK: @llvm.ppc.altivec.lvx
+                                                // CHECK: store <4 x i32> zeroinitializer
+                                                // CHECK: @llvm.ppc.altivec.lvsl
+                                                // CHECK: @llvm.ppc.altivec.vperm
+                                                // CHECK: @llvm.ppc.altivec.lvsr
+                                                // CHECK: @llvm.ppc.altivec.vperm
+                                                // CHECK: @llvm.ppc.altivec.stvxl
+
+  vec_stvrxl(vi, 0, &vi);                       // CHECK: @llvm.ppc.altivec.lvx
+                                                // CHECK: store <4 x i32> zeroinitializer
+                                                // CHECK: @llvm.ppc.altivec.lvsl
+                                                // CHECK: @llvm.ppc.altivec.vperm
+                                                // CHECK: @llvm.ppc.altivec.lvsr
+                                                // CHECK: @llvm.ppc.altivec.vperm
+                                                // CHECK: @llvm.ppc.altivec.stvxl
+
+  vec_stvrxl(vui, 0, &param_ui);                // CHECK: @llvm.ppc.altivec.lvx
+                                                // CHECK: store <4 x i32> zeroinitializer
+                                                // CHECK: @llvm.ppc.altivec.lvsl
+                                                // CHECK: @llvm.ppc.altivec.vperm
+                                                // CHECK: @llvm.ppc.altivec.lvsr
+                                                // CHECK: @llvm.ppc.altivec.vperm
+                                                // CHECK: @llvm.ppc.altivec.stvxl
+
+  vec_stvrxl(vui, 0, &vui);                     // CHECK: @llvm.ppc.altivec.lvx
+                                                // CHECK: store <4 x i32> zeroinitializer
+                                                // CHECK: @llvm.ppc.altivec.lvsl
+                                                // CHECK: @llvm.ppc.altivec.vperm
+                                                // CHECK: @llvm.ppc.altivec.lvsr
+                                                // CHECK: @llvm.ppc.altivec.vperm
+                                                // CHECK: @llvm.ppc.altivec.stvxl
+
+  vec_stvrxl(vbi, 0, &vbi);                     // CHECK: @llvm.ppc.altivec.lvx
+                                                // CHECK: store <4 x i32> zeroinitializer
+                                                // CHECK: @llvm.ppc.altivec.lvsl
+                                                // CHECK: @llvm.ppc.altivec.vperm
+                                                // CHECK: @llvm.ppc.altivec.lvsr
+                                                // CHECK: @llvm.ppc.altivec.vperm
+                                                // CHECK: @llvm.ppc.altivec.stvxl
+
+  vec_stvrxl(vf, 0, &vf);                       // CHECK: @llvm.ppc.altivec.lvx
+                                                // CHECK: store <4 x float> zeroinitializer
+                                                // CHECK: @llvm.ppc.altivec.lvsl
+                                                // CHECK: @llvm.ppc.altivec.vperm
+                                                // CHECK: @llvm.ppc.altivec.lvsr
+                                                // CHECK: @llvm.ppc.altivec.vperm
+                                                // CHECK: @llvm.ppc.altivec.stvxl
+
+  /* vec_promote */
+  res_vsc = vec_promote(param_sc, 0);           // CHECK: store <16 x i8> zeroinitializer
+                                                // CHECK: insertelement <16 x i8>
+
+  res_vuc = vec_promote(param_uc, 0);           // CHECK: store <16 x i8> zeroinitializer
+                                                // CHECK: insertelement <16 x i8>
+
+  res_vs  = vec_promote(param_s, 0);            // CHECK: store <8 x i16> zeroinitializer
+                                                // CHECK: insertelement <8 x i16>
+
+  res_vus = vec_promote(param_us, 0);           // CHECK: store <8 x i16> zeroinitializer
+                                                // CHECK: insertelement <8 x i16>
+
+  res_vi  = vec_promote(param_i, 0);            // CHECK: store <4 x i32> zeroinitializer
+                                                // CHECK: insertelement <4 x i32>
+
+  res_vui = vec_promote(param_ui, 0);           // CHECK: store <4 x i32> zeroinitializer
+                                                // CHECK: insertelement <4 x i32>
+
+  res_vf  = vec_promote(param_f, 0);            // CHECK: store <4 x float> zeroinitializer
+                                                // CHECK: insertelement <4 x float>
+
+  /* vec_splats */
+  res_vsc = vec_splats(param_sc);               // CHECK: insertelement <16 x i8>
+
+  res_vuc = vec_splats(param_uc);               // CHECK: insertelement <16 x i8>
+
+  res_vs  = vec_splats(param_s);                // CHECK: insertelement <8 x i16>
+
+  res_vus = vec_splats(param_us);               // CHECK: insertelement <8 x i16>
+
+  res_vi  = vec_splats(param_i);                // CHECK: insertelement <4 x i32>
+
+  res_vui = vec_splats(param_ui);               // CHECK: insertelement <4 x i32>
+
+  res_vf  = vec_splats(param_f);                // CHECK: insertelement <4 x float>
+
   /* ------------------------------ predicates -------------------------------------- */
 
-  /*  vec_all_eq */
+  /* vec_all_eq */
   res_i = vec_all_eq(vsc, vsc);                 // CHECK: @llvm.ppc.altivec.vcmpequb.p
   res_i = vec_all_eq(vsc, vbc);                 // CHECK: @llvm.ppc.altivec.vcmpequb.p
   res_i = vec_all_eq(vuc, vuc);                 // CHECK: @llvm.ppc.altivec.vcmpequb.p
