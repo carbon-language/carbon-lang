@@ -24,7 +24,8 @@ class UnsignedTypesTestCase(TestBase):
         self.unsigned_types()
 
     def setUp(self):
-        super(UnsignedTypesTestCase, self).setUp()
+        # Call super's setUp().
+        TestBase.setUp(self)
         # Find the line number to break inside main().
         self.line = line_number('main.cpp', '// Set break point at this line.')
 

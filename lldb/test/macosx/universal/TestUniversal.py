@@ -10,7 +10,8 @@ class UniversalTestCase(TestBase):
     mydir = "macosx/universal"
 
     def setUp(self):
-        super(UniversalTestCase, self).setUp()
+        # Call super's setUp().
+        TestBase.setUp(self)
         # Find the line number to break inside main().
         self.line = line_number('main.c', '// Set break point at this line.')
 

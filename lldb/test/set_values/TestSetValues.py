@@ -21,7 +21,8 @@ class SetValuesTestCase(TestBase):
         self.set_values()
 
     def setUp(self):
-        super(SetValuesTestCase, self).setUp()
+        # Call super's setUp().
+        TestBase.setUp(self)
         # Find the line numbers to break inside main().
         self.line1 = line_number('main.c', '// Set break point #1.')
         self.line2 = line_number('main.c', '// Set break point #2.')

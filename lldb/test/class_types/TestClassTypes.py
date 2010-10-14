@@ -47,7 +47,8 @@ class ClassTypesTestCase(TestBase):
         self.class_types_expr_parser()
 
     def setUp(self):
-        super(ClassTypesTestCase, self).setUp()
+        # Call super's setUp().
+        TestBase.setUp(self)
         # Find the line number to break for main.cpp.
         self.line = line_number('main.cpp', '// Set break point at this line.')
 

@@ -34,7 +34,8 @@ class IterateFrameAndDisassembleTestCase(TestBase):
         self.disassemble_call_stack_api()
 
     def setUp(self):
-        super(IterateFrameAndDisassembleTestCase, self).setUp()
+        # Call super's setUp().
+        TestBase.setUp(self)
         # Find the line number to break for main.cpp.
         self.line = line_number('main.cpp', '// Set break point at this line.')
 

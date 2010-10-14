@@ -23,7 +23,8 @@ class BreakpointLocationsTestCase(TestBase):
         self.breakpoint_locations_test()
 
     def setUp(self):
-        super(BreakpointLocationsTestCase, self).setUp()
+        # Call super's setUp().
+        TestBase.setUp(self)
         # Find the line number to break inside main().
         self.line = line_number('main.c', '// Set break point at this line.')
 

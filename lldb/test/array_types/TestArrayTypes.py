@@ -32,7 +32,8 @@ class ArrayTypesTestCase(TestBase):
         self.array_types_python()
 
     def setUp(self):
-        super(ArrayTypesTestCase, self).setUp()
+        # Call super's setUp().
+        TestBase.setUp(self)
         # Find the line number to break inside main().
         self.line = line_number('main.c', '// Set break point at this line.')
 

@@ -25,7 +25,8 @@ class StructTypesTestCase(TestBase):
         self.struct_types()
 
     def setUp(self):
-        super(StructTypesTestCase, self).setUp()
+        # Call super's setUp().
+        TestBase.setUp(self)
         # Find the line number to break for main.c.
         self.line = line_number('main.c', '// Set break point at this line.')
         self.first_executable_line = line_number('main.c',

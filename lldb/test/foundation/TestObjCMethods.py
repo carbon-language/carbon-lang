@@ -85,7 +85,8 @@ class FoundationTestCase(TestBase):
             substrs = ["Foundation`-[NSAutoreleasePool release]"])
 
     def setUp(self):
-        super(FoundationTestCase, self).setUp()
+        # Call super's setUp().
+        TestBase.setUp(self)
         # Find the line number to break inside main().
         self.line = line_number('main.m', '// Set break point at this line.')
 

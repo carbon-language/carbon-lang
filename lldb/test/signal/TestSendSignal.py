@@ -21,7 +21,8 @@ class SendSignalTestCase(TestBase):
         self.send_signal()
 
     def setUp(self):
-        super(SendSignalTestCase, self).setUp()
+        # Call super's setUp().
+        TestBase.setUp(self)
         # Find the line number to break inside main().
         self.line = line_number('main.c', 'Put breakpoint here')
 

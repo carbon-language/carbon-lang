@@ -23,7 +23,8 @@ class STLTestCase(TestBase):
         self.step_into_stl()
 
     def setUp(self):
-        super(STLTestCase, self).setUp()
+        # Call super's setUp().
+        TestBase.setUp(self)
         # Find the line number to break inside main().
         self.line = line_number('main.cpp', '// Set break point at this line.')
 

@@ -27,7 +27,8 @@ class BreakpointCommandTestCase(TestBase):
         self.breakpoint_command_sequence()
 
     def setUp(self):
-        super(BreakpointCommandTestCase, self).setUp()
+        # Call super's setUp().
+        TestBase.setUp(self)
         # Find the line number to break inside main().
         self.line = line_number('main.c', '// Set break point at this line.')
 
