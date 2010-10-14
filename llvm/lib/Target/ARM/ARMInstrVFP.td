@@ -927,7 +927,9 @@ def FMSTAT : VFPAI<(outs), (ins), VFPMiscFrm, IIC_fpSTAT, "vmrs",
   let Inst{15-12} = 0b1111;
   let Inst{11-8}  = 0b1010;
   let Inst{7}     = 0;
+  let Inst{6-5}   = 0b00;
   let Inst{4}     = 1;
+  let Inst{3-0}   = 0b0000;
 }
 
 // FPSCR <-> GPR (for disassembly only)

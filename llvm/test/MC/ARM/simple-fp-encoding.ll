@@ -331,6 +331,8 @@ entry:
   ret float %sub
 }
 
+; FIXME: Check for fmstat instruction.
+
 define i32 @f100() nounwind readnone {
 entry:
 ; CHECK: f100

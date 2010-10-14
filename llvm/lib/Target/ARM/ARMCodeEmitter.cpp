@@ -1599,10 +1599,6 @@ void ARMCodeEmitter::emitMiscInstruction(const MachineInstr &MI) {
   default:
     llvm_unreachable("ARMCodeEmitter::emitMiscInstruction");
 
-  case ARM::FMSTAT:
-    // No further encoding needed.
-    break;
-
   case ARM::FCONSTD:
   case ARM::FCONSTS: {
     // Encode Dd / Sd.
