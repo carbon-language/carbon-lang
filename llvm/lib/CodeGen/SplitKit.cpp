@@ -14,6 +14,7 @@
 
 #define DEBUG_TYPE "splitter"
 #include "SplitKit.h"
+#include "LiveRangeEdit.h"
 #include "VirtRegMap.h"
 #include "llvm/CodeGen/CalcSpillWeights.h"
 #include "llvm/CodeGen/LiveIntervalAnalysis.h"
@@ -580,15 +581,14 @@ VNInfo *LiveIntervalMap::defByCopyFrom(unsigned Reg,
 
 /// Create a new SplitEditor for editing the LiveInterval analyzed by SA.
 SplitEditor::SplitEditor(SplitAnalysis &sa, LiveIntervals &lis, VirtRegMap &vrm,
-                         SmallVectorImpl<LiveInterval*> &intervals)
+                         LiveRangeEdit &edit)
   : sa_(sa), lis_(lis), vrm_(vrm),
     mri_(vrm.getMachineFunction().getRegInfo()),
     tii_(*vrm.getMachineFunction().getTarget().getInstrInfo()),
+    edit_(edit),
     curli_(sa_.getCurLI()),
     dupli_(lis_, *curli_),
-    openli_(lis_, *curli_),
-    intervals_(intervals),
-    firstInterval(intervals_.size())
+    openli_(lis_, *curli_)
 {
   assert(curli_ && "SplitEditor created from empty SplitAnalysis");
 
@@ -599,17 +599,9 @@ SplitEditor::SplitEditor(SplitAnalysis &sa, LiveIntervals &lis, VirtRegMap &vrm,
 
 }
 
-LiveInterval *SplitEditor::createInterval() {
-  unsigned Reg = mri_.createVirtualRegister(mri_.getRegClass(curli_->reg));
-  LiveInterval &Intv = lis_.getOrCreateInterval(Reg);
-  vrm_.grow();
-  vrm_.assignVirt2StackSlot(Reg, vrm_.getStackSlot(curli_->reg));
-  return &Intv;
-}
-
 bool SplitEditor::intervalsLiveAt(SlotIndex Idx) const {
-  for (int i = firstInterval, e = intervals_.size(); i != e; ++i)
-    if (intervals_[i]->liveAt(Idx))
+  for (LiveRangeEdit::iterator I = edit_.begin(), E = edit_.end(); I != E; ++I)
+    if (*I != dupli_.getLI() && (*I)->liveAt(Idx))
       return true;
   return false;
 }
@@ -619,10 +611,9 @@ void SplitEditor::openIntv() {
   assert(!openli_.getLI() && "Previous LI not closed before openIntv");
 
   if (!dupli_.getLI())
-    dupli_.reset(createInterval());
+    dupli_.reset(&edit_.create(mri_, lis_, vrm_));
 
-  openli_.reset(createInterval());
-  intervals_.push_back(openli_.getLI());
+  openli_.reset(&edit_.create(mri_, lis_, vrm_));
 }
 
 /// enterIntvBefore - Enter openli before the instruction at Idx. If curli is
@@ -749,8 +740,9 @@ void SplitEditor::rewrite(unsigned reg) {
     SlotIndex Idx = lis_.getInstructionIndex(MI);
     Idx = MO.isUse() ? Idx.getUseIndex() : Idx.getDefIndex();
     LiveInterval *LI = 0;
-    for (unsigned i = firstInterval, e = intervals_.size(); i != e; ++i) {
-      LiveInterval *testli = intervals_[i];
+    for (LiveRangeEdit::iterator I = edit_.begin(), E = edit_.end(); I != E;
+         ++I) {
+      LiveInterval *testli = *I;
       if (testli->liveAt(Idx)) {
         LI = testli;
         break;
@@ -769,9 +761,10 @@ SplitEditor::addTruncSimpleRange(SlotIndex Start, SlotIndex End, VNInfo *VNI) {
   typedef std::pair<LiveInterval::const_iterator,
                     LiveInterval::const_iterator> IIPair;
   SmallVector<IIPair, 8> Iters;
-  for (int i = firstInterval, e = intervals_.size(); i != e; ++i) {
-    LiveInterval::const_iterator I = intervals_[i]->find(Start);
-    LiveInterval::const_iterator E = intervals_[i]->end();
+  for (LiveRangeEdit::iterator LI = edit_.begin(), LE = edit_.end(); LI != LE;
+       ++LI) {
+    LiveInterval::const_iterator I = (*LI)->find(Start);
+    LiveInterval::const_iterator E = (*LI)->end();
     if (I != E)
       Iters.push_back(std::make_pair(I, E));
   }
@@ -868,20 +861,16 @@ void SplitEditor::finish() {
   if (unsigned NumComp = ConEQ.Classify(dupli_.getLI())) {
     DEBUG(dbgs() << "  Remainder has " << NumComp << " connected components: "
                  << *dupli_.getLI() << '\n');
-    unsigned firstComp = intervals_.size();
-    intervals_.push_back(dupli_.getLI());
     // Did the remainder break up? Create intervals for all the components.
     if (NumComp > 1) {
+      SmallVector<LiveInterval*, 8> dups;
+      dups.push_back(dupli_.getLI());
       for (unsigned i = 1; i != NumComp; ++i)
-        intervals_.push_back(createInterval());
-      ConEQ.Distribute(&intervals_[firstComp]);
+        dups.push_back(&edit_.create(mri_, lis_, vrm_));
+      ConEQ.Distribute(&dups[0]);
       // Rewrite uses to the new regs.
       rewrite(dupli_.getLI()->reg);
     }
-  } else {
-    DEBUG(dbgs() << "  dupli became empty?\n");
-    lis_.removeInterval(dupli_.getLI()->reg);
-    dupli_.reset(0);
   }
 
   // Rewrite instructions.
@@ -889,8 +878,8 @@ void SplitEditor::finish() {
 
   // Calculate spill weight and allocation hints for new intervals.
   VirtRegAuxInfo vrai(vrm_.getMachineFunction(), lis_, sa_.loops_);
-  for (unsigned i = firstInterval, e = intervals_.size(); i != e; ++i) {
-    LiveInterval &li = *intervals_[i];
+  for (LiveRangeEdit::iterator I = edit_.begin(), E = edit_.end(); I != E; ++I){
+    LiveInterval &li = **I;
     vrai.CalculateRegClass(li.reg);
     vrai.CalculateWeightAndHint(li);
     DEBUG(dbgs() << "  new interval " << mri_.getRegClass(li.reg)->getName()

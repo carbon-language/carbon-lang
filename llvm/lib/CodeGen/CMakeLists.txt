@@ -23,6 +23,7 @@ add_llvm_library(LLVMCodeGen
   LiveIntervalAnalysis.cpp
   LiveStackAnalysis.cpp
   LiveVariables.cpp
+  LiveRangeEdit.cpp
   LocalStackSlotAllocation.cpp
   LowerSubregs.cpp
   MachineBasicBlock.cpp
