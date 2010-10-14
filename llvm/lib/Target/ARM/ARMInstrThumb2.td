@@ -1598,7 +1598,7 @@ defm t2ASR  : T2I_sh_ir<0b10, "asr", BinOpFrag<(sra  node:$LHS, node:$RHS)>>;
 defm t2ROR  : T2I_sh_ir<0b11, "ror", BinOpFrag<(rotr node:$LHS, node:$RHS)>>;
 
 let Uses = [CPSR] in {
-def t2MOVrx : T2sI<(outs rGPR:$dst), (ins rGPR:$src), IIC_iMOVsi,
+def t2RRX : T2sI<(outs rGPR:$dst), (ins rGPR:$src), IIC_iMOVsi,
                    "rrx", "\t$dst, $src",
                    [(set rGPR:$dst, (ARMrrx rGPR:$src))]> {
   let Inst{31-27} = 0b11101;

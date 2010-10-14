@@ -1686,9 +1686,9 @@ def : ARMPat<(or GPR:$src, 0xffff0000), (MOVTi16 GPR:$src, 0xffff)>,
       Requires<[IsARM, HasV6T2]>;
 
 let Uses = [CPSR] in
-def MOVrx : AsI1<0b1101, (outs GPR:$dst), (ins GPR:$src), Pseudo, IIC_iMOVsi,
-                 "mov", "\t$dst, $src, rrx",
-                 [(set GPR:$dst, (ARMrrx GPR:$src))]>, UnaryDP;
+def RRX: AsI1<0b1101, (outs GPR:$Rd), (ins GPR:$Rm), Pseudo, IIC_iMOVsi,
+              "rrx", "\t$Rd, $Rm",
+              [(set GPR:$Rd, (ARMrrx GPR:$Rm))]>, UnaryDP;
 
 // These aren't really mov instructions, but we have to define them this way
 // due to flag operands.

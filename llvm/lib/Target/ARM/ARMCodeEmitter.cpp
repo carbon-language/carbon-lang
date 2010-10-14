@@ -645,7 +645,7 @@ void ARMCodeEmitter::emitPseudoMoveInstruction(const MachineInstr &MI) {
   // Encode the shift operation.
   switch (Opcode) {
   default: break;
-  case ARM::MOVrx:
+  case ARM::RRX:
     // rrx
     Binary |= 0x6 << 4;
     break;
@@ -748,7 +748,7 @@ void ARMCodeEmitter::emitPseudoInstruction(const MachineInstr &MI) {
     // Materialize jumptable address.
     emitLEApcrelJTInstruction(MI);
     break;
-  case ARM::MOVrx:
+  case ARM::RRX:
   case ARM::MOVsrl_flag:
   case ARM::MOVsra_flag:
     emitPseudoMoveInstruction(MI);
