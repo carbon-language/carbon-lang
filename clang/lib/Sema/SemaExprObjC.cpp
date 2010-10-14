@@ -557,9 +557,10 @@ Sema::ObjCMessageKind Sema::getObjCMessageKind(Scope *S,
   ReceiverType = ParsedType();
 
   // If the identifier is "super" and there is no trailing dot, we're
-  // messaging super.
-  if (IsSuper && !HasTrailingDot && S->isInObjcMethodScope())
-    return ObjCSuperMessage;
+  // messaging super. If the identifier is "super" and there is a
+  // trailing dot, it's an instance message.
+  if (IsSuper && S->isInObjcMethodScope())
+    return HasTrailingDot? ObjCInstanceMessage : ObjCSuperMessage;
   
   LookupResult Result(*this, Name, NameLoc, LookupOrdinaryName);
   LookupName(Result, S);
@@ -568,14 +569,15 @@ Sema::ObjCMessageKind Sema::getObjCMessageKind(Scope *S,
   case LookupResult::NotFound:
     // Normal name lookup didn't find anything. If we're in an
     // Objective-C method, look for ivars. If we find one, we're done!
-    // FIXME: This is a hack. Ivar lookup should be part of normal lookup.
+    // FIXME: This is a hack. Ivar lookup should be part of normal
+    // lookup.
     if (ObjCMethodDecl *Method = getCurMethodDecl()) {
       ObjCInterfaceDecl *ClassDeclared;
       if (Method->getClassInterface()->lookupInstanceVariable(Name, 
                                                               ClassDeclared))
         return ObjCInstanceMessage;
     }
-      
+  
     // Break out; we'll perform typo correction below.
     break;
 

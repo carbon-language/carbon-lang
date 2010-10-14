@@ -44,7 +44,23 @@ IdentifierInfo::IdentifierInfo() {
 // IdentifierTable Implementation
 //===----------------------------------------------------------------------===//
 
+IdentifierIterator::~IdentifierIterator() { }
+
 IdentifierInfoLookup::~IdentifierInfoLookup() {}
+
+namespace {
+  /// \brief A simple identifier lookup iterator that represents an
+  /// empty sequence of identifiers.
+  class EmptyLookupIterator : public IdentifierIterator
+  {
+  public:
+    virtual llvm::StringRef Next() { return llvm::StringRef(); }
+  };
+}
+
+IdentifierIterator *IdentifierInfoLookup::getIdentifiers() const {
+  return new EmptyLookupIterator();
+}
 
 ExternalIdentifierLookup::~ExternalIdentifierLookup() {}
 

@@ -2694,6 +2694,7 @@ public:
       BestEditDistance((std::numeric_limits<unsigned>::max)()) { }
 
   virtual void FoundDecl(NamedDecl *ND, NamedDecl *Hiding, bool InBaseClass);
+  void FoundName(llvm::StringRef Name);
   void addKeywordResult(ASTContext &Context, llvm::StringRef Keyword);
 
   typedef llvm::StringMap<bool, llvm::BumpPtrAllocator>::iterator iterator;
@@ -2721,10 +2722,17 @@ void TypoCorrectionConsumer::FoundDecl(NamedDecl *ND, NamedDecl *Hiding,
   if (!Name)
     return;
 
+  FoundName(Name->getName());
+}
+
+void TypoCorrectionConsumer::FoundName(llvm::StringRef Name) {
   // Compute the edit distance between the typo and the name of this
   // entity. If this edit distance is not worse than the best edit
   // distance we've seen so far, add it to the list of results.
-  unsigned ED = Typo.edit_distance(Name->getName());
+  unsigned ED = Typo.edit_distance(Name);
+  if (ED == 0)
+    return;
+  
   if (ED < BestEditDistance) {
     // This result is better than any we've seen before; clear out
     // the previous results.
@@ -2735,12 +2743,12 @@ void TypoCorrectionConsumer::FoundDecl(NamedDecl *ND, NamedDecl *Hiding,
     // ignore it.
     return;
   }
-
+  
   // Add this name to the list of results. By not assigning a value, we
   // keep the current value if we've seen this name before (either as a
   // keyword or as a declaration), or get the default value (not a keyword)
   // if we haven't seen it before.
-  (void)BestResults[Name->getName()];
+  (void)BestResults[Name];  
 }
 
 void TypoCorrectionConsumer::addKeywordResult(ASTContext &Context, 
@@ -2842,7 +2850,25 @@ DeclarationName Sema::CorrectTypo(LookupResult &Res, Scope *S, CXXScopeSpec *SS,
     
     LookupVisibleDecls(DC, Res.getLookupKind(), Consumer);
   } else {
-    LookupVisibleDecls(S, Res.getLookupKind(), Consumer);
+    // For unqualified lookup, look through all of the names that we have
+    // seen in this translation unit.
+    for (IdentifierTable::iterator I = Context.Idents.begin(), 
+                                IEnd = Context.Idents.end();
+         I != IEnd; ++I)
+      Consumer.FoundName(I->getKey());
+    
+    // Walk through identifiers in external identifier sources.
+    if (IdentifierInfoLookup *External
+                              = Context.Idents.getExternalIdentifierLookup()) {
+      IdentifierIterator *Iter = External->getIdentifiers();
+      do {
+        llvm::StringRef Name = Iter->Next();
+        if (Name.empty())
+          break;
+
+        Consumer.FoundName(Name);
+      } while (true);
+    }
   }
 
   // Add context-dependent keywords.
@@ -3017,7 +3043,7 @@ DeclarationName Sema::CorrectTypo(LookupResult &Res, Scope *S, CXXScopeSpec *SS,
   // Make sure that the user typed at least 3 characters for each correction 
   // made. Otherwise, we don't even both looking at the results.
   unsigned ED = Consumer.getBestEditDistance();
-  if (ED == 0 || (Typo->getName().size() / ED) < 3)
+  if (ED > 0 && Typo->getName().size() / ED < 3)
     return DeclarationName();
 
   // Weed out any names that could not be found by name lookup.

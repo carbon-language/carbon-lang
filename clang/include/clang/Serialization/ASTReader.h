@@ -47,6 +47,7 @@ namespace clang {
 class AddrLabelExpr;
 class ASTConsumer;
 class ASTContext;
+class ASTIdentifierIterator;
 class Attr;
 class Decl;
 class DeclContext;
@@ -180,6 +181,7 @@ public:
   friend class PCHValidator;
   friend class ASTDeclReader;
   friend class ASTStmtReader;
+  friend class ASTIdentifierIterator;
   friend class ASTIdentifierLookupTrait;
   friend class TypeLocReader;
 private:
@@ -968,6 +970,10 @@ public:
   IdentifierInfo *get(llvm::StringRef Name) {
     return get(Name.begin(), Name.end());
   }
+
+  /// \brief Retrieve an iterator into the set of all identifiers
+  /// in all loaded AST files.
+  virtual IdentifierIterator *getIdentifiers() const;
 
   /// \brief Load the contents of the global method pool for a given
   /// selector.

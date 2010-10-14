@@ -18,7 +18,7 @@ int bar;
 @end
 
 @implementation I
-- (int) Meth { return PROP; }	// expected-note {{'PROP' declared here}}
+- (int) Meth { return PROP; }
 
 @dynamic PROP1;
 - (int) Meth1 { return PROP1; }  // expected-error {{use of undeclared identifier 'PROP1'}}

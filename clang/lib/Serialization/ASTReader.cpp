@@ -603,6 +603,10 @@ public:
   static const internal_key_type&
   GetInternalKey(const external_key_type& x) { return x; }
 
+  // This hopefully will just get inlined and removed by the optimizer.
+  static const external_key_type&
+  GetExternalKey(const internal_key_type& x) { return x; }
+
   static std::pair<unsigned, unsigned>
   ReadKeyDataLength(const unsigned char*& d) {
     using namespace clang::io;
@@ -3569,6 +3573,64 @@ IdentifierInfo* ASTReader::get(const char *NameStart, const char *NameEnd) {
     return *Pos;
   }
   return 0;
+}
+
+namespace clang {
+  /// \brief An identifier-lookup iterator that enumerates all of the
+  /// identifiers stored within a set of AST files.
+  class ASTIdentifierIterator : public IdentifierIterator {
+    /// \brief The AST reader whose identifiers are being enumerated.
+    const ASTReader &Reader;
+
+    /// \brief The current index into the chain of AST files stored in
+    /// the AST reader.
+    unsigned Index;
+
+    /// \brief The current position within the identifier lookup table
+    /// of the current AST file.
+    ASTIdentifierLookupTable::key_iterator Current;
+
+    /// \brief The end position within the identifier lookup table of
+    /// the current AST file.
+    ASTIdentifierLookupTable::key_iterator End;
+
+  public:
+    explicit ASTIdentifierIterator(const ASTReader &Reader);
+
+    virtual llvm::StringRef Next();
+  };
+}
+
+ASTIdentifierIterator::ASTIdentifierIterator(const ASTReader &Reader)
+  : Reader(Reader), Index(Reader.Chain.size() - 1) {
+  ASTIdentifierLookupTable *IdTable
+    = (ASTIdentifierLookupTable *)Reader.Chain[Index]->IdentifierLookupTable;
+  Current = IdTable->key_begin();
+  End = IdTable->key_end();
+}
+
+llvm::StringRef ASTIdentifierIterator::Next() {
+  while (Current == End) {
+    // If we have exhausted all of our AST files, we're done.
+    if (Index == 0)
+      return llvm::StringRef();
+
+    --Index;
+    ASTIdentifierLookupTable *IdTable
+      = (ASTIdentifierLookupTable *)Reader.Chain[Index]->IdentifierLookupTable;
+    Current = IdTable->key_begin();
+    End = IdTable->key_end();
+  }
+
+  // We have any identifiers remaining in the current AST file; return
+  // the next one.
+  std::pair<const char*, unsigned> Key = *Current;
+  ++Current;
+  return llvm::StringRef(Key.first, Key.second);
+}
+
+IdentifierIterator *ASTReader::getIdentifiers() const {
+  return new ASTIdentifierIterator(*this);
 }
 
 std::pair<ObjCMethodList, ObjCMethodList>

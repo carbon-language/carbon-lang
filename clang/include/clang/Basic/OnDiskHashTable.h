@@ -334,6 +334,70 @@ public:
 
   iterator end() const { return iterator(); }
 
+  /// \brief Iterates over all of the keys in the table.
+  class key_iterator {
+    const unsigned char* Ptr;
+    unsigned NumItemsInBucketLeft;
+    unsigned NumEntriesLeft;
+    Info *InfoObj;
+  public:
+    typedef external_key_type value_type;
+
+    key_iterator(const unsigned char* const Ptr, unsigned NumEntries,
+                  Info *InfoObj)
+      : Ptr(Ptr), NumItemsInBucketLeft(0), NumEntriesLeft(NumEntries),
+        InfoObj(InfoObj) { }
+    key_iterator()
+      : Ptr(0), NumItemsInBucketLeft(0), NumEntriesLeft(0), InfoObj(0) { }
+
+    friend bool operator==(const key_iterator &X, const key_iterator &Y) {
+      return X.NumEntriesLeft == Y.NumEntriesLeft;
+    }
+    friend bool operator!=(const key_iterator& X, const key_iterator &Y) {
+      return X.NumEntriesLeft != Y.NumEntriesLeft;
+    }
+    
+    key_iterator& operator++() {  // Preincrement
+      if (!NumItemsInBucketLeft) {
+        // 'Items' starts with a 16-bit unsigned integer representing the
+        // number of items in this bucket.
+        NumItemsInBucketLeft = io::ReadUnalignedLE16(Ptr);
+      }
+      Ptr += 4; // Skip the hash.
+      // Determine the length of the key and the data.
+      const std::pair<unsigned, unsigned>& L = Info::ReadKeyDataLength(Ptr);
+      Ptr += L.first + L.second;
+      assert(NumItemsInBucketLeft);
+      --NumItemsInBucketLeft;
+      assert(NumEntriesLeft);
+      --NumEntriesLeft;
+      return *this;
+    }
+    key_iterator operator++(int) {  // Postincrement
+      key_iterator tmp = *this; ++*this; return tmp;
+    }
+
+    value_type operator*() const {
+      const unsigned char* LocalPtr = Ptr;
+      if (!NumItemsInBucketLeft)
+        LocalPtr += 2; // number of items in bucket
+      LocalPtr += 4; // Skip the hash.
+
+      // Determine the length of the key and the data.
+      const std::pair<unsigned, unsigned>& L
+        = Info::ReadKeyDataLength(LocalPtr);
+
+      // Read the key.
+      const internal_key_type& Key = InfoObj->ReadKey(LocalPtr, L.first);
+      return InfoObj->GetExternalKey(Key);
+    }
+  };
+
+  key_iterator key_begin() {
+    return key_iterator(Base + 4, getNumEntries(), &InfoObj);
+  }
+  key_iterator key_end() { return key_iterator(); }
+
   /// \brief Iterates over all the entries in the table, returning
   /// a key/data pair.
   class item_iterator {
