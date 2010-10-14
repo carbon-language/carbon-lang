@@ -475,6 +475,8 @@ def fno_validate_pch : Flag<"-fno-validate-pch">,
   HelpText<"Disable validation of precompiled headers">;
 def dump_deserialized_pch_decls : Flag<"-dump-deserialized-decls">,
   HelpText<"Dump declarations that are deserialized from PCH, for testing">;
+def error_on_deserialized_pch_decl : Separate<"-error-on-deserialized-decl">,
+  HelpText<"Emit error if a specific declaration is deserialized from PCH, for testing">;
 def fshort_wchar : Flag<"-fshort-wchar">,
   HelpText<"Force wchar_t to be a short unsigned int">;
 def fshort_enums : Flag<"-fshort-enums">,

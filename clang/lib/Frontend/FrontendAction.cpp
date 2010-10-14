@@ -51,6 +51,41 @@ public:
                                    MacroDefinition *MD) {}
 };
 
+  /// \brief Checks deserialized declarations and emits error if a name
+  /// matches one given in command-line using -error-on-deserialized-decl.
+  class DeserializedDeclsChecker : public ASTDeserializationListener {
+    ASTContext &Ctx;
+    std::set<std::string> NamesToCheck;
+    ASTDeserializationListener *Previous;
+
+  public:
+    DeserializedDeclsChecker(ASTContext &Ctx,
+                             const std::set<std::string> &NamesToCheck, 
+                             ASTDeserializationListener *Previous)
+      : Ctx(Ctx), NamesToCheck(NamesToCheck), Previous(Previous) { }
+
+    virtual void DeclRead(serialization::DeclID ID, const Decl *D) {
+      if (const NamedDecl *ND = dyn_cast<NamedDecl>(D))
+        if (NamesToCheck.find(ND->getNameAsString()) != NamesToCheck.end()) {
+          unsigned DiagID
+            = Ctx.getDiagnostics().getCustomDiagID(Diagnostic::Error,
+                                                   "%0 was deserialized");
+          Ctx.getDiagnostics().Report(Ctx.getFullLoc(D->getLocation()), DiagID)
+              << ND->getNameAsString();
+        }
+
+      if (Previous)
+        Previous->DeclRead(ID, D);
+    }
+
+    virtual void SetReader(ASTReader *Reader) {}
+    virtual void IdentifierRead(serialization::IdentID ID, IdentifierInfo *II) {}
+    virtual void TypeRead(serialization::TypeIdx Idx, QualType T) {}
+    virtual void SelectorRead(serialization::SelectorID iD, Selector Sel) {}
+    virtual void MacroDefinitionRead(serialization::MacroID,
+                                     MacroDefinition *MD) {}
+};
+
 } // end anonymous namespace
 
 FrontendAction::FrontendAction() : Instance(0) {}
@@ -154,6 +189,10 @@ bool FrontendAction::BeginSourceFile(CompilerInstance &CI,
                   Consumer->GetASTDeserializationListener() : 0;
       if (CI.getPreprocessorOpts().DumpDeserializedPCHDecls)
         DeserialListener = new DeserializedDeclsDumper(DeserialListener);
+      if (!CI.getPreprocessorOpts().DeserializedPCHDeclsToErrorOn.empty())
+        DeserialListener = new DeserializedDeclsChecker(CI.getASTContext(),
+                         CI.getPreprocessorOpts().DeserializedPCHDeclsToErrorOn,
+                                                        DeserialListener);
       CI.createPCHExternalASTSource(
                                 CI.getPreprocessorOpts().ImplicitPCHInclude,
                                 CI.getPreprocessorOpts().DisablePCHValidation,
