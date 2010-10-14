@@ -318,13 +318,13 @@ public:
     void __make_ready_at_thread_exit(__assoc_sub_state*);
 };
 
-extern __thread_specific_ptr<__thread_struct> __thread_local_data;
+__thread_specific_ptr<__thread_struct>& __thread_local_data();
 
 template <class _F>
 void*
 __thread_proxy(void* __vp)
 {
-    __thread_local_data.reset(new __thread_struct);
+    __thread_local_data().reset(new __thread_struct);
     std::unique_ptr<_F> __p(static_cast<_F*>(__vp));
     (*__p)();
     return nullptr;

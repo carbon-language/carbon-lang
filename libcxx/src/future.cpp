@@ -83,7 +83,7 @@ __assoc_sub_state::set_value_at_thread_exit()
     if (__has_value())
         throw future_error(make_error_code(future_errc::promise_already_satisfied));
     __state_ |= __constructed;
-    __thread_local_data->__make_ready_at_thread_exit(this);
+    __thread_local_data()->__make_ready_at_thread_exit(this);
     __lk.unlock();
 }
 
@@ -106,7 +106,7 @@ __assoc_sub_state::set_exception_at_thread_exit(exception_ptr __p)
     if (__has_value())
         throw future_error(make_error_code(future_errc::promise_already_satisfied));
     __exception_ = __p;
-    __thread_local_data->__make_ready_at_thread_exit(this);
+    __thread_local_data()->__make_ready_at_thread_exit(this);
     __lk.unlock();
 }
 

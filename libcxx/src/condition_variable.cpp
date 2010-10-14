@@ -64,7 +64,7 @@ condition_variable::__do_timed_wait(unique_lock<mutex>& lk,
 void
 notify_all_at_thread_exit(condition_variable& cond, unique_lock<mutex> lk)
 {
-    __thread_local_data->notify_all_at_thread_exit(&cond, lk.release());
+    __thread_local_data()->notify_all_at_thread_exit(&cond, lk.release());
 }
 
 _LIBCPP_END_NAMESPACE_STD

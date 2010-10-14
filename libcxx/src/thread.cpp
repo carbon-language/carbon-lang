@@ -83,7 +83,12 @@ sleep_for(const chrono::nanoseconds& ns)
 
 }  // this_thread
 
-__thread_specific_ptr<__thread_struct> __thread_local_data;
+__thread_specific_ptr<__thread_struct>&
+__thread_local_data()
+{
+    static __thread_specific_ptr<__thread_struct> __p;
+    return __p;
+}
 
 // __thread_struct_imp
 

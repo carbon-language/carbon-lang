@@ -677,7 +677,7 @@ __assoc_state<_R>::set_value_at_thread_exit(_Arg& __arg)
         throw future_error(make_error_code(future_errc::promise_already_satisfied));
     ::new(&__value_) _R(_STD::forward<_Arg>(__arg));
     this->__state_ |= base::__constructed;
-    __thread_local_data->__make_ready_at_thread_exit(this);
+    __thread_local_data()->__make_ready_at_thread_exit(this);
     __lk.unlock();
 }
 
@@ -750,7 +750,7 @@ __assoc_state<_R&>::set_value_at_thread_exit(_R& __arg)
         throw future_error(make_error_code(future_errc::promise_already_satisfied));
     __value_ = &__arg;
     this->__state_ |= base::__constructed;
-    __thread_local_data->__make_ready_at_thread_exit(this);
+    __thread_local_data()->__make_ready_at_thread_exit(this);
     __lk.unlock();
 }
 
