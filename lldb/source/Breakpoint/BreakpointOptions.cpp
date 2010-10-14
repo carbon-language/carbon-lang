@@ -15,8 +15,11 @@
 // Project includes
 #include "lldb/Core/Stream.h"
 #include "lldb/Core/StringList.h"
+#include "lldb/Core/Value.h"
 #include "lldb/Breakpoint/StoppointCallbackContext.h"
+#include "lldb/Target/Process.h"
 #include "lldb/Target/ThreadSpec.h"
+#include "lldb/Target/ThreadPlanTestCondition.h"
 
 using namespace lldb;
 using namespace lldb_private;
@@ -36,7 +39,8 @@ BreakpointOptions::BreakpointOptions() :
     m_callback_is_synchronous (false),
     m_enabled (true),
     m_ignore_count (0),
-    m_thread_spec_ap (NULL)
+    m_thread_spec_ap (NULL),
+    m_condition_ap()
 {
 }
 
@@ -49,10 +53,13 @@ BreakpointOptions::BreakpointOptions(const BreakpointOptions& rhs) :
     m_callback_is_synchronous (rhs.m_callback_is_synchronous),
     m_enabled (rhs.m_enabled),
     m_ignore_count (rhs.m_ignore_count),
-    m_thread_spec_ap (NULL)
+    m_thread_spec_ap (NULL),
+    m_condition_ap (NULL)
 {
     if (rhs.m_thread_spec_ap.get() != NULL)
         m_thread_spec_ap.reset (new ThreadSpec(*rhs.m_thread_spec_ap.get()));
+    if (rhs.m_condition_ap.get())
+        m_condition_ap.reset (new ClangUserExpression (rhs.m_condition_ap->GetUserText()));
 }
 
 //----------------------------------------------------------------------
@@ -68,6 +75,8 @@ BreakpointOptions::operator=(const BreakpointOptions& rhs)
     m_ignore_count = rhs.m_ignore_count;
     if (rhs.m_thread_spec_ap.get() != NULL)
         m_thread_spec_ap.reset(new ThreadSpec(*rhs.m_thread_spec_ap.get()));
+    if (rhs.m_condition_ap.get())
+        m_condition_ap.reset (new ClangUserExpression (rhs.m_condition_ap->GetUserText()));
     return *this;
 }
 
@@ -107,7 +116,8 @@ BreakpointOptions::SetCallback (BreakpointHitCallback callback, const BatonSP &c
 void
 BreakpointOptions::ClearCallback ()
 {
-    m_callback = NULL;
+    m_callback = BreakpointOptions::NullCallback;
+    m_callback_is_synchronous = false;
     m_callback_baton_sp.reset();
 }
 
@@ -143,6 +153,71 @@ bool
 BreakpointOptions::HasCallback ()
 {
     return m_callback != BreakpointOptions::NullCallback;
+}
+
+void 
+BreakpointOptions::SetCondition (const char *condition)
+{
+    if (condition == NULL || condition[0] == '\0')
+    {
+        if (m_condition_ap.get())
+            m_condition_ap.reset();
+    }
+    else
+    {
+        m_condition_ap.reset(new ClangUserExpression (condition));
+    }
+}
+
+ThreadPlan * 
+BreakpointOptions::GetThreadPlanToTestCondition (ExecutionContext &exe_ctx, 
+                                                 lldb::BreakpointLocationSP break_loc_sp,
+                                                 Stream &error_stream)
+{
+    // No condition means we should stop, so return NULL.
+    if (!m_condition_ap.get())
+        return NULL;
+        
+    // FIXME: I shouldn't have to do this, the process should handle it for me:
+    if (!exe_ctx.process->GetDynamicCheckers())
+    {
+        DynamicCheckerFunctions *dynamic_checkers = new DynamicCheckerFunctions();
+        
+        StreamString install_errors;
+        
+        if (!dynamic_checkers->Install(install_errors, exe_ctx))
+        {
+            error_stream.Printf("Couldn't install dynamic checkers into the execution context: %s\n", install_errors.GetData());
+            return NULL;
+        }
+        
+        exe_ctx.process->SetDynamicCheckers(dynamic_checkers);
+    }
+
+    if (!m_condition_ap->Parse (error_stream, exe_ctx))
+    {
+        // Errors mean we should stop.
+        return NULL;
+    }
+    // FIXME: When we can execute static expressions without running the target, we should check that here,
+    // and return something to indicate we should stop or just continue.
+
+    ThreadPlan *new_plan = new ThreadPlanTestCondition (*exe_ctx.thread, 
+                                                        exe_ctx, 
+                                                        m_condition_ap.get(), 
+                                                        break_loc_sp, 
+                                                        true);
+    
+    return new_plan;
+}
+
+const char *
+BreakpointOptions::GetConditionText ()
+{
+    if (m_condition_ap.get())
+        return m_condition_ap->GetUserText();
+    else
+        return "<No Condition>";
 }
 
 //------------------------------------------------------------------
@@ -234,6 +309,14 @@ BreakpointOptions::GetDescription (Stream *s, lldb::DescriptionLevel level) cons
         if (level != eDescriptionLevelBrief)
             s->EOL();
         m_callback_baton_sp->GetDescription (s, level);
+    }
+    if (m_condition_ap.get())
+    {
+       if (level != eDescriptionLevelBrief)
+       {
+            s->EOL();
+            s->Printf("Condition: %s\n", m_condition_ap->GetUserText());
+        }
     }    
 }
 

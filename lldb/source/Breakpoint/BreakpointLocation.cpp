@@ -18,6 +18,7 @@
 #include "lldb/Breakpoint/StoppointCallbackContext.h"
 #include "lldb/Core/Log.h"
 #include "lldb/Target/Target.h"
+#include "lldb/Target/ThreadPlan.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Core/StreamString.h"
 #include "lldb/lldb-private-log.h"
@@ -131,10 +132,33 @@ BreakpointLocation::SetCallback (BreakpointHitCallback callback, const BatonSP &
     GetLocationOptions()->SetCallback (callback, baton_sp, is_synchronous);
 }
 
+
 void
 BreakpointLocation::ClearCallback ()
 {
     GetLocationOptions()->ClearCallback();
+}
+
+void 
+BreakpointLocation::SetCondition (const char *condition)
+{
+    GetLocationOptions()->SetCondition (condition);
+}
+
+ThreadPlan *
+BreakpointLocation::GetThreadPlanToTestCondition (ExecutionContext &exe_ctx, Stream &error)
+{
+    lldb::BreakpointLocationSP my_sp(m_owner.GetLocationSP(this));
+    if (m_options_ap.get())
+        return m_options_ap->GetThreadPlanToTestCondition (exe_ctx, my_sp, error);
+    else
+        return m_owner.GetThreadPlanToTestCondition (exe_ctx, my_sp, error);
+}
+
+const char *
+BreakpointLocation::GetConditionText ()
+{
+    return GetLocationOptions()->GetConditionText();
 }
 
 uint32_t
@@ -185,6 +209,7 @@ bool
 BreakpointLocation::ShouldStop (StoppointCallbackContext *context)
 {
     bool should_stop = true;
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_BREAKPOINTS);
 
     m_hit_count++;
 
@@ -194,13 +219,31 @@ BreakpointLocation::ShouldStop (StoppointCallbackContext *context)
     if (m_hit_count <= GetIgnoreCount())
         return false;
 
-    // Tell if the callback is synchronous here.
+    // Next in order of importance is the condition.  See if it is true:
+    StreamString errors;
+
+    // We only run synchronous callbacks in ShouldStop:
     context->is_synchronous = true;
     should_stop = InvokeCallback (context);
-        
+    
+    // The SYNCHRONOUS callback says we should stop, next try the condition.
+    
     if (should_stop)
     {
-        Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_BREAKPOINTS);
+        ThreadPlanSP condition_plan_sp(GetThreadPlanToTestCondition(context->exe_ctx, errors));
+        if (log && errors.GetSize() > 0)
+        {
+            log->Printf("Error evaluating condition: \"%s\".\n", errors.GetData());
+        }
+        else if (condition_plan_sp != NULL)
+        {
+            context->exe_ctx.thread->QueueThreadPlan(condition_plan_sp, false);
+            return false;
+        }
+    }
+    
+    if (should_stop)
+    {
         if (log)
         {
             StreamString s;
@@ -215,6 +258,12 @@ bool
 BreakpointLocation::IsResolved () const
 {
     return m_bp_site_sp.get() != NULL;
+}
+
+lldb::BreakpointSiteSP
+BreakpointLocation::GetBreakpointSite() const
+{
+    return m_bp_site_sp;
 }
 
 bool

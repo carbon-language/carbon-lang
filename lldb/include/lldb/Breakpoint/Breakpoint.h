@@ -370,12 +370,41 @@ public:
     ClearCallback ();
 
     //------------------------------------------------------------------
-    /// Set the condition expression to be checked when the breakpoint is hit.
-    /// @param[in] expression
-    ///    The method that will get called when the breakpoint is hit.
+    /// Set the breakpoint's condition.
+    ///
+    /// @param[in] condition
+    ///    The condition expression to evaluate when the breakpoint is hit.
+    ///    Pass in NULL to clear the condition.
     //------------------------------------------------------------------
-    void
-    SetCondition (void *expression);
+    void SetCondition (const char *condition);
+    
+    //------------------------------------------------------------------
+    /// Test the breakpoint condition in the Execution context passed in.
+    ///
+    /// @param[in] exe_ctx
+    ///    The execution context in which to evaluate this expression.
+    /// 
+    /// @param[in] break_loc_sp
+    ///    A shared pointer to the location that we are testing thsi condition for.
+    ///
+    /// @param[in] error
+    ///    Error messages will be written to this stream.
+    ///
+    /// @return
+    ///     A thread plan to run to test the condition or NULL if no condition.
+    //------------------------------------------------------------------
+    ThreadPlan *GetThreadPlanToTestCondition (ExecutionContext &exe_ctx, 
+                                              lldb::BreakpointLocationSP break_loc_sp, 
+                                              Stream &error);
+    
+    //------------------------------------------------------------------
+    /// Return a pointer to the text of the condition expression.
+    ///
+    /// @return
+    ///    A pointer to the condition expression text, or NULL if no
+    //     condition has been set.
+    //------------------------------------------------------------------
+    const char *GetConditionText ();
 
     //------------------------------------------------------------------
     // The next section are various utility functions.

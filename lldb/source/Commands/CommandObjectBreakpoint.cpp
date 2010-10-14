@@ -547,9 +547,25 @@ CommandObjectMultiwordBreakpoint::VerifyBreakpointIDs (Args &args, Target *targe
     //                                  2). the full breakpoint & location canonical representation
     //                                  3). the word "to" or a hyphen, representing a range (in which case there
     //                                      had *better* be an entry both before & after of one of the first two types.
+    // If args is empty, we will use the last created breakpoint (if there is one.)
 
     Args temp_args;
 
+    if (args.GetArgumentCount() == 0)
+    {
+        if (target->GetLastCreatedBreakpoint() != NULL)
+        {
+            valid_ids->AddBreakpointID (BreakpointID(target->GetLastCreatedBreakpoint()->GetID(), LLDB_INVALID_BREAK_ID));
+            result.SetStatus (eReturnStatusSuccessFinishNoResult);
+        } 
+        else
+        {   
+            result.AppendError("No breakpoint specified and no last created breakpoint.");
+            result.SetStatus (eReturnStatusFailed);
+        }
+        return;
+    }
+    
     // Create a new Args variable to use; copy any non-breakpoint-id-ranges stuff directly from the old ARGS to
     // the new TEMP_ARGS.  Do not copy breakpoint id range strings over; instead generate a list of strings for
     // all the breakpoint ids in the range, and shove all of those breakpoint id strings into TEMP_ARGS.
@@ -1076,16 +1092,15 @@ CommandObjectBreakpointDelete::Execute
 
     if (args.GetArgumentCount() == 0)
     {
-        // No breakpoint selected; disable all currently set breakpoints.
-        if (args.GetArgumentCount() != 0)
+        if (!m_interpreter.Confirm ("About to delete all breakpoints, do you want to do that?", true))
         {
-            result.AppendErrorWithFormat ("Specify breakpoints to delete with the -i option.\n");
-            result.SetStatus (eReturnStatusFailed);
-            return false;
+            result.AppendMessage("Operation cancelled...");
         }
-
-        target->RemoveAllBreakpoints ();
-        result.AppendMessageWithFormat ("All breakpoints removed. (%d breakpoints)\n", num_breakpoints);
+        else
+        {
+            target->RemoveAllBreakpoints ();
+            result.AppendMessageWithFormat ("All breakpoints removed. (%d breakpoints)\n", num_breakpoints);
+        }
         result.SetStatus (eReturnStatusSuccessFinishNoResult);
     }
     else
@@ -1143,10 +1158,12 @@ CommandObjectBreakpointModify::CommandOptions::CommandOptions() :
     m_thread_index (UINT32_MAX),
     m_thread_name(),
     m_queue_name(),
+    m_condition (),
     m_enable_passed (false),
     m_enable_value (false),
     m_name_passed (false),
-    m_queue_passed (false)
+    m_queue_passed (false),
+    m_condition_passed (false)
 {
 }
 
@@ -1162,9 +1179,10 @@ CommandObjectBreakpointModify::CommandOptions::g_option_table[] =
 { LLDB_OPT_SET_ALL, false, "thread-id",    't', required_argument, NULL, NULL, eArgTypeThreadID, "The breakpoint stops only for the thread whose TID matches this argument."},
 { LLDB_OPT_SET_ALL, false, "thread-name",  'T', required_argument, NULL, NULL, eArgTypeThreadName, "The breakpoint stops only for the thread whose thread name matches this argument."},
 { LLDB_OPT_SET_ALL, false, "queue-name",   'q', required_argument, NULL, NULL, eArgTypeQueueName, "The breakpoint stops only for threads in the queue whose name is given by this argument."},
+{ LLDB_OPT_SET_ALL, false, "condition",    'c', required_argument, NULL, NULL, eArgTypeExpression, "The breakpoint stops only if this condition expression evaluates to true."},
 { LLDB_OPT_SET_1,   false, "enable",       'e', no_argument,       NULL, NULL, eArgTypeNone, "Enable the breakpoint."},
 { LLDB_OPT_SET_2,   false, "disable",      'd', no_argument,       NULL, NULL, eArgTypeNone, "Disable the breakpoint."},
-{ 0,                false, NULL,            0 , 0,                 NULL, 0, eArgTypeNone, NULL }
+{ 0,                false, NULL,            0 , 0,                 NULL, 0,    eArgTypeNone, NULL }
 };
 
 const lldb::OptionDefinition*
@@ -1181,6 +1199,13 @@ CommandObjectBreakpointModify::CommandOptions::SetOptionValue (int option_idx, c
 
     switch (short_option)
     {
+        case 'c':
+            if (option_arg != NULL)
+                m_condition = option_arg;
+            else
+                m_condition.clear();
+            m_condition_passed = true;
+            break;
         case 'd':
             m_enable_passed = true;
             m_enable_value = false;
@@ -1243,9 +1268,11 @@ CommandObjectBreakpointModify::CommandOptions::ResetOptionValues ()
     m_thread_index = UINT32_MAX;
     m_thread_name.clear();
     m_queue_name.clear();
+    m_condition.clear();
     m_enable_passed = false;
     m_queue_passed = false;
     m_name_passed = false;
+    m_condition_passed = false;
 }
 
 //-------------------------------------------------------------------------
@@ -1297,13 +1324,6 @@ CommandObjectBreakpointModify::Execute
     CommandReturnObject &result
 )
 {
-    if (command.GetArgumentCount() == 0)
-    {
-        result.AppendError ("No breakpoints specified.");
-        result.SetStatus (eReturnStatusFailed);
-        return false;
-    }
-
     Target *target = m_interpreter.GetDebugger().GetSelectedTarget().get();
     if (target == NULL)
     {
@@ -1351,6 +1371,9 @@ CommandObjectBreakpointModify::Execute
                             
                         if (m_options.m_enable_passed)
                             location->SetEnabled (m_options.m_enable_value);
+                            
+                        if (m_options.m_condition_passed)
+                            location->SetCondition (m_options.m_condition.c_str());
                     }
                 }
                 else
@@ -1372,7 +1395,9 @@ CommandObjectBreakpointModify::Execute
                         
                     if (m_options.m_enable_passed)
                         bp->SetEnabled (m_options.m_enable_value);
-
+                        
+                    if (m_options.m_condition_passed)
+                        bp->SetCondition (m_options.m_condition.c_str());
                 }
             }
         }

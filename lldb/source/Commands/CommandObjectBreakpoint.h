@@ -167,10 +167,12 @@ public:
         uint32_t m_thread_index;
         std::string m_thread_name;
         std::string m_queue_name;
+        std::string m_condition;
         bool m_enable_passed;
         bool m_enable_value;
         bool m_name_passed;
         bool m_queue_passed;
+        bool m_condition_passed;
 
     };
 

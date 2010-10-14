@@ -179,6 +179,8 @@ public:
         eThisThread
     } ThreadScope;
 
+    // We use these enums so that we can cast a base thread plan to it's real type without having to resort
+    // to dynamic casting.
     typedef enum
     {
         eKindGeneric,
@@ -191,7 +193,8 @@ public:
         eKindStepInRange,
         eKindRunToAddress,
         eKindStepThrough,
-        eKindStepUntil
+        eKindStepUntil,
+        eKindTestCondition
         
     } ThreadPlanKind;
     

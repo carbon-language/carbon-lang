@@ -204,6 +204,12 @@ public:
 
     const BreakpointList &
     GetBreakpointList(bool internal = false) const;
+    
+    lldb::BreakpointSP
+    GetLastCreatedBreakpoint ()
+    {
+        return m_last_created_breakpoint;
+    }
 
     lldb::BreakpointSP
     GetBreakpointByID (lldb::break_id_t break_id);
@@ -443,6 +449,7 @@ protected:
     SectionLoadList m_section_load_list;
     BreakpointList  m_breakpoint_list;
     BreakpointList  m_internal_breakpoint_list;
+    lldb::BreakpointSP m_last_created_breakpoint;
     // We want to tightly control the process destruction process so
     // we can correctly tear down everything that we need to, so the only
     // class that knows about the process lifespan is this target class.

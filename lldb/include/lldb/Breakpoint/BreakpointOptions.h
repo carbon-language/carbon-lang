@@ -18,6 +18,7 @@
 #include "lldb/lldb-private.h"
 #include "lldb/Core/Baton.h"
 #include "lldb/Core/StringList.h"
+#include "lldb/Expression/ClangUserExpression.h"
 
 namespace lldb_private {
 
@@ -88,7 +89,46 @@ public:
     Baton *GetBaton ();
     const Baton *GetBaton () const;
     void ClearCallback ();
-
+    
+    //------------------------------------------------------------------
+    // Condition
+    //------------------------------------------------------------------
+    //------------------------------------------------------------------
+    /// Set the breakpoint option's condition.
+    ///
+    /// @param[in] condition
+    ///    The condition expression to evaluate when the breakpoint is hit.
+    //------------------------------------------------------------------
+    void SetCondition (const char *condition);
+    
+    //------------------------------------------------------------------
+    /// Test the breakpoint condition in the Execution context passed in.
+    ///
+    /// @param[in] exe_ctx
+    ///    The execution context in which to evaluate this expression.
+    /// 
+    /// @param[in] break_loc_sp
+    ///    A shared pointer to the location that we are testing thsi condition for.
+    ///
+    /// @param[in] error
+    ///    Error messages will be written to this stream.
+    ///
+    /// @return
+    ///     A thread plan to run to test the condition, or NULL if there is no thread plan.
+    //------------------------------------------------------------------
+    ThreadPlan *GetThreadPlanToTestCondition (ExecutionContext &exe_ctx, 
+                                              lldb::BreakpointLocationSP break_loc_sp, 
+                                              Stream &error);
+    
+    //------------------------------------------------------------------
+    /// Return a pointer to the text of the condition expression.
+    ///
+    /// @return
+    ///    A pointer to the condition expression text, or NULL if no
+    //     condition has been set.
+    //------------------------------------------------------------------
+    const char *GetConditionText ();
+    
     //------------------------------------------------------------------
     // Enabled/Ignore Count
     //------------------------------------------------------------------
@@ -107,6 +147,12 @@ public:
     void
     SetEnabled (bool enabled);
 
+    //------------------------------------------------------------------
+    /// Set the breakpoint to ignore the next \a count breakpoint hits.
+    /// @param[in] count
+    ///    The number of breakpoint hits to ignore.
+    //------------------------------------------------------------------
+
     void
     SetIgnoreCount (uint32_t n);
 
@@ -117,12 +163,6 @@ public:
     //------------------------------------------------------------------
     uint32_t
     GetIgnoreCount () const;
-
-    //------------------------------------------------------------------
-    /// Set the breakpoint to ignore the next \a count breakpoint hits.
-    /// @param[in] count
-    ///    The number of breakpoint hits to ignore.
-    //------------------------------------------------------------------
 
     //------------------------------------------------------------------
     /// Return the current thread spec for this option.  This will return NULL if the no thread
@@ -218,6 +258,7 @@ private:
     bool m_enabled;
     uint32_t m_ignore_count; // Number of times to ignore this breakpoint
     std::auto_ptr<ThreadSpec> m_thread_spec_ap; // Thread for which this breakpoint will take
+    std::auto_ptr<ClangUserExpression> m_condition_ap;  // The condition to test.
 
 };
 

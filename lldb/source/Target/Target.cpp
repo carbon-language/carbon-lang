@@ -252,6 +252,12 @@ Target::CreateBreakpoint (SearchFilterSP &filter_sp, BreakpointResolverSP &resol
 
         bp_sp->ResolveBreakpoint();
     }
+    
+    if (!internal && bp_sp)
+    {
+        m_last_created_breakpoint = bp_sp;
+    }
+    
     return bp_sp;
 }
 
@@ -265,6 +271,8 @@ Target::RemoveAllBreakpoints (bool internal_also)
     m_breakpoint_list.RemoveAll (true);
     if (internal_also)
         m_internal_breakpoint_list.RemoveAll (false);
+        
+    m_last_created_breakpoint.reset();
 }
 
 void
@@ -303,7 +311,11 @@ Target::RemoveBreakpointByID (break_id_t break_id)
         if (LLDB_BREAK_ID_IS_INTERNAL (break_id))
             m_internal_breakpoint_list.Remove(break_id, false);
         else
+        {
+            if (m_last_created_breakpoint->GetID() == break_id)
+                m_last_created_breakpoint.reset();
             m_breakpoint_list.Remove(break_id, true);
+        }
         return true;
     }
     return false;

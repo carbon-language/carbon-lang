@@ -215,27 +215,18 @@ ClangUserExpression::Parse (Stream &error_stream, ExecutionContext &exe_ctx)
 }
 
 bool
-ClangUserExpression::Execute (Stream &error_stream,
-                              ExecutionContext &exe_ctx,
-                              ClangExpressionVariable *&result)
+ClangUserExpression::PrepareToExecuteJITExpression (Stream &error_stream,
+                                       ExecutionContext &exe_ctx,
+                                       lldb::addr_t &struct_address,
+                                       lldb::addr_t object_ptr)
 {
     Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS);
 
-    if (m_dwarf_opcodes.get())
+    if (m_jit_addr != LLDB_INVALID_ADDRESS)
     {
-        // TODO execute the JITted opcodes
-        
-        error_stream.Printf("We don't currently support executing DWARF expressions");
-        
-        return false;
-    }
-    else if (m_jit_addr != LLDB_INVALID_ADDRESS)
-    {
-        lldb::addr_t struct_address;
         
         Error materialize_error;
         
-        lldb::addr_t object_ptr = NULL;
         
         if (m_needs_object_ptr && !(m_expr_decl_map->GetObjectPointer(object_ptr, &exe_ctx, materialize_error)))
         {
@@ -274,6 +265,64 @@ ClangUserExpression::Execute (Stream &error_stream,
                 }
             }
         }
+    }
+    return true;
+}
+
+ThreadPlan *
+ClangUserExpression::GetThreadPlanToExecuteJITExpression (Stream &error_stream,
+                                       ExecutionContext &exe_ctx)
+{
+    lldb::addr_t struct_address;
+            
+    lldb::addr_t object_ptr = NULL;
+    
+    PrepareToExecuteJITExpression (error_stream, exe_ctx, struct_address, object_ptr);
+    
+    return ClangFunction::GetThreadPlanToCallFunction (exe_ctx, 
+                                        m_jit_addr, 
+                                        struct_address, 
+                                        error_stream,
+                                        true,
+                                        true, 
+                                        (m_needs_object_ptr ? &object_ptr : NULL));
+}
+
+bool
+ClangUserExpression::FinalizeJITExecution (Stream &error_stream,
+                                           ExecutionContext &exe_ctx,
+                                           ClangExpressionVariable *&result)
+{
+    Error expr_error;
+    
+    if (!m_expr_decl_map->Dematerialize(&exe_ctx, result, expr_error))
+    {
+        error_stream.Printf ("Couldn't dematerialize struct : %s\n", expr_error.AsCString("unknown error"));
+        return false;
+    }
+    return true;
+}        
+
+bool
+ClangUserExpression::Execute (Stream &error_stream,
+                              ExecutionContext &exe_ctx,
+                              ClangExpressionVariable *&result)
+{
+    if (m_dwarf_opcodes.get())
+    {
+        // TODO execute the JITted opcodes
+        
+        error_stream.Printf("We don't currently support executing DWARF expressions");
+        
+        return false;
+    }
+    else if (m_jit_addr != LLDB_INVALID_ADDRESS)
+    {
+        lldb::addr_t struct_address;
+                
+        lldb::addr_t object_ptr = NULL;
+        
+        PrepareToExecuteJITExpression (error_stream, exe_ctx, struct_address, object_ptr);
         
         ClangFunction::ExecutionResults execution_result = 
         ClangFunction::ExecuteFunction (exe_ctx, 
@@ -312,15 +361,7 @@ ClangUserExpression::Execute (Stream &error_stream,
             return false;
         }
         
-        Error expr_error;
-        
-        if (!m_expr_decl_map->Dematerialize(&exe_ctx, result, expr_error))
-        {
-            error_stream.Printf ("Couldn't dematerialize struct : %s\n", expr_error.AsCString("unknown error"));
-            return false;
-        }
-        
-        return true;
+        return FinalizeJITExecution (error_stream, exe_ctx, result);
     }
     else
     {

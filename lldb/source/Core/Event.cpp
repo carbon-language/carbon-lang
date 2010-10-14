@@ -49,12 +49,6 @@ Event::~Event ()
 }
 
 void
-Event::Clear()
-{
-    m_data_ap.reset();
-}
-
-void
 Event::Dump (Stream *s) const
 {
     s->Printf("%p Event: broadcaster = %p, type = 0x%8.8x, data = ", this, m_broadcaster, m_type);
@@ -69,48 +63,11 @@ Event::Dump (Stream *s) const
     }
 }
 
-Broadcaster *
-Event::GetBroadcaster () const
-{
-    return m_broadcaster;
-}
-
-bool
-Event::BroadcasterIs (Broadcaster *broadcaster)
-{
-    return broadcaster == m_broadcaster;
-}
-
-uint32_t
-Event::GetType() const
-{
-    return m_type;
-}
-
-
-EventData *
-Event::GetData ()
-{
-    return m_data_ap.get();
-}
-
-const EventData *
-Event::GetData () const
-{
-    return m_data_ap.get();
-}
-
 void
 Event::DoOnRemoval ()
 {
     if (m_data_ap.get())
         m_data_ap->DoOnRemoval (this);
-}
-
-void
-Event::SetBroadcaster (Broadcaster *broadcaster)
-{
-    m_broadcaster = broadcaster;
 }
 
 EventData::EventData()

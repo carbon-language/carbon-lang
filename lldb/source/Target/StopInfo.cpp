@@ -56,6 +56,14 @@ public:
     {
     }
     
+    StopInfoBreakpoint (Thread &thread, break_id_t break_id, bool should_stop) :
+        StopInfo (thread, break_id),
+        m_description(),
+        m_should_stop (should_stop),
+        m_should_stop_is_valid (true)
+    {
+    }
+
     virtual ~StopInfoBreakpoint ()
     {
     }
@@ -364,6 +372,12 @@ StopInfoSP
 StopInfo::CreateStopReasonWithBreakpointSiteID (Thread &thread, break_id_t break_id)
 {
     return StopInfoSP (new StopInfoBreakpoint (thread, break_id));
+}
+
+StopInfoSP
+StopInfo::CreateStopReasonWithBreakpointSiteID (Thread &thread, break_id_t break_id, bool should_stop)
+{
+    return StopInfoSP (new StopInfoBreakpoint (thread, break_id, should_stop));
 }
 
 StopInfoSP

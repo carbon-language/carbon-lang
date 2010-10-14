@@ -134,22 +134,52 @@ public:
     Dump (Stream *s) const;
 
     EventData *
-    GetData ();
+    GetData ()
+    {
+        return m_data_ap.get();
+    }
 
     const EventData *
-    GetData () const;
+    GetData () const
+    {
+        return m_data_ap.get();
+    }
+    
+    void
+    SetData (EventData *new_data)
+    {
+        m_data_ap.reset (new_data);
+    }
 
     uint32_t
-    GetType () const;
+    GetType () const
+    {
+        return m_type;
+    }
+    
+    void
+    SetType (uint32_t new_type)
+    {
+        m_type = new_type;
+    }
 
     Broadcaster *
-    GetBroadcaster () const;
-
+    GetBroadcaster () const
+    {
+        return m_broadcaster;
+    }
+    
     bool
-    BroadcasterIs (Broadcaster *broadcaster);
+    BroadcasterIs (Broadcaster *broadcaster)
+    {
+        return broadcaster == m_broadcaster;
+    }
 
     void
-    Clear();
+    Clear()
+    {
+        m_data_ap.reset();
+    }
 
 
 private:
@@ -164,7 +194,11 @@ private:
     // know about it update the contained broadcaster so that events can be
     // popped off one queue and re-broadcast to others.
     void
-    SetBroadcaster (Broadcaster *broadcaster);
+    SetBroadcaster (Broadcaster *broadcaster)
+    {
+        m_broadcaster = broadcaster;
+    }
+
 
     Broadcaster *   m_broadcaster;  // The broadcaster that sent this event
     uint32_t        m_type;         // The bit describing this event

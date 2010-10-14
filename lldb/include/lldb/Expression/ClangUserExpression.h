@@ -24,6 +24,7 @@
 #include "lldb/lldb-private.h"
 #include "lldb/Core/ClangForward.h"
 #include "lldb/Expression/ClangExpression.h"
+#include "lldb/Expression/ClangExpressionVariable.h"
 
 #include "llvm/ExecutionEngine/JITMemoryManager.h"
 
@@ -90,7 +91,15 @@ public:
     bool
     Execute (Stream &error_stream,
              ExecutionContext &exe_ctx,
-             ClangExpressionVariable *& result);
+             ClangExpressionVariable *&result);
+             
+    ThreadPlan *
+    GetThreadPlanToExecuteJITExpression (Stream &error_stream,
+                                 ExecutionContext &exe_ctx);
+    bool
+    FinalizeJITExecution (Stream &error_stream,
+                        ExecutionContext &exe_ctx,
+                        ClangExpressionVariable *&result);
     
     //------------------------------------------------------------------
     /// Return the string that the parser should parse.  Must be a full
@@ -100,6 +109,15 @@ public:
     Text ()
     {
         return m_transformed_text.c_str();
+    }
+    
+    //------------------------------------------------------------------
+    /// Return the string that the user typed.
+    //------------------------------------------------------------------
+    const char *
+    GetUserText ()
+    {
+        return m_expr_text.c_str();
     }
     
     //------------------------------------------------------------------
@@ -181,6 +199,12 @@ private:
     //------------------------------------------------------------------
     void
     ScanContext(ExecutionContext &exe_ctx);
+
+    bool
+    PrepareToExecuteJITExpression (Stream &error_stream,
+                                       ExecutionContext &exe_ctx,
+                                       lldb::addr_t &struct_address,
+                                       lldb::addr_t object_ptr);
     
     std::string                                 m_expr_text;            ///< The text of the expression, as typed by the user
     std::string                                 m_transformed_text;     ///< The text of the expression, as send to the parser

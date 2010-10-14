@@ -238,6 +238,12 @@ public:
     StopInfo *
     GetStopInfo ();
 
+    void
+    SetStopInfo (lldb::StopInfoSP stop_info_sp)
+    {
+        m_public_stop_info_sp = stop_info_sp;
+    }
+
     bool
     ThreadStoppedForAReason ();
 

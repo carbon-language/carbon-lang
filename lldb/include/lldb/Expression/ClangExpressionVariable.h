@@ -89,7 +89,8 @@ struct ClangExpressionVariable
     /// The following values should stay valid for the life of the variable
     //----------------------------------------------------------------------
     std::string             m_name;         ///< The name of the variable
-    TypeFromUser            m_user_type;    ///< The type of the variable according to some LLDB context; NULL if the type hasn't yet been migrated to one
+    TypeFromUser            m_user_type;    ///< The type of the variable according to some LLDB context; 
+                                            ///< NULL if the type hasn't yet been migrated to one
     
     //----------------------------------------------------------------------
     /// The following values indicate where the variable originally came from

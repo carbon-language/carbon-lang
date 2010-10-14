@@ -185,6 +185,24 @@ Breakpoint::GetThreadID ()
         return m_options.GetThreadSpec()->GetTID();
 }
 
+void 
+Breakpoint::SetCondition (const char *condition)
+{
+    m_options.SetCondition (condition);
+}
+
+ThreadPlan *
+Breakpoint::GetThreadPlanToTestCondition (ExecutionContext &exe_ctx, lldb::BreakpointLocationSP loc_sp, Stream &error)
+{
+    return m_options.GetThreadPlanToTestCondition (exe_ctx, loc_sp, error);
+}
+
+const char *
+Breakpoint::GetConditionText ()
+{
+    return m_options.GetConditionText();
+}
+
 // This function is used when "baton" doesn't need to be freed
 void
 Breakpoint::SetCallback (BreakpointHitCallback callback, void *baton, bool is_synchronous)

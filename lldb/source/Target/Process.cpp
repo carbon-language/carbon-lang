@@ -82,9 +82,9 @@ Process::Process(Target &target, Listener &listener) :
     m_exit_string (),
     m_thread_list (this),
     m_notifications (),
+    m_persistent_vars(),
     m_listener(listener),
-    m_unix_signals (),
-    m_persistent_vars()
+    m_unix_signals ()
 {
     UpdateInstanceName();
 

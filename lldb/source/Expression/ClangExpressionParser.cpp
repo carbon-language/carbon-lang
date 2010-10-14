@@ -447,7 +447,7 @@ ClangExpressionParser::MakeJIT (lldb::addr_t &func_addr,
             return err;
         }
         
-        if (m_expr.NeedsValidation())
+        if (m_expr.NeedsValidation() && exe_ctx.process->GetDynamicCheckers())
         {
             /* 
              Disabled temporarily - TODO Centralize and re-enable this inside Process to avoid race conditions

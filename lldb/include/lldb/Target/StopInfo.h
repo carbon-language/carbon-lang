@@ -90,6 +90,10 @@ public:
     static lldb::StopInfoSP
     CreateStopReasonWithBreakpointSiteID (Thread &thread, lldb::break_id_t break_id);
 
+    // This creates a StopInfo for the thread where the should_stop is already set, and won't be recalculated.
+    static lldb::StopInfoSP
+    CreateStopReasonWithBreakpointSiteID (Thread &thread, lldb::break_id_t break_id, bool should_stop);
+
     static lldb::StopInfoSP
     CreateStopReasonWithWatchpointID (Thread &thread, lldb::break_id_t watch_id);
 

@@ -539,9 +539,11 @@ ClangFunction::ExecuteFunction (
             // Not really sure what to do if Halt fails here...
             if (log)
                 if (try_all_threads)
-                    log->Printf ("Running function with timeout: %d timed out, trying with all threads enabled.", single_thread_timeout_usec);
+                    log->Printf ("Running function with timeout: %d timed out, trying with all threads enabled.",
+                                 single_thread_timeout_usec);
                 else
-                    log->Printf ("Running function with timeout: %d timed out, abandoning execution.", single_thread_timeout_usec);
+                    log->Printf ("Running function with timeout: %d timed out, abandoning execution.", 
+                                 single_thread_timeout_usec);
             
             if (exe_ctx.process->Halt().Success())
             {
