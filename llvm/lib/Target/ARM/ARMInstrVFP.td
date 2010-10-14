@@ -921,7 +921,7 @@ def VNEGScc  : ASuI<0b11101, 0b11, 0b0001, 0b01, 0,
 let Defs = [CPSR], Uses = [FPSCR] in
 def FMSTAT : VFPAI<(outs), (ins), VFPMiscFrm, IIC_fpSTAT, "vmrs",
                    "\tapsr_nzcv, fpscr",
-             [(arm_fmstat)]> {
+                   [(arm_fmstat)]> {
   let Inst{27-20} = 0b11101111;
   let Inst{19-16} = 0b0001;
   let Inst{15-12} = 0b1111;
@@ -932,7 +932,7 @@ def FMSTAT : VFPAI<(outs), (ins), VFPMiscFrm, IIC_fpSTAT, "vmrs",
   let Inst{3-0}   = 0b0000;
 }
 
-// FPSCR <-> GPR (for disassembly only)
+// FPSCR <-> GPR
 let hasSideEffects = 1, Uses = [FPSCR] in
 def VMRS : VFPAI<(outs GPR:$Rt), (ins), VFPMiscFrm, IIC_fpSTAT,
                  "vmrs", "\t$Rt, fpscr",
@@ -971,25 +971,49 @@ def VMSR : VFPAI<(outs), (ins GPR:$src), VFPMiscFrm, IIC_fpSTAT,
 
 // Materialize FP immediates. VFP3 only.
 let isReMaterializable = 1 in {
-def FCONSTD : VFPAI<(outs DPR:$dst), (ins vfp_f64imm:$imm),
+def FCONSTD : VFPAI<(outs DPR:$Dd), (ins vfp_f64imm:$imm),
                     VFPMiscFrm, IIC_fpUNA64,
-                    "vmov", ".f64\t$dst, $imm",
-                    [(set DPR:$dst, vfp_f64imm:$imm)]>, Requires<[HasVFP3]> {
+                    "vmov", ".f64\t$Dd, $imm",
+                    [(set DPR:$Dd, vfp_f64imm:$imm)]>, Requires<[HasVFP3]> {
+  // Instruction operands.
+  bits<5>  Dd;
+  bits<32> imm;
+
+  // Encode instruction operands.
+  let Inst{15-12} = Dd{3-0};
+  let Inst{22}    = Dd{4};
+  let Inst{19}    = imm{31};
+  let Inst{18-16} = imm{22-20};
+  let Inst{3-0}   = imm{19-16};
+
+  // Encode remaining instruction bits.
   let Inst{27-23} = 0b11101;
   let Inst{21-20} = 0b11;
   let Inst{11-9}  = 0b101;
-  let Inst{8}     = 1;
+  let Inst{8}     = 1;          // Double precision.
   let Inst{7-4}   = 0b0000;
 }
 
-def FCONSTS : VFPAI<(outs SPR:$dst), (ins vfp_f32imm:$imm),
-                    VFPMiscFrm, IIC_fpUNA32,
-                    "vmov", ".f32\t$dst, $imm",
-                    [(set SPR:$dst, vfp_f32imm:$imm)]>, Requires<[HasVFP3]> {
+def FCONSTS : VFPAI<(outs SPR:$Sd), (ins vfp_f32imm:$imm),
+                     VFPMiscFrm, IIC_fpUNA32,
+                     "vmov", ".f32\t$Sd, $imm",
+                     [(set SPR:$Sd, vfp_f32imm:$imm)]>, Requires<[HasVFP3]> {
+  // Instruction operands.
+  bits<5>  Sd;
+  bits<32> imm;
+
+  // Encode instruction operands.
+  let Inst{15-12} = Sd{4-1};
+  let Inst{22}    = Sd{0};
+  let Inst{19}    = imm{31};    // The immediate is handled as a double.
+  let Inst{18-16} = imm{22-20};
+  let Inst{3-0}   = imm{19-16};
+
+  // Encode remaining instruction bits.
   let Inst{27-23} = 0b11101;
   let Inst{21-20} = 0b11;
   let Inst{11-9}  = 0b101;
-  let Inst{8}     = 0;
+  let Inst{8}     = 0;          // Single precision.
   let Inst{7-4}   = 0b0000;
 }
 }

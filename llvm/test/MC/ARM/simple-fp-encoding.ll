@@ -352,3 +352,19 @@ entry:
 }
 
 declare void @llvm.arm.set.fpscr(i32) nounwind
+
+
+define double @f102() nounwind readnone {
+entry:
+; CHECK: f102
+; CHECK: vmov.f64 d16, #3.000000e+00 @ encoding: [0x08,0x0b,0xf0,0xee]
+  ret double 3.000000e+00
+}
+
+define float @f103(float %a) nounwind readnone {
+entry:
+; CHECK: f103
+; CHECK: vmov.f32 s0, #3.000000e+00  @ encoding: [0x08,0x0a,0xb0,0xee]
+  %add = fadd float %a, 3.000000e+00
+  ret float %add
+}

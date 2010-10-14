@@ -138,10 +138,13 @@ EmitImmediate(const MCOperand &DispOp, unsigned Size, MCFixupKind FixupKind,
 /// operand requires relocation, record the relocation and return zero.
 unsigned ARMMCCodeEmitter::getMachineOpValue(const MCInst &MI,
                                              const MCOperand &MO) const {
-  if (MO.isReg())
+  if (MO.isReg()) {
     return getARMRegisterNumbering(MO.getReg());
-  else if (MO.isImm()) {
+  } else if (MO.isImm()) {
     return static_cast<unsigned>(MO.getImm());
+  } else if (MO.isFPImm()) {
+    return static_cast<unsigned>(APFloat(MO.getFPImm())
+                     .bitcastToAPInt().getHiBits(32).getLimitedValue());
   } else {
 #ifndef NDEBUG
     errs() << MO;
@@ -150,7 +153,6 @@ unsigned ARMMCCodeEmitter::getMachineOpValue(const MCInst &MI,
   }
   return 0;
 }
-
 
 unsigned ARMMCCodeEmitter::getSORegOpValue(const MCInst &MI,
                                            unsigned OpIdx) const {
