@@ -256,3 +256,97 @@ entry:
   %conv = fptoui float %a to i32
   ret i32 %conv
 }
+
+define double @f90(double %a, double %b, double %c) nounwind readnone {
+entry:
+; CHECK: f90
+; FIXME: vmla.f64 d16, d18, d17      @ encoding: [0xa1,0x0b,0x42,0xee]
+  %mul = fmul double %a, %b
+  %add = fadd double %mul, %c
+  ret double %add
+}
+
+define float @f91(float %a, float %b, float %c) nounwind readnone {
+entry:
+; CHECK: f91
+; CHECK: vmla.f32 s2, s1, s0         @ encoding: [0x80,0x1a,0x00,0xee]
+  %mul = fmul float %a, %b
+  %add = fadd float %mul, %c
+  ret float %add
+}
+
+define double @f94(double %a, double %b, double %c) nounwind readnone {
+entry:
+; CHECK: f94
+; CHECK: vmls.f64 d16, d18, d17      @ encoding: [0xe1,0x0b,0x42,0xee]
+  %mul = fmul double %a, %b
+  %sub = fsub double %c, %mul
+  ret double %sub
+}
+
+define float @f95(float %a, float %b, float %c) nounwind readnone {
+entry:
+; CHECK: f95
+; CHECK: vmls.f32 s2, s1, s0         @ encoding: [0xc0,0x1a,0x00,0xee]
+  %mul = fmul float %a, %b
+  %sub = fsub float %c, %mul
+  ret float %sub
+}
+
+define double @f96(double %a, double %b, double %c) nounwind readnone {
+entry:
+; CHECK: f96
+; CHECK: vnmla.f64 d16, d18, d17     @ encoding: [0xe1,0x0b,0x52,0xee]
+  %mul = fmul double %a, %b
+  %sub = fsub double -0.000000e+00, %mul
+  %sub3 = fsub double %sub, %c
+  ret double %sub3
+}
+
+define float @f97(float %a, float %b, float %c) nounwind readnone {
+entry:
+; CHECK: f97
+; CHECK: vnmla.f32 s2, s1, s0        @ encoding: [0xc0,0x1a,0x10,0xee]
+  %mul = fmul float %a, %b
+  %sub = fsub float -0.000000e+00, %mul
+  %sub3 = fsub float %sub, %c
+  ret float %sub3
+}
+
+define double @f92(double %a, double %b, double %c) nounwind readnone {
+entry:
+; CHECK: f92
+; CHECK: vnmls.f64 d16, d18, d17     @ encoding: [0xa1,0x0b,0x52,0xee]
+  %mul = fmul double %a, %b
+  %sub = fsub double %mul, %c
+  ret double %sub
+}
+
+define float @f93(float %a, float %b, float %c) nounwind readnone {
+entry:
+; CHECK: f93
+; CHECK: vnmls.f32 s2, s1, s0        @ encoding: [0x80,0x1a,0x10,0xee]
+  %mul = fmul float %a, %b
+  %sub = fsub float %mul, %c
+  ret float %sub
+}
+
+define i32 @f100() nounwind readnone {
+entry:
+; CHECK: f100
+; CHECK: vmrs r0, fpscr              @ encoding: [0x10,0x0a,0xf1,0xee]
+  %0 = tail call i32 @llvm.arm.get.fpscr()
+  ret i32 %0
+}
+
+declare i32 @llvm.arm.get.fpscr() nounwind readnone
+
+define void @f101(i32 %a) nounwind {
+entry:
+; CHECK: f101
+; CHECK: vmsr fpscr, r0              @ encoding: [0x10,0x0a,0xe1,0xee]
+  tail call void @llvm.arm.set.fpscr(i32 %a)
+  ret void
+}
+
+declare void @llvm.arm.set.fpscr(i32) nounwind

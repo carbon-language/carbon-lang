@@ -25,15 +25,15 @@ def arm_ftoui  : SDNode<"ARMISD::FTOUI",  SDT_FTOI>;
 def arm_ftosi  : SDNode<"ARMISD::FTOSI",  SDT_FTOI>;
 def arm_sitof  : SDNode<"ARMISD::SITOF",  SDT_ITOF>;
 def arm_uitof  : SDNode<"ARMISD::UITOF",  SDT_ITOF>;
-def arm_fmstat : SDNode<"ARMISD::FMSTAT", SDTNone, [SDNPInFlag,SDNPOutFlag]>;
+def arm_fmstat : SDNode<"ARMISD::FMSTAT", SDTNone, [SDNPInFlag, SDNPOutFlag]>;
 def arm_cmpfp  : SDNode<"ARMISD::CMPFP",  SDT_ARMCmp, [SDNPOutFlag]>;
 def arm_cmpfp0 : SDNode<"ARMISD::CMPFPw0",SDT_CMPFP0, [SDNPOutFlag]>;
 def arm_fmdrr  : SDNode<"ARMISD::VMOVDRR",  SDT_VMOVDRR>;
 
+
 //===----------------------------------------------------------------------===//
 // Operand Definitions.
 //
-
 
 def vfp_f32imm : Operand<f32>,
                  PatLeaf<(f32 fpimm), [{
@@ -672,7 +672,7 @@ def VTOSIRS : AVConv1InsS_Encode<0b11101, 0b11, 0b1101, 0b1010,
 def VTOUIRD : AVConv1IsD_Encode<0b11101, 0b11, 0b1100, 0b1011,
                                 (outs SPR:$Sd), (ins DPR:$Dm),
                                 IIC_fpCVTDI, "vcvtr", ".u32.f64\t$Sd, $Dm",
-                                [(set SPR:$Sd, (int_arm_vcvtru (f64 DPR:$Dm)))]> {
+                                [(set SPR:$Sd, (int_arm_vcvtru(f64 DPR:$Dm)))]>{
   let Inst{7} = 0; // Z bit
 }
 
@@ -735,7 +735,7 @@ def VTOULD : AVConv1XI<0b11101, 0b11, 0b1111, 0b1011, 1,
                        (outs DPR:$dst), (ins DPR:$a, i32imm:$fbits),
                  IIC_fpCVTDI, "vcvt", ".u32.f64\t$dst, $a, $fbits",
                  [/* For disassembly only; pattern left blank */]>;
-}
+} // End of 'let isCodeGenOnly = 1 in'
 
 // Fixed-Point to FP:
 
@@ -779,7 +779,7 @@ def VULTOD : AVConv1XI<0b11101, 0b11, 0b1011, 0b1011, 1,
                        (outs DPR:$dst), (ins DPR:$a, i32imm:$fbits),
                  IIC_fpCVTID, "vcvt", ".f64.u32\t$dst, $a, $fbits",
                  [/* For disassembly only; pattern left blank */]>;
-}
+} // End of 'let isCodeGenOnly = 1 in'
 
 } // End of 'let Constraints = "$src = $dst" in'
 
@@ -787,62 +787,100 @@ def VULTOD : AVConv1XI<0b11101, 0b11, 0b1011, 0b1011, 1,
 // FP FMA Operations.
 //
 
-def VMLAD : ADbI_vmlX<0b11100, 0b00, 0, 0,
-                (outs DPR:$dst), (ins DPR:$dstin, DPR:$a, DPR:$b),
-                IIC_fpMAC64, "vmla", ".f64\t$dst, $a, $b",
-                [(set DPR:$dst, (fadd (fmul DPR:$a, DPR:$b),
-                                      (f64 DPR:$dstin)))]>,
-                RegConstraint<"$dstin = $dst">;
+class ADbI_vmlX_Encode<bits<5> opcod1, bits<2> opcod2, bit op6, bit op4,
+                       dag oops, dag iops, InstrItinClass itin, string opc,
+                       string asm, list<dag> pattern>
+  : ADbI_vmlX<opcod1, opcod2, op6, op4, oops, iops, itin, opc, asm, pattern> {
+  // Instruction operands.
+  bits<5> Dd;
+  bits<5> Dn;
+  bits<5> Dm;
 
-def VMLAS : ASbIn<0b11100, 0b00, 0, 0,
-                 (outs SPR:$dst), (ins SPR:$dstin, SPR:$a, SPR:$b),
-                 IIC_fpMAC32, "vmla", ".f32\t$dst, $a, $b",
-                 [(set SPR:$dst, (fadd (fmul SPR:$a, SPR:$b), SPR:$dstin))]>,
-                 RegConstraint<"$dstin = $dst">;
+  // Encode instruction operands.
+  let Inst{19-16} = Dn{3-0};
+  let Inst{7}     = Dn{4};
+  let Inst{15-12} = Dd{3-0};
+  let Inst{22}    = Dd{4};
+  let Inst{3-0}   = Dm{3-0};
+  let Inst{5}     = Dm{4};
+}
 
-def VNMLSD : ADbI_vmlX<0b11100, 0b01, 0, 0,
-                (outs DPR:$dst), (ins DPR:$dstin, DPR:$a, DPR:$b),
-                IIC_fpMAC64, "vnmls", ".f64\t$dst, $a, $b",
-                [(set DPR:$dst, (fsub (fmul DPR:$a, DPR:$b),
-                                (f64 DPR:$dstin)))]>,
-                RegConstraint<"$dstin = $dst">;
+def VMLAD : ADbI_vmlX_Encode<0b11100, 0b00, 0, 0,
+                             (outs DPR:$Dd), (ins DPR:$Ddin, DPR:$Dn, DPR:$Dm),
+                             IIC_fpMAC64, "vmla", ".f64\t$Dd, $Dn, $Dm",
+                             [(set DPR:$Dd, (fadd (fmul DPR:$Dn, DPR:$Dm),
+                                                  (f64 DPR:$Ddin)))]>,
+                             RegConstraint<"$Ddin = $Dd">;
 
-def VNMLSS : ASbI<0b11100, 0b01, 0, 0,
-                (outs SPR:$dst), (ins SPR:$dstin, SPR:$a, SPR:$b),
-                IIC_fpMAC32, "vnmls", ".f32\t$dst, $a, $b",
-                [(set SPR:$dst, (fsub (fmul SPR:$a, SPR:$b), SPR:$dstin))]>,
-                RegConstraint<"$dstin = $dst">;
+def VMLAS : ASbIn_Encode<0b11100, 0b00, 0, 0,
+                         (outs SPR:$Sd), (ins SPR:$Sdin, SPR:$Sn, SPR:$Sm),
+                         IIC_fpMAC32, "vmla", ".f32\t$Sd, $Sn, $Sm",
+                         [(set SPR:$Sd, (fadd (fmul SPR:$Sn, SPR:$Sm),
+                                              SPR:$Sdin))]>,
+                         RegConstraint<"$Sdin = $Sd">;
 
-def VMLSD : ADbI_vmlX<0b11100, 0b00, 1, 0,
-                 (outs DPR:$dst), (ins DPR:$dstin, DPR:$a, DPR:$b),
-                 IIC_fpMAC64, "vmls", ".f64\t$dst, $a, $b",
-             [(set DPR:$dst, (fadd (fneg (fmul DPR:$a, DPR:$b)),
-                             (f64 DPR:$dstin)))]>,
-                RegConstraint<"$dstin = $dst">;
+def : Pat<(fadd DPR:$dstin, (fmul DPR:$a, (f64 DPR:$b))),
+          (VMLAD DPR:$dstin, DPR:$a, DPR:$b)>, Requires<[DontUseNEONForFP]>;
+def : Pat<(fadd SPR:$dstin, (fmul SPR:$a, SPR:$b)),
+          (VMLAS SPR:$dstin, SPR:$a, SPR:$b)>, Requires<[DontUseNEONForFP]>;
 
-def VMLSS : ASbIn<0b11100, 0b00, 1, 0,
-                  (outs SPR:$dst), (ins SPR:$dstin, SPR:$a, SPR:$b),
-                  IIC_fpMAC32, "vmls", ".f32\t$dst, $a, $b",
-             [(set SPR:$dst, (fadd (fneg (fmul SPR:$a, SPR:$b)), SPR:$dstin))]>,
-                RegConstraint<"$dstin = $dst">;
+def VMLSD : ADbI_vmlX_Encode<0b11100, 0b00, 1, 0,
+                             (outs DPR:$Dd), (ins DPR:$Ddin, DPR:$Dn, DPR:$Dm),
+                             IIC_fpMAC64, "vmls", ".f64\t$Dd, $Dn, $Dm",
+                             [(set DPR:$Dd, (fadd (fneg (fmul DPR:$Dn,DPR:$Dm)),
+                                                        (f64 DPR:$Ddin)))]>,
+                             RegConstraint<"$Ddin = $Dd">;
+
+def VMLSS : ASbIn_Encode<0b11100, 0b00, 1, 0,
+                         (outs SPR:$Sd), (ins SPR:$Sdin, SPR:$Sn, SPR:$Sm),
+                         IIC_fpMAC32, "vmls", ".f32\t$Sd, $Sn, $Sm",
+                         [(set SPR:$Sd, (fadd (fneg (fmul SPR:$Sn, SPR:$Sm)),
+                                                    SPR:$Sdin))]>,
+                         RegConstraint<"$Sdin = $Sd">;
 
 def : Pat<(fsub DPR:$dstin, (fmul DPR:$a, (f64 DPR:$b))),
           (VMLSD DPR:$dstin, DPR:$a, DPR:$b)>, Requires<[DontUseNEONForFP]>;
 def : Pat<(fsub SPR:$dstin, (fmul SPR:$a, SPR:$b)),
           (VMLSS SPR:$dstin, SPR:$a, SPR:$b)>, Requires<[DontUseNEONForFP]>;
 
-def VNMLAD : ADbI_vmlX<0b11100, 0b01, 1, 0,
-                 (outs DPR:$dst), (ins DPR:$dstin, DPR:$a, DPR:$b),
-                 IIC_fpMAC64, "vnmla", ".f64\t$dst, $a, $b",
-             [(set DPR:$dst, (fsub (fneg (fmul DPR:$a, DPR:$b)),
-                             (f64 DPR:$dstin)))]>,
-                RegConstraint<"$dstin = $dst">;
+def VNMLAD : ADbI_vmlX_Encode<0b11100, 0b01, 1, 0,
+                              (outs DPR:$Dd), (ins DPR:$Ddin, DPR:$Dn, DPR:$Dm),
+                              IIC_fpMAC64, "vnmla", ".f64\t$Dd, $Dn, $Dm",
+                              [(set DPR:$Dd,(fsub (fneg (fmul DPR:$Dn,DPR:$Dm)),
+                                                  (f64 DPR:$Ddin)))]>,
+                RegConstraint<"$Ddin = $Dd">;
 
-def VNMLAS : ASbI<0b11100, 0b01, 1, 0,
-                (outs SPR:$dst), (ins SPR:$dstin, SPR:$a, SPR:$b),
-                IIC_fpMAC32, "vnmla", ".f32\t$dst, $a, $b",
-             [(set SPR:$dst, (fsub (fneg (fmul SPR:$a, SPR:$b)), SPR:$dstin))]>,
-                RegConstraint<"$dstin = $dst">;
+def VNMLAS : ASbI_Encode<0b11100, 0b01, 1, 0,
+                         (outs SPR:$Sd), (ins SPR:$Sdin, SPR:$Sn, SPR:$Sm),
+                         IIC_fpMAC32, "vnmla", ".f32\t$Sd, $Sn, $Sm",
+                         [(set SPR:$Sd, (fsub (fneg (fmul SPR:$Sn, SPR:$Sm)),
+                                              SPR:$Sdin))]>,
+                         RegConstraint<"$Sdin = $Sd">;
+
+def : Pat<(fsub (fneg (fmul DPR:$a, (f64 DPR:$b))), DPR:$dstin),
+          (VNMLAD DPR:$dstin, DPR:$a, DPR:$b)>, Requires<[DontUseNEONForFP]>;
+def : Pat<(fsub (fneg (fmul SPR:$a, SPR:$b)), SPR:$dstin),
+          (VNMLAS SPR:$dstin, SPR:$a, SPR:$b)>, Requires<[DontUseNEONForFP]>;
+
+def VNMLSD : ADbI_vmlX_Encode<0b11100, 0b01, 0, 0,
+                              (outs DPR:$Dd), (ins DPR:$Ddin, DPR:$Dn, DPR:$Dm),
+                              IIC_fpMAC64, "vnmls", ".f64\t$Dd, $Dn, $Dm",
+                              [(set DPR:$Dd, (fsub (fmul DPR:$Dn, DPR:$Dm),
+                                                   (f64 DPR:$Ddin)))]>,
+                              RegConstraint<"$Ddin = $Dd">;
+
+def VNMLSS : ASbI_Encode<0b11100, 0b01, 0, 0,
+                         (outs SPR:$Sd), (ins SPR:$Sdin, SPR:$Sn, SPR:$Sm),
+                         IIC_fpMAC32, "vnmls", ".f32\t$Sd, $Sn, $Sm",
+                         [(set SPR:$Sd, (fsub (fmul SPR:$Sn, SPR:$Sm),
+                                              SPR:$Sdin))]>,
+                         RegConstraint<"$Sdin = $Sd">;
+
+def : Pat<(fsub (fmul DPR:$a, (f64 DPR:$b)), DPR:$dstin),
+          (VNMLSD DPR:$dstin, DPR:$a, DPR:$b)>, Requires<[DontUseNEONForFP]>;
+def : Pat<(fsub (fmul SPR:$a, SPR:$b), SPR:$dstin),
+          (VNMLSS SPR:$dstin, SPR:$a, SPR:$b)>, Requires<[DontUseNEONForFP]>;
+
 
 //===----------------------------------------------------------------------===//
 // FP Conditional moves.
@@ -894,20 +932,34 @@ def FMSTAT : VFPAI<(outs), (ins), VFPMiscFrm, IIC_fpSTAT, "vmrs",
 
 // FPSCR <-> GPR (for disassembly only)
 let hasSideEffects = 1, Uses = [FPSCR] in
-def VMRS : VFPAI<(outs GPR:$dst), (ins), VFPMiscFrm, IIC_fpSTAT,
-                 "vmrs", "\t$dst, fpscr",
-             [(set GPR:$dst, (int_arm_get_fpscr))]> {
+def VMRS : VFPAI<(outs GPR:$Rt), (ins), VFPMiscFrm, IIC_fpSTAT,
+                 "vmrs", "\t$Rt, fpscr",
+                 [(set GPR:$Rt, (int_arm_get_fpscr))]> {
+  // Instruction operand.
+  bits<4> Rt;
+
+  // Encode instruction operand.
+  let Inst{15-12} = Rt;
+
   let Inst{27-20} = 0b11101111;
   let Inst{19-16} = 0b0001;
   let Inst{11-8}  = 0b1010;
   let Inst{7}     = 0;
+  let Inst{6-5}   = 0b00;
   let Inst{4}     = 1;
+  let Inst{3-0}   = 0b0000;
 }
 
 let Defs = [FPSCR] in 
 def VMSR : VFPAI<(outs), (ins GPR:$src), VFPMiscFrm, IIC_fpSTAT, 
                  "vmsr", "\tfpscr, $src",
-             [(int_arm_set_fpscr GPR:$src)]> {
+                 [(int_arm_set_fpscr GPR:$src)]> {
+  // Instruction operand.
+  bits<4> src;
+
+  // Encode instruction operand.
+  let Inst{15-12} = src;
+
   let Inst{27-20} = 0b11101110;
   let Inst{19-16} = 0b0001;
   let Inst{11-8}  = 0b1010;

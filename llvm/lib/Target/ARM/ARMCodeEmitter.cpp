@@ -1595,21 +1595,13 @@ void ARMCodeEmitter::emitMiscInstruction(const MachineInstr &MI) {
   // Set the conditional execution predicate
   Binary |= II->getPredicate(&MI) << ARMII::CondShift;
 
-  switch(Opcode) {
+  switch (Opcode) {
   default:
     llvm_unreachable("ARMCodeEmitter::emitMiscInstruction");
 
   case ARM::FMSTAT:
     // No further encoding needed.
     break;
-
-  case ARM::VMRS:
-  case ARM::VMSR: {
-    const MachineOperand &MO0 = MI.getOperand(0);
-    // Encode Rt.
-    Binary |= getARMRegisterNumbering(MO0.getReg()) << ARMII::RegRdShift;
-    break;
-  }
 
   case ARM::FCONSTD:
   case ARM::FCONSTS: {
