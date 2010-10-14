@@ -90,5 +90,13 @@ entry:
   ret i32 42405
 }
 
+define i64 @f10(i64 %a) nounwind readnone ssp {
+entry:
+; CHECK: f10
+; CHECK: asrs  r1, r1, #1             @ encoding: [0xc1,0x10,0xb0,0xe1]
+; CHECK: rrx r0, r0                   @ encoding: [0x60,0x00,0xa0,0xe1]
+  %shr = ashr i64 %a, 1
+  ret i64 %shr
+}
 
 declare void @llvm.trap() nounwind
