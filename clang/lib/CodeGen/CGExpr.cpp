@@ -13,6 +13,7 @@
 
 #include "CodeGenFunction.h"
 #include "CodeGenModule.h"
+#include "CodeGenTBAA.h"
 #include "CGCall.h"
 #include "CGCXXABI.h"
 #include "CGRecordLayout.h"
@@ -580,12 +581,15 @@ LValue CodeGenFunction::EmitLValue(const Expr *E) {
 }
 
 llvm::Value *CodeGenFunction::EmitLoadOfScalar(llvm::Value *Addr, bool Volatile,
-                                              unsigned Alignment, QualType Ty) {
+                                              unsigned Alignment, QualType Ty,
+                                              llvm::MDNode *TBAAInfo) {
   llvm::LoadInst *Load = Builder.CreateLoad(Addr, "tmp");
   if (Volatile)
     Load->setVolatile(true);
   if (Alignment)
     Load->setAlignment(Alignment);
+  if (TBAAInfo)
+    CGM.DecorateInstruction(Load, TBAAInfo);
 
   // Bool can have different representation in memory than in registers.
   llvm::Value *V = Load;
@@ -604,7 +608,8 @@ static bool isBooleanUnderlyingType(QualType Ty) {
 
 void CodeGenFunction::EmitStoreOfScalar(llvm::Value *Value, llvm::Value *Addr,
                                         bool Volatile, unsigned Alignment,
-                                        QualType Ty) {
+                                        QualType Ty,
+                                        llvm::MDNode *TBAAInfo) {
 
   if (Ty->isBooleanType() || isBooleanUnderlyingType(Ty)) {
     // Bool can have different representation in memory than in registers.
@@ -615,6 +620,8 @@ void CodeGenFunction::EmitStoreOfScalar(llvm::Value *Value, llvm::Value *Addr,
   llvm::StoreInst *Store = Builder.CreateStore(Value, Addr, Volatile);
   if (Alignment)
     Store->setAlignment(Alignment);
+  if (TBAAInfo)
+    CGM.DecorateInstruction(Store, TBAAInfo);
 }
 
 /// EmitLoadOfLValue - Given an expression that represents a value lvalue, this
@@ -637,7 +644,8 @@ RValue CodeGenFunction::EmitLoadOfLValue(LValue LV, QualType ExprType) {
 
     // Everything needs a load.
     return RValue::get(EmitLoadOfScalar(Ptr, LV.isVolatileQualified(),
-                                        LV.getAlignment(), ExprType));
+                                        LV.getAlignment(), ExprType,
+                                        LV.getTBAAInfo()));
 
   }
 
@@ -846,7 +854,8 @@ void CodeGenFunction::EmitStoreThroughLValue(RValue Src, LValue Dst,
 
   assert(Src.isScalar() && "Can't emit an agg store with this method");
   EmitStoreOfScalar(Src.getScalarVal(), Dst.getAddress(),
-                    Dst.isVolatileQualified(), Dst.getAlignment(), Ty);
+                    Dst.isVolatileQualified(), Dst.getAlignment(), Ty,
+                    Dst.getTBAAInfo());
 }
 
 void CodeGenFunction::EmitStoreThroughBitfieldLValue(RValue Src, LValue Dst,

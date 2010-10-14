@@ -157,8 +157,13 @@ class LValue {
   bool ThreadLocalRef : 1;
 
   Expr *BaseIvarExp;
+
+  /// TBAAInfo - TBAA information to attach to dereferences of this LValue.
+  llvm::MDNode *TBAAInfo;
+
 private:
-  void Initialize(Qualifiers Quals, unsigned Alignment = 0) {
+  void Initialize(Qualifiers Quals, unsigned Alignment = 0,
+                  llvm::MDNode *TBAAInfo = 0) {
     this->Quals = Quals;
     this->Alignment = Alignment;
     assert(this->Alignment == Alignment && "Alignment exceeds allowed max!");
@@ -167,6 +172,7 @@ private:
     this->Ivar = this->ObjIsArray = this->NonGC = this->GlobalObjCRef = false;
     this->ThreadLocalRef = false;
     this->BaseIvarExp = 0;
+    this->TBAAInfo = TBAAInfo;
   }
 
 public:
@@ -207,6 +213,9 @@ public:
   
   Expr *getBaseIvarExp() const { return BaseIvarExp; }
   void setBaseIvarExp(Expr *V) { BaseIvarExp = V; }
+
+  llvm::MDNode *getTBAAInfo() const { return TBAAInfo; }
+  void setTBAAInfo(llvm::MDNode *N) { TBAAInfo = N; }
 
   const Qualifiers &getQuals() const { return Quals; }
   Qualifiers &getQuals() { return Quals; }
@@ -252,14 +261,15 @@ public:
   }
 
   static LValue MakeAddr(llvm::Value *V, QualType T, unsigned Alignment,
-                         ASTContext &Context) {
+                         ASTContext &Context,
+                         llvm::MDNode *TBAAInfo = 0) {
     Qualifiers Quals = Context.getCanonicalType(T).getQualifiers();
     Quals.setObjCGCAttr(Context.getObjCGCAttrKind(T));
 
     LValue R;
     R.LVType = Simple;
     R.V = V;
-    R.Initialize(Quals, Alignment);
+    R.Initialize(Quals, Alignment, TBAAInfo);
     return R;
   }
 

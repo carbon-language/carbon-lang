@@ -1011,7 +1011,8 @@ public:
   //===--------------------------------------------------------------------===//
 
   LValue MakeAddrLValue(llvm::Value *V, QualType T, unsigned Alignment = 0) {
-    return LValue::MakeAddr(V, T, Alignment, getContext());
+    return LValue::MakeAddr(V, T, Alignment, getContext(),
+                            CGM.getTBAAInfo(T));
   }
 
   /// CreateTempAlloca - This creates a alloca and inserts it into the entry
@@ -1349,13 +1350,15 @@ public:
   /// care to appropriately convert from the memory representation to
   /// the LLVM value representation.
   llvm::Value *EmitLoadOfScalar(llvm::Value *Addr, bool Volatile,
-                                unsigned Alignment, QualType Ty);
+                                unsigned Alignment, QualType Ty,
+                                llvm::MDNode *TBAAInfo = 0);
 
   /// EmitStoreOfScalar - Store a scalar value to an address, taking
   /// care to appropriately convert from the memory representation to
   /// the LLVM value representation.
   void EmitStoreOfScalar(llvm::Value *Value, llvm::Value *Addr,
-                         bool Volatile, unsigned Alignment, QualType Ty);
+                         bool Volatile, unsigned Alignment, QualType Ty,
+                         llvm::MDNode *TBAAInfo = 0);
 
   /// EmitLoadOfLValue - Given an expression that represents a value lvalue,
   /// this method emits the address of the lvalue, then loads the result as an

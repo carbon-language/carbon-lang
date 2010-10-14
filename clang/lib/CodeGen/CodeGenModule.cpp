@@ -14,6 +14,7 @@
 #include "CodeGenModule.h"
 #include "CGDebugInfo.h"
 #include "CodeGenFunction.h"
+#include "CodeGenTBAA.h"
 #include "CGCall.h"
 #include "CGCXXABI.h"
 #include "CGObjCRuntime.h"
@@ -62,6 +63,7 @@ CodeGenModule::CodeGenModule(ASTContext &C, const CodeGenOptions &CGO,
     TheTargetData(TD), TheTargetCodeGenInfo(0), Diags(diags),
     ABI(createCXXABI(*this)), 
     Types(C, M, TD, getTargetCodeGenInfo().getABIInfo(), ABI),
+    TBAA(0),
     VTables(*this), Runtime(0),
     CFConstantStringClassRef(0), NSConstantStringClassRef(0),
     VMContext(M.getContext()),
@@ -78,6 +80,10 @@ CodeGenModule::CodeGenModule(ASTContext &C, const CodeGenOptions &CGO,
     Runtime = CreateMacNonFragileABIObjCRuntime(*this);
   else
     Runtime = CreateMacObjCRuntime(*this);
+
+  // Enable TBAA unless it's suppressed.
+  if (!CodeGenOpts.RelaxedAliasing && CodeGenOpts.OptimizationLevel > 0)
+    TBAA = new CodeGenTBAA(Context, VMContext, getLangOptions());
 
   // If debug info generation is enabled, create the CGDebugInfo object.
   DebugInfo = CodeGenOpts.DebugInfo ? new CGDebugInfo(*this) : 0;
@@ -114,6 +120,17 @@ void CodeGenModule::Release() {
 
   if (getCodeGenOpts().EmitDeclMetadata)
     EmitDeclMetadata();
+}
+
+llvm::MDNode *CodeGenModule::getTBAAInfo(QualType QTy) {
+  if (!TBAA)
+    return 0;
+  return TBAA->getTBAAInfo(QTy);
+}
+
+void CodeGenModule::DecorateInstruction(llvm::Instruction *Inst,
+                                        llvm::MDNode *TBAAInfo) {
+  Inst->setMetadata(llvm::LLVMContext::MD_tbaa, TBAAInfo);
 }
 
 bool CodeGenModule::isTargetDarwin() const {

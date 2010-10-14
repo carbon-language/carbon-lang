@@ -70,6 +70,7 @@ namespace clang {
 namespace CodeGen {
 
   class CodeGenFunction;
+  class CodeGenTBAA;
   class CGCXXABI;
   class CGDebugInfo;
   class CGObjCRuntime;
@@ -111,6 +112,7 @@ class CodeGenModule : public BlockModule {
   Diagnostic &Diags;
   CGCXXABI &ABI;
   CodeGenTypes Types;
+  CodeGenTBAA *TBAA;
 
   /// VTables - Holds information about C++ vtables.
   CodeGenVTables VTables;
@@ -249,6 +251,11 @@ public:
   llvm::LLVMContext &getLLVMContext() { return VMContext; }
   const TargetCodeGenInfo &getTargetCodeGenInfo();
   bool isTargetDarwin() const;
+
+  llvm::MDNode *getTBAAInfo(QualType QTy);
+
+  static void DecorateInstruction(llvm::Instruction *Inst,
+                                  llvm::MDNode *TBAAInfo);
 
   /// getDeclVisibilityMode - Compute the visibility of the decl \arg D.
   LangOptions::VisibilityMode getDeclVisibilityMode(const Decl *D) const;
