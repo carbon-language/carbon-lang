@@ -311,9 +311,9 @@ ObjCObjectType::ObjCObjectType(QualType Canonical, QualType Base,
                                ObjCProtocolDecl * const *Protocols,
                                unsigned NumProtocols)
   : Type(ObjCObject, Canonical, false, false),
-    NumProtocols(NumProtocols),
     BaseType(Base) {
-  assert(this->NumProtocols == NumProtocols &&
+  SubclassBits = NumProtocols;
+  assert(getNumProtocols() == NumProtocols &&
          "bitfield overflow in protocol count");
   if (NumProtocols)
     memcpy(getProtocolStorage(), Protocols,
@@ -1026,7 +1026,7 @@ void FunctionProtoType::Profile(llvm::FoldingSetNodeID &ID, QualType Result,
                                 unsigned TypeQuals, bool hasExceptionSpec,
                                 bool anyExceptionSpec, unsigned NumExceptions,
                                 exception_iterator Exs,
-                                const FunctionType::ExtInfo &Info) {
+                                FunctionType::ExtInfo Info) {
   ID.AddPointer(Result.getAsOpaquePtr());
   for (unsigned i = 0; i != NumArgs; ++i)
     ID.AddPointer(ArgTys[i].getAsOpaquePtr());
@@ -1038,9 +1038,7 @@ void FunctionProtoType::Profile(llvm::FoldingSetNodeID &ID, QualType Result,
     for (unsigned i = 0; i != NumExceptions; ++i)
       ID.AddPointer(Exs[i].getAsOpaquePtr());
   }
-  ID.AddInteger(Info.getNoReturn());
-  ID.AddInteger(Info.getRegParm());
-  ID.AddInteger(Info.getCC());
+  Info.Profile(ID);
 }
 
 void FunctionProtoType::Profile(llvm::FoldingSetNodeID &ID) {

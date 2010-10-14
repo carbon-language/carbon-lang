@@ -982,9 +982,8 @@ def err_cconv_knr : Error<
 def err_cconv_varargs : Error<
   "variadic function cannot use %0 calling convention">;
 def err_regparm_mismatch : Error<"function declared with with regparm(%0) "
-  "attribute was previously declared %plural{0:without the regparm|1:"
-  "with the regparm(1)|2:with the regparm(2)|3:with the regparm(3)|:with the"
-  "regparm}1 attribute">;
+  "attribute was previously declared "
+  "%plural{0:without the regparm|:with the regparm(%1)}1 attribute">;
 def warn_label_attribute_not_unused : Warning<
   "The only valid attribute for labels is 'unused'">;
 
