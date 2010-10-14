@@ -409,6 +409,19 @@ raw_fd_ostream::raw_fd_ostream(const char *Filename, std::string &ErrorInfo,
   ShouldClose = true;
 }
 
+/// raw_fd_ostream ctor - FD is the file descriptor that this writes to.  If
+/// ShouldClose is true, this closes the file when the stream is destroyed.
+raw_fd_ostream::raw_fd_ostream(int fd, bool shouldClose, bool unbuffered)
+  : raw_ostream(unbuffered), FD(fd),
+    ShouldClose(shouldClose), Error(false) {
+#ifdef O_BINARY
+  // Setting STDOUT and STDERR to binary mode is necessary in Win32
+  // to avoid undesirable linefeed conversion.
+  if (fd == STDOUT_FILENO || fd == STDERR_FILENO)
+    setmode(fd, O_BINARY);
+#endif
+}
+
 raw_fd_ostream::~raw_fd_ostream() {
   if (FD >= 0) {
     flush();

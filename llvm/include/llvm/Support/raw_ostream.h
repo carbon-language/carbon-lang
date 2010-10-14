@@ -349,10 +349,7 @@ public:
 
   /// raw_fd_ostream ctor - FD is the file descriptor that this writes to.  If
   /// ShouldClose is true, this closes the file when the stream is destroyed.
-  raw_fd_ostream(int fd, bool shouldClose,
-                 bool unbuffered=false) : raw_ostream(unbuffered), FD(fd),
-                                          ShouldClose(shouldClose),
-                                          Error(false) {}
+  raw_fd_ostream(int fd, bool shouldClose, bool unbuffered=false);
 
   ~raw_fd_ostream();
 
