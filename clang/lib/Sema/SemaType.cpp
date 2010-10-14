@@ -1403,13 +1403,16 @@ TypeSourceInfo *Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
     const FunctionProtoType *FnTy = T->getAs<FunctionProtoType>();
     assert(FnTy && "Why oh why is there not a FunctionProtoType here?");
 
-    // C++ 8.3.5p4: A cv-qualifier-seq shall only be part of the function type
-    // for a nonstatic member function, the function type to which a pointer
-    // to member refers, or the top-level function type of a function typedef
-    // declaration.
-    bool FreeFunction = (D.getContext() != Declarator::MemberContext &&
+    // C++ 8.3.5p4: 
+    //   A cv-qualifier-seq shall only be part of the function type
+    //   for a nonstatic member function, the function type to which a pointer
+    //   to member refers, or the top-level function type of a function typedef
+    //   declaration.
+    bool FreeFunction = 
+        (D.getContext() != Declarator::MemberContext ||
+         D.getDeclSpec().isFriendSpecified()) &&
         (!D.getCXXScopeSpec().isSet() ||
-         !computeDeclContext(D.getCXXScopeSpec(), /*FIXME:*/true)->isRecord()));
+         !computeDeclContext(D.getCXXScopeSpec(), /*FIXME:*/true)->isRecord());
     if (FnTy->getTypeQuals() != 0 &&
         D.getDeclSpec().getStorageClassSpec() != DeclSpec::SCS_typedef &&
         (FreeFunction ||
