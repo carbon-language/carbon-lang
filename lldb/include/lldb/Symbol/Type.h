@@ -197,7 +197,8 @@ public:
                               uint32_t &child_byte_size,
                               int32_t &child_byte_offset,
                               uint32_t &child_bitfield_bit_size,
-                              uint32_t &child_bitfield_bit_offset);
+                              uint32_t &child_bitfield_bit_offset,
+                              bool &child_is_base_class);
 
     static int
     Compare(const Type &a, const Type &b);
@@ -210,9 +211,11 @@ protected:
     EncodingDataType m_encoding_uid_type;
     uint32_t m_encoding_uid;
     uint32_t m_byte_size;
-    bool m_is_forward_decl;
     Declaration m_decl;
-    lldb::clang_type_t m_clang_qual_type;
+    lldb::clang_type_t m_clang_type;
+    bool    m_is_forward_decl:1,
+            m_encoding_type_forward_decl_resolved:1,
+            m_encoding_type_decl_resolved:1;
 
     Type *
     GetEncodingType ();

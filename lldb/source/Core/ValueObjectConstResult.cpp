@@ -35,7 +35,7 @@ ValueObjectConstResult::ValueObjectConstResult
     lldb::ByteOrder data_byte_order, 
     uint8_t data_addr_size
 ) :
-    ValueObject (),
+    ValueObject (NULL),
     m_clang_ast (clang_ast),
     m_type_name ()
 {
@@ -50,7 +50,7 @@ ValueObjectConstResult::ValueObjectConstResult
 }
 
 ValueObjectConstResult::ValueObjectConstResult (const Error& error) :
-    ValueObject (),
+    ValueObject (NULL),
     m_clang_ast (NULL),
     m_type_name ()
 {

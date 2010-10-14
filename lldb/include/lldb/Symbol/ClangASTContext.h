@@ -30,6 +30,26 @@ class Declaration;
 class ClangASTContext
 {
 public:
+    enum {
+        eTypeHasChildren        = (1u <<  0),
+        eTypeHasValue           = (1u <<  1),
+        eTypeIsArray            = (1u <<  2),
+        eTypeIsBlock            = (1u <<  3),
+        eTypeIsBuiltIn          = (1u <<  4),
+        eTypeIsClass            = (1u <<  5),
+        eTypeIsCPlusPlus        = (1u <<  6),
+        eTypeIsEnumeration      = (1u <<  7),
+        eTypeIsFuncPrototype    = (1u <<  8),
+        eTypeIsMember           = (1u <<  9),
+        eTypeIsObjC             = (1u << 10),
+        eTypeIsPointer          = (1u << 11),
+        eTypeIsReference        = (1u << 12),
+        eTypeIsStructUnion      = (1u << 13),
+        eTypeIsTemplate         = (1u << 14),
+        eTypeIsTypedef          = (1u << 15),
+        eTypeIsVector           = (1u << 16)
+    };
+
     //------------------------------------------------------------------
     // Constructors and Destructors
     //------------------------------------------------------------------
@@ -304,6 +324,10 @@ public:
     static bool
     IsAggregateType (lldb::clang_type_t clang_type);
 
+    // Returns a mask containing bits from the ClangASTContext::eTypeXXX enumerations
+    static uint32_t
+    GetTypeInfoMask (lldb::clang_type_t clang_type);
+
     static uint32_t
     GetNumChildren (lldb::clang_type_t clang_type,
                     bool omit_empty_base_classes);
@@ -318,7 +342,8 @@ public:
                               uint32_t &child_byte_size,
                               int32_t &child_byte_offset,
                               uint32_t &child_bitfield_bit_size,
-                              uint32_t &child_bitfield_bit_offset);
+                              uint32_t &child_bitfield_bit_offset,
+                              bool &child_is_base_class);
     
     static lldb::clang_type_t
     GetChildClangTypeAtIndex (clang::ASTContext *ast_context,
@@ -331,7 +356,8 @@ public:
                               uint32_t &child_byte_size,
                               int32_t &child_byte_offset,
                               uint32_t &child_bitfield_bit_size,
-                              uint32_t &child_bitfield_bit_offset);
+                              uint32_t &child_bitfield_bit_offset,
+                              bool &child_is_base_class);
     
     // Lookup a child given a name. This function will match base class names
     // and member member names in "clang_type" only, not descendants.
@@ -527,6 +553,10 @@ public:
     
     static bool
     IsFloatingPointType (lldb::clang_type_t clang_type, uint32_t &count, bool &is_complex);
+
+    static bool
+    GetCXXClassName (lldb::clang_type_t clang_type, 
+                     std::string &class_name);
 
     static bool
     IsCXXClassType (lldb::clang_type_t clang_type);

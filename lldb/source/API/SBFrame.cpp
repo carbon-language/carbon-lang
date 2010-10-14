@@ -390,7 +390,7 @@ SBFrame::GetRegisters ()
             const uint32_t num_sets = reg_ctx->GetRegisterSetCount();
             for (uint32_t set_idx = 0; set_idx < num_sets; ++set_idx)
             {
-                value_list.Append(ValueObjectSP (new ValueObjectRegisterSet (reg_ctx, set_idx)));
+                value_list.Append(ValueObjectSP (new ValueObjectRegisterSet (NULL, reg_ctx, set_idx)));
             }
         }
     }

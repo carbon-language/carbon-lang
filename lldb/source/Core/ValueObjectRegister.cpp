@@ -29,8 +29,8 @@ using namespace lldb_private;
 
 #pragma mark ValueObjectRegisterContext
 
-ValueObjectRegisterContext::ValueObjectRegisterContext (RegisterContext *reg_ctx) :
-    ValueObject (),
+ValueObjectRegisterContext::ValueObjectRegisterContext (ValueObject *parent, RegisterContext *reg_ctx) :
+    ValueObject (parent),
     m_reg_ctx (reg_ctx)
 {
     assert (reg_ctx);
@@ -93,7 +93,7 @@ ValueObjectRegisterContext::CreateChildAtIndex (uint32_t idx, bool synthetic_arr
 
     const uint32_t num_children = GetNumChildren();
     if (idx < num_children)
-        valobj_sp.reset (new ValueObjectRegisterSet(m_reg_ctx, idx));
+        valobj_sp.reset (new ValueObjectRegisterSet(this, m_reg_ctx, idx));
     return valobj_sp;
 }
 
@@ -101,8 +101,8 @@ ValueObjectRegisterContext::CreateChildAtIndex (uint32_t idx, bool synthetic_arr
 #pragma mark -
 #pragma mark ValueObjectRegisterSet
 
-ValueObjectRegisterSet::ValueObjectRegisterSet (RegisterContext *reg_ctx, uint32_t reg_set_idx) :
-    ValueObject (),
+ValueObjectRegisterSet::ValueObjectRegisterSet (ValueObject *parent, RegisterContext *reg_ctx, uint32_t reg_set_idx) :
+    ValueObject (parent),
     m_reg_ctx (reg_ctx),
     m_reg_set (NULL),
     m_reg_set_idx (reg_set_idx)
@@ -195,7 +195,7 @@ ValueObjectRegisterSet::CreateChildAtIndex (uint32_t idx, bool synthetic_array_m
     {
         const uint32_t num_children = GetNumChildren();
         if (idx < num_children)
-            valobj_sp.reset (new ValueObjectRegister(m_reg_ctx, m_reg_set->registers[idx]));
+            valobj_sp.reset (new ValueObjectRegister(this, m_reg_ctx, m_reg_set->registers[idx]));
     }
     return valobj_sp;
 }
@@ -204,8 +204,8 @@ ValueObjectRegisterSet::CreateChildAtIndex (uint32_t idx, bool synthetic_array_m
 #pragma mark -
 #pragma mark ValueObjectRegister
 
-ValueObjectRegister::ValueObjectRegister (RegisterContext *reg_ctx, uint32_t reg_num) :
-    ValueObject (),
+ValueObjectRegister::ValueObjectRegister (ValueObject *parent, RegisterContext *reg_ctx, uint32_t reg_num) :
+    ValueObject (parent),
     m_reg_ctx (reg_ctx),
     m_reg_info (NULL),
     m_reg_num (reg_num),

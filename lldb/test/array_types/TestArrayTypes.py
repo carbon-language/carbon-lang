@@ -69,18 +69,18 @@ class ArrayTypesTestCase(TestBase):
 
         self.expect("frame variable -t strings", VARIABLES_DISPLAYED_CORRECTLY,
             startstr = '(char *[4])',
-            substrs = ['(char *) strings[0]',
-                       '(char *) strings[1]',
-                       '(char *) strings[2]',
-                       '(char *) strings[3]',
+            substrs = ['(char *) [0]',
+                       '(char *) [1]',
+                       '(char *) [2]',
+                       '(char *) [3]',
                        'Hello',
                        'Hola',
                        'Bonjour',
                        'Guten Tag'])
 
         self.expect("frame variable -t char_16", VARIABLES_DISPLAYED_CORRECTLY,
-            substrs = ['(char) char_16[0]',
-                       '(char) char_16[15]'])
+            substrs = ['(char) [0]',
+                       '(char) [15]'])
 
         self.expect("frame variable -t ushort_matrix", VARIABLES_DISPLAYED_CORRECTLY,
             startstr = '(unsigned short [2][3])')

@@ -83,6 +83,7 @@ SBType::GetChildAtIndex (bool omit_empty_base_classes, uint32_t idx, SBTypeMembe
     int32_t child_byte_offset = 0;
     uint32_t child_bitfield_bit_size = 0;
     uint32_t child_bitfield_bit_offset = 0;
+    bool child_is_base_class = false;
 
     if (IsValid ())
     {
@@ -97,7 +98,8 @@ SBType::GetChildAtIndex (bool omit_empty_base_classes, uint32_t idx, SBTypeMembe
                                                                       child_byte_size,
                                                                       child_byte_offset,
                                                                       child_bitfield_bit_size,
-                                                                      child_bitfield_bit_offset);
+                                                                      child_bitfield_bit_offset,
+                                                                      child_is_base_class);
         
     }
     
@@ -110,6 +112,7 @@ SBType::GetChildAtIndex (bool omit_empty_base_classes, uint32_t idx, SBTypeMembe
         member.m_offset = child_byte_offset;
         member.m_bit_size = child_bitfield_bit_size;
         member.m_bit_offset = child_bitfield_bit_offset;
+        member.m_is_base_class = child_is_base_class;
     }
     else
     {
@@ -192,7 +195,9 @@ SBTypeMember::SBTypeMember () :
     m_member_name (NULL),
     m_offset (0),
     m_bit_size (0),
-    m_bit_offset (0)
+    m_bit_offset (0),
+    m_is_base_class (false)
+    
 {
 }
 
@@ -222,6 +227,7 @@ SBTypeMember::Clear()
     m_offset = 0;
     m_bit_size  = 0;
     m_bit_offset = 0;
+    m_is_base_class = false;
 }
 
 bool
@@ -246,6 +252,12 @@ size_t
 SBTypeMember::GetBitfieldOffset ()
 {
     return m_bit_offset;
+}
+
+bool
+SBTypeMember::IsBaseClass ()
+{
+    return m_is_base_class;
 }
 
 size_t

@@ -71,6 +71,9 @@ public:
     ~SBTypeMember ();
 
     bool
+    IsBaseClass ();
+
+    bool
     IsValid ();
 
     void
@@ -110,7 +113,7 @@ protected:
     int32_t m_offset;
     uint32_t m_bit_size;
     uint32_t m_bit_offset;
-
+    bool m_is_base_class;
 };
 
 

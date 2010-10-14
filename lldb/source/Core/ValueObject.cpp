@@ -42,8 +42,9 @@ static lldb::user_id_t g_value_obj_uid = 0;
 //----------------------------------------------------------------------
 // ValueObject constructor
 //----------------------------------------------------------------------
-ValueObject::ValueObject () :
+ValueObject::ValueObject (ValueObject *parent) :
     UserID (++g_value_obj_uid), // Unique identifier for every value object
+    m_parent (parent),
     m_update_id (0),    // Value object lists always start at 1, value objects start at zero
     m_name (),
     m_data (),
@@ -354,6 +355,7 @@ ValueObject::CreateChildAtIndex (uint32_t idx, bool synthetic_array_member, int3
     int32_t child_byte_offset = 0;
     uint32_t child_bitfield_bit_size = 0;
     uint32_t child_bitfield_bit_offset = 0;
+    bool child_is_base_class = false;
     const bool transparent_pointers = synthetic_array_member == false;
     clang::ASTContext *clang_ast = GetClangAST();
     void *clang_type = GetClangType();
@@ -368,7 +370,8 @@ ValueObject::CreateChildAtIndex (uint32_t idx, bool synthetic_array_member, int3
                                                                   child_byte_size,
                                                                   child_byte_offset,
                                                                   child_bitfield_bit_size,
-                                                                  child_bitfield_bit_offset);
+                                                                  child_bitfield_bit_offset,
+                                                                  child_is_base_class);
     if (child_clang_type)
     {
         if (synthetic_index)
@@ -385,7 +388,8 @@ ValueObject::CreateChildAtIndex (uint32_t idx, bool synthetic_array_member, int3
                                                child_byte_size,
                                                child_byte_offset,
                                                child_bitfield_bit_size,
-                                               child_bitfield_bit_offset));
+                                               child_bitfield_bit_offset,
+                                               child_is_base_class));
     }
     return valobj_sp;
 }
@@ -863,6 +867,46 @@ ValueObject::SetDynamicValue ()
 
 
 void
+ValueObject::GetExpressionPath (Stream &s)
+{
+    if (m_parent)
+    {
+        m_parent->GetExpressionPath (s);
+        clang_type_t parent_clang_type = m_parent->GetClangType();
+        if (parent_clang_type)
+        {
+            if (ClangASTContext::IsPointerType(parent_clang_type))
+            {
+                s.PutCString("->");
+            }
+            else if (ClangASTContext::IsAggregateType (parent_clang_type))
+            {
+                if (ClangASTContext::IsArrayType (parent_clang_type) == false &&
+                    m_parent->IsBaseClass() == false)
+                    s.PutChar('.');
+            }
+        }
+    }
+    
+    if (IsBaseClass())
+    {
+        clang_type_t clang_type = GetClangType();
+        std::string cxx_class_name;
+        if (ClangASTContext::GetCXXClassName (clang_type, cxx_class_name))
+        {
+            s << cxx_class_name.c_str() << "::";
+        }
+    }
+    else
+    {
+        const char *name = GetName().AsCString();
+        if (name)
+            s.PutCString(name);    
+    }
+}
+
+
+void
 ValueObject::DumpValueObject 
 (
     Stream &s,
@@ -875,33 +919,59 @@ ValueObject::DumpValueObject
     bool show_types,
     bool show_location,
     bool use_objc,
-    bool scope_already_checked
+    bool scope_already_checked,
+    bool flat_output
 )
 {
     if (valobj)
     {
         //const char *loc_cstr = valobj->GetLocationAsCString();
-        if (show_location)
+        clang_type_t clang_type = valobj->GetClangType();
+
+        const Flags type_info_flags (ClangASTContext::GetTypeInfoMask (clang_type));
+        const char *err_cstr = NULL;
+        const bool has_children = type_info_flags.IsSet (ClangASTContext::eTypeHasChildren);
+        const bool has_value = type_info_flags.IsSet (ClangASTContext::eTypeHasValue);
+        
+        const bool print_valobj = flat_output == false || has_value;
+        
+        if (print_valobj)
         {
-            s.Printf("%s: ", valobj->GetLocationAsCString(exe_scope));
-        }
+            if (show_location)
+            {
+                s.Printf("%s: ", valobj->GetLocationAsCString(exe_scope));
+            }
 
-        s.Indent();
+            s.Indent();
 
-        if (show_types)
-            s.Printf("(%s) ", valobj->GetTypeName().AsCString());
+            if (show_types)
+                s.Printf("(%s) ", valobj->GetTypeName().AsCString());
 
-        const char *name_cstr = root_valobj_name ? root_valobj_name : valobj->GetName().AsCString("");
-        s.Printf ("%s = ", name_cstr);
 
-        if (!scope_already_checked && !valobj->IsInScope(exe_scope->CalculateStackFrame()))
-        {
-            s.PutCString("error: out of scope");
-            return;
+            if (flat_output)
+            {
+                valobj->GetExpressionPath(s);
+                s.PutCString(" =");
+            }
+            else
+            {
+                const char *name_cstr = root_valobj_name ? root_valobj_name : valobj->GetName().AsCString("");
+                s.Printf ("%s =", name_cstr);
+            }
+
+            if (!scope_already_checked && !valobj->IsInScope(exe_scope->CalculateStackFrame()))
+            {
+                err_cstr = "error: out of scope";
+            }
         }
         
-        const char *val_cstr = valobj->GetValueAsCString(exe_scope);
-        const char *err_cstr = valobj->GetError().AsCString();
+        const char *val_cstr = NULL;
+        
+        if (err_cstr == NULL)
+        {
+            val_cstr = valobj->GetValueAsCString(exe_scope);
+            err_cstr = valobj->GetError().AsCString();
+        }
 
         if (err_cstr)
         {
@@ -909,75 +979,99 @@ ValueObject::DumpValueObject
         }
         else
         {
-            const char *sum_cstr = valobj->GetSummaryAsCString(exe_scope);
-
-            const bool is_aggregate = ClangASTContext::IsAggregateType (valobj->GetClangType());
-
-            if (val_cstr)
-                s.PutCString(val_cstr);
-
-            if (sum_cstr)
-                s.Printf(" %s", sum_cstr);
-            
-            if (use_objc)
+            if (print_valobj)
             {
-                const char *object_desc = valobj->GetObjectDescription(exe_scope);
-                if (object_desc)
-                    s.Printf("\n%s\n", object_desc);
-                else
-                    s.Printf ("No description available.\n");
-                return;
-            }
+                const char *sum_cstr = valobj->GetSummaryAsCString(exe_scope);
 
+                if (val_cstr)
+                    s.Printf(" %s", val_cstr);
+
+                if (sum_cstr)
+                    s.Printf(" %s", sum_cstr);
+                
+                if (use_objc)
+                {
+                    const char *object_desc = valobj->GetObjectDescription(exe_scope);
+                    if (object_desc)
+                        s.Printf(" %s\n", object_desc);
+                    else
+                        s.Printf ("No description available.\n");
+                    return;
+                }                
+            }
 
             if (curr_depth < max_depth)
             {
-                if (is_aggregate)
-                    s.PutChar('{');
-
-                bool is_ptr_or_ref = ClangASTContext::IsPointerOrReferenceType (valobj->GetClangType());
+                bool is_ptr_or_ref = type_info_flags.IsSet (ClangASTContext::eTypeIsPointer | ClangASTContext::eTypeIsReference);
                 
-                if (is_ptr_or_ref && ptr_depth == 0)
-                    return;
-
-                const uint32_t num_children = valobj->GetNumChildren();
-                if (num_children)
+                if (!is_ptr_or_ref || ptr_depth > 0)
                 {
-                    s.IndentMore();
-                    for (uint32_t idx=0; idx<num_children; ++idx)
+                    const uint32_t num_children = valobj->GetNumChildren();
+                    if (num_children)
                     {
-                        ValueObjectSP child_sp(valobj->GetChildAtIndex(idx, true));
-                        if (child_sp.get())
+                        if (flat_output)
                         {
-                            s.EOL();
-                            DumpValueObject (s,
-                                             exe_scope,
-                                             child_sp.get(),
-                                             NULL,
-                                             is_ptr_or_ref ? ptr_depth - 1 : ptr_depth,
-                                             curr_depth + 1,
-                                             max_depth,
-                                             show_types,
-                                             show_location,
-                                             false,
-                                             true);
-                            if (idx + 1 < num_children)
-                                s.PutChar(',');
+                            if (print_valobj)
+                                s.EOL();
+                        }
+                        else
+                        {
+                            if (print_valobj)
+                                s.PutCString(" {\n");
+                            s.IndentMore();
+                        }
+
+                        for (uint32_t idx=0; idx<num_children; ++idx)
+                        {
+                            ValueObjectSP child_sp(valobj->GetChildAtIndex(idx, true));
+                            if (child_sp.get())
+                            {
+                                DumpValueObject (s,
+                                                 exe_scope,
+                                                 child_sp.get(),
+                                                 NULL,
+                                                 is_ptr_or_ref ? ptr_depth - 1 : ptr_depth,
+                                                 curr_depth + 1,
+                                                 max_depth,
+                                                 show_types,
+                                                 show_location,
+                                                 false,
+                                                 true,
+                                                 flat_output);
+                            }
+                        }
+
+                        if (!flat_output)
+                        {
+                            s.IndentLess();
+                            s.Indent("}\n");
                         }
                     }
-                    s.IndentLess();
+                    else if (has_children)
+                    {
+                        // Aggregate, no children...
+                        if (print_valobj)
+                            s.PutCString("{}\n");
+                    }
+                    else
+                    {
+                        if (print_valobj)
+                            s.EOL();
+                    }
+
                 }
-                if (is_aggregate)
-                {
+                else
+                {  
+                    // We printed a pointer, but we are stopping and not printing
+                    // and children of this pointer...
                     s.EOL();
-                    s.Indent("}");
                 }
             }
             else
             {
-                if (is_aggregate)
+                if (has_children && print_valobj)
                 {
-                    s.PutCString("{...}");
+                    s.PutCString("{...}\n");
                 }
             }
         }

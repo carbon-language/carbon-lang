@@ -871,6 +871,9 @@ ClangExpressionDeclMap::FindVariableInScope(StackFrame &frame,
     
     VariableList *var_list = frame.GetVariableList(true);
     
+    if (!var_list)
+        return NULL;
+    
     lldb::VariableSP var = var_list->FindVariable(name_cs);
     
     if (!var)

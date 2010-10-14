@@ -31,7 +31,8 @@ public:
                       uint32_t byte_size,
                       int32_t byte_offset,
                       uint32_t bitfield_bit_size,
-                      uint32_t bitfield_bit_offset);
+                      uint32_t bitfield_bit_offset,
+                      bool is_base_class);
 
 
     virtual ~ValueObjectChild();
@@ -69,8 +70,13 @@ public:
     virtual bool
     IsInScope (StackFrame *frame);
 
+    virtual bool
+    IsBaseClass ()
+    {
+        return m_is_base_class;
+    }
+
 protected:
-    ValueObject* m_parent;  // The parent value object of which this is a child of.
     clang::ASTContext *m_clang_ast; // The clang AST that the clang type comes from
     void *m_clang_type; // The type of the child in question within the parent (m_parent_sp)
     ConstString m_type_name;
@@ -78,6 +84,7 @@ protected:
     int32_t m_byte_offset;
     uint32_t m_bitfield_bit_size;
     uint32_t m_bitfield_bit_offset;
+    bool m_is_base_class;
 
     uint32_t
     GetByteOffset() const;

@@ -33,16 +33,17 @@ ValueObjectChild::ValueObjectChild
     uint32_t byte_size,
     int32_t byte_offset,
     uint32_t bitfield_bit_size,
-    uint32_t bitfield_bit_offset
+    uint32_t bitfield_bit_offset,
+    bool is_base_class
 ) :
-    ValueObject (),
-    m_parent (parent),
+    ValueObject (parent),
     m_clang_ast (clang_ast),
     m_clang_type (clang_type),
     m_byte_size (byte_size),
     m_byte_offset (byte_offset),
     m_bitfield_bit_size (bitfield_bit_size),
-    m_bitfield_bit_offset (bitfield_bit_offset)
+    m_bitfield_bit_offset (bitfield_bit_offset),
+    m_is_base_class (is_base_class)
 {
     m_name = name;
 }

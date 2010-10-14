@@ -61,25 +61,25 @@ class BitfieldsTestCase(TestBase):
 
         # This should display correctly.
         self.expect("frame variable -t bits", VARIABLES_DISPLAYED_CORRECTLY,
-            substrs = ['(uint32_t:1) b1 = 1,',
-                       '(uint32_t:2) b2 = 3,',
-                       '(uint32_t:3) b3 = 7,',
-                       '(uint32_t:4) b4 = 15,',
-                       '(uint32_t:5) b5 = 31,',
-                       '(uint32_t:6) b6 = 63,',
-                       '(uint32_t:7) b7 = 127,',
+            substrs = ['(uint32_t:1) b1 = 1',
+                       '(uint32_t:2) b2 = 3',
+                       '(uint32_t:3) b3 = 7',
+                       '(uint32_t:4) b4 = 15',
+                       '(uint32_t:5) b5 = 31',
+                       '(uint32_t:6) b6 = 63',
+                       '(uint32_t:7) b7 = 127',
                        '(uint32_t:4) four = 15'])
 
         # And so should this.
         # rdar://problem/8348251
         self.expect("frame variable -t", VARIABLES_DISPLAYED_CORRECTLY,
-            substrs = ['(uint32_t:1) b1 = 1,',
-                       '(uint32_t:2) b2 = 3,',
-                       '(uint32_t:3) b3 = 7,',
-                       '(uint32_t:4) b4 = 15,',
-                       '(uint32_t:5) b5 = 31,',
-                       '(uint32_t:6) b6 = 63,',
-                       '(uint32_t:7) b7 = 127,',
+            substrs = ['(uint32_t:1) b1 = 1',
+                       '(uint32_t:2) b2 = 3',
+                       '(uint32_t:3) b3 = 7',
+                       '(uint32_t:4) b4 = 15',
+                       '(uint32_t:5) b5 = 31',
+                       '(uint32_t:6) b6 = 63',
+                       '(uint32_t:7) b7 = 127',
                        '(uint32_t:4) four = 15'])
 
     def bitfields_variable_python(self):

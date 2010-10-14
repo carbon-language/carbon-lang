@@ -250,8 +250,8 @@ CommandObjectExpression::EvaluateExpression
                                       m_options.show_types,     // Show types when dumping?
                                       false,                    // Show locations of variables, no since this is a host address which we don't care to see
                                       m_options.print_object,   // Print the objective C object?
-                                      true);                    // Scope is already checked. Const results are always in scope.
-        output_stream.EOL();
+                                      true,                     // Scope is already checked. Const results are always in scope.
+                                      false);                   // Don't flatten output
         if (result)
             result->SetStatus (eReturnStatusSuccessFinishResult);
     }

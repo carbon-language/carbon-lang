@@ -1651,6 +1651,61 @@ ClangASTContext::AddMethodToObjCObjectType
 }
 
 
+uint32_t
+ClangASTContext::GetTypeInfoMask (clang_type_t clang_type)
+{
+    if (clang_type == NULL)
+        return false;
+    
+    QualType qual_type (QualType::getFromOpaquePtr(clang_type));
+
+    const clang::Type::TypeClass type_class = qual_type->getTypeClass();
+    switch (type_class)
+    {
+    case clang::Type::BlockPointer:                     return eTypeIsPointer | eTypeHasChildren | eTypeIsBlock;
+    case clang::Type::Builtin:                          return eTypeIsBuiltIn | eTypeHasValue;
+    case clang::Type::Complex:                          return eTypeHasChildren | eTypeIsBuiltIn | eTypeHasValue;
+    case clang::Type::ConstantArray:                    return eTypeHasChildren | eTypeIsArray;
+    case clang::Type::DependentName:                    return 0;
+    case clang::Type::DependentSizedArray:              return eTypeHasChildren | eTypeIsArray;
+    case clang::Type::DependentSizedExtVector:          return eTypeHasChildren | eTypeIsVector;
+    case clang::Type::DependentTemplateSpecialization:  return eTypeIsTemplate;
+    case clang::Type::Decltype:                         return 0;
+    case clang::Type::Enum:                             return eTypeIsEnumeration | eTypeHasValue;
+    case clang::Type::Elaborated:                       return 0;
+    case clang::Type::ExtVector:                        return eTypeHasChildren | eTypeIsVector;
+    case clang::Type::FunctionProto:                    return eTypeIsFuncPrototype | eTypeHasValue;
+    case clang::Type::FunctionNoProto:                  return eTypeIsFuncPrototype | eTypeHasValue;
+    case clang::Type::IncompleteArray:                  return eTypeHasChildren | eTypeIsArray;
+    case clang::Type::InjectedClassName:                return 0;
+    case clang::Type::LValueReference:                  return eTypeHasChildren | eTypeIsReference | eTypeHasValue;
+    case clang::Type::MemberPointer:                    return eTypeIsPointer   | eTypeIsMember | eTypeHasValue;
+    case clang::Type::ObjCObjectPointer:                return eTypeHasChildren | eTypeIsObjC | eTypeIsClass | eTypeIsPointer | eTypeHasValue;
+    case clang::Type::ObjCObject:                       return eTypeHasChildren | eTypeIsObjC | eTypeIsClass;
+    case clang::Type::ObjCInterface:                    return eTypeHasChildren | eTypeIsObjC | eTypeIsClass;
+    case clang::Type::Pointer:                      	return eTypeHasChildren | eTypeIsPointer | eTypeHasValue;
+    case clang::Type::Record:
+        if (qual_type->getAsCXXRecordDecl())
+            return eTypeHasChildren | eTypeIsClass | eTypeIsCPlusPlus;
+        else
+            return eTypeHasChildren | eTypeIsStructUnion;
+        break;
+    case clang::Type::RValueReference:                  return eTypeHasChildren | eTypeIsReference | eTypeHasValue;
+    case clang::Type::SubstTemplateTypeParm:            return eTypeIsTemplate;
+    case clang::Type::TemplateTypeParm:                 return eTypeIsTemplate;
+    case clang::Type::TemplateSpecialization:           return eTypeIsTemplate;
+    case clang::Type::Typedef:                          return eTypeIsTypedef | 
+                                                               ClangASTContext::GetTypeInfoMask (cast<TypedefType>(qual_type)->LookThroughTypedefs().getAsOpaquePtr());
+    case clang::Type::TypeOfExpr:                       return 0;
+    case clang::Type::TypeOf:                           return 0;
+    case clang::Type::UnresolvedUsing:                  return 0;
+    case clang::Type::VariableArray:                    return eTypeHasChildren | eTypeIsArray;
+    case clang::Type::Vector:                           return eTypeHasChildren | eTypeIsVector;
+    default:                                            return 0;
+    }
+    return 0;
+}
+
 
 #pragma mark Aggregate Types
 
@@ -1838,7 +1893,8 @@ ClangASTContext::GetChildClangTypeAtIndex
     uint32_t &child_byte_size,
     int32_t &child_byte_offset,
     uint32_t &child_bitfield_bit_size,
-    uint32_t &child_bitfield_bit_offset
+    uint32_t &child_bitfield_bit_offset,
+    bool &child_is_base_class
 )
 {
     if (parent_clang_type)
@@ -1853,7 +1909,8 @@ ClangASTContext::GetChildClangTypeAtIndex
                                          child_byte_size,
                                          child_byte_offset,
                                          child_bitfield_bit_size,
-                                         child_bitfield_bit_offset);
+                                         child_bitfield_bit_offset,
+                                         child_is_base_class);
     return NULL;
 }
 
@@ -1870,7 +1927,8 @@ ClangASTContext::GetChildClangTypeAtIndex
     uint32_t &child_byte_size,
     int32_t &child_byte_offset,
     uint32_t &child_bitfield_bit_size,
-    uint32_t &child_bitfield_bit_offset
+    uint32_t &child_bitfield_bit_offset,
+    bool &child_is_base_class
 )
 {
     if (parent_clang_type == NULL)
@@ -1881,6 +1939,7 @@ ClangASTContext::GetChildClangTypeAtIndex
         uint32_t bit_offset;
         child_bitfield_bit_size = 0;
         child_bitfield_bit_offset = 0;
+        child_is_base_class = false;
         QualType parent_qual_type(QualType::getFromOpaquePtr(parent_clang_type));
         const clang::Type::TypeClass parent_type_class = parent_qual_type->getTypeClass();
         switch (parent_type_class)
@@ -1956,6 +2015,7 @@ ClangASTContext::GetChildClangTypeAtIndex
                             // Base classes biut sizes should be a multiple of 8 bits in size
                             assert (clang_type_info_bit_size % 8 == 0);
                             child_byte_size = clang_type_info_bit_size / 8;
+                            child_is_base_class = true;
                             return base_class->getType().getAsOpaquePtr();
                         }
                         // We don't increment the child index in the for loop since we might
@@ -2025,6 +2085,7 @@ ClangASTContext::GetChildClangTypeAtIndex
 
                                         child_byte_size = ivar_type_info.first / 8;
                                         child_byte_offset = 0;
+                                        child_is_base_class = true;
 
                                         return ivar_qual_type.getAsOpaquePtr();
                                     }
@@ -2087,7 +2148,8 @@ ClangASTContext::GetChildClangTypeAtIndex
                                                      child_byte_size,
                                                      child_byte_offset,
                                                      child_bitfield_bit_size,
-                                                     child_bitfield_bit_offset);
+                                                     child_bitfield_bit_offset,
+                                                     child_is_base_class);
                 }
                 else
                 {
@@ -2119,8 +2181,8 @@ ClangASTContext::GetChildClangTypeAtIndex
                 {
                     std::pair<uint64_t, unsigned> field_type_info = ast_context->getTypeInfo(array->getElementType());
 
-                    char element_name[32];
-                    ::snprintf (element_name, sizeof (element_name), "%s[%u]", parent_name ? parent_name : "", idx);
+                    char element_name[64];
+                    ::snprintf (element_name, sizeof (element_name), "[%u]", idx);
 
                     child_name.assign(element_name);
                     assert(field_type_info.first % 8 == 0);
@@ -2148,7 +2210,8 @@ ClangASTContext::GetChildClangTypeAtIndex
                                                      child_byte_size,
                                                      child_byte_offset,
                                                      child_bitfield_bit_size,
-                                                     child_bitfield_bit_offset);
+                                                     child_bitfield_bit_offset,
+                                                     child_is_base_class);
                 }
                 else
                 {
@@ -2182,7 +2245,8 @@ ClangASTContext::GetChildClangTypeAtIndex
                                              child_byte_size,
                                              child_byte_offset,
                                              child_bitfield_bit_size,
-                                             child_bitfield_bit_offset);
+                                             child_bitfield_bit_offset,
+                                             child_is_base_class);
             break;
 
         default:
@@ -3410,6 +3474,26 @@ ClangASTContext::IsFloatingPointType (clang_type_t clang_type, uint32_t &count, 
     }
     return false;
 }
+
+
+bool
+ClangASTContext::GetCXXClassName (clang_type_t clang_type, std::string &class_name)
+{
+    if (clang_type)
+    {
+        QualType qual_type (QualType::getFromOpaquePtr(clang_type));
+        
+        CXXRecordDecl *cxx_record_decl = qual_type->getAsCXXRecordDecl();
+        if (cxx_record_decl)
+        {
+            class_name.assign (cxx_record_decl->getIdentifier()->getNameStart());
+            return true;
+        }
+    }
+    class_name.clear();
+    return false;
+}
+
 
 bool
 ClangASTContext::IsCXXClassType (clang_type_t clang_type)

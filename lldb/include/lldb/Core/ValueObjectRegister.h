@@ -26,7 +26,7 @@ namespace lldb_private {
 class ValueObjectRegisterContext : public ValueObject
 {
 public:
-    ValueObjectRegisterContext (RegisterContext *reg_ctx);
+    ValueObjectRegisterContext (ValueObject *parent, RegisterContext *reg_ctx);
 
     virtual
     ~ValueObjectRegisterContext();
@@ -71,7 +71,7 @@ private:
 class ValueObjectRegisterSet : public ValueObject
 {
 public:
-    ValueObjectRegisterSet (RegisterContext *reg_ctx, uint32_t set_idx);
+    ValueObjectRegisterSet (ValueObject *parent, RegisterContext *reg_ctx, uint32_t set_idx);
 
     virtual
     ~ValueObjectRegisterSet();
@@ -119,7 +119,7 @@ private:
 class ValueObjectRegister : public ValueObject
 {
 public:
-    ValueObjectRegister (RegisterContext *reg_ctx, uint32_t reg_num);
+    ValueObjectRegister (ValueObject *parent, RegisterContext *reg_ctx, uint32_t reg_num);
 
     virtual
     ~ValueObjectRegister();

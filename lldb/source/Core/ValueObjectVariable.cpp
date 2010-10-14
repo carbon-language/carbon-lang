@@ -33,7 +33,7 @@
 using namespace lldb_private;
 
 ValueObjectVariable::ValueObjectVariable (const lldb::VariableSP &var_sp) :
-    ValueObject(),
+    ValueObject(NULL),
     m_variable_sp(var_sp)
 {
     // Do not attempt to construct one of these objects with no variable!

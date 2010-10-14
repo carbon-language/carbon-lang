@@ -318,6 +318,7 @@ public:
             case 'L':   show_location= true;  break;
             case 'c':   show_decl    = true;  break;
             case 'D':   debug        = true;  break;
+            case 'f':   flat_output  = true;  break;
             case 'd':
                 max_depth = Args::StringToUInt32 (option_arg, UINT32_MAX, 0, &success);
                 if (!success)
@@ -362,6 +363,7 @@ public:
             show_location = false;
             show_decl     = false;
             debug         = false;
+            flat_output   = false;
             max_depth     = UINT32_MAX;
             ptr_depth     = 0;
             globals.clear();
@@ -386,7 +388,8 @@ public:
              show_summary:1,
              show_location:1,
              show_decl:1,
-             debug:1;
+             debug:1,
+             flat_output:1;
         uint32_t max_depth; // The depth to print when dumping concrete (not pointers) aggreate values
         uint32_t ptr_depth; // The default depth that is dumped when we find pointers
         std::vector<ConstString> globals;
@@ -502,8 +505,8 @@ public:
                                                                       m_options.show_types,
                                                                       m_options.show_location,
                                                                       m_options.use_objc, 
-                                                                      false);                                        
-                                        s.EOL();
+                                                                      false,
+                                                                      m_options.flat_output);                                        
                                     }
                                 }
                             }
@@ -561,8 +564,8 @@ public:
                                                                               m_options.show_types,
                                                                               m_options.show_location,
                                                                               m_options.use_objc, 
-                                                                              false);                                        
-                                                s.EOL();
+                                                                              false,
+                                                                              m_options.flat_output);                                        
                                             }
                                         }
                                     }
@@ -731,9 +734,8 @@ public:
                                                                   m_options.show_types,
                                                                   m_options.show_location,
                                                                   m_options.use_objc, 
-                                                                  false);                                        
-
-                                    s.EOL();
+                                                                  false,
+                                                                  m_options.flat_output);                                        
                                 }
                             }
                             else
@@ -813,9 +815,8 @@ public:
                                                                       m_options.show_types,
                                                                       m_options.show_location,
                                                                       m_options.use_objc, 
-                                                                      false);                                        
-                                        
-                                        s.EOL();
+                                                                      false,
+                                                                      m_options.flat_output);                                        
                                     }
                                 }
                             }
@@ -849,6 +850,7 @@ CommandObjectFrameVariable::CommandOptions::g_option_table[] =
 { LLDB_OPT_SET_1, false, "objc",       'o', no_argument,       NULL, 0, eArgTypeNone,    "When looking up a variable by name (--name), print as an Objective-C object."},
 { LLDB_OPT_SET_1, false, "ptr-depth",  'p', required_argument, NULL, 0, eArgTypeCount,   "The number of pointers to be traversed when dumping values (default is zero)."},
 { LLDB_OPT_SET_1, false, "regex",      'r', no_argument,       NULL, 0, eArgTypeRegularExpression,    "The <variable-name> argument for name lookups are regular expressions."},
+{ LLDB_OPT_SET_1, false, "flat",       'f', no_argument,       NULL, 0, eArgTypeNone,    "Display results in a flat format that uses expression paths for each variable or member."},
 { 0, false, NULL, 0, 0, NULL, NULL, eArgTypeNone, NULL }
 };
 #pragma mark CommandObjectMultiwordFrame

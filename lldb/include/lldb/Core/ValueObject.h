@@ -82,6 +82,15 @@ public:
     IsPointerOrReferenceType ();
 
     virtual bool
+    IsBaseClass ()
+    {
+        return false;
+    }
+
+    virtual void
+    GetExpressionPath (Stream &s);//, ValueObject *child);
+
+    virtual bool
     IsInScope (StackFrame *frame)
     {
         return true;
@@ -199,7 +208,8 @@ public:
                      bool show_types,
                      bool show_location,
                      bool use_objc,
-                     bool scope_already_checked);
+                     bool scope_already_checked,
+                     bool flat_output);
 
     bool
     GetIsConstant () const
@@ -225,10 +235,22 @@ public:
         m_format = format;
     }
 
+    ValueObject *
+    GetParent()
+    {
+        return m_parent;
+    }
+
+    const ValueObject *
+    GetParent() const
+    {
+        return m_parent;
+    }
 protected:
     //------------------------------------------------------------------
     // Classes that inherit from ValueObject can see and modify these
     //------------------------------------------------------------------
+    ValueObject*        m_parent;       // The parent value object, or NULL if this has no parent
     lldb::user_id_t     m_update_id;    // An integer that specifies the update number for this value in
                                         // this value object list. If this value object is asked to update itself
                                         // it will first check if the update ID match the value object
@@ -257,7 +279,7 @@ protected:
     //------------------------------------------------------------------
     // Constructors and Destructors
     //------------------------------------------------------------------
-    ValueObject ();
+    ValueObject (ValueObject *parent);
 
     void
     SetName (const char *name);
