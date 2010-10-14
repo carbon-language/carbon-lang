@@ -28,17 +28,25 @@
 #include "llvm/CodeGen/MachineMemOperand.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/PseudoSourceValue.h"
+#include "llvm/Target/TargetLowering.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Target/TargetInstrInfo.h"
+#include "llvm/Target/TargetInstrItineraries.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/Statistic.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 
 using namespace llvm;
+
+static cl::opt<bool>
+TrackRegPressure("rp-aware-machine-licm",
+                 cl::desc("Register pressure aware machine LICM"),
+                 cl::init(false), cl::Hidden);
 
 STATISTIC(NumHoisted, "Number of machine instructions hoisted out of loops");
 STATISTIC(NumCSEed,   "Number of hoisted machine instructions CSEed");
@@ -51,9 +59,11 @@ namespace {
 
     const TargetMachine   *TM;
     const TargetInstrInfo *TII;
+    const TargetLowering *TLI;
     const TargetRegisterInfo *TRI;
     const MachineFrameInfo *MFI;
-    MachineRegisterInfo *RegInfo;
+    MachineRegisterInfo *MRI;
+    const InstrItineraryData *InstrItins;
 
     // Various analyses that we use...
     AliasAnalysis        *AA;      // Alias analysis info.
@@ -67,6 +77,10 @@ namespace {
     MachineBasicBlock *CurPreheader; // The preheader for CurLoop.
 
     BitVector AllocatableSet;
+
+    // Track 'estimated' register pressure.
+    SmallVector<unsigned, 8> RegPressure;
+    SmallVector<unsigned, 8> RegLimit;
 
     // For each opcode, keep a list of potential CSE instructions.
     DenseMap<unsigned, std::vector<const MachineInstr*> > CSEMap;
@@ -94,6 +108,8 @@ namespace {
     }
 
     virtual void releaseMemory() {
+      RegPressure.clear();
+      RegLimit.clear();
       CSEMap.clear();
     }
 
@@ -138,6 +154,10 @@ namespace {
     /// 
     bool IsLoopInvariantInst(MachineInstr &I);
 
+    /// ComputeOperandLatency - Compute operand latency between a def of 'Reg'
+    /// and an use in the current loop.
+    int ComputeOperandLatency(MachineInstr &MI, unsigned DefIdx, unsigned Reg);
+
     /// IsProfitableToHoist - Return true if it is potentially profitable to
     /// hoist the given loop invariant.
     bool IsProfitableToHoist(MachineInstr &MI);
@@ -149,6 +169,16 @@ namespace {
     /// pass without iteration.
     ///
     void HoistRegion(MachineDomTreeNode *N);
+
+    /// InitRegPressure - Find all virtual register references that are livein
+    /// to the block to initialize the starting "register pressure". Note this
+    /// does not count live through (livein but not used) registers.
+    void InitRegPressure(MachineBasicBlock *BB);
+
+    /// UpdateRegPressureBefore / UpdateRegPressureAfter - Update estimate of
+    /// register pressure before and after executing a specifi instruction.
+    void UpdateRegPressureBefore(const MachineInstr *MI);
+    void UpdateRegPressureAfter(const MachineInstr *MI);
 
     /// isLoadFromConstantMemory - Return true if the given instruction is a
     /// load from constant memory.
@@ -175,7 +205,7 @@ namespace {
     /// Hoist - When an instruction is found to only use loop invariant operands
     /// that is safe to hoist, this instruction is called to do the dirty work.
     ///
-    void Hoist(MachineInstr *MI);
+    void Hoist(MachineInstr *MI, MachineBasicBlock *Preheader);
 
     /// InitCSEMap - Initialize the CSE map with instructions that are in the
     /// current loop preheader that may become duplicates of instructions that
@@ -224,10 +254,23 @@ bool MachineLICM::runOnMachineFunction(MachineFunction &MF) {
   Changed = FirstInLoop = false;
   TM = &MF.getTarget();
   TII = TM->getInstrInfo();
+  TLI = TM->getTargetLowering();
   TRI = TM->getRegisterInfo();
   MFI = MF.getFrameInfo();
-  RegInfo = &MF.getRegInfo();
+  MRI = &MF.getRegInfo();
+  InstrItins = TM->getInstrItineraryData();
   AllocatableSet = TRI->getAllocatableSet(MF);
+
+  if (PreRegAlloc) {
+    // Estimate register pressure during pre-regalloc pass.
+    unsigned NumRC = TRI->getNumRegClasses();
+    RegPressure.resize(NumRC);
+    RegLimit.resize(NumRC);
+    std::fill(RegPressure.begin(), RegPressure.end(), 0);
+    for (TargetRegisterInfo::regclass_iterator I = TRI->regclass_begin(),
+           E = TRI->regclass_end(); I != E; ++I)
+      RegLimit[(*I)->getID()] = TLI->getRegPressureLimit(*I, MF);
+  }
 
   // Get our Loop information...
   MLI = &getAnalysis<MachineLoopInfo>();
@@ -486,11 +529,24 @@ void MachineLICM::HoistRegion(MachineDomTreeNode *N) {
   // If this subregion is not in the top level loop at all, exit.
   if (!CurLoop->contains(BB)) return;
 
-  for (MachineBasicBlock::iterator
-         MII = BB->begin(), E = BB->end(); MII != E; ) {
-    MachineBasicBlock::iterator NextMII = MII; ++NextMII;
-    Hoist(&*MII);
-    MII = NextMII;
+  MachineBasicBlock *Preheader = getCurPreheader();
+  if (Preheader) {
+    if (TrackRegPressure)
+      InitRegPressure(BB);
+
+    for (MachineBasicBlock::iterator
+           MII = BB->begin(), E = BB->end(); MII != E; ) {
+      MachineBasicBlock::iterator NextMII = MII; ++NextMII;
+      MachineInstr *MI = &*MII;
+
+      if (TrackRegPressure)
+        UpdateRegPressureBefore(MI);
+      Hoist(MI, Preheader);
+      if (TrackRegPressure)
+        UpdateRegPressureAfter(MI);
+
+      MII = NextMII;
+    }
   }
 
   // Don't hoist things out of a large switch statement.  This often causes
@@ -500,6 +556,79 @@ void MachineLICM::HoistRegion(MachineDomTreeNode *N) {
     const std::vector<MachineDomTreeNode*> &Children = N->getChildren();
     for (unsigned I = 0, E = Children.size(); I != E; ++I)
       HoistRegion(Children[I]);
+  }
+}
+
+/// InitRegPressure - Find all virtual register references that are livein to
+/// the block to initialize the starting "register pressure". Note this does
+/// not count live through (livein but not used) registers.
+void MachineLICM::InitRegPressure(MachineBasicBlock *BB) {
+  SmallSet<unsigned, 16> Seen;
+
+  std::fill(RegPressure.begin(), RegPressure.end(), 0);
+  for (MachineBasicBlock::iterator MII = BB->begin(), E = BB->end();
+       MII != E; ++MII) {
+    MachineInstr *MI = &*MII;
+    for (unsigned i = 0, e = MI->getDesc().getNumOperands(); i != e; ++i) {
+      const MachineOperand &MO = MI->getOperand(i);
+      if (!MO.isReg() || MO.isImplicit())
+        continue;
+      unsigned Reg = MO.getReg();
+      if (!Reg || TargetRegisterInfo::isPhysicalRegister(Reg))
+        continue;
+      if (!Seen.insert(Reg))
+        continue;
+
+      // Must be a livein.
+      const TargetRegisterClass *RC = MRI->getRegClass(Reg);
+      EVT VT = *RC->vt_begin();
+      unsigned RCId = TLI->getRepRegClassFor(VT)->getID();
+      RegPressure[RCId] += TLI->getRepRegClassCostFor(VT);
+    }
+  }
+}
+
+/// UpdateRegPressureBefore / UpdateRegPressureAfter - Update estimate of
+/// register pressure before and after executing a specifi instruction.
+void MachineLICM::UpdateRegPressureBefore(const MachineInstr *MI) {
+  if (MI->isImplicitDef() || MI->isPHI())
+    return;
+
+  for (unsigned i = 0, e = MI->getDesc().getNumOperands(); i != e; ++i) {
+    const MachineOperand &MO = MI->getOperand(i);
+    if (!MO.isReg() || MO.isImplicit() || !MO.isUse() || !MO.isKill())
+      continue;
+    unsigned Reg = MO.getReg();
+    if (!Reg || TargetRegisterInfo::isPhysicalRegister(Reg))
+      continue;
+
+    const TargetRegisterClass *RC = MRI->getRegClass(Reg);
+    EVT VT = *RC->vt_begin();
+    unsigned RCId = TLI->getRepRegClassFor(VT)->getID();
+    unsigned RCCost = TLI->getRepRegClassCostFor(VT);
+
+    assert(RCCost <= RegPressure[RCId]);
+    RegPressure[RCId] -= RCCost;
+  }
+}
+
+void MachineLICM::UpdateRegPressureAfter(const MachineInstr *MI) {
+  if (MI->isImplicitDef() || MI->isPHI())
+    return;
+
+  for (unsigned i = 0, e = MI->getDesc().getNumOperands(); i != e; ++i) {
+    const MachineOperand &MO = MI->getOperand(i);
+    if (!MO.isReg() || MO.isImplicit() || !MO.isDef())
+      continue;
+    unsigned Reg = MO.getReg();
+    if (!Reg || TargetRegisterInfo::isPhysicalRegister(Reg))
+      continue;
+
+    const TargetRegisterClass *RC = MRI->getRegClass(Reg);
+    EVT VT = *RC->vt_begin();
+    unsigned RCId = TLI->getRepRegClassFor(VT)->getID();
+    unsigned RCCost = TLI->getRepRegClassCostFor(VT);
+    RegPressure[RCId] += RCCost;
   }
 }
 
@@ -540,14 +669,14 @@ bool MachineLICM::IsLoopInvariantInst(MachineInstr &I) {
         // If the physreg has no defs anywhere, it's just an ambient register
         // and we can freely move its uses. Alternatively, if it's allocatable,
         // it could get allocated to something with a def during allocation.
-        if (!RegInfo->def_empty(Reg))
+        if (!MRI->def_empty(Reg))
           return false;
         if (AllocatableSet.test(Reg))
           return false;
         // Check for a def among the register's aliases too.
         for (const unsigned *Alias = TRI->getAliasSet(Reg); *Alias; ++Alias) {
           unsigned AliasReg = *Alias;
-          if (!RegInfo->def_empty(AliasReg))
+          if (!MRI->def_empty(AliasReg))
             return false;
           if (AllocatableSet.test(AliasReg))
             return false;
@@ -567,12 +696,12 @@ bool MachineLICM::IsLoopInvariantInst(MachineInstr &I) {
     if (!MO.isUse())
       continue;
 
-    assert(RegInfo->getVRegDef(Reg) &&
+    assert(MRI->getVRegDef(Reg) &&
            "Machine instr not mapped for this vreg?!");
 
     // If the loop contains the definition of an operand, then the instruction
     // isn't loop invariant.
-    if (CurLoop->contains(RegInfo->getVRegDef(Reg)))
+    if (CurLoop->contains(MRI->getVRegDef(Reg)))
       return false;
   }
 
@@ -582,9 +711,9 @@ bool MachineLICM::IsLoopInvariantInst(MachineInstr &I) {
 
 
 /// HasPHIUses - Return true if the specified register has any PHI use.
-static bool HasPHIUses(unsigned Reg, MachineRegisterInfo *RegInfo) {
-  for (MachineRegisterInfo::use_iterator UI = RegInfo->use_begin(Reg),
-         UE = RegInfo->use_end(); UI != UE; ++UI) {
+static bool HasPHIUses(unsigned Reg, MachineRegisterInfo *MRI) {
+  for (MachineRegisterInfo::use_iterator UI = MRI->use_begin(Reg),
+         UE = MRI->use_end(); UI != UE; ++UI) {
     MachineInstr *UseMI = &*UI;
     if (UseMI->isPHI())
       return true;
@@ -610,9 +739,48 @@ bool MachineLICM::isLoadFromConstantMemory(MachineInstr *MI) {
   }
 }
 
+/// ComputeOperandLatency - Compute operand latency between a def of 'Reg'
+/// and an use in the current loop.
+int MachineLICM::ComputeOperandLatency(MachineInstr &MI,
+                                       unsigned DefIdx, unsigned Reg) {
+  if (MRI->use_nodbg_empty(Reg))
+    // No use? Return arbitrary large number!
+    return 300;
+
+  int Latency = -1;
+  for (MachineRegisterInfo::use_nodbg_iterator I = MRI->use_nodbg_begin(Reg),
+         E = MRI->use_nodbg_end(); I != E; ++I) {
+    MachineInstr *UseMI = &*I;
+    if (!CurLoop->contains(UseMI->getParent()))
+      continue;
+    for (unsigned i = 0, e = UseMI->getNumOperands(); i != e; ++i) {
+      const MachineOperand &MO = UseMI->getOperand(i);
+      if (!MO.isReg() || !MO.isUse())
+        continue;
+      unsigned MOReg = MO.getReg();
+      if (MOReg != Reg)
+        continue;
+
+      int UseCycle = TII->getOperandLatency(InstrItins, &MI, DefIdx, UseMI, i);
+      Latency = std::max(Latency, UseCycle);
+    }
+
+    if (Latency != -1)
+      break;
+  }
+
+  if (Latency == -1)
+    Latency = InstrItins->getOperandCycle(MI.getDesc().getSchedClass(), DefIdx);
+
+  return Latency;
+}
+
 /// IsProfitableToHoist - Return true if it is potentially profitable to hoist
 /// the given loop invariant.
 bool MachineLICM::IsProfitableToHoist(MachineInstr &MI) {
+  if (MI.isImplicitDef())
+    return true;
+
   // FIXME: For now, only hoist re-materilizable instructions. LICM will
   // increase register pressure. We want to make sure it doesn't increase
   // spilling.
@@ -621,8 +789,59 @@ bool MachineLICM::IsProfitableToHoist(MachineInstr &MI) {
   // trade off is it may cause spill in high pressure situation. It will end up
   // adding a store in the loop preheader. But the reload is no more expensive.
   // The side benefit is these loads are frequently CSE'ed.
-  if (!TII->isTriviallyReMaterializable(&MI, AA)) {
-    if (!isLoadFromConstantMemory(&MI))
+  if (!TrackRegPressure || MI.getDesc().isAsCheapAsAMove()) {
+    if (!TII->isTriviallyReMaterializable(&MI, AA) &&
+        !isLoadFromConstantMemory(&MI))
+      return false;
+  } else {
+    // In low register pressure situation, we can be more aggressive about 
+    // hoisting. Also, favors hoisting long latency instructions even in
+    // moderately high pressure situation.
+    int Delta = 0;
+    for (unsigned i = 0, e = MI.getDesc().getNumOperands(); i != e; ++i) {
+      const MachineOperand &MO = MI.getOperand(i);
+      if (!MO.isReg() || MO.isImplicit())
+        continue;
+      unsigned Reg = MO.getReg();
+      if (!Reg || TargetRegisterInfo::isPhysicalRegister(Reg))
+        continue;
+      const TargetRegisterClass *RC = MRI->getRegClass(Reg);
+      EVT VT = *RC->vt_begin();
+      unsigned RCId = TLI->getRepRegClassFor(VT)->getID();
+      unsigned RCCost = TLI->getRepRegClassCostFor(VT);
+
+      if (MO.isUse()) {
+        if (RegPressure[RCId] >= RegLimit[RCId]) {
+          // Hoisting this instruction may actually reduce register pressure
+          // in the loop.
+          int Pressure = RegPressure[RCId] - RCCost;
+          assert(Pressure >= 0);
+          Delta -= (int)RegLimit[RCId] - Pressure;
+        }
+      } else {
+        if (InstrItins && !InstrItins->isEmpty()) {
+          int Cycle = ComputeOperandLatency(MI, i, Reg);
+          if (Cycle > 3)
+            // FIXME: Target specific high latency limit?
+            return true;
+        }
+        if (RegPressure[RCId] >= RegLimit[RCId])
+          Delta += RCCost;
+        else {
+          int Pressure = RegPressure[RCId] + RCCost;
+          if (Pressure > (int)RegLimit[RCId])
+            Delta += Pressure - RegLimit[RCId];
+        }
+      }
+    }
+
+    if (Delta >= 0)
+      return true;
+
+    // High register pressure situation, only hoist if the instruction is going to
+    // be remat'ed.
+    if (!TII->isTriviallyReMaterializable(&MI, AA) &&
+        !isLoadFromConstantMemory(&MI))
       return false;
   }
 
@@ -633,7 +852,7 @@ bool MachineLICM::IsProfitableToHoist(MachineInstr &MI) {
     const MachineOperand &MO = MI.getOperand(i);
     if (!MO.isReg() || !MO.isDef())
       continue;
-    if (HasPHIUses(MO.getReg(), RegInfo))
+    if (HasPHIUses(MO.getReg(), MRI))
       return false;
   }
 
@@ -663,7 +882,7 @@ MachineInstr *MachineLICM::ExtractHoistableLoad(MachineInstr *MI) {
   if (TID.getNumDefs() != 1) return 0;
   const TargetRegisterClass *RC = TID.OpInfo[LoadRegIndex].getRegClass(TRI);
   // Ok, we're unfolding. Create a temporary register and do the unfold.
-  unsigned Reg = RegInfo->createVirtualRegister(RC);
+  unsigned Reg = MRI->createVirtualRegister(RC);
 
   MachineFunction &MF = *MI->getParent()->getParent();
   SmallVector<MachineInstr *, 2> NewMIs;
@@ -747,8 +966,8 @@ bool MachineLICM::EliminateCSE(MachineInstr *MI,
 
       if (MO.isReg() && MO.isDef() &&
           !TargetRegisterInfo::isPhysicalRegister(MO.getReg())) {
-        RegInfo->replaceRegWith(MO.getReg(), Dup->getOperand(i).getReg());
-        RegInfo->clearKillFlags(Dup->getOperand(i).getReg());
+        MRI->replaceRegWith(MO.getReg(), Dup->getOperand(i).getReg());
+        MRI->clearKillFlags(Dup->getOperand(i).getReg());
       }
     }
     MI->eraseFromParent();
@@ -761,10 +980,7 @@ bool MachineLICM::EliminateCSE(MachineInstr *MI,
 /// Hoist - When an instruction is found to use only loop invariant operands
 /// that are safe to hoist, this instruction is called to do the dirty work.
 ///
-void MachineLICM::Hoist(MachineInstr *MI) {
-  MachineBasicBlock *Preheader = getCurPreheader();
-  if (!Preheader) return;
-
+void MachineLICM::Hoist(MachineInstr *MI, MachineBasicBlock *Preheader) {
   // First check whether we should hoist this instruction.
   if (!IsLoopInvariantInst(*MI) || !IsProfitableToHoist(*MI)) {
     // If not, try unfolding a hoistable load.
@@ -806,7 +1022,7 @@ void MachineLICM::Hoist(MachineInstr *MI) {
     for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
       MachineOperand &MO = MI->getOperand(i);
       if (MO.isReg() && MO.isDef() && !MO.isDead())
-        RegInfo->clearKillFlags(MO.getReg());
+        MRI->clearKillFlags(MO.getReg());
     }
 
     // Add to the CSE map.
