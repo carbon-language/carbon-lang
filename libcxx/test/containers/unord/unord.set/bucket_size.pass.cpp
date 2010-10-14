@@ -39,7 +39,5 @@ int main()
         assert(c.bucket_size(2) == 1);
         assert(c.bucket_size(3) == 1);
         assert(c.bucket_size(4) == 1);
-        assert(c.bucket_size(5) == 0);
-        assert(c.bucket_size(6) == 0);
     }
 }

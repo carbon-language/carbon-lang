@@ -22,7 +22,7 @@ int main()
     {
         std::vector<bool> v(100);
         bool a[] = {1, 0, 0, 1, 1};
-        const bool N = sizeof(a)/sizeof(a[0]);
+        const unsigned N = sizeof(a)/sizeof(a[0]);
         std::vector<bool>::iterator i = v.insert(v.cbegin() + 10, input_iterator<const bool*>(a),
                                         input_iterator<const bool*>(a+N));
         assert(v.size() == 100 + N);
@@ -38,7 +38,7 @@ int main()
     {
         std::vector<bool> v(100);
         bool a[] = {1, 0, 0, 1, 1};
-        const bool N = sizeof(a)/sizeof(a[0]);
+        const unsigned N = sizeof(a)/sizeof(a[0]);
         std::vector<bool>::iterator i = v.insert(v.cbegin() + 10, forward_iterator<const bool*>(a),
                                         forward_iterator<const bool*>(a+N));
         assert(v.size() == 100 + N);
