@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only %s
+// RUN: %clang_cc1 -fsyntax-only %s -verify
 
 // C++'0x [namespace.memdef] p3:
 //   Every name first declared in a namespace is a member of that namespace. If
@@ -66,3 +66,28 @@ namespace N3 {
 }
 
 // FIXME: Woefully inadequate for testing
+
+// Friends declared as template-ids aren't subject to the restriction
+// on innermost namespaces.
+// rdar://problem/8552377
+namespace test5 {
+  template <class T> void f(T);  
+  namespace ns {
+    class A {
+      friend void f<int>(int);
+      static void foo(); // expected-note 2 {{declared private here}}
+    };
+
+    // Note that this happens without instantiation.
+    template <class T> void f(T) {
+      A::foo(); // expected-error {{'foo' is a private member of 'test5::ns::A'}}
+    }
+  }
+
+  template <class T> void f(T) {
+    ns::A::foo(); // expected-error {{'foo' is a private member of 'test5::ns::A'}}
+  }
+
+  template void f<int>(int);
+  template void f<long>(long); //expected-note {{instantiation}}
+}

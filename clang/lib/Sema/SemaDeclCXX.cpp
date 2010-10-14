@@ -6384,6 +6384,7 @@ Decl *Sema::ActOnFriendFunctionDecl(Scope *S, Declarator &D, bool IsDefinition,
     //   declaration, if there is no prior declaration, the program is
     //   ill-formed.
     bool isLocal = cast<CXXRecordDecl>(CurContext)->isLocalClass();
+    bool isTemplateId = D.getName().getKind() == UnqualifiedId::IK_TemplateId;
 
     // Find the appropriate context according to the above.
     DC = CurContext;
@@ -6404,7 +6405,11 @@ Decl *Sema::ActOnFriendFunctionDecl(Scope *S, Declarator &D, bool IsDefinition,
       if (isLocal || !Previous.empty())
         break;
 
-      if (DC->isFileContext()) break;
+      if (isTemplateId) {
+        if (isa<TranslationUnitDecl>(DC)) break;
+      } else {
+        if (DC->isFileContext()) break;
+      }
       DC = DC->getParent();
     }
 
