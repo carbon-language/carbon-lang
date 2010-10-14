@@ -910,6 +910,10 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   if (!Args.hasFlag(options::OPT_fzero_initialized_in_bss,
                     options::OPT_fno_zero_initialized_in_bss))
     CmdArgs.push_back("-mno-zero-initialized-in-bss");
+  if (Args.hasFlag(options::OPT_fno_strict_aliasing,
+                   options::OPT_fstrict_aliasing,
+                   false))
+    CmdArgs.push_back("-relaxed-aliasing");
 
   // Decide whether to use verbose asm. Verbose assembly is the default on
   // toolchains which have the integrated assembler on by default.

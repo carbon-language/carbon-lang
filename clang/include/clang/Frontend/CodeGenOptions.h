@@ -66,6 +66,7 @@ public:
   unsigned OptimizationLevel : 3; /// The -O[0-4] option specified.
   unsigned OptimizeSize      : 1; /// If -Os is specified.
   unsigned RelaxAll          : 1; /// Relax all machine code instructions.
+  unsigned RelaxedAliasing   : 1; /// Set when -fno-strict-aliasing is enabled.
   unsigned SimplifyLibCalls  : 1; /// Set when -fbuiltin is enabled.
   unsigned SoftFloat         : 1; /// -soft-float.
   unsigned TimePasses        : 1; /// Set when -ftime-report is enabled.
@@ -128,6 +129,7 @@ public:
     OptimizationLevel = 0;
     OptimizeSize = 0;
     RelaxAll = 0;
+    RelaxedAliasing = 0;
     SimplifyLibCalls = 1;
     SoftFloat = 0;
     TimePasses = 0;
