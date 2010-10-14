@@ -421,3 +421,9 @@ install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/include/
   )
 
 # TODO: make and install documentation.
+
+set(CPACK_PACKAGE_VENDOR "LLVM")
+set(CPACK_PACKAGE_VERSION_MAJOR 2)
+set(CPACK_PACKAGE_VERSION_MINOR 9)
+add_version_info_from_vcs(CPACK_PACKAGE_VERSION_PATCH)
+include(CPack)
