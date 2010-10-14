@@ -24,7 +24,7 @@
 #include "Pass.h"
 #include "llvm/PassRegistry.h"
 #include "llvm/InitializePasses.h"
-#include "llvm/Support/Compiler.h"
+#include "llvm/System/Atomic.h"
 #include <vector>
 
 namespace llvm {
@@ -137,8 +137,20 @@ private:
     return PI; \
   } \
   void llvm::initialize##passName##Pass(PassRegistry &Registry) { \
-    ATTRIBUTE_USED \
-    static void* initialized = initialize##passName##PassOnce(Registry); \
+    static volatile sys::cas_flag initialized = 0; \
+    sys::cas_flag old_val = sys::CompareAndSwap(&initialized, 1, 0); \
+    if (old_val == 0) { \
+      initialize##passName##PassOnce(Registry); \
+      sys::MemoryFence(); \
+      initialized = 2; \
+    } else { \
+      sys::cas_flag tmp = initialized; \
+      sys::MemoryFence(); \
+      while (tmp != 2) { \
+        tmp = initialized; \
+        sys::MemoryFence(); \
+      } \
+    } \
   } \
   static RegisterPass<passName> passName ## _info(arg, name, cfg, analysis);
 
@@ -157,8 +169,20 @@ private:
     return PI; \
   } \
   void llvm::initialize##passName##Pass(PassRegistry &Registry) { \
-    ATTRIBUTE_USED \
-    static void* initialized = initialize##passName##PassOnce(Registry); \
+    static volatile sys::cas_flag initialized = 0; \
+    sys::cas_flag old_val = sys::CompareAndSwap(&initialized, 1, 0); \
+    if (old_val == 0) { \
+      initialize##passName##PassOnce(Registry); \
+      sys::MemoryFence(); \
+      initialized = 2; \
+    } else { \
+      sys::cas_flag tmp = initialized; \
+      sys::MemoryFence(); \
+      while (tmp != 2) { \
+        tmp = initialized; \
+        sys::MemoryFence(); \
+      } \
+    } \
   } \
   static RegisterPass<passName> passName ## _info(arg, name, cfg, analysis);
 
@@ -244,10 +268,23 @@ struct RegisterAnalysisGroup : public RegisterAGBase {
     return AI; \
   } \
   void llvm::initialize##agName##AnalysisGroup(PassRegistry &Registry) { \
-    ATTRIBUTE_USED static void* initialized = \
+    static volatile sys::cas_flag initialized = 0; \
+    sys::cas_flag old_val = sys::CompareAndSwap(&initialized, 1, 0); \
+    if (old_val == 0) { \
       initialize##agName##AnalysisGroupOnce(Registry); \
+      sys::MemoryFence(); \
+      initialized = 2; \
+    } else { \
+      sys::cas_flag tmp = initialized; \
+      sys::MemoryFence(); \
+      while (tmp != 2) { \
+        tmp = initialized; \
+        sys::MemoryFence(); \
+      } \
+    } \
   } \
   static RegisterAnalysisGroup<agName> agName##_info (name);
+
 
 #define INITIALIZE_AG_PASS(passName, agName, arg, name, cfg, analysis, def) \
   static void* initialize##passName##PassOnce(PassRegistry &Registry) { \
@@ -260,11 +297,24 @@ struct RegisterAnalysisGroup : public RegisterAGBase {
     return AI; \
   } \
   void llvm::initialize##passName##Pass(PassRegistry &Registry) { \
-    ATTRIBUTE_USED \
-    static void* initialized = initialize##passName##PassOnce(Registry); \
+    static volatile sys::cas_flag initialized = 0; \
+    sys::cas_flag old_val = sys::CompareAndSwap(&initialized, 1, 0); \
+    if (old_val == 0) { \
+      initialize##passName##PassOnce(Registry); \
+      sys::MemoryFence(); \
+      initialized = 2; \
+    } else { \
+      sys::cas_flag tmp = initialized; \
+      sys::MemoryFence(); \
+      while (tmp != 2) { \
+        tmp = initialized; \
+        sys::MemoryFence(); \
+      } \
+    } \
   } \
   static RegisterPass<passName> passName ## _info(arg, name, cfg, analysis); \
   static RegisterAnalysisGroup<agName, def> passName ## _ag(passName ## _info);
+
 
 #define INITIALIZE_AG_PASS_BEGIN(passName, agName, arg, n, cfg, analysis, def) \
   static void* initialize##passName##PassOnce(PassRegistry &Registry) {
@@ -279,8 +329,20 @@ struct RegisterAnalysisGroup : public RegisterAGBase {
     return AI; \
   } \
   void llvm::initialize##passName##Pass(PassRegistry &Registry) { \
-    ATTRIBUTE_USED \
-    static void* initialized = initialize##passName##PassOnce(Registry); \
+    static volatile sys::cas_flag initialized = 0; \
+    sys::cas_flag old_val = sys::CompareAndSwap(&initialized, 1, 0); \
+    if (old_val == 0) { \
+      initialize##passName##PassOnce(Registry); \
+      sys::MemoryFence(); \
+      initialized = 2; \
+    } else { \
+      sys::cas_flag tmp = initialized; \
+      sys::MemoryFence(); \
+      while (tmp != 2) { \
+        tmp = initialized; \
+        sys::MemoryFence(); \
+      } \
+    } \
   } \
   static RegisterPass<passName> passName ## _info(arg, n, cfg, analysis); \
   static RegisterAnalysisGroup<agName, def> passName ## _ag(passName ## _info);
