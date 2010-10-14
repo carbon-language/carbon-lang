@@ -77,7 +77,7 @@ void test6() {
 }
 
 // PR5606
-int f0(int var) { // expected-note{{'var' declared here}}
+int f0(int var) {
   switch (va) { // expected-error{{use of undeclared identifier 'va'}}
   case 1:
     break;

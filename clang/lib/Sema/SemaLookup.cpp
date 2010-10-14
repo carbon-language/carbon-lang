@@ -31,7 +31,9 @@
 #include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallPtrSet.h"
+#include "llvm/ADT/StringMap.h"
 #include "llvm/Support/ErrorHandling.h"
+#include <limits>
 #include <list>
 #include <set>
 #include <vector>
@@ -2679,35 +2681,28 @@ class TypoCorrectionConsumer : public VisibleDeclConsumer {
 
   /// \brief The results found that have the smallest edit distance
   /// found (so far) with the typo name.
-  llvm::SmallVector<NamedDecl *, 4> BestResults;
+  ///
+  /// The boolean value indicates whether there is a keyword with this name.
+  llvm::StringMap<bool, llvm::BumpPtrAllocator> BestResults;
 
-  /// \brief The keywords that have the smallest edit distance.
-  llvm::SmallVector<IdentifierInfo *, 4> BestKeywords;
-  
   /// \brief The best edit distance found so far.
   unsigned BestEditDistance;
   
 public:
   explicit TypoCorrectionConsumer(IdentifierInfo *Typo)
-    : Typo(Typo->getName()) { }
+    : Typo(Typo->getName()), 
+      BestEditDistance((std::numeric_limits<unsigned>::max)()) { }
 
   virtual void FoundDecl(NamedDecl *ND, NamedDecl *Hiding, bool InBaseClass);
   void addKeywordResult(ASTContext &Context, llvm::StringRef Keyword);
 
-  typedef llvm::SmallVector<NamedDecl *, 4>::const_iterator iterator;
-  iterator begin() const { return BestResults.begin(); }
-  iterator end() const { return BestResults.end(); }
-  void clear_decls() { BestResults.clear(); }
-  
-  bool empty() const { return BestResults.empty() && BestKeywords.empty(); }
+  typedef llvm::StringMap<bool, llvm::BumpPtrAllocator>::iterator iterator;
+  iterator begin() { return BestResults.begin(); }
+  iterator end()  { return BestResults.end(); }
+  void erase(iterator I) { BestResults.erase(I); }
+  unsigned size() const { return BestResults.size(); }
+  bool empty() const { return BestResults.empty(); }
 
-  typedef llvm::SmallVector<IdentifierInfo *, 4>::const_iterator
-    keyword_iterator;
-  keyword_iterator keyword_begin() const { return BestKeywords.begin(); }
-  //keyword_iterator keyword_end() const { return BestKeywords.end(); }
-  bool keyword_empty() const { return BestKeywords.empty(); }
-  unsigned keyword_size() const { return BestKeywords.size(); }
-  
   unsigned getBestEditDistance() const { return BestEditDistance; }  
 };
 
@@ -2730,22 +2725,22 @@ void TypoCorrectionConsumer::FoundDecl(NamedDecl *ND, NamedDecl *Hiding,
   // entity. If this edit distance is not worse than the best edit
   // distance we've seen so far, add it to the list of results.
   unsigned ED = Typo.edit_distance(Name->getName());
-  if (!BestResults.empty() || !BestKeywords.empty()) {
-    if (ED < BestEditDistance) {
-      // This result is better than any we've seen before; clear out
-      // the previous results.
-      BestResults.clear();
-      BestKeywords.clear();
-      BestEditDistance = ED;
-    } else if (ED > BestEditDistance) {
-      // This result is worse than the best results we've seen so far;
-      // ignore it.
-      return;
-    }
-  } else
+  if (ED < BestEditDistance) {
+    // This result is better than any we've seen before; clear out
+    // the previous results.
+    BestResults.clear();
     BestEditDistance = ED;
+  } else if (ED > BestEditDistance) {
+    // This result is worse than the best results we've seen so far;
+    // ignore it.
+    return;
+  }
 
-  BestResults.push_back(ND);
+  // Add this name to the list of results. By not assigning a value, we
+  // keep the current value if we've seen this name before (either as a
+  // keyword or as a declaration), or get the default value (not a keyword)
+  // if we haven't seen it before.
+  (void)BestResults[Name->getName()];
 }
 
 void TypoCorrectionConsumer::addKeywordResult(ASTContext &Context, 
@@ -2754,20 +2749,16 @@ void TypoCorrectionConsumer::addKeywordResult(ASTContext &Context,
   // If this edit distance is not worse than the best edit
   // distance we've seen so far, add it to the list of results.
   unsigned ED = Typo.edit_distance(Keyword);
-  if (!BestResults.empty() || !BestKeywords.empty()) {
-    if (ED < BestEditDistance) {
-      BestResults.clear();
-      BestKeywords.clear();
-      BestEditDistance = ED;
-    } else if (ED > BestEditDistance) {
-      // This result is worse than the best results we've seen so far;
-      // ignore it.
-      return;
-    }
-  } else
+  if (ED < BestEditDistance) {
+    BestResults.clear();
     BestEditDistance = ED;
+  } else if (ED > BestEditDistance) {
+    // This result is worse than the best results we've seen so far;
+    // ignore it.
+    return;
+  }
   
-  BestKeywords.push_back(&Context.Idents.get(Keyword));
+  BestResults[Keyword] = true;
 }
 
 /// \brief Try to "correct" a typo in the source code by finding
@@ -3023,117 +3014,88 @@ DeclarationName Sema::CorrectTypo(LookupResult &Res, Scope *S, CXXScopeSpec *SS,
   if (Consumer.empty())
     return DeclarationName();
 
-  // Only allow a single, closest name in the result set (it's okay to
-  // have overloads of that name, though).
-  DeclarationName BestName;
-  NamedDecl *BestIvarOrPropertyDecl = 0;
-  bool FoundIvarOrPropertyDecl = false;
-  
-  // Check all of the declaration results to find the best name so far.
+  // Make sure that the user typed at least 3 characters for each correction 
+  // made. Otherwise, we don't even both looking at the results.
+  unsigned ED = Consumer.getBestEditDistance();
+  if (ED == 0 || (Typo->getName().size() / ED) < 3)
+    return DeclarationName();
+
+  // Weed out any names that could not be found by name lookup.
   for (TypoCorrectionConsumer::iterator I = Consumer.begin(), 
                                      IEnd = Consumer.end();
-       I != IEnd; ++I) {
-    if (!BestName)
-      BestName = (*I)->getDeclName();
-    else if (BestName != (*I)->getDeclName())
-      return DeclarationName();
-
-    // \brief Keep track of either an Objective-C ivar or a property, but not
-    // both.
-    if (isa<ObjCIvarDecl>(*I) || isa<ObjCPropertyDecl>(*I)) {
-      if (FoundIvarOrPropertyDecl)
-        BestIvarOrPropertyDecl = 0;
-      else {
-        BestIvarOrPropertyDecl = *I;
-        FoundIvarOrPropertyDecl = true;
-      }
+       I != IEnd; /* Increment in loop. */) {
+    // Keywords are always found.
+    if (I->second) {
+      ++I;
+      continue;
     }
-  }
+    
+    // Perform name lookup on this name.
+    IdentifierInfo *Name = &Context.Idents.get(I->getKey());
+    Res.suppressDiagnostics();
+    Res.clear();
+    Res.setLookupName(Name);
+    if (MemberContext)
+      LookupQualifiedName(Res, MemberContext);
+    else {
+      LookupParsedName(Res, S, SS, /*AllowBuiltinCreation=*/false, 
+                       EnteringContext);
 
-  // Now check all of the keyword results to find the best name. 
-  switch (Consumer.keyword_size()) {
-    case 0:
-      // No keywords matched.
-      break;
-      
-    case 1:
-      // If we already have a name
-      if (!BestName) {
-        // We did not have anything previously, 
-        BestName = *Consumer.keyword_begin();
-      } else if (BestName.getAsIdentifierInfo() == *Consumer.keyword_begin()) {
-        // We have a declaration with the same name as a context-sensitive
-        // keyword. The keyword takes precedence.
-        BestIvarOrPropertyDecl = 0;
-        FoundIvarOrPropertyDecl = false;
-        Consumer.clear_decls();
-      } else if (CTC == CTC_ObjCMessageReceiver &&
-                 (*Consumer.keyword_begin())->isStr("super")) {
-        // In an Objective-C message send, give the "super" keyword a slight
-        // edge over entities not in function or method scope.
-        for (TypoCorrectionConsumer::iterator I = Consumer.begin(), 
-                                           IEnd = Consumer.end();
-             I != IEnd; ++I) {
-          if ((*I)->getDeclName() == BestName) {
-            if ((*I)->getDeclContext()->isFunctionOrMethod())
-              return DeclarationName();
+      // Fake ivar lookup; this should really be part of
+      // LookupParsedName.
+      if (ObjCMethodDecl *Method = getCurMethodDecl()) {
+        if (Method->isInstanceMethod() && Method->getClassInterface() &&
+            (Res.empty() || 
+             (Res.isSingleResult() &&
+              Res.getFoundDecl()->isDefinedOutsideFunctionOrMethod()))) {
+          ObjCInterfaceDecl *ClassDeclared = 0;
+          if (ObjCIvarDecl *IV 
+                = Method->getClassInterface()->lookupInstanceVariable(Name, 
+                                                               ClassDeclared)) {
+            Res.clear();
+            Res.addDecl(IV);
+            Res.resolveKind();
           }
         }
-        
-        // Everything found was outside a function or method; the 'super'
-        // keyword takes precedence.
-        BestIvarOrPropertyDecl = 0;
-        FoundIvarOrPropertyDecl = false;
-        Consumer.clear_decls();        
-        BestName = *Consumer.keyword_begin();
-      } else {
-        // Name collision; we will not correct typos.
-        return DeclarationName();
       }
+    }
+    
+    switch (Res.getResultKind()) {
+    case LookupResult::NotFound:
+    case LookupResult::NotFoundInCurrentInstantiation:
+    case LookupResult::Ambiguous:
+      // We didn't find this name in our scope, or didn't like what we found; 
+      // ignore it.
+      Res.suppressDiagnostics();
+      {
+        TypoCorrectionConsumer::iterator Next = I;
+        ++Next;
+        Consumer.erase(I);
+        I = Next;
+      }
+      break;      
+        
+    case LookupResult::Found:
+    case LookupResult::FoundOverloaded:
+    case LookupResult::FoundUnresolvedValue:
+      ++I;
       break;
-      
-    default:
-      // Name collision; we will not correct typos.
-      return DeclarationName();
+    }
+    
+    if (Res.isAmbiguous()) {
+      // We don't deal with ambiguities.
+      Res.suppressDiagnostics();
+      Res.clear();
+      return DeclarationName(); 
+    }        
   }
-  
-  // BestName is the closest viable name to what the user
-  // typed. However, to make sure that we don't pick something that's
-  // way off, make sure that the user typed at least 3 characters for
-  // each correction.
-  unsigned ED = Consumer.getBestEditDistance();
-  if (ED == 0 || !BestName.getAsIdentifierInfo() ||
-      (BestName.getAsIdentifierInfo()->getName().size() / ED) < 3)
-    return DeclarationName();
 
-  // Perform name lookup again with the name we chose, and declare
-  // success if we found something that was not ambiguous.
+  // If only a single name remains, return that result.
+  if (Consumer.size() == 1)
+    return &Context.Idents.get(Consumer.begin()->getKey());  
+
+  Res.suppressDiagnostics();
+  Res.setLookupName(Typo);
   Res.clear();
-  Res.setLookupName(BestName);
-
-  // If we found an ivar or property, add that result; no further
-  // lookup is required.
-  if (BestIvarOrPropertyDecl)
-    Res.addDecl(BestIvarOrPropertyDecl);  
-  // If we're looking into the context of a member, perform qualified
-  // name lookup on the best name.
-  else if (!Consumer.keyword_empty()) {
-    // The best match was a keyword. Return it.
-    return BestName;
-  } else if (MemberContext)
-    LookupQualifiedName(Res, MemberContext);
-  // Perform lookup as if we had just parsed the best name.
-  else
-    LookupParsedName(Res, S, SS, /*AllowBuiltinCreation=*/false, 
-                     EnteringContext);
-
-  if (Res.isAmbiguous()) {
-    Res.suppressDiagnostics();
-    return DeclarationName();
-  }
-
-  if (Res.getResultKind() != LookupResult::NotFound)
-    return BestName;
-  
   return DeclarationName();
 }
