@@ -213,24 +213,28 @@ const MachineLoop *SplitAnalysis::getBestSplitLoop() {
   if (usingLoops_.empty())
     return 0;
 
-  LoopPtrSet Loops, SecondLoops;
+  LoopPtrSet Loops;
   LoopBlocks Blocks;
   BlockPtrSet CriticalExits;
 
-  // Find first-class and second class candidate loops.
-  // We prefer to split around loops where curli is used outside the periphery.
+  // We split around loops where curli is used outside the periphery.
   for (LoopCountMap::const_iterator I = usingLoops_.begin(),
        E = usingLoops_.end(); I != E; ++I) {
     const MachineLoop *Loop = I->first;
     getLoopBlocks(Loop, Blocks);
 
-    LoopPtrSet *LPS = 0;
     switch(analyzeLoopPeripheralUse(Blocks)) {
     case OutsideLoop:
-      LPS = &Loops;
       break;
     case MultiPeripheral:
-      LPS = &SecondLoops;
+      // FIXME: We could split a live range with multiple uses in a peripheral
+      // block and still make progress. However, it is possible that splitting
+      // another live range will insert copies into a peripheral block, and
+      // there is a small chance we can enter an infinity loop, inserting copies
+      // forever.
+      // For safety, stick to splitting live ranges with uses outside the
+      // periphery.
+      DEBUG(dbgs() << "  multiple peripheral uses in " << *Loop);
       break;
     case ContainedInLoop:
       DEBUG(dbgs() << "  contained in " << *Loop);
@@ -246,16 +250,11 @@ const MachineLoop *SplitAnalysis::getBestSplitLoop() {
     if (!canSplitCriticalExits(Blocks, CriticalExits))
       continue;
     // This is a possible split.
-    assert(LPS);
-    LPS->insert(Loop);
+    Loops.insert(Loop);
   }
 
-  DEBUG(dbgs() << "  getBestSplitLoop found " << Loops.size() << " + "
-               << SecondLoops.size() << " candidate loops.\n");
-
-  // If there are no first class loops available, look at second class loops.
-  if (Loops.empty())
-    Loops = SecondLoops;
+  DEBUG(dbgs() << "  getBestSplitLoop found " << Loops.size()
+               << " candidate loops.\n");
 
   if (Loops.empty())
     return 0;
