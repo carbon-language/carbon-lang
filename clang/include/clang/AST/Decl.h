@@ -2220,7 +2220,7 @@ class RecordDecl : public TagDecl {
   /// methods/nested types we allow deserialization of just the fields
   /// when needed.
   mutable bool LoadedFieldsFromExternalStorage : 1;
-  friend void DeclContext::LoadLexicalDeclsFromExternalStorage() const;
+  friend class DeclContext;
 
 protected:
   RecordDecl(Kind DK, TagKind TK, DeclContext *DC,
