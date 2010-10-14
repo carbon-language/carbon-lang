@@ -24,7 +24,7 @@
 #include "Pass.h"
 #include "llvm/PassRegistry.h"
 #include "llvm/InitializePasses.h"
-#include "llvm/System/Atomic.h"
+#include "llvm/Support/Compiler.h"
 #include <vector>
 
 namespace llvm {
@@ -137,10 +137,10 @@ private:
     return PI; \
   } \
   void llvm::initialize##passName##Pass(PassRegistry &Registry) { \
-    static sys::cas_flag initialized = 0; \
-    sys::cas_flag old_val = sys::CompareAndSwap(&initialized, 1, 0); \
-    if (old_val == 0) initialize##passName##PassOnce(Registry); \
-  }
+    ATTRIBUTE_USED \
+    static void* initialized = initialize##passName##PassOnce(Registry); \
+  } \
+  static RegisterPass<passName> passName ## _info(arg, name, cfg, analysis);
 
 #define INITIALIZE_PASS_BEGIN(passName, arg, name, cfg, analysis) \
   static void* initialize##passName##PassOnce(PassRegistry &Registry) {
@@ -157,10 +157,10 @@ private:
     return PI; \
   } \
   void llvm::initialize##passName##Pass(PassRegistry &Registry) { \
-    static sys::cas_flag initialized = 0; \
-    sys::cas_flag old_val = sys::CompareAndSwap(&initialized, 1, 0); \
-    if (old_val == 0) initialize##passName##PassOnce(Registry); \
-  }
+    ATTRIBUTE_USED \
+    static void* initialized = initialize##passName##PassOnce(Registry); \
+  } \
+  static RegisterPass<passName> passName ## _info(arg, name, cfg, analysis);
 
 template<typename PassName>
 Pass *callDefaultCtor() { return new PassName(); }
@@ -244,11 +244,10 @@ struct RegisterAnalysisGroup : public RegisterAGBase {
     return AI; \
   } \
   void llvm::initialize##agName##AnalysisGroup(PassRegistry &Registry) { \
-    static sys::cas_flag initialized = 0; \
-    sys::cas_flag old_val = sys::CompareAndSwap(&initialized, 1, 0); \
-    if (old_val == 0) initialize##agName##AnalysisGroupOnce(Registry); \
-  }
-
+    ATTRIBUTE_USED static void* initialized = \
+      initialize##agName##AnalysisGroupOnce(Registry); \
+  } \
+  static RegisterAnalysisGroup<agName> agName##_info (name);
 
 #define INITIALIZE_AG_PASS(passName, agName, arg, name, cfg, analysis, def) \
   static void* initialize##passName##PassOnce(PassRegistry &Registry) { \
@@ -261,11 +260,11 @@ struct RegisterAnalysisGroup : public RegisterAGBase {
     return AI; \
   } \
   void llvm::initialize##passName##Pass(PassRegistry &Registry) { \
-    static sys::cas_flag initialized = 0; \
-    sys::cas_flag old_val = sys::CompareAndSwap(&initialized, 1, 0); \
-    if (old_val == 0) initialize##passName##PassOnce(Registry); \
-  }
-
+    ATTRIBUTE_USED \
+    static void* initialized = initialize##passName##PassOnce(Registry); \
+  } \
+  static RegisterPass<passName> passName ## _info(arg, name, cfg, analysis); \
+  static RegisterAnalysisGroup<agName, def> passName ## _ag(passName ## _info);
 
 #define INITIALIZE_AG_PASS_BEGIN(passName, agName, arg, n, cfg, analysis, def) \
   static void* initialize##passName##PassOnce(PassRegistry &Registry) {
@@ -280,10 +279,11 @@ struct RegisterAnalysisGroup : public RegisterAGBase {
     return AI; \
   } \
   void llvm::initialize##passName##Pass(PassRegistry &Registry) { \
-    static sys::cas_flag initialized = 0; \
-    sys::cas_flag old_val = sys::CompareAndSwap(&initialized, 1, 0); \
-    if (old_val == 0) initialize##passName##PassOnce(Registry); \
-  }
+    ATTRIBUTE_USED \
+    static void* initialized = initialize##passName##PassOnce(Registry); \
+  } \
+  static RegisterPass<passName> passName ## _info(arg, n, cfg, analysis); \
+  static RegisterAnalysisGroup<agName, def> passName ## _ag(passName ## _info);
 
 //===---------------------------------------------------------------------------
 /// PassRegistrationListener class - This class is meant to be derived from by
