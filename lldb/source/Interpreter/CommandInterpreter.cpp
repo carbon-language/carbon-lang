@@ -1107,12 +1107,7 @@ CommandInterpreter::GetSynchronous ()
 void
 CommandInterpreter::SetSynchronous (bool value)
 {
-    static bool value_set_once = false;
-    if (!value_set_once)
-    {
-        value_set_once = true;
-        m_synchronous_execution  = value;
-    }
+    m_synchronous_execution  = value;
 }
 
 void

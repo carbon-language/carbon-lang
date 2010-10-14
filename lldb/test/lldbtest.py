@@ -150,6 +150,8 @@ STEP_OUT_SUCCEEDED = "Thread step-out succeeded"
 
 STOPPED_DUE_TO_BREAKPOINT = "Process state is stopped due to breakpoint"
 
+STOPPED_DUE_TO_SIGNAL = "Process state is stopped due to signal"
+
 STOPPED_DUE_TO_STEP_IN = "Process state is stopped due to step in"
 
 DATA_TYPES_DISPLAYED_CORRECTLY = "Data type(s) displayed correctly"
