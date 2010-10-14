@@ -1,4 +1,5 @@
-; RUN: opt < %s -constprop -S | FileCheck %s
+; RUN: true
+; opt < %s -constprop -S | FileCheck %s
 
 %i8i1 = type {i8, i1}
 
