@@ -74,4 +74,21 @@ entry:
   ret i32 %add
 }
 
+define i32 @f8(i32 %a) nounwind readnone ssp {
+entry:
+; CHECK: f8
+; CHECK: movt r0, #42405              @ encoding: [0xa5,0x05,0x4a,0xe3]
+  %and = and i32 %a, 65535
+  %or = or i32 %and, -1515913216
+  ret i32 %or
+}
+
+define i32 @f9() nounwind readnone ssp {
+entry:
+; CHECK: f9
+; CHECK: movw r0, #42405              @ encoding: [0xa5,0x05,0x0a,0xe3]
+  ret i32 42405
+}
+
+
 declare void @llvm.trap() nounwind

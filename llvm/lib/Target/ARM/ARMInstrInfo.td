@@ -1634,6 +1634,8 @@ def MOVr_TC : AsI1<0b1101, (outs tcGPR:$Rd), (ins tcGPR:$Rm), DPFrm,
 def MOVs : AsI1<0b1101, (outs GPR:$Rd), (ins so_reg:$src),
                 DPSoRegFrm, IIC_iMOVsr,
                 "mov", "\t$Rd, $src", [(set GPR:$Rd, so_reg:$src)]>, UnaryDP {
+  bits<12> src;
+  let Inst{11-0} = src;
   let Inst{25} = 0;
 }
 
@@ -1649,23 +1651,33 @@ def MOVi : AsI1<0b1101, (outs GPR:$Rd), (ins so_imm:$imm), DPFrm, IIC_iMOVi,
 }
 
 let isReMaterializable = 1, isAsCheapAsAMove = 1 in
-def MOVi16 : AI1<0b1000, (outs GPR:$dst), (ins i32imm:$src),
+def MOVi16 : AI1<0b1000, (outs GPR:$Rd), (ins i32imm:$imm),
                  DPFrm, IIC_iMOVi,
-                 "movw", "\t$dst, $src",
-                 [(set GPR:$dst, imm0_65535:$src)]>,
+                 "movw", "\t$Rd, $imm",
+                 [(set GPR:$Rd, imm0_65535:$imm)]>,
                  Requires<[IsARM, HasV6T2]>, UnaryDP {
+  bits<4> Rd;
+  bits<16> imm;
+  let Inst{15-12} = Rd;
+  let Inst{11-0}  = imm{11-0};
+  let Inst{19-16} = imm{15-12};
   let Inst{20} = 0;
   let Inst{25} = 1;
 }
 
-let Constraints = "$src = $dst" in
-def MOVTi16 : AI1<0b1010, (outs GPR:$dst), (ins GPR:$src, i32imm:$imm),
+let Constraints = "$src = $Rd" in
+def MOVTi16 : AI1<0b1010, (outs GPR:$Rd), (ins GPR:$src, i32imm:$imm),
                   DPFrm, IIC_iMOVi,
-                  "movt", "\t$dst, $imm",
-                  [(set GPR:$dst,
+                  "movt", "\t$Rd, $imm",
+                  [(set GPR:$Rd,
                         (or (and GPR:$src, 0xffff),
                             lo16AllZero:$imm))]>, UnaryDP,
                   Requires<[IsARM, HasV6T2]> {
+  bits<4> Rd;
+  bits<16> imm;
+  let Inst{15-12} = Rd;
+  let Inst{11-0}  = imm{11-0};
+  let Inst{19-16} = imm{15-12};
   let Inst{20} = 0;
   let Inst{25} = 1;
 }
