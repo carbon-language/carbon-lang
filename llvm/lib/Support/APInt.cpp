@@ -2067,8 +2067,8 @@ APInt APInt::ssub_ov(const APInt &RHS, bool &Overflow) const {
 }
 
 APInt APInt::usub_ov(const APInt &RHS, bool &Overflow) const {
-  APInt Res = *this+RHS;
-  Overflow = Res.ugt(RHS);
+  APInt Res = *this-RHS;
+  Overflow = Res.ugt(*this);
   return Res;
 }
 
