@@ -26,26 +26,26 @@ class MacroDefinition;
   
 class ASTDeserializationListener {
 protected:
-  virtual ~ASTDeserializationListener() {}
+  virtual ~ASTDeserializationListener();
 
 public:
   /// \brief Tell the listener about the reader.
-  virtual void SetReader(ASTReader *Reader) = 0;
+  virtual void SetReader(ASTReader *Reader) { }
 
   /// \brief An identifier was deserialized from the AST file.
   virtual void IdentifierRead(serialization::IdentID ID,
-                              IdentifierInfo *II) = 0;
+                              IdentifierInfo *II) { }
   /// \brief A type was deserialized from the AST file. The ID here has the
   ///        qualifier bits already removed, and T is guaranteed to be locally
   ///        unqualified.
-  virtual void TypeRead(serialization::TypeIdx Idx, QualType T) = 0;
+  virtual void TypeRead(serialization::TypeIdx Idx, QualType T) { }
   /// \brief A decl was deserialized from the AST file.
-  virtual void DeclRead(serialization::DeclID ID, const Decl *D) = 0;
+  virtual void DeclRead(serialization::DeclID ID, const Decl *D) { }
   /// \brief A selector was read from the AST file.
-  virtual void SelectorRead(serialization::SelectorID iD, Selector Sel) = 0;
+  virtual void SelectorRead(serialization::SelectorID iD, Selector Sel) { }
   /// \brief A macro definition was read from the AST file.
   virtual void MacroDefinitionRead(serialization::MacroID, 
-                                   MacroDefinition *MD) = 0;
+                                   MacroDefinition *MD) { }
 };
 
 }

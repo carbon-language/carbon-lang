@@ -42,13 +42,6 @@ public:
     if (Previous)
       Previous->DeclRead(ID, D);
   }
-
-  virtual void SetReader(ASTReader *Reader) {}
-  virtual void IdentifierRead(serialization::IdentID ID, IdentifierInfo *II) {}
-  virtual void TypeRead(serialization::TypeIdx Idx, QualType T) {}
-  virtual void SelectorRead(serialization::SelectorID iD, Selector Sel) {}
-  virtual void MacroDefinitionRead(serialization::MacroID,
-                                   MacroDefinition *MD) {}
 };
 
   /// \brief Checks deserialized declarations and emits error if a name
@@ -77,13 +70,6 @@ public:
       if (Previous)
         Previous->DeclRead(ID, D);
     }
-
-    virtual void SetReader(ASTReader *Reader) {}
-    virtual void IdentifierRead(serialization::IdentID ID, IdentifierInfo *II) {}
-    virtual void TypeRead(serialization::TypeIdx Idx, QualType T) {}
-    virtual void SelectorRead(serialization::SelectorID iD, Selector Sel) {}
-    virtual void MacroDefinitionRead(serialization::MacroID,
-                                     MacroDefinition *MD) {}
 };
 
 } // end anonymous namespace

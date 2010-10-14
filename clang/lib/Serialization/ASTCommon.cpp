@@ -12,10 +12,14 @@
 //===----------------------------------------------------------------------===//
 
 #include "ASTCommon.h"
+#include "clang/Serialization/ASTDeserializationListener.h"
 #include "clang/Basic/IdentifierTable.h"
 #include "llvm/ADT/StringExtras.h"
 
 using namespace clang;
+
+// Give ASTDeserializationListener's VTable a home.
+ASTDeserializationListener::~ASTDeserializationListener() { }
 
 serialization::TypeIdx
 serialization::TypeIdxFromBuiltin(const BuiltinType *BT) {
