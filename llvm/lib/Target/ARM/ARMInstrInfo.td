@@ -1634,7 +1634,9 @@ def MOVr_TC : AsI1<0b1101, (outs tcGPR:$Rd), (ins tcGPR:$Rm), DPFrm,
 def MOVs : AsI1<0b1101, (outs GPR:$Rd), (ins so_reg:$src),
                 DPSoRegFrm, IIC_iMOVsr,
                 "mov", "\t$Rd, $src", [(set GPR:$Rd, so_reg:$src)]>, UnaryDP {
+  bits<4> Rd;
   bits<12> src;
+  let Inst{15-12} = Rd;
   let Inst{11-0} = src;
   let Inst{25} = 0;
 }
