@@ -781,15 +781,12 @@ void ELFObjectWriterImpl::ComputeSymbolTable(MCAssembler &Asm) {
   StringMap<uint64_t> StringIndexMap;
   StringTable += '\x00';
 
-  // Add the data for local symbols.
+  // Add the data for the symbols.
   for (MCAssembler::symbol_iterator it = Asm.symbol_begin(),
          ie = Asm.symbol_end(); it != ie; ++it) {
     const MCSymbol &Symbol = it->getSymbol();
 
     if (!isInSymtab(Asm, *it, UsedInReloc.count(&Symbol)))
-      continue;
-
-    if (!isLocal(*it))
       continue;
 
     uint64_t &Entry = StringIndexMap[Symbol.getName()];
@@ -802,50 +799,18 @@ void ELFObjectWriterImpl::ComputeSymbolTable(MCAssembler &Asm) {
     ELFSymbolData MSD;
     MSD.SymbolData = it;
     MSD.StringIndex = Entry;
+    bool Local = isLocal(*it);
 
-    if (Symbol.isAbsolute()) {
-      MSD.SectionIndex = ELF::SHN_ABS;
-      LocalSymbolData.push_back(MSD);
-    } else {
-      const MCSymbol *SymbolP = &Symbol;
-      if (Symbol.isVariable()) {
-        const MCExpr *Value = Symbol.getVariableValue();
-        assert (Value->getKind() == MCExpr::SymbolRef && "Unimplemented");
-        const MCSymbolRefExpr *Ref = static_cast<const MCSymbolRefExpr*>(Value);
-        SymbolP = &Ref->getSymbol();
-      }
-      MSD.SectionIndex = SectionIndexMap.lookup(&SymbolP->getSection());
-      assert(MSD.SectionIndex && "Invalid section index!");
-      LocalSymbolData.push_back(MSD);
-    }
-  }
-
-  // Now add non-local symbols.
-  for (MCAssembler::symbol_iterator it = Asm.symbol_begin(),
-         ie = Asm.symbol_end(); it != ie; ++it) {
-    const MCSymbol &Symbol = it->getSymbol();
-
-    if (!isInSymtab(Asm, *it, UsedInReloc.count(&Symbol)))
-      continue;
-
-    if (isLocal(*it))
-      continue;
-
-    uint64_t &Entry = StringIndexMap[Symbol.getName()];
-    if (!Entry) {
-      Entry = StringTable.size();
-      StringTable += Symbol.getName();
-      StringTable += '\x00';
-    }
-
-    ELFSymbolData MSD;
-    MSD.SymbolData = it;
-    MSD.StringIndex = Entry;
-
-    // FIXME: There is duplicated code with the local case.
     if (it->isCommon()) {
+      assert(!Local);
       MSD.SectionIndex = ELF::SHN_COMMON;
       ExternalSymbolData.push_back(MSD);
+    } else if (Symbol.isAbsolute()) {
+      MSD.SectionIndex = ELF::SHN_ABS;
+      if (Local)
+        LocalSymbolData.push_back(MSD);
+      else
+        ExternalSymbolData.push_back(MSD);
     } else if (Symbol.isVariable()) {
       const MCExpr *Value = Symbol.getVariableValue();
       assert (Value->getKind() == MCExpr::SymbolRef && "Unimplemented");
@@ -854,22 +819,26 @@ void ELFObjectWriterImpl::ComputeSymbolTable(MCAssembler &Asm) {
       if (RefSymbol.isDefined()) {
         MSD.SectionIndex = SectionIndexMap.lookup(&RefSymbol.getSection());
         assert(MSD.SectionIndex && "Invalid section index!");
-        ExternalSymbolData.push_back(MSD);
+        if (Local)
+          LocalSymbolData.push_back(MSD);
+        else
+          ExternalSymbolData.push_back(MSD);
       }
     } else if (Symbol.isUndefined()) {
+      assert(!Local);
       MSD.SectionIndex = ELF::SHN_UNDEF;
       // FIXME: Undefined symbols are global, but this is the first place we
       // are able to set it.
       if (GetBinding(*it) == ELF::STB_LOCAL)
         SetBinding(*it, ELF::STB_GLOBAL);
       UndefinedSymbolData.push_back(MSD);
-    } else if (Symbol.isAbsolute()) {
-      MSD.SectionIndex = ELF::SHN_ABS;
-      ExternalSymbolData.push_back(MSD);
     } else {
       MSD.SectionIndex = SectionIndexMap.lookup(&Symbol.getSection());
       assert(MSD.SectionIndex && "Invalid section index!");
-      ExternalSymbolData.push_back(MSD);
+      if (Local)
+        LocalSymbolData.push_back(MSD);
+      else
+        ExternalSymbolData.push_back(MSD);
     }
   }
 

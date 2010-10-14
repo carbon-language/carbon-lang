@@ -22,7 +22,7 @@
 // CHECK-NEXT:  # Symbol 0
 // CHECK-NEXT:  (('st_name', 0) # ''
 // CHECK:       # Symbol 1
-// CHECK-NEXT:  (('st_name', 1) # '.Lsym8'
+// CHECK-NEXT:  (('st_name', 13) # '.Lsym8'
 // CHECK:       # Symbol 2
 // CHECK-NEXT:  (('st_name', 0) # ''
 // CHECK:       # Symbol 3
@@ -32,9 +32,9 @@
 // CHECK:       # Symbol 5
 // CHECK-NEXT:  (('st_name', 0) # ''
 // CHECK:       # Symbol 6
-// CHECK-NEXT:  (('st_name', 8) # '.Lsym1'
+// CHECK-NEXT:  (('st_name', 1) # '.Lsym1'
 // CHECK:       # Symbol 7
-// CHECK-NEXT:  (('st_name', 15) # 'sym6'
+// CHECK-NEXT:  (('st_name', 8) # 'sym6'
 // CHECK-NEXT:   ('st_bind', 1)
 // CHECK-NEXT:   ('st_type', 1)
 // CHECK-NEXT:   ('st_other', 0)
