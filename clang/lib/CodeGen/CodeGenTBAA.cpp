@@ -49,20 +49,34 @@ CodeGenTBAA::getTBAAInfo(QualType QTy) {
   }
 
   // For now, just emit a very minimal tree.
-  const Type *CanonicalTy = Context.getCanonicalType(Ty);
-  if (const BuiltinType *BTy = dyn_cast<BuiltinType>(CanonicalTy)) {
+  if (const BuiltinType *BTy = dyn_cast<BuiltinType>(Ty)) {
     switch (BTy->getKind()) {
+    // Charactar types are special and can alias anything.
     case BuiltinType::Char_U:
     case BuiltinType::Char_S:
     case BuiltinType::UChar:
     case BuiltinType::SChar:
-      // Charactar types are special.
       return Char;
+
+    // Unsigned types can alias their corresponding signed types.
+    case BuiltinType::UShort:
+      return getTBAAInfo(Context.ShortTy);
+    case BuiltinType::UInt:
+      return getTBAAInfo(Context.IntTy);
+    case BuiltinType::ULong:
+      return getTBAAInfo(Context.LongTy);
+    case BuiltinType::ULongLong:
+      return getTBAAInfo(Context.LongLongTy);
+    case BuiltinType::UInt128:
+      return getTBAAInfo(Context.Int128Ty);
+
+    // Other builtin types.
     default:
       return MetadataCache[Ty] =
                getTBAAInfoForNamedType(BTy->getName(Features), Char);
     }
   }
 
-  return MetadataCache[Ty] = getTBAAInfoForNamedType("TBAA.other", Char);
+  // For now, handle any other kind of type conservatively.
+  return MetadataCache[Ty] = Char;
 }
