@@ -312,7 +312,7 @@ ObjCObjectType::ObjCObjectType(QualType Canonical, QualType Base,
                                unsigned NumProtocols)
   : Type(ObjCObject, Canonical, false, false),
     BaseType(Base) {
-  SubclassBits = NumProtocols;
+  ObjCObjectTypeBits.NumProtocols = NumProtocols;
   assert(getNumProtocols() == NumProtocols &&
          "bitfield overflow in protocol count");
   if (NumProtocols)
@@ -917,7 +917,7 @@ bool Type::isElaboratedTypeSpecifier() const {
 }
 
 const char *Type::getTypeClassName() const {
-  switch (TC) {
+  switch (TypeBits.TC) {
   default: assert(0 && "Type class not in TypeNodes.def!");
 #define ABSTRACT_TYPE(Derived, Base)
 #define TYPE(Derived, Base) case Derived: return #Derived;
@@ -1273,28 +1273,28 @@ Linkage Type::getLinkage() const {
   if (this != CanonicalType.getTypePtr())
     return CanonicalType->getLinkage();
   
-  if (!LinkageKnown) {
+  if (!TypeBits.LinkageKnown) {
     std::pair<Linkage, bool> Result = getLinkageUnnamedLocalImpl();
-    CachedLinkage = Result.first;
-    CachedLocalOrUnnamed = Result.second;
-    LinkageKnown = true;
+    TypeBits.CachedLinkage = Result.first;
+    TypeBits.CachedLocalOrUnnamed = Result.second;
+    TypeBits.LinkageKnown = true;
   }
   
-  return static_cast<clang::Linkage>(CachedLinkage);
+  return static_cast<clang::Linkage>(TypeBits.CachedLinkage);
 }
 
 bool Type::hasUnnamedOrLocalType() const {
   if (this != CanonicalType.getTypePtr())
     return CanonicalType->hasUnnamedOrLocalType();
   
-  if (!LinkageKnown) {
+  if (!TypeBits.LinkageKnown) {
     std::pair<Linkage, bool> Result = getLinkageUnnamedLocalImpl();
-    CachedLinkage = Result.first;
-    CachedLocalOrUnnamed = Result.second;
-    LinkageKnown = true;
+    TypeBits.CachedLinkage = Result.first;
+    TypeBits.CachedLocalOrUnnamed = Result.second;
+    TypeBits.LinkageKnown = true;
   }
   
-  return CachedLocalOrUnnamed;
+  return TypeBits.CachedLocalOrUnnamed;
 }
 
 std::pair<Linkage, bool> Type::getLinkageUnnamedLocalImpl() const { 
@@ -1307,7 +1307,7 @@ void Type::ClearLinkageCache() {
   if (this != CanonicalType.getTypePtr())
     CanonicalType->ClearLinkageCache();
   else
-    LinkageKnown = false;
+    TypeBits.LinkageKnown = false;
 }
 
 std::pair<Linkage, bool> BuiltinType::getLinkageUnnamedLocalImpl() const {

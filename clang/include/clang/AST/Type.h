@@ -785,35 +785,147 @@ private:
 
   QualType CanonicalType;
 
-  /// TypeClass bitfield - Enum that specifies what subclass this belongs to.
-  unsigned TC : 8;
+  /// Bitfields required by the Type class.
+  class TypeBitfields {
+    friend class Type;
 
-  /// Dependent - Whether this type is a dependent type (C++ [temp.dep.type]).
-  /// Note that this should stay at the end of the ivars for Type so that
-  /// subclasses can pack their bitfields into the same word.
-  bool Dependent : 1;
-  
-  /// \brief Whether this type is a variably-modified type (C99 6.7.5).
-  bool VariablyModified : 1;
-  
-  /// \brief Whether the linkage of this type along with the presence of any
-  /// local or unnamed types is already known.
-  mutable bool LinkageKnown : 1;
-  
-  /// \brief Linkage of this type.
-  mutable unsigned CachedLinkage : 2;
+    /// TypeClass bitfield - Enum that specifies what subclass this belongs to.
+    unsigned TC : 8;
 
-  /// \brief Whether this type involves and local or unnamed types. 
-  mutable bool CachedLocalOrUnnamed : 1;
+    /// Dependent - Whether this type is a dependent type (C++ [temp.dep.type]).
+    /// Note that this should stay at the end of the ivars for Type so that
+    /// subclasses can pack their bitfields into the same word.
+    bool Dependent : 1;
   
-  /// \brief FromAST - Whether this type comes from an AST file.
-  mutable bool FromAST : 1;
+    /// \brief Whether this type is a variably-modified type (C99 6.7.5).
+    bool VariablyModified : 1;
+  
+    /// \brief Whether the linkage of this type along with the presence of any
+    /// local or unnamed types is already known.
+    mutable bool LinkageKnown : 1;
+  
+    /// \brief Linkage of this type.
+    mutable unsigned CachedLinkage : 2;
 
-  unsigned SpareBit : 1;
+    /// \brief Whether this type involves and local or unnamed types. 
+    mutable bool CachedLocalOrUnnamed : 1;
+  
+    /// \brief FromAST - Whether this type comes from an AST file.
+    mutable bool FromAST : 1;
 
+    unsigned SpareBit : 1;
+  };
+  enum { NumTypeBits = 16 };
+
+protected:
+  // These classes allow subclasses to somewhat cleanly pack bitfields
+  // into Type.
+
+  class ArrayTypeBitfields {
+    friend class ArrayType;
+
+    unsigned : NumTypeBits;
+
+    /// IndexTypeQuals - CVR qualifiers from declarations like
+    /// 'int X[static restrict 4]'. For function parameters only.
+    unsigned IndexTypeQuals : 3;
+
+    /// SizeModifier - storage class qualifiers from declarations like
+    /// 'int X[static restrict 4]'. For function parameters only.
+    /// Actually an ArrayType::ArraySizeModifier.
+    unsigned SizeModifier : 3;
+  };
+
+  class BuiltinTypeBitfields {
+    friend class BuiltinType;
+
+    unsigned : NumTypeBits;
+
+    /// The kind (BuiltinType::Kind) of builtin type this is.
+    unsigned Kind : 8;
+  };
+
+  class FunctionTypeBitfields {
+    friend class FunctionType;
+
+    unsigned : NumTypeBits;
+
+    /// Extra information which affects how the function is called, like
+    /// regparm and the calling convention.
+    unsigned ExtInfo : 8;
+
+    /// A bit to be used by the subclass.
+    bool SubclassInfo : 1;
+
+    /// TypeQuals - Used only by FunctionProtoType, put here to pack with the
+    /// other bitfields.
+    /// The qualifiers are part of FunctionProtoType because...
+    ///
+    /// C++ 8.3.5p4: The return type, the parameter type list and the
+    /// cv-qualifier-seq, [...], are part of the function type.
+    unsigned TypeQuals : 3;
+  };
+
+  class ObjCObjectTypeBitfields {
+    friend class ObjCObjectType;
+
+    unsigned : NumTypeBits;
+
+    /// NumProtocols - The number of protocols stored directly on this
+    /// object type.
+    unsigned NumProtocols : 32 - NumTypeBits;
+  };
+
+  class ReferenceTypeBitfields {
+    friend class ReferenceType;
+
+    unsigned : NumTypeBits;
+
+    /// True if the type was originally spelled with an lvalue sigil.
+    /// This is never true of rvalue references but can also be false
+    /// on lvalue references because of C++0x [dcl.typedef]p9,
+    /// as follows:
+    ///
+    ///   typedef int &ref;    // lvalue, spelled lvalue
+    ///   typedef int &&rvref; // rvalue
+    ///   ref &a;              // lvalue, inner ref, spelled lvalue
+    ///   ref &&a;             // lvalue, inner ref
+    ///   rvref &a;            // lvalue, inner ref, spelled lvalue
+    ///   rvref &&a;           // rvalue, inner ref
+    bool SpelledAsLValue : 1;
+
+    /// True if the inner type is a reference type.  This only happens
+    /// in non-canonical forms.
+    bool InnerRef : 1;
+  };
+
+  class VectorTypeBitfields {
+    friend class VectorType;
+
+    unsigned : NumTypeBits;
+
+    /// AltiVecSpec - AltiVec-specific vector information, used
+    /// to differentiate things like 'pixel'.
+    unsigned AltiVecSpec : 2;
+
+    /// NumElements - The number of elements in the vector.
+    unsigned NumElements : 30 - NumTypeBits;
+  };
+
+  union {
+    TypeBitfields TypeBits;
+    ArrayTypeBitfields ArrayTypeBits;
+    BuiltinTypeBitfields BuiltinTypeBits;
+    FunctionTypeBitfields FunctionTypeBits;
+    ObjCObjectTypeBitfields ObjCObjectTypeBits;
+    ReferenceTypeBitfields ReferenceTypeBits;
+    VectorTypeBitfields VectorTypeBits;
+  };
+
+private:
   /// \brief Set whether this type comes from an AST file.
   void setFromAST(bool V = true) const { 
-    FromAST = V;
+    TypeBits.FromAST = V;
   }
 
 protected:
@@ -821,55 +933,29 @@ protected:
   /// any local or unnamed types.
   virtual std::pair<Linkage, bool> getLinkageUnnamedLocalImpl() const;
 
-  unsigned SubclassBits : 16;
-
-#define BITFIELD(Name, Previous, N) \
-  static unsigned Encode##Name(unsigned V) { \
-    assert(!((V << Name##Offset) & ~Name##Mask) && \
-           #Name " value out of range");   \
-    return (V << Name##Offset); \
-  } \
-  static unsigned Decode##Name(unsigned Bits) { \
-    return (Bits & Name##Mask) >> Name##Offset; \
-  } \
-  enum { \
-    Name##Width = (N), \
-    Name##Offset = Previous##Offset + Previous##Width, \
-    Name##Mask = ((1 << (N)) - 1) << Name##Offset \
-  }
-#define BOOL_BITFIELD(Name, Previous) \
-  static unsigned Encode##Name(bool V) { \
-    return (V ? Name##Mask : 0); \
-  } \
-  static bool Decode##Name(unsigned Bits) { \
-    return (Bits & Name##Mask) != 0; \
-  } \
-  enum { \
-    Name##Width = 1, \
-    Name##Offset = Previous##Offset + Previous##Width, \
-    Name##Mask = 1 << Name##Offset \
-  }
-#define InitialBitfieldWidth 0
-#define InitialBitfieldOffset 0
-
   // silence VC++ warning C4355: 'this' : used in base member initializer list
   Type *this_() { return this; }
   Type(TypeClass tc, QualType Canonical, bool Dependent, bool VariablyModified)
-    : CanonicalType(Canonical.isNull() ? QualType(this_(), 0) : Canonical),
-      TC(tc), Dependent(Dependent), VariablyModified(VariablyModified),
-      LinkageKnown(false), 
-      CachedLinkage(NoLinkage), FromAST(false) {}
+    : CanonicalType(Canonical.isNull() ? QualType(this_(), 0) : Canonical) {
+    TypeBits.TC = tc;
+    TypeBits.Dependent = Dependent;
+    TypeBits.VariablyModified = VariablyModified;
+    TypeBits.LinkageKnown = false;
+    TypeBits.CachedLocalOrUnnamed = false;
+    TypeBits.CachedLinkage = NoLinkage;
+    TypeBits.FromAST = false;
+  }
   virtual ~Type();
   friend class ASTContext;
 
-  void setDependent(bool D = true) { Dependent = D; }
-  void setVariablyModified(bool VM = true) { VariablyModified = VM; }
+  void setDependent(bool D = true) { TypeBits.Dependent = D; }
+  void setVariablyModified(bool VM = true) { TypeBits.VariablyModified = VM; }
   
 public:
-  TypeClass getTypeClass() const { return static_cast<TypeClass>(TC); }
+  TypeClass getTypeClass() const { return static_cast<TypeClass>(TypeBits.TC); }
 
   /// \brief Whether this type comes from an AST file.
-  bool isFromAST() const { return FromAST; }
+  bool isFromAST() const { return TypeBits.FromAST; }
 
   bool isCanonicalUnqualified() const {
     return CanonicalType.getTypePtr() == this;
@@ -989,10 +1075,10 @@ public:
   /// isDependentType - Whether this type is a dependent type, meaning
   /// that its definition somehow depends on a template parameter
   /// (C++ [temp.dep.type]).
-  bool isDependentType() const { return Dependent; }
+  bool isDependentType() const { return TypeBits.Dependent; }
   
   /// \brief Whether this type is a variably-modified type (C99 6.7.5).
-  bool isVariablyModifiedType() const { return VariablyModified; }
+  bool isVariablyModifiedType() const { return TypeBits.VariablyModified; }
   
   /// \brief Whether this type is or contains a local or unnamed type.
   bool hasUnnamedOrLocalType() const;
@@ -1181,8 +1267,6 @@ public:
     ObjCSel    // This represents the ObjC 'SEL' type.
   };
 
-  // SubclassBits stores a Kind.
-  
 protected:
   virtual std::pair<Linkage, bool> getLinkageUnnamedLocalImpl() const;
   
@@ -1190,10 +1274,10 @@ public:
   BuiltinType(Kind K)
     : Type(Builtin, QualType(), /*Dependent=*/(K == Dependent),
            /*VariablyModified=*/false) {
-    SubclassBits = K;
+    BuiltinTypeBits.Kind = K;
   }
 
-  Kind getKind() const { return static_cast<Kind>(SubclassBits); }
+  Kind getKind() const { return static_cast<Kind>(BuiltinTypeBits.Kind); }
   const char *getName(const LangOptions &LO) const;
 
   bool isSugared() const { return false; }
@@ -1334,37 +1418,20 @@ public:
 class ReferenceType : public Type, public llvm::FoldingSetNode {
   QualType PointeeType;
 
-  /// True if the type was originally spelled with an lvalue sigil.
-  /// This is never true of rvalue references but can also be false
-  /// on lvalue references because of C++0x [dcl.typedef]p9,
-  /// as follows:
-  ///
-  ///   typedef int &ref;    // lvalue, spelled lvalue
-  ///   typedef int &&rvref; // rvalue
-  ///   ref &a;              // lvalue, inner ref, spelled lvalue
-  ///   ref &&a;             // lvalue, inner ref
-  ///   rvref &a;            // lvalue, inner ref, spelled lvalue
-  ///   rvref &&a;           // rvalue, inner ref
-  BOOL_BITFIELD(SpelledAsLValue, InitialBitfield);
-
-  /// True if the inner type is a reference type.  This only happens
-  /// in non-canonical forms.
-  BOOL_BITFIELD(InnerRef, SpelledAsLValue);
-
 protected:
   ReferenceType(TypeClass tc, QualType Referencee, QualType CanonicalRef,
                 bool SpelledAsLValue) :
     Type(tc, CanonicalRef, Referencee->isDependentType(),
          Referencee->isVariablyModifiedType()), PointeeType(Referencee) {
-    SubclassBits = EncodeSpelledAsLValue(SpelledAsLValue) |
-                   EncodeInnerRef(Referencee->isReferenceType());
+    ReferenceTypeBits.SpelledAsLValue = SpelledAsLValue;
+    ReferenceTypeBits.InnerRef = Referencee->isReferenceType();
   }
   
   virtual std::pair<Linkage, bool> getLinkageUnnamedLocalImpl() const;
   
 public:
-  bool isSpelledAsLValue() const { return SubclassBits & SpelledAsLValueMask; }
-  bool isInnerRef() const { return SubclassBits & InnerRefMask; }
+  bool isSpelledAsLValue() const { return ReferenceTypeBits.SpelledAsLValue; }
+  bool isInnerRef() const { return ReferenceTypeBits.InnerRef; }
   
   QualType getPointeeTypeAsWritten() const { return PointeeType; }
   QualType getPointeeType() const {
@@ -1496,13 +1563,6 @@ private:
   /// ElementType - The element type of the array.
   QualType ElementType;
 
-  // IndexTypeQuals - Capture qualifiers in declarations like:
-  // 'int X[static restrict 4]'. For function parameters only.
-  enum { IndexTypeQualsMask = 0x7 };
-
-  // NOTE: VC++ treats enums as signed, avoid using the ArraySizeModifier enum
-  enum { SizeModifierMask = 0x18, SizeModifierOffset = 3 };
-
 protected:
   // C++ [temp.dep.type]p1:
   //   A type is dependent if it is...
@@ -1514,7 +1574,8 @@ protected:
     : Type(tc, can, et->isDependentType() || tc == DependentSizedArray,
            (tc == VariableArray || et->isVariablyModifiedType())),
       ElementType(et) {
-    SubclassBits = tq | (static_cast<unsigned>(sm) << SizeModifierOffset);
+    ArrayTypeBits.IndexTypeQuals = tq;
+    ArrayTypeBits.SizeModifier = sm;
   }
 
   friend class ASTContext;  // ASTContext creates these.
@@ -1524,13 +1585,13 @@ protected:
 public:
   QualType getElementType() const { return ElementType; }
   ArraySizeModifier getSizeModifier() const {
-    return ArraySizeModifier(SubclassBits >> SizeModifierOffset);
+    return ArraySizeModifier(ArrayTypeBits.SizeModifier);
   }
   Qualifiers getIndexTypeQualifiers() const {
     return Qualifiers::fromCVRMask(getIndexTypeCVRQualifiers());
   }
   unsigned getIndexTypeCVRQualifiers() const {
-    return SubclassBits & IndexTypeQualsMask;
+    return ArrayTypeBits.IndexTypeQuals;
   }
 
   static bool classof(const Type *T) {
@@ -1805,26 +1866,20 @@ protected:
   /// ElementType - The element type of the vector.
   QualType ElementType;
 
-  // NumElements - The number of elements in the vector.
-  enum { NumElementsOffset = 2 };
-
-  // AltiVecSpec
-  enum { AltiVecSpecMask = 0x3 };
-
   VectorType(QualType vecType, unsigned nElements, QualType canonType,
       AltiVecSpecific altiVecSpec) :
     Type(Vector, canonType, vecType->isDependentType(),
          vecType->isVariablyModifiedType()), ElementType(vecType) {
-    SubclassBits = (nElements << NumElementsOffset) |
-                   static_cast<unsigned>(altiVecSpec);
+    VectorTypeBits.AltiVecSpec = altiVecSpec;
+    VectorTypeBits.NumElements = nElements;
   }
   
   VectorType(TypeClass tc, QualType vecType, unsigned nElements,
              QualType canonType, AltiVecSpecific altiVecSpec)
     : Type(tc, canonType, vecType->isDependentType(),
            vecType->isVariablyModifiedType()), ElementType(vecType) {
-    SubclassBits = (nElements << NumElementsOffset) |
-                   static_cast<unsigned>(altiVecSpec);
+    VectorTypeBits.AltiVecSpec = altiVecSpec;
+    VectorTypeBits.NumElements = nElements;
   }
   friend class ASTContext;  // ASTContext creates these.
   
@@ -1833,13 +1888,13 @@ protected:
 public:
 
   QualType getElementType() const { return ElementType; }
-  unsigned getNumElements() const { return SubclassBits >> NumElementsOffset; }
+  unsigned getNumElements() const { return VectorTypeBits.NumElements; }
 
   bool isSugared() const { return false; }
   QualType desugar() const { return QualType(this, 0); }
 
   AltiVecSpecific getAltiVecSpecific() const {
-    return AltiVecSpecific(SubclassBits & AltiVecSpecMask);
+    return AltiVecSpecific(VectorTypeBits.AltiVecSpec);
   }
 
   void Profile(llvm::FoldingSetNodeID &ID) {
@@ -1933,31 +1988,6 @@ public:
 class FunctionType : public Type {
   virtual void ANCHOR(); // Key function for FunctionType.
 
-  /// CallConv - The calling convention used by the function, as specified via
-  /// __attribute__((cdecl|stdcall|fastcall|thiscall|pascal)).
-  BITFIELD(CallConv, InitialBitfield, 3);
-
-  /// NoReturn - Indicates if the function type has __attribute__((noreturn)).
-  BOOL_BITFIELD(NoReturn, CallConv);
-
-  /// RegParm - How many arguments to pass inreg.
-  /// The value passed to __attribute__((regparm(x)))
-  BITFIELD(RegParm, NoReturn, 3);
-
-  BITFIELD(ExtInfo, InitialBitfield,
-           CallConvWidth + NoReturnWidth + RegParmWidth);
-
-  /// SubclassInfo
-  BOOL_BITFIELD(SubclassInfo, RegParm);
-
-  /// TypeQuals - Used only by FunctionProtoType, put here to pack with the
-  /// other bitfields.
-  /// The qualifiers are part of FunctionProtoType because...
-  ///
-  /// C++ 8.3.5p4: The return type, the parameter type list and the
-  /// cv-qualifier-seq, [...], are part of the function type.
-  BITFIELD(TypeQuals, SubclassInfo, 3);
-
   // The type returned by the function.
   QualType ResultType;
 
@@ -1980,7 +2010,11 @@ class FunctionType : public Type {
   // * Codegen
 
   class ExtInfo {
-    /// Laid out the same way as they are on FunctionType.
+    enum { CallConvMask = 0x7 };
+    enum { NoReturnMask = 0x8 };
+    enum { RegParmMask = ~(CallConvMask | NoReturnMask),
+           RegParmOffset = 4 };
+
     unsigned Bits;
 
     ExtInfo(unsigned Bits) : Bits(Bits) {}
@@ -1991,18 +2025,18 @@ class FunctionType : public Type {
     // Constructor with no defaults. Use this when you know that you
     // have all the elements (when reading an AST file for example).
     ExtInfo(bool noReturn, unsigned regParm, CallingConv cc) {
-      Bits = EncodeCallConv(cc) |
-             EncodeNoReturn(noReturn) |
-             EncodeRegParm(regParm);
+      Bits = ((unsigned) cc) |
+             (noReturn ? NoReturnMask : 0) |
+             (regParm << RegParmOffset);
     }
 
     // Constructor with all defaults. Use when for example creating a
     // function know to use defaults.
     ExtInfo() : Bits(0) {}
 
-    bool getNoReturn() const { return DecodeNoReturn(Bits); }
-    unsigned getRegParm() const { return DecodeRegParm(Bits); }
-    CallingConv getCC() const { return CallingConv(DecodeCallConv(Bits)); }
+    bool getNoReturn() const { return Bits & NoReturnMask; }
+    unsigned getRegParm() const { return Bits >> RegParmOffset; }
+    CallingConv getCC() const { return CallingConv(Bits & CallConvMask); }
 
     bool operator==(ExtInfo Other) const {
       return Bits == Other.Bits;
@@ -2022,11 +2056,11 @@ class FunctionType : public Type {
     }
 
     ExtInfo withRegParm(unsigned RegParm) const {
-      return ExtInfo((Bits & ~RegParmMask) | EncodeRegParm(RegParm));
+      return ExtInfo((Bits & ~RegParmMask) | (RegParm << RegParmOffset));
     }
 
     ExtInfo withCallingConv(CallingConv cc) const {
-      return ExtInfo((Bits & ~CallConvMask) | EncodeCallConv(cc));
+      return ExtInfo((Bits & ~CallConvMask) | (unsigned) cc);
     }
 
     void Profile(llvm::FoldingSetNodeID &ID) {
@@ -2039,28 +2073,20 @@ protected:
                unsigned typeQuals, QualType Canonical, bool Dependent,
                bool VariablyModified, ExtInfo Info)
     : Type(tc, Canonical, Dependent, VariablyModified), ResultType(res) {
-    SubclassBits = EncodeExtInfo(Info.Bits) |
-                   EncodeSubclassInfo(SubclassInfo) |
-                   EncodeTypeQuals(typeQuals);
+    FunctionTypeBits.ExtInfo = Info.Bits;
+    FunctionTypeBits.SubclassInfo = SubclassInfo;
+    FunctionTypeBits.TypeQuals = typeQuals;
   }
-  bool getSubClassData() const { return DecodeSubclassInfo(SubclassBits); }
-  unsigned getTypeQuals() const { return DecodeTypeQuals(SubclassBits); }
+  bool getSubClassData() const { return FunctionTypeBits.SubclassInfo; }
+  unsigned getTypeQuals() const { return FunctionTypeBits.TypeQuals; }
 public:
 
   QualType getResultType() const { return ResultType; }
   
-  unsigned getRegParmType() const {
-    return DecodeRegParm(SubclassBits);
-  }
-  bool getNoReturnAttr() const {
-    return DecodeNoReturn(SubclassBits);
-  }
-  CallingConv getCallConv() const {
-    return static_cast<CallingConv>(DecodeCallConv(SubclassBits));
-  }
-  ExtInfo getExtInfo() const {
-    return ExtInfo(DecodeExtInfo(SubclassBits));
-  }
+  unsigned getRegParmType() const { return getExtInfo().getRegParm(); }
+  bool getNoReturnAttr() const { return getExtInfo().getNoReturn(); }
+  CallingConv getCallConv() const { return getExtInfo().getCC(); }
+  ExtInfo getExtInfo() const { return ExtInfo(FunctionTypeBits.ExtInfo); }
 
   /// \brief Determine the type of an expression that calls a function of
   /// this type.
@@ -3019,8 +3045,8 @@ public:
 /// with base BuiltinType::ObjCIdType and protocol list [P].  Eventually
 /// this should get its own sugar class to better represent the source.
 class ObjCObjectType : public Type {
-  // SubclassBits stores a count of number of protocols stored after
-  // the ObjCObjectPointerType node.
+  // ObjCObjectType.NumProtocols - the number of protocols stored
+  // after the ObjCObjectPointerType node.
   //
   // These protocols are those written directly on the type.  If
   // protocol qualifiers ever become additive, the iterators will need
@@ -3046,7 +3072,7 @@ protected:
   ObjCObjectType(enum Nonce_ObjCInterface)
     : Type(ObjCInterface, QualType(), false, false),
       BaseType(QualType(this_(), 0)) {
-    SubclassBits = 0;
+    ObjCObjectTypeBits.NumProtocols = 0;
   }
 
 protected:
@@ -3092,7 +3118,7 @@ public:
 
   /// getNumProtocols - Return the number of qualifying protocols in this
   /// interface type, or 0 if there are none.
-  unsigned getNumProtocols() const { return SubclassBits; }
+  unsigned getNumProtocols() const { return ObjCObjectTypeBits.NumProtocols; }
 
   /// \brief Fetch a protocol by index.
   ObjCProtocolDecl *getProtocol(unsigned I) const {
@@ -3763,9 +3789,5 @@ template <typename T> const T *Type::getAs() const {
 }
 
 }  // end namespace clang
-
-#undef BITFIELD
-#undef InitialBitfieldWidth
-#undef InitialBitfieldOffset
 
 #endif
