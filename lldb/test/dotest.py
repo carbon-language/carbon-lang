@@ -488,7 +488,9 @@ for testdir in testdirs:
 # For the time being, let's bracket the test runner within the
 # lldb.SBDebugger.Initialize()/Terminate() pair.
 import lldb, atexit
-lldb.SBDebugger.Initialize()
+# Update: the act of importing lldb now executes lldb.SBDebugger.Initialize(),
+# there's no need to call it a second time.
+#lldb.SBDebugger.Initialize()
 atexit.register(lambda: lldb.SBDebugger.Terminate())
 
 # Create a singleton SBDebugger in the lldb namespace.

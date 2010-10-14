@@ -5,6 +5,9 @@
 # module (which was automatically generated via running swig), and 
 # initializes it to 0.
 #
+# It also calls SBDebugger.Initialize() to initialize the lldb debugger
+# subsystem.
+#
 
 import sys
 
@@ -21,7 +24,7 @@ except IOError:
     print "Error:  Unable to open file for appending: " + output_name
 else:
     f_out.write ("debugger_unique_id = 0\n");
-    f_out.write ("lldb.SBDebugger.Initialize()\n");
+    f_out.write ("SBDebugger.Initialize()\n");
     try:
         f_out.close()
     except IOError:
