@@ -1200,10 +1200,9 @@ let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1 in {
     def TAILJMPr : AXI<(outs), (ins tcGPR:$dst, variable_ops),
                      BrMiscFrm, IIC_Br, "bx\t$dst  @ TAILCALL",
                    []>, Requires<[IsDarwin]> {
-                   let Inst{7-4}   = 0b0001;
-                   let Inst{19-8}  = 0b111111111111;
-                   let Inst{27-20} = 0b00010010;
-                   let Inst{31-28} = 0b1110;
+      bits<4> dst;
+      let Inst{31-4} = 0b1110000100101111111111110001;
+      let Inst{3-0}  = dst;
     }
   }
 
@@ -1232,10 +1231,9 @@ let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1 in {
     def TAILJMPrND : AXI<(outs), (ins tcGPR:$dst, variable_ops),
                      BrMiscFrm, IIC_Br, "bx\t$dst  @ TAILCALL",
                    []>, Requires<[IsNotDarwin]> {
-                   let Inst{7-4}   = 0b0001;
-                   let Inst{19-8}  = 0b111111111111;
-                   let Inst{27-20} = 0b00010010;
-                   let Inst{31-28} = 0b1110;
+      bits<4> dst;
+      let Inst{31-4} = 0b1110000100101111111111110001;
+      let Inst{3-0}  = dst;
     }
   }
 }
