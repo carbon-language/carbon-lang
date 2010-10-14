@@ -859,7 +859,7 @@ static bool EvalPluralExpr(unsigned ValNo, const char *Start, const char *End) {
 /// {1:form0|[2,4]:form1|:form2}
 /// Polish (requires repeated form):
 /// {1:form0|%100=[10,20]:form2|%10=[2,4]:form1|:form2}
-static void HandlePluralModifier(unsigned ValNo,
+static void HandlePluralModifier(const DiagnosticInfo &DInfo, unsigned ValNo,
                                  const char *Argument, unsigned ArgumentLen,
                                  llvm::SmallVectorImpl<char> &OutStr) {
   const char *ArgumentEnd = Argument + ArgumentLen;
@@ -873,7 +873,10 @@ static void HandlePluralModifier(unsigned ValNo,
     if (EvalPluralExpr(ValNo, Argument, ExprEnd)) {
       Argument = ExprEnd + 1;
       ExprEnd = ScanFormat(Argument, ArgumentEnd, '|');
-      OutStr.append(Argument, ExprEnd);
+
+      // Recursively format the result of the plural clause into the
+      // output string.
+      DInfo.FormatDiagnostic(Argument, ExprEnd, OutStr);
       return;
     }
     Argument = ScanFormat(Argument, ArgumentEnd - 1, '|') + 1;
@@ -975,11 +978,13 @@ FormatDiagnostic(const char *DiagStr, const char *DiagEnd,
       int Val = getArgSInt(ArgNo);
 
       if (ModifierIs(Modifier, ModifierLen, "select")) {
-        HandleSelectModifier(*this, (unsigned)Val, Argument, ArgumentLen, OutStr);
+        HandleSelectModifier(*this, (unsigned)Val, Argument, ArgumentLen,
+                             OutStr);
       } else if (ModifierIs(Modifier, ModifierLen, "s")) {
         HandleIntegerSModifier(Val, OutStr);
       } else if (ModifierIs(Modifier, ModifierLen, "plural")) {
-        HandlePluralModifier((unsigned)Val, Argument, ArgumentLen, OutStr);
+        HandlePluralModifier(*this, (unsigned)Val, Argument, ArgumentLen,
+                             OutStr);
       } else if (ModifierIs(Modifier, ModifierLen, "ordinal")) {
         HandleOrdinalModifier((unsigned)Val, OutStr);
       } else {
@@ -996,7 +1001,8 @@ FormatDiagnostic(const char *DiagStr, const char *DiagEnd,
       } else if (ModifierIs(Modifier, ModifierLen, "s")) {
         HandleIntegerSModifier(Val, OutStr);
       } else if (ModifierIs(Modifier, ModifierLen, "plural")) {
-        HandlePluralModifier((unsigned)Val, Argument, ArgumentLen, OutStr);
+        HandlePluralModifier(*this, (unsigned)Val, Argument, ArgumentLen,
+                             OutStr);
       } else if (ModifierIs(Modifier, ModifierLen, "ordinal")) {
         HandleOrdinalModifier(Val, OutStr);
       } else {
