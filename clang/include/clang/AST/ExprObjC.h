@@ -229,13 +229,29 @@ class ObjCPropertyRefExpr : public Expr {
 private:
   ObjCPropertyDecl *AsProperty;
   SourceLocation IdLoc;
-  Stmt *Base;
+  
+  /// \brief When the receiver in property access is 'super', this is
+  /// the location of the 'super' keyword.
+  SourceLocation SuperLoc;
+  
+  /// \brief When the receiver in property access is 'super', this is
+  /// the type associated with 'super' keyword. A null type indicates
+  /// that this is not a 'super' receiver.
+  llvm::PointerUnion<Stmt*, Type*> BaseExprOrSuperType;
+  
 public:
   ObjCPropertyRefExpr(ObjCPropertyDecl *PD, QualType t,
                       SourceLocation l, Expr *base)
     : Expr(ObjCPropertyRefExprClass, t, /*TypeDependent=*/false, 
            base->isValueDependent()), 
-      AsProperty(PD), IdLoc(l), Base(base) {
+      AsProperty(PD), IdLoc(l), BaseExprOrSuperType(base) {
+  }
+  
+  ObjCPropertyRefExpr(ObjCPropertyDecl *PD, QualType t,
+                      SourceLocation l, SourceLocation sl, QualType st)
+  : Expr(ObjCPropertyRefExprClass, t, /*TypeDependent=*/false, false), 
+    AsProperty(PD), IdLoc(l), SuperLoc(sl), 
+    BaseExprOrSuperType(st.getTypePtr()) {
   }
 
   explicit ObjCPropertyRefExpr(EmptyShell Empty)
@@ -243,13 +259,27 @@ public:
 
   ObjCPropertyDecl *getProperty() const { return AsProperty; }
 
-  const Expr *getBase() const { return cast<Expr>(Base); }
-  Expr *getBase() { return cast<Expr>(Base); }
+  const Expr *getBase() const { 
+    return cast<Expr>(BaseExprOrSuperType.get<Stmt*>()); 
+  }
+  Expr *getBase() { 
+    return cast<Expr>(BaseExprOrSuperType.get<Stmt*>()); 
+  }
 
   SourceLocation getLocation() const { return IdLoc; }
+  
+  SourceLocation getSuperLocation() const { return SuperLoc; }
+  QualType getSuperType() const { 
+    Type *t = BaseExprOrSuperType.get<Type*>();
+    return QualType(t, 0); 
+  }
+  bool isSuperReceiver() const { return BaseExprOrSuperType.is<Type*>(); }
 
   virtual SourceRange getSourceRange() const {
-    return SourceRange(getBase()->getLocStart(), IdLoc);
+    return SourceRange(
+                  (BaseExprOrSuperType.is<Stmt*>() ? getBase()->getLocStart() 
+                                                   : getSuperLocation()), 
+                  IdLoc);
   }
 
   static bool classof(const Stmt *T) {
@@ -263,8 +293,10 @@ public:
 private:
   friend class ASTStmtReader;
   void setProperty(ObjCPropertyDecl *D) { AsProperty = D; }
-  void setBase(Expr *base) { Base = base; }
+  void setBase(Expr *base) { BaseExprOrSuperType = base; }
   void setLocation(SourceLocation L) { IdLoc = L; }
+  void setSuperLocation(SourceLocation Loc) { SuperLoc = Loc; }
+  void setSuperType(QualType T) { BaseExprOrSuperType = T.getTypePtr(); }
 };
 
 /// ObjCImplicitSetterGetterRefExpr - A dot-syntax expression to access two
@@ -292,10 +324,22 @@ class ObjCImplicitSetterGetterRefExpr : public Expr {
   // FIXME: Swizzle these into a single pointer.
   Stmt *Base;
   ObjCInterfaceDecl *InterfaceDecl;
-  /// Location of the receiver class in the dot syntax notation
+  /// \brief Location of the receiver class in the dot syntax notation
   /// used to call a class method setter/getter.
   SourceLocation ClassLoc;
 
+  /// \brief When the receiver in dot-syntax expression is 'super',
+  /// this is the location of the 'super' keyword.
+  SourceLocation SuperLoc;
+  
+  /// \brief When the receiver in dot-syntax expression is 'super', this is
+  /// the type associated with 'super' keyword.
+  QualType SuperTy;
+  
+  /// \brief When the receiver in dot-syntax expression is 'super', this is
+  /// set to true.
+  bool IsSuper:1;
+  
 public:
   ObjCImplicitSetterGetterRefExpr(ObjCMethodDecl *getter,
                  QualType t,
@@ -305,7 +349,22 @@ public:
            base->isValueDependent()),
       Setter(setter), Getter(getter), MemberLoc(l), Base(base),
       InterfaceDecl(0), ClassLoc(SourceLocation()) {
+      IsSuper = false;
     }
+  
+  ObjCImplicitSetterGetterRefExpr(ObjCMethodDecl *getter,
+                                  QualType t,
+                                  ObjCMethodDecl *setter,
+                                  SourceLocation l,
+                                  SourceLocation sl, 
+                                  QualType st)
+  : Expr(ObjCImplicitSetterGetterRefExprClass, t, /*TypeDependent=*/false, 
+         false),
+  Setter(setter), Getter(getter), MemberLoc(l),
+  InterfaceDecl(0), ClassLoc(SourceLocation()), 
+  SuperLoc(sl), SuperTy(st), IsSuper(true) {
+  }
+  
   ObjCImplicitSetterGetterRefExpr(ObjCMethodDecl *getter,
                  QualType t,
                  ObjCMethodDecl *setter,
@@ -313,6 +372,7 @@ public:
     : Expr(ObjCImplicitSetterGetterRefExprClass, t, false, false),
       Setter(setter), Getter(getter), MemberLoc(l), Base(0), InterfaceDecl(C),
       ClassLoc(CL) {
+        IsSuper = false;
     }
   explicit ObjCImplicitSetterGetterRefExpr(EmptyShell Empty)
            : Expr(ObjCImplicitSetterGetterRefExprClass, Empty){}
@@ -325,6 +385,8 @@ public:
   void setInterfaceDecl(ObjCInterfaceDecl *D) { InterfaceDecl = D; }
 
   virtual SourceRange getSourceRange() const {
+    if (isSuperReceiver())
+      return SourceRange(getSuperLocation(), MemberLoc);
     if (Base)
       return SourceRange(getBase()->getLocStart(), MemberLoc);
     return SourceRange(ClassLoc, MemberLoc);
@@ -337,6 +399,10 @@ public:
   void setLocation(SourceLocation L) { MemberLoc = L; }
   SourceLocation getClassLoc() const { return ClassLoc; }
   void setClassLoc(SourceLocation L) { ClassLoc = L; }
+  
+  SourceLocation getSuperLocation() const { return SuperLoc; }
+  QualType getSuperType() const { return SuperTy; }
+  bool isSuperReceiver() const { return IsSuper; }
 
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == ObjCImplicitSetterGetterRefExprClass;
@@ -346,6 +412,12 @@ public:
   // Iterators
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
+  
+private:
+  friend class ASTStmtReader;
+  void setSuperLocation(SourceLocation Loc) { SuperLoc = Loc; }
+  void setSuperType(QualType T) { SuperTy = T; }
+  void setSuperReceiver(bool bv) { IsSuper = bv; }
 };
 
 /// \brief An expression that sends a message to the given Objective-C
@@ -736,33 +808,6 @@ public:
   arg_iterator arg_end()   { return getArgs() + NumArgs; }
   const_arg_iterator arg_begin() const { return getArgs(); }
   const_arg_iterator arg_end() const { return getArgs() + NumArgs; }
-};
-
-/// ObjCSuperExpr - Represents the "super" expression in Objective-C,
-/// which refers to the object on which the current method is executing.
-///
-/// FIXME: This class is intended for removal, once its remaining
-/// clients have been altered to represent "super" internally.
-class ObjCSuperExpr : public Expr {
-  SourceLocation Loc;
-public:
-  ObjCSuperExpr(SourceLocation L, QualType Type)
-    : Expr(ObjCSuperExprClass, Type, false, false), Loc(L) { }
-  explicit ObjCSuperExpr(EmptyShell Empty) : Expr(ObjCSuperExprClass, Empty) {}
-
-  SourceLocation getLoc() const { return Loc; }
-  void setLoc(SourceLocation L) { Loc = L; }
-
-  virtual SourceRange getSourceRange() const { return SourceRange(Loc); }
-
-  static bool classof(const Stmt *T) {
-    return T->getStmtClass() == ObjCSuperExprClass;
-  }
-  static bool classof(const ObjCSuperExpr *) { return true; }
-
-  // Iterators
-  virtual child_iterator child_begin();
-  virtual child_iterator child_end();
 };
 
 /// ObjCIsaExpr - Represent X->isa and X.isa when X is an ObjC 'id' type.

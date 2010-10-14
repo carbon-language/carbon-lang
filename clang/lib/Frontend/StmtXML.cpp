@@ -150,7 +150,6 @@ namespace  {
     void VisitObjCImplicitSetterGetterRefExpr(
                         ObjCImplicitSetterGetterRefExpr *Node);
     void VisitObjCIvarRefExpr(ObjCIvarRefExpr *Node);
-    void VisitObjCSuperExpr(ObjCSuperExpr *Node);
 #endif
   };
 }
@@ -426,11 +425,6 @@ void StmtXML::VisitObjCImplicitSetterGetterRefExpr(
   ObjCMethodDecl *Setter = Node->getSetterMethod();
   Doc.addAttribute("Getter", Getter->getSelector().getAsString());
   Doc.addAttribute("Setter", Setter ? Setter->getSelector().getAsString().c_str() : "(null)");
-}
-
-void StmtXML::VisitObjCSuperExpr(ObjCSuperExpr *Node) {
-  DumpExpr(Node);
-  Doc.addAttribute("super", "1");
 }
 
 void StmtXML::VisitObjCIvarRefExpr(ObjCIvarRefExpr *Node) {

@@ -1209,6 +1209,9 @@ Stmt *RewriteObjC::RewritePropertyOrImplicitSetter(BinaryOperator *BinOp, Expr *
   QualType Ty;
   Selector Sel;
   Stmt *Receiver;
+  bool Super = false;
+  QualType SuperTy;
+  SourceLocation SuperLocation;
   // Synthesize a ObjCMessageExpr from a ObjCPropertyRefExpr or ObjCImplicitSetterGetterRefExpr.
   // This allows us to reuse all the fun and games in SynthMessageExpr().
   if (ObjCPropertyRefExpr *PropRefExpr = dyn_cast<ObjCPropertyRefExpr>(BinOp->getLHS())) {
@@ -1216,14 +1219,26 @@ Stmt *RewriteObjC::RewritePropertyOrImplicitSetter(BinaryOperator *BinOp, Expr *
     OMD = PDecl->getSetterMethodDecl();
     Ty = PDecl->getType();
     Sel = PDecl->getSetterName();
-    Receiver = PropRefExpr->getBase();
+    Super = PropRefExpr->isSuperReceiver();
+    if (!Super)
+      Receiver = PropRefExpr->getBase();
+    else {
+      SuperTy = PropRefExpr->getSuperType();
+      SuperLocation = PropRefExpr->getSuperLocation();
+    }
   }
   else if (ObjCImplicitSetterGetterRefExpr *ImplicitRefExpr = 
            dyn_cast<ObjCImplicitSetterGetterRefExpr>(BinOp->getLHS())) {
     OMD = ImplicitRefExpr->getSetterMethod();
     Sel = OMD->getSelector();
     Ty = ImplicitRefExpr->getType();
-    Receiver = ImplicitRefExpr->getBase();
+    Super = ImplicitRefExpr->isSuperReceiver();
+    if (!Super)
+      Receiver = ImplicitRefExpr->getBase();
+    else {
+      SuperTy = ImplicitRefExpr->getSuperType();
+      SuperLocation = ImplicitRefExpr->getSuperLocation();
+    }
   }
   
   assert(OMD && "RewritePropertyOrImplicitSetter - null OMD");
@@ -1236,13 +1251,13 @@ Stmt *RewriteObjC::RewritePropertyOrImplicitSetter(BinaryOperator *BinOp, Expr *
       Receiver = PropGetters[Exp];
   
   ObjCMessageExpr *MsgExpr;
-  if (isa<ObjCSuperExpr>(Receiver))
+  if (Super)
     MsgExpr = ObjCMessageExpr::Create(*Context, 
                                       Ty.getNonReferenceType(),
                                       /*FIXME?*/SourceLocation(),
-                                      Receiver->getLocStart(),
+                                      SuperLocation,
                                       /*IsInstanceSuper=*/true,
-                                      cast<Expr>(Receiver)->getType(),
+                                      SuperTy,
                                       Sel, OMD,
                                       &ExprVec[0], 1,
                                       /*FIXME:*/SourceLocation());
@@ -1272,20 +1287,35 @@ Stmt *RewriteObjC::RewritePropertyOrImplicitGetter(Expr *PropOrGetterRefExpr) {
   ObjCMethodDecl *OMD = 0;
   QualType Ty;
   Selector Sel;
+  bool Super = false;
+  QualType SuperTy;
+  SourceLocation SuperLocation;
   if (ObjCPropertyRefExpr *PropRefExpr = 
         dyn_cast<ObjCPropertyRefExpr>(PropOrGetterRefExpr)) {
     ObjCPropertyDecl *PDecl = PropRefExpr->getProperty();
     OMD = PDecl->getGetterMethodDecl();
-    Receiver = PropRefExpr->getBase();
     Ty = PDecl->getType();
     Sel = PDecl->getGetterName();
+    Super = PropRefExpr->isSuperReceiver();
+    if (!Super)
+      Receiver = PropRefExpr->getBase();
+    else {
+      SuperTy = PropRefExpr->getSuperType();
+      SuperLocation = PropRefExpr->getSuperLocation();
+    }
   }
   else if (ObjCImplicitSetterGetterRefExpr *ImplicitRefExpr = 
             dyn_cast<ObjCImplicitSetterGetterRefExpr>(PropOrGetterRefExpr)) {
     OMD = ImplicitRefExpr->getGetterMethod();
-    Receiver = ImplicitRefExpr->getBase();
     Sel = OMD->getSelector();
     Ty = ImplicitRefExpr->getType();
+    Super = ImplicitRefExpr->isSuperReceiver();
+    if (!Super)
+      Receiver = ImplicitRefExpr->getBase();
+    else {
+      SuperTy = ImplicitRefExpr->getSuperType();
+      SuperLocation = ImplicitRefExpr->getSuperLocation();
+    }
   }
   
   assert (OMD && "RewritePropertyOrImplicitGetter - OMD is null");
@@ -1296,13 +1326,13 @@ Stmt *RewriteObjC::RewritePropertyOrImplicitGetter(Expr *PropOrGetterRefExpr) {
       Receiver = PropGetters[Exp];
   
   ObjCMessageExpr *MsgExpr;
-  if (isa<ObjCSuperExpr>(Receiver))
+  if (Super)
     MsgExpr = ObjCMessageExpr::Create(*Context, 
                                       Ty.getNonReferenceType(),
-                                      /*FIXME:*/SourceLocation(),
-                                      Receiver->getLocStart(),
+                                      /*FIXME?*/SourceLocation(),
+                                      SuperLocation,
                                       /*IsInstanceSuper=*/true,
-                                      cast<Expr>(Receiver)->getType(),
+                                      SuperTy,
                                       Sel, OMD,
                                       0, 0, 
                                       /*FIXME:*/SourceLocation());

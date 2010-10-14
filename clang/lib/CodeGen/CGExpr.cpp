@@ -552,9 +552,6 @@ LValue CodeGenFunction::EmitLValue(const Expr *E) {
     return EmitObjCPropertyRefLValue(cast<ObjCPropertyRefExpr>(E));
   case Expr::ObjCImplicitSetterGetterRefExprClass:
     return EmitObjCKVCRefLValue(cast<ObjCImplicitSetterGetterRefExpr>(E));
-  case Expr::ObjCSuperExprClass:
-    return EmitObjCSuperExprLValue(cast<ObjCSuperExpr>(E));
-
   case Expr::StmtExprClass:
     return EmitStmtExprLValue(cast<StmtExpr>(E));
   case Expr::UnaryOperatorClass:
@@ -2080,10 +2077,6 @@ LValue CodeGenFunction::EmitObjCKVCRefLValue(
   // This is a special l-value that just issues sends when we load or store
   // through it.
   return LValue::MakeKVCRef(E, E->getType().getCVRQualifiers());
-}
-
-LValue CodeGenFunction::EmitObjCSuperExprLValue(const ObjCSuperExpr *E) {
-  return EmitUnsupportedLValue(E, "use of super");
 }
 
 LValue CodeGenFunction::EmitStmtExprLValue(const StmtExpr *E) {

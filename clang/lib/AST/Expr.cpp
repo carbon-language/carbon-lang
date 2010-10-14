@@ -2348,22 +2348,34 @@ Stmt::child_iterator ObjCIvarRefExpr::child_begin() { return &Base; }
 Stmt::child_iterator ObjCIvarRefExpr::child_end() { return &Base+1; }
 
 // ObjCPropertyRefExpr
-Stmt::child_iterator ObjCPropertyRefExpr::child_begin() { return &Base; }
-Stmt::child_iterator ObjCPropertyRefExpr::child_end() { return &Base+1; }
+Stmt::child_iterator ObjCPropertyRefExpr::child_begin()
+{ 
+  if (BaseExprOrSuperType.is<Stmt*>()) {
+    // Hack alert!
+    return reinterpret_cast<Stmt**> (&BaseExprOrSuperType);
+  }
+  return child_iterator(); 
+}
+
+Stmt::child_iterator ObjCPropertyRefExpr::child_end()
+{ return BaseExprOrSuperType.is<Stmt*>() ? 
+          reinterpret_cast<Stmt**> (&BaseExprOrSuperType)+1 : 
+          child_iterator(); 
+}
 
 // ObjCImplicitSetterGetterRefExpr
 Stmt::child_iterator ObjCImplicitSetterGetterRefExpr::child_begin() {
-  // If this is accessing a class member, skip that entry.
-  if (Base) return &Base;
-  return &Base+1;
+  // If this is accessing a class member or super, skip that entry.
+  // Technically, 2nd condition is sufficient. But I want to be verbose
+  if (isSuperReceiver() || !Base)
+    return child_iterator();
+  return &Base;
 }
 Stmt::child_iterator ObjCImplicitSetterGetterRefExpr::child_end() {
+  if (isSuperReceiver() || !Base)
+    return child_iterator();
   return &Base+1;
 }
-
-// ObjCSuperExpr
-Stmt::child_iterator ObjCSuperExpr::child_begin() { return child_iterator(); }
-Stmt::child_iterator ObjCSuperExpr::child_end() { return child_iterator(); }
 
 // ObjCIsaExpr
 Stmt::child_iterator ObjCIsaExpr::child_begin() { return &Base; }

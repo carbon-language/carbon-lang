@@ -121,7 +121,6 @@ def ObjCProtocolExpr : DStmt<Expr>;
 def ObjCIvarRefExpr : DStmt<Expr>;
 def ObjCPropertyRefExpr : DStmt<Expr>;
 def ObjCImplicitSetterGetterRefExpr : DStmt<Expr>;
-def ObjCSuperExpr : DStmt<Expr>;
 def ObjCIsaExpr : DStmt<Expr>;
 
 // Clang Extensions.

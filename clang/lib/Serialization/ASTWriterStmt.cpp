@@ -103,7 +103,6 @@ namespace clang {
     void VisitObjCImplicitSetterGetterRefExpr(
                         ObjCImplicitSetterGetterRefExpr *E);
     void VisitObjCMessageExpr(ObjCMessageExpr *E);
-    void VisitObjCSuperExpr(ObjCSuperExpr *E);
     void VisitObjCIsaExpr(ObjCIsaExpr *E);
 
     // Objective-C Statements
@@ -824,7 +823,12 @@ void ASTStmtWriter::VisitObjCPropertyRefExpr(ObjCPropertyRefExpr *E) {
   VisitExpr(E);
   Writer.AddDeclRef(E->getProperty(), Record);
   Writer.AddSourceLocation(E->getLocation(), Record);
-  Writer.AddStmt(E->getBase());
+  Writer.AddSourceLocation(E->getSuperLocation(), Record);
+  if (E->isSuperReceiver())
+    Writer.AddTypeRef(E->getSuperType(), Record);
+  else
+    Writer.AddStmt(E->getBase());
+  
   Code = serialization::EXPR_OBJC_PROPERTY_REF_EXPR;
 }
 
@@ -839,6 +843,9 @@ void ASTStmtWriter::VisitObjCImplicitSetterGetterRefExpr(
   Writer.AddStmt(E->getBase());
   Writer.AddSourceLocation(E->getLocation(), Record);
   Writer.AddSourceLocation(E->getClassLoc(), Record);
+  Writer.AddSourceLocation(E->getSuperLocation(), Record);
+  Writer.AddTypeRef(E->getSuperType(), Record);
+  Record.push_back(E->isSuperReceiver());
   Code = serialization::EXPR_OBJC_KVC_REF_EXPR;
 }
 
@@ -877,12 +884,6 @@ void ASTStmtWriter::VisitObjCMessageExpr(ObjCMessageExpr *E) {
        Arg != ArgEnd; ++Arg)
     Writer.AddStmt(*Arg);
   Code = serialization::EXPR_OBJC_MESSAGE_EXPR;
-}
-
-void ASTStmtWriter::VisitObjCSuperExpr(ObjCSuperExpr *E) {
-  VisitExpr(E);
-  Writer.AddSourceLocation(E->getLoc(), Record);
-  Code = serialization::EXPR_OBJC_SUPER_EXPR;
 }
 
 void ASTStmtWriter::VisitObjCForCollectionStmt(ObjCForCollectionStmt *S) {

@@ -336,7 +336,9 @@ ObjCMethodDecl *Sema::LookupPrivateInstanceMethod(Selector Sel,
 ExprResult Sema::
 HandleExprPropertyRefExpr(const ObjCObjectPointerType *OPT,
                           Expr *BaseExpr, DeclarationName MemberName,
-                          SourceLocation MemberLoc) {
+                          SourceLocation MemberLoc,
+                          SourceLocation SuperLoc, QualType SuperType,
+                          bool Super) {
   const ObjCInterfaceType *IFaceT = OPT->getInterfaceType();
   ObjCInterfaceDecl *IFace = IFaceT->getDecl();
   IdentifierInfo *Member = MemberName.getAsIdentifierInfo();
@@ -351,8 +353,13 @@ HandleExprPropertyRefExpr(const ObjCObjectPointerType *OPT,
     ObjCMethodDecl *Getter = IFace->lookupInstanceMethod(Sel);
     if (DiagnosePropertyAccessorMismatch(PD, Getter, MemberLoc))
       ResTy = Getter->getSendResultType();
-    return Owned(new (Context) ObjCPropertyRefExpr(PD, ResTy,
-                                                   MemberLoc, BaseExpr));
+    if (Super)
+      return Owned(new (Context) ObjCPropertyRefExpr(PD, ResTy,
+                                                     MemberLoc, 
+                                                     SuperLoc, SuperType));
+    else
+      return Owned(new (Context) ObjCPropertyRefExpr(PD, ResTy,
+                                                     MemberLoc, BaseExpr));
   }
   // Check protocols on qualified interfaces.
   for (ObjCObjectPointerType::qual_iterator I = OPT->qual_begin(),
@@ -361,9 +368,14 @@ HandleExprPropertyRefExpr(const ObjCObjectPointerType *OPT,
       // Check whether we can reference this property.
       if (DiagnoseUseOfDecl(PD, MemberLoc))
         return ExprError();
-
+      if (Super)
       return Owned(new (Context) ObjCPropertyRefExpr(PD, PD->getType(),
-                                                     MemberLoc, BaseExpr));
+                                                     MemberLoc, 
+                                                     SuperLoc, SuperType));
+      else
+        return Owned(new (Context) ObjCPropertyRefExpr(PD, PD->getType(),
+                                                       MemberLoc,
+                                                       BaseExpr));
     }
   // If that failed, look for an "implicit" property by seeing if the nullary
   // selector is implemented.
@@ -407,8 +419,15 @@ HandleExprPropertyRefExpr(const ObjCObjectPointerType *OPT,
   if (Getter) {
     QualType PType;
     PType = Getter->getSendResultType();
-    return Owned(new (Context) ObjCImplicitSetterGetterRefExpr(Getter, PType,
-                                    Setter, MemberLoc, BaseExpr));
+    if (Super)
+      return Owned(new (Context) ObjCImplicitSetterGetterRefExpr(Getter, PType,
+                                    Setter, MemberLoc,
+                                    SuperLoc, SuperType));
+    else
+      return Owned(new (Context) ObjCImplicitSetterGetterRefExpr(Getter, PType,
+                                                                 Setter, MemberLoc, 
+                                                                 BaseExpr));
+
   }
 
   // Attempt to correct for typos in property names.
@@ -422,7 +441,8 @@ HandleExprPropertyRefExpr(const ObjCObjectPointerType *OPT,
     ObjCPropertyDecl *Property = Res.getAsSingle<ObjCPropertyDecl>();
     Diag(Property->getLocation(), diag::note_previous_decl)
       << Property->getDeclName();
-    return HandleExprPropertyRefExpr(OPT, BaseExpr, TypoResult, MemberLoc);
+    return HandleExprPropertyRefExpr(OPT, BaseExpr, TypoResult, MemberLoc,
+                                     SuperLoc, SuperType, Super);
   }
   
   Diag(MemberLoc, diag::err_property_not_found)
@@ -453,11 +473,11 @@ ActOnClassPropertyRefExpr(IdentifierInfo &receiverName,
           QualType T = 
             Context.getObjCInterfaceType(CurMethod->getClassInterface());
           T = Context.getObjCObjectPointerType(T);
-          Expr *SuperExpr = new (Context) ObjCSuperExpr(receiverNameLoc, T);
         
           return HandleExprPropertyRefExpr(T->getAsObjCInterfacePointerType(),
-                                           SuperExpr, &propertyName,
-                                           propertyNameLoc);
+                                           /*BaseExpr*/0, &propertyName,
+                                           propertyNameLoc,
+                                           receiverNameLoc, T, true);
         }
 
         // Otherwise, if this is a class method, try dispatching to our

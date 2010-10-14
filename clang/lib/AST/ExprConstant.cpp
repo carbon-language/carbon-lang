@@ -2468,7 +2468,6 @@ static ICEDiag CheckICE(const Expr* E, ASTContext &Ctx) {
   case Expr::ObjCIvarRefExprClass:
   case Expr::ObjCPropertyRefExprClass:
   case Expr::ObjCImplicitSetterGetterRefExprClass:
-  case Expr::ObjCSuperExprClass:
   case Expr::ObjCIsaExprClass:
   case Expr::ShuffleVectorExprClass:
   case Expr::BlockExprClass:

@@ -509,16 +509,21 @@ void StmtPrinter::VisitObjCIvarRefExpr(ObjCIvarRefExpr *Node) {
 }
 
 void StmtPrinter::VisitObjCPropertyRefExpr(ObjCPropertyRefExpr *Node) {
-  if (Node->getBase()) {
+  if (Node->isSuperReceiver())
+    OS << "super.";
+  else if (Node->getBase()) {
     PrintExpr(Node->getBase());
     OS << ".";
   }
+
   OS << Node->getProperty()->getName();
 }
 
 void StmtPrinter::VisitObjCImplicitSetterGetterRefExpr(
                                         ObjCImplicitSetterGetterRefExpr *Node) {
-  if (Node->getBase()) {
+  if (Node->isSuperReceiver())
+    OS << "super.";
+  else if (Node->getBase()) {
     PrintExpr(Node->getBase());
     OS << ".";
   }
@@ -1298,9 +1303,6 @@ void StmtPrinter::VisitObjCMessageExpr(ObjCMessageExpr *Mess) {
   OS << "]";
 }
 
-void StmtPrinter::VisitObjCSuperExpr(ObjCSuperExpr *) {
-  OS << "super";
-}
 
 void StmtPrinter::VisitBlockExpr(BlockExpr *Node) {
   BlockDecl *BD = Node->getBlockDecl();

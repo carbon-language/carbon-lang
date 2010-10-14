@@ -153,7 +153,6 @@ CXCursor cxcursor::MakeCXCursor(Stmt *S, Decl *Parent, ASTUnit *TU) {
   case Stmt::ObjCSelectorExprClass:   
   case Stmt::ObjCProtocolExprClass:   
   case Stmt::ObjCImplicitSetterGetterRefExprClass: 
-  case Stmt::ObjCSuperExprClass:     
   case Stmt::ObjCIsaExprClass:       
   case Stmt::ShuffleVectorExprClass: 
   case Stmt::BlockExprClass:  

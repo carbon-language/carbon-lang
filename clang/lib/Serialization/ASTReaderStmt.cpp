@@ -122,7 +122,6 @@ namespace clang {
     void VisitObjCImplicitSetterGetterRefExpr(
                             ObjCImplicitSetterGetterRefExpr *E);
     void VisitObjCMessageExpr(ObjCMessageExpr *E);
-    void VisitObjCSuperExpr(ObjCSuperExpr *E);
     void VisitObjCIsaExpr(ObjCIsaExpr *E);
 
     void VisitObjCForCollectionStmt(ObjCForCollectionStmt *);
@@ -843,7 +842,13 @@ void ASTStmtReader::VisitObjCPropertyRefExpr(ObjCPropertyRefExpr *E) {
   VisitExpr(E);
   E->setProperty(cast<ObjCPropertyDecl>(Reader.GetDecl(Record[Idx++])));
   E->setLocation(ReadSourceLocation(Record, Idx));
-  E->setBase(Reader.ReadSubExpr());
+  E->SuperLoc = ReadSourceLocation(Record, Idx);
+  if (E->isSuperReceiver()) {
+    QualType T = Reader.GetType(Record[Idx++]);
+    E->BaseExprOrSuperType = T.getTypePtr();
+  }
+  else
+    E->setBase(Reader.ReadSubExpr());
 }
 
 void ASTStmtReader::VisitObjCImplicitSetterGetterRefExpr(
@@ -858,6 +863,9 @@ void ASTStmtReader::VisitObjCImplicitSetterGetterRefExpr(
   E->setBase(Reader.ReadSubExpr());
   E->setLocation(ReadSourceLocation(Record, Idx));
   E->setClassLoc(ReadSourceLocation(Record, Idx));
+  E->SuperLoc = ReadSourceLocation(Record, Idx);
+  E->SuperTy = Reader.GetType(Record[Idx++]);
+  E->IsSuper = Record[Idx++];
 }
 
 void ASTStmtReader::VisitObjCMessageExpr(ObjCMessageExpr *E) {
@@ -896,11 +904,6 @@ void ASTStmtReader::VisitObjCMessageExpr(ObjCMessageExpr *E) {
 
   for (unsigned I = 0, N = E->getNumArgs(); I != N; ++I)
     E->setArg(I, Reader.ReadSubExpr());
-}
-
-void ASTStmtReader::VisitObjCSuperExpr(ObjCSuperExpr *E) {
-  VisitExpr(E);
-  E->setLoc(ReadSourceLocation(Record, Idx));
 }
 
 void ASTStmtReader::VisitObjCForCollectionStmt(ObjCForCollectionStmt *S) {
@@ -1630,9 +1633,6 @@ Stmt *ASTReader::ReadStmtFromStream(PerFileData &F) {
     case EXPR_OBJC_MESSAGE_EXPR:
       S = ObjCMessageExpr::CreateEmpty(*Context,
                                      Record[ASTStmtReader::NumExprFields]);
-      break;
-    case EXPR_OBJC_SUPER_EXPR:
-      S = new (Context) ObjCSuperExpr(Empty);
       break;
     case EXPR_OBJC_ISA:
       S = new (Context) ObjCIsaExpr(Empty);

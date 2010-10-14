@@ -534,7 +534,7 @@ RValue CodeGenFunction::EmitObjCPropertyGet(const Expr *Exp,
   // FIXME: Split it into two separate routines.
   if (const ObjCPropertyRefExpr *E = dyn_cast<ObjCPropertyRefExpr>(Exp)) {
     Selector S = E->getProperty()->getGetterName();
-    if (isa<ObjCSuperExpr>(E->getBase()))
+    if (E->isSuperReceiver())
       return EmitObjCSuperPropertyGet(E, S, Return);
     return CGM.getObjCRuntime().
              GenerateMessageSend(*this, Return, Exp->getType(), S,
@@ -548,7 +548,7 @@ RValue CodeGenFunction::EmitObjCPropertyGet(const Expr *Exp,
     if (KE->getInterfaceDecl()) {
       const ObjCInterfaceDecl *OID = KE->getInterfaceDecl();
       Receiver = CGM.getObjCRuntime().GetClass(Builder, OID);
-    } else if (isa<ObjCSuperExpr>(KE->getBase()))
+    } else if (KE->isSuperReceiver())
       return EmitObjCSuperPropertyGet(KE, S, Return);
     else
       Receiver = EmitScalarExpr(KE->getBase());
@@ -586,7 +586,7 @@ void CodeGenFunction::EmitObjCPropertySet(const Expr *Exp,
   // FIXME: Split it into two separate routines.
   if (const ObjCPropertyRefExpr *E = dyn_cast<ObjCPropertyRefExpr>(Exp)) {
     Selector S = E->getProperty()->getSetterName();
-    if (isa<ObjCSuperExpr>(E->getBase())) {
+    if (E->isSuperReceiver()) {
       EmitObjCSuperPropertySet(E, S, Src);
       return;
     }
@@ -605,7 +605,7 @@ void CodeGenFunction::EmitObjCPropertySet(const Expr *Exp,
     if (E->getInterfaceDecl()) {
       const ObjCInterfaceDecl *OID = E->getInterfaceDecl();
       Receiver = CGM.getObjCRuntime().GetClass(Builder, OID);
-    } else if (isa<ObjCSuperExpr>(E->getBase())) {
+    } else if (E->isSuperReceiver()) {
       EmitObjCSuperPropertySet(E, S, Src);
       return;
     } else

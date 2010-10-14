@@ -3307,7 +3307,8 @@ Sema::LookupMemberExpr(LookupResult &R, Expr *&BaseExpr,
           return ExprError();
 
         return Owned(new (Context) ObjCPropertyRefExpr(PD, PD->getType(),
-                                                       MemberLoc, BaseExpr));
+                                                       MemberLoc, 
+                                                       BaseExpr));
       }
       if (ObjCMethodDecl *OMD = dyn_cast<ObjCMethodDecl>(PMDecl)) {
         // Check the use of this method.
@@ -3337,7 +3338,8 @@ Sema::LookupMemberExpr(LookupResult &R, Expr *&BaseExpr,
   if (!IsArrow)
     if (const ObjCObjectPointerType *OPT =
           BaseType->getAsObjCInterfacePointerType())
-      return HandleExprPropertyRefExpr(OPT, BaseExpr, MemberName, MemberLoc);
+      return HandleExprPropertyRefExpr(OPT, BaseExpr, MemberName, MemberLoc,
+                                       SourceLocation(), QualType(), false);
 
   // Handle the following exceptional case (*Obj).isa.
   if (!IsArrow &&
@@ -6018,7 +6020,10 @@ static bool IsReadonlyProperty(Expr *E, Sema &S) {
   if (E->getStmtClass() == Expr::ObjCPropertyRefExprClass) {
     const ObjCPropertyRefExpr* PropExpr = cast<ObjCPropertyRefExpr>(E);
     if (ObjCPropertyDecl *PDecl = PropExpr->getProperty()) {
-      QualType BaseType = PropExpr->getBase()->getType();
+      QualType BaseType = PropExpr->isSuperReceiver() ? 
+                            PropExpr->getSuperType() :  
+                            PropExpr->getBase()->getType();
+      
       if (const ObjCObjectPointerType *OPT =
             BaseType->getAsObjCInterfacePointerType())
         if (ObjCInterfaceDecl *IFace = OPT->getInterfaceDecl())

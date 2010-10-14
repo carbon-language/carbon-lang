@@ -1610,7 +1610,6 @@ void CXXNameMangler::mangleExpression(const Expr *E, unsigned Arity) {
   case Expr::ObjCProtocolExprClass:
   case Expr::ObjCSelectorExprClass:
   case Expr::ObjCStringLiteralClass:
-  case Expr::ObjCSuperExprClass:
   case Expr::OffsetOfExprClass:
   case Expr::PredefinedExprClass:
   case Expr::ShuffleVectorExprClass:

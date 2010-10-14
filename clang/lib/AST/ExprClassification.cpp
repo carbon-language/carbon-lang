@@ -109,7 +109,6 @@ static Cl::Kinds ClassifyInternal(ASTContext &Ctx, const Expr *E) {
   case Expr::CXXThrowExprClass:
   case Expr::ShuffleVectorExprClass:
   case Expr::IntegerLiteralClass:
-  case Expr::ObjCSuperExprClass:
   case Expr::CharacterLiteralClass:
   case Expr::AddrLabelExprClass:
   case Expr::CXXDeleteExprClass:

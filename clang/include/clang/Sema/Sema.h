@@ -3786,7 +3786,9 @@ public:
   HandleExprPropertyRefExpr(const ObjCObjectPointerType *OPT,
                             Expr *BaseExpr,
                             DeclarationName MemberName,
-                            SourceLocation MemberLoc);
+                            SourceLocation MemberLoc,
+                            SourceLocation SuperLoc, QualType SuperType,
+                            bool Super);
 
   ExprResult
   ActOnClassPropertyRefExpr(IdentifierInfo &receiverName,

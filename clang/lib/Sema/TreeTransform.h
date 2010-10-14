@@ -1886,14 +1886,26 @@ public:
   /// Subclasses may override this routine to provide different behavior.  
   ExprResult RebuildObjCImplicitSetterGetterRefExpr(
                                                         ObjCMethodDecl *Getter,
-                                                          QualType T,
+                                                        QualType T,
                                                         ObjCMethodDecl *Setter,
                                                         SourceLocation NameLoc,
-                                                          Expr *Base) {
+                                                        Expr *Base,
+                                                        SourceLocation SuperLoc,
+                                                        QualType SuperTy, 
+                                                        bool Super) {
     // Since these expressions can only be value-dependent, we do not need to
     // perform semantic analysis again.
-    return Owned(
-             new (getSema().Context) ObjCImplicitSetterGetterRefExpr(Getter, T,
+    if (Super)
+      return Owned(
+                   new (getSema().Context) ObjCImplicitSetterGetterRefExpr(Getter, T,
+                                                                           Setter,
+                                                                           NameLoc,
+                                                                           SuperLoc,
+                                                                           SuperTy));
+    else
+      return Owned(
+                   new (getSema().Context) ObjCImplicitSetterGetterRefExpr(
+                                                                     Getter, T,
                                                                      Setter,
                                                                      NameLoc,
                                                                      Base));
@@ -6146,6 +6158,11 @@ TreeTransform<Derived>::TransformObjCIvarRefExpr(ObjCIvarRefExpr *E) {
 template<typename Derived>
 ExprResult
 TreeTransform<Derived>::TransformObjCPropertyRefExpr(ObjCPropertyRefExpr *E) {
+  // 'super' never changes. Property never changes. Just retain the existing
+  // expression.
+  if (E->isSuperReceiver())
+    return SemaRef.Owned(E->Retain());
+  
   // Transform the base expression.
   ExprResult Base = getDerived().TransformExpr(E->getBase());
   if (Base.isInvalid())
@@ -6166,6 +6183,11 @@ template<typename Derived>
 ExprResult
 TreeTransform<Derived>::TransformObjCImplicitSetterGetterRefExpr(
                                           ObjCImplicitSetterGetterRefExpr *E) {
+  // If this implicit setter/getter refers to super, it cannot have any
+  // dependent parts. Just retain the existing declaration.
+  if (E->isSuperReceiver())
+    return SemaRef.Owned(E->Retain());
+  
   // If this implicit setter/getter refers to class methods, it cannot have any
   // dependent parts. Just retain the existing declaration.
   if (E->getInterfaceDecl())
@@ -6185,18 +6207,14 @@ TreeTransform<Derived>::TransformObjCImplicitSetterGetterRefExpr(
   
   return getDerived().RebuildObjCImplicitSetterGetterRefExpr(
                                                           E->getGetterMethod(),
-                                                             E->getType(),
+                                                          E->getType(),
                                                           E->getSetterMethod(),
-                                                             E->getLocation(),
-                                                             Base.get());
+                                                          E->getLocation(),
+                                                          Base.get(),
+                                                          E->getSuperLocation(), 
+                                                          E->getSuperType(),
+                                                          E->isSuperReceiver());
                                                              
-}
-
-template<typename Derived>
-ExprResult
-TreeTransform<Derived>::TransformObjCSuperExpr(ObjCSuperExpr *E) {
-  // Can never occur in a dependent context.
-  return SemaRef.Owned(E->Retain());
 }
 
 template<typename Derived>
