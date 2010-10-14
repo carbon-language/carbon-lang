@@ -7,6 +7,7 @@
 
 struct S1 {
   void S1_method(); // This should not be deserialized.
+  virtual void S1_keyfunc();
 };
 
 

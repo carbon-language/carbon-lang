@@ -770,6 +770,11 @@ void ASTDeclWriter::VisitCXXRecordDecl(CXXRecordDecl *D) {
     Record.push_back(CXXRecNotTemplate);
   }
 
+  // Store the key function to avoid deserializing every method so we can
+  // compute it.
+  if (D->IsDefinition)
+    Writer.AddDeclRef(Context.getKeyFunction(D), Record);
+
   Code = serialization::DECL_CXX_RECORD;
 }
 

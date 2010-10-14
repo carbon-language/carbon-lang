@@ -833,6 +833,15 @@ void ASTDeclReader::VisitCXXRecordDecl(CXXRecordDecl *D) {
     break;
   }
   }
+
+  // Load the key function to avoid deserializing every method so we can
+  // compute it.
+  if (D->IsDefinition) {
+    CXXMethodDecl *Key
+        = cast_or_null<CXXMethodDecl>(Reader.GetDecl(Record[Idx++]));
+    if (Key)
+      C.KeyFunctions[D] = Key;
+  }
 }
 
 void ASTDeclReader::VisitCXXMethodDecl(CXXMethodDecl *D) {

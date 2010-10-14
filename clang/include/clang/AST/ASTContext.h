@@ -287,7 +287,9 @@ class ASTContext {
   /// \brief The current C++ ABI.
   llvm::OwningPtr<CXXABI> ABI;
   CXXABI *createCXXABI(const TargetInfo &T);
-  
+
+  friend class ASTDeclReader;
+
 public:
   const TargetInfo &Target;
   IdentifierTable &Idents;

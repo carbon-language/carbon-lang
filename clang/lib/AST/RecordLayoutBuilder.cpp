@@ -1712,9 +1712,6 @@ const CXXMethodDecl *ASTContext::getKeyFunction(const CXXRecordDecl *RD) {
   const CXXMethodDecl *&Entry = KeyFunctions[RD];
   if (!Entry)
     Entry = RecordLayoutBuilder::ComputeKeyFunction(RD);
-  else
-    assert(Entry == RecordLayoutBuilder::ComputeKeyFunction(RD) &&
-           "Key function changed!");
 
   return Entry;
 }
