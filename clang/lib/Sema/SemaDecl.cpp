@@ -6056,7 +6056,9 @@ void Sema::ActOnStartCXXMemberDeclarations(Scope *S, Decl *TagD,
                             CurContext, Record->getLocation(),
                             Record->getIdentifier(),
                             Record->getTagKeywordLoc(),
-                            Record);
+                            /*PrevDecl=*/0,
+                            /*DelayTypeCreation=*/true);
+  Context.getTypeDeclType(InjectedClassName, Record);
   InjectedClassName->setImplicit();
   InjectedClassName->setAccess(AS_public);
   if (ClassTemplateDecl *Template = Record->getDescribedClassTemplate())
