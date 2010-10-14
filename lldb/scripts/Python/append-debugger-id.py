@@ -18,14 +18,6 @@ else:
 
 # print "output_name is '" + output_name + "'"
 
-try:
-    f_out = open (output_name, 'a')
-except IOError:
-    print "Error:  Unable to open file for appending: " + output_name
-else:
-    f_out.write ("debugger_unique_id = 0\n");
-    f_out.write ("SBDebugger.Initialize()\n");
-    try:
-        f_out.close()
-    except IOError:
-        print "Error occurred while close file."
+with open(output_name, 'a') as f_out:
+    f_out.write("debugger_unique_id = 0\n")
+    f_out.write("SBDebugger.Initialize()\n")
