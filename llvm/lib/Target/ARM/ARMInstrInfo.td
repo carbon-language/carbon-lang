@@ -1686,20 +1686,20 @@ def : ARMPat<(or GPR:$src, 0xffff0000), (MOVTi16 GPR:$src, 0xffff)>,
       Requires<[IsARM, HasV6T2]>;
 
 let Uses = [CPSR] in
-def RRX: AsI1<0b1101, (outs GPR:$Rd), (ins GPR:$Rm), Pseudo, IIC_iMOVsi,
-              "rrx", "\t$Rd, $Rm",
-              [(set GPR:$Rd, (ARMrrx GPR:$Rm))]>, UnaryDP;
+def RRX: PseudoInst<(outs GPR:$Rd), (ins GPR:$Rm), IIC_iMOVsi, "",
+                    [(set GPR:$Rd, (ARMrrx GPR:$Rm))]>, UnaryDP,
+                    Requires<[IsARM]>;
 
 // These aren't really mov instructions, but we have to define them this way
 // due to flag operands.
 
 let Defs = [CPSR] in {
-def MOVsrl_flag : AI1<0b1101, (outs GPR:$dst), (ins GPR:$src), Pseudo,
-                      IIC_iMOVsi, "movs", "\t$dst, $src, lsr #1",
-                      [(set GPR:$dst, (ARMsrl_flag GPR:$src))]>, UnaryDP;
-def MOVsra_flag : AI1<0b1101, (outs GPR:$dst), (ins GPR:$src), Pseudo,
-                      IIC_iMOVsi, "movs", "\t$dst, $src, asr #1",
-                      [(set GPR:$dst, (ARMsra_flag GPR:$src))]>, UnaryDP;
+def MOVsrl_flag : PseudoInst<(outs GPR:$dst), (ins GPR:$src), IIC_iMOVsi, "",
+                      [(set GPR:$dst, (ARMsrl_flag GPR:$src))]>, UnaryDP,
+                      Requires<[IsARM]>;
+def MOVsra_flag : PseudoInst<(outs GPR:$dst), (ins GPR:$src), IIC_iMOVsi, "",
+                      [(set GPR:$dst, (ARMsra_flag GPR:$src))]>, UnaryDP,
+                      Requires<[IsARM]>;
 }
 
 //===----------------------------------------------------------------------===//

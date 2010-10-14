@@ -2,7 +2,7 @@
 
 define i64 @f0(i64 %A, i64 %B) {
 ; CHECK: f0
-; CHECK:      movs    r3, r3, lsr #1
+; CHECK:      lsrs    r3, r3, #1
 ; CHECK-NEXT: rrx     r2, r2
 ; CHECK-NEXT: subs    r0, r0, r2
 ; CHECK-NEXT: sbc     r1, r1, r3

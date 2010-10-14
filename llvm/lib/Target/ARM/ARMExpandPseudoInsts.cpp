@@ -16,6 +16,7 @@
 
 #define DEBUG_TYPE "arm-pseudo"
 #include "ARM.h"
+#include "ARMAddressingModes.h"
 #include "ARMBaseInstrInfo.h"
 #include "ARMRegisterInfo.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
@@ -575,6 +576,34 @@ bool ARMExpandPseudo::ExpandMBB(MachineBasicBlock &MBB) {
       ModifiedOp = false;
       break;
 
+    case ARM::MOVsrl_flag:
+    case ARM::MOVsra_flag: {
+      // These are just fancy MOVs insructions.
+      MachineInstrBuilder MIB =
+        AddDefaultPred(BuildMI(MBB, MBBI, MI.getDebugLoc(), TII->get(ARM::MOVs),
+                               MI.getOperand(0).getReg())
+        .addOperand(MI.getOperand(1))
+        .addReg(0)
+        .addImm(ARM_AM::getSORegOpc((Opcode == ARM::MOVsrl_flag ? ARM_AM::lsr
+                                     : ARM_AM::asr), 1)))
+        .addReg(ARM::CPSR);
+      TransferImpOps(MI, MIB, MIB);
+      MI.eraseFromParent();
+      break;
+    }
+    case ARM::RRX: {
+      // This encodes as "MOVs Rd, Rm, rrx
+      MachineInstrBuilder MIB =
+        AddDefaultPred(BuildMI(MBB, MBBI, MI.getDebugLoc(), TII->get(ARM::MOVs),
+                               MI.getOperand(0).getReg())
+        .addOperand(MI.getOperand(1))
+        .addOperand(MI.getOperand(1))
+        .addImm(ARM_AM::getSORegOpc(ARM_AM::rrx, 0)))
+        .addReg(0);
+      TransferImpOps(MI, MIB, MIB);
+      MI.eraseFromParent();
+      break;
+    }
     case ARM::tLDRpci_pic:
     case ARM::t2LDRpci_pic: {
       unsigned NewLdOpc = (Opcode == ARM::tLDRpci_pic)
