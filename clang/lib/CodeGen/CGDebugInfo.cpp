@@ -1018,9 +1018,19 @@ llvm::DIType CGDebugInfo::CreateType(const RecordType *Ty,
 
     // A class's primary base or the class itself contains the vtable.
     const ASTRecordLayout &RL = CGM.getContext().getASTRecordLayout(RD);
-    if (const CXXRecordDecl *PBase = RL.getPrimaryBase())
+    if (const CXXRecordDecl *PBase = RL.getPrimaryBase()) {
+      // Seek non virtual primary base root.
+      while (1) {
+        const ASTRecordLayout &BRL = CGM.getContext().getASTRecordLayout(PBase);
+        const CXXRecordDecl *PBT = BRL.getPrimaryBase();
+        if (PBT && !BRL.getPrimaryBaseWasVirtual())
+          PBase = PBT;
+        else 
+          break;
+      }
       ContainingType = 
         getOrCreateType(QualType(PBase->getTypeForDecl(), 0), Unit);
+    }
     else if (CXXDecl->isDynamicClass()) 
       ContainingType = FwdDecl;
   }
