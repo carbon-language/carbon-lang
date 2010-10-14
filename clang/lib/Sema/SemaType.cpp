@@ -1902,14 +1902,14 @@ bool ProcessFnAttr(Sema &S, QualType &Type, const AttributeList &Attr) {
       S.Diag(Attr.getLoc(), diag::err_attribute_regparm_wrong_platform)
         << NumParamsExpr->getSourceRange();
       Attr.setInvalid();
-      return;
+      return false;
     }
 
     if (NumParams.getLimitedValue(255) > S.Context.Target.getRegParmMax()) {
       S.Diag(Attr.getLoc(), diag::err_attribute_regparm_invalid_number)
         << S.Context.Target.getRegParmMax() << NumParamsExpr->getSourceRange();
       Attr.setInvalid();
-      return;
+      return false;
     }
 
     Type = S.Context.getRegParmType(Type, NumParams.getZExtValue());
