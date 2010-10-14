@@ -9,6 +9,12 @@ macro(add_llvm_library name)
   if( LLVM_COMMON_DEPENDS )
     add_dependencies( ${name} ${LLVM_COMMON_DEPENDS} )
   endif( LLVM_COMMON_DEPENDS )
+
+  if( BUILD_SHARED_LIBS )
+    get_system_libs(sl)
+    target_link_libraries( ${name} ${sl} )
+  endif()
+
   install(TARGETS ${name}
     LIBRARY DESTINATION lib${LLVM_LIBDIR_SUFFIX}
     ARCHIVE DESTINATION lib${LLVM_LIBDIR_SUFFIX})
