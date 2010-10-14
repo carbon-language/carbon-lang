@@ -165,7 +165,8 @@ def Preprocess : OptionPreprocessor<
 // Tools
 
 class llvm_gcc_based <string cmd, string in_lang,
-                      string E_ext, string out_lang, string out_ext> : Tool<
+                      string E_ext, list<string> out_lang,
+                      string out_ext> : Tool<
 [(in_language in_lang),
  (out_language out_lang),
  (output_suffix out_ext),
@@ -221,10 +222,10 @@ class llvm_gcc_based <string cmd, string in_lang,
 ]>;
 
 class llvm_gcc_comp_based <string cmd, string in_lang, string E_ext>
-: llvm_gcc_based<cmd, in_lang, E_ext, "llvm-bitcode", "bc">;
+: llvm_gcc_based<cmd, in_lang, E_ext, ["llvm-bitcode", "object-code"], "bc">;
 
 class llvm_gcc_pch_based <string cmd, string in_lang, string E_ext>
-: llvm_gcc_based<cmd, in_lang, E_ext, "precompiled-header", "gch">;
+: llvm_gcc_based<cmd, in_lang, E_ext, ["precompiled-header"], "gch">;
 
 def llvm_gcc_c : llvm_gcc_comp_based
     <"@LLVMGCCCOMMAND@ -x c", "c", "i">;
@@ -294,7 +295,7 @@ def llc : Tool<
           (switch_on "fPIC"), (append_cmd "-relocation-model=pic"),
           (switch_on "mdynamic-no-pic"),
                      (append_cmd "-relocation-model=dynamic-no-pic"),
-          (not_empty "march"), (forward_as "mtune", "-mcpu"),
+          (not_empty "march"), (forward_as "march", "-mcpu"),
           (not_empty "mtune"), (forward_as "mtune", "-mcpu"),
           (not_empty "mcpu"), (forward "mcpu"),
           (not_empty "m"), (forward_transformed_value "m", "ConvertToMAttr"),
@@ -375,7 +376,7 @@ def LanguageMap : LanguageMap<[
     (lang_to_suffixes "object-code", ["o", "*empty*"]),
     (lang_to_suffixes "static-library", ["a", "lib"]),
     (lang_to_suffixes "dynamic-library", ["so", "dylib", "dll"]),
-    (lang_to_suffixes "executable", ["out"])
+    (lang_to_suffixes "executable", "out")
 ]>;
 
 // Compilation graph
