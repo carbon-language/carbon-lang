@@ -1898,6 +1898,20 @@ bool ProcessFnAttr(Sema &S, QualType &Type, const AttributeList &Attr) {
         !NumParamsExpr->isIntegerConstantExpr(NumParams, S.Context))
       return false;
 
+    if (S.Context.Target.getRegParmMax() == 0) {
+      S.Diag(Attr.getLoc(), diag::err_attribute_regparm_wrong_platform)
+        << NumParamsExpr->getSourceRange();
+      Attr.setInvalid();
+      return;
+    }
+
+    if (NumParams.getLimitedValue(255) > S.Context.Target.getRegParmMax()) {
+      S.Diag(Attr.getLoc(), diag::err_attribute_regparm_invalid_number)
+        << S.Context.Target.getRegParmMax() << NumParamsExpr->getSourceRange();
+      Attr.setInvalid();
+      return;
+    }
+
     Type = S.Context.getRegParmType(Type, NumParams.getZExtValue());
     return false;
   }
