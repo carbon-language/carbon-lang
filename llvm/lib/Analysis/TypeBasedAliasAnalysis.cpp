@@ -52,7 +52,7 @@ namespace {
     TBAANode getParent() const {
       if (Node->getNumOperands() < 2)
         return TBAANode();
-      MDNode *P = dyn_cast<MDNode>(Node->getOperand(1));
+      MDNode *P = dyn_cast_or_null<MDNode>(Node->getOperand(1));
       if (!P)
         return TBAANode();
       // Ok, this node has a valid parent. Return it.
