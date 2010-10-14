@@ -2053,10 +2053,22 @@ APInt APInt::sadd_ov(const APInt &RHS, bool &Overflow) const {
   return Res;
 }
 
+APInt APInt::uadd_ov(const APInt &RHS, bool &Overflow) const {
+  APInt Res = *this+RHS;
+  Overflow = Res.ult(RHS);
+  return Res;
+}
+
 APInt APInt::ssub_ov(const APInt &RHS, bool &Overflow) const {
   APInt Res = *this - RHS;
   Overflow = isNonNegative() != RHS.isNonNegative() &&
              Res.isNonNegative() != isNonNegative();
+  return Res;
+}
+
+APInt APInt::usub_ov(const APInt &RHS, bool &Overflow) const {
+  APInt Res = *this+RHS;
+  Overflow = Res.ugt(RHS);
   return Res;
 }
 

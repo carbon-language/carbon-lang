@@ -170,3 +170,14 @@ declare {i8, i1} @llvm.usub.with.overflow.i8(i8, i8)
 
 declare {i8, i1} @llvm.sadd.with.overflow.i8(i8, i8)
 declare {i8, i1} @llvm.ssub.with.overflow.i8(i8, i8)
+declare {i8, i1} @llvm.smul.with.overflow.i8(i8, i8)
+
+; rdar://8501501
+define {i8, i1} @smul_1() nounwind {
+entry:
+  %t = call {i8, i1} @llvm.smul.with.overflow.i8(i8 -20, i8 -10)
+  ret {i8, i1} %t
+
+; CHECK: @smul_1
+; CHECK: ret %i8i1 { i8 -56, i1 true }
+}

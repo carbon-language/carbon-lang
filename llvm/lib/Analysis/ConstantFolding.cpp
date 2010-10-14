@@ -1001,6 +1001,7 @@ llvm::canConstantFoldCallTo(const Function *F) {
   case Intrinsic::usub_with_overflow:
   case Intrinsic::sadd_with_overflow:
   case Intrinsic::ssub_with_overflow:
+  case Intrinsic::smul_with_overflow:
   case Intrinsic::convert_from_fp16:
   case Intrinsic::convert_to_fp16:
     return true;
@@ -1248,40 +1249,35 @@ llvm::ConstantFoldCall(Function *F,
       if (ConstantInt *Op2 = dyn_cast<ConstantInt>(Operands[1])) {
         switch (F->getIntrinsicID()) {
         default: break;
-        case Intrinsic::uadd_with_overflow: {
-          Constant *Res = ConstantExpr::getAdd(Op1, Op2);           // result.
+        case Intrinsic::sadd_with_overflow:
+        case Intrinsic::uadd_with_overflow:
+        case Intrinsic::ssub_with_overflow:
+        case Intrinsic::usub_with_overflow:
+        case Intrinsic::smul_with_overflow: {
+          APInt Res;
+          bool Overflow;
+          switch (F->getIntrinsicID()) {
+          default: assert(0 && "Invalid case");
+          case Intrinsic::sadd_with_overflow:
+            Res = Op1->getValue().sadd_ov(Op2->getValue(), Overflow);
+            break;
+          case Intrinsic::uadd_with_overflow:
+            Res = Op1->getValue().uadd_ov(Op2->getValue(), Overflow);
+            break;
+          case Intrinsic::ssub_with_overflow:
+            Res = Op1->getValue().ssub_ov(Op2->getValue(), Overflow);
+            break;
+          case Intrinsic::usub_with_overflow:
+            Res = Op1->getValue().usub_ov(Op2->getValue(), Overflow);
+            break;
+          case Intrinsic::smul_with_overflow:
+            Res = Op1->getValue().smul_ov(Op2->getValue(), Overflow);
+            break;
+          }
           Constant *Ops[] = {
-            Res, ConstantExpr::getICmp(CmpInst::ICMP_ULT, Res, Op1) // overflow.
+            ConstantInt::get(F->getContext(), Res),
+            ConstantInt::get(Type::getInt1Ty(F->getContext()), Overflow)
           };
-          return ConstantStruct::get(F->getContext(), Ops, 2, false);
-        }
-        case Intrinsic::usub_with_overflow: {
-          Constant *Res = ConstantExpr::getSub(Op1, Op2);           // result.
-          Constant *Ops[] = {
-            Res, ConstantExpr::getICmp(CmpInst::ICMP_UGT, Res, Op1) // overflow.
-          };
-          return ConstantStruct::get(F->getContext(), Ops, 2, false);
-        }
-        case Intrinsic::sadd_with_overflow: {
-          Constant *Res = ConstantExpr::getAdd(Op1, Op2);           // result.
-          Constant *Overflow = ConstantExpr::getSelect(
-              ConstantExpr::getICmp(CmpInst::ICMP_SGT,
-                ConstantInt::get(Op1->getType(), 0), Op1),
-              ConstantExpr::getICmp(CmpInst::ICMP_SGT, Res, Op2), 
-              ConstantExpr::getICmp(CmpInst::ICMP_SLT, Res, Op2)); // overflow.
-
-          Constant *Ops[] = { Res, Overflow };
-          return ConstantStruct::get(F->getContext(), Ops, 2, false);
-        }
-        case Intrinsic::ssub_with_overflow: {
-          Constant *Res = ConstantExpr::getSub(Op1, Op2);           // result.
-          Constant *Overflow = ConstantExpr::getSelect(
-              ConstantExpr::getICmp(CmpInst::ICMP_SGT,
-                ConstantInt::get(Op2->getType(), 0), Op2),
-              ConstantExpr::getICmp(CmpInst::ICMP_SLT, Res, Op1), 
-              ConstantExpr::getICmp(CmpInst::ICMP_SGT, Res, Op1)); // overflow.
-
-          Constant *Ops[] = { Res, Overflow };
           return ConstantStruct::get(F->getContext(), Ops, 2, false);
         }
         }

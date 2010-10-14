@@ -806,10 +806,10 @@ public:
   
   
   // Operations that return overflow indicators.
-  
-  // ssub_ov - Signed subtraction.  Unsigned subtraction never overflows.
   APInt sadd_ov(const APInt &RHS, bool &Overflow) const;
+  APInt uadd_ov(const APInt &RHS, bool &Overflow) const;
   APInt ssub_ov(const APInt &RHS, bool &Overflow) const;
+  APInt usub_ov(const APInt &RHS, bool &Overflow) const;
   APInt sdiv_ov(const APInt &RHS, bool &Overflow) const;
   APInt smul_ov(const APInt &RHS, bool &Overflow) const;
   APInt sshl_ov(unsigned Amt, bool &Overflow) const;
@@ -877,7 +877,7 @@ public:
   /// the validity of the less-than relationship.
   /// @returns true if *this < RHS when both are considered unsigned.
   /// @brief Unsigned less than comparison
-  bool ult(const APInt& RHS) const;
+  bool ult(const APInt &RHS) const;
 
   /// Regards both *this as an unsigned quantity and compares it with RHS for
   /// the validity of the less-than relationship.
