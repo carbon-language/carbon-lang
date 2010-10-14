@@ -53,14 +53,23 @@ class SendSignalTestCase(TestBase):
         output = self.res.GetOutput()
         pid = re.match("Process (.*) Stopped", output).group(1)
 
-        # After resuming the process, immediately send a SIGUSR1 signal.
+        # After resuming the process, send it a SIGUSR1 signal.
+
+        # It is necessary at this point to make command interpreter interaction
+        # be asynchronous, because we want to resume the process and to send it
+        # a signal.
         self.dbg.SetAsync(True)
         self.runCmd("process continue")
+        # Insert a delay of 1 second before doing the signaling stuffs.
+        time.sleep(1)
+
         self.runCmd("process handle -n False -p True -s True SIGUSR1")
         #os.kill(int(pid), signal.SIGUSR1)
         self.runCmd("process signal SIGUSR1")
 
+        # Insert a delay of 1 second before checking the process status.
         time.sleep(1)
+        # Make the interaction mode be synchronous again.
         self.dbg.SetAsync(False)
         self.expect("process status", STOPPED_DUE_TO_SIGNAL,
             startstr = "Process %s Stopped" % pid,
