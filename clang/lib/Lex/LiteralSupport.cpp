@@ -431,6 +431,7 @@ NumericLiteralParser(const char *begin, const char *end,
       }
       continue;  // Success.
     case 'i':
+    case 'I':
       if (PP.getLangOptions().Microsoft) {
         if (isFPConstant || isLong || isLongLong) break;
 
@@ -467,7 +468,6 @@ NumericLiteralParser(const char *begin, const char *end,
         }
       }
       // fall through.
-    case 'I':
     case 'j':
     case 'J':
       if (isImaginary) break;   // Cannot be repeated.
