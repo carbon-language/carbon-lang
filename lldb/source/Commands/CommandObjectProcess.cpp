@@ -1155,14 +1155,15 @@ public:
     CommandObjectProcessHandle (CommandInterpreter &interpreter) :
         CommandObject (interpreter,
                        "process handle",
-                       "Update whether the process should or should not stop or notify or suppress various signals it receives from the OS.",
+                       "Show or update what the process and debugger should do with various signals received from the OS.",
                        NULL)
     {
+        SetHelpLong ("If no signals are specified, update them all.  If no update option is specified, list the current values.\n");
         CommandArgumentEntry arg;
         CommandArgumentData signal_name_arg;
 
         signal_name_arg.arg_type = eArgTypeSignalName;
-        signal_name_arg.arg_repetition = eArgRepeatPlus;
+        signal_name_arg.arg_repetition = eArgRepeatStar;
 
         arg.push_back (signal_name_arg);
         
@@ -1180,23 +1181,78 @@ public:
     }
 
     bool
-    VerifyCommandOptionValue (const std::string &option, int *real_value)
+    VerifyCommandOptionValue (const std::string &option, int &real_value)
     {
         bool okay = true;
 
-        if (strcasecmp (option.c_str(), "false") == 0)
-            *real_value = 0;
-        else if (strcasecmp (option.c_str(), "true") == 0)
-            *real_value = 1;
+        bool success = false;
+        bool tmp_value = Args::StringToBoolean (option.c_str(), false, &success);
+
+        if (success && tmp_value)
+            real_value = 1;
+        else if (success && !tmp_value)
+            real_value = 0;
         else
         {
             // If the value isn't 'true' or 'false', it had better be 0 or 1.
-            *real_value = Args::StringToUInt32 (option.c_str(), 3);
-            if (*real_value != 0 && *real_value != 1)
+            real_value = Args::StringToUInt32 (option.c_str(), 3);
+            if (real_value != 0 && real_value != 1)
                 okay = false;
         }
         
         return okay;
+    }
+
+    void
+    PrintSignalHeader (Stream &str)
+    {
+        str.Printf ("NAME        PASS   STOP   NOTIFY\n");
+        str.Printf ("==========  =====  =====  ======\n");
+    }  
+
+    void
+    PrintSignal (Stream &str, int32_t signo, const char *sig_name, UnixSignals &signals)
+    {
+        bool stop;
+        bool suppress;
+        bool notify;
+
+        str.Printf ("%-10s  ", sig_name);
+        if (signals.GetSignalInfo (signo, suppress, stop, notify))
+        {
+            bool pass = !suppress;
+            str.Printf ("%s  %s  %s", 
+                        (pass ? "true " : "false"), 
+                        (stop ? "true " : "false"), 
+                        (notify ? "true " : "false"));
+        }
+        str.Printf ("\n");
+    }
+
+    void
+    PrintSignalInformation (Stream &str, Args &signal_args, int num_valid_signals, UnixSignals &signals)
+    {
+        PrintSignalHeader (str);
+
+        if (num_valid_signals > 0)
+        {
+            size_t num_args = signal_args.GetArgumentCount();
+            for (size_t i = 0; i < num_args; ++i)
+            {
+                int32_t signo = signals.GetSignalNumberFromName (signal_args.GetArgumentAtIndex (i));
+                if (signo != LLDB_INVALID_SIGNAL_NUMBER)
+                    PrintSignal (str, signo, signal_args.GetArgumentAtIndex (i), signals);
+            }
+        }
+        else // Print info for ALL signals
+        {
+            int32_t signo = signals.GetFirstSignalNumber(); 
+            while (signo != LLDB_INVALID_SIGNAL_NUMBER)
+            {
+                PrintSignal (str, signo, signals.GetSignalAsCString (signo), signals);
+                signo = signals.GetNextSignalNumber (signo);
+            }
+        }
     }
 
     bool
@@ -1221,29 +1277,12 @@ public:
             return false;
         }
 
-        if (m_options.stop.empty()
-            && m_options.notify.empty()
-            && m_options.pass.empty())
-        {
-            result.AppendError ("No action specified (-s or -n or -q); no signal will be updated.\n");
-            result.SetStatus (eReturnStatusFailed);
-            return false;
-        }
-
-        size_t num_signals = signal_args.GetArgumentCount();
-        if (num_signals == 0)
-        {
-            result.AppendError ("No signal specified to be updated.\n");
-            result.SetStatus (eReturnStatusFailed);
-            return false;
-        }
-
         int stop_action = -1;   // -1 means leave the current setting alone
-        int pass_action = -1;  // -1 means leave the current setting alone
+        int pass_action = -1;   // -1 means leave the current setting alone
         int notify_action = -1; // -1 means leave the current setting alone
 
         if (! m_options.stop.empty()
-            && ! VerifyCommandOptionValue (m_options.stop, &stop_action))
+            && ! VerifyCommandOptionValue (m_options.stop, stop_action))
         {
             result.AppendError ("Invalid argument for command option --stop; must be true or false.\n");
             result.SetStatus (eReturnStatusFailed);
@@ -1251,7 +1290,7 @@ public:
         }
 
         if (! m_options.notify.empty()
-            && ! VerifyCommandOptionValue (m_options.notify, &notify_action))
+            && ! VerifyCommandOptionValue (m_options.notify, notify_action))
         {
             result.AppendError ("Invalid argument for command option --notify; must be true or false.\n");
             result.SetStatus (eReturnStatusFailed);
@@ -1259,7 +1298,7 @@ public:
         }
 
         if (! m_options.pass.empty()
-            && ! VerifyCommandOptionValue (m_options.pass, &pass_action))
+            && ! VerifyCommandOptionValue (m_options.pass, pass_action))
         {
             result.AppendError ("Invalid argument for command option --pass; must be true or false.\n");
             result.SetStatus (eReturnStatusFailed);
@@ -1270,31 +1309,58 @@ public:
         UnixSignals &signals = process_sp->GetUnixSignals();
         int num_signals_set = 0;
 
-        for (size_t i = 0; i < num_args; ++i)
+        if (num_args > 0)
         {
-            int32_t signo = signals.GetSignalNumberFromName (signal_args.GetArgumentAtIndex (i));
-            if (signo != LLDB_INVALID_SIGNAL_NUMBER)
+            for (size_t i = 0; i < num_args; ++i)
             {
-                // Casting the actions as bools here should be okay, because VerifyCommandOptionValue guarantees that
-                // the value is either 0 or 1.
-                if (stop_action != -1)
-                    signals.SetShouldStop (signo, (bool) stop_action);
-                if (pass_action != -1)
+                int32_t signo = signals.GetSignalNumberFromName (signal_args.GetArgumentAtIndex (i));
+                if (signo != LLDB_INVALID_SIGNAL_NUMBER)
                 {
-                    if (pass_action == 1) // pass it down, so 'suppress' is false
-                        signals.SetShouldSuppress (signo, false);
-                    else if (pass_action == 0) // do not pass it down, so 'suppress' is true
-                        signals.SetShouldSuppress (signo, true);
+                    // Casting the actions as bools here should be okay, because VerifyCommandOptionValue guarantees
+                    // the value is either 0 or 1.
+                    if (stop_action != -1)
+                        signals.SetShouldStop (signo, (bool) stop_action);
+                    if (pass_action != -1)
+                    {
+                        bool suppress = ! ((bool) pass_action);
+                        signals.SetShouldSuppress (signo, suppress);
+                    }
+                    if (notify_action != -1)
+                        signals.SetShouldNotify (signo, (bool) notify_action);
+                    ++num_signals_set;
                 }
-                if (notify_action != -1)
-                    signals.SetShouldNotify (signo, (bool) notify_action);
-                ++num_signals_set;
-            }
-            else
-            {
-                result.AppendErrorWithFormat ("Invalid signal name '%s'\n", signal_args.GetArgumentAtIndex (i));
+                else
+                {
+                    result.AppendErrorWithFormat ("Invalid signal name '%s'\n", signal_args.GetArgumentAtIndex (i));
+                }
             }
         }
+        else
+        {
+            // No signal specified, if any command options were specified, update ALL signals.
+            if ((notify_action != -1) || (stop_action != -1) || (pass_action != -1))
+            {
+                if (m_interpreter.Confirm ("Do you really want to update all the signals?", false))
+                {
+                    int32_t signo = signals.GetFirstSignalNumber();
+                    while (signo != LLDB_INVALID_SIGNAL_NUMBER)
+                    {
+                        if (notify_action != -1)
+                            signals.SetShouldNotify (signo, (bool) notify_action);
+                        if (stop_action != -1)
+                            signals.SetShouldStop (signo, (bool) stop_action);
+                        if (pass_action != -1)
+                        {
+                            bool suppress = ! ((bool) pass_action);
+                            signals.SetShouldSuppress (signo, suppress);
+                        }
+                        signo = signals.GetNextSignalNumber (signo);
+                    }
+                }
+            }
+        }
+
+        PrintSignalInformation (result.GetOutputStream(), signal_args, num_signals_set, signals);
 
         if (num_signals_set > 0)
             result.SetStatus (eReturnStatusSuccessFinishNoResult);
