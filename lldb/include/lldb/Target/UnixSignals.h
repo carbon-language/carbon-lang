@@ -97,9 +97,11 @@ public:
     void
     AddSignal (int signo,
                const char *name,
+               const char *short_name,
                bool default_suppress,
                bool default_stop,
-               bool default_notify);
+               bool default_notify,
+               const char *description);
 
     void
     RemoveSignal (int signo);
@@ -111,36 +113,22 @@ protected:
 
     struct Signal
     {
-        typedef enum
-        {
-            eCondSuppress = 0,
-            eCondStop = 1,
-            eCondNotify
-        } Condition;
-
         ConstString m_name;
-        bool m_conditions[3];
+        ConstString m_short_name;
+        std::string m_description;
+        bool m_suppress:1,
+             m_stop:1,
+             m_notify:1;
 
         Signal (const char *name,
+                const char *short_name,
                 bool default_suppress,
                 bool default_stop,
-                bool default_notify);
+                bool default_notify,
+                const char *description);
 
         ~Signal () {}
     };
-
-    bool
-    GetCondition (int signo,
-                  Signal::Condition cond_pos) const;
-    bool
-    SetCondition (int signo,
-                  Signal::Condition cond_pos,
-                  bool value);
-
-    bool
-    SetCondition (const char *signal_name,
-                  Signal::Condition cond_pos,
-                  bool value);
 
     Signal *
     GetSignalByName (const char *name,
