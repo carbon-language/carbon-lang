@@ -597,7 +597,29 @@ for ia in range(len(archs) if iterArchs else 1):
                             suite.countTestCases() != 1 and "s" or ""))
 
         # Invoke the test runner.
-        result = unittest2.TextTestRunner(stream=sys.stderr, verbosity=verbose).run(suite)
+        class LLDBTestResult(unittest2.TextTestResult):
+            """
+            Enforce a singleton pattern to allow inspection of test progress.
+            """
+            __singleton__ = None
+
+            def __init__(self, *args):
+                if LLDBTestResult.__singleton__:
+                    raise "LLDBTestResult instantiated more than once"
+                super(LLDBTestResult, self).__init__(*args)
+                LLDBTestResult.__singleton__ = self
+                # Now put this singleton into the lldb module namespace.
+                lldb.test_result = self
+
+            def addFailure(self, test, err):
+                super(LLDBTestResult, self).addFailure(test, err)
+                method = getattr(test, "markFailure", None)
+                if method:
+                    method()
+                setattr(test, "__failed__", True)
+
+        result = unittest2.TextTestRunner(stream=sys.stderr, verbosity=verbose,
+                                          resultclass=LLDBTestResult).run(suite)
         
 
 # Terminate the test suite if ${LLDB_TESTSUITE_FORCE_FINISH} is defined.

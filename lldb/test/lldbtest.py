@@ -99,6 +99,7 @@ $
 import os, sys, traceback
 import re
 from subprocess import *
+import StringIO
 import time
 import types
 import unittest2
@@ -244,6 +245,37 @@ def pointer_size():
     return 8 * ctypes.sizeof(a_pointer)
 
 
+class recording(StringIO.StringIO):
+    """
+    A nice little context manager for recording the debugger interactions into
+    our session object.  If trace flag is ON, it also emits the interactions
+    into the stderr.
+    """
+    def __init__(self, test, trace):
+        """Create a StringIO instance; record session, stderr, and trace."""
+        StringIO.StringIO.__init__(self)
+        self.session = test.session
+        self.stderr = test.old_stderr
+        self.trace = trace
+
+    def __enter__(self):
+        """
+        Context management protocol on entry to the body of the with statement.
+        Just return the StringIO object.
+        """
+        return self
+
+    def __exit__(self, type, value, tb):
+        """
+        Context management protocol on exit from the body of the with statement.
+        If trace is ON, it emits the recordings into stderr.  Always add the
+        recordings to our session object.  And close the StringIO object, too.
+        """
+        if self.trace:
+            print >> self.stderr, self.getvalue()
+        print >> self.session, self.getvalue()
+        self.close()
+
 class TestBase(unittest2.TestCase):
     """This LLDB abstract base class is meant to be subclassed."""
 
@@ -369,9 +401,38 @@ class TestBase(unittest2.TestCase):
         self.dict = None
         self.doTearDownCleanup = False
 
+        # Create a string buffer to record the session info.
+        self.session = StringIO.StringIO()
+
+        # Substitute self.session as the sys.stderr and restore it at the end of
+        # the test during tearDown().  If trace is ON, we dump the session info
+        # into the real stderr as well.  The session info will be dumped into a
+        # test case specific file if a failure is encountered.
+        self.old_stderr = sys.stderr
+        sys.stderr = self.session
+
     def setTearDownCleanup(self, dictionary=None):
         self.dict = dictionary
         self.doTearDownCleanup = True
+
+    def markFailure(self):
+        """Callback invoked when we (the test case instance) failed."""
+        with recording(self, False) as sbuf:
+            # False because there's no need to write "FAIL" to the stderr again.
+            print >> sbuf, "FAIL"
+
+    def dumpSessionInfo(self):
+        """
+        Dump the debugger interactions leading to a test failure.  This allows
+        for more convenient postmortem analysis.
+        """
+        for test, err in lldb.test_result.failures:
+            if test is self:
+                print >> self.session, err
+
+        fname = os.path.join(os.environ["LLDB_TEST"], ".session-" + self.id())
+        with open(fname, "w") as f:
+            print >> f, self.session.getvalue()
 
     def tearDown(self):
         #import traceback
@@ -393,6 +454,15 @@ class TestBase(unittest2.TestCase):
             if not module.cleanup(dictionary=self.dict):
                 raise Exception("Don't know how to do cleanup")
 
+        # lldb.test_result is an instance of unittest2.TextTestResult enforced
+        # as a singleton.  During tearDown(), lldb.test_result can be consulted
+        # in order to determine whether we failed for the current test instance.
+        if getattr(self, "__failed__", False):
+            self.dumpSessionInfo()
+
+        # Restore the sys.stderr to what it was before.
+        sys.stderr = self.old_stderr
+
     def runCmd(self, cmd, msg=None, check=True, trace=False, setCookie=True):
         """
         Ask the command interpreter to handle the command and then check its
@@ -409,13 +479,13 @@ class TestBase(unittest2.TestCase):
         for i in range(self.maxLaunchCount if running else 1):
             self.ci.HandleCommand(cmd, self.res)
 
-            if trace:
-                print >> sys.stderr, "runCmd:", cmd
+            with recording(self, trace) as sbuf:
+                print >> sbuf, "runCmd:", cmd
                 if self.res.Succeeded():
-                    print >> sys.stderr, "output:", self.res.GetOutput()
+                    print >> sbuf, "output:", self.res.GetOutput()
                 else:
-                    print >> sys.stderr, "runCmd failed!"
-                    print >> sys.stderr, self.res.GetError()
+                    print >> sbuf, "runCmd failed!"
+                    print >> sbuf, self.res.GetError()
 
             if running:
                 # For process launch, wait some time before possible next try.
@@ -423,8 +493,9 @@ class TestBase(unittest2.TestCase):
 
             if self.res.Succeeded():
                 break
-            elif running:                
-                print >> sys.stderr, "Command '" + cmd + "' failed!"
+            elif running:
+                with recording(self, True) as sbuf:
+                    print >> sbuf, "Command '" + cmd + "' failed!"
 
         # Modify runStarted only if "run" or "process launch" was encountered.
         if running:
@@ -474,35 +545,35 @@ class TestBase(unittest2.TestCase):
         else:
             # No execution required, just compare str against the golden input.
             output = str
-            if trace:
-                print >> sys.stderr, "looking at:", output
+            with recording(self, trace) as sbuf:
+                print >> sbuf, "looking at:", output
 
         # The heading says either "Expecting" or "Not expecting".
-        if trace:
-            heading = "Expecting" if matching else "Not expecting"
+        heading = "Expecting" if matching else "Not expecting"
 
         # Start from the startstr, if specified.
         # If there's no startstr, set the initial state appropriately.
         matched = output.startswith(startstr) if startstr else (True if matching else False)
 
-        if startstr and trace:
-            print >> sys.stderr, "%s start string: %s" % (heading, startstr)
-            print >> sys.stderr, "Matched" if matched else "Not matched"
-            print >> sys.stderr
+        if startstr:
+            with recording(self, trace) as sbuf:
+                print >> sbuf, "%s start string: %s" % (heading, startstr)
+                print >> sbuf, "Matched" if matched else "Not matched"
+                print >> sbuf
 
         # Look for sub strings, if specified.
         keepgoing = matched if matching else not matched
         if substrs and keepgoing:
             for str in substrs:
                 matched = output.find(str) != -1
-                if trace:
-                    print >> sys.stderr, "%s sub string: %s" % (heading, str)
-                    print >> sys.stderr, "Matched" if matched else "Not matched"
+                with recording(self, trace) as sbuf:
+                    print >> sbuf, "%s sub string: %s" % (heading, str)
+                    print >> sbuf, "Matched" if matched else "Not matched"
                 keepgoing = matched if matching else not matched
                 if not keepgoing:
                     break
-            if trace:
-                print >> sys.stderr
+            with recording(self, trace) as sbuf:
+                print >> sbuf
 
         # Search for regular expression patterns, if specified.
         keepgoing = matched if matching else not matched
@@ -510,14 +581,14 @@ class TestBase(unittest2.TestCase):
             for pattern in patterns:
                 # Match Objects always have a boolean value of True.
                 matched = bool(re.search(pattern, output))
-                if trace:
-                    print >> sys.stderr, "%s pattern: %s" % (heading, pattern)
-                    print >> sys.stderr, "Matched" if matched else "Not matched"
+                with recording(self, trace) as sbuf:
+                    print >> sbuf, "%s pattern: %s" % (heading, pattern)
+                    print >> sbuf, "Matched" if matched else "Not matched"
                 keepgoing = matched if matching else not matched
                 if not keepgoing:
                     break
-            if trace:
-                print >> sys.stderr
+            with recording(self, trace) as sbuf:
+                print >> sbuf
 
         self.assertTrue(matched if matching else not matched,
                         msg if msg else CMD_MSG(str, exe))
@@ -531,8 +602,8 @@ class TestBase(unittest2.TestCase):
         self.assertTrue(inspect.ismethod(method),
                         name + "is a method name of object: " + str(obj))
         result = method()
-        if trace:
-            print >> sys.stderr, str(method) + ":",  result
+        with recording(self, trace) as sbuf:
+            print >> sbuf, str(method) + ":",  result
         return result
 
     def breakAfterLaunch(self, process, func, trace=False):
@@ -548,28 +619,28 @@ class TestBase(unittest2.TestCase):
             # The stop reason of the thread should be breakpoint.
             thread = process.GetThreadAtIndex(0)
             SR = thread.GetStopReason()
-            if trace:
-                print >> sys.stderr, "StopReason =", StopReasonString(SR)
+            with recording(self, trace) as sbuf:
+                print >> sbuf, "StopReason =", StopReasonString(SR)
 
             if SR == StopReasonEnum("Breakpoint"):
                 frame = thread.GetFrameAtIndex(0)
                 name = frame.GetFunction().GetName()
-                if trace:
-                    print >> sys.stderr, "function =", name
+                with recording(self, trace) as sbuf:
+                    print >> sbuf, "function =", name
                 if (name == func):
                     # We got what we want; now break out of the loop.
                     return True
 
             # The inferior is in a transient state; continue the process.
             time.sleep(1.0)
-            if trace:
-                print >> sys.stderr, "Continuing the process:", process
+            with recording(self, trace) as sbuf:
+                print >> sbuf, "Continuing the process:", process
             process.Continue()
 
             count = count + 1
             if count == 15:
-                if trace:
-                    print >> sys.stderr, "Reached 15 iterations, giving up..."
+                with recording(self, trace) as sbuf:
+                    print >> sbuf, "Reached 15 iterations, giving up..."
                 # Enough iterations already, break out of the loop.
                 return False
 

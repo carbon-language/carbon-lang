@@ -6,6 +6,12 @@ import lldb
 import sys
 import StringIO
 
+################################################
+#                                              #
+# Iterator for lldb aggregate data structures. #
+#                                              #
+################################################
+
 def lldb_iter(obj, getsize, getelem):
     """
     A generator adaptor for lldb aggregate data structures.
