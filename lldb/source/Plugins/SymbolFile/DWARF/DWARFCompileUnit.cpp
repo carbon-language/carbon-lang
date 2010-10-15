@@ -564,14 +564,14 @@ void
 DWARFCompileUnit::Index 
 (
     const uint32_t cu_idx,
-    NameToDIE& base_name_to_function_die,
-    NameToDIE& full_name_to_function_die,
-    NameToDIE& method_name_to_function_die,
-    NameToDIE& selector_name_to_function_die,
-    NameToDIE& objc_class_selector_dies,
-    NameToDIE& name_to_global_die,
-    NameToDIE& name_to_type_die,
-    NameToDIE& name_to_namespace_die,
+    NameToDIE& func_basenames,
+    NameToDIE& func_fullnames,
+    NameToDIE& func_methods,
+    NameToDIE& func_selectors,
+    NameToDIE& objc_class_selectors,
+    NameToDIE& globals,
+    NameToDIE& types,
+    NameToDIE& namespaces,
     const DWARFDebugRanges *debug_ranges,
     DWARFDebugAranges *aranges
 )
@@ -799,14 +799,14 @@ DWARFCompileUnit::Index
                                 
                                 // Keep a map of the objective C class name to all selector
                                 // DIEs
-                                objc_class_selector_dies.Insert(class_name, die_info);
+                                objc_class_selectors.Insert(class_name, die_info);
                                 
                                 // Skip the space
                                 ++method_name;
                                 // Extract the objective C basename and add it to the
                                 // accelerator tables
                                 size_t method_name_len = name_len - (method_name - name) - 1;                                
-                                selector_name_to_function_die.Insert (ConstString (method_name, method_name_len), die_info);
+                                func_selectors.Insert (ConstString (method_name, method_name_len), die_info);
                             }
                         }
                     }
@@ -843,14 +843,14 @@ DWARFCompileUnit::Index
 
 
                     if (is_method)
-                        method_name_to_function_die.Insert (ConstString(name), die_info);
+                        func_methods.Insert (ConstString(name), die_info);
                     else
-                        base_name_to_function_die.Insert (ConstString(name), die_info);
+                        func_basenames.Insert (ConstString(name), die_info);
                 }
                 if (mangled.GetMangledName())
-                    full_name_to_function_die.Insert (mangled.GetMangledName(), die_info);
+                    func_fullnames.Insert (mangled.GetMangledName(), die_info);
                 if (mangled.GetDemangledName())
-                    full_name_to_function_die.Insert (mangled.GetDemangledName(), die_info);
+                    func_fullnames.Insert (mangled.GetDemangledName(), die_info);
             }
             break;
 
@@ -858,11 +858,11 @@ DWARFCompileUnit::Index
             if (has_address)
             {
                 if (name)
-                    base_name_to_function_die.Insert (ConstString(name), die_info);
+                    func_basenames.Insert (ConstString(name), die_info);
                 if (mangled.GetMangledName())
-                    full_name_to_function_die.Insert (mangled.GetMangledName(), die_info);
+                    func_fullnames.Insert (mangled.GetMangledName(), die_info);
                 if (mangled.GetDemangledName())
-                    full_name_to_function_die.Insert (mangled.GetDemangledName(), die_info);
+                    func_fullnames.Insert (mangled.GetDemangledName(), die_info);
             }
             break;
         
@@ -877,19 +877,19 @@ DWARFCompileUnit::Index
         case DW_TAG_typedef:
             if (name && is_declaration == false)
             {
-                name_to_type_die.Insert (ConstString(name), die_info);
+                types.Insert (ConstString(name), die_info);
             }
             break;
 
         case DW_TAG_namespace:
             if (name)
-                name_to_namespace_die.Insert (ConstString(name), die_info);
+                namespaces.Insert (ConstString(name), die_info);
             break;
 
         case DW_TAG_variable:
             if (name && has_location && is_global_or_static_variable)
             {
-                name_to_global_die.Insert (ConstString(name), die_info);
+                globals.Insert (ConstString(name), die_info);
             }
             break;
             

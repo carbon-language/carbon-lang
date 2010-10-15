@@ -134,14 +134,14 @@ public:
 //
     void
     Index (const uint32_t cu_idx,
-           NameToDIE& base_name_to_function_die,
-           NameToDIE& full_name_to_function_die,
-           NameToDIE& method_name_to_function_die,
-           NameToDIE& selector_name_to_function_die,
-           NameToDIE& objc_class_selector_dies,
-           NameToDIE& name_to_global_die,
-           NameToDIE& name_to_type_die,
-           NameToDIE& name_to_namespace_die,
+           NameToDIE& func_basenames,
+           NameToDIE& func_fullnames,
+           NameToDIE& func_methods,
+           NameToDIE& func_selectors,
+           NameToDIE& objc_class_selectors,
+           NameToDIE& globals,
+           NameToDIE& types,
+           NameToDIE& namespaces,
            const DWARFDebugRanges* debug_ranges,
            DWARFDebugAranges *aranges);
 
