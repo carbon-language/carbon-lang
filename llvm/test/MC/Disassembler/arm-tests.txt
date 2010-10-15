@@ -51,7 +51,7 @@
 # CHECK:	movt	r8, #65535
 0xff 0x8f 0x4f 0xe3
 
-# CHECK:	mvnpls	r7, #245, 2
+# CHECK:	mvnspl	r7, #245, 2
 0xf5 0x71 0xf0 0x53
 
 # CHECK-NOT:	orr	r7, r8, r7, rrx #0
@@ -81,8 +81,8 @@
 # CHECK:	rsbeq	r0, r2, r0
 0x00 0x00 0x62 0x00
 
-# CHECK-NOT:	rsceqs	r0, r0, r1, lsl #0
-# CHECK:	rsceqs	r0, r0, r1
+# CHECK-NOT:	rscseq	r0, r0, r1, lsl #0
+# CHECK:	rscseq	r0, r0, r1
 0x01 0x00 0xf0 0x00
 
 # CHECK:	sbcs	r0, pc, #1

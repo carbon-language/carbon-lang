@@ -284,7 +284,7 @@ class sI<dag oops, dag iops, AddrMode am, SizeFlagVal sz,
 
   let OutOperandList = oops;
   let InOperandList = !con(iops, (ins pred:$p, cc_out:$s));
-  let AsmString = !strconcat(opc, "${p}${s}", asm);
+  let AsmString = !strconcat(opc, "${s}${p}", asm);
   let Pattern = pattern;
   list<Predicate> Predicates = [IsARM];
 }

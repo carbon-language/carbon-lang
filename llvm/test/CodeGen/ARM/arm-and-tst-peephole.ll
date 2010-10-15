@@ -59,3 +59,50 @@ sw.bb8:                                           ; preds = %tailrecurse.switch
 sw.epilog:                                        ; preds = %tailrecurse.switch
   ret %struct.Foo* undef
 }
+
+; Another test that exercises the AND/TST peephole optimization and also
+; generates a predicated ANDS instruction. Check that the predicate is printed
+; after the "S" modifier on the instruction.
+
+%struct.S = type { i8* (i8*)*, [1 x i8] }
+
+; CHECK: bar
+; THUMB: bar
+; T2: bar
+define internal zeroext i8 @bar(%struct.S* %x, %struct.S* nocapture %y) nounwind readonly {
+entry:
+  %0 = getelementptr inbounds %struct.S* %x, i32 0, i32 1, i32 0
+  %1 = load i8* %0, align 1
+  %2 = zext i8 %1 to i32
+; CHECK: ands
+; THUMB: ands
+; T2: ands
+  %3 = and i32 %2, 112
+  %4 = icmp eq i32 %3, 0
+  br i1 %4, label %return, label %bb
+
+bb:                                               ; preds = %entry
+  %5 = getelementptr inbounds %struct.S* %y, i32 0, i32 1, i32 0
+  %6 = load i8* %5, align 1
+  %7 = zext i8 %6 to i32
+; CHECK: andsne
+; THUMB: ands
+; T2: andsne
+  %8 = and i32 %7, 112
+  %9 = icmp eq i32 %8, 0
+  br i1 %9, label %return, label %bb2
+
+bb2:                                              ; preds = %bb
+  %10 = icmp eq i32 %3, 16
+  %11 = icmp eq i32 %8, 16
+  %or.cond = or i1 %10, %11
+  br i1 %or.cond, label %bb4, label %return
+
+bb4:                                              ; preds = %bb2
+  %12 = ptrtoint %struct.S* %x to i32
+  %phitmp = trunc i32 %12 to i8
+  ret i8 %phitmp
+
+return:                                           ; preds = %bb2, %bb, %entry
+  ret i8 1
+}
