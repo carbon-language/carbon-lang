@@ -3845,6 +3845,61 @@ ASTReader::ReadDeclarationName(const RecordData &Record, unsigned &Idx) {
   return DeclarationName();
 }
 
+void ASTReader::ReadDeclarationNameLoc(PerFileData &F,
+                                       DeclarationNameLoc &DNLoc,
+                                       DeclarationName Name,
+                                      const RecordData &Record, unsigned &Idx) {
+  switch (Name.getNameKind()) {
+  case DeclarationName::CXXConstructorName:
+  case DeclarationName::CXXDestructorName:
+  case DeclarationName::CXXConversionFunctionName:
+    DNLoc.NamedType.TInfo = GetTypeSourceInfo(F, Record, Idx);
+    break;
+
+  case DeclarationName::CXXOperatorName:
+    DNLoc.CXXOperatorName.BeginOpNameLoc
+        = ReadSourceLocation(F, Record, Idx).getRawEncoding();
+    DNLoc.CXXOperatorName.EndOpNameLoc
+        = ReadSourceLocation(F, Record, Idx).getRawEncoding();
+    break;
+
+  case DeclarationName::CXXLiteralOperatorName:
+    DNLoc.CXXLiteralOperatorName.OpNameLoc
+        = ReadSourceLocation(F, Record, Idx).getRawEncoding();
+    break;
+
+  case DeclarationName::Identifier:
+  case DeclarationName::ObjCZeroArgSelector:
+  case DeclarationName::ObjCOneArgSelector:
+  case DeclarationName::ObjCMultiArgSelector:
+  case DeclarationName::CXXUsingDirective:
+    break;
+  }
+}
+
+void ASTReader::ReadDeclarationNameInfo(PerFileData &F,
+                                        DeclarationNameInfo &NameInfo,
+                                      const RecordData &Record, unsigned &Idx) {
+  NameInfo.setName(ReadDeclarationName(Record, Idx));
+  NameInfo.setLoc(ReadSourceLocation(F, Record, Idx));
+  DeclarationNameLoc DNLoc;
+  ReadDeclarationNameLoc(F, DNLoc, NameInfo.getName(), Record, Idx);
+  NameInfo.setInfo(DNLoc);
+}
+
+void ASTReader::ReadQualifierInfo(PerFileData &F, QualifierInfo &Info,
+                                  const RecordData &Record, unsigned &Idx) {
+  Info.NNS = ReadNestedNameSpecifier(Record, Idx);
+  Info.NNSRange = ReadSourceRange(F, Record, Idx);
+  unsigned NumTPLists = Record[Idx++];
+  Info.NumTemplParamLists = NumTPLists;
+  if (NumTPLists) {
+    Info.TemplParamLists = new (*Context) TemplateParameterList*[NumTPLists];
+    for (unsigned i=0; i != NumTPLists; ++i)
+      Info.TemplParamLists[i] = ReadTemplateParameterList(F, Record, Idx);
+  }
+}
+
 TemplateName
 ASTReader::ReadTemplateName(const RecordData &Record, unsigned &Idx) {
   TemplateName::NameKind Kind = (TemplateName::NameKind)Record[Idx++]; 

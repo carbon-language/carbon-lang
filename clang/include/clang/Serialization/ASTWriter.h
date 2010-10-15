@@ -400,6 +400,12 @@ public:
 
   /// \brief Emit a declaration name.
   void AddDeclarationName(DeclarationName Name, RecordData &Record);
+  void AddDeclarationNameLoc(const DeclarationNameLoc &DNLoc,
+                             DeclarationName Name, RecordData &Record);
+  void AddDeclarationNameInfo(const DeclarationNameInfo &NameInfo,
+                              RecordData &Record);
+
+  void AddQualifierInfo(const QualifierInfo &Info, RecordData &Record);
 
   /// \brief Emit a nested name specifier.
   void AddNestedNameSpecifier(NestedNameSpecifier *NNS, RecordData &Record);

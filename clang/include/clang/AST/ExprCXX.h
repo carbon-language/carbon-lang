@@ -1553,6 +1553,9 @@ public:
            T->getStmtClass() == UnresolvedMemberExprClass;
   }
   static bool classof(const OverloadExpr *) { return true; }
+
+  friend class ASTStmtReader;
+  friend class ASTStmtWriter;
 };
 
 /// \brief A reference to a name which we were able to look up during
@@ -1838,6 +1841,9 @@ public:
 
   virtual StmtIterator child_begin();
   virtual StmtIterator child_end();
+
+  friend class ASTStmtReader;
+  friend class ASTStmtWriter;
 };
 
 class CXXExprWithTemporaries : public Expr {
@@ -2250,6 +2256,9 @@ public:
   // Iterators
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
+
+  friend class ASTStmtReader;
+  friend class ASTStmtWriter;
 };
 
 /// \brief Represents a C++ member access expression for which lookup

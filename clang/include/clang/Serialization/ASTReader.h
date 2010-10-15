@@ -1021,6 +1021,14 @@ public:
 
   /// \brief Read a declaration name.
   DeclarationName ReadDeclarationName(const RecordData &Record, unsigned &Idx);
+  void ReadDeclarationNameLoc(PerFileData &F,
+                              DeclarationNameLoc &DNLoc, DeclarationName Name,
+                              const RecordData &Record, unsigned &Idx);
+  void ReadDeclarationNameInfo(PerFileData &F, DeclarationNameInfo &NameInfo,
+                               const RecordData &Record, unsigned &Idx);
+
+  void ReadQualifierInfo(PerFileData &F, QualifierInfo &Info,
+                         const RecordData &Record, unsigned &Idx);
 
   NestedNameSpecifier *ReadNestedNameSpecifier(const RecordData &Record,
                                                unsigned &Idx);

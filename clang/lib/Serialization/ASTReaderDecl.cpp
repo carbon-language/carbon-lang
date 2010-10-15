@@ -49,6 +49,18 @@ namespace clang {
                                       unsigned &I) {
       return Reader.GetTypeSourceInfo(F, R, I);
     }
+    void ReadQualifierInfo(QualifierInfo &Info,
+                           const ASTReader::RecordData &R, unsigned &I) {
+      Reader.ReadQualifierInfo(F, Info, R, I);
+    }
+    void ReadDeclarationNameLoc(DeclarationNameLoc &DNLoc, DeclarationName Name,
+                                const ASTReader::RecordData &R, unsigned &I) {
+      Reader.ReadDeclarationNameLoc(F, DNLoc, Name, R, I);
+    }
+    void ReadDeclarationNameInfo(DeclarationNameInfo &NameInfo,
+                                const ASTReader::RecordData &R, unsigned &I) {
+      Reader.ReadDeclarationNameInfo(F, NameInfo, R, I);
+    }
 
   public:
     ASTDeclReader(ASTReader &Reader, ASTReader::PerFileData &F,
@@ -202,9 +214,13 @@ void ASTDeclReader::VisitTagDecl(TagDecl *TD) {
   TD->setEmbeddedInDeclarator(Record[Idx++]);
   TD->setRBraceLoc(ReadSourceLocation(Record, Idx));
   TD->setTagKeywordLoc(ReadSourceLocation(Record, Idx));
-  // FIXME: maybe read optional qualifier and its range.
-  TD->setTypedefForAnonDecl(
-                    cast_or_null<TypedefDecl>(Reader.GetDecl(Record[Idx++])));
+  if (Record[Idx++]) { // hasExtInfo
+    TagDecl::ExtInfo *Info = new (*Reader.getContext()) TagDecl::ExtInfo();
+    ReadQualifierInfo(*Info, Record, Idx);
+    TD->TypedefDeclOrQualifier = Info;
+  } else
+    TD->setTypedefForAnonDecl(
+                      cast_or_null<TypedefDecl>(Reader.GetDecl(Record[Idx++])));
 }
 
 void ASTDeclReader::VisitEnumDecl(EnumDecl *ED) {
@@ -243,17 +259,21 @@ void ASTDeclReader::VisitEnumConstantDecl(EnumConstantDecl *ECD) {
 
 void ASTDeclReader::VisitDeclaratorDecl(DeclaratorDecl *DD) {
   VisitValueDecl(DD);
-  TypeSourceInfo *TInfo = GetTypeSourceInfo(Record, Idx);
-  if (TInfo)
-    DD->setTypeSourceInfo(TInfo);
-  // FIXME: read optional qualifier and its range.
+  if (Record[Idx++]) { // hasExtInfo
+    DeclaratorDecl::ExtInfo *Info
+        = new (*Reader.getContext()) DeclaratorDecl::ExtInfo();
+    ReadQualifierInfo(*Info, Record, Idx);
+    Info->TInfo = GetTypeSourceInfo(Record, Idx);
+    DD->DeclInfo = Info;
+  } else
+    DD->DeclInfo = GetTypeSourceInfo(Record, Idx);
 }
 
 void ASTDeclReader::VisitFunctionDecl(FunctionDecl *FD) {
   VisitDeclaratorDecl(FD);
   VisitRedeclarable(FD);
-  // FIXME: read DeclarationNameLoc.
 
+  ReadDeclarationNameLoc(FD->DNLoc, FD->getDeclName(), Record, Idx);
   FD->IdentifierNamespace = Record[Idx++];
   switch ((FunctionDecl::TemplatedKind)Record[Idx++]) {
   default: assert(false && "Unhandled TemplatedKind!");
@@ -689,7 +709,7 @@ void ASTDeclReader::VisitUsingDecl(UsingDecl *D) {
   D->setUsingLocation(ReadSourceLocation(Record, Idx));
   D->setNestedNameRange(ReadSourceRange(Record, Idx));
   D->setTargetNestedNameDecl(Reader.ReadNestedNameSpecifier(Record, Idx));
-  // FIXME: read the DNLoc component.
+  ReadDeclarationNameLoc(D->DNLoc, D->getDeclName(), Record, Idx);
 
   // FIXME: It would probably be more efficient to read these into a vector
   // and then re-cosntruct the shadow decl set over that vector since it
@@ -731,7 +751,7 @@ void ASTDeclReader::VisitUnresolvedUsingValueDecl(UnresolvedUsingValueDecl *D) {
   D->setTargetNestedNameRange(ReadSourceRange(Record, Idx));
   D->setUsingLoc(ReadSourceLocation(Record, Idx));
   D->setTargetNestedNameSpecifier(Reader.ReadNestedNameSpecifier(Record, Idx));
-  // FIXME: read the DNLoc component.
+  ReadDeclarationNameLoc(D->DNLoc, D->getDeclName(), Record, Idx);
 }
 
 void ASTDeclReader::VisitUnresolvedUsingTypenameDecl(

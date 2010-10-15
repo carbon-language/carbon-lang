@@ -2095,6 +2095,9 @@ public:
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
   static bool classof(const UnresolvedUsingValueDecl *D) { return true; }
   static bool classofKind(Kind K) { return K == UnresolvedUsingValue; }
+
+  friend class ASTDeclReader;
+  friend class ASTDeclWriter;
 };
 
 /// UnresolvedUsingTypenameDecl - Represents a dependent using

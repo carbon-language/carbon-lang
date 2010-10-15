@@ -170,8 +170,11 @@ void ASTDeclWriter::VisitTagDecl(TagDecl *D) {
   Record.push_back(D->isEmbeddedInDeclarator());
   Writer.AddSourceLocation(D->getRBraceLoc(), Record);
   Writer.AddSourceLocation(D->getTagKeywordLoc(), Record);
-  // FIXME: maybe write optional qualifier and its range.
-  Writer.AddDeclRef(D->getTypedefForAnonDecl(), Record);
+  Record.push_back(D->hasExtInfo());
+  if (D->hasExtInfo())
+    Writer.AddQualifierInfo(*D->getExtInfo(), Record);
+  else
+    Writer.AddDeclRef(D->getTypedefForAnonDecl(), Record);
 }
 
 void ASTDeclWriter::VisitEnumDecl(EnumDecl *D) {
@@ -212,15 +215,17 @@ void ASTDeclWriter::VisitEnumConstantDecl(EnumConstantDecl *D) {
 
 void ASTDeclWriter::VisitDeclaratorDecl(DeclaratorDecl *D) {
   VisitValueDecl(D);
+  Record.push_back(D->hasExtInfo());
+  if (D->hasExtInfo())
+    Writer.AddQualifierInfo(*D->getExtInfo(), Record);
   Writer.AddTypeSourceInfo(D->getTypeSourceInfo(), Record);
-  // FIXME: write optional qualifier and its range.
 }
 
 void ASTDeclWriter::VisitFunctionDecl(FunctionDecl *D) {
   VisitDeclaratorDecl(D);
   VisitRedeclarable(D);
-  // FIXME: write DeclarationNameLoc.
 
+  Writer.AddDeclarationNameLoc(D->DNLoc, D->getDeclName(), Record);
   Record.push_back(D->getIdentifierNamespace());
   Record.push_back(D->getTemplatedKind());
   switch (D->getTemplatedKind()) {
@@ -648,6 +653,7 @@ void ASTDeclWriter::VisitUsingDecl(UsingDecl *D) {
   Writer.AddSourceRange(D->getNestedNameRange(), Record);
   Writer.AddSourceLocation(D->getUsingLocation(), Record);
   Writer.AddNestedNameSpecifier(D->getTargetNestedNameDecl(), Record);
+  Writer.AddDeclarationNameLoc(D->DNLoc, D->getDeclName(), Record);
   Record.push_back(D->getNumShadowDecls());
   for (UsingDecl::shadow_iterator P = D->shadow_begin(),
        PEnd = D->shadow_end(); P != PEnd; ++P)
@@ -681,6 +687,7 @@ void ASTDeclWriter::VisitUnresolvedUsingValueDecl(UnresolvedUsingValueDecl *D) {
   Writer.AddSourceRange(D->getTargetNestedNameRange(), Record);
   Writer.AddSourceLocation(D->getUsingLoc(), Record);
   Writer.AddNestedNameSpecifier(D->getTargetNestedNameSpecifier(), Record);
+  Writer.AddDeclarationNameLoc(D->DNLoc, D->getDeclName(), Record);
   Code = serialization::DECL_UNRESOLVED_USING_VALUE;
 }
 
@@ -1103,6 +1110,7 @@ void ASTWriter::WriteDeclsBlockAbbrevs() {
   // ValueDecl
   Abv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 6)); // Type
   // DeclaratorDecl
+  Abv->Add(BitCodeAbbrevOp(0));                       // hasExtInfo
   Abv->Add(BitCodeAbbrevOp(serialization::PREDEF_TYPE_NULL_ID)); // InfoType
   // VarDecl
   Abv->Add(BitCodeAbbrevOp(0));                       // StorageClass

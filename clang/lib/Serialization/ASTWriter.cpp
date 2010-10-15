@@ -2929,6 +2929,55 @@ void ASTWriter::AddDeclarationName(DeclarationName Name, RecordData &Record) {
   }
 }
 
+void ASTWriter::AddDeclarationNameLoc(const DeclarationNameLoc &DNLoc,
+                                     DeclarationName Name, RecordData &Record) {
+  switch (Name.getNameKind()) {
+  case DeclarationName::CXXConstructorName:
+  case DeclarationName::CXXDestructorName:
+  case DeclarationName::CXXConversionFunctionName:
+    AddTypeSourceInfo(DNLoc.NamedType.TInfo, Record);
+    break;
+
+  case DeclarationName::CXXOperatorName:
+    AddSourceLocation(
+       SourceLocation::getFromRawEncoding(DNLoc.CXXOperatorName.BeginOpNameLoc),
+       Record);
+    AddSourceLocation(
+        SourceLocation::getFromRawEncoding(DNLoc.CXXOperatorName.EndOpNameLoc),
+        Record);
+    break;
+
+  case DeclarationName::CXXLiteralOperatorName:
+    AddSourceLocation(
+     SourceLocation::getFromRawEncoding(DNLoc.CXXLiteralOperatorName.OpNameLoc),
+     Record);
+    break;
+
+  case DeclarationName::Identifier:
+  case DeclarationName::ObjCZeroArgSelector:
+  case DeclarationName::ObjCOneArgSelector:
+  case DeclarationName::ObjCMultiArgSelector:
+  case DeclarationName::CXXUsingDirective:
+    break;
+  }
+}
+
+void ASTWriter::AddDeclarationNameInfo(const DeclarationNameInfo &NameInfo,
+                                       RecordData &Record) {
+  AddDeclarationName(NameInfo.getName(), Record);
+  AddSourceLocation(NameInfo.getLoc(), Record);
+  AddDeclarationNameLoc(NameInfo.getInfo(), NameInfo.getName(), Record);
+}
+
+void ASTWriter::AddQualifierInfo(const QualifierInfo &Info,
+                                 RecordData &Record) {
+  AddNestedNameSpecifier(Info.NNS, Record);
+  AddSourceRange(Info.NNSRange, Record);
+  Record.push_back(Info.NumTemplParamLists);
+  for (unsigned i=0, e=Info.NumTemplParamLists; i != e; ++i)
+    AddTemplateParameterList(Info.TemplParamLists[i], Record);
+}
+
 void ASTWriter::AddNestedNameSpecifier(NestedNameSpecifier *NNS,
                                        RecordData &Record) {
   // Nested name specifiers usually aren't too long. I think that 8 would

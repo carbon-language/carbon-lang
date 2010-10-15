@@ -385,8 +385,8 @@ void ASTStmtWriter::VisitDeclRefExpr(DeclRefExpr *E) {
     AddExplicitTemplateArgumentList(E->getExplicitTemplateArgs());
 
   Writer.AddDeclRef(E->getDecl(), Record);
-  // FIXME: write DeclarationNameLoc.
   Writer.AddSourceLocation(E->getLocation(), Record);
+  Writer.AddDeclarationNameLoc(E->DNLoc, E->getDecl()->getDeclName(), Record);
   Code = serialization::EXPR_DECL_REF;
 }
 
@@ -555,9 +555,10 @@ void ASTStmtWriter::VisitMemberExpr(MemberExpr *E) {
   Writer.AddTypeRef(E->getType(), Record);
   Writer.AddStmt(E->getBase());
   Writer.AddDeclRef(E->getMemberDecl(), Record);
-  // FIXME: write DeclarationNameLoc.
   Writer.AddSourceLocation(E->getMemberLoc(), Record);
   Record.push_back(E->isArrow());
+  Writer.AddDeclarationNameLoc(E->MemberDNLoc,
+                               E->getMemberDecl()->getDeclName(), Record);
   Code = serialization::EXPR_MEMBER;
 }
 
@@ -1190,9 +1191,7 @@ ASTStmtWriter::VisitCXXDependentScopeMemberExpr(CXXDependentScopeMemberExpr *E){
   Writer.AddNestedNameSpecifier(E->getQualifier(), Record);
   Writer.AddSourceRange(E->getQualifierRange(), Record);
   Writer.AddDeclRef(E->getFirstQualifierFoundInScope(), Record);
-  // FIXME: write whole DeclarationNameInfo.
-  Writer.AddDeclarationName(E->getMember(), Record);
-  Writer.AddSourceLocation(E->getMemberLoc(), Record);
+  Writer.AddDeclarationNameInfo(E->MemberNameInfo, Record);
   Code = serialization::EXPR_CXX_DEPENDENT_SCOPE_MEMBER;
 }
 
@@ -1212,9 +1211,7 @@ ASTStmtWriter::VisitDependentScopeDeclRefExpr(DependentScopeDeclRefExpr *E) {
     Record.push_back(0);
   }
 
-  // FIXME: write whole DeclarationNameInfo.
-  Writer.AddDeclarationName(E->getDeclName(), Record);
-  Writer.AddSourceLocation(E->getLocation(), Record);
+  Writer.AddDeclarationNameInfo(E->NameInfo, Record);
   Writer.AddSourceRange(E->getQualifierRange(), Record);
   Writer.AddNestedNameSpecifier(E->getQualifier(), Record);
   Code = serialization::EXPR_CXX_DEPENDENT_SCOPE_DECL_REF;
@@ -1255,11 +1252,9 @@ void ASTStmtWriter::VisitOverloadExpr(OverloadExpr *E) {
     Record.push_back(OvI.getAccess());
   }
 
-  // FIXME: write whole DeclarationNameInfo.
-  Writer.AddDeclarationName(E->getName(), Record);
+  Writer.AddDeclarationNameInfo(E->NameInfo, Record);
   Writer.AddNestedNameSpecifier(E->getQualifier(), Record);
   Writer.AddSourceRange(E->getQualifierRange(), Record);
-  Writer.AddSourceLocation(E->getNameLoc(), Record);
 }
 
 void ASTStmtWriter::VisitUnresolvedMemberExpr(UnresolvedMemberExpr *E) {

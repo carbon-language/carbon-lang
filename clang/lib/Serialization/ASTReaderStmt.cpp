@@ -38,6 +38,14 @@ namespace clang {
                                       unsigned &I) {
       return Reader.GetTypeSourceInfo(F, R, I);
     }
+    void ReadDeclarationNameLoc(DeclarationNameLoc &DNLoc, DeclarationName Name,
+                                const ASTReader::RecordData &R, unsigned &I) {
+      Reader.ReadDeclarationNameLoc(F, DNLoc, Name, R, I);
+    }
+    void ReadDeclarationNameInfo(DeclarationNameInfo &NameInfo,
+                                const ASTReader::RecordData &R, unsigned &I) {
+      Reader.ReadDeclarationNameInfo(F, NameInfo, R, I);
+    }
 
   public:
     ASTStmtReader(ASTReader &Reader, ASTReader::PerFileData &F,
@@ -421,8 +429,8 @@ void ASTStmtReader::VisitDeclRefExpr(DeclRefExpr *E) {
                                      NumTemplateArgs);
 
   E->setDecl(cast<ValueDecl>(Reader.GetDecl(Record[Idx++])));
-  // FIXME: read DeclarationNameLoc.
   E->setLocation(ReadSourceLocation(Record, Idx));
+  ReadDeclarationNameLoc(E->DNLoc, E->getDecl()->getDeclName(), Record, Idx);
 }
 
 void ASTStmtReader::VisitIntegerLiteral(IntegerLiteral *E) {
@@ -1186,9 +1194,7 @@ ASTStmtReader::VisitCXXDependentScopeMemberExpr(CXXDependentScopeMemberExpr *E){
   E->setQualifierRange(ReadSourceRange(Record, Idx));
   E->setFirstQualifierFoundInScope(
                         cast_or_null<NamedDecl>(Reader.GetDecl(Record[Idx++])));
-  // FIXME: read whole DeclarationNameInfo.
-  E->setMember(Reader.ReadDeclarationName(Record, Idx));
-  E->setMemberLoc(ReadSourceLocation(Record, Idx));
+  ReadDeclarationNameInfo(E->MemberNameInfo, Record, Idx);
 }
 
 void
@@ -1202,9 +1208,7 @@ ASTStmtReader::VisitDependentScopeDeclRefExpr(DependentScopeDeclRefExpr *E) {
     ReadExplicitTemplateArgumentList(E->getExplicitTemplateArgs(),
                                      NumTemplateArgs);
 
-  // FIXME: read whole DeclarationNameInfo.
-  E->setDeclName(Reader.ReadDeclarationName(Record, Idx));
-  E->setLocation(ReadSourceLocation(Record, Idx));
+  ReadDeclarationNameInfo(E->NameInfo, Record, Idx);
   E->setQualifierRange(ReadSourceRange(Record, Idx));
   E->setQualifier(Reader.ReadNestedNameSpecifier(Record, Idx));
 }
@@ -1240,11 +1244,9 @@ void ASTStmtReader::VisitOverloadExpr(OverloadExpr *E) {
   }
   E->initializeResults(*Reader.getContext(), Decls.begin(), Decls.end());
 
-  // FIXME: read whole DeclarationNameInfo.
-  E->setName(Reader.ReadDeclarationName(Record, Idx));
+  ReadDeclarationNameInfo(E->NameInfo, Record, Idx);
   E->setQualifier(Reader.ReadNestedNameSpecifier(Record, Idx));
   E->setQualifierRange(ReadSourceRange(Record, Idx));
-  E->setNameLoc(ReadSourceLocation(Record, Idx));
 }
 
 void ASTStmtReader::VisitUnresolvedMemberExpr(UnresolvedMemberExpr *E) {
@@ -1518,7 +1520,6 @@ Stmt *ASTReader::ReadStmtFromStream(PerFileData &F) {
       QualType T = GetType(Record[Idx++]);
       Expr *Base = ReadSubExpr();
       ValueDecl *MemberD = cast<ValueDecl>(GetDecl(Record[Idx++]));
-      // FIXME: read DeclarationNameLoc.
       SourceLocation MemberLoc = ReadSourceLocation(F, Record, Idx);
       DeclarationNameInfo MemberNameInfo(MemberD->getDeclName(), MemberLoc);
       bool IsArrow = Record[Idx++];
@@ -1526,6 +1527,8 @@ Stmt *ASTReader::ReadStmtFromStream(PerFileData &F) {
       S = MemberExpr::Create(*Context, Base, IsArrow, NNS, QualifierRange,
                              MemberD, FoundDecl, MemberNameInfo,
                              NumTemplateArgs ? &ArgInfo : 0, T);
+      ReadDeclarationNameLoc(F, cast<MemberExpr>(S)->MemberDNLoc,
+                             MemberD->getDeclName(), Record, Idx);
       break;
     }
 
