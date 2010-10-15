@@ -80,7 +80,7 @@ lldb_private::Initialize ()
         ObjectContainerUniversalMachO::Initialize();
         ObjectFileMachO::Initialize();
         ProcessGDBRemote::Initialize();
-        ProcessMacOSX::Initialize();
+        //ProcessMacOSX::Initialize();
         SymbolVendorMacOSX::Initialize();
 #endif
 	Debugger::GetSettingsController (false);
@@ -117,7 +117,7 @@ lldb_private::Terminate ()
     ObjectContainerUniversalMachO::Terminate();
     ObjectFileMachO::Terminate();
     ProcessGDBRemote::Terminate();
-    ProcessMacOSX::Terminate();
+    //ProcessMacOSX::Terminate();
     SymbolVendorMacOSX::Terminate();
 #endif
 

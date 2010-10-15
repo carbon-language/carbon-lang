@@ -168,7 +168,7 @@ public:
 
         if (process == NULL)
         {
-            result.AppendErrorWithFormat ("Failed to find a process plugin for executable");
+            result.AppendErrorWithFormat ("Failed to find a process plugin for executable.\n");
             result.SetStatus (eReturnStatusFailed);
             return false;
         }
