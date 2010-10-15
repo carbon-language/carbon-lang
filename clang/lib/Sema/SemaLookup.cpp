@@ -2704,6 +2704,10 @@ public:
   unsigned size() const { return BestResults.size(); }
   bool empty() const { return BestResults.empty(); }
 
+  bool &operator[](llvm::StringRef Name) {
+    return BestResults[Name];
+  }
+
   unsigned getBestEditDistance() const { return BestEditDistance; }  
 };
 
@@ -3119,7 +3123,15 @@ DeclarationName Sema::CorrectTypo(LookupResult &Res, Scope *S, CXXScopeSpec *SS,
   // If only a single name remains, return that result.
   if (Consumer.size() == 1)
     return &Context.Idents.get(Consumer.begin()->getKey());  
-
+  else if (Consumer.size() > 1 && CTC == CTC_ObjCMessageReceiver 
+           && Consumer["super"]) {
+    // Prefix 'super' when we're completing in a message-receiver
+    // context.
+    Res.suppressDiagnostics();
+    Res.clear();
+    return &Context.Idents.get("super");
+  }
+           
   Res.suppressDiagnostics();
   Res.setLookupName(Typo);
   Res.clear();
