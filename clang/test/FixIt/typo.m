@@ -1,5 +1,5 @@
 // RUN: %clang_cc1 -fsyntax-only -triple x86_64-apple-darwin10 -fobjc-nonfragile-abi -DNON_FIXITS -verify %s
-// RUN: %clang -E -P %s -o %t
+// RUN: %clang_cc1 -triple x86_64-apple-darwin10 -x objective-c -E -P %s -o %t
 // RUN: %clang_cc1 -x objective-c -fsyntax-only -triple x86_64-apple-darwin10 -fobjc-nonfragile-abi -fixit %t  || true
 // RUN: %clang_cc1 -x objective-c -fsyntax-only -triple x86_64-apple-darwin10 -fobjc-nonfragile-abi -pedantic -Werror %t
 
