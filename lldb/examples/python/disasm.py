@@ -17,9 +17,6 @@ def disassemble_instructions (insts):
     for i in range(insts.GetSize()):
         print insts.GetInstructionAtIndex(i)
 
-# Initialize LLDB so we can use it
-lldb.SBDebugger.Initialize()
-
 # Create a new debugger instance
 debugger = lldb.SBDebugger.Create()
 
