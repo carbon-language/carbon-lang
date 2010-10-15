@@ -99,4 +99,19 @@ entry:
   ret i64 %shr
 }
 
+define i32 @f11([1 x i32] %A.coerce0, [1 x i32] %B.coerce0) nounwind readnone ssp {
+entry:
+; CHECK: f11
+; CHECK: ubfx  r1, r1, #8, #5         @ encoding: [0x51,0x14,0xe4,0xe7]
+; CHECK: sbfx  r0, r0, #13, #7        @ encoding: [0xd0,0x06,0xa6,0xe7]
+  %tmp11 = extractvalue [1 x i32] %A.coerce0, 0
+  %tmp4 = extractvalue [1 x i32] %B.coerce0, 0
+  %0 = shl i32 %tmp11, 12
+  %bf.val.sext = ashr i32 %0, 25
+  %1 = lshr i32 %tmp4, 8
+  %bf.clear2 = and i32 %1, 31
+  %mul = mul nsw i32 %bf.val.sext, %bf.clear2
+  ret i32 %mul
+}
+
 declare void @llvm.trap() nounwind

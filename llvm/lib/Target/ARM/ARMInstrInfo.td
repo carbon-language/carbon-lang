@@ -367,6 +367,13 @@ def imm0_31 : Operand<i32>, PatLeaf<(imm), [{
   return (int32_t)N->getZExtValue() < 32;
 }]>;
 
+/// imm0_31_m1 - Matches and prints like imm0_31, but encodes as 'value - 1'.
+def imm0_31_m1 : Operand<i32>, PatLeaf<(imm), [{
+  return (int32_t)N->getZExtValue() < 32;
+}]> {
+  string EncoderMethod = "getImmMinusOneOpValue";
+}
+
 // Define ARM specific addressing modes.
 
 // addrmode2base := reg +/- imm12
@@ -1761,22 +1768,38 @@ defm UXTAH : AI_exta_rrot<0b01101111, "uxtah",
 defm UXTAB16 : AI_exta_rrot_np<0b01101100, "uxtab16">;
 
 
-def SBFX  : I<(outs GPR:$dst),
-              (ins GPR:$src, imm0_31:$lsb, imm0_31:$width),
+def SBFX  : I<(outs GPR:$Rd),
+              (ins GPR:$Rn, imm0_31:$lsb, imm0_31_m1:$width),
                AddrMode1, Size4Bytes, IndexModeNone, DPFrm, IIC_iUNAsi,
-               "sbfx", "\t$dst, $src, $lsb, $width", "", []>,
+               "sbfx", "\t$Rd, $Rn, $lsb, $width", "", []>,
                Requires<[IsARM, HasV6T2]> {
+  bits<4> Rd;
+  bits<4> Rn;
+  bits<5> lsb;
+  bits<5> width;
   let Inst{27-21} = 0b0111101;
   let Inst{6-4}   = 0b101;
+  let Inst{20-16} = width;
+  let Inst{15-12} = Rd;
+  let Inst{11-7}  = lsb;
+  let Inst{3-0}   = Rn;
 }
 
-def UBFX  : I<(outs GPR:$dst),
-              (ins GPR:$src, imm0_31:$lsb, imm0_31:$width),
+def UBFX  : I<(outs GPR:$Rd),
+              (ins GPR:$Rn, imm0_31:$lsb, imm0_31_m1:$width),
                AddrMode1, Size4Bytes, IndexModeNone, DPFrm, IIC_iUNAsi,
-               "ubfx", "\t$dst, $src, $lsb, $width", "", []>,
+               "ubfx", "\t$Rd, $Rn, $lsb, $width", "", []>,
                Requires<[IsARM, HasV6T2]> {
+  bits<4> Rd;
+  bits<4> Rn;
+  bits<5> lsb;
+  bits<5> width;
   let Inst{27-21} = 0b0111111;
   let Inst{6-4}   = 0b101;
+  let Inst{20-16} = width;
+  let Inst{15-12} = Rd;
+  let Inst{11-7}  = lsb;
+  let Inst{3-0}   = Rn;
 }
 
 //===----------------------------------------------------------------------===//

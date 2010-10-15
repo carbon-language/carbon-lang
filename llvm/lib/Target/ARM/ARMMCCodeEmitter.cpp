@@ -84,6 +84,10 @@ public:
     }
   }
 
+  unsigned getImmMinusOneOpValue(const MCInst &MI, unsigned Op) const {
+    return MI.getOperand(Op).getImm() - 1;
+  }
+
   unsigned getNumFixupKinds() const {
     assert(0 && "ARMMCCodeEmitter::getNumFixupKinds() not yet implemented.");
     return 0;
