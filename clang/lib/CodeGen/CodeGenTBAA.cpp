@@ -76,7 +76,9 @@ CodeGenTBAA::getTBAAInfo(QualType QTy) {
     case BuiltinType::UInt128:
       return getTBAAInfo(Context.Int128Ty);
 
-    // Other builtin types.
+    // Treat all other builtin types as distinct types. This includes
+    // treating wchar_t, char16_t, and char32_t as distinct from their
+    // "underlying types".
     default:
       return MetadataCache[Ty] =
                getTBAAInfoForNamedType(BTy->getName(Features), Char);
