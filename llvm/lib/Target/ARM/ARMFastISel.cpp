@@ -138,7 +138,7 @@ class ARMFastISel : public FastISel {
     bool ARMEmitLoad(EVT VT, unsigned &ResultReg, unsigned Reg, int Offset);
     bool ARMEmitStore(EVT VT, unsigned SrcReg, unsigned Reg, int Offset);
     bool ARMComputeRegOffset(const Value *Obj, unsigned &Reg, int &Offset);
-    unsigned ARMSimplifyRegOffset(unsigned Reg, int &Offset);
+    void ARMSimplifyRegOffset(unsigned &Reg, int &Offset, EVT VT);
     unsigned ARMMaterializeFP(const ConstantFP *CFP, EVT VT);
     unsigned ARMMaterializeInt(const Constant *C, EVT VT);
     unsigned ARMMaterializeGV(const GlobalValue *GV, EVT VT);
@@ -605,8 +605,9 @@ bool ARMFastISel::ARMComputeRegOffset(const Value *Obj, unsigned &Reg,
     }
     case Instruction::GetElementPtr: {
       int SavedOffset = Offset;
+      unsigned SavedReg = Reg;
       int TmpOffset = Offset;
-      
+
       // Iterate through the GEP folding the constants into offsets where
       // we can.
       gep_type_iterator GTI = gep_type_begin(U);
@@ -618,24 +619,43 @@ bool ARMFastISel::ARMComputeRegOffset(const Value *Obj, unsigned &Reg,
           unsigned Idx = cast<ConstantInt>(Op)->getZExtValue();
           TmpOffset += SL->getElementOffset(Idx);
         } else {
-          goto unsupported_gep;
+          uint64_t S = TD.getTypeAllocSize(GTI.getIndexedType());
+          SmallVector<const Value *, 4> Worklist;
+          Worklist.push_back(Op);
+          do {
+            Op = Worklist.pop_back_val();
+            if (const ConstantInt *CI = dyn_cast<ConstantInt>(Op)) {
+              // Constant-offset addressing.
+              TmpOffset += CI->getSExtValue() * S;
+            } else if (0 && isa<AddOperator>(Op) &&
+                       isa<ConstantInt>(cast<AddOperator>(Op)->getOperand(1))) {
+              // An add with a constant operand. Fold the constant.
+              ConstantInt *CI =
+                cast<ConstantInt>(cast<AddOperator>(Op)->getOperand(1));
+              TmpOffset += CI->getSExtValue() * S;
+              // Add the other operand back to the work list.
+              Worklist.push_back(cast<AddOperator>(Op)->getOperand(0));
+            } else
+              goto unsupported_gep;
+          } while (!Worklist.empty());
         }
       }
-      
+
+      // Try to grab the base operand now.
       Offset = TmpOffset;
       if (ARMComputeRegOffset(U->getOperand(0), Reg, Offset)) return true;
-      
+
+      // We failed, restore everything and try the other options.
       Offset = SavedOffset;
-      break;
-      
+      Reg = SavedReg;
+
       unsupported_gep:
-      // errs() << "GEP: " << *U << "\n";
       break;
     }
     case Instruction::Alloca: {
       // TODO: Fix this to do intermediate loads, etc.
       if (Offset != 0) return false;
-      
+
       const AllocaInst *AI = cast<AllocaInst>(Obj);
       DenseMap<const AllocaInst*, int>::iterator SI =
         FuncInfo.StaticAllocaMap.find(AI);
@@ -656,18 +676,17 @@ bool ARMFastISel::ARMComputeRegOffset(const Value *Obj, unsigned &Reg,
   if (const GlobalValue *GV = dyn_cast<GlobalValue>(Obj)) {
     unsigned Tmp = ARMMaterializeGV(GV, TLI.getValueType(Obj->getType()));
     if (Tmp == 0) return false;
-    
+
     Reg = Tmp;
     return true;
   }
 
   // Try to get this in a register if nothing else has worked.
   if (Reg == 0) Reg = getRegForValue(Obj);
-  
   return Reg != 0;
 }
 
-unsigned ARMFastISel::ARMSimplifyRegOffset(unsigned Reg, int &Offset) {
+void ARMFastISel::ARMSimplifyRegOffset(unsigned &Reg, int &Offset, EVT VT) {
 
   // Since the offset may be too large for the load instruction
   // get the reg+offset into a register.
@@ -675,21 +694,23 @@ unsigned ARMFastISel::ARMSimplifyRegOffset(unsigned Reg, int &Offset) {
     ARMCC::CondCodes Pred = ARMCC::AL;
     unsigned PredReg = 0;
 
+    TargetRegisterClass *RC = isThumb ? ARM::tGPRRegisterClass :
+      ARM::GPRRegisterClass;
+    unsigned BaseReg = createResultReg(RC);
+
     if (!isThumb)
       emitARMRegPlusImmediate(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
-                              Reg, Reg, Offset, Pred, PredReg,
+                              BaseReg, Reg, Offset, Pred, PredReg,
                               static_cast<const ARMBaseInstrInfo&>(TII));
     else {
       assert(AFI->isThumb2Function());
       emitT2RegPlusImmediate(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
-                             Reg, Reg, Offset, Pred, PredReg,
+                             BaseReg, Reg, Offset, Pred, PredReg,
                              static_cast<const ARMBaseInstrInfo&>(TII));
     }
-    
     Offset = 0;
+    Reg = BaseReg;
   }
-  
-  return Reg;
 }
 
 bool ARMFastISel::ARMEmitLoad(EVT VT, unsigned &ResultReg,
@@ -767,10 +788,10 @@ bool ARMFastISel::SelectLoad(const Instruction *I) {
   if (!ARMComputeRegOffset(I->getOperand(0), Reg, Offset))
     return false;
 
-  unsigned BaseReg = ARMSimplifyRegOffset(Reg, Offset);
+  ARMSimplifyRegOffset(Reg, Offset, VT);
 
   unsigned ResultReg;
-  if (!ARMEmitLoad(VT, ResultReg, BaseReg, Offset)) return false;
+  if (!ARMEmitLoad(VT, ResultReg, Reg, Offset)) return false;
 
   UpdateValueMap(I, ResultReg);
   return true;
@@ -785,7 +806,7 @@ bool ARMFastISel::ARMEmitStore(EVT VT, unsigned SrcReg,
   switch (VT.getSimpleVT().SimpleTy) {
     default: return false;
     case MVT::i1:
-    case MVT::i8: 
+    case MVT::i8:
       VT = MVT::i32;
       StrOpc = isThumb ? ARM::t2STRBi8 : ARM::STRB;
       break;
@@ -846,9 +867,9 @@ bool ARMFastISel::SelectStore(const Instruction *I) {
   if (!ARMComputeRegOffset(I->getOperand(1), Reg, Offset))
     return false;
 
-  unsigned BaseReg = ARMSimplifyRegOffset(Reg, Offset);
+  ARMSimplifyRegOffset(Reg, Offset, VT);
 
-  if (!ARMEmitStore(VT, SrcReg, BaseReg, Offset)) return false;
+  if (!ARMEmitStore(VT, SrcReg, Reg, Offset)) return false;
 
   return true;
 }
@@ -1167,7 +1188,7 @@ bool ARMFastISel::SelectSRem(const Instruction *I) {
   else if (VT == MVT::i128)
     LC = RTLIB::SREM_I128;
   assert(LC != RTLIB::UNKNOWN_LIBCALL && "Unsupported SREM!");
-    
+
   return ARMEmitLibcall(I, LC);
 }
 
