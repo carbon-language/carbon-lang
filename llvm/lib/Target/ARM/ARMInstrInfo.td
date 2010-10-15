@@ -614,6 +614,10 @@ multiclass AI_ext_rrot<bits<8> opcod, string opc, PatFrag opnode> {
                  IIC_iEXTr, opc, "\t$Rd, $Rm",
                  [(set GPR:$Rd, (opnode GPR:$Rm))]>,
               Requires<[IsARM, HasV6]> {
+    bits<4> Rd;
+    bits<4> Rm;
+    let Inst{15-12} = Rd;
+    let Inst{3-0}   = Rm;
     let Inst{11-10} = 0b00;
     let Inst{19-16} = 0b1111;
   }
@@ -621,8 +625,12 @@ multiclass AI_ext_rrot<bits<8> opcod, string opc, PatFrag opnode> {
                  IIC_iEXTr, opc, "\t$Rd, $Rm, ror $rot",
                  [(set GPR:$Rd, (opnode (rotr GPR:$Rm, rot_imm:$rot)))]>,
               Requires<[IsARM, HasV6]> {
+    bits<4> Rd;
+    bits<4> Rm;
     bits<2> rot;
+    let Inst{15-12} = Rd;
     let Inst{11-10} = rot;
+    let Inst{3-0}   = Rm;
     let Inst{19-16} = 0b1111;
   }
 }
