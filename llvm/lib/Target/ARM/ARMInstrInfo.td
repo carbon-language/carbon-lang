@@ -1991,64 +1991,71 @@ def : ARMPat<(adde   GPR:$src, so_imm_not:$imm),
 
 // ARM Arithmetic Instruction -- for disassembly only
 // GPR:$dst = GPR:$a op GPR:$b
-class AAI<bits<8> op27_20, bits<4> op7_4, string opc,
+class AAI<bits<8> op27_20, bits<8> op11_4, string opc,
           list<dag> pattern = [/* For disassembly only; pattern left blank */]>
-  : AI<(outs GPR:$dst), (ins GPR:$a, GPR:$b), DPFrm, IIC_iALUr,
-       opc, "\t$dst, $a, $b", pattern> {
+  : AI<(outs GPR:$Rd), (ins GPR:$Rn, GPR:$Rm), DPFrm, IIC_iALUr,
+       opc, "\t$Rd, $Rn, $Rm", pattern> {
+  bits<4> Rd;
+  bits<4> Rn;
+  bits<4> Rm;
   let Inst{27-20} = op27_20;
-  let Inst{7-4} = op7_4;
+  let Inst{11-4} = op11_4;
+  let Inst{19-16} = Rn;
+  let Inst{15-12} = Rd;
+  let Inst{3-0}   = Rm;
 }
 
 // Saturating add/subtract -- for disassembly only
 
-def QADD    : AAI<0b00010000, 0b0101, "qadd",
-                  [(set GPR:$dst, (int_arm_qadd GPR:$a, GPR:$b))]>;
-def QADD16  : AAI<0b01100010, 0b0001, "qadd16">;
-def QADD8   : AAI<0b01100010, 0b1001, "qadd8">;
-def QASX    : AAI<0b01100010, 0b0011, "qasx">;
-def QDADD   : AAI<0b00010100, 0b0101, "qdadd">;
-def QDSUB   : AAI<0b00010110, 0b0101, "qdsub">;
-def QSAX    : AAI<0b01100010, 0b0101, "qsax">;
-def QSUB    : AAI<0b00010010, 0b0101, "qsub",
-                  [(set GPR:$dst, (int_arm_qsub GPR:$a, GPR:$b))]>;
-def QSUB16  : AAI<0b01100010, 0b0111, "qsub16">;
-def QSUB8   : AAI<0b01100010, 0b1111, "qsub8">;
-def UQADD16 : AAI<0b01100110, 0b0001, "uqadd16">;
-def UQADD8  : AAI<0b01100110, 0b1001, "uqadd8">;
-def UQASX   : AAI<0b01100110, 0b0011, "uqasx">;
-def UQSAX   : AAI<0b01100110, 0b0101, "uqsax">;
-def UQSUB16 : AAI<0b01100110, 0b0111, "uqsub16">;
-def UQSUB8  : AAI<0b01100110, 0b1111, "uqsub8">;
+def QADD    : AAI<0b00010000, 0b00000101, "qadd",
+                  [(set GPR:$Rd, (int_arm_qadd GPR:$Rn, GPR:$Rm))]>;
+def QSUB    : AAI<0b00010010, 0b00000101, "qsub",
+                  [(set GPR:$Rd, (int_arm_qsub GPR:$Rn, GPR:$Rm))]>;
+def QDADD   : AAI<0b00010100, 0b00000101, "qdadd">;
+def QDSUB   : AAI<0b00010110, 0b00000101, "qdsub">;
+
+def QADD16  : AAI<0b01100010, 0b11110001, "qadd16">;
+def QADD8   : AAI<0b01100010, 0b11111001, "qadd8">;
+def QASX    : AAI<0b01100010, 0b11110011, "qasx">;
+def QSAX    : AAI<0b01100010, 0b11110101, "qsax">;
+def QSUB16  : AAI<0b01100010, 0b11110111, "qsub16">;
+def QSUB8   : AAI<0b01100010, 0b11111111, "qsub8">;
+def UQADD16 : AAI<0b01100110, 0b11110001, "uqadd16">;
+def UQADD8  : AAI<0b01100110, 0b11111001, "uqadd8">;
+def UQASX   : AAI<0b01100110, 0b11110011, "uqasx">;
+def UQSAX   : AAI<0b01100110, 0b11110101, "uqsax">;
+def UQSUB16 : AAI<0b01100110, 0b11110111, "uqsub16">;
+def UQSUB8  : AAI<0b01100110, 0b11111111, "uqsub8">;
 
 // Signed/Unsigned add/subtract -- for disassembly only
 
-def SASX   : AAI<0b01100001, 0b0011, "sasx">;
-def SADD16 : AAI<0b01100001, 0b0001, "sadd16">;
-def SADD8  : AAI<0b01100001, 0b1001, "sadd8">;
-def SSAX   : AAI<0b01100001, 0b0101, "ssax">;
-def SSUB16 : AAI<0b01100001, 0b0111, "ssub16">;
-def SSUB8  : AAI<0b01100001, 0b1111, "ssub8">;
-def UASX   : AAI<0b01100101, 0b0011, "uasx">;
-def UADD16 : AAI<0b01100101, 0b0001, "uadd16">;
-def UADD8  : AAI<0b01100101, 0b1001, "uadd8">;
-def USAX   : AAI<0b01100101, 0b0101, "usax">;
-def USUB16 : AAI<0b01100101, 0b0111, "usub16">;
-def USUB8  : AAI<0b01100101, 0b1111, "usub8">;
+def SASX   : AAI<0b01100001, 0b11110011, "sasx">;
+def SADD16 : AAI<0b01100001, 0b11110001, "sadd16">;
+def SADD8  : AAI<0b01100001, 0b11111001, "sadd8">;
+def SSAX   : AAI<0b01100001, 0b11110101, "ssax">;
+def SSUB16 : AAI<0b01100001, 0b11110111, "ssub16">;
+def SSUB8  : AAI<0b01100001, 0b11111111, "ssub8">;
+def UASX   : AAI<0b01100101, 0b11110011, "uasx">;
+def UADD16 : AAI<0b01100101, 0b11110001, "uadd16">;
+def UADD8  : AAI<0b01100101, 0b11111001, "uadd8">;
+def USAX   : AAI<0b01100101, 0b11110101, "usax">;
+def USUB16 : AAI<0b01100101, 0b11110111, "usub16">;
+def USUB8  : AAI<0b01100101, 0b11111111, "usub8">;
 
 // Signed/Unsigned halving add/subtract -- for disassembly only
 
-def SHASX   : AAI<0b01100011, 0b0011, "shasx">;
-def SHADD16 : AAI<0b01100011, 0b0001, "shadd16">;
-def SHADD8  : AAI<0b01100011, 0b1001, "shadd8">;
-def SHSAX   : AAI<0b01100011, 0b0101, "shsax">;
-def SHSUB16 : AAI<0b01100011, 0b0111, "shsub16">;
-def SHSUB8  : AAI<0b01100011, 0b1111, "shsub8">;
-def UHASX   : AAI<0b01100111, 0b0011, "uhasx">;
-def UHADD16 : AAI<0b01100111, 0b0001, "uhadd16">;
-def UHADD8  : AAI<0b01100111, 0b1001, "uhadd8">;
-def UHSAX   : AAI<0b01100111, 0b0101, "uhsax">;
-def UHSUB16 : AAI<0b01100111, 0b0111, "uhsub16">;
-def UHSUB8  : AAI<0b01100111, 0b1111, "uhsub8">;
+def SHASX   : AAI<0b01100011, 0b11110011, "shasx">;
+def SHADD16 : AAI<0b01100011, 0b11110001, "shadd16">;
+def SHADD8  : AAI<0b01100011, 0b11111001, "shadd8">;
+def SHSAX   : AAI<0b01100011, 0b11110101, "shsax">;
+def SHSUB16 : AAI<0b01100011, 0b11110111, "shsub16">;
+def SHSUB8  : AAI<0b01100011, 0b11111111, "shsub8">;
+def UHASX   : AAI<0b01100111, 0b11110011, "uhasx">;
+def UHADD16 : AAI<0b01100111, 0b11110001, "uhadd16">;
+def UHADD8  : AAI<0b01100111, 0b11111001, "uhadd8">;
+def UHSAX   : AAI<0b01100111, 0b11110101, "uhsax">;
+def UHSUB16 : AAI<0b01100111, 0b11110111, "uhsub16">;
+def UHSUB8  : AAI<0b01100111, 0b11111111, "uhsub8">;
 
 // Unsigned Sum of Absolute Differences [and Accumulate] -- for disassembly only
 
