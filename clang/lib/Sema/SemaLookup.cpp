@@ -3051,6 +3051,7 @@ DeclarationName Sema::CorrectTypo(LookupResult &Res, Scope *S, CXXScopeSpec *SS,
     return DeclarationName();
 
   // Weed out any names that could not be found by name lookup.
+  bool LastLookupWasAccepted = false;
   for (TypoCorrectionConsumer::iterator I = Consumer.begin(), 
                                      IEnd = Consumer.end();
        I != IEnd; /* Increment in loop. */) {
@@ -3103,12 +3104,14 @@ DeclarationName Sema::CorrectTypo(LookupResult &Res, Scope *S, CXXScopeSpec *SS,
         Consumer.erase(I);
         I = Next;
       }
+      LastLookupWasAccepted = false;
       break;      
         
     case LookupResult::Found:
     case LookupResult::FoundOverloaded:
     case LookupResult::FoundUnresolvedValue:
       ++I;
+      LastLookupWasAccepted = false;
       break;
     }
     
@@ -3121,8 +3124,41 @@ DeclarationName Sema::CorrectTypo(LookupResult &Res, Scope *S, CXXScopeSpec *SS,
   }
 
   // If only a single name remains, return that result.
-  if (Consumer.size() == 1)
+  if (Consumer.size() == 1) {
+    IdentifierInfo *Name = &Context.Idents.get(Consumer.begin()->getKey());
+    if (!LastLookupWasAccepted) {
+      // Perform name lookup on this name.
+      Res.suppressDiagnostics();
+      Res.clear();
+      Res.setLookupName(Name);
+      if (MemberContext)
+        LookupQualifiedName(Res, MemberContext);
+      else {
+        LookupParsedName(Res, S, SS, /*AllowBuiltinCreation=*/false, 
+                         EnteringContext);
+
+        // Fake ivar lookup; this should really be part of
+        // LookupParsedName.
+        if (ObjCMethodDecl *Method = getCurMethodDecl()) {
+          if (Method->isInstanceMethod() && Method->getClassInterface() &&
+              (Res.empty() || 
+               (Res.isSingleResult() &&
+                Res.getFoundDecl()->isDefinedOutsideFunctionOrMethod()))) {
+            ObjCInterfaceDecl *ClassDeclared = 0;
+            if (ObjCIvarDecl *IV 
+                = Method->getClassInterface()->lookupInstanceVariable(Name, 
+                                                              ClassDeclared)) {
+              Res.clear();
+              Res.addDecl(IV);
+              Res.resolveKind();
+            }
+          }
+        }
+      }
+    }
+
     return &Context.Idents.get(Consumer.begin()->getKey());  
+  }
   else if (Consumer.size() > 1 && CTC == CTC_ObjCMessageReceiver 
            && Consumer["super"]) {
     // Prefix 'super' when we're completing in a message-receiver
