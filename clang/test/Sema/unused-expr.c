@@ -118,3 +118,6 @@ void f(int i, ...) {
     __builtin_va_arg(ap, int);
     __builtin_va_end(ap);
 }
+
+// PR8371
+int fn5() __attribute__ ((__const));
