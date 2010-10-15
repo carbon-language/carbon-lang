@@ -65,6 +65,7 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo *Name) {
     .Case("final", AT_final)
     .Case("cdecl", AT_cdecl)
     .Case("const", AT_const)
+    .Case("__const", AT_const) // some GCC headers do contain this spelling
     .Case("blocks", AT_blocks)
     .Case("format", AT_format)
     .Case("hiding", AT_hiding)
