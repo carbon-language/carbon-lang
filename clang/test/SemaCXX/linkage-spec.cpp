@@ -86,3 +86,6 @@ namespace N {
 }
 
 extern "C++" using N::value;
+
+// PR7076
+extern "C" const char *Version_string = "2.9";

@@ -4339,7 +4339,7 @@ void Sema::AddInitializerToDecl(Decl *RealDecl, Expr *Init, bool DirectInit) {
       }
     }
   } else if (VDecl->isFileVarDecl()) {
-    if (VDecl->getStorageClass() == SC_Extern && 
+    if (VDecl->getStorageClassAsWritten() == SC_Extern && 
         (!getLangOptions().CPlusPlus || 
          !Context.getBaseElementType(VDecl->getType()).isConstQualified()))
       Diag(VDecl->getLocation(), diag::warn_extern_init);
