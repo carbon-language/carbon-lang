@@ -313,8 +313,9 @@ protected:
     NameToDIE                           m_function_method_index;    // All inlined functions
     NameToDIE                           m_function_selector_index;  // All method names for functions of classes
     NameToDIE                           m_objc_class_selectors_index; // Given a class name, find all selectors for the class
-    NameToDIE                           m_global_index;             // Global and static variables
-    NameToDIE                           m_types_index;              // All type DIE offsets
+    NameToDIE                           m_global_index;                 // Global and static variables
+    NameToDIE                           m_type_index;                  // All type DIE offsets
+    NameToDIE                           m_namespace_index;              // All type DIE offsets
     bool m_indexed;
 
     std::auto_ptr<DWARFDebugRanges>     m_ranges;

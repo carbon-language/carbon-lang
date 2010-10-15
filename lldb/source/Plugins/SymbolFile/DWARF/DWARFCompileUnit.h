@@ -141,6 +141,7 @@ public:
            NameToDIE& objc_class_selector_dies,
            NameToDIE& name_to_global_die,
            NameToDIE& name_to_type_die,
+           NameToDIE& name_to_namespace_die,
            const DWARFDebugRanges* debug_ranges,
            DWARFDebugAranges *aranges);
 

@@ -163,7 +163,8 @@ SymbolFileDWARF::SymbolFileDWARF(ObjectFile* objfile) :
     m_function_selector_index(),
     m_objc_class_selectors_index(),
     m_global_index(),
-    m_types_index(),
+    m_type_index(),
+    m_namespace_index(),
     m_indexed(false),
     m_ranges()
 {
@@ -1718,7 +1719,8 @@ SymbolFileDWARF::Index ()
                        m_function_selector_index,
                        m_objc_class_selectors_index,
                        m_global_index, 
-                       m_types_index,
+                       m_type_index,
+                       m_namespace_index,
                        DebugRanges(),
                        m_aranges.get());  
             
@@ -1742,7 +1744,9 @@ SymbolFileDWARF::Index ()
         s.Printf("\nFunction selectors:\n");    m_function_selector_index.Dump (&s);
         s.Printf("\nObjective C class selectors:\n");    m_objc_class_selectors_index.Dump (&s);
         s.Printf("\nGlobals and statics:\n");   m_global_index.Dump (&s); 
-        s.Printf("\nTypes:\n");                 m_types_index.Dump (&s);
+        s.Printf("\nTypes:\n");                 m_type_index.Dump (&s);
+        s.Printf("\nNamepaces:\n");             m_namespace_index.Dump (&s);
+        
 #endif
     }
 }
@@ -2033,7 +2037,7 @@ SymbolFileDWARF::FindTypes(const SymbolContext& sc, const ConstString &name, boo
     DWARFCompileUnit* prev_cu = NULL;
     const DWARFDebugInfoEntry* die = NULL;
     std::vector<NameToDIE::Info> die_info_array;
-    const size_t num_matches = m_types_index.Find (name, die_info_array);
+    const size_t num_matches = m_type_index.Find (name, die_info_array);
     for (size_t i=0; i<num_matches; ++i, prev_cu = cu)
     {
         cu = info->GetCompileUnitAtIndex(die_info_array[i].cu_idx);
@@ -2770,7 +2774,7 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                     {
                         // We have a forward declaration
                         std::vector<NameToDIE::Info> die_info_array;
-                        const size_t num_matches = m_types_index.Find (type_name_const_str, die_info_array);
+                        const size_t num_matches = m_type_index.Find (type_name_const_str, die_info_array);
                         DWARFCompileUnit* type_cu = NULL;
                         DWARFCompileUnit* curr_cu = dwarf_cu;
                         DWARFDebugInfo *info = DebugInfo();

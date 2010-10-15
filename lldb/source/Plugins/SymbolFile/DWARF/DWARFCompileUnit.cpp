@@ -571,6 +571,7 @@ DWARFCompileUnit::Index
     NameToDIE& objc_class_selector_dies,
     NameToDIE& name_to_global_die,
     NameToDIE& name_to_type_die,
+    NameToDIE& name_to_namespace_die,
     const DWARFDebugRanges *debug_ranges,
     DWARFDebugAranges *aranges
 )
@@ -874,11 +875,15 @@ DWARFCompileUnit::Index
         case DW_TAG_structure_type:
         case DW_TAG_union_type:
         case DW_TAG_typedef:
-        case DW_TAG_namespace:
             if (name && is_declaration == false)
             {
                 name_to_type_die.Insert (ConstString(name), die_info);
             }
+            break;
+
+        case DW_TAG_namespace:
+            if (name)
+                name_to_namespace_die.Insert (ConstString(name), die_info);
             break;
 
         case DW_TAG_variable:
