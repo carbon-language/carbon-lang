@@ -130,14 +130,6 @@ protected:
         ~Signal () {}
     };
 
-    Signal *
-    GetSignalByName (const char *name,
-                     int32_t &signo);
-
-    const Signal *
-    GetSignalByName (const char *name,
-                     int32_t &signo) const;
-
     void
     Reset ();
 

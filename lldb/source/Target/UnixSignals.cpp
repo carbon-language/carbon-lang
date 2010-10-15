@@ -13,6 +13,7 @@
 // C++ Includes
 // Other libraries and framework includes
 // Project includes
+#include "lldb/Interpreter/Args.h"
 
 using namespace lldb_private;
 
@@ -117,41 +118,6 @@ UnixSignals::RemoveSignal (int signo)
         m_signals.erase (pos);
 }
 
-UnixSignals::Signal *
-UnixSignals::GetSignalByName (const char *name, int32_t &signo)
-{
-    ConstString const_name (name);
-
-    collection::iterator pos, end = m_signals.end ();
-    for (pos = m_signals.begin (); pos != end; pos++)
-    {
-        if ((const_name == pos->second.m_name) || (const_name == pos->second.m_short_name))
-        {
-            signo = pos->first;
-            return &pos->second;
-        }
-    }
-    return NULL;
-}
-
-
-const UnixSignals::Signal *
-UnixSignals::GetSignalByName (const char *name, int32_t &signo) const
-{
-    ConstString const_name (name);
-
-    collection::const_iterator pos, end = m_signals.end ();
-    for (pos = m_signals.begin (); pos != end; pos++)
-    {
-        if (const_name == pos->second.m_name)
-        {
-            signo = pos->first;
-            return &(pos->second);
-        }
-    }
-    return NULL;
-}
-
 const char *
 UnixSignals::GetSignalAsCString (int signo) const
 {
@@ -173,12 +139,19 @@ UnixSignals::SignalIsValid (int32_t signo) const
 int32_t
 UnixSignals::GetSignalNumberFromName (const char *name) const
 {
-    int32_t signo;
-    const Signal *signal = GetSignalByName (name, signo);
-    if (signal == NULL)
-        return LLDB_INVALID_SIGNAL_NUMBER;
-    else
+    ConstString const_name (name);
+
+    collection::const_iterator pos, end = m_signals.end ();
+    for (pos = m_signals.begin (); pos != end; pos++)
+    {
+        if ((const_name == pos->second.m_name) || (const_name == pos->second.m_short_name))
+            return pos->first;
+    }
+    
+    const int32_t signo = Args::StringToSInt32(name, LLDB_INVALID_SIGNAL_NUMBER, 0);
+    if (signo != LLDB_INVALID_SIGNAL_NUMBER)
         return signo;
+    return LLDB_INVALID_SIGNAL_NUMBER;
 }
 
 int32_t
@@ -253,7 +226,10 @@ UnixSignals::SetShouldSuppress (int signo, bool value)
 bool
 UnixSignals::SetShouldSuppress (const char *signal_name, bool value)
 {
-    return SetShouldSuppress (GetSignalNumberFromName (signal_name), value);
+    const int32_t signo = GetSignalNumberFromName (signal_name);
+    if (signo != LLDB_INVALID_SIGNAL_NUMBER)
+        return SetShouldSuppress (signo, value);
+    return false;
 }
 
 bool
@@ -280,7 +256,10 @@ UnixSignals::SetShouldStop (int signo, bool value)
 bool
 UnixSignals::SetShouldStop (const char *signal_name, bool value)
 {
-    return SetShouldStop (GetSignalNumberFromName (signal_name), value);
+    const int32_t signo = GetSignalNumberFromName (signal_name);
+    if (signo != LLDB_INVALID_SIGNAL_NUMBER)
+        return SetShouldStop (signo, value);
+    return false;
 }
 
 bool
@@ -307,6 +286,8 @@ UnixSignals::SetShouldNotify (int signo, bool value)
 bool
 UnixSignals::SetShouldNotify (const char *signal_name, bool value)
 {
-    return SetShouldNotify (GetSignalNumberFromName (signal_name), value);
+    const int32_t signo = GetSignalNumberFromName (signal_name);
+    if (signo != LLDB_INVALID_SIGNAL_NUMBER)
+        return SetShouldNotify (signo, value);
+    return false;
 }
-
