@@ -185,52 +185,6 @@ def CMD_MSG(str, exe):
 def EnvArray():
     return map(lambda k,v: k+"="+v, os.environ.keys(), os.environ.values())
 
-# From 2.7's subprocess.check_output() convenience function.
-def system(*popenargs, **kwargs):
-    r"""Run command with arguments and return its output as a byte string.
-
-    If the exit code was non-zero it raises a CalledProcessError.  The
-    CalledProcessError object will have the return code in the returncode
-    attribute and output in the output attribute.
-
-    The arguments are the same as for the Popen constructor.  Example:
-
-    >>> check_output(["ls", "-l", "/dev/null"])
-    'crw-rw-rw- 1 root root 1, 3 Oct 18  2007 /dev/null\n'
-
-    The stdout argument is not allowed as it is used internally.
-    To capture standard error in the result, use stderr=STDOUT.
-
-    >>> check_output(["/bin/sh", "-c",
-    ...               "ls -l non_existent_file ; exit 0"],
-    ...              stderr=STDOUT)
-    'ls: non_existent_file: No such file or directory\n'
-    """
-    if 'stdout' in kwargs:
-        raise ValueError('stdout argument not allowed, it will be overridden.')
-    process = Popen(stdout=PIPE, *popenargs, **kwargs)
-    output, error = process.communicate()
-    retcode = process.poll()
-
-    if traceAlways:
-        if isinstance(popenargs, types.StringTypes):
-            args = [popenargs]
-        else:
-            args = list(popenargs)
-        print >> sys.stderr
-        print >> sys.stderr, "os command:", args
-        print >> sys.stderr, "stdout:", output
-        print >> sys.stderr, "stderr:", error
-        print >> sys.stderr, "retcode:", retcode
-        print >> sys.stderr
-
-    if retcode:
-        cmd = kwargs.get("args")
-        if cmd is None:
-            cmd = popenargs[0]
-        raise CalledProcessError(retcode, cmd)
-    return output
-
 def line_number(filename, string_to_match):
     """Helper function to return the line number of the first matched string."""
     with open(filename, 'r') as f:
@@ -254,10 +208,9 @@ class recording(StringIO.StringIO):
     into the stderr.
     """
     def __init__(self, test, trace):
-        """Create a StringIO instance; record session, stderr, and trace."""
+        """Create a StringIO instance; record the session obj and trace flag."""
         StringIO.StringIO.__init__(self)
-        self.session = test.session
-        self.stderr = test.old_stderr
+        self.session = test.session if test else None
         self.trace = trace
 
     def __enter__(self):
@@ -274,9 +227,60 @@ class recording(StringIO.StringIO):
         recordings to our session object.  And close the StringIO object, too.
         """
         if self.trace:
-            print >> self.stderr, self.getvalue()
-        print >> self.session, self.getvalue()
+            print >> sys.stderr, self.getvalue()
+        if self.session:
+            print >> self.session, self.getvalue()
         self.close()
+
+# From 2.7's subprocess.check_output() convenience function.
+def system(*popenargs, **kwargs):
+    r"""Run command with arguments and return its output as a byte string.
+
+    If the exit code was non-zero it raises a CalledProcessError.  The
+    CalledProcessError object will have the return code in the returncode
+    attribute and output in the output attribute.
+
+    The arguments are the same as for the Popen constructor.  Example:
+
+    >>> check_output(["ls", "-l", "/dev/null"])
+    'crw-rw-rw- 1 root root 1, 3 Oct 18  2007 /dev/null\n'
+
+    The stdout argument is not allowed as it is used internally.
+    To capture standard error in the result, use stderr=STDOUT.
+
+    >>> check_output(["/bin/sh", "-c",
+    ...               "ls -l non_existent_file ; exit 0"],
+    ...              stderr=STDOUT)
+    'ls: non_existent_file: No such file or directory\n'
+    """
+
+    # Assign the sender object to variable 'test' and remove it from kwargs.
+    test = kwargs.pop('sender', None)
+
+    if 'stdout' in kwargs:
+        raise ValueError('stdout argument not allowed, it will be overridden.')
+    process = Popen(stdout=PIPE, *popenargs, **kwargs)
+    output, error = process.communicate()
+    retcode = process.poll()
+
+    with recording(test, traceAlways) as sbuf:
+        if isinstance(popenargs, types.StringTypes):
+            args = [popenargs]
+        else:
+            args = list(popenargs)
+        print >> sbuf
+        print >> sbuf, "os command:", args
+        print >> sbuf, "stdout:", output
+        print >> sbuf, "stderr:", error
+        print >> sbuf, "retcode:", retcode
+        print >> sbuf
+
+    if retcode:
+        cmd = kwargs.get("args")
+        if cmd is None:
+            cmd = popenargs[0]
+        raise CalledProcessError(retcode, cmd)
+    return output
 
 class TestBase(unittest2.TestCase):
     """This LLDB abstract base class is meant to be subclassed."""
@@ -403,15 +407,9 @@ class TestBase(unittest2.TestCase):
         self.dict = None
         self.doTearDownCleanup = False
 
-        # Create a string buffer to record the session info.
+        # Create a string buffer to record the session info, to be dumped into a
+        # test case specific file if test failure is encountered.
         self.session = StringIO.StringIO()
-
-        # Substitute self.session as the sys.stderr and restore it at the end of
-        # the test during tearDown().  If trace is ON, we dump the session info
-        # into the real stderr as well.  The session info will be dumped into a
-        # test case specific file if a failure is encountered.
-        self.old_stderr = sys.stderr
-        sys.stderr = self.session
 
         # Optimistically set self.__failed__ to False initially.  If the test
         # failed, the session info (self.session) is then dumped into a session
@@ -468,9 +466,6 @@ class TestBase(unittest2.TestCase):
         # to check the failure status here.
         if self.__failed__:
             self.dumpSessionInfo()
-
-        # Restore the sys.stderr to what it was before.
-        sys.stderr = self.old_stderr
 
     def runCmd(self, cmd, msg=None, check=True, trace=False, setCookie=True):
         """
@@ -656,19 +651,19 @@ class TestBase(unittest2.TestCase):
     def buildDefault(self, architecture=None, compiler=None, dictionary=None):
         """Platform specific way to build the default binaries."""
         module = __import__(sys.platform)
-        if not module.buildDefault(architecture, compiler, dictionary):
+        if not module.buildDefault(self, architecture, compiler, dictionary):
             raise Exception("Don't know how to build default binary")
 
     def buildDsym(self, architecture=None, compiler=None, dictionary=None):
         """Platform specific way to build binaries with dsym info."""
         module = __import__(sys.platform)
-        if not module.buildDsym(architecture, compiler, dictionary):
+        if not module.buildDsym(self, architecture, compiler, dictionary):
             raise Exception("Don't know how to build binary with dsym")
 
     def buildDwarf(self, architecture=None, compiler=None, dictionary=None):
         """Platform specific way to build binaries with dwarf maps."""
         module = __import__(sys.platform)
-        if not module.buildDwarf(architecture, compiler, dictionary):
+        if not module.buildDwarf(self, architecture, compiler, dictionary):
             raise Exception("Don't know how to build binary with dwarf")
 
     def DebugSBValue(self, frame, val):

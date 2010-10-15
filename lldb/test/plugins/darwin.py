@@ -57,43 +57,46 @@ def getCmdLine(d):
     return " " + cmdline
 
 
-def buildDefault(architecture=None, compiler=None, dictionary=None):
+def buildDefault(sender=None, architecture=None, compiler=None, dictionary=None):
     """Build the binaries the default way."""
     lldbtest.system(["/bin/sh", "-c",
                      "make clean" + getCmdLine(dictionary) + "; make"
                      + getArchSpec(architecture) + getCCSpec(compiler)
-                     + getCmdLine(dictionary)])
+                     + getCmdLine(dictionary)],
+                    sender=sender)
 
     # True signifies that we can handle building default.
     return True
 
-def buildDsym(architecture=None, compiler=None, dictionary=None):
+def buildDsym(sender=None, architecture=None, compiler=None, dictionary=None):
     """Build the binaries with dsym debug info."""
     lldbtest.system(["/bin/sh", "-c",
                      "make clean" + getCmdLine(dictionary)
                      + "; make MAKE_DSYM=YES"
                      + getArchSpec(architecture) + getCCSpec(compiler)
-                     + getCmdLine(dictionary)])
+                     + getCmdLine(dictionary)],
+                    sender=sender)
 
     # True signifies that we can handle building dsym.
     return True
 
-def buildDwarf(architecture=None, compiler=None, dictionary=None):
+def buildDwarf(sender=None, architecture=None, compiler=None, dictionary=None):
     """Build the binaries with dwarf debug info."""
     lldbtest.system(["/bin/sh", "-c",
                      "make clean" + getCmdLine(dictionary)
                      + "; make MAKE_DSYM=NO"
                      + getArchSpec(architecture) + getCCSpec(compiler)
-                     + getCmdLine(dictionary)])
+                     + getCmdLine(dictionary)],
+                    sender=sender)
 
     # True signifies that we can handle building dsym.
     return True
 
-def cleanup(dictionary=None):
+def cleanup(sender=None, dictionary=None):
     """Perform a platform-specific cleanup after the test."""
     if os.path.isfile("Makefile"):
-        lldbtest.system(["/bin/sh", "-c", "make clean" + getCmdLine(dictionary)]
-                        )
+        lldbtest.system(["/bin/sh", "-c", "make clean"+getCmdLine(dictionary)],
+                        sender=sender)
 
     # True signifies that we can handle building dsym.
     return True

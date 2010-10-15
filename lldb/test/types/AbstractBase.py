@@ -24,7 +24,7 @@ class GenericTester(TestBase):
 
         # First, capture the golden output emitted by the oracle, i.e., the
         # series of printf statements.
-        go = system("./a.out")
+        go = system("./a.out", sender=self)
         # This golden list contains a list of (variable, value) pairs extracted
         # from the golden output.
         gl = []
@@ -102,7 +102,7 @@ class GenericTester(TestBase):
 
         # First, capture the golden output emitted by the oracle, i.e., the
         # series of printf statements.
-        go = system("./a.out")
+        go = system("./a.out", sender=self)
         # This golden list contains a list of (variable, value) pairs extracted
         # from the golden output.
         gl = []
