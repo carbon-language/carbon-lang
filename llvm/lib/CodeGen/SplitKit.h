@@ -242,9 +242,6 @@ class SplitEditor {
   /// edit_ - The current parent register and new intervals created.
   LiveRangeEdit &edit_;
 
-  /// curli_ - The immutable interval we are currently splitting.
-  const LiveInterval *const curli_;
-
   /// dupli_ - Created as a copy of curli_, ranges are carved out as new
   /// intervals get added through openIntv / closeIntv. This is used to avoid
   /// editing curli_.

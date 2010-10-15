@@ -586,11 +586,9 @@ SplitEditor::SplitEditor(SplitAnalysis &sa, LiveIntervals &lis, VirtRegMap &vrm,
     mri_(vrm.getMachineFunction().getRegInfo()),
     tii_(*vrm.getMachineFunction().getTarget().getInstrInfo()),
     edit_(edit),
-    curli_(sa_.getCurLI()),
-    dupli_(lis_, *curli_),
-    openli_(lis_, *curli_)
+    dupli_(lis_, edit.getParent()),
+    openli_(lis_, edit.getParent())
 {
-  assert(curli_ && "SplitEditor created from empty SplitAnalysis");
 }
 
 bool SplitEditor::intervalsLiveAt(SlotIndex Idx) const {
@@ -615,7 +613,7 @@ void SplitEditor::openIntv() {
 void SplitEditor::enterIntvBefore(SlotIndex Idx) {
   assert(openli_.getLI() && "openIntv not called before enterIntvBefore");
   DEBUG(dbgs() << "    enterIntvBefore " << Idx);
-  VNInfo *ParentVNI = curli_->getVNInfoAt(Idx.getUseIndex());
+  VNInfo *ParentVNI = edit_.getParent().getVNInfoAt(Idx.getUseIndex());
   if (!ParentVNI) {
     DEBUG(dbgs() << ": not live\n");
     return;
@@ -624,7 +622,7 @@ void SplitEditor::enterIntvBefore(SlotIndex Idx) {
   truncatedValues.insert(ParentVNI);
   MachineInstr *MI = lis_.getInstructionFromIndex(Idx);
   assert(MI && "enterIntvBefore called with invalid index");
-  VNInfo *VNI = openli_.defByCopyFrom(curli_->reg, ParentVNI,
+  VNInfo *VNI = openli_.defByCopyFrom(edit_.getReg(), ParentVNI,
                                       *MI->getParent(), MI);
   openli_.getLI()->addRange(LiveRange(VNI->def, Idx.getDefIndex(), VNI));
   DEBUG(dbgs() << ": " << *openli_.getLI() << '\n');
@@ -635,14 +633,14 @@ void SplitEditor::enterIntvAtEnd(MachineBasicBlock &MBB) {
   assert(openli_.getLI() && "openIntv not called before enterIntvAtEnd");
   SlotIndex End = lis_.getMBBEndIdx(&MBB);
   DEBUG(dbgs() << "    enterIntvAtEnd BB#" << MBB.getNumber() << ", " << End);
-  VNInfo *ParentVNI = curli_->getVNInfoAt(End.getPrevSlot());
+  VNInfo *ParentVNI = edit_.getParent().getVNInfoAt(End.getPrevSlot());
   if (!ParentVNI) {
     DEBUG(dbgs() << ": not live\n");
     return;
   }
   DEBUG(dbgs() << ": valno " << ParentVNI->id);
   truncatedValues.insert(ParentVNI);
-  VNInfo *VNI = openli_.defByCopyFrom(curli_->reg, ParentVNI,
+  VNInfo *VNI = openli_.defByCopyFrom(edit_.getReg(), ParentVNI,
                                       MBB, MBB.getFirstTerminator());
   // Make sure openli is live out of MBB.
   openli_.getLI()->addRange(LiveRange(VNI->def, End, VNI));
@@ -667,7 +665,7 @@ void SplitEditor::leaveIntvAfter(SlotIndex Idx) {
   DEBUG(dbgs() << "    leaveIntvAfter " << Idx);
 
   // The interval must be live beyond the instruction at Idx.
-  VNInfo *ParentVNI = curli_->getVNInfoAt(Idx.getBoundaryIndex());
+  VNInfo *ParentVNI = edit_.getParent().getVNInfoAt(Idx.getBoundaryIndex());
   if (!ParentVNI) {
     DEBUG(dbgs() << ": not live\n");
     return;
@@ -692,7 +690,7 @@ void SplitEditor::leaveIntvAtTop(MachineBasicBlock &MBB) {
   SlotIndex Start = lis_.getMBBStartIdx(&MBB);
   DEBUG(dbgs() << "    leaveIntvAtTop BB#" << MBB.getNumber() << ", " << Start);
 
-  VNInfo *ParentVNI = curli_->getVNInfoAt(Start);
+  VNInfo *ParentVNI = edit_.getParent().getVNInfoAt(Start);
   if (!ParentVNI) {
     DEBUG(dbgs() << ": not live\n");
     return;
@@ -804,13 +802,13 @@ void SplitEditor::computeRemainder() {
   // If values were partially rematted, we should shrink to uses.
   // If values were fully rematted, they should be omitted.
   // FIXME: If a single value is redefined, just move the def and truncate.
+  LiveInterval &parent = edit_.getParent();
 
   // Values that are fully contained in the split intervals.
   SmallPtrSet<const VNInfo*, 8> deadValues;
-
   // Map all curli values that should have live defs in dupli.
-  for (LiveInterval::const_vni_iterator I = curli_->vni_begin(),
-       E = curli_->vni_end(); I != E; ++I) {
+  for (LiveInterval::const_vni_iterator I = parent.vni_begin(),
+       E = parent.vni_end(); I != E; ++I) {
     const VNInfo *VNI = *I;
     // Original def is contained in the split intervals.
     if (intervalsLiveAt(VNI->def)) {
@@ -827,7 +825,7 @@ void SplitEditor::computeRemainder() {
   }
 
   // Add all ranges to dupli.
-  for (LiveInterval::const_iterator I = curli_->begin(), E = curli_->end();
+  for (LiveInterval::const_iterator I = parent.begin(), E = parent.end();
        I != E; ++I) {
     const LiveRange &LR = *I;
     if (truncatedValues.count(LR.valno)) {
@@ -868,7 +866,7 @@ void SplitEditor::finish() {
   }
 
   // Rewrite instructions.
-  rewrite(curli_->reg);
+  rewrite(edit_.getReg());
 
   // Calculate spill weight and allocation hints for new intervals.
   VirtRegAuxInfo vrai(vrm_.getMachineFunction(), lis_, sa_.loops_);
