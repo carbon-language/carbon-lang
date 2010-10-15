@@ -337,7 +337,7 @@ Parser::ParseTemplateParameterList(unsigned Depth,
       // subsumed by whatever goes on in ParseTemplateParameter.
       // TODO: This could match >>, and it would be nice to avoid those
       // silly errors with template <vec<T>>.
-      // Diag(Tok.getLocation(), diag::err_expected_comma_greater);
+      Diag(Tok.getLocation(), diag::err_expected_comma_greater);
       SkipUntil(tok::greater, true, true);
       return false;
     }
