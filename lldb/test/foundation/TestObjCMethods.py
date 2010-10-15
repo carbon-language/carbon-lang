@@ -23,7 +23,6 @@ class FoundationTestCase(TestBase):
         self.buildDwarf()
         self.break_on_objc_methods()
 
-    @unittest2.skip("Skip due to deadlock?")
     @unittest2.expectedFailure
     # rdar://problem/8542091
     # rdar://problem/8492646
@@ -32,7 +31,6 @@ class FoundationTestCase(TestBase):
         self.buildDsym()
         self.data_type_and_expr_objc()
 
-    @unittest2.skip("Skip due to deadlock?")
     @unittest2.expectedFailure
     # rdar://problem/8542091
     # rdar://problem/8492646
@@ -161,7 +159,7 @@ class FoundationTestCase(TestBase):
         # error: 1 errors parsing expression
         #
 
-        self.runCmd("breakpoint delete")
+        self.runCmd("breakpoint delete 1")
         self.expect("breakpoint set -f main.m -l %d" % self.line,
                     BREAKPOINT_CREATED,
             startstr = "Breakpoint created: 2: file ='main.m', line = %d, locations = 1" %
