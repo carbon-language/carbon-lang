@@ -106,9 +106,6 @@ def ARMbr2jt         : SDNode<"ARMISD::BR2_JT", SDT_ARMBr2JT,
 def ARMBcci64        : SDNode<"ARMISD::BCC_i64", SDT_ARMBCC_i64,
                               [SDNPHasChain]>;
 
-def ARMand           : SDNode<"ARMISD::AND", SDT_ARMAnd,
-                              [SDNPOutFlag]>;
-
 def ARMcmp           : SDNode<"ARMISD::CMP", SDT_ARMCmp,
                               [SDNPOutFlag]>;
 
@@ -2028,9 +2025,6 @@ def : ARMV6Pat<(int_arm_usat GPR:$a, imm:$pos), (USAT imm:$pos, GPR:$a, 0)>;
 defm AND   : AsI1_bin_irs<0b0000, "and",
                           IIC_iBITi, IIC_iBITr, IIC_iBITsr,
                           BinOpFrag<(and node:$LHS, node:$RHS)>, 1>;
-defm ANDS  : AI1_bin_s_irs<0b0000, "and",
-                           IIC_iBITi, IIC_iBITr, IIC_iBITsr,
-                           BinOpFrag<(ARMand node:$LHS, node:$RHS)>, 1>;
 defm ORR   : AsI1_bin_irs<0b1100, "orr",
                           IIC_iBITi, IIC_iBITr, IIC_iBITsr,
                           BinOpFrag<(or  node:$LHS, node:$RHS)>, 1>;
