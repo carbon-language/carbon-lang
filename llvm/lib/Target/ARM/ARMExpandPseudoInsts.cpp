@@ -586,7 +586,7 @@ bool ARMExpandPseudo::ExpandMBB(MachineBasicBlock &MBB) {
         .addReg(0)
         .addImm(ARM_AM::getSORegOpc((Opcode == ARM::MOVsrl_flag ? ARM_AM::lsr
                                      : ARM_AM::asr), 1)))
-        .addReg(ARM::CPSR, getDefRegState(true));
+        .addReg(ARM::CPSR, RegState::Define);
       MI.eraseFromParent();
       break;
     }
@@ -616,7 +616,7 @@ bool ARMExpandPseudo::ExpandMBB(MachineBasicBlock &MBB) {
       (*MIB1).setMemRefs(MI.memoperands_begin(), MI.memoperands_end());
       MachineInstrBuilder MIB2 = BuildMI(MBB, MBBI, MI.getDebugLoc(),
                                          TII->get(ARM::tPICADD))
-        .addReg(DstReg, getDefRegState(true) | getDeadRegState(DstIsDead))
+        .addReg(DstReg, RegState::Define | getDeadRegState(DstIsDead))
         .addReg(DstReg)
         .addOperand(MI.getOperand(2));
       TransferImpOps(MI, MIB1, MIB2);
@@ -640,7 +640,7 @@ bool ARMExpandPseudo::ExpandMBB(MachineBasicBlock &MBB) {
       HI16 = BuildMI(MBB, MBBI, MI.getDebugLoc(),
                      TII->get(Opcode == ARM::MOVi32imm ?
                               ARM::MOVTi16 : ARM::t2MOVTi16))
-        .addReg(DstReg, getDefRegState(true) | getDeadRegState(DstIsDead))
+        .addReg(DstReg, RegState::Define | getDeadRegState(DstIsDead))
         .addReg(DstReg);
 
       if (MO.isImm()) {
@@ -677,13 +677,13 @@ bool ARMExpandPseudo::ExpandMBB(MachineBasicBlock &MBB) {
         AddDefaultPred(BuildMI(MBB, MBBI, MI.getDebugLoc(),
                                TII->get(ARM::VMOVQ))
                      .addReg(EvenDst,
-                             getDefRegState(true) | getDeadRegState(DstIsDead))
+                             RegState::Define | getDeadRegState(DstIsDead))
                      .addReg(EvenSrc, getKillRegState(SrcIsKill)));
       MachineInstrBuilder Odd =
         AddDefaultPred(BuildMI(MBB, MBBI, MI.getDebugLoc(),
                                TII->get(ARM::VMOVQ))
                      .addReg(OddDst,
-                             getDefRegState(true) | getDeadRegState(DstIsDead))
+                             RegState::Define | getDeadRegState(DstIsDead))
                      .addReg(OddSrc, getKillRegState(SrcIsKill)));
       TransferImpOps(MI, Even, Odd);
       MI.eraseFromParent();
