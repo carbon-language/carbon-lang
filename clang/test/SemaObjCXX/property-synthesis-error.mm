@@ -22,7 +22,7 @@
 
 @implementation MyClass
 
-@synthesize array=_array; // expected-error {{assigning to 'NSMutableArray *' from incompatible type 'NSArray *'}}
+@synthesize array=_array;
 
 @end
 

@@ -460,7 +460,8 @@ Decl *Sema::ActOnPropertyImplDecl(Scope *S,
                                Ivar);
   if (ObjCMethodDecl *getterMethod = property->getGetterMethodDecl()) {
     getterMethod->createImplicitParams(Context, IDecl);
-    if (getLangOptions().CPlusPlus && Synthesize) {
+    if (getLangOptions().CPlusPlus && Synthesize &&
+        Ivar->getType()->isRecordType()) {
       // For Objective-C++, need to synthesize the AST for the IVAR object to be
       // returned by the getter as it must conform to C++'s copy-return rules.
       // FIXME. Eventually we want to do this for Objective-C as well.
@@ -488,7 +489,8 @@ Decl *Sema::ActOnPropertyImplDecl(Scope *S,
   }
   if (ObjCMethodDecl *setterMethod = property->getSetterMethodDecl()) {
     setterMethod->createImplicitParams(Context, IDecl);
-    if (getLangOptions().CPlusPlus && Synthesize) {
+    if (getLangOptions().CPlusPlus && Synthesize
+        && Ivar->getType()->isRecordType()) {
       // FIXME. Eventually we want to do this for Objective-C as well.
       ImplicitParamDecl *SelfDecl = setterMethod->getSelfDecl();
       DeclRefExpr *SelfExpr = 
