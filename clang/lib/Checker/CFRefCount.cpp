@@ -2420,8 +2420,8 @@ CFRefLeakReport::getEndPath(BugReporterContext& BRC,
           "collector";
   }
   else
-    os << " is no longer referenced after this point and has a retain count of"
-          " +" << RV->getCount() << " (object leaked)";
+    os << " is not referenced later in this execution path and has a retain "
+          "count of +" << RV->getCount() << " (object leaked)";
 
   return new PathDiagnosticEventPiece(L, os.str());
 }
