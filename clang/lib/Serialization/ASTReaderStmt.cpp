@@ -873,7 +873,6 @@ void ASTStmtReader::VisitObjCImplicitSetterGetterRefExpr(
   E->setClassLoc(ReadSourceLocation(Record, Idx));
   E->SuperLoc = ReadSourceLocation(Record, Idx);
   E->SuperTy = Reader.GetType(Record[Idx++]);
-  E->IsSuper = Record[Idx++];
 }
 
 void ASTStmtReader::VisitObjCMessageExpr(ObjCMessageExpr *E) {

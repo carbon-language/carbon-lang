@@ -846,7 +846,6 @@ void ASTStmtWriter::VisitObjCImplicitSetterGetterRefExpr(
   Writer.AddSourceLocation(E->getClassLoc(), Record);
   Writer.AddSourceLocation(E->getSuperLocation(), Record);
   Writer.AddTypeRef(E->getSuperType(), Record);
-  Record.push_back(E->isSuperReceiver());
   Code = serialization::EXPR_OBJC_KVC_REF_EXPR;
 }
 

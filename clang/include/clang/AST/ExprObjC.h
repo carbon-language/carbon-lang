@@ -336,10 +336,6 @@ class ObjCImplicitSetterGetterRefExpr : public Expr {
   /// the type associated with 'super' keyword.
   QualType SuperTy;
   
-  /// \brief When the receiver in dot-syntax expression is 'super', this is
-  /// set to true.
-  bool IsSuper:1;
-  
 public:
   ObjCImplicitSetterGetterRefExpr(ObjCMethodDecl *getter,
                  QualType t,
@@ -348,9 +344,7 @@ public:
     : Expr(ObjCImplicitSetterGetterRefExprClass, t, /*TypeDependent=*/false, 
            base->isValueDependent()),
       Setter(setter), Getter(getter), MemberLoc(l), Base(base),
-      InterfaceDecl(0), ClassLoc(SourceLocation()) {
-      IsSuper = false;
-    }
+      InterfaceDecl(0), ClassLoc(SourceLocation()) {}
   
   ObjCImplicitSetterGetterRefExpr(ObjCMethodDecl *getter,
                                   QualType t,
@@ -361,8 +355,8 @@ public:
   : Expr(ObjCImplicitSetterGetterRefExprClass, t, /*TypeDependent=*/false, 
          false),
   Setter(setter), Getter(getter), MemberLoc(l),
-  InterfaceDecl(0), ClassLoc(SourceLocation()), 
-  SuperLoc(sl), SuperTy(st), IsSuper(true) {
+  Base(0), InterfaceDecl(0), ClassLoc(SourceLocation()), 
+  SuperLoc(sl), SuperTy(st) {
   }
   
   ObjCImplicitSetterGetterRefExpr(ObjCMethodDecl *getter,
@@ -371,9 +365,7 @@ public:
                  SourceLocation l, ObjCInterfaceDecl *C, SourceLocation CL)
     : Expr(ObjCImplicitSetterGetterRefExprClass, t, false, false),
       Setter(setter), Getter(getter), MemberLoc(l), Base(0), InterfaceDecl(C),
-      ClassLoc(CL) {
-        IsSuper = false;
-    }
+      ClassLoc(CL) {}
   explicit ObjCImplicitSetterGetterRefExpr(EmptyShell Empty)
            : Expr(ObjCImplicitSetterGetterRefExprClass, Empty){}
 
@@ -402,7 +394,9 @@ public:
   
   SourceLocation getSuperLocation() const { return SuperLoc; }
   QualType getSuperType() const { return SuperTy; }
-  bool isSuperReceiver() const { return IsSuper; }
+  /// \brief When the receiver in dot-syntax expression is 'super', this
+  /// method returns true if both Base expression and Interface are null.
+  bool isSuperReceiver() const { return InterfaceDecl == 0 && Base == 0; }
 
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == ObjCImplicitSetterGetterRefExprClass;
@@ -417,7 +411,6 @@ private:
   friend class ASTStmtReader;
   void setSuperLocation(SourceLocation Loc) { SuperLoc = Loc; }
   void setSuperType(QualType T) { SuperTy = T; }
-  void setSuperReceiver(bool bv) { IsSuper = bv; }
 };
 
 /// \brief An expression that sends a message to the given Objective-C
