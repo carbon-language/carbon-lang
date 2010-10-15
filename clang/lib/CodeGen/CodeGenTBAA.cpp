@@ -51,7 +51,11 @@ CodeGenTBAA::getTBAAInfo(QualType QTy) {
   // For now, just emit a very minimal tree.
   if (const BuiltinType *BTy = dyn_cast<BuiltinType>(Ty)) {
     switch (BTy->getKind()) {
-    // Charactar types are special and can alias anything.
+    // Character types are special and can alias anything.
+    // In C++, this technically only includes "char" and "unsigned char",
+    // and not "signed char". In C, it includes all three. For now,
+    // the risk of exploting this detail in C++ seems likely to outweigh
+    // the benefit.
     case BuiltinType::Char_U:
     case BuiltinType::Char_S:
     case BuiltinType::UChar:
