@@ -92,6 +92,7 @@ CodeGenModule::CodeGenModule(ASTContext &C, const CodeGenOptions &CGO,
 CodeGenModule::~CodeGenModule() {
   delete Runtime;
   delete &ABI;
+  delete TBAA;
   delete DebugInfo;
 }
 
