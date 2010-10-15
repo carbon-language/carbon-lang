@@ -3052,7 +3052,7 @@ Sema::LookupMemberExpr(LookupResult &R, Expr *&BaseExpr,
             ResultTy->getAs<PointerType>()->getPointeeType()
                                                           ->isRecordType()))) {
         SourceLocation Loc = PP.getLocForEndOfToken(BaseExpr->getLocEnd());
-        Diag(Loc, diag::err_member_reference_needs_call)
+        Diag(BaseExpr->getExprLoc(), diag::err_member_reference_needs_call)
           << QualType(Fun, 0)
           << FixItHint::CreateInsertion(Loc, "()");
 
