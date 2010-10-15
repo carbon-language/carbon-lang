@@ -762,7 +762,7 @@ bool ARMFastISel::ARMEmitLoad(EVT VT, unsigned &ResultReg,
   assert((Base.Reg == ARM::SP || Offset == 0) &&
           "Offset not zero and not a stack load!");
 
-  if (Base.Reg == ARM::SP)
+  if (Base.Reg == ARM::SP && Offset == 0)
     TII.loadRegFromStackSlot(*FuncInfo.MBB, *FuncInfo.InsertPt,
                              ResultReg, Base.FrameIndex, RC,
                              TM.getRegisterInfo());
@@ -832,7 +832,7 @@ bool ARMFastISel::ARMEmitStore(EVT VT, unsigned SrcReg,
       break;
   }
 
-  if (Base.Reg == ARM::SP)
+  if (Base.Reg == ARM::SP && Offset == 0)
     TII.storeRegToStackSlot(*FuncInfo.MBB, *FuncInfo.InsertPt,
                             SrcReg, true /*isKill*/, Base.FrameIndex,
                             TLI.getRegClassFor(VT), TM.getRegisterInfo());
