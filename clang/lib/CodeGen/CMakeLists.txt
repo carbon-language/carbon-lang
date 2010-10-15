@@ -31,6 +31,7 @@ add_clang_library(clangCodeGen
   CodeGenAction.cpp
   CodeGenFunction.cpp
   CodeGenModule.cpp
+  CodeGenTBAA.cpp
   CodeGenTypes.cpp
   ItaniumCXXABI.cpp
   Mangle.cpp
