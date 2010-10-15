@@ -907,7 +907,7 @@ ClangExpressionDeclMap::GetDecls(NameSearchContext &context,
     Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS);
         
     if (log)
-        log->Printf("Hunting for a definition for %s", name);
+        log->Printf("Hunting for a definition for '%s'", name);
     
     // Back out in all cases where we're not fully initialized
     if (!m_exe_ctx || !m_exe_ctx->frame || !m_sym_ctx)

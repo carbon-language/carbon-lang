@@ -9,6 +9,7 @@
 
 
 #include "clang/AST/ASTContext.h"
+#include "lldb/Core/Log.h"
 #include "lldb/Expression/ClangASTSource.h"
 #include "lldb/Expression/ClangExpression.h"
 #include "lldb/Expression/ClangExpressionDeclMap.h"
@@ -37,8 +38,13 @@ Selector ClangASTSource::GetExternalSelector(uint32_t) { return Selector(); }
 uint32_t ClangASTSource::GetNumExternalSelectors() { return 0; }
 
 // The core lookup interface.
-DeclContext::lookup_result ClangASTSource::FindExternalVisibleDeclsByName(const DeclContext *DC, DeclarationName Name) {
-    switch (Name.getNameKind()) {
+DeclContext::lookup_result ClangASTSource::FindExternalVisibleDeclsByName
+(
+    const DeclContext *decl_ctx, 
+    DeclarationName decl_name
+) 
+{
+    switch (decl_name.getNameKind()) {
     // Normal identifiers.
     case DeclarationName::Identifier:
       break;
@@ -51,7 +57,7 @@ DeclContext::lookup_result ClangASTSource::FindExternalVisibleDeclsByName(const 
     // Using directives found in this context.
     // Tell Sema we didn't find any or we'll end up getting asked a *lot*.
     case DeclarationName::CXXUsingDirective:
-      return SetNoExternalVisibleDeclsForName(DC, Name);
+      return SetNoExternalVisibleDeclsForName(decl_ctx, decl_name);
             
     // These aren't looked up like this.
     case DeclarationName::ObjCZeroArgSelector:
@@ -65,19 +71,34 @@ DeclContext::lookup_result ClangASTSource::FindExternalVisibleDeclsByName(const 
     case DeclarationName::CXXConversionFunctionName:
       return DeclContext::lookup_result();
     }
+
+        
+    std::string name (decl_name.getAsString());
+    if (0 == name.compare ("__va_list_tag")      ||
+        0 == name.compare ("__int128_t")         ||
+        0 == name.compare ("__uint128_t")        ||
+        0 == name.compare ("SEL")                ||
+        0 == name.compare ("id")                 ||
+        0 == name.compare ("Class")              ||
+        0 == name.compare ("nil")                ||
+        0 == name.compare ("gp_offset")          ||
+        0 == name.compare ("fp_offset")          ||
+        0 == name.compare ("overflow_arg_area")  ||
+        0 == name.compare ("reg_save_area")      ||
+        0 == name.find    ("__builtin")          )
+    {
+        Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS);
+        if (log)
+            log->Printf("Ignoring built-in in find external declarations for name: '%s'", name.c_str());
+
+        return SetNoExternalVisibleDeclsForName(decl_ctx, decl_name);
+    }
     
 	llvm::SmallVector<NamedDecl*, 4> Decls;
     
-    NameSearchContext NSC(*this, Decls, Name, DC);
-    
-    std::string name (Name.getAsString());
-    // TODO: Figure out what to do here, after recent changes to the DWARF 
-    // parser where more types are now in type by name index, we were sometimes
-    // finding our own version of a builtin? Skip it for now until we figure out
-    // how to get around this properly.
-    if (name.compare("__va_list_tag") != 0)
-        DeclMap.GetDecls(NSC, name.c_str());
-    return SetExternalVisibleDeclsForName(DC, Name, Decls);
+    NameSearchContext NSC(*this, Decls, decl_name, decl_ctx);
+    DeclMap.GetDecls(NSC, name.c_str());
+    return SetExternalVisibleDeclsForName(decl_ctx, decl_name, Decls);
 }
 
 void ClangASTSource::MaterializeVisibleDecls(const DeclContext *DC)
